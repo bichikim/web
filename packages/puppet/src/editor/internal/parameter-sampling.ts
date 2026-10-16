@@ -1,5 +1,6 @@
 import {composeParameterGlue, sampleParameterGlue} from '../../deformation/parameter-glue'
 import {
+  composeParameterPartDrawOrder,
   composeParameterPartProperties,
   composeParameterScene,
   composeParameterVertices,
@@ -38,11 +39,14 @@ const sampleParameterPreview = (options: CreateParameterPreviewOptions): PuppetD
         restVertices: part.mesh.vertices,
       }),
     },
-    properties: composeParameterPartProperties({
-      document: options.document,
-      parameterValues: options.parameterValues,
-      partId: part.id,
-    }),
+    properties: {
+      ...composeParameterPartProperties({
+        document: options.document,
+        parameterValues: options.parameterValues,
+        partId: part.id,
+      }),
+      drawOrder: composeParameterPartDrawOrder(options.document, part.id, options.parameterValues),
+    },
   })),
   scene: composeParameterScene(options.document, options.parameterValues),
 })
@@ -100,15 +104,29 @@ const samplePartProperties = (options: SamplePartKeyformOptions) => {
   ) {
     return undefined
   }
+  const document = {
+    ...options.document,
+    parameterBindings: [{...options.binding, influences: undefined}],
+  }
+  const parameterValues = Object.fromEntries(
+    options.binding.parameterIds.map((id, index) => [id, options.values[index]!]),
+  )
   const {multiplyColor, opacity, screenColor} = composeParameterPartProperties({
-    document: {
-      ...options.document,
-      parameterBindings: [{...options.binding, influences: undefined}],
-    },
-    parameterValues: Object.fromEntries(
-      options.binding.parameterIds.map((id, index) => [id, options.values[index]!]),
-    ),
+    document,
+    parameterValues,
     partId: options.part.id,
   })
-  return {multiplyColor, opacity, screenColor}
+  const keyedDrawOrder = options.binding.keyforms.some((keyform) =>
+    keyform.parts.some(
+      (part) => part.partId === options.part.id && part.properties?.drawOrder !== undefined,
+    ),
+  )
+  return keyedDrawOrder
+    ? {
+        drawOrder: composeParameterPartDrawOrder(document, options.part.id, parameterValues),
+        multiplyColor,
+        opacity,
+        screenColor,
+      }
+    : {multiplyColor, opacity, screenColor}
 }

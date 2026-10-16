@@ -291,9 +291,7 @@ const updateMotionIndices = (document: PuppetDocument, partId: string, vertexInd
     tracks: motion.tracks
       .filter(
         (track) =>
-          track.kind === 'parameter' ||
-          track.partId !== partId ||
-          track.vertexIndex !== vertexIndex,
+          track.kind !== 'vertex' || track.partId !== partId || track.vertexIndex !== vertexIndex,
       )
       .map((track) =>
         track.kind === 'vertex' && track.partId === partId && track.vertexIndex > vertexIndex

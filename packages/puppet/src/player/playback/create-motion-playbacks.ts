@@ -1,5 +1,7 @@
 import type {PuppetMotion} from '../document'
+import {getMotionFadeOutTime, getPassedEvents} from './motion-fade'
 import type {
+  MotionEvent,
   MotionFrame,
   MotionPlayback,
   MotionPlaybackOptions,
@@ -8,10 +10,13 @@ import type {
 import {validatePlaybackNumber} from './validate-playback-number'
 
 interface Playback extends MotionFrame {
+  readonly elapsed: number
   readonly loop: boolean
   readonly onComplete?: () => void
   readonly speed: number
   readonly status: MotionPlaybackStatus
+  /** Motion seconds left of a requested fade-out. */
+  readonly stopping?: number
 }
 
 interface PlaybackEntry {
@@ -21,6 +26,7 @@ interface PlaybackEntry {
 interface CreateMotionPlaybacksOptions {
   readonly motions: ReadonlyArray<PuppetMotion>
   readonly onChange: () => void
+  readonly onEvent?: (event: MotionEvent) => void
 }
 
 export interface MotionPlaybacks {
@@ -34,14 +40,98 @@ export interface MotionPlaybacks {
   update(motions: ReadonlyArray<PuppetMotion>): void
 }
 
-const advancePlayback = (playback: Playback, deltaTime: number): Playback => {
-  const next = playback.time + Math.max(0, deltaTime) * playback.speed
+const advancePlayback = (playback: Playback, deltaTime: number) => {
+  const step = Math.max(0, deltaTime) * playback.speed
+  const next = playback.time + step
   const finished = !playback.loop && next >= playback.motion.duration
+  const wrapped = playback.loop && playback.motion.duration > 0 && next >= playback.motion.duration
   const time =
     playback.loop && playback.motion.duration > 0
       ? next % playback.motion.duration
       : Math.min(next, playback.motion.duration)
-  return {...playback, status: finished ? 'finished' : 'playing', time}
+  return {
+    events: getPassedEvents(playback.motion, playback.time, time, wrapped),
+    playback: {
+      ...playback,
+      elapsed: playback.elapsed + step,
+      status: finished ? ('finished' as const) : ('playing' as const),
+      stopping: playback.stopping === undefined ? undefined : playback.stopping - step,
+      time,
+    },
+  }
+}
+
+/** Seconds until the playback ends: a requested fade-out, or a non-looping motion's end. */
+const getRemaining = (playback: Playback) => {
+  const end = playback.loop ? undefined : playback.motion.duration - playback.time
+  return end === undefined || playback.stopping === undefined
+    ? (end ?? playback.stopping)
+    : Math.min(end, playback.stopping)
+}
+
+interface PlaybackHandleContext {
+  readonly change: (update: Partial<Playback>) => void
+  readonly current: () => Playback
+  readonly motionId: string
+  readonly stop: () => void
+}
+
+const createPlaybackHandle = ({
+  change,
+  current,
+  motionId,
+  stop,
+}: PlaybackHandleContext): MotionPlayback => {
+  return {
+    fadeOut() {
+      const fadeOutTime = getMotionFadeOutTime(current().motion)
+      if (fadeOutTime <= 0) {
+        stop()
+      } else if (current().stopping === undefined) {
+        change({stopping: fadeOutTime})
+      }
+    },
+    getState() {
+      const playback = current()
+      return {
+        duration: playback.motion.duration,
+        motionId,
+        speed: playback.speed,
+        status: playback.status,
+        time: playback.time,
+        weight: playback.weight,
+      }
+    },
+    pause() {
+      if (current().status === 'playing') {
+        change({status: 'paused'})
+      }
+    },
+    resume() {
+      if (current().status === 'paused') {
+        change({status: 'playing'})
+      }
+    },
+    seek(time) {
+      validatePlaybackNumber(time, 'Time', -Number.MAX_VALUE)
+      const playback = current()
+      const bounded = Math.min(playback.motion.duration, Math.max(0, time))
+      change({
+        status:
+          playback.status === 'finished' && bounded < playback.motion.duration
+            ? 'paused'
+            : playback.status,
+        time: bounded,
+      })
+    },
+    setSpeed(speed) {
+      change({speed: validatePlaybackNumber(speed, 'Speed')})
+    },
+    setWeight(weight) {
+      change({weight: validatePlaybackNumber(weight, 'Weight')})
+    },
+    stop,
+  }
 }
 
 export const createMotionPlaybacks = (options: CreateMotionPlaybacksOptions): MotionPlaybacks => {
@@ -64,7 +154,8 @@ export const createMotionPlaybacks = (options: CreateMotionPlaybacksOptions): Mo
     }
     const playback: Playback = {
       blend: settings.blend ?? 'replace',
-      loop: settings.loop ?? true,
+      elapsed: 0,
+      loop: settings.loop ?? motion.loop ?? true,
       motion,
       onComplete: settings.onComplete,
       priority: validatePlaybackNumber(settings.priority ?? 1, 'Priority', -Number.MAX_VALUE),
@@ -84,57 +175,24 @@ export const createMotionPlaybacks = (options: CreateMotionPlaybacksOptions): Mo
     }
     playbacks.set(id, entry)
     options.onChange()
-    return {
-      getState() {
-        const playback = current()
-        return {
-          duration: playback.motion.duration,
-          motionId,
-          speed: playback.speed,
-          status: playback.status,
-          time: playback.time,
-          weight: playback.weight,
-        }
-      },
-      pause() {
-        if (current().status === 'playing') {
-          change(id, {status: 'paused'})
-        }
-      },
-      resume() {
-        if (current().status === 'paused') {
-          change(id, {status: 'playing'})
-        }
-      },
-      seek(time) {
-        validatePlaybackNumber(time, 'Time', -Number.MAX_VALUE)
-        const playback = current()
-        const bounded = Math.min(playback.motion.duration, Math.max(0, time))
-        change(id, {
-          status:
-            playback.status === 'finished' && bounded < playback.motion.duration
-              ? 'paused'
-              : playback.status,
-          time: bounded,
-        })
-      },
-      setSpeed(speed) {
-        change(id, {speed: validatePlaybackNumber(speed, 'Speed')})
-      },
-      setWeight(weight) {
-        change(id, {weight: validatePlaybackNumber(weight, 'Weight')})
-      },
-      stop,
-    }
+    return createPlaybackHandle({change: (update) => change(id, update), current, motionId, stop})
   }
   const advance = (deltaTime: number): ReadonlyArray<() => void> => {
     const callbacks: Array<() => void> = []
     for (const [id, entry] of playbacks) {
       const {playback} = entry
       if (playback.status === 'playing' && playback.speed > 0) {
-        const nextPlayback = advancePlayback(playback, deltaTime)
+        const {events, playback: nextPlayback} = advancePlayback(playback, deltaTime)
         entry.playback = nextPlayback
-        if (nextPlayback.status === 'finished' && playback.onComplete !== undefined) {
+        for (const event of events) {
+          callbacks.push(() =>
+            options.onEvent?.({motionId: playback.motion.id, time: event.time, value: event.value}),
+          )
+        }
+        if (nextPlayback.stopping !== undefined && nextPlayback.stopping <= 0) {
+          entry.playback = {...nextPlayback, onComplete: undefined, status: 'stopped'}
+          playbacks.delete(id)
+        } else if (nextPlayback.status === 'finished' && playback.onComplete !== undefined) {
           callbacks.push(() => {
             const current = entry.playback
             if (
@@ -174,7 +232,11 @@ export const createMotionPlaybacks = (options: CreateMotionPlaybacksOptions): Mo
   return {
     advance,
     frames: (): ReadonlyArray<MotionFrame> =>
-      [...playbacks.values()].map((entry) => entry.playback),
+      [...playbacks.values()].map(({playback}) => ({
+        ...playback,
+        rate: playback.status === 'playing' ? playback.speed : 0,
+        remaining: getRemaining(playback),
+      })),
     isPlaying: () =>
       [...playbacks.values()].some(
         ({playback}) => playback.status === 'playing' && playback.speed > 0,

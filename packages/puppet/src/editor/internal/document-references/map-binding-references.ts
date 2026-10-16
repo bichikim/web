@@ -1,3 +1,7 @@
+import {
+  isThreeDimensionalParameterBinding,
+  isTwoDimensionalParameterBinding,
+} from '../../../deformation'
 import type {PuppetParameterBinding, PuppetParameterKeyform} from '../../../player/document'
 import type {ReferenceTransform} from './types'
 
@@ -7,6 +11,7 @@ const mapForm = <T extends PuppetParameterKeyform>(form: T, transform: Reference
     ...deformer,
     nodeId: transform.rename(deformer.nodeId),
   })),
+  groups: form.groups?.map((group) => ({...group, groupId: transform.rename(group.groupId)})),
   parts: form.parts
     .filter((part) => transform.keepPart(part.partId))
     .map((part) => ({
@@ -30,27 +35,29 @@ export const mapBindingReferences = (
       parameterId: transform.rename(influence.parameterId),
     })),
     targetDeformerIds: binding.targetDeformerIds?.map(transform.rename),
+    targetGroupIds: binding.targetGroupIds?.map(transform.rename),
     targetPartIds: binding.targetPartIds?.filter(transform.keepPart).map(transform.rename),
   }
-  if (binding.parameterIds.length === 1) {
+  const {rename} = transform
+  if (isThreeDimensionalParameterBinding(binding)) {
+    const [x, y, z] = binding.parameterIds
     return {
       ...common,
-      keyforms: binding.keyforms.map((form) => ({
-        ...mapForm(form, transform),
-        values: [form.values[0]],
-      })),
-      parameterIds: [transform.rename(binding.parameterIds[0])],
+      keyforms: binding.keyforms.map((form) => mapForm(form, transform)),
+      parameterIds: [rename(x), rename(y), rename(z)],
+    }
+  }
+  if (isTwoDimensionalParameterBinding(binding)) {
+    const [x, y] = binding.parameterIds
+    return {
+      ...common,
+      keyforms: binding.keyforms.map((form) => mapForm(form, transform)),
+      parameterIds: [rename(x), rename(y)],
     }
   }
   return {
     ...common,
-    keyforms: binding.keyforms.map((form) => ({
-      ...mapForm(form, transform),
-      values: [form.values[0], form.values[1]!],
-    })),
-    parameterIds: [
-      transform.rename(binding.parameterIds[0]),
-      transform.rename(binding.parameterIds[1]),
-    ],
+    keyforms: binding.keyforms.map((form) => mapForm(form, transform)),
+    parameterIds: [rename(binding.parameterIds[0])],
   }
 }

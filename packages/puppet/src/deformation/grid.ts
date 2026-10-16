@@ -72,7 +72,10 @@ const transformUnweightedPoint = (
     unchanged = sameDeformerShape(node, binding.rest)
     bindingMatches.set(node, unchanged)
   }
-  return unchanged ? preserved : applyBindingStep(node, binding.rest, preserved, vertex)
+  // Binding layouts never store a rotation scale, so a scaled pose still needs the node mapping.
+  return unchanged && (node.rotationScale ?? 1) === 1
+    ? preserved
+    : applyBindingStep(node, binding.rest, preserved, vertex)
 }
 
 export const transformDeformerPoint = (

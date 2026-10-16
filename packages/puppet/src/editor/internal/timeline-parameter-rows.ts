@@ -1,14 +1,14 @@
 import type {PuppetDocument} from '../../player'
 import {createMemo} from 'solid-js'
-import {getVisibleParameters} from './parameter-presentation'
-import type {ParameterTimelineTrack} from './timeline-keyframe-selection'
+import {isTrackForRow} from '../../player/timeline-rows'
+import {getTimelineRows, type ParameterTimelineTrack} from './timeline-keyframe-selection'
 
 export const addTimelineParameterRow = (
   document: PuppetDocument,
   motionId: string,
   parameterId: string,
 ): PuppetDocument | undefined => {
-  if (!getVisibleParameters(document).some((parameter) => parameter.id === parameterId)) {
+  if (!getTimelineRows(document).some((parameter) => parameter.id === parameterId)) {
     return undefined
   }
 
@@ -39,9 +39,7 @@ export const removeTimelineParameterRow = (
   if (
     motion === undefined ||
     (!motion.timelineParameterIds?.includes(parameterId) &&
-      !motion.tracks.some(
-        (track) => track.kind === 'parameter' && track.parameterId === parameterId,
-      ))
+      !motion.tracks.some((track) => isTrackForRow(track, parameterId)))
   ) {
     return undefined
   }
@@ -55,9 +53,7 @@ export const removeTimelineParameterRow = (
             timelineParameterIds: candidate.timelineParameterIds?.filter(
               (id) => id !== parameterId,
             ),
-            tracks: candidate.tracks.filter(
-              (track) => track.kind !== 'parameter' || track.parameterId !== parameterId,
-            ),
+            tracks: candidate.tracks.filter((track) => !isTrackForRow(track, parameterId)),
           }
         : candidate,
     ),
@@ -75,7 +71,7 @@ interface TimelineParameterRowActions {
 export const createTimelineParameterRowActions = (options: TimelineParameterRowActions) => {
   const available = createMemo(() => {
     const displayedIds = new Set(options.tracks().map((track) => track.parameter.id))
-    return getVisibleParameters(options.document()).filter(
+    return getTimelineRows(options.document()).filter(
       (parameter) => !displayedIds.has(parameter.id),
     )
   })

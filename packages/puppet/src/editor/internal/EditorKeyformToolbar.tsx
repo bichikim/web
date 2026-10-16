@@ -7,11 +7,12 @@ import {EditorKeyformTools, type EditorKeyformToolsProps} from './EditorKeyformT
 
 export interface EditorKeyformToolbarProps extends Pick<
   EditorKeyformToolsProps,
-  'center' | 'parameters' | 'onMirror' | 'onGenerate'
+  'centers' | 'parameters' | 'onMirror' | 'onGenerate'
 > {
   readonly activeBinding?: PuppetParameterBinding
   readonly activeKeyformValues?: PuppetParameterValues | null
   readonly onParameterAdd?: () => void
+  readonly onThreeDimensionalParameterAdd?: () => void
   readonly onTwoDimensionalParameterAdd?: () => void
   readonly parameterCreationAvailable?: boolean
   readonly setBrushControlsMount?: (element: HTMLDivElement | undefined) => void
@@ -52,6 +53,18 @@ export const EditorKeyformToolbar = (props: EditorKeyformToolbarProps) => {
         >
           <span aria-hidden="true" class="puppet-icon puppet-icon-plus" /> 2D
         </EditorButton>
+        <EditorButton
+          aria-label="3차원 Parameter 추가"
+          class="panel-add-button"
+          disabled={
+            props.parameterCreationAvailable === false ||
+            props.onThreeDimensionalParameterAdd === undefined
+          }
+          type="button"
+          onClick={() => props.onThreeDimensionalParameterAdd?.()}
+        >
+          <span aria-hidden="true" class="puppet-icon puppet-icon-plus" /> 3D
+        </EditorButton>
       </div>
       <div class="keyform-actions">
         <Show when={props.onMirror !== undefined || props.onGenerate !== undefined}>
@@ -59,7 +72,7 @@ export const EditorKeyformToolbar = (props: EditorKeyformToolbarProps) => {
             binding={props.activeBinding}
             values={props.activeKeyformValues}
             parameters={props.parameters}
-            center={props.center}
+            centers={props.centers}
             onMirror={props.onMirror}
             onGenerate={props.onGenerate}
           />

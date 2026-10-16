@@ -31,6 +31,8 @@ export interface EditorToolbarProps {
   readonly panelVisibility?: EditorPanelVisibility
   readonly playerStatus: PlayerCanvasStatus
   readonly onExport: () => void
+  /** Exports with part images packed into shared texture atlas pages. */
+  readonly onAtlasExport?: () => void
   readonly onRecoveryOpen?: (returnFocus: () => void) => void
   readonly onExampleOpen?: (example: PuppetExampleDocument) => void
   readonly onFileImport: (file: File | undefined) => void
@@ -86,6 +88,8 @@ interface ToolbarMenuProps {
   readonly onUndo?: () => void
   readonly onRedo?: () => void
   readonly onExport: () => void
+  /** Exports with part images packed into shared texture atlas pages. */
+  readonly onAtlasExport?: () => void
   readonly onExampleOpen?: (example: PuppetExampleDocument) => void
   readonly onFileImport: (file: File | undefined) => void
   readonly onPsdReimport?: (file: File | undefined) => void
@@ -166,6 +170,19 @@ const ToolbarMenu = (props: ToolbarMenuProps) => {
           >
             JSON 내보내기
           </Button>
+          <Show when={props.onAtlasExport}>
+            {(exportAtlas) => (
+              <Button
+                type="button"
+                onClick={() => {
+                  setMenuOpen(false)
+                  exportAtlas()()
+                }}
+              >
+                텍스처 아틀라스로 JSON 내보내기
+              </Button>
+            )}
+          </Show>
           <Show when={props.exportUrl}>
             {(url) => (
               <a href={url()} download="puppet-model.json">
@@ -218,6 +235,7 @@ export const EditorToolbar = (props: EditorToolbarProps) => (
       onUndo={props.onUndo}
       onRedo={props.onRedo}
       onExport={props.onExport}
+      onAtlasExport={props.onAtlasExport}
       onRecoveryOpen={props.onRecoveryOpen}
       onExampleOpen={props.onExampleOpen}
       onFileImport={props.onFileImport}

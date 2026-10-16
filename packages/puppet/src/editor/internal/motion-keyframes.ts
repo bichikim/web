@@ -6,13 +6,20 @@ import type {
   PuppetEasing,
   PuppetKeyframe,
   PuppetMotion,
-  PuppetParameterTrack,
+  PuppetTrack,
   PuppetTrackAxis,
   PuppetVertexTrack,
 } from '../../player/document'
 import {sampleMotionVertices} from '../../player/internal/motion'
 import {resolveParameterValue} from '../../player/parameter-value'
+import {createRowTrack, getRowParameter, isTrackForRow} from '../../player/timeline-rows'
 import type {VertexPoint} from '../edit-document'
+
+/** Bezier handles belong to the `bezier` easing only. */
+const withEasing = (keyframe: PuppetKeyframe, easing: PuppetEasing): PuppetKeyframe => {
+  const {bezier, ...rest} = keyframe
+  return easing === 'bezier' && bezier !== undefined ? {...rest, bezier, easing} : {...rest, easing}
+}
 
 export interface VertexKeyframeTarget {
   readonly motionId: string
@@ -142,6 +149,16 @@ const upsertTrack = (
   }
 }
 
+/** A track's own fade times, kept when its keyframes are replaced. */
+const fadeOf = (track: PuppetTrack | undefined) =>
+  track === undefined
+    ? {}
+    : Object.fromEntries(
+        (['fadeInTime', 'fadeOutTime'] as const).flatMap((key) =>
+          track[key] === undefined ? [] : [[key, track[key]]],
+        ),
+      )
+
 const replaceMotion = (
   document: PuppetDocument,
   motionId: string,
@@ -164,9 +181,7 @@ const replaceMotion = (
 export const setParameterKeyframe = (
   options: SetParameterKeyframeOptions,
 ): PuppetDocument | undefined => {
-  const parameter = options.document.parameters?.find(
-    (candidate) => candidate.id === options.parameterId,
-  )
+  const parameter = getRowParameter(options.document, options.parameterId)
 
   if (parameter === undefined || !Number.isFinite(options.value)) {
     return undefined
@@ -174,18 +189,15 @@ export const setParameterKeyframe = (
 
   return replaceMotion(options.document, options.motionId, (motion) => {
     const time = clamp(options.time, 0, motion.duration)
-    const trackIndex = motion.tracks.findIndex(
-      (track) => track.kind === 'parameter' && track.parameterId === options.parameterId,
-    )
+    const trackIndex = motion.tracks.findIndex((track) => isTrackForRow(track, options.parameterId))
     const keyframes = upsertKeyframe(
       trackIndex < 0 ? [] : (motion.tracks[trackIndex]?.keyframes ?? []),
       time,
       resolveParameterValue(parameter, options.value),
     )
-    const track: PuppetParameterTrack = {
-      keyframes,
-      kind: 'parameter',
-      parameterId: options.parameterId,
+    const track = {
+      ...createRowTrack(options.parameterId, keyframes),
+      ...fadeOf(motion.tracks[trackIndex]),
     }
 
     return {
@@ -208,7 +220,7 @@ export const deleteParameterKeyframes = (
   replaceMotion(options.document, options.motionId, (motion) => ({
     ...motion,
     tracks: motion.tracks.flatMap((track) => {
-      if (track.kind !== 'parameter' || track.parameterId !== options.parameterId) {
+      if (!isTrackForRow(track, options.parameterId)) {
         return [track]
       }
 
@@ -227,9 +239,7 @@ export const moveParameterKeyframes = (
   options: MoveParameterKeyframesOptions,
 ): PuppetDocument | undefined => {
   const motion = options.document.motions.find((candidate) => candidate.id === options.motionId)
-  const track = motion?.tracks.find(
-    (candidate) => candidate.kind === 'parameter' && candidate.parameterId === options.parameterId,
-  )
+  const track = motion?.tracks.find((candidate) => isTrackForRow(candidate, options.parameterId))
   const sourceKeyframe = track?.keyframes.find((keyframe) =>
     hasSameTime(keyframe.time, options.time),
   )
@@ -267,7 +277,7 @@ export const moveParameterKeyframes = (
   return replaceMotion(options.document, options.motionId, (candidate) => ({
     ...candidate,
     tracks: candidate.tracks.map((candidateTrack) =>
-      candidateTrack.kind === 'parameter' && candidateTrack.parameterId === options.parameterId
+      isTrackForRow(candidateTrack, options.parameterId)
         ? {
             ...candidateTrack,
             keyframes: sortBy(
@@ -294,12 +304,12 @@ export const setParameterKeyframesEasing = (
   replaceMotion(options.document, options.motionId, (motion) => ({
     ...motion,
     tracks: motion.tracks.map((track) =>
-      track.kind === 'parameter' && track.parameterId === options.parameterId
+      isTrackForRow(track, options.parameterId)
         ? {
             ...track,
             keyframes: track.keyframes.map((keyframe) =>
               includesTime(options.times, keyframe.time)
-                ? {...keyframe, easing: options.easing}
+                ? withEasing(keyframe, options.easing)
                 : keyframe,
             ),
           }
@@ -353,7 +363,7 @@ export const deleteVertexKeyframe = (
     ...motion,
     tracks: motion.tracks.flatMap((track) => {
       if (
-        track.kind === 'parameter' ||
+        track.kind !== 'vertex' ||
         track.partId !== options.partId ||
         track.vertexIndex !== options.vertexIndex
       ) {
@@ -374,7 +384,7 @@ export const setVertexKeyframeEasing = (
     ...motion,
     tracks: motion.tracks.map((track) => {
       if (
-        track.kind === 'parameter' ||
+        track.kind !== 'vertex' ||
         track.partId !== options.partId ||
         track.vertexIndex !== options.vertexIndex
       ) {
@@ -385,7 +395,7 @@ export const setVertexKeyframeEasing = (
         ...track,
         keyframes: track.keyframes.map((keyframe) =>
           hasSameTime(keyframe.time, options.time)
-            ? {...keyframe, easing: options.easing}
+            ? withEasing(keyframe, options.easing)
             : keyframe,
         ),
       }

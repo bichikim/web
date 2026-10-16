@@ -1,6 +1,6 @@
 import {reconcileGlueKeyforms} from './glue'
 import {
-  isTwoDimensionalParameterBinding,
+  mapBindingKeyforms,
   parameterValuesEqual,
   type PuppetParameterValues,
 } from '../../deformation'
@@ -116,9 +116,7 @@ export const applyTemporaryForm = (
           ),
         }
       : form
-  const next = isTwoDimensionalParameterBinding(binding)
-    ? {...binding, keyforms: binding.keyforms.map(replace)}
-    : {...binding, keyforms: binding.keyforms.map(replace)}
+  const next = mapBindingKeyforms(binding, replace)
   return reconcileGlueKeyforms({
     ...options.document,
     parameterBindings: options.document.parameterBindings?.map((candidate) =>

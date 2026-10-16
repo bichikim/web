@@ -1,4 +1,5 @@
 import type {PuppetParameter, PuppetPendulum, PuppetPhysics} from '../document'
+import {hasValidPhysicsChains} from './parse-physics-chain'
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null
@@ -72,6 +73,7 @@ export const hasValidPhysics = (
 
   const {pendulums} = value
   return (
+    hasValidPhysicsChains(value, parameters) &&
     pendulums.every((pendulum) => isPendulum(pendulum, parameters)) &&
     new Set(pendulums.map((pendulum) => (isRecord(pendulum) ? pendulum.id : undefined))).size ===
       pendulums.length &&

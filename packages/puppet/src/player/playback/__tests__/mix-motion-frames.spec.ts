@@ -24,6 +24,30 @@ const frame = (value: number, options: Partial<MotionFrame> = {}): MotionFrame =
 })
 
 describe('mixMotionFrames', () => {
+  test('should apply expressions over motions and under external overrides', () => {
+    const expressions = [
+      {
+        expression: {
+          id: 'look',
+          parameters: [
+            {blend: 'add' as const, parameterId: 'angle', value: 5},
+            {blend: 'overwrite' as const, parameterId: 'mouth', value: 1},
+          ],
+        },
+        weight: 1,
+      },
+    ]
+    const mixed = mixMotionFrames({document, expressions, frames: [frame(30)]}).parameterValues
+    expect(mixed).toEqual({angle: 35, mouth: 1})
+    const overridden = mixMotionFrames({
+      document,
+      expressions,
+      frames: [frame(30)],
+      parameterValues: {angle: -20},
+    }).parameterValues
+    expect(overridden.angle).toBe(-20)
+  })
+
   test('should normalize large finite weights without overflowing their sum', () => {
     const frames = [frame(30, {weight: 1e308}), frame(70, {weight: 1e308})]
     expect(mixMotionFrames({document, frames}).parameterValues.angle).toBeCloseTo(50)

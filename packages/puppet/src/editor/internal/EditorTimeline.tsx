@@ -3,6 +3,7 @@ import {createEffect, createMemo, createSignal, createUniqueId, on, Show} from '
 
 import {getDefaultParameterValueMap, type PuppetParameterValueMap} from '../../deformation'
 import {
+  getMotionFramesPerSecond,
   getPuppetFramesPerSecond,
   MAXIMUM_PUPPET_FRAMES_PER_SECOND,
   MINIMUM_PUPPET_FRAMES_PER_SECOND,
@@ -10,22 +11,20 @@ import {
   type PuppetEasing,
   type PuppetMotion,
 } from '../../player/document'
-import {sampleMotionParameterValues} from '../../player/internal/motion'
+import {sampleTimelineRowValues} from './timeline-row-values'
 import {createTimelineParameterRowActions} from './timeline-parameter-rows'
 import {ALL_MOTIONS_OPTION, AllMotionTimeline} from './AllMotionTimeline'
 import {createTimelineMotionActions} from './create-timeline-motion-actions'
 import {editMotion} from './edit-motion'
 import {getAvailableAction} from './get-available-action'
-import {deleteTimelineKeyframes} from './delete-timeline-keyframes'
 import {insertParameterKeyframe} from './insert-parameter-keyframe'
+import {setFramesPerSecond} from './motion-frame-rate'
 import {
   moveParameterKeyframes,
   type MoveParameterKeyframesTarget,
   setParameterKeyframe,
-  setParameterKeyframesEasing,
 } from './motion-keyframes'
 import {
-  easeSelectedKeyframes,
   getFrame,
   getKeyframeSelectionAtTime,
   getParameterTracks,
@@ -43,6 +42,7 @@ import {TimelineDopesheet} from './TimelineDopesheet'
 import {TimelineSettingsControls} from './TimelineSettingsControls'
 import {TimelineMotionName} from './TimelineMotionName'
 import {TimelineToolbar} from './TimelineToolbar'
+import {applyDocumentChange, createKeyframeEditActions} from './timeline-keyframe-actions'
 
 export interface EditorTimelineProps {
   readonly currentTime?: number
@@ -66,17 +66,6 @@ const DEFAULT_ZOOM = 100
 const getMotionOptions = (document: PuppetDocument) => {
   const ids = document.motions.map((motion) => motion.id)
   return ids.length === 0 ? [] : [ALL_MOTIONS_OPTION, ...ids]
-}
-
-const applyDocumentChange = (
-  onDocumentChange: EditorTimelineProps['onDocumentChange'],
-  document: PuppetDocument | undefined,
-) => {
-  if (onDocumentChange === undefined || document === undefined) {
-    return false
-  }
-  onDocumentChange(document)
-  return true
 }
 
 const hasEditableSelection = (
@@ -103,7 +92,11 @@ export const EditorTimeline = (props: EditorTimelineProps) => {
   const [allMotionsVisible, setAllMotionsVisible] = createSignal(false)
   const [motionTimes, setMotionTimes] = createSignal<Readonly<Record<string, number>>>({})
   const motion = () => getActiveMotion(props.document, props.motionId)
-  const framesPerSecond = () => getPuppetFramesPerSecond(props.document)
+  // The all-motion view shares the document's frame rate; one motion uses its own.
+  const framesPerSecond = () =>
+    allMotionsVisible()
+      ? getPuppetFramesPerSecond(props.document)
+      : getMotionFramesPerSecond(props.document, motion())
   const duration = () => motion()?.duration ?? 0
   const currentTime = () => clamp(props.currentTime ?? 0, 0, duration())
   const parameterTracks = createMemo(() => getParameterTracks(props.document, motion()))
@@ -118,10 +111,10 @@ export const EditorTimeline = (props: EditorTimelineProps) => {
     tracks: parameterTracks,
   })
   const parameterValues = createMemo(() =>
-    sampleMotionParameterValues({
+    sampleTimelineRowValues({
+      document: props.document,
       motion: motion(),
-      parameters: props.document.parameters,
-      parameterValues: props.parameterValues ?? getDefaultParameterValueMap(props.document),
+      parameterValues: props.parameterValues,
       time: currentTime(),
     }),
   )
@@ -221,16 +214,14 @@ export const EditorTimeline = (props: EditorTimelineProps) => {
   }
 
   const handleFramesPerSecondChange = (nextFramesPerSecond: number) => {
-    if (
-      props.onDocumentChange === undefined ||
-      !Number.isInteger(nextFramesPerSecond) ||
-      nextFramesPerSecond < MINIMUM_PUPPET_FRAMES_PER_SECOND ||
-      nextFramesPerSecond > MAXIMUM_PUPPET_FRAMES_PER_SECOND
-    ) {
-      return
+    const next = setFramesPerSecond(
+      props.document,
+      allMotionsVisible() ? undefined : motion()?.id,
+      nextFramesPerSecond,
+    )
+    if (next !== undefined) {
+      props.onDocumentChange?.(next)
     }
-
-    props.onDocumentChange({...props.document, framesPerSecond: nextFramesPerSecond})
   }
 
   const handleActiveDurationChange = (nextDuration: number) => {
@@ -413,42 +404,12 @@ export const EditorTimeline = (props: EditorTimelineProps) => {
     return true
   }
 
-  const deleteKeyframes = (motionId: string, parameterId: string, times: ReadonlyArray<number>) => {
-    return applyDocumentChange(
-      props.onDocumentChange,
-      deleteTimelineKeyframes({document: props.document, motionId, parameterId, times}),
-    )
-  }
-
-  const updateKeyframesEasing = (
-    motionId: string,
-    parameterId: string,
-    times: ReadonlyArray<number>,
-    easing: PuppetEasing,
-  ) => {
-    return applyDocumentChange(
-      props.onDocumentChange,
-      setParameterKeyframesEasing({
-        document: props.document,
-        easing,
-        motionId,
-        parameterId,
-        times,
-      }),
-    )
-  }
-
-  const handleEasingChange = (value: string) => {
-    const document = easeSelectedKeyframes({
-      document: props.document,
-      motion: motion(),
-      selection: selection(),
-      value,
-    })
-    if (document !== undefined) {
-      props.onDocumentChange?.(document)
-    }
-  }
+  const {deleteKeyframes, handleEasingChange, updateKeyframesEasing} = createKeyframeEditActions({
+    document: () => props.document,
+    motion,
+    onDocumentChange: () => props.onDocumentChange,
+    selection,
+  })
 
   return (
     <section class="timeline" aria-labelledby={titleId}>
@@ -485,6 +446,13 @@ export const EditorTimeline = (props: EditorTimelineProps) => {
               onMotionRename={getAvailableAction(props.onDocumentChange, motionActions.rename)}
               onParameterAdd={getAvailableAction(props.onDocumentChange, parameterRows.add)}
               onEasingChange={handleEasingChange}
+              motionSettings={{
+                currentTime: currentTime(),
+                document: props.document,
+                motion: motion(),
+                onDocumentChange: props.onDocumentChange,
+                selection: selection(),
+              }}
               onPlaybackToggle={props.onPlaybackToggle}
               titleId={titleId}
             />

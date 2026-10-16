@@ -7,7 +7,8 @@ import {
 } from '../../player'
 import {getDeformerBounds} from './deformer-bounds'
 import {createDeformerControlPoints} from './grid-control-points'
-import {isSceneNodeLocked, removeParameterDeformerTargets} from './scene-graph'
+import {isSceneNodeLocked} from './scene-graph'
+import {removeParameterNodeTargets} from './remove-node-targets'
 import {collectPartIds, findNode, updateNode} from './scene-tree'
 import {createSpatialSurface} from './create-spatial-surface'
 
@@ -195,8 +196,6 @@ export const convertSceneContainers = (
     }),
     scene: {...scene, roots},
   }
-  return removeParameterDeformerTargets(
-    document,
-    new Set(nodes.filter((node) => node.kind === 'deformer').map((node) => node.id)),
-  )
+  // A converted node can no longer be the kind of target its bindings expect.
+  return removeParameterNodeTargets(document, new Set(nodes.map((node) => node.id)))
 }

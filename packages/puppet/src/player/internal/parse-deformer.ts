@@ -3,6 +3,7 @@ import type {
   PuppetParameterDeformerKeyform,
   PuppetSceneNode,
 } from '../document'
+import {isPartRenderProperties} from './parse-part-properties'
 import {isSpatialMesh} from './parse-spatial-mesh'
 
 const CUBIC_DEGREE = 3
@@ -242,7 +243,8 @@ const hasValidRotation = (value: Record<string, unknown>): boolean => {
 }
 
 const isDeformerShape = (value: Record<string, unknown>): boolean => {
-  if (!hasValidRotation(value)) {
+  // `rotationScale` is posed from keyforms only.
+  if (!hasValidRotation(value) || value.rotationScale !== undefined) {
     return false
   }
   if (
@@ -286,11 +288,38 @@ export const isParameterDeformerKeyform = (
   isFiniteNumberArray(value.controlPoints) &&
   isCurveHandles(value.curveHandles) &&
   (value.rotationOrigin === undefined || isPoint(value.rotationOrigin)) &&
-  (value.spatialOrigin === undefined || isSpatialCoordinates(value.spatialOrigin)) &&
-  (value.spatialMeshPosition === undefined || isSpatialCoordinates(value.spatialMeshPosition)) &&
-  (value.spatialRotation === undefined || isSpatialCoordinates(value.spatialRotation)) &&
-  (value.spatialScale === undefined || isPositiveSpatialScale(value.spatialScale)) &&
-  (value.spatialTranslation === undefined || isSpatialCoordinates(value.spatialTranslation))
+  hasValidSpatialKeys(value) &&
+  (value.properties === undefined || isDeformerRenderProperties(value.properties)) &&
+  (value.rotationScale === undefined ||
+    (typeof value.rotationScale === 'number' &&
+      Number.isFinite(value.rotationScale) &&
+      value.rotationScale > 0))
+
+const SPATIAL_KEYS = [
+  'spatialMeshPosition',
+  'spatialOrigin',
+  'spatialRotation',
+  'spatialScale',
+  'spatialTranslation',
+] as const
+
+const hasValidSpatialKeys = (value: Record<string, unknown>) =>
+  SPATIAL_KEYS.every((key) =>
+    key === 'spatialScale'
+      ? value[key] === undefined || isPositiveSpatialScale(value[key])
+      : value[key] === undefined || isSpatialCoordinates(value[key]),
+  )
+
+/** Opacity and colors only, within 0..1. */
+const isDeformerRenderProperties = (value: unknown) =>
+  isPartRenderProperties(value) &&
+  Object.keys(value).every((key) => DEFORMER_RENDER_PROPERTIES.has(key))
+
+const DEFORMER_RENDER_PROPERTIES: ReadonlySet<string> = new Set([
+  'multiplyColor',
+  'opacity',
+  'screenColor',
+])
 
 export const hasValidDeformerKeyform = (
   deformer: PuppetParameterDeformerKeyform,
@@ -303,18 +332,18 @@ export const hasValidDeformerKeyform = (
   const pointIndices = new Set(node.curveHandles?.map((handle) => handle.pointIndex) ?? [])
   return (
     node.controlPoints.length === deformer.controlPoints.length &&
-    (deformer.spatialOrigin === undefined || node.deformerType === 'spatial') &&
-    (deformer.spatialMeshPosition === undefined || node.deformerType === 'spatial') &&
-    (deformer.spatialRotation === undefined || node.deformerType === 'spatial') &&
-    (deformer.spatialScale === undefined || node.deformerType === 'spatial') &&
-    (deformer.spatialTranslation === undefined || node.deformerType === 'spatial') &&
+    (node.deformerType === 'spatial' || SPATIAL_KEYS.every((key) => deformer[key] === undefined)) &&
+    (deformer.rotationScale === undefined || node.deformerType === 'rotation') &&
     (deformer.curveHandles?.length ?? 0) === pointIndices.size &&
     deformer.curveHandles?.every((handle) => pointIndices.has(handle.pointIndex)) !== false
   )
 }
 
 export const isDeformer = (value: Record<string, unknown>): boolean => {
-  if (!isDeformerShape(value)) {
+  if (
+    !isDeformerShape(value) ||
+    (value.properties !== undefined && !isDeformerRenderProperties(value.properties))
+  ) {
     return false
   }
   const {binding} = value

@@ -122,6 +122,25 @@ describe('parseDocument', () => {
     ).toBe(false)
   })
 
+  it('should accept motion sounds as WAV data URLs or paths', () => {
+    const document = createDemoDocument()
+    const withSound = (sound: unknown) =>
+      parseDocument(
+        JSON.stringify({
+          ...document,
+          motions: [{...document.motions[0], sound}, ...document.motions.slice(1)],
+        }),
+      ).ok
+
+    expect(withSound({src: 'sounds/talk.wav'})).toBe(true)
+    expect(withSound({src: 'data:audio/wav;base64,UklGRg=='})).toBe(true)
+    expect(withSound({src: 'data:audio/X-WAV;name=talk.wav;base64,UklGRg=='})).toBe(true)
+    expect(withSound({src: 'data:audio/mpeg;base64,AAAA'})).toBe(false)
+    expect(withSound({src: 'data:audio/wav,RIFF'})).toBe(false)
+    expect(withSound({src: ''})).toBe(false)
+    expect(withSound('sounds/talk.wav')).toBe(false)
+  })
+
   it('should accept a positive integer frame rate and retain the legacy default when omitted', () => {
     const document = createDemoDocument()
 
@@ -276,7 +295,10 @@ describe('parseDocument', () => {
       parseDocument(
         JSON.stringify({
           ...document,
-          parts: [{...part, properties: {...properties, drawOrder: 2}}, ...document.parts.slice(1)],
+          parts: [
+            {...part, properties: {...properties, drawOrder: 1001}},
+            ...document.parts.slice(1),
+          ],
         }),
       ),
     ).toMatchObject({ok: false})

@@ -24,6 +24,7 @@ export const iconShortcuts = {
   'puppet-icon-eye': 'i-tabler-eye',
   'puppet-icon-eye-off': 'i-tabler-eye-off',
   'puppet-icon-file-import': 'i-tabler-file-import',
+  'puppet-icon-flip-horizontal': 'i-tabler-flip-horizontal',
   'puppet-icon-focus-2': 'i-tabler-focus-2',
   'puppet-icon-hand-move': 'i-tabler-hand-move',
   'puppet-icon-indent-decrease': 'i-tabler-indent-decrease',

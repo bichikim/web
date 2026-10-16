@@ -1,5 +1,9 @@
 import {type JSX, Show} from 'solid-js'
-import {isTwoDimensionalParameterBinding, type PuppetParameterValues} from '../../../deformation'
+import {
+  isThreeDimensionalParameterBinding,
+  isTwoDimensionalParameterBinding,
+  type PuppetParameterValues,
+} from '../../../deformation'
 import {ParameterValueField} from '../ParameterValueField'
 import {EditorParameterItem} from '../EditorParameterItem'
 import type {EditorKeyformTrackProps} from './types'
@@ -22,6 +26,7 @@ export interface EditorKeyformTrackLabelProps extends Pick<
 export const EditorKeyformTrackLabel = (props: EditorKeyformTrackLabelProps) => {
   const firstParameter = () => props.parameters[0]
   const secondParameter = () => props.parameters[1]
+  const thirdParameter = () => props.parameters[2]
   const handleValueChange = (axis: number, value: number) => {
     const values = (
       props.values ?? props.parameters.map((parameter) => parameter.defaultValue)
@@ -47,7 +52,10 @@ export const EditorKeyformTrackLabel = (props: EditorKeyformTrackLabelProps) => 
       class="keyform-track-label"
       role="group"
       aria-label={`${props.parameters.map((parameter) => parameter.name).join(' / ')} 파라미터`}
-      classList={{'parameter-grid-label': isTwoDimensionalParameterBinding(props.binding)}}
+      classList={{
+        'parameter-grid-label': isTwoDimensionalParameterBinding(props.binding),
+        'parameter-volume-label': isThreeDimensionalParameterBinding(props.binding),
+      }}
     >
       <Show when={firstParameter()}>
         {(parameter) => (
@@ -84,6 +92,20 @@ export const EditorKeyformTrackLabel = (props: EditorKeyformTrackLabelProps) => 
             }
             pressed={props.active}
             secondaryName={secondParameter()?.name}
+            tertiaryControl={
+              <Show when={thirdParameter()}>
+                {(tertiary) => (
+                  <ParameterValueField
+                    parameter={tertiary()}
+                    value={props.values?.[2]}
+                    onEditEnd={props.onEditEnd}
+                    onEditStart={props.onEditStart}
+                    onValueChange={(value) => handleValueChange(2, value)}
+                  />
+                )}
+              </Show>
+            }
+            tertiaryName={thirdParameter()?.name}
             onDelete={
               props.onBindingDelete === undefined
                 ? undefined
@@ -94,6 +116,9 @@ export const EditorKeyformTrackLabel = (props: EditorKeyformTrackLabelProps) => 
             }
             onSecondaryNameChange={(name) =>
               props.onParameterNameChange?.(props.binding.id, secondParameter()!.id, name)
+            }
+            onTertiaryNameChange={(name) =>
+              props.onParameterNameChange?.(props.binding.id, thirdParameter()!.id, name)
             }
             onSelect={() => props.onBindingSelect?.(props.binding.id)}
           />

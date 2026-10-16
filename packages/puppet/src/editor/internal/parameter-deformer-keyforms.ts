@@ -2,7 +2,7 @@ import {getBoneChannels, poseBoneChannels} from '../../deformation/bone'
 import {getDeformerPoint, getDeformerRotationOrigin} from './deformer-transform'
 import {moveCurveHandles} from './curve-control-points'
 import {
-  isTwoDimensionalParameterBinding,
+  mapBindingKeyforms,
   parameterValuesEqual,
   type PuppetParameterValues,
 } from '../../deformation'
@@ -72,9 +72,7 @@ const replaceKeyformDeformer = (
           }
         : keyform
 
-    return isTwoDimensionalParameterBinding(binding)
-      ? {...binding, keyforms: binding.keyforms.map(replaceDeformer)}
-      : {...binding, keyforms: binding.keyforms.map(replaceDeformer)}
+    return mapBindingKeyforms(binding, replaceDeformer)
   })
 
 export interface SetParameterKeyformDeformerControlPointsOptions extends ParameterDeformerValuesTarget {

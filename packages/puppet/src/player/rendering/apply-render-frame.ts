@@ -11,9 +11,10 @@ import {getPartRenderFrame} from '../internal/render-plan'
 import {applySceneDeformers} from '../internal/scene-deformation'
 import type {SpatialPartPose} from '../internal/spatial-part'
 import {applyDocumentScene} from './apply-document-scene'
-import {applyPartRenderProperties} from './apply-part-render-properties'
+import {applyLayerRenderProperties, applyPartRenderProperties} from './apply-part-render-properties'
+import {cullFlippedTriangles} from './cull-flipped-triangles'
 import {updateRuntimeMask} from './part-mask'
-import type {RuntimePart} from './types'
+import type {RuntimeLayer, RuntimePart} from './types'
 
 interface ApplyFrameVerticesOptions {
   readonly document: PuppetDocument
@@ -52,20 +53,23 @@ const applyFrameVertices = (options: ApplyFrameVerticesOptions) => {
 interface ApplyRenderFrameOptions {
   readonly mix: MotionMix
   readonly parameterValues: PuppetParameterValueMap
+  readonly poseOpacityByPartId?: ReadonlyMap<string, number>
   readonly document: PuppetDocument
   readonly layoutRoot: () => void
+  readonly layerById: ReadonlyMap<string, RuntimeLayer>
   readonly partById: ReadonlyMap<string, RuntimePart>
   readonly root: Container
 }
 
-export const applyRenderFrame = (options: ApplyRenderFrameOptions): void => {
+/** Applies one frame and returns the part IDs in paint order, back to front. */
+export const applyRenderFrame = (options: ApplyRenderFrameOptions): ReadonlyArray<string> => {
   const frameParameterValues = options.parameterValues
   const posedScene = composeParameterScene(options.document, frameParameterValues)
-  const {plans: renderPlans, spatialPoses} = getPartRenderFrame(
-    options.document,
-    frameParameterValues,
-    posedScene,
-  )
+  const frame = getPartRenderFrame(options.document, frameParameterValues, posedScene, {
+    mix: options.mix,
+    poseOpacityByPartId: options.poseOpacityByPartId,
+  })
+  const {plans: renderPlans, spatialPoses} = frame
   const planById = new Map(renderPlans.map((plan) => [plan.partId, plan]))
 
   for (const [partId, runtimePart] of options.partById) {
@@ -93,24 +97,52 @@ export const applyRenderFrame = (options: ApplyRenderFrameOptions): void => {
     ),
   })
 
+  const documentPartById = new Map(options.document.parts.map((part) => [part.id, part]))
   for (const runtimePart of options.partById.values()) {
     runtimePart.mesh.vertices = runtimePart.vertices
     const plan = planById.get(runtimePart.partId)
     if (plan !== undefined) {
       applyPartRenderProperties(plan.properties, runtimePart)
     }
+    const indices = documentPartById.get(runtimePart.partId)?.mesh.indices
+    const culling = plan?.properties.culling === true
+    if (indices !== undefined && (culling || runtimePart.culled === true)) {
+      runtimePart.mesh.geometry.indices = culling
+        ? cullFlippedTriangles(indices, runtimePart.restVertices, runtimePart.vertices)
+        : new Uint32Array(indices)
+      runtimePart.culled = culling
+    }
   }
 
-  for (const runtimePart of options.partById.values()) {
-    if (runtimePart.mask !== undefined) {
+  for (const runtimeLayer of options.layerById.values()) {
+    const plan = frame.layers.get(runtimeLayer.groupId)
+    if (plan !== undefined) {
+      applyLayerRenderProperties(plan.properties, runtimeLayer)
+    }
+    runtimeLayer.memberPartIds = renderPlans.flatMap((partPlan) =>
+      partPlan.visible && partPlan.layerIds.includes(runtimeLayer.groupId) ? [partPlan.partId] : [],
+    )
+  }
+
+  for (const runtimeMask of [
+    ...[...options.partById.values()].map((runtimePart) => runtimePart.mask),
+    ...[...options.layerById.values()].map((runtimeLayer) => runtimeLayer.mask),
+  ]) {
+    if (runtimeMask !== undefined) {
       updateRuntimeMask({
-        mask: runtimePart.mask,
+        mask: runtimeMask,
         partById: options.partById,
         planById,
       })
     }
   }
 
-  applyDocumentScene(renderPlans, options.partById, options.root)
+  applyDocumentScene({
+    frame,
+    layerById: options.layerById,
+    partById: options.partById,
+    root: options.root,
+  })
   options.layoutRoot()
+  return renderPlans.map((plan) => plan.partId)
 }

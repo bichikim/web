@@ -2,12 +2,14 @@ import {clamp} from 'es-toolkit/math'
 
 import {
   getPartRenderProperties,
-  isTwoDimensionalParameterBinding,
+  mapBindingKeyforms,
   type PuppetParameterValues,
   type ResolvedPartRenderProperties,
 } from '../../deformation'
 import {
   canUsePartAsMask,
+  PUPPET_DEFAULT_DRAW_ORDER,
+  PUPPET_MAXIMUM_DRAW_ORDER,
   type PuppetColor,
   type PuppetDocument,
   type PuppetParameterBinding,
@@ -24,10 +26,14 @@ export interface SetPartRenderPropertiesOptions {
 
 export interface SetParameterKeyformPartPropertiesOptions {
   readonly bindingId: string
-  readonly currentProperties?: ResolvedPartRenderProperties
+  /** The part's properties now, with its composed draw order. */
+  readonly currentProperties?: ResolvedPartRenderProperties & {readonly drawOrder?: number}
   readonly document: PuppetDocument
   readonly partId: string
-  readonly properties: Pick<PuppetPartRenderProperties, 'multiplyColor' | 'opacity' | 'screenColor'>
+  readonly properties: Pick<
+    PuppetPartRenderProperties,
+    'drawOrder' | 'multiplyColor' | 'opacity' | 'screenColor'
+  >
   readonly values: PuppetParameterValues
 }
 
@@ -52,13 +58,24 @@ const getKeyformPropertyUpdate = (
 
   const part = options.document.parts.find((candidate) => candidate.id === options.partId)!
   const rest = getPartRenderProperties(part)
+  const restDrawOrder = part.properties?.drawOrder ?? PUPPET_DEFAULT_DRAW_ORDER
   const keyform = {
+    drawOrder: keyformPart.properties?.drawOrder ?? restDrawOrder,
     multiplyColor: keyformPart.properties?.multiplyColor ?? rest.multiplyColor,
     opacity: keyformPart.properties?.opacity ?? rest.opacity,
     screenColor: keyformPart.properties?.screenColor ?? rest.screenColor,
   }
-  const {multiplyColor, opacity, screenColor} = options.properties
+  const {drawOrder, multiplyColor, opacity, screenColor} = options.properties
   return {
+    ...(drawOrder === undefined
+      ? {}
+      : {
+          drawOrder: clamp(
+            keyform.drawOrder + drawOrder - (current.drawOrder ?? restDrawOrder),
+            0,
+            PUPPET_MAXIMUM_DRAW_ORDER,
+          ),
+        }),
     ...(multiplyColor === undefined
       ? {}
       : {
@@ -126,9 +143,7 @@ export const setParameterKeyformPartProperties = (
       value === keyform
         ? {...value, parts: replaceKeyformPart(value.parts, options.partId, properties)}
         : value
-    return isTwoDimensionalParameterBinding(candidate)
-      ? {...candidate, keyforms: candidate.keyforms.map(replaceKeyform)}
-      : {...candidate, keyforms: candidate.keyforms.map(replaceKeyform)}
+    return mapBindingKeyforms(candidate, replaceKeyform)
   }
 
   return {

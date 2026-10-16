@@ -1,4 +1,8 @@
 import {isEqual} from 'es-toolkit'
+import {
+  getGroupRenderProperties,
+  type ResolvedGroupRenderProperties,
+} from '../deformation/group-properties'
 import {getPartRenderProperties} from '../deformation/part-properties'
 import {
   getDocumentScene,
@@ -26,11 +30,24 @@ interface TargetChange {
 const RENDER_FIELDS: ReadonlyArray<ChangeField<PuppetPartRenderProperties>> = [
   {key: 'opacity', title: '불투명도 변경'},
   {key: 'blendMode', title: '블렌드 모드 변경'},
+  {key: 'alphaBlendMode', title: '알파 합성 변경'},
+  {key: 'culling', title: '컬링 변경'},
   {key: 'multiplyColor', title: '곱하기 색상 변경'},
   {key: 'screenColor', title: '스크린 색상 변경'},
   {key: 'clippingMaskIds', title: '마스크 적용 대상 변경'},
   {key: 'invertedMask', title: '마스크 반전 변경'},
   {key: 'renderWhenUsedAsMask', title: '마스크 사용 시 파츠 표시 변경'},
+]
+
+const GROUP_FIELDS: ReadonlyArray<ChangeField<ResolvedGroupRenderProperties>> = [
+  {key: 'offscreen', title: '오프스크린 합성 변경'},
+  {key: 'opacity', title: '불투명도 변경'},
+  {key: 'blendMode', title: '블렌드 모드 변경'},
+  {key: 'alphaBlendMode', title: '알파 합성 변경'},
+  {key: 'multiplyColor', title: '곱하기 색상 변경'},
+  {key: 'screenColor', title: '스크린 색상 변경'},
+  {key: 'clippingMaskIds', title: '클리핑 마스크 변경'},
+  {key: 'invertedMask', title: '마스크 반전 변경'},
 ]
 
 const NODE_FIELDS: ReadonlyArray<ChangeField<PuppetSceneNode>> = [
@@ -129,6 +146,13 @@ const getNodeDetails = (before: PuppetSceneNode, after: PuppetSceneNode) => [
   ...getChangedFields(before, after, NODE_FIELDS),
   ...(before.kind === 'deformer' && after.kind === 'deformer'
     ? getChangedFields(before, after, DEFORMER_FIELDS)
+    : []),
+  ...(before.kind === 'group' && after.kind === 'group'
+    ? getChangedFields(
+        getGroupRenderProperties(before),
+        getGroupRenderProperties(after),
+        GROUP_FIELDS,
+      )
     : []),
   ...(before.kind === 'part' && after.kind === 'part' && !isEqual(before.skinning, after.skinning)
     ? ['스키닝 변경']
@@ -240,11 +264,23 @@ const getSettingsTitle = (before: PuppetDocument, after: PuppetDocument) => {
   if (before.layerOrderRules !== after.layerOrderRules) {
     return '레이어 순서 규칙 변경'
   }
+  if (before.expressions !== after.expressions) {
+    return '표정 편집'
+  }
+  if (before.poseGroups !== after.poseGroups) {
+    return '포즈 편집'
+  }
+  if (before.hitAreas !== after.hitAreas) {
+    return '히트 영역 편집'
+  }
   if (before.framesPerSecond !== after.framesPerSecond) {
     return '프레임 속도 변경'
   }
   if (before.viewport !== after.viewport) {
     return '캔버스 크기 변경'
+  }
+  if (before.layout !== after.layout) {
+    return '기본 화면 변경'
   }
   return undefined
 }

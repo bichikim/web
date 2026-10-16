@@ -107,6 +107,9 @@ export const parametersShortcuts = {
     '[.puppet-editor_&_.parameter-item]:[border-width:0]',
     '[.puppet-editor_&.parameter-grid-label_.parameter-swipe-row]:[min-height:7.75rem]',
     '[.puppet-editor_&.parameter-grid-label_.parameter-item]:[min-height:7.75rem]',
+    '[.puppet-editor_&.parameter-volume-label]:[min-height:12.5rem]',
+    '[.puppet-editor_&.parameter-volume-label_.parameter-swipe-row]:[min-height:12.5rem]',
+    '[.puppet-editor_&.parameter-volume-label_.parameter-item]:[min-height:12.5rem]',
   ],
   'keyform-track-labels': [
     '[.puppet-editor_&]:grid [.puppet-editor_&]:[align-content:start] [grid-column:1] [grid-row:1_/_3]',
@@ -135,6 +138,9 @@ export const parametersShortcuts = {
     '[.puppet-editor_&]:touch-none',
     '[.puppet-editor_&:focus-visible]:[outline:0.125rem_solid_#fff0cf]',
     '[.puppet-editor_&:focus-visible]:[outline-offset:-0.125rem]',
+  ],
+  'keyform-volume-track': [
+    '[.puppet-editor_&]:grid [.puppet-editor_&]:[grid-template-rows:auto_auto]',
   ],
   'parameter-binding-name': [
     '[.puppet-editor_&]:m-0 [.puppet-editor_&]:min-w-0',

@@ -23,11 +23,16 @@ test('should reject negative, fractional, and out-of-range vertex motion targets
     document.parts.find((part) => part.id === 'mesh-preview')!.mesh.vertices.length / 2
   for (const vertexIndex of [-1, 0.5, vertexCount]) {
     expect(
-      hasValidTrackTargets(document.parts, document.parameters ?? [], [
-        {...motion, tracks: [{...motion.tracks[0]!, vertexIndex}]},
-      ]),
+      hasValidTrackTargets(
+        document.parts,
+        document.parameters ?? [],
+        [{...motion, tracks: [{...motion.tracks[0]!, vertexIndex}]}],
+        new Set(),
+      ),
     ).toBe(false)
   }
 
-  expect(hasValidTrackTargets(document.parts, document.parameters ?? [], [motion])).toBe(true)
+  expect(hasValidTrackTargets(document.parts, document.parameters ?? [], [motion], new Set())).toBe(
+    true,
+  )
 })

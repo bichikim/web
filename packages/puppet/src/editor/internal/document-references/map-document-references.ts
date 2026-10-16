@@ -1,7 +1,30 @@
 import type {PuppetDocument, PuppetTrack} from '../../../player/document'
+import {getGroupOpacityRowId, getRowGroupId, isModelRow} from '../../../player/timeline-rows'
 import {getDocumentScene} from '../../../player/scene'
 import {mapBindingReferences} from './map-binding-references'
 import {mapSceneReferences} from './map-scene-references'
+
+/** Breath, look, parameter groups, roles and mouth shapes with renamed parameter and group IDs. */
+const renameModelMetadata = (document: PuppetDocument, rename: (id: string) => string) => ({
+  breath: document.breath?.map((entry) => ({...entry, parameterId: rename(entry.parameterId)})),
+  look: document.look?.map((entry) => ({...entry, parameterId: rename(entry.parameterId)})),
+  mouthShapes:
+    document.mouthShapes === undefined
+      ? undefined
+      : {...document.mouthShapes, parameterIds: document.mouthShapes.parameterIds.map(rename)},
+  parameterGroups: document.parameterGroups?.map((group) => ({
+    ...group,
+    groupId: group.groupId === undefined ? undefined : rename(group.groupId),
+    id: rename(group.id),
+  })),
+  parameterRoles:
+    document.parameterRoles === undefined
+      ? undefined
+      : {
+          eyeBlink: document.parameterRoles.eyeBlink?.map(rename),
+          lipSync: document.parameterRoles.lipSync?.map(rename),
+        },
+})
 
 interface MapDocumentReferencesOptions {
   readonly document: PuppetDocument
@@ -17,14 +40,33 @@ export const mapDocumentReferences = (options: MapDocumentReferencesOptions): Pu
   )
   const glueIds = new Set(glue?.map((value) => value.id))
   const transform = {keepGlue: (id: string) => glueIds.has(id), keepPart, rename}
+  const renameRow = (id: string) => {
+    const groupId = getRowGroupId(id)
+    if (groupId !== undefined) {
+      return getGroupOpacityRowId(rename(groupId))
+    }
+    return isModelRow(id) ? id : rename(id)
+  }
   return {
     ...document,
+    expressions: document.expressions?.map((expression) => ({
+      ...expression,
+      id: rename(expression.id),
+      parameters: expression.parameters.map((parameter) => ({
+        ...parameter,
+        parameterId: rename(parameter.parameterId),
+      })),
+    })),
     glue: glue?.map((value) => ({
       ...value,
       first: {...value.first, partId: rename(value.first.partId)},
       id: rename(value.id),
       second: {...value.second, partId: rename(value.second.partId)},
     })),
+    hitAreas: document.hitAreas?.flatMap((area) => {
+      const partIds = area.partIds.filter(keepPart).map(rename)
+      return partIds.length > 0 ? [{...area, id: rename(area.id), partIds}] : []
+    }),
     layerOrderRules: document.layerOrderRules?.flatMap((rule) => {
       const partIds = rule.partIds.filter(keepPart).map(rename)
       return keepPart(rule.referencePartId) && partIds.length > 0
@@ -41,13 +83,17 @@ export const mapDocumentReferences = (options: MapDocumentReferencesOptions): Pu
     motions: document.motions.map((motion) => ({
       ...motion,
       id: rename(motion.id),
-      timelineParameterIds: motion.timelineParameterIds?.map(rename),
+      timelineParameterIds: motion.timelineParameterIds?.map(renameRow),
       tracks: motion.tracks.flatMap<PuppetTrack>((track) => {
         switch (track.kind) {
           case 'vertex':
             return keepPart(track.partId) ? [{...track, partId: rename(track.partId)}] : []
           case 'parameter':
             return [{...track, parameterId: rename(track.parameterId)}]
+          case 'group-opacity':
+            return [{...track, groupId: rename(track.groupId)}]
+          case 'model':
+            return [track]
           default: {
             const exhaustive: never = track
             return exhaustive
@@ -58,7 +104,12 @@ export const mapDocumentReferences = (options: MapDocumentReferencesOptions): Pu
     parameterBindings: document.parameterBindings?.map((binding) =>
       mapBindingReferences(binding, transform),
     ),
-    parameters: document.parameters?.map((parameter) => ({...parameter, id: rename(parameter.id)})),
+    ...renameModelMetadata(document, rename),
+    parameters: document.parameters?.map((parameter) => ({
+      ...parameter,
+      groupId: parameter.groupId === undefined ? undefined : rename(parameter.groupId),
+      id: rename(parameter.id),
+    })),
     parts: document.parts
       .filter((part) => keepPart(part.id))
       .map((part) => ({
@@ -87,6 +138,18 @@ export const mapDocumentReferences = (options: MapDocumentReferencesOptions): Pu
         ? undefined
         : {
             ...document.physics,
+            chains: document.physics.chains?.map((chain) => ({
+              ...chain,
+              id: transform.rename(chain.id),
+              inputs: chain.inputs.map((input) => ({
+                ...input,
+                parameterId: transform.rename(input.parameterId),
+              })),
+              outputs: chain.outputs.map((output) => ({
+                ...output,
+                parameterId: transform.rename(output.parameterId),
+              })),
+            })),
             pendulums: document.physics.pendulums.map((pendulum) => ({
               ...pendulum,
               id: transform.rename(pendulum.id),
@@ -94,6 +157,15 @@ export const mapDocumentReferences = (options: MapDocumentReferencesOptions): Pu
               outputParameterId: transform.rename(pendulum.outputParameterId),
             })),
           },
+    poseGroups: document.poseGroups?.flatMap((group) => {
+      const entries = group.entries.flatMap((entry) => {
+        const partIds = entry.partIds.filter(keepPart).map(rename)
+        return partIds.length > 0 ? [{...entry, partIds}] : []
+      })
+      return entries.length > 0
+        ? [{...group, entries, id: rename(group.id), parameterId: rename(group.parameterId)}]
+        : []
+    }),
     scene: {roots: mapSceneReferences(getDocumentScene(document).roots, transform)},
   }
 }
