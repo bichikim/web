@@ -1,3 +1,4 @@
+import {MAX_TEXT_BYTES, SOURCE_CHUNK_LENGTH} from './reading-limits'
 import {MAX_CODE_BYTES} from './editing-limits'
 import {z} from 'zod'
 
@@ -13,6 +14,7 @@ export const tokenSchema = z.object({
   text: z.string(),
 })
 export const documentSchema = z.object({
+  lineCount: z.number().int().positive().optional(),
   lines: z.array(z.array(tokenSchema)),
   location: locationSchema,
   media: z
@@ -22,8 +24,14 @@ export const documentSchema = z.object({
       size: z.number().int().nonnegative(),
     })
     .optional(),
+  readOnly: z.boolean().optional(),
   revision: z.string(),
   source: z.string(),
+  sourceLength: z.number().int().nonnegative().max(MAX_TEXT_BYTES).optional(),
+})
+export const sourceChunkSchema = z.object({
+  data: z.string().max(SOURCE_CHUNK_LENGTH),
+  next: z.number().int().nonnegative(),
 })
 export const mediaChunkSchema = z.object({data: z.string(), next: z.number().int().nonnegative()})
 export const workspaceSessionSchema = z.object({
@@ -41,12 +49,19 @@ export const navigationLocationSchema = locationSchema.extend({
     .optional(),
 })
 export type NavigationLocation = z.infer<typeof navigationLocationSchema>
+export const navigationGroupSchema = z.object({
+  count: z.number().int().positive(),
+  path: z.string(),
+})
+export type NavigationGroup = z.infer<typeof navigationGroupSchema>
 export const navigationSchema = z.object({
+  groups: z.array(navigationGroupSchema).optional(),
   kind: z.enum(['definition', 'references']).optional(),
   locations: z.array(navigationLocationSchema),
 })
 export type NavigationKind = NonNullable<z.infer<typeof navigationSchema>['kind']>
-export type NavigationResult = Required<z.infer<typeof navigationSchema>>
+export const navigationResultSchema = navigationSchema.required({kind: true})
+export type NavigationResult = z.infer<typeof navigationResultSchema>
 export const codeSourceSchema = z.object({path: z.string(), source: z.string().max(MAX_CODE_BYTES)})
 export type CodeSource = z.infer<typeof codeSourceSchema>
 export const navigationInputSchema = z.object({
@@ -108,6 +123,7 @@ export const errorSchema = z.object({
     'outside-workspace',
     'unsupported-file',
     'too-large',
+    'text-too-large',
     'media-too-large',
     'host-path-missing',
     'session-expired',

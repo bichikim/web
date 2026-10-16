@@ -59,6 +59,139 @@ describe('createWorkspace Python navigation', () => {
       ).toBe(false)
     }
   })
+  it('should include aliased calls and exclude unrelated aliases in unopened modules', async () => {
+    writeFileSync(join(root, 'bridge.py'), 'from helpers import greet as exported\n')
+    writeFileSync(
+      join(root, 'caller.py'),
+      'from bridge import exported as welcome\nwelcome("hello")\n',
+    )
+    writeFileSync(join(root, 'unrelated.py'), 'def greet(value): return value\n')
+    writeFileSync(
+      join(root, 'other.py'),
+      'from unrelated import greet as welcome\nwelcome("other")\n',
+    )
+    const helper = readFileSync(join(root, 'helpers.py'), 'utf8')
+    const references = await workspace.references('helpers.py', helper.indexOf('greet'))
+    expect(references).toMatchObject({
+      ok: true,
+      value: expect.arrayContaining([
+        expect.objectContaining({line: 8, path: 'main.py'}),
+        expect.objectContaining({line: 11, path: 'main.py'}),
+        expect.objectContaining({line: 2, path: 'caller.py'}),
+      ]),
+    })
+    if (references.ok) {
+      expect(references.value.some(({path}) => path === 'other.py')).toBe(false)
+      expect(new Set(references.value.map((location) => JSON.stringify(location))).size).toBe(
+        references.value.length,
+      )
+    }
+  })
+  it('should refresh cached aliased calls after a closed module changes', async () => {
+    const document = workspace.read('helpers.py')
+    if (!document.ok) {
+      throw new Error(document.error.code)
+    }
+    const input = {
+      navigation: 'definition' as const,
+      offset: document.value.source.indexOf('greet'),
+      path: 'helpers.py',
+      revision: document.value.revision,
+    }
+    const query = async () =>
+      (await Array.fromAsync(workspace.scanNavigation(input, new AbortController().signal)))
+        .flatMap(({locations}) => locations)
+        .toSorted(
+          (left, right) =>
+            left.path.localeCompare(right.path) ||
+            left.line - right.line ||
+            left.column - right.column,
+        )
+    expect(await query()).toEqual(
+      expect.arrayContaining([expect.objectContaining({line: 8, path: 'main.py'})]),
+    )
+    writeFileSync(join(root, 'caller.py'), 'from helpers import greet as welcome\nwelcome("new")\n')
+    const added = await query()
+    expect(added).toEqual(
+      expect.arrayContaining([expect.objectContaining({line: 2, path: 'caller.py'})]),
+    )
+    expect(await query()).toEqual(added)
+    writeFileSync(join(root, 'other.py'), 'def greet(value): return value\n')
+    writeFileSync(join(root, 'caller.py'), 'from other import greet as welcome\nwelcome("other")\n')
+    expect((await query()).some(({path}) => path === 'caller.py')).toBe(false)
+  })
+  it('should retain bindings and calls for repeated and differently named aliases in unopened files', async () => {
+    const expected = Array.from({length: 12}, (_, index) => {
+      const path = `caller_${index}.py`
+      const alias = index < 6 ? 'shared' : `unique_${index}`
+      const text = `from helpers import greet as ${alias}\n${alias}("value")\n`
+      writeFileSync(join(root, path), text)
+      return {binding: 30, path}
+    })
+    const result = await workspace.references('helpers.py', 4)
+    if (!result.ok) {
+      throw new Error(result.error.code)
+    }
+    for (const {path, binding} of expected) {
+      expect(result.value).toEqual(
+        expect.arrayContaining([
+          {column: 21, line: 1, path},
+          {column: binding, line: 1, path},
+          {column: 1, line: 2, path},
+        ]),
+      )
+    }
+  })
+  it('should follow name assignments through imports and exclude shadowed names and returned values', async () => {
+    writeFileSync(
+      join(root, 'assignment.py'),
+      'from helpers import greet\nwelcome = greet\nwelcome("direct")\n',
+    )
+    writeFileSync(
+      join(root, 'chained.py'),
+      'from assignment import welcome as hello\nhello("chain")\n',
+    )
+    writeFileSync(
+      join(root, 'qualified.py'),
+      'import helpers\nwelcome = helpers.greet\nwelcome("qualified")\n',
+    )
+    writeFileSync(
+      join(root, 'shadowed.py'),
+      'from helpers import greet\nwelcome = greet\ndef other(welcome):\n    welcome("shadowed")\nwelcome("actual")\n',
+    )
+    writeFileSync(
+      join(root, 'returned.py'),
+      'from helpers import greet\nwelcome = greet("value")\nwelcome("returned")\n',
+    )
+    const result = await workspace.references('helpers.py', 4)
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      throw new Error(result.error.code)
+    }
+    expect(result.value).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({line: 3, path: 'assignment.py'}),
+        expect.objectContaining({line: 2, path: 'chained.py'}),
+        expect.objectContaining({line: 3, path: 'qualified.py'}),
+        expect.objectContaining({line: 5, path: 'shadowed.py'}),
+      ]),
+    )
+    expect(
+      result.value.some((location) => location.path === 'shadowed.py' && location.line === 4),
+    ).toBe(false)
+    expect(
+      result.value.some((location) => location.path === 'returned.py' && location.line === 3),
+    ).toBe(false)
+  })
+  it('should follow aliased classes and wildcard reexports without matching another class', async () => {
+    writeFileSync(join(root, 'bridge.py'), 'from reports.models import Report as Exported\n')
+    writeFileSync(join(root, 'caller.py'), 'from bridge import *\nreport = Exported("title")\n')
+    const model = readFileSync(join(root, 'reports/models.py'), 'utf8')
+    expect(await workspace.references('reports/models.py', model.indexOf('Report'))).toMatchObject({
+      ok: true,
+      value: expect.arrayContaining([expect.objectContaining({line: 2, path: 'caller.py'})]),
+    })
+  })
   it('should follow imports, aliases, reexports, classes and methods with Pyright', async () => {
     const document = workspace.read('main.py')
     expect(document).toMatchObject({ok: true, value: {source}})

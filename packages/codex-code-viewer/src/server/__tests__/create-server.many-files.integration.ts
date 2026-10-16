@@ -5,10 +5,10 @@ import {Client} from '@modelcontextprotocol/sdk/client/index.js'
 import {InMemoryTransport} from '@modelcontextprotocol/sdk/inMemory.js'
 import {expect, it} from 'vitest'
 import {z} from 'zod'
-import {navigationSchema, sessionSchema, streamEndpointSchema} from '../../shared/contracts'
+import {navigationResultSchema, sessionSchema, streamEndpointSchema} from '../../shared/contracts'
 import {createServer} from '../create-server'
 
-it('should deliver the first caller over MCP before completing twenty thousand usage previews', async () => {
+it('should stream discovered file groups over MCP and complete all twenty thousand usages', async () => {
   const root = realpathSync(mkdtempSync(join(tmpdir(), 'viewer-mcp-many-files-')))
   const instance = createServer('<html>viewer</html>')
   const client = new Client({name: 'mcp-many-files-test', version: '1.0.0'})
@@ -30,7 +30,7 @@ it('should deliver the first caller over MCP before completing twenty thousand u
       (await client.callTool({arguments: {path: join(root, 'helper.ts')}, name: 'code.open'}))
         .structuredContent,
     )
-    const started = performance.now()
+    const started = Date.now()
     const {url} = streamEndpointSchema.parse(
       (
         await client.callTool({
@@ -49,17 +49,20 @@ it('should deliver the first caller over MCP before completing twenty thousand u
     )
     const schema = z.discriminatedUnion('done', [
       z.object({done: z.literal(true)}),
-      z.object({batch: navigationSchema.required(), done: z.literal(false)}),
+      z.object({batch: navigationResultSchema, done: z.literal(false)}),
     ])
     const first = schema.parse(
       (await client.callTool({arguments: {url}, name: 'code.stream.read'})).structuredContent,
     )
-    const firstMilliseconds = performance.now() - started
+    const firstMilliseconds = Date.now() - started
     expect(first.done).toBe(false)
     if (first.done) {
       throw new Error('First batch missing')
     }
-    expect(first.batch.locations.map((location) => location.path)).toEqual([paths[0], paths[0]])
+    expect(first.batch.groups?.length).toBeGreaterThan(0)
+    expect(first.batch.groups?.length).toBeLessThan(paths.length)
+    expect(first.batch.locations).toEqual([])
+    let groups = first.batch.groups
     const locations = [...first.batch.locations]
     let batches = 1
     let complete = false
@@ -69,11 +72,20 @@ it('should deliver the first caller over MCP before completing twenty thousand u
       const next = schema.parse(response.structuredContent)
       complete = next.done
       if (!next.done) {
+        groups = next.batch.groups ?? groups
         locations.push(...next.batch.locations)
         batches += 1
       }
     }
-    expect(locations).toEqual(
+    expect(groups).toEqual(paths.map((path) => ({count: 2, path})))
+    expect(
+      locations.sort(
+        (left, right) =>
+          left.path.localeCompare(right.path) ||
+          left.line - right.line ||
+          left.column - right.column,
+      ),
+    ).toEqual(
       paths.flatMap((path, index) => [
         {column: 9, line: 1, path, preview: `import {fanOut} from '../helper'\nfanOut(${index})`},
         {column: 1, line: 2, path, preview: `fanOut(${index})`},
@@ -84,7 +96,7 @@ it('should deliver the first caller over MCP before completing twenty thousand u
       JSON.stringify({
         batches,
         firstMilliseconds: Math.round(firstMilliseconds),
-        totalMilliseconds: Math.round(performance.now() - started),
+        totalMilliseconds: Math.round(Date.now() - started),
         usages: locations.length,
       }),
     )

@@ -2,7 +2,7 @@
 
 [한국어 README](https://github.com/bichikim/web/blob/dev/packages/codex-code-viewer/README.ko.md)
 
-A plugin for reading and navigating code beside your Codex conversation. The current development source also supports editing TypeScript, JavaScript, stylesheets, component and configuration files, and plain text. Follow imports and symbols to related code, then add a file or an exact line and column range as context for your next chat message.
+A plugin for reading and navigating code beside your Codex conversation. It also supports editing TypeScript, JavaScript, stylesheets, component and configuration files, and plain text. Follow imports and symbols to related code, then add a file or an exact line and column range as context for your next chat message.
 
 ## Features
 
@@ -21,11 +21,13 @@ A plugin for reading and navigating code beside your Codex conversation. The cur
 | View media              | Zoom and pan images and SVGs, or play video and audio.                                                                                             |
 | Restore view state      | Reopening a file in the same viewer tab restores its selection, scrolling, preview mode, zoom and PDF page.                                        |
 
-Supported TS/JS extensions are `.ts`, `.tsx`, `.mts`, `.cts`, `.js`, `.jsx`, `.mjs` and `.cjs`. The current development source can edit and save these files along with Ruby, Python, Rust, CSS/SCSS/SASS/LESS, Vue/Svelte/Astro, XML/INI/CONF/CFG/PROPERTIES, JSON variants, TOML, YAML/YML, HTML/HTM and plain text. Ruby includes `.rb`, `.rake`, `.gemspec`, `Gemfile` and `Rakefile`; Python includes `.py` and `.pyi`; Rust uses `.rs`. The [shared editing rules](https://github.com/bichikim/web/blob/dev/packages/codex-code-viewer/src/shared/is-editable-file.ts) define editable files. Markdown and CSV/TSV are edited as source text.
+Supported TS/JS extensions are `.ts`, `.tsx`, `.mts`, `.cts`, `.js`, `.jsx`, `.mjs` and `.cjs`. You can edit and save these files along with Ruby, Python, Rust, CSS/SCSS/SASS/LESS, Vue/Svelte/Astro, XML/INI/CONF/CFG/PROPERTIES, JSON variants, TOML, YAML/YML, HTML/HTM and plain text. Ruby includes `.rb`, `.rake`, `.gemspec`, `Gemfile` and `Rakefile`; Python includes `.py` and `.pyi`; Rust uses `.rs`. The [shared editing rules](https://github.com/bichikim/web/blob/dev/packages/codex-code-viewer/src/shared/is-editable-file.ts) define editable files. Markdown and CSV/TSV are edited as source text.
 
 For example, follow a component's import to its implementation, select a function and choose **Add to chat**, then ask Codex to explain or modify it. See [Supported formats](#supported-formats) for format-specific features and required tools.
 
-## Code editing (current development source)
+## Code editing
+
+Use the arrows beside line numbers to fold multiline functions, objects, classes and markup blocks in reading and editing views. Click **…** to expand a folded block. Search results and definition/usage navigation automatically reveal hidden destinations. Small-file folds are restored when reopening the file in the same viewer tab and reset when its source changes. Python, Ruby and Rust block folding follows indentation.
 
 Choose **Edit** in the document toolbar to open the editor with line numbers and syntax highlighting. Undo with `Cmd/Ctrl+Z` and redo with `Cmd/Ctrl+Shift+Z`. Choose **Save** or press `Cmd/Ctrl+S` to save the current file. There is no autosave. Reading and editing both highlight TS/JS, Ruby, Python, Rust, CSS/SCSS/SASS/LESS, Vue/Svelte/Astro, XML/INI/CONF/CFG/PROPERTIES, JSON/JSONC/JSON5, TOML, YAML/YML and HTML/HTM. Other text formats use plain-text editing. HTML, Vue, Svelte and Astro are edited as source and never executed. `.conf` and `.cfg` use INI-style highlighting for sections, keys, values and comments.
 
@@ -96,12 +98,12 @@ codex plugin add codex-code-viewer@winter-love-plugins --json
 - **Opening files:** A file entry point uses the path supplied by the Codex host. The same input accepts paths and search terms. Enter an absolute or relative supported path and press Enter or **Open file**. It also recognizes `path:line:column` addresses and paths inside sentences. The first file requires an absolute path; opening another absolute path starts a new workspace and navigation history.
 - **Imports:** Click an import string to open its module. Relative paths, barrel `index.ts` files and tsconfig `paths` are resolved.
 - **Symbols and usages:** Click a usage to open its definition, or a definition name to list usages inside the workspace. TS/JS, Python, Ruby and Rust use their existing analyzers. Results are grouped by file with its path and usage count shown once; each item displays line, column and a one-line code preview. Groups stay expanded and long lists scroll as a whole. Previews prefer unsaved drafts; an unreadable preview does not remove a destination. Select an item to navigate. Empty usages show an empty result, while multiple definitions show a definition picker.
-- **History:** Back and forward navigate to visited files and lines. Unavailable directions are disabled. Failed navigation does not change history. `Alt+←/→` also navigates back and forward.
+- **History:** Back and forward navigate to visited files and lines, skipping deleted files unless a retained draft can be reopened and saved to recreate them. Deleting the current file preserves other visits. Directions with no remaining visits are disabled. Workspace change notifications or refresh make externally restored files available again. Other read errors are reported instead of skipped. `Alt+←/→` also navigates back and forward.
 - **Renaming:** Choose **Rename** in a file or folder's context menu to change its name in the same directory without overwriting an existing entry. Open documents and history paths update together. Save or discard drafts before renaming their files or a containing folder.
 - **File tree:** The **File tree** button beside search toggles the right panel. Ancestors of the current file expand automatically and the file is highlighted. Click a folder to expand/collapse or a file to open it. **Filter files** matches part of a path while preserving hierarchy. Use Up/Down, `Home` and `End` to select, and Left/Right to collapse/expand folders. Right-click or `Shift+F10` opens copy, cut, paste, chat attachment, path copy and deletion actions. **Copy path** copies the absolute path. **Add to chat** attaches a whole file/folder path without line numbers, including unsupported formats. Opening a menu does not navigate or toggle folders. The tree displays up to 10,000 files and folders, excluding hidden paths, generated files and symlinks; unsupported files cannot be opened.
 - **File search:** Enter a filename or query without a path to search supported workspace files. Click a result or select it with Up/Down and Enter. `Cmd/Ctrl+P` focuses the input and Escape closes results.
 - **Reveal and creation:** **Reveal current file** above the filter clears it, expands ancestors and scrolls to the open file. **New file** and **New folder** create siblings of the selected file, children of a selected folder, or entries at an empty workspace's root. The name dialog shows the destination. Existing entries are never overwritten. The tree shows the new entry and supported files open immediately. Empty folders are included. Names cannot contain path separators, colons, or hidden/generated names excluded by the tree.
-- **Copy, cut and paste:** The tree context menu manages actual disk entries. With tree focus, `Cmd/Ctrl+C`, `X`, `V` and `Delete` are also available. Copy/cut uses an internal clipboard limited to this viewer's workspace; it differs from **Copy path**. Paste into a folder creates a child; paste on a file uses its parent. The empty-space context menu supports pasting at the workspace root. Copy collisions generate a copy name; cut collisions report an error without overwriting. Cut removes the source only after the complete copy succeeds and its original snapshot is rechecked.
+- **Copy, cut and paste:** The tree context menu manages actual disk entries. With tree focus, `Cmd/Ctrl+C`, `X`, `V` and `Delete` are also available. Copy/cut uses an internal clipboard limited to this viewer's workspace; it differs from **Copy path**. Copied entries remain available after pasting and opening other files in the same workspace, so they can be pasted repeatedly. Cut entries are cleared after a successful move. Paste into a folder creates a child; paste on a file uses its parent. The empty-space context menu supports pasting at the workspace root. Copy collisions generate a copy name; cut collisions report an error without overwriting. Cut removes the source only after the complete copy succeeds and its original snapshot is rechecked.
 - **Deletion:** A confirmation dialog identifies the target. Deletion is **permanent and bypasses the trash**. Entries with unsaved drafts or saves in progress cannot be changed. If the source changes after inspection, the action stops; repeat the copy/cut/delete request. The workspace itself, symlinks and folders containing `.git`, `.codex`, `.aws` or `.ssh` are protected. Inspection is limited to 10,000 entries per operation.
 - **Tree width:** Drag the divider between document and tree. Default tree width is 288px, with minimum widths of 200px for the tree and 240px for the viewer. Focus the divider and use Left/Right for 16px steps or `Home`/`End` for minimum/maximum width. Width and filter remain when the panel reopens in the same tab. Narrow windows allow horizontal scrolling.
 - **Find in file:** `Cmd/Ctrl+F` searches literal text without case sensitivity and highlights matches above the code. Enter/Shift+Enter or previous/next buttons cycle results; Escape closes search. A single-line text selection supplies the initial query. Search navigation retains the line selection used for chat context.
@@ -156,6 +158,8 @@ gem install solargraph
 
 Require paths, modules, classes, methods and instance variables navigate to analyzed definitions. Literal `require_relative` resolves from the current file without an analyzer; dynamically constructed require paths do not receive links. The first definition lookup starts the analyzer and reuses it within the same Gemfile project. `Gemfile`/`gems.rb` distinguish nested projects; `.solargraph.yml` supplies configuration. Override the executable with `SOLARGRAPH_BINARY` or interpreter with `RUBY_BINARY`. By default the current Ruby environment's Solargraph gem is used, so its gem executable need not be on `PATH`.
 
+Constant-alias usages follow sequential assignments and possible conditional branches, including values copied before reassignment. `require`/`require_relative` follow statically computable paths, including string variables, interpolation, concatenation and `File.join`, while preserving require-once behavior. The same reference extension applies to the default gem and `SOLARGRAPH_BINARY`.
+
 Open-file changes are synchronized and analyzer character positions are converted to UTF-16 coordinates. Shutdown cleans up the analyzer and its Unix child processes. Gem and standard-library definitions outside the workspace are excluded. Opening, highlighting, selecting and searching remain available if it cannot run.
 
 #### Rust
@@ -172,7 +176,7 @@ This minimal setup navigates functions, types, variables, methods and modules in
 
 CSV/TSV tables use the first row as column names by default; disable **Use first row as headers** for headerless files. Click a column name to sort ascending/descending or use **Filter rows** to match cells. Quoted cells containing commas, tabs or newlines, escaped double quotes, UTF-8 BOMs and empty cells are supported. HTML and formulas remain text. Parsing is local using the bundled [csv-parse browser distribution](https://csv.js.org/parse/distributions/).
 
-Tables display 50 rows at a time and preview only the first 10,000 rows, including headers, and 100 columns. A notice identifies truncation; **Source** exposes the full text. Sorting/filtering applies to the preview range. Multiline cells can make table row numbers differ from text line numbers, so range selection and chat attachment use source; `Cmd/Ctrl+F` also switches to source. UTF-8 CSV/TSV files have the same 512 KiB limit as other text. Invalid quoting shows a notice and falls back to source.
+Tables display 50 rows at a time and preview only the first 10,000 rows, including headers, and 100 columns. A notice identifies truncation; **Source** exposes the full text. Sorting/filtering applies to the preview range. Multiline cells can make table row numbers differ from text line numbers, so range selection and chat attachment use source; `Cmd/Ctrl+F` also switches to source. UTF-8 CSV/TSV files open up to 32 MiB. Files above 512 KiB open as read-only source instead of a table preview. Invalid quoting shows a notice and falls back to source.
 
 #### Word and Excel
 
@@ -182,7 +186,7 @@ XLSX is parsed locally with [SheetJS](https://docs.sheetjs.com/docs/). Select a 
 
 #### SVG, PDF and media
 
-SVG supports image preview and XML source modes. Source uses HTML-style markup highlighting, `Cmd/Ctrl+F` and exact range attachments from its context menu. Preview supports zoom and pan. SVGs above 512 KiB offer preview only within the image limit, with source disabled. Attach a whole SVG through the tree context menu or a source range through its code context menu.
+SVG supports image preview and XML source modes. Source uses HTML-style markup highlighting, `Cmd/Ctrl+F` and exact range attachments from its context menu. Preview supports zoom and pan. SVG source up to 32 MiB is available; above 512 KiB it uses a read-only viewport. SVGs above the source limit retain image preview within the image limit. Attach a whole SVG through the tree context menu or a source range through its code context menu.
 
 Attach PDF, DOCX, XLSX, image, video and audio files through **Add to chat** in the tree context menu. This attaches the whole path without line numbers. Media is read in 256 KiB chunks through session-bound MCP tools and displayed as Blobs, released on file changes or viewer closure. Files come from the connected server host; no separate media server is required. Video/audio playback also depends on embedded browser codec support. Display errors are reported.
 
@@ -198,17 +202,19 @@ Audio never autoplays. Choose Play to start; switching files or closing the view
 
 Opening from the tools menu connects the conversation's workspace and shows its tree before file selection. The conversation ID supplied by Codex reads only the working-directory field in local metadata, not the conversation body. If no path is found, the viewer asks for an absolute file path. New conversations whose metadata has not yet been saved show the same prompt.
 
-Opening a file directly determines the workspace from an ancestor containing `.git` or `pnpm-workspace.yaml`. Rust projects without these markers use an ancestor `Cargo.toml`. Reading does not execute or modify files. Text is limited to 512 KiB per file; PDF, DOCX, XLSX, images, video and audio to 128 MiB. Paths outside the workspace and `.git`, `.codex`, `.aws` and `.ssh` are excluded. Only hidden configuration files in [`HIDDEN_TEXT_FILES`](https://github.com/bichikim/web/blob/dev/packages/codex-code-viewer/src/shared/file-formats.ts) are allowed; others such as `.env` are excluded. Non-UTF-8 content and files with NUL bytes cannot open as text. Search excludes generated files and `node_modules`, inspecting up to 10,000 files and returning up to 100 results.
+Opening a file directly determines the workspace from an ancestor containing `.git` or `pnpm-workspace.yaml`. Rust projects without these markers use an ancestor `Cargo.toml`. Reading does not execute or modify files. Text opens up to 32 MiB per file. Files above 512 KiB open read-only, with visible-line rendering and incremental syntax highlighting; editing remains limited to 512 KiB. Large Markdown opens as source. PDF, DOCX, XLSX, images, video and audio to 128 MiB. Paths outside the workspace and `.git`, `.codex`, `.aws` and `.ssh` are excluded. Only hidden configuration files in [`HIDDEN_TEXT_FILES`](https://github.com/bichikim/web/blob/dev/packages/codex-code-viewer/src/shared/file-formats.ts) are allowed; others such as `.env` are excluded. Non-UTF-8 content and files with NUL bytes cannot open as text. Search excludes generated files and `node_modules`, inspecting up to 10,000 files and returning up to 100 results.
 
-### Per-file view state (current development source)
+### Per-file view state
 
 Reopening from the tree, search or history restores code/text horizontal and vertical scrolling and line/column selection; Markdown preview/source mode and scrolling; PDF page/zoom/fit mode; and image/SVG zoom and pan. An explicit line/column address or definition destination takes priority. Selections and PDF pages are clamped if content becomes shorter.
 
 View state is held in memory for the 64 most recent files per workspace while the viewer remains open. Closing or reloading resets it; nothing is written to disk.
 
-### Navigation caches (current development source)
+### Navigation caches
 
 Search and the tree share a file index per workspace. File-watcher events refresh added, renamed or deleted entries and open document content. Filters, expanded folders and scroll positions are retained; document replacement waits while an unsaved draft exists. A loopback event stream with a random token per session carries change signals instead of periodic scans. No external network connection or additional installation is required. When watching is unavailable, manual refresh and directory-change validation during reads remain available.
+
+TS/JS references use a name and import-relationship index to select initial analysis candidates, followed by full semantic analysis. Disk index restoration runs alongside analysis; navigation starts with local candidates while restoration is pending. Per-file index summaries persist under `CODEX_HOME/cache/codex-code-viewer/navigation` (default: `~/.codex/cache/codex-code-viewer/navigation`) for reuse after restart. File metadata and configuration are checked to refresh summaries; invalid or unavailable caches are rebuilt. Reference locations and unsaved drafts are not persisted.
 
 Recent documents reuse source and tokens within [document cache limits](https://github.com/bichikim/web/blob/dev/packages/codex-code-viewer/src/server/create-document-reader.ts). Reads validate the path and nanosecond change metadata; changed or missing files cannot use stale entries. Closing a session releases watchers and the document cache.
 
@@ -231,7 +237,7 @@ codex plugin marketplace add "$PWD/dist" --json
 codex plugin add codex-code-viewer@winter-love-code-viewer --json
 ```
 
-`dist/plugin` contains the server, HTML, TypeScript standard declarations, `.codex-plugin/plugin.json` and `.mcp.json`. It needs no separate npm install at runtime. `dist/.agents/plugins/marketplace.json` is the local catalog pointing to this bundle.
+`dist/plugin` contains the server, HTML, TS7 executables and SDK declarations for macOS, Windows and Linux on arm64/x64, `.codex-plugin/plugin.json` and `.mcp.json`. It needs no separate npm install at runtime. `dist/.agents/plugins/marketplace.json` is the local catalog pointing to this bundle.
 
 The installation bundle follows the documented Codex-compatible layout. The original root `plugin.json` plus `extensions.com.openai.mcpServers` appeared in the catalog, but desktop CLI 0.158.0-alpha.2.1 returned no servers from `plugin/read`. After adopting the compatible layout, CLI 0.158.0-alpha.2.1 and local runtime 0.160.0 discovered the server and its then-eight tools. Builds clear the previous installation bundle to avoid retaining an obsolete root manifest.
 
@@ -283,6 +289,6 @@ A browser check started with an empty conversation panel, opened Puppet's actual
 
 After packaging changes, desktop CLI 0.160.0's `mcpServerStatus/list` reported `toolsError: null`, `thread` metadata for `code.panel`, `file` metadata for `code.file` and an HTML resource. `mcpServer/resource/read` loaded the viewer HTML. These checks establish server discovery and UI-resource loading, not native rendering or successful file connection.
 
-TypeScript resolution uses the tsconfig nearest the analyzed file. Bundler-only aliases, browser public URLs and computed dynamic paths are not fully resolved. If a pnpm symlink points to a global store outside the workspace, that dependency's definition cannot open. Completion and symbol rename/refactoring are not included. Editing scope is described above.
+TypeScript and JavaScript symbol navigation uses the bundled TS7 engine. Preparation starts in the background when a workspace containing supported sources opens, and verified results are delivered as the search proceeds. TypeScript resolution uses the tsconfig nearest the analyzed file. Bundler-only aliases, browser public URLs and computed dynamic paths are not fully resolved. If a pnpm symlink points to a global store outside the workspace, that dependency's definition cannot open. Completion and symbol rename/refactoring are not included. Editing scope is described above.
 
 </details>

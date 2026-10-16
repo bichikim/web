@@ -1,6 +1,7 @@
 import type {CallToolResult} from '@modelcontextprotocol/sdk/types.js'
 import type {
   CodeLocation,
+  NavigationGroup,
   NavigationLocation,
   ViewerConnection,
   WorkspaceEntry,
@@ -62,6 +63,7 @@ export interface ContextMenuCloseOptions {
 }
 
 export interface NavigationOptions {
+  deleted?: boolean
   historyIndex?: number
   preserveSelection?: boolean
   restoreView?: boolean
@@ -109,6 +111,7 @@ export interface NavigationPoint {
   readonly y: number
 }
 export interface ReferenceChoices {
+  readonly groups?: readonly NavigationGroup[]
   readonly kind?: 'definition' | 'references'
   readonly label: string
   readonly locations: readonly NavigationLocation[]

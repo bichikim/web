@@ -32,7 +32,8 @@ const messages: Record<ViewerError['code'], string> = {
     '내장 Rust 분석기를 실행할 수 없습니다. 플러그인 설치 상태를 확인하고 뷰어를 다시 열어 주세요.',
   'session-expired': '연결이 종료되었습니다. Codex에서 파일을 다시 열어 주세요.',
   'stale-document': '파일이 변경되었습니다. 새로고침한 뒤 다시 이동해 주세요.',
-  'too-large': '512 KiB보다 큰 파일은 이 뷰어에서 열 수 없습니다.',
+  'text-too-large': '32 MiB보다 큰 텍스트 파일은 이 뷰어에서 열 수 없습니다.',
+  'too-large': '512 KiB보다 큰 파일은 편집할 수 없습니다.',
   'unsupported-file': '지원하지 않는 파일 형식입니다.',
   'write-conflict':
     '다른 곳에서 파일이 변경되어 저장하지 않았습니다. 초안을 복사하거나 변경을 버린 뒤 원본을 다시 확인해 주세요.',

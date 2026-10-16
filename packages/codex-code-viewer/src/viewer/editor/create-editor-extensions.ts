@@ -16,8 +16,11 @@ import {classHighlighter} from '@lezer/highlight'
 import type {CodeToken} from '../../shared/contracts'
 import type {CodeTextRange, NavigationPoint} from '../types'
 import {createEditorNavigation} from './create-editor-navigation'
+import {createEditorFolding} from './create-editor-folding'
 import {createEditorLanguage} from './create-editor-language'
 interface EditorExtensionsOptions {
+  readonly foldLabel?: (open: boolean) => string
+  readonly readOffset?: (position: number) => number
   readonly separator: string
   readonly location: {readonly path: string}
   readonly writable: Extension
@@ -35,6 +38,7 @@ export const createEditorExtensions = (options: EditorExtensionsOptions): Extens
   EditorState.lineSeparator.of(options.separator),
   EditorState.tabSize.of(2),
   lineNumbers(),
+  createEditorFolding(options.location.path, options.foldLabel),
   highlightActiveLineGutter(),
   highlightActiveLine(),
   highlightSpecialChars(),
@@ -43,7 +47,11 @@ export const createEditorExtensions = (options: EditorExtensionsOptions): Extens
   indentOnInput(),
   bracketMatching(),
   createEditorLanguage(options.location.path),
-  createEditorNavigation({onFollow: options.onFollow, path: options.location.path}),
+  createEditorNavigation({
+    onFollow: options.onFollow,
+    path: options.location.path,
+    readOffset: options.readOffset,
+  }),
   syntaxHighlighting(classHighlighter),
   options.editability.of(options.writable),
   options.marks.of(EditorView.decorations.of(Decoration.none)),

@@ -10,6 +10,22 @@ const file = (dependencies: string[] = [], names: string[] = [], surface = '') =
 })
 
 describe('createDependencyGraph', () => {
+  it('should rank connected aliases before unrelated names despite uncertain sources', () => {
+    const graph = createDependencyGraph()
+    graph.update('unrelated.ts', file([], ['greet']), 1)
+    graph.update('dependency.ts', file([], ['unrelated']), 1)
+    graph.update('entry.ts', file(['dependency.ts'], ['greet'], 'export'), 1)
+    graph.update('barrel.ts', file(['entry.ts'], ['welcome'], 'export'), 1)
+    graph.update('outside/use.ts', file(['barrel.ts'], ['hello']), 1)
+    graph.update('global.ts', {...file([], ['unrelated']), uncertain: true}, 1)
+    expect(graph.candidates(['entry.ts'], 'greet')).toEqual([
+      'entry.ts',
+      'barrel.ts',
+      'outside/use.ts',
+      'unrelated.ts',
+    ])
+    expect(graph.scope(['entry.ts'], 'greet')).toContain('global.ts')
+  })
   it('should find new candidates including an initially empty name bucket', () => {
     const graph = createDependencyGraph()
     graph.update('helper.ts', file([], ['greet'], 'export'), 1)

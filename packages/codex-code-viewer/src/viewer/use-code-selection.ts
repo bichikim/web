@@ -18,8 +18,23 @@ interface CodeSelectionOptions {
   workspace?: Accessor<string | undefined>
 }
 
+const documentRows = (document: CodeDocument): string[] =>
+  document.lines.length > 0
+    ? document.lines.map((tokens) => tokens.map((token) => token.text).join(''))
+    : document.source.split(/\r\n|\n|\r/u)
+
 export const useCodeSelection = (options: CodeSelectionOptions) => {
   const [selection, setSelection] = createSignal<CodeSelection | null>(null)
+  const rows = createMemo(() => {
+    const document = options.session()?.document
+    const source = options.source?.()
+    return source === undefined
+      ? document === undefined
+        ? ['']
+        : documentRows(document)
+      : source.split(/\r\n|\n|\r/u)
+  })
+
   const address = createMemo(() => {
     const document = options.session()?.document
     if (document?.media !== undefined) {
@@ -41,14 +56,14 @@ export const useCodeSelection = (options: CodeSelectionOptions) => {
       reset(document)
       return
     }
-    const last = Math.max(1, document.lines.length)
+    const last = Math.max(1, document.lineCount ?? document.lines.length)
     const selected = {
       ...previous,
       endLine: Math.min(last, previous.endLine),
       line: Math.min(last, previous.line),
     }
     if (selected.endColumn !== undefined) {
-      const rows = document.lines.map((tokens) => tokens.map((token) => token.text).join(''))
+      const rows = documentRows(document)
       selected.column = Math.min(selected.column, (rows[selected.line - 1]?.length ?? 0) + 1)
       selected.endColumn = Math.min(
         selected.endColumn,
@@ -65,7 +80,7 @@ export const useCodeSelection = (options: CodeSelectionOptions) => {
     if (current === null || !Number.isInteger(anchor) || !Number.isInteger(focus)) {
       return
     }
-    const last = Math.max(1, current.document.lines.length)
+    const last = Math.max(1, current.document.lineCount ?? current.document.lines.length)
     const selected = {
       ...current.document.location,
       column: 1,
@@ -84,16 +99,12 @@ export const useCodeSelection = (options: CodeSelectionOptions) => {
     ) {
       return
     }
-    const draft = options.source?.()
-    const rows =
-      draft === undefined
-        ? current.document.lines.map((tokens) => tokens.map((token) => token.text).join(''))
-        : draft.split(/\r\n|\n|\r/u)
-    const last = Math.max(1, rows.length)
+    const sourceRows = rows()
+    const last = Math.max(1, sourceRows.length)
     const line = Math.min(last, range.line)
     const endLine = Math.max(line, Math.min(last, range.endLine))
-    const column = Math.min((rows[line - 1]?.length ?? 0) + 1, range.column)
-    const endColumn = Math.min((rows[endLine - 1]?.length ?? 0) + 1, range.endColumn)
+    const column = Math.min((sourceRows[line - 1]?.length ?? 0) + 1, range.column)
+    const endColumn = Math.min((sourceRows[endLine - 1]?.length ?? 0) + 1, range.endColumn)
     setSelection({
       ...current.document.location,
       column,

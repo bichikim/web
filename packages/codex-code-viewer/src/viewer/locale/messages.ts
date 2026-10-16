@@ -7,6 +7,8 @@ export const english = {
   '{count}픽셀': '{count} pixels',
   '{count}행': '{count} rows',
   '{line}줄 선택': 'Select line {line}',
+  '{line}줄 접기': 'Fold line {line}',
+  '{line}줄 펼치기': 'Unfold line {line}',
   '{name} 정렬': 'Sort {name}',
   '{path} · 복사했습니다. 대상 폴더에 붙여넣으세요.':
     '{path} · Copied. Paste into the destination folder.',
@@ -20,11 +22,13 @@ export const english = {
   '{title} {count}개': '{title}: {count}',
   '{title} 검색 중': 'Searching {title}',
   '1줄': '1 line',
+  '32 MiB 이하 SVG에서 원문을 볼 수 있습니다.': 'Source is available for SVG files up to 32 MiB.',
+  '32 MiB보다 큰 텍스트 파일은 이 뷰어에서 열 수 없습니다.':
+    'This viewer cannot open text files larger than 32 MiB.',
   '128 MiB보다 큰 문서·이미지·영상·음악은 이 뷰어에서 열 수 없습니다.':
     'This viewer cannot open documents or media larger than 128 MiB.',
-  '512 KiB 이하 SVG에서 원문을 볼 수 있습니다.': 'Source is available for SVG files up to 512 KiB.',
-  '512 KiB보다 큰 파일은 이 뷰어에서 열 수 없습니다.':
-    'This viewer cannot open source files larger than 512 KiB.',
+  '512 KiB보다 큰 파일은 읽기 전용입니다.': 'Files larger than 512 KiB are read-only.',
+  '512 KiB보다 큰 파일은 편집할 수 없습니다.': 'Files larger than 512 KiB cannot be edited.',
   'Code Viewer 연결을 확인해 주세요.': 'Check the Code Viewer connection.',
   'Codex가 파일 경로를 전달하지 않았습니다. code.open 도구로 파일을 열어 주세요.':
     'Codex did not provide a file path. Open the file with code.open.',
@@ -182,6 +186,7 @@ export const english = {
   '일부 폴더를 읽지 못했습니다. 새로고침하여 다시 탐색해 주세요.':
     'Some folders could not be read. Refresh to try again.',
   '일치하는 파일이 없습니다.': 'No matching files.',
+  '읽기 전용': 'Read-only',
   자동: 'Automatic',
   '자동은 앱 언어를 따릅니다. 지원하지 않는 언어는 영어로 표시합니다.':
     'Automatic follows the app language. Unsupported languages use English.',
@@ -195,6 +200,8 @@ export const english = {
   저장: 'Save',
   '저장 중…': 'Saving…',
   '저장했습니다.': 'Saved.',
+  접기: 'Fold',
+  '접힌 {count}줄 펼치기': 'Show {count} folded lines',
   '정의 선택': 'Choose definition',
   '정의 위치': 'Definitions',
   '정의·사용처 찾기': 'Find definitions and references',
@@ -262,6 +269,7 @@ export const english = {
   편집: 'Edit',
   '편집 더 보기': 'More editing actions',
   '편집 작업': 'Editing actions',
+  펼치기: 'Unfold',
   '폴더 삭제': 'Delete folder',
   '폴더를 다음 채팅 메시지에 추가했습니다.': 'Added the folder to your next chat message.',
   '폴더와 그 안의 모든 항목을': 'This folder and all its contents',

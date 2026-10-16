@@ -37,10 +37,27 @@ describe('createWorkspace', () => {
     rmSync(root, {force: true, recursive: true})
   })
   it('should resolve renamed imports through a barrel to the source definition', async () => {
-    expect(workspace.definitions('src/main.ts', source.lastIndexOf('value'))).toEqual({
+    expect(await workspace.definitions('src/main.ts', source.lastIndexOf('value'))).toEqual({
       ok: true,
       value: [{column: 14, line: 1, path: 'src/answer.ts'}],
     })
+  })
+  it('should preserve cancellation callbacks before and after a native lookup', async () => {
+    expect(() =>
+      workspace.definitions('src/main.ts', source.lastIndexOf('value'), [], () => true),
+    ).toThrow()
+    let cancelled = false
+    await expect(
+      workspace.references('src/answer.ts', 13, [], {
+        cancelled: () => cancelled,
+        receive: () => {
+          cancelled = true
+        },
+      }),
+    ).rejects.toThrow()
+    expect(cancelled).toBe(true)
+    const result = await workspace.references('src/answer.ts', 13)
+    expect(result.ok && result.value.length).toBeGreaterThan(0)
   })
   it.each(['js', 'jsx', 'mjs', 'mts'])(
     'should read, search, and navigate %s files with an existing TypeScript configuration',
@@ -56,7 +73,7 @@ describe('createWorkspace', () => {
         ok: true,
         value: [{column: 1, line: 1, path: dependency}],
       })
-      expect(workspace.definitions(path, text.lastIndexOf('answer'))).toEqual({
+      expect(await workspace.definitions(path, text.lastIndexOf('answer'))).toEqual({
         ok: true,
         value: [{column: 14, line: 1, path: dependency}],
       })
@@ -103,15 +120,17 @@ describe('createWorkspace', () => {
       ok: true,
       value: [{column: 1, line: 1, path: 'packages/example/lib/answer.ts'}],
     })
-    expect(workspace.definitions('packages/example/main.ts', text.lastIndexOf('answer'))).toEqual({
+    expect(
+      await workspace.definitions('packages/example/main.ts', text.lastIndexOf('answer')),
+    ).toEqual({
       ok: true,
       value: [{column: 14, line: 1, path: 'packages/example/lib/answer.ts'}],
     })
   })
   it('should reload edited dependency definitions', async () => {
-    workspace.definitions('src/main.ts', source.lastIndexOf('value'))
+    await workspace.definitions('src/main.ts', source.lastIndexOf('value'))
     writeFileSync(join(root, 'src/answer.ts'), '\n\nexport const answer = 43\n')
-    expect(workspace.definitions('src/main.ts', source.lastIndexOf('value'))).toMatchObject({
+    expect(await workspace.definitions('src/main.ts', source.lastIndexOf('value'))).toMatchObject({
       ok: true,
       value: [{line: 3}],
     })
@@ -122,7 +141,9 @@ describe('createWorkspace', () => {
       {path: 'src/main.ts', source: draft},
       {path: 'src/extra.ts', source: '\n\nexport const renamed = 7\n'},
     ]
-    expect(workspace.definitions('src/main.ts', draft.lastIndexOf('renamed'), sources)).toEqual({
+    expect(
+      await workspace.definitions('src/main.ts', draft.lastIndexOf('renamed'), sources),
+    ).toEqual({
       ok: true,
       value: [{column: 14, line: 3, path: 'src/extra.ts'}],
     })
@@ -131,7 +152,7 @@ describe('createWorkspace', () => {
       value: [{column: 1, line: 1, path: 'src/extra.ts'}],
     })
     expect(workspace.read('src/main.ts')).toMatchObject({ok: true, value: {source}})
-    expect(workspace.definitions('src/main.ts', source.lastIndexOf('value'))).toEqual({
+    expect(await workspace.definitions('src/main.ts', source.lastIndexOf('value'))).toEqual({
       ok: true,
       value: [{column: 14, line: 1, path: 'src/answer.ts'}],
     })

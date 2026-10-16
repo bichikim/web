@@ -49,11 +49,39 @@ const sourceNavigation = (
     : null
 }
 
+interface SyntaxPoint {
+  readonly name: string
+  readonly from: number
+  readonly to: number
+}
+const PATH_PREFIX_LENGTH = 3
+const scriptNavigation = (
+  state: EditorState,
+  node: SyntaxPoint,
+  position: number,
+  code: boolean,
+): CodeToken['navigation'] => {
+  if (code && identifiers.has(node.name)) {
+    return 'definition'
+  }
+  if (!['String', 'TemplateString'].includes(node.name)) {
+    return null
+  }
+  const module = code && scriptReference(state, position)
+  const start = node.from + 1
+  const prefix = state.sliceDoc(start, Math.min(node.to, start + PATH_PREFIX_LENGTH))
+  if (!module && !isSourcePath(prefix)) {
+    return null
+  }
+  return navigableString(state.sliceDoc(start, node.to - 1), module) ? 'path' : null
+}
+
 /** Converts a navigable editor position to a source token, excluding ordinary text and comments. */
 export const navigationToken = (
   state: EditorState,
   position: number,
   path: string,
+  readOffset?: (position: number) => number,
 ): CodeToken | null => {
   if (!isNavigableFile(path)) {
     return null
@@ -62,30 +90,20 @@ export const navigationToken = (
   if (position < node.from || position >= node.to) {
     return null
   }
-  const text = state.sliceDoc(node.from, node.to)
   const format = fileFormat(path)
-  if (format?.kind === 'syntax' && sourceLanguages.has(format.language)) {
-    const navigation = sourceNavigation(state, node.name, node.from, format.language)
-    return navigation === null
-      ? null
-      : {
-          kind: navigation === 'path' ? 'string' : 'identifier',
-          navigation,
-          offset: state.sliceDoc(0, position).length,
-          text,
-        }
-  }
-  const value = text.slice(1, -1)
-  const code = format?.kind === 'code'
-  const string = node.name === 'String' || node.name === 'TemplateString'
-  const reference = string && navigableString(value, code && scriptReference(state, position))
-  if (!reference && !(code && identifiers.has(node.name))) {
+  const navigation =
+    format?.kind === 'syntax' && sourceLanguages.has(format.language)
+      ? sourceNavigation(state, node.name, node.from, format.language)
+      : scriptNavigation(state, node, position, format?.kind === 'code')
+  if (navigation === null) {
     return null
   }
   return {
-    kind: reference ? 'string' : 'identifier',
-    navigation: reference ? 'path' : 'definition',
-    offset: state.sliceDoc(0, Math.min(position, state.doc.length)).length,
-    text,
+    kind: navigation === 'path' ? 'string' : 'identifier',
+    navigation,
+    offset:
+      readOffset?.(position) ??
+      position + (state.lineBreak.length - 1) * (state.doc.lineAt(position).number - 1),
+    text: state.sliceDoc(node.from, node.to),
   }
 }

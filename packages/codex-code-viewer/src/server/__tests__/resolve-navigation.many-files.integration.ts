@@ -50,11 +50,29 @@ it('should return complete sorted previews for usages in ten thousand unopened f
       new AbortController().signal,
     )
     const first = await stream.next()
-    expect(first.value?.locations).toEqual(result.value.locations.slice(0, 2))
+    expect(first.value?.groups?.length).toBeGreaterThan(0)
+    // Direct import edges arrive before native call sites; completion must retain every location.
+    expect(first.value?.groups?.length).toBeLessThanOrEqual(paths.length)
+    expect(first.value?.groups).toEqual(
+      paths.slice(0, first.value?.groups?.length).map((path) => ({count: 1, path})),
+    )
+    expect(first.value?.locations).toEqual([])
+    const details = await stream.next()
+    expect(details.value?.locations).toEqual(result.value.locations.slice(0, 1))
     expect(first.done).toBe(false)
     const remaining = await Array.fromAsync(stream)
     expect(remaining.length).toBeGreaterThan(1)
-    expect(remaining.flatMap((batch) => batch.locations)).toEqual(result.value.locations.slice(2))
+    expect(
+      [...(details.value?.locations ?? []), ...remaining.flatMap((batch) => batch.locations)].sort(
+        (left, right) =>
+          left.path.localeCompare(right.path) ||
+          left.line - right.line ||
+          left.column - right.column,
+      ),
+    ).toEqual(result.value.locations)
+    expect(
+      remaining.findLast((batch) => batch.groups !== undefined)?.groups ?? first.value?.groups,
+    ).toEqual(paths.map((path) => ({count: 2, path})))
   } finally {
     workspace.dispose()
     rmSync(root, {force: true, recursive: true})

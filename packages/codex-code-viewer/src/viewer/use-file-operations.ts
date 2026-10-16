@@ -1,6 +1,6 @@
 import {useLocalizedMessage} from './locale/use-localized-message'
 import type {LocalizedMessage} from './locale/types'
-import {type Accessor, batch, createEffect, createSignal, on} from 'solid-js'
+import {type Accessor, batch, createEffect, createMemo, createSignal, on} from 'solid-js'
 import {
   entrySchema,
   type EntrySnapshot,
@@ -33,6 +33,9 @@ const clipboardMessages = {
   copy: '{path} · 복사했습니다. 대상 폴더에 붙여넣으세요.',
   cut: '{path} · 잘라냈습니다. 대상 폴더에 붙여넣으세요.',
 } as const
+const canTransfer = (path: string | undefined, props: UseFileOperationsProps): boolean =>
+  path !== undefined && !props.saving() && !hasPendingPath(path, props.pendingPaths())
+
 export const useFileOperations = (props: UseFileOperationsProps) => {
   const localize = useLocalizedMessage()
   const [clipboard, setClipboard] = createSignal<ClipboardEntry | null>(null)
@@ -43,13 +46,14 @@ export const useFileOperations = (props: UseFileOperationsProps) => {
     setFeedback(errorMessage(error))
     props.onRefresh?.()
   })
+  const workspace = createMemo(() => props.session()?.workspace)
+  createEffect(on(workspace, () => setClipboard(null)))
   createEffect(
     on(
-      () => props.session()?.session,
+      createMemo(() => props.session()?.session),
       () => {
         request.cancel()
         batch(() => {
-          setClipboard(null)
           setDeleting(null)
           setFeedback('')
           setPasting(false)
@@ -58,7 +62,7 @@ export const useFileOperations = (props: UseFileOperationsProps) => {
     ),
   )
   const available = (path: string): boolean => {
-    if (props.saving() || hasPendingPath(path, props.pendingPaths())) {
+    if (!canTransfer(path, props)) {
       setFeedback('미저장 변경을 먼저 저장하거나 버린 뒤 파일 작업을 해 주세요.')
       return false
     }
@@ -112,11 +116,12 @@ export const useFileOperations = (props: UseFileOperationsProps) => {
     return entry
   }
   const paste = async (selection: WorkspaceSelection): Promise<void> => {
-    const current = clipboard()
+    const copied = clipboard()
     const session = props.session()
-    if (current === null || session === null || request.pending()) {
+    if (copied === null || session === null || request.pending()) {
       return
     }
+    const current = {...copied, session: session.session}
     const target = relativeWorkspacePath(session.workspace, selection.path)
     if (target === null || !available(current.path)) {
       return
@@ -168,7 +173,7 @@ export const useFileOperations = (props: UseFileOperationsProps) => {
         setDeleting(null)
       }
     },
-    canPaste: () => clipboard() !== null && !request.pending(),
+    canPaste: () => !request.pending() && canTransfer(clipboard()?.path, props),
     confirmDelete,
     copy: (selection: WorkspaceSelection) => capture(selection, 'copy'),
     cut: (selection: WorkspaceSelection) => capture(selection, 'cut'),

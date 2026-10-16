@@ -5,10 +5,16 @@ import {getPathSpecifier} from './get-path-specifier'
 import {readCodeSources} from './read-code-sources'
 import {readSource, resolveFile} from './file-access'
 import type {NavigationWorkspace} from './resolve-navigation'
+import type {SymbolLookup} from './types'
 
 interface PathNavigationOptions {
   readonly root: string
-  readonly symbols: NavigationWorkspace['definitions']
+  readonly symbols: (
+    path: string,
+    offset: number,
+    sources?: readonly CodeSource[],
+    lookup?: SymbolLookup,
+  ) => ReturnType<NavigationWorkspace['definitions']>
   readonly hasAnalyzer: (language: SyntaxLanguage) => boolean
   readonly resolveModule: (path: string, specifier: string) => string | undefined
   readonly refresh: () => void
@@ -17,9 +23,9 @@ interface PathNavigationOptions {
 /** Resolves import paths with current compiler settings or the workspace language analyzer. */
 export const createPathNavigation =
   (options: PathNavigationOptions): NavigationWorkspace['followPath'] =>
-  (path, offset, drafts: readonly CodeSource[] = []) => {
+  (path, offset, drafts, signal) => {
     options.refresh()
-    const sources = readCodeSources(options.root, drafts)
+    const sources = readCodeSources(options.root, drafts ?? [])
     if (!sources.ok) {
       return sources
     }
@@ -34,7 +40,7 @@ export const createPathNavigation =
     }
     const format = fileFormat(path)
     if (format?.kind === 'syntax' && options.hasAnalyzer(format.language)) {
-      return options.symbols(path, offset, drafts)
+      return options.symbols(path, offset, drafts ?? [], {kind: 'definition', signal})
     }
     const specifier = getPathSpecifier({offset, path, source: source.value})
     if (specifier === null) {

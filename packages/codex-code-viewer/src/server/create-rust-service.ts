@@ -3,6 +3,7 @@ import {failure, type Failure, type Result, success} from '../shared/contracts'
 import {createLspService} from './create-lsp-service'
 import type {RustProject} from './rust/types'
 import {resolveAnalyzer} from './rust/resolve-analyzer'
+import {withAbort} from './with-abort'
 const statusSchema = z.object({quiescent: z.boolean()})
 const startService = (project: RustProject, command: string) =>
   createLspService({
@@ -60,11 +61,20 @@ export const createRustService = (project: RustProject): ReturnType<typeof creat
       stopped.resolve(failure('rust-analysis-failed'))
       service?.dispose()
     },
+    lookupIndexedSymbols: async (path, source, offset, lookup) => {
+      if (disposed) {
+        return failure('rust-analysis-failed')
+      }
+      const prepared = await withAbort(Promise.race([prepare(), stopped.promise]), lookup.signal)
+      return prepared.ok
+        ? prepared.value.lookupIndexedSymbols(path, source, offset, lookup)
+        : prepared
+    },
     lookupSymbols: async (path, source, offset, lookup) => {
       if (disposed) {
         return failure('rust-analysis-failed')
       }
-      const prepared = await Promise.race([prepare(), stopped.promise])
+      const prepared = await withAbort(Promise.race([prepare(), stopped.promise]), lookup.signal)
       return prepared.ok ? prepared.value.lookupSymbols(path, source, offset, lookup) : prepared
     },
     update: (root, changes) => service?.update(root, changes),

@@ -1,5 +1,15 @@
 import {createHash} from 'node:crypto'
-import {accessSync, constants, mkdtempSync, readFileSync, rmSync, writeFileSync} from 'node:fs'
+import {
+  accessSync,
+  constants,
+  linkSync,
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from 'node:fs'
 import {tmpdir} from 'node:os'
 import {join} from 'node:path'
 import {gzipSync} from 'node:zlib'
@@ -48,6 +58,8 @@ describe('bundleRustAnalyzers', () => {
   })
   it('should fetch a new release instead of treating the previous release cache as corruption', async () => {
     await bundleRustAnalyzers({assets: [asset], output, version: 'first-version'})
+    const previous = join(output, 'previous-analyzer')
+    linkSync(join(output, 'rust/darwin-arm64/rust-analyzer'), previous)
     const updated = Buffer.from('updated analyzer fixture')
     const compressed = gzipSync(updated)
     fetch.mockResolvedValue(new Response(compressed))
@@ -57,7 +69,19 @@ describe('bundleRustAnalyzers', () => {
       version: 'second-version',
     })
     expect(readFileSync(join(output, 'rust/darwin-arm64/rust-analyzer'))).toEqual(updated)
+    expect(readFileSync(previous)).toEqual(executable)
     expect(fetch).toHaveBeenCalledTimes(2)
+  })
+  it('should discard staged output when replacing the executable fails', async () => {
+    const directory = join(output, 'rust/darwin-arm64')
+    const executablePath = join(directory, 'rust-analyzer')
+    mkdirSync(executablePath, {recursive: true})
+    writeFileSync(join(executablePath, 'retained'), 'previous output')
+    await expect(
+      bundleRustAnalyzers({assets: [asset], output, version: 'pinned-version'}),
+    ).rejects.toThrow()
+    expect(readFileSync(join(executablePath, 'retained'), 'utf8')).toBe('previous output')
+    expect(readdirSync(directory).sort()).toEqual(['pinned-version', 'rust-analyzer'])
   })
   it('should extract only the Windows executable from the official zip layout', async () => {
     const compressed = zipSync({

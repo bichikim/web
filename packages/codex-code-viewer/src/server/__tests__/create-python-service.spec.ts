@@ -86,6 +86,34 @@ describe('createPythonService', () => {
     expect(opened).toHaveLength(1)
     expect(changed).toHaveLength(0)
   })
+  it('should query indexed aliases without opening files or releasing an active draft', async () => {
+    const references = vi.fn((_value: unknown) => [
+      {
+        range: {end: {character: 7, line: 2}, start: {character: 0, line: 2}},
+        uri: pathToFileURL(`${root}/src/closed.py`).href,
+      },
+    ])
+    server.onRequest('textDocument/references', (value: unknown) => references(value))
+    await service.lookupSymbols(path, 'def greet(): pass', 4, {draft: true, kind: 'definition'})
+    expect(
+      await service.lookupIndexedSymbols(
+        `${root}/src/closed.py`,
+        'from main import greet as welcome',
+        26,
+        {kind: 'references'},
+      ),
+    ).toEqual({
+      ok: true,
+      value: [{column: 1, line: 3, path: `${root}/src/closed.py`}],
+    })
+    expect(references).toHaveBeenCalledWith({
+      context: {includeDeclaration: false},
+      position: {character: 26, line: 0},
+      textDocument: {uri: pathToFileURL(`${root}/src/closed.py`).href},
+    })
+    expect(opened).toHaveLength(1)
+    expect(closed).toEqual([])
+  })
   it('should finish pending requests when the analyzer exits', async () => {
     const requested = Promise.withResolvers<void>()
     definition.mockImplementation(() => {
@@ -96,6 +124,31 @@ describe('createPythonService', () => {
     await requested.promise
     process.emit('exit', 1)
     expect(await pending).toMatchObject({error: {code: 'python-analysis-failed'}, ok: false})
+  })
+  it('should publish partial results before completion and merge overlapping final locations', async () => {
+    const completed = Promise.withResolvers<unknown>()
+    const received = Promise.withResolvers<void>()
+    const uri = pathToFileURL(path).href
+    const location = {range: {end: {character: 8, line: 2}, start: {character: 3, line: 2}}, uri}
+    server.onNotification('textDocument/didOpen', () => {
+      server
+        .sendNotification('textDocument/publishDiagnostics', {diagnostics: [], uri, version: 1})
+        .catch(() => undefined)
+    })
+    server.onRequest('textDocument/references', async (params) => {
+      await server.sendNotification('$/progress', {
+        token: params.partialResultToken,
+        value: [location],
+      })
+      return completed.promise
+    })
+    const receive = vi.fn(() => received.resolve())
+    const result = service.lookupSymbols(path, 'greet()', 0, {kind: 'references', receive})
+    await received.promise
+    expect(receive).toHaveBeenCalledWith([{column: 4, line: 3, path}])
+    completed.resolve([location])
+    expect(await result).toEqual(success([{column: 4, line: 3, path}]))
+    expect(receive).toHaveBeenCalledTimes(1)
   })
   it('should synchronize edited source before requesting a new definition', async () => {
     await service.lookupSymbols(path, 'fn main() {}', 3, {kind: 'definition'})
@@ -205,5 +258,81 @@ describe('createPythonService', () => {
       },
       {disableOrganizeImports: true},
     ])
+  })
+  it('should cancel a pending request without restarting its initialized analyzer', async () => {
+    const started = Promise.withResolvers<void>()
+    server.onRequest('textDocument/definition', (_value, token) => {
+      started.resolve()
+      return new Promise((resolve) => {
+        token.onCancellationRequested(() => resolve([]))
+      })
+    })
+    const controller = new AbortController()
+    const pending = service.lookupSymbols(path, 'greet()', 0, {
+      kind: 'definition',
+      signal: controller.signal,
+    })
+    await started.promise
+    controller.abort()
+    await expect(pending).rejects.toThrow()
+    server.onRequest('textDocument/definition', (value) => definition(value))
+    expect(await service.lookupSymbols(path, 'greet()', 0, {kind: 'definition'})).toMatchObject({
+      ok: true,
+    })
+    expect(spawn).toHaveBeenCalledOnce()
+    expect(spawn.mock.results[0].value.kill).not.toHaveBeenCalled()
+  })
+  it('should preserve initialization after a caller cancels its wait', async () => {
+    const initialized = Promise.withResolvers<unknown>()
+    initialize.mockReturnValue(initialized.promise)
+    const controller = new AbortController()
+    const pending = service.lookupSymbols(path, 'greet()', 0, {
+      kind: 'definition',
+      signal: controller.signal,
+    })
+    controller.abort()
+    await expect(pending).rejects.toThrow()
+    initialized.resolve({capabilities: {definitionProvider: true}})
+    expect(await service.lookupSymbols(path, 'greet()', 0, {kind: 'definition'})).toMatchObject({
+      ok: true,
+    })
+    expect(spawn).toHaveBeenCalledOnce()
+  })
+  it('should cancel a queued lookup before the active request finishes', async () => {
+    const started = Promise.withResolvers<void>()
+    const response = Promise.withResolvers<unknown>()
+    definition.mockImplementationOnce(() => {
+      started.resolve()
+      return response.promise
+    })
+    const active = service.lookupSymbols(path, 'greet()', 0, {kind: 'definition'})
+    await started.promise
+    const controller = new AbortController()
+    let cancelled = false
+    const queued = service
+      .lookupSymbols(path, 'greet()', 0, {
+        kind: 'definition',
+        signal: controller.signal,
+      })
+      .catch((error: unknown) => {
+        cancelled = error === controller.signal.reason
+      })
+    controller.abort()
+    await new Promise<void>((resolve) => {
+      setImmediate(resolve)
+    })
+    try {
+      expect(cancelled).toBe(true)
+      expect(definition).toHaveBeenCalledOnce()
+    } finally {
+      response.resolve([])
+      await active
+      await queued
+    }
+    expect(await service.lookupSymbols(path, 'greet()', 0, {kind: 'definition'})).toMatchObject({
+      ok: true,
+    })
+    expect(definition).toHaveBeenCalledTimes(2)
+    expect(spawn).toHaveBeenCalledOnce()
   })
 })

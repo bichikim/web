@@ -40,7 +40,7 @@ export const createRubyNavigation = (root: string) => {
       const file = resolveFile(root, resolve(dirname(path), `${required.path}${extension}`))
       return success(file.ok ? [{column: 1, line: 1, path: relative(root, file.value)}] : [])
     }
-    const directory = projectRoot(path)
+    const directory = kind === 'references' ? root : projectRoot(path)
     let service = services.get(directory)
     if (service === undefined) {
       try {
@@ -50,12 +50,8 @@ export const createRubyNavigation = (root: string) => {
         return failure('ruby-analyzer-unavailable')
       }
     }
-    const result = await service.lookupSymbols(path, source, offset, lookup)
-    if (!result.ok) {
-      return result
-    }
-    return success(
-      result.value.flatMap((target) => {
+    const normalize = (targets: readonly CodeLocation[]): CodeLocation[] =>
+      targets.flatMap((target) => {
         const file = resolveFile(root, target.path)
         if (!file.ok) {
           return []
@@ -70,8 +66,16 @@ export const createRubyNavigation = (root: string) => {
           return []
         }
         return [{...target, column, path: relative(root, file.value)}]
-      }),
-    )
+      })
+    const progress =
+      lookup.receive === undefined
+        ? lookup
+        : {
+            ...lookup,
+            receive: (targets: readonly CodeLocation[]) => lookup.receive?.(normalize(targets)),
+          }
+    const result = await service.lookupSymbols(path, source, offset, progress)
+    return result.ok ? success(normalize(result.value)) : result
   }
   const dispose = (): void => {
     if (disposed) {

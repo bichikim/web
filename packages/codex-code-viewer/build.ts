@@ -11,6 +11,8 @@ import {inlineHtml} from './build/inline-html'
 import {bundleRustAnalyzers} from './build/bundle-rust-analyzers'
 import {syncPluginVersion} from './build/sync-plugin-version'
 import rustAnalyzers from './rust-analyzers.json' with {type: 'json'}
+import typescriptAnalyzers from './typescript-analyzers.json' with {type: 'json'}
+import {bundleTypescriptAnalyzers} from './build/bundle-typescript-analyzers'
 
 const root = dirname(fileURLToPath(import.meta.url))
 const output = `${root}/dist`
@@ -36,6 +38,7 @@ const template = await readFile(`${root}/index.html`, 'utf8')
 const html = inlineHtml({entrypoint: '/src/viewer/main.tsx', javascript, stylesheet, template})
 await mkdir(output, {recursive: true})
 await bundleRustAnalyzers({output, ...rustAnalyzers})
+await bundleTypescriptAnalyzers({output, ...typescriptAnalyzers})
 const library = dirname(typescript.getDefaultLibFilePath({}))
 const declarations = (await readdir(library)).filter(
   (file) => file.startsWith('lib.') && file.endsWith('.d.ts'),
@@ -162,7 +165,20 @@ const rustLicenses = await Promise.all(
       `## rust-analyzer/${file}\n\n${await readFile(`${root}/build/licenses/${file}`, 'utf8')}`,
   ),
 )
-const licenses = `${packageLicenses}\n${pdfLicenses.flat().join('\n\n')}\n${rustLicenses.join('\n\n')}\n`
+const typescriptNotices = await Promise.all(
+  typescriptAnalyzers.assets.map(async ({host}) => {
+    const directory = `${output}/typescript/${host}`
+    const license = await readFile(`${directory}/LICENSE`, 'utf8')
+    const notice = await readFile(`${directory}/NOTICE.txt`, 'utf8')
+    return `## TypeScript native ${typescriptAnalyzers.version} ${host}\n\n${license}\n\n${notice}`
+  }),
+)
+const licenses = [
+  packageLicenses,
+  ...pdfLicenses.flat(),
+  ...rustLicenses,
+  ...typescriptNotices,
+].join('\n\n')
 const plugin = `${output}/plugin`
 await rm(plugin, {force: true, recursive: true})
 await mkdir(`${plugin}/dist`, {recursive: true})
@@ -177,6 +193,12 @@ await Promise.all([
   ),
   cp(`${root}/assets`, `${plugin}/assets`, {recursive: true}),
   cp(`${output}/python`, `${plugin}/dist/python`, {recursive: true}),
+  ...typescriptAnalyzers.assets.map(async ({host}) => {
+    await cp(`${output}/typescript/${host}`, `${plugin}/dist/typescript/${host}`, {
+      filter: (path) => !path.endsWith('.tgz'),
+      recursive: true,
+    })
+  }),
   ...rustAnalyzers.assets.map(async ({host}) => {
     const binary = host.startsWith('win32-') ? 'rust-analyzer.exe' : 'rust-analyzer'
     await mkdir(`${plugin}/dist/rust/${host}`, {recursive: true})

@@ -24,6 +24,71 @@ describe('createServer', () => {
     await client.close()
     await instance.dispose()
   })
+  it('should transport large source in revision-bound bounded chunks', async () => {
+    const root = mkdtempSync(join(tmpdir(), 'viewer-chunks-'))
+    const source = `${'a'.repeat(1048575)}😀\r\nend`
+    const path = join(root, 'large.txt')
+    writeFileSync(path, source)
+    try {
+      const opened = await client.callTool({arguments: {path}, name: 'code.open'})
+      const connection = sessionSchema.parse(opened.structuredContent)
+      expect(connection.document).toMatchObject({
+        readOnly: true,
+        source: '',
+        sourceLength: source.length,
+      })
+      expect(JSON.stringify(opened).length).toBeLessThan(10000)
+      const parts: string[] = []
+      let offset = 0
+      while (offset < source.length) {
+        // oxlint-disable-next-line no-await-in-loop -- Validate each returned source cursor before advancing it.
+        const result = await client.callTool({
+          arguments: {
+            offset,
+            path: 'large.txt',
+            revision: connection.document.revision,
+            session: connection.session,
+          },
+          name: 'code.source',
+        })
+        const chunk = z
+          .object({data: z.string().max(1048576), next: z.number()})
+          .parse(result.structuredContent)
+        parts.push(chunk.data)
+        offset = chunk.next
+      }
+      expect(parts.join('')).toBe(source)
+      writeFileSync(path, source.replace('end', 'new'))
+      expect(
+        (
+          await client.callTool({
+            arguments: {
+              offset: 0,
+              path: 'large.txt',
+              revision: connection.document.revision,
+              session: connection.session,
+            },
+            name: 'code.source',
+          })
+        ).structuredContent,
+      ).toMatchObject({code: 'stale-document'})
+      expect(
+        (
+          await client.callTool({
+            arguments: {
+              offset: 0,
+              path: 'large.txt',
+              revision: connection.document.revision,
+              session: 'missing',
+            },
+            name: 'code.source',
+          })
+        ).structuredContent,
+      ).toMatchObject({code: 'session-expired'})
+    } finally {
+      rmSync(root, {force: true, recursive: true})
+    }
+  })
   it('should advertise the released package version to the MCP client', () => {
     expect(client.getServerVersion()?.version).toBe(version)
   })

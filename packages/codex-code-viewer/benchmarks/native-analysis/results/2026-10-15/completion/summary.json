@@ -1,0 +1,98 @@
+[
+  {
+    "name": "getWindow",
+    "variant": "before",
+    "phase": "cold",
+    "count": 102,
+    "samples": 7,
+    "first": 322.46975,
+    "complete": 4298.611875,
+    "firstRange": [284.023209, 613.232875],
+    "completeRange": [3986.91025, 5301.081792],
+    "preparation": 0
+  },
+  {
+    "name": "getWindow",
+    "variant": "before",
+    "phase": "repeat",
+    "count": 102,
+    "samples": 7,
+    "first": 48.227125,
+    "complete": 48.262167,
+    "firstRange": [43.455833, 55.837166],
+    "completeRange": [43.491791, 55.873958],
+    "preparation": 0
+  },
+  {
+    "name": "getWindow",
+    "variant": "after",
+    "phase": "cold",
+    "count": 102,
+    "samples": 7,
+    "first": 291.109875,
+    "complete": 4375.673542,
+    "firstRange": [287.421125, 348.707083],
+    "completeRange": [3878.469916, 4539.2175],
+    "preparation": 0
+  },
+  {
+    "name": "getWindow",
+    "variant": "after",
+    "phase": "repeat",
+    "count": 102,
+    "samples": 7,
+    "first": 44.573666,
+    "complete": 44.609541,
+    "firstRange": [41.490292, 50.333792],
+    "completeRange": [41.523958, 50.36825],
+    "preparation": 0
+  },
+  {
+    "name": "javascript",
+    "variant": "before",
+    "phase": "cold",
+    "count": 6,
+    "samples": 3,
+    "first": 295.115375,
+    "complete": 4762.358542,
+    "firstRange": [284.580125, 299.758333],
+    "completeRange": [4683.492417, 5339.317334],
+    "preparation": 0
+  },
+  {
+    "name": "javascript",
+    "variant": "before",
+    "phase": "repeat",
+    "count": 6,
+    "samples": 3,
+    "first": 44.521166,
+    "complete": 44.53475,
+    "firstRange": [42.847, 44.548],
+    "completeRange": [42.860541, 44.562167],
+    "preparation": 0
+  },
+  {
+    "name": "javascript",
+    "variant": "after",
+    "phase": "cold",
+    "count": 6,
+    "samples": 3,
+    "first": 287.932459,
+    "complete": 5229.016084,
+    "firstRange": [287.182625, 288.190333],
+    "completeRange": [4628.420792, 6262.022167],
+    "preparation": 0
+  },
+  {
+    "name": "javascript",
+    "variant": "after",
+    "phase": "repeat",
+    "count": 6,
+    "samples": 3,
+    "first": 43.510459,
+    "complete": 43.530917,
+    "firstRange": [41.492875, 46.673708],
+    "completeRange": [41.5055, 46.687042],
+    "preparation": 0
+  }
+]

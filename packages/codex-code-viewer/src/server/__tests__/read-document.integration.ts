@@ -97,11 +97,17 @@ describe('readDocument', () => {
       )
     }
   })
-  it('should preserve image-only preview for SVG larger than the source limit', () => {
+  it('should open large SVG source without eagerly highlighting its full contents', () => {
     writeFileSync(join(root, 'large.svg'), `<svg>${' '.repeat(524288)}</svg>`)
     expect(readDocument(root, 'large.svg')).toMatchObject({
       ok: true,
-      value: {media: {mimeType: 'image/svg+xml'}, source: ''},
+      value: {
+        lineCount: 1,
+        lines: [],
+        media: {mimeType: 'image/svg+xml'},
+        readOnly: true,
+        source: `<svg>${' '.repeat(524288)}</svg>`,
+      },
     })
   })
   it('should read other lock files as plain text instead of TOML', () => {
@@ -202,14 +208,32 @@ describe('readDocument', () => {
       },
     })
   })
-  it('should reject directories and oversized text', () => {
+  it('should reject directories', () => {
     mkdirSync(join(root, 'folder.png'))
-    writeFileSync(join(root, 'large.txt'), 'a'.repeat(524289))
     expect(readDocument(root, 'folder.png')).toMatchObject({
       error: {code: 'unsupported-file'},
       ok: false,
     })
-    expect(readDocument(root, 'large.txt')).toMatchObject({error: {code: 'too-large'}, ok: false})
+  })
+  it.each(['txt', 'ts', 'py', 'rb', 'rs', 'md', 'csv'])(
+    'should open large %s source for viewport rendering',
+    (extension) => {
+      const source = `${'// padding\r\n'.repeat(50000)}export const target = 1\n`
+      writeFileSync(join(root, `large.${extension}`), source)
+      expect(readDocument(root, `large.${extension}`, 50001)).toMatchObject({
+        ok: true,
+        value: {lineCount: 50002, lines: [], location: {line: 50001}, readOnly: true, source},
+      })
+    },
+  )
+  it('should reject text above the viewing limit before reading its contents', () => {
+    const path = join(root, 'oversized.txt')
+    writeFileSync(path, '')
+    truncateSync(path, 33554433)
+    expect(readDocument(root, 'oversized.txt')).toMatchObject({
+      error: {code: 'text-too-large'},
+      ok: false,
+    })
   })
   it('should reject media larger than 128 MiB before transferring any bytes', () => {
     const path = join(root, 'large.mp4')

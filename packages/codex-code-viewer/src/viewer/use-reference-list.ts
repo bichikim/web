@@ -1,5 +1,5 @@
-import {type Accessor, createMemo, createSignal} from 'solid-js'
-import type {NavigationLocation} from '../shared/contracts'
+import {type Accessor, createEffect, createMemo, createSignal, on} from 'solid-js'
+import type {NavigationGroup, NavigationLocation} from '../shared/contracts'
 import {useVirtualTree} from './use-virtual-tree'
 
 interface ReferenceHeader {
@@ -14,34 +14,49 @@ interface ReferenceDestination {
 type ReferenceRow = ReferenceHeader | ReferenceDestination
 interface ReferenceListOptions {
   readonly element: Accessor<HTMLDivElement | null>
+  readonly filter?: Accessor<string>
+  readonly groups?: Accessor<readonly NavigationGroup[]>
   readonly locations: Accessor<readonly NavigationLocation[]>
   readonly rowHeight?: Accessor<number>
 }
 export const REFERENCE_ROW_HEIGHT = 40
 const VIRTUAL_THRESHOLD = 200
 
+const fileKey = (path: string): string => JSON.stringify(['file', path])
+
+const rowKey = (row: ReferenceRow): string =>
+  row.kind === 'header'
+    ? JSON.stringify(['header', row.path])
+    : JSON.stringify(['destination', row.location.path, row.location.line, row.location.column])
+
 /** Windows expanded reference groups and keeps keyboard destinations mounted before focusing. */
 export const useReferenceList = (options: ReferenceListOptions) => {
-  const entries = createMemo(() =>
-    [...Map.groupBy(options.locations(), (location) => location.path)]
-      .flatMap(([path, locations]): ReferenceRow[] => [
-        {count: locations.length, kind: 'header', path},
-        ...locations.map((location): ReferenceDestination => ({kind: 'destination', location})),
+  const entries = createMemo(() => {
+    const locations = Map.groupBy(options.locations(), (location) => location.path)
+    const groups = new Map((options.groups?.() ?? []).map((group) => [group.path, group.count]))
+    const paths = new Set([...groups.keys(), ...locations.keys()])
+    return [...paths]
+      .flatMap((path): ReferenceRow[] => [
+        {count: groups.get(path) ?? locations.get(path)?.length ?? 0, kind: 'header', path},
+        ...(locations.get(path) ?? []).map(
+          (location): ReferenceDestination => ({kind: 'destination', location}),
+        ),
       ])
-      .map((row) => ({
-        key:
-          row.kind === 'header'
-            ? JSON.stringify(['header', row.path])
-            : JSON.stringify([
-                'destination',
-                row.location.path,
-                row.location.line,
-                row.location.column,
-              ]),
-        row,
-      })),
+      .map((row) => ({key: rowKey(row), row}))
+  })
+  const lookup = createMemo(
+    () =>
+      new Map(
+        entries().flatMap((entry) =>
+          entry.row.kind === 'header'
+            ? [
+                [entry.key, entry],
+                [fileKey(entry.row.path), entry],
+              ]
+            : [[entry.key, entry]],
+        ),
+      ),
   )
-  const lookup = createMemo(() => new Map(entries().map((entry) => [entry.key, entry])))
   const headers = createMemo(
     () =>
       new Map(entries().flatMap(({key, row}) => (row.kind === 'header' ? [[row.path, key]] : []))),
@@ -51,20 +66,33 @@ export const useReferenceList = (options: ReferenceListOptions) => {
     const hidden = collapsed()
     return entries().filter(({row}) => row.kind === 'header' || !hidden.has(row.location.path))
   })
-  const paths = createMemo(() => visible().map((entry) => entry.key))
+  const rowKeys = createMemo(() => visible().map((entry) => entry.key))
+  const paths = createMemo(() =>
+    visible().flatMap(({key, row}) => (row.kind === 'header' ? [key, fileKey(row.path)] : [key])),
+  )
   const positions = createMemo(() => new Map(paths().map((key, index) => [key, index + 1])))
   const virtual = () => entries().length > VIRTUAL_THRESHOLD
   const [active, setActive] = createSignal<string | null>(null)
   const window = useVirtualTree({
-    active,
+    active: () => lookup().get(active() ?? '')?.key ?? null,
     current: () => '',
     element: options.element,
-    paths,
+    paths: rowKeys,
     rowHeight: options.rowHeight ?? (() => REFERENCE_ROW_HEIGHT),
   })
+  createEffect(
+    on(
+      options.filter ?? (() => ''),
+      () => {
+        setActive(null)
+        window.reveal(rowKeys()[0] ?? null)
+      },
+      {defer: true},
+    ),
+  )
   const move = (key: string): void => {
     setActive(key)
-    window.reveal(key)
+    window.reveal(lookup().get(key)?.key ?? key)
     const focus = (): void =>
       Array.from(options.element()?.querySelectorAll<HTMLButtonElement>('button[value]') ?? [])
         .find((button) => button.value === key)
@@ -101,10 +129,14 @@ export const useReferenceList = (options: ReferenceListOptions) => {
     }
     if (entry?.row.kind === 'header' && event.key === 'ArrowRight') {
       event.preventDefault()
+      if (keys[current] === fileKey(entry.row.path)) {
+        move(entry.key)
+        return
+      }
       if (collapsed().has(entry.row.path)) {
         expand(entry.row.path, true)
       } else {
-        move(keys[current + 1] ?? entry.key)
+        move(keys[current + 2] ?? entry.key)
       }
       return
     }
@@ -127,6 +159,7 @@ export const useReferenceList = (options: ReferenceListOptions) => {
       return row?.kind === 'destination' ? row : null
     },
     expanded: (path: string): boolean => !collapsed().has(path),
+    fileKey,
     focus: setActive,
     gap: (key: string): number => (virtual() ? window.gap(key) : 0),
     handleKeyboard,
@@ -135,7 +168,7 @@ export const useReferenceList = (options: ReferenceListOptions) => {
       return row?.kind === 'header' ? row : null
     },
     position: (key: string): number | undefined => positions().get(key),
-    rows: createMemo(() => (virtual() ? window.paths() : paths())),
+    rows: createMemo(() => (virtual() ? window.paths() : rowKeys())),
     scroll: window.scroll,
     size: () => paths().length,
     toggle: (path: string): void => expand(path, collapsed().has(path)),

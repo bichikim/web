@@ -66,6 +66,46 @@ const closeStream = async (
   }
 }
 
+const appendDiscoveries = (
+  previous: ReferenceChoices | null,
+  next: ReferenceChoices,
+): ReferenceChoices => ({
+  ...next,
+  groups:
+    next.groups ?? (previous !== null && previous.kind === next.kind ? previous.groups : undefined),
+  locations: [
+    ...(previous !== null && previous.kind === next.kind ? previous.locations : []),
+    ...next.locations,
+  ],
+})
+
+const readSnapshot = (options: DefinitionNavigationOptions): NavigationSnapshot | null => {
+  const current = options.session()
+  return current === null
+    ? null
+    : {
+        path: current.document.location.path,
+        revision: options.revision?.() ?? current.document.revision,
+        session: current.session,
+        sources: options.sources?.() ?? [],
+      }
+}
+
+const retainOrigin = (
+  before: NavigationSnapshot,
+  after: NavigationSnapshot | null,
+  operation: AbortController,
+): boolean => {
+  if (sameNavigation(before, after)) {
+    return true
+  }
+  operation.abort()
+  return false
+}
+
+const completeReferences = (previous: ReferenceChoices | null): ReferenceChoices | null =>
+  previous === null ? null : {...previous, status: 'complete'}
+
 /** Follows a unique definition or exposes destinations and unresolved/ambiguous result feedback. */
 export const useDefinitionNavigation = (
   options: DefinitionNavigationOptions,
@@ -81,17 +121,7 @@ export const useDefinitionNavigation = (
     controller = null
     setReferences(null)
   }
-  const snapshot = (): NavigationSnapshot | null => {
-    const current = options.session()
-    return current === null
-      ? null
-      : {
-          path: current.document.location.path,
-          revision: options.revision?.() ?? current.document.revision,
-          session: current.session,
-          sources: options.sources?.() ?? [],
-        }
-  }
+  const snapshot = (): NavigationSnapshot | null => readSnapshot(options)
   createEffect(() => {
     const current = snapshot()
     if (origin !== null && !sameNavigation(origin, current)) {
@@ -160,25 +190,39 @@ export const useDefinitionNavigation = (
       try {
         const definition = await readNavigationStream({
           call: options.port.call,
-          receive: (locations) => {
-            if (!sameNavigation(current, snapshot())) {
-              operation.abort()
+          receive: (locations, groups) => {
+            if (!retainOrigin(current, snapshot(), operation)) {
               return
             }
-            setReferences((previous) => ({
-              label: token.text,
-              locations: [...(previous?.locations ?? []), ...locations],
-              point,
-              status: 'searching',
-            }))
+            setReferences((previous) =>
+              appendDiscoveries(previous, {
+                groups,
+                label: token.text,
+                locations,
+                point,
+                status: 'searching',
+              }),
+            )
+          },
+          receiveDefinitions: (locations) => {
+            if (!retainOrigin(current, snapshot(), operation)) {
+              return
+            }
+            setReferences((previous) =>
+              appendDiscoveries(previous, {
+                kind: 'definition',
+                label: token.text,
+                locations,
+                point,
+                status: 'searching',
+              }),
+            )
           },
           signal: operation.signal,
           url: result.url,
         })
         if (definition === null) {
-          setReferences((previous) =>
-            previous === null ? null : {...previous, status: 'complete'},
-          )
+          setReferences(completeReferences)
         } else {
           await showDefinitions(definition.locations, token.text, point)
         }

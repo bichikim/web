@@ -1,5 +1,5 @@
 import {type Accessor, createEffect} from 'solid-js'
-import {Compartment, type Extension} from '@codemirror/state'
+import {Compartment, EditorState, type Extension} from '@codemirror/state'
 import {EditorView} from '@codemirror/view'
 import {useTranslations} from '../locale/use-translations'
 
@@ -9,13 +9,16 @@ export const useEditorAccessibility = (
 ): Accessor<Extension> => {
   const t = useTranslations()
   const compartment = new Compartment()
-  const attributes = (): Extension =>
+  const attributes = (): Extension => [
+    EditorState.phrases.of({'Fold line': t('접기'), 'Unfold line': t('펼치기')}),
     EditorView.contentAttributes.of({
       'aria-label': t('코드 편집기'),
       'aria-multiline': 'true',
       role: 'textbox',
       spellcheck: 'false',
-    })
+      tabindex: '0',
+    }),
+  ]
   createEffect(() => {
     const editor = view()
     const extension = attributes()

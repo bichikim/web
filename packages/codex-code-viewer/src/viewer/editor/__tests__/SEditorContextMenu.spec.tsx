@@ -54,4 +54,15 @@ describe('SEditorContextMenu', () => {
     fireEvent.keyDown(paste, {ctrlKey: true, key: 'v'})
     expect(onPaste).toHaveBeenCalledOnce()
   })
+  it('should disable and skip paste when there is no available paste action', () => {
+    const onFind = vi.fn()
+    const onClose = vi.fn()
+    render(() => <SEditorContextMenu x={80} y={100} onFind={onFind} onClose={onClose} />)
+    expect(screen.getByRole('menuitem', {name: '붙여넣기 ⌘/Ctrl V'})).toBeDisabled()
+    expect(document.activeElement).toBe(
+      screen.getByRole('menuitem', {name: '파일 내 검색 ⌘/Ctrl F'}),
+    )
+    fireEvent.keyDown(document.activeElement!, {ctrlKey: true, key: 'v'})
+    expect(onClose).not.toHaveBeenCalled()
+  })
 })

@@ -204,13 +204,15 @@ describe('useViewer navigation', () => {
     expect(viewer.search()).toBe('editor')
   })
 
-  it('should expose ambiguous definitions and preserve choices when dismissing their notice', async () => {
+  it('should expose ambiguous definitions without a redundant notice', async () => {
     const port = createPort()
     const viewer = mount(port)
     const locations = [document('first.ts').location, document('second.ts').location]
+    viewer.reportError(new Error('earlier failure'))
     vi.mocked(port.call).mockResolvedValueOnce({content: [], structuredContent: {locations}})
     await viewer.follow({kind: 'identifier', navigation: 'definition', offset: 0, text: 'Report'})
-    expect(viewer.notice()?.message).toBe('이동할 정의를 선택하세요.')
+    expect(viewer.notice()).toBeNull()
+    expect(viewer.references()).toMatchObject({kind: 'definition', locations})
     viewer.dismissNotice()
     expect(viewer.notice()).toBeNull()
     expect(viewer.choices()).toEqual(locations)
