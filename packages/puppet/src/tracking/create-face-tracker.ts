@@ -45,18 +45,8 @@ export const createFaceTracker = (options: CreateFaceTrackerOptions) => {
     const simd = await FilesetResolver.isSimdSupported()
     if (!disposed) {
       worker.postMessage({
-        runtime: new URL('/tracking/vendor/vision_bundle.js', location.href).href,
+        simd,
         type: 'initialize',
-        wasm: {
-          wasmBinaryPath: new URL(
-            `/tracking/vendor/vision_wasm_${simd ? '' : 'nosimd_'}internal.wasm`,
-            location.href,
-          ).href,
-          wasmLoaderPath: new URL(
-            `/tracking/vendor/vision_wasm_${simd ? '' : 'nosimd_'}internal.js`,
-            location.href,
-          ).href,
-        },
       })
     }
   }

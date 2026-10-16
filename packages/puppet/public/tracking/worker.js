@@ -4,8 +4,19 @@ globalThis.onmessage = async (event) => {
   const message = event.data
   try {
     if (message.type === 'initialize') {
-      importScripts(message.runtime)
-      tracker = await Vision.FaceLandmarker.createFromOptions(message.wasm, {
+      if (typeof message.simd !== 'boolean') {
+        throw new Error('추적 WASM 설정이 올바르지 않습니다.')
+      }
+      importScripts('/tracking/vendor/vision_bundle.js')
+      const wasm = {
+        wasmBinaryPath: message.simd
+          ? '/tracking/vendor/vision_wasm_internal.wasm'
+          : '/tracking/vendor/vision_wasm_nosimd_internal.wasm',
+        wasmLoaderPath: message.simd
+          ? '/tracking/vendor/vision_wasm_internal.js'
+          : '/tracking/vendor/vision_wasm_nosimd_internal.js',
+      }
+      tracker = await Vision.FaceLandmarker.createFromOptions(wasm, {
         baseOptions: {delegate: 'CPU', modelAssetPath: '/tracking/face.task'},
         numFaces: 1,
         outputFaceBlendshapes: true,
