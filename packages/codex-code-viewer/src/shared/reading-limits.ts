@@ -1,0 +1,2 @@
+export const MAX_TEXT_BYTES = 33554432
+export const SOURCE_CHUNK_LENGTH = 1048576

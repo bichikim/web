@@ -28,7 +28,7 @@ const transport = new StdioClientTransport({
   args: [new URL('./dist/server.js', import.meta.url).pathname],
   command: process.execPath,
   env: Object.fromEntries(
-    ['GEM_HOME', 'GEM_PATH', 'RUBY_BINARY', 'SOLARGRAPH_BINARY'].flatMap((name) => {
+    ['CODEX_HOME', 'GEM_HOME', 'GEM_PATH', 'RUBY_BINARY', 'SOLARGRAPH_BINARY'].flatMap((name) => {
       const value = process.env[name]
       return value === undefined ? [] : [[name, value]]
     }),
@@ -43,6 +43,7 @@ const allowed = new Set([
   'code.open',
   'code.attach',
   'code.read',
+  'code.source',
   'code.write',
   'code.create',
   'code.entry',

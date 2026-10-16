@@ -30,6 +30,20 @@ describe('useCodeEditing', () => {
       return {editing, port, setCurrent}
     })
   afterEach(() => dispose())
+  it('should keep a viewport document read-only even when editing was enabled for another file', () => {
+    const {editing, port, setCurrent} = mount()
+    editing.toggle()
+    const large = session('large.ts', 'large original')
+    large.document.readOnly = true
+    setCurrent(large)
+    expect(editing.editable()).toBe(false)
+    editing.change('replacement')
+    editing.markDeleted(large)
+    expect(editing.source()).toBe('large original')
+    expect(editing.dirty()).toBe(false)
+    expect(editing.sources()).toEqual([])
+    expect(port.call).not.toHaveBeenCalled()
+  })
   it.each(['original', '', 'edited draft'])(
     'should consider deletion a pending change and recreate %j on save',
     async (source) => {
@@ -48,6 +62,23 @@ describe('useCodeEditing', () => {
       expect(editing.dirty()).toBe(false)
     },
   )
+  it('should bind a retained deleted draft to the accepted replacement session', async () => {
+    const {editing, port, setCurrent} = mount()
+    editing.change('retained draft')
+    editing.markDeleted(session())
+    const replacement = {...session(), session: 'replacement'}
+    setCurrent(replacement)
+    editing.markDeleted(replacement)
+    expect(editing.draftDocument('/project', 'main.ts')?.source).toBe('original')
+    expect(editing.source()).toBe('retained draft')
+    expect(await editing.save()).toBe(true)
+    expect(port.call).toHaveBeenCalledWith('code.write', {
+      path: 'main.ts',
+      revision: null,
+      session: 'replacement',
+      source: 'retained draft',
+    })
+  })
   it('should remove the deleted draft when discarding it', () => {
     const {editing} = mount()
     editing.change('edited draft')

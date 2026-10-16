@@ -6,7 +6,7 @@ interface FileMutationHandlerProps {
   readonly go: (location: CodeLocation) => Promise<void>
   readonly onMove?: (session: ViewerSession) => void
   readonly onChange: (change: FileMutation) => void
-  readonly receive: (value: ViewerConnection) => Promise<void>
+  readonly onDeleted: () => Promise<void>
   readonly session: Accessor<ViewerConnection | null>
 }
 /** Updates file history and the displayed document after a workspace entry changes. */
@@ -34,7 +34,7 @@ export const createFileMutationHandler =
         })
         return
       case 'delete':
-        await props.receive({session: current.session, workspace: current.workspace})
+        await props.onDeleted()
         return
       default: {
         const exhaustive: never = change.action

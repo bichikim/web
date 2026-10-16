@@ -1,0 +1,20 @@
+{
+  "binary": "/Users/bichi/.codex/worktrees/379e/web/node_modules/.pnpm/@typescript+typescript-darwin-arm64@7.0.2/node_modules/@typescript/typescript-darwin-arm64/lib/tsc",
+  "nativeVersion": "Version 7.0.2",
+  "node": "v24.15.0",
+  "hashes": {
+    "/Users/bichi/.codex/worktrees/379e/web/node_modules/.pnpm/@typescript+typescript-darwin-arm64@7.0.2/node_modules/@typescript/typescript-darwin-arm64/lib/tsc": "a82f731365ad69d5c4c15f5e18fba4584bf3b7b839960172a76c3462b5114bf2",
+    "/private/tmp/code-viewer-native-analysis/existing/workspace.js": "8572b968dc25619c33e259e873dffb254d37f37dbc9ca2d4eeb69d0316e7fdbb",
+    "/private/tmp/code-viewer-native-analysis/existing/navigation-worker.js": "0bdaa92dd33965774cf27e2ae34b418135794aa1fc6d226ae704d82061f5739e",
+    "/Users/bichi/.codex/worktrees/379e/web/packages/codex-code-viewer/benchmarks/native-analysis/measure.ts": "b5e593e909593d4218bf80bc718164a6290bc500110bd93a7a4da82e448ea6a1",
+    "/Users/bichi/.codex/worktrees/379e/web/packages/codex-code-viewer/benchmarks/native-analysis/create-lsp-experiment.ts": "a475e552ad0b8d2437ab3d7e4c2a97b75ff6fdb53a694e0992dd9675097bcd08"
+  },
+  "existingVersion": "6.0.3",
+  "records": 330,
+  "platform": "macOS arm64",
+  "projectRepresentatives": 25,
+  "discoveredSources": 6545,
+  "existingBundleUnchanged": true,
+  "method": "Fresh independent processes and empty CODEX_HOME; OS file caches retained; existing/native/native-opened rotated in order. Five pairs for two main TS queries, three for others. Initial source/manifest read excluded; native spawn/initialize/opening included. Existing product cache retained; native direct LSP repeat has no completed-result cache. Server first nonempty result, not UI paint.",
+  "reproductionBundleIdentical": true
+}

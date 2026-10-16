@@ -1,10 +1,23 @@
-import {EditorState} from '@codemirror/state'
+import {EditorState, Text} from '@codemirror/state'
 import {javascript} from '@codemirror/lang-javascript'
 import {createEditorLanguage} from '../create-editor-language'
 import {describe, expect, it} from 'vitest'
+import {createEditorOffsets} from '../create-editor-offsets'
 import {navigationToken} from '../navigation-token'
 
 describe('navigationToken', () => {
+  it('should retain original source positions when a readonly document has mixed line endings', () => {
+    const source = 'const answer = 1\r\n// line\ranswer()\n'
+    const offsets = createEditorOffsets(source)
+    const state = EditorState.create({
+      doc: Text.of(source.split(/\r\n|\r|\n/u)),
+      extensions: [EditorState.lineSeparator.of('\r\n'), createEditorLanguage('main.ts')],
+    })
+    const position = source.lastIndexOf('answer') + 2
+    expect(
+      navigationToken(state, offsets.toEditor(position), 'main.ts', offsets.toSource),
+    ).toMatchObject({navigation: 'definition', offset: position, text: 'answer'})
+  })
   it.each([0, 2, 5])('should navigate a Rust raw identifier at offset %s', (relative) => {
     const doc = 'fn r#type() {}\nfn main() { r#type(); }'
     const state = EditorState.create({doc, extensions: createEditorLanguage('main.rs')})

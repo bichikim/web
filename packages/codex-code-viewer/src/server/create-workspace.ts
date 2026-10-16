@@ -1,24 +1,17 @@
+import {createSourceSynchronization} from './create-source-synchronization'
 import {createProjectLanguages} from './create-project-languages'
-import {createCodeLocationReader} from './create-code-location-reader'
+import {createWorkspaceSymbols} from './create-workspace-symbols'
 import {realpathSync, statSync} from 'node:fs'
-import {relative, resolve, sep} from 'node:path'
+import {join, resolve} from 'node:path'
+import {homedir} from 'node:os'
 import {createPathNavigation} from './create-path-navigation'
-import {
-  type CodeLocation,
-  type CodeSource,
-  failure,
-  type Result,
-  success,
-  type WorkspaceEntry,
-} from '../shared/contracts'
-import {readCodeSources} from './read-code-sources'
+import {type CodeSource, type WorkspaceEntry, type WorkspaceTree} from '../shared/contracts'
 import {writeSource} from './write-source'
 import {createEntry} from './create-entry'
 import {createFileOperations} from './file-operations'
 import {createSyntaxNavigation} from './create-syntax-navigation'
 import {fileFormat} from '../shared/file-formats'
-import {createLanguageService} from './create-language-service'
-import {findWorkspace, readSource, resolveFile} from './file-access'
+import {findWorkspace} from './file-access'
 import {createDocumentReader} from './create-document-reader'
 import {createFileIndex, type FileIndex} from './create-file-index'
 import {readMedia} from './read-media'
@@ -27,9 +20,23 @@ import {createNavigationStream, type SymbolLookupOptions} from './create-navigat
 import {
   createNavigationCache,
   createNavigationIndex,
+  createSourceIndexStore,
+  type NavigationCheckpoint,
   type NavigationReview,
 } from './navigation-cache'
 import {observeNavigationConfiguration} from './observe-navigation-configuration'
+import type {DefinitionLookup, ReferenceLookup} from './types'
+import {createNativeSymbols} from './native/create-native-symbols'
+import {isSupportedSource} from './native/is-supported-source'
+import {createWorkerSymbols} from './create-worker-symbols'
+
+const navigationStorageDirectory = (): string =>
+  join(
+    process.env.CODEX_HOME || join(homedir(), '.codex'),
+    'cache',
+    'codex-code-viewer',
+    'navigation',
+  )
 
 const createOpenedReader =
   (reader: ReturnType<typeof createDocumentReader>, index: Pick<FileIndex, 'open'>) =>
@@ -41,14 +48,83 @@ const createOpenedReader =
     return result
   }
 
-export const createWorkspace = (anchor: string) => {
+interface WarmNavigationOptions {
+  readonly busy?: () => boolean
+  readonly checkpoint?: (signal: AbortSignal) => Promise<NavigationCheckpoint>
+  readonly prepare: (path: string, discovery?: WorkspaceTree) => Promise<boolean>
+  readonly refresh: () => void
+  readonly signal: AbortSignal
+}
+const createWarmNavigation =
+  ({busy, checkpoint, prepare, refresh, signal}: WarmNavigationOptions) =>
+  async (path: string): Promise<boolean> => {
+    if (!isSupportedSource(path) || signal.aborted || busy?.() === true) {
+      return false
+    }
+    refresh()
+    try {
+      const snapshot = await checkpoint?.(signal)
+      signal.throwIfAborted()
+      return await prepare(path, snapshot?.discovery)
+    } catch {
+      return false
+    }
+  }
+
+interface WorkspacePreparationOptions {
+  readonly discover: () => Promise<NavigationCheckpoint>
+  readonly prepare: (path: string) => Promise<boolean>
+  readonly signal: AbortSignal
+}
+const startWorkspacePreparation = ({
+  discover,
+  prepare,
+  signal,
+}: WorkspacePreparationOptions): Promise<boolean> =>
+  discover()
+    .then((listing) => {
+      const source = listing.discovery?.files.find((file) => isSupportedSource(file.path))
+      if (signal.aborted || source === undefined) {
+        return false
+      }
+      return prepare(source.path)
+    })
+    .catch(() => false)
+
+interface WorkspaceScanOptions {
+  readonly background: Pick<
+    ReturnType<typeof createNavigationWorker>,
+    'prioritize' | 'changed' | 'start'
+  >
+  readonly cache: ReturnType<typeof createNavigationCache>
+  readonly reset: () => void
+}
+const createWorkspaceScan = ({background, cache, reset}: WorkspaceScanOptions) =>
+  async function* createWorkspaceScan(...input: Parameters<typeof cache.scan>) {
+    const release = background.prioritize()
+    try {
+      if (fileFormat(input[0].path)?.kind === 'code') {
+        background.start()
+      } else if (await background.changed(input[1])) {
+        reset()
+        cache.clear()
+      }
+      // oxlint-disable-next-line eslint-js/yield-star-spacing -- Oxfmt formats generator delegation with this spacing.
+      yield* cache.scan(...input)
+    } finally {
+      release()
+    }
+  }
+
+export const createWorkspace = (anchor: string, options: {readonly worker?: boolean} = {}) => {
   const canonical = realpathSync(anchor)
   const root = statSync(canonical).isDirectory() ? canonical : findWorkspace(canonical)
   const languages = createProjectLanguages(root)
   const navigation = createSyntaxNavigation(root)
   const index = createFileIndex(root)
   const reader = createDocumentReader(root)
-  const background = createNavigationWorker(root)
+  const native = options.worker === true ? createNativeSymbols(root) : undefined
+  const background = createNavigationWorker(root, languages.project)
   const configuration = observeNavigationConfiguration(index, {
     background,
     languages,
@@ -58,88 +134,33 @@ export const createWorkspace = (anchor: string) => {
   const navigationIndex = createNavigationIndex({
     changes: index,
     onConfigurationChange: configuration.reset,
-    onSourcesChange: (changes) =>
-      navigation.update(changes.map((change) => ({...change, path: resolve(root, change.path)}))),
+    root,
+    storage: createSourceIndexStore({
+      directory: navigationStorageDirectory(),
+      root,
+    }),
+  })
+  const synchronization = createSourceSynchronization({
+    onConfigurationChange: configuration.reset,
+    onSourcesChange: navigation.update,
     root,
   })
-  const symbols = (
-    path: string,
-    offset: number,
-    drafts: readonly CodeSource[] = [],
-    lookup: SymbolLookupOptions = {kind: 'definition'},
-  ): Result<CodeLocation[]> | Promise<Result<CodeLocation[]>> => {
-    configuration.refresh()
-    const {kind, retained = [], files: reviewed} = lookup
-    const sources = readCodeSources(root, drafts)
-    if (!sources.ok) {
-      return sources
-    }
-    const file = resolveFile(root, path)
-    if (!file.ok) {
-      return file
-    }
-    const draft = sources.value.get(file.value)
-    const source = draft === undefined ? readSource(root, path) : success(draft)
-    if (!source.ok) {
-      return source
-    }
-    if (offset < 0 || offset >= source.value.length) {
-      return failure('invalid-position')
-    }
+  const prepare = async (path: string, signal: AbortSignal): Promise<void> => {
     const format = fileFormat(path)
     if (format?.kind === 'syntax' && navigation.has(format.language)) {
-      return navigationIndex.refresh(lifetime.signal).then(() =>
-        navigation.lookupSymbols({
-          draft: draft !== undefined,
-          kind,
-          offset,
-          path: file.value,
-          source: source.value,
-        }),
-      )
+      await synchronization.refresh(format.language, AbortSignal.any([signal, lifetime.signal]))
     }
-    const language =
-      drafts.length === 0 ? languages.get(path) : createLanguageService(file.value, sources.value)
-    const locations = (
-      targets: readonly {fileName: string; textSpan: {start: number}}[],
-    ): Result<CodeLocation[]> => {
-      if (drafts.length > 0) {
-        language.dispose()
-      }
-      const readLocation = createCodeLocationReader(root, sources.value)
-      const unchanged = new Set(retained)
-      return success(
-        targets.flatMap((target) => {
-          if (unchanged.has(relative(root, target.fileName).split(sep).join('/'))) {
-            return []
-          }
-          const location = readLocation(target.fileName, target.textSpan.start)
-          return location.ok ? [location.value] : []
-        }),
-      )
-    }
-    if (kind === 'definition') {
-      return locations(language.definitions(file.value, offset))
-    }
-    const projectFiles =
-      reviewed === undefined
-        ? index.tree().then((tree) => tree.files.map((entry) => entry.path))
-        : Promise.resolve(reviewed)
-    return projectFiles.then((paths) =>
-      locations(
-        language.references(
-          file.value,
-          offset,
-          paths
-            .filter((path) => fileFormat(path)?.kind === 'code')
-            .flatMap((path) => {
-              const resolved = resolveFile(root, path)
-              return resolved.ok ? [resolved.value] : []
-            }),
-        ),
-      ),
-    )
   }
+  const symbols = createWorkspaceSymbols({
+    code:
+      native?.query ??
+      createWorkerSymbols({background, read: reader.read, signal: lifetime.signal}),
+    navigation,
+    prepare,
+    refresh: configuration.refresh,
+    root,
+    signal: lifetime.signal,
+  })
   const followPath = createPathNavigation({
     hasAnalyzer: navigation.has,
     refresh: configuration.refresh,
@@ -151,22 +172,56 @@ export const createWorkspace = (anchor: string) => {
   const cachedNavigation = createNavigationCache({
     index: navigationIndex,
     read: reader.read,
-    scan: createNavigationStream({background, followPath, read: reader.read, root, symbols}),
+    scan: createNavigationStream({
+      background,
+      followPath,
+      prepare,
+      read: reader.read,
+      root,
+      symbols,
+    }),
+    semanticInputs: background.inputs,
   })
+  const warmNavigation = createWarmNavigation({
+    busy: native === undefined ? background.busy : undefined,
+    checkpoint: native === undefined ? navigationIndex.checkpoint : undefined,
+    prepare: native?.warm ?? background.warm,
+    refresh: configuration.refresh,
+    signal: lifetime.signal,
+  })
+  const preparing =
+    options.worker === true
+      ? undefined
+      : startWorkspacePreparation({
+          discover: () => navigationIndex.checkpoint(lifetime.signal),
+          prepare: warmNavigation,
+          signal: lifetime.signal,
+        })
   return {
     create: (parent: string, name: string, kind: WorkspaceEntry['kind']) =>
       createEntry({kind, name, parent, root}),
-    definitions: (path: string, offset: number, drafts: readonly CodeSource[] = []) =>
-      symbols(path, offset, drafts),
+    definitions: (
+      path: string,
+      offset: number,
+      drafts: readonly CodeSource[] = [],
+      lookup?: DefinitionLookup,
+    ) =>
+      symbols(path, offset, drafts, {
+        ...(typeof lookup === 'function' ? {cancelled: lookup} : lookup),
+        kind: 'definition',
+      }),
+    directFunctionReferences: true,
     dispose: () => {
       lifetime.abort()
       configuration.dispose()
+      synchronization.dispose()
       cachedNavigation.dispose()
       background.dispose()
       index.dispose()
       reader.dispose()
       languages.dispose()
       navigation.dispose()
+      native?.dispose()
     },
     followPath,
     list: index.list,
@@ -174,18 +229,34 @@ export const createWorkspace = (anchor: string) => {
       readMedia({offset, path, revision, root}),
     observe: index.observe,
     operations: createFileOperations(root),
+    prepareNavigation: (path: string, cancelled?: () => boolean): void => {
+      configuration.refresh()
+      if (cancelled?.() !== true) {
+        warmNavigation(path)
+      }
+    },
+    prepareWorkspace: (discovery?: WorkspaceTree): Promise<boolean> =>
+      native?.prepare(discovery) ?? preparing ?? Promise.resolve(false),
+    prioritizeNavigation: native?.prioritize,
     read: createOpenedReader(reader, index),
     references: (
       path: string,
       offset: number,
       drafts: readonly CodeSource[] = [],
-      review: NavigationReview = {},
+      review: ReferenceLookup = {},
     ) => symbols(path, offset, drafts, {...review, kind: 'references'}),
+    resolutionInputs: native?.inputs ?? languages.resolutionInputs,
     root,
     scan: index.scan,
-    scanNavigation: cachedNavigation.scan,
+    scanNavigation: createWorkspaceScan({
+      background,
+      cache: cachedNavigation,
+      reset: configuration.reset,
+    }),
+    seedNavigation: native?.seed,
     subscribe: index.subscribe,
     tree: index.tree,
+    warmNavigation,
     write: (path: string, source: string, revision: string | null) =>
       writeSource({path, revision, root, source}),
   }

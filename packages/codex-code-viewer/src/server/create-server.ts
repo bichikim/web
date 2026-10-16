@@ -1,3 +1,4 @@
+import {SOURCE_CHUNK_LENGTH} from '../shared/reading-limits'
 import {resolveNavigation} from './resolve-navigation'
 import {MAX_CODE_BYTES, MAX_DRAFT_FILES} from '../shared/editing-limits'
 import {McpServer} from '@modelcontextprotocol/sdk/server/mcp.js'
@@ -277,6 +278,58 @@ const registerScanTools = (
   )
 }
 
+const registerRead = (
+  server: McpServer,
+  withSession: ReturnType<typeof createSessions>['withSession'],
+): void => {
+  const pathInput = {path: z.string(), session: z.string()}
+  server.registerTool(
+    'code.source',
+    {
+      _meta: appOnly,
+      annotations,
+      inputSchema: {...pathInput, offset: z.number().int().nonnegative(), revision: z.string()},
+      title: 'Read source chunk',
+    },
+    async ({session, path, revision, offset}) =>
+      withSession(session, (workspace) => {
+        const document = workspace.read(path)
+        if (!document.ok) {
+          return document
+        }
+        if (document.value.revision !== revision) {
+          return failure('stale-document')
+        }
+        if (offset > document.value.source.length) {
+          return failure('invalid-position')
+        }
+        const data = document.value.source.slice(offset, offset + SOURCE_CHUNK_LENGTH)
+        return success({data, next: offset + data.length})
+      }),
+  )
+  server.registerTool(
+    'code.read',
+    {
+      _meta: appOnly,
+      annotations,
+      inputSchema: {
+        ...pathInput,
+        column: z.number().int().positive().default(1),
+        line: z.number().int().positive().default(1),
+      },
+      title: 'Read code file',
+    },
+    async ({session, path, line, column}) =>
+      withSession(session, (workspace) => {
+        const document = workspace.read(path, line, column)
+        if (document.ok) {
+          workspace.warmNavigation(document.value.location.path)
+        }
+        return document.ok ? success({document: document.value}) : document
+      }),
+  )
+}
+
 export const createServer = (html: string, options: ServerOptions = {}) => {
   const server = new McpServer({
     name: 'codex-code-viewer',
@@ -351,24 +404,7 @@ export const createServer = (html: string, options: ServerOptions = {}) => {
       return toolResult(path === undefined ? failure('host-path-missing') : open(path))
     },
   )
-  server.registerTool(
-    'code.read',
-    {
-      _meta: appOnly,
-      annotations,
-      inputSchema: {
-        ...pathInput,
-        column: z.number().int().positive().default(1),
-        line: z.number().int().positive().default(1),
-      },
-      title: 'Read code file',
-    },
-    async ({session, path, line, column}) =>
-      withSession(session, (workspace) => {
-        const document = workspace.read(path, line, column)
-        return document.ok ? success({document: document.value}) : document
-      }),
-  )
+  registerRead(server, withSession)
   registerNavigation(server, withSession, updates, streams)
   registerList(server, withSession, updates, streams)
   server.registerTool(

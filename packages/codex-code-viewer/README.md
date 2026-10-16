@@ -39,6 +39,8 @@ Set `CODEX_HOME` if you use another Codex configuration directory. If the CLI is
 - **Browse folders:** Use **File tree** beside search. Click a folder to expand it or a file to open it. **Filter files** narrows the tree by path; **Reveal current file** clears the filter and scrolls to the open file.
 - **Return to a file:** Use the back/forward buttons or `Alt+←/→`.
 
+History skips deleted files unless a retained draft can be reopened and saved to recreate them. Deleting the current file preserves other visits. Change notifications or refresh make externally restored files available again. Other read errors are reported instead of skipped.
+
 Drag the divider to resize the tree. With the divider focused, Left/Right changes its width and Home/End selects minimum/maximum width. With tree focus, Up/Down and Home/End select entries; Left/Right collapses/expands folders. Right-click or `Shift+F10` opens an entry's menu.
 
 Reopening a file in the same tab restores its selection, scrolling and applicable preview, zoom or page settings. An explicit line/column destination takes priority. The viewer remembers the 64 most recent files per workspace; closing or reloading clears this state.
@@ -46,6 +48,10 @@ Reopening a file in the same tab restores its selection, scrolling and applicabl
 ## 3. Read and navigate code
 
 In reading mode, click an import path to open its module, or a symbol usage to open its definition. Click a definition name to list its usages. Results are grouped by file; select a result to navigate. If there are multiple definitions, choose one from the list.
+
+Definition and usage lists display verified results as the search proceeds. Filter file paths beside the title, collapse file groups, or use the right-hand navigation button to open a file.
+
+Use the arrows beside line numbers to fold multiline functions, objects, classes and markup in reading and editing views. Click **…** to expand a folded block. Search and definition/usage navigation reveal hidden destinations. Small-file folds are restored in the same tab and reset when the source changes. Python, Ruby and Rust folding follows indentation.
 
 Definition and usage navigation supports TypeScript, JavaScript, Python, Ruby and Rust. JSON/JSONC/JSON5 supports file-path navigation only. Other highlighted formats do not provide symbol navigation. Language requirements are listed under [Navigation setup](#navigation-setup).
 
@@ -65,7 +71,7 @@ You can move between files without losing drafts. Toggle **Edit** off to read un
 
 TS/JS and JSON navigation includes unsaved changes from multiple files. Python, Ruby and Rust include changes from the current file only; save changes to other files before navigating to them.
 
-If another program changes the original, saving is rejected and your draft remains. Attach its changes to chat for review, or discard it to reload the original. If the file was deleted externally, **Save** recreates it at the same path; **Discard changes** closes it. If another program restores the file first, saving reports a conflict.
+If another program changes the original, saving is rejected and your draft remains. Attach its changes to chat for review, or discard it to reload the original. If the file was deleted externally, **Save** recreates it at the same path; **Discard changes** removes the draft and navigates to another visited file when available. If another program restores the file first, saving reports a conflict.
 
 When you change workspace or Codex requests viewer closure, choose save-all, discard or continue editing. Save drafts before closing or reloading. Unsaved content cannot be recovered after a forced shutdown.
 
@@ -90,6 +96,8 @@ Select text, then choose **Copy code** or **Copy** from its context menu to copy
 Use **New file** or **New folder** in the tree toolbar. A selected folder becomes the destination; a selected file uses its parent. An empty workspace uses its root. The name dialog shows the destination, and existing entries are never overwritten.
 
 Right-click a file or folder for **Rename**, **Copy**, **Cut**, **Paste** or **Delete**. With tree focus, `Cmd/Ctrl+C`, `Cmd/Ctrl+X`, `Cmd/Ctrl+V` and Delete are also available. Copy/cut uses an internal clipboard within this viewer's workspace. Paste on a folder places entries inside it; paste on a file uses its parent. The empty-space menu pastes at the workspace root. Copy collisions create a copy name; cut/rename collisions report an error.
+
+Copied entries remain available for repeated paste, including after navigating between files in the same workspace. Cut entries clear after a successful move. Paste actions are disabled when no file/folder or code content is available.
 
 **Deletion is permanent and bypasses the trash.** Confirm the target in the dialog. Save or discard affected drafts before renaming, moving or deleting entries. The workspace root, symlinks and folders containing `.git`, `.codex`, `.aws` or `.ssh` are protected. Operations can handle up to 10,000 entries at a time. If the source changes during an operation, check its contents before trying again.
 
@@ -121,12 +129,16 @@ Only `Cargo.lock` uses TOML highlighting; other `.lock` files are plain text. `.
 
 ### Navigation setup
 
-- **TypeScript / JavaScript:** Uses the nearest tsconfig, including `paths`, relative imports and barrel exports. Bundler-only aliases, browser public URLs and computed paths may not resolve.
+- **TypeScript / JavaScript:** Uses the bundled TS7 engine. Background preparation starts when the workspace opens, and verified results are delivered progressively. Uses the nearest tsconfig, including `paths`, relative imports and barrel exports. Bundler-only aliases, browser public URLs and computed paths may not resolve.
 - **Python:** No separate analyzer installation is needed. Project settings follow the Pyright configuration in `pyrightconfig.json` or `pyproject.toml`.
 - **Ruby:** Install Solargraph in the project's Ruby environment with `gem install solargraph`. Use `SOLARGRAPH_BINARY` or `RUBY_BINARY` to override executables. Literal `require_relative` paths also work without an analyzer; dynamically constructed paths do not.
 - **Rust:** No Rust/Cargo/rustup installation is required. First navigation needs access to GitHub Releases to download the analyzer; afterward it works offline. Supported hosts are macOS/Linux/Windows on x64/arm64; Linux requires glibc. Set `RUST_ANALYZER_BINARY` to use an existing analyzer executable.
 
 Rust navigation covers standalone files, modules and local Cargo dependencies. Definitions that depend on the standard library, external packages, additional features or generated code may not resolve.
+
+Ruby constant aliases follow reassignment order and conditional branches. Reference analysis includes statically evaluable `require`/`require_relative` paths from string variables, concatenation and `File.join`. The same supplementation applies to default and external Solargraph executables.
+
+TS/JS navigation reuses completed results and per-file index summaries, refreshing them when files, drafts or configuration change. Restoring the disk index does not block search. Reference locations and unsaved drafts are not stored in that disk index.
 
 Library definitions outside the workspace cannot be opened. Viewing, highlighting, editing and saving remain available if an analyzer cannot start. Completion, symbol rename/refactoring and code execution are not provided.
 
@@ -137,7 +149,7 @@ Library definitions outside the workspace cannot be opened. Viewing, highlightin
 - **Word:** DOCX previews headings, paragraphs, lists, tables and embedded images. Original pagination, fonts and detailed formatting are not reproduced. External images are not read.
 - **Excel:** Choose a sheet, then use the table controls. Numbers/dates use stored formats and formulas use stored results without recalculation. Each sheet has the same preview limits as CSV. Cell styles, merged layouts, charts and images are not reproduced. Legacy `.doc`/`.xls` and password entry are unsupported.
 - **PDF:** Enter a page or zoom (25–400%), or choose **Fit to width**. Drag text to select/copy. `Cmd/Ctrl+F` searches document text; Enter/Shift+Enter moves between results. Search is limited to 2,048 pages, 4,194,304 characters and 10,000 results. Scanned PDFs require a text layer; OCR and password entry are unsupported.
-- **Images / SVG:** Use zoom buttons, a zoom value (1–1600%), pinch or `Ctrl/Cmd+wheel`. Drag or use arrow keys to pan. With image focus, `+`/`-` zoom, `0` restores 100% and Home fits to view. SVG also offers XML source; above 512 KiB, only preview is available.
+- **Images / SVG:** Use zoom buttons, a zoom value (1–1600%), pinch or `Ctrl/Cmd+wheel`. Drag or use arrow keys to pan. With image focus, `+`/`-` zoom, `0` restores 100% and Home fits to view. SVG also offers XML source up to 32 MiB; larger files provide preview only.
 - **Video / audio:** Use the playback controls. Playback depends on the embedded browser's codec support. Audio starts only when you choose Play and stops when you leave the file.
 
 ## Limits and troubleshooting
@@ -150,7 +162,7 @@ Library definitions outside the workspace cannot be opened. Viewing, highlightin
 | Save reports a conflict          | Keep or attach the draft, then discard it to reload the disk version when ready.                                             |
 | Changes disappear after restart  | Drafts cannot be recovered after closing. Save before you close.                                                             |
 
-Text files, including code, Markdown and CSV/TSV, must be UTF-8 and at most 512 KiB each. Files containing NUL bytes cannot be opened as text. PDF, DOCX, XLSX, images, video and audio are limited to 128 MiB per file. Paths outside the workspace and `.git`, `.codex`, `.aws`, `.ssh` are excluded. The only hidden files you can open are `.dockerignore`, `.gitignore`, `.gitattributes`, `.gitmodules`, `.editorconfig`, `.prettierignore`, `.eslintignore`, `.npmignore` and `.browserslistrc`. `.env` cannot be opened. Search returns up to 100 results. Search and the tree exclude generated and dependency directories.
+UTF-8 text files, including code, Markdown and CSV/TSV, can be up to 32 MiB each. Above 512 KiB, files are read-only and use viewport rendering with selection, search and code navigation. Large Markdown and CSV/TSV files display as source. Files containing NUL bytes cannot be opened as text. PDF, DOCX, XLSX, images, video and audio are limited to 128 MiB per file. Paths outside the workspace and `.git`, `.codex`, `.aws`, `.ssh` are excluded. The only hidden files you can open are `.dockerignore`, `.gitignore`, `.gitattributes`, `.gitmodules`, `.editorconfig`, `.prettierignore`, `.eslintignore`, `.npmignore` and `.browserslistrc`. `.env` cannot be opened. Search returns up to 100 results. Search and the tree exclude generated and dependency directories.
 
 Changes made in another program refresh the viewer. Unsaved drafts are not replaced automatically. If the file list does not update, use **Refresh file tree**.
 

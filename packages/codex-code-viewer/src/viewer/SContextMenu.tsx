@@ -16,6 +16,28 @@ interface SContextMenuProps {
   onClose?: (options?: ContextMenuCloseOptions) => void
 }
 
+const handleFieldKeyboard = (event: KeyboardEvent, menu: HTMLElement | null): boolean => {
+  const field = menu?.querySelector<HTMLInputElement>('input:not(:disabled)')
+  if (field === null || field === undefined) {
+    return false
+  }
+  if (event.key === 'Tab' && event.target !== field) {
+    event.preventDefault()
+    event.stopPropagation()
+    field.focus({preventScroll: true})
+    return true
+  }
+  if (event.target instanceof HTMLInputElement && event.key !== 'Escape' && event.key !== 'Tab') {
+    if (event.key === 'ArrowDown') {
+      event.preventDefault()
+      menu?.querySelector<HTMLButtonElement>('button:not(:disabled)')?.focus()
+    }
+    event.stopPropagation()
+    return true
+  }
+  return false
+}
+
 export const SContextMenu = (props: SContextMenuProps) => {
   const t = useTranslations()
   const groups = createMemo(() =>
@@ -52,6 +74,9 @@ export const SContextMenu = (props: SContextMenuProps) => {
       return
     }
     setKeyboard(true)
+    if (handleFieldKeyboard(event, element())) {
+      return
+    }
     const shortcut = props.items.find(
       (item) => item.key === event.key.toLowerCase() && item.onSelect !== undefined,
     )

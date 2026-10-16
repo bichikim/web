@@ -1,11 +1,19 @@
-import {copyFileSync, mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync} from 'node:fs'
+import {
+  copyFileSync,
+  cpSync,
+  mkdirSync,
+  mkdtempSync,
+  realpathSync,
+  rmSync,
+  writeFileSync,
+} from 'node:fs'
 import {tmpdir} from 'node:os'
 import {join} from 'node:path'
 import {fileURLToPath} from 'node:url'
 import {Client} from '@modelcontextprotocol/sdk/client/index.js'
 import {StdioClientTransport} from '@modelcontextprotocol/sdk/client/stdio.js'
 import {expect, it} from 'vitest'
-import {navigationSchema, sessionSchema, streamEndpointSchema} from '../../shared/contracts'
+import {navigationResultSchema, sessionSchema, streamEndpointSchema} from '../../shared/contracts'
 
 it('should stream TypeScript references from the isolated distribution and its bundled worker', async () => {
   const root = realpathSync(mkdtempSync(join(tmpdir(), 'viewer-distribution-')))
@@ -17,6 +25,9 @@ it('should stream TypeScript references from the isolated distribution and its b
   for (const file of ['server.js', 'navigation-worker.js', 'app.html']) {
     copyFileSync(fileURLToPath(new URL(file, output)), join(distribution, file))
   }
+  cpSync(fileURLToPath(new URL('typescript/', output)), join(distribution, 'typescript'), {
+    recursive: true,
+  })
   writeFileSync(join(project, 'tsconfig.json'), '{"compilerOptions":{"noLib":true,"types":[]}}')
   writeFileSync(join(project, 'helper.ts'), 'export const greet = () => 1\n')
   writeFileSync(join(project, 'caller.ts'), "import {greet} from './helper'\ngreet()\n")
@@ -53,9 +64,7 @@ it('should stream TypeScript references from the isolated distribution and its b
       .map((line) => JSON.parse(line))
     expect(messages.at(-1)).toEqual({done: true})
     expect(
-      messages
-        .slice(0, -1)
-        .flatMap((message) => navigationSchema.required().parse(message).locations),
+      messages.slice(0, -1).flatMap((message) => navigationResultSchema.parse(message).locations),
     ).toEqual([
       {column: 9, line: 1, path: 'caller.ts', preview: "import {greet} from './helper'\ngreet()"},
       {column: 1, line: 2, path: 'caller.ts', preview: 'greet()'},
@@ -112,7 +121,7 @@ it('should navigate Rust from the isolated distribution using Node and its embed
       name: 'code.navigate',
     })
     expect(result.isError).not.toBe(true)
-    expect(navigationSchema.parse(result.structuredContent)).toEqual({
+    expect(navigationResultSchema.parse(result.structuredContent)).toEqual({
       kind: 'definition',
       locations: [{column: 8, line: 1, path: 'helper.rs'}],
     })

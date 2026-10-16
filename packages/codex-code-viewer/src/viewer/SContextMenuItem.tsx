@@ -26,7 +26,8 @@ export const SContextMenuItem = (props: SContextMenuItemProps) => {
       </Show>
       <button
         class="ui-transition flex w-full items-center justify-between gap-3 rounded-row px-3 py-2
-        text-left text-sm [overflow-wrap:anywhere] outline-none enabled:hover:bg-hover enabled:active:bg-pressed"
+        text-left text-sm [overflow-wrap:anywhere] outline-none enabled:hover:bg-hover enabled:active:bg-pressed
+        disabled:cursor-default disabled:opacity-40"
         classList={{'focus:bg-hover': props.keyboard, 'ui-focus': props.keyboard}}
         disabled={props.item.onSelect === undefined}
         onClick={handleSelect}

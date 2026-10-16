@@ -79,6 +79,16 @@ describe('useDefinitionNavigation', () => {
       status: 'resolving',
     })
     await attached.promise
+    const groups = [
+      {count: 1, path: 'report.rb'},
+      {count: 1, path: 'second.rb'},
+    ]
+    await writer.write(
+      new TextEncoder().encode(`${JSON.stringify({groups, kind: 'references', locations: []})}\n`),
+    )
+    await vi.waitFor(() => expect(navigation.references()?.groups).toEqual(groups))
+    expect(navigation.references()?.locations).toEqual([])
+    expect(navigation.references()?.status).toBe('searching')
     await writer.write(
       new TextEncoder().encode(`${JSON.stringify({kind: 'references', locations: [location]})}\n`),
     )
@@ -92,9 +102,10 @@ describe('useDefinitionNavigation', () => {
     await following
     expect(navigation.references()?.locations).toHaveLength(2)
     expect(navigation.references()?.status).toBe('complete')
+    expect(navigation.references()?.groups).toEqual(groups)
   })
   it.each([[location], [location, {...location, path: 'other.rb'}]])(
-    'should avoid a reference popup while streaming definition destinations %j',
+    'should display definition candidates before completion and defer unique navigation %j',
     async (...locations) => {
       const output = new TransformStream<Uint8Array, Uint8Array>()
       const writer = output.writable.getWriter()
@@ -118,7 +129,14 @@ describe('useDefinitionNavigation', () => {
       await writer.write(
         new TextEncoder().encode(`${JSON.stringify({kind: 'definition', locations})}\n`),
       )
-      expect(navigation.references()?.status).toBe('resolving')
+      await vi.waitFor(() =>
+        expect(navigation.references()).toMatchObject({
+          kind: 'definition',
+          locations,
+          status: 'searching',
+        }),
+      )
+      expect(open).not.toHaveBeenCalled()
       await writer.write(new TextEncoder().encode('{"done":true}\n'))
       await following
       if (locations.length === 1) {

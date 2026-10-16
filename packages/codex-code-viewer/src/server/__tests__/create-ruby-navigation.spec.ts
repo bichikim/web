@@ -19,7 +19,12 @@ describe('createRubyNavigation', () => {
       ok: true,
       value: [{column: 5, line: 1, path: join(root, 'helper.rb')}],
     })
-    vi.mocked(createRubyService).mockReturnValue({dispose, lookupSymbols, update: vi.fn()})
+    vi.mocked(createRubyService).mockReturnValue({
+      dispose,
+      lookupIndexedSymbols: lookupSymbols,
+      lookupSymbols,
+      update: vi.fn(),
+    })
     navigation = createRubyNavigation(root)
   })
   afterEach(() => {

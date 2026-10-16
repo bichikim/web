@@ -18,13 +18,17 @@ const manifestSchema = z.object({
   bench: z.array(targetSchema).optional(),
   bin: z.array(targetSchema).optional(),
   dependencies: dependenciesSchema.optional(),
+  'dev-dependencies': dependenciesSchema.optional(),
   example: z.array(targetSchema).optional(),
   features: z.record(z.string(), z.array(z.string())).optional(),
   lib: targetSchema.optional(),
   package: z
     .object({
+      autobenches: z.boolean().optional(),
       autobins: z.boolean().optional(),
+      autoexamples: z.boolean().optional(),
       autolib: z.boolean().optional(),
+      autotests: z.boolean().optional(),
       edition: z.union([editionSchema, inheritedSchema]).optional(),
       name: z.string(),
       workspace: z.string().optional(),

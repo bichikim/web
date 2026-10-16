@@ -1,0 +1,19 @@
+{
+  "date": "2026-10-15T16:24:37.438611+09:00",
+  "platform": "macOS-26.5.2-arm64-arm-64bit-Mach-O",
+  "node": "v24.15.0",
+  "native": "Version 7.0.2",
+  "binarySha256": "a82f731365ad69d5c4c15f5e18fba4584bf3b7b839960172a76c3462b5114bf2",
+  "baseline": "/tmp/ts7-completion/before/existing/workspace.js",
+  "after": "/tmp/ts7-completion/routing-after/existing/workspace.js",
+  "first": "First nonempty server stream batch; not browser paint.",
+  "repeat": "Completed navigation cache in the same process with input revision validation.",
+  "scope": "Both variants analyze the same current monorepo. Separate CODEX_HOME per process. Alternating order. No own build/tests/source edits during the final 40-record cohort. Shared host, OS caches not flushed.",
+  "samples": {
+    "getWindow": 7,
+    "javascript": 3
+  },
+  "conclusion": "First-result latency retained below one second; aggregate completion medians did not improve. Do not claim a completion speedup.",
+  "rejected": "Async preparation, Go CPU limit, readiness RPC removal, and asynchronous file preloading were not retained.",
+  "GOMAXPROCS": null
+}
