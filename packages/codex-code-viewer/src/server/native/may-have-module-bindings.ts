@@ -1,6 +1,20 @@
-// Lock the trivia span before checking call syntax to prevent backtracking into comments.
-const moduleCall =
-  /\b(?:require|import)\b(?=(?<trivia>(?:\s|\/\*[\s\S]*?\*\/|\/\/[^\r\n]*)*))\k<trivia>(?:\(|<|\?\.)/u
+const hasModuleCall = (source: string): boolean => {
+  const trailingTrivia = /\s+|\/\*[\s\S]*?\*\/|\/\/[^\r\n]*/uy
+  const callSyntax = /[<(]|\?\./uy
+  for (const name of source.matchAll(/\b(?:require|import)\b/gu)) {
+    let cursor = name.index + name[0].length
+    trailingTrivia.lastIndex = cursor
+    // Consume each complete comment once instead of backtracking between trivia segments.
+    while (trailingTrivia.test(source)) {
+      cursor = trailingTrivia.lastIndex
+    }
+    callSyntax.lastIndex = cursor
+    if (callSyntax.test(source)) {
+      return true
+    }
+  }
+  return false
+}
 const trivia = String.raw`(?:\s|\/\*[\s\S]*?\*\/|\/\/[^\r\n]*)*`
 // Consume whole trivia spans so operators inside comments cannot become binding syntax.
 const bindingStart = new RegExp(String.raw`(?:\bconst\b|,)(?=(${trivia}))\1\{`, 'u')
@@ -28,7 +42,7 @@ const hasComplexComments = (source: string): boolean => {
 export const mayHaveModuleBindings = (source: string): boolean => {
   const escaped = source.includes('\\u')
   return (
-    (escaped || moduleCall.test(source)) &&
+    (escaped || hasModuleCall(source)) &&
     bindingEnd.test(source) &&
     (escaped ||
       hasComplexComments(source) ||
