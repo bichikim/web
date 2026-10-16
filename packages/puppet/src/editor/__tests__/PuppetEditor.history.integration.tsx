@@ -182,7 +182,7 @@ describe('PuppetEditor', () => {
 
     fireEvent.click(view.getByRole('button', {name: '1차원 Parameter 추가'}))
     await waitFor(() => expect(undoButton).toBeEnabled())
-    expect(undoButton).toHaveAccessibleDescription('1단계 되돌릴 수 있음 · ⌘Z / Ctrl+Z')
+    expect(undoButton).toHaveAccessibleDescription('1단계 되돌릴 수 있음 · Ctrl+Z')
 
     fireEvent.click(undoButton)
     await waitFor(() => {
@@ -222,7 +222,7 @@ describe('PuppetEditor', () => {
           .find((part) => part.properties?.opacity !== undefined)?.properties?.opacity,
       ).toBeCloseTo(0.9)
     })
-    expect(undoButton).toHaveAccessibleDescription('1단계 되돌릴 수 있음 · ⌘Z / Ctrl+Z')
+    expect(undoButton).toHaveAccessibleDescription('1단계 되돌릴 수 있음 · Ctrl+Z')
 
     fireEvent.click(undoButton)
 

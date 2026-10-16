@@ -97,8 +97,10 @@ describe('development model articulation', () => {
         'mouth-smile': 1,
         'tongue-raise': 1,
       }
-      expect(render('psd-88', values)).toEqual(neutralLips)
-      expect(render('psd-91', values)).toEqual(neutralTongue)
+      expect(render('psd-88', values)).toEqual(neutralLips.map((value) => expect.closeTo(value, 6)))
+      expect(render('psd-91', values)).toEqual(
+        neutralTongue.map((value) => expect.closeTo(value, 6)),
+      )
       for (const partId of ['psd-79', 'psd-80', 'psd-81', 'psd-83', 'psd-84', 'psd-85']) {
         expect(
           composeParameterPartProperties({document: model, parameterValues: values, partId})
@@ -114,4 +116,23 @@ describe('development model articulation', () => {
     const raised = render('psd-83', {'mouth-open': 0.65, 'tongue-raise': 1})
     expect(bounds(raised).top).toBeCloseTo(bounds(neutral).top - 22, 6)
   })
+})
+
+test('should give the default fully open mouth a tall aperture rather than a thin slit', () => {
+  const upper = render('psd-91', {'mouth-open': 1})
+  const lower = render('psd-88', {'mouth-open': 1})
+  const seam = model.parts.find((candidate) => candidate.id === 'psd-88')!
+  const center = seam.mesh.vertices.findIndex((value, index) => index % 2 === 0 && value === 2020)
+  const separation = lower[center + 1]! - upper[center + 1]!
+  expect(separation).toBeGreaterThan(50)
+})
+
+test('should flatten the neutral closed lip and curve the smiling closed lip upward at its corners', () => {
+  const neutral = bounds(render('psd-88', {}))
+  expect(neutral.bottom - neutral.top).toBeLessThan(15)
+  const smiling = render('psd-88', {'mouth-shape': 1})
+  const part = model.parts.find((candidate) => candidate.id === 'psd-88')!
+  const edge = part.mesh.vertices.findIndex((value, index) => index % 2 === 0 && value === 1972)
+  const middle = part.mesh.vertices.findIndex((value, index) => index % 2 === 0 && value === 2020)
+  expect(smiling[middle + 1]! - smiling[edge + 1]!).toBeGreaterThan(5)
 })

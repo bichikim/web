@@ -128,3 +128,23 @@ test('should open recovery from the file menu when available', () => {
   onRecoveryOpen.mock.calls[0]![0]()
   expect(screen.getByRole('button', {name: '메인 메뉴'})).toHaveFocus()
 })
+
+test('should launch the current model from the top workspace navigation', () => {
+  const onStudioOpen = vi.fn()
+  const onViewerOpen = vi.fn()
+  render(() => (
+    <EditorToolbar
+      playerStatus="ready"
+      onExport={vi.fn()}
+      onFileImport={vi.fn()}
+      onFileOpen={vi.fn()}
+      onStudioOpen={onStudioOpen}
+      onViewerOpen={onViewerOpen}
+    />
+  ))
+  const navigation = within(screen.getByRole('navigation', {name: '작업 공간 이동'}))
+  fireEvent.click(navigation.getByRole('button', {name: 'Studio'}))
+  fireEvent.click(navigation.getByRole('button', {name: 'Viewer'}))
+  expect(onStudioOpen).toHaveBeenCalledOnce()
+  expect(onViewerOpen).toHaveBeenCalledOnce()
+})
