@@ -1,4 +1,6 @@
-const moduleCall = /\b(?:require|import)\b(?:\s|\/\*[\s\S]*?\*\/|\/\/[^\r\n]*)*(?:\(|<|\?\.)/u
+// Lock the trivia span before checking call syntax to prevent backtracking into comments.
+const moduleCall =
+  /\b(?:require|import)\b(?=(?<trivia>(?:\s|\/\*[\s\S]*?\*\/|\/\/[^\r\n]*)*))\k<trivia>(?:\(|<|\?\.)/u
 const trivia = String.raw`(?:\s|\/\*[\s\S]*?\*\/|\/\/[^\r\n]*)*`
 // Consume whole trivia spans so operators inside comments cannot become binding syntax.
 const bindingStart = new RegExp(String.raw`(?:\bconst\b|,)(?=(${trivia}))\1\{`, 'u')

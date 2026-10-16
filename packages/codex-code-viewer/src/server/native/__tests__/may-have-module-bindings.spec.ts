@@ -68,4 +68,21 @@ describe('mayHaveModuleBindings', () => {
     expect(mayHaveModuleBindings("const api = require<API>('./core')")).toBe(false)
     expect(mayHaveModuleBindings("const {greet} = require<API>('./core')")).toBe(true)
   })
+  it('should ignore call syntax inside the module name trailing line comment', () => {
+    expect(mayHaveModuleBindings('const {greet}: API = source; require // (')).toBe(false)
+  })
+  it.each([
+    {kind: 'block', trivia: `/*${'*//*'.repeat(4096)}*/`},
+    {kind: 'line', trivia: `${'//'.repeat(8192)}\n`},
+  ])('should reject missing calls after repeated $kind comment delimiters', ({trivia}) => {
+    expect(mayHaveModuleBindings(`const {greet}: API = source; require ${trivia} neither`)).toBe(
+      false,
+    )
+  })
+  it.each([
+    {kind: 'block', trivia: `/*${'*//*'.repeat(4096)}*/`},
+    {kind: 'line', trivia: `${'//'.repeat(8192)}\n`},
+  ])('should retain module bindings after repeated $kind comment delimiters', ({trivia}) => {
+    expect(mayHaveModuleBindings(`const {greet} = require ${trivia} ('./core')`)).toBe(true)
+  })
 })
