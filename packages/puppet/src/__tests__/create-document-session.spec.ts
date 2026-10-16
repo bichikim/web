@@ -103,3 +103,28 @@ test('should find legacy documents and skip invalid records', async () => {
   sessionStorage.setItem('puppet:document-session:v1', 'legacy')
   expect(await createDocumentSession({database, storage: sessionStorage}).read()).toEqual(document)
 })
+
+test('should isolate explicit viewer snapshots from editor recovery and preserve them on reload', async () => {
+  const database = new IDBFactory()
+  const editor = createDocumentSession({database, storage: sessionStorage})
+  const editorKey = sessionStorage.getItem('puppet:document-session:v1')
+  await editor.write(createEmptyDocument())
+  const viewer = createDocumentSession({
+    database,
+    databaseName: 'puppet-viewer',
+    sessionId: 'snapshot',
+    storage: sessionStorage,
+  })
+  const document = createDemoDocument()
+  await viewer.write(document)
+  const reloaded = createDocumentSession({
+    database,
+    databaseName: 'puppet-viewer',
+    sessionId: 'snapshot',
+    storage: sessionStorage,
+  })
+  expect(await reloaded.read()).toEqual(document)
+  expect((await editor.read())?.parts).toHaveLength(0)
+  expect(sessionStorage.getItem('puppet:document-session:v1')).toBe(editorKey)
+  expect(await editor.listRecoveries()).toEqual([])
+})

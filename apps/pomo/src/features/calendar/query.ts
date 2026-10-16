@@ -28,9 +28,11 @@ const CALENDAR_PERIOD_BOUNDARY_PATTERN = new RegExp(
   'u',
 )
 const CALENDAR_WORD_START_PATTERN = '(?<![\\p{L}\\p{N}_])'
-const createCalendarRelativeDayPattern = (phrase: string): RegExp =>
+const RELATIVE_DAY_SELECTION_PARTICLE_PATTERN = '(?:나|이나)'
+const createRelativeDayPattern = (phrase: string): RegExp =>
   new RegExp(
-    `${CALENDAR_WORD_START_PATTERN}(?:${phrase})${CALENDAR_PERIOD_BOUNDARY_PATTERN.source}`,
+    `${CALENDAR_WORD_START_PATTERN}(?:${phrase})(?:${CALENDAR_PERIOD_BOUNDARY_PATTERN.source}|` +
+      `${RELATIVE_DAY_SELECTION_PARTICLE_PATTERN}(?=$|[\\s,.!?…]))`,
     'u',
   )
 const THIS_WEEK_PATTERN = new RegExp(`이번 ?주${CALENDAR_PERIOD_BOUNDARY_PATTERN.source}`, 'u')
@@ -83,17 +85,18 @@ const PREVIOUS_WEEKEND_PATTERN = /(?:지난|저번) ?주말/u
 const WEEKEND_EXCLUSION_PATTERN = createCalendarExclusionPattern('주말(?:은|에)?\\s*')
 const WEEKEND_PATTERN = /주말/u
 const DAY_BEFORE_YESTERDAY_PHRASE = '(?:엊그제|그저께|그제)'
-const DAY_BEFORE_YESTERDAY_PATTERN = createCalendarRelativeDayPattern(DAY_BEFORE_YESTERDAY_PHRASE)
-const YESTERDAY_PATTERN = createCalendarRelativeDayPattern('어제')
-const TODAY_PATTERN = createCalendarRelativeDayPattern('오늘')
+const DAY_BEFORE_YESTERDAY_PATTERN = createRelativeDayPattern(DAY_BEFORE_YESTERDAY_PHRASE)
+const YESTERDAY_PATTERN = createRelativeDayPattern('어제')
+const TODAY_PATTERN = createRelativeDayPattern('오늘')
 // 날짜 조사가 붙은 '낼로' 등은 앞의 목적격 조사보다 우선하며, '돈을 낼'은 동사로 남긴다.
 const TOMORROW_PHRASE = `(?:내일|낼(?=${CALENDAR_PERIOD_PARTICLE_PATTERN.source})|(?<![을를]\\s+)낼)`
-const TOMORROW_PATTERN = createCalendarRelativeDayPattern(TOMORROW_PHRASE)
-const DAY_AFTER_TOMORROW_PHRASE = '(?:내일)?모레'
-const DAY_AFTER_TOMORROW_PATTERN = createCalendarRelativeDayPattern(DAY_AFTER_TOMORROW_PHRASE)
-const THREE_DAYS_AHEAD_PATTERN = createCalendarRelativeDayPattern('글피')
-const RELATIVE_DAY_PATTERN = createCalendarRelativeDayPattern(
-  `(?:${DAY_BEFORE_YESTERDAY_PHRASE}|어제|오늘|${DAY_AFTER_TOMORROW_PHRASE}|${TOMORROW_PHRASE}|글피)`,
+const TOMORROW_PATTERN = createRelativeDayPattern(TOMORROW_PHRASE)
+const DAY_AFTER_TOMORROW_PATTERN = createRelativeDayPattern('(?:내일)?모레')
+const THREE_DAYS_AHEAD_PATTERN = createRelativeDayPattern('글피')
+const RELATIVE_DAY_PATTERN = new RegExp(
+  `(?:${DAY_BEFORE_YESTERDAY_PATTERN.source}|${YESTERDAY_PATTERN.source}|${TODAY_PATTERN.source}|` +
+    `${DAY_AFTER_TOMORROW_PATTERN.source}|${TOMORROW_PATTERN.source}|${THREE_DAYS_AHEAD_PATTERN.source})`,
+  'u',
 )
 const CALENDAR_OTHER_PERIOD_TERM_PATTERN = new RegExp(
   `(?:${WEEK_AFTER_NEXT_TERM_PATTERN}${CALENDAR_PERIOD_BOUNDARY_PATTERN.source}|` +

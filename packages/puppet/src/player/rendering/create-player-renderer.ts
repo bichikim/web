@@ -1,3 +1,4 @@
+import type {PlayerViewCamera} from '../view-camera'
 import {Application, Container, UPDATE_PRIORITY} from 'pixi.js'
 import type {PuppetParameterValueMap} from '../../deformation'
 import type {PuppetDocument} from '../document'
@@ -27,6 +28,7 @@ export interface PlayerRenderer {
   destroy(): void
   redraw(): void
   resize(): void
+  setViewCamera(camera: PlayerViewCamera): void
   setRunning(running: boolean): void
   subscribeFrame(onFrame: (deltaTime: number) => void): void
   updateDocument(document: PuppetDocument): boolean
@@ -76,6 +78,7 @@ export const createPlayerRenderer = async (
   const root = new Container()
   const partById = new Map<string, RuntimePart>()
   let {document} = options
+  let camera: PlayerViewCamera | undefined
   let destroyed = false
   let running = true
   const destroy = () => {
@@ -103,6 +106,7 @@ export const createPlayerRenderer = async (
   }
   const layoutRoot = () =>
     layoutPlayerRoot({
+      camera,
       document,
       root,
       screen: application.screen,
@@ -159,6 +163,13 @@ export const createPlayerRenderer = async (
       } else {
         application.stop()
       }
+    },
+    setViewCamera(nextCamera) {
+      if (destroyed) {
+        return
+      }
+      camera = nextCamera
+      layoutRoot()
     },
     subscribeFrame(onFrame) {
       application.ticker.add((ticker) => {

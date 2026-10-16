@@ -126,6 +126,15 @@ Preserve `min-width: 0` and shrinkable grid tracks where names and fields share 
 
 Panel close gestures use half the minimum size as the release threshold. Reaching the minimum size alone must not close a panel. Keep the sizing and gesture policy in [use-panel-layout.ts](src/editor/use-panel-layout.ts).
 
+Studio and Viewer place file actions in the leading hamburger menu, reusing the editor menu
+trigger and row styles. Keep model loading separate from Studio save/load inside the menu; the
+graph toolbar contains graph editing actions. File menus remain above the canvas and restore
+keyboard focus when dismissed with Escape.
+
+Use [WorkspaceNavigation](src/WorkspaceNavigation.tsx) across Editor, Studio, and Viewer, with the
+current page visibly selected. Editor launch actions open the current work in a new tab. Wrap header controls within
+the editor's actual width when space is limited, and let the header row grow to fit.
+
 ## Spacing
 
 The [spacing theme](uno/spacing.ts) owns a compact, rem-based scale. Pixel equivalents assume a 16px root font size. Compose its named tokens through UnoCSS padding, margin, and gap utilities in the owning shortcuts; do not introduce independent spacing values for ordinary interface layout.

@@ -1,5 +1,5 @@
 import {beforeEach, expect, it, vi} from 'vitest'
-import {createDeferred} from 'src/test-utils/create-deferred'
+import {createDeferred} from 'src/__tests__/create-deferred'
 import {requestCloudText} from '../client'
 import {createCloudTextTask} from '../create-cloud-text-task'
 import type {CloudTextResponse} from '../contracts'

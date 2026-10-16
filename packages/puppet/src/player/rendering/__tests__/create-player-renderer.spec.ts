@@ -73,6 +73,18 @@ describe('createPlayerRenderer', () => {
     expect(application.stage.addChild).not.toHaveBeenCalled()
     expect(MeshSimple).not.toHaveBeenCalled()
   })
+  test('should retain the selected camera when resizing a paused renderer', async () => {
+    const renderer = await createPlayerRenderer({
+      canvas: document.createElement('canvas'),
+      document: createEmptyDocument(),
+    })
+    renderer.setRunning(false)
+    renderer.setViewCamera({x: 30, y: -20, zoom: 2})
+    renderer.resize()
+    expect(root.scale.set).toHaveBeenLastCalledWith(2)
+    expect(root.position.set).toHaveBeenLastCalledWith(-60, 40)
+    renderer.destroy()
+  })
   test('should reject incompatible document reuse and close the renderer only once', async () => {
     const renderer = await createPlayerRenderer({
       canvas: document.createElement('canvas'),

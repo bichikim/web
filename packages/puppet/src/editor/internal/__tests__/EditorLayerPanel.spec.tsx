@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 
-import {fireEvent, render} from '@solidjs/testing-library'
+import {fireEvent, render, screen} from '@solidjs/testing-library'
 import {createSignal} from 'solid-js'
 import {describe, expect, test, vi} from 'vitest'
 
@@ -434,3 +434,75 @@ test.each(['.layers-panel', '.layer-scroll', '.layer-tree', '.layer-toolbar', '.
     expect(selection().activeNodeId).toBe('shape-circle')
   },
 )
+
+test('should rename a selected part on a second name click without requiring a double click', () => {
+  const [document, setDocument] = createSignal(createDemoDocument())
+  const [selection, setSelection] = createSignal<SceneSelection>({activeNodeId: null, nodeIds: []})
+  const view = render(() => (
+    <EditorLayerPanel
+      document={document()}
+      selection={selection()}
+      onDocumentChange={setDocument}
+      onSelectionChange={setSelection}
+    />
+  ))
+  const button = view.getByRole('button', {name: 'mesh-preview 레이어 선택'})
+  const name = button.querySelector('strong')!
+  fireEvent.click(name)
+  expect(view.queryByRole('textbox', {name: 'mesh-preview 파츠 이름'})).not.toBeInTheDocument()
+  fireEvent.click(name)
+  const input = view.getByRole('textbox', {name: 'mesh-preview 파츠 이름'})
+  fireEvent.input(input, {target: {value: '새 이름'}})
+  fireEvent.keyDown(input, {key: 'Enter'})
+  expect(view.getByRole('button', {name: '새 이름 레이어 선택'})).toBeVisible()
+})
+
+test('should offer clipboard actions and rename in the layer context menu', async () => {
+  const [document, setDocument] = createSignal(createDemoDocument())
+  const view = render(() => (
+    <EditorLayerPanel document={document()} onDocumentChange={setDocument} />
+  ))
+  const target = view.getByRole('button', {name: 'mesh-preview 레이어 선택'})
+  const open = () =>
+    fireEvent.contextMenu(target.closest('.layer-row')!, {
+      clientX: 80,
+      clientY: 80,
+    })
+  open()
+  const copy = await screen.findByRole('menuitem', {name: '복사'})
+  expect(screen.queryByRole('menuitem', {name: '붙여넣기'})).not.toBeInTheDocument()
+  copy.dispatchEvent(new MouseEvent('pointerup', {bubbles: true, button: 0}))
+  open()
+  const paste = await screen.findByRole('menuitem', {name: '붙여넣기'})
+  paste.dispatchEvent(new MouseEvent('pointerup', {bubbles: true, button: 0}))
+  expect(document().parts).toHaveLength(4)
+  open()
+  const rename = await screen.findByRole('menuitem', {name: '이름 바꾸기'})
+  rename.dispatchEvent(new MouseEvent('pointerup', {bubbles: true, button: 0}))
+  expect(view.getByRole('textbox', {name: 'mesh-preview 파츠 이름'})).toBeVisible()
+})
+
+test('should cut and paste into an empty layer list', async () => {
+  const source = createDemoDocument()
+  const [document, setDocument] = createSignal(source)
+  const [selection, setSelection] = createSignal<SceneSelection>({
+    activeNodeId: 'mesh-preview',
+    nodeIds: source.scene!.roots.map((node) => node.id),
+  })
+  const view = render(() => (
+    <EditorLayerPanel
+      document={document()}
+      selection={selection()}
+      onDocumentChange={setDocument}
+      onSelectionChange={setSelection}
+    />
+  ))
+  fireEvent.contextMenu(view.getByRole('button', {name: 'mesh-preview 레이어 선택'}))
+  const cut = await screen.findByRole('menuitem', {name: '잘라내기'})
+  cut.dispatchEvent(new MouseEvent('pointerup', {bubbles: true, button: 0}))
+  expect(document().parts).toHaveLength(0)
+  fireEvent.contextMenu(view.getByLabelText('레이어 목록 스크롤'))
+  const paste = await screen.findByRole('menuitem', {name: '붙여넣기'})
+  paste.dispatchEvent(new MouseEvent('pointerup', {bubbles: true, button: 0}))
+  expect(document().parts).toHaveLength(source.parts.length)
+})

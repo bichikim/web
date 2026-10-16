@@ -420,7 +420,7 @@ const getTextGenerationTokenizer = (
   }
 }
 
-const createTextGenerationOperation = (
+const runTextGeneration = (
   request: TextGenerationRequest,
   observer: TextGenerationResponseObserver,
   provider: TextGenerationExecutionProvider,
@@ -523,7 +523,7 @@ const generateText = (
     return Promise.resolve(providerResult)
   }
 
-  return createTextGenerationOperation(request, observer, providerResult.value, activeOperations)
+  return runTextGeneration(request, observer, providerResult.value, activeOperations)
 }
 
 /** Creates the shared text execution boundary and routes device or server targets. */

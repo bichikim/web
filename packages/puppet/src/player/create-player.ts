@@ -1,3 +1,4 @@
+import type {PlayerViewCamera} from './view-camera'
 import type {PuppetParameterValueMap} from '../deformation'
 import {
   assertPreparedPuppetDocument,
@@ -32,6 +33,7 @@ export interface Player {
   resetPhysics(): void
   resume(): void
   seek(time: number): void
+  setViewCamera(camera: PlayerViewCamera): void
   setMotion(motionId: string): boolean
   /** Updates one external override without replacing other overrides. */
   setParameterValue(parameterId: string, value: number): boolean
@@ -311,6 +313,7 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
       redraw()
     },
     setMotion,
+
     setParameterValue(parameterId, value) {
       const parameter = document.parameters?.find((candidate) => candidate.id === parameterId)
       if (destroyed || parameter === undefined) {
@@ -348,6 +351,18 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
       if (!destroyed) {
         syncTicker()
       }
+    },
+    setViewCamera(camera) {
+      if (
+        destroyed ||
+        ![camera.x, camera.y, camera.zoom].every(Number.isFinite) ||
+        camera.zoom <= 0
+      ) {
+        return
+      }
+      renderer.setViewCamera(camera)
+      applyFrame()
+      redraw()
     },
     startMotion: (motionId, settings) =>
       destroyed ? undefined : playbacks.start(motionId, settings),

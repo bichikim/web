@@ -1,5 +1,5 @@
 import flushPromises from 'flush-promises'
-import {createTestBroadcastChannel} from 'src/test-utils/create-test-broadcast-channel'
+import {createTestBroadcastChannel} from 'src/__tests__/create-test-broadcast-channel'
 /** @vitest-environment jsdom */
 
 import {renderHook} from '@solidjs/testing-library'

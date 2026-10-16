@@ -45,7 +45,7 @@ export type StoredCustomTrack = z.infer<typeof storedTrackSchema>
 
 let databasePromise: Promise<IDBDatabase> | null = null
 
-const createDatabase = (): Promise<IDBDatabase> =>
+const openDatabase = (): Promise<IDBDatabase> =>
   new Promise((resolve, reject) => {
     if (typeof globalThis.indexedDB === 'undefined') {
       reject(new CustomAlbumError('database-unavailable'))
@@ -70,7 +70,7 @@ const createDatabase = (): Promise<IDBDatabase> =>
 
 export const openCustomAlbumDatabase = (): Promise<IDBDatabase> => {
   if (databasePromise === null) {
-    databasePromise = createDatabase().catch((error: unknown) => {
+    databasePromise = openDatabase().catch((error: unknown) => {
       databasePromise = null
       throw error
     })
