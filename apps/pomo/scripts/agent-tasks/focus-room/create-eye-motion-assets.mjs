@@ -2,6 +2,7 @@
 import {createRequire} from 'node:module'
 import {mkdir, rename} from 'node:fs/promises'
 import path from 'node:path'
+import {fillHorizontalMask} from './fill-horizontal-mask.mjs'
 
 const require = createRequire(import.meta.url)
 const sharp = require('sharp')
@@ -17,9 +18,6 @@ const MASK_DILATION_SIZE = 5
 const MASK_EDGE_THRESHOLD = 16
 const INPAINT_SAMPLE_RADIUS = 18
 const INPAINT_BLUR = 1.1
-const RED_BRIGHTNESS_WEIGHT = 0.2126
-const GREEN_BRIGHTNESS_WEIGHT = 0.7152
-const BLUE_BRIGHTNESS_WEIGHT = 0.0722
 const ASSET_LIBRARY_DIRECTORY = path.resolve(process.cwd(), 'asset-library')
 const DAY_READING_EYE_FILL =
   'focus-room-source/layers/day-reading-focused/workfiles/eye-base-candidate-a.png'
@@ -202,109 +200,16 @@ async function shiftLeft(source, pixels) {
     .toBuffer()
 }
 
-const getBrightness = (data, offset) =>
-  data[offset] * RED_BRIGHTNESS_WEIGHT +
-  data[offset + 1] * GREEN_BRIGHTNESS_WEIGHT +
-  data[offset + 2] * BLUE_BRIGHTNESS_WEIGHT
-
-const findBrightestHorizontalPixel = ({data, direction, mask, startX, width, y}) => {
-  let brightestOffset
-  let brightestValue = -1
-
-  for (let distance = 0; distance < INPAINT_SAMPLE_RADIUS; distance += 1) {
-    const x = startX + distance * direction
-
-    if (x < 0 || x >= width) {
-      break
-    }
-
-    const pixelIndex = y * width + x
-    const offset = pixelIndex * RGBA_CHANNEL_COUNT
-
-    if (mask[pixelIndex] <= MASK_EDGE_THRESHOLD && data[offset + ALPHA_CHANNEL_INDEX] !== 0) {
-      const brightness = getBrightness(data, offset)
-
-      if (brightness > brightestValue) {
-        brightestOffset = offset
-        brightestValue = brightness
-      }
-    }
-  }
-
-  return brightestOffset
-}
-
-const fillHorizontalRange = ({endX, output, sampleOffset, source, startX, width, y}) => {
-  if (sampleOffset === undefined) {
-    return
-  }
-
-  for (let fillX = startX; fillX <= endX; fillX += 1) {
-    const outputOffset = (y * width + fillX) * RGBA_CHANNEL_COUNT
-
-    for (let channel = 0; channel < ALPHA_CHANNEL_INDEX; channel += 1) {
-      output[outputOffset + channel] = source[sampleOffset + channel]
-    }
-  }
-}
-
 async function createHorizontalEyeFill(headSource, removalMask) {
   const [{data: source, info}, {data: mask}] = await Promise.all([
     sharp(headSource).ensureAlpha().raw().toBuffer({resolveWithObject: true}),
     sharp(removalMask).greyscale().raw().toBuffer({resolveWithObject: true}),
   ])
-  const output = Buffer.from(source)
-
-  for (let y = 0; y < info.height; y += 1) {
-    let x = 0
-
-    while (x < info.width) {
-      if (mask[y * info.width + x] <= MASK_EDGE_THRESHOLD) {
-        x += 1
-      } else {
-        const startX = x
-
-        while (x < info.width && mask[y * info.width + x] > MASK_EDGE_THRESHOLD) {
-          x += 1
-        }
-
-        const endX = x - 1
-        const leftOffset = findBrightestHorizontalPixel({
-          data: source,
-          direction: -1,
-          mask,
-          startX: startX - 1,
-          width: info.width,
-          y,
-        })
-        const rightOffset = findBrightestHorizontalPixel({
-          data: source,
-          direction: 1,
-          mask,
-          startX: endX + 1,
-          width: info.width,
-          y,
-        })
-        const sampleOffset =
-          leftOffset === undefined
-            ? rightOffset
-            : rightOffset === undefined ||
-                getBrightness(source, leftOffset) >= getBrightness(source, rightOffset)
-              ? leftOffset
-              : rightOffset
-
-        fillHorizontalRange({
-          endX,
-          output,
-          sampleOffset,
-          source,
-          startX,
-          width: info.width,
-          y,
-        })
-      }
-    }
-  }
+  const output = fillHorizontalMask(source, mask, {
+    dimensions: info,
+    edgeThreshold: MASK_EDGE_THRESHOLD,
+    sampleRadius: INPAINT_SAMPLE_RADIUS,
+  })
 
   return sharp(output, {
     raw: {channels: RGBA_CHANNEL_COUNT, height: info.height, width: info.width},
