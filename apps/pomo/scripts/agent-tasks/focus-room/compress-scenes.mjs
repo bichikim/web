@@ -5,6 +5,7 @@ import {mkdir, mkdtemp, readdir, rename, rm, stat, writeFile} from 'node:fs/prom
 import path from 'node:path'
 
 import {writeParallaxDepthWebp} from './depth-parallax-assets.mjs'
+import {measureRgbaError} from './measure-rgba-error.mjs'
 
 const commandArguments = process.argv.slice(2)
 const unsupportedArguments = commandArguments.filter((argument) => argument !== '--depth-only')
@@ -235,28 +236,13 @@ const isAcceptableAlphaAsset = async (sourcePath, outputPath) => {
 
   assertMatchingDimensions(source, output, outputPath)
 
-  let absoluteError = 0
-  let squaredError = 0
-  let comparedValues = 0
+  const error = measureRgbaError(source, output)
 
-  for (let index = 0; index < source.data.length; index += RGBA_CHANNEL_COUNT) {
-    const alpha = source.data[index + ALPHA_CHANNEL_INDEX]
-
-    if (alpha !== output.data[index + ALPHA_CHANNEL_INDEX]) {
-      return false
-    }
-
-    if (alpha !== 0) {
-      const opacity = alpha / MAXIMUM_CHANNEL_VALUE
-
-      for (let channel = 0; channel < RGB_CHANNEL_COUNT; channel += 1) {
-        const difference = (source.data[index + channel] - output.data[index + channel]) * opacity
-        absoluteError += Math.abs(difference)
-        squaredError += difference ** 2
-        comparedValues += 1
-      }
-    }
+  if (error === null) {
+    return false
   }
+
+  const {absoluteError, comparedValues, squaredError} = error
 
   if (comparedValues === 0) {
     return true
