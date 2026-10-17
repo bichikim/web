@@ -1,3 +1,4 @@
+import {CUSTOM_TRACK_ID_PREFIX} from '../custom-albums/model'
 import type {PTrack} from './focus-room-playlist'
 
 export interface ResolvePPlaylistOptions {
@@ -6,7 +7,7 @@ export interface ResolvePPlaylistOptions {
   readonly tracks: readonly PTrack[]
 }
 
-/** Resolves a saved playlist against the current catalog while preserving the default fallback. */
+/** Resolves saved tracks while retaining fallback behavior for obsolete bundled IDs. */
 export const resolvePPlaylist = (options: ResolvePPlaylistOptions): readonly PTrack[] => {
   if (options.storedTrackIds === null) {
     return options.defaultTracks
@@ -17,8 +18,11 @@ export const resolvePPlaylist = (options: ResolvePPlaylistOptions): readonly PTr
     const track = tracksById.get(trackId)
     return track === undefined ? [] : [track]
   })
+  const hasCustomTrackIds = options.storedTrackIds.some((trackId) =>
+    trackId.startsWith(CUSTOM_TRACK_ID_PREFIX),
+  )
 
-  if (options.storedTrackIds.length > 0 && restoredTracks.length === 0) {
+  if (options.storedTrackIds.length > 0 && restoredTracks.length === 0 && !hasCustomTrackIds) {
     return options.defaultTracks
   }
 

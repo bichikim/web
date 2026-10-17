@@ -1,6 +1,7 @@
 /** @vitest-environment jsdom */
 import {describe, expect, it, vi} from 'vitest'
 
+import {CUSTOM_TRACK_ID_PREFIX} from '../../../features/custom-albums/model'
 import type {PPlaybackState, PTrack} from '../../../features/focus-room-audio'
 import {restorePPlayerState} from '../restoration'
 
@@ -18,10 +19,18 @@ const ALBUM_TRACK = {
   source: '/album.mp3',
   title: 'Album',
 } as const satisfies PTrack
+const CUSTOM_TRACK = {
+  ...ALBUM_TRACK,
+  id: `${CUSTOM_TRACK_ID_PREFIX}saved`,
+} as const satisfies PTrack
 const ALBUM_PLAYBACK = {
   isPlaying: false,
   positionSeconds: 10,
   trackId: ALBUM_TRACK.id,
+} as const satisfies PPlaybackState
+const CUSTOM_PLAYBACK = {
+  ...ALBUM_PLAYBACK,
+  trackId: CUSTOM_TRACK.id,
 } as const satisfies PPlaybackState
 
 describe('restorePPlayerState', () => {
@@ -134,15 +143,15 @@ describe('restorePPlayerState', () => {
     expect(onRestore).not.toHaveBeenCalled()
   })
 
-  it('should keep playback restoration responsive while custom tracks are loading', async () => {
+  it('should wait for delayed custom-track resolution before restoring the saved queue', async () => {
     const customTracks = Promise.withResolvers<readonly PTrack[]>()
     const onRestore = vi.fn()
     const restoration = restorePPlayerState({
       canRestore: () => true,
       defaultTracks: [DEFAULT_TRACK],
       onRestore,
-      playbackRequest: Promise.resolve(ALBUM_PLAYBACK),
-      playlistRequest: Promise.resolve([ALBUM_TRACK.id]),
+      playbackRequest: Promise.resolve(CUSTOM_PLAYBACK),
+      playlistRequest: Promise.resolve([CUSTOM_TRACK.id]),
       resolveTracks: () => customTracks.promise,
       tracks: [DEFAULT_TRACK],
     })
@@ -150,9 +159,9 @@ describe('restorePPlayerState', () => {
     await Promise.resolve()
     expect(onRestore).not.toHaveBeenCalled()
 
-    customTracks.resolve([ALBUM_TRACK])
+    customTracks.resolve([CUSTOM_TRACK])
     await restoration
 
-    expect(onRestore).toHaveBeenCalledExactlyOnceWith([ALBUM_TRACK], ALBUM_PLAYBACK)
+    expect(onRestore).toHaveBeenCalledExactlyOnceWith([CUSTOM_TRACK], CUSTOM_PLAYBACK)
   })
 })
