@@ -1,3 +1,6 @@
+/** 영어 수량 명사의 정규식 부분식. 공백·단어 경계·플래그는 각 사용처에서 조합한다. */
+export const ENGLISH_COUNT_NOUNS = '(?:[a-z]+s|children|feet|men|mice|people|teeth|women)'
+
 export const NUMBER_SIGN_CHARACTERS = '+\\-−－＋'
 export const NUMBER_SIGN_PATTERN_SOURCE = `[${NUMBER_SIGN_CHARACTERS}]`
 const ASCII_DIGIT_PATTERN_SOURCE = '\\d'
