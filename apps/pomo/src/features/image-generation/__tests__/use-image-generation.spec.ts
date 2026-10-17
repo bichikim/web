@@ -64,6 +64,60 @@ it('should accept the maximum supported seed', async () => {
   expect(result.result()?.seed).toBe(MAXIMUM_SEED)
 })
 
+it('should normalize fullwidth seed digits before image generation', async () => {
+  vi.mocked(runImageGeneration).mockResolvedValue({
+    blob: new Blob(['png']),
+    prompt: 'A dancing hamburger',
+  })
+  const {result} = renderHook(useImageGeneration)
+  await vi.waitFor(() => expect(result.supported()).toBe(true))
+  result.setIdea('춤추는 햄버거')
+  result.setSeed('１２３')
+  await result.generate()
+  expect(runImageGeneration).toHaveBeenCalledWith(
+    expect.objectContaining({settings: expect.objectContaining({seed: 123})}),
+  )
+  expect(result.result()?.seed).toBe(123)
+  expect(result.error()).toBe(null)
+})
+
+it.each(['+123', '-123', '12.3', '＋１２３', '－１２３', '１２．３', '9007199254740992'])(
+  'should reject signed, decimal, or unsafe seed %s before image generation',
+  async (seedText) => {
+    const {result} = renderHook(useImageGeneration)
+    await vi.waitFor(() => expect(result.supported()).toBe(true))
+    result.setIdea('춤추는 햄버거')
+    result.setSeed(seedText)
+    await result.generate()
+    expect(runImageGeneration).not.toHaveBeenCalled()
+    expect(result.error()).toBe(m.picture_diary_generation_seed_error())
+    expect(result.busy()).toBe(false)
+  },
+)
+
+it('should use a random uint32 seed when the seed input is empty', async () => {
+  const randomSeed = 1234
+  const getRandomValues = vi.fn((values: Uint32Array) => {
+    values[0] = randomSeed
+    return values
+  })
+  vi.stubGlobal('crypto', {getRandomValues})
+  vi.mocked(runImageGeneration).mockResolvedValue({
+    blob: new Blob(['png']),
+    prompt: 'A dancing hamburger',
+  })
+  const {result} = renderHook(useImageGeneration)
+  await vi.waitFor(() => expect(result.supported()).toBe(true))
+  result.setIdea('춤추는 햄버거')
+  result.setSeed('')
+  await result.generate()
+  expect(getRandomValues).toHaveBeenCalledOnce()
+  expect(runImageGeneration).toHaveBeenCalledWith(
+    expect.objectContaining({settings: expect.objectContaining({seed: randomSeed})}),
+  )
+  expect(result.result()?.seed).toBe(randomSeed)
+})
+
 it('should reject seeds above the supported range before image generation', async () => {
   const {result} = renderHook(useImageGeneration)
   await vi.waitFor(() => expect(result.supported()).toBe(true))
