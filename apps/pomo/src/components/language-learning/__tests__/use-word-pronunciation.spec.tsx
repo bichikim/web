@@ -54,6 +54,7 @@ let manager: ReturnType<typeof createManager>
 let audioRepository: ReturnType<typeof createAudioRepository>
 let pendingWord: () => LanguageLearningWord | null
 let requestWord: (value: LanguageLearningWord) => void
+let getPronunciationAudioUrl: (value: LanguageLearningWord) => string | null
 let confirmDownload: () => void
 let cancelDownload: () => void
 let removeWord: (value: LanguageLearningWord) => void
@@ -62,6 +63,7 @@ const Harness = () => {
   const pronunciation = useLanguageLearningWordPronunciation()
   pendingWord = pronunciation.pendingWord
   requestWord = pronunciation.request
+  getPronunciationAudioUrl = pronunciation.audioUrl
   confirmDownload = pronunciation.confirmDownload
   cancelDownload = pronunciation.cancelDownload
   removeWord = pronunciation.remove
@@ -152,6 +154,26 @@ it('should generate a pronunciation with a ready model and expose the audio URL'
     }),
   )
   expect(screen.getByTestId('loading')).toHaveTextContent('false')
+})
+
+it('should reuse an in-memory pronunciation for Unicode-equivalent spellings', async () => {
+  vi.spyOn(globalThis.crypto, 'randomUUID').mockReturnValue('00000000-0000-4000-8000-000000000001')
+  vi.mocked(manager.runAfterVoiceModel).mockImplementation(async ({task}) => ({
+    status: 'complete',
+    value: await task(),
+  }))
+  renderPronunciation()
+  const composedWord = {...word, language: 'ko' as const, value: '한글'}
+  const decomposedWord = {...composedWord, value: composedWord.value.normalize('NFD')}
+
+  requestWord(composedWord)
+
+  await vi.waitFor(() => expect(getPronunciationAudioUrl(composedWord)).toBe('blob:pronunciation'))
+  requestWord(decomposedWord)
+
+  expect(getPronunciationAudioUrl(decomposedWord)).toBe('blob:pronunciation')
+  expect(audioRepository.get).toHaveBeenCalledOnce()
+  expect(generateLanguageLearningWordPronunciation).toHaveBeenCalledOnce()
 })
 
 it('should resume pronunciation when settings hydrate after a cache miss', async () => {
