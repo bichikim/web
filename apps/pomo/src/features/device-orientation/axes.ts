@@ -1,3 +1,4 @@
+import {wrapDegrees} from 'src/utils/wrap-degrees'
 import {clamp} from 'es-toolkit/math'
 
 const DEVICE_ORIENTATION_RANGE_X = 18
@@ -7,7 +8,6 @@ const SCREEN_ANGLE_LANDSCAPE_PRIMARY = 90
 const SCREEN_ANGLE_PORTRAIT_SECONDARY = 180
 const SCREEN_ANGLE_LANDSCAPE_SECONDARY = 270
 const HALF_ROTATION_DEGREES = 180
-const FULL_ROTATION_DEGREES = 360
 
 export interface OrientationAxes {
   readonly x: number
@@ -16,10 +16,8 @@ export interface OrientationAxes {
 
 const removeDeadZone = (value: number) =>
   Math.abs(value) < DEVICE_ORIENTATION_DEAD_ZONE ? 0 : value
-const normalizeAngle = (angle: number) =>
-  ((angle % FULL_ROTATION_DEGREES) + FULL_ROTATION_DEGREES) % FULL_ROTATION_DEGREES
 const getAngleDelta = (current: number, baseline: number) =>
-  normalizeAngle(current - baseline + HALF_ROTATION_DEGREES) - HALF_ROTATION_DEGREES
+  wrapDegrees(current - baseline + HALF_ROTATION_DEGREES) - HALF_ROTATION_DEGREES
 
 export const getOrientationAxes = (
   beta: number | null,
@@ -30,7 +28,7 @@ export const getOrientationAxes = (
     return null
   }
 
-  switch (normalizeAngle(screenAngle)) {
+  switch (wrapDegrees(screenAngle)) {
     case 0:
       return {x: gamma, y: beta}
     case SCREEN_ANGLE_LANDSCAPE_PRIMARY:

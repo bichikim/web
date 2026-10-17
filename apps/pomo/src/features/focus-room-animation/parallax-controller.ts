@@ -1,3 +1,4 @@
+import {wrapDegrees} from 'src/utils/wrap-degrees'
 import {observeReducedMotionPreference} from 'src/utils/observe-media-query'
 import {getDragDepthOffset} from 'src/utils/get-drag-depth-offset'
 import {exponentialApproachFactor} from 'src/utils/exponential-approach-factor'
@@ -13,7 +14,6 @@ import type {PSceneMotionInput} from './scene-motion'
 
 const DRAG_RETURN_DELAY = 150
 const FOLLOW_TIME_CONSTANT = 180
-const FULL_ROTATION_DEGREES = 360
 const MAXIMUM_FRAME_DURATION = 64
 const PARALLAX_SETTLE_DISTANCE = 0.01
 const RETURN_TIME_CONSTANT = 320
@@ -28,10 +28,6 @@ export interface ParallaxControllerOptions {
   readonly inputMode?: PSceneMotionInput
   readonly onInputModeChange?: MotionInputChange
   readonly onMotionPreferenceChange?: MotionPreferenceChange
-}
-
-const getScreenAngle = (angle: number) => {
-  return ((angle % FULL_ROTATION_DEGREES) + FULL_ROTATION_DEGREES) % FULL_ROTATION_DEGREES
 }
 
 export class ParallaxController {
@@ -53,7 +49,7 @@ export class ParallaxController {
     const axes = getOrientationAxes(
       event.beta,
       event.gamma,
-      getScreenAngle(this.#environment.getAngle()),
+      wrapDegrees(this.#environment.getAngle()),
     )
 
     if (axes === null) {
