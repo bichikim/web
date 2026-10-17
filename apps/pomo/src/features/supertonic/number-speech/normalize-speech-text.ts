@@ -10,7 +10,7 @@ const PROTECTED_NUMBER_SOURCE = [
   '[\\p{L}\\p{N}._%+-]+@[\\p{L}\\p{N}.-]+\\.[\\p{L}]{2,}',
   `\\b(?:between|from)\\s+${PROTECTED_RANGE_NUMBER_SOURCE}` +
     `\\s+(?:and|to|through)\\s+${PROTECTED_RANGE_NUMBER_SOURCE}\\b`,
-  `(?<!\\d)${PROTECTED_RANGE_NUMBER_SOURCE}` +
+  `(?<![\\d:：])${PROTECTED_RANGE_NUMBER_SOURCE}` +
     `\\s*(?:~|–|—|에서|부터|내지|to|through)\\s*${PROTECTED_RANGE_NUMBER_SOURCE}(?!\\d)`,
   '\\b(?:version|model|room|chapter|episode|id)\\s+\\d+(?:\\.\\d+)*(?:st|nd|rd|th)?\\b',
   '\\b\\d+(?:[.-]\\d+){2,}\\b',
