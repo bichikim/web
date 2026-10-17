@@ -1,14 +1,8 @@
-import type {useUiAutoHide} from 'src/features/ui-auto-hide'
-import type {BackgroundController} from 'src/features/background'
 import {cx} from 'class-variance-authority'
 import {createSignal, Show} from 'solid-js'
 import {useToolbarWrap} from './use-toolbar-wrap'
 import {getPomoIconClass} from '../icon-style'
-import {
-  type PSceneMotionInput,
-  type PSceneMotionMode,
-  type PSceneStyle,
-} from '../../features/focus-room-animation/index'
+import {type PSceneMotionMode, type PSceneStyle} from '../../features/focus-room-animation/index'
 import {type PActivity, type PGaze} from '../../features/focus-room-scene-preferences/index'
 import type {SceneTimeMode} from '../../features/focus-room-time/index'
 import {type ScreenSaverDelay} from '../../features/screen-saver/index'
@@ -24,7 +18,7 @@ import {PScribbleCircleControl} from '../scribble/CircleControl'
 import {SceneSettingsPanel} from './SettingsPanel'
 import {CLASSES} from './shared'
 import {PWeatherStatus} from '../p-weather-status/PWeatherStatus'
-import type {DesktopMode} from '../../features/desktop-mode/index'
+import type {PSettingsProps} from '../settings/types'
 import {MemoryAssistPanel} from './MemoryAssistPanel'
 import {VersionNoticePanel} from './VersionNoticePanel'
 import {GLASS_ICON_BUTTON} from '../button-presets'
@@ -33,30 +27,12 @@ import {PTools} from '../p-tools/PTools'
 import {PToastRegion} from '../p-toast'
 import {PStudioTourHint} from './TourHint'
 
-interface SceneToolbarProps {
-  readonly uiAutoHide?: ReturnType<typeof useUiAutoHide>
-  readonly pomodoroVisible?: boolean
-  readonly onPomodoroVisibleChange?: (visible: boolean) => void
-  readonly playerVisible?: boolean
-  readonly onPlayerVisibleChange?: (visible: boolean) => void
-  readonly background?: BackgroundController
+interface SceneToolbarProps extends Omit<PSettingsProps, 'desktopSurface'> {
   readonly activity: PActivity
-  readonly canUseGyroscope?: boolean
-  readonly featureRequestVisible?: boolean
-  readonly onFeatureRequestVisibleChange?: (visible: boolean) => void
-  readonly toolsButtonVisible?: boolean
-  readonly onToolsButtonVisibleChange?: (visible: boolean) => void
-  readonly memoryAssistVisible?: boolean
-  readonly onMemoryAssistVisibleChange?: (visible: boolean) => void
-  readonly tourButtonVisible?: boolean
-  readonly onTourButtonVisibleChange?: (visible: boolean) => void
-  readonly dialogueComposerVisible?: boolean
   readonly gaze: PGaze
   readonly isSceneTransitioning: boolean
   readonly onActivityChange: (activity: PActivity) => void
-  readonly onDialogueComposerVisibleChange?: (visible: boolean) => void
   readonly onGazeChange: (gaze: PGaze) => void
-  readonly onMotionInputChange?: (motionInput: PSceneMotionInput) => void
   readonly onMotionModeChange: (motionMode: PSceneMotionMode) => void
   readonly onScreenSaverDelayChange: (delay: ScreenSaverDelay) => void
   readonly onSceneStyleChange: (sceneStyle: PSceneStyle) => void
@@ -69,17 +45,12 @@ interface SceneToolbarProps {
   readonly onWeatherSceneModeChange: (mode: WeatherSceneMode) => void
   readonly screenSaverDelay: ScreenSaverDelay
   readonly sceneStyle: PSceneStyle
-  readonly motionInput?: PSceneMotionInput
   readonly motionMode: PSceneMotionMode
   readonly timeMode: SceneTimeMode
   readonly weatherEnabled: boolean
   readonly weatherLocation: WeatherLocation
   readonly weatherSceneMode: WeatherSceneMode
   readonly weatherState: WeatherState
-  readonly desktopMode?: DesktopMode
-  readonly desktopModeError?: string | null
-  readonly isDesktopModeChanging?: boolean
-  readonly onDesktopModeChange?: (mode: DesktopMode) => Promise<void>
   readonly layout?: 'studio' | 'surface'
 }
 
