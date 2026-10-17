@@ -1,3 +1,4 @@
+import {getExceptionMessage} from 'src/features/error-detail'
 import {AiRunnerError, createAiRunnerClient} from './runner-client'
 import {createAiRunnerJobRequest} from './runner-contract'
 import {
@@ -102,7 +103,7 @@ const dispatchOpenAiJob = async (job: AiJobRecord): Promise<AiJobRecord> => {
     return persistAcceptedProviderAfterClaimLoss(
       job,
       `${OPENAI_RESPONSE_PREFIX}${handle.responseId}`,
-      error instanceof Error ? error.message : 'Failed to persist OpenAI response ID',
+      getExceptionMessage(error, 'Failed to persist OpenAI response ID'),
     )
   }
 
@@ -134,7 +135,7 @@ const dispatchRunnerJob = async (job: AiJobRecord): Promise<AiJobRecord> => {
     return persistAcceptedProviderAfterClaimLoss(
       job,
       runnerJob.jobId,
-      error instanceof Error ? error.message : 'Failed to persist runner job ID',
+      getExceptionMessage(error, 'Failed to persist runner job ID'),
     )
   }
 
@@ -207,7 +208,7 @@ const handleDispatchError = async (
     await releaseAiJobConcurrency(job.id)
     const queued = await recordAiJobDispatchError(
       job.id,
-      error instanceof Error ? error.message : 'AI job dispatch failed',
+      getExceptionMessage(error, 'AI job dispatch failed'),
     )
     return {job: queued ?? job, kind: 'queued'}
   }
@@ -215,7 +216,7 @@ const handleDispatchError = async (
   await releaseAiJobConcurrency(job.id)
   const failed = await finalizeAiJob(job.id, {
     errorCode: getDispatchErrorCode(error),
-    errorMessage: error instanceof Error ? error.message : 'AI job dispatch failed',
+    errorMessage: getExceptionMessage(error, 'AI job dispatch failed'),
     status: 'failed',
   })
   return {job: failed ?? job, kind: 'terminal'}

@@ -10,6 +10,10 @@ import {
 const now = new Date('2026-09-20T00:00:00.000Z')
 afterEach(() => vi.restoreAllMocks())
 
+const diagnosticCases = (['delete', 'cleanup'] as const).flatMap((operation) =>
+  (['detail', 'empty', 'plain'] as const).map((cause) => ({cause, operation})),
+)
+
 const createArtifact = (index: number): AiArtifactRecord => ({
   archivePendingAt: null,
   contentType: 'text/plain',
@@ -74,6 +78,58 @@ const createStorage = () => ({
 })
 
 describe('createAiArtifactService', () => {
+  it.each(diagnosticCases)(
+    'should preserve the diagnostic and artifact guards for $operation / $cause',
+    async ({operation, cause}) => {
+      const pending = {...createArtifact(0), lifecycle: 'deletion_pending' as const}
+      const repository = createRepository()
+      const storage = createStorage()
+      let messageReads = 0
+      const message = cause === 'empty' ? '' : 'storage detail'
+      const error = Object.defineProperty(cause === 'plain' ? {} : new Error(message), 'message', {
+        get: () => {
+          messageReads += 1
+          if (cause === 'plain') {
+            throw new Error('A plain-object message must not be read')
+          }
+          return message
+        },
+      })
+      repository.findAiJobArtifactForUser.mockResolvedValue(pending)
+      repository.claimAiJobArtifactDeletion.mockResolvedValue(pending)
+      repository.listExpiredAiArtifacts.mockResolvedValue([pending])
+      repository.recordAiJobArtifactDeleteFailure.mockResolvedValue(pending)
+      storage.deleteAiArtifactObject.mockRejectedValue(error)
+      const service = createAiArtifactService({clock: () => now, repository, storage})
+
+      if (operation === 'delete') {
+        await expect(
+          service.deleteAiJobArtifactForUser(pending.jobId, pending.userId),
+        ).resolves.toBe(pending)
+      } else {
+        await expect(service.cleanupExpiredAiArtifacts()).resolves.toEqual({
+          deleted: 0,
+          failures: 1,
+        })
+      }
+
+      expect(repository.recordAiJobArtifactDeleteFailure).toHaveBeenCalledWith(
+        pending.id,
+        cause === 'plain' ? 'AI artifact deletion failed' : message,
+        {
+          expectedLifecycle: pending.lifecycle,
+          expectedObjectKey: pending.objectKey,
+          expectedPendingObjectKey: pending.pendingObjectKey,
+          expectedSourceObjectKey: pending.sourceObjectKey,
+          ...(operation === 'cleanup' ? {preserveLifecycle: false} : {}),
+        },
+      )
+      expect(messageReads).toBe(cause === 'plain' ? 0 : 1)
+      expect(repository.markAiJobArtifactDeleted).not.toHaveBeenCalled()
+      expect(storage.deleteAiArtifactObject).toHaveBeenCalledExactlyOnceWith(pending.objectKey)
+    },
+  )
+
   it.each(['artifacts', 'intermediate'] as const)(
     'should keep eight-item batch barriers, failures and final partial batch for %s cleanup',
     async (kind) => {
