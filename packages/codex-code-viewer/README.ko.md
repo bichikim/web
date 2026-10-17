@@ -129,7 +129,7 @@ TS·JS·JSON 탐색에는 여러 파일의 미저장 변경이 반영됩니다. 
 
 ### 코드 탐색 설정
 
-- **TypeScript·JavaScript:** 내장 TS7 엔진을 사용합니다. 작업 폴더를 열면 백그라운드 준비를 시작하고, 검증한 결과부터 전달합니다. 파일에 가장 가까운 tsconfig를 사용하며 `paths`, 상대 import와 barrel 내보내기를 해석합니다. 번들러 전용 별칭, 브라우저 public URL, 계산된 경로는 해석하지 못할 수 있습니다.
+- **TypeScript·JavaScript:** TS7 엔진을 사용합니다. npm으로 설치하면 탐색 준비 시 현재 OS에 필요한 고정 버전을 npm 레지스트리에서 내려받아 SHA-512 체크섬을 검증합니다. 이후에는 캐시를 재사용하므로 오프라인에서도 사용할 수 있습니다. 작업 폴더를 열면 백그라운드 준비를 시작하고, 검증한 결과부터 전달합니다. 파일에 가장 가까운 tsconfig를 사용하며 `paths`, 상대 import와 barrel 내보내기를 해석합니다. 번들러 전용 별칭, 브라우저 public URL, 계산된 경로는 해석하지 못할 수 있습니다.
 - **Python:** 별도 분석기 설치 없이 사용할 수 있습니다. 프로젝트 설정은 `pyrightconfig.json` 또는 `pyproject.toml`의 Pyright 설정을 따릅니다.
 - **Ruby:** 프로젝트의 Ruby 환경에서 `gem install solargraph`로 Solargraph를 설치합니다. 실행 파일은 `SOLARGRAPH_BINARY`·`RUBY_BINARY`로 지정할 수 있습니다. 문자열 리터럴인 `require_relative`는 분석기 없이도 이동하며, 동적으로 만든 경로는 지원하지 않습니다.
 - **Rust:** Rust·Cargo·rustup 설치 없이 사용할 수 있습니다. 첫 탐색에는 분석기를 내려받기 위한 GitHub Releases 연결이 필요하며, 다운로드 후에는 오프라인으로 사용할 수 있습니다. macOS·Linux·Windows의 x64·arm64를 지원하고 Linux에는 glibc가 필요합니다. 기존 분석기를 사용하려면 `RUST_ANALYZER_BINARY`에 실행 파일 경로를 지정하세요.

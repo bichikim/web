@@ -28,6 +28,11 @@ const archive = resolve(arguments_[0])
 const output = resolve(arguments_[1] ?? join(repository, 'node_modules/.cache/code-viewer-install'))
 await mkdir(output, {recursive: true})
 const bytes = await readFile(archive)
+const MAX_PLUGIN_BYTES = 52428800
+assert.ok(
+  bytes.length <= MAX_PLUGIN_BYTES,
+  `Code Viewer archive is ${bytes.length} bytes; Codex allows at most ${MAX_PLUGIN_BYTES} bytes.`,
+)
 const root = await realpath(await mkdtemp(join(tmpdir(), 'viewer-tarball-')))
 /** @param {Buffer} value */
 const sha256 = (value) => createHash('sha256').update(value).digest('hex')

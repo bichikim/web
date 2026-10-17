@@ -32,7 +32,7 @@ describe('createNativeNavigation', () => {
         consumer.replace('../core.', '../other.'),
       )
       const client = createNativeNavigation({
-        binary: resolveNativeBinary(),
+        binary: await resolveNativeBinary(),
         documents: [],
         receive: () => undefined,
         root,
@@ -106,7 +106,7 @@ describe('createNativeNavigation', () => {
       })
     writeFileSync(join(root, 'consumer/tsconfig.json'), configuration('core'))
     const client = createNativeNavigation({
-      binary: resolveNativeBinary(),
+      binary: await resolveNativeBinary(),
       documents: [],
       receive: () => undefined,
       root,
@@ -139,7 +139,7 @@ describe('createNativeNavigation', () => {
     writeFileSync(join(root, 'core.ts'), source)
     writeFileSync(join(root, 'use.ts'), consumer)
     const client = createNativeNavigation({
-      binary: resolveNativeBinary(),
+      binary: await resolveNativeBinary(),
       documents: [],
       receive: () => undefined,
       root,
@@ -204,7 +204,7 @@ describe('createNativeNavigation', () => {
       writeFileSync(join(root, 'consumer.cjs'), consumer)
       writeFileSync(join(root, 'unrelated.cjs'), consumer.replace('./core.cjs', './other.cjs'))
       const client = createNativeNavigation({
-        binary: resolveNativeBinary(),
+        binary: await resolveNativeBinary(),
         documents: [],
         receive: () => undefined,
         root,
@@ -244,7 +244,7 @@ describe('createNativeNavigation', () => {
     writeFileSync(join(root, 'other.ts'), 'export const other = () => 2')
     writeFileSync(join(root, 'consumer.cjs'), consumer)
     const client = createNativeNavigation({
-      binary: resolveNativeBinary(),
+      binary: await resolveNativeBinary(),
       documents: [],
       receive: () => undefined,
       root,
@@ -281,7 +281,7 @@ describe('createNativeNavigation', () => {
     const files = Array.from({length: 32}, (_, index) => `consumer-${index}.cjs`)
     files.forEach((file) => writeFileSync(join(root, file), consumer))
     const client = createNativeNavigation({
-      binary: resolveNativeBinary(),
+      binary: await resolveNativeBinary(),
       documents: [],
       receive: () => undefined,
       root,
@@ -348,7 +348,7 @@ describe('createNativeNavigation', () => {
       writeFileSync(join(root, file), text)
     })
     const client = createNativeNavigation({
-      binary: resolveNativeBinary(),
+      binary: await resolveNativeBinary(),
       documents: [],
       receive: () => undefined,
       root,

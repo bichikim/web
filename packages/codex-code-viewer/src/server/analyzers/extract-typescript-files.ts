@@ -1,6 +1,6 @@
 import {gunzipSync} from 'node:zlib'
 
-/** Extracts regular binary and SDK files from a verified TypeScript platform tarball. */
+/** 검증된 TypeScript 압축 파일에서 실행 파일과 SDK 일반 파일만 추출한다. */
 export const extractTypescriptFiles = (archive: Uint8Array): ReadonlyMap<string, Buffer> => {
   const bytes = gunzipSync(archive)
   const files = new Map<string, Buffer>()

@@ -129,7 +129,7 @@ Only `Cargo.lock` uses TOML highlighting; other `.lock` files are plain text. `.
 
 ### Navigation setup
 
-- **TypeScript / JavaScript:** Uses the bundled TS7 engine. Background preparation starts when the workspace opens, and verified results are delivered progressively. Uses the nearest tsconfig, including `paths`, relative imports and barrel exports. Bundler-only aliases, browser public URLs and computed paths may not resolve.
+- **TypeScript / JavaScript:** Uses the TS7 engine. npm installations download the pinned engine for your OS from the npm registry when navigation first prepares, verify its SHA-512 checksum, and cache it for offline reuse. Background preparation starts when the workspace opens, and verified results are delivered progressively. Uses the nearest tsconfig, including `paths`, relative imports and barrel exports. Bundler-only aliases, browser public URLs and computed paths may not resolve.
 - **Python:** No separate analyzer installation is needed. Project settings follow the Pyright configuration in `pyrightconfig.json` or `pyproject.toml`.
 - **Ruby:** Install Solargraph in the project's Ruby environment with `gem install solargraph`. Use `SOLARGRAPH_BINARY` or `RUBY_BINARY` to override executables. Literal `require_relative` paths also work without an analyzer; dynamically constructed paths do not.
 - **Rust:** No Rust/Cargo/rustup installation is required. First navigation needs access to GitHub Releases to download the analyzer; afterward it works offline. Supported hosts are macOS/Linux/Windows on x64/arm64; Linux requires glibc. Set `RUST_ANALYZER_BINARY` to use an existing analyzer executable.

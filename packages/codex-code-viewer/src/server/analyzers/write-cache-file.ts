@@ -7,7 +7,7 @@ interface WriteCacheFileOptions {
   readonly mode: number
 }
 
-/** Publishes a complete cache file atomically, accepting an identical concurrent writer. */
+/** 완성된 캐시 파일을 원자적으로 게시하며 동일한 동시 쓰기를 허용한다. */
 export const writeCacheFile = async (options: WriteCacheFileOptions): Promise<void> => {
   const directory = dirname(options.path)
   await mkdir(directory, {recursive: true})
