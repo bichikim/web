@@ -134,6 +134,67 @@ describe('tokenizeSyntax', () => {
     },
   )
 
+  it.each([
+    ['css', '/* viewer */\r\n.card { color: red; content: "한글 🦊"; }', 'color', 'keyword'],
+    ['scss', '$accent: red;\r\n.card { color: $accent; content: "한글 🦊"; }', 'color', 'keyword'],
+    ['sass', '$accent: red\r\n.card\n  color: $accent\n  content: "한글 🦊"', 'color', 'keyword'],
+    ['less', '@accent: red;\r\n.card { color: @accent; content: "한글 🦊"; }', 'color', 'keyword'],
+    [
+      'vue',
+      [
+        '<script setup lang="ts">const title = "한글 🦊";</script>\r\n',
+        '<template><h1>{{ title }}</h1></template>',
+        '<style>.card { color: red; }</style>',
+      ].join(''),
+      'const',
+      'keyword',
+    ],
+    [
+      'svelte',
+      [
+        '<script lang="ts">const title = "한글 🦊";</script>\r\n',
+        '{#if title}<h1>{title}</h1>{/if}',
+        '<style>.card { color: red; }</style>',
+      ].join(''),
+      'const',
+      'keyword',
+    ],
+    [
+      'astro',
+      '---\r\nconst title: string = "한글 🦊";\r\n---\n<h1>{title}</h1><style>.card { color: red; }</style>',
+      'const',
+      'keyword',
+    ],
+    ['xml', '<?xml version="1.0"?>\r\n<viewer name="한글 🦊">hello</viewer>', 'viewer', 'keyword'],
+    ['ini', '; 한글 🦊\r\n[viewer]\nname=viewer', 'name', 'keyword'],
+    ['properties', '! 한글 🦊\r\nname=viewer', 'name', 'keyword'],
+  ] as const)(
+    'should highlight %s in reading mode and preserve source offsets',
+    (language, source, text, kind) => {
+      const lines = tokenizeSyntax(language, source)
+      const tokens = lines.flat()
+      expect(lines.map((line) => line.map((token) => token.text).join(''))).toEqual(
+        source.split(/\r\n|\n|\r/u),
+      )
+      expect(tokens).toContainEqual(expect.objectContaining({kind, text}))
+      if (['ini', 'properties'].includes(language)) {
+        expect(tokens).toContainEqual(expect.objectContaining({kind: 'string', text: 'viewer'}))
+      }
+      if (['vue', 'svelte', 'astro'].includes(language)) {
+        expect(tokens).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({kind: 'keyword', text: 'h1'}),
+            expect.objectContaining({kind: 'keyword', text: 'color'}),
+          ]),
+        )
+      }
+      for (const token of tokens) {
+        expect(token.navigation).toBeNull()
+        expect(source.slice(token.offset, token.offset + token.text.length)).toBe(token.text)
+      }
+    },
+  )
+
   it('should keep Rust raw strings and nested comments intact', () => {
     const source = 'let text = r###"// 🦊"###; /* outer /* nested */ end */'
     const tokens = tokenizeSyntax('rust', source).flat()
@@ -193,4 +254,14 @@ describe('tokenizeSyntax', () => {
     expect(lines[2][0].offset).toBe(source.indexOf('  한글'))
     expect(lines[3][0].offset).toBe(source.indexOf('  text'))
   })
+  it.each(['json', 'jsonc', 'json5'] as const)(
+    'should mark only file path values as navigable in %s reading mode',
+    (language) => {
+      const source = '{"extends":"./base.json","label":"hello","comment":"https://example.com"}'
+      const tokens = tokenizeSyntax(language, source).flat()
+      expect(tokens.filter((token) => token.navigation !== null)).toEqual([
+        expect.objectContaining({navigation: 'path', text: '"./base.json"'}),
+      ])
+    },
+  )
 })

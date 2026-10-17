@@ -1,4 +1,5 @@
 import {z} from 'zod'
+import {sumBy} from 'es-toolkit/math'
 
 export const CLOUD_TEXT_DAILY_LIMIT = 3
 export const CLOUD_TEXT_MODEL = 'gpt-6-luna'
@@ -33,9 +34,7 @@ export const cloudTextRequestSchema = z.object({
     .min(1)
     .max(MAXIMUM_MESSAGES)
     .refine(
-      (messages) =>
-        messages.reduce((length, message) => length + message.content.length, 0) <=
-        MAXIMUM_INPUT_LENGTH,
+      (messages) => sumBy(messages, (message) => message.content.length) <= MAXIMUM_INPUT_LENGTH,
     ),
   requestId: z.uuid(),
 })

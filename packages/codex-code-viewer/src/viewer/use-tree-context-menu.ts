@@ -33,13 +33,18 @@ export const useTreeContextMenu = (options: TreeContextMenuOptions) => {
   const open = (target: HTMLElement, path: string, x: number, y: number): void => {
     const current = options.session()
     const node = options.node(path)
-    if (current === null || node === undefined || !options.visible()) {
+    if (current === null || (node === undefined && path !== '') || !options.visible()) {
       return
     }
-    options.onFocus(path)
+    if (path !== '') {
+      options.onFocus(path)
+    }
     setContext({
       returnFocus: target,
-      selection: {kind: node.kind, path: `${current.workspace.replace(/\/$/u, '')}/${node.path}`},
+      selection: {
+        kind: node?.kind ?? 'directory',
+        path: path === '' ? current.workspace : `${current.workspace.replace(/\/$/u, '')}/${path}`,
+      },
       x,
       y,
     })
@@ -67,5 +72,10 @@ export const useTreeContextMenu = (options: TreeContextMenuOptions) => {
     open(target, path, rect.right, rect.bottom)
     return true
   }
-  return {close, context, handleContextMenu, handleKeyboard}
+  const handleBackground = (event: MouseEvent): void => {
+    if (event.target instanceof Element && event.target.closest('[role=treeitem]') === null) {
+      handleContextMenu(event, '')
+    }
+  }
+  return {close, context, handleBackground, handleContextMenu, handleKeyboard}
 }

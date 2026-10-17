@@ -1,4 +1,5 @@
 // oxlint-disable no-magic-numbers, eslint/no-bitwise -- Ogg uses fixed binary fields and a bitwise CRC algorithm.
+import {sumBy} from 'es-toolkit/math'
 import type {SampleRate} from 'libopus-wasm'
 
 const OPUS_MEDIA_TYPE = 'audio/ogg; codecs=opus'
@@ -70,14 +71,8 @@ const createOggPage = (options: OggPageOptions) => {
     lacingValues: getLacingValues(packet.length),
     packet,
   }))
-  const segmentCount = packetParts.reduce(
-    (total, packetPart) => total + packetPart.lacingValues.length,
-    0,
-  )
-  const payloadLength = packetParts.reduce(
-    (total, packetPart) => total + packetPart.packet.length,
-    0,
-  )
+  const segmentCount = sumBy(packetParts, (packetPart) => packetPart.lacingValues.length)
+  const payloadLength = sumBy(packetParts, (packetPart) => packetPart.packet.length)
   const page = new Uint8Array(27 + segmentCount + payloadLength)
   const view = new DataView(page.buffer)
   let headerType = options.firstPage === true ? 0x02 : 0

@@ -19,6 +19,14 @@ export const CharacterCanvas = (props: CharacterCanvasProps) => {
   const [clothAvailable, setClothAvailable] = createSignal(false)
   const [clothEnabled, setClothEnabled] = createSignal(true)
   const [windEnabled, setWindEnabled] = createSignal(true)
+  let previousModelUrl: string | null = null
+  let engineInitializationFailed = false
+  createEffect(() => {
+    if (previousModelUrl !== null && engineInitializationFailed) {
+      untrack(() => props.onLoadError())
+    }
+    previousModelUrl = props.modelUrl
+  })
   onMount(() => {
     const surface = canvas()
     if (surface === null) {
@@ -34,6 +42,7 @@ export const CharacterCanvas = (props: CharacterCanvasProps) => {
       )
     } catch (error: unknown) {
       reportClientError(error, {feature: 'character-renderer', source: 'direct'})
+      engineInitializationFailed = true
       props.onLoadError()
       return
     }

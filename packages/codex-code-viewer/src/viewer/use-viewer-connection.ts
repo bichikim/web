@@ -1,17 +1,21 @@
-import {type Accessor, onCleanup} from 'solid-js'
+import {type Accessor, createSignal, onCleanup} from 'solid-js'
 import type {ViewerConnection} from '../shared/contracts'
 import type {ViewerPort} from './types'
+import {useWorkspaceUpdates} from './use-workspace-updates'
 import {createPendingTasks} from './create-pending-tasks'
 
 interface ConnectionOptions {
   port: ViewerPort
   receive: (session: ViewerConnection) => void
-  refresh: () => void
+  refresh: () => Promise<void>
   report: (error: unknown) => void
   session: Accessor<ViewerConnection | null>
+  blocked?: Accessor<boolean>
+  beforeClose?: () => Promise<boolean>
 }
 
-export const useViewerConnection = (connection: ConnectionOptions): void => {
+export const useViewerConnection = (connection: ConnectionOptions): Accessor<number> => {
+  const [ready, setReady] = createSignal(false)
   let disposed = false
   let disposePort: (() => void) | null = null
   let released = false
@@ -43,6 +47,7 @@ export const useViewerConnection = (connection: ConnectionOptions): void => {
   const teardown = async (): Promise<void> => {
     if (!disposed) {
       disposed = true
+      setReady(false)
       const current = connection.session()
       if (current !== null) {
         closeSession(current)
@@ -51,15 +56,29 @@ export const useViewerConnection = (connection: ConnectionOptions): void => {
     await closing.settle()
   }
   connection.port
-    .start(receive, connection.report, refresh, teardown)
+    .start(receive, connection.report, refresh, async () => {
+      if (connection.beforeClose !== undefined && !(await connection.beforeClose())) {
+        throw new Error('미저장 변경으로 종료를 취소했습니다.')
+      }
+      await teardown()
+    })
     .then((dispose) => {
       disposePort = dispose
       if (disposed) {
         return finish()
       }
+      setReady(true)
     })
     .catch(connection.report)
+  const revision = useWorkspaceUpdates({
+    blocked: () => disposed || (connection.blocked?.() ?? false),
+    port: connection.port,
+    refresh: connection.refresh,
+    report: connection.report,
+    session: () => (ready() ? connection.session() : null),
+  })
   onCleanup(() => {
     teardown().then(finish).catch(connection.report)
   })
+  return revision
 }

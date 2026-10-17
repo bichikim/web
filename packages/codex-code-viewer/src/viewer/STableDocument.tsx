@@ -1,3 +1,4 @@
+import {useTranslations} from './locale/use-translations'
 import {createEffect, For, Show} from 'solid-js'
 import {SIcon} from './SIcon'
 import {useTableView} from './use-table-view'
@@ -16,6 +17,7 @@ const sortButtonClasses = [
   'px-3 py-2 text-left hover:bg-hover',
 ].join(' ')
 export const STableDocument = (props: STableDocumentProps) => {
+  const t = useTranslations()
   const table = useTableView({
     data: () => props.data,
     delimiter: () => props.delimiter ?? ',',
@@ -32,9 +34,9 @@ export const STableDocument = (props: STableDocumentProps) => {
     <div class="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
       <div class="flex shrink-0 flex-wrap items-center gap-3 border-b border-divider px-4 py-2">
         <input
-          aria-label="행 필터링"
+          aria-label={t('행 필터링')}
           class="ui-input w-48 py-1"
-          placeholder="행 필터링…"
+          placeholder={t('행 필터링…')}
           value={table.query()}
           onInput={(event) => table.changeQuery(event.currentTarget.value)}
         />
@@ -45,13 +47,13 @@ export const STableDocument = (props: STableDocumentProps) => {
             checked={table.header()}
             onChange={(event) => table.changeHeader(event.currentTarget.checked)}
           />
-          첫 행을 열 이름으로
+          {t('첫 행을 열 이름으로')}
         </label>
-        <span class="text-sm text-muted">{table.count()}행</span>
+        <span class="text-sm text-muted">{t('{count}행', {count: table.count()})}</span>
         <Show when={table.truncated()}>
           <span class="text-xs text-muted">
             {props.truncationMessage ??
-              '표는 처음 10,000행·100열까지 표시합니다. 전체 내용은 원문에서 확인하세요.'}
+              t('표는 처음 10,000행·100열까지 표시합니다. 전체 내용은 원문에서 확인하세요.')}
           </span>
         </Show>
       </div>
@@ -59,12 +61,12 @@ export const STableDocument = (props: STableDocumentProps) => {
         when={table.data().ok}
         fallback={
           <p role="status" class="m-0 p-4 text-sm text-muted">
-            표를 표시할 수 없습니다. 원문을 확인해 주세요.
+            {t('표를 표시할 수 없습니다. 원문을 확인해 주세요.')}
           </p>
         }
       >
         <div class="min-h-0 min-w-0 flex-1 overflow-auto">
-          <table aria-label="파일 데이터" class="min-w-full border-collapse text-sm">
+          <table aria-label={t('파일 데이터')} class="min-w-full border-collapse text-sm">
             <thead class="bg-surface">
               <tr>
                 <For each={table.headers()}>
@@ -81,7 +83,7 @@ export const STableDocument = (props: STableDocumentProps) => {
                       class="border-b border-r border-divider p-0 text-left font-medium"
                     >
                       <button
-                        aria-label={`${name} 정렬`}
+                        aria-label={t('{name} 정렬', {name})}
                         class={sortButtonClasses}
                         type="button"
                         onClick={() => table.order(index())}
@@ -120,16 +122,16 @@ export const STableDocument = (props: STableDocumentProps) => {
           </table>
           <Show when={table.count() === 0}>
             <p role="status" class="m-0 p-4 text-sm text-muted">
-              표시할 행이 없습니다.
+              {t('표시할 행이 없습니다.')}
             </p>
           </Show>
         </div>
         <div
-          aria-label="표 페이지 조절"
+          aria-label={t('표 페이지 조절')}
           class="flex shrink-0 items-center justify-end gap-2 border-t border-divider px-4 py-1"
         >
           <button
-            aria-label="이전 표 페이지"
+            aria-label={t('이전 표 페이지')}
             class="ui-icon-button"
             type="button"
             disabled={table.page() <= 1}
@@ -141,7 +143,7 @@ export const STableDocument = (props: STableDocumentProps) => {
             {table.page()} / {table.pages()}
           </span>
           <button
-            aria-label="다음 표 페이지"
+            aria-label={t('다음 표 페이지')}
             class="ui-icon-button"
             type="button"
             disabled={table.page() >= table.pages()}

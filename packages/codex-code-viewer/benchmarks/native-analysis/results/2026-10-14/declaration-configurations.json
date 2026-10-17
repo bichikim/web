@@ -1,0 +1,26 @@
+{
+  "maps": {
+    "compilerOptions": {
+      "composite": true,
+      "declaration": true,
+      "declarationMap": true,
+      "outDir": "./dist",
+      "rootDir": "."
+    },
+    "exclude": ["dist"],
+    "extends": "../../tsconfig.json",
+    "include": ["*.ts"]
+  },
+  "maps-references": {
+    "compilerOptions": {
+      "composite": true,
+      "declaration": true,
+      "declarationMap": true,
+      "outDir": "./dist",
+      "rootDir": "."
+    },
+    "exclude": ["dist"],
+    "extends": "../../tsconfig.json",
+    "include": ["*.ts"]
+  }
+}

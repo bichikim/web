@@ -1,0 +1,30 @@
+[
+  {
+    "name": "getWindow",
+    "variant": "before",
+    "total": 22,
+    "median": 351.126291,
+    "range": [338.122541, 365.769458]
+  },
+  {
+    "name": "getWindow",
+    "variant": "after",
+    "total": 22,
+    "median": 347.21525,
+    "range": [334.72375, 387.137959]
+  },
+  {
+    "name": "javascript",
+    "variant": "before",
+    "total": 6,
+    "median": 2410.224583,
+    "range": [1968.79125, 3237.399792]
+  },
+  {
+    "name": "javascript",
+    "variant": "after",
+    "total": 6,
+    "median": 2317.63175,
+    "range": [2051.207625, 10057.483458]
+  }
+]

@@ -1,4 +1,5 @@
 import {PSelect} from '../p-select/PSelect'
+import {getLanguageLabel} from './get-language-label'
 
 import * as m from '@paraglide/message'
 import type {LanguageLearningLanguage} from '../../features/language-learning'
@@ -25,17 +26,6 @@ export interface LanguageLearningSettingsProps {
   readonly onVoiceChange: (voiceId: SupertonicVoiceId) => void
   readonly sentenceDisabled?: boolean
   readonly voiceId: SupertonicVoiceId
-}
-
-const getLanguageLabel = (language: LanguageLearningLanguage) => {
-  switch (language) {
-    case 'en':
-      return m.learning_language_en()
-    case 'ja':
-      return m.learning_language_ja()
-    case 'ko':
-      return m.learning_language_ko()
-  }
 }
 
 export const LanguageLearningSettings = (props: LanguageLearningSettingsProps) => (

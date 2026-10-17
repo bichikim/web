@@ -1,5 +1,6 @@
 // oxlint-disable no-await-in-loop -- Binary model chunks are consumed in order to preserve progress.
 import {isAbortError} from 'src/utils/is-cancellation-reason'
+import {concatBytes} from 'src/utils/concat-bytes'
 import {httpFetch} from '../../http-client'
 import {loadModelResource, type ModelStorage, reportModelStorageError} from '../../model-storage'
 import {failureResult, type Result, successResult} from '../../result'
@@ -97,13 +98,7 @@ export const createSupertonicResourceLoader = (options: ResourceLoaderOptions) =
         totalBytes: request.totalBytes,
       })
     }
-    const buffer = new Uint8Array(received)
-    let offset = 0
-    for (const chunk of chunks) {
-      buffer.set(chunk, offset)
-      offset += chunk.byteLength
-    }
-    return buffer.buffer
+    return concatBytes(chunks, received).buffer
   }
 
   return {

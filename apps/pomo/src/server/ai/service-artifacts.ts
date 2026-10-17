@@ -1,4 +1,5 @@
 import {chunk} from 'es-toolkit/array'
+import {sum} from 'es-toolkit/math'
 import type * as AiJobRepository from 'src/server/repositories/ai-jobs'
 import type {AiArtifactRecord} from 'src/server/repositories/ai-jobs'
 
@@ -322,7 +323,7 @@ const createAiArtifactCleanupService = (
     })
 
     return {
-      deleted: results.reduce((total, deleted) => total + deleted, 0),
+      deleted: sum(results),
       failures: jobs.length - results.length,
     }
   }

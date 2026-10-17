@@ -1,0 +1,26 @@
+diff --git a/dist/index/index.js b/dist/index/index.js
+index d13f4b55e3a7834cdcc7bba3b91b2cd93498d83e..9da0eea48fd65155434ade01736fac0d59dc0519 100644
+--- a/dist/index/index.js
++++ b/dist/index/index.js
+@@ -78,7 +78,7 @@ function createWritableStore(accessor) {
+ * Schedules a callback during idle time, falling back to a macrotask where
+ * `requestIdleCallback` is unavailable (Safari, jsdom).
+ */
+-const scheduleIdleCallback = typeof requestIdleCallback == "function" ? requestIdleCallback : (callback) => setTimeout(callback, 0), EdgeLabelRenderer = (props) => {
++const scheduleIdleCallback = typeof requestAnimationFrame == "function" ? requestAnimationFrame : (callback) => queueMicrotask(callback), EdgeLabelRenderer = (props) => {
+ 	let { store } = useInternalSolidFlow(), labelNode = () => store.domNode?.querySelector(".solid-flow__edge-labels");
+ 	return createComponent(Show, {
+ 		get when() {
+diff --git a/dist/index/index.jsx b/dist/index/index.jsx
+index d7d0dae5495621fe32964a5b425d2d64cc34fddc..e3a151122bb7cfd4dd0da00111f471e2e52bed9a 100644
+--- a/dist/index/index.jsx
++++ b/dist/index/index.jsx
+@@ -78,7 +78,7 @@ function createWritableStore(accessor) {
+ * Schedules a callback during idle time, falling back to a macrotask where
+ * `requestIdleCallback` is unavailable (Safari, jsdom).
+ */
+-const scheduleIdleCallback = typeof requestIdleCallback == "function" ? requestIdleCallback : (callback) => setTimeout(callback, 0), EdgeLabelRenderer = (props) => {
++const scheduleIdleCallback = typeof requestAnimationFrame == "function" ? requestAnimationFrame : (callback) => queueMicrotask(callback), EdgeLabelRenderer = (props) => {
+ 	let { store } = useInternalSolidFlow(), labelNode = () => store.domNode?.querySelector(".solid-flow__edge-labels");
+ 	return <Show when={labelNode()}>{(root) => <Portal mount={root()}>{props.children}</Portal>}</Show>;
+ }, EdgeLabel = (props) => {

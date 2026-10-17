@@ -7,6 +7,7 @@ import type {ViewerPort} from '../types'
 describe('SCodeViewer media lifecycle', () => {
   const originalScroll = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'scrollIntoView')
   beforeEach(() => {
+    vi.spyOn(navigator, 'language', 'get').mockReturnValue('ko-KR')
     Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', {
       configurable: true,
       value: vi.fn(),
@@ -15,6 +16,7 @@ describe('SCodeViewer media lifecycle', () => {
   afterEach(() => {
     cleanup()
     vi.unstubAllGlobals()
+    vi.restoreAllMocks()
     if (originalScroll === undefined) {
       Reflect.deleteProperty(HTMLElement.prototype, 'scrollIntoView')
     } else {

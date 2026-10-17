@@ -17,6 +17,7 @@ import {getBroadFutureAnswer} from 'src/features/saju/get-broad-future-answer'
 import {getDayPillarFactAnswer} from 'src/features/saju/get-day-pillar-fact-answer'
 import type {GenerateSajuRequest} from 'src/features/saju/messages'
 import {requiresAnnualReading} from 'src/features/saju/requires-annual-reading'
+import {toSajuCalculationBirth} from 'src/features/saju/to-saju-calculation-birth'
 import {SajuForm, type SajuFormInput} from '../saju/SajuForm'
 
 interface CalculationSection {
@@ -73,11 +74,12 @@ function SajuIntro() {
 }
 
 function calculateSections(birth: BirthInput, gender: 'M' | 'F' | 'N', question: string) {
-  const chart = deriveSaju(birth)
+  const calculationBirth = toSajuCalculationBirth(birth)
+  const chart = deriveSaju(calculationBirth)
   const elements = analyzeElements(chart)
   const sipseong = analyzeSipseong(chart)
   const ilju = iljuInfo(chart)
-  const daeun = gender === 'N' ? null : analyzeDaeun(birth, chart, gender)
+  const daeun = gender === 'N' ? null : analyzeDaeun(calculationBirth, chart, gender)
   const messages = createMessages({birth, chart, daeun, elements, ilju, question, sipseong})
 
   return {

@@ -6,18 +6,28 @@ import {createWorkspace} from './create-workspace'
 import {toolResult} from './tool-result'
 const MAX_SESSIONS = 16
 
-export const createSessions = () => {
+interface SessionEvents {
+  onChange?: (session: string) => void
+  onClose?: (session: string) => void
+}
+
+export const createSessions = (events: SessionEvents = {}) => {
   const sessions = new Map<string, ReturnType<typeof createWorkspace>>()
+  const close = (session: string): void => {
+    sessions.get(session)?.dispose()
+    sessions.delete(session)
+    events.onClose?.(session)
+  }
   const register = (workspace: ReturnType<typeof createWorkspace>) => {
     if (sessions.size >= MAX_SESSIONS) {
       const oldest = sessions.keys().next().value
       if (oldest !== undefined) {
-        sessions.get(oldest)?.dispose()
-        sessions.delete(oldest)
+        close(oldest)
       }
     }
     const session = randomUUID()
     sessions.set(session, workspace)
+    workspace.subscribe(() => events.onChange?.(session))
     return {session, workspace: workspace.root}
   }
   const connect = (path: string) => {
@@ -38,6 +48,7 @@ export const createSessions = () => {
         workspace.dispose()
         return document
       }
+      workspace.warmNavigation(document.value.location.path)
       return success({...register(workspace), document: document.value})
     } catch (error) {
       return failure(
@@ -66,14 +77,9 @@ export const createSessions = () => {
     }
   }
   const dispose = (): void => {
-    for (const workspace of sessions.values()) {
-      workspace.dispose()
+    for (const session of sessions.keys()) {
+      close(session)
     }
-    sessions.clear()
-  }
-  const close = (session: string): void => {
-    sessions.get(session)?.dispose()
-    sessions.delete(session)
   }
   return {close, connect, dispose, open, withSession}
 }

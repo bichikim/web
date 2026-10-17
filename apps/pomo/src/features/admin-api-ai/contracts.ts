@@ -1,4 +1,5 @@
 import {z} from 'zod'
+import {hasUniqueIds} from '../catalog-policy'
 
 export const MAXIMUM_API_AI_ROUTES = 5
 export const MAXIMUM_API_AI_MODEL_LENGTH = 256
@@ -16,8 +17,7 @@ export const apiAiRouteListSchema = z
   .array(apiAiRouteSchema)
   .min(1)
   .refine(
-    (routes) =>
-      new Set(routes.map((route) => `${route.providerId}:${route.model}`)).size === routes.length,
+    (routes) => hasUniqueIds(routes.map((route) => `${route.providerId}:${route.model}`)),
     'The same provider and model cannot appear twice',
   )
 export const apiAiRoutesSchema = apiAiRouteListSchema.max(MAXIMUM_API_AI_ROUTES)
@@ -28,8 +28,7 @@ export const apiAiCatalogSchema = z
   .array(apiAiModelSchema)
   .max(MAXIMUM_API_AI_MODELS)
   .refine(
-    (entries) =>
-      new Set(entries.map((entry) => `${entry.providerId}:${entry.model}`)).size === entries.length,
+    (entries) => hasUniqueIds(entries.map((entry) => `${entry.providerId}:${entry.model}`)),
     'The same provider model cannot be registered twice',
   )
 export const apiAiRoutingSchema = z.object({

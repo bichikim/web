@@ -1,4 +1,5 @@
 import type {Response} from 'openai/resources/responses/responses'
+import {extractSearchSourceUrls} from './extract-search-source-urls'
 import type {ApiAiResponse} from './types'
 
 const MAXIMUM_PERSISTED_TOKENS = 2_147_483_647
@@ -33,15 +34,7 @@ export const normalizeResponse = (response: Response): ApiAiResponse => {
     model: response.model,
     outputText,
     responseId: response.id,
-    searchSourceUrls: [
-      ...new Set(
-        response.output.flatMap((item) =>
-          item.type === 'web_search_call' && item.action.type === 'search'
-            ? (item.action.sources ?? []).map((source) => source.url)
-            : [],
-        ),
-      ),
-    ],
+    searchSourceUrls: extractSearchSourceUrls(response.output),
     status: invalidCompletion ? 'failed' : response.status,
     tokenCount,
   }

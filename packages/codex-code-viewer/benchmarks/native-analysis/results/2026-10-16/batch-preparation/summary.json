@@ -1,0 +1,186 @@
+[
+  {
+    "name": "getWindow",
+    "variant": "before",
+    "phase": "cold",
+    "samples": 10,
+    "count": 102,
+    "middleCount": 22,
+    "first": {
+      "median": 286.48816650000003,
+      "min": 279.661375,
+      "max": 330.572417
+    },
+    "middle": {
+      "median": 354.2923125,
+      "min": 344.594542,
+      "max": 450.680792
+    },
+    "complete": {
+      "median": 3771.3120625,
+      "min": 3649.265125,
+      "max": 4443.460667
+    }
+  },
+  {
+    "name": "getWindow",
+    "variant": "before",
+    "phase": "repeat",
+    "samples": 10,
+    "count": 102,
+    "middleCount": 22,
+    "first": {
+      "median": 46.635062500000004,
+      "min": 44.252042,
+      "max": 54.615375
+    },
+    "middle": {
+      "median": 46.635062500000004,
+      "min": 44.252042,
+      "max": 54.615375
+    },
+    "complete": {
+      "median": 46.650604,
+      "min": 44.266292,
+      "max": 54.633917
+    }
+  },
+  {
+    "name": "getWindow",
+    "variant": "after",
+    "phase": "cold",
+    "samples": 10,
+    "count": 102,
+    "middleCount": 22,
+    "first": {
+      "median": 287.2672915,
+      "min": 279.009791,
+      "max": 436.801458
+    },
+    "middle": {
+      "median": 352.731708,
+      "min": 345.3715,
+      "max": 578.543542
+    },
+    "complete": {
+      "median": 3718.2504165,
+      "min": 3640.328916,
+      "max": 4071.251208
+    }
+  },
+  {
+    "name": "getWindow",
+    "variant": "after",
+    "phase": "repeat",
+    "samples": 10,
+    "count": 102,
+    "middleCount": 22,
+    "first": {
+      "median": 45.8946045,
+      "min": 44.351875,
+      "max": 52.467333
+    },
+    "middle": {
+      "median": 45.8946045,
+      "min": 44.351875,
+      "max": 52.467333
+    },
+    "complete": {
+      "median": 45.910208499999996,
+      "min": 44.368666,
+      "max": 52.527
+    }
+  },
+  {
+    "name": "javascript",
+    "variant": "before",
+    "phase": "cold",
+    "samples": 10,
+    "count": 6,
+    "middleCount": 6,
+    "first": {
+      "median": 304.40587500000004,
+      "min": 297.887875,
+      "max": 313.955667
+    },
+    "middle": {
+      "median": 348.40835400000003,
+      "min": 340.446791,
+      "max": 363.597542
+    },
+    "complete": {
+      "median": 5326.039375,
+      "min": 4993.084084,
+      "max": 9877.7955
+    }
+  },
+  {
+    "name": "javascript",
+    "variant": "before",
+    "phase": "repeat",
+    "samples": 10,
+    "count": 6,
+    "middleCount": 6,
+    "first": {
+      "median": 46.866249499999995,
+      "min": 43.908333,
+      "max": 51.561833
+    },
+    "middle": {
+      "median": 46.866249499999995,
+      "min": 43.908333,
+      "max": 51.561833
+    },
+    "complete": {
+      "median": 46.879875,
+      "min": 43.929,
+      "max": 51.574041
+    }
+  },
+  {
+    "name": "javascript",
+    "variant": "after",
+    "phase": "cold",
+    "samples": 10,
+    "count": 6,
+    "middleCount": 6,
+    "first": {
+      "median": 312.597208,
+      "min": 287.534583,
+      "max": 339.118834
+    },
+    "middle": {
+      "median": 355.5141245,
+      "min": 324.37475,
+      "max": 387.7075
+    },
+    "complete": {
+      "median": 4054.8383125,
+      "min": 3857.665958,
+      "max": 4511.170708
+    }
+  },
+  {
+    "name": "javascript",
+    "variant": "after",
+    "phase": "repeat",
+    "samples": 10,
+    "count": 6,
+    "middleCount": 6,
+    "first": {
+      "median": 47.595708,
+      "min": 43.843959,
+      "max": 55.785792
+    },
+    "middle": {
+      "median": 47.595708,
+      "min": 43.843959,
+      "max": 55.785792
+    },
+    "complete": {
+      "median": 47.607479,
+      "min": 43.85825,
+      "max": 55.798667
+    }
+  }
+]

@@ -1,7 +1,8 @@
 import {useEditorWorkspace} from './use-editor-workspace'
 import {PsdReimportDialog} from './internal/PsdReimportDialog'
 import {useEditorImports} from './use-editor-imports'
-import {EditorModelingKeyformPanel} from './internal/EditorModelingKeyformPanel'
+import {EditorWorkspacePanel} from './internal/EditorWorkspacePanel'
+import {DocumentHistoryPanel} from './internal/DocumentHistoryPanel'
 import {useTemporaryForm} from './internal/use-temporary-form'
 import {TemporaryFormButton} from './internal/TemporaryFormButton'
 import {createSkinSession, SkinSessionContext} from './internal/skin-session'
@@ -10,8 +11,9 @@ import type {PuppetVertexReference} from '../player/document'
 import {GlueEditor} from './internal/GlueEditor'
 import {useDeformerMode} from './internal/use-deformer-mode'
 import {Portal} from 'solid-js/web'
-import {batch, createEffect, createMemo, createSignal, Show, untrack} from 'solid-js'
+import {batch, createEffect, createMemo, createSignal, on, Show, untrack} from 'solid-js'
 import {createEmptyDocument, type Player, type PuppetDocument} from '../player'
+import {createRuntimeLauncher} from '../runtime/create-runtime-launcher'
 import {useDocumentExport} from './use-document-export'
 import {EditorViewport} from './EditorViewport'
 import {createDeformerControlSelection} from './internal/deformer-control-selection'
@@ -38,21 +40,25 @@ import {
   unwrapSceneNodes,
 } from './internal/scene-graph'
 import {EditorPanelLayout} from './internal/EditorPanelLayout'
-import {EditorTimeline} from './internal/EditorTimeline'
 import {EditorToolbar} from './internal/EditorToolbar'
 import type {PuppetExampleDocument} from './example-document'
-import {type ParameterEditorResult, useParameterEditor} from './use-parameter-editor'
+import {useParameterEditor} from './use-parameter-editor'
 import {useAutoMesh} from './use-auto-mesh'
 import {useDocumentHistory} from './use-document-history'
 import {useDocumentHistoryShortcuts} from './use-document-history-shortcuts'
 import type {PlayerCanvasStatus} from './PlayerCanvas'
 import {EditorStyles} from './internal/EditorStyles'
+import {EditorToast} from '../design-system'
+import type {DocumentRecovery} from './document-recovery'
+import {DocumentRecoveryDialog} from './internal/DocumentRecoveryDialog'
 export interface PuppetEditorProps {
+  readonly onDocumentCommit?: (document: PuppetDocument) => void
   readonly examples?: ReadonlyArray<PuppetExampleDocument>
   readonly initialDocument?: PuppetDocument
   readonly initialMotionId?: string
   readonly initialWorkspace?: 'animation' | 'modeling'
   readonly onDocumentChange?: (document: PuppetDocument) => void
+  readonly recovery?: DocumentRecovery
 }
 const setPlayerPlayback = (player: Player, isPlaying: boolean) => {
   if (isPlaying) {
@@ -72,56 +78,6 @@ const syncPlayerPlayback = (player: Player | null, isPlaying: boolean) => {
   }
   return player
 }
-interface EditorWorkspacePanelProps {
-  readonly currentTime: number
-  readonly document: PuppetDocument
-  readonly editor: ParameterEditorResult
-  readonly isPlaying: boolean
-  readonly motionId: string | null
-  readonly onDocumentChange: (document: PuppetDocument) => void
-  readonly onEditEnd?: () => void
-  readonly onEditStart?: () => void
-  readonly onMotionChange?: (motionId: string) => void
-  readonly onMotionSeek?: (motionId: string, time: number) => void
-  readonly onPlaybackToggle?: () => void
-  readonly onSeek?: (time: number) => void
-  readonly selectedNodeIds: ReadonlyArray<string>
-  readonly setBrushControlsMount?: (element: HTMLDivElement | undefined) => void
-  readonly workspace: 'animation' | 'modeling'
-}
-const EditorWorkspacePanel = (props: EditorWorkspacePanelProps) => (
-  <Show
-    when={props.workspace === 'modeling'}
-    fallback={
-      <EditorTimeline
-        currentTime={props.currentTime}
-        document={props.document}
-        isPlaying={props.isPlaying}
-        motionId={props.motionId ?? undefined}
-        onDocumentChange={props.onDocumentChange}
-        onEditEnd={props.onEditEnd}
-        onEditStart={props.onEditStart}
-        onMotionChange={props.onMotionChange}
-        onMotionSeek={props.onMotionSeek}
-        onPlaybackToggle={props.onPlaybackToggle}
-        onSeek={props.onSeek}
-        parameterValues={props.editor.parameterValueMap()}
-      />
-    }
-  >
-    <section class="modeling-panel" aria-label="Parameter와 키폼 편집">
-      <EditorModelingKeyformPanel
-        document={props.document}
-        editor={props.editor}
-        onEditEnd={props.onEditEnd}
-        onEditStart={props.onEditStart}
-        selectedNodeIds={props.selectedNodeIds}
-        setBrushControlsMount={props.setBrushControlsMount}
-      />
-    </section>
-  </Show>
-)
-
 const WORKSPACE_EDIT_MODES = {animation: 'motion', modeling: 'parameter'} as const
 
 // eslint-disable-next-line complexity, max-lines-per-function, max-statements
@@ -134,7 +90,13 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
   const initialPartId = initialDocument.parts[0]?.id ?? null
   const history = useDocumentHistory({initialDocument})
   const sourceDocument = history.document
-  const documentExport = useDocumentExport(sourceDocument)
+  const [recoveryOpen, setRecoveryOpen] = createSignal(false)
+  const [recoveryRevision, setRecoveryRevision] = createSignal(0)
+  let returnRecoveryFocus: (() => void) | undefined
+  const handleRecoveryOpen = (returnFocus: () => void) => {
+    returnRecoveryFocus = returnFocus
+    setRecoveryOpen(true)
+  }
   const skinSession = createSkinSession()
   const [activePartId, setActivePartId] = createSignal<string | null>(initialPartId)
   const [layerSelection, setLayerSelection] = createSignal(createSceneSelection(initialPartId))
@@ -208,6 +170,12 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
     parameterValueMap: parameterEditor.parameterValueMap,
     parameterValues: parameterEditor.parameterValues,
   })
+  const runtimeLauncher = createRuntimeLauncher({
+    document: temporary.document,
+    motionId: () => activeMotionId() ?? undefined,
+    onError: setNotice,
+  })
+  const documentExport = useDocumentExport(sourceDocument, temporary.hasChanges)
   const parameterPreviewDocument = createMemo(() =>
     createParameterPreview({
       document: temporary.document(),
@@ -215,11 +183,11 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
       parameterValues: temporary.valueMap(),
     }),
   )
-  const resetEditorDocument = (document: PuppetDocument) => {
+  const resetEditorDocument = (document: PuppetDocument, title = '문서 불러오기') => {
     const partId = document.parts[0]?.id ?? null
     batch(() => {
       temporary.reset()
-      history.setDocument(document)
+      history.setDocument(document, title)
       setActivePartId(partId)
       setLayerSelection(createSceneSelection(partId))
       setActiveVertexIndex(null)
@@ -232,7 +200,7 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
     document: sourceDocument,
     onDocumentChange: resetEditorDocument,
     onNotice: setNotice,
-    onReimportDocumentChange: history.setDocument,
+    onReimportDocumentChange: (document) => history.setDocument(document, 'PSD 다시 가져오기'),
   })
   const pausePlayback = () => {
     const currentPlayer = player()
@@ -240,6 +208,16 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
       currentPlayer.pause()
       setIsPlaying(false)
     }
+  }
+  const handleRecoveryRestore = (document: PuppetDocument) => {
+    pausePlayback()
+    history.endTransaction()
+    batch(() => {
+      resetEditorDocument(document, '자동 저장 작업 복구')
+      setCurrentTime(0)
+      setActiveMotionId(document.motions[0]?.id ?? null)
+      setRecoveryRevision((revision) => revision + 1)
+    })
   }
 
   createEffect(() => {
@@ -256,20 +234,15 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
     pausePlayback()
     history.beginTransaction()
   }
-  const handleUndo = () => {
-    const changed = history.undo()
+  const handleHistoryChange = (changed: boolean) => {
     if (changed) {
       pausePlayback()
     }
     return changed
   }
-  const handleRedo = () => {
-    const changed = history.redo()
-    if (changed) {
-      pausePlayback()
-    }
-    return changed
-  }
+  const handleUndo = () => handleHistoryChange(history.undo())
+  const handleRedo = () => handleHistoryChange(history.redo())
+  const handleHistorySelect = (id: number) => handleHistoryChange(history.goTo(id))
   const activateHistoryShortcuts = useDocumentHistoryShortcuts({
     onRedo: handleRedo,
     onUndo: handleUndo,
@@ -278,7 +251,7 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
     document: sourceDocument,
     onBeforeApply: pausePlayback,
     onDocumentChange(document) {
-      history.setDocument(document)
+      history.setDocument(document, '자동 메시 생성')
       setActiveVertexIndex(null)
     },
     onNotice: setNotice,
@@ -289,6 +262,9 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
     const document = sourceDocument()
     untrack(() => props.onDocumentChange?.(document))
   })
+  createEffect(
+    on(history.committedDocument, (document) => props.onDocumentCommit?.(document), {defer: true}),
+  )
   const handlePlayerChange = (nextPlayer: Player | null) => {
     setPlayer(syncPlayerPlayback(nextPlayer, isPlaying()))
   }
@@ -402,6 +378,16 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
             containerUnwrapAvailable={selectionActions().containerIds.length > 0}
             document={temporary.document()}
             editMode={WORKSPACE_EDIT_MODES[workspace()]}
+            history={
+              <DocumentHistoryPanel
+                entries={history.entries()}
+                canUndo={history.canUndo()}
+                canRedo={history.canRedo()}
+                onUndo={handleUndo}
+                onRedo={handleRedo}
+                onSelect={handleHistorySelect}
+              />
+            }
             parameterProperties={
               <Show when={workspace() === 'modeling' ? activeParameterBinding() : undefined}>
                 {(binding) => (
@@ -506,6 +492,9 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
             onRedo={handleRedo}
             exportUrl={documentExport.url()}
             onExport={documentExport.exportDocument}
+            onViewerOpen={import.meta.env.DEV ? runtimeLauncher.openViewer : undefined}
+            onStudioOpen={import.meta.env.DEV ? runtimeLauncher.openStudio : undefined}
+            onRecoveryOpen={props.recovery === undefined ? undefined : handleRecoveryOpen}
             onExampleOpen={editorImports.handleOpenExample}
             onFileImport={editorImports.handleImport}
             onPsdReimport={editorImports.reimport.load}
@@ -529,7 +518,7 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
               temporary.hide()
             }}
             onRestDocumentChange={history.setDocument}
-            fitRevision={editorImports.revision()}
+            fitRevision={editorImports.revision() + recoveryRevision()}
             overlay={
               <Show
                 when={
@@ -589,6 +578,22 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
       />
       <PsdReimportDialog controller={editorImports.reimport} />
       <EditorAutoMeshDialog autoMesh={autoMesh} />
+      <Show when={recoveryOpen() && props.recovery}>
+        {(recovery) => (
+          <DocumentRecoveryDialog
+            recovery={recovery()}
+            onRestore={handleRecoveryRestore}
+            onClose={() => setRecoveryOpen(false)}
+            onReturnFocus={() => returnRecoveryFocus?.()}
+          />
+        )}
+      </Show>
+      <EditorToast
+        message={
+          documentExport.omitsTemporary() ? '임시 변경은 JSON에 포함되지 않았습니다.' : undefined
+        }
+        onDismiss={documentExport.dismissNotice}
+      />
     </SkinSessionContext.Provider>
   )
 }

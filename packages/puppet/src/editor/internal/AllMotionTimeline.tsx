@@ -28,10 +28,13 @@ import {
   updateKeyframeSelection,
 } from './timeline-keyframe-selection'
 import {TimelineDopesheet} from './TimelineDopesheet'
+import {TimelineZoomControls} from './TimelineZoomControls'
 
 export const ALL_MOTIONS_OPTION = '모든 타임라인 보기'
 
 interface AllMotionToolbarProps {
+  readonly zoom?: number | 'fit'
+  readonly onZoomChange?: (zoom: number | 'fit') => void
   readonly easing: PuppetEasing
   readonly framesPerSecond: number
   readonly hasEditableSelection: boolean
@@ -88,11 +91,15 @@ const AllMotionToolbar = (props: AllMotionToolbarProps) => (
           />
         </label>
       </div>
+      <div class="timeline-control-group" role="group" aria-label="타임라인 보기">
+        <TimelineZoomControls zoom={props.zoom} onChange={props.onZoomChange} />
+      </div>
     </div>
   </header>
 )
 
 interface AllMotionTimelineGroupProps {
+  readonly zoom?: number | 'fit'
   readonly currentTime: number
   readonly document: PuppetDocument
   readonly framesPerSecond: number
@@ -250,6 +257,7 @@ const AllMotionTimelineGroup = (props: AllMotionTimelineGroupProps) => {
   return (
     <section class="timeline-motion-group" aria-label={`${props.motion.id} 타임라인`}>
       <TimelineDopesheet
+        zoom={props.zoom}
         currentTime={props.currentTime}
         duration={props.motion.duration}
         framesPerSecond={props.framesPerSecond}
@@ -282,6 +290,8 @@ const AllMotionTimelineGroup = (props: AllMotionTimelineGroupProps) => {
 }
 
 export interface AllMotionTimelineProps {
+  readonly zoom?: number | 'fit'
+  readonly onZoomChange?: (zoom: number | 'fit') => void
   readonly onKeyframeAdd?: (motionId: string, parameterId: string, time: number) => boolean
   readonly document: PuppetDocument
   readonly framesPerSecond: number
@@ -358,6 +368,8 @@ export const AllMotionTimeline = (props: AllMotionTimelineProps) => {
   return (
     <>
       <AllMotionToolbar
+        zoom={props.zoom}
+        onZoomChange={props.onZoomChange}
         easing={(selectedKeyframe()?.easing ?? 'linear') satisfies PuppetEasing}
         framesPerSecond={props.framesPerSecond}
         hasEditableSelection={
@@ -405,6 +417,7 @@ export const AllMotionTimeline = (props: AllMotionTimelineProps) => {
 
             return (
               <AllMotionTimelineGroup
+                zoom={props.zoom}
                 currentTime={props.getCurrentTime(motion())}
                 document={props.document}
                 framesPerSecond={props.framesPerSecond}

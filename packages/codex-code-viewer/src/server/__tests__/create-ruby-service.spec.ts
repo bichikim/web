@@ -1,5 +1,7 @@
 /** @vitest-environment node */
 import {EventEmitter} from 'node:events'
+import {existsSync} from 'node:fs'
+import {delimiter, join} from 'node:path'
 import {PassThrough} from 'node:stream'
 import {pathToFileURL} from 'node:url'
 import {createMessageConnection} from 'vscode-jsonrpc/node.js'
@@ -55,13 +57,22 @@ describe('createRubyService', () => {
   })
   it('should negotiate codepoint positions and launch the selected Ruby gem', async () => {
     const source = '# 한글 🦊\r\nReport.new\n'
-    expect(await service.definitions(path, source, source.indexOf('Report'))).toEqual({
+    expect(
+      await service.lookupSymbols(path, source, source.indexOf('Report'), {kind: 'definition'}),
+    ).toEqual({
       ok: true,
       value: [{column: 7, line: 2, path: `${root}/report.rb`}],
     })
     expect(spawn).toHaveBeenCalledWith(
       'ruby',
-      ['-r', 'rubygems', '-e', "load Gem.bin_path('solargraph', 'solargraph')", '--', 'stdio'],
+      [
+        '-r',
+        'rubygems',
+        '-e',
+        expect.stringContaining("load Gem.bin_path('solargraph', 'solargraph')"),
+        '--',
+        'stdio',
+      ],
       expect.objectContaining({cwd: root}),
     )
     expect(initialize.mock.calls[0][0]).toMatchObject({
@@ -78,12 +89,12 @@ describe('createRubyService', () => {
     expect(opened).toHaveBeenCalledWith(
       expect.objectContaining({textDocument: expect.objectContaining({languageId: 'ruby'})}),
     )
-    await service.definitions(path, 'label = "🦊"; Report.new', 14)
+    await service.lookupSymbols(path, 'label = "🦊"; Report.new', 14, {kind: 'definition'})
     expect(definition.mock.calls.at(-1)?.[0]).toMatchObject({position: {character: 13, line: 0}})
   })
   it('should replace edited Ruby source using its previous codepoint range', async () => {
-    await service.definitions(path, '# 🦊\r\nReport.new; "🦊"', 7)
-    await service.definitions(path, '# changed\nReport.new', 10)
+    await service.lookupSymbols(path, '# 🦊\r\nReport.new; "🦊"', 7, {kind: 'definition'})
+    await service.lookupSymbols(path, '# changed\nReport.new', 10, {kind: 'definition'})
     expect(changed).toHaveBeenCalledWith({
       contentChanges: [
         {
@@ -97,12 +108,50 @@ describe('createRubyService', () => {
   it('should use a configured analyzer executable using its stdio mode', () => {
     service.dispose()
     vi.stubEnv('SOLARGRAPH_BINARY', '/custom/solargraph')
+    vi.stubEnv('RUBYOPT', '-W0')
+    vi.stubEnv('RUBYLIB', '/custom/libraries')
     service = createRubyService(root)
     expect(spawn).toHaveBeenLastCalledWith(
       '/custom/solargraph',
       ['stdio'],
-      expect.objectContaining({cwd: root}),
+      expect.objectContaining({
+        cwd: root,
+        env: expect.objectContaining({
+          RUBYLIB: expect.stringContaining(`${delimiter}/custom/libraries`),
+          RUBYOPT: '-W0 -rcode-viewer-solargraph-loader',
+        }),
+      }),
     )
+    const directory = vi.mocked(spawn).mock.calls.at(-1)?.[2]?.env?.RUBYLIB?.split(delimiter)[0]
+    if (directory === undefined) {
+      throw new Error('Missing Ruby preload directory')
+    }
+    expect(existsSync(join(directory, 'code-viewer-solargraph-loader.rb'))).toBe(true)
+    expect(existsSync(join(directory, 'reference-handler.rb'))).toBe(true)
+    service.dispose()
+    expect(existsSync(directory)).toBe(false)
+  })
+  it('should release the external preload if analyzer creation throws', () => {
+    service.dispose()
+    vi.stubEnv('SOLARGRAPH_BINARY', '/custom/solargraph')
+    vi.mocked(spawn).mockImplementationOnce(() => {
+      throw new Error('invalid executable')
+    })
+    expect(() => createRubyService(root)).toThrow('invalid executable')
+    const directory = vi.mocked(spawn).mock.calls.at(-1)?.[2]?.env?.RUBYLIB?.split(delimiter)[0]
+    expect(directory).toBeDefined()
+    expect(directory !== undefined && existsSync(directory)).toBe(false)
+  })
+  it('should release the external preload when the executable fails to start', async () => {
+    service.dispose()
+    vi.stubEnv('SOLARGRAPH_BINARY', '/custom/solargraph')
+    service = createRubyService(root)
+    const directory = vi.mocked(spawn).mock.calls.at(-1)?.[2]?.env?.RUBYLIB?.split(delimiter)[0]
+    const pending = service.lookupSymbols(path, 'Report.new', 0, {kind: 'definition'})
+    child.emit('error', new Error('missing executable'))
+    expect(await pending).toMatchObject({error: {code: 'ruby-analyzer-unavailable'}, ok: false})
+    expect(directory).toBeDefined()
+    expect(directory !== undefined && existsSync(directory)).toBe(false)
   })
   it('should use a configured Ruby interpreter for the gem launcher', () => {
     service.dispose()
@@ -115,7 +164,7 @@ describe('createRubyService', () => {
     )
   })
   it('should report unavailable analyzers and finish pending startup', async () => {
-    const pending = service.definitions(path, 'Report.new', 0)
+    const pending = service.lookupSymbols(path, 'Report.new', 0, {kind: 'definition'})
     child.emit('error', new Error('missing Ruby'))
     expect(await pending).toMatchObject({error: {code: 'ruby-analyzer-unavailable'}, ok: false})
   })
@@ -125,7 +174,7 @@ describe('createRubyService', () => {
       requested.resolve()
       return new Promise(() => {})
     })
-    const pending = service.definitions(path, 'Report.new', 0)
+    const pending = service.lookupSymbols(path, 'Report.new', 0, {kind: 'definition'})
     await requested.promise
     service.dispose()
     expect(await pending).toMatchObject({error: {code: 'ruby-analysis-failed'}, ok: false})

@@ -9,7 +9,7 @@ export const useLatestRequest = (onError: (error: unknown) => void) => {
     setPending(false)
   }
   const run = async <Value>(
-    request: () => Promise<Value>,
+    request: (current: () => boolean) => Promise<Value>,
     onDiscard?: (value: Value) => Promise<void>,
   ): Promise<Value | null> => {
     if (disposed) {
@@ -19,7 +19,7 @@ export const useLatestRequest = (onError: (error: unknown) => void) => {
     const ticket = sequence
     setPending(true)
     try {
-      const value = await request()
+      const value = await request(() => !disposed && ticket === sequence)
       if (ticket !== sequence) {
         await onDiscard?.(value)
         return null

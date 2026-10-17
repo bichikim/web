@@ -83,17 +83,28 @@ describe('CharacterCanvas', () => {
       })
       return (
         <>
+          <output>{controller.status()}</output>
           <button type="button" onClick={() => controller.loadDefaultModel()}>
             Retry
           </button>
-          <CharacterCanvas modelUrl={controller.modelUrl()} {...callbacks()} />
+          <CharacterCanvas
+            modelUrl={controller.modelUrl()}
+            onLoadError={controller.handleLoadError}
+            onLoadProgress={controller.handleLoadProgress}
+            onLoadStart={controller.handleLoadStart}
+            onLoadSuccess={controller.handleLoadSuccess}
+          />
         </>
       )
     })
     events().onError(new Error('Temporary model request failure'))
+    expect(view.getByRole('status')).toHaveTextContent('error')
     fireEvent.click(view.getByRole('button', {name: 'Retry'}))
     expect(renderer.load).toHaveBeenCalledTimes(2)
     expect(renderer.load).toHaveBeenLastCalledWith('/model.glb')
+    expect(view.getByRole('status')).toHaveTextContent('loading')
+    events().onReady()
+    expect(view.getByRole('status')).toHaveTextContent('ready')
   })
 
   it('should forward repeated camera commands without loading again', () => {
@@ -166,5 +177,83 @@ describe('CharacterCanvas', () => {
       feature: 'character-renderer',
       source: 'direct',
     })
+  })
+
+  it('should keep Pomo retries in an error state when Engine initialization fails', () => {
+    const error = new Error('WebGL unavailable')
+    vi.mocked(Engine).mockImplementation(function FailedEngine() {
+      throw error
+    })
+    const onLoadError = vi.fn()
+    const runtime = {
+      createObjectUrl: vi.fn(() => 'blob:portrait.glb'),
+      revokeObjectUrl: vi.fn(),
+    }
+    let controller: ReturnType<typeof useCharacterRenderer> | undefined
+    const view = render(() => {
+      const rendererController = useCharacterRenderer({
+        defaultModelName: 'Pomo',
+        defaultModelUrl: '/model.glb',
+        runtime,
+      })
+      controller = rendererController
+      const handleDefaultModelClick = () => {
+        if (
+          rendererController.modelUrl() !== '/model.glb' ||
+          rendererController.status() === 'error'
+        ) {
+          rendererController.loadDefaultModel()
+        }
+      }
+      return (
+        <>
+          <output>{rendererController.status()}</output>
+          <button onClick={handleDefaultModelClick} type="button">
+            Pomo
+          </button>
+          <CharacterCanvas
+            modelUrl={rendererController.modelUrl()}
+            onLoadError={() => {
+              onLoadError()
+              rendererController.handleLoadError()
+            }}
+            onLoadProgress={rendererController.handleLoadProgress}
+            onLoadStart={rendererController.handleLoadStart}
+            onLoadSuccess={rendererController.handleLoadSuccess}
+          />
+        </>
+      )
+    })
+    const canvas = view.container.querySelector('canvas')
+
+    expect(view.getByRole('status')).toHaveTextContent('error')
+    expect(onLoadError).toHaveBeenCalledOnce()
+    fireEvent.click(view.getByRole('button', {name: 'Pomo'}))
+    expect(view.getByRole('status')).toHaveTextContent('error')
+    expect(onLoadError).toHaveBeenCalledTimes(2)
+    fireEvent.click(view.getByRole('button', {name: 'Pomo'}))
+    expect(view.getByRole('status')).toHaveTextContent('error')
+    expect(onLoadError).toHaveBeenCalledTimes(3)
+    expect(view.container.querySelector('canvas')).toBe(canvas)
+    expect(controller?.loadUrl('/other-model.glb')).toBe(true)
+    expect(controller?.modelUrl()).toBe('/other-model.glb')
+    expect(view.getByRole('status')).toHaveTextContent('error')
+    expect(onLoadError).toHaveBeenCalledTimes(4)
+    controller?.loadFile(new File(['glb'], 'portrait.glb', {type: 'model/gltf-binary'}))
+    expect(controller?.modelUrl()).toBe('blob:portrait.glb')
+    expect(view.getByRole('status')).toHaveTextContent('error')
+    expect(onLoadError).toHaveBeenCalledTimes(5)
+    expect(Engine).toHaveBeenCalledOnce()
+    expect(createCharacterRenderer).not.toHaveBeenCalled()
+
+    const errorCountBeforeUnmount = onLoadError.mock.calls.length
+    view.unmount()
+    expect(runtime.revokeObjectUrl).toHaveBeenCalledOnce()
+    expect(runtime.revokeObjectUrl).toHaveBeenCalledWith('blob:portrait.glb')
+    if (controller === undefined) {
+      throw new Error('Character renderer was not created')
+    }
+    controller.loadDefaultModel()
+    expect(onLoadError).toHaveBeenCalledTimes(errorCountBeforeUnmount)
   })
 })

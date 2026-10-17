@@ -1,6 +1,7 @@
 /** @vitest-environment jsdom */
 
 import {cleanup, fireEvent, render, screen} from '@solidjs/testing-library'
+import {analyzeDaeun, deriveSaju} from 'k-saju'
 import {For, type JSX} from 'solid-js'
 import {afterEach, expect, it, vi} from 'vitest'
 
@@ -155,6 +156,60 @@ it('should pass a lunar birth date and leap-month choice to the calculation', ()
   expect(JSON.parse(messages[1].content)).toMatchObject({
     birth: {calendar: 'lunar', date: '1995-03-17', isLeapMonth: false},
   })
+})
+
+it('should calculate a selectable lunar year-end day while keeping its lunar birth in messages', () => {
+  render(() => <SajuPage />)
+
+  fireEvent.click(screen.getByRole('radio', {name: '음력'}))
+  fireEvent.change(screen.getByRole('combobox', {name: '음력 연도'}), {
+    target: {value: '1999'},
+  })
+  fireEvent.change(screen.getByRole('combobox', {name: '음력 월'}), {target: {value: '12'}})
+  const days = screen.getByRole('combobox', {name: '음력 일'}) as HTMLSelectElement
+  expect(Array.from(days.options).map((option) => option.value)).toContain('20')
+  fireEvent.change(days, {target: {value: '20'}})
+  fireEvent.input(screen.getByLabelText('질문'), {target: {value: '재물에 대해 알려줘'}})
+  fireEvent.submit(screen.getByRole('button', {name: '사주 풀이 생성'}).closest('form')!)
+
+  const solarBirth = {calendar: 'solar', date: '2000-01-26'} as const
+  const expectedChart = deriveSaju(solarBirth)
+  const expectedDaeun = analyzeDaeun(solarBirth, expectedChart, 'M')
+  const getSectionValue = (title: string) => {
+    const code = screen
+      .getByRole('heading', {name: title})
+      .nextElementSibling?.querySelector('code')
+    if (code === null || code === undefined) {
+      throw new Error(`missing calculation section: ${title}`)
+    }
+    return JSON.parse(code.textContent ?? 'null') as unknown
+  }
+
+  expect(screen.queryByRole('alert')).toBeNull()
+  expect(getSectionValue('사주팔자 · deriveSaju()')).toEqual(expectedChart)
+  expect(getSectionValue('대운 · analyzeDaeun()')).toEqual(expectedDaeun)
+  const messages = JSON.parse(
+    screen.getByRole('region', {name: 'LLM 전달 값'}).querySelector('code')!.textContent!,
+  ) as Array<{content: string}>
+  const userPayload = JSON.parse(messages[1].content) as {
+    birth: unknown
+    chart: unknown
+    daeun: unknown
+  }
+  expect(userPayload.birth).toEqual({
+    calendar: 'lunar',
+    date: '1999-12-20',
+    isLeapMonth: false,
+  })
+  expect(userPayload.chart).toEqual(expectedChart)
+  expect(userPayload.daeun).toEqual(expectedDaeun)
+
+  fireEvent.submit(screen.getByRole('button', {name: '사주 풀이 생성'}).closest('form')!)
+  const repeatedMessages = JSON.parse(
+    screen.getByRole('region', {name: 'LLM 전달 값'}).querySelector('code')!.textContent!,
+  ) as Array<{content: string}>
+  expect(repeatedMessages).toEqual(messages)
+  expect(GenerationWorkspace).toHaveBeenCalledTimes(2)
 })
 
 it('should require a meaningful question before preparing LLM messages', () => {

@@ -8,12 +8,15 @@ import 'prismjs/components/prism-json.js'
 import 'prismjs/components/prism-json5.js'
 import {type CodeToken} from '../shared/contracts'
 import {type SyntaxLanguage} from '../shared/file-formats'
+import {highlightLanguage} from './highlight-language'
+import {isSourcePath} from '../shared/is-source-path'
 
 interface SyntaxToken {
   readonly kind: CodeToken['kind']
   readonly text: string
   readonly navigation?: CodeToken['navigation']
 }
+type SyntaxNavigation = (tokens: SyntaxToken[]) => SyntaxToken[]
 const kinds = new Map<string, CodeToken['kind']>([
   ['comment', 'comment'],
   ['string', 'string'],
@@ -158,42 +161,51 @@ const previousToken = (tokens: readonly SyntaxToken[], index: number): number =>
 }
 
 const navigableTokens = (language: SyntaxLanguage, tokens: SyntaxToken[]): SyntaxToken[] => {
-  switch (language) {
-    case 'rust':
-      return tokens.flatMap(rustIdentifiers)
-    case 'python':
-      return tokens.flatMap(pythonIdentifiers)
-    case 'ruby':
-      return tokens.flatMap(rubyIdentifiers).flatMap(rubyPaths)
-    case 'yaml':
-    case 'toml':
-    case 'json':
-    case 'jsonc':
-    case 'json5':
-    case 'html':
-      return tokens
-    default: {
-      const unsupported: never = language
-      return unsupported
-    }
-  }
+  const navigation = new Map<SyntaxLanguage, SyntaxNavigation>([
+    ['rust', (source) => source.flatMap(rustIdentifiers)],
+    ['python', (source) => source.flatMap(pythonIdentifiers)],
+    ['ruby', (source) => source.flatMap(rubyIdentifiers).flatMap(rubyPaths)],
+    ['json', jsonPaths],
+    ['jsonc', jsonPaths],
+    ['json5', jsonPaths],
+  ])
+  return navigation.get(language)?.(tokens) ?? tokens
 }
+
+const jsonPaths = (tokens: SyntaxToken[]): SyntaxToken[] =>
+  tokens.map((token) =>
+    token.kind === 'string' && isSourcePath(token.text.slice(1, -1))
+      ? {...token, navigation: 'path'}
+      : token,
+  )
 
 export const tokenizeSyntax = (language: SyntaxLanguage, source: string): CodeToken[][] => {
   const grammars = new Map<SyntaxLanguage, Prism.Grammar>([
     ['rust', rustGrammar],
     ['ruby', rubyGrammar],
+    ['python', Prism.languages.python],
+    ['yaml', Prism.languages.yaml],
+    ['toml', Prism.languages.toml],
+    ['json', Prism.languages.json],
+    ['jsonc', Prism.languages.json],
+    ['json5', Prism.languages.json5],
+    ['html', Prism.languages.html],
   ])
-  const grammar =
-    grammars.get(language) ?? Prism.languages[language === 'jsonc' ? 'json' : language]
-  const highlighted = flattenTokens(Prism.tokenize(source, grammar))
+  const grammar = grammars.get(language)
+  const highlighted =
+    grammar === undefined
+      ? highlightLanguage(language, source)
+      : flattenTokens(Prism.tokenize(source, grammar))
   const tokens = navigableTokens(language, highlighted)
   const lines: CodeToken[][] = [[]]
   let offset = 0
   for (const token of tokens) {
     for (const [index, text] of token.text.split(/(?<newline>\r\n|\n|\r)/u).entries()) {
       if (index % 2 === 1) {
-        lines.push([])
+        // Syntax spans may split a CRLF pair.
+        if (!(text === '\n' && source[offset - 1] === '\r')) {
+          lines.push([])
+        }
       } else if (text.length > 0) {
         lines[lines.length - 1].push({
           kind: token.kind,

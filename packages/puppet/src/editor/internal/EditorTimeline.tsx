@@ -62,6 +62,12 @@ export interface EditorTimelineProps {
 const getActiveMotion = (document: PuppetDocument, motionId: string | undefined) =>
   document.motions.find((motion) => motion.id === motionId) ?? document.motions[0]
 
+const DEFAULT_ZOOM = 100
+const getMotionOptions = (document: PuppetDocument) => {
+  const ids = document.motions.map((motion) => motion.id)
+  return ids.length === 0 ? [] : [ALL_MOTIONS_OPTION, ...ids]
+}
+
 const applyDocumentChange = (
   onDocumentChange: EditorTimelineProps['onDocumentChange'],
   document: PuppetDocument | undefined,
@@ -91,6 +97,7 @@ const getMotionSeekAction = (
 // eslint-disable-next-line max-lines-per-function
 export const EditorTimeline = (props: EditorTimelineProps) => {
   const titleId = createUniqueId()
+  const [zoom, setZoom] = createSignal<number | 'fit'>(DEFAULT_ZOOM)
   const [selection, setSelection] = createSignal<KeyframeSelection | null>(null)
   const [activeParameterId, setActiveParameterId] = createSignal<string | null>(null)
   const [allMotionsVisible, setAllMotionsVisible] = createSignal(false)
@@ -119,8 +126,7 @@ export const EditorTimeline = (props: EditorTimelineProps) => {
     }),
   )
   const selectedKeyframe = createMemo(() => getSelectedKeyframe(selection(), parameterTracks()))
-  const motionIds = () => props.document.motions.map((candidate) => candidate.id)
-  const motionOptions = () => (motionIds().length === 0 ? [] : [ALL_MOTIONS_OPTION, ...motionIds()])
+  const motionOptions = () => getMotionOptions(props.document)
   const minimumDuration = (targetMotion: PuppetMotion) =>
     Math.max(
       1 / framesPerSecond(),
@@ -451,6 +457,8 @@ export const EditorTimeline = (props: EditorTimelineProps) => {
         fallback={
           <>
             <TimelineToolbar
+              zoom={zoom()}
+              onZoomChange={setZoom}
               easing={(selectedKeyframe()?.easing ?? 'linear') satisfies PuppetEasing}
               framesPerSecond={framesPerSecond()}
               hasEditableSelection={hasEditableSelection(
@@ -481,6 +489,7 @@ export const EditorTimeline = (props: EditorTimelineProps) => {
               titleId={titleId}
             />
             <TimelineDopesheet
+              zoom={zoom()}
               currentTime={currentTime()}
               duration={duration()}
               framesPerSecond={framesPerSecond()}
@@ -511,7 +520,7 @@ export const EditorTimeline = (props: EditorTimelineProps) => {
                     <div class="timeline-motion-group-heading">
                       <TimelineMotionName
                         motionId={activeMotion().id}
-                        motionIds={motionIds()}
+                        motionIds={props.document.motions.map((item) => item.id)}
                         onDelete={getAvailableAction(props.onDocumentChange, motionActions.delete)}
                         onRename={getAvailableAction(props.onDocumentChange, motionActions.rename)}
                       >
@@ -548,6 +557,8 @@ export const EditorTimeline = (props: EditorTimelineProps) => {
         }
       >
         <AllMotionTimeline
+          zoom={zoom()}
+          onZoomChange={setZoom}
           document={props.document}
           framesPerSecond={framesPerSecond()}
           getCurrentTime={getMotionTime}

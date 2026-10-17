@@ -2,10 +2,10 @@ import {uniq} from 'es-toolkit/array'
 import {onCleanup, onMount, type Setter} from 'solid-js'
 
 import type {AlbumDraftData} from './album-draft'
+import {getAlbumDraftStorage} from './album-draft-persistence'
 import type {AlbumDraftReadResult, AlbumDraftStorageResult} from './album-draft-storage'
 import type {DraftReferenceUpdater} from './create-draft-reference-lifecycle'
 
-const getAlbumDraftStorage = () => import('./album-draft-storage')
 const MILLISECONDS_PER_SECOND = 1000
 const SECONDS_PER_MINUTE = 60
 const MINUTES_PER_HOUR = 60

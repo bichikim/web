@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 
-import {cleanup, fireEvent, render, screen, waitFor} from '@solidjs/testing-library'
+import {cleanup, fireEvent, render, screen, waitFor, within} from '@solidjs/testing-library'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 import {
   createDemoDocument,
@@ -30,6 +30,74 @@ beforeEach(() => {
 })
 
 describe('PuppetEditor', () => {
+  test('should restore a recovered document as one undoable history entry', async () => {
+    const initialDocument = createDemoDocument()
+    const recovered = {...initialDocument, parts: [], scene: {roots: []}}
+    const recovery = {
+      listRecoveries: vi
+        .fn()
+        .mockResolvedValue([
+          {id: 'previous', motionCount: recovered.motions.length, partCount: 0, savedAt: 1000},
+        ]),
+      loadRecovery: vi.fn().mockResolvedValue(recovered),
+    }
+    const onDocumentChange = vi.fn<(document: PuppetDocument) => void>()
+    const view = render(() => (
+      <PuppetEditor
+        initialDocument={initialDocument}
+        recovery={recovery}
+        onDocumentChange={onDocumentChange}
+      />
+    ))
+    fireEvent.click(view.getByRole('button', {name: '메인 메뉴'}))
+    fireEvent.click(await screen.findByRole('button', {name: '복구 찾기'}))
+    const dialog = within(await screen.findByRole('dialog', {name: '복구 찾기'}))
+    fireEvent.click(await dialog.findByRole('button', {name: '복구'}))
+    await waitFor(() => expect(screen.queryByRole('dialog', {name: '복구 찾기'})).toBeNull())
+    expect(onDocumentChange.mock.calls.at(-1)?.[0]).toBe(recovered)
+    const panel = within(view.getByRole('region', {name: '작업 기록'}))
+    expect(panel.getByRole('button', {current: 'step', name: '자동 저장 작업 복구'})).toBeVisible()
+    fireEvent.click(panel.getByRole('button', {name: '실행 취소'}))
+    expect(onDocumentChange.mock.calls.at(-1)?.[0]).toBe(initialDocument)
+    fireEvent.click(panel.getByRole('button', {name: '다시 실행'}))
+    expect(onDocumentChange.mock.calls.at(-1)?.[0]).toBe(recovered)
+  })
+
+  test('should show the edited part and keyform property in history and restore its value', () => {
+    const view = render(() => <PuppetEditor initialDocument={createDemoDocument()} />)
+    const panel = within(view.getByRole('region', {name: '작업 기록'}))
+    fireEvent.click(view.getByRole('button', {name: '파트 불투명도 감소'}))
+    expect(
+      panel.getByRole('button', {
+        current: 'step',
+        name: 'mesh-preview · 불투명도 변경 (키폼)',
+      }),
+    ).toBeVisible()
+    expect(view.getByRole('spinbutton', {name: '파트 불투명도'})).toHaveValue(0.99)
+    fireEvent.click(panel.getByRole('button', {name: '실행 취소'}))
+    expect(view.getByRole('spinbutton', {name: '파트 불투명도'})).toHaveValue(1)
+    expect(panel.getByText('다시 실행 가능')).toBeVisible()
+    fireEvent.click(panel.getByRole('button', {name: '다시 실행'}))
+    expect(view.getByRole('spinbutton', {name: '파트 불투명도'})).toHaveValue(0.99)
+  })
+  test('should restore document states from named sidebar entries and retain redo entries', async () => {
+    const onDocumentChange = vi.fn<(document: PuppetDocument) => void>()
+    const view = render(() => (
+      <PuppetEditor initialDocument={createDemoDocument()} onDocumentChange={onDocumentChange} />
+    ))
+    const panel = within(view.getByRole('region', {name: '작업 기록'}))
+    fireEvent.click(view.getByRole('button', {name: '1차원 Parameter 추가'}))
+    fireEvent.click(view.getByRole('button', {name: '1차원 Parameter 추가'}))
+    expect(panel.getAllByRole('button', {name: '파라미터 추가'})).toHaveLength(2)
+    fireEvent.click(panel.getByRole('button', {current: false, name: '파라미터 추가'}))
+    await waitFor(() => expect(onDocumentChange.mock.calls.at(-1)?.[0]?.parameters).toHaveLength(3))
+    expect(panel.getByText('다시 실행 가능')).toBeVisible()
+    expect(panel.getByRole('button', {current: 'step', name: '파라미터 추가'})).toBeVisible()
+    fireEvent.click(panel.getByRole('button', {name: '다시 실행'}))
+    await waitFor(() => expect(onDocumentChange.mock.calls.at(-1)?.[0]?.parameters).toHaveLength(4))
+    expect(panel.queryByText('다시 실행 가능')).toBeNull()
+  })
+
   test('should edit mesh topology only from the modeling workspace and include it in history', async () => {
     const onDocumentChange = vi.fn<(document: PuppetDocument) => void>()
     const view = render(() => (
@@ -72,13 +140,17 @@ describe('PuppetEditor', () => {
       expect(onDocumentChange.mock.calls.at(-1)?.[0]?.parts[0]?.mesh.vertices).toHaveLength(10)
     })
 
-    fireEvent.click(screen.getByRole('button', {name: '실행 취소'}))
+    fireEvent.click(
+      within(screen.getByLabelText('파일 및 편집 작업')).getByRole('button', {name: '실행 취소'}),
+    )
 
     await waitFor(() => {
       expect(onDocumentChange.mock.calls.at(-1)?.[0]?.parts[0]?.mesh.vertices).toHaveLength(12)
     })
 
-    fireEvent.click(screen.getByRole('button', {name: '실행 취소'}))
+    fireEvent.click(
+      within(screen.getByLabelText('파일 및 편집 작업')).getByRole('button', {name: '실행 취소'}),
+    )
 
     await waitFor(() => {
       expect(onDocumentChange.mock.calls.at(-1)?.[0]?.parts[0]?.mesh.vertices).toHaveLength(10)
@@ -98,15 +170,19 @@ describe('PuppetEditor', () => {
     const view = render(() => (
       <PuppetEditor initialDocument={createDemoDocument()} onDocumentChange={onDocumentChange} />
     ))
-    const undoButton = screen.getByRole('button', {name: '실행 취소'})
-    const redoButton = screen.getByRole('button', {name: '다시 실행'})
+    const undoButton = within(screen.getByLabelText('파일 및 편집 작업')).getByRole('button', {
+      name: '실행 취소',
+    })
+    const redoButton = within(screen.getByLabelText('파일 및 편집 작업')).getByRole('button', {
+      name: '다시 실행',
+    })
 
     expect(undoButton).toBeDisabled()
     expect(redoButton).toBeDisabled()
 
     fireEvent.click(view.getByRole('button', {name: '1차원 Parameter 추가'}))
     await waitFor(() => expect(undoButton).toBeEnabled())
-    expect(undoButton).toHaveAccessibleDescription('1단계 되돌릴 수 있음 · ⌘Z / Ctrl+Z')
+    expect(undoButton).toHaveAccessibleDescription('1단계 되돌릴 수 있음 · Ctrl+Z')
 
     fireEvent.click(undoButton)
     await waitFor(() => {
@@ -126,7 +202,9 @@ describe('PuppetEditor', () => {
       <PuppetEditor initialDocument={createDemoDocument()} onDocumentChange={onDocumentChange} />
     ))
     const opacityField = view.getByRole('spinbutton', {name: '파트 불투명도'})
-    const undoButton = screen.getByRole('button', {name: '실행 취소'})
+    const undoButton = within(screen.getByLabelText('파일 및 편집 작업')).getByRole('button', {
+      name: '실행 취소',
+    })
     vi.spyOn(opacityField, 'getBoundingClientRect').mockReturnValue(
       DOMRect.fromRect({width: 100, x: 0}),
     )
@@ -144,7 +222,7 @@ describe('PuppetEditor', () => {
           .find((part) => part.properties?.opacity !== undefined)?.properties?.opacity,
       ).toBeCloseTo(0.9)
     })
-    expect(undoButton).toHaveAccessibleDescription('1단계 되돌릴 수 있음 · ⌘Z / Ctrl+Z')
+    expect(undoButton).toHaveAccessibleDescription('1단계 되돌릴 수 있음 · Ctrl+Z')
 
     fireEvent.click(undoButton)
 
