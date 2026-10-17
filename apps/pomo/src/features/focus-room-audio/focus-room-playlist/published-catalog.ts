@@ -1,5 +1,6 @@
 import {isPlainObject, isString} from 'es-toolkit/predicate'
 import {createCatalogRequestInit, hasUniqueIds} from 'src/features/catalog-policy'
+import {toError} from 'src/utils/to-error'
 import * as m from '@paraglide/message'
 
 import {apiFetch, httpFetch} from '../../http-client'
@@ -167,10 +168,7 @@ export const loadPublishedPAlbums = async (
     }
 
     return {
-      error:
-        error instanceof Error
-          ? error
-          : new Error('Published focus-room albums request failed', {cause: error}),
+      error: toError(error, 'Published focus-room albums request failed'),
       status: 'failed',
     }
   }

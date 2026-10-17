@@ -1,5 +1,6 @@
 import {type Accessor, createResource, createSignal, onCleanup, onMount} from 'solid-js'
 import {createAsync, revalidate} from '@solidjs/router'
+import {toError} from 'src/utils/to-error'
 
 import {
   loadBundledPAlbums,
@@ -61,10 +62,7 @@ export const useAlbumLibrary = (): AlbumLibraryController => {
     } catch (error: unknown) {
       if (!isDisposed) {
         setPublishedCatalogState({
-          error:
-            error instanceof Error
-              ? error
-              : new Error('Published focus-room albums request failed', {cause: error}),
+          error: toError(error, 'Published focus-room albums request failed'),
           kind: 'rejected',
         })
       }
