@@ -124,6 +124,96 @@ describe('useReplySpeech', () => {
     expect(voice.speak).toHaveBeenCalledExactlyOnceWith('Please ask Dr. Smith to call.')
   })
 
+  it('should speak earlier sentences while holding only a trailing decimal period', () => {
+    const {result, voice, setStreamingText} = setup()
+    result.start()
+    const partialText = 'An earlier sentence. The value is 3.'
+
+    setStreamingText(partialText)
+    expect(voice.speak).toHaveBeenCalledExactlyOnceWith('An earlier sentence.')
+
+    setStreamingText(`${partialText}14. Next sentence.`)
+    expect(voice.speak.mock.calls.map(([text]) => text)).toEqual([
+      'An earlier sentence.',
+      'The value is 3.14.',
+      'Next sentence.',
+    ])
+  })
+
+  it('should discard a held decimal period after reply speech is stopped', () => {
+    const {result, voice, setAnswerDraft, setStreamingText} = setup()
+    result.start()
+    const partialText = 'The value is 3.'
+
+    setStreamingText(partialText)
+    expect(voice.speak).not.toHaveBeenCalled()
+
+    result.stop()
+    const completedText = 'The value is 3.14.'
+    setStreamingText(completedText)
+    setAnswerDraft({content: completedText, id: 'stopped'})
+
+    expect(voice.speak).not.toHaveBeenCalled()
+    expect(voice.finish).not.toHaveBeenCalled()
+  })
+
+  it('should not replay a spoken numeric sentence when its following separator changes to a newline', () => {
+    const {result, voice, setStreamingText} = setup()
+    result.start()
+
+    setStreamingText('There are 3. Original ending.')
+    expect(voice.speak.mock.calls.map(([text]) => text)).toEqual([
+      'There are 3.',
+      'Original ending.',
+    ])
+
+    setStreamingText('There are 3.\nRevised ending.')
+    expect(voice.speak.mock.calls.map(([text]) => text)).toEqual([
+      'There are 3.',
+      'Original ending.',
+      'Revised ending.',
+    ])
+  })
+
+  it('should not replay a flushed numeric tail when revised text adds a newline', () => {
+    const {result, voice, setAnswerDraft, setStreamingText} = setup()
+    result.start()
+
+    setStreamingText('There are 3.')
+    setAnswerDraft({content: 'There are 3.', id: 'reply'})
+    expect(voice.speak.mock.calls.map(([text]) => text)).toEqual(['There are 3.'])
+
+    setStreamingText('There are 3.\nRevised ending.')
+    expect(voice.speak.mock.calls.map(([text]) => text)).toEqual([
+      'There are 3.',
+      'Revised ending.',
+    ])
+  })
+
+  it('should speak the full decimal sentence when a consumed number extends after a newline', () => {
+    const {result, voice, setStreamingText} = setup()
+    result.start()
+
+    setStreamingText('There are 3. Original ending.')
+    expect(voice.speak.mock.calls.map(([text]) => text)).toEqual([
+      'There are 3.',
+      'Original ending.',
+    ])
+
+    setStreamingText('There are 3.\n')
+    expect(voice.speak.mock.calls.map(([text]) => text)).toEqual([
+      'There are 3.',
+      'Original ending.',
+    ])
+
+    setStreamingText('There are 3.14 units.')
+    expect(voice.speak.mock.calls.map(([text]) => text)).toEqual([
+      'There are 3.',
+      'Original ending.',
+      'There are 3.14 units.',
+    ])
+  })
+
   it('should not repeat a completed sentence when streaming text shrinks', async () => {
     const {result, voice, setStreamingText} = setup()
     result.start()
