@@ -1,6 +1,7 @@
 import {type Accessor, createEffect, createMemo, on, onCleanup} from 'solid-js'
 import {useAsyncTask} from 'src/features/async-task'
 import {withPromiseFallback} from 'src/utils/with-promise-fallback'
+import {toError} from 'src/utils/to-error'
 
 export interface ImageBitmapController {
   readonly error: Accessor<Error | null>
@@ -45,7 +46,7 @@ export const useImageBitmap = (source: Accessor<Blob | null>): ImageBitmapContro
       return null
     }
     const cause = state.error
-    return cause instanceof Error ? cause : new Error('Image decoding failed', {cause})
+    return toError(cause, 'Image decoding failed')
   })
   const isLoading = () => task.state().status === 'pending'
 
