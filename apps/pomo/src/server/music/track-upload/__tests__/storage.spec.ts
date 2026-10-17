@@ -171,4 +171,77 @@ describe('signTrackObjectRequest', () => {
       signTrackObjectRequest(new Request('https://example.com/source.mp3'), {}, true),
     ).toThrow('POMO_PAID_AUDIO_R2_ACCESS_KEY_ID is not set')
   })
+
+  it.each(['', ' \t\u00a0'])(
+    'should reject a present blank paid access key %j before fallback and signer construction',
+    (accessKey) => {
+      const reads: string[] = []
+
+      expect(() =>
+        signTrackObjectRequest(
+          new Request('https://example.com/source.mp3'),
+          {
+            get POMO_PAID_AUDIO_R2_ACCESS_KEY_ID() {
+              reads.push('paid-access')
+              return accessKey
+            },
+            get POMO_PAID_AUDIO_R2_SECRET_ACCESS_KEY() {
+              reads.push('paid-secret')
+              return 'secret-key'
+            },
+            get POMO_PUBLIC_ASSETS_R2_ACCESS_KEY_ID() {
+              reads.push('public-access')
+              return 'public-access-key'
+            },
+          },
+          true,
+        ),
+      ).toThrow(new TypeError('POMO_PAID_AUDIO_R2_ACCESS_KEY_ID is not set'))
+      expect(reads).toEqual(['paid-access'])
+      expect(AwsClient).not.toHaveBeenCalled()
+      expect(sign).not.toHaveBeenCalled()
+    },
+  )
+
+  it('should reject a missing secret with its own configuration name before signer construction', () => {
+    expect(() =>
+      signTrackObjectRequest(
+        new Request('https://example.com/source.mp3'),
+        {POMO_PAID_AUDIO_R2_ACCESS_KEY_ID: 'access-key'},
+        false,
+      ),
+    ).toThrow(new TypeError('POMO_PAID_AUDIO_R2_SECRET_ACCESS_KEY is not set'))
+    expect(AwsClient).not.toHaveBeenCalled()
+    expect(sign).not.toHaveBeenCalled()
+  })
+
+  it('should propagate a secret getter failure after reading the paid access key once', () => {
+    const failure = new Error('secret getter failed')
+    const reads: string[] = []
+    let thrown: unknown
+
+    try {
+      signTrackObjectRequest(
+        new Request('https://example.com/source.mp3'),
+        {
+          get POMO_PAID_AUDIO_R2_ACCESS_KEY_ID() {
+            reads.push('paid-access')
+            return 'access-key'
+          },
+          get POMO_PAID_AUDIO_R2_SECRET_ACCESS_KEY(): string {
+            reads.push('paid-secret')
+            throw failure
+          },
+        },
+        true,
+      )
+    } catch (error) {
+      thrown = error
+    }
+
+    expect(thrown).toBe(failure)
+    expect(reads).toEqual(['paid-access', 'paid-secret'])
+    expect(AwsClient).not.toHaveBeenCalled()
+    expect(sign).not.toHaveBeenCalled()
+  })
 })
