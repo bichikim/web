@@ -27,7 +27,10 @@ const options = (modelId: 'full' | 'int8') => ({
 })
 
 beforeEach(() => vi.stubGlobal('Worker', InitializationWorker))
-afterEach(() => vi.unstubAllGlobals())
+afterEach(() => {
+  vi.clearAllMocks()
+  vi.unstubAllGlobals()
+})
 
 it('should share queued promises and settle callbacks after synchronous queue advancement', async () => {
   const client = createSupertonicClient()

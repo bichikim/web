@@ -28,7 +28,10 @@ beforeEach(() => {
   repository.listDialogues.mockResolvedValue([])
   playback.prepare.mockResolvedValue(true)
 })
-afterEach(() => vi.restoreAllMocks())
+afterEach(() => {
+  vi.clearAllMocks()
+  vi.restoreAllMocks()
+})
 
 it.each(['success', 'failure'] as const)(
   'should release concurrent callers after initialization %s and preserve their call order',
