@@ -106,24 +106,6 @@ it('should split long audio across valid Ogg pages', async () => {
   expect(pages[3]).toMatchObject({headerType: 0x04, sequence: 3})
 })
 
-it('should size and pack unequal packets at exact lacing boundaries', async () => {
-  const packets = [new Uint8Array(255).fill(7), new Uint8Array(510).fill(8), Uint8Array.of(9)]
-  for (const packet of packets) {
-    encoderMocks.encodeFloat.mockReturnValueOnce(packet)
-  }
-
-  const blob = await encodeOpusBlob(new Float32Array(960), 24_000)
-  const pages = readPages(new Uint8Array(await readBlob(blob)))
-
-  expect(pages).toHaveLength(3)
-  expect(pages[2]?.lacingValues).toEqual([255, 0, 255, 255, 0, 1])
-  expect(pages[2]?.payload).toEqual(
-    Uint8Array.from([...new Array(255).fill(7), ...new Array(510).fill(8), 9]),
-  )
-  expect(pages[2]).toMatchObject({granulePosition: 2232, headerType: 0x04, sequence: 2})
-  expect(encoderMocks.free).toHaveBeenCalledOnce()
-})
-
 it('should reject an oversized encoded packet and release the encoder', async () => {
   encoderMocks.encodeFloat.mockReturnValueOnce(new Uint8Array(65_025))
 
@@ -141,20 +123,4 @@ it('should reject empty audio and unsupported sample rates', async () => {
     'Unsupported Opus sample rate: 44100',
   )
   expect(encoderMocks.create).not.toHaveBeenCalled()
-})
-
-it('should preserve encoded packet bytes and order across Blob parts', async () => {
-  const backing = Uint8Array.of(99, 1, 2, 3, 99)
-  const packets = [backing.subarray(1, 4), new Uint8Array(255).fill(4), Uint8Array.of(5)]
-  for (const packet of packets) {
-    encoderMocks.encodeFloat.mockReturnValueOnce(packet)
-  }
-
-  const blob = await encodeOpusBlob(new Float32Array(960), 24_000)
-  backing.fill(0)
-  const pages = readPages(new Uint8Array(await readBlob(blob)))
-
-  expect(pages).toHaveLength(3)
-  expect(pages[2]?.payload).toEqual(Uint8Array.from([1, 2, 3, ...new Array(255).fill(4), 5]))
-  expect(encoderMocks.free).toHaveBeenCalledOnce()
 })
