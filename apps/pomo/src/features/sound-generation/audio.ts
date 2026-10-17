@@ -1,4 +1,5 @@
 import {clamp} from 'es-toolkit/math'
+import {writeTextBytes} from 'src/utils/write-text-bytes'
 // oxlint-disable no-magic-numbers -- Fixed PCM header fields and the official SA3 LogSNR schedule.
 import {SAMPLE_RATE, STEREO_FRAME_BYTES, WAV_HEADER_BYTES} from './connection'
 
@@ -22,15 +23,10 @@ export function createStereoWave(pcm: Int32Array, frames: number): Blob {
   }
   const buffer = new ArrayBuffer(WAV_HEADER_BYTES + frames * STEREO_FRAME_BYTES)
   const view = new DataView(buffer)
-  const text = (offset: number, value: string) => {
-    for (let index = 0; index < value.length; index += 1) {
-      view.setUint8(offset + index, value.charCodeAt(index))
-    }
-  }
-  text(0, 'RIFF')
+  writeTextBytes(view, 0, 'RIFF')
   view.setUint32(4, buffer.byteLength - 8, true)
-  text(8, 'WAVE')
-  text(12, 'fmt ')
+  writeTextBytes(view, 8, 'WAVE')
+  writeTextBytes(view, 12, 'fmt ')
   view.setUint32(16, 16, true)
   view.setUint16(20, 1, true)
   view.setUint16(22, 2, true)
@@ -38,7 +34,7 @@ export function createStereoWave(pcm: Int32Array, frames: number): Blob {
   view.setUint32(28, SAMPLE_RATE * STEREO_FRAME_BYTES, true)
   view.setUint16(32, STEREO_FRAME_BYTES, true)
   view.setUint16(34, 16, true)
-  text(36, 'data')
+  writeTextBytes(view, 36, 'data')
   view.setUint32(40, frames * STEREO_FRAME_BYTES, true)
   for (let index = 0; index < frames * 2; index += 1) {
     view.setInt16(WAV_HEADER_BYTES + index * 2, clamp(pcm[index], -32768, 32767), true)
