@@ -1,11 +1,11 @@
-import {dayjs} from 'src/utils/zoned-dayjs'
 import {PInput} from 'src/components/p-input/PInput'
 import {cx} from 'class-variance-authority'
-import {type Accessor, Show} from 'solid-js'
+import {type Accessor, createSignal, Show} from 'solid-js'
 import * as m from '@paraglide/message'
 import type {CalendarEvent} from '../../features/calendar'
 import type {MemoryMemo} from '../../features/memory-assist'
 import {useCalendarAlarmController} from '../../features/calendar-alarm'
+import {localDateRuntime, type LocalDateRuntime, useLocalDate} from '../../features/civil-date'
 import {PButton} from '../p-button/PButton'
 const systemNow = () => new Date()
 const INPUT_CLASSES = cx(
@@ -13,6 +13,38 @@ const INPUT_CLASSES = cx(
   'bg-content-surface px-4 text-base text-foreground outline-none',
   'focus-visible:border-highlight focus-visible:shadow-focus',
 )
+
+interface CalendarAlarmDateInputProps {
+  readonly clock: Accessor<Date>
+  readonly onInput: (value: string) => void
+  readonly timeZone: Accessor<string>
+  readonly value: Accessor<string>
+}
+
+const CalendarAlarmDateInput = (props: CalendarAlarmDateInputProps) => {
+  const clock = () => props.clock()
+  const timeZone = () => props.timeZone()
+  const runtime: LocalDateRuntime = {
+    now: clock,
+    schedule: localDateRuntime.schedule,
+    subscribe: localDateRuntime.subscribe,
+  }
+  const minimumDate = useLocalDate({runtime, timeZone})
+
+  return (
+    <label class="grid gap-1.5 text-sm font-650">
+      <span>{m.calendar_alarm_date()}</span>
+      <PInput
+        unstyled
+        class={INPUT_CLASSES}
+        min={minimumDate()}
+        onInput={(event) => props.onInput(event.currentTarget.value)}
+        type="date"
+        value={props.value()}
+      />
+    </label>
+  )
+}
 
 interface CalendarAlarmControlProps {
   readonly now?: Accessor<Date>
@@ -25,7 +57,7 @@ interface CalendarAlarmControlProps {
 export const CalendarAlarmControl = (props: CalendarAlarmControlProps) => {
   const clock = () => (props.now ?? systemNow)()
   const timeZone = () => props.timeZone ?? Intl.DateTimeFormat().resolvedOptions().timeZone
-  const currentDate = () => dayjs(clock()).tz(timeZone()).format('YYYY-MM-DD')
+  const [popoverOpen, setPopoverOpen] = createSignal(false)
   const alarm = useCalendarAlarmController({
     clock,
     defaultAlarmDate: () => props.defaultAlarmDate,
@@ -73,6 +105,7 @@ export const CalendarAlarmControl = (props: CalendarAlarmControlProps) => {
           '[position-anchor:var(--pomo-calendar-alarm-anchor)]',
         )}
         id={alarm.popoverId}
+        onToggle={(event) => setPopoverOpen(event.newState === 'open')}
         popover="auto"
         ref={alarm.setPopoverElement}
         role="dialog"
@@ -93,17 +126,14 @@ export const CalendarAlarmControl = (props: CalendarAlarmControlProps) => {
         </Show>
 
         <div class="grid grid-cols-1 gap-3">
-          <label class="grid gap-1.5 text-sm font-650">
-            <span>{m.calendar_alarm_date()}</span>
-            <PInput
-              unstyled
-              class={INPUT_CLASSES}
-              min={currentDate()}
-              onInput={(event) => alarm.setDate(event.currentTarget.value)}
-              type="date"
-              value={alarm.date()}
+          <Show when={popoverOpen()}>
+            <CalendarAlarmDateInput
+              clock={clock}
+              onInput={alarm.setDate}
+              timeZone={timeZone}
+              value={alarm.date}
             />
-          </label>
+          </Show>
           <label class="grid gap-1.5 text-sm font-650">
             <span>{m.calendar_alarm_time()}</span>
             <PInput
