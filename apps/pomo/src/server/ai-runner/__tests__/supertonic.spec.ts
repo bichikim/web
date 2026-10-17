@@ -18,6 +18,11 @@ afterEach(() => {
 
 describe('Supertonic runner audio', () => {
   it('should preserve ordered PCM and floor the inter-chunk silence in its WAV result', async () => {
+    let draws = 0
+    const random = vi.spyOn(Math, 'random').mockImplementation(() => {
+      draws += 1
+      return draws % 2 === 1 ? Math.exp(-0.5) : 0.5
+    })
     const sampleRate = 8_009
     function createTensor(...parameters: ReadonlyArray<unknown>) {
       return {data: parameters[1]}
@@ -28,9 +33,10 @@ describe('Supertonic runner audio', () => {
     const vector = {
       run: vi
         .fn()
-        .mockImplementation(async (feeds: Record<string, {readonly data: Float32Array}>) => ({
-          denoised_latent: feeds.noisy_latent,
-        })),
+        .mockImplementation(async (feeds: Record<string, {readonly data: Float32Array}>) => {
+          expect(feeds.noisy_latent.data).toEqual(new Float32Array(81).fill(-1))
+          return {denoised_latent: feeds.noisy_latent}
+        }),
     }
     const vocoder = {
       run: vi
@@ -74,6 +80,7 @@ describe('Supertonic runner audio', () => {
     const audio = decodePcmWav(result.bytes)
 
     expect(vocoder.run).toHaveBeenCalledTimes(2)
+    expect(random).toHaveBeenCalledTimes(324)
     expect(audio.sampleRate).toBe(sampleRate)
     expect(audio.samples).toHaveLength(2_404)
     expect(audio.samples[0]).toBeCloseTo(0.5, 4)
