@@ -1,5 +1,6 @@
 import {createDraftStorage, createJsonCodec} from '../value-storage'
 import {z} from 'zod'
+import {MEMORY_RECALL_MODES} from './schema'
 
 const MEMORY_MEMO_DRAFT_KEY = 'pomo:memory-memo:draft:v1'
 const DEFAULT_EXACT_REPEAT_INTERVAL_MINUTES = 10
@@ -20,7 +21,7 @@ const memoryMemoDraftSchema = z.object({
     .int()
     .nonnegative()
     .default(DEFAULT_EXACT_REPEAT_UNTIL_MINUTES),
-  recallMode: z.enum(['none', 'random', 'reinforcement']),
+  recallMode: z.enum(MEMORY_RECALL_MODES),
   reminderDay: z.enum(['custom', 'today', 'tomorrow']),
   reminderTime: z.string(),
   text: z.string(),

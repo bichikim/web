@@ -36,11 +36,23 @@ const createStorage = (): MemoryMemoDraftStorage => {
   }
 }
 
-it('should persist and restore the unsaved memo draft for the browser session', () => {
-  writeMemoryMemoDraft(draft)
+it.each(['none', 'random', 'reinforcement'] as const)(
+  'should preserve %s recall when restoring an exact reminder draft',
+  (recallMode) => {
+    writeMemoryMemoDraft({...draft, recallMode})
 
-  expect(readMemoryMemoDraft()).toEqual(draft)
-})
+    expect(readMemoryMemoDraft()).toEqual({...draft, recallMode})
+  },
+)
+
+it.each(['', 'NONE', 'unknown', null, undefined, 0, [], {}].map((recallMode) => ({recallMode})))(
+  'should ignore a stored draft with an invalid recall mode ($recallMode)',
+  ({recallMode}) => {
+    sessionStorage.setItem('pomo:memory-memo:draft:v1', JSON.stringify({...draft, recallMode}))
+
+    expect(readMemoryMemoDraft()).toBeNull()
+  },
+)
 
 it('should restore legacy drafts without exactEnabled as disabled', () => {
   sessionStorage.setItem(
@@ -55,12 +67,6 @@ it('should ignore malformed stored drafts', () => {
   sessionStorage.setItem('pomo:memory-memo:draft:v1', '{"version":1,"text":3}')
 
   expect(readMemoryMemoDraft()).toBeNull()
-})
-
-it('should preserve the selected recall mode in a stored exact reminder draft', () => {
-  writeMemoryMemoDraft({...draft, recallMode: 'reinforcement'})
-
-  expect(readMemoryMemoDraft()?.recallMode).toBe('reinforcement')
 })
 
 it('should remove the draft after the memo is saved', () => {
