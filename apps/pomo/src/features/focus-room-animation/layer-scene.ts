@@ -1,9 +1,8 @@
 import {randomInRange} from 'src/utils/random-in-range'
 import {cosineEaseInOut} from 'src/utils/cosine-ease-in-out'
-import {Container, type Texture, Ticker} from 'pixi.js'
-
+import {Container, type Filter, type Texture, Ticker} from 'pixi.js'
 import {clampUnit} from 'src/utils/clamp-unit'
-
+import {destroyFilters} from './destroy-filters'
 import {positionLayerContainer, validateTextureSizes} from './layer-layout'
 import {createLayerMaskFilter, detachLayerMasks} from './layer-mask'
 import type {LayerInstance, MotionInstance, MotionState} from './layer-runtime-state'
@@ -88,8 +87,7 @@ export class PixiLayerScene {
     try {
       validateLayerSceneDefinition(this.#definition)
     } catch (error: unknown) {
-      this.destroy()
-      throw error
+      this.#destroyAfterFailure(error)
     }
 
     const layerSources = this.#definition.layers.map((layer) => layer.source)
@@ -99,8 +97,7 @@ export class PixiLayerScene {
     try {
       textures = await acquireTextureGroup([...layerSources, ...maskSources])
     } catch (error: unknown) {
-      this.destroy()
-      throw error
+      this.#destroyAfterFailure(error)
     }
 
     if (this.#destroyed) {
@@ -118,6 +115,7 @@ export class PixiLayerScene {
   ) {
     this.#textures = textures
     const layers: LayerInstance[] = []
+    const pendingFilters: Filter[] = []
     try {
       validateTextureSizes({
         definition: this.#definition,
@@ -156,6 +154,9 @@ export class PixiLayerScene {
           maskTextures,
           textures[index].texture,
         )
+        for (const motion of motionInstances) {
+          pendingFilters.push(...motion.pixelPushFilters)
+        }
         const statePixelPushFilter =
           definition.statePixelPush === undefined
             ? null
@@ -164,11 +165,17 @@ export class PixiLayerScene {
                 maskTextures,
                 textures[index].texture,
               )
+        if (statePixelPushFilter !== null) {
+          pendingFilters.push(statePixelPushFilter)
+        }
         const layerMaskFilter = createLayerMaskFilter(
           definition,
           maskTextures,
           textures[index].texture,
         )
+        if (layerMaskFilter !== null) {
+          pendingFilters.push(layerMaskFilter)
+        }
         sprite.filters = [
           ...(layerMaskFilter === null ? [] : [layerMaskFilter]),
           ...(statePixelPushFilter === null ? [] : [statePixelPushFilter]),
@@ -190,6 +197,7 @@ export class PixiLayerScene {
           sprite,
           statePixelPushFilter,
         })
+        pendingFilters.length = 0
       }
 
       this.#effects.attachTrailing()
@@ -198,9 +206,13 @@ export class PixiLayerScene {
 
       this.#initializeLayers(layers, state)
     } catch (error: unknown) {
+      try {
+        destroyFilters(pendingFilters)
+      } catch (cleanupError: unknown) {
+        console.error('Failed to destroy pending layer filters.', cleanupError)
+      }
       this.#layers = layers
-      this.destroy()
-      throw error
+      this.#destroyAfterFailure(error)
     }
   }
 
@@ -273,29 +285,47 @@ export class PixiLayerScene {
     if (this.#destroyed) {
       return
     }
-
     this.#destroyed = true
-    this.#ticker.destroy()
-    detachLayerMasks(this.#layers)
-
-    for (const layer of this.#layers) {
-      layer.layerMaskFilter?.destroy()
-      layer.statePixelPushFilter?.destroy()
-
-      for (const motion of layer.motions) {
-        for (const filter of motion.pixelPushFilters) {
-          filter.destroy()
-        }
-      }
-    }
-
-    this.#effects?.destroy()
-
-    this.container.destroy({children: true})
-    releaseTextureGroup(this.#textures)
+    const layers = this.#layers
+    const effects = this.#effects
+    const textures = this.#textures
     this.#textures = []
     this.#layers = []
     this.#effects = null
+    const errors: unknown[] = []
+    const cleanup = (action: () => void) => {
+      try {
+        action()
+      } catch (error: unknown) {
+        errors.push(error)
+      }
+    }
+    cleanup(() => this.#ticker.destroy())
+    cleanup(() => detachLayerMasks(layers))
+    for (const layer of layers) {
+      cleanup(() => layer.layerMaskFilter?.destroy())
+      cleanup(() => layer.statePixelPushFilter?.destroy())
+
+      for (const motion of layer.motions) {
+        cleanup(() => destroyFilters(motion.pixelPushFilters))
+      }
+    }
+
+    cleanup(() => effects?.destroy())
+    cleanup(() => this.container.destroy({children: true}))
+    cleanup(() => releaseTextureGroup(textures))
+    if (errors.length > 0) {
+      throw errors[0]
+    }
+  }
+
+  #destroyAfterFailure(error: unknown): never {
+    try {
+      this.destroy()
+    } catch (cleanupError: unknown) {
+      console.error('Failed to destroy a failed layer scene.', cleanupError)
+    }
+    throw error
   }
 
   readonly #advance = (ticker: Ticker) => {
@@ -481,23 +511,31 @@ export class PixiLayerScene {
     layerTexture: Texture,
   ) {
     const instances: MotionInstance[] = []
+    const filters: Filter[] = []
 
     try {
       for (const motion of motions) {
+        const pixelPushFilters = createPushFilters(
+          getMotionEffects(motion),
+          maskTextures,
+          layerTexture,
+        )
+        filters.push(...pixelPushFilters)
+        const state = this.#createMotionState(motion)
         instances.push({
           definition: motion,
           enabled: true,
-          pixelPushFilters: createPushFilters(getMotionEffects(motion), maskTextures, layerTexture),
-          state: this.#createMotionState(motion),
+          pixelPushFilters,
+          state,
         })
       }
 
       return instances
     } catch (error: unknown) {
-      for (const instance of instances) {
-        for (const filter of instance.pixelPushFilters) {
-          filter.destroy()
-        }
+      try {
+        destroyFilters(filters)
+      } catch (cleanupError: unknown) {
+        console.error('Failed to destroy partially created motion filters.', cleanupError)
       }
 
       throw error
