@@ -2,7 +2,7 @@ import {CUSTOM_TRACK_ID_PREFIX, readCustomAlbumTracks} from '../../features/cust
 import type {PTrack} from '../../features/focus-room-audio'
 
 interface ResolveStoredPlaylistTracksOptions {
-  readonly onError: (error: unknown) => void
+  readonly onError: (error: unknown, trackId?: string) => void
   readonly sourceTracks: readonly PTrack[]
   readonly storedTrackIds: Promise<readonly string[] | null>
 }
@@ -19,7 +19,10 @@ export const resolveStoredPlaylistTracks = async (
   }
 
   try {
-    const customTracks = await readCustomAlbumTracks({trackIds: customTrackIds})
+    const customTracks = await readCustomAlbumTracks({
+      onError: options.onError,
+      trackIds: customTrackIds,
+    })
     return [...options.sourceTracks, ...customTracks]
   } catch (error: unknown) {
     options.onError(error)
