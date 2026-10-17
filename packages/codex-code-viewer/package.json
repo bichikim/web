@@ -28,11 +28,6 @@
     "dist/app.html",
     "dist/install.js",
     "dist/python",
-    "dist/typescript/*/tsc",
-    "dist/typescript/*/tsc.exe",
-    "dist/typescript/*/*.d.ts",
-    "dist/typescript/*/LICENSE",
-    "dist/typescript/*/NOTICE.txt",
     "dist/lib.*.d.ts",
     "dist/THIRD_PARTY_LICENSES.md"
   ],

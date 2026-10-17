@@ -3,8 +3,8 @@ import {chmod, readFile} from 'node:fs/promises'
 import {join} from 'node:path'
 import {gunzipSync} from 'node:zlib'
 import {unzipSync} from 'fflate'
-import {downloadArchive} from './download-archive'
-import {writeCacheFile} from './write-cache-file'
+import {downloadArchive} from '../analyzers/download-archive'
+import {writeCacheFile} from '../analyzers/write-cache-file'
 
 interface AnalyzerAsset {
   readonly host: string
