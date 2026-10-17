@@ -35,14 +35,19 @@ it('should select a bounded date with a custom calendar and return focus', async
   expect(trigger).toBeInTheDocument()
   expect(trigger).toHaveFocus()
 })
-it('should follow external changes and navigate with keyboard across month boundaries', () => {
+it.each([
+  {date: '2024-02-28', key: 'ArrowLeft'},
+  {date: '2024-03-01', key: 'ArrowRight'},
+  {date: '2024-02-22', key: 'ArrowUp'},
+  {date: '2024-03-07', key: 'ArrowDown'},
+])('should follow external changes and navigate with $key', ({date, key}) => {
   const [value, setValue] = createSignal('2024-02-29')
   render(() => <PDatePicker label="날짜" value={value()} onChange={setValue} />)
   fireEvent.click(screen.getByRole('button', {name: '날짜: 2024-02-29'}))
-  fireEvent.keyDown(screen.getByRole('button', {name: '2024-02-29'}), {key: 'ArrowRight'})
-  expect(screen.getByRole('button', {name: '2024-03-01'})).toHaveFocus()
-  fireEvent.click(screen.getByRole('button', {name: '2024-03-01'}))
-  expect(value()).toBe('2024-03-01')
+  fireEvent.keyDown(screen.getByRole('button', {name: '2024-02-29'}), {key})
+  expect(screen.getByRole('button', {name: date})).toHaveFocus()
+  fireEvent.click(screen.getByRole('button', {name: date}))
+  expect(value()).toBe(date)
   setValue('2025-01-01')
   expect(screen.getByRole('button', {name: '날짜: 2025-01-01'})).toBeVisible()
 })
