@@ -1,4 +1,5 @@
 import {clamp} from 'es-toolkit/math'
+import {writeTextBytes} from '../write-text-bytes/index.ts'
 // oxlint-disable no-magic-numbers -- These constants are fixed offsets and ranges in the PCM WAV specification.
 /** Encodes mono float samples as little-endian PCM16 RIFF/WAVE bytes. */
 export const encodeMonoPcm16Wav = (samples: Float32Array, sampleRate: number): ArrayBuffer => {
@@ -6,16 +7,10 @@ export const encodeMonoPcm16Wav = (samples: Float32Array, sampleRate: number): A
   const buffer = new ArrayBuffer(headerSize + samples.length * 2)
   const view = new DataView(buffer)
 
-  const writeText = (offset: number, text: string) => {
-    for (let index = 0; index < text.length; index += 1) {
-      view.setUint8(offset + index, text.charCodeAt(index))
-    }
-  }
-
-  writeText(0, 'RIFF')
+  writeTextBytes(view, 0, 'RIFF')
   view.setUint32(4, buffer.byteLength - 8, true)
-  writeText(8, 'WAVE')
-  writeText(12, 'fmt ')
+  writeTextBytes(view, 8, 'WAVE')
+  writeTextBytes(view, 12, 'fmt ')
   view.setUint32(16, 16, true)
   view.setUint16(20, 1, true)
   view.setUint16(22, 1, true)
@@ -23,7 +18,7 @@ export const encodeMonoPcm16Wav = (samples: Float32Array, sampleRate: number): A
   view.setUint32(28, sampleRate * 2, true)
   view.setUint16(32, 2, true)
   view.setUint16(34, 16, true)
-  writeText(36, 'data')
+  writeTextBytes(view, 36, 'data')
   view.setUint32(40, samples.length * 2, true)
 
   for (let index = 0; index < samples.length; index += 1) {

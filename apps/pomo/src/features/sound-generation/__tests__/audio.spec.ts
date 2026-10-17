@@ -19,6 +19,9 @@ it('should encode interleaved stereo PCM and trim padding to the requested durat
     reader.readAsArrayBuffer(blob)
   })
   const view = new DataView(buffer)
+  expect(
+    [0, 8, 12, 36].map((offset) => new TextDecoder().decode(new Uint8Array(buffer, offset, 4))),
+  ).toEqual(['RIFF', 'WAVE', 'fmt ', 'data'])
   expect(view.byteLength).toBe(52)
   expect(view.getUint16(22, true)).toBe(2)
   expect(view.getUint32(24, true)).toBe(44100)

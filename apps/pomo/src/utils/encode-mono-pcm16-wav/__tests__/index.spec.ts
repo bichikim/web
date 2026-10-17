@@ -7,7 +7,9 @@ describe('encodeMonoPcm16Wav', () => {
     const samples = new Float32Array([-2, -1, -0.5, 0, 0.5, 1, 2])
     const buffer = encodeMonoPcm16Wav(samples, 24000)
     const view = new DataView(buffer)
-    expect(new TextDecoder().decode(new Uint8Array(buffer, 0, 4))).toBe('RIFF')
+    expect(
+      [0, 8, 12, 36].map((offset) => new TextDecoder().decode(new Uint8Array(buffer, offset, 4))),
+    ).toEqual(['RIFF', 'WAVE', 'fmt ', 'data'])
     expect(view.getUint32(4, true)).toBe(buffer.byteLength - 8)
     expect(view.getUint16(22, true)).toBe(1)
     expect(view.getUint32(24, true)).toBe(24000)
