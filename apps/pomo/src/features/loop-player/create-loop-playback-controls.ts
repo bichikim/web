@@ -4,6 +4,7 @@ import type {LoopPlayback} from './player'
 interface LoopPlaybackControlsOptions {
   readonly player: () => LoopPlayback | undefined
   readonly onSeekError: (error: unknown) => void
+  readonly onSeekResult?: (playing: boolean) => void
 }
 
 /** Owns scrub previews and ignores seek completions superseded by playback changes. */
@@ -47,9 +48,10 @@ export const createLoopPlaybackControls = (options: LoopPlaybackControlsOptions)
       return
     }
     try {
-      await player.seek(target)
+      const isPlaying = await player.seek(target)
       if (currentRevision === revision && player === options.player()) {
         previousPosition = position()
+        options.onSeekResult?.(isPlaying)
       }
     } catch (error: unknown) {
       if (currentRevision === revision && player === options.player()) {

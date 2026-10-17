@@ -2,11 +2,13 @@ import {getExceptionMessage} from 'src/features/error-detail'
 import {DEFAULT_CONNECTION_SECONDS} from '../sound-generation/connection'
 
 export interface LoopPlayback {
-  seek: (seconds: number) => Promise<void>
+  /** Returns true when playback remains active after the seek. */
+  seek: (seconds: number) => Promise<boolean>
   setVolume: (volume: number) => void
   stop: () => void
   close: () => Promise<void>
-  play: (connectionSeconds?: number, preview?: boolean, position?: number) => Promise<void>
+  /** Returns false when a newer playback operation superseded this request. */
+  play: (connectionSeconds?: number, preview?: boolean, position?: number) => Promise<boolean>
 }
 
 /** Streams one URL through two alternating players; the connection duration defaults to four seconds. */
@@ -122,27 +124,29 @@ export function createLoopPlayer(
       const playRequest = audio[0].play()
       await Promise.all([resumeRequest, playRequest])
       if (token !== revision) {
-        return
+        return false
       }
       playing = true
       onStatus('루프 재생 중', true)
+      return true
     } catch (cause) {
       if (token === revision) {
         stop()
         throw cause
       }
+      return false
     }
   }
   const seek = async (seconds: number) => {
     validatePosition(seconds, audio[0].duration, closed)
     if (playing) {
-      await play(connectionSeconds, false, seconds)
-      return
+      return play(connectionSeconds, false, seconds)
     }
     stop()
     current = 0
     audio[0].currentTime = seconds === audio[0].duration ? 0 : seconds
     onPosition?.(audio[0].currentTime)
+    return false
   }
   const setVolume = (volume: number) => setMasterVolume(context, masterGain, volume, closed)
   const close = async () => {
