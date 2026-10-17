@@ -1,30 +1,14 @@
 import {type JSX, onCleanup, splitProps} from 'solid-js'
 
-import {useAudioPlayer} from './context'
+import {type AudioPlayerMediaBindings, useAudioPlayer} from './context'
 
 type NativeAudioProps = Omit<
   JSX.AudioHTMLAttributes<HTMLAudioElement>,
-  | 'ref'
-  | 'onDurationChange'
-  | 'onEmptied'
-  | 'onEnded'
-  | 'onLoadedMetadata'
-  | 'onPause'
-  | 'onPlay'
-  | 'onTimeUpdate'
-  | 'onVolumeChange'
+  keyof AudioPlayerMediaBindings
 >
 
-export interface AudioPlayerMediaProps extends NativeAudioProps {
-  readonly onDurationChange?: JSX.EventHandler<HTMLAudioElement, Event>
-  readonly onEmptied?: JSX.EventHandler<HTMLAudioElement, Event>
-  readonly onEnded?: JSX.EventHandler<HTMLAudioElement, Event>
-  readonly onLoadedMetadata?: JSX.EventHandler<HTMLAudioElement, Event>
-  readonly onPause?: JSX.EventHandler<HTMLAudioElement, Event>
-  readonly onPlay?: JSX.EventHandler<HTMLAudioElement, Event>
-  readonly onTimeUpdate?: JSX.EventHandler<HTMLAudioElement, Event>
-  readonly onVolumeChange?: JSX.EventHandler<HTMLAudioElement, Event>
-}
+export interface AudioPlayerMediaProps
+  extends NativeAudioProps, Partial<Omit<AudioPlayerMediaBindings, 'ref'>> {}
 
 export const AudioPlayerMedia = (props: AudioPlayerMediaProps) => {
   const player = useAudioPlayer()
