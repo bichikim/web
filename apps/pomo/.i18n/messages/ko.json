@@ -199,6 +199,8 @@
   "settings_feed_issue_too_long": "원문이 {count}자로 3,000자 제한을 넘었어요.",
   "settings_feed_open_source": "원문 보기",
   "settings_feed_cleanup_next": "다음 확인 때 정리",
+  "settings_feed_cleanup_minutes": "{minutes}분 후 정리",
+  "settings_feed_cleanup_minutes_one": "1분 후 정리",
   "settings_feed_cleanup_hours": "{hours}시간 후 정리",
   "settings_feed_cleanup_hours_one": "1시간 후 정리",
   "settings_feed_dialogue_delete_failed": "피드 대화를 삭제하지 못했어요.",
