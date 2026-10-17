@@ -1,0 +1,35 @@
+{
+  "files": 6628,
+  "exact": true,
+  "milliseconds": [808.5081039999982, 577.1526980000035],
+  "statistics": [
+    {
+      "importTimings": {
+        "preprocess": {
+          "count": 6628,
+          "milliseconds": 243.5940160000001
+        },
+        "moduleResolution": {
+          "count": 12912,
+          "milliseconds": 491.49237700000003
+        }
+      },
+      "resolutionCalls": 25824,
+      "resolutionHits": 11802
+    },
+    {
+      "importTimings": {
+        "preprocess": {
+          "count": 6171,
+          "milliseconds": 233.59690499999957
+        },
+        "moduleResolution": {
+          "count": 12912,
+          "milliseconds": 290.1185849999984
+        }
+      },
+      "resolutionCalls": 25824,
+      "resolutionHits": 11802
+    }
+  ]
+}

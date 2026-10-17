@@ -1,9 +1,11 @@
 import {useTranslations} from './locale/use-translations'
 import {createMemo, createSignal, For, Show} from 'solid-js'
-import type {NavigationLocation} from '../shared/contracts'
+import type {NavigationGroup, NavigationLocation} from '../shared/contracts'
 import {REFERENCE_ROW_HEIGHT, useReferenceList} from './use-reference-list'
 
 interface SReferenceListProps {
+  readonly filter?: string
+  readonly groups?: readonly NavigationGroup[]
   readonly locations: readonly NavigationLocation[]
   readonly previewLines?: number
   readonly onSelect: (location: NavigationLocation) => void
@@ -17,7 +19,13 @@ export const SReferenceList = (props: SReferenceListProps) => {
   const rowHeight = createMemo(() =>
     Math.max(REFERENCE_ROW_HEIGHT, (props.previewLines ?? 2) * lineHeight + rowPadding),
   )
-  const list = useReferenceList({element, locations: () => props.locations, rowHeight})
+  const list = useReferenceList({
+    element,
+    filter: () => props.filter ?? '',
+    groups: () => props.groups ?? [],
+    locations: () => props.locations,
+    rowHeight,
+  })
   return (
     <div
       ref={setElement}
@@ -31,31 +39,48 @@ export const SReferenceList = (props: SReferenceListProps) => {
           <div class="pt-[var(--reference-gap)]" style={{'--reference-gap': `${list.gap(key)}px`}}>
             <Show when={list.header(key)}>
               {(header) => (
-                <button
-                  class="ui-reference-row flex h-[var(--reference-row-height)] w-full items-center
+                <div class="flex h-[var(--reference-row-height)] items-center">
+                  <button
+                    class="ui-reference-row flex h-full min-w-0 flex-1 items-center
                     gap-2 rounded-row px-3 text-left text-xs font-semibold"
-                  role="menuitem"
-                  tabindex="-1"
-                  type="button"
-                  value={key}
-                  aria-label={`${header().path} · ${t('{count}개', {count: header().count})}`}
-                  aria-expanded={list.expanded(header().path)}
-                  aria-posinset={list.position(key)}
-                  aria-setsize={list.size()}
-                  title={header().path}
-                  onFocus={() => list.focus(key)}
-                  onClick={() => list.toggle(header().path)}
-                >
-                  <span
-                    aria-hidden="true"
-                    class="i-tabler-chevron-right h-3 w-3 shrink-0"
-                    classList={{'rotate-90': list.expanded(header().path)}}
-                  />
-                  <span class="min-w-0 flex-1 truncate">{header().path}</span>
-                  <span class="shrink-0 font-normal text-muted">
-                    {t('{count}개', {count: header().count})}
-                  </span>
-                </button>
+                    role="menuitem"
+                    tabindex="-1"
+                    type="button"
+                    value={key}
+                    aria-label={`${header().path} · ${t('{count}개', {count: header().count})}`}
+                    aria-expanded={list.expanded(header().path)}
+                    aria-posinset={list.position(key)}
+                    aria-setsize={list.size()}
+                    title={header().path}
+                    onFocus={() => list.focus(key)}
+                    onClick={() => list.toggle(header().path)}
+                  >
+                    <span
+                      aria-hidden="true"
+                      class="i-tabler-chevron-right h-3 w-3 shrink-0"
+                      classList={{'rotate-90': list.expanded(header().path)}}
+                    />
+                    <span class="min-w-0 flex-1 truncate">{header().path}</span>
+                    <span class="shrink-0 font-normal text-muted">
+                      {t('{count}개', {count: header().count})}
+                    </span>
+                  </button>
+                  <button
+                    class="ui-reference-row flex h-full w-8 shrink-0 items-center justify-center rounded-row"
+                    role="menuitem"
+                    tabindex="-1"
+                    type="button"
+                    value={list.fileKey(header().path)}
+                    aria-label={`${t('파일로 이동')}: ${header().path}`}
+                    aria-posinset={list.position(list.fileKey(header().path))}
+                    aria-setsize={list.size()}
+                    title={t('파일로 이동')}
+                    onFocus={() => list.focus(list.fileKey(header().path))}
+                    onClick={() => props.onSelect({column: 1, line: 1, path: header().path})}
+                  >
+                    <span aria-hidden="true" class="i-tabler-arrow-up-right h-4 w-4" />
+                  </button>
+                </div>
               )}
             </Show>
             <Show when={list.destination(key)}>

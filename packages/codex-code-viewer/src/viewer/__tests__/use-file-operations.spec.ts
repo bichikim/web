@@ -20,6 +20,7 @@ const mount = () =>
       workspace: '/project',
     })
     const [drafts, setDrafts] = createSignal<readonly string[]>([])
+    const [saving, setSaving] = createSignal(false)
     const port: ViewerPort = {
       call: vi.fn(async (name) => ({
         content: [],
@@ -36,12 +37,25 @@ const mount = () =>
       onChanged: changed,
       pendingPaths: drafts,
       port,
-      saving: () => false,
+      saving,
       session,
     })
-    return {changed, operations, port, setDrafts, setSession}
+    return {changed, operations, port, setDrafts, setSaving, setSession}
   })
 describe('useFileOperations', () => {
+  it('should disable paste without a copied entry and while its source cannot be transferred', async () => {
+    const {operations, setDrafts, setSaving} = mount()
+    expect(operations.canPaste()).toBe(false)
+    await operations.copy(file)
+    expect(operations.canPaste()).toBe(true)
+    setDrafts(['src/main.ts'])
+    expect(operations.canPaste()).toBe(false)
+    setDrafts([])
+    setSaving(true)
+    expect(operations.canPaste()).toBe(false)
+    setSaving(false)
+    expect(operations.canPaste()).toBe(true)
+  })
   it('should translate existing path feedback without changing the file name', async () => {
     const [language, setLanguage] = createSignal<ViewerLanguage>('en')
     const hook = renderHook(() => mount(), {
@@ -72,6 +86,26 @@ describe('useFileOperations', () => {
       session: 'first',
     })
     expect(changed).toHaveBeenCalledTimes(2)
+    expect(operations.canPaste()).toBe(true)
+  })
+  it('should retain copies across document updates and sessions in one workspace', async () => {
+    const {operations, port, setSession} = mount()
+    await operations.copy(file)
+    await operations.paste(destination)
+    setSession({session: 'first', workspace: '/project'})
+    await Promise.resolve()
+    expect(operations.canPaste()).toBe(true)
+    setSession({session: 'second', workspace: '/project'})
+    await Promise.resolve()
+    expect(operations.canPaste()).toBe(true)
+    await operations.paste(destination)
+    expect(port.call).toHaveBeenLastCalledWith('code.transfer', {
+      action: 'copy',
+      parent: 'dest',
+      path: 'src/main.ts',
+      revision: 'revision',
+      session: 'second',
+    })
     expect(operations.canPaste()).toBe(true)
   })
   it('should keep cut contents on failure and consume them only after successful paste', async () => {

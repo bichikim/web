@@ -24,8 +24,18 @@ interface EditorContext {
 
 const MENU_INSET = 8
 
+const hasClipboardText = async (): Promise<boolean> => {
+  try {
+    const text = await navigator.clipboard?.readText()
+    return text !== undefined && text.length > 0
+  } catch {
+    return false
+  }
+}
+
 export const useEditorContextMenu = (props: UseEditorContextMenuProps) => {
   const [context, setContext] = createSignal<EditorContext | null>(null)
+  const [canPaste, setCanPaste] = createSignal(false)
   let disposed = false
   onCleanup(() => {
     disposed = true
@@ -97,15 +107,26 @@ export const useEditorContextMenu = (props: UseEditorContextMenuProps) => {
       ...(selected.empty ? {} : {endColumn: selected.to - end.from + 1}),
     }
     const readOnly = props.readOnly() || state.readOnly
-    setContext({
+    const current: EditorContext = {
       onCopy: selected.empty ? undefined : () => write(editor, state, 'copy'),
       onCut: selected.empty || readOnly ? undefined : () => write(editor, state, 'cut'),
       onFind: props.onFind === undefined ? undefined : () => props.onFind?.(text),
-      onPaste: readOnly ? undefined : () => paste(editor, state),
+      get onPaste() {
+        return readOnly || !canPaste() ? undefined : () => paste(editor, state)
+      },
       onShare: props.onShare === undefined ? undefined : () => props.onShare?.(selection),
       x,
       y,
-    })
+    }
+    setCanPaste(false)
+    setContext(current)
+    if (!readOnly) {
+      hasClipboardText().then((available) => {
+        if (!disposed && context() === current && props.view() === editor) {
+          setCanPaste(available)
+        }
+      })
+    }
   }
   const handleContextMenu = (event: MouseEvent): void => {
     const editor = props.view()

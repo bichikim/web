@@ -1,5 +1,5 @@
 import {createHash} from 'node:crypto'
-import {chmod, mkdir, readFile, writeFile} from 'node:fs/promises'
+import {mkdir, mkdtemp, readFile, rename, rm, writeFile} from 'node:fs/promises'
 import {gunzipSync} from 'node:zlib'
 import {unzipSync} from 'fflate'
 interface RustAnalyzerAsset {
@@ -46,8 +46,15 @@ export const bundleRustAnalyzers = async (options: BundleRustAnalyzersOptions): 
       }
       await mkdir(cache, {recursive: true})
       await writeFile(compressed, bytes)
-      await writeFile(`${directory}/${binary}`, executable)
-      await chmod(`${directory}/${binary}`, EXECUTABLE_MODE)
+      const staged = await mkdtemp(`${directory}/.executable-`)
+      const target = `${staged}/${binary}`
+      try {
+        await writeFile(target, executable, {mode: EXECUTABLE_MODE})
+        // Replace the file identity instead of overwriting code with a cached macOS signature.
+        await rename(target, `${directory}/${binary}`)
+      } finally {
+        await rm(staged, {force: true, recursive: true})
+      }
     }),
   )
 }

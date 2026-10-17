@@ -1,4 +1,4 @@
-import {withPromiseNull} from 'src/utils/with-promise-null'
+import {withPromiseFallback} from 'src/utils/with-promise-fallback'
 import {
   hasNativeStorageBridge,
   readTossStorageJson,
@@ -71,7 +71,7 @@ export const createPSceneStyleRepository = (storage: PSceneStyleStorage): PScene
       return
     }
 
-    await withPromiseNull(storage.writeToss(SCENE_STYLE_STORAGE_KEY, sceneStyle))
+    await withPromiseFallback(storage.writeToss(SCENE_STYLE_STORAGE_KEY, sceneStyle), null)
   }
 
   return {read, write}

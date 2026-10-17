@@ -21,9 +21,7 @@ export const PTooltip = (props: PTooltipProps) => {
     ),
   )
   createEffect(() => {
-    // oxlint-disable-next-line eslint/prefer-destructuring -- Track the target without destructuring Solid props.
     const target = props.target
-    // oxlint-disable-next-line eslint/prefer-destructuring -- Track visibility without destructuring Solid props.
     const show = props.show
     const supported = tooltip?.supported()
     if (target === undefined || tooltip === undefined) {

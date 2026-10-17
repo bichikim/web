@@ -48,6 +48,7 @@ export const createSessions = (events: SessionEvents = {}) => {
         workspace.dispose()
         return document
       }
+      workspace.warmNavigation(document.value.location.path)
       return success({...register(workspace), document: document.value})
     } catch (error) {
       return failure(

@@ -1,0 +1,17 @@
+{
+  "checks": [
+    {"mode": "api", "name": "cold", "count": 3, "passed": true},
+    {"mode": "api", "name": "repeat", "count": 3, "passed": true},
+    {"mode": "api", "name": "closed-consumer-edit", "count": 3, "passed": true},
+    {"mode": "api", "name": "new-outside-file", "count": 6, "passed": true},
+    {"mode": "api", "name": "deleted-consumer", "count": 3, "passed": true},
+    {"mode": "api", "name": "source-edit", "count": 3, "passed": true},
+    {"mode": "viewer", "name": "cold", "count": 3, "passed": true},
+    {"mode": "viewer", "name": "repeat", "count": 3, "passed": true},
+    {"mode": "viewer", "name": "closed-consumer-edit", "count": 3, "passed": true},
+    {"mode": "viewer", "name": "new-outside-file", "count": 6, "passed": true},
+    {"mode": "viewer", "name": "deleted-consumer", "count": 3, "passed": true},
+    {"mode": "viewer", "name": "source-edit", "count": 3, "passed": true}
+  ],
+  "passed": true
+}

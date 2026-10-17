@@ -14,6 +14,9 @@ export const createProject = (directory: string, packages: readonly RustPackage[
   )
   const crates: RustCrate[] = targets.map(({entry, target}) => {
     const dependencies = entry.dependencies.flatMap((dependency) => {
+      if (dependency.development === true && ['lib', 'binary'].includes(target.kind)) {
+        return []
+      }
       const library = libraries.get(dependency.directory)
       return library === undefined
         ? []
@@ -21,12 +24,16 @@ export const createProject = (directory: string, packages: readonly RustPackage[
     })
     const library = libraries.get(entry.directory)
     const local =
-      target.kind === 'binary' && library !== undefined
+      target.kind !== 'lib' && library !== undefined
         ? [{crate: library.index, name: library.name}]
         : []
     return {
-      cfg: entry.cfg,
-      deps: [...dependencies, ...local],
+      cfg: ['test', 'bench'].includes(target.kind) ? [...entry.cfg, 'test'] : entry.cfg,
+      deps: [
+        ...new Map(
+          [...dependencies, ...local].map((dependency) => [dependency.name, dependency]),
+        ).values(),
+      ],
       display_name: target.name,
       edition: entry.edition,
       is_workspace_member: true,

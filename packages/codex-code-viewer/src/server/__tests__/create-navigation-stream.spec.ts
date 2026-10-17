@@ -17,6 +17,7 @@ describe('createNavigationStream', () => {
     const stream = createNavigationStream({
       background: {scan},
       followPath: vi.fn(),
+      prepare: vi.fn(async () => undefined),
       read,
       root: '/project',
       symbols,
@@ -45,6 +46,7 @@ describe('createNavigationStream', () => {
       const stream = createNavigationStream({
         background: {scan},
         followPath: vi.fn(),
+        prepare: vi.fn(async () => undefined),
         read,
         root: '/missing',
         symbols,
@@ -56,11 +58,40 @@ describe('createNavigationStream', () => {
             new AbortController().signal,
           ),
         ),
-      ).toEqual([{kind: 'references', locations: [location]}])
+      ).toEqual([
+        {groups: [{count: 1, path}], kind: 'references', locations: []},
+        {kind: 'references', locations: [location]},
+      ])
       expect(symbols).toHaveBeenLastCalledWith(path, 0, undefined, {
         kind: 'references',
+        receive: expect.any(Function),
+        signal: expect.any(AbortSignal),
+        synchronized: true,
       })
       expect(scan).not.toHaveBeenCalled()
     },
   )
+  it('should propagate cancellation when following a Python import path', async () => {
+    const signal = new AbortController().signal
+    const followPath = vi.fn(async () => success([]))
+    const stream = createNavigationStream({
+      background: {scan: vi.fn()},
+      followPath,
+      prepare: vi.fn(async () => undefined),
+      read: vi.fn(() =>
+        success({
+          lines: [],
+          location: {column: 1, line: 1, path: 'main.py'},
+          revision: 'r',
+          source: 'import helpers',
+        }),
+      ),
+      root: '/project',
+      symbols: vi.fn(),
+    })
+    await Array.fromAsync(
+      stream({navigation: 'path', offset: 7, path: 'main.py', revision: 'r'}, signal),
+    )
+    expect(followPath).toHaveBeenCalledWith('main.py', 7, undefined, signal)
+  })
 })

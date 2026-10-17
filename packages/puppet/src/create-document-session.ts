@@ -2,6 +2,8 @@ import {parseDocumentValue, type PuppetDocument} from './player'
 import type {DocumentRecovery, DocumentRecoveryEntry} from './editor/document-recovery'
 
 interface CreateDocumentSessionOptions {
+  readonly databaseName?: string
+  readonly sessionId?: string
   readonly database: IDBFactory
   readonly storage: Pick<Storage, 'getItem' | 'setItem'>
 }
@@ -27,9 +29,9 @@ const readRecord = (value: unknown) => {
   }
 }
 
-const openDatabase = (factory: IDBFactory): Promise<IDBDatabase> =>
+const openDatabase = (factory: IDBFactory, name: string): Promise<IDBDatabase> =>
   new Promise((resolve, reject) => {
-    const request = factory.open(DATABASE_NAME, 1)
+    const request = factory.open(name, 1)
     request.onupgradeneeded = () => request.result.createObjectStore(STORE_NAME)
     request.onsuccess = () => resolve(request.result)
     request.onerror = () => reject(request.error)
@@ -44,10 +46,13 @@ const finishTransaction = (transaction: IDBTransaction): Promise<void> =>
   })
 
 export const createDocumentSession = (options: CreateDocumentSessionOptions): DocumentSession => {
-  const key = options.storage.getItem(SESSION_KEY) ?? crypto.randomUUID()
-  options.storage.setItem(SESSION_KEY, key)
+  const key = options.sessionId ?? options.storage.getItem(SESSION_KEY) ?? crypto.randomUUID()
+  const databaseName = options.databaseName ?? DATABASE_NAME
+  if (options.sessionId === undefined) {
+    options.storage.setItem(SESSION_KEY, key)
+  }
   const loadRecovery = async (id: string) => {
-    const database = await openDatabase(options.database)
+    const database = await openDatabase(options.database, databaseName)
     try {
       const transaction = database.transaction(STORE_NAME, 'readonly')
       const completed = finishTransaction(transaction)
@@ -68,7 +73,7 @@ export const createDocumentSession = (options: CreateDocumentSessionOptions): Do
   }
   return {
     async listRecoveries() {
-      const database = await openDatabase(options.database)
+      const database = await openDatabase(options.database, databaseName)
       try {
         const transaction = database.transaction(STORE_NAME, 'readonly')
         const completed = finishTransaction(transaction)
@@ -101,7 +106,7 @@ export const createDocumentSession = (options: CreateDocumentSessionOptions): Do
     loadRecovery,
     read: () => loadRecovery(key),
     async write(document) {
-      const database = await openDatabase(options.database)
+      const database = await openDatabase(options.database, databaseName)
       try {
         const transaction = database.transaction(STORE_NAME, 'readwrite')
         const completed = finishTransaction(transaction)

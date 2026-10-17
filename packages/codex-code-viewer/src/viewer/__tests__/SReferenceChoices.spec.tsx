@@ -18,6 +18,121 @@ afterEach(() => {
   }
 })
 describe('SReferenceChoices', () => {
+  it.each(['definition', 'references'] as const)(
+    'should filter %s by filename and restore collapsed groups when cleared',
+    (kind) => {
+      const locations = [
+        {column: 1, line: 2, path: 'src/Report.ts', preview: 'report()'},
+        {column: 3, line: 4, path: 'Report/other.ts', preview: 'other()'},
+      ]
+      const open = vi.fn()
+      render(() => (
+        <SReferenceChoices
+          references={{kind, label: 'report', locations, point: {x: 0, y: 0}}}
+          onOpen={open}
+        />
+      ))
+      fireEvent.click(screen.getByRole('menuitem', {name: 'Report/other.ts · 1개'}))
+      const input = screen.getByRole('textbox', {name: '파일 필터링'})
+      fireEvent.input(input, {target: {value: '  rEpOrT  '}})
+      expect(screen.getByRole('menuitem', {name: 'src/Report.ts · 1개'})).toBeInTheDocument()
+      expect(screen.queryByRole('menuitem', {name: 'Report/other.ts · 1개'})).toBeNull()
+      expect(screen.getByRole('menuitem', {name: '2:1 report()'})).toBeInTheDocument()
+      fireEvent.input(input, {target: {value: 'missing'}})
+      expect(screen.queryByRole('menuitem')).toBeNull()
+      expect(screen.getByText('일치하는 파일이 없습니다.')).toBeInTheDocument()
+      fireEvent.input(input, {target: {value: ''}})
+      expect(screen.getByRole('menuitem', {name: 'Report/other.ts · 1개'})).toHaveAttribute(
+        'aria-expanded',
+        'false',
+      )
+      fireEvent.click(screen.getByRole('menuitem', {name: '2:1 report()'}))
+      expect(open).toHaveBeenCalledWith(locations[0])
+    },
+  )
+
+  it('should apply the active filename filter to groups before previews and arriving results', () => {
+    const [references, setReferences] = createSignal<ReferenceChoices>({
+      groups: [
+        {count: 2, path: 'first.ts'},
+        {count: 1, path: 'second.ts'},
+      ],
+      label: 'greet',
+      locations: [],
+      point: {x: 0, y: 0},
+      status: 'searching',
+    })
+    render(() => <SReferenceChoices references={references()} />)
+    const input = screen.getByRole('textbox', {name: '파일 필터링'})
+    fireEvent.input(input, {target: {value: 'FIRST'}})
+    expect(screen.getByText('사용처 2개')).toBeInTheDocument()
+    expect(screen.getByRole('menuitem', {name: 'first.ts · 2개'})).toBeInTheDocument()
+    expect(screen.queryByRole('menuitem', {name: 'second.ts · 1개'})).toBeNull()
+    setReferences((previous) => ({
+      ...previous,
+      locations: [
+        {column: 1, line: 2, path: 'first.ts'},
+        {column: 1, line: 3, path: 'first.ts'},
+        {column: 1, line: 2, path: 'second.ts'},
+      ],
+      status: 'complete',
+    }))
+    expect(screen.getAllByRole('menuitem')).toHaveLength(4)
+    expect(input).toHaveValue('FIRST')
+    expect(screen.getByText('사용처 2개')).toBeInTheDocument()
+  })
+
+  it('should reach the filter by keyboard and preserve text editing keys', () => {
+    const close = vi.fn()
+    render(() => (
+      <SReferenceChoices
+        references={{
+          label: 'greet',
+          locations: [{column: 1, line: 2, path: 'first.ts'}],
+          point: {x: 0, y: 0},
+        }}
+        onClose={close}
+      />
+    ))
+    const first = screen.getByRole('menuitem', {name: 'first.ts · 1개'})
+    const input = screen.getByRole('textbox', {name: '파일 필터링'})
+    fireEvent.keyDown(first, {key: 'Tab'})
+    expect(input).toHaveFocus()
+    expect(close).not.toHaveBeenCalled()
+    expect(fireEvent.keyDown(input, {key: 'Home'})).toBe(true)
+    expect(fireEvent.keyDown(input, {key: 'ArrowLeft'})).toBe(true)
+    expect(input).toHaveFocus()
+    fireEvent.keyDown(input, {key: 'ArrowDown'})
+    expect(first).toHaveFocus()
+    fireEvent.keyDown(first, {key: 'Tab'})
+    fireEvent.keyDown(input, {key: 'Escape'})
+    expect(close).toHaveBeenCalledOnce()
+  })
+
+  it('should show the first matching file after filtering a scrolled virtual list', () => {
+    const locations = Array.from({length: 10000}, (_, index) => ({
+      column: 1,
+      line: 2,
+      path: `callers/caller-${String(index).padStart(5, '0')}.ts`,
+    }))
+    render(() => (
+      <SReferenceChoices references={{label: 'greet', locations, point: {x: 0, y: 0}}} />
+    ))
+    fireEvent.keyDown(
+      screen.getByRole('menuitem', {name: '파일로 이동: callers/caller-00000.ts'}),
+      {key: 'End'},
+    )
+    const input = screen.getByRole('textbox', {name: '파일 필터링'})
+    input.focus()
+    fireEvent.input(input, {target: {value: 'caller-00'}})
+    expect(input).toHaveFocus()
+    expect(
+      screen.getByRole('menuitem', {name: 'callers/caller-00000.ts · 1개'}),
+    ).toBeInTheDocument()
+    expect(screen.queryByRole('menuitem', {name: 'callers/caller-09999.ts · 1개'})).toBeNull()
+    expect(screen.getAllByRole('menuitem').length).toBeLessThan(50)
+  })
+
   it('should show an accessible loading indicator immediately and reuse the menu for results', () => {
     const [references, setReferences] = createSignal<ReferenceChoices>({
       label: 'greet',
@@ -28,8 +143,9 @@ describe('SReferenceChoices', () => {
     const close = vi.fn()
     render(() => <SReferenceChoices references={references()} onClose={close} />)
     const menu = screen.getByRole('menu', {name: '위치 확인'})
+    expect(menu.style.getPropertyValue('--menu-preferred-width')).toBe('480px')
     expect(screen.getByRole('status', {name: '위치 확인 중'})).toBeInTheDocument()
-    expect(screen.getByText('greet · 위치 확인 중')).toBeInTheDocument()
+    expect(screen.getByText('위치 확인 중')).toBeInTheDocument()
     expect(screen.queryByText(/0개/u)).toBeNull()
     expect(screen.queryByText(/찾지 못했습니다/u)).toBeNull()
     expect(menu).toHaveFocus()
@@ -39,8 +155,9 @@ describe('SReferenceChoices', () => {
       status: 'searching',
     }))
     expect(screen.getByRole('menu', {name: '사용처'})).toBe(menu)
+    expect(menu.style.getPropertyValue('--menu-preferred-width')).toBe('480px')
     expect(screen.getByRole('status', {name: '사용처 검색 중'})).toBeInTheDocument()
-    expect(screen.getByText('greet · 사용처 1개')).toBeInTheDocument()
+    expect(screen.getByText('사용처 1개')).toBeInTheDocument()
     fireEvent.keyDown(menu, {key: 'ArrowDown'})
     expect(screen.getByRole('menuitem', {name: 'main.ts · 1개'})).toHaveFocus()
     fireEvent.keyDown(menu, {key: 'Escape'})
@@ -91,7 +208,7 @@ describe('SReferenceChoices', () => {
       />
     ))
     expect(screen.getByRole('menu', {name: '정의 위치'})).toBeInTheDocument()
-    expect(screen.getByText('greet · 정의 위치 2개')).toBeInTheDocument()
+    expect(screen.getByText('정의 위치 2개')).toBeInTheDocument()
     expect(screen.queryByRole('menu', {name: '사용처'})).toBeNull()
     fireEvent.click(screen.getAllByRole('menuitem', {name: '2:1'})[0])
     expect(open).toHaveBeenCalledWith(location)
@@ -107,7 +224,7 @@ describe('SReferenceChoices', () => {
     const close = vi.fn()
     render(() => <SReferenceChoices references={references()} onClose={close} />)
     const menu = screen.getByRole('menu', {name: '사용처'})
-    expect(screen.getByText('greet · 사용처 0개')).toBeInTheDocument()
+    expect(screen.getByText('사용처 0개')).toBeInTheDocument()
     expect(screen.getByRole('status', {name: '사용처 검색 중'})).toBeInTheDocument()
     expect(screen.queryByText('준비된 사용처부터 표시하고 있습니다.')).toBeNull()
     expect(screen.queryByText('작업 폴더 안에서 사용처를 찾지 못했습니다.')).toBeNull()
@@ -128,7 +245,7 @@ describe('SReferenceChoices', () => {
       'true',
     )
     setReferences((previous) => ({...previous, status: 'complete'}))
-    expect(screen.getByText('greet · 사용처 3개')).toBeInTheDocument()
+    expect(screen.getByText('사용처 3개')).toBeInTheDocument()
     expect(screen.queryByRole('status', {name: '사용처 검색 중'})).toBeNull()
     fireEvent.keyDown(header, {key: 'Escape'})
     expect(close).toHaveBeenCalledOnce()
@@ -150,19 +267,41 @@ describe('SReferenceChoices', () => {
     const menu = screen.getByRole('menu', {name: '사용처'})
     expect(menu).toHaveAttribute('popover', 'auto')
     expect(menu.style.getPropertyValue('--menu-limit')).toBe('320px')
-    expect(screen.getByText('greet · 사용처 30개')).toBeInTheDocument()
+    expect(screen.getByText('사용처 30개')).toBeInTheDocument()
     const main = screen.getByRole('menuitem', {expanded: true, name: 'src/main.ts · 15개'})
     const other = screen.getByRole('menuitem', {expanded: true, name: 'src/other.ts · 15개'})
     expect(screen.getAllByText('src/main.ts')).toHaveLength(1)
     expect(main).toHaveAttribute('aria-expanded', 'true')
     expect(other).toHaveAttribute('aria-expanded', 'true')
-    expect(screen.getAllByRole('menuitem')).toHaveLength(32)
+    expect(screen.getAllByRole('menuitem')).toHaveLength(34)
     expect(screen.getByText('greet("usage 12")')).toBeInTheDocument()
     const chosen = screen.getByRole('menuitem', {name: '13:4 greet("usage 12")'})
     fireEvent.keyDown(chosen, {key: 'End'})
     expect(document.activeElement).toBe(screen.getAllByRole('menuitem').at(-1))
     fireEvent.click(chosen)
     expect(open).toHaveBeenCalledWith(locations[12])
+    expect(screen.queryByRole('menu')).toBeNull()
+  })
+  it('should open a verified file group before details arrive and close the menu', () => {
+    const open = vi.fn()
+    const close = vi.fn()
+    render(() => (
+      <SReferenceChoices
+        references={{
+          groups: [{count: 3, path: 'caller.ts'}],
+          label: 'greet',
+          locations: [],
+          point: {x: 0, y: 0},
+          status: 'searching',
+        }}
+        onOpen={open}
+        onClose={close}
+      />
+    ))
+    expect(screen.getByText('사용처 3개')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('menuitem', {name: '파일로 이동: caller.ts'}))
+    expect(open).toHaveBeenCalledWith({column: 1, line: 1, path: 'caller.ts'})
+    expect(close).toHaveBeenCalledOnce()
     expect(screen.queryByRole('menu')).toBeNull()
   })
   it('should start expanded and collapse each file independently without closing the menu', () => {
@@ -187,7 +326,7 @@ describe('SReferenceChoices', () => {
       screen.getByRole('menuitem', {expanded: true, name: 'second.ts · 1개'}),
     ).toBeInTheDocument()
     expect(screen.getByRole('menuitem', {name: '9:1 greet("second")'})).toBeInTheDocument()
-    expect(screen.getByText('greet · 사용처 3개')).toBeInTheDocument()
+    expect(screen.getByText('사용처 3개')).toBeInTheDocument()
     expect(open).not.toHaveBeenCalled()
     fireEvent.keyDown(first, {key: 'ArrowRight'})
     expect(first).toHaveAttribute('aria-expanded', 'true')
@@ -209,7 +348,7 @@ describe('SReferenceChoices', () => {
         onOpen={open}
       />
     ))
-    expect(screen.getByText('greet · 사용처 10000개')).toBeInTheDocument()
+    expect(screen.getByText('사용처 10000개')).toBeInTheDocument()
     const header = screen.getByRole('menuitem', {expanded: true, name: 'src/caller-0.ts · 1000개'})
     fireEvent.click(header)
     expect(screen.queryByRole('menuitem', {name: '2:1 greet(0)'})).toBeNull()
@@ -218,7 +357,7 @@ describe('SReferenceChoices', () => {
     ).toBeInTheDocument()
     fireEvent.keyDown(header, {key: 'ArrowRight'})
     expect(screen.getAllByRole('menuitem').length).toBeLessThan(50)
-    expect(document.activeElement).toBe(screen.getAllByRole('menuitem')[0])
+    expect(document.activeElement).toBe(header)
     fireEvent.keyDown(document.activeElement!, {key: 'End'})
     const last = screen.getByRole('menuitem', {name: '1001:1 greet(9999)'})
     expect(document.activeElement).toBe(last)
@@ -249,7 +388,7 @@ describe('SReferenceChoices', () => {
       expanded: true,
       name: 'callers/caller-00000.ts · 1개',
     })
-    expect(screen.getByText('fanOut · 사용처 10000개')).toBeInTheDocument()
+    expect(screen.getByText('사용처 10000개')).toBeInTheDocument()
     expect(screen.getAllByRole('menuitem').length).toBeLessThan(50)
     fireEvent.keyDown(first, {key: 'End'})
     const usage = screen.getByRole('menuitem', {name: '2:1 fanOut(9999)'})
@@ -270,9 +409,11 @@ describe('SReferenceChoices', () => {
     })
     fireEvent.keyDown(returned, {key: 'End'})
     expect(document.activeElement).toBe(
-      screen.getByRole('menuitem', {expanded: false, name: 'callers/caller-09999.ts · 1개'}),
+      screen.getByRole('menuitem', {name: '파일로 이동: callers/caller-09999.ts'}),
     )
     fireEvent.keyDown(document.activeElement!, {key: 'ArrowRight'})
+    fireEvent.keyDown(document.activeElement!, {key: 'ArrowRight'})
+    fireEvent.keyDown(document.activeElement!, {key: 'ArrowDown'})
     fireEvent.keyDown(document.activeElement!, {key: 'ArrowDown'})
     fireEvent.click(screen.getByRole('menuitem', {name: '2:1 fanOut(9999)'}))
     expect(open).toHaveBeenCalledWith(locations.at(-1))
@@ -290,19 +431,20 @@ describe('SReferenceChoices', () => {
     for (const path of ['caller-0.ts', 'caller-1.ts', 'caller-2.ts']) {
       fireEvent.click(screen.getByRole('menuitem', {expanded: true, name: `${path} · 100개`}))
     }
-    expect(screen.getAllByRole('menuitem')).toHaveLength(3)
+    expect(screen.getAllByRole('menuitem')).toHaveLength(6)
     expect(screen.getAllByRole('menuitem', {expanded: false})).toHaveLength(3)
     const middle = screen.getByRole('menuitem', {name: 'caller-1.ts · 100개'})
     fireEvent.focus(middle)
     fireEvent.keyDown(middle, {key: 'ArrowRight'})
     expect(middle).toHaveAttribute('aria-expanded', 'true')
     fireEvent.keyDown(middle, {key: 'ArrowDown'})
+    fireEvent.keyDown(document.activeElement!, {key: 'ArrowDown'})
     const usage = screen.getByRole('menuitem', {name: '101:1 greet(100)'})
     expect(document.activeElement).toBe(usage)
     fireEvent.keyDown(usage, {key: 'ArrowLeft'})
     expect(document.activeElement).toBe(middle)
     expect(middle).toHaveAttribute('aria-expanded', 'false')
-    expect(screen.getAllByRole('menuitem')).toHaveLength(3)
+    expect(screen.getAllByRole('menuitem')).toHaveLength(6)
   })
   it('should retain focused references during manual scrolling and close with Escape', () => {
     const locations = Array.from({length: 300}, (_, index) => ({

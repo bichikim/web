@@ -1,5 +1,6 @@
 /** @vitest-environment jsdom */
 import {createRoot} from 'solid-js'
+import {waitFor} from '@solidjs/testing-library'
 import {EditorState} from '@codemirror/state'
 import {EditorView} from '@codemirror/view'
 import {history, undo} from '@codemirror/commands'
@@ -9,6 +10,8 @@ import {useEditorContextMenu} from '../use-editor-context-menu'
 const disposers: (() => void)[] = []
 const readText = vi.fn<() => Promise<string>>()
 const writeText = vi.fn<(text: string) => Promise<void>>()
+const readyPaste = async (context: ReturnType<typeof setup>['context']) =>
+  waitFor(() => expect(context.onPaste).toBeTypeOf('function'))
 const setup = (readOnly = false) => {
   const editor = new EditorView({
     parent: document.body,
@@ -82,8 +85,9 @@ describe('useEditorContextMenu', () => {
   })
 
   it('should replace the selection with normalized clipboard text and support undo', async () => {
-    readText.mockResolvedValueOnce('one\r\ntwo\rthree')
     const {context, editor} = setup()
+    await readyPaste(context)
+    readText.mockResolvedValueOnce('one\r\ntwo\rthree')
     await context.onPaste?.()
     expect(editor.state.sliceDoc()).toBe('const one\ntwo\nthree = "hello"\nname()')
     expect(undo(editor)).toBe(true)
@@ -91,16 +95,18 @@ describe('useEditorContextMenu', () => {
   })
 
   it('should preserve the selection when the clipboard is empty', async () => {
-    readText.mockResolvedValueOnce('')
     const {context, editor} = setup()
+    await readyPaste(context)
+    readText.mockResolvedValueOnce('')
     await context.onPaste?.()
     expect(editor.state.sliceDoc()).toBe('const name = "hello"\nname()')
   })
 
   it('should report clipboard read failures without changing the document', async () => {
     const error = new Error('clipboard denied')
-    readText.mockRejectedValueOnce(error)
     const {context, editor, onError} = setup()
+    await readyPaste(context)
+    readText.mockRejectedValueOnce(error)
     await context.onPaste?.()
     expect(onError).toHaveBeenCalledWith(error)
     expect(editor.state.sliceDoc()).toBe('const name = "hello"\nname()')
@@ -108,6 +114,7 @@ describe('useEditorContextMenu', () => {
 
   it('should not apply an asynchronous paste after the selection changes', async () => {
     const {context, editor, onError} = setup()
+    await readyPaste(context)
     const pending = context.onPaste?.()
     editor.dispatch({selection: {anchor: 0}})
     await pending
@@ -130,6 +137,7 @@ describe('useEditorContextMenu', () => {
     expect(context.onPaste).toBeUndefined()
     expect(context.onCopy).toBeTypeOf('function')
     expect(context.onFind).toBeTypeOf('function')
+    expect(readText).not.toHaveBeenCalled()
   })
 
   it('should share exact columns and use the selected text to search', () => {
@@ -163,14 +171,62 @@ describe('useEditorContextMenu', () => {
     })
   })
 
-  it('should move the cursor for a right click outside the selection and disable empty copy', () => {
+  it('should move the cursor for a right click outside the selection and disable empty copy', async () => {
     const {editor, menu} = setup()
     vi.mocked(editor.posAtCoords).mockReturnValue(22)
     menu.handleContextMenu(new MouseEvent('contextmenu', {clientX: 120, clientY: 140}))
     expect(editor.state.selection.main.head).toBe(22)
     expect(menu.context()?.onCopy).toBeUndefined()
     expect(menu.context()?.onCut).toBeUndefined()
-    expect(menu.context()?.onPaste).toBeTypeOf('function')
+    await readyPaste(menu.context()!)
+  })
+
+  it('should keep paste unavailable until nonempty clipboard text is confirmed', async () => {
+    const pending = Promise.withResolvers<string>()
+    readText.mockReturnValueOnce(pending.promise)
+    const {context} = setup()
+    expect(context.onPaste).toBeUndefined()
+    pending.resolve('copied code')
+    await readyPaste(context)
+  })
+
+  it.each(['', null])(
+    'should disable paste for an empty or unreadable clipboard: %s',
+    async (text) => {
+      const pending = Promise.withResolvers<string>()
+      readText.mockReturnValueOnce(pending.promise)
+      const {context, onError} = setup()
+      if (text === null) {
+        pending.reject(new Error('clipboard denied'))
+      } else {
+        pending.resolve(text)
+      }
+      await Promise.allSettled([pending.promise])
+      expect(context.onPaste).toBeUndefined()
+      expect(onError).not.toHaveBeenCalled()
+    },
+  )
+
+  it('should ignore an older clipboard result after reopening the menu', async () => {
+    const older = Promise.withResolvers<string>()
+    const newer = Promise.withResolvers<string>()
+    readText.mockReturnValueOnce(older.promise).mockReturnValueOnce(newer.promise)
+    const {menu} = setup()
+    menu.close()
+    menu.handleContextMenu(new MouseEvent('contextmenu', {clientX: 80, clientY: 100}))
+    newer.resolve('')
+    await Promise.allSettled([newer.promise])
+    older.resolve('stale code')
+    await Promise.allSettled([older.promise])
+    expect(menu.context()?.onPaste).toBeUndefined()
+  })
+
+  it('should keep paste disabled when the host has no clipboard API', async () => {
+    vi.stubGlobal('navigator', {})
+    const {context, onError} = setup()
+    await Promise.resolve()
+    expect(context.onPaste).toBeUndefined()
+    expect(onError).not.toHaveBeenCalled()
   })
 
   it('should open from Shift F10 and restore editor focus on close', () => {

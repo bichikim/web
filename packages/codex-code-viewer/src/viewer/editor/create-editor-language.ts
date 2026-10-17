@@ -12,6 +12,9 @@ export const createEditorLanguage = (path: string): Extension => {
       typescript: /\.(?:ts|tsx|mts|cts)$/iu.test(path),
     })
   }
+  if (format?.kind === 'image' && format.mimeType === 'image/svg+xml') {
+    return createSyntaxLanguage('html') ?? []
+  }
   if (format?.kind !== 'syntax') {
     return []
   }

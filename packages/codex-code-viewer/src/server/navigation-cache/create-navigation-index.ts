@@ -1,15 +1,20 @@
 import {relative, resolve, sep} from 'node:path'
+import {withAbort} from '../with-abort'
 import type {FileIndex} from '../create-file-index'
+import {createStoredSources} from './create-stored-sources'
 import {createDependencyGraph} from './create-dependency-graph'
+import {createNavigationCheckpoint} from './create-navigation-checkpoint'
 import {createModuleResolver} from './create-module-resolver'
 import {isNavigationConfiguration} from './is-navigation-configuration'
 import {readSourceUpdates} from './read-source-updates'
 import {readChangedPaths} from './read-changed-paths'
 import {isAnalyzableFile, readNavigationFiles} from './read-navigation-files'
 import type {IndexedSource, NavigationIndex} from './types'
+import type {createSourceIndexStore} from './create-source-index-store'
 import type {SourceChange} from '../types'
 interface NavigationIndexOptions {
   readonly root: string
+  readonly storage?: ReturnType<typeof createSourceIndexStore>
   readonly changes: Pick<FileIndex, 'subscribeChanges'>
   readonly onConfigurationChange?: () => void
   readonly onSourcesChange?: (changes: readonly SourceChange[]) => void
@@ -17,10 +22,102 @@ interface NavigationIndexOptions {
 const relevantChange = (path: string | null, event: string): boolean =>
   path === null || isNavigationConfiguration(path) || isAnalyzableFile(path) || event === 'rename'
 
+const indexCheckpoints = (
+  root: string,
+  sources: ReadonlyMap<string, IndexedSource>,
+  directories: ReadonlyMap<string, string>,
+  configurations: ReadonlyMap<string, string | null>,
+) =>
+  new Map([
+    ...[...sources].map(([path, source]) => [resolve(root, path), source.revision] as const),
+    ...directories,
+    ...[...configurations].map(([path, version]) => [path, version ?? 'unreadable'] as const),
+  ])
+
+const createSourceUpdater =
+  (sources: Map<string, IndexedSource>, graph: ReturnType<typeof createDependencyGraph>) =>
+  (
+    path: string,
+    source: IndexedSource | null,
+    revision: number,
+    entries: Set<string> | null,
+  ): void => {
+    if (source === null || (entries !== null && !entries.has(path))) {
+      sources.delete(path)
+      graph.update(path, null, revision)
+    } else {
+      sources.set(path, source)
+    }
+  }
+
+const configurationKey = (values: ReadonlyMap<string, string | null>): string =>
+  JSON.stringify([...values].sort(([left], [right]) => left.localeCompare(right)))
+
+const configurationObserver = (configure: (signature: string) => void, changed?: () => void) => {
+  let observed: string | undefined
+  return (configuration: string, notify = true): void => {
+    configure(configuration)
+    if (configuration !== observed) {
+      const initialized = observed !== undefined
+      observed = configuration
+      if (notify && initialized) {
+        changed?.()
+      }
+    }
+  }
+}
+
+const createRelationshipUpdater =
+  (
+    root: string,
+    sources: ReadonlyMap<string, IndexedSource>,
+    graph: ReturnType<typeof createDependencyGraph>,
+  ) =>
+  (paths: readonly string[], revision: number): void => {
+    const resolve = createModuleResolver(root, sources)
+    for (const path of paths) {
+      const source = sources.get(path)
+      if (source !== undefined) {
+        graph.update(path, resolve(path, source), revision)
+      }
+    }
+  }
+
+const checkpointReader = (
+  options: NavigationIndexOptions,
+  lifetime: AbortSignal,
+  observe: (configuration: string) => void,
+) => {
+  let pending: ReturnType<typeof createNavigationCheckpoint> | undefined
+  let previous: Awaited<ReturnType<typeof createNavigationCheckpoint>> | undefined
+  return async (signal: AbortSignal) => {
+    signal.throwIfAborted()
+    pending ??= (async () => {
+      if (previous !== undefined && (await previous.unchanged(lifetime))) {
+        return previous
+      }
+      const checkpoint = await createNavigationCheckpoint(options.root, lifetime)
+      observe(checkpoint.configuration ?? '[]')
+      previous = checkpoint
+      return checkpoint
+    })()
+    const current = pending
+    // A cancelled caller must not discard discovery shared with a file-open warmup.
+    const release = current.finally(() => {
+      if (pending === current) {
+        pending = undefined
+      }
+    })
+    return withAbort(release, signal)
+  }
+}
+
 /** Lazily refreshes changed source summaries and candidate membership independently of visible files. */
 export const createNavigationIndex = (options: NavigationIndexOptions): NavigationIndex => {
   const graph = createDependencyGraph()
   const sources = new Map<string, IndexedSource>()
+  const applySource = createSourceUpdater(sources, graph)
+  const updateRelationships = createRelationshipUpdater(options.root, sources, graph)
   let directories: ReadonlyMap<string, string> = new Map()
   let configurations: ReadonlyMap<string, string | null> = new Map()
   const dirty = new Set<string>()
@@ -44,35 +141,29 @@ export const createNavigationIndex = (options: NavigationIndexOptions): Navigati
       }
     }
   })
-  const apply = (path: string, source: IndexedSource | null, version: number): void => {
-    if (source === null) {
-      sources.delete(path)
-      graph.update(path, null, version)
-    } else {
-      sources.set(path, source)
-    }
-  }
+  const stored = createStoredSources({
+    graph,
+    onRestore: (restored) => (configurations = restored),
+    signal: lifetime.signal,
+    sources,
+    storage: options.storage,
+  })
+  const observeConfiguration = configurationObserver(
+    stored.configure,
+    options.onConfigurationChange,
+  )
   const probe = async (): Promise<void> => {
-    const checkpoints = new Map(
-      [...sources].map(([path, source]) => [resolve(options.root, path), source.revision]),
-    )
-    directories.forEach((version, path) => checkpoints.set(path, version))
-    configurations.forEach((version, path) => checkpoints.set(path, version ?? 'unreadable'))
+    const checkpoints = indexCheckpoints(options.root, sources, directories, configurations)
     const changes = await readChangedPaths(checkpoints, lifetime.signal)
-    if (changes.length > 0) {
-      generation += 1
-    }
-    changes.forEach((path) => {
-      if (directories.has(path)) {
-        rescan = true
-      } else {
-        dirty.add(relative(options.root, path).split(sep).join('/'))
-        reconfigure ||= configurations.has(path)
-      }
-    })
+    generation += Number(changes.length > 0)
+    changes.forEach((path) => dirty.add(relative(options.root, path).split(sep).join('/')))
+    rescan ||= changes.some((path) => directories.has(path))
+    reconfigure ||= changes.some((path) => configurations.has(path))
   }
   const refresh = async (): Promise<number> => {
+    await stored.restore()
     await probe()
+    const previous = revision
     do {
       lifetime.signal.throwIfAborted()
       const paths = new Set(dirty)
@@ -107,10 +198,11 @@ export const createNavigationIndex = (options: NavigationIndexOptions): Navigati
         revision += 1
         if (reset) {
           broadRevision = revision
-          options.onConfigurationChange?.()
+        }
+        if (reset || revision === 1) {
+          observeConfiguration(configurationKey(configurations), revision > 1)
         }
         const candidates = [...paths].filter(isAnalyzableFile)
-        const version = revision
         const updated: SourceChange[] = []
         // oxlint-disable-next-line no-await-in-loop -- Apply bounded source updates before resolving graph edges.
         for await (const {change, path, source} of readSourceUpdates({
@@ -121,24 +213,23 @@ export const createNavigationIndex = (options: NavigationIndexOptions): Navigati
           sources,
         })) {
           updated.push(...(change === null ? [] : [change]))
-          apply(path, entries !== null && !entries.has(path) ? null : source, version)
+          applySource(path, source, revision, entries)
         }
         options.onSourcesChange?.(updated)
-        const resolve = createModuleResolver(options.root, sources)
         // File additions can make previously unresolved imports resolvable.
         const relationships = discover ? [...sources.keys()] : candidates
-        relationships.forEach((path) => {
-          const source = sources.get(path)
-          if (source !== undefined) {
-            graph.update(path, resolve(path, source), version)
-          }
-        })
+        updateRelationships(relationships, revision)
       }
     } while (dirty.size > 0 || rescan || reconfigure)
+    if (revision !== previous) {
+      await stored.persist(configurations)
+    }
     return revision
   }
   return {
+    candidates: graph.candidates,
     changed: graph.changed,
+    checkpoint: checkpointReader(options, lifetime.signal, observeConfiguration),
     dispose: () => {
       lifetime.abort()
       unsubscribe()
@@ -167,6 +258,7 @@ export const createNavigationIndex = (options: NavigationIndexOptions): Navigati
         }
       }
     },
+    restore: stored.restore,
     scope: graph.scope,
     uncertain: (since) => broadRevision > since || graph.uncertain(since),
   }

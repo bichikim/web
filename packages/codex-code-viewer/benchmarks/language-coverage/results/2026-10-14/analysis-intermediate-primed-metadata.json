@@ -1,0 +1,15 @@
+{
+  "node": "v24.15.0",
+  "ruby": "ruby 4.0.6 (2026-07-14 revision 03b6d3f889) +PRISM [arm64-darwin25]",
+  "baseline": "current source before token cache, ranking and worker heap changes; includes all omission and Rust rebuild fixes",
+  "hashes": {
+    "before/workspace.js": "9aa8203ab636923755fb8e7ac9a8bab5f1cd539f37edc883020fd7acd0df3568",
+    "before/navigation-worker.js": "33010322e1022cb891cacc0b8ce52d44e2fe43729ce30a6fac1aa7677e58fa02",
+    "after/workspace.js": "b66701ea04a6ead46602371b0225675ddc06563f57825a22059068d65a9dfb1e",
+    "after/navigation-worker.js": "43821e7a763f9cd642fb430b94f01d7a66798948a84f29c57d3d4a7a9f4a8f9e"
+  },
+  "analyzers": {
+    "/Users/bichi/.codex/worktrees/379e/web/packages/codex-code-viewer/dist/python/langserver.index.js": "f200762078eb9880faf421a5b30f9ef3055b1d85c6f10780d75db4da8d8499f1",
+    "/Users/bichi/.codex/worktrees/379e/web/packages/codex-code-viewer/dist/rust/darwin-arm64/rust-analyzer": "6e232bb1835fee8106ee985d90702e2cef9647392b28b91dcfa2cae17a975983"
+  }
+}

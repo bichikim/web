@@ -15,6 +15,10 @@ interface WorkspaceSyncOptions {
   readonly diagnostics?: boolean
 }
 
+interface DocumentOwnership {
+  readonly draft?: boolean
+  readonly retainDrafts?: boolean
+}
 /** Synchronizes changed workspace files and replaces temporary draft ownership between queries. */
 export const createWorkspaceSync = (options: WorkspaceSyncOptions) => {
   const {connection} = options
@@ -31,8 +35,13 @@ export const createWorkspaceSync = (options: WorkspaceSyncOptions) => {
     connection.sendNotification('workspace/didChangeWatchedFiles', {
       changes: [{type, uri: pathToFileURL(path).href}],
     })
-  const synchronize = async (path: string, source: string, incremental: boolean, draft = false) => {
-    for (const file of drafts) {
+  const synchronize = async (
+    path: string,
+    source: string,
+    incremental: boolean,
+    ownership: DocumentOwnership = {},
+  ) => {
+    for (const file of ownership.retainDrafts === true ? [] : drafts) {
       if (file !== path) {
         // oxlint-disable-next-line no-await-in-loop -- Release prior drafts before reindexing their saved contents.
         await documents.close(file)
@@ -40,7 +49,9 @@ export const createWorkspaceSync = (options: WorkspaceSyncOptions) => {
         await notify(file, 2)
       }
     }
-    drafts.clear()
+    if (ownership.retainDrafts !== true) {
+      drafts.clear()
+    }
     const updates = [...changed]
     changed.clear()
     for (const [file, {root, kind}] of updates) {
@@ -56,7 +67,7 @@ export const createWorkspaceSync = (options: WorkspaceSyncOptions) => {
       }
     }
     const uri = await documents.synchronize(path, source, incremental)
-    if (draft) {
+    if (ownership.draft === true) {
       drafts.add(path)
     }
     return uri

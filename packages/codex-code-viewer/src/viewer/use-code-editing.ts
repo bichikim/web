@@ -44,7 +44,7 @@ const omitDraft = (drafts: Readonly<Record<string, Draft>>, key: string) =>
 const deletedDraft = (drafts: Readonly<Record<string, Draft>>, value: ViewerSession) => {
   const key = keyOf(value)
   const draft = drafts[key]
-  return draft?.deleted
+  return draft?.deleted && draft.session.session === value.session
     ? drafts
     : {
         ...drafts,
@@ -64,7 +64,7 @@ const acceptDraft = (drafts: Readonly<Record<string, Draft>>, value: ViewerSessi
   }
   return draft.source === draft.base.source
     ? omitDraft(drafts, key)
-    : {...drafts, [key]: {...draft, deleted: false}}
+    : {...drafts, [key]: {...draft, deleted: false, session: value}}
 }
 const analysisSources = (
   entries: readonly (readonly [string, Draft])[],
@@ -76,6 +76,36 @@ const analysisSources = (
         value.session.workspace === workspace && isNavigableFile(value.base.location.path),
     )
     .map(([, value]) => ({path: value.base.location.path, source: value.source}))
+
+const retainedDocument = (
+  drafts: Readonly<Record<string, Draft>>,
+  workspace: string | undefined,
+  path: string,
+): CodeDocument | undefined => {
+  const draft = drafts[JSON.stringify([workspace, path])]
+  return draft !== undefined && changed(draft) ? draft.base : undefined
+}
+
+interface DraftChangesOptions {
+  readonly draft: Draft | undefined
+  readonly port: ViewerPort
+  readonly feedback: (message: string) => void
+}
+const shareDraftChanges = ({draft, port, feedback}: DraftChangesOptions): Promise<void> =>
+  draft === undefined
+    ? Promise.resolve()
+    : shareCodeChanges({
+        onError: (error) => feedback(errorMessage(error)),
+        onNotice: feedback,
+        original: draft.deleted ? '' : draft.base.source,
+        port,
+        revision: draft.base.revision,
+        session: draft.session,
+        source: draft.source,
+      })
+
+const editableDocument = (document: CodeDocument | undefined): boolean =>
+  document !== undefined && document.readOnly !== true && isEditableFile(document.location.path)
 
 /** Retains per-file drafts and revision-checked explicit saves until they are saved or discarded. */
 export const useCodeEditing = (options: EditingOptions) => {
@@ -94,7 +124,7 @@ export const useCodeEditing = (options: EditingOptions) => {
     Object.entries(drafts()).filter(([, value]) => changed(value)),
   )
   const dirty = (): boolean => current() !== undefined && changed(current()!)
-  const editable = (): boolean => isEditableFile(options.session()?.document.location.path ?? '')
+  const editable = (): boolean => editableDocument(options.session()?.document)
   const change = (source: string): void => {
     const value = options.session()
     if (value === null || !editable()) {
@@ -177,7 +207,7 @@ export const useCodeEditing = (options: EditingOptions) => {
     setDrafts((previous) => acceptDraft(previous, value))
   }
   const markDeleted = (value: ViewerSession): void => {
-    if (!isEditableFile(value.document.location.path)) {
+    if (!editableDocument(value.document)) {
       return
     }
     setDrafts((previous) => deletedDraft(previous, value))
@@ -201,6 +231,8 @@ export const useCodeEditing = (options: EditingOptions) => {
     dirty,
     discard,
     dismissFeedback: () => setFeedback(null),
+    draftDocument: (workspace: string | undefined, path: string) =>
+      retainedDocument(drafts(), workspace, path),
     editable,
     enabled,
     feedback,
@@ -209,20 +241,8 @@ export const useCodeEditing = (options: EditingOptions) => {
     revision: () => current()?.base.revision ?? options.session()?.document.revision ?? '',
     save,
     saving,
-    shareChanges: (): Promise<void> => {
-      const draft = current()
-      return draft === undefined
-        ? Promise.resolve()
-        : shareCodeChanges({
-            onError: (error) => setFeedback(errorMessage(error)),
-            onNotice: setFeedback,
-            original: draft.deleted ? '' : draft.base.source,
-            port: options.port,
-            revision: draft.base.revision,
-            session: draft.session,
-            source: draft.source,
-          })
-    },
+    shareChanges: () =>
+      shareDraftChanges({draft: current(), feedback: setFeedback, port: options.port}),
     source: (): string => current()?.source ?? options.session()?.document.source ?? '',
     sources: () => analysisSources(pendingDrafts(), options.session()?.workspace),
     toggle: () => setEnabled((previous) => !previous),

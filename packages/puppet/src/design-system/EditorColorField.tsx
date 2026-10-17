@@ -1,3 +1,4 @@
+import {usePopoverSurface} from './use-popover-surface'
 import type {ControlSizeProps} from './control-size'
 import {ColorArea} from '@kobalte/core/color-area'
 import {ColorField} from '@kobalte/core/color-field'
@@ -17,6 +18,10 @@ export interface EditorColorFieldProps extends ControlSizeProps {
 }
 
 export const EditorColorField = (props: EditorColorFieldProps) => {
+  const [open, setOpen] = createSignal(false)
+  const [trigger, setTrigger] = createSignal<HTMLButtonElement>()
+  const [surface, setSurface] = createSignal<HTMLDivElement>()
+  const popup = usePopoverSurface({open, surface, trigger})
   const [color, setColor] = createSignal(untrack(() => parseColor(props.value).toFormat('hsb')))
   createEffect(() => {
     const value = parseColor(props.value)
@@ -32,17 +37,35 @@ export const EditorColorField = (props: EditorColorFieldProps) => {
     }
   }
 
+  const handleOpenChange = (open: boolean) => {
+    setOpen(open)
+    if (open) {
+      props.onEditStart?.()
+    } else {
+      props.onEditEnd?.()
+    }
+  }
   return (
     <div class="editor-control editor-color-field" data-control-size={props.size ?? 'sm'}>
-      <Popover onOpenChange={(open) => (open ? props.onEditStart?.() : props.onEditEnd?.())}>
+      <Popover onOpenChange={handleOpenChange}>
         <Popover.Trigger
+          ref={setTrigger}
           class="editor-color-trigger"
           aria-label={`${props.label} 선택`}
           disabled={props.disabled}
         >
           <ColorSwatch class="editor-color-swatch" value={color()} />
         </Popover.Trigger>
-        <Popover.Content class="mask-picker editor-color-picker">
+        <Popover.Content
+          ref={setSurface}
+          class="mask-picker editor-color-picker"
+          popover="manual"
+          data-top-layer={popup.active()}
+          style={{
+            '--color-picker-x': `${popup.position().x}px`,
+            '--color-picker-y': `${popup.position().y}px`,
+          }}
+        >
           <div class="mask-picker-heading">
             <Popover.Title>{props.label}</Popover.Title>
             <Popover.CloseButton aria-label="색상 선택기 닫기">
@@ -90,6 +113,7 @@ export const EditorColorField = (props: EditorColorFieldProps) => {
         }}
       >
         <ColorField.Input
+          class="editor-color-input"
           aria-label={props.label}
           onFocus={() => props.onEditStart?.()}
           onBlur={() => props.onEditEnd?.()}

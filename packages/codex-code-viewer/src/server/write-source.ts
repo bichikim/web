@@ -65,6 +65,9 @@ const readWriteTarget = (options: WriteSourceOptions): Result<string> => {
   if (!current.ok) {
     return current
   }
+  if (Buffer.byteLength(current.value, 'utf8') > MAX_CODE_BYTES) {
+    return failure('too-large')
+  }
   if (revisionOf(current.value) !== options.revision) {
     return failure('write-conflict')
   }

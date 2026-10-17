@@ -1,7 +1,14 @@
-import {mkdirSync, mkdtempSync, realpathSync, renameSync, rmSync, writeFileSync} from 'node:fs'
+import {
+  mkdirSync,
+  mkdtempSync,
+  realpathSync,
+  renameSync,
+  rmSync,
+  symlinkSync,
+  writeFileSync,
+} from 'node:fs'
 import {tmpdir} from 'node:os'
-import {join, relative} from 'node:path'
-import typescript from '@typescript/typescript6'
+import {join} from 'node:path'
 import {readFile} from 'node:fs/promises'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 import type {NavigationInput, NavigationLocation} from '../../../shared/contracts'
@@ -15,20 +22,6 @@ import {createNavigationIndex} from '../create-navigation-index'
 vi.mock('node:fs/promises', async () => {
   const actual = await vi.importActual<typeof import('node:fs/promises')>('node:fs/promises')
   return {...actual, readFile: vi.fn(actual.readFile)}
-})
-
-interface TypeScriptModule {
-  readonly default: typeof typescript
-}
-vi.mock('@typescript/typescript6', async () => {
-  const actual = await vi.importActual<TypeScriptModule>('@typescript/typescript6')
-  return {
-    ...actual,
-    default: {
-      ...actual.default,
-      createLanguageService: vi.fn(actual.default.createLanguageService),
-    },
-  }
 })
 
 const sorted = (locations: readonly NavigationLocation[]) =>
@@ -65,6 +58,67 @@ describe('createNavigationCache integration', () => {
     }
     return result.value.locations
   }
+  it('should discover new renamed callers behind external reexports after caching references', async () => {
+    mkdirSync(join(root, 'node_modules/external'), {recursive: true})
+    writeFileSync(
+      join(root, 'tsconfig.json'),
+      JSON.stringify({
+        compilerOptions: {
+          module: 'esnext',
+          moduleResolution: 'bundler',
+          noLib: true,
+          types: [],
+        },
+      }),
+    )
+    writeFileSync(
+      join(root, 'node_modules/external/index.ts'),
+      "export {greet as welcome} from '../../helper'",
+    )
+    await query()
+    await changed('later.ts', () =>
+      writeFileSync(join(root, 'later.ts'), "import {welcome} from 'external'\nwelcome()\n"),
+    )
+    const updated = await query()
+    expect(updated).toEqual(
+      expect.arrayContaining([{column: 1, line: 2, path: 'later.ts', preview: 'welcome()'}]),
+    )
+    expect(updated).toEqual(sorted(await fresh()))
+  })
+  it('should invalidate cached references for callers using a different conditional export mode', async () => {
+    mkdirSync(join(root, 'bridge'))
+    mkdirSync(join(root, 'node_modules'))
+    writeFileSync(
+      join(root, 'tsconfig.json'),
+      JSON.stringify({
+        compilerOptions: {
+          module: 'nodenext',
+          moduleResolution: 'nodenext',
+          noLib: true,
+          types: [],
+        },
+      }),
+    )
+    writeFileSync(
+      join(root, 'bridge/package.json'),
+      JSON.stringify({
+        exports: {import: './esm.mts', require: './cjs.cts'},
+        name: 'bridge',
+        type: 'module',
+      }),
+    )
+    writeFileSync(join(root, 'bridge/esm.mts'), "export {greet as welcome} from '../helper.js'")
+    writeFileSync(join(root, 'bridge/cjs.cts'), 'export function welcome() {}')
+    symlinkSync(join(root, 'bridge'), join(root, 'node_modules/bridge'), 'dir')
+    await query()
+    await changed('later.mts', () =>
+      writeFileSync(join(root, 'later.mts'), "import {welcome} from 'bridge'\nwelcome()\n"),
+    )
+    expect(await query()).toEqual(
+      expect.arrayContaining([{column: 1, line: 2, path: 'later.mts', preview: 'welcome()'}]),
+    )
+    expect(await query()).toEqual(sorted(await fresh()))
+  })
   beforeEach(() => {
     vi.mocked(readFile).mockClear()
     root = realpathSync(mkdtempSync(join(tmpdir(), 'navigation-cache-')))
@@ -126,6 +180,42 @@ describe('createNavigationCache integration', () => {
     workspace.dispose()
     rmSync(root, {force: true, recursive: true})
   })
+  it('should reuse completed usages after a definition round trip and invalidate edited destinations', async () => {
+    const caller = workspace.read('first.ts')
+    if (!caller.ok) {
+      throw new Error(caller.error.code)
+    }
+    const request = {
+      ...input,
+      offset: caller.value.source.lastIndexOf('greet'),
+      path: 'first.ts',
+      revision: caller.value.revision,
+    }
+    expect(await query(request)).toEqual([{column: 14, line: 1, path: 'helper.ts'}])
+    const usages = await query()
+    expect(usages).toHaveLength(4)
+    expect(await query({...request, offset: request.offset + 1})).toEqual([
+      {column: 14, line: 1, path: 'helper.ts'},
+    ])
+    expect(await query({...input, offset: input.offset + 2})).toEqual(usages)
+    expect(analyze).toHaveBeenCalledTimes(2)
+    await changed('second.ts', () =>
+      writeFileSync(join(root, 'second.ts'), "\nimport {greet} from './helper'\ngreet()\n"),
+    )
+    expect(await query({...input, offset: input.offset + 1})).toEqual(sorted(await fresh()))
+    expect(analyze).toHaveBeenCalledTimes(3)
+    await changed('helper.ts', () =>
+      writeFileSync(join(root, 'helper.ts'), 'export const greet = () => 2\n'),
+    )
+    await expect(query()).rejects.toThrow('stale-document')
+    const updated = workspace.read('helper.ts')
+    if (!updated.ok) {
+      throw new Error(updated.error.code)
+    }
+    const current = {...input, revision: updated.value.revision}
+    expect(await query(current)).toEqual(sorted(await fresh(current)))
+    expect(analyze).toHaveBeenCalledTimes(4)
+  })
   it('should retain verified groups and discover new aliased usages in closed files', async () => {
     expect(await query()).toEqual(await fresh())
     expect(await query()).toHaveLength(4)
@@ -155,21 +245,16 @@ describe('createNavigationCache integration', () => {
     expect(analyze).toHaveBeenCalledOnce()
     const results = await Array.fromAsync(stream)
     expect(readFile).toHaveBeenCalledTimes(reads + 2)
-    expect(analyze).toHaveBeenLastCalledWith({files: ['second.ts'], retained: ['first.ts']})
-    const service = vi.mocked(typescript.createLanguageService).mock.results.at(-1)?.value
-    const program = service.getProgram()
+    expect(analyze).toHaveBeenLastCalledWith({
+      candidates: expect.arrayContaining(['helper.ts', 'first.ts', 'second.ts']),
+      files: ['second.ts'],
+      retained: ['first.ts'],
+    })
     expect(
-      program
-        .getRootFileNames()
-        .map((path: string) => relative(root, path))
-        .sort(),
-    ).toEqual(['helper.ts', 'second.ts'])
-    expect(
-      program
-        .getSourceFiles()
-        .map((file: typescript.SourceFile) => relative(root, file.fileName))
-        .sort(),
-    ).toEqual(['helper.ts', 'second.ts'])
+      results
+        .flatMap((batch) => batch.locations)
+        .every((location) => location.path === 'second.ts'),
+    ).toBe(true)
     expect(
       results
         .flatMap((batch) => batch.locations)
@@ -274,7 +359,11 @@ describe('createNavigationCache integration', () => {
       writeFileSync(join(root, 'second.ts'), `${derived}new Derived().run()\n`),
     )
     const locations = await query(request)
-    expect(analyze).toHaveBeenLastCalledWith({files: ['second.ts'], retained: ['first.ts']})
+    expect(analyze).toHaveBeenLastCalledWith({
+      candidates: expect.arrayContaining(['helper.ts', 'first.ts', 'second.ts']),
+      files: ['second.ts'],
+      retained: ['first.ts'],
+    })
     expect(locations).toEqual(await fresh(request))
     expect(locations).toHaveLength(3)
   })
@@ -287,15 +376,14 @@ describe('createNavigationCache integration', () => {
       writeFileSync(join(root, 'second.ts'), "import {greet} from './helper'\n\ngreet()\n"),
     )
     const locations = await query()
-    expect(analyze).toHaveBeenLastCalledWith({files: undefined, retained: []})
-    const service = vi.mocked(typescript.createLanguageService).mock.results.at(-1)?.value
-    expect(
-      service
-        .getProgram()
-        .getRootFileNames()
-        .map((path: string) => relative(root, path))
-        .sort(),
-    ).toEqual(['first.ts', 'globals.d.ts', 'helper.ts', 'second.ts', 'unrelated.ts'])
+    expect(analyze).toHaveBeenLastCalledWith({
+      candidates: expect.arrayContaining(['helper.ts', 'first.ts', 'second.ts']),
+      files: undefined,
+      retained: [],
+    })
+    expect(new Set(locations.map((location) => location.path))).toEqual(
+      new Set(['first.ts', 'second.ts']),
+    )
     expect(locations).toEqual(await fresh())
   })
 })

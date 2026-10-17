@@ -1,11 +1,7 @@
 import {type Accessor, batch, createEffect, createSignal, on} from 'solid-js'
-import {
-  type CodeDocument,
-  type CodeLocation,
-  errorSchema,
-  type ViewerSession,
-} from '../shared/contracts'
+import {type CodeDocument, type CodeLocation, type ViewerSession} from '../shared/contracts'
 import type {useLatestRequest} from './use-latest-request'
+import {isMissingDocument} from './is-missing-document'
 
 interface DocumentRefreshOptions {
   readonly session: Accessor<ViewerSession | null>
@@ -17,6 +13,7 @@ interface DocumentRefreshOptions {
   readonly onDeleted: (session: ViewerSession) => void
   readonly onPresent: (session: ViewerSession) => void
   readonly report: (error: unknown) => void
+  readonly onRefresh?: () => void
 }
 
 /** Checks deletion while retaining drafts and defers content replacement until editing is settled. */
@@ -32,8 +29,7 @@ export const useDocumentRefresh = (options: DocumentRefreshOptions) => {
     try {
       return await options.read(location)
     } catch (error) {
-      const parsed = errorSchema.safeParse(error instanceof Error ? error.cause : error)
-      if (parsed.success && parsed.data.code === 'not-found') {
+      if (isMissingDocument(error)) {
         return {document: null}
       }
       throw error
@@ -44,6 +40,7 @@ export const useDocumentRefresh = (options: DocumentRefreshOptions) => {
     if (current === null || options.navigation.pending() || options.saving()) {
       return
     }
+    options.onRefresh?.()
     const result = await options.navigation.run(() => read(current.document.location))
     if (result === null) {
       return

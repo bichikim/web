@@ -1,3 +1,4 @@
+import {useCodeFolding} from './use-code-folding'
 import {useTranslations} from './locale/use-translations'
 import {createEffect, createSignal, For, onCleanup, Show, untrack} from 'solid-js'
 import type {CodeDocument, CodeToken} from '../shared/contracts'
@@ -26,6 +27,13 @@ export interface SCodeDocumentProps {
 export const SCodeDocument = (props: SCodeDocumentProps) => {
   const t = useTranslations()
   const [element, setElement] = createSignal<HTMLDivElement | null>(null)
+  const folds = useCodeFolding({
+    active: () => props.activeMatch,
+    document: () => props.document,
+    matches: () => props.matches,
+    searchRequest: () => props.searchScrollRequest,
+    selection: () => props.selection,
+  })
   const scroll = useScrollRestoration({
     content: () => props.document,
     element,
@@ -91,14 +99,18 @@ export const SCodeDocument = (props: SCodeDocumentProps) => {
         ref={setElement}
       >
         <pre class="ui-code-text m-0 w-max min-w-full pb-4 selection:bg-code-selection">
-          <For each={props.document.lines}>
-            {(tokens, index) => (
+          <For each={folds.visible()}>
+            {(row) => (
               <SCodeLine
-                focusable={index() + 1 === (props.selection?.line ?? props.document.location.line)}
-                line={index() + 1}
+                focusable={row.line === (props.selection?.line ?? props.document.location.line)}
+                line={row.line}
                 selectable={props.onSelect !== undefined}
-                selected={interaction.selected(index() + 1)}
-                tokens={tokens}
+                selected={interaction.selected(row.line)}
+                tokens={row.tokens}
+                folding={folds.ranges().size > 0}
+                foldEnd={folds.ranges().get(row.line)}
+                collapsed={folds.closed().has(row.line)}
+                onToggleFold={() => folds.toggle(row.line)}
                 matches={props.matches}
                 activeMatch={props.activeMatch}
               />

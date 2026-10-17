@@ -27,6 +27,9 @@ import {useDefinitionNavigation} from './use-definition-navigation'
 import {useCodeEditing} from './use-code-editing'
 import {createFileMutationHandler} from './create-file-mutation-handler'
 import {useDocumentRefresh} from './use-document-refresh'
+import {useFileNavigation} from './use-file-navigation'
+
+const documentReadSchema = z.object({document: documentSchema})
 
 const sameDocument = (previous: CodeDocument, next: CodeDocument): boolean =>
   previous.revision === next.revision &&
@@ -104,7 +107,11 @@ const receiveDocument = (options: NavigatedViewOptions): CodeDocument => {
   const document = withDraftLocation(options.document, options.location, options.editing.sources())
   const next = {...options.connection, document}
   batch(() => {
-    options.editing.accept(next)
+    if (options.navigation?.deleted) {
+      options.editing.markDeleted(next)
+    } else {
+      options.editing.accept(next)
+    }
     const selected = options.viewState.restore(
       next,
       options.navigation?.restoreView === true || options.navigation?.preserveSelection === true,
@@ -151,23 +158,17 @@ const createDocumentReceiver =
     options.synchronize({...current, document: nextDocument})
   }
 
-interface HistoryMoveProps {
-  readonly direction: -1 | 1
-  readonly history: ReturnType<typeof useFileHistory>
-  readonly go: (location: CodeLocation, options?: NavigationOptions) => Promise<void>
-}
-const moveHistory = async ({direction, history, go}: HistoryMoveProps): Promise<void> => {
-  const location = history.destination(direction)
-  if (location !== undefined) {
-    await go(location, {historyIndex: history.index() + direction, restoreView: true})
-  }
+const clearDocument = (value: ViewerConnection, options: DocumentReceiverOptions): void => {
+  options.onReset()
+  options.onNavigate()
+  receiveView({session: value.session, workspace: value.workspace}, undefined, options)
 }
 
 export const useViewer = (port: ViewerPort) => {
   const [connection, setConnection] = createSignal<ViewerConnection | null>(null)
   const session = createMemo(() => documentSession(connection()))
   const editing = useCodeEditing({
-    onDiscardDeleted: (value) => receive({session: value.session, workspace: value.workspace}),
+    onDiscardDeleted: (value) => files.forget(value.document.location.path).catch(report),
     onSaved: (value) => {
       setConnection((current) => mergeSavedDocument(current, value))
       refreshing.reset()
@@ -195,6 +196,7 @@ export const useViewer = (port: ViewerPort) => {
     workspace: () => connection()?.workspace,
   })
   const viewState = useSessionViewState({selection: codeSelection.selection, session})
+  const view = {codeSelection, editing, setConnection, viewState}
   const navigation = useLatestRequest(report)
   const search = useFileSearch({onError: report, port, session: connection})
   const synchronizeLocation = createLocationSynchronizer({port, report})
@@ -216,31 +218,29 @@ export const useViewer = (port: ViewerPort) => {
     port,
     report,
   })
-  const showDocument = createDocumentReceiver({
-    codeSelection,
-    editing,
+  const documentView = {
+    ...view,
     history,
     onNavigate: () => definitions.reset(),
     onReset: () => refreshing.reset(),
-    setConnection,
     synchronize: synchronizeLocation,
-    viewState,
-  })
-  const read = (location: CodeLocation) =>
-    request('code.read', location, z.object({document: documentSchema}))
-  const go = async (location: CodeLocation, options?: NavigationOptions): Promise<void> => {
-    const current = connection()
-    if (current === null) {
-      return
-    }
-    const result = await navigation.run(() => read(location))
-    if (result !== null) {
-      showDocument(current, result.document, location, options)
-    }
   }
+  const showDocument = createDocumentReceiver(documentView)
+  const read = (location: CodeLocation) => request('code.read', location, documentReadSchema)
+  const files = useFileNavigation({
+    clear: (value) => clearDocument(value, documentView),
+    connection,
+    history,
+    navigation,
+    read,
+    report,
+    retained: editing.draftDocument,
+    revision: () => workspaceRevision(),
+    show: showDocument,
+  })
   const definitions = useDefinitionNavigation({
     onError: report,
-    onOpen: go,
+    onOpen: files.go,
     port,
     revision: editing.revision,
     run: navigation.run,
@@ -257,6 +257,7 @@ export const useViewer = (port: ViewerPort) => {
         preserveSelection: true,
       }),
     onPresent: editing.accept,
+    onRefresh: history.retryMissing,
     read,
     report,
     saving: editing.saving,
@@ -281,23 +282,23 @@ export const useViewer = (port: ViewerPort) => {
     ...definitions,
     copy,
     copyPath: (path: string): Promise<void> => copy(path, '경로를 복사했습니다.'),
-    deleted: refreshing.deleted,
+    deleted: () => session() !== null && (refreshing.deleted() || editing.deleted()),
     dismissNotice: feedback.dismiss,
     editing,
     fileMutation: createFileMutationHandler({
-      go,
+      go: files.go,
       onChange: history.applyMutation,
+      onDeleted: files.recover,
       onMove: editing.accept,
-      receive,
       session: connection,
     }),
     files: search.files,
     find: search.find,
     finding: search.finding,
-    go,
-    move: (direction: -1 | 1) => moveHistory({direction, go, history}),
+    go: files.go,
+    move: files.move,
     notice: feedback.notice,
-    openLocation: createLocationOpener({go, open: opening.open, session}),
+    openLocation: createLocationOpener({go: files.go, open: opening.open, session}),
     refresh: refreshing.refresh,
     reportError: report,
     search: search.search,

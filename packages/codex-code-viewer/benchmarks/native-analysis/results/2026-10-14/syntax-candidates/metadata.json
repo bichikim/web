@@ -1,0 +1,31 @@
+{
+  "binary": "/Users/bichi/.codex/worktrees/379e/web/node_modules/.pnpm/@typescript+typescript-darwin-arm64@7.0.2/node_modules/@typescript/typescript-darwin-arm64/lib/tsc",
+  "nativeVersion": "Version 7.0.2",
+  "node": "v24.15.0",
+  "hashes": {
+    "/Users/bichi/.codex/worktrees/379e/web/node_modules/.pnpm/@typescript+typescript-darwin-arm64@7.0.2/node_modules/@typescript/typescript-darwin-arm64/lib/tsc": "a82f731365ad69d5c4c15f5e18fba4584bf3b7b839960172a76c3462b5114bf2",
+    "/private/tmp/native-syntax-final/existing/workspace.js": "8572b968dc25619c33e259e873dffb254d37f37dbc9ca2d4eeb69d0316e7fdbb",
+    "/private/tmp/native-syntax-final/existing/navigation-worker.js": "0bdaa92dd33965774cf27e2ae34b418135794aa1fc6d226ae704d82061f5739e",
+    "/Users/bichi/.codex/worktrees/379e/web/packages/codex-code-viewer/benchmarks/native-analysis/measure.ts": "61053f41984c7406300ad272af22aafa74fe6e39afb0b11f193755c6846ec923",
+    "/Users/bichi/.codex/worktrees/379e/web/packages/codex-code-viewer/benchmarks/native-analysis/create-lsp-experiment.ts": "a86c72895b842600351e6c6e0dcc70b43dbb8d75173f76d38aedb2bf9399ed63"
+  },
+  "clientHashes": {
+    "before": "181d3865047d9cdd713bcef5af57c00521d7dd9f4cd0f69509ec08bfe242bf1c",
+    "after": "e7727bd4c334ce76d8a45de433fdffbdd077ba738a9b54b9d3a4fe5cefc238fa"
+  },
+  "productUnchanged": true,
+  "measurement": "new process and empty CODEX_HOME; alternating before/after; module loading excluded; OS caches not cleared; server batch, not browser paint",
+  "records": 340,
+  "fixtures": 23,
+  "nodeStageOnly": {
+    "before": 1873.105708,
+    "after": 1801.366667
+  },
+  "sourceHashes": {
+    "may-have-module-bindings.ts": "a70fd68658b668eb8b007c7b19b70ce4ecb73e5c47b3b9f86457716da90cc577",
+    "scan-linked-references.ts": "0bb4e2d53cc72444d0680414d35310dea94f51b7a1fcafc96c4b1ecdfc2c81fc",
+    "read-input-revisions.ts": "f8206f6c8dd6cb70b0d562da3cb94ac51e2219f14c4331bbc1fcde104552565c",
+    "create-workspace-links.ts": "65de1fab165c804d42b6e9531dbd17514d3b35977c729bb98d803ba566aa7be2",
+    "create-lsp-experiment.ts": "a86c72895b842600351e6c6e0dcc70b43dbb8d75173f76d38aedb2bf9399ed63"
+  }
+}
