@@ -13,9 +13,9 @@ interface DecimalTerm {
 }
 
 /**
- * Ceils the sum of nonnegative integer quantities multiplied by finite nonnegative
- * numbers interpreted through their canonical decimal string representations.
- * Returns 0n for an empty sum; throws RangeError for negative quantities or invalid multipliers.
+ * 0 이상의 정수 수량에 유한한 0 이상의 수를 곱한 합을 올림한다.
+ * 곱하는 수는 표준 십진 문자열 표현으로 해석한다.
+ * 빈 합은 0n을 반환하며, 음수 수량이나 유효하지 않은 승수는 RangeError를 던진다.
  */
 export const ceilWeightedSum = (options: CeilWeightedSumOptions): bigint => {
   const terms = options.products.map(({multiplier, quantity}): DecimalTerm => {

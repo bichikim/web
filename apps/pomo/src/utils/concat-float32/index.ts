@@ -2,7 +2,7 @@ export interface Float32Source {
   readonly chunks: ReadonlyArray<Float32Array>
 }
 
-/** Copies a nonempty collection of views into an owned buffer with nonnegative integer gaps; reads chunks for sample sizing, gap sizing, then copying. */
+/** 비어 있지 않은 뷰 모음을 새 버퍼에 복사하고 0 이상의 정수 길이 간격을 둔다. 청크는 샘플 크기 계산, 간격 크기 계산, 복사 순으로 읽는다. */
 export const concatFloat32 = (
   source: Float32Source,
   gapLength: number,

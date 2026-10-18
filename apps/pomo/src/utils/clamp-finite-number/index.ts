@@ -1,6 +1,6 @@
 import {clamp} from 'es-toolkit/math'
 
-/** Clamps a finite value to the supplied bounds; missing or non-finite values return undefined. */
+/** 유한한 값을 지정한 범위로 제한하며, 값이 없거나 유한하지 않으면 undefined를 반환한다. */
 export const clampFiniteNumber = (
   value: number | undefined,
   min: number,
