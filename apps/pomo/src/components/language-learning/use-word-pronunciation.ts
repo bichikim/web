@@ -13,6 +13,7 @@ import {
   type LanguageLearningWordAudioRepository,
   LanguageLearningWordAudioStorageError,
   normalizeLanguageLearningWordUnicodeValue,
+  readLanguageLearningWords,
 } from '../../features/language-learning'
 import {type ModelAssetManager, useModelAssetManager} from '../../features/model-download'
 import {isSupertonicModelDownloaded} from '../../features/supertonic'
@@ -20,6 +21,15 @@ import {generateLanguageLearningWordPronunciation} from './word-pronunciation'
 
 const getWordKey = (word: LanguageLearningWord) => `${word.language}:${word.value}`
 const getAudioResourceKey = (key: string) => normalizeLanguageLearningWordUnicodeValue(key)
+
+const hasStoredAudioAlias = (word: LanguageLearningWord) => {
+  const key = getWordKey(word)
+  const resourceKey = getAudioResourceKey(key)
+  return readLanguageLearningWords().some(
+    (storedWord) =>
+      getWordKey(storedWord) !== key && getAudioResourceKey(getWordKey(storedWord)) === resourceKey,
+  )
+}
 
 interface PendingPronunciation extends PendingSettingsPronunciation {
   readonly audioOwner: string
@@ -135,6 +145,8 @@ const createAudioPublisher = (options: AudioPublisherOptions) => {
 interface GeneratePronunciationOptions {
   readonly audioRepository: LanguageLearningWordAudioRepository
   readonly downloadIfMissing: boolean
+  /** 저장 완료 시점에 같은 자원을 사용하는 현재 참조를 확인합니다. */
+  readonly hasSharedAudioReference: () => boolean
   readonly isCurrent: () => boolean
   readonly modelAssets: ModelAssetManager
   readonly onMissingModel: (request: PendingPronunciation) => void
@@ -202,9 +214,16 @@ const generatePronunciation = (options: GeneratePronunciationOptions) => {
                 }
               }
               if (!options.isCurrent()) {
-                await options.audioRepository
-                  .delete(options.request.word, options.request.audioOwner)
-                  .catch(() => undefined)
+                const removal = options.hasSharedAudioReference()
+                  ? options.audioRepository.delete(
+                      options.request.word,
+                      options.request.audioOwner,
+                      {
+                        preserveSharedAudio: true,
+                      },
+                    )
+                  : options.audioRepository.delete(options.request.word, options.request.audioOwner)
+                await removal.catch(() => undefined)
                 return
               }
               options.publish(options.request.word, pronunciation.audio)
@@ -280,6 +299,15 @@ export const useLanguageLearningWordPronunciation = (): LanguageLearningWordPron
     generatePronunciation({
       audioRepository: getAudioRepository(),
       downloadIfMissing,
+      hasSharedAudioReference: () => {
+        const resourceKey = getAudioResourceKey(getWordKey(request.word))
+        return (
+          hasStoredAudioAlias(request.word) ||
+          (!disposed &&
+            (audioResources()[resourceKey] !== undefined ||
+              (activeRequest !== null && getAudioResourceKey(activeRequest.key) === resourceKey)))
+        )
+      },
       isCurrent: () => !disposed && !request.signal.aborted,
       modelAssets,
       onMissingModel: setPendingRequest,
@@ -424,7 +452,7 @@ export const useLanguageLearningWordPronunciation = (): LanguageLearningWordPron
       activeRequest !== null && getAudioResourceKey(activeRequest.key) === resourceKey
     const repository = getAudioRepository()
     const removal =
-      remainingWordKeys.length > 0 || otherRequestUsesResource
+      remainingWordKeys.length > 0 || otherRequestUsesResource || hasStoredAudioAlias(word)
         ? repository.delete(word, undefined, {preserveSharedAudio: true})
         : repository.delete(word)
     removal.catch((reason: unknown) => {
