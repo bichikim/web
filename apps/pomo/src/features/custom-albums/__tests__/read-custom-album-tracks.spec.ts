@@ -6,7 +6,6 @@ import {afterEach, expect, it, vi} from 'vitest'
 import * as customAlbumDatabase from '../database'
 import {readCustomAlbumTracks} from '../read-custom-album-tracks'
 import {revokeCustomTrackObjectUrls} from '../to-custom-p-track'
-import {resolveStoredPlaylistTracks} from '../../../components/media-player/resolve-stored-playlist-tracks'
 import type {PTrack} from '../../focus-room-audio'
 
 const VALID_TRACK_A_ID = 'custom-track:valid-a'
@@ -83,7 +82,7 @@ afterEach(async () => {
   }
 })
 
-it('returns healthy requested tracks in order and reports corrupt records without deleting them', async () => {
+it('should return healthy requested tracks in order and report corrupt records without deleting them', async () => {
   await seedMixedTracks()
   const onError = vi.fn()
 
@@ -110,31 +109,7 @@ it('returns healthy requested tracks in order and reports corrupt records withou
   expect(await readStoredTrack(CORRUPT_TRACK_ID)).toMatchObject({durationSeconds: -1})
 })
 
-it('restores healthy custom tracks alongside bundled tracks when another stored record is corrupt', async () => {
-  await seedMixedTracks()
-  const onError = vi.fn()
-
-  const tracks = await resolveStoredPlaylistTracks({
-    onError,
-    sourceTracks: [BUNDLED_TRACK],
-    storedTrackIds: Promise.resolve([
-      VALID_TRACK_B_ID,
-      CORRUPT_TRACK_ID,
-      VALID_TRACK_A_ID,
-      VALID_TRACK_B_ID,
-      MISSING_TRACK_ID,
-    ]),
-  })
-
-  expect(tracks.map(({id}) => id)).toEqual([BUNDLED_TRACK.id, VALID_TRACK_B_ID, VALID_TRACK_A_ID])
-  expect(onError).toHaveBeenCalledExactlyOnceWith(
-    expect.objectContaining({code: 'corrupt-data'}),
-    CORRUPT_TRACK_ID,
-  )
-  expect(await readStoredTrack(CORRUPT_TRACK_ID)).toMatchObject({durationSeconds: -1})
-})
-
-it('propagates IndexedDB request failures without reporting them as corrupt records', async () => {
+it('should propagate IndexedDB request failures without reporting them as corrupt records', async () => {
   const storageError = new Error('IndexedDB request failed')
   const onError = vi.fn()
   vi.spyOn(customAlbumDatabase, 'readRequest').mockRejectedValueOnce(storageError)
@@ -143,5 +118,61 @@ it('propagates IndexedDB request failures without reporting them as corrupt reco
     storageError,
   )
 
+  expect(onError).not.toHaveBeenCalled()
+})
+
+it.each([
+  {label: 'empty', trackIds: []},
+  {label: 'bundled', trackIds: ['bundled-track']},
+  {label: 'unrecognized', trackIds: ['not-custom']},
+])('should avoid opening storage for $label requests', async ({trackIds}) => {
+  const open = vi.spyOn(customAlbumDatabase, 'openCustomAlbumDatabase')
+  const onError = vi.fn()
+  expect(await readCustomAlbumTracks({onError, trackIds})).toEqual([])
+  expect(open).not.toHaveBeenCalled()
+  expect(onError).not.toHaveBeenCalled()
+})
+
+it('should ignore missing records without reporting corruption', async () => {
+  const onError = vi.fn()
+  expect(await readCustomAlbumTracks({onError, trackIds: [MISSING_TRACK_ID]})).toEqual([])
+  expect(onError).not.toHaveBeenCalled()
+})
+
+it('should report each corrupt record once and preserve all stored records', async () => {
+  const secondId = 'custom-track:invalid-audio'
+  await putStoredTracks([
+    createStoredTrack(CORRUPT_TRACK_ID, -1),
+    {...createStoredTrack(secondId), audio: 'invalid'},
+  ])
+  const onError = vi.fn()
+  const tracks = await readCustomAlbumTracks({
+    onError,
+    trackIds: [CORRUPT_TRACK_ID, secondId, CORRUPT_TRACK_ID],
+  })
+  expect(tracks).toEqual([])
+  expect(onError.mock.calls.map(([, id]) => id)).toEqual([CORRUPT_TRACK_ID, secondId])
+  expect(onError.mock.calls.every(([error]) => error.code === 'corrupt-data')).toBe(true)
+  expect(await readStoredTrack(CORRUPT_TRACK_ID)).toMatchObject({durationSeconds: -1})
+  expect(await readStoredTrack(secondId)).toMatchObject({audio: 'invalid'})
+})
+
+it('should propagate transaction failures without reporting record corruption', async () => {
+  const transactionError = new Error('IndexedDB transaction failed')
+  const onError = vi.fn()
+  vi.spyOn(customAlbumDatabase, 'waitForTransaction').mockRejectedValueOnce(transactionError)
+  await expect(readCustomAlbumTracks({onError, trackIds: [VALID_TRACK_A_ID]})).rejects.toBe(
+    transactionError,
+  )
+  expect(onError).not.toHaveBeenCalled()
+})
+
+it('should propagate database open failure without reporting record corruption', async () => {
+  const databaseError = new Error('IndexedDB open failed')
+  const onError = vi.fn()
+  vi.spyOn(customAlbumDatabase, 'openCustomAlbumDatabase').mockRejectedValueOnce(databaseError)
+  await expect(readCustomAlbumTracks({onError, trackIds: [VALID_TRACK_A_ID]})).rejects.toBe(
+    databaseError,
+  )
   expect(onError).not.toHaveBeenCalled()
 })

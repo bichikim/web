@@ -10,10 +10,13 @@ import {CUSTOM_TRACK_ID_PREFIX, CustomAlbumError} from './model'
 import {toCustomPTrack} from './to-custom-p-track'
 
 export interface ReadCustomAlbumTracksOptions {
+  /** 누락 레코드는 제외하고, 손상된 요청 레코드마다 원래 검증 원인과 요청 ID를 한 번 전달한다. */
   readonly onError: (error: CustomAlbumError, trackId: string) => void
+  /** 요청 순서를 보존하며 중복 ID와 커스텀 트랙이 아닌 ID는 제외한다. */
   readonly trackIds: readonly string[]
 }
 
+/** 손상 레코드만 건너뛰어 정상 트랙을 읽는다. 저장소는 변경하지 않으며 DB 요청·트랜잭션 실패는 거부한다. */
 export const readCustomAlbumTracks = async (
   options: ReadCustomAlbumTracksOptions,
 ): Promise<readonly PTrack[]> => {
