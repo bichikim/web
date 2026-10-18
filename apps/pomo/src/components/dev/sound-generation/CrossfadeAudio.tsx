@@ -221,7 +221,7 @@ function CrossfadeAudioView(props: CrossfadeAudioViewProps) {
         onChange={() => props.onSeek()}
         step="0.1"
         type="range"
-        value={props.position}
+        value={props.duration > 0 ? props.position : 0}
       />
       <p class="m-0 text-sm text-#bdb2c4" role="status">
         {props.status}
