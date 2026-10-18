@@ -88,11 +88,15 @@ it('should notify a committed result and close its session', async () => {
     return {}
   })
   connection.connect.mockResolvedValue(Object.assign(emitter, {query, release}))
-  const response = streamCloudTextJob(userId, requestId, new AbortController().signal, [
-    'session=refreshed',
+  const cookies = Object.freeze([
+    'session=first; Path=/; HttpOnly',
+    'expired=one; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Path=/',
+    'session=second; Path=/; HttpOnly',
+    'session=first; Path=/; HttpOnly',
   ])
+  const response = streamCloudTextJob(userId, requestId, new AbortController().signal, cookies)
   expect(response.headers.get('cache-control')).toBe('no-store')
-  expect(response.headers.getSetCookie()).toEqual(['session=refreshed'])
+  expect(response.headers.getSetCookie()).toEqual(cookies)
   if (response.body === null) {
     throw new Error('Expected stream')
   }
