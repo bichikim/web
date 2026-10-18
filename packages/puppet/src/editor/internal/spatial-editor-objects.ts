@@ -190,3 +190,12 @@ export const splitSpatialEditorObject = (
         : object,
     ]
   })
+
+export const listSpatialEditorRows = (
+  objects: ReadonlyArray<PuppetSpatialObject>,
+  depth = 0,
+): ReadonlyArray<{readonly object: PuppetSpatialObject; readonly depth: number}> =>
+  objects.flatMap((object) => [
+    {depth, object},
+    ...(object.kind === 'group' ? listSpatialEditorRows(object.children, depth + 1) : []),
+  ])

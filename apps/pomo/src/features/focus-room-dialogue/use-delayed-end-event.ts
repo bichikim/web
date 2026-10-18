@@ -26,31 +26,33 @@ const isValidDuration = (durationMinutes: number) =>
   durationMinutes >= MIN_DELAYED_END_EVENT_MINUTES &&
   durationMinutes <= MAX_DELAYED_END_EVENT_MINUTES
 
-/** Schedules one delayed-end event and cancels it when the owner or enabled scope closes. */
+/** Schedules delayed-end events and cancels the timer and any queued event when the scope closes. */
 export const useDelayedEndEvent = (props: UseDelayedEndEventProps): DelayedEndEventController => {
   const [isRunning, setIsRunning] = createSignal(false)
   let pendingDelay = 0
   let timerGeneration = 0
-  let eventState: 'idle' | 'running' | 'queued' = 'idle'
+  let isEventRunning = false
+  let hasQueuedEvent = false
 
   const runEvent = () => {
-    eventState = 'running'
+    isEventRunning = true
     runPendingEvent({
       onError: (error) => console.error('Failed to queue the delayed end event.', error),
       onEvent: () => props.onEvent(),
       onSettled: () => {
-        if (eventState === 'queued') {
+        isEventRunning = false
+
+        if (hasQueuedEvent) {
+          hasQueuedEvent = false
           runEvent()
-          return
         }
-        eventState = 'idle'
       },
     })
   }
 
   const triggerEvent = () => {
-    if (eventState !== 'idle') {
-      eventState = 'queued'
+    if (isEventRunning) {
+      hasQueuedEvent = true
       return
     }
 
@@ -71,6 +73,7 @@ export const useDelayedEndEvent = (props: UseDelayedEndEventProps): DelayedEndEv
     timerGeneration += 1
     timeout.cancel()
     setIsRunning(false)
+    hasQueuedEvent = false
   }
 
   const start = (durationMinutes: number) => {

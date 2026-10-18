@@ -80,6 +80,6 @@ const isSupertonicLanguage = (language: string): language is SupertonicLanguage 
 
 /** Resolves an HTML language tag to a language token supported by Supertonic 3. */
 export const resolveSupertonicLanguage = (htmlLanguage: string): SupertonicLanguage => {
-  const [primaryLanguage = ''] = htmlLanguage.trim().toLowerCase().split(/[-_]/u)
+  const [primaryLanguage = ''] = htmlLanguage.trim().toLowerCase().split(/[-_]/u, 1)
   return isSupertonicLanguage(primaryLanguage) ? primaryLanguage : 'na'
 }

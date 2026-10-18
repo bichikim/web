@@ -171,4 +171,50 @@ describe('createAiArtifactService', () => {
     expect(storage.listAiArtifactIntermediateObjectKeys).not.toHaveBeenCalled()
     expect(storage.listAiArtifactTemporaryObjectKeys).not.toHaveBeenCalled()
   })
+
+  it('should sum only completed intermediate cleanups with different object counts', async () => {
+    const artifacts = Array.from({length: 3}, (_, index) => createArtifact(index))
+    const repository = createRepository()
+    const storage = createStorage()
+    const error = new Error('partial deletion failed')
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    repository.listAiJobsWithExpiredIntermediateArtifacts.mockResolvedValue([
+      {id: artifacts[0].jobId, status: 'succeeded'},
+      {id: artifacts[1].jobId, status: 'failed'},
+      {id: artifacts[2].jobId, status: 'cancelled'},
+    ])
+    storage.listAiArtifactIntermediateObjectKeys.mockImplementation(async (prefix) => {
+      if (prefix.endsWith(artifacts[1].jobId)) {
+        return ['intermediate-1', 'intermediate-2']
+      }
+      return prefix.endsWith(artifacts[2].jobId) ? ['partial-1', 'partial-2'] : []
+    })
+    storage.listAiArtifactTemporaryObjectKeys.mockImplementation(async (id) =>
+      id === artifacts[1].jobId ? ['temporary-1'] : [],
+    )
+    storage.deleteAiArtifactObject.mockImplementation(async (key) => {
+      if (key === 'partial-2') {
+        throw error
+      }
+    })
+    const service = createAiArtifactService({clock: () => now, repository, storage})
+
+    await expect(service.cleanupExpiredAiIntermediateObjects()).resolves.toEqual({
+      deleted: 3,
+      failures: 1,
+    })
+
+    expect(repository.markAiJobIntermediateCleanupCompleted.mock.calls.map(([id]) => id)).toEqual([
+      artifacts[0].jobId,
+      artifacts[1].jobId,
+    ])
+    expect(storage.deleteAiArtifactObject).toHaveBeenCalledTimes(5)
+    expect(storage.listAiArtifactTemporaryObjectKeys.mock.calls.map(([id]) => id)).toEqual([
+      artifacts[1].jobId,
+      artifacts[2].jobId,
+    ])
+    expect(consoleError.mock.calls).toEqual([
+      ['Failed to process an AI artifact cleanup item', error],
+    ])
+  })
 })

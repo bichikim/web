@@ -3,6 +3,7 @@
 import {expect, it} from 'vitest'
 
 import {
+  DESKTOP_MODE_STORAGE_KEY,
   type DesktopModeStorage,
   readCleanExitStorage,
   readDesktopModeStorage,
@@ -27,6 +28,26 @@ it('should persist desktop mode and clean-exit state through one injected store'
   expect(readDesktopModeStorage(storage)).toBe('widget')
   expect(readCleanExitStorage(storage)).toBe(true)
 })
+
+it.each(['normal', 'widget', 'desktop', 'interactiveDesktop'] as const)(
+  'should read the exact persisted mode %s',
+  (mode) => {
+    const storage = createStorage()
+    storage.setItem(DESKTOP_MODE_STORAGE_KEY, mode)
+
+    expect(readDesktopModeStorage(storage)).toBe(mode)
+  },
+)
+
+it.each(['invalid', 'Normal', ' desktop', 'widget '])(
+  'should preserve the fallback for unsupported persisted value %s',
+  (value) => {
+    const storage = createStorage()
+    storage.setItem(DESKTOP_MODE_STORAGE_KEY, value)
+
+    expect(readDesktopModeStorage(storage)).toBe('normal')
+  },
+)
 
 it('should preserve fallback behavior when an injected store fails', () => {
   const storage: DesktopModeStorage = {

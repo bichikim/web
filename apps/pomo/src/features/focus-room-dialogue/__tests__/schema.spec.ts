@@ -2,6 +2,7 @@
 import {describe, expect, it} from 'vitest'
 
 import {dialogueEventBindingSchema, focusRoomDialogueSchema} from '../schema'
+import {SUPERTONIC_VOICES} from '../../supertonic/model'
 
 const baseDialogue = {
   audioKey: 'audio-key',
@@ -16,6 +17,31 @@ const baseDialogue = {
 } as const
 
 describe('focusRoomDialogueSchema', () => {
+  it.each(SUPERTONIC_VOICES)('should preserve the registered $id voice', ({id}) => {
+    expect(
+      focusRoomDialogueSchema.parse({
+        ...baseDialogue,
+        segments: [{durationMs: 1000, index: 0, startMs: 0, text: '반가워!'}],
+        voiceId: id,
+      }).voiceId,
+    ).toBe(id)
+  })
+
+  it.each(['default', 'Sarah', 'yuna', ' Yuna ', null])(
+    'should reject an unregistered voice %s at its field',
+    (voiceId) => {
+      const result = focusRoomDialogueSchema.safeParse({
+        ...baseDialogue,
+        segments: [{durationMs: 1000, index: 0, startMs: 0, text: '반가워!'}],
+        voiceId,
+      })
+      expect(result.success).toBe(false)
+      expect(result.error?.issues).toEqual([
+        {code: 'custom', message: 'Invalid input', path: ['voiceId']},
+      ])
+    },
+  )
+
   it('should migrate a stored dialogue without a language to Korean', () => {
     const dialogue = focusRoomDialogueSchema.parse({
       ...baseDialogue,

@@ -40,6 +40,70 @@ describe('createTrackObjectUrl', () => {
     expect(result.pathname).toBe(`/pomofi-paid-audio/${OBJECT_KEY}`)
   })
 
+  it.each([
+    {path: '', prefix: ' \t\n '},
+    {path: '', prefix: '/////'},
+    {path: 'previews/pr-123/', prefix: ' ///previews/pr-123//// '},
+    {path: 'previews/', prefix: '\uFEFF\u2028/previews/\u00A0'},
+  ])('should trim only the prefix boundaries for $prefix', ({prefix, path}) => {
+    const result = createTrackObjectUrl(OBJECT_KEY, {
+      CLOUDFLARE_R2_ACCOUNT_ID: 'account-id',
+      POMO_PAID_AUDIO_R2_PREFIX: prefix,
+    })
+
+    expect(result.pathname).toBe(`/pomofi-paid-audio/${path}${OBJECT_KEY}`)
+  })
+
+  it.each(['previews//pr-123', '/ previews/', '/previews /', '/Previews/'])(
+    'should preserve invalid interior prefix content for %s',
+    (prefix) => {
+      expect(() =>
+        createTrackObjectUrl(OBJECT_KEY, {
+          CLOUDFLARE_R2_ACCOUNT_ID: 'account-id',
+          POMO_PAID_AUDIO_R2_PREFIX: prefix,
+        }),
+      ).toThrow(new TypeError('POMO_PAID_AUDIO_R2_PREFIX is invalid'))
+    },
+  )
+
+  it('should read account, bucket, and prefix once in order', () => {
+    const reads: string[] = []
+    const result = createTrackObjectUrl(OBJECT_KEY, {
+      get CLOUDFLARE_R2_ACCOUNT_ID() {
+        reads.push('account')
+        return 'account-id'
+      },
+      get POMO_PAID_AUDIO_R2_BUCKET() {
+        reads.push('bucket')
+        return 'bucket'
+      },
+      get POMO_PAID_AUDIO_R2_PREFIX() {
+        reads.push('prefix')
+        return '/previews/'
+      },
+    })
+
+    expect(reads).toEqual(['account', 'bucket', 'prefix'])
+    expect(result.pathname).toBe(`/bucket/previews/${OBJECT_KEY}`)
+  })
+
+  it('should propagate a prefix getter failure without reading it again', () => {
+    const failure = new Error('prefix getter failed')
+    const getPrefix = vi.fn((): string => {
+      throw failure
+    })
+
+    expect(() =>
+      createTrackObjectUrl(OBJECT_KEY, {
+        CLOUDFLARE_R2_ACCOUNT_ID: 'account-id',
+        get POMO_PAID_AUDIO_R2_PREFIX() {
+          return getPrefix()
+        },
+      }),
+    ).toThrow(failure)
+    expect(getPrefix).toHaveBeenCalledOnce()
+  })
+
   it('should reject missing account IDs and invalid prefixes', () => {
     expect(() => createTrackObjectUrl(OBJECT_KEY, {})).toThrow(
       'CLOUDFLARE_R2_ACCOUNT_ID is not set',
@@ -106,5 +170,78 @@ describe('signTrackObjectRequest', () => {
     expect(() =>
       signTrackObjectRequest(new Request('https://example.com/source.mp3'), {}, true),
     ).toThrow('POMO_PAID_AUDIO_R2_ACCESS_KEY_ID is not set')
+  })
+
+  it.each(['', ' \t\u00a0'])(
+    'should reject a present blank paid access key %j before fallback and signer construction',
+    (accessKey) => {
+      const reads: string[] = []
+
+      expect(() =>
+        signTrackObjectRequest(
+          new Request('https://example.com/source.mp3'),
+          {
+            get POMO_PAID_AUDIO_R2_ACCESS_KEY_ID() {
+              reads.push('paid-access')
+              return accessKey
+            },
+            get POMO_PAID_AUDIO_R2_SECRET_ACCESS_KEY() {
+              reads.push('paid-secret')
+              return 'secret-key'
+            },
+            get POMO_PUBLIC_ASSETS_R2_ACCESS_KEY_ID() {
+              reads.push('public-access')
+              return 'public-access-key'
+            },
+          },
+          true,
+        ),
+      ).toThrow(new TypeError('POMO_PAID_AUDIO_R2_ACCESS_KEY_ID is not set'))
+      expect(reads).toEqual(['paid-access'])
+      expect(AwsClient).not.toHaveBeenCalled()
+      expect(sign).not.toHaveBeenCalled()
+    },
+  )
+
+  it('should reject a missing secret with its own configuration name before signer construction', () => {
+    expect(() =>
+      signTrackObjectRequest(
+        new Request('https://example.com/source.mp3'),
+        {POMO_PAID_AUDIO_R2_ACCESS_KEY_ID: 'access-key'},
+        false,
+      ),
+    ).toThrow(new TypeError('POMO_PAID_AUDIO_R2_SECRET_ACCESS_KEY is not set'))
+    expect(AwsClient).not.toHaveBeenCalled()
+    expect(sign).not.toHaveBeenCalled()
+  })
+
+  it('should propagate a secret getter failure after reading the paid access key once', () => {
+    const failure = new Error('secret getter failed')
+    const reads: string[] = []
+    let thrown: unknown
+
+    try {
+      signTrackObjectRequest(
+        new Request('https://example.com/source.mp3'),
+        {
+          get POMO_PAID_AUDIO_R2_ACCESS_KEY_ID() {
+            reads.push('paid-access')
+            return 'access-key'
+          },
+          get POMO_PAID_AUDIO_R2_SECRET_ACCESS_KEY(): string {
+            reads.push('paid-secret')
+            throw failure
+          },
+        },
+        true,
+      )
+    } catch (error) {
+      thrown = error
+    }
+
+    expect(thrown).toBe(failure)
+    expect(reads).toEqual(['paid-access', 'paid-secret'])
+    expect(AwsClient).not.toHaveBeenCalled()
+    expect(sign).not.toHaveBeenCalled()
   })
 })

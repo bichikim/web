@@ -1,24 +1,15 @@
 import {parse} from 'csv-parse/browser/esm/sync'
+import type {TableResult} from './table/types'
 
 interface DelimitedTextOptions {
   readonly source: string
   readonly delimiter: ',' | '\t'
 }
-interface TableData {
-  readonly ok: true
-  readonly rows: readonly (readonly string[])[]
-  readonly columns: number
-  readonly truncated: boolean
-}
-interface TableError {
-  readonly ok: false
-  readonly message: string
-}
 const MAX_ROWS = 10000
 const MAX_COLUMNS = 100
 
 /** Parses quoted CSV/TSV into a bounded preview, preserving cell text without evaluation. */
-export const parseDelimitedText = (options: DelimitedTextOptions): TableData | TableError => {
+export const parseDelimitedText = (options: DelimitedTextOptions): TableResult => {
   try {
     const records = parse(options.source, {
       bom: true,

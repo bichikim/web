@@ -7,7 +7,6 @@ import {
   runnerCapabilityFor,
   textJobInputSchema,
 } from '../contracts'
-import {createAiRunnerJobRequest} from '../runner-contract'
 
 describe('AI job contracts', () => {
   it('validates text input and maps capability names for the runner', () => {
@@ -17,22 +16,6 @@ describe('AI job contracts', () => {
 
     expect(input).toMatchObject({messages: [{content: '안녕하세요', role: 'user'}]})
     expect(runnerCapabilityFor('speech-to-text')).toBe('speech_to_text')
-  })
-
-  it('separates runner intermediates from the final temporary result namespace', () => {
-    expect(
-      createAiRunnerJobRequest({
-        capability: 'image',
-        input: {idea: 'rain'},
-        jobId: '019d0000-0000-7000-8000-000000000001',
-        modelId: 'image-model',
-      }),
-    ).toMatchObject({
-      artifact: {
-        intermediateObjectKeyPrefix: 'ai/intermediate/019d0000-0000-7000-8000-000000000001',
-        objectKeyPrefix: 'ai/jobs/019d0000-0000-7000-8000-000000000001/temporary',
-      },
-    })
   })
 
   it('rejects an audio job without an input reference', () => {

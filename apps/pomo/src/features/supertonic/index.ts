@@ -48,5 +48,6 @@ export type {
   UseSupertonicVoiceLabProps,
 } from './use-supertonic-voice-lab'
 export {parseSupertonicVoiceStyle} from './voice-style'
+export {isSupertonicVoiceId} from './is-supertonic-voice-id'
 export type {SupertonicVoiceStyle} from './voice-style'
 export {splitSpeechText} from './text-chunking'

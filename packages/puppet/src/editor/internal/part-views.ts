@@ -21,29 +21,34 @@ interface CreatePartViewsOptions {
   readonly activePartId?: string
   readonly candidates: ReadonlyArray<PuppetPart>
   readonly draftPoint: VertexPoint | null
-  readonly props: MeshEditorProps
   readonly selectedVertex: number | null
+  readonly verticesByPartId: ReadonlyMap<string, Float32Array>
 }
 
-export const createPartViews = (options: CreatePartViewsOptions): ReadonlyArray<MeshPartView> => {
+export const createPreviewVertices = (
+  props: MeshEditorProps,
+): ReadonlyMap<string, Float32Array> => {
   const verticesByPartId = new Map(
-    options.props.document.parts.map((candidate) => [
+    props.document.parts.map((candidate) => [
       candidate.id,
-      new Float32Array(getPartPreviewVertices(options.props, candidate)),
+      new Float32Array(getPartPreviewVertices(props, candidate)),
     ]),
   )
   applySceneDeformers({
-    document: getDeformerPreviewDocument(options.props),
+    document: getDeformerPreviewDocument(props),
     verticesByPartId,
   })
+  return verticesByPartId
+}
 
-  return options.candidates.map((candidate) => {
+export const createPartViews = (options: CreatePartViewsOptions): ReadonlyArray<MeshPartView> =>
+  options.candidates.map((candidate) => {
     const isActivePart = candidate.id === options.activePartId
     const vertices = getIndexedVertices({
       draftPoint: isActivePart ? options.draftPoint : null,
       mesh: {
         ...candidate.mesh,
-        vertices: Array.from(verticesByPartId.get(candidate.id) ?? candidate.mesh.vertices),
+        vertices: Array.from(options.verticesByPartId.get(candidate.id) ?? candidate.mesh.vertices),
       },
       selectedVertex: isActivePart ? options.selectedVertex : null,
     })
@@ -60,4 +65,3 @@ export const createPartViews = (options: CreatePartViewsOptions): ReadonlyArray<
       vertices,
     }
   })
-}

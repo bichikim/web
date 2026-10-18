@@ -1,6 +1,6 @@
 import {render} from 'solid-js/web'
 
-import {PuppetEditor} from './editor'
+import {EditorApp} from './EditorApp'
 import type {PuppetExampleDocument} from './editor/example-document'
 import {
   createDemoDocument,
@@ -62,13 +62,23 @@ if (!(rootElement instanceof HTMLElement)) {
 if (import.meta.env.DEV && /^\/converter\/?$/u.test(location.pathname)) {
   const {ConverterPage} = await import('./converter/ConverterPage')
   render(() => <ConverterPage />, rootElement)
-} else {
-  const initialDocument = await loadInitialDocument()
+} else if (import.meta.env.DEV && /^\/(?:viewer|studio)\/?$/u.test(location.pathname)) {
+  const {RuntimePage} = await import('./runtime/RuntimePage')
   render(
     () => (
-      <PuppetEditor
+      <RuntimePage
+        mode={location.pathname.startsWith('/studio') ? 'studio' : 'viewer'}
+        loadInitialDocument={loadInitialDocument}
+      />
+    ),
+    rootElement,
+  )
+} else {
+  render(
+    () => (
+      <EditorApp
         examples={import.meta.env.DEV ? DEVELOPMENT_EXAMPLES : undefined}
-        initialDocument={initialDocument}
+        loadInitialDocument={loadInitialDocument}
         initialMotionId={import.meta.env.DEV ? DEVELOPMENT_INITIAL_MOTION_ID : undefined}
         initialWorkspace={import.meta.env.DEV ? 'animation' : 'modeling'}
       />

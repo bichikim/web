@@ -69,3 +69,4 @@ export {getFeedConnectionKey} from './feed-connection-key'
 export {getFeedRequestUrl, type FeedUrlEnvironment} from './feed-request-url'
 
 export * from './settings-runtime'
+export {isDevelopmentFeedPath} from './is-development-feed-path'

@@ -1,3 +1,4 @@
+import type {DesktopMode} from './is-desktop-mode'
 import {
   type DesktopModeStorage,
   readCleanExitStorage,
@@ -19,10 +20,8 @@ export {
 } from './storage'
 export type {DesktopModeOwnerState, DesktopModeStorage} from './storage'
 
-export type DesktopMode = 'desktop' | 'interactiveDesktop' | 'normal' | 'widget'
-
-export const isDesktopMode = (value: unknown): value is DesktopMode =>
-  value === 'normal' || value === 'widget' || value === 'desktop' || value === 'interactiveDesktop'
+export {isDesktopMode} from './is-desktop-mode'
+export type {DesktopMode} from './is-desktop-mode'
 
 export const isDesktopBackgroundMode = (mode: DesktopMode): boolean =>
   mode === 'desktop' || mode === 'interactiveDesktop'

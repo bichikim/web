@@ -38,7 +38,7 @@ export const PToastCard = (props: PToastCardProps) => {
       <PScribblePanel enabled={props.sceneStyle === 'scribble'} class="min-w-0 w-full">
         <div
           class={cx(
-            'pointer-events-auto flex min-h-8 min-w-0 items-center gap-2 bg-surface px-3 py-0.5',
+            'pointer-events-auto flex min-h-8 min-w-0 w-full items-center gap-2 bg-surface px-3 py-0.5',
             'text-sm leading-5 text-foreground shadow-panel backdrop-blur-surface',
             props.sceneStyle === 'scribble'
               ? 'rounded-none border-0'

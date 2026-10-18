@@ -6,7 +6,7 @@ import {
   type DefaultTextModelId,
 } from './settings'
 
-/** Reads the shared default model for local sentence generation. */
+/** Reads the shared default model for text generation. */
 export const useDefaultTextModel = (): Accessor<DefaultTextModelId> => {
   const [settings] = usePreference(createTextGenerationPreferenceOptions())
   return createMemo(() => settings()?.modelId ?? DEFAULT_TEXT_GENERATION_SETTINGS.modelId)

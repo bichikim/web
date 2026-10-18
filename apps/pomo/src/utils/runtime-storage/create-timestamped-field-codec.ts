@@ -4,7 +4,7 @@ export type StoredTimestampedField<Field extends string, Value> = Readonly<Recor
   readonly savedAt: number
 }
 
-/** Parses timestamped fields and migrates legacy bare values with timestamp zero. */
+/** 타임스탬프가 있는 필드를 파싱하고, 기존 단독 값에는 타임스탬프 0을 부여해 변환한다. */
 export const createTimestampedFieldCodec = <Field extends string, Value>(
   field: Field,
   valueSchema: z.ZodType<Value>,

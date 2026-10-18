@@ -12,6 +12,8 @@ import {
 import {getTextModel} from 'src/features/text-generation'
 import {PSelect, type PSelectOption} from '../p-select/PSelect'
 import * as m from '@paraglide/message'
+import {useAuth} from 'src/features/auth'
+import {useCloudTextUsage} from 'src/features/cloud-text/use-cloud-text-usage'
 
 const CLASSES = {
   textSettings: cx(
@@ -35,6 +37,25 @@ const MODEL_OPTIONS: ReadonlyArray<PSelectOption<DefaultTextModelId>> = DEFAULT_
 )
 
 export const PDefaultTextGenerationSettings = () => {
+  const authentication = useAuth()
+  const cloud = useCloudTextUsage()
+  const cloudOption = (): PSelectOption<DefaultTextModelId> => {
+    if (authentication.session() === null) {
+      return {disabled: true, label: m.settings_ai_cloud_login(), value: 'cloud'}
+    }
+    const usage = cloud.usage()
+    const label =
+      usage === null
+        ? cloud.error()
+          ? m.settings_ai_cloud_usage_failed()
+          : m.settings_ai_cloud_usage_loading()
+        : usage.remaining === null
+          ? m.settings_ai_cloud_unlimited()
+          : m.settings_ai_cloud_usage({remaining: usage.remaining})
+    return {label, value: 'cloud'}
+  }
+  const modelOptions = (): ReadonlyArray<PSelectOption<DefaultTextModelId>> =>
+    MODEL_OPTIONS.map((option) => (option.value === 'cloud' ? cloudOption() : option))
   const [failedSettings, setFailedSettings] = createSignal<TextGenerationSettings | null>(null)
   const [message, setMessage] = createSignal<string | null>(null)
   const saveQueue = createPreferenceSaveQueue({
@@ -91,6 +112,9 @@ export const PDefaultTextGenerationSettings = () => {
   })
 
   const saveSettings = (nextSettings: TextGenerationSettings) => {
+    if (nextSettings.modelId === 'cloud' && authentication.session() === null) {
+      return
+    }
     if (storedSettings() === null) {
       setMessage(m.settings_ai_text_not_ready())
       return
@@ -117,7 +141,7 @@ export const PDefaultTextGenerationSettings = () => {
             accessibleLabel={m.settings_ai_text_model_label()}
             label={m.settings_ai_text_model()}
             onChange={(modelId) => saveSettings({...settings(), modelId})}
-            options={MODEL_OPTIONS}
+            options={modelOptions()}
             value={settings().modelId}
           />
         </div>

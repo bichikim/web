@@ -5,9 +5,11 @@ import {pathToFileURL} from 'node:url'
 import {createMessageConnection} from 'vscode-jsonrpc/node.js'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 import {createRustService} from '../create-rust-service'
+import {resolveAnalyzer} from '../rust/resolve-analyzer'
 
 const {spawn} = vi.hoisted(() => ({spawn: vi.fn()}))
 vi.mock('node:child_process', () => ({spawn}))
+vi.mock('../rust/resolve-analyzer', () => ({resolveAnalyzer: vi.fn()}))
 
 describe('createRustService', () => {
   let process: EventEmitter
@@ -20,6 +22,7 @@ describe('createRustService', () => {
   const root = '/workspace/example'
   const path = `${root}/src/main.rs`
   beforeEach(() => {
+    vi.mocked(resolveAnalyzer).mockResolvedValue('/cached/rust-analyzer')
     const input = new PassThrough()
     const output = new PassThrough()
     process = Object.assign(new EventEmitter(), {
@@ -47,7 +50,20 @@ describe('createRustService', () => {
     server.onNotification('textDocument/didChange', (value) => changed.push(value))
     server.onRequest('textDocument/definition', (value: unknown) => definition(value))
     server.listen()
-    service = createRustService({directory: root, file: path, manifest: true})
+    service = createRustService({
+      crates: [
+        {
+          cfg: [],
+          deps: [],
+          display_name: 'example',
+          edition: '2021',
+          is_workspace_member: true,
+          root_module: path,
+          source: {exclude_dirs: [], include_dirs: [root]},
+        },
+      ],
+      directory: root,
+    })
   })
   afterEach(() => {
     service.dispose()
@@ -57,7 +73,7 @@ describe('createRustService', () => {
   it('should initialize once and translate UTF-16 positions and definition links', async () => {
     const source = 'fn main() {\r\n let text = "🦊"; answer();\n}'
     const offset = source.indexOf('answer')
-    expect(await service.definitions(path, source, offset)).toEqual({
+    expect(await service.lookupSymbols(path, source, offset, {kind: 'definition'})).toEqual({
       ok: true,
       value: [{column: 8, line: 3, path: `${root}/src/math.rs`}],
     })
@@ -72,7 +88,7 @@ describe('createRustService', () => {
         targetUri: pathToFileURL(path).href,
       },
     ])
-    expect(await service.definitions(path, source, offset)).toEqual({
+    expect(await service.lookupSymbols(path, source, offset, {kind: 'definition'})).toEqual({
       ok: true,
       value: [{column: 4, line: 1, path}],
     })
@@ -86,7 +102,7 @@ describe('createRustService', () => {
       started.resolve()
       return server.sendNotification('experimental/serverStatus', {health: 'ok', quiescent: false})
     })
-    const pending = service.definitions(path, 'main()', 0)
+    const pending = service.lookupSymbols(path, 'main()', 0, {kind: 'definition'})
     await started.promise
     expect(definition).not.toHaveBeenCalled()
     await server.sendNotification('experimental/serverStatus', {health: 'ok', quiescent: true})
@@ -98,14 +114,14 @@ describe('createRustService', () => {
       requested.resolve()
       return new Promise(() => {})
     })
-    const pending = service.definitions(path, 'main()', 0)
+    const pending = service.lookupSymbols(path, 'main()', 0, {kind: 'definition'})
     await requested.promise
     process.emit('exit', 1)
     expect(await pending).toMatchObject({error: {code: 'rust-analysis-failed'}, ok: false})
   })
   it('should synchronize edited source before requesting a new definition', async () => {
-    await service.definitions(path, 'fn main() {}', 3)
-    await service.definitions(path, '\nfn main() {}', 4)
+    await service.lookupSymbols(path, 'fn main() {}', 3, {kind: 'definition'})
+    await service.lookupSymbols(path, '\nfn main() {}', 4, {kind: 'definition'})
     expect(changed).toEqual([
       {
         contentChanges: [{text: '\nfn main() {}'}],
@@ -116,7 +132,10 @@ describe('createRustService', () => {
   })
   it('should return no targets for an unresolved symbol', async () => {
     definition.mockReturnValue(null)
-    expect(await service.definitions(path, 'unknown()', 0)).toEqual({ok: true, value: []})
+    expect(await service.lookupSymbols(path, 'unknown()', 0, {kind: 'definition'})).toEqual({
+      ok: true,
+      value: [],
+    })
   })
   it('should reject malformed or non-file navigation results', async () => {
     definition.mockReturnValue([
@@ -125,15 +144,82 @@ describe('createRustService', () => {
         uri: 'https://example.com/file.rs',
       },
     ])
-    expect(await service.definitions(path, 'main()', 0)).toMatchObject({
+    expect(await service.lookupSymbols(path, 'main()', 0, {kind: 'definition'})).toMatchObject({
       error: {code: 'rust-analysis-failed'},
       ok: false,
     })
   })
   it('should report missing analyzer and finish pending initialization', async () => {
-    const pending = service.definitions(path, 'main()', 0)
+    const spawned = Promise.withResolvers<void>()
+    spawn.mockImplementationOnce(() => {
+      spawned.resolve()
+      return process
+    })
+    const pending = service.lookupSymbols(path, 'main()', 0, {kind: 'definition'})
+    await spawned.promise
     process.emit('error', Object.assign(new Error('missing'), {code: 'ENOENT'}))
     expect(await pending).toMatchObject({error: {code: 'rust-analyzer-unavailable'}, ok: false})
+  })
+  it('should wait for the analyzer download before starting its process', async () => {
+    const downloaded = Promise.withResolvers<string>()
+    vi.mocked(resolveAnalyzer).mockReturnValueOnce(downloaded.promise)
+    const pending = service.lookupSymbols(path, 'main()', 0, {kind: 'definition'})
+    expect(spawn).not.toHaveBeenCalled()
+    downloaded.resolve('/cached/downloaded-analyzer')
+    expect(await pending).toMatchObject({ok: true})
+    expect(spawn).toHaveBeenCalledWith('/cached/downloaded-analyzer', [], expect.any(Object))
+  })
+  it('should retry provisioning after a temporary download failure', async () => {
+    vi.mocked(resolveAnalyzer).mockRejectedValueOnce(new Error('offline'))
+    expect(await service.lookupSymbols(path, 'main()', 0, {kind: 'definition'})).toEqual({
+      error: {code: 'rust-analyzer-unavailable'},
+      ok: false,
+    })
+    expect(await service.lookupSymbols(path, 'main()', 0, {kind: 'definition'})).toMatchObject({
+      ok: true,
+    })
+    expect(resolveAnalyzer).toHaveBeenCalledTimes(2)
+  })
+  it.each(['lookupSymbols', 'lookupIndexedSymbols'] as const)(
+    'should cancel %s during provisioning and retain the download for a retry',
+    async (method) => {
+      const downloaded = Promise.withResolvers<string>()
+      vi.mocked(resolveAnalyzer).mockReturnValueOnce(downloaded.promise)
+      const controller = new AbortController()
+      let cancelled = false
+      const pending = service[method](path, 'main()', 0, {
+        kind: 'definition',
+        signal: controller.signal,
+      }).catch((error: unknown) => {
+        cancelled = error === controller.signal.reason
+      })
+      controller.abort()
+      await new Promise<void>((resolve) => {
+        setImmediate(resolve)
+      })
+      try {
+        expect(cancelled).toBe(true)
+        expect(spawn).not.toHaveBeenCalled()
+      } finally {
+        downloaded.resolve('/cached/downloaded-analyzer')
+        await pending
+      }
+      expect(await service[method](path, 'main()', 0, {kind: 'definition'})).toMatchObject({
+        ok: true,
+      })
+      expect(resolveAnalyzer).toHaveBeenCalledOnce()
+      expect(spawn).toHaveBeenCalledOnce()
+    },
+  )
+  it('should finish a pending lookup on disposal without spawning after the download', async () => {
+    const downloaded = Promise.withResolvers<string>()
+    vi.mocked(resolveAnalyzer).mockReturnValueOnce(downloaded.promise)
+    const pending = service.lookupSymbols(path, 'main()', 0, {kind: 'definition'})
+    service.dispose()
+    expect(await pending).toMatchObject({error: {code: 'rust-analysis-failed'}, ok: false})
+    downloaded.resolve('/cached/downloaded-analyzer')
+    await downloaded.promise
+    expect(spawn).not.toHaveBeenCalled()
   })
   it('should release pending requests and stop the process on disposal', async () => {
     const requested = Promise.withResolvers<void>()
@@ -141,7 +227,7 @@ describe('createRustService', () => {
       requested.resolve()
       return new Promise(() => {})
     })
-    const pending = service.definitions(path, 'main()', 0)
+    const pending = service.lookupSymbols(path, 'main()', 0, {kind: 'definition'})
     await requested.promise
     service.dispose()
     expect(await pending).toMatchObject({error: {code: 'rust-analysis-failed'}, ok: false})
@@ -149,12 +235,13 @@ describe('createRustService', () => {
     expect(Reflect.get(process, 'kill')).toHaveBeenCalledTimes(1)
   })
   it('should disable project execution and use the server file watcher', async () => {
-    await service.definitions(path, 'main()', 0)
+    await service.lookupSymbols(path, 'main()', 0, {kind: 'definition'})
     expect(initialize.mock.calls[0][0]).toMatchObject({
       initializationOptions: {
-        cargo: {buildScripts: {enable: false}, noDeps: true},
+        cargo: {buildScripts: {enable: false}, noDeps: true, sysroot: null},
         checkOnSave: false,
         files: {watcher: 'server'},
+        linkedProjects: [{crates: [{root_module: path}]}],
         procMacro: {enable: false},
       },
     })

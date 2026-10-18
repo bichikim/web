@@ -3,7 +3,7 @@ export interface SerialTaskQueue {
   readonly settle: () => Promise<void>
 }
 
-/** Runs every submitted operation in order and lets later operations proceed after a failure. */
+/** 제출된 모든 작업을 순서대로 실행하고, 실패 후에도 다음 작업을 진행한다. */
 export const createSerialTaskQueue = (): SerialTaskQueue => {
   let pending = Promise.resolve()
   return {

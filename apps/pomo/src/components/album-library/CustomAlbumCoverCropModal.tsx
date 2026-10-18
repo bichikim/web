@@ -105,7 +105,7 @@ export const CustomAlbumCoverCropModal = (props: CustomAlbumCoverCropModalProps)
           <PButton
             bordered
             disabled={crop.isCropping()}
-            onPress={props.onCancel}
+            onPress={() => crop.handleOpenChange(false)}
             size="small"
             tone="secondary"
             transparent

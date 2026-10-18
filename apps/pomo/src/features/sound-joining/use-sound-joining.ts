@@ -1,7 +1,7 @@
 import {createSoundWorkerController} from '../sound-worker-controller'
 import {isNonBlankString} from 'src/utils/is-non-blank-string'
 import {CONNECTION_CONTEXT_SECONDS, SAMPLE_RATE} from '../sound-generation/connection'
-import {assembleJoin, prepareJoin, type StereoAudio} from './audio'
+import {assembleJoin, getJoinParameterError, prepareJoin, type StereoAudio} from './audio'
 
 export interface JoinRequest {
   readonly first: File
@@ -68,6 +68,10 @@ export function useSoundJoining() {
             seconds: 12,
           },
         }
+      },
+      validate: () => {
+        const error = getJoinParameterError(request)
+        return error === null ? null : {error, status: '잘라낼 시간과 연결 구간을 확인해 주세요.'}
       },
     })
   const {run: _run, ...state} = controller

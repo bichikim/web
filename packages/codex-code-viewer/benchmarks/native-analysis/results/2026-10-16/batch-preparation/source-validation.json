@@ -1,0 +1,12 @@
+{
+  "sourceCount": 582,
+  "unchangedDuringCollectionAndFinalVerification": true,
+  "exactCases": 120,
+  "missing": 0,
+  "unexpected": 0,
+  "existingIntegrationTests": 200,
+  "additionalIntegrationTests": 1,
+  "unitTests": 152,
+  "distributionTests": 2,
+  "cacheChecks": 37
+}

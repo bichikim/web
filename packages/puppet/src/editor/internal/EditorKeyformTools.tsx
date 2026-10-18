@@ -139,7 +139,7 @@ export const EditorKeyformTools = (props: EditorKeyformToolsProps) => {
                   />
                 </label>
               </Show>
-              <div class="flex items-center justify-between gap-2">
+              <div class="flex items-center justify-between gap-editor-field">
                 <label for={overwriteId}>기존 키폼 덮어쓰기</label>
                 <EditorCheckbox
                   inputId={overwriteId}

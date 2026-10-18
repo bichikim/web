@@ -177,6 +177,23 @@ describe('createPSceneStyleRepository', () => {
     writeWeb: vi.fn<(key: string, value: unknown) => void>(),
   })
 
+  it('should reject coercible web values without invoking their conversion methods', async () => {
+    const convert = vi.fn(() => 'scribble')
+    const storage = createStorage()
+    storage.usesTossStorage = () => false
+    storage.readWeb.mockReturnValue({
+      [Symbol.toPrimitive]: convert,
+      toString: convert,
+      valueOf: convert,
+    })
+    const repository = createPSceneStyleRepository(storage)
+
+    await expect(repository.read()).resolves.toBe('original')
+    expect(convert).not.toHaveBeenCalled()
+    expect(storage.readToss).not.toHaveBeenCalled()
+    expect(storage.writeWeb).not.toHaveBeenCalled()
+  })
+
   it('should restore a pending read despite writes in another repository', async () => {
     const firstStorage = createStorage()
     const secondStorage = createStorage()

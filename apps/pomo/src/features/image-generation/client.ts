@@ -1,4 +1,4 @@
-import {createOneShotWorkerRequest} from 'src/utils/worker-transport'
+import {requestWorkerOnce} from 'src/utils/worker-transport'
 import * as m from '@paraglide/message'
 import type {ModelDownloadController} from '../model-download'
 import {prepareImageModels} from './prepare'
@@ -28,10 +28,10 @@ interface RunWorkerOptions {
 }
 
 const runWorker = (options: RunWorkerOptions): Promise<GenerationResponse> =>
-  createOneShotWorkerRequest<GenerationRequest, GenerationResponse, GenerationResponse>({
-    abortError: () => new DOMException('Generation cancelled', 'AbortError'),
+  requestWorkerOnce<GenerationRequest, GenerationResponse, GenerationResponse>({
     failureMessage: m.picture_diary_generation_error(),
-    onMessage: (response, reply) => {
+    getAbortError: () => new DOMException('Generation cancelled', 'AbortError'),
+    handleResponse: (response, reply) => {
       switch (response.type) {
         case 'progress':
           options.onUpdate(response)

@@ -8,6 +8,7 @@ export interface TextModelSupportOptions {
 
 /** Checks availability of the selected model's execution backend. */
 export const supportsTextModel = (options: TextModelSupportOptions): boolean =>
-  getTextModelImplementation(options.modelId).architecture === 'lfm-2-gguf'
+  options.modelId === 'cloud' ||
+  (getTextModelImplementation(options.modelId).architecture === 'lfm-2-gguf'
     ? typeof WebAssembly !== 'undefined'
-    : (options.webGpu ?? supportsWebGpu())
+    : (options.webGpu ?? supportsWebGpu()))

@@ -1,4 +1,4 @@
-import {clampDisplayedPercentage} from 'src/utils/clamp-displayed-percentage'
+import {clampFiniteNumber} from 'src/utils/clamp-finite-number'
 import {cx} from 'class-variance-authority'
 import {type Accessor, createMemo, Match, Switch} from 'solid-js'
 
@@ -15,14 +15,12 @@ import {PLoadingStatus} from '../p-loading-status/PLoadingStatus'
 import {PProgress} from '../p-progress/PProgress'
 import {useDownloadStatusItem} from './use-download-status-item'
 
+const MAXIMUM_PERCENTAGE = 100
 const ERROR_CLASSES = cx(
   'pointer-events-auto flex min-h-control-sm items-center gap-2',
   'border border-solid border-border rounded-control bg-surface px-3',
   'text-foreground text-sm font-650 shadow-panel backdrop-blur-surface',
 )
-
-const getDisplayPercentage = (percentage: number) =>
-  Number.isFinite(percentage) ? clampDisplayedPercentage(percentage) : undefined
 
 export interface PModelDownloadStatusItemProps {
   readonly item?: ModelDownloadItem
@@ -47,7 +45,7 @@ export const PModelDownloadStatusItem = (props: PModelDownloadStatusItemProps) =
   const handleLoading = (state: Accessor<LoadingModelDownloadState>) => {
     const display = createMemo(() => {
       const current = state()
-      const percentage = getDisplayPercentage(current.percentage)
+      const percentage = clampFiniteNumber(current.percentage, 0, MAXIMUM_PERCENTAGE)
       return {
         message:
           percentage === undefined

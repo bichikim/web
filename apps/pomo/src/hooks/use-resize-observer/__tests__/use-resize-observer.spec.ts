@@ -28,6 +28,30 @@ beforeEach(() => {
 afterEach(() => vi.unstubAllGlobals())
 
 describe('useResizeObserver', () => {
+  it.each([null, undefined])(
+    'should defer observation while the initial target is %s and observe it when available',
+    (initialTarget) => {
+      const [target, setTarget] = createSignal<Element | null | undefined>(initialTarget)
+      const onResize = vi.fn()
+      const {result, cleanup} = renderHook(() => useResizeObserver({onResize, target}))
+
+      result.start()
+      expect(TestResizeObserver.instances).toHaveLength(0)
+      expect(onResize).not.toHaveBeenCalled()
+
+      const element = document.createElement('span')
+      setTarget(element)
+      expect(TestResizeObserver.instances).toHaveLength(1)
+      const observer = TestResizeObserver.instances[0]!
+      expect(observer.observe).toHaveBeenCalledExactlyOnceWith(element)
+      observer.notify()
+      expect(onResize).toHaveBeenCalledExactlyOnceWith([], observer)
+
+      cleanup()
+      expect(observer.disconnect).toHaveBeenCalledOnce()
+    },
+  )
+
   it('should stay stopped until explicitly started and make repeated operations idempotent', () => {
     const target = document.createElement('div')
     const onResize = vi.fn()
@@ -109,6 +133,45 @@ describe('useResizeObserver', () => {
     setTarget([])
     expect(TestResizeObserver.instances[0]!.disconnect).toHaveBeenCalledOnce()
     expect(TestResizeObserver.instances).toHaveLength(1)
+    cleanup()
+  })
+
+  it('should consume the target iterator once and retain first-occurrence element identities', () => {
+    const first = document.createElement('div')
+    const second = document.createElement('span')
+    const targets = [first, second, first]
+    const iterate = vi.fn(() => targets.values())
+    Object.defineProperty(targets, Symbol.iterator, {value: iterate})
+    const target = vi.fn(() => targets)
+    const {result, cleanup} = renderHook(() => useResizeObserver({onResize: vi.fn(), target}))
+
+    result.start()
+    result.start()
+
+    expect(target).toHaveBeenCalledOnce()
+    expect(iterate).toHaveBeenCalledOnce()
+    expect(TestResizeObserver.instances[0]!.observe.mock.calls).toEqual([[first], [second]])
+    expect(targets[0]).toBe(first)
+    expect(targets[1]).toBe(second)
+    expect(targets[2]).toBe(first)
+    expect(targets).toHaveLength(3)
+    cleanup()
+  })
+
+  it('should propagate a target iterator failure before constructing an observer', () => {
+    const cause = new Error('Target iterator failed')
+    const targets: Element[] = []
+    Object.defineProperty(targets, Symbol.iterator, {
+      value: () => {
+        throw cause
+      },
+    })
+    const {result, cleanup} = renderHook(() =>
+      useResizeObserver({onResize: vi.fn(), target: () => targets}),
+    )
+
+    expect(() => result.start()).toThrow(cause)
+    expect(TestResizeObserver.instances).toHaveLength(0)
     cleanup()
   })
 

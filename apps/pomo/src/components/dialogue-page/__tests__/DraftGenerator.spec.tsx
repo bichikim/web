@@ -21,6 +21,8 @@ import {PDialogueDraftGenerator} from '../DraftGenerator'
 import {useDefaultTextModel} from 'src/features/text-generation/use-default-text-model'
 import type {TextModelId} from 'src/features/text-generation/model'
 
+const supportMocks = vi.hoisted(() => ({supportsWebGpu: vi.fn(() => true)}))
+
 vi.mock('../../../features/dialogue-writer', () => ({
   useDialogueWriter: vi.fn(),
 }))
@@ -36,6 +38,9 @@ vi.mock('../../../features/text-generation', async () => {
 
   return {...actual, isTextModelDownloaded: vi.fn()}
 })
+vi.mock('src/features/text-generation/environment', () => ({
+  supportsWebGpu: supportMocks.supportsWebGpu,
+}))
 
 vi.mock('src/components/p-modal/PModal', () => ({PModal: vi.fn()}))
 
@@ -72,6 +77,7 @@ const createModelDownload = (): ModelDownloadController => ({
 })
 
 beforeEach(() => {
+  supportMocks.supportsWebGpu.mockReturnValue(true)
   vi.mocked(useDefaultTextModel).mockReturnValue(() => 'gemma-4-e2b')
   vi.mocked(isTextModelDownloaded).mockResolvedValue(false)
   vi.mocked(useModelDownload).mockReturnValue(createModelDownload())
@@ -464,6 +470,7 @@ it('should explain writer errors and unsupported models', () => {
   expect(screen.getByRole('status').textContent).toContain('대사 모델을 시작하지 못했어요.')
   errorView.unmount()
 
+  supportMocks.supportsWebGpu.mockReturnValue(false)
   const unsupportedWriter = createWriter()
   vi.mocked(useDialogueWriter).mockReturnValue({
     ...unsupportedWriter,
@@ -473,9 +480,7 @@ it('should explain writer errors and unsupported models', () => {
   render(() => <PDialogueDraftGenerator onGenerated={vi.fn()} />)
   fireEvent.click(screen.getByRole('button', {name: /초안 만들기/}))
 
-  expect(screen.getByRole('status').textContent).toContain(
-    '이 기기에서는 대사 모델을 사용할 수 없어요.',
-  )
+  expect(screen.getByRole('status').textContent).toContain('WebGPU를 사용할 수 없어요.')
   expect(screen.getByRole('button', {name: '대사 만들기'}).hasAttribute('disabled')).toBe(true)
 })
 

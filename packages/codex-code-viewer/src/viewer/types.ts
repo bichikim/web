@@ -1,5 +1,12 @@
 import type {CallToolResult} from '@modelcontextprotocol/sdk/types.js'
-import type {CodeLocation, ViewerSession} from '../shared/contracts'
+import type {
+  CodeLocation,
+  NavigationGroup,
+  NavigationLocation,
+  ViewerConnection,
+  WorkspaceEntry,
+} from '../shared/contracts'
+import type {DraftStorage} from './drafts/types'
 
 export interface CodeSelection extends CodeLocation {
   endLine: number
@@ -14,6 +21,11 @@ export interface CodeTextRange {
   endColumn: number
 }
 
+export interface CodeSnippet extends CodeSelection {
+  readonly kind: 'code'
+  readonly text: string
+}
+
 export interface Notice {
   message: string
 }
@@ -22,11 +34,26 @@ export interface WorkspaceSelection {
   readonly kind: 'file' | 'directory'
   readonly path: string
 }
+export interface FileMutation {
+  readonly action: 'copy' | 'cut' | 'delete' | 'rename'
+  readonly source: string
+  readonly entry: WorkspaceEntry
+}
 
-export type ViewerContext = CodeSelection | WorkspaceSelection
+export interface CodeChanges {
+  readonly kind: 'changes'
+  readonly path: string
+  readonly revision: string
+  readonly patch: string
+}
+
+export type ViewerContext = CodeSelection | CodeSnippet | WorkspaceSelection | CodeChanges
 
 export interface ContextMenuItem {
+  readonly group?: string
+  readonly description?: string
   readonly label: string
+  readonly separatorBefore?: boolean
   readonly shortcut?: string
   readonly key?: string
   readonly onSelect?: () => void
@@ -37,23 +64,64 @@ export interface ContextMenuCloseOptions {
 }
 
 export interface NavigationOptions {
+  deleted?: boolean
   historyIndex?: number
   preserveSelection?: boolean
   restoreView?: boolean
 }
 
+export interface ViewerSettingsEnvironment {
+  readonly navigator?: Pick<Navigator, 'language'>
+  readonly localStorage?: Pick<Storage, 'getItem' | 'setItem'>
+}
+
 export interface ViewerPort {
-  call(name: string, arguments_: Record<string, unknown>): Promise<CallToolResult>
+  readonly draftStorage?: DraftStorage
+  copyContextFiles?(): Promise<void>
+  attachContextFiles?(): Promise<void>
+  attachSelection?(selection: ViewerContext): Promise<void>
+  subscribeContext?(receive: (contexts: readonly string[] | null) => void): () => void
+  removeContext?(index?: number): Promise<void>
+  subscribeLocale?(receive: (locale: string | undefined) => void): () => void
+  watch?(
+    session: string,
+    receive: () => void,
+    report: (error: unknown) => void,
+  ): Promise<() => Promise<void>>
+  call(
+    name: string,
+    arguments_: Record<string, unknown>,
+    options?: ViewerRequestOptions,
+  ): Promise<CallToolResult>
   context(selection: ViewerContext): Promise<void>
   location?(location: ViewerFileLocation): Promise<void>
   start(
-    receive: (session: ViewerSession) => void,
+    receive: (session: ViewerConnection, navigation?: NavigationOptions) => void,
     report: (error: unknown) => void,
     refresh: () => void,
+    onTeardown?: () => Promise<void>,
   ): Promise<() => void>
+}
+
+export interface ViewerRequestOptions {
+  readonly signal?: AbortSignal
+  readonly timeout?: number
 }
 
 export interface ViewerFileLocation {
   readonly path: string
   readonly workspace: string
+}
+
+export interface NavigationPoint {
+  readonly x: number
+  readonly y: number
+}
+export interface ReferenceChoices {
+  readonly groups?: readonly NavigationGroup[]
+  readonly kind?: 'definition' | 'references'
+  readonly label: string
+  readonly locations: readonly NavigationLocation[]
+  readonly point: NavigationPoint
+  readonly status?: 'resolving' | 'searching' | 'complete' | 'failed'
 }

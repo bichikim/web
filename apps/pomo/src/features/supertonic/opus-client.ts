@@ -1,4 +1,4 @@
-import {createOneShotWorkerRequest} from 'src/utils/worker-transport'
+import {requestWorkerOnce} from 'src/utils/worker-transport'
 import type {OpusWorkerRequest, OpusWorkerResponse} from './opus-messages'
 
 const OPUS_WORKER_FAILURE_MESSAGE = 'Opus 인코딩 Worker를 실행하지 못했어요.'
@@ -45,11 +45,10 @@ export const createOpusBlob = (options: CreateOpusBlobOptions): Promise<Blob> =>
       ? new Float32Array(options.samples.buffer)
       : options.samples.slice()
 
-  return createOneShotWorkerRequest<OpusWorkerRequest, OpusWorkerResponse, Blob>({
-    abortError: getAbortError,
+  return requestWorkerOnce<OpusWorkerRequest, OpusWorkerResponse, Blob>({
     failureMessage: OPUS_WORKER_FAILURE_MESSAGE,
-    messageFailureMessage: 'Opus 인코딩 Worker 응답을 읽지 못했어요.',
-    onMessage: (response, reply) => {
+    getAbortError,
+    handleResponse: (response, reply) => {
       switch (response.type) {
         case 'complete':
           reply.resolve(response.audio)
@@ -60,8 +59,9 @@ export const createOpusBlob = (options: CreateOpusBlobOptions): Promise<Blob> =>
       }
       response satisfies never
     },
+    mapSendError: getWorkerError,
+    messageFailureMessage: 'Opus 인코딩 Worker 응답을 읽지 못했어요.',
     request: {sampleRate: options.sampleRate, samples: workerSamples},
-    sendError: getWorkerError,
     get signal() {
       return options.signal
     },

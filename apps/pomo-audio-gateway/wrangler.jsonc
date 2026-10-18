@@ -58,5 +58,19 @@
         },
       ],
     },
+    "staging": {
+      "name": "pomofi-audio-gateway-staging",
+      "vars": {
+        "ALLOWED_ORIGINS": "https://staging.pomofi.io",
+        "ALLOWED_ORIGIN_SUFFIXES": ".vercel.app",
+        "R2_OBJECT_PREFIX": "staging",
+      },
+      "r2_buckets": [
+        {
+          "binding": "PAID_AUDIO",
+          "bucket_name": "pomofi-paid-audio-dev",
+        },
+      ],
+    },
   },
 }

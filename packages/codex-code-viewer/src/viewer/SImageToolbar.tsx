@@ -1,3 +1,5 @@
+import {STooltip} from './STooltip'
+import {useTranslations} from './locale/use-translations'
 import {SIcon} from './SIcon'
 import {useNumberInput} from './use-number-input'
 import type {useImageView} from './use-image-view'
@@ -15,6 +17,7 @@ const inputClasses = [
   '[&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none',
 ].join(' ')
 export const SImageToolbar = (props: SImageToolbarProps) => {
+  const t = useTranslations()
   const input = useNumberInput({
     onCommit: (value) => {
       if (value > 0) {
@@ -25,7 +28,7 @@ export const SImageToolbar = (props: SImageToolbarProps) => {
   })
   return (
     <div
-      aria-label="이미지 표시 방식"
+      aria-label={t('이미지 표시 방식')}
       class="flex shrink-0 flex-wrap items-center gap-2 border-b border-divider px-4 py-2"
     >
       <button
@@ -34,21 +37,26 @@ export const SImageToolbar = (props: SImageToolbarProps) => {
         onClick={() => props.image.fit()}
         type="button"
       >
-        화면에 맞춤
+        {t('화면에 맞춤')}
       </button>
       <div class="flex items-center gap-1">
-        <button
-          aria-label="이미지 축소"
-          class="ui-document-button aspect-square px-0"
-          disabled={!props.image.loaded() || props.image.percent() <= props.image.minimum}
-          onClick={() => props.onZoomOut()}
-          type="button"
-        >
-          <SIcon name="minus" />
-        </button>
+        <STooltip content={t('이미지 축소')}>
+          {(description) => (
+            <button
+              aria-describedby={description}
+              aria-label={t('이미지 축소')}
+              class="ui-document-button aspect-square px-0"
+              disabled={!props.image.loaded() || props.image.percent() <= props.image.minimum}
+              onClick={() => props.onZoomOut()}
+              type="button"
+            >
+              <SIcon name="minus" />
+            </button>
+          )}
+        </STooltip>
         <label class="ui-field ui-document-control gap-1 text-sm">
           <input
-            aria-label="이미지 배율 (%)"
+            aria-label={t('이미지 배율 (%)')}
             class={inputClasses}
             type="number"
             inputmode="decimal"
@@ -63,15 +71,20 @@ export const SImageToolbar = (props: SImageToolbarProps) => {
           />
           <span class="text-muted">%</span>
         </label>
-        <button
-          aria-label="이미지 확대"
-          class="ui-document-button aspect-square px-0"
-          disabled={!props.image.loaded() || props.image.percent() >= props.image.maximum}
-          onClick={() => props.onZoomIn()}
-          type="button"
-        >
-          <SIcon name="add" />
-        </button>
+        <STooltip content={t('이미지 확대')}>
+          {(description) => (
+            <button
+              aria-describedby={description}
+              aria-label={t('이미지 확대')}
+              class="ui-document-button aspect-square px-0"
+              disabled={!props.image.loaded() || props.image.percent() >= props.image.maximum}
+              onClick={() => props.onZoomIn()}
+              type="button"
+            >
+              <SIcon name="add" />
+            </button>
+          )}
+        </STooltip>
       </div>
     </div>
   )

@@ -1,0 +1,8 @@
+{
+  "files": 579,
+  "sameBeforeAndAfterCollection": true,
+  "changedSincePreviousProduct": [
+    "packages/codex-code-viewer/src/server/native/may-have-module-bindings.ts",
+    "packages/codex-code-viewer/src/server/native/__tests__/may-have-module-bindings.spec.ts"
+  ]
+}

@@ -114,3 +114,31 @@ it('should lock sentence settings while preserving voice regeneration choices', 
   expect(screen.getByRole('combobox', {name: /목소리/})).toBeEnabled()
   expect(screen.getByRole('combobox', {name: /음성 모델/})).toBeEnabled()
 })
+
+it('should preserve language option order and translated labels', () => {
+  render(() => (
+    <LanguageLearningSettings
+      count={1}
+      disabled={false}
+      language="en"
+      modelId="full"
+      onCountChange={() => undefined}
+      onLanguageChange={() => undefined}
+      onModelChange={() => undefined}
+      onVoiceChange={() => undefined}
+      voiceId="Yuna"
+    />
+  ))
+
+  const select = screen.getByRole('combobox', {name: /학습 언어/})
+  expect(
+    Array.from(select.querySelectorAll('option')).map((option) => ({
+      label: option.textContent,
+      value: option.value,
+    })),
+  ).toEqual([
+    {label: '한국어', value: 'ko'},
+    {label: '영어', value: 'en'},
+    {label: '일본어', value: 'ja'},
+  ])
+})

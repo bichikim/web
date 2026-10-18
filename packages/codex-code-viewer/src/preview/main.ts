@@ -10,12 +10,21 @@ if (frame === null || frame.contentWindow === null) {
 const bridge = new AppBridge(
   null,
   {name: 'Code Viewer Preview', version: manifest.version},
-  {experimental: {'openai/modelContext': {}}, serverTools: {}, updateModelContext: {}},
+  {
+    experimental: {
+      'openai/modelContext': {},
+      'winter-love/code-viewer/http': {version: 1},
+    },
+    serverTools: {},
+    updateModelContext: {},
+  },
 )
-const selection = document.querySelector<HTMLSelectElement>('select')
+const selection = document.querySelector<HTMLSelectElement>('#host-theme')
+const language = document.querySelector<HTMLSelectElement>('#host-locale')
 const count = document.querySelector('output')
 const contextList = document.querySelector('ul')
 let modelContext: {updateId: string; content: ContentBlock[]} | null = null
+let contextRevision = 0
 const preference = globalThis.matchMedia('(prefers-color-scheme: dark)')
 const updateAppearance = (): void => {
   const selected = selection?.value
@@ -25,6 +34,10 @@ const updateAppearance = (): void => {
   const styles = getComputedStyle(document.documentElement)
   bridge.setHostContext(
     McpUiHostContextSchema.parse({
+      locale:
+        language?.value === 'auto' || language?.value === undefined
+          ? navigator.language
+          : language.value,
       'openai/modelContext': modelContext,
       styles: {
         variables: {
@@ -46,6 +59,7 @@ const updateAppearance = (): void => {
   )
 }
 selection?.addEventListener('change', updateAppearance)
+language?.addEventListener('change', updateAppearance)
 preference.addEventListener('change', updateAppearance)
 const request = async (name: string, arguments_: Record<string, unknown>) => {
   const response = await fetch('./tool', {
@@ -60,7 +74,8 @@ const request = async (name: string, arguments_: Record<string, unknown>) => {
 }
 bridge.oncalltool = async (input) => request(input.name, input.arguments ?? {})
 bridge.onupdatemodelcontext = async (input) => {
-  modelContext = {content: input.content ?? [], updateId: crypto.randomUUID()}
+  contextRevision += 1
+  modelContext = {content: input.content ?? [], updateId: `preview-${contextRevision}`}
   if (count !== null) {
     count.textContent = String(modelContext.content.length)
   }

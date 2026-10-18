@@ -1,5 +1,7 @@
 /** @vitest-environment jsdom */
 
+import {createPlayerFixture} from './fixtures/player'
+
 import {cleanup, fireEvent, render, screen, waitFor, within} from '@solidjs/testing-library'
 
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
@@ -25,20 +27,7 @@ const mocks = vi.hoisted(() => ({
   importPng: vi.fn(),
   readTexturePixels: vi.fn(),
 }))
-const player: Player = {
-  destroy: vi.fn(),
-  pause: vi.fn(),
-  play: vi.fn(),
-  playMotion: vi.fn(() => true),
-  redraw: vi.fn(),
-  resetPhysics: vi.fn(),
-  resize: vi.fn(),
-  seek: vi.fn(),
-  setMotion: vi.fn(() => true),
-  setParameterValues: vi.fn(),
-  setPhysicsPreview: vi.fn(),
-  updateDocument: vi.fn(() => true),
-}
+const player = createPlayerFixture()
 
 vi.mock('../../player', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../player')>()),
@@ -226,7 +215,9 @@ describe('PuppetEditor', () => {
 
     const parameterValue = view.getByRole('spinbutton', {name: 'Parameter 3 값'})
     fireEvent.input(parameterValue, {target: {value: '30'}})
-    fireEvent.click(view.getByRole('button', {name: '현재 값에 키폼'}))
+    const track = view.getByLabelText('Parameter 3 키폼 트랙')
+    vi.spyOn(track, 'getBoundingClientRect').mockReturnValue(new DOMRect(100, 0, 200, 40))
+    fireEvent.dblClick(track, {clientX: 300})
     fireEvent.input(view.getByRole('spinbutton', {name: '자유 변형 각도'}), {
       target: {value: '60'},
     })
@@ -321,15 +312,27 @@ describe('PuppetEditor', () => {
     expect(view.getAllByRole('button', {name: /^곡선 (제어점|핸들) \d+$/})).toHaveLength(7)
     fireEvent.keyDown(svg, {key: 'Delete'})
     expect(view.getAllByRole('button', {name: /^곡선 (제어점|핸들) \d+$/})).toHaveLength(4)
-    fireEvent.click(screen.getByRole('button', {name: '실행 취소'}))
+    fireEvent.click(
+      within(screen.getByRole('region', {name: '작업 기록'})).getByRole('button', {
+        name: '실행 취소',
+      }),
+    )
     await waitFor(() =>
       expect(view.getAllByRole('button', {name: /^곡선 (제어점|핸들) \d+$/})).toHaveLength(7),
     )
-    fireEvent.click(screen.getByRole('button', {name: '실행 취소'}))
+    fireEvent.click(
+      within(screen.getByRole('region', {name: '작업 기록'})).getByRole('button', {
+        name: '실행 취소',
+      }),
+    )
     await waitFor(() =>
       expect(view.getAllByRole('button', {name: /^곡선 (제어점|핸들) \d+$/})).toHaveLength(4),
     )
-    fireEvent.click(screen.getByRole('button', {name: '다시 실행'}))
+    fireEvent.click(
+      within(screen.getByRole('region', {name: '작업 기록'})).getByRole('button', {
+        name: '다시 실행',
+      }),
+    )
     await waitFor(() =>
       expect(view.getAllByRole('button', {name: /^곡선 (제어점|핸들) \d+$/})).toHaveLength(7),
     )
@@ -358,9 +361,17 @@ describe('PuppetEditor', () => {
     })
     fireEvent.dblClick(svg, {clientX: 840, clientY: 430})
     expect(view.getAllByRole('button', {name: /본 관절/})).toHaveLength(3)
-    fireEvent.click(screen.getByRole('button', {name: '실행 취소'}))
+    fireEvent.click(
+      within(screen.getByRole('region', {name: '작업 기록'})).getByRole('button', {
+        name: '실행 취소',
+      }),
+    )
     await waitFor(() => expect(view.getAllByRole('button', {name: /본 관절/})).toHaveLength(2))
-    fireEvent.click(screen.getByRole('button', {name: '다시 실행'}))
+    fireEvent.click(
+      within(screen.getByRole('region', {name: '작업 기록'})).getByRole('button', {
+        name: '다시 실행',
+      }),
+    )
     await waitFor(() => expect(view.getAllByRole('button', {name: /본 관절/})).toHaveLength(3))
   })
 
@@ -387,9 +398,17 @@ describe('PuppetEditor', () => {
     expect(node().controlPoints).not.toEqual(before.controlPoints)
     expect(transformDeformerPoint(node(), point)).toEqual(expected)
     const placed = node()
-    fireEvent.click(screen.getByRole('button', {name: '실행 취소'}))
+    fireEvent.click(
+      within(screen.getByRole('region', {name: '작업 기록'})).getByRole('button', {
+        name: '실행 취소',
+      }),
+    )
     expect(node()).toEqual(before)
-    fireEvent.click(screen.getByRole('button', {name: '다시 실행'}))
+    fireEvent.click(
+      within(screen.getByRole('region', {name: '작업 기록'})).getByRole('button', {
+        name: '다시 실행',
+      }),
+    )
     expect(node()).toEqual(placed)
     expect(parseDocument(serializeDocument(latest())).ok).toBe(true)
     fireEvent.click(view.getByRole('button', {name: '변형 편집'}))

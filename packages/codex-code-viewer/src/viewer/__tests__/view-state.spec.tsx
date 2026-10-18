@@ -53,6 +53,40 @@ describe('session view state', () => {
     fresh.dispose()
   })
 
+  it('should recover the selected position and viewport after remounting the same session', () => {
+    const storage = new Map<string, string>()
+    const environment = () => ({
+      getItem: (key: string) => storage.get(key) ?? null,
+      removeItem: (key: string) => storage.delete(key),
+      setItem: (key: string, value: string) => {
+        storage.set(key, value)
+      },
+    })
+    const selected = {column: 3, endColumn: 3, endLine: 1, line: 1, path: 'notes.txt'}
+    const open = (value: ViewerSession) =>
+      createRoot((dispose) => ({
+        dispose,
+        state: useSessionViewState({
+          onError: vi.fn(),
+          selection: () => null,
+          session: () => value,
+          storage: environment,
+        }),
+      }))
+    const first = open(fixture)
+    first.state.bind()?.update({codeScroll: {left: 30, top: 240}, selection: selected})
+    first.dispose()
+    const reopened = open(fixture)
+    expect(reopened.state.restore(fixture, true)).toEqual(selected)
+    expect(reopened.state.bind()?.read()?.codeScroll).toEqual({left: 30, top: 240})
+    reopened.state.restore(fixture, false)
+    expect(reopened.state.bind()?.read()?.codeScroll).toBeUndefined()
+    reopened.dispose()
+    const other = open({...fixture, session: 'other'})
+    expect(other.state.bind()?.read()).toBeUndefined()
+    other.dispose()
+  })
+
   it('should capture the final viewport when leaving before a scroll event is delivered', async () => {
     const view = mount()
     Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', {
