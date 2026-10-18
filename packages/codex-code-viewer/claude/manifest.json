@@ -2,7 +2,7 @@
   "manifest_version": "0.3",
   "name": "winter-love-code-viewer",
   "display_name": "Code Viewer",
-  "version": "0.4.3",
+  "version": "0.6.0",
   "description": "Browse and edit local code, documents and media, and attach selected text to Claude.",
   "author": {"name": "Bichi Kim", "url": "https://github.com/bichikim"},
   "compatibility": {"runtimes": {"node": ">=24"}},
