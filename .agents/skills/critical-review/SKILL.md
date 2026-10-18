@@ -20,6 +20,17 @@ Report any behavior defect encountered, regardless of the perspective that revea
 
 Complete all three perspectives before producing one report. Merge findings sharing a root cause and fix, preserving distinct impacts and locations. Use the verification gate and output contract below. Disclose unfinished coverage; do not claim completion when a perspective or required verification cannot finish.
 
+## Solid reactivity and lifecycle review
+
+For Solid code, trace state changes through derived values, rendering, event handlers, async work, and side effects to their actual consumers, including relevant callers and callees. Check:
+
+- Creation-time-only reads, props destructuring that breaks tracking, incorrectly connected accessors, memos, or stores, and manual refresh paths that bypass reactive propagation.
+- Incorrect effect dependency tracking, cyclic updates, and unnecessary recomputation.
+- Unintended DOM replacement through `For`, `Show`, or `Dynamic`, including loss of focus, local state, or subscriptions.
+- Owner and cleanup leaks, and async work that uses a disposed owner or outlives the cleanup responsible for it.
+
+Apply the verification gate to state changes and relevant lifecycle transitions at the consuming boundary; the presence of a listed pattern alone does not establish a defect.
+
 ## Shared review rules
 
 - Report risks and actionable alternatives, not praise.

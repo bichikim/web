@@ -4,10 +4,9 @@ export const propertiesShortcuts = {
     '[.puppet-editor_&_>_div_>_.deformer-properties]:m-0',
   ],
   'inspector-panel': [
-    '[.puppet-editor_&]:grid [.puppet-editor_&]:content-start [.puppet-editor_&]:gap-editor-group',
-    '[.puppet-editor_&_>_*]:m-0 [.puppet-editor_&_>_section_>_.deformer-properties]:m-0',
-    '[.puppet-editor_&]:[grid-area:inspector] [.puppet-editor_&]:overflow-y-auto',
-    '[.puppet-editor_&]:[overscroll-behavior:contain] [.puppet-editor_&]:[scrollbar-gutter:stable]',
+    '[.puppet-editor_&]:grid [.puppet-editor_&]:[grid-template-rows:minmax(0,_1fr)]',
+    '[.puppet-editor_&]:p-0 [.puppet-editor_&]:min-h-0 [.puppet-editor_&]:gap-0',
+    '[.puppet-editor_&]:[grid-area:inspector] [.puppet-editor_&]:overflow-hidden',
     '[.puppet-editor_&]:[border-left:0.0625rem_solid_#27302d]',
   ],
   'mask-action-button': [

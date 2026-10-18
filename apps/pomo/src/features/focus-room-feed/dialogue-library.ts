@@ -9,5 +9,6 @@ export const excludeFeedDialogues = (
   return excludeByIds(
     dialogues,
     feedDialogues.map((item) => item.metadata.dialogueId),
+    (dialogue) => dialogue.id,
   )
 }

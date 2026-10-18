@@ -1,4 +1,4 @@
-export {createDeferred} from 'src/test-utils/create-deferred'
+export {createDeferred} from 'src/__tests__/create-deferred'
 import {useNavigate} from '@solidjs/router'
 import {cleanup, fireEvent, render, screen, waitFor} from '@solidjs/testing-library'
 import {type ComponentProps, createSignal} from 'solid-js'

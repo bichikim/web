@@ -34,7 +34,11 @@ export const resolveReminderAt = (
   }
 
   const reminder = new Date(`${dateValue}T${time}`)
-  return Number.isNaN(reminder.getTime()) ? null : reminder.toISOString()
+  return Number.isNaN(reminder.getTime()) ||
+    formatLocalDate(reminder) !== dateValue ||
+    getTimeInputValue(reminder) !== time
+    ? null
+    : reminder.toISOString()
 }
 
 /** Resolves form date/time and repeat toggles into persisted reminder settings at save time. */

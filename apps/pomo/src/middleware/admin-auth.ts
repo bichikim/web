@@ -1,4 +1,5 @@
 import {getAuthSession} from '../server/auth/get-auth-session'
+import {appendSetCookies} from '../server/http/append-set-cookies'
 
 const ADMIN_PATH = '/admin'
 const ADMIN_LOGIN_PATH = '/admin/login'
@@ -27,12 +28,6 @@ export const getCleanAuthCallbackUrl = (url: URL): URL | null => {
   return cleanUrl
 }
 
-const appendCookies = (headers: Headers, cookies: readonly string[]): void => {
-  for (const cookie of cookies) {
-    headers.append('Set-Cookie', cookie)
-  }
-}
-
 const applyAdminSecurityHeaders = (headers: Headers): void => {
   headers.set('Cache-Control', NO_STORE)
   headers.set('Referrer-Policy', 'no-referrer')
@@ -41,7 +36,7 @@ const applyAdminSecurityHeaders = (headers: Headers): void => {
 const createLoginRedirect = (input: AdminAuthRequest, cookies: readonly string[]): Response => {
   const headers = new Headers(input.responseHeaders)
   headers.set('Location', new URL(ADMIN_LOGIN_PATH, input.url).toString())
-  appendCookies(headers, cookies)
+  appendSetCookies(headers, cookies)
 
   return new Response(null, {headers, status: 302})
 }
@@ -58,7 +53,7 @@ const createCallbackRedirect = (
 
   const headers = new Headers(input.responseHeaders)
   headers.set('Location', cleanUrl.toString())
-  appendCookies(headers, cookies)
+  appendSetCookies(headers, cookies)
   return new Response(null, {headers, status: 302})
 }
 
@@ -69,7 +64,7 @@ const createErrorResponse = (
   cookies: readonly string[] = [],
 ): Response => {
   const headers = new Headers(responseHeaders)
-  appendCookies(headers, cookies)
+  appendSetCookies(headers, cookies)
 
   return new Response(message, {headers, status})
 }
@@ -111,7 +106,7 @@ export const handleAdminAuthRequest = async (input: AdminAuthRequest): Promise<R
         return callbackRedirect
       }
 
-      appendCookies(input.responseHeaders, setCookies)
+      appendSetCookies(input.responseHeaders, setCookies)
       return null
     }
     case 'anonymous':

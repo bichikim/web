@@ -1,0 +1,402 @@
+[
+  {
+    "name": "getWindow",
+    "variant": "before",
+    "run": 0,
+    "cpuUser": 14.284768000000001,
+    "cpuSystem": 6.062942,
+    "pageFaults": 326,
+    "compressionDelta": 70361,
+    "decompressionDelta": 9854
+  },
+  {
+    "name": "getWindow",
+    "variant": "after",
+    "run": 0,
+    "cpuUser": 14.879311999999999,
+    "cpuSystem": 5.8652429999999995,
+    "pageFaults": 184,
+    "compressionDelta": 130842,
+    "decompressionDelta": 52465
+  },
+  {
+    "name": "getWindow",
+    "variant": "after",
+    "run": 1,
+    "cpuUser": 14.049835999999999,
+    "cpuSystem": 5.385676999999999,
+    "pageFaults": 274,
+    "compressionDelta": 0,
+    "decompressionDelta": 10114
+  },
+  {
+    "name": "getWindow",
+    "variant": "before",
+    "run": 1,
+    "cpuUser": 12.693781999999999,
+    "cpuSystem": 5.118527,
+    "pageFaults": 181,
+    "compressionDelta": 0,
+    "decompressionDelta": 3171
+  },
+  {
+    "name": "getWindow",
+    "variant": "before",
+    "run": 2,
+    "cpuUser": 13.450182000000005,
+    "cpuSystem": 5.804497999999999,
+    "pageFaults": 179,
+    "compressionDelta": 0,
+    "decompressionDelta": 4543
+  },
+  {
+    "name": "getWindow",
+    "variant": "after",
+    "run": 2,
+    "cpuUser": 13.262910000000005,
+    "cpuSystem": 5.355628999999997,
+    "pageFaults": 180,
+    "compressionDelta": 0,
+    "decompressionDelta": 8043
+  },
+  {
+    "name": "getWindow",
+    "variant": "after",
+    "run": 3,
+    "cpuUser": 12.737016999999994,
+    "cpuSystem": 5.117998,
+    "pageFaults": 183,
+    "compressionDelta": 0,
+    "decompressionDelta": 961
+  },
+  {
+    "name": "getWindow",
+    "variant": "before",
+    "run": 3,
+    "cpuUser": 13.064238000000003,
+    "cpuSystem": 5.3272619999999975,
+    "pageFaults": 180,
+    "compressionDelta": 0,
+    "decompressionDelta": 9152
+  },
+  {
+    "name": "getWindow",
+    "variant": "before",
+    "run": 4,
+    "cpuUser": 12.925859000000003,
+    "cpuSystem": 5.194147000000001,
+    "pageFaults": 179,
+    "compressionDelta": 0,
+    "decompressionDelta": 10503
+  },
+  {
+    "name": "getWindow",
+    "variant": "after",
+    "run": 4,
+    "cpuUser": 14.510717999999997,
+    "cpuSystem": 5.562463000000001,
+    "pageFaults": 314,
+    "compressionDelta": 33972,
+    "decompressionDelta": 8346
+  },
+  {
+    "name": "getWindow",
+    "variant": "after",
+    "run": 5,
+    "cpuUser": 15.115751999999986,
+    "cpuSystem": 5.163552000000003,
+    "pageFaults": 182,
+    "compressionDelta": 22350,
+    "decompressionDelta": 3656
+  },
+  {
+    "name": "getWindow",
+    "variant": "before",
+    "run": 5,
+    "cpuUser": 14.769580000000019,
+    "cpuSystem": 5.399153999999996,
+    "pageFaults": 289,
+    "compressionDelta": 3792,
+    "decompressionDelta": 2809
+  },
+  {
+    "name": "getWindow",
+    "variant": "before",
+    "run": 6,
+    "cpuUser": 15.119641000000001,
+    "cpuSystem": 7.182376000000005,
+    "pageFaults": 182,
+    "compressionDelta": 18124,
+    "decompressionDelta": 8995
+  },
+  {
+    "name": "getWindow",
+    "variant": "after",
+    "run": 6,
+    "cpuUser": 15.761770000000013,
+    "cpuSystem": 6.298980999999998,
+    "pageFaults": 290,
+    "compressionDelta": 0,
+    "decompressionDelta": 1109
+  },
+  {
+    "name": "getWindow",
+    "variant": "after",
+    "run": 7,
+    "cpuUser": 15.812194000000005,
+    "cpuSystem": 7.129771000000005,
+    "pageFaults": 310,
+    "compressionDelta": 337027,
+    "decompressionDelta": 2644
+  },
+  {
+    "name": "getWindow",
+    "variant": "before",
+    "run": 7,
+    "cpuUser": 15.824802000000005,
+    "cpuSystem": 6.154202000000012,
+    "pageFaults": 312,
+    "compressionDelta": 56794,
+    "decompressionDelta": 80225
+  },
+  {
+    "name": "getWindow",
+    "variant": "before",
+    "run": 8,
+    "cpuUser": 16.313254,
+    "cpuSystem": 6.2769850000000105,
+    "pageFaults": 377,
+    "compressionDelta": 462819,
+    "decompressionDelta": 660559
+  },
+  {
+    "name": "getWindow",
+    "variant": "after",
+    "run": 8,
+    "cpuUser": 14.380344000000008,
+    "cpuSystem": 5.230093999999994,
+    "pageFaults": 182,
+    "compressionDelta": 0,
+    "decompressionDelta": 30589
+  },
+  {
+    "name": "getWindow",
+    "variant": "after",
+    "run": 9,
+    "cpuUser": 14.614783999999986,
+    "cpuSystem": 5.391797999999994,
+    "pageFaults": 180,
+    "compressionDelta": 0,
+    "decompressionDelta": 68142
+  },
+  {
+    "name": "getWindow",
+    "variant": "before",
+    "run": 9,
+    "cpuUser": 12.978631000000007,
+    "cpuSystem": 5.1849050000000005,
+    "pageFaults": 182,
+    "compressionDelta": 0,
+    "decompressionDelta": 8556
+  },
+  {
+    "name": "javascript",
+    "variant": "before",
+    "run": 0,
+    "cpuUser": 13.207281000000023,
+    "cpuSystem": 5.879304000000005,
+    "pageFaults": 181,
+    "compressionDelta": 0,
+    "decompressionDelta": 2029
+  },
+  {
+    "name": "javascript",
+    "variant": "after",
+    "run": 0,
+    "cpuUser": 14.043083000000024,
+    "cpuSystem": 5.467863999999992,
+    "pageFaults": 312,
+    "compressionDelta": 20030,
+    "decompressionDelta": 64347
+  },
+  {
+    "name": "javascript",
+    "variant": "after",
+    "run": 1,
+    "cpuUser": 12.794040999999993,
+    "cpuSystem": 5.80404399999999,
+    "pageFaults": 183,
+    "compressionDelta": 27789,
+    "decompressionDelta": 8866
+  },
+  {
+    "name": "javascript",
+    "variant": "before",
+    "run": 1,
+    "cpuUser": 13.810846000000026,
+    "cpuSystem": 6.390355,
+    "pageFaults": 293,
+    "compressionDelta": 31466,
+    "decompressionDelta": 32892
+  },
+  {
+    "name": "javascript",
+    "variant": "before",
+    "run": 2,
+    "cpuUser": 13.753064999999992,
+    "cpuSystem": 6.304990000000004,
+    "pageFaults": 289,
+    "compressionDelta": 2074,
+    "decompressionDelta": 5499
+  },
+  {
+    "name": "javascript",
+    "variant": "after",
+    "run": 2,
+    "cpuUser": 13.256554999999992,
+    "cpuSystem": 5.532872000000026,
+    "pageFaults": 185,
+    "compressionDelta": 0,
+    "decompressionDelta": 5810
+  },
+  {
+    "name": "javascript",
+    "variant": "after",
+    "run": 3,
+    "cpuUser": 13.460929999999962,
+    "cpuSystem": 5.393322000000012,
+    "pageFaults": 183,
+    "compressionDelta": 26955,
+    "decompressionDelta": 24634
+  },
+  {
+    "name": "javascript",
+    "variant": "before",
+    "run": 3,
+    "cpuUser": 13.976783000000012,
+    "cpuSystem": 5.34430900000001,
+    "pageFaults": 291,
+    "compressionDelta": 67932,
+    "decompressionDelta": 6432
+  },
+  {
+    "name": "javascript",
+    "variant": "before",
+    "run": 4,
+    "cpuUser": 13.474852999999996,
+    "cpuSystem": 5.7570790000000045,
+    "pageFaults": 288,
+    "compressionDelta": 0,
+    "decompressionDelta": 8320
+  },
+  {
+    "name": "javascript",
+    "variant": "after",
+    "run": 4,
+    "cpuUser": 14.856428999999991,
+    "cpuSystem": 5.754159000000016,
+    "pageFaults": 181,
+    "compressionDelta": 355627,
+    "decompressionDelta": 28765
+  },
+  {
+    "name": "javascript",
+    "variant": "after",
+    "run": 5,
+    "cpuUser": 13.640852999999993,
+    "cpuSystem": 5.17252000000002,
+    "pageFaults": 186,
+    "compressionDelta": 0,
+    "decompressionDelta": 11375
+  },
+  {
+    "name": "javascript",
+    "variant": "before",
+    "run": 5,
+    "cpuUser": 12.403339000000017,
+    "cpuSystem": 5.179892999999993,
+    "pageFaults": 181,
+    "compressionDelta": 0,
+    "decompressionDelta": 3847
+  },
+  {
+    "name": "javascript",
+    "variant": "before",
+    "run": 6,
+    "cpuUser": 12.87221599999998,
+    "cpuSystem": 5.081152000000003,
+    "pageFaults": 179,
+    "compressionDelta": 0,
+    "decompressionDelta": 9002
+  },
+  {
+    "name": "javascript",
+    "variant": "after",
+    "run": 6,
+    "cpuUser": 12.786636999999985,
+    "cpuSystem": 5.323494000000011,
+    "pageFaults": 180,
+    "compressionDelta": 0,
+    "decompressionDelta": 7063
+  },
+  {
+    "name": "javascript",
+    "variant": "after",
+    "run": 7,
+    "cpuUser": 12.595135999999968,
+    "cpuSystem": 5.563754000000017,
+    "pageFaults": 179,
+    "compressionDelta": 0,
+    "decompressionDelta": 4418
+  },
+  {
+    "name": "javascript",
+    "variant": "before",
+    "run": 7,
+    "cpuUser": 13.268475000000024,
+    "cpuSystem": 5.904286999999982,
+    "pageFaults": 179,
+    "compressionDelta": 0,
+    "decompressionDelta": 3550
+  },
+  {
+    "name": "javascript",
+    "variant": "before",
+    "run": 8,
+    "cpuUser": 13.385888999999963,
+    "cpuSystem": 5.778531000000015,
+    "pageFaults": 179,
+    "compressionDelta": 0,
+    "decompressionDelta": 3012
+  },
+  {
+    "name": "javascript",
+    "variant": "after",
+    "run": 8,
+    "cpuUser": 12.91094099999998,
+    "cpuSystem": 4.685490999999985,
+    "pageFaults": 180,
+    "compressionDelta": 0,
+    "decompressionDelta": 1704
+  },
+  {
+    "name": "javascript",
+    "variant": "after",
+    "run": 9,
+    "cpuUser": 12.575921999999991,
+    "cpuSystem": 4.679273999999992,
+    "pageFaults": 179,
+    "compressionDelta": 0,
+    "decompressionDelta": 1846
+  },
+  {
+    "name": "javascript",
+    "variant": "before",
+    "run": 9,
+    "cpuUser": 12.31945399999995,
+    "cpuSystem": 4.477955000000009,
+    "pageFaults": 180,
+    "compressionDelta": 0,
+    "decompressionDelta": 219228
+  }
+]

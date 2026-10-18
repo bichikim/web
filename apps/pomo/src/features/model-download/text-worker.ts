@@ -12,19 +12,11 @@ import {createPomoAssetFetcher, isPomoAssetBundled, isPomoSteamRuntime} from '..
 import {downloadTextModel} from '../text-generation/download-text-model'
 import type {
   PrepareTextModelRequest,
-  TextGenerationErrorResponse,
-  TextGenerationLoadingResponse,
-  TextGenerationReadyResponse,
+  TextModelPreparationResponse,
 } from '../text-generation/messages'
 
-type TextModelDownloadWorkerResponse =
-  | TextGenerationErrorResponse
-  | TextGenerationLoadingResponse
-  | TextGenerationReadyResponse
-
 const workerScope = globalThis.self as DedicatedWorkerGlobalScope
-const sendResponse = (response: TextModelDownloadWorkerResponse) =>
-  workerScope.postMessage(response)
+const sendResponse = (response: TextModelPreparationResponse) => workerScope.postMessage(response)
 const prepareModel = async (request: PrepareTextModelRequest) => {
   await downloadTextModel({
     modelId: request.modelId,

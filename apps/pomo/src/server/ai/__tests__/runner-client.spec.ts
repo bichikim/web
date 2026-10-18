@@ -17,6 +17,42 @@ import {createAiRunnerJobRequest} from '../runner-contract'
 afterEach(() => vi.restoreAllMocks())
 
 describe('AI runner client', () => {
+  it('should decode a UTF-8 response split across subarray chunks', async () => {
+    const encoded = new TextEncoder().encode(JSON.stringify({jobId: '한글'}))
+    const backing = new Uint8Array(encoded.byteLength + 2)
+    backing.set(encoded, 1)
+    const split = encoded.findIndex((byte) => byte > 127) + 2
+    const fetcher = vi.fn<typeof fetch>().mockResolvedValue(
+      new Response(
+        new ReadableStream({
+          start(controller) {
+            controller.enqueue(backing.subarray(1, split))
+            controller.enqueue(backing.subarray(split, backing.byteLength - 1))
+            controller.close()
+          },
+        }),
+      ),
+    )
+    const client = createAiRunnerClient({
+      baseUrl: 'https://runner.example.test',
+      fetcher,
+      timeoutMs: 1000,
+      token: 'runner-token',
+    })
+
+    await expect(
+      client.submit(
+        createAiRunnerJobRequest({
+          capability: 'text',
+          input: {messages: []},
+          jobId: '019d0000-0000-7000-8000-000000000001',
+          modelId: 'gemma-4-e2b',
+        }),
+      ),
+    ).resolves.toEqual({jobId: '한글'})
+    expect(backing.subarray(1, backing.byteLength - 1)).toEqual(encoded)
+  })
+
   it('submits a versioned request with bearer authentication and parses the response', async () => {
     const fetcher = vi.fn<typeof fetch>().mockResolvedValue(Response.json({jobId: 'runner-job-1'}))
     const client = createAiRunnerClient({

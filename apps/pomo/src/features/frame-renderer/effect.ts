@@ -1,4 +1,4 @@
-import {FULLSCREEN_VERTEX} from 'src/utils/fullscreen-vertex'
+import {FULLSCREEN_VERTEX} from 'src/utils/shader'
 import {Filter, GlProgram, type Texture, UniformGroup} from 'pixi.js'
 
 export type ShaderEffect = 'directional-wipe' | 'cross-warp' | 'circle-open' | 'rgb-kinetic'

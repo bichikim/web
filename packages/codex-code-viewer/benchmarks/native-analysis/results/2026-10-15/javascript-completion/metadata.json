@@ -1,0 +1,16 @@
+{
+  "root": "/Users/bichi/.codex/worktrees/379e/web",
+  "node": "v24.15.0",
+  "platform": "macOS-26.5.2-arm64-arm-64bit-Mach-O",
+  "binary": "/Users/bichi/.codex/worktrees/379e/web/packages/codex-code-viewer/dist/typescript/darwin-arm64/tsc",
+  "binarySha256": "a82f731365ad69d5c4c15f5e18fba4584bf3b7b839960172a76c3462b5114bf2",
+  "cohort": "7 before/after pairs per target; cold and immediate repeat; alternating order; no own test/build/profile during collection; fresh CODEX_HOME per process; OS cache not cleared",
+  "clock": "server stream batch receipt, not browser paint",
+  "baseline": "previous final serial product",
+  "resultCounts": {
+    "getWindow": 102,
+    "javascript": 6
+  },
+  "records": 56,
+  "validation": "restored final source exactly matches all 579 measured source hashes"
+}

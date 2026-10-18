@@ -157,6 +157,7 @@ afterEach(() => {
   mocks.resumableFetch.mockImplementation(
     async () => new Response('{%- generation -%}QAD chat template{%- endgeneration -%}'),
   )
+  mocks.cachePut.mockReset()
   vi.unstubAllEnvs()
 })
 
@@ -410,4 +411,64 @@ it('should prepare LFM Q4 and generate through its text-only tokenizer', async (
     'repository/lfm-1.2b',
     expect.objectContaining({device: 'webgpu', dtype: 'q4'}),
   )
+})
+
+it('should consume the template only after its cache clone finishes storing', async () => {
+  const response = new Response('QAD template')
+  const readText = vi.spyOn(response, 'text')
+  const write = Promise.withResolvers<void>()
+  const writing = Promise.withResolvers<Response>()
+  mocks.tokenizerFromPretrained.mockResolvedValue(tokenizer)
+  mocks.loadGgufModel.mockResolvedValue({createChatCompletion: vi.fn()})
+  mocks.resumableFetch.mockResolvedValueOnce(response)
+  mocks.cachePut.mockImplementationOnce((_url, clone: Response) => {
+    writing.resolve(clone)
+    return write.promise
+  })
+  const runtime = createTransformersRuntime({onProgress: vi.fn()})
+
+  const preparation = runtime.prepare('lfm-2.6b-qad')
+  const clone = await writing.promise
+  expect(clone).not.toBe(response)
+  expect(await clone.text()).toBe('QAD template')
+  expect(readText).not.toHaveBeenCalled()
+  expect(response.bodyUsed).toBe(false)
+  expect(mocks.cacheMatch.mock.invocationCallOrder[0]).toBeLessThan(
+    mocks.cachePut.mock.invocationCallOrder[0]!,
+  )
+  expect(mocks.loadGgufModel).not.toHaveBeenCalled()
+
+  write.resolve()
+  await preparation
+  expect(readText).toHaveBeenCalledOnce()
+  expect(mocks.cachePut.mock.invocationCallOrder[0]).toBeLessThan(
+    readText.mock.invocationCallOrder[0]!,
+  )
+  expect(mocks.loadGgufModel).toHaveBeenCalledOnce()
+})
+
+it('should reject before consuming the template or allocating GGUF when cache storage rejects', async () => {
+  const error = new Error('cache cleanup failed')
+  const response = new Response('QAD template')
+  const readText = vi.spyOn(response, 'text')
+  mocks.tokenizerFromPretrained.mockResolvedValue(tokenizer)
+  mocks.resumableFetch.mockResolvedValueOnce(response)
+  mocks.cachePut.mockRejectedValueOnce(error)
+  const runtime = createTransformersRuntime({onProgress: vi.fn()})
+
+  await expect(runtime.prepare('lfm-2.6b-qad')).rejects.toBe(error)
+  expect(readText).not.toHaveBeenCalled()
+  expect(response.bodyUsed).toBe(false)
+  expect(mocks.loadGgufModel).not.toHaveBeenCalled()
+})
+
+it('should reject Qwen outside development before invoking its lazy loader', async () => {
+  vi.stubEnv('DEV', false)
+  mocks.processorFromPretrained.mockResolvedValue(createProcessor())
+  const runtime = createTransformersRuntime({onProgress: vi.fn()})
+
+  await expect(runtime.prepare('qwen-0.8b')).rejects.toThrow(
+    'Qwen 텍스트 모델은 개발 빌드에서만 사용할 수 있어요.',
+  )
+  expect(mocks.loadQwenModel).not.toHaveBeenCalled()
 })

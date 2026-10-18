@@ -3,6 +3,7 @@
 import {fireEvent, render} from '@solidjs/testing-library'
 import {expect, test, vi} from 'vitest'
 
+import {EditorNumberField, EditorSelect} from '../../../design-system'
 import {EditorParameterItem} from '../EditorParameterItem'
 
 const renderItem = (onDelete = vi.fn(), onNameChange = vi.fn()) => {
@@ -175,4 +176,88 @@ test('should suppress only the first footer click after a cancelled swipe', () =
   expect(toggle).not.toHaveBeenCalled()
   fireEvent.click(footer, {detail: 0})
   expect(toggle).toHaveBeenCalledOnce()
+})
+
+test.each(['surface', 'group', 'details'])(
+  'should start swipe deletion from the %s area',
+  (area) => {
+    const onDelete = vi.fn()
+    const view = render(() => (
+      <EditorParameterItem name="Angle X" groupName="Head" onDelete={onDelete}>
+        <span>Parameter value</span>
+      </EditorParameterItem>
+    ))
+    // The empty row surface has no independent accessible control.
+    const target =
+      area === 'surface'
+        ? view.container.querySelector('.parameter-item-surface')!
+        : view.getByText(area === 'group' ? 'Head' : 'Parameter value')
+
+    target.dispatchEvent(new MouseEvent('pointerdown', {bubbles: true, button: 0, clientX: 200}))
+    globalThis.dispatchEvent(new MouseEvent('pointermove', {clientX: 280}))
+    expect(view.getByText('놓아 삭제')).toBeVisible()
+    globalThis.dispatchEvent(new MouseEvent('pointerup'))
+    expect(onDelete).toHaveBeenCalledOnce()
+  },
+)
+
+test.each(['input', 'decrease', 'increase'])(
+  'should exclude the numeric %s control from swipe deletion',
+  (control) => {
+    const onDelete = vi.fn()
+    const onValueChange = vi.fn()
+    const view = render(() => (
+      <EditorParameterItem name="Angle X" onDelete={onDelete}>
+        <EditorNumberField label="Angle X 값" value={0} onValueChange={onValueChange} />
+      </EditorParameterItem>
+    ))
+    const target =
+      control === 'input'
+        ? view.getByRole('spinbutton', {name: 'Angle X 값'})
+        : view.getByRole('button', {name: `Angle X 값 ${control === 'decrease' ? '감소' : '증가'}`})
+
+    target.dispatchEvent(new MouseEvent('pointerdown', {bubbles: true, button: 0, clientX: 200}))
+    globalThis.dispatchEvent(new MouseEvent('pointermove', {clientX: 280}))
+    globalThis.dispatchEvent(new MouseEvent('pointerup'))
+    expect(onDelete).not.toHaveBeenCalled()
+    expect(view.queryByText('놓아 삭제')).not.toBeInTheDocument()
+    if (control === 'input') {
+      expect(onValueChange).toHaveBeenCalled()
+    } else {
+      fireEvent.click(target)
+      expect(onValueChange).toHaveBeenCalledWith(control === 'decrease' ? -1 : 1)
+    }
+  },
+)
+
+test('should exclude the name editing input from swipe deletion', () => {
+  const {item, onDelete, view} = renderItem()
+  fireEvent.dblClick(item)
+  const input = view.getByRole('textbox', {name: 'Parameter 이름'})
+
+  input.dispatchEvent(new MouseEvent('pointerdown', {bubbles: true, button: 0, clientX: 200}))
+  globalThis.dispatchEvent(new MouseEvent('pointermove', {clientX: 280}))
+  globalThis.dispatchEvent(new MouseEvent('pointerup'))
+  expect(onDelete).not.toHaveBeenCalled()
+})
+
+test('should exclude a discrete parameter value selector from swipe deletion', () => {
+  const onDelete = vi.fn()
+  const view = render(() => (
+    <EditorParameterItem
+      name="눈동자 무늬"
+      onDelete={onDelete}
+      primaryControl={
+        <EditorSelect label="눈동자 무늬 값" options={['기본', '하트']} value="기본" />
+      }
+    />
+  ))
+  const value = view.getByRole('button', {name: '눈동자 무늬 값 기본'})
+
+  value.dispatchEvent(new MouseEvent('pointerdown', {bubbles: true, button: 0, clientX: 200}))
+  globalThis.dispatchEvent(new MouseEvent('pointermove', {clientX: 280}))
+  globalThis.dispatchEvent(new MouseEvent('pointerup'))
+
+  expect(onDelete).not.toHaveBeenCalled()
+  expect(view.queryByText('놓아 삭제')).not.toBeInTheDocument()
 })

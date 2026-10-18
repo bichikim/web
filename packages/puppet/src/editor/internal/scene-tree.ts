@@ -73,19 +73,21 @@ export const updateChildren = (
   update: (children: ReadonlyArray<PuppetSceneNode>) => ReadonlyArray<PuppetSceneNode>,
 ): PuppetScene | undefined => {
   if (parentId === null) {
-    return {...scene, roots: update(scene.roots)}
+    const roots = update(scene.roots)
+    return roots === scene.roots ? scene : {...scene, roots}
   }
 
   let updated = false
   const updateNodes = (nodes: ReadonlyArray<PuppetSceneNode>): ReadonlyArray<PuppetSceneNode> =>
-    nodes.map((node) => {
+    mapNodes(nodes, (node) => {
       if (!isSceneContainerNode(node)) {
         return node
       }
 
       if (node.id === parentId) {
         updated = true
-        return {...node, children: update(node.children)}
+        const children = update(node.children)
+        return children === node.children ? node : {...node, children}
       }
 
       const children = updateNodes(node.children)
@@ -93,7 +95,15 @@ export const updateChildren = (
     })
 
   const roots = updateNodes(scene.roots)
-  return updated ? {...scene, roots} : undefined
+  return updated ? (roots === scene.roots ? scene : {...scene, roots}) : undefined
+}
+
+const mapNodes = (
+  nodes: ReadonlyArray<PuppetSceneNode>,
+  update: (node: PuppetSceneNode) => PuppetSceneNode,
+): ReadonlyArray<PuppetSceneNode> => {
+  const next = nodes.map(update)
+  return next.every((node, index) => node === nodes[index]) ? nodes : next
 }
 
 export const updateNode = (
@@ -101,7 +111,7 @@ export const updateNode = (
   nodeId: string,
   update: (node: PuppetSceneNode) => PuppetSceneNode,
 ): ReadonlyArray<PuppetSceneNode> =>
-  nodes.map((node) => {
+  mapNodes(nodes, (node) => {
     if (node.id === nodeId) {
       return update(node)
     }
@@ -110,7 +120,8 @@ export const updateNode = (
       return node
     }
 
-    return {...node, children: updateNode(node.children, nodeId, update)}
+    const children = updateNode(node.children, nodeId, update)
+    return children === node.children ? node : {...node, children}
   })
 
 export const collectNodeIds = (nodes: ReadonlyArray<PuppetSceneNode>, ids: Set<string>) => {
@@ -132,4 +143,19 @@ export const collectPartIds = (node: PuppetSceneNode, partIds: Set<string>) => {
   for (const child of node.children) {
     collectPartIds(child, partIds)
   }
+}
+
+export const getContainerIds = (nodes: ReadonlyArray<PuppetSceneNode>) => {
+  const groupIds = new Set<string>()
+
+  for (const node of nodes) {
+    if (isSceneContainerNode(node)) {
+      groupIds.add(node.id)
+      for (const childId of getContainerIds(node.children)) {
+        groupIds.add(childId)
+      }
+    }
+  }
+
+  return groupIds
 }

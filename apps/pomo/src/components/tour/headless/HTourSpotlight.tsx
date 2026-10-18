@@ -40,7 +40,6 @@ export const HTourSpotlight = (props: HTourSpotlightProps) => {
   const [targetBounds, setTargetBounds] = createSignal<TourTargetBounds | null>(null)
 
   createEffect(() => {
-    // oxlint-disable-next-line eslint/prefer-destructuring -- Solid props require reactive property access.
     const element = props.element
     const padding = Math.max(0, props.padding ?? 0)
 

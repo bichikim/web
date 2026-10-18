@@ -1,4 +1,5 @@
 import {createPlaybackToken} from '@pomo/playback-token'
+import {getPlaybackSecret} from './get-playback-secret'
 
 const SECONDS_PER_MINUTE = 60
 const MILLISECONDS_PER_SECOND = 1000
@@ -42,16 +43,6 @@ const getGatewayOrigin = (environment: PlaybackEnvironment): string => {
   }
 
   return origin
-}
-
-const getPlaybackSecret = (environment: PlaybackEnvironment): string => {
-  const secret = environment.POMO_PLAYBACK_TOKEN_SECRET?.trim()
-
-  if (secret === undefined || secret.length === 0) {
-    throw new TypeError('POMO_PLAYBACK_TOKEN_SECRET is not set')
-  }
-
-  return secret
 }
 
 export const createPlaybackAccess = async ({

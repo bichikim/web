@@ -1,5 +1,6 @@
 import {type Accessor, createEffect, createMemo, on, onCleanup} from 'solid-js'
 import {useAsyncTask} from 'src/features/async-task'
+import {withPromiseFallback} from 'src/utils/with-promise-fallback'
 
 export interface ImageBitmapController {
   readonly error: Accessor<Error | null>
@@ -29,7 +30,7 @@ export const useImageBitmap = (source: Accessor<Blob | null>): ImageBitmapContro
       onCleanup(task.reset)
       if (current !== null) {
         // The task state supplies diagnostics; this effect has no promise consumer.
-        task.execute(current).catch(() => undefined)
+        withPromiseFallback(task.execute(current), undefined)
       }
     }),
   )

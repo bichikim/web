@@ -1,4 +1,5 @@
 import {sql} from 'drizzle-orm'
+import {FEATURE_REQUEST_STATUSES} from 'src/features/feature-requests/types'
 import {
   check,
   index,
@@ -14,12 +15,7 @@ import {
 
 import {pomoUsers} from './users'
 
-export const featureRequestStatusEnum = pgEnum('feature_request_status', [
-  'requested',
-  'voting',
-  'confirmed',
-  'completed',
-])
+export const featureRequestStatusEnum = pgEnum('feature_request_status', FEATURE_REQUEST_STATUSES)
 
 export const featureRequests = pgTable(
   'feature_requests',

@@ -66,6 +66,8 @@ export const EditorKeyformPanel = (props: EditorKeyformPanelProps) => {
                     <EditorKeyformTrackLabel
                       active={bindingId === props.activeBindingId}
                       binding={binding()}
+                      influence={props.bindingInfluences?.get(bindingId)}
+                      previewOnly={props.previewBindingIds?.has(bindingId)}
                       parameters={parameters()}
                       values={bindingValues(binding())}
                       onBindingDelete={
@@ -87,8 +89,6 @@ export const EditorKeyformPanel = (props: EditorKeyformPanelProps) => {
       <EditorParameterFooter
         activeBinding={activeBinding()}
         allParametersVisible={props.allParametersVisible}
-        influence={props.influence}
-        previewOnly={activePreview()}
         selectedPartIds={props.selectedPartIds}
         targetPartIds={props.targetPartIds}
         onAllParametersVisibleChange={props.onAllParametersVisibleChange}

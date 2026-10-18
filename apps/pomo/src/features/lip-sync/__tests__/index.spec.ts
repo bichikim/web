@@ -33,6 +33,18 @@ describe('createPVisemeTrack', () => {
     expect(cues.at(-1)?.endMs).toBe(600)
   })
 
+  it('should allocate cue durations in proportion to their pronunciation weights', () => {
+    const cues = createPVisemeTrack({durationMs: 2_300, text: '아,오'})
+
+    expect(cues.map((cue) => cue.viseme)).toEqual(['open', 'rest', 'round'])
+    expect(cues[0]?.startMs).toBe(0)
+    expect(cues[0]?.endMs).toBeCloseTo(1_000)
+    expect(cues[1]?.startMs).toBe(cues[0]?.endMs)
+    expect(cues[1]?.endMs).toBeCloseTo(1_300)
+    expect(cues[2]?.startMs).toBe(cues[1]?.endMs)
+    expect(cues[2]?.endMs).toBe(2_300)
+  })
+
   it('should return an empty track for zero duration', () => {
     expect(createPVisemeTrack({durationMs: 0, text: '안녕'})).toEqual([])
   })

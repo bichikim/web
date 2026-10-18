@@ -1,0 +1,20 @@
+{
+  "date": "2026-10-15T11:32:40.499618+09:00",
+  "node": "26.4.0",
+  "platform": "darwin-arm64",
+  "machine": "Mac17,9",
+  "memoryBytes": 51539607552,
+  "native": "7.0.2",
+  "first": "first nonempty server location batch, not browser paint",
+  "repeat": "same session, same symbol",
+  "preparation": "reported separately; await workspace.prepareWorkspace",
+  "OSCache": "not flushed",
+  "hostLoad": "shared host; recorded in every sample",
+  "root": "/Users/bichi/.codex/worktrees/379e/web",
+  "cases": 4,
+  "samples": {
+    "javascript-immediate": 7,
+    "other-groups": 3
+  },
+  "concurrentProjectJobs": "none during final collection"
+}

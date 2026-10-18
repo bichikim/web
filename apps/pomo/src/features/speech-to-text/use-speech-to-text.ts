@@ -115,6 +115,7 @@ interface CreateRecordingActionsOptions {
   readonly activity: Accessor<SpeechActivity>
   readonly endpointing: Accessor<boolean>
   readonly endpointTranscription: EndpointTranscription
+  readonly errorMessage: Accessor<string | null>
   readonly isDisposed: () => boolean
   readonly modelOwner: SpeechModelOwner
   readonly onCaptureFailure: (error: SpeechCaptureError) => void
@@ -138,7 +139,20 @@ const createRecordingActions = (options: CreateRecordingActionsOptions) => {
     options.setActivity('requesting')
     options.setErrorMessage(null)
 
-    const result = await options.recorder.current.start(options.timer.refresh)
+    const result = await options.recorder.current.start(options.timer.refresh, (error) => {
+      const activeRecording = options.recording.current
+
+      if (activeRecording === null || options.isDisposed() || options.activity() !== 'recording') {
+        return
+      }
+
+      stopRecording({error, recording: activeRecording}).catch((unexpectedError: unknown) => {
+        if (!options.isDisposed()) {
+          options.setErrorMessage(getExceptionMessage(unexpectedError, '음성 처리 오류'))
+          options.setActivity('idle')
+        }
+      })
+    })
 
     if (options.isDisposed()) {
       if (result.ok) {
@@ -170,10 +184,17 @@ const createRecordingActions = (options: CreateRecordingActionsOptions) => {
     })
   }
 
-  const stopRecording = async () => {
-    const activeRecording = options.recording.current
+  const stopRecording = async (interruption?: {
+    readonly error: SpeechCaptureError
+    readonly recording: SpeechRecording
+  }) => {
+    const activeRecording = interruption?.recording ?? options.recording.current
 
-    if (options.activity() !== 'recording' || activeRecording === null) {
+    if (
+      options.activity() !== 'recording' ||
+      activeRecording === null ||
+      options.recording.current !== activeRecording
+    ) {
       return
     }
 
@@ -198,7 +219,7 @@ const createRecordingActions = (options: CreateRecordingActionsOptions) => {
     }
 
     if (!shouldTranscribeEndpoints && audioResult.value.length < MINIMUM_SAMPLE_COUNT) {
-      options.onCaptureFailure({code: 'capture-too-short', retryable: true})
+      options.onCaptureFailure(interruption?.error ?? {code: 'capture-too-short', retryable: true})
       return
     }
 
@@ -207,6 +228,9 @@ const createRecordingActions = (options: CreateRecordingActionsOptions) => {
     }
 
     if (!options.isDisposed()) {
+      if (interruption !== undefined && options.errorMessage() === null) {
+        options.setErrorMessage(getSpeechErrorMessage(interruption.error))
+      }
       options.setActivity('idle')
     }
   }
@@ -311,6 +335,7 @@ export const useSpeechToText = (props: UseSpeechToTextProps = {}): SpeechToTextC
     activity,
     endpointing,
     endpointTranscription,
+    errorMessage,
     isDisposed: () => disposed,
     modelOwner,
     onCaptureFailure: handleCaptureFailure,

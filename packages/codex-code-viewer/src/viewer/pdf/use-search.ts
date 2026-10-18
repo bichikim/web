@@ -1,3 +1,4 @@
+import {useTranslations} from '../locale/use-translations'
 import {
   type Accessor,
   batch,
@@ -37,6 +38,7 @@ const MAX_CHARACTERS = 4194304
 
 /** Provides lazy document-wide PDF search with bounded extracted text and page navigation. */
 export const usePdfSearch = (options: PdfSearchOptions) => {
+  const t = useTranslations()
   const [visible, setVisible] = createSignal(false)
   const [query, setQuery] = createSignal('')
   const [focusRequest, setFocusRequest] = createSignal(0)
@@ -160,7 +162,7 @@ export const usePdfSearch = (options: PdfSearchOptions) => {
     scrollRequest,
     status: () =>
       found().length > MAX_MATCHES
-        ? `검색 결과는 처음 ${MAX_MATCHES.toLocaleString()}개까지 표시합니다.`
+        ? t('검색 결과는 처음 {count}개까지 표시합니다.', {count: MAX_MATCHES.toLocaleString()})
         : status(),
     visible,
   }

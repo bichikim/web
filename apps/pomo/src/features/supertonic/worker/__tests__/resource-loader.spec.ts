@@ -200,3 +200,38 @@ it('should keep simultaneous binary and JSON loads independent', async () => {
   first.resolve(new Response(new Uint8Array([1])))
   expect((await binary).ok).toBe(true)
 })
+
+it('should allocate the streamed length captured before copying a changing byte view', async () => {
+  const bytes = Uint8Array.of(99, 1, 2, 88)
+  const chunk = bytes.subarray(1, 3)
+  let lengthReads = 0
+  Object.defineProperty(chunk, 'byteLength', {
+    get: () => {
+      lengthReads += 1
+      return lengthReads === 1 ? 2 : 1
+    },
+  })
+  const body = new ReadableStream<Uint8Array>({
+    start(controller) {
+      controller.enqueue(chunk)
+      controller.close()
+    },
+  })
+  vi.mocked(storage.get).mockResolvedValue(successResult(new Response(body)))
+
+  const result = await createLoader().loadBuffer(bufferRequest)
+
+  expect(result.ok).toBe(true)
+  if (result.ok) {
+    expect(new Uint8Array(result.value)).toEqual(Uint8Array.of(1, 2))
+    expect(result.value).not.toBe(bytes.buffer)
+  }
+  expect(lengthReads).toBe(2)
+  expect(bytes).toEqual(Uint8Array.of(99, 1, 2, 88))
+  expect(progress).toHaveBeenCalledExactlyOnceWith({
+    fileName: 'weights.bin',
+    loadedBytes: 12,
+    totalBytes: 13,
+  })
+  expect(httpFetch).not.toHaveBeenCalled()
+})

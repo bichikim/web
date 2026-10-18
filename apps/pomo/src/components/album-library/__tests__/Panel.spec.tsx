@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 
-import {cleanup, render, screen} from '@solidjs/testing-library'
+import {cleanup, render, screen, within} from '@solidjs/testing-library'
 import type {JSX} from 'solid-js'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
@@ -83,7 +83,10 @@ it('should contain a lazy album module failure inside the modal', async () => {
     />
   ))
 
-  expect(await screen.findByRole('alert')).toHaveTextContent('앨범을 불러오지 못했어요')
+  const alert = await screen.findByRole('alert')
+  expect(alert).toHaveTextContent('앨범을 불러오지 못했어요')
+  expect(within(alert).queryByRole('button')).toBeNull()
+  expect(reporterMocks.reportClientError).toHaveBeenCalledOnce()
   expect(reporterMocks.reportClientError).toHaveBeenCalledWith(loadError, {
     feature: 'album-library',
     source: 'error-boundary',
