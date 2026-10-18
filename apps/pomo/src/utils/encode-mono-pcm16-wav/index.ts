@@ -1,6 +1,6 @@
 import {clamp} from 'es-toolkit/math'
-// oxlint-disable no-magic-numbers -- These constants are fixed offsets and ranges in the PCM WAV specification.
-/** Encodes mono float samples as little-endian PCM16 RIFF/WAVE bytes. */
+// oxlint-disable no-magic-numbers -- PCM WAV 명세에 정의된 고정 오프셋과 범위 상수다.
+/** 모노 부동소수점 샘플을 리틀 엔디언 PCM16 RIFF/WAVE 바이트로 인코딩한다. */
 export const encodeMonoPcm16Wav = (samples: Float32Array, sampleRate: number): ArrayBuffer => {
   const headerSize = 44
   const buffer = new ArrayBuffer(headerSize + samples.length * 2)

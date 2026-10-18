@@ -2,7 +2,7 @@ import {createWebStorageDriver} from './create-web-storage-driver'
 
 const drivers = new WeakMap<Storage, ReturnType<typeof createWebStorageDriver>>()
 
-/** Returns the synchronous driver for the current browser storage instance. */
+/** 현재 브라우저 저장소 인스턴스의 동기 드라이버를 반환한다. */
 export const getWebRuntimeStorage = (): ReturnType<typeof createWebStorageDriver> => {
   const storage = globalThis.localStorage
   const cached = drivers.get(storage)

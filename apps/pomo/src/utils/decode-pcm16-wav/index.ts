@@ -1,4 +1,4 @@
-// oxlint-disable no-magic-numbers -- RIFF chunk offsets and PCM16 scaling are format constants.
+// oxlint-disable no-magic-numbers -- RIFF 청크 오프셋과 PCM16 배율은 형식에 정의된 상수다.
 interface DecodedPcm16Wave {
   readonly channels: number
   readonly sampleRate: number
@@ -41,7 +41,7 @@ const readPcmChunks = (view: DataView, options: WaveDecodeOptions) => {
     : {data, format}
 }
 
-/** Decodes PCM16 WAV to mono samples, averaging channels and honoring the truncation policy. */
+/** 채널 평균과 잘림 처리 정책을 적용해 PCM16 WAV를 모노 샘플로 디코딩한다. */
 export const decodePcm16Wav = (
   bytes: ArrayBuffer | Uint8Array,
   options: WaveDecodeOptions = {},

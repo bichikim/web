@@ -2,7 +2,7 @@ import {getWebRuntimeStorage} from './get-web-runtime-storage'
 import {parseStorageJson} from './parse-storage-json'
 import type {ParseStoredValue} from './types'
 
-/** Reads and parses best-effort browser storage without leaking platform errors. */
+/** 브라우저 저장소 읽기와 파싱을 시도하고 플랫폼 오류를 외부로 전파하지 않는다. */
 export const readWebStorageJson = <Value>(
   key: string,
   parseValue: ParseStoredValue<Value>,
