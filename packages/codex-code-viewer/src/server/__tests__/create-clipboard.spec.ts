@@ -1,8 +1,16 @@
 /** @vitest-environment node */
-import {expect, it, vi} from 'vitest'
+import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 import {createClipboard} from '../create-clipboard'
 const adapter = vi.hoisted(() => ({end: vi.fn(), exec: vi.fn()}))
 vi.mock('node:child_process', () => ({execFile: adapter.exec}))
+beforeEach(() => {
+  vi.clearAllMocks()
+  vi.stubGlobal('process', {...process, platform: 'darwin'})
+})
+afterEach(() => {
+  vi.unstubAllEnvs()
+  vi.unstubAllGlobals()
+})
 it('should access text only after an explicit clipboard operation', async () => {
   vi.stubEnv('LC_ALL', 'C')
   adapter.exec.mockImplementation((command, _args, _options, done) => {
@@ -23,7 +31,6 @@ it('should access text only after an explicit clipboard operation', async () => 
     'en_US.UTF-8',
   ])
   expect(process.env.LC_ALL).toBe('C')
-  vi.unstubAllEnvs()
 })
 it('should return a bounded adapter error without exposing clipboard data', async () => {
   adapter.exec.mockImplementation((_command, _args, _options, done) =>
@@ -34,3 +41,17 @@ it('should return a bounded adapter error without exposing clipboard data', asyn
     ok: false,
   })
 })
+it.each(['linux', 'win32'])(
+  'should reject clipboard operations on %s without I/O',
+  async (platform) => {
+    vi.stubGlobal('process', {...process, platform})
+    const clipboard = createClipboard()
+    expect(await clipboard.read()).toEqual({error: {code: 'clipboard-unavailable'}, ok: false})
+    expect(await clipboard.write('selected')).toEqual({
+      error: {code: 'clipboard-unavailable'},
+      ok: false,
+    })
+    expect(clipboard.writeAttachment).toBeUndefined()
+    expect(adapter.exec).not.toHaveBeenCalled()
+  },
+)
