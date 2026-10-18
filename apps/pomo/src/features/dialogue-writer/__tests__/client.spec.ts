@@ -1,5 +1,6 @@
 /** @vitest-environment node */
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
+import {createWorkerHarness} from 'src/__tests__/create-worker-harness'
 import {createDeferred} from 'src/__tests__/create-deferred'
 import {requestCloudText} from 'src/features/cloud-text/client'
 import type {CloudTextResponse} from 'src/features/cloud-text/contracts'
@@ -14,43 +15,7 @@ vi.mock('../../client-error-reporter/reporter', () => ({reportClientError}))
 import {createDialogueClient} from '../client'
 import type {DialogueWorkerResponse} from '../messages'
 
-type WorkerListener = (event: ErrorEvent | MessageEvent<DialogueWorkerResponse>) => void
-
-class FakeWorker {
-  static current: FakeWorker | null = null
-
-  readonly postMessage = vi.fn()
-  readonly terminate = vi.fn()
-  readonly #listeners = new Map<string, Array<WorkerListener>>()
-
-  constructor() {
-    FakeWorker.current = this
-  }
-
-  addEventListener(type: string, listener: WorkerListener) {
-    const listeners = this.#listeners.get(type) ?? []
-    listeners.push(listener)
-    this.#listeners.set(type, listeners)
-  }
-
-  emitError(message: string) {
-    for (const listener of this.#listeners.get('error') ?? []) {
-      listener({message} as ErrorEvent)
-    }
-  }
-
-  emitMessage(message: DialogueWorkerResponse) {
-    for (const listener of this.#listeners.get('message') ?? []) {
-      listener({data: message} as MessageEvent<DialogueWorkerResponse>)
-    }
-  }
-
-  emitMessageError() {
-    for (const listener of this.#listeners.get('messageerror') ?? []) {
-      listener({} as MessageEvent<DialogueWorkerResponse>)
-    }
-  }
-}
+const FakeWorker = createWorkerHarness<DialogueWorkerResponse>()
 
 const getWorker = () => {
   const worker = FakeWorker.current
