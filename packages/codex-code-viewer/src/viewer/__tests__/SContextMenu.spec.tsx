@@ -1,5 +1,5 @@
 /** @vitest-environment jsdom */
-import {cleanup, render, screen} from '@solidjs/testing-library'
+import {cleanup, fireEvent, render, screen} from '@solidjs/testing-library'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 import {SContextMenu} from '../SContextMenu'
 
@@ -75,5 +75,21 @@ describe('SContextMenu', () => {
     expect(screen.getByRole('menu', {name: '작업'}).style.getPropertyValue('--menu-height')).toBe(
       '120px',
     )
+  })
+
+  it('should retain the menu on secondary release and close on an outside primary press', () => {
+    const onClose = vi.fn()
+    const {unmount} = render(() => <SContextMenu x={100} y={200} items={[]} onClose={onClose} />)
+    const menu = screen.getByRole('menu', {name: '작업'})
+    expect(menu).toHaveAttribute('popover', 'manual')
+    fireEvent(document.body, new MouseEvent('pointerup', {bubbles: true, button: 2}))
+    fireEvent(document.body, new MouseEvent('pointerdown', {bubbles: true, button: 2}))
+    fireEvent(menu, new MouseEvent('pointerdown', {bubbles: true, button: 0}))
+    expect(onClose).not.toHaveBeenCalled()
+    fireEvent(document.body, new MouseEvent('pointerdown', {bubbles: true, button: 0}))
+    expect(onClose).toHaveBeenCalledExactlyOnceWith({restoreFocus: false})
+    unmount()
+    fireEvent(document.body, new MouseEvent('pointerdown', {bubbles: true, button: 0}))
+    expect(onClose).toHaveBeenCalledTimes(1)
   })
 })

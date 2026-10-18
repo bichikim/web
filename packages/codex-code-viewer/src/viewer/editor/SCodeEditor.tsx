@@ -13,6 +13,9 @@ import type {CodeSnippet, CodeTextRange, NavigationPoint} from '../types'
 import {useEditorContextMenu} from './use-editor-context-menu'
 import {SEditorContextMenu} from './SEditorContextMenu'
 import {fileFormat} from '../../shared/file-formats'
+import {useFileViewState} from '../view-state/context'
+import {createEditorSelection} from './create-editor-selection'
+import {connectEditorScroll} from './connect-editor-scroll'
 import {useEditorAccessibility} from './use-editor-accessibility'
 
 interface SCodeEditorProps {
@@ -50,6 +53,15 @@ const syntaxLanguageOf = (path: string): string | undefined => {
   return format?.kind === 'syntax' ? format.language : undefined
 }
 
+const locateEditor = (editor: EditorView, location: CodeLocation): void => {
+  const line = editor.state.doc.line(Math.min(location.line, editor.state.doc.lines))
+  const position = Math.min(line.to, line.from + location.column - 1)
+  editor.dispatch({
+    effects: EditorView.scrollIntoView(position, {y: 'center'}),
+    selection: {anchor: position},
+  })
+}
+
 export const SCodeEditor = (props: SCodeEditorProps) => {
   const t = useTranslations()
   const [container, setContainer] = createSignal<HTMLDivElement>()
@@ -58,6 +70,7 @@ export const SCodeEditor = (props: SCodeEditorProps) => {
   const readOnly = (): boolean => props.readOnly !== false
   const states = () => props.states ?? EMPTY_STATES
   const fileKey = () => props.fileKey ?? props.location.path
+  const fileView = useFileViewState()
   const menu = useEditorContextMenu({
     onError: (error) => props.onError?.(error),
     get onFind() {
@@ -113,23 +126,25 @@ export const SCodeEditor = (props: SCodeEditorProps) => {
     const key = fileKey()
     const cache = states()
     const cached = cache.get(key)
+    const retained = requestValue().restore ? fileView?.read() : undefined
     const state =
       cached?.sliceDoc() === props.source
         ? cached.update({effects: StateEffect.reconfigure.of(extensions())}).state
-        : EditorState.create({doc: documentText(props.source), extensions: extensions()})
+        : EditorState.create({
+            doc: documentText(props.source),
+            extensions: extensions(),
+            selection: createEditorSelection(documentText(props.source), retained?.selection),
+          })
     const editor = new EditorView({parent: container(), state})
-    if (!requestValue().restore || cached === undefined) {
-      const line = state.doc.line(Math.min(props.location.line, state.doc.lines))
-      const position = Math.min(line.to, line.from + props.location.column - 1)
-      editor.dispatch({
-        effects: EditorView.scrollIntoView(position, {y: 'center'}),
-        selection: {anchor: position},
-      })
+    if (!requestValue().restore || (cached === undefined && retained?.selection === undefined)) {
+      locateEditor(editor, props.location)
     }
     setView(editor)
     editor.focus()
+    const stopScroll = connectEditorScroll(editor, fileView, retained?.codeScroll)
     onCleanup(() => {
       if (editor !== undefined) {
+        stopScroll()
         cache.set(key, editor.state)
         editor.destroy()
       }
@@ -140,12 +155,7 @@ export const SCodeEditor = (props: SCodeEditorProps) => {
     const request = requestValue()
     const location = locationValue()
     if (editor !== undefined && !request.restore) {
-      const line = editor.state.doc.line(Math.min(location.line, editor.state.doc.lines))
-      const position = Math.min(line.to, line.from + location.column - 1)
-      editor.dispatch({
-        effects: EditorView.scrollIntoView(position, {y: 'center'}),
-        selection: {anchor: position},
-      })
+      locateEditor(editor, location)
     }
   })
   createEffect(() => {

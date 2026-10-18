@@ -8,6 +8,7 @@ import type {
   WorkspaceSelection,
 } from './types'
 import {formatSelection} from './format-selection'
+import {addChatContext} from './add-chat-context'
 
 interface CodeSelectionOptions {
   onError: (error: unknown) => void
@@ -18,22 +19,14 @@ interface CodeSelectionOptions {
   workspace?: Accessor<string | undefined>
 }
 
-const documentRows = (document: CodeDocument): string[] =>
-  document.lines.length > 0
+const documentRows = (document: CodeDocument | undefined, source?: string): string[] =>
+  source === undefined && document !== undefined && document.lines.length > 0
     ? document.lines.map((tokens) => tokens.map((token) => token.text).join(''))
-    : document.source.split(/\r\n|\n|\r/u)
+    : (source ?? document?.source ?? '').split(/\r\n|\n|\r/u)
 
 export const useCodeSelection = (options: CodeSelectionOptions) => {
   const [selection, setSelection] = createSignal<CodeSelection | null>(null)
-  const rows = createMemo(() => {
-    const document = options.session()?.document
-    const source = options.source?.()
-    return source === undefined
-      ? document === undefined
-        ? ['']
-        : documentRows(document)
-      : source.split(/\r\n|\n|\r/u)
-  })
+  const rows = createMemo(() => documentRows(options.session()?.document, options.source?.()))
 
   const address = createMemo(() => {
     const document = options.session()?.document
@@ -56,14 +49,18 @@ export const useCodeSelection = (options: CodeSelectionOptions) => {
       reset(document)
       return
     }
-    const last = Math.max(1, document.lineCount ?? document.lines.length)
+    const draft = options.source?.()
+    const rows = documentRows(document, draft)
+    const last = Math.max(
+      1,
+      draft === undefined ? (document.lineCount ?? rows.length) : rows.length,
+    )
     const selected = {
       ...previous,
       endLine: Math.min(last, previous.endLine),
       line: Math.min(last, previous.line),
     }
     if (selected.endColumn !== undefined) {
-      const rows = documentRows(document)
       selected.column = Math.min(selected.column, (rows[selected.line - 1]?.length ?? 0) + 1)
       selected.endColumn = Math.min(
         selected.endColumn,
@@ -80,7 +77,13 @@ export const useCodeSelection = (options: CodeSelectionOptions) => {
     if (current === null || !Number.isInteger(anchor) || !Number.isInteger(focus)) {
       return
     }
-    const last = Math.max(1, current.document.lineCount ?? current.document.lines.length)
+    const draft = options.source?.()
+    const last = Math.max(
+      1,
+      draft === undefined
+        ? (current.document.lineCount ?? current.document.lines.length)
+        : rows().length,
+    )
     const selected = {
       ...current.document.location,
       column: 1,
@@ -125,12 +128,15 @@ export const useCodeSelection = (options: CodeSelectionOptions) => {
     const selected = snapshot ?? selection()
     if (current !== null && selected !== null && selected.path === current.document.location.path) {
       try {
-        await options.port.context({...selected, path: `${current.workspace}/${selected.path}`})
-        options.onNotice(
-          'kind' in selected
-            ? '선택한 코드를 다음 채팅 메시지에 추가했습니다.'
-            : '선택한 파일과 줄 정보를 다음 채팅 메시지에 추가했습니다.',
-        )
+        await addChatContext({
+          message:
+            'kind' in selected
+              ? '선택한 코드를 다음 채팅 메시지에 추가했습니다.'
+              : '선택한 파일과 줄 정보를 다음 채팅 메시지에 추가했습니다.',
+          onNotice: options.onNotice,
+          port: options.port,
+          selection: {...selected, path: `${current.workspace}/${selected.path}`},
+        })
       } catch (error) {
         options.onError(error)
       }
@@ -142,12 +148,15 @@ export const useCodeSelection = (options: CodeSelectionOptions) => {
       return
     }
     try {
-      await options.port.context(selected)
-      options.onNotice(
-        selected.kind === 'file'
-          ? '파일을 다음 채팅 메시지에 추가했습니다.'
-          : '폴더를 다음 채팅 메시지에 추가했습니다.',
-      )
+      await addChatContext({
+        message:
+          selected.kind === 'file'
+            ? '파일을 다음 채팅 메시지에 추가했습니다.'
+            : '폴더를 다음 채팅 메시지에 추가했습니다.',
+        onNotice: options.onNotice,
+        port: options.port,
+        selection: selected,
+      })
     } catch (error) {
       options.onError(error)
     }

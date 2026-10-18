@@ -5,6 +5,7 @@ import {LocaleContext} from './locale/context'
 import {SViewerWorkspace} from './SViewerWorkspace'
 
 interface SCodeViewerProps {
+  readonly embedded?: boolean
   readonly port: ViewerPort
 }
 export const SCodeViewer = (props: SCodeViewerProps) => {
@@ -20,7 +21,7 @@ export const SCodeViewer = (props: SCodeViewerProps) => {
   })
   return (
     <LocaleContext.Provider value={settings.language}>
-      <SViewerWorkspace port={port} settings={settings} />
+      <SViewerWorkspace port={port} settings={settings} embedded={props.embedded} />
     </LocaleContext.Provider>
   )
 }

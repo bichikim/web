@@ -119,11 +119,16 @@ export const streamEndpointSchema = z.object({
 })
 export const errorSchema = z.object({
   code: z.enum([
+    'clipboard-unavailable',
+    'composer-permission-required',
+    'composer-target-missing',
+    'composer-attachment-failed',
     'not-found',
     'outside-workspace',
     'unsupported-file',
     'too-large',
     'text-too-large',
+    'context-too-large',
     'media-too-large',
     'host-path-missing',
     'session-expired',

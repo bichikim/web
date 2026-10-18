@@ -7,13 +7,9 @@ import {errorMessage} from './error-message'
 import type {ViewerPort} from './types'
 import {useUnsavedChanges} from './use-unsaved-changes'
 import {shareCodeChanges} from './share-code-changes'
+import {useEditingDrafts} from './drafts/use-editing-drafts'
+import type {EditingDraft as Draft} from './drafts/types'
 
-interface Draft {
-  readonly base: CodeDocument
-  readonly source: string
-  readonly session: ViewerSession
-  readonly deleted: boolean
-}
 interface EditingOptions {
   readonly port: ViewerPort
   readonly session: Accessor<ViewerSession | null>
@@ -21,51 +17,8 @@ interface EditingOptions {
   readonly onDiscardDeleted?: (value: ViewerSession) => void
 }
 const keyOf = (value: ViewerSession): string =>
-  JSON.stringify([value.workspace, value.document.location.path])
+  JSON.stringify([value.session, value.workspace, value.document.location.path])
 const changed = (draft: Draft): boolean => draft.deleted || draft.source !== draft.base.source
-const editDraft = (
-  drafts: Readonly<Record<string, Draft>>,
-  value: ViewerSession,
-  source: string,
-) => {
-  const key = keyOf(value)
-  return {
-    ...drafts,
-    [key]: {
-      base: drafts[key]?.base ?? value.document,
-      deleted: drafts[key]?.deleted ?? false,
-      session: value,
-      source,
-    },
-  }
-}
-const omitDraft = (drafts: Readonly<Record<string, Draft>>, key: string) =>
-  Object.fromEntries(Object.entries(drafts).filter(([entry]) => entry !== key))
-const deletedDraft = (drafts: Readonly<Record<string, Draft>>, value: ViewerSession) => {
-  const key = keyOf(value)
-  const draft = drafts[key]
-  return draft?.deleted && draft.session.session === value.session
-    ? drafts
-    : {
-        ...drafts,
-        [key]: {
-          base: draft?.base ?? value.document,
-          deleted: true,
-          session: value,
-          source: draft?.source ?? value.document.source,
-        },
-      }
-}
-const acceptDraft = (drafts: Readonly<Record<string, Draft>>, value: ViewerSession) => {
-  const key = keyOf(value)
-  const draft = drafts[key]
-  if (draft === undefined) {
-    return drafts
-  }
-  return draft.source === draft.base.source
-    ? omitDraft(drafts, key)
-    : {...drafts, [key]: {...draft, deleted: false, session: value}}
-}
 const analysisSources = (
   entries: readonly (readonly [string, Draft])[],
   workspace: string | undefined,
@@ -79,11 +32,12 @@ const analysisSources = (
 
 const retainedDocument = (
   drafts: Readonly<Record<string, Draft>>,
+  session: ViewerSession | null,
   workspace: string | undefined,
   path: string,
 ): CodeDocument | undefined => {
-  const draft = drafts[JSON.stringify([workspace, path])]
-  return draft !== undefined && changed(draft) ? draft.base : undefined
+  const draft = drafts[JSON.stringify([session?.session, workspace, path])]
+  return draft !== undefined && changed(draft) ? {...draft.base, lines: []} : undefined
 }
 
 interface DraftChangesOptions {
@@ -109,10 +63,11 @@ const editableDocument = (document: CodeDocument | undefined): boolean =>
 
 /** Retains per-file drafts and revision-checked explicit saves until they are saved or discarded. */
 export const useCodeEditing = (options: EditingOptions) => {
-  const [drafts, setDrafts] = createSignal<Readonly<Record<string, Draft>>>({})
   const [enabled, setEnabled] = createSignal(false)
   const [saving, setSaving] = createSignal(false)
   const [feedback, setFeedback] = createSignal<string | null>(null)
+  const retained = useEditingDrafts({onError: setFeedback, storage: options.port.draftStorage})
+  const {drafts} = retained
   let writing: Promise<boolean> | null = null
   let writingKey: string | null = null
   let writingSource: string | undefined
@@ -130,7 +85,7 @@ export const useCodeEditing = (options: EditingOptions) => {
     if (value === null || !editable()) {
       return
     }
-    setDrafts((previous) => editDraft(previous, value, source))
+    retained.change(value, source)
   }
   const saveDraft = async (key: string): Promise<boolean> => {
     const draft = drafts()[key]
@@ -152,17 +107,9 @@ export const useCodeEditing = (options: EditingOptions) => {
       })
       const session = {...draft.session, document: result.document}
       batch(() => {
-        setDrafts((previous) => ({
-          ...previous,
-          [key]: {
-            base: result.document,
-            deleted: false,
-            session,
-            source: previous[key]?.source ?? draft.source,
-          },
-        }))
-        options.onSaved?.(session)
         setFeedback('저장했습니다.')
+        retained.saved(session)
+        options.onSaved?.(session)
       })
       return true
     } catch (error) {
@@ -195,8 +142,8 @@ export const useCodeEditing = (options: EditingOptions) => {
       const key = keyOf(value)
       const deleted = drafts()[key]?.deleted === true
       batch(() => {
-        setDrafts((previous) => omitDraft(previous, key))
         setFeedback(null)
+        retained.discard(value)
         if (deleted) {
           options.onDiscardDeleted?.(value)
         }
@@ -204,16 +151,19 @@ export const useCodeEditing = (options: EditingOptions) => {
     }
   }
   const accept = (value: ViewerSession): void => {
-    setDrafts((previous) => acceptDraft(previous, value))
+    if (retained.accept(value)) {
+      setEnabled(true)
+    }
   }
+
   const markDeleted = (value: ViewerSession): void => {
     if (!editableDocument(value.document)) {
       return
     }
-    setDrafts((previous) => deletedDraft(previous, value))
+    retained.markDeleted(value)
   }
   const protection = useUnsavedChanges({
-    discardAll: () => setDrafts({}),
+    discardAll: retained.clear,
     pending: () => pendingDrafts().length > 0,
     saveAll: () =>
       pendingDrafts().reduce(
@@ -232,7 +182,7 @@ export const useCodeEditing = (options: EditingOptions) => {
     discard,
     dismissFeedback: () => setFeedback(null),
     draftDocument: (workspace: string | undefined, path: string) =>
-      retainedDocument(drafts(), workspace, path),
+      retainedDocument(drafts(), options.session(), workspace, path),
     editable,
     enabled,
     feedback,

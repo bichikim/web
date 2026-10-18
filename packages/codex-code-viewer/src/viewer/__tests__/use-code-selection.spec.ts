@@ -48,3 +48,31 @@ describe('useCodeSelection', () => {
     }
   })
 })
+
+import type {ViewerSession} from '../../shared/contracts'
+
+it('should restore a cursor inside unsaved lines beyond the disk document', () => {
+  createRoot((dispose) => {
+    const value: ViewerSession = {
+      document: {
+        lines: [[{kind: 'plain', navigation: null, offset: 0, text: 'disk'}]],
+        location: {column: 1, line: 1, path: 'main.ts'},
+        revision: 'disk',
+        source: 'disk',
+      },
+      session: 'one',
+      workspace: '/project',
+    }
+    const selection = useCodeSelection({
+      onError: vi.fn(),
+      onNotice: vi.fn(),
+      port: {call: vi.fn(), context: vi.fn(), start: vi.fn()},
+      session: () => value,
+      source: () => 'disk\nunsaved position\n',
+    })
+    const saved = {column: 7, endColumn: 7, endLine: 2, line: 2, path: 'main.ts'}
+    selection.reset(value.document, saved)
+    expect(selection.selection()).toEqual(saved)
+    dispose()
+  })
+})

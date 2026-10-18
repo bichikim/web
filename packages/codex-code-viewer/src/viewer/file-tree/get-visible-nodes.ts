@@ -1,4 +1,5 @@
 import type {FileTreeNode} from './types'
+import {filterFileTree} from './filter-file-tree'
 
 function* iterateVisibleNodes(
   nodes: readonly FileTreeNode[],
@@ -13,8 +14,15 @@ function* iterateVisibleNodes(
   }
 }
 
-/** Flattens the expanded hierarchy in reading order. */
+/** Flattens expanded folders, or reveals a filter's matching descendants and ancestors. */
 export const getVisibleNodes = (
   nodes: readonly FileTreeNode[],
   expanded: (path: string) => boolean,
-): FileTreeNode[] => Array.from(iterateVisibleNodes(nodes, expanded))
+  query = '',
+): FileTreeNode[] =>
+  Array.from(
+    iterateVisibleNodes(
+      query === '' ? nodes : filterFileTree(nodes, query),
+      (path) => query !== '' || expanded(path),
+    ),
+  )
