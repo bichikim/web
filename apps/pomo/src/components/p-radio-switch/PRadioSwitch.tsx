@@ -1,4 +1,5 @@
 import {RadioGroup} from '@kobalte/core/radio-group'
+import {getArrowKeyDelta} from '@winter-love/utils/browser/events/get-arrow-key-delta'
 import {cx} from 'class-variance-authority'
 import {For, type JSX, Show} from 'solid-js'
 
@@ -23,20 +24,19 @@ export interface PRadioSwitchProps<TValue extends string> {
 }
 
 const getNextOptionIndex = (key: string, currentIndex: number, optionCount: number) => {
-  switch (key) {
-    case 'ArrowDown':
-    case 'ArrowRight':
-      return (currentIndex + 1) % optionCount
-    case 'ArrowLeft':
-    case 'ArrowUp':
-      return (currentIndex - 1 + optionCount) % optionCount
-    case 'End':
-      return optionCount - 1
-    case 'Home':
-      return 0
-    default:
-      return null
+  if (key === 'End') {
+    return optionCount - 1
   }
+  if (key === 'Home') {
+    return 0
+  }
+  const delta = getArrowKeyDelta(key)
+  if (delta === null) {
+    return null
+  }
+  return delta.x + delta.y > 0
+    ? (currentIndex + 1) % optionCount
+    : (currentIndex - 1 + optionCount) % optionCount
 }
 
 export const PRadioSwitch = <TValue extends string>(props: PRadioSwitchProps<TValue>) => {
