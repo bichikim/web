@@ -14,6 +14,57 @@ import {expect, it, vi} from 'vitest'
 import type {PomodoroTimerState} from '../model'
 import {usePomodoroTimer} from '../use-pomodoro-timer'
 
+it('should share one pending completion and preserve asynchronous waiter order after initialization', async () => {
+  const preference = createDeferred<boolean>()
+  autoStartMocks.read.mockReturnValue(preference.promise)
+  const view = renderHook(usePomodoroTimer, {wrapper: PreferenceProvider})
+  const completion = view.result.waitForInitialization()
+  const observed: string[] = []
+  completion.then(() => observed.push('first'))
+  completion.then(() => observed.push('second'))
+
+  expect(view.result.waitForInitialization()).toBe(completion)
+  await Promise.resolve()
+  expect(observed).toEqual([])
+
+  preference.resolve(false)
+  await completion
+
+  expect(observed).toEqual(['first', 'second'])
+  expect(view.result.waitForInitialization()).toBe(completion)
+  expect(JSON.parse(localStorage.getItem(STATE_STORAGE_KEY) ?? '')).toEqual(view.result.state())
+  completion.then(() => observed.push('late'))
+  expect(observed).toEqual(['first', 'second'])
+  await Promise.resolve()
+  expect(observed).toEqual(['first', 'second', 'late'])
+  view.cleanup()
+})
+
+it('should keep completion independent across timer instances', async () => {
+  const firstPreference = createDeferred<boolean>()
+  const secondPreference = createDeferred<boolean>()
+  autoStartMocks.read.mockReturnValueOnce(firstPreference.promise)
+  autoStartMocks.read.mockReturnValueOnce(secondPreference.promise)
+  const first = renderHook(usePomodoroTimer, {wrapper: PreferenceProvider})
+  const second = renderHook(usePomodoroTimer, {wrapper: PreferenceProvider})
+  const firstCompletion = first.result.waitForInitialization()
+  const secondCompletion = second.result.waitForInitialization()
+  const observed: string[] = []
+  firstCompletion.then(() => observed.push('first'))
+  secondCompletion.then(() => observed.push('second'))
+
+  expect(firstCompletion).not.toBe(secondCompletion)
+  firstPreference.resolve(false)
+  await firstCompletion
+  expect(observed).toEqual(['first'])
+
+  secondPreference.resolve(true)
+  await secondCompletion
+  expect(observed).toEqual(['first', 'second'])
+  first.cleanup()
+  second.cleanup()
+})
+
 it('should restore valid configuration and paused state before persisting them', async () => {
   const pausedState = {
     completedFocusSessions: 1,

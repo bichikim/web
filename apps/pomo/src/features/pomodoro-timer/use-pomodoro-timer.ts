@@ -128,11 +128,8 @@ export interface UsePomodoroTimerProps {
 
 // oxlint-disable-next-line eslint/max-lines-per-function -- Timer restoration, catch-up events, cross-window synchronization, and persistence share one lifecycle.
 export const usePomodoroTimer = (props: UsePomodoroTimerProps = {}): PomodoroTimerController => {
-  let resolveInitialization!: () => void
   let stateToRestore: PomodoroTimerState | null = null
-  const initialization = new Promise<void>((resolve) => {
-    resolveInitialization = resolve
-  })
+  const initialization = Promise.withResolvers<void>()
   let syncController: TimerSyncController | null = null
   const [config, setConfig] = createSignal<PomodoroTimerConfig>(POMODORO_TIMER_CONFIG)
   const [autoStart, setIsAutoStartEnabled] = usePreference({
@@ -190,7 +187,7 @@ export const usePomodoroTimer = (props: UsePomodoroTimerProps = {}): PomodoroTim
   const markStorageReady = (isReady: boolean) => {
     setIsStorageReady(isReady)
     if (isReady) {
-      resolveInitialization()
+      initialization.resolve()
     }
   }
 
@@ -427,6 +424,6 @@ export const usePomodoroTimer = (props: UsePomodoroTimerProps = {}): PomodoroTim
     progress,
     remainingSeconds,
     state,
-    waitForInitialization: () => initialization,
+    waitForInitialization: () => initialization.promise,
   }
 }
