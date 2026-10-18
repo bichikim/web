@@ -9,8 +9,20 @@ const AUDIO_PATH_PREFIX = '/__pomo/language-learning-word-audio'
 const defaultAudioCoordinator = createKeyedTaskQueue()
 const injectedAudioCoordinators = new WeakMap<ModelStorage, KeyedTaskQueue>()
 
+export interface LanguageLearningWordAudioDeleteOptions {
+  /** 생략하면 전체 경로를 지웁니다. true이면 다른 행이 사용하는 NFC 캐시는 보존하고
+   * 이 단어의 legacy 원문 경로만 지웁니다. NFC 단어는 삭제할 legacy 경로가 없습니다.
+   * owner를 지정한 경우 각 삭제 경로의 기존 소유자 검사도 유지합니다. */
+  readonly preserveSharedAudio?: boolean
+}
+
 export interface LanguageLearningWordAudioRepository {
-  readonly delete: (word: LanguageLearningWord, owner?: string) => Promise<void>
+  /** 원문 경로와 공유 캐시의 삭제 범위를 구분하며 같은 NFC 자원 queue에서 처리합니다. */
+  readonly delete: (
+    word: LanguageLearningWord,
+    owner?: string,
+    options?: LanguageLearningWordAudioDeleteOptions,
+  ) => Promise<void>
   readonly get: (word: LanguageLearningWord) => Promise<Blob | null>
   readonly save: (word: LanguageLearningWord, audio: Blob, owner: string) => Promise<void>
 }
@@ -63,9 +75,12 @@ export const createLanguageLearningWordAudioRepository = (
     (storage === undefined ? defaultAudioCoordinator : getInjectedAudioCoordinator(resolvedStorage))
 
   return {
-    delete(word, owner) {
-      const paths = getAudioPaths(word)
-      return resolvedCoordinator.run(paths[0]!, async () => {
+    delete(word, owner, options) {
+      const sharedPath = getAudioPath(word)
+      const paths = getAudioPaths(word).filter(
+        (path) => options?.preserveSharedAudio !== true || path !== sharedPath,
+      )
+      return resolvedCoordinator.run(sharedPath, async () => {
         await paths.reduce<Promise<void>>(async (previous, path) => {
           await previous
 
