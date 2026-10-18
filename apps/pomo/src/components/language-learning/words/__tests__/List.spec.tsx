@@ -44,6 +44,83 @@ it('should expose selected words and forward word selection', () => {
   expect(onSelect).toHaveBeenCalledWith(word)
 })
 
+it('should display existing canonical spellings as distinct word rows', () => {
+  const composedWord = {
+    createdAt: '2026-09-06T00:00:00Z',
+    language: 'ko' as const,
+    memorized: false,
+    value: '한글',
+    version: 1 as const,
+  }
+  const decomposedWord = {
+    ...composedWord,
+    value: composedWord.value.normalize('NFD'),
+  }
+  const {container} = render(() => (
+    <LanguageLearningWordList
+      autoplayKey={() => null}
+      getAudioUrl={() => null}
+      isPronunciationLoading={() => false}
+      onDelete={vi.fn()}
+      onPronounce={vi.fn()}
+      onToggleMemorized={vi.fn()}
+      emptyMessage="단어 없음"
+      onSelect={vi.fn()}
+      selectedWords={() => []}
+      words={[composedWord, decomposedWord]}
+    />
+  ))
+  const wordButtons = [...container.querySelectorAll('ul button[aria-pressed]')]
+
+  expect(wordButtons.map((button) => button.textContent)).toEqual([
+    composedWord.value,
+    decomposedWord.value,
+  ])
+  expect(wordButtons[0]).not.toBe(wordButtons[1])
+})
+
+it('should autoplay only the requested raw spelling when canonical equivalents coexist', () => {
+  const playedWords: string[] = []
+  const play = vi
+    .spyOn(HTMLMediaElement.prototype, 'play')
+    .mockImplementation(function recordPlayedWord(this: HTMLMediaElement) {
+      const word = this.closest('li')?.querySelector('button[aria-pressed]')?.textContent
+      if (word !== null && word !== undefined) {
+        playedWords.push(word)
+      }
+      return Promise.resolve()
+    })
+  vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => undefined)
+  const composedWord = {
+    createdAt: '2026-09-06T00:00:00Z',
+    language: 'ko' as const,
+    memorized: false,
+    value: '한글',
+    version: 1 as const,
+  }
+  const decomposedWord = {
+    ...composedWord,
+    value: composedWord.value.normalize('NFD'),
+  }
+  render(() => (
+    <LanguageLearningWordList
+      autoplayKey={() => `ko:${decomposedWord.value}`}
+      getAudioUrl={() => '/sample.opus'}
+      isPronunciationLoading={() => false}
+      onDelete={vi.fn()}
+      onPronounce={vi.fn()}
+      onToggleMemorized={vi.fn()}
+      emptyMessage="단어 없음"
+      onSelect={vi.fn()}
+      selectedWords={() => []}
+      words={[composedWord, decomposedWord]}
+    />
+  ))
+
+  expect(play).toHaveBeenCalledOnce()
+  expect(playedWords).toEqual([decomposedWord.value])
+})
+
 it('should preserve playing word audio and focus when another stored word changes', () => {
   vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => undefined)
   const play = vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue(undefined)
