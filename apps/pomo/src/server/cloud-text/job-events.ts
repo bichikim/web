@@ -1,6 +1,7 @@
 import {Pool, type PoolClient} from '@neondatabase/serverless'
 import {on} from 'node:events'
 import {env} from 'src/env'
+import {appendSetCookies} from 'src/server/http/append-set-cookies'
 import {withNoStore} from 'src/server/http/response'
 import {readCloudTextJob} from './job-status'
 
@@ -80,8 +81,6 @@ export const streamCloudTextJob = (
     },
   })
   const headers = new Headers({'Content-Type': 'application/x-ndjson; charset=utf-8'})
-  for (const cookie of cookies) {
-    headers.append('Set-Cookie', cookie)
-  }
+  appendSetCookies(headers, cookies)
   return withNoStore(new Response(body, {headers}))
 }
