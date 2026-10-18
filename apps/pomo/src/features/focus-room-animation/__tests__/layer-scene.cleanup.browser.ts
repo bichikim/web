@@ -69,7 +69,7 @@ it('should release filter subscriptions on a shared texture after repeated faile
       )
       scene.destroy()
     }
-    await Array.from({length: FAILED_INITIALIZATION_COUNT}).reduce(
+    await Array.from({length: FAILED_INITIALIZATION_COUNT}).reduce<Promise<void>>(
       (previous) => previous.then(initializeFailure),
       Promise.resolve(),
     )
