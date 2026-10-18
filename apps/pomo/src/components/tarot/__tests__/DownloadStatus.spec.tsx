@@ -47,3 +47,22 @@ it.each([Number.NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY])(
     expect(status.querySelector('[data-indeterminate]')).toBeInTheDocument()
   },
 )
+
+it('should retain the progress control when entering and leaving indeterminate progress', () => {
+  const [progress, setProgress] = createSignal(42)
+  render(() => <DownloadStatus kind="text" onCancel={vi.fn()} progress={progress()} />)
+  const status = screen.getByRole('status')
+  const progressBar = screen.getByRole('progressbar')
+
+  setProgress(Number.NaN)
+  expect(screen.getByRole('status')).toBe(status)
+  expect(screen.getByRole('progressbar')).toBe(progressBar)
+  expect(progressBar).not.toHaveAttribute('aria-valuenow')
+  expect(status).not.toHaveTextContent('%')
+
+  setProgress(57)
+  expect(screen.getByRole('progressbar')).toBe(progressBar)
+  expect(progressBar).toHaveAttribute('aria-valuenow', '57')
+  expect(status).toHaveTextContent('57%')
+  expect(status.querySelector('[data-indeterminate]')).not.toBeInTheDocument()
+})

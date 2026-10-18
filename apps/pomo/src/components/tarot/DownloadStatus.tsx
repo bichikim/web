@@ -55,7 +55,7 @@ export const DownloadStatus = (props: DownloadStatusProps) => {
         <div
           class={
             'h-full w-[var(--download-progress)] bg-current data-[indeterminate]:w-1/3 ' +
-            'data-[indeterminate]:animate-pulse motion-reduce:animate-none'
+            'motion-safe:data-[indeterminate]:animate-pulse'
           }
           data-indeterminate={percentage() === undefined ? '' : undefined}
           style={
