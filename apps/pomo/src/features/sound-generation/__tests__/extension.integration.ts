@@ -92,3 +92,29 @@ it('should use the custom connection duration for context and remove exactly tha
   expect(vi.mocked(generateSound).mock.calls.map((call) => call[1])).toEqual([120, 17])
   expect(result.size).toBe(44 + 121 * 44100 * 4)
 })
+
+it('should preserve separate tail channels and zero padding in continuation context', async () => {
+  let calls = 0
+  vi.mocked(generateSound).mockImplementation(async (_prompt, seconds, _progress, options) => {
+    calls += 1
+    if (calls === 1) {
+      const buffer = await (await createWave(seconds)).arrayBuffer()
+      const view = new DataView(buffer)
+      view.setInt16(buffer.byteLength - 4, -32768, true)
+      view.setInt16(buffer.byteLength - 2, 32767, true)
+      return new Blob([buffer], {type: 'audio/wav'})
+    }
+
+    const context = options?.inpaint
+    expect(context?.left[4 * 44100 - 1]).toBe(-1)
+    expect(context?.right[4 * 44100 - 1]).toBe(32767 / 32768)
+    expect(context?.left[4 * 44100]).toBe(0)
+    expect(context?.right[4 * 44100]).toBe(0)
+    return createWave(seconds)
+  })
+
+  const result = await generateExtendedSound('rain', 121, vi.fn())
+
+  expect(calls).toBe(2)
+  expect(result.size).toBe(44 + 121 * 44100 * 4)
+})

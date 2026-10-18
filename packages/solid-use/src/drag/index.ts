@@ -82,6 +82,7 @@ export const useDrag = (
     })
   }
 
+  useEvent(toggleValue(getWindow, pointDown, null), 'pointerup', onMoveEnd)
   useEvent(toggleValue(getWindow, pointDown, null), 'mouseup', onMoveEnd)
   useEvent(toggleValue(getWindow, pointDown, null), 'touchend', onMoveEnd)
   useEvent(toggleValue(getWindow, pointDown, null), 'pointercancel', onMoveEnd)

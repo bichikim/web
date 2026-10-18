@@ -41,3 +41,22 @@ it.each([
     expectedConstraintCount,
   )
 })
+
+it.each([
+  ['commerce_product_status', commerceProducts.status, ['active', 'archived'], 'active'],
+  [
+    'commerce_offer_billing_type',
+    commerceOffers.billingType,
+    ['one_time', 'subscription'],
+    undefined,
+  ],
+  ['commerce_offer_status', commerceOffers.status, ['active', 'inactive'], 'inactive'],
+] as const)(
+  'should retain ordered enum values and the default for %s',
+  (sqlType, column, values, defaultValue) => {
+    expect(column.getSQLType()).toBe(sqlType)
+    expect(column.enumValues).toEqual(values)
+    expect(column.default).toBe(defaultValue)
+    expect(column.notNull).toBe(true)
+  },
+)

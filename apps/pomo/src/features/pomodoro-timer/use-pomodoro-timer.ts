@@ -9,6 +9,7 @@ import {
   onMount,
   untrack,
 } from 'solid-js'
+import {createAnimationLoop} from '@winter-love/solid-use/animation-loop'
 import {useEvent} from '@winter-love/solid-use/event'
 import {z} from 'zod'
 
@@ -127,11 +128,8 @@ export interface UsePomodoroTimerProps {
 
 // oxlint-disable-next-line eslint/max-lines-per-function -- Timer restoration, catch-up events, cross-window synchronization, and persistence share one lifecycle.
 export const usePomodoroTimer = (props: UsePomodoroTimerProps = {}): PomodoroTimerController => {
-  let resolveInitialization!: () => void
   let stateToRestore: PomodoroTimerState | null = null
-  const initialization = new Promise<void>((resolve) => {
-    resolveInitialization = resolve
-  })
+  const initialization = Promise.withResolvers<void>()
   let syncController: TimerSyncController | null = null
   const [config, setConfig] = createSignal<PomodoroTimerConfig>(POMODORO_TIMER_CONFIG)
   const [autoStart, setIsAutoStartEnabled] = usePreference({
@@ -189,7 +187,7 @@ export const usePomodoroTimer = (props: UsePomodoroTimerProps = {}): PomodoroTim
   const markStorageReady = (isReady: boolean) => {
     setIsStorageReady(isReady)
     if (isReady) {
-      resolveInitialization()
+      initialization.resolve()
     }
   }
 
@@ -281,18 +279,21 @@ export const usePomodoroTimer = (props: UsePomodoroTimerProps = {}): PomodoroTim
       )
     })
 
-    const refreshFrame = () => {
-      refresh()
-      if (!isDisposed) {
-        frame = globalThis.requestAnimationFrame(refreshFrame)
+    const animation = createAnimationLoop()
+    animation.start(() => {
+      try {
+        refresh()
+      } catch (error) {
+        // Preserve the consumer's stop-on-error policy; the shared loop otherwise continues.
+        animation.stop()
+        throw error
       }
-    }
-    let frame = globalThis.requestAnimationFrame(refreshFrame)
+    })
     useEvent(document, 'visibilitychange', refresh)
 
     onCleanup(() => {
       isDisposed = true
-      globalThis.cancelAnimationFrame(frame)
+      animation.stop()
       const shouldPersistBeforeInitialization = !isStorageReady()
       const shouldPersistStateBeforeInitialization =
         shouldPersistBeforeInitialization && state().status !== 'idle'
@@ -423,6 +424,6 @@ export const usePomodoroTimer = (props: UsePomodoroTimerProps = {}): PomodoroTim
     progress,
     remainingSeconds,
     state,
-    waitForInitialization: () => initialization,
+    waitForInitialization: () => initialization.promise,
   }
 }

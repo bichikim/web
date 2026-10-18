@@ -1,10 +1,13 @@
+import {clampFiniteNumber} from 'src/utils/clamp-finite-number'
 import {PTextarea} from 'src/components/p-textarea/PTextarea'
 import {cx} from 'class-variance-authority'
-import {type JSX, Match, Show, Switch, untrack} from 'solid-js'
+import {createMemo, type JSX, Match, Show, Switch, untrack} from 'solid-js'
 import {type SpeechModelDefinition, useSpeechToText} from '../../features/speech-to-text/index'
 import {isSpeechBusyActivity} from '../../features/speech-to-text/is-speech-busy-activity'
 import {MicrophoneIcon} from './MicrophoneIcon'
 import {SPEECH_BUTTON_CLASSES, SPEECH_TEXTAREA_CLASSES} from './style'
+
+const MAXIMUM_PERCENTAGE = 100
 
 interface SpeechModelWorkspaceProps {
   readonly model: SpeechModelDefinition
@@ -12,6 +15,9 @@ interface SpeechModelWorkspaceProps {
 
 export const SpeechModelWorkspace = (props: SpeechModelWorkspaceProps) => {
   const speech = useSpeechToText({modelId: untrack(() => props.model.id)})
+  const modelPercentage = createMemo(() =>
+    clampFiniteNumber(speech.modelProgress(), 0, MAXIMUM_PERCENTAGE),
+  )
   const isBusy = () => isSpeechBusyActivity(speech.activity())
   const isRecording = () => speech.activity() === 'recording'
   const buttonLabel = () => {
@@ -45,7 +51,7 @@ export const SpeechModelWorkspace = (props: SpeechModelWorkspaceProps) => {
             </Match>
             <Match when={speech.modelState().status === 'loading'}>
               <span>
-                {props.model.label} 준비 중 · {speech.modelProgress()}%
+                {props.model.label} 준비 중 · {modelPercentage() ?? 0}%
               </span>
             </Match>
             <Match when={true}>
@@ -58,16 +64,16 @@ export const SpeechModelWorkspace = (props: SpeechModelWorkspaceProps) => {
 
       <Show when={speech.modelState().status === 'loading'}>
         <div
-          aria-label={`${props.model.label} ${speech.modelProgress()}% 준비됨`}
+          aria-label={`${props.model.label} ${modelPercentage() ?? 0}% 준비됨`}
           aria-valuemax="100"
           aria-valuemin="0"
-          aria-valuenow={speech.modelProgress()}
+          aria-valuenow={modelPercentage()}
           class="h-1.5 overflow-hidden rounded-full bg-white/8"
           role="progressbar"
         >
           <div
             class="h-full rounded-full bg-#9ed6bb [width:var(--pomo-progress-width)] transition-[width]"
-            style={{'--pomo-progress-width': `${speech.modelProgress()}%`}}
+            style={{'--pomo-progress-width': `${modelPercentage() ?? 0}%`}}
           />
         </div>
       </Show>

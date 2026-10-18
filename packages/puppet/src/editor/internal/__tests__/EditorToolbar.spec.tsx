@@ -18,20 +18,24 @@ test('should group file and history actions in the main menu', () => {
   ))
   const trigger = view.getByRole('button', {name: '메인 메뉴'})
   const menu = screen.getByLabelText('파일 및 편집 작업')
+  const menuContent = within(menu)
+  const exportButton = menuContent.getByRole('button', {name: 'JSON 내보내기'})
+  const undoButton = menuContent.getByRole('button', {name: '실행 취소'})
+  const redoButton = menuContent.getByRole('button', {name: '다시 실행'})
   expect(trigger).toHaveAttribute('aria-haspopup', 'dialog')
-  expect(menu).toContainElement(screen.getByRole('button', {name: 'JSON 내보내기'}))
-  fireEvent.click(screen.getByRole('button', {name: 'JSON 내보내기'}))
+  expect(menu).toContainElement(exportButton)
+  fireEvent.click(exportButton)
   expect(onExport).toHaveBeenCalledOnce()
   const file = new File(['png'], 'part.png', {type: 'image/png'})
-  fireEvent.change(screen.getByLabelText('가져오기'), {target: {files: [file]}})
+  fireEvent.change(menuContent.getByLabelText('가져오기'), {target: {files: [file]}})
   expect(onFileImport).toHaveBeenCalledWith(file)
   const psd = new File(['psd'], 'layers.psd')
-  fireEvent.change(screen.getByLabelText('불러오기'), {target: {files: [psd]}})
+  fireEvent.change(menuContent.getByLabelText('불러오기'), {target: {files: [psd]}})
   expect(onFileOpen).toHaveBeenCalledWith(psd)
-  expect(menu).toContainElement(screen.getByRole('button', {name: '실행 취소'}))
-  expect(menu).toContainElement(screen.getByRole('button', {name: '다시 실행'}))
-  expect(screen.getByRole('button', {name: '실행 취소'})).toBeDisabled()
-  expect(screen.getByRole('button', {name: '다시 실행'})).toBeDisabled()
+  expect(menu).toContainElement(undoButton)
+  expect(menu).toContainElement(redoButton)
+  expect(undoButton).toBeDisabled()
+  expect(redoButton).toBeDisabled()
   expect(view.getByRole('group', {name: '편집 작업 공간'}).nextElementSibling).toHaveClass(
     'panel-visibility-controls',
   )
@@ -105,4 +109,42 @@ test('should omit the examples entry without development examples', () => {
 
   const menu = screen.getAllByLabelText('파일 및 편집 작업').at(-1)!
   expect(within(menu).queryByText('예제')).not.toBeInTheDocument()
+  expect(within(menu).queryByRole('button', {name: '복구 찾기'})).not.toBeInTheDocument()
+})
+
+test('should open recovery from the file menu when available', () => {
+  const onRecoveryOpen = vi.fn()
+  render(() => (
+    <EditorToolbar
+      playerStatus="ready"
+      onRecoveryOpen={onRecoveryOpen}
+      onExport={vi.fn()}
+      onFileImport={vi.fn()}
+      onFileOpen={vi.fn()}
+    />
+  ))
+  fireEvent.click(screen.getByRole('button', {name: '복구 찾기'}))
+  expect(onRecoveryOpen).toHaveBeenCalledOnce()
+  onRecoveryOpen.mock.calls[0]![0]()
+  expect(screen.getByRole('button', {name: '메인 메뉴'})).toHaveFocus()
+})
+
+test('should launch the current model from the top workspace navigation', () => {
+  const onStudioOpen = vi.fn()
+  const onViewerOpen = vi.fn()
+  render(() => (
+    <EditorToolbar
+      playerStatus="ready"
+      onExport={vi.fn()}
+      onFileImport={vi.fn()}
+      onFileOpen={vi.fn()}
+      onStudioOpen={onStudioOpen}
+      onViewerOpen={onViewerOpen}
+    />
+  ))
+  const navigation = within(screen.getByRole('navigation', {name: '작업 공간 이동'}))
+  fireEvent.click(navigation.getByRole('button', {name: 'Studio'}))
+  fireEvent.click(navigation.getByRole('button', {name: 'Viewer'}))
+  expect(onStudioOpen).toHaveBeenCalledOnce()
+  expect(onViewerOpen).toHaveBeenCalledOnce()
 })

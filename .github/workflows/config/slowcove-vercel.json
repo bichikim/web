@@ -1,0 +1,9 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "solidstart-1",
+  "buildCommand": "NITRO_PRESET=vercel POMO_STANDALONE_RELAX=true POMO_PUBLIC_ORIGIN=https://www.slowcove.app pnpm run build:web:slowcove",
+  "installCommand": "pnpm install --frozen-lockfile",
+  "git": {
+    "deploymentEnabled": false
+  }
+}

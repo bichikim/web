@@ -1,16 +1,9 @@
 /// <reference lib="webworker" />
 import {getMonotonicTime} from 'src/utils/get-monotonic-time'
-import {isAbortError as hasAbortErrorName} from 'src/utils/is-cancellation-reason'
 
 // oxlint-disable no-await-in-loop -- Model streams and sessions are loaded sequentially to cap peak browser memory.
 
-import {httpFetch} from '../http-client'
-import {
-  createModelStorage,
-  loadModelResource,
-  type ModelStorageError,
-  reportModelStorageError,
-} from '../model-storage'
+import {createModelStorage} from '../model-storage'
 import {joinAudioChunks} from './audio'
 import {
   createSupertonicVoice,
@@ -19,13 +12,7 @@ import {
   type SupertonicSessions,
   type SupertonicVoice,
 } from './engine'
-import {
-  type CancelledError,
-  type DownloadFailedError,
-  getErrorDetail,
-  type SupertonicError,
-  type WorkerFailedError,
-} from './errors'
+import {type CancelledError, type SupertonicError} from './errors'
 import type {SupertonicVoiceSource, SupertonicWorkerInput, SupertonicWorkerOutput} from './messages'
 import {
   getVoiceStyleUrl,
@@ -40,30 +27,23 @@ import {
   type SupertonicVoiceId,
 } from './model'
 import {loadSupertonicRuntime, type SupertonicBackend, type SupertonicRuntime} from './runtime'
-import {type LoadBufferOptions, loadSessions, releaseSessions} from './sessions'
+import {loadSessions, releaseSessions} from './sessions'
 import {failureResult, type Result, successResult} from 'src/features/result'
 import {splitSpeechText} from './text-chunking'
 import {normalizeSpeechText} from './number-speech'
 import {createSupertonicWorkerDispatch} from './worker/dispatch'
+import {createWorkerError} from './worker/create-worker-error'
+import {createSupertonicResourceLoader} from './worker/resource-loader'
 
 const workerScope = globalThis.self as DedicatedWorkerGlobalScope
 const modelStorage = createModelStorage()
 const voiceCache = new Map<SupertonicVoiceId, SupertonicVoice>()
-const REQUEST_TIMEOUT_STATUS = 408
-const TOO_MANY_REQUESTS_STATUS = 429
-const SERVER_ERROR_STATUS = 500
 let engine: SupertonicEngine | null = null
 let activeModel: SupertonicModel | null = null
 let activeModelAssets: ModelAssets | null = null
 let activeAbortController: AbortController | null = null
 let activeGenerationAbortController: AbortController | null = null
 let activeRuntime: SupertonicRuntime | null = null
-
-interface FetchJsonOptions {
-  readonly fileName: string
-  readonly signal: AbortSignal
-  readonly url: string
-}
 
 interface GeneratedAudio {
   readonly generationTime: number
@@ -72,14 +52,6 @@ interface GeneratedAudio {
 }
 
 type Backend = SupertonicBackend
-
-const finishCacheWrite = async (cacheWrite: Promise<Result<void, ModelStorageError>>) => {
-  const result = await cacheWrite
-
-  if (!result.ok) {
-    reportModelStorageError(result.error)
-  }
-}
 
 const postMessage = (
   message: SupertonicWorkerOutput,
@@ -94,145 +66,21 @@ const createCancelledError = (phase: CancelledError['phase']): CancelledError =>
   retryable: false,
 })
 
-const isAbortError = (error: unknown) => error instanceof DOMException && hasAbortErrorName(error)
-
-const createDownloadError = (
-  options: Pick<LoadBufferOptions, 'fileName'> | Pick<FetchJsonOptions, 'fileName'>,
-  status: number | null,
-): DownloadFailedError => ({
-  code: 'download-failed',
-  fileName: options.fileName,
-  phase: 'download',
-  retryable:
-    status === null ||
-    status === REQUEST_TIMEOUT_STATUS ||
-    status === TOO_MANY_REQUESTS_STATUS ||
-    status >= SERVER_ERROR_STATUS,
-  status,
+const {
+  loadBuffer: fetchBuffer,
+  loadJson: fetchJson,
+  loadManifest,
+} = createSupertonicResourceLoader({
+  onProgress: (progress) => postMessage({progress, type: 'progress'}),
+  storage: modelStorage,
 })
 
-const createWorkerError = (
-  phase: WorkerFailedError['phase'],
-  error: unknown,
-): WorkerFailedError => ({
-  code: 'worker-failed',
-  detail: getErrorDetail(error),
-  phase,
-  retryable: true,
-})
-
-const fetchBuffer = async (
-  options: LoadBufferOptions,
-): Promise<Result<ArrayBuffer, CancelledError | DownloadFailedError>> => {
-  try {
-    const resource = await loadModelResource({
-      onStorageError: reportModelStorageError,
-      signal: options.signal,
-      storage: modelStorage,
-      url: options.url,
-    })
-    const {response} = resource
-
-    if (!response.ok) {
-      return failureResult(createDownloadError(options, response.status))
-    }
-
-    if (response.body === null) {
-      const buffer = await response.arrayBuffer()
-      await finishCacheWrite(resource.cacheWrite)
-      return successResult(buffer)
-    }
-
-    const reader = response.body.getReader()
-    const chunks: Array<Uint8Array> = []
-    let received = 0
-
-    while (true) {
-      const result = await reader.read()
-
-      if (result.done) {
-        break
-      }
-
-      chunks.push(result.value)
-      received += result.value.byteLength
-      postMessage({
-        progress: {
-          fileName: options.fileName,
-          loadedBytes: options.loadedBefore + Math.min(received, options.expectedSize),
-          totalBytes: options.totalBytes,
-        },
-        type: 'progress',
-      })
-    }
-
-    const buffer = new Uint8Array(received)
-    let offset = 0
-
-    for (const chunk of chunks) {
-      buffer.set(chunk, offset)
-      offset += chunk.byteLength
-    }
-
-    await finishCacheWrite(resource.cacheWrite)
-    return successResult(buffer.buffer)
-  } catch (error: unknown) {
-    return failureResult(
-      isAbortError(error) ? createCancelledError('download') : createDownloadError(options, null),
-    )
-  }
-}
-
-const fetchJson = async (
-  options: FetchJsonOptions,
-): Promise<Result<unknown, CancelledError | DownloadFailedError>> => {
-  try {
-    const resource = await loadModelResource({
-      onStorageError: reportModelStorageError,
-      signal: options.signal,
-      storage: modelStorage,
-      url: options.url,
-    })
-    const {response} = resource
-
-    if (!response.ok) {
-      return failureResult(createDownloadError(options, response.status))
-    }
-
-    const value: unknown = await response.json()
-    await finishCacheWrite(resource.cacheWrite)
-    return successResult(value)
-  } catch (error: unknown) {
-    return failureResult(
-      isAbortError(error) ? createCancelledError('download') : createDownloadError(options, null),
-    )
-  }
-}
-
-const fetchModelAssets = async (
-  signal: AbortSignal,
-): Promise<Result<unknown, CancelledError | DownloadFailedError>> => {
-  const options: FetchJsonOptions = {
+const fetchModelAssets = async (signal: AbortSignal) =>
+  loadManifest({
     fileName: '모델 자산 설정',
     signal,
     url: new URL(SUPERTONIC_MODEL_ASSETS_URL, workerScope.location.origin).href,
-  }
-
-  try {
-    const response = await httpFetch(options.url, {cache: 'no-store', signal})
-
-    if (!response.ok) {
-      return failureResult(createDownloadError(options, response.status))
-    }
-
-    const value: unknown = await response.json()
-    return successResult(value)
-  } catch (error: unknown) {
-    return failureResult(
-      isAbortError(error) ? createCancelledError('download') : createDownloadError(options, null),
-    )
-  }
-}
+  })
 
 const loadInitializationAssets = async (
   signal: AbortSignal,

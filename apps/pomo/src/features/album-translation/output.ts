@@ -11,20 +11,21 @@ const translationOutputSchema = z.object({
   'zh-Hans': translationTextSchema,
 })
 
+const parseTranslationCandidate = (json: string) => {
+  try {
+    return translationOutputSchema.parse(JSON.parse(json))
+  } catch {
+    return undefined
+  }
+}
+
 export const parseAlbumTranslation = (
   output: string,
 ): AlbumTranslationCompleteResponse['translations'] => {
   const objectCandidates = Array.from(iterateJsonObjectSlices(output))
-  const translations = objectCandidates
-    .map(({slice}) => {
-      try {
-        return translationOutputSchema.parse(JSON.parse(slice))
-      } catch {
-        return undefined
-      }
-    })
-    .filter((candidate) => candidate !== undefined)
-    .pop()
+  const translations = objectCandidates.reduceRight<
+    AlbumTranslationCompleteResponse['translations'] | undefined
+  >((translations, {slice}) => translations ?? parseTranslationCandidate(slice), undefined)
 
   if (translations !== undefined) {
     return translations

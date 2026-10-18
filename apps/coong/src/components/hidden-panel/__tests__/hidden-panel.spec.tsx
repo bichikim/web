@@ -19,7 +19,7 @@ afterEach(() => {
 })
 
 describe('hidden panel state', () => {
-  it('should toggle visible content from the close control', async () => {
+  it('should toggle visible content from the close control', () => {
     render(() => (
       <SHiddenPanelProvider initShow>
         <SClose playedTime={5} totalTime={10} />
@@ -28,7 +28,7 @@ describe('hidden panel state', () => {
     ))
 
     expect(screen.getByText('panel content')).toBeInTheDocument()
-    await fireEvent.click(screen.getByRole('button'))
+    fireEvent.click(screen.getByRole('button'))
     expect(screen.queryByText('panel content')).not.toBeInTheDocument()
   })
 

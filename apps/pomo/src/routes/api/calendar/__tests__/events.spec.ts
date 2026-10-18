@@ -170,6 +170,17 @@ it('should return normalized events for the authenticated user', async () => {
   })
 })
 
+it('should pass an exact instant query to the calendar service', async () => {
+  const response = await GET(createEvent('at=2026-09-04T03%3A00%3A00.000Z&timeZone=Asia%2FSeoul'))
+
+  expect(response.status).toBe(200)
+  expect(dependencyMocks.listEvents).toHaveBeenCalledWith({
+    at: '2026-09-04T03:00:00.000Z',
+    displayTimeZone: 'Asia/Seoul',
+    userId: 'user-1',
+  })
+})
+
 it('should return service unavailable when the calendar service fails', async () => {
   dependencyMocks.listEvents.mockRejectedValue(new Error('calendar unavailable'))
   const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)

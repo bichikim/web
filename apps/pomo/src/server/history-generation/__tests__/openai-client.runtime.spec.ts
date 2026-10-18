@@ -1,9 +1,11 @@
 /** @vitest-environment node */
+import {ApiAiAdmissionError} from 'src/server/api-ai/admission-error'
 import {beforeEach, expect, it, vi} from 'vitest'
 
 const openAiMocks = vi.hoisted(() => ({
   constructor: vi.fn(),
   create: vi.fn(),
+  queued: vi.fn(),
   unwrap: vi.fn(),
 }))
 const environmentMocks = vi.hoisted(() => ({
@@ -16,6 +18,9 @@ const environmentMocks = vi.hoisted(() => ({
   },
 }))
 
+vi.mock('src/server/api-ai/submit-queued-history-response', () => ({
+  submitQueuedHistoryResponse: openAiMocks.queued,
+}))
 vi.mock('openai', () => ({
   default: class OpenAI {
     readonly responses = {create: openAiMocks.create}
@@ -35,11 +40,13 @@ import {getOpenAiClient, submitHistoryResponse, unwrapOpenAiWebhook} from '../op
 
 beforeEach(() => {
   vi.clearAllMocks()
-  openAiMocks.create.mockResolvedValue({id: 'resp-default'})
+  openAiMocks.queued.mockResolvedValue({
+    responseId: 'pomo-api:019d0000-0000-7000-8000-000000000001',
+  })
   openAiMocks.unwrap.mockReturnValue({id: 'event-1'})
 })
 
-it('should lazily reuse the default OpenAI client for submissions', async () => {
+it('should reuse the client for legacy lookups while queueing new history submissions', async () => {
   const firstClient = getOpenAiClient()
 
   expect(getOpenAiClient()).toBe(firstClient)
@@ -51,8 +58,13 @@ it('should lazily reuse the default OpenAI client for submissions', async () => 
       submissionKey: '019d0000-0000-7000-8000-000000000001',
       targetDate: {day: 16, isoDate: '2026-08-16', month: 8},
     }),
-  ).resolves.toEqual({responseId: 'resp-default'})
+  ).resolves.toEqual({responseId: 'pomo-api:019d0000-0000-7000-8000-000000000001'})
   expect(openAiMocks.constructor).toHaveBeenCalledOnce()
+  expect(openAiMocks.create).not.toHaveBeenCalled()
+  expect(openAiMocks.queued).toHaveBeenCalledWith(
+    '019d0000-0000-7000-8000-000000000001',
+    expect.objectContaining({background: true, store: true}),
+  )
 })
 
 it('should unwrap a webhook with the configured secret', () => {
@@ -64,4 +76,18 @@ it('should unwrap a webhook with the configured secret', () => {
     headers,
     'webhook-secret',
   )
+})
+
+it('should classify local queue admission failure as rejected without sending an API request', async () => {
+  openAiMocks.queued.mockRejectedValueOnce(new ApiAiAdmissionError('queue full'))
+  await expect(
+    submitHistoryResponse({
+      generationRunId: 'run-1',
+      policy: HISTORY_SOURCE_POLICY,
+      promptVersion: 'v1',
+      submissionKey: '019d0000-0000-7000-8000-000000000001',
+      targetDate: {day: 16, isoDate: '2026-08-16', month: 8},
+    }),
+  ).rejects.toMatchObject({acceptance: 'rejected'})
+  expect(openAiMocks.create).not.toHaveBeenCalled()
 })

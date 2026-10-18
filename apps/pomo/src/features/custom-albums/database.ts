@@ -1,5 +1,7 @@
 import {z} from 'zod'
 
+import {createLazyInitializer} from 'src/utils/create-lazy-initializer'
+
 import {
   CUSTOM_ALBUM_COVER_SOURCES,
   CUSTOM_ALBUM_ICONS,
@@ -43,9 +45,7 @@ export const storedTrackSchema = z.object({
 export type StoredCustomAlbum = z.infer<typeof storedAlbumSchema>
 export type StoredCustomTrack = z.infer<typeof storedTrackSchema>
 
-let databasePromise: Promise<IDBDatabase> | null = null
-
-const createDatabase = (): Promise<IDBDatabase> =>
+const openDatabase = (): Promise<IDBDatabase> =>
   new Promise((resolve, reject) => {
     if (typeof globalThis.indexedDB === 'undefined') {
       reject(new CustomAlbumError('database-unavailable'))
@@ -68,16 +68,7 @@ const createDatabase = (): Promise<IDBDatabase> =>
       reject(new CustomAlbumError('database-unavailable', {cause: request.error}))
   })
 
-export const openCustomAlbumDatabase = (): Promise<IDBDatabase> => {
-  if (databasePromise === null) {
-    databasePromise = createDatabase().catch((error: unknown) => {
-      databasePromise = null
-      throw error
-    })
-  }
-
-  return databasePromise
-}
+export const openCustomAlbumDatabase = createLazyInitializer(openDatabase)
 
 export const readRequest = <Value>(request: IDBRequest<Value>): Promise<Value> =>
   new Promise((resolve, reject) => {

@@ -1,4 +1,5 @@
 import {uniq} from 'es-toolkit/array'
+import {once} from 'es-toolkit/function'
 export {
   deleteStoredDialogueAudio,
   type DialogueAudioDeletionResult,
@@ -110,12 +111,10 @@ interface TossReadResult {
 }
 
 const COMPLETE_RESET_RESULT: CompleteOptionResetResult = {status: 'complete'}
-let tossStoragePromise: Promise<TossOptionResetStorage> | null = null
-
-const loadTossStorage = (): Promise<TossOptionResetStorage> => {
-  tossStoragePromise ??= import('@apps-in-toss/web-framework').then(({Storage}) => Storage)
-  return tossStoragePromise
-}
+const loadTossStorage = once(
+  (): Promise<TossOptionResetStorage> =>
+    import('@apps-in-toss/web-framework').then(({Storage}) => Storage),
+)
 
 const withResetError = async <Result>(operation: () => Promise<Result>): Promise<Result> => {
   try {
@@ -509,26 +508,23 @@ export const createOptionResetManager = (
   }
 }
 
+const collectSessionKeys = (prefix: string): ReadonlyArray<string> =>
+  Array.from({length: sessionStorage.length}, (_, index) => sessionStorage.key(index)).filter(
+    (key): key is string => key !== null && key.startsWith(prefix),
+  )
+
 const runtimeStorage: OptionResetStorage = {
-  getSessionStorageEntriesByPrefix: (prefix) => {
-    const matchingKeys = Array.from({length: sessionStorage.length}, (_, index) =>
-      sessionStorage.key(index),
-    ).filter((key): key is string => key !== null && key.startsWith(prefix))
-    return matchingKeys.flatMap((key) => {
+  getSessionStorageEntriesByPrefix: (prefix) =>
+    collectSessionKeys(prefix).flatMap((key) => {
       const value = sessionStorage.getItem(key)
       return value === null ? [] : [{key, value}]
-    })
-  },
+    }),
   async getToss(key) {
     const storage = await loadTossStorage()
     return storage.getItem(key)
   },
-  removeSessionStorageByPrefix: (prefix) => {
-    const matchingKeys = Array.from({length: sessionStorage.length}, (_, index) =>
-      sessionStorage.key(index),
-    ).filter((key): key is string => key !== null && key.startsWith(prefix))
-    matchingKeys.forEach((key) => sessionStorage.removeItem(key))
-  },
+  removeSessionStorageByPrefix: (prefix) =>
+    collectSessionKeys(prefix).forEach((key) => sessionStorage.removeItem(key)),
   async removeToss(key) {
     const storage = await loadTossStorage()
     await storage.removeItem(key)

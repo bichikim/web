@@ -1,3 +1,4 @@
+import {useResizeObserver} from 'src/hooks/use-resize-observer'
 import type {AssetContainer} from '@babylonjs/core/assetContainer'
 import {ArcRotateCamera} from '@babylonjs/core/Cameras/arcRotateCamera'
 import {Engine} from '@babylonjs/core/Engines/engine'
@@ -219,22 +220,20 @@ export const TrainCanvas = (props: TrainCanvasProps) => {
       activeContainer = null
     }
 
-    const resizeObserver = new ResizeObserver(() => engine.resize())
-    resizeObserver.observe(renderCanvas)
+    const resizeObserver = useResizeObserver({onResize: () => engine.resize(), target: canvas})
+    resizeObserver.start()
     engine.runRenderLoop(() => scene.render())
 
     createEffect(() => {
       if (props.seatedCharacters !== undefined) {
         return
       }
-      /* eslint-disable prefer-destructuring -- Solid props stay tracked through direct access. */
       const modelUrl = props.modelUrl
       const cacheModels = props.cacheModels
       const onLoadError = props.onLoadError
       const onLoadProgress = props.onLoadProgress
       const onLoadStart = props.onLoadStart
       const onLoadSuccess = props.onLoadSuccess
-      /* eslint-enable prefer-destructuring */
       loadRevision += 1
       const revision = loadRevision
       unloadModel()
@@ -297,7 +296,7 @@ export const TrainCanvas = (props: TrainCanvasProps) => {
 
     onCleanup(() => {
       loadRevision += 1
-      resizeObserver.disconnect()
+      resizeObserver.stop()
       engine.stopRenderLoop()
       unloadModel()
       for (const container of modelCache.values()) {

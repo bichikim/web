@@ -99,6 +99,38 @@ it('should create a feature request for the resolved user', async () => {
   })
 })
 
+it('should trim and accept the exact title and description limits', async () => {
+  authMocks.resolveUserRequest.mockResolvedValue({cookies: [], userId: 'user-1'})
+  const title = '가'.repeat(120)
+  const description = '설'.repeat(2000)
+
+  const response = await invokeApiRoute(
+    POST,
+    createRequest({description: ` ${description} `, title: ` ${title} `}),
+  )
+
+  expect(response.status).toBe(201)
+  expect(repositoryMocks.createFeatureRequest).toHaveBeenCalledWith({
+    description,
+    title,
+    userId: 'user-1',
+  })
+})
+
+it.each([
+  {description: '', title: '가'.repeat(121)},
+  {description: '설'.repeat(2001), title: '새 기능'},
+  {description: '', title: '   '},
+])('should reject content outside the trimmed create schema: %#', async (input) => {
+  authMocks.resolveUserRequest.mockResolvedValue({cookies: [], userId: 'user-1'})
+
+  const response = await invokeApiRoute(POST, createRequest(input))
+
+  expect(response.status).toBe(400)
+  await expect(response.json()).resolves.toEqual({error: 'invalid_request'})
+  expect(repositoryMocks.createFeatureRequest).not.toHaveBeenCalled()
+})
+
 it('should reject invalid request content before writing', async () => {
   authMocks.resolveUserRequest.mockResolvedValue({cookies: [], userId: 'user-1'})
 

@@ -72,7 +72,7 @@ beforeEach(() => {
 })
 
 describe('TextMoodLab', () => {
-  it('should wire initial text, direct input, samples, and actions', () => {
+  it('should wire initial text and direct input', () => {
     const harness = createHarness()
     renderLab(harness)
 
@@ -80,10 +80,20 @@ describe('TextMoodLab', () => {
       initialText: '창문을 여니 시원한 바람이 불어왔다. 오늘은 좋은 일이 생길 것 같다.',
     })
     expect(screen.getByRole('heading', {name: '문장의 분위기를 열두 갈래로 읽어요'})).toBeVisible()
-    expect(screen.getByRole('textbox', {name: '분석할 문장'})).toHaveValue('초기 문장')
+    const input = screen.getByRole('textbox', {name: '분석할 문장'})
+    expect(input).toHaveValue('초기 문장')
     expect(screen.getByTestId('evaluation')).toBeInTheDocument()
     expect(screen.queryByTestId('analysis-result')).not.toBeInTheDocument()
     expect(screen.queryByTestId('insufficient-result')).not.toBeInTheDocument()
+
+    fireEvent.input(input, {target: {value: '직접 입력한 문장'}})
+    expect(harness.controller.setText).toHaveBeenCalledWith('직접 입력한 문장')
+    expect(harness.controller.setText).toHaveBeenCalledOnce()
+  })
+
+  it('should wire samples and actions', () => {
+    const harness = createHarness()
+    renderLab(harness)
 
     fireEvent.input(screen.getByRole('textbox', {name: '분석할 문장'}), {
       target: {value: '직접 입력한 문장'},

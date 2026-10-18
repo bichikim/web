@@ -86,7 +86,7 @@ describe('display theme preference repository', () => {
 
   it('should reject a browser save when browser storage fails', async () => {
     storage.writeWeb.mockImplementation(() => {
-      throw new Error('Browser storage unavailable')
+      return new Error('Browser storage unavailable')
     })
 
     await expect(repository.write('bright')).rejects.toThrow(
@@ -148,7 +148,7 @@ describe('display theme preference repository', () => {
     webValues.set(STORAGE_KEY, {preference: 'bright', savedAt: 10})
     tossValues.set(STORAGE_KEY, {preference: 'dark', savedAt: 20})
     storage.writeWeb.mockImplementationOnce(() => {
-      throw new Error('Browser storage unavailable')
+      return new Error('Browser storage unavailable')
     })
 
     await expect(repository.read()).resolves.toBe('dark')
@@ -194,7 +194,7 @@ describe('display theme preference repository', () => {
   it('should persist through toss storage when the browser cache is unavailable', async () => {
     storage.usesTossStorage.mockReturnValue(true)
     storage.writeWeb.mockImplementation(() => {
-      throw new Error('Browser storage unavailable')
+      return new Error('Browser storage unavailable')
     })
 
     await expect(repository.write('dark')).resolves.toBeUndefined()
@@ -208,7 +208,7 @@ describe('display theme preference repository', () => {
     storage.usesTossStorage.mockReturnValue(true)
     webValues.set(STORAGE_KEY, 'dark')
     storage.writeWeb.mockImplementationOnce(() => {
-      throw new Error('Browser storage unavailable')
+      return new Error('Browser storage unavailable')
     })
 
     await expect(repository.write('bright')).resolves.toBeUndefined()

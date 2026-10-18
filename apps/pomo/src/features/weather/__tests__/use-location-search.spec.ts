@@ -140,3 +140,21 @@ it('should expose provider failures and abort work when disposed', async () => {
   root.dispose()
   expect(signal?.aborted).toBe(true)
 })
+
+it('should search the same query again after selecting a location', async () => {
+  clientMocks.searchWeatherLocations.mockResolvedValue([tokyo])
+  const root = createSearchRoot()
+
+  root.controller.onQueryChange('Tokyo')
+  await vi.advanceTimersByTimeAsync(300)
+  root.controller.onSelect(tokyo)
+  expect(root.controller.status()).toBe('idle')
+  root.controller.onQueryChange('Tokyo')
+  expect(root.controller.status()).toBe('searching')
+  await vi.advanceTimersByTimeAsync(300)
+
+  expect(clientMocks.searchWeatherLocations).toHaveBeenCalledTimes(2)
+  expect(root.controller.results()).toEqual([tokyo])
+  expect(root.controller.status()).toBe('ready')
+  root.dispose()
+})

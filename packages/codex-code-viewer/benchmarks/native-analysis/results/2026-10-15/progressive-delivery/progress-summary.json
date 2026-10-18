@@ -1,0 +1,34 @@
+[
+  {
+    "name": "getWindow",
+    "variant": "before",
+    "threshold": 22,
+    "samples": 7,
+    "milliseconds": 698.19975,
+    "range": [648.968583, 1267.697708]
+  },
+  {
+    "name": "getWindow",
+    "variant": "after",
+    "threshold": 22,
+    "samples": 7,
+    "milliseconds": 378.389583,
+    "range": [368.526666, 492.743041]
+  },
+  {
+    "name": "javascript",
+    "variant": "before",
+    "threshold": 6,
+    "samples": 7,
+    "milliseconds": 2493.25175,
+    "range": [2292.340584, 7655.721]
+  },
+  {
+    "name": "javascript",
+    "variant": "after",
+    "threshold": 6,
+    "samples": 7,
+    "milliseconds": 2077.66625,
+    "range": [2048.496041, 6714.259208]
+  }
+]

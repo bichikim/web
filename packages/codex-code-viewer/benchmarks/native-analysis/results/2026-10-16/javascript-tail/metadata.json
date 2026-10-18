@@ -1,0 +1,22 @@
+{
+  "root": "/Users/bichi/.codex/worktrees/379e/web",
+  "node": "v24.15.0",
+  "platform": "macOS-26.5.2-arm64-arm-64bit-Mach-O",
+  "engine": "TS7 7.0.2",
+  "binarySha256": "a82f731365ad69d5c4c15f5e18fba4584bf3b7b839960172a76c3462b5114bf2",
+  "environment": {
+    "GOMEMLIMIT": null,
+    "GOGC": null,
+    "GOMAXPROCS": null
+  },
+  "codeFiles": 6631,
+  "samplesPerVariantPerQuery": 7,
+  "freshWorkspaceAndCodeHome": true,
+  "osCachesFlushed": false,
+  "timing": "server stream receipt, not browser paint",
+  "baseline": "prior product including metadata binding filter",
+  "middleCounts": {
+    "getWindow": 22,
+    "javascript": 6
+  }
+}

@@ -1,4 +1,5 @@
-import {createSignal, onCleanup, onMount} from 'solid-js'
+import {createSignal, onMount} from 'solid-js'
+import {createAnimationLoop} from '@winter-love/solid-use/animation-loop'
 
 const REFINEMENT_FRAMES = ['뷁뚱', '휵쟝', '먕귱', '륭쫑'] as const
 
@@ -9,13 +10,17 @@ export const RefinementIndicator = () => {
 
   onMount(() => {
     const startedAt = Date.now()
-    const animate = () => {
-      const elapsed = Date.now() - startedAt
-      setFrame(Math.floor(elapsed / FRAME_INTERVAL) % REFINEMENT_FRAMES.length)
-      animation = globalThis.requestAnimationFrame(animate)
-    }
-    let animation = globalThis.requestAnimationFrame(animate)
-    onCleanup(() => globalThis.cancelAnimationFrame(animation))
+    const animation = createAnimationLoop()
+    animation.start(() => {
+      try {
+        const elapsed = Date.now() - startedAt
+        setFrame(Math.floor(elapsed / FRAME_INTERVAL) % REFINEMENT_FRAMES.length)
+      } catch (error) {
+        // Preserve the consumer's stop-on-error policy; the shared loop otherwise continues.
+        animation.stop()
+        throw error
+      }
+    })
   })
 
   return (

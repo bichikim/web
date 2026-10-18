@@ -6,8 +6,8 @@ import * as m from '@paraglide/message'
 import {MAXIMUM_MEMORY_MEMO_LENGTH} from '../../features/memory-assist'
 import {PButton} from '../p-button/PButton'
 import {PModal} from '../p-modal/PModal'
-import {type ReminderDraft, ReminderFields} from './ReminderFields'
-import {formatLocalDate} from 'src/utils/format-local-date'
+import {type ReminderDraft} from './ReminderFields'
+import {MemoryMemoReminderFields} from './MemoryMemoReminderFields'
 
 const TEXTAREA_CLASSES = cx(
   'box-border min-h-24 w-full resize-y rounded-5 border border-solid border-border',
@@ -73,11 +73,9 @@ export const MemoryMemoModal = (props: MemoryMemoModalProps) => {
           />
         </label>
 
-        <ReminderFields
-          draft={props.reminderDraft}
-          minimumDate={formatLocalDate(new Date())}
-          onChange={props.onReminderChange}
-        />
+        <Show when={props.isOpen}>
+          <MemoryMemoReminderFields draft={props.reminderDraft} onChange={props.onReminderChange} />
+        </Show>
 
         <Show when={props.message()}>
           {(currentMessage) => (

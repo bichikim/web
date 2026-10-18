@@ -1,5 +1,5 @@
 import {createBestEffortValueStorage, type ValueCodec} from '../value-storage'
-import type {DesktopMode} from './model'
+import {type DesktopMode, isDesktopMode} from './is-desktop-mode'
 
 export const DESKTOP_MODE_STORAGE_KEY = 'pomo:desktop-mode:v1'
 export const DESKTOP_CLEAN_EXIT_STORAGE_KEY = 'pomo:desktop-clean-exit:v1'
@@ -13,16 +13,13 @@ export interface DesktopModeStorage {
 const getStorage = (storage?: DesktopModeStorage): DesktopModeStorage =>
   storage ?? globalThis.localStorage
 
-const isSupportedDesktopMode = (value: unknown): value is DesktopMode =>
-  value === 'normal' || value === 'widget' || value === 'desktop' || value === 'interactiveDesktop'
-
 export type DesktopModeOwnerState = 'primary' | 'released'
 
 const isSupportedDesktopModeOwnerState = (value: unknown): value is DesktopModeOwnerState =>
   value === 'primary' || value === 'released'
 
 const modeCodec: ValueCodec<DesktopMode> = {
-  decode: (stored) => (isSupportedDesktopMode(stored) ? stored : null),
+  decode: (stored) => (isDesktopMode(stored) ? stored : null),
   encode: (mode) => mode,
 }
 const cleanExitCodec: ValueCodec<boolean> = {

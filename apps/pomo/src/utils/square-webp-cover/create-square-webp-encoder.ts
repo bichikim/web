@@ -10,7 +10,7 @@ export interface SquareWebpEncoderOptions {
   readonly contextError: () => Error
   readonly encodingError: () => Error
 }
-/** Draws one square crop and encodes it at each requested WebP quality. */
+/** 정사각형으로 잘라 그린 뒤 요청한 각 WebP 품질로 인코딩한다. */
 export const createSquareWebpEncoder = (
   options: SquareWebpEncoderOptions,
   canvas: SquareWebpCanvas = createSquareWebpCanvas(),

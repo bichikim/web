@@ -1,3 +1,4 @@
+import {resolveTextModelAssetUrl} from './resolve-text-model-asset-url'
 import {createModelStorage, type ModelStorage} from '../model-storage'
 import {isPomoAssetBundled} from '../product-assets'
 import {getTextModelImplementation, type TextModelId} from './model'
@@ -10,19 +11,20 @@ export interface IsTextModelDownloadedOptions {
   readonly storage?: ModelStorage
 }
 
-const getModelWeightUrls = (modelId: TextModelId): ReadonlyArray<string> => {
+export const getTextModelWeightUrls = (modelId: TextModelId): ReadonlyArray<string> => {
   const model = getTextModelImplementation(modelId)
-  const modelPath = model.assetSource.pathTemplate
-    .replaceAll('{model}', model.repositoryId)
-    .replaceAll('{revision}', model.assetSource.revision)
+  if (model.architecture === 'lfm-2-gguf') {
+    return [resolveTextModelAssetUrl({...model, relativePath: model.weightFile})]
+  }
 
-  return MODEL_WEIGHT_NAMES.flatMap((name) =>
-    MODEL_WEIGHT_EXTENSIONS.map(
-      (extension) =>
-        new URL(
-          `${modelPath}onnx/${name}_${model.quantization}.${extension}`,
-          model.assetSource.host,
-        ).href,
+  const weightNames = model.architecture === 'lfm-2' ? ['model'] : MODEL_WEIGHT_NAMES
+
+  return weightNames.flatMap((name) =>
+    MODEL_WEIGHT_EXTENSIONS.map((extension) =>
+      resolveTextModelAssetUrl({
+        ...model,
+        relativePath: `onnx/${name}_${model.quantization}.${extension}`,
+      }),
     ),
   )
 }
@@ -31,7 +33,10 @@ const getModelWeightUrls = (modelId: TextModelId): ReadonlyArray<string> => {
 export const isTextModelDownloaded = async (
   options: IsTextModelDownloadedOptions,
 ): Promise<boolean> => {
-  const modelWeightUrls = getModelWeightUrls(options.modelId)
+  if (options.modelId === 'cloud') {
+    return true
+  }
+  const modelWeightUrls = getTextModelWeightUrls(options.modelId)
   if (modelWeightUrls.every(isPomoAssetBundled)) {
     return true
   }

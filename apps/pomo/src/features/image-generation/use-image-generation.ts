@@ -1,6 +1,7 @@
-import {replaceBlobObjectUrl, replaceObjectUrl} from 'src/features/blob-object-url'
+import {replaceBlobObjectUrl} from 'src/features/blob-object-url'
 import * as m from '@paraglide/message'
 import {isAbortError} from 'src/utils/is-cancellation-reason'
+import {normalizePasteNumericInput} from 'src/utils/normalize-paste-numeric-input'
 import {getExceptionMessage} from '../error-detail'
 import {type ModelDownloadItem, useModelDownload} from '../model-download'
 import {createMemo, createSignal, onCleanup, type Setter} from 'solid-js'
@@ -49,11 +50,15 @@ const clearGeneratedImage = (
 }
 
 const parseSeed = (text: string) => {
-  const seed = Number(text)
-  if (text !== '' && (!/^\d+$/u.test(text) || seed > MAXIMUM_SEED)) {
+  const normalizedText = normalizePasteNumericInput(text)
+  const seed = Number(normalizedText)
+  if (
+    normalizedText !== '' &&
+    (!/^\d+$/u.test(normalizedText) || !Number.isSafeInteger(seed) || seed > MAXIMUM_SEED)
+  ) {
     throw new Error(m.picture_diary_generation_seed_error())
   }
-  return text === '' ? crypto.getRandomValues(new Uint32Array(1))[0]! : seed
+  return normalizedText === '' ? crypto.getRandomValues(new Uint32Array(1))[0]! : seed
 }
 
 interface DownloadProgressOptions {
@@ -90,12 +95,6 @@ const handleGenerationUpdate = (update: GenerationUpdate, handlers: GenerationUp
 }
 
 export type ImageGenerationController = ReturnType<typeof useImageGeneration>
-
-const imageUrlRuntime = {
-  create: (blob: Blob) => URL.createObjectURL(blob),
-  order: 'create-first' as const,
-  revoke: (url: string) => URL.revokeObjectURL(url),
-}
 
 export const useImageGeneration = (options: UseImageGenerationOptions = {}) => {
   const downloads = useModelDownload()
@@ -136,10 +135,7 @@ export const useImageGeneration = (options: UseImageGenerationOptions = {}) => {
   onCleanup(() => {
     disposed = true
     controller?.abort()
-    const image = result()
-    if (image !== null) {
-      replaceBlobObjectUrl(image.url, () => null)
-    }
+    clearGeneratedImage(result(), setResult, true)
   })
 
   const generate = async () => {
@@ -180,7 +176,9 @@ export const useImageGeneration = (options: UseImageGenerationOptions = {}) => {
         return
       }
       const previous = result()
-      const url = replaceObjectUrl(previous?.url ?? null, () => image.blob, imageUrlRuntime)
+      const url = replaceBlobObjectUrl(previous?.url ?? null, () => image.blob, {
+        order: 'create-first',
+      })
       setResult({...settings, blob: image.blob, prompt: image.prompt, url})
       setStatus(m.picture_diary_generation_complete())
     } catch (failure) {

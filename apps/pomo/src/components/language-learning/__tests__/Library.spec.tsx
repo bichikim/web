@@ -119,7 +119,7 @@ beforeEach(() => {
   })
 })
 
-it('should use the shared language select and filter saved sentences', async () => {
+const renderLearningLibrary = () => {
   const events = createEvents()
   vi.mocked(events.getAudio).mockResolvedValue(new Blob(['audio']))
   vi.mocked(usePEvents).mockReturnValue(events)
@@ -141,7 +141,12 @@ it('should use the shared language select and filter saved sentences', async () 
       version: 1,
     },
   ])
-  const result = render(() => <LanguageLearningLibrary />)
+  const view = render(() => <LanguageLearningLibrary />)
+  return {events, view}
+}
+
+it('should use the shared select with initial language-filtered saved sentences', () => {
+  const {view} = renderLearningLibrary()
 
   expect(PSelect).toHaveBeenCalledWith(
     expect.objectContaining({
@@ -165,7 +170,11 @@ it('should use the shared language select and filter saved sentences', async () 
   expect(controls?.className).not.toContain('flex-wrap')
   expect(createLink.className).toContain('rounded-control')
   expect(createLink.className).toContain('border-highlight')
+  view.unmount()
+})
 
+it('should filter saved sentences and retain actions for the selected language', () => {
+  const {view} = renderLearningLibrary()
   fireEvent.change(screen.getByRole('combobox', {name: '학습 언어'}), {
     target: {value: 'ja'},
   })
@@ -180,27 +189,48 @@ it('should use the shared language select and filter saved sentences', async () 
     '/dialogue?dialogueId=dialogue-ja',
   )
   expect(screen.getByRole('button', {name: '삭제'})).toBeDefined()
+  view.unmount()
+})
 
+it('should switch from the initial language, play, and remove on the same mount', async () => {
+  const {events, view} = renderLearningLibrary()
+  expect(screen.getByRole('combobox', {name: '학습 언어'})).toHaveValue('en')
+  expect(screen.getByText('I am home.')).toBeDefined()
+  expect(screen.queryByText('家に帰ります。')).toBeNull()
+
+  fireEvent.change(screen.getByRole('combobox', {name: '학습 언어'}), {
+    target: {value: 'ja'},
+  })
+  expect(screen.getByRole('combobox', {name: '학습 언어'})).toHaveValue('ja')
+  expect(screen.queryByText('I am home.')).toBeNull()
+  expect(screen.getByText('家に帰ります。')).toBeDefined()
+  expect(screen.queryByText(/사용 단어/u)).toBeNull()
+  expect(screen.queryByText(/말풍선/u)).toBeNull()
+  expect(screen.getByRole('button', {name: '듣기'})).toBeDefined()
+  expect(screen.getByRole('button', {name: '캐릭터로 듣기'})).toBeDefined()
+  expect(screen.getByRole('link', {name: '편집'}).getAttribute('href')).toBe(
+    '/dialogue?dialogueId=dialogue-ja',
+  )
   fireEvent.click(screen.getByRole('button', {name: '캐릭터로 듣기'}))
-  await vi.waitFor(() => expect(events.playDialogue).toHaveBeenCalledWith('dialogue-ja'))
+  await Promise.resolve()
+  await Promise.resolve()
+  expect(events.playDialogue).toHaveBeenCalledWith('dialogue-ja')
 
   fireEvent.click(screen.getByRole('button', {name: '삭제'}))
   fireEvent.click(screen.getByRole('button', {name: '삭제 확인'}))
-
-  return vi.waitFor(() => {
-    expect(events.deleteDialogue).toHaveBeenCalledWith('dialogue-ja')
-    expect(readLanguageLearningSentences()).toEqual([
-      {
-        createdAt: '2026-08-28T00:00:00.000Z',
-        dialogueId: 'dialogue-en',
-        language: 'en',
-        tags: ['home'],
-        text: 'I am home.',
-        version: 1,
-      },
-    ])
-    result.unmount()
-  })
+  await Promise.resolve()
+  expect(events.deleteDialogue).toHaveBeenCalledWith('dialogue-ja')
+  expect(readLanguageLearningSentences()).toEqual([
+    {
+      createdAt: '2026-08-28T00:00:00.000Z',
+      dialogueId: 'dialogue-en',
+      language: 'en',
+      tags: ['home'],
+      text: 'I am home.',
+      version: 1,
+    },
+  ])
+  view.unmount()
 })
 
 it('should hide stale learning records without a saved dialogue', () => {

@@ -92,7 +92,7 @@ export const PVersionNotice = (props: PVersionNoticeProps) => {
     setReleases([])
   }
   const showFeatureRequest = () => props.featureRequestVisible ?? true
-  const releaseContent = () => (
+  const ReleaseContent = () => (
     <Show
       when={releases().length > 0}
       fallback={<PLoadingStatus message={m.modal_content_loading()} />}
@@ -102,7 +102,7 @@ export const PVersionNotice = (props: PVersionNoticeProps) => {
       </div>
     </Show>
   )
-  const featureRequestContent = () => (
+  const FeatureRequestContent = () => (
     <PFeatureRequest
       desktopDialog={props.desktopDialog}
       desktopSurface={props.desktopSurface}
@@ -110,7 +110,7 @@ export const PVersionNotice = (props: PVersionNoticeProps) => {
       sceneStyle={props.sceneStyle}
     />
   )
-  const desktopVersionNoticeContent = () => (
+  const DesktopVersionNoticeContent = () => (
     <DesktopDialogFrame
       onClose={() => {
         persistViewedRelease()
@@ -118,10 +118,10 @@ export const PVersionNotice = (props: PVersionNoticeProps) => {
       }}
       title={m.version_notice_title()}
     >
-      {releaseContent()}
+      <ReleaseContent />
     </DesktopDialogFrame>
   )
-  const inlineVersionNoticeContent = () => (
+  const InlineVersionNoticeContent = () => (
     <>
       <PScribbleCircleControl enabled={props.sceneStyle === 'scribble'}>
         <POrbitBorder>
@@ -143,7 +143,7 @@ export const PVersionNotice = (props: PVersionNoticeProps) => {
         size="wide"
         title={m.version_notice_title()}
       >
-        {releaseContent()}
+        <ReleaseContent />
       </PModal>
     </>
   )
@@ -151,14 +151,18 @@ export const PVersionNotice = (props: PVersionNoticeProps) => {
   return (
     <Show
       when={!props.desktopDialog || catalogAvailable()}
-      fallback={desktopVersionNoticeContent()}
+      fallback={<DesktopVersionNoticeContent />}
     >
       <Show
-        fallback={<Show when={showFeatureRequest()}>{featureRequestContent()}</Show>}
+        fallback={
+          <Show when={showFeatureRequest()}>
+            <FeatureRequestContent />
+          </Show>
+        }
         when={releases().length > 0}
       >
-        <Show when={props.desktopDialog} fallback={inlineVersionNoticeContent()}>
-          {desktopVersionNoticeContent()}
+        <Show when={props.desktopDialog} fallback={<InlineVersionNoticeContent />}>
+          <DesktopVersionNoticeContent />
         </Show>
       </Show>
     </Show>

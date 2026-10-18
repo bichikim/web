@@ -1,0 +1,44 @@
+{
+  "before": {
+    "32mb.txt": {
+      "milliseconds": [386, 370, 364],
+      "median": 370
+    },
+    "compiled.mjs": {
+      "milliseconds": [327, 248, 223],
+      "median": 248
+    },
+    "small.ts": {
+      "milliseconds": [42, 43, 40, 43, 43, 44, 43, 28, 42, 44],
+      "median": 43.0
+    },
+    "cold-": {
+      "milliseconds": [353, 325, 330],
+      "median": 330
+    },
+    "frameTime": {
+      "method": "DOM-matched output followed by two requestAnimationFrame callbacks, Date.now clock, file-selection click starts measurement; not physical monitor timing"
+    }
+  },
+  "after": {
+    "32mb.txt": {
+      "milliseconds": [84, 82, 87],
+      "median": 84
+    },
+    "compiled.mjs": {
+      "milliseconds": [297, 80, 75],
+      "median": 80
+    },
+    "small.ts": {
+      "milliseconds": [42, 41, 44, 40, 40, 44, 43, 28, 45, 43],
+      "median": 42.5
+    },
+    "cold-": {
+      "milliseconds": [320, 247, 234],
+      "median": 247
+    },
+    "frameTime": {
+      "method": "DOM-matched output followed by two requestAnimationFrame callbacks, Date.now clock, file-selection click starts measurement; not physical monitor timing"
+    }
+  }
+}

@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 
-import {fireEvent, render} from '@solidjs/testing-library'
+import {fireEvent, render, screen} from '@solidjs/testing-library'
 import {createSignal} from 'solid-js'
 import {describe, expect, test, vi} from 'vitest'
 
@@ -10,6 +10,91 @@ import {EditorLayerPanel} from '../EditorLayerPanel'
 import {convertSceneContainers} from '../container-conversion'
 
 describe('EditorLayerPanel', () => {
+  test('should preserve the filter while Escape is cancelling IME composition', () => {
+    const view = render(() => <EditorLayerPanel document={createDemoDocument()} />)
+    const input = view.getByRole('textbox', {name: '레이어 이름 필터'})
+    fireEvent.input(input, {target: {value: '한글'}})
+    fireEvent.keyDown(input, {isComposing: true, key: 'Escape'})
+    expect(input).toHaveValue('한글')
+    fireEvent.keyDown(input, {key: 'Escape'})
+    expect(input).toHaveValue('')
+  })
+  test('should keep matching descendants visible when a new ancestor is introduced while filtering', () => {
+    const [document, setDocument] = createSignal(createDemoDocument())
+    const view = render(() => <EditorLayerPanel document={document()} />)
+    fireEvent.input(view.getByRole('textbox', {name: '레이어 이름 필터'}), {
+      target: {value: 'circle'},
+    })
+    expect(view.getByRole('button', {name: 'shape-circle 레이어 선택'})).toBeVisible()
+    setDocument(createDeformer(document(), ['shape-circle'])!)
+    expect(view.getByRole('button', {name: 'shape-circle 레이어 선택'})).toBeVisible()
+  })
+
+  test('should return keyboard focus to the filter input after clearing it', () => {
+    const view = render(() => <EditorLayerPanel document={createDemoDocument()} />)
+    const input = view.getByRole('textbox', {name: '레이어 이름 필터'})
+    fireEvent.input(input, {target: {value: 'circle'}})
+    const clear = view.getByRole('button', {name: '레이어 필터 지우기'})
+    clear.focus()
+    fireEvent.click(clear)
+    expect(input).toHaveValue('')
+    expect(input).toHaveFocus()
+  })
+
+  test('should retain a manually collapsed filtered group across document edits', () => {
+    const [document, setDocument] = createSignal(createDemoDocument())
+    const view = render(() => (
+      <EditorLayerPanel document={document()} onDocumentChange={setDocument} />
+    ))
+    fireEvent.input(view.getByRole('textbox', {name: '레이어 이름 필터'}), {
+      target: {value: 'circle'},
+    })
+    fireEvent.click(view.getByRole('button', {name: 'Shapes 접기'}))
+    fireEvent.click(view.getByRole('button', {name: 'Shapes 숨기기'}))
+    const expand = view.getByRole('button', {name: 'Shapes 펼치기'})
+    expect(expand).toBeVisible()
+    expect(expand.closest('[role="treeitem"]')).toHaveAttribute('aria-expanded', 'false')
+    expect(expand.closest('.layer-tree-node')).toHaveAttribute('data-closed')
+  })
+
+  test('should filter layer names while retaining their ancestors and selection', () => {
+    const onSelectionChange = vi.fn()
+    const view = render(() => (
+      <EditorLayerPanel
+        document={createDemoDocument()}
+        selection={{activeNodeId: 'shape-diamond', nodeIds: ['shape-diamond']}}
+        onSelectionChange={onSelectionChange}
+      />
+    ))
+    fireEvent.click(view.getByRole('button', {name: 'Shapes 접기'}))
+    const filter = view.getByRole('textbox', {name: '레이어 이름 필터'})
+    fireEvent.input(filter, {target: {value: '  CIRCLE  '}})
+    expect(view.getByRole('button', {name: 'Shapes 레이어 선택'})).toBeInTheDocument()
+    expect(view.getByRole('button', {name: 'shape-circle 레이어 선택'})).toBeInTheDocument()
+    expect(view.queryByRole('button', {name: 'shape-diamond 레이어 선택'})).not.toBeInTheDocument()
+    expect(onSelectionChange).not.toHaveBeenCalled()
+    fireEvent.input(filter, {target: {value: '없는 레이어'}})
+    expect(view.getByRole('status')).toHaveTextContent('일치하는 레이어가 없습니다.')
+    fireEvent.click(view.getByRole('button', {name: '레이어 필터 지우기'}))
+    expect(filter).toHaveValue('')
+    expect(view.getByRole('button', {name: 'Shapes 펼치기'})).toBeInTheDocument()
+    expect(onSelectionChange).not.toHaveBeenCalled()
+  })
+  test('should retain nested rows and focus while updating visibility', () => {
+    const [document, setDocument] = createSignal(createDemoDocument())
+    const view = render(() => (
+      <EditorLayerPanel document={document()} onDocumentChange={setDocument} />
+    ))
+    const rows = view.getAllByRole('treeitem')
+    const toggle = view.getByRole('button', {name: 'shape-circle 숨기기'})
+    toggle.focus()
+    fireEvent.click(toggle)
+
+    view.getAllByRole('treeitem').forEach((row, index) => expect(row).toBe(rows[index]))
+    expect(view.getByRole('button', {name: 'shape-circle 표시하기'})).toBe(toggle)
+    expect(toggle).toHaveFocus()
+  })
+
   test('should distinguish a 3D deformer from a free deformation deformer in the layer tree', () => {
     const spatial = convertSceneContainers({
       document: createDemoDocument(),
@@ -109,21 +194,18 @@ describe('EditorLayerPanel', () => {
     fireEvent.click(view.getByRole('button', {name: 'shape-circle 레이어 선택'}), {ctrlKey: true})
     fireEvent.click(view.getByRole('button', {name: '그룹'}))
 
-    expect(view.getByRole('button', {name: '새 그룹 레이어 선택'})).toBeDefined()
+    const newGroupButton = view.getByRole('button', {name: '새 그룹 레이어 선택'})
+    expect(newGroupButton).toBeDefined()
     expect(document().scene?.roots[0]).toMatchObject({
       children: [{id: 'mesh-preview'}, {id: 'shape-circle'}],
       kind: 'group',
     })
 
-    fireEvent.click(view.getByRole('button', {name: '새 그룹 레이어 선택'}))
+    fireEvent.click(newGroupButton)
 
-    expect(
-      view
-        .getByRole('button', {name: '새 그룹 레이어 선택'})
-        .closest('[role="treeitem"]')
-        ?.getAttribute('aria-selected'),
-    ).toBe('true')
-    fireEvent.dblClick(view.getByRole('button', {name: '새 그룹 레이어 선택'}))
+    expect(newGroupButton.closest('[role="treeitem"]')?.getAttribute('aria-selected')).toBe('true')
+    expect(newGroupButton).toBeInTheDocument()
+    fireEvent.dblClick(newGroupButton)
     const groupNameInput = view.getByRole('textbox', {
       name: '새 그룹 그룹 이름',
     })
@@ -352,3 +434,75 @@ test.each(['.layers-panel', '.layer-scroll', '.layer-tree', '.layer-toolbar', '.
     expect(selection().activeNodeId).toBe('shape-circle')
   },
 )
+
+test('should rename a selected part on a second name click without requiring a double click', () => {
+  const [document, setDocument] = createSignal(createDemoDocument())
+  const [selection, setSelection] = createSignal<SceneSelection>({activeNodeId: null, nodeIds: []})
+  const view = render(() => (
+    <EditorLayerPanel
+      document={document()}
+      selection={selection()}
+      onDocumentChange={setDocument}
+      onSelectionChange={setSelection}
+    />
+  ))
+  const button = view.getByRole('button', {name: 'mesh-preview 레이어 선택'})
+  const name = button.querySelector('strong')!
+  fireEvent.click(name)
+  expect(view.queryByRole('textbox', {name: 'mesh-preview 파츠 이름'})).not.toBeInTheDocument()
+  fireEvent.click(name)
+  const input = view.getByRole('textbox', {name: 'mesh-preview 파츠 이름'})
+  fireEvent.input(input, {target: {value: '새 이름'}})
+  fireEvent.keyDown(input, {key: 'Enter'})
+  expect(view.getByRole('button', {name: '새 이름 레이어 선택'})).toBeVisible()
+})
+
+test('should offer clipboard actions and rename in the layer context menu', async () => {
+  const [document, setDocument] = createSignal(createDemoDocument())
+  const view = render(() => (
+    <EditorLayerPanel document={document()} onDocumentChange={setDocument} />
+  ))
+  const target = view.getByRole('button', {name: 'mesh-preview 레이어 선택'})
+  const open = () =>
+    fireEvent.contextMenu(target.closest('.layer-row')!, {
+      clientX: 80,
+      clientY: 80,
+    })
+  open()
+  const copy = await screen.findByRole('menuitem', {name: '복사'})
+  expect(screen.queryByRole('menuitem', {name: '붙여넣기'})).not.toBeInTheDocument()
+  copy.dispatchEvent(new MouseEvent('pointerup', {bubbles: true, button: 0}))
+  open()
+  const paste = await screen.findByRole('menuitem', {name: '붙여넣기'})
+  paste.dispatchEvent(new MouseEvent('pointerup', {bubbles: true, button: 0}))
+  expect(document().parts).toHaveLength(4)
+  open()
+  const rename = await screen.findByRole('menuitem', {name: '이름 바꾸기'})
+  rename.dispatchEvent(new MouseEvent('pointerup', {bubbles: true, button: 0}))
+  expect(view.getByRole('textbox', {name: 'mesh-preview 파츠 이름'})).toBeVisible()
+})
+
+test('should cut and paste into an empty layer list', async () => {
+  const source = createDemoDocument()
+  const [document, setDocument] = createSignal(source)
+  const [selection, setSelection] = createSignal<SceneSelection>({
+    activeNodeId: 'mesh-preview',
+    nodeIds: source.scene!.roots.map((node) => node.id),
+  })
+  const view = render(() => (
+    <EditorLayerPanel
+      document={document()}
+      selection={selection()}
+      onDocumentChange={setDocument}
+      onSelectionChange={setSelection}
+    />
+  ))
+  fireEvent.contextMenu(view.getByRole('button', {name: 'mesh-preview 레이어 선택'}))
+  const cut = await screen.findByRole('menuitem', {name: '잘라내기'})
+  cut.dispatchEvent(new MouseEvent('pointerup', {bubbles: true, button: 0}))
+  expect(document().parts).toHaveLength(0)
+  fireEvent.contextMenu(view.getByLabelText('레이어 목록 스크롤'))
+  const paste = await screen.findByRole('menuitem', {name: '붙여넣기'})
+  paste.dispatchEvent(new MouseEvent('pointerup', {bubbles: true, button: 0}))
+  expect(document().parts).toHaveLength(source.parts.length)
+})

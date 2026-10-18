@@ -260,6 +260,77 @@ describe('useScreenWakeLock', () => {
     },
   )
 
+  it('should report a synchronous native bridge failure and allow a retry', async () => {
+    appsInTossMocks.setAwakeMode.mockImplementationOnce(() => {
+      throw new Error('bridge threw')
+    })
+    const {getController} = renderController()
+    getController()?.onEnabledChange(true)
+    await waitFor(() => expect(getController()?.isRequestPending()).toBe(false))
+    expect(getController()?.isEnabled()).toBe(false)
+    expect(getController()?.errorMessage()).toBe(
+      '화면 유지 요청을 허용하지 못했어요. 앱 설정을 확인해 주세요.',
+    )
+
+    getController()?.onEnabledChange(true)
+    await waitFor(() => expect(getController()?.isRequestPending()).toBe(false))
+    expect(getController()?.isEnabled()).toBe(true)
+    expect(getController()?.errorMessage()).toBeNull()
+  })
+
+  it.each(['success', 'failure'] as const)(
+    'should keep the latest disable pending after an older native %s',
+    async (outcome) => {
+      const first = Promise.withResolvers<{enabled: boolean}>()
+      const disable = Promise.withResolvers<{enabled: boolean}>()
+      appsInTossMocks.setAwakeMode
+        .mockImplementationOnce(() => first.promise)
+        .mockImplementationOnce(() => disable.promise)
+      const {getController} = renderController()
+      getController()?.onEnabledChange(true)
+      await Promise.resolve()
+      getController()?.onEnabledChange(false)
+      expect(getController()?.isRequestPending()).toBe(true)
+
+      if (outcome === 'success') {
+        first.resolve({enabled: true})
+      } else {
+        first.reject(new Error('superseded enable failed'))
+      }
+      await waitFor(() => expect(appsInTossMocks.setAwakeMode).toHaveBeenCalledTimes(2))
+      expect(getController()?.isRequestPending()).toBe(true)
+      expect(getController()?.isEnabled()).toBe(false)
+      expect(getController()?.errorMessage()).toBeNull()
+
+      disable.resolve({enabled: false})
+      await waitFor(() => expect(getController()?.isRequestPending()).toBe(false))
+      expect(getController()?.errorMessage()).toBeNull()
+    },
+  )
+
+  it('should retain each native visibility reapply before the final cleanup disable', async () => {
+    const first = Promise.withResolvers<{enabled: boolean}>()
+    appsInTossMocks.setAwakeMode.mockImplementationOnce(() => first.promise)
+    const {getController, view} = renderController()
+    getController()?.onEnabledChange(true)
+    await Promise.resolve()
+    const visibilityChanged = vi.mocked(browserWakeLock.subscribeVisibility).mock.calls.at(-1)?.[0]
+    visibilityChanged?.()
+    visibilityChanged?.()
+    view.unmount()
+    expect(getController()?.isRequestPending()).toBe(false)
+    first.resolve({enabled: true})
+
+    await waitFor(() => expect(appsInTossMocks.setAwakeMode).toHaveBeenCalledTimes(4))
+    expect(appsInTossMocks.setAwakeMode.mock.calls).toEqual([
+      [{enabled: true}],
+      [{enabled: true}],
+      [{enabled: true}],
+      [{enabled: false}],
+    ])
+    expect(getController()?.errorMessage()).toBeNull()
+  })
+
   it('should keep the browser capability boundary in a regular web build', async () => {
     let controller: ScreenWakeLockController | undefined
     vi.stubEnv('VITE_POMO_IS_APPS_IN_TOSS', '')

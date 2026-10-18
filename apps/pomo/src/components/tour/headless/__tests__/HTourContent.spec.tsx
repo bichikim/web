@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 
 import {Dialog} from '@kobalte/core/dialog'
-import {render, screen} from '@solidjs/testing-library'
+import {cleanup, render, screen} from '@solidjs/testing-library'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {HTourContent} from '../HTourContent'
@@ -38,7 +38,11 @@ beforeEach(() => {
   vi.stubGlobal('ResizeObserver', TestResizeObserver)
 })
 
-afterEach(() => vi.unstubAllGlobals())
+afterEach(() => {
+  cleanup()
+  vi.restoreAllMocks()
+  vi.unstubAllGlobals()
+})
 
 describe('HTourContent', () => {
   it('should place content below the target when more space is available below', () => {
@@ -124,4 +128,39 @@ it('should preserve the left inset when the viewport is narrower than both inset
     </Dialog>
   ))
   expect(screen.getByRole('dialog').style.getPropertyValue('--tour-left')).toBe('16px')
+})
+
+it('should synchronously measure content without ResizeObserver and preserve custom gap and inset', () => {
+  vi.stubGlobal('ResizeObserver', undefined)
+  vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue(
+    new DOMRect(0, 0, 300, 200),
+  )
+  render(() => (
+    <Dialog open>
+      <HTourContent
+        gap={20}
+        targetBounds={{...createBounds(60, 108), left: 700}}
+        viewportInset={24}
+      >
+        Content
+      </HTourContent>
+    </Dialog>
+  ))
+  const content = screen.getByRole('dialog')
+  expect(content.style.getPropertyValue('--tour-left')).toBe('476px')
+  expect(content.style.getPropertyValue('--tour-edge')).toBe('128px')
+  expect(content.style.getPropertyValue('--tour-max-height')).toBe('448px')
+  expect(TestResizeObserver.instances).toHaveLength(0)
+})
+
+it('should observe the mounted dialog and disconnect on unmount', () => {
+  const result = render(() => (
+    <Dialog open>
+      <HTourContent>Content</HTourContent>
+    </Dialog>
+  ))
+  const observer = TestResizeObserver.instances[0]!
+  expect(observer.observe).toHaveBeenCalledExactlyOnceWith(screen.getByRole('dialog'))
+  result.unmount()
+  expect(observer.disconnect).toHaveBeenCalledOnce()
 })

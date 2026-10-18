@@ -12,17 +12,21 @@ import {
 } from 'src/utils/runtime-storage'
 
 const PLAYBACK_STORAGE_KEY = 'pomo:focus-room-playback:v1'
-const storedPlaybackSchema = z.object({
+const storedPlaybackBaseSchema = z.object({
   isPlaying: z.boolean().default(false),
   positionSeconds: z.number().finite().nonnegative(),
   savedAt: z.number().finite().nonnegative(),
   trackId: z.string().min(1),
   trackIndex: z.number().int().nonnegative().optional(),
 })
+const storedPlaybackSchema = storedPlaybackBaseSchema.extend({
+  queueEntryId: z.string().min(1).optional(),
+})
 
 export interface PPlaybackState {
   readonly isPlaying: boolean
   readonly positionSeconds: number
+  readonly queueEntryId?: string
   readonly trackId: string
   readonly trackIndex?: number
 }
@@ -32,8 +36,13 @@ export interface StoredPlaybackState extends PPlaybackState {
 }
 
 const parseStoredPlayback = (value: unknown): StoredPlaybackState | null => {
+  const legacyResult = storedPlaybackBaseSchema.safeParse(value)
+  if (!legacyResult.success) {
+    return null
+  }
+
   const result = storedPlaybackSchema.safeParse(value)
-  return result.success ? result.data : null
+  return result.success ? result.data : legacyResult.data
 }
 
 export interface PlaybackStorageAdapter {
@@ -98,10 +107,14 @@ const toPlaybackState = (state: StoredPlaybackState | null): PPlaybackState | nu
     return null
   }
 
-  const {isPlaying, positionSeconds, trackId, trackIndex} = state
-  return trackIndex === undefined
-    ? {isPlaying, positionSeconds, trackId}
-    : {isPlaying, positionSeconds, trackId, trackIndex}
+  const {isPlaying, positionSeconds, queueEntryId, trackId, trackIndex} = state
+  return {
+    isPlaying,
+    positionSeconds,
+    ...(queueEntryId === undefined ? {} : {queueEntryId}),
+    trackId,
+    ...(trackIndex === undefined ? {} : {trackIndex}),
+  }
 }
 
 export interface PlaybackClock {

@@ -358,7 +358,7 @@
   - [x] provider-specific authorize URL·account·normalize 계약 유지
   - [x] 관련 calendar provider 단위 테스트 · typecheck · lint 통과
 
-- [x] [#2315](https://github.com/bichikim/web/issues/2315) Refactor: Pomo image-generation runWorker·opus createOpusBlob one-shot Worker Promise 복제 — createOneShotWorkerRequest (#1492 OOS leftover)
+- [x] [#2315](https://github.com/bichikim/web/issues/2315) Refactor: Pomo image-generation runWorker·opus createOpusBlob one-shot Worker Promise 복제 — requestWorkerOnce (#1492 OOS leftover)
   - [x] image-generation `runWorker`와 opus `createOpusBlob`가 공유 one-shot helper를 씀
   - [x] abort / error / messageerror / terminate-once 계약 유지
   - [x] progress 중간 메시지·transfer·도메인 응답 매핑 유지
@@ -573,14 +573,14 @@
 | [#2276](https://github.com/bichikim/web/issues/2276) | 적용           | [src/server/calendar/providers/aggregate-provider-events.ts ](/Users/bichi/.codex/worktrees/aa4c/web/apps/pomo/src/server/calendar/providers/aggregate-provider-events.ts:10)                                                 |
 | [#2290](https://github.com/bichikim/web/issues/2290) | 적용           | [src/features/worker-rpc/phase-errors.ts ](/Users/bichi/.codex/worktrees/aa4c/web/apps/pomo/src/features/worker-rpc/phase-errors.ts:2)                                                                                        |
 | [#2309](https://github.com/bichikim/web/issues/2309) | 적용           | [src/server/calendar/providers/create-oauth-token-methods.ts ](/Users/bichi/.codex/worktrees/aa4c/web/apps/pomo/src/server/calendar/providers/create-oauth-token-methods.ts:13)                                               |
-| [#2315](https://github.com/bichikim/web/issues/2315) | 적용           | [src/utils/worker-transport/create-one-shot-worker-request.ts ](/Users/bichi/.codex/worktrees/aa4c/web/apps/pomo/src/utils/worker-transport/create-one-shot-worker-request.ts:17)                                             |
+| [#2315](https://github.com/bichikim/web/issues/2315) | 적용           | [src/utils/worker-transport/request-worker-once.ts ](/Users/bichi/.codex/worktrees/90a2/web/apps/pomo/src/utils/worker-transport/request-worker-once.ts:17)                                                                   |
 | [#2316](https://github.com/bichikim/web/issues/2316) | 적용           | [src/features/sound-worker-controller/index.ts ](/Users/bichi/.codex/worktrees/aa4c/web/apps/pomo/src/features/sound-worker-controller/index.ts:68)                                                                           |
 | [#2446](https://github.com/bichikim/web/issues/2446) | 적용           | [src/utils/clear-html-media-element/index.ts ](/Users/bichi/.codex/worktrees/aa4c/web/apps/pomo/src/utils/clear-html-media-element/index.ts:8)                                                                                |
 | [#2511](https://github.com/bichikim/web/issues/2511) | 적용           | [src/utils/square-webp-cover/create-square-webp-encoder.ts ](/Users/bichi/.codex/worktrees/aa4c/web/apps/pomo/src/utils/square-webp-cover/create-square-webp-encoder.ts:12)                                                   |
 | [#2519](https://github.com/bichikim/web/issues/2519) | 적용           | [src/features/custom-albums/to-custom-p-track.ts ](/Users/bichi/.codex/worktrees/aa4c/web/apps/pomo/src/features/custom-albums/to-custom-p-track.ts:7)                                                                        |
 | [#2543](https://github.com/bichikim/web/issues/2543) | 적용           | [src/features/device-orientation/request-device-orientation-permission.ts ](/Users/bichi/.codex/worktrees/aa4c/web/apps/pomo/src/features/device-orientation/request-device-orientation-permission.ts:2)                      |
 | [#2339](https://github.com/bichikim/web/issues/2339) | 적용           | [src/features/focus-room-animation/create-masked-particle-effect.ts ](/Users/bichi/.codex/worktrees/aa4c/web/apps/pomo/src/features/focus-room-animation/create-masked-particle-effect.ts:9)                                  |
-| [#2544](https://github.com/bichikim/web/issues/2544) | 적용           | [src/components/p-relax-player-page/use-relax-depth-motion.ts ](/Users/bichi/.codex/worktrees/aa4c/web/apps/pomo/src/components/p-relax-player-page/use-relax-depth-motion.ts:44)                                             |
+| [#2544](https://github.com/bichikim/web/issues/2544) | 적용           | [src/components/p-slowcove-page/use-relax-depth-motion.ts ](/Users/bichi/.codex/worktrees/aa4c/web/apps/pomo/src/components/p-slowcove-page/use-relax-depth-motion.ts:44)                                                     |
 | [#2545](https://github.com/bichikim/web/issues/2545) | 적용           | [src/utils/fullscreen-vertex/index.ts ](/Users/bichi/.codex/worktrees/aa4c/web/apps/pomo/src/utils/fullscreen-vertex/index.ts:1)                                                                                              |
 | [#2557](https://github.com/bichikim/web/issues/2557) | 적용           | [src/features/relax-glass-renderer/cover-uv.ts ](/Users/bichi/.codex/worktrees/aa4c/web/apps/pomo/src/features/relax-glass-renderer/cover-uv.ts:1)                                                                            |
 | [#2558](https://github.com/bichikim/web/issues/2558) | 적용           | [src/features/frame-renderer/effect.ts ](/Users/bichi/.codex/worktrees/aa4c/web/apps/pomo/src/features/frame-renderer/effect.ts:83)                                                                                           |
@@ -589,7 +589,7 @@
 | [#2574](https://github.com/bichikim/web/issues/2574) | 적용           | [src/utils/depth-response/index.ts ](/Users/bichi/.codex/worktrees/aa4c/web/apps/pomo/src/utils/depth-response/index.ts:1)                                                                                                    |
 | [#2581](https://github.com/bichikim/web/issues/2581) | 적용           | [src/features/focus-room-animation/filter-vertex.ts ](/Users/bichi/.codex/worktrees/aa4c/web/apps/pomo/src/features/focus-room-animation/filter-vertex.ts:9)                                                                  |
 | [#2582](https://github.com/bichikim/web/issues/2582) | 적용           | [src/features/background/playlist.ts ](/Users/bichi/.codex/worktrees/aa4c/web/apps/pomo/src/features/background/playlist.ts:47)                                                                                               |
-| [#2174](https://github.com/bichikim/web/issues/2174) | 적용           | [src/test-utils/create-deferred.ts ](/Users/bichi/.codex/worktrees/aa4c/web/apps/pomo/src/test-utils/create-deferred.ts:2)                                                                                                    |
+| [#2174](https://github.com/bichikim/web/issues/2174) | 적용           | [src/**tests**/create-deferred.ts ](/Users/bichi/.codex/worktrees/aa4c/web/apps/pomo/src/__tests__/create-deferred.ts:2)                                                                                                      |
 | [#2175](https://github.com/bichikim/web/issues/2175) | 적용           | [src/server/ai-runner/**tests**/index.integration.ts ](/Users/bichi/.codex/worktrees/aa4c/web/apps/pomo/src/server/ai-runner/__tests__/index.integration.ts:68)                                                               |
 | [#2213](https://github.com/bichikim/web/issues/2213) | 적용           | [**tests**/build/polyfills.integration.ts ](/Users/bichi/.codex/worktrees/aa4c/web/apps/pomo/__tests__/build/polyfills.integration.ts:55)                                                                                     |
 | [#2221](https://github.com/bichikim/web/issues/2221) | 적용           | [scripts/vite/**tests**/transform-cache.integration.ts ](/Users/bichi/.codex/worktrees/aa4c/web/apps/pomo/scripts/vite/__tests__/transform-cache.integration.ts:15)                                                           |
@@ -597,7 +597,7 @@
 | [#2277](https://github.com/bichikim/web/issues/2277) | 적용           | [src/features/dialogue-writer/**tests**/worker.integration.ts ](/Users/bichi/.codex/worktrees/aa4c/web/apps/pomo/src/features/dialogue-writer/__tests__/worker.integration.ts:156)                                            |
 | [#2282](https://github.com/bichikim/web/issues/2282) | 적용           | [src/features/image-generation/**tests**/worker.lifecycle.integration.ts ](/Users/bichi/.codex/worktrees/aa4c/web/apps/pomo/src/features/image-generation/__tests__/worker.lifecycle.integration.ts:36)                       |
 | [#2287](https://github.com/bichikim/web/issues/2287) | 적용           | [src/features/supertonic/**tests**/worker.integration.ts ](/Users/bichi/.codex/worktrees/aa4c/web/apps/pomo/src/features/supertonic/__tests__/worker.integration.ts:236)                                                      |
-| [#2429](https://github.com/bichikim/web/issues/2429) | 적용           | [src/test-utils/create-test-broadcast-channel.ts ](/Users/bichi/.codex/worktrees/aa4c/web/apps/pomo/src/test-utils/create-test-broadcast-channel.ts:8)                                                                        |
+| [#2429](https://github.com/bichikim/web/issues/2429) | 적용           | [src/**tests**/create-test-broadcast-channel.ts ](/Users/bichi/.codex/worktrees/aa4c/web/apps/pomo/src/__tests__/create-test-broadcast-channel.ts:8)                                                                          |
 
 ### 최초 구현 검증 결과
 
@@ -609,7 +609,7 @@
 - 남은 통합 실패: PMusicPlayerContent.queue-restoration의 “should stop restored playback before clearing every loaded track”. 저장 위치 기대값은 22초, 관찰값은 0초다. 실제 테스트 로더에 HEAD의 변경 전 production 소스를 주입해도 같은 실패(19개 통과·1개 실패)가 재현되어 이번 공통화와 분리했다. 관련 없는 playback 변경은 포함하지 않았다.
 - 실제 브라우저 WebGL: 데스크톱(128×96), 세로(96×128), 좁은 가로(128×40)의 필터 36개 + 입자 30개 비교. 65개는 RGBA가 완전히 동일했다. 데스크톱 rain의 49,152개 채널 중 3개만 최대 1/255 차이였다. 입자는 초기·advance·reset·숨김·재개를 비교했고 destroy 반복과 destroy 이후 advance도 예외 없이 실행했다. 합성 텍스처에 대한 독립 렌더 검증이며 전체 앱 화면 검증을 대신하지 않는다.
 - Pomo 타입 검사 통과. 저장소 `pnpm lint` 오류 0개; 기존 PPomodoroDurationEditor prefer-destructuring 경고 3개는 변경하지 않았다.
-- `pnpm format`, `pnpm format:check`, `git diff --check` 통과. 변경 후 graft graph를 다시 생성했다.
+- `pnpm format`, `pnpm format:check`, `git diff --check` 통과.
 
 ### 검증 한계와 원격 상태
 

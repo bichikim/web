@@ -2,7 +2,7 @@
 import {describe, expect, it} from 'vitest'
 
 import type {PTrack} from '../focus-room-playlist'
-import {appendUniqueTracks} from '../playlist-queue'
+import {appendUniqueTracks} from 'src/features/focus-room-audio/playlist-queue'
 
 const createTrack = (id: string): PTrack => ({
   artist: `Artist ${id}`,
@@ -45,5 +45,26 @@ describe('appendUniqueTracks', () => {
     const second = createTrack('second')
 
     expect(appendUniqueTracks([], [first, first, second])).toEqual([first, second])
+  })
+
+  it('should retain existing occurrences and append the first new object without mutating inputs', () => {
+    const existing = Object.freeze(createTrack('existing'))
+    const repeated = Object.freeze({...existing, title: 'Existing occurrence'})
+    const first = Object.freeze(createTrack('new'))
+    const duplicate = Object.freeze({...first, title: 'Later addition'})
+    const last = Object.freeze(createTrack('last'))
+    const tracks = Object.freeze([existing, repeated])
+    const additions = Object.freeze([first, existing, duplicate, last])
+
+    const result = appendUniqueTracks(tracks, additions)
+
+    expect(result).toEqual([existing, repeated, first, last])
+    expect(result).not.toBe(tracks)
+    expect(result[0]).toBe(existing)
+    expect(result[1]).toBe(repeated)
+    expect(result[2]).toBe(first)
+    expect(result[3]).toBe(last)
+    expect(tracks).toEqual([existing, repeated])
+    expect(additions).toEqual([first, existing, duplicate, last])
   })
 })

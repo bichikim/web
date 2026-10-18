@@ -1,0 +1,131 @@
+name: Release Slowcove
+
+on:
+  push:
+    branches:
+      - dev
+    paths:
+      - apps/pomo/**
+      - packages/**
+      - pnpm-lock.yaml
+      - pnpm-workspace.yaml
+      - package.json
+      - .github/workflows/slowcove-deploy.yml
+      - .github/workflows/config/slowcove-vercel.json
+  workflow_dispatch:
+
+run-name: Release Slowcove from ${{ github.ref_name }} at ${{ github.sha }}
+
+concurrency:
+  group: slowcove-production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  NODE_VERSION: '24.x'
+  PNPM_VERSION: 11.8.0
+  VERCEL_CLI_VERSION: 59.5.0
+  VERCEL_ORG_ID: team_Ic8YKQ9jWkFLhVzeljhB4ZLV
+  VERCEL_PROJECT_ID: prj_pr4m1w0MSBhDDrSY3qgLrZuOZZGa
+  VERCEL_CONFIG: .github/workflows/config/slowcove-vercel.json
+
+jobs:
+  deploy:
+    name: Verify and deploy Slowcove
+    if: github.ref == 'refs/heads/dev'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Verify Slowcove
+        run: |
+          pnpm --dir apps/pomo lint
+          pnpm --dir apps/pomo typecheck
+          NODE_OPTIONS=--no-experimental-webstorage pnpm exec vitest run \
+            'apps/pomo/src/routes/(main-layout)/(home-layout)/__tests__/index.spec.tsx' \
+            'apps/pomo/src/routes/(main-layout)/(home-layout)/__tests__/relax.spec.tsx' \
+            apps/pomo/src/components/p-slowcove-page/__tests__/PSlowcovePage.spec.tsx \
+            apps/pomo/src/middleware/__tests__/relax-routing.spec.ts \
+            apps/pomo/scripts/vite/__tests__/create-plugins.spec.ts \
+            apps/pomo/scripts/vite/__tests__/create-nitro-config.spec.ts \
+            --project=unit --reporter=dot
+
+      - name: Pull Slowcove production settings
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: >-
+          pnpm dlx vercel@${VERCEL_CLI_VERSION} pull
+          --yes --environment=production --local-config="${VERCEL_CONFIG}"
+
+      - name: Build Slowcove output
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          pnpm dlx vercel@${VERCEL_CLI_VERSION} build \
+            --prod --local-config="${VERCEL_CONFIG}"
+          test -f .vercel/output/functions/__server.func/.vc-config.json
+          test -f .vercel/output/static/slowcove/city-sunny-riverside.webp
+          node --input-type=module <<'NODE'
+          import {readFileSync} from 'node:fs'
+          import handler from './.vercel/output/functions/__server.func/index.mjs'
+          const config = JSON.parse(readFileSync('.vercel/output/config.json', 'utf8'))
+          if (!config.routes.some((route) => route.dest === '/__server')) {
+            throw new Error('Slowcove output must route requests to the Nitro server')
+          }
+          if (config.crons?.length) {
+            throw new Error('Slowcove must not schedule Pomo cron jobs')
+          }
+          for (const [path, status] of [
+            ['/', 200], ['/relax', 200], ['/?layout=all-in-one', 200],
+            ['/api/cron/ai-jobs', 404], ['/admin', 404],
+          ]) {
+            const response = await handler.fetch(new Request(`https://slowcove.example${path}`), {})
+            if (response.status !== status) {
+              throw new Error(`Slowcove ${path} returned ${response.status}, expected ${status}`)
+            }
+            await response.text()
+          }
+          NODE
+
+      - name: Deploy verified output
+        id: deploy
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          deployment_url="$(pnpm dlx vercel@${VERCEL_CLI_VERSION} deploy \
+            --prebuilt --prod --yes --local-config="${VERCEL_CONFIG}" \
+            --meta githubCommitSha="${GITHUB_SHA}" \
+            --meta githubCommitRef="${GITHUB_REF_NAME}")"
+          echo "url=${deployment_url}" >> "${GITHUB_OUTPUT}"
+          echo "Deployment: ${deployment_url}" >> "${GITHUB_STEP_SUMMARY}"
+          echo "Source commit: ${GITHUB_SHA}" >> "${GITHUB_STEP_SUMMARY}"
+
+      - name: Smoke test deployment routes
+        env:
+          DEPLOYMENT_URL: ${{ steps.deploy.outputs.url }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          for path in / '/?layout=all-in-one' /relax; do
+            pnpm dlx vercel@${VERCEL_CLI_VERSION} curl "${path}" \
+              --deployment="${DEPLOYMENT_URL}" -- \
+              --fail --silent --show-error --max-time 30 --output /dev/null
+          done

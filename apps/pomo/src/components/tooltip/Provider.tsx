@@ -1,4 +1,5 @@
-import {createSignal, type JSX, onCleanup, onMount} from 'solid-js'
+import {createSignal, type JSX, onMount} from 'solid-js'
+import {createTimeout} from '@winter-love/solid-use/timeout'
 import {tooltipContext, type TooltipRequest} from './context'
 
 const CLOSE_DELAY = 150
@@ -10,19 +11,11 @@ export interface PTooltipProviderProps {
 export const PTooltipProvider = (props: PTooltipProviderProps) => {
   const [supported, setSupported] = createSignal<boolean>()
   const [active, setActive] = createSignal<TooltipRequest>()
-  let closeTimer: ReturnType<typeof setTimeout> | undefined
-  const cancelClose = () => {
-    clearTimeout(closeTimer)
-    closeTimer = undefined
-  }
   const close = () => {
     cancelClose()
     setActive(undefined)
   }
-  const scheduleClose = () => {
-    cancelClose()
-    closeTimer = setTimeout(close, CLOSE_DELAY)
-  }
+  const {cancel: cancelClose, execute: scheduleClose} = createTimeout(close, CLOSE_DELAY)
   const present = (request: TooltipRequest) => {
     if (
       !supported() ||
@@ -52,7 +45,6 @@ export const PTooltipProvider = (props: PTooltipProviderProps) => {
         CSS.supports('position-try-fallbacks', 'flip-block'),
     ),
   )
-  onCleanup(cancelClose)
   return (
     <tooltipContext.Provider
       value={{active, cancelClose, close, dismiss, present, scheduleClose, supported}}

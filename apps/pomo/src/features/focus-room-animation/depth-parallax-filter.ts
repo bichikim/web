@@ -1,5 +1,5 @@
 import {FILTER_SCENE_VERTEX} from './filter-vertex'
-import {DEPTH_RESPONSE} from 'src/utils/depth-response'
+import {DEPTH_RESPONSE} from 'src/utils/shader'
 import {Filter, GlProgram, type Texture, UniformGroup} from 'pixi.js'
 
 const DEPTH_FRAGMENT = `
@@ -47,6 +47,7 @@ export class DepthParallaxFilter extends Filter {
       glProgram: GlProgram.from({
         fragment: DEPTH_FRAGMENT,
         name: 'focus-room-depth-parallax',
+        preferredFragmentPrecision: 'highp',
         vertex: FILTER_SCENE_VERTEX,
       }),
       resources: {

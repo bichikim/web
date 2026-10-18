@@ -270,6 +270,92 @@ describe('album draft cover storage', () => {
     expect(storage.deleteData).not.toHaveBeenCalled()
   })
 
+  it('should clear the actual persisted coverless snapshot after submission', async () => {
+    const storage = createStorage()
+    const submittedDraft = createDraft()
+    const persistedDraft = {...submittedDraft, coverDraftId: null, hasCoverFile: false}
+    writeAlbumDraftData(persistedDraft, storage)
+
+    await expect(
+      deleteAlbumDraft(persistedDraft.coverDraftId, {expectedDraft: persistedDraft, storage}),
+    ).resolves.toEqual({success: true})
+
+    expect(readAlbumDraftDataOrNull(storage)).toBeNull()
+  })
+
+  it('should preserve a newer coverless draft when clearing a submitted draft', async () => {
+    const storage = createStorage()
+    const submittedDraft = createDraft()
+    const newerDraft: AlbumDraftData = {
+      ...submittedDraft,
+      coverDraftId: null,
+      hasCoverFile: false,
+      translations: {
+        ...submittedDraft.translations,
+        ko: {...submittedDraft.translations.ko, title: '새 앨범'},
+      },
+    }
+    writeAlbumDraftData(newerDraft, storage)
+
+    await expect(
+      deleteAlbumDraft(submittedDraft.coverDraftId, {expectedDraft: submittedDraft, storage}),
+    ).resolves.toEqual({success: true})
+
+    expect(readAlbumDraftDataOrNull(storage)).toEqual(newerDraft)
+    expect(storage.deleteData).not.toHaveBeenCalled()
+  })
+
+  it('should keep a newer draft when the cover reference cannot be cleared', async () => {
+    const storage = createStorage()
+    const submittedDraft = createDraft()
+    const newerDraft: AlbumDraftData = {
+      ...submittedDraft,
+      coverDraftId: null,
+      hasCoverFile: false,
+      translations: {
+        ...submittedDraft.translations,
+        ko: {...submittedDraft.translations.ko, title: '새 앨범'},
+      },
+    }
+    writeAlbumDraftData(newerDraft, storage)
+
+    await expect(deleteAlbumDraft(null, {expectedDraft: submittedDraft, storage})).resolves.toEqual(
+      {success: true},
+    )
+
+    expect(readAlbumDraftDataOrNull(storage)).toEqual(newerDraft)
+    expect(storage.deleteData).not.toHaveBeenCalled()
+  })
+
+  it('should preserve a newer draft with the same cover when the submitted snapshot is stale', async () => {
+    const storage = createStorage()
+    const submittedDraft = createDraft()
+    const newerDraft: AlbumDraftData = {
+      ...submittedDraft,
+      translations: {
+        ...submittedDraft.translations,
+        ko: {...submittedDraft.translations.ko, title: '같은 커버의 새 앨범'},
+      },
+    }
+    const cover = new File(['same cover'], 'cover.webp', {type: 'image/webp'})
+    writeAlbumDraftData(newerDraft, storage)
+    await writeAlbumDraftCover(submittedDraft.coverDraftId!, cover, storage)
+
+    await expect(
+      deleteAlbumDraft(submittedDraft.coverDraftId, {
+        expectedDraft: submittedDraft,
+        storage,
+      }),
+    ).resolves.toEqual({success: true})
+
+    expect(readAlbumDraftDataOrNull(storage)).toEqual(newerDraft)
+    await expect(readAlbumDraftCoverOrNull(submittedDraft.coverDraftId!, storage)).resolves.toEqual(
+      cover,
+    )
+    expect(storage.deleteCover).not.toHaveBeenCalled()
+    expect(storage.deleteData).not.toHaveBeenCalled()
+  })
+
   it('should report a cover persistence failure to the caller', async () => {
     const storage = createStorage()
     const error = new Error('quota exceeded')

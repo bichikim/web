@@ -1,4 +1,6 @@
 /** @vitest-environment jsdom */
+
+import {PreferenceProvider} from 'src/hooks/use-preference'
 import {fireEvent, render, screen} from '@solidjs/testing-library'
 import {afterEach, expect, it, vi} from 'vitest'
 import {PMemoryAssist} from '../PMemoryAssist'
@@ -50,11 +52,14 @@ it('should open and close while preloading and reveal content without replacing 
     Object.defineProperty(styles, 'animationName', {configurable: true, value: 'none'})
     return styles
   })
-  render(() => (
-    <PModelDownloadProvider>
-      <PMemoryAssist />
-    </PModelDownloadProvider>
-  ))
+  render(
+    () => (
+      <PModelDownloadProvider>
+        <PMemoryAssist />
+      </PModelDownloadProvider>
+    ),
+    {wrapper: PreferenceProvider},
+  )
   const trigger = screen.getByRole('button', {name: '생각 보조'})
   await loading.startedPromise
   expect(loading.started).toHaveBeenCalledOnce()

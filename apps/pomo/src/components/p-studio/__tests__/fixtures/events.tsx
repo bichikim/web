@@ -50,6 +50,7 @@ const serverJobMocks = vi.hoisted(() => ({
 const oneOffChatMocks = vi.hoisted(() => ({
   cancelDownloadConsent: vi.fn(),
   downloadConsentOpen: vi.fn(() => false),
+  downloadSize: () => '3.7GB',
   draft: vi.fn(() => ''),
   errorMessage: vi.fn((): string | null => null),
   isBusy: vi.fn(() => false),
@@ -84,7 +85,6 @@ vi.mock('../../../../features/memory-assist', () => ({
 }))
 vi.mock('../../../../features/sound-effects', () => ({useOptionalSoundEffects: vi.fn()}))
 vi.mock('../../use-one-off-chat', () => ({
-  ONE_OFF_CHAT_MODEL: {downloadSize: '3.7GB'},
   useOneOffChat: vi.fn(() => oneOffChatMocks),
 }))
 vi.mock('../../use-mobile-layout', () => ({

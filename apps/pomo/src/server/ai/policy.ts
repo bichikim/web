@@ -1,3 +1,4 @@
+import {ceilWeightedSum} from 'src/utils/ceil-weighted-sum'
 import type {AiCapability} from './model-catalog.ts'
 
 const MILLISECONDS_PER_SECOND = 1000
@@ -89,19 +90,6 @@ const getParameters = (
     ? (input.parameters as Readonly<Record<string, unknown>>)
     : {}
 
-interface CreditTerm {
-  readonly scale: number
-  readonly units: bigint
-}
-
-const createCreditTerm = (value: number, rate: number): CreditTerm => {
-  const [coefficient = '0', exponent = '0'] = rate.toString().split('e')
-  const fractionLength = coefficient.split('.')[1]?.length ?? 0
-  const scale = fractionLength - Number(exponent)
-  const units = BigInt(value) * BigInt(coefficient.replace('.', ''))
-  return scale < 0 ? {scale: 0, units: units * 10n ** BigInt(-scale)} : {scale, units}
-}
-
 const calculateCredits = (values: ReadonlyArray<[number | null, number | null]>): number | null => {
   if (
     values.some(
@@ -118,14 +106,12 @@ const calculateCredits = (values: ReadonlyArray<[number | null, number | null]>)
   }
 
   // Decimal rates must not reserve an extra credit because of binary floating-point residue.
-  const terms = values.map(([value, rate]) => createCreditTerm(value ?? 0, rate ?? 0))
-  const scale = Math.max(0, ...terms.map((term) => term.scale))
-  const divisor = 10n ** BigInt(scale)
-  const total = terms.reduce(
-    (sum, term) => sum + term.units * 10n ** BigInt(scale - term.scale),
-    0n,
-  )
-  const credits = (total + divisor - 1n) / divisor
+  const credits = ceilWeightedSum({
+    products: values.map(([value, rate]) => ({
+      multiplier: rate ?? 0,
+      quantity: BigInt(value ?? 0),
+    })),
+  })
   return credits <= BigInt(MAXIMUM_CREDITS) ? Number(credits) : null
 }
 

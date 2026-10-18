@@ -1,0 +1,82 @@
+[
+  {
+    "name": "stable-Original-default",
+    "variant": "before",
+    "phase": "cold",
+    "firstMs": 515.793417,
+    "completeMs": 633.572792,
+    "firstRangeMs": [491.254, 593.26425],
+    "completeRangeMs": [613.966875, 710.750833],
+    "count": 241
+  },
+  {
+    "name": "stable-Original-default",
+    "variant": "before",
+    "phase": "repeat",
+    "firstMs": 0.437167,
+    "completeMs": 0.486375,
+    "firstRangeMs": [0.38125, 0.536292],
+    "completeRangeMs": [0.429542, 0.584834],
+    "count": 241
+  },
+  {
+    "name": "stable-Original-default",
+    "variant": "after",
+    "phase": "cold",
+    "firstMs": 486.323584,
+    "completeMs": 535.998959,
+    "firstRangeMs": [479.887542, 553.212208],
+    "completeRangeMs": [526.846375, 612.380625],
+    "count": 241
+  },
+  {
+    "name": "stable-Original-default",
+    "variant": "after",
+    "phase": "repeat",
+    "firstMs": 0.445375,
+    "completeMs": 0.493041,
+    "firstRangeMs": [0.348208, 0.569708],
+    "completeRangeMs": [0.393458, 0.630125],
+    "count": 241
+  },
+  {
+    "name": "stable-Original-external",
+    "variant": "before",
+    "phase": "cold",
+    "firstMs": 491.236042,
+    "completeMs": 604.910208,
+    "firstRangeMs": [488.226292, 500.876584],
+    "completeRangeMs": [603.492084, 611.528084],
+    "count": 241
+  },
+  {
+    "name": "stable-Original-external",
+    "variant": "before",
+    "phase": "repeat",
+    "firstMs": 0.417458,
+    "completeMs": 0.46575,
+    "firstRangeMs": [0.357083, 0.740792],
+    "completeRangeMs": [0.405542, 0.804917],
+    "count": 241
+  },
+  {
+    "name": "stable-Original-external",
+    "variant": "after",
+    "phase": "cold",
+    "firstMs": 499.008584,
+    "completeMs": 548.161834,
+    "firstRangeMs": [488.312959, 533.30125],
+    "completeRangeMs": [537.584084, 580.962041],
+    "count": 241
+  },
+  {
+    "name": "stable-Original-external",
+    "variant": "after",
+    "phase": "repeat",
+    "firstMs": 0.461375,
+    "completeMs": 0.511375,
+    "firstRangeMs": [0.437042, 0.514334],
+    "completeRangeMs": [0.481708, 0.568667],
+    "count": 241
+  }
+]

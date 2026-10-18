@@ -21,11 +21,17 @@ const MAXIMUM_RANGE_MILLISECONDS =
   SECONDS_PER_MINUTE *
   MILLISECONDS_PER_SECOND
 const MAXIMUM_TIME_ZONE_CHARACTERS = 100
-const querySchema = z.object({
-  end: z.iso.datetime(),
-  start: z.iso.datetime(),
-  timeZone: z.string().min(1).max(MAXIMUM_TIME_ZONE_CHARACTERS),
-})
+const querySchema = z.union([
+  z.object({
+    end: z.iso.datetime(),
+    start: z.iso.datetime(),
+    timeZone: z.string().min(1).max(MAXIMUM_TIME_ZONE_CHARACTERS),
+  }),
+  z.object({
+    at: z.iso.datetime(),
+    timeZone: z.string().min(1).max(MAXIMUM_TIME_ZONE_CHARACTERS),
+  }),
+])
 
 export const GET = async (event: APIEvent): Promise<Response> => {
   const resolved = await resolveUserRequestOrUnavailable(event.request, {
@@ -61,20 +67,23 @@ export const GET = async (event: APIEvent): Promise<Response> => {
     )
   }
 
-  const startTime = new Date(parsed.data.start).getTime()
-  const endTime = new Date(parsed.data.end).getTime()
-  if (endTime <= startTime || endTime - startTime > MAXIMUM_RANGE_MILLISECONDS) {
-    return noStoreJson(
-      {error: 'invalid_calendar_range'},
-      {cookies: identity.cookies, status: HTTP_BAD_REQUEST},
-    )
+  if (!('at' in parsed.data)) {
+    const startTime = new Date(parsed.data.start).getTime()
+    const endTime = new Date(parsed.data.end).getTime()
+    if (endTime <= startTime || endTime - startTime > MAXIMUM_RANGE_MILLISECONDS) {
+      return noStoreJson(
+        {error: 'invalid_calendar_range'},
+        {cookies: identity.cookies, status: HTTP_BAD_REQUEST},
+      )
+    }
   }
 
   try {
     const result = await getCalendarService().listEvents({
       displayTimeZone: parsed.data.timeZone,
-      end: parsed.data.end,
-      start: parsed.data.start,
+      ...('at' in parsed.data
+        ? {at: parsed.data.at}
+        : {end: parsed.data.end, start: parsed.data.start}),
       userId: identity.userId,
     })
     return noStoreJson({...result, timeZone: parsed.data.timeZone}, {cookies: identity.cookies})

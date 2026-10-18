@@ -1,7 +1,9 @@
 import {clamp} from 'es-toolkit/math'
 import {Dialog} from '@kobalte/core/dialog'
 import {cx} from 'class-variance-authority'
-import {createEffect, createMemo, createSignal, type JSX, onCleanup} from 'solid-js'
+import {createEffect, createMemo, createSignal, type JSX, onMount} from 'solid-js'
+
+import {useResizeObserver} from 'src/hooks/use-resize-observer'
 
 import type {TourTargetBounds} from './types'
 
@@ -93,22 +95,16 @@ export const HTourContent = (props: HTourContentProps) => {
     }
   }
 
-  createEffect(() => {
+  const updateWidth = () => {
     const element = contentElement()
-
-    if (element === undefined) {
-      return
+    if (element !== undefined) {
+      setContentWidth(element.getBoundingClientRect().width)
     }
+  }
+  const resizeObserver = useResizeObserver({onResize: updateWidth, target: contentElement})
 
-    const updateWidth = () => setContentWidth(element.getBoundingClientRect().width)
-    const resizeObserver =
-      typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(updateWidth)
-
-    updateWidth()
-    resizeObserver?.observe(element)
-
-    onCleanup(() => resizeObserver?.disconnect())
-  })
+  createEffect(updateWidth)
+  onMount(resizeObserver.start)
 
   const placement = createMemo(() =>
     resolvePlacement({

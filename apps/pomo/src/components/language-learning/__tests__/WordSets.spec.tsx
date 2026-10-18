@@ -1,35 +1,30 @@
 /** @vitest-environment jsdom */
 
-import {fireEvent, render, screen} from '@solidjs/testing-library'
-import type {JSX} from 'solid-js'
+import {fireEvent, render, screen, within} from '@solidjs/testing-library'
 import {expect, it, vi} from 'vitest'
-
-vi.mock('@solidjs/router', () => ({
-  A: (props: {readonly children: JSX.Element; readonly class?: string; readonly href: string}) => (
-    <a class={props.class} href={props.href}>
-      {props.children}
-    </a>
-  ),
-}))
 
 import {LanguageLearningWordSets} from '../WordSets'
 
 it('should show the word set catalog page and Pomo return link', () => {
   render(() => <LanguageLearningWordSets />)
 
-  expect(screen.getByRole('main')).toHaveClass('bg-background', 'text-foreground')
-  expect(screen.getByRole('heading', {level: 1, name: '단어 세트 가져오기'})).toBeInTheDocument()
-  expect(screen.getByRole('link', {name: '앱으로 돌아가기'})).toHaveAttribute('href', '/')
-  expect(screen.getByRole('heading', {level: 2, name: '단어 세트'})).toBeInTheDocument()
-  expect(screen.getByRole('tablist', {name: '단어 세트 언어'})).toBeInTheDocument()
-  expect(screen.getAllByRole('tab').map((tab) => tab.textContent)).toEqual([
-    '전체',
-    '한글',
-    '영어',
-    '일본어',
-  ])
+  const main = screen.getByRole('main')
+  const headings = within(main).getAllByRole('heading')
+  expect(main).toHaveClass('bg-background', 'text-foreground')
+  expect(headings).toHaveLength(2)
+  expect(headings[0]).toHaveProperty('tagName', 'H1')
+  expect(headings[0]).toHaveAccessibleName('단어 세트 가져오기')
+  expect(headings[1]).toHaveProperty('tagName', 'H2')
+  expect(headings[1]).toHaveAccessibleName('단어 세트')
+  expect(within(main).getByRole('link', {name: '앱으로 돌아가기'})).toHaveAttribute('href', '/')
+  expect(within(main).getByRole('tablist', {name: '단어 세트 언어'})).toBeInTheDocument()
+  expect(
+    within(main)
+      .getAllByRole('tab')
+      .map((tab) => tab.textContent),
+  ).toEqual(['전체', '한글', '영어', '일본어'])
   expect(screen.queryByRole('heading', {level: 3})).toBeNull()
-  expect(screen.getByText('가져올 수 있는 단어 세트를 준비 중이에요.')).toBeInTheDocument()
+  expect(within(main).getByText('가져올 수 있는 단어 세트를 준비 중이에요.')).toBeInTheDocument()
 })
 
 it('should render one mixed list and filter it by Hangul, English, or Japanese', () => {

@@ -57,7 +57,7 @@ const easeProgress = (easing: PuppetEasing | undefined, progress: number) => {
   }
 }
 
-const sampleKeyframes = (keyframes: ReadonlyArray<PuppetKeyframe>, time: number) => {
+export const sampleKeyframes = (keyframes: ReadonlyArray<PuppetKeyframe>, time: number) => {
   const nextIndex = keyframes.findIndex((keyframe) => keyframe.time >= time)
 
   if (nextIndex === -1) {
@@ -82,7 +82,7 @@ const sampleKeyframes = (keyframes: ReadonlyArray<PuppetKeyframe>, time: number)
   return previousKeyframe.value + (nextKeyframe.value - previousKeyframe.value) * easedProgress
 }
 
-const sampleDiscreteKeyframes = (keyframes: ReadonlyArray<PuppetKeyframe>, time: number) => {
+export const sampleDiscreteKeyframes = (keyframes: ReadonlyArray<PuppetKeyframe>, time: number) => {
   const nextIndex = keyframes.findIndex((keyframe) => keyframe.time > time)
   return nextIndex === -1
     ? (keyframes.at(-1)?.value ?? 0)
@@ -93,7 +93,7 @@ export const isParameterTrack = (
   track: PuppetParameterTrack | PuppetVertexTrack,
 ): track is PuppetParameterTrack => track.kind === 'parameter'
 
-const getCoordinateIndex = (track: PuppetVertexTrack) =>
+export const getCoordinateIndex = (track: PuppetVertexTrack) =>
   track.vertexIndex * COORDINATES_PER_VERTEX + (track.axis === 'y' ? Y_COORDINATE_OFFSET : 0)
 
 export const applyMotionVertices = (options: ApplyMotionVerticesOptions) => {

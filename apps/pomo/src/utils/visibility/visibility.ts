@@ -1,6 +1,6 @@
 import {getWindow} from '@winter-love/utils'
 
-/** Reports document visibility changes with true for hidden and false for visible. */
+/** 문서의 표시 상태가 바뀌면 숨김은 true, 표시는 false로 알린다. */
 export const visibility = (callback: (isHidden: boolean) => void) => {
   const target = getWindow()?.document
   const notifyVisibilityChange = (): void => {

@@ -59,6 +59,13 @@ test('should add, edit, and remove a pendulum from the Physics panel', () => {
   const gravity = view.getByRole('spinbutton', {name: '물리 연결 1 중력'})
   fireEvent.input(gravity, {target: {value: '12'}})
   expect(document().physics?.pendulums[0]?.gravity).toBe(12)
+  expect(view.getByRole('spinbutton', {name: '물리 연결 1 중력'})).toBe(gravity)
+  expect(gravity.closest('details')).toHaveAttribute('open')
+  fireEvent(gravity, new MouseEvent('pointerdown', {bubbles: true, button: 0, clientX: 100}))
+  fireEvent(globalThis.window, new MouseEvent('pointermove', {clientX: 110}))
+  fireEvent(globalThis.window, new MouseEvent('pointermove', {clientX: 120}))
+  fireEvent(globalThis.window, new MouseEvent('pointerup', {clientX: 120}))
+  expect(document().physics?.pendulums[0]?.gravity).toBe(14)
 
   fireEvent.click(view.getByRole('button', {name: '물리 연결 1 삭제'}))
   expect(document().physics).toBeUndefined()

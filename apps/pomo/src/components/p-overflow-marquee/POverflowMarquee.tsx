@@ -1,5 +1,7 @@
 import {cx} from 'class-variance-authority'
-import {createEffect, createSignal, onCleanup, onMount, Show} from 'solid-js'
+import {createEffect, createSignal, onMount, Show} from 'solid-js'
+
+import {useResizeObserver} from 'src/hooks/use-resize-observer'
 
 const CONTENT_GAP_PIXELS = 32
 const MINIMUM_DURATION_SECONDS = 6
@@ -54,24 +56,14 @@ export const POverflowMarquee = (props: POverflowMarqueeProps) => {
     measureOverflow()
   })
 
+  const resizeObserver = useResizeObserver({
+    onResize: measureOverflow,
+    target: () => [contentElement(), viewportElement()],
+  })
+
   onMount(() => {
-    const content = contentElement()
-    const viewport = viewportElement()
-
-    if (content === undefined || viewport === undefined) {
-      return
-    }
-
-    if (typeof ResizeObserver === 'undefined') {
-      measureOverflow()
-      return
-    }
-
-    const resizeObserver = new ResizeObserver(measureOverflow)
-    resizeObserver.observe(content)
-    resizeObserver.observe(viewport)
+    resizeObserver.start()
     measureOverflow()
-    onCleanup(() => resizeObserver.disconnect())
   })
 
   return (

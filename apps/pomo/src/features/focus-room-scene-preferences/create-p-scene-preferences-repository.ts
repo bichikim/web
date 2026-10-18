@@ -19,7 +19,8 @@ export interface PScenePreferencesStorage {
   readonly readToss: (key: string) => Promise<unknown | null>
   readonly readWeb: (key: string) => unknown | null
   readonly writeToss: (key: string, value: unknown) => Promise<void>
-  readonly writeWeb: (key: string, value: unknown) => void
+  /** Returns null on success or the persistence error on failure. */
+  readonly writeWeb: (key: string, value: unknown) => unknown | null
 }
 
 export interface PScenePreferencesRepository {
@@ -52,10 +53,7 @@ export const createPScenePreferencesRepository = (
         parsePScenePreferences(await storage.readToss(SCENE_PREFERENCES_STORAGE_KEY)),
       readWeb: () => parsePScenePreferences(storage.readWeb(SCENE_PREFERENCES_STORAGE_KEY)),
       writeNative: (value) => storage.writeToss(SCENE_PREFERENCES_STORAGE_KEY, value),
-      writeWeb: (value) => {
-        storage.writeWeb(SCENE_PREFERENCES_STORAGE_KEY, value)
-        return null
-      },
+      writeWeb: (value) => storage.writeWeb(SCENE_PREFERENCES_STORAGE_KEY, value),
     },
     writeFailureMessage: 'Failed to persist scene preferences.',
   })

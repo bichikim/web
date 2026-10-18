@@ -40,7 +40,7 @@ const getInputGroups = (document: PuppetDocument, inputParameterIds?: ReadonlyAr
     const connections = pendulums.filter((pendulum) => pendulum.inputParameterId === parameter.id)
     return connections.length === 0
       ? []
-      : [{inputLabel: getParameterLabel(document, parameter.id), pendulums: connections}]
+      : [{inputParameterId: parameter.id, pendulums: connections}]
   })
 }
 
@@ -151,14 +151,17 @@ export const PhysicsProperties = (props: PhysicsPropertiesProps) => {
         fallback={<p class="physics-empty">연결된 출력 파라미터 없음</p>}
       >
         <div class="physics-pendulum-list">
-          <For each={inputGroups()}>
-            {(group) => (
+          <For each={inputGroups().map((group) => group.inputParameterId)}>
+            {(inputParameterId) => (
               <PhysicsInputGroup
                 allPendulums={allPendulums()}
                 disabled={disabled()}
                 document={props.document}
-                inputLabel={group.inputLabel}
-                pendulums={group.pendulums}
+                inputLabel={getParameterLabel(props.document, inputParameterId)}
+                pendulums={
+                  inputGroups().find((group) => group.inputParameterId === inputParameterId)
+                    ?.pendulums ?? []
+                }
                 onEditEnd={props.onEditEnd}
                 onEditStart={props.onEditStart}
                 onNumberChange={handleNumberChange}

@@ -1,5 +1,6 @@
 export {classifySpeechNumber} from './classify-speech-number'
 export {hasNumberKind} from './has-number-kind'
+export {parseClockTime} from './parse-clock-time'
 export {parseInteger} from './parse-integer'
 export {
   DECIMAL_PERCENT_PATTERN,
@@ -11,6 +12,7 @@ export {normalizeEnglishSpeechText} from './normalize-english-speech-text'
 export {normalizeKoreanSpeechText} from './normalize-korean-speech-text'
 export {normalizeSpeechText} from './normalize-speech-text'
 export {
+  ENGLISH_COUNT_NOUNS,
   INTEGER_PATTERN_SOURCE,
   KOREAN_DIGIT_PATTERN_SOURCE,
   KOREAN_INTEGER_PATTERN_SOURCE,

@@ -93,6 +93,15 @@ const createAlbum = (id: string, tracks: readonly PTrack[]): PResolvedAlbum => (
   tracks,
 })
 
+const finishAlbumLoads = async () => {
+  const loads = [
+    ...audioMocks.loadBundledPAlbums.mock.results,
+    ...audioMocks.loadPublishedPAlbums.mock.results,
+    ...customAlbumMocks.readCustomAlbums.mock.results,
+  ]
+  await Promise.all(loads.map(({value}) => Promise.resolve(value)))
+}
+
 let previewOptions: PreviewOptions
 let previewError: () => string | null
 let previewHandleEnded: () => void
@@ -198,7 +207,8 @@ describe('PAlbumLibraryContent', () => {
       />
     ))
 
-    expect(await screen.findByTestId('album-partial')).toBeTruthy()
+    await finishAlbumLoads()
+    expect(screen.getByTestId('album-partial')).toBeTruthy()
     expect(screen.getByText('미리듣기 오류')).toBeInTheDocument()
     expect(vi.mocked(previewSetAudio).mock.calls[0]?.[0]).toBeInstanceOf(HTMLAudioElement)
     const cards = componentMocks.albumCard.mock.calls.map(([props]) => props as AlbumCardProps)
@@ -231,12 +241,15 @@ describe('PAlbumLibraryContent', () => {
     vi.mocked(previewToggle).mockRejectedValueOnce(previewFailure)
     const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
     screen.getByRole('button', {name: 'preview partial'}).click()
-    await waitFor(() => {
-      expect(consoleError).toHaveBeenCalledWith(
-        'Failed to toggle album track preview.',
-        previewFailure,
-      )
-    })
+    const previewResult = vi.mocked(previewToggle).mock.results.at(-1)
+    if (previewResult?.type !== 'return') {
+      throw new Error('Album preview did not start.')
+    }
+    await Promise.allSettled([previewResult.value])
+    expect(consoleError).toHaveBeenCalledWith(
+      'Failed to toggle album track preview.',
+      previewFailure,
+    )
   })
 
   it('should support optional preview callbacks', async () => {
@@ -261,6 +274,8 @@ describe('PAlbumLibraryContent', () => {
     render(() => <PAlbumLibraryContent onAddTracks={vi.fn()} tracks={[]} />)
 
     await screen.findByRole('button', {name: '다시 시도'})
+    expect(screen.queryByRole('alert')).toBeNull()
+    expect(reporterMocks.reportClientError).toHaveBeenCalledOnce()
     expect(reporterMocks.reportClientError).toHaveBeenCalledWith(loadError, {
       feature: 'album-library',
       source: 'error-boundary',
@@ -277,6 +292,40 @@ describe('PAlbumLibraryContent', () => {
 
     expect(audioMocks.loadBundledPAlbums).toHaveBeenCalledTimes(3)
     expect(await screen.findByTestId('album-recovered')).toBeTruthy()
+  })
+
+  it('should keep the focused retry action until recovery completes', async () => {
+    const retryRequest = Promise.withResolvers<readonly PResolvedAlbum[]>()
+    audioMocks.loadBundledPAlbums
+      .mockRejectedValueOnce(new Error('album load failed'))
+      .mockReturnValueOnce(retryRequest.promise)
+
+    render(() => <PAlbumLibraryContent onAddTracks={vi.fn()} tracks={[]} />)
+
+    const retryButton = await screen.findByRole('button', {name: '다시 시도'})
+    const retryProps = componentMocks.button.mock.lastCall?.[0] as ButtonProps
+    retryButton.focus()
+    const retry = retryProps.onPress()
+
+    expect(screen.getByRole('button', {name: '다시 시도'})).toBe(retryButton)
+    expect(retryButton).toHaveFocus()
+    expect(reporterMocks.reportClientError).toHaveBeenCalledOnce()
+    retryRequest.resolve([])
+    await retry
+
+    expect(screen.getByText('등록된 앨범이 없어요')).toBeInTheDocument()
+    expect(retryButton).not.toBeInTheDocument()
+    expect(reporterMocks.reportClientError).toHaveBeenCalledOnce()
+  })
+
+  it('should show an empty library without an alert or retry action', async () => {
+    render(() => <PAlbumLibraryContent onAddTracks={vi.fn()} tracks={[]} />)
+    await finishAlbumLoads()
+
+    expect(screen.getByText('등록된 앨범이 없어요').closest('[role]')).toBeNull()
+    expect(screen.queryByRole('alert')).toBeNull()
+    expect(screen.queryByRole('button', {name: '다시 시도'})).toBeNull()
+    expect(reporterMocks.reportClientError).not.toHaveBeenCalled()
   })
 
   it('should preserve bundled albums and retry only the failed published catalog', async () => {

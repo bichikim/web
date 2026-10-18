@@ -11,19 +11,16 @@ import {createBackground} from 'src/features/background/__tests__/fixtures/contr
 import {Background} from '../Background'
 import {Scene} from '../Scene'
 import {Style} from '../Style'
-import {Weather} from '../Weather'
 import {Website} from '../Website'
 
 vi.mock('../Scene', () => ({Scene: vi.fn()}))
 vi.mock('../Style', () => ({Style: vi.fn()}))
-vi.mock('../Weather', () => ({Weather: vi.fn()}))
 vi.mock('../Website', () => ({Website: vi.fn()}))
 
 beforeEach(() => {
   vi.clearAllMocks()
   vi.mocked(Scene).mockImplementation(() => <div>character scene controls</div>)
   vi.mocked(Style).mockImplementation(() => <div>character style controls</div>)
-  vi.mocked(Weather).mockImplementation(() => <div>window weather controls</div>)
   vi.mocked(Website).mockImplementation(() => <div>website background controls</div>)
 })
 
@@ -106,7 +103,6 @@ it('should switch between character controls and frame media settings', () => {
   expect(screen.queryByRole('radio', {name: 'URL'})).not.toBeInTheDocument()
   fireEvent.click(screen.getByRole('radio', {name: '액자'}))
   expect(screen.queryByText('character scene controls')).not.toBeInTheDocument()
-  expect(screen.queryByText('window weather controls')).not.toBeInTheDocument()
   expect(screen.getByText('보여줄 사진 또는 동영상이 없어요')).toBeInTheDocument()
 })
 
@@ -145,9 +141,9 @@ it('should return to character controls after switching to frame settings', () =
   render(() => <Background background={background} />)
 
   fireEvent.click(screen.getByRole('radio', {name: '액자'}))
-  expect(screen.queryByText('window weather controls')).not.toBeInTheDocument()
 
   fireEvent.click(screen.getByRole('radio', {name: '캐릭터'}))
 
-  expect(screen.getByText('window weather controls')).toBeInTheDocument()
+  expect(screen.getByText('character scene controls')).toBeInTheDocument()
+  expect(screen.getByText('character style controls')).toBeInTheDocument()
 })

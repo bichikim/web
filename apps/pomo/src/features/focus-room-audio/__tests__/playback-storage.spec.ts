@@ -65,6 +65,24 @@ describe('playback-storage', () => {
     })
   })
 
+  it('should preserve stable queue entry identity during storage round trips', async () => {
+    await playbackStorage.write({
+      isPlaying: true,
+      positionSeconds: 12,
+      queueEntryId: 'entry-second',
+      trackId: 'track-one',
+      trackIndex: 1,
+    })
+
+    await expect(playbackStorage.read()).resolves.toEqual({
+      isPlaying: true,
+      positionSeconds: 12,
+      queueEntryId: 'entry-second',
+      trackId: 'track-one',
+      trackIndex: 1,
+    })
+  })
+
   it('should return null after browser playback storage is removed', async () => {
     await playbackStorage.write({isPlaying: true, positionSeconds: 12, trackId: 'track-one'})
     storage.state.web = null

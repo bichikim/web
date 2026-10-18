@@ -26,6 +26,25 @@ it.each([
 ])('should compose the selected %s with the unchanged time field', (name, value, expected) => {
   const onChange = vi.fn()
   render(() => <PTimePicker label="알림 시간" value="09:05" onChange={onChange} />)
-  fireEvent.change(screen.getByRole('combobox', {name}), {target: {value}})
+  fireEvent.change(screen.getByLabelText(name, {selector: 'select'}), {target: {value}})
   expect(onChange).toHaveBeenCalledExactlyOnceWith(expected)
+})
+
+it('should expose an empty time and allow choosing a time', () => {
+  const onChange = vi.fn()
+  render(() => <PTimePicker clearable label="출생 시각" value="" onChange={onChange} />)
+
+  expect(screen.queryByLabelText('출생 시각 시', {selector: 'select'})).toBeNull()
+  fireEvent.click(screen.getByRole('button', {name: /출생 시각.*선택/u}))
+
+  expect(onChange).toHaveBeenCalledExactlyOnceWith('00:00')
+})
+
+it('should clear a selected time', () => {
+  const onChange = vi.fn()
+  render(() => <PTimePicker clearable label="출생 시각" value="09:05" onChange={onChange} />)
+
+  fireEvent.click(screen.getByRole('button', {name: /출생 시각.*지우기/u}))
+
+  expect(onChange).toHaveBeenCalledExactlyOnceWith('')
 })

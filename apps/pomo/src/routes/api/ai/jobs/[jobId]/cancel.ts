@@ -1,37 +1,28 @@
+import {parseAiJobId} from 'src/server/ai/parse-ai-job-id'
 import type {APIEvent} from '@solidjs/start/server'
-import {z} from 'zod'
 
-import {isUserRequestResolutionError} from 'src/server/auth/user-request-resolution-error'
-import {resolveUserRequest} from 'src/server/auth/resolve-user-request'
+import {resolveUserRequestOrUnavailable} from 'src/server/auth/resolve-user-request-or-unavailable'
 import {cancelAiJobForUser, createPublicJob} from 'src/server/ai/service'
 import {noStoreJson} from 'src/server/http/response'
 
-const HTTP_BAD_REQUEST = 400
 const HTTP_NOT_FOUND = 404
 const HTTP_SERVICE_UNAVAILABLE = 503
 const HTTP_UNAUTHORIZED = 401
-const jobIdSchema = z.uuid()
 
 export const POST = async (event: APIEvent): Promise<Response> => {
-  const parsedJobId = jobIdSchema.safeParse(event.params.jobId)
-  if (!parsedJobId.success) {
-    return noStoreJson({error: 'invalid_request'}, {status: HTTP_BAD_REQUEST})
+  const jobId = parseAiJobId(event.params.jobId)
+  if (jobId instanceof Response) {
+    return jobId
   }
 
-  let identity: Awaited<ReturnType<typeof resolveUserRequest>>
-  try {
-    identity = await resolveUserRequest(event.request)
-  } catch (error: unknown) {
-    if (!isUserRequestResolutionError(error)) {
-      throw error
-    }
-
-    console.error('Failed to resolve AI job cancellation user', error.cause)
-    return noStoreJson(
-      {error: 'ai_job_unavailable'},
-      {cookies: error.cookies, status: HTTP_SERVICE_UNAVAILABLE},
-    )
+  const resolved = await resolveUserRequestOrUnavailable(event.request, {
+    logMessage: 'Failed to resolve AI job cancellation user',
+    unavailableError: 'ai_job_unavailable',
+  })
+  if (resolved.kind === 'unavailable') {
+    return resolved.response
   }
+  const {identity} = resolved
 
   if (identity.userId === null) {
     return noStoreJson(
@@ -41,7 +32,7 @@ export const POST = async (event: APIEvent): Promise<Response> => {
   }
 
   try {
-    const job = await cancelAiJobForUser(parsedJobId.data, identity.userId)
+    const job = await cancelAiJobForUser(jobId, identity.userId)
     return job === null
       ? noStoreJson(
           {error: 'ai_job_not_found'},

@@ -1,4 +1,4 @@
-import {createDeferred} from 'src/test-utils/create-deferred'
+import {createDeferred} from 'src/__tests__/create-deferred'
 /** @vitest-environment jsdom */
 
 import {render} from '@solidjs/testing-library'

@@ -1,13 +1,8 @@
 const POMO_RUNTIME_TARGETS = ['web', 'apps-in-toss', 'desktop', 'android', 'ios'] as const
 export type PomoTarget = (typeof POMO_RUNTIME_TARGETS)[number]
-const POMO_BUILD_TARGETS = ['web', 'apps-in-toss', 'desktop', 'android', 'ios'] as const
-type PomoBuildTarget = (typeof POMO_BUILD_TARGETS)[number]
 
 const isPomoRuntimeTarget = (value: string): value is PomoTarget =>
   POMO_RUNTIME_TARGETS.includes(value as PomoTarget)
-
-const isPomoBuildTarget = (value: string): value is PomoBuildTarget =>
-  POMO_BUILD_TARGETS.includes(value as PomoBuildTarget)
 
 export const resolveRuntimeTarget = (
   buildTarget: string | undefined,
@@ -19,7 +14,7 @@ export const resolveRuntimeTarget = (
     )
   }
 
-  if (buildTarget !== undefined && !isPomoBuildTarget(buildTarget)) {
+  if (buildTarget !== undefined && !isPomoRuntimeTarget(buildTarget)) {
     throw new Error(
       `Unsupported POMO_BUILD_TARGET: ${buildTarget}. Use web, apps-in-toss, desktop, android, or ios.`,
     )

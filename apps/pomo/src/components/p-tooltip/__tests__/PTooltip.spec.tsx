@@ -85,14 +85,29 @@ it('should open after hovering and connect the description without moving focus'
   expect(button).not.toHaveFocus()
 })
 
-it('should cancel a pending hover when the pointer leaves', () => {
+it('should restart the full opening delay on repeated hover', () => {
   const result = renderTooltip()
   const button = result.getByRole('button')
   fireEvent.pointerEnter(button)
-  fireEvent.pointerLeave(button)
-  vi.advanceTimersByTime(1000)
+  vi.advanceTimersByTime(300)
+  fireEvent.pointerEnter(button)
+  vi.advanceTimersByTime(399)
   expect(button).not.toHaveAttribute('aria-describedby')
+  vi.advanceTimersByTime(1)
+  expect(button).toHaveAttribute('aria-describedby', screen.getByRole('tooltip').id)
 })
+
+it.each(['pointerLeave', 'blur', 'pointerDown'] as const)(
+  'should cancel a pending hover on %s',
+  (event) => {
+    const result = renderTooltip()
+    const button = result.getByRole('button')
+    fireEvent.pointerEnter(button)
+    fireEvent[event](button)
+    vi.advanceTimersByTime(1000)
+    expect(button).not.toHaveAttribute('aria-describedby')
+  },
+)
 
 it('should remain open while moving onto the tooltip and dismiss with Escape', () => {
   const result = renderTooltip()
@@ -151,6 +166,26 @@ it('should replace the previous tooltip when another trigger is hovered', () => 
   expect(buttons[1]).toHaveAttribute('aria-describedby')
 })
 
+it('should cancel old closing when another tooltip is presented', () => {
+  const result = render(() => (
+    <>
+      <Trigger label="첫 번째">{(trigger) => <button {...trigger}>첫째</button>}</Trigger>
+      <Trigger label="두 번째">{(trigger) => <button {...trigger}>둘째</button>}</Trigger>
+    </>
+  ))
+  const [first, second] = result.getAllByRole('button')
+  fireEvent.pointerEnter(first!)
+  vi.advanceTimersByTime(400)
+  fireEvent.pointerLeave(first!)
+  vi.advanceTimersByTime(100)
+  browser.setVisibleFocus(second!)
+  second!.focus()
+  vi.advanceTimersByTime(150)
+  expect(first).not.toHaveAttribute('aria-describedby')
+  expect(second).toHaveAttribute('aria-describedby', screen.getByRole('tooltip').id)
+  expect(screen.getByRole('tooltip')).toHaveTextContent('두 번째')
+})
+
 it('should preserve touch activation without opening a tooltip', () => {
   const result = renderTooltip()
   const button = result.getByRole('button')
@@ -179,6 +214,21 @@ it('should clear pending work when unmounted', () => {
   fireEvent.pointerEnter(result.getByRole('button'))
   result.unmount()
   expect(vi.getTimerCount()).toBe(0)
+})
+
+it('should cancel pending closing when the provider is unmounted', () => {
+  const result = renderTooltip()
+  const button = result.getByRole('button')
+  fireEvent.pointerEnter(button)
+  vi.advanceTimersByTime(400)
+  fireEvent.pointerLeave(button)
+  expect(button).toHaveAttribute('aria-describedby')
+  expect(vi.getTimerCount()).toBe(1)
+  result.unmount()
+  expect(vi.getTimerCount()).toBe(0)
+  vi.advanceTimersByTime(150)
+  expect(button).not.toHaveAttribute('aria-describedby')
+  expect(screen.queryByRole('tooltip')).toBeNull()
 })
 
 it('should close on pointer leave while preserving button focus', () => {

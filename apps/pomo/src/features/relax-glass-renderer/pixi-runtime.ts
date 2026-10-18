@@ -1,3 +1,4 @@
+import {observeReducedMotionPreference} from 'src/utils/observe-media-query'
 import {Application, Texture, type WebGLRenderer} from 'pixi.js'
 
 const MAX_RENDER_RESOLUTION = 1.5
@@ -8,7 +9,8 @@ export class GlassPixiRuntime {
   #initialized = false
   #disposed = false
   #observer: ResizeObserver | null = null
-  #motionPreference: MediaQueryList | null = null
+  #reducedMotion = false
+  #stopMotionPreference: (() => void) | null = null
   #motionChange: (() => void) | null = null
 
   get initialized() {
@@ -51,14 +53,16 @@ export class GlassPixiRuntime {
   attachEnvironment(canvas: HTMLCanvasElement, onResize: () => void, onMotion: () => void) {
     this.#observer = new ResizeObserver(onResize)
     this.#observer.observe(canvas)
-    this.#motionPreference = globalThis.matchMedia('(prefers-reduced-motion: reduce)')
     this.#motionChange = onMotion
-    this.#motionPreference.addEventListener('change', onMotion)
+    this.#stopMotionPreference = observeReducedMotionPreference((matches) => {
+      this.#reducedMotion = matches
+      onMotion()
+    })
     globalThis.document.addEventListener('visibilitychange', onMotion)
   }
 
   isMotionPaused() {
-    return globalThis.document.hidden || this.#motionPreference?.matches === true
+    return globalThis.document.hidden || this.#reducedMotion
   }
 
   async loadTexture(source: string): Promise<Texture> {
@@ -76,7 +80,7 @@ export class GlassPixiRuntime {
     this.#disposed = true
     this.#observer?.disconnect()
     if (this.#motionChange !== null) {
-      this.#motionPreference?.removeEventListener('change', this.#motionChange)
+      this.#stopMotionPreference?.()
       globalThis.document.removeEventListener('visibilitychange', this.#motionChange)
     }
     if (this.#initialized) {

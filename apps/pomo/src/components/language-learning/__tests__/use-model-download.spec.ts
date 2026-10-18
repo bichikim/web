@@ -1,4 +1,4 @@
-import {createDeferred} from 'src/test-utils/create-deferred'
+import {createDeferred} from 'src/__tests__/create-deferred'
 import {createSignal} from 'solid-js'
 import {expect, it, type Mock, vi} from 'vitest'
 
@@ -34,6 +34,7 @@ const createDownloadTestContext = (): DownloadTestContext => {
     setPendingDownload,
     setPhase: vi.fn(),
     setRegeneratingCandidateId: vi.fn(),
+    textModelId: () => 'gemma-4-e2b',
     workflow: {isDisposed: false},
   } satisfies LanguageLearningDownloadState
 

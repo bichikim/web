@@ -1,3 +1,5 @@
+import {appendSetCookies} from './append-set-cookies'
+
 const HTTP_OK = 200
 const HTTP_NO_CONTENT = 204
 const NO_STORE_HEADERS = {
@@ -19,9 +21,7 @@ const createNoStoreHeaders = (options: NoStoreResponseOptions): Headers => {
     headers.set(name, value)
   }
 
-  for (const cookie of options.cookies ?? []) {
-    headers.append('Set-Cookie', cookie)
-  }
+  appendSetCookies(headers, options.cookies ?? [])
 
   return headers
 }

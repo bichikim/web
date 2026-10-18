@@ -1,3 +1,4 @@
+import {invalidJsonBodyResponse} from 'src/server/http/invalid-json-body-response'
 import type {APIEvent} from '@solidjs/start/server'
 import {z} from 'zod'
 
@@ -8,7 +9,6 @@ import {createPendingTrack} from 'src/server/repositories/music-track-registrati
 
 const MAXIMUM_BODY_SIZE = 8192
 const MAXIMUM_TEXT_LENGTH = 120
-const HTTP_BAD_REQUEST = 400
 const HTTP_CREATED = 201
 const HTTP_NOT_FOUND = 404
 const HTTP_INTERNAL_SERVER_ERROR = 500
@@ -29,13 +29,10 @@ export const POST = async (event: APIEvent): Promise<Response> => {
   const parsedBody = trackSchema.safeParse(bodyResult.success ? bodyResult.body : null)
 
   if (!parsedBody.success) {
-    return noStoreJson(
-      {error: 'invalid_request'},
-      {
-        cookies: authorization.cookies,
-        status: bodyResult.success ? HTTP_BAD_REQUEST : bodyResult.status,
-      },
-    )
+    return invalidJsonBodyResponse(bodyResult, {
+      cookies: authorization.cookies,
+      error: 'invalid_request',
+    })
   }
 
   try {

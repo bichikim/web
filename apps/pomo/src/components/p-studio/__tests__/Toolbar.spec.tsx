@@ -2,6 +2,7 @@
 
 import {render, screen} from '@solidjs/testing-library'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
+import type {JSX} from 'solid-js'
 import * as m from '@paraglide/message'
 
 import type {WeatherLocation} from '../../../features/weather'
@@ -25,6 +26,36 @@ vi.mock('../../p-model-download-status/PModelDownloadStatus', () => ({
 vi.mock('../SettingsPanel', () => ({SceneSettingsPanel: vi.fn()}))
 vi.mock('../MemoryAssistPanel', () => ({MemoryAssistPanel: vi.fn()}))
 vi.mock('../VersionNoticePanel', () => ({VersionNoticePanel: vi.fn()}))
+vi.mock('../../p-button/PButton', () => ({
+  PButton: (props: {
+    accessibleLabel?: string
+    class?: string
+    children?: JSX.Element
+    disabled?: boolean
+    icon?: string
+    onPress?: (source: HTMLButtonElement) => void
+    type?: 'button' | 'reset' | 'submit'
+  }) => {
+    const icon = props.icon
+
+    return (
+      <button
+        aria-label={props.accessibleLabel}
+        class={props.class}
+        disabled={props.disabled}
+        onClick={(event) => props.onPress?.(event.currentTarget)}
+        type={props.type ?? 'button'}
+      >
+        {icon && <span aria-hidden="true" class={icon} />}
+        {props.children}
+      </button>
+    )
+  },
+}))
+vi.mock('../../p-tools/PTools', () => ({
+  PTools: () => <button aria-label={m.tools_open()} type="button" />,
+}))
+vi.mock('../../p-toast', () => ({PToastRegion: () => null}))
 
 const callbacks = {
   onActivityChange: vi.fn(),

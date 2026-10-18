@@ -21,7 +21,7 @@ export const getLanguageLearningGenerationStatus = (
   if (options.downloadState.status === 'loading') {
     return {
       kind: options.downloadState.target.kind === 'voice' ? 'voice' : 'draft',
-      message: `${options.downloadState.label} 모델 받는 중 · ${options.downloadState.percentage}%`,
+      message: `${options.downloadState.label} 모델 받는 중`,
       progress: options.downloadState.percentage,
       progressLabel: '모델 다운로드 진행률',
     }

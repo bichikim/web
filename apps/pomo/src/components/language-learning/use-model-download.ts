@@ -1,8 +1,8 @@
+import type {TextModelId} from 'src/features/text-generation'
 import * as m from '@paraglide/message'
 import type {ModelDownloadController} from '../../features/model-download/controller'
 import type {SupertonicModelId} from '../../features/supertonic'
 import type {LanguageLearningEditorPhase, LanguageLearningPendingDownload} from './editor-state'
-import {TEXT_MODEL_ID} from './use-editor-state'
 
 interface LanguageLearningDownloadController {
   readonly startTextModel: ModelDownloadController['startTextModel']
@@ -14,6 +14,7 @@ interface LanguageLearningWorkflowStatus {
 }
 
 export interface LanguageLearningDownloadState {
+  readonly textModelId: () => TextModelId
   readonly fail: (message: string) => void
   readonly modelDownload: LanguageLearningDownloadController
   readonly modelId: () => SupertonicModelId
@@ -68,7 +69,7 @@ export const useModelDownload = (props: UseModelDownloadProps) => {
     try {
       const result =
         target.kind === 'text'
-          ? await props.state.modelDownload.startTextModel(TEXT_MODEL_ID)
+          ? await props.state.modelDownload.startTextModel(props.state.textModelId())
           : await props.state.modelDownload.startVoiceModel(props.state.modelId())
 
       if (props.state.workflow.isDisposed) {

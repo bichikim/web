@@ -12,7 +12,7 @@ vi.mock('../ViewportCanvas', () => ({
     readonly onLoadStart: () => void
     readonly onLoadSuccess: () => void
   }) => (
-    <div data-model-url={props.modelUrl}>
+    <div data-model-url={props.modelUrl} data-testid="viewport-canvas">
       <button onClick={props.onLoadStart} type="button">
         시작
       </button>
@@ -45,10 +45,7 @@ describe('CharacterViewport', () => {
 
     expect(screen.getByText('Babylon.js 렌더러를 준비하고 있어요.')).toBeInTheDocument()
     expect(screen.getByText('모델 로딩 32%')).toBeInTheDocument()
-    expect(screen.getByRole('button', {name: '시작'}).parentElement).toHaveAttribute(
-      'data-model-url',
-      '/loading.glb',
-    )
+    expect(screen.getByTestId('viewport-canvas')).toHaveAttribute('data-model-url', '/loading.glb')
     const loadingMessage = screen.getByText('Babylon.js 렌더러를 준비하고 있어요.')
     expect(loadingMessage.previousElementSibling).toHaveClass('animate-spin')
     expect(screen.getByText('모델 로딩 32%').previousElementSibling).toHaveClass('bg-#efb18f')

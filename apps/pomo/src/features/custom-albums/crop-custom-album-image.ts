@@ -1,3 +1,4 @@
+import {clamp} from 'es-toolkit/math'
 import {createSquareWebpEncoder} from 'src/utils/square-webp-cover'
 import {CUSTOM_ALBUM_COVER_EDGE, CustomAlbumError, MAXIMUM_CUSTOM_COVER_BYTES} from './model'
 
@@ -22,8 +23,8 @@ export const cropCustomAlbumImage = async (options: CropCustomAlbumImageOptions)
   }
 
   const sourceSize = Math.min(options.sourceSize, options.image.width, options.image.height)
-  const sourceX = Math.min(Math.max(0, options.sourceX), options.image.width - sourceSize)
-  const sourceY = Math.min(Math.max(0, options.sourceY), options.image.height - sourceSize)
+  const sourceX = clamp(options.sourceX, 0, options.image.width - sourceSize)
+  const sourceY = clamp(options.sourceY, 0, options.image.height - sourceSize)
   const encode = createSquareWebpEncoder({
     contextError: () => new CustomAlbumError('invalid-cover'),
     contextOptions: {alpha: false},

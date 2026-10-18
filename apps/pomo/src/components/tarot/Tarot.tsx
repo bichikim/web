@@ -9,11 +9,10 @@ import {
 import {PButton} from '../p-button/PButton'
 import {PRadioSwitch} from '../p-radio-switch/PRadioSwitch'
 import {PTextField} from '../p-text-field/PTextField'
-import {PModelDownloadConsent} from '../p-model-download-consent/PModelDownloadConsent'
-import {DownloadStatus} from './DownloadStatus'
 import {Reading} from './Reading'
 import {Spread} from './Spread'
 import {Options} from './Options'
+import {ModelDownloads} from './ModelDownloads'
 
 const TABLE_THEME =
   '[--pomo-color-foreground-channels:242_232_207] [--pomo-color-foreground-opacity:1] ' +
@@ -58,8 +57,8 @@ export const Tarot = (props: TarotProps) => {
       props.reading.setCount(count)
     }
   }
-  const isDownloading = () => props.reading.status() === 'downloading'
-  const isInterpreting = () => isBusy() && !isDownloading()
+  const isTextDownloading = () => props.reading.status() === 'downloading'
+  const isInterpreting = () => isBusy() && !isTextDownloading()
   return (
     <section
       aria-label={m.tarot_tab()}
@@ -69,12 +68,9 @@ export const Tarot = (props: TarotProps) => {
         `shadow-[inset_0_0_60px_#0003] sm:gap-5 sm:p-6 ${TABLE_THEME}`
       }
     >
-      <div
-        class="grid min-w-0 grid-cols-1 items-end gap-4 sm:grid-cols-[minmax(0,16rem)_minmax(0,1fr)]
-        lg:grid-cols-[minmax(0,16rem)_minmax(0,1fr)_auto]"
-      >
+      <div class="grid min-w-0 grid-cols-1 gap-4">
         <PRadioSwitch
-          class={COUNT_SELECTOR}
+          class={`${COUNT_SELECTOR} w-64 max-w-full`}
           disabled={isBusy()}
           label={m.tarot_count_label()}
           onChange={handleCountChange}
@@ -96,84 +92,76 @@ export const Tarot = (props: TarotProps) => {
           rows={1}
           value={props.reading.question()}
         />
-        <div class="flex flex-wrap items-center justify-end gap-2 sm:col-span-2 lg:col-span-1 lg:min-h-[3.25rem]">
-          <Show when={isDownloading()}>
-            <DownloadStatus
-              onCancel={props.reading.cancelDownload}
-              progress={props.reading.progress() ?? 0}
-              kind={props.reading.downloadKind()}
-            />
-          </Show>
-          <Show when={!isBusy()}>
-            <PButton
-              class="whitespace-nowrap !rounded-full !px-4 !text-[#241d10]
-                !shadow-[0_4px_20px_#0004,inset_0_1px_0_#fff6]
-            focus-visible:!outline-2 focus-visible:!outline-solid focus-visible:!outline-offset-4
-            focus-visible:!outline-[#d8b97e]"
-              icon="i-tabler-sparkles"
-              disabled={props.reading.status() === 'consent'}
-              onPress={props.reading.draw}
-              raised
-            >
-              {props.reading.cards().length > 0 ? m.tarot_redraw() : m.tarot_draw()}
-            </PButton>
-          </Show>
-          <Show when={isInterpreting()}>
-            <PButton
-              class={SECONDARY_BUTTON}
-              bordered
-              icon="i-tabler-loader-2 animate-spin motion-reduce:animate-none"
-              onPress={props.reading.cancel}
-              tone="secondary"
-              transparent
-            >
-              {m.tarot_cancel()}
-            </PButton>
-          </Show>
-          <Show when={canInterpret()}>
-            <PButton
-              accessibleLabel={m.tarot_interpret()}
-              class={SECONDARY_BUTTON}
-              bordered
-              icon="i-tabler-sparkles"
-              onPress={props.reading.retry}
-              tone="secondary"
-              tooltip={m.tarot_interpret()}
-              transparent
-            />
-          </Show>
-          <Show when={props.reading.cards().length > 0 && props.reading.status() === 'error'}>
-            <PButton
-              class={SECONDARY_BUTTON}
-              bordered
-              onPress={props.reading.retry}
-              tone="secondary"
-              transparent
-            >
-              {m.tarot_retry()}
-            </PButton>
-          </Show>
+        <div class="flex min-w-0 flex-wrap items-center justify-between gap-3">
+          <Options
+            autoRead={props.speech.autoRead()}
+            onAutoReadChange={props.speech.setAutoRead}
+            onUprightChange={props.reading.setShowCardsUpright}
+            upright={props.reading.showCardsUpright()}
+          />
+          <div class="ml-auto flex flex-wrap items-center justify-end gap-2">
+            <ModelDownloads part="progress" reading={props.reading} speech={props.speech} />
+            <Show when={!isBusy()}>
+              <PButton
+                class="whitespace-nowrap !rounded-full !px-4 !text-[#241d10]
+                  !shadow-[0_4px_20px_#0004,inset_0_1px_0_#fff6]
+              focus-visible:!outline-2 focus-visible:!outline-solid focus-visible:!outline-offset-4
+                focus-visible:!outline-[#d8b97e]"
+                icon="i-tabler-sparkles"
+                disabled={
+                  props.reading.status() === 'consent' || props.speech.status() === 'consent'
+                }
+                onPress={props.reading.draw}
+                raised
+              >
+                {props.reading.cards().length > 0 ? m.tarot_redraw() : m.tarot_draw()}
+              </PButton>
+            </Show>
+            <Show when={isInterpreting()}>
+              <PButton
+                class={SECONDARY_BUTTON}
+                bordered
+                icon="i-tabler-loader-2 animate-spin motion-reduce:animate-none"
+                onPress={props.reading.cancel}
+                tone="secondary"
+                transparent
+              >
+                {m.tarot_cancel()}
+              </PButton>
+            </Show>
+            <Show when={canInterpret()}>
+              <PButton
+                accessibleLabel={m.tarot_interpret()}
+                class={SECONDARY_BUTTON}
+                bordered
+                icon="i-tabler-sparkles"
+                onPress={props.reading.retry}
+                tone="secondary"
+                tooltip={m.tarot_interpret()}
+                transparent
+              />
+            </Show>
+            <Show when={props.reading.cards().length > 0 && props.reading.status() === 'error'}>
+              <PButton
+                class={SECONDARY_BUTTON}
+                bordered
+                onPress={props.reading.retry}
+                tone="secondary"
+                transparent
+              >
+                {m.tarot_retry()}
+              </PButton>
+            </Show>
+          </div>
         </div>
       </div>
-      <Options
-        autoRead={props.speech.autoRead()}
-        onAutoReadChange={props.speech.setAutoRead}
-        onUprightChange={props.reading.setShowCardsUpright}
-        upright={props.reading.showCardsUpright()}
-      />
       <Spread
         cards={props.reading.cards()}
         count={props.reading.count()}
         locale={props.locale}
         showUpright={props.reading.showCardsUpright()}
       />
-      <PModelDownloadConsent
-        actionLabel={m.tarot_download_action()}
-        downloadSize={props.reading.downloadSize()}
-        isOpen={props.reading.status() === 'consent'}
-        onCancel={props.reading.cancelDownloadConsent}
-        onConfirm={props.reading.startDownload}
-      />
+      <ModelDownloads part="consent" reading={props.reading} speech={props.speech} />
       <Show when={props.reading.status() === 'unsupported'}>
         <p role="status" class="m-0 text-sm leading-6 text-muted-foreground">
           {m.tarot_unsupported()}

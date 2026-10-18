@@ -42,11 +42,13 @@ const createWriterHarness = (): WriterHarness => {
     generateWithPreparation: vi.fn(),
     isBusy: busy,
     isModelReady: modelReady,
+    modelId: () => 'gemma-4-e2b',
     output: () => '',
     prepare: vi.fn(),
     progress: () => 0,
     release: vi.fn(),
     request,
+    selectModel: vi.fn(),
     setRequest: vi.fn(setRequest),
     state,
     statusMessage: () => '',
@@ -109,10 +111,31 @@ describe('DialogueWriter', () => {
 
   it('should release other models and prepare each inactive model', () => {
     const writers = MODEL_IDS.map(() => createWriterHarness())
+    const calls: string[] = []
+    const releaseOrders = [
+      [1, 2, 3, 4],
+      [0, 2, 3, 4],
+      [0, 1, 3, 4],
+      [0, 1, 2, 4],
+      [0, 1, 2, 3],
+    ] as const
+    writers.forEach(({controller}, index) => {
+      vi.mocked(controller.release).mockImplementation(() => {
+        calls.push(`release:${MODEL_IDS[index]}`)
+      })
+      vi.mocked(controller.prepare).mockImplementation(() => {
+        calls.push(`prepare:${MODEL_IDS[index]}`)
+      })
+    })
     renderWriter(writers)
 
     MODEL_IDS.forEach((modelId, activeIndex) => {
+      calls.length = 0
       fireEvent.click(screen.getByTestId(`model-${modelId}`))
+      expect(calls).toEqual([
+        ...releaseOrders[activeIndex]!.map((index) => `release:${MODEL_IDS[index]}`),
+        `prepare:${modelId}`,
+      ])
       expect(writers[activeIndex]!.controller.prepare).toHaveBeenCalledOnce()
       expect(writers[activeIndex]!.controller.generate).not.toHaveBeenCalled()
     })

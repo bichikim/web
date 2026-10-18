@@ -6,7 +6,7 @@ interface WebStorageSubscriptionOptions {
   readonly includeUnknownArea?: boolean
 }
 
-/** Subscribes to local storage updates and clear events until explicitly unsubscribed. */
+/** 명시적으로 구독을 해제할 때까지 로컬 스토리지 변경과 전체 삭제 이벤트를 구독한다. */
 export const subscribeWebStorageChange = (options: WebStorageSubscriptionOptions): (() => void) => {
   const handleStorage = (event: Event) => {
     if (!(event instanceof StorageEvent)) {

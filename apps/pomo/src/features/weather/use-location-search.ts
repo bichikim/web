@@ -1,4 +1,5 @@
-import {createSignal, onCleanup} from 'solid-js'
+import {createSignal} from 'solid-js'
+import {type AsyncSearchStatus, useAsyncSearch} from 'src/hooks/use-async-search'
 
 import {searchWeatherLocations} from './location-client'
 import type {WeatherLocation} from './contract'
@@ -6,12 +7,7 @@ import type {WeatherLocation} from './contract'
 const SEARCH_DELAY_MILLISECONDS = 300
 const MINIMUM_QUERY_LENGTH = 2
 
-export type WeatherLocationSearchStatus =
-  | 'error'
-  | 'idle'
-  | 'input-required'
-  | 'ready'
-  | 'searching'
+export type WeatherLocationSearchStatus = AsyncSearchStatus
 
 export interface WeatherLocationSearchController {
   readonly onQueryChange: (query: string) => void
@@ -22,73 +18,18 @@ export interface WeatherLocationSearchController {
 
 /** Debounces world-city search and cancels requests superseded by newer input. */
 export const useWeatherLocationSearch = (): WeatherLocationSearchController => {
-  const [results, setResults] = createSignal<ReadonlyArray<WeatherLocation>>([])
-  const [status, setStatus] = createSignal<WeatherLocationSearchStatus>('idle')
-  let searchTimer: ReturnType<typeof setTimeout> | null = null
-  let searchRequest: AbortController | null = null
-  let revision = 0
+  const [query, setQuery] = createSignal('', {equals: false})
+  const search = useAsyncSearch({
+    delayMs: SEARCH_DELAY_MILLISECONDS,
+    minLength: MINIMUM_QUERY_LENGTH,
+    query,
+    search: (query, signal) => searchWeatherLocations({query, signal}),
+  })
 
-  const cancelSearch = () => {
-    if (searchTimer !== null) {
-      clearTimeout(searchTimer)
-      searchTimer = null
-    }
-    searchRequest?.abort()
-    searchRequest = null
+  return {
+    onQueryChange: setQuery,
+    onSelect: search.reset,
+    results: search.results,
+    status: search.status,
   }
-
-  const onQueryChange = (query: string) => {
-    cancelSearch()
-    revision += 1
-    const currentRevision = revision
-    const normalizedQuery = query.trim()
-
-    if (normalizedQuery.length === 0) {
-      setResults([])
-      setStatus('idle')
-      return
-    }
-    if (normalizedQuery.length < MINIMUM_QUERY_LENGTH) {
-      setResults([])
-      setStatus('input-required')
-      return
-    }
-
-    setResults([])
-    setStatus('searching')
-    searchTimer = setTimeout(() => {
-      searchTimer = null
-      const controller = new AbortController()
-      searchRequest = controller
-      searchWeatherLocations({query: normalizedQuery, signal: controller.signal})
-        .then((locations) => {
-          if (revision === currentRevision) {
-            setResults(locations)
-            setStatus('ready')
-          }
-        })
-        .catch(() => {
-          if (!controller.signal.aborted && revision === currentRevision) {
-            setResults([])
-            setStatus('error')
-          }
-        })
-        .finally(() => {
-          if (revision === currentRevision) {
-            searchRequest = null
-          }
-        })
-    }, SEARCH_DELAY_MILLISECONDS)
-  }
-
-  const onSelect = (_location: WeatherLocation) => {
-    cancelSearch()
-    revision += 1
-    setResults([])
-    setStatus('idle')
-  }
-
-  onCleanup(cancelSearch)
-
-  return {onQueryChange, onSelect, results, status}
 }

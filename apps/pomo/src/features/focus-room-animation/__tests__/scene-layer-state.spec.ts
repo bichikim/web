@@ -1,5 +1,5 @@
 /** @vitest-environment node */
-import {describe, expect, it} from 'vitest'
+import {describe, expect, it, vi} from 'vitest'
 
 import {
   FOCUS_ROOM_JAW_CHANNEL,
@@ -13,6 +13,104 @@ import {getPSceneLayer} from '../scene-layer-catalog'
 import {createFocusRoomLayerState} from '../scene-layer-state'
 
 describe('createFocusRoomLayerState', () => {
+  it('should inspect each bridge frame once while composing all mouth channels', () => {
+    const supportsStage = vi.fn<(stage: string) => boolean>(() => true)
+    const transition = Object.freeze({from: 'closed', progress: 0.375, to: 'open'} as const)
+    const state = createFocusRoomLayerState('open', true, transition, supportsStage)
+
+    expect(supportsStage.mock.calls.map(([stage]) => stage)).toEqual([
+      'release',
+      'small-open',
+      'half-open',
+    ])
+    expect(state.animationEnabled).toBe(false)
+    expect(state.channels?.[FOCUS_ROOM_MOUTH_TRANSITION_CHANNELS.release]).toEqual({
+      opacity: Math.SQRT1_2,
+      visible: true,
+    })
+    expect(state.channels?.[FOCUS_ROOM_MOUTH_TRANSITION_CHANNELS['small-open']]).toEqual({
+      opacity: Math.SQRT1_2,
+      visible: true,
+    })
+    expect(state.channels?.[FOCUS_ROOM_JAW_CHANNEL]?.pixelPushProgress).toBe(0.375)
+  })
+
+  it('should stop inspecting bridge frames at the first unavailable stage', () => {
+    const supportsStage = vi.fn((stage: string) => stage !== 'small-open')
+    const state = createFocusRoomLayerState(
+      'open',
+      false,
+      {from: 'closed', progress: 0.5, to: 'open'},
+      supportsStage,
+    )
+
+    expect(supportsStage.mock.calls.map(([stage]) => stage)).toEqual(['release', 'small-open'])
+    expect(state.channels?.[FOCUS_ROOM_MOUTH_CHANNELS.closed]?.opacity).toBe(Math.SQRT1_2)
+    expect(state.channels?.[FOCUS_ROOM_MOUTH_CHANNELS.open]?.opacity).toBe(Math.SQRT1_2)
+  })
+
+  it('should propagate bridge lookup errors without changing the transition input', () => {
+    const error = new Error('Channel lookup failed')
+    const transition = Object.freeze({from: 'closed', progress: 0.5, to: 'open'} as const)
+    const supportsStage = vi.fn<(stage: string) => boolean>(() => {
+      throw error
+    })
+
+    expect(() => createFocusRoomLayerState('open', false, transition, supportsStage)).toThrow(error)
+    expect(supportsStage).toHaveBeenCalledTimes(1)
+    expect(supportsStage.mock.calls[0]?.[0]).toBe('release')
+    expect(transition).toEqual({from: 'closed', progress: 0.5, to: 'open'})
+  })
+
+  it('should use the active mouth and skip bridge lookup for an unchanged viseme', () => {
+    const supportsStage = vi.fn<(stage: string) => boolean>(() => true)
+    const state = createFocusRoomLayerState(
+      'round',
+      false,
+      {from: 'open', progress: 0.5, to: 'open'},
+      supportsStage,
+    )
+
+    expect(supportsStage).not.toHaveBeenCalled()
+    expect(state.channels?.[FOCUS_ROOM_MOUTH_CHANNELS.round]).toEqual({opacity: 1, visible: true})
+    expect(state.channels?.[FOCUS_ROOM_JAW_CHANNEL]?.pixelPushProgress).toBe(0.5)
+    for (const channel of Object.values(FOCUS_ROOM_MOUTH_TRANSITION_CHANNELS)) {
+      expect(state.channels?.[channel]).toEqual({opacity: 0, visible: false})
+    }
+  })
+
+  it.each(P_MOUTH_TRANSITION_PATHS)(
+    'should preserve forward and reverse frame order for $from to $to',
+    (path) => {
+      const channels = [
+        FOCUS_ROOM_MOUTH_CHANNELS[path.from],
+        ...path.stages.map((stage) => FOCUS_ROOM_MOUTH_TRANSITION_CHANNELS[stage]),
+        FOCUS_ROOM_MOUTH_CHANNELS[path.to],
+      ]
+
+      for (const [index, channel] of channels.entries()) {
+        const forward = createFocusRoomLayerState(path.to, false, {
+          from: path.from,
+          progress: index / (channels.length - 1),
+          to: path.to,
+        })
+        const reverse = createFocusRoomLayerState(path.from, false, {
+          from: path.to,
+          progress: 1 - index / (channels.length - 1),
+          to: path.from,
+        })
+
+        expect(forward.channels?.[channel]?.opacity).toBeCloseTo(1)
+        expect(reverse.channels?.[channel]?.opacity).toBeCloseTo(1)
+        expect(Object.keys(reverse.channels ?? {})).toEqual(Object.keys(forward.channels ?? {}))
+        for (const other of channels.filter((candidate) => candidate !== channel)) {
+          expect(forward.channels?.[other]?.opacity).toBeCloseTo(0)
+          expect(reverse.channels?.[other]?.opacity).toBeCloseTo(0)
+        }
+      }
+    },
+  )
+
   it('should show only the active mouth when no transition is running', () => {
     const state = createFocusRoomLayerState('open', false)
 

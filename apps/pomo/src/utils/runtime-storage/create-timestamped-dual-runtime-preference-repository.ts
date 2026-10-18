@@ -24,7 +24,7 @@ export interface TimestampedPreferenceRepositoryOptions<
   readonly writeFailureMessage: string
   readonly policy: 'strict-native' | 'recover-web'
 }
-/** Coordinates timestamp selection, mirrors and ordered writes for two runtime stores. */
+/** 두 런타임 저장소의 타임스탬프 선택, 복제, 순차 쓰기를 조정한다. */
 export const createTimestampedDualRuntimePreferenceRepository = <
   Stored extends {readonly savedAt: number},
   Value,
@@ -95,7 +95,7 @@ export const createTimestampedDualRuntimePreferenceRepository = <
       coordinator.observeSavedAt(latest?.savedAt ?? 0)
       return latest === null ? options.defaultValue : options.toValue(latest)
     }
-    // Default-fallback repositories let web read failures propagate before native reads.
+    // 기본값으로 대체하는 저장소는 네이티브 읽기 전에 웹 읽기 실패를 전파한다.
     const initialWeb = options.policy === 'recover-web' ? readWeb() : null
     try {
       const web = options.policy === 'recover-web' ? initialWeb : readWeb()
@@ -110,7 +110,7 @@ export const createTimestampedDualRuntimePreferenceRepository = <
         await coordinator.settleWrites()
         return read()
       }
-      // Native legacy values retain authority when timestamps tie.
+      // 타임스탬프가 같으면 기존 네이티브 값을 우선한다.
       const value = await restore(web, toss)
       if (coordinator.revision() !== revision) {
         await coordinator.settleWrites()

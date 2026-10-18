@@ -13,8 +13,11 @@ export interface CreateNitroConfigOptions extends ResolvePrerenderRoutesOptions 
   readonly fontAsset: PublicAssetDir
   readonly staticSecurityHeaders: Record<string, string>
   readonly steamAsset?: PublicAssetDir
+  readonly standaloneRelax?: boolean
   readonly workerSecurityHeaders: Record<string, string>
 }
+
+const API_AI_FUNCTION_SECONDS = 300
 
 interface NitroPrerenderRoute {
   readonly contentType?: string
@@ -33,7 +36,7 @@ export const createNitroConfig = (options: CreateNitroConfigOptions) => {
   return {
     features: {websocket: !isStaticBuild || options.command === 'serve'},
     handlers:
-      isStaticBuild && options.command === 'build'
+      options.standaloneRelax || (isStaticBuild && options.command === 'build')
         ? []
         : [
             {
@@ -60,9 +63,25 @@ export const createNitroConfig = (options: CreateNitroConfigOptions) => {
       },
     },
     prerender: {
-      failOnError: isStaticBuild,
-      routes: resolvePrerenderRoutes(options),
+      failOnError: isStaticBuild || options.standaloneRelax === true,
+      routes: options.standaloneRelax ? ['/relax'] : resolvePrerenderRoutes(options),
     },
+    ...(isStaticBuild
+      ? {}
+      : {
+          vercel: {
+            functionRules: {
+              '/api/cloud-text': {maxDuration: API_AI_FUNCTION_SECONDS},
+              '/api/cron/api-ai': {maxDuration: API_AI_FUNCTION_SECONDS},
+              '/api/queues/api-ai': {
+                experimentalTriggers: [{topic: 'pomo-api-ai', type: 'queue/v2beta'}],
+                maxDuration: API_AI_FUNCTION_SECONDS,
+              },
+              '/api/webhooks/api-ai/**': {maxDuration: API_AI_FUNCTION_SECONDS},
+              '/api/webhooks/openai': {maxDuration: API_AI_FUNCTION_SECONDS},
+            },
+          },
+        }),
     publicAssets: [
       ...(options.command === 'serve' ? [{baseURL: '/', dir: './dev-public', maxAge: 0}] : []),
       ...(options.steamAsset === undefined ? [] : [options.steamAsset]),
