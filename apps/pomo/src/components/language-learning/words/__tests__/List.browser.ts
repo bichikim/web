@@ -1,6 +1,7 @@
 import {cleanup, render, screen} from '@solidjs/testing-library'
 import {createComponent, createSignal} from 'solid-js'
 import {afterEach, expect, it} from 'vitest'
+import {userEvent} from 'vitest/browser'
 import {encodeMonoPcm16Wav} from 'src/utils/encode-mono-pcm16-wav'
 import type {LanguageLearningWord} from '../../../../features/language-learning/word-schema'
 import {LanguageLearningWordList} from '../List'
@@ -38,7 +39,7 @@ it('should keep native playback when an equivalent stored row is removed', async
       getAudioUrl: () => audioUrl ?? null,
       isPronunciationLoading: () => false,
       onDelete: () => undefined,
-      onPronounce: () => undefined,
+      onPronounce: (requestedWord) => setAutoplayKey(`ko:${requestedWord.value}`),
       onSelect: () => undefined,
       onToggleMemorized: () => undefined,
       selectedWords: () => [],
@@ -57,7 +58,13 @@ it('should keep native playback when an equivalent stored row is removed', async
   const observer = new MutationObserver((records) => sourceMutations.push(...records))
   observer.observe(audio, {attributeFilter: ['src']})
   try {
-    setAutoplayKey(`ko:${word.value}`)
+    const pronounceButton = button
+      .closest('li')
+      ?.querySelector<HTMLButtonElement>('button[aria-busy]')
+    if (pronounceButton === null || pronounceButton === undefined) {
+      throw new Error('단어의 발음 버튼이 없습니다.')
+    }
+    await userEvent.click(pronounceButton)
     await expect.poll(() => audio.paused).toBe(false)
     await expect.poll(() => audio.currentTime).toBeGreaterThan(0)
     const position = audio.currentTime
