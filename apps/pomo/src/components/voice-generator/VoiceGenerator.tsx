@@ -27,6 +27,15 @@ export const VoiceGenerator = () => {
   const [fileError, setFileError] = createSignal<string | null>(null)
   let fileSelectionId = 0
 
+  const handleGenerate = () => {
+    if (!voiceLab.canGenerate()) {
+      return
+    }
+
+    fileSelectionId += 1
+    return voiceLab.generate()
+  }
+
   const handleModelChange = (modelId: SupertonicModelId) => {
     voiceLab.selectModel(modelId)
   }
@@ -117,7 +126,7 @@ export const VoiceGenerator = () => {
           canPrepare={voiceLab.canPrepare()}
           errorMessage={voiceLab.errorMessage()}
           isModelReady={voiceLab.isModelReady()}
-          onGenerate={voiceLab.generate}
+          onGenerate={handleGenerate}
           onPrepare={voiceLab.prepare}
           progress={voiceLab.progress()}
           status={voiceLab.state().status}
