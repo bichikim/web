@@ -1,0 +1,15 @@
+{
+  "sourceFiles": 582,
+  "unchangedDuringCollection": true,
+  "changedFromPrevious": [
+    "src/server/native/create-native-client.ts",
+    "src/server/native/scan-linked-references.ts",
+    "src/server/native/create-native-navigation.ts",
+    "src/server/native/create-native-preparation.ts",
+    "src/server/native/types.ts",
+    "src/server/native/__tests__/create-native-preparation.spec.ts",
+    "src/server/native/__tests__/scan-linked-references.spec.ts",
+    "src/server/native/__tests__/create-native-client.spec.ts"
+  ],
+  "preservedFromPrevious": 574
+}

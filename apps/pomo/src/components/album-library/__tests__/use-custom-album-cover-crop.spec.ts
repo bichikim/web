@@ -414,6 +414,79 @@ describe('crop encoding', () => {
     expect(image.close).not.toHaveBeenCalled()
   })
 
+  it('should invalidate a pending crop when cancellation is requested', async () => {
+    const harness = createHarness()
+    const pending = Promise.withResolvers<Blob>()
+    vi.mocked(cropCustomAlbumImage).mockReturnValueOnce(pending.promise)
+    const applying = harness.crop.handleCrop()
+
+    harness.crop.handleOpenChange(false)
+    pending.resolve(new Blob(['cancelled']))
+    await applying
+
+    expect(harness.onCancel).toHaveBeenCalledOnce()
+    expect(harness.crop.isCropping()).toBe(false)
+    expect(harness.onApply).not.toHaveBeenCalled()
+  })
+
+  it.each(['resolve', 'reject'] as const)(
+    'should ignore a late %s after the crop owner is disposed',
+    async (settlement) => {
+      const harness = createHarness()
+      const pending = Promise.withResolvers<Blob>()
+      vi.mocked(cropCustomAlbumImage).mockReturnValueOnce(pending.promise)
+      const applying = harness.crop.handleCrop()
+
+      harness.dispose()
+      if (settlement === 'resolve') {
+        pending.resolve(new Blob(['stale']))
+      } else {
+        pending.reject(new Error('stale encoding failure'))
+      }
+      await applying
+
+      expect(harness.crop.errorMessage()).toBeNull()
+      expect(getCustomAlbumErrorMessage).not.toHaveBeenCalled()
+      expect(m.album_custom_error_cover_invalid).not.toHaveBeenCalled()
+      expect(harness.onApply).not.toHaveBeenCalled()
+    },
+  )
+
+  it.each(['resolve', 'reject'] as const)(
+    'should ignore a late %s for a replaced file and allow a new crop in the same owner',
+    async (settlement) => {
+      const harness = createHarness()
+      const stale = Promise.withResolvers<Blob>()
+      const current = Promise.withResolvers<Blob>()
+      vi.mocked(cropCustomAlbumImage)
+        .mockReturnValueOnce(stale.promise)
+        .mockReturnValueOnce(current.promise)
+      const applyingStale = harness.crop.handleCrop()
+
+      harness.setFile(new File(['replacement'], 'replacement.png', {type: 'image/png'}))
+      expect(harness.crop.isCropping()).toBe(false)
+      if (settlement === 'resolve') {
+        stale.resolve(new Blob(['stale']))
+      } else {
+        stale.reject(new Error('stale encoding failure'))
+      }
+      await applyingStale
+
+      expect(harness.crop.errorMessage()).toBeNull()
+      expect(getCustomAlbumErrorMessage).not.toHaveBeenCalled()
+      expect(m.album_custom_error_cover_invalid).not.toHaveBeenCalled()
+      expect(harness.onApply).not.toHaveBeenCalled()
+
+      const applyingCurrent = harness.crop.handleCrop()
+      const cover = new Blob(['current'], {type: 'image/webp'})
+      current.resolve(cover)
+      await applyingCurrent
+
+      expect(harness.crop.isCropping()).toBe(false)
+      expect(harness.onApply).toHaveBeenCalledExactlyOnceWith(cover)
+    },
+  )
+
   it('should localize domain errors and clear the crop error on a subsequent attempt', async () => {
     const harness = createHarness()
     harness.setErrorMessage('Earlier image error')

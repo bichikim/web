@@ -185,3 +185,76 @@ it('should isolate an ambiguous submission expiration failure', async () => {
   )
   expect(mocks.startHistoryGeneration).toHaveBeenCalledOnce()
 })
+
+it('should count mixed results while excluding pending submissions and responses', async () => {
+  vi.spyOn(console, 'error').mockImplementation(() => undefined)
+  mocks.listRecoverableGenerationRuns.mockResolvedValue([
+    {kind: 'submission_unknown', runId: 'expired'},
+    {kind: 'submission_unknown', runId: 'pending'},
+    {kind: 'response', responseId: 'pending-response'},
+    {kind: 'response', responseId: 'unreadable'},
+    {kind: 'response', responseId: 'webhook-failed'},
+  ])
+  mocks.expireGenerationSubmission.mockResolvedValueOnce(true).mockResolvedValueOnce(false)
+  mocks.retrieveHistoryResponse
+    .mockResolvedValueOnce({status: 'queued'})
+    .mockRejectedValueOnce(new Error('retrieval failed'))
+    .mockResolvedValueOnce({status: 'completed'})
+  mocks.handleOpenAiResponseEvent.mockRejectedValueOnce(new Error('webhook failed'))
+
+  await expect(recoverHistoryGenerations(NOW)).resolves.toEqual({
+    checked: 5,
+    failed: 2,
+    terminal: 1,
+  })
+  expect(mocks.expireGenerationSubmission).toHaveBeenCalledTimes(2)
+  expect(mocks.retrieveHistoryResponse).toHaveBeenCalledTimes(3)
+  expect(mocks.startHistoryGeneration).toHaveBeenCalledOnce()
+})
+
+it('should wait for every concurrent recovery before starting the next generation', async () => {
+  const expiration = Promise.withResolvers<boolean>()
+  const retrieval = Promise.withResolvers<{status: 'completed'}>()
+  mocks.listRecoverableGenerationRuns.mockResolvedValue([
+    {kind: 'submission_unknown', runId: 'pending-expiration'},
+    {kind: 'response', responseId: 'pending-retrieval'},
+  ])
+  mocks.expireGenerationSubmission.mockReturnValueOnce(expiration.promise)
+  mocks.retrieveHistoryResponse.mockReturnValueOnce(retrieval.promise)
+
+  const recovery = recoverHistoryGenerations(NOW)
+  await Promise.resolve()
+  expect(mocks.expireGenerationSubmission).toHaveBeenCalledOnce()
+  expect(mocks.retrieveHistoryResponse).toHaveBeenCalledOnce()
+  expect(mocks.startHistoryGeneration).not.toHaveBeenCalled()
+
+  expiration.resolve(false)
+  await Promise.resolve()
+  expect(mocks.startHistoryGeneration).not.toHaveBeenCalled()
+
+  retrieval.resolve({status: 'completed'})
+  await expect(recovery).resolves.toEqual({checked: 2, failed: 0, terminal: 1})
+  expect(mocks.startHistoryGeneration).toHaveBeenCalledOnce()
+})
+
+it('should propagate a run-list failure without starting another generation', async () => {
+  const error = new Error('run list unavailable')
+  mocks.listRecoverableGenerationRuns.mockRejectedValue(error)
+
+  await expect(recoverHistoryGenerations(NOW)).rejects.toBe(error)
+  expect(mocks.retrieveHistoryResponse).not.toHaveBeenCalled()
+  expect(mocks.expireGenerationSubmission).not.toHaveBeenCalled()
+  expect(mocks.startHistoryGeneration).not.toHaveBeenCalled()
+})
+
+it('should propagate the next-generation failure after recovery completes', async () => {
+  const error = new Error('generation retry unavailable')
+  mocks.listRecoverableGenerationRuns.mockResolvedValue([
+    {kind: 'submission_unknown', runId: 'expired'},
+  ])
+  mocks.startHistoryGeneration.mockRejectedValue(error)
+
+  await expect(recoverHistoryGenerations(NOW)).rejects.toBe(error)
+  expect(mocks.expireGenerationSubmission).toHaveBeenCalledOnce()
+  expect(mocks.startHistoryGeneration).toHaveBeenCalledOnce()
+})

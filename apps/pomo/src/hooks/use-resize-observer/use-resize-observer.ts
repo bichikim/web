@@ -1,4 +1,5 @@
 import {type Accessor, createRenderEffect, createSignal, onCleanup, untrack} from 'solid-js'
+import {uniq} from 'es-toolkit/array'
 
 type ResizeObserverTarget = Element | null | undefined
 
@@ -37,7 +38,7 @@ export const useResizeObserver = (props: UseResizeObserverProps): ResizeObserver
       return
     }
     const target = props.target()
-    const targets = [...new Set(Array.isArray(target) ? target : [target])].filter(
+    const targets = uniq(Array.isArray(target) ? target : [target]).filter(
       (element): element is Element => element !== null && element !== undefined,
     )
     if (targets.length === 0 || typeof globalThis.ResizeObserver === 'undefined') {

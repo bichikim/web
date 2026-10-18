@@ -4,7 +4,7 @@ import {createSignal} from 'solid-js'
 import {beforeEach, expect, it, vi} from 'vitest'
 import {useAuth} from 'src/features/auth'
 import type {AuthenticatedSession} from 'src/features/auth/machine'
-import {createDeferred} from 'src/test-utils/create-deferred'
+import {createDeferred} from 'src/__tests__/create-deferred'
 import {CLOUD_TEXT_USAGE_EVENT, readCloudTextUsage} from '../client'
 import type {CloudTextUsage} from '../contracts'
 import {useCloudTextUsage} from '../use-cloud-text-usage'
@@ -64,6 +64,33 @@ it('should expose a failed read and recover on a generation completion event', a
   expect(result.error()).toBe(false)
 })
 
+it('should refresh usage when the document becomes visible', async () => {
+  const pending = createDeferred<CloudTextUsage>()
+  vi.mocked(readCloudTextUsage)
+    .mockResolvedValueOnce(FIRST_USAGE)
+    .mockReturnValueOnce(pending.promise)
+  const [session] = createSignal<AuthenticatedSession>({
+    email: 'first@example.com',
+    kind: 'authenticated',
+    provider: 'email',
+  })
+  vi.mocked(useAuth).mockReturnValue({session} as ReturnType<typeof useAuth>)
+  const {cleanup, result} = renderHook(useCloudTextUsage)
+  await waitFor(() => expect(result.usage()).toEqual(FIRST_USAGE), {interval: 1})
+
+  Object.defineProperty(document, 'visibilityState', {configurable: true, value: 'hidden'})
+  document.dispatchEvent(new Event('visibilitychange'))
+  expect(readCloudTextUsage).toHaveBeenCalledOnce()
+
+  Object.defineProperty(document, 'visibilityState', {configurable: true, value: 'visible'})
+  document.dispatchEvent(new Event('visibilitychange'))
+  expect(readCloudTextUsage).toHaveBeenCalledTimes(2)
+  expect(result.usage()).toEqual(FIRST_USAGE)
+  pending.resolve({...FIRST_USAGE, remaining: 0, used: 3})
+  await waitFor(() => expect(result.usage()?.remaining).toBe(0), {interval: 1})
+  cleanup()
+})
+
 it('should retain same-account usage during refresh and stop listeners on disposal', async () => {
   const pending = createDeferred<CloudTextUsage>()
   vi.mocked(readCloudTextUsage)
@@ -84,5 +111,7 @@ it('should retain same-account usage during refresh and stop listeners on dispos
   cleanup()
   globalThis.dispatchEvent(new Event(CLOUD_TEXT_USAGE_EVENT))
   globalThis.dispatchEvent(new Event('focus'))
+  Object.defineProperty(document, 'visibilityState', {configurable: true, value: 'visible'})
+  document.dispatchEvent(new Event('visibilitychange'))
   expect(readCloudTextUsage).toHaveBeenCalledTimes(2)
 })

@@ -38,6 +38,9 @@ const focusMountedInput = (element: HTMLInputElement | undefined) => {
 const containsFocusTarget = (element: HTMLElement | undefined, target: EventTarget | null) =>
   target instanceof Node && element?.contains(target) === true
 
+const isOutsideComposer = (element: HTMLFormElement | undefined, target: EventTarget | null) =>
+  element !== undefined && target instanceof Node && !element.contains(target)
+
 interface UseAutoExpandOptions {
   readonly autoExpand: Accessor<boolean>
   readonly input: Accessor<HTMLInputElement | undefined>
@@ -214,8 +217,14 @@ export const PDialogueComposer = (props: PDialogueComposerProps) => {
   }
   const handleTriggerMount = (element: HTMLButtonElement) => {
     if (restoreTriggerFocus) {
-      restoreTriggerFocus = false
-      element.focus()
+      queueMicrotask(() => {
+        if (!restoreTriggerFocus || !element.isConnected) {
+          return
+        }
+
+        restoreTriggerFocus = false
+        element.focus()
+      })
     }
   }
   const handleInput = (event: InputEvent & {currentTarget: HTMLInputElement}) => {
@@ -229,15 +238,7 @@ export const PDialogueComposer = (props: PDialogueComposerProps) => {
     }
   }
   const handleOutsidePointer = (event: PointerEvent) => {
-    const composerElement = composer()
-    const eventTarget = event.target
-
-    if (
-      !isExpanded() ||
-      composerElement === undefined ||
-      !(eventTarget instanceof Node) ||
-      composerElement.contains(eventTarget)
-    ) {
+    if (!isExpanded() || !isOutsideComposer(composer(), event.target)) {
       return
     }
 
@@ -253,7 +254,7 @@ export const PDialogueComposer = (props: PDialogueComposerProps) => {
     }
   }
   const handleKeyDown = (event: KeyboardEvent) => {
-    if (event.key === 'Escape') {
+    if (event.key === 'Escape' && !event.isComposing) {
       event.preventDefault()
       collapse()
     }

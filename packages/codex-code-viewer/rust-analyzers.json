@@ -1,0 +1,35 @@
+{
+  "version": "2026-10-05",
+  "assets": [
+    {
+      "host": "darwin-arm64",
+      "archive": "rust-analyzer-aarch64-apple-darwin.gz",
+      "sha256": "64d3f6b8aacd94a93a03298d7988dfa0c747f8a4fcc539a4e59d9c9f920ca62f"
+    },
+    {
+      "host": "darwin-x64",
+      "archive": "rust-analyzer-x86_64-apple-darwin.gz",
+      "sha256": "32400dfe2b1472fff9689e063dbb80b8c90e0d4f883af49de7abbba3f2e20705"
+    },
+    {
+      "host": "linux-arm64",
+      "archive": "rust-analyzer-aarch64-unknown-linux-gnu.gz",
+      "sha256": "3974c863acbbd96ef2cc02a7aaa79123935b05f27ffe4fd393fc229522f75cb9"
+    },
+    {
+      "host": "linux-x64",
+      "archive": "rust-analyzer-x86_64-unknown-linux-gnu.gz",
+      "sha256": "28070188df63b6f217768040781decc8db43bc9d29b126847acb365575b09bc9"
+    },
+    {
+      "host": "win32-arm64",
+      "archive": "rust-analyzer-aarch64-pc-windows-msvc.zip",
+      "sha256": "6dd175fe96b321fa28061a935951ddebd8f919b73192ee2e3d06f9bb9c01e89f"
+    },
+    {
+      "host": "win32-x64",
+      "archive": "rust-analyzer-x86_64-pc-windows-msvc.zip",
+      "sha256": "5a9d499aa26d835406cbccfc52f12bce8286733c5bfe62d79f0ed87cae2e64b9"
+    }
+  ]
+}

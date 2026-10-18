@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 import {renderHook, waitFor} from '@solidjs/testing-library'
 import {beforeEach, expect, it, vi} from 'vitest'
-import {createDeferred} from 'src/test-utils/create-deferred'
+import {createDeferred} from 'src/__tests__/create-deferred'
 import {readAdminCloudTextUsers, resetAdminCloudTextUsage, updateAdminCloudTextLimit} from '../api'
 import type {AdminCloudTextPage, AdminCloudTextUser} from '../contracts'
 import {useAdminCloudText} from '../use-admin-cloud-text'

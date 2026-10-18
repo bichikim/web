@@ -20,7 +20,12 @@ export interface PdfViewState {
   readonly fitting: boolean
   readonly percent: number
 }
+export interface CodeFoldingState {
+  readonly revision: string
+  readonly lines: readonly number[]
+}
 export interface FileViewState {
+  readonly codeFolds?: CodeFoldingState
   readonly selection?: CodeSelection
   readonly codeScroll?: ScrollPosition
   readonly previewScroll?: ScrollPosition

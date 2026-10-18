@@ -1,0 +1,23 @@
+{
+  "name": "@winter-love/laya-wasm",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Laya browser inference and decision scorer training with ONNX Runtime WASM",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./*": "./src/*"
+  },
+  "dependencies": {
+    "@huggingface/tokenizers": "0.2.0",
+    "onnxruntime-web": "1.27.0"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "@unocss/vite": "catalog:",
+    "@winter-love/unocss-config": "workspace:*",
+    "solid-js": "catalog:",
+    "vite": "catalog:",
+    "vite-plugin-solid": "catalog:"
+  }
+}

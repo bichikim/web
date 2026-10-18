@@ -1,10 +1,20 @@
 /** @vitest-environment jsdom */
 import {cleanup, fireEvent, render, screen} from '@solidjs/testing-library'
-import {createSignal} from 'solid-js'
+import {createSignal, onMount} from 'solid-js'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 import type {CodeDocument} from '../../shared/contracts'
 import {SFileDocument} from '../SFileDocument'
 import type {ViewerPort} from '../types'
+import {useCodeEditing} from '../use-code-editing'
+
+const EditorProbe = (props: {onMount: () => void}) => {
+  onMount(props.onMount)
+  return (
+    <div role="textbox" aria-label="뷰포트 예제">
+      source
+    </div>
+  )
+}
 
 describe('SFileDocument', () => {
   const originalScroll = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'scrollIntoView')
@@ -31,6 +41,99 @@ describe('SFileDocument', () => {
     revision: 'first',
     source: '# 문서',
   }
+  it('should mount a supplied viewport once', () => {
+    const mounted = vi.fn()
+    render(() => (
+      <SFileDocument
+        document={{...document, lineCount: 1, lines: [], readOnly: true}}
+        port={port}
+        session="session"
+        onFollow={vi.fn()}
+        editor={<EditorProbe onMount={mounted} />}
+      />
+    ))
+    expect(screen.getByRole('textbox', {name: '뷰포트 예제'})).toBeTruthy()
+    expect(mounted).toHaveBeenCalledTimes(1)
+  })
+  it('should provide a keyboard-focusable readonly viewport when no editor capability is supplied', () => {
+    render(() => (
+      <SFileDocument
+        document={{...document, lineCount: 1, lines: [], readOnly: true}}
+        port={port}
+        session="session"
+        onFollow={vi.fn()}
+      />
+    ))
+    const source = screen.getByRole('textbox', {name: '코드 편집기'})
+    expect(source).toHaveAttribute('aria-readonly', 'true')
+    expect(source).toHaveAttribute('contenteditable', 'false')
+    expect(source).toHaveAttribute('tabindex', '0')
+    expect(source.textContent).toBe('# 문서')
+  })
+  it('should display large documents through the readonly viewport without parsing Markdown preview', () => {
+    render(() => (
+      <SFileDocument
+        document={{...document, lineCount: 50000, lines: [], readOnly: true}}
+        port={port}
+        session="session"
+        onFollow={vi.fn()}
+        editor={
+          <div role="textbox" aria-label="큰 파일 원문" aria-readonly="true">
+            viewport content
+          </div>
+        }
+      />
+    ))
+    expect(screen.getByRole('textbox', {name: '큰 파일 원문'})).toHaveAttribute(
+      'aria-readonly',
+      'true',
+    )
+    expect(screen.getByText('읽기 전용')).toBeTruthy()
+    expect(screen.queryByRole('button', {name: '편집'})).toBeNull()
+    expect(screen.queryByRole('heading', {name: '문서'})).toBeNull()
+  })
+  it('should combine display and editing controls in one toolbar and preview unsaved Markdown', () => {
+    let editing: ReturnType<typeof useCodeEditing>
+    render(() => {
+      editing = useCodeEditing({
+        port,
+        session: () => ({document, session: 'session', workspace: '/project'}),
+      })
+      return (
+        <SFileDocument
+          document={document}
+          port={port}
+          session="session"
+          editing={editing}
+          editor={
+            <textarea
+              aria-label="예제 편집기"
+              value={editing.source()}
+              readOnly={!editing.enabled()}
+            />
+          }
+          onFollow={vi.fn()}
+        />
+      )
+    })
+    const toolbar = screen.getByRole('group', {name: '문서 도구'})
+    expect(toolbar.contains(screen.getByRole('button', {name: '미리보기'}))).toBe(true)
+    expect(toolbar.contains(screen.getByRole('button', {name: '편집'}))).toBe(true)
+    fireEvent.click(screen.getByRole('button', {name: '편집'}))
+    expect(screen.getAllByRole('group', {name: '문서 도구'})).toHaveLength(1)
+    expect(screen.queryByRole('button', {name: '미리보기'})).toBeNull()
+    expect(screen.getByRole('textbox', {name: '예제 편집기'})).not.toHaveAttribute('readonly')
+    expect(screen.getByRole('button', {name: '저장'})).toBeDisabled()
+    editing!.change('# 수정한 문서')
+    expect(screen.getByRole('button', {name: '저장'})).toBeEnabled()
+    fireEvent.click(screen.getByRole('button', {name: '편집'}))
+    expect(screen.getByRole('heading', {name: '수정한 문서'})).toBeTruthy()
+    expect(editing!.dirty()).toBe(true)
+    expect(screen.queryByRole('button', {name: '저장'})).toBeNull()
+    fireEvent.click(screen.getByRole('button', {name: '원문'}))
+    expect(screen.getByRole('textbox', {name: '예제 편집기'})).toHaveAttribute('readonly')
+    expect(screen.getByRole('textbox', {name: '예제 편집기'})).toHaveValue('# 수정한 문서')
+  })
   it('should switch Markdown to original during search and keep it after search closes', () => {
     const [visible, setVisible] = createSignal(false)
     render(() => (

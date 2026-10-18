@@ -1,5 +1,14 @@
 import type {Point} from '@winter-love/utils/core/types/shared'
-import {type Accessor, createEffect, createMemo, createSignal, type JSX, untrack} from 'solid-js'
+import {
+  type Accessor,
+  createEffect,
+  createMemo,
+  createSignal,
+  type JSX,
+  on,
+  onCleanup,
+  untrack,
+} from 'solid-js'
 
 import * as m from '@paraglide/message'
 import {
@@ -113,13 +122,21 @@ export const useCustomAlbumCoverCrop = (
     return frame === null || source === null ? null : {...frame, source}
   })
 
-  createEffect(() => {
-    if (props.isOpen) {
-      untrack(crop.reset)
-    } else {
-      untrack(crop.endGesture)
-    }
-  })
+  let cropOperationVersion = 0
+
+  createEffect(
+    on([() => props.file, () => props.isOpen], ([, isOpen]) => {
+      if (isOpen) {
+        untrack(crop.reset)
+      } else {
+        untrack(crop.endGesture)
+      }
+      setIsCropping(false)
+      onCleanup(() => {
+        cropOperationVersion += 1
+      })
+    }),
+  )
 
   const handleZoomInput: JSX.EventHandler<HTMLInputElement, InputEvent> = (event) => {
     crop.changeZoom(event.currentTarget.valueAsNumber / CUSTOM_COVER_ZOOM_PERCENT_BASE)
@@ -185,6 +202,8 @@ export const useCustomAlbumCoverCrop = (
 
     setCropErrorMessage(null)
     setIsCropping(true)
+    cropOperationVersion += 1
+    const operationVersion = cropOperationVersion
 
     try {
       const croppedImage = await cropCustomAlbumImage({
@@ -193,22 +212,33 @@ export const useCustomAlbumCoverCrop = (
         sourceX: frame.sourceX,
         sourceY: frame.sourceY,
       })
-      setIsCropping(false)
+      if (operationVersion !== cropOperationVersion) {
+        return
+      }
       props.onApply(croppedImage)
     } catch (error: unknown) {
+      if (operationVersion !== cropOperationVersion) {
+        return
+      }
       setCropErrorMessage(
         error instanceof CustomAlbumError
           ? getCustomAlbumErrorMessage(error)
           : m.album_custom_error_cover_invalid(),
       )
-      setIsCropping(false)
+    } finally {
+      if (operationVersion === cropOperationVersion) {
+        setIsCropping(false)
+      }
     }
   }
 
   const handleOpenChange = (isOpen: boolean) => {
-    if (!isOpen) {
-      props.onCancel()
+    if (isOpen) {
+      return
     }
+    cropOperationVersion += 1
+    setIsCropping(false)
+    props.onCancel()
   }
 
   return {

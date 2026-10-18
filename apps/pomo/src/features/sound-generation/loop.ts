@@ -9,11 +9,11 @@ import {
   EDGE_RAMP_SECONDS,
   MAX_AI_CONNECTION_SECONDS,
   MIN_AI_CONNECTION_SECONDS,
-  PCM16_SCALE,
   SAMPLE_RATE,
   STEREO_FRAME_BYTES,
   WAV_HEADER_BYTES,
 } from './connection'
+import {copyStereoPcm16} from './copy-stereo-pcm16'
 import {MAX_GENERATION_SECONDS} from './extension'
 
 async function validateWave(source: Blob): Promise<void> {
@@ -55,11 +55,13 @@ async function readContext(source: Blob) {
   const left = new Float32Array(CONNECTION_WINDOW_SECONDS * SAMPLE_RATE)
   const right = new Float32Array(CONNECTION_WINDOW_SECONDS * SAMPLE_RATE)
   for (let part = 0; part < views.length; part += 1) {
-    for (let frame = 0; frame < CONNECTION_CONTEXT_SECONDS * SAMPLE_RATE; frame += 1) {
-      const target = part * CONNECTION_CONTEXT_SECONDS * SAMPLE_RATE + frame
-      left[target] = views[part].getInt16(frame * STEREO_FRAME_BYTES, true) / PCM16_SCALE
-      right[target] = views[part].getInt16(frame * STEREO_FRAME_BYTES + 2, true) / PCM16_SCALE
-    }
+    copyStereoPcm16({
+      frames: CONNECTION_CONTEXT_SECONDS * SAMPLE_RATE,
+      left,
+      right,
+      source: views[part],
+      startFrame: part * CONNECTION_CONTEXT_SECONDS * SAMPLE_RATE,
+    })
   }
   return {left, right}
 }

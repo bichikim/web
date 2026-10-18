@@ -1,7 +1,12 @@
 /** @vitest-environment node */
-import {expect, it, vi} from 'vitest'
+import {afterEach, expect, it, vi} from 'vitest'
 import {type AiJobServiceDependencies, createAiJobService} from '../create-ai-job-service'
+import * as catalog from '../model-catalog'
 import {createJob, NOW, USER_ID} from './fixtures/job'
+
+afterEach(() => {
+  vi.restoreAllMocks()
+})
 
 const createDependencies = () =>
   ({
@@ -114,4 +119,65 @@ it('should isolate configuration and clocks between service instances', async ()
   )
   expect(first.dispatchJob).not.toHaveBeenCalled()
   expect(second.dispatchJob).not.toHaveBeenCalled()
+})
+
+it.each([
+  {
+    capability: 'image',
+    expected: 'image',
+    input: {height: 256, idea: 'rain', seed: 1, steps: 1, width: 256},
+    modelId: 'bonsai-binary',
+  },
+  {
+    capability: 'sound',
+    expected: 'sound',
+    input: {durationSeconds: 1, prompt: 'rain'},
+    modelId: 'stable-audio-3-optimized',
+  },
+  {
+    capability: 'speech-to-text',
+    expected: 'speech_to_text',
+    input: {audioBase64: 'UklGRg=='},
+    modelId: 'whisper-tiny',
+  },
+  {
+    capability: 'text',
+    expected: 'text',
+    input: {messages: [{content: 'hello', role: 'user'}]},
+    modelId: 'gpt-5.6-luna',
+  },
+  {
+    capability: 'text-to-speech',
+    expected: 'text_to_speech',
+    input: {text: 'hello', voiceId: 'F1'},
+    modelId: 'supertonic-full',
+  },
+] as const)('should persist the $expected capability before dispatch', async (request) => {
+  vi.spyOn(catalog, 'isAiModelProductionEnabled').mockReturnValue(true)
+  const dependencies = createDependencies()
+  const queued = createJob({capability: request.expected, modelId: request.modelId})
+  dependencies.repository.createAiJob.mockResolvedValue({job: queued, kind: 'created'})
+
+  await expect(
+    createAiJobService(dependencies).submitAiJob(USER_ID, {
+      capability: request.capability,
+      idempotencyKey: 'capability-submission',
+      input: request.input,
+      modelId: request.modelId,
+    }),
+  ).resolves.toEqual({created: true, job: queued, kind: 'accepted'})
+
+  expect(dependencies.repository.createAiJob).toHaveBeenCalledOnce()
+  expect(dependencies.repository.createAiJob).toHaveBeenCalledWith(
+    expect.objectContaining({
+      capability: request.expected,
+      modelId: request.modelId,
+      userId: USER_ID,
+    }),
+    expect.objectContaining({now: NOW}),
+  )
+  expect(dependencies.dispatchJob).toHaveBeenCalledWith(queued)
+  expect(dependencies.repository.createAiJob.mock.invocationCallOrder[0]).toBeLessThan(
+    dependencies.dispatchJob.mock.invocationCallOrder[0],
+  )
 })

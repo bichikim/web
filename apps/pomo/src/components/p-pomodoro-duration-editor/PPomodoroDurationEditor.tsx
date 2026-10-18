@@ -5,14 +5,7 @@ import {POMODORO_TIMER_LIMITS, type PomodoroTimerConfig} from '../../features/po
 import * as m from '@paraglide/message'
 import {DurationField} from '../pomodoro-duration-editor/Field'
 import {CLASSES} from '../pomodoro-duration-editor/shared'
-import {normalizePasteNumericInput} from 'src/utils/normalize-paste-numeric-input'
-
-interface DurationDraft {
-  readonly focus: string
-  readonly longBreak: string
-  readonly sessions: string
-  readonly shortBreak: string
-}
+import {type DurationDraft, parseDurationDraft} from './parse-duration-draft'
 
 interface DurationDraftState {
   readonly baseConfig: PomodoroTimerConfig
@@ -46,20 +39,6 @@ const getDraftForConfig = (
   return baseConfig === config ? draft : createDurationDraft(config)
 }
 
-const parseDurationMinutes = (value: string) => {
-  const minutes = Number(normalizePasteNumericInput(value))
-
-  if (
-    !Number.isInteger(minutes) ||
-    minutes < MIN_DURATION_MINUTES ||
-    minutes > POMODORO_TIMER_LIMITS.maxDurationMinutes
-  ) {
-    return null
-  }
-
-  return minutes
-}
-
 export const PPomodoroDurationEditor = (props: PPomodoroDurationEditorProps) => {
   const [draftState, setDraftState] = createSignal<DurationDraftState>(
     untrack(() => {
@@ -81,31 +60,7 @@ export const PPomodoroDurationEditor = (props: PPomodoroDurationEditorProps) => 
       sessions: props.config.focusSessionsPerCycle,
       shortBreak: props.config.shortBreakSeconds / SECONDS_PER_MINUTE,
     })
-  const nextConfig = createMemo(() => {
-    const durationDraft = draft()
-    const focusMinutes = parseDurationMinutes(durationDraft.focus)
-    const longBreakMinutes = parseDurationMinutes(durationDraft.longBreak)
-    const sessionCount = Number(normalizePasteNumericInput(durationDraft.sessions))
-    const shortBreakMinutes = parseDurationMinutes(durationDraft.shortBreak)
-
-    if (
-      focusMinutes === null ||
-      longBreakMinutes === null ||
-      shortBreakMinutes === null ||
-      !Number.isInteger(sessionCount) ||
-      sessionCount < MIN_FOCUS_SESSIONS ||
-      sessionCount > POMODORO_TIMER_LIMITS.maxFocusSessions
-    ) {
-      return null
-    }
-
-    return {
-      focusSeconds: focusMinutes * SECONDS_PER_MINUTE,
-      focusSessionsPerCycle: sessionCount,
-      longBreakSeconds: longBreakMinutes * SECONDS_PER_MINUTE,
-      shortBreakSeconds: shortBreakMinutes * SECONDS_PER_MINUTE,
-    } satisfies PomodoroTimerConfig
-  })
+  const nextConfig = createMemo(() => parseDurationDraft(draft()))
   const handleToggle = () => {
     const nextEditing = !props.isEditing
 

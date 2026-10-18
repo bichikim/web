@@ -5,6 +5,15 @@
 - **Examples**: If the user asks only to see an example, provide it in the chat response without creating or editing files. If the user asks to build something from an example and its implementation code is available, study that implementation before implementing it.
 - **Intent gate**: State the concrete interpretation at task start and when the scope or direction changes.
 - **Existing code references**: When discussing existing code, always include a clickable link to its exact file and line number so the link opens at that line.
+- **Comment language**: Write code comments, including JSDoc, in Korean. Preserve identifiers and established technical names.
+
+## UI communication
+
+Explanations and notices tend to accumulate as AI adds features, crowding the workspace and competing with the user's actual task. Keep feedback proportionate so the interface remains focused on the work.
+
+- Keep user-facing UI text concise; avoid verbose explanations and persistent status text whenever possible.
+- Prefer toasts or other transient feedback that does not consume layout space. Keep routine success silent; show concise feedback when the user needs to act.
+- Use persistent inline guidance only when it is necessary to complete the current task or understand the current state.
 
 ## Code review
 
@@ -40,9 +49,9 @@
 
 ## Side effects
 
-- Do not create side-effecting functions. Write function logic as input-to-result transformations whenever possible, without mutating caller-owned inputs or shared state.
-- Returning the same object after mutating it, or hiding mutation in a closure, does not remove the side effect.
-- If a side effect is genuinely unavoidable because of performance or other constraints after evaluating alternatives, stop before implementing it. Explain the concrete necessity, alternatives and tradeoffs, and discuss them with the user to obtain explicit approval. Convenience does not justify an exception.
+- Write computation and transformation logic as pure functions whenever possible, and concentrate side effects at input/output boundaries.
+- Implement ordinary side effects needed to fulfill the user's requested functionality without separate approval.
+- Obtain approval before implementing external changes beyond the requested scope, destructive operations, or actions requiring new permissions or costs.
 
 ## Evidence
 
@@ -99,10 +108,6 @@
 
 1. Fix oxlint errors
 2. Run oxfmt (`pnpm format`)
-
-## Comments
-
-Function JSDoc: contract (what) only; call sites: intent (why) only.
 
 ## GitHub CLI authentication
 

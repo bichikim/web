@@ -1,7 +1,7 @@
 import {RAIN_MAP_ERASER} from './rain-map-eraser'
 import {Filter, GlProgram, type Texture} from 'pixi.js'
 
-import {FULLSCREEN_VERTEX} from 'src/utils/fullscreen-vertex'
+import {FULLSCREEN_VERTEX} from 'src/utils/shader'
 
 const FRAGMENT = `
 in vec2 vUv;

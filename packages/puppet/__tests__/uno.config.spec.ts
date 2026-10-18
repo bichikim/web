@@ -147,3 +147,36 @@ it('should keep spatial mesh dialog dividers on their intended edge', async () =
     style.remove()
   }
 })
+
+it('should keep the layer list menu shrinkable and its rows transparent to layout', async () => {
+  const generator = await createGenerator(unoConfig)
+  const result = await generator.generate(
+    'layers-panel puppet-layer-list-menu puppet-layer-row-menu layer-scroll',
+    {safelist: false},
+  )
+  const style = document.createElement('style')
+  style.textContent = result.css
+  const surface = document.createElement('div')
+  surface.className = 'puppet-editor'
+  surface.innerHTML = `<aside class="layers-panel">
+    <div class="puppet-layer-list-menu">
+      <div class="layer-scroll"><div class="puppet-layer-row-menu"></div></div>
+    </div>
+  </aside>`
+  document.head.append(style)
+  document.body.append(surface)
+  try {
+    const menu = getComputedStyle(surface.querySelector('.puppet-layer-list-menu')!)
+    expect(menu.display).toBe('flex')
+    expect(menu.flexDirection).toBe('column')
+    expect(menu.flexShrink).toBe('1')
+    expect(menu.minHeight).toBe('0')
+    expect(getComputedStyle(surface.querySelector('.layer-scroll')!).overflow).toBe('auto')
+    expect(getComputedStyle(surface.querySelector('.puppet-layer-row-menu')!).display).toBe(
+      'contents',
+    )
+  } finally {
+    surface.remove()
+    style.remove()
+  }
+})

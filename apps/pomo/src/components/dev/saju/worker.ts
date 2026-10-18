@@ -4,13 +4,12 @@ import {
   createDeviceTarget,
   createGenerationFailure,
   createRequestSequence,
-  trimRepetitiveTail,
 } from 'src/features/text-generation'
 import {createTextGenerationExecutor} from 'src/features/text-generation/execution'
 import {createExclusiveAsyncTask} from 'src/utils/create-exclusive-async-task'
 import {getErrorMessage} from 'src/utils/get-error-message'
-import {generateSajuAnswer} from './generate-answer'
-import type {GenerateSajuRequest, SajuWorkerResponse} from './messages'
+import {generateSajuAnswer} from 'src/features/saju/generate-answer'
+import type {GenerateSajuRequest, SajuWorkerResponse} from 'src/features/saju/messages'
 
 const MODEL = createDeviceTarget('gemma-4-e2b')
 const createRequestId = createRequestSequence('saju')
@@ -41,7 +40,7 @@ async function generateAnswer(messages: GenerateSajuRequest['messages']): Promis
     throw createGenerationFailure(result.error, '사주 풀이를 생성하지 못했어요.')
   }
 
-  return trimRepetitiveTail(result.value).trim()
+  return result.value
 }
 
 async function generate(request: GenerateSajuRequest) {

@@ -34,10 +34,15 @@ export const useCloudTextUsage = () => {
     error: () => usage.error !== undefined,
     usage: () => {
       const session = authentication.session()
-      if (session === null || usage.error !== undefined) {
+      if (
+        session === null ||
+        usage.error !== undefined ||
+        usage.state === 'pending' ||
+        usage.state === 'unresolved'
+      ) {
         return null
       }
-      const current = usage()
+      const current = usage.latest
       return current?.session === session ? current.usage : null
     },
   }

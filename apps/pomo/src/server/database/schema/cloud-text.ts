@@ -12,6 +12,7 @@ import {
 } from 'drizzle-orm/pg-core'
 import {pomoUsers} from './users'
 import {commerceProducts} from './commerce'
+import {apiAiJobs} from './api-ai'
 
 export const cloudTextRequests = pgTable(
   'cloud_text_requests',
@@ -19,6 +20,7 @@ export const cloudTextRequests = pgTable(
     day: date().notNull(),
     expiresAt: timestamp({withTimezone: true}).notNull(),
     id: uuid().primaryKey(),
+    queueJobId: uuid().references(() => apiAiJobs.id),
     requestHash: varchar({length: 64}).notNull(),
     result: text(),
     status: varchar({enum: ['pending', 'complete', 'failed'], length: 16}).notNull(),

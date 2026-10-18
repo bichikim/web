@@ -11,10 +11,10 @@ import {z} from 'zod'
 import {webLocalStorage} from 'src/utils/preference-storage'
 import {
   SUPERTONIC_MODELS,
-  SUPERTONIC_VOICES,
   type SupertonicModelId,
   type SupertonicVoiceId,
 } from '../supertonic/model'
+import {isSupertonicVoiceId} from '../supertonic/is-supertonic-voice-id'
 import {
   type AutomaticDialogueSettings,
   type AutomaticDialogueSettingsRepository,
@@ -34,9 +34,7 @@ export const AUTOMATIC_DIALOGUE_SETTINGS_STORAGE_KEY = 'pomo:automatic-dialogue-
 const modelIdSchema = z.custom<SupertonicModelId>((value) =>
   SUPERTONIC_MODELS.some((model) => model.id === value),
 )
-const voiceIdSchema = z.custom<SupertonicVoiceId>((value) =>
-  SUPERTONIC_VOICES.some((voice) => voice.id === value),
-)
+const voiceIdSchema = z.custom<SupertonicVoiceId>(isSupertonicVoiceId)
 const automaticDialogueSettingsSchema: z.ZodType<AutomaticDialogueSettings> = z.object({
   modelId: modelIdSchema,
   version: z.literal(1).default(1),

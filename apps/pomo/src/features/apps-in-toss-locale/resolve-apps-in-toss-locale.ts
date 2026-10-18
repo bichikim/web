@@ -13,7 +13,7 @@ export const normalizeDeviceLocale = (value: unknown): Locale | undefined => {
     return exactLocale
   }
 
-  const [language] = value.split(/[-_]/u)
+  const [language] = value.split(/[-_]/u, 1)
   return toLocale(language)
 }
 

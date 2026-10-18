@@ -1,4 +1,5 @@
 import type {TrackImportTask} from './types'
+import {countBy} from 'es-toolkit/array'
 import {useImportNavigation} from './use-import-navigation'
 import {useAsyncTask} from '../async-task'
 import {createAsync, revalidate, useAction, useSubmission, useSubmissions} from '@solidjs/router'
@@ -11,11 +12,10 @@ import {getCatalogTrackCounts} from './catalog-track-counts'
 import {useAlbumDraft} from './use-album-draft'
 import {useTrackManagement} from './use-track-management'
 
-const getAlbumStats = (albums: AdminCatalog['albums']) => ({
-  draft: albums.filter((album) => album.status === 'draft').length,
-  published: albums.filter((album) => album.status === 'published').length,
-  total: albums.length,
-})
+const getAlbumStats = (albums: AdminCatalog['albums']) => {
+  const counts = countBy(albums, (album) => album.status)
+  return {draft: counts.draft ?? 0, published: counts.published ?? 0, total: albums.length}
+}
 
 export const useAdminMusic = () => {
   const changeAlbumStatus = useAction(changeAdminAlbumStatusAction)

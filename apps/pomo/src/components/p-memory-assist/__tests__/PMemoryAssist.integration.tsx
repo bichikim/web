@@ -84,7 +84,7 @@ it('should switch Korean panels, refresh the calendar and restore focus after cl
     within(dialog)
       .getAllByRole('tab')
       .map((tab) => tab.textContent),
-  ).toEqual(['학습 문장', '학습 단어', '메모', '일기장', '캘린더', '타로'])
+  ).toEqual(['학습 문장', '학습 단어', '메모', '일기장', '캘린더', '타로', '사주'])
   expect(await screen.findByRole('tabpanel', {name: '학습 문장'})).toHaveTextContent(
     'language learning library',
   )

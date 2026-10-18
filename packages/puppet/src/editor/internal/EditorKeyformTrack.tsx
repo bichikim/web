@@ -40,7 +40,7 @@ export const EditorKeyformTrack = (props: EditorKeyformTrackProps) => {
     <EditorContextMenu
       entries={contextEntries()}
       label="키폼 작업"
-      disabled={props.onKeyformAdd === undefined && props.onKeyformDelete === undefined}
+      disabled={contextEntries().length === 0}
       onOpenChange={handleMenuOpenChange}
       onContextMenu={handleTriggerRequest}
       onPointerDown={handleTriggerRequest}

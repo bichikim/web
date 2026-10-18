@@ -6,6 +6,7 @@ import {PModal} from '../p-modal/PModal'
 import {PlaylistFooter} from './Footer'
 import {LoadingStatus} from './LoadingStatus'
 import * as m from '@paraglide/message'
+import {PStatus} from './PStatus'
 
 const PAlbumLibraryContent = lazy(async () => {
   const {PAlbumLibraryContent} = await import('./Content')
@@ -73,21 +74,7 @@ export const PAlbumLibraryPanel = (props: PAlbumLibraryPanelProps) => {
         fallback={(error) => {
           reportClientError(error, {feature: 'album-library', source: 'error-boundary'})
 
-          return (
-            <div
-              class="grid min-h-32 place-items-center rounded-control border border-dashed
-                border-border p-5 text-center"
-              role="alert"
-            >
-              <div>
-                <span
-                  aria-hidden="true"
-                  class="i-tabler-music-off mx-auto mb-2 block size-6 text-highlight"
-                />
-                <p class="m-0 text-sm font-650">{m.album_load_failed()}</p>
-              </div>
-            </div>
-          )
+          return <PStatus message={m.album_load_failed()} role="alert" />
         }}
       >
         <Suspense fallback={<LoadingStatus />}>
