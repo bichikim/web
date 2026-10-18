@@ -1,4 +1,4 @@
-import {clampDisplayedPercentage} from 'src/utils/clamp-displayed-percentage'
+import {clampFiniteNumber} from 'src/utils/clamp-finite-number'
 import {writeTextToClipboard} from 'src/utils/write-text-to-clipboard'
 import * as m from '@paraglide/message'
 import {type Accessor, createMemo, createSignal, onCleanup, untrack} from 'solid-js'
@@ -182,7 +182,7 @@ const getDialogueWriterStatusMessage = (currentState: DialogueWriterState): stri
       }
 
       return m.dialogue_writer_downloading_status({
-        percentage: clampDisplayedPercentage(currentState.percentage) ?? 0,
+        percentage: clampFiniteNumber(currentState.percentage, 0, MAXIMUM_PROGRESS) ?? 0,
       })
     case 'ready':
       return m.dialogue_writer_ready_status()

@@ -5,12 +5,21 @@ interface ViewerShortcutsOptions {
   onMove: (direction: -1 | 1) => void
   onDismiss: () => void
   onFind?: () => void
+  onSave?: () => void
 }
 
 export const useViewerShortcuts = (options: ViewerShortcutsOptions): void => {
   const handleKeyboard = (event: KeyboardEvent): void => {
-    if (event.isComposing) {
+    if (event.isComposing || event.defaultPrevented) {
       return
+    }
+    if (
+      (event.metaKey || event.ctrlKey) &&
+      event.key.toLowerCase() === 's' &&
+      options.onSave !== undefined
+    ) {
+      event.preventDefault()
+      options.onSave()
     }
     if (event.key === 'Escape') {
       options.onDismiss()

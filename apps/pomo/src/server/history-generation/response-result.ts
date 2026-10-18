@@ -1,6 +1,6 @@
-import {uniq} from 'es-toolkit/array'
 import type {Response} from 'openai/resources/responses/responses'
 import {parseApiAiResponseReference} from 'src/server/api-ai/response-reference'
+import {extractSearchSourceUrls} from 'src/server/api-ai/extract-search-source-urls'
 import type {ApiAiStatus} from 'src/server/api-ai/types'
 
 export interface HistoryResponseResult {
@@ -32,15 +32,6 @@ const historyStatus = (status: ApiAiStatus): Response['status'] => {
     }
   }
 }
-
-const extractSearchSources = (response: Response): ReadonlyArray<string> =>
-  uniq(
-    response.output.flatMap((item) =>
-      item.type === 'web_search_call' && item.action.type === 'search'
-        ? (item.action.sources ?? []).map((source) => source.url)
-        : [],
-    ),
-  )
 
 /** Retrieves a background response with the complete web-search source list. */
 export const retrieveHistoryResponse = async (
@@ -80,7 +71,7 @@ export const retrieveHistoryResponse = async (
     model: response.model,
     outputText: response.output_text,
     responseId: response.id,
-    searchSourceUrls: extractSearchSources(response),
+    searchSourceUrls: extractSearchSourceUrls(response.output),
     status: response.status,
   }
 }

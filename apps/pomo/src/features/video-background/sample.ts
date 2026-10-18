@@ -1,6 +1,5 @@
-import {clearHtmlMediaElement} from 'src/utils/clear-html-media-element'
 import {subscribeEvent} from 'src/utils/subscribe-event'
-import {replaceBlobObjectUrl} from 'src/features/blob-object-url'
+import {videoSamplingRuntime} from './runtime'
 import {sampleTimes} from './timeline'
 
 const SAMPLE_LENGTH = 32
@@ -23,7 +22,7 @@ export interface VideoSample {
 
 /** Copies a decoded frame into a small, aspect-preserving color sample. */
 export const captureSample = (video: HTMLVideoElement): VideoSample => {
-  const canvas = document.createElement('canvas')
+  const canvas = videoSamplingRuntime.createCanvas()
   const scale = SAMPLE_LENGTH / Math.max(video.videoWidth, video.videoHeight, 1)
   canvas.width = Math.max(1, Math.round(video.videoWidth * scale))
   canvas.height = Math.max(1, Math.round(video.videoHeight * scale))
@@ -72,8 +71,8 @@ const waitForMedia = (options: MediaWaitOptions): Promise<void> =>
 
 /** Samples a separate muted decoder and releases it on completion, failure, or cancellation. */
 export const sampleVideo = async (blob: Blob, signal: AbortSignal): Promise<VideoSample[]> => {
-  const video = document.createElement('video')
-  const url = replaceBlobObjectUrl(null, () => blob)
+  const video = videoSamplingRuntime.createVideo()
+  const url = videoSamplingRuntime.createUrl(blob)
   video.muted = true
   video.playsInline = true
   video.preload = 'auto'
@@ -108,7 +107,9 @@ export const sampleVideo = async (blob: Blob, signal: AbortSignal): Promise<Vide
     }
     return samples
   } finally {
-    clearHtmlMediaElement(video)
-    replaceBlobObjectUrl(url, () => null)
+    video.pause()
+    video.removeAttribute('src')
+    video.load()
+    videoSamplingRuntime.releaseUrl(url)
   }
 }

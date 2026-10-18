@@ -1,5 +1,6 @@
 /** @vitest-environment node */
 import {expect, it} from 'vitest'
+import {SUPERTONIC_VOICES} from '../../supertonic/model'
 
 import {feedConnectionSchema, normalizeFeedUrl} from '../schema'
 
@@ -11,6 +12,21 @@ const connection = {
   version: 1,
   voiceId: 'default',
 } as const
+
+it.each(SUPERTONIC_VOICES)('should preserve the registered $id connection voice', ({id}) => {
+  expect(feedConnectionSchema.parse({...connection, voiceId: id}).voiceId).toBe(id)
+})
+
+it.each(['Sarah', 'yuna', ' Yuna ', null])(
+  'should reject an unregistered connection voice %s at its field',
+  (voiceId) => {
+    const result = feedConnectionSchema.safeParse({...connection, voiceId})
+    expect(result.success).toBe(false)
+    expect(result.error?.issues).toEqual([
+      {code: 'custom', message: 'Invalid input', path: ['voiceId']},
+    ])
+  },
+)
 
 it('should validate supported feed URLs and voice identifiers', () => {
   expect(feedConnectionSchema.safeParse(connection).success).toBe(true)

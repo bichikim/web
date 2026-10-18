@@ -73,6 +73,10 @@ export const createNitroConfig = (options: CreateNitroConfigOptions) => {
             functionRules: {
               '/api/cloud-text': {maxDuration: API_AI_FUNCTION_SECONDS},
               '/api/cron/api-ai': {maxDuration: API_AI_FUNCTION_SECONDS},
+              '/api/queues/api-ai': {
+                experimentalTriggers: [{topic: 'pomo-api-ai', type: 'queue/v2beta'}],
+                maxDuration: API_AI_FUNCTION_SECONDS,
+              },
               '/api/webhooks/api-ai/**': {maxDuration: API_AI_FUNCTION_SECONDS},
               '/api/webhooks/openai': {maxDuration: API_AI_FUNCTION_SECONDS},
             },

@@ -1,5 +1,4 @@
-// oxlint-disable no-await-in-loop -- Pool selection belongs to one serialized database transaction.
-import {and, asc, count, eq, sql} from 'drizzle-orm'
+import {asc, eq, sql} from 'drizzle-orm'
 import {apiAiAttempts, apiAiJobs, withTransactionalDatabase} from 'src/server/database'
 import {API_AI_POLICY} from 'src/server/api-ai/policy'
 import type {ApiAiClaim, ApiAiProvider} from 'src/server/api-ai/types'
@@ -12,29 +11,13 @@ const orderProviders = (
   attempts: ReadonlyArray<StoredApiAiAttempt>,
 ): ReadonlyArray<ApiAiProvider> => {
   const supported = providers.filter((provider) => provider.models[job.kind] !== undefined)
-  const untried = supported.filter(
-    (provider) => !attempts.some((attempt) => attempt.providerId === provider.id),
-  )
-  const tried = supported.filter((provider) =>
-    attempts.some((attempt) => attempt.providerId === provider.id),
-  )
-  return [...untried, ...tried]
-}
-
-const isUserAtCapacity = async (
-  transaction: ApiAiTransaction,
-  userId: string,
-): Promise<boolean> => {
-  const [active] = await transaction
-    .select({total: count()})
-    .from(apiAiJobs)
-    .where(
-      and(
-        eq(apiAiJobs.ownerId, userId),
-        sql`${apiAiJobs.status} in ('submitting', 'running', 'recovery_pending')`,
+  return supported.filter(
+    (provider) =>
+      !attempts.some(
+        (attempt) =>
+          attempt.providerId === provider.id && attempt.modelId === provider.models[job.kind],
       ),
-    )
-  return active.total >= API_AI_POLICY.maximumRunningPerUser
+  )
 }
 
 interface JobClaimInput {
@@ -75,31 +58,25 @@ const claimInTransaction = async (input: JobClaimInput): Promise<ApiAiClaim | nu
       .where(eq(apiAiJobs.id, job.id))
     return null
   }
-  const canRun = job.ownerId === null || !(await isUserAtCapacity(transaction, job.ownerId))
-  if (canRun) {
-    for (const provider of orderProviders(providers, job, attempts)) {
-      const claim = await claimProviderAttempt({
-        attemptId,
-        attempts,
-        deadline,
-        job,
-        now,
-        provider,
-        transaction,
-      })
-      if (claim !== null) {
-        return claim
-      }
-    }
+  const [provider] = orderProviders(providers, job, attempts)
+  if (provider === undefined) {
+    await transaction
+      .update(apiAiJobs)
+      .set({completedAt: now, errorMessage: 'AI providers are unavailable', status: 'failed'})
+      .where(eq(apiAiJobs.id, job.id))
+    return null
   }
-  await transaction
-    .update(apiAiJobs)
-    .set({nextAttemptAt: new Date(now.getTime() + API_AI_POLICY.retryMilliseconds)})
-    .where(eq(apiAiJobs.id, job.id))
-  return null
+  return claimProviderAttempt({
+    attemptId,
+    deadline,
+    job,
+    now,
+    provider,
+    transaction,
+  })
 }
 
-/** Atomically claims a job and its applicable account, request and token capacity. */
+/** Atomically claims one job while preserving the configured model order. */
 export const claimApiAiJob = (
   jobId: string,
   providers: ReadonlyArray<ApiAiProvider>,

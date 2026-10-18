@@ -92,6 +92,7 @@ export const useTemporaryForm = (options: TemporaryFormOptions) => {
     bindingId,
     document,
     form,
+    hasChanges: () => forms().size > 0,
     hide: () => {
       setEditing(null)
       setPreview(false)

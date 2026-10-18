@@ -1,7 +1,7 @@
 import {normalizePathname} from 'src/utils/normalize-pathname'
 import {z} from 'zod'
 
-import {SUPERTONIC_VOICES, type SupertonicVoiceId} from '../supertonic'
+import {isSupertonicVoiceId, type SupertonicVoiceId} from '../supertonic'
 
 const MAXIMUM_FEED_URL_LENGTH = 2048
 export const DEFAULT_FEED_VOICE_ID = 'default'
@@ -9,8 +9,7 @@ export const DEFAULT_FEED_VOICE_ID = 'default'
 export type FeedVoiceId = typeof DEFAULT_FEED_VOICE_ID | SupertonicVoiceId
 
 const feedVoiceIdSchema = z.custom<FeedVoiceId>(
-  (value) =>
-    value === DEFAULT_FEED_VOICE_ID || SUPERTONIC_VOICES.some((voice) => voice.id === value),
+  (value) => value === DEFAULT_FEED_VOICE_ID || isSupertonicVoiceId(value),
 )
 const isSupportedFeedUrl = (value: string) => {
   try {

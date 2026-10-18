@@ -4,11 +4,32 @@ import type {Notification, Request, Result} from '@modelcontextprotocol/sdk/type
 import {z} from 'zod'
 import manifest from '../../package.json'
 import {OpenAIExtensions, OpenAIFileEntrypointInputSchema} from '@openai/mcp-extensions/app'
-import {sessionSchema} from '../shared/contracts'
+import {subscribeWorkspace} from './subscribe-workspace'
+import {connectionSchema} from '../shared/contracts'
 import type {ViewerPort} from './types'
 import {connectHostAppearance} from './connect-host-appearance'
 import {formatContext} from './format-context'
 import {createPendingTasks} from './create-pending-tasks'
+import {subscribeWorkspaceChanges} from './subscribe-workspace-changes'
+
+const httpStreams = (app: App): boolean =>
+  z
+    .object({version: z.literal(1)})
+    .safeParse(app.getHostCapabilities()?.experimental?.['winter-love/code-viewer/http']).success
+
+const createToolCall =
+  (app: App, requests: ReturnType<typeof createPendingTasks>): ViewerPort['call'] =>
+  (name, arguments_, options) =>
+    requests.run(() => {
+      const input = {
+        arguments:
+          arguments_.stream === true
+            ? {...arguments_, transport: httpStreams(app) ? 'http' : 'mcp'}
+            : arguments_,
+        name,
+      }
+      return options === undefined ? app.callServerTool(input) : app.callServerTool(input, options)
+    })
 
 export const createHost = (): ViewerPort => {
   const app = new App({name: 'Code Viewer', version: manifest.version}, {}, {autoResize: false})
@@ -16,8 +37,12 @@ export const createHost = (): ViewerPort => {
   // The base protocol carries custom methods, as in the OpenAI extensions adapter.
   const protocol = app as unknown as Protocol<Request, Notification, Result>
   const requests = createPendingTasks()
-  const call: ViewerPort['call'] = (name, arguments_) =>
-    requests.run(() => app.callServerTool({arguments: arguments_, name}))
+  const call = createToolCall(app, requests)
+  const localeListeners = new Set<(locale: string | undefined) => void>()
+  const publishLocale = (): void => {
+    const locale = app.getHostContext()?.locale
+    localeListeners.forEach((receive) => receive(locale))
+  }
   let contexts: string[] = []
   let observedContextId: string | null | undefined
   let contextQueue: Promise<void> = Promise.resolve()
@@ -67,11 +92,17 @@ export const createHost = (): ViewerPort => {
         ),
       )
     },
-    start: async (receive, report, refresh) => {
-      let resource: string | null = null
+    start: async (receive, report, _refresh, onTeardown) => {
       let stopped = false
-      const handleResult = (result: {structuredContent?: Record<string, unknown>}): void => {
-        const parsed = sessionSchema.safeParse(result.structuredContent)
+      const handleResult = (result: {
+        isError?: boolean
+        structuredContent?: Record<string, unknown>
+      }): void => {
+        if (result.isError) {
+          report(result.structuredContent)
+          return
+        }
+        const parsed = connectionSchema.safeParse(result.structuredContent)
         if (parsed.success) {
           receive(parsed.data)
         }
@@ -91,17 +122,6 @@ export const createHost = (): ViewerPort => {
           return
         }
         handleResult(result)
-        if (stopped) {
-          return
-        }
-        if (resource !== null) {
-          await extensions.resources?.unsubscribe({uri: resource})
-        }
-        if (stopped) {
-          return
-        }
-        resource = parsed.data.file.resourceUri
-        await extensions.resources?.subscribe({uri: resource})
       }
       const handleInput = (input: {arguments?: Record<string, unknown>}): void => {
         requests.run(() => handleFile(input)).catch(report)
@@ -110,10 +130,16 @@ export const createHost = (): ViewerPort => {
         app.removeEventListener('toolresult', handleResult)
         app.removeEventListener('toolinput', handleInput)
         app.removeEventListener('hostcontextchanged', synchronizeContext)
+        app.removeEventListener('hostcontextchanged', publishLocale)
       }
       app.addEventListener('toolresult', handleResult)
       app.addEventListener('toolinput', handleInput)
       app.addEventListener('hostcontextchanged', synchronizeContext)
+      app.addEventListener('hostcontextchanged', publishLocale)
+      app.onteardown = async () => {
+        await onTeardown?.()
+        return {}
+      }
       const connected = app.connect()
       try {
         await connected
@@ -125,19 +151,26 @@ export const createHost = (): ViewerPort => {
         throw error
       }
       synchronizeContext()
+      publishLocale()
       const disposeAppearance = connectHostAppearance(app)
-      const disposeUpdates = extensions.resources?.addUpdateHandler(() => refresh())
       return async () => {
         stopped = true
         disposeAppearance()
-        disposeUpdates?.()
         removeListeners()
         await requests.settle()
-        if (resource !== null) {
-          await extensions.resources?.unsubscribe({uri: resource}).catch(report)
-        }
         await app.close().catch(report)
       }
     },
+    subscribeLocale: (receive) => {
+      localeListeners.add(receive)
+      receive(app.getHostContext()?.locale)
+      return () => {
+        localeListeners.delete(receive)
+      }
+    },
+    watch: (session, receive, report) =>
+      httpStreams(app)
+        ? subscribeWorkspace({call, receive, session})
+        : subscribeWorkspaceChanges({call, receive, report, session}),
   }
 }

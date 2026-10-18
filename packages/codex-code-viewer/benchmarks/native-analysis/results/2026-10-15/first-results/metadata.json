@@ -1,0 +1,19 @@
+{
+  "date": "2026-10-15T12:20:24.956566+09:00",
+  "platform": "macOS-26.5.2-arm64-arm-64bit-Mach-O",
+  "machine": "arm64",
+  "node": "v24.15.0",
+  "native": "Version 7.0.2",
+  "hardware": "Mac17,9\n51539607552\n15",
+  "commit": "dfd5a66156dea9469354fac93b1c6db8f63da817",
+  "baseline": "/tmp/ts7-latency/shipped-after/existing/workspace.js",
+  "after": "/tmp/ts7-first/final/existing/workspace.js",
+  "scope": "Same current monorepo source/dependencies for both TS7 product bundles. No concurrent project build or tests during final performance collection. Shared host; OS caches not flushed.",
+  "first": "First nonempty server location batch, not browser paint.",
+  "requery": "Same-session completed navigation cache, actual revision validation retained.",
+  "samples": {
+    "javascript": 7,
+    "otherQueries": 3
+  },
+  "binarySha256": "a82f731365ad69d5c4c15f5e18fba4584bf3b7b839960172a76c3462b5114bf2  /Users/bichi/.codex/worktrees/379e/web/packages/codex-code-viewer/dist/typescript/darwin-arm64/tsc"
+}

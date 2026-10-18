@@ -1,6 +1,7 @@
 /** @vitest-environment node */
 import {getTableConfig} from 'drizzle-orm/pg-core'
 import {expect, it} from 'vitest'
+import {aiJobStatusSchema} from 'src/features/ai-job/contracts'
 
 import {
   aiArtifactLifecycleEnum,
@@ -51,4 +52,19 @@ it('should expose the AI job capabilities and durable coordination indexes', () 
   )
   expect(getTableConfig(aiJobs).columns.map(({name}) => name)).toContain('intermediateCleanupAt')
   expect(getTableConfig(aiCostLedger).name).toBe('ai_cost_ledger')
+})
+
+it('should retain the job status column type, default and independent enum values', () => {
+  expect(aiJobs.status.getSQLType()).toBe('ai_job_status')
+  expect(aiJobs.status.notNull).toBe(true)
+  expect(aiJobs.status.default).toBe('queued')
+  expect(aiJobStatusEnum.enumValues).not.toBe(aiJobStatusSchema.options)
+
+  try {
+    aiJobStatusEnum.enumValues.reverse()
+    expect(aiJobStatusSchema.parse('queued')).toBe('queued')
+    expect(aiJobStatusSchema.options[0]).toBe('queued')
+  } finally {
+    aiJobStatusEnum.enumValues.reverse()
+  }
 })

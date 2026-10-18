@@ -1,3 +1,5 @@
+import {STooltip} from './STooltip'
+import {useTranslations} from './locale/use-translations'
 import {SIcon} from './SIcon'
 import {useNumberInput} from './use-number-input'
 import type {usePdfDocument} from './use-pdf-document'
@@ -23,6 +25,7 @@ const MAX_PERCENT = 400
 const ZOOM_STEP = 25
 
 export const SPdfToolbar = (props: SPdfToolbarProps) => {
+  const t = useTranslations()
   const pageInput = useNumberInput({
     onCommit: (value) => props.pdf.turn(value),
     value: () => props.pdf.page(),
@@ -33,22 +36,27 @@ export const SPdfToolbar = (props: SPdfToolbarProps) => {
   })
   return (
     <div
-      aria-label="PDF 표시 방식"
+      aria-label={t('PDF 표시 방식')}
       class="flex shrink-0 flex-wrap items-center gap-2 border-b border-divider px-4 py-2"
     >
-      <div role="group" aria-label="PDF 페이지 조절" class={groupClasses}>
-        <button
-          aria-label="이전 PDF 페이지"
-          class={`${buttonClasses} h-full w-7 rounded-l-pill border-r border-divider`}
-          type="button"
-          disabled={props.pdf.page() <= 1}
-          onClick={() => props.pdf.turn(props.pdf.page() - 1)}
-        >
-          <SIcon name="minus" />
-        </button>
+      <div role="group" aria-label={t('PDF 페이지 조절')} class={groupClasses}>
+        <STooltip content={t('이전 PDF 페이지')} class="h-full">
+          {(description) => (
+            <button
+              aria-describedby={description}
+              aria-label={t('이전 PDF 페이지')}
+              class={`${buttonClasses} h-full w-7 rounded-l-pill border-r border-divider`}
+              type="button"
+              disabled={props.pdf.page() <= 1}
+              onClick={() => props.pdf.turn(props.pdf.page() - 1)}
+            >
+              <SIcon name="minus" />
+            </button>
+          )}
+        </STooltip>
         <label class="flex items-center gap-1 px-2">
           <input
-            aria-label="PDF 페이지"
+            aria-label={t('PDF 페이지')}
             class={`w-8 ${inputClasses}`}
             type="number"
             min="1"
@@ -61,15 +69,20 @@ export const SPdfToolbar = (props: SPdfToolbarProps) => {
           />
           <span class="whitespace-nowrap text-muted">/ {props.pdf.pages()}</span>
         </label>
-        <button
-          aria-label="다음 PDF 페이지"
-          class={`${buttonClasses} h-full w-7 rounded-r-pill border-l border-divider`}
-          type="button"
-          disabled={props.pdf.page() >= props.pdf.pages()}
-          onClick={() => props.pdf.turn(props.pdf.page() + 1)}
-        >
-          <SIcon name="add" />
-        </button>
+        <STooltip content={t('다음 PDF 페이지')} class="h-full">
+          {(description) => (
+            <button
+              aria-describedby={description}
+              aria-label={t('다음 PDF 페이지')}
+              class={`${buttonClasses} h-full w-7 rounded-r-pill border-l border-divider`}
+              type="button"
+              disabled={props.pdf.page() >= props.pdf.pages()}
+              onClick={() => props.pdf.turn(props.pdf.page() + 1)}
+            >
+              <SIcon name="add" />
+            </button>
+          )}
+        </STooltip>
       </div>
       <button
         class="ui-document-button"
@@ -78,12 +91,12 @@ export const SPdfToolbar = (props: SPdfToolbarProps) => {
         disabled={props.pdf.pages() === 0}
         onClick={() => props.pdf.fit()}
       >
-        화면에 맞춤
+        {t('화면에 맞춤')}
       </button>
-      <div role="group" aria-label="PDF 배율 조절" class={groupClasses}>
+      <div role="group" aria-label={t('PDF 배율 조절')} class={groupClasses}>
         <label class="flex items-center gap-1 pl-3 pr-2">
           <input
-            aria-label="PDF 배율 (%)"
+            aria-label={t('PDF 배율 (%)')}
             class={`w-10 ${inputClasses}`}
             type="number"
             min={MIN_PERCENT}
@@ -97,35 +110,51 @@ export const SPdfToolbar = (props: SPdfToolbarProps) => {
           <span class="text-muted">%</span>
         </label>
         <div class="flex h-full w-7 flex-col border-l border-divider [--icon-size:12px]">
-          <button
-            aria-label="PDF 확대"
-            class={`${buttonClasses} min-h-0 flex-1 rounded-tr-pill border-b border-divider`}
-            type="button"
-            disabled={props.pdf.pages() === 0 || props.pdf.percent() >= MAX_PERCENT}
-            onClick={() => props.pdf.zoom(props.pdf.percent() + ZOOM_STEP)}
-          >
-            <SIcon name="add" />
-          </button>
-          <button
-            aria-label="PDF 축소"
-            class={`${buttonClasses} min-h-0 flex-1 rounded-br-pill`}
-            type="button"
-            disabled={props.pdf.pages() === 0 || props.pdf.percent() <= MIN_PERCENT}
-            onClick={() => props.pdf.zoom(props.pdf.percent() - ZOOM_STEP)}
-          >
-            <SIcon name="minus" />
-          </button>
+          <STooltip content={t('PDF 확대')} class="min-h-0 flex-1">
+            {(description) => (
+              <button
+                aria-describedby={description}
+                aria-label={t('PDF 확대')}
+                class={`${buttonClasses} min-h-0 flex-1 rounded-tr-pill border-b border-divider`}
+                type="button"
+                disabled={props.pdf.pages() === 0 || props.pdf.percent() >= MAX_PERCENT}
+                onClick={() => props.pdf.zoom(props.pdf.percent() + ZOOM_STEP)}
+              >
+                <SIcon name="add" />
+              </button>
+            )}
+          </STooltip>
+          <STooltip content={t('PDF 축소')} class="min-h-0 flex-1">
+            {(description) => (
+              <button
+                aria-describedby={description}
+                aria-label={t('PDF 축소')}
+                class={`${buttonClasses} min-h-0 flex-1 rounded-br-pill`}
+                type="button"
+                disabled={props.pdf.pages() === 0 || props.pdf.percent() <= MIN_PERCENT}
+                onClick={() => props.pdf.zoom(props.pdf.percent() - ZOOM_STEP)}
+              >
+                <SIcon name="minus" />
+              </button>
+            )}
+          </STooltip>
         </div>
       </div>
-      <button
-        aria-label="PDF 텍스트 검색"
-        class="ui-document-button"
-        type="button"
-        disabled={props.pdf.pages() === 0}
-        onClick={() => props.onFind?.()}
-      >
-        <SIcon name="search" /> 검색
-      </button>
+      <STooltip content={t('PDF 텍스트 검색')}>
+        {(description) => (
+          <button
+            aria-describedby={description}
+            aria-label={t('PDF 텍스트 검색')}
+            class="ui-document-button"
+            type="button"
+            disabled={props.pdf.pages() === 0}
+            onClick={() => props.onFind?.()}
+          >
+            <SIcon name="search" />
+            {t('검색')}
+          </button>
+        )}
+      </STooltip>
     </div>
   )
 }

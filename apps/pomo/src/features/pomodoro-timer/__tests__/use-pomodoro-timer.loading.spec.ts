@@ -7,7 +7,7 @@ import {
   STATE_STORAGE_KEY,
   TestBroadcastChannel,
 } from './fixtures/timer'
-import {createDeferred} from 'src/test-utils/create-deferred'
+import {createDeferred} from 'src/__tests__/create-deferred'
 import {PreferenceProvider} from 'src/hooks/use-preference'
 import {renderHook} from '@solidjs/testing-library'
 import {expect, it, vi} from 'vitest'
@@ -257,10 +257,16 @@ it('should abandon pending preference restoration after cleanup', async () => {
   const preference = createDeferred<boolean>()
   autoStartMocks.read.mockReturnValue(preference.promise)
   const view = renderHook(usePomodoroTimer, {wrapper: PreferenceProvider})
+  const completion = view.result.waitForInitialization()
+  const onComplete = vi.fn()
+  completion.then(onComplete)
 
   view.cleanup()
   preference.resolve(true)
   await preference.promise
+  await vi.advanceTimersByTimeAsync(0)
 
   expect(view.result.isAutoStartEnabled()).toBe(false)
+  expect(view.result.waitForInitialization()).toBe(completion)
+  expect(onComplete).not.toHaveBeenCalled()
 })

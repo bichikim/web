@@ -1,3 +1,4 @@
+import {useTranslations} from './locale/use-translations'
 import {createEffect, createSignal, For, Show} from 'solid-js'
 
 interface SFileResultsProps {
@@ -12,6 +13,7 @@ const handleMouseDown = (event: MouseEvent): void => {
 }
 
 export const SFileResults = (props: SFileResultsProps) => {
+  const t = useTranslations()
   const [list, setList] = createSignal<HTMLUListElement | null>(null)
   createEffect(() => {
     const index = props.activeIndex ?? -1
@@ -20,7 +22,7 @@ export const SFileResults = (props: SFileResultsProps) => {
   return (
     <section class="max-h-[min(16rem,calc(100dvh-96px))] overflow-auto p-2">
       <ul
-        aria-label="파일 검색 결과"
+        aria-label={t('파일 검색 결과')}
         class="m-0 list-none p-0"
         id="file-results"
         ref={setList}
@@ -50,7 +52,7 @@ export const SFileResults = (props: SFileResultsProps) => {
       </ul>
       <Show when={props.pending || props.files.length === 0}>
         <p class="m-0 px-3 py-2 text-xs text-muted" role="status">
-          {props.pending ? '파일을 찾는 중…' : '일치하는 파일이 없습니다.'}
+          {props.pending ? t('파일을 찾는 중…') : t('일치하는 파일이 없습니다.')}
         </p>
       </Show>
     </section>

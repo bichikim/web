@@ -1,4 +1,5 @@
 import {isObject} from 'src/utils/is-object'
+import {concatFloat32} from 'src/utils/concat-float32'
 import {clampUnit} from '../../utils/clamp-unit/index.ts'
 // oxlint-disable eslint-js/camelcase -- Supertonic ONNX tensor names are an external model contract.
 // oxlint-disable no-await-in-loop -- Each denoising step consumes the previous step.
@@ -380,23 +381,6 @@ const generateSamples = async (
   )
 }
 
-const joinAudioChunks = (chunks: ReadonlyArray<Float32Array>, sampleRate: number): Float32Array => {
-  const silenceLength = Math.floor(sampleRate * SUPERTONIC_SILENCE_SECONDS)
-  const totalLength =
-    chunks.reduce((total, chunk) => total + chunk.length, 0) +
-    Math.max(0, chunks.length - 1) * silenceLength
-  const samples = new Float32Array(totalLength)
-  let offset = 0
-  for (const [index, chunk] of chunks.entries()) {
-    samples.set(chunk, offset)
-    offset += chunk.length
-    if (index < chunks.length - 1) {
-      offset += silenceLength
-    }
-  }
-  return samples
-}
-
 const releaseState = async (state: SupertonicState): Promise<void> => {
   await Promise.all(Object.values(state.sessions).map((session) => session.release()))
 }
@@ -461,7 +445,10 @@ export const createSupertonicExecutor = () => {
         await generateSamples(state, voice, chunk, input.speed ?? 1, chunkContext),
       )
     }
-    const samples = joinAudioChunks(generatedChunks, state.config.ae.sample_rate)
+    const samples = concatFloat32(
+      {chunks: generatedChunks},
+      Math.floor(state.config.ae.sample_rate * SUPERTONIC_SILENCE_SECONDS),
+    )
     const bytes = createWaveBuffer(samples, state.config.ae.sample_rate)
     context.onProgress(100)
     return {

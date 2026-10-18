@@ -52,6 +52,16 @@ export const AdminDashboard = () => {
       </Show>
 
       <section class="mx-auto mt-12 grid w-full max-w-6xl gap-5 sm:grid-cols-2">
+        <A class={ADMIN_CARD_CLASSES} href="/admin/api-ai">
+          <p class="m-0 text-xs font-750 tracking-[0.18em] text-#e8bc88 uppercase">AI</p>
+          <h2 class="mb-0 mt-3 text-lg font-750">모델 사용 우선순위</h2>
+          <p class="mb-0 mt-3 max-w-xl text-sm leading-6 text-white/60">
+            타로와 역사 콘텐츠의 모델 순서와 자동 폴백을 설정합니다.
+          </p>
+          <span class="mt-6 inline-block text-sm font-700 text-#f3d1a9 group-hover:underline">
+            관리 페이지 열기 →
+          </span>
+        </A>
         <A class={ADMIN_CARD_CLASSES} href="/admin/music">
           <p class="m-0 text-xs font-750 tracking-[0.18em] text-#e8bc88 uppercase">Catalog</p>
           <h2 class="mb-0 mt-3 text-lg font-750">음악 / 앨범 관리</h2>

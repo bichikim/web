@@ -1,4 +1,4 @@
-import {clampDisplayedPercentage} from 'src/utils/clamp-displayed-percentage'
+import {clampFiniteNumber} from 'src/utils/clamp-finite-number'
 import {PTextarea} from 'src/components/p-textarea/PTextarea'
 import {cx} from 'class-variance-authority'
 import {createMemo, For, type JSX, Show} from 'solid-js'
@@ -8,6 +8,7 @@ import {TextMoodAnalysisResult} from './AnalysisResult'
 import {TextMoodEvaluation} from './Evaluation'
 import {TextMoodInsufficientResult} from './InsufficientResult'
 
+const MAXIMUM_PERCENTAGE = 100
 const SAMPLE_TEXTS = [
   '창문을 여니 시원한 바람이 불어왔다. 오늘은 좋은 일이 생길 것 같다.',
   '와, 정말 완벽하게 해냈네. 파일을 전부 지워 버리다니.',
@@ -35,7 +36,9 @@ const SECONDARY_BUTTON_CLASSES = cx(
 
 export const TextMoodLab = () => {
   const mood = useTextMood({initialText: SAMPLE_TEXTS[0]})
-  const modelPercentage = createMemo(() => clampDisplayedPercentage(mood.progress()))
+  const modelPercentage = createMemo(() =>
+    clampFiniteNumber(mood.progress(), 0, MAXIMUM_PERCENTAGE),
+  )
   const analysis = createMemo(() => {
     const state = mood.state()
     return state.status === 'complete' ? state.analysis : null

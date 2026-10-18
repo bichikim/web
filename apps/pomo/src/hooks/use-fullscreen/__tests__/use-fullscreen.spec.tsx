@@ -4,7 +4,7 @@ import {render, waitFor} from '@solidjs/testing-library'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {type FullscreenController, useFullscreen} from '..'
-import {createDeferred} from 'src/test-utils/create-deferred'
+import {createDeferred} from 'src/__tests__/create-deferred'
 
 interface FullscreenHarnessProps {
   readonly onController: (controller: FullscreenController) => void

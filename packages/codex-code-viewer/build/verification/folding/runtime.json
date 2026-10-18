@@ -1,0 +1,45 @@
+{
+  "date": "2026-10-16",
+  "host": "Codex in-app browser, local production build",
+  "smallFile": {
+    "nestedFunctionAndObjectFolding": true,
+    "originalLineNumbersPreserved": true,
+    "nestedFoldsRestoredOnExpand": true,
+    "keyboardEnter": true,
+    "ellipsisExpand": true,
+    "reopenedFileFoldsRestored": true,
+    "hiddenSearchDestinationRevealed": true,
+    "hiddenUsageDestinationRevealed": true,
+    "hiddenDefinitionDestinationRevealed": true
+  },
+  "editor": {
+    "keyboardEnter": true,
+    "foldingDoesNotEnableSave": true,
+    "hiddenSearchDestinationRevealed": true,
+    "gutterButtonsExposedToAssistiveTechnology": true
+  },
+  "largeFile": {
+    "readOnly": true,
+    "keyboardSpace": true,
+    "foldingHidesBody": true,
+    "focusRetainedOnReplacementButton": true,
+    "hiddenSearchDestinationRevealed": true
+  },
+  "languagesObservedInUI": ["TypeScript", "Python", "Ruby", "Rust"],
+  "indentationFallback": [
+    "Python",
+    "Ruby",
+    "Rust",
+    "Sass",
+    "SCSS",
+    "Less",
+    "TOML multiline values"
+  ],
+  "typecheck": "focused viewer and folding test graph passed",
+  "oxlint": "passed for codex-code-viewer",
+  "format": "pnpm format passed",
+  "unitTests": {
+    "passed": 58,
+    "failed": 0
+  }
+}

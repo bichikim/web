@@ -1,6 +1,6 @@
 /** @vitest-environment node */
 import {beforeEach, expect, it, vi} from 'vitest'
-import {createDeferred} from 'src/test-utils/create-deferred'
+import {createDeferred} from 'src/__tests__/create-deferred'
 import {requestCloudText} from 'src/features/cloud-text/client'
 import type {CloudTextResponse} from 'src/features/cloud-text/contracts'
 import {CLOUD_TEXT_RESPONSE} from 'src/features/cloud-text/__tests__/fixtures/response'

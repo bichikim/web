@@ -1,4 +1,5 @@
 import {AwsClient} from 'aws4fetch'
+import {requireEnvironmentValue} from '../require-environment-value'
 
 const DEFAULT_BUCKET = 'pomofi-audio'
 const DEFAULT_PUBLIC_ORIGIN = 'https://storage.pomofi.io'
@@ -45,19 +46,6 @@ export interface StoredAlbumCover {
 
 export interface StoredTrackArtwork {
   readonly artworkUrl: string
-}
-
-const requireEnvironmentValue = (
-  name: keyof PublicAssetsEnvironment,
-  value: string | undefined,
-): string => {
-  const normalizedValue = value?.trim()
-
-  if (normalizedValue === undefined || normalizedValue.length === 0) {
-    throw new TypeError(`${name} is not set`)
-  }
-
-  return normalizedValue
 }
 
 const createSigner = (environment: PublicAssetsEnvironment) => {

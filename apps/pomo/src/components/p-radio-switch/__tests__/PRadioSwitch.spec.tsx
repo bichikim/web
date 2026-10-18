@@ -164,6 +164,24 @@ describe('PRadioSwitch', () => {
     expect(onChange).toHaveBeenNthCalledWith(6, 'day')
   })
 
+  it('should wrap around enabled options in both directions', () => {
+    const onChange = vi.fn()
+    const options = [OPTIONS[0], {...OPTIONS[1], disabled: true}, OPTIONS[2]]
+    render(() => <PRadioSwitch label="시간" onChange={onChange} options={options} value="day" />)
+
+    const day = screen.getByRole('radio', {name: '낮'})
+    const automatic = screen.getByRole('radio', {name: '자동'})
+    expect(fireEvent.keyDown(day, {key: 'ArrowLeft'})).toBe(false)
+    expect(automatic).toHaveFocus()
+    expect(fireEvent.keyDown(automatic, {key: 'ArrowRight'})).toBe(false)
+    expect(day).toHaveFocus()
+    expect(fireEvent.keyDown(day, {key: 'ArrowUp'})).toBe(false)
+    expect(automatic).toHaveFocus()
+    expect(fireEvent.keyDown(automatic, {key: 'ArrowDown'})).toBe(false)
+    expect(day).toHaveFocus()
+    expect(onChange.mock.calls).toEqual([['auto'], ['day'], ['auto'], ['day']])
+  })
+
   it('should ignore unrelated keys and targets without enabled radio inputs', () => {
     const onChange = vi.fn()
     render(() => <PRadioSwitch label="시간" onChange={onChange} options={OPTIONS} value="day" />)

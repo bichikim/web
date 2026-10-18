@@ -1,6 +1,5 @@
 import {usePendingDeleteConfirmation} from 'src/hooks/use-pending-delete-confirmation'
 import {KeyedList} from '../keyed-list'
-import {clearHtmlMediaElement} from 'src/utils/clear-html-media-element'
 import {cx} from 'class-variance-authority'
 import {A} from '@solidjs/router'
 import {createSignal, onCleanup, Show} from 'solid-js'
@@ -49,7 +48,9 @@ export const DialogueLibrary = (props: DialogueLibraryProps) => {
     const audio = audioElement()
 
     if (audio !== undefined) {
-      clearHtmlMediaElement(audio)
+      audio.pause()
+      audio.removeAttribute('src')
+      audio.load()
     }
 
     if (playbackUrl !== null) {

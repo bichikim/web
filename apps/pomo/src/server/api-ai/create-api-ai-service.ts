@@ -12,6 +12,7 @@ import type {
   ApiAiServiceDependencies,
 } from './types'
 import {classifyApiAiSubmissionError} from './submission-error'
+import {isApiAiJobActive} from './status'
 
 const dispatchClaim = async (
   dependencies: ApiAiServiceDependencies,
@@ -30,7 +31,19 @@ const dispatchClaim = async (
   }
   let response: ApiAiResponse
   try {
-    response = await dependencies.adapter.submit(claim.provider, body, claim.attempt.id)
+    if (claim.provider.protocol === 'openrouter-responses-queue') {
+      if (dependencies.queue === undefined) {
+        throw new TypeError('Queued AI execution is not configured')
+      }
+      response = await dependencies.queue.adapter.submit(
+        claim.provider,
+        body,
+        claim.attempt.id,
+        Math.max(1, claim.attempt.deadlineAt.getTime() - dependencies.clock().getTime()),
+      )
+    } else {
+      response = await dependencies.adapter.submit(claim.provider, body, claim.attempt.id)
+    }
   } catch (error: unknown) {
     const now = dependencies.clock()
     await dependencies.repository.recordApiAiSubmissionError(
@@ -83,6 +96,9 @@ const processCallback = async (
     if (provider === undefined) {
       throw new Error(`AI callback provider is not configured: ${callback.providerId}`)
     }
+    if (provider.protocol === 'openrouter-responses-queue') {
+      throw new TypeError('Queued AI providers do not issue background callbacks')
+    }
     const response = await dependencies.adapter.retrieve(provider, callback.responseId)
     const recorded = await dependencies.repository.findApiAiResponseAttempt(
       provider.id,
@@ -127,20 +143,14 @@ const processCallbacks = async (
   }
 }
 
-const recoverAttempt = async (
+const recoverSubmittedAttempt = async (
   dependencies: ApiAiServiceDependencies,
   providers: ReadonlyArray<ApiAiProvider>,
   attempt: ApiAiAttempt,
   now: Date,
 ): Promise<void> => {
-  const claimed = await dependencies.repository.claimApiAiAttemptRecovery(attempt.id, now)
-  const provider = claimed
-    ? providers.find((candidate) => candidate.id === attempt.providerId)
-    : undefined
-  if (!claimed) {
-    return
-  }
-  if (attempt.responseId === null) {
+  const provider = providers.find((candidate) => candidate.id === attempt.providerId)
+  if (attempt.responseId === null || provider?.protocol === 'openrouter-responses-queue') {
     if (attempt.deadlineAt <= now) {
       await dependencies.repository.failUnknownApiAiJob(attempt.jobId, now)
     }
@@ -170,6 +180,36 @@ const recoverAttempt = async (
   }
 }
 
+const recoverAttempt = async (
+  dependencies: ApiAiServiceDependencies,
+  providers: ReadonlyArray<ApiAiProvider>,
+  attempt: ApiAiAttempt,
+  now: Date,
+): Promise<void> => {
+  if (await dependencies.repository.claimApiAiAttemptRecovery(attempt.id, now)) {
+    await recoverSubmittedAttempt(dependencies, providers, attempt, now)
+  }
+}
+
+const monitorBackgroundJob = async (
+  dependencies: ApiAiServiceDependencies,
+  jobId: string,
+): Promise<void> => {
+  const job = await dependencies.repository.findApiAiJob(jobId)
+  if (job === null || !isApiAiJobActive(job.status) || job.activeAttemptId === null) {
+    return
+  }
+  const attempt = await dependencies.repository.findApiAiAttempt(job.activeAttemptId)
+  if (attempt !== null) {
+    await recoverSubmittedAttempt(
+      dependencies,
+      dependencies.providers(),
+      attempt,
+      dependencies.clock(),
+    )
+  }
+}
+
 const recoverAttempts = async (
   dependencies: ApiAiServiceDependencies,
   providers: ReadonlyArray<ApiAiProvider>,
@@ -188,11 +228,34 @@ const recoverAttempts = async (
 
 /** Composes durable dispatch, callback completion, fallback and recovery. */
 export const createApiAiService = (dependencies: ApiAiServiceDependencies): ApiAiService => {
-  const dispatchJob = async (
+  const executeJob = async (
     jobId: string,
     deadline = dependencies.clock().getTime() + API_AI_POLICY.invocationMilliseconds,
+    queued = false,
   ): Promise<void> => {
-    const providers = dependencies.providers()
+    const catalog = dependencies.providers()
+    const providers = await dependencies.repository.resolveApiAiJobProviders(
+      jobId,
+      catalog,
+      dependencies.defaultProviders?.() ?? catalog,
+    )
+    const queuedProviders = providers.filter(
+      (provider) => provider.protocol === 'openrouter-responses-queue',
+    )
+    if (!queued && (queuedProviders.length > 0 || dependencies.queue?.monitorBackground === true)) {
+      const job = await dependencies.repository.findApiAiJob(jobId)
+      if (
+        job?.status === 'queued' &&
+        (queuedProviders.some((provider) => provider.models[job.kind] !== undefined) ||
+          (dependencies.queue?.monitorBackground === true && job.kind === 'cloud-text'))
+      ) {
+        if (dependencies.queue === undefined) {
+          throw new TypeError('Queued AI execution is not configured')
+        }
+        await dependencies.queue.enqueue(jobId)
+        return
+      }
+    }
     for (let round = 0; round < API_AI_POLICY.maximumAttempts; round += 1) {
       if (dependencies.clock().getTime() >= deadline) {
         return
@@ -209,9 +272,29 @@ export const createApiAiService = (dependencies: ApiAiServiceDependencies): ApiA
       await dispatchClaim(dependencies, claim)
     }
   }
+  const dispatchJob = (jobId: string, deadline?: number): Promise<void> =>
+    executeJob(jobId, deadline)
+  const executeQueuedJob = async (jobId: string): Promise<void> => {
+    const deadline = dependencies.clock().getTime() + API_AI_POLICY.invocationMilliseconds
+    await executeJob(jobId, deadline, true)
+    if (dependencies.queue?.monitorBackground === true) {
+      await monitorBackgroundJob(dependencies, jobId)
+    }
+    await deliverJobs(dependencies, deadline)
+    const job = await dependencies.repository.findApiAiJob(jobId)
+    if (
+      job?.status === 'queued' ||
+      (dependencies.queue?.monitorBackground === true &&
+        job !== null &&
+        isApiAiJobActive(job.status))
+    ) {
+      throw new Error('AI job is waiting for completion or recovery')
+    }
+  }
   const dispatch = async (
     deadline = dependencies.clock().getTime() + API_AI_POLICY.invocationMilliseconds,
   ): Promise<void> => {
+    await dependencies.repository.expireQueuedApiAiJobs(dependencies.clock())
     for (const job of await dependencies.repository.listQueuedApiAiJobs(dependencies.clock())) {
       try {
         await dispatchJob(job.id, deadline)
@@ -235,5 +318,5 @@ export const createApiAiService = (dependencies: ApiAiServiceDependencies): ApiA
     await deliverJobs(dependencies, deadline)
     await dispatch(deadline)
   }
-  return {complete, dispatch, dispatchJob, recover}
+  return {complete, dispatch, dispatchJob, executeQueuedJob, recover}
 }

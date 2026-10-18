@@ -31,6 +31,12 @@ export const SFileIcon = (props: SFileIconProps) => {
         <Match when={fileFormat(props.path)?.kind === 'table'}>
           <span class="i-tabler-table h-4 w-4 text-muted" />
         </Match>
+        <Match when={fileFormat(props.path)?.kind === 'spreadsheet'}>
+          <span class="i-tabler-table h-4 w-4 text-green-600" />
+        </Match>
+        <Match when={fileFormat(props.path)?.kind === 'word'}>
+          <span class="i-tabler-file-text h-4 w-4 text-blue-600" />
+        </Match>
         <Match when={fileFormat(props.path)?.kind === 'image'}>
           <span class="i-tabler-photo h-4 w-4 text-muted" />
         </Match>
