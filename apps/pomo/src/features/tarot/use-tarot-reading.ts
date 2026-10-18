@@ -26,6 +26,17 @@ type TarotReadingStatus =
   | 'preparing'
   | 'unsupported'
 
+interface TarotModelSelection {
+  readonly modelId: DefaultTextModelId
+  /** 같은 모델로 돌아와도 이전 검사를 구분하는 선택 순서입니다. */
+  readonly revision: number
+}
+
+interface TarotReadingContext {
+  locale: TarotLocale
+  question: string
+}
+
 export interface UseTarotReadingProps {
   readonly locale: Accessor<TarotLocale>
 }
@@ -57,7 +68,7 @@ export interface TarotReadingController {
 export const useTarotReading = (props: UseTarotReadingProps): TarotReadingController => {
   const defaultModelId = useDefaultTextModel()
   const defaultModelSelection = createMemo(
-    (previous: {readonly modelId: DefaultTextModelId; readonly revision: number}) => {
+    (previous: TarotModelSelection) => {
       const modelId = defaultModelId()
       return modelId === previous.modelId ? previous : {modelId, revision: previous.revision + 1}
     },
@@ -87,7 +98,7 @@ export const useTarotReading = (props: UseTarotReadingProps): TarotReadingContro
   const [error, setError] = createSignal<string | null>(null)
   const [modelProgress, setModelProgress] = createSignal<number | null>(null)
   const [missingText, setMissingText] = createSignal(false)
-  const readingContext: {locale: TarotLocale; question: string} = {
+  const readingContext: TarotReadingContext = {
     locale: props.locale(),
     question: '',
   }
