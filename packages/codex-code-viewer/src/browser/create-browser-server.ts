@@ -1,3 +1,4 @@
+import {UPDATE_INSTALL_TIMEOUT_MS} from '../shared/plugin-updates'
 import {randomBytes} from 'node:crypto'
 import {once} from 'node:events'
 import {createServer, type IncomingMessage, type ServerResponse} from 'node:http'
@@ -289,13 +290,13 @@ export const createBrowserServer = async (
         sendJson(response, {content: [], structuredContent: {retained: true}})
         return
       }
-      const opening = input.name === 'code.open'
       const result = CallToolResultSchema.parse(
         await options.client.callTool(forwardTool(input, connection), undefined, {
           signal: controller.signal,
+          ...(input.name === 'code.update-install' ? {timeout: UPDATE_INSTALL_TIMEOUT_MS} : {}),
         }),
       )
-      if (opening && !result.isError) {
+      if (input.name === 'code.open' && !result.isError) {
         sendJson(response, {
           ...result,
           structuredContent: {...connection, ...result.structuredContent},

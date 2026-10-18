@@ -88,6 +88,8 @@ export const english = {
     'Could not start the bundled Rust analyzer. Check the plugin installation and reopen the viewer.',
   '다른 곳에서 파일이 변경되어 저장하지 않았습니다. 초안을 복사하거나 변경을 버린 뒤 원본을 다시 확인해 주세요.':
     'The file changed elsewhere and was not saved. Copy your draft or discard changes, then check the original.',
+  '다른 창에서 업데이트를 설치 중입니다. 완료 후 다시 확인해 주세요.':
+    'Another window is installing an update. Check again when it finishes.',
   '다음 PDF 페이지': 'Next PDF page',
   '다음 검색 결과': 'Next search result',
   '다음 결과 (Enter)': 'Next result (Enter)',
@@ -116,6 +118,7 @@ export const english = {
   '미저장 변경을 먼저 저장하거나 버린 뒤 파일 작업을 해 주세요.':
     'Save or discard unsaved changes before performing file operations.',
   '미저장 변경이 있습니다': 'Unsaved changes',
+  '버전을 확인하지 못했습니다. 다시 시도해 주세요.': 'Could not check for updates. Try again.',
   변경: 'Rename',
   '변경 내용 채팅에 추가': 'Add changes to chat',
   '변경 내용을 다음 채팅 메시지에 추가했습니다.': 'Added changes to your next chat message.',
@@ -131,6 +134,7 @@ export const english = {
   사용처: 'References',
   삭제: 'Delete',
   '삭제 중…': 'Deleting…',
+  '새 버전 {version}': 'New version {version}',
   '새 파일': 'New file',
   '새 폴더': 'New folder',
   새로고침: 'Refresh',
@@ -141,6 +145,12 @@ export const english = {
     'Added the selected file and lines to your next chat message.',
   설정: 'Settings',
   '설정 닫기': 'Close settings',
+  '설치하지 못했습니다. 다시 시도하거나 터미널에서 실행해 주세요.':
+    'Installation failed. Retry or run in a terminal.',
+  '설치했습니다. Claude Desktop에서 새 로컬 세션을 열어 주세요.':
+    'Installed. Open a new local session in Claude Desktop.',
+  '설치했습니다. Codex 앱을 완전히 종료하고 다시 열어 주세요.':
+    'Installed. Quit Codex completely and reopen it.',
   '셀 내용을 표시합니다. 수식은 다시 계산하지 않습니다.':
     'Showing cell values. Formulas are not recalculated.',
   '소스 코드': 'Source code',
@@ -153,6 +163,11 @@ export const english = {
   '알림 닫기': 'Dismiss notification',
   '앞으로 이동': 'Go forward',
   언어: 'Language',
+  업데이트: 'Updates',
+  '업데이트 설치 중…': 'Installing update…',
+  '업데이트 확인': 'Check for updates',
+  '업데이트 확인 중…': 'Checking for updates…',
+  업데이트하기: 'Update',
   '엑셀 파일을 읽을 수 없습니다. 손상되었거나 암호화된 파일인지 확인해 주세요.':
     'Cannot read this spreadsheet. Check whether it is damaged or encrypted.',
   '연결된 작업 폴더가 없습니다. 위에 파일의 절대 경로를 입력해 주세요.':
@@ -227,6 +242,7 @@ export const english = {
     'Could not confirm the attachment card. Check the Claude composer.',
   '첨부할 내용 {count}개': 'Pending context: {count}',
   '첫 행을 열 이름으로': 'Use first row as headers',
+  '최신 버전입니다.': 'You’re up to date.',
   취소: 'Cancel',
   '코드 복사': 'Copy code',
   '코드 작업': 'Code actions',
@@ -308,6 +324,7 @@ export const english = {
     'Pinch or Ctrl+wheel to zoom. Drag or use arrow keys to pan. Use +, -, 0, or Home to adjust zoom.',
   '행 필터링': 'Filter rows',
   '행 필터링…': 'Filter rows…',
+  '현재 버전 {version}': 'Current version {version}',
   '현재 파일 위치로 이동': 'Reveal current file',
   '현재 파일에서 찾기…': 'Find in current file…',
   '화면에 맞춤': 'Fit to view',
