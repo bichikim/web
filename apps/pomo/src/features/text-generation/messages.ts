@@ -24,3 +24,8 @@ export interface TextGenerationErrorResponse {
   readonly restartRequired: boolean
   readonly type: 'error'
 }
+
+export type TextModelPreparationResponse =
+  | TextGenerationErrorResponse
+  | TextGenerationLoadingResponse
+  | TextGenerationReadyResponse

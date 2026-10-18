@@ -31,18 +31,20 @@ const createWriter = (options: WriterOptions): DialogueWriterController => ({
   generateWithPreparation: vi.fn(),
   isBusy: () => false,
   isModelReady: () => options.isModelReady ?? false,
+  modelId: () => 'gemma-4-e2b',
   output: () => options.output ?? '',
   prepare: vi.fn(),
   progress: () => 42,
   release: vi.fn(),
   request: () => '질문',
+  selectModel: vi.fn(),
   setRequest: vi.fn(),
   state: () => options.state,
   statusMessage: () => '현재 상태 설명',
 })
 
 describe('ModelPanel', () => {
-  it('should describe every writer status with its activation label', () => {
+  it('should describe loading and ready statuses with their activation labels', () => {
     render(() => (
       <>
         <ModelPanel
@@ -71,6 +73,18 @@ describe('ModelPanel', () => {
           writer={createWriter({isModelReady: true, state: {status: 'ready'}})}
           disabled
         />
+      </>
+    ))
+
+    expect(screen.getByRole('button', {name: '모델 준비 중…'})).toBeDisabled()
+    expect(screen.getByRole('button', {name: '답변 만드는 중…'})).toBeDisabled()
+    expect(screen.getAllByRole('button', {name: '이 모델로 답변 만들기'})).toHaveLength(2)
+    expect(screen.getAllByText('한국어 답변 품질을 비교합니다.')).toHaveLength(4)
+  })
+
+  it('should describe error and inactive statuses with their activation labels', () => {
+    render(() => (
+      <>
         <ModelPanel
           model={model}
           onActivate={vi.fn()}
@@ -101,11 +115,9 @@ describe('ModelPanel', () => {
       </>
     ))
 
-    expect(screen.getByRole('button', {name: '모델 준비 중…'})).toBeDisabled()
-    expect(screen.getByRole('button', {name: '답변 만드는 중…'})).toBeDisabled()
-    expect(screen.getAllByRole('button', {name: '이 모델로 답변 만들기'})).toHaveLength(3)
+    expect(screen.getAllByRole('button', {name: '이 모델로 답변 만들기'})).toHaveLength(1)
     expect(screen.getAllByRole('button', {name: 'Qwen 준비하기'})).toHaveLength(3)
-    expect(screen.getAllByText('한국어 답변 품질을 비교합니다.')).toHaveLength(8)
+    expect(screen.getAllByText('한국어 답변 품질을 비교합니다.')).toHaveLength(4)
   })
 
   it('should activate only panels whose model can generate or prepare', () => {

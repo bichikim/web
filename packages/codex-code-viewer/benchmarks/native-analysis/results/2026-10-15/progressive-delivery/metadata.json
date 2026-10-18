@@ -1,0 +1,20 @@
+{
+  "date": "2026-10-15T17:35:54.041884+09:00",
+  "platform": "macOS-26.5.2-arm64-arm-64bit-Mach-O",
+  "node": "v24.15.0",
+  "native": "Version 7.0.2",
+  "binarySha256": "a82f731365ad69d5c4c15f5e18fba4584bf3b7b839960172a76c3462b5114bf2",
+  "before": "/tmp/ts7-completion/routing-after/existing/workspace.js",
+  "after": "/tmp/ts7-progress/serial/existing/workspace.js",
+  "first": "First nonempty server location batch; not browser paint.",
+  "progress": "Time until the cumulative location count reaches 22 (getWindow) or 6 (JavaScript).",
+  "scope": "Same current monorepo for both variants; alternating before/after order; fresh CODEX_HOME per process. No own tests, build, profile, or source edits during collection. Shared host; OS caches not flushed.",
+  "samples": {
+    "getWindow": 7,
+    "javascript": 7
+  },
+  "additionalJavaScript": "Four additional pairs were added after the initial three because completion latency varied widely. All slow samples are retained.",
+  "requery": "Same-session completed navigation cache with revision validation retained.",
+  "profile": "Separate final profile, not part of the comparison cohort. Metadata and TS7 preparation remain significant.",
+  "conclusion": "First result stays below 1s in all 14 modified cold samples. Early getWindow delivery improves; JavaScript total completion has no confirmed improvement."
+}

@@ -8,6 +8,7 @@ import type {
   ProviderEventsResult,
 } from './types'
 import {aggregateProviderEvents} from './aggregate-provider-events'
+import {listPaginatedEvents} from './list-paginated-events'
 import {formatCalendarDate} from './format-calendar-date'
 import {createOAuthTokenMethods} from './create-oauth-token-methods'
 import {paginate, PAGINATION_LIMITS} from './paginate'
@@ -68,6 +69,7 @@ const normalizeEvent = (
   event: z.infer<typeof graphEventSchema>,
   calendarLabel: string,
   displayTimeZoneFormatter: Intl.DateTimeFormat,
+  includeExactInstantRange: boolean,
 ): ProviderEvent | null => {
   if (event.isCancelled === true) {
     return null
@@ -83,6 +85,9 @@ const normalizeEvent = (
     allDay: event.isAllDay,
     calendarLabel,
     end,
+    ...(event.isAllDay && includeExactInstantRange
+      ? {exactInstantRange: {end: toUtcIso(event.end), start: toUtcIso(event.start)}}
+      : {}),
     id: event.id,
     start,
     title: event.subject?.trim() || '제목 없는 일정',
@@ -128,36 +133,25 @@ const listCalendarEvents = async ({
   initialUrl.searchParams.set('$top', String(PAGINATION_LIMITS.events.pageSize))
   initialUrl.searchParams.set('endDateTime', eventOptions.end)
   initialUrl.searchParams.set('startDateTime', eventOptions.start)
-  let unavailableCalendars = 0
-  const result = await paginate<ProviderEvent, URL>({
-    loadPage: async (nextUrl) => {
-      try {
-        const url = nextUrl ?? initialUrl
-        const response = await fetch(url, {headers})
-        if (!response.ok) {
-          throw new Error(`Microsoft Calendar events request failed with status ${response.status}`)
-        }
+  return listPaginatedEvents<URL>(async (nextUrl) => {
+    const url = nextUrl ?? initialUrl
+    const response = await fetch(url, {headers})
+    if (!response.ok) {
+      throw new Error(`Microsoft Calendar events request failed with status ${response.status}`)
+    }
 
-        const body = graphEventsSchema.parse(await response.json())
-        const items = body.value.flatMap((event) => {
-          const normalized = normalizeEvent(event, calendarLabel, displayTimeZoneFormatter)
-          return normalized === null ? [] : [normalized]
-        })
-        return {items, nextCursor: readNextUrl(body['@odata.nextLink'])}
-      } catch {
-        unavailableCalendars = 1
-        return {items: [], nextCursor: null}
-      }
-    },
-    maximumItems: PAGINATION_LIMITS.events.maximumItems,
-    maximumPages: PAGINATION_LIMITS.events.maximumPages,
+    const body = graphEventsSchema.parse(await response.json())
+    const items = body.value.flatMap((event) => {
+      const normalized = normalizeEvent(
+        event,
+        calendarLabel,
+        displayTimeZoneFormatter,
+        eventOptions.lookupInstant !== undefined,
+      )
+      return normalized === null ? [] : [normalized]
+    })
+    return {items, nextCursor: readNextUrl(body['@odata.nextLink'])}
   })
-
-  return {
-    events: result.items,
-    truncated: unavailableCalendars === 0 && result.truncated,
-    unavailableCalendars,
-  }
 }
 
 interface CalendarListResult {

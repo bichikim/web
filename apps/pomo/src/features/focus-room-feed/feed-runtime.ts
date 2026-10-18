@@ -2,11 +2,11 @@ import {getDownloadPercentage} from 'src/features/download-progress'
 import {getFeedRequestUrl} from './feed-request-url'
 import {httpFetch} from '../http-client'
 import type {FeedDialogueMetadata} from './feed-dialogue-schema'
+import {isDevelopmentFeedPath} from './is-development-feed-path'
 
 const FEED_REQUEST_TIMEOUT_MS = 15_000
 
 export const FEED_POLLING_INTERVAL_MS = 60_000
-const DEV_FEED_PATHS = new Set(['/__dev/feeds/atom.xml', '/__dev/feeds/rss.xml'])
 
 export const getFeedGenerationProgress = (loadedBytes: number, totalBytes: number) =>
   totalBytes > 0 ? getDownloadPercentage(loadedBytes, totalBytes) : 0
@@ -24,7 +24,7 @@ const resolveDesktopDevelopmentFeedUrl = (url: string, localOrigin: string | und
     const parsedUrl = new URL(url)
     const pathname = parsedUrl.pathname.replace(/\/$/u, '')
     if (
-      !DEV_FEED_PATHS.has(pathname) ||
+      !isDevelopmentFeedPath(pathname) ||
       (parsedUrl.origin !== localOrigin &&
         parsedUrl.origin !== import.meta.env.VITE_POMO_PUBLIC_ORIGIN)
     ) {

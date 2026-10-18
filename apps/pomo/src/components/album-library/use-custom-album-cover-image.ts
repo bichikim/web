@@ -1,7 +1,15 @@
-import {type Accessor, createEffect, createSignal, onCleanup} from 'solid-js'
+import {
+  type Accessor,
+  catchError,
+  createEffect,
+  createMemo,
+  createSignal,
+  onCleanup,
+} from 'solid-js'
 
 import * as m from '@paraglide/message'
-import {replaceBlobObjectUrl} from '../../features/blob-object-url'
+import {useImageBitmap} from 'src/hooks/use-image-bitmap'
+import {useObjectUrl} from 'src/hooks/use-object-url'
 
 interface UseCustomAlbumCoverImageProps {
   readonly file: File
@@ -18,61 +26,42 @@ export interface CustomAlbumCoverImageController {
 export const useCustomAlbumCoverImage = (
   props: UseCustomAlbumCoverImageProps,
 ): CustomAlbumCoverImageController => {
-  const [imageBitmap, setImageBitmap] = createSignal<ImageBitmap | null>(null)
-  const [previewUrl, setPreviewUrl] = createSignal<string | null>(null)
-  const [errorMessage, setErrorMessage] = createSignal<string | null>(null)
-  const [isLoading, setIsLoading] = createSignal(true)
+  const source = createMemo(() => (props.isOpen ? props.file : null))
+  const [current, setCurrent] = createSignal<CustomAlbumCoverImageController | null>(null)
 
   createEffect(() => {
-    if (!props.isOpen) {
+    const file = source()
+    if (file === null) {
       return
     }
 
-    const {file} = props
-    setErrorMessage(null)
-    setImageBitmap(null)
-    setIsLoading(true)
-
-    if (typeof globalThis.createImageBitmap === 'undefined') {
-      setErrorMessage(m.album_custom_error_cover_invalid())
-      setIsLoading(false)
-      return
-    }
-
-    const objectUrl = replaceBlobObjectUrl(null, () => file)
-    setPreviewUrl(objectUrl)
-    let isCancelled = false
-    let decodedImage: ImageBitmap | null = null
-
-    globalThis
-      .createImageBitmap(file)
-      .then((image) => {
-        if (isCancelled) {
-          image.close()
-          return
-        }
-
-        decodedImage = image
-        setImageBitmap(image)
-        setIsLoading(false)
-      })
-      .catch(() => {
-        if (!isCancelled) {
-          setErrorMessage(m.album_custom_error_cover_invalid())
-          setIsLoading(false)
-        }
-      })
-
-    onCleanup(() => {
-      isCancelled = true
-      decodedImage?.close()
-      setImageBitmap(null)
-      setPreviewUrl(null)
-      if (objectUrl !== null) {
-        replaceBlobObjectUrl(objectUrl, () => null)
-      }
+    // Scope both resources to this file so preview readiness cannot belong to a previous source.
+    const isSupported = typeof globalThis.createImageBitmap !== 'undefined'
+    const [previewFailed, setPreviewFailed] = createSignal(false)
+    const objectUrl = catchError(
+      () => useObjectUrl(() => (isSupported ? file : null)),
+      () => setPreviewFailed(true),
+    )
+    const image = useImageBitmap(() => {
+      return !isSupported || objectUrl?.() !== undefined ? file : null
     })
+    const errorMessage = createMemo(() => {
+      return previewFailed() || image.error() !== null ? m.album_custom_error_cover_invalid() : null
+    })
+
+    setCurrent({
+      errorMessage,
+      imageBitmap: image.imageBitmap,
+      isLoading: image.isLoading,
+      previewUrl: () => objectUrl?.() ?? null,
+    })
+    onCleanup(() => setCurrent(null))
   })
 
-  return {errorMessage, imageBitmap, isLoading, previewUrl}
+  return {
+    errorMessage: () => current()?.errorMessage() ?? null,
+    imageBitmap: () => current()?.imageBitmap() ?? null,
+    isLoading: () => current()?.isLoading() ?? false,
+    previewUrl: () => current()?.previewUrl() ?? null,
+  }
 }

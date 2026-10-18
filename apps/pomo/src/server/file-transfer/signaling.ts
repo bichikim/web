@@ -1,4 +1,5 @@
 // oxlint-disable no-magic-numbers -- Handshake limits and WebSocket close codes are protocol constants.
+import {Buffer} from 'node:buffer'
 import {defineWebSocketHandler} from 'nitro'
 
 interface Peer {
@@ -61,9 +62,7 @@ const createSession = (peer: Peer): void => {
     creator: peer,
     expiresAt: Date.now() + HANDSHAKE_DURATION_MS,
     id: crypto.randomUUID(),
-    secret: [...crypto.getRandomValues(new Uint8Array(32))]
-      .map((byte) => byte.toString(16).padStart(2, '0'))
-      .join(''),
+    secret: Buffer.from(crypto.getRandomValues(new Uint8Array(32))).toString('hex'),
   }
   sessions.set(session.id, session)
   memberships.set(peer.id, session)

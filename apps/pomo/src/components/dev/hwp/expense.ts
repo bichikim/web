@@ -1,4 +1,6 @@
 import {isObject} from 'src/utils/is-object'
+import {sumBy} from 'es-toolkit/math'
+import {normalizePasteNumericInput} from 'src/utils/normalize-paste-numeric-input'
 import {parseDate} from 'src/features/civil-date'
 import {iterateJsonObjectSlices} from 'src/utils/json'
 import {isNonBlankString} from 'src/utils/is-non-blank-string'
@@ -32,16 +34,14 @@ export type ExpenseParseResult =
 
 const MAXIMUM_ITEMS = 20
 const EXPENSE_LINE_PATTERN =
-  /^\s*(?<name>.+?)\s+(?<unitPrice>[\d,]+)\s*원(?:\s+(?<quantity>[\d,]+)\s*개)?\s*$/u
+  /^\s*(?<name>.+?)\s+(?<unitPrice>[\d０-９,]+)\s*원(?:\s+(?<quantity>[\d,]+)\s*개)?\s*$/u
 const DATE_LINE_PATTERN =
-  /^\s*(?<year>\d{4})-(?<month>\d{1,2})-(?<day>\d{1,2})(?:\s+[월화수목금토일]요일)?\s*$/u
+  /^\s*(?<year>[0-9０-９]{4})-(?<month>[0-9０-９]{1,2})-(?<day>[0-9０-９]{1,2})(?:\s+[월화수목금토일]요일)?\s*$/u
 
 const invalid = (code: ExpenseParseError['code']): ExpenseParseResult => ({
   error: {code},
   ok: false,
 })
-
-const isRecord = (value: unknown): value is Record<string, unknown> => isObject(value)
 
 const toPositiveInteger = (value: unknown) => {
   if (typeof value === 'number' && Number.isSafeInteger(value) && value > 0) {
@@ -60,7 +60,7 @@ const toPositiveInteger = (value: unknown) => {
   return Number.isSafeInteger(parsed) && parsed > 0 ? parsed : null
 }
 
-const readExpenseDate = (value: string) => {
+const readExpenseDate = (value: string, allowFullwidthDateDigits = false) => {
   const dateMatch = DATE_LINE_PATTERN.exec(value)
   const year = dateMatch?.groups?.year
   const month = dateMatch?.groups?.month
@@ -69,8 +69,17 @@ const readExpenseDate = (value: string) => {
     return null
   }
 
-  const normalizedDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`
-  return parseDate(normalizedDate) === null ? null : `${year}-${month}-${day}`
+  if (!allowFullwidthDateDigits && [year, month, day].some((part) => /[０-９]/u.test(part))) {
+    return null
+  }
+
+  const normalizedYear = normalizePasteNumericInput(year)
+  const normalizedMonth = normalizePasteNumericInput(month)
+  const normalizedDay = normalizePasteNumericInput(day)
+  const normalizedDate = `${normalizedYear}-${normalizedMonth.padStart(2, '0')}-${normalizedDay.padStart(2, '0')}`
+  return parseDate(normalizedDate) === null
+    ? null
+    : `${normalizedYear}-${normalizedMonth}-${normalizedDay}`
 }
 
 const readDate = (value: unknown) => {
@@ -104,7 +113,7 @@ const readItems = (value: unknown) => {
 
   const items: Array<ExpenseItem> = []
   for (const item of value) {
-    if (!isRecord(item) || typeof item.name !== 'string' || !isNonBlankString(item.name)) {
+    if (!isObject(item) || typeof item.name !== 'string' || !isNonBlankString(item.name)) {
       return null
     }
 
@@ -136,7 +145,7 @@ const createExpenseForm = (
   questions: ReadonlyArray<string>,
   overflowCode: ExpenseParseError['code'] = 'invalid-shape',
 ): ExpenseParseResult => {
-  const total = items.reduce((sum, item) => sum + item.amount, 0)
+  const total = sumBy(items, (item) => item.amount)
   if (!Number.isSafeInteger(total)) {
     return invalid(overflowCode)
   }
@@ -152,14 +161,15 @@ const parseExpenseAssistantCandidate = (json: string): ExpenseParseResult => {
     return invalid('invalid-json')
   }
 
-  if (!isRecord(parsed)) {
+  if (!isObject(parsed)) {
     return invalid('invalid-shape')
   }
 
-  const date = readDate(parsed.date)
+  const dateValue = typeof parsed.date === 'string' ? parsed.date.trim() : parsed.date
+  const date = readDate(dateValue)
   const questions = readQuestions(parsed.questions)
   const items = readItems(parsed.items)
-  if (parsed.date !== undefined && parsed.date !== null && date === null) {
+  if (dateValue !== undefined && dateValue !== null && dateValue !== '' && date === null) {
     return invalid('invalid-shape')
   }
   if (questions === null || items === null) {
@@ -197,14 +207,14 @@ export const parseExpenseText = (text: string): ExpenseParseResult => {
   const items: Array<ExpenseItem> = []
 
   for (const line of lines) {
-    const dateValue = readExpenseDate(line)
+    const dateValue = readExpenseDate(line, true)
     if (dateValue === null) {
       const expenseMatch = EXPENSE_LINE_PATTERN.exec(line)
       if (expenseMatch?.groups === undefined) {
         return invalid('invalid-input')
       }
 
-      const unitPrice = toPositiveInteger(expenseMatch.groups.unitPrice)
+      const unitPrice = toPositiveInteger(normalizePasteNumericInput(expenseMatch.groups.unitPrice))
       const quantity = toPositiveInteger(expenseMatch.groups.quantity ?? '1')
       const name = expenseMatch.groups.name.trim()
       if (unitPrice === null || quantity === null || name.length === 0) {

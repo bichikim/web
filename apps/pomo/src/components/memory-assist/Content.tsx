@@ -7,11 +7,19 @@ import {MemoryMemoList} from './Memos'
 import {PictureDiary} from './PictureDiary'
 import {LanguageLearningLibrary} from '../language-learning/Library'
 import {LanguageLearningWords} from '../language-learning/Words'
+import type {TarotReadingController, TarotSpeechController} from '../../features/tarot'
+import {Tarot} from '../tarot/Tarot'
+import {Saju} from '../saju/Saju'
+import type {SajuReadingController} from '../../features/saju'
+import {getLocale} from '@paraglide/runtime'
 
 interface PMemoryAssistContentProps {
   readonly weatherState?: WeatherState
   readonly calendarRevision?: number
   readonly onRefreshCalendar?: () => void
+  readonly tarot: TarotReadingController
+  readonly tarotSpeech: TarotSpeechController
+  readonly saju: SajuReadingController
 }
 export const PMemoryAssistContent = (props: PMemoryAssistContentProps) => (
   <>
@@ -39,6 +47,12 @@ export const PMemoryAssistContent = (props: PMemoryAssistContentProps) => (
           />
         }
       />
+    </Tabs.Content>
+    <Tabs.Content value="tarot">
+      <Tarot locale={getLocale()} reading={props.tarot} speech={props.tarotSpeech} />
+    </Tabs.Content>
+    <Tabs.Content value="saju">
+      <Saju reading={props.saju} />
     </Tabs.Content>
   </>
 )

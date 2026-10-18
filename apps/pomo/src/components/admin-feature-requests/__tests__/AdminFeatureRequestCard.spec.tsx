@@ -22,6 +22,34 @@ beforeEach(() => {
   vi.clearAllMocks()
 })
 
+it('should approve a pending request and open voting with the selected goal', async () => {
+  const onSave = vi.fn(async (): Promise<string | null> => null)
+  render(() => <AdminFeatureRequestCard disabled={false} onSave={onSave} request={REQUEST} />)
+
+  expect(screen.getByText(m.admin_feature_request_pending_description())).toBeVisible()
+  expect(screen.getByRole('button', {name: m.feature_request_status_requested()})).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  )
+  expect(screen.getByRole('button', {name: m.feature_request_status_voting()})).toHaveAttribute(
+    'aria-pressed',
+    'false',
+  )
+  expect(screen.queryByRole('spinbutton')).not.toBeInTheDocument()
+  expect(
+    screen.queryByRole('button', {name: m.admin_feature_request_approve()}),
+  ).not.toBeInTheDocument()
+  fireEvent.click(screen.getByRole('button', {name: m.feature_request_status_voting()}))
+  fireEvent.input(screen.getByRole('spinbutton'), {target: {value: '15'}})
+  fireEvent.click(screen.getByRole('button', {name: m.admin_feature_request_approve()}))
+
+  expect(onSave).toHaveBeenCalledWith({
+    requestId: REQUEST.id,
+    status: 'voting',
+    targetVoteCount: 15,
+  })
+})
+
 it('should validate a required vote goal before saving a voting status', async () => {
   const onSave = vi.fn(async (): Promise<string | null> => null)
   render(() => <AdminFeatureRequestCard disabled={false} onSave={onSave} request={REQUEST} />)
@@ -41,7 +69,13 @@ it('should validate a required vote goal before saving a voting status', async (
 
 it('should save a selected status and display a save error', async () => {
   const onSave = vi.fn(async (): Promise<string | null> => null)
-  render(() => <AdminFeatureRequestCard disabled={false} onSave={onSave} request={REQUEST} />)
+  render(() => (
+    <AdminFeatureRequestCard
+      disabled={false}
+      onSave={onSave}
+      request={{...REQUEST, status: 'voting', targetVoteCount: 10}}
+    />
+  ))
 
   fireEvent.click(screen.getByRole('button', {name: m.feature_request_status_confirmed()}))
   const target = screen.getByRole('spinbutton', {

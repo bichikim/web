@@ -2,7 +2,7 @@ import {filter, map, pipe, take, uniqBy} from 'es-toolkit/fp'
 
 export const MAXIMUM_LANGUAGE_LEARNING_TAGS = 10
 export const MAXIMUM_LANGUAGE_LEARNING_TAG_LENGTH = 30
-export const LANGUAGE_LEARNING_TAG_DELIMITER_PATTERN = /[,;\uFF0C\n]/u
+export const LANGUAGE_LEARNING_TAG_DELIMITER_PATTERN = /[,;\uFF0C\uFF1B\n]/u
 
 const tagGraphemeSegmenter = new Intl.Segmenter(undefined, {granularity: 'grapheme'})
 

@@ -1,10 +1,11 @@
 import {z} from 'zod'
+import {asyncPipe} from '@winter-love/utils'
 
 import {apiJson, apiJsonRequest} from '../api-json'
 import {readStoredAppSession} from '../user-auth/app-session'
 import {createCalendarPromptContext} from './prompt'
 import {createCalendarQuery} from './query'
-import {CALENDAR_PROVIDERS, type CalendarEvent} from './types'
+import {CALENDAR_PROVIDERS, type CalendarEvent, type CalendarEventLookup} from './types'
 
 const MAXIMUM_PROMPT_EVENTS = 40
 
@@ -22,11 +23,7 @@ export interface CalendarEvents {
   readonly unavailableConnections: number
 }
 
-interface ListCalendarEventsOptions {
-  readonly end: string
-  readonly start: string
-  readonly timeZone?: string
-}
+type ListCalendarEventsOptions = CalendarEventLookup & {readonly timeZone?: string}
 
 const calendarConnectionSchema: z.ZodType<CalendarConnection> = z.object({
   accountLabel: z.string(),
@@ -40,6 +37,7 @@ const calendarEventSchema: z.ZodType<CalendarEvent> = z.object({
   accountLabel: z.string(),
   allDay: z.boolean(),
   calendarLabel: z.string(),
+  calendarTimeZone: z.string().optional(),
   end: z.string(),
   id: z.string(),
   provider: z.enum(CALENDAR_PROVIDERS),
@@ -111,7 +109,7 @@ export const listCalendarEvents = async (
   options: ListCalendarEventsOptions,
 ): Promise<CalendarEvents> => {
   const timeZone = options.timeZone ?? Intl.DateTimeFormat().resolvedOptions().timeZone
-  const search = new URLSearchParams({end: options.end, start: options.start, timeZone})
+  const search = new URLSearchParams({...options, timeZone})
   return apiJson(`calendar/events?${search}`, {
     ...(await createRequestOptions()),
     responseSchema: calendarEventsSchema,
@@ -129,6 +127,12 @@ export const openCalendarAuthorization = async (authorizationUrl: string): Promi
   globalThis.location.assign(authorizationUrl)
 }
 
+/** Requests provider consent and hands its validated URL to the current platform's navigation API. */
+export const authorizeCalendarConnection = asyncPipe(
+  createCalendarAuthorization,
+  openCalendarAuthorization,
+)
+
 /** Loads only the calendar range implied by the current question and returns local-model grounding. */
 export const loadCalendarPromptContext = async (
   options: LoadCalendarPromptContextOptions,
@@ -143,6 +147,14 @@ export const loadCalendarPromptContext = async (
 
   if (query === null) {
     return null
+  }
+
+  if ('empty' in query) {
+    if ((await listCalendarConnections()).length === 0) {
+      return '연결된 캘린더가 없습니다. 일정이 없다고 답하지 말고 캘린더 연결이 필요하다고 안내하세요.'
+    }
+
+    return '요청한 남은 일정 시간대가 이미 종료되어 조회하지 않았습니다. 다음 날로 넘기지 않았습니다.'
   }
 
   const response = await listCalendarEvents({...query, timeZone})

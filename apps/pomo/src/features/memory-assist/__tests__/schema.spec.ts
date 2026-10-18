@@ -121,6 +121,40 @@ it('should preserve an explicitly consumed exact reminder and its delayed delive
   })
 })
 
+it('should not restore an exact occurrence already recorded as delivered', () => {
+  const exactReminderAt = '2026-09-04T04:00:00.000Z'
+  const result = parseMemoryMemos([
+    {
+      createdAt: '2026-09-04T03:00:00.000Z',
+      dialogueId: null,
+      exactReminderAt,
+      id: 'memo-1',
+      nextExactReminderAt: exactReminderAt,
+      nextRecallAt: null,
+      recallMode: 'none',
+      reinforcementIndex: 0,
+      reminderEvents: [
+        {
+          deliveredAt: '2026-09-04T04:05:00.000Z',
+          kind: 'exact',
+          scheduledAt: exactReminderAt,
+        },
+      ],
+      reminderHistory: ['2026-09-04T04:05:00.000Z'],
+      text: '여권 갱신하기',
+      updatedAt: '2026-09-04T04:05:00.000Z',
+      version: 1,
+    },
+  ])
+  const memo = result?.[0]
+
+  const dueReminder =
+    memo === undefined ? null : getDueMemoryReminder(memo, new Date('2026-09-04T04:10:00.000Z'))
+
+  expect(dueReminder).toBeNull()
+  expect(memo?.nextExactReminderAt).toBeNull()
+})
+
 it('should preserve a normalized legacy memo when it is parsed again', () => {
   const result = parseMemoryMemos([
     {
@@ -232,6 +266,7 @@ it('should not treat a recall event as a consumed exact reminder', () => {
       dialogueId: null,
       exactReminderAt,
       id: 'memo-1',
+      nextExactReminderAt: exactReminderAt,
       nextRecallAt: null,
       recallMode: 'none',
       reinforcementIndex: 0,

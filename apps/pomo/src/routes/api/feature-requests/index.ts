@@ -3,22 +3,24 @@ import {invalidJsonBodyResponse} from 'src/server/http/invalid-json-body-respons
 import type {APIEvent} from '@solidjs/start/server'
 import {z} from 'zod'
 
+import {
+  MAXIMUM_FEATURE_REQUEST_DESCRIPTION_LENGTH,
+  MAXIMUM_FEATURE_REQUEST_TITLE_LENGTH,
+} from 'src/features/feature-requests/limits'
 import {resolveUserRequestOrUnavailable} from 'src/server/auth/resolve-user-request-or-unavailable'
 import {readJsonBody} from 'src/server/http/body'
 import {noStoreJson} from 'src/server/http/response'
 import {createFeatureRequest, listFeatureRequests} from 'src/server/repositories/feature-requests'
 
 const MAXIMUM_BODY_SIZE = 8192
-const MAXIMUM_DESCRIPTION_LENGTH = 2000
-const MAXIMUM_TITLE_LENGTH = 120
 const HTTP_BAD_REQUEST = 400
 const HTTP_CREATED = 201
 const HTTP_INTERNAL_SERVER_ERROR = 500
 const HTTP_UNAUTHORIZED = 401
 
 const createFeatureRequestSchema = z.object({
-  description: z.string().trim().max(MAXIMUM_DESCRIPTION_LENGTH),
-  title: z.string().trim().min(1).max(MAXIMUM_TITLE_LENGTH),
+  description: z.string().trim().max(MAXIMUM_FEATURE_REQUEST_DESCRIPTION_LENGTH),
+  title: z.string().trim().min(1).max(MAXIMUM_FEATURE_REQUEST_TITLE_LENGTH),
 })
 
 const resolveIdentity = async (event: APIEvent) => {

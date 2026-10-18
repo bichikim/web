@@ -1,10 +1,10 @@
 import {createSerialTaskQueue} from 'src/utils/create-serial-task-queue'
 import {
   createLatestStorageWriter,
+  getTossRuntimeStorage,
   getWebRuntimeStorage,
   hasNativeStorageBridge,
   parseStorageJson,
-  readTossStorageJson,
   writeTossStorageJson,
   writeWebStorageJson,
 } from 'src/utils/runtime-storage'
@@ -15,8 +15,8 @@ export const MEMORY_MEMOS_CHANGED_EVENT = 'pomo:memory-memos-changed'
 
 export interface MemoryMemoStorage {
   readonly usesTossStorage: () => boolean
-  readonly readToss: () => Promise<ReadonlyArray<MemoryMemo> | null>
-  readonly readWeb: () => ReadonlyArray<MemoryMemo> | null
+  readonly readToss: () => Promise<string | null>
+  readonly readWeb: () => string | null
   readonly writeToss: (memos: ReadonlyArray<MemoryMemo>) => Promise<void>
   readonly writeWeb: (memos: ReadonlyArray<MemoryMemo>) => unknown | null
 }
@@ -31,10 +31,22 @@ export interface MemoryMemosChangedEventDetail {
   readonly revision: number
 }
 
+type StoredMemoryMemos =
+  | {readonly status: 'invalid' | 'missing'}
+  | {readonly memos: ReadonlyArray<MemoryMemo>; readonly status: 'valid'}
+
+const parseStoredMemoryMemos = (storedValue: string | null): StoredMemoryMemos => {
+  if (storedValue === null) {
+    return {status: 'missing'}
+  }
+
+  const memos = parseStorageJson(storedValue, parseMemoryMemos)
+  return memos === null ? {status: 'invalid'} : {memos, status: 'valid'}
+}
+
 const createRuntimeStorage = (): MemoryMemoStorage => ({
-  readToss: () => readTossStorageJson(MEMORY_MEMOS_STORAGE_KEY, parseMemoryMemos),
-  readWeb: () =>
-    parseStorageJson(getWebRuntimeStorage().getItem(MEMORY_MEMOS_STORAGE_KEY), parseMemoryMemos),
+  readToss: () => getTossRuntimeStorage().read(MEMORY_MEMOS_STORAGE_KEY),
+  readWeb: () => getWebRuntimeStorage().getItem(MEMORY_MEMOS_STORAGE_KEY),
   usesTossStorage: hasNativeStorageBridge,
   writeToss: createLatestStorageWriter(MEMORY_MEMOS_STORAGE_KEY, writeTossStorageJson),
   writeWeb: (memos) => writeWebStorageJson(MEMORY_MEMOS_STORAGE_KEY, memos),
@@ -45,35 +57,37 @@ export const createMemoryMemoRepository = (
 ): MemoryMemoRepository => ({
   async read() {
     if (!storage.usesTossStorage()) {
-      return storage.readWeb() ?? []
+      const webRead = parseStoredMemoryMemos(storage.readWeb())
+      return webRead.status === 'valid' ? webRead.memos : []
     }
 
     try {
-      const tossMemos = await storage.readToss()
+      const tossRead = parseStoredMemoryMemos(await storage.readToss())
 
-      if (tossMemos !== null) {
-        const webError = storage.writeWeb(tossMemos)
+      if (tossRead.status === 'valid') {
+        const webError = storage.writeWeb(tossRead.memos)
         if (webError !== null) {
           throw webError
         }
 
-        return tossMemos
+        return tossRead.memos
       }
 
-      const webMemos = storage.readWeb()
-      if (webMemos !== null) {
-        await storage.writeToss(webMemos).catch((error: unknown) => {
+      const webRead = parseStoredMemoryMemos(storage.readWeb())
+      if (webRead.status !== 'valid') {
+        return []
+      }
+
+      if (tossRead.status === 'missing') {
+        await storage.writeToss(webRead.memos).catch((error: unknown) => {
           globalThis.reportError?.(error)
         })
-        return webMemos
       }
 
-      storage.writeWeb([])
+      return webRead.memos
     } catch (error) {
       throw new Error('Failed to read memory memos.', {cause: error})
     }
-
-    return []
   },
   async write(memos) {
     const snapshot = parseMemoryMemos(memos)

@@ -7,16 +7,17 @@ import {createBoneDeformer, editBoneRest} from '../bone-editing'
 import {getSceneNode} from '../scene-graph'
 import {DeformerWeights} from '../DeformerWeights'
 
+const boneDocument = createBoneDeformer(createDemoDocument(), ['mesh-preview'])!
+const editableBoneDocument = editBoneRest({
+  document: boneDocument,
+  nodeId: 'bone',
+  operation: 'append',
+  point: {x: 900, y: 240},
+})!
+
 afterEach(cleanup)
 test('should select a vertex, edit normalized bone weights and return to automatic weighting', () => {
-  const [document, setDocument] = createSignal(
-    editBoneRest({
-      document: createBoneDeformer(createDemoDocument(), ['mesh-preview'])!,
-      nodeId: 'bone',
-      operation: 'append',
-      point: {x: 900, y: 240},
-    })!,
-  )
+  const [document, setDocument] = createSignal(editableBoneDocument)
   const node = () => getSceneNode(document(), 'bone') as PuppetSceneDeformerNode
   const view = render(() => (
     <DeformerWeights document={document()} node={node()} onDocumentChange={setDocument} />
@@ -34,12 +35,7 @@ test('should select a vertex, edit normalized bone weights and return to automat
 })
 
 test('should paint multiple vertices as one undoable stroke and stop after capture loss', () => {
-  const initial = editBoneRest({
-    document: createBoneDeformer(createDemoDocument(), ['mesh-preview'])!,
-    nodeId: 'bone',
-    operation: 'append',
-    point: {x: 900, y: 240},
-  })!
+  const initial = editableBoneDocument
   const [document, setDocument] = createSignal(initial)
   const onEditStart = vi.fn()
   const onEditEnd = vi.fn()
@@ -81,14 +77,7 @@ test('should paint multiple vertices as one undoable stroke and stop after captu
 })
 
 test('should select multiple vertices with Shift and assign one weight to all', () => {
-  const [document, setDocument] = createSignal(
-    editBoneRest({
-      document: createBoneDeformer(createDemoDocument(), ['mesh-preview'])!,
-      nodeId: 'bone',
-      operation: 'append',
-      point: {x: 900, y: 240},
-    })!,
-  )
+  const [document, setDocument] = createSignal(editableBoneDocument)
   const view = render(() => (
     <DeformerWeights
       document={document()}
@@ -109,7 +98,7 @@ test('should select multiple vertices with Shift and assign one weight to all', 
 })
 
 test('should subtract influence from a single bone with the brush', () => {
-  const initial = createBoneDeformer(createDemoDocument(), ['mesh-preview'])!
+  const initial = boneDocument
   const [document, setDocument] = createSignal(initial)
   const onEditStart = vi.fn()
   const onEditEnd = vi.fn()

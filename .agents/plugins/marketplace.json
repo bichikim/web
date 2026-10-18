@@ -1,0 +1,22 @@
+{
+  "plugins": [
+    {
+      "name": "codex-code-viewer",
+      "source": {
+        "package": "@winter-love/codex-code-viewer",
+        "source": "npm",
+        "version": "0.6.0",
+        "registry": "https://registry.npmjs.org"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Developer Tools"
+    }
+  ],
+  "name": "winter-love-plugins",
+  "interface": {
+    "displayName": "Winter Love Plugins"
+  }
+}

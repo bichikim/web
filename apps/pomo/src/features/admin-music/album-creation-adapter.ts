@@ -3,9 +3,9 @@ import {z} from 'zod'
 
 import {type AlbumCreationResult, type AlbumCreationServices} from './album-creation'
 import {ALBUM_LOCALES, type AlbumDraftData} from './album-draft'
+import {getAlbumDraftStorage} from './album-draft-persistence'
 import {uploadAlbumCover} from './cover-upload'
 
-const getAlbumDraftStorage = () => import('./album-draft-storage')
 const HTTP_CONFLICT = 409
 const payloadMismatchSchema = z.object({error: z.literal('album_creation_payload_mismatch')})
 
@@ -56,10 +56,17 @@ const createAlbum = async (
   }
 }
 
-const clearDraft = async (coverDraftId: string | null): Promise<boolean> => {
+const clearDraft = async (
+  coverDraftId: string | null,
+  expectedDraft?: AlbumDraftData,
+): Promise<boolean> => {
   try {
     const {deleteAlbumDraft} = await getAlbumDraftStorage()
-    return (await deleteAlbumDraft(coverDraftId)).success
+    const result =
+      expectedDraft === undefined
+        ? await deleteAlbumDraft(coverDraftId)
+        : await deleteAlbumDraft(coverDraftId, {expectedDraft})
+    return result.success
   } catch (error) {
     console.warn('Failed to clear the created album draft.', error)
     return false

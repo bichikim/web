@@ -2,10 +2,88 @@
 import {describe, expect, it} from 'vitest'
 
 import {advanceMemoryMemo, createMemoryMemo, editMemoryMemo} from '../schedule'
+import {parseMemoryMemos} from '../schema'
 
 const NOW = new Date('2026-09-04T03:00:00.000Z')
 
 describe('editMemoryMemo', () => {
+  it.each([
+    {
+      events: [
+        {kind: 'exact' as const, scheduledAt: '2026-09-04T04:00:00.000Z'},
+        {kind: 'exact' as const, scheduledAt: '2026-09-04T04:10:00.000Z'},
+        {kind: 'recall' as const, scheduledAt: '2026-09-04T04:15:00.000Z'},
+      ],
+      expected: '2026-09-04T04:25:00.000Z',
+      history: [],
+      scenario: 'the last exact event before a trailing recall event',
+    },
+    {
+      events: [
+        {kind: 'exact' as const, scheduledAt: '2026-09-04T04:20:00.000Z'},
+        {kind: 'exact' as const, scheduledAt: '2026-09-04T04:10:00.000Z'},
+      ],
+      expected: '2026-09-04T04:25:00.000Z',
+      history: [],
+      scenario: 'the last stored exact event when timestamps are out of order',
+    },
+    {
+      events: [{kind: 'recall' as const, scheduledAt: '2026-09-04T04:50:00.000Z'}],
+      expected: '2026-09-04T04:15:00.000Z',
+      history: ['2026-09-04T04:00:00.000Z'],
+      scenario: 'legacy history when no exact event exists',
+    },
+    {
+      events: [],
+      expected: '2026-09-04T04:35:00.000Z',
+      history: [],
+      scenario: 'the pending occurrence when both histories are empty',
+    },
+  ])(
+    'should recompute from $scenario without changing the stored memo',
+    ({events, expected, history}) => {
+      const memo = parseMemoryMemos([
+        {
+          ...createMemoryMemo({
+            exactReminderAt: '2026-09-04T04:00:00.000Z',
+            exactReminderRepeatIntervalMinutes: 10,
+            exactReminderRepeatUntilMinutes: 60,
+            id: 'memo-1',
+            now: NOW,
+            random: () => 0,
+            recallMode: 'none',
+            text: '여권 갱신하기',
+          }),
+          nextExactReminderAt: '2026-09-04T04:30:00.000Z',
+          reminderEvents: events.map((event) => ({...event, deliveredAt: event.scheduledAt})),
+          reminderHistory: history,
+        },
+      ])?.[0]
+      expect(memo).toBeDefined()
+      if (memo === undefined) {
+        return
+      }
+      const snapshot = structuredClone(memo)
+      Object.freeze(memo)
+      memo.reminderEvents.forEach(Object.freeze)
+
+      const edited = editMemoryMemo({
+        exactReminderAt: memo.exactReminderAt,
+        exactReminderRepeatIntervalMinutes: 15,
+        exactReminderRepeatUntilMinutes: 60,
+        memo,
+        now: new Date('2026-09-04T04:12:00.000Z'),
+        random: () => 0,
+        recallMode: 'none',
+        text: memo.text,
+      })
+
+      expect(edited.nextExactReminderAt).toBe(expected)
+      expect(edited.reminderEvents).toBe(memo.reminderEvents)
+      expect(memo).toEqual(snapshot)
+    },
+  )
+
   it('should recompute the pending exact occurrence when the repeat interval changes', () => {
     const first = advanceMemoryMemo({
       kind: 'exact',

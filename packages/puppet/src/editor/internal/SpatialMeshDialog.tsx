@@ -1,8 +1,9 @@
+import {useSpatialMeshImport} from './use-spatial-mesh-import'
+import {KeyedFor} from './KeyedFor'
 import {Dialog} from '@kobalte/core/dialog'
 import {createEffect, createMemo, createSignal, For, Show} from 'solid-js'
 import {EditorButton, EditorNumberField, useEditorPortalMount} from '../../design-system'
 import {createSpatialMeshObject} from '../../deformation/create-spatial-mesh-object'
-import {importSpatialMesh} from '../../deformation/import-spatial-mesh'
 import {
   PUPPET_SPATIAL_OBJECT_MAX_DEPTH,
   type PuppetPart,
@@ -26,6 +27,7 @@ import {
   duplicateSpatialEditorObject,
   findSpatialEditorObject,
   legacySpatialObjects,
+  listSpatialEditorRows,
   removeSpatialEditorObject,
   splitSpatialEditorObject,
   updateSpatialEditorObject,
@@ -51,21 +53,9 @@ interface SpatialMeshDialogProps {
   readonly onOpenChange: (open: boolean) => void
 }
 
-interface ObjectRow {
-  readonly object: PuppetSpatialObject
-  readonly depth: number
-}
-
 const AXES = ['X', 'Y', 'Z'] as const
 const MIN_SHAPE_SIZE = 0.01
-const MAX_FILE_BYTES = 20_000_000
 const SHAPE_SPACING_RATIO = 0.35
-
-const listRows = (objects: ReadonlyArray<PuppetSpatialObject>, depth = 0): ObjectRow[] =>
-  objects.flatMap((object) => [
-    {depth, object},
-    ...(object.kind === 'group' ? listRows(object.children, depth + 1) : []),
-  ])
 
 // eslint-disable-next-line max-lines-per-function -- The editor coordinates selection, history, and the modal controls.
 export const SpatialMeshDialog = (props: SpatialMeshDialogProps) => {
@@ -80,7 +70,16 @@ export const SpatialMeshDialog = (props: SpatialMeshDialogProps) => {
   const targetBounds = createMemo(() =>
     getSpatialTargetBounds(props.targetParts ?? props.referenceParts ?? [], props.bounds),
   )
+  const {importFile, resetImport} = useSpatialMeshImport({
+    bounds: () => props.bounds,
+    onError: setImportError,
+    onImport: (object) => {
+      commit([...objects(), object])
+      setSelection([object.id])
+    },
+  })
   createEffect(() => {
+    resetImport()
     if (!props.isOpen) {
       return
     }
@@ -101,7 +100,7 @@ export const SpatialMeshDialog = (props: SpatialMeshDialogProps) => {
     setFuture([])
     setObjects(next)
   }
-  const rows = createMemo(() => listRows(objects()))
+  const rows = createMemo(() => listSpatialEditorRows(objects()))
   const selectedRoots = createMemo(() =>
     objects().filter((object) => selection().includes(object.id)),
   )
@@ -136,23 +135,6 @@ export const SpatialMeshDialog = (props: SpatialMeshDialogProps) => {
           }
     commit([...objects(), object])
     setSelection([object.id])
-  }
-  const importFile = async (file: File | undefined) => {
-    if (file === undefined) {
-      return
-    }
-    try {
-      if (file.size > MAX_FILE_BYTES) {
-        throw new Error('20MB 이하의 GLB 파일을 선택해 주세요.')
-      }
-      const mesh = importSpatialMesh(await file.arrayBuffer(), file.name, props.bounds)
-      const object = createSpatialMeshObject(mesh)
-      commit([...objects(), object])
-      setSelection([object.id])
-      setImportError(undefined)
-    } catch (error) {
-      setImportError(error instanceof Error ? error.message : 'GLB 메시를 가져올 수 없습니다.')
-    }
   }
   const fitPrimitive = () => {
     const current = selected()
@@ -310,43 +292,46 @@ export const SpatialMeshDialog = (props: SpatialMeshDialogProps) => {
                     fallback={<p>위 도구 막대에서 도형이나 메시를 추가하세요.</p>}
                   >
                     <ul class="spatial-mesh-object-list">
-                      <For each={rows()}>
+                      <KeyedFor each={rows()} key={(row) => row.object.id}>
                         {(row) => (
                           <li
-                            data-depth={row.depth}
-                            data-selected={selection().includes(row.object.id)}
+                            data-depth={row().depth}
+                            data-selected={selection().includes(row().object.id)}
                           >
                             <input
                               type="checkbox"
-                              aria-label={`${row.object.name} 합성 선택`}
-                              checked={selection().includes(row.object.id)}
-                              disabled={row.depth > 0}
+                              aria-label={`${row().object.name} 합성 선택`}
+                              checked={selection().includes(row().object.id)}
+                              disabled={row().depth > 0}
                               onChange={(event) =>
-                                toggleSelection(row.object.id, event.currentTarget.checked)
+                                toggleSelection(row().object.id, event.currentTarget.checked)
                               }
                             />
                             <button
                               type="button"
-                              aria-label={`${row.object.name} 편집`}
-                              onClick={() => setSelection([row.object.id])}
+                              aria-label={`${row().object.name} 편집`}
+                              onClick={() => setSelection([row().object.id])}
                             >
                               <span
                                 aria-hidden="true"
                                 class={`puppet-icon ${
-                                  row.object.kind === 'group'
+                                  row().object.kind === 'group'
                                     ? 'puppet-icon-squares'
-                                    : row.object.kind === 'mesh'
+                                    : row().object.kind === 'mesh'
                                       ? 'puppet-icon-file-import'
                                       : 'puppet-icon-cube'
                                 }`}
                               />{' '}
-                              {row.object.name}
+                              {row().object.name}
                             </button>
                             <button
                               type="button"
-                              aria-label={`${row.object.name} ${row.object.visible ? '숨기기' : '보이기'}`}
+                              aria-label={[
+                                row().object.name,
+                                row().object.visible ? '숨기기' : '보이기',
+                              ].join(' ')}
                               onClick={() =>
-                                change(row.object.id, (object) => ({
+                                change(row().object.id, (object) => ({
                                   ...object,
                                   visible: !object.visible,
                                 }))
@@ -354,19 +339,23 @@ export const SpatialMeshDialog = (props: SpatialMeshDialogProps) => {
                             >
                               <span
                                 aria-hidden="true"
-                                class={`puppet-icon ${row.object.visible ? 'puppet-icon-eye' : 'puppet-icon-eye-off'}`}
+                                class="puppet-icon"
+                                classList={{
+                                  'puppet-icon-eye': row().object.visible,
+                                  'puppet-icon-eye-off': !row().object.visible,
+                                }}
                               />
                             </button>
                             <button
                               type="button"
-                              aria-label={`${row.object.name} 삭제`}
-                              onClick={() => remove(row.object.id)}
+                              aria-label={`${row().object.name} 삭제`}
+                              onClick={() => remove(row().object.id)}
                             >
                               <span aria-hidden="true" class="puppet-icon puppet-icon-trash" />
                             </button>
                           </li>
                         )}
-                      </For>
+                      </KeyedFor>
                     </ul>
                   </Show>
                   <div class="spatial-mesh-combine-controls">
@@ -479,7 +468,7 @@ export const SpatialMeshDialog = (props: SpatialMeshDialogProps) => {
                             </Show>
                             <For each={['center', 'rotation', 'size'] as const}>
                               {(key) => (
-                                <div class="grid grid-cols-3 gap-2">
+                                <div class="grid grid-cols-3 gap-editor-field">
                                   <For each={AXES}>
                                     {(axis, index) => {
                                       let editRecorded = false
@@ -550,7 +539,7 @@ export const SpatialMeshDialog = (props: SpatialMeshDialogProps) => {
                             </Show>
                           </>
                         </Show>
-                        <div class="flex flex-wrap gap-2">
+                        <div class="flex flex-wrap gap-editor-field">
                           <Show when={object().kind === 'group'}>
                             <EditorButton type="button" onClick={() => split(object())}>
                               합치기 해제

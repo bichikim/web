@@ -1,0 +1,787 @@
+{
+  "total": 78,
+  "textAreas": "Blank: app overlays localized card number and title",
+  "template": "front-layout.png",
+  "cards": [
+    {
+      "id": "fool",
+      "name": {
+        "en": "The Fool",
+        "ko": "광대"
+      },
+      "scene": "Pomo takes a first step along a sunlit garden path at the edge of a gentle hill, carrying a small travel satchel with a single white rose. A tiny friendly white dog accompanies her. Open sky, hopeful curiosity, beginning a journey; no dangerous fall. DISTINCT CAMERA, POSE AND GAZE: Full-body traveling scene; Pomo's head upright, eyes looking upward toward image-left with an open hopeful smile, as in the already accepted first card. DISTINCT WARDROBE: Keep this card's original light sage cardigan and cream top as one cozy travel outfit; other cards use different wardrobes.. Preserve her face, bob hair and coral square hair clip. This outfit overrides wardrobe in either reference.",
+      "image": "../../../src/features/tarot/assets/cards/fool.png",
+      "generated": true
+    },
+    {
+      "id": "magician",
+      "name": {
+        "en": "The Magician",
+        "ko": "마법사"
+      },
+      "scene": "Pomo confidently works at a cozy wooden study table. Clearly display one wooden wand, one golden cup, one ceremonial sword and one golden pentacle coin on the tabletop, all distinct. One hand lifts a wand, the other points to the table; creativity becoming action, subtle infinity-shaped light, flowers. DISTINCT CAMERA, POSE AND GAZE: Medium-close hands-and-face composition; a focused downward gaze is appropriate for this one crafting card. DISTINCT WARDROBE: Light ivory linen button-up blouse with rolled sleeves, a narrow terracotta waistcoat and tailored dark trousers; no knitwear, no turtleneck, no cardigan.. Preserve her face, bob hair and coral square hair clip. This outfit overrides wardrobe in either reference.",
+      "image": "../../../src/features/tarot/assets/cards/magician.png",
+      "generated": true
+    },
+    {
+      "id": "high-priestess",
+      "name": {
+        "en": "The High Priestess",
+        "ko": "여사제"
+      },
+      "scene": "Pomo calmly sits between two elegant dark and pale wooden pillars in a moonlit library, holding a closed blank book. A soft crescent moon and subtle pomegranate botanical pattern evoke intuition and hidden knowledge. DISTINCT CAMERA, POSE AND GAZE: Centered symmetrical portrait at eye level. Pomo faces STRAIGHT FORWARD with her chin level and both eyes looking directly at the viewer, composed and mysterious. Do NOT copy the reference's downward-left tilt. DISTINCT WARDROBE: Lightweight midnight-blue silk robe with restrained gold botanical embroidery over a pale flowing dress, elegant loose sleeves; no wool or sweater.. Preserve her face, bob hair and coral square hair clip. This outfit overrides wardrobe in either reference.",
+      "image": "../../../src/features/tarot/assets/cards/high-priestess.png",
+      "generated": true
+    },
+    {
+      "id": "empress",
+      "name": {
+        "en": "The Empress",
+        "ko": "여황제"
+      },
+      "scene": "Pomo rests in a lush garden chair surrounded by ripe wheat, flowers and abundant greenery, gently tending a small plant. Flowing sage and cream clothing, nurturing warmth, creative abundance, soft daylight. DISTINCT CAMERA, POSE AND GAZE: Medium-wide seated garden composition. Pomo's face is in a clear THREE-QUARTER view facing IMAGE-RIGHT, chin level, warmly smiling toward the plant on her right. Nose and gaze point right, not left. DISTINCT WARDROBE: Airy ivory linen sundress with subtle flower embroidery and short puff sleeves, a light green sash; bare forearms, no cardigan or turtleneck.. Preserve her face, bob hair and coral square hair clip. This outfit overrides wardrobe in either reference.",
+      "image": "../../../src/features/tarot/assets/cards/empress.png",
+      "generated": true
+    },
+    {
+      "id": "emperor",
+      "name": {
+        "en": "The Emperor",
+        "ko": "황제"
+      },
+      "scene": "Pomo sits upright in a solid carved oak chair on a stone terrace, wearing a structured burgundy coat over cream clothing. A small globe and sturdy staff, mountain horizon, calm authority, boundaries and stability. DISTINCT CAMERA, POSE AND GAZE: Slightly low camera, waist-up composition with broad upright shoulders. Pomo faces nearly STRAIGHT FORWARD, makes direct eye contact, chin slightly raised, calm and firm expression, no head tilt. DISTINCT WARDROBE: Crisp white collared shirt, fitted burgundy vest and tailored cream trousers; light formal fabrics, no coat, sweater or turtleneck.. Preserve her face, bob hair and coral square hair clip. This outfit overrides wardrobe in either reference.",
+      "image": "../../../src/features/tarot/assets/cards/emperor.png",
+      "generated": true
+    },
+    {
+      "id": "hierophant",
+      "name": {
+        "en": "The Hierophant",
+        "ko": "교황"
+      },
+      "scene": "Pomo teaches at a warm wooden table in a quiet old library, with two attentive young adult learners and an open book containing blank pages. Paired crossed keys in foreground, shared wisdom, tradition and learning. DISTINCT CAMERA, POSE AND GAZE: Group composition with Pomo actively speaking and gesturing toward a learner, rather than passively posing. DISTINCT WARDROBE: Soft pale-blue short-sleeved linen shirt with a simple sand-colored vest and tailored trousers; relaxed teacher attire, no knitwear.. Preserve her face, bob hair and coral square hair clip. This outfit overrides wardrobe in either reference.",
+      "image": "../../../src/features/tarot/assets/cards/hierophant.png",
+      "generated": true
+    },
+    {
+      "id": "lovers",
+      "name": {
+        "en": "The Lovers",
+        "ko": "연인"
+      },
+      "scene": "Pomo and a kind young adult companion stand on opposite sides of a flowering garden path, meeting each other's gaze and gently joining hands. Two branching paths behind them, warm dawn, relationship and thoughtful choice; tasteful fully clothed scene. DISTINCT CAMERA, POSE AND GAZE: Two-person medium-wide scene. Pomo turns her head upward toward her companion in image-left, engaged eye contact and a warm smile. DISTINCT WARDROBE: Light warm-white summer dress with delicate coral floral print, short flutter sleeves and a simple waist ribbon; no cardigan or turtleneck.. Preserve her face, bob hair and coral square hair clip. This outfit overrides wardrobe in either reference.",
+      "image": "../../../src/features/tarot/assets/cards/lovers.png",
+      "generated": true
+    },
+    {
+      "id": "chariot",
+      "name": {
+        "en": "The Chariot",
+        "ko": "전차"
+      },
+      "scene": "Pomo holds the reins of a small elegant wooden carriage, drawn in the same direction by one pale and one dark horse. A starry blue canopy, confident posture, path leading forward, balanced competing forces. DISTINCT CAMERA, POSE AND GAZE: Wide action composition viewed from a slightly low angle. Pomo faces STRAIGHT AHEAD toward the viewer, chin upright, determined eyes directly forward, hair moving with carriage momentum. No looking down or sideways. DISTINCT WARDROBE: Light travel attire: fitted cream linen tunic, dark leather waist belt, tailored trousers and a short flowing sage cape; no thick sweater.. Preserve her face, bob hair and coral square hair clip. This outfit overrides wardrobe in either reference.",
+      "image": "../../../src/features/tarot/assets/cards/chariot.png",
+      "generated": true
+    },
+    {
+      "id": "strength",
+      "name": {
+        "en": "Strength",
+        "ko": "힘"
+      },
+      "scene": "Pomo gently rests her hand on the mane of a peaceful lion in a flowering meadow. Patient calm, quiet courage, subtle infinity-shaped vine overhead; no struggle, no aggression. DISTINCT CAMERA, POSE AND GAZE: Medium-wide interaction, Pomo placed on IMAGE-LEFT and lion on IMAGE-RIGHT. Show Pomo in a clear RIGHT-FACING SIDE PROFILE, head upright, looking lovingly at the lion's eyes. Her nose points right. Do not reproduce the reference's downward-left face. DISTINCT WARDROBE: Simple coral short-sleeved blouse and comfortable cream linen wide-leg trousers; relaxed outdoor spring attire, no knitwear.. Preserve her face, bob hair and coral square hair clip. This outfit overrides wardrobe in either reference.",
+      "image": "../../../src/features/tarot/assets/cards/strength.png",
+      "generated": true
+    },
+    {
+      "id": "hermit",
+      "name": {
+        "en": "The Hermit",
+        "ko": "은둔자"
+      },
+      "scene": "Pomo walks alone along a quiet mountain trail at dusk, wrapped in a warm cream cloak, holding one softly glowing lantern and a simple walking staff. Spacious calm, reflective solitude, insight. DISTINCT CAMERA, POSE AND GAZE: Wide environmental composition from BEHIND Pomo's right shoulder. She looks toward the distant trail; only a small side of her face is visible, contemplative solitude. DISTINCT WARDROBE: Weather-appropriate light gray travel cloak over a simple thin linen tunic and trousers, hood down; cloak supports the mountain scene, not a bulky sweater.. Preserve her face, bob hair and coral square hair clip. This outfit overrides wardrobe in either reference.",
+      "image": "../../../src/features/tarot/assets/cards/hermit.png",
+      "generated": true
+    },
+    {
+      "id": "wheel-of-fortune",
+      "name": {
+        "en": "Wheel of Fortune",
+        "ko": "운명의 수레바퀴"
+      },
+      "scene": "Pomo observes a large beautiful wooden wheel turning among floating seasonal leaves, flowers, snowflakes and sunlight. A cyclical circular composition within the central panel, change and opportunity, no lettering or glyphs. DISTINCT CAMERA, POSE AND GAZE: Slightly elevated wide composition. Pomo appears on image-left in RIGHT-FACING PROFILE, looking up at the turning wheel with surprised wonder. DISTINCT WARDROBE: Light blue loose-collared cotton blouse, sand-colored trousers and a flowing patterned waist scarf; visible forearms.. Preserve her face, bob hair and coral square hair clip. This outfit overrides wardrobe in either reference.",
+      "image": "../../../src/features/tarot/assets/cards/wheel-of-fortune.png",
+      "generated": true
+    },
+    {
+      "id": "justice",
+      "name": {
+        "en": "Justice",
+        "ko": "정의"
+      },
+      "scene": "Pomo sits calmly in a symmetrical wooden chair, holding a balanced golden scale in one hand and an upright ceremonial sword in the other. Two simple pillars, muted ruby curtains, clear fair judgment and responsibility. DISTINCT CAMERA, POSE AND GAZE: Centered frontal medium-full-body view. Direct level gaze, upright chin, serious fair-minded expression, symmetrical scale-and-sword posture. DISTINCT WARDROBE: Clean navy fitted vest over a crisp ivory open-collar shirt, tailored trousers, elegant and precise; no turtleneck or knit cardigan.. Preserve her face, bob hair and coral square hair clip. This outfit overrides wardrobe in either reference.",
+      "image": "../../../src/features/tarot/assets/cards/justice.png",
+      "generated": true
+    },
+    {
+      "id": "hanged-man",
+      "name": {
+        "en": "The Hanged Man",
+        "ko": "매달린 사람"
+      },
+      "scene": "Pomo is peacefully suspended upside down by one ankle from a low sturdy garden trellis in a traditional tarot pose, fully clothed, other leg bent. Her expression is calm and thoughtful, a soft halo of sunlight, voluntary pause and a new perspective, no distress or injury. DISTINCT CAMERA, POSE AND GAZE: Pomo's body and head are fully upside down in the traditional calm tarot pose. A wide scene shows the trellis and relaxed silhouette, not a normal upright portrait. DISTINCT WARDROBE: Practical light ochre long-sleeved cotton shirt with sleeves rolled up, comfortable dark trousers, fabric drapes correctly while upside down.. Preserve her face, bob hair and coral square hair clip. This outfit overrides wardrobe in either reference.",
+      "image": "../../../src/features/tarot/assets/cards/hanged-man.png",
+      "generated": true
+    },
+    {
+      "id": "death",
+      "name": {
+        "en": "Death",
+        "ko": "죽음"
+      },
+      "scene": "Pomo gently closes an old blank book beside a fading autumn branch as a new green seedling grows in warm dawn light. A butterfly emerges nearby, old season ending and new growth beginning; symbolic transformation, no skeletons, gore or frightening imagery. DISTINCT CAMERA, POSE AND GAZE: Over-the-LEFT-shoulder medium-wide view. Pomo's back is partly toward us and she turns her face gently to IMAGE-RIGHT to observe the seedling, reflective bittersweet expression. DISTINCT WARDROBE: Plain soft charcoal linen dress with short sleeves and a pale sage waist sash, understated transitional season.. Preserve her face, bob hair and coral square hair clip. This outfit overrides wardrobe in either reference.",
+      "image": "../../../src/features/tarot/assets/cards/death.png",
+      "generated": true
+    },
+    {
+      "id": "temperance",
+      "name": {
+        "en": "Temperance",
+        "ko": "절제"
+      },
+      "scene": "Pomo carefully pours a luminous stream of water between two golden cups, with one foot near a small stream and the other on garden earth. Soft iris flowers, harmonious golden light, balance and patience. DISTINCT CAMERA, POSE AND GAZE: Three-quarter body view facing IMAGE-RIGHT, medium-full-body framing. Eyes focus down and right on the water between cups, serene concentration, arms and pouring motion prominent. DISTINCT WARDROBE: Flowing light cream dress with airy translucent outer sleeves and a pale blue sash, delicate fabrics rather than wool.. Preserve her face, bob hair and coral square hair clip. This outfit overrides wardrobe in either reference.",
+      "image": "../../../src/features/tarot/assets/cards/temperance.png",
+      "generated": true
+    },
+    {
+      "id": "devil",
+      "name": {
+        "en": "The Devil",
+        "ko": "악마"
+      },
+      "scene": "Pomo notices loose decorative chains draped around a closed wooden treasure chest, while its inviting glow casts an oversized shadow on the wall. She holds one opened chain link calmly, recognizing attachment and regaining choice; fully clothed, no monster, no horror. DISTINCT CAMERA, POSE AND GAZE: Clear LEFT-FACING SIDE PROFILE, medium shot. Pomo looks level toward the loose chain with thoughtful concern and slightly furrowed brows, not a soft default smile. DISTINCT WARDROBE: Refined dark plum silk blouse with open collar and tailored charcoal trousers, light fabric, fully clothed and non-revealing.. Preserve her face, bob hair and coral square hair clip. This outfit overrides wardrobe in either reference.",
+      "image": "../../../src/features/tarot/assets/cards/devil.png",
+      "generated": true
+    },
+    {
+      "id": "tower",
+      "name": {
+        "en": "The Tower",
+        "ko": "탑"
+      },
+      "scene": "Pomo stands at a safe distance watching lightning strike the upper section of an old stone tower, loosening a few stones into an empty garden. Storm clouds breaking toward dawn, revelation and rebuilding, no people falling or injury. DISTINCT CAMERA, POSE AND GAZE: Very wide environmental scene from BEHIND Pomo. She is a smaller full-body figure watching the tower, no large portrait face. Storm and rebuilding dominate. DISTINCT WARDROBE: Simple rust-red outdoor jacket of thin cotton over a cream tee and practical trousers, windblown, no bulky wool.. Preserve her face, bob hair and coral square hair clip. This outfit overrides wardrobe in either reference.",
+      "image": "../../../src/features/tarot/assets/cards/tower.png",
+      "generated": true
+    },
+    {
+      "id": "star",
+      "name": {
+        "en": "The Star",
+        "ko": "별"
+      },
+      "scene": "Pomo kneels beside a clear garden pool at twilight, gently pours water from two pitchers onto earth and into the pool. One large glowing star and smaller distant stars, serene hope and recovery; fully clothed cream and sage outfit. DISTINCT CAMERA, POSE AND GAZE: Wide kneeling composition. Pomo in RIGHT-FACING PROFILE looks upward toward the large star with a relieved hopeful smile, not down at the water. DISTINCT WARDROBE: Light pastel-blue sleeveless summer dress with a high modest neckline and flowing skirt, bare arms, fully clothed.. Preserve her face, bob hair and coral square hair clip. This outfit overrides wardrobe in either reference.",
+      "image": "../../../src/features/tarot/assets/cards/star.png",
+      "generated": true
+    },
+    {
+      "id": "moon",
+      "name": {
+        "en": "The Moon",
+        "ko": "달"
+      },
+      "scene": "Pomo walks along a winding moonlit path between two quiet stone towers near a pool. A small dog and wolf-shaped stone statue flank the path, mist and reflections, one luminous moon, uncertainty and intuition rather than horror. DISTINCT CAMERA, POSE AND GAZE: Wide scene from BEHIND with Pomo's silhouette moving into moonlight. Her head turns slightly left toward the moon, face mostly unseen, reflective uncertainty. DISTINCT WARDROBE: Soft ivory cotton blouse and long indigo skirt, a very thin gauzy shawl for the evening, no heavy cardigan.. Preserve her face, bob hair and coral square hair clip. This outfit overrides wardrobe in either reference.",
+      "image": "../../../src/features/tarot/assets/cards/moon.png",
+      "generated": true
+    },
+    {
+      "id": "sun",
+      "name": {
+        "en": "The Sun",
+        "ko": "태양"
+      },
+      "scene": "Pomo happily rides a gentle white horse through a sunflower garden under a large warm sun, holding a flowing coral ribbon. Bright joy, clarity, energy, fully clothed and wholesome. DISTINCT CAMERA, POSE AND GAZE: Front-facing lively full-body composition, Pomo looks directly forward and smiles joyfully with visibly lifted cheeks and slightly open mouth, warm energetic expression. DISTINCT WARDROBE: Bright coral short-sleeved linen dress or summer blouse with cream trousers, cheerful warm-weather clothing.. Preserve her face, bob hair and coral square hair clip. This outfit overrides wardrobe in either reference.",
+      "image": "../../../src/features/tarot/assets/cards/sun.png",
+      "generated": true
+    },
+    {
+      "id": "judgement",
+      "name": {
+        "en": "Judgement",
+        "ko": "심판"
+      },
+      "scene": "Pomo stands in an open garden at dawn, looking up toward a radiant sky as a golden trumpet motif sends soft circular waves of light across old blank books. Reflection, awakening and a fresh decision, no written symbols, no graves. DISTINCT CAMERA, POSE AND GAZE: Slightly low-angle medium-full-body composition. Pomo faces IMAGE-RIGHT in three-quarter profile with head lifted toward the sky, eyes upward, an awakening expression. DISTINCT WARDROBE: Light warm-white flowing shirt with rolled sleeves and soft blue trousers, a coral scarf moving in the dawn breeze.. Preserve her face, bob hair and coral square hair clip. This outfit overrides wardrobe in either reference.",
+      "image": "../../../src/features/tarot/assets/cards/judgement.png",
+      "generated": true
+    },
+    {
+      "id": "world",
+      "name": {
+        "en": "The World",
+        "ko": "세계"
+      },
+      "scene": "Pomo stands gracefully within a large oval laurel wreath, holding two small batons. Rich garden greens and gentle sky, subtle lion, eagle, bull and angel motifs at the INNER illustration corners only, completion and connectedness. DISTINCT CAMERA, POSE AND GAZE: Wide frontal full-body composition with Pomo's entire wreath and open balanced pose visible. Chin level, eyes toward viewer, content confident smile; figure smaller than a portrait. DISTINCT WARDROBE: Airy sage-green flowing dress with modest short sleeves and a coral sash, light fabric moving gracefully.. Preserve her face, bob hair and coral square hair clip. This outfit overrides wardrobe in either reference.",
+      "image": "../../../src/features/tarot/assets/cards/world.png",
+      "generated": true
+    },
+    {
+      "id": "wands-ace",
+      "name": {
+        "en": "Ace of Wands",
+        "ko": "완드 에이스"
+      },
+      "scene": "A single leafy wooden wand emerges from a softly glowing cloud above Pomo's open hand; she looks toward a bright garden path, a new spark of initiative. DISTINCT CAMERA, POSE AND GAZE: Straight frontal face with chin level and direct eye contact. Medium-full-body framing with visible stance and surroundings; face occupies less than a fifth of the central art. Expression: open curiosity and a small surprised smile. Adapt the gaze naturally to the specific objects and companions, while maintaining the specified face direction. DISTINCT WARDROBE: ivory short-sleeved linen blouse, terracotta vest, cream trousers. Preserve her face, bob hair and coral square hair clip. This outfit overrides wardrobe in either reference.",
+      "image": "../../../src/features/tarot/assets/cards/wands-ace.png",
+      "generated": true
+    },
+    {
+      "id": "wands-two",
+      "name": {
+        "en": "Two of Wands",
+        "ko": "완드 2"
+      },
+      "scene": "Pomo stands at a garden balcony holding a small globe, with exactly two tall leafy wooden wands beside her, looking over possible paths. DISTINCT CAMERA, POSE AND GAZE: Clear right-facing side profile, nose pointing image-right, eyes level toward the scene. Wide environmental composition with Pomo a smaller figure and important card objects dominant. Expression: thoughtful attention while weighing alternatives. Adapt the gaze naturally to the specific objects and companions, while maintaining the specified face direction. DISTINCT WARDROBE: light sage collared shirt with rolled sleeves, tan travel trousers. Preserve her face, bob hair and coral square hair clip. This outfit overrides wardrobe in either reference.",
+      "image": "../../../src/features/tarot/assets/cards/wands-two.png",
+      "generated": true
+    },
+    {
+      "id": "wands-three",
+      "name": {
+        "en": "Three of Wands",
+        "ko": "완드 3"
+      },
+      "scene": "Pomo watches small distant sailboats from a grassy terrace, exactly three tall leafy wands stand around her, first progress and widening horizons. DISTINCT CAMERA, POSE AND GAZE: Clear left-facing side profile, nose pointing image-left, eyes level toward the scene. Medium interaction scene with active gesture and visibly different posture from the sample. Expression: engaged warm interest toward the companions or work. Adapt the gaze naturally to the specific objects and companions, while maintaining the specified face direction. DISTINCT WARDROBE: coral sleeveless modest tunic with a thin ivory sash, sand trousers. Preserve her face, bob hair and coral square hair clip. This outfit overrides wardrobe in either reference.",
+      "image": "../../../src/features/tarot/assets/cards/wands-three.png",
+      "generated": true
+    },
+    {
+      "id": "wands-four",
+      "name": {
+        "en": "Four of Wands",
+        "ko": "완드 4"
+      },
+      "scene": "Pomo and two friends celebrate beneath an airy flower garland held by exactly four wooden wands, a cozy garden gathering. DISTINCT CAMERA, POSE AND GAZE: Three-quarter face toward image-right, chin lifted slightly, gaze upward-right. Medium-close composition from a slightly elevated camera; hands and symbolic objects stay visible. Expression: quiet contemplation with a relaxed neutral mouth. Adapt the gaze naturally to the specific objects and companions, while maintaining the specified face direction. DISTINCT WARDROBE: airy cream short-sleeved summer dress with subtle coral floral embroidery. Preserve her face, bob hair and coral square hair clip. This outfit overrides wardrobe in either reference.",
+      "image": "../../../src/features/tarot/assets/cards/wands-four.png",
+      "generated": true
+    },
+    {
+      "id": "wands-five",
+      "name": {
+        "en": "Five of Wands",
+        "ko": "완드 5"
+      },
+      "scene": "Pomo and four other young adults playfully practice together with exactly five distinct wooden wands, one each. Lively conflicting ideas, no injury or aggression. DISTINCT CAMERA, POSE AND GAZE: Three-quarter face toward image-left, chin level, gaze across the scene rather than downward. Medium-full-body composition from a slightly low camera, with head and body upright. Expression: concern or regret expressed in the brows, no default cheerful smile. Adapt the gaze naturally to the specific objects and companions, while maintaining the specified face direction. DISTINCT WARDROBE: ochre short-sleeved cotton shirt and practical brown trousers. Preserve her face, bob hair and coral square hair clip. This outfit overrides wardrobe in either reference.",
+      "image": "../../../src/features/tarot/assets/cards/wands-five.png",
+      "generated": true
+    },
+    {
+      "id": "wands-six",
+      "name": {
+        "en": "Six of Wands",
+        "ko": "완드 6"
+      },
+      "scene": "Pomo rides a gentle horse on a garden path as friends congratulate her; exactly six wooden wands including the one she carries, one small laurel wreath. DISTINCT CAMERA, POSE AND GAZE: View from behind the left shoulder, head turning right toward the main symbol; back and shoulder visible. Medium-full-body framing with visible stance and surroundings; face occupies less than a fifth of the central art. Expression: gentle relief and renewed confidence. Adapt the gaze naturally to the specific objects and companions, while maintaining the specified face direction. DISTINCT WARDROBE: white open-collar shirt, lightweight terracotta travel cape, fitted trousers. Preserve her face, bob hair and coral square hair clip. This outfit overrides wardrobe in either reference.",
+      "image": "../../../src/features/tarot/assets/cards/wands-six.png",
+      "generated": true
+    },
+    {
+      "id": "wands-seven",
+      "name": {
+        "en": "Seven of Wands",
+        "ko": "완드 7"
+      },
+      "scene": "Pomo stands firmly on a small raised garden terrace holding one wooden wand, with exactly six other wands leaning from below, defending her position calmly. DISTINCT CAMERA, POSE AND GAZE: View from behind the right shoulder, head turning left toward the main symbol; back and shoulder visible. Wide environmental composition with Pomo a smaller figure and important card objects dominant. Expression: focused determination and careful appraisal. Adapt the gaze naturally to the specific objects and companions, while maintaining the specified face direction. DISTINCT WARDROBE: fitted coral cotton blouse with rolled sleeves, sturdy tan trousers. Preserve her face, bob hair and coral square hair clip. This outfit overrides wardrobe in either reference.",
+      "image": "../../../src/features/tarot/assets/cards/wands-seven.png",
+      "generated": true
+    },
+    {
+      "id": "wands-eight",
+      "name": {
+        "en": "Eight of Wands",
+        "ko": "완드 8"
+      },
+      "scene": "Exactly eight distinct leafy wooden wands sweep diagonally across the sky above Pomo in a wide open meadow, swift momentum and news. DISTINCT CAMERA, POSE AND GAZE: Near-frontal face with gaze upward and head upright; no downward-left tilt. Medium interaction scene with active gesture and visibly different posture from the sample. Expression: active concentration on the task or movement. Adapt the gaze naturally to the specific objects and companions, while maintaining the specified face direction. DISTINCT WARDROBE: light blue sleeveless high-neck blouse and flowing cream trousers. Preserve her face, bob hair and coral square hair clip. This outfit overrides wardrobe in either reference.",
+      "image": "../../../src/features/tarot/assets/cards/wands-eight.png",
+      "generated": true
+    },
+    {
+      "id": "wands-nine",
+      "name": {
+        "en": "Nine of Wands",
+        "ko": "완드 9"
+      },
+      "scene": "Pomo rests with a determined expression and holds one wand, exactly eight other wands form a row behind her, resilience after repeated effort, no wounds. DISTINCT CAMERA, POSE AND GAZE: Straight frontal face with chin level and direct eye contact. Medium-close composition from a slightly elevated camera; hands and symbolic objects stay visible. Expression: a reflective expression matching this card's specific feeling, no default posed smile. Adapt the gaze naturally to the specific objects and companions, while maintaining the specified face direction. DISTINCT WARDROBE: simple sand-colored linen shirt, dark trousers, a thin weathered scarf. Preserve her face, bob hair and coral square hair clip. This outfit overrides wardrobe in either reference.",
+      "image": "../../../src/features/tarot/assets/cards/wands-nine.png",
+      "generated": true
+    },
+    {
+      "id": "wands-ten",
+      "name": {
+        "en": "Ten of Wands",
+        "ko": "완드 10"
+      },
+      "scene": "Pomo carries exactly ten long wooden wands bundled together toward a cozy house, noticeable effort and responsibility, bundle count visibly distinct. DISTINCT CAMERA, POSE AND GAZE: Clear right-facing side profile, nose pointing image-right, eyes level toward the scene. Medium-full-body composition from a slightly low camera, with head and body upright. Expression: a feeling matching the ending or shared outcome, shown through body posture as well as face. Adapt the gaze naturally to the specific objects and companions, while maintaining the specified face direction. DISTINCT WARDROBE: light cotton work shirt with rolled sleeves and practical trousers. Preserve her face, bob hair and coral square hair clip. This outfit overrides wardrobe in either reference.",
+      "image": "../../../src/features/tarot/assets/cards/wands-ten.png",
+      "generated": true
+    },
+    {
+      "id": "wands-page",
+      "name": {
+        "en": "Page of Wands",
+        "ko": "완드 시종"
+      },
+      "scene": "Pomo as a curious young adult explorer studies a single tall leafy wooden wand in a sunlit garden, small travel cape, eagerness to learn. DISTINCT CAMERA, POSE AND GAZE: Clear left-facing side profile, nose pointing image-left, eyes level toward the scene. Medium-full-body framing with visible stance and surroundings; face occupies less than a fifth of the central art. Expression: bright curious eyes and alert enthusiasm. Adapt the gaze naturally to the specific objects and companions, while maintaining the specified face direction. DISTINCT WARDROBE: light terracotta tunic with short sleeves and a travel satchel, fitted trousers. Preserve her face, bob hair and coral square hair clip. This outfit overrides wardrobe in either reference.",
+      "image": "../../../src/features/tarot/assets/cards/wands-page.png",
+      "generated": true
+    },
+    {
+      "id": "wands-knight",
+      "name": {
+        "en": "Knight of Wands",
+        "ko": "완드 기사"
+      },
+      "scene": "Pomo in a coral travel cape rides a lively but gentle chestnut horse, holding a leafy wooden wand, forward adventure and purposeful direction. DISTINCT CAMERA, POSE AND GAZE: Three-quarter face toward image-right, chin lifted slightly, gaze upward-right. Wide environmental composition with Pomo a smaller figure and important card objects dominant. Expression: energetic purposeful gaze toward the path ahead. Adapt the gaze naturally to the specific objects and companions, while maintaining the specified face direction. DISTINCT WARDROBE: crisp ivory shirt, short coral cape, light leather waist belt, tailored trousers. Preserve her face, bob hair and coral square hair clip. This outfit overrides wardrobe in either reference.",
+      "image": "../../../src/features/tarot/assets/cards/wands-knight.png",
+      "generated": true
+    },
+    {
+      "id": "wands-queen",
+      "name": {
+        "en": "Queen of Wands",
+        "ko": "완드 여왕"
+      },
+      "scene": "Pomo sits confidently in a warm oak garden chair holding a sunflower and a leafy wand, a small black cat sits nearby, creative warmth. DISTINCT CAMERA, POSE AND GAZE: Three-quarter face toward image-left, chin level, gaze across the scene rather than downward. Medium interaction scene with active gesture and visibly different posture from the sample. Expression: warm confidence and thoughtful attentiveness. Adapt the gaze naturally to the specific objects and companions, while maintaining the specified face direction. DISTINCT WARDROBE: flowing ivory summer dress with a light amber sash and short sleeves. Preserve her face, bob hair and coral square hair clip. This outfit overrides wardrobe in either reference.",
+      "image": "../../../src/features/tarot/assets/cards/wands-queen.png",
+      "generated": true
+    },
+    {
+      "id": "wands-king",
+      "name": {
+        "en": "King of Wands",
+        "ko": "완드 왕"
+      },
+      "scene": "Pomo in an elegant burgundy coat sits upright in a sturdy garden chair holding a tall wand, distant rolling hills, focused vision and leadership. DISTINCT CAMERA, POSE AND GAZE: View from behind the left shoulder, head turning right toward the main symbol; back and shoulder visible. Medium-close composition from a slightly elevated camera; hands and symbolic objects stay visible. Expression: composed firm gaze and steady upright posture. Adapt the gaze naturally to the specific objects and companions, while maintaining the specified face direction. DISTINCT WARDROBE: ochre formal vest over a crisp white collared shirt, tailored cream trousers. Preserve her face, bob hair and coral square hair clip. This outfit overrides wardrobe in either reference.",
+      "image": "../../../src/features/tarot/assets/cards/wands-king.png",
+      "generated": true
+    },
+    {
+      "id": "cups-ace",
+      "name": {
+        "en": "Ace of Cups",
+        "ko": "컵 에이스"
+      },
+      "scene": "Pomo holds a single beautiful golden cup overflowing gently into a tranquil garden pool, soft lotus flowers and luminous water, fresh feeling and connection. DISTINCT CAMERA, POSE AND GAZE: Three-quarter face toward image-right, chin lifted slightly, gaze upward-right. Medium interaction scene with active gesture and visibly different posture from the sample. Expression: open curiosity and a small surprised smile. Adapt the gaze naturally to the specific objects and companions, while maintaining the specified face direction. DISTINCT WARDROBE: pale blue short-sleeved linen blouse and airy cream skirt. Preserve her face, bob hair and coral square hair clip. This outfit overrides wardrobe in either reference.",
+      "image": "../../../src/features/tarot/assets/cards/cups-ace.png",
+      "generated": true
+    },
+    {
+      "id": "cups-two",
+      "name": {
+        "en": "Two of Cups",
+        "ko": "컵 2"
+      },
+      "scene": "Pomo and a kind companion exchange exactly two golden cups, one each, at a garden table, mutual understanding and respect. DISTINCT CAMERA, POSE AND GAZE: Three-quarter face toward image-left, chin level, gaze across the scene rather than downward. Medium-close composition from a slightly elevated camera; hands and symbolic objects stay visible. Expression: thoughtful attention while weighing alternatives. Adapt the gaze naturally to the specific objects and companions, while maintaining the specified face direction. DISTINCT WARDROBE: soft coral modest summer dress with short flutter sleeves. Preserve her face, bob hair and coral square hair clip. This outfit overrides wardrobe in either reference.",
+      "image": "../../../src/features/tarot/assets/cards/cups-two.png",
+      "generated": true
+    },
+    {
+      "id": "cups-three",
+      "name": {
+        "en": "Three of Cups",
+        "ko": "컵 3"
+      },
+      "scene": "Pomo and two close friends raise exactly three golden cups together in a sunlit orchard, friendship, support and celebration. DISTINCT CAMERA, POSE AND GAZE: View from behind the left shoulder, head turning right toward the main symbol; back and shoulder visible. Medium-full-body composition from a slightly low camera, with head and body upright. Expression: engaged warm interest toward the companions or work. Adapt the gaze naturally to the specific objects and companions, while maintaining the specified face direction. DISTINCT WARDROBE: ivory floral short-sleeved dress with a light blue waist ribbon. Preserve her face, bob hair and coral square hair clip. This outfit overrides wardrobe in either reference.",
+      "image": "../../../src/features/tarot/assets/cards/cups-three.png",
+      "generated": true
+    },
+    {
+      "id": "cups-four",
+      "name": {
+        "en": "Four of Cups",
+        "ko": "컵 4"
+      },
+      "scene": "Pomo sits thoughtfully beneath a leafy tree; exactly three golden cups rest in front of her while a fourth cup is offered from a soft luminous cloud, reconsidering fulfillment. DISTINCT CAMERA, POSE AND GAZE: View from behind the right shoulder, head turning left toward the main symbol; back and shoulder visible. Medium-full-body framing with visible stance and surroundings; face occupies less than a fifth of the central art. Expression: quiet contemplation with a relaxed neutral mouth. Adapt the gaze naturally to the specific objects and companions, while maintaining the specified face direction. DISTINCT WARDROBE: loose sky-blue linen shirt and comfortable sand trousers. Preserve her face, bob hair and coral square hair clip. This outfit overrides wardrobe in either reference.",
+      "image": "../../../src/features/tarot/assets/cards/cups-four.png",
+      "generated": true
+    },
+    {
+      "id": "cups-five",
+      "name": {
+        "en": "Five of Cups",
+        "ko": "컵 5"
+      },
+      "scene": "Pomo gazes gently at exactly three overturned golden cups, with two upright cups behind her, a river and bridge in distance, loss alongside what remains. DISTINCT CAMERA, POSE AND GAZE: Near-frontal face with gaze upward and head upright; no downward-left tilt. Wide environmental composition with Pomo a smaller figure and important card objects dominant. Expression: concern or regret expressed in the brows, no default cheerful smile. Adapt the gaze naturally to the specific objects and companions, while maintaining the specified face direction. DISTINCT WARDROBE: plain charcoal light cotton blouse and deep blue skirt. Preserve her face, bob hair and coral square hair clip. This outfit overrides wardrobe in either reference.",
+      "image": "../../../src/features/tarot/assets/cards/cups-five.png",
+      "generated": true
+    },
+    {
+      "id": "cups-six",
+      "name": {
+        "en": "Six of Cups",
+        "ko": "컵 6"
+      },
+      "scene": "Pomo warmly exchanges a cup of flowers with a childhood friend portrayed as an adult; exactly six golden cups with flowers decorate a cozy courtyard, fond memory. DISTINCT CAMERA, POSE AND GAZE: Straight frontal face with chin level and direct eye contact. Medium interaction scene with active gesture and visibly different posture from the sample. Expression: gentle relief and renewed confidence. Adapt the gaze naturally to the specific objects and companions, while maintaining the specified face direction. DISTINCT WARDROBE: light cream short-sleeved dress with delicate flower pattern. Preserve her face, bob hair and coral square hair clip. This outfit overrides wardrobe in either reference.",
+      "image": "../../../src/features/tarot/assets/cards/cups-six.png",
+      "generated": true
+    },
+    {
+      "id": "cups-seven",
+      "name": {
+        "en": "Seven of Cups",
+        "ko": "컵 7"
+      },
+      "scene": "Pomo thoughtfully looks at exactly seven golden cups on a cloudlike display, each holds a different small symbolic object such as a gem, flower, wreath, tiny castle, butterfly, cloud or ribbon; appealing uncertain options. DISTINCT CAMERA, POSE AND GAZE: Clear right-facing side profile, nose pointing image-right, eyes level toward the scene. Medium-close composition from a slightly elevated camera; hands and symbolic objects stay visible. Expression: focused determination and careful appraisal. Adapt the gaze naturally to the specific objects and companions, while maintaining the specified face direction. DISTINCT WARDROBE: soft lavender silk blouse and ivory flowing skirt. Preserve her face, bob hair and coral square hair clip. This outfit overrides wardrobe in either reference.",
+      "image": "../../../src/features/tarot/assets/cards/cups-seven.png",
+      "generated": true
+    },
+    {
+      "id": "cups-eight",
+      "name": {
+        "en": "Eight of Cups",
+        "ko": "컵 8"
+      },
+      "scene": "Pomo walks away along a moonlit garden path from exactly eight golden cups neatly stacked in the foreground, leaving what no longer nourishes her. DISTINCT CAMERA, POSE AND GAZE: Clear left-facing side profile, nose pointing image-left, eyes level toward the scene. Medium-full-body composition from a slightly low camera, with head and body upright. Expression: active concentration on the task or movement. Adapt the gaze naturally to the specific objects and companions, while maintaining the specified face direction. DISTINCT WARDROBE: thin indigo travel shawl over a pale cotton shirt and trousers. Preserve her face, bob hair and coral square hair clip. This outfit overrides wardrobe in either reference.",
+      "image": "../../../src/features/tarot/assets/cards/cups-eight.png",
+      "generated": true
+    },
+    {
+      "id": "cups-nine",
+      "name": {
+        "en": "Nine of Cups",
+        "ko": "컵 9"
+      },
+      "scene": "Pomo sits contentedly at a cozy table, exactly nine golden cups form an orderly arc behind her, quiet satisfaction and appreciation. DISTINCT CAMERA, POSE AND GAZE: Three-quarter face toward image-right, chin lifted slightly, gaze upward-right. Medium-full-body framing with visible stance and surroundings; face occupies less than a fifth of the central art. Expression: a reflective expression matching this card's specific feeling, no default posed smile. Adapt the gaze naturally to the specific objects and companions, while maintaining the specified face direction. DISTINCT WARDROBE: light coral collared shirt with relaxed sleeves and cream trousers. Preserve her face, bob hair and coral square hair clip. This outfit overrides wardrobe in either reference.",
+      "image": "../../../src/features/tarot/assets/cards/cups-nine.png",
+      "generated": true
+    },
+    {
+      "id": "cups-ten",
+      "name": {
+        "en": "Ten of Cups",
+        "ko": "컵 10"
+      },
+      "scene": "Pomo and close friends stand together in a peaceful garden beneath a rainbow formed by exactly ten golden cups, belonging and shared happiness. DISTINCT CAMERA, POSE AND GAZE: Three-quarter face toward image-left, chin level, gaze across the scene rather than downward. Wide environmental composition with Pomo a smaller figure and important card objects dominant. Expression: a feeling matching the ending or shared outcome, shown through body posture as well as face. Adapt the gaze naturally to the specific objects and companions, while maintaining the specified face direction. DISTINCT WARDROBE: airy pale blue sundress with modest neckline and a coral ribbon. Preserve her face, bob hair and coral square hair clip. This outfit overrides wardrobe in either reference.",
+      "image": "../../../src/features/tarot/assets/cards/cups-ten.png",
+      "generated": true
+    },
+    {
+      "id": "cups-page",
+      "name": {
+        "en": "Page of Cups",
+        "ko": "컵 시종"
+      },
+      "scene": "Pomo curiously looks into one golden cup from which a tiny friendly fish peeks, waterside garden, an unexpected new feeling. DISTINCT CAMERA, POSE AND GAZE: View from behind the left shoulder, head turning right toward the main symbol; back and shoulder visible. Medium interaction scene with active gesture and visibly different posture from the sample. Expression: bright curious eyes and alert enthusiasm. Adapt the gaze naturally to the specific objects and companions, while maintaining the specified face direction. DISTINCT WARDROBE: light blue cotton tunic with rolled sleeves, cream trousers. Preserve her face, bob hair and coral square hair clip. This outfit overrides wardrobe in either reference.",
+      "image": "../../../src/features/tarot/assets/cards/cups-page.png",
+      "generated": true
+    },
+    {
+      "id": "cups-knight",
+      "name": {
+        "en": "Knight of Cups",
+        "ko": "컵 기사"
+      },
+      "scene": "Pomo rides a calm pale horse by a stream while carrying one golden cup carefully, warm invitation and gentle emotional movement. DISTINCT CAMERA, POSE AND GAZE: View from behind the right shoulder, head turning left toward the main symbol; back and shoulder visible. Medium-close composition from a slightly elevated camera; hands and symbolic objects stay visible. Expression: energetic purposeful gaze toward the path ahead. Adapt the gaze naturally to the specific objects and companions, while maintaining the specified face direction. DISTINCT WARDROBE: ivory open-collar shirt, short flowing blue cape, tailored trousers. Preserve her face, bob hair and coral square hair clip. This outfit overrides wardrobe in either reference.",
+      "image": "../../../src/features/tarot/assets/cards/cups-knight.png",
+      "generated": true
+    },
+    {
+      "id": "cups-queen",
+      "name": {
+        "en": "Queen of Cups",
+        "ko": "컵 여왕"
+      },
+      "scene": "Pomo sits beside a calm pool holding one ornate closed golden cup, attentive expression, shell and flower motifs, compassionate insight. DISTINCT CAMERA, POSE AND GAZE: Near-frontal face with gaze upward and head upright; no downward-left tilt. Medium-full-body composition from a slightly low camera, with head and body upright. Expression: warm confidence and thoughtful attentiveness. Adapt the gaze naturally to the specific objects and companions, while maintaining the specified face direction. DISTINCT WARDROBE: flowing pale blue silk dress with airy modest sleeves and a pearl-colored sash. Preserve her face, bob hair and coral square hair clip. This outfit overrides wardrobe in either reference.",
+      "image": "../../../src/features/tarot/assets/cards/cups-queen.png",
+      "generated": true
+    },
+    {
+      "id": "cups-king",
+      "name": {
+        "en": "King of Cups",
+        "ko": "컵 왕"
+      },
+      "scene": "Pomo sits composed on an oak chair on a terrace above changing blue waves, holding one golden cup and a small scepter, steady emotional balance. DISTINCT CAMERA, POSE AND GAZE: Straight frontal face with chin level and direct eye contact. Medium-full-body framing with visible stance and surroundings; face occupies less than a fifth of the central art. Expression: composed firm gaze and steady upright posture. Adapt the gaze naturally to the specific objects and companions, while maintaining the specified face direction. DISTINCT WARDROBE: deep blue light vest over a crisp cream shirt, tailored trousers. Preserve her face, bob hair and coral square hair clip. This outfit overrides wardrobe in either reference.",
+      "image": "../../../src/features/tarot/assets/cards/cups-king.png",
+      "generated": true
+    },
+    {
+      "id": "swords-ace",
+      "name": {
+        "en": "Ace of Swords",
+        "ko": "검 에이스"
+      },
+      "scene": "Pomo holds one bright ceremonial silver sword upright, with a small laurel wreath near its tip; clear morning sky after clouds, a lucid idea. DISTINCT CAMERA, POSE AND GAZE: View from behind the right shoulder, head turning left toward the main symbol; back and shoulder visible. Medium-full-body composition from a slightly low camera, with head and body upright. Expression: open curiosity and a small surprised smile. Adapt the gaze naturally to the specific objects and companions, while maintaining the specified face direction. DISTINCT WARDROBE: crisp white rolled-sleeve collared shirt and slate trousers. Preserve her face, bob hair and coral square hair clip. This outfit overrides wardrobe in either reference.",
+      "image": "../../../src/features/tarot/assets/cards/swords-ace.png",
+      "generated": true
+    },
+    {
+      "id": "swords-two",
+      "name": {
+        "en": "Two of Swords",
+        "ko": "검 2"
+      },
+      "scene": "Pomo sits peacefully beside still water with a loose soft blindfold and exactly two ceremonial silver swords crossed before her, uncertain balanced choice, no threat. DISTINCT CAMERA, POSE AND GAZE: Near-frontal face with gaze upward and head upright; no downward-left tilt. Medium-full-body framing with visible stance and surroundings; face occupies less than a fifth of the central art. Expression: thoughtful attention while weighing alternatives. Adapt the gaze naturally to the specific objects and companions, while maintaining the specified face direction. DISTINCT WARDROBE: light ivory long-sleeved cotton blouse and a simple gray skirt. Preserve her face, bob hair and coral square hair clip. This outfit overrides wardrobe in either reference.",
+      "image": "../../../src/features/tarot/assets/cards/swords-two.png",
+      "generated": true
+    },
+    {
+      "id": "swords-three",
+      "name": {
+        "en": "Three of Swords",
+        "ko": "검 3"
+      },
+      "scene": "A large red heart-shaped glass ornament is crossed by exactly three decorative silver swords in the foreground while Pomo quietly reflects beside a rainy window, emotional hurt, no person pierced or injury. DISTINCT CAMERA, POSE AND GAZE: Straight frontal face with chin level and direct eye contact. Wide environmental composition with Pomo a smaller figure and important card objects dominant. Expression: engaged warm interest toward the companions or work. Adapt the gaze naturally to the specific objects and companions, while maintaining the specified face direction. DISTINCT WARDROBE: soft pale gray cotton blouse with rolled sleeves and indigo trousers. Preserve her face, bob hair and coral square hair clip. This outfit overrides wardrobe in either reference.",
+      "image": "../../../src/features/tarot/assets/cards/swords-three.png",
+      "generated": true
+    },
+    {
+      "id": "swords-four",
+      "name": {
+        "en": "Four of Swords",
+        "ko": "검 4"
+      },
+      "scene": "Pomo peacefully rests on a cushioned library bench; exactly three ceremonial swords hang horizontally on the wall and a fourth lies on a low shelf, restorative pause. DISTINCT CAMERA, POSE AND GAZE: Clear right-facing side profile, nose pointing image-right, eyes level toward the scene. Medium interaction scene with active gesture and visibly different posture from the sample. Expression: quiet contemplation with a relaxed neutral mouth. Adapt the gaze naturally to the specific objects and companions, while maintaining the specified face direction. DISTINCT WARDROBE: comfortable thin blue lounge shirt and cream loose trousers. Preserve her face, bob hair and coral square hair clip. This outfit overrides wardrobe in either reference.",
+      "image": "../../../src/features/tarot/assets/cards/swords-four.png",
+      "generated": true
+    },
+    {
+      "id": "swords-five",
+      "name": {
+        "en": "Five of Swords",
+        "ko": "검 5"
+      },
+      "scene": "Pomo stands thoughtfully holding exactly three ceremonial swords while two lie on the garden ground and two companions walk away, the relational cost of winning, no combat. DISTINCT CAMERA, POSE AND GAZE: Clear left-facing side profile, nose pointing image-left, eyes level toward the scene. Medium-close composition from a slightly elevated camera; hands and symbolic objects stay visible. Expression: concern or regret expressed in the brows, no default cheerful smile. Adapt the gaze naturally to the specific objects and companions, while maintaining the specified face direction. DISTINCT WARDROBE: light charcoal fitted vest over a white shirt and dark trousers. Preserve her face, bob hair and coral square hair clip. This outfit overrides wardrobe in either reference.",
+      "image": "../../../src/features/tarot/assets/cards/swords-five.png",
+      "generated": true
+    },
+    {
+      "id": "swords-six",
+      "name": {
+        "en": "Six of Swords",
+        "ko": "검 6"
+      },
+      "scene": "Pomo and a companion travel in a gentle small wooden boat across calm water, exactly six ceremonial silver swords secured upright along one side, transition away from difficulty. DISTINCT CAMERA, POSE AND GAZE: Three-quarter face toward image-right, chin lifted slightly, gaze upward-right. Medium-full-body composition from a slightly low camera, with head and body upright. Expression: gentle relief and renewed confidence. Adapt the gaze naturally to the specific objects and companions, while maintaining the specified face direction. DISTINCT WARDROBE: blue linen travel shirt and light sand trousers, thin scarf. Preserve her face, bob hair and coral square hair clip. This outfit overrides wardrobe in either reference.",
+      "image": "../../../src/features/tarot/assets/cards/swords-six.png",
+      "generated": true
+    },
+    {
+      "id": "swords-seven",
+      "name": {
+        "en": "Seven of Swords",
+        "ko": "검 7"
+      },
+      "scene": "Pomo carefully carries exactly five ceremonial swords away from a camp table while two remain upright behind her, thoughtful strategy and motives, no violence. DISTINCT CAMERA, POSE AND GAZE: Three-quarter face toward image-left, chin level, gaze across the scene rather than downward. Medium-full-body framing with visible stance and surroundings; face occupies less than a fifth of the central art. Expression: focused determination and careful appraisal. Adapt the gaze naturally to the specific objects and companions, while maintaining the specified face direction. DISTINCT WARDROBE: simple gray short-sleeved cotton tunic and charcoal trousers. Preserve her face, bob hair and coral square hair clip. This outfit overrides wardrobe in either reference.",
+      "image": "../../../src/features/tarot/assets/cards/swords-seven.png",
+      "generated": true
+    },
+    {
+      "id": "swords-eight",
+      "name": {
+        "en": "Eight of Swords",
+        "ko": "검 8"
+      },
+      "scene": "Pomo stands within a loose circle of exactly eight ceremonial swords planted harmlessly in the grass, a loose blindfold and open path visible, feeling limited by perspective. DISTINCT CAMERA, POSE AND GAZE: View from behind the left shoulder, head turning right toward the main symbol; back and shoulder visible. Wide environmental composition with Pomo a smaller figure and important card objects dominant. Expression: active concentration on the task or movement. Adapt the gaze naturally to the specific objects and companions, while maintaining the specified face direction. DISTINCT WARDROBE: plain ivory cotton blouse and loose blue trousers. Preserve her face, bob hair and coral square hair clip. This outfit overrides wardrobe in either reference.",
+      "image": "../../../src/features/tarot/assets/cards/swords-eight.png",
+      "generated": true
+    },
+    {
+      "id": "swords-nine",
+      "name": {
+        "en": "Nine of Swords",
+        "ko": "검 9"
+      },
+      "scene": "Pomo sits awake on the edge of a cozy bed with a worried reflective expression, exactly nine ceremonial swords aligned horizontally on the wall, dawn light offering relief, no injury. DISTINCT CAMERA, POSE AND GAZE: View from behind the right shoulder, head turning left toward the main symbol; back and shoulder visible. Medium interaction scene with active gesture and visibly different posture from the sample. Expression: a reflective expression matching this card's specific feeling, no default posed smile. Adapt the gaze naturally to the specific objects and companions, while maintaining the specified face direction. DISTINCT WARDROBE: soft pale-blue lightweight pajamas, no cardigan. Preserve her face, bob hair and coral square hair clip. This outfit overrides wardrobe in either reference.",
+      "image": "../../../src/features/tarot/assets/cards/swords-nine.png",
+      "generated": true
+    },
+    {
+      "id": "swords-ten",
+      "name": {
+        "en": "Ten of Swords",
+        "ko": "검 10"
+      },
+      "scene": "Pomo rests exhausted on a blanket in a quiet dawn garden, exactly ten ceremonial swords laid in a neat row on the ground beside her, never touching or piercing her, recognizing an ending and hope beyond it. DISTINCT CAMERA, POSE AND GAZE: Near-frontal face with gaze upward and head upright; no downward-left tilt. Medium-close composition from a slightly elevated camera; hands and symbolic objects stay visible. Expression: a feeling matching the ending or shared outcome, shown through body posture as well as face. Adapt the gaze naturally to the specific objects and companions, while maintaining the specified face direction. DISTINCT WARDROBE: simple thin ivory lounge shirt and charcoal trousers. Preserve her face, bob hair and coral square hair clip. This outfit overrides wardrobe in either reference.",
+      "image": "../../../src/features/tarot/assets/cards/swords-ten.png",
+      "generated": true
+    },
+    {
+      "id": "swords-page",
+      "name": {
+        "en": "Page of Swords",
+        "ko": "검 시종"
+      },
+      "scene": "Pomo stands on a breezy grassy hill holding one ceremonial sword with alert curiosity, observant thoughtful expression. DISTINCT CAMERA, POSE AND GAZE: Straight frontal face with chin level and direct eye contact. Medium-full-body composition from a slightly low camera, with head and body upright. Expression: bright curious eyes and alert enthusiasm. Adapt the gaze naturally to the specific objects and companions, while maintaining the specified face direction. DISTINCT WARDROBE: crisp light blue collared shirt with rolled sleeves, tailored gray trousers. Preserve her face, bob hair and coral square hair clip. This outfit overrides wardrobe in either reference.",
+      "image": "../../../src/features/tarot/assets/cards/swords-page.png",
+      "generated": true
+    },
+    {
+      "id": "swords-knight",
+      "name": {
+        "en": "Knight of Swords",
+        "ko": "검 기사"
+      },
+      "scene": "Pomo rides a swift white horse through windswept clouds with one ceremonial sword held upward, fast thought needing care, no attacking anyone. DISTINCT CAMERA, POSE AND GAZE: Clear right-facing side profile, nose pointing image-right, eyes level toward the scene. Medium-full-body framing with visible stance and surroundings; face occupies less than a fifth of the central art. Expression: energetic purposeful gaze toward the path ahead. Adapt the gaze naturally to the specific objects and companions, while maintaining the specified face direction. DISTINCT WARDROBE: white fitted shirt and short blue travel cape, dark trousers. Preserve her face, bob hair and coral square hair clip. This outfit overrides wardrobe in either reference.",
+      "image": "../../../src/features/tarot/assets/cards/swords-knight.png",
+      "generated": true
+    },
+    {
+      "id": "swords-queen",
+      "name": {
+        "en": "Queen of Swords",
+        "ko": "검 여왕"
+      },
+      "scene": "Pomo sits upright in a pale oak chair beside open sky, holding one ceremonial sword vertically and extending her other hand openly, clear boundaries and honest words. DISTINCT CAMERA, POSE AND GAZE: Clear left-facing side profile, nose pointing image-left, eyes level toward the scene. Wide environmental composition with Pomo a smaller figure and important card objects dominant. Expression: warm confidence and thoughtful attentiveness. Adapt the gaze naturally to the specific objects and companions, while maintaining the specified face direction. DISTINCT WARDROBE: elegant pale gray silk blouse and structured blue skirt, bare forearms. Preserve her face, bob hair and coral square hair clip. This outfit overrides wardrobe in either reference.",
+      "image": "../../../src/features/tarot/assets/cards/swords-queen.png",
+      "generated": true
+    },
+    {
+      "id": "swords-king",
+      "name": {
+        "en": "King of Swords",
+        "ko": "검 왕"
+      },
+      "scene": "Pomo sits composed in a structured blue coat on a wooden chair, holding one ceremonial sword, symmetrical library and clear sky, reasoned accountable judgment. DISTINCT CAMERA, POSE AND GAZE: Three-quarter face toward image-right, chin lifted slightly, gaze upward-right. Medium interaction scene with active gesture and visibly different posture from the sample. Expression: composed firm gaze and steady upright posture. Adapt the gaze naturally to the specific objects and companions, while maintaining the specified face direction. DISTINCT WARDROBE: navy formal vest over an ivory open-collar shirt, dark tailored trousers. Preserve her face, bob hair and coral square hair clip. This outfit overrides wardrobe in either reference.",
+      "image": "../../../src/features/tarot/assets/cards/swords-king.png",
+      "generated": true
+    },
+    {
+      "id": "pentacles-ace",
+      "name": {
+        "en": "Ace of Pentacles",
+        "ko": "펜타클 에이스"
+      },
+      "scene": "Pomo holds one large golden coin engraved only with a five-point star, above rich garden soil and a small sprouting plant, a practical new opportunity. DISTINCT CAMERA, POSE AND GAZE: Clear right-facing side profile, nose pointing image-right, eyes level toward the scene. Wide environmental composition with Pomo a smaller figure and important card objects dominant. Expression: open curiosity and a small surprised smile. Adapt the gaze naturally to the specific objects and companions, while maintaining the specified face direction. DISTINCT WARDROBE: light cream short-sleeved linen blouse and green trousers. Preserve her face, bob hair and coral square hair clip. This outfit overrides wardrobe in either reference.",
+      "image": "../../../src/features/tarot/assets/cards/pentacles-ace.png",
+      "generated": true
+    },
+    {
+      "id": "pentacles-two",
+      "name": {
+        "en": "Two of Pentacles",
+        "ko": "펜타클 2"
+      },
+      "scene": "Pomo gently balances exactly two golden star coins connected by a looping ribbon, small waves and a cozy harbor behind her, adapting to changing demands. DISTINCT CAMERA, POSE AND GAZE: Clear left-facing side profile, nose pointing image-left, eyes level toward the scene. Medium interaction scene with active gesture and visibly different posture from the sample. Expression: thoughtful attention while weighing alternatives. Adapt the gaze naturally to the specific objects and companions, while maintaining the specified face direction. DISTINCT WARDROBE: loose sage cotton shirt and sand-colored trousers. Preserve her face, bob hair and coral square hair clip. This outfit overrides wardrobe in either reference.",
+      "image": "../../../src/features/tarot/assets/cards/pentacles-two.png",
+      "generated": true
+    },
+    {
+      "id": "pentacles-three",
+      "name": {
+        "en": "Three of Pentacles",
+        "ko": "펜타클 3"
+      },
+      "scene": "Pomo collaborates with two adult friends on crafting a wooden arch, exactly three golden star coins arranged on the arch, shared skill and cooperation. DISTINCT CAMERA, POSE AND GAZE: Three-quarter face toward image-right, chin lifted slightly, gaze upward-right. Medium-close composition from a slightly elevated camera; hands and symbolic objects stay visible. Expression: engaged warm interest toward the companions or work. Adapt the gaze naturally to the specific objects and companions, while maintaining the specified face direction. DISTINCT WARDROBE: ivory rolled-sleeve work shirt with a tan canvas apron and trousers. Preserve her face, bob hair and coral square hair clip. This outfit overrides wardrobe in either reference.",
+      "image": "../../../src/features/tarot/assets/cards/pentacles-three.png",
+      "generated": true
+    },
+    {
+      "id": "pentacles-four",
+      "name": {
+        "en": "Four of Pentacles",
+        "ko": "펜타클 4"
+      },
+      "scene": "Pomo holds one golden star coin close, with one above her chair and two at her feet, exactly four coins total, guarding security and resources. DISTINCT CAMERA, POSE AND GAZE: Three-quarter face toward image-left, chin level, gaze across the scene rather than downward. Medium-full-body composition from a slightly low camera, with head and body upright. Expression: quiet contemplation with a relaxed neutral mouth. Adapt the gaze naturally to the specific objects and companions, while maintaining the specified face direction. DISTINCT WARDROBE: structured light moss-green vest over an ivory collared shirt, dark trousers. Preserve her face, bob hair and coral square hair clip. This outfit overrides wardrobe in either reference.",
+      "image": "../../../src/features/tarot/assets/cards/pentacles-four.png",
+      "generated": true
+    },
+    {
+      "id": "pentacles-five",
+      "name": {
+        "en": "Five of Pentacles",
+        "ko": "펜타클 5"
+      },
+      "scene": "Pomo and a companion walk through a cold garden toward the warm glow of a library window containing exactly five golden star coins, difficulty and available support, no injuries. DISTINCT CAMERA, POSE AND GAZE: View from behind the left shoulder, head turning right toward the main symbol; back and shoulder visible. Medium-full-body framing with visible stance and surroundings; face occupies less than a fifth of the central art. Expression: concern or regret expressed in the brows, no default cheerful smile. Adapt the gaze naturally to the specific objects and companions, while maintaining the specified face direction. DISTINCT WARDROBE: weather-appropriate warm burgundy coat and scarf for this specific cold scene; other pentacle cards wear light clothes. Preserve her face, bob hair and coral square hair clip. This outfit overrides wardrobe in either reference.",
+      "image": "../../../src/features/tarot/assets/cards/pentacles-five.png",
+      "generated": true
+    },
+    {
+      "id": "pentacles-six",
+      "name": {
+        "en": "Six of Pentacles",
+        "ko": "펜타클 6"
+      },
+      "scene": "Pomo shares resources between two seated adult friends while holding small balanced scales, exactly six golden star coins visible, fair help and exchange. DISTINCT CAMERA, POSE AND GAZE: View from behind the right shoulder, head turning left toward the main symbol; back and shoulder visible. Wide environmental composition with Pomo a smaller figure and important card objects dominant. Expression: gentle relief and renewed confidence. Adapt the gaze naturally to the specific objects and companions, while maintaining the specified face direction. DISTINCT WARDROBE: light tan short-sleeved blouse and comfortable green linen trousers. Preserve her face, bob hair and coral square hair clip. This outfit overrides wardrobe in either reference.",
+      "image": "../../../src/features/tarot/assets/cards/pentacles-six.png",
+      "generated": true
+    },
+    {
+      "id": "pentacles-seven",
+      "name": {
+        "en": "Seven of Pentacles",
+        "ko": "펜타클 7"
+      },
+      "scene": "Pomo pauses to assess a garden vine growing exactly seven golden star coins, rests her hands on a small gardening tool, patient effort and evaluation. DISTINCT CAMERA, POSE AND GAZE: Near-frontal face with gaze upward and head upright; no downward-left tilt. Medium interaction scene with active gesture and visibly different posture from the sample. Expression: focused determination and careful appraisal. Adapt the gaze naturally to the specific objects and companions, while maintaining the specified face direction. DISTINCT WARDROBE: rolled-sleeve ivory work blouse, a simple canvas gardening apron and tan trousers. Preserve her face, bob hair and coral square hair clip. This outfit overrides wardrobe in either reference.",
+      "image": "../../../src/features/tarot/assets/cards/pentacles-seven.png",
+      "generated": true
+    },
+    {
+      "id": "pentacles-eight",
+      "name": {
+        "en": "Eight of Pentacles",
+        "ko": "펜타클 8"
+      },
+      "scene": "Pomo carefully crafts a golden star coin at a wooden workbench, exactly eight coins total including the one being worked on and seven neatly displayed, skill through practice. DISTINCT CAMERA, POSE AND GAZE: Straight frontal face with chin level and direct eye contact. Medium-close composition from a slightly elevated camera; hands and symbolic objects stay visible. Expression: active concentration on the task or movement. Adapt the gaze naturally to the specific objects and companions, while maintaining the specified face direction. DISTINCT WARDROBE: light blue short-sleeved work shirt and a dark canvas apron, practical trousers. Preserve her face, bob hair and coral square hair clip. This outfit overrides wardrobe in either reference.",
+      "image": "../../../src/features/tarot/assets/cards/pentacles-eight.png",
+      "generated": true
+    },
+    {
+      "id": "pentacles-nine",
+      "name": {
+        "en": "Nine of Pentacles",
+        "ko": "펜타클 9"
+      },
+      "scene": "Pomo stands peacefully in a lush carefully tended garden with exactly nine golden star coins among the vines and a small bird nearby, earned independence and care. DISTINCT CAMERA, POSE AND GAZE: Clear right-facing side profile, nose pointing image-right, eyes level toward the scene. Medium-full-body composition from a slightly low camera, with head and body upright. Expression: a reflective expression matching this card's specific feeling, no default posed smile. Adapt the gaze naturally to the specific objects and companions, while maintaining the specified face direction. DISTINCT WARDROBE: airy ivory linen dress with short sleeves and a subtle green sash. Preserve her face, bob hair and coral square hair clip. This outfit overrides wardrobe in either reference.",
+      "image": "../../../src/features/tarot/assets/cards/pentacles-nine.png",
+      "generated": true
+    },
+    {
+      "id": "pentacles-ten",
+      "name": {
+        "en": "Ten of Pentacles",
+        "ko": "펜타클 10"
+      },
+      "scene": "Pomo with adult loved ones gathers at a welcoming wooden home garden, exactly ten golden star coins in a graceful arch of vines, lasting shared foundations. DISTINCT CAMERA, POSE AND GAZE: Clear left-facing side profile, nose pointing image-left, eyes level toward the scene. Medium-full-body framing with visible stance and surroundings; face occupies less than a fifth of the central art. Expression: a feeling matching the ending or shared outcome, shown through body posture as well as face. Adapt the gaze naturally to the specific objects and companions, while maintaining the specified face direction. DISTINCT WARDROBE: soft sage short-sleeved summer shirt and cream trousers. Preserve her face, bob hair and coral square hair clip. This outfit overrides wardrobe in either reference.",
+      "image": "../../../src/features/tarot/assets/cards/pentacles-ten.png",
+      "generated": true
+    },
+    {
+      "id": "pentacles-page",
+      "name": {
+        "en": "Page of Pentacles",
+        "ko": "펜타클 시종"
+      },
+      "scene": "Pomo as a curious student carefully studies one golden star coin over a blank open notebook in a meadow, grounded learning and plans. DISTINCT CAMERA, POSE AND GAZE: Three-quarter face toward image-right, chin lifted slightly, gaze upward-right. Wide environmental composition with Pomo a smaller figure and important card objects dominant. Expression: bright curious eyes and alert enthusiasm. Adapt the gaze naturally to the specific objects and companions, while maintaining the specified face direction. DISTINCT WARDROBE: light pale-yellow collared cotton shirt and green trousers. Preserve her face, bob hair and coral square hair clip. This outfit overrides wardrobe in either reference.",
+      "image": "../../../src/features/tarot/assets/cards/pentacles-page.png",
+      "generated": true
+    },
+    {
+      "id": "pentacles-knight",
+      "name": {
+        "en": "Knight of Pentacles",
+        "ko": "펜타클 기사"
+      },
+      "scene": "Pomo sits on a calm sturdy dark horse holding one golden star coin, neatly cultivated fields behind her, steady reliable progress. DISTINCT CAMERA, POSE AND GAZE: Three-quarter face toward image-left, chin level, gaze across the scene rather than downward. Medium interaction scene with active gesture and visibly different posture from the sample. Expression: energetic purposeful gaze toward the path ahead. Adapt the gaze naturally to the specific objects and companions, while maintaining the specified face direction. DISTINCT WARDROBE: ivory rolled-sleeve shirt with a lightweight olive travel vest and fitted trousers. Preserve her face, bob hair and coral square hair clip. This outfit overrides wardrobe in either reference.",
+      "image": "../../../src/features/tarot/assets/cards/pentacles-knight.png",
+      "generated": true
+    },
+    {
+      "id": "pentacles-queen",
+      "name": {
+        "en": "Queen of Pentacles",
+        "ko": "펜타클 여왕"
+      },
+      "scene": "Pomo sits comfortably in a leafy garden chair and cradles one golden star coin with practical tenderness, a small rabbit near flowers, everyday nurturing. DISTINCT CAMERA, POSE AND GAZE: View from behind the left shoulder, head turning right toward the main symbol; back and shoulder visible. Medium-close composition from a slightly elevated camera; hands and symbolic objects stay visible. Expression: warm confidence and thoughtful attentiveness. Adapt the gaze naturally to the specific objects and companions, while maintaining the specified face direction. DISTINCT WARDROBE: soft cream short-sleeved linen dress with green leaf embroidery. Preserve her face, bob hair and coral square hair clip. This outfit overrides wardrobe in either reference.",
+      "image": "../../../src/features/tarot/assets/cards/pentacles-queen.png",
+      "generated": true
+    },
+    {
+      "id": "pentacles-king",
+      "name": {
+        "en": "King of Pentacles",
+        "ko": "펜타클 왕"
+      },
+      "scene": "Pomo wears an elegant earthy green coat and sits on a sturdy oak chair holding one golden star coin, abundant vineyard and solid house behind, responsible stewardship. DISTINCT CAMERA, POSE AND GAZE: View from behind the right shoulder, head turning left toward the main symbol; back and shoulder visible. Medium-full-body composition from a slightly low camera, with head and body upright. Expression: composed firm gaze and steady upright posture. Adapt the gaze naturally to the specific objects and companions, while maintaining the specified face direction. DISTINCT WARDROBE: dark green formal vest over a crisp ivory shirt, tailored tan trousers. Preserve her face, bob hair and coral square hair clip. This outfit overrides wardrobe in either reference.",
+      "image": "../../../src/features/tarot/assets/cards/pentacles-king.png",
+      "generated": true
+    }
+  ]
+}

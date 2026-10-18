@@ -1,4 +1,5 @@
-import {createSignal, type JSX, onCleanup} from 'solid-js'
+import {createSignal, type JSX} from 'solid-js'
+import {createTimeout} from '@winter-love/solid-use/timeout'
 
 const OPEN_DELAY = 400
 
@@ -7,11 +8,7 @@ export const useTooltipTrigger = () => {
   // Reissue hover requests after the provider dismisses a tooltip.
   const [show, setShow] = createSignal(false, {equals: false})
   let visibleFocus = false
-  let timer: ReturnType<typeof setTimeout> | undefined
-  const cancel = () => {
-    clearTimeout(timer)
-    timer = undefined
-  }
+  const {cancel, execute: scheduleOpen} = createTimeout(() => setShow(true), OPEN_DELAY)
   const onBlur = () => {
     visibleFocus = false
     cancel()
@@ -33,15 +30,12 @@ export const useTooltipTrigger = () => {
     if (event.pointerType === 'touch') {
       return
     }
-    cancel()
     if (visibleFocus) {
+      cancel()
       setShow(true)
       return
     }
-    timer = setTimeout(() => {
-      timer = undefined
-      setShow(true)
-    }, OPEN_DELAY)
+    scheduleOpen()
   }) satisfies JSX.EventHandler<HTMLElement, PointerEvent>
   const onPointerLeave = () => {
     cancel()
@@ -49,6 +43,23 @@ export const useTooltipTrigger = () => {
       setShow(false)
     }
   }
-  onCleanup(cancel)
-  return {onBlur, onFocus, onPointerDown, onPointerEnter, onPointerLeave, setTarget, show, target}
+  const triggerProps = {
+    onBlur,
+    onFocus,
+    onPointerDown,
+    onPointerEnter,
+    onPointerLeave,
+    ref: setTarget,
+  }
+  return {
+    onBlur,
+    onFocus,
+    onPointerDown,
+    onPointerEnter,
+    onPointerLeave,
+    setTarget,
+    show,
+    target,
+    triggerProps,
+  }
 }

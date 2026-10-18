@@ -2,12 +2,14 @@ import type {Accessor} from 'solid-js'
 
 import type {PTrack} from './focus-room-playlist'
 import {type PPlaybackState, writePPlayback} from './playback-storage'
+import {readPlaybackPosition} from './read-playback-position'
 
 const PROGRESS_SAVE_INTERVAL_MILLISECONDS = 5_000
 
 export interface UsePPlaybackPersistenceProps {
   readonly currentTrack: Accessor<PTrack | undefined>
   readonly currentIndex?: Accessor<number>
+  readonly currentQueueEntryId?: Accessor<string | undefined>
   readonly getAudioElement: Accessor<HTMLAudioElement | undefined>
   readonly isPlaying: Accessor<boolean>
 }
@@ -37,7 +39,14 @@ export const usePPlaybackPersistence = (
 
   const writePlayback = (state: PPlaybackState) => {
     const trackIndex = state.trackIndex ?? props.currentIndex?.()
-    writeStoredPlayback(trackIndex === undefined ? state : {...state, trackIndex})
+    const queueEntryId =
+      state.queueEntryId ??
+      (state.trackId === props.currentTrack()?.id ? props.currentQueueEntryId?.() : undefined)
+    writeStoredPlayback({
+      ...state,
+      ...(queueEntryId === undefined ? {} : {queueEntryId}),
+      ...(trackIndex === undefined ? {} : {trackIndex}),
+    })
   }
 
   const setPendingPosition = (state: PPlaybackState | null) => {
@@ -53,35 +62,45 @@ export const usePPlaybackPersistence = (
     }
 
     const pendingPlayback = pendingPosition
-    if (pendingPlayback?.trackId === track.id) {
+    const currentQueueEntryId = props.currentQueueEntryId?.()
+    const pendingTargetsCurrentEntry =
+      pendingPlayback?.queueEntryId === undefined ||
+      currentQueueEntryId === undefined ||
+      pendingPlayback.queueEntryId === currentQueueEntryId
+    if (pendingPlayback?.trackId === track.id && pendingTargetsCurrentEntry) {
       const currentIndex = props.currentIndex?.()
       const indexedPendingPlayback =
         currentIndex !== undefined && pendingPlayback.trackIndex !== currentIndex
           ? {...pendingPlayback, trackIndex: currentIndex}
           : pendingPlayback
+      const identifiedPendingPlayback =
+        currentQueueEntryId !== undefined &&
+        indexedPendingPlayback.queueEntryId !== currentQueueEntryId
+          ? {...indexedPendingPlayback, queueEntryId: currentQueueEntryId}
+          : indexedPendingPlayback
 
-      if (!updatePendingIntent || indexedPendingPlayback.isPlaying === isPlaying) {
-        if (indexedPendingPlayback !== pendingPlayback) {
-          pendingPosition = indexedPendingPlayback
-          writePlayback(indexedPendingPlayback)
+      if (!updatePendingIntent || identifiedPendingPlayback.isPlaying === isPlaying) {
+        if (identifiedPendingPlayback !== pendingPlayback) {
+          pendingPosition = identifiedPendingPlayback
+          writePlayback(identifiedPendingPlayback)
         }
         return
       }
 
-      const updatedPlayback = {...indexedPendingPlayback, isPlaying}
+      const updatedPlayback = {...identifiedPendingPlayback, isPlaying}
       pendingPosition = updatedPlayback
       writePlayback(updatedPlayback)
       return
     }
 
-    const positionSeconds = props.getAudioElement()?.currentTime
-    if (positionSeconds === undefined || !Number.isFinite(positionSeconds)) {
+    const positionSeconds = readPlaybackPosition(props.getAudioElement())
+    if (positionSeconds === null) {
       return
     }
 
     writePlayback({
       isPlaying,
-      positionSeconds: Math.max(0, positionSeconds),
+      positionSeconds,
       trackId: track.id,
     })
   }
@@ -119,6 +138,9 @@ export const usePPlaybackPersistence = (
     if (
       playback === null ||
       track?.id !== playback.trackId ||
+      (playback.queueEntryId !== undefined &&
+        props.currentQueueEntryId?.() !== undefined &&
+        props.currentQueueEntryId() !== playback.queueEntryId) ||
       audioElement === undefined ||
       audioElement.readyState < HTMLMediaElement.HAVE_METADATA
     ) {
@@ -134,7 +156,14 @@ export const usePPlaybackPersistence = (
     try {
       audioElement.currentTime = positionSeconds
       pendingPosition = null
-      const restoredPlayback = {...playback, positionSeconds}
+      const currentQueueEntryId = props.currentQueueEntryId?.()
+      const restoredPlayback = {
+        ...playback,
+        positionSeconds,
+        ...(playback.queueEntryId === undefined && currentQueueEntryId !== undefined
+          ? {queueEntryId: currentQueueEntryId}
+          : {}),
+      }
       writePlayback(restoredPlayback)
       return restoredPlayback
     } catch {

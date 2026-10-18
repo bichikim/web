@@ -91,7 +91,7 @@ test('should restore hidden toolbar controls and allow enabling them after reloa
 }) => {
   await page.clock.setFixedTime(new Date('2026-09-09T00:00:00.000Z'))
   const dialog = await openSettings(page)
-  for (const name of ['도구 표시', '기억보조 표시', '투어 버튼 표시']) {
+  for (const name of ['도구 표시', '생각 보조 표시', '투어 버튼 표시']) {
     const toggle = dialog.getByRole('switch', {exact: true, name})
     await expect(toggle).toBeChecked()
     await dialog
@@ -102,13 +102,13 @@ test('should restore hidden toolbar controls and allow enabling them after reloa
   }
   await dialog.getByRole('button', {exact: true, name: '닫기'}).click()
   await expect(dialog).not.toBeVisible()
-  for (const name of ['도구', '기억보조', '둘러보기']) {
+  for (const name of ['도구', '생각 보조', '둘러보기']) {
     await expect(page.getByRole('button', {exact: true, name})).toHaveCount(0)
   }
 
   await page.reload()
   await page.getByRole('button', {exact: true, name: '설정'}).click()
-  for (const name of ['도구 표시', '기억보조 표시', '투어 버튼 표시']) {
+  for (const name of ['도구 표시', '생각 보조 표시', '투어 버튼 표시']) {
     const toggle = dialog.getByRole('switch', {exact: true, name})
     await expect(toggle).not.toBeChecked()
     await dialog
@@ -119,7 +119,7 @@ test('should restore hidden toolbar controls and allow enabling them after reloa
   }
   await dialog.getByRole('button', {exact: true, name: '닫기'}).click()
   await expect(dialog).not.toBeVisible()
-  for (const name of ['도구', '기억보조', '둘러보기']) {
+  for (const name of ['도구', '생각 보조', '둘러보기']) {
     await expect(page.getByRole('button', {exact: true, name})).toBeVisible()
   }
 })

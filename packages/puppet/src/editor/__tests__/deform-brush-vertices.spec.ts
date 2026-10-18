@@ -5,6 +5,34 @@ import {deformBrushVertices} from '../deform-brush-vertices'
 describe('deformBrushVertices', () => {
   const vertices = [0, 0, 5, 0, 10, 0, 15, 0]
 
+  test('should expand radially without moving the center or vertices outside the radius', () => {
+    expect(
+      deformBrushVertices({
+        center: {x: 0, y: 0},
+        delta: {x: 5, y: 0},
+        hardness: 1,
+        mode: 'expand',
+        radius: 10,
+        strength: 1,
+        vertices,
+      }),
+    ).toEqual([0, 0, 7.5, 0, 10, 0, 15, 0])
+  })
+
+  test('should contract without crossing the brush center', () => {
+    expect(
+      deformBrushVertices({
+        center: {x: 0, y: 0},
+        delta: {x: -100, y: 0},
+        hardness: 1,
+        mode: 'expand',
+        radius: 10,
+        strength: 1,
+        vertices,
+      }),
+    ).toEqual([0, 0, 0.25, 0, 10, 0, 15, 0])
+  })
+
   test('should move nearby vertices with decreasing influence', () => {
     expect(
       deformBrushVertices({

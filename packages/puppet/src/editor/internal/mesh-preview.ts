@@ -30,7 +30,10 @@ const getPreviewParameterValues = (props: MeshEditorProps) => {
     ...props.parameterValueMap,
     ...activeParameterValues,
   }
-  const [motion] = props.document.motions
+  const motion =
+    props.motionId === undefined
+      ? props.document.motions[0]
+      : props.document.motions.find((motion) => motion.id === props.motionId)
 
   return props.editMode === 'parameter'
     ? parameterValueMap
@@ -46,7 +49,10 @@ export const getPartPreviewVertices = (props: MeshEditorProps, part: PuppetPart)
   if (props.meshEditing) {
     return part.mesh.vertices
   }
-  const [motion] = props.document.motions
+  const motion =
+    props.motionId === undefined
+      ? props.document.motions[0]
+      : props.document.motions.find((motion) => motion.id === props.motionId)
   const parameterValues = getPreviewParameterValues(props)
   const parameterVertices = composeParameterVertices({
     document: getParameterEditingDocument(

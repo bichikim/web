@@ -1,5 +1,7 @@
 /** @vitest-environment jsdom */
 
+import {createSignal} from 'solid-js'
+import type {PSceneStyle} from 'src/features/focus-room-animation'
 import {PreferenceProvider} from 'src/hooks/use-preference'
 import {fireEvent, render, screen, within} from '@solidjs/testing-library'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
@@ -543,5 +545,22 @@ describe('PPomodoro', () => {
     } finally {
       vi.doUnmock('src/features/pomodoro-timer')
     }
+  })
+  it('should preserve the focused duration draft when scene style changes', async () => {
+    const [style, setStyle] = createSignal<PSceneStyle>('original')
+    render(() => (
+      <PreferenceProvider>
+        <PPomodoro desktopDialog sceneStyle={style()} />
+      </PreferenceProvider>
+    ))
+    await vi.advanceTimersByTimeAsync(0)
+    fireEvent.click(screen.getByRole('button', {name: /4세션/}))
+    const input = screen.getByRole('spinbutton', {name: '집중 시간(분)'})
+    fireEvent.input(input, {target: {value: '31'}})
+    input.focus()
+    setStyle('scribble')
+    expect(screen.getByRole('spinbutton', {name: '집중 시간(분)'})).toBe(input)
+    expect(input).toHaveValue('31')
+    expect(document.activeElement).toBe(input)
   })
 })

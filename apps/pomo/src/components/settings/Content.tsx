@@ -1,3 +1,4 @@
+import {PAiSettingsPanel} from '../ai-settings/Panel'
 import {Background} from './background/Background'
 import {Tabs} from '@kobalte/core/tabs'
 import type {ScreenWakeLockController} from '../../features/screen-wake-lock'
@@ -30,6 +31,7 @@ export const PSettingsContent = (props: PSettingsContentProps) => {
       <PCreditsSettings />
       <PFeedSettings />
       <PDialogueSettings />
+      <PAiSettingsPanel />
       <UserSettings />
     </>
   )

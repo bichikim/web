@@ -1,3 +1,4 @@
+import {sumBy} from 'es-toolkit/math'
 import {z} from 'zod'
 
 const MAX_DAY = 31
@@ -45,10 +46,7 @@ const createHistoricalMomentDraftSchema = (urlSchema: z.ZodType<string>) => {
       title: z.string().trim().min(1).max(MAX_TITLE_LENGTH),
     })
     .superRefine((moment, context) => {
-      const bodyLength = Object.values(moment.sections).reduce(
-        (length, section) => length + section.text.length,
-        0,
-      )
+      const bodyLength = sumBy(Object.values(moment.sections), (section) => section.text.length)
 
       if (bodyLength < MIN_BODY_LENGTH || bodyLength > MAX_BODY_LENGTH) {
         context.addIssue({

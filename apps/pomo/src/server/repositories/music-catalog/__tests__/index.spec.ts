@@ -302,6 +302,92 @@ describe('listPublishedAlbums', () => {
     ])
   })
 
+  it('should preserve album order, last preferred translations and ordered duplicate asset rows', async () => {
+    const translation = (id: string, locale: 'en' | 'ko', title: string) => ({
+      coverFallback: 'music',
+      coverImageUrl: null,
+      description: title,
+      id,
+      locale,
+      publishedAt: new Date('2026-08-26T00:00:00Z'),
+      title,
+    })
+    const translations = [
+      translation('__proto__', 'en', 'First English'),
+      translation('fallback', 'ko', 'First fallback'),
+      translation('empty', 'en', 'Empty album'),
+      translation('__proto__', 'ko', 'Ignored fallback'),
+      translation('fallback', 'ko', 'Ignored duplicate fallback'),
+      translation('__proto__', 'en', 'Last English'),
+    ]
+    const track = (albumId: string, id: string, title: string, artworkUrl: string | null) => ({
+      albumId,
+      artist: 'Artist',
+      artworkUrl,
+      id,
+      title,
+    })
+    const tracks = [
+      track('__proto__', 'same-track', 'First asset', null),
+      track('fallback', 'other-track', 'Other album', 'https://assets.example/other.webp'),
+      track('__proto__', 'same-track', 'Second asset', 'https://assets.example/second.webp'),
+      track('untranslated', 'orphan-track', 'No translation', null),
+    ]
+    const originalTranslations = structuredClone(translations)
+    const originalTracks = structuredClone(tracks)
+    queueCatalog(translations, tracks, [
+      {albumId: '__proto__', externalProductId: 'old-offer'},
+      {albumId: '__proto__', externalProductId: 'last-offer'},
+      {albumId: 'untranslated', externalProductId: 'orphan-offer'},
+    ])
+
+    const albums = await listPublishedAlbums('en')
+
+    expect(
+      albums.map(({id, title, description, trackCount, sale}) => ({
+        description,
+        id,
+        sale,
+        title,
+        trackCount,
+      })),
+    ).toEqual([
+      {
+        description: 'Last English',
+        id: '__proto__',
+        sale: {externalProductId: 'last-offer', state: 'configured'},
+        title: 'Last English',
+        trackCount: 2,
+      },
+      {
+        description: 'First fallback',
+        id: 'fallback',
+        sale: {state: 'preparing'},
+        title: 'First fallback',
+        trackCount: 1,
+      },
+      {
+        description: 'Empty album',
+        id: 'empty',
+        sale: {state: 'preparing'},
+        title: 'Empty album',
+        trackCount: 0,
+      },
+    ])
+    expect(albums[0].tracks).toEqual([
+      {artist: 'Artist', artworkUrl: undefined, id: 'same-track', title: 'First asset'},
+      {
+        artist: 'Artist',
+        artworkUrl: 'https://assets.example/second.webp',
+        id: 'same-track',
+        title: 'Second asset',
+      },
+    ])
+    expect(albums[2].tracks).toEqual([])
+    expect(translations).toEqual(originalTranslations)
+    expect(tracks).toEqual(originalTracks)
+  })
+
   it('should return an empty catalog for empty database results', async () => {
     queueCatalog([], [], [])
 

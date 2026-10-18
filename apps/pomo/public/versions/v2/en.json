@@ -2,6 +2,70 @@
   "releases": [
     {
       "title": "Pomo update",
+      "summary": "Create albums from your music and enjoy ambient sounds. Explore AI tarot and file transfers between devices, with improvements to timers, speech, calendars, and saving.",
+      "changes": [
+        {
+          "title": "AI tarot readings",
+          "description": "Ask a question and draw one, three, or five cards for an AI interpretation. Expand cards, view them upright, and listen to the reading aloud."
+        },
+        {
+          "title": "AI models and voices",
+          "description": "Choose the default text generation model and the voice model and voice for automatic dialogue in the AI settings tab. LFM is now also available among the text models that run on your device."
+        },
+        {
+          "title": "Albums made from your music",
+          "description": "Add your own music files to create and play personal albums. Choose a cover, crop a photo for it, and edit track titles. Your albums are stored on the device you are using."
+        },
+        {
+          "title": "Ambient sounds for your focus space",
+          "description": "Listen to waves, rain, thunder, and café conversations alongside your music. Adjust each sound’s volume or stop and restart all ambient sounds together."
+        },
+        {
+          "title": "Music and dialogue for each moment",
+          "description": "Set music and ambient sounds to start or stop when you enter or when focus and break sessions begin or end. A new timer lets you run end actions after a delay you choose."
+        },
+        {
+          "title": "File transfers between devices",
+          "description": "In supported environments, connect another device through a link or QR code in Tools to send and receive files. Review connection requests, track transfer progress, and save received files."
+        },
+        {
+          "title": "Timer transitions and tab synchronization",
+          "description": "Timer state now carries over more reliably when you stop it in another tab or reopen the screen. Settings changes and resets no longer trigger unnecessary start or end announcements, and duplicate delayed end actions have been reduced."
+        },
+        {
+          "title": "Playlist and playback position recovery",
+          "description": "Repeated copies of the same track keep their own queue positions and playback state. Paused positions restore more reliably, and older operations are prevented from overwriting current playback when you switch tracks or reopen the player."
+        },
+        {
+          "title": "More natural spoken guidance",
+          "description": "Korean dates, times, numbers, and long passages are read more naturally. Speech that starts late after you stop a reply or leave the screen, and duplicate readings of the same reply, have also been addressed."
+        },
+        {
+          "title": "Calendar questions and date handling",
+          "description": "Calendar questions better recognize relative dates, weeks, weekends, and morning or afternoon conditions. Queries covering multiple dates or excluding specific dates, all-day events, and timezone-sensitive dates and alarms have also been refined."
+        },
+        {
+          "title": "Memo and reminder saving",
+          "description": "Earlier saves are prevented from overwriting your latest memo edits. Today and tomorrow reminders are checked again when the date changes, with improvements to repeated notifications and save failure messages."
+        },
+        {
+          "title": "Feed reading and language learning",
+          "description": "Feed content, dates, and links are read more reliably, with better handling of duplicate items and listening history. Duplicate words and example sentences, tag entry, and learning state after language changes have also been refined."
+        },
+        {
+          "title": "Picture diary editing and saving",
+          "description": "Previous AI images are cleared when generation fails or restarts. Drawing edits, undo, saving when you close the screen, and the diary’s final pages have also been refined."
+        },
+        {
+          "title": "Settings recovery and clearer feedback",
+          "description": "Loading existing settings and memos, recovery after failed saves, and error messages have been improved. Controls remain visible while dialogs and menus are open, with refinements to generation and download progress and feature request list refreshes."
+        }
+      ],
+      "version": "2026. 10. 06 14:32",
+      "releasedAt": "2026-10-06T14:32:00+09:00"
+    },
+    {
+      "title": "Pomo update",
       "summary": "Keep timers and music playing more reliably, manage memo reminders and calendars with more confidence, and suggest features directly.",
       "changes": [
         {

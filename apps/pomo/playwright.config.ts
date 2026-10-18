@@ -69,7 +69,8 @@ export default defineConfig({
       url: appsInTossBaseUrl,
     },
     {
-      command: 'pnpm exec vite dev --host 127.0.0.1 --port 44175 --strictPort',
+      command:
+        'node ../../../../../node_modules/vite/bin/vite.js dev --host 127.0.0.1 --port 44175 --strictPort',
       cwd: clientActionsFixtureDirectory,
       reuseExistingServer: false,
       timeout: 120_000,

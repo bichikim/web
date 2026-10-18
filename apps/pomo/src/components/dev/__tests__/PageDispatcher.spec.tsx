@@ -26,6 +26,7 @@ vi.mock('../LayerReviewPage', () => ({LayerReviewPage: createPage('layer-review'
 vi.mock('../LoopPlayerPage', () => ({LoopPlayerPage: createPage('loop-player')}))
 vi.mock('../OptionResetPage', () => ({OptionResetPage: createPage('option-reset')}))
 vi.mock('../RecoveryPage', () => ({RecoveryPage: createPage('recovery')}))
+vi.mock('../SajuPage', () => ({SajuPage: createPage('saju')}))
 vi.mock('../SpeechToTextPage', () => ({SpeechToTextPage: createPage('speech-to-text')}))
 vi.mock('../StoragePage', () => ({StoragePage: createPage('storage')}))
 vi.mock('../SoundJoiningPage', () => ({SoundJoiningPage: createPage('sound-joining')}))
@@ -52,6 +53,7 @@ it.each([
   ['/dev/loop-player', 'loop-player'],
   ['/dev/options', 'option-reset'],
   ['/dev/recovery', 'recovery'],
+  ['/dev/saju', 'saju'],
   ['/dev/sound-joining', 'sound-joining'],
   ['/dev/sound-loop', 'sound-loop'],
   ['/dev/sound-player', 'sound-player'],

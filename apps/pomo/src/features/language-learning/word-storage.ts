@@ -1,16 +1,22 @@
-import {uniqBy} from 'es-toolkit/array'
+import {differenceBy, uniqBy} from 'es-toolkit/array'
 import {createCollectionStorage} from '../value-storage'
 import {z} from 'zod'
 
 import type {LanguageLearningLanguage} from './schema'
 import type {LanguageLearningStorageOptions} from './storage'
-import {type LanguageLearningWord, languageLearningWordSchema} from './word-schema'
+import {
+  type LanguageLearningWord,
+  languageLearningWordSchema,
+  normalizeLanguageLearningWordUnicodeValue,
+} from './word-schema'
 
 const STORAGE_KEY = 'pomo:language-learning:words:v1'
 export const LANGUAGE_LEARNING_WORDS_CHANGED_EVENT = 'pomo:language-learning:words-changed'
 const storedWordsSchema = z.array(languageLearningWordSchema).readonly()
 const normalizeLanguageLearningWordValue = (value: string): string =>
   value.trim().toLocaleLowerCase()
+const normalizeAppendedLanguageLearningWordValue = (value: string): string =>
+  normalizeLanguageLearningWordUnicodeValue(normalizeLanguageLearningWordValue(value))
 
 export interface AppendLanguageLearningWordsResult {
   readonly addedCount: number
@@ -49,23 +55,21 @@ export const appendLanguageLearningWords = (
   options?: LanguageLearningStorageOptions,
 ): AppendLanguageLearningWordsResult => {
   const storedWords = readLanguageLearningWords(options)
-  const existingValues = new Set(
-    storedWords
-      .filter((word) => word.language === language)
-      .map((word) => normalizeLanguageLearningWordValue(word.value)),
-  )
+  const existingValues = storedWords
+    .filter((word) => word.language === language)
+    .map((word) => word.value)
   const createdAt = new Date().toISOString()
-  const newWords = values.flatMap((value): ReadonlyArray<LanguageLearningWord> => {
-    const trimmedValue = value.trim()
-    const normalizedValue = normalizeLanguageLearningWordValue(trimmedValue)
-
-    if (trimmedValue.length === 0 || existingValues.has(normalizedValue)) {
-      return []
-    }
-
-    existingValues.add(normalizedValue)
-    return [{createdAt, language, memorized: false, value: trimmedValue, version: 1}]
-  })
+  const newValues = differenceBy(
+    uniqBy(
+      values.map((value) => value.trim()).filter((value) => value.length > 0),
+      normalizeAppendedLanguageLearningWordValue,
+    ),
+    existingValues,
+    normalizeAppendedLanguageLearningWordValue,
+  )
+  const newWords = newValues.map(
+    (value): LanguageLearningWord => ({createdAt, language, memorized: false, value, version: 1}),
+  )
 
   if (newWords.length > 0) {
     writeLanguageLearningWords([...storedWords, ...newWords], options)

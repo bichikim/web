@@ -250,6 +250,53 @@ it('should expand recurring Google events and normalize timed and all-day values
   )
 })
 
+it('should preserve the Google calendar zone for exact-instant all-day filtering', async () => {
+  const fetch = vi
+    .fn<typeof globalThis.fetch>()
+    .mockResolvedValueOnce(
+      Response.json({items: [{id: 'work', summary: '업무', timeZone: 'Pacific/Kiritimati'}]}),
+    )
+    .mockResolvedValueOnce(
+      Response.json({
+        items: [
+          {
+            end: {date: '2026-09-06'},
+            id: 'all-day',
+            start: {date: '2026-09-05'},
+          },
+        ],
+      }),
+    )
+  const provider = createGoogleCalendarProvider({
+    clientId: 'google-client',
+    clientSecret: 'google-secret',
+    fetch,
+  })
+
+  await expect(
+    provider.listEvents({
+      accessToken: 'access',
+      displayTimeZone: 'America/New_York',
+      end: '2026-09-04T16:00:01.000Z',
+      lookupInstant: '2026-09-04T16:00:00.000Z',
+      start: '2026-09-04T15:59:59.000Z',
+    }),
+  ).resolves.toMatchObject({
+    events: [
+      {
+        allDay: true,
+        calendarLabel: '업무',
+        calendarTimeZone: 'Pacific/Kiritimati',
+        end: '2026-09-06',
+        id: '["work","all-day"]',
+        start: '2026-09-05',
+      },
+    ],
+    truncated: false,
+    unavailableCalendars: 0,
+  })
+})
+
 it('should page through every Google calendar before loading events', async () => {
   const fetch = vi
     .fn<typeof globalThis.fetch>()

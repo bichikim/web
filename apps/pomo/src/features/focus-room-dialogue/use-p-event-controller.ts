@@ -94,6 +94,7 @@ export const usePEventController = (props: UsePEventControllerProps): PEventCont
   let persistedPlaybackModes: EventPlaybackModes = {}
   let persistedDelayedEndEventDurationMinutes: number =
     DEFAULT_DELAYED_END_EVENT_SETTINGS.durationMinutes
+  let activeDelayedEndEventDurationMinutes: number | null = null
   let delayedEndEventDurationRevision = 0
   const beforePlaybackCallbacks = new Set<() => void>()
   let resolveInitialization: (() => void) | null = null
@@ -310,6 +311,15 @@ export const usePEventController = (props: UsePEventControllerProps): PEventCont
     onEvent: delayedEndPlayback.request,
   })
 
+  const startDelayedEndEventTimer = (durationMinutes: number) => {
+    const timerGeneration = delayedEndEvent.getTimerGeneration()
+    delayedEndEvent.start(durationMinutes)
+
+    if (delayedEndEvent.getTimerGeneration() !== timerGeneration) {
+      activeDelayedEndEventDurationMinutes = durationMinutes
+    }
+  }
+
   const cancelActiveDelayedEndPlayback = () => {
     if (delayedEndPlayback.isActive()) {
       playback.cancel()
@@ -323,6 +333,8 @@ export const usePEventController = (props: UsePEventControllerProps): PEventCont
       throw new Error('지정 시간은 1~120분 사이의 정수여야 해요.')
     }
 
+    const timerGenerationAtSave = delayedEndEvent.getTimerGeneration()
+    const wasTimerRunningAtSave = delayedEndEvent.isRunning()
     const currentRevision = (delayedEndEventDurationRevision += 1)
     setDelayedEndEventDurationMinutes(nextSettings.durationMinutes)
 
@@ -330,10 +342,25 @@ export const usePEventController = (props: UsePEventControllerProps): PEventCont
       await writeDelayedEndEventSettings(nextSettings)
       if (currentRevision === delayedEndEventDurationRevision) {
         persistedDelayedEndEventDurationMinutes = nextSettings.durationMinutes
+
+        if (
+          wasTimerRunningAtSave &&
+          delayedEndEvent.isRunning() &&
+          delayedEndEvent.getTimerGeneration() === timerGenerationAtSave
+        ) {
+          startDelayedEndEventTimer(nextSettings.durationMinutes)
+        }
       }
     } catch (error: unknown) {
       if (!isDisposed && currentRevision === delayedEndEventDurationRevision) {
         setDelayedEndEventDurationMinutes(persistedDelayedEndEventDurationMinutes)
+
+        if (
+          delayedEndEvent.isRunning() &&
+          activeDelayedEndEventDurationMinutes !== persistedDelayedEndEventDurationMinutes
+        ) {
+          startDelayedEndEventTimer(persistedDelayedEndEventDurationMinutes)
+        }
       }
       throw error
     }
@@ -348,6 +375,7 @@ export const usePEventController = (props: UsePEventControllerProps): PEventCont
     activeViseme: playback.activeViseme,
     cancelDelayedEndEvent: () => {
       delayedEndEvent.cancel()
+      activeDelayedEndEventDurationMinutes = null
       delayedEndPlayback.clearPendingEvent()
       cancelActiveDelayedEndPlayback()
     },
@@ -517,7 +545,7 @@ export const usePEventController = (props: UsePEventControllerProps): PEventCont
     },
     skipDialoguePlayback: playback.skip,
     startDelayedEndEvent: () => {
-      delayedEndEvent.start(delayedEndEventDurationMinutes())
+      startDelayedEndEventTimer(delayedEndEventDurationMinutes())
       if (delayedEndEvent.isRunning()) {
         delayedEndPlayback.clearPendingEvent()
         cancelActiveDelayedEndPlayback()

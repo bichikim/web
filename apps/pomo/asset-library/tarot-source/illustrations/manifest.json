@@ -1,0 +1,562 @@
+{
+  "method": "built-in image_gen edit",
+  "intent": "Preserve each original tarot scene and identity; remove printed frame and extend the illustration edge to edge without text.",
+  "frame": "src/features/tarot/assets/frame.png",
+  "maps": [
+    {
+      "id": "fool",
+      "source": "src/features/tarot/assets/cards/fool.png",
+      "sourceSha256": "266b38c4cc43a238f4be47670ad7bb41afbae8fffa36e04a7034a5695b36329e",
+      "illustration": "src/features/tarot/assets/illustrations/fool.png",
+      "generatedSource": "/Users/bichi/.codex/generated_images/01a1051e-d819-7423-b4c2-1f8e8334e501/exec-2a24e719-5789-411a-8e14-81af83431fdb.png"
+    },
+    {
+      "id": "magician",
+      "source": "src/features/tarot/assets/cards/magician.png",
+      "sourceSha256": "a304f226beab79bda762e8212c4e948488933e5d4e705a91393a1610d4d8329a",
+      "illustration": "src/features/tarot/assets/illustrations/magician.png",
+      "generatedSource": "/Users/bichi/.codex/generated_images/01a1051e-d819-7423-b4c2-1f8e8334e501/exec-b1ed0212-5903-449e-93ff-dbff08ca3652.png"
+    },
+    {
+      "id": "high-priestess",
+      "source": "src/features/tarot/assets/cards/high-priestess.png",
+      "sourceSha256": "36dacc8f3a49ba4291bf43a8aa627f87182138b611c6efa030960c8689dc3615",
+      "illustration": "src/features/tarot/assets/illustrations/high-priestess.png",
+      "generatedSource": "/Users/bichi/.codex/generated_images/01a1051e-d819-7423-b4c2-1f8e8334e501/exec-14c8e509-3e52-426a-ae22-369b705e351a.png"
+    },
+    {
+      "id": "empress",
+      "source": "src/features/tarot/assets/cards/empress.png",
+      "sourceSha256": "2dd8c003302c796a9c71fb0f3d6c2cf25df23be6bfb25253d06ba4b07303d640",
+      "illustration": "src/features/tarot/assets/illustrations/empress.png",
+      "generatedSource": "/Users/bichi/.codex/generated_images/01a1051e-d819-7423-b4c2-1f8e8334e501/exec-86f394b1-90d5-4ec1-906a-182dd35a06eb.png"
+    },
+    {
+      "id": "emperor",
+      "source": "src/features/tarot/assets/cards/emperor.png",
+      "sourceSha256": "9812f825759553af64ef75bb6c897bed7a9d1b448545f5515c9e013c542aacca",
+      "illustration": "src/features/tarot/assets/illustrations/emperor.png",
+      "generatedSource": "/Users/bichi/.codex/generated_images/01a1051e-d819-7423-b4c2-1f8e8334e501/exec-0b3deffc-3b20-46ad-9e06-18b911332276.png"
+    },
+    {
+      "id": "hierophant",
+      "source": "src/features/tarot/assets/cards/hierophant.png",
+      "sourceSha256": "08b6e5de6bca68827f37753934561df997e9bbc678444c712031e0e9c6ad8273",
+      "illustration": "src/features/tarot/assets/illustrations/hierophant.png",
+      "generatedSource": "/Users/bichi/.codex/generated_images/01a1051e-d819-7423-b4c2-1f8e8334e501/exec-74ab66c4-425b-4ceb-a5e6-c39323c79c98.png"
+    },
+    {
+      "id": "lovers",
+      "source": "src/features/tarot/assets/cards/lovers.png",
+      "sourceSha256": "bc44c22122d2daf664122183b0188e9f1e08b6a45ddc27c68aac66cde90031c6",
+      "illustration": "src/features/tarot/assets/illustrations/lovers.png",
+      "generatedSource": "/Users/bichi/.codex/generated_images/01a1051e-d819-7423-b4c2-1f8e8334e501/exec-8e21a2b6-6a3b-42cb-bfb8-9d1f16733cd4.png"
+    },
+    {
+      "id": "chariot",
+      "source": "src/features/tarot/assets/cards/chariot.png",
+      "sourceSha256": "5b6563a28bc2c490007bb79a10be08d42c4da50561a767c051110fd3d2b509e9",
+      "illustration": "src/features/tarot/assets/illustrations/chariot.png",
+      "generatedSource": "/Users/bichi/.codex/generated_images/01a1051e-d819-7423-b4c2-1f8e8334e501/exec-0b4d8db4-9501-4d32-8e63-57af849c3b7e.png"
+    },
+    {
+      "id": "strength",
+      "source": "src/features/tarot/assets/cards/strength.png",
+      "sourceSha256": "627eef66f3190b10e7cb7992b8940e4fc136d0a7e1d3213dc53dc0b76c1a9c9e",
+      "illustration": "src/features/tarot/assets/illustrations/strength.png",
+      "generatedSource": "/Users/bichi/.codex/generated_images/01a1051e-d819-7423-b4c2-1f8e8334e501/exec-2b1a73a4-95e6-4e8a-a091-0e4323ebaf4e.png"
+    },
+    {
+      "id": "hermit",
+      "source": "src/features/tarot/assets/cards/hermit.png",
+      "sourceSha256": "8c87549f4f835c7b49c1dd44fb41420e044dc8c6a0da56d5c57bb91683fa18d8",
+      "illustration": "src/features/tarot/assets/illustrations/hermit.png",
+      "generatedSource": "/Users/bichi/.codex/generated_images/01a1051e-d819-7423-b4c2-1f8e8334e501/exec-82622b98-89d7-4059-bfcc-3a1498bd539c.png"
+    },
+    {
+      "id": "wheel-of-fortune",
+      "source": "src/features/tarot/assets/cards/wheel-of-fortune.png",
+      "sourceSha256": "16cbe658333065fc50ed11344e614437f3ee799cdb7d50b3c5ca86669e6b88ab",
+      "illustration": "src/features/tarot/assets/illustrations/wheel-of-fortune.png",
+      "generatedSource": "/Users/bichi/.codex/generated_images/01a1051e-d819-7423-b4c2-1f8e8334e501/exec-ca1a7aef-3ff8-4683-b727-2a1173a001e1.png"
+    },
+    {
+      "id": "justice",
+      "source": "src/features/tarot/assets/cards/justice.png",
+      "sourceSha256": "0a955c7bc55fbaa471e0038f5ec7c35014b121ccaf9e760c778d72b56ccc915c",
+      "illustration": "src/features/tarot/assets/illustrations/justice.png",
+      "generatedSource": "/Users/bichi/.codex/generated_images/01a1051e-d819-7423-b4c2-1f8e8334e501/exec-7881e4df-22a1-462d-99f5-2e8b5a62ffad.png"
+    },
+    {
+      "id": "hanged-man",
+      "source": "src/features/tarot/assets/cards/hanged-man.png",
+      "sourceSha256": "996219db9e758190b5950c4d4d8c231db7ea7c8aee051ab782a00b065ee1681a",
+      "illustration": "src/features/tarot/assets/illustrations/hanged-man.png",
+      "generatedSource": "/Users/bichi/.codex/generated_images/01a1051e-d819-7423-b4c2-1f8e8334e501/exec-7b10e095-862f-4c01-b5c9-e0472982a3fa.png"
+    },
+    {
+      "id": "death",
+      "source": "src/features/tarot/assets/cards/death.png",
+      "sourceSha256": "873c0f3de33748e71dd71c07e293697ea2c694c8c025441fc63c630ca16a23cd",
+      "illustration": "src/features/tarot/assets/illustrations/death.png",
+      "generatedSource": "/Users/bichi/.codex/generated_images/01a1051e-d819-7423-b4c2-1f8e8334e501/exec-ed8cc131-5787-4775-a7e4-cc5f7f68a712.png"
+    },
+    {
+      "id": "temperance",
+      "source": "src/features/tarot/assets/cards/temperance.png",
+      "sourceSha256": "932c327a77951e274005bd729c24633a4dc4c1cc28f9a5bc85f043f9acaaf50f",
+      "illustration": "src/features/tarot/assets/illustrations/temperance.png",
+      "generatedSource": "/Users/bichi/.codex/generated_images/01a1051e-d819-7423-b4c2-1f8e8334e501/exec-c3bb7c02-2cba-4afd-87d8-407f1d087a77.png"
+    },
+    {
+      "id": "devil",
+      "source": "src/features/tarot/assets/cards/devil.png",
+      "sourceSha256": "2c7879af5cf6ea4b244ddc8a6b4f2324f42730c02a4a9da794e94bb36f46b4a8",
+      "illustration": "src/features/tarot/assets/illustrations/devil.png",
+      "generatedSource": "/Users/bichi/.codex/generated_images/01a1051e-d819-7423-b4c2-1f8e8334e501/exec-d6ac10c5-8007-4a2b-8c23-ed3d4f1e9878.png"
+    },
+    {
+      "id": "tower",
+      "source": "src/features/tarot/assets/cards/tower.png",
+      "sourceSha256": "cc797b50a4601439b1ba2f973314017784d4e4e38005f0e07f3a385422d4676c",
+      "illustration": "src/features/tarot/assets/illustrations/tower.png",
+      "generatedSource": "/Users/bichi/.codex/generated_images/01a1051e-d819-7423-b4c2-1f8e8334e501/exec-4773a4f7-d372-43a1-9fbc-62ac5f1ff4bf.png"
+    },
+    {
+      "id": "star",
+      "source": "src/features/tarot/assets/cards/star.png",
+      "sourceSha256": "ba0cb2e7e15eb2ac7b1110e21ebd98a0a478c7fc70d1313cea3351e577f106d8",
+      "illustration": "src/features/tarot/assets/illustrations/star.png",
+      "generatedSource": "/Users/bichi/.codex/generated_images/01a1051e-d819-7423-b4c2-1f8e8334e501/exec-04afc8d8-81a8-4656-8139-3c0f1a75bf4e.png"
+    },
+    {
+      "id": "moon",
+      "source": "src/features/tarot/assets/cards/moon.png",
+      "sourceSha256": "96e1fc71657ebf67ccc64633cb86fde3ddeccc7a2069e1318f96fc3368b453d6",
+      "illustration": "src/features/tarot/assets/illustrations/moon.png",
+      "generatedSource": "/Users/bichi/.codex/generated_images/01a1051e-d819-7423-b4c2-1f8e8334e501/exec-1e114c71-32e0-4c36-b4ba-02b0088060b0.png"
+    },
+    {
+      "id": "sun",
+      "source": "src/features/tarot/assets/cards/sun.png",
+      "sourceSha256": "49f411650665bc885788fa0d2e58cb79e819e5ea2def409d2b9a354cab44448f",
+      "illustration": "src/features/tarot/assets/illustrations/sun.png",
+      "generatedSource": "/Users/bichi/.codex/generated_images/01a1051e-d819-7423-b4c2-1f8e8334e501/exec-90a57db8-d59a-4036-b7ce-53a944cd7fc2.png"
+    },
+    {
+      "id": "judgement",
+      "source": "src/features/tarot/assets/cards/judgement.png",
+      "sourceSha256": "224a78891434afa269e0ae0754531acb93769ad6aa3505d3773fc7b2cc5bf267",
+      "illustration": "src/features/tarot/assets/illustrations/judgement.png",
+      "generatedSource": "/Users/bichi/.codex/generated_images/01a1051e-d819-7423-b4c2-1f8e8334e501/exec-075b0340-da67-429e-8303-e8e1e4d9b75b.png"
+    },
+    {
+      "id": "world",
+      "source": "src/features/tarot/assets/cards/world.png",
+      "sourceSha256": "4053928980ced972718ffda6857e52494fc2120f79338a4cc65c30b0f50e7463",
+      "illustration": "src/features/tarot/assets/illustrations/world.png",
+      "generatedSource": "/Users/bichi/.codex/generated_images/01a1051e-d819-7423-b4c2-1f8e8334e501/exec-1118772c-9ada-49aa-9bd1-64c2d50a0d1d.png"
+    },
+    {
+      "id": "wands-ace",
+      "source": "src/features/tarot/assets/cards/wands-ace.png",
+      "sourceSha256": "a4dd17c33b628bbb22c01b26191262f3c79c36b9fc1cd397b228dcce3e868537",
+      "illustration": "src/features/tarot/assets/illustrations/wands-ace.png",
+      "generatedSource": "/Users/bichi/.codex/generated_images/01a1051e-d819-7423-b4c2-1f8e8334e501/exec-b18ce6a9-c6a8-4845-aa47-62e1e9791cd0.png"
+    },
+    {
+      "id": "wands-two",
+      "source": "src/features/tarot/assets/cards/wands-two.png",
+      "sourceSha256": "a156e880295c9ddcfe09c997b2d6acab7544a9f81670ee3673af4c809d1db308",
+      "illustration": "src/features/tarot/assets/illustrations/wands-two.png",
+      "generatedSource": "/Users/bichi/.codex/generated_images/01a1051e-d819-7423-b4c2-1f8e8334e501/exec-df988df6-ac2b-4573-adad-bac0214d4958.png"
+    },
+    {
+      "id": "wands-three",
+      "source": "src/features/tarot/assets/cards/wands-three.png",
+      "sourceSha256": "e9157e295053db5f4895d5ee110e0601d05515d223af431595ea8b54e43bf243",
+      "illustration": "src/features/tarot/assets/illustrations/wands-three.png",
+      "generatedSource": "/Users/bichi/.codex/generated_images/01a1051e-d819-7423-b4c2-1f8e8334e501/exec-249be541-6ba8-4ffb-a52f-30bd346f70c8.png"
+    },
+    {
+      "id": "wands-four",
+      "source": "src/features/tarot/assets/cards/wands-four.png",
+      "sourceSha256": "00845b7fdff74b4ab83b86914d4adaf2164743c4add6475b6add04d175174a64",
+      "illustration": "src/features/tarot/assets/illustrations/wands-four.png",
+      "generatedSource": "/Users/bichi/.codex/generated_images/01a1051e-d819-7423-b4c2-1f8e8334e501/exec-47ca2ae2-ed43-4507-82ee-e6e0b7fdf3a6.png"
+    },
+    {
+      "id": "wands-five",
+      "source": "src/features/tarot/assets/cards/wands-five.png",
+      "sourceSha256": "271efc0a8951dc0947895f49dc933d69619eafc00a446725fb06a4da4f04632c",
+      "illustration": "src/features/tarot/assets/illustrations/wands-five.png",
+      "generatedSource": "/Users/bichi/.codex/generated_images/01a1051e-d819-7423-b4c2-1f8e8334e501/exec-4c6d93b6-65a1-45bd-a0d4-97e757f4064c.png"
+    },
+    {
+      "id": "wands-six",
+      "source": "src/features/tarot/assets/cards/wands-six.png",
+      "sourceSha256": "3859dcef15b701db2991637a073f607e2a3654d4238081f704c32e36868209c3",
+      "illustration": "src/features/tarot/assets/illustrations/wands-six.png",
+      "generatedSource": "/Users/bichi/.codex/generated_images/01a1051e-d819-7423-b4c2-1f8e8334e501/exec-3f7e7a0b-fc95-43fd-8cb7-5f7c4efaac0f.png"
+    },
+    {
+      "id": "wands-seven",
+      "source": "src/features/tarot/assets/cards/wands-seven.png",
+      "sourceSha256": "477018d9a9f2c707b8fe2087a15b4110a62349ad3e88065ddb8dfb8dfd74ef29",
+      "illustration": "src/features/tarot/assets/illustrations/wands-seven.png",
+      "generatedSource": "/Users/bichi/.codex/generated_images/01a1051e-d819-7423-b4c2-1f8e8334e501/exec-668089ab-dec6-4850-be11-94fdc6879ea2.png"
+    },
+    {
+      "id": "wands-eight",
+      "source": "src/features/tarot/assets/cards/wands-eight.png",
+      "sourceSha256": "27d11e0e821a82648c5831f3ac104fada0019577343cc28c5521c1bf003d4109",
+      "illustration": "src/features/tarot/assets/illustrations/wands-eight.png",
+      "generatedSource": "/Users/bichi/.codex/generated_images/01a1051e-d819-7423-b4c2-1f8e8334e501/exec-1e85d7ad-786a-406a-8065-8bb0b2f7ce0f.png"
+    },
+    {
+      "id": "wands-nine",
+      "source": "src/features/tarot/assets/cards/wands-nine.png",
+      "sourceSha256": "ff054e758ed8a8ff130cb6df41c94be1bdf33cedbd1a8417bbbcf20e19eb7c26",
+      "illustration": "src/features/tarot/assets/illustrations/wands-nine.png",
+      "generatedSource": "/Users/bichi/.codex/generated_images/01a1051e-d819-7423-b4c2-1f8e8334e501/exec-b9e7bb3b-8c09-47ff-b394-4de2f2242d9b.png"
+    },
+    {
+      "id": "wands-ten",
+      "source": "src/features/tarot/assets/cards/wands-ten.png",
+      "sourceSha256": "41029c504192a1ade10b54e007b2509775ea254b740e17e786268b49c3375aa3",
+      "illustration": "src/features/tarot/assets/illustrations/wands-ten.png",
+      "generatedSource": "/Users/bichi/.codex/generated_images/01a1051e-d819-7423-b4c2-1f8e8334e501/exec-660dc324-57f7-417a-a9f3-1fe1a9d7b5d7.png"
+    },
+    {
+      "id": "wands-page",
+      "source": "src/features/tarot/assets/cards/wands-page.png",
+      "sourceSha256": "15e8e87e6023dca6a5e6e017c2fc861f94aa50251de26e6235ff90657a5cd9ef",
+      "illustration": "src/features/tarot/assets/illustrations/wands-page.png",
+      "generatedSource": "/Users/bichi/.codex/generated_images/01a1051e-d819-7423-b4c2-1f8e8334e501/exec-f2aa8ae7-8e74-4f9c-a2db-159079cdffc4.png"
+    },
+    {
+      "id": "wands-knight",
+      "source": "src/features/tarot/assets/cards/wands-knight.png",
+      "sourceSha256": "96b074f42df8d13554fcb0664df8e6f07fd7a7c049fe4cc01a045c797f4185b1",
+      "illustration": "src/features/tarot/assets/illustrations/wands-knight.png",
+      "generatedSource": "/Users/bichi/.codex/generated_images/01a1051e-d819-7423-b4c2-1f8e8334e501/exec-86a03f66-b288-4ee8-9948-c15bcbc4a3c5.png"
+    },
+    {
+      "id": "wands-queen",
+      "source": "src/features/tarot/assets/cards/wands-queen.png",
+      "sourceSha256": "8fc520ecd5aa2830c78c8e90f0e0a1335b7c5fb7c6e6bbfeee4f55ddad80389b",
+      "illustration": "src/features/tarot/assets/illustrations/wands-queen.png",
+      "generatedSource": "/Users/bichi/.codex/generated_images/01a1051e-d819-7423-b4c2-1f8e8334e501/exec-af277e10-5ee7-4469-b4ad-f565d278bf21.png"
+    },
+    {
+      "id": "wands-king",
+      "source": "src/features/tarot/assets/cards/wands-king.png",
+      "sourceSha256": "8b6ef1af661dafd86f34cba7753e3a82b4f8a0d1d135a131827cc89e9c44d212",
+      "illustration": "src/features/tarot/assets/illustrations/wands-king.png",
+      "generatedSource": "/Users/bichi/.codex/generated_images/01a1051e-d819-7423-b4c2-1f8e8334e501/exec-405a5679-cb9a-4ac5-a39c-ee6da7883608.png"
+    },
+    {
+      "id": "cups-ace",
+      "source": "src/features/tarot/assets/cards/cups-ace.png",
+      "sourceSha256": "5665672439c1a52a22458961485d4c1c1f2fda876fe606d1a7b888b9005b2508",
+      "illustration": "src/features/tarot/assets/illustrations/cups-ace.png",
+      "generatedSource": "/Users/bichi/.codex/generated_images/01a1051e-d819-7423-b4c2-1f8e8334e501/exec-c9e34b40-13c3-4689-bb75-25e4d1d9cfd7.png"
+    },
+    {
+      "id": "cups-two",
+      "source": "src/features/tarot/assets/cards/cups-two.png",
+      "sourceSha256": "3f476f61c48ebabe3cd00553afca0930ee0feaf1abdd8dac92dacad63a390047",
+      "illustration": "src/features/tarot/assets/illustrations/cups-two.png",
+      "generatedSource": "/Users/bichi/.codex/generated_images/01a1051e-d819-7423-b4c2-1f8e8334e501/exec-6b3e16b5-dc70-4a5d-a649-773afdd25443.png"
+    },
+    {
+      "id": "cups-three",
+      "source": "src/features/tarot/assets/cards/cups-three.png",
+      "sourceSha256": "9e9a62ddcad23afb8bbf16ece25ac30dcd7c70788ca71bd839a9a63ef38bd7b5",
+      "illustration": "src/features/tarot/assets/illustrations/cups-three.png",
+      "generatedSource": "/Users/bichi/.codex/generated_images/01a1051e-d819-7423-b4c2-1f8e8334e501/exec-5fbc7e05-abba-43d5-bb47-0d50d3dd918a.png"
+    },
+    {
+      "id": "cups-four",
+      "source": "src/features/tarot/assets/cards/cups-four.png",
+      "sourceSha256": "4c68e79f7073c2285bbf98acce70d4d615a3426f2ab7b74006884b723b26d609",
+      "illustration": "src/features/tarot/assets/illustrations/cups-four.png",
+      "generatedSource": "/Users/bichi/.codex/generated_images/01a1051e-d819-7423-b4c2-1f8e8334e501/exec-3949084f-9187-4974-a18d-320caed2a4e7.png"
+    },
+    {
+      "id": "cups-five",
+      "source": "src/features/tarot/assets/cards/cups-five.png",
+      "sourceSha256": "7dc9b0eb278bd5c58f7d45bfa7bf1e27de441c229443e827eb325d345011e268",
+      "illustration": "src/features/tarot/assets/illustrations/cups-five.png",
+      "generatedSource": "/Users/bichi/.codex/generated_images/01a1051e-d819-7423-b4c2-1f8e8334e501/exec-b18b3b54-6f9f-42fc-91f3-d39056a55487.png"
+    },
+    {
+      "id": "cups-six",
+      "source": "src/features/tarot/assets/cards/cups-six.png",
+      "sourceSha256": "8271c87c64cffc23796aeda7aa45bf5b342584f378d22fc3c78700158ed195ca",
+      "illustration": "src/features/tarot/assets/illustrations/cups-six.png",
+      "generatedSource": "/Users/bichi/.codex/generated_images/01a1051e-d819-7423-b4c2-1f8e8334e501/exec-372dbd7d-b7e3-444f-97a0-69ab9e65ba4a.png"
+    },
+    {
+      "id": "cups-seven",
+      "source": "src/features/tarot/assets/cards/cups-seven.png",
+      "sourceSha256": "c6e4c5b588e7b0cd718c2444b34473fcb41e1d93e8b87d9e6c17825e0226fe7f",
+      "illustration": "src/features/tarot/assets/illustrations/cups-seven.png",
+      "generatedSource": "/Users/bichi/.codex/generated_images/01a1051e-d819-7423-b4c2-1f8e8334e501/exec-d7c11f0a-106b-4660-8acb-d3b90a9bd2c5.png"
+    },
+    {
+      "id": "cups-eight",
+      "source": "src/features/tarot/assets/cards/cups-eight.png",
+      "sourceSha256": "c01c762c1d43c705b40c451632c8a08a03fd7640c0b9ac038dbee78df8bd80ba",
+      "illustration": "src/features/tarot/assets/illustrations/cups-eight.png",
+      "generatedSource": "/Users/bichi/.codex/generated_images/01a1051e-d819-7423-b4c2-1f8e8334e501/exec-45c60e57-d7d7-4798-8a74-9bb10d942206.png"
+    },
+    {
+      "id": "cups-nine",
+      "source": "src/features/tarot/assets/cards/cups-nine.png",
+      "sourceSha256": "e28ed24cff94a4de630c5d9806a947d92df16fb2c41ee2282f4dafc46d08bba7",
+      "illustration": "src/features/tarot/assets/illustrations/cups-nine.png",
+      "generatedSource": "/Users/bichi/.codex/generated_images/01a1051e-d819-7423-b4c2-1f8e8334e501/exec-7692a2bd-ac6b-46a5-bf5e-2022bca282b6.png"
+    },
+    {
+      "id": "cups-ten",
+      "source": "src/features/tarot/assets/cards/cups-ten.png",
+      "sourceSha256": "e214b2a80037de149c9163e574d2a75dc90504c2d499fca553149aeaf912ce58",
+      "illustration": "src/features/tarot/assets/illustrations/cups-ten.png",
+      "generatedSource": "/Users/bichi/.codex/generated_images/01a1051e-d819-7423-b4c2-1f8e8334e501/exec-4f60ce63-7b4b-407e-bc5f-ed0b1f454d9d.png"
+    },
+    {
+      "id": "cups-page",
+      "source": "src/features/tarot/assets/cards/cups-page.png",
+      "sourceSha256": "6775b04f43138cbb975f58a6c38ac4eae42b4909291735634bb2c4347a3fec51",
+      "illustration": "src/features/tarot/assets/illustrations/cups-page.png",
+      "generatedSource": "/Users/bichi/.codex/generated_images/01a1051e-d819-7423-b4c2-1f8e8334e501/exec-bfc45301-9ad3-4eca-9aea-984e9eb4b4bb.png"
+    },
+    {
+      "id": "cups-knight",
+      "source": "src/features/tarot/assets/cards/cups-knight.png",
+      "sourceSha256": "bcd49bda09de66dc64caef45a6cb3df79c6634c29614b3b4a342e5f703e0bf81",
+      "illustration": "src/features/tarot/assets/illustrations/cups-knight.png",
+      "generatedSource": "/Users/bichi/.codex/generated_images/01a1051e-d819-7423-b4c2-1f8e8334e501/exec-f46a26ba-d3cc-420e-82f2-b10b3d24e12d.png"
+    },
+    {
+      "id": "cups-queen",
+      "source": "src/features/tarot/assets/cards/cups-queen.png",
+      "sourceSha256": "48cec3775b936333e66988560197146c45adc4688805281cc7f8d276f68761c3",
+      "illustration": "src/features/tarot/assets/illustrations/cups-queen.png",
+      "generatedSource": "/Users/bichi/.codex/generated_images/01a1051e-d819-7423-b4c2-1f8e8334e501/exec-a080c7f3-7716-4429-a1a0-db960bc1c00b.png"
+    },
+    {
+      "id": "cups-king",
+      "source": "src/features/tarot/assets/cards/cups-king.png",
+      "sourceSha256": "b2c8a838b5bc8ffba34ba79deb15c1a122b35fee9a992891bbbaccb548444b15",
+      "illustration": "src/features/tarot/assets/illustrations/cups-king.png",
+      "generatedSource": "/Users/bichi/.codex/generated_images/01a1051e-d819-7423-b4c2-1f8e8334e501/exec-5ade339f-9b97-4da0-93ec-9ee44367f3b9.png"
+    },
+    {
+      "id": "swords-ace",
+      "source": "src/features/tarot/assets/cards/swords-ace.png",
+      "sourceSha256": "764417b303f00441286948d9783e64544b4a5555a57c753f64a72acd34dcc18a",
+      "illustration": "src/features/tarot/assets/illustrations/swords-ace.png",
+      "generatedSource": "/Users/bichi/.codex/generated_images/01a1051e-d819-7423-b4c2-1f8e8334e501/exec-70f447b9-ce90-480b-bc79-3fa485caa727.png"
+    },
+    {
+      "id": "swords-two",
+      "source": "src/features/tarot/assets/cards/swords-two.png",
+      "sourceSha256": "c18e613b0fc4ff966098fb3aa735e36ee445ca697ae4ce71335c6fbf8a0de638",
+      "illustration": "src/features/tarot/assets/illustrations/swords-two.png",
+      "generatedSource": "/Users/bichi/.codex/generated_images/01a1051e-d819-7423-b4c2-1f8e8334e501/exec-d65af82d-f7e4-41f0-8415-f143719a1e73.png"
+    },
+    {
+      "id": "swords-three",
+      "source": "src/features/tarot/assets/cards/swords-three.png",
+      "sourceSha256": "7bfa97e7d4e6558461ec6c0c4c2ad9054afaa6fedc0b49fa19ddf134f3dd71e0",
+      "illustration": "src/features/tarot/assets/illustrations/swords-three.png",
+      "generatedSource": "/Users/bichi/.codex/generated_images/01a1051e-d819-7423-b4c2-1f8e8334e501/exec-d15f9afc-b8ea-45f0-aa79-60346137a069.png"
+    },
+    {
+      "id": "swords-four",
+      "source": "src/features/tarot/assets/cards/swords-four.png",
+      "sourceSha256": "70c20e0a98bf5ec7993f14ea9d8e7bb8987265a02bfb8dc7fb9fa2aec4a1c6ee",
+      "illustration": "src/features/tarot/assets/illustrations/swords-four.png",
+      "generatedSource": "/Users/bichi/.codex/generated_images/01a1051e-d819-7423-b4c2-1f8e8334e501/exec-1a5ce813-76ff-402e-9a18-ccbfa115707a.png"
+    },
+    {
+      "id": "swords-five",
+      "source": "src/features/tarot/assets/cards/swords-five.png",
+      "sourceSha256": "455e6af1a39b537690c3fb42d3610bdc3ad69db12fd8f905189d6307c1ee0184",
+      "illustration": "src/features/tarot/assets/illustrations/swords-five.png",
+      "generatedSource": "/Users/bichi/.codex/generated_images/01a1051e-d819-7423-b4c2-1f8e8334e501/exec-83c9aa07-f154-412e-a9c9-29b36c5dc77f.png"
+    },
+    {
+      "id": "swords-six",
+      "source": "src/features/tarot/assets/cards/swords-six.png",
+      "sourceSha256": "8d368f5dd433b2c72bd9415b29dd369496fe0b0d98581a6f0f83fed41087a8db",
+      "illustration": "src/features/tarot/assets/illustrations/swords-six.png",
+      "generatedSource": "/Users/bichi/.codex/generated_images/01a1051e-d819-7423-b4c2-1f8e8334e501/exec-885f8fe1-cf40-4b7b-873d-aa356c864b0d.png"
+    },
+    {
+      "id": "swords-seven",
+      "source": "src/features/tarot/assets/cards/swords-seven.png",
+      "sourceSha256": "9aaa032a77ef617431d81c4d483e9c672f6f280121e5a46a66db8bb7c197cd94",
+      "illustration": "src/features/tarot/assets/illustrations/swords-seven.png",
+      "generatedSource": "/Users/bichi/.codex/generated_images/01a1051e-d819-7423-b4c2-1f8e8334e501/exec-fd424071-6aaa-478c-bd7d-080970fafb97.png"
+    },
+    {
+      "id": "swords-eight",
+      "source": "src/features/tarot/assets/cards/swords-eight.png",
+      "sourceSha256": "53fc402d73af235ef3ed538e0c90d0df840fc9e40c348875a3d784acdb3f857b",
+      "illustration": "src/features/tarot/assets/illustrations/swords-eight.png",
+      "generatedSource": "/Users/bichi/.codex/generated_images/01a1051e-d819-7423-b4c2-1f8e8334e501/exec-b90b53a1-4071-45b9-bf97-57bd9eafe34f.png"
+    },
+    {
+      "id": "swords-nine",
+      "source": "src/features/tarot/assets/cards/swords-nine.png",
+      "sourceSha256": "b45660c93f5f5e981482624a6c1649271fee4f1c497ca8a7ee376c60b87b3947",
+      "illustration": "src/features/tarot/assets/illustrations/swords-nine.png",
+      "generatedSource": "/Users/bichi/.codex/generated_images/01a1051e-d819-7423-b4c2-1f8e8334e501/exec-b0ae695e-7cdf-4dff-b324-709650fc1720.png"
+    },
+    {
+      "id": "swords-ten",
+      "source": "src/features/tarot/assets/cards/swords-ten.png",
+      "sourceSha256": "93006748789f7f07beb983a0f022df0e59813d02afc019c9c7e927b321634ccb",
+      "illustration": "src/features/tarot/assets/illustrations/swords-ten.png",
+      "generatedSource": "/Users/bichi/.codex/generated_images/01a1051e-d819-7423-b4c2-1f8e8334e501/exec-3a4aea80-d690-487a-a480-c0420e4f6cae.png"
+    },
+    {
+      "id": "swords-page",
+      "source": "src/features/tarot/assets/cards/swords-page.png",
+      "sourceSha256": "994f36914f1cc07a931b7e9094c9455daf81a3a90093c04924dfb9e1534369da",
+      "illustration": "src/features/tarot/assets/illustrations/swords-page.png",
+      "generatedSource": "/Users/bichi/.codex/generated_images/01a1051e-d819-7423-b4c2-1f8e8334e501/exec-5672e8cd-733b-4bd2-9f13-ed554b404b4c.png"
+    },
+    {
+      "id": "swords-knight",
+      "source": "src/features/tarot/assets/cards/swords-knight.png",
+      "sourceSha256": "1dd9b756e1183e627ebccfbcedd0dc16c5ecfd0db98d3887fcaccd80a0aa6937",
+      "illustration": "src/features/tarot/assets/illustrations/swords-knight.png",
+      "generatedSource": "/Users/bichi/.codex/generated_images/01a1051e-d819-7423-b4c2-1f8e8334e501/exec-3a933c06-6678-4776-8d0d-1b91a8ffb264.png"
+    },
+    {
+      "id": "swords-queen",
+      "source": "src/features/tarot/assets/cards/swords-queen.png",
+      "sourceSha256": "9dcc5d1a49587762eb7f3833afee489e5e834de1b8665e7db87877c056d61e3f",
+      "illustration": "src/features/tarot/assets/illustrations/swords-queen.png",
+      "generatedSource": "/Users/bichi/.codex/generated_images/01a1051e-d819-7423-b4c2-1f8e8334e501/exec-d28cde39-fc45-486b-b3cc-11c45ec13359.png"
+    },
+    {
+      "id": "swords-king",
+      "source": "src/features/tarot/assets/cards/swords-king.png",
+      "sourceSha256": "ee090b4ad56fd3a1cd149b51fad0d50a91977f592c93bc6436d24c720436e21e",
+      "illustration": "src/features/tarot/assets/illustrations/swords-king.png",
+      "generatedSource": "/Users/bichi/.codex/generated_images/01a1051e-d819-7423-b4c2-1f8e8334e501/exec-8a2ee294-c761-4bad-8e03-fc24fd5fc05e.png"
+    },
+    {
+      "id": "pentacles-ace",
+      "source": "src/features/tarot/assets/cards/pentacles-ace.png",
+      "sourceSha256": "718a733017f38bbd0668ba34285d6125555e817921800122cdeba0d32fef0c47",
+      "illustration": "src/features/tarot/assets/illustrations/pentacles-ace.png",
+      "generatedSource": "/Users/bichi/.codex/generated_images/01a1051e-d819-7423-b4c2-1f8e8334e501/exec-fb0ad385-a63c-44a6-bd3d-4dc123b390c8.png"
+    },
+    {
+      "id": "pentacles-two",
+      "source": "src/features/tarot/assets/cards/pentacles-two.png",
+      "sourceSha256": "11a6c21f4ae5c924a35650b6e2bcf3e90df0ddfde9bea92ddcebd94335b98f15",
+      "illustration": "src/features/tarot/assets/illustrations/pentacles-two.png",
+      "generatedSource": "/Users/bichi/.codex/generated_images/01a1051e-d819-7423-b4c2-1f8e8334e501/exec-231b7006-4483-48e6-8cc3-daa0f74f2e43.png"
+    },
+    {
+      "id": "pentacles-three",
+      "source": "src/features/tarot/assets/cards/pentacles-three.png",
+      "sourceSha256": "d4f6d80f32ca123ea0be8b58a677f35ed2a0bab2de5b0ca890329936db86a6b1",
+      "illustration": "src/features/tarot/assets/illustrations/pentacles-three.png",
+      "generatedSource": "/Users/bichi/.codex/generated_images/01a1051e-d819-7423-b4c2-1f8e8334e501/exec-3f2ca55e-ea33-438d-aedc-d76599eb6d32.png"
+    },
+    {
+      "id": "pentacles-four",
+      "source": "src/features/tarot/assets/cards/pentacles-four.png",
+      "sourceSha256": "a0ceade0e998303204a3d6bd7fe3972aa119d0df81eb59ee27fcabbbb924dc2d",
+      "illustration": "src/features/tarot/assets/illustrations/pentacles-four.png",
+      "generatedSource": "/Users/bichi/.codex/generated_images/01a1051e-d819-7423-b4c2-1f8e8334e501/exec-e7cbfe5f-15b3-4abb-98c5-735150932907.png"
+    },
+    {
+      "id": "pentacles-five",
+      "source": "src/features/tarot/assets/cards/pentacles-five.png",
+      "sourceSha256": "e42a5895fe80db44a0ebd37190179339f948e68c89bf739d026ac65d96bdee84",
+      "illustration": "src/features/tarot/assets/illustrations/pentacles-five.png",
+      "generatedSource": "/Users/bichi/.codex/generated_images/01a1051e-d819-7423-b4c2-1f8e8334e501/exec-09671e80-104e-4d7d-b75f-53914425cb62.png"
+    },
+    {
+      "id": "pentacles-six",
+      "source": "src/features/tarot/assets/cards/pentacles-six.png",
+      "sourceSha256": "a0c487c98b50ccb5988e02d36b2ca89aa8f62c71d7811666d5663e99980b0357",
+      "illustration": "src/features/tarot/assets/illustrations/pentacles-six.png",
+      "generatedSource": "/Users/bichi/.codex/generated_images/01a1051e-d819-7423-b4c2-1f8e8334e501/exec-79200b42-91e5-4545-b0a4-0202327d0506.png"
+    },
+    {
+      "id": "pentacles-seven",
+      "source": "src/features/tarot/assets/cards/pentacles-seven.png",
+      "sourceSha256": "7caa36bc52bccb4898aecc174766410885860b3c3b4226e9c0390f156624f544",
+      "illustration": "src/features/tarot/assets/illustrations/pentacles-seven.png",
+      "generatedSource": "/Users/bichi/.codex/generated_images/01a1051e-d819-7423-b4c2-1f8e8334e501/exec-422e2b44-6307-4b2f-bf24-a313731fb073.png"
+    },
+    {
+      "id": "pentacles-eight",
+      "source": "src/features/tarot/assets/cards/pentacles-eight.png",
+      "sourceSha256": "5c53b1cccf5476670ead192c00f77d0aa7466b0ab29e85f7af350810f037d1ac",
+      "illustration": "src/features/tarot/assets/illustrations/pentacles-eight.png",
+      "generatedSource": "/Users/bichi/.codex/generated_images/01a1051e-d819-7423-b4c2-1f8e8334e501/exec-d8fd634f-d943-45fb-b418-893803561e71.png"
+    },
+    {
+      "id": "pentacles-nine",
+      "source": "src/features/tarot/assets/cards/pentacles-nine.png",
+      "sourceSha256": "c6f261c8647dd00cead5590d454c72eea35158c3b71a12b49a51ae44a9f81c22",
+      "illustration": "src/features/tarot/assets/illustrations/pentacles-nine.png",
+      "generatedSource": "/Users/bichi/.codex/generated_images/01a1051e-d819-7423-b4c2-1f8e8334e501/exec-71680df4-3830-4aad-9fad-3aa223c5cb54.png"
+    },
+    {
+      "id": "pentacles-page",
+      "source": "src/features/tarot/assets/cards/pentacles-page.png",
+      "sourceSha256": "0baa9632790a913ac33cea1d02381ab77b1ddd9c872dc1fadf05b4ca1caa8674",
+      "illustration": "src/features/tarot/assets/illustrations/pentacles-page.png",
+      "generatedSource": "/Users/bichi/.codex/generated_images/01a1051e-d819-7423-b4c2-1f8e8334e501/exec-cdb49589-b116-4115-9ce7-d205e489b735.png"
+    },
+    {
+      "id": "pentacles-knight",
+      "source": "src/features/tarot/assets/cards/pentacles-knight.png",
+      "sourceSha256": "689c82d9ebf0fddb662fcc3031d4b1e5f5ae1fb69f9a8311e8fc3137f39ae545",
+      "illustration": "src/features/tarot/assets/illustrations/pentacles-knight.png",
+      "generatedSource": "/Users/bichi/.codex/generated_images/01a1051e-d819-7423-b4c2-1f8e8334e501/exec-ded508aa-076a-4983-9aeb-e9f97d0ad812.png"
+    },
+    {
+      "id": "pentacles-queen",
+      "source": "src/features/tarot/assets/cards/pentacles-queen.png",
+      "sourceSha256": "6e06dd93f5dd0d87c26d19d45ddcac6f328b6b9747534434f37192fbbcc6a91b",
+      "illustration": "src/features/tarot/assets/illustrations/pentacles-queen.png",
+      "generatedSource": "/Users/bichi/.codex/generated_images/01a1051e-d819-7423-b4c2-1f8e8334e501/exec-ec8a76c2-38a7-44ea-9a6f-ab28150f9e58.png"
+    },
+    {
+      "id": "pentacles-king",
+      "source": "src/features/tarot/assets/cards/pentacles-king.png",
+      "sourceSha256": "dc39ff4734bb524d54e10bb33984f616c8aa1f94af3bd83a8849c52067a54259",
+      "illustration": "src/features/tarot/assets/illustrations/pentacles-king.png",
+      "generatedSource": "/Users/bichi/.codex/generated_images/01a1051e-d819-7423-b4c2-1f8e8334e501/exec-2220e9cb-6d04-4131-897b-66d6e97e9877.png"
+    },
+    {
+      "id": "pentacles-ten",
+      "source": "src/features/tarot/assets/cards/pentacles-ten.png",
+      "sourceSha256": "d1220ba9746be0cdf27642e3713f3b7ec8503258f9cdc4eaddde5cf1254ea177",
+      "illustration": "src/features/tarot/assets/illustrations/pentacles-ten.png",
+      "generatedSource": "/Users/bichi/.codex/generated_images/01a1051e-d819-7423-b4c2-1f8e8334e501/exec-e7f06fc5-c1f7-42da-b982-d9c8fcb7faf8.png"
+    }
+  ],
+  "promptTemplate": "Use case: precise-object-edit. Image 1 is the edit target, the original Pomo tarot card CARD_ID. Produce a standalone full-bleed portrait illustration that will be displayed underneath a separate card frame. Remove the entire brown-and-gold ornamental picture frame, border books/stars/leaves, top number medallion and bottom parchment title plaque. Seamlessly reconstruct the scene into all removed border and plaque areas so painted scenery reaches every edge of a rectangular 2:3 canvas, ideally 1024x1536. Preserve the original scene, person's identity, hair, face, outfit, expression, pose, original tarot symbolism and props, their counts and arrangements, colors, lighting and painterly 3D illustration style. Do not redesign the scene or introduce extra people, symbols or objects. Keep the complete primary subject(s) and important props visible, positioned with breathing room for a later frame overlay. No ornamental border, no picture frame, no rounded card corners, no medallion, no parchment label, no lettering, no numbers, no title plaque, no UI elements, no watermarks. Opaque full painted backdrop, not a cutout. The only change is to remove the printed card frame and fill its former areas with continuation of the original illustration.",
+  "numericSuitConstraint": "For number cards, the prompt also specifies the original suit prop count and arrangement.",
+  "adjustments": [
+    {
+      "id": "pentacles-ten",
+      "reason": "Keep all ten coins visible inside the common frame opening.",
+      "constraint": "All coins within x=150..874 and y=200..600 on the 1024x1536 canvas."
+    }
+  ]
+}

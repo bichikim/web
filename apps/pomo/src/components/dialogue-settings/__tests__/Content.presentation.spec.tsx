@@ -48,6 +48,15 @@ vi.mock('src/features/focus-room-feed', () => ({
   excludeFeedDialogues: (dialogues: ReadonlyArray<PDialogue>) => dialogues,
   usePFeedContext: vi.fn(),
 }))
+vi.mock('../use-volume-ducking', () => ({
+  useVolumeDucking: () => ({
+    changeEnabled: () => undefined,
+    changeVolume: () => undefined,
+    isLoading: () => false,
+    message: () => null,
+    settings: () => ({enabled: true, playerVolumePercent: 50, version: 2}),
+  }),
+}))
 
 const DIALOGUE: PDialogue = {
   audioKey: 'audio-saved',
@@ -270,11 +279,10 @@ it('should apply compact spacing to dialogue settings groups', () => {
   render(() => <PDialogueSettingsContent />, {wrapper: PreferenceProvider})
   const [list] = screen.getAllByRole('list')
   const section = list?.parentElement
-  const automatic = screen.getByRole('region', {name: '자동 음성 생성'})
 
   expect(section).toHaveClass('settings-compact:gap-4')
   expect(list).toHaveClass('settings-compact:gap-2', 'settings-compact:[&_>_li]:gap-2')
-  expect(automatic.classList.contains('settings-compact:gap-3')).toBe(true)
+  expect(screen.queryByRole('region', {name: '기본 자동 음성 생성'})).not.toBeInTheDocument()
 })
 
 it('should use the theme surface for an empty dialogue library', () => {

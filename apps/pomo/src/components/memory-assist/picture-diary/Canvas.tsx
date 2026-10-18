@@ -1,6 +1,6 @@
 import {releaseCapturedPointer} from 'src/utils/release-captured-pointer'
-import {replaceBlobObjectUrl} from 'src/features/blob-object-url'
-import {type Accessor, createEffect, createSignal, For, type JSX, onCleanup, Show} from 'solid-js'
+import {useObjectUrl} from 'src/hooks/use-object-url'
+import {createEffect, For, type JSX, Show} from 'solid-js'
 
 import {clampUnit} from 'src/utils/clamp-unit'
 
@@ -46,23 +46,8 @@ const getPoint = (event: PointerEvent & {currentTarget: SVGSVGElement}): Picture
 const getPolylinePoints = (stroke: PictureDiaryStroke) =>
   stroke.points.map((point) => `${point.x * DRAWING_WIDTH},${point.y * DRAWING_HEIGHT}`).join(' ')
 
-const useImageUrl = (image: Accessor<PictureDiaryImage | undefined>) => {
-  const [imageUrl, setImageUrl] = createSignal<string>()
-  createEffect(() => {
-    const storedImage = image()
-    if (storedImage === undefined) {
-      setImageUrl(undefined)
-      return
-    }
-    const url = replaceBlobObjectUrl(null, () => storedImage.blob)
-    setImageUrl(url)
-    onCleanup(() => replaceBlobObjectUrl(url, () => null))
-  })
-  return imageUrl
-}
-
 export const PictureDiaryCanvas = (props: PictureDiaryCanvasProps) => {
-  const imageUrl = useImageUrl(() => props.image)
+  const imageUrl = useObjectUrl(() => props.image?.blob)
   let svgElement: SVGSVGElement | undefined
   let activePointerId: number | null = null
   let activeGestureRevision = 0

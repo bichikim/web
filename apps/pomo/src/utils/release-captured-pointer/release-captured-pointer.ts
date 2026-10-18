@@ -3,7 +3,7 @@ interface PointerCaptureTarget {
   readonly releasePointerCapture?: (pointerId: number) => void
 }
 
-/** Releases a pointer only while its target still owns capture. */
+/** 대상이 포인터 캡처를 유지하고 있을 때만 해제한다. */
 export const releaseCapturedPointer = (target: PointerCaptureTarget, pointerId: number): void => {
   if (target.hasPointerCapture?.(pointerId)) {
     target.releasePointerCapture?.(pointerId)

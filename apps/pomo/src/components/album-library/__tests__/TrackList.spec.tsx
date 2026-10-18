@@ -177,6 +177,15 @@ it('should indicate that more tracks remain below until the list reaches the bot
   const list = screen.getByRole('list', {name: 'Album 수록곡'})
   let scrollTop = 0
 
+  expect(list).toHaveClass(
+    'max-h-[10.5rem]',
+    'overflow-y-auto',
+    'sm:max-h-[5.25rem]',
+    'sm:grid-cols-2',
+    '2xl:max-h-[10.5rem]',
+    '2xl:grid-cols-1',
+  )
+  expect(list.tabIndex).toBe(0)
   expect(list.classList.contains('overscroll-auto')).toBe(true)
   expect(list.classList.contains('overscroll-contain')).toBe(false)
 

@@ -13,6 +13,7 @@ const createRepository = () => {
     writeToss: vi.fn<PScenePreferencesStorage['writeToss']>().mockResolvedValue(),
     writeWeb: (key: string, value: unknown) => {
       values.set(key, value)
+      return null
     },
   } satisfies PScenePreferencesStorage
   return {
@@ -91,7 +92,7 @@ describe('createPScenePreferencesRepository', () => {
   })
 
   it('should restore native preferences when browser marker reads fail', async () => {
-    const writeWeb = vi.fn()
+    const writeWeb = vi.fn<PScenePreferencesStorage['writeWeb']>().mockReturnValue(null)
     const repository = createPScenePreferencesRepository({
       storage: {
         readToss: vi.fn(async () => preferences),
@@ -142,6 +143,7 @@ describe('createPScenePreferencesRepository', () => {
           writeToss,
           writeWeb: (key: string, value: unknown) => {
             values.set(key, value)
+            return null
           },
         },
       })
@@ -197,6 +199,7 @@ describe('createPScenePreferencesRepository', () => {
       }),
       writeWeb: (key: string, value: unknown) => {
         values.set(key, value)
+        return null
       },
     } satisfies PScenePreferencesStorage
     const repository = createPScenePreferencesRepository({storage})
@@ -226,6 +229,7 @@ describe('createPScenePreferencesRepository', () => {
         writeToss,
         writeWeb: (key: string, value: unknown) => {
           values.set(key, value)
+          return null
         },
       },
     })

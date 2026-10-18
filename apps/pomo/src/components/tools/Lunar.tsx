@@ -1,8 +1,9 @@
-import {createMemo, createSignal, Show} from 'solid-js'
+import {createEffect, createMemo, createSignal, Show} from 'solid-js'
 import {
+  getConvertibleLunarDays,
+  getLunarToSolarResult,
   type LunarDirection,
   lunarDirectionStorage,
-  lunarToSolar,
   solarToLunar,
   useSelection,
 } from 'src/features/tools'
@@ -11,7 +12,6 @@ import {PSelect} from '../p-select/PSelect'
 import {PSwitch} from '../p-switch/PSwitch'
 import {Result} from './Result'
 
-const MAXIMUM_DAY = 30
 const MONTH_COUNT = 12
 const YEAR_COUNT = 152
 const FIRST_YEAR = 1899
@@ -28,19 +28,71 @@ export const Lunar = () => {
   const [month, setMonth] = createSignal('1')
   const [day, setDay] = createSignal('1')
   const [leap, setLeap] = createSignal(false)
+  const lunarDayOptions = createMemo(() => {
+    if (direction() !== 'lunar') {
+      return []
+    }
+    return getConvertibleLunarDays({
+      leap: leap(),
+      month: Number(month()),
+      year: Number(year()),
+    }).map((value) => ({label: String(value), value: String(value)}))
+  })
+  const selectedLunarDay = createMemo(() => {
+    const currentDay = day()
+    const availableDays = lunarDayOptions()
+    return (
+      availableDays.find((option) => option.value === currentDay)?.value ??
+      availableDays.at(-1)?.value ??
+      currentDay
+    )
+  })
+  createEffect(() => {
+    const availableDays = lunarDayOptions()
+    if (availableDays.length === 0) {
+      return
+    }
+    const currentDay = day()
+    if (availableDays.some((option) => option.value === currentDay)) {
+      return
+    }
+    const lastAvailableDay = availableDays.at(-1)
+    if (lastAvailableDay !== undefined) {
+      setDay(lastAvailableDay.value)
+    }
+  })
+  const lunarConversion = createMemo(() =>
+    getLunarToSolarResult({
+      day: Number(selectedLunarDay()),
+      leap: leap(),
+      month: Number(month()),
+      year: Number(year()),
+    }),
+  )
   const result = createMemo(() => {
     if (direction() === 'lunar') {
-      return lunarToSolar({
-        day: Number(day()),
-        leap: leap(),
-        month: Number(month()),
-        year: Number(year()),
-      })
+      const conversion = lunarConversion()
+      return conversion.status === 'converted' ? conversion.value : null
     }
     const value = solarToLunar(solar())
     return value === null
       ? null
       : `${value.year}년 ${value.leap ? '윤' : ''}${value.month}월 ${value.day}일`
+  })
+  const fallbackMessage = createMemo(() => {
+    if (direction() === 'solar') {
+      return solar()
+        ? '존재하지 않는 날짜·윤달이거나 지원 범위를 벗어났습니다.'
+        : '날짜를 선택해주세요.'
+    }
+    switch (lunarConversion().status) {
+      case 'converted':
+        return ''
+      case 'invalid':
+        return '존재하지 않는 날짜·윤달입니다.'
+      case 'unsupported':
+        return '지원 범위를 벗어난 날짜입니다.'
+    }
   })
   return (
     <div class="grid gap-4">
@@ -71,12 +123,14 @@ export const Lunar = () => {
                 value={month()}
                 onChange={setMonth}
               />
-              <PSelect
-                label="음력 일"
-                options={options(1, MAXIMUM_DAY)}
-                value={day()}
-                onChange={setDay}
-              />
+              <Show when={lunarDayOptions().length > 0}>
+                <PSelect
+                  label="음력 일"
+                  options={lunarDayOptions()}
+                  value={selectedLunarDay()}
+                  onChange={setDay}
+                />
+              </Show>
             </div>
             <PSwitch label="윤달" checked={leap()} onChange={setLeap} />
           </>
@@ -94,9 +148,7 @@ export const Lunar = () => {
         when={result()}
         fallback={
           <p role="status" class="text-sm text-muted-foreground">
-            {direction() === 'solar' && !solar()
-              ? '날짜를 선택해주세요.'
-              : '존재하지 않는 날짜·윤달이거나 지원 범위를 벗어났습니다.'}
+            {fallbackMessage()}
           </p>
         }
       >

@@ -38,10 +38,9 @@ import {
 import type {GeneratedDialogueAudio} from './generate-dialogue-audio'
 import {createPDialogueRepository} from './repository'
 import {DEFAULT_FOCUS_ROOM_DIALOGUE_LANGUAGE, type PDialogue} from './schema'
+import {DEFAULT_DIALOGUE_MODEL_ID, DEFAULT_DIALOGUE_VOICE_ID} from './speech-defaults'
 
 const MAXIMUM_PROGRESS = 100
-const DEFAULT_MODEL_ID: SupertonicModelId = 'full'
-const DEFAULT_VOICE_ID: SupertonicVoiceId = 'Yuna'
 
 export type {DialogueEditorState} from './dialogue-editor-state'
 export type {PDialogueEditorController, UsePDialogueEditorProps} from './dialogue-editor-contract'
@@ -58,8 +57,8 @@ const createSpeechSelection = () => {
   const [language, setLanguage] = createSignal<SupertonicLanguage>(
     DEFAULT_FOCUS_ROOM_DIALOGUE_LANGUAGE,
   )
-  const [modelId, setModelId] = createSignal<SupertonicModelId>(DEFAULT_MODEL_ID)
-  const [voiceId, setVoiceId] = createSignal<SupertonicVoiceId>(DEFAULT_VOICE_ID)
+  const [modelId, setModelId] = createSignal<SupertonicModelId>(DEFAULT_DIALOGUE_MODEL_ID)
+  const [voiceId, setVoiceId] = createSignal<SupertonicVoiceId>(DEFAULT_DIALOGUE_VOICE_ID)
   return {language, modelId, setLanguage, setModelId, setVoiceId, voiceId}
 }
 
@@ -242,8 +241,8 @@ export const usePDialogueEditor = (props: UsePDialogueEditorProps): PDialogueEdi
       setRegeneratingSegmentIndex(null)
       setText('')
       setLanguageSignal(DEFAULT_FOCUS_ROOM_DIALOGUE_LANGUAGE)
-      setModelIdSignal(DEFAULT_MODEL_ID)
-      setVoiceIdSignal(DEFAULT_VOICE_ID)
+      setModelIdSignal(DEFAULT_DIALOGUE_MODEL_ID)
+      setVoiceIdSignal(DEFAULT_DIALOGUE_VOICE_ID)
       setEditorState({
         message: selectedId === null ? m.dialogue_status_initial() : m.dialogue_status_loading(),
         status: selectedId === null ? 'idle' : 'loading',

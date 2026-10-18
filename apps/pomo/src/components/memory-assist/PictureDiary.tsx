@@ -1,10 +1,11 @@
+import {differenceBy} from 'es-toolkit/array'
 import {formatLocalDate} from 'src/utils/format-local-date'
 import {createMemo, createSignal, onCleanup, onMount, untrack} from 'solid-js'
-import {isNonBlankString} from 'src/utils/is-non-blank-string'
 import * as m from '@paraglide/message'
 import {
   createPictureDiaryEntry,
   createPictureDiaryRepository,
+  hasPictureDiaryTextContent,
   type PictureDiaryEntry,
   type PictureDiaryImage,
   type PictureDiaryRepository,
@@ -70,9 +71,8 @@ const mergeLoadedEntries = (
   loaded: ReadonlyArray<PictureDiaryEntry>,
   current: ReadonlyArray<PictureDiaryEntry>,
 ) => {
-  const currentIds = new Set(current.map((entry) => entry.id))
   return sortPictureDiaryEntries([
-    ...loaded.filter((entry) => !currentIds.has(entry.id)),
+    ...differenceBy(loaded, current, (entry) => entry.id),
     ...current,
   ])
 }
@@ -160,7 +160,7 @@ export const PictureDiary = (props: PictureDiaryProps) => {
     () =>
       !saving() &&
       date().length > 0 &&
-      (isNonBlankString(text()) || strokes().length > 0 || image() !== undefined),
+      (hasPictureDiaryTextContent(text()) || strokes().length > 0 || image() !== undefined),
   )
   const backCoverClosed = createMemo(() => view().kind === 'back-cover')
   const pagination = createMemo(() =>

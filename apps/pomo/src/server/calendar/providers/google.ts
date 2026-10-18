@@ -8,8 +8,10 @@ import type {
   ProviderEventsResult,
 } from './types'
 import {aggregateProviderEvents} from './aggregate-provider-events'
+import {listPaginatedEvents} from './list-paginated-events'
 import {createOAuthTokenMethods} from './create-oauth-token-methods'
 import {paginate, PAGINATION_LIMITS} from './paginate'
+import {isValidTimeZone} from 'src/utils/is-valid-time-zone'
 
 const GOOGLE_ACCOUNT_API = 'https://openidconnect.googleapis.com/v1/userinfo'
 const GOOGLE_AUTHORIZATION_URL = 'https://accounts.google.com/o/oauth2/v2/auth'
@@ -30,7 +32,9 @@ const googleEventsSchema = z.object({
   nextPageToken: z.string().min(1).optional(),
 })
 const googleCalendarsSchema = z.object({
-  items: z.array(z.object({id: z.string(), summary: z.string()})).default([]),
+  items: z
+    .array(z.object({id: z.string(), summary: z.string(), timeZone: z.string().optional()}))
+    .default([]),
   nextPageToken: z.string().min(1).optional(),
 })
 const googleAccountSchema = z.object({email: z.string().email(), sub: z.string().min(1)})
@@ -39,6 +43,7 @@ const normalizeEvent = (
   event: z.infer<typeof googleEventSchema>,
   calendarId: string,
   calendarLabel: string,
+  calendarTimeZone?: string,
 ): ProviderEvent | null => {
   if (event.status === 'cancelled') {
     return null
@@ -47,6 +52,7 @@ const normalizeEvent = (
   if (event.start.date !== undefined && event.end.date !== undefined) {
     return {
       allDay: true,
+      ...(calendarTimeZone === undefined ? {} : {calendarTimeZone}),
       calendarLabel,
       end: event.end.date,
       id: JSON.stringify([calendarId, event.id]),
@@ -69,55 +75,45 @@ const normalizeEvent = (
   }
 }
 
-const listCalendarEvents = async (
-  calendarId: string,
-  calendarLabel: string,
-  options: ListProviderEventsOptions,
-  fetch: typeof globalThis.fetch,
-): Promise<ProviderEventsResult> => {
+interface ListCalendarEventsOptions extends ListProviderEventsOptions {
+  readonly calendarId: string
+  readonly calendarLabel: string
+  readonly calendarTimeZone?: string
+  readonly fetch: typeof globalThis.fetch
+}
+
+const listCalendarEvents = async ({
+  calendarId,
+  calendarLabel,
+  calendarTimeZone,
+  fetch,
+  ...options
+}: ListCalendarEventsOptions): Promise<ProviderEventsResult> => {
   const headers = {Authorization: `Bearer ${options.accessToken}`}
-  let unavailableCalendars = 0
-  const result = await paginate<ProviderEvent, string>({
-    loadPage: async (pageToken) => {
-      try {
-        const url = new URL(
-          `${GOOGLE_CALENDAR_API}/calendars/${encodeURIComponent(calendarId)}/events`,
-        )
-        url.searchParams.set('maxResults', String(PAGINATION_LIMITS.events.pageSize))
-        url.searchParams.set('orderBy', 'startTime')
-        url.searchParams.set('showDeleted', 'false')
-        url.searchParams.set('singleEvents', 'true')
-        url.searchParams.set('timeMax', options.end)
-        url.searchParams.set('timeMin', options.start)
-        if (pageToken !== null) {
-          url.searchParams.set('pageToken', pageToken)
-        }
-        const response = await fetch(url, {headers})
+  return listPaginatedEvents<string>(async (pageToken) => {
+    const url = new URL(`${GOOGLE_CALENDAR_API}/calendars/${encodeURIComponent(calendarId)}/events`)
+    url.searchParams.set('maxResults', String(PAGINATION_LIMITS.events.pageSize))
+    url.searchParams.set('orderBy', 'startTime')
+    url.searchParams.set('showDeleted', 'false')
+    url.searchParams.set('singleEvents', 'true')
+    url.searchParams.set('timeMax', options.end)
+    url.searchParams.set('timeMin', options.start)
+    if (pageToken !== null) {
+      url.searchParams.set('pageToken', pageToken)
+    }
+    const response = await fetch(url, {headers})
 
-        if (!response.ok) {
-          throw new Error(`Google Calendar events request failed with status ${response.status}`)
-        }
+    if (!response.ok) {
+      throw new Error(`Google Calendar events request failed with status ${response.status}`)
+    }
 
-        const body = googleEventsSchema.parse(await response.json())
-        const items = body.items.flatMap((event) => {
-          const normalized = normalizeEvent(event, calendarId, calendarLabel)
-          return normalized === null ? [] : [normalized]
-        })
-        return {items, nextCursor: body.nextPageToken ?? null}
-      } catch {
-        unavailableCalendars = 1
-        return {items: [], nextCursor: null}
-      }
-    },
-    maximumItems: PAGINATION_LIMITS.events.maximumItems,
-    maximumPages: PAGINATION_LIMITS.events.maximumPages,
+    const body = googleEventsSchema.parse(await response.json())
+    const items = body.items.flatMap((event) => {
+      const normalized = normalizeEvent(event, calendarId, calendarLabel, calendarTimeZone)
+      return normalized === null ? [] : [normalized]
+    })
+    return {items, nextCursor: body.nextPageToken ?? null}
   })
-
-  return {
-    events: result.items,
-    truncated: unavailableCalendars === 0 && result.truncated,
-    unavailableCalendars,
-  }
 }
 
 interface CalendarListResult {
@@ -160,7 +156,21 @@ const listEvents = async (
   const calendarList = await listCalendars(options.accessToken, fetch)
   return aggregateProviderEvents({
     calendars: calendarList.calendars,
-    load: (calendar) => listCalendarEvents(calendar.id, calendar.summary, options, fetch),
+    load: (calendar) => {
+      const calendarTimeZone =
+        options.lookupInstant === undefined
+          ? undefined
+          : calendar.timeZone !== undefined && isValidTimeZone(calendar.timeZone)
+            ? calendar.timeZone
+            : options.displayTimeZone
+      return listCalendarEvents({
+        ...options,
+        calendarId: calendar.id,
+        calendarLabel: calendar.summary,
+        calendarTimeZone,
+        fetch,
+      })
+    },
     truncated: calendarList.truncated,
   })
 }

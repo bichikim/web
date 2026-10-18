@@ -1,0 +1,2 @@
+{"state":"Please update the email address on my account.","question":{"type":"choice","instructions":"Classify this message.","criteria":["account support","other"]},"target":[1,0]}
+{"state":"What is the weather like today?","question":{"type":"choice","instructions":"Classify this message.","criteria":["account support","other"]},"target":[0,1]}

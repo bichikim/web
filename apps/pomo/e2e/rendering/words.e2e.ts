@@ -31,8 +31,8 @@ const captureWords = async (page: Page, information: TestInfo, name: string) => 
 }
 
 const openWords = async (page: Page) => {
-  await page.getByRole('button', {exact: true, name: '기억보조'}).click()
-  const dialog = page.getByRole('dialog', {exact: true, name: 'Pomofi 기억 보조'})
+  await page.getByRole('button', {exact: true, name: '생각 보조'}).click()
+  const dialog = page.getByRole('dialog', {exact: true, name: 'Pomofi 생각 보조'})
   await dialog.getByRole('tab', {exact: true, name: '학습 단어'}).click()
   await expect(dialog.getByRole('textbox', {name: '모르는 단어'})).toBeVisible()
   return dialog
@@ -117,5 +117,5 @@ test('should persist saved words, memorized filters, and deletion after reload',
   await expect(dialog.getByRole('button', {name: '선택한 0개 단어 삭제'})).toBeDisabled()
   await dialog.getByRole('button', {exact: true, name: '닫기'}).click()
   await expect(dialog).not.toBeVisible()
-  await expect(page.getByRole('button', {exact: true, name: '기억보조'})).toBeFocused()
+  await expect(page.getByRole('button', {exact: true, name: '생각 보조'})).toBeFocused()
 })

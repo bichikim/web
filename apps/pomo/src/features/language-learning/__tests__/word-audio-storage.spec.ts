@@ -25,12 +25,10 @@ it('should store and read compressed word audio without a WAV entry', async () =
   const storage = createStorage()
   const repository = createLanguageLearningWordAudioRepository(storage)
   const audio = new Blob(['opus'], {type: 'audio/ogg; codecs=opus'})
+  const path = `/__pomo/language-learning-word-audio/en/${encodeURIComponent(word.value)}.opus`
 
   await repository.save(word, audio, 'request-1')
-  expect(storage.set).toHaveBeenCalledWith(
-    expect.stringMatching(/\.opus$/u),
-    expect.objectContaining({}),
-  )
+  expect(storage.set).toHaveBeenCalledWith(path, expect.objectContaining({}))
   expect(storage.set).not.toHaveBeenCalledWith(expect.stringMatching(/\.wav$/u), expect.anything())
 
   vi.mocked(storage.get).mockResolvedValueOnce({
@@ -38,6 +36,52 @@ it('should store and read compressed word audio without a WAV entry', async () =
     value: new Response(audio),
   })
   await expect(repository.get(word)).resolves.toEqual(audio)
+})
+
+it('should share pronunciation cache paths for Unicode-equivalent spellings', async () => {
+  const storage = createStorage()
+  const repository = createLanguageLearningWordAudioRepository(storage)
+  const composedWord = {...word, language: 'ko' as const, value: '한글'}
+  const decomposedWord = {...composedWord, value: composedWord.value.normalize('NFD')}
+  const path = `/__pomo/language-learning-word-audio/ko/${encodeURIComponent(composedWord.value)}.opus`
+
+  await repository.save(composedWord, new Blob(['audio']), 'request-1')
+  await repository.get(decomposedWord)
+
+  expect(storage.set).toHaveBeenCalledWith(path, expect.any(Response))
+  expect(storage.get).toHaveBeenCalledWith(path)
+})
+
+it('should read an existing pronunciation cache entry from its previous Unicode path', async () => {
+  const storage = createStorage()
+  const repository = createLanguageLearningWordAudioRepository(storage)
+  const composedWord = {...word, language: 'ko' as const, value: '한글'}
+  const decomposedWord = {...composedWord, value: composedWord.value.normalize('NFD')}
+  const normalizedPath = `/__pomo/language-learning-word-audio/ko/${encodeURIComponent(composedWord.value)}.opus`
+  const previousPath = `/__pomo/language-learning-word-audio/ko/${encodeURIComponent(decomposedWord.value)}.opus`
+  const audio = new Blob(['legacy audio'])
+  vi.mocked(storage.get)
+    .mockResolvedValueOnce({ok: true, value: null})
+    .mockResolvedValueOnce({ok: true, value: new Response(audio)})
+
+  await expect(repository.get(decomposedWord)).resolves.toEqual(audio)
+
+  expect(storage.get).toHaveBeenNthCalledWith(1, normalizedPath)
+  expect(storage.get).toHaveBeenNthCalledWith(2, previousPath)
+})
+
+it('should delete both pronunciation cache paths when a word is removed', async () => {
+  const storage = createStorage()
+  const repository = createLanguageLearningWordAudioRepository(storage)
+  const composedWord = {...word, language: 'ko' as const, value: '한글'}
+  const decomposedWord = {...composedWord, value: composedWord.value.normalize('NFD')}
+  const normalizedPath = `/__pomo/language-learning-word-audio/ko/${encodeURIComponent(composedWord.value)}.opus`
+  const previousPath = `/__pomo/language-learning-word-audio/ko/${encodeURIComponent(decomposedWord.value)}.opus`
+
+  await repository.delete(decomposedWord)
+
+  expect(storage.delete).toHaveBeenNthCalledWith(1, normalizedPath)
+  expect(storage.delete).toHaveBeenNthCalledWith(2, previousPath)
 })
 
 it('should delete the saved word audio entry', async () => {

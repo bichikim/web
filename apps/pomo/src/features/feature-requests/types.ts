@@ -26,3 +26,10 @@ export interface CreateFeatureRequestInput {
   readonly description: string
   readonly title: string
 }
+
+export interface FeatureRequestPageQuery extends PaginatedPageQuery<
+  [scope: string],
+  FeatureRequestPage,
+  number
+> {}
+import type {PaginatedPageQuery} from 'src/utils/with-pagination'

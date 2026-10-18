@@ -2,7 +2,7 @@ import Dexie, {type Table} from 'dexie'
 
 import {
   parsePictureDiaryEntries,
-  parsePictureDiaryEntry,
+  parseWritablePictureDiaryEntry,
   type PictureDiaryEntry,
   sortPictureDiaryEntries,
 } from './schema'
@@ -69,7 +69,7 @@ export const createPictureDiaryRepository = (
     }
   },
   async save(entry) {
-    const parsedEntry = parsePictureDiaryEntry(entry)
+    const parsedEntry = parseWritablePictureDiaryEntry(entry)
 
     if (parsedEntry === null) {
       throw new TypeError('Invalid picture diary entry.')

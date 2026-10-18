@@ -1,6 +1,12 @@
 /** @vitest-environment jsdom */
 import {beforeEach, expect, it} from 'vitest'
-import {readPPlaylist, writePPlaylist} from '../playlist-storage'
+import {
+  playlistPreference,
+  readPPlaylist,
+  readPPlaylistWithEntryIds,
+  writePPlaylist,
+  writePPlaylistWithEntryIds,
+} from '../playlist-storage'
 
 const STORAGE_KEY = 'pomo:focus-room-playlist:v1'
 
@@ -26,6 +32,57 @@ it('should preserve duplicate track IDs through the runtime storage adapter', as
     savedAt: expect.any(Number),
     trackIds,
     version: 1,
+  })
+})
+
+it('should migrate a legacy playlist by adding occurrence IDs only on the next write', async () => {
+  localStorage.setItem(
+    STORAGE_KEY,
+    JSON.stringify({savedAt: 10, trackIds: ['one', 'one'], version: 1}),
+  )
+
+  await expect(readPPlaylistWithEntryIds()).resolves.toEqual({trackIds: ['one', 'one']})
+  expect(JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '')).toEqual({
+    savedAt: 10,
+    trackIds: ['one', 'one'],
+    version: 1,
+  })
+
+  await writePPlaylistWithEntryIds(['one', 'one'], ['first-entry', 'second-entry'])
+
+  await expect(readPPlaylistWithEntryIds()).resolves.toEqual({
+    entryIds: ['first-entry', 'second-entry'],
+    trackIds: ['one', 'one'],
+  })
+})
+
+it('should salvage legacy track IDs when stored entry identity is malformed', async () => {
+  localStorage.setItem(
+    STORAGE_KEY,
+    JSON.stringify({
+      entryIds: ['same', 'same'],
+      savedAt: 10,
+      trackIds: ['one', 'one'],
+      version: 1,
+    }),
+  )
+
+  await expect(readPPlaylistWithEntryIds()).resolves.toEqual({trackIds: ['one', 'one']})
+  await expect(readPPlaylist()).resolves.toEqual(['one', 'one'])
+})
+
+it('should expose stable entry IDs through the playlist preference adapter', async () => {
+  const savedPlaylist = {
+    entryIds: ['first', 'second'],
+    savedAt: 10,
+    trackIds: ['one', 'one'],
+    version: 1,
+  }
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(savedPlaylist))
+
+  await expect(playlistPreference.storage.read()).resolves.toEqual({
+    entryIds: ['first', 'second'],
+    trackIds: ['one', 'one'],
   })
 })
 

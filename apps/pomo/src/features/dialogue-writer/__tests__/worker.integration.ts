@@ -51,6 +51,7 @@ vi.mock('@huggingface/transformers', () => ({
   AutoProcessor: {from_pretrained: transformers.processorFromPretrained},
   env: transformers.environment,
   Gemma4ForCausalLM: {from_pretrained: transformers.gemmaModelFromPretrained},
+  Gemma4Processor: {from_pretrained: transformers.processorFromPretrained},
   InterruptableStoppingCriteria: class {
     interrupt() {}
   },

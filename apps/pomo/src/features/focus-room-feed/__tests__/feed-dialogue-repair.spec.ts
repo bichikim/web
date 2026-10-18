@@ -30,6 +30,32 @@ const failure = (overrides: Partial<FeedItemRecord> = {}) =>
     ...overrides,
   }) as FeedItemRecord
 
+it.each([
+  ['rss.xml//?existing=1#fragment', true],
+  ['atom.xml///', true],
+  ['RSS.XML/', false],
+  ['rss.xml.bak', false],
+  ['%72ss.xml', false],
+])('should retain stored dialogue normalization for %s', (path, expected) => {
+  expect(
+    isMalformedDevFeedDialogue({
+      dialogue: dialogue('stored', 'pomo-dev-feed: leaked'),
+      metadata: metadata('stored', `https://example.test/__dev/feeds/${path}`),
+    }),
+  ).toBe(expected)
+})
+
+it.each([
+  ['rss.xml//?existing=1#fragment', true],
+  ['atom.xml///', true],
+  ['RSS.XML/', false],
+  ['rss.xml.bak', false],
+])('should retain stored failure normalization for %s', (path, expected) => {
+  expect(
+    isLegacyDevFeedFailure(failure({sourceUrl: `https://example.test/__dev/feeds/${path}`})),
+  ).toBe(expected)
+})
+
 it('should detect only leaked identifiers in development feed dialogues', () => {
   expect(
     isMalformedDevFeedDialogue({

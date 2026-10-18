@@ -1,5 +1,6 @@
-import {createEffect, createSignal, onCleanup, onMount} from 'solid-js'
+import {createEffect, onMount} from 'solid-js'
 
+import {useMediaQuery} from 'src/hooks/use-media-query'
 import {usePreference} from 'src/hooks/use-preference'
 import {createParsedPreferenceStorage} from '../parsed-preference-storage'
 
@@ -37,7 +38,7 @@ export const useDisplayThemeController = (): DisplayThemeController => {
     parse: parseDisplayThemePreference,
     storage: displayThemeStorage,
   })
-  const [prefersDark, setPrefersDark] = createSignal(false)
+  const prefersDark = useMediaQuery('(prefers-color-scheme: dark)')
   const preference = () => storedPreference() ?? DEFAULT_DISPLAY_THEME
 
   const onPreferenceChange = (nextPreference: DisplayThemePreference) => {
@@ -45,19 +46,9 @@ export const useDisplayThemeController = (): DisplayThemeController => {
   }
 
   onMount(() => {
-    const mediaQuery = globalThis.matchMedia('(prefers-color-scheme: dark)')
-    setPrefersDark(mediaQuery.matches)
-
-    const handleSystemThemeChange = (event: MediaQueryListEvent) => {
-      setPrefersDark(event.matches)
-    }
-    mediaQuery.addEventListener('change', handleSystemThemeChange)
-
     createEffect(() => {
       applyDocumentTheme(preference(), prefersDark())
     })
-
-    onCleanup(() => mediaQuery.removeEventListener('change', handleSystemThemeChange))
   })
 
   return {onPreferenceChange, preference}

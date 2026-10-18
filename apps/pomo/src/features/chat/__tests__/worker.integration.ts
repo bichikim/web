@@ -16,8 +16,6 @@ const contextMocks = vi.hoisted(() => ({partitionChatHistory: vi.fn()}))
 const promptMocks = vi.hoisted(() => ({
   createChatMessages: vi.fn(),
   createSummaryMessages: vi.fn(),
-  limitChatAnswer: vi.fn(),
-  takeChatAnswerPrefix: vi.fn(),
 }))
 const runtimeMocks = vi.hoisted(() => ({
   countTokens: vi.fn(),
@@ -45,9 +43,6 @@ vi.mock('../context', () => ({partitionChatHistory: contextMocks.partitionChatHi
 vi.mock('../prompt', () => ({
   createChatMessages: promptMocks.createChatMessages,
   createSummaryMessages: promptMocks.createSummaryMessages,
-  limitChatAnswer: promptMocks.limitChatAnswer,
-  MAXIMUM_CHAT_ANSWER_CHARACTERS: 240,
-  takeChatAnswerPrefix: promptMocks.takeChatAnswerPrefix,
 }))
 
 type WorkerMessageListener = (event: MessageEvent<ChatWorkerRequest>) => void
@@ -144,10 +139,6 @@ beforeEach(() => {
   textMocks.trimRepetitiveTail.mockImplementation((text: string) => text)
   promptMocks.createChatMessages.mockReturnValue([{content: 'chat', role: 'user'}])
   promptMocks.createSummaryMessages.mockReturnValue([{content: 'summary', role: 'user'}])
-  promptMocks.limitChatAnswer.mockImplementation((text: string) => text)
-  promptMocks.takeChatAnswerPrefix.mockImplementation((text: string, maximum: number) =>
-    Array.from(text).slice(0, Math.max(0, maximum)).join(''),
-  )
   contextMocks.partitionChatHistory.mockImplementation((messages: ChatContext['messages']) => ({
     messagesToSummarize: [],
     recentMessages: messages,

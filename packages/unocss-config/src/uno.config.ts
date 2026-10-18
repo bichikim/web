@@ -210,11 +210,13 @@ export default defineConfig({
     animation: {
       counts: {
         blink: 'infinite',
+        glint: 'infinite',
         slide: 'infinite',
         'slide-text': 'infinite',
       },
       durations: {
         blink: '1s',
+        glint: '2.6s',
         slide: '2s',
         'slide-text': '2s',
       },
@@ -223,6 +225,10 @@ export default defineConfig({
             {0% { background-position: 0% 50%; }
              100% { background-position: 133.333% 50%; }}`,
         blink: '{0%, 100% { opacity: 0.5; } 50% { opacity: 1; }}',
+        glint:
+          '{0% { transform: translate(-75%, -75%); opacity: 0; } ' +
+          '15% { opacity: 1; } 55% { opacity: 1; } ' +
+          '70%, 100% { transform: translate(75%, 75%); opacity: 0; }}',
         slide: '{0% { transform: translateX(-100%); } 100% { transform: translateX(100%); }}',
         'slide-text': '{0% { transform: translateX(0%); } 100% { transform: translateX(-50%); }}',
       },

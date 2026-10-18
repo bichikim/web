@@ -2,7 +2,7 @@ import {describe, expect, test} from 'vitest'
 
 import modelSource from '../../../../examples/development-model.json?raw'
 import {composeParameterScene, composeParameterVertices} from '../../../deformation'
-import type {PuppetPart} from '../../document'
+import type {PuppetDocument, PuppetPart} from '../../document'
 import {parseDocument} from '../../parse-document'
 import {applySceneDeformers} from '../scene-deformation'
 
@@ -14,6 +14,30 @@ const model = parsed.document
 const arms = model.parts.filter((part) =>
   ['psd-27', 'psd-28', 'psd-30', 'psd-35'].includes(part.id),
 )
+const sceneCache = new WeakMap<
+  PuppetDocument,
+  Map<string, ReturnType<typeof composeParameterScene>>
+>()
+
+const getParameterScene = (document: PuppetDocument, values: Readonly<Record<string, number>>) => {
+  let documentCache = sceneCache.get(document)
+  if (documentCache === undefined) {
+    documentCache = new Map()
+    sceneCache.set(document, documentCache)
+  }
+
+  const cacheKey = JSON.stringify(
+    Object.entries(values).sort(([firstId], [secondId]) => firstId.localeCompare(secondId)),
+  )
+  const cachedScene = documentCache.get(cacheKey)
+  if (cachedScene !== undefined) {
+    return cachedScene
+  }
+
+  const scene = composeParameterScene(document, values)
+  documentCache.set(cacheKey, scene)
+  return scene
+}
 
 const renderArm = (
   part: PuppetPart,
@@ -29,7 +53,7 @@ const renderArm = (
     }),
   ]
   applySceneDeformers({
-    document: {...document, scene: composeParameterScene(document, values)},
+    document: {...document, scene: getParameterScene(document, values)},
     verticesByPartId: new Map([[part.id, vertices]]),
   })
   return vertices
@@ -40,11 +64,13 @@ const width = (vertices: ReadonlyArray<number>) => {
   return Math.max(...horizontal) - Math.min(...horizontal)
 }
 
-const triangleArea = (vertices: ReadonlyArray<number>, triangle: ReadonlyArray<number>) => {
-  const [a, b, c] = triangle.map((index) => index * 2)
+const triangleArea = (vertices: ReadonlyArray<number>, a: number, b: number, c: number) => {
+  const first = a * 2
+  const second = b * 2
+  const third = c * 2
   return (
-    (vertices[b!]! - vertices[a!]!) * (vertices[c! + 1]! - vertices[a! + 1]!) -
-    (vertices[b! + 1]! - vertices[a! + 1]!) * (vertices[c!]! - vertices[a!]!)
+    (vertices[second]! - vertices[first]!) * (vertices[third + 1]! - vertices[first + 1]!) -
+    (vertices[second + 1]! - vertices[first + 1]!) * (vertices[third]! - vertices[first]!)
   )
 }
 
@@ -131,8 +157,10 @@ describe('development model arm yaw volume', () => {
       expect(widthRatio).toBeGreaterThan(0.35)
       expect(widthRatio).toBeLessThan(1.5)
       for (let index = 0; index < part.mesh.indices.length; index += 3) {
-        const triangle = part.mesh.indices.slice(index, index + 3)
-        const ratio = triangleArea(vertices, triangle) / triangleArea(neutral, triangle)
+        const a = part.mesh.indices[index]!
+        const b = part.mesh.indices[index + 1]!
+        const c = part.mesh.indices[index + 2]!
+        const ratio = triangleArea(vertices, a, b, c) / triangleArea(neutral, a, b, c)
         expect(ratio, `${part.id} triangle ${index / 3}`).toBeGreaterThan(0.15)
       }
     }
@@ -201,18 +229,39 @@ describe('development model articulated arms', () => {
         const neutral = renderArm(part, baseline)
         const moved = renderArm(part, values)
         expect(moved.every(Number.isFinite)).toBe(true)
-        part.mesh.vertices.forEach((coordinate, index) => {
+        let hiddenVerticesPreserved = true
+        for (let index = 1; index < part.mesh.vertices.length; index += 2) {
+          const coordinate = part.mesh.vertices[index]!
           if (index % 2 === 1 && coordinate <= 1750) {
-            expect(moved[index - 1]).toBeCloseTo(neutral[index - 1]!, 5)
-            expect(moved[index]).toBeCloseTo(neutral[index]!, 5)
+            const movedX = moved[index - 1]!
+            const neutralX = neutral[index - 1]!
+            const movedY = moved[index]!
+            const neutralY = neutral[index]!
+            if (
+              !Number.isFinite(movedX) ||
+              !Number.isFinite(neutralX) ||
+              !Number.isFinite(movedY) ||
+              !Number.isFinite(neutralY) ||
+              Math.abs(movedX - neutralX) >= 0.000005 ||
+              Math.abs(movedY - neutralY) >= 0.000005
+            ) {
+              hiddenVerticesPreserved = false
+            }
           }
-        })
-        for (let index = 0; index < part.mesh.indices.length; index += 3) {
-          const triangle = part.mesh.indices.slice(index, index + 3)
-          const ratio = triangleArea(moved, triangle) / triangleArea(neutral, triangle)
-          expect(ratio, `${partId} triangle ${index / 3}`).toBeGreaterThan(0.15)
-          expect(ratio).toBeLessThan(2)
         }
+        expect(hiddenVerticesPreserved, `${partId} hidden vertices`).toBe(true)
+        let minimumRatio = Infinity
+        let maximumRatio = -Infinity
+        for (let index = 0; index < part.mesh.indices.length; index += 3) {
+          const a = part.mesh.indices[index]!
+          const b = part.mesh.indices[index + 1]!
+          const c = part.mesh.indices[index + 2]!
+          const ratio = triangleArea(moved, a, b, c) / triangleArea(neutral, a, b, c)
+          minimumRatio = Math.min(minimumRatio, ratio)
+          maximumRatio = Math.max(maximumRatio, ratio)
+        }
+        expect(minimumRatio, `${partId} minimum triangle area ratio`).toBeGreaterThan(0.15)
+        expect(maximumRatio, `${partId} maximum triangle area ratio`).toBeLessThan(2)
       }
     },
   )

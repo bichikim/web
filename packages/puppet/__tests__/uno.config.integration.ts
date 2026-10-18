@@ -10,7 +10,7 @@ describe('unoConfig', () => {
     const result = await generator.generate('', {safelist: true})
     expect(result.matched.has('order-rule-heading')).toBe(true)
     expect(result.css).toContain('.order-rule-summary-content')
-    expect(result.css).toMatch(/\.order-rule-heading[^{}]*\{[^}]*font-size:0\.6875rem/)
+    expect(result.css).toMatch(/\.order-rule-heading[^{}]*\{[^}]*font-size:0\.625rem/)
   })
 
   it('should generate local Iconify masks for every editor icon in the embedded stylesheet', async () => {

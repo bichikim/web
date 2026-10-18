@@ -1,5 +1,7 @@
 /** @vitest-environment jsdom */
 
+import {PreferenceProvider} from 'src/hooks/use-preference'
+
 import {fireEvent, render, screen, waitFor} from '@solidjs/testing-library'
 import {Suspense} from 'solid-js'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
@@ -15,6 +17,7 @@ import {LanguageLearningWords} from '../../language-learning/Words'
 import {MemoryMemoList} from '../../memory-assist/Memos'
 import {PictureDiary} from '../../memory-assist/PictureDiary'
 import {PMemoryAssist} from '../PMemoryAssist'
+import {PModelDownloadProvider} from '../../../features/model-download'
 
 vi.mock('../../../features/auth/AuthProvider', () => ({useAuth: vi.fn()}))
 vi.mock('../../../features/calendar', async () => {
@@ -75,11 +78,16 @@ afterEach(() => {
 
 const renderMemoryAssist = async () => {
   await import('../../memory-assist/Content')
-  render(() => (
-    <Suspense>
-      <PMemoryAssist />
-    </Suspense>
-  ))
+  render(
+    () => (
+      <PModelDownloadProvider>
+        <Suspense>
+          <PMemoryAssist />
+        </Suspense>
+      </PModelDownloadProvider>
+    ),
+    {wrapper: PreferenceProvider},
+  )
 }
 
 it.each(['events', 'connections'] as const)(
@@ -91,7 +99,7 @@ it.each(['events', 'connections'] as const)(
       vi.mocked(listCalendarConnections).mockReturnValue(new Promise(() => {}))
     }
     await renderMemoryAssist()
-    fireEvent.click(screen.getByRole('button', {name: '기억보조'}))
+    fireEvent.click(screen.getByRole('button', {name: '생각 보조'}))
     fireEvent.click(await screen.findByRole('tab', {name: '캘린더'}))
     await waitFor(() => expect(listCalendarEvents).toHaveBeenCalled())
     await waitFor(() => expect(listCalendarConnections).toHaveBeenCalled())
@@ -142,7 +150,7 @@ it('should show cached events and the month grid before the refresh resolves', a
   vi.mocked(listCalendarEvents).mockReturnValue(new Promise(() => {}))
   vi.mocked(listCalendarConnections).mockReturnValue(new Promise(() => {}))
   await renderMemoryAssist()
-  fireEvent.click(screen.getByRole('button', {name: '기억보조'}))
+  fireEvent.click(screen.getByRole('button', {name: '생각 보조'}))
   fireEvent.click(await screen.findByRole('tab', {name: '캘린더'}))
   expect(await screen.findByRole('grid')).toBeVisible()
   expect(screen.getAllByText('저장된 일정')).toHaveLength(2)

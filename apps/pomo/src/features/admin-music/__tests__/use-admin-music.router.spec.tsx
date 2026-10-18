@@ -6,6 +6,7 @@ import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
 import {adminCatalogQuery} from '../catalog-query'
 import {useAdminMusic} from '../use-admin-music'
+import type {AdminCatalog} from '../catalog'
 
 const catalog = {albums: [], assets: [], offers: [], pendingTracks: [], tracks: []}
 
@@ -29,6 +30,39 @@ beforeEach(async () => {
 afterEach(() => {
   cleanup()
   vi.unstubAllGlobals()
+})
+
+it('updates album asset counts when refreshed tracks move albums and assets change status', async () => {
+  const firstCatalog: AdminCatalog = {
+    ...catalog,
+    assets: [
+      {id: 'active', status: 'active', trackId: 'track'},
+      {id: 'pending', status: 'pending', trackId: 'track'},
+    ],
+    tracks: [{albumId: 'first', artist: '', id: 'track', position: 0, title: ''}],
+  }
+  let currentCatalog = firstCatalog
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async () => Response.json(currentCatalog)),
+  )
+  const model = renderAdminMusic()
+  await waitFor(() => expect(model.isLoading()).toBe(false))
+  expect(model.getTrackCount('first')).toBe(1)
+  expect(model.getTrackCount('second')).toBe(0)
+
+  currentCatalog = {
+    ...firstCatalog,
+    assets: firstCatalog.assets.map((asset) => ({...asset, status: 'active'})),
+    tracks: [{...firstCatalog.tracks[0], albumId: 'second'}],
+  }
+  await model.runTrackImport(async () => ({created: 1, failed: 0, preserved: 0}))
+  expect(model.getTrackCount('first')).toBe(0)
+  expect(model.getTrackCount('second')).toBe(2)
+
+  currentCatalog = catalog
+  await model.runTrackImport(async () => ({created: 1, failed: 0, preserved: 0}))
+  expect(model.getTrackCount('second')).toBe(0)
 })
 
 it('should preserve deletion success and retry through the actual router and catalog query', async () => {

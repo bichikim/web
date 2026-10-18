@@ -1,0 +1,7 @@
+{
+  "maxLogitDifference": 1.1205673217773438e-5,
+  "cases": 3,
+  "encoder": "jhu-clsp/mmBERT-base",
+  "torch": "2.14.1",
+  "precision": "float32"
+}

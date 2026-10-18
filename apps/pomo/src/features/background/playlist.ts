@@ -1,4 +1,4 @@
-import {uniq} from 'es-toolkit/array'
+import {difference, intersection, uniq} from 'es-toolkit/array'
 import {shuffleWithRandom} from 'src/utils/shuffle-with-random'
 import type {PlaybackOrder} from './model'
 
@@ -21,8 +21,7 @@ const orderQueue = (
 ): string[] => {
   switch (mode) {
     case 'sequential': {
-      const queuedIds = new Set(queue)
-      return ids.filter((id) => queuedIds.has(id))
+      return intersection(ids, queue)
     }
     case 'random': {
       const shuffled = shuffleWithRandom(queue, Math.random)
@@ -45,15 +44,11 @@ export const nextSlide = (options: NextSlideOptions): Slide => {
     return {current: null, remaining: []}
   }
   const seen = uniq(
-    (options.seen ?? (options.current === null ? [] : [options.current])).filter((id) =>
-      ids.includes(id),
-    ),
+    intersection(options.seen ?? (options.current === null ? [] : [options.current]), ids),
   )
-  const seenIds = new Set(seen)
-  const queued = uniq(options.remaining.filter((id) => ids.includes(id) && !seenIds.has(id)))
-  const queuedIds = new Set(queued)
-  const available = ids.filter((id) => !seenIds.has(id))
-  const queue = [...queued, ...available.filter((id) => !queuedIds.has(id))]
+  const available = difference(ids, seen)
+  const queued = uniq(intersection(options.remaining, available))
+  const queue = [...queued, ...difference(available, queued)]
   const startsNewCycle = queue.length === 0
   const candidates = startsNewCycle ? [...ids] : queue
   const hasModeChanged =

@@ -16,6 +16,13 @@ const options = {
   workerSecurityHeaders: {'Content-Security-Policy-Report-Only': 'worker policy'},
 } satisfies CreateNitroConfigOptions
 
+it('should omit the signaling backend and fail standalone prerendering on startup errors', () => {
+  const config = createNitroConfig({...options, standaloneRelax: true})
+  expect(config.handlers).toEqual([])
+  expect(config.prerender.routes).toEqual(['/relax'])
+  expect(config.prerender.failOnError).toBe(true)
+})
+
 it.each(['web', 'apps-in-toss', 'desktop', 'android', 'ios'] as const)(
   'should derive the %s build policy from explicit options',
   (target) => {
@@ -39,6 +46,14 @@ it('should use shared routes and development assets without a static preset when
     {baseURL: '/', dir: './dev-public', maxAge: 0},
     options.fontAsset,
   ])
+})
+
+it('should emit a dedicated 300-second queue trigger only for the web backend', () => {
+  expect(createNitroConfig(options).vercel?.functionRules['/api/queues/api-ai']).toEqual({
+    experimentalTriggers: [{topic: 'pomo-api-ai', type: 'queue/v2beta'}],
+    maxDuration: 300,
+  })
+  expect(createNitroConfig({...options, target: 'apps-in-toss'}).vercel).toBeUndefined()
 })
 
 it('should expose Steam assets only when the Steam distribution is configured', () => {

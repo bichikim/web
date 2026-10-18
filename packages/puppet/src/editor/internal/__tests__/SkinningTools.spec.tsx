@@ -1,8 +1,13 @@
 /** @vitest-environment jsdom */
 import {fireEvent, render} from '@solidjs/testing-library'
-import {expect, test} from 'vitest'
+import {expect, test, vi} from 'vitest'
 import example from '../../../../examples/rotation-skinning.json'
 import {parseDocument} from '../../../player'
+import {
+  PUPPET_DOCUMENT_FORMAT,
+  PUPPET_DOCUMENT_VERSION,
+  type PuppetDocument,
+} from '../../../player/document'
 import {createSkinBinding} from '../../../deformation/skinning'
 import {composeParameterScene} from '../../../deformation/scene'
 import {applySceneNodeDeformers} from '../../../deformation/vertices'
@@ -11,7 +16,9 @@ import {setPartSkinning} from '../skinning'
 import {findNode} from '../scene-tree'
 import {SkinningTools} from '../SkinningTools'
 
-test('should let a child rotation influence selected vertices of its parent part and undo the edit', () => {
+vi.mock('../SkinningJoints', () => ({SkinningJoints: () => null}))
+
+const createSkinningDocument = () => {
   const parsed = parseDocument(JSON.stringify(example))
   if (!parsed.ok) {
     throw new Error('Invalid example')
@@ -23,7 +30,47 @@ test('should let a child rotation influence selected vertices of its parent part
     ['wrist', 'elbow'],
     part.mesh.vertices,
   )!
-  const document = setPartSkinning(parsed.document, 'fore', binding)
+  return {document: setPartSkinning(parsed.document, 'fore', binding), part}
+}
+
+const createBrushControlsDocument = (): PuppetDocument => {
+  const identity = {x: 0, xx: 1, xy: 0, y: 0, yx: 0, yy: 1}
+  const weights = [0.75, 0.5, 0.25]
+  return {
+    format: PUPPET_DOCUMENT_FORMAT,
+    motions: [{duration: 1, id: 'idle', tracks: []}],
+    parts: [
+      {
+        id: 'fore',
+        mesh: {indices: [0, 1, 2], uvs: [0, 0, 1, 0, 0, 1], vertices: [0, 0, 10, 0, 0, 10]},
+        texture: {height: 10, src: 'fore.webp', width: 10},
+      },
+    ],
+    scene: {
+      roots: [
+        {
+          id: 'fore',
+          kind: 'part',
+          locked: false,
+          name: 'Fore',
+          skinning: {
+            bind: identity,
+            influences: [
+              {inverseBind: identity, nodeId: 'joint-one', weights},
+              {inverseBind: identity, nodeId: 'joint-two', weights: [...weights].reverse()},
+            ],
+          },
+          visible: true,
+        },
+      ],
+    },
+    version: PUPPET_DOCUMENT_VERSION,
+    viewport: {height: 10, width: 10},
+  }
+}
+
+test('should let a child rotation influence selected vertices of its parent part and undo the edit', () => {
+  const {document, part} = createSkinningDocument()
   const history = useDocumentHistory({initialDocument: document})
   const view = render(() => (
     <SkinningTools
@@ -45,6 +92,7 @@ test('should let a child rotation influence selected vertices of its parent part
   fireEvent.click(view.getByRole('button', {name: '선택 정점에 적용'}))
   const node = findNode(history.document().scene!.roots, 'fore')
   expect(node?.kind === 'part' ? node.skinning?.influences[0]?.weights[24] : undefined).toBe(0.75)
+
   const before = new Map([['fore', [...part.mesh.vertices]]])
   const after = new Map([['fore', [...part.mesh.vertices]]])
   applySceneNodeDeformers(composeParameterScene(document, {'wrist-angle': 60}).roots, before)
@@ -57,19 +105,13 @@ test('should let a child rotation influence selected vertices of its parent part
   expect(view.getByRole('status')).toHaveTextContent('뒤집힘')
   history.undo()
   expect(history.document()).toEqual(document)
+  view.unmount()
 })
 
 test('should expose the shared brush buttons and retain settings across selection mode', () => {
-  const parsed = parseDocument(JSON.stringify(example))
-  if (!parsed.ok) {
-    throw new Error('Invalid example')
-  }
+  const document = createBrushControlsDocument()
   const view = render(() => (
-    <SkinningTools
-      document={parsed.document}
-      sourceDocument={parsed.document}
-      activePartId="fore"
-    />
+    <SkinningTools document={document} sourceDocument={document} activePartId="fore" />
   ))
   fireEvent.click(view.getByRole('checkbox', {name: '스키닝 가중치 편집'}))
   fireEvent.click(view.getByRole('button', {name: '브러시'}))

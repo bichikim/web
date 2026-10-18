@@ -1,4 +1,5 @@
 import {getDocument} from '@winter-love/utils'
+import {getMonotonicTime} from 'src/utils/get-monotonic-time'
 import {visibility} from 'src/utils/visibility'
 
 export interface VisibilityIntervalOptions {
@@ -8,7 +9,7 @@ export interface VisibilityIntervalOptions {
   readonly runOverdueOnVisible?: boolean
 }
 
-/** Pauses the interval while hidden and restarts it when the document is visible. */
+/** 문서가 숨겨져 있는 동안 주기 실행을 멈추고, 다시 보이면 재개한다. */
 export function visibilityInterval(options: VisibilityIntervalOptions): () => void
 export function visibilityInterval(
   callback: () => void,
@@ -35,9 +36,9 @@ export function visibilityInterval(
     options = optionsOrCallback
   }
 
-  let nextExecution = Date.now() + options.interval
+  let nextExecution = getMonotonicTime() + options.interval
   const run = () => {
-    const now = Date.now()
+    const now = getMonotonicTime()
     nextExecution = now + options.interval
     options.callback()
   }
@@ -48,7 +49,7 @@ export function visibilityInterval(
       return
     }
 
-    const now = Date.now()
+    const now = getMonotonicTime()
     const isOverdue = now >= nextExecution
     nextExecution = now + options.interval
     intervalId = globalThis.setInterval(run, options.interval)

@@ -1,6 +1,6 @@
 import {isObject} from 'src/utils/is-object'
 
-/** Returns a non-empty error message, the fallback, or null. */
+/** 비어 있지 않은 오류 메시지나 대체값 또는 null을 반환한다. */
 export function getErrorMessage(error: unknown): string | null
 export function getErrorMessage(error: unknown, fallback: string): string
 export function getErrorMessage(error: unknown, fallback?: string): string | null {

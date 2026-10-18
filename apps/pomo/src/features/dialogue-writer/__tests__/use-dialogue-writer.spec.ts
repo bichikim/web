@@ -24,6 +24,20 @@ interface TestRuntime extends DialogueWriterRuntime {
 
 const originalGetLocale = getLocale
 
+it('should allow switching an unsupported GPU model to LFM and preparing it without WebGPU', () => {
+  const runtime = createRuntime(false)
+  const root = createDialogueRoot(runtime)
+  expect(root.controller.state().status).toBe('unsupported')
+  root.controller.selectModel('lfm-2.6b-qad')
+  expect(root.controller.state().status).toBe('idle')
+  root.controller.prepare()
+  expect(runtime.client.prepare).toHaveBeenCalledOnce()
+  expect(runtime.createClient).toHaveBeenCalledWith(
+    expect.objectContaining({modelId: 'lfm-2.6b-qad'}),
+  )
+  root.dispose()
+})
+
 const createRuntime = (supported: boolean): TestRuntime => {
   let onResponse: ((response: DialogueWorkerResponse) => void) | null = null
   const client: DialogueClient = {
@@ -76,6 +90,22 @@ afterEach(() => {
 })
 
 describe('useDialogueWriter', () => {
+  it('should reject copying when clipboard permission is denied', async () => {
+    const failure = new Error('Clipboard permission denied')
+    vi.stubGlobal('navigator', {clipboard: {writeText: vi.fn().mockRejectedValue(failure)}})
+    const runtime = createRuntime(true)
+    const root = createDialogueRoot(runtime)
+    root.controller.prepare()
+    runtime.emit({type: 'ready'})
+    root.controller.generate()
+    runtime.emit({text: 'Completed answer', type: 'complete'})
+    try {
+      await expect(root.controller.copyOutput()).rejects.toBe(failure)
+    } finally {
+      root.dispose()
+    }
+  })
+
   it('should expose an unsupported state without creating a browser client', () => {
     const runtime = createRuntime(false)
     const root = createDialogueRoot(runtime)
@@ -488,4 +518,21 @@ describe('useDialogueWriter', () => {
     root.dispose()
     expect(runtime.client.dispose).toHaveBeenCalledTimes(2)
   })
+})
+
+it('should release the previous model before preparing the newly selected model', () => {
+  const runtime = createRuntime(true)
+  const root = createDialogueRoot(runtime)
+  root.controller.prepare()
+  runtime.emit({type: 'ready'})
+  root.controller.selectModel('lfm-2.6b-qad')
+  expect(root.controller.modelId()).toBe('lfm-2.6b-qad')
+  expect(runtime.client.dispose).toHaveBeenCalledOnce()
+  expect(root.controller.isModelReady()).toBe(false)
+  expect(root.controller.request()).toBe('  삶의 행복  ')
+  root.controller.generateWithPreparation()
+  expect(runtime.createClient).toHaveBeenLastCalledWith(
+    expect.objectContaining({modelId: 'lfm-2.6b-qad'}),
+  )
+  root.dispose()
 })

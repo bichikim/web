@@ -72,3 +72,38 @@ test('delivers browser Worker messages and failures through the shared transport
     message: 'received:hello',
   })
 })
+
+test('transfers buffer ownership through the shared transport', async ({page}) => {
+  await page.goto('/')
+
+  const result = await page.evaluate(async () => {
+    const modulePath = '/src/utils/worker-transport/index.ts'
+    const transportModule: WorkerTransportModule = await import(/* @vite-ignore */ modulePath)
+    const workerUrl = URL.createObjectURL(
+      new Blob(
+        ['self.onmessage = (event) => self.postMessage(Array.from(new Uint8Array(event.data)))'],
+        {type: 'text/javascript'},
+      ),
+    )
+    const buffer = new Uint8Array([2, 4, 6]).buffer
+    let detachedLength = -1
+    let transport: WorkerTransport<ArrayBuffer> | undefined
+    try {
+      const bytes = await new Promise<Array<number>>((resolve, reject) => {
+        transport = transportModule.createWorkerTransport<ArrayBuffer, Array<number>>({
+          onFailure: reject,
+          onResponse: resolve,
+          worker: new Worker(workerUrl),
+        })
+        transport.send(buffer, [buffer])
+        detachedLength = buffer.byteLength
+      })
+      return {bytes, detachedLength}
+    } finally {
+      transport?.dispose()
+      URL.revokeObjectURL(workerUrl)
+    }
+  })
+
+  expect(result).toEqual({bytes: [2, 4, 6], detachedLength: 0})
+})

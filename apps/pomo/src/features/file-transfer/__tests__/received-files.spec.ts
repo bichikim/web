@@ -95,3 +95,71 @@ describe('ZIP saving', () => {
     click.mockRestore()
   })
 })
+
+describe('ZIP saving lifecycle', () => {
+  it('should report stream failures without downloading or marking contents saved', async () => {
+    vi.stubGlobal('Blob', NodeBlob)
+    const {files} = prepare(100)
+    const click = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {})
+    const blob = new Blob(['content'])
+    vi.spyOn(blob, 'stream').mockImplementation(() => {
+      throw new Error('stream failed')
+    })
+    files.add(blob, 'failed.txt')
+    await files.saveAll()
+    expect(files.state.error).toBe(true)
+    expect(files.state.saving).toBe(false)
+    expect(files.state.files[0].saved).toBe(false)
+    expect(click).not.toHaveBeenCalled()
+    click.mockRestore()
+  })
+
+  it('should archive the initial snapshot and ignore concurrent save requests and later additions', async () => {
+    vi.stubGlobal('Blob', NodeBlob)
+    const blobs: Blob[] = []
+    const revoke = vi.fn()
+    vi.stubGlobal('URL', {
+      createObjectURL: (blob: Blob) => {
+        blobs.push(blob)
+        return `blob:${blobs.length}`
+      },
+      revokeObjectURL: revoke,
+    })
+    const click = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {})
+    const files = createReceivedFiles(100)
+    const original = new Blob(['original'])
+    const stream = original.stream()
+    const reader = stream.getReader()
+    const read = reader.read.bind(reader)
+    let finish!: () => void
+    const barrier = new Promise<void>((resolve) => {
+      finish = resolve
+    })
+    vi.spyOn(reader, 'read').mockImplementationOnce(async () => {
+      await barrier
+      return read()
+    })
+    vi.spyOn(stream, 'getReader').mockReturnValue(reader)
+    vi.spyOn(original, 'stream').mockReturnValue(stream)
+    files.add(original, 'original.txt')
+    const id = files.state.files[0].id
+    const pending = files.saveAll()
+    expect(files.state.saving).toBe(true)
+    await files.saveAll()
+    files.add(new Blob(['later']), 'later.txt')
+    files.remove(id)
+    finish()
+    await pending
+    const archive = unzipSync(new Uint8Array(await blobs[2].arrayBuffer()))
+    expect(Object.keys(archive)).toEqual(['original.txt'])
+    expect(new TextDecoder().decode(archive['original.txt'])).toBe('original')
+    expect(files.state.files.map((file) => file.saved)).toEqual([false])
+    expect(files.state.saving).toBe(false)
+    expect(files.state.error).toBe(false)
+    expect(click).toHaveBeenCalledTimes(1)
+    await files.saveAll()
+    expect(revoke).toHaveBeenCalledWith('blob:3')
+    expect(files.state.files[0].saved).toBe(true)
+    click.mockRestore()
+  })
+})

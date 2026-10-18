@@ -1,12 +1,6 @@
-import type {HistoricalMomentDraft} from './contract'
+import {escape as escapeHtml} from 'es-toolkit/string'
 
-const escapeHtml = (value: string): string =>
-  value
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&#39;')
+import type {HistoricalMomentDraft} from './contract'
 
 /** Renders validated historical prose and source links into safe feed HTML. */
 export const renderHistoryContentHtml = (moment: HistoricalMomentDraft): string => {

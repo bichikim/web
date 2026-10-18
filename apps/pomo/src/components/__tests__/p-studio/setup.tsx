@@ -355,7 +355,7 @@ export const setupStudio = () => {
         <button onClick={() => props.onTourOpen?.()} type="button">
           둘러보기
         </button>
-        <div data-tour-step="memory-assist">기억 보조</div>
+        <div data-tour-step="memory-assist">생각 보조</div>
         <button onClick={() => props.onActivityChange('writing')} type="button">
           글쓰기
         </button>

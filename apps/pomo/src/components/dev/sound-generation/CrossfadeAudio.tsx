@@ -27,18 +27,28 @@ export function CrossfadeAudio(props: CrossfadeAudioProps) {
   const [playing, setPlaying] = createSignal(false)
   const [status, setStatus] = createSignal('재생 준비 중…')
   let playback: LoopPlayback | undefined
+  let playRevision = 0
+  let playbackErrorRevision = 0
   let autoPlayed = false
   let currentConnection: number | undefined
   const controls = createLoopPlaybackControls({
     onSeekError: (cause) => {
+      playbackErrorRevision += 1
       setPlaying(false)
       setStatus(getExceptionMessage(cause, '위치를 이동하지 못했습니다.'))
+    },
+    onSeekResult: (active) => {
+      if (!active && playing()) {
+        setStatus('재생 준비 완료')
+      }
+      setPlaying(active)
     },
     player: () => playback,
   })
   const {position, previewPosition, seek} = controls
 
   const close = (preserveState = false) => {
+    playRevision += 1
     controls.invalidate()
     const current = playback
     playback = undefined
@@ -64,19 +74,28 @@ export function CrossfadeAudio(props: CrossfadeAudioProps) {
     if (current === undefined || duration() <= 0) {
       return
     }
+    const currentRevision = (playRevision += 1)
     const target = clamp(requestedPosition, 0, duration())
     controls.preparePlayback(target)
+    const currentErrorRevision = playbackErrorRevision
     try {
-      await current.play(connection(), false, target)
+      const started = await current.play(connection(), false, target)
+      if (current === playback && currentRevision === playRevision && !started) {
+        setPlaying(false)
+        if (currentErrorRevision === playbackErrorRevision) {
+          setStatus('재생 준비 완료')
+        }
+      }
     } catch (cause) {
-      setPlaying(false)
-      setStatus(getExceptionMessage(cause, '재생하지 못했습니다.'))
+      if (current === playback && currentRevision === playRevision) {
+        setPlaying(false)
+        setStatus(getExceptionMessage(cause, '재생하지 못했습니다.'))
+      }
     }
   }
 
   createEffect(() => {
     // Read the prop inside the effect so a changed generated URL recreates the player.
-    // oxlint-disable-next-line eslint/prefer-destructuring -- Reactive prop access must stay inside the tracked effect.
     const url = props.url
     const initialPosition = untrack(() => props.initialPosition ?? 0)
     close()
@@ -89,6 +108,9 @@ export function CrossfadeAudio(props: CrossfadeAudioProps) {
       playback = createLoopPlayer(
         url,
         (message, active) => {
+          if (!active) {
+            playbackErrorRevision += 1
+          }
           setStatus(message)
           setPlaying(active)
         },
@@ -132,6 +154,7 @@ export function CrossfadeAudio(props: CrossfadeAudioProps) {
     }
     if (playing()) {
       controls.invalidate()
+      playRevision += 1
       current.stop()
       setPlaying(false)
       setStatus('정지했습니다.')
@@ -198,7 +221,7 @@ function CrossfadeAudioView(props: CrossfadeAudioViewProps) {
         onChange={() => props.onSeek()}
         step="0.1"
         type="range"
-        value={props.position}
+        value={props.duration > 0 ? props.position : 0}
       />
       <p class="m-0 text-sm text-#bdb2c4" role="status">
         {props.status}

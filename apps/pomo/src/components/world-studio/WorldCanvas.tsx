@@ -1,3 +1,4 @@
+import {useResizeObserver} from 'src/hooks/use-resize-observer'
 import {ArcRotateCamera} from '@babylonjs/core/Cameras/arcRotateCamera'
 import {DefaultRenderingPipeline} from '@babylonjs/core/PostProcesses/RenderPipeline/Pipelines/defaultRenderingPipeline'
 import {SSAO2RenderingPipeline} from '@babylonjs/core/PostProcesses/RenderPipeline/Pipelines/ssao2RenderingPipeline'
@@ -330,13 +331,13 @@ export function WorldCanvas(props: WorldCanvasProps) {
       targetPosition: MODEL_TARGET_POSITION,
     })
 
-    const observer = new ResizeObserver(() => engine.resize())
-    observer.observe(surface)
+    const observer = useResizeObserver({onResize: () => engine.resize(), target: () => surface})
+    observer.start()
     engine.runRenderLoop(() => scene.render())
 
     onCleanup(() => {
       activeCamera = null
-      observer.disconnect()
+      observer.stop()
       engine.stopRenderLoop()
       disposeModel()
       postProcessing.ambientOcclusion?.dispose()

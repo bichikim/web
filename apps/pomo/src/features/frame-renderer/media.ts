@@ -1,4 +1,3 @@
-import {clearHtmlMediaElement} from 'src/utils/clear-html-media-element'
 import {replaceBlobObjectUrl} from 'src/features/blob-object-url'
 import type {MediaKind} from '../background'
 
@@ -28,10 +27,7 @@ export const createMedia = (options: MediaOptions): MediaResource => {
   let cancelled = false
   let loaded = false
   let settled = false
-  let resolve!: (value: boolean) => void
-  const ready = new Promise<boolean>((finish) => {
-    resolve = finish
-  })
+  const {promise: ready, resolve} = Promise.withResolvers<boolean>()
   const settle = (value: boolean) => {
     if (settled) {
       return
@@ -74,7 +70,9 @@ export const createMedia = (options: MediaOptions): MediaResource => {
     if (video === null) {
       source.removeAttribute('src')
     } else {
-      clearHtmlMediaElement(video)
+      video.pause()
+      video.removeAttribute('src')
+      video.load()
     }
     replaceBlobObjectUrl(url, () => null)
   }

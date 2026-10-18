@@ -18,6 +18,54 @@ export interface PreferenceEntryOptions {
   readonly onError: (error: unknown) => void
 }
 
+interface PreferenceWrite {
+  readonly value: unknown
+  readonly revision: number
+  readonly rollbackOnError: boolean
+}
+
+interface PreferenceWriterOptions {
+  readonly canRollback: (revision: number) => boolean
+  readonly onError: (error: unknown) => void
+  readonly onRollback: (snapshot: PreferenceSnapshot) => void
+  readonly onSaved: () => void
+  readonly write: (value: unknown) => ReturnType<PreferenceStorage['write']>
+}
+
+const createPreferenceWriter = (options: PreferenceWriterOptions) => {
+  let committed: PreferenceSnapshot = {value: null}
+  const reportFailure = (error: unknown, write: PreferenceWrite) => {
+    if (write.rollbackOnError && options.canRollback(write.revision)) {
+      options.onRollback(committed)
+    }
+    options.onError(error)
+  }
+  const reportWrite = (error: unknown, write: PreferenceWrite) => {
+    if (error !== null && error !== undefined) {
+      reportFailure(error, write)
+    } else {
+      committed = {value: write.value}
+      options.onSaved()
+    }
+  }
+  const persist = (write: PreferenceWrite): Promise<void> | null => {
+    try {
+      const result = options.write(write.value)
+      if (isPromise(result)) {
+        return result.then(
+          (error) => reportWrite(error, write),
+          (error: unknown) => reportFailure(error, write),
+        )
+      }
+      reportWrite(result, write)
+    } catch (error: unknown) {
+      reportFailure(error, write)
+    }
+    return null
+  }
+  return {commit: (snapshot: PreferenceSnapshot) => (committed = snapshot), persist}
+}
+
 const subscribePreferenceListener = <Listener>(
   listeners: Set<Listener>,
   listener: Listener,
@@ -38,6 +86,7 @@ export const createPreferenceEntry = (options: PreferenceEntryOptions): StoredPr
   let restoring = false
   let edited = false
   let shouldPersistInitialEdit = false
+  let rollbackInitialEdit = false
   let pending: Promise<void> | null = null
   const reportError = (error: unknown) => {
     if (listeners.size === 0) {
@@ -46,29 +95,19 @@ export const createPreferenceEntry = (options: PreferenceEntryOptions): StoredPr
       listeners.forEach((listener) => listener(error))
     }
   }
-  const reportWrite = (error: unknown) => {
-    if (error !== null && error !== undefined) {
-      reportError(error)
-    } else {
-      saves.forEach((listener) => listener())
-    }
-  }
-  const persist = (value: unknown): Promise<void> | null => {
-    try {
-      const result = options.storage.write(options.key, value)
-      if (isPromise(result)) {
-        return result.then(reportWrite, reportError)
-      }
-      reportWrite(result)
-    } catch (error: unknown) {
-      reportError(error)
-    }
-    return null
-  }
-  const enqueue = (value: unknown) => {
+  const writer = createPreferenceWriter({
+    canRollback: (version) => version === revision && options.isActive(),
+    onError: reportError,
+    onRollback: setSnapshot,
+    onSaved: () => saves.forEach((listener) => listener()),
+    write: (value) => options.storage.write(options.key, value),
+  })
+  const enqueue = (write: PreferenceWrite) => {
     const previous = pending
     const completion =
-      previous === null ? persist(value) : previous.then(() => persist(value)).then(() => undefined)
+      previous === null
+        ? writer.persist(write)
+        : previous.then(() => writer.persist(write)).then(() => undefined)
     // A synchronous save callback may already have queued another asynchronous edit.
     if (pending === previous) {
       pending = completion
@@ -79,7 +118,7 @@ export const createPreferenceEntry = (options: PreferenceEntryOptions): StoredPr
     restoring = false
     const current = snapshot()
     if (edited && current !== null && shouldPersistInitialEdit) {
-      enqueue(current.value)
+      enqueue({revision, rollbackOnError: rollbackInitialEdit, value: current.value})
     }
     shouldPersistInitialEdit = false
   }
@@ -106,8 +145,11 @@ export const createPreferenceEntry = (options: PreferenceEntryOptions): StoredPr
           if (snapshot() === null) {
             setSnapshot({value: null})
           }
-        } else if (!initial || !edited) {
-          setSnapshot(result)
+        } else {
+          writer.commit(result)
+          if (!initial || !edited) {
+            setSnapshot(result)
+          }
         }
         if (initial) {
           finishInitial()
@@ -162,11 +204,12 @@ export const createPreferenceEntry = (options: PreferenceEntryOptions): StoredPr
       edited = true
       if (shouldPersist) {
         shouldPersistInitialEdit = true
+        rollbackInitialEdit = valueOptions?.rollbackOnError === true
       }
       batch(() => {
         setSnapshot({value})
         if (initialized && shouldPersist) {
-          enqueue(value)
+          enqueue({revision, rollbackOnError: valueOptions?.rollbackOnError === true, value})
         }
       })
     },

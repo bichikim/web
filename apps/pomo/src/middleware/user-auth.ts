@@ -1,4 +1,5 @@
 import {getAuthSession} from 'src/server/auth/get-auth-session'
+import {appendSetCookies} from 'src/server/http/append-set-cookies'
 
 const ACCOUNT_PATH = '/account'
 const ACCOUNT_PATH_WITH_TRAILING_SLASH = `${ACCOUNT_PATH}/`
@@ -9,12 +10,6 @@ interface UserAuthRequest {
   readonly request: Request
   readonly responseHeaders: Headers
   readonly url: URL
-}
-
-const appendCookies = (headers: Headers, cookies: ReadonlyArray<string>): void => {
-  for (const cookie of cookies) {
-    headers.append('Set-Cookie', cookie)
-  }
 }
 
 export const handleUserAuthRequest = async (input: UserAuthRequest): Promise<Response | null> => {
@@ -33,7 +28,7 @@ export const handleUserAuthRequest = async (input: UserAuthRequest): Promise<Res
     const sessionResponse = await getAuthSession(input.request, {provider: 'neon'})
 
     if (sessionResponse.access === 'invalid') {
-      appendCookies(input.responseHeaders, sessionResponse.setCookies)
+      appendSetCookies(input.responseHeaders, sessionResponse.setCookies)
       return new Response('Authentication is unavailable', {
         headers: input.responseHeaders,
         status: 503,
@@ -45,7 +40,7 @@ export const handleUserAuthRequest = async (input: UserAuthRequest): Promise<Res
 
     cleanUrl.searchParams.delete(SESSION_VERIFIER_PARAM)
     headers.set('Location', cleanUrl.toString())
-    appendCookies(headers, sessionResponse.setCookies)
+    appendSetCookies(headers, sessionResponse.setCookies)
 
     return new Response(null, {headers, status: 302})
   } catch (error) {

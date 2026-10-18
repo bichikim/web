@@ -1,7 +1,10 @@
 /** @vitest-environment jsdom */
+
+import {PreferenceProvider} from 'src/hooks/use-preference'
 import {fireEvent, render, screen} from '@solidjs/testing-library'
 import {afterEach, expect, it, vi} from 'vitest'
 import {PMemoryAssist} from '../PMemoryAssist'
+import {PModelDownloadProvider} from '../../../features/model-download'
 
 interface LoadedContent {
   readonly PMemoryAssistContent: () => string
@@ -49,12 +52,19 @@ it('should open and close while preloading and reveal content without replacing 
     Object.defineProperty(styles, 'animationName', {configurable: true, value: 'none'})
     return styles
   })
-  render(() => <PMemoryAssist />)
-  const trigger = screen.getByRole('button', {name: '기억보조'})
+  render(
+    () => (
+      <PModelDownloadProvider>
+        <PMemoryAssist />
+      </PModelDownloadProvider>
+    ),
+    {wrapper: PreferenceProvider},
+  )
+  const trigger = screen.getByRole('button', {name: '생각 보조'})
   await loading.startedPromise
   expect(loading.started).toHaveBeenCalledOnce()
   fireEvent.click(trigger)
-  expect(screen.getByRole('dialog', {name: 'Pomofi 기억 보조'})).toBeVisible()
+  expect(screen.getByRole('dialog', {name: 'Pomofi 생각 보조'})).toBeVisible()
   expect(screen.getByRole('status')).toBeVisible()
   fireEvent.click(screen.getByRole('button', {name: '닫기'}))
   expect(screen.queryByRole('dialog')).toBeNull()
@@ -66,7 +76,7 @@ it('should open and close while preloading and reveal content without replacing 
   })
   await Promise.resolve()
   expect(screen.queryByRole('dialog')).toBeNull()
-  expect(screen.getByRole('button', {name: '기억보조'})).toBe(trigger)
+  expect(screen.getByRole('button', {name: '생각 보조'})).toBe(trigger)
   fireEvent.click(trigger)
   await loading.contentRenderedPromise
   expect(screen.getByText('준비된 내용')).toBeVisible()

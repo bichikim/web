@@ -27,6 +27,7 @@ describe('runtime scene preference persistence', () => {
   })
 
   afterEach(() => {
+    vi.restoreAllMocks()
     Reflect.deleteProperty(globalThis, 'ReactNativeWebView')
     vi.unstubAllGlobals()
   })
@@ -64,6 +65,44 @@ describe('runtime scene preference persistence', () => {
       JSON.stringify(preferences),
     )
     expect(storageMocks.setItem).not.toHaveBeenCalled()
+  })
+
+  it('should reject a failed web write and retain previously persisted preferences', async () => {
+    const previousPreferences = {activity: 'writing', gaze: 'focused', timeMode: 'day'} as const
+    const storageError = new DOMException('The operation is insecure.', 'SecurityError')
+    localStorage.setItem(
+      'pomo:focus-room-scene-preferences:v1',
+      JSON.stringify(previousPreferences),
+    )
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw storageError
+    })
+
+    await expect(writePScenePreferences(preferences)).rejects.toMatchObject({
+      cause: storageError,
+      message: 'Failed to persist scene preferences.',
+    })
+    await expect(readPScenePreferences()).resolves.toEqual(previousPreferences)
+    expect(localStorage.getItem('pomo:focus-room-scene-preferences:v1')).toBe(
+      JSON.stringify(previousPreferences),
+    )
+  })
+
+  it('should reject a failed first web write and keep default preferences', async () => {
+    const storageError = new DOMException('The operation is insecure.', 'SecurityError')
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw storageError
+    })
+
+    await expect(writePScenePreferences(preferences)).rejects.toMatchObject({
+      cause: storageError,
+      message: 'Failed to persist scene preferences.',
+    })
+    await expect(readPScenePreferences()).resolves.toEqual({
+      activity: 'reading',
+      gaze: 'focused',
+      timeMode: 'day',
+    })
   })
 
   it('should restore native preferences and rebuild the browser copy', async () => {
@@ -140,5 +179,19 @@ describe('runtime scene preference persistence', () => {
     ])
 
     expect(nativeWrites).toEqual([JSON.stringify(preferences), JSON.stringify(nextPreferences)])
+  })
+
+  it('should persist to native storage when the browser mirror is unavailable', async () => {
+    Object.defineProperty(globalThis, 'ReactNativeWebView', {configurable: true, value: {}})
+    const storageError = new DOMException('The operation is insecure.', 'SecurityError')
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw storageError
+    })
+
+    await expect(writePScenePreferences(preferences)).resolves.toBeUndefined()
+    expect(storageMocks.setItem).toHaveBeenCalledWith(
+      'pomo:focus-room-scene-preferences:v1',
+      JSON.stringify(preferences),
+    )
   })
 })

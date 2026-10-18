@@ -180,3 +180,21 @@ it.each(['', ' ', 'not-a-date', '2026-02-31'])(
     ).toBe(0)
   },
 )
+
+it.each([
+  [' 2026-09-03T14:00:00Z', '2026-09-03T15:00:00Z'],
+  ['2026-09-03T14:00:00Z', '2026-09-03T15:00:00Z '],
+  ['\t2026-09-03T23:00:00+09:00\n', '\n2026-09-04T00:00:00+09:00\t'],
+])(
+  'should group trimmed timed intervals and preserve the exclusive end: %s through %s',
+  (start, end) => {
+    const source = {...event, end, start}
+    const grouped = groupCalendarEvents([source], ['2026-09-03', '2026-09-04'], 'Asia/Seoul')
+
+    expect([...grouped.keys()]).toEqual(['2026-09-03'])
+    expect(grouped.get('2026-09-03')).toEqual([source])
+    expect(grouped.get('2026-09-03')?.[0]).toBe(source)
+    expect(source.start).toBe(start)
+    expect(source.end).toBe(end)
+  },
+)

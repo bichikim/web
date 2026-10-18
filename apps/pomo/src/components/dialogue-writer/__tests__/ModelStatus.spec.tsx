@@ -38,6 +38,20 @@ describe('ModelStatus', () => {
     expect(screen.getByText('Qwen · WebGPU').previousElementSibling).toHaveClass('bg-#f2a7b8')
   })
 
+  it('should expose indeterminate loading progress when its percentage is unavailable', () => {
+    render(() => (
+      <ModelStatus model={model} status="loading" statusMessage="모델을 내려받는 중이에요." />
+    ))
+
+    const progress = screen.getByRole('progressbar', {name: '모델 준비 진행률 확인 중'})
+    expect(progress).toHaveAttribute('aria-valuemin', '0')
+    expect(progress).toHaveAttribute('aria-valuemax', '100')
+    expect(progress).not.toHaveAttribute('aria-valuenow')
+    expect(screen.getByText('진행률 확인 중')).toBeInTheDocument()
+    expect(progress.firstElementChild).toHaveAttribute('data-indeterminate')
+    expect(screen.queryByText('모델을 내려받는 중이에요.')).not.toBeInTheDocument()
+  })
+
   it('should show ready and complete models with their download size', () => {
     render(() => (
       <>

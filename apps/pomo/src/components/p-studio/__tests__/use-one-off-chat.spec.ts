@@ -45,7 +45,9 @@ const createChat = () => {
     isBusy: () => ['compacting', 'generating', 'loading', 'refining'].includes(state().status),
     isModelReady: () => state().status === 'ready',
     messages,
+    modelId: () => 'gemma-4-e2b',
     prepare: vi.fn(() => setState({percentage: 0, status: 'loading'})),
+    selectModel: vi.fn(),
     send: vi.fn(() => {
       setDraft('')
       setState({status: 'generating'})
@@ -711,3 +713,7 @@ describe('useOneOffChat', () => {
     cleanup()
   })
 })
+
+vi.mock('src/features/text-generation/use-default-text-model', () => ({
+  useDefaultTextModel: () => () => 'gemma-4-e2b',
+}))

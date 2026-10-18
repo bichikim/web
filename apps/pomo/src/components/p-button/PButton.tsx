@@ -1,6 +1,7 @@
 /* ignore file coverage -- Wallaby mismerges this fully covered TSX module across test workers. */
 import {cva, cx, type VariantProps} from 'class-variance-authority'
 import {children, type JSX, Show} from 'solid-js'
+import {Dynamic} from 'solid-js/web'
 import {isNonBlankString} from 'src/utils/is-non-blank-string'
 import {HButton} from '../h-button'
 import {PTooltip} from '../p-tooltip/PTooltip'
@@ -14,14 +15,15 @@ const BUTTON_TRANSITION =
 
 const BUTTON_HOVER =
   // oxlint-disable-next-line eslint-js/max-len -- UnoCSS requires a complete arbitrary-value token.
-  '[&:not(:disabled):hover]:[background-color:color-mix(in_srgb,var(--pomo-button-bg),var(--pomo-color-foreground)_10%)]'
+  '[&:not(:disabled):not([aria-disabled=true]):hover]:[background-color:color-mix(in_srgb,var(--pomo-button-bg),var(--pomo-color-foreground)_10%)]'
 
 export const P_BUTTON_CLASSES = cva(
   `group inline-flex box-border cursor-pointer items-center justify-center gap-2 border border-solid ` +
     `font-[inherit] font-750 leading-5 ` +
     `outline-none ${BUTTON_TRANSITION} [background-color:var(--pomo-button-bg)] ${BUTTON_HOVER} ` +
     `disabled:cursor-not-allowed ` +
-    `disabled:opacity-50 disabled:transform-none motion-reduce:transition-none`,
+    `disabled:opacity-50 disabled:transform-none motion-reduce:transition-none ` +
+    `[&[aria-disabled=true]]:cursor-not-allowed [&[aria-disabled=true]]:opacity-50`,
   {
     compoundVariants: [
       {bordered: true, class: 'border-[rgb(239_138_116_/_34%)]', tone: 'danger'},
@@ -127,7 +129,7 @@ const LEADING_OVERFLOW =
   'size-16 [margin-block:-1.25rem] [margin-inline-start:-0.75rem] ' +
   '[filter:drop-shadow(0_0.125rem_0.1875rem_rgb(0_0_0_/_32%))]'
 
-export interface PButtonProps extends VariantProps<typeof P_BUTTON_CLASSES> {
+export interface PButtonAppearanceProps extends VariantProps<typeof P_BUTTON_CLASSES> {
   readonly accessibleLabel?: string
   readonly children?: JSX.Element
   readonly class?: string
@@ -138,20 +140,75 @@ export interface PButtonProps extends VariantProps<typeof P_BUTTON_CLASSES> {
   readonly leadingImage?: string
   readonly leadingImageClass?: string
   readonly leadingOverflow?: boolean
-  readonly onBlur?: JSX.EventHandler<HTMLButtonElement, FocusEvent>
-  readonly onKeyDown?: JSX.EventHandler<HTMLButtonElement, KeyboardEvent>
-  readonly onPress?: (source: HTMLButtonElement) => void
   readonly pressed?: boolean
   readonly tooltip?: string
   readonly trailingIcon?: string
+}
+
+export interface PButtonProps extends PButtonAppearanceProps {
+  readonly href?: undefined
+  readonly onBlur?: JSX.EventHandler<HTMLButtonElement, FocusEvent>
+  readonly onKeyDown?: JSX.EventHandler<HTMLButtonElement, KeyboardEvent>
+  readonly onPress?: (source: HTMLButtonElement) => void
   readonly type?: 'button' | 'reset' | 'submit'
 }
 
-export const PButton = (props: PButtonProps) => {
+export interface PButtonLinkProps extends PButtonAppearanceProps {
+  readonly href: string
+  readonly onBlur?: JSX.EventHandler<HTMLAnchorElement, FocusEvent>
+  readonly onKeyDown?: JSX.EventHandler<HTMLAnchorElement, KeyboardEvent>
+  readonly onPress?: (source: HTMLAnchorElement) => void
+  readonly type?: never
+}
+
+const isButtonEvent = <EventType extends Event>(
+  event: EventType & {currentTarget: HTMLButtonElement | HTMLAnchorElement},
+): event is EventType & {currentTarget: HTMLButtonElement} =>
+  event.currentTarget instanceof HTMLButtonElement
+
+const isLinkEvent = <EventType extends Event>(
+  event: EventType & {currentTarget: HTMLButtonElement | HTMLAnchorElement},
+): event is EventType & {currentTarget: HTMLAnchorElement} =>
+  event.currentTarget instanceof HTMLAnchorElement
+
+export interface PButtonComponent {
+  (props: PButtonLinkProps): JSX.Element
+  (props: PButtonProps): JSX.Element
+}
+
+export const PButton: PButtonComponent = (props: PButtonProps | PButtonLinkProps) => {
   const tooltip = useTooltipTrigger()
-  const handleBlur: JSX.EventHandler<HTMLButtonElement, FocusEvent> = (event) => {
+  const handleBlur: JSX.EventHandler<HTMLButtonElement | HTMLAnchorElement, FocusEvent> = (
+    event,
+  ) => {
     tooltip.onBlur()
-    props.onBlur?.(event)
+    if (props.href === undefined && isButtonEvent(event)) {
+      props.onBlur?.(event)
+    } else if (props.href !== undefined && isLinkEvent(event)) {
+      props.onBlur?.(event)
+    }
+  }
+  const handleKeyDown: JSX.EventHandler<HTMLButtonElement | HTMLAnchorElement, KeyboardEvent> = (
+    event,
+  ) => {
+    if (props.href === undefined && isButtonEvent(event)) {
+      props.onKeyDown?.(event)
+    } else if (props.href !== undefined && isLinkEvent(event)) {
+      props.onKeyDown?.(event)
+    }
+  }
+  const handlePress: JSX.EventHandler<HTMLButtonElement | HTMLAnchorElement, MouseEvent> = (
+    event,
+  ) => {
+    if (props.disabled) {
+      event.preventDefault()
+      return
+    }
+    if (props.href === undefined && isButtonEvent(event)) {
+      props.onPress?.(event.currentTarget)
+    } else if (props.href !== undefined && isLinkEvent(event)) {
+      props.onPress?.(event.currentTarget)
+    }
   }
   const content = children(() => props.children)
   const hasContent = () =>
@@ -164,14 +221,17 @@ export const PButton = (props: PButtonProps) => {
       )
   return (
     <>
-      <HButton.Root
+      <Dynamic
+        component={props.href === undefined ? HButton.Root : 'a'}
         ref={tooltip.setTarget}
         aria-label={props.accessibleLabel}
-        aria-pressed={props.pressed}
+        aria-pressed={props.href === undefined ? props.pressed : undefined}
+        aria-disabled={props.href !== undefined && props.disabled ? true : undefined}
+        role={props.href !== undefined && props.disabled ? 'link' : undefined}
         class={P_BUTTON_CLASSES({
           backdropBlur: props.backdropBlur,
           bordered: props.bordered,
-          class: props.class,
+          class: cx(props.href !== undefined && 'no-underline', props.class),
           focusOutline: props.focusOutline,
           pill: props.pill,
           raised: props.raised,
@@ -180,15 +240,17 @@ export const PButton = (props: PButtonProps) => {
           transparent: props.transparent,
         })}
         data-icon-only={hasContent() ? undefined : ''}
-        disabled={props.disabled}
+        disabled={props.href === undefined ? props.disabled : undefined}
+        href={props.disabled ? undefined : props.href}
+        tabIndex={props.href !== undefined && props.disabled ? -1 : undefined}
         onBlur={handleBlur}
         onFocus={tooltip.onFocus}
-        onKeyDown={props.onKeyDown}
-        onClick={(event) => props.onPress?.(event.currentTarget)}
+        onKeyDown={handleKeyDown}
+        onClick={handlePress}
         onPointerDown={tooltip.onPointerDown}
         onPointerEnter={tooltip.onPointerEnter}
         onPointerLeave={tooltip.onPointerLeave}
-        type={props.type ?? 'button'}
+        type={props.href === undefined ? (props.type ?? 'button') : undefined}
       >
         <Show when={props.leadingImage}>
           {(source) => (
@@ -232,7 +294,7 @@ export const PButton = (props: PButtonProps) => {
             />
           )}
         </Show>
-      </HButton.Root>
+      </Dynamic>
       <PTooltip target={tooltip.target()} show={tooltip.show()} text={props.tooltip} />
     </>
   )

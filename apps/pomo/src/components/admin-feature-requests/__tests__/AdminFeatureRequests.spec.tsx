@@ -1,7 +1,8 @@
 /** @vitest-environment jsdom */
 
 import {fireEvent, render, screen, waitFor} from '@solidjs/testing-library'
-import {createSignal, type JSX} from 'solid-js'
+import {createSignal} from 'solid-js'
+import {A} from '@solidjs/router'
 import {beforeEach, expect, it, vi} from 'vitest'
 
 import * as m from '@paraglide/message'
@@ -16,11 +17,7 @@ import {AdminFeatureRequests} from '../AdminFeatureRequests'
 const featureRequestMocks = vi.hoisted(() => ({useAdminFeatureRequests: vi.fn()}))
 
 vi.mock('@solidjs/meta', () => ({Title: vi.fn()}))
-vi.mock('@solidjs/router', () => ({
-  A: (props: {readonly children?: JSX.Element; readonly href: string}) => (
-    <a href={props.href}>{props.children}</a>
-  ),
-}))
+vi.mock('@solidjs/router', () => ({A: vi.fn()}))
 vi.mock('../../../features/feature-requests/use-admin-feature-requests', () => featureRequestMocks)
 vi.mock('../AdminFeatureRequestCard', () => ({AdminFeatureRequestCard: vi.fn()}))
 
@@ -42,24 +39,24 @@ const createModel = (updateResult: {
   const [isLoadingMore] = createSignal(false)
   const [loadFailed] = createSignal(false)
   const [loadMoreFailed] = createSignal(false)
-  const [updatingRequestId] = createSignal<string | null>(null)
 
   return {
     hasMore: () => true,
     isLoading,
     isLoadingMore,
+    isUpdatingRequest: () => false,
     loadFailed,
     loadMore: vi.fn(async () => undefined),
     loadMoreFailed,
     refresh: vi.fn(async () => undefined),
     requests: () => [REQUEST],
     updateRequest: vi.fn(async (_input: AdminFeatureRequestStatusInput) => updateResult),
-    updatingRequestId,
   }
 }
 
 beforeEach(() => {
   vi.clearAllMocks()
+  vi.mocked(A).mockImplementation((props) => <a href={props.href}>{props.children}</a>)
   vi.mocked(AdminFeatureRequestCard).mockImplementation((props) => {
     const [message, setMessage] = createSignal<string | null>(null)
     return (
