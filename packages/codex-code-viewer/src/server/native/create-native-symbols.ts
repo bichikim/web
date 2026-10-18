@@ -6,12 +6,11 @@ import type {NativeQuery} from './types'
 /** Owns the native semantic session for one worker workspace and its validated drafts. */
 export const createNativeSymbols = (root: string) => {
   const navigation = createNativeNavigation({
-    binary: resolveNativeBinary(),
+    binary: resolveNativeBinary,
     documents: [],
     receive: () => undefined,
     root,
   })
-  navigation.initialize()
   return {
     dispose: navigation.dispose,
     inputs: () => navigation.inputs(),

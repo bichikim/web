@@ -274,6 +274,8 @@ describe('PAlbumLibraryContent', () => {
     render(() => <PAlbumLibraryContent onAddTracks={vi.fn()} tracks={[]} />)
 
     await screen.findByRole('button', {name: '다시 시도'})
+    expect(screen.queryByRole('alert')).toBeNull()
+    expect(reporterMocks.reportClientError).toHaveBeenCalledOnce()
     expect(reporterMocks.reportClientError).toHaveBeenCalledWith(loadError, {
       feature: 'album-library',
       source: 'error-boundary',
@@ -290,6 +292,40 @@ describe('PAlbumLibraryContent', () => {
 
     expect(audioMocks.loadBundledPAlbums).toHaveBeenCalledTimes(3)
     expect(await screen.findByTestId('album-recovered')).toBeTruthy()
+  })
+
+  it('should keep the focused retry action until recovery completes', async () => {
+    const retryRequest = Promise.withResolvers<readonly PResolvedAlbum[]>()
+    audioMocks.loadBundledPAlbums
+      .mockRejectedValueOnce(new Error('album load failed'))
+      .mockReturnValueOnce(retryRequest.promise)
+
+    render(() => <PAlbumLibraryContent onAddTracks={vi.fn()} tracks={[]} />)
+
+    const retryButton = await screen.findByRole('button', {name: '다시 시도'})
+    const retryProps = componentMocks.button.mock.lastCall?.[0] as ButtonProps
+    retryButton.focus()
+    const retry = retryProps.onPress()
+
+    expect(screen.getByRole('button', {name: '다시 시도'})).toBe(retryButton)
+    expect(retryButton).toHaveFocus()
+    expect(reporterMocks.reportClientError).toHaveBeenCalledOnce()
+    retryRequest.resolve([])
+    await retry
+
+    expect(screen.getByText('등록된 앨범이 없어요')).toBeInTheDocument()
+    expect(retryButton).not.toBeInTheDocument()
+    expect(reporterMocks.reportClientError).toHaveBeenCalledOnce()
+  })
+
+  it('should show an empty library without an alert or retry action', async () => {
+    render(() => <PAlbumLibraryContent onAddTracks={vi.fn()} tracks={[]} />)
+    await finishAlbumLoads()
+
+    expect(screen.getByText('등록된 앨범이 없어요').closest('[role]')).toBeNull()
+    expect(screen.queryByRole('alert')).toBeNull()
+    expect(screen.queryByRole('button', {name: '다시 시도'})).toBeNull()
+    expect(reporterMocks.reportClientError).not.toHaveBeenCalled()
   })
 
   it('should preserve bundled albums and retry only the failed published catalog', async () => {

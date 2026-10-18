@@ -1,6 +1,6 @@
 import {createHash} from 'node:crypto'
 import {mkdir, mkdtemp, readFile, rename, rm, writeFile} from 'node:fs/promises'
-import {extractTypescriptFiles} from './extract-typescript-files'
+import {extractTypescriptFiles} from '../src/server/analyzers/extract-typescript-files'
 
 interface TypescriptAsset {
   readonly host: string

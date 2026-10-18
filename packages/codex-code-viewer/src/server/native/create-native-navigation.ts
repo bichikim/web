@@ -13,12 +13,12 @@ import type {NativeLocation, NativeOptions, NativePreparationOptions, NativeQuer
 
 const initializeSession = (
   disposed: boolean,
-  client: () => ReturnType<typeof createNativeClient>,
+  client: () => Promise<ReturnType<typeof createNativeClient>>,
 ): Promise<boolean> =>
   disposed
     ? Promise.resolve(false)
     : client()
-        .prepare([])
+        .then((native) => native.prepare([]))
         .then(
           () => true,
           () => false,
@@ -74,11 +74,46 @@ const createStageMarker =
     }
   }
 
-/** Adds verified workspace declaration and immutable module-binding edges to native LSP results. */
-export const createNativeNavigation = (options: NativeOptions) => {
+interface NavigationOptions extends Omit<NativeOptions, 'binary'> {
+  /** 실행 파일 경로나 최초 사용 시 이를 준비하는 비동기 함수를 지정한다. */
+  readonly binary: string | (() => Promise<string>)
+}
+
+const createClientResolver = (options: NavigationOptions, disposed: () => boolean) => {
+  let native: ReturnType<typeof createNativeClient> | undefined
+  let starting: Promise<ReturnType<typeof createNativeClient>> | undefined
+  const read = (): Promise<ReturnType<typeof createNativeClient>> => {
+    if (native !== undefined) {
+      return Promise.resolve(native)
+    }
+    starting ??= Promise.resolve()
+      .then(async () => {
+        const binary = typeof options.binary === 'string' ? options.binary : await options.binary()
+        if (disposed()) {
+          throw new Error('Native workspace is disposed')
+        }
+        native = createNativeClient({...options, binary, documents: [], receive: silent})
+        return native
+      })
+      .finally(() => {
+        starting = undefined
+      })
+    return starting
+  }
+  return {
+    current: () => native,
+    dispose: async (): Promise<void> => {
+      await native?.dispose()
+      native = undefined
+    },
+    read,
+  }
+}
+
+/** 네이티브 LSP 결과에 검증된 작업 폴더 선언과 불변 모듈 연결을 더한다. */
+export const createNativeNavigation = (options: NavigationOptions) => {
   const lookup = createQueryPool(1)
   const priority = createPreparationGate()
-  let native: ReturnType<typeof createNativeClient> | undefined
   let checkpoint: ReadonlyMap<string, string | null> | undefined
   let expanded = false
   let disposed = false
@@ -91,10 +126,10 @@ export const createNativeNavigation = (options: NativeOptions) => {
   let sources: ReadonlyMap<string, string> = new Map()
   let sourceKey = JSON.stringify([])
   const identities = new Map<string, readonly NativeLocation[]>()
+  const client = createClientResolver(options, () => disposed)
   const discovery = createNativeDiscovery(options.root, () => sources)
   const reset = async (): Promise<void> => {
-    await native?.dispose()
-    native = undefined
+    await client.dispose()
     discovery.clear()
     checkpoint = undefined
     identities.clear()
@@ -104,7 +139,7 @@ export const createNativeNavigation = (options: NativeOptions) => {
   }
   return {
     diagnostics: () => ({
-      ...native?.diagnostics(),
+      ...client.current()?.diagnostics(),
       ...discovery.statistics(),
       details: timings.read(),
       identities: identityStatistics,
@@ -115,13 +150,9 @@ export const createNativeNavigation = (options: NativeOptions) => {
     dispose: async (): Promise<void> => {
       disposed = true
       priority.release()
-      await native?.dispose()
+      await client.dispose()
     },
-    initialize: (): Promise<boolean> =>
-      initializeSession(
-        disposed,
-        () => (native ??= createNativeClient({...options, documents: [], receive: silent})),
-      ),
+    initialize: (): Promise<boolean> => initializeSession(disposed, client.read),
     inputs: (): ReadonlyMap<string, string> => retainedInputs(checkpoint),
     prioritize: priority.begin,
     query: (input: NativeQuery): Promise<NativeLocation[]> =>
@@ -154,10 +185,9 @@ export const createNativeNavigation = (options: NativeOptions) => {
           if (!matchesSource(options.root, sources, input)) {
             throw new Error('stale-source')
           }
-          native ??= createNativeClient({...options, documents: [], receive: silent})
-          const client = scopeNativeClient(native, input.signal, sources)
+          const scoped = scopeNativeClient(await client.read(), input.signal, sources)
           if (sources.size > 0) {
-            await client.prepare([...sources.keys()])
+            await scoped.prepare([...sources.keys()])
           }
           const preparation = warming
           const {
@@ -166,7 +196,7 @@ export const createNativeNavigation = (options: NativeOptions) => {
             statistics,
           } = await queryNativeSymbol({
             allowed: discovery.scope,
-            client,
+            client: scoped,
             concurrency: options.concurrency,
             identities,
             input,
@@ -209,9 +239,8 @@ export const createNativeNavigation = (options: NativeOptions) => {
             await reset()
             return false
           }
-          native ??= createNativeClient({...options, documents: [], receive: silent})
-          const client = scopeNativeClient(native, undefined, sources)
-          checkpoint = await prepareLinkedWorkspace(client, workspace, () => active === 0)
+          const scoped = scopeNativeClient(await client.read(), undefined, sources)
+          checkpoint = await prepareLinkedWorkspace(scoped, workspace, () => active === 0)
           expanded = true
           return !disposed
         })
