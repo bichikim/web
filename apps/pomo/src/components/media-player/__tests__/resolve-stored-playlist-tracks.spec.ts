@@ -85,8 +85,10 @@ afterEach(async () => {
 it('should restore healthy custom tracks alongside bundled tracks when another stored record is corrupt', async () => {
   await seedMixedTracks()
   const onError = vi.fn()
+  const onCorruptTrack = vi.fn()
 
   const tracks = await resolveStoredPlaylistTracks({
+    onCorruptTrack,
     onError,
     sourceTracks: [BUNDLED_TRACK],
     storedTrackIds: Promise.resolve([
@@ -99,7 +101,8 @@ it('should restore healthy custom tracks alongside bundled tracks when another s
   })
 
   expect(tracks.map(({id}) => id)).toEqual([BUNDLED_TRACK.id, VALID_TRACK_B_ID, VALID_TRACK_A_ID])
-  expect(onError).toHaveBeenCalledExactlyOnceWith(
+  expect(onError).not.toHaveBeenCalled()
+  expect(onCorruptTrack).toHaveBeenCalledExactlyOnceWith(
     expect.objectContaining({code: 'corrupt-data'}),
     CORRUPT_TRACK_ID,
   )
@@ -115,8 +118,10 @@ it.each([
   async ({storedTrackIds}) => {
     const open = vi.spyOn(customAlbumDatabase, 'openCustomAlbumDatabase')
     const onError = vi.fn()
+    const onCorruptTrack = vi.fn()
     const sourceTracks = [BUNDLED_TRACK]
     const tracks = await resolveStoredPlaylistTracks({
+      onCorruptTrack,
       onError,
       sourceTracks,
       storedTrackIds: Promise.resolve(storedTrackIds),
@@ -130,27 +135,33 @@ it.each([
 it('should report storage failure once and preserve the bundled fallback', async () => {
   const storageError = new Error('IndexedDB request failed')
   const onError = vi.fn()
+  const onCorruptTrack = vi.fn()
   const sourceTracks = [BUNDLED_TRACK]
   vi.spyOn(customAlbumDatabase, 'readRequest').mockRejectedValueOnce(storageError)
   const tracks = await resolveStoredPlaylistTracks({
+    onCorruptTrack,
     onError,
     sourceTracks,
     storedTrackIds: Promise.resolve([VALID_TRACK_A_ID]),
   })
   expect(tracks).toBe(sourceTracks)
   expect(onError).toHaveBeenCalledExactlyOnceWith(storageError)
+  expect(onCorruptTrack).not.toHaveBeenCalled()
 })
 
 it('should report database open failure once and preserve the bundled fallback', async () => {
   const databaseError = new Error('IndexedDB open failed')
   const onError = vi.fn()
+  const onCorruptTrack = vi.fn()
   const sourceTracks = [BUNDLED_TRACK]
   vi.spyOn(customAlbumDatabase, 'openCustomAlbumDatabase').mockRejectedValueOnce(databaseError)
   const tracks = await resolveStoredPlaylistTracks({
+    onCorruptTrack,
     onError,
     sourceTracks,
     storedTrackIds: Promise.resolve([VALID_TRACK_A_ID]),
   })
   expect(tracks).toBe(sourceTracks)
   expect(onError).toHaveBeenCalledExactlyOnceWith(databaseError)
+  expect(onCorruptTrack).not.toHaveBeenCalled()
 })
