@@ -2,12 +2,12 @@ import {getExceptionMessage} from 'src/features/error-detail'
 import {DEFAULT_CONNECTION_SECONDS} from '../sound-generation/connection'
 
 export interface LoopPlayback {
-  /** Returns true when playback remains active after the seek. */
+  /** 위치 이동 후에도 재생 중이면 true를 반환합니다. */
   seek: (seconds: number) => Promise<boolean>
   setVolume: (volume: number) => void
   stop: () => void
   close: () => Promise<void>
-  /** Returns false when a newer playback operation superseded this request. */
+  /** 새 재생 작업이 이 요청을 대체하면 false를 반환합니다. */
   play: (connectionSeconds?: number, preview?: boolean, position?: number) => Promise<boolean>
 }
 

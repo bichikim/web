@@ -2,8 +2,11 @@ import {createSignal} from 'solid-js'
 import type {LoopPlayback} from './player'
 
 interface LoopPlaybackControlsOptions {
+  /** 현재 소유한 플레이어를 반환하며, 없으면 위치 이동을 실행하지 않습니다. */
   readonly player: () => LoopPlayback | undefined
+  /** 최신 위치 이동이 실패하면 원인을 전달합니다. */
   readonly onSeekError: (error: unknown) => void
+  /** 최신 위치 이동 후 재생 여부를 전달하며, 생략하면 결과를 별도로 알리지 않습니다. */
   readonly onSeekResult?: (playing: boolean) => void
 }
 
