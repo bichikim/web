@@ -8,7 +8,7 @@ interface TimestampedStorageOptions {
   readonly timestamp?: 'clock' | 'monotonic'
 }
 
-/** Coordinates timestamped writes and read revisions; adapters retain runtime reconciliation and failure policies. */
+/** 타임스탬프가 있는 쓰기와 읽기 리비전을 조정한다. 런타임 간 조정과 실패 정책은 어댑터가 담당한다. */
 export const createTimestampedDualRuntimeStorage = <Value extends TimestampedValue>(
   options: TimestampedStorageOptions,
 ) => {

@@ -8,6 +8,10 @@ import {
   readFeatureRequestDraft,
   writeFeatureRequestDraft,
 } from '../../features/feature-requests'
+import {
+  MAXIMUM_FEATURE_REQUEST_DESCRIPTION_LENGTH,
+  MAXIMUM_FEATURE_REQUEST_TITLE_LENGTH,
+} from '../../features/feature-requests/limits'
 import {PSettingsActionButton} from '../settings/ActionButton'
 import {type FeatureRequestFormMessage, FeatureRequestFormModal} from './FeatureRequestFormModal'
 
@@ -18,6 +22,34 @@ interface FeatureRequestFormProps {
 
 const persistDraft = (title: string, description: string) => {
   writeFeatureRequestDraft({description, title, version: 1})
+}
+
+type FeatureRequestInputValidation =
+  | {readonly status: 'invalid'}
+  | {readonly status: 'too-long'}
+  | {
+      readonly input: {readonly description: string; readonly title: string}
+      readonly status: 'valid'
+    }
+
+const validateFeatureRequestInput = (
+  title: string,
+  description: string,
+): FeatureRequestInputValidation => {
+  const normalizedInput = {description: description.trim(), title: title.trim()}
+
+  if (normalizedInput.title.length === 0) {
+    return {status: 'invalid'}
+  }
+
+  if (
+    normalizedInput.title.length > MAXIMUM_FEATURE_REQUEST_TITLE_LENGTH ||
+    normalizedInput.description.length > MAXIMUM_FEATURE_REQUEST_DESCRIPTION_LENGTH
+  ) {
+    return {status: 'too-long'}
+  }
+
+  return {input: normalizedInput, status: 'valid'}
 }
 
 export const FeatureRequestForm = (props: FeatureRequestFormProps) => {
@@ -51,17 +83,19 @@ export const FeatureRequestForm = (props: FeatureRequestFormProps) => {
   const handleSubmit: JSX.EventHandler<HTMLFormElement, SubmitEvent> = async (event) => {
     event.preventDefault()
     setFormMessage(null)
-    const normalizedTitle = title().trim()
+    const validation = validateFeatureRequestInput(title(), description())
 
-    if (normalizedTitle.length === 0) {
+    if (validation.status === 'invalid') {
       setFormMessage('invalid')
       return
     }
 
-    const result = await props.model.createRequest({
-      description: description().trim(),
-      title: normalizedTitle,
-    })
+    if (validation.status === 'too-long') {
+      setFormMessage('invalid_request')
+      return
+    }
+
+    const result = await props.model.createRequest(validation.input)
 
     switch (result.status) {
       case 'created':
@@ -71,7 +105,7 @@ export const FeatureRequestForm = (props: FeatureRequestFormProps) => {
         setFormMessage('created')
         return
       case 'invalid':
-        setFormMessage('invalid')
+        setFormMessage('invalid_request')
         return
       case 'unauthorized':
         setFormMessage('unauthorized')

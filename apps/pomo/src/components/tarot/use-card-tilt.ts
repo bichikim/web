@@ -2,6 +2,7 @@ import {createSignal, type JSX, onCleanup, onMount} from 'solid-js'
 import {clamp} from 'es-toolkit/math'
 import {releaseCapturedPointer} from 'src/utils/release-captured-pointer'
 import {exponentialApproachFactor} from 'src/utils/exponential-approach-factor'
+import {getArrowKeyDelta} from '@winter-love/utils/browser/events/get-arrow-key-delta'
 
 interface CardTiltOffset {
   readonly x: number
@@ -121,24 +122,18 @@ export const useCardTilt = () => {
     }
   }
   const handleKeyDown: JSX.EventHandler<HTMLDivElement, KeyboardEvent> = (event) => {
-    switch (event.key) {
-      case 'ArrowLeft':
-        setTarget(target.x - KEYBOARD_STEP, target.y)
-        break
-      case 'ArrowRight':
-        setTarget(target.x + KEYBOARD_STEP, target.y)
-        break
-      case 'ArrowUp':
-        setTarget(target.x, target.y - KEYBOARD_STEP)
-        break
-      case 'ArrowDown':
-        setTarget(target.x, target.y + KEYBOARD_STEP)
-        break
-      case 'Home':
-        setTarget(0, 0)
-        break
-      default:
+    const {key} = event
+    if (key === 'Home') {
+      setTarget(0, 0)
+    } else {
+      const delta = getArrowKeyDelta(key, KEYBOARD_STEP)
+      if (delta === null) {
         return
+      }
+      setTarget(
+        delta.x === 0 ? target.x : target.x + delta.x,
+        delta.y === 0 ? target.y : target.y + delta.y,
+      )
     }
     event.preventDefault()
     event.stopPropagation()

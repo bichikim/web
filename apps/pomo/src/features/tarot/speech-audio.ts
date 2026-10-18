@@ -1,5 +1,6 @@
 import {type Accessor, createSignal, type Setter} from 'solid-js'
 import * as m from '@paraglide/message'
+import {getExceptionMessage} from '../error-detail'
 import {replaceBlobObjectUrl} from '../blob-object-url'
 import type {ModelAssetManager} from '../model-download'
 import {
@@ -167,7 +168,7 @@ export const createTarotSpeechAudioController = (
       result satisfies never
     } catch (cause: unknown) {
       if (isCurrent(currentRevision)) {
-        setError(cause instanceof Error ? cause.message : m.tarot_voice_failed())
+        setError(getExceptionMessage(cause, () => m.tarot_voice_failed()))
         setStatus('error')
       }
       return {missing: false, revision: currentRevision}

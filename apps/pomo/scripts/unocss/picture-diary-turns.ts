@@ -36,16 +36,6 @@ export const pictureDiaryTurnsStyles = `
   height: 100%;
 }
 
-.picture-diary-book__turn-sheet--cover.picture-diary-book__turn-sheet--older
-  .picture-diary-book__cover-turn-sheet {
-  transform-origin: right center;
-}
-
-.picture-diary-book__turn-sheet--cover.picture-diary-book__turn-sheet--newer
-  .picture-diary-book__cover-turn-sheet {
-  transform-origin: left center;
-}
-
 .picture-diary-book__turn-rest,
 .picture-diary-book__turn-flap {
   box-sizing: border-box;

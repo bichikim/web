@@ -1,4 +1,5 @@
 /** @vitest-environment node */
+import {prepareApiAiQueue} from './fixtures/api-ai-queue'
 import {PGlite} from '@electric-sql/pglite'
 import {drizzle} from 'drizzle-orm/pglite'
 import {readFile} from 'node:fs/promises'
@@ -16,6 +17,7 @@ import {prepareProductLimits} from './fixtures/product-limits'
 
 vi.mock('src/server/database', async () => ({
   ...(await vi.importActual('src/server/database/schema/cloud-text')),
+  ...(await vi.importActual('src/server/database/schema/api-ai')),
   ...(await vi.importActual('src/server/database/schema/commerce')),
   ...(await vi.importActual('src/server/database/schema/users')),
   getDatabase: vi.fn(),
@@ -57,12 +59,15 @@ beforeAll(async () => {
   )
   vi.mocked(getDatabase).mockReturnValue(client as unknown as ReturnType<typeof getDatabase>)
   await prepareProductLimits(database)
+  await prepareApiAiQueue(database)
   vi.mocked(withTransactionalDatabase).mockImplementation(async (operation) =>
     operation(client as unknown as Parameters<typeof operation>[0]),
   )
 })
 afterEach(async () => {
-  await database.exec('truncate cloud_text_requests, cloud_text_limits')
+  await database.exec(
+    'truncate cloud_text_requests, cloud_text_limits, api_ai_jobs, api_ai_attempts cascade',
+  )
 })
 afterAll(async () => {
   await database.close()
@@ -163,4 +168,63 @@ it('should allow unlimited generations while recording usage and retaining it af
   await updateUserCloudTextLimit({dailyLimit: null, userId})
   expect(await readCloudTextUsage(userId, now)).toMatchObject({limit: 3, remaining: 0, used: 5})
   expect(await reserve()).toMatchObject({kind: 'exhausted'})
+})
+
+it('should roll back quota admission when the durable queue is full', async () => {
+  const requestId = crypto.randomUUID()
+  const input = {
+    body: {max_output_tokens: 100},
+    generationMilliseconds: 120000,
+    id: requestId,
+    kind: 'cloud-text' as const,
+    ownerId: userId,
+    queueExpiresAt: new Date(now.getTime() + 900000),
+    requestHash: 'a'.repeat(64),
+  }
+  expect(
+    await reserveCloudText({
+      now,
+      queue: {input, limit: 1},
+      requestHash: input.requestHash,
+      requestId,
+      userId,
+    }),
+  ).toMatchObject({kind: 'reserved'})
+  const otherRequestId = crypto.randomUUID()
+  expect(
+    await reserveCloudText({
+      now,
+      queue: {input: {...input, id: otherRequestId, ownerId: otherId}, limit: 1},
+      requestHash: input.requestHash,
+      requestId: otherRequestId,
+      userId: otherId,
+    }),
+  ).toMatchObject({kind: 'queue_full'})
+  expect(await readCloudTextUsage(otherId, now)).toMatchObject({used: 0})
+})
+it('should retain a queued allowance beyond the old synchronous expiration and settle it once', async () => {
+  const at = new Date('2026-10-07T12:00:00.000Z')
+  const requestId = crypto.randomUUID()
+  const input = {
+    body: {max_output_tokens: 100},
+    generationMilliseconds: 120000,
+    id: requestId,
+    kind: 'cloud-text' as const,
+    ownerId: userId,
+    queueExpiresAt: new Date(at.getTime() + 900000),
+    requestHash: 'a'.repeat(64),
+  }
+  await reserveCloudText({
+    now: at,
+    queue: {input, limit: 10},
+    requestHash: input.requestHash,
+    requestId,
+    userId,
+  })
+  const late = new Date(at.getTime() + 600000)
+  expect(await readCloudTextUsage(userId, late)).toMatchObject({used: 1})
+  const completion = {now: late, requestId, text: '완료', tokenCount: 10, userId}
+  await completeCloudText(completion)
+  await completeCloudText(completion)
+  expect(await readCloudTextUsage(userId, late)).toMatchObject({used: 1})
 })

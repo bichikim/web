@@ -1,0 +1,42 @@
+{
+  "viewportWidth": 804,
+  "reading": {
+    "before": {
+      "codeStart": 88,
+      "foldWidth": 24,
+      "gap": 16
+    },
+    "after": {
+      "codeStart": 72,
+      "foldWidth": 24,
+      "foldHeight": 24,
+      "gap": 0
+    }
+  },
+  "editor": {
+    "before": {
+      "codeStartIncludingPadding": 88,
+      "linePadding": 16,
+      "buttonWidth": 24
+    },
+    "after": {
+      "codeStartIncludingPadding": 72,
+      "linePadding": 0,
+      "buttonWidth": 24,
+      "buttonHeight": 24
+    }
+  },
+  "runtimeChecks": [
+    "reading click to fold",
+    "reading Enter to unfold",
+    "editor click to fold",
+    "editor Space to unfold",
+    "folding keeps Save disabled"
+  ],
+  "checks": {
+    "build": "passed",
+    "changed_files_oxlint": "passed",
+    "pnpm_format": "passed"
+  },
+  "preview": "http://127.0.0.1:64516/e54476e5-2ead-44fa-97ed-abc8a217640c/"
+}

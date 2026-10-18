@@ -17,13 +17,14 @@ import {
 } from 'drizzle-orm/pg-core'
 import {musicAlbums} from './music'
 import {pomoUsers} from './users'
+import {OFFER_BILLING_TYPES, OFFER_STATUSES, PRODUCT_STATUSES} from 'src/features/commerce'
 
-export const commerceProductStatusEnum = pgEnum('commerce_product_status', ['active', 'archived'])
-export const commerceOfferBillingTypeEnum = pgEnum('commerce_offer_billing_type', [
-  'one_time',
-  'subscription',
-])
-export const commerceOfferStatusEnum = pgEnum('commerce_offer_status', ['active', 'inactive'])
+export const commerceProductStatusEnum = pgEnum('commerce_product_status', PRODUCT_STATUSES)
+export const commerceOfferBillingTypeEnum = pgEnum(
+  'commerce_offer_billing_type',
+  OFFER_BILLING_TYPES,
+)
+export const commerceOfferStatusEnum = pgEnum('commerce_offer_status', OFFER_STATUSES)
 export const commerceOrderStatusEnum = pgEnum('commerce_order_status', [
   'pending',
   'paid',

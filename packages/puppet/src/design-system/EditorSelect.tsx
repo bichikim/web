@@ -49,7 +49,7 @@ export const EditorSelect = (props: EditorSelectProps) => {
         </Select.Icon>
       </Select.Trigger>
       <Select.Portal mount={mount}>
-        <Select.Content class="editor-context-menu-content">
+        <Select.Content class="editor-context-menu-content editor-select-content">
           <Select.Listbox class="editor-select-list" />
         </Select.Content>
       </Select.Portal>

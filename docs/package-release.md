@@ -62,10 +62,9 @@ public 패키지는 `private !== true`이면서 `publishConfig.access`가 `publi
 1. 기존 public 패키지의 실제 npm 버전과 저장소 버전을 정합화한다.
 2. npm에 없는 패키지는 최초 버전을 수동 배포하고 기준 태그를 만든다.
 3. 각 npm 패키지에 `bichikim/web`과 `npm-release.yml`을 Trusted Publisher로 등록한다.
-4. Repository variable `NPM_RELEASE_ENABLED`를 `true`로 설정한다.
-5. `node scripts/npm-release/run.mjs check`가 오류 없이 끝나는지 확인한다.
-6. 다음 patch 하나로 수동 publish, 태그와 GitHub Release 생성을 검증한다.
-7. 검증 후 기존 npm write token을 폐기한다.
+4. `node scripts/npm-release/run.mjs check`가 오류 없이 끝나는지 확인한다.
+5. 다음 patch 하나로 수동 publish, 태그와 GitHub Release 생성을 검증한다.
+6. 검증 후 기존 npm write token을 폐기한다.
 
 ## 완료 기준
 

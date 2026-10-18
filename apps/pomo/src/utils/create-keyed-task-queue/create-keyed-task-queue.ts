@@ -2,7 +2,7 @@ export interface KeyedTaskQueue {
   readonly run: <Value>(key: string, operation: () => Promise<Value>) => Promise<Value>
 }
 
-/** Serializes operations for each key independently and releases completed queue entries. */
+/** 키별로 작업을 독립적으로 순차 실행하고 완료된 큐 항목을 해제한다. */
 export const createKeyedTaskQueue = (): KeyedTaskQueue => {
   const queues = new Map<string, Promise<void>>()
   return {

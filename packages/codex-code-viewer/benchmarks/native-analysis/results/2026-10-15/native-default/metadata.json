@@ -1,0 +1,21 @@
+{
+  "date": "2026-10-15T04:17:36.976993+09:00",
+  "root": "/Users/bichi/.codex/worktrees/379e/web",
+  "machine": "Mac17,9",
+  "platform": "darwin-arm64",
+  "memoryBytes": 51539607552,
+  "node": "26.4.0",
+  "native": "7.0.2",
+  "samples": 3,
+  "cases": 4,
+  "variants": 4,
+  "phases": 2,
+  "first": "first nonempty server location batch, not browser paint",
+  "preparation": "workspace.prepareWorkspace completed, reported separately",
+  "OSCache": "not flushed",
+  "CODEX_HOME": "fresh empty directory for each measured process",
+  "hostLoad": "shared host; recorded per sample",
+  "concurrency": 2,
+  "productBundle": "/tmp/native-pool/product-shipped/existing/workspace.js",
+  "concurrentProjectJobs": "none during performance collection"
+}

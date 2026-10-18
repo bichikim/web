@@ -1,4 +1,4 @@
-import {and, count, eq, gt} from 'drizzle-orm'
+import {and, count, eq, gt, isNotNull, or} from 'drizzle-orm'
 import {type CloudTextUsage} from 'src/features/cloud-text/contracts'
 import {
   cloudTextRequests,
@@ -9,10 +9,13 @@ import {
 } from '../database'
 import {createCloudTextUsage, getCloudTextUsageCondition} from './usage'
 import {readUserCloudTextLimits} from './read-user-limits'
+import type {ApiAiJobInput} from 'src/server/api-ai/types'
+import {createApiAiJobInTransaction} from 'src/server/repositories/api-ai/jobs'
 
 const RESERVATION_MILLISECONDS = 180_000
 
 export interface ReserveCloudTextOptions {
+  readonly queue?: {readonly input: ApiAiJobInput; readonly limit: number}
   readonly now: Date
   readonly requestHash: string
   readonly requestId: string
@@ -27,7 +30,10 @@ export type CloudTextReservation =
       readonly tokenCount: number
       readonly usage: CloudTextUsage
     }
-  | {readonly kind: 'conflict' | 'pending' | 'failed' | 'exhausted'; readonly usage: CloudTextUsage}
+  | {
+      readonly kind: 'conflict' | 'pending' | 'failed' | 'exhausted' | 'queue_full'
+      readonly usage: CloudTextUsage
+    }
 
 const readUsage = async (
   database: Pick<Database, 'select'>,
@@ -76,7 +82,8 @@ export const reserveCloudText = (options: ReserveCloudTextOptions): Promise<Clou
         }
         return {
           kind:
-            existing.status === 'pending' && existing.expiresAt > options.now
+            existing.status === 'pending' &&
+            (existing.queueJobId !== null || existing.expiresAt > options.now)
               ? 'pending'
               : 'failed',
           usage,
@@ -85,10 +92,31 @@ export const reserveCloudText = (options: ReserveCloudTextOptions): Promise<Clou
       if (usage.remaining === 0) {
         return {kind: 'exhausted', usage}
       }
+      if (options.queue !== undefined) {
+        const queued = await createApiAiJobInTransaction(
+          transaction,
+          options.queue.input,
+          options.queue.limit,
+          options.now,
+        )
+        if (queued.kind === 'full') {
+          return {kind: 'queue_full', usage}
+        }
+        if (queued.kind === 'conflict') {
+          return {kind: 'conflict', usage}
+        }
+      }
       await transaction.insert(cloudTextRequests).values({
         day: usage.day,
-        expiresAt: new Date(options.now.getTime() + RESERVATION_MILLISECONDS),
+        expiresAt:
+          options.queue === undefined
+            ? new Date(options.now.getTime() + RESERVATION_MILLISECONDS)
+            : new Date(
+                options.queue.input.queueExpiresAt.getTime() +
+                  options.queue.input.generationMilliseconds,
+              ),
         id: options.requestId,
+        queueJobId: options.queue?.input.id,
         requestHash: options.requestHash,
         status: 'pending',
         userId: options.userId,
@@ -119,11 +147,23 @@ export const completeCloudText = async (options: CompleteCloudTextOptions): Prom
         eq(cloudTextRequests.userId, userId),
         eq(cloudTextRequests.id, requestId),
         eq(cloudTextRequests.status, 'pending'),
-        gt(cloudTextRequests.expiresAt, now),
+        or(gt(cloudTextRequests.expiresAt, now), isNotNull(cloudTextRequests.queueJobId)),
       ),
     )
     .returning({id: cloudTextRequests.id})
   if (completed === undefined) {
+    const [existing] = await getDatabase()
+      .select()
+      .from(cloudTextRequests)
+      .where(and(eq(cloudTextRequests.userId, userId), eq(cloudTextRequests.id, requestId)))
+      .limit(1)
+    if (
+      existing?.status === 'complete' &&
+      existing.result === text &&
+      existing.tokenCount === tokenCount
+    ) {
+      return
+    }
     throw new Error('Cloud text reservation expired before completion')
   }
 }

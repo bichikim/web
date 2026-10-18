@@ -1,0 +1,330 @@
+{
+  "cases": {
+    "fileRevision": {
+      "before": {
+        "definition": {
+          "first": {
+            "median": 728.383292,
+            "min": 723.424625,
+            "max": 765.730875
+          },
+          "complete": {
+            "median": 754.993625,
+            "min": 749.513125,
+            "max": 793.4685
+          },
+          "count": [1]
+        },
+        "first-references": {
+          "first": {
+            "median": 712.303208,
+            "min": 701.062125,
+            "max": 737.9535
+          },
+          "complete": {
+            "median": 7604.746042,
+            "min": 7470.981041,
+            "max": 7798.653917
+          },
+          "count": [22]
+        },
+        "definition-revisit": {
+          "first": {
+            "median": 30.457542,
+            "min": 28.6815,
+            "max": 32.173042
+          },
+          "complete": {
+            "median": 30.476042,
+            "min": 28.70325,
+            "max": 32.195792
+          },
+          "count": [1]
+        },
+        "references-revisit": {
+          "first": {
+            "median": 36.500708,
+            "min": 35.006375,
+            "max": 36.722
+          },
+          "complete": {
+            "median": 36.524458,
+            "min": 35.028541,
+            "max": 36.74725
+          },
+          "count": [22]
+        },
+        "definition-interior": {
+          "first": {
+            "median": 304.673583,
+            "min": 303.471291,
+            "max": 310.23975
+          },
+          "complete": {
+            "median": 330.483458,
+            "min": 329.738291,
+            "max": 336.731959
+          },
+          "count": [1]
+        },
+        "references-interior": {
+          "first": {
+            "median": 601.540583,
+            "min": 583.11325,
+            "max": 616.574542
+          },
+          "complete": {
+            "median": 949.468583,
+            "min": 924.644208,
+            "max": 963.253917
+          },
+          "count": [22]
+        }
+      },
+      "after": {
+        "definition": {
+          "first": {
+            "median": 738.403666,
+            "min": 737.628875,
+            "max": 745.332042
+          },
+          "complete": {
+            "median": 768.780042,
+            "min": 766.984125,
+            "max": 774.474459
+          },
+          "count": [1]
+        },
+        "first-references": {
+          "first": {
+            "median": 701.641625,
+            "min": 700.709833,
+            "max": 702.110792
+          },
+          "complete": {
+            "median": 7494.261458,
+            "min": 7382.682625,
+            "max": 7667.888083
+          },
+          "count": [22]
+        },
+        "definition-revisit": {
+          "first": {
+            "median": 26.782083,
+            "min": 26.486167,
+            "max": 27.05975
+          },
+          "complete": {
+            "median": 26.804042,
+            "min": 26.506417,
+            "max": 27.0805
+          },
+          "count": [1]
+        },
+        "references-revisit": {
+          "first": {
+            "median": 33.819917,
+            "min": 33.234292,
+            "max": 35.41475
+          },
+          "complete": {
+            "median": 33.841459,
+            "min": 33.254917,
+            "max": 35.438125
+          },
+          "count": [22]
+        },
+        "definition-interior": {
+          "first": {
+            "median": 25.595375,
+            "min": 24.658,
+            "max": 26.921042
+          },
+          "complete": {
+            "median": 25.618167,
+            "min": 24.680834,
+            "max": 26.945208
+          },
+          "count": [1]
+        },
+        "references-interior": {
+          "first": {
+            "median": 34.722708,
+            "min": 33.140167,
+            "max": 36.069083
+          },
+          "complete": {
+            "median": 34.740042,
+            "min": 33.156125,
+            "max": 36.094541
+          },
+          "count": [22]
+        }
+      }
+    },
+    "getWindow": {
+      "before": {
+        "definition": {
+          "first": {
+            "median": 646.212084,
+            "min": 617.071459,
+            "max": 789.928125
+          },
+          "complete": {
+            "median": 680.099459,
+            "min": 650.025875,
+            "max": 849.197708
+          },
+          "count": [1]
+        },
+        "first-references": {
+          "first": {
+            "median": 871.394292,
+            "min": 870.025542,
+            "max": 1193.651625
+          },
+          "complete": {
+            "median": 7520.795375,
+            "min": 7178.995417,
+            "max": 8142.650666
+          },
+          "count": [102]
+        },
+        "definition-revisit": {
+          "first": {
+            "median": 29.028,
+            "min": 26.512542,
+            "max": 29.056792
+          },
+          "complete": {
+            "median": 29.04475,
+            "min": 26.530167,
+            "max": 29.073
+          },
+          "count": [1]
+        },
+        "references-revisit": {
+          "first": {
+            "median": 33.951916,
+            "min": 33.776458,
+            "max": 35.073708
+          },
+          "complete": {
+            "median": 33.995583,
+            "min": 33.823625,
+            "max": 35.108333
+          },
+          "count": [102]
+        },
+        "definition-interior": {
+          "first": {
+            "median": 223.498209,
+            "min": 220.118209,
+            "max": 233.017625
+          },
+          "complete": {
+            "median": 249.485792,
+            "min": 246.463667,
+            "max": 258.916
+          },
+          "count": [1]
+        },
+        "references-interior": {
+          "first": {
+            "median": 946.395667,
+            "min": 934.074125,
+            "max": 946.59925
+          },
+          "complete": {
+            "median": 1137.213416,
+            "min": 1128.264083,
+            "max": 1137.657667
+          },
+          "count": [102]
+        }
+      },
+      "after": {
+        "definition": {
+          "first": {
+            "median": 637.0235,
+            "min": 628.573958,
+            "max": 671.270916
+          },
+          "complete": {
+            "median": 673.51525,
+            "min": 665.041083,
+            "max": 710.840416
+          },
+          "count": [1]
+        },
+        "first-references": {
+          "first": {
+            "median": 897.34925,
+            "min": 873.580875,
+            "max": 973.342084
+          },
+          "complete": {
+            "median": 7991.962208,
+            "min": 7833.934416,
+            "max": 8639.47925
+          },
+          "count": [102]
+        },
+        "definition-revisit": {
+          "first": {
+            "median": 32.386125,
+            "min": 26.257583,
+            "max": 48.062791
+          },
+          "complete": {
+            "median": 32.403416,
+            "min": 26.27575,
+            "max": 48.090041
+          },
+          "count": [1]
+        },
+        "references-revisit": {
+          "first": {
+            "median": 39.387458,
+            "min": 34.141959,
+            "max": 40.141375
+          },
+          "complete": {
+            "median": 39.420666,
+            "min": 34.175459,
+            "max": 40.180208
+          },
+          "count": [102]
+        },
+        "definition-interior": {
+          "first": {
+            "median": 29.959125,
+            "min": 26.785541,
+            "max": 30.225459
+          },
+          "complete": {
+            "median": 29.978875,
+            "min": 26.806125,
+            "max": 30.247292
+          },
+          "count": [1]
+        },
+        "references-interior": {
+          "first": {
+            "median": 38.350834,
+            "min": 34.195917,
+            "max": 39.950917
+          },
+          "complete": {
+            "median": 38.395667,
+            "min": 34.238833,
+            "max": 40.002667
+          },
+          "count": [102]
+        }
+      }
+    }
+  },
+  "records": 72,
+  "failures": []
+}

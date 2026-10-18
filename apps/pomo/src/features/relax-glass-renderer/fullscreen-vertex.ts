@@ -1,1 +1,1 @@
-export {FULLSCREEN_VERTEX} from 'src/utils/fullscreen-vertex'
+export {FULLSCREEN_VERTEX} from 'src/utils/shader'

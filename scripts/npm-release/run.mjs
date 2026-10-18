@@ -211,6 +211,16 @@ const validateArchive = (item, archive) => {
   }
 
   assertPublishableDependencies(packedManifest)
+
+  if (expectedManifest.name === '@winter-love/codex-code-viewer') {
+    run(
+      process.execPath,
+      [fileURLToPath(new URL('./verify-code-viewer.mjs', import.meta.url)), archive],
+      {
+        stdio: 'inherit',
+      },
+    )
+  }
 }
 
 const packReleases = (releases, temporaryDirectory) =>

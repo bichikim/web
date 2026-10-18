@@ -1,3 +1,4 @@
+import {runtimeShortcuts, viewerShortcuts} from './uno/shortcuts/viewer'
 import {controlShortcuts} from './uno/shortcuts/controls'
 import {brushShortcuts} from './uno/shortcuts/brush'
 import {icons as tablerIcons} from '@iconify-json/tabler'
@@ -8,15 +9,20 @@ import {layoutShortcuts} from './uno/shortcuts/layout'
 import {layersShortcuts} from './uno/shortcuts/layers'
 import {layerOrderShortcuts} from './uno/shortcuts/layer-order'
 import {propertiesShortcuts} from './uno/shortcuts/properties'
+import {historyShortcuts} from './uno/shortcuts/history'
 import {canvasShortcuts} from './uno/shortcuts/canvas'
 import {parametersShortcuts} from './uno/shortcuts/parameters'
 import {timelineShortcuts} from './uno/shortcuts/timeline'
 import {dialogsShortcuts} from './uno/shortcuts/dialogs'
 import {typographyShortcuts, typographyTheme} from './uno/shortcuts/typography'
 import {spacingTheme} from './uno/spacing'
+import {scrollbarShortcuts} from './uno/shortcuts/scrollbars'
 
 const shortcuts = {
+  ...viewerShortcuts,
+  ...runtimeShortcuts,
   ...typographyShortcuts,
+  ...scrollbarShortcuts,
   'puppet-demo': [
     'w-full h-full m-0 [&_body]:w-full [&_body]:h-full [&_body]:m-0 [&_body]:overflow-hidden',
     '[&_#root]:w-full [&_#root]:h-full [&_puppet-editor]:w-full [&_puppet-editor]:h-full',
@@ -27,6 +33,7 @@ const shortcuts = {
   ...layersShortcuts,
   ...layerOrderShortcuts,
   ...propertiesShortcuts,
+  ...historyShortcuts,
   ...canvasShortcuts,
   ...brushShortcuts,
   ...parametersShortcuts,

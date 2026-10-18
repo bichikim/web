@@ -1,7 +1,9 @@
-import {clampDisplayedPercentage} from 'src/utils/clamp-displayed-percentage'
+import {clampFiniteNumber} from 'src/utils/clamp-finite-number'
 import {cx} from 'class-variance-authority'
 import {createMemo, Show} from 'solid-js'
 import {type TextModelDefinition} from '../../features/text-generation/index'
+
+const MAXIMUM_PERCENTAGE = 100
 
 interface ModelStatusProps {
   readonly model: TextModelDefinition
@@ -18,15 +20,7 @@ interface ModelStatusProps {
 }
 
 export const ModelStatus = (props: ModelStatusProps) => {
-  const percentage = createMemo(() => {
-    const currentPercentage = props.percentage
-
-    if (currentPercentage === undefined || !Number.isFinite(currentPercentage)) {
-      return undefined
-    }
-
-    return clampDisplayedPercentage(currentPercentage)
-  })
+  const percentage = createMemo(() => clampFiniteNumber(props.percentage, 0, MAXIMUM_PERCENTAGE))
 
   return (
     <div aria-live="polite" class="rounded-4 border border-white/8 bg-white/4 p-4">

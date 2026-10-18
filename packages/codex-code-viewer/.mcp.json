@@ -3,7 +3,8 @@
     "codex-code-viewer": {
       "command": "node",
       "args": ["./dist/server.js"],
-      "cwd": "."
+      "cwd": ".",
+      "env_vars": ["CODEX_HOME"]
     }
   }
 }

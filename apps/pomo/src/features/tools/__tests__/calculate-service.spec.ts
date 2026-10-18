@@ -86,3 +86,35 @@ it('should include enlistment day in custom duration and reject invalid periods'
     ).toBeNull()
   }
 })
+
+it.each([
+  {end: '2026-03-09', start: '2026-03-07', today: '2026-03-08'},
+  {end: '2026-11-02', start: '2026-10-31', today: '2026-11-01'},
+])('should count calendar days across daylight-saving dates from $start', ({start, today, end}) => {
+  expect(calculateService({branch: 'army', days: 3, start, today})).toEqual({
+    end,
+    progress: 33.33333333333333,
+    remaining: 1,
+    total: 3,
+  })
+})
+
+it.each(['0100-01-01', '2000-02-29', '9999-12-31'])(
+  'should preserve one-day periods at the valid calendar boundary %s',
+  (date) => {
+    expect(calculateService({branch: 'army', days: 1, start: date, today: date})).toEqual({
+      end: date,
+      progress: 100,
+      remaining: 0,
+      total: 1,
+    })
+  },
+)
+
+it.each([
+  {days: 1, start: '1900-02-29', today: '1900-03-01'},
+  {days: 1, start: '2024-02-29', today: '2023-02-29'},
+  {days: 2, start: '9999-12-31', today: '9999-12-31'},
+])('should reject invalid calendar inputs and overflowing discharge dates %j', (period) => {
+  expect(calculateService({branch: 'army', ...period})).toBeNull()
+})

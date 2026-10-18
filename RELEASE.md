@@ -206,23 +206,15 @@ Allowed action: npm publish
 
 GitHub Environment를 Trusted Publisher에 지정한다면 workflow에도 정확히 같은 environment 이름을 추가해야 한다.
 
-모든 기존 npm 패키지의 연결을 마친 뒤 GitHub repository의 Actions variable을 설정한다.
+### 첫 실행 전 확인 사항
 
-```text
-NPM_RELEASE_ENABLED=true
-```
-
-이 변수는 초기 설정이 끝나기 전 publish를 막고 필요할 때 전체 패키지 릴리스를 중단하는 스위치다. 한번 활성화한 뒤에는 릴리스마다 조작하지 않으며 수동 Action 실행과 `package.json.version`을 배포 의사표시로 사용한다. 변수가 없거나 `true`가 아니면 검증과 tarball 확인은 실행되지만 publish job은 실행되지 않는다.
-
-### 현재 도입 전 확인 사항
-
-패키지 릴리스를 활성화하기 전에 다음 기존 상태를 확인한다.
+패키지 릴리스를 처음 실행하기 전에 다음 기존 상태를 확인한다.
 
 - `@winter-love/solid-test`: npm `1.0.36`, 저장소 `1.0.38`이므로 patch 배포 대상으로 판정된다.
 - `@winter-love/tonejs-midi`: npm에 없으므로 자동화에서 건너뛰며 최초 수동 배포가 필요하다.
 - npm보다 저장소가 한 patch 앞선 다른 패키지는 preflight 통과 후 배포 대상으로 판정된다.
 
-현재 기준으로 `NPM_RELEASE_ENABLED=true` 설정 후 첫 `Release packages` 실행은 `solid-components`, `solid-test`, `solid-use`, `utils`의 `1.0.38` 배포를 시도한다. 이 네 npm 패키지에 Trusted Publisher가 모두 연결됐는지 먼저 확인한다.
+현재 기준으로 첫 `Release packages` 실행은 `solid-components`, `solid-test`, `solid-use`, `utils`의 `1.0.38` 배포를 시도한다. 이 네 npm 패키지에 Trusted Publisher가 모두 연결됐는지 먼저 확인한다.
 
 실제 상태는 다음 명령으로 다시 확인한다.
 

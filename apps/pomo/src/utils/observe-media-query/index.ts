@@ -5,7 +5,7 @@ export interface ObserveMediaQueryOptions {
   readonly notifyInitial?: boolean
 }
 
-/** Observes media matches and returns the subscription disposer; unavailable capability returns null. */
+/** 미디어 쿼리 일치 여부를 관찰하고 구독 해제 함수를 반환한다. 지원하지 않으면 null을 반환한다. */
 export const observeMediaQuery = (
   query: string,
   onChange: (matches: boolean) => void,

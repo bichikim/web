@@ -12,7 +12,7 @@ export interface EditorKeyformPanelProps {
   readonly activeKeyformValues?: PuppetParameterValues | null
   readonly allParametersVisible?: boolean
   readonly bindings: ReadonlyArray<PuppetParameterBinding>
-  readonly influence?: number
+  readonly bindingInfluences?: ReadonlyMap<string, number>
   readonly onAllParametersVisibleChange?: (visible: boolean) => void
   readonly onBindingDelete?: (bindingId: string) => void
   readonly onBindingSelect?: (bindingId: string) => void

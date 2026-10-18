@@ -11,7 +11,7 @@ import {type IndexedVertex, type MeshTriangle, snapPointToEdge} from './internal
 import {setVertexKeyframe} from './internal/motion-keyframes'
 import {getDeformerPreviewDocument, unapplyPartPreviewSpatialPose} from './internal/mesh-preview'
 import {getEditErrorMessage} from './internal/notices'
-import {createPartViews, type MeshPartView} from './internal/part-views'
+import {createPartViews, createPreviewVertices, type MeshPartView} from './internal/part-views'
 import {unapplySceneDeformersPoint} from './internal/scene-deformation'
 import {getEditorPoint, getEditorViewBox} from './internal/viewport'
 import type {MeshEditorProps} from './mesh-editor-contract'
@@ -98,6 +98,7 @@ const createMeshEditorState = (props: MeshEditorProps): MeshEditorState => {
   const [dragStartPoint, setDragStartPoint] = createSignal<VertexPoint | null>(null)
   const [focusedPartId, setFocusedPartId] = createSignal<string | null>(null)
   let activeDocument = untrack(() => props.document)
+  let activeMotionId = untrack(() => props.motionId)
   let activeEditing = untrack(() => props.meshEditing)
   let activePartId = untrack(() => props.activePartId)
   const selectedPartIds = createMemo<ReadonlyArray<string>>(() => {
@@ -135,26 +136,34 @@ const createMeshEditorState = (props: MeshEditorProps): MeshEditorState => {
         VERTEX_RADIUS_DIVISOR,
     ),
   )
+  const clippedParts = createMemo(() => {
+    const maskPartId = part()?.id
+    return maskPartId === undefined
+      ? []
+      : props.document.parts.filter((candidate) =>
+          candidate.properties?.clippingMaskIds?.includes(maskPartId),
+        )
+  })
+  const hasPreviewParts = createMemo(() => parts().length > 0 || clippedParts().length > 0)
+  const previewVertices = createMemo(() =>
+    hasPreviewParts() ? createPreviewVertices(props) : new Map<string, Float32Array>(),
+  )
   const partViews = createMemo<ReadonlyArray<MeshPartView>>(() => {
     const activePart = part()
     return createPartViews({
       activePartId: activePart?.id,
       candidates: parts(),
       draftPoint: draftPoint(),
-      props,
       selectedVertex: selectedVertex(),
+      verticesByPartId: previewVertices(),
     })
   })
   const clippedPartViews = createMemo<ReadonlyArray<MeshPartView>>(() => {
-    const maskPartId = part()?.id
     return createPartViews({
-      candidates: props.document.parts.filter(
-        (candidate) =>
-          maskPartId !== undefined && candidate.properties?.clippingMaskIds?.includes(maskPartId),
-      ),
+      candidates: clippedParts(),
       draftPoint: null,
-      props,
       selectedVertex: null,
+      verticesByPartId: previewVertices(),
     })
   })
   const vertices = createMemo<ReadonlyArray<IndexedVertex>>(() => {
@@ -167,14 +176,16 @@ const createMeshEditorState = (props: MeshEditorProps): MeshEditorState => {
   })
 
   createEffect(() => {
-    const {activePartId: nextActivePartId, document, meshEditing} = props
+    const {activePartId: nextActivePartId, document, meshEditing, motionId} = props
 
     if (
       document !== activeDocument ||
+      motionId !== activeMotionId ||
       meshEditing !== activeEditing ||
       nextActivePartId !== activePartId
     ) {
       activeDocument = document
+      activeMotionId = motionId
       activeEditing = meshEditing
       activePartId = nextActivePartId
       setDraggingVertex(null)
@@ -380,6 +391,7 @@ const createPointerEndHandler = (props: MeshEditorProps, state: MeshEditorState)
     document: props.document,
     editMode: props.editMode ?? 'motion',
     keyframeTime,
+    motionId: props.motionId,
     parameterValueMap: props.parameterValueMap,
     parameterValues,
     part: activePart,

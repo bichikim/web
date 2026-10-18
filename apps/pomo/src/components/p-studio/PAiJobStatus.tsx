@@ -1,5 +1,7 @@
 import {Show} from 'solid-js'
 
+import {withPromiseFallback} from 'src/utils/with-promise-fallback'
+
 import type {AiTextJobController} from '../../features/ai-job/use-ai-text-job'
 
 interface PAiJobStatusProps {
@@ -53,7 +55,7 @@ export const PAiJobStatus = (props: PAiJobStatusProps) => {
               class="rounded border border-border px-3 py-1.5 hover:bg-surface-interactive disabled:opacity-50"
               disabled={props.job.isCancelling()}
               onClick={() => {
-                props.job.cancel().catch(() => undefined)
+                withPromiseFallback(props.job.cancel(), undefined)
               }}
               type="button"
             >
@@ -64,7 +66,7 @@ export const PAiJobStatus = (props: PAiJobStatusProps) => {
             <button
               class="rounded border border-border px-3 py-1.5 hover:bg-surface-interactive"
               onClick={() => {
-                props.job.retry().catch(() => undefined)
+                withPromiseFallback(props.job.retry(), undefined)
               }}
               type="button"
             >
@@ -75,7 +77,7 @@ export const PAiJobStatus = (props: PAiJobStatusProps) => {
             <button
               class="rounded border border-border px-3 py-1.5 hover:bg-surface-interactive"
               onClick={() => {
-                props.job.retry().catch(() => undefined)
+                withPromiseFallback(props.job.retry(), undefined)
               }}
               type="button"
             >
@@ -90,7 +92,7 @@ export const PAiJobStatus = (props: PAiJobStatusProps) => {
             <button
               class="rounded border border-border px-3 py-1.5 hover:bg-surface-interactive"
               onClick={() => {
-                props.job.speakResult().catch(() => undefined)
+                withPromiseFallback(props.job.speakResult(), undefined)
               }}
               type="button"
             >
@@ -102,7 +104,7 @@ export const PAiJobStatus = (props: PAiJobStatusProps) => {
               class="rounded border border-border px-3 py-1.5 hover:bg-surface-interactive disabled:opacity-50"
               disabled={props.job.isRefreshingResult()}
               onClick={() => {
-                props.job.refreshResult().catch(() => undefined)
+                withPromiseFallback(props.job.refreshResult(), undefined)
               }}
               type="button"
             >
@@ -112,7 +114,7 @@ export const PAiJobStatus = (props: PAiJobStatusProps) => {
               class="rounded border border-border px-3 py-1.5 hover:bg-surface-interactive disabled:opacity-50"
               disabled={props.job.isSaving()}
               onClick={() => {
-                props.job.saveArtifact().catch(() => undefined)
+                withPromiseFallback(props.job.saveArtifact(), undefined)
               }}
               type="button"
             >
@@ -122,7 +124,7 @@ export const PAiJobStatus = (props: PAiJobStatusProps) => {
               class="rounded border border-border px-3 py-1.5 hover:bg-surface-interactive disabled:opacity-50"
               disabled={props.job.isDeleting()}
               onClick={() => {
-                props.job.deleteArtifact().catch(() => undefined)
+                withPromiseFallback(props.job.deleteArtifact(), undefined)
               }}
               type="button"
             >
@@ -141,7 +143,7 @@ export const PAiJobStatus = (props: PAiJobStatusProps) => {
               class="rounded border border-border px-3 py-1.5 hover:bg-surface-interactive disabled:opacity-50"
               disabled={props.job.isRefreshingResult()}
               onClick={() => {
-                props.job.refreshResult().catch(() => undefined)
+                withPromiseFallback(props.job.refreshResult(), undefined)
               }}
               type="button"
             >

@@ -8,7 +8,7 @@ vi.mock('@apps-in-toss/web-framework', () => ({
 
 describe('loadTossStorage', () => {
   it('should expose storage methods without assimilating the SDK object as a promise', async () => {
-    // Devtools throws for unknown properties, including Promise resolution's then lookup.
+    // Devtools는 Promise 이행 과정의 then 조회를 포함해 알 수 없는 속성을 조회하면 예외를 던진다.
     Object.defineProperty(Storage, 'then', {
       configurable: true,
       get() {

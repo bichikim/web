@@ -1,4 +1,4 @@
-import {PInput} from '../p-input/PInput'
+import {PInput, type PInputProps} from '../p-input/PInput'
 import {PTextarea} from '../p-textarea/PTextarea'
 import {FIELD_DESCRIPTION} from 'src/components/field-classes'
 import {TextField} from '@kobalte/core/text-field'
@@ -11,7 +11,7 @@ export interface PTextFieldProps {
   readonly description?: string
   readonly disabled?: boolean
   readonly errorMessage?: string
-  readonly inputMode?: 'decimal' | 'email' | 'none' | 'numeric' | 'search' | 'tel' | 'text' | 'url'
+  readonly inputMode?: NonNullable<PInputProps['inputmode']>
   readonly multiline?: boolean
   readonly rows?: number
   readonly label: string

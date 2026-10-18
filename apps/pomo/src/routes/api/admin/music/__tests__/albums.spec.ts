@@ -110,6 +110,67 @@ describe('admin music album route', () => {
     })
   })
 
+  it.each(['fr', 'zh-Hant', 'KO', 'zh-hans', '', null, 0, {}])(
+    'should reject unsupported locale %j before cover validation and preserve auth cookies',
+    async (locale) => {
+      authMocks.authorizeAdminRequest.mockResolvedValue({
+        authorized: true,
+        cookies: ['session=renewed; HttpOnly; Path=/'],
+      })
+      const request = new Request('https://www.pomofi.io/api/admin/music/albums', {
+        body: JSON.stringify({
+          coverFallback: 'lp',
+          coverImageUrl: 'https://storage.pomofi.io/album-covers/fixture/cover.webp',
+          id: ALBUM_ID,
+          translations: [
+            {description: '설명', locale: 'ko', title: '제목'},
+            {description: 'Description', locale, title: 'Title'},
+          ],
+        }),
+        headers: {'Content-Type': 'application/json'},
+        method: 'POST',
+      })
+
+      const response = await invokeApiRoute(POST, request)
+
+      expect(response.status).toBe(400)
+      await expect(response.json()).resolves.toEqual({error: 'invalid_request'})
+      expect(response.headers.get('Set-Cookie')).toBe('session=renewed; HttpOnly; Path=/')
+      expect(response.headers.get('Cache-Control')).toBe('no-store')
+      expect(storageMocks.isManagedAlbumCoverUrl).not.toHaveBeenCalled()
+      expect(repositoryMocks.createAlbum).not.toHaveBeenCalled()
+    },
+  )
+
+  it('should preserve distinct locale order while trimming translated metadata', async () => {
+    const translations = [
+      {description: ' English description ', locale: 'en', title: ' English title '},
+      {description: ' 한국어 설명 ', locale: 'ko', title: ' 한국어 제목 '},
+    ]
+    const request = new Request('https://www.pomofi.io/api/admin/music/albums', {
+      body: JSON.stringify({
+        coverFallback: 'lp',
+        coverImageUrl: null,
+        id: ALBUM_ID,
+        translations,
+      }),
+      headers: {'Content-Type': 'application/json'},
+      method: 'POST',
+    })
+
+    const response = await invokeApiRoute(POST, request)
+
+    expect(response.status).toBe(201)
+    expect(repositoryMocks.createAlbum).toHaveBeenCalledWith(
+      expect.objectContaining({
+        translations: [
+          {description: 'English description', locale: 'en', title: 'English title'},
+          {description: '한국어 설명', locale: 'ko', title: '한국어 제목'},
+        ],
+      }),
+    )
+  })
+
   it('should preserve an older external-cover request without reservation fields', async () => {
     const request = new Request('https://www.pomofi.io/api/admin/music/albums', {
       body: JSON.stringify({
@@ -192,12 +253,17 @@ describe('admin music album route', () => {
     expect(repositoryMocks.createAlbum).not.toHaveBeenCalled()
   })
 
-  it('should reject duplicate locales', async () => {
+  it('should reject duplicate locales before cover validation and preserve auth cookies', async () => {
+    authMocks.authorizeAdminRequest.mockResolvedValue({
+      authorized: true,
+      cookies: ['session=renewed; HttpOnly; Path=/'],
+    })
+    storageMocks.isManagedAlbumCoverUrl.mockReturnValue(true)
     const request = new Request('https://www.pomofi.io/api/admin/music/albums', {
       body: JSON.stringify({
         coverDraftId: null,
         coverFallback: 'lp',
-        coverImageUrl: null,
+        coverImageUrl: 'https://storage.pomofi.io/album-covers/fixture/cover.webp',
         coverReservationId: null,
         translations: [
           {description: '설명', locale: 'ko', title: '제목'},
@@ -211,6 +277,10 @@ describe('admin music album route', () => {
     const response = await invokeApiRoute(POST, request)
 
     expect(response.status).toBe(400)
+    await expect(response.json()).resolves.toEqual({error: 'invalid_request'})
+    expect(response.headers.get('Set-Cookie')).toBe('session=renewed; HttpOnly; Path=/')
+    expect(response.headers.get('Cache-Control')).toBe('no-store')
+    expect(storageMocks.isManagedAlbumCoverUrl).not.toHaveBeenCalled()
     expect(repositoryMocks.createAlbum).not.toHaveBeenCalled()
   })
 

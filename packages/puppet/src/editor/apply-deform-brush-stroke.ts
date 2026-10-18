@@ -73,6 +73,7 @@ export const applyDeformBrushStroke = (options: ApplyDeformBrushStrokeOptions): 
         document,
         editMode: options.props.editMode ?? 'motion',
         keyframeTime: options.time,
+        motionId: options.props.motionId,
         parameterValueMap: options.props.parameterValueMap,
         parameterValues: options.values,
         part,
