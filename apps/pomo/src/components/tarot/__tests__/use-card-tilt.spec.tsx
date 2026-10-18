@@ -156,6 +156,72 @@ describe('useCardTilt', () => {
     expect(frames.size).toBe(0)
   })
 
+  it.each([
+    {expected: '0,-0.25', key: 'ArrowUp'},
+    {expected: '0,0.25', key: 'ArrowDown'},
+  ])('should apply $key once before preventing and stopping the event', ({expected, key}) => {
+    render(Card)
+    const card = screen.getByRole('group', {name: 'card'})
+    const event = new KeyboardEvent('keydown', {bubbles: true, cancelable: true})
+    const calls: string[] = []
+    Object.defineProperty(event, 'key', {
+      get: () => {
+        calls.push('key')
+        return calls.length === 1 ? key : 'End'
+      },
+    })
+    const prevent = event.preventDefault.bind(event)
+    const stop = event.stopPropagation.bind(event)
+    vi.spyOn(event, 'preventDefault').mockImplementation(() => {
+      expect(frames.size).toBe(1)
+      calls.push('preventDefault')
+      prevent()
+    })
+    vi.spyOn(event, 'stopPropagation').mockImplementation(() => {
+      calls.push('stopPropagation')
+      stop()
+    })
+
+    fireEvent(card, event)
+    expect(calls).toEqual(['key', 'preventDefault', 'stopPropagation'])
+    expect(event.defaultPrevented).toBe(true)
+    flushFrames()
+    expect(screen.getByLabelText('tilt')).toHaveTextContent(expected)
+  })
+
+  it('should clamp accumulated keyboard targets and reset both axes with Home', () => {
+    render(Card)
+    const card = screen.getByRole('group', {name: 'card'})
+    for (let index = 0; index < 6; index += 1) {
+      fireEvent.keyDown(card, {key: 'ArrowRight'})
+      fireEvent.keyDown(card, {key: 'ArrowDown'})
+    }
+    expect(frames.size).toBe(1)
+    flushFrames()
+    expect(screen.getByLabelText('tilt')).toHaveTextContent('1,1')
+
+    const event = new KeyboardEvent('keydown', {bubbles: true, cancelable: true, key: 'Home'})
+    fireEvent(card, event)
+    expect(event.defaultPrevented).toBe(true)
+    flushFrames()
+    expect(screen.getByLabelText('tilt')).toHaveTextContent('0,0')
+  })
+
+  it('should leave unrelated keys and the current tilt unchanged', () => {
+    render(Card)
+    const card = screen.getByRole('group', {name: 'card'})
+    fireEvent.keyDown(card, {key: 'ArrowRight'})
+    flushFrames()
+    const event = new KeyboardEvent('keydown', {bubbles: true, cancelable: true, key: 'End'})
+    const stop = vi.spyOn(event, 'stopPropagation')
+
+    fireEvent(card, event)
+    expect(event.defaultPrevented).toBe(false)
+    expect(stop).not.toHaveBeenCalled()
+    expect(frames.size).toBe(0)
+    expect(screen.getByLabelText('tilt')).toHaveTextContent('0.25,0')
+  })
+
   it('should reset motion immediately and stop interaction when reduced motion is requested', () => {
     render(Card)
     const card = screen.getByRole('group', {name: 'card'})
@@ -164,7 +230,15 @@ describe('useCardTilt', () => {
     expect(screen.getByLabelText('tilt')).toHaveTextContent('0.25,0')
     reduced = true
     preference.dispatchEvent(new Event('change'))
-    fireEvent.keyDown(card, {key: 'ArrowLeft'})
+    const event = new KeyboardEvent('keydown', {
+      bubbles: true,
+      cancelable: true,
+      key: 'ArrowLeft',
+    })
+    const stop = vi.spyOn(event, 'stopPropagation')
+    fireEvent(card, event)
+    expect(event.defaultPrevented).toBe(true)
+    expect(stop).toHaveBeenCalledExactlyOnceWith()
     flushFrames()
     expect(screen.getByLabelText('tilt')).toHaveTextContent('0,0')
     expect(frames.size).toBe(0)
