@@ -1,5 +1,5 @@
 import {createRoot, createSignal} from 'solid-js'
-import {afterEach, describe, expect, it, vi} from 'vitest'
+import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 import type {CallToolResult} from '@modelcontextprotocol/sdk/types.js'
 import type {ViewerSession} from '../../shared/contracts'
 import type {ViewerPort} from '../types'
@@ -12,7 +12,7 @@ const session = (path = 'main.ts', source = 'original', revision = 'v1'): Viewer
 })
 describe('useCodeEditing', () => {
   let dispose: () => void
-  const mount = () =>
+  const mount = (draftStorage?: ViewerPort['draftStorage']) =>
     createRoot((cleanup) => {
       dispose = cleanup
       const [current, setCurrent] = createSignal<ViewerSession | null>(session())
@@ -24,11 +24,13 @@ describe('useCodeEditing', () => {
           },
         })),
         context: vi.fn(),
+        draftStorage,
         start: vi.fn(),
       }
       const editing = useCodeEditing({port, session: current})
       return {editing, port, setCurrent}
     })
+  beforeEach(() => localStorage.clear())
   afterEach(() => dispose())
   it('should keep a viewport document read-only even when editing was enabled for another file', () => {
     const {editing, port, setCurrent} = mount()
@@ -43,6 +45,131 @@ describe('useCodeEditing', () => {
     expect(editing.dirty()).toBe(false)
     expect(editing.sources()).toEqual([])
     expect(port.call).not.toHaveBeenCalled()
+  })
+  it('should restore multiple unsaved files after reopening without writing originals', async () => {
+    const first = mount(() => localStorage)
+    first.editing.accept(session())
+    first.editing.change('main draft\n')
+    first.setCurrent(session('helper.ts', 'helper base', 'helper-v1'))
+    first.editing.change('helper draft')
+    dispose()
+    const reopened = mount(() => localStorage)
+    reopened.editing.accept(session('main.ts', 'external update', 'external-v2'))
+    expect(reopened.editing.source()).toBe('main draft\n')
+    expect(reopened.editing.enabled()).toBe(true)
+    expect(reopened.editing.revision()).toBe('v1')
+    expect(reopened.editing.pendingFiles()).toEqual(['main.ts', 'helper.ts'])
+    reopened.setCurrent(session('helper.ts', 'external helper', 'helper-v2'))
+    expect(reopened.editing.source()).toBe('helper draft')
+    expect(reopened.editing.revision()).toBe('helper-v1')
+    expect(first.port.call).not.toHaveBeenCalled()
+    expect(reopened.port.call).not.toHaveBeenCalled()
+    await reopened.editing.shareChanges()
+    expect(reopened.port.context).toHaveBeenCalledWith(
+      expect.objectContaining({
+        patch: expect.stringContaining('-helper base\n'),
+        revision: 'helper-v1',
+      }),
+    )
+  })
+  it('should keep recovered drafts isolated by workspace and server session', () => {
+    const first = mount(() => localStorage)
+    first.editing.accept(session())
+    first.editing.change('private draft')
+    dispose()
+    const reopened = mount(() => localStorage)
+    reopened.editing.accept({...session(), session: 'other-session'})
+    reopened.setCurrent({...session(), session: 'other-session'})
+    expect(reopened.editing.source()).toBe('original')
+    reopened.editing.accept({...session(), workspace: '/other-project'})
+    reopened.setCurrent({...session(), workspace: '/other-project'})
+    expect(reopened.editing.source()).toBe('original')
+  })
+  it.each(['save', 'discard', 'revert'] as const)(
+    'should not resurrect a draft after %s',
+    async (action) => {
+      const first = mount(() => localStorage)
+      first.editing.accept(session())
+      first.editing.change('temporary draft')
+      switch (action) {
+        case 'save':
+          await first.editing.save()
+          break
+        case 'discard':
+          first.editing.discard()
+          break
+        case 'revert':
+          first.editing.change('original')
+          break
+      }
+      dispose()
+      const reopened = mount(() => localStorage)
+      reopened.editing.accept(session())
+      expect(reopened.editing.pendingFiles()).toEqual([])
+      expect(reopened.editing.source()).toBe('original')
+    },
+  )
+  it('should retain the deleted status and revision after reopening', () => {
+    const first = mount(() => localStorage)
+    first.editing.accept(session())
+    first.editing.change('deleted draft')
+    first.editing.markDeleted(session())
+    dispose()
+    const reopened = mount(() => localStorage)
+    // Opening another file must retain the missing file's recoverable draft.
+    reopened.editing.accept(session('other.ts'))
+    reopened.setCurrent(session())
+    expect(reopened.editing.deleted()).toBe(true)
+    expect(reopened.editing.source()).toBe('deleted draft')
+    expect(reopened.editing.revision()).toBe('v1')
+  })
+  it('should keep the in-memory draft and report denied recovery storage', () => {
+    const {editing} = mount(() => {
+      throw new Error('Storage denied')
+    })
+    editing.accept(session())
+    editing.change('retained draft')
+    expect(editing.source()).toBe('retained draft')
+    expect(editing.feedback()).toContain('초안')
+    expect(editing.feedback()).toContain('Storage denied')
+  })
+  it('should report malformed recovery data without losing new edits', () => {
+    const first = mount(() => localStorage)
+    first.editing.accept(session())
+    first.editing.change('old draft')
+    dispose()
+    const key = localStorage.key(0)!
+    localStorage.setItem(key, '{broken')
+    const reopened = mount(() => localStorage)
+    reopened.editing.accept(session())
+    expect(reopened.editing.feedback()).toContain('초안 복구')
+    reopened.editing.change('new draft')
+    expect(reopened.editing.source()).toBe('new draft')
+    expect(JSON.parse(localStorage.getItem(key)!)).toMatchObject({
+      drafts: [expect.objectContaining({source: 'new draft'})],
+    })
+  })
+  it('should recover typing that followed a completed save with the updated baseline', async () => {
+    const first = mount(() => localStorage)
+    first.editing.accept(session())
+    const saved = Promise.withResolvers<CallToolResult>()
+    vi.mocked(first.port.call).mockReturnValueOnce(saved.promise)
+    first.editing.change('first draft')
+    const writing = first.editing.save()
+    first.editing.change('latest draft')
+    saved.resolve({
+      content: [],
+      structuredContent: {
+        document: session('main.ts', 'first draft', 'v2').document,
+      },
+    })
+    await writing
+    dispose()
+    const reopened = mount(() => localStorage)
+    reopened.editing.accept(session('main.ts', 'first draft', 'v2'))
+    expect(reopened.editing.source()).toBe('latest draft')
+    expect(reopened.editing.revision()).toBe('v2')
+    expect(reopened.editing.dirty()).toBe(true)
   })
   it.each(['original', '', 'edited draft'])(
     'should consider deletion a pending change and recreate %j on save',
@@ -78,6 +205,25 @@ describe('useCodeEditing', () => {
       session: 'replacement',
       source: 'retained draft',
     })
+  })
+  it('should persist a deleted draft only under its accepted replacement session', () => {
+    const first = mount(() => localStorage)
+    first.editing.accept(session())
+    first.editing.change('deleted draft')
+    first.editing.markDeleted(session())
+    const replacement = {...session(), session: 'replacement'}
+    first.setCurrent(replacement)
+    first.editing.markDeleted(replacement)
+    dispose()
+    const reopened = mount(() => localStorage)
+    reopened.editing.accept({...session('other.ts'), session: 'replacement'})
+    reopened.setCurrent(replacement)
+    expect(reopened.editing.source()).toBe('deleted draft')
+    expect(reopened.editing.deleted()).toBe(true)
+    dispose()
+    const original = mount(() => localStorage)
+    original.editing.accept(session())
+    expect(original.editing.pendingFiles()).toEqual([])
   })
   it('should remove the deleted draft when discarding it', () => {
     const {editing} = mount()

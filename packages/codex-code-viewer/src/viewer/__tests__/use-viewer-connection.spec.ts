@@ -16,6 +16,23 @@ const initial: ViewerSession = {
 }
 
 describe('useViewerConnection', () => {
+  it('should forward explicit host navigation options to the viewer', () => {
+    const receive = vi.fn()
+    const port: ViewerPort = {
+      call: vi.fn(async () => ({content: []})),
+      context: async () => {},
+      start: async (deliver) => {
+        deliver(initial, {restoreView: false})
+        return vi.fn(() => {})
+      },
+    }
+    const dispose = createRoot((dispose) => {
+      useViewerConnection({port, receive, refresh: vi.fn(), report: vi.fn(), session: () => null})
+      return dispose
+    })
+    expect(receive).toHaveBeenCalledWith(initial, {restoreView: false})
+    dispose()
+  })
   it('should wait for host initialization before subscribing to the initial workspace', async () => {
     const ready = Promise.withResolvers<() => void>()
     const subscribed = Promise.withResolvers<void>()

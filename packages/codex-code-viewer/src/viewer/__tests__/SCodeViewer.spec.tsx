@@ -86,6 +86,39 @@ describe('SCodeViewer', () => {
     }
   })
 
+  it('should reopen the draft with its cursor beyond the disk document', () => {
+    const value = {
+      document: {
+        lines: [[{kind: 'plain' as const, navigation: null, offset: 0, text: 'disk'}]],
+        location: {column: 1, line: 1, path: 'notes.txt'},
+        revision: 'disk',
+        source: 'disk',
+      },
+      session: 'restored',
+      workspace: '/project',
+    }
+    const mount = () => {
+      const port: ViewerPort = {
+        call: vi.fn().mockResolvedValue({content: []}),
+        context: vi.fn(),
+        draftStorage: () => localStorage,
+        start: vi.fn<ViewerPort['start']>().mockResolvedValue(() => {}),
+      }
+      const rendered = render(() => <SCodeViewer port={port} />)
+      vi.mocked(port.start).mock.calls[0]![0](value, {restoreView: true})
+      return rendered
+    }
+    const first = mount()
+    fireEvent.click(screen.getByRole('button', {name: '편집'}))
+    const editor = EditorView.findFromDOM(screen.getByRole('textbox', {name: '코드 편집기'}))!
+    editor.dispatch({changes: {from: 4, insert: '\nunsaved position'}, selection: {anchor: 12}})
+    first.unmount()
+    mount()
+    const reopened = EditorView.findFromDOM(screen.getByRole('textbox', {name: '코드 편집기'}))!
+    expect(reopened.state.sliceDoc()).toBe('disk\nunsaved position')
+    expect(reopened.state.selection.main.anchor).toBe(12)
+  })
+
   it('should open settings beside the tree toggle and persist the selected preview lines', () => {
     const {textbox} = mountEditor()
     const button = screen.getByRole('button', {name: '설정'})

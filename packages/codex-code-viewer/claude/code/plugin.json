@@ -1,0 +1,24 @@
+{
+  "name": "code-viewer",
+  "displayName": "Code Viewer",
+  "version": "0.4.9",
+  "description": "Browse, edit, save and attach project code beside your Claude Code chat.",
+  "author": {
+    "name": "Bichi Kim"
+  },
+  "commands": {
+    "open": {
+      "description": "Open Code Viewer in the Browser pane",
+      "content": "Open Code Viewer for the user's explicit request. The Mod handles this command without a model turn when enabled. Otherwise call this plugin's code.browser and navigate the Browser to its full URL including the fragment. Pass any requested project path and 1-based line and column. Do not open on session startup. File links and the Code Viewer open button also open it on demand. Keep the existing Browser page, drafts and attachments when following file locations."
+    }
+  },
+  "mcpServers": {
+    "viewer": {
+      "command": "${CLAUDE_PLUGIN_ROOT}/runtime/node",
+      "args": ["${CLAUDE_PLUGIN_ROOT}/dist/browser.js", "${CLAUDE_PROJECT_DIR}"],
+      "env": {
+        "CODE_VIEWER_CLIPBOARD": "true"
+      }
+    }
+  }
+}

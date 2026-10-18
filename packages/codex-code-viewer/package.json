@@ -24,9 +24,12 @@
     ".mcp.json",
     "assets",
     "dist/server.js",
+    "dist/browser.js",
+    "dist/browser.html",
     "dist/navigation-worker.js",
     "dist/app.html",
     "dist/install.js",
+    "dist/claude/manifest.json",
     "dist/python",
     "dist/lib.*.d.ts",
     "dist/THIRD_PARTY_LICENSES.md"
