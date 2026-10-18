@@ -50,6 +50,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Install Codex CLI for packed plugin verification
+        run: npm install --global @openai/codex@0.155.1
+
       - name: Validate release plan
         run: node scripts/npm-release/run.mjs check
 
@@ -94,6 +97,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Install Codex CLI for packed plugin verification
+        run: npm install --global @openai/codex@0.155.1
+
       - name: Configure release author
         run: |
           git config user.name github-actions[bot]
@@ -102,4 +108,5 @@ jobs:
       - name: Publish packages and record releases
         env:
           GH_TOKEN: ${{ github.token }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: node scripts/npm-release/run.mjs publish

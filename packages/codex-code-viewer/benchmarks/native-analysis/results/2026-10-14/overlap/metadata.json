@@ -1,0 +1,28 @@
+{
+  "binary": "/Users/bichi/.codex/worktrees/379e/web/node_modules/.pnpm/@typescript+typescript-darwin-arm64@7.0.2/node_modules/@typescript/typescript-darwin-arm64/lib/tsc",
+  "nativeVersion": "Version 7.0.2",
+  "node": "v24.15.0",
+  "hashes": {
+    "/Users/bichi/.codex/worktrees/379e/web/node_modules/.pnpm/@typescript+typescript-darwin-arm64@7.0.2/node_modules/@typescript/typescript-darwin-arm64/lib/tsc": "a82f731365ad69d5c4c15f5e18fba4584bf3b7b839960172a76c3462b5114bf2",
+    "/private/tmp/code-viewer-native-overlap/existing/workspace.js": "8572b968dc25619c33e259e873dffb254d37f37dbc9ca2d4eeb69d0316e7fdbb",
+    "/private/tmp/code-viewer-native-overlap/existing/navigation-worker.js": "0bdaa92dd33965774cf27e2ae34b418135794aa1fc6d226ae704d82061f5739e",
+    "/Users/bichi/.codex/worktrees/379e/web/packages/codex-code-viewer/benchmarks/native-analysis/measure.ts": "61053f41984c7406300ad272af22aafa74fe6e39afb0b11f193755c6846ec923",
+    "/Users/bichi/.codex/worktrees/379e/web/packages/codex-code-viewer/benchmarks/native-analysis/create-lsp-experiment.ts": "a86c72895b842600351e6c6e0dcc70b43dbb8d75173f76d38aedb2bf9399ed63"
+  },
+  "execution": "before and after use esbuild-bundled Node24 ESM clients",
+  "clientHashes": {
+    "before": "12347901074d3fe69530c9ea8ff6478639d8ed94c9a5c526543e98e922f605a7",
+    "after": "c37cb64a85eee12ca0adb53aa04a84127ee6606863e3d6bc1b1dad2b6089e8b5"
+  },
+  "verifiedClientUnchanged": true,
+  "typescript6Runtime": "6.0.3",
+  "previousProductHashes": {
+    "workspace.js": "8572b968dc25619c33e259e873dffb254d37f37dbc9ca2d4eeb69d0316e7fdbb",
+    "navigation-worker.js": "0bdaa92dd33965774cf27e2ae34b418135794aa1fc6d226ae704d82061f5739e"
+  },
+  "productUnchanged": true,
+  "revisionReaderHash": "f8206f6c8dd6cb70b0d562da3cb94ac51e2219f14c4331bbc1fcde104552565c",
+  "revisionReaderUnchanged": true,
+  "records": 510,
+  "fixtureCases": 23
+}

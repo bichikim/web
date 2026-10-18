@@ -12,5 +12,6 @@ export interface SpeechRecorder {
   readonly isSupported: () => boolean
   readonly start: (
     onDataAvailable?: () => void,
+    onInterruption?: (error: SpeechCaptureError) => void,
   ) => Promise<Result<SpeechRecording, SpeechCaptureError>>
 }

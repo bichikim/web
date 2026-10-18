@@ -1,6 +1,7 @@
 import {z} from 'zod'
 
 import {ALBUM_LOCALES} from './album-draft'
+import {OFFER_BILLING_TYPES, OFFER_STATUSES, PRODUCT_STATUSES} from '../commerce'
 
 const coverFallbackSchema = z.enum(['lp', 'cd', 'music'])
 const albumTranslationSchema = z.object({
@@ -39,12 +40,12 @@ const assetSchema = z.object({
 })
 const offerSchema = z.object({
   albumId: z.string(),
-  billingType: z.enum(['one_time', 'subscription']),
+  billingType: z.enum(OFFER_BILLING_TYPES),
   externalProductId: z.string(),
   productCode: z.string(),
-  productStatus: z.enum(['active', 'archived']),
+  productStatus: z.enum(PRODUCT_STATUSES),
   provider: z.string(),
-  status: z.enum(['active', 'inactive']),
+  status: z.enum(OFFER_STATUSES),
 })
 
 export const catalogSchema = z.object({

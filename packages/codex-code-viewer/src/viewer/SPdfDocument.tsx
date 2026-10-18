@@ -1,3 +1,5 @@
+import {useLocalizedMessage} from './locale/use-localized-message'
+import {useTranslations} from './locale/use-translations'
 import {createEffect, createMemo, createSignal, onCleanup, Show} from 'solid-js'
 import {useFileViewState} from './view-state/context'
 import {SFindBar} from './SFindBar'
@@ -16,6 +18,8 @@ interface SPdfDocumentProps {
 const PADDING = 32
 
 export const SPdfDocument = (props: SPdfDocumentProps) => {
+  const t = useTranslations()
+  const localize = useLocalizedMessage()
   const state = useFileViewState()
   const [canvas, setCanvas] = createSignal<HTMLCanvasElement | null>(null)
   const [viewport, setViewport] = createSignal<HTMLDivElement | null>(null)
@@ -80,7 +84,7 @@ export const SPdfDocument = (props: SPdfDocumentProps) => {
         <Show when={search.status()}>
           {(message) => (
             <p role="status" class="m-0 px-4 py-1 text-xs text-muted">
-              {message()}
+              {localize(message())}
             </p>
           )}
         </Show>
@@ -88,17 +92,17 @@ export const SPdfDocument = (props: SPdfDocumentProps) => {
       <Show when={props.onError === undefined ? error() : null}>
         {(message) => (
           <p role="status" class="m-0 p-4 text-sm text-muted">
-            {message()}
+            {localize(message())}
           </p>
         )}
       </Show>
       <Show when={pdf.pending() && pdf.error() === null}>
         <p role="status" class="m-0 shrink-0 px-4 py-1 text-sm text-muted">
-          PDF 불러오는 중…
+          {t('PDF 불러오는 중…')}
         </p>
       </Show>
       <div
-        aria-label="PDF 페이지 보기"
+        aria-label={t('PDF 페이지 보기')}
         tabIndex={0}
         class="min-h-0 min-w-0 flex-1 overflow-auto p-4"
         ref={setViewport}
@@ -109,7 +113,7 @@ export const SPdfDocument = (props: SPdfDocumentProps) => {
           style={{'--pdf-height': `${pdf.size().height}px`, '--pdf-width': `${pdf.size().width}px`}}
         >
           <canvas
-            aria-label={`${props.path} ${pdf.page()}페이지`}
+            aria-label={t('{path} {page}페이지', {page: pdf.page(), path: props.path})}
             class="block h-full w-full"
             ref={setCanvas}
             width={Math.max(1, Math.ceil(pdf.size().width * pdf.size().ratio))}

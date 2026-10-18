@@ -1,4 +1,4 @@
-import {createDeferred} from 'src/test-utils/create-deferred'
+import {createDeferred} from 'src/__tests__/create-deferred'
 // oxlint-disable require-yield -- Rejection coverage needs an async generator that fails before its first value.
 import {createRoot} from 'solid-js'
 import {describe, expect, it, vi} from 'vitest'

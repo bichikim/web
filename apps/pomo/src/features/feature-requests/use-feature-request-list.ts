@@ -33,6 +33,18 @@ export interface FeatureRequestListController {
   ) => void
 }
 
+export type FeatureRequestListView = Pick<
+  FeatureRequestListController,
+  | 'hasMore'
+  | 'isLoading'
+  | 'isLoadingMore'
+  | 'loadFailed'
+  | 'loadMore'
+  | 'loadMoreFailed'
+  | 'refresh'
+  | 'requests'
+>
+
 /** Loads request pages and preserves the feature’s first-page refresh policy. */
 export const useFeatureRequestList = (
   props: UseFeatureRequestListProps,

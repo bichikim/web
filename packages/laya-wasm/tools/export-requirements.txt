@@ -1,0 +1,6 @@
+laya==0.3.20
+torch==2.14.1
+transformers==5.0.0
+onnx==1.23.2
+onnxscript==0.7.2
+onnxruntime==1.31.0

@@ -1,5 +1,6 @@
 /** @vitest-environment node */
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
+import {createWorkerHarness} from 'src/__tests__/create-worker-harness'
 
 const reportClientError = vi.hoisted(() => vi.fn())
 
@@ -8,37 +9,7 @@ vi.mock('../../client-error-reporter/reporter', () => ({reportClientError}))
 import {createAlbumTranslationClient} from '../client'
 import type {AlbumTranslationWorkerResponse} from '../messages'
 
-type WorkerListener = (event: ErrorEvent | MessageEvent<AlbumTranslationWorkerResponse>) => void
-
-class FakeWorker {
-  static current: FakeWorker | null = null
-
-  readonly postMessage = vi.fn()
-  readonly terminate = vi.fn()
-  readonly #listeners = new Map<string, Array<WorkerListener>>()
-
-  constructor() {
-    FakeWorker.current = this
-  }
-
-  addEventListener(type: string, listener: WorkerListener) {
-    const listeners = this.#listeners.get(type) ?? []
-    listeners.push(listener)
-    this.#listeners.set(type, listeners)
-  }
-
-  emitError(message: string) {
-    for (const listener of this.#listeners.get('error') ?? []) {
-      listener({message} as ErrorEvent)
-    }
-  }
-
-  emitMessageError() {
-    for (const listener of this.#listeners.get('messageerror') ?? []) {
-      listener({} as MessageEvent<AlbumTranslationWorkerResponse>)
-    }
-  }
-}
+const FakeWorker = createWorkerHarness<AlbumTranslationWorkerResponse>()
 
 beforeEach(() => {
   FakeWorker.current = null

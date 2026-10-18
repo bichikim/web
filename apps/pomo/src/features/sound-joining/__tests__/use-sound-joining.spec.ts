@@ -1,6 +1,6 @@
 import {createSoundWorker} from 'src/features/sound-generation/create-sound-worker'
 vi.mock('src/features/sound-generation/create-sound-worker', () => ({createSoundWorker: vi.fn()}))
-import {createDeferred} from 'src/test-utils/create-deferred'
+import {createDeferred} from 'src/__tests__/create-deferred'
 /** @vitest-environment node */
 import {createRoot} from 'solid-js'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'

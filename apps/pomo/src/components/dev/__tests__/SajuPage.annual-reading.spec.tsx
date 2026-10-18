@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 
 import {cleanup, fireEvent, render, screen} from '@solidjs/testing-library'
-import type {JSX} from 'solid-js'
+import {For, type JSX} from 'solid-js'
 import {afterEach, expect, it, vi} from 'vitest'
 
 import {GenerationWorkspace} from '../saju/GenerationWorkspace'
@@ -13,6 +13,25 @@ vi.mock('@solidjs/meta', () => ({
 }))
 vi.mock('@solidjs/router', () => ({
   A: (props: {children?: JSX.Element; href: string}) => <a href={props.href}>{props.children}</a>,
+}))
+vi.mock('../../p-select/PSelect', () => ({
+  PSelect: (props: {
+    accessibleLabel?: string
+    label: string
+    onChange: (value: string) => void
+    options: ReadonlyArray<{label: string; value: string}>
+    value: string
+  }) => (
+    <select
+      aria-label={props.accessibleLabel ?? props.label}
+      value={props.value}
+      onChange={(event) => props.onChange(event.currentTarget.value)}
+    >
+      <For each={props.options}>
+        {(option) => <option value={option.value}>{option.label}</option>}
+      </For>
+    </select>
+  ),
 }))
 
 afterEach(cleanup)
@@ -35,11 +54,7 @@ it.each([
     role: string
   }>
   expect(JSON.parse(messages[1].content)).toMatchObject({question})
-  expect(GenerationWorkspace).toHaveBeenCalledExactlyOnceWith({
-    facts: {birthYear: 1995},
-    fallbackAnswer: expect.any(String),
-    messages,
-  })
+  expect(GenerationWorkspace).toHaveBeenCalledExactlyOnceWith({messages})
 })
 
 it.each([

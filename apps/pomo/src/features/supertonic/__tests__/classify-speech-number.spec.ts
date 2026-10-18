@@ -15,6 +15,13 @@ const classify = (language: 'en' | 'ko', text: string, value: string) => {
 }
 
 describe('classifySpeechNumber', () => {
+  it.each(['children', 'feet', 'men', 'mice', 'people', 'teeth', 'women', 'devices'])(
+    'should classify an English quantity before %s',
+    (noun) => {
+      expect(classify('en', `3 ${noun}`, '3')).toEqual({confidence: 0.99, kind: 'count'})
+    },
+  )
+
   it.each([
     ['사과 3개', '3', 'count'],
     ['고양이 21마리', '21', 'count'],

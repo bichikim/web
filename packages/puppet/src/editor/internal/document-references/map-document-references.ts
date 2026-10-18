@@ -6,6 +6,7 @@ import {mapSceneReferences} from './map-scene-references'
 interface MapDocumentReferencesOptions {
   readonly document: PuppetDocument
   readonly rename: (id: string) => string
+  readonly keepNode?: (id: string) => boolean
   readonly keepPart?: (id: string) => boolean
 }
 
@@ -16,7 +17,12 @@ export const mapDocumentReferences = (options: MapDocumentReferencesOptions): Pu
     (value) => keepPart(value.first.partId) && keepPart(value.second.partId),
   )
   const glueIds = new Set(glue?.map((value) => value.id))
-  const transform = {keepGlue: (id: string) => glueIds.has(id), keepPart, rename}
+  const transform = {
+    keepGlue: (id: string) => glueIds.has(id),
+    keepNode: options.keepNode,
+    keepPart,
+    rename,
+  }
   return {
     ...document,
     glue: glue?.map((value) => ({
@@ -80,6 +86,14 @@ export const mapDocumentReferences = (options: MapDocumentReferencesOptions): Pu
                   part.psdSource.documentId === undefined
                     ? undefined
                     : rename(part.psdSource.documentId),
+              },
+        spatial:
+          part.spatial === undefined
+            ? undefined
+            : {
+                ...part.spatial,
+                groupId:
+                  part.spatial.groupId === undefined ? undefined : rename(part.spatial.groupId),
               },
       })),
     physics:

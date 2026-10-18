@@ -73,7 +73,7 @@ describe('AudioPlayerRoot', () => {
     const onTimeUpdate = vi.fn()
     const result = render(() => (
       <AudioPlayer.Root>
-        <AudioPlayer.Media onPlay={[onPlay, 'caller']} onTimeUpdate={onTimeUpdate} />
+        <AudioPlayer.Media onPlay={onPlay} onTimeUpdate={onTimeUpdate} />
         <AudioPlayer.Time />
         <AudioPlayer.PlayButton />
       </AudioPlayer.Root>
@@ -83,7 +83,7 @@ describe('AudioPlayerRoot', () => {
     fireEvent.timeUpdate(audio)
     fireEvent.play(audio)
 
-    expect(onPlay).toHaveBeenCalledWith('caller', expect.any(Event))
+    expect(onPlay).toHaveBeenCalledWith(expect.any(Event))
     expect(onTimeUpdate).toHaveBeenCalledOnce()
     expect(screen.getByText('0:12')).toBeDefined()
     expect(screen.getByRole('button', {name: 'Pause audio'})).toBeDefined()

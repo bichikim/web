@@ -1,0 +1,10 @@
+{
+  "workspace.js": {
+    "onlyDifference": "order of plain paths and options properties passed to prepareDocuments",
+    "normalizedEqual": true
+  },
+  "navigation-worker.js": {
+    "onlyDifference": "order of plain paths and options properties passed to prepareDocuments",
+    "normalizedEqual": true
+  }
+}

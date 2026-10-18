@@ -1,4 +1,5 @@
-const UUID_PATTERN = /^[\da-f]{8}-(?:[\da-f]{4}-){3}[\da-f]{12}$/iu
+import {regexes} from 'zod/v4/core'
+
 const TRACK_KEY_SEGMENT_COUNT = 4
 
 export interface CreateTrackAssetKeyOptions {
@@ -7,7 +8,7 @@ export interface CreateTrackAssetKeyOptions {
 }
 
 const assertUuid = (value: string, name: string) => {
-  if (!UUID_PATTERN.test(value)) {
+  if (!regexes.guid.test(value)) {
     throw new TypeError(`${name} must be a UUID`)
   }
 }

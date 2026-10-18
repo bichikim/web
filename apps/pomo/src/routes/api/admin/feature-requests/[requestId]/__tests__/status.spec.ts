@@ -42,21 +42,22 @@ it('should require administrator authorization before changing status', async ()
   expect(repositoryMocks.updateFeatureRequestStatus).not.toHaveBeenCalled()
 })
 
-it('should update the status and target vote count through the repository', async () => {
-  const response = await invokeApiRoute(
-    PATCH,
-    createRequest({status: 'voting', targetVoteCount: 10}),
-    {requestId: REQUEST_ID},
-  )
+it.each(['requested', 'voting', 'confirmed', 'completed'] as const)(
+  'should update status %s and target vote count through the repository',
+  async (status) => {
+    const response = await invokeApiRoute(PATCH, createRequest({status, targetVoteCount: 10}), {
+      requestId: REQUEST_ID,
+    })
 
-  expect(response.status).toBe(200)
-  await expect(response.json()).resolves.toEqual({status: 'updated'})
-  expect(repositoryMocks.updateFeatureRequestStatus).toHaveBeenCalledWith({
-    requestId: REQUEST_ID,
-    status: 'voting',
-    targetVoteCount: 10,
-  })
-})
+    expect(response.status).toBe(200)
+    await expect(response.json()).resolves.toEqual({status: 'updated'})
+    expect(repositoryMocks.updateFeatureRequestStatus).toHaveBeenCalledWith({
+      requestId: REQUEST_ID,
+      status,
+      targetVoteCount: 10,
+    })
+  },
+)
 
 it('should expose a missing request as not found', async () => {
   repositoryMocks.updateFeatureRequestStatus.mockResolvedValue({
@@ -79,5 +80,27 @@ it('should reject a voting state without a positive target', async () => {
   )
 
   expect(response.status).toBe(400)
+  expect(repositoryMocks.updateFeatureRequestStatus).not.toHaveBeenCalled()
+})
+
+it.each([
+  null,
+  undefined,
+  'Requested',
+  ' voting',
+  'voting ',
+  'deleted',
+  'constructor',
+  'toString',
+  '__proto__',
+  0,
+  [],
+  {},
+])('should reject unsupported status %j without updating the repository', async (status) => {
+  const response = await invokeApiRoute(PATCH, createRequest({status, targetVoteCount: 10}), {
+    requestId: REQUEST_ID,
+  })
+  expect(response.status).toBe(400)
+  await expect(response.json()).resolves.toEqual({error: 'invalid_request'})
   expect(repositoryMocks.updateFeatureRequestStatus).not.toHaveBeenCalled()
 })

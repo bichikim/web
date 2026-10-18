@@ -1,3 +1,6 @@
+const selectedLayerRow =
+  "[.puppet-editor_&[aria-selected='true']_>_.layer-tree-node_>_.editor-context-menu-trigger_>_.layer-row]"
+
 export const layersShortcuts = {
   'container-kind-trigger': [
     'relative flex shrink-0 items-center justify-center gap-editor-tight py-0 pl-0 pr-editor-related rounded-lg',
@@ -34,6 +37,15 @@ export const layersShortcuts = {
     '[.puppet-editor_&]:place-items-center [.puppet-editor_&]:[border:0.0625rem_solid_#313b37]',
     '[.puppet-editor_&]:[border-radius:0.375rem] [.puppet-editor_&]:[color:#84918c]',
     '[.puppet-editor_&]:text-editor-caption',
+  ],
+  'layer-filter': [
+    'flex min-w-0 items-center gap-editor-control pb-editor-field',
+    '[&_.layer-filter-input]:min-w-0 [&_.layer-filter-input]:flex-1',
+    '[&_.editor-text-input]:min-w-0 [&_.editor-text-input]:w-full',
+    '[&_.editor-text-input]:border [&_.editor-text-input]:border-solid [&_.editor-text-input]:border-[#35413d]',
+    '[&_.editor-text-input]:rounded-md [&_.editor-text-input]:bg-[#121816] [&_.editor-text-input]:text-[#edf4f0]',
+    '[&_.editor-text-input::placeholder]:text-[#84918c]',
+    '[&_.editor-text-input:focus-visible]:outline [&_.editor-text-input:focus-visible]:outline-[#64e5c4]',
   ],
   'layer-kind-badge': [
     'inline-block mr-editor-related px-editor-related rounded-sm bg-[#254c40] text-[#a4f3d9]',
@@ -151,7 +163,8 @@ export const layersShortcuts = {
   ],
   'layers-panel': [
     '[.puppet-editor_&]:flex [.puppet-editor_&]:flex-col [.puppet-editor_&]:min-w-0',
-    '[.puppet-editor_&]:overflow-hidden [.puppet-editor_&_>_:not(.layer-scroll)]:shrink-0',
+    '[.puppet-editor_&]:overflow-hidden',
+    '[.puppet-editor_&_>_:not(.puppet-layer-list-menu)]:shrink-0',
     '[.puppet-editor_&]:[grid-area:layers] [.puppet-editor_&]:[border-right:0.0625rem_solid_#27302d]',
   ],
   'puppet-layer-choice': [
@@ -162,6 +175,10 @@ export const layersShortcuts = {
     '[.puppet-editor_&]:[width:1.75rem] [.puppet-editor_&]:[height:1.75rem] [.puppet-editor_&]:[flex:none]',
     '[.puppet-editor_&.group]:[color:#e5b55a]',
     '[.puppet-editor_&.deformer]:[color:#76d8c0]',
+  ],
+  'puppet-layer-list-menu': [
+    '[.puppet-editor_&]:flex [.puppet-editor_&]:flex-col [.puppet-editor_&]:min-h-0',
+    '[.puppet-editor_&]:min-w-0 [.puppet-editor_&]:flex-1',
   ],
   'puppet-layer-name-editor': [
     '[.puppet-editor_&]:grid [.puppet-editor_&]:min-w-0',
@@ -175,6 +192,7 @@ export const layersShortcuts = {
     '[.puppet-editor_&_input:focus-visible]:[outline:0.125rem_solid_#61e3c1]',
     '[.puppet-editor_&_input:focus-visible]:[outline-offset:0.0625rem]',
   ],
+  'puppet-layer-row-menu': ['[.puppet-editor_&]:contents'],
   'puppet-layer-state-actions': [
     '[.puppet-editor_&_button]:inline-grid [.puppet-editor_&_button]:place-items-center',
     '[.puppet-editor_&_button]:[min-height:1.625rem] [.puppet-editor_&_button]:[border:0.0625rem_solid_#35413d]',
@@ -195,10 +213,10 @@ export const layersShortcuts = {
     '[.puppet-editor_&]:block [.puppet-editor_&]:[width:0.875rem] [.puppet-editor_&]:[height:0.875rem]',
   ],
   'puppet-layer-tree-item': [
-    "[.puppet-editor_&[aria-selected='true']_>_.layer-tree-node_>_.layer-row]:[border-color:#64e5c4]",
-    "[.puppet-editor_&[aria-selected='true']_>_.layer-tree-node_>_.layer-row]:[background:#1a2925]",
-    "[.puppet-editor_&[aria-selected='true']_>_.layer-tree-node_>_.layer-row]:[box-shadow:inset_0.1875rem_0_0_#64e5c4]",
-    '[.puppet-editor_&.dragging_>_.layer-tree-node_>_.layer-row]:[opacity:0.5]',
+    `${selectedLayerRow}:[border-color:#64e5c4]`,
+    `${selectedLayerRow}:[background:#1a2925]`,
+    `${selectedLayerRow}:[box-shadow:inset_0.1875rem_0_0_#64e5c4]`,
+    '[.puppet-editor_&.dragging_>_.layer-tree-node_>_.editor-context-menu-trigger_>_.layer-row]:[opacity:0.5]',
   ],
   'puppet-layer-tree-spacer': [
     '[.puppet-editor_&]:grid [.puppet-editor_&]:[width:1rem] [.puppet-editor_&]:[height:2.25rem]',

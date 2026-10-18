@@ -5,6 +5,7 @@ import {getParameterEditTarget} from './parameter-edit-target'
 import {setDeformerControlPoints} from './deformer-control-points'
 import {setParameterKeyformDeformerControlPoints} from './parameter-deformer-keyforms'
 import {applyGridBrush, type GridBrushMode} from './apply-grid-brush'
+import {useDeformerGestureCancellation} from './use-deformer-gesture-cancellation'
 
 interface UseGridBrushProps {
   readonly editor: DeformerEditorProps
@@ -79,21 +80,11 @@ const useStrokeCancellation = (
       cancel()
     }
   }
-  createEffect(
-    on(
-      () => [
-        props.editor.document,
-        props.editor.activeNodeId,
-        props.editor.deformerMode,
-        props.editable(),
-      ],
-      cancel,
-    ),
-  )
+  createEffect(on(() => [props.editor.document, props.editable()], cancel))
+  useDeformerGestureCancellation(props.editor, cancel)
   globalThis.addEventListener('keydown', handleKeyDown)
   globalThis.addEventListener('blur', cancel)
   onCleanup(() => {
-    cancel()
     globalThis.removeEventListener('keydown', handleKeyDown)
     globalThis.removeEventListener('blur', cancel)
   })

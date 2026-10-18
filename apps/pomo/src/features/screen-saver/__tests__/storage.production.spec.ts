@@ -3,7 +3,7 @@
 import {renderHook} from '@solidjs/testing-library'
 import {afterEach, expect, it, vi} from 'vitest'
 
-import {createTestBroadcastChannel} from 'src/test-utils/create-test-broadcast-channel'
+import {createTestBroadcastChannel} from 'src/__tests__/create-test-broadcast-channel'
 import {useDesktopSceneSettingsListener} from '../../desktop-mode/scene-settings'
 
 const TestBroadcastChannel = createTestBroadcastChannel()

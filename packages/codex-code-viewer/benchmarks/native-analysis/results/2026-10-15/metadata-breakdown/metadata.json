@@ -1,0 +1,16 @@
+{
+  "root": "/Users/bichi/.codex/worktrees/379e/web",
+  "collectedAtUtc": "2026-10-15T12:58:59.998903+00:00",
+  "node": "v24.15.0",
+  "platform": "macOS-26.5.2-arm64-arm-64bit-Mach-O",
+  "binary": "/Users/bichi/.codex/worktrees/379e/web/packages/codex-code-viewer/dist/typescript/darwin-arm64/tsc",
+  "binarySha256": "a82f731365ad69d5c4c15f5e18fba4584bf3b7b839960172a76c3462b5114bf2",
+  "goEnvironment": {
+    "GOGC": null,
+    "GOMEMLIMIT": null,
+    "GOMAXPROCS": null
+  },
+  "cohort": "7 before/after pairs per target; cold and immediate repeat; alternating order; fresh CODEX_HOME per process; OS cache not flushed; no own tests/builds/profiles/source edits during collection",
+  "clock": "server receipt of nonempty location batches, not browser paint",
+  "records": 56
+}

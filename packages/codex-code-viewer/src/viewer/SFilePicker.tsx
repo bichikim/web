@@ -1,3 +1,4 @@
+import {useTranslations} from './locale/use-translations'
 import {createEffect, createSignal, createUniqueId, type JSX, on, Show} from 'solid-js'
 import type {NavigationOptions} from './types'
 import type {CodeLocation} from '../shared/contracts'
@@ -17,7 +18,31 @@ interface SFilePickerProps {
   actions?: JSX.Element
 }
 
+const navigateFiles = (event: KeyboardEvent, picker: ReturnType<typeof useFilePicker>): void => {
+  if (event.isComposing) {
+    return
+  }
+  switch (event.key) {
+    case 'ArrowDown':
+      event.preventDefault()
+      picker.move(1)
+      break
+    case 'ArrowUp':
+      event.preventDefault()
+      picker.move(-1)
+      break
+    case 'Escape':
+      if (picker.expanded()) {
+        event.preventDefault()
+        event.stopPropagation()
+        picker.dismiss()
+      }
+      break
+  }
+}
+
 export const SFilePicker = (props: SFilePickerProps) => {
+  const t = useTranslations()
   const anchor = `--file-picker-${createUniqueId()}`
   const [input, setInput] = createSignal<HTMLInputElement | null>(null)
   const [popup, setPopup] = createSignal<HTMLDivElement | null>(null)
@@ -70,28 +95,6 @@ export const SFilePicker = (props: SFilePickerProps) => {
   const handleComposition = (event: CompositionEvent & {currentTarget: HTMLInputElement}): void => {
     picker.change(event.currentTarget.value)
   }
-  const handleKeyboard = (event: KeyboardEvent): void => {
-    if (event.isComposing) {
-      return
-    }
-    switch (event.key) {
-      case 'ArrowDown':
-        event.preventDefault()
-        picker.move(1)
-        break
-      case 'ArrowUp':
-        event.preventDefault()
-        picker.move(-1)
-        break
-      case 'Escape':
-        if (picker.expanded()) {
-          event.preventDefault()
-          event.stopPropagation()
-          picker.dismiss()
-        }
-        break
-    }
-  }
   const handleBlur = (event: FocusEvent & {currentTarget: HTMLElement}): void => {
     const target = event.relatedTarget
     if (!(target instanceof Node) || !event.currentTarget.contains(target)) {
@@ -118,16 +121,18 @@ export const SFilePicker = (props: SFilePickerProps) => {
             aria-autocomplete="list"
             aria-controls={picker.expanded() ? 'file-results' : undefined}
             aria-expanded={picker.expanded()}
-            aria-label="파일 경로 또는 검색어"
+            aria-label={t('파일 경로 또는 검색어')}
             class="h-full min-w-0 flex-1 bg-transparent text-sm text-foreground outline-none placeholder:text-muted"
             onCompositionEnd={handleComposition}
             onClick={handleClick}
             onFocus={handleFocus}
             onInput={handleInput}
-            onKeyDown={handleKeyboard}
+            onKeyDown={(event) => navigateFiles(event, picker)}
             onPointerCancel={() => setPointerFocus(false)}
             onPointerDown={() => setPointerFocus(true)}
-            placeholder={props.searchable ? '파일 경로 또는 검색어…' : '파일의 절대 경로 입력…'}
+            placeholder={
+              props.searchable ? t('파일 경로 또는 검색어…') : t('파일의 절대 경로 입력…')
+            }
             ref={setInput}
             role="combobox"
             value={picker.query()}
@@ -138,7 +143,7 @@ export const SFilePicker = (props: SFilePickerProps) => {
           disabled={!picker.canSubmit()}
           type="submit"
         >
-          {picker.input().kind === 'path' ? '파일 열기' : '검색'}
+          {picker.input().kind === 'path' ? t('파일 열기') : t('검색')}
         </button>
         {props.actions}
       </form>

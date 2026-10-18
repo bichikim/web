@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 
 import {cleanup, fireEvent, render, screen} from '@solidjs/testing-library'
-import type {JSX} from 'solid-js'
+import {For, type JSX} from 'solid-js'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
 import {supportsTextModel} from 'src/features/text-generation'
@@ -13,6 +13,25 @@ vi.mock('@solidjs/meta', () => ({
 }))
 vi.mock('@solidjs/router', () => ({
   A: (props: {children?: JSX.Element; href: string}) => <a href={props.href}>{props.children}</a>,
+}))
+vi.mock('../../p-select/PSelect', () => ({
+  PSelect: (props: {
+    accessibleLabel?: string
+    label: string
+    onChange: (value: string) => void
+    options: ReadonlyArray<{label: string; value: string}>
+    value: string
+  }) => (
+    <select
+      aria-label={props.accessibleLabel ?? props.label}
+      value={props.value}
+      onChange={(event) => props.onChange(event.currentTarget.value)}
+    >
+      <For each={props.options}>
+        {(option) => <option value={option.value}>{option.label}</option>}
+      </For>
+    </select>
+  ),
 }))
 
 vi.mock('src/features/text-generation', () => ({supportsTextModel: vi.fn()}))
@@ -35,7 +54,7 @@ afterEach(async () => {
   vi.unstubAllGlobals()
 })
 
-it('should send displayed birth facts and messages through the real generation workspace', async () => {
+it('should send displayed messages through the real generation workspace', async () => {
   render(() => <SajuPage />)
 
   fireEvent.input(screen.getByLabelText('질문'), {target: {value: '재물에 대해 알려줘'}})
@@ -56,14 +75,12 @@ it('should send displayed birth facts and messages through the real generation w
   expect(messages[1].content).toContain('"金"')
   await vi.dynamicImportSettled()
   expect(send).toHaveBeenCalledExactlyOnceWith({
-    facts: {birthYear: 1995},
-    fallbackAnswer: expect.any(String),
     messages,
     type: 'generate',
   })
 })
 
-it('should dispose real generation when an invalid date removes the reading', async () => {
+it('should dispose real generation when an invalid lunar date removes the reading', async () => {
   render(() => <SajuPage />)
 
   const form = screen.getByRole('button', {name: '사주 풀이 생성'}).closest('form')!
@@ -71,7 +88,9 @@ it('should dispose real generation when an invalid date removes the reading', as
   fireEvent.submit(form)
   await vi.dynamicImportSettled()
   expect(send).toHaveBeenCalledOnce()
-  fireEvent.input(screen.getByLabelText('생년월일'), {target: {value: '1899-01-01'}})
+  fireEvent.click(screen.getByRole('radio', {name: '음력'}))
+  fireEvent.click(screen.getByRole('checkbox', {name: '윤달'}))
+  expect(screen.queryByRole('combobox', {name: '음력 일'})).toBeNull()
   fireEvent.submit(form)
 
   expect(screen.getByRole('alert')).toBeTruthy()

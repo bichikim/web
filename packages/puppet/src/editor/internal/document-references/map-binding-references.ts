@@ -3,10 +3,12 @@ import type {ReferenceTransform} from './types'
 
 const mapForm = <T extends PuppetParameterKeyform>(form: T, transform: ReferenceTransform): T => ({
   ...form,
-  deformers: form.deformers?.map((deformer) => ({
-    ...deformer,
-    nodeId: transform.rename(deformer.nodeId),
-  })),
+  deformers: form.deformers
+    ?.filter((deformer) => transform.keepNode?.(deformer.nodeId) !== false)
+    .map((deformer) => ({
+      ...deformer,
+      nodeId: transform.rename(deformer.nodeId),
+    })),
   parts: form.parts
     .filter((part) => transform.keepPart(part.partId))
     .map((part) => ({
@@ -29,7 +31,9 @@ export const mapBindingReferences = (
       ...influence,
       parameterId: transform.rename(influence.parameterId),
     })),
-    targetDeformerIds: binding.targetDeformerIds?.map(transform.rename),
+    targetDeformerIds: binding.targetDeformerIds
+      ?.filter((id) => transform.keepNode?.(id) !== false)
+      .map(transform.rename),
     targetPartIds: binding.targetPartIds?.filter(transform.keepPart).map(transform.rename),
   }
   if (binding.parameterIds.length === 1) {

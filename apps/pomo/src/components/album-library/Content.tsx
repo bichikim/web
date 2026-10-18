@@ -8,6 +8,7 @@ import {LoadingStatus} from './LoadingStatus'
 import {useAlbumLibrary} from './use-album-library'
 import * as m from '@paraglide/message'
 import {PublishedCatalogError} from './PublishedCatalogError'
+import {PStatus} from './PStatus'
 
 export interface PAlbumLibraryContentProps {
   readonly onAddTracks: (tracks: readonly PTrack[]) => void
@@ -75,28 +76,18 @@ export function PAlbumLibraryContent(props: PAlbumLibraryContentProps) {
           reportClientError(error, {feature: 'album-library', source: 'error-boundary'})
 
           return (
-            <div
-              class="grid min-h-32 place-items-center rounded-control border border-dashed
-              border-border p-5 text-center"
-            >
-              <div>
-                <span
-                  aria-hidden="true"
-                  class="i-tabler-music-off mx-auto mb-2 block size-6 text-highlight"
-                />
-                <p class="m-0 text-sm font-650">{m.album_load_failed()}</p>
-                <PButton
-                  bordered
-                  transparent
-                  class="mt-3"
-                  onPress={() => albumLibrary.retryLibrary().then(reset)}
-                  size="small"
-                  tone="secondary"
-                >
-                  {m.album_retry()}
-                </PButton>
-              </div>
-            </div>
+            <PStatus message={m.album_load_failed()}>
+              <PButton
+                bordered
+                transparent
+                class="mt-3"
+                onPress={() => albumLibrary.retryLibrary().then(reset)}
+                size="small"
+                tone="secondary"
+              >
+                {m.album_retry()}
+              </PButton>
+            </PStatus>
           )
         }}
       >
@@ -113,18 +104,7 @@ export function PAlbumLibraryContent(props: PAlbumLibraryContentProps) {
           <Show
             fallback={
               <Show when={albumLibrary.catalogError() === null}>
-                <div
-                  class="grid min-h-32 place-items-center rounded-control border border-dashed
-                    border-border p-5 text-center"
-                >
-                  <div>
-                    <span
-                      aria-hidden="true"
-                      class="i-tabler-music-off mx-auto mb-2 block size-6 text-highlight"
-                    />
-                    <p class="m-0 text-sm font-650">{m.album_empty()}</p>
-                  </div>
-                </div>
+                <PStatus message={m.album_empty()} />
               </Show>
             }
             when={albumLibrary.albums().length > 0}

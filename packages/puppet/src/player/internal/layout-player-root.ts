@@ -1,3 +1,4 @@
+import type {PlayerViewCamera} from '../view-camera'
 import type {Container} from 'pixi.js'
 
 import type {PuppetDocument} from '../document'
@@ -5,6 +6,7 @@ import type {PuppetDocument} from '../document'
 const VIEWPORT_PADDING = 1
 
 interface LayoutPlayerRootOptions {
+  readonly camera?: PlayerViewCamera
   readonly document: PuppetDocument
   readonly root: Container
   readonly screen: {
@@ -15,6 +17,12 @@ interface LayoutPlayerRootOptions {
 }
 
 export const layoutPlayerRoot = (options: LayoutPlayerRootOptions) => {
+  if (options.camera !== undefined) {
+    const {x, y, zoom} = options.camera
+    options.root.scale.set(zoom)
+    options.root.position.set(-x * zoom, -y * zoom)
+    return
+  }
   const viewportPadding = Math.max(0, options.viewportPadding ?? 0)
   const viewportWidth = options.document.viewport.width * (1 + viewportPadding * 2)
   const viewportHeight = options.document.viewport.height * (1 + viewportPadding * 2)
