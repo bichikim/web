@@ -88,7 +88,7 @@ export function useLoopPlayer() {
     }
   }
   const play = async (preview: boolean) => {
-    controls.invalidate()
+    controls.cancelScrubbing()
     const current = player
     if (current === undefined) {
       return
