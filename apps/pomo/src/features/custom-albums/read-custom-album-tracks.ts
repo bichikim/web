@@ -10,19 +10,13 @@ import {CUSTOM_TRACK_ID_PREFIX, CustomAlbumError} from './model'
 import {toCustomPTrack} from './to-custom-p-track'
 
 export interface ReadCustomAlbumTracksOptions {
+  /** 누락 레코드는 제외하고, 손상된 요청 레코드마다 원래 검증 원인과 요청 ID를 한 번 전달한다. */
+  readonly onError: (error: CustomAlbumError, trackId: string) => void
+  /** 요청 순서를 보존하며 중복 ID와 커스텀 트랙이 아닌 ID는 제외한다. */
   readonly trackIds: readonly string[]
 }
 
-const parseStoredTrack = (value: unknown) => {
-  const result = storedTrackSchema.safeParse(value)
-
-  if (!result.success) {
-    throw new CustomAlbumError('corrupt-data', {cause: result.error})
-  }
-
-  return result.data
-}
-
+/** 손상 레코드만 건너뛰어 정상 트랙을 읽는다. 저장소는 변경하지 않으며 DB 요청·트랜잭션 실패는 거부한다. */
 export const readCustomAlbumTracks = async (
   options: ReadCustomAlbumTracksOptions,
 ): Promise<readonly PTrack[]> => {
@@ -38,12 +32,26 @@ export const readCustomAlbumTracks = async (
   const transaction = database.transaction(TRACK_STORE_NAME, 'readonly')
   const finished = waitForTransaction(transaction)
   const trackRequests = trackIds.map((trackId) =>
-    readRequest<unknown>(transaction.objectStore(TRACK_STORE_NAME).get(trackId)),
+    readRequest<unknown>(transaction.objectStore(TRACK_STORE_NAME).get(trackId)).then((track) => ({
+      track,
+      trackId,
+    })),
   )
-  const [, rawTracks] = await Promise.all([finished, Promise.all(trackRequests)])
-  const tracks = rawTracks.flatMap((track) =>
-    track === undefined ? [] : [parseStoredTrack(track)],
-  )
+  const [, requestedTracks] = await Promise.all([finished, Promise.all(trackRequests)])
+  const tracks = requestedTracks.flatMap(({track, trackId}) => {
+    if (track === undefined) {
+      return []
+    }
+
+    const result = storedTrackSchema.safeParse(track)
+
+    if (!result.success) {
+      options.onError(new CustomAlbumError('corrupt-data', {cause: result.error}), trackId)
+      return []
+    }
+
+    return [result.data]
+  })
 
   return tracks.map(toCustomPTrack)
 }
