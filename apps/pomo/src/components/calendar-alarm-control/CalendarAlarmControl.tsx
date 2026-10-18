@@ -5,46 +5,10 @@ import * as m from '@paraglide/message'
 import type {CalendarEvent} from '../../features/calendar'
 import type {MemoryMemo} from '../../features/memory-assist'
 import {useCalendarAlarmController} from '../../features/calendar-alarm'
-import {localDateRuntime, type LocalDateRuntime, useLocalDate} from '../../features/civil-date'
 import {PButton} from '../p-button/PButton'
+import {CalendarAlarmDateInput} from './DateInput'
+import {INPUT_CLASSES} from './input-classes'
 const systemNow = () => new Date()
-const INPUT_CLASSES = cx(
-  'box-border min-h-control-md min-w-0 w-full rounded-panel-inner border border-solid border-border',
-  'bg-content-surface px-4 text-base text-foreground outline-none',
-  'focus-visible:border-highlight focus-visible:shadow-focus',
-)
-
-interface CalendarAlarmDateInputProps {
-  readonly clock: Accessor<Date>
-  readonly onInput: (value: string) => void
-  readonly timeZone: Accessor<string>
-  readonly value: Accessor<string>
-}
-
-const CalendarAlarmDateInput = (props: CalendarAlarmDateInputProps) => {
-  const clock = () => props.clock()
-  const timeZone = () => props.timeZone()
-  const runtime: LocalDateRuntime = {
-    now: clock,
-    schedule: localDateRuntime.schedule,
-    subscribe: localDateRuntime.subscribe,
-  }
-  const minimumDate = useLocalDate({runtime, timeZone})
-
-  return (
-    <label class="grid gap-1.5 text-sm font-650">
-      <span>{m.calendar_alarm_date()}</span>
-      <PInput
-        unstyled
-        class={INPUT_CLASSES}
-        min={minimumDate()}
-        onInput={(event) => props.onInput(event.currentTarget.value)}
-        type="date"
-        value={props.value()}
-      />
-    </label>
-  )
-}
 
 interface CalendarAlarmControlProps {
   readonly now?: Accessor<Date>

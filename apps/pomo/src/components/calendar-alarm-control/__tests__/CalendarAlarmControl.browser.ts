@@ -2,24 +2,24 @@ import {cleanup, render} from '@solidjs/testing-library'
 import {createComponent} from 'solid-js'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 import {page, userEvent} from 'vitest/browser'
+import {getLocale, overwriteGetLocale} from '@paraglide/runtime'
 
 import type {CalendarEvent} from '../../../features/calendar'
 import {localDateRuntime} from '../../../features/civil-date'
 import {MEMORY_MEMOS_STORAGE_KEY} from '../../../features/memory-assist/repository'
+import {usePEvents} from '../../../features/focus-room-dialogue'
 import {CalendarAlarmControl} from '../CalendarAlarmControl'
 
 const VIEWPORT_WIDTH = 800
 const VIEWPORT_HEIGHT = 600
 const FINAL_SUBSCRIPTION_COUNT = 3
 
-vi.mock('../../../features/focus-room-dialogue', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../../../features/focus-room-dialogue')>()
-  return {
-    ...actual,
-    deleteDialogueAudio: async () => undefined,
-    usePEvents: () => ({deleteDialogue: async () => undefined}),
-  }
-})
+vi.mock('../../../features/focus-room-dialogue', () => ({
+  createPDialogueRepository: vi.fn(),
+  deleteDialogueAudio: vi.fn(),
+  generateCompressedDialogueAudio: vi.fn(),
+  usePEvents: vi.fn(),
+}))
 
 const event: CalendarEvent = {
   accountLabel: 'person@example.com',
@@ -35,22 +35,25 @@ const event: CalendarEvent = {
 let timerCancelCount = 0
 let visibilityUnsubscribeCount = 0
 let outsideButton: HTMLButtonElement | undefined
+const originalGetLocale = getLocale
 
 beforeEach(async () => {
+  overwriteGetLocale(() => 'ko')
   await page.viewport(VIEWPORT_WIDTH, VIEWPORT_HEIGHT)
   localStorage.removeItem(MEMORY_MEMOS_STORAGE_KEY)
   timerCancelCount = 0
   visibilityUnsubscribeCount = 0
+  vi.mocked(usePEvents, {partial: true}).mockReturnValue({
+    deleteDialogue: vi.fn(async () => undefined),
+  })
   outsideButton = document.createElement('button')
   outsideButton.textContent = 'Outside'
-  outsideButton.style.position = 'fixed'
-  outsideButton.style.right = '0'
-  outsideButton.style.bottom = '0'
   document.body.append(outsideButton)
 })
 
 afterEach(() => {
   cleanup()
+  overwriteGetLocale(originalGetLocale)
   outsideButton?.remove()
   outsideButton = undefined
   localStorage.removeItem(MEMORY_MEMOS_STORAGE_KEY)
@@ -119,9 +122,7 @@ it('should unmount the live date subscription after native dismissals and a succ
   await page.getByRole('button', {name: '알람 저장'}).click()
   await expectClosed(FINAL_SUBSCRIPTION_COUNT)
 
-  const storedMemos = JSON.parse(localStorage.getItem(MEMORY_MEMOS_STORAGE_KEY) ?? '[]') as Array<{
-    exactReminderAt: string
-  }>
-  expect(storedMemos).toHaveLength(1)
-  expect(storedMemos[0]?.exactReminderAt).toBe('2026-02-01T00:00:00.000Z')
+  expect(JSON.parse(localStorage.getItem(MEMORY_MEMOS_STORAGE_KEY) ?? '[]')).toEqual([
+    expect.objectContaining({exactReminderAt: '2026-02-01T00:00:00.000Z'}),
+  ])
 })
