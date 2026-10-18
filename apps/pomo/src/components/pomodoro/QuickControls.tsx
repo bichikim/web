@@ -9,7 +9,7 @@ import {
 import type {PSceneStyle} from '../../features/focus-room-animation/index'
 import {type PomodoroPhase} from '../../features/pomodoro-timer/index'
 import * as m from '@paraglide/message'
-import {PScribbleCircleFrame} from '../scribble/CircleFrame'
+import {CIRCLE_PATHS} from '../scribble/circle-paths'
 import {PScribbleFrame} from '../scribble/Frame'
 import {CLASSES} from './shared'
 
@@ -106,7 +106,7 @@ export const PomodoroQuickControls = (props: PomodoroQuickControlsProps) => {
           />
           <span aria-hidden="true" class={CLASSES.pomodoroActionIndicator}>
             <Show when={props.sceneStyle === 'scribble'}>
-              <PScribbleCircleFrame />
+              <PScribbleFrame paths={CIRCLE_PATHS} />
             </Show>
             <span class={cx(props.primaryIcon, CLASSES.pomodoroActionIcon)} />
           </span>

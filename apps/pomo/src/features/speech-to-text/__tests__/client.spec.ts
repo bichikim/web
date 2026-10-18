@@ -1,46 +1,11 @@
 /** @vitest-environment node */
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
+import {createWorkerHarness} from 'src/__tests__/create-worker-harness'
 
 import {createSpeechRecognizer} from '../index'
 import type {SpeechWorkerResponse} from '../messages'
 
-type WorkerListener = (event: ErrorEvent | MessageEvent<SpeechWorkerResponse>) => void
-
-class FakeWorker {
-  static current: FakeWorker | null = null
-
-  readonly postMessage = vi.fn()
-  readonly terminate = vi.fn()
-  readonly #listeners = new Map<string, Array<WorkerListener>>()
-
-  constructor() {
-    FakeWorker.current = this
-  }
-
-  addEventListener(type: string, listener: WorkerListener) {
-    const listeners = this.#listeners.get(type) ?? []
-    listeners.push(listener)
-    this.#listeners.set(type, listeners)
-  }
-
-  emitError(message: string) {
-    for (const listener of this.#listeners.get('error') ?? []) {
-      listener({message} as ErrorEvent)
-    }
-  }
-
-  emitMessage(message: SpeechWorkerResponse) {
-    for (const listener of this.#listeners.get('message') ?? []) {
-      listener({data: message} as MessageEvent<SpeechWorkerResponse>)
-    }
-  }
-
-  emitMessageError() {
-    for (const listener of this.#listeners.get('messageerror') ?? []) {
-      listener({} as MessageEvent)
-    }
-  }
-}
+const FakeWorker = createWorkerHarness<SpeechWorkerResponse>()
 
 const getWorker = () => {
   const worker = FakeWorker.current

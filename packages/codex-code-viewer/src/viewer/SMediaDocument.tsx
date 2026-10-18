@@ -1,9 +1,12 @@
+import {useLocalizedMessage} from './locale/use-localized-message'
+import {useTranslations} from './locale/use-translations'
 import {createSignal, Match, onCleanup, Show, Switch} from 'solid-js'
 import type {CodeDocument} from '../shared/contracts'
 import type {ViewerPort} from './types'
 import {SImageDocument} from './SImageDocument'
 import {useMediaUrl} from './use-media-url'
 import {SPdfDocument} from './SPdfDocument'
+import {SOfficeDocument} from './office/SOfficeDocument'
 
 interface SMediaDocumentProps {
   document: CodeDocument
@@ -12,6 +15,8 @@ interface SMediaDocumentProps {
   onError?: (error: unknown) => void
 }
 export const SMediaDocument = (props: SMediaDocumentProps) => {
+  const t = useTranslations()
+  const localize = useLocalizedMessage()
   const media = useMediaUrl({
     document: () => props.document,
     onError: (error) => props.onError?.(error),
@@ -36,12 +41,28 @@ export const SMediaDocument = (props: SMediaDocumentProps) => {
             when={media.url()}
             fallback={
               <p role="status" class="m-0 p-4 text-sm text-muted">
-                미디어 불러오는 중… {media.progress()}%
+                {t('미디어 불러오는 중…')}
+                {media.progress()}%
               </p>
             }
           >
             {(url) => (
               <Switch>
+                <Match
+                  when={
+                    props.document.media?.kind === 'word' ||
+                    props.document.media?.kind === 'spreadsheet'
+                  }
+                >
+                  <Show when={media.blob()}>
+                    {(blob) => (
+                      <SOfficeDocument
+                        blob={blob()}
+                        kind={props.document.media?.kind === 'word' ? 'word' : 'spreadsheet'}
+                      />
+                    )}
+                  </Show>
+                </Match>
                 <Match when={props.document.media?.kind === 'pdf'}>
                   <Show when={media.blob()}>
                     {(blob) => (
@@ -93,7 +114,7 @@ export const SMediaDocument = (props: SMediaDocumentProps) => {
       >
         {(error) => (
           <p role="status" class="m-0 p-4 text-sm text-muted">
-            {error()}
+            {localize(error())}
           </p>
         )}
       </Show>

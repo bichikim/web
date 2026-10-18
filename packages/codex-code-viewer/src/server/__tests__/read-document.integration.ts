@@ -11,7 +11,35 @@ describe('readDocument', () => {
   })
   afterEach(() => rmSync(root, {force: true, recursive: true}))
   it.each([
+    [
+      'report.docx',
+      'word',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    ],
+    [
+      'workbook.XLSX',
+      'spreadsheet',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    ],
+  ])('should open %s as a binary document with a transferable revision', (path, kind, mimeType) => {
+    writeFileSync(join(root, path), Buffer.from([80, 75, 0, 255]))
+    const result = readDocument(root, path)
+    expect(result).toMatchObject({
+      ok: true,
+      value: {lines: [[]], media: {kind, mimeType, size: 4}, source: ''},
+    })
+    if (result.ok) {
+      expect(result.value.revision).not.toBe('')
+    }
+  })
+  it.each([
     ['main.rs', 'fn main() {}', 'fn', 'keyword'],
+    ['main.rb', 'class Report\nend', 'class', 'keyword'],
+    ['MAIN.RB', 'module Reports\nend', 'module', 'keyword'],
+    ['tasks.rake', 'def build\nend', 'def', 'keyword'],
+    ['viewer.gemspec', 'if true\nend', 'if', 'keyword'],
+    ['Gemfile', "source 'https://rubygems.org'\nif true\nend", 'if', 'keyword'],
+    ['Rakefile', 'def build\nend', 'def', 'keyword'],
     ['Cargo.lock', '# Generated\nversion = 4', '4', 'number'],
     ['Cargo.toml', '[package]\nname = "hello"', '"hello"', 'string'],
     ['config.yaml', '# comment\nname: hello', '# comment', 'comment'],
@@ -20,6 +48,23 @@ describe('readDocument', () => {
     ['config.json5', "{name: 'hello',}", "'hello'", 'string'],
     ['index.html', '<h1 class="title">HTML 원문</h1>', 'h1', 'keyword'],
     ['index.htm', '<h1>HTML 원문</h1>', 'h1', 'keyword'],
+    ['styles.css', '.card {color: red}', 'color', 'keyword'],
+    ['styles.scss', '$color: red; .card {color: $color}', 'color', 'keyword'],
+    ['styles.sass', '.card\n  color: red\n', 'color', 'keyword'],
+    ['styles.less', '@color: red; .card {color: @color}', 'color', 'keyword'],
+    [
+      'Panel.vue',
+      '<script setup>const title = "viewer"</script><template><h1>{{title}}</h1></template>',
+      'const',
+      'keyword',
+    ],
+    ['Panel.svelte', '<script>const title = "viewer"</script><h1>{title}</h1>', 'const', 'keyword'],
+    ['Panel.astro', '---\nconst title = "viewer"\n---\n<h1>{title}</h1>', 'const', 'keyword'],
+    ['document.xml', '<viewer name="hello"/>', 'viewer', 'keyword'],
+    ['settings.ini', '[viewer]\nname=hello', 'name', 'keyword'],
+    ['settings.conf', 'name=hello', 'name', 'keyword'],
+    ['settings.cfg', 'name=hello', 'name', 'keyword'],
+    ['settings.properties', 'name=hello', 'name', 'keyword'],
     ['INDEX.HTML', '<h1>HTML 원문</h1>', 'h1', 'keyword'],
   ])('should read and highlight %s at the requested location', (path, source, text, kind) => {
     writeFileSync(join(root, path), source)
@@ -52,11 +97,17 @@ describe('readDocument', () => {
       )
     }
   })
-  it('should preserve image-only preview for SVG larger than the source limit', () => {
+  it('should open large SVG source without eagerly highlighting its full contents', () => {
     writeFileSync(join(root, 'large.svg'), `<svg>${' '.repeat(524288)}</svg>`)
     expect(readDocument(root, 'large.svg')).toMatchObject({
       ok: true,
-      value: {media: {mimeType: 'image/svg+xml'}, source: ''},
+      value: {
+        lineCount: 1,
+        lines: [],
+        media: {mimeType: 'image/svg+xml'},
+        readOnly: true,
+        source: `<svg>${' '.repeat(524288)}</svg>`,
+      },
     })
   })
   it('should read other lock files as plain text instead of TOML', () => {
@@ -157,14 +208,32 @@ describe('readDocument', () => {
       },
     })
   })
-  it('should reject directories and oversized text', () => {
+  it('should reject directories', () => {
     mkdirSync(join(root, 'folder.png'))
-    writeFileSync(join(root, 'large.txt'), 'a'.repeat(524289))
     expect(readDocument(root, 'folder.png')).toMatchObject({
       error: {code: 'unsupported-file'},
       ok: false,
     })
-    expect(readDocument(root, 'large.txt')).toMatchObject({error: {code: 'too-large'}, ok: false})
+  })
+  it.each(['txt', 'ts', 'py', 'rb', 'rs', 'md', 'csv'])(
+    'should open large %s source for viewport rendering',
+    (extension) => {
+      const source = `${'// padding\r\n'.repeat(50000)}export const target = 1\n`
+      writeFileSync(join(root, `large.${extension}`), source)
+      expect(readDocument(root, `large.${extension}`, 50001)).toMatchObject({
+        ok: true,
+        value: {lineCount: 50002, lines: [], location: {line: 50001}, readOnly: true, source},
+      })
+    },
+  )
+  it('should reject text above the viewing limit before reading its contents', () => {
+    const path = join(root, 'oversized.txt')
+    writeFileSync(path, '')
+    truncateSync(path, 33554433)
+    expect(readDocument(root, 'oversized.txt')).toMatchObject({
+      error: {code: 'text-too-large'},
+      ok: false,
+    })
   })
   it('should reject media larger than 128 MiB before transferring any bytes', () => {
     const path = join(root, 'large.mp4')

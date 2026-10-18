@@ -1,6 +1,8 @@
 /** @vitest-environment node */
 import type {Response as OpenAiResponse} from 'openai/resources/responses/responses'
 import {beforeEach, expect, it, vi} from 'vitest'
+import {findApiAiJob} from 'src/server/repositories/api-ai'
+import type {ApiAiStatus} from 'src/server/api-ai/types'
 
 const openAiMocks = vi.hoisted(() => ({
   getOpenAiClient: vi.fn(),
@@ -8,6 +10,7 @@ const openAiMocks = vi.hoisted(() => ({
 }))
 
 vi.mock('../openai-client', () => ({getOpenAiClient: openAiMocks.getOpenAiClient}))
+vi.mock('src/server/repositories/api-ai', () => ({findApiAiJob: vi.fn()}))
 
 import {retrieveHistoryResponse} from '../response-result'
 
@@ -115,3 +118,52 @@ it('should propagate retrieval failures without creating a result', async () => 
   openAiMocks.retrieve.mockRejectedValue(failure)
   await expect(retrieveHistoryResponse('response-failed')).rejects.toBe(failure)
 })
+
+const queuedStatuses = [
+  ['queued', 'queued'],
+  ['submitting', 'in_progress'],
+  ['running', 'in_progress'],
+  ['recovery_pending', 'in_progress'],
+  ['succeeded', 'completed'],
+  ['failed', 'failed'],
+  ['cancelled', 'cancelled'],
+] as const satisfies ReadonlyArray<readonly [ApiAiStatus, string]>
+
+it.each(queuedStatuses)(
+  'should map queued history status %s to %s without contacting the provider',
+  async (status, expected) => {
+    vi.mocked(findApiAiJob).mockResolvedValue({
+      activeAttemptId: null,
+      body: {
+        metadata: {generation_run_id: 'run', ignored: 1, submission_key: 'submission'},
+        model: 'primary',
+      },
+      cancelRequestedAt: null,
+      id: '00000000-0000-4000-8000-000000000001',
+      kind: 'history',
+      ownerId: null,
+      result: {
+        failureCode: null,
+        fallback: true,
+        metadata: {},
+        model: 'fallback',
+        outputText: 'stored result',
+        responseId: 'response-fallback',
+        searchSourceUrls: ['https://source.example'],
+        status: 'completed',
+        tokenCount: 10,
+      },
+      status,
+    })
+    expect(
+      await retrieveHistoryResponse('pomo-api:00000000-0000-4000-8000-000000000001'),
+    ).toMatchObject({
+      metadata: {generation_run_id: 'run', submission_key: 'submission'},
+      model: 'fallback',
+      outputText: 'stored result',
+      searchSourceUrls: ['https://source.example'],
+      status: expected,
+    })
+    expect(openAiMocks.getOpenAiClient).not.toHaveBeenCalled()
+  },
+)

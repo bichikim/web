@@ -4,8 +4,17 @@ import {resolveUserRequestOrUnavailable} from 'src/server/auth/resolve-user-requ
 import {readCloudTextUsage} from 'src/server/cloud-text/quota'
 import {generateCloudText} from 'src/server/cloud-text/service'
 import {noStoreJson} from 'src/server/http/response'
+import {z} from 'zod'
+import {waitUntil} from '@vercel/functions'
+import {streamCloudTextJob} from 'src/server/cloud-text/job-events'
+import {readCloudTextJob} from 'src/server/cloud-text/job-status'
+import {cancelCloudTextJob} from 'src/server/cloud-text/cancel-job'
+import {completeApiAiJobs} from 'src/server/api-ai/service'
 
+const HTTP_OK = 200
+const HTTP_NOT_FOUND = 404
 const HTTP_BAD_REQUEST = 400
+const HTTP_ACCEPTED = 202
 const HTTP_UNAUTHORIZED = 401
 const HTTP_CONFLICT = 409
 const HTTP_TOO_MANY_REQUESTS = 429
@@ -42,6 +51,46 @@ export const GET = async (event: APIEvent): Promise<Response> => {
     return identity
   }
   try {
+    const requestId = new URL(event.request.url).searchParams.get('requestId')
+    if (requestId !== null) {
+      const parsed = z.uuid().safeParse(requestId)
+      if (!parsed.success) {
+        return noStoreJson(
+          {error: 'invalid_request'},
+          {cookies: identity.cookies, status: HTTP_BAD_REQUEST},
+        )
+      }
+      const result = await readCloudTextJob(identity.userId, parsed.data)
+      if (result !== null && new URL(event.request.url).searchParams.get('events') === 'true') {
+        return streamCloudTextJob(
+          identity.userId,
+          parsed.data,
+          event.request.signal,
+          identity.cookies,
+        )
+      }
+      return result === null
+        ? noStoreJson({error: 'not_found'}, {cookies: identity.cookies, status: HTTP_NOT_FOUND})
+        : noStoreJson(
+            result.kind === 'complete'
+              ? {
+                  modelId: result.modelId,
+                  text: result.text,
+                  tokenCount: result.tokenCount,
+                  usage: result.usage,
+                }
+              : result,
+            {
+              cookies: identity.cookies,
+              status:
+                result.kind === 'pending'
+                  ? HTTP_ACCEPTED
+                  : result.kind === 'complete'
+                    ? HTTP_OK
+                    : HTTP_CONFLICT,
+            },
+          )
+    }
     return noStoreJson(await readCloudTextUsage(identity.userId), {cookies: identity.cookies})
   } catch (error: unknown) {
     console.error('Failed to read cloud text usage', error)
@@ -83,9 +132,20 @@ export const POST = async (event: APIEvent): Promise<Response> => {
   try {
     const result = await generateCloudText(identity.userId, parsed.data)
     switch (result.kind) {
+      case 'accepted':
+        waitUntil(completeApiAiJobs())
+        return noStoreJson(
+          {requestId: result.requestId, usage: result.usage},
+          {cookies: identity.cookies, status: HTTP_ACCEPTED},
+        )
       case 'complete':
         return noStoreJson(
-          {text: result.text, tokenCount: result.tokenCount, usage: result.usage},
+          {
+            modelId: result.modelId,
+            text: result.text,
+            tokenCount: result.tokenCount,
+            usage: result.usage,
+          },
           {cookies: identity.cookies},
         )
       case 'exhausted':
@@ -93,7 +153,11 @@ export const POST = async (event: APIEvent): Promise<Response> => {
           {error: 'daily_limit', usage: result.usage},
           {cookies: identity.cookies, status: HTTP_TOO_MANY_REQUESTS},
         )
-      case 'pending':
+      case 'queue_full':
+        return noStoreJson(
+          {error: 'queue_full', usage: result.usage},
+          {cookies: identity.cookies, status: HTTP_TOO_MANY_REQUESTS},
+        )
       case 'conflict':
       case 'failed':
         return noStoreJson(
@@ -103,6 +167,34 @@ export const POST = async (event: APIEvent): Promise<Response> => {
     }
   } catch (error: unknown) {
     console.error('Failed to generate cloud text', error)
+    return noStoreJson(
+      {error: 'cloud_text_unavailable'},
+      {cookies: identity.cookies, status: HTTP_SERVICE_UNAVAILABLE},
+    )
+  }
+}
+
+export const DELETE = async (event: APIEvent): Promise<Response> => {
+  const identity = await authenticate(event.request)
+  if (identity instanceof Response) {
+    return identity
+  }
+  const parsed = z.uuid().safeParse(new URL(event.request.url).searchParams.get('requestId'))
+  if (!parsed.success) {
+    return noStoreJson(
+      {error: 'invalid_request'},
+      {cookies: identity.cookies, status: HTTP_BAD_REQUEST},
+    )
+  }
+  try {
+    const found = await cancelCloudTextJob(identity.userId, parsed.data)
+    waitUntil(completeApiAiJobs())
+    return noStoreJson(
+      {cancellationRequested: found},
+      {cookies: identity.cookies, status: found ? HTTP_ACCEPTED : HTTP_NOT_FOUND},
+    )
+  } catch (error: unknown) {
+    console.error('Failed to cancel cloud text job', error)
     return noStoreJson(
       {error: 'cloud_text_unavailable'},
       {cookies: identity.cookies, status: HTTP_SERVICE_UNAVAILABLE},

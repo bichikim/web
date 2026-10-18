@@ -1,4 +1,6 @@
 import {type Accessor, createEffect, createMemo, createSignal, untrack} from 'solid-js'
+import {sidebarWidth} from '../headless/sidebar-width'
+import {SIDEBAR_LAYOUT} from '../headless/sidebar-layout'
 
 interface UseSidebarResizeProps {
   availableWidth: Accessor<number>
@@ -15,20 +17,20 @@ interface PointerDrag {
 }
 
 export const useSidebarResize = (props: UseSidebarResizeProps) => {
-  const INITIAL_WIDTH = 288
-  const KEYBOARD_STEP = 16
-  const initial = untrack(() => props.initialWidth ?? INITIAL_WIDTH)
+  const initial = untrack(() => props.initialWidth ?? SIDEBAR_LAYOUT.initial)
   const [preferred, setPreferred] = createSignal(initial)
   const [drag, setDrag] = createSignal<PointerDrag | null>(null)
-  const maximum = createMemo(() => {
-    const available = props.availableWidth()
-    return Math.max(
-      props.minimum(),
-      available > 0 ? available - props.contentMinimum() - props.spacing() : initial,
-    )
-  })
-  const clamp = (value: number): number =>
-    Math.round(Math.min(maximum(), Math.max(props.minimum(), value)))
+  const constrain = (preferred: number) =>
+    sidebarWidth({
+      available: props.availableWidth(),
+      contentMinimum: props.contentMinimum(),
+      initial,
+      minimum: props.minimum(),
+      preferred,
+      spacing: props.spacing(),
+    })
+  const maximum = createMemo(() => constrain(initial).maximum)
+  const clamp = (value: number): number => constrain(value).width
   const width = createMemo(() => clamp(preferred()))
   createEffect(() => {
     if (!props.visible()) {
@@ -55,10 +57,10 @@ export const useSidebarResize = (props: UseSidebarResizeProps) => {
     const current = width()
     switch (key) {
       case 'ArrowLeft':
-        setPreferred(clamp(current + KEYBOARD_STEP))
+        setPreferred(clamp(current + SIDEBAR_LAYOUT.keyboardStep))
         return true
       case 'ArrowRight':
-        setPreferred(clamp(current - KEYBOARD_STEP))
+        setPreferred(clamp(current - SIDEBAR_LAYOUT.keyboardStep))
         return true
       case 'Home':
         setPreferred(props.minimum())

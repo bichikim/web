@@ -1,6 +1,7 @@
 import type {SupertonicLanguage} from '../language'
 import {classifyTinySpeechNumber} from './classify-tiny-speech-number'
 import {
+  ENGLISH_COUNT_NOUNS,
   KOREAN_PARTICLE_PATTERN_SOURCE,
   KOREAN_UNIT_END_PATTERN_SOURCE,
   NUMBER_SIGN_PATTERN_SOURCE,
@@ -40,8 +41,7 @@ const ENGLISH_MONTH_PATTERN = new RegExp(
 )
 const ENGLISH_YEAR_SUFFIX_PATTERN =
   /^\s+(?:(?:AD|BC|BCE|CE)\b|(?:is|was|will)\b[^.!?]{0,64}\byear\b)/iu
-const ENGLISH_COUNT_NOUN_PATTERN =
-  /^\s+(?:[a-z]+s|children|feet|men|mice|people|teeth|women)(?![A-Za-z])/u
+const ENGLISH_COUNT_NOUN_PATTERN = new RegExp(`^\\s+${ENGLISH_COUNT_NOUNS}(?![A-Za-z])`, 'u')
 const ENGLISH_QUANTITY_CUES =
   'are|contain|contains|exactly|got|had|has|have|include|includes|' +
   'need|needed|needs|over|under|with'

@@ -2,6 +2,7 @@ import type {Accessor} from 'solid-js'
 
 import type {PTrack} from './focus-room-playlist'
 import {type PPlaybackState, writePPlayback} from './playback-storage'
+import {readPlaybackPosition} from './read-playback-position'
 
 const PROGRESS_SAVE_INTERVAL_MILLISECONDS = 5_000
 
@@ -92,14 +93,14 @@ export const usePPlaybackPersistence = (
       return
     }
 
-    const positionSeconds = props.getAudioElement()?.currentTime
-    if (positionSeconds === undefined || !Number.isFinite(positionSeconds)) {
+    const positionSeconds = readPlaybackPosition(props.getAudioElement())
+    if (positionSeconds === null) {
       return
     }
 
     writePlayback({
       isPlaying,
-      positionSeconds: Math.max(0, positionSeconds),
+      positionSeconds,
       trackId: track.id,
     })
   }

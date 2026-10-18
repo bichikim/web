@@ -1,12 +1,8 @@
 import {Title} from '@solidjs/meta'
 import {A} from '@solidjs/router'
 import {type Accessor, createSignal, Show} from 'solid-js'
-import {
-  DEFAULT_CONNECTION_SECONDS,
-  MAX_AI_CONNECTION_SECONDS,
-  MIN_AI_CONNECTION_SECONDS,
-} from 'src/features/sound-generation'
-import {useSoundJoining} from 'src/features/sound-joining'
+import {DEFAULT_CONNECTION_SECONDS, MAX_AI_CONNECTION_SECONDS} from 'src/features/sound-generation'
+import {getJoinParameterError, useSoundJoining} from 'src/features/sound-joining'
 import {isNonBlankString} from 'src/utils/is-non-blank-string'
 import {ModelTerms} from './sound-generation/ModelTerms'
 import {Source} from './sound-joining/Source'
@@ -24,17 +20,32 @@ export function SoundJoiningPage() {
   const [repeat, setRepeat] = createSignal(false)
   const [prompt, setPrompt] = createSignal(DEFAULT_PROMPT)
   const joining = useSoundJoining()
+  const parameters = () => ({
+    connectionSeconds: connectionSeconds(),
+    trimEnd: trimEnd(),
+    trimStart: trimStart(),
+  })
+  const canGenerate = () =>
+    first() !== null &&
+    second() !== null &&
+    isNonBlankString(prompt()) &&
+    getJoinParameterError(parameters()) === null
   const generate = () => {
     const firstFile = first()
     const secondFile = second()
-    if (firstFile !== null && secondFile !== null) {
+    const requestParameters = parameters()
+    const promptValue = prompt()
+    if (
+      firstFile !== null &&
+      secondFile !== null &&
+      isNonBlankString(promptValue) &&
+      getJoinParameterError(requestParameters) === null
+    ) {
       return joining.generate({
-        connectionSeconds: connectionSeconds(),
+        ...requestParameters,
         first: firstFile,
-        prompt: prompt(),
+        prompt: promptValue,
         second: secondFile,
-        trimEnd: trimEnd(),
-        trimStart: trimStart(),
       })
     }
   }
@@ -108,15 +119,7 @@ export function SoundJoiningPage() {
           <button
             class="min-h-11 rounded-xl border-0 bg-#b8e8d0 px-6 text-#17131f font-700 disabled:opacity-50"
             type="button"
-            disabled={
-              joining.busy() ||
-              first() === null ||
-              second() === null ||
-              !isNonBlankString(prompt()) ||
-              !Number.isFinite(connectionSeconds()) ||
-              connectionSeconds() < MIN_AI_CONNECTION_SECONDS ||
-              connectionSeconds() > MAX_AI_CONNECTION_SECONDS
-            }
+            disabled={joining.busy() || !canGenerate()}
             onClick={generate}
           >
             {joining.busy() ? '연결 생성 중…' : 'AI로 연결하기'}

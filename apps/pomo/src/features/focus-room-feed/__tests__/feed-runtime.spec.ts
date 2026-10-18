@@ -101,3 +101,33 @@ it('should keep only expired dialogues that are not scheduled', () => {
     }),
   ).toEqual([expired[1]])
 })
+
+it.each([
+  ['rss.xml/', 'http://127.0.0.1:1420/__dev/feeds/rss.xml', true],
+  ['atom.xml/', 'http://127.0.0.1:1420/__dev/feeds/atom.xml', true],
+  ['rss.xml//', 'https://www.pomofi.io/__dev/feeds/rss.xml//', false],
+  ['RSS.XML/', 'https://www.pomofi.io/__dev/feeds/RSS.XML/', true],
+  ['rss.xml.bak', 'https://www.pomofi.io/__dev/feeds/rss.xml.bak', false],
+])('should retain request normalization for %s', (path, expected, dateSensitive) => {
+  vi.stubEnv('VITE_POMO_IS_DESKTOP', 'true')
+  vi.stubEnv('VITE_POMO_PUBLIC_ORIGIN', 'https://www.pomofi.io')
+  vi.stubGlobal('location', {origin: 'http://127.0.0.1:1420'})
+  vi.spyOn(AbortSignal, 'timeout').mockReturnValue(AbortSignal.abort())
+  mocks.httpFetch.mockReturnValue('response')
+
+  const source = new URL(`https://www.pomofi.io/__dev/feeds/${path}`)
+  source.search = '?existing=1'
+  source.hash = '#fragment'
+  expect(createFeedFetcher()(source.href)).toBe('response')
+
+  const expectedUrl = new URL(expected)
+  expectedUrl.search = source.search
+  expectedUrl.hash = source.hash
+  if (dateSensitive) {
+    expectedUrl.searchParams.set('timeZone', Intl.DateTimeFormat().resolvedOptions().timeZone)
+  }
+  expect(mocks.httpFetch).toHaveBeenCalledWith(
+    expectedUrl.href,
+    expect.objectContaining({cache: 'no-store'}),
+  )
+})

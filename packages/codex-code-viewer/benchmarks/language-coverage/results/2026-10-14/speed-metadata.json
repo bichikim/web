@@ -1,0 +1,33 @@
+{
+  "node": "v24.15.0",
+  "ruby": "ruby 4.0.6 (2026-07-14 revision 03b6d3f889) +PRISM [arm64-darwin25]",
+  "baseline": "/tmp/code-viewer-ruby-completion/after, after Ruby completion optimization and before supported-language coverage fixes",
+  "hashes": {
+    "before/workspace.js": "531e46bd4983eab155b14ec582c710bf8cf8d30f0ea3309fc82bc21922cf1379",
+    "before/navigation-worker.js": "06e8d64c366dc8481ce42008df5bb3a8615c69894f15d752723eac172ff2bd8a",
+    "after/workspace.js": "ebb2c853ad3b44c60efeb9cb8322581c62aeb102eafc02e0fff1fe371e253958",
+    "after/navigation-worker.js": "706a3b5b78cfac007b0feaf484aab8571fd31cfd20b4857e854159b8a646ac32"
+  },
+  "analyzers": {
+    "/Users/bichi/.codex/worktrees/379e/web/packages/codex-code-viewer/dist/python/langserver.index.js": "f200762078eb9880faf421a5b30f9ef3055b1d85c6f10780d75db4da8d8499f1",
+    "/Users/bichi/.codex/worktrees/379e/web/packages/codex-code-viewer/dist/rust/darwin-arm64/rust-analyzer": "6e232bb1835fee8106ee985d90702e2cef9647392b28b91dcfa2cae17a975983"
+  },
+  "typescript": "6.0.3",
+  "pyright": "1.1.414",
+  "rust_analyzer": "rust-analyzer 0.3.3073-standalone (65ac641199 2026-10-04)",
+  "solargraph": "0.60.4",
+  "measurement_method": {
+    "rounds": 3,
+    "confirmation_pairs": 5,
+    "warmup": false,
+    "fresh_CODEX_HOME_per_process": true,
+    "OS_cache_cleared": false,
+    "clock": "process.hrtime.bigint",
+    "first": "first nonempty server batch after workspace.read",
+    "repeat": "same workspace/process after complete",
+    "variant_order": "alternating pairs",
+    "controlled_test_build_overlap": false
+  },
+  "baseline_hash_matches_prior_report": true,
+  "typescript_package": "6.0.2"
+}

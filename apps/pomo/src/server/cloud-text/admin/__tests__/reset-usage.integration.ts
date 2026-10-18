@@ -1,4 +1,5 @@
 /** @vitest-environment node */
+import {prepareApiAiQueue} from '../../__tests__/fixtures/api-ai-queue'
 import {PGlite} from '@electric-sql/pglite'
 import {drizzle} from 'drizzle-orm/pglite'
 import {readFile} from 'node:fs/promises'
@@ -10,6 +11,7 @@ import {prepareProductLimits} from '../../__tests__/fixtures/product-limits'
 
 vi.mock('src/server/database', async () => ({
   ...(await vi.importActual('src/server/database/schema/cloud-text')),
+  ...(await vi.importActual('src/server/database/schema/api-ai')),
   ...(await vi.importActual('src/server/database/schema/commerce')),
   ...(await vi.importActual('src/server/database/schema/users')),
   getDatabase: vi.fn(),
@@ -42,6 +44,7 @@ beforeAll(async () => {
   ])
   vi.mocked(getDatabase).mockReturnValue(client as unknown as ReturnType<typeof getDatabase>)
   await prepareProductLimits(database)
+  await prepareApiAiQueue(database)
   vi.mocked(withTransactionalDatabase).mockImplementation(async (operation) =>
     operation(client as unknown as Parameters<typeof operation>[0]),
   )

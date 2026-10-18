@@ -4,6 +4,9 @@ import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 import type {CodeDocument} from '../../shared/contracts'
 import {SMediaDocument} from '../SMediaDocument'
 import type {ViewerPort} from '../types'
+import {createSignal} from 'solid-js'
+import {LocaleContext} from '../locale/context'
+import type {ViewerLanguage} from '../locale/types'
 
 describe('SMediaDocument', () => {
   const document: CodeDocument = {
@@ -53,5 +56,17 @@ describe('SMediaDocument', () => {
     expect(screen.getByRole('status').textContent).toContain('코덱')
     expect(screen.queryByLabelText('sample.mp3')).toBeNull()
     expect(onError).toHaveBeenCalledWith(expect.any(Error))
+  })
+  it('should translate existing decoding feedback when the language changes', async () => {
+    const [language, setLanguage] = createSignal<ViewerLanguage>('en')
+    render(() => (
+      <LocaleContext.Provider value={language}>
+        <SMediaDocument document={document} port={port} session="session" />
+      </LocaleContext.Provider>
+    ))
+    fireEvent.error(await screen.findByLabelText('sample.mp3'))
+    expect(screen.getByRole('status')).toHaveTextContent('Cannot display this file.')
+    setLanguage('ko')
+    expect(screen.getByRole('status')).toHaveTextContent('이 파일을 표시할 수 없습니다.')
   })
 })

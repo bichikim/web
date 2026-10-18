@@ -1,7 +1,30 @@
 import {type Accessor, createMemo, createSignal} from 'solid-js'
+import {getLocale} from '@paraglide/runtime'
 import type {PFeedController} from 'src/features/focus-room-feed'
 import type {useModelDownload} from 'src/features/model-download'
 import * as m from '@paraglide/message'
+
+const localizeFeedGenerationMessage = (message: string): string => {
+  const started = /^(?<title>.+) 음성을 만들고 있어요\.$/su.exec(message)
+  if (started?.groups?.title !== undefined) {
+    return m.feed_generation_started({title: started.groups.title})
+  }
+
+  const chunks = /^(?<title>.+) · (?<completed>\d+)\/(?<total>\d+) 구간 생성 중$/su.exec(message)
+  if (
+    chunks?.groups?.title !== undefined &&
+    chunks.groups.completed !== undefined &&
+    chunks.groups.total !== undefined
+  ) {
+    return m.feed_generation_progress({
+      completed: Number(chunks.groups.completed),
+      title: chunks.groups.title,
+      total: Number(chunks.groups.total),
+    })
+  }
+
+  return message
+}
 
 export const useFeedProgress = (
   controller: Accessor<PFeedController>,
@@ -23,7 +46,14 @@ export const useFeedProgress = (
   const generation = createMemo(() => {
     const state = controller().state()
     return state.status === 'preparing' || state.status === 'generating'
-      ? {message: state.message, progress: state.progress, status: state.status}
+      ? {
+          message:
+            state.status === 'generating' && getLocale() === 'en'
+              ? localizeFeedGenerationMessage(state.message)
+              : state.message,
+          progress: state.progress,
+          status: state.status,
+        }
       : null
   })
   const progress = createMemo(() => {

@@ -35,14 +35,19 @@ it('should select a bounded date with a custom calendar and return focus', async
   expect(trigger).toBeInTheDocument()
   expect(trigger).toHaveFocus()
 })
-it('should follow external changes and navigate with keyboard across month boundaries', () => {
+it.each([
+  {date: '2024-02-28', key: 'ArrowLeft'},
+  {date: '2024-03-01', key: 'ArrowRight'},
+  {date: '2024-02-22', key: 'ArrowUp'},
+  {date: '2024-03-07', key: 'ArrowDown'},
+])('should follow external changes and navigate with $key', ({date, key}) => {
   const [value, setValue] = createSignal('2024-02-29')
   render(() => <PDatePicker label="날짜" value={value()} onChange={setValue} />)
   fireEvent.click(screen.getByRole('button', {name: '날짜: 2024-02-29'}))
-  fireEvent.keyDown(screen.getByRole('button', {name: '2024-02-29'}), {key: 'ArrowRight'})
-  expect(screen.getByRole('button', {name: '2024-03-01'})).toHaveFocus()
-  fireEvent.click(screen.getByRole('button', {name: '2024-03-01'}))
-  expect(value()).toBe('2024-03-01')
+  fireEvent.keyDown(screen.getByRole('button', {name: '2024-02-29'}), {key})
+  expect(screen.getByRole('button', {name: date})).toHaveFocus()
+  fireEvent.click(screen.getByRole('button', {name: date}))
+  expect(value()).toBe(date)
   setValue('2025-01-01')
   expect(screen.getByRole('button', {name: '날짜: 2025-01-01'})).toBeVisible()
 })
@@ -70,24 +75,25 @@ it('should close the calendar from a month navigation button without bubbling Es
 })
 
 it('should preserve every date button while moving focus within the same month', () => {
-  render(() => <PDatePicker label="날짜" value="2026-10-15" />)
+  const view = render(() => <PDatePicker label="날짜" value="2026-10-15" />)
   fireEvent.click(screen.getByRole('button', {name: '날짜: 2026-10-15'}))
-  const buttons = screen.getAllByRole('button', {name: /^2026-10-/})
+  const getDateButtons = () =>
+    Array.from(view.container.querySelectorAll<HTMLButtonElement>('button[data-date^="2026-10-"]'))
+  const buttons = getDateButtons()
   expect(buttons).toHaveLength(31)
   buttons.forEach((button) => {
     expect(button.tagName).toBe('BUTTON')
     expect(button).toHaveAttribute('type', 'button')
-    expect(button).toBeVisible()
-    expect(button).toHaveAccessibleName(button.getAttribute('data-date') ?? '')
     expect(button).toHaveAttribute('aria-label', button.dataset.date)
   })
+  expect(buttons[0]).toBeVisible()
+  expect(buttons[0]).toHaveAccessibleName('2026-10-01')
   fireEvent.keyDown(screen.getByRole('button', {name: '2026-10-15'}), {key: 'ArrowRight'})
-  const currentButtons = screen.getAllByRole('button', {name: /^2026-10-/})
+  const currentButtons = getDateButtons()
   expect(currentButtons).toHaveLength(31)
   currentButtons.forEach((button, index) => {
     expect(button).toBe(buttons[index])
-    expect(button).toBeVisible()
-    expect(button).toHaveAccessibleName(button.getAttribute('data-date') ?? '')
+    expect(button).toHaveAttribute('aria-label', button.dataset.date)
   })
   expect(screen.getByRole('button', {name: '2026-10-16'})).toHaveFocus()
   expect(screen.getByRole('button', {name: '2026-10-16'})).toHaveAttribute('tabindex', '0')

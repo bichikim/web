@@ -21,7 +21,7 @@ Open and apply the reference files for the relevant section before working. For 
 10. Make each function read as one level of story. Treat mixed reasons to change, deep nesting, combined network/time/global test setup, and operations whose purpose is unclear from their syntax as refactoring signals. Use guard clauses to keep the normal path linear. Also review decomposition when a function grows to roughly 30–40 lines; this is a review signal, not a hard limit or a reason to postpone earlier decomposition. Follow the reuse and naming workflow below; do not add wrappers that only add navigation. Do not introduce arrays, objects, or loops solely to enumerate fixed calls. Prefer direct calls when the abstraction does not clarify meaning or behavior; fewer lines or reuse of the same list alone does not justify it.
 11. Use exhaustive `switch` with a `never` check when dispatching a discriminated union or comparing three or more cases of one finite value (`type`, `status`, `kind`), including boolean membership written with chained `||`; reserve `if` for guards and binary conditions, and never hide cases behind a catch-all default.
 12. Use a generic only when it preserves a real relationship between values or members of a returned generic container; replace a naked type parameter used once with a concrete type or `unknown`.
-13. Never write comments on the right side of code; always write above the target code.
+13. Follow [Comments](#comments) for function JSDoc, call-site comments, and option-property documentation.
 14. Check `null`/`undefined` with `=== null` / `=== undefined`.
 15. Run `oxlint --fix` after writing code, then fix remaining lint issues.
 16. See ./rules/object-parameter.md when naming a single object parameter on a hook or util.
@@ -29,9 +29,16 @@ Open and apply the reference files for the relevant section before working. For 
 18. See ./code-patterns/type-guard.md when handling `unknown` or writing type guards.
 19. See ./code-patterns/type-and-value-import.md when importing both a type and a value from the same module.
 20. For every internal import, consider an available `src/*` alias and choose the shortest readable valid specifier.
-21. Group cohesive feature APIs in an entrypoint and prefer importing through it from outside the feature when practical. Direct subpath imports are also allowed; bypassing an available entrypoint alone is not a violation. Do not omit `index.ts` re-exports to hide internals.
+21. Group cohesive feature APIs in an entrypoint and prefer importing through it from outside the feature when practical. Direct subpath imports are also allowed; bypassing an available entrypoint alone is not a violation. Do not omit `index.ts` re-exports to hide internals. In folders exposing multiple independent features, `index.ts` must only re-export their modules; do not mix feature implementations with re-exports of other features. A folder dedicated to a single feature may implement that feature in `index.ts`.
 22. When implementing functions, prefer one primary exported function per file and name the file after that function in kebab-case.
 23. Do not directly use the built-in `performance` API or `eval` function, including through `globalThis` or `window`.
+
+## Comments
+
+- Write comments above the target code, never on its right side, and follow the repository’s comment-language policy.
+- Function JSDoc describes the contract (what), not the implementation. Call-site comments explain intent (why).
+- Document every property of a function's options object with JSDoc explaining its role and usage contract. For optional properties, explain the behavior when omitted. For callbacks, explain when they are called and the meaning of their arguments and return values. For resource-related properties, explain ownership and cleanup responsibilities.
+- When adding or changing option properties, update their JSDoc and verify that every property is documented before reporting completion.
 
 ## Low-Cost Parameterization
 
@@ -62,7 +69,7 @@ Prefer composing existing general-purpose operations over implementing a combine
 
 When deciding whether to separate a function or hook, prioritize its likelihood of reuse: operations meaningful across broader contexts are stronger candidates than feature-specific sequences. Extract when that reusable contract is useful, not merely to create an encapsulation boundary. A single use or one-line body does not rule out extraction when the name improves comprehension. Do not invent speculative abstractions merely to fill all three levels.
 
-Verify that a candidate's input semantics and behavior match the task; similar names or private internal helpers are not sufficient. Prefer a meaningful function name over a comment that merely explains the operation. Keep comments for intent or constraints the name cannot express. Choose shared placement by the generality and credible reuse potential of the contract; multiple existing callers are not required.
+Verify that a candidate's input semantics and behavior match the task; similar names or private internal helpers are not sufficient. Prefer a meaningful function name over a comment that merely explains the operation. Keep implementation comments for intent or constraints the name cannot express. Choose shared placement by the generality and credible reuse potential of the contract; multiple existing callers are not required.
 
 Read [references/error-contracts.md](references/error-contracts.md) when designing, changing, or normalizing error contracts.
 

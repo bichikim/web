@@ -7,7 +7,7 @@ import {
   STATE_STORAGE_KEY,
   TestBroadcastChannel,
 } from './fixtures/timer'
-import {createDeferred} from 'src/test-utils/create-deferred'
+import {createDeferred} from 'src/__tests__/create-deferred'
 import {PreferenceProvider} from 'src/hooks/use-preference'
 import {renderHook} from '@solidjs/testing-library'
 import {expect, it, vi} from 'vitest'

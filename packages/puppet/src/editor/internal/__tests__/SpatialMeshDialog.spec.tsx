@@ -2,6 +2,7 @@
 
 import {fireEvent, render, screen} from '@solidjs/testing-library'
 import {afterEach, expect, test, vi} from 'vitest'
+import {createSignal} from 'solid-js'
 
 import type {PuppetPart} from '../../../player'
 import {createSpatialEditorObject} from '../spatial-editor-objects'
@@ -29,6 +30,61 @@ vi.mock('../spatial-mesh-preview-renderer', () => ({
     resize: () => undefined,
   }),
 }))
+
+test('should retain object rows and focus while toggling visibility', () => {
+  const bounds = {height: 100, width: 100, x: 0, y: 0}
+  const first = {...createSpatialEditorObject(bounds, 'box'), name: 'First'}
+  const second = {...createSpatialEditorObject(bounds, 'sphere'), name: 'Second'}
+  render(() => (
+    <SpatialMeshDialog
+      bounds={bounds}
+      initialObjects={[first, second]}
+      isOpen
+      onApply={() => true}
+      onOpenChange={vi.fn()}
+    />
+  ))
+  const toggle = screen.getByRole('button', {name: 'First 숨기기'})
+  const secondButton = screen.getByRole('button', {name: 'Second 편집'})
+  toggle.focus()
+  fireEvent.click(toggle)
+
+  expect(screen.getByRole('button', {name: 'First 보이기'})).toBe(toggle)
+  expect(screen.getByRole('button', {name: 'Second 편집'})).toBe(secondButton)
+  expect(toggle).toHaveFocus()
+})
+
+test.each(['reopen', 'dispose'] as const)(
+  'should discard an import after %s ends its session',
+  async (end) => {
+    const [open, setOpen] = createSignal(true)
+    let resolve!: (value: ArrayBuffer) => void
+    const pendingResult = new Promise<ArrayBuffer>((done) => {
+      resolve = done
+    })
+    const file = new File([], 'stale.glb')
+    Object.defineProperty(file, 'arrayBuffer', {value: () => pendingResult})
+    const view = render(() => (
+      <SpatialMeshDialog
+        bounds={{height: 100, width: 100, x: 0, y: 0}}
+        isOpen={open()}
+        onApply={() => true}
+        onOpenChange={setOpen}
+      />
+    ))
+    fireEvent.change(screen.getByLabelText('GLB 메시 가져오기'), {target: {files: [file]}})
+    if (end === 'reopen') {
+      setOpen(false)
+      setOpen(true)
+    } else {
+      view.unmount()
+    }
+    resolve(new ArrayBuffer(0))
+    await pendingResult
+    expect(imported.parse).not.toHaveBeenCalled()
+    expect(screen.queryByText('GLB 메시를 가져올 수 없습니다.')).toBeNull()
+  },
+)
 
 test('should expose an editor workspace without the introductory heading and description', () => {
   const view = render(() => (

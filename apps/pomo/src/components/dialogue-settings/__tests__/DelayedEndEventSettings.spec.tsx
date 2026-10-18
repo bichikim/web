@@ -278,3 +278,35 @@ it('should hide status and helper descriptions while waiting', () => {
     screen.queryByText('시작 버튼을 누른 뒤 지정한 시간이 지나면 연결한 대화와 행동을 실행해요.'),
   ).toBeNull()
 })
+
+it('should cancel only while the timer is running and start again after it expires', () => {
+  const [isRunning, setIsRunning] = createSignal(false)
+  const startDelayedEndEvent = vi.fn(() => setIsRunning(true))
+  const cancelDelayedEndEvent = vi.fn(() => setIsRunning(false))
+  const events = createEvents({
+    cancelDelayedEndEvent,
+    delayedEndEventIsRunning: isRunning,
+    startDelayedEndEvent,
+  })
+  eventMocks.usePEvents.mockReturnValue(events)
+
+  render(() => <DelayedEndEventSettings />)
+
+  fireEvent.click(screen.getByRole('button', {name: '시작'}))
+  expect(startDelayedEndEvent).toHaveBeenCalledOnce()
+  expect(cancelDelayedEndEvent).not.toHaveBeenCalled()
+
+  fireEvent.click(screen.getByRole('button', {name: '중지'}))
+  expect(cancelDelayedEndEvent).toHaveBeenCalledOnce()
+  expect(startDelayedEndEvent).toHaveBeenCalledOnce()
+
+  fireEvent.click(screen.getByRole('button', {name: '시작'}))
+  expect(startDelayedEndEvent).toHaveBeenCalledTimes(2)
+
+  // Timer expiry clears the running state without invoking the button's cancel path.
+  setIsRunning(false)
+  fireEvent.click(screen.getByRole('button', {name: '시작'}))
+
+  expect(startDelayedEndEvent).toHaveBeenCalledTimes(3)
+  expect(cancelDelayedEndEvent).toHaveBeenCalledOnce()
+})

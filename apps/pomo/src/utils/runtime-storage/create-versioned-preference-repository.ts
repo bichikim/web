@@ -1,11 +1,11 @@
 import {createLatestAsyncTask} from '../create-latest-async-task'
-import {withPromiseNull} from '../with-promise-null'
+import {withPromiseFallback} from '../with-promise-fallback'
 
 export interface VersionedPreferenceStorage<Value> {
   readonly isNative: () => boolean
   readonly readNative: () => Promise<Value | null>
   readonly readWeb: () => Value | null
-  /** Returns null on success, or the storage error on failure. */
+  /** 성공하면 null을, 실패하면 저장소 오류를 반환한다. */
   readonly writeWeb: (value: Value) => unknown | null
   readonly writeNative: (value: Value) => Promise<void>
 }
@@ -22,7 +22,7 @@ export interface CreateVersionedPreferenceRepositoryOptions<Value> {
   readonly writeFailureMessage: string
 }
 
-/** Coordinates versioned browser and native preference reads and writes. */
+/** 버전이 있는 브라우저·네이티브 설정의 읽기와 쓰기를 조정한다. */
 export const createVersionedPreferenceRepository = <Value>(
   options: CreateVersionedPreferenceRepositoryOptions<Value>,
 ): VersionedPreferenceRepository<Value> => {
@@ -36,7 +36,7 @@ export const createVersionedPreferenceRepository = <Value>(
     const initialWriteRevision = preferenceWriteRevision
 
     if (pendingNativeSave !== null) {
-      await withPromiseNull(pendingNativeSave)
+      await withPromiseFallback(pendingNativeSave, null)
 
       if (preferenceWriteRevision !== initialWriteRevision) {
         return read()
@@ -48,7 +48,7 @@ export const createVersionedPreferenceRepository = <Value>(
 
     if (webValue !== null && (!isNative || !prefersNativeSettings || browserCopyMissing)) {
       if (isNative) {
-        withPromiseNull(writeLatestNative(webValue))
+        withPromiseFallback(writeLatestNative(webValue), null)
       }
 
       prefersNativeSettings = false
@@ -73,7 +73,7 @@ export const createVersionedPreferenceRepository = <Value>(
       if (browserCopyMissing && latestWebValue !== null) {
         prefersNativeSettings = false
         browserCopyMissing = false
-        withPromiseNull(writeLatestNative(latestWebValue))
+        withPromiseFallback(writeLatestNative(latestWebValue), null)
         return latestWebValue
       }
 

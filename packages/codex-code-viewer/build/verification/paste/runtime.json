@@ -1,0 +1,31 @@
+{
+  "date": "2026-10-16",
+  "host": "Codex in-app browser, production bundle",
+  "fileTree": {
+    "noCopiedEntry": {
+      "disabled": true,
+      "opacity": "0.4"
+    },
+    "copiedEntryPasteEnabled": true
+  },
+  "editor": {
+    "emptyClipboard": {
+      "disabled": true,
+      "opacity": "0.4"
+    },
+    "nonemptyTextPasteEnabled": true
+  },
+  "systemClipboardRestored": true,
+  "sourceFileWasNotChangedByUIVerification": true,
+  "tests": {
+    "passed": 34,
+    "failed": 0
+  },
+  "checks": [
+    "focused viewer/type test graph",
+    "oxlint codex-code-viewer",
+    "pnpm format",
+    "production build",
+    "git diff --check"
+  ]
+}

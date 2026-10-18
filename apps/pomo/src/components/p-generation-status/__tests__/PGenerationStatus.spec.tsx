@@ -127,3 +127,58 @@ it('should snapshot a volatile progress accessor once', () => {
     screen.getByRole('progressbar', {name: '대사 생성 진행률'}).getAttribute('aria-valuenow'),
   ).toBe('20')
 })
+
+it.each([
+  [-0, '0'],
+  [25.5, '25.5'],
+  [Number.NEGATIVE_INFINITY, '0'],
+])('should present progress %s as %s percent', (progress, expected) => {
+  render(() => (
+    <PGenerationStatus
+      kind="draft"
+      message="대사를 작성하고 있어요."
+      progress={progress}
+      progressLabel="대사 생성 진행률"
+    />
+  ))
+
+  expect(screen.getByRole('status').textContent).toContain(`${expected}%`)
+  expect(
+    screen.getByRole('progressbar', {name: '대사 생성 진행률'}).getAttribute('aria-valuenow'),
+  ).toBe(expected)
+})
+
+it('should preserve the status and cancellation action when progress hides and returns', () => {
+  const [progress, setProgress] = createSignal<number | null>(25.5)
+  const onCancel = vi.fn()
+  render(() => (
+    <PGenerationStatus
+      kind="draft"
+      message="작성 중"
+      onCancel={onCancel}
+      progress={progress()}
+      progressLabel="대사 생성 진행률"
+    />
+  ))
+
+  const status = screen.getByRole('status')
+  const cancel = screen.getByRole('button', {name: '취소'})
+  const progressbar = screen.getByRole('progressbar', {name: '대사 생성 진행률'})
+
+  setProgress(50)
+  expect(screen.getByRole('progressbar', {name: '대사 생성 진행률'})).toBe(progressbar)
+  expect(progressbar.getAttribute('aria-valuenow')).toBe('50')
+
+  setProgress(null)
+  expect(screen.queryByRole('progressbar')).toBeNull()
+  expect(status.textContent).toBe('작성 중취소')
+
+  setProgress(0)
+  expect(screen.getByRole('status')).toBe(status)
+  expect(screen.getByRole('button', {name: '취소'})).toBe(cancel)
+  expect(
+    screen.getByRole('progressbar', {name: '대사 생성 진행률'}).getAttribute('aria-valuenow'),
+  ).toBe('0')
+  fireEvent.click(cancel)
+  expect(onCancel).toHaveBeenCalledOnce()
+})

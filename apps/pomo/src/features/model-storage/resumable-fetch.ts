@@ -1,3 +1,4 @@
+import {concatBytes} from 'src/utils/concat-bytes'
 import {httpFetch} from '../http-client'
 
 import {
@@ -132,13 +133,7 @@ const createPersistedStream = (
       return
     }
 
-    const chunk = new Uint8Array(chunkBytes)
-    let offset = 0
-
-    for (const value of chunks) {
-      chunk.set(value, offset)
-      offset += value.byteLength
-    }
+    const chunk = concatBytes(chunks)
 
     chunks = []
     chunkBytes = 0

@@ -1,4 +1,5 @@
 import {isObject} from 'src/utils/is-object'
+import {sumBy} from 'es-toolkit/math'
 import {normalizePasteNumericInput} from 'src/utils/normalize-paste-numeric-input'
 import {parseDate} from 'src/features/civil-date'
 import {iterateJsonObjectSlices} from 'src/utils/json'
@@ -32,23 +33,15 @@ export type ExpenseParseResult =
   | {readonly error: ExpenseParseError; readonly ok: false}
 
 const MAXIMUM_ITEMS = 20
-const FULLWIDTH_TO_ASCII_DIGIT_OFFSET = 0xfee0
 const EXPENSE_LINE_PATTERN =
   /^\s*(?<name>.+?)\s+(?<unitPrice>[\d０-９,]+)\s*원(?:\s+(?<quantity>[\d,]+)\s*개)?\s*$/u
 const DATE_LINE_PATTERN =
   /^\s*(?<year>[0-9０-９]{4})-(?<month>[0-9０-９]{1,2})-(?<day>[0-9０-９]{1,2})(?:\s+[월화수목금토일]요일)?\s*$/u
 
-const normalizeDateDigits = (value: string) =>
-  value.replace(/[０-９]/gu, (digit) =>
-    String.fromCharCode(digit.charCodeAt(0) - FULLWIDTH_TO_ASCII_DIGIT_OFFSET),
-  )
-
 const invalid = (code: ExpenseParseError['code']): ExpenseParseResult => ({
   error: {code},
   ok: false,
 })
-
-const isRecord = (value: unknown): value is Record<string, unknown> => isObject(value)
 
 const toPositiveInteger = (value: unknown) => {
   if (typeof value === 'number' && Number.isSafeInteger(value) && value > 0) {
@@ -80,9 +73,9 @@ const readExpenseDate = (value: string, allowFullwidthDateDigits = false) => {
     return null
   }
 
-  const normalizedYear = normalizeDateDigits(year)
-  const normalizedMonth = normalizeDateDigits(month)
-  const normalizedDay = normalizeDateDigits(day)
+  const normalizedYear = normalizePasteNumericInput(year)
+  const normalizedMonth = normalizePasteNumericInput(month)
+  const normalizedDay = normalizePasteNumericInput(day)
   const normalizedDate = `${normalizedYear}-${normalizedMonth.padStart(2, '0')}-${normalizedDay.padStart(2, '0')}`
   return parseDate(normalizedDate) === null
     ? null
@@ -120,7 +113,7 @@ const readItems = (value: unknown) => {
 
   const items: Array<ExpenseItem> = []
   for (const item of value) {
-    if (!isRecord(item) || typeof item.name !== 'string' || !isNonBlankString(item.name)) {
+    if (!isObject(item) || typeof item.name !== 'string' || !isNonBlankString(item.name)) {
       return null
     }
 
@@ -152,7 +145,7 @@ const createExpenseForm = (
   questions: ReadonlyArray<string>,
   overflowCode: ExpenseParseError['code'] = 'invalid-shape',
 ): ExpenseParseResult => {
-  const total = items.reduce((sum, item) => sum + item.amount, 0)
+  const total = sumBy(items, (item) => item.amount)
   if (!Number.isSafeInteger(total)) {
     return invalid(overflowCode)
   }
@@ -168,7 +161,7 @@ const parseExpenseAssistantCandidate = (json: string): ExpenseParseResult => {
     return invalid('invalid-json')
   }
 
-  if (!isRecord(parsed)) {
+  if (!isObject(parsed)) {
     return invalid('invalid-shape')
   }
 

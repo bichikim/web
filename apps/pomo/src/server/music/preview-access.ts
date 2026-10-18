@@ -1,4 +1,5 @@
 import {createPlaybackToken, verifyPlaybackToken} from '@pomo/playback-token'
+import {getPlaybackSecret} from './get-playback-secret'
 
 import type {PlaybackAsset} from './playback-access'
 
@@ -29,16 +30,6 @@ interface VerifyPreviewAccessOptions {
 export interface PreviewAccess {
   readonly expiresAt: Date
   readonly url: string
-}
-
-const getPlaybackSecret = (environment: PreviewEnvironment): string => {
-  const secret = environment.POMO_PLAYBACK_TOKEN_SECRET?.trim()
-
-  if (secret === undefined || secret.length === 0) {
-    throw new TypeError('POMO_PLAYBACK_TOKEN_SECRET is not set')
-  }
-
-  return secret
 }
 
 export const createPreviewAccess = async ({

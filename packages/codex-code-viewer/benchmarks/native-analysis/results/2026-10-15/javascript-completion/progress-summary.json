@@ -1,0 +1,26 @@
+[
+  {
+    "name": "getWindow",
+    "variant": "before",
+    "total": 22,
+    "median": 611.2875
+  },
+  {
+    "name": "getWindow",
+    "variant": "after",
+    "total": 22,
+    "median": 622.220125
+  },
+  {
+    "name": "javascript",
+    "variant": "before",
+    "total": 6,
+    "median": 2321.343459
+  },
+  {
+    "name": "javascript",
+    "variant": "after",
+    "total": 6,
+    "median": 2294.976667
+  }
+]

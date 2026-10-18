@@ -1,4 +1,4 @@
-import {withPromiseNull} from 'src/utils/with-promise-null'
+import {withPromiseFallback} from 'src/utils/with-promise-fallback'
 import {
   hasNativeStorageBridge,
   readTossStorageJson,
@@ -8,11 +8,9 @@ import {
 } from 'src/utils/runtime-storage'
 
 import {getDefaultPSceneStyle, type PSceneStyle} from './scene-style'
+import {parseSceneStyle} from './parse-scene-style'
 
 const SCENE_STYLE_STORAGE_KEY = 'pomo:focus-room-scene-style:v1'
-const parseSceneStyle = (value: unknown): PSceneStyle | null => {
-  return value === 'original' || value === 'scribble' ? value : null
-}
 
 export interface PSceneStyleStorage {
   readonly getDefault: () => PSceneStyle
@@ -73,7 +71,7 @@ export const createPSceneStyleRepository = (storage: PSceneStyleStorage): PScene
       return
     }
 
-    await withPromiseNull(storage.writeToss(SCENE_STYLE_STORAGE_KEY, sceneStyle))
+    await withPromiseFallback(storage.writeToss(SCENE_STYLE_STORAGE_KEY, sceneStyle), null)
   }
 
   return {read, write}

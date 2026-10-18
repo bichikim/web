@@ -1,5 +1,6 @@
 export * from './desktop-music-actions'
 export * from './error'
+export * from './is-desktop-mode'
 export * from './model'
 export * from './runtime'
 export * from './safe-area'

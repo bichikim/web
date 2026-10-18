@@ -1,4 +1,4 @@
-import {ceilDecimalProducts} from 'src/utils/ceil-decimal-products'
+import {ceilWeightedSum} from 'src/utils/ceil-weighted-sum'
 import type {AiCapability} from './model-catalog.ts'
 
 const MILLISECONDS_PER_SECOND = 1000
@@ -106,7 +106,7 @@ const calculateCredits = (values: ReadonlyArray<[number | null, number | null]>)
   }
 
   // Decimal rates must not reserve an extra credit because of binary floating-point residue.
-  const credits = ceilDecimalProducts({
+  const credits = ceilWeightedSum({
     products: values.map(([value, rate]) => ({
       multiplier: rate ?? 0,
       quantity: BigInt(value ?? 0),

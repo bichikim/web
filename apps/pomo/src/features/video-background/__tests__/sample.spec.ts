@@ -1,22 +1,32 @@
 /** @vitest-environment jsdom */
 import {afterEach, expect, it, vi} from 'vitest'
 import {captureSample, sampleVideo} from '../sample'
+import {videoSamplingRuntime} from '../runtime'
+
+vi.mock('../runtime', () => ({
+  videoSamplingRuntime: {
+    createCanvas: vi.fn(),
+    createUrl: vi.fn(),
+    createVideo: vi.fn(),
+    releaseUrl: vi.fn(),
+  },
+}))
 afterEach(() => {
   vi.useRealTimers()
   vi.restoreAllMocks()
-  vi.unstubAllGlobals()
+  vi.resetAllMocks()
 })
 
 const createDecoder = (duration = 12) => {
   const video = document.createElement('video')
-  const create = document.createElement.bind(document)
-  vi.spyOn(document, 'createElement').mockImplementation((tag, options) =>
-    tag === 'video' ? video : create(tag, options),
-  )
+  const canvas = document.createElement('canvas')
+  vi.mocked(videoSamplingRuntime.createVideo).mockReturnValue(video)
+  vi.mocked(videoSamplingRuntime.createCanvas).mockReturnValue(canvas)
+  vi.mocked(videoSamplingRuntime.createUrl).mockReturnValue('blob:sample')
   Object.defineProperties(video, {
-    duration: {value: duration},
-    videoHeight: {value: 1},
-    videoWidth: {value: 2},
+    duration: {configurable: true, value: duration},
+    videoHeight: {configurable: true, value: 1},
+    videoWidth: {configurable: true, value: 2},
   })
   let position = 0
   const seek = vi.fn()
@@ -31,18 +41,19 @@ const createDecoder = (duration = 12) => {
   const load = vi.spyOn(video, 'load').mockImplementation(() => undefined)
   const pause = vi.spyOn(video, 'pause').mockImplementation(() => undefined)
   const draw = vi.fn()
-  vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue({
+  vi.spyOn(canvas, 'getContext').mockReturnValue({
     drawImage: draw,
     getImageData: () => ({data: new Uint8ClampedArray(32 * 16 * 4)}),
   } as unknown as ReturnType<HTMLCanvasElement['getContext']>)
-  vi.stubGlobal('URL', {createObjectURL: vi.fn(() => 'blob:sample'), revokeObjectURL: vi.fn()})
-  return {draw, load, pause, seek, video}
+  return {canvas, draw, load, pause, seek, video}
 }
 
 it('should finish each seek and capture before starting the next seek', async () => {
   vi.useFakeTimers()
   const {draw, load, pause, seek, video} = createDecoder()
-  const pending = sampleVideo(new Blob(), new AbortController().signal)
+  const blob = new Blob()
+  const pending = sampleVideo(blob, new AbortController().signal)
+  expect(videoSamplingRuntime.createUrl).toHaveBeenCalledExactlyOnceWith(blob)
   expect(video.muted).toBe(true)
   expect(video.playsInline).toBe(true)
   expect(video.preload).toBe('auto')
@@ -67,7 +78,7 @@ it('should finish each seek and capture before starting the next seek', async ()
   expect(pause).toHaveBeenCalledOnce()
   expect(load).toHaveBeenCalledTimes(2)
   expect(video.hasAttribute('src')).toBe(false)
-  expect(URL.revokeObjectURL).toHaveBeenCalledExactlyOnceWith('blob:sample')
+  expect(videoSamplingRuntime.releaseUrl).toHaveBeenCalledExactlyOnceWith('blob:sample')
   expect(vi.getTimerCount()).toBe(0)
 })
 
@@ -87,7 +98,7 @@ it.each(['load', 'seek'] as const)(
     expect(pause).toHaveBeenCalledOnce()
     expect(load).toHaveBeenCalledTimes(2)
     expect(video.hasAttribute('src')).toBe(false)
-    expect(URL.revokeObjectURL).toHaveBeenCalledExactlyOnceWith('blob:sample')
+    expect(videoSamplingRuntime.releaseUrl).toHaveBeenCalledExactlyOnceWith('blob:sample')
     expect(vi.getTimerCount()).toBe(0)
   },
 )
@@ -110,7 +121,7 @@ it.each(['load', 'seek'] as const)(
     expect(pause).toHaveBeenCalledOnce()
     expect(load).toHaveBeenCalledTimes(2)
     expect(video.hasAttribute('src')).toBe(false)
-    expect(URL.revokeObjectURL).toHaveBeenCalledExactlyOnceWith('blob:sample')
+    expect(videoSamplingRuntime.releaseUrl).toHaveBeenCalledExactlyOnceWith('blob:sample')
     expect(vi.getTimerCount()).toBe(0)
   },
 )
@@ -128,7 +139,7 @@ it('should preserve the cancellation reason while seeking and release the decode
   expect(pause).toHaveBeenCalledOnce()
   expect(load).toHaveBeenCalledTimes(2)
   expect(video.hasAttribute('src')).toBe(false)
-  expect(URL.revokeObjectURL).toHaveBeenCalledExactlyOnceWith('blob:sample')
+  expect(videoSamplingRuntime.releaseUrl).toHaveBeenCalledExactlyOnceWith('blob:sample')
   expect(vi.getTimerCount()).toBe(0)
 })
 
@@ -143,7 +154,7 @@ it('should release an already-aborted decoder without loading its source', async
   expect(pause).toHaveBeenCalledOnce()
   expect(load).toHaveBeenCalledOnce()
   expect(video.hasAttribute('src')).toBe(false)
-  expect(URL.revokeObjectURL).toHaveBeenCalledExactlyOnceWith('blob:sample')
+  expect(videoSamplingRuntime.releaseUrl).toHaveBeenCalledExactlyOnceWith('blob:sample')
   expect(vi.getTimerCount()).toBe(0)
 })
 
@@ -170,7 +181,7 @@ it.each(['load', 'seek'] as const)(
     expect(pause).toHaveBeenCalledOnce()
     expect(load).toHaveBeenCalledTimes(2)
     expect(video.hasAttribute('src')).toBe(false)
-    expect(URL.revokeObjectURL).toHaveBeenCalledExactlyOnceWith('blob:sample')
+    expect(videoSamplingRuntime.releaseUrl).toHaveBeenCalledExactlyOnceWith('blob:sample')
     expect(vi.getTimerCount()).toBe(0)
   },
 )
@@ -185,60 +196,52 @@ it('should skip seeks within the existing epsilon', async () => {
   expect(load).toHaveBeenCalledTimes(2)
   expect(vi.getTimerCount()).toBe(0)
 })
-it('should capture an aspect-preserving color sample and reject an unavailable canvas', () => {
-  const video = document.createElement('video')
+it('should capture an aspect-preserving color sample', () => {
+  const {canvas, video} = createDecoder()
   Object.defineProperties(video, {videoHeight: {value: 400}, videoWidth: {value: 200}})
   video.currentTime = 2
   const drawImage = vi.fn()
   const pixels = new Uint8ClampedArray(16 * 32 * 4)
-  const context = vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue({
+  vi.spyOn(canvas, 'getContext').mockReturnValue({
     drawImage,
     getImageData: () => ({data: pixels}),
   } as unknown as ReturnType<HTMLCanvasElement['getContext']>)
   expect(captureSample(video)).toEqual({height: 32, pixels, time: 2, width: 16})
   expect(drawImage).toHaveBeenCalledWith(video, 0, 0, 16, 32)
-  context.mockReturnValue(null)
+})
+it('should reject an unavailable canvas', () => {
+  const {canvas, video} = createDecoder()
+  vi.mocked(canvas.getContext).mockReturnValue(null)
   expect(() => captureSample(video)).toThrow('canvas')
 })
+it('should release the decoder and URL when frame capture fails', async () => {
+  vi.useFakeTimers()
+  const {canvas, load, pause, video} = createDecoder()
+  vi.mocked(canvas.getContext).mockReturnValue(null)
+  const pending = sampleVideo(new Blob(), new AbortController().signal)
+  const assertion = expect(pending).rejects.toThrow('Video background canvas is unavailable.')
+
+  video.dispatchEvent(new Event('loadeddata'))
+  await assertion
+
+  expect(pause).toHaveBeenCalledOnce()
+  expect(load).toHaveBeenCalledTimes(2)
+  expect(video.hasAttribute('src')).toBe(false)
+  expect(videoSamplingRuntime.releaseUrl).toHaveBeenCalledExactlyOnceWith('blob:sample')
+  expect(vi.getTimerCount()).toBe(0)
+})
 it('should capture both samples for a clip shorter than the end margin', async () => {
-  vi.stubGlobal('URL', {createObjectURL: vi.fn(() => 'blob:sample'), revokeObjectURL: vi.fn()})
-  let currentTime = 0
-  let initialized = false
-  vi.spyOn(HTMLMediaElement.prototype, 'load').mockImplementation(
-    function load(this: HTMLMediaElement) {
-      if (!initialized && this instanceof HTMLVideoElement) {
-        initialized = true
-        Object.defineProperties(this, {
-          duration: {value: 0.04},
-          videoHeight: {value: 2},
-          videoWidth: {value: 2},
-        })
-        Object.defineProperty(this, 'currentTime', {
-          configurable: true,
-          get: () => currentTime,
-          set: (time: number) => {
-            currentTime = time
-            this.dispatchEvent(new Event('seeked'))
-          },
-        })
-      }
-      this.dispatchEvent(new Event('loadeddata'))
-    },
-  )
-  vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue({
-    drawImage: vi.fn(),
-    getImageData: () => ({data: new Uint8ClampedArray(32 * 32 * 4)}),
-  } as unknown as ReturnType<HTMLCanvasElement['getContext']>)
+  const {load, seek, video} = createDecoder(0.04)
+  load.mockImplementationOnce(() => video.dispatchEvent(new Event('loadeddata')))
+  seek.mockImplementation(() => video.dispatchEvent(new Event('seeked')))
 
   const samples = await sampleVideo(new Blob(), new AbortController().signal)
 
   expect(samples.map((sample) => sample.time)).toEqual([0, 0.04])
-  expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:sample')
+  expect(videoSamplingRuntime.releaseUrl).toHaveBeenCalledExactlyOnceWith('blob:sample')
 })
 it('should stop the decoder and release its URL when loading is aborted', async () => {
-  vi.stubGlobal('URL', {createObjectURL: vi.fn(() => 'blob:sample'), revokeObjectURL: vi.fn()})
-  const load = vi.spyOn(HTMLMediaElement.prototype, 'load').mockImplementation(() => undefined)
-  const pause = vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => undefined)
+  const {load, pause} = createDecoder()
   const controller = new AbortController()
   const pending = sampleVideo(new Blob(), controller.signal)
   const assertion = expect(pending).rejects.toMatchObject({name: 'AbortError'})
@@ -246,7 +249,7 @@ it('should stop the decoder and release its URL when loading is aborted', async 
   await assertion
   expect(pause).toHaveBeenCalledOnce()
   expect(load).toHaveBeenCalledTimes(2)
-  expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:sample')
+  expect(videoSamplingRuntime.releaseUrl).toHaveBeenCalledExactlyOnceWith('blob:sample')
 })
 
 it.each([
@@ -273,7 +276,7 @@ it.each([
   }
   await expect(pending).rejects.toBe(reason)
   expect(video.hasAttribute('src')).toBe(false)
-  expect(URL.revokeObjectURL).toHaveBeenCalledExactlyOnceWith('blob:sample')
+  expect(videoSamplingRuntime.releaseUrl).toHaveBeenCalledExactlyOnceWith('blob:sample')
   expect(vi.getTimerCount()).toBe(0)
 })
 
@@ -290,7 +293,7 @@ it.each([null, undefined])('should preserve a nullish abort reason: %s', async (
   controller.abort(reason)
   await assertion
   expect(video.hasAttribute('src')).toBe(false)
-  expect(URL.revokeObjectURL).toHaveBeenCalledExactlyOnceWith('blob:sample')
+  expect(videoSamplingRuntime.releaseUrl).toHaveBeenCalledExactlyOnceWith('blob:sample')
   expect(vi.getTimerCount()).toBe(0)
 })
 

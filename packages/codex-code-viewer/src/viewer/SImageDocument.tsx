@@ -1,3 +1,4 @@
+import {useTranslations} from './locale/use-translations'
 import {createEffect, createSignal, type JSX, onCleanup, untrack} from 'solid-js'
 import {useFileViewState} from './view-state/context'
 import {SImageToolbar} from './SImageToolbar'
@@ -21,6 +22,7 @@ interface SImageDocumentProps {
   onError?: () => void
 }
 export const SImageDocument = (props: SImageDocumentProps) => {
+  const t = useTranslations()
   const state = useFileViewState()
   const saved = state?.read()?.image
   const [element, setElement] = createSignal<HTMLDivElement | null>(null)
@@ -66,8 +68,10 @@ export const SImageDocument = (props: SImageDocumentProps) => {
       <SImageToolbar image={image} onZoomIn={gestures.zoomIn} onZoomOut={gestures.zoomOut} />
       <div class="min-h-0 flex flex-1 overflow-hidden p-4">
         <div
-          aria-label="이미지 확대 및 이동"
-          aria-description="핀치 또는 Ctrl+휠로 확대·축소합니다. 확대된 이미지는 드래그나 방향키로 이동합니다. +, -, 0, Home 키로 배율을 조절합니다."
+          aria-label={t('이미지 확대 및 이동')}
+          aria-description={t(
+            '핀치 또는 Ctrl+휠로 확대·축소합니다. 확대된 이미지는 드래그나 방향키로 이동합니다. +, -, 0, Home 키로 배율을 조절합니다.',
+          )}
           class={viewportClasses}
           data-pannable={image.pannable()}
           data-dragging={image.dragging()}

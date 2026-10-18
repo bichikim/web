@@ -1,6 +1,6 @@
 import {maxBy} from 'es-toolkit/array'
 
-/** Returns normalized exponential probabilities, preserving input order and empty inputs. */
+/** 입력 순서와 빈 입력을 유지하면서 정규화된 지수 확률을 반환한다. */
 export const numericallyStableSoftmax = (values: ReadonlyArray<number>): number[] => {
   if (values.length === 0) {
     return []
