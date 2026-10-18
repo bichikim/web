@@ -1,4 +1,5 @@
 import type {TextGenerationMessage} from '../text-generation/runtime'
+import {getExceptionMessage} from '../error-detail'
 import {requestCloudText} from './client'
 import type {CloudTextResponse} from './contracts'
 
@@ -35,9 +36,7 @@ export const createCloudTextTask = () => {
       }
     } catch (error: unknown) {
       if (!disposed && !controller.signal.aborted) {
-        options.onError(
-          error instanceof Error ? error.message : '클라우드 텍스트 생성에 실패했어요.',
-        )
+        options.onError(getExceptionMessage(error, '클라우드 텍스트 생성에 실패했어요.'))
       }
     } finally {
       active = null

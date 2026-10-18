@@ -2,6 +2,7 @@ import {hasNumberKind} from './has-number-kind'
 import {parseInteger} from './parse-integer'
 import {DECIMAL_PERCENT_PATTERN, INTEGER_PERCENT_PATTERN} from './percent-patterns'
 import {
+  ENGLISH_COUNT_NOUNS,
   INTEGER_PATTERN_SOURCE,
   NUMBER_TOKEN_START_PATTERN_SOURCE,
   UNSIGNED_INTEGER_PATTERN_SOURCE,
@@ -94,9 +95,9 @@ const YEAR_PATTERN = new RegExp(
 )
 const FIRST_SUPPORTED_YEAR = 1000n
 const LAST_SUPPORTED_YEAR = 9999n
-const COUNT_NOUNS = '(?:[a-z]+s|people|children|men|women|feet|teeth|mice)'
 const COUNT_PATTERN = new RegExp(
-  `${NUMBER_TOKEN_START_PATTERN_SOURCE}([-−－]?${UNSIGNED_INTEGER_PATTERN_SOURCE})(?=\\s+${COUNT_NOUNS}(?![A-Za-z]))`,
+  `${NUMBER_TOKEN_START_PATTERN_SOURCE}([-−－]?${UNSIGNED_INTEGER_PATTERN_SOURCE})` +
+    `(?=\\s+${ENGLISH_COUNT_NOUNS}(?![A-Za-z]))`,
   'gu',
 )
 const DIGIT_CODE_PATTERN = new RegExp(

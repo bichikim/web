@@ -1,3 +1,5 @@
+import {concatFloat32} from 'src/utils/concat-float32'
+
 interface JoinAudioChunksOptions {
   readonly chunks: ReadonlyArray<Float32Array>
   readonly sampleRate: number
@@ -11,16 +13,5 @@ export const joinAudioChunks = (options: JoinAudioChunksOptions): Float32Array =
   }
 
   const silenceLength = Math.round(options.sampleRate * options.silenceDuration)
-  const totalLength =
-    options.chunks.reduce((total, chunk) => total + chunk.length, 0) +
-    silenceLength * (options.chunks.length - 1)
-  const samples = new Float32Array(totalLength)
-  let offset = 0
-
-  for (const chunk of options.chunks) {
-    samples.set(chunk, offset)
-    offset += chunk.length + silenceLength
-  }
-
-  return samples
+  return concatFloat32(options, silenceLength)
 }

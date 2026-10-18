@@ -1,0 +1,21 @@
+{
+  "node": "v24.15.0",
+  "ruby": "ruby 4.0.6 (2026-07-14 revision 03b6d3f889) +PRISM [arm64-darwin25]",
+  "baseline": "current source before token cache, ranking and worker heap changes; includes all omission and Rust rebuild fixes",
+  "hashes": {
+    "before/workspace.js": "9aa8203ab636923755fb8e7ac9a8bab5f1cd539f37edc883020fd7acd0df3568",
+    "before/navigation-worker.js": "33010322e1022cb891cacc0b8ce52d44e2fe43729ce30a6fac1aa7677e58fa02",
+    "after/workspace.js": "b00444a47beb008528de3be6769bfe4373cce58bcb718ffebed09fdf52eb8567",
+    "after/navigation-worker.js": "473ed7d55037e021d24776a53a5b8d9c359fe58c0469d906a91c074a990287b2"
+  },
+  "analyzers": {
+    "/Users/bichi/.codex/worktrees/379e/web/packages/codex-code-viewer/dist/python/langserver.index.js": "f200762078eb9880faf421a5b30f9ef3055b1d85c6f10780d75db4da8d8499f1",
+    "/Users/bichi/.codex/worktrees/379e/web/packages/codex-code-viewer/dist/rust/darwin-arm64/rust-analyzer": "6e232bb1835fee8106ee985d90702e2cef9647392b28b91dcfa2cae17a975983"
+  },
+  "changes": [
+    "token-aligned completed navigation keys",
+    "one priority score per source",
+    "worker young generation limit 64 MiB"
+  ],
+  "gcExperiment": "64 and 128 MiB variants tested; only 64 MiB included in final comparison"
+}

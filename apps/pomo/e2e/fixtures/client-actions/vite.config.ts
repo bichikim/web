@@ -2,6 +2,9 @@ import {fileURLToPath} from 'node:url'
 import {solidStart} from '@solidjs/start/config'
 import {nitro} from 'nitro/vite'
 import {defineConfig} from 'vite'
+import UnoCSS from 'unocss/vite'
+import {createUnoCssInlineResolver} from '@winter-love/unocss-config'
+import unoConfig from '../../../uno.config'
 
 const fixtureDirectory = fileURLToPath(new URL('.', import.meta.url))
 
@@ -12,7 +15,12 @@ export default defineConfig({
     'import.meta.env.VITE_POMO_IS_DESKTOP': JSON.stringify('false'),
     'import.meta.env.VITE_POMO_PUBLIC_ORIGIN': JSON.stringify('http://127.0.0.1:44175'),
   },
-  plugins: [solidStart({devOverlay: false, solid: {hot: false}}), nitro()],
+  plugins: [
+    createUnoCssInlineResolver(),
+    UnoCSS(unoConfig),
+    solidStart({devOverlay: false, solid: {hot: false}}),
+    nitro(),
+  ],
   resolve: {
     alias: {
       '@apps-in-toss/web-framework': fileURLToPath(

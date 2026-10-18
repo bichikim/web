@@ -153,6 +153,49 @@ describe('useSend', () => {
     },
   )
 
+  it.each(['success', 'failure'] as const)(
+    'should keep a replacement lookup pending after an invalidated calendar %s settles',
+    async (outcome) => {
+      const oldRequest = Promise.withResolvers<string | null>()
+      const currentRequest = Promise.withResolvers<string | null>()
+      const error = new Error('obsolete calendar failed')
+      const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+      vi.mocked(loadCalendarPromptContext)
+        .mockReturnValueOnce(oldRequest.promise)
+        .mockReturnValueOnce(currentRequest.promise)
+      const {result, clients, onSendStarted, cleanup} = setup()
+
+      const oldSend = result.sending.send()
+      result.sending.invalidate()
+      result.chat.setDraft('새 질문')
+      const currentSend = result.sending.send()
+      const callsAfterCurrentSend = vi.mocked(loadCalendarPromptContext).mock.calls.length
+
+      if (outcome === 'success') {
+        oldRequest.resolve('obsolete context')
+      } else {
+        oldRequest.reject(error)
+      }
+      await oldRequest.promise.catch(() => undefined)
+
+      const duplicateSend = result.sending.send()
+      const callsAfterDuplicateSend = vi.mocked(loadCalendarPromptContext).mock.calls.length
+      currentRequest.resolve('current context')
+      await Promise.all([oldSend, currentSend, duplicateSend])
+
+      expect(callsAfterCurrentSend).toBe(2)
+      expect(callsAfterDuplicateSend).toBe(2)
+      expect(loadCalendarPromptContext).toHaveBeenCalledTimes(2)
+      expect(consoleError).not.toHaveBeenCalled()
+      expect(onSendStarted).toHaveBeenCalledOnce()
+      expect(clients[0]?.generate).toHaveBeenCalledWith(expect.any(Object), '2', {
+        refineAnswer: true,
+        supplementaryContext: 'current context',
+      })
+      cleanup()
+    },
+  )
+
   it('should ignore duplicate sends and read refinement settings when the query completes', async () => {
     const deferred = Promise.withResolvers<string | null>()
     vi.mocked(loadCalendarPromptContext).mockReturnValue(deferred.promise)

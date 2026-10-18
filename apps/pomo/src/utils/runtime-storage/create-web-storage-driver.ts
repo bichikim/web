@@ -12,7 +12,7 @@ const expectSynchronousCompletion = (result: void | Promise<void>): void => {
   }
 }
 
-/** Uses unstorage's localStorage driver while preserving synchronous browser reads and writes. */
+/** 브라우저의 동기 읽기·쓰기를 유지하면서 unstorage의 localStorage 드라이버를 사용한다. */
 export const createWebStorageDriver = (
   storage: Storage = globalThis.localStorage,
 ): SynchronousWebStorageDriver => {

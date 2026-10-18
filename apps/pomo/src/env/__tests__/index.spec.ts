@@ -1,5 +1,6 @@
 /** @vitest-environment node */
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
+import {envSchema} from '../schema'
 
 const completeEnv = {
   CRON_SECRET: 'cron-secret-1234',
@@ -9,6 +10,7 @@ const completeEnv = {
   NEON_AUTH_COOKIE_SECRET: 'a-secure-cookie-secret-with-32-characters',
   OPENAI_API_KEY: 'sk-test-secret',
   OPENAI_WEBHOOK_SECRET: 'whsec_test',
+  OPENROUTER_API_KEY: 'router-test-key',
   OPENWEATHER_API_KEY: 'openweather-key',
   POMO_TOSS_CALLBACK_AUTHORIZATION: 'Basic dXNlcjpwYXNz',
   POMO_TOSS_MTLS_CERT: '-----BEGIN CERTIFICATE-----\nCERT BODY\n-----END CERTIFICATE-----',
@@ -28,10 +30,14 @@ afterEach(() => {
 })
 
 it('should export a parsed env aligned with envSchema', async () => {
-  const {env, envSchema} = await import('../index')
+  vi.stubEnv('POMO_API_AI_CLOUD_TEXT_PROVIDER', 'openrouter')
+  const {env, envSchema: exportedSchema} = await import('../index')
 
   expect(Object.keys(env).sort()).toEqual(Object.keys(envSchema).sort())
+  expect(Object.keys(exportedSchema).sort()).toEqual(Object.keys(envSchema).sort())
   expect(env.OPENAI_API_KEY).toBe('sk-test-secret')
+  expect(env.OPENROUTER_API_KEY).toBe('router-test-key')
+  expect(env.POMO_API_AI_CLOUD_TEXT_PROVIDER).toBe('openrouter')
 })
 
 it('should validate the environment when the module loads', async () => {

@@ -3,6 +3,7 @@ import utc from 'dayjs/plugin/utc'
 import timezone from 'dayjs/plugin/timezone'
 import type {IncomingMessage, ServerResponse} from 'node:http'
 
+import {escapeXmlValue as escapeXml} from '../../escape-xml-value.mjs'
 import {DEV_FEED_QUOTES} from './quotes'
 
 dayjs.extend(utc)
@@ -42,14 +43,6 @@ type DevFeedMiddleware = (
   response: ServerResponse,
   next: () => void,
 ) => void
-
-const escapeXml = (value: string) =>
-  value
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&apos;')
 
 const getTimeLabel = (date: Date, timeZone: string) => {
   const local = dayjs(date).tz(timeZone)

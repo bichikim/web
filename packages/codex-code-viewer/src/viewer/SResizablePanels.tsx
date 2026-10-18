@@ -1,3 +1,4 @@
+import {useTranslations} from './locale/use-translations'
 import {createEffect, createSignal, type JSX, onCleanup, Show, untrack} from 'solid-js'
 import {useSidebarResize} from './use-sidebar-resize'
 
@@ -12,6 +13,7 @@ interface SResizablePanelsProps {
 }
 
 export const SResizablePanels = (props: SResizablePanelsProps) => {
+  const t = useTranslations()
   const MINIMUM_SIDEBAR = 200
   const MINIMUM_CONTENT = 240
   const SEPARATOR_WIDTH = 6
@@ -86,13 +88,13 @@ export const SResizablePanels = (props: SResizablePanelsProps) => {
         </div>
         <Show when={props.visible}>
           <div
-            aria-label="파일 트리 너비 조절"
+            aria-label={t('파일 트리 너비 조절')}
             aria-controls={props.controls}
             aria-orientation="vertical"
             aria-valuemin={minimum()}
             aria-valuemax={resize.maximum()}
             aria-valuenow={resize.width()}
-            aria-valuetext={`${resize.width()}픽셀`}
+            aria-valuetext={t('{count}픽셀', {count: resize.width()})}
             class="group flex w-[var(--separator-width)] shrink-0 touch-none cursor-col-resize justify-center
               outline-none hover:bg-hover focus-visible:bg-hover"
             classList={{'bg-hover': resize.dragging()}}

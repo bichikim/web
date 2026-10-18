@@ -1,5 +1,6 @@
 import {apiJsonRequest, parseJsonResponse} from '../api-json'
 import {z} from 'zod'
+import {withPromiseFallback} from 'src/utils/with-promise-fallback'
 
 import {uploadTrackAudio} from './track-upload'
 
@@ -101,9 +102,10 @@ export const createTrackWithAudio = async (
 
     return {success: true}
   } catch (error) {
-    const cleanupSucceeded = await removeTrack(trackId)
-      .then(() => true)
-      .catch(() => false)
+    const cleanupSucceeded = await withPromiseFallback(
+      removeTrack(trackId).then(() => true),
+      false,
+    )
     return {
       cleanupStatus: cleanupSucceeded ? 'succeeded' : 'failed',
       error,

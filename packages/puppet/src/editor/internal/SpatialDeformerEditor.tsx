@@ -1,4 +1,5 @@
-import {For, Show} from 'solid-js'
+import {For, mergeProps, Show} from 'solid-js'
+import {useDeformerGestureCancellation} from './use-deformer-gesture-cancellation'
 import type {PuppetParameterValues} from '../../deformation'
 import type {PuppetDocument, PuppetPoint, PuppetSceneDeformerNode} from '../../player'
 import {isSceneNodeLocked} from './scene-graph'
@@ -111,7 +112,7 @@ export const SpatialDeformerEditor = (props: SpatialDeformerEditorProps) => {
       value: next,
     })
     if (document !== undefined) {
-      props.onDocumentChange?.(document)
+      changeDocument(document)
     }
   }
   const setTranslation = (axis: number, value: number) => {
@@ -129,7 +130,7 @@ export const SpatialDeformerEditor = (props: SpatialDeformerEditorProps) => {
       value: next,
     })
     if (document !== undefined) {
-      props.onDocumentChange?.(document)
+      changeDocument(document)
     }
   }
   const startRotationDrag = (event: PointerEvent, axis: number) => {
@@ -188,16 +189,23 @@ export const SpatialDeformerEditor = (props: SpatialDeformerEditorProps) => {
           : drag.point.y - point.y
     setTranslation(drag.axis, drag.initial + movement)
   }
-  const stopDrag = (event: PointerEvent) => {
-    if (drag?.pointerId !== event.pointerId) {
+  const stopDrag = (event?: PointerEvent) => {
+    const current = drag
+    if (current === undefined || (event !== undefined && current.pointerId !== event.pointerId)) {
       return
     }
-    if (root?.hasPointerCapture?.(event.pointerId)) {
-      root.releasePointerCapture(event.pointerId)
-    }
     drag = undefined
+    if (root?.hasPointerCapture?.(current.pointerId)) {
+      root.releasePointerCapture(current.pointerId)
+    }
     props.onEditEnd?.()
   }
+  const gestureProps = mergeProps(props, {
+    get activeNodeId() {
+      return props.node.id
+    },
+  })
+  const {changeDocument} = useDeformerGestureCancellation(gestureProps, stopDrag)
   const stepRotation = (event: KeyboardEvent, axis: number) => {
     if (!editable() || (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight')) {
       return

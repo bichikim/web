@@ -2,7 +2,7 @@ import {relative} from 'node:path'
 import {type CodeDocument, type Result, success} from '../shared/contracts'
 import {readSource} from './file-access'
 import {readMediaInfo} from './read-media-info'
-import {tokenizeSyntax} from './tokenize-syntax'
+import {createSourceDocument} from './create-source-document'
 
 interface MediaDocumentOptions {
   readonly root: string
@@ -29,17 +29,16 @@ export const readMediaDocument = (options: MediaDocumentOptions): Result<CodeDoc
   }
   const source = readSource(options.root, options.path)
   if (!source.ok) {
-    return source.error.code === 'too-large' ? success(document) : source
+    return source.error.code === 'text-too-large' ? success(document) : source
   }
-  const lines = tokenizeSyntax('html', source.value)
   return success({
     ...document,
-    lines,
-    location: {
-      ...document.location,
+    ...createSourceDocument({
       column: options.column,
-      line: Math.min(Math.max(1, options.line), lines.length),
-    },
-    source: source.value,
+      line: options.line,
+      path: document.location.path,
+      source: source.value,
+    }),
+    revision: document.revision,
   })
 }

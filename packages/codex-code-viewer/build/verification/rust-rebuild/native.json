@@ -1,0 +1,65 @@
+{
+  "expectedSha256": "6e232bb1835fee8106ee985d90702e2cef9647392b28b91dcfa2cae17a975983",
+  "records": [
+    {
+      "run": 1,
+      "path": "/Users/bichi/.codex/worktrees/379e/web/packages/codex-code-viewer/dist/rust/darwin-arm64/rust-analyzer",
+      "inodeBefore": 468427427,
+      "inodeAfter": 468477006,
+      "sha256": "6e232bb1835fee8106ee985d90702e2cef9647392b28b91dcfa2cae17a975983",
+      "signature": {
+        "exitCode": 0,
+        "output": "/Users/bichi/.codex/worktrees/379e/web/packages/codex-code-viewer/dist/rust/darwin-arm64/rust-analyzer: valid on disk\n/Users/bichi/.codex/worktrees/379e/web/packages/codex-code-viewer/dist/rust/darwin-arm64/rust-analyzer: satisfies its Designated Requirement\n"
+      },
+      "version": {
+        "exitCode": 0,
+        "output": "rust-analyzer 0.3.3073-standalone (65ac641199 2026-10-04)\n"
+      }
+    },
+    {
+      "run": 1,
+      "path": "/Users/bichi/.codex/worktrees/379e/web/packages/codex-code-viewer/dist/plugin/dist/rust/darwin-arm64/rust-analyzer",
+      "inodeBefore": 468427428,
+      "inodeAfter": 468482589,
+      "sha256": "6e232bb1835fee8106ee985d90702e2cef9647392b28b91dcfa2cae17a975983",
+      "signature": {
+        "exitCode": 0,
+        "output": "/Users/bichi/.codex/worktrees/379e/web/packages/codex-code-viewer/dist/plugin/dist/rust/darwin-arm64/rust-analyzer: valid on disk\n/Users/bichi/.codex/worktrees/379e/web/packages/codex-code-viewer/dist/plugin/dist/rust/darwin-arm64/rust-analyzer: satisfies its Designated Requirement\n"
+      },
+      "version": {
+        "exitCode": 0,
+        "output": "rust-analyzer 0.3.3073-standalone (65ac641199 2026-10-04)\n"
+      }
+    },
+    {
+      "run": 2,
+      "path": "/Users/bichi/.codex/worktrees/379e/web/packages/codex-code-viewer/dist/rust/darwin-arm64/rust-analyzer",
+      "inodeBefore": 468477006,
+      "inodeAfter": 468488943,
+      "sha256": "6e232bb1835fee8106ee985d90702e2cef9647392b28b91dcfa2cae17a975983",
+      "signature": {
+        "exitCode": 0,
+        "output": "/Users/bichi/.codex/worktrees/379e/web/packages/codex-code-viewer/dist/rust/darwin-arm64/rust-analyzer: valid on disk\n/Users/bichi/.codex/worktrees/379e/web/packages/codex-code-viewer/dist/rust/darwin-arm64/rust-analyzer: satisfies its Designated Requirement\n"
+      },
+      "version": {
+        "exitCode": 0,
+        "output": "rust-analyzer 0.3.3073-standalone (65ac641199 2026-10-04)\n"
+      }
+    },
+    {
+      "run": 2,
+      "path": "/Users/bichi/.codex/worktrees/379e/web/packages/codex-code-viewer/dist/plugin/dist/rust/darwin-arm64/rust-analyzer",
+      "inodeBefore": 468482589,
+      "inodeAfter": 468494500,
+      "sha256": "6e232bb1835fee8106ee985d90702e2cef9647392b28b91dcfa2cae17a975983",
+      "signature": {
+        "exitCode": 0,
+        "output": "/Users/bichi/.codex/worktrees/379e/web/packages/codex-code-viewer/dist/plugin/dist/rust/darwin-arm64/rust-analyzer: valid on disk\n/Users/bichi/.codex/worktrees/379e/web/packages/codex-code-viewer/dist/plugin/dist/rust/darwin-arm64/rust-analyzer: satisfies its Designated Requirement\n"
+      },
+      "version": {
+        "exitCode": 0,
+        "output": "rust-analyzer 0.3.3073-standalone (65ac641199 2026-10-04)\n"
+      }
+    }
+  ]
+}

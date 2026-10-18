@@ -20,9 +20,56 @@ describe('createTrackAssetKey', () => {
   ])('should reject non-UUID key input', (options) => {
     expect(() => createTrackAssetKey(options)).toThrow(TypeError)
   })
+
+  it.each([
+    '00000000-0000-0000-0000-000000000000',
+    'ffffffff-ffff-ffff-ffff-ffffffffffff',
+    '123E4567-E89B-92D3-1456-426614174001',
+  ])('should retain permissive UUID version and variant input %s', (assetId) => {
+    expect(createTrackAssetKey({assetId, trackId: assetId})).toBe(
+      `tracks/${assetId.toLowerCase()}/${assetId.toLowerCase()}/source.mp3`,
+    )
+  })
+
+  it.each(['\n', '\r', '\u2028', ' '])(
+    'should reject trailing content on a UUID for %j',
+    (suffix) => {
+      expect(() =>
+        createTrackAssetKey({
+          assetId: `123e4567-e89b-12d3-a456-426614174001${suffix}`,
+          trackId: '123e4567-e89b-12d3-a456-426614174000',
+        }),
+      ).toThrow(new TypeError('assetId must be a UUID'))
+    },
+  )
+
+  it('should validate both IDs before reading them again for normalization', () => {
+    const reads: string[] = []
+    const result = createTrackAssetKey({
+      get assetId() {
+        reads.push('asset')
+        return '123E4567-E89B-12D3-A456-426614174001'
+      },
+      get trackId() {
+        reads.push('track')
+        return '123E4567-E89B-12D3-A456-426614174000'
+      },
+    })
+
+    expect(reads).toEqual(['track', 'asset', 'track', 'asset'])
+    expect(result).toBe(
+      'tracks/123e4567-e89b-12d3-a456-426614174000/123e4567-e89b-12d3-a456-426614174001/source.mp3',
+    )
+  })
 })
 
 describe('getTrackAssetId', () => {
+  it('should preserve asset normalization without validating the track segment', () => {
+    expect(
+      getTrackAssetId('tracks/track-segment/123E4567-E89B-92D3-1456-426614174001/source.mp3'),
+    ).toBe('123e4567-e89b-92d3-1456-426614174001')
+  })
+
   it('should read an asset ID from a server-owned object key', () => {
     expect(
       getTrackAssetId(

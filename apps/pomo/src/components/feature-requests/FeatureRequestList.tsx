@@ -1,6 +1,7 @@
 import {KeyedList} from '../keyed-list'
 import {createSignal, type JSX, Show} from 'solid-js'
 import * as m from '@paraglide/message'
+import {withPromiseFallback} from 'src/utils/with-promise-fallback'
 
 import type {AuthController} from '../../features/auth/controller'
 import {type FeatureRequestsController} from '../../features/feature-requests'
@@ -61,7 +62,7 @@ export const FeatureRequestList = (props: FeatureRequestListProps) => {
             <span>{m.feature_request_list_failed()}</span>
             <PButton
               bordered
-              onPress={() => props.model.refresh().catch(() => undefined)}
+              onPress={() => withPromiseFallback(props.model.refresh(), undefined)}
               size="small"
               tone="danger"
               transparent
@@ -98,7 +99,7 @@ export const FeatureRequestList = (props: FeatureRequestListProps) => {
                     <FeatureRequestCard
                       isAuthenticated={isAuthenticated()}
                       isVoting={props.model.votingRequestId() === request().id}
-                      onVote={(requestId) => handleVote(requestId).catch(() => undefined)}
+                      onVote={(requestId) => withPromiseFallback(handleVote(requestId), undefined)}
                       request={request()}
                     />
                   )}
@@ -119,7 +120,7 @@ export const FeatureRequestList = (props: FeatureRequestListProps) => {
           <PButton
             bordered
             disabled={props.model.isLoadingMore()}
-            onPress={() => props.model.loadMore().catch(() => undefined)}
+            onPress={() => withPromiseFallback(props.model.loadMore(), undefined)}
             size="small"
             tone="secondary"
             transparent

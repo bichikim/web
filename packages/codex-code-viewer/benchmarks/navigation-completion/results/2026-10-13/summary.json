@@ -1,0 +1,271 @@
+{
+  "measurements": [
+    {
+      "name": "declarations",
+      "variant": "after",
+      "phase": "cold",
+      "runs": 3,
+      "firstMs": 332.615541,
+      "completeMs": 491.081708,
+      "firstRangeMs": [327.968958, 364.016667],
+      "completeRangeMs": [471.2165, 533.058459],
+      "count": 17
+    },
+    {
+      "name": "declarations",
+      "variant": "after",
+      "phase": "repeat",
+      "runs": 3,
+      "firstMs": 7.90175,
+      "completeMs": 7.922,
+      "firstRangeMs": [7.7995, 8.12975],
+      "completeRangeMs": [7.821375, 8.169417],
+      "count": 17
+    },
+    {
+      "name": "declarations",
+      "variant": "before",
+      "phase": "cold",
+      "runs": 3,
+      "firstMs": 346.991125,
+      "completeMs": 605.491417,
+      "firstRangeMs": [325.101375, 366.151584],
+      "completeRangeMs": [590.01225, 738.222167],
+      "count": 17
+    },
+    {
+      "name": "declarations",
+      "variant": "before",
+      "phase": "repeat",
+      "runs": 3,
+      "firstMs": 8.028125,
+      "completeMs": 8.053166,
+      "firstRangeMs": [7.77, 8.666959],
+      "completeRangeMs": [7.795084, 8.711209],
+      "count": 17
+    },
+    {
+      "name": "fileRevision",
+      "variant": "after",
+      "phase": "cold",
+      "runs": 3,
+      "firstMs": 1529.794209,
+      "completeMs": 11150.336167,
+      "firstRangeMs": [1370.741417, 1906.788875],
+      "completeRangeMs": [10992.292417, 18633.667041],
+      "count": 15
+    },
+    {
+      "name": "fileRevision",
+      "variant": "after",
+      "phase": "repeat",
+      "runs": 3,
+      "firstMs": 72.877542,
+      "completeMs": 72.900167,
+      "firstRangeMs": [54.6895, 75.912583],
+      "completeRangeMs": [54.713375, 75.942708],
+      "count": 15
+    },
+    {
+      "name": "fileRevision",
+      "variant": "before",
+      "phase": "cold",
+      "runs": 3,
+      "firstMs": 1725.08075,
+      "completeMs": 18402.360083,
+      "firstRangeMs": [1471.704125, 2057.14475],
+      "completeRangeMs": [15929.37575, 21366.503541],
+      "count": 15
+    },
+    {
+      "name": "fileRevision",
+      "variant": "before",
+      "phase": "repeat",
+      "runs": 3,
+      "firstMs": 52.083416,
+      "completeMs": 52.133958,
+      "firstRangeMs": [36.46725, 62.109625],
+      "completeRangeMs": [36.485375, 62.139459],
+      "count": 15
+    },
+    {
+      "name": "getWindow",
+      "variant": "after",
+      "phase": "cold",
+      "runs": 3,
+      "firstMs": 2339.131542,
+      "completeMs": 20965.773959,
+      "firstRangeMs": [1646.928542, 2555.646584],
+      "completeRangeMs": [13510.659333, 21995.676333],
+      "count": 102
+    },
+    {
+      "name": "getWindow",
+      "variant": "after",
+      "phase": "repeat",
+      "runs": 3,
+      "firstMs": 68.366667,
+      "completeMs": 68.421958,
+      "firstRangeMs": [40.7365, 68.65125],
+      "completeRangeMs": [40.776166, 68.715167],
+      "count": 102
+    },
+    {
+      "name": "getWindow",
+      "variant": "before",
+      "phase": "cold",
+      "runs": 3,
+      "firstMs": 2539.171416,
+      "completeMs": 25192.959833,
+      "firstRangeMs": [2304.768541, 2680.235],
+      "completeRangeMs": [20620.906958, 28487.418375],
+      "count": 102
+    },
+    {
+      "name": "getWindow",
+      "variant": "before",
+      "phase": "repeat",
+      "runs": 3,
+      "firstMs": 76.758584,
+      "completeMs": 76.825,
+      "firstRangeMs": [37.835958, 114.732167],
+      "completeRangeMs": [37.889667, 114.780125],
+      "count": 102
+    },
+    {
+      "name": "getWindow-definition",
+      "variant": "after",
+      "phase": "cold",
+      "runs": 3,
+      "firstMs": 817.740166,
+      "completeMs": 855.242583,
+      "firstRangeMs": [723.178375, 972.364042],
+      "completeRangeMs": [756.95925, 1018.0915],
+      "count": 1
+    },
+    {
+      "name": "getWindow-definition",
+      "variant": "after",
+      "phase": "repeat",
+      "runs": 3,
+      "firstMs": 27.534541,
+      "completeMs": 27.55225,
+      "firstRangeMs": [26.040542, 69.579333],
+      "completeRangeMs": [26.057, 69.657167],
+      "count": 1
+    },
+    {
+      "name": "getWindow-definition",
+      "variant": "before",
+      "phase": "cold",
+      "runs": 3,
+      "firstMs": 841.404125,
+      "completeMs": 876.842667,
+      "firstRangeMs": [798.576375, 979.897333],
+      "completeRangeMs": [842.086666, 1025.696375],
+      "count": 1
+    },
+    {
+      "name": "getWindow-definition",
+      "variant": "before",
+      "phase": "repeat",
+      "runs": 3,
+      "firstMs": 31.930209,
+      "completeMs": 31.947125,
+      "firstRangeMs": [30.525375, 39.094125],
+      "completeRangeMs": [30.541625, 39.126833],
+      "count": 1
+    },
+    {
+      "name": "paths",
+      "variant": "after",
+      "phase": "cold",
+      "runs": 3,
+      "firstMs": 358.254958,
+      "completeMs": 520.241083,
+      "firstRangeMs": [318.971292, 359.593042],
+      "completeRangeMs": [469.331083, 584.109208],
+      "count": 14
+    },
+    {
+      "name": "paths",
+      "variant": "after",
+      "phase": "repeat",
+      "runs": 3,
+      "firstMs": 8.785125,
+      "completeMs": 8.811375,
+      "firstRangeMs": [7.1485, 9.702542],
+      "completeRangeMs": [7.164333, 9.720375],
+      "count": 14
+    },
+    {
+      "name": "paths",
+      "variant": "before",
+      "phase": "cold",
+      "runs": 3,
+      "firstMs": 365.551959,
+      "completeMs": 637.428917,
+      "firstRangeMs": [347.773459, 374.934167],
+      "completeRangeMs": [613.939042, 786.137958],
+      "count": 14
+    },
+    {
+      "name": "paths",
+      "variant": "before",
+      "phase": "repeat",
+      "runs": 3,
+      "firstMs": 9.623959,
+      "completeMs": 9.646,
+      "firstRangeMs": [7.175375, 9.636875],
+      "completeRangeMs": [7.191166, 9.657709],
+      "count": 14
+    }
+  ],
+  "correctness": [
+    {
+      "name": "paths",
+      "before": 14,
+      "after": 14,
+      "stableAcrossColdRepeatAndThreeProcesses": true,
+      "verified": true
+    },
+    {
+      "name": "declarations",
+      "before": 17,
+      "after": 17,
+      "stableAcrossColdRepeatAndThreeProcesses": true,
+      "verified": true
+    },
+    {
+      "name": "fileRevision",
+      "before": 15,
+      "after": 15,
+      "stableAcrossColdRepeatAndThreeProcesses": true,
+      "verified": true
+    },
+    {
+      "name": "getWindow",
+      "before": 102,
+      "after": 102,
+      "stableAcrossColdRepeatAndThreeProcesses": true,
+      "verified": true
+    },
+    {
+      "name": "getWindow-definition",
+      "before": 1,
+      "after": 1,
+      "stableAcrossColdRepeatAndThreeProcesses": true,
+      "verified": true
+    }
+  ],
+  "bundles": {
+    "before": {
+      "workspace.js": "f8c4dde93a5b5e6e69e9e0e9e81e361ec9ecf85dc0e7e6d1ef8dff7da3d00570",
+      "navigation-worker.js": "eb567beb22c504073e59fa6e8454e76251d27507b8768c2be9f6189ca5809972"
+    },
+    "after": {
+      "workspace.js": "d411715ad16f27f53adf7bde764623519177fda8a62d0967ff4a596123ecf963",
+      "navigation-worker.js": "7df6120d602dff4ffe5b411e3d156eac3396ca61df05580c0abd4a716dcd5854"
+    }
+  }
+}

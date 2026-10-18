@@ -8,6 +8,40 @@ import {EditorKeyformPanel} from '../EditorKeyformPanel'
 import {addParameter} from '../parameter-keyforms'
 
 describe('EditorKeyformPanel', () => {
+  test('should change one displayed axis while preserving the other current coordinate', () => {
+    const document = createDemoDocument()
+    const onValueChange = vi.fn()
+    const view = render(() => (
+      <EditorKeyformPanel
+        activeBindingId="angle-xy"
+        bindings={document.parameterBindings!}
+        parameters={document.parameters!}
+        values={[5, 9]}
+        onValueChange={onValueChange}
+      />
+    ))
+    fireEvent.input(view.getByRole('spinbutton', {name: 'Angle X 값'}), {target: {value: '15'}})
+    expect(onValueChange).toHaveBeenLastCalledWith([15, 9])
+    fireEvent.input(view.getByRole('spinbutton', {name: 'Angle Y 값'}), {target: {value: '-10'}})
+    expect(onValueChange).toHaveBeenLastCalledWith([5, -10])
+  })
+  test('should show one parameter name with its numeric input and default influence', () => {
+    const document = createDemoDocument()
+    const added = addParameter({document, nodeIds: ['mesh-preview']})!
+    const parameters = added.document.parameters!.map((parameter) =>
+      parameter.id === added.binding.parameterIds[0]
+        ? {...parameter, name: '꼬리 흔들림'}
+        : parameter,
+    )
+    const bindings = added.document.parameterBindings!.map((binding) =>
+      binding.id === added.binding.id ? {...binding, name: '꼬리 · 흔들림'} : binding,
+    )
+    const view = render(() => <EditorKeyformPanel bindings={bindings} parameters={parameters} />)
+    expect(view.getAllByText('꼬리 흔들림')).toHaveLength(1)
+    expect(view.queryByText('꼬리 · 흔들림')).not.toBeInTheDocument()
+    expect(view.getByRole('spinbutton', {name: '꼬리 흔들림 값'})).toBeVisible()
+    expect(view.getAllByText('적용량 100%')).toHaveLength(2)
+  })
   test('should render and select a complete two-dimensional keyform grid', () => {
     const document = createDemoDocument()
     const onKeyformSelect = vi.fn()

@@ -1,4 +1,5 @@
 import {uniq} from 'es-toolkit/array'
+import {sumBy} from 'es-toolkit/math'
 import {FeedRecoveryNotice} from '../feed-status/FeedRecoveryNotice'
 import {useFeedProgress} from '../feed-status/use-feed-progress'
 import {createEffect, createSignal, Match, Show, Switch} from 'solid-js'
@@ -44,7 +45,7 @@ const getMissingModelDownloads = async (
   const missingStates = modelStates.filter((state) => !state.downloaded)
   return {
     modelIds: missingStates.map((state) => state.modelId),
-    size: missingStates.reduce((total, state) => total + getSupertonicModel(state.modelId).size, 0),
+    size: sumBy(missingStates, (state) => getSupertonicModel(state.modelId).size),
   }
 }
 

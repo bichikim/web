@@ -1,0 +1,24 @@
+{
+  "referenceCount": 17,
+  "exactExpectedSet": true,
+  "positions": [
+    "[\"apps/built/use.ts\",17,5]",
+    "[\"apps/built/use.ts\",44,5]",
+    "[\"apps/built/use.ts\",8,5]",
+    "[\"apps/consumer/namespace.ts\",56,7]",
+    "[\"apps/consumer/use.ts\",18,5]",
+    "[\"apps/consumer/use.ts\",60,5]",
+    "[\"apps/consumer/use.ts\",8,6]",
+    "[\"loose/use.ts\",17,7]",
+    "[\"loose/use.ts\",57,7]",
+    "[\"loose/use.ts\",8,5]",
+    "[\"packages/bridge/entry.ts\",17,7]",
+    "[\"packages/bridge/entry.ts\",8,5]",
+    "[\"packages/bridge/next.ts\",19,6]",
+    "[\"packages/bridge/next.ts\",8,7]",
+    "[\"packages/core/local.ts\",17,5]",
+    "[\"packages/core/local.ts\",40,5]",
+    "[\"packages/core/local.ts\",8,5]"
+  ],
+  "performanceMeasured": false
+}

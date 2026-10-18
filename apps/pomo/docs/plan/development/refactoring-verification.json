@@ -328,7 +328,7 @@
     {
       "issue": 2315,
       "status": "implemented",
-      "file": "apps/pomo/src/utils/worker-transport/create-one-shot-worker-request.ts",
+      "file": "apps/pomo/src/utils/worker-transport/request-worker-once.ts",
       "line": 17
     },
     {
@@ -424,7 +424,7 @@
     {
       "issue": 2174,
       "status": "implemented",
-      "file": "apps/pomo/src/test-utils/create-deferred.ts",
+      "file": "apps/pomo/src/__tests__/create-deferred.ts",
       "line": 2
     },
     {
@@ -472,7 +472,7 @@
     {
       "issue": 2429,
       "status": "implemented",
-      "file": "apps/pomo/src/test-utils/create-test-broadcast-channel.ts",
+      "file": "apps/pomo/src/__tests__/create-test-broadcast-channel.ts",
       "line": 8
     }
   ],

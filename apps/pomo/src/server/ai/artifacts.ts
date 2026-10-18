@@ -1,4 +1,5 @@
 import {AwsClient} from 'aws4fetch'
+import {requireEnvironmentValue} from '../require-environment-value'
 
 import {AI_OPERATIONAL_LIMITS, getAiDownloadExpiry} from './policy.ts'
 
@@ -41,18 +42,6 @@ const createStorageFetcher = (options: AiArtifactStorageOptions) => {
     signal.throwIfAborted()
     return (options.fetcher ?? fetch)(new Request(request, {signal}))
   }
-}
-
-const requireEnvironmentValue = (
-  name: keyof AiArtifactEnvironment,
-  value: string | undefined,
-): string => {
-  const normalized = value?.trim()
-  if (normalized === undefined || normalized.length === 0) {
-    throw new TypeError(`${name} is not set`)
-  }
-
-  return normalized
 }
 
 const normalizePrefix = (value: string): string => {

@@ -31,12 +31,12 @@ export interface PAudioPreviewProps {
     playing: boolean,
     operation: 'play' | 'seek',
   ) => boolean
-  readonly onLoadedMetadata?: JSX.EventHandlerUnion<HTMLAudioElement, Event>
+  readonly onLoadedMetadata?: JSX.EventHandler<HTMLAudioElement, Event>
   readonly onCanPlay?: JSX.EventHandlerUnion<HTMLAudioElement, Event>
-  readonly onEnded?: JSX.EventHandlerUnion<HTMLAudioElement, Event>
+  readonly onEnded?: JSX.EventHandler<HTMLAudioElement, Event>
   readonly onError?: JSX.EventHandlerUnion<HTMLAudioElement, Event>
-  readonly onPause?: JSX.EventHandlerUnion<HTMLAudioElement, Event>
-  readonly onPlay?: JSX.EventHandlerUnion<HTMLAudioElement, Event>
+  readonly onPause?: JSX.EventHandler<HTMLAudioElement, Event>
+  readonly onPlay?: JSX.EventHandler<HTMLAudioElement, Event>
   readonly onRequest?: () => void
   readonly paused?: boolean
   readonly preload?: 'auto' | 'metadata' | 'none'

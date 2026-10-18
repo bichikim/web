@@ -9,7 +9,7 @@ export interface TossWebStorageAdapterOptions {
   readonly writeWebMode?: 'throw' | 'return-error'
 }
 
-/** Assembles runtime storage operations without binding a preference key. */
+/** 설정 키를 지정하지 않고 런타임 저장소 작업을 구성한다. */
 export const createTossWebStorageAdapter = (options: TossWebStorageAdapterOptions = {}) => ({
   readToss: (key: string) => readTossStorageJson(key, (value) => value),
   readWeb: (key: string) => readWebStorageJson(key, (value) => value),

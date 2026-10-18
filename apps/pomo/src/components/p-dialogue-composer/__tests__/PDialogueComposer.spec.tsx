@@ -13,6 +13,17 @@ afterEach(() => {
   overwriteGetLocale(originalGetLocale)
 })
 
+const dispatchEscape = (input: HTMLInputElement, isComposing: boolean) => {
+  const event = new KeyboardEvent('keydown', {
+    bubbles: true,
+    cancelable: true,
+    isComposing,
+    key: 'Escape',
+  })
+  input.dispatchEvent(event)
+  return event
+}
+
 it('should expand the initial dialogue button into a focused input', async () => {
   render(() => <PDialogueComposer />)
 
@@ -82,6 +93,63 @@ it('should update and restore a draft owned by the caller', () => {
 
   setDraft('복구된 대화')
   expect(input).toHaveValue('복구된 대화')
+})
+
+it('should leave a focused composer open while Escape cancels an IME composition', async () => {
+  render(() => <PDialogueComposer />)
+  fireEvent.click(screen.getByRole('button', {name: '대화 시작하기'}))
+  const input = screen.getByRole('textbox', {name: '대화 입력'}) as HTMLInputElement
+  await Promise.resolve()
+  expect(input).toHaveFocus()
+  fireEvent.input(input, {target: {value: '이어 쓸 대화'}})
+
+  const compositionEscape = dispatchEscape(input, true)
+  expect(compositionEscape.defaultPrevented).toBe(false)
+  expect(screen.getByRole('textbox', {name: '대화 입력'})).toBe(input)
+  expect(input).toHaveFocus()
+
+  fireEvent.compositionEnd(input)
+  const collapseEscape = dispatchEscape(input, false)
+  expect(collapseEscape.defaultPrevented).toBe(true)
+  expect(screen.queryByRole('textbox', {name: '대화 입력'})).not.toBeInTheDocument()
+
+  const trigger = screen.getByRole('button', {name: '대화 시작하기'})
+  await Promise.resolve()
+  expect(trigger).toHaveFocus()
+  fireEvent.click(trigger)
+  const reopenedInput = screen.getByRole('textbox', {name: '대화 입력'})
+  expect(reopenedInput).toHaveValue('이어 쓸 대화')
+  await Promise.resolve()
+  expect(reopenedInput).toHaveFocus()
+})
+
+it('should preserve a caller-controlled draft through composing Escape and reopen', async () => {
+  const [draft, setDraft] = createSignal('')
+  render(() => <PDialogueComposer draft={draft} onDraftChange={setDraft} />)
+  fireEvent.click(screen.getByRole('button', {name: '대화 시작하기'}))
+  const input = screen.getByRole('textbox', {name: '대화 입력'}) as HTMLInputElement
+  await Promise.resolve()
+  expect(input).toHaveFocus()
+  fireEvent.input(input, {target: {value: 'caller draft'}})
+
+  const compositionEscape = dispatchEscape(input, true)
+  expect(compositionEscape.defaultPrevented).toBe(false)
+  expect(screen.getByRole('textbox', {name: '대화 입력'})).toBe(input)
+  expect(input).toHaveFocus()
+
+  fireEvent.compositionEnd(input)
+  const collapseEscape = dispatchEscape(input, false)
+  expect(collapseEscape.defaultPrevented).toBe(true)
+  const trigger = screen.getByRole('button', {name: '대화 시작하기'})
+  await Promise.resolve()
+  expect(trigger).toHaveFocus()
+  fireEvent.click(trigger)
+
+  const reopenedInput = screen.getByRole('textbox', {name: '대화 입력'})
+  await Promise.resolve()
+  expect(draft()).toBe('caller draft')
+  expect(reopenedInput).toHaveValue('caller draft')
+  expect(reopenedInput).toHaveFocus()
 })
 
 it('should auto-expand once without moving focus', async () => {

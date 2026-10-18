@@ -10,6 +10,7 @@ import {
 import {tmpdir} from 'node:os'
 import {join} from 'node:path'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
+import * as documents from '../read-document'
 import * as tokenizer from '../tokenize-source'
 import {createDocumentReader} from '../create-document-reader'
 
@@ -25,6 +26,36 @@ describe('createDocumentReader', () => {
     reader.dispose()
     vi.restoreAllMocks()
     rmSync(root, {force: true, recursive: true})
+  })
+  it('should preserve large source locations and refresh a cached document after it shrinks', () => {
+    const source = 'large row\r\n'.repeat(50000)
+    writeFileSync(join(root, 'large.txt'), source)
+    expect(reader.read('large.txt', 40000, 3)).toMatchObject({
+      ok: true,
+      value: {lines: [], location: {column: 3, line: 40000}, readOnly: true},
+    })
+    expect(reader.read('large.txt', 999999)).toMatchObject({
+      ok: true,
+      value: {location: {line: 50001}},
+    })
+    writeFileSync(join(root, 'large.txt'), 'small')
+    expect(reader.read('large.txt', 999999)).toMatchObject({
+      ok: true,
+      value: {location: {line: 1}, source: 'small'},
+    })
+    const current = reader.read('large.txt')
+    expect(current.ok && current.value.readOnly).toBeUndefined()
+  })
+  it('should bound retained large documents by source bytes', () => {
+    const read = vi.spyOn(documents, 'readDocument')
+    writeFileSync(join(root, 'one.txt'), 'x'.repeat(17 * 1024 * 1024))
+    writeFileSync(join(root, 'two.txt'), 'x'.repeat(17 * 1024 * 1024))
+    expect(reader.read('one.txt').ok).toBe(true)
+    expect(reader.read('two.txt').ok).toBe(true)
+    expect(reader.read('two.txt').ok).toBe(true)
+    expect(read).toHaveBeenCalledTimes(2)
+    expect(reader.read('one.txt').ok).toBe(true)
+    expect(read).toHaveBeenCalledTimes(3)
   })
   it('should reuse tokenization while applying each requested location', () => {
     const tokenize = vi.spyOn(tokenizer, 'tokenizeSource')

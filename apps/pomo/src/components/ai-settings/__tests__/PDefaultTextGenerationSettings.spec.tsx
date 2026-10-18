@@ -3,7 +3,7 @@ import {fireEvent, render, screen, waitFor} from '@solidjs/testing-library'
 import {createSignal, For, Show} from 'solid-js'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 import {PreferenceProvider} from 'src/hooks/use-preference'
-import {createDeferred} from 'src/test-utils/create-deferred'
+import {createDeferred} from 'src/__tests__/create-deferred'
 import {PSelect} from '../../p-select/PSelect'
 import {
   DEFAULT_TEXT_GENERATION_SETTINGS,

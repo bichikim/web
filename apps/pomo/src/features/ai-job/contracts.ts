@@ -1,19 +1,12 @@
 import {z} from 'zod'
+import {AI_JOB_STATUSES} from './job-statuses'
 
 const MAXIMUM_JOB_PROGRESS = 100
 const MAXIMUM_MESSAGE_LENGTH = 12_000
 const MAXIMUM_MESSAGE_COUNT = 64
 const MAXIMUM_TOKENS = 4_096
 
-export const aiJobStatusSchema = z.enum([
-  'queued',
-  'running',
-  'recovery_pending',
-  'succeeded',
-  'failed',
-  'cancelled',
-  'timed_out',
-])
+export const aiJobStatusSchema = z.enum(AI_JOB_STATUSES)
 
 export type AiJobStatus = z.infer<typeof aiJobStatusSchema>
 

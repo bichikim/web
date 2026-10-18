@@ -8,11 +8,11 @@ import {
   DEFAULT_CONNECTION_SECONDS,
   MAX_GENERATION_CONNECTION_SECONDS,
   MIN_CONNECTION_SECONDS,
-  PCM16_SCALE,
   SAMPLE_RATE,
   STEREO_FRAME_BYTES,
   WAV_HEADER_BYTES,
 } from './connection'
+import {copyStereoPcm16} from './copy-stereo-pcm16'
 import type {InpaintAudio} from './inpaint'
 import {
   type ChunkNoiseMode,
@@ -90,10 +90,7 @@ async function createContext(
   )
   const left = new Float32Array(seconds * SAMPLE_RATE)
   const right = new Float32Array(seconds * SAMPLE_RATE)
-  for (let frame = 0; frame < frames; frame += 1) {
-    left[frame] = tail.getInt16(frame * STEREO_FRAME_BYTES, true) / PCM16_SCALE
-    right[frame] = tail.getInt16(frame * STEREO_FRAME_BYTES + 2, true) / PCM16_SCALE
-  }
+  copyStereoPcm16({frames, left, right, source: tail})
   return {end: seconds, left, right, start: connectionSeconds}
 }
 

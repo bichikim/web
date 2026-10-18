@@ -35,9 +35,10 @@ export const PlayerCanvas = (props: PlayerCanvasProps) => {
   let generation = 0
   let overlay: SpatialThreeOverlay | undefined
   let playerCanvas: HTMLCanvasElement | undefined
-  const notifyFrame = (frame: PlayerFrame) => untrack(() => props.onFrame)?.(frame)
+  const notifyFrame = (frame: PlayerFrame) => untrack(() => props.onFrame?.(frame))
   const notifyPlayerChange = (nextPlayer: Player | null) =>
-    untrack(() => props.onPlayerChange)?.(nextPlayer)
+    untrack(() => props.onPlayerChange?.(nextPlayer))
+  const notifyStatus = (status: PlayerCanvasStatus) => untrack(() => props.onStatusChange?.(status))
 
   createEffect(() => {
     const hostElement = host()
@@ -94,7 +95,6 @@ export const PlayerCanvas = (props: PlayerCanvasProps) => {
 
   createEffect(() => {
     const hostElement = host()
-    const onStatusChange = untrack(() => props.onStatusChange)
 
     if (hostElement === undefined) {
       return
@@ -102,14 +102,14 @@ export const PlayerCanvas = (props: PlayerCanvasProps) => {
 
     generation += 1
     const activeGeneration = generation
-    onStatusChange?.('loading')
+    notifyStatus('loading')
     const preparedDocument = markPreparedPuppetDocument(props.document)
     const currentPlayer = untrack(player)
 
     try {
       if (currentPlayer?.updateDocument(preparedDocument) === true) {
         setErrorMessage(null)
-        onStatusChange?.('ready')
+        notifyStatus('ready')
         return
       }
     } catch (error) {
@@ -120,7 +120,7 @@ export const PlayerCanvas = (props: PlayerCanvasProps) => {
       setPlayer(null)
       hostElement.replaceChildren()
       setErrorMessage(error instanceof Error ? error.message : '편집 데이터를 적용하지 못했습니다.')
-      onStatusChange?.('error')
+      notifyStatus('error')
       return
     }
 
@@ -163,7 +163,7 @@ export const PlayerCanvas = (props: PlayerCanvasProps) => {
 
         setPlayer(createdPlayer)
         notifyPlayerChange(createdPlayer)
-        onStatusChange?.('ready')
+        notifyStatus('ready')
       })
       .catch((error: unknown) => {
         if (activeGeneration !== generation) {
@@ -177,7 +177,7 @@ export const PlayerCanvas = (props: PlayerCanvasProps) => {
         setPlayer(null)
         hostElement.replaceChildren()
         setErrorMessage(error instanceof Error ? error.message : '플레이어를 시작하지 못했습니다.')
-        onStatusChange?.('error')
+        notifyStatus('error')
       })
   })
 

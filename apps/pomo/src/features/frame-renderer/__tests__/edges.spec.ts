@@ -1,5 +1,6 @@
 /** @vitest-environment jsdom */
 import {
+  BlurFilter,
   Container,
   type GenerateTextureOptions,
   type Renderer,
@@ -7,15 +8,20 @@ import {
   Texture,
   TextureSource,
 } from 'pixi.js'
-import {expect, it, vi} from 'vitest'
+import {beforeEach, expect, it, vi} from 'vitest'
 import {PhotoEdges} from '../edges'
 
 vi.mock('pixi.js', async (original) => ({
   ...(await original<typeof import('pixi.js')>()),
-  BlurFilter: class {
-    destroy() {}
-  },
+  BlurFilter: vi.fn(),
 }))
+
+beforeEach(() => {
+  vi.clearAllMocks()
+  vi.mocked(BlurFilter).mockImplementation(function createFilter() {
+    return {destroy: vi.fn()} as unknown as BlurFilter
+  })
+})
 
 it('should extend original edges before blurring, cache the result and rebuild only for changed layout', () => {
   const texture = new Texture({source: new TextureSource({height: 200, width: 400})})
@@ -118,3 +124,68 @@ it.each(['horizontal', 'vertical'] as const)(
     }
   },
 )
+
+it('should keep crop resources alive through both rendering passes before releasing them', () => {
+  const texture = new Texture({source: new TextureSource({height: 200, width: 400})})
+  let composite: Container | undefined
+  let crops: Texture[] = []
+  const generated: Texture[] = []
+  const generateTexture = vi.fn(({target}: GenerateTextureOptions) => {
+    if (target instanceof Sprite) {
+      expect(composite?.destroyed).toBe(false)
+      expect(crops.every((crop) => !crop.destroyed)).toBe(true)
+    } else {
+      composite = target
+      crops = target.children.map((child) => (child as Sprite).texture)
+    }
+    const result = new Texture({source: new TextureSource({height: 128, width: 256})})
+    generated.push(result)
+    return result
+  })
+  const edges = new PhotoEdges({renderer: {generateTexture} as unknown as Renderer, texture})
+
+  edges.resize({height: 600, photoHeight: 150, photoWidth: 300, width: 300})
+  expect(generateTexture).toHaveBeenCalledTimes(2)
+  expect(composite?.destroyed).toBe(true)
+  expect(crops.every((crop) => crop.destroyed)).toBe(true)
+  expect(generated[0]?.destroyed).toBe(true)
+  expect(texture.source.destroyed).toBe(false)
+  edges.destroy()
+  expect(generated[1]?.destroyed).toBe(true)
+  texture.destroy(true)
+})
+
+it.each([1, 2])('should release temporary resources when render pass %s fails', (pass) => {
+  const texture = new Texture({source: new TextureSource({height: 200, width: 400})})
+  const failure = new Error('render failed')
+  let composite: Container | undefined
+  let crops: Texture[] = []
+  let stretched: Texture | undefined
+  let calls = 0
+  const generateTexture = vi.fn(({target}: GenerateTextureOptions) => {
+    calls += 1
+    if (!(target instanceof Sprite)) {
+      composite = target
+      crops = target.children.map((child) => (child as Sprite).texture)
+    }
+    if (calls === pass) {
+      throw failure
+    }
+    stretched = new Texture({source: new TextureSource({height: 128, width: 256})})
+    return stretched
+  })
+  const edges = new PhotoEdges({renderer: {generateTexture} as unknown as Renderer, texture})
+
+  expect(() => edges.resize({height: 600, photoHeight: 150, photoWidth: 300, width: 300})).toThrow(
+    failure,
+  )
+  expect(composite?.destroyed).toBe(true)
+  expect(crops.every((crop) => crop.destroyed)).toBe(true)
+  expect(stretched?.destroyed ?? true).toBe(true)
+  expect(texture.destroyed).toBe(false)
+  expect(texture.source.destroyed).toBe(false)
+  expect(texture.source.listenerCount('resize')).toBe(1)
+  expect(edges.view.children).toHaveLength(0)
+  edges.destroy()
+  texture.destroy(true)
+})

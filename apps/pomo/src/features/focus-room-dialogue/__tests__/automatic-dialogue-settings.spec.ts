@@ -1,5 +1,6 @@
 /** @vitest-environment node */
 import {expect, it, vi} from 'vitest'
+import {SUPERTONIC_VOICES} from '../../supertonic/model'
 
 import {
   AUTOMATIC_DIALOGUE_SETTINGS_STORAGE_KEY,
@@ -12,6 +13,21 @@ const createStorage = (storedValue: string | null = null) => ({
   getItem: vi.fn(() => storedValue),
   setItem: vi.fn(),
 })
+
+it.each(SUPERTONIC_VOICES)('should parse the registered $id voice with legacy defaults', ({id}) => {
+  expect(parseAutomaticDialogueSettings({modelId: 'int8', voiceId: id})).toEqual({
+    modelId: 'int8',
+    version: 1,
+    voiceId: id,
+  })
+})
+
+it.each(['default', 'Sarah', 'yuna', ' Yuna ', null])(
+  'should return absence for the unregistered voice %s',
+  (voiceId) => {
+    expect(parseAutomaticDialogueSettings({modelId: 'int8', voiceId})).toBeNull()
+  },
+)
 
 it('should use the compatible automatic generation defaults when no setting exists', () => {
   const repository = createAutomaticDialogueSettingsRepository(createStorage())

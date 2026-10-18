@@ -109,4 +109,42 @@ test('should omit the examples entry without development examples', () => {
 
   const menu = screen.getAllByLabelText('파일 및 편집 작업').at(-1)!
   expect(within(menu).queryByText('예제')).not.toBeInTheDocument()
+  expect(within(menu).queryByRole('button', {name: '복구 찾기'})).not.toBeInTheDocument()
+})
+
+test('should open recovery from the file menu when available', () => {
+  const onRecoveryOpen = vi.fn()
+  render(() => (
+    <EditorToolbar
+      playerStatus="ready"
+      onRecoveryOpen={onRecoveryOpen}
+      onExport={vi.fn()}
+      onFileImport={vi.fn()}
+      onFileOpen={vi.fn()}
+    />
+  ))
+  fireEvent.click(screen.getByRole('button', {name: '복구 찾기'}))
+  expect(onRecoveryOpen).toHaveBeenCalledOnce()
+  onRecoveryOpen.mock.calls[0]![0]()
+  expect(screen.getByRole('button', {name: '메인 메뉴'})).toHaveFocus()
+})
+
+test('should launch the current model from the top workspace navigation', () => {
+  const onStudioOpen = vi.fn()
+  const onViewerOpen = vi.fn()
+  render(() => (
+    <EditorToolbar
+      playerStatus="ready"
+      onExport={vi.fn()}
+      onFileImport={vi.fn()}
+      onFileOpen={vi.fn()}
+      onStudioOpen={onStudioOpen}
+      onViewerOpen={onViewerOpen}
+    />
+  ))
+  const navigation = within(screen.getByRole('navigation', {name: '작업 공간 이동'}))
+  fireEvent.click(navigation.getByRole('button', {name: 'Studio'}))
+  fireEvent.click(navigation.getByRole('button', {name: 'Viewer'}))
+  expect(onStudioOpen).toHaveBeenCalledOnce()
+  expect(onViewerOpen).toHaveBeenCalledOnce()
 })

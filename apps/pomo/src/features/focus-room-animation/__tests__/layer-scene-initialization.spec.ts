@@ -343,6 +343,66 @@ describe('PixiLayerScene initialization', () => {
     expect(releaseTextureGroup).toHaveBeenCalledOnce()
   })
 
+  it('should retain layer leases and acquire each shared mask once in first occurrence order', async () => {
+    vi.mocked(getMotionEffects).mockImplementation((motion) =>
+      motion.kind === 'pixel-oscillation' ? motion.effects : [],
+    )
+    const definition = createDefinition({
+      effects: [
+        {id: 'shared', kind: 'falling-streaks', maskSource: '/shared.webp'},
+        {id: 'trailing', kind: 'falling-flakes', maskSource: '/scene-mask.png'},
+      ],
+      layers: [
+        {
+          id: 'first',
+          maskSource: '/shared.webp',
+          motion: {
+            effects: [
+              {distance: {x: 1, y: 1}, kind: 'masked-pixel-push', maskSource: '/motion.png'},
+              {distance: {x: 1, y: 1}, kind: 'masked-pixel-push', maskSource: '/shared.webp'},
+            ],
+            kind: 'pixel-oscillation',
+            travel: {maximumSeconds: 1, minimumSeconds: 1},
+          },
+          source: '/shared.webp',
+          statePixelPush: {
+            channel: 'state',
+            effect: {
+              distance: {x: 1, y: 1},
+              kind: 'masked-pixel-push',
+              maskSource: '/state.png',
+            },
+          },
+        },
+        {id: 'second', maskSource: '/state.png', source: '/shared.webp'},
+      ],
+    })
+    const sources = [
+      '/shared.webp',
+      '/shared.webp',
+      '/shared.webp',
+      '/state.png',
+      '/motion.png',
+      '/scene-mask.png',
+    ]
+    const leases = sources.map(createLease)
+    vi.mocked(acquireTextureGroup).mockResolvedValueOnce(leases as never)
+    const scene = new PixiLayerScene(definition, {onRender: vi.fn()})
+
+    await scene.initialize(enabledState)
+
+    expect(acquireTextureGroup).toHaveBeenCalledExactlyOnceWith(sources)
+    expect(sprites.map((sprite) => sprite.texture)).toEqual([leases[0].texture, leases[1].texture])
+    expect(createSceneEffects).toHaveBeenCalledWith(
+      expect.objectContaining({
+        maskTextures: new Map(leases.slice(2).map((lease) => [lease.source, lease.texture])),
+      }),
+    )
+    scene.destroy()
+    scene.destroy()
+    expect(releaseTextureGroup).toHaveBeenCalledExactlyOnceWith(leases)
+  })
+
   it('should default state pixel push progress and ignore unmasked motion effects', async () => {
     const stateFilter = {destroy: vi.fn(), setProgress: vi.fn()}
     vi.mocked(createPushFilter).mockReturnValue(stateFilter as never)
