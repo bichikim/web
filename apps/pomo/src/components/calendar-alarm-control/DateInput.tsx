@@ -4,7 +4,7 @@ import * as m from '@paraglide/message'
 import {localDateRuntime, type LocalDateRuntime, useLocalDate} from '../../features/civil-date'
 import {INPUT_CLASSES} from './input-classes'
 
-interface CalendarAlarmDateInputProps {
+interface DateInputProps {
   /** 날짜 하한 계산에 사용할 현재 시각을 읽습니다. */
   readonly clock: Accessor<Date>
   /** 사용자가 선택한 날짜를 알람 초안에 전달합니다. */
@@ -15,7 +15,7 @@ interface CalendarAlarmDateInputProps {
   readonly value: Accessor<string>
 }
 
-export const CalendarAlarmDateInput = (props: CalendarAlarmDateInputProps) => {
+export const DateInput = (props: DateInputProps) => {
   const clock = () => props.clock()
   const timeZone = () => props.timeZone()
   const runtime: LocalDateRuntime = {

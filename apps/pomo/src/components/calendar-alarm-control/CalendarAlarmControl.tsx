@@ -6,7 +6,7 @@ import type {CalendarEvent} from '../../features/calendar'
 import type {MemoryMemo} from '../../features/memory-assist'
 import {useCalendarAlarmController} from '../../features/calendar-alarm'
 import {PButton} from '../p-button/PButton'
-import {CalendarAlarmDateInput} from './DateInput'
+import {DateInput} from './DateInput'
 import {INPUT_CLASSES} from './input-classes'
 const systemNow = () => new Date()
 
@@ -91,7 +91,7 @@ export const CalendarAlarmControl = (props: CalendarAlarmControlProps) => {
 
         <div class="grid grid-cols-1 gap-3">
           <Show when={popoverOpen()}>
-            <CalendarAlarmDateInput
+            <DateInput
               clock={clock}
               onInput={alarm.setDate}
               timeZone={timeZone}
