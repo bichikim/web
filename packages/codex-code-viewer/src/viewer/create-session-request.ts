@@ -19,7 +19,7 @@ export const createSessionRequest =
   ): Promise<Value> => {
     const current = session()
     if (current === null) {
-      throw new Error('Codex에서 파일을 먼저 열어 주세요.')
+      throw new Error('파일을 먼저 열어 주세요.')
     }
     return callViewerTool({input: {...input, session: current.session}, name, port, schema})
   }

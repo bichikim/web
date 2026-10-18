@@ -1,7 +1,7 @@
 import {EditorState} from '@codemirror/state'
-import {language, syntaxTree} from '@codemirror/language'
+import {ensureSyntaxTree, language} from '@codemirror/language'
 import {classHighlighter, highlightTree} from '@lezer/highlight'
-import {describe, expect, it} from 'vitest'
+import {assert, describe, expect, it} from 'vitest'
 import {createEditorLanguage} from '../create-editor-language'
 
 describe('createEditorLanguage', () => {
@@ -25,10 +25,12 @@ describe('createEditorLanguage', () => {
     ['index.htm', '<div class="viewer"><p>Hello</p></div>'],
   ])('should parse %s with its supported syntax', (path, doc) => {
     const state = EditorState.create({doc, extensions: createEditorLanguage(path)})
+    const tree = ensureSyntaxTree(state, doc.length)
     expect(state.facet(language)).not.toBeNull()
-    expect(syntaxTree(state).length).toBe(doc.length)
+    assert(tree !== null)
+    expect(tree.length).toBe(doc.length)
     const errors: string[] = []
-    syntaxTree(state).iterate({
+    tree.iterate({
       enter: (node) => {
         if (node.type.isError) {
           errors.push(node.name)
@@ -108,8 +110,10 @@ describe('createEditorLanguage', () => {
     {doc: '! comment\nname=viewer\n', path: 'settings.properties', token: ['name', 'viewer']},
   ])('should highlight syntax tokens while editing $path', ({doc, path, token}) => {
     const state = EditorState.create({doc, extensions: createEditorLanguage(path)})
+    const tree = ensureSyntaxTree(state, doc.length)
+    assert(tree !== null)
     const highlighted: string[] = []
-    highlightTree(syntaxTree(state), classHighlighter, (from, to) => {
+    highlightTree(tree, classHighlighter, (from, to) => {
       highlighted.push(doc.slice(from, to))
     })
     expect(highlighted).toEqual(expect.arrayContaining([token].flat()))

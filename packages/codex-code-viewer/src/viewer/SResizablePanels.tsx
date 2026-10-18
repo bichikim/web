@@ -1,6 +1,7 @@
 import {useTranslations} from './locale/use-translations'
 import {createEffect, createSignal, type JSX, onCleanup, Show, untrack} from 'solid-js'
 import {useSidebarResize} from './use-sidebar-resize'
+import {SIDEBAR_LAYOUT} from '../headless/sidebar-layout'
 
 interface SResizablePanelsProps {
   children?: JSX.Element
@@ -14,13 +15,11 @@ interface SResizablePanelsProps {
 
 export const SResizablePanels = (props: SResizablePanelsProps) => {
   const t = useTranslations()
-  const MINIMUM_SIDEBAR = 200
-  const MINIMUM_CONTENT = 240
-  const SEPARATOR_WIDTH = 6
+  const SEPARATOR_WIDTH = SIDEBAR_LAYOUT.spacing
   const [element, setElement] = createSignal<HTMLDivElement | null>(null)
   const [available, setAvailable] = createSignal(0)
-  const minimum = () => props.minimum ?? MINIMUM_SIDEBAR
-  const contentMinimum = () => props.contentMinimum ?? MINIMUM_CONTENT
+  const minimum = () => props.minimum ?? SIDEBAR_LAYOUT.minimum
+  const contentMinimum = () => props.contentMinimum ?? SIDEBAR_LAYOUT.contentMinimum
   const resize = useSidebarResize({
     availableWidth: available,
     contentMinimum,

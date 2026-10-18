@@ -14,8 +14,49 @@ env:
   PNPM_VERSION: 11.8.0
 
 jobs:
+  claude-runtime:
+    name: Build Claude Desktop runtime
+    if: github.repository == 'bichikim/web' && github.ref == 'refs/heads/main'
+    runs-on: macos-15
+    env:
+      MACOSX_DEPLOYMENT_TARGET: '14.0'
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: Reuse an immutable runtime release
+        id: runtime
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version=$(node -p "require('./packages/codex-code-viewer/package.json').version")
+          tag="code-viewer-runtime-v${version}"
+          if gh release view "$tag" >/dev/null 2>&1; then
+            mkdir -p packages/codex-code-viewer/dist/claude
+            gh release download "$tag" --pattern '*.zip' --pattern manifest.json --dir packages/codex-code-viewer/dist/claude
+            echo 'reused=true' >> "$GITHUB_OUTPUT"
+          fi
+      - if: steps.runtime.outputs.reused != 'true'
+        run: pnpm install --frozen-lockfile
+      - if: steps.runtime.outputs.reused != 'true'
+        run: pnpm --filter @winter-love/codex-code-viewer build
+      - uses: actions/upload-artifact@v7
+        with:
+          name: code-viewer-claude-runtime
+          path: packages/codex-code-viewer/dist/claude
+          if-no-files-found: error
+          compression-level: 0
+
   validate:
     name: Validate release
+    needs: claude-runtime
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
@@ -63,6 +104,12 @@ jobs:
           pnpm format:check
           pnpm test:vitest
 
+      - name: Download Claude runtime
+        uses: actions/download-artifact@v8
+        with:
+          name: code-viewer-claude-runtime
+          path: packages/codex-code-viewer/dist/claude
+
       - name: Verify package archives
         run: node scripts/npm-release/run.mjs pack
 
@@ -104,6 +151,22 @@ jobs:
         run: |
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+
+      - name: Download Claude runtime
+        uses: actions/download-artifact@v8
+        with:
+          name: code-viewer-claude-runtime
+          path: packages/codex-code-viewer/dist/claude
+
+      - name: Publish Claude runtime before npm installers
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version=$(node -p "require('./packages/codex-code-viewer/package.json').version")
+          tag="code-viewer-runtime-v${version}"
+          if ! gh release view "$tag" >/dev/null 2>&1; then
+            gh release create "$tag" packages/codex-code-viewer/dist/claude/*.zip packages/codex-code-viewer/dist/claude/manifest.json --target "$GITHUB_SHA" --title "Code Viewer Claude runtime ${version}" --notes 'Runtime downloaded on demand by the npm installer. Integrity is recorded in manifest.json.'
+          fi
 
       - name: Publish packages and record releases
         env:

@@ -1,5 +1,11 @@
 import {type Accessor, createMemo, createSignal} from 'solid-js'
-import type {ImageCamera} from './view-state/types'
+import {
+  type ImageCamera,
+  imageView,
+  MAX_IMAGE_PERCENT,
+  MIN_IMAGE_PERCENT,
+  zoomImage,
+} from '../headless/image-camera'
 
 interface ImagePoint {
   readonly x: number
@@ -25,12 +31,8 @@ interface PinchGesture {
   readonly scale: number
 }
 type ImageGesture = DragGesture | PinchGesture
-const MIN_PERCENT = 1
-const MAX_PERCENT = 1600
 const PERCENT = 100
 const TENTHS = 10
-const position = (value: number, available: number, size: number): number =>
-  size <= available ? (available - size) / 2 : Math.min(0, Math.max(available - size, value))
 const center = (first: ImagePoint, second: ImagePoint): ImagePoint => ({
   x: (first.x + second.x) / 2,
   y: (first.y + second.y) / 2,
@@ -43,25 +45,9 @@ export const useImageView = (props: UseImageViewProps) => {
   const [gesture, setGesture] = createSignal<ImageGesture | null>(null)
   const pointers = new Map<number, ImagePoint>()
   const loaded = createMemo(() => props.natural().width > 0 && props.natural().height > 0)
-  const view = createMemo(() => {
-    const natural = props.natural()
-    const viewport = props.viewport()
-    const current = camera()
-    const fitting =
-      loaded() && viewport.width > 0 && viewport.height > 0
-        ? Math.min(1, viewport.width / natural.width, viewport.height / natural.height)
-        : 1
-    const scale = current.mode === 'fit' ? fitting : current.scale
-    const width = natural.width * scale
-    const height = natural.height * scale
-    return {
-      height,
-      scale,
-      width,
-      x: position(current.mode === 'fit' ? 0 : current.x, viewport.width, width),
-      y: position(current.mode === 'fit' ? 0 : current.y, viewport.height, height),
-    }
-  })
+  const view = createMemo(() =>
+    imageView({camera: camera(), natural: props.natural(), viewport: props.viewport()}),
+  )
   const pannable = createMemo(
     () => view().width > props.viewport().width || view().height > props.viewport().height,
   )
@@ -73,13 +59,7 @@ export const useImageView = (props: UseImageViewProps) => {
     const current = view()
     const viewport = props.viewport()
     const anchor = point ?? {x: viewport.width / 2, y: viewport.height / 2}
-    const scale = Math.min(MAX_PERCENT, Math.max(MIN_PERCENT, value)) / PERCENT
-    setCamera({
-      mode: 'zoom',
-      scale,
-      x: anchor.x - ((anchor.x - current.x) * scale) / current.scale,
-      y: anchor.y - ((anchor.y - current.y) * scale) / current.scale,
-    })
+    setCamera(zoomImage({anchor, current, percent: value}))
   }
   const fit = (): void => {
     pointers.clear()
@@ -133,9 +113,9 @@ export const useImageView = (props: UseImageViewProps) => {
       const points = Array.from(pointers.values())
       const midpoint = center(points[0], points[1])
       const scale = Math.min(
-        MAX_PERCENT / PERCENT,
+        MAX_IMAGE_PERCENT / PERCENT,
         Math.max(
-          MIN_PERCENT / PERCENT,
+          MIN_IMAGE_PERCENT / PERCENT,
           (current.scale * distance(points[0], points[1])) / current.distance,
         ),
       )
@@ -167,8 +147,8 @@ export const useImageView = (props: UseImageViewProps) => {
     fit,
     fitting: () => camera().mode === 'fit',
     loaded,
-    maximum: MAX_PERCENT,
-    minimum: MIN_PERCENT,
+    maximum: MAX_IMAGE_PERCENT,
+    minimum: MIN_IMAGE_PERCENT,
     move,
     pan,
     pannable,

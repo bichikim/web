@@ -1,5 +1,10 @@
 import {randomUUID} from 'node:crypto'
-import {CancellationTokenSource, type MessageConnection, ProgressType} from 'vscode-jsonrpc/node.js'
+import {
+  CancellationTokenSource,
+  type MessageConnection,
+  ProgressType,
+  ResponseError,
+} from 'vscode-jsonrpc/node.js'
 import type {CodeLocation, Result, ViewerError} from '../../shared/contracts'
 import type {SymbolLookup} from '../types'
 import {withAbort} from '../with-abort'
@@ -57,8 +62,8 @@ export const requestSymbols = async ({
         })
   const cancel = (): void => cancellation.cancel()
   request.signal?.addEventListener('abort', cancel, {once: true})
-  try {
-    const targets = await withAbort(
+  const send = () =>
+    withAbort(
       connection.sendRequest<unknown>(
         `textDocument/${request.kind}`,
         {
@@ -71,6 +76,21 @@ export const requestSymbols = async ({
       ),
       request.signal,
     )
+  try {
+    const targets = await send().catch((error: unknown) => {
+      request.signal?.throwIfAborted()
+      const CONTENT_MODIFIED = -32801
+      if (
+        !(error instanceof ResponseError) ||
+        error.code !== CONTENT_MODIFIED ||
+        cancellation.token.isCancellationRequested ||
+        locations.size > 0
+      ) {
+        throw error
+      }
+      // 초안 종료 직후 분석기가 무효화한 요청은 결과를 전달하기 전에 한 번만 다시 보냅니다.
+      return send()
+    })
     const result = collect(targets)
     return invalid || !result.ok
       ? readDefinitionLocations(undefined, failed)

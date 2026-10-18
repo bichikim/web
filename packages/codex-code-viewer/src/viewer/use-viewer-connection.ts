@@ -6,7 +6,7 @@ import {createPendingTasks} from './create-pending-tasks'
 
 interface ConnectionOptions {
   port: ViewerPort
-  receive: (session: ViewerConnection) => void
+  receive: Parameters<ViewerPort['start']>[0]
   refresh: () => Promise<void>
   report: (error: unknown) => void
   session: Accessor<ViewerConnection | null>
@@ -32,11 +32,11 @@ export const useViewerConnection = (connection: ConnectionOptions): Accessor<num
       disposePort()
     }
   }
-  const receive = (value: ViewerConnection): void => {
+  const receive: ConnectionOptions['receive'] = (value, navigation): void => {
     if (disposed) {
       closeSession(value)
     } else {
-      connection.receive(value)
+      connection.receive(value, navigation)
     }
   }
   const refresh = (): void => {

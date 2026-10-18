@@ -57,6 +57,14 @@ export const SContextMenu = (props: SContextMenuProps) => {
     }
     menu.showPopover()
     measure()
+    const handleOutside = (event: PointerEvent): void => {
+      if (event.button === 0 && event.target instanceof Node && !menu.contains(event.target)) {
+        props.onClose?.({restoreFocus: false})
+      }
+    }
+    const document = menu.ownerDocument
+    document.addEventListener('pointerdown', handleOutside, true)
+    onCleanup(() => document.removeEventListener('pointerdown', handleOutside, true))
     const initial = menu.querySelector<HTMLButtonElement>('button:not(:disabled)') ?? menu
     initial.focus({preventScroll: true})
     if (typeof ResizeObserver !== 'undefined') {
@@ -127,7 +135,7 @@ export const SContextMenu = (props: SContextMenuProps) => {
           props.onClose?.({restoreFocus: false})
         }
       }}
-      popover="auto"
+      popover="manual"
       ref={setElement}
       role="menu"
       tabindex="-1"
