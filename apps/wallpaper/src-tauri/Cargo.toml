@@ -1,0 +1,34 @@
+[package]
+name = "wallpaper-desktop"
+version = "0.1.0"
+description = "Local desktop wallpaper utility"
+edition = "2024"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+uuid = { version = "1", features = ["v4"] }
+tempfile = "3"
+toml_edit = "0.25.13"
+reqwest = { version = "0.13.4", default-features = false, features = ["json", "native-tls"] }
+tokio = { version = "1", features = ["sync", "macros"] }
+tauri = { version = "~2.11", features = ["macos-private-api", "tray-icon", "unstable"] }
+tauri-plugin-desktop-surface = { path = "../../../packages/desktop-surface" }
+
+[target.'cfg(target_os = "macos")'.dependencies]
+block2 = "0.6.2"
+objc2 = "0.6.4"
+objc2-app-kit = { version = "0.3.2", features = ["NSEvent", "NSWindow", "block2"] }
+objc2-foundation = { version = "0.3.2", features = ["NSString"] }
+
+[target.'cfg(target_os = "windows")'.dependencies]
+windows = { version = "0.61.3", features = [
+  "Win32_Foundation",
+  "Win32_System_LibraryLoader",
+  "Win32_System_Threading",
+  "Win32_UI_WindowsAndMessaging",
+  "Win32_UI_Input_KeyboardAndMouse",
+] }

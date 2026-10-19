@@ -6,6 +6,7 @@ export const createPlayerFixture = (): Player => ({
   destroy: vi.fn(),
   getParameterValue: vi.fn(),
   getParameterValues: vi.fn(() => ({})),
+  patchParameterValues: vi.fn(),
   pause: vi.fn(),
   play: vi.fn(),
   playMotion: vi.fn<(motionId: string, options?: PlayerPlaybackOptions) => boolean>(() => true),

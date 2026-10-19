@@ -5,10 +5,10 @@ import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 import {type BackgroundMedia, type BackgroundPreferences, DEFAULT_BACKGROUND} from '../model'
 import {type BackgroundController} from '../use-background'
 import {usePlayback} from '../use-playback'
-import {getMonotonicTime} from 'src/utils/get-monotonic-time'
+import {getMonotonicTime} from '@winter-love/wallpaper/album/get-monotonic-time'
 import {createBackground} from './fixtures/controller'
 
-vi.mock('src/utils/get-monotonic-time', () => ({getMonotonicTime: vi.fn()}))
+vi.mock('@winter-love/wallpaper/album/get-monotonic-time', () => ({getMonotonicTime: vi.fn()}))
 
 const monotonicTime = vi.mocked(getMonotonicTime)
 

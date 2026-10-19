@@ -274,11 +274,11 @@ const generate = async (
     for (const [chunkIndex, text] of textChunks.entries()) {
       const chunkNumber = chunkIndex + 1
       const chunkStartedAt = getMonotonicTime()
-      const normalizedText = normalizeSpeechText({language: message.language, text})
-      const engineText =
-        Array.from(normalizedText).length <= currentModel.speechPolicy.maximumLength
-          ? normalizedText
-          : text
+      const engineText = normalizeSpeechText({
+        language: message.language,
+        maximumLength: currentModel.speechPolicy.maximumLength,
+        text,
+      })
       const samples = await currentEngine.generate({
         language: message.language,
         onProgress: (step, total) => {
