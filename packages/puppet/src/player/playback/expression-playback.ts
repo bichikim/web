@@ -5,6 +5,7 @@ import {
 } from '../document'
 import type {PuppetParameterValueMap} from '../../deformation'
 import {easeProgress} from '../internal/motion'
+import {blendParameterValue} from '../parameter-blends'
 
 /** One expression with its eased fade weight, oldest first. */
 export interface ExpressionLayer {
@@ -94,7 +95,10 @@ export const createExpressionPlayback = (
   }
 }
 
-/** Applies expression layers to motion-mixed values (`add`, `multiply`, `overwrite`). */
+/**
+ * Applies expression layers to motion-mixed values (`add`, `multiply`, `overwrite`), by each
+ * layer's weight with the same operations as parameter blends.
+ */
 export const applyExpressionLayers = (
   parameters: ReadonlyArray<PuppetParameter>,
   values: PuppetParameterValueMap,
@@ -109,21 +113,13 @@ export const applyExpressionLayers = (
             const entry = layer.expression.parameters.find(
               (candidate) => candidate.parameterId === parameter.id,
             )
-            if (entry === undefined) {
-              return value
-            }
-            switch (entry.blend) {
-              case 'add':
-                return value + entry.value * layer.weight
-              case 'multiply':
-                return value * (1 + (entry.value - 1) * layer.weight)
-              case 'overwrite':
-                return value + (entry.value - value) * layer.weight
-              default: {
-                const exhaustive: never = entry.blend
-                return exhaustive
-              }
-            }
+            return entry === undefined
+              ? value
+              : blendParameterValue(value, {
+                  mode: entry.blend,
+                  value: entry.value,
+                  weight: layer.weight,
+                })
           }, values[parameter.id] ?? parameter.defaultValue),
         ]),
       )

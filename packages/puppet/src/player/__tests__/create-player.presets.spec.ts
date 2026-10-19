@@ -221,3 +221,20 @@ test('should fade to the pose a paused seek selects', async () => {
   expect(renderer.alphas()).toEqual([0, 1, 1])
   player.destroy()
 })
+
+test('should keep the model opacity on non-finite input', async () => {
+  const renderer = setUpRenderer()
+  const player = await createPlayer({
+    canvas: globalThis.document.createElement('canvas'),
+    document: prepare(presetDocument),
+  })
+  player.setModelOpacity(0.5)
+  expect(renderer.alphas()).toEqual([0.5, 0, 0.5])
+  for (const opacity of [Number.NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY]) {
+    player.setModelOpacity(opacity)
+    expect(renderer.alphas()).toEqual([0.5, 0, 0.5])
+  }
+  player.setModelOpacity(2)
+  expect(renderer.alphas()).toEqual([1, 0, 1])
+  player.destroy()
+})

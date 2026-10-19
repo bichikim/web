@@ -1,3 +1,5 @@
+import {clamp} from 'es-toolkit/math'
+
 import {
   DEFAULT_PUPPET_CHAIN_FPS,
   DEFAULT_PUPPET_CHAIN_GRAVITY,
@@ -82,8 +84,6 @@ const angleBetween = (from: Vector, to: Vector) => {
   const turn = Math.atan2(to[1], to[0]) - Math.atan2(from[1], from[0])
   return turn - FULL_TURN * Math.round(turn / FULL_TURN)
 }
-const clamp = (value: number, parameter: PuppetParameter) =>
-  Math.min(parameter.maximum, Math.max(parameter.minimum, value))
 
 const getWorld = (
   physics: PuppetPhysics | undefined,
@@ -115,7 +115,7 @@ const normalize = (
   range: PuppetPhysicsRange,
   reflect: boolean,
 ) => {
-  const offset = clamp(value, parameter) - parameter.defaultValue
+  const offset = clamp(value, parameter.minimum, parameter.maximum) - parameter.defaultValue
   const [limit, end] =
     offset > 0 ? [parameter.maximum, range.maximum] : [parameter.minimum, range.minimum]
   const span = limit - parameter.defaultValue
@@ -242,7 +242,7 @@ const writeOutputs = (
     if (parameter === undefined || !Number.isFinite(reading)) {
       return written
     }
-    const target = clamp(reading * output.scale, parameter)
+    const target = clamp(reading * output.scale, parameter.minimum, parameter.maximum)
     const current = readValue(parameter, written)
     const value =
       output.weight >= 1 ? target : current * (1 - output.weight) + target * output.weight

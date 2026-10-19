@@ -107,7 +107,7 @@ const advanceOutgoing = (outgoing: OutgoingMotion, deltaTime: number) => {
  * Previously selected motions, playing on while they fade out after switches. Each keeps its
  * fade-in and ends no later than it would have on its own (Cubism keeps every fading entry).
  */
-const createOutgoingMotion = (onEvent: ((event: MotionEvent) => void) | undefined) => {
+const createOutgoingMotions = (onEvent: ((event: MotionEvent) => void) | undefined) => {
   let outgoing: ReadonlyArray<OutgoingMotion> = []
   return {
     active: () => outgoing.length > 0,
@@ -201,7 +201,7 @@ export const createSelectedPlayback = (
   let scrubbed = false
   // A pause also holds the fading motions, even once a one-shot selection finished.
   let held = false
-  const outgoing = createOutgoingMotion(options.onEvent)
+  const outgoing = createOutgoingMotions(options.onEvent)
   const emit = eventCallback.bind(undefined, options.onEvent)
   return {
     advance(deltaTime) {

@@ -1,58 +1,51 @@
-import type {PlayerViewCamera} from './view-camera'
 import type {PuppetParameterValueMap} from '../deformation'
+import {createMotionSounds} from './audio/motion-sounds'
+import type {PuppetVowelWeights} from './document'
+import {
+  advanceEyeBlink,
+  createEyeBlinkState,
+  DEFAULT_EYE_BLINK_TIMING,
+  type EyeBlinkState,
+  resolveEyeBlinkTiming,
+} from './eye-blink'
+import {createAppAdjustments} from './internal/app-adjustments'
+import {isEffectActive} from './internal/effect-activity'
+import {findHitArea} from './internal/hit-area'
+import {createLookAndBreath} from './internal/look-and-breath'
+import {createPhysicsState, evaluatePhysics} from './internal/physics'
+import {evaluatePose, isPoseFading, type PoseState} from './internal/pose'
 import {
   assertPreparedPuppetDocument,
   type PreparedPuppetDocument,
 } from './internal/prepared-document'
-import {findHitArea} from './internal/hit-area'
-import {createMotionSounds} from './audio/motion-sounds'
-import type {MotionSoundError} from './audio/motion-sound-loader'
-import type {PuppetVowelWeights} from './document'
-import {toVowelWeights} from './voice/analyze-vowels'
-import {
-  applyMouthShapes,
-  followMouthShapes,
-  type MouthShapesState,
-  normalizeVowelWeights,
-} from './voice/mouth-shapes'
-import type {PuppetFraming} from './internal/layout-player-root'
-import {createAppAdjustments} from './internal/app-adjustments'
-import {isEffectActive} from './internal/effect-activity'
-import {createLookAndBreath} from './internal/look-and-breath'
-import type {LookTarget} from './look'
-
-export type {PuppetFraming} from './internal/layout-player-root'
-export type {PuppetRenderOverride} from './internal/render-overrides'
 import {type PuppetRenderOverride, setRenderOverride} from './internal/render-overrides'
-import {getSceneGroupIds} from './internal/parse-group-keyforms'
-export type {CreatePlayerOptions, Player, PlayerFrame, PlayerPlaybackOptions} from './player-types'
-import type {CreatePlayerOptions, Player, PlayerPlaybackOptions} from './player-types'
-import {createPhysicsState, evaluatePhysics} from './internal/physics'
-import {evaluatePose, isPoseFading, type PoseState} from './internal/pose'
+import {getSceneGroupIds} from './internal/scene-groups'
+import {applyLipSync} from './lip-sync'
+import {pickGroupMotion} from './motion-groups'
 import {resolveParameterValue} from './parameter-value'
-export type {PuppetParameterBlend, PuppetParameterBlendMode} from './parameter-blends'
 import type {ChainsState} from './physics-chain'
-export type {PuppetPhysicsOptions} from './physics-options'
 import {
   createExpressionPlayback,
   createMotionPlaybacks,
   createSelectedPlayback,
   mixMotionFrames,
   type MotionEvent,
-  type MotionPlayback,
-  type MotionPlaybackOptions,
+  type MotionFrame,
 } from './playback'
+import type {CreatePlayerOptions, Player, PlayerPlaybackOptions} from './player-types'
 import {createPlayerRenderer} from './rendering'
 import {
-  advanceEyeBlink,
-  applyLipSync,
-  createEyeBlinkState,
-  DEFAULT_EYE_BLINK_TIMING,
-  type EyeBlinkState,
-  resolveEyeBlinkTiming,
-  pickGroupMotion,
-  type RandomSource,
-} from './model-effects'
+  applyMouthShapes,
+  followMouthShapes,
+  type MouthShapesState,
+  normalizeVowelWeights,
+} from './voice/mouth-shapes'
+
+export type {PuppetFraming} from './internal/layout-player-root'
+export type {PuppetRenderOverride} from './internal/render-overrides'
+export type {PuppetParameterBlend, PuppetParameterBlendMode} from './parameter-blends'
+export type {PuppetPhysicsOptions} from './physics-options'
+export type {CreatePlayerOptions, Player, PlayerFrame, PlayerPlaybackOptions} from './player-types'
 
 // eslint-disable-next-line max-lines-per-function -- Public operations share one lifecycle boundary.
 export const createPlayer = async (options: CreatePlayerOptions): Promise<Player> => {
@@ -104,43 +97,47 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
   const playbacks = createMotionPlaybacks({
     motions: document.motions,
     onChange: () => {
-      if (!destroyed) {
-        applyFrame()
-        redraw()
-        syncTicker()
-      }
+      refresh()
     },
     onEvent,
   })
 
-  const destroy = () => {
-    if (destroyed) {
-      return
-    }
-
-    destroyed = true
-    playback.stop()
-    playbacks.stop()
-    sounds.stop()
-    renderer.destroy()
-  }
-
-  /** Eye openness from the automatic blink, which rests while a selected motion plays. */
-  const blink = (deltaTime: number) => {
-    if (eyeBlink === undefined || playback.isPlaying()) {
-      return undefined
-    }
-    const next = advanceEyeBlink(eyeBlink, deltaTime, {random, timing: eyeBlinkTiming})
-    eyeBlink = next.state
-    return next.openness
-  }
-  const applyFrame = (deltaTime = 0, settlePhysics = !physicsPreview) => {
-    const frames = [...playback.frames(), ...playbacks.frames()]
+  /**
+   * Advances the effects whose state follows time alone (blink, look and breath, mouth shapes),
+   * before this frame's values exist.
+   */
+  const advanceEffects = (deltaTime: number, frames: ReadonlyArray<MotionFrame>) => {
     const soundMouth = sounds.mouth(frames)
+    // The automatic blink rests while a selected motion plays.
+    const blinked =
+      eyeBlink === undefined || playback.isPlaying()
+        ? undefined
+        : advanceEyeBlink(eyeBlink, deltaTime, {random, timing: eyeBlinkTiming})
+    eyeBlink = blinked?.state ?? eyeBlink
+    lookAndBreath.advance(deltaTime)
+    mouth = followMouthShapes({
+      deltaTime,
+      document,
+      soundWeights: soundMouth?.weights,
+      state: mouth,
+      voiceTarget,
+    })
+    return {eyeOpenness: blinked?.openness, soundLevel: soundMouth?.level}
+  }
+  /**
+   * Evaluates the frame's values and renders them. Physics and pose fades also step here because
+   * they integrate this frame's values over `deltaTime`.
+   */
+  const evaluateFrame = (
+    frames: ReadonlyArray<MotionFrame>,
+    effects: ReturnType<typeof advanceEffects>,
+    deltaTime: number,
+    settlePhysics: boolean,
+  ) => {
     const mix = mixMotionFrames({
       document,
       expressions: expressions.layers(),
-      eyeOpenness: blink(deltaTime),
+      eyeOpenness: effects.eyeOpenness,
       frames,
       modelOpacity,
       parameterValues,
@@ -152,28 +149,20 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
       parameterValues: lookAndBreath.apply(
         document,
         adjustments.applyBlends(document, mix.parameterValues),
-        deltaTime,
       ),
       physicsOptions: adjustments.physicsOptions(),
       physicsState,
       settle: settlePhysics,
     })
     ;({chainState, physicsState} = result)
-    mouth = followMouthShapes({
-      deltaTime,
-      document,
-      soundWeights: soundMouth?.weights,
-      state: mouth,
-      voiceTarget,
-    })
     const shaped =
       mouth === undefined
         ? result.parameterValues
         : applyMouthShapes(document, result.parameterValues, mouth.shown)
     // Without mouth shapes, a motion sound's loudness opens the mouth (Cubism's volume lip sync).
     const level =
-      soundMouth !== undefined && document.mouthShapes === undefined
-        ? soundMouth.level
+      effects.soundLevel !== undefined && document.mouthShapes === undefined
+        ? effects.soundLevel
         : lipSyncLevel
     const effected = level === undefined ? shaped : applyLipSync(document, shaped, level)
     const pose = evaluatePose({
@@ -195,6 +184,10 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
     )
     // Frame listeners can redraw synchronously after the renderer has updated its masks.
     options.onFrame?.(playback.getFrame())
+  }
+  const applyFrame = (deltaTime = 0, settlePhysics = !physicsPreview) => {
+    const frames = [...playback.frames(), ...playbacks.frames()]
+    evaluateFrame(frames, advanceEffects(deltaTime, frames), deltaTime, settlePhysics)
   }
 
   const syncTicker = () => {
@@ -268,10 +261,7 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
       syncTicker()
     }
 
-    applyFrame()
-    redraw()
-    syncTicker()
-
+    refresh()
     return true
   }
 
@@ -299,9 +289,7 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
     if (destroyed || !playback.playMotion(motionId, settings)) {
       return false
     }
-    applyFrame()
-    redraw()
-    syncTicker()
+    refresh()
     return true
   }
 
@@ -331,7 +319,16 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
       )
       refresh()
     },
-    destroy,
+    destroy() {
+      if (destroyed) {
+        return
+      }
+      destroyed = true
+      playback.stop()
+      playbacks.stop()
+      sounds.stop()
+      renderer.destroy()
+    },
     getExpression: () => expressions.current(),
     getParameterValue(parameterId) {
       return Object.hasOwn(frameValues, parameterId) ? frameValues[parameterId] : undefined
@@ -411,7 +408,6 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
     setBreath(enabled) {
       if (!destroyed && lookAndBreath.setBreath(enabled)) {
         refresh()
-        syncTicker()
       }
     },
     setExpression(expressionId) {
@@ -419,7 +415,6 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
         return false
       }
       refresh()
-      syncTicker()
       return true
     },
     setEyeBlink(enabled) {
@@ -428,7 +423,6 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
       }
       eyeBlink = enabled ? createEyeBlinkState(eyeBlinkTiming, random) : undefined
       refresh()
-      syncTicker()
     },
     setEyeBlinkTiming(timing) {
       const resolved = resolveEyeBlinkTiming(timing)
@@ -457,8 +451,11 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
       }
     },
     setModelOpacity(opacity) {
-      modelOpacity = Number.isFinite(opacity) ? Math.min(1, Math.max(0, opacity)) : 1
-      refresh()
+      // Like the other setters, non-finite input changes nothing.
+      if (Number.isFinite(opacity)) {
+        modelOpacity = Math.min(1, Math.max(0, opacity))
+        refresh()
+      }
     },
     setMotion,
 
@@ -548,7 +545,6 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
       playback.stop()
       playbacks.stop()
       refresh()
-      syncTicker()
     },
     updateDocument,
   }

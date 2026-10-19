@@ -5,7 +5,8 @@ import type {PuppetFraming} from './internal/layout-player-root'
 import type {PreparedPuppetDocument} from './internal/prepared-document'
 import type {PuppetRenderOverride} from './internal/render-overrides'
 import type {LookTarget} from './look'
-import type {EyeBlinkTiming, RandomSource} from './model-effects'
+import type {EyeBlinkTiming} from './eye-blink'
+import type {RandomSource} from './random'
 import type {PuppetParameterBlend} from './parameter-blends'
 import type {PuppetPhysicsOptions} from './physics-options'
 import type {MotionEvent, MotionPlayback, MotionPlaybackOptions} from './playback'
@@ -55,7 +56,10 @@ export interface Player {
   setEyeBlinkTiming(timing?: Partial<EyeBlinkTiming>): boolean
   /** Adds a mouth level to the lip-sync role parameters after physics; omitted stops. */
   setLipSync(level?: number): void
-  /** Scales every part's opacity (0..1); motions' model opacity tracks start from it. */
+  /**
+   * Scales every part's opacity, limited to 0..1; motions' model opacity tracks start from it.
+   * Non-finite values change nothing.
+   */
   setModelOpacity(opacity: number): void
   /**
    * Overrides a scene group's own opacity and its parts' colors (Cubism's part overrides); `undefined`

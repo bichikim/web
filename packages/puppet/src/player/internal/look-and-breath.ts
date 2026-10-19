@@ -8,15 +8,13 @@ import {
   LOOK_REST,
   type LookTarget,
 } from '../look'
-import {applyBreath} from '../model-effects'
+import {applyBreath} from '../breath'
 
 export interface LookAndBreath {
-  /** Advances `deltaTime` seconds and adds look, then breath (Cubism's update order). */
-  apply(
-    document: PuppetDocument,
-    values: PuppetParameterValueMap,
-    deltaTime: number,
-  ): PuppetParameterValueMap
+  /** Advances the look point and breathing by `deltaTime` seconds. */
+  advance(deltaTime: number): void
+  /** Adds look, then breath (Cubism's update order), at the advanced time. */
+  apply(document: PuppetDocument, values: PuppetParameterValueMap): PuppetParameterValueMap
   isAnimating(document: PuppetDocument): boolean
   /** Returns whether breathing switched; turning it on starts the waves from 0 seconds. */
   setBreath(enabled: boolean): boolean
@@ -31,9 +29,11 @@ export const createLookAndBreath = (): LookAndBreath => {
   let lookTarget = clampLookTarget(undefined)
   let lookPoint = LOOK_REST
   return {
-    apply(document, values, deltaTime) {
+    advance(deltaTime) {
       breathTime = breathTime === undefined ? undefined : breathTime + deltaTime
       lookPoint = advanceLookPoint(lookPoint, lookTarget, deltaTime)
+    },
+    apply(document, values) {
       const looked = document.look === undefined ? values : applyLook(document, values, lookPoint)
       return breathTime === undefined ? looked : applyBreath(document, looked, breathTime)
     },
