@@ -108,3 +108,21 @@ it('should ignore stored style restoration after cleanup', async () => {
   expect(controller?.sceneStyle()).toBe('original')
   expect(controller?.isReady()).toBe(false)
 })
+
+it('should reject coercible stored values through the preference adapter', async () => {
+  const convert = vi.fn(() => 'scribble')
+  storageMocks.read.mockResolvedValue({
+    [Symbol.toPrimitive]: convert,
+    toString: convert,
+    valueOf: convert,
+  })
+  let controller: PSceneStyleController | undefined
+  renderSceneStyle((nextController) => {
+    controller = nextController
+  })
+
+  await vi.waitFor(() => expect(controller?.isReady()).toBe(true))
+  expect(controller?.sceneStyle()).toBe('original')
+  expect(convert).not.toHaveBeenCalled()
+  expect(storageMocks.write).not.toHaveBeenCalled()
+})

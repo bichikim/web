@@ -1,0 +1,9 @@
+{
+  "host": "Codex in-app browser with production bundle",
+  "fileCopies": ["main 복사본 2.ts", "main 복사본 3.ts", "main 복사본.ts"],
+  "fileContentsMatchOriginal": true,
+  "copiesRetainedAfterOpeningAnotherFile": true,
+  "folderCopies": ["target/source", "target/source 복사본"],
+  "folderContentsMatchOriginal": true,
+  "pasteEnabledAfterEachCopy": true
+}

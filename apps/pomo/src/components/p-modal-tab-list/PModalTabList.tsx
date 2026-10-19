@@ -1,7 +1,8 @@
+import {useHorizontalScrollHints} from 'src/hooks/use-horizontal-scroll-hints'
 import {Tabs} from '@kobalte/core/tabs'
 import * as m from '@paraglide/message'
 import {cx} from 'class-variance-authority'
-import {createEffect, createSignal, For, type JSX, onCleanup, Show} from 'solid-js'
+import {createSignal, For, type JSX, Show} from 'solid-js'
 
 const TAB_LIST_CLASSES =
   'flex h-full w-full min-w-0 flex-1 overflow-x-auto overscroll-x-contain ' +
@@ -45,46 +46,13 @@ export interface PModalTabListProps {
 }
 
 export const PModalTabList = (props: PModalTabListProps) => {
-  const [canScrollLeft, setCanScrollLeft] = createSignal(false)
-  const [canScrollRight, setCanScrollRight] = createSignal(false)
   const [listElement, setListElement] = createSignal<HTMLDivElement>()
-  const updateScrollHints = (element: HTMLDivElement) => {
-    const edgeTolerance = 1
-
-    setCanScrollLeft(element.scrollLeft > edgeTolerance)
-    setCanScrollRight(
-      element.scrollLeft + element.clientWidth < element.scrollWidth - edgeTolerance,
-    )
-  }
-  const handleScroll: JSX.EventHandler<HTMLDivElement, Event> = (event) => {
-    updateScrollHints(event.currentTarget)
-  }
-  const scrollTabs = (direction: -1 | 1) => {
-    const element = listElement()
-
-    if (element === undefined) {
-      return
-    }
-
-    element.scrollBy({
-      behavior: 'smooth',
-      left: direction * element.clientWidth * TAB_SCROLL_RATIO,
-    })
-  }
-
-  createEffect(() => {
-    const element = listElement()
-
-    if (element === undefined) {
-      return
-    }
-
-    updateScrollHints(element)
-
-    const resizeObserver = new ResizeObserver(() => updateScrollHints(element))
-    resizeObserver.observe(element)
-    onCleanup(() => resizeObserver.disconnect())
-  })
+  const {
+    canScrollLeft,
+    canScrollRight,
+    onScroll: handleScroll,
+    scrollByPage: scrollTabs,
+  } = useHorizontalScrollHints({behavior: 'smooth', ratio: TAB_SCROLL_RATIO, target: listElement})
 
   return (
     <div class="relative h-full min-w-0">

@@ -12,12 +12,14 @@ export interface StereoAudio {
   readonly left: Float32Array
   readonly right: Float32Array
 }
-export interface JoinOptions {
-  readonly first: StereoAudio
-  readonly second: StereoAudio
+export interface JoinParameters {
   readonly trimEnd: number
   readonly trimStart: number
   readonly connectionSeconds: number
+}
+export interface JoinOptions extends JoinParameters {
+  readonly first: StereoAudio
+  readonly second: StereoAudio
 }
 export interface JoinPlan extends StereoAudio {
   readonly offset: number
@@ -27,8 +29,11 @@ export interface JoinPlan extends StereoAudio {
 const PCM_SCALE = 32767
 const CONTEXT = CONNECTION_CONTEXT_SECONDS * SAMPLE_RATE
 
-export function prepareJoin(options: JoinOptions): JoinPlan {
-  const {first, second, trimEnd, trimStart, connectionSeconds} = options
+export function getJoinParameterError({
+  trimEnd,
+  trimStart,
+  connectionSeconds,
+}: JoinParameters): string | null {
   if (
     ![trimEnd, trimStart, connectionSeconds].every(Number.isFinite) ||
     trimEnd < 0 ||
@@ -36,9 +41,16 @@ export function prepareJoin(options: JoinOptions): JoinPlan {
     connectionSeconds < MIN_AI_CONNECTION_SECONDS ||
     connectionSeconds > MAX_AI_CONNECTION_SECONDS
   ) {
-    throw new Error(
-      `잘라낼 시간은 0 이상, 연결 구간은 1~${MAX_AI_CONNECTION_SECONDS}초로 지정해 주세요.`,
-    )
+    return `잘라낼 시간은 0 이상, 연결 구간은 1~${MAX_AI_CONNECTION_SECONDS}초로 지정해 주세요.`
+  }
+  return null
+}
+
+export function prepareJoin(options: JoinOptions): JoinPlan {
+  const {first, second, trimEnd, trimStart, connectionSeconds} = options
+  const parameterError = getJoinParameterError(options)
+  if (parameterError !== null) {
+    throw new Error(parameterError)
   }
   const end = first.left.length - Math.round(trimEnd * SAMPLE_RATE)
   const start = Math.round(trimStart * SAMPLE_RATE)

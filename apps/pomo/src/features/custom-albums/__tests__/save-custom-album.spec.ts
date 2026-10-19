@@ -1,30 +1,16 @@
+import {clearCustomAlbumDatabase, stubCustomAlbumAudioMetadata} from './support'
 /** @vitest-environment node */
 
 import 'fake-indexeddb/auto'
 import {afterEach, expect, it, vi} from 'vitest'
 import {
-  ALBUM_STORE_NAME,
-  openCustomAlbumDatabase,
-  TRACK_STORE_NAME,
-  waitForTransaction,
-} from 'src/features/custom-albums/database'
-import {
   addCustomAlbumTracks,
+  type CustomAlbumCoverUpdate,
   readCustomAlbumDraft,
+  readCustomAlbumLibraryBytes,
   readCustomAlbums,
   saveCustomAlbum,
 } from 'src/features/custom-albums'
-
-const clearCustomAlbumDatabase = async (): Promise<void> => {
-  const database = await openCustomAlbumDatabase()
-  const transaction = database.transaction([ALBUM_STORE_NAME, TRACK_STORE_NAME], 'readwrite')
-  const finished = waitForTransaction(transaction)
-
-  transaction.objectStore(ALBUM_STORE_NAME).clear()
-  transaction.objectStore(TRACK_STORE_NAME).clear()
-
-  await finished
-}
 
 afterEach(async () => {
   try {
@@ -35,34 +21,73 @@ afterEach(async () => {
   }
 })
 
-const stubAudioMetadata = (durationSeconds: number): void => {
-  vi.stubGlobal('document', {
-    createElement: (tagName: string) => {
-      if (tagName !== 'audio') {
-        throw new Error(`Unexpected element: ${tagName}`)
-      }
+it.each([
+  {availableBytes: 2, cover: 'keep', succeeds: true},
+  {availableBytes: 1, cover: 'keep', succeeds: false},
+  {availableBytes: 3, cover: 'replace', succeeds: true},
+  {availableBytes: 2, cover: 'replace', succeeds: false},
+  {availableBytes: 0, cover: 'remove', succeeds: true},
+] as const)(
+  'should credit removed and replaced audio without crediting a kept cover: $cover/$availableBytes',
+  async ({availableBytes, cover, succeeds}) => {
+    const albumOptions = {
+      artist: 'Artist',
+      coverIcon: 'disc' as const,
+      coverSource: 'manual' as const,
+      title: 'Album',
+    }
+    const track = {
+      audio: new Blob(['1234567'], {type: 'audio/mpeg'}),
+      durationSeconds: 60,
+      fileName: 'song.mp3',
+      id: 'custom-track:kept',
+      title: 'Track',
+    }
+    vi.stubGlobal('navigator', {storage: {estimate: vi.fn().mockResolvedValue({})}})
+    const albumId = await saveCustomAlbum({
+      ...albumOptions,
+      albumId: null,
+      coverImage: {image: new Blob(['123'], {type: 'image/webp'}), kind: 'replace'},
+      tracks: [track, {...track, audio: new Blob(['12345']), id: 'custom-track:removed'}],
+    })
+    const replacement = Object.freeze({
+      ...track,
+      audio: new Blob(['12345678901234'], {type: 'audio/mpeg'}),
+    })
+    const covers = {
+      keep: {kind: 'keep'},
+      remove: {image: null, kind: 'replace'},
+      replace: {image: new Blob(['1234'], {type: 'image/webp'}), kind: 'replace'},
+    } satisfies Record<typeof cover, CustomAlbumCoverUpdate>
+    vi.stubGlobal('navigator', {
+      storage: {estimate: vi.fn().mockResolvedValue({quota: 100, usage: 100 - availableBytes})},
+    })
 
-      let loadedMetadataListener: (() => void) | undefined
+    const saved = saveCustomAlbum({
+      ...albumOptions,
+      albumId,
+      coverImage: covers[cover],
+      tracks: Object.freeze([replacement]),
+    })
 
-      return {
-        addEventListener: (eventName: string, listener: () => void) => {
-          if (eventName === 'loadedmetadata') {
-            loadedMetadataListener = listener
-          }
-        },
-        duration: durationSeconds,
-        load: () => {
-          queueMicrotask(() => loadedMetadataListener?.())
-        },
-        preload: '',
-        removeAttribute: vi.fn(),
-        removeEventListener: vi.fn(),
-      }
-    },
-  } as unknown as Document)
-  vi.spyOn(globalThis.URL, 'createObjectURL').mockReturnValue('blob:audio')
-  vi.spyOn(globalThis.URL, 'revokeObjectURL').mockImplementation(() => undefined)
-}
+    if (succeeds) {
+      await expect(saved).resolves.toBe(albumId)
+      const draft = await readCustomAlbumDraft({albumId})
+      expect(draft?.tracks.map(({id}) => id)).toEqual(['custom-track:kept'])
+      expect(await draft?.tracks[0]?.audio.text()).toBe('12345678901234')
+      expect(draft?.coverImage?.size ?? 0).toBe(
+        cover === 'keep' ? 3 : (covers[cover].image?.size ?? 0),
+      )
+    } else {
+      await expect(saved).rejects.toMatchObject({code: 'quota-exceeded'})
+      const draft = await readCustomAlbumDraft({albumId})
+      expect(draft?.tracks.map(({id}) => id)).toEqual(['custom-track:kept', 'custom-track:removed'])
+      expect(await draft?.tracks[0]?.audio.text()).toBe('1234567')
+      expect(draft?.coverImage?.size).toBe(3)
+      await expect(readCustomAlbumLibraryBytes({excludedAlbumId: null})).resolves.toBe(15)
+    }
+  },
+)
 
 it('should persist a changed track title when re-saving a custom album', async () => {
   vi.stubGlobal('crypto', {
@@ -261,7 +286,7 @@ it('should reject a track replacement when available quota only covers the exist
 })
 
 it('should reject audio whose rounded duration would be zero as invalid audio', async () => {
-  stubAudioMetadata(0.499)
+  stubCustomAlbumAudioMetadata({deferLoad: true, durationSeconds: 0.499})
   vi.stubGlobal('crypto', {randomUUID: () => 'track-1'})
 
   const file = new File([new Uint8Array(32)], 'short.mp3', {type: 'audio/mpeg'})
@@ -277,7 +302,7 @@ it('should reject audio whose rounded duration would be zero as invalid audio', 
 })
 
 it('should persist audio that rounds to one second', async () => {
-  stubAudioMetadata(0.5)
+  stubCustomAlbumAudioMetadata({deferLoad: true, durationSeconds: 0.5})
   vi.stubGlobal('crypto', {randomUUID: () => 'track-1'})
 
   const file = new File([new Uint8Array(32)], 'short.mp3', {type: 'audio/mpeg'})

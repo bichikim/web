@@ -39,6 +39,11 @@ it.each([
     JSON.stringify({targetDate: '2026-08-26', titles: ['Same', 'Same', 'Other']}),
     400,
   ],
+  [
+    'duplicate titles after trimming',
+    JSON.stringify({targetDate: '2026-08-26', titles: [' Same ', 'Same', 'Other']}),
+    400,
+  ],
   ['an oversized body', 'x'.repeat(16_385), 413],
 ])('should reject %s', async (_label, body, status) => {
   const response = await invokeApiRoute(POST, createRequest(body))
@@ -82,6 +87,27 @@ it('should return an internal error when regeneration submission fails', async (
 
   expect(response.status).toBe(500)
   await expect(response.text()).resolves.toBe('Regeneration submission failed')
+})
+
+it('should retain title order and distinguish case and Unicode spelling after trimming', async () => {
+  const titles = [' Event ', 'event', 'Ａ', 'A', ' e\u0301 ']
+  generationMocks.startHistoryRegeneration.mockResolvedValue({
+    responseId: 'response-1',
+    status: 'submitted',
+  })
+
+  const response = await invokeApiRoute(
+    POST,
+    createRequest(JSON.stringify({targetDate: '2026-08-26', titles})),
+  )
+
+  expect(response.status).toBe(202)
+  expect(generationMocks.startHistoryRegeneration).toHaveBeenCalledOnce()
+  expect(generationMocks.startHistoryRegeneration).toHaveBeenCalledWith({
+    requiredTitles: ['Event', 'event', 'Ａ', 'A', 'e\u0301'],
+    targetDate: {day: 26, isoDate: '2026-08-26', month: 8},
+  })
+  expect(titles).toEqual([' Event ', 'event', 'Ａ', 'A', ' e\u0301 '])
 })
 
 it('should reject a target date when the validated schema contract is violated', async () => {

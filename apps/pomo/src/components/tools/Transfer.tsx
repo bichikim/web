@@ -4,6 +4,7 @@ import * as m from '@paraglide/message'
 
 import {fileTransfer} from 'src/features/file-transfer/session'
 import {TransferConnectionInfo} from './TransferConnectionInfo'
+import {TransferConnectionHelp} from './TransferConnectionHelp'
 import {ReceivedFiles} from './ReceivedFiles'
 import {TransferFileRequest} from './TransferFileRequest'
 import {PButton} from '../p-button/PButton'
@@ -107,7 +108,12 @@ export const Transfer = () => {
               url={url()}
               connected={connected()}
               waiting={transfer.phase === 'waiting'}
-              onApprove={transfer.phase === 'approval-needed' ? fileTransfer.approve : undefined}
+              connecting={transfer.phase === 'connecting'}
+              onApprove={
+                transfer.phase === 'approval-needed' || transfer.phase === 'connecting'
+                  ? fileTransfer.approve
+                  : undefined
+              }
             />
           )}
         </Show>
@@ -156,6 +162,9 @@ export const Transfer = () => {
         <p role="alert" class="m-0 text-red-500">
           {transfer.error}
         </p>
+      </Show>
+      <Show when={transfer.errorCode === 'direct-connection'}>
+        <TransferConnectionHelp />
       </Show>
     </section>
   )

@@ -37,7 +37,6 @@ vi.mock('../../../features/focus-room-feed', () => ({
   excludeFeedDialogues: (dialogues: ReadonlyArray<PDialogue>) => dialogues,
   usePFeedContext: vi.fn(),
 }))
-vi.mock('../AutomaticSettings', () => ({AutomaticDialogueSettings: () => <div>자동 설정</div>}))
 vi.mock('../DelayedEndEventSettings', () => ({DelayedEndEventSettings: vi.fn()}))
 vi.mock('../RandomEventSettings', () => ({RandomEventSettings: () => <div>랜덤 설정</div>}))
 vi.mock('../VolumeDuckingSettings', () => ({DialogueVolumeDuckingSettings: vi.fn()}))

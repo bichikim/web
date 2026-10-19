@@ -1,5 +1,6 @@
+import {replaceBlobObjectUrl} from 'src/features/blob-object-url'
 import {createStore} from 'solid-js/store'
-import {Zip, ZipPassThrough} from 'fflate'
+import {createBlobArchive} from 'src/utils/create-blob-archive'
 
 export const RECEIVED_BYTES_LIMIT = 300_000_000
 
@@ -28,33 +29,13 @@ const download = (url: string, name: string): void => {
   link.click()
 }
 
-// oxlint-disable no-await-in-loop -- ZIP entries consume Blob streams in order with bounded input memory.
-const appendArchive = async (archive: Zip, blob: Blob, name: string): Promise<void> => {
-  const entry = new ZipPassThrough(name)
-  archive.add(entry)
-  const reader = blob.stream().getReader()
-  try {
-    let chunk = await reader.read()
-    while (!chunk.done) {
-      entry.push(chunk.value)
-      chunk = await reader.read()
-    }
-    entry.push(new Uint8Array(), true)
-  } finally {
-    reader.releaseLock()
-  }
-}
-
 /** Keeps received file contents in this page until removed or evicted by the byte limit. */
 export const createReceivedFiles = (maximumBytes = RECEIVED_BYTES_LIMIT) => {
   const [state, setState] = createStore<ReceivedState>({error: false, files: [], saving: false})
   const contents = new Map<string, Blob>()
   let archiveUrl: string | null = null
   const releaseArchive = (): void => {
-    if (archiveUrl !== null) {
-      URL.revokeObjectURL(archiveUrl)
-      archiveUrl = null
-    }
+    archiveUrl = replaceBlobObjectUrl(archiveUrl, () => null)
   }
   const retainedBytes = () =>
     state.files.reduce((total, file) => total + (file.url === null ? 0 : file.size), 0)
@@ -65,7 +46,7 @@ export const createReceivedFiles = (maximumBytes = RECEIVED_BYTES_LIMIT) => {
     }
     releaseArchive()
     if (file.url !== null) {
-      URL.revokeObjectURL(file.url)
+      replaceBlobObjectUrl(file.url, () => null)
       contents.delete(id)
     }
     if (reason === 'manual') {
@@ -87,7 +68,7 @@ export const createReceivedFiles = (maximumBytes = RECEIVED_BYTES_LIMIT) => {
         removed: null,
         saved: false,
         size: blob.size,
-        url: URL.createObjectURL(blob),
+        url: replaceBlobObjectUrl(null, () => blob),
       },
     ])
     let bytes = retainedBytes()
@@ -121,36 +102,17 @@ export const createReceivedFiles = (maximumBytes = RECEIVED_BYTES_LIMIT) => {
       return
     }
     const files = state.files.filter((file) => file.url !== null)
-    const blobs = files.map((file) => contents.get(file.id))
+    const entries = files.flatMap((file) => {
+      const blob = contents.get(file.id)
+      return blob === undefined ? [] : [{blob, name: file.name}]
+    })
     if (files.length === 0) {
       return
     }
     setState({error: false, saving: true})
     try {
-      const chunks: BlobPart[] = []
-      const archive = new Zip((error, data) => {
-        if (error !== null) {
-          throw error
-        }
-        chunks.push(new Uint8Array(data))
-      })
-      const names = new Set<string>()
-      for (const [index, file] of files.entries()) {
-        let {name} = file
-        let suffix = 1
-        while (names.has(name)) {
-          name = `${suffix}-${file.name}`
-          suffix += 1
-        }
-        names.add(name)
-        const blob = blobs[index]
-        if (blob !== undefined) {
-          await appendArchive(archive, blob, name)
-        }
-      }
-      archive.end()
-      releaseArchive()
-      archiveUrl = URL.createObjectURL(new Blob(chunks, {type: 'application/zip'}))
+      const archive = await createBlobArchive(entries)
+      archiveUrl = replaceBlobObjectUrl(archiveUrl, () => archive)
       download(archiveUrl, 'pomo-files.zip')
       const ids = new Set(files.map((file) => file.id))
       setState('files', (file) => ids.has(file.id), {saved: true})

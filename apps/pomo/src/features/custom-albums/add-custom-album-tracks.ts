@@ -1,16 +1,19 @@
-import {replaceBlobObjectUrl} from 'src/features/blob-object-url'
+import {readAudioDuration} from 'src/utils/read-audio-duration'
 import {
   CUSTOM_TRACK_ID_PREFIX,
   CustomAlbumError,
   type CustomAlbumTrack,
   isSupportedCustomAudio,
   MAXIMUM_CUSTOM_ALBUM_BYTES,
+  MAXIMUM_CUSTOM_LIBRARY_BYTES,
   MAXIMUM_CUSTOM_TRACK_BYTES,
   MAXIMUM_CUSTOM_TRACK_COUNT,
 } from './model'
+import {readCustomAlbumLibraryBytes} from './read-custom-album-library-bytes'
 import {readEmbeddedAudioCover} from './read-embedded-audio-cover'
 
 export interface AddCustomAlbumTracksOptions {
+  readonly albumId?: string | null
   readonly currentAlbumBytes: number
   readonly currentTrackCount: number
   readonly files: readonly File[]
@@ -25,42 +28,22 @@ export type AddCustomAlbumTracksResult =
     }
   | {readonly kind: 'album-too-large'}
   | {readonly kind: 'file-type'}
+  | {readonly kind: 'library-too-large'}
   | {readonly kind: 'track-count'}
   | {readonly kind: 'track-too-large'}
 
-const readAudioDuration = (file: File): Promise<number> =>
-  new Promise((resolve, reject) => {
-    const audio = globalThis.document.createElement('audio')
-    const source = replaceBlobObjectUrl(null, () => file)
-    const cleanUp = () => {
-      audio.removeEventListener('loadedmetadata', handleLoadedMetadata)
-      audio.removeEventListener('error', handleError)
-      audio.removeAttribute('src')
-      replaceBlobObjectUrl(source, () => null)
-    }
-    const handleLoadedMetadata = () => {
-      const {duration} = audio
-      const roundedDuration = Math.round(duration)
-      cleanUp()
+// Match the frame-renderer media loading budget: allow slower local metadata reads,
+// but bound imports when a browser emits neither metadata nor an error.
+const AUDIO_METADATA_TIMEOUT_MS = 30_000
 
-      if (!Number.isFinite(duration) || duration <= 0 || roundedDuration <= 0) {
-        reject(new CustomAlbumError('invalid-audio'))
-        return
-      }
-
-      resolve(roundedDuration)
-    }
-    const handleError = () => {
-      cleanUp()
-      reject(new CustomAlbumError('invalid-audio'))
-    }
-
-    audio.preload = 'metadata'
-    audio.addEventListener('loadedmetadata', handleLoadedMetadata, {once: true})
-    audio.addEventListener('error', handleError, {once: true})
-    audio.src = source
-    audio.load()
-  })
+const readTrackDuration = async (file: File): Promise<number> => {
+  const duration = await readAudioDuration(file, {timeoutMs: AUDIO_METADATA_TIMEOUT_MS})
+  const roundedDuration = Math.round(duration ?? 0)
+  if (duration === null || !Number.isFinite(duration) || duration <= 0 || roundedDuration <= 0) {
+    throw new CustomAlbumError('invalid-audio')
+  }
+  return roundedDuration
+}
 
 const getTrackTitle = (fileName: string): string => fileName.replace(/\.[^.]+$/u, '').trim()
 
@@ -78,14 +61,23 @@ export const addCustomAlbumTracks = async (
   }
 
   const addedBytes = options.files.reduce((total, file) => total + file.size, 0)
-  if (options.currentAlbumBytes + addedBytes > MAXIMUM_CUSTOM_ALBUM_BYTES) {
+  const albumBytes = options.currentAlbumBytes + addedBytes
+  if (albumBytes > MAXIMUM_CUSTOM_ALBUM_BYTES) {
     return {kind: 'album-too-large'}
+  }
+
+  const otherLibraryBytes = await readCustomAlbumLibraryBytes({
+    excludedAlbumId: options.albumId ?? null,
+  })
+  const libraryBytes = otherLibraryBytes + albumBytes
+  if (libraryBytes > MAXIMUM_CUSTOM_LIBRARY_BYTES) {
+    return {kind: 'library-too-large'}
   }
 
   const tracks = await Promise.all(
     options.files.map(async (file) => ({
       audio: file,
-      durationSeconds: await readAudioDuration(file),
+      durationSeconds: await readTrackDuration(file),
       fileName: file.name,
       id: `${CUSTOM_TRACK_ID_PREFIX}${globalThis.crypto.randomUUID()}`,
       title: getTrackTitle(file.name) || file.name,
@@ -96,8 +88,8 @@ export const addCustomAlbumTracks = async (
     : null
   const embeddedCoverImage =
     embeddedCoverCandidate !== null &&
-    options.currentAlbumBytes + addedBytes + embeddedCoverCandidate.size >
-      MAXIMUM_CUSTOM_ALBUM_BYTES
+    (albumBytes + embeddedCoverCandidate.size > MAXIMUM_CUSTOM_ALBUM_BYTES ||
+      libraryBytes + embeddedCoverCandidate.size > MAXIMUM_CUSTOM_LIBRARY_BYTES)
       ? null
       : embeddedCoverCandidate
 

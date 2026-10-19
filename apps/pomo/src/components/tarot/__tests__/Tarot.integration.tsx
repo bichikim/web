@@ -54,13 +54,16 @@ it('should keep options above the cards and preserve cards while interpreting', 
   ))
 
   expect(screen.getByRole('button', {name: '다시 뽑기'})).toBeInTheDocument()
-  screen.getAllByRole('article').forEach((article) => fireEvent.load(article.querySelector('img')!))
+  screen.getAllByRole('article').forEach((article) => {
+    fireEvent.load(article.querySelector('img')!)
+    fireEvent.load(article.querySelectorAll('img')[1]!)
+  })
   expect(screen.getByRole('article', {name: '과거'})).toHaveTextContent(TAROT_CARDS[0]!.name.ko)
   expect(screen.getByRole('article', {name: '현재'})).toHaveTextContent(TAROT_CARDS[1]!.name.ko)
   expect(screen.getByRole('article', {name: '미래'})).toHaveTextContent(TAROT_CARDS[2]!.name.ko)
-  expect(document.querySelectorAll('article img')).toHaveLength(3)
+  expect(document.querySelectorAll('article img')).toHaveLength(6)
   expect(screen.queryAllByRole('img')).toHaveLength(0)
-  expect(screen.getByText(/Gemma 4 해석을 실행할 수 없어요/)).toBeInTheDocument()
+  expect(screen.getByRole('status')).toHaveTextContent('선택한 AI 모델')
 
   const uprightView = screen.getByRole('checkbox', {name: '카드는 정방향으로 보기'})
   const options = screen.getByRole('group', {name: '타로 옵션'})

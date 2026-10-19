@@ -1,56 +1,37 @@
 import {Title} from '@solidjs/meta'
 import {A} from '@solidjs/router'
-import {createEffect, createSignal, Show} from 'solid-js'
-import {clamp} from 'es-toolkit/math'
+import {Show} from 'solid-js'
 
-import {DEFAULT_CONNECTION_SECONDS, useSoundGeneration} from 'src/features/sound-generation'
+import {useSoundGeneration} from 'src/features/sound-generation'
 import {ModelTerms} from './sound-generation/ModelTerms'
-import {CrossfadeAudio, type CrossfadePlaybackState} from './sound-generation/CrossfadeAudio'
+import {CrossfadeAudio} from './sound-generation/CrossfadeAudio'
+import {useResultPlayback} from './sound-generation/use-result-playback'
 import {
   SoundGenerationForm,
   type SoundGenerationFormRequest,
 } from './sound-generation/SoundGenerationForm'
 
 export function SoundGenerationPage() {
-  const [repeat, setRepeat] = createSignal(false)
-  const [connectionEnabled, setConnectionEnabled] = createSignal(true)
-  const [connectionSeconds, setConnectionSeconds] = createSignal(DEFAULT_CONNECTION_SECONDS)
-  const [handoff, setHandoff] = createSignal<CrossfadePlaybackState | null>(null)
   const generation = useSoundGeneration()
   let nativeAudio: HTMLAudioElement | undefined
-
-  const applyNativeHandoff = () => {
-    const element = nativeAudio
-    const state = handoff()
-    if (element === undefined || state === null) {
-      return
-    }
-    if (element.readyState < 1 || !Number.isFinite(element.duration)) {
-      return
-    }
-    element.currentTime = clamp(state.position, 0, element.duration)
-    if (state.playing) {
-      Promise.resolve(element.play()).catch(() => undefined)
-    }
-    setHandoff(null)
-  }
-  createEffect(() => {
-    if (!repeat() || !connectionEnabled()) {
-      handoff()
-      applyNativeHandoff()
-    }
-  })
-  const handleConnectionEnabledChange = (enabled: boolean) => {
-    if (enabled && repeat() && nativeAudio !== undefined) {
-      const state = {playing: !nativeAudio.paused, position: nativeAudio.currentTime}
-      setConnectionEnabled(true)
-      setHandoff(state)
-      return
-    }
-    setConnectionEnabled(enabled)
+  const {
+    applyNativeHandoff,
+    connectionEnabled,
+    connectionSeconds,
+    handleConnectionEnabledChange,
+    handleConnectionSecondsChange,
+    handleHandoffChange,
+    handleRepeatChange,
+    handoff,
+    repeat,
+    resetResult,
+  } = useResultPlayback({nativeAudio: () => nativeAudio, resultUrl: generation.url})
+  const handleNativeAudio = (element: HTMLAudioElement) => {
+    nativeAudio = element
+    applyNativeHandoff()
   }
   const generate = (request: SoundGenerationFormRequest) => {
-    setHandoff(null)
+    resetResult()
     generation.generate(request)
   }
 
@@ -83,7 +64,7 @@ export function SoundGenerationPage() {
             connectionSeconds={connectionSeconds}
             error={generation.error}
             onConnectionEnabledChange={handleConnectionEnabledChange}
-            onConnectionSecondsChange={setConnectionSeconds}
+            onConnectionSecondsChange={handleConnectionSecondsChange}
             onGenerate={generate}
             onStop={generation.stop}
             status={generation.status}
@@ -103,10 +84,7 @@ export function SoundGenerationPage() {
                       controls
                       loop={repeat()}
                       onLoadedMetadata={applyNativeHandoff}
-                      ref={(element) => {
-                        nativeAudio = element
-                        applyNativeHandoff()
-                      }}
+                      ref={handleNativeAudio}
                       src={url()}
                     />
                   }
@@ -116,7 +94,7 @@ export function SoundGenerationPage() {
                     autoPlay={handoff()?.playing ?? false}
                     connectionSeconds={connectionSeconds()}
                     initialPosition={handoff()?.position ?? 0}
-                    onStateChange={setHandoff}
+                    onStateChange={handleHandoffChange}
                     url={url()}
                   />
                 </Show>
@@ -124,16 +102,7 @@ export function SoundGenerationPage() {
                   <input
                     type="checkbox"
                     checked={repeat()}
-                    onChange={(event) => {
-                      const enabled = event.currentTarget.checked
-                      if (enabled && nativeAudio !== undefined) {
-                        setHandoff({
-                          playing: !nativeAudio.paused,
-                          position: nativeAudio.currentTime,
-                        })
-                      }
-                      setRepeat(enabled)
-                    }}
+                    onChange={(event) => handleRepeatChange(event.currentTarget.checked)}
                   />
                   반복 재생
                 </label>

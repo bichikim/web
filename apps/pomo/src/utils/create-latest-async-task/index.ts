@@ -2,7 +2,7 @@ interface PendingInput<Input> {
   readonly value: Input
 }
 
-/** Runs one task at a time, retains only the latest pending input, and settles callers after the final task. */
+/** 작업을 한 번에 하나씩 실행하고 최신 대기 입력만 유지하며, 마지막 작업이 끝나면 호출자들의 Promise를 완료한다. */
 export const createLatestAsyncTask = <Input>(
   execute: (input: Input) => void | Promise<void>,
 ): ((input: Input) => Promise<void>) => {
@@ -15,7 +15,7 @@ export const createLatestAsyncTask = <Input>(
         const current = pendingInput
         pendingInput = null
         try {
-          // Await sequentially to prevent overlapping tasks.
+          // 작업이 겹치지 않도록 순서대로 기다린다.
           // eslint-disable-next-line no-await-in-loop
           await execute(current.value)
         } catch (error: unknown) {

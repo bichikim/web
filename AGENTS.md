@@ -5,6 +5,19 @@
 - **Examples**: If the user asks only to see an example, provide it in the chat response without creating or editing files. If the user asks to build something from an example and its implementation code is available, study that implementation before implementing it.
 - **Intent gate**: State the concrete interpretation at task start and when the scope or direction changes.
 - **Existing code references**: When discussing existing code, always include a clickable link to its exact file and line number so the link opens at that line.
+- **Comment language**: Write code comments, including JSDoc, in Korean. Preserve identifiers and established technical names.
+
+## UI communication
+
+Explanations and notices tend to accumulate as AI adds features, crowding the workspace and competing with the user's actual task. Keep feedback proportionate so the interface remains focused on the work.
+
+- Keep user-facing UI text concise; avoid verbose explanations and persistent status text whenever possible.
+- Prefer toasts or other transient feedback that does not consume layout space. Keep routine success silent; show concise feedback when the user needs to act.
+- Use persistent inline guidance only when it is necessary to complete the current task or understand the current state.
+
+## Code review
+
+- For Codex code reviews, read and follow the `critical-review` skill at `.agents/skills/critical-review/SKILL.md`.
 
 ## Styling ownership
 
@@ -33,6 +46,12 @@
 - When implementing a feature, prefer event-driven work whenever the relevant event or completion signal is available. Before using `setTimeout` or `setInterval`, explain why an event-driven approach is insufficient and obtain explicit user approval.
 - **Declarative programming (required; very important)**: Write code declaratively by composing reusable operations. Judge readability by how clearly the composition expresses intent, not by code length.
 - Evaluate changes in repository-wide context, prioritizing compatibility, reusability, and readability over local optimization.
+
+## Side effects
+
+- Write computation and transformation logic as pure functions whenever possible, and concentrate side effects at input/output boundaries.
+- Implement ordinary side effects needed to fulfill the user's requested functionality without separate approval.
+- Obtain approval before implementing external changes beyond the requested scope, destructive operations, or actions requiring new permissions or costs.
 
 ## Evidence
 
@@ -82,18 +101,13 @@
 
 ## Unit test execution time
 
-- Preserve the unit test time limit configured in Vitest. Never change or override it, including through test-specific timeout settings. No environment-based exceptions are allowed.
-- The recommended maximum execution-time target is 150ms per Vitest unit test. Write tests to execute as quickly as possible.
-- To reduce execution time, prioritize mocking over splitting tests, and splitting tests over moving integration-test portions into integration tests. Preserve the behavior and assertions that need verification.
+- Write each Vitest unit test to complete within 150ms when that individual test is run by itself. This is per-test authoring guidance, not a timeout for a whole file or parallel suite.
+- When an individual unit test exceeds 150ms, diagnose in order: missing mocks; too many independent scenarios combined in one test; whether the test has integration-test characteristics. Preserve assertions, scenarios that require the same mount, and required coverage. Mock missing boundaries where appropriate, split only independent scenarios, and keep genuine integration behavior in integration tests.
 
 ## Required after changes
 
 1. Fix oxlint errors
 2. Run oxfmt (`pnpm format`)
-
-## Comments
-
-Function JSDoc: contract (what) only; call sites: intent (why) only.
 
 ## GitHub CLI authentication
 

@@ -9,5 +9,6 @@ export const excludeLanguageLearningDialogues = (
   return excludeByIds(
     dialogues,
     sentences.map((sentence) => sentence.dialogueId),
+    (dialogue) => dialogue.id,
   )
 }

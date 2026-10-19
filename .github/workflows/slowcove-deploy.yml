@@ -33,7 +33,7 @@ env:
 
 jobs:
   deploy:
-    name: Verify and deploy relax player
+    name: Verify and deploy Slowcove
     if: github.ref == 'refs/heads/dev'
     runs-on: ubuntu-latest
     timeout-minutes: 30
@@ -56,14 +56,14 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Verify relax player
+      - name: Verify Slowcove
         run: |
           pnpm --dir apps/pomo lint
           pnpm --dir apps/pomo typecheck
           NODE_OPTIONS=--no-experimental-webstorage pnpm exec vitest run \
             'apps/pomo/src/routes/(main-layout)/(home-layout)/__tests__/index.spec.tsx' \
             'apps/pomo/src/routes/(main-layout)/(home-layout)/__tests__/relax.spec.tsx' \
-            apps/pomo/src/components/p-relax-player-page/__tests__/PRelaxPlayerPage.spec.tsx \
+            apps/pomo/src/components/p-slowcove-page/__tests__/PSlowcovePage.spec.tsx \
             apps/pomo/src/middleware/__tests__/relax-routing.spec.ts \
             apps/pomo/scripts/vite/__tests__/create-plugins.spec.ts \
             apps/pomo/scripts/vite/__tests__/create-nitro-config.spec.ts \
@@ -83,7 +83,7 @@ jobs:
           pnpm dlx vercel@${VERCEL_CLI_VERSION} build \
             --prod --local-config="${VERCEL_CONFIG}"
           test -f .vercel/output/functions/__server.func/.vc-config.json
-          test -f .vercel/output/static/relax-player/city-sunny-riverside.png
+          test -f .vercel/output/static/slowcove/city-sunny-riverside.webp
           node --input-type=module <<'NODE'
           import {readFileSync} from 'node:fs'
           import handler from './.vercel/output/functions/__server.func/index.mjs'

@@ -1,4 +1,5 @@
 import {uniq} from 'es-toolkit/array'
+import {sumBy} from 'es-toolkit/math'
 import {createPDialogueRepository, deleteDialogueAudio} from 'src/features/focus-room-dialogue'
 
 export interface DialogueAudioReference {
@@ -36,7 +37,7 @@ export const deleteStoredDialogueAudio = async (
     const results = await Promise.allSettled(
       audioKeys.map((audioKey) => storage.deleteAudio(audioKey)),
     )
-    const failedCount = results.filter((result) => result.status === 'rejected').length
+    const failedCount = sumBy(results, (result) => (result.status === 'rejected' ? 1 : 0))
     return {deletedCount: results.length - failedCount, failedCount}
   } finally {
     storage.dispose()

@@ -3,10 +3,8 @@ import type {BackgroundMedia} from './model'
 import {getPairDirection, type PhotoSize} from './pairing'
 
 const LOAD_TIMEOUT = 10_000
-export interface LoadedPhoto {
-  readonly image: HTMLImageElement
-  readonly release: () => void
-}
+import type {LoadedPhoto} from '@winter-love/wallpaper/frame-renderer/types'
+export type {LoadedPhoto} from '@winter-love/wallpaper/frame-renderer/types'
 export interface FindCompanionOptions {
   readonly first: PhotoSize
   readonly viewport: PhotoSize

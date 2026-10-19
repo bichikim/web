@@ -1,4 +1,5 @@
 // oxlint-disable no-magic-numbers, eslint/no-bitwise -- Ogg uses fixed binary fields and a bitwise CRC algorithm.
+import {sumBy} from 'es-toolkit/math'
 import type {SampleRate} from 'libopus-wasm'
 
 const OPUS_MEDIA_TYPE = 'audio/ogg; codecs=opus'
@@ -70,14 +71,8 @@ const createOggPage = (options: OggPageOptions) => {
     lacingValues: getLacingValues(packet.length),
     packet,
   }))
-  const segmentCount = packetParts.reduce(
-    (total, packetPart) => total + packetPart.lacingValues.length,
-    0,
-  )
-  const payloadLength = packetParts.reduce(
-    (total, packetPart) => total + packetPart.packet.length,
-    0,
-  )
+  const segmentCount = sumBy(packetParts, (packetPart) => packetPart.lacingValues.length)
+  const payloadLength = sumBy(packetParts, (packetPart) => packetPart.packet.length)
   const page = new Uint8Array(27 + segmentCount + payloadLength)
   const view = new DataView(page.buffer)
   let headerType = options.firstPage === true ? 0x02 : 0
@@ -173,18 +168,6 @@ const createAudioPages = (packets: ReadonlyArray<OggPacket>, streamSerial: numbe
   })
 }
 
-const concatenate = (parts: ReadonlyArray<Uint8Array>) => {
-  const result = new Uint8Array(parts.reduce((total, part) => total + part.length, 0))
-  let offset = 0
-
-  for (const part of parts) {
-    result.set(part, offset)
-    offset += part.length
-  }
-
-  return result
-}
-
 const isOpusSampleRate = (sampleRate: number): sampleRate is SampleRate =>
   OPUS_SAMPLE_RATES.some((supportedRate) => supportedRate === sampleRate)
 
@@ -251,9 +234,7 @@ export const encodeOpusBlob = async (samples: Float32Array, sampleRate: number):
       }),
       ...createAudioPages(packets, streamSerial),
     ]
-    const file = concatenate(pages)
-
-    return new Blob([file], {type: OPUS_MEDIA_TYPE})
+    return new Blob(pages, {type: OPUS_MEDIA_TYPE})
   } finally {
     encoder.free()
   }

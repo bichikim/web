@@ -2,6 +2,7 @@ import {createEffect, ErrorBoundary, lazy, Suspense, untrack} from 'solid-js'
 import {useLocation, useNavigate} from '@solidjs/router'
 import * as m from '@paraglide/message'
 import {fileTransfer} from 'src/features/file-transfer/session'
+import {consumeTransferLink} from 'src/features/file-transfer/consume-link'
 import {PModal} from '../p-modal/PModal'
 import {PLoadingStatus} from '../p-loading-status/PLoadingStatus'
 import {toolsDialog} from './dialog'
@@ -13,23 +14,21 @@ export const PToolsDialog = () => {
   const navigate = useNavigate()
 
   createEffect(() => {
-    const parameters = new URLSearchParams(location.search)
-    if (parameters.get('tool') !== 'transfer' || !fileTransfer.isConfigured) {
+    const link = consumeTransferLink({
+      hash: location.hash,
+      isConfigured: fileTransfer.isConfigured,
+      pathname: location.pathname,
+      search: location.search,
+    })
+    if (link === null) {
       return
     }
-    const sessionId = parameters.get('session')
-    const secret = location.hash.slice(1)
-    const {pathname} = location
-    const hash = sessionId === null ? location.hash : ''
-    parameters.delete('tool')
-    parameters.delete('session')
-    const search = parameters.size === 0 ? '' : `?${parameters.toString()}`
     untrack(() => {
       toolsDialog.open({selected: 'transfer'})
-      if (sessionId !== null) {
-        fileTransfer.join(sessionId, secret)
+      if (link.sessionId !== null) {
+        fileTransfer.join(link.sessionId, link.secret)
       }
-      navigate(`${pathname}${search}${hash}`, {replace: true, scroll: false})
+      navigate(link.replacementUrl, {replace: true, scroll: false})
     })
   })
 

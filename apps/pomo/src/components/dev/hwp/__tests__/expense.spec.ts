@@ -62,6 +62,31 @@ describe('parseExpenseText', () => {
     })
   })
 
+  it.each([
+    ['２0２6-０9-０５', '2026-09-05'],
+    ['２０２６-9-５', '2026-9-5'],
+    ['202６-0９-5', '2026-09-5'],
+    ['２０２４-０２-２９', '2024-02-29'],
+  ])('should preserve mixed-width date parts in %s', (date, normalizedDate) => {
+    expect(parseExpenseText(`${date}\n두부 1,500원`)).toMatchObject({
+      ok: true,
+      value: {date: normalizedDate, total: 1500},
+    })
+  })
+
+  it.each([
+    '＋２０２６-０９-０５',
+    '２０２６－０９－０５',
+    '２０２６，０９，０５',
+    '２０２６-０９-⑤',
+    '２０２６-０９-₅',
+  ])('should reject unrelated compatibility characters in date line %s', (date) => {
+    expect(parseExpenseText(`${date}\n두부 1,500원`)).toEqual({
+      error: {code: 'invalid-input'},
+      ok: false,
+    })
+  })
+
   it('should not normalize fullwidth digits in quantities or separators', () => {
     expect(parseExpenseText('두부 1,500원 ２개')).toEqual({
       error: {code: 'invalid-input'},
@@ -149,16 +174,93 @@ describe('parseExpenseText', () => {
 })
 
 describe('parseExpenseAssistantResponse', () => {
-  it('should reject fullwidth digits in structured date values', () => {
+  it.each([[null], [[]], [false], [42], ['두부']])(
+    'should reject a non-object structured item: %j',
+    (item) => {
+      expect(parseExpenseAssistantResponse(JSON.stringify({items: [item]}))).toEqual({
+        error: {code: 'invalid-shape'},
+        ok: false,
+      })
+    },
+  )
+
+  it.each([
+    [Number.MAX_SAFE_INTEGER - 1, {ok: true, value: {total: Number.MAX_SAFE_INTEGER}}],
+    [Number.MAX_SAFE_INTEGER, {error: {code: 'invalid-shape'}, ok: false}],
+  ])(
+    'should preserve the structured total boundary for a unit price of %i',
+    (unitPrice, result) => {
+      expect(
+        parseExpenseAssistantResponse(
+          JSON.stringify({
+            items: [
+              {name: '식사', quantity: 1, unitPrice},
+              {name: '차', quantity: 1, unitPrice: 1},
+            ],
+          }),
+        ),
+      ).toMatchObject(result)
+    },
+  )
+
+  it.each([undefined, null, '', '   ', '\t\n', '\u3000'])(
+    'should treat an absent or blank date as missing: %j',
+    (date) => {
+      const result = parseExpenseAssistantResponse(
+        JSON.stringify({
+          date,
+          items: [{name: '두부', quantity: 1, unitPrice: 1500}],
+          questions: ['단가를 확인해 주세요.'],
+        }),
+      )
+
+      expect(result).toEqual({
+        ok: true,
+        value: {
+          date: null,
+          items: [{amount: 1500, name: '두부', quantity: 1, unitPrice: 1500}],
+          questions: ['단가를 확인해 주세요.'],
+          total: 1500,
+        },
+      })
+    },
+  )
+
+  it.each([0, false, [], {}])('should reject a non-string date: %j', (date) => {
     expect(
       parseExpenseAssistantResponse(
-        '{"date":"２０２６-０９-０５","items":[{"name":"두부","quantity":1,"unitPrice":1500}]}',
+        JSON.stringify({
+          date,
+          items: [{name: '두부', quantity: 1, unitPrice: 1500}],
+        }),
       ),
-    ).toEqual({
+    ).toEqual({error: {code: 'invalid-shape'}, ok: false})
+  })
+
+  it.each([
+    {name: '', quantity: 1, unitPrice: 1500},
+    {name: '두부', quantity: 0, unitPrice: 1500},
+    {name: '두부', quantity: 1, unitPrice: 0},
+  ])('should still reject invalid items with a blank date: %j', (item) => {
+    expect(parseExpenseAssistantResponse(JSON.stringify({date: '', items: [item]}))).toEqual({
       error: {code: 'invalid-shape'},
       ok: false,
     })
   })
+
+  it.each(['２０２６-０９-０５', '２0２6-０9-０５', '２０２６-9-５', '202６-0９-5'])(
+    'should reject fullwidth digits in structured date value %s',
+    (date) => {
+      expect(
+        parseExpenseAssistantResponse(
+          JSON.stringify({date, items: [{name: '두부', quantity: 1, unitPrice: 1500}]}),
+        ),
+      ).toEqual({
+        error: {code: 'invalid-shape'},
+        ok: false,
+      })
+    },
+  )
 
   it('should parse JSON after brace-delimited prose', () => {
     expect(

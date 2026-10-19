@@ -36,7 +36,7 @@ export const VolumeControl = (props: VolumeControlProps) => {
   return (
     <div class="flex min-w-0 items-center justify-end gap-0">
       <button
-        ref={tooltip.setTarget}
+        {...tooltip.triggerProps}
         aria-controls={popoverId}
         aria-haspopup="dialog"
         aria-label={m.player_volume()}
@@ -48,11 +48,6 @@ export const VolumeControl = (props: VolumeControlProps) => {
           // oxlint-disable-next-line eslint-js/max-len -- UnoCSS requires the complete anchor-name utility.
           '[&[data-pomo-tooltip-trigger]]:[anchor-name:var(--pomo-volume-popover-anchor),var(--pomo-tooltip-anchor)]',
         )}
-        onBlur={tooltip.onBlur}
-        onFocus={tooltip.onFocus}
-        onPointerDown={tooltip.onPointerDown}
-        onPointerEnter={tooltip.onPointerEnter}
-        onPointerLeave={tooltip.onPointerLeave}
         onClick={handleTriggerClick}
         popovertarget={popoverId}
         style={{'--pomo-volume-popover-anchor': popoverAnchor}}

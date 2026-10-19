@@ -1,4 +1,4 @@
-import {DEPTH_RESPONSE} from 'src/utils/depth-response'
+import {DEPTH_RESPONSE} from 'src/utils/shader'
 export const DEPTH_PARALLAX_FRAGMENT = `
 uniform sampler2D uDepthTexture;
 uniform vec2 uParallaxPixels;

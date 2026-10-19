@@ -1,9 +1,11 @@
+import {attachViewPan} from './attach-view-pan'
 import {attachViewNavigation} from './view-navigation'
 import {ViewRuler} from './ViewRuler'
 import {createEffect, createSignal, type JSX, on, onCleanup, untrack} from 'solid-js'
 import {ViewCameraControls} from './ViewCameraControls'
 import {MAXIMUM_VIEW_ZOOM, MINIMUM_VIEW_ZOOM, type ViewCamera} from './view-camera'
 import {EDITOR_VIEWPORT_PADDING} from './viewport'
+import {useElementSize} from './use-element-size'
 
 interface CameraViewportProps {
   readonly fitRevision?: number
@@ -17,13 +19,20 @@ interface CameraViewportProps {
 export const CameraViewport = (props: CameraViewportProps) => {
   const GRID_STEP = 20
   const [camera, setCamera] = createSignal<ViewCamera>({x: 0, y: 0, zoom: 1})
-  let viewport: HTMLDivElement | undefined
-  let drag: {pointer: number; x: number; y: number; camera: ViewCamera} | undefined
+  const [viewport, setViewport] = createSignal<HTMLDivElement | null>(null)
+  const size = useElementSize(viewport)
+  const [fitted, setFitted] = createSignal(true)
   const [dragging, setDragging] = createSignal(false)
+  const navigate = (nextCamera: ViewCamera) => {
+    setFitted(false)
+    setCamera(nextCamera)
+  }
   const fit = () => {
-    if (viewport === undefined || viewport.clientWidth === 0 || viewport.clientHeight === 0) {
+    const element = viewport()
+    if (element === null || element.clientWidth === 0 || element.clientHeight === 0) {
       return
     }
+    setFitted(true)
     setCamera({
       x: 0,
       y: 0,
@@ -31,12 +40,25 @@ export const CameraViewport = (props: CameraViewportProps) => {
         MINIMUM_VIEW_ZOOM,
         Math.min(
           MAXIMUM_VIEW_ZOOM,
-          viewport.clientWidth / props.width,
-          viewport.clientHeight / props.height,
+          element.clientWidth / props.width,
+          element.clientHeight / props.height,
         ),
       ),
     })
   }
+  createEffect(() => {
+    const measured = size()
+    if (fitted() && measured.width > 0 && measured.height > 0) {
+      untrack(fit)
+    }
+  })
+  createEffect(() => {
+    const element = viewport()
+    if (element !== null) {
+      onCleanup(attachViewNavigation({camera, element, onChange: navigate}))
+      onCleanup(attachViewPan({camera, element, onChange: navigate, onPanningChange: setDragging}))
+    }
+  })
   createEffect(
     on(
       () => props.fitRevision,
@@ -47,10 +69,6 @@ export const CameraViewport = (props: CameraViewportProps) => {
       },
     ),
   )
-  const stop = () => {
-    drag = undefined
-    setDragging(false)
-  }
   return (
     <>
       <div class="camera-frame">
@@ -63,10 +81,7 @@ export const CameraViewport = (props: CameraViewportProps) => {
           class="viewport"
           role="region"
           aria-label="모델 보기"
-          ref={(element) => {
-            viewport = element
-            onCleanup(attachViewNavigation({camera, element, onChange: setCamera}))
-          }}
+          ref={setViewport}
           data-panning={dragging()}
           style={{
             '--camera-grid': `${GRID_STEP * camera().zoom}px`,
@@ -78,33 +93,6 @@ export const CameraViewport = (props: CameraViewportProps) => {
             '--stage-x': `${(-camera().x - props.width * EDITOR_VIEWPORT_PADDING) * camera().zoom}px`,
             '--stage-y': `${(-camera().y - props.height * EDITOR_VIEWPORT_PADDING) * camera().zoom}px`,
           }}
-          onPointerDown={(event) => {
-            if (event.button !== 1) {
-              return
-            }
-            event.preventDefault()
-            drag = {camera: camera(), pointer: event.pointerId, x: event.clientX, y: event.clientY}
-            event.currentTarget.setPointerCapture(event.pointerId)
-            setDragging(true)
-          }}
-          onPointerMove={(event) => {
-            if (drag === undefined || drag.pointer !== event.pointerId) {
-              return
-            }
-            setCamera({
-              ...drag.camera,
-              x: drag.camera.x - (event.clientX - drag.x) / drag.camera.zoom,
-              y: drag.camera.y - (event.clientY - drag.y) / drag.camera.zoom,
-            })
-          }}
-          onPointerUp={(event) => {
-            if (drag?.pointer === event.pointerId) {
-              stop()
-              event.currentTarget.releasePointerCapture(event.pointerId)
-            }
-          }}
-          onPointerCancel={stop}
-          onLostPointerCapture={stop}
         >
           <div class="camera-stage">{props.children}</div>
           <div class="camera-origin" aria-hidden="true">
@@ -115,7 +103,7 @@ export const CameraViewport = (props: CameraViewportProps) => {
         <ViewCameraControls
           children={props.viewControls}
           camera={camera()}
-          onChange={setCamera}
+          onChange={navigate}
           onFit={fit}
         />
       </div>

@@ -1,9 +1,10 @@
 /// <reference lib="webworker" />
+import {listenTextGenerationRequests} from '../text-generation/listen-text-generation-requests'
+import {unwrapGenerationResult} from '../text-generation/unwrap-generation-result'
 
 import {createExclusiveAsyncTask} from 'src/utils/create-exclusive-async-task'
 import {
   createDeviceTarget,
-  createGenerationFailure,
   createRequestSequence,
   type TextGenerationMessage,
   type TextModelId,
@@ -11,8 +12,6 @@ import {
 } from '../text-generation'
 
 // oxlint-disable no-await-in-loop -- Contaminated sentences share one WebGPU model and must be refined sequentially.
-
-import {getErrorMessage} from 'src/utils/get-error-message'
 
 import {
   containsForeignCjk,
@@ -26,6 +25,8 @@ import {createTextGenerationExecutor} from '../text-generation/execution'
 import {partitionChatHistory} from './context'
 import type {ChatContext, ChatMessage, ChatWorkerRequest, ChatWorkerResponse} from './messages'
 import {createChatMessages, createSummaryMessages} from './prompt'
+
+const FAILURE_MESSAGE = '채팅 모델을 실행하지 못했어요.'
 
 const CONTEXT_COMPACTION_TOKENS = 4608
 const MAXIMUM_ANSWER_TOKENS = 2048
@@ -42,9 +43,7 @@ const createRequestId = createRequestSequence('chat')
 
 const prepareModel = async (modelId: TextModelId) => {
   const result = await textExecutor.prepare(createDeviceTarget(modelId))
-  if (!result.ok) {
-    throw createGenerationFailure(result.error, '채팅 모델을 실행하지 못했어요.')
-  }
+  const resultValue = unwrapGenerationResult(result, FAILURE_MESSAGE)
 
   sendResponse({type: 'ready'})
 }
@@ -58,11 +57,9 @@ const countPromptTokens = async (
     createDeviceTarget(modelId),
     createChatMessages({...context, supplementaryContext}),
   )
-  if (!result.ok) {
-    throw createGenerationFailure(result.error, '채팅 모델을 실행하지 못했어요.')
-  }
+  const resultValue = unwrapGenerationResult(result, FAILURE_MESSAGE)
 
-  return result.value
+  return resultValue
 }
 
 interface GenerateChatTextOptions {
@@ -97,11 +94,9 @@ const generateText = async (options: GenerateChatTextOptions) => {
       },
     },
   )
-  if (!result.ok) {
-    throw createGenerationFailure(result.error, '채팅 모델을 실행하지 못했어요.')
-  }
+  const resultValue = unwrapGenerationResult(result, FAILURE_MESSAGE)
 
-  const output = result.value
+  const output = resultValue
 
   return trimRepetitiveTail(output).trim()
 }
@@ -140,10 +135,8 @@ const refineKoreanAnswer = async (text: string, modelId: TextModelId) => {
 
   sendResponse({type: 'refining'})
   const tokenizerResult = textExecutor.getTokenizer(createDeviceTarget(modelId))
-  if (!tokenizerResult.ok) {
-    throw createGenerationFailure(tokenizerResult.error, '채팅 모델을 실행하지 못했어요.')
-  }
-  suppressedCjkTokenIds ??= createForeignCjkTokenIds(tokenizerResult.value)
+  const tokenizerResultValue = unwrapGenerationResult(tokenizerResult, FAILURE_MESSAGE)
+  suppressedCjkTokenIds ??= createForeignCjkTokenIds(tokenizerResultValue)
   const refinedSegments: Array<string> = []
 
   for (const segment of segments) {
@@ -204,9 +197,7 @@ interface GenerateAnswerOptions {
 
 const generateAnswer = async (options: GenerateAnswerOptions) => {
   const preparation = await textExecutor.prepare(createDeviceTarget(options.modelId))
-  if (!preparation.ok) {
-    throw createGenerationFailure(preparation.error, '채팅 모델을 실행하지 못했어요.')
-  }
+  unwrapGenerationResult(preparation, FAILURE_MESSAGE)
 
   const compacted = await compactContext(options.context, options.modelId)
   const contextTokens = await countPromptTokens(
@@ -267,12 +258,9 @@ const handleRequest = async (request: ChatWorkerRequest): Promise<void> => {
   }
 }
 
-workerScope.addEventListener('message', (event: MessageEvent<ChatWorkerRequest>) => {
-  handleRequest(event.data).catch((error: unknown) => {
-    sendResponse({
-      message: getErrorMessage(error, '채팅 모델을 실행하지 못했어요.'),
-      restartRequired: false,
-      type: 'error',
-    })
-  })
+listenTextGenerationRequests<ChatWorkerRequest>({
+  fallback: FAILURE_MESSAGE,
+  handle: handleRequest,
+  onError: sendResponse,
+  scope: workerScope,
 })

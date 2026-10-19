@@ -7,6 +7,7 @@ export interface MeshEditorProps {
   readonly brushControlsExternal?: boolean
   readonly brushControlsMount?: HTMLDivElement
   readonly brushSettingsMount?: HTMLDivElement
+  readonly motionId?: string
   readonly meshEditing?: boolean
   readonly modeControls?: JSX.Element
   readonly activeBindingId?: string

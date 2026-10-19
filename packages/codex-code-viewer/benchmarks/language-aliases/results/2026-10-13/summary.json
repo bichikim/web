@@ -1,0 +1,359 @@
+{
+  "correctness": [
+    {
+      "name": "python-stub",
+      "expected": 144,
+      "allAfterExact": true
+    },
+    {
+      "name": "python-control",
+      "expected": 144,
+      "allAfterExact": true
+    },
+    {
+      "name": "python-project",
+      "expected": 144,
+      "allAfterExact": true
+    },
+    {
+      "name": "python-definition",
+      "expected": 1,
+      "allAfterExact": true
+    },
+    {
+      "name": "rust-project",
+      "expected": 144,
+      "allAfterExact": true
+    },
+    {
+      "name": "rust-definition",
+      "expected": 1,
+      "allAfterExact": true
+    },
+    {
+      "name": "ruby-constant",
+      "expected": 241,
+      "allAfterExact": true
+    }
+  ],
+  "measurements": [
+    {
+      "name": "python-stub",
+      "variant": "before",
+      "phase": "cold",
+      "firstMs": null,
+      "completeMs": 379.146042,
+      "firstRangeMs": null,
+      "completeRangeMs": [372.074042, 402.235916],
+      "counts": [0],
+      "errors": []
+    },
+    {
+      "name": "python-stub",
+      "variant": "before",
+      "phase": "repeat",
+      "firstMs": null,
+      "completeMs": 0.428666,
+      "firstRangeMs": null,
+      "completeRangeMs": [0.425667, 0.431541],
+      "counts": [0],
+      "errors": []
+    },
+    {
+      "name": "python-stub",
+      "variant": "after",
+      "phase": "cold",
+      "firstMs": 585.6945,
+      "completeMs": 623.17375,
+      "firstRangeMs": [569.790667, 606.87475],
+      "completeRangeMs": [616.435208, 649.070459],
+      "counts": [144],
+      "errors": []
+    },
+    {
+      "name": "python-stub",
+      "variant": "after",
+      "phase": "repeat",
+      "firstMs": 3.843708,
+      "completeMs": 3.874542,
+      "firstRangeMs": [1.0195, 5.26975],
+      "completeRangeMs": [1.054667, 5.302708],
+      "counts": [144],
+      "errors": []
+    },
+    {
+      "name": "python-control",
+      "variant": "before",
+      "phase": "cold",
+      "firstMs": 379.285667,
+      "completeMs": 414.478,
+      "firstRangeMs": [377.462084, 388.013292],
+      "completeRangeMs": [412.926542, 418.728708],
+      "counts": [144],
+      "errors": []
+    },
+    {
+      "name": "python-control",
+      "variant": "before",
+      "phase": "repeat",
+      "firstMs": 0.405834,
+      "completeMs": 0.436959,
+      "firstRangeMs": [0.39575, 0.505125],
+      "completeRangeMs": [0.424208, 0.648333],
+      "counts": [144],
+      "errors": []
+    },
+    {
+      "name": "python-control",
+      "variant": "after",
+      "phase": "cold",
+      "firstMs": 384.108875,
+      "completeMs": 414.558458,
+      "firstRangeMs": [370.443791, 384.672167],
+      "completeRangeMs": [406.43025, 421.392667],
+      "counts": [144],
+      "errors": []
+    },
+    {
+      "name": "python-control",
+      "variant": "after",
+      "phase": "repeat",
+      "firstMs": 0.417166,
+      "completeMs": 0.4455,
+      "firstRangeMs": [0.347166, 0.423583],
+      "completeRangeMs": [0.375416, 0.452625],
+      "counts": [144],
+      "errors": []
+    },
+    {
+      "name": "python-project",
+      "variant": "before",
+      "phase": "cold",
+      "firstMs": null,
+      "completeMs": 382.689417,
+      "firstRangeMs": null,
+      "completeRangeMs": [375.185125, 410.220292],
+      "counts": [0],
+      "errors": []
+    },
+    {
+      "name": "python-project",
+      "variant": "before",
+      "phase": "repeat",
+      "firstMs": null,
+      "completeMs": 0.411125,
+      "firstRangeMs": null,
+      "completeRangeMs": [0.409667, 0.544917],
+      "counts": [0],
+      "errors": []
+    },
+    {
+      "name": "python-project",
+      "variant": "after",
+      "phase": "cold",
+      "firstMs": 729.691625,
+      "completeMs": 1816.366417,
+      "firstRangeMs": [495.991333, 774.3035],
+      "completeRangeMs": [1398.251166, 2156.368583],
+      "counts": [144],
+      "errors": []
+    },
+    {
+      "name": "python-project",
+      "variant": "after",
+      "phase": "repeat",
+      "firstMs": 0.497166,
+      "completeMs": 0.526416,
+      "firstRangeMs": [0.357, 0.749709],
+      "completeRangeMs": [0.387792, 0.7925],
+      "counts": [144],
+      "errors": []
+    },
+    {
+      "name": "python-definition",
+      "variant": "before",
+      "phase": "cold",
+      "firstMs": null,
+      "completeMs": 210.937875,
+      "firstRangeMs": null,
+      "completeRangeMs": [206.888, 221.978125],
+      "counts": [0],
+      "errors": []
+    },
+    {
+      "name": "python-definition",
+      "variant": "before",
+      "phase": "repeat",
+      "firstMs": null,
+      "completeMs": 0.467375,
+      "firstRangeMs": null,
+      "completeRangeMs": [0.466416, 0.523083],
+      "counts": [0],
+      "errors": []
+    },
+    {
+      "name": "python-definition",
+      "variant": "after",
+      "phase": "cold",
+      "firstMs": 324.804875,
+      "completeMs": 325.613166,
+      "firstRangeMs": [240.061417, 563.280167],
+      "completeRangeMs": [240.886125, 564.331375],
+      "counts": [1],
+      "errors": []
+    },
+    {
+      "name": "python-definition",
+      "variant": "after",
+      "phase": "repeat",
+      "firstMs": 0.661917,
+      "completeMs": 0.670584,
+      "firstRangeMs": [0.600208, 1.186042],
+      "completeRangeMs": [0.606625, 1.193042],
+      "counts": [1],
+      "errors": []
+    },
+    {
+      "name": "rust-project",
+      "variant": "before",
+      "phase": "cold",
+      "firstMs": null,
+      "completeMs": 266.198584,
+      "firstRangeMs": null,
+      "completeRangeMs": [257.23225, 946.993417],
+      "counts": [0],
+      "errors": ["rust-analysis-failed"]
+    },
+    {
+      "name": "rust-project",
+      "variant": "before",
+      "phase": "repeat",
+      "firstMs": null,
+      "completeMs": 8.811209,
+      "firstRangeMs": null,
+      "completeRangeMs": [8.521833, 8.852],
+      "counts": [0],
+      "errors": ["rust-analysis-failed"]
+    },
+    {
+      "name": "rust-project",
+      "variant": "after",
+      "phase": "cold",
+      "firstMs": 469.675791,
+      "completeMs": 1203.072791,
+      "firstRangeMs": [464.098208, 485.9],
+      "completeRangeMs": [1193.241041, 1245.303458],
+      "counts": [144],
+      "errors": []
+    },
+    {
+      "name": "rust-project",
+      "variant": "after",
+      "phase": "repeat",
+      "firstMs": 0.465334,
+      "completeMs": 0.497292,
+      "firstRangeMs": [0.442666, 0.569625],
+      "completeRangeMs": [0.471416, 0.605375],
+      "counts": [144],
+      "errors": []
+    },
+    {
+      "name": "rust-definition",
+      "variant": "before",
+      "phase": "cold",
+      "firstMs": 240.505167,
+      "completeMs": 241.187042,
+      "firstRangeMs": [239.228042, 248.844917],
+      "completeRangeMs": [239.899334, 249.481459],
+      "counts": [1],
+      "errors": []
+    },
+    {
+      "name": "rust-definition",
+      "variant": "before",
+      "phase": "repeat",
+      "firstMs": 0.478625,
+      "completeMs": 0.483541,
+      "firstRangeMs": [0.440333, 0.56725],
+      "completeRangeMs": [0.444875, 0.573459],
+      "counts": [1],
+      "errors": []
+    },
+    {
+      "name": "rust-definition",
+      "variant": "after",
+      "phase": "cold",
+      "firstMs": 241.374542,
+      "completeMs": 242.105458,
+      "firstRangeMs": [236.8595, 241.789416],
+      "completeRangeMs": [237.507667, 242.467791],
+      "counts": [1],
+      "errors": []
+    },
+    {
+      "name": "rust-definition",
+      "variant": "after",
+      "phase": "repeat",
+      "firstMs": 0.487292,
+      "completeMs": 0.492334,
+      "firstRangeMs": [0.467875, 0.572042],
+      "completeRangeMs": [0.473875, 0.578042],
+      "counts": [1],
+      "errors": []
+    },
+    {
+      "name": "ruby-constant",
+      "variant": "before",
+      "phase": "cold",
+      "firstMs": 430.988458,
+      "completeMs": 446.743167,
+      "firstRangeMs": [419.78775, 734.04175],
+      "completeRangeMs": [434.582041, 748.72975],
+      "counts": [49],
+      "errors": []
+    },
+    {
+      "name": "ruby-constant",
+      "variant": "before",
+      "phase": "repeat",
+      "firstMs": 0.388333,
+      "completeMs": 0.399542,
+      "firstRangeMs": [0.332417, 0.398541],
+      "completeRangeMs": [0.345125, 0.409791],
+      "counts": [49],
+      "errors": []
+    },
+    {
+      "name": "ruby-constant",
+      "variant": "after",
+      "phase": "cold",
+      "firstMs": 443.022166,
+      "completeMs": 547.256958,
+      "firstRangeMs": [420.133083, 453.048833],
+      "completeRangeMs": [511.713, 557.630333],
+      "counts": [241],
+      "errors": []
+    },
+    {
+      "name": "ruby-constant",
+      "variant": "after",
+      "phase": "repeat",
+      "firstMs": 0.445875,
+      "completeMs": 0.487833,
+      "firstRangeMs": [0.401958, 0.571541],
+      "completeRangeMs": [0.448625, 0.651291],
+      "counts": [241],
+      "errors": []
+    }
+  ],
+  "bundles": {
+    "before": {
+      "workspace.js": "d411715ad16f27f53adf7bde764623519177fda8a62d0967ff4a596123ecf963",
+      "navigation-worker.js": "7df6120d602dff4ffe5b411e3d156eac3396ca61df05580c0abd4a716dcd5854"
+    },
+    "after": {
+      "workspace.js": "09f6094bc8e4a0f26be6f084dc180fde35907af42e1be849d112918f6d46147a",
+      "navigation-worker.js": "a73d49b3cb5dfd1b9471c2b6d7b333e8616184acf2f253d1937b02c34700b915"
+    }
+  }
+}

@@ -1,7 +1,8 @@
+import {clamp} from 'es-toolkit/math'
 import type {Point} from '@winter-love/utils/core/types/shared'
 import type {SquareCropFrame, SquareCropSelection} from './types'
 
-const clampPosition = (value: number): number => Math.min(1, Math.max(-1, value))
+const clampPosition = (value: number): number => clamp(value, -1, 1)
 
 /** Converts viewport selection coordinates to a position within the image's movable range. */
 export const getSquareCropPosition = (

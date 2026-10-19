@@ -18,6 +18,13 @@ describe('tarot cards', () => {
       expect(card.reversedMeaning.ko).not.toBe(card.meaning.ko)
       expect(card.reversedMeaning.en).not.toBe(card.meaning.en)
       for (const locale of ['ko', 'en'] as const) {
+        expect(card.readingMeaning[locale].trim()).not.toBe('')
+        expect(card.reversedReadingMeaning[locale].trim()).not.toBe('')
+        expect(card.meaning[locale]).toContain(card.readingMeaning[locale])
+        expect(card.reversedMeaning[locale]).toContain(card.reversedReadingMeaning[locale])
+        const background = locale === 'ko' ? '아르카나' : 'Arcana'
+        expect(card.readingMeaning[locale]).not.toContain(background)
+        expect(card.reversedReadingMeaning[locale]).not.toContain(background)
         expect(card.meaning[locale]).toContain(card.name[locale])
         expect(card.reversedMeaning[locale]).toContain(card.name[locale])
         expect(card.meaning[locale]).toContain(locale === 'ko' ? '정방향:' : 'Upright:')

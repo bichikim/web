@@ -30,35 +30,38 @@ const VISEME_JAW_PROGRESS = {
   wide: 0.3,
 } satisfies Readonly<Record<PViseme, number>>
 
-const getVisemeOpacity = (
-  viseme: PViseme,
+const getMouthOpacities = (
   activeViseme: PViseme,
   transition: PVisemeTransition | undefined,
   supportsMouthTransitionStage: SupportsMouthTransitionStage | undefined,
-) => {
+): Readonly<Record<string, number>> => {
   if (transition === undefined || transition.from === transition.to) {
-    return viseme === activeViseme ? 1 : 0
+    return {[FOCUS_ROOM_MOUTH_CHANNELS[activeViseme]]: 1}
   }
 
   const progress = clampUnit(transition.progress)
   const path = getMouthTransitionPath(transition, supportsMouthTransitionStage)
 
-  if (path !== undefined) {
-    const pathProgress = getPathProgress(path, transition, progress)
-    const frameCount = path.stages.length + 2
-
-    if (viseme === path.from) {
-      return getPathFrameOpacity(0, pathProgress, frameCount)
+  if (path === undefined) {
+    return {
+      [FOCUS_ROOM_MOUTH_CHANNELS[transition.from]]: getEqualPowerOpacity(1 - progress),
+      [FOCUS_ROOM_MOUTH_CHANNELS[transition.to]]: getEqualPowerOpacity(progress),
     }
-
-    return viseme === path.to ? getPathFrameOpacity(frameCount - 1, pathProgress, frameCount) : 0
   }
 
-  if (viseme === transition.from) {
-    return getEqualPowerOpacity(1 - progress)
-  }
+  const pathProgress = getPathProgress(path, transition, progress)
+  const frames = [
+    FOCUS_ROOM_MOUTH_CHANNELS[path.from],
+    ...path.stages.map((stage) => FOCUS_ROOM_MOUTH_TRANSITION_CHANNELS[stage]),
+    FOCUS_ROOM_MOUTH_CHANNELS[path.to],
+  ]
 
-  return viseme === transition.to ? getEqualPowerOpacity(progress) : 0
+  return Object.fromEntries(
+    frames.map((channel, index) => [
+      channel,
+      getPathFrameOpacity(index, pathProgress, frames.length),
+    ]),
+  )
 }
 
 const getMouthTransitionPath = (
@@ -82,30 +85,6 @@ const getPathProgress = (
 const getPathFrameOpacity = (frameIndex: number, progress: number, frameCount: number) =>
   getEqualPowerOpacity(1 - Math.abs(progress * (frameCount - 1) - frameIndex))
 
-const getMouthTransitionOpacity = (
-  stage: PMouthTransitionStage,
-  transition: PVisemeTransition | undefined,
-  supportsMouthTransitionStage: SupportsMouthTransitionStage | undefined,
-) => {
-  if (transition === undefined || transition.from === transition.to) {
-    return 0
-  }
-
-  const progress = clampUnit(transition.progress)
-  const path = getMouthTransitionPath(transition, supportsMouthTransitionStage)
-
-  if (path === undefined) {
-    return 0
-  }
-
-  const stageIndex = path.stages.findIndex((pathStage) => pathStage === stage)
-  const frameCount = path.stages.length + 2
-
-  return stageIndex === -1
-    ? 0
-    : getPathFrameOpacity(stageIndex + 1, getPathProgress(path, transition, progress), frameCount)
-}
-
 const getJawProgress = (activeViseme: PViseme, transition: PVisemeTransition | undefined) => {
   if (transition === undefined || transition.from === transition.to) {
     return VISEME_JAW_PROGRESS[activeViseme]
@@ -123,22 +102,21 @@ export const createFocusRoomLayerState = (
   prefersReducedMotion: boolean,
   transition?: PVisemeTransition,
   supportsMouthTransitionStage?: SupportsMouthTransitionStage,
-): PixiLayerSceneState => ({
-  animationEnabled: !prefersReducedMotion,
-  channels: Object.fromEntries([
-    ...P_VISEMES.map((viseme) => {
-      const opacity = getVisemeOpacity(
-        viseme,
-        activeViseme,
-        transition,
-        supportsMouthTransitionStage,
-      )
-      return [FOCUS_ROOM_MOUTH_CHANNELS[viseme], {opacity, visible: opacity > 0}] as const
-    }),
-    ...P_MOUTH_TRANSITION_STAGES.map((stage) => {
-      const opacity = getMouthTransitionOpacity(stage, transition, supportsMouthTransitionStage)
-      return [FOCUS_ROOM_MOUTH_TRANSITION_CHANNELS[stage], {opacity, visible: opacity > 0}] as const
-    }),
-    [FOCUS_ROOM_JAW_CHANNEL, {pixelPushProgress: getJawProgress(activeViseme, transition)}],
-  ]),
-})
+): PixiLayerSceneState => {
+  const opacities = getMouthOpacities(activeViseme, transition, supportsMouthTransitionStage)
+  const mouthChannels = [
+    ...P_VISEMES.map((viseme) => FOCUS_ROOM_MOUTH_CHANNELS[viseme]),
+    ...P_MOUTH_TRANSITION_STAGES.map((stage) => FOCUS_ROOM_MOUTH_TRANSITION_CHANNELS[stage]),
+  ]
+
+  return {
+    animationEnabled: !prefersReducedMotion,
+    channels: Object.fromEntries([
+      ...mouthChannels.map((channel) => {
+        const opacity = opacities[channel] ?? 0
+        return [channel, {opacity, visible: opacity > 0}] as const
+      }),
+      [FOCUS_ROOM_JAW_CHANNEL, {pixelPushProgress: getJawProgress(activeViseme, transition)}],
+    ]),
+  }
+}

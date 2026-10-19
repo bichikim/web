@@ -3,25 +3,24 @@
 import {fireEvent, render, screen} from '@solidjs/testing-library'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
-const databaseMocks = vi.hoisted(() => {
-  const limit = vi.fn().mockResolvedValue([])
-  const where = vi.fn(() => ({limit}))
-  const from = vi.fn(() => ({where}))
-  const select = vi.fn(() => ({from}))
-  const onConflictDoUpdate = vi.fn().mockResolvedValue(undefined)
-  const values = vi.fn(() => ({onConflictDoUpdate}))
-  const insert = vi.fn(() => ({values}))
-
-  return {database: {insert, select}, insert, onConflictDoUpdate, values}
-})
-
+const databaseMocks = vi.hoisted(() => ({
+  from: vi.fn(),
+  getDatabase: vi.fn(),
+  insert: vi.fn(),
+  limit: vi.fn(),
+  onConflictDoUpdate: vi.fn(),
+  reserveQuota: vi.fn(),
+  select: vi.fn(),
+  values: vi.fn(),
+  where: vi.fn(),
+}))
 vi.mock('src/env', () => ({env: {OPENWEATHER_API_KEY: 'weather-search-test-key'}}))
 vi.mock('src/server/database', async (importOriginal) => {
   const database = await importOriginal<typeof import('src/server/database')>()
-  return {...database, getDatabase: () => databaseMocks.database}
+  return {...database, getDatabase: databaseMocks.getDatabase}
 })
 vi.mock('src/server/weather/provider-quota', () => ({
-  reserveOpenWeatherRequest: vi.fn().mockResolvedValue(undefined),
+  reserveOpenWeatherRequest: databaseMocks.reserveQuota,
 }))
 
 import type {APIEvent} from '@solidjs/start/server'
@@ -69,6 +68,19 @@ const createFetch = () =>
   })
 
 beforeEach(() => {
+  vi.clearAllMocks()
+  databaseMocks.getDatabase.mockReturnValue({
+    insert: databaseMocks.insert,
+    select: databaseMocks.select,
+  })
+  databaseMocks.select.mockReturnValue({from: databaseMocks.from})
+  databaseMocks.from.mockReturnValue({where: databaseMocks.where})
+  databaseMocks.where.mockReturnValue({limit: databaseMocks.limit})
+  databaseMocks.limit.mockResolvedValue([])
+  databaseMocks.insert.mockReturnValue({values: databaseMocks.values})
+  databaseMocks.values.mockReturnValue({onConflictDoUpdate: databaseMocks.onConflictDoUpdate})
+  databaseMocks.onConflictDoUpdate.mockResolvedValue(undefined)
+  databaseMocks.reserveQuota.mockResolvedValue(undefined)
   vi.useFakeTimers()
 })
 
@@ -77,7 +89,7 @@ afterEach(() => {
   vi.unstubAllGlobals()
 })
 
-it('searches and selects distinct nearby locations through the real combobox and provider flow', async () => {
+it('should search and select distinct nearby locations through the real combobox and provider flow', async () => {
   const fetcher = createFetch()
   vi.stubGlobal('fetch', fetcher)
   const onChange = vi.fn()

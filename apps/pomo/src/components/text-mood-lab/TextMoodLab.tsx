@@ -1,3 +1,4 @@
+import {clampFiniteNumber} from 'src/utils/clamp-finite-number'
 import {PTextarea} from 'src/components/p-textarea/PTextarea'
 import {cx} from 'class-variance-authority'
 import {createMemo, For, type JSX, Show} from 'solid-js'
@@ -7,6 +8,7 @@ import {TextMoodAnalysisResult} from './AnalysisResult'
 import {TextMoodEvaluation} from './Evaluation'
 import {TextMoodInsufficientResult} from './InsufficientResult'
 
+const MAXIMUM_PERCENTAGE = 100
 const SAMPLE_TEXTS = [
   '창문을 여니 시원한 바람이 불어왔다. 오늘은 좋은 일이 생길 것 같다.',
   '와, 정말 완벽하게 해냈네. 파일을 전부 지워 버리다니.',
@@ -34,6 +36,9 @@ const SECONDARY_BUTTON_CLASSES = cx(
 
 export const TextMoodLab = () => {
   const mood = useTextMood({initialText: SAMPLE_TEXTS[0]})
+  const modelPercentage = createMemo(() =>
+    clampFiniteNumber(mood.progress(), 0, MAXIMUM_PERCENTAGE),
+  )
   const analysis = createMemo(() => {
     const state = mood.state()
     return state.status === 'complete' ? state.analysis : null
@@ -116,16 +121,16 @@ export const TextMoodLab = () => {
 
         <Show when={mood.state().status === 'loading'}>
           <div
-            aria-label={`모델 ${mood.progress()}% 준비됨`}
+            aria-label={`모델 ${modelPercentage() ?? 0}% 준비됨`}
             aria-valuemax="100"
             aria-valuemin="0"
-            aria-valuenow={mood.progress()}
+            aria-valuenow={modelPercentage()}
             class="h-1.5 overflow-hidden rounded-full bg-white/8"
             role="progressbar"
           >
             <div
               class="h-full rounded-full bg-#9ed6bb [width:var(--pomo-progress-width)] transition-[width]"
-              style={{'--pomo-progress-width': `${mood.progress()}%`}}
+              style={{'--pomo-progress-width': `${modelPercentage() ?? 0}%`}}
             />
           </div>
         </Show>

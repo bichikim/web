@@ -1,3 +1,4 @@
+import {useResizeObserver} from 'src/hooks/use-resize-observer'
 import {useAction, useSubmissions} from '@solidjs/router'
 import {createMemo, createSignal, For, onCleanup, onMount, Show} from 'solid-js'
 import {PTag} from '../p-tag/PTag'
@@ -91,9 +92,8 @@ export const PAlbumTrackList = (props: PAlbumTrackListProps) => {
       return
     }
 
-    const observer = new ResizeObserver(updateOverflow)
-    observer.observe(list)
-    onCleanup(() => observer.disconnect())
+    const observer = useResizeObserver({onResize: updateOverflow, target: () => list})
+    observer.start()
   })
 
   return (

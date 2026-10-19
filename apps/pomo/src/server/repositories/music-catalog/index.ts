@@ -1,4 +1,5 @@
 import {and, asc, desc, eq, gt, inArray, isNull, lte, or} from 'drizzle-orm'
+import {mapValues} from 'es-toolkit/map'
 
 import {
   commerceEntitlementGrants,
@@ -172,28 +173,23 @@ export const listPublishedAlbums = async (
         ),
       ),
   ])
-  const tracksByAlbum = new Map<string, PublishedAlbumTrack[]>()
+  const tracksByAlbum = mapValues(
+    Map.groupBy(albumTracks, (track) => track.albumId),
+    (tracks): PublishedAlbumTrack[] =>
+      tracks.map((track) => ({
+        artist: track.artist,
+        artworkUrl: track.artworkUrl ?? undefined,
+        id: track.id,
+        title: track.title,
+      })),
+  )
   const offersByAlbum = new Map(offers.map((offer) => [offer.albumId, offer.externalProductId]))
-  const albumsById: Map<string, (typeof albumTranslations)[number]> = new Map()
-
-  for (const translation of albumTranslations) {
-    const current = albumsById.get(translation.id)
-
-    if (current === undefined || translation.locale === locale) {
-      albumsById.set(translation.id, translation)
-    }
-  }
-
-  for (const track of albumTracks) {
-    const tracks = tracksByAlbum.get(track.albumId) ?? []
-    tracks.push({
-      artist: track.artist,
-      artworkUrl: track.artworkUrl ?? undefined,
-      id: track.id,
-      title: track.title,
-    })
-    tracksByAlbum.set(track.albumId, tracks)
-  }
+  const albumsById = mapValues(
+    Map.groupBy(albumTranslations, (translation) => translation.id),
+    // Keep publication order while choosing the last requested-locale row or first fallback.
+    (translations) =>
+      translations.findLast((translation) => translation.locale === locale) ?? translations[0],
+  )
 
   return [...albumsById.values()].map((album) => {
     const externalProductId = offersByAlbum.get(album.id)

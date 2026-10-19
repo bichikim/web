@@ -1,4 +1,5 @@
-import {createSignal, onCleanup, onMount, Show} from 'solid-js'
+import {useIntersection} from '@winter-love/solid-use/intersection'
+import {createSignal, Show} from 'solid-js'
 import type {BackgroundController, BackgroundMedia} from 'src/features/background'
 import {Content} from './Content'
 
@@ -10,29 +11,18 @@ export interface ItemProps {
 }
 
 export const Item = (props: ItemProps) => {
-  const [element, setElement] = createSignal<HTMLLIElement>()
-  const [visible, setVisible] = createSignal(false)
+  const [element, setElement] = createSignal<HTMLLIElement | null>(null)
   const [focused, setFocused] = createSignal(false)
   const [height, setHeight] = createSignal(PLACEHOLDER_HEIGHT)
-  onMount(() => {
-    const target = element()
-    if (target === undefined) {
-      return
-    }
-    const observer = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) {
-          if (!entry.isIntersecting) {
-            setHeight(target.getBoundingClientRect().height)
-          }
-          setVisible(entry.isIntersecting)
-        }
-      },
-      {root: target.closest('ol'), rootMargin: '80px'},
-    )
-    observer.observe(target)
-    onCleanup(() => observer.disconnect())
-  })
+  const visible = useIntersection(
+    element,
+    () => ({root: element()?.closest('ol') ?? null, rootMargin: '80px'}),
+    (entry) => {
+      if (!entry.isIntersecting) {
+        setHeight(entry.target.getBoundingClientRect().height)
+      }
+    },
+  )
   return (
     <li
       ref={setElement}

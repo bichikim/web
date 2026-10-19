@@ -2,53 +2,42 @@
 
 import {render} from '@solidjs/testing-library'
 import type {JSX} from 'solid-js'
+import type {WeatherLocation} from '../../../features/weather'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
-const databaseMocks = vi.hoisted(() => {
-  const limit = vi.fn().mockResolvedValue([])
-  const where = vi.fn(() => ({limit}))
-  const from = vi.fn(() => ({where}))
-  const select = vi.fn(() => ({from}))
-  const onConflictDoUpdate = vi.fn().mockResolvedValue(undefined)
-  const values = vi.fn(() => ({onConflictDoUpdate}))
-  const insert = vi.fn(() => ({values}))
-
-  return {database: {insert, select}, insert, onConflictDoUpdate, values}
-})
-const comboboxMocks = vi.hoisted(() => ({
-  rootProps: undefined as Record<string, unknown> | undefined,
+const databaseMocks = vi.hoisted(() => ({
+  from: vi.fn(),
+  getDatabase: vi.fn(),
+  insert: vi.fn(),
+  limit: vi.fn(),
+  onConflictDoUpdate: vi.fn(),
+  reserveQuota: vi.fn(),
+  select: vi.fn(),
+  values: vi.fn(),
+  where: vi.fn(),
 }))
+
+interface ChildProps {
+  readonly children?: JSX.Element
+}
+
+interface ComboboxBoundary {
+  readonly onChange: (location: WeatherLocation | null) => void
+  readonly onInputChange: (query: string) => void
+  readonly options: ReadonlyArray<WeatherLocation>
+}
+
+const comboboxMocks = vi.hoisted(() => ({root: vi.fn<(props: ComboboxBoundary) => JSX.Element>()}))
 
 vi.mock('src/env', () => ({env: {OPENWEATHER_API_KEY: 'weather-search-test-key'}}))
 vi.mock('src/server/database', async (importOriginal) => {
   const database = await importOriginal<typeof import('src/server/database')>()
-  return {...database, getDatabase: () => databaseMocks.database}
+  return {...database, getDatabase: databaseMocks.getDatabase}
 })
 vi.mock('src/server/weather/provider-quota', () => ({
-  reserveOpenWeatherRequest: vi.fn().mockResolvedValue(undefined),
+  reserveOpenWeatherRequest: databaseMocks.reserveQuota,
 }))
-vi.mock('@kobalte/core/combobox', () => {
-  const passthrough = (props: {readonly children?: JSX.Element}) => <>{props.children}</>
-  const Combobox = Object.assign(
-    (props: Record<string, unknown>) => {
-      comboboxMocks.rootProps = props
-      return null
-    },
-    {
-      Content: passthrough,
-      Control: passthrough,
-      HiddenSelect: () => null,
-      Input: passthrough,
-      Item: passthrough,
-      ItemDescription: passthrough,
-      ItemLabel: passthrough,
-      Label: passthrough,
-      Listbox: passthrough,
-      Portal: passthrough,
-    },
-  )
-  return {Combobox}
-})
+vi.mock('@kobalte/core/combobox', () => ({Combobox: comboboxMocks.root}))
 
 import type {APIEvent} from '@solidjs/start/server'
 import {PWeatherLocationSearch} from '../PWeatherLocationSearch'
@@ -101,6 +90,33 @@ const flushMicrotasks = () =>
   )
 
 beforeEach(() => {
+  vi.clearAllMocks()
+  databaseMocks.getDatabase.mockReturnValue({
+    insert: databaseMocks.insert,
+    select: databaseMocks.select,
+  })
+  databaseMocks.select.mockReturnValue({from: databaseMocks.from})
+  databaseMocks.from.mockReturnValue({where: databaseMocks.where})
+  databaseMocks.where.mockReturnValue({limit: databaseMocks.limit})
+  databaseMocks.limit.mockResolvedValue([])
+  databaseMocks.insert.mockReturnValue({values: databaseMocks.values})
+  databaseMocks.values.mockReturnValue({onConflictDoUpdate: databaseMocks.onConflictDoUpdate})
+  databaseMocks.onConflictDoUpdate.mockResolvedValue(undefined)
+  databaseMocks.reserveQuota.mockResolvedValue(undefined)
+  const passthrough = (props: ChildProps) => <>{props.children}</>
+  comboboxMocks.root.mockImplementation(() => null)
+  Object.assign(comboboxMocks.root, {
+    Content: passthrough,
+    Control: passthrough,
+    HiddenSelect: () => null,
+    Input: passthrough,
+    Item: passthrough,
+    ItemDescription: passthrough,
+    ItemLabel: passthrough,
+    Label: passthrough,
+    Listbox: passthrough,
+    Portal: passthrough,
+  })
   vi.useFakeTimers()
 })
 
@@ -109,15 +125,15 @@ afterEach(() => {
   vi.unstubAllGlobals()
 })
 
-it('maps real provider search results to distinct combobox options', async () => {
+it('should map real provider search results to distinct combobox options', async () => {
   const fetcher = createFetch()
   vi.stubGlobal('fetch', fetcher)
   const onChange = vi.fn()
   const view = render(() => <PWeatherLocationSearch onChange={onChange} />)
-  const props = comboboxMocks.rootProps as {
-    onChange: (location: {readonly id: string} | null) => void
-    onInputChange: (query: string) => void
-    options: ReadonlyArray<{readonly id: string; readonly name: string}>
+  const props = comboboxMocks.root.mock.calls[0]?.[0]
+  expect(props).toBeDefined()
+  if (props === undefined) {
+    throw new Error('Combobox props were not captured')
   }
 
   props.onInputChange('Location')

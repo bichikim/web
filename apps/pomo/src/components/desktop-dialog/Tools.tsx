@@ -1,7 +1,8 @@
-import {ErrorBoundary, lazy, onCleanup, onMount, Suspense} from 'solid-js'
+import {ErrorBoundary, lazy, onMount, Suspense} from 'solid-js'
 import * as m from '@paraglide/message'
 import type {CloseRequestedEvent} from '@tauri-apps/api/window'
 
+import {useAsyncTask} from '../../features/async-task'
 import {closeDesktopDialog} from '../../features/desktop-mode/dialogs'
 import {fileTransfer} from '../../features/file-transfer/session'
 import {PLoadingStatus} from '../p-loading-status/PLoadingStatus'
@@ -31,27 +32,19 @@ const handleNativeClose = (event: CloseRequestedEvent): void => {
 }
 
 export const DesktopToolsDialog = () => {
+  const nativeCloseListener = useAsyncTask({
+    cleanupResult: (unlisten: () => void) => unlisten(),
+    task: () =>
+      import('@tauri-apps/api/window').then(({getCurrentWindow}) =>
+        getCurrentWindow().onCloseRequested(handleNativeClose),
+      ),
+  })
   onMount(() => {
     if (import.meta.env.VITE_POMO_IS_DESKTOP !== 'true') {
       return
     }
-    let unlisten: (() => void) | undefined
-    let disposed = false
-    import('@tauri-apps/api/window')
-      .then(({getCurrentWindow}) => getCurrentWindow().onCloseRequested(handleNativeClose))
-      .then((listener) => {
-        if (disposed) {
-          listener()
-        } else {
-          unlisten = listener
-        }
-      })
-      .catch((error: unknown) => {
-        console.error('Failed to watch the desktop tools dialog.', error)
-      })
-    onCleanup(() => {
-      disposed = true
-      unlisten?.()
+    nativeCloseListener.execute().catch((error: unknown) => {
+      console.error('Failed to watch the desktop tools dialog.', error)
     })
   })
 

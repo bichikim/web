@@ -1,3 +1,5 @@
+import {once} from 'es-toolkit/function'
+import {subscribeEvent} from 'src/utils/subscribe-event'
 import {
   createSupertonicClient,
   type InitializeSupertonicOptions,
@@ -45,14 +47,11 @@ export const runLanguageLearningSupertonic = async <T>(
   }
 
   const client = createSupertonicClient()
-  let isClientDisposed = false
-  const disposeClient = () => {
-    if (!isClientDisposed) {
-      isClientDisposed = true
-      client.dispose()
-    }
-  }
-  options.signal?.addEventListener('abort', disposeClient, {once: true})
+  const disposeClient = once(() => client.dispose())
+  const unsubscribe =
+    options.signal === undefined
+      ? undefined
+      : subscribeEvent(options.signal, 'abort', disposeClient, {once: true})
 
   try {
     if (isAborted(options.signal)) {
@@ -81,7 +80,7 @@ export const runLanguageLearningSupertonic = async <T>(
 
     return {status: 'complete', value}
   } finally {
-    options.signal?.removeEventListener('abort', disposeClient)
+    unsubscribe?.()
     disposeClient()
   }
 }

@@ -87,7 +87,9 @@ const isDesktopSceneSetting = (value: unknown): value is DesktopSceneSettingMess
     case 'sceneStyle':
       return isOneOf(setting.value, ['original', 'scribble'])
     case 'screenSaverDelay':
-      return isOneOf(setting.value, ['off', '5s', '1m', '10m', '20m', '1h'])
+      return import.meta.env.DEV
+        ? isOneOf(setting.value, ['off', '5s', '1m', '10m', '20m', '1h'])
+        : isOneOf(setting.value, ['off', '1m', '10m', '20m', '1h'])
     case 'timeMode':
       return isOneOf(setting.value, ['auto', 'day', 'evening', 'night'])
     case 'weatherCity':

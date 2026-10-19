@@ -1,9 +1,11 @@
+import {resolveTextModelAssetUrl} from './resolve-text-model-asset-url'
 // oxlint-disable eslint-js/camelcase -- Wllama options follow its external contract.
 import type {ProgressInfo} from '@huggingface/transformers'
 import type {Wllama} from '@wllama/wllama/esm/index.js'
 import wasmUrl from '@wllama/wllama/esm/wasm/wllama.wasm?url'
 
 import type {ModelStorage, ModelStorageError} from '../model-storage'
+import {GGUF_CONFIG} from './gguf-config'
 import type {GgufTextModelImplementation} from './model'
 
 export interface GgufModelDependencies {
@@ -28,10 +30,7 @@ const loadWeights = async ({
   fetcher,
   onStorageError,
 }: LoadGgufModelOptions): Promise<Blob> => {
-  const path = model.assetSource.pathTemplate
-    .replaceAll('{model}', model.repositoryId)
-    .replaceAll('{revision}', model.assetSource.revision)
-  const url = new URL(`${path}${model.weightFile}`, model.assetSource.host).href
+  const url = resolveTextModelAssetUrl({...model, relativePath: model.weightFile})
   const cached = await storage.get(url)
   if (cached.ok && cached.value !== null) {
     await onStored?.(url)
@@ -84,6 +83,7 @@ export const loadGgufModel = async (options: LoadGgufModelOptions): Promise<Wlla
       n_batch: 256,
       n_ctx: 8192,
       reasoning: true,
+      reasoning_budget_tokens: GGUF_CONFIG.maximumReasoningTokens,
     })
     return model
   } catch (error: unknown) {

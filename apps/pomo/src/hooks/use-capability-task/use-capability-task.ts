@@ -11,6 +11,7 @@ export interface UseCapabilityTaskProps<
 }
 
 export interface CapabilityTaskController<Arguments extends readonly unknown[], Result> {
+  readonly reset: () => void
   readonly availability: Accessor<CapabilityAvailability>
   readonly state: Accessor<AsyncTaskState<Result>>
   readonly execute: (...arguments_: Arguments) => Promise<Result | undefined>
@@ -44,5 +45,5 @@ export const useCapabilityTask = <Arguments extends readonly unknown[], Result>(
     return task.execute(...arguments_)
   }
 
-  return {availability, execute, state: task.state}
+  return {availability, execute, reset: task.reset, state: task.state}
 }

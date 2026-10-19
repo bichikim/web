@@ -72,6 +72,69 @@ it('should reject empty and unsupported files and continue after one storage fai
   cleanup()
 })
 
+it('should classify empty-MIME PNG and MP4 files by case-insensitive extension', async () => {
+  const {result, cleanup} = renderHook(useBackground)
+  await waitFor(() => expect(result.ready()).toBe(true))
+  const files = [
+    new File(['png'], 'vacation.png', {type: ''}),
+    new File(['png'], 'VACATION.PNG', {type: ''}),
+    new File(['mp4'], 'clip.mp4', {type: ''}),
+    new File(['mp4'], 'CLIP.MP4', {type: ''}),
+  ]
+
+  await result.add(files)
+
+  expect(repository.add).toHaveBeenNthCalledWith(1, files[0], 'photo')
+  expect(repository.add).toHaveBeenNthCalledWith(2, files[1], 'photo')
+  expect(repository.add).toHaveBeenNthCalledWith(3, files[2], 'video')
+  expect(repository.add).toHaveBeenNthCalledWith(4, files[3], 'video')
+  expect(result.error()).toBeNull()
+  cleanup()
+})
+
+it('should reject empty, unsupported, and MIME-conflicting media candidates', async () => {
+  const {result, cleanup} = renderHook(useBackground)
+  await waitFor(() => expect(result.ready()).toBe(true))
+  const files = [
+    new File([], 'empty.png', {type: ''}),
+    new File(['data'], 'unsupported.pdf', {type: ''}),
+    new File(['data'], 'unsupported-image.png', {type: 'text/plain'}),
+    new File(['data'], 'photo.png', {type: 'video/mp4'}),
+    new File(['data'], 'video.mp4', {type: 'image/png'}),
+  ]
+
+  await result.add(files)
+
+  expect(repository.add).not.toHaveBeenCalled()
+  expect(result.error()).toBe('file')
+  cleanup()
+})
+
+it('should apply photo and video size limits to empty-MIME extension candidates', async () => {
+  const {result, cleanup} = renderHook(useBackground)
+  await waitFor(() => expect(result.ready()).toBe(true))
+  const createFile = (name: string, size: number) => {
+    const file = new File(['media'], name, {type: ''})
+    Object.defineProperty(file, 'size', {value: size})
+    return file
+  }
+  const photo = createFile('photo.png', 3_000_000)
+  const video = createFile('video.mp4', 30_000_000)
+
+  await result.add([
+    createFile('large.PNG', 3_000_001),
+    photo,
+    createFile('large.MP4', 30_000_001),
+    video,
+  ])
+
+  expect(repository.add).toHaveBeenCalledTimes(2)
+  expect(repository.add).toHaveBeenCalledWith(photo, 'photo')
+  expect(repository.add).toHaveBeenCalledWith(video, 'video')
+  expect(result.error()).toBe('size')
+  cleanup()
+})
+
 it('should serialize rapid setting changes without dropping the last selection', async () => {
   const {result, cleanup} = renderHook(useBackground)
   await waitFor(() => expect(result.ready()).toBe(true))

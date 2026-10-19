@@ -1,5 +1,7 @@
 /** @vitest-environment jsdom */
 
+import {PreferenceProvider} from 'src/hooks/use-preference'
+
 import {fireEvent, render, screen} from '@solidjs/testing-library'
 import {beforeEach, expect, it, vi} from 'vitest'
 
@@ -98,12 +100,15 @@ const renderDraftGenerator = (
   runtime: ModelDownloadRuntime,
   onController: (controller: ModelDownloadController) => void,
 ) => {
-  render(() => (
-    <PModelDownloadProvider runtime={runtime}>
-      <ModelDownloadObserver onController={onController} />
-      <PDialogueDraftGenerator onGenerated={vi.fn()} />
-    </PModelDownloadProvider>
-  ))
+  render(
+    () => (
+      <PModelDownloadProvider runtime={runtime}>
+        <ModelDownloadObserver onController={onController} />
+        <PDialogueDraftGenerator onGenerated={vi.fn()} />
+      </PModelDownloadProvider>
+    ),
+    {wrapper: PreferenceProvider},
+  )
   fireEvent.click(screen.getByRole('button', {name: /초안 만들기/}))
 }
 

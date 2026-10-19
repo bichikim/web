@@ -1,3 +1,4 @@
+import {invalidJsonBodyResponse} from 'src/server/http/invalid-json-body-response'
 import type {APIEvent} from '@solidjs/start/server'
 import {z} from 'zod'
 
@@ -6,6 +7,8 @@ import {readJsonBody} from 'src/server/http/body'
 import {noStoreJson} from 'src/server/http/response'
 import {createAlbum} from 'src/server/repositories/music-album-creation'
 import {isManagedAlbumCoverUrl} from 'src/server/music/cover-upload'
+import {hasUniqueIds} from 'src/features/catalog-policy'
+import {ALBUM_LOCALES} from 'src/features/admin-music/album-draft'
 
 const MAXIMUM_BODY_SIZE = 65_536
 const MAXIMUM_DESCRIPTION_LENGTH = 2000
@@ -17,7 +20,7 @@ const HTTP_CREATED = 201
 const HTTP_INTERNAL_SERVER_ERROR = 500
 const translationSchema = z.object({
   description: z.string().trim().max(MAXIMUM_DESCRIPTION_LENGTH),
-  locale: z.enum(['ko', 'en', 'ja', 'zh-Hans']),
+  locale: z.enum(ALBUM_LOCALES),
   title: z.string().trim().max(MAXIMUM_TITLE_LENGTH),
 })
 const albumSchema = z.object({
@@ -33,10 +36,7 @@ const albumSchema = z.object({
     .array(translationSchema)
     .min(1)
     .max(REQUIRED_TRANSLATION_COUNT)
-    .refine(
-      (translations) =>
-        new Set(translations.map(({locale}) => locale)).size === translations.length,
-    )
+    .refine((translations) => hasUniqueIds(translations.map(({locale}) => locale)))
     .refine((translations) =>
       translations.some(
         (translation) =>
@@ -58,13 +58,10 @@ export const POST = async (event: APIEvent): Promise<Response> => {
   const parsedBody = albumSchema.safeParse(bodyResult.success ? bodyResult.body : null)
 
   if (!parsedBody.success) {
-    return noStoreJson(
-      {error: 'invalid_request'},
-      {
-        cookies: authorization.cookies,
-        status: bodyResult.success ? HTTP_BAD_REQUEST : bodyResult.status,
-      },
-    )
+    return invalidJsonBodyResponse(bodyResult, {
+      cookies: authorization.cookies,
+      error: 'invalid_request',
+    })
   }
 
   if (

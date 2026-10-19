@@ -1,7 +1,7 @@
 /** @vitest-environment node */
 import {describe, expect, it} from 'vitest'
 
-import {type AdminAlbum, getAlbumTranslation} from '../catalog'
+import {type AdminAlbum, catalogSchema, getAlbumTranslation} from '../catalog'
 
 const englishTranslation = {
   albumId: 'album-1',
@@ -38,5 +38,60 @@ describe('getAlbumTranslation', () => {
 
   it('should return undefined when the requested locale is missing', () => {
     expect(getAlbumTranslation(albumWithoutKoreanTranslation, 'ko')).toBeUndefined()
+  })
+})
+
+const offer = {
+  albumId: 'album-1',
+  billingType: 'one_time',
+  externalProductId: 'product-1',
+  productCode: 'album-product',
+  productStatus: 'active',
+  provider: 'apps-in-toss',
+  status: 'inactive',
+} as const
+
+const catalog = {albums: [], assets: [], offers: [offer], pendingTracks: [], tracks: []}
+
+describe('catalogSchema', () => {
+  it.each([
+    ['one_time', 'active', 'active'],
+    ['one_time', 'active', 'inactive'],
+    ['one_time', 'archived', 'active'],
+    ['one_time', 'archived', 'inactive'],
+    ['subscription', 'active', 'active'],
+    ['subscription', 'active', 'inactive'],
+    ['subscription', 'archived', 'active'],
+    ['subscription', 'archived', 'inactive'],
+  ] as const)(
+    'should preserve the offer combination %s/%s/%s',
+    (billingType, productStatus, status) => {
+      const input = {...catalog, offers: [{...offer, billingType, productStatus, status}]}
+
+      expect(catalogSchema.parse(input)).toEqual(input)
+    },
+  )
+
+  it.each([
+    ['billingType', 'active', ['one_time', 'subscription']],
+    ['productStatus', 'inactive', ['active', 'archived']],
+    ['status', 'archived', ['active', 'inactive']],
+  ] as const)('should reject a value from a different category for %s', (field, value, values) => {
+    const result = catalogSchema.safeParse({
+      ...catalog,
+      offers: [{...offer, [field]: value}],
+    })
+
+    expect(result.success).toBe(false)
+    if (!result.success) {
+      expect(result.error.issues).toEqual([
+        {
+          code: 'invalid_value',
+          message: expect.any(String),
+          path: ['offers', 0, field],
+          values,
+        },
+      ])
+    }
   })
 })

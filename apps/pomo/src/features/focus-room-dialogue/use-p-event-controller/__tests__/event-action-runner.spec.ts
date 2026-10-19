@@ -4,10 +4,122 @@ import {createSignal} from 'solid-js'
 import {describe, expect, it, vi} from 'vitest'
 
 import type {EventActionIds} from '../../event-context'
-import {FOCUS_ROOM_ENTRY_EVENT, RANDOM_DIALOGUE_EVENT} from '../../schema'
+import {FOCUS_ROOM_DIALOGUE_EVENTS, FOCUS_ROOM_ENTRY_EVENT} from '../../schema'
 import {createEventActionRunner} from '../event-action-runner'
 
 describe('createEventActionRunner', () => {
+  it.each(FOCUS_ROOM_DIALOGUE_EVENTS)(
+    'should retain %s actions across active executor unregister and re-register',
+    async (eventId) => {
+      const actionIds: EventActionIds = {[eventId]: ['music-stop', 'music-start']}
+      const runner = createEventActionRunner(() => actionIds)
+      const firstExecutor = vi.fn()
+      const unregister = runner.register(firstExecutor)
+      unregister()
+
+      const firstRun = runner.run([eventId])
+      const secondRun = runner.run([eventId])
+      if (firstRun.kind !== 'queued' || secondRun.kind !== 'queued') {
+        throw new Error(`Expected ${eventId} actions to wait for an executor.`)
+      }
+
+      const nextExecutor = vi.fn()
+      runner.register(nextExecutor)
+      await Promise.all([firstRun.completion, secondRun.completion])
+
+      expect(firstExecutor).not.toHaveBeenCalled()
+      expect(nextExecutor.mock.calls).toEqual([
+        ['music-stop'],
+        ['music-start'],
+        ['music-stop'],
+        ['music-start'],
+      ])
+      const laterExecutor = vi.fn()
+      runner.register(laterExecutor)
+      expect(laterExecutor).not.toHaveBeenCalled()
+      runner.dispose()
+    },
+  )
+
+  it.each(FOCUS_ROOM_DIALOGUE_EVENTS)(
+    'should release %s waiting on deferred registration and retain its actions',
+    async (eventId) => {
+      const actionIds: EventActionIds = {[eventId]: ['music-stop', 'music-start']}
+      const runner = createEventActionRunner(() => actionIds)
+      const firstRun = runner.run([eventId])
+      if (firstRun.kind !== 'queued') {
+        throw new Error(`Expected ${eventId} actions to wait for an executor.`)
+      }
+
+      const deferredExecutor = vi.fn()
+      const unregister = runner.register(deferredExecutor, {mode: 'deferred'})
+      await firstRun.completion
+      expect(runner.run([eventId])).toEqual({kind: 'completed'})
+      expect(deferredExecutor).not.toHaveBeenCalled()
+      unregister()
+
+      const activeExecutor = vi.fn()
+      runner.register(activeExecutor)
+      expect(activeExecutor.mock.calls).toEqual([
+        ['music-stop'],
+        ['music-start'],
+        ['music-stop'],
+        ['music-start'],
+      ])
+      runner.dispose()
+    },
+  )
+
+  it('should clear delayed-end actions and settle their waiters without clearing other events', async () => {
+    const actionIds: EventActionIds = {
+      'delayed-end': ['music-stop'],
+      'focus-end': ['music-start'],
+    }
+    const runner = createEventActionRunner(() => actionIds)
+    const delayedRun = runner.run(['delayed-end'])
+    const focusRun = runner.run(['focus-end'])
+    if (delayedRun.kind !== 'queued' || focusRun.kind !== 'queued') {
+      throw new Error('Expected both events to wait for an executor.')
+    }
+
+    runner.clearDelayedEndActions()
+    await delayedRun.completion
+    const executor = vi.fn()
+    runner.register(executor)
+    await focusRun.completion
+    expect(executor).toHaveBeenCalledExactlyOnceWith('music-start')
+    runner.dispose()
+  })
+
+  it('should settle waiting requests and continue remaining actions when an executor throws', async () => {
+    const actionIds: EventActionIds = {'focus-end': ['music-stop', 'music-start']}
+    const runner = createEventActionRunner(() => actionIds)
+    const pendingRun = runner.run(['focus-end'])
+    if (pendingRun.kind !== 'queued') {
+      throw new Error('Expected the event to wait for an executor.')
+    }
+
+    const failure = new Error('Music stop failed')
+    const logError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    const executor = vi.fn((actionId) => {
+      if (actionId === 'music-stop') {
+        throw failure
+      }
+    })
+    try {
+      runner.register(executor)
+      await pendingRun.completion
+      expect(executor.mock.calls).toEqual([['music-stop'], ['music-start']])
+      expect(logError).toHaveBeenCalledExactlyOnceWith(
+        'Failed to run a focus room event action.',
+        failure,
+      )
+    } finally {
+      logError.mockRestore()
+      runner.dispose()
+    }
+  })
+
   it('should resolve multiple queued requests on disposal without executing them', async () => {
     const [getActionIds] = createSignal<EventActionIds>({'focus-end': ['music-stop']})
     const runner = createEventActionRunner(getActionIds)
@@ -47,75 +159,6 @@ describe('createEventActionRunner', () => {
     expect(activeExecutor).toHaveBeenNthCalledWith(2, 'music-stop')
     runner.dispose()
   })
-
-  it('should retain focus-end actions after an active executor is unregistered', async () => {
-    const actionIds: EventActionIds = {'focus-end': ['music-stop']}
-    const [getActionIds] = createSignal(actionIds)
-    const runner = createEventActionRunner(getActionIds)
-    const firstExecutor = vi.fn()
-    const unregister = runner.register(firstExecutor)
-    unregister()
-
-    const pendingPlayback = runner.run(['focus-end'])
-    expect(pendingPlayback.kind).toBe('queued')
-
-    const secondExecutor = vi.fn()
-    runner.register(secondExecutor)
-    if (pendingPlayback.kind === 'queued') {
-      await pendingPlayback.completion
-    }
-
-    expect(secondExecutor).toHaveBeenCalledExactlyOnceWith('music-stop')
-    runner.dispose()
-  })
-
-  it('should retain random actions after an active executor is unregistered', async () => {
-    const actionIds: EventActionIds = {[RANDOM_DIALOGUE_EVENT]: ['music-start']}
-    const [getActionIds] = createSignal(actionIds)
-    const runner = createEventActionRunner(getActionIds)
-    const firstExecutor = vi.fn()
-    const unregister = runner.register(firstExecutor)
-    unregister()
-
-    const pendingPlayback = runner.run([RANDOM_DIALOGUE_EVENT])
-    expect(pendingPlayback).toBeDefined()
-
-    const secondExecutor = vi.fn()
-    runner.register(secondExecutor)
-    await pendingPlayback
-
-    expect(secondExecutor).toHaveBeenCalledExactlyOnceWith('music-start')
-    runner.dispose()
-  })
-
-  it.each([
-    ['focus-start', 'music-start'],
-    ['break-start', 'music-start'],
-    ['long-break-start', 'music-start'],
-    ['long-break-end', 'music-start'],
-    ['long-break-end', 'music-stop'],
-  ] as const)(
-    'should retain actions for %s with %s after an active executor is unregistered',
-    async (eventId, actionId) => {
-      const actionIds: EventActionIds = {[eventId]: [actionId]}
-      const [getActionIds] = createSignal(actionIds)
-      const runner = createEventActionRunner(getActionIds)
-      const unregister = runner.register(vi.fn())
-      unregister()
-
-      const pendingPlayback = runner.run([eventId])
-      if (pendingPlayback.kind !== 'queued') {
-        throw new Error(`Expected ${eventId} actions to wait for an executor.`)
-      }
-
-      const nextExecutor = vi.fn()
-      runner.register(nextExecutor)
-      await pendingPlayback.completion
-
-      expect(nextExecutor).toHaveBeenCalledExactlyOnceWith(actionId)
-      runner.dispose()
-    },
-  )
 
   it('should retain actions until an active executor is registered', async () => {
     const actionIds: EventActionIds = {'focus-start': ['music-start']}

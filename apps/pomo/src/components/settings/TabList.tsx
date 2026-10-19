@@ -19,6 +19,7 @@ const getItems = () =>
       label: m.settings_tab_dialogue(),
       value: 'dialogue-library',
     },
+    {icon: 'i-tabler-sparkles', label: m.settings_tab_ai(), value: 'ai'},
     {icon: 'i-tabler-user-circle', label: m.settings_tab_user(), value: 'user'},
     {icon: 'i-tabler-help-circle', label: m.settings_tab_guide(), value: 'guide'},
     {icon: 'i-tabler-heart', label: m.settings_tab_credits(), value: 'credits'},

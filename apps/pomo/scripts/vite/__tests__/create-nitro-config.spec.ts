@@ -48,6 +48,14 @@ it('should use shared routes and development assets without a static preset when
   ])
 })
 
+it('should emit a dedicated 300-second queue trigger only for the web backend', () => {
+  expect(createNitroConfig(options).vercel?.functionRules['/api/queues/api-ai']).toEqual({
+    experimentalTriggers: [{topic: 'pomo-api-ai', type: 'queue/v2beta'}],
+    maxDuration: 300,
+  })
+  expect(createNitroConfig({...options, target: 'apps-in-toss'}).vercel).toBeUndefined()
+})
+
 it('should expose Steam assets only when the Steam distribution is configured', () => {
   const steamAsset = {baseURL: '/assets-steam', dir: './assets-steam', maxAge: 123}
 

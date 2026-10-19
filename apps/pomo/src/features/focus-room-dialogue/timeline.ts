@@ -78,19 +78,10 @@ export const getDialoguePositionAtTime = (
   segments: ReadonlyArray<DialogueSegment>,
   currentTimeMs: number,
 ): DialogueSegmentPosition | null => {
-  let activePosition: DialogueSegmentPosition | null = null
-  let position = 0
-
-  for (const segment of segments) {
-    if (segment.startMs > currentTimeMs) {
-      return activePosition
-    }
-
-    activePosition = {position, text: segment.text}
-    position += 1
-  }
-
-  return activePosition
+  const nextPosition = segments.findIndex((segment) => segment.startMs > currentTimeMs)
+  const position = (nextPosition === -1 ? segments.length : nextPosition) - 1
+  const segment = segments[position]
+  return segment === undefined ? null : {position, text: segment.text}
 }
 
 /** Returns the latest line whose audio has started, including pauses before the next line. */

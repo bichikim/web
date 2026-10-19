@@ -1,3 +1,5 @@
+import {hasUniqueIds} from 'src/features/catalog-policy'
+
 /** Creates stable fallback IDs for legacy playlist occurrences until they are explicitly saved. */
 export const createLegacyPlaylistEntryIds = (trackIds: readonly string[]): readonly string[] => {
   const occurrences = new Map<string, number>()
@@ -20,4 +22,4 @@ export const hasValidPlaylistEntryIds = (
   entryIds !== undefined &&
   entryIds.length === trackIds.length &&
   entryIds.every((entryId) => entryId.length > 0) &&
-  new Set(entryIds).size === entryIds.length
+  hasUniqueIds(entryIds)

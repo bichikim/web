@@ -41,6 +41,7 @@ it('should restore controlled playback after a revision changes while tracks are
   const dispose = createRoot(() => {
     usePlaylistRestoration({
       isQueueControlled: () => true,
+      onCorruptTrack: vi.fn(),
       onError: vi.fn(),
       onLoad: ({defaultTracks}) => defaultTracks,
       onLoadSettled: vi.fn(),
@@ -75,6 +76,7 @@ it('should skip controlled playback when revision changes after tracks are ready
   const dispose = createRoot(() => {
     usePlaylistRestoration({
       isQueueControlled: () => true,
+      onCorruptTrack: vi.fn(),
       onError: vi.fn(),
       onLoad: ({defaultTracks}) => defaultTracks,
       onLoadSettled: vi.fn(),

@@ -27,7 +27,7 @@ interface LegacyWorldWeatherLocation extends WorldWeatherLocation {
 
 const LEGACY_LOCATION_MAXIMUM_DISTANCE_DEGREES = 0.05
 const LEGACY_LOCATION_PROVIDER_COUNTRY = 'KR'
-const LEGACY_PROVIDER_LOCATION_ID_DECIMAL_PLACES = 4
+const LEGACY_ID_DECIMALS = 4
 
 const LEGACY_WORLD_WEATHER_LOCATIONS = Object.fromEntries(
   Object.values(LEGACY_WEATHER_LOCATIONS).map((location) => {
@@ -53,14 +53,11 @@ const LEGACY_PROVIDER_LOCATION_ALIASES: Partial<
 const createProviderLocationId = (providerLocationId: string): WeatherLocationId =>
   `openweather:${providerLocationId}`
 
-const formatLegacyRoundedCoordinate = (coordinate: number): string => {
-  return coordinate.toFixed(LEGACY_PROVIDER_LOCATION_ID_DECIMAL_PLACES)
-}
-
-const createLegacyRoundedProviderLocationId = (
+/** 기존에 저장한 좌표 ID를 찾을 때만 4자리 표현을 사용한다. 신규 ID의 정밀도는 줄이지 않는다. */
+const legacyCoordinatesKey = (
   location: Pick<OpenWeatherSearchLocation, 'latitude' | 'longitude'>,
 ): string =>
-  `${formatLegacyRoundedCoordinate(location.latitude)},${formatLegacyRoundedCoordinate(location.longitude)}`
+  `${location.latitude.toFixed(LEGACY_ID_DECIMALS)},${location.longitude.toFixed(LEGACY_ID_DECIMALS)}`
 
 const readLegacyLocation = (id: WeatherLocationId): LegacyWorldWeatherLocation | undefined => {
   const prefix = 'openweather:legacy:'
@@ -111,7 +108,8 @@ const findLegacyWorldWeatherLocation = (
   })
 }
 
-const preserveExactRegisteredLegacyIds = async (
+/** 같은 좌표로 등록된 이전 ID만 유지해 저장된 사용자 설정의 연결을 보존한다. */
+const preserveLegacyIds = async (
   locations: ReadonlyArray<OpenWeatherSearchLocation>,
   database: Database,
 ): Promise<ReadonlyArray<OpenWeatherSearchLocation>> => {
@@ -122,20 +120,18 @@ const preserveExactRegisteredLegacyIds = async (
     return locations
   }
 
-  const legacyRoundedProviderLocationIds = Array.from(
-    new Set(candidateLocations.map(createLegacyRoundedProviderLocationId)),
-  )
-  const registeredLocations = await database
+  const legacyIds = Array.from(new Set(candidateLocations.map(legacyCoordinatesKey)))
+  const storedLocations = await database
     .select({
       latitude: weatherLocations.latitude,
       longitude: weatherLocations.longitude,
       providerLocationId: weatherLocations.providerLocationId,
     })
     .from(weatherLocations)
-    .where(inArray(weatherLocations.providerLocationId, legacyRoundedProviderLocationIds))
-    .limit(legacyRoundedProviderLocationIds.length)
-  const registeredLocationsByProviderId = new Map(
-    registeredLocations.map((location) => [location.providerLocationId, location]),
+    .where(inArray(weatherLocations.providerLocationId, legacyIds))
+    .limit(legacyIds.length)
+  const storedById = new Map(
+    storedLocations.map((location) => [location.providerLocationId, location]),
   )
 
   return locations.map((location) => {
@@ -143,18 +139,16 @@ const preserveExactRegisteredLegacyIds = async (
       return location
     }
 
-    const registeredLocation = registeredLocationsByProviderId.get(
-      createLegacyRoundedProviderLocationId(location),
-    )
+    const storedLocation = storedById.get(legacyCoordinatesKey(location))
     if (
-      registeredLocation === undefined ||
-      registeredLocation.latitude !== location.latitude ||
-      registeredLocation.longitude !== location.longitude
+      storedLocation === undefined ||
+      storedLocation.latitude !== location.latitude ||
+      storedLocation.longitude !== location.longitude
     ) {
       return location
     }
 
-    return {...location, providerLocationId: registeredLocation.providerLocationId}
+    return {...location, providerLocationId: storedLocation.providerLocationId}
   })
 }
 
@@ -174,19 +168,19 @@ const getSearchWeatherLocation = (location: OpenWeatherSearchLocation): WeatherL
 const deduplicateProviderLocations = (
   locations: ReadonlyArray<OpenWeatherSearchLocation>,
 ): ReadonlyArray<OpenWeatherSearchLocation> => {
-  const seenProviderLocationIds = new Set<string>()
+  const seenIds = new Set<string>()
 
   return locations.filter((location) => {
-    if (seenProviderLocationIds.has(location.providerLocationId)) {
+    if (seenIds.has(location.providerLocationId)) {
       return false
     }
 
-    seenProviderLocationIds.add(location.providerLocationId)
+    seenIds.add(location.providerLocationId)
     return true
   })
 }
 
-/** Searches and registers fixed provider coordinates for subsequent feed requests. */
+/** 검색한 위치의 좌표를 등록하되, 같은 위치의 기존 저장 ID는 유지한다. */
 export const searchWorldWeatherLocations = async (
   options: SearchOpenWeatherLocationsOptions,
   database: Database = getDatabase(),
@@ -198,11 +192,8 @@ export const searchWorldWeatherLocations = async (
     return []
   }
 
-  const providerLocationsWithRegisteredIds = await preserveExactRegisteredLegacyIds(
-    providerLocations,
-    database,
-  )
-  const newProviderLocations = providerLocationsWithRegisteredIds.filter(
+  const resolvedLocations = await preserveLegacyIds(providerLocations, database)
+  const newProviderLocations = resolvedLocations.filter(
     (location) => findLegacyWorldWeatherLocation(location) === undefined,
   )
 
@@ -233,7 +224,7 @@ export const searchWorldWeatherLocations = async (
       })
   }
 
-  return providerLocationsWithRegisteredIds.map(getSearchWeatherLocation)
+  return resolvedLocations.map(getSearchWeatherLocation)
 }
 
 /** Resolves only server-registered location IDs to fixed coordinates. */

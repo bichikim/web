@@ -1,3 +1,4 @@
+import {clampFiniteNumber} from 'src/utils/clamp-finite-number'
 import {cx} from 'class-variance-authority'
 import {type Accessor, createMemo, Match, Switch} from 'solid-js'
 
@@ -14,18 +15,12 @@ import {PLoadingStatus} from '../p-loading-status/PLoadingStatus'
 import {PProgress} from '../p-progress/PProgress'
 import {useDownloadStatusItem} from './use-download-status-item'
 
+const MAXIMUM_PERCENTAGE = 100
 const ERROR_CLASSES = cx(
   'pointer-events-auto flex min-h-control-sm items-center gap-2',
   'border border-solid border-border rounded-control bg-surface px-3',
   'text-foreground text-sm font-650 shadow-panel backdrop-blur-surface',
 )
-
-const MIN_DISPLAY_PERCENTAGE = 0
-const MAX_DISPLAY_PERCENTAGE = 100
-const getDisplayPercentage = (percentage: number) =>
-  Number.isFinite(percentage)
-    ? Math.min(MAX_DISPLAY_PERCENTAGE, Math.max(MIN_DISPLAY_PERCENTAGE, percentage))
-    : undefined
 
 export interface PModelDownloadStatusItemProps {
   readonly item?: ModelDownloadItem
@@ -50,7 +45,7 @@ export const PModelDownloadStatusItem = (props: PModelDownloadStatusItemProps) =
   const handleLoading = (state: Accessor<LoadingModelDownloadState>) => {
     const display = createMemo(() => {
       const current = state()
-      const percentage = getDisplayPercentage(current.percentage)
+      const percentage = clampFiniteNumber(current.percentage, 0, MAXIMUM_PERCENTAGE)
       return {
         message:
           percentage === undefined
@@ -61,7 +56,7 @@ export const PModelDownloadStatusItem = (props: PModelDownloadStatusItemProps) =
     })
 
     return (
-      <div aria-live="polite" class="pointer-events-auto" role="status">
+      <div aria-live="polite" class="pointer-events-auto min-w-0" role="status">
         <div class="border border-solid border-border rounded-control backdrop-blur-surface">
           <PLoadingStatus message={display().message} onCancel={handleCancel} />
         </div>
@@ -81,9 +76,18 @@ export const PModelDownloadStatusItem = (props: PModelDownloadStatusItemProps) =
     </PFormMessage>
   )
   const handleQueued = (state: Accessor<QueuedModelDownloadState>) => (
-    <div class={ERROR_CLASSES} role="status">
-      <span>{state().label} · 다운로드 대기 중</span>
-      <PButton bordered transparent size="small" tone="secondary" onPress={handleCancel}>
+    <div class={cx(ERROR_CLASSES, 'min-w-0')} role="status">
+      <span class="min-w-0 flex-1 truncate" title={state().label}>
+        {state().label} · 다운로드 대기 중
+      </span>
+      <PButton
+        bordered
+        transparent
+        class="flex-none"
+        size="small"
+        tone="secondary"
+        onPress={handleCancel}
+      >
         취소
       </PButton>
     </div>

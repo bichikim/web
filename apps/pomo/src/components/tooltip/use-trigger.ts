@@ -43,5 +43,23 @@ export const useTooltipTrigger = () => {
       setShow(false)
     }
   }
-  return {onBlur, onFocus, onPointerDown, onPointerEnter, onPointerLeave, setTarget, show, target}
+  const triggerProps = {
+    onBlur,
+    onFocus,
+    onPointerDown,
+    onPointerEnter,
+    onPointerLeave,
+    ref: setTarget,
+  }
+  return {
+    onBlur,
+    onFocus,
+    onPointerDown,
+    onPointerEnter,
+    onPointerLeave,
+    setTarget,
+    show,
+    target,
+    triggerProps,
+  }
 }

@@ -42,7 +42,7 @@ interface FeedSyncContext {
 
 const setSyncState = (context: FeedSyncContext, state: PFeedState) => {
   const current = context.options.getState?.()
-  if (current?.status === 'generating' || current?.status === 'preparing') {
+  if (context.isDisposed || current?.status === 'generating' || current?.status === 'preparing') {
     return
   }
   context.options.setState(state)
@@ -61,8 +61,17 @@ const runFeedSync = async (context: FeedSyncContext): Promise<void> => {
       new Set(connections.map((connection) => connection.id)),
       now.toISOString(),
     )
+    if (context.isDisposed) {
+      return
+    }
     await context.options.cleanupExpiredDialogues(now)
+    if (context.isDisposed) {
+      return
+    }
     await context.options.reloadIssues()
+    if (context.isDisposed) {
+      return
+    }
 
     if (connections.length === 0) {
       context.options.setState(NO_FEED_CONNECTIONS_STATE)
@@ -85,6 +94,10 @@ const runFeedSync = async (context: FeedSyncContext): Promise<void> => {
       resolveGenerationSettings: context.options.resolveGenerationSettings,
     })
 
+    if (context.isDisposed) {
+      return
+    }
+
     if (summary.failures.length > 0) {
       setSyncState(context, {
         message: `${summary.failures.length}개 피드를 가져오지 못했어요. 주소나 CORS 설정을 확인해 주세요.`,
@@ -97,7 +110,9 @@ const runFeedSync = async (context: FeedSyncContext): Promise<void> => {
     if (!autoPrepare) {
       await context.options.onSynchronized?.()
     }
-    context.options.scheduleJobs(summary.queuedJobIds)
+    if (!context.isDisposed) {
+      context.options.scheduleJobs(summary.queuedJobIds)
+    }
   } catch (error: unknown) {
     console.error('Failed to synchronize focus room feeds.', error)
     setSyncState(context, {message: '피드를 확인하지 못했어요.', status: 'error'})

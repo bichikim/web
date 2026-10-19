@@ -30,44 +30,22 @@ describe('POverflowMarquee', () => {
   afterEach(() => {
     cleanup()
     vi.restoreAllMocks()
-    vi.doUnmock('solid-js')
-    vi.resetModules()
     vi.unstubAllGlobals()
   })
 
-  it('should tolerate missing measured elements during lifecycle setup', async () => {
-    vi.resetModules()
-    vi.doMock('solid-js', async () => {
-      const solid = await vi.importActual<typeof import('solid-js')>('solid-js')
-      let signalIndex = 0
-
-      return {
-        ...solid,
-        createSignal: ((initialValue?: unknown) => {
-          signalIndex += 1
-
-          if (signalIndex === 1 || signalIndex === 3) {
-            return [() => undefined, vi.fn()]
-          }
-
-          return solid.createSignal(initialValue)
-        }) as typeof solid.createSignal,
-      }
-    })
-    const {POverflowMarquee: MarqueeWithoutRefs} = await import('../POverflowMarquee')
-
-    const result = render(() => <MarqueeWithoutRefs text="Track title" />)
-
-    expect(result.container.firstElementChild).not.toBeNull()
-    expect(resizeObservers).toHaveLength(0)
-  })
-
-  it('should measure once without observing in browsers that lack ResizeObserver', () => {
+  it('should measure overflow without observing in browsers that lack ResizeObserver', () => {
     vi.stubGlobal('ResizeObserver', undefined)
+    vi.spyOn(HTMLElement.prototype, 'clientWidth', 'get').mockReturnValue(100)
+    vi.spyOn(HTMLElement.prototype, 'scrollWidth', 'get').mockReturnValue(112)
 
     const result = render(() => <POverflowMarquee text="Track title" />)
+    const viewport = result.container.firstElementChild
+    const track = viewport?.firstElementChild
 
-    expect(result.container.firstElementChild).not.toBeNull()
+    expect(viewport).toHaveAttribute('data-overflowing', 'true')
+    expect(viewport).toHaveAttribute('tabindex', '0')
+    expect(track).toHaveStyle('--pomo-marquee-distance: 144px')
+    expect(track).toHaveStyle('--pomo-marquee-duration: 6s')
     expect(resizeObservers).toHaveLength(0)
   })
 

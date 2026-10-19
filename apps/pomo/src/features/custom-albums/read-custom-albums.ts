@@ -10,7 +10,7 @@ import {
   TRACK_STORE_NAME,
   waitForTransaction,
 } from './database'
-import {CUSTOM_ALBUM_ICON_CLASSES, CustomAlbumError} from './model'
+import {CUSTOM_ALBUM_ICON_CLASSES} from './model'
 import {toCustomPTrack} from './to-custom-p-track'
 
 export type ResolvedCustomAlbum = PResolvedAlbum & {readonly customCoverImage: Blob | null}
@@ -18,16 +18,17 @@ export type ResolvedCustomAlbum = PResolvedAlbum & {readonly customCoverImage: B
 const toResolvedAlbum = (
   album: StoredCustomAlbum,
   tracksById: ReadonlyMap<string, StoredCustomTrack>,
-): ResolvedCustomAlbum => {
-  const tracks = album.trackIds.map((trackId) => {
+): ResolvedCustomAlbum | null => {
+  const tracks = album.trackIds.flatMap((trackId) => {
     const track = tracksById.get(trackId)
 
-    if (track === undefined || track.albumId !== album.id) {
-      throw new CustomAlbumError('corrupt-data')
-    }
-
-    return track
+    return track !== undefined && track.albumId === album.id ? [track] : []
   })
+
+  if (tracks.length !== album.trackIds.length) {
+    return null
+  }
+
   const playableTracks = tracks.map(toCustomPTrack)
 
   return {
@@ -59,5 +60,9 @@ export const readCustomAlbums = async (): Promise<readonly ResolvedCustomAlbum[]
 
   return albums
     .toSorted((left, right) => left.createdAt - right.createdAt)
-    .map((album) => toResolvedAlbum(album, tracksById))
+    .flatMap((album) => {
+      const resolvedAlbum = toResolvedAlbum(album, tracksById)
+
+      return resolvedAlbum === null ? [] : [resolvedAlbum]
+    })
 }

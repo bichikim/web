@@ -1,0 +1,16 @@
+{
+  "name": "@winter-love/supertonic",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./number-speech": "./src/number-speech/index.ts",
+    "./*": "./src/*.ts"
+  },
+  "dependencies": {
+    "es-toolkit": "catalog:",
+    "onnxruntime-web": "1.23.2",
+    "zod": "catalog:"
+  }
+}

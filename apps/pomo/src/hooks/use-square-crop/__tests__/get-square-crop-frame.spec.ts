@@ -5,6 +5,26 @@ const viewport = {height: 300, width: 400}
 const position = {x: 0, y: 0}
 
 describe('getSquareCropFrame', () => {
+  it.each([
+    0,
+    -1,
+    0.5,
+    1 - Number.EPSILON,
+    Number.NaN,
+    Number.POSITIVE_INFINITY,
+    Number.NEGATIVE_INFINITY,
+  ])('should return null for an invalid zoom %s', (zoom) => {
+    expect(
+      getSquareCropFrame({image: {height: 400, width: 800}, position, viewport, zoom}),
+    ).toBeNull()
+  })
+
+  it('should preserve a finite fractional zoom above one', () => {
+    expect(
+      getSquareCropFrame({image: {height: 400, width: 800}, position, viewport, zoom: 2.5}),
+    ).toMatchObject({cropSize: 80, sourceSize: 160, sourceX: 320, sourceY: 120})
+  })
+
   it('should fit a landscape image and center the full shorter source edge', () => {
     expect(
       getSquareCropFrame({image: {height: 400, width: 800}, position, viewport, zoom: 1}),
@@ -76,6 +96,40 @@ describe('getSquareCropFrame', () => {
       sourceX: sample.sourceX,
       sourceY: sample.sourceY,
     })
+  })
+
+  it('should map an interior normalized position without clamping', () => {
+    expect(
+      getSquareCropFrame({
+        image: {height: 400, width: 800},
+        position: {x: 0.5, y: -0.5},
+        viewport,
+        zoom: 2,
+      }),
+    ).toMatchObject({sourceSize: 200, sourceX: 450, sourceY: 50})
+  })
+
+  it.each([
+    {x: Number.NaN, y: 0},
+    {x: 0, y: Number.NaN},
+    {x: Number.POSITIVE_INFINITY, y: 0},
+    {x: 0, y: Number.POSITIVE_INFINITY},
+    {x: Number.NEGATIVE_INFINITY, y: 0},
+    {x: 0, y: Number.NEGATIVE_INFINITY},
+    {x: 2, y: 0},
+    {x: 1 + Number.EPSILON, y: 0},
+    {x: -1 - Number.EPSILON, y: 0},
+    {x: 0, y: 1 + Number.EPSILON},
+    {x: 0, y: -1 - Number.EPSILON},
+  ])('should return null for an invalid normalized position $x, $y', (invalidPosition) => {
+    expect(
+      getSquareCropFrame({
+        image: {height: 400, width: 800},
+        position: invalidPosition,
+        viewport,
+        zoom: 2,
+      }),
+    ).toBeNull()
   })
 
   it.each([

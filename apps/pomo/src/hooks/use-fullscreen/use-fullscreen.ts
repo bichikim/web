@@ -2,6 +2,7 @@ import {type Accessor, createSignal, onCleanup, onMount} from 'solid-js'
 import {useEvent} from '@winter-love/solid-use/event'
 
 import {type CapabilityAvailability, useCapabilityTask} from 'src/hooks/use-capability-task'
+import {withPromiseFallback} from 'src/utils/with-promise-fallback'
 
 export type FullscreenAvailability = CapabilityAvailability
 export type FullscreenError = 'enter-failed' | 'exit-failed'
@@ -72,11 +73,11 @@ export const useFullscreen = (): FullscreenController => {
   })
   const isRequestPending = () => task.state().status === 'pending'
   // The UI consumes domain error state rather than promise rejections.
-  const onEnabledChange = (nextEnabled: boolean) => task.execute(nextEnabled).catch(() => undefined)
+  const onEnabledChange = (nextEnabled: boolean) =>
+    withPromiseFallback(task.execute(nextEnabled), undefined)
 
   const handleFullscreenError = () => {
     setIsEnabled(getFullscreenState())
-    setError(requestError)
   }
 
   onCleanup(() => {

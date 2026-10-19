@@ -12,6 +12,14 @@ it('should match KASI 2026 lunar new year and round trip a leap month', () => {
   expect(lunarToSolar({day: 1, leap: true, month: 5, year: 2017})).toBe('2017-06-24')
   expect(solarToLunar('2017-06-24')).toEqual({day: 1, leap: true, month: 5, year: 2017})
 })
+
+it('should convert a solar date entered with fullwidth digits', () => {
+  const ascii = solarToLunar('2026-02-17')
+
+  expect(ascii).toEqual({day: 1, leap: false, month: 1, year: 2026})
+  expect(solarToLunar('２０２６-０２-１７')).toEqual(ascii)
+})
+
 it('should reject impossible leap months dates and unsupported years', () => {
   expect(lunarToSolar({day: 1, leap: true, month: 1, year: 2026})).toBeNull()
   expect(solarToLunar('2026-02-30')).toBeNull()

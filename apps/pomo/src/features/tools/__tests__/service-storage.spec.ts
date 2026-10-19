@@ -261,3 +261,24 @@ it('should avoid native repair on the regular web', async () => {
   await expect(repository.read()).resolves.toEqual(latest)
   expect(fixture.setItem).not.toHaveBeenCalled()
 })
+
+it.each([false, true])(
+  'should restore valid settings with one leading BOM (native: %s)',
+  async (usesTossStorage) => {
+    const settings = {branch: 'navy', days: '300', manual: true, start: '2026-09-01'} as const
+    const stored = `\uFEFF${JSON.stringify(settings)}`
+    fixture.usesTossStorage.mockReturnValue(usesTossStorage)
+    if (usesTossStorage) {
+      fixture.getItem.mockResolvedValueOnce(stored)
+    } else {
+      fixture.web.set('pomo:service-settings:v1', stored)
+    }
+
+    await expect(repository.read()).resolves.toEqual(settings)
+  },
+)
+
+it('should reject invalid settings even when the JSON starts with a BOM', async () => {
+  fixture.web.set('pomo:service-settings:v1', '\uFEFF{"manual":"true"}')
+  await expect(repository.read()).resolves.toEqual(DEFAULT_SERVICE_SETTINGS)
+})

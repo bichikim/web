@@ -5,15 +5,15 @@ import {type Component, type JSX, lazy} from 'solid-js'
 import {clientOnly} from '@solidjs/start'
 import {afterEach, beforeAll, expect, it, vi} from 'vitest'
 
-interface RelaxPlayerPageProps {
+interface SlowcovePageProps {
   readonly returnHref?: string
 }
 
 const {searchParams} = vi.hoisted(() => ({
   searchParams: {layout: '' as string | string[] | undefined},
 }))
-const {mockRelaxPlayerPage} = vi.hoisted(() => ({
-  mockRelaxPlayerPage: vi.fn<(props: RelaxPlayerPageProps) => string>(),
+const {mockSlowcovePage} = vi.hoisted(() => ({
+  mockSlowcovePage: vi.fn<(props: SlowcovePageProps) => string>(),
 }))
 vi.mock('@solidjs/router', () => ({useSearchParams: () => [searchParams]}))
 vi.mock('@solidjs/start', () => ({clientOnly: vi.fn()}))
@@ -27,11 +27,11 @@ vi.mock('src/components/apps-in-toss-prepare', () => ({
   ),
 }))
 vi.mock('src/components/p-home-page/PHomePage', () => ({PHomePage: () => <p>Pomo home</p>}))
-vi.mock('src/components/p-relax-player-page/PRelaxPlayerPage', () => ({
-  PRelaxPlayerPage: mockRelaxPlayerPage,
+vi.mock('src/components/p-slowcove-page/PSlowcovePage', () => ({
+  PSlowcovePage: mockSlowcovePage,
 }))
 
-mockRelaxPlayerPage.mockImplementation(() => 'Relax player')
+mockSlowcovePage.mockImplementation(() => 'Relax player')
 
 let RootPage: Component
 
@@ -70,12 +70,12 @@ it.each(['all-in-one', 'unknown'])('should render the Pomo home for layout %s', 
 
 it('should render the dedicated relax player without an integrated-app return href', async () => {
   vi.stubEnv('VITE_POMO_IS_APPS_IN_TOSS', '')
-  vi.stubEnv('VITE_APP_LAYOUT', 'relax-player')
+  vi.stubEnv('VITE_APP_LAYOUT', 'slowcove')
 
   render(() => <RootPage />)
 
   expect(await screen.findByText('Relax player')).toBeInTheDocument()
-  expect(mockRelaxPlayerPage.mock.calls[0]?.[0].returnHref).toBeUndefined()
+  expect(mockSlowcovePage.mock.calls[0]?.[0].returnHref).toBeUndefined()
   expect(screen.queryByText('Pomo home')).not.toBeInTheDocument()
 })
 
@@ -88,9 +88,9 @@ it('should render the Pomo home inside Apps in Toss preparation', () => {
   expect(within(preparation).getByText('Pomo home')).toBeInTheDocument()
 })
 
-it('should open the all-in-one app from a relax-player build when explicitly requested', () => {
+it('should open the all-in-one app from a slowcove build when explicitly requested', () => {
   vi.stubEnv('VITE_POMO_IS_APPS_IN_TOSS', '')
-  vi.stubEnv('VITE_APP_LAYOUT', 'relax-player')
+  vi.stubEnv('VITE_APP_LAYOUT', 'slowcove')
   searchParams.layout = 'all-in-one'
 
   render(() => <RootPage />)
@@ -101,12 +101,12 @@ it('should open the all-in-one app from a relax-player build when explicitly req
 
 it.each([
   {description: 'a single query value', layout: ['all-in-one']},
-  {description: 'one of multiple query values', layout: ['relax-player', 'all-in-one']},
+  {description: 'one of multiple query values', layout: ['slowcove', 'all-in-one']},
 ])(
   'should open the all-in-one app when an array layout includes all-in-one ($description)',
   ({layout}) => {
     vi.stubEnv('VITE_POMO_IS_APPS_IN_TOSS', '')
-    vi.stubEnv('VITE_APP_LAYOUT', 'relax-player')
+    vi.stubEnv('VITE_APP_LAYOUT', 'slowcove')
     searchParams.layout = layout
 
     render(() => <RootPage />)
@@ -118,7 +118,7 @@ it.each([
 
 it.each([
   {description: 'a string', layout: 'all-in-one'},
-  {description: 'an array', layout: ['relax-player', 'all-in-one']},
+  {description: 'an array', layout: ['slowcove', 'all-in-one']},
 ])(
   'should keep a standalone release on the player for $description layout queries',
   async ({layout}) => {
@@ -128,7 +128,7 @@ it.each([
     render(() => <RootPage />)
 
     expect(await screen.findByText('Relax player')).toBeInTheDocument()
-    expect(mockRelaxPlayerPage.mock.calls[0]?.[0].returnHref).toBeUndefined()
+    expect(mockSlowcovePage.mock.calls[0]?.[0].returnHref).toBeUndefined()
     expect(screen.queryByText('Pomo home')).not.toBeInTheDocument()
   },
 )

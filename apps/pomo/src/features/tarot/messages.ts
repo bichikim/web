@@ -1,7 +1,9 @@
+import type {TextModelId} from '../text-generation/model'
 import type {DrawnTarotCard, TarotLocale} from './cards'
 
 export interface TarotGenerateRequest {
   readonly cards: ReadonlyArray<DrawnTarotCard>
+  readonly modelId: TextModelId
   readonly locale: TarotLocale
   readonly question: string
   readonly requestId: string

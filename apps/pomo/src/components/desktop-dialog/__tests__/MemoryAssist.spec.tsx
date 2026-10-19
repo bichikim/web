@@ -1,5 +1,7 @@
 /** @vitest-environment jsdom */
 
+import {PreferenceProvider} from 'src/hooks/use-preference'
+
 import {fireEvent, render, screen, waitFor} from '@solidjs/testing-library'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
@@ -22,11 +24,14 @@ afterEach(() => {
 })
 
 it('should load memory assist content and close its native window', async () => {
-  render(() => (
-    <PModelDownloadProvider>
-      <DesktopMemoryAssistDialog />
-    </PModelDownloadProvider>
-  ))
+  render(
+    () => (
+      <PModelDownloadProvider>
+        <DesktopMemoryAssistDialog />
+      </PModelDownloadProvider>
+    ),
+    {wrapper: PreferenceProvider},
+  )
 
   await waitFor(() => expect(PMemoryAssistContent).toHaveBeenCalledOnce())
   const contentProps = vi.mocked(PMemoryAssistContent).mock.calls[0]?.[0]

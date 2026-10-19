@@ -21,6 +21,10 @@ import {
 import type {Database} from 'src/server/database'
 import {searchWorldWeatherLocations} from 'src/server/weather/world-locations'
 
+interface SearchQuery {
+  readonly query: string
+}
+
 const savedLocation = {
   country: 'GB',
   id: 'openweather:51.5200,-0.1100' as const,
@@ -70,8 +74,7 @@ it('should restore a legacy rounded preference through exact world search', asyn
     writeToss: vi.fn(async () => undefined),
     writeWeb: vi.fn((key: string, value: unknown) => valuesByKey.set(key, value)),
   } satisfies WeatherPreferenceStorage
-  const search = ({query}: {readonly query: string}) =>
-    searchWorldWeatherLocations({fetcher, query}, database)
+  const search = ({query}: SearchQuery) => searchWorldWeatherLocations({fetcher, query}, database)
   const repository = createWeatherPreferenceRepository({
     restoreLocation: (location) => restoreWeatherLocationNames({location, search}),
     storage,

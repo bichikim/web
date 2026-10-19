@@ -47,6 +47,7 @@ type NativeInputProps = Omit<
   | 'min'
   | 'onChange'
   | 'onInput'
+  | 'onKeyDown'
   | 'readOnly'
   | 'size'
   | 'step'
@@ -63,6 +64,7 @@ export interface PNumberInputProps extends NativeInputProps {
   readonly max?: number
   readonly min?: number
   readonly onInputValueChange?: (value: string) => void
+  readonly onKeyDown?: JSX.EventHandler<HTMLInputElement, KeyboardEvent>
   readonly onValueChange?: (value: number) => void
   readonly readOnly?: boolean
   readonly size?: 'medium' | 'small'
@@ -130,15 +132,11 @@ const getRange = (min: number | undefined, max: number | undefined) => {
 
 const handleNumberInputKeyDown = (
   event: Parameters<JSX.EventHandler<HTMLInputElement, KeyboardEvent>>[0],
-  handler: JSX.EventHandlerUnion<HTMLInputElement, KeyboardEvent> | undefined,
+  handler: JSX.EventHandler<HTMLInputElement, KeyboardEvent> | undefined,
   shouldStep: boolean,
   changeByStep: (direction: -1 | 1) => void,
 ) => {
-  if (typeof handler === 'function') {
-    handler(event)
-  } else if (handler !== undefined) {
-    handler[0](handler[1], event)
-  }
+  handler?.(event)
 
   if (
     event.defaultPrevented ||

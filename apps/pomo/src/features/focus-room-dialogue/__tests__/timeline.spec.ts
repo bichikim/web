@@ -96,6 +96,39 @@ describe('getDialoguePositionAtTime', () => {
     {durationMs: 750, index: 8, startMs: 800, text: '두 번째 문장'},
   ]
 
+  it.each([
+    {currentTimeMs: -Infinity, position: null},
+    {currentTimeMs: -1, position: null},
+    {currentTimeMs: 0, position: 0},
+    {currentTimeMs: 500, position: 0},
+    {currentTimeMs: 700, position: 0},
+    {currentTimeMs: 799, position: 0},
+    {currentTimeMs: 800, position: 1},
+    {currentTimeMs: 2000, position: 1},
+    {currentTimeMs: Infinity, position: 1},
+    {currentTimeMs: NaN, position: 1},
+  ])('should resolve position $position at time $currentTimeMs', ({currentTimeMs, position}) => {
+    expect(getDialoguePositionAtTime(segments, currentTimeMs)).toEqual(
+      position === null ? null : {position, text: segments[position]?.text},
+    )
+  })
+
+  it('should retain the final segment with the same start time', () => {
+    expect(getDialoguePositionAtTime([segments[0]!, {...segments[1]!, startMs: 0}], 0)).toEqual({
+      position: 1,
+      text: '두 번째 문장',
+    })
+  })
+
+  it('should stop at the first future segment even when later segments have started', () => {
+    expect(
+      getDialoguePositionAtTime(
+        [...segments, {durationMs: 100, index: 10, startMs: 100, text: '세 번째 문장'}],
+        700,
+      ),
+    ).toEqual({position: 0, text: '첫 문장'})
+  })
+
   it('should return the array position rather than the stored segment index', () => {
     expect(getDialoguePositionAtTime(segments, 800)).toEqual({
       position: 1,
@@ -105,6 +138,13 @@ describe('getDialoguePositionAtTime', () => {
 
   it('should return null when no dialogue segment exists', () => {
     expect(getDialoguePositionAtTime([], 0)).toBeNull()
+  })
+
+  it('should reject a sparse segment before reaching the next boundary', () => {
+    const sparseSegments = [...segments]
+    delete sparseSegments[0]
+
+    expect(() => getDialoguePositionAtTime(sparseSegments, 700)).toThrow(TypeError)
   })
 })
 

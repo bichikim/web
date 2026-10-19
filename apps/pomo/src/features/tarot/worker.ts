@@ -1,13 +1,13 @@
 /// <reference lib="webworker" />
+import {listenTextGenerationRequests} from '../text-generation/listen-text-generation-requests'
+import {unwrapGenerationResult} from '../text-generation/unwrap-generation-result'
 
-import {getErrorMessage} from 'src/utils/get-error-message'
 import {createExclusiveAsyncTask} from 'src/utils/create-exclusive-async-task'
-import {createDeviceTarget, createGenerationFailure, trimRepetitiveTail} from '../text-generation'
+import {createDeviceTarget, trimRepetitiveTail} from '../text-generation'
 import {createTextGenerationExecutor} from '../text-generation/execution'
 import type {TarotGenerateRequest, TarotWorkerRequest, TarotWorkerResponse} from './messages'
 import {createTarotMessages} from './prompt'
 
-const MODEL_ID = 'gemma-4-e2b'
 const MAXIMUM_NEW_TOKENS = 2560
 const workerScope = globalThis.self as DedicatedWorkerGlobalScope
 let activeRequestId = ''
@@ -20,11 +20,9 @@ const generation = createExclusiveAsyncTask()
 
 const generateReading = async (request: TarotGenerateRequest) => {
   activeRequestId = request.requestId
-  const target = createDeviceTarget(MODEL_ID)
+  const target = createDeviceTarget(request.modelId)
   const preparation = await textExecutor.prepare(target)
-  if (!preparation.ok) {
-    throw createGenerationFailure(preparation.error, '타로 해석 모델을 준비하지 못했어요.')
-  }
+  unwrapGenerationResult(preparation, '타로 해석 모델을 준비하지 못했어요.')
 
   sendResponse({requestId: request.requestId, type: 'started'})
   const result = await textExecutor.generate(
@@ -49,11 +47,9 @@ const generateReading = async (request: TarotGenerateRequest) => {
       },
     },
   )
-  if (!result.ok) {
-    throw createGenerationFailure(result.error, '타로 해석을 만들지 못했어요.')
-  }
+  const resultValue = unwrapGenerationResult(result, '타로 해석을 만들지 못했어요.')
 
-  const text = trimRepetitiveTail(result.value).trim()
+  const text = trimRepetitiveTail(resultValue).trim()
   if (text.length === 0) {
     throw new Error('타로 해석 결과가 비어 있어요.')
   }
@@ -65,15 +61,9 @@ const generateReading = async (request: TarotGenerateRequest) => {
   })
 }
 
-workerScope.addEventListener('message', (event: MessageEvent<TarotWorkerRequest>) => {
-  generation
-    .run(() => generateReading(event.data))
-    .catch((error: unknown) => {
-      sendResponse({
-        message: getErrorMessage(error, '타로 해석을 만들지 못했어요.'),
-        requestId: event.data.requestId,
-        restartRequired: false,
-        type: 'error',
-      })
-    })
+listenTextGenerationRequests<TarotWorkerRequest>({
+  fallback: '타로 해석을 만들지 못했어요.',
+  handle: (request) => generation.run(() => generateReading(request)),
+  onError: (error, request) => sendResponse({...error, requestId: request.requestId}),
+  scope: workerScope,
 })

@@ -3,7 +3,7 @@
 import {renderHook} from '@solidjs/testing-library'
 import {createRoot} from 'solid-js'
 import {describe, expect, it, vi} from 'vitest'
-import {createDeferred} from 'src/test-utils/create-deferred'
+import {createDeferred} from 'src/__tests__/create-deferred'
 import {useCapabilityTask} from '..'
 
 describe('useCapabilityTask', () => {
