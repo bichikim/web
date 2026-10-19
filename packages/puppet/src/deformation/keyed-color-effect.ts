@@ -23,6 +23,12 @@ export interface ComposeKeyedColorEffectOptions<Effect extends PuppetColorEffect
   readonly rest: Effect
 }
 
+/** Whether the properties key opacity or a color, the values this module interpolates. */
+const keysColorEffect = (properties: Partial<PuppetColorEffect> | undefined) =>
+  properties?.opacity !== undefined ||
+  properties?.multiplyColor !== undefined ||
+  properties?.screenColor !== undefined
+
 /** Opacity, multiply color and screen color as one interpolation vector. */
 export const toColorEffectCoordinates = (effect: PuppetColorEffect) => [
   effect.opacity,
@@ -56,7 +62,8 @@ export const composeKeyedColorEffect = <Subject extends PuppetColorEffect>(
   const restCoordinates = toColorEffectCoordinates(rest)
   const coordinates = (options.document.parameterBindings ?? []).reduce((current, binding) => {
     const keyed = options.keyedProperties(binding)
-    if (keyed === undefined) {
+    // A binding whose keyforms all keep the rest values adds no offset, so it is not sampled.
+    if (keyed === undefined || !keyed.some(keysColorEffect)) {
       return current
     }
     const sampled = sampleParameterCoordinates({

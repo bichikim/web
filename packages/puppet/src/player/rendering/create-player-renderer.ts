@@ -7,6 +7,7 @@ import {canReuseLayerResources, canReusePartResources} from '../internal/render-
 import {layoutPlayerRoot, type PuppetFraming} from '../internal/layout-player-root'
 import type {RenderOverrides} from '../internal/render-overrides'
 import {applyRenderFrame} from './apply-render-frame'
+import {replaceBackBufferPresentation} from './back-buffer-presentation'
 import {documentUsesBackdropBlend} from './part-blend-filter'
 import {initializeRuntimeParts} from './initialize-runtime-parts'
 import {destroyRuntimeMask, renderRuntimeMask} from './part-mask'
@@ -56,11 +57,11 @@ interface RenderPartMasksOptions {
   readonly root: Container
 }
 
-/** Masks of visible parts and layers with the vertices that bound them. */
+/** Masks of visible parts and layers with the vertex arrays that bound them. */
 const visibleMasks = (options: RenderPartMasksOptions) => [
   ...[...options.partById.values()].flatMap((part) =>
     part.mask !== undefined && part.mesh.visible
-      ? [{mask: part.mask, vertices: part.vertices}]
+      ? [{mask: part.mask, vertexSets: [part.vertices]}]
       : [],
   ),
   ...[...options.layerById.values()].flatMap((layer) =>
@@ -68,11 +69,11 @@ const visibleMasks = (options: RenderPartMasksOptions) => [
       ? [
           {
             mask: layer.mask,
-            vertices: new Float32Array(
-              layer.memberPartIds.flatMap((partId) => [
-                ...(options.partById.get(partId)?.vertices ?? []),
-              ]),
-            ),
+            // The members' own arrays bound the layer; they are not copied into one.
+            vertexSets: layer.memberPartIds.flatMap((partId) => {
+              const vertices = options.partById.get(partId)?.vertices
+              return vertices === undefined ? [] : [vertices]
+            }),
           },
         ]
       : [],
@@ -81,7 +82,7 @@ const visibleMasks = (options: RenderPartMasksOptions) => [
 
 const renderPartMasks = (options: RenderPartMasksOptions) => {
   let stateReset = false
-  for (const {mask, vertices} of visibleMasks(options)) {
+  for (const {mask, vertexSets} of visibleMasks(options)) {
     if (!stateReset && options.externalRendering) {
       // External drawing can change the shared WebGL state before this mask pass.
       options.application.renderer.resetState()
@@ -91,23 +92,7 @@ const renderPartMasks = (options: RenderPartMasksOptions) => {
       MINIMUM_MASK_RESOLUTION,
       options.application.renderer.resolution * options.root.scale.x,
     )
-    renderRuntimeMask(mask, options.application.renderer, resolution, vertices)
-  }
-}
-
-/**
- * PixiJS presents its WebGL back buffer with normal blending and without clearing the canvas,
- * so several renders before one browser presentation accumulate over transparent pixels.
- * Presenting with blending disabled copies the frame instead.
- */
-const replaceBackBufferPresentation = (application: Application) => {
-  const backBuffer = (
-    application.renderer as
-      | {backBuffer?: {_state?: {blendMode: string}; useBackBuffer: boolean}}
-      | undefined
-  )?.backBuffer
-  if (backBuffer?.useBackBuffer === true && backBuffer._state !== undefined) {
-    backBuffer._state.blendMode = 'none'
+    renderRuntimeMask(mask, options.application.renderer, resolution, vertexSets)
   }
 }
 
@@ -127,7 +112,12 @@ const createApplication = async (options: CreatePlayerRendererOptions) => {
     width: options.document.viewport.width,
     ...(resizeTarget === null ? {} : {resizeTo: resizeTarget}),
   })
-  replaceBackBufferPresentation(application)
+  const presentation = replaceBackBufferPresentation(
+    (application.renderer as {backBuffer?: unknown} | undefined)?.backBuffer,
+  )
+  if (presentation === 'unsupported') {
+    console.warn('Puppet player could not replace the PixiJS back buffer presentation.')
+  }
   return application
 }
 

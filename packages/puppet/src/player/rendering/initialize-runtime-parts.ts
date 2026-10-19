@@ -69,18 +69,17 @@ export const initializeRuntimeParts = async (options: InitializeRuntimePartsOpti
   const frame = getPartRenderFrame(options.document)
   const {plans} = frame
   const planById = new Map(plans.map((plan) => [plan.partId, plan]))
+  // Masks draw other parts, so they are attached once every part exists.
   for (const runtimePart of options.partById.values()) {
     const plan = planById.get(runtimePart.partId)
-    runtimePart.mask =
-      plan?.mask === undefined
-        ? undefined
-        : createRuntimePartMask({
-            document: options.document,
-            partById: options.partById,
-            plan: plan.mask,
-          })
-    if (runtimePart.mask !== undefined) {
-      runtimePart.mask.filter.inverse = plan?.properties.invertedMask ?? false
+    if (plan?.mask !== undefined) {
+      const mask = createRuntimePartMask({
+        document: options.document,
+        partById: options.partById,
+        plan: plan.mask,
+      })
+      mask.filter.inverse = plan.properties.invertedMask
+      options.partById.set(runtimePart.partId, {...runtimePart, mask})
     }
   }
 

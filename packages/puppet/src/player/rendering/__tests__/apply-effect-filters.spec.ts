@@ -2,10 +2,7 @@ import {Container, MaskFilter, MeshSimple, RenderTexture, Sprite, Texture} from 
 import {describe, expect, test} from 'vitest'
 import type {ResolvedPartRenderProperties} from '../../../deformation'
 import type {PuppetPartBlendMode} from '../../document'
-import {
-  applyLayerRenderProperties,
-  applyPartRenderProperties,
-} from '../apply-part-render-properties'
+import {applyLayerRenderProperties, applyPartRenderProperties} from '../apply-effect-filters'
 import type {RuntimeLayer, RuntimePart, RuntimePartMask} from '../types'
 
 const createMask = (): RuntimePartMask => {

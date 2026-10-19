@@ -8,7 +8,10 @@ import type {
 } from 'pixi.js'
 import type {PartBlendFilter} from './part-blend-filter'
 
-/** Filters created on demand for a part's or layer's render properties. */
+/**
+ * Filters created on demand for a part's or layer's render properties; the mask is fixed when
+ * the part or layer is created.
+ */
 export interface RuntimeEffects {
   blendFilter?: PartBlendFilter
   colorFilter?: ColorMatrixFilter
@@ -18,7 +21,6 @@ export interface RuntimeEffects {
 export interface RuntimePart extends RuntimeEffects {
   /** Whether the drawn indices currently leave out turned-over triangles. */
   culled?: boolean
-  mask?: RuntimePartMask
   readonly mesh: MeshSimple
   readonly partId: string
   restVertices: ReadonlyArray<number>
