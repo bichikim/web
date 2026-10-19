@@ -51,7 +51,12 @@ const composeEffectFilters = (options: ComposeEffectFiltersOptions) => {
   const {target} = options
   const filters: Array<Filter> = []
   if (options.colorMatrix !== undefined) {
-    const colorFilter = target.colorFilter ?? new ColorMatrixFilter()
+    const colorFilter =
+      target.colorFilter ??
+      new ColorMatrixFilter({
+        antialias: 'inherit',
+        resolution: 'inherit',
+      })
     target.colorFilter = colorFilter
     colorFilter.matrix = options.colorMatrix
     filters.push(colorFilter)

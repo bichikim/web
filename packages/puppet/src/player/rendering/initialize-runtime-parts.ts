@@ -16,7 +16,7 @@ const loadTexture = limitAsync(async (source: string) => {
   image.src = source
   await image.decode()
 
-  return Texture.from(image)
+  return Texture.from({autoGenerateMipmaps: true, resource: image, scaleMode: 'linear'})
 }, MAXIMUM_CONCURRENT_DECODES)
 
 interface InitializeRuntimePartsOptions {

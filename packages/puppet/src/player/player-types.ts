@@ -22,6 +22,8 @@ export interface Player {
   getParameterValues(): PuppetParameterValueMap
   /** Hit area ID under a point in canvas CSS pixels, using the last rendered meshes. */
   hitTest(point: {readonly x: number; readonly y: number}): string | undefined
+  /** 지정한 외부 값만 병합하며 다른 입력과 모션 재생은 유지한다. */
+  patchParameterValues(values: PuppetParameterValueMap): void
   pause(): void
   play(options?: PlayerPlaybackOptions): void
   playMotion(motionId: string, options?: PlayerPlaybackOptions): boolean
