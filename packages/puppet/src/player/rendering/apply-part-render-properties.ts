@@ -54,11 +54,15 @@ const composeEffectFilters = (options: ComposeEffectFiltersOptions) => {
     const colorFilter = target.colorFilter ?? new ColorMatrixFilter()
     target.colorFilter = colorFilter
     colorFilter.matrix = options.colorMatrix
-    colorFilter.blendMode = 'normal'
     filters.push(colorFilter)
   }
   if (target.mask !== undefined) {
     filters.push(target.mask.filter)
+  }
+  // 재사용되는 필터에는 이전 프레임의 합성 모드가 남아 있으므로, 합성 필터만 다시 지정하도록 모두
+  // 'normal'로 되돌린다. 그대로 두면 투명하게 지워진 중간 패스에 이전 모드가 적용된다.
+  for (const filter of filters) {
+    filter.blendMode = 'normal'
   }
   if (usesBackdropBlend(options.blendMode, options.alphaBlendMode)) {
     const blendFilter = target.blendFilter ?? createPartBlendFilter()

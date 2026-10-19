@@ -3,14 +3,17 @@ import {decodeWav, type DecodeWavError, type PuppetSound} from './decode-wav'
 
 /** A motion sound that could not be fetched or decoded. */
 export interface MotionSoundError {
-  readonly reason: DecodeWavError | 'fetch-failed'
+  readonly reason: DecodeWavError | 'fetch-failed' | 'playback-failed'
   readonly src: string
 }
 
 export interface MotionSoundLoader {
   /** The decoded sound, once loaded. */
   get(src: string): PuppetSound | undefined
-  /** Starts loading the document's motion sounds that are not loaded yet. */
+  /**
+   * Starts loading the document's motion sounds that are not loaded yet and drops sounds the
+   * document no longer uses.
+   */
   load(document: Pick<PuppetDocument, 'motions'>): void
 }
 
@@ -40,7 +43,13 @@ export const createMotionSoundLoader = (
     try {
       bytes = await read(src)
     } catch {
-      options.onError?.({reason: 'fetch-failed', src})
+      if (requested.has(src)) {
+        options.onError?.({reason: 'fetch-failed', src})
+      }
+      return
+    }
+    // The document dropped this sound while it loaded.
+    if (!requested.has(src)) {
       return
     }
     const decoded = decodeWav(bytes)
@@ -53,9 +62,15 @@ export const createMotionSoundLoader = (
   return {
     get: (src) => sounds.get(src),
     load(document) {
-      for (const motion of document.motions) {
-        const src = motion.sound?.src
-        if (src !== undefined && !requested.has(src)) {
+      const used = new Set(document.motions.flatMap((motion) => motion.sound?.src ?? []))
+      for (const src of requested) {
+        if (!used.has(src)) {
+          requested.delete(src)
+          sounds.delete(src)
+        }
+      }
+      for (const src of used) {
+        if (!requested.has(src)) {
           requested.add(src)
           request(src).catch(() => undefined)
         }

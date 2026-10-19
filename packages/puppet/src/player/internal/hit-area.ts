@@ -19,10 +19,15 @@ const side = (from: Point, to: Point, point: Point) =>
   (to.x - from.x) * (point.y - from.y) - (to.y - from.y) * (point.x - from.x)
 
 const containsInTriangle = (corners: ReadonlyArray<Point>, point: Point) => {
-  const sides = corners.map((corner, index) =>
-    side(corner, corners[(index + 1) % corners.length]!, point),
+  const [first, second, third] = corners as [Point, Point, Point]
+  // Twice the signed area: a collapsed or non-finite triangle covers nothing.
+  const area = side(first, second, third)
+  if (!Number.isFinite(area) || area === 0) {
+    return false
+  }
+  return corners.every(
+    (corner, index) => side(corner, corners[(index + 1) % corners.length]!, point) * area >= 0,
   )
-  return !sides.some((value) => value < 0) || !sides.some((value) => value > 0)
 }
 
 const contains = (vertices: ArrayLike<number>, indices: ReadonlyArray<number>, point: Point) => {

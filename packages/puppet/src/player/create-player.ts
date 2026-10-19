@@ -17,6 +17,7 @@ import {
 } from './voice/mouth-shapes'
 import type {PuppetFraming} from './internal/layout-player-root'
 import {createAppAdjustments} from './internal/app-adjustments'
+import {isEffectActive} from './internal/effect-activity'
 import {createLookAndBreath} from './internal/look-and-breath'
 import type {LookTarget} from './look'
 
@@ -204,10 +205,11 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
       playback.isPlaying() ||
         playbacks.isPlaying() ||
         expressions.isAnimating() ||
-        eyeBlink !== undefined ||
+        isEffectActive(document, {
+          eyeBlinking: eyeBlink !== undefined,
+          shapingMouth: mouth !== undefined || voiceTarget !== undefined,
+        }) ||
         lookAndBreath.isAnimating(document) ||
-        mouth !== undefined ||
-        voiceTarget !== undefined ||
         isPoseFading(poseState) ||
         (physicsPreview &&
           (document.physics?.pendulums.length ?? 0) + (document.physics?.chains?.length ?? 0) > 0),
@@ -280,8 +282,8 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
     const selection = playback.select(motionId)
     switch (selection) {
       case 'changed':
-        applyFrame()
-        redraw()
+        // A pose the new motion selects starts fading.
+        refresh()
         return true
       case 'unchanged':
         return true
@@ -307,6 +309,8 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
     if (!destroyed) {
       applyFrame()
       redraw()
+      // A change without time passing can start a fade, such as a pose selection.
+      syncTicker()
     }
   }
   const resume = () => {
@@ -350,7 +354,8 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
       }
       playback.pause()
       playbacks.pause()
-      syncTicker()
+      // The frame stops sounding motions too, even when the ticker stops after this.
+      refresh()
     },
     play(playbackOptions) {
       if (destroyed) {
@@ -401,8 +406,7 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
         return
       }
       playback.seek(time)
-      applyFrame()
-      redraw()
+      refresh()
     },
     setBreath(enabled) {
       if (!destroyed && lookAndBreath.setBreath(enabled)) {
@@ -514,9 +518,7 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
     },
     setPlaybackSpeed(speed) {
       playback.setSpeed(speed)
-      if (!destroyed) {
-        syncTicker()
-      }
+      refresh()
     },
     setViewCamera(camera) {
       if (

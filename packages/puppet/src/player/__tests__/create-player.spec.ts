@@ -108,7 +108,8 @@ describe('createPlayer', () => {
     expect(application.stop).toHaveBeenCalledOnce()
     expect(application.start).toHaveBeenCalledOnce()
     expect(application.resize).toHaveBeenCalledOnce()
-    expect(application.render).toHaveBeenCalledTimes(3)
+    // Creation, pause (the stopped frame), seek and resize each draw once.
+    expect(application.render).toHaveBeenCalledTimes(4)
     expect(player.updateDocument(preparedDocument)).toBe(true)
     expect(player.updateDocument(replacementDocument)).toBe(false)
     expect(() => player.updateDocument(puppetDocument as PreparedPuppetDocument)).toThrow(

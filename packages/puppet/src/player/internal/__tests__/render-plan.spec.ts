@@ -306,4 +306,42 @@ describe('canReusePartResources', () => {
     expect(canReusePartResources(document, changedSource)).toBe(false)
     expect(canReusePartResources(document, changedGraph)).toBe(false)
   })
+
+  test('should reject a topology change of a part used only as an offscreen group mask', () => {
+    const createLayerMaskDocument = (maskSource: PuppetPart): PuppetDocument => ({
+      ...createDocument(),
+      parts: [createPart('member'), maskSource],
+      scene: {
+        roots: [
+          {
+            children: [{id: 'member', kind: 'part', locked: false, name: 'Member', visible: true}],
+            id: 'layer',
+            kind: 'group',
+            locked: false,
+            name: 'Layer',
+            properties: {clippingMaskIds: ['source'], offscreen: true},
+            visible: true,
+          },
+          {id: 'source', kind: 'part', locked: false, name: 'Source', visible: true},
+        ],
+      },
+    })
+    const triangle = createPart('source')
+    const quad: PuppetPart = {
+      ...triangle,
+      mesh: {
+        boundaryLoops: [[0, 1, 3, 2]],
+        indices: [0, 1, 2, 1, 3, 2],
+        uvs: [0, 0, 1, 0, 0, 1, 1, 1],
+        vertices: [0, 0, 1, 0, 0, 1, 1, 1],
+      },
+    }
+
+    expect(
+      canReusePartResources(createLayerMaskDocument(triangle), createLayerMaskDocument(triangle)),
+    ).toBe(true)
+    expect(
+      canReusePartResources(createLayerMaskDocument(triangle), createLayerMaskDocument(quad)),
+    ).toBe(false)
+  })
 })

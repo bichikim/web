@@ -11,6 +11,8 @@ interface CreateSelectedPlaybackOptions {
 
 /** The previously selected motion, still playing while it fades out after a switch. */
 interface OutgoingMotion {
+  /** Motion seconds since it started fading in; undefined when it started settled. */
+  readonly elapsed: number | undefined
   readonly loop: boolean
   readonly motion: PuppetMotion
   readonly remaining: number
@@ -79,70 +81,109 @@ const eventCallback =
     }
   }
 
-/** The previously selected motion, playing on while it fades out after a switch. */
-const createOutgoingMotion = (onEvent: ((event: MotionEvent) => void) | undefined) => {
-  let outgoing: OutgoingMotion | undefined
+/**
+ * Advances an outgoing motion by `deltaTime` seconds; `undefined` once it faded out. A motion
+ * frozen at speed 0 holds its pose and fades out over real time instead of never.
+ */
+const advanceOutgoing = (outgoing: OutgoingMotion, deltaTime: number) => {
+  const step = deltaTime * outgoing.speed
+  const next = stepTime(outgoing.motion, outgoing.time, step, outgoing.loop)
+  const remaining = outgoing.remaining - (outgoing.speed > 0 ? step : deltaTime)
   return {
-    active: () => outgoing !== undefined,
-    /** Advances it and returns the events it passed; drops it once faded out. */
+    next:
+      remaining > 0
+        ? {
+            ...outgoing,
+            elapsed: outgoing.elapsed === undefined ? undefined : outgoing.elapsed + step,
+            remaining,
+            time: next.time,
+          }
+        : undefined,
+    passed: getPassedEvents(outgoing.motion, outgoing.time, next.time, next.wrapped),
+  }
+}
+
+/**
+ * Previously selected motions, playing on while they fade out after switches. Each keeps its
+ * fade-in and ends no later than it would have on its own (Cubism keeps every fading entry).
+ */
+const createOutgoingMotion = (onEvent: ((event: MotionEvent) => void) | undefined) => {
+  let outgoing: ReadonlyArray<OutgoingMotion> = []
+  return {
+    active: () => outgoing.length > 0,
+    /** Advances them and returns the events they passed; drops those faded out. */
     advance(deltaTime: number) {
-      if (outgoing === undefined) {
+      if (outgoing.length === 0) {
         return undefined
       }
-      const step = Math.max(0, deltaTime) * outgoing.speed
-      const next = stepTime(outgoing.motion, outgoing.time, step, outgoing.loop)
-      const events = eventCallback(
-        onEvent,
-        outgoing.motion,
-        getPassedEvents(outgoing.motion, outgoing.time, next.time, next.wrapped),
+      const advanced = outgoing.map((motion) => ({
+        motion,
+        ...advanceOutgoing(motion, Math.max(0, deltaTime)),
+      }))
+      outgoing = advanced.flatMap(({next}) => next ?? [])
+      const events = advanced.map(({motion, passed}) =>
+        eventCallback(onEvent, motion.motion, passed),
       )
-      const remaining = outgoing.remaining - step
-      outgoing = remaining > 0 ? {...outgoing, remaining, time: next.time} : undefined
-      return events
+      return () => {
+        for (const emit of events) {
+          emit()
+        }
+      }
     },
     clear() {
-      outgoing = undefined
+      outgoing = []
     },
-    frames(): ReadonlyArray<MotionFrame> {
-      return outgoing === undefined
-        ? []
-        : [
-            {
-              blend: 'replace',
-              motion: outgoing.motion,
-              priority: 0,
-              rate: outgoing.speed,
-              remaining: outgoing.remaining,
-              time: outgoing.time,
-              weight: 1,
-            },
-          ]
-    },
-    /** Starts fading `current` out, if its motion has a fade-out time. */
+    /** Their frames; a paused player holds them still (rate 0, so their sounds stop too). */
+    frames: (paused: boolean): ReadonlyArray<MotionFrame> =>
+      outgoing.map((motion) => ({
+        blend: 'replace',
+        elapsed: motion.elapsed,
+        motion: motion.motion,
+        priority: 0,
+        rate: paused ? 0 : motion.speed,
+        remaining: motion.remaining,
+        time: motion.time,
+        weight: 1,
+      })),
+    /** Starts fading `current` out, if its motion has a fade-out time left. */
     release(current: Omit<OutgoingMotion, 'remaining'>) {
-      const remaining = getMotionFadeOutTime(current.motion)
-      outgoing = remaining > 0 ? {...current, remaining} : undefined
+      const left = current.loop ? Number.POSITIVE_INFINITY : current.motion.duration - current.time
+      const remaining = Math.min(getMotionFadeOutTime(current.motion), left)
+      if (remaining > 0) {
+        outgoing = [...outgoing, {...current, remaining}]
+      }
     },
   }
 }
 
-/** The selected motion's frame; a non-looping one fades out before its end. */
-const selectedFrame = (state: {
+/**
+ * The selected motion's frame, unless none is selected or it stopped. A non-looping one fades
+ * out before its end, except at a time reached by seeking or selecting until playback resumes
+ * (like the fade-in, which a seek skips).
+ */
+const selectedFrames = (state: {
   readonly elapsed: number | undefined
   readonly loop: boolean
-  readonly motion: PuppetMotion
-  readonly rate: number
+  readonly motion: PuppetMotion | undefined
+  readonly scrubbed: boolean
+  readonly speed: number
+  readonly status: MotionPlaybackStatus
   readonly time: number
-}): MotionFrame => ({
-  blend: 'replace',
-  elapsed: state.elapsed,
-  motion: state.motion,
-  priority: 0,
-  rate: state.rate,
-  remaining: state.loop ? undefined : state.motion.duration - state.time,
-  time: state.time,
-  weight: 1,
-})
+}): ReadonlyArray<MotionFrame> =>
+  state.motion === undefined || state.status === 'stopped'
+    ? []
+    : [
+        {
+          blend: 'replace',
+          elapsed: state.elapsed,
+          motion: state.motion,
+          priority: 0,
+          rate: state.status === 'playing' ? state.speed : 0,
+          remaining: state.loop || state.scrubbed ? undefined : state.motion.duration - state.time,
+          time: state.time,
+          weight: 1,
+        },
+      ]
 
 export const createSelectedPlayback = (
   options: CreateSelectedPlaybackOptions,
@@ -156,15 +197,22 @@ export const createSelectedPlayback = (
   let onComplete: (() => void) | undefined
   // Motion seconds since the selection started fading in; undefined when it started settled.
   let elapsed: number | undefined
+  // A time reached by seeking or selecting shows without fades until playback resumes.
+  let scrubbed = false
+  // A pause also holds the fading motions, even once a one-shot selection finished.
+  let held = false
   const outgoing = createOutgoingMotion(options.onEvent)
   const emit = eventCallback.bind(undefined, options.onEvent)
   return {
     advance(deltaTime) {
-      const outgoingEvents = outgoing.advance(deltaTime)
+      // Pausing holds the fading motions too.
+      const outgoingEvents = held ? undefined : outgoing.advance(deltaTime)
       if (status !== 'playing' || motion === undefined || speed === 0) {
         return outgoingEvents
       }
       const step = deltaTime * speed
+      // Once time passes again the motion fades as usual, even after a seek while playing.
+      scrubbed &&= step <= 0
       const completed = !loop && time + step >= motion.duration
       const next = stepTime(motion, time, step, loop)
       const passed = emit(motion, getPassedEvents(motion, time, next.time, next.wrapped))
@@ -192,26 +240,20 @@ export const createSelectedPlayback = (
         }
       }
     },
-    frames() {
-      const previous = outgoing.frames()
-      return motion === undefined || status === 'stopped'
-        ? previous
-        : [
-            ...previous,
-            selectedFrame({elapsed, loop, motion, rate: status === 'playing' ? speed : 0, time}),
-          ]
-    },
+    frames: () => [
+      ...outgoing.frames(held),
+      ...selectedFrames({elapsed, loop, motion, scrubbed, speed, status, time}),
+    ],
     getFrame() {
       const selected = status === 'stopped' ? undefined : motion
       return {duration: selected?.duration ?? 0, motionId: selected?.id ?? null, time}
     },
     // Without a motion nothing plays, so automatic effects that rest during motions keep running.
     isPlaying: () =>
-      (status === 'playing' && speed > 0 && motion !== undefined) || outgoing.active(),
+      (status === 'playing' && speed > 0 && motion !== undefined) || (!held && outgoing.active()),
     pause() {
-      if (status === 'playing') {
-        status = 'paused'
-      }
+      held = status !== 'stopped'
+      status = status === 'playing' ? 'paused' : status
     },
     play(settings) {
       const nextSpeed = validatePlaybackNumber(settings?.speed ?? speed, 'Speed')
@@ -220,6 +262,8 @@ export const createSelectedPlayback = (
         elapsed = 0
       }
       status = 'playing'
+      held = false
+      scrubbed = false
       speed = nextSpeed
       loop = settings?.loop ?? motion?.loop ?? true
       onComplete = settings?.onComplete
@@ -232,13 +276,15 @@ export const createSelectedPlayback = (
       }
       const nextSpeed = validatePlaybackNumber(settings.speed ?? 1, 'Speed')
       if (motion !== undefined && status === 'playing') {
-        outgoing.release({loop, motion, speed, time})
+        outgoing.release({elapsed, loop, motion, speed, time})
       }
       motion = nextMotion
       time = 0
       elapsed = 0
       loop = settings.loop ?? nextMotion.loop ?? true
       status = 'playing'
+      held = false
+      scrubbed = false
       speed = nextSpeed
       ;({onComplete} = settings)
       return true
@@ -246,11 +292,14 @@ export const createSelectedPlayback = (
     resume() {
       if (status !== 'stopped') {
         status = 'playing'
+        held = false
+        scrubbed = false
       }
     },
     seek(nextTime) {
       time = getSeekTime(motion, nextTime)
       elapsed = undefined
+      scrubbed = true
       outgoing.clear()
     },
     select(motionId) {
@@ -267,6 +316,7 @@ export const createSelectedPlayback = (
       }
       time = 0
       elapsed = undefined
+      scrubbed = true
       outgoing.clear()
       loop = nextMotion.loop ?? true
       onComplete = undefined

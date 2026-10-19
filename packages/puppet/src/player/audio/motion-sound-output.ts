@@ -32,10 +32,17 @@ const toAudioBuffer = (context: BaseAudioContext, sound: PuppetSound) => {
   return buffer
 }
 
-/** Plays motion sounds into `destination` in step with the motions' timelines. */
-export const createMotionSoundOutput = (destination: AudioNode): MotionSoundOutput => {
+/**
+ * Plays motion sounds into `destination` in step with the motions' timelines. A sound the audio
+ * context refuses is reported once through `onError` and skipped; the mouth still follows it.
+ */
+export const createMotionSoundOutput = (
+  destination: AudioNode,
+  onError?: (src: string) => void,
+): MotionSoundOutput => {
   const {context} = destination
   const buffers = new WeakMap<PuppetSound, AudioBuffer>()
+  const refused = new WeakSet<PuppetSound>()
   const voices = new Map<string, Voice>()
   const getBuffer = (sound: PuppetSound) => {
     const cached = buffers.get(sound)
@@ -53,15 +60,40 @@ export const createMotionSoundOutput = (destination: AudioNode): MotionSoundOutp
     voice?.gain.disconnect()
   }
   const start = (key: string, sound: PuppetSound, frame: MotionFrame, rate: number) => {
+    // The buffer comes first: a refused sound must not leave a connected node behind.
+    const buffer = getBuffer(sound)
     release(key)
     const gain = context.createGain()
     gain.connect(destination)
     const source = context.createBufferSource()
-    source.buffer = getBuffer(sound)
+    source.buffer = buffer
     source.playbackRate.value = rate
     source.connect(gain)
     source.start(0, frame.time)
     voices.set(key, {gain, offset: frame.time, rate, sound, source, startedAt: context.currentTime})
+  }
+  /** Keeps `key`'s voice playing `sound` at the frame; false when the context refused it. */
+  const keepVoice = (key: string, sound: PuppetSound, frame: MotionFrame, rate: number) => {
+    const voice = voices.get(key)
+    const position =
+      voice === undefined
+        ? undefined
+        : voice.offset + (context.currentTime - voice.startedAt) * voice.rate
+    if (
+      voice === undefined ||
+      voice.sound !== sound ||
+      voice.rate !== rate ||
+      Math.abs((position ?? 0) - frame.time) > MOTION_SOUND_DRIFT
+    ) {
+      try {
+        start(key, sound, frame, rate)
+      } catch {
+        refused.add(sound)
+        return false
+      }
+    }
+    voices.get(key)!.gain.gain.value = frame.weight
+    return true
   }
   return {
     stop() {
@@ -80,22 +112,16 @@ export const createMotionSoundOutput = (destination: AudioNode): MotionSoundOutp
         const occurrence = seen.get(frame.motion.id) ?? 0
         seen.set(frame.motion.id, occurrence + 1)
         const key = `${frame.motion.id}#${occurrence}`
-        if (sound !== undefined && rate > 0 && frame.time < sound.mono.length / sound.sampleRate) {
+        const sounding =
+          src !== undefined &&
+          sound !== undefined &&
+          !refused.has(sound) &&
+          rate > 0 &&
+          frame.time < sound.mono.length / sound.sampleRate
+        if (sounding && keepVoice(key, sound, frame, rate)) {
           active.add(key)
-          const voice = voices.get(key)
-          const position =
-            voice === undefined
-              ? undefined
-              : voice.offset + (context.currentTime - voice.startedAt) * voice.rate
-          if (
-            voice === undefined ||
-            voice.sound !== sound ||
-            voice.rate !== rate ||
-            Math.abs((position ?? 0) - frame.time) > MOTION_SOUND_DRIFT
-          ) {
-            start(key, sound, frame, rate)
-          }
-          voices.get(key)!.gain.gain.value = frame.weight
+        } else if (sounding) {
+          onError?.(src)
         }
       }
       for (const key of voices.keys()) {

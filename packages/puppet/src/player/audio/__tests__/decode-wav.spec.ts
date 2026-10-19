@@ -61,4 +61,14 @@ describe('decodeWav', () => {
     new DataView(silent.buffer).setUint32(24, 0, true)
     expect(decodeWav(silent)).toEqual({error: 'invalid-format', ok: false})
   })
+
+  test('should refuse sample rates and channel counts Web Audio cannot play', () => {
+    const at = (sampleRate: number, channels = 1) =>
+      decodeWav(encodeWav({channels: Array.from({length: channels}, () => RAMP), sampleRate}))
+    expect(at(2000)).toEqual({error: 'unsupported-encoding', ok: false})
+    expect(at(800_000)).toEqual({error: 'unsupported-encoding', ok: false})
+    expect(at(8000, 33)).toEqual({error: 'unsupported-encoding', ok: false})
+    expect(at(3000).ok).toBe(true)
+    expect(at(8000, 32).ok).toBe(true)
+  })
 })

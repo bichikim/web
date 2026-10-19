@@ -29,9 +29,18 @@ export const connectVoiceMouthShapes = (options: ConnectVoiceMouthShapesOptions)
     frame = requestAnimationFrame(analyze)
   }
   frame = requestAnimationFrame(analyze)
+  let connected = true
   return () => {
     cancelAnimationFrame(frame)
-    options.source.disconnect(analyser)
+    // The mouth closes even if the app already disconnected the source.
     options.player.setVowelWeights(undefined)
+    if (connected) {
+      connected = false
+      try {
+        options.source.disconnect(analyser)
+      } catch {
+        // Already disconnected by the app: nothing is left to undo.
+      }
+    }
   }
 }

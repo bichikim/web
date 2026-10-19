@@ -2,8 +2,14 @@ import {DEFAULT_PUPPET_POSE_FADE_TIME, type PuppetDocument, type PuppetPoseGroup
 import type {PuppetParameterValueMap} from '../../deformation'
 import {resolveParameterValue} from '../parameter-value'
 
-/** Entry opacities per pose group, indexed like the group's entries. */
-export type PoseState = ReadonlyMap<string, ReadonlyArray<number>>
+/** A pose group's selected entry and entry opacities, indexed like the group's entries. */
+export interface PoseGroupState {
+  readonly selected: number
+  readonly weights: ReadonlyArray<number>
+}
+
+/** Pose group states by group ID. */
+export type PoseState = ReadonlyMap<string, PoseGroupState>
 
 export interface EvaluatePoseOptions {
   readonly deltaTime: number
@@ -71,11 +77,11 @@ export const evaluatePose = (options: EvaluatePoseOptions): PoseEvaluation => {
     const weights = fadeGroup({
       deltaTime: options.deltaTime,
       group,
-      previous: options.poseState.get(group.id),
+      previous: options.poseState.get(group.id)?.weights,
       selected,
       settle: options.settle === true,
     })
-    return [{group, weights}]
+    return [{group, selected, weights}]
   })
   return {
     opacityByPartId: new Map(
@@ -85,10 +91,15 @@ export const evaluatePose = (options: EvaluatePoseOptions): PoseEvaluation => {
         ),
       ),
     ),
-    poseState: new Map(groups.map(({group, weights}) => [group.id, weights])),
+    poseState: new Map(groups.map(({group, selected, weights}) => [group.id, {selected, weights}])),
   }
 }
 
-/** Whether any group is between entries. */
+/**
+ * Whether any group has yet to show only its selected entry, including a selection made
+ * without time passing (the fade then starts on the next frame).
+ */
 export const isPoseFading = (state: PoseState) =>
-  [...state.values()].some((weights) => weights.some((weight) => weight > 0 && weight < 1))
+  [...state.values()].some(({selected, weights}) =>
+    weights.some((weight, index) => (index === selected ? weight < 1 : weight > 0)),
+  )

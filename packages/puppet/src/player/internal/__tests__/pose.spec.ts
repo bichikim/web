@@ -63,7 +63,7 @@ describe('evaluatePose', () => {
       parameterValues: {'arm-pose': 1},
       poseState: start.poseState,
     })
-    expect(halfway.poseState.get('arms')).toEqual([0.5, 0.5])
+    expect(halfway.poseState.get('arms')).toEqual({selected: 1, weights: [0.5, 0.5]})
     expect(isPoseFading(halfway.poseState)).toBe(true)
 
     const done = evaluatePose({
@@ -72,6 +72,25 @@ describe('evaluatePose', () => {
       parameterValues: {'arm-pose': 1},
       poseState: halfway.poseState,
     })
-    expect(done.poseState.get('arms')).toEqual([0, 1])
+    expect(done.poseState.get('arms')).toEqual({selected: 1, weights: [0, 1]})
+  })
+
+  test('should count a selection made without time passing as fading', () => {
+    const start = evaluatePose({
+      deltaTime: 0,
+      document,
+      parameterValues: {},
+      poseState: new Map(),
+      settle: true,
+    })
+    // An app pin or a paused seek changes the selector with no elapsed time.
+    const selected = evaluatePose({
+      deltaTime: 0,
+      document,
+      parameterValues: {'arm-pose': 1},
+      poseState: start.poseState,
+    })
+    expect(selected.poseState.get('arms')).toEqual({selected: 1, weights: [1, 0]})
+    expect(isPoseFading(selected.poseState)).toBe(true)
   })
 })

@@ -39,6 +39,9 @@ const SIZE_OFFSET = 4
 const WAVE_TAG_OFFSET = 8
 /** Offsets inside the `fmt ` chunk body. */
 const FORMAT = {bits: 14, channels: 2, sampleRate: 4} as const
+/** Web Audio's `createBuffer` limits; files outside them could not play. */
+const MAX_CHANNELS = 32
+const SAMPLE_RATE_RANGE = {maximum: 768_000, minimum: 3000} as const
 
 interface WavFormat {
   readonly bits: number
@@ -145,6 +148,13 @@ export const decodeWav = (bytes: ArrayBuffer | Uint8Array): DecodeWavResult => {
   }
   if (format.channels === 0 || format.sampleRate === 0) {
     return {error: 'invalid-format', ok: false}
+  }
+  if (
+    format.channels > MAX_CHANNELS ||
+    format.sampleRate < SAMPLE_RATE_RANGE.minimum ||
+    format.sampleRate > SAMPLE_RATE_RANGE.maximum
+  ) {
+    return {error: 'unsupported-encoding', ok: false}
   }
   if (chunks.data === undefined) {
     return {error: 'missing-data', ok: false}

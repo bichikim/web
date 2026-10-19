@@ -35,4 +35,24 @@ describe('connectVoiceMouthShapes', () => {
     expect(source.disconnect).toHaveBeenCalledWith(analyser)
     expect(player.setVowelWeights).toHaveBeenLastCalledWith(undefined)
   })
+
+  test('should close the mouth even when the app already disconnected the source', () => {
+    vi.stubGlobal('requestAnimationFrame', vi.fn())
+    vi.stubGlobal('cancelAnimationFrame', vi.fn())
+    const analyser = {context: {sampleRate: 16_000}, fftSize: 0, getFloatTimeDomainData: vi.fn()}
+    const source = {
+      connect: vi.fn(),
+      context: {createAnalyser: () => analyser},
+      // Like Chromium after the app's own `source.disconnect()`.
+      disconnect: vi.fn(() => {
+        throw new DOMException('not connected', 'InvalidAccessError')
+      }),
+    }
+    const player = {setVowelWeights: vi.fn()}
+    const disconnect = connectVoiceMouthShapes({player, source: source as unknown as AudioNode})
+    expect(() => disconnect()).not.toThrow()
+    expect(() => disconnect()).not.toThrow()
+    expect(player.setVowelWeights).toHaveBeenLastCalledWith(undefined)
+    expect(source.disconnect).toHaveBeenCalledOnce()
+  })
 })

@@ -122,6 +122,7 @@ const setUpRenderer = () => {
   return {
     alphas: () =>
       mocks.MeshSimple.mock.results.map((result) => (result.value as {alpha: number}).alpha),
+    application,
     tick: (seconds: number) => {
       for (const [callback] of application.ticker.add.mock.calls) {
         ;(callback as (ticker: {deltaMS: number}) => void)({deltaMS: seconds * 1000})
@@ -164,5 +165,59 @@ test('should fade expressions and pose entries and hit-test areas', async () => 
   expect(player.hitTest({x: 55, y: 5})).toBe('body')
   expect(player.hitTest({x: 15, y: 5})).toBeUndefined()
 
+  player.destroy()
+})
+
+test('should start a pose fade the app selects while nothing moves', async () => {
+  const renderer = setUpRenderer()
+  const player = await createPlayer({
+    canvas: globalThis.document.createElement('canvas'),
+    document: prepare(presetDocument),
+  })
+  // Without motions or effects the ticker rests after a frame.
+  renderer.tick(0.1)
+  expect(renderer.application.stop).toHaveBeenCalledOnce()
+  expect(renderer.application.start).not.toHaveBeenCalled()
+
+  player.setParameterValue('pose', 1)
+  expect(renderer.application.start).toHaveBeenCalledOnce()
+  renderer.tick(0.5)
+  expect(renderer.alphas()).toEqual([0, 1, 1])
+
+  player.destroy()
+})
+
+test('should fade to the pose a paused seek selects', async () => {
+  const renderer = setUpRenderer()
+  const player = await createPlayer({
+    canvas: globalThis.document.createElement('canvas'),
+    document: prepare({
+      ...presetDocument,
+      motions: [
+        {
+          duration: 1,
+          id: 'raise',
+          tracks: [
+            {
+              keyframes: [
+                {time: 0, value: 0},
+                {time: 1, value: 1},
+              ],
+              kind: 'parameter',
+              parameterId: 'pose',
+            },
+          ],
+        },
+      ],
+    }),
+  })
+  player.pause()
+  renderer.tick(0.1)
+  renderer.application.start.mockClear()
+  player.seek(1)
+  // Scrubbing changes the pose selector without time passing; the ticker must run the fade.
+  expect(renderer.application.start).toHaveBeenCalledOnce()
+  renderer.tick(0.5)
+  expect(renderer.alphas()).toEqual([0, 1, 1])
   player.destroy()
 })

@@ -128,6 +128,100 @@ describe('motion fades', () => {
     expect(playback.frames().map((frame) => frame.motion.id)).toEqual(['second'])
   })
 
+  test('should fade a switched-away motion from where its own fade stood', () => {
+    const constant = (id: string, value: number): PuppetMotion => ({
+      duration: 2,
+      fadeInTime: 0.5,
+      fadeOutTime: 0.5,
+      id,
+      loop: false,
+      tracks: [track([{time: 0, value}])],
+    })
+    const motions = [constant('a', 8), constant('b', -8), constant('c', 4)]
+    const mix = (playback: ReturnType<typeof createSelectedPlayback>) =>
+      mixMotionFrames({document: document(motions), frames: playback.frames()}).parameterValues.p!
+
+    // Near its end a one-shot has almost faded out; switching must not bring it back.
+    const ending = createSelectedPlayback({motions})
+    ending.advance(1.95)
+    const before = mix(ending)
+    ending.playMotion('b')
+    expect(mix(ending)).toBeCloseTo(before, 6)
+    expect(ending.frames()[0]!.remaining).toBeCloseTo(0.05)
+
+    // A second switch keeps the first outgoing motion fading instead of dropping it.
+    const twice = createSelectedPlayback({motions})
+    twice.advance(0.5)
+    twice.playMotion('b')
+    twice.advance(0.05)
+    const fading = mix(twice)
+    twice.playMotion('c')
+    expect(twice.frames().map((frame) => frame.motion.id)).toEqual(['a', 'b', 'c'])
+    expect(mix(twice)).toBeCloseTo(fading, 6)
+  })
+
+  test('should fade a one-shot out at its end after a seek while playing', () => {
+    const once: PuppetMotion = {...fading, fadeOutTime: 0.5, loop: false}
+    const playback = createSelectedPlayback({motions: [once]})
+    playback.seek(0.1)
+    playback.advance(1.85)
+    const near = mixMotionFrames({document: document([once]), frames: playback.frames()})
+    expect(Math.abs(near.parameterValues.p!)).toBeLessThan(8)
+    playback.advance(0.1)
+    expect(
+      mixMotionFrames({document: document([once]), frames: playback.frames()}).parameterValues.p,
+    ).toBeCloseTo(0)
+  })
+
+  test('should hold fading motions while paused and fade frozen ones over real time', () => {
+    const second: PuppetMotion = {...fading, id: 'second'}
+    const paused = createSelectedPlayback({motions: [fading, second]})
+    paused.advance(1)
+    paused.playMotion('second')
+    paused.pause()
+    paused.advance(0.2)
+    const [outgoing] = paused.frames()
+    expect([outgoing!.motion.id, outgoing!.rate, outgoing!.remaining]).toEqual(['fading', 0, 0.5])
+    expect(paused.isPlaying()).toBe(false)
+
+    const frozen = createSelectedPlayback({motions: [fading, second]})
+    frozen.advance(1)
+    frozen.setSpeed(0)
+    frozen.playMotion('second')
+    frozen.advance(0.25)
+    const [held] = frozen.frames()
+    expect([held!.motion.id, held!.time, held!.remaining]).toEqual(['fading', 1, 0.25])
+    frozen.advance(0.25)
+    expect(frozen.frames().map((frame) => frame.motion.id)).toEqual(['second'])
+  })
+
+  test('should hold fading motions on pause after a one-shot selection finished', () => {
+    const short: PuppetMotion = {duration: 0.2, id: 'short', loop: false, tracks: []}
+    const playback = createSelectedPlayback({motions: [fading, short]})
+    playback.advance(0.1)
+    playback.playMotion('short')
+    playback.advance(0.3)
+    playback.pause()
+    const before = playback.frames()[0]!
+    playback.advance(0.2)
+    const after = playback.frames()[0]!
+    expect([after.motion.id, after.rate, after.time]).toEqual(['fading', 0, before.time])
+    expect(playback.isPlaying()).toBe(false)
+  })
+
+  test('should show a scrubbed one-shot at full weight until playback resumes', () => {
+    const once: PuppetMotion = {...fading, fadeOutTime: 0.5, loop: false}
+    const playback = createSelectedPlayback({motions: [once]})
+    playback.pause()
+    playback.seek(1.9)
+    const at = () => mixMotionFrames({document: document([once]), frames: playback.frames()})
+    expect(at().parameterValues.p).toBeCloseTo(sampleKeyframes(once.tracks[0]!.keyframes, 1.9), 9)
+    playback.resume()
+    expect(Math.abs(at().parameterValues.p!)).toBeLessThan(
+      Math.abs(sampleKeyframes(once.tracks[0]!.keyframes, 1.9)),
+    )
+  })
+
   test('should default looping to the motion and fade a layered playback out on request', () => {
     const once: PuppetMotion = {...fading, loop: false}
     const playbacks = createMotionPlaybacks({motions: [once], onChange: () => undefined})

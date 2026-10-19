@@ -38,7 +38,7 @@ export const createLookAndBreath = (): LookAndBreath => {
       return breathTime === undefined ? looked : applyBreath(document, looked, breathTime)
     },
     isAnimating: (document) =>
-      breathTime !== undefined ||
+      (breathTime !== undefined && (document.breath?.length ?? 0) > 0) ||
       ((document.look?.length ?? 0) > 0 && !isLookSettled(lookPoint, lookTarget)),
     setBreath(enabled) {
       if (enabled === (breathTime !== undefined)) {

@@ -42,4 +42,13 @@ describe('findHitArea', () => {
     expect(hit(80, 80)).toBeUndefined()
     expect(hit(0, 10)).toBe('body')
   })
+
+  test('should not hit a part whose triangles collapsed or are not finite', () => {
+    const collapsed = (point: ReadonlyArray<number>) => (id: string) =>
+      id === 'face' ? point : vertices[id]
+    const at = (shape: (id: string) => ReadonlyArray<number> | undefined) =>
+      findHitArea({document, paintOrder: ['face'], point: {x: 90, y: 90}, vertices: shape})
+    expect(at(collapsed([5, 5, 5, 5, 5, 5, 5, 5]))).toBeUndefined()
+    expect(at(collapsed([Number.NaN, 0, 40, 0, 20, 20, 40, 20]))).toBeUndefined()
+  })
 })

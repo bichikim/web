@@ -371,10 +371,12 @@ export const getPartRenderPlans = (
 const valuesEqual = (first: ReadonlyArray<number>, second: ReadonlyArray<number>) =>
   first.length === second.length && first.every((value, index) => value === second[index])
 
+/**
+ * 파트 리소스를 그대로 재사용할 수 있는지 판단한다. 마스크 메시는 생성 시점의 indices/uvs를
+ * 복사하므로, 파트 마스크와 offscreen 그룹 마스크의 소스 파트는 메시 토폴로지가 같아야 한다.
+ */
 export const canReusePartResources = (document: PuppetDocument, nextDocument: PuppetDocument) => {
-  const maskPartIds = new Set(
-    nextDocument.parts.flatMap((part) => part.properties?.clippingMaskIds ?? []),
-  )
+  const {maskPartIds} = getStaticMaskStructure(nextDocument)
 
   return (
     nextDocument.parts.length === document.parts.length &&

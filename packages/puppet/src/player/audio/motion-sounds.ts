@@ -23,7 +23,11 @@ export interface MotionSounds {
 export const createMotionSounds = (options: CreateMotionSoundsOptions = {}): MotionSounds => {
   const loader = createMotionSoundLoader({onError: options.onError})
   const output =
-    options.destination === undefined ? undefined : createMotionSoundOutput(options.destination)
+    options.destination === undefined
+      ? undefined
+      : createMotionSoundOutput(options.destination, (src) =>
+          options.onError?.({reason: 'playback-failed', src}),
+        )
   return {
     load: (document) => loader.load(document),
     mouth: (frames) => getMotionSoundMouth(frames, loader.get),

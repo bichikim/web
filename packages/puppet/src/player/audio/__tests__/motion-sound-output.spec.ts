@@ -88,6 +88,21 @@ describe('createMotionSoundOutput', () => {
     expect(context.createBuffer).toHaveBeenCalledTimes(1)
   })
 
+  test('should skip and report a sound the context refuses instead of throwing', () => {
+    const {context, gains, sources} = createContext()
+    context.createBuffer.mockImplementation(() => {
+      throw new DOMException('rate out of range', 'NotSupportedError')
+    })
+    const onError = vi.fn()
+    const output = createMotionSoundOutput({context} as unknown as AudioNode, onError)
+    expect(() => output.sync([frame(0.5)], getSound)).not.toThrow()
+    output.sync([frame(0.6)], getSound)
+    expect(onError).toHaveBeenCalledOnce()
+    expect(onError).toHaveBeenCalledWith('talk.wav')
+    // Nothing was connected for the refused sound.
+    expect([gains.length, sources.length]).toEqual([0, 0])
+  })
+
   test('should stop when paused, past the sound or no longer playing', () => {
     const {context, sources} = createContext()
     const output = createMotionSoundOutput({context} as unknown as AudioNode)
