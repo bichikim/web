@@ -47,13 +47,12 @@ describe('resolvePPlaylist', () => {
     ).toBe(DEFAULT_TRACKS)
   })
 
-  it('should preserve a custom-only selection when every saved custom track is missing', () => {
+  it.each([
+    {label: 'custom-only', storedTrackIds: [MISSING_CUSTOM_TRACK_ID]},
+    {label: 'mixed missing', storedTrackIds: [MISSING_CUSTOM_TRACK_ID, 'obsolete-bundled-track']},
+  ])('should preserve an unresolved custom selection ($label)', ({storedTrackIds}) => {
     expect(
-      resolvePPlaylist({
-        defaultTracks: DEFAULT_TRACKS,
-        storedTrackIds: [MISSING_CUSTOM_TRACK_ID],
-        tracks: TRACKS,
-      }),
+      resolvePPlaylist({defaultTracks: DEFAULT_TRACKS, storedTrackIds, tracks: TRACKS}),
     ).toEqual([])
   })
 })
