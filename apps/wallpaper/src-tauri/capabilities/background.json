@@ -1,0 +1,9 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "background",
+  "description": "Local wallpaper renderer access to desktop surfaces. Remote websites receive no capabilities.",
+  "platforms": ["macOS", "windows"],
+  "local": true,
+  "webviews": ["wallpaper-*"],
+  "permissions": ["core:default"]
+}
