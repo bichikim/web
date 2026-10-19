@@ -75,9 +75,10 @@ test('should render the editor frame while recovery is pending without saving it
   fireEvent.click(view.getByRole('button', {name: '타임라인 FPS 증가'}))
   await saved
   expect(write).toHaveBeenCalledTimes(1)
-  expect(write).toHaveBeenCalledWith(
-    expect.objectContaining({framesPerSecond: 25} satisfies Partial<PuppetDocument>),
-  )
+  expect(write).toHaveBeenCalledWith({
+    ...document,
+    motions: [{...document.motions[0], framesPerSecond: 25}, ...document.motions.slice(1)],
+  })
   expect(loadInitialDocument).not.toHaveBeenCalled()
   expect(view.container).not.toHaveTextContent('새로고침 복구 저장됨')
   expect(view.container).not.toHaveTextContent('작업 복원됨')
