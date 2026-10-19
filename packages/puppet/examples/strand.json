@@ -11,7 +11,7 @@
       "texture": {
         "width": 480,
         "height": 44,
-        "src": "data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%22480%22%20height%3D%2244%22%3E%3Crect%20width%3D%22480%22%20height%3D%2244%22%20fill%3D%22%23bb86fc%22/%3E%3Cpath%20d%3D%22M0%209H480M0%2022H480M0%2035H480%22%20stroke%3D%22%23f1dfff%22%20stroke-width%3D%222%22/%3E%3C/svg%3E"
+        "src": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAeAAAAAsCAYAAAC9iWvuAAAAx0lEQVR42u3dsQ2AIBRF0YdhdlZxCDdgCWawl+AG2lmYc0aguXkF+eVo1woA8KnNEwCAAAOAAAMAAgwAAgwACDAACDAA8KycY/kHDAAWMAD8X+379AoAYAEDgAADAAIMAAIMAAgwAAgwACDAACDAACDAngAABBgA4hgDAGABA0AcYwAALGAAEGAAQIABQIABAAEGAAEGAAEGAAQYAAQYABBgAIhjDACABQwAcYwBALCAAUCAAUCAAQABBgABBgAEGAAEGAB4cwPzSxZL0fCwKAAAAABJRU5ErkJggg=="
       },
       "mesh": {
         "vertices": [
@@ -319,6 +319,13 @@
       "minimum": -30,
       "maximum": 30,
       "defaultValue": 0
+    },
+    {
+      "id": "sway",
+      "name": "⑤ 흔들기 (물리 입력)",
+      "minimum": -10,
+      "maximum": 10,
+      "defaultValue": 0
     }
   ],
   "parameterBindings": [
@@ -487,5 +494,89 @@
       ]
     }
   ],
-  "motions": []
+  "motions": [],
+  "physics": {
+    "gravity": [1, 0],
+    "pendulums": [],
+    "chains": [
+      {
+        "id": "strand",
+        "inputs": [
+          {
+            "axis": "x",
+            "parameterId": "sway",
+            "weight": 1
+          }
+        ],
+        "normalization": {
+          "angle": {
+            "center": 0,
+            "maximum": 10,
+            "minimum": -10
+          },
+          "position": {
+            "center": 0,
+            "maximum": 10,
+            "minimum": -10
+          }
+        },
+        "outputs": [
+          {
+            "axis": "angle",
+            "parameterId": "root-angle",
+            "pendulumIndex": 0,
+            "scale": 38,
+            "weight": 1
+          },
+          {
+            "axis": "angle",
+            "parameterId": "middle-angle",
+            "pendulumIndex": 1,
+            "scale": 38,
+            "weight": 1
+          },
+          {
+            "axis": "angle",
+            "parameterId": "lower-angle",
+            "pendulumIndex": 2,
+            "scale": 38,
+            "weight": 1
+          },
+          {
+            "axis": "angle",
+            "parameterId": "tip-angle",
+            "pendulumIndex": 3,
+            "scale": 38,
+            "weight": 1
+          }
+        ],
+        "pendulums": [
+          {
+            "acceleration": 1.5,
+            "length": 10,
+            "mobility": 0.95,
+            "reaction": 0.9
+          },
+          {
+            "acceleration": 1.5,
+            "length": 10,
+            "mobility": 0.92,
+            "reaction": 0.9
+          },
+          {
+            "acceleration": 1.5,
+            "length": 10,
+            "mobility": 0.89,
+            "reaction": 0.9
+          },
+          {
+            "acceleration": 1.5,
+            "length": 10,
+            "mobility": 0.86,
+            "reaction": 0.9
+          }
+        ]
+      }
+    ]
+  }
 }
