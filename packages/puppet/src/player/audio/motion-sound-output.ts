@@ -75,16 +75,13 @@ export const createMotionSoundOutput = (
   /** Keeps `key`'s voice playing `sound` at the frame; false when the context refused it. */
   const keepVoice = (key: string, sound: PuppetSound, frame: MotionFrame, rate: number) => {
     const voice = voices.get(key)
-    const position =
-      voice === undefined
-        ? undefined
-        : voice.offset + (context.currentTime - voice.startedAt) * voice.rate
-    if (
-      voice === undefined ||
-      voice.sound !== sound ||
-      voice.rate !== rate ||
-      Math.abs((position ?? 0) - frame.time) > MOTION_SOUND_DRIFT
-    ) {
+    // A suspended context's clock stands still, so its drift says nothing about the voice.
+    const drifted =
+      voice !== undefined &&
+      context.state === 'running' &&
+      Math.abs(voice.offset + (context.currentTime - voice.startedAt) * voice.rate - frame.time) >
+        MOTION_SOUND_DRIFT
+    if (voice === undefined || voice.sound !== sound || voice.rate !== rate || drifted) {
       try {
         start(key, sound, frame, rate)
       } catch {

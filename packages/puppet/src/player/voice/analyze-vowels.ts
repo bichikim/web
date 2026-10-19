@@ -191,8 +191,10 @@ const weighVowels = ([first, second]: Formants) => {
   return scores.map((score) => (total > 0 ? score / total : 0))
 }
 
-/** Voice activity from the frame's mean power in dBFS. */
-/** Loudness of a frame from 0 (silence) to 1, voiced or not (Cubism's volume lip sync). */
+/**
+ * Loudness of a frame from 0 (silence) to 1, voiced or not (Cubism's volume lip sync): its mean
+ * power in dBFS mapped linearly between `silenceDecibels` and `fullDecibels`.
+ */
 export const measureVoiceLevel = (
   samples: ArrayLike<number>,
   options: AnalyzeVowelsOptions = {},

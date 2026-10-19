@@ -1,4 +1,12 @@
-export {decodeWav, type DecodeWavError, type DecodeWavResult, type PuppetSound} from './decode-wav'
+export {
+  decodeWav,
+  type DecodeWavError,
+  type DecodeWavResult,
+  type PuppetSound,
+  readWavHeader,
+  type ReadWavHeaderResult,
+  type WavHeader,
+} from './decode-wav'
 export type {MotionSoundError} from './motion-sound-loader'
 export {
   getMotionSoundMouth,

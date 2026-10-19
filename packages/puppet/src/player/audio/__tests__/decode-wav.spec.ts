@@ -1,6 +1,6 @@
 import {describe, expect, test} from 'vitest'
 
-import {decodeWav} from '../decode-wav'
+import {decodeWav, readWavHeader} from '../decode-wav'
 import {encodeWav} from './support/encode-wav'
 
 const RAMP = [-1, -0.5, -0.25, 0, 0.25, 0.5, 0.75]
@@ -70,5 +70,58 @@ describe('decodeWav', () => {
     expect(at(8000, 33)).toEqual({error: 'unsupported-encoding', ok: false})
     expect(at(3000).ok).toBe(true)
     expect(at(8000, 32).ok).toBe(true)
+  })
+
+  test('should read the same validity and length from the header as decoding', () => {
+    const wav = encodeWav({channels: [RAMP], sampleRate: 8000})
+    const stereo = encodeWav({
+      channels: [RAMP, RAMP],
+      extraChunks: [{id: 'LIST', size: 3}],
+      sampleRate: 8000,
+    })
+    const patched = (offset: number, value: number, size: 16 | 32) => {
+      const bytes = wav.slice()
+      const view = new DataView(bytes.buffer)
+      if (size === 16) {
+        view.setUint16(offset, value, true)
+      } else {
+        view.setUint32(offset, value, true)
+      }
+      return bytes
+    }
+    const fixtures = [
+      ...([8, 16, 24, 32] as const).map((bits) =>
+        encodeWav({bits, channels: [RAMP], sampleRate: 8000}),
+      ),
+      encodeWav({channels: [RAMP, RAMP], extensible: true, float: true, sampleRate: 44_100}),
+      encodeWav({bits: 24, channels: [RAMP], extensible: true, sampleRate: 48_000}),
+      stereo,
+      stereo.subarray(0, -1),
+      new Uint8Array(8),
+      wav.subarray(0, 12),
+      wav.subarray(0, 36),
+      patched(20, 2, 16),
+      patched(24, 0, 32),
+      encodeWav({channels: [RAMP], sampleRate: 2000}),
+      encodeWav({channels: [RAMP], sampleRate: 800_000}),
+      encodeWav({channels: Array.from({length: 33}, () => RAMP), sampleRate: 8000}),
+      encodeWav({channels: Array.from({length: 32}, () => RAMP), sampleRate: 3000}),
+    ]
+    for (const bytes of fixtures) {
+      const decoded = decodeWav(bytes)
+      const header = readWavHeader(bytes)
+      if (decoded.ok && header.ok) {
+        expect(header.header).toMatchObject({
+          channels: decoded.sound.channels.length,
+          duration: decoded.sound.mono.length / decoded.sound.sampleRate,
+          frames: decoded.sound.mono.length,
+          sampleRate: decoded.sound.sampleRate,
+        })
+      } else {
+        expect(header).toEqual(decoded)
+      }
+    }
+    // Both outcomes are covered.
+    expect(fixtures.filter((bytes) => readWavHeader(bytes).ok)).toHaveLength(9)
   })
 })

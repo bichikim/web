@@ -1,4 +1,4 @@
-import {decodeWav, type DecodeWavError} from '../../player/audio/decode-wav'
+import {type DecodeWavError, readWavHeader} from '../../player/audio/decode-wav'
 
 const BASE64_CHUNK = 0x8000
 const DATA_URL = /^data:[^,]*;base64,(?<payload>.*)$/su
@@ -26,19 +26,12 @@ const toBase64 = (bytes: Uint8Array) => {
 const fromBase64 = (text: string) =>
   Uint8Array.from(atob(text), (character) => character.codePointAt(0)!)
 
-const getDuration = (bytes: Uint8Array) => {
-  const decoded = decodeWav(bytes)
-  return decoded.ok
-    ? ({duration: decoded.sound.mono.length / decoded.sound.sampleRate, ok: true} as const)
-    : ({error: decoded.error, ok: false} as const)
-}
-
 /** Checks that a chosen file is a WAV the players can decode and embeds it as a data URL. */
 export const readMotionSoundFile = async (file: Blob): Promise<MotionSoundFileResult> => {
   const bytes = new Uint8Array(await file.arrayBuffer())
-  const result = getDuration(bytes)
+  const result = readWavHeader(bytes)
   return result.ok
-    ? {duration: result.duration, ok: true, src: `data:audio/wav;base64,${toBase64(bytes)}`}
+    ? {duration: result.header.duration, ok: true, src: `data:audio/wav;base64,${toBase64(bytes)}`}
     : {message: MESSAGES[result.error], ok: false}
 }
 
@@ -49,8 +42,8 @@ export const getEmbeddedSoundDuration = (src: string): number | undefined => {
     return undefined
   }
   try {
-    const result = getDuration(fromBase64(base64))
-    return result.ok ? result.duration : undefined
+    const result = readWavHeader(fromBase64(base64))
+    return result.ok ? result.header.duration : undefined
   } catch {
     return undefined
   }

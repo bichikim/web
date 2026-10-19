@@ -31,25 +31,31 @@ const fetchBytes = async (src: string) => {
   return response.arrayBuffer()
 }
 
-/** Loads each distinct motion sound once, in the background. */
+/**
+ * Loads each distinct motion sound once, in the background. A failed fetch is reported once and
+ * retried on the next `load` that still uses the sound; an undecodable file is not retried.
+ */
 export const createMotionSoundLoader = (
   options: CreateMotionSoundLoaderOptions = {},
 ): MotionSoundLoader => {
   const sounds = new Map<string, PuppetSound>()
-  const requested = new Set<string>()
+  /** The current attempt per used `src`; a settled attempt that is no longer current is ignored. */
+  const requested = new Map<string, object>()
   const read = options.fetchBytes ?? fetchBytes
-  const request = async (src: string) => {
+  const request = async (src: string, attempt: object) => {
     let bytes: ArrayBuffer
     try {
       bytes = await read(src)
     } catch {
-      if (requested.has(src)) {
+      if (requested.get(src) === attempt) {
+        // Forgetting the attempt lets the next `load` retry a temporary failure.
+        requested.delete(src)
         options.onError?.({reason: 'fetch-failed', src})
       }
       return
     }
     // The document dropped this sound while it loaded.
-    if (!requested.has(src)) {
+    if (requested.get(src) !== attempt) {
       return
     }
     const decoded = decodeWav(bytes)
@@ -63,7 +69,7 @@ export const createMotionSoundLoader = (
     get: (src) => sounds.get(src),
     load(document) {
       const used = new Set(document.motions.flatMap((motion) => motion.sound?.src ?? []))
-      for (const src of requested) {
+      for (const src of requested.keys()) {
         if (!used.has(src)) {
           requested.delete(src)
           sounds.delete(src)
@@ -71,8 +77,9 @@ export const createMotionSoundLoader = (
       }
       for (const src of used) {
         if (!requested.has(src)) {
-          requested.add(src)
-          request(src).catch(() => undefined)
+          const attempt = {}
+          requested.set(src, attempt)
+          request(src, attempt).catch(() => undefined)
         }
       }
     },

@@ -119,15 +119,31 @@ const findChunks = (view: DataView) => {
   return {data, format}
 }
 
-/**
- * Decodes a linear PCM (8-bit unsigned, 16/24/32-bit signed) or 32-bit float WAV file,
- * including `WAVE_FORMAT_EXTENSIBLE`. A truncated data chunk keeps its whole sample frames.
- */
-export const decodeWav = (bytes: ArrayBuffer | Uint8Array): DecodeWavResult => {
-  const view =
-    bytes instanceof Uint8Array
-      ? new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength)
-      : new DataView(bytes)
+/** A WAV file's playable format and length, read from its `fmt ` and `data` chunk headers. */
+export interface WavHeader {
+  readonly bits: number
+  readonly channels: number
+  /** Byte offset of the first sample frame. */
+  readonly dataOffset: number
+  /** Seconds of whole sample frames, `frames / sampleRate`. */
+  readonly duration: number
+  /** `FLOAT` (3) or `PCM` (1), after resolving `WAVE_FORMAT_EXTENSIBLE`. */
+  readonly encoding: number
+  /** Whole sample frames in the (possibly truncated) data chunk. */
+  readonly frames: number
+  readonly sampleRate: number
+}
+
+export type ReadWavHeaderResult =
+  | {readonly header: WavHeader; readonly ok: true}
+  | {readonly error: DecodeWavError; readonly ok: false}
+
+const toView = (bytes: ArrayBuffer | Uint8Array) =>
+  bytes instanceof Uint8Array
+    ? new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength)
+    : new DataView(bytes)
+
+const readHeader = (view: DataView): ReadWavHeaderResult => {
   if (
     view.byteLength < RIFF_HEADER ||
     tag(view, 0) !== 'RIFF' ||
@@ -159,12 +175,42 @@ export const decodeWav = (bytes: ArrayBuffer | Uint8Array): DecodeWavResult => {
   if (chunks.data === undefined) {
     return {error: 'missing-data', ok: false}
   }
-  const sampleBytes = format.bits / BITS_PER_BYTE
-  const frameBytes = sampleBytes * format.channels
-  const length = Math.floor(chunks.data.size / frameBytes)
-  const read = sampleReader(view, format)
-  const start = chunks.data.offset
-  const channels = Array.from({length: format.channels}, (_, channel) =>
+  const frames = Math.floor(chunks.data.size / ((format.bits / BITS_PER_BYTE) * format.channels))
+  return {
+    header: {
+      ...format,
+      dataOffset: chunks.data.offset,
+      duration: frames / format.sampleRate,
+      frames,
+    },
+    ok: true,
+  }
+}
+
+/**
+ * Reads a WAV file's format and length without decoding its samples. It accepts and rejects
+ * exactly the files `decodeWav` does, with the same errors.
+ */
+export const readWavHeader = (bytes: ArrayBuffer | Uint8Array): ReadWavHeaderResult =>
+  readHeader(toView(bytes))
+
+/**
+ * Decodes a linear PCM (8-bit unsigned, 16/24/32-bit signed) or 32-bit float WAV file,
+ * including `WAVE_FORMAT_EXTENSIBLE`. A truncated data chunk keeps its whole sample frames.
+ */
+export const decodeWav = (bytes: ArrayBuffer | Uint8Array): DecodeWavResult => {
+  const view = toView(bytes)
+  const result = readHeader(view)
+  if (!result.ok) {
+    return result
+  }
+  const {header} = result
+  const sampleBytes = header.bits / BITS_PER_BYTE
+  const frameBytes = sampleBytes * header.channels
+  const length = header.frames
+  const read = sampleReader(view, header)
+  const start = header.dataOffset
+  const channels = Array.from({length: header.channels}, (_, channel) =>
     Float32Array.from({length}, (_, frame) =>
       read(start + frame * frameBytes + channel * sampleBytes),
     ),
@@ -177,5 +223,5 @@ export const decodeWav = (bytes: ArrayBuffer | Uint8Array): DecodeWavResult => {
           (_, frame) =>
             channels.reduce((sum, channel) => sum + channel[frame]!, 0) / channels.length,
         )
-  return {ok: true, sound: {channels, mono, sampleRate: format.sampleRate}}
+  return {ok: true, sound: {channels, mono, sampleRate: header.sampleRate}}
 }

@@ -44,6 +44,7 @@ const createContext = () => {
       return gain
     },
     currentTime: 0,
+    state: 'running' as AudioContextState,
   }
   return {context, gains, sources}
 }
@@ -86,6 +87,25 @@ describe('createMotionSoundOutput', () => {
     ])
     // The buffer is made once per sound.
     expect(context.createBuffer).toHaveBeenCalledTimes(1)
+  })
+
+  test('should not restart for drift while the context is suspended', () => {
+    const {context, sources} = createContext()
+    context.state = 'suspended'
+    const output = createMotionSoundOutput({context} as unknown as AudioNode)
+    // A missing voice still starts so it plays once the context resumes.
+    output.sync([frame(0.2)], getSound)
+    // The frozen clock looks like drift, but the voice is kept.
+    output.sync([frame(1)], getSound)
+    output.sync([frame(1.5)], getSound)
+    expect(sources).toEqual([{offset: 0.2, rate: 1, stopped: false}])
+    // Once running, the real drift restarts the voice at the motion time.
+    context.state = 'running'
+    output.sync([frame(1.6)], getSound)
+    expect(sources.map(({offset, stopped}) => [offset, stopped])).toEqual([
+      [0.2, true],
+      [1.6, false],
+    ])
   })
 
   test('should skip and report a sound the context refuses instead of throwing', () => {

@@ -37,4 +37,35 @@ describe('createMotionSoundLoader', () => {
     loader.load(document('a.wav', 'c.wav'))
     expect(fetchBytes.mock.calls.map(([src]) => src)).toEqual(['a.wav', 'b.wav', 'c.wav', 'a.wav'])
   })
+
+  test('should retry a failed fetch on the next load and report each failure once', async () => {
+    const fetchBytes = vi
+      .fn<(src: string) => Promise<ArrayBuffer>>()
+      .mockRejectedValueOnce(new Error('offline'))
+      .mockRejectedValueOnce(new Error('offline'))
+      .mockResolvedValue(wav.slice().buffer)
+    const onError = vi.fn()
+    const loader = createMotionSoundLoader({fetchBytes, onError})
+    loader.load(document('a.wav'))
+    await vi.waitFor(() => expect(onError).toHaveBeenCalledTimes(1))
+    loader.load(document('a.wav'))
+    await vi.waitFor(() => expect(onError).toHaveBeenCalledTimes(2))
+    expect(onError).toHaveBeenLastCalledWith({reason: 'fetch-failed', src: 'a.wav'})
+    loader.load(document('a.wav'))
+    await vi.waitFor(() => expect(loader.get('a.wav')).toBeDefined())
+    // A loaded sound is not fetched again.
+    loader.load(document('a.wav'))
+    expect(fetchBytes).toHaveBeenCalledTimes(3)
+    expect(onError).toHaveBeenCalledTimes(2)
+  })
+
+  test('should not retry a sound that fetched but failed to decode', async () => {
+    const fetchBytes = vi.fn(async () => new ArrayBuffer(8))
+    const onError = vi.fn()
+    const loader = createMotionSoundLoader({fetchBytes, onError})
+    loader.load(document('a.wav'))
+    await vi.waitFor(() => expect(onError).toHaveBeenCalledWith({reason: 'not-wav', src: 'a.wav'}))
+    loader.load(document('a.wav'))
+    expect(fetchBytes).toHaveBeenCalledOnce()
+  })
 })

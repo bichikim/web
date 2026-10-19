@@ -1,7 +1,7 @@
 import {FileField} from '@kobalte/core/file-field'
 import {createMemo, createSignal, Show} from 'solid-js'
 
-import {EditorButton} from '../../design-system'
+import {EditorButton, EditorToast} from '../../design-system'
 import type {PuppetMotionSound} from '../../player/document'
 import {getEmbeddedSoundDuration, readMotionSoundFile} from './motion-sound-file'
 
@@ -12,22 +12,26 @@ export interface MotionSoundFieldProps {
 }
 
 const SECONDS_DIGITS = 2
+const HELP = '모션 0초부터 함께 재생되고, 소리가 이어지는 동안 입을 움직입니다.'
 
 /** The motion's sound (Cubism's motion `Sound`): add, replace or remove a WAV file. */
 export const MotionSoundField = (props: MotionSoundFieldProps) => {
   const [input, setInput] = createSignal<HTMLInputElement>()
   const [message, setMessage] = createSignal<string>()
+  // Re-reads the embedded WAV header only when the source itself changes.
+  const src = createMemo(() => props.sound?.src)
   const summary = createMemo(() => {
-    const src = props.sound?.src
-    if (src === undefined) {
+    const current = src()
+    if (current === undefined) {
       return '없음'
     }
-    const duration = getEmbeddedSoundDuration(src)
-    return duration === undefined ? src : `WAV ${duration.toFixed(SECONDS_DIGITS)}초`
+    const duration = getEmbeddedSoundDuration(current)
+    return duration === undefined ? current : `WAV ${duration.toFixed(SECONDS_DIGITS)}초`
   })
   const handleChange = async (event: Event & {currentTarget: HTMLInputElement}) => {
     const file = event.currentTarget.files?.[0]
     event.currentTarget.value = ''
+    setMessage(undefined)
     if (file === undefined) {
       return
     }
@@ -38,14 +42,27 @@ export const MotionSoundField = (props: MotionSoundFieldProps) => {
     }
   }
   return (
-    <fieldset class="preset-fields">
+    <fieldset class="entry-fields">
       <legend>소리</legend>
       <span role="status">{summary()}</span>
-      <EditorButton disabled={props.disabled} onClick={() => input()?.click()}>
+      <EditorButton
+        disabled={props.disabled}
+        title={HELP}
+        onClick={() => {
+          setMessage(undefined)
+          input()?.click()
+        }}
+      >
         {props.sound === undefined ? 'WAV 넣기' : 'WAV 바꾸기'}
       </EditorButton>
       <Show when={props.sound !== undefined}>
-        <EditorButton disabled={props.disabled} onClick={() => props.onChange(undefined)}>
+        <EditorButton
+          disabled={props.disabled}
+          onClick={() => {
+            setMessage(undefined)
+            props.onChange(undefined)
+          }}
+        >
           소리 빼기
         </EditorButton>
       </Show>
@@ -60,8 +77,7 @@ export const MotionSoundField = (props: MotionSoundFieldProps) => {
           }}
         />
       </FileField>
-      <Show when={message()}>{(text) => <span role="alert">{text()}</span>}</Show>
-      <small>모션 0초부터 함께 재생되고, 소리가 이어지는 동안 입을 움직입니다.</small>
+      <EditorToast message={message()} onDismiss={() => setMessage(undefined)} />
     </fieldset>
   )
 }
