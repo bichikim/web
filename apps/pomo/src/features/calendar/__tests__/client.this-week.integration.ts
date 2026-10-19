@@ -76,3 +76,24 @@ it.each([
     expect(context).not.toContain('토요일 검증 일정')
   },
 )
+
+it.each(['이번 주 금요일 말고 토요일 뭐 있어?', '이번 주의 금요일 말고 토요일 뭐 있어?'])(
+  'should ground the selected Saturday through the existing implicit exclusion grammar for "%s"',
+  async (text) => {
+    const context = await loadCalendarPromptContext({
+      now: new Date('2026-09-04T10:30:00.000Z'),
+      text,
+      timeZone: 'Asia/Seoul',
+    })
+    expect(apiJson).toHaveBeenCalledOnce()
+    const request = new URL(
+      String(vi.mocked(apiJson).mock.calls[0]?.[0]),
+      'https://fixture.invalid',
+    )
+    expect(request.pathname).toBe('/calendar/events')
+    expect(request.searchParams.get('start')).toBe('2026-09-04T15:00:00.000Z')
+    expect(request.searchParams.get('end')).toBe('2026-09-05T15:00:00.000Z')
+    expect(context).toContain('토요일 검증 일정')
+    expect(context).not.toContain('금요일 검증 일정')
+  },
+)

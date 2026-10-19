@@ -48,6 +48,7 @@ const {
   getRequestedWeekdays,
   getStandaloneWeekdayIntent,
   getWeekdayIntent,
+  isWeekSchedule,
   weekdayPatternSource: WEEKDAY_PATTERN_SOURCE,
 } = createCalendarWeekdayParser({
   calendarIntentPattern: CALENDAR_INTENT_PATTERN,
@@ -57,8 +58,7 @@ const {
   calendarWordStartPattern: CALENDAR_WORD_START_PATTERN,
 })
 const THIS_WEEK_PATTERN = createPeriodPattern(
-  `(?:이번 ?주|${CALENDAR_WORD_START_PATTERN}이번 ?주\\s*` +
-    `(?:${CALENDAR_PERIOD_PARTICLE_PATTERN.source}\\s*)?${WEEKDAY_PATTERN_SOURCE})`,
+  `(?:이번 ?주|${CALENDAR_WORD_START_PATTERN}이번 ?주\\s*${WEEKDAY_PATTERN_SOURCE})`,
 )
 const WEEK_AFTER_NEXT_TERM_PATTERN = `${CALENDAR_WORD_START_PATTERN}다다음 ?주`
 const PREVIOUS_WEEK_TERM_PATTERN = `${CALENDAR_WORD_START_PATTERN}(?:지난|저번) ?주`
@@ -502,9 +502,7 @@ const createStandaloneCalendarWeekdayRange = ({
 }
 
 const hasCalendarQueryIntent = (text: string) =>
-  CALENDAR_INTENT_PATTERN.test(text) ||
-  IMPLICIT_SCHEDULE_PATTERN.test(text) ||
-  isImplicitWeekdaySchedule(text)
+  CALENDAR_INTENT_PATTERN.test(text) || IMPLICIT_SCHEDULE_PATTERN.test(text) || isWeekSchedule(text)
 
 /** Resolves a calendar lookup in the requested time zone. */
 export const createCalendarQuery = (
