@@ -14,7 +14,8 @@ export interface Mirror {
 const COORDINATES = 2
 const TRIANGLE_CORNERS = 3
 
-const reflect = (value: number, center: number) => 2 * center - value
+/** `value` reflected across `center`. */
+export const reflect = (value: number, center: number) => 2 * center - value
 
 export const mirrorPoint = <Point extends PuppetPoint>(point: Point, mirror: Mirror): Point => ({
   ...point,

@@ -1,7 +1,3 @@
-/** @vitest-environment jsdom */
-
-import {fireEvent, render, screen} from '@solidjs/testing-library'
-import {createSignal} from 'solid-js'
 import {describe, expect, test} from 'vitest'
 
 import {
@@ -11,7 +7,6 @@ import {
   type PuppetDocument,
 } from '../../../player'
 import {addBreathParameter, removeBreathParameter, updateBreathParameter} from '../breath'
-import {BreathProperties} from '../BreathProperties'
 
 const createDocument = (): PuppetDocument => ({
   format: PUPPET_DOCUMENT_FORMAT,
@@ -40,19 +35,5 @@ describe('breath editing', () => {
     expect(updateBreathParameter(second, 1, {period: 0})).toBeUndefined()
     expect(updateBreathParameter(second, 1, {peak: 10})?.breath?.[1]?.peak).toBe(10)
     expect(removeBreathParameter(removeBreathParameter(second, 0), 0)).not.toHaveProperty('breath')
-  })
-
-  test('should add, edit and delete breathing from the inspector', async () => {
-    const [document, setDocument] = createSignal(createDocument())
-    render(() => <BreathProperties document={document()} onDocumentChange={setDocument} />)
-    fireEvent.click(screen.getByRole('button', {name: /호흡 파라미터 추가/u}))
-    fireEvent.input(await screen.findByRole('spinbutton', {name: '호흡 1 진폭'}), {
-      target: {value: '0.4'},
-    })
-    expect(document().breath).toEqual([
-      {offset: 0.5, parameterId: 'breath', peak: 0.4, period: 3.5, weight: 0.5},
-    ])
-    fireEvent.click(screen.getByRole('button', {name: '호흡 1 삭제'}))
-    expect(document()).not.toHaveProperty('breath')
   })
 })

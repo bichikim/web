@@ -2,6 +2,7 @@ import {EditorCheckbox, EditorNumberField} from '../../design-system'
 import {createUniqueId, For, Show} from 'solid-js'
 
 import type {PuppetDocument, PuppetLayout} from '../../player'
+import {setDocumentLayout} from './document-layout'
 import {EditorPropertyGroup} from './EditorPropertyGroup'
 
 const CENTER = 0.5
@@ -12,18 +13,6 @@ export interface DocumentLayoutPropertiesProps {
   readonly onDocumentChange?: (document: PuppetDocument) => void
   readonly onEditEnd?: () => void
   readonly onEditStart?: () => void
-}
-
-/** Sets or, with `undefined`, removes the document's default framing. */
-export const setDocumentLayout = (
-  document: PuppetDocument,
-  layout: PuppetLayout | undefined,
-): PuppetDocument => {
-  if (layout !== undefined) {
-    return {...document, layout}
-  }
-  const {layout: _layout, ...rest} = document
-  return rest
 }
 
 const RECT_FIELDS = [
@@ -54,7 +43,11 @@ export const DocumentLayoutProperties = (props: DocumentLayoutPropertiesProps) =
   }
   const align = () => layout()?.align ?? [CENTER, CENTER]
   return (
-    <EditorPropertyGroup class="document-layout-properties" title="기본 화면">
+    <EditorPropertyGroup
+      class="document-layout-properties"
+      title="기본 화면"
+      tooltip="플레이어가 처음 보여 줄 문서 영역입니다. 편집 화면은 항상 캔버스 전체를 보여 줍니다."
+    >
       <div class="editor-color-row">
         <label for={enabledId}>기본 화면 영역</label>
         <EditorCheckbox
@@ -100,7 +93,9 @@ export const DocumentLayoutProperties = (props: DocumentLayoutPropertiesProps) =
             <For each={[0, 1] as const}>
               {(axis) => (
                 <label>
-                  {axis === 0 ? '가로 맞춤' : '세로 맞춤'}
+                  <span data-tooltip="화면 비율이 다를 때의 위치: 0 왼쪽·위, 1 오른쪽·아래">
+                    {axis === 0 ? '가로 맞춤' : '세로 맞춤'}
+                  </span>
                   <EditorNumberField
                     disabled={disabled()}
                     label={`기본 화면 ${axis === 0 ? '가로' : '세로'} 맞춤`}
@@ -123,10 +118,6 @@ export const DocumentLayoutProperties = (props: DocumentLayoutPropertiesProps) =
           </>
         )}
       </Show>
-      <p class="parameter-section-summary">
-        플레이어가 처음 보여 줄 문서 영역입니다. 화면 비율이 다르면 맞춤(0 왼쪽·위, 1 오른쪽·아래)에
-        따라 놓습니다. 편집 화면은 항상 캔버스 전체를 보여 줍니다.
-      </p>
     </EditorPropertyGroup>
   )
 }

@@ -13,6 +13,7 @@ import {
   mirrorDeformerForm,
   mirrorDeformerShape,
   mirrorMesh,
+  reflect,
 } from './mirror-geometry'
 import {findNodeLock} from './scene-tree'
 
@@ -128,9 +129,20 @@ const mirrorVertexTracks = (
       track.kind === 'vertex' && track.axis === mirror.axis && partIds.has(track.partId)
         ? {
             ...track,
-            keyframes: track.keyframes.map((keyframe) => ({
+            keyframes: track.keyframes.map(({bezier, ...keyframe}) => ({
               ...keyframe,
-              value: 2 * mirror.center - keyframe.value,
+              // Bezier handles hold values too, so they are reflected with the keyframe.
+              ...(bezier === undefined
+                ? {}
+                : {
+                    bezier: [
+                      bezier[0],
+                      reflect(bezier[1], mirror.center),
+                      bezier[2],
+                      reflect(bezier[3], mirror.center),
+                    ] as const,
+                  }),
+              value: reflect(keyframe.value, mirror.center),
             })),
           }
         : track,

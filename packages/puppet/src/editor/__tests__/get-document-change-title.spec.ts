@@ -13,6 +13,10 @@ import {
   setPartRenderProperties,
 } from '../internal/part-properties'
 import {createDeformer, renameSceneNode, setSceneNodeState} from '../internal/scene-graph'
+import {addBreathParameter} from '../internal/breath'
+import {addLookParameter} from '../internal/look'
+import {setMouthShapeParameter} from '../internal/mouth-shapes'
+import {addParameterGroup, setParameterRole} from '../internal/parameter-roles'
 
 const initial = createDemoDocument()
 interface TitleCase {
@@ -91,6 +95,34 @@ const cases: ReadonlyArray<TitleCase> = [
   {document: {...initial, parameterBindings: []}, title: '키폼 편집'},
   {document: {...initial, framesPerSecond: 30}, title: '프레임 속도 변경'},
   {document: {...initial, viewport: {...initial.viewport, width: 900}}, title: '캔버스 크기 변경'},
+  {
+    document: {
+      ...initial,
+      parts: initial.parts.map((part) => ({
+        ...part,
+        properties: {...part.properties, drawOrder: 600},
+      })),
+    },
+    title: 'mesh-preview 외 2개 · 그리기 순서 변경',
+  },
+  {document: addBreathParameter(initial)!, title: '자동 호흡 편집'},
+  {document: addLookParameter(initial)!, title: '시선 따라가기 편집'},
+  {document: setMouthShapeParameter(initial, 'angle-x', true), title: '입 모양 편집'},
+  {document: setParameterRole(initial, 'angle-x', 'eyeBlink', true), title: '파라미터 역할 변경'},
+  {document: addParameterGroup(initial, '얼굴')!.document, title: '파라미터 그룹 편집'},
+  {
+    document: {
+      ...initial,
+      scene: {
+        roots: getDocumentScene(initial).roots.map((node) =>
+          node.kind === 'group'
+            ? {...node, properties: {...node.properties, drawOrder: 600}}
+            : node,
+        ),
+      },
+    },
+    title: 'Shapes · 그리기 순서 변경',
+  },
   {document: {...initial}, title: '문서 편집'},
 ]
 
@@ -245,4 +277,83 @@ test('should name a deformer and its changed 3D pose in a keyform', () => {
     ],
   }
   expect(getDocumentChangeTitle(before, after)).toBe(`${deformer.name} · 3D 이동 변경 (키폼)`)
+})
+
+test('should name the deformer and its changed opacity', () => {
+  const before = createDeformer(named, ['mesh-preview'])!
+  const deformer = getDocumentScene(before).roots.find((node) => node.kind === 'deformer')!
+  const after: PuppetDocument = {
+    ...before,
+    scene: {
+      roots: getDocumentScene(before).roots.map((node) =>
+        node.id === deformer.id ? {...node, properties: {opacity: 0.5}} : node,
+      ),
+    },
+  }
+  expect(getDocumentChangeTitle(before, after)).toBe(`${deformer.name} · 불투명도 변경`)
+})
+
+test('should name a deformer and its changed scale and colors in a keyform', () => {
+  const document = createDeformer(named, ['mesh-preview'])!
+  const deformer = getDocumentScene(document).roots.find((node) => node.kind === 'deformer')!
+  const binding: PuppetParameterBinding1D = {
+    id: 'pose',
+    keyforms: [
+      {
+        deformers: [{controlPoints: deformer.controlPoints, kind: 'deformer', nodeId: deformer.id}],
+        parts: [],
+        values: [0],
+      },
+    ],
+    parameterIds: ['angle-x'],
+    targetDeformerIds: [deformer.id],
+  }
+  const before = {...document, parameterBindings: [binding]}
+  const after: PuppetDocument = {
+    ...before,
+    parameterBindings: [
+      {
+        ...binding,
+        keyforms: binding.keyforms.map((keyform) => ({
+          ...keyform,
+          deformers: keyform.deformers?.map((node) => ({
+            ...node,
+            properties: {multiplyColor: [0.5, 1, 1] as const},
+            rotationScale: 2,
+          })),
+        })),
+      },
+    ],
+  }
+  expect(getDocumentChangeTitle(before, after)).toBe(
+    `${deformer.name} · 배율 변경, 곱하기 색상 변경 (키폼)`,
+  )
+})
+
+test('should name a group and its changed keyed opacity and draw order', () => {
+  const binding: PuppetParameterBinding1D = {
+    id: 'fade',
+    keyforms: [{groups: [{groupId: 'shapes', properties: {opacity: 1}}], parts: [], values: [0]}],
+    parameterIds: ['angle-x'],
+    targetGroupIds: ['shapes'],
+  }
+  const before = {...initial, parameterBindings: [binding]}
+  const after: PuppetDocument = {
+    ...before,
+    parameterBindings: [
+      {
+        ...binding,
+        keyforms: [
+          {
+            groups: [{groupId: 'shapes', properties: {drawOrder: 700, opacity: 0.5}}],
+            parts: [],
+            values: [0],
+          },
+        ],
+      },
+    ],
+  }
+  expect(getDocumentChangeTitle(before, after)).toBe(
+    'Shapes · 불투명도 변경, 그리기 순서 변경 (키폼)',
+  )
 })

@@ -22,7 +22,9 @@ export const ParameterRepeatProperties = (props: ParameterRepeatPropertiesProps)
       <KeyedFor each={parameters()} key={(parameter) => parameter.id}>
         {(parameter) => (
           <div class="editor-color-row">
-            <span>{parameter().name} 반복</span>
+            <span data-tooltip="범위를 넘으면 반대쪽 끝으로 이어지고, 최댓값의 키폼 대신 첫 키폼으로 돌아갑니다">
+              {parameter().name} 반복
+            </span>
             <EditorCheckbox
               checked={parameter().repeat === true}
               disabled={props.onDocumentChange === undefined || parameter().options !== undefined}
@@ -37,10 +39,6 @@ export const ParameterRepeatProperties = (props: ParameterRepeatPropertiesProps)
           </div>
         )}
       </KeyedFor>
-      <p class="parameter-section-summary">
-        반복하면 값이 범위를 넘을 때 반대쪽 끝으로 이어지고, 최댓값의 키폼 대신 첫 키폼으로
-        돌아갑니다.
-      </p>
     </EditorPropertyGroup>
   )
 }

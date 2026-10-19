@@ -48,7 +48,12 @@ describe('expression editing', () => {
     const second = addExpression(faded, 'angle-x', 0)!
     expect(renameExpression(second.document, '표정 1', '표정 2')).toBeUndefined()
     expect(renameExpression(second.document, '표정 1', '  ')).toBeUndefined()
-    const renamed = renameExpression(second.document, '표정 1', ' 웃음 ')!
+    const {document: renamed, id: renamedId} = renameExpression(
+      second.document,
+      '표정 1',
+      ' 웃음 ',
+    )!
+    expect(renamedId).toBe('웃음')
     expect(renamed.expressions!.map((expression) => expression.id)).toEqual(['웃음', '표정 2'])
 
     const reduced = removeExpressionParameter(renamed, '웃음', 'angle-y')!

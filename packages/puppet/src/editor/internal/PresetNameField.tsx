@@ -59,7 +59,7 @@ export const PresetNameField = (props: PresetNameFieldProps) => {
         />
       </TextField>
       <Show when={error()}>
-        <span class="preset-name-error" role="alert">
+        <span class="entry-name-error" role="alert">
           비어 있거나 이미 사용 중인 이름입니다.
         </span>
       </Show>

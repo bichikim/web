@@ -32,7 +32,11 @@ export const MouthShapeProperties = (props: MouthShapePropertiesProps) => {
   return (
     <Show when={props.document.mouthShapes}>
       {(shapes) => (
-        <EditorPropertyGroup class="parameter-properties" title="입 모양(모음)">
+        <EditorPropertyGroup
+          class="parameter-properties"
+          title="입 모양(모음)"
+          tooltip="입 모양 파라미터를 모음 모양으로 맞춘 뒤 현재 값을 저장합니다. 재생할 때는 음성의 모음 비율만큼 섞고, 조용하면 원래 값으로 돌아갑니다."
+        >
           <p class="parameter-section-summary">{names().join(', ')}</p>
           <For each={PUPPET_VOWELS}>
             {(vowel, index) => (
@@ -74,10 +78,6 @@ export const MouthShapeProperties = (props: MouthShapePropertiesProps) => {
               }
             />
           </label>
-          <p class="parameter-section-summary">
-            입 모양 파라미터를 모음 모양으로 맞춘 뒤 그 모음의 현재 값 저장을 누릅니다. 재생할 때는
-            음성 분석으로 나온 모음 비율만큼 이 값들을 섞고, 조용하면 원래 값으로 돌아갑니다.
-          </p>
         </EditorPropertyGroup>
       )}
     </Show>

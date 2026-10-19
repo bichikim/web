@@ -5,8 +5,10 @@ import {createSignal} from 'solid-js'
 import {expect, test} from 'vitest'
 
 import {PUPPET_DOCUMENT_FORMAT, PUPPET_DOCUMENT_VERSION, type PuppetDocument} from '../../../player'
+import {addBreathParameter} from '../breath'
 import {addLookParameter} from '../look'
-import {LookProperties} from '../LookProperties'
+import {BREATH_EFFECT, LOOK_EFFECT} from '../parameter-effects'
+import {ParameterEffectProperties} from '../ParameterEffectProperties'
 
 const createDocument = (): PuppetDocument => ({
   format: PUPPET_DOCUMENT_FORMAT,
@@ -17,9 +19,34 @@ const createDocument = (): PuppetDocument => ({
   viewport: {height: 1, width: 1},
 })
 
+test('should keep an edited breath field mounted and focused', () => {
+  const [document, setDocument] = createSignal(addBreathParameter(createDocument())!)
+  render(() => (
+    <ParameterEffectProperties
+      document={document()}
+      effect={BREATH_EFFECT}
+      onDocumentChange={setDocument}
+    />
+  ))
+  const peak = screen.getByRole('spinbutton', {name: '호흡 1 진폭'})
+
+  peak.focus()
+  fireEvent.input(peak, {target: {value: '0.4'}})
+
+  expect(document().breath?.[0]?.peak).toBe(0.4)
+  expect(screen.getByRole('spinbutton', {name: '호흡 1 진폭'})).toBe(peak)
+  expect(peak).toHaveFocus()
+})
+
 test('should keep an edited look field mounted and focused', () => {
   const [document, setDocument] = createSignal(addLookParameter(createDocument())!)
-  render(() => <LookProperties document={document()} onDocumentChange={setDocument} />)
+  render(() => (
+    <ParameterEffectProperties
+      document={document()}
+      effect={LOOK_EFFECT}
+      onDocumentChange={setDocument}
+    />
+  ))
   const x = screen.getByRole('spinbutton', {name: '시선 1 X 계수'})
 
   x.focus()

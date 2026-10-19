@@ -72,7 +72,8 @@ export const removeParameterReferences = (
         (track) => track.kind !== 'parameter' || kept(track.parameterId),
       ),
     })),
-    // World settings outlive the last pendulum, so later ones still use them.
+    // World settings (fps, gravity, wind) apply only to chains; they outlive the last chain so
+    // chains added later still use them.
     physics: physics === undefined || isEmptyPhysics(physics) ? undefined : physics,
     poseGroups: document.poseGroups?.filter((group) => kept(group.parameterId)),
   }

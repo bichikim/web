@@ -1,5 +1,5 @@
 import {EditorButton, EditorNumberField, EditorSelect} from '../../design-system'
-import {createSignal, For, Show} from 'solid-js'
+import {createMemo, createSignal, For, Show} from 'solid-js'
 
 import type {PuppetParameterValueMap} from '../../deformation'
 import {
@@ -77,9 +77,6 @@ interface ExpressionCardProps {
   readonly onRename?: (from: string, to: string) => void
 }
 
-const getExpressionIds = (document: PuppetDocument) =>
-  new Set((document.expressions ?? []).map((expression) => expression.id))
-
 const ExpressionCard = (props: ExpressionCardProps) => {
   const bounds = () => valueBounds(props.parameter, props.entry.blend)
   const setEntry = (changes: Partial<PuppetExpressionParameter>) =>
@@ -98,12 +95,12 @@ const ExpressionCard = (props: ExpressionCardProps) => {
     props.expression[property] ?? DEFAULT_PUPPET_EXPRESSION_FADE_TIME
 
   return (
-    <article class="preset-card">
-      <header class="preset-card-header">
+    <article class="entry-card">
+      <header class="entry-card-header">
         <h3>{props.expression.id}</h3>
         <EditorButton
           aria-label={`${props.expression.id}에서 ${props.parameter.name} 제외`}
-          class="preset-remove-button"
+          class="entry-remove-button"
           disabled={props.disabled}
           title="이 표정에서 파라미터를 제외합니다."
           onClick={() =>
@@ -115,7 +112,7 @@ const ExpressionCard = (props: ExpressionCardProps) => {
           <span aria-hidden="true" class="puppet-icon puppet-icon-trash" />
         </EditorButton>
       </header>
-      <div class="preset-fields">
+      <div class="entry-fields">
         <label>
           적용
           <EditorSelect
@@ -143,9 +140,9 @@ const ExpressionCard = (props: ExpressionCardProps) => {
           />
         </label>
       </div>
-      <details class="preset-settings">
+      <details class="entry-settings">
         <summary>표정 설정</summary>
-        <div class="preset-fields">
+        <div class="entry-fields">
           <label>
             이름
             <PresetNameField
@@ -154,14 +151,10 @@ const ExpressionCard = (props: ExpressionCardProps) => {
               value={props.expression.id}
               onRename={(name) => {
                 const renamed = renameExpression(props.document, props.expression.id, name)
-                // The accepted ID may differ from the typed name (for example trimmed).
-                const renamedId = renamed?.expressions?.find(
-                  (expression) => !getExpressionIds(props.document).has(expression.id),
-                )?.id
-                if (renamedId !== undefined) {
-                  props.onRename?.(props.expression.id, renamedId)
+                if (renamed !== undefined) {
+                  props.onRename?.(props.expression.id, renamed.id)
                 }
-                return props.apply(renamed)
+                return props.apply(renamed?.document)
               }}
             />
           </label>
@@ -190,7 +183,7 @@ const ExpressionCard = (props: ExpressionCardProps) => {
             )}
           </For>
           <EditorButton
-            class="preset-action-button"
+            class="entry-action-button"
             disabled={props.disabled}
             onClick={() => props.apply(removeExpression(props.document, props.expression.id))}
           >
@@ -243,34 +236,47 @@ export const ParameterExpressionProperties = (props: ParameterExpressionProperti
               .map((expression) => expression.id)
           const [requestedTarget, setRequestedTarget] = createSignal(CREATE)
           // Card keys follow renames, so a renamed card keeps its focus and open settings while a
-          // deleted card unmounts. Each key belongs to one expression ID at a time.
-          const cardKeys = new Map<string, string>()
+          // deleted card unmounts. Each key belongs to one expression ID at a time, and only IDs
+          // still shown keep one.
+          let pendingRename: {readonly from: string; readonly to: string} | undefined
           let nextCardKey = 0
-          const cardKey = (id: string) => {
-            const key = cardKeys.get(id) ?? `card-${(nextCardKey += 1)}`
-            cardKeys.set(id, key)
-            return key
-          }
+          const cardKeys = createMemo<ReadonlyMap<string, string>>((previous) => {
+            const ids = entries().map((item) => item.expression.id)
+            const rename = pendingRename
+            pendingRename = undefined
+            const inherited = (id: string) =>
+              rename?.to === id && !ids.includes(rename.from)
+                ? previous.get(rename.from)
+                : undefined
+            return new Map(
+              ids.map((id) => [
+                id,
+                previous.get(id) ?? inherited(id) ?? `card-${(nextCardKey += 1)}`,
+              ]),
+            )
+          }, new Map())
           const moveCardKey = (from: string, to: string) => {
-            cardKeys.set(to, cardKey(from))
-            cardKeys.delete(from)
+            pendingRename = {from, to}
           }
           // Fall back to a new expression once the requested one already uses the parameter.
           const target = () =>
             available().includes(requestedTarget()) ? requestedTarget() : CREATE
           return (
             <>
-              <div class="preset-header">
+              <div class="entry-header">
                 <span>
                   {parameters().length > 1 ? `${current().name} · ` : ''}표정 {entries().length}개
                 </span>
               </div>
               <Show
                 when={entries().length > 0}
-                fallback={<p class="preset-empty">이 파라미터를 바꾸는 표정이 없습니다.</p>}
+                fallback={<p class="entry-empty">이 파라미터를 바꾸는 표정이 없습니다.</p>}
               >
-                <div class="preset-card-list">
-                  <KeyedFor each={entries()} key={(item) => cardKey(item.expression.id)}>
+                <div class="entry-card-list">
+                  <KeyedFor
+                    each={entries()}
+                    key={(item) => cardKeys().get(item.expression.id) ?? item.expression.id}
+                  >
                     {(item) => (
                       <ExpressionCard
                         apply={apply}
@@ -288,7 +294,7 @@ export const ParameterExpressionProperties = (props: ParameterExpressionProperti
                   </KeyedFor>
                 </div>
               </Show>
-              <div class="preset-header">
+              <div class="entry-header">
                 <EditorSelect
                   disabled={disabled()}
                   label={`${current().name}을(를) 추가할 표정`}
@@ -298,7 +304,7 @@ export const ParameterExpressionProperties = (props: ParameterExpressionProperti
                   onChange={setRequestedTarget}
                 />
                 <EditorButton
-                  class="preset-action-button"
+                  class="entry-action-button"
                   disabled={disabled()}
                   onClick={() => addTo(current(), target())}
                 >

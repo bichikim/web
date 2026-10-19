@@ -19,9 +19,17 @@ export interface ParameterRolePropertiesProps {
   readonly onDocumentChange?: (document: PuppetDocument) => void
 }
 
-const ROLES: ReadonlyArray<{readonly label: string; readonly role: ParameterRole}> = [
-  {label: '자동 눈 깜빡임', role: 'eyeBlink'},
-  {label: '립싱크', role: 'lipSync'},
+const ROLES: ReadonlyArray<{
+  readonly label: string
+  readonly role: ParameterRole
+  readonly tooltip: string
+}> = [
+  {
+    label: '자동 눈 깜빡임',
+    role: 'eyeBlink',
+    tooltip: '기본값이 뜬 눈, 범위의 반대쪽 끝이 감은 눈입니다',
+  },
+  {label: '립싱크', role: 'lipSync', tooltip: '입 크기가 더해집니다'},
 ]
 const NO_GROUP = ''
 
@@ -48,9 +56,9 @@ export const ParameterRoleProperties = (props: ParameterRolePropertiesProps) => 
         {(parameter) => (
           <>
             <For each={ROLES}>
-              {({label, role}) => (
+              {({label, role, tooltip}) => (
                 <div class="editor-color-row">
-                  <span>{label}</span>
+                  <span data-tooltip={tooltip}>{label}</span>
                   <EditorCheckbox
                     checked={
                       props.document.parameterRoles?.[role]?.includes(parameter().id) === true
@@ -67,7 +75,9 @@ export const ParameterRoleProperties = (props: ParameterRolePropertiesProps) => 
               )}
             </For>
             <div class="editor-color-row">
-              <span>입 모양(모음)</span>
+              <span data-tooltip="음성의 모음(아·이·우·에·오)에 따라 정해 둔 값으로 바뀝니다">
+                입 모양(모음)
+              </span>
               <EditorCheckbox
                 checked={props.document.mouthShapes?.parameterIds.includes(parameter().id) === true}
                 disabled={disabled()}
@@ -115,11 +125,6 @@ export const ParameterRoleProperties = (props: ParameterRolePropertiesProps) => 
           </>
         )}
       </KeyedFor>
-      <p class="parameter-section-summary">
-        눈 깜빡임 대상은 기본값이 뜬 눈이고 범위의 반대쪽 끝이 감은 눈입니다. 립싱크 대상에는 입
-        크기가 더해집니다. 입 모양 대상은 음성의 모음(아·이·우·에·오)에 따라 정해 둔 값으로
-        바뀝니다.
-      </p>
     </EditorPropertyGroup>
   )
 }

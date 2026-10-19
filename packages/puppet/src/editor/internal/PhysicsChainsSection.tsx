@@ -51,11 +51,11 @@ const parameterLabel = (document: PuppetDocument) => (id: string) =>
   document.parameters?.find((parameter) => parameter.id === id)?.name ?? id
 
 const ChainInputs = (props: ChainProps) => (
-  <fieldset class="preset-fields">
+  <fieldset class="entry-fields">
     <legend>입력</legend>
     <Index each={props.chain.inputs}>
       {(input, index) => (
-        <div class="preset-fields">
+        <div class="entry-fields">
           <EditorSelect
             disabled={props.disabled}
             label={`${props.chain.id} 입력 ${index + 1} 파라미터`}
@@ -150,11 +150,11 @@ const PENDULUM_FIELDS = [
 ] as const
 
 const ChainPendulums = (props: ChainProps) => (
-  <fieldset class="preset-fields">
+  <fieldset class="entry-fields">
     <legend>진자 (위에서 아래로)</legend>
     <Index each={props.chain.pendulums}>
       {(pendulum, index) => (
-        <div class="preset-fields">
+        <div class="entry-fields">
           <For each={PENDULUM_FIELDS}>
             {(field) => (
               <EditorNumberField
@@ -218,11 +218,11 @@ const OUTPUT_NUMBER_FIELDS = [
 ] as const
 
 const ChainOutputs = (props: ChainProps) => (
-  <fieldset class="preset-fields">
+  <fieldset class="entry-fields">
     <legend>출력</legend>
     <Index each={props.chain.outputs}>
       {(output, index) => (
-        <div class="preset-fields">
+        <div class="entry-fields">
           <EditorSelect
             disabled={props.disabled}
             label={`${props.chain.id} 출력 ${index + 1} 파라미터`}
@@ -333,7 +333,7 @@ const RANGE_KEYS = [
 ] as const
 
 const ChainNormalization = (props: ChainProps) => (
-  <details class="preset-settings">
+  <details class="entry-settings">
     <summary>정규화 범위</summary>
     <For
       each={
@@ -344,7 +344,7 @@ const ChainNormalization = (props: ChainProps) => (
       }
     >
       {([kind, label]) => (
-        <div class="preset-fields">
+        <div class="entry-fields">
           <For each={RANGE_KEYS}>
             {([key, keyLabel]) => (
               <EditorNumberField
@@ -389,9 +389,9 @@ const WorldSettings = (props: PhysicsChainsSectionProps) => {
     }
   }
   return (
-    <details class="preset-settings">
+    <details class="entry-settings">
       <summary>체인 공통 설정</summary>
-      <div class="preset-fields">
+      <div class="entry-fields">
         <For each={WORLD_FIELDS}>
           {(field) => (
             <EditorNumberField
@@ -475,12 +475,12 @@ export const PhysicsChainsSection = (props: PhysicsChainsSectionProps) => {
               commit(updatePhysicsChain(props.document, chain().id, change)),
           }
           return (
-            <article class="preset-card">
-              <header class="preset-card-header">
+            <article class="entry-card">
+              <header class="entry-card-header">
                 <h3>{chain().id}</h3>
                 <EditorButton
                   aria-label={`${chain().id} 체인 삭제`}
-                  class="preset-remove-button"
+                  class="entry-remove-button"
                   disabled={props.disabled}
                   onClick={() => commit(removePhysicsChain(props.document, chain().id))}
                 >

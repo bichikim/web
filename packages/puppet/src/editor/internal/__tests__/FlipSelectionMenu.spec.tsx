@@ -49,5 +49,6 @@ describe('FlipSelectionMenu', () => {
     const trigger = screen.getByRole('button', {name: '선택 레이어 반전'})
     expect(trigger).toBeDisabled()
     expect(trigger).toHaveAttribute('title', '잠긴 레이어가 있어 반전할 수 없습니다.')
+    expect(trigger).toHaveAccessibleDescription('잠긴 레이어가 있어 반전할 수 없습니다.')
   })
 })

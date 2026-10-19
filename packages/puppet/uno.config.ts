@@ -9,7 +9,7 @@ import {layoutShortcuts} from './uno/shortcuts/layout'
 import {layersShortcuts} from './uno/shortcuts/layers'
 import {layerOrderShortcuts} from './uno/shortcuts/layer-order'
 import {propertiesShortcuts} from './uno/shortcuts/properties'
-import {presetShortcuts} from './uno/shortcuts/presets'
+import {entryCardShortcuts} from './uno/shortcuts/entry-cards'
 import {historyShortcuts} from './uno/shortcuts/history'
 import {canvasShortcuts} from './uno/shortcuts/canvas'
 import {parametersShortcuts} from './uno/shortcuts/parameters'
@@ -34,7 +34,7 @@ const shortcuts = {
   ...layersShortcuts,
   ...layerOrderShortcuts,
   ...propertiesShortcuts,
-  ...presetShortcuts,
+  ...entryCardShortcuts,
   ...historyShortcuts,
   ...canvasShortcuts,
   ...brushShortcuts,

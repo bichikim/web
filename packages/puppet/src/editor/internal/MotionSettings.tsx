@@ -88,7 +88,7 @@ const MotionEventFields = (props: {
     }
   }
   return (
-    <fieldset class="preset-fields">
+    <fieldset class="entry-fields">
       <legend>이벤트</legend>
       {/*
         Events have no ID; rows are addressed by position so edits keep them mounted. A time edit
@@ -160,7 +160,7 @@ export const MotionSettings = (props: MotionSettingsProps) => {
 
   return (
     <Popover placement="top-start">
-      <Popover.Trigger class="editor-button" disabled={props.motion === undefined}>
+      <Popover.Trigger as={EditorButton} disabled={props.motion === undefined}>
         <span aria-hidden="true" class="puppet-icon puppet-icon-adjustments-horizontal" />
         <span>모션 설정</span>
       </Popover.Trigger>
@@ -209,7 +209,7 @@ export const MotionSettings = (props: MotionSettingsProps) => {
           />
           <Show when={bezier()}>
             {(handles) => (
-              <fieldset class="preset-fields">
+              <fieldset class="entry-fields">
                 <legend>베지어 핸들</legend>
                 <For each={HANDLE_LABELS}>
                   {(label, index) => (

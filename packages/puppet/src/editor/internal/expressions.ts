@@ -58,16 +58,21 @@ export const removeExpression = (document: PuppetDocument, expressionId: string)
     getExpressions(document).filter((expression) => expression.id !== expressionId),
   )
 
-/** Renames an expression; empty or duplicate names are rejected. */
+/**
+ * Renames an expression; empty or duplicate names are rejected. Returns the accepted ID (the
+ * name may be normalized, for example trimmed) with the document.
+ */
 export const renameExpression = (document: PuppetDocument, expressionId: string, name: string) => {
   const id = acceptName(
     name,
     expressionId,
     getExpressions(document).map((expression) => expression.id),
   )
-  return id === undefined
-    ? undefined
-    : mapExpression(document, expressionId, (expression) => ({...expression, id}))
+  if (id === undefined) {
+    return undefined
+  }
+  const next = mapExpression(document, expressionId, (expression) => ({...expression, id}))
+  return next === undefined ? undefined : {document: next, id}
 }
 
 export const setExpressionFade = (

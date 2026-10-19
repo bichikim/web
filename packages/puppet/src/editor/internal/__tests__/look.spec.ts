@@ -1,7 +1,3 @@
-/** @vitest-environment jsdom */
-
-import {fireEvent, render, screen} from '@solidjs/testing-library'
-import {createSignal} from 'solid-js'
 import {describe, expect, test} from 'vitest'
 
 import {
@@ -14,7 +10,6 @@ import {
 import {mapDocumentReferences} from '../document-references'
 import {removeParameterReferences} from '../document-references/remove-parameter-references'
 import {addLookParameter, updateLookParameter} from '../look'
-import {LookProperties} from '../LookProperties'
 import {mergeDocument} from '../merge-document'
 
 const createDocument = (): PuppetDocument => ({
@@ -39,18 +34,6 @@ describe('look editing', () => {
     expect(parseDocumentValue(both).ok).toBe(true)
     expect(addLookParameter(both)).toBeUndefined()
     expect(updateLookParameter(both, 1, {parameterId: 'face-x'})).toBeUndefined()
-  })
-
-  test('should edit factors from the inspector and delete entries', async () => {
-    const [document, setDocument] = createSignal(createDocument())
-    render(() => <LookProperties document={document()} onDocumentChange={setDocument} />)
-    fireEvent.click(screen.getByRole('button', {name: /시선 파라미터 추가/u}))
-    fireEvent.input(await screen.findByRole('spinbutton', {name: '시선 1 XY 계수'}), {
-      target: {value: '-30'},
-    })
-    expect(document().look).toEqual([{parameterId: 'face-x', x: 30, xy: -30, y: 0}])
-    fireEvent.click(screen.getByRole('button', {name: '시선 1 삭제'}))
-    expect(document()).not.toHaveProperty('look')
   })
 
   test('should rename, drop and merge look parameters with their parameters', () => {

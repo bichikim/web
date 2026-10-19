@@ -24,7 +24,13 @@ const removeGroupOpacityTracks = (
   }
 }
 
-/** Drops removed deformers and groups from bindings, and removed groups' opacity tracks. */
+/**
+ * Drops `nodeIds` as parameter targets: from bindings' targets and keyforms, and groups' opacity
+ * tracks and rows. Callers change the scene themselves (unwrapping replaces the node with its
+ * children; converting keeps it as another kind), so the scene and skinning are left as they
+ * are. Removing nodes outright goes through `mapDocumentReferences` with `keepNode` instead,
+ * which also drops them, their subtrees and skinning that uses them as joints.
+ */
 export const removeParameterNodeTargets = (
   document: PuppetDocument,
   nodeIds: ReadonlySet<string>,

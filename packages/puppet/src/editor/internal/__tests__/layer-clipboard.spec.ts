@@ -200,8 +200,11 @@ test('should fit copied layer curves into a shorter motion of the target', () =>
   const copied = getIdleMotion(result.document).tracks.find(
     (track) => track.kind === 'group-opacity' && track.groupId === copyId,
   )
-  // The keyframe past the target's end is dropped instead of failing the paste.
-  expect(copied?.keyframes).toEqual([{time: 0, value: 1}])
+  // The curve ends at the target's end with the value it had there instead of failing the paste.
+  expect(copied?.keyframes).toEqual([
+    {time: 0, value: 1},
+    {time: 0.5, value: 0.5},
+  ])
   expect(parseDocumentValue(result.document).ok).toBe(true)
 })
 

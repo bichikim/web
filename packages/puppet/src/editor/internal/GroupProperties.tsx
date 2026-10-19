@@ -297,7 +297,12 @@ export const GroupProperties = (props: GroupPropertiesProps) => {
         onEditStart={props.onEditStart}
       />
       <div class="editor-color-row">
-        <label for={offscreenId}>오프스크린 합성</label>
+        <label
+          data-tooltip="꺼져 있으면 불투명도와 색상을 하위 파트마다 곱합니다. 켜면 하위 파트를 한 장으로 합친 뒤 적용하고 블렌드·마스크를 쓸 수 있습니다."
+          for={offscreenId}
+        >
+          오프스크린 합성
+        </label>
         <EditorCheckbox
           checked={properties().offscreen}
           disabled={disabled()}
@@ -306,15 +311,7 @@ export const GroupProperties = (props: GroupPropertiesProps) => {
           onChange={(offscreen) => apply({offscreen})}
         />
       </div>
-      <Show
-        when={properties().offscreen}
-        fallback={
-          <p class="parameter-section-summary">
-            불투명도와 색상을 하위 파트마다 곱합니다. 오프스크린 합성을 켜면 하위 파트를 한 장으로
-            합친 뒤 적용하고 블렌드·마스크를 쓸 수 있습니다.
-          </p>
-        }
-      >
+      <Show when={properties().offscreen}>
         <OffscreenFields controller={controller} document={props.document} />
       </Show>
     </EditorPropertyGroup>

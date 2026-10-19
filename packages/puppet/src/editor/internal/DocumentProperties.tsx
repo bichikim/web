@@ -1,7 +1,7 @@
 import type {PuppetDocument} from '../../player'
-import {BreathProperties} from './BreathProperties'
 import {DocumentLayoutProperties} from './DocumentLayoutProperties'
-import {LookProperties} from './LookProperties'
+import {BREATH_EFFECT, LOOK_EFFECT} from './parameter-effects'
+import {ParameterEffectProperties} from './ParameterEffectProperties'
 
 export interface DocumentPropertiesProps {
   readonly disabled?: boolean
@@ -15,7 +15,7 @@ export interface DocumentPropertiesProps {
 export const DocumentProperties = (props: DocumentPropertiesProps) => (
   <>
     <DocumentLayoutProperties {...props} />
-    <BreathProperties {...props} />
-    <LookProperties {...props} />
+    <ParameterEffectProperties {...props} effect={BREATH_EFFECT} />
+    <ParameterEffectProperties {...props} effect={LOOK_EFFECT} />
   </>
 )

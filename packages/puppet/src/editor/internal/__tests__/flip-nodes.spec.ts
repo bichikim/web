@@ -325,6 +325,40 @@ describe('flipSceneNodes', () => {
     expect(parseDocumentValue(result.document).ok).toBe(true)
   })
 
+  test('should reflect the bezier handles of mirrored vertex curves', () => {
+    const document: PuppetDocument = {
+      ...createDocument(),
+      motions: [
+        {
+          duration: 1,
+          id: 'wave',
+          tracks: [
+            {
+              axis: 'x',
+              keyframes: [
+                {bezier: [0.25, 62, 0.75, 66], easing: 'bezier', time: 0, value: 62},
+                {time: 1, value: 66},
+              ],
+              kind: 'vertex',
+              partId: 'arm',
+              vertexIndex: 1,
+            },
+          ],
+        },
+      ],
+    }
+    const result = flipSceneNodes({axis: 'x', document, nodeIds: ['rot'], reference: 'canvas'})
+    if (!result.ok) {
+      throw new Error(result.message)
+    }
+    expect(result.document.motions[0]!.tracks[0]!.keyframes[0]).toEqual({
+      bezier: [0.25, 38, 0.75, 34],
+      easing: 'bezier',
+      time: 0,
+      value: 38,
+    })
+  })
+
   test('should refuse locked, 3D and curve layers', () => {
     const document = createDocument()
     const locked = {

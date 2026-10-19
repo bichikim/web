@@ -65,7 +65,11 @@ export const DeformerRenderProperties = (props: DeformerRenderPropertiesProps) =
   return (
     <Show when={properties()}>
       {(current) => (
-        <EditorPropertyGroup class="deformer-render-properties" title="디포머 렌더링">
+        <EditorPropertyGroup
+          class="deformer-render-properties"
+          title="디포머 렌더링"
+          tooltip="불투명도와 색상은 하위 파트와 디포머에 곱해집니다"
+        >
           <label>
             불투명도
             <EditorNumberField
@@ -105,7 +109,7 @@ export const DeformerRenderProperties = (props: DeformerRenderPropertiesProps) =
           </div>
           <Show when={deformer()?.deformerType === 'rotation'}>
             <label>
-              배율
+              <span data-tooltip="활성 파라미터의 키폼에서만 편집합니다">배율</span>
               <EditorNumberField
                 disabled={disabled() || props.keyform === undefined || entry() === undefined}
                 label="회전 디포머 배율"
@@ -131,10 +135,6 @@ export const DeformerRenderProperties = (props: DeformerRenderPropertiesProps) =
               />
             </label>
           </Show>
-          <p class="parameter-section-summary">
-            불투명도와 색상은 하위 파트와 디포머에 곱해집니다. 배율은 활성 파라미터의 키폼에서만
-            편집합니다.
-          </p>
         </EditorPropertyGroup>
       )}
     </Show>

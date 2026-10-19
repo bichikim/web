@@ -1,5 +1,5 @@
 import {DropdownMenu} from '@kobalte/core/dropdown-menu'
-import {For} from 'solid-js'
+import {createUniqueId, For, Show} from 'solid-js'
 
 import {useEditorPortalMount} from '../../design-system'
 import type {PuppetDocument} from '../../player'
@@ -28,20 +28,31 @@ export interface FlipSelectionMenuProps {
  */
 export const FlipSelectionMenu = (props: FlipSelectionMenuProps) => {
   const mount = useEditorPortalMount()
+  const blockerId = createUniqueId()
   const blocker = () => getFlipBlocker(props.document, props.nodeIds)
   return (
     <DropdownMenu modal={false} placement="bottom-start">
+      {/* A disabled trigger gets no tooltip or focus, so assistive technology reads the reason
+          from its description; pointers still get the native title. */}
       <DropdownMenu.Trigger
+        aria-describedby={blocker() === undefined ? undefined : blockerId}
         aria-label="선택 레이어 반전"
         class="container-kind-trigger"
         disabled={blocker() !== undefined}
-        title={blocker() ?? '선택 레이어 반전'}
+        title={blocker() ?? '선택 레이어 반전 (안의 레이어·디포머와 키폼도 함께)'}
       >
         <span
           aria-hidden="true"
           class="puppet-icon puppet-icon-flip-horizontal layer-toolbar-icon puppet-layer-toolbar-icon"
         />
       </DropdownMenu.Trigger>
+      <Show when={blocker()}>
+        {(reason) => (
+          <span hidden id={blockerId}>
+            {reason()}
+          </span>
+        )}
+      </Show>
       <DropdownMenu.Portal mount={mount}>
         <DropdownMenu.Content class="kind-menu" aria-label="반전">
           <For each={FLIPS}>
@@ -63,10 +74,6 @@ export const FlipSelectionMenu = (props: FlipSelectionMenuProps) => {
               </DropdownMenu.Item>
             )}
           </For>
-          <DropdownMenu.Separator class="editor-context-menu-separator" />
-          <p class="kind-menu-note">
-            안의 레이어·디포머와 키폼도 함께 뒤집어 움직임도 반대로 됩니다.
-          </p>
         </DropdownMenu.Content>
       </DropdownMenu.Portal>
     </DropdownMenu>
