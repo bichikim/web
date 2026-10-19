@@ -56,7 +56,12 @@ export const createRuntimePartMask = (options: CreateRuntimePartMaskOptions): Ru
   const texture = RenderTexture.create({antialias: true, dynamic: true, height: 1, width: 1})
   const sprite = new Sprite(texture)
   sprite.renderable = false
-  const filter = new MaskFilter({channel: 'alpha', sprite})
+  const filter = new MaskFilter({
+    antialias: 'inherit',
+    channel: 'alpha',
+    resolution: 'inherit',
+    sprite,
+  })
   return {container, filter, meshes, sprite, texture}
 }
 

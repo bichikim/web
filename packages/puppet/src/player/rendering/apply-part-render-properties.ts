@@ -43,7 +43,12 @@ export const applyPartRenderProperties = (
     !colorsEqual(properties.screenColor, [0, 0, 0])
   const filters: Array<ColorMatrixFilter | MaskFilter> = []
   if (hasColorEffect) {
-    const colorFilter = runtimePart.colorFilter ?? new ColorMatrixFilter()
+    const colorFilter =
+      runtimePart.colorFilter ??
+      new ColorMatrixFilter({
+        antialias: 'inherit',
+        resolution: 'inherit',
+      })
     runtimePart.colorFilter = colorFilter
     colorFilter.matrix = createColorMatrix(properties.multiplyColor, properties.screenColor)
     colorFilter.blendMode = 'normal'

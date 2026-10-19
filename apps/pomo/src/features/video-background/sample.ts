@@ -2,7 +2,6 @@ import {subscribeEvent} from 'src/utils/subscribe-event'
 import {videoSamplingRuntime} from './runtime'
 import {sampleTimes} from './timeline'
 
-const SAMPLE_LENGTH = 32
 const DECODE_TIMEOUT = 10_000
 const SEEK_EPSILON = 0.001
 
@@ -13,31 +12,14 @@ interface MediaWaitOptions {
   readonly video: HTMLVideoElement
 }
 
-export interface VideoSample {
-  readonly time: number
-  readonly width: number
-  readonly height: number
-  readonly pixels: Uint8ClampedArray
-}
+export {type VideoSample} from '@winter-love/wallpaper/frame-renderer/capture-video-sample'
+import {
+  captureVideoSample,
+  type VideoSample,
+} from '@winter-love/wallpaper/frame-renderer/capture-video-sample'
 
-/** Copies a decoded frame into a small, aspect-preserving color sample. */
-export const captureSample = (video: HTMLVideoElement): VideoSample => {
-  const canvas = videoSamplingRuntime.createCanvas()
-  const scale = SAMPLE_LENGTH / Math.max(video.videoWidth, video.videoHeight, 1)
-  canvas.width = Math.max(1, Math.round(video.videoWidth * scale))
-  canvas.height = Math.max(1, Math.round(video.videoHeight * scale))
-  const context = canvas.getContext('2d', {willReadFrequently: true})
-  if (context === null) {
-    throw new Error('Video background canvas is unavailable.')
-  }
-  context.drawImage(video, 0, 0, canvas.width, canvas.height)
-  return {
-    height: canvas.height,
-    pixels: context.getImageData(0, 0, canvas.width, canvas.height).data,
-    time: video.currentTime,
-    width: canvas.width,
-  }
-}
+export const captureSample = (video: HTMLVideoElement): VideoSample =>
+  captureVideoSample({canvas: videoSamplingRuntime.createCanvas(), video})
 
 const waitForMedia = (options: MediaWaitOptions): Promise<void> =>
   new Promise((resolve, reject) => {

@@ -1,3 +1,4 @@
+import 'pixi.js/unsafe-eval'
 import {Application, Container, UPDATE_PRIORITY} from 'pixi.js'
 import type {PuppetParameterValueMap} from '../../deformation'
 import type {PuppetDocument} from '../document'
