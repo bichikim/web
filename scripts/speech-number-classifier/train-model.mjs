@@ -22,7 +22,7 @@ const sourceDirectory = new URL('./', import.meta.url)
 const dataUrl = new URL('training-data.json', sourceDirectory)
 const evaluationDataUrl = new URL('evaluation-data.json', sourceDirectory)
 const outputUrl = new URL(
-  '../../apps/pomo/src/features/supertonic/number-speech/model/tiny-speech-number-model.json',
+  '../../packages/supertonic/src/number-speech/model/tiny-speech-number-model.json',
   sourceDirectory,
 )
 

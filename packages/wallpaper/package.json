@@ -1,0 +1,21 @@
+{
+  "name": "@winter-love/wallpaper",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./*": "./src/*.ts",
+    "./frame-renderer": "./src/frame-renderer/index.ts"
+  },
+  "dependencies": {
+    "@winter-love/supertonic": "workspace:*",
+    "dexie": "^4.4.4",
+    "es-toolkit": "catalog:",
+    "pixi.js": "^8.21.0",
+    "zod": "catalog:"
+  },
+  "peerDependencies": {
+    "solid-js": "catalog:"
+  }
+}

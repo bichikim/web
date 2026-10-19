@@ -22,6 +22,8 @@ export interface Player {
   getParameterValue(parameterId: string): number | undefined
   /** Returns a snapshot of resolved parameter values used by the last rendered frame. */
   getParameterValues(): PuppetParameterValueMap
+  /** Merges specified external overrides while preserving other inputs and motion playback. */
+  patchParameterValues(values: PuppetParameterValueMap): void
   pause(): void
   play(options?: PlayerPlaybackOptions): void
   playMotion(motionId: string, options?: PlayerPlaybackOptions): boolean
@@ -233,6 +235,12 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
       redraw()
     }
   }
+  const resolveOverrides = (values: PuppetParameterValueMap) =>
+    Object.fromEntries(
+      (document.parameters ?? [])
+        .filter((parameter) => Object.hasOwn(values, parameter.id))
+        .map((parameter) => [parameter.id, resolveParameterValue(parameter, values[parameter.id])]),
+    )
   const resume = () => {
     if (!destroyed) {
       playback.resume()
@@ -256,6 +264,16 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
       return Object.hasOwn(frameValues, parameterId) ? frameValues[parameterId] : undefined
     },
     getParameterValues: () => ({...frameValues}),
+    patchParameterValues(values) {
+      if (destroyed) {
+        return
+      }
+      const resolved = resolveOverrides(values)
+      if (Object.entries(resolved).some(([id, value]) => parameterValues[id] !== value)) {
+        parameterValues = {...parameterValues, ...resolved}
+        refresh()
+      }
+    },
     pause() {
       if (destroyed) {
         return
@@ -327,14 +345,7 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
       if (destroyed) {
         return
       }
-      parameterValues = Object.fromEntries(
-        (document.parameters ?? [])
-          .filter((parameter) => Object.hasOwn(values, parameter.id))
-          .map((parameter) => [
-            parameter.id,
-            resolveParameterValue(parameter, values[parameter.id]),
-          ]),
-      )
+      parameterValues = resolveOverrides(values)
       refresh()
     },
     setPhysicsPreview(enabled) {
