@@ -100,7 +100,7 @@ it('should restore healthy custom tracks alongside bundled tracks when another s
     ]),
   })
 
-  expect(tracks.map(({id}) => id)).toEqual([BUNDLED_TRACK.id, VALID_TRACK_B_ID, VALID_TRACK_A_ID])
+  expect(tracks?.map(({id}) => id)).toEqual([BUNDLED_TRACK.id, VALID_TRACK_B_ID, VALID_TRACK_A_ID])
   expect(onError).not.toHaveBeenCalled()
   expect(onCorruptTrack).toHaveBeenCalledExactlyOnceWith(
     expect.objectContaining({code: 'corrupt-data'}),
@@ -132,7 +132,7 @@ it.each([
   },
 )
 
-it('should report storage failure once and preserve the bundled fallback', async () => {
+it('should report storage failure once and distinguish it from successful resolution', async () => {
   const storageError = new Error('IndexedDB request failed')
   const onError = vi.fn()
   const onCorruptTrack = vi.fn()
@@ -144,12 +144,12 @@ it('should report storage failure once and preserve the bundled fallback', async
     sourceTracks,
     storedTrackIds: Promise.resolve([VALID_TRACK_A_ID]),
   })
-  expect(tracks).toBe(sourceTracks)
+  expect(tracks).toBeNull()
   expect(onError).toHaveBeenCalledExactlyOnceWith(storageError)
   expect(onCorruptTrack).not.toHaveBeenCalled()
 })
 
-it('should report database open failure once and preserve the bundled fallback', async () => {
+it('should report database open failure once and distinguish it from successful resolution', async () => {
   const databaseError = new Error('IndexedDB open failed')
   const onError = vi.fn()
   const onCorruptTrack = vi.fn()
@@ -161,7 +161,7 @@ it('should report database open failure once and preserve the bundled fallback',
     sourceTracks,
     storedTrackIds: Promise.resolve([VALID_TRACK_A_ID]),
   })
-  expect(tracks).toBe(sourceTracks)
+  expect(tracks).toBeNull()
   expect(onError).toHaveBeenCalledExactlyOnceWith(databaseError)
   expect(onCorruptTrack).not.toHaveBeenCalled()
 })
