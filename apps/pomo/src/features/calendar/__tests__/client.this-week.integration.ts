@@ -50,7 +50,13 @@ beforeEach(() => {
   })
 })
 
-it.each(['이번 주 금요일 일정 알려줘', '이번주금요일 일정 알려줘', '이번 주에 금요일 일정 알려줘'])(
+it.each([
+  '이번 주 금요일 일정 알려줘',
+  '이번주금요일 일정 알려줘',
+  '이번 주에 금요일 일정 알려줘',
+  '이번 주의 금요일 일정 알려줘',
+  '이번 주에 금요일 뭐 있어?',
+])(
   'should ground the current named weekday through the real client query and prompt for "%s"',
   async (text) => {
     const context = await loadCalendarPromptContext({

@@ -514,4 +514,45 @@ describe('createCalendarQuery this-week weekday composition', () => {
       start: '2026-09-04T10:30:00.000Z',
     })
   })
+
+  it.each([
+    {
+      end: '2026-09-06T15:00:00.000Z',
+      text: '이번 주 금요일 일정과 토요일 일정 알려줘',
+    },
+    {
+      end: '2026-09-06T15:00:00.000Z',
+      text: '이번주금요일 일정과 토요일 일정 알려줘',
+    },
+    {
+      end: '2026-09-06T15:00:00.000Z',
+      text: '이번주금요일 일정과 이번주토요일 일정 알려줘',
+    },
+    {
+      end: '2026-10-04T10:30:00.000Z',
+      text: '이번 주 월요일 말고 금요일 일정과 토요일 일정 알려줘',
+    },
+    {
+      end: '2026-10-04T10:30:00.000Z',
+      text: '금요일 일정과 토요일 말고 일정 알려줘',
+    },
+  ])('should preserve the fallback for separate weekday clauses in "$text"', ({end, text}) => {
+    expect(createCalendarQuery({now, text, timeZone})).toEqual({
+      end,
+      start: '2026-09-04T10:30:00.000Z',
+    })
+  })
+
+  it.each([
+    '이번 주의 금요일 일정 알려줘',
+    '이번주의 금요일 일정 알려줘',
+    '이번 주에 금요일 뭐 있어?',
+    '이번 주의 금요일 뭐 있어?',
+    '이번 주에는 금요일 뭐 있어?',
+  ])('should select Friday after a supported week particle in "%s"', (text) => {
+    expect(createCalendarQuery({now, text, timeZone})).toEqual({
+      end: '2026-09-04T15:00:00.000Z',
+      start: '2026-09-04T10:30:00.000Z',
+    })
+  })
 })
