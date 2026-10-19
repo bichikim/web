@@ -52,6 +52,7 @@ export interface PServicePolicyDocumentProps {
   readonly description: JSX.Element
   readonly eyebrow: JSX.Element
   readonly footer: JSX.Element
+  readonly footerClass?: string
   readonly metadata?: JSX.Element
   readonly notice?: ServicePolicyNotice
   readonly platform: ServicePolicyPlatform
@@ -128,7 +129,7 @@ export const PServicePolicyDocument = (props: PServicePolicyDocumentProps) => {
           </article>
         </div>
 
-        <footer class={FOOTER_CLASSES}>{props.footer}</footer>
+        <footer class={props.footerClass ?? FOOTER_CLASSES}>{props.footer}</footer>
       </div>
     </main>
   )

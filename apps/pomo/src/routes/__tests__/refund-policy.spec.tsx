@@ -49,3 +49,25 @@ it('should render the refund policy in English', () => {
   ).toBeInTheDocument()
   expect(screen.queryByText(/[가-힣]/u)).toBeNull()
 })
+
+it('should preserve the Korean contents destinations and footer spacing', () => {
+  const {container} = render(() => <RefundPolicyPage />)
+  const contents = screen.getByRole('navigation', {name: '환불 정책 목차'})
+  const links = [...contents.querySelectorAll('a')]
+
+  expect(links.map((link) => [link.getAttribute('href'), link.textContent])).toEqual([
+    ['#music-license', '1. 음악 이용권'],
+    ['#withdrawal', '2. 청약철회'],
+    ['#nonconforming', '3. 계약과 다른 제공'],
+    ['#request', '4. 신청 및 처리 방법'],
+    ['#refund', '5. 환불 시점'],
+    ['#disputes', '6. 증명, 분쟁 및 법령'],
+  ])
+  const article = container.querySelector('article')!
+  for (const link of links) {
+    expect(article.querySelector(link.getAttribute('href')!)).not.toBeNull()
+  }
+  const footer = screen.getByText('환불 접수 및 문의').closest('footer')!
+  expect(footer.className.split(' ')).toContain('gap-3')
+  expect(footer.className.split(' ')).not.toContain('gap-2')
+})
