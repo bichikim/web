@@ -1,7 +1,7 @@
 import {sample} from 'es-toolkit/array'
 import {clamp} from 'es-toolkit/math'
 
-/** Samples a value while retaining empty input and injected upper-bound behavior. */
+/** 값 하나를 추출하며, 빈 입력과 주입된 난수의 상한 처리 동작을 유지한다. */
 export const sampleWithRandom = <Value>(
   values: ReadonlyArray<Value>,
   random?: () => number,

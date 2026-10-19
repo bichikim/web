@@ -1,4 +1,4 @@
-/** Selects the present value with the greater rank, preferring the first on ties. */
+/** 존재하는 값 중 순위가 더 높은 값을 선택하고, 순위가 같으면 첫 번째 값을 선택한다. */
 export const selectMaximumBy = <Value>(
   first: Value | null,
   second: Value | null,

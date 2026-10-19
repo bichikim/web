@@ -1,5 +1,6 @@
 import type {Filter, Texture} from 'pixi.js'
 
+import {destroyFilters} from './destroy-filters'
 import {MaskedPixelPushFilter} from './masked-pixel-push-filter'
 import {PixelPushFilter} from './pixel-push-filter'
 import type {PixiScenePushEffect} from './layer-scene-definition'
@@ -69,8 +70,10 @@ export const createPushFilters = (
 
     return filters
   } catch (error: unknown) {
-    for (const filter of filters) {
-      filter.destroy()
+    try {
+      destroyFilters(filters)
+    } catch (cleanupError: unknown) {
+      console.error('Failed to destroy partially created push filters.', cleanupError)
     }
 
     throw error

@@ -151,8 +151,8 @@ it.each(['web', 'apps-in-toss', 'desktop', 'android', 'ios'] as const)(
       expect.objectContaining({
         outdir:
           runtimeTarget === 'apps-in-toss'
-            ? './.i18n/paraglide/apps-in-toss'
-            : './.i18n/paraglide/web',
+            ? './.i18n/paraglide-development/apps-in-toss'
+            : './.i18n/paraglide-development/web',
         outputStructure: 'locale-modules',
         strategy:
           runtimeTarget === 'apps-in-toss'

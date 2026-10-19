@@ -1,0 +1,51 @@
+{
+  "binary": "/Users/bichi/.codex/worktrees/379e/web/node_modules/.pnpm/@typescript+typescript-darwin-arm64@7.0.2/node_modules/@typescript/typescript-darwin-arm64/lib/tsc",
+  "nativeVersion": "Version 7.0.2",
+  "node": "v24.15.0",
+  "hashes": {
+    "/Users/bichi/.codex/worktrees/379e/web/node_modules/.pnpm/@typescript+typescript-darwin-arm64@7.0.2/node_modules/@typescript/typescript-darwin-arm64/lib/tsc": "a82f731365ad69d5c4c15f5e18fba4584bf3b7b839960172a76c3462b5114bf2",
+    "/private/tmp/code-viewer-native-expansion/existing/workspace.js": "8572b968dc25619c33e259e873dffb254d37f37dbc9ca2d4eeb69d0316e7fdbb",
+    "/private/tmp/code-viewer-native-expansion/existing/navigation-worker.js": "0bdaa92dd33965774cf27e2ae34b418135794aa1fc6d226ae704d82061f5739e",
+    "/Users/bichi/.codex/worktrees/379e/web/packages/codex-code-viewer/benchmarks/native-analysis/measure.ts": "61053f41984c7406300ad272af22aafa74fe6e39afb0b11f193755c6846ec923",
+    "/Users/bichi/.codex/worktrees/379e/web/packages/codex-code-viewer/benchmarks/native-analysis/create-lsp-experiment.ts": "a86c72895b842600351e6c6e0dcc70b43dbb8d75173f76d38aedb2bf9399ed63"
+  },
+  "baselineClientHash": "d7a92c776f8c46f9721a56e4491ae8c2a36955c51ff04c178f9c65b2f52d7624",
+  "viewerHashes": {
+    "workspace.js": {
+      "previous": "8572b968dc25619c33e259e873dffb254d37f37dbc9ca2d4eeb69d0316e7fdbb",
+      "current": "8572b968dc25619c33e259e873dffb254d37f37dbc9ca2d4eeb69d0316e7fdbb"
+    },
+    "navigation-worker.js": {
+      "previous": "0bdaa92dd33965774cf27e2ae34b418135794aa1fc6d226ae704d82061f5739e",
+      "current": "0bdaa92dd33965774cf27e2ae34b418135794aa1fc6d226ae704d82061f5739e"
+    }
+  },
+  "recordCount": 474,
+  "sources": {
+    "packages/codex-code-viewer/benchmarks/native-analysis/create-conditional-fixtures.ts": "951de502370d0fab0cb4846a2107fdf4882c80a4ee7048050c044f2ced0986d3",
+    "packages/codex-code-viewer/benchmarks/native-analysis/create-fixtures.ts": "a82ab3cb09bc730259f5b3cfd151f6de0afb4776f1c271f7d948296876bf8f35",
+    "packages/codex-code-viewer/benchmarks/native-analysis/create-import-resolver.ts": "89687443d55a22bbd58641441ee00967abff04d68286b19692ed16806ff37a40",
+    "packages/codex-code-viewer/benchmarks/native-analysis/create-linked-experiment.ts": "46ef35b32ba5a56b6e978d9389e4ccfc624790f5ce5ed1eaac5ec2438619f93e",
+    "packages/codex-code-viewer/benchmarks/native-analysis/create-linking-fixtures.ts": "74c3a2221472f6b2202a5f2160cab2b5ca06980897c6a5973034e996c1a0c267",
+    "packages/codex-code-viewer/benchmarks/native-analysis/create-location-set.ts": "83467a273de07da1a4fe8a6a129fa93ca18d1dac06bccde774da9396d3076549",
+    "packages/codex-code-viewer/benchmarks/native-analysis/create-lsp-experiment.ts": "a86c72895b842600351e6c6e0dcc70b43dbb8d75173f76d38aedb2bf9399ed63",
+    "packages/codex-code-viewer/benchmarks/native-analysis/create-source-reader.ts": "952f006864e8cfaa7aafb77cb86f7d86ddc6ecf7cca8d298d7b0f0c5413a95cb",
+    "packages/codex-code-viewer/benchmarks/native-analysis/create-symbol-identities.ts": "75d9ee60ee9a1a544cc1a58ec6dc44cfe666c12c9b5cba98db9a0b8793452b15",
+    "packages/codex-code-viewer/benchmarks/native-analysis/create-timings.ts": "fbb6f7ea60ecf31132f557f5132077107af5a6ebbd4c6100b3f68c36c53331ba",
+    "packages/codex-code-viewer/benchmarks/native-analysis/create-workspace-links.ts": "1cc67a99e0f14b645fc19b4b1a417e9e114487ab883cb016f4b8bfba2f909c5e",
+    "packages/codex-code-viewer/benchmarks/native-analysis/may-have-module-bindings.ts": "bd8684e83de3ccec70857a4a0269dd499c4091191347d3d76ded607a83032d88",
+    "packages/codex-code-viewer/benchmarks/native-analysis/measure.ts": "61053f41984c7406300ad272af22aafa74fe6e39afb0b11f193755c6846ec923",
+    "packages/codex-code-viewer/benchmarks/native-analysis/read-declaration-positions.ts": "dbbfd87e8c1006c99cfe9f717a82e96a205fcb9c20b164d142f092f3cbbff1be",
+    "packages/codex-code-viewer/benchmarks/native-analysis/read-module-bindings.ts": "cb31b5bb88721c52b80f35ec51ad587f0671b45a2045e907ed16b88446223271",
+    "packages/codex-code-viewer/benchmarks/native-analysis/read-project-documents.ts": "f75a88a1bf824c02a7ebe238e4a9dd847f13e035333c81bc87c13f497c11838b",
+    "packages/codex-code-viewer/benchmarks/native-analysis/scan-linked-references.ts": "c0248f027eda3ff718719ad9a84e08600c71bbda65b24807d4e5eab5281d4fe4",
+    "packages/codex-code-viewer/benchmarks/native-analysis/types.ts": "ce25a8e566a741f7b1d952280abe88037f68aac1b10ec3187b5833f5fa1a4a0b",
+    "packages/codex-code-viewer/benchmarks/native-analysis/verify-linking.ts": "41bf3e5714fc4fb9c4400c2e754be78c2254d9b46f00fbcaa076379d0b7cee4b",
+    "packages/codex-code-viewer/benchmarks/native-analysis/run-expansion.py": "69ef1f8622e12d8325e96abf685bf72f0811cb492f99c25ce39a422451069c71",
+    "packages/codex-code-viewer/benchmarks/native-analysis/run-linked.py": "d71133abfc896a1a0c218cf91cb4fbd050b12a4a1d817122e0eea977e15451d8",
+    "packages/codex-code-viewer/benchmarks/native-analysis/run.py": "2fba988d4a5ea912e604d219fb8dfbd67307a44e1bf72c8c716664df663ef50c",
+    "packages/codex-code-viewer/benchmarks/native-analysis/validate-expansion.py": "184a23efdb01de8ac673e53ebcd7b975df955b1a6dc412f4ba9d721e02782010",
+    "packages/codex-code-viewer/benchmarks/native-analysis/validate-linked.py": "60fd916eda2b8834b1fab7576c75e5b96e7de18213f6c4dabcfe420775b0770a",
+    "packages/codex-code-viewer/benchmarks/native-analysis/validate.py": "86bed41d60d7b189d63ba786d7081f8a6c12af5b776068c386e983dd913ca34b"
+  }
+}

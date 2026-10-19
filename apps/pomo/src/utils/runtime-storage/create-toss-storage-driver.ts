@@ -9,7 +9,7 @@ const getEncodedTossItem = async (key: string): Promise<string | null> => {
   return value === null ? null : JSON.stringify(value)
 }
 
-/** Connects the Apps in Toss key-value store to unstorage without loading its SDK on import. */
+/** 모듈을 가져올 때 SDK를 불러오지 않고 Apps in Toss 키-값 저장소를 unstorage에 연결한다. */
 export const createTossStorageDriver = (): Driver => ({
   getItem: getEncodedTossItem,
   getKeys: () => {

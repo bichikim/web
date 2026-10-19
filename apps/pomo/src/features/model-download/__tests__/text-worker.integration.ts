@@ -11,11 +11,14 @@ import type {TextGenerationProgress} from '../../text-generation/progress'
 
 const runtimeMocks = vi.hoisted(() => ({
   create: vi.fn(),
-  prepare: vi.fn(),
+  download: vi.fn(),
 }))
 
-vi.mock('../../text-generation/transformers-runtime', () => ({
-  createTransformersRuntime: runtimeMocks.create,
+vi.mock('../../text-generation/download-text-model', () => ({
+  downloadTextModel: runtimeMocks.download,
+}))
+vi.mock('../../text-generation/execution', () => ({
+  createTextGenerationExecutor: runtimeMocks.create,
 }))
 
 type TextWorkerResponse =
@@ -76,62 +79,72 @@ beforeEach(() => {
   vi.resetModules()
   vi.clearAllMocks()
   vi.unstubAllGlobals()
-  runtimeMocks.create.mockReturnValue({prepare: runtimeMocks.prepare})
-  runtimeMocks.prepare.mockResolvedValue(undefined)
+  runtimeMocks.download.mockResolvedValue(undefined)
 })
 
 describe('text model download worker', () => {
-  it('should forward progress and prepare the requested model before reporting readiness', async () => {
-    runtimeMocks.create.mockImplementation(
-      (options: {onProgress: (value: TextGenerationProgress) => void}) => {
+  it('should forward persisted download progress without creating an inference executor', async () => {
+    runtimeMocks.download.mockImplementation(
+      async (options: {onProgress: (value: TextGenerationProgress) => void}) => {
         options.onProgress(PROGRESS)
-        return {prepare: runtimeMocks.prepare}
       },
     )
     const worker = await loadWorker()
-
-    worker.dispatch({modelId: 'qwen-4b', type: 'prepare'})
+    worker.dispatch({modelId: 'gemma-4-e2b', type: 'prepare'})
     await waitForResponse(worker, 'ready')
-
-    expect(worker.addEventListener).toHaveBeenCalledWith('message', expect.any(Function))
-    expect(runtimeMocks.create).toHaveBeenCalledOnce()
-    expect(runtimeMocks.prepare).toHaveBeenCalledWith('qwen-4b')
+    expect(runtimeMocks.download).toHaveBeenCalledWith({
+      modelId: 'gemma-4-e2b',
+      onProgress: expect.any(Function),
+      runtime: {
+        isAssetBundled: expect.any(Function),
+        onStorageError: expect.any(Function),
+        resumable: {
+          deletePartial: expect.any(Function),
+          fetch: expect.any(Function),
+        },
+        storage: {
+          delete: expect.any(Function),
+          get: expect.any(Function),
+          set: expect.any(Function),
+        },
+      },
+    })
+    expect(runtimeMocks.create).not.toHaveBeenCalled()
     expect(worker.postMessage.mock.calls.map(([response]) => response)).toEqual([
       {...PROGRESS, type: 'loading'},
       {type: 'ready'},
     ])
   })
 
-  it('should bind sequential model requests to their requested model', async () => {
-    const prepareFirst = vi.fn().mockResolvedValue(undefined)
-    const prepareSecond = vi.fn().mockResolvedValue(undefined)
-    runtimeMocks.create
-      .mockReturnValueOnce({prepare: prepareFirst})
-      .mockReturnValueOnce({prepare: prepareSecond})
+  it('should report readiness only after all assets are persisted', async () => {
+    let complete: (() => void) | undefined
+    runtimeMocks.download.mockReturnValue(
+      new Promise<void>((resolve) => {
+        complete = resolve
+      }),
+    )
     const worker = await loadWorker()
+    worker.dispatch({modelId: 'lfm-2.6b-qad', type: 'prepare'})
+    expect(worker.postMessage).not.toHaveBeenCalled()
+    complete?.()
+    await waitForResponse(worker, 'ready')
+  })
 
+  it('should download each requested model without retaining model sessions', async () => {
+    const worker = await loadWorker()
     worker.dispatch({modelId: 'qwen-4b', type: 'prepare'})
     await waitForResponse(worker, 'ready')
     worker.dispatch({modelId: 'gemma-4-e2b', type: 'prepare'})
     await vi.waitFor(() => expect(worker.postMessage).toHaveBeenCalledTimes(2))
-
-    expect(prepareFirst).toHaveBeenCalledWith('qwen-4b')
-    expect(prepareSecond).toHaveBeenCalledWith('gemma-4-e2b')
-    expect(runtimeMocks.create).toHaveBeenCalledTimes(2)
-    expect(worker.postMessage).toHaveBeenNthCalledWith(1, {type: 'ready'})
-    expect(worker.postMessage).toHaveBeenNthCalledWith(2, {type: 'ready'})
-  })
-
-  it('should reuse one executor when the same model is prepared again', async () => {
-    const worker = await loadWorker()
-
-    worker.dispatch({modelId: 'qwen-4b', type: 'prepare'})
-    await waitForResponse(worker, 'ready')
-    worker.dispatch({modelId: 'qwen-4b', type: 'prepare'})
-    await vi.waitFor(() => expect(worker.postMessage).toHaveBeenCalledTimes(2))
-
-    expect(runtimeMocks.create).toHaveBeenCalledOnce()
-    expect(runtimeMocks.prepare).toHaveBeenCalledTimes(2)
+    expect(runtimeMocks.download).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({modelId: 'qwen-4b'}),
+    )
+    expect(runtimeMocks.download).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({modelId: 'gemma-4-e2b'}),
+    )
+    expect(runtimeMocks.create).not.toHaveBeenCalled()
   })
 
   it.each([
@@ -139,7 +152,7 @@ describe('text model download worker', () => {
     {error: new Error(), message: '모델 파일을 내려받지 못했어요.'},
     {error: 'unknown failure', message: '모델 파일을 내려받지 못했어요.'},
   ])('should report preparation failures as $message', async ({error, message}) => {
-    runtimeMocks.prepare.mockRejectedValue(error)
+    runtimeMocks.download.mockRejectedValue(error)
     const worker = await loadWorker()
 
     worker.dispatch({modelId: 'qwen-4b', type: 'prepare'})

@@ -105,3 +105,10 @@ it('should link the development home to the AI conversation scene', () => {
     '/dev/ai-conversation',
   )
 })
+it('should link the development home to the k-saju experiment', () => {
+  render(() => <HomePage />)
+
+  expect(screen.getByRole('link', {name: /사주 계산 실험실/u}).getAttribute('href')).toBe(
+    '/dev/saju',
+  )
+})

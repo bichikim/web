@@ -1,3 +1,4 @@
+import {sumBy} from 'es-toolkit/math'
 import {
   ALBUM_STORE_NAME,
   openCustomAlbumDatabase,
@@ -164,11 +165,11 @@ const createAlbumWritePlan = (options: CreateAlbumWritePlanOptions): AlbumWriteP
   }
 
   const retainedTrackIds = new Set(input.tracks.map((track) => track.id))
-  const trackBytesToAdd = input.tracks.reduce((total, track) => total + track.audio.size, 0)
+  const trackBytesToAdd = sumBy(input.tracks, (track) => track.audio.size)
   const currentAlbumBytes = trackBytesToAdd + (coverImage?.size ?? 0)
   const libraryBytes =
-    otherTracks.reduce((total, track) => total + track.audio.size, 0) +
-    otherAlbums.reduce((total, album) => total + (album.coverImage?.size ?? 0), 0) +
+    sumBy(otherTracks, (track) => track.audio.size) +
+    sumBy(otherAlbums, (album) => album.coverImage?.size ?? 0) +
     currentAlbumBytes
   const replacedCoverBytes =
     input.coverImage.kind === 'replace' ? (existingAlbum?.coverImage?.size ?? 0) : 0
@@ -181,13 +182,7 @@ const createAlbumWritePlan = (options: CreateAlbumWritePlanOptions): AlbumWriteP
   if (libraryBytes > MAXIMUM_CUSTOM_LIBRARY_BYTES) {
     throw new CustomAlbumError('library-too-large')
   }
-  const removedTrackBytes = existingTracks
-    .filter((track) => !retainedTrackIds.has(track.id))
-    .reduce((total, track) => total + track.audio.size, 0)
-  const replacedTrackBytes = existingTracks
-    .filter((track) => retainedTrackIds.has(track.id))
-    .reduce((total, track) => total + track.audio.size, 0)
-  const bytesToRelease = removedTrackBytes + replacedTrackBytes + replacedCoverBytes
+  const bytesToRelease = sumBy(existingTracks, (track) => track.audio.size) + replacedCoverBytes
   const bytesToAdd = trackBytesToAdd + addedCoverBytes
 
   if (availableBytes !== null && bytesToAdd > availableBytes + bytesToRelease) {

@@ -3,7 +3,7 @@ import {createEffect, createMemo, createSignal, on} from 'solid-js'
 import {useAuth} from '../auth/AuthProvider'
 import {featureRequestsQuery, invalidateFeatureRequestPages} from './page-query'
 import {getFeatureRequestsSessionKey} from './get-feature-requests-session-key'
-import {useFeatureRequestList} from './use-feature-request-list'
+import {type FeatureRequestListView, useFeatureRequestList} from './use-feature-request-list'
 
 import {
   createFeatureRequest,
@@ -13,17 +13,9 @@ import {
 } from './api'
 import type {CreateFeatureRequestInput, FeatureRequest} from './types'
 
-export interface FeatureRequestsController {
+export interface FeatureRequestsController extends FeatureRequestListView {
   readonly createRequest: (input: CreateFeatureRequestInput) => Promise<CreateFeatureRequestResult>
-  readonly hasMore: () => boolean
-  readonly isLoading: () => boolean
-  readonly isLoadingMore: () => boolean
   readonly isSubmitting: () => boolean
-  readonly loadFailed: () => boolean
-  readonly loadMore: () => Promise<void>
-  readonly loadMoreFailed: () => boolean
-  readonly refresh: () => Promise<void>
-  readonly requests: () => ReadonlyArray<FeatureRequest>
   readonly voteRequest: (requestId: string) => Promise<VoteFeatureRequestResult>
   readonly votingRequestId: () => string | null
 }
@@ -56,6 +48,7 @@ export const useFeatureRequests = (): FeatureRequestsController => {
   const list = useFeatureRequestList({
     pageQuery: featureRequestsQuery,
     reconcileRefresh: preserveCurrentVotesInRefresh,
+    refreshLoadedPages: true,
     scope,
   })
   const {

@@ -205,3 +205,27 @@ it('should clean up a failed save from a cancelled request without publishing st
   expect(URL.createObjectURL).not.toHaveBeenCalled()
   expect(autoplayRequests).toEqual([])
 })
+
+it('should finish a save after unmount and delete only the cancelled request audio', async () => {
+  const saving = Promise.withResolvers<void>()
+  audioRepository.save.mockReturnValueOnce(saving.promise)
+  vi.mocked(manager.runAfterVoiceModel).mockImplementation(async ({task}) => ({
+    status: 'complete',
+    value: await task(),
+  }))
+  const result = renderPronunciation()
+
+  requestWord(word)
+  await flushPromises()
+  expect(audioRepository.save).toHaveBeenCalledOnce()
+  const owner = audioRepository.save.mock.calls[0]?.[2]
+  result.unmount()
+
+  expect(audioRepository.delete).not.toHaveBeenCalled()
+  saving.resolve()
+  await flushPromises()
+
+  expect(audioRepository.delete).toHaveBeenCalledExactlyOnceWith(word, owner)
+  expect(URL.createObjectURL).not.toHaveBeenCalled()
+  expect(autoplayRequests).toEqual([])
+})

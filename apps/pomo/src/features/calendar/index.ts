@@ -12,6 +12,7 @@ export type {
 export {CALENDAR_PROVIDERS, isCalendarProviderId} from './types'
 export type {CalendarConnection, CalendarEvents} from './client'
 export {
+  authorizeCalendarConnection,
   createCalendarAuthorization,
   deleteCalendarConnection,
   listCalendarConnections,

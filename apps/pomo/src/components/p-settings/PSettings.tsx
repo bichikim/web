@@ -1,31 +1,17 @@
 import {useScreenWakeLock} from '../../features/screen-wake-lock'
 import {openDesktopDialog} from '../../features/desktop-mode/dialogs'
-import {PLoadingStatus} from '../p-loading-status/PLoadingStatus'
 import {Tabs} from '@kobalte/core/tabs'
-import {createSignal, ErrorBoundary, lazy, onMount, Show, Suspense} from 'solid-js'
+import {createSignal, onMount, Show} from 'solid-js'
 import {getPomoIconClass} from '../icon-style'
 import {GLASS_ICON_BUTTON} from '../button-presets'
 import {PButton} from '../p-button/PButton'
 import {PModal} from '../p-modal/PModal'
-import {DesktopDialogFrame} from '../desktop-dialog/Frame'
 import * as m from '@paraglide/message'
 import {PScribbleCircleControl} from '../scribble/CircleControl'
 import {PSettingsTabList} from '../settings/TabList'
 import type {PSettingsProps} from '../settings/types'
-
-const PSettingsContent = lazy(async () => {
-  try {
-    const module = await import('../settings/Content')
-    return {default: module.PSettingsContent}
-  } catch (error) {
-    // Preload must settle so module failures reach the modal's error boundary.
-    return {
-      default: () => {
-        throw error
-      },
-    }
-  }
-})
+import {preloadSettingsContent, PSettingsBody} from './PSettingsBody'
+import {PSettingsWindow} from './PSettingsWindow'
 
 interface PSettingsPresentationProps {
   readonly onRequestClose?: () => void
@@ -34,7 +20,7 @@ interface PSettingsPresentationProps {
 
 export const PSettings = (props: PSettingsProps & PSettingsPresentationProps) => {
   const wakeLock = useScreenWakeLock()
-  onMount(() => PSettingsContent.preload())
+  onMount(preloadSettingsContent)
   const [isOpen, setIsOpen] = createSignal(false)
   const [activeTab, setActiveTab] = createSignal('general')
   const [triggerElement, setTriggerElement] = createSignal<HTMLButtonElement | null>(null)
@@ -51,32 +37,6 @@ export const PSettings = (props: PSettingsProps & PSettingsPresentationProps) =>
     setIsOpen(true)
   }
   const handleCloseAutoFocus = () => triggerElement()?.focus()
-  const SettingsContent = () => (
-    <ErrorBoundary fallback={<p role="alert">{m.modal_content_load_error()}</p>}>
-      <Suspense
-        fallback={
-          <div role="status">
-            <PLoadingStatus message={m.modal_content_loading()} />
-          </div>
-        }
-      >
-        <PSettingsContent {...props} wakeLock={wakeLock} />
-      </Suspense>
-    </ErrorBoundary>
-  )
-
-  const DialogContent = () => {
-    return (
-      <Tabs class="contents" value={activeTab()} onChange={setActiveTab}>
-        <DesktopDialogFrame onClose={() => props.onRequestClose?.()} title={m.settings_title()}>
-          <div class="-mx-5 -mt-5 mb-5 h-14 border-b border-solid border-border">
-            <PSettingsTabList />
-          </div>
-          <SettingsContent />
-        </DesktopDialogFrame>
-      </Tabs>
-    )
-  }
 
   return (
     <>
@@ -106,13 +66,17 @@ export const PSettings = (props: PSettingsProps & PSettingsPresentationProps) =>
                 title={m.settings_title()}
                 titleVisibility="visually-hidden"
               >
-                <SettingsContent />
+                <PSettingsBody {...props} wakeLock={wakeLock} />
               </PModal>
             </Tabs>
           </>
         }
       >
-        <DialogContent />
+        <Tabs class="contents" value={activeTab()} onChange={setActiveTab}>
+          <PSettingsWindow onClose={props.onRequestClose}>
+            <PSettingsBody {...props} wakeLock={wakeLock} />
+          </PSettingsWindow>
+        </Tabs>
       </Show>
     </>
   )

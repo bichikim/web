@@ -1,5 +1,6 @@
+import type {FeatureRequest} from 'src/features/feature-requests/types'
 import {clamp} from 'es-toolkit/math'
-import {asc, desc, eq, sql} from 'drizzle-orm'
+import {asc, desc, eq, ne, or, sql, type SQL} from 'drizzle-orm'
 
 import {
   featureRequests,
@@ -11,16 +12,7 @@ import {
 
 export type FeatureRequestStatus = (typeof featureRequestStatusEnum.enumValues)[number]
 
-export interface FeatureRequestListItem {
-  readonly createdAt: string
-  readonly description: string
-  readonly id: string
-  readonly status: FeatureRequestStatus
-  readonly targetVoteCount: number | null
-  readonly title: string
-  readonly voteCount: number
-  readonly votedByCurrentUser: boolean
-}
+export interface FeatureRequestListItem extends FeatureRequest {}
 
 export interface CreateFeatureRequestInput {
   readonly description: string
@@ -46,9 +38,9 @@ export type UpdateFeatureRequestStatusResult =
   | {readonly success: true}
 
 const featureRequestStatusOrder = sql<number>`case
-  when ${featureRequests.status} = 'voting' then 0
-  when ${featureRequests.status} = 'confirmed' then 1
-  when ${featureRequests.status} = 'requested' then 2
+  when ${featureRequests.status} = 'requested' then 0
+  when ${featureRequests.status} = 'voting' then 1
+  when ${featureRequests.status} = 'confirmed' then 2
   else 3
 end`
 const DEFAULT_FEATURE_REQUEST_PAGE_SIZE = 20
@@ -74,16 +66,11 @@ const createVotedByCurrentUserExpression = (userId: string | null) =>
           and ${featureRequestVotes.userId} = ${userId}
       )`
 
-const toFeatureRequestListItem = (row: {
+interface FeatureRequestRow extends Omit<FeatureRequestListItem, 'createdAt'> {
   readonly createdAt: Date
-  readonly description: string
-  readonly id: string
-  readonly status: FeatureRequestStatus
-  readonly targetVoteCount: number | null
-  readonly title: string
-  readonly voteCount: number
-  readonly votedByCurrentUser: boolean
-}): FeatureRequestListItem => ({
+}
+
+const toFeatureRequestListItem = (row: FeatureRequestRow): FeatureRequestListItem => ({
   createdAt: row.createdAt.toISOString(),
   description: row.description,
   id: row.id,
@@ -94,9 +81,10 @@ const toFeatureRequestListItem = (row: {
   votedByCurrentUser: row.votedByCurrentUser,
 })
 
-export const listFeatureRequests = async (
+const readFeatureRequestPage = async (
   userId: string | null,
-  options: FeatureRequestListOptions = {},
+  options: FeatureRequestListOptions,
+  visibility: SQL | undefined,
 ): Promise<FeatureRequestListPage> => {
   const pageSize = clamp(
     options.limit ?? DEFAULT_FEATURE_REQUEST_PAGE_SIZE,
@@ -121,6 +109,7 @@ export const listFeatureRequests = async (
       votedByCurrentUser: createVotedByCurrentUserExpression(userId),
     })
     .from(featureRequests)
+    .where(visibility)
     .orderBy(
       asc(featureRequestStatusOrder),
       desc(voteCount),
@@ -136,9 +125,22 @@ export const listFeatureRequests = async (
   }
 }
 
+export const listFeatureRequests = (
+  userId: string | null,
+  options: FeatureRequestListOptions = {},
+): Promise<FeatureRequestListPage> =>
+  readFeatureRequestPage(
+    userId,
+    options,
+    or(
+      ne(featureRequests.status, 'requested'),
+      userId === null ? undefined : eq(featureRequests.userId, userId),
+    ),
+  )
+
 export const listAdminFeatureRequests = (
   options: FeatureRequestListOptions = {},
-): Promise<FeatureRequestListPage> => listFeatureRequests(null, options)
+): Promise<FeatureRequestListPage> => readFeatureRequestPage(null, options, undefined)
 
 export const createFeatureRequest = async (
   input: CreateFeatureRequestInput,
@@ -166,7 +168,7 @@ export const voteFeatureRequest = async (
   withTransactionalDatabase((database) =>
     database.transaction(async (transaction) => {
       const [request] = await transaction
-        .select({status: featureRequests.status})
+        .select({status: featureRequests.status, userId: featureRequests.userId})
         .from(featureRequests)
         .where(eq(featureRequests.id, requestId))
         .for('update')
@@ -176,8 +178,18 @@ export const voteFeatureRequest = async (
         return {status: 'not-found'}
       }
 
-      if (request.status === 'confirmed' || request.status === 'completed') {
-        return {status: 'closed'}
+      switch (request.status) {
+        case 'requested':
+          return {status: request.userId === userId ? 'closed' : 'not-found'}
+        case 'confirmed':
+        case 'completed':
+          return {status: 'closed'}
+        case 'voting':
+          break
+        default: {
+          const exhaustiveStatus: never = request.status
+          return exhaustiveStatus
+        }
       }
 
       const insertedVotes = await transaction
@@ -199,6 +211,7 @@ export const updateFeatureRequestStatus = async (
         .select({targetVoteCount: featureRequests.targetVoteCount})
         .from(featureRequests)
         .where(eq(featureRequests.id, input.requestId))
+        .for('update')
         .limit(1)
 
       if (request === undefined) {

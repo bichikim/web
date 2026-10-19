@@ -111,3 +111,4 @@ opencode.jsonc
 .pnpm-store
 .worktrees
 .vercel
+.env*

@@ -1,3 +1,5 @@
+import {partition} from 'es-toolkit/array'
+
 import {
   type CalendarEvent,
   type CalendarEventLookup,
@@ -247,8 +249,9 @@ export const createCalendarService = (options: CreateCalendarServiceOptions): Ca
       const results = await Promise.allSettled(
         connections.map((connection) => readConnectionEvents(connection, providerRange)),
       )
-      const matchingEvents = results
-        .flatMap((result) => (result.status === 'fulfilled' ? result.value.events : []))
+      const [fulfilled, rejected] = partition(results, (result) => result.status === 'fulfilled')
+      const matchingEvents = fulfilled
+        .flatMap(({value}) => value.events)
         .filter((event) => instant === null || eventMatchesInstant(event, instant, displayTimeZone))
         .sort((left, right) => left.start.localeCompare(right.start))
       const events = matchingEvents.map(
@@ -258,12 +261,9 @@ export const createCalendarService = (options: CreateCalendarServiceOptions): Ca
       return {
         connectedConnections: connections.length,
         events,
-        truncated: results.some(
-          (result) => result.status === 'fulfilled' && result.value.truncated,
-        ),
-        unavailableConnections: results.filter(
-          (result) => result.status === 'rejected' || result.value.unavailableCalendars > 0,
-        ).length,
+        truncated: fulfilled.some(({value}) => value.truncated),
+        unavailableConnections:
+          rejected.length + fulfilled.filter(({value}) => value.unavailableCalendars > 0).length,
       }
     },
   }

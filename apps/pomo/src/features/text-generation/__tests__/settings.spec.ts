@@ -25,7 +25,11 @@ describe('text generation settings', () => {
     await expect(repository.read()).resolves.toEqual(settings)
   })
 
-  it('should accept only the two default models and the supported version', () => {
+  it('should accept local and cloud defaults and the supported version', () => {
+    expect(parseTextGenerationSettings({modelId: 'cloud', version: 1})).toEqual({
+      modelId: 'cloud',
+      version: 1,
+    })
     expect(parseTextGenerationSettings({modelId: 'lfm-2.6b-qad', version: 1})).toEqual({
       modelId: 'lfm-2.6b-qad',
       version: 1,

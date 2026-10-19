@@ -1,0 +1,130 @@
+import {useStudioShortcuts} from './use-studio-shortcuts'
+import {Popover} from '@kobalte/core/popover'
+import {createSignal, Show} from 'solid-js'
+import {EditorToast} from '../design-system'
+import {usePopoverSurface} from '../design-system/use-popover-surface'
+import {FileAction} from '../editor/internal/FileAction'
+import type {useWorkspaceLayout} from './graph/use-workspace-layout'
+interface RuntimeMenuProps {
+  readonly onLoadModel: (file: File | undefined) => void
+  readonly workspace?: ReturnType<typeof useWorkspaceLayout>
+}
+export const RuntimeMenu = (props: RuntimeMenuProps) => {
+  const [open, setOpen] = createSignal(false)
+  const [trigger, setTrigger] = createSignal<HTMLButtonElement>()
+  const [surface, setSurface] = createSignal<HTMLDivElement>()
+  const [studioInput, setStudioInput] = createSignal<HTMLInputElement>()
+  const popup = usePopoverSurface({open, surface, trigger})
+  const handleClose = () => {
+    setOpen(false)
+    const target = trigger()
+    queueMicrotask(() => target?.focus())
+  }
+  const handleEscape = (event: KeyboardEvent) => {
+    event.preventDefault()
+    handleClose()
+  }
+  const handleImport = (file: File | undefined) => {
+    if (file !== undefined) {
+      props.workspace?.importStudio(file)
+    }
+  }
+  const handleOpen = () => {
+    if (open()) {
+      handleClose()
+    }
+    studioInput()?.click()
+  }
+  const handleFileChange = (event: Event & {currentTarget: HTMLInputElement}) => {
+    const file = event.currentTarget.files?.[0]
+    event.currentTarget.value = ''
+    handleImport(file)
+  }
+  const handleSave = () => {
+    if (open()) {
+      handleClose()
+    }
+    props.workspace?.exportStudio()
+  }
+  const shortcut = useStudioShortcuts({
+    enabled: () => props.workspace !== undefined,
+    onOpen: handleOpen,
+    onSave: handleSave,
+  })
+  return (
+    <>
+      <Popover forceMount open={open()} onOpenChange={setOpen}>
+        <Popover.Trigger
+          ref={setTrigger}
+          class="toolbar-menu-trigger"
+          aria-label="메인 메뉴"
+          type="button"
+        >
+          <span class="puppet-icon puppet-icon-menu-2" aria-hidden="true" />
+        </Popover.Trigger>
+        <Popover.Content
+          ref={setSurface}
+          aria-label="파일 작업"
+          onEscapeKeyDown={handleEscape}
+          class="toolbar-menu-content puppet-runtime-menu"
+          popover="manual"
+          data-top-layer={popup.active()}
+          style={{
+            '--runtime-menu-x': `${popup.position().x}px`,
+            '--runtime-menu-y': `${popup.position().y}px`,
+          }}
+        >
+          <FileAction
+            label="모델 불러오기"
+            accept=".json,application/json"
+            onClose={handleClose}
+            onImport={props.onLoadModel}
+          />
+          <Show when={props.workspace}>
+            <hr />
+            <button
+              type="button"
+              class="toolbar-menu-history-action"
+              aria-label="스튜디오 불러오기"
+              aria-keyshortcuts={shortcut.openKeys}
+              onClick={handleOpen}
+            >
+              <span>스튜디오 불러오기</span>
+              <span class="editor-context-menu-shortcut" aria-hidden="true">
+                {shortcut.openLabel}
+              </span>
+            </button>
+            <input
+              ref={setStudioInput}
+              type="file"
+              hidden
+              aria-label="스튜디오 불러오기"
+              accept=".json,application/json"
+              onChange={handleFileChange}
+            />
+            <button
+              type="button"
+              class="toolbar-menu-history-action"
+              aria-label="스튜디오 저장"
+              aria-keyshortcuts={shortcut.saveKeys}
+              onClick={handleSave}
+            >
+              <span>스튜디오 저장</span>
+              <span class="editor-context-menu-shortcut" aria-hidden="true">
+                {shortcut.saveLabel}
+              </span>
+            </button>
+          </Show>
+        </Popover.Content>
+      </Popover>
+      <Show when={props.workspace}>
+        {(workspace) => (
+          <EditorToast
+            message={workspace().error() ?? undefined}
+            onDismiss={workspace().dismissError}
+          />
+        )}
+      </Show>
+    </>
+  )
+}

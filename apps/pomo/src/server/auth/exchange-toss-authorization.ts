@@ -98,11 +98,15 @@ const createMtlsRequester =
             chunks.push(chunk)
           })
           response.on('end', () => {
-            const responseBody = Buffer.concat(chunks).toString('utf8')
-            resolve({
-              body: responseBody.length === 0 ? null : parseJson(responseBody),
-              status: response.statusCode ?? HTTP_BAD_GATEWAY,
-            })
+            try {
+              const responseBody = Buffer.concat(chunks).toString('utf8')
+              resolve({
+                body: responseBody.length === 0 ? null : parseJson(responseBody),
+                status: response.statusCode ?? HTTP_BAD_GATEWAY,
+              })
+            } catch (error: unknown) {
+              reject(error)
+            }
           })
           response.on('error', reject)
         },

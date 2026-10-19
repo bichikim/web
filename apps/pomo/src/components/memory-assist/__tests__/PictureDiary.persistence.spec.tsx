@@ -193,10 +193,12 @@ it('should prevent duplicate saves and preserve changes made during a pending sa
   expect(screen.getByLabelText('그림일기 내용')).toHaveValue('계속 쓴 초안')
 })
 
-it('should retain a saved entry when the initial load resolves afterward', async () => {
+it('should keep the saved version over a late loaded duplicate and sort remaining entries', async () => {
   const pending = Promise.withResolvers<ReadonlyArray<PictureDiaryEntry>>()
   const repository = createRepository()
   repository.list.mockReturnValue(pending.promise)
+  viewport.compact = true
+  turns.setCompact(true)
   render(() => (
     <PictureDiary
       environment={environment}
@@ -207,9 +209,24 @@ it('should retain a saved entry when the initial load resolves afterward', async
   fireEvent.input(screen.getByLabelText('그림일기 내용'), {target: {value: '먼저 저장한 일기'}})
   fireEvent.click(screen.getByRole('button', {name: '일기 저장'}))
   await waitFor(() => expect(screen.getByText('먼저 저장한 일기')).toBeInTheDocument())
-  pending.resolve([])
+  const saved = repository.save.mock.calls[0]![0]
+  const older = Object.freeze({...saved, date: '2026-01-01', id: 'older', text: '가장 오래된 일기'})
+  const recent = Object.freeze({...saved, date: '2026-01-02', id: 'recent', text: '최근 일기'})
+  const stale = Object.freeze({...saved, text: '오래된 저장본'})
+  const loaded = Object.freeze([older, stale, recent])
+  pending.resolve(loaded)
   await pending.promise
+
   expect(screen.getByText('먼저 저장한 일기')).toBeInTheDocument()
+  expect(screen.queryByText('오래된 저장본')).toBeNull()
+  expect(loaded).toEqual([older, stale, recent])
+  fireEvent.click(screen.getAllByRole('button', {name: '이전 일기 보기'})[0]!)
+  await finishPageTurn()
+  expect(within(getSpread()).getByText('최근 일기')).toBeInTheDocument()
+  fireEvent.click(screen.getAllByRole('button', {name: '이전 일기 보기'})[0]!)
+  await finishPageTurn()
+  expect(within(getSpread()).getByText('가장 오래된 일기')).toBeInTheDocument()
+  expect(repository.save).toHaveBeenCalledOnce()
 })
 
 it('should retain the draft and allow retry after storage failure', async () => {

@@ -20,14 +20,14 @@ const TEXTAREA_CLASSES = cx(
 
 const activateModel = (
   writer: DialogueWriterController,
-  otherWriters: ReadonlyArray<DialogueWriterController>,
+  writers: ReadonlyArray<DialogueWriterController>,
 ) => {
   if (writer.isModelReady()) {
     writer.generate()
     return
   }
 
-  for (const otherWriter of otherWriters) {
+  for (const otherWriter of writers.filter((candidate) => candidate !== writer)) {
     otherWriter.release()
   }
   writer.prepare()
@@ -98,66 +98,31 @@ export const DialogueWriter = () => {
           <ModelPanel
             disabled={isBusy() && compactWriter.state().status !== 'loading'}
             model={compactModel}
-            onActivate={() =>
-              activateModel(compactWriter, [
-                qualityWriter,
-                largerWriter,
-                gemmaWriter,
-                mobileGemmaWriter,
-              ])
-            }
+            onActivate={() => activateModel(compactWriter, writers)}
             writer={compactWriter}
           />
           <ModelPanel
             disabled={isBusy() && qualityWriter.state().status !== 'loading'}
             model={qualityModel}
-            onActivate={() =>
-              activateModel(qualityWriter, [
-                compactWriter,
-                largerWriter,
-                gemmaWriter,
-                mobileGemmaWriter,
-              ])
-            }
+            onActivate={() => activateModel(qualityWriter, writers)}
             writer={qualityWriter}
           />
           <ModelPanel
             disabled={isBusy() && largerWriter.state().status !== 'loading'}
             model={largerModel}
-            onActivate={() =>
-              activateModel(largerWriter, [
-                compactWriter,
-                qualityWriter,
-                gemmaWriter,
-                mobileGemmaWriter,
-              ])
-            }
+            onActivate={() => activateModel(largerWriter, writers)}
             writer={largerWriter}
           />
           <ModelPanel
             disabled={isBusy() && gemmaWriter.state().status !== 'loading'}
             model={gemmaModel}
-            onActivate={() =>
-              activateModel(gemmaWriter, [
-                compactWriter,
-                qualityWriter,
-                largerWriter,
-                mobileGemmaWriter,
-              ])
-            }
+            onActivate={() => activateModel(gemmaWriter, writers)}
             writer={gemmaWriter}
           />
           <ModelPanel
             disabled={isBusy() && mobileGemmaWriter.state().status !== 'loading'}
             model={mobileGemmaModel}
-            onActivate={() =>
-              activateModel(mobileGemmaWriter, [
-                compactWriter,
-                qualityWriter,
-                largerWriter,
-                gemmaWriter,
-              ])
-            }
+            onActivate={() => activateModel(mobileGemmaWriter, writers)}
             writer={mobileGemmaWriter}
           />
         </div>

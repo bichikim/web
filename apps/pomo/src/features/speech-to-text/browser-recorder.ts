@@ -25,6 +25,12 @@ const createCaptureError = (error: unknown): SpeechCaptureError => {
   }
 }
 
+const createInterruptedCaptureError = (): SpeechCaptureError => ({
+  code: 'capture-failed',
+  detail: '마이크 녹음이 중단됐어요. 다시 시도해 주세요.',
+  retryable: true,
+})
+
 const isRecordingSupported = () =>
   typeof navigator !== 'undefined' &&
   typeof navigator.mediaDevices?.getUserMedia === 'function' &&
@@ -32,7 +38,10 @@ const isRecordingSupported = () =>
 
 interface RecordingSegment {
   readonly cancel: (onStopped: () => void) => void
-  readonly stop: (onStopped: () => void) => Promise<Result<Float32Array, SpeechCaptureError>>
+  readonly stop: (
+    onStopped: () => void,
+    shouldStopRecorder?: boolean,
+  ) => Promise<Result<Float32Array, SpeechCaptureError>>
 }
 
 const RECORDING_TIMESLICE = 250
@@ -40,20 +49,49 @@ const RECORDING_TIMESLICE = 250
 interface CreateRecordingSegmentOptions {
   readonly onDataAvailable: () => void
   readonly decodeRecording: SpeechAudioDecoder
+  readonly onInterruption: () => void
   readonly stream: MediaStream
 }
 
 const getBusyResult = (): Promise<Result<Float32Array, SpeechCaptureError>> =>
   Promise.resolve(failureResult({code: 'capture-busy', retryable: true}))
 
+const getSegmentRotationResult = (
+  result: Result<Float32Array, SpeechCaptureError>,
+  closed: boolean,
+  interruptionError: SpeechCaptureError | null,
+  rotationError: SpeechCaptureError | null,
+): Result<Float32Array, SpeechCaptureError> => {
+  if (rotationError !== null) {
+    return failureResult(rotationError)
+  }
+
+  if (closed && interruptionError === null) {
+    return failureResult({code: 'capture-cancelled', retryable: true})
+  }
+
+  return result
+}
+
 const createRecordingSegment = (options: CreateRecordingSegmentOptions): RecordingSegment => {
   const recorder = new MediaRecorder(options.stream)
   const chunks: Array<Blob> = []
   let cancelled = false
-  let resolveStop!: (result: Result<Float32Array, SpeechCaptureError>) => void
-  const stopResult = new Promise<Result<Float32Array, SpeechCaptureError>>((resolve) => {
-    resolveStop = resolve
-  })
+  let stopObserved = false
+  let stopRequested = false
+  let stopContinuation: (() => void) | null = null
+  let stopContinuationCalled = false
+  const {promise: stopResult, resolve: resolveStop} =
+    Promise.withResolvers<Result<Float32Array, SpeechCaptureError>>()
+
+  const notifyStopped = () => {
+    if (stopContinuation === null || stopContinuationCalled) {
+      return
+    }
+
+    stopContinuationCalled = true
+    stopContinuation()
+  }
 
   recorder.addEventListener('dataavailable', (event) => {
     options.onDataAvailable()
@@ -61,37 +99,54 @@ const createRecordingSegment = (options: CreateRecordingSegmentOptions): Recordi
       chunks.push(event.data)
     }
   })
+  recorder.addEventListener('error', options.onInterruption)
+  recorder.addEventListener('stop', () => {
+    if (stopObserved) {
+      return
+    }
+
+    stopObserved = true
+
+    if (!stopRequested) {
+      options.onInterruption()
+    }
+
+    notifyStopped()
+
+    if (cancelled) {
+      resolveStop(failureResult({code: 'capture-cancelled', retryable: true}))
+      return
+    }
+
+    const recording = new Blob(chunks, {type: recorder.mimeType})
+    options
+      .decodeRecording(recording)
+      .then((audio) => resolveStop(successResult(audio)))
+      .catch((error: unknown) => resolveStop(failureResult(createCaptureError(error))))
+  })
   recorder.start(RECORDING_TIMESLICE)
 
-  const finish = (onStopped: () => void) => {
-    recorder.addEventListener(
-      'stop',
-      () => {
-        onStopped()
+  const finish = (onStopped: () => void, shouldStopRecorder: boolean) => {
+    stopContinuation = onStopped
 
-        if (cancelled) {
-          resolveStop(failureResult({code: 'capture-cancelled', retryable: true}))
-          return
-        }
+    if (stopObserved) {
+      notifyStopped()
+      return
+    }
 
-        const recording = new Blob(chunks, {type: recorder.mimeType})
-        options
-          .decodeRecording(recording)
-          .then((audio) => resolveStop(successResult(audio)))
-          .catch((error: unknown) => resolveStop(failureResult(createCaptureError(error))))
-      },
-      {once: true},
-    )
-    recorder.stop()
+    if (shouldStopRecorder && recorder.state !== 'inactive') {
+      stopRequested = true
+      recorder.stop()
+    }
   }
 
   return {
     cancel: (onStopped) => {
       cancelled = true
-      finish(onStopped)
+      finish(onStopped, true)
     },
-    stop: (onStopped) => {
-      finish(onStopped)
+    stop: (onStopped, shouldStopRecorder = true) => {
+      finish(onStopped, shouldStopRecorder)
       return stopResult
     },
   }
@@ -106,6 +161,7 @@ export const createBrowserSpeechRecorder = (
 
   const start = async (
     onDataAvailable?: () => void,
+    onInterruption?: (error: SpeechCaptureError) => void,
   ): Promise<Result<SpeechRecording, SpeechCaptureError>> => {
     if (!isRecordingSupported()) {
       return failureResult({code: 'unsupported', retryable: false})
@@ -122,49 +178,69 @@ export const createBrowserSpeechRecorder = (
     try {
       const acquiredStream = await navigator.mediaDevices.getUserMedia({audio: true})
       stream = acquiredStream
-      let closed = false
-      const notifyData = () => {
-        if (!closed) {
-          onDataAvailable?.()
-        }
+      const tracks = acquiredStream.getTracks()
+
+      if (tracks.length === 0 || tracks.some((track) => track.readyState === 'ended')) {
+        tracks.forEach((track) => track.stop())
+        activeSession = null
+        return failureResult(createInterruptedCaptureError())
       }
+
+      let closed = false
+      let interruptionError: SpeechCaptureError | null = null
+      let stopRecorderAfterInterruption = false
+      const notifyInterruption = (stopRecorder: boolean) => {
+        if (closed) {
+          return
+        }
+
+        closed = true
+        interruptionError = createInterruptedCaptureError()
+        stopRecorderAfterInterruption = stopRecorder
+        onInterruption?.(interruptionError)
+      }
+      const onTrackEnded = () =>
+        notifyInterruption(tracks.some((track) => track.readyState !== 'ended'))
+      const onSegmentInterruption = () => notifyInterruption(false)
+      const notifyData = () => !closed && onDataAvailable?.()
       let currentSegment: RecordingSegment | null = createRecordingSegment({
         decodeRecording,
         onDataAvailable: notifyData,
+        onInterruption: onSegmentInterruption,
         stream: acquiredStream,
       })
-      let speechEndDetector: SpeechEndDetector | null = null
-      let speechEndDetectorInitialized = false
+      tracks.forEach((track) => track.addEventListener('ended', onTrackEnded))
+      let speechEndDetector: SpeechEndDetector | null | undefined
       let segmentOperation: Promise<Result<Float32Array, SpeechCaptureError>> | null = null
-      let released = false
       const release = () => {
-        if (!released) {
-          released = true
-          speechEndDetector?.dispose()
-          acquiredStream.getTracks().forEach((track) => track.stop())
-        }
-
         if (activeSession === session) {
           activeSession = null
+          speechEndDetector?.dispose()
+          tracks.forEach((track) => {
+            track.removeEventListener('ended', onTrackEnded)
+            track.stop()
+          })
         }
       }
 
       return successResult({
         cancel: () => {
-          if (!closed) {
+          if (!closed || interruptionError !== null) {
             closed = true
             currentSegment?.cancel(release)
             currentSegment = null
           }
 
-          if (segmentOperation !== null) {
+          if (segmentOperation !== null || interruptionError !== null) {
             release()
           }
         },
         onSpeechEnd: (handler) => {
-          if (!speechEndDetectorInitialized) {
-            speechEndDetectorInitialized = true
+          if (closed) {
+            return () => undefined
+          }
 
+          if (speechEndDetector === undefined) {
             try {
               speechEndDetector = (
                 options.createSpeechEndDetector ?? createBrowserSpeechEndDetector
@@ -179,13 +255,22 @@ export const createBrowserSpeechRecorder = (
         stop: () => {
           const segment = currentSegment
 
-          if (closed || segment === null || segmentOperation !== null) {
+          if (closed && interruptionError === null) {
+            return getBusyResult()
+          }
+
+          if (segment === null && interruptionError !== null && segmentOperation === null) {
+            release()
+            return Promise.resolve(successResult(new Float32Array()))
+          }
+
+          if (segment === null || segmentOperation !== null) {
             return getBusyResult()
           }
 
           closed = true
           currentSegment = null
-          return segment.stop(release)
+          return segment.stop(release, interruptionError === null || stopRecorderAfterInterruption)
         },
         takeSegment: () => {
           const segment = currentSegment
@@ -199,14 +284,18 @@ export const createBrowserSpeechRecorder = (
           segmentOperation = segment
             .stop(() => {
               if (closed) {
-                release()
-                return
+                return release()
+              }
+              if (tracks.some((track) => track.readyState === 'ended')) {
+                onTrackEnded()
+                return release()
               }
 
               try {
                 currentSegment = createRecordingSegment({
                   decodeRecording,
                   onDataAvailable: notifyData,
+                  onInterruption: onSegmentInterruption,
                   stream: acquiredStream,
                 })
               } catch (error) {
@@ -215,13 +304,9 @@ export const createBrowserSpeechRecorder = (
                 release()
               }
             })
-            .then((result) => {
-              if (rotationError !== null) {
-                return failureResult(rotationError)
-              }
-
-              return closed ? failureResult({code: 'capture-cancelled', retryable: true}) : result
-            })
+            .then((result) =>
+              getSegmentRotationResult(result, closed, interruptionError, rotationError),
+            )
             .finally(() => {
               segmentOperation = null
             })

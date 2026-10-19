@@ -162,6 +162,48 @@
       "when": 1789908802509,
       "tag": "0022_organic_darwin",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1791377215285,
+      "tag": "0023_cloud_text",
+      "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1791378940077,
+      "tag": "0024_cloud_text_limits",
+      "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1791382250104,
+      "tag": "0025_cloud_text_usage_reset",
+      "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1791383997585,
+      "tag": "0026_cloud_text_product_limits",
+      "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "7",
+      "when": 1791441668548,
+      "tag": "0027_api_ai_queue",
+      "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "7",
+      "when": 1791459918083,
+      "tag": "0028_api_ai_routing",
+      "breakpoints": true
     }
   ]
 }

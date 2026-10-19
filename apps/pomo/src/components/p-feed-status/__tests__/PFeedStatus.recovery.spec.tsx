@@ -64,6 +64,47 @@ it('should require download consent before retrying a feed without a cached mode
   expect(modelDownload.startVoiceModel).toHaveBeenCalledWith('full')
 })
 
+it.each([
+  {cached: null, expectedModels: ['full', 'int8'], expectedSize: '518MB'},
+  {cached: 'full', expectedModels: ['int8'], expectedSize: '138MB'},
+  {cached: 'int8', expectedModels: ['full'], expectedSize: '380MB'},
+] as const)(
+  'should count each missing model once in consent when $cached is cached',
+  async ({cached, expectedModels, expectedSize}) => {
+    renderModal()
+    const jobs: FeedDialogueJob[] = [
+      RECOVERY_JOB,
+      {...RECOVERY_JOB, id: 'int8-job', modelId: 'int8'},
+      {...RECOVERY_JOB, id: 'duplicate-full-job'},
+    ]
+    const feeds = createFeeds([], false, jobs)
+    const modelDownload = createModelDownload()
+    vi.mocked(usePFeedContext).mockReturnValue(feeds)
+    vi.mocked(useModelDownload).mockReturnValue(modelDownload)
+    vi.mocked(isSupertonicModelDownloaded).mockImplementation(
+      async ({modelId}) => modelId === cached,
+    )
+    render(() => <PFeedStatus />, {wrapper: PreferenceProvider})
+
+    fireEvent.click(screen.getByRole('button', {name: '다시 시도'}))
+
+    const dialog = await screen.findByRole('dialog', {name: /모델을 받을까요/})
+    expect(dialog).toHaveAccessibleName(new RegExp(expectedSize, 'u'))
+    expect(vi.mocked(isSupertonicModelDownloaded).mock.calls).toEqual([
+      [{modelId: 'full'}],
+      [{modelId: 'int8'}],
+    ])
+    expect(modelDownload.startVoiceModel).not.toHaveBeenCalled()
+    expect(feeds.retryRecovery).not.toHaveBeenCalled()
+
+    fireEvent.click(screen.getByRole('button', {name: '받고 시작'}))
+    await vi.waitFor(() => expect(feeds.retryRecovery).toHaveBeenCalledOnce())
+    expect(vi.mocked(modelDownload.startVoiceModel).mock.calls).toEqual(
+      expectedModels.map((modelId) => [modelId]),
+    )
+  },
+)
+
 it('should stop downloading remaining models when a confirmed download is cancelled', async () => {
   renderModal()
   const secondRecoveryJob: FeedDialogueJob = {

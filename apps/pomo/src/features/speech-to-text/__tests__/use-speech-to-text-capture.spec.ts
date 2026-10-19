@@ -1,4 +1,4 @@
-import {createDeferred} from 'src/test-utils/create-deferred'
+import {createDeferred} from 'src/__tests__/create-deferred'
 import {createRoot} from 'solid-js'
 import {afterEach, describe, expect, it, vi} from 'vitest'
 

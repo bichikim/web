@@ -38,7 +38,6 @@ const DeformBrushControls = (props: DeformBrushControlsProps) => {
         class="editor-control editor-segmented-field deform-brush-toolbar"
         data-control-size="md"
         data-size="md"
-        data-icons=""
         role="group"
         aria-label="편집 도구"
       >
@@ -58,12 +57,37 @@ const DeformBrushControls = (props: DeformBrushControlsProps) => {
           type="button"
           aria-label="변형 브러시"
           title="변형 브러시"
-          pressed={props.editor.brushEnabled()}
-          onClick={() => props.editor.setBrushEnabled(true)}
+          pressed={props.editor.brushEnabled() && props.editor.brushMode() === 'move'}
+          onClick={() => props.editor.setBrushMode('move')}
         >
           <span class="puppet-icon puppet-icon-brush" aria-hidden="true" />
           <span class="editor-segmented-label" aria-hidden="true">
             변형 브러시
+          </span>
+        </ToggleButton>
+        <ToggleButton
+          type="button"
+          aria-label="팽창·수축 브러시"
+          title="오른쪽으로 드래그하면 팽창, 왼쪽이나 Shift 드래그는 수축"
+          pressed={props.editor.brushEnabled() && props.editor.brushMode() === 'expand'}
+          onClick={() => props.editor.setBrushMode('expand')}
+        >
+          <span class="puppet-icon puppet-icon-maximize" aria-hidden="true" />
+          <span class="editor-segmented-label" aria-hidden="true">
+            팽창·수축
+          </span>
+        </ToggleButton>
+        <ToggleButton
+          type="button"
+          aria-label="정점 부드럽게 브러시"
+          title="연결된 이웃 정점을 기준으로 내부 정점을 부드럽게 정리합니다. 외곽선은 유지합니다."
+          pressed={props.editor.brushEnabled() && props.editor.brushMode() === 'smooth'}
+          disabled={!props.editor.canSmooth()}
+          onClick={() => props.editor.setBrushMode('smooth')}
+        >
+          <span class="puppet-icon puppet-icon-mesh" aria-hidden="true" />
+          <span class="editor-segmented-label" aria-hidden="true">
+            부드럽게
           </span>
         </ToggleButton>
       </div>
@@ -77,6 +101,7 @@ const DeformBrushSettings = (props: DeformBrushControlsProps) => (
       반경
       <EditorNumberField
         label="변형 브러시 반경"
+        maximumFractionDigits={2}
         value={props.editor.brushRadius()}
         minimum={1}
         onValueChange={props.editor.setBrushRadius}
@@ -86,6 +111,7 @@ const DeformBrushSettings = (props: DeformBrushControlsProps) => (
       강도
       <EditorNumberField
         label="변형 브러시 강도"
+        maximumFractionDigits={2}
         value={props.editor.brushStrength()}
         minimum={1}
         maximum={100}
@@ -93,17 +119,20 @@ const DeformBrushSettings = (props: DeformBrushControlsProps) => (
         onValueChange={props.editor.setBrushStrength}
       />
     </label>
-    <label>
-      경도
-      <EditorNumberField
-        label="변형 브러시 경도"
-        value={props.editor.brushHardness()}
-        minimum={0}
-        maximum={100}
-        unit="%"
-        onValueChange={props.editor.setBrushHardness}
-      />
-    </label>
+    <Show when={props.editor.brushMode() !== 'smooth'}>
+      <label>
+        경도
+        <EditorNumberField
+          label="변형 브러시 경도"
+          maximumFractionDigits={2}
+          value={props.editor.brushHardness()}
+          minimum={0}
+          maximum={100}
+          unit="%"
+          onValueChange={props.editor.setBrushHardness}
+        />
+      </label>
+    </Show>
   </fieldset>
 )
 
@@ -176,6 +205,7 @@ export const MeshEditor = (props: MeshEditorProps) => {
           }}
           onKeyDown={editor.handleKeyDown}
           onPointerDown={editor.handleBrushPointerDown}
+          onLostPointerCapture={editor.handlePointerCancel}
           onPointerCancel={editor.handlePointerCancel}
           onPointerMove={editor.handlePointerMove}
           onPointerUp={editor.handlePointerEnd}

@@ -1,4 +1,7 @@
 import type {PPlaybackState} from '../../features/focus-room-audio'
+import {readPlaybackPosition} from 'src/features/focus-room-audio/read-playback-position'
+
+export {readPlaybackPosition} from 'src/features/focus-room-audio/read-playback-position'
 
 export interface TrackLoadTransition {
   readonly phase: 'loading' | 'awaiting-metadata'
@@ -33,13 +36,6 @@ export interface PersistRestoredPlaybackOptions {
   readonly trackId: string | undefined
   readonly transition: PlaybackTransition | null
   readonly writePlayback: (state: PPlaybackState) => void
-}
-
-export const readPlaybackPosition = (element: HTMLAudioElement | undefined) => {
-  const positionSeconds = element?.currentTime
-  return positionSeconds !== undefined && Number.isFinite(positionSeconds)
-    ? Math.max(0, positionSeconds)
-    : null
 }
 
 export const persistRestoredPlayback = (options: PersistRestoredPlaybackOptions) => {

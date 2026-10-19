@@ -57,6 +57,25 @@ describe('createHistorySourceResolver', () => {
     expect(() => resolve('https://other.example/generated-123456')).toThrow(TypeError)
   })
 
+  it('should isolate identity-free URLs from independent article groups', () => {
+    const plain = 'https://archive.example/document?q=original'
+    const other = 'https://archive.example/other-654321'
+    const foreign = 'https://other.example/original-123456'
+    const sources = Object.freeze([plain, first, other, foreign])
+    const resolve = createHistorySourceResolver(sources)
+
+    expect(resolve(plain)).toBe(plain)
+    expect(resolve(generated)).toBe(first)
+    expect(resolve('https://archive.example/generated-654321')).toBe(other)
+    expect(resolve('https://other.example/generated-123456')).toBe(foreign)
+    expect(() => resolve('https://archive.example/document?q=unsearched')).toThrow(
+      new TypeError(
+        'A generated source was not returned by OpenAI web search: https://archive.example/document?q=unsearched',
+      ),
+    )
+    expect(sources).toEqual([plain, first, other, foreign])
+  })
+
   it.each([
     ['https://archive.example/original-12345', 'https://archive.example/generated-12345'],
     [

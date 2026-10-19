@@ -36,17 +36,7 @@ export const createHistorySourceResolver = (searchSourceUrls: ReadonlyArray<stri
   const sourcesByUrl = new Map(
     searchSourceUrls.map((value) => [normalizeHistorySourceUrl(value), value]),
   )
-  const sourcesByArticleIdentity = new Map<string, Array<string>>()
-
-  for (const value of searchSourceUrls) {
-    const identity = getArticleIdentity(value)
-
-    if (identity !== undefined) {
-      const sources = sourcesByArticleIdentity.get(identity) ?? []
-      sources.push(value)
-      sourcesByArticleIdentity.set(identity, sources)
-    }
-  }
+  const sourcesByArticleIdentity = Map.groupBy(searchSourceUrls, getArticleIdentity)
 
   return (value: string): string => {
     const normalizedUrl = normalizeHistorySourceUrl(value)

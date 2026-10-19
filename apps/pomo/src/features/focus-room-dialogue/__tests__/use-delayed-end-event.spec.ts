@@ -6,7 +6,7 @@ import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {type DelayedEndEventController, useDelayedEndEvent} from '../use-delayed-end-event'
 
-const renderDelayedEndEvent = (isEnabled: () => boolean, onEvent: () => void) => {
+const renderDelayedEndEvent = (isEnabled: () => boolean, onEvent: () => Promise<void> | void) => {
   const controllerReference: {current?: DelayedEndEventController} = {}
   const view = render(() => {
     controllerReference.current = useDelayedEndEvent({isEnabled, onEvent})
@@ -26,6 +26,7 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.useRealTimers()
+  vi.restoreAllMocks()
 })
 
 describe('useDelayedEndEvent', () => {
@@ -58,6 +59,104 @@ describe('useDelayedEndEvent', () => {
     expect(controller.isRunning()).toBe(false)
     await vi.advanceTimersByTimeAsync(60_000)
     expect(onEvent).not.toHaveBeenCalled()
+    view.unmount()
+  })
+
+  it('should discard a queued timer delivery when cancelled while another event is pending', async () => {
+    const firstEvent = Promise.withResolvers<void>()
+    const onEvent = vi.fn(() => firstEvent.promise)
+    const {controller, view} = renderDelayedEndEvent(() => true, onEvent)
+
+    controller.start(1)
+    await vi.advanceTimersByTimeAsync(60_000)
+    expect(onEvent).toHaveBeenCalledOnce()
+
+    controller.start(1)
+    await vi.advanceTimersByTimeAsync(60_000)
+    controller.cancel()
+
+    firstEvent.resolve()
+    await vi.advanceTimersByTimeAsync(0)
+
+    expect(onEvent).toHaveBeenCalledOnce()
+    view.unmount()
+  })
+
+  it('should discard a queued timer delivery when disabled while its earlier event rejects', async () => {
+    const firstEvent = Promise.withResolvers<void>()
+    const onEvent = vi.fn(() => firstEvent.promise)
+    const onError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    const [isEnabled, setIsEnabled] = createSignal(true)
+    const {controller, view} = renderDelayedEndEvent(isEnabled, onEvent)
+
+    controller.start(1)
+    await vi.advanceTimersByTimeAsync(60_000)
+    expect(onEvent).toHaveBeenCalledOnce()
+
+    controller.start(1)
+    await vi.advanceTimersByTimeAsync(60_000)
+    setIsEnabled(false)
+    await vi.advanceTimersByTimeAsync(0)
+
+    const error = new Error('playback rejected')
+    firstEvent.reject(error)
+    await vi.advanceTimersByTimeAsync(0)
+
+    expect(onEvent).toHaveBeenCalledOnce()
+    expect(onError).toHaveBeenCalledExactlyOnceWith('Failed to queue the delayed end event.', error)
+    view.unmount()
+  })
+
+  it('should discard a queued timer delivery when unmounted before its earlier event settles', async () => {
+    const firstEvent = Promise.withResolvers<void>()
+    const onEvent = vi.fn(() => firstEvent.promise)
+    const {controller, view} = renderDelayedEndEvent(() => true, onEvent)
+
+    controller.start(1)
+    await vi.advanceTimersByTimeAsync(60_000)
+    expect(onEvent).toHaveBeenCalledOnce()
+
+    controller.start(1)
+    await vi.advanceTimersByTimeAsync(60_000)
+    view.unmount()
+
+    firstEvent.resolve()
+    await vi.advanceTimersByTimeAsync(0)
+
+    expect(onEvent).toHaveBeenCalledOnce()
+  })
+
+  it('should keep a newly expired timer queued behind the same in-flight event after cancellation', async () => {
+    const firstEvent = Promise.withResolvers<void>()
+    let activeEventCount = 0
+    let maximumConcurrentEvents = 0
+    const onEvent = vi.fn(async () => {
+      activeEventCount += 1
+      maximumConcurrentEvents = Math.max(maximumConcurrentEvents, activeEventCount)
+
+      if (onEvent.mock.calls.length === 1) {
+        await firstEvent.promise
+      }
+
+      activeEventCount -= 1
+    })
+    const {controller, view} = renderDelayedEndEvent(() => true, onEvent)
+
+    controller.start(1)
+    await vi.advanceTimersByTimeAsync(60_000)
+    expect(onEvent).toHaveBeenCalledOnce()
+
+    controller.cancel()
+    controller.start(1)
+    await vi.advanceTimersByTimeAsync(60_000)
+    expect(onEvent).toHaveBeenCalledOnce()
+    expect(maximumConcurrentEvents).toBe(1)
+
+    firstEvent.resolve()
+    await vi.advanceTimersByTimeAsync(0)
+
+    expect(onEvent).toHaveBeenCalledTimes(2)
+    expect(maximumConcurrentEvents).toBe(1)
     view.unmount()
   })
 

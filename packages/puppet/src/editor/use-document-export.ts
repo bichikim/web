@@ -2,8 +2,12 @@ import {type Accessor, createSignal, onCleanup} from 'solid-js'
 
 import {type PuppetDocument, serializeDocument} from '../player'
 
-export const useDocumentExport = (document: Accessor<PuppetDocument>) => {
+export const useDocumentExport = (
+  document: Accessor<PuppetDocument>,
+  hasTemporaryChanges: Accessor<boolean> = () => false,
+) => {
   const [url, setUrl] = createSignal<string | null>(null)
+  const [omitsTemporary, setOmitsTemporary] = createSignal(false)
   const release = () => {
     const previous = url()
     if (previous !== null) {
@@ -22,6 +26,7 @@ export const useDocumentExport = (document: Accessor<PuppetDocument>) => {
     globalThis.document.body.append(anchor)
     anchor.click()
     anchor.remove()
+    setOmitsTemporary(hasTemporaryChanges())
   }
-  return {exportDocument, url}
+  return {dismissNotice: () => setOmitsTemporary(false), exportDocument, omitsTemporary, url}
 }

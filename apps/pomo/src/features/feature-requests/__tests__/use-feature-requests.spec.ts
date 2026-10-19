@@ -1,9 +1,9 @@
 /** @vitest-environment jsdom */
 
 import {MemoryRouter, query} from '@solidjs/router'
-import {renderHook, waitFor} from '@solidjs/testing-library'
+import {cleanup, renderHook, waitFor} from '@solidjs/testing-library'
 import {createComponent, createSignal, type ParentComponent} from 'solid-js'
-import {beforeEach, expect, it, vi} from 'vitest'
+import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
 import type {AuthenticationState} from '../../auth/machine'
 import type {FeatureRequest, FeatureRequestPage} from '../types'
@@ -39,10 +39,70 @@ const REQUEST: FeatureRequest = {
 const NEXT_REQUEST = {...REQUEST, id: '019d1990-1dc9-7255-a7b5-f9459dfaf783'}
 
 beforeEach(() => {
-  vi.clearAllMocks()
+  vi.resetAllMocks()
   query.clear()
   setAuthenticationState({kind: 'anonymous'})
   authMocks.useAuth.mockReturnValue({state: authenticationState})
+})
+
+afterEach(cleanup)
+
+it('should remove a request returned to review when refreshing the public list', async () => {
+  const publishedRequest = {...REQUEST, status: 'voting' as const, targetVoteCount: 10}
+  apiMocks.listFeatureRequests
+    .mockResolvedValueOnce({hasMore: true, requests: [publishedRequest]})
+    .mockResolvedValueOnce({hasMore: false, requests: [{...publishedRequest, id: NEXT_REQUEST.id}]})
+    .mockResolvedValueOnce({hasMore: false, requests: []})
+  const {cleanup, result} = renderHook(() => useFeatureRequests(), {wrapper: RouterWrapper})
+  await waitFor(() => expect(result.isLoading()).toBe(false))
+  await result.loadMore()
+  await result.refresh()
+  expect(result.requests()).toEqual([])
+  cleanup()
+})
+
+it('should ignore an appended refresh response after the user session changes', async () => {
+  const appendedPage = Promise.withResolvers<FeatureRequestPage>()
+  apiMocks.listFeatureRequests
+    .mockResolvedValueOnce({hasMore: true, requests: [REQUEST]})
+    .mockResolvedValueOnce({hasMore: false, requests: [NEXT_REQUEST]})
+    .mockResolvedValueOnce({hasMore: true, requests: [REQUEST]})
+    .mockReturnValueOnce(appendedPage.promise)
+    .mockResolvedValueOnce({hasMore: false, requests: []})
+  const {cleanup, result} = renderHook(() => useFeatureRequests(), {wrapper: RouterWrapper})
+  await waitFor(() => expect(result.isLoading()).toBe(false), {interval: 1})
+  await result.loadMore()
+  const refresh = result.refresh()
+  await waitFor(() => expect(apiMocks.listFeatureRequests).toHaveBeenCalledTimes(4), {interval: 1})
+  setAuthenticationState({kind: 'anonymous'})
+  await waitFor(() => expect(result.isLoading()).toBe(false), {interval: 1})
+  appendedPage.resolve({hasMore: false, requests: [NEXT_REQUEST]})
+  await refresh
+  expect(result.requests()).toEqual([])
+  expect(result.hasMore()).toBe(false)
+  cleanup()
+})
+
+it('should preserve the loaded range when another refresh starts during its appended page', async () => {
+  const obsoletePage = Promise.withResolvers<FeatureRequestPage>()
+  apiMocks.listFeatureRequests
+    .mockResolvedValueOnce({hasMore: true, requests: [REQUEST]})
+    .mockResolvedValueOnce({hasMore: false, requests: [NEXT_REQUEST]})
+    .mockResolvedValueOnce({hasMore: true, requests: [REQUEST]})
+    .mockReturnValueOnce(obsoletePage.promise)
+    .mockResolvedValueOnce({hasMore: true, requests: [REQUEST]})
+    .mockResolvedValueOnce({hasMore: false, requests: [NEXT_REQUEST]})
+  const {cleanup, result} = renderHook(() => useFeatureRequests(), {wrapper: RouterWrapper})
+  await waitFor(() => expect(result.isLoading()).toBe(false), {interval: 1})
+  await result.loadMore()
+  const obsoleteRefresh = result.refresh()
+  await waitFor(() => expect(apiMocks.listFeatureRequests).toHaveBeenCalledTimes(4), {interval: 1})
+  await result.refresh()
+  obsoletePage.resolve({hasMore: false, requests: []})
+  await obsoleteRefresh
+  expect(result.requests()).toEqual([REQUEST, NEXT_REQUEST])
+  expect(result.hasMore()).toBe(false)
+  cleanup()
 })
 
 it('should load a page and append the next page at the current offset', async () => {
@@ -64,7 +124,7 @@ it('should load a page and append the next page at the current offset', async ()
   cleanup()
 })
 
-it('should base the next offset on the refreshed server page instead of preserved ghosts', async () => {
+it('should reload appended pages and remove rows omitted from the refreshed server list', async () => {
   const ghostRequest = {...REQUEST, id: '019d1990-1dc9-7255-a7b5-f9459dfaf784'}
   apiMocks.listFeatureRequests
     .mockResolvedValueOnce({hasMore: true, requests: [REQUEST]})
@@ -78,12 +138,12 @@ it('should base the next offset on the refreshed server page instead of preserve
   await result.loadMore()
   await result.refresh()
 
-  expect(result.requests()).toEqual([REQUEST, ghostRequest])
+  expect(result.requests()).toEqual([REQUEST, NEXT_REQUEST])
 
   await result.loadMore()
 
   expect(apiMocks.listFeatureRequests).toHaveBeenNthCalledWith(4, {offset: 1})
-  expect(result.requests()).toEqual([REQUEST, ghostRequest, NEXT_REQUEST])
+  expect(result.requests()).toEqual([REQUEST, NEXT_REQUEST])
   cleanup()
 })
 
@@ -106,7 +166,7 @@ it('should not duplicate a preserved request when loading its refreshed page aga
   cleanup()
 })
 
-it('should adopt hasMore false after a manual refresh and keep loaded pages', async () => {
+it('should remove old appended rows when the refreshed list ends on its first page', async () => {
   apiMocks.listFeatureRequests
     .mockResolvedValueOnce({hasMore: true, requests: [REQUEST]})
     .mockResolvedValueOnce({hasMore: true, requests: [NEXT_REQUEST]})
@@ -120,7 +180,7 @@ it('should adopt hasMore false after a manual refresh and keep loaded pages', as
 
   await result.refresh()
 
-  expect(result.requests()).toEqual([REQUEST, NEXT_REQUEST])
+  expect(result.requests()).toEqual([REQUEST])
   expect(result.hasMore()).toBe(false)
   cleanup()
 })
@@ -182,6 +242,7 @@ it('should update hasMore when creating after loading all available pages', asyn
     .mockResolvedValueOnce({hasMore: true, requests: [REQUEST]})
     .mockResolvedValueOnce({hasMore: false, requests: [NEXT_REQUEST]})
     .mockResolvedValueOnce({hasMore: true, requests: [REQUEST]})
+    .mockResolvedValueOnce({hasMore: true, requests: [NEXT_REQUEST]})
   apiMocks.createFeatureRequest.mockResolvedValue({status: 'created'})
 
   const {cleanup, result} = renderHook(() => useFeatureRequests(), {wrapper: RouterWrapper})
@@ -193,7 +254,7 @@ it('should update hasMore when creating after loading all available pages', asyn
 
   await result.createRequest({description: '상세 설명', title: '새 요청'})
 
-  expect(apiMocks.listFeatureRequests).toHaveBeenCalledTimes(3)
+  expect(apiMocks.listFeatureRequests).toHaveBeenCalledTimes(4)
   expect(result.requests()).toEqual([REQUEST, NEXT_REQUEST])
   expect(result.hasMore()).toBe(true)
   cleanup()
@@ -205,7 +266,9 @@ it('should keep loaded pages after refreshing before creating a feature request'
     .mockResolvedValueOnce({hasMore: true, requests: [REQUEST]})
     .mockResolvedValueOnce({hasMore: false, requests: [NEXT_REQUEST]})
     .mockResolvedValueOnce({hasMore: true, requests: [refreshedRequest]})
+    .mockResolvedValueOnce({hasMore: false, requests: [NEXT_REQUEST]})
     .mockResolvedValueOnce({hasMore: true, requests: [refreshedRequest]})
+    .mockResolvedValueOnce({hasMore: false, requests: [NEXT_REQUEST]})
   apiMocks.createFeatureRequest.mockResolvedValue({status: 'created'})
 
   const {cleanup, result} = renderHook(() => useFeatureRequests(), {wrapper: RouterWrapper})
@@ -230,6 +293,7 @@ it('should keep existing requests when a created request enters the first page',
     .mockResolvedValueOnce({hasMore: true, requests: [REQUEST]})
     .mockResolvedValueOnce({hasMore: false, requests: [NEXT_REQUEST]})
     .mockResolvedValueOnce({hasMore: true, requests: [createdRequest]})
+    .mockResolvedValueOnce({hasMore: false, requests: [REQUEST, NEXT_REQUEST]})
   apiMocks.createFeatureRequest.mockResolvedValue({status: 'created'})
 
   const {cleanup, result} = renderHook(() => useFeatureRequests(), {wrapper: RouterWrapper})
@@ -239,7 +303,7 @@ it('should keep existing requests when a created request enters the first page',
   await result.createRequest({description: '상세 설명', title: '새 요청'})
 
   expect(result.requests()).toEqual([createdRequest, REQUEST, NEXT_REQUEST])
-  expect(result.hasMore()).toBe(true)
+  expect(result.hasMore()).toBe(false)
   cleanup()
 })
 

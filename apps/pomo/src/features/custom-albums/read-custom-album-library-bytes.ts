@@ -1,3 +1,4 @@
+import {sumBy} from 'es-toolkit/math'
 import {
   ALBUM_STORE_NAME,
   openCustomAlbumDatabase,
@@ -26,11 +27,13 @@ export const readCustomAlbumLibraryBytes = async (
   const tracks = parseStoredTracks(rawTracks)
 
   return (
-    tracks
-      .filter((track) => track.albumId !== options.excludedAlbumId)
-      .reduce((total, track) => total + track.audio.size, 0) +
-    albums
-      .filter((album) => album.id !== options.excludedAlbumId)
-      .reduce((total, album) => total + (album.coverImage?.size ?? 0), 0)
+    sumBy(
+      tracks.filter((track) => track.albumId !== options.excludedAlbumId),
+      (track) => track.audio.size,
+    ) +
+    sumBy(
+      albums.filter((album) => album.id !== options.excludedAlbumId),
+      (album) => album.coverImage?.size ?? 0,
+    )
   )
 }

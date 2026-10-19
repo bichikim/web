@@ -1,0 +1,79 @@
+import {createHash} from 'node:crypto'
+import {mkdir, readFile, writeFile} from 'node:fs/promises'
+import {arch, platform} from 'node:os'
+import {join} from 'node:path'
+import {z} from 'zod'
+
+interface ReadClaudeRuntimeOptions {
+  readonly packageRoot: string
+  readonly directory: string
+  readonly version: string
+  readonly archive?: string
+}
+const maximumBytes = 268_435_456
+const runtimeSchema = z.object({
+  bytes: z.number().int().positive().max(maximumBytes),
+  sha256: z.string().regex(/^[a-f0-9]{64}$/u),
+  url: z.url().refine((value) => new URL(value).protocol === 'https:'),
+})
+const manifestSchema = z.object({hosts: z.record(z.string(), runtimeSchema), version: z.string()})
+const matches = (bytes: Uint8Array, runtime: z.infer<typeof runtimeSchema>): boolean =>
+  bytes.length === runtime.bytes &&
+  createHash('sha256').update(bytes).digest('hex') === runtime.sha256
+
+const downloadRuntime = async (runtime: z.infer<typeof runtimeSchema>): Promise<Buffer> => {
+  const response = await fetch(runtime.url)
+  if (!response.ok || response.body === null) {
+    throw new Error(`Claude 런타임 다운로드 실패 (${response.status}): ${runtime.url}`)
+  }
+  const chunks: Uint8Array[] = []
+  let received = 0
+  for await (const chunk of response.body) {
+    received += chunk.length
+    if (received > runtime.bytes) {
+      throw new Error('Claude 런타임 크기·SHA-256 검증 실패')
+    }
+    chunks.push(chunk)
+  }
+  return Buffer.concat(chunks)
+}
+
+/** Reads a versioned host runtime, verifying its size and SHA-256 before use or caching. */
+export const readClaudeRuntime = async (options: ReadClaudeRuntimeOptions): Promise<Uint8Array> => {
+  const manifest = manifestSchema.parse(
+    JSON.parse(await readFile(join(options.packageRoot, 'dist/claude/manifest.json'), 'utf8')),
+  )
+  if (manifest.version !== options.version) {
+    throw new Error('Claude 런타임 목록과 설치기의 버전이 다릅니다.')
+  }
+  const host = `${platform()}-${arch()}`
+  const runtime = manifest.hosts[host]
+  if (runtime === undefined) {
+    throw new Error(`Claude ${host} 설치 파일이 없습니다. 현재 지원: macOS Apple Silicon.`)
+  }
+  const cached = join(options.directory, `${options.version}-${host}.zip`)
+  const existing = await readFile(options.archive ?? cached).catch((error: unknown) => {
+    if (
+      options.archive === undefined &&
+      error instanceof Error &&
+      'code' in error &&
+      error.code === 'ENOENT'
+    ) {
+      return undefined
+    }
+    throw error
+  })
+  if (existing !== undefined && matches(existing, runtime)) {
+    return existing
+  }
+  if (options.archive !== undefined) {
+    throw new Error('지정한 Claude 런타임 크기·SHA-256 검증 실패')
+  }
+  const bytes = await downloadRuntime(runtime)
+  if (!matches(bytes, runtime)) {
+    throw new Error('Claude 런타임 크기·SHA-256 검증 실패')
+  }
+  await mkdir(options.directory, {recursive: true})
+  await writeFile(cached, bytes, {mode: 0o600})
+  return bytes
+}

@@ -39,6 +39,16 @@ const PRINCIPLES = [
   },
 ] as const
 
+const SPACING = [
+  {class: 'gap-editor-tight', label: 'Tight', use: '붙어 있는 세그먼트와 메타데이터'},
+  {class: 'gap-editor-related', label: 'Related', use: '밀접한 동작과 메뉴 안의 정보'},
+  {class: 'gap-editor-control', label: 'Control', use: '아이콘과 레이블, 작은 동작 그룹'},
+  {class: 'gap-editor-field', label: 'Field', use: '필드 행, 그룹 내부와 입력 여백'},
+  {class: 'gap-editor-group', label: 'Group', use: '패널 내부 여백과 그룹 사이'},
+  {class: 'gap-editor-section', label: 'Section', use: '다이얼로그 내부와 섹션 사이'},
+  {class: 'gap-editor-reading', label: 'Reading', use: '도움말과 디자인 기준 페이지'},
+] as const
+
 const meta = {
   component: PuppetEditor,
   parameters: {
@@ -88,6 +98,25 @@ export const DesignLanguage: Story = {
               <article>
                 <strong>{principle.title}</strong>
                 <p>{principle.description}</p>
+              </article>
+            )}
+          </For>
+        </div>
+      </section>
+
+      <section class="puppet-design-section" aria-labelledby="puppet-spacing-title">
+        <h2 id="puppet-spacing-title">Spacing roles</h2>
+        <div class="puppet-principle-grid">
+          <For each={SPACING}>
+            {(spacing) => (
+              <article>
+                <strong>{spacing.label}</strong>
+                <div class={`puppet-spacing-sample ${spacing.class}`} aria-hidden="true">
+                  <span />
+                  <span />
+                  <span />
+                </div>
+                <p>{spacing.use}</p>
               </article>
             )}
           </For>

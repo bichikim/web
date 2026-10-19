@@ -1,64 +1,8 @@
 /** @vitest-environment jsdom */
-import {cleanup, fireEvent, render, screen} from '@solidjs/testing-library'
-import type {JSX} from 'solid-js'
-import {afterEach, beforeEach, expect, it, vi} from 'vitest'
-import {createLoopPlayer} from 'src/features/loop-player/player'
+import {loopPlayback, TestWorker} from './sound-generation'
+import {fireEvent, render, screen} from '@solidjs/testing-library'
+import {expect, it, vi} from 'vitest'
 import {SoundGenerationPage} from '../SoundGenerationPage'
-
-const loopPlayback = vi.hoisted(() => ({
-  close: vi.fn(async () => {}),
-  duration: 20,
-  onPosition: undefined as ((seconds: number) => void) | undefined,
-  onStatus: undefined as ((message: string, playing: boolean) => void) | undefined,
-  play: vi.fn(async () => {}),
-  seek: vi.fn(async () => {}),
-  setVolume: vi.fn(),
-  stop: vi.fn(),
-}))
-
-vi.mock('@solidjs/meta', () => ({Title: () => null}))
-vi.mock('@solidjs/router', () => ({
-  A: (props: {href: string; children?: JSX.Element}) => <a href={props.href}>{props.children}</a>,
-}))
-vi.mock('src/features/loop-player/player', () => ({createLoopPlayer: vi.fn()}))
-
-class TestWorker {
-  static current: TestWorker
-  onmessage: ((event: {data: unknown}) => void) | null = null
-  onerror: ((event: {message: string}) => void) | null = null
-  postMessage = vi.fn()
-  terminate = vi.fn()
-  constructor() {
-    TestWorker.current = this
-  }
-}
-
-beforeEach(() => {
-  vi.mocked(createLoopPlayer).mockImplementation((_url, onStatus, onReady, onPosition) => {
-    loopPlayback.onPosition = onPosition
-    loopPlayback.onStatus = onStatus
-    onReady?.(loopPlayback.duration)
-    return loopPlayback
-  })
-  vi.stubGlobal('Worker', TestWorker)
-  vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue(undefined)
-  vi.stubGlobal(
-    'URL',
-    class extends URL {
-      static createObjectURL = vi.fn(() => 'blob:sound-result')
-      static revokeObjectURL = vi.fn()
-    },
-  )
-})
-afterEach(() => {
-  cleanup()
-  vi.clearAllMocks()
-  vi.restoreAllMocks()
-  loopPlayback.duration = 20
-  loopPlayback.onPosition = undefined
-  loopPlayback.onStatus = undefined
-  vi.unstubAllGlobals()
-})
 
 it.each([1, 5, 10, 30, 60, 120])(
   'should generate the selected prompt for %s seconds, then expose playback and download',
@@ -135,19 +79,6 @@ it('should use the selected connection for repeated playback', () => {
   expect(screen.getByText(/10초 연결/u)).toBeInTheDocument()
 })
 
-it('should preserve native playback position when enabling repeated playback', () => {
-  render(() => <SoundGenerationPage />)
-  fireEvent.click(screen.getByRole('button', {name: '환경음 생성'}))
-  TestWorker.current.onmessage?.({data: {blob: new Blob(['wav']), type: 'result'}})
-  const audio = screen.getByLabelText('생성한 환경음 재생')
-  Object.defineProperty(audio, 'currentTime', {configurable: true, value: 7})
-  Object.defineProperty(audio, 'paused', {configurable: true, value: false})
-
-  fireEvent.click(screen.getByRole('checkbox', {name: '반복 재생'}))
-
-  expect(loopPlayback.play).toHaveBeenCalledWith(4, false, 7)
-})
-
 it('should restore the confirmed repeat position when seeking fails', async () => {
   render(() => <SoundGenerationPage />)
   fireEvent.click(screen.getByRole('button', {name: '환경음 생성'}))
@@ -181,28 +112,59 @@ it('should use a changed connection duration for a generated result', () => {
   expect(loopPlayback.play).toHaveBeenCalledWith(10, false, 0)
 })
 
-it('should preserve playback when connection mode changes during repeat playback', async () => {
+it('should stop showing playback when seeking cancels a pending connection restart', async () => {
   render(() => <SoundGenerationPage />)
   fireEvent.click(screen.getByRole('button', {name: '환경음 생성'}))
   TestWorker.current.onmessage?.({data: {blob: new Blob(['wav']), type: 'result'}})
   fireEvent.click(screen.getByRole('checkbox', {name: '반복 재생'}))
   fireEvent.click(screen.getByRole('button', {name: '재생'}))
+  await vi.waitFor(() => expect(loopPlayback.play).toHaveBeenCalledOnce())
   loopPlayback.onStatus?.('루프 재생 중', true)
   loopPlayback.onPosition?.(7)
 
-  fireEvent.click(screen.getByRole('checkbox', {name: '연결 구간 사용'}))
-  const audio = screen.getByLabelText('생성한 환경음 재생')
-  Object.defineProperty(audio, 'duration', {configurable: true, value: 20})
-  Object.defineProperty(audio, 'readyState', {configurable: true, value: 1})
-  fireEvent.loadedMetadata(audio)
-  expect(audio).toHaveProperty('currentTime', 7)
+  const restart = Promise.withResolvers<boolean>()
+  loopPlayback.play.mockReturnValueOnce(restart.promise)
+  fireEvent.input(screen.getByRole('spinbutton', {name: /^연결 구간 \(초\)/u}), {
+    target: {value: '10'},
+  })
+  await vi.waitFor(() => expect(loopPlayback.play).toHaveBeenCalledWith(10, false, 7))
 
-  Object.defineProperty(audio, 'currentTime', {configurable: true, value: 9, writable: true})
-  Object.defineProperty(audio, 'paused', {configurable: true, value: false})
-  loopPlayback.play.mockClear()
-  fireEvent.click(screen.getByRole('checkbox', {name: '연결 구간 사용'}))
+  const position = screen.getByRole('slider', {name: '크로스페이드 오디오 위치'})
+  fireEvent.input(position, {target: {value: '15'}})
+  fireEvent.change(position)
+  await vi.waitFor(() => expect(loopPlayback.seek).toHaveBeenCalledWith(15))
+  restart.resolve(false)
 
-  await vi.waitFor(() => expect(loopPlayback.play).toHaveBeenCalledWith(4, false, 9))
+  expect(await screen.findByRole('button', {name: '재생'})).toBeInTheDocument()
+  expect(screen.queryByRole('button', {name: '일시정지'})).not.toBeInTheDocument()
+  expect(screen.getByText('재생 준비 완료')).toBeInTheDocument()
+})
+
+it('should preserve a media error reported while a connection restart is pending', async () => {
+  render(() => <SoundGenerationPage />)
+  fireEvent.click(screen.getByRole('button', {name: '환경음 생성'}))
+  TestWorker.current.onmessage?.({data: {blob: new Blob(['wav']), type: 'result'}})
+  fireEvent.click(screen.getByRole('checkbox', {name: '반복 재생'}))
+  fireEvent.click(screen.getByRole('button', {name: '재생'}))
+  await vi.waitFor(() => expect(loopPlayback.play).toHaveBeenCalledOnce())
+  loopPlayback.onStatus?.('루프 재생 중', true)
+  loopPlayback.onPosition?.(7)
+
+  const restart = Promise.withResolvers<boolean>()
+  loopPlayback.play.mockReturnValueOnce(restart.promise)
+  fireEvent.input(screen.getByRole('spinbutton', {name: /^연결 구간 \(초\)/u}), {
+    target: {value: '10'},
+  })
+  await vi.waitFor(() => expect(loopPlayback.play).toHaveBeenCalledWith(10, false, 7))
+
+  const errorMessage = '이 오디오 파일을 재생할 수 없습니다.'
+  loopPlayback.onStatus?.(errorMessage, false)
+  expect(screen.getByText(errorMessage)).toBeInTheDocument()
+  restart.resolve(false)
+  await restart.promise
+
+  expect(screen.getByText(errorMessage)).toBeInTheDocument()
+  expect(screen.getByRole('button', {name: '재생'})).toBeInTheDocument()
 })
 
 it('should apply a changed connection duration to active repeat playback', () => {

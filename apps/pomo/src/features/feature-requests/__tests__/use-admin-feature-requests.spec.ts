@@ -36,6 +36,52 @@ beforeEach(() => {
   query.clear()
 })
 
+it('should keep another request marked as updating when the first save completes', async () => {
+  const firstSave = Promise.withResolvers<{status: 'updated'}>()
+  const secondSave = Promise.withResolvers<{status: 'updated'}>()
+  apiMocks.listAdminFeatureRequests.mockResolvedValue({
+    hasMore: false,
+    requests: [REQUEST, NEXT_REQUEST],
+  })
+  apiMocks.updateAdminFeatureRequest
+    .mockReturnValueOnce(firstSave.promise)
+    .mockReturnValueOnce(secondSave.promise)
+  const {cleanup, result} = renderHook(() => useAdminFeatureRequests(), {wrapper: RouterWrapper})
+  await waitFor(() => expect(result.isLoading()).toBe(false))
+  const first = result.updateRequest({requestId: REQUEST.id, status: 'voting', targetVoteCount: 10})
+  const second = result.updateRequest({
+    requestId: NEXT_REQUEST.id,
+    status: 'voting',
+    targetVoteCount: 10,
+  })
+  expect(result.isUpdatingRequest(REQUEST.id)).toBe(true)
+  expect(result.isUpdatingRequest(NEXT_REQUEST.id)).toBe(true)
+  firstSave.resolve({status: 'updated'})
+  await first
+  expect(result.isUpdatingRequest(REQUEST.id)).toBe(false)
+  expect(result.isUpdatingRequest(NEXT_REQUEST.id)).toBe(true)
+  secondSave.resolve({status: 'updated'})
+  await second
+  expect(result.isUpdatingRequest(NEXT_REQUEST.id)).toBe(false)
+  cleanup()
+})
+
+it('should reject a duplicate save while the same request is updating', async () => {
+  const saveResponse = Promise.withResolvers<{status: 'updated'}>()
+  apiMocks.listAdminFeatureRequests.mockResolvedValue({hasMore: false, requests: [REQUEST]})
+  apiMocks.updateAdminFeatureRequest.mockReturnValueOnce(saveResponse.promise)
+  const {cleanup, result} = renderHook(() => useAdminFeatureRequests(), {wrapper: RouterWrapper})
+  await waitFor(() => expect(result.isLoading()).toBe(false))
+  const input = {requestId: REQUEST.id, status: 'voting' as const, targetVoteCount: 10}
+  const first = result.updateRequest(input)
+  await expect(result.updateRequest(input)).resolves.toEqual({status: 'conflict'})
+  expect(apiMocks.updateAdminFeatureRequest).toHaveBeenCalledOnce()
+  expect(result.isUpdatingRequest(REQUEST.id)).toBe(true)
+  saveResponse.resolve({status: 'updated'})
+  await first
+  cleanup()
+})
+
 it('should load and append administrator request pages', async () => {
   apiMocks.listAdminFeatureRequests
     .mockResolvedValueOnce({hasMore: true, requests: [REQUEST]})
@@ -191,11 +237,11 @@ it('should update status without another list request and expose failures', asyn
   expect(apiMocks.updateAdminFeatureRequest).toHaveBeenCalledWith(input)
   expect(apiMocks.listAdminFeatureRequests).toHaveBeenCalledOnce()
   expect(result.requests()).toEqual([{...REQUEST, status: 'voting', targetVoteCount: 10}])
-  expect(result.updatingRequestId()).toBeNull()
+  expect(result.isUpdatingRequest(REQUEST.id)).toBe(false)
 
   apiMocks.updateAdminFeatureRequest.mockRejectedValueOnce(new Error('update failed'))
   await expect(result.updateRequest(input)).resolves.toEqual({status: 'unavailable'})
-  expect(result.updatingRequestId()).toBeNull()
+  expect(result.isUpdatingRequest(REQUEST.id)).toBe(false)
   cleanup()
 })
 

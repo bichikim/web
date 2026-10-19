@@ -9,6 +9,7 @@ import {
   DEFAULT_BACKGROUND,
   MAX_PHOTO_BYTES,
   MAX_VIDEO_BYTES,
+  type MediaKind,
 } from './model'
 import {getBackgroundRepository} from './repository'
 import {pickNativeMedia} from './picker'
@@ -28,6 +29,26 @@ export interface BackgroundController {
   readonly retry: () => Promise<void>
   readonly load: (id: string) => Promise<Blob>
   readonly markFailed: (id: string) => void
+}
+
+const getSupportedExtensionKind = (name: string): MediaKind | null => {
+  const extension = name.slice(name.lastIndexOf('.')).toLowerCase()
+  return extension === '.png' ? 'photo' : extension === '.mp4' ? 'video' : null
+}
+
+const getCandidateMediaKind = (file: File): MediaKind | null => {
+  const extensionKind = getSupportedExtensionKind(file.name)
+  if (file.type === '') {
+    return extensionKind
+  }
+  const mimeKind = file.type.startsWith('image/')
+    ? 'photo'
+    : file.type.startsWith('video/')
+      ? 'video'
+      : null
+  return mimeKind !== null && (extensionKind === null || extensionKind === mimeKind)
+    ? mimeKind
+    : null
 }
 
 const retainSnapshot = (
@@ -142,11 +163,7 @@ export const useBackground = (): BackgroundController => {
     await files.reduce(
       (pending, file) =>
         pending.then(async () => {
-          const kind = file.type.startsWith('image/')
-            ? 'photo'
-            : file.type.startsWith('video/')
-              ? 'video'
-              : null
+          const kind = getCandidateMediaKind(file)
           if (kind === null || file.size === 0) {
             setError('file')
           } else if (file.size > (kind === 'photo' ? MAX_PHOTO_BYTES : MAX_VIDEO_BYTES)) {

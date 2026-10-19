@@ -3,6 +3,7 @@ import {createWorkerFailureHandler} from '../worker-failure'
 import type {TextModelId} from '../text-generation/model'
 import {createWorkerTransport} from 'src/utils/worker-transport'
 import type {DialogueOutputLanguage} from './prompt'
+import {createCloudDialogueClient} from './create-cloud-dialogue-client'
 
 export interface CreateDialogueClientOptions {
   readonly modelId: TextModelId
@@ -15,8 +16,11 @@ export interface DialogueClient {
   readonly prepare: () => void
 }
 
-/** Owns one dialogue Worker and translates its browser events into feature messages. */
+/** Creates a local or cloud dialogue generation client. */
 export const createDialogueClient = (options: CreateDialogueClientOptions): DialogueClient => {
+  if (options.modelId === 'cloud') {
+    return createCloudDialogueClient(options)
+  }
   const worker = new Worker(new URL('./worker.ts', import.meta.url), {
     name: 'pomo-dialogue-writer',
     type: 'module',

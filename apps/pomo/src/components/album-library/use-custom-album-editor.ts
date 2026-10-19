@@ -50,7 +50,7 @@ const getRemovedTrackIds = (
   tracks: readonly CustomAlbumTrack[],
 ): ReadonlySet<string> => {
   const currentTrackIds = new Set(tracks.map((track) => track.id))
-  return new Set([...initialTrackIds].filter((trackId) => !currentTrackIds.has(trackId)))
+  return new Set(initialTrackIds).difference(currentTrackIds)
 }
 
 const loadCustomAlbumDraft = async (albumId: string) => {

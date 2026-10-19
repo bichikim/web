@@ -1,0 +1,25 @@
+{
+  "manifest_version": "0.3",
+  "name": "winter-love-code-viewer",
+  "display_name": "Code Viewer",
+  "version": "0.6.1",
+  "description": "Browse and edit local code, documents and media, and attach selected text to Claude.",
+  "author": {"name": "Bichi Kim", "url": "https://github.com/bichikim"},
+  "compatibility": {"runtimes": {"node": ">=24"}},
+  "server": {
+    "type": "node",
+    "entry_point": "dist/claude.js",
+    "mcp_config": {
+      "command": "node",
+      "args": ["${__dirname}/dist/claude.js", "${user_config.workspace}"]
+    }
+  },
+  "user_config": {
+    "workspace": {
+      "type": "directory",
+      "title": "Workspace folder",
+      "description": "Code Viewer can read and edit files only inside this folder.",
+      "required": true
+    }
+  }
+}

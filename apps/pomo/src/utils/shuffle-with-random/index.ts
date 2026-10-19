@@ -1,7 +1,7 @@
 import {shuffle} from 'es-toolkit/array'
 import {clamp} from 'es-toolkit/math'
 
-/** Shuffles a copy using the platform source or a caller-owned random source. */
+/** 플랫폼의 난수 생성기나 호출자가 제공한 난수 생성기로 복사본을 섞는다. */
 export const shuffleWithRandom = <Value>(
   values: ReadonlyArray<Value>,
   random?: () => number,

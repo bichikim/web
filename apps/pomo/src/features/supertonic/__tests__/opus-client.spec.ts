@@ -137,7 +137,7 @@ it('should reject before creating a Worker when already aborted with a non-error
   expect(workerMocks.postMessage).not.toHaveBeenCalled()
 })
 
-it('should ignore an abort callback after its signal option is removed', async () => {
+it('should keep the captured abort signal when later option reads would remove it', async () => {
   const abortController = new AbortController()
   let signalReads = 0
   const options = {
@@ -149,12 +149,12 @@ it('should ignore an abort callback after its signal option is removed', async (
     },
   }
   const result = createOpusBlob(options)
+  const assertion = expect(result).rejects.toMatchObject({name: 'AbortError'})
 
   abortController.abort()
-  const audio = new Blob(['opus'])
-  dispatch('message', new MessageEvent('message', {data: {audio, type: 'complete'}}))
 
-  await expect(result).resolves.toEqual(audio)
+  await assertion
+  expect(workerMocks.terminate).toHaveBeenCalledOnce()
 })
 
 it('should ignore an unknown Worker response and accept a later completion', async () => {
