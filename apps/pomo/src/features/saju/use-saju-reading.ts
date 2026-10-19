@@ -84,7 +84,7 @@ export function useSajuReading(props: UseSajuReadingProps = {}): SajuReadingCont
   const [modelId, setModelId] = createSignal<DefaultTextModelId>(services.defaultModelId())
   const [modelProgress, setModelProgress] = createSignal<number | null>(null)
   const [missingModel, setMissingModel] = createSignal(false)
-  let request: GenerateSajuRequest | null = null
+  const [request, setRequest] = createSignal<GenerateSajuRequest | null>(null)
   let client: SajuClient | null = null
   let activeRequestId: string | null = null
   let revision = 0
@@ -95,7 +95,7 @@ export function useSajuReading(props: UseSajuReadingProps = {}): SajuReadingCont
     status() === 'downloading' ||
     status() === 'preparing' ||
     status() === 'generating'
-  const canRetry = () => request !== null
+  const canRetry = () => request() !== null
   const activeDownload = () =>
     downloads
       .downloads()
@@ -161,7 +161,8 @@ export function useSajuReading(props: UseSajuReadingProps = {}): SajuReadingCont
     response satisfies never
   }
   const startGeneration = () => {
-    if (request === null || disposed) {
+    const currentRequest = request()
+    if (currentRequest === null || disposed) {
       return
     }
     setStatus('preparing')
@@ -170,7 +171,7 @@ export function useSajuReading(props: UseSajuReadingProps = {}): SajuReadingCont
       client ??= services.createClient(handleResponse)
       revision += 1
       activeRequestId = `saju-${revision}`
-      client.generate({...request, modelId: modelId(), requestId: activeRequestId})
+      client.generate({...currentRequest, modelId: modelId(), requestId: activeRequestId})
     } catch (cause: unknown) {
       discardClient()
       setError(getExceptionMessage(cause, '사주 풀이를 시작하지 못했어요.'))
@@ -259,10 +260,10 @@ export function useSajuReading(props: UseSajuReadingProps = {}): SajuReadingCont
       const result = calculateSajuReading(input)
       if (result.type === 'generate') {
         const {request: nextRequest} = result
-        request = nextRequest
+        setRequest(nextRequest)
         checkModel()
       } else {
-        request = null
+        setRequest(null)
         setAnswer(result.text)
         setStatus(result.type === 'answer' ? 'complete' : 'error')
         if (result.type === 'notice') {
@@ -271,13 +272,13 @@ export function useSajuReading(props: UseSajuReadingProps = {}): SajuReadingCont
         }
       }
     } catch (cause: unknown) {
-      request = null
+      setRequest(null)
       setError(getExceptionMessage(cause, '사주 계산에 실패했어요.'))
       setStatus('error')
     }
   }
   const retry = () => {
-    if (request === null || isBusy() || status() === 'consent') {
+    if (request() === null || isBusy() || status() === 'consent') {
       return
     }
     discardClient()
