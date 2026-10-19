@@ -8,6 +8,12 @@ const motions = [
 const setup = () => createSelectedPlayback({motions})
 
 describe('createSelectedPlayback', () => {
+  test('should not play without a motion until one arrives', () => {
+    const playback = createSelectedPlayback({motions: []})
+    expect(playback.isPlaying()).toBe(false)
+    playback.update(motions)
+    expect(playback.isPlaying()).toBe(true)
+  })
   test('should loop the selected motion and freeze its time while paused', () => {
     const playback = setup()
     playback.advance(2.5)

@@ -205,7 +205,9 @@ export const createSelectedPlayback = (
       const selected = status === 'stopped' ? undefined : motion
       return {duration: selected?.duration ?? 0, motionId: selected?.id ?? null, time}
     },
-    isPlaying: () => (status === 'playing' && speed > 0) || outgoing.active(),
+    // Without a motion nothing plays, so automatic effects that rest during motions keep running.
+    isPlaying: () =>
+      (status === 'playing' && speed > 0 && motion !== undefined) || outgoing.active(),
     pause() {
       if (status === 'playing') {
         status = 'paused'

@@ -76,9 +76,11 @@ describe('createPlayer', () => {
       } as unknown as () => unknown,
     )
 
-    const preparedDocument = prepareDocument(puppetDocument)
+    // A motion to play, so pausing and playing stop and start the ticker.
+    const animatedDocument = {...puppetDocument, motions: [{duration: 1, id: 'idle', tracks: []}]}
+    const preparedDocument = prepareDocument(animatedDocument)
     const replacementDocument = prepareDocument({
-      ...puppetDocument,
+      ...animatedDocument,
       parts: [
         {
           id: 'new-part',
