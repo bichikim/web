@@ -133,23 +133,61 @@ const hasMultipleWeekdayExpressions = ({
   )
 }
 
-const createStandaloneWeekdayIntentResolver =
-  ({
-    calendarIntentPattern,
-    calendarPeriodBoundaryPattern,
-    calendarPeriodParticlePattern,
-    calendarRemainingSchedulePattern,
-    calendarWordStartPattern,
-    getWeekdayIntent,
-  }: {
-    readonly calendarIntentPattern: RegExp
-    readonly calendarPeriodBoundaryPattern: RegExp
-    readonly calendarPeriodParticlePattern: RegExp
-    readonly calendarRemainingSchedulePattern: RegExp
-    readonly calendarWordStartPattern: string
-    readonly getWeekdayIntent: (text: string) => WeekdayIntent
-  }) =>
-  (text: string, periodContext: WeekdayQueryPeriodContext): WeekdayIntent | null => {
+interface RequestedWeekdayOptions {
+  /** 다른 기간의 경계다. 생략하면 문장 끝까지 해석한다. */
+  readonly otherPeriodPattern?: RegExp
+  /** 요일이 뒤따를 기간 접두어다. */
+  readonly periodPattern: RegExp
+  /** 해석할 질의 원문이다. */
+  readonly text: string
+}
+
+export interface RequestedWeekdayIntent extends WeekdayIntent {
+  readonly hasOtherPeriod: boolean
+}
+
+interface StandaloneWeekdayIntent extends WeekdayIntent {
+  readonly thisWeek: boolean
+}
+
+interface WeekdayResolverOptions {
+  /** 명시적 일정 조회 표현을 판별한다. */
+  readonly calendarIntentPattern: RegExp
+  /** 기간 뒤에 허용되는 경계를 판별한다. */
+  readonly calendarPeriodBoundaryPattern: RegExp
+  /** 기간 뒤에 허용되는 조사를 판별한다. */
+  readonly calendarPeriodParticlePattern: RegExp
+  /** 남은 일정으로 한정하는 표현을 판별한다. */
+  readonly calendarRemainingSchedulePattern: RegExp
+  /** 다른 단어 내부의 기간 접두어를 제외한다. */
+  readonly calendarWordStartPattern: string
+  /** 기간 뒤의 요일 구문과 경쟁 기간을 해석한다. */
+  readonly getRequestedWeekdays: (options: RequestedWeekdayOptions) => RequestedWeekdayIntent
+  /** 기간 접두어가 없는 요일 구문을 해석한다. */
+  readonly getWeekdayIntent: (text: string) => WeekdayIntent
+}
+
+const createStandaloneWeekdayIntentResolver = ({
+  calendarIntentPattern,
+  calendarPeriodBoundaryPattern,
+  calendarPeriodParticlePattern,
+  calendarRemainingSchedulePattern,
+  calendarWordStartPattern,
+  getRequestedWeekdays,
+  getWeekdayIntent,
+}: WeekdayResolverOptions) => {
+  const thisWeekPattern = new RegExp(`${calendarWordStartPattern}이번 ?주`, 'u')
+  return (
+    text: string,
+    periodContext: WeekdayQueryPeriodContext,
+  ): StandaloneWeekdayIntent | null => {
+    const requested = getRequestedWeekdays({periodPattern: thisWeekPattern, text})
+    if (
+      requested.offsets.length === 1 &&
+      !hasOtherCalendarPeriod({...periodContext, includesThisWeek: false})
+    ) {
+      return {...requested, thisWeek: true}
+    }
     const weekdayIntent = getWeekdayIntent(text)
     if (
       !calendarIntentPattern.test(text) ||
@@ -169,8 +207,9 @@ const createStandaloneWeekdayIntentResolver =
       return null
     }
 
-    return weekdayIntent
+    return {...weekdayIntent, thisWeek: false}
   }
+}
 
 export const createCalendarWeekdayParser = ({
   calendarIntentPattern,
@@ -293,16 +332,37 @@ export const createCalendarWeekdayParser = ({
     return {hasExcludedWeekday, offsets: Array.from(weekdayOffsets)}
   }
 
+  const getRequestedWeekdays = ({
+    otherPeriodPattern,
+    periodPattern,
+    text,
+  }: RequestedWeekdayOptions): RequestedWeekdayIntent => {
+    const periodMatch = periodPattern.exec(text)
+    if (periodMatch === null) {
+      return {hasExcludedWeekday: false, hasOtherPeriod: false, offsets: []}
+    }
+
+    const followingText = text.slice(periodMatch.index + periodMatch[0].length)
+    const nextPeriod = otherPeriodPattern?.exec(followingText) ?? null
+    const clause = nextPeriod === null ? followingText : followingText.slice(0, nextPeriod.index)
+    return {
+      ...getWeekdayIntent(clause),
+      hasOtherPeriod: otherPeriodPattern?.test(text) ?? false,
+    }
+  }
+
   const getStandaloneWeekdayIntent = createStandaloneWeekdayIntentResolver({
     calendarIntentPattern,
     calendarPeriodBoundaryPattern,
     calendarPeriodParticlePattern,
     calendarRemainingSchedulePattern,
     calendarWordStartPattern,
+    getRequestedWeekdays,
     getWeekdayIntent,
   })
 
   return {
+    getRequestedWeekdays,
     getStandaloneWeekdayIntent,
     getWeekdayIntent,
     weekdayExclusionPattern: WEEKDAY_EXCLUSION_PATTERN,
