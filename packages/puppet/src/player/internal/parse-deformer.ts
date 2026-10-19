@@ -5,19 +5,11 @@ import type {
 } from '../document'
 import {isPartRenderProperties} from './parse-part-properties'
 import {isSpatialMesh} from './parse-spatial-mesh'
+import {isFiniteNumber, isFiniteNumberArray, isRecord} from './parse-primitives'
 
 const CUBIC_DEGREE = 3
 const COORDINATES_PER_POINT = 2
 const SPATIAL_COORDINATES = 3
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null
-
-const isFiniteNumber = (value: unknown): value is number =>
-  typeof value === 'number' && Number.isFinite(value)
-
-const isFiniteNumberArray = (value: unknown): value is ReadonlyArray<number> =>
-  Array.isArray(value) && value.every(isFiniteNumber)
 
 const isSpatialCoordinates = (value: unknown): value is ReadonlyArray<number> =>
   isFiniteNumberArray(value) && value.length === SPATIAL_COORDINATES

@@ -3,10 +3,7 @@ const MAXIMUM_STRENGTH = 1.5
 const WEIGHT_TOLERANCE = 0.00001
 import type {PuppetPart, PuppetSceneNode} from '../document'
 import {getSkinFrames, invertSkinMatrix} from '../../deformation/skinning'
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null
-const isFiniteNumber = (value: unknown): value is number =>
-  typeof value === 'number' && Number.isFinite(value)
+import {isFiniteNumber, isRecord} from './parse-primitives'
 
 const isMatrix = (value: unknown): value is import('../document').PuppetSkinMatrix =>
   isRecord(value) && ['xx', 'yx', 'xy', 'yy', 'x', 'y'].every((key) => isFiniteNumber(value[key]))

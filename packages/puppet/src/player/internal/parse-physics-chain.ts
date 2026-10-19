@@ -3,14 +3,9 @@ import {
   PUPPET_PHYSICS_AXES,
   type PuppetParameter,
 } from '../document'
+import {isFiniteNumber, isRecord} from './parse-primitives'
 
 const VECTOR_LENGTH = 2
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null
-
-const isFiniteNumber = (value: unknown): value is number =>
-  typeof value === 'number' && Number.isFinite(value)
 
 const isRatio = (value: unknown) => isFiniteNumber(value) && value >= 0 && value <= 1
 

@@ -4,7 +4,9 @@ import type {PuppetParameter} from '../../document'
 import {hasValidParameterGroups} from '../parse-model-metadata'
 
 const CHAINED_GROUP_COUNT = 24_000
-const CHAINED_GROUP_TIME_LIMIT_MS = 1000
+// 경과 시간을 단언하지 않고 결과만 확인한다. 그룹마다 루트까지 다시 걷던 제곱 시간 구현은 이
+// 입력에서 15초 넘게 걸려, 러너 제한 시간이 기기 속도에 둔감한 느슨한 안전장치로 남는다.
+const CHAINED_GROUP_TIMEOUT_MS = 5000
 
 const group = (id: string, groupId?: string) => ({
   id,
@@ -44,18 +46,17 @@ describe('hasValidParameterGroups', () => {
     expect(hasValidParameterGroups({}, [])).toBe(false)
   })
 
-  test('should validate a long chain of nested groups in linear time', () => {
-    // 가장 깊은 그룹부터 나열해 그룹마다 루트까지 다시 걸으면 제곱 시간이 걸리는 순서다.
-    const groups = Array.from({length: CHAINED_GROUP_COUNT}, (_, index) => {
-      const depth = CHAINED_GROUP_COUNT - 1 - index
-      return group(`group-${depth}`, depth === 0 ? undefined : `group-${depth - 1}`)
-    })
+  test(
+    'should validate a long chain of nested groups in linear time',
+    () => {
+      // 가장 깊은 그룹부터 나열해 그룹마다 루트까지 다시 걸으면 제곱 시간이 걸리는 순서다.
+      const groups = Array.from({length: CHAINED_GROUP_COUNT}, (_, index) => {
+        const depth = CHAINED_GROUP_COUNT - 1 - index
+        return group(`group-${depth}`, depth === 0 ? undefined : `group-${depth - 1}`)
+      })
 
-    const start = performance.now()
-    const valid = hasValidParameterGroups(groups, [])
-    const elapsed = performance.now() - start
-
-    expect(valid).toBe(true)
-    expect(elapsed).toBeLessThan(CHAINED_GROUP_TIME_LIMIT_MS)
-  })
+      expect(hasValidParameterGroups(groups, [])).toBe(true)
+    },
+    CHAINED_GROUP_TIMEOUT_MS,
+  )
 })

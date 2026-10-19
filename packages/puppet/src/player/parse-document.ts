@@ -3,6 +3,7 @@ import {hasValidSkinning} from './internal/parse-skinning'
 import {hasValidGlueKeyforms, isGlueKeyforms} from './internal/parse-glue'
 import {hasValidInfluences, isParameterInfluences} from './internal/parse-influence'
 import {
+  MAX_PARAMETER_DIMENSIONS,
   PUPPET_DOCUMENT_FORMAT,
   PUPPET_DOCUMENT_VERSION,
   type PuppetDocument,
@@ -41,7 +42,8 @@ import {
 import {hasValidParameterOptions} from './internal/parse-parameter'
 import {hasValidPhysics} from './internal/parse-physics'
 import {hasValidLayerOrderRules} from './internal/parse-layer-order'
-import {getSceneGroupIds, hasValidGroupKeyforms} from './internal/parse-group-keyforms'
+import {hasValidGroupKeyforms} from './internal/parse-group-keyforms'
+import {getSceneGroupIds} from './internal/scene-groups'
 import {
   hasValidTargetIds,
   isGroupRenderProperties,
@@ -52,6 +54,7 @@ import {hasValidHitAreas} from './internal/parse-hit-area'
 import {hasValidPoseGroups} from './internal/parse-pose'
 import {hasValidSpatialAttachments, isSpatialSurface} from './internal/parse-spatial'
 import {expandDocumentTextureAssets} from './texture-assets'
+import {isFiniteNumber, isFiniteNumberArray, isRecord} from './internal/parse-primitives'
 
 export type ParseDocumentErrorCode = 'invalid-document' | 'invalid-json'
 
@@ -74,15 +77,6 @@ export type ParseDocumentResult = ParseDocumentFailure | ParseDocumentSuccess
 const COORDINATES_PER_VERTEX = 2
 const INDICES_PER_TRIANGLE = 3
 const MINIMUM_VERTEX_COUNT = 3
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null
-
-const isFiniteNumber = (value: unknown): value is number =>
-  typeof value === 'number' && Number.isFinite(value)
-
-const isFiniteNumberArray = (value: unknown): value is ReadonlyArray<number> =>
-  Array.isArray(value) && value.every(isFiniteNumber)
 
 const isViewport = (value: unknown): value is PuppetViewport =>
   isRecord(value) &&
@@ -262,8 +256,6 @@ const isParameterDefinition = (value: unknown): value is PuppetParameter =>
   (value.groupId === undefined || typeof value.groupId === 'string') &&
   hasValidParameterOptions(value)
 
-const MAX_PARAMETER_AXES = 3
-
 /** 키폼을 세 번째 값(평면)별로 문서 순서를 유지해 한 번에 묶는다. */
 const groupByPlane = (keyforms: ReadonlyArray<PuppetParameterKeyform>) =>
   keyforms.reduce((planes, keyform) => {
@@ -294,7 +286,7 @@ const isParameterKeyform = (value: unknown): value is PuppetParameterKeyform =>
   isRecord(value) &&
   Array.isArray(value.values) &&
   value.values.length >= 1 &&
-  value.values.length <= MAX_PARAMETER_AXES &&
+  value.values.length <= MAX_PARAMETER_DIMENSIONS &&
   value.values.every(isFiniteNumber) &&
   (value.deformers === undefined ||
     (Array.isArray(value.deformers) &&
@@ -317,7 +309,7 @@ const isParameterBinding = (value: unknown): value is PuppetParameterBinding => 
     value.id.length === 0 ||
     !Array.isArray(parameterIds) ||
     parameterIds.length < 1 ||
-    parameterIds.length > MAX_PARAMETER_AXES ||
+    parameterIds.length > MAX_PARAMETER_DIMENSIONS ||
     !parameterIds.every(
       (parameterId) => typeof parameterId === 'string' && parameterId.length > 0,
     ) ||
@@ -337,7 +329,7 @@ const isParameterBinding = (value: unknown): value is PuppetParameterBinding => 
     return false
   }
 
-  if (parameterIds.length === MAX_PARAMETER_AXES) {
+  if (parameterIds.length === MAX_PARAMETER_DIMENSIONS) {
     return hasMatchingPlanes(keyforms)
   }
 

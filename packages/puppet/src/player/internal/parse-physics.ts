@@ -1,11 +1,6 @@
 import type {PuppetParameter, PuppetPendulum, PuppetPhysics} from '../document'
 import {hasValidPhysicsChains} from './parse-physics-chain'
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null
-
-const isFiniteNumber = (value: unknown): value is number =>
-  typeof value === 'number' && Number.isFinite(value)
+import {isFiniteNumber, isRecord} from './parse-primitives'
 
 const hasParameter = (parameters: ReadonlyArray<PuppetParameter>, parameterId: unknown) =>
   typeof parameterId === 'string' &&

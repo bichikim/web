@@ -1,5 +1,6 @@
 import type {PuppetParameterBinding, PuppetScene, PuppetSceneNode} from '../document'
 import {hasValidTargetIds, isPartRenderProperties} from './parse-part-properties'
+import {getSceneGroupIds} from './scene-groups'
 
 const KEYED_PROPERTIES: ReadonlySet<string> = new Set([
   'drawOrder',
@@ -24,22 +25,6 @@ const collectDrawOrderGroupIds = (nodes: ReadonlyArray<PuppetSceneNode>, ids: Se
   return ids
 }
 
-/** IDs of every scene group. */
-export const getSceneGroupIds = (scene: PuppetScene | undefined): ReadonlySet<string> =>
-  collectGroupIds(scene?.roots ?? [], new Set())
-
-const collectGroupIds = (nodes: ReadonlyArray<PuppetSceneNode>, ids: Set<string>) => {
-  for (const node of nodes) {
-    if (node.kind !== 'part') {
-      if (node.kind === 'group') {
-        ids.add(node.id)
-      }
-      collectGroupIds(node.children, ids)
-    }
-  }
-  return ids
-}
-
 const isKeyedProperties = (value: unknown) =>
   isPartRenderProperties(value) && Object.keys(value).every((key) => KEYED_PROPERTIES.has(key))
 
@@ -51,7 +36,7 @@ export const hasValidGroupKeyforms = (
   bindings: ReadonlyArray<PuppetParameterBinding>,
   scene: PuppetScene | undefined,
 ) => {
-  const groupIds = collectGroupIds(scene?.roots ?? [], new Set())
+  const groupIds = getSceneGroupIds(scene)
   const drawOrderGroupIds = collectDrawOrderGroupIds(scene?.roots ?? [], new Set())
   return bindings.every((binding) => {
     // 바인딩 검증을 거치지 않은 호출자도 있을 수 있어, 집합을 만들기 전에 대상 ID를 확인한다.

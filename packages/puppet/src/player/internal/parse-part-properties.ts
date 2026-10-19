@@ -5,14 +5,9 @@ import {
   type PuppetGroupRenderProperties,
   type PuppetPartRenderProperties,
 } from '../document'
+import {isFiniteNumber, isRecord} from './parse-primitives'
 
 const COLOR_CHANNEL_COUNT = 3
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null
-
-const isFiniteNumber = (value: unknown): value is number =>
-  typeof value === 'number' && Number.isFinite(value)
 
 /** Absent, or distinct non-empty IDs. */
 export const hasValidTargetIds = (value: unknown) =>

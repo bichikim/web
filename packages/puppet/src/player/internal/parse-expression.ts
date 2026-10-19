@@ -1,10 +1,5 @@
 import {PUPPET_EXPRESSION_BLENDS, type PuppetExpression, type PuppetParameter} from '../document'
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null
-
-const isFiniteNumber = (value: unknown): value is number =>
-  typeof value === 'number' && Number.isFinite(value)
+import {isFiniteNumber, isRecord} from './parse-primitives'
 
 const isFadeTime = (value: unknown) => value === undefined || (isFiniteNumber(value) && value >= 0)
 

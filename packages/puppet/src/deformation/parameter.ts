@@ -1,14 +1,14 @@
 import Delaunator from 'delaunator'
 
-import type {
-  PuppetParameterBinding,
-  PuppetParameterBinding2D,
-  PuppetParameterBinding3D,
-  PuppetParameterKeyform,
+import {
+  MAX_PARAMETER_DIMENSIONS,
+  type PuppetParameterBinding,
+  type PuppetParameterBinding2D,
+  type PuppetParameterBinding3D,
+  type PuppetParameterKeyform,
 } from '../player/document'
 
-/** Parameters a binding can key, Cubism's limit. */
-export const MAX_PARAMETER_DIMENSIONS = 3
+export {MAX_PARAMETER_DIMENSIONS}
 
 /** How many parameters a binding keys. */
 export type ParameterDimensions = 1 | 2 | typeof MAX_PARAMETER_DIMENSIONS
@@ -287,12 +287,15 @@ export const mapBindingKeyforms = (
   binding: PuppetParameterBinding,
   update: <Keyform extends PuppetParameterKeyform>(keyform: Keyform) => Keyform,
 ): PuppetParameterBinding => {
+  // 식은 같지만 차원별로 좁혀야 키폼 배열이 바인딩과 같은 차원으로 유지된다. 합집합 그대로 매핑하면
+  // 차원이 섞인 키폼 배열이 되어 타입 검사를 통과하지 못한다.
   if (isThreeDimensionalParameterBinding(binding)) {
     return {...binding, keyforms: binding.keyforms.map(update)}
   }
-  return isTwoDimensionalParameterBinding(binding)
-    ? {...binding, keyforms: binding.keyforms.map(update)}
-    : {...binding, keyforms: binding.keyforms.map(update)}
+  if (isTwoDimensionalParameterBinding(binding)) {
+    return {...binding, keyforms: binding.keyforms.map(update)}
+  }
+  return {...binding, keyforms: binding.keyforms.map(update)}
 }
 
 const keyformValue = (keyform: {readonly values: ReadonlyArray<number>}, index: number) =>
@@ -303,10 +306,14 @@ export const withKeyformValues = (
   keyform: Omit<PuppetParameterKeyform, 'values'>,
   values: PuppetParameterValues,
 ): PuppetParameterKeyform => {
+  // 값 튜플의 길이로 좁혀야 결과가 같은 차원의 키폼 타입 하나에 맞는다.
   if (values.length === MAX_PARAMETER_DIMENSIONS) {
     return {...keyform, values}
   }
-  return values.length === 2 ? {...keyform, values} : {...keyform, values}
+  if (values.length === 2) {
+    return {...keyform, values}
+  }
+  return {...keyform, values}
 }
 
 /** `binding` with `keyforms`, each value tuple cut to the binding's parameter count. */
@@ -321,7 +328,11 @@ export const withBindingKeyforms = (
       ...binding,
       keyforms: keyforms.map((keyform) => ({
         ...keyform,
-        values: [keyform.values[0], keyformValue(keyform, 1), keyformValue(keyform, 2)] as const,
+        values: [
+          keyformValue(keyform, 0),
+          keyformValue(keyform, 1),
+          keyformValue(keyform, 2),
+        ] as const,
       })),
     }
   }

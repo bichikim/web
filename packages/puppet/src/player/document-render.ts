@@ -72,6 +72,11 @@ export interface PuppetPartRenderProperties {
   readonly screenColor?: PuppetColor
 }
 
+/** Draw order range end. */
+export const PUPPET_MAXIMUM_DRAW_ORDER = 1000
+/** Draw order of parts and draw order groups that omit it. */
+export const PUPPET_DEFAULT_DRAW_ORDER = 500
+
 /**
  * Rest render properties of a scene group. Without `offscreen`, `opacity`, `multiplyColor` and
  * `screenColor` apply to every descendant as if each part had them after its own (the colors as
@@ -81,10 +86,6 @@ export interface PuppetPartRenderProperties {
  * The descendants of an offscreen group always paint together, at the position of the first one
  * in paint order.
  */
-/** Draw order range end and the value of parts and draw order groups that omit it. */
-export const PUPPET_MAXIMUM_DRAW_ORDER = 1000
-export const PUPPET_DEFAULT_DRAW_ORDER = 500
-
 export interface PuppetGroupRenderProperties {
   readonly alphaBlendMode?: PuppetAlphaBlendMode
   readonly blendMode?: PuppetPartBlendMode

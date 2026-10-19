@@ -22,6 +22,8 @@ export const PUPPET_DOCUMENT_VERSION = 1
 export const DEFAULT_PUPPET_FRAMES_PER_SECOND = 24
 export const MAXIMUM_PUPPET_FRAMES_PER_SECOND = 240
 export const MINIMUM_PUPPET_FRAMES_PER_SECOND = 1
+/** Parameters a binding can key, Cubism's limit. */
+export const MAX_PARAMETER_DIMENSIONS = 3
 export const PUPPET_SPATIAL_OBJECT_MAX_DEPTH = 12
 
 export const PUPPET_EXPRESSION_BLENDS = ['add', 'multiply', 'overwrite'] as const

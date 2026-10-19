@@ -13,15 +13,10 @@ import {
 import {resolveParameterValue} from '../parameter-value'
 import {isOptionalFramesPerSecond} from './parse-model-metadata'
 import {getGroupOpacityRowId, getModelTrackRowId} from '../timeline-rows'
+import {isFiniteNumber, isRecord} from './parse-primitives'
 
 const COORDINATES_PER_VERTEX = 2
 const BEZIER_LENGTH = 4
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null
-
-const isFiniteNumber = (value: unknown): value is number =>
-  typeof value === 'number' && Number.isFinite(value)
 
 const isTrackAxis = (value: unknown): value is PuppetTrackAxis => value === 'x' || value === 'y'
 

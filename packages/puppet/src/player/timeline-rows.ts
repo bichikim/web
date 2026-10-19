@@ -111,7 +111,7 @@ export const getRowParameter = (
     : {defaultValue: 1, id: rowId, maximum: 1, minimum: 0, name: `${group.name} 불투명도`}
 }
 
-/** Model rows, then one opacity row per scene group. */
+/** IDs of every scene group, in depth-first document order. */
 const collectGroupIds = (nodes: ReadonlyArray<PuppetSceneNode>): ReadonlyArray<string> =>
   nodes.flatMap((node) =>
     node.kind === 'part'
@@ -119,6 +119,7 @@ const collectGroupIds = (nodes: ReadonlyArray<PuppetSceneNode>): ReadonlyArray<s
       : [...(node.kind === 'group' ? [node.id] : []), ...collectGroupIds(node.children)],
   )
 
+/** Model rows, then one opacity row per scene group. */
 export const getEffectRows = (document: PuppetDocument): ReadonlyArray<PuppetParameter> =>
   [
     ...PUPPET_MODEL_TRACK_TARGETS.map(getModelTrackRowId),

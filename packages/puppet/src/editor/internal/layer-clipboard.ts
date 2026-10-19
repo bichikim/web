@@ -3,10 +3,12 @@ import {
   isSceneContainerNode,
   parseDocumentValue,
   type PuppetDocument,
+  type PuppetKeyframe,
   type PuppetSceneNode,
   type PuppetTrack,
 } from '../../player'
-import {getSceneGroupIds} from '../../player/internal/parse-group-keyforms'
+import {sampleKeyframes} from '../../player/internal/motion'
+import {getSceneGroupIds} from '../../player/internal/scene-groups'
 import {getRowGroupId, isModelRow} from '../../player/timeline-rows'
 import {collectDocumentIds, mapDocumentReferences} from './document-references'
 import {
@@ -68,12 +70,24 @@ const isLayerTrack = (track: PuppetTrack) =>
   track.kind === 'vertex' || track.kind === 'group-opacity'
 
 /**
- * The layer tracks of a copied motion that fit into a motion of `duration` seconds: keyframes
- * past its end are dropped (the copy may come from a longer motion), and so are emptied tracks.
+ * `keyframes` cut at `duration`: later keyframes are dropped and, unless one already sits at
+ * the cut, a keyframe sampled there ends the curve with the value it had at that time. Linear
+ * and stepped segments keep their shape; other easings span the shortened segment instead.
+ */
+const cutKeyframes = (keyframes: ReadonlyArray<PuppetKeyframe>, duration: number) => {
+  const kept = keyframes.filter((keyframe) => keyframe.time <= duration)
+  return kept.length === keyframes.length || kept.at(-1)?.time === duration
+    ? kept
+    : [...kept, {time: duration, value: sampleKeyframes(keyframes, duration)}]
+}
+
+/**
+ * The layer tracks of a copied motion that fit into a motion of `duration` seconds (the copy
+ * may come from a longer motion); tracks without keyframes are dropped.
  */
 const fitLayerTracks = (tracks: ReadonlyArray<PuppetTrack>, duration: number) =>
   tracks.filter(isLayerTrack).flatMap((track) => {
-    const keyframes = track.keyframes.filter((keyframe) => keyframe.time <= duration)
+    const keyframes = cutKeyframes(track.keyframes, duration)
     return keyframes.length === 0 ? [] : [{...track, keyframes}]
   })
 

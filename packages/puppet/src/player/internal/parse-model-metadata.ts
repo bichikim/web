@@ -4,9 +4,7 @@ import {
   PUPPET_VOWELS,
   type PuppetParameter,
 } from '../document'
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null
+import {isFiniteNumber, isRecord} from './parse-primitives'
 
 const isIdList = (value: unknown, known: ReadonlySet<string>) =>
   value === undefined ||
@@ -82,20 +80,17 @@ export const isOptionalFramesPerSecond = (value: unknown) =>
     (value as number) >= MINIMUM_PUPPET_FRAMES_PER_SECOND &&
     (value as number) <= MAXIMUM_PUPPET_FRAMES_PER_SECOND)
 
-const isFinite = (value: unknown): value is number =>
-  typeof value === 'number' && Number.isFinite(value)
-
-const isRatio = (value: unknown) => isFinite(value) && value >= 0 && value <= 1
+const isRatio = (value: unknown) => isFiniteNumber(value) && value >= 0 && value <= 1
 
 /** A non-empty rectangle, aligned by ratios within 0..1. */
 export const isOptionalLayout = (value: unknown) =>
   value === undefined ||
   (isRecord(value) &&
-    isFinite(value.x) &&
-    isFinite(value.y) &&
-    isFinite(value.width) &&
+    isFiniteNumber(value.x) &&
+    isFiniteNumber(value.y) &&
+    isFiniteNumber(value.width) &&
     value.width > 0 &&
-    isFinite(value.height) &&
+    isFiniteNumber(value.height) &&
     value.height > 0 &&
     (value.align === undefined ||
       (Array.isArray(value.align) && value.align.length === 2 && value.align.every(isRatio))))
@@ -105,7 +100,11 @@ export const hasValidLook = (value: unknown, parameters: ReadonlyArray<PuppetPar
   value === undefined ||
   (Array.isArray(value) &&
     value.every(
-      (entry) => isRecord(entry) && isFinite(entry.x) && isFinite(entry.y) && isFinite(entry.xy),
+      (entry) =>
+        isRecord(entry) &&
+        isFiniteNumber(entry.x) &&
+        isFiniteNumber(entry.y) &&
+        isFiniteNumber(entry.xy),
     ) &&
     isIdList(
       value.map((entry: Record<string, unknown>) => entry.parameterId),
@@ -123,11 +122,11 @@ export const hasValidBreath = (value: unknown, parameters: ReadonlyArray<PuppetP
     value.every(
       (entry) =>
         isRecord(entry) &&
-        isFinite(entry.offset) &&
-        isFinite(entry.peak) &&
-        isFinite(entry.period) &&
+        isFiniteNumber(entry.offset) &&
+        isFiniteNumber(entry.peak) &&
+        isFiniteNumber(entry.period) &&
         entry.period > 0 &&
-        isFinite(entry.weight),
+        isFiniteNumber(entry.weight),
     ) &&
     isIdList(
       value.map((entry: Record<string, unknown>) => entry.parameterId),
@@ -150,11 +149,13 @@ export const hasValidMouthShapes = (value: unknown, parameters: ReadonlyArray<Pu
     Array.isArray(parameterIds) &&
     parameterIds.length > 0 &&
     isIdList(parameterIds, known) &&
-    (smoothing === undefined || (isFinite(smoothing) && smoothing >= 0)) &&
+    (smoothing === undefined || (isFiniteNumber(smoothing) && smoothing >= 0)) &&
     PUPPET_VOWELS.every((vowel) => {
       const values = vowels[vowel]
       return (
-        Array.isArray(values) && values.length === parameterIds.length && values.every(isFinite)
+        Array.isArray(values) &&
+        values.length === parameterIds.length &&
+        values.every(isFiniteNumber)
       )
     })
   )

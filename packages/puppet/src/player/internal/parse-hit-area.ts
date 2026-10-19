@@ -1,7 +1,5 @@
 import type {PuppetHitArea, PuppetPart} from '../document'
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null
+import {isRecord} from './parse-primitives'
 
 const isHitArea = (value: unknown, partIds: ReadonlySet<string>): value is PuppetHitArea =>
   isRecord(value) &&

@@ -4,8 +4,10 @@ import {createDemoDocument} from '../create-demo-document'
 import {parseDocument, parseDocumentValue} from '../parse-document'
 import {serializeDocument} from '../serialize-document'
 
-const PLANE_COUNT = 24_000
-const PLANE_TIME_LIMIT_MS = 1000
+const PLANE_COUNT = 60_000
+// 경과 시간을 단언하지 않고 결과만 확인한다. 평면마다 전체 키폼을 다시 거르던 제곱 시간 구현은 이
+// 입력에서 10초 넘게 걸려, 러너 제한 시간이 기기 속도에 둔감한 느슨한 안전장치로 남는다.
+const PLANE_TIMEOUT_MS = 5000
 
 const createLegacyDocument = () => {
   const document = createDemoDocument()
@@ -595,36 +597,35 @@ describe('parseDocument', () => {
     }
   })
 
-  it('should validate many three-dimensional keyform planes quickly', () => {
-    const document = createDemoDocument()
-    const depth = {
-      defaultValue: 0,
-      id: 'depth',
-      maximum: PLANE_COUNT,
-      minimum: 0,
-      name: 'Depth',
-    }
-    const binding = {
-      id: 'planes',
-      keyforms: Array.from({length: PLANE_COUNT}, (_, plane) => ({
-        parts: [],
-        values: [0, 0, plane],
-      })),
-      parameterIds: ['angle-x', 'angle-y', 'depth'],
-    }
-    const value = {
-      ...document,
-      parameterBindings: [...(document.parameterBindings ?? []), binding],
-      parameters: [...(document.parameters ?? []), depth],
-    }
+  it(
+    'should validate many three-dimensional keyform planes quickly',
+    () => {
+      const document = createDemoDocument()
+      const depth = {
+        defaultValue: 0,
+        id: 'depth',
+        maximum: PLANE_COUNT,
+        minimum: 0,
+        name: 'Depth',
+      }
+      const binding = {
+        id: 'planes',
+        keyforms: Array.from({length: PLANE_COUNT}, (_, plane) => ({
+          parts: [],
+          values: [0, 0, plane],
+        })),
+        parameterIds: ['angle-x', 'angle-y', 'depth'],
+      }
+      const value = {
+        ...document,
+        parameterBindings: [...(document.parameterBindings ?? []), binding],
+        parameters: [...(document.parameters ?? []), depth],
+      }
 
-    const start = performance.now()
-    const result = parseDocumentValue(value)
-    const elapsed = performance.now() - start
-
-    expect(result).toMatchObject({ok: true})
-    expect(elapsed).toBeLessThan(PLANE_TIME_LIMIT_MS)
-  })
+      expect(parseDocumentValue(value)).toMatchObject({ok: true})
+    },
+    PLANE_TIMEOUT_MS,
+  )
 
   it('should reject three-dimensional planes with different point sets', () => {
     const document = createDemoDocument()

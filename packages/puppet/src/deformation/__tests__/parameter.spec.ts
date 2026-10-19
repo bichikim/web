@@ -7,8 +7,10 @@ import {
 } from '../../player'
 import {getKeyformPlanes, sampleParameterVertices} from '../parameter'
 
-const PLANE_COUNT = 24_000
-const PLANE_TIME_LIMIT_MS = 1000
+const PLANE_COUNT = 60_000
+// 경과 시간을 단언하지 않고 결과만 확인한다. 평면마다 전체 키폼을 다시 거르던 제곱 시간 구현은 이
+// 입력에서 20초 넘게 걸려, 러너 제한 시간이 기기 속도에 둔감한 느슨한 안전장치로 남는다.
+const PLANE_TIMEOUT_MS = 5000
 
 const createPlaneBinding = (
   values: ReadonlyArray<readonly [number, number, number]>,
@@ -129,17 +131,18 @@ describe('getKeyformPlanes', () => {
     ])
   })
 
-  test('should split many planes quickly', () => {
-    const binding = createPlaneBinding(
-      Array.from({length: PLANE_COUNT}, (_, plane) => [0, 0, PLANE_COUNT - plane] as const),
-    )
+  test(
+    'should split many planes quickly',
+    () => {
+      const binding = createPlaneBinding(
+        Array.from({length: PLANE_COUNT}, (_, plane) => [0, 0, PLANE_COUNT - plane] as const),
+      )
 
-    const start = performance.now()
-    const planes = getKeyformPlanes(binding)
-    const elapsed = performance.now() - start
+      const planes = getKeyformPlanes(binding)
 
-    expect(planes).toHaveLength(PLANE_COUNT)
-    expect(planes[0]).toMatchObject({indices: [PLANE_COUNT - 1], value: 1})
-    expect(elapsed).toBeLessThan(PLANE_TIME_LIMIT_MS)
-  })
+      expect(planes).toHaveLength(PLANE_COUNT)
+      expect(planes[0]).toMatchObject({indices: [PLANE_COUNT - 1], value: 1})
+    },
+    PLANE_TIMEOUT_MS,
+  )
 })
