@@ -204,6 +204,7 @@ export const MotionSettings = (props: MotionSettingsProps) => {
           </For>
           <MotionSoundField
             disabled={disabled()}
+            motionId={props.motion?.id}
             sound={props.motion?.sound}
             onChange={(sound) => apply({sound})}
           />

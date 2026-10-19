@@ -117,3 +117,14 @@ test('should compose deformer opacity, colors and rotation scales, keeping scale
   ).deformers!
   expect(shrunk?.rotationScale).toBe(0.01)
 })
+
+test('should compose keyed part and group draw order offsets when generating a corner', () => {
+  const form = (drawOrder: number): PuppetParameterKeyform => ({
+    groups: [{groupId: 'group', properties: {drawOrder}}],
+    parts: [{partId: 'part', properties: {drawOrder}, vertices: []}],
+    values: [0, 0],
+  })
+  const blended = blendKeyformDeltas(form(600), form(650), form(500))
+  expect(blended.parts[0]?.properties?.drawOrder).toBe(750)
+  expect(blended.groups?.[0]?.properties.drawOrder).toBe(750)
+})

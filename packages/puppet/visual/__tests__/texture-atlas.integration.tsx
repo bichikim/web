@@ -147,3 +147,18 @@ describe('texture atlas', () => {
     expect(Math.max(...differences)).toBeLessThanOrEqual(TOLERANCE)
   })
 })
+
+test('should preserve clamp-to-edge rendering for UVs outside an image', async () => {
+  const source = createDocument()
+  const document: PuppetDocument = {
+    ...source,
+    parts: source.parts.map((part) => ({
+      ...part,
+      mesh: {...part.mesh, uvs: part.mesh.uvs.map((value) => value * 2 - 0.5)},
+    })),
+  }
+  const packed = await packTextureAtlas(document)
+  expect(maximumDifference(await render(packed), await render(document))).toBeLessThanOrEqual(
+    TOLERANCE,
+  )
+})

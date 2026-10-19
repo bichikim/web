@@ -124,6 +124,7 @@ export const EditorTimeline = (props: EditorTimelineProps) => {
     Math.max(
       1 / framesPerSecond(),
       ...targetMotion.tracks.flatMap((track) => track.keyframes.map((keyframe) => keyframe.time)),
+      ...(targetMotion.events ?? []).map((event) => event.time),
     )
   const activeMinimumDuration = () => {
     const activeMotion = motion()

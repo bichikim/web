@@ -130,3 +130,14 @@ describe('texture atlas', () => {
     expect(withRegion({height: 5, width: 10, x: 0.5, y: 0})).toBe(false)
   })
 })
+
+test('should retain out-of-range UVs even when another part packs the same source', () => {
+  const source = part('packed', 16, 16, 'shared.png')
+  const clamped = {...source, id: 'clamped', mesh: {...source.mesh, uvs: [-0.5, 0, 1, 0, 0, 1]}}
+  const document = createDocument([source, clamped])
+  const images = getAtlasImages(document)
+  const packed = applyTextureAtlas(document, planTextureAtlas(images), ['atlas.png'])
+  expect(packed.parts[0]?.texture.src).toBe('atlas.png')
+  expect(packed.parts[1]).toBe(clamped)
+  expect(getAtlasImages(createDocument([clamped]))).toEqual([])
+})

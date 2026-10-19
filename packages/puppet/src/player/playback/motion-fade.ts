@@ -22,18 +22,26 @@ export const getTrackFadeWeight = (frame: MotionFrame, track: PuppetTrack) =>
 export const getMotionFadeOutTime = (motion: PuppetMotion) => motion.fadeOutTime ?? 0
 
 /**
- * Events passed, in order, when motion time moves from `from` to `to` (Cubism checks
- * `from < time <= to`). `wrapped` means the playback looped in between, covering
- * `from..duration` and then `0..to`.
+ * `from < time <= to`를 지난 이벤트를 시간순으로 반환한다. `wraps`는 그 사이에 지난 반복
+ * 경계 수이며, 완전히 지난 반복의 이벤트도 빠짐없이 반환한다.
  */
 export const getPassedEvents = (
   motion: PuppetMotion,
   from: number,
   to: number,
-  wrapped: boolean,
+  wraps: number,
 ): ReadonlyArray<PuppetMotionEvent> => {
   const events = (motion.events ?? []).toSorted((first, second) => first.time - second.time)
+  if (events.length === 0) {
+    return []
+  }
   const within = (start: number, end: number) =>
     events.filter((event) => event.time > start && event.time <= end)
-  return wrapped ? [...within(from, motion.duration), ...within(0, to)] : within(from, to)
+  return wraps > 0
+    ? [
+        ...within(from, motion.duration),
+        ...Array.from({length: wraps - 1}, () => within(0, motion.duration)).flat(),
+        ...within(0, to),
+      ]
+    : within(from, to)
 }

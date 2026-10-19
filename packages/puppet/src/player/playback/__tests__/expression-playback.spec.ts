@@ -83,3 +83,14 @@ describe('createExpressionPlayback', () => {
     expect(playback.set('smile')).toBe(false)
   })
 })
+
+test('should apply zero-duration expression fades without waiting for another frame', () => {
+  const expression: PuppetExpression = {...smile, fadeInTime: 0, fadeOutTime: 0}
+  const playback = createExpressionPlayback([expression])
+  playback.set(expression.id)
+  expect(playback.layers()).toEqual([{expression, weight: 1}])
+  expect(playback.isAnimating()).toBe(false)
+  playback.set(undefined)
+  expect(playback.layers()).toEqual([])
+  expect(playback.isAnimating()).toBe(false)
+})
