@@ -164,4 +164,43 @@ describe('restorePPlayerState', () => {
 
     expect(onRestore).toHaveBeenCalledExactlyOnceWith([CUSTOM_TRACK], CUSTOM_PLAYBACK)
   })
+
+  it('should preserve the default queue when custom-track storage resolution fails', async () => {
+    const onRestore = vi.fn()
+    await restorePPlayerState({
+      canRestore: () => true,
+      defaultTracks: [DEFAULT_TRACK],
+      onRestore,
+      playbackRequest: Promise.resolve(CUSTOM_PLAYBACK),
+      playlistRequest: Promise.resolve({entryIds: ['custom-entry'], trackIds: [CUSTOM_TRACK.id]}),
+      resolveTracks: async () => null,
+      tracks: [ALBUM_TRACK],
+    })
+    expect(onRestore).toHaveBeenCalledExactlyOnceWith([DEFAULT_TRACK], CUSTOM_PLAYBACK)
+  })
+
+  it('should discard a failed custom-track resolution invalidated while pending', async () => {
+    const resolution = Promise.withResolvers<readonly PTrack[] | null>()
+    const started = Promise.withResolvers<void>()
+    let canRestore = true
+    const onRestore = vi.fn()
+    const restoration = restorePPlayerState({
+      canRestore: () => canRestore,
+      defaultTracks: [DEFAULT_TRACK],
+      onRestore,
+      playbackRequest: Promise.resolve(CUSTOM_PLAYBACK),
+      playlistRequest: Promise.resolve([CUSTOM_TRACK.id]),
+      resolveTracks: () => {
+        started.resolve()
+        return resolution.promise
+      },
+      tracks: [DEFAULT_TRACK],
+    })
+    await started.promise
+    expect(onRestore).not.toHaveBeenCalled()
+    canRestore = false
+    resolution.resolve(null)
+    await restoration
+    expect(onRestore).not.toHaveBeenCalled()
+  })
 })
