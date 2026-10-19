@@ -54,10 +54,13 @@ export const hasValidGroupKeyforms = (
   const groupIds = collectGroupIds(scene?.roots ?? [], new Set())
   const drawOrderGroupIds = collectDrawOrderGroupIds(scene?.roots ?? [], new Set())
   return bindings.every((binding) => {
+    // 바인딩 검증을 거치지 않은 호출자도 있을 수 있어, 집합을 만들기 전에 대상 ID를 확인한다.
+    if (!hasValidTargetIds(binding.targetGroupIds)) {
+      return false
+    }
     const targets = binding.targetGroupIds ?? []
     const targetSet = new Set(targets)
     return (
-      hasValidTargetIds(binding.targetGroupIds) &&
       targets.every((groupId) => groupIds.has(groupId)) &&
       binding.keyforms.every((keyform) => {
         const groups: ReadonlyArray<unknown> = Array.isArray(keyform.groups) ? keyform.groups : []

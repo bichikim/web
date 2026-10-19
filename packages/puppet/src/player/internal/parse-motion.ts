@@ -227,15 +227,23 @@ interface TrackTargets {
   readonly parts: ReadonlyMap<string, PuppetPart>
 }
 
+/**
+ * 키프레임은 범위·선택지 안의 값만 허용한다. 반복 파라미터는 최댓값이 최솟값으로 감싸지지만,
+ * 0→360 같은 한 바퀴를 그릴 수 있도록 최댓값도 허용한다(보간 뒤에 감싼다). 범위를 넘는 값은
+ * 반복을 끄면 문서가 깨지고 에디터가 범위 안으로만 다루므로 받지 않는다.
+ */
+const isParameterKeyframeValue = (parameter: PuppetParameter, value: number) =>
+  parameter.repeat === true
+    ? value >= parameter.minimum && value <= parameter.maximum
+    : resolveParameterValue(parameter, value) === value
+
 const hasTrackTarget = (track: PuppetTrack, targets: TrackTargets) => {
   switch (track.kind) {
     case 'parameter': {
       const parameter = targets.parameters.get(track.parameterId)
       return (
         parameter !== undefined &&
-        track.keyframes.every(
-          (keyframe) => resolveParameterValue(parameter, keyframe.value) === keyframe.value,
-        )
+        track.keyframes.every((keyframe) => isParameterKeyframeValue(parameter, keyframe.value))
       )
     }
     case 'vertex': {

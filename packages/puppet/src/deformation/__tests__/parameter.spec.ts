@@ -1,7 +1,22 @@
 import {describe, expect, test} from 'vitest'
 
-import {createDemoDocument, type PuppetParameterBinding2D} from '../../player'
-import {sampleParameterVertices} from '../parameter'
+import {
+  createDemoDocument,
+  type PuppetParameterBinding2D,
+  type PuppetParameterBinding3D,
+} from '../../player'
+import {getKeyformPlanes, sampleParameterVertices} from '../parameter'
+
+const PLANE_COUNT = 24_000
+const PLANE_TIME_LIMIT_MS = 1000
+
+const createPlaneBinding = (
+  values: ReadonlyArray<readonly [number, number, number]>,
+): PuppetParameterBinding3D => ({
+  id: 'planes',
+  keyforms: values.map((value) => ({parts: [], values: value})),
+  parameterIds: ['x', 'y', 'z'],
+})
 
 describe('sampleParameterVertices', () => {
   test('should interpolate a two-dimensional point set through its Delaunay triangles', () => {
@@ -76,5 +91,55 @@ describe('sampleParameterVertices', () => {
         values: [-100, 100],
       }).slice(-2),
     ).toEqual([256, 304])
+  })
+})
+
+describe('getKeyformPlanes', () => {
+  test('should group keyforms by increasing third value and keep document order', () => {
+    const binding = createPlaneBinding([
+      [1, 0, 2],
+      [0, 0, -1],
+      [0, 0, 2],
+      [1, 0, -1],
+    ])
+
+    expect(
+      getKeyformPlanes(binding).map((plane) => ({
+        indices: plane.indices,
+        value: plane.value,
+        values: plane.binding.keyforms.map((keyform) => keyform.values),
+      })),
+    ).toEqual([
+      {
+        indices: [1, 3],
+        value: -1,
+        values: [
+          [0, 0],
+          [1, 0],
+        ],
+      },
+      {
+        indices: [0, 2],
+        value: 2,
+        values: [
+          [1, 0],
+          [0, 0],
+        ],
+      },
+    ])
+  })
+
+  test('should split many planes quickly', () => {
+    const binding = createPlaneBinding(
+      Array.from({length: PLANE_COUNT}, (_, plane) => [0, 0, PLANE_COUNT - plane] as const),
+    )
+
+    const start = performance.now()
+    const planes = getKeyformPlanes(binding)
+    const elapsed = performance.now() - start
+
+    expect(planes).toHaveLength(PLANE_COUNT)
+    expect(planes[0]).toMatchObject({indices: [PLANE_COUNT - 1], value: 1})
+    expect(elapsed).toBeLessThan(PLANE_TIME_LIMIT_MS)
   })
 })

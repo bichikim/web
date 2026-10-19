@@ -1,8 +1,11 @@
 import {describe, expect, it, test} from 'vitest'
 
 import {createDemoDocument} from '../create-demo-document'
-import {parseDocument} from '../parse-document'
+import {parseDocument, parseDocumentValue} from '../parse-document'
 import {serializeDocument} from '../serialize-document'
+
+const PLANE_COUNT = 24_000
+const PLANE_TIME_LIMIT_MS = 1000
 
 const createLegacyDocument = () => {
   const document = createDemoDocument()
@@ -551,5 +554,104 @@ describe('parseDocument', () => {
     const result = parseDocument(JSON.stringify({...legacyDocument, parameters: [legacyParameter]}))
 
     expect(result).toEqual({error: {code: 'invalid-document'}, ok: false})
+  })
+
+  it('should keep parameter tracks that reach the range end after repeat is turned on', () => {
+    const document = createDemoDocument()
+    const turn = {
+      duration: 1,
+      id: 'turn',
+      tracks: [
+        {
+          keyframes: [
+            {time: 0, value: -30},
+            {time: 1, value: 30},
+          ],
+          kind: 'parameter' as const,
+          parameterId: 'angle-x',
+        },
+      ],
+    }
+    const turned = {...document, motions: [turn]}
+    const repeated = {
+      ...turned,
+      parameters: document.parameters?.map((parameter) =>
+        parameter.id === 'angle-x' ? {...parameter, repeat: true} : parameter,
+      ),
+    }
+
+    expect(parseDocumentValue(turned)).toMatchObject({ok: true})
+    expect(parseDocumentValue(repeated)).toMatchObject({ok: true})
+  })
+
+  it('should reject non-array target group IDs without throwing', () => {
+    const document = createDemoDocument()
+    const binding = document.parameterBindings?.[0]
+
+    for (const targetGroupIds of [5, {}, true, 'shapes']) {
+      expect(
+        parseDocumentValue({...document, parameterBindings: [{...binding, targetGroupIds}]}),
+      ).toEqual({error: {code: 'invalid-document'}, ok: false})
+    }
+  })
+
+  it('should validate many three-dimensional keyform planes quickly', () => {
+    const document = createDemoDocument()
+    const depth = {
+      defaultValue: 0,
+      id: 'depth',
+      maximum: PLANE_COUNT,
+      minimum: 0,
+      name: 'Depth',
+    }
+    const binding = {
+      id: 'planes',
+      keyforms: Array.from({length: PLANE_COUNT}, (_, plane) => ({
+        parts: [],
+        values: [0, 0, plane],
+      })),
+      parameterIds: ['angle-x', 'angle-y', 'depth'],
+    }
+    const value = {
+      ...document,
+      parameterBindings: [...(document.parameterBindings ?? []), binding],
+      parameters: [...(document.parameters ?? []), depth],
+    }
+
+    const start = performance.now()
+    const result = parseDocumentValue(value)
+    const elapsed = performance.now() - start
+
+    expect(result).toMatchObject({ok: true})
+    expect(elapsed).toBeLessThan(PLANE_TIME_LIMIT_MS)
+  })
+
+  it('should reject three-dimensional planes with different point sets', () => {
+    const document = createDemoDocument()
+    const depth = {defaultValue: 0, id: 'depth', maximum: 1, minimum: 0, name: 'Depth'}
+    const binding = {
+      id: 'planes',
+      keyforms: [
+        {parts: [], values: [0, 0, 0]},
+        {parts: [], values: [0, 0, 1]},
+        {parts: [], values: [1, 0, 1]},
+      ],
+      parameterIds: ['angle-x', 'angle-y', 'depth'],
+    }
+
+    expect(
+      parseDocumentValue({
+        ...document,
+        parameterBindings: [binding],
+        parameters: [...(document.parameters ?? []), depth],
+      }),
+    ).toMatchObject({ok: false})
+    expect(
+      parseDocumentValue({
+        ...document,
+        parameterBindings: [{...binding, keyforms: binding.keyforms.slice(0, 2)}],
+        parameters: [...(document.parameters ?? []), depth],
+      }),
+    ).toMatchObject({ok: true})
   })
 })

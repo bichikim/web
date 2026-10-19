@@ -51,16 +51,19 @@ export const hasValidParameterGroups = (
       isRecord(group) ? [[String(group.id), group.groupId as string | undefined] as const] : [],
     ),
   )
+  // 루트에 닿는다고 확인된 그룹을 공유해 그룹마다 루트까지 다시 걷지 않는다(전체 O(G)).
+  const rooted = new Set<string>()
   const reachesRoot = (id: string) => {
     const seen = new Set<string>()
     let current: string | undefined = id
-    while (current !== undefined) {
+    while (current !== undefined && !rooted.has(current)) {
       if (seen.has(current) || !parents.has(current)) {
         return false
       }
       seen.add(current)
       current = parents.get(current)
     }
+    seen.forEach((seenId) => rooted.add(seenId))
     return true
   }
   return (

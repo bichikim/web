@@ -257,6 +257,28 @@ describe('parameter keyframes', () => {
     expect(deleted?.motions[0]?.tracks).toEqual([])
   })
 
+  test('should store a repeat parameter keyframe limited to its range without wrapping', () => {
+    const document = createEmptyMotionDocument()
+    const repeatDocument = {
+      ...document,
+      parameters: document.parameters?.map((parameter) =>
+        parameter.id === 'angle-x' ? {...parameter, repeat: true} : parameter,
+      ),
+    }
+    const keyframeAt = (time: number, value: number) =>
+      setParameterKeyframe({
+        document: repeatDocument,
+        motionId: 'idle-deform',
+        parameterId: 'angle-x',
+        time,
+        value,
+      })?.motions[0]?.tracks[0]?.keyframes
+
+    expect(keyframeAt(1, 30)).toEqual([{time: 1, value: 30}])
+    expect(keyframeAt(1, 100)).toEqual([{time: 1, value: 30}])
+    expect(keyframeAt(1, -100)).toEqual([{time: 1, value: -30}])
+  })
+
   test('should return absence for an invalid parameter value or target', () => {
     const document = createEmptyMotionDocument()
 

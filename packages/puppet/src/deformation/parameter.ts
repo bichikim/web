@@ -357,26 +357,32 @@ export const getKeyformPlanes = (binding: PuppetParameterBinding3D) => {
   if (cached !== undefined) {
     return cached
   }
-  const values = [...new Set(binding.keyforms.map((keyform) => keyform.values[2]))].toSorted(
-    (first, second) => first - second,
-  )
-  const planes = values.map((value): KeyformPlane => {
-    const indices = binding.keyforms.flatMap((keyform, index) =>
-      keyform.values[2] === value ? [index] : [],
-    )
-    return {
-      binding: {
-        id: binding.id,
-        keyforms: indices.map((index) => {
-          const keyform = binding.keyforms[index]!
-          return {...keyform, values: [keyform.values[0], keyform.values[1]] as const}
-        }),
-        parameterIds: [binding.parameterIds[0], binding.parameterIds[1]],
-      },
-      indices,
-      value,
+  // 평면마다 전체 키폼을 다시 거르지 않도록 세 번째 값별 인덱스를 한 번에 묶는다.
+  const indicesByValue = binding.keyforms.reduce((planeIndices, keyform, index) => {
+    const indices = planeIndices.get(keyform.values[2])
+    if (indices === undefined) {
+      planeIndices.set(keyform.values[2], [index])
+    } else {
+      indices.push(index)
     }
-  })
+    return planeIndices
+  }, new Map<number, number[]>())
+  const planes = [...indicesByValue]
+    .toSorted(([first], [second]) => first - second)
+    .map(
+      ([value, indices]): KeyformPlane => ({
+        binding: {
+          id: binding.id,
+          keyforms: indices.map((index) => {
+            const keyform = binding.keyforms[index]!
+            return {...keyform, values: [keyform.values[0], keyform.values[1]] as const}
+          }),
+          parameterIds: [binding.parameterIds[0], binding.parameterIds[1]],
+        },
+        indices,
+        value,
+      }),
+    )
   planesByKeyforms.set(binding.keyforms, planes)
   return planes
 }

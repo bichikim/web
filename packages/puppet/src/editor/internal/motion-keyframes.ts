@@ -6,6 +6,7 @@ import type {
   PuppetEasing,
   PuppetKeyframe,
   PuppetMotion,
+  PuppetParameter,
   PuppetTrack,
   PuppetTrackAxis,
   PuppetVertexTrack,
@@ -178,6 +179,15 @@ const replaceMotion = (
   }
 }
 
+/**
+ * 키프레임에 저장할 값. 반복 파라미터는 최댓값(한 바퀴)을 표현할 수 있도록 감싸지 않고 범위로만
+ * 제한한다.
+ */
+const toKeyframeValue = (parameter: PuppetParameter, value: number) =>
+  parameter.repeat === true
+    ? clamp(value, parameter.minimum, parameter.maximum)
+    : resolveParameterValue(parameter, value)
+
 export const setParameterKeyframe = (
   options: SetParameterKeyframeOptions,
 ): PuppetDocument | undefined => {
@@ -193,7 +203,7 @@ export const setParameterKeyframe = (
     const keyframes = upsertKeyframe(
       trackIndex < 0 ? [] : (motion.tracks[trackIndex]?.keyframes ?? []),
       time,
-      resolveParameterValue(parameter, options.value),
+      toKeyframeValue(parameter, options.value),
     )
     const track = {
       ...createRowTrack(options.parameterId, keyframes),

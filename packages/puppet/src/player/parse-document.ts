@@ -264,16 +264,29 @@ const isParameterDefinition = (value: unknown): value is PuppetParameter =>
 
 const MAX_PARAMETER_AXES = 3
 
+/** 키폼을 세 번째 값(평면)별로 문서 순서를 유지해 한 번에 묶는다. */
+const groupByPlane = (keyforms: ReadonlyArray<PuppetParameterKeyform>) =>
+  keyforms.reduce((planes, keyform) => {
+    const plane = planes.get(keyform.values[2])
+    if (plane === undefined) {
+      planes.set(keyform.values[2], [keyform])
+    } else {
+      plane.push(keyform)
+    }
+    return planes
+  }, new Map<number | undefined, PuppetParameterKeyform[]>())
+
+/** 한 평면이 가진 첫째·둘째 값 점들의 순서 없는 서명. */
+const getPlaneSignature = (plane: ReadonlyArray<PuppetParameterKeyform>) =>
+  plane
+    .map((keyform) => `${keyform.values[0]}:${keyform.values[1]}`)
+    .toSorted()
+    .join(',')
+
 /** Whether every plane along the third value holds the same first/second value points. */
 const hasMatchingPlanes = (keyforms: ReadonlyArray<PuppetParameterKeyform>) => {
-  const planes = [...new Set(keyforms.map((keyform) => keyform.values[2]))]
-  const signature = (plane: number | undefined) =>
-    keyforms
-      .filter((keyform) => keyform.values[2] === plane)
-      .map((keyform) => `${keyform.values[0]}:${keyform.values[1]}`)
-      .toSorted()
-      .join(',')
-  const [first, ...rest] = planes.map(signature)
+  // 평면마다 전체 키폼을 다시 거르지 않도록 한 번 묶은 평면에서 서명을 만든다.
+  const [first, ...rest] = [...groupByPlane(keyforms).values()].map(getPlaneSignature)
   return rest.every((plane) => plane === first)
 }
 
@@ -311,6 +324,7 @@ const isParameterBinding = (value: unknown): value is PuppetParameterBinding => 
     new Set(parameterIds).size !== parameterIds.length ||
     !hasValidTargetIds(targetDeformerIds) ||
     !hasValidTargetIds(targetPartIds) ||
+    !hasValidTargetIds(value.targetGroupIds) ||
     !Array.isArray(keyforms) ||
     !keyforms.every(isParameterKeyform) ||
     !keyforms.every((keyform) => keyform.values.length === parameterIds.length)
