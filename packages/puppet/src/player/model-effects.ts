@@ -17,6 +17,24 @@ export const DEFAULT_EYE_BLINK_TIMING: EyeBlinkTiming = {
   opening: 0.15,
 }
 
+/**
+ * `timing` with omitted values from the defaults (Cubism's blinking interval and settings);
+ * `undefined` when a value is not a positive finite number.
+ */
+export const resolveEyeBlinkTiming = (
+  timing: Partial<EyeBlinkTiming> | undefined,
+): EyeBlinkTiming | undefined => {
+  const resolved: EyeBlinkTiming = {
+    closed: timing?.closed ?? DEFAULT_EYE_BLINK_TIMING.closed,
+    closing: timing?.closing ?? DEFAULT_EYE_BLINK_TIMING.closing,
+    interval: timing?.interval ?? DEFAULT_EYE_BLINK_TIMING.interval,
+    opening: timing?.opening ?? DEFAULT_EYE_BLINK_TIMING.opening,
+  }
+  return Object.values(resolved).every((value) => Number.isFinite(value) && value > 0)
+    ? resolved
+    : undefined
+}
+
 /** Where a blink is: waiting until `next`, or in a phase that started at `since`. */
 export type EyeBlinkState =
   | {readonly next: number; readonly phase: 'open'; readonly time: number}

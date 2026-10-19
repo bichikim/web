@@ -8,6 +8,7 @@ import {
 import type {PuppetDocument} from '../document'
 import {mixMotionVertices, type MotionMix} from '../playback'
 import {getPartRenderFrame} from '../internal/render-plan'
+import type {RenderOverrides} from '../internal/render-overrides'
 import {applySceneDeformers} from '../internal/scene-deformation'
 import type {SpatialPartPose} from '../internal/spatial-part'
 import {applyDocumentScene} from './apply-document-scene'
@@ -53,6 +54,7 @@ const applyFrameVertices = (options: ApplyFrameVerticesOptions) => {
 interface ApplyRenderFrameOptions {
   readonly mix: MotionMix
   readonly parameterValues: PuppetParameterValueMap
+  readonly overrides?: RenderOverrides
   readonly poseOpacityByPartId?: ReadonlyMap<string, number>
   readonly document: PuppetDocument
   readonly layoutRoot: () => void
@@ -67,6 +69,7 @@ export const applyRenderFrame = (options: ApplyRenderFrameOptions): ReadonlyArra
   const posedScene = composeParameterScene(options.document, frameParameterValues)
   const frame = getPartRenderFrame(options.document, frameParameterValues, posedScene, {
     mix: options.mix,
+    overrides: options.overrides,
     poseOpacityByPartId: options.poseOpacityByPartId,
   })
   const {plans: renderPlans, spatialPoses} = frame

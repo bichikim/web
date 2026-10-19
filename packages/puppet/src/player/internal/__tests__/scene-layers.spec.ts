@@ -128,6 +128,45 @@ describe('getPartRenderFrame with groups', () => {
     })
   })
 
+  test('should apply app overrides: own values first, then the nearest plain group', () => {
+    const document = createDocument([
+      part('back'),
+      group(
+        'plain',
+        [group('layer', [part('a'), part('b')], {offscreen: true, opacity: 0.5}), part('c')],
+        {multiplyColor: [0.5, 0.5, 0.5], opacity: 0.3},
+      ),
+    ])
+    const overrides = {
+      groups: new Map([
+        ['plain', {multiplyColor: [1, 0, 0] as const, opacity: 0.8}],
+        ['layer', {screenColor: [0, 0, 1] as const}],
+      ]),
+      parts: new Map([['b', {culling: true, multiplyColor: [0, 1, 0] as const, opacity: 0.25}]]),
+    }
+    const frame = getPartRenderFrame(document, undefined, undefined, {overrides})
+    const plan = (id: string) => frame.plans.find((candidate) => candidate.partId === id)!
+    // The plain group's color replaces its parts' final color; its opacity replaces its own.
+    expect(plan('c').properties).toMatchObject({
+      multiplyColor: [1, 0, 0],
+      opacity: 0.8,
+      screenColor: [0, 0, 0],
+    })
+    // Inside the offscreen layer the plain group's override applies to the layer instead.
+    expect(plan('a').properties).toMatchObject({multiplyColor: [1, 1, 1], opacity: 1})
+    expect(plan('b').properties).toMatchObject({
+      culling: true,
+      multiplyColor: [0, 1, 0],
+      opacity: 0.25,
+    })
+    expect(frame.layers.get('layer')?.properties).toMatchObject({
+      multiplyColor: [1, 0, 0],
+      opacity: 0.4,
+      screenColor: [0, 0, 1],
+    })
+    expect(plan('back').properties).toMatchObject({multiplyColor: [1, 1, 1], opacity: 1})
+  })
+
   test('should gather layer members moved apart by layer order rules', () => {
     const document: PuppetDocument = {
       ...createDocument([

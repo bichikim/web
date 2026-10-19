@@ -5,6 +5,7 @@ import type {PuppetDocument} from '../document'
 import type {MotionMix} from '../playback'
 import {canReuseLayerResources, canReusePartResources} from '../internal/render-plan'
 import {layoutPlayerRoot, type PuppetFraming} from '../internal/layout-player-root'
+import type {RenderOverrides} from '../internal/render-overrides'
 import {applyRenderFrame} from './apply-render-frame'
 import {documentUsesBackdropBlend} from './part-blend-filter'
 import {initializeRuntimeParts} from './initialize-runtime-parts'
@@ -30,6 +31,7 @@ export interface PlayerRenderer {
     mix: MotionMix,
     parameterValues: PuppetParameterValueMap,
     poseOpacityByPartId?: ReadonlyMap<string, number>,
+    overrides?: RenderOverrides,
   ): void
   destroy(): void
   /** Part IDs of the last applied frame in paint order, back to front. */
@@ -204,12 +206,13 @@ export const createPlayerRenderer = async (
     }
   }
   return {
-    applyFrame(mix, parameterValues, poseOpacityByPartId) {
+    applyFrame(mix, parameterValues, poseOpacityByPartId, overrides) {
       paintOrder = applyRenderFrame({
         document,
         layerById,
         layoutRoot,
         mix,
+        overrides,
         parameterValues,
         partById,
         poseOpacityByPartId,

@@ -16,14 +16,22 @@ import {
   normalizeVowelWeights,
 } from './voice/mouth-shapes'
 import type {PuppetFraming} from './internal/layout-player-root'
+import {createAppAdjustments} from './internal/app-adjustments'
 import {createLookAndBreath} from './internal/look-and-breath'
 import type {LookTarget} from './look'
 
 export type {PuppetFraming} from './internal/layout-player-root'
+export type {PuppetRenderOverride} from './internal/render-overrides'
+import {type PuppetRenderOverride, setRenderOverride} from './internal/render-overrides'
+import {getSceneGroupIds} from './internal/parse-group-keyforms'
+export type {CreatePlayerOptions, Player, PlayerFrame, PlayerPlaybackOptions} from './player-types'
+import type {CreatePlayerOptions, Player, PlayerPlaybackOptions} from './player-types'
 import {createPhysicsState, evaluatePhysics} from './internal/physics'
 import {evaluatePose, isPoseFading, type PoseState} from './internal/pose'
 import {resolveParameterValue} from './parameter-value'
+export type {PuppetParameterBlend, PuppetParameterBlendMode} from './parameter-blends'
 import type {ChainsState} from './physics-chain'
+export type {PuppetPhysicsOptions} from './physics-options'
 import {
   createExpressionPlayback,
   createMotionPlaybacks,
@@ -40,112 +48,10 @@ import {
   createEyeBlinkState,
   DEFAULT_EYE_BLINK_TIMING,
   type EyeBlinkState,
+  resolveEyeBlinkTiming,
   pickGroupMotion,
   type RandomSource,
 } from './model-effects'
-
-export interface Player {
-  /** Releases external overrides; omitted IDs release all overrides. */
-  clearParameterValues(parameterIds?: ReadonlyArray<string>): void
-  destroy(): void
-  /** The expression fading in or held, if any. */
-  getExpression(): string | undefined
-  getParameterValue(parameterId: string): number | undefined
-  /** Returns a snapshot of resolved parameter values used by the last rendered frame. */
-  getParameterValues(): PuppetParameterValueMap
-  /** Hit area ID under a point in canvas CSS pixels, using the last rendered meshes. */
-  hitTest(point: {readonly x: number; readonly y: number}): string | undefined
-  pause(): void
-  play(options?: PlayerPlaybackOptions): void
-  playMotion(motionId: string, options?: PlayerPlaybackOptions): boolean
-  /** Plays a random motion of `group` (Cubism's random motion); returns its ID. */
-  playGroup(group: string, options?: PlayerPlaybackOptions): string | undefined
-  redraw(): void
-  resize(): void
-  /** Pins the specified parameters to their defaults; omitted IDs reset all parameters. */
-  resetParameters(parameterIds?: ReadonlyArray<string>): void
-  /** Removes inertia at the current input pose without changing timeline time. */
-  resetPhysics(): void
-  resume(): void
-  seek(time: number): void
-  /** Cross-fades to an expression; omitted IDs fade the current one out. Unknown IDs return false. */
-  setExpression(expressionId?: string): boolean
-  /** Breathes with the document's `breath` parameters, added after motions and before physics. */
-  setBreath(enabled: boolean): void
-  /**
-   * Where the document's `look` parameters look, `-1..1` (x right, y up); the look point follows
-   * with limited speed. Omitted returns it to the center.
-   */
-  setLookTarget(target?: LookTarget): void
-  /** Blinks the eye-blink role parameters automatically while no selected motion plays. */
-  setEyeBlink(enabled: boolean): void
-  /** Adds a mouth level to the lip-sync role parameters after physics; omitted stops. */
-  setLipSync(level?: number): void
-  /** Scales every part's opacity (0..1); motions' model opacity tracks start from it. */
-  setModelOpacity(opacity: number): void
-  /** Shows this document point and zoom instead of fitting the document. */
-  setViewCamera(camera: PlayerViewCamera): void
-  /**
-   * Vowel weights, such as `analyzeVowels` results, that blend the document's mouth shapes
-   * after physics. Shown weights follow with the shapes' smoothing; omitted fades them out.
-   */
-  setVowelWeights(weights?: Partial<PuppetVowelWeights>): void
-  setMotion(motionId: string): boolean
-  /** Updates one external override without replacing other overrides. */
-  setParameterValue(parameterId: string, value: number): boolean
-  /** Replaces the external override map; unknown IDs are ignored. */
-  setParameterValues(values: PuppetParameterValueMap): void
-  setPlaybackSpeed(speed: number): void
-  /** Enables inertia; when disabled, physics outputs follow their static input equilibrium. */
-  setPhysicsPreview(enabled: boolean): void
-  /** Starts an independent playback; missing motions return undefined. */
-  startMotion(motionId: string, options?: MotionPlaybackOptions): MotionPlayback | undefined
-  /** Removes all motion contributions and resets the selected motion's time. */
-  stop(): void
-  updateDocument(document: PreparedPuppetDocument): boolean
-}
-
-export interface PlayerPlaybackOptions {
-  readonly loop?: boolean
-  readonly onComplete?: () => void
-  readonly speed?: number
-}
-
-export interface PlayerFrame {
-  readonly duration: number
-  readonly motionId: string | null
-  readonly time: number
-}
-
-export interface CreatePlayerOptions {
-  readonly canvas: HTMLCanvasElement
-  readonly document: PreparedPuppetDocument
-  readonly motionId?: string
-  readonly onAfterRender?: () => void
-  readonly onBeforeRender?: () => void
-  readonly onFrame?: (frame: PlayerFrame) => void
-  /** Called after a rendered frame for each motion event its playbacks passed, in order. */
-  readonly onMotionEvent?: (event: MotionEvent) => void
-  /** Called for each motion sound that cannot be fetched or decoded; it stays silent. */
-  readonly onSoundError?: (error: MotionSoundError) => void
-  readonly parameterValues?: PuppetParameterValueMap
-  readonly physicsPreview?: boolean
-  /** Random numbers for eye blinks and motion groups; `Math.random` when omitted. */
-  readonly random?: RandomSource
-  readonly resolution?: number
-  readonly resizeTo?: HTMLElement
-  /**
-   * Where motion sounds play, such as an `AudioContext`'s destination (resumed after a user
-   * gesture). Without it motion sounds only drive the mouth.
-   */
-  readonly soundDestination?: AudioNode
-  /**
-   * What the screen shows: the document's `layout` rectangle (the default, the whole viewport
-   * when it has none) or always the whole viewport, as an editor does.
-   */
-  readonly framing?: PuppetFraming
-  readonly viewportPadding?: number
-}
 
 // eslint-disable-next-line max-lines-per-function -- Public operations share one lifecycle boundary.
 export const createPlayer = async (options: CreatePlayerOptions): Promise<Player> => {
@@ -158,11 +64,17 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
   let physicsState = createPhysicsState(document)
   let chainState: ChainsState | undefined
   let physicsPreview = options.physicsPreview ?? true
+  const adjustments = createAppAdjustments()
   let poseState: PoseState = new Map()
   let destroyed = false
   const random = options.random ?? Math.random
   let eyeBlink: EyeBlinkState | undefined
+  let eyeBlinkTiming = DEFAULT_EYE_BLINK_TIMING
   const lookAndBreath = createLookAndBreath()
+  const renderOverrides = {
+    groups: new Map<string, PuppetRenderOverride>(),
+    parts: new Map<string, PuppetRenderOverride>(),
+  }
   let lipSyncLevel: number | undefined
   let mouth: MouthShapesState | undefined
   // Weights from `setVowelWeights`; playing motion sounds take over the mouth while they last.
@@ -217,7 +129,7 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
     if (eyeBlink === undefined || playback.isPlaying()) {
       return undefined
     }
-    const next = advanceEyeBlink(eyeBlink, deltaTime, {random, timing: DEFAULT_EYE_BLINK_TIMING})
+    const next = advanceEyeBlink(eyeBlink, deltaTime, {random, timing: eyeBlinkTiming})
     eyeBlink = next.state
     return next.openness
   }
@@ -236,7 +148,12 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
       chainState,
       deltaTime,
       document,
-      parameterValues: lookAndBreath.apply(document, mix.parameterValues, deltaTime),
+      parameterValues: lookAndBreath.apply(
+        document,
+        adjustments.applyBlends(document, mix.parameterValues),
+        deltaTime,
+      ),
+      physicsOptions: adjustments.physicsOptions(),
       physicsState,
       settle: settlePhysics,
     })
@@ -267,7 +184,7 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
       settle: poseState.size === 0,
     })
     ;({poseState} = pose)
-    renderer.applyFrame(mix, effected, pose.opacityByPartId)
+    renderer.applyFrame(mix, effected, pose.opacityByPartId, renderOverrides)
     sounds.sync(frames)
     frameValues = Object.fromEntries(
       (document.parameters ?? []).map((parameter) => [
@@ -505,9 +422,25 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
       if (destroyed || enabled === (eyeBlink !== undefined)) {
         return
       }
-      eyeBlink = enabled ? createEyeBlinkState(DEFAULT_EYE_BLINK_TIMING, random) : undefined
+      eyeBlink = enabled ? createEyeBlinkState(eyeBlinkTiming, random) : undefined
       refresh()
       syncTicker()
+    },
+    setEyeBlinkTiming(timing) {
+      const resolved = resolveEyeBlinkTiming(timing)
+      if (destroyed || resolved === undefined) {
+        return false
+      }
+      eyeBlinkTiming = resolved
+      return true
+    },
+    setGroupOverride(groupId, override) {
+      if (destroyed || !getSceneGroupIds(document.scene).has(groupId)) {
+        return false
+      }
+      setRenderOverride(renderOverrides.groups, groupId, override)
+      refresh()
+      return true
     },
     setLipSync(level) {
       lipSyncLevel = level !== undefined && Number.isFinite(level) ? level : undefined
@@ -525,6 +458,13 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
     },
     setMotion,
 
+    setParameterBlend(parameterId, blend) {
+      if (destroyed || !adjustments.setParameterBlend(document, parameterId, blend)) {
+        return false
+      }
+      refresh()
+      return true
+    },
     setParameterValue(parameterId, value) {
       const parameter = document.parameters?.find((candidate) => candidate.id === parameterId)
       if (destroyed || parameter === undefined) {
@@ -547,6 +487,21 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
           ]),
       )
       refresh()
+    },
+    setPartOverride(partId, override) {
+      if (destroyed || !document.parts.some((part) => part.id === partId)) {
+        return false
+      }
+      setRenderOverride(renderOverrides.parts, partId, override)
+      refresh()
+      return true
+    },
+    setPhysicsOptions(options) {
+      if (destroyed || !adjustments.setPhysicsOptions(options)) {
+        return false
+      }
+      refresh()
+      return true
     },
     setPhysicsPreview(enabled) {
       if (destroyed || physicsPreview === enabled) {

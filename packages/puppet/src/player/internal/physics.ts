@@ -3,6 +3,7 @@ import {advancePendulum, createPendulumState, type PendulumState} from '../physi
 import type {PuppetParameterValueMap} from '../../deformation'
 import {boundParameterValue} from '../parameter-value'
 import {advanceChains, type ChainsState, matchesChains, settleChains} from '../physics-chain'
+import {applyPhysicsOptions, type PuppetPhysicsOptions} from '../physics-options'
 
 export interface EvaluatePhysicsOptions {
   /** Chain state from the previous evaluation; without it (or after chain edits) chains settle. */
@@ -10,6 +11,8 @@ export interface EvaluatePhysicsOptions {
   readonly deltaTime: number
   readonly document: PuppetDocument
   readonly parameterValues: PuppetParameterValueMap
+  /** The app's gravity and wind for chains, in place of the document's. */
+  readonly physicsOptions?: PuppetPhysicsOptions
   readonly physicsState: ReadonlyMap<string, PendulumState>
   readonly settle?: boolean
 }
@@ -88,7 +91,7 @@ export const evaluatePhysics = (options: EvaluatePhysicsOptions): PhysicsEvaluat
 const evaluateChains = (
   options: EvaluatePhysicsOptions & {readonly parameterById: ReadonlyMap<string, PuppetParameter>},
 ) => {
-  const {physics} = options.document
+  const physics = applyPhysicsOptions(options.document.physics, options.physicsOptions)
   const common = {
     parameters: options.parameterById,
     physics,

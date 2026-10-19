@@ -236,7 +236,7 @@ pnpm dev
 
 ## 앱에서 플레이어 제어
 
-공개 계약은 [`Player`](src/player/create-player.ts)와
+공개 계약은 [`Player`](src/player/player-types.ts)와
 [`MotionPlayback`](src/player/playback/types.ts)에 정의한다.
 `createPlayer`에 검증·준비된 문서와 canvas를 전달한 뒤 반환된 플레이어를 제어한다.
 
@@ -411,6 +411,9 @@ scene 그룹 노드의 `properties`(`PuppetGroupRenderProperties`)로 그룹 전
   `setLipSync(level)`은 물리 다음에 립싱크 대상에 더하며, `setModelOpacity(opacity)`는 모든 파트
   불투명도에 곱한다. `playGroup(group)`은 모션 `group`이 같은 모션 중 하나를 무작위로 재생한다.
   `createPlayer({random})`으로 무작위 수를 바꿀 수 있다(`createSeededRandom(seed)`는 Rust와 같은 순서).
+- `setEyeBlinkTiming({interval, closing, closed, opening})`(초)은 평균 간격(실제는 0~두 배 사이 무작위)과 깜빡임
+  단계 시간을 바꾼다(Cubism `SetBlinkingInterval`·`SetBlinkingSettings`). 빠진 값은 기본값, 인자 없이 부르면
+  기본값으로 돌아가고, 양의 유한값이 아니면 `false`. 이미 예약된 깜빡임 시각은 그대로다.
 - 모션 트랙 `model`(`opacity`·`eye-blink`·`lip-sync`)과 `group-opacity`는 Cubism의 모델 커브와 파트
   불투명도 커브다. 타임라인 `파라미터 추가`에서 일반 파라미터처럼 키를 넣는다.
 - `parameterGroups`·파라미터 `groupId`(표시용 폴더)와 파트 `userData`(앱에 전달할 문자열)는 파라미터
@@ -431,6 +434,33 @@ scene 그룹 노드의 `properties`(`PuppetGroupRenderProperties`)로 그룹 전
 - 문서 `breath`의 파라미터마다 `(offset + peak · sin(2π · t / period)) · weight`를 모션 다음, 물리 전에
   더한다(Cubism Breath). `player.setBreath(true)`로 켠다. Rust SDK는 `breath`가 있으면 기본으로 켠다.
 - 아무것도 고르지 않았을 때 인스펙터의 `자동 호흡`에서 편집한다.
+
+### 시선 따라가기
+
+- 문서 `look`의 파라미터마다 시선 점 `(X, Y)`(`-1..1`)에 대해 `x·X + y·Y + xy·X·Y`를 모션 다음, 호흡 전에
+  더한다(Cubism Look). `player.setLookTarget({x, y})`로 목표를 주면 시선 점이 속도·가속 제한으로 따라가고,
+  인자 없이 부르면 가운데로 돌아간다. 인스펙터의 `시선 따라가기`에서 편집한다.
+
+### 파라미터 덮어쓰기·더하기·곱하기
+
+- `player.setParameterBlend(id, {mode: 'overwrite' | 'add' | 'multiply', value, weight?})`은 모션·표정·고정값 다음,
+  시선·호흡·물리 전에 값을 바꾼다(Cubism 파라미터 조작). `weight`(기본 1)만큼 적용하고 범위 안으로 자른다.
+- 지울 때까지 유지되고, 두 번째 인자 없이 부르면 지운다. 모르는 id나 무한·NaN 값은 `false`를 반환한다.
+
+### 실행 중 물리 중력·바람
+
+- `player.setPhysicsOptions({gravity: [x, y], wind: [x, y]})`(`y`가 아래)은 문서의 `physics.gravity`·`physics.wind`
+  대신 앱 값을 진자 체인에 쓴다(Cubism 물리 옵션). 빠진 값은 문서 값, 인자 없이 부르면 문서 값으로 돌아간다.
+- 무한·NaN이나 길이 0 중력은 `false`를 반환하고 바꾸지 않는다. 단순 진자는 영향을 받지 않는다.
+- 각도 출력은 중력 기준이라 중력을 돌리면 흔들린 뒤 원래 각도로 돌아온다. 바람과 X·Y 출력은 멈춘 자세도 바꾼다.
+
+### 실행 중 렌더 덮어쓰기
+
+- `player.setPartOverride(partId, {opacity, multiplyColor, screenColor, culling})`은 파트의 값을 문서·모션
+  대신 쓴다(Cubism 파트 덮어쓰기). 불투명도는 파트 자신의 값이고 모델 불투명도는 그대로 곱한다.
+- `player.setGroupOverride(groupId, {opacity, multiplyColor, screenColor})`은 장면 그룹 자신의 불투명도와
+  안쪽 파트의 색을 바꾼다. 가까운 덮어쓰기가 먼저이고, 오프스크린 그룹에서 멈춰 그 레이어에 적용된다.
+- 두 번째 인자 없이 부르면 지운다. 값은 `0..1`로 자르고, 모르는 id는 `false`를 반환한다.
 
 ### 모션 사운드
 

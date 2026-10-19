@@ -131,3 +131,82 @@ test('should look toward the target and back to the center', async () => {
   expect(player.getParameterValue('angle')).toBe(0)
   player.destroy()
 })
+
+test('should refuse overrides of unknown parts and groups', async () => {
+  setUpRenderer()
+  const player = await createPlayer({
+    canvas: globalThis.document.createElement('canvas'),
+    document: prepare(document),
+  })
+  expect(player.setPartOverride('missing', {opacity: 0})).toBe(false)
+  expect(player.setGroupOverride('missing', {opacity: 0})).toBe(false)
+  player.destroy()
+})
+
+test('should refuse physics options without a gravity direction or finite values', async () => {
+  setUpRenderer()
+  const player = await createPlayer({
+    canvas: globalThis.document.createElement('canvas'),
+    document: prepare(document),
+  })
+  expect(player.setPhysicsOptions({gravity: [0, 0]})).toBe(false)
+  expect(player.setPhysicsOptions({wind: [Number.NaN, 0]})).toBe(false)
+  expect(player.setPhysicsOptions({gravity: [1, 1], wind: [2, 0]})).toBe(true)
+  expect(player.setPhysicsOptions()).toBe(true)
+  player.destroy()
+})
+
+test('should add an app blend after motions and before physics', async () => {
+  setUpRenderer()
+  const player = await createPlayer({
+    canvas: globalThis.document.createElement('canvas'),
+    document: prepare({...document, breath: undefined}),
+  })
+  expect(player.setParameterBlend('missing', {mode: 'add', value: 1})).toBe(false)
+  expect(player.setParameterBlend('angle', {mode: 'add', value: Number.NaN})).toBe(false)
+  expect(player.setParameterBlend('angle', {mode: 'add', value: 10, weight: 0.5})).toBe(true)
+  expect(player.getParameterValue('angle')).toBe(5)
+  expect(player.setParameterBlend('angle')).toBe(true)
+  expect(player.getParameterValue('angle')).toBe(0)
+  player.destroy()
+})
+
+test('should refuse eye blink timing that is not positive and finite', async () => {
+  setUpRenderer()
+  const player = await createPlayer({
+    canvas: globalThis.document.createElement('canvas'),
+    document: prepare(document),
+  })
+  expect(player.setEyeBlinkTiming({closing: 0})).toBe(false)
+  expect(player.setEyeBlinkTiming({interval: -1})).toBe(false)
+  expect(player.setEyeBlinkTiming({interval: 8})).toBe(true)
+  expect(player.setEyeBlinkTiming()).toBe(true)
+  player.destroy()
+})
+
+test('should blink with the timing the app sets', async () => {
+  const tick = setUpRenderer()
+  const player = await createPlayer({
+    canvas: globalThis.document.createElement('canvas'),
+    document: prepare({
+      ...document,
+      breath: undefined,
+      parameterRoles: {eyeBlink: ['eye']},
+      parameters: [
+        ...(document.parameters ?? []),
+        {defaultValue: 1, id: 'eye', maximum: 1, minimum: 0, name: 'Eye'},
+      ],
+    }),
+    random: () => 0.5,
+  })
+  // Half of twice the interval: the blink starts after 0.25 s and closes over 1 s.
+  expect(player.setEyeBlinkTiming({closed: 1, closing: 1, interval: 0.25, opening: 1})).toBe(true)
+  // Without motions nothing plays, so blinking runs without stopping playback.
+  player.setEyeBlink(true)
+  tick(0.5)
+  tick(0.5)
+  const eye = player.getParameterValue('eye')
+  expect(eye).toBeGreaterThan(0)
+  expect(eye).toBeLessThan(1)
+  player.destroy()
+})
