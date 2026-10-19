@@ -41,6 +41,42 @@ const getSelectionIds = (document: PuppetDocument, nodeIds: ReadonlyArray<string
   return {ids, parts, roots}
 }
 
+/**
+ * The copied `node` with the source's skinning and group render properties, whose references
+ * outside the selection the copy keeps; pasting drops the ones the target document lacks.
+ */
+const restoreSourceReferences = (
+  node: PuppetSceneNode,
+  source: PuppetSceneNode | undefined,
+): PuppetSceneNode => {
+  switch (node.kind) {
+    case 'part':
+      return source?.kind === 'part' ? {...node, skinning: source.skinning} : node
+    case 'group':
+      return source?.kind === 'group' ? {...node, properties: source.properties} : node
+    case 'deformer':
+      return node
+    default: {
+      const exhaustive: never = node
+      return exhaustive
+    }
+  }
+}
+
+/** Whether `track` animates a layer itself rather than a parameter or the model. */
+const isLayerTrack = (track: PuppetTrack) =>
+  track.kind === 'vertex' || track.kind === 'group-opacity'
+
+/**
+ * The layer tracks of a copied motion that fit into a motion of `duration` seconds: keyframes
+ * past its end are dropped (the copy may come from a longer motion), and so are emptied tracks.
+ */
+const fitLayerTracks = (tracks: ReadonlyArray<PuppetTrack>, duration: number) =>
+  tracks.filter(isLayerTrack).flatMap((track) => {
+    const keyframes = track.keyframes.filter((keyframe) => keyframe.time <= duration)
+    return keyframes.length === 0 ? [] : [{...track, keyframes}]
+  })
+
 /** Captures selected subtrees and their animation and parameter data. */
 export const createLayerFragment = (
   document: PuppetDocument,
@@ -57,18 +93,20 @@ export const createLayerFragment = (
     rename: (id) => id,
   })
   const sourceScene = getDocumentScene(document)
-  const roots = [...selection.parts].reduce(
+  const roots = [...selection.ids].reduce(
     (nodes, id) =>
-      updateNode(nodes, id, (node) => {
-        const source = findNode(sourceScene.roots, id)
-        return node.kind === 'part' && source?.kind === 'part'
-          ? {...node, skinning: source.skinning}
-          : node
-      }),
+      updateNode(nodes, id, (node) =>
+        restoreSourceReferences(node, findNode(sourceScene.roots, id)),
+      ),
     getDocumentScene(mapped).roots,
   )
   const parameterBindings = mapped.parameterBindings?.filter((binding) =>
-    binding.keyforms.some((form) => form.parts.length > 0 || (form.deformers?.length ?? 0) > 0),
+    binding.keyforms.some(
+      (form) =>
+        form.parts.length > 0 ||
+        (form.deformers?.length ?? 0) > 0 ||
+        (form.groups?.length ?? 0) > 0,
+    ),
   )
   const parameterIds = new Set([
     ...(parameterBindings ?? []).flatMap((binding) => [
@@ -182,15 +220,23 @@ export const pasteLayerFragment = (
   if (nextScene === undefined) {
     return undefined
   }
-  const motions = document.motions.map((motion) => ({
-    ...motion,
-    tracks: [
-      ...motion.tracks,
-      ...(added.motions
-        .find((candidate) => candidate.id === motion.id)
-        ?.tracks.filter((track) => track.kind === 'vertex') ?? []),
-    ],
-  }))
+  // A motion the document already has gains the copied layers' own curves and rows; its
+  // parameter curves stay the document's.
+  const motions = document.motions.map((motion) => {
+    const copied = added.motions.find((candidate) => candidate.id === motion.id)
+    if (copied === undefined) {
+      return motion
+    }
+    const rows = (copied.timelineParameterIds ?? []).filter((id) => getRowGroupId(id) !== undefined)
+    return {
+      ...motion,
+      timelineParameterIds:
+        rows.length === 0
+          ? motion.timelineParameterIds
+          : [...(motion.timelineParameterIds ?? []), ...rows],
+      tracks: [...motion.tracks, ...fitLayerTracks(copied.tracks, motion.duration)],
+    }
+  })
   const result = parseDocumentValue(
     reconcileSpatialGroups(
       {

@@ -30,6 +30,7 @@ import {
   toParameterValues,
 } from './keyform-grid'
 import {createParameterBindingId, createParameterIds} from './parameter-id'
+import {getSceneGroup} from './group-properties'
 import {sampleKeyformGroups} from './sample-keyform-groups'
 import {
   createDeformerKeyform,
@@ -339,10 +340,13 @@ export const insertParameterKeyform = (options: ParameterValuesTarget) => {
     binding === undefined
       ? []
       : getDocumentDeformers(options.document, getParameterTargetDeformerIds(binding))
+  const keysGroups = (binding?.targetGroupIds ?? []).some(
+    (groupId) => getSceneGroup(options.document, groupId) !== undefined,
+  )
 
   if (
     binding === undefined ||
-    (parts.length === 0 && deformers.length === 0) ||
+    (parts.length === 0 && deformers.length === 0 && !keysGroups) ||
     options.values.length !== binding.parameterIds.length ||
     parameters.length !== binding.parameterIds.length ||
     binding.keyforms.some((keyform) => parameterValuesEqual(keyform.values, options.values)) ||

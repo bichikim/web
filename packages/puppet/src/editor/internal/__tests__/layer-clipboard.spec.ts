@@ -1,6 +1,13 @@
 import skinningExample from '../../../../examples/rotation-skinning.json'
 import {expect, test} from 'vitest'
-import {createDemoDocument, getDocumentScene, parseDocumentValue} from '../../../player'
+import {
+  createDemoDocument,
+  getDocumentScene,
+  parseDocumentValue,
+  type PuppetDocument,
+} from '../../../player'
+import {connectParameterGroup, setKeyformGroupProperties} from '../group-keyforms'
+import {setGroupRenderProperties} from '../group-properties'
 import {findNode, getContainerIds} from '../scene-tree'
 import {createDeformer} from '../scene-graph'
 import {createLayerFragment, pasteLayerFragment, removeLayerNodes} from '../layer-clipboard'
@@ -103,4 +110,114 @@ test('should retain external skinning influences when pasting beside the source 
   const copy = findNode(getDocumentScene(result.document).roots, result.nodeIds[0]!)!
   expect(copy.kind === 'part' && copy.skinning).toEqual(node.kind === 'part' && node.skinning)
   expect(parseDocumentValue(result.document).ok).toBe(true)
+})
+
+/** The demo with a motion fading the `shapes` group, shown as a saved timeline row. */
+const createGroupOpacityDocument = (): PuppetDocument => {
+  const source = createDemoDocument()
+  return {
+    ...source,
+    motions: source.motions.map((motion) =>
+      motion.id === 'idle-deform'
+        ? {
+            ...motion,
+            timelineParameterIds: ['group-opacity:shapes'],
+            tracks: [
+              ...motion.tracks,
+              {
+                groupId: 'shapes',
+                keyframes: [
+                  {time: 0, value: 1},
+                  {time: 1, value: 0},
+                ],
+                kind: 'group-opacity' as const,
+              },
+            ],
+          }
+        : motion,
+    ),
+  }
+}
+
+const getIdleMotion = (document: PuppetDocument) =>
+  document.motions.find((motion) => motion.id === 'idle-deform')!
+
+test('should remove a group together with its motion opacity tracks and rows', () => {
+  const source = createGroupOpacityDocument()
+  expect(parseDocumentValue(source).ok).toBe(true)
+  const result = removeLayerNodes(source, ['shapes'])
+  expect(result).toBeDefined()
+  const motion = getIdleMotion(result!)
+  expect(motion.tracks.some((track) => track.kind === 'group-opacity')).toBe(false)
+  expect(motion.timelineParameterIds ?? []).toEqual([])
+  expect(parseDocumentValue(result!).ok).toBe(true)
+})
+
+test('should copy bindings that key only the copied group', () => {
+  const source = setKeyformGroupProperties({
+    bindingId: 'angle-xy',
+    document: connectParameterGroup(createDemoDocument(), 'angle-xy', 'shapes')!,
+    groupId: 'shapes',
+    properties: {opacity: 0.2},
+    values: [30, 0],
+  })!
+  const fragment = createLayerFragment(source, ['shapes'])!
+  expect(fragment.parameterBindings?.map((binding) => binding.targetGroupIds)).toEqual([['shapes']])
+  const result = pasteLayerFragment(source, fragment, 'shapes')!
+  const [copyId] = result.nodeIds
+  expect(
+    result.document.parameterBindings?.some((binding) => binding.targetGroupIds?.includes(copyId!)),
+  ).toBe(true)
+  expect(parseDocumentValue(result.document).ok).toBe(true)
+})
+
+test('should append copied group opacity tracks and rows to an existing motion', () => {
+  const source = createGroupOpacityDocument()
+  const fragment = createLayerFragment(source, ['shapes'])!
+  const result = pasteLayerFragment(source, fragment, 'shapes')!
+  const [copyId] = result.nodeIds
+  const motion = getIdleMotion(result.document)
+  expect(
+    motion.tracks.flatMap((track) => (track.kind === 'group-opacity' ? [track.groupId] : [])),
+  ).toEqual(['shapes', copyId])
+  expect(motion.timelineParameterIds).toEqual(['group-opacity:shapes', `group-opacity:${copyId}`])
+  expect(parseDocumentValue(result.document).ok).toBe(true)
+})
+
+test('should fit copied layer curves into a shorter motion of the target', () => {
+  const source = createGroupOpacityDocument()
+  const fragment = createLayerFragment(source, ['shapes'])!
+  const shorter = {
+    ...source,
+    motions: source.motions.map((motion) =>
+      motion.id === 'idle-deform'
+        ? {...motion, duration: 0.5, timelineParameterIds: [], tracks: []}
+        : motion,
+    ),
+  }
+  const result = pasteLayerFragment(shorter, fragment, null)!
+  const [copyId] = result.nodeIds
+  const copied = getIdleMotion(result.document).tracks.find(
+    (track) => track.kind === 'group-opacity' && track.groupId === copyId,
+  )
+  // The keyframe past the target's end is dropped instead of failing the paste.
+  expect(copied?.keyframes).toEqual([{time: 0, value: 1}])
+  expect(parseDocumentValue(result.document).ok).toBe(true)
+})
+
+test('should retain group masks outside the copied selection', () => {
+  const source = setGroupRenderProperties(createDemoDocument(), 'shapes', {
+    clippingMaskIds: ['mesh-preview'],
+    offscreen: true,
+  })!
+  const fragment = createLayerFragment(source, ['shapes'])!
+  const result = pasteLayerFragment(source, fragment, 'shapes')!
+  const copy = findNode(getDocumentScene(result.document).roots, result.nodeIds[0]!)!
+  expect(copy.kind === 'group' && copy.properties?.clippingMaskIds).toEqual(['mesh-preview'])
+  expect(parseDocumentValue(result.document).ok).toBe(true)
+  const empty = removeLayerNodes(source, ['mesh-preview'])!
+  const pasted = pasteLayerFragment(empty, fragment, 'shapes')!
+  const pastedCopy = findNode(getDocumentScene(pasted.document).roots, pasted.nodeIds[0]!)!
+  expect(pastedCopy.kind === 'group' && pastedCopy.properties?.clippingMaskIds).toEqual([])
+  expect(parseDocumentValue(pasted.document).ok).toBe(true)
 })

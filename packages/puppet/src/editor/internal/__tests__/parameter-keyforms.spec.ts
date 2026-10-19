@@ -1,6 +1,6 @@
 import {describe, expect, test} from 'vitest'
 
-import {parameterValuesEqual} from '../../../deformation'
+import {mapBindingKeyforms, parameterValuesEqual} from '../../../deformation'
 import {createDemoDocument, parseDocument} from '../../../player'
 import {
   addParameter,
@@ -18,6 +18,11 @@ import {
   renameParameter,
   setParameterKeyformVertex,
 } from '../parameter-keyforms'
+import {
+  connectParameterGroup,
+  getKeyformGroupProperties,
+  setKeyformGroupProperties,
+} from '../group-keyforms'
 import {updatePhysics} from '../physics'
 
 describe('parameter keyform editing', () => {
@@ -171,6 +176,32 @@ describe('parameter keyform editing', () => {
         (keyform) => keyform.values[0] === 15 && keyform.values[1] === 15,
       ),
     ).toBe(false)
+  })
+
+  test('should insert a keyform into a binding that keys only a group', () => {
+    const connected = connectParameterGroup(createDemoDocument(), 'angle-xy', 'shapes')!
+    const keyed = setKeyformGroupProperties({
+      bindingId: 'angle-xy',
+      document: connected,
+      groupId: 'shapes',
+      properties: {opacity: 0.2},
+      values: [30, 0],
+    })!
+    const document = {
+      ...keyed,
+      parameterBindings: keyed.parameterBindings!.map((binding) => ({
+        ...mapBindingKeyforms(binding, (keyform) => ({...keyform, parts: []})),
+        targetPartIds: [],
+      })),
+    }
+    expect(parseDocument(JSON.stringify(document)).ok).toBe(true)
+    const inserted = insertParameterKeyform({bindingId: 'angle-xy', document, values: [15, 0]})
+
+    expect(inserted?.parameterBindings?.[0]?.keyforms).toHaveLength(10)
+    expect(
+      getKeyformGroupProperties(inserted!, 'angle-xy', [15, 0], 'shapes')?.opacity,
+    ).toBeCloseTo(0.6)
+    expect(parseDocument(JSON.stringify(inserted)).ok).toBe(true)
   })
 
   test('should delete a binding together with its scalar parameter definitions', () => {

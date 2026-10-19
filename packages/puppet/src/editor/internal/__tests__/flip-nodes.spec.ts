@@ -287,6 +287,44 @@ describe('flipSceneNodes', () => {
     }
   })
 
+  test('should mirror motion vertex tracks of flipped parts on the flipped axis', () => {
+    const track = (partId: string, axis: 'x' | 'y', value: number) => ({
+      axis,
+      keyframes: [
+        {time: 0, value},
+        {time: 1, value: value + 4},
+      ],
+      kind: 'vertex' as const,
+      partId,
+      vertexIndex: 1,
+    })
+    const document: PuppetDocument = {
+      ...createDocument(),
+      motions: [
+        {
+          duration: 1,
+          id: 'wave',
+          tracks: [track('arm', 'x', 62), track('arm', 'y', 35), track('skin', 'x', 45)],
+        },
+      ],
+    }
+    expect(parseDocumentValue(document).ok).toBe(true)
+    const result = flipSceneNodes({axis: 'x', document, nodeIds: ['rot'], reference: 'canvas'})
+    if (!result.ok) {
+      throw new Error(result.message)
+    }
+    expect(
+      result.document.motions[0]!.tracks.map((candidate) =>
+        candidate.keyframes.map((keyframe) => keyframe.value),
+      ),
+    ).toEqual([
+      [38, 34],
+      [35, 39],
+      [45, 49],
+    ])
+    expect(parseDocumentValue(result.document).ok).toBe(true)
+  })
+
   test('should refuse locked, 3D and curve layers', () => {
     const document = createDocument()
     const locked = {

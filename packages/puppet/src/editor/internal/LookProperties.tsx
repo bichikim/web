@@ -1,4 +1,4 @@
-import {For, Show} from 'solid-js'
+import {For, Index, Show} from 'solid-js'
 
 import {EditorButton, EditorNumberField, EditorSelect} from '../../design-system'
 import type {PuppetDocument, PuppetLookParameter} from '../../player'
@@ -39,42 +39,43 @@ export const LookProperties = (props: LookPropertiesProps) => {
     commit(updateLookParameter(props.document, index, changes))
   return (
     <EditorPropertyGroup class="look-properties" title="시선 따라가기">
-      <For each={props.document.look ?? []}>
+      {/* Entries are addressed by position, so rows stay mounted while they are edited. */}
+      <Index each={props.document.look ?? []}>
         {(entry, index) => (
           <fieldset class="preset-fields">
-            <legend>{name(entry.parameterId)}</legend>
+            <legend>{name(entry().parameterId)}</legend>
             <EditorSelect
               disabled={disabled()}
-              label={`시선 ${index() + 1} 파라미터`}
+              label={`시선 ${index + 1} 파라미터`}
               optionLabel={name}
               options={parameterIds()}
-              value={entry.parameterId}
-              onChange={(parameterId) => update(index(), {parameterId})}
+              value={entry().parameterId}
+              onChange={(parameterId) => update(index, {parameterId})}
             />
             <For each={FIELDS}>
               {(field) => (
                 <EditorNumberField
                   disabled={disabled()}
-                  label={`시선 ${index() + 1} ${field.label}`}
-                  name={`look-${index()}-${field.key}`}
+                  label={`시선 ${index + 1} ${field.label}`}
+                  name={`look-${index}-${field.key}`}
                   step={STEP}
-                  value={entry[field.key]}
+                  value={entry()[field.key]}
                   onEditEnd={props.onEditEnd}
                   onEditStart={props.onEditStart}
-                  onValueChange={(value) => update(index(), {[field.key]: value})}
+                  onValueChange={(value) => update(index, {[field.key]: value})}
                 />
               )}
             </For>
             <EditorButton
-              aria-label={`시선 ${index() + 1} 삭제`}
+              aria-label={`시선 ${index + 1} 삭제`}
               disabled={disabled()}
-              onClick={() => commit(removeLookParameter(props.document, index()))}
+              onClick={() => commit(removeLookParameter(props.document, index))}
             >
               <span aria-hidden="true" class="puppet-icon puppet-icon-trash" />
             </EditorButton>
           </fieldset>
         )}
-      </For>
+      </Index>
       <Show when={(props.document.look?.length ?? 0) < parameterIds().length}>
         <EditorButton
           disabled={disabled()}

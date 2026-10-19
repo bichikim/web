@@ -193,6 +193,8 @@ const OffscreenFields = (props: {
 const DrawOrderFields = (props: {
   readonly controller: GroupPropertiesController
   readonly group: PuppetSceneGroupNode
+  readonly onEditEnd?: () => void
+  readonly onEditStart?: () => void
 }) => {
   const grouped = () => props.group.properties?.drawOrder !== undefined
   return (
@@ -217,6 +219,8 @@ const DrawOrderFields = (props: {
             name={`${props.group.id}-draw-order`}
             step={1}
             value={props.controller.drawOrder()}
+            onEditEnd={props.onEditEnd}
+            onEditStart={props.onEditStart}
             onValueChange={(drawOrder) => props.controller.applyEffect({drawOrder})}
           />
         </label>
@@ -286,7 +290,12 @@ export const GroupProperties = (props: GroupPropertiesProps) => {
           onValueChange={(value) => applyColor('screenColor', value)}
         />
       </div>
-      <DrawOrderFields controller={controller} group={props.group} />
+      <DrawOrderFields
+        controller={controller}
+        group={props.group}
+        onEditEnd={props.onEditEnd}
+        onEditStart={props.onEditStart}
+      />
       <div class="editor-color-row">
         <label for={offscreenId}>오프스크린 합성</label>
         <EditorCheckbox

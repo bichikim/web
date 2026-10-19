@@ -1,4 +1,4 @@
-import {For, Show} from 'solid-js'
+import {For, Index, Show} from 'solid-js'
 
 import {EditorButton, EditorNumberField, EditorSelect} from '../../design-system'
 import type {PuppetBreathParameter, PuppetDocument} from '../../player'
@@ -39,44 +39,45 @@ export const BreathProperties = (props: BreathPropertiesProps) => {
     commit(updateBreathParameter(props.document, index, changes))
   return (
     <EditorPropertyGroup class="breath-properties" title="자동 호흡">
-      <For each={props.document.breath ?? []}>
+      {/* Entries are addressed by position, so rows stay mounted while they are edited. */}
+      <Index each={props.document.breath ?? []}>
         {(entry, index) => (
           <fieldset class="preset-fields">
-            <legend>{name(entry.parameterId)}</legend>
+            <legend>{name(entry().parameterId)}</legend>
             <EditorSelect
               disabled={disabled()}
-              label={`호흡 ${index() + 1} 파라미터`}
+              label={`호흡 ${index + 1} 파라미터`}
               optionLabel={name}
               options={parameterIds()}
-              value={entry.parameterId}
-              onChange={(parameterId) => update(index(), {parameterId})}
+              value={entry().parameterId}
+              onChange={(parameterId) => update(index, {parameterId})}
             />
             <For each={FIELDS}>
               {(field) => (
                 <EditorNumberField
                   disabled={disabled()}
-                  label={`호흡 ${index() + 1} ${field.label}`}
+                  label={`호흡 ${index + 1} ${field.label}`}
                   minimum={field.key === 'period' ? STEP : undefined}
-                  name={`breath-${index()}-${field.key}`}
+                  name={`breath-${index}-${field.key}`}
                   step={STEP}
                   unit={'unit' in field ? field.unit : undefined}
-                  value={entry[field.key]}
+                  value={entry()[field.key]}
                   onEditEnd={props.onEditEnd}
                   onEditStart={props.onEditStart}
-                  onValueChange={(value) => update(index(), {[field.key]: value})}
+                  onValueChange={(value) => update(index, {[field.key]: value})}
                 />
               )}
             </For>
             <EditorButton
-              aria-label={`호흡 ${index() + 1} 삭제`}
+              aria-label={`호흡 ${index + 1} 삭제`}
               disabled={disabled()}
-              onClick={() => commit(removeBreathParameter(props.document, index()))}
+              onClick={() => commit(removeBreathParameter(props.document, index))}
             >
               <span aria-hidden="true" class="puppet-icon puppet-icon-trash" />
             </EditorButton>
           </fieldset>
         )}
-      </For>
+      </Index>
       <Show when={(props.document.breath?.length ?? 0) < parameterIds().length}>
         <EditorButton
           disabled={disabled()}

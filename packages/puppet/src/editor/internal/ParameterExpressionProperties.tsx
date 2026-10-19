@@ -73,7 +73,12 @@ interface ExpressionCardProps {
   readonly apply: (document: PuppetDocument | undefined) => boolean
   readonly onEditEnd?: () => void
   readonly onEditStart?: () => void
+  /** Called before a rename is applied, so the card keeps its key under the new ID. */
+  readonly onRename?: (from: string, to: string) => void
 }
+
+const getExpressionIds = (document: PuppetDocument) =>
+  new Set((document.expressions ?? []).map((expression) => expression.id))
 
 const ExpressionCard = (props: ExpressionCardProps) => {
   const bounds = () => valueBounds(props.parameter, props.entry.blend)
@@ -147,9 +152,17 @@ const ExpressionCard = (props: ExpressionCardProps) => {
               disabled={props.disabled}
               label={`${props.expression.id} 이름`}
               value={props.expression.id}
-              onRename={(name) =>
-                props.apply(renameExpression(props.document, props.expression.id, name))
-              }
+              onRename={(name) => {
+                const renamed = renameExpression(props.document, props.expression.id, name)
+                // The accepted ID may differ from the typed name (for example trimmed).
+                const renamedId = renamed?.expressions?.find(
+                  (expression) => !getExpressionIds(props.document).has(expression.id),
+                )?.id
+                if (renamedId !== undefined) {
+                  props.onRename?.(props.expression.id, renamedId)
+                }
+                return props.apply(renamed)
+              }}
             />
           </label>
           <For each={['fadeInTime', 'fadeOutTime'] as const}>
@@ -229,6 +242,19 @@ export const ParameterExpressionProperties = (props: ParameterExpressionProperti
               .filter((expression) => !entries().some((item) => item.expression === expression))
               .map((expression) => expression.id)
           const [requestedTarget, setRequestedTarget] = createSignal(CREATE)
+          // Card keys follow renames, so a renamed card keeps its focus and open settings while a
+          // deleted card unmounts. Each key belongs to one expression ID at a time.
+          const cardKeys = new Map<string, string>()
+          let nextCardKey = 0
+          const cardKey = (id: string) => {
+            const key = cardKeys.get(id) ?? `card-${(nextCardKey += 1)}`
+            cardKeys.set(id, key)
+            return key
+          }
+          const moveCardKey = (from: string, to: string) => {
+            cardKeys.set(to, cardKey(from))
+            cardKeys.delete(from)
+          }
           // Fall back to a new expression once the requested one already uses the parameter.
           const target = () =>
             available().includes(requestedTarget()) ? requestedTarget() : CREATE
@@ -244,7 +270,7 @@ export const ParameterExpressionProperties = (props: ParameterExpressionProperti
                 fallback={<p class="preset-empty">이 파라미터를 바꾸는 표정이 없습니다.</p>}
               >
                 <div class="preset-card-list">
-                  <KeyedFor each={entries()} key={(item) => item.expression.id}>
+                  <KeyedFor each={entries()} key={(item) => cardKey(item.expression.id)}>
                     {(item) => (
                       <ExpressionCard
                         apply={apply}
@@ -256,6 +282,7 @@ export const ParameterExpressionProperties = (props: ParameterExpressionProperti
                         parameter={current()}
                         onEditEnd={props.onEditEnd}
                         onEditStart={props.onEditStart}
+                        onRename={moveCardKey}
                       />
                     )}
                   </KeyedFor>

@@ -1,6 +1,9 @@
+import {pick} from 'es-toolkit/object'
 import {
   getDocumentScene,
+  type PuppetDeformerRenderProperties,
   type PuppetDocument,
+  type PuppetGroupRenderProperties,
   type PuppetSceneDeformerNode,
   type PuppetSceneGroupNode,
   type PuppetSceneNode,
@@ -30,6 +33,19 @@ export interface ConvertSceneContainersOptions extends SceneContainerConversion 
   readonly document: PuppetDocument
 }
 
+/**
+ * The opacity and colors of `properties`, which deformers share with groups; `undefined` when
+ * none is set. Group-only settings (offscreen, blending, masks, draw order) have no deformer
+ * counterpart and are left out.
+ */
+const getSharedRenderProperties = (
+  properties: PuppetGroupRenderProperties | undefined,
+): PuppetDeformerRenderProperties | undefined => {
+  const shared =
+    properties === undefined ? {} : pick(properties, ['multiplyColor', 'opacity', 'screenColor'])
+  return Object.values(shared).some((value) => value !== undefined) ? shared : undefined
+}
+
 const createConvertedDeformer = (
   document: PuppetDocument,
   node: PuppetSceneGroupNode,
@@ -50,6 +66,7 @@ const createConvertedDeformer = (
     kind: 'deformer',
     locked: node.locked,
     name: node.name,
+    properties: getSharedRenderProperties(node.properties),
     rotationOrigin: {x: bounds.x + bounds.width / 2, y: bounds.y + bounds.height / 2},
     rows: 2,
     visible: node.visible,
@@ -64,6 +81,7 @@ const createConvertedGroup = (node: PuppetSceneDeformerNode): PuppetSceneGroupNo
   kind: 'group',
   locked: node.locked,
   name: node.name,
+  properties: getSharedRenderProperties(node.properties),
   visible: node.visible,
 })
 

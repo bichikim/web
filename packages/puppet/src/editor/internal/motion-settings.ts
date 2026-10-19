@@ -1,4 +1,9 @@
-import type {PuppetDocument, PuppetKeyframe, PuppetMotion} from '../../player/document'
+import type {
+  PuppetDocument,
+  PuppetKeyframe,
+  PuppetMotion,
+  PuppetMotionEvent,
+} from '../../player/document'
 import type {KeyframeSelection} from './timeline-keyframe-selection'
 import {isTrackForRow} from '../../player/timeline-rows'
 
@@ -14,6 +19,11 @@ const ONE_THIRD = 1 / SEGMENT_THIRDS
 const TWO_THIRDS = 2 / SEGMENT_THIRDS
 
 const unit = (value: number) => Math.min(1, Math.max(0, value))
+
+const clampEventTime = (motion: PuppetMotion) => (event: PuppetMotionEvent) => ({
+  ...event,
+  time: Math.min(motion.duration, Math.max(0, event.time)),
+})
 
 const replaceMotion = (
   document: PuppetDocument,
@@ -46,9 +56,8 @@ export const setMotionSettings = (
       sound,
       ...rest
     } = {...motion, ...changes}
-    const events = mergedEvents
-      ?.map((event) => ({...event, time: Math.min(motion.duration, Math.max(0, event.time))}))
-      .toSorted((first, second) => first.time - second.time)
+    // Events keep their order (playback sorts them), so editor rows never swap under the user.
+    const events = mergedEvents?.map(clampEventTime(motion))
     const name = mergedName?.trim()
     const group = mergedGroup?.trim()
     return {
@@ -59,6 +68,20 @@ export const setMotionSettings = (
       ...(sound === undefined ? {} : {sound}),
     }
   })
+
+/** Changes the motion's event at `index` in place, so every editor row keeps its event. */
+export const setMotionEvent = (
+  document: PuppetDocument,
+  motionId: string,
+  index: number,
+  change: Partial<PuppetMotionEvent>,
+): PuppetDocument | undefined =>
+  replaceMotion(document, motionId, (motion) => ({
+    ...motion,
+    events: (motion.events ?? []).map((event, at) =>
+      at === index ? clampEventTime(motion)({...event, ...change}) : event,
+    ),
+  }))
 
 /** The selected keyframe and the next one of its parameter track. */
 const getSelectedSegment = (

@@ -43,7 +43,7 @@ const createDocument = (): PuppetDocument => ({
 const selection = {parameterId: 'p', time: 0, times: [0]}
 
 describe('motion settings', () => {
-  test('should drop empty names and events and keep events ordered within the motion', () => {
+  test('should drop empty names and events and keep events in order within the motion', () => {
     const document = setMotionSettings(createDocument(), 'wave', {
       events: [
         {time: 5, value: 'late'},
@@ -52,14 +52,18 @@ describe('motion settings', () => {
       fadeInTime: 0.3,
       name: '  인사 ',
     })!
+    // Times stay within the motion; the order stays the document's (playback sorts by time).
     expect(document.motions[0]).toMatchObject({
       events: [
-        {time: 0.5, value: 'early'},
         {time: 2, value: 'late'},
+        {time: 0.5, value: 'early'},
       ],
       fadeInTime: 0.3,
       name: '인사',
     })
+    // An unrelated edit does not reorder the events either.
+    const faded = setMotionSettings(document, 'wave', {fadeInTime: 0.5})!
+    expect(faded.motions[0]?.events?.map((event) => event.value)).toEqual(['late', 'early'])
     const cleared = setMotionSettings(document, 'wave', {events: [], name: ''})!
     expect(cleared.motions[0]).not.toHaveProperty('events')
     expect(cleared.motions[0]).not.toHaveProperty('name')

@@ -1,5 +1,5 @@
 import {removeMouthShapeParameters} from '../mouth-shapes'
-import type {PuppetDocument} from '../../../player/document'
+import type {PuppetDocument, PuppetPhysics} from '../../../player/document'
 
 /** Drops removed parameters from the eye-blink and lip-sync roles, omitting empty roles. */
 const removeRoleParameters = (document: PuppetDocument, kept: (id: string) => boolean) => {
@@ -26,21 +26,35 @@ const keepEffectParameters = (document: PuppetDocument, kept: (id: string) => bo
   return {breath: listed(document.breath), look: listed(document.look)}
 }
 
+/** Whether `physics` holds neither pendulums, chains nor world settings. */
+const isEmptyPhysics = (physics: PuppetPhysics) =>
+  physics.pendulums.length === 0 &&
+  (physics.chains?.length ?? 0) === 0 &&
+  physics.fps === undefined &&
+  physics.gravity === undefined &&
+  physics.wind === undefined
+
 /** Drops document references to `removedParameterIds` outside parameter bindings. */
 export const removeParameterReferences = (
   document: PuppetDocument,
   removedParameterIds: ReadonlySet<string>,
 ): PuppetDocument => {
   const kept = (id: string) => !removedParameterIds.has(id)
-  const pendulums = document.physics?.pendulums.filter(
-    (pendulum) => kept(pendulum.inputParameterId) && kept(pendulum.outputParameterId),
-  )
-  // Chains stay; only their inputs and outputs of removed parameters go.
-  const chains = document.physics?.chains?.map((chain) => ({
-    ...chain,
-    inputs: chain.inputs.filter((input) => kept(input.parameterId)),
-    outputs: chain.outputs.filter((output) => kept(output.parameterId)),
-  }))
+  const physics =
+    document.physics === undefined
+      ? undefined
+      : {
+          ...document.physics,
+          // Chains stay; only their inputs and outputs of removed parameters go.
+          chains: document.physics.chains?.map((chain) => ({
+            ...chain,
+            inputs: chain.inputs.filter((input) => kept(input.parameterId)),
+            outputs: chain.outputs.filter((output) => kept(output.parameterId)),
+          })),
+          pendulums: document.physics.pendulums.filter(
+            (pendulum) => kept(pendulum.inputParameterId) && kept(pendulum.outputParameterId),
+          ),
+        }
   const roles = document.parameterRoles
   const withoutRoles = roles === undefined ? document : removeRoleParameters(document, kept)
   return {
@@ -58,11 +72,8 @@ export const removeParameterReferences = (
         (track) => track.kind !== 'parameter' || kept(track.parameterId),
       ),
     })),
-    physics:
-      document.physics === undefined ||
-      ((pendulums?.length ?? 0) === 0 && (chains?.length ?? 0) === 0)
-        ? undefined
-        : {...document.physics, chains, pendulums: pendulums ?? []},
+    // World settings outlive the last pendulum, so later ones still use them.
+    physics: physics === undefined || isEmptyPhysics(physics) ? undefined : physics,
     poseGroups: document.poseGroups?.filter((group) => kept(group.parameterId)),
   }
 }

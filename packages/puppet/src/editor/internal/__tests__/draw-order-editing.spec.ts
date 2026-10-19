@@ -2,12 +2,14 @@ import {describe, expect, test} from 'vitest'
 
 import {getPartRenderProperties} from '../../../deformation'
 import {
+  createDemoDocument,
   parseDocumentValue,
   PUPPET_DOCUMENT_FORMAT,
   PUPPET_DOCUMENT_VERSION,
   type PuppetDocument,
 } from '../../../player'
-import {setDrawOrderGroup} from '../group-properties'
+import {connectParameterGroup, setKeyformGroupProperties} from '../group-keyforms'
+import {setDrawOrderGroup, setGroupRenderProperties} from '../group-properties'
 import {insertParameterKeyform} from '../parameter-keyforms'
 import {createParameterPreview} from '../parameter-sampling'
 import {setParameterKeyformPartProperties} from '../part-properties'
@@ -100,5 +102,64 @@ describe('draw order editing', () => {
     expect(parseDocumentValue(plain).ok).toBe(true)
     const grouped = setDrawOrderGroup(plain, 'g', true)!
     expect(grouped.scene?.roots[0]).toMatchObject({properties: {drawOrder: 500}})
+  })
+
+  test('should drop keyed draw orders when the group stops being offscreen', () => {
+    const offscreen = setGroupRenderProperties(createDemoDocument(), 'shapes', {offscreen: true})!
+    const keyed = setKeyformGroupProperties({
+      bindingId: 'angle-xy',
+      document: connectParameterGroup(offscreen, 'angle-xy', 'shapes')!,
+      groupId: 'shapes',
+      properties: {drawOrder: 700},
+      values: [30, 0],
+    })!
+    const plain = setGroupRenderProperties(keyed, 'shapes', {offscreen: false})!
+    const entries = plain.parameterBindings!.flatMap((binding) =>
+      binding.keyforms.flatMap((keyform) => keyform.groups ?? []),
+    )
+    expect(entries.length).toBeGreaterThan(0)
+    expect(entries.every((entry) => entry.properties.drawOrder === undefined)).toBe(true)
+    expect(parseDocumentValue(plain).ok).toBe(true)
+  })
+
+  test('should keep keyed draw orders when an offscreen group still has its own draw order', () => {
+    const offscreen = setGroupRenderProperties(createDemoDocument(), 'shapes', {
+      drawOrder: 400,
+      offscreen: true,
+    })!
+    const keyed = setKeyformGroupProperties({
+      bindingId: 'angle-xy',
+      document: connectParameterGroup(offscreen, 'angle-xy', 'shapes')!,
+      groupId: 'shapes',
+      properties: {drawOrder: 700},
+      values: [30, 0],
+    })!
+    const plain = setGroupRenderProperties(keyed, 'shapes', {offscreen: false})!
+    const keyform = plain.parameterBindings![0]!.keyforms.find(
+      (candidate) => candidate.values[0] === 30 && candidate.values[1] === 0,
+    )
+    expect(keyform?.groups?.[0]?.properties.drawOrder).toBe(700)
+    expect(parseDocumentValue(plain).ok).toBe(true)
+  })
+
+  test('should keep keyed draw orders when an offscreen group leaves the draw-order groups', () => {
+    const offscreen = setGroupRenderProperties(createDemoDocument(), 'shapes', {
+      drawOrder: 400,
+      offscreen: true,
+    })!
+    const keyed = setKeyformGroupProperties({
+      bindingId: 'angle-xy',
+      document: connectParameterGroup(offscreen, 'angle-xy', 'shapes')!,
+      groupId: 'shapes',
+      properties: {drawOrder: 700},
+      values: [30, 0],
+    })!
+    // Still offscreen, so still ordered as a unit: the keyed values remain valid.
+    const ungrouped = setDrawOrderGroup(keyed, 'shapes', false)!
+    const keyform = ungrouped.parameterBindings![0]!.keyforms.find(
+      (candidate) => candidate.values[0] === 30 && candidate.values[1] === 0,
+    )
+    expect(keyform?.groups?.[0]?.properties.drawOrder).toBe(700)
+    expect(parseDocumentValue(ungrouped).ok).toBe(true)
   })
 })

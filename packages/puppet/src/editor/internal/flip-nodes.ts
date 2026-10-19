@@ -2,6 +2,7 @@ import {
   getDocumentScene,
   isSceneContainerNode,
   type PuppetDocument,
+  type PuppetMotion,
   type PuppetParameterBinding,
   type PuppetSceneNode,
 } from '../../player'
@@ -112,6 +113,30 @@ const mirrorBinding = (
     ),
   }))
 
+/**
+ * Motions with the flipped parts' vertex curves reflected like their meshes: vertex curves hold
+ * absolute coordinates, so only those on the mirrored axis change.
+ */
+const mirrorVertexTracks = (
+  motions: ReadonlyArray<PuppetMotion>,
+  partIds: ReadonlySet<string>,
+  mirror: Mirror,
+) =>
+  motions.map((motion) => ({
+    ...motion,
+    tracks: motion.tracks.map((track) =>
+      track.kind === 'vertex' && track.axis === mirror.axis && partIds.has(track.partId)
+        ? {
+            ...track,
+            keyframes: track.keyframes.map((keyframe) => ({
+              ...keyframe,
+              value: 2 * mirror.center - keyframe.value,
+            })),
+          }
+        : track,
+    ),
+  }))
+
 const mirrorSceneNodes = (
   nodes: ReadonlyArray<PuppetSceneNode>,
   flipped: ReadonlySet<string>,
@@ -146,7 +171,7 @@ const mirrorSceneNodes = (
 /**
  * Flips the selected layers and everything inside them across a vertical (`x`) or horizontal
  * (`y`) line (Cubism's object flip): meshes, deformer layouts including rotation deformer
- * pivots, and their keyforms, so the movement is mirrored too.
+ * pivots, their keyforms and motion vertex curves, so the movement is mirrored too.
  */
 export const flipSceneNodes = (options: FlipSceneNodesOptions): FlipSceneNodesResult => {
   const {axis, document} = options
@@ -170,6 +195,7 @@ export const flipSceneNodes = (options: FlipSceneNodesOptions): FlipSceneNodesRe
   return {
     document: {
       ...document,
+      motions: mirrorVertexTracks(document.motions, partIds, mirror),
       parameterBindings: document.parameterBindings?.map((binding) =>
         mirrorBinding(binding, partIds, deformers, mirror),
       ),

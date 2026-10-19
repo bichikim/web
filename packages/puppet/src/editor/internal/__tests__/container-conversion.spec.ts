@@ -1,6 +1,12 @@
 import {describe, expect, test} from 'vitest'
 
-import {createDemoDocument, getDocumentScene, parseDocument} from '../../../player'
+import {
+  createDemoDocument,
+  getDocumentScene,
+  parseDocument,
+  type PuppetDocument,
+} from '../../../player'
+import {setGroupRenderProperties} from '../group-properties'
 import {addParameter} from '../parameter-keyforms'
 import {createDeformer, createSceneGroup, setSceneNodeState} from '../scene-graph'
 import {convertSceneContainers, getContainerKind} from '../container-conversion'
@@ -94,6 +100,39 @@ describe('convertSceneContainers', () => {
       targetDeformerIds: [],
     })
     expect(parseDocument(JSON.stringify(converted)).ok).toBe(true)
+  })
+
+  test('should carry opacity and colors across container conversions', () => {
+    const shared = {
+      multiplyColor: [1, 0.5, 0.25],
+      opacity: 0.4,
+      screenColor: [0.1, 0.2, 0.3],
+    } as const
+    const source = setGroupRenderProperties(createDemoDocument(), 'shapes', {
+      ...shared,
+      clippingMaskIds: ['mesh-preview'],
+      drawOrder: 300,
+      offscreen: true,
+    })!
+    const properties = (document: PuppetDocument) =>
+      getDocumentScene(document).roots.find((node) => node.id === 'shapes')!
+    const deformer = convertSceneContainers({
+      document: source,
+      nodeIds: ['shapes'],
+      targetKind: 'deformer',
+    })!
+    expect(properties(deformer)).toMatchObject({kind: 'deformer', properties: shared})
+    const pin = convertSceneContainers({
+      document: deformer,
+      nodeIds: ['shapes'],
+      targetKind: 'pin',
+    })!
+    expect(properties(pin)).toMatchObject({kind: 'deformer', properties: shared})
+    const group = convertSceneContainers({document: pin, nodeIds: ['shapes'], targetKind: 'group'})!
+    expect(properties(group)).toEqual(expect.objectContaining({kind: 'group', properties: shared}))
+    for (const document of [deformer, pin, group]) {
+      expect(parseDocument(JSON.stringify(document)).ok).toBe(true)
+    }
   })
 
   test('should reject mixed or locked container conversion atomically', () => {

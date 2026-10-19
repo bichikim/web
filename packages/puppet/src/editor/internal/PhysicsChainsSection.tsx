@@ -20,6 +20,7 @@ import {
   setPhysicsWorld,
   updatePhysicsChain,
 } from './physics-chains'
+import {KeyedFor} from './KeyedFor'
 
 export interface PhysicsChainsSectionProps {
   readonly disabled: boolean
@@ -456,11 +457,11 @@ export const PhysicsChainsSection = (props: PhysicsChainsSectionProps) => {
           진자 체인 추가
         </EditorButton>
       </div>
-      <For each={chains()}>
+      <KeyedFor each={chains()} key={(chain) => chain.id}>
         {(chain) => {
           const shared = {
             get chain() {
-              return chain
+              return chain()
             },
             get disabled() {
               return props.disabled
@@ -471,17 +472,17 @@ export const PhysicsChainsSection = (props: PhysicsChainsSectionProps) => {
             onEditEnd: props.onEditEnd,
             onEditStart: props.onEditStart,
             update: (change: (current: PuppetPhysicsChain) => PuppetPhysicsChain) =>
-              commit(updatePhysicsChain(props.document, chain.id, change)),
+              commit(updatePhysicsChain(props.document, chain().id, change)),
           }
           return (
             <article class="preset-card">
               <header class="preset-card-header">
-                <h3>{chain.id}</h3>
+                <h3>{chain().id}</h3>
                 <EditorButton
-                  aria-label={`${chain.id} 체인 삭제`}
+                  aria-label={`${chain().id} 체인 삭제`}
                   class="preset-remove-button"
                   disabled={props.disabled}
-                  onClick={() => commit(removePhysicsChain(props.document, chain.id))}
+                  onClick={() => commit(removePhysicsChain(props.document, chain().id))}
                 >
                   <span aria-hidden="true" class="puppet-icon puppet-icon-trash" />
                 </EditorButton>
@@ -493,7 +494,7 @@ export const PhysicsChainsSection = (props: PhysicsChainsSectionProps) => {
             </article>
           )
         }}
-      </For>
+      </KeyedFor>
       <Show when={(props.document.physics?.chains?.length ?? 0) > 0}>
         <WorldSettings {...props} />
       </Show>
