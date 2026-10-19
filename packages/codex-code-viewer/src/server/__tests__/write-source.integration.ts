@@ -26,6 +26,14 @@ describe('writeSource', () => {
     writeFileSync(join(root, 'main.ts'), initial, {mode: 0o640})
   })
   afterEach(() => rmSync(root, {force: true, recursive: true}))
+  it('should preserve a large readonly file when a smaller replacement is submitted', () => {
+    const source = 'x'.repeat(524289)
+    writeFileSync(join(root, 'large.txt'), source)
+    expect(
+      writeSource({path: 'large.txt', revision: revision(source), root, source: 'replacement'}),
+    ).toMatchObject({error: {code: 'too-large'}, ok: false})
+    expect(readFileSync(join(root, 'large.txt'), 'utf8')).toBe(source)
+  })
   it.each([
     ['main.py', 'value = 1\r\n', 'value = 42\r\n'],
     ['main.pyi', 'def value() -> int: ...\n', 'def value() -> str: ...\n'],

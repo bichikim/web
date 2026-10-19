@@ -34,6 +34,7 @@ describe('createNavigationCache on Windows', () => {
     const cache = createNavigationCache({
       index: {
         changed: graph.changed,
+        checkpoint: async () => ({bytes: 0, unchanged: async () => true}),
         dispose: () => {},
         generation: () => revision,
         refresh: async () => revision,

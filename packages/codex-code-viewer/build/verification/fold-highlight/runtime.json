@@ -1,0 +1,20 @@
+{
+  "selectedLine": 15,
+  "before": {
+    "row": "rgb(236, 242, 255)",
+    "gutter": "rgb(249, 249, 249)"
+  },
+  "after": {
+    "row": "rgb(236, 242, 255)",
+    "number": "rgb(236, 242, 255)",
+    "gutter": "rgb(236, 242, 255)"
+  },
+  "deselectedGutter": "rgb(249, 249, 249)",
+  "buttonWidth": 24,
+  "codeStart": 72,
+  "checks": {
+    "changed_file_oxlint": "passed",
+    "pnpm_format": "passed",
+    "production_build": "passed"
+  }
+}

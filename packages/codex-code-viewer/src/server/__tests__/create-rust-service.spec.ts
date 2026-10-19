@@ -180,6 +180,37 @@ describe('createRustService', () => {
     })
     expect(resolveAnalyzer).toHaveBeenCalledTimes(2)
   })
+  it.each(['lookupSymbols', 'lookupIndexedSymbols'] as const)(
+    'should cancel %s during provisioning and retain the download for a retry',
+    async (method) => {
+      const downloaded = Promise.withResolvers<string>()
+      vi.mocked(resolveAnalyzer).mockReturnValueOnce(downloaded.promise)
+      const controller = new AbortController()
+      let cancelled = false
+      const pending = service[method](path, 'main()', 0, {
+        kind: 'definition',
+        signal: controller.signal,
+      }).catch((error: unknown) => {
+        cancelled = error === controller.signal.reason
+      })
+      controller.abort()
+      await new Promise<void>((resolve) => {
+        setImmediate(resolve)
+      })
+      try {
+        expect(cancelled).toBe(true)
+        expect(spawn).not.toHaveBeenCalled()
+      } finally {
+        downloaded.resolve('/cached/downloaded-analyzer')
+        await pending
+      }
+      expect(await service[method](path, 'main()', 0, {kind: 'definition'})).toMatchObject({
+        ok: true,
+      })
+      expect(resolveAnalyzer).toHaveBeenCalledOnce()
+      expect(spawn).toHaveBeenCalledOnce()
+    },
+  )
   it('should finish a pending lookup on disposal without spawning after the download', async () => {
     const downloaded = Promise.withResolvers<string>()
     vi.mocked(resolveAnalyzer).mockReturnValueOnce(downloaded.promise)

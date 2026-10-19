@@ -1,0 +1,23 @@
+{
+  "excluded": [
+    "Activation-uncontrolled hard reload measurements (4.1-6.7 s) are stored separately and are not evidence of product latency or its cause.",
+    "236 ms locator-key scroll centered a large content element; comparison uses native input.",
+    "A wheel no-op could leave an early probe pending until next scroll (21501 ms); fixed probe uses a bounded next-frame observation and comparison has three verified position changes."
+  ],
+  "limits": [
+    "Main first-file comparison excludes source cache, but OS disk cache is warm.",
+    "JavaScript first uncached opening is one observation per build.",
+    "requestAnimationFrame is a rendering opportunity, not a compositor presentation timestamp.",
+    "Startup comparison uses two newly created visible tabs per build."
+  ],
+  "unresolved": {
+    "postEditingFrameTimesMs": [6502, 4620],
+    "controlledRepeat": {
+      "domMs": 82,
+      "firstFrameMs": 84,
+      "secondFrameMs": 86
+    },
+    "cause": "Not established. No claim that all intermittent delays have been eliminated.",
+    "chromeCrossCheck": "Navigation blocked with ERR_BLOCKED_BY_CLIENT; the temporary error tab was closed."
+  }
+}

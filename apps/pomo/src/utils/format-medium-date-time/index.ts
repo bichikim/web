@@ -1,6 +1,6 @@
 const formatters = new Map<string, Intl.DateTimeFormat>()
 
-/** Formats a timestamp with medium date and short time in the requested locale. */
+/** 요청한 로케일의 medium 날짜 형식과 short 시간 형식으로 타임스탬프를 표시한다. */
 export const formatMediumDateTime = (value: string, locale: string): string => {
   let formatter = formatters.get(locale)
   if (formatter === undefined) {

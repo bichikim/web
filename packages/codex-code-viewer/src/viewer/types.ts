@@ -1,10 +1,12 @@
 import type {CallToolResult} from '@modelcontextprotocol/sdk/types.js'
 import type {
   CodeLocation,
+  NavigationGroup,
   NavigationLocation,
   ViewerConnection,
   WorkspaceEntry,
 } from '../shared/contracts'
+import type {DraftStorage} from './drafts/types'
 
 export interface CodeSelection extends CodeLocation {
   endLine: number
@@ -62,6 +64,7 @@ export interface ContextMenuCloseOptions {
 }
 
 export interface NavigationOptions {
+  deleted?: boolean
   historyIndex?: number
   preserveSelection?: boolean
   restoreView?: boolean
@@ -73,6 +76,12 @@ export interface ViewerSettingsEnvironment {
 }
 
 export interface ViewerPort {
+  readonly draftStorage?: DraftStorage
+  copyContextFiles?(): Promise<void>
+  attachContextFiles?(): Promise<void>
+  attachSelection?(selection: ViewerContext): Promise<void>
+  subscribeContext?(receive: (contexts: readonly string[] | null) => void): () => void
+  removeContext?(index?: number): Promise<void>
   subscribeLocale?(receive: (locale: string | undefined) => void): () => void
   watch?(
     session: string,
@@ -87,7 +96,7 @@ export interface ViewerPort {
   context(selection: ViewerContext): Promise<void>
   location?(location: ViewerFileLocation): Promise<void>
   start(
-    receive: (session: ViewerConnection) => void,
+    receive: (session: ViewerConnection, navigation?: NavigationOptions) => void,
     report: (error: unknown) => void,
     refresh: () => void,
     onTeardown?: () => Promise<void>,
@@ -109,6 +118,7 @@ export interface NavigationPoint {
   readonly y: number
 }
 export interface ReferenceChoices {
+  readonly groups?: readonly NavigationGroup[]
   readonly kind?: 'definition' | 'references'
   readonly label: string
   readonly locations: readonly NavigationLocation[]

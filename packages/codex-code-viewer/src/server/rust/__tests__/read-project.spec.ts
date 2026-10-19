@@ -186,10 +186,17 @@ renamed = {path = "helper", package = "helper"}
     write('Cargo.toml', '[package]\nname = "app"\n[lib]\npath = "code/lib.rs"\n')
     write('code/lib.rs', 'pub fn run() {}')
     write('src/main.rs', 'fn main() {}')
+    write('tests/ignored.rs', 'fn test() {}')
+    write('examples/ignored.rs', 'fn main() {}')
+    write('benches/ignored.rs', 'fn main() {}')
     expect(readProject({file: join(root, 'code/lib.rs'), root})).toMatchObject({
       ok: true,
       value: {crates: [{root_module: join(root, 'code/lib.rs')}]},
     })
+    const result = readProject({file: join(root, 'code/lib.rs'), root})
+    expect(result.ok && result.value.crates.map(({root_module}) => root_module)).toEqual([
+      join(root, 'code/lib.rs'),
+    ])
   })
 
   it('should preserve workspace inheritance for a path dependency in its own workspace', () => {
@@ -245,5 +252,32 @@ util.workspace = true
     } finally {
       rmSync(outside, {force: true, recursive: true})
     }
+  })
+  it('should honor disabled development target discovery and retain explicit target paths', () => {
+    write(
+      'Cargo.toml',
+      [
+        '[package]',
+        'name="app"',
+        'edition="2021"',
+        'autotests=false',
+        'autoexamples=false',
+        'autobenches=false',
+        '[[test]]',
+        'name="custom"',
+        'path="custom/check.rs"',
+        '',
+      ].join('\n'),
+    )
+    write('src/lib.rs', 'pub fn run() {}')
+    write('tests/ignored.rs', 'fn test() {}')
+    write('examples/ignored.rs', 'fn main() {}')
+    write('benches/ignored.rs', 'fn main() {}')
+    write('custom/check.rs', 'fn test() {}')
+    const result = readProject({file: join(root, 'src/lib.rs'), root})
+    expect(result.ok && result.value.crates.map(({root_module}) => root_module)).toEqual([
+      join(root, 'src/lib.rs'),
+      join(root, 'custom/check.rs'),
+    ])
   })
 })

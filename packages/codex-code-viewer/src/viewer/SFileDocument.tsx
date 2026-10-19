@@ -9,6 +9,7 @@ import {STableDocument} from './STableDocument'
 import {hasDocumentSource} from '../shared/has-document-source'
 import {useDocumentMode} from './use-document-mode'
 import type {useCodeEditing} from './use-code-editing'
+import {SCodeEditor} from './editor/SCodeEditor'
 import {SEditingToolbar} from './editor/SEditingToolbar'
 import type {ViewerPort} from './types'
 
@@ -37,22 +38,29 @@ export const SFileDocument = (props: SFileDocumentProps) => {
     searchVisible: () => props.searchVisible === true,
     sourceAvailable,
   })
-  const previewAvailable = (): boolean => markdown() || table() || svg()
+  const previewAvailable = (): boolean =>
+    svg() || (props.document.readOnly !== true && (markdown() || table()))
   const editable = (): boolean => props.editing?.editable() === true
   const editingEnabled = (): boolean => editable() && props.editing?.enabled() === true
   const editorVisible = (): boolean =>
-    editable() &&
-    (editingEnabled() ||
-      (props.editing?.dirty() === true && (mode.original() || !previewAvailable())))
+    (props.document.readOnly === true && (mode.original() || !svg())) ||
+    (editable() &&
+      (editingEnabled() ||
+        (props.editing?.dirty() === true && (mode.original() || !previewAvailable()))))
   const source = (): string => (editable() ? props.editing!.source() : props.document.source)
   return (
     <>
-      <Show when={previewAvailable() || editable()}>
+      <Show when={previewAvailable() || editable() || props.document.readOnly}>
         <div
           aria-label={t('문서 도구')}
           role="group"
           class="flex shrink-0 items-center gap-2 border-b border-divider px-4 py-2"
         >
+          <Show when={props.document.readOnly}>
+            <span class="text-xs text-muted" title={t('512 KiB보다 큰 파일은 읽기 전용입니다.')}>
+              {t('읽기 전용')}
+            </span>
+          </Show>
           <Show when={previewAvailable() && !editingEnabled()}>
             <div
               aria-label={t('문서 표시 방식')}
@@ -73,7 +81,7 @@ export const SFileDocument = (props: SFileDocumentProps) => {
                 aria-pressed={mode.original()}
                 disabled={!sourceAvailable()}
                 title={
-                  sourceAvailable() ? undefined : t('512 KiB 이하 SVG에서 원문을 볼 수 있습니다.')
+                  sourceAvailable() ? undefined : t('32 MiB 이하 SVG에서 원문을 볼 수 있습니다.')
                 }
                 onClick={mode.showOriginal}
               >
@@ -98,7 +106,22 @@ export const SFileDocument = (props: SFileDocumentProps) => {
         </div>
       </Show>
       <Switch fallback={<SCodeDocument {...props} />}>
-        <Match when={editorVisible()}>{props.editor}</Match>
+        <Match when={editorVisible()}>
+          {props.editor ?? (
+            <SCodeEditor
+              source={props.document.source}
+              location={props.document.location}
+              onFollow={props.onFollow}
+              onSelect={props.onSelectText}
+              matches={props.matches}
+              activeMatch={props.activeMatch}
+              searchScrollRequest={props.searchScrollRequest}
+              onShare={props.onShare}
+              onFind={props.onFind}
+              onError={props.onError}
+            />
+          )}
+        </Match>
         <Match when={props.document.media !== undefined && !mode.original()}>
           <Show
             when={`${props.session}:${props.document.location.path}:${props.document.revision}`}

@@ -35,7 +35,8 @@ export default defineConfig({
     builtin: true,
     node: true,
   },
-  ignorePatterns: ['apps/*/dist/**', 'packages/*/dist/**'],
+  // 수동 뷰어 검증 입력은 긴 줄과 빈 파일 자체가 검증 대상입니다.
+  ignorePatterns: ['apps/*/dist/**', 'packages/*/dist/**', 'pane-validation-files/**'],
   jsPlugins: [
     {
       name: 'eslint-js',

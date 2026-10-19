@@ -91,7 +91,9 @@ export const SViewerDocument = (props: SViewerDocumentProps) => {
                       request={
                         props.viewer.viewState.bind()?.request() ?? {restore: true, version: 0}
                       }
-                      readOnly={!props.viewer.editing.enabled()}
+                      readOnly={
+                        session().document.readOnly === true || !props.viewer.editing.enabled()
+                      }
                       matches={props.search.matches()}
                       activeMatch={props.search.active()}
                       searchScrollRequest={props.search.scrollRequest()}

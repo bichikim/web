@@ -1,3 +1,5 @@
+import {takeWhile} from 'es-toolkit/array'
+
 import type {CalendarWeekendIntent} from './period-range'
 
 interface CreateCalendarWeekdayParserOptions {
@@ -221,23 +223,19 @@ export const createCalendarWeekdayParser = ({
       return []
     }
 
-    const connectedMatches: WeekdayMatch[] = [firstMatch]
-    let previousMatch = firstMatch
-    for (const match of weekdayMatches.slice(1)) {
-      const separator = text.slice(previousMatch.end, match.start)
-      if (
-        !weekdayDateSeparatorPattern.test(separator) &&
-        !weekdayExclusionContextPattern.test(separator) &&
-        !/요일/u.test(text.slice(match.start, match.end))
-      ) {
-        break
+    return takeWhile(weekdayMatches, (match, index) => {
+      if (index === 0) {
+        return true
       }
 
-      connectedMatches.push(match)
-      previousMatch = match
-    }
-
-    return connectedMatches
+      const previousMatch = weekdayMatches[index - 1]!
+      const separator = text.slice(previousMatch.end, match.start)
+      return (
+        weekdayDateSeparatorPattern.test(separator) ||
+        weekdayExclusionContextPattern.test(separator) ||
+        /요일/u.test(text.slice(match.start, match.end))
+      )
+    })
   }
 
   const getWeekdayDateExpression = (text: string): WeekdayDateExpression => {

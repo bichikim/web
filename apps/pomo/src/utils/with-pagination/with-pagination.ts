@@ -1,6 +1,6 @@
 import type {PageQuery, PaginatedPageQuery, PaginationOptions} from './types'
 
-/** Adds pagination rules to a callable query while preserving its cache identity. */
+/** 호출 가능한 쿼리의 캐시 식별자를 유지하면서 페이지네이션 규칙을 추가한다. */
 export const withPagination = <Args extends unknown[], Page, PageParam>(
   pageQuery: PageQuery<Args, Page, PageParam>,
   options: PaginationOptions<Page, PageParam>,

@@ -20,8 +20,8 @@ const VOLUME_STORAGE_KEY = 'pomo:sound-effect-volume:v1:waves'
 
 const createPlayback = () => ({
   close: vi.fn(async () => undefined),
-  play: vi.fn(async () => undefined),
-  seek: vi.fn(async () => undefined),
+  play: vi.fn(async () => true),
+  seek: vi.fn(async () => false),
   setVolume: vi.fn(),
   stop: vi.fn(),
 })
@@ -121,8 +121,8 @@ it('should keep playback stopped while changing volume until activation', async 
 })
 
 it('should resume when activation follows a stop during playback startup', async () => {
-  const firstPlayRequest = Promise.withResolvers<undefined>()
-  const secondPlayRequest = Promise.withResolvers<undefined>()
+  const firstPlayRequest = Promise.withResolvers<boolean>()
+  const secondPlayRequest = Promise.withResolvers<boolean>()
   const playback = createPlayback()
   playback.play
     .mockReturnValueOnce(firstPlayRequest.promise)
@@ -143,11 +143,11 @@ it('should resume when activation follows a stop during playback startup', async
 
   root.controller.stop()
   root.controller.activate()
-  firstPlayRequest.resolve(undefined)
+  firstPlayRequest.resolve(true)
   await Promise.resolve()
 
   expect(playback.play).toHaveBeenCalledTimes(2)
-  secondPlayRequest.resolve(undefined)
+  secondPlayRequest.resolve(true)
   root.dispose()
 })
 
@@ -177,7 +177,7 @@ it('should restore the saved volume before starting the effect', async () => {
 })
 
 it('should ignore duplicate activation while the effect is starting', async () => {
-  const playRequest = Promise.withResolvers<undefined>()
+  const playRequest = Promise.withResolvers<boolean>()
   const playback = createPlayback()
   playback.play.mockReturnValue(playRequest.promise)
   let onReady: ((duration: number) => void) | undefined
@@ -197,8 +197,41 @@ it('should ignore duplicate activation while the effect is starting', async () =
   root.controller.activate()
 
   expect(playback.play).toHaveBeenCalledOnce()
-  playRequest.resolve(undefined)
+  playRequest.resolve(true)
   await Promise.resolve()
+  root.dispose()
+})
+
+it('should not resume playing after a media error cancels the pending start', async () => {
+  const pending = Promise.withResolvers<boolean>()
+  const playback = createPlayback()
+  playback.play.mockReturnValueOnce(pending.promise)
+  let onStatus: ((message: string, active: boolean) => void) | undefined
+  let onReady: ((duration: number) => void) | undefined
+  vi.mocked(createLoopPlayer).mockImplementation((_url, status, ready) => {
+    onStatus = status
+    onReady = ready
+    return playback
+  })
+
+  const root = createRoot((dispose) => ({
+    controller: useSoundEffectPlayback(() => EFFECT),
+    dispose,
+  }))
+  await Promise.resolve()
+  onReady?.(EFFECT.durationSeconds)
+  expect(playback.play).toHaveBeenCalledOnce()
+
+  const message = '이 오디오 파일을 재생할 수 없습니다.'
+  onStatus?.(message, false)
+  expect(root.controller.playing()).toBe(false)
+  expect(root.controller.error()?.message).toBe(message)
+
+  pending.resolve(false)
+  await pending.promise
+
+  expect(root.controller.playing()).toBe(false)
+  expect(root.controller.error()?.message).toBe(message)
   root.dispose()
 })
 

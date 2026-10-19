@@ -1,4 +1,4 @@
-import {MAX_CODE_BYTES} from '../shared/editing-limits'
+import {MAX_TEXT_BYTES} from '../shared/reading-limits'
 import {existsSync, readFileSync, realpathSync, statSync} from 'node:fs'
 import {dirname, isAbsolute, relative, resolve, sep} from 'node:path'
 import {failure, type Result, success} from '../shared/contracts'
@@ -77,8 +77,8 @@ export const readSource = (root: string, path: string): Result<string> => {
     if (!stats.isFile()) {
       return failure('unsupported-file')
     }
-    if (stats.size > MAX_CODE_BYTES) {
-      return failure('too-large')
+    if (stats.size > MAX_TEXT_BYTES) {
+      return failure('text-too-large')
     }
     const bytes = readFileSync(resolved.value)
     if (bytes.includes(0)) {

@@ -1,3 +1,4 @@
+import type {FeatureRequest} from 'src/features/feature-requests/types'
 import {clamp} from 'es-toolkit/math'
 import {asc, desc, eq, ne, or, sql, type SQL} from 'drizzle-orm'
 
@@ -11,16 +12,7 @@ import {
 
 export type FeatureRequestStatus = (typeof featureRequestStatusEnum.enumValues)[number]
 
-export interface FeatureRequestListItem {
-  readonly createdAt: string
-  readonly description: string
-  readonly id: string
-  readonly status: FeatureRequestStatus
-  readonly targetVoteCount: number | null
-  readonly title: string
-  readonly voteCount: number
-  readonly votedByCurrentUser: boolean
-}
+export interface FeatureRequestListItem extends FeatureRequest {}
 
 export interface CreateFeatureRequestInput {
   readonly description: string
@@ -74,16 +66,11 @@ const createVotedByCurrentUserExpression = (userId: string | null) =>
           and ${featureRequestVotes.userId} = ${userId}
       )`
 
-const toFeatureRequestListItem = (row: {
+interface FeatureRequestRow extends Omit<FeatureRequestListItem, 'createdAt'> {
   readonly createdAt: Date
-  readonly description: string
-  readonly id: string
-  readonly status: FeatureRequestStatus
-  readonly targetVoteCount: number | null
-  readonly title: string
-  readonly voteCount: number
-  readonly votedByCurrentUser: boolean
-}): FeatureRequestListItem => ({
+}
+
+const toFeatureRequestListItem = (row: FeatureRequestRow): FeatureRequestListItem => ({
   createdAt: row.createdAt.toISOString(),
   description: row.description,
   id: row.id,

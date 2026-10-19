@@ -24,6 +24,22 @@ const setup = () => ({
   source: 'const value = 2\n',
 })
 describe('shareCodeChanges', () => {
+  it('should send only the unsaved patch through native attachment without staging context', async () => {
+    const options = setup()
+    const attachSelection = vi.fn().mockResolvedValue(undefined)
+    await shareCodeChanges({...options, port: {...options.port, attachSelection}})
+    expect(attachSelection).toHaveBeenCalledExactlyOnceWith(
+      expect.objectContaining({
+        kind: 'changes',
+        patch: expect.stringContaining('+const value = 2\n'),
+        path: '/project/src/main.ts',
+        revision: 'original-revision',
+      }),
+    )
+    expect(options.port.context).not.toHaveBeenCalled()
+    expect(options.onNotice).not.toHaveBeenCalled()
+    expect(options.onError).not.toHaveBeenCalled()
+  })
   it('should attach a patch against the draft baseline instead of the refreshed document', async () => {
     const options = setup()
     await shareCodeChanges(options)

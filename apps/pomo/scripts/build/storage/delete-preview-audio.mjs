@@ -2,6 +2,7 @@ import {pathToFileURL} from 'node:url'
 
 import {AwsClient} from 'aws4fetch'
 
+import {escapeXmlValue} from '../../escape-xml-value.mjs'
 import {requireValue} from '../require-value.mjs'
 
 const PREVIEW_PREFIX_PATTERN = /^previews\/pr-\d+\/$/u
@@ -20,14 +21,6 @@ const readXmlValues = (xml, tagName) => {
   const expression = new RegExp(`<${tagName}>([\\s\\S]*?)<\\/${tagName}>`, 'gu')
   return Array.from(xml.matchAll(expression), (match) => decodeXmlValue(match[1] ?? ''))
 }
-
-const escapeXmlValue = (value) =>
-  value
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&apos;')
 
 /** @returns {RequestSigner} */
 const createSigner = ({accessKeyId, secretAccessKey}) =>

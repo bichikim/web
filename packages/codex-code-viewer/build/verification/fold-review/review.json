@@ -1,0 +1,129 @@
+{
+  "scope": "Latest fold gutter spacing and continuous selected-line background changes, with SCodeLine/SCodeDocument, useCodeFolding, useCodeInteraction, editor extensions, folding controls, UnoCSS and relevant tests as the relevance cone.",
+  "overallRisk": "Low and localized. No product behavior defect found in this review. One test callback contract violation blocked focused typecheck and was repaired.",
+  "passes": [
+    {
+      "number": 1,
+      "perspectives": [
+        "behavior, accessibility, Solid reactivity, lifecycle and CSS painting",
+        "refactoring, declarative composition and side-effect boundaries",
+        "naming, placement, config imports and file sizes"
+      ],
+      "findings": ["P2-1"]
+    },
+    {
+      "number": 2,
+      "perspectives": [
+        "fresh behavior and lifecycle trace over final source and runtime evidence",
+        "fresh refactoring review",
+        "fresh naming and structure review"
+      ],
+      "findings": []
+    }
+  ],
+  "findings": [
+    {
+      "id": "P2-1",
+      "title": "Fold range test callback returns number instead of false or void",
+      "file": "src/viewer/editor/__tests__/unfold-editor-range.spec.ts",
+      "line": 20,
+      "cause": "Expression-bodied callback returned Array.push result; RangeSet.between callback requires false | void.",
+      "impact": "Required focused typecheck failed with TS2322, preventing validation closure. Runtime assertions still passed.",
+      "before": "44 tests passed; focused typecheck failed with TS2322 at 20:61.",
+      "fix": "Use a block callback to collect offsets without returning a value. No assertions or production behavior changed.",
+      "after": "Same 44 tests passed; focused typecheck exit 0.",
+      "status": "fixed"
+    }
+  ],
+  "counts": {
+    "discovered": {
+      "P0": 0,
+      "P1": 0,
+      "P2": 1
+    },
+    "fixed": {
+      "P0": 0,
+      "P1": 0,
+      "P2": 1
+    },
+    "remaining": {
+      "P0": 0,
+      "P1": 0,
+      "P2": 0
+    }
+  },
+  "tests": {
+    "command": "wallaby run packages/codex-code-viewer/src/viewer/__tests__/SCodeDocument.spec.tsx packages/codex-code-viewer/src/viewer/__tests__/SCodeDocument.folding.spec.tsx packages/codex-code-viewer/src/viewer/editor/__tests__/create-editor-folding.spec.ts packages/codex-code-viewer/src/viewer/editor/__tests__/read-code-folds.spec.ts packages/codex-code-viewer/src/viewer/editor/__tests__/unfold-editor-range.spec.ts",
+    "before": {
+      "passed": 44,
+      "failed": 0
+    },
+    "after": {
+      "passed": 44,
+      "failed": 0
+    }
+  },
+  "typecheck": {
+    "command": "node node_modules/.pnpm/@typescript+typescript6@6.0.2/node_modules/@typescript/typescript6/lib/tsc.js --ignoreConfig --noEmit --skipLibCheck --target esnext --module esnext --moduleResolution bundler --esModuleInterop --jsx preserve --jsxImportSource solid-js --types node,vite/client,@testing-library/jest-dom/vitest packages/codex-code-viewer/src/viewer/SViewerDocument.tsx packages/codex-code-viewer/uno.config.ts packages/codex-code-viewer/src/viewer/__tests__/SCodeDocument.spec.tsx packages/codex-code-viewer/src/viewer/__tests__/SCodeDocument.folding.spec.tsx packages/codex-code-viewer/src/viewer/editor/__tests__/create-editor-folding.spec.ts packages/codex-code-viewer/src/viewer/editor/__tests__/read-code-folds.spec.ts packages/codex-code-viewer/src/viewer/editor/__tests__/unfold-editor-range.spec.ts",
+    "before": "TS2322",
+    "after": "exit 0",
+    "script": "No package-local typecheck script; direct TypeScript compiler checks the viewer consumer graph, UnoCSS config and relevant tests. Root Turbo typecheck does not provide a package-local check for this package."
+  },
+  "runtime": {
+    "host": "macOS Codex in-app browser; current production build; actual repository TypeScript source",
+    "viewports": [640, 1280],
+    "lightReading": {
+      "row": "rgb(236, 242, 255)",
+      "number": "rgb(236, 242, 255)",
+      "foldGutter": "rgb(236, 242, 255)",
+      "buttonSize": [24, 24],
+      "codeStart": 72
+    },
+    "horizontalScroll": {
+      "scrollLeft": 223,
+      "gutterLeft": 0,
+      "buttonLeft": 48,
+      "centerHitButton": true,
+      "mouseFold": true,
+      "enterUnfold": true
+    },
+    "darkReading": {
+      "row": "rgb(40, 54, 75)",
+      "number": "rgb(40, 54, 75)",
+      "foldGutter": "rgb(40, 54, 75)"
+    },
+    "darkEditor": {
+      "linePadding": 0,
+      "buttonSize": [24, 24],
+      "activeLineAndGutters": "rgb(40, 54, 75)",
+      "mouseFold": true,
+      "spaceUnfold": true,
+      "saveRemainsDisabled": true
+    },
+    "settingsRestored": "Host theme system; viewport override reset; reading mode restored."
+  },
+  "verificationGaps": [
+    "UI checks were performed only in the macOS Codex in-app browser; manual cross-browser regression was not performed."
+  ],
+  "remainingP3P4": "none",
+  "outOfScope": [
+    "Prior search engine, navigation cache, language analyzer, file-history and clipboard implementation audits; full monorepo regression."
+  ],
+  "prUpdated": false,
+  "status": "no remaining P0/P1/P2 findings",
+  "preview": "http://127.0.0.1:59900/01a8f0d8-c18c-4ab0-a35a-d863ae022b8f/",
+  "otherChecks": {
+    "lint": {
+      "command": "pnpm exec oxlint packages/codex-code-viewer/src/viewer/SCodeLine.tsx packages/codex-code-viewer/uno.config.ts packages/codex-code-viewer/src/viewer/SCodeDocument.tsx packages/codex-code-viewer/src/viewer/use-code-folding.ts packages/codex-code-viewer/src/viewer/editor/create-editor-folding.ts packages/codex-code-viewer/src/viewer/editor/__tests__/unfold-editor-range.spec.ts",
+      "result": "exit 0"
+    },
+    "format": {
+      "command": "pnpm format",
+      "result": "exit 0"
+    },
+    "formatCheck": {
+      "command": "pnpm exec oxfmt --check packages/codex-code-viewer/src/viewer/SCodeLine.tsx packages/codex-code-viewer/uno.config.ts packages/codex-code-viewer/src/viewer/SCodeDocument.tsx packages/codex-code-viewer/src/viewer/use-code-folding.ts packages/codex-code-viewer/src/viewer/editor/create-editor-folding.ts packages/codex-code-viewer/src/viewer/editor/__tests__/unfold-editor-range.spec.ts",
+      "result": "exit 0"
+    }
+  }
+}

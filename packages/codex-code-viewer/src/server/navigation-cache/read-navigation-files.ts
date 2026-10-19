@@ -29,6 +29,11 @@ export const readNavigationFiles = async (root: string, signal: AbortSignal) => 
     directories: new Map(
       listing.directories.map((directory) => [directory.path, directory.revision]),
     ),
+    discovery: {
+      directories: listing.directories.map((entry) => entry.path),
+      files: [...listing.files],
+      truncated: false,
+    },
     files: new Set(
       listing.files.filter((file) => isAnalyzableFile(file.path)).map((file) => file.path),
     ),

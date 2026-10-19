@@ -14,12 +14,17 @@ import {navigationToken} from './navigation-token'
 import {isNavigableFile} from '../../shared/is-navigable-file'
 
 interface EditorNavigationOptions {
+  readonly readOffset?: (position: number) => number
   readonly path: string
   readonly onFollow: (token: CodeToken, point?: NavigationPoint) => void
 }
 const modifierChange = StateEffect.define<boolean>()
 
-const navigationMarks = (view: EditorView, path: string): DecorationSet => {
+const navigationMarks = (
+  view: EditorView,
+  path: string,
+  readOffset?: (position: number) => number,
+): DecorationSet => {
   const marks: ReturnType<Decoration['range']>[] = []
   for (const visible of view.visibleRanges) {
     syntaxTree(view.state).iterate({
@@ -27,7 +32,7 @@ const navigationMarks = (view: EditorView, path: string): DecorationSet => {
         if (node.node.firstChild !== null) {
           return
         }
-        const token = navigationToken(view.state, node.from, path)
+        const token = navigationToken(view.state, node.from, path, readOffset)
         if (token !== null) {
           marks.push(
             Decoration.mark({
@@ -69,7 +74,7 @@ export const createEditorNavigation = (options: EditorNavigationOptions): Extens
       decorations: DecorationSet
 
       constructor(view: EditorView) {
-        this.decorations = navigationMarks(view, options.path)
+        this.decorations = navigationMarks(view, options.path, options.readOffset)
       }
 
       update(update: ViewUpdate): void {
@@ -78,7 +83,7 @@ export const createEditorNavigation = (options: EditorNavigationOptions): Extens
           update.viewportChanged ||
           syntaxTree(update.startState) !== syntaxTree(update.state)
         ) {
-          this.decorations = navigationMarks(update.view, options.path)
+          this.decorations = navigationMarks(update.view, options.path, options.readOffset)
         }
       }
     },
@@ -109,7 +114,10 @@ export const createEditorNavigation = (options: EditorNavigationOptions): Extens
           return false
         }
         const position = view.posAtCoords({x: event.clientX, y: event.clientY})
-        const token = position === null ? null : navigationToken(view.state, position, options.path)
+        const token =
+          position === null
+            ? null
+            : navigationToken(view.state, position, options.path, options.readOffset)
         if (token === null) {
           return false
         }
@@ -122,7 +130,12 @@ export const createEditorNavigation = (options: EditorNavigationOptions): Extens
       {
         key: 'F12',
         run: (view) => {
-          const token = navigationToken(view.state, view.state.selection.main.head, options.path)
+          const token = navigationToken(
+            view.state,
+            view.state.selection.main.head,
+            options.path,
+            options.readOffset,
+          )
           if (token === null) {
             return false
           }

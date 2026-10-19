@@ -1,10 +1,9 @@
-import {createHash} from 'node:crypto'
 import {relative} from 'node:path'
 import {type CodeDocument, type Result, success} from '../shared/contracts'
 import {fileFormat} from '../shared/file-formats'
 import {readSource, resolveFile} from './file-access'
 import {readMediaDocument} from './read-media-document'
-import {tokenizeDocument} from './tokenize-document'
+import {createSourceDocument} from './create-source-document'
 export const readDocument = (
   root: string,
   path: string,
@@ -24,11 +23,5 @@ export const readDocument = (
   if (!source.ok) {
     return source
   }
-  const lines = tokenizeDocument(resolved.value, source.value)
-  return success({
-    lines,
-    location: {...location, column, line: Math.min(Math.max(1, line), lines.length)},
-    revision: createHash('sha256').update(source.value).digest('hex'),
-    source: source.value,
-  })
+  return success(createSourceDocument({column, line, path: location.path, source: source.value}))
 }

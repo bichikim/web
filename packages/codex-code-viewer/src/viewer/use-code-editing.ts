@@ -7,13 +7,9 @@ import {errorMessage} from './error-message'
 import type {ViewerPort} from './types'
 import {useUnsavedChanges} from './use-unsaved-changes'
 import {shareCodeChanges} from './share-code-changes'
+import {useEditingDrafts} from './drafts/use-editing-drafts'
+import type {EditingDraft as Draft} from './drafts/types'
 
-interface Draft {
-  readonly base: CodeDocument
-  readonly source: string
-  readonly session: ViewerSession
-  readonly deleted: boolean
-}
 interface EditingOptions {
   readonly port: ViewerPort
   readonly session: Accessor<ViewerSession | null>
@@ -21,51 +17,8 @@ interface EditingOptions {
   readonly onDiscardDeleted?: (value: ViewerSession) => void
 }
 const keyOf = (value: ViewerSession): string =>
-  JSON.stringify([value.workspace, value.document.location.path])
+  JSON.stringify([value.session, value.workspace, value.document.location.path])
 const changed = (draft: Draft): boolean => draft.deleted || draft.source !== draft.base.source
-const editDraft = (
-  drafts: Readonly<Record<string, Draft>>,
-  value: ViewerSession,
-  source: string,
-) => {
-  const key = keyOf(value)
-  return {
-    ...drafts,
-    [key]: {
-      base: drafts[key]?.base ?? value.document,
-      deleted: drafts[key]?.deleted ?? false,
-      session: value,
-      source,
-    },
-  }
-}
-const omitDraft = (drafts: Readonly<Record<string, Draft>>, key: string) =>
-  Object.fromEntries(Object.entries(drafts).filter(([entry]) => entry !== key))
-const deletedDraft = (drafts: Readonly<Record<string, Draft>>, value: ViewerSession) => {
-  const key = keyOf(value)
-  const draft = drafts[key]
-  return draft?.deleted
-    ? drafts
-    : {
-        ...drafts,
-        [key]: {
-          base: draft?.base ?? value.document,
-          deleted: true,
-          session: value,
-          source: draft?.source ?? value.document.source,
-        },
-      }
-}
-const acceptDraft = (drafts: Readonly<Record<string, Draft>>, value: ViewerSession) => {
-  const key = keyOf(value)
-  const draft = drafts[key]
-  if (draft === undefined) {
-    return drafts
-  }
-  return draft.source === draft.base.source
-    ? omitDraft(drafts, key)
-    : {...drafts, [key]: {...draft, deleted: false}}
-}
 const analysisSources = (
   entries: readonly (readonly [string, Draft])[],
   workspace: string | undefined,
@@ -77,12 +30,44 @@ const analysisSources = (
     )
     .map(([, value]) => ({path: value.base.location.path, source: value.source}))
 
+const retainedDocument = (
+  drafts: Readonly<Record<string, Draft>>,
+  session: ViewerSession | null,
+  workspace: string | undefined,
+  path: string,
+): CodeDocument | undefined => {
+  const draft = drafts[JSON.stringify([session?.session, workspace, path])]
+  return draft !== undefined && changed(draft) ? {...draft.base, lines: []} : undefined
+}
+
+interface DraftChangesOptions {
+  readonly draft: Draft | undefined
+  readonly port: ViewerPort
+  readonly feedback: (message: string) => void
+}
+const shareDraftChanges = ({draft, port, feedback}: DraftChangesOptions): Promise<void> =>
+  draft === undefined
+    ? Promise.resolve()
+    : shareCodeChanges({
+        onError: (error) => feedback(errorMessage(error)),
+        onNotice: feedback,
+        original: draft.deleted ? '' : draft.base.source,
+        port,
+        revision: draft.base.revision,
+        session: draft.session,
+        source: draft.source,
+      })
+
+const editableDocument = (document: CodeDocument | undefined): boolean =>
+  document !== undefined && document.readOnly !== true && isEditableFile(document.location.path)
+
 /** Retains per-file drafts and revision-checked explicit saves until they are saved or discarded. */
 export const useCodeEditing = (options: EditingOptions) => {
-  const [drafts, setDrafts] = createSignal<Readonly<Record<string, Draft>>>({})
   const [enabled, setEnabled] = createSignal(false)
   const [saving, setSaving] = createSignal(false)
   const [feedback, setFeedback] = createSignal<string | null>(null)
+  const retained = useEditingDrafts({onError: setFeedback, storage: options.port.draftStorage})
+  const {drafts} = retained
   let writing: Promise<boolean> | null = null
   let writingKey: string | null = null
   let writingSource: string | undefined
@@ -94,13 +79,13 @@ export const useCodeEditing = (options: EditingOptions) => {
     Object.entries(drafts()).filter(([, value]) => changed(value)),
   )
   const dirty = (): boolean => current() !== undefined && changed(current()!)
-  const editable = (): boolean => isEditableFile(options.session()?.document.location.path ?? '')
+  const editable = (): boolean => editableDocument(options.session()?.document)
   const change = (source: string): void => {
     const value = options.session()
     if (value === null || !editable()) {
       return
     }
-    setDrafts((previous) => editDraft(previous, value, source))
+    retained.change(value, source)
   }
   const saveDraft = async (key: string): Promise<boolean> => {
     const draft = drafts()[key]
@@ -122,17 +107,9 @@ export const useCodeEditing = (options: EditingOptions) => {
       })
       const session = {...draft.session, document: result.document}
       batch(() => {
-        setDrafts((previous) => ({
-          ...previous,
-          [key]: {
-            base: result.document,
-            deleted: false,
-            session,
-            source: previous[key]?.source ?? draft.source,
-          },
-        }))
-        options.onSaved?.(session)
         setFeedback('저장했습니다.')
+        retained.saved(session)
+        options.onSaved?.(session)
       })
       return true
     } catch (error) {
@@ -165,8 +142,8 @@ export const useCodeEditing = (options: EditingOptions) => {
       const key = keyOf(value)
       const deleted = drafts()[key]?.deleted === true
       batch(() => {
-        setDrafts((previous) => omitDraft(previous, key))
         setFeedback(null)
+        retained.discard(value)
         if (deleted) {
           options.onDiscardDeleted?.(value)
         }
@@ -174,16 +151,19 @@ export const useCodeEditing = (options: EditingOptions) => {
     }
   }
   const accept = (value: ViewerSession): void => {
-    setDrafts((previous) => acceptDraft(previous, value))
+    if (retained.accept(value)) {
+      setEnabled(true)
+    }
   }
+
   const markDeleted = (value: ViewerSession): void => {
-    if (!isEditableFile(value.document.location.path)) {
+    if (!editableDocument(value.document)) {
       return
     }
-    setDrafts((previous) => deletedDraft(previous, value))
+    retained.markDeleted(value)
   }
   const protection = useUnsavedChanges({
-    discardAll: () => setDrafts({}),
+    discardAll: retained.clear,
     pending: () => pendingDrafts().length > 0,
     saveAll: () =>
       pendingDrafts().reduce(
@@ -201,6 +181,8 @@ export const useCodeEditing = (options: EditingOptions) => {
     dirty,
     discard,
     dismissFeedback: () => setFeedback(null),
+    draftDocument: (workspace: string | undefined, path: string) =>
+      retainedDocument(drafts(), options.session(), workspace, path),
     editable,
     enabled,
     feedback,
@@ -209,20 +191,8 @@ export const useCodeEditing = (options: EditingOptions) => {
     revision: () => current()?.base.revision ?? options.session()?.document.revision ?? '',
     save,
     saving,
-    shareChanges: (): Promise<void> => {
-      const draft = current()
-      return draft === undefined
-        ? Promise.resolve()
-        : shareCodeChanges({
-            onError: (error) => setFeedback(errorMessage(error)),
-            onNotice: setFeedback,
-            original: draft.deleted ? '' : draft.base.source,
-            port: options.port,
-            revision: draft.base.revision,
-            session: draft.session,
-            source: draft.source,
-          })
-    },
+    shareChanges: () =>
+      shareDraftChanges({draft: current(), feedback: setFeedback, port: options.port}),
     source: (): string => current()?.source ?? options.session()?.document.source ?? '',
     sources: () => analysisSources(pendingDrafts(), options.session()?.workspace),
     toggle: () => setEnabled((previous) => !previous),

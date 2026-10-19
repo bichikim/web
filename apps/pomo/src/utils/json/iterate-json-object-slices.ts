@@ -4,7 +4,7 @@ export interface JsonObjectSlice {
   readonly slice: string
   readonly start: number
 }
-/** Iterates complete object candidates, including nested objects unless the caller skips their range. */
+/** 완전한 객체 후보를 순회하며, 호출자가 범위를 건너뛰지 않으면 중첩 객체도 포함한다. */
 export function* iterateJsonObjectSlices(
   text: string,
 ): Generator<JsonObjectSlice, void, number | undefined> {

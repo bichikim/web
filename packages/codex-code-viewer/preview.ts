@@ -1,3 +1,4 @@
+import {UPDATE_INSTALL_TIMEOUT_MS} from './src/shared/plugin-updates'
 import {randomUUID} from 'node:crypto'
 import {readFile} from 'node:fs/promises'
 import {createServer, type IncomingMessage, type ServerResponse} from 'node:http'
@@ -28,7 +29,7 @@ const transport = new StdioClientTransport({
   args: [new URL('./dist/server.js', import.meta.url).pathname],
   command: process.execPath,
   env: Object.fromEntries(
-    ['GEM_HOME', 'GEM_PATH', 'RUBY_BINARY', 'SOLARGRAPH_BINARY'].flatMap((name) => {
+    ['CODEX_HOME', 'GEM_HOME', 'GEM_PATH', 'RUBY_BINARY', 'SOLARGRAPH_BINARY'].flatMap((name) => {
       const value = process.env[name]
       return value === undefined ? [] : [[name, value]]
     }),
@@ -40,9 +41,12 @@ const token = randomUUID()
 const base = `/${token}/`
 const streams = createPreviewStreams(base)
 const allowed = new Set([
+  'code.update-check',
+  'code.update-install',
   'code.open',
   'code.attach',
   'code.read',
+  'code.source',
   'code.write',
   'code.create',
   'code.entry',
@@ -78,10 +82,16 @@ const serveTool = async (request: IncomingMessage, response: ServerResponse): Pr
     return
   }
   const result = CallToolResultSchema.parse(
-    await client.callTool({
-      ...input.params,
-      _meta: {'openai/resource': {path: anchor}},
-    }),
+    await client.callTool(
+      {
+        ...input.params,
+        _meta: {'openai/resource': {path: anchor}},
+      },
+      undefined,
+      input.params.name === 'code.update-install'
+        ? {timeout: UPDATE_INSTALL_TIMEOUT_MS}
+        : undefined,
+    ),
   )
   const endpoint = streams.expose(result.structuredContent?.url, `http://${request.headers.host}`)
   const content =

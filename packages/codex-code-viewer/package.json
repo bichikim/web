@@ -1,6 +1,6 @@
 {
   "name": "@winter-love/codex-code-viewer",
-  "version": "0.4.2",
+  "version": "0.6.1",
   "private": false,
   "description": "A Codex viewer for code, documents and media with file navigation and chat context.",
   "keywords": [
@@ -24,9 +24,12 @@
     ".mcp.json",
     "assets",
     "dist/server.js",
+    "dist/browser.js",
+    "dist/browser.html",
     "dist/navigation-worker.js",
     "dist/app.html",
     "dist/install.js",
+    "dist/claude/manifest.json",
     "dist/python",
     "dist/lib.*.d.ts",
     "dist/THIRD_PARTY_LICENSES.md"

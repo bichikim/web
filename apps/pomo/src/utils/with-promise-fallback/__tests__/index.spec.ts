@@ -20,7 +20,7 @@ describe('withPromiseFallback', () => {
     'should return the exact fallback for rejection reason %s',
     async (reason) => {
       const fallback = {enabled: false}
-      // Rejections from external promises are not necessarily Error instances.
+      // 외부 Promise의 거부 사유가 반드시 Error 인스턴스인 것은 아니다.
       // eslint-disable-next-line prefer-promise-reject-errors
       const rejected = Promise.reject(reason)
       expect(await withPromiseFallback(rejected, fallback)).toBe(fallback)

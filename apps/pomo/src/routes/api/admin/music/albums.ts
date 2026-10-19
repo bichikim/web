@@ -8,6 +8,7 @@ import {noStoreJson} from 'src/server/http/response'
 import {createAlbum} from 'src/server/repositories/music-album-creation'
 import {isManagedAlbumCoverUrl} from 'src/server/music/cover-upload'
 import {hasUniqueIds} from 'src/features/catalog-policy'
+import {ALBUM_LOCALES} from 'src/features/admin-music/album-draft'
 
 const MAXIMUM_BODY_SIZE = 65_536
 const MAXIMUM_DESCRIPTION_LENGTH = 2000
@@ -19,7 +20,7 @@ const HTTP_CREATED = 201
 const HTTP_INTERNAL_SERVER_ERROR = 500
 const translationSchema = z.object({
   description: z.string().trim().max(MAXIMUM_DESCRIPTION_LENGTH),
-  locale: z.enum(['ko', 'en', 'ja', 'zh-Hans']),
+  locale: z.enum(ALBUM_LOCALES),
   title: z.string().trim().max(MAXIMUM_TITLE_LENGTH),
 })
 const albumSchema = z.object({

@@ -1,6 +1,8 @@
 import {AwsClient} from 'aws4fetch'
 import {trim} from 'es-toolkit'
 
+import {requireEnvironmentValue} from '../../require-environment-value'
+
 const DEFAULT_BUCKET = 'pomofi-paid-audio'
 const STORAGE_PREFIX_SEGMENT_PATTERN = /^[a-z\d](?:[a-z\d-]*[a-z\d])?$/u
 
@@ -17,19 +19,6 @@ export interface PaidAudioEnvironment {
 export interface TrackStorageOptions {
   readonly environment?: PaidAudioEnvironment
   readonly signRequest?: (request: Request, signQuery: boolean) => Promise<Request>
-}
-
-const requireEnvironmentValue = (
-  name: keyof PaidAudioEnvironment,
-  value: string | undefined,
-): string => {
-  const normalizedValue = value?.trim()
-
-  if (normalizedValue === undefined || normalizedValue.length === 0) {
-    throw new TypeError(`${name} is not set`)
-  }
-
-  return normalizedValue
 }
 
 const normalizeStoragePrefix = (value: string): string => trim(value.trim(), '/')

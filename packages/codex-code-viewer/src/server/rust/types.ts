@@ -24,7 +24,7 @@ export interface RustProject {
 export interface RustTarget {
   readonly name: string
   readonly path: string
-  readonly kind: 'lib' | 'binary'
+  readonly kind: 'lib' | 'binary' | 'test' | 'example' | 'bench'
 }
 
 export interface RustPackage {
@@ -36,6 +36,7 @@ export interface RustPackage {
     readonly name: string
     readonly renamed: boolean
     readonly directory: string
+    readonly development?: boolean
   }[]
 }
 
@@ -46,12 +47,14 @@ export interface RustTargetCandidate {
 }
 
 export interface RustDependencyCandidate {
+  readonly development?: boolean
   readonly manifest: string
   readonly name: string
   readonly renamed: boolean
 }
 
 export interface RustPackageDescription {
+  readonly discovery: boolean
   readonly edition: RustCrate['edition']
   readonly cfg: readonly string[]
   readonly targets: readonly RustTargetCandidate[]

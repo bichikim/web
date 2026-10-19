@@ -12,12 +12,24 @@ import {
   type LanguageLearningWord,
   type LanguageLearningWordAudioRepository,
   LanguageLearningWordAudioStorageError,
+  normalizeLanguageLearningWordUnicodeValue,
+  readLanguageLearningWords,
 } from '../../features/language-learning'
 import {type ModelAssetManager, useModelAssetManager} from '../../features/model-download'
 import {isSupertonicModelDownloaded} from '../../features/supertonic'
 import {generateLanguageLearningWordPronunciation} from './word-pronunciation'
 
 const getWordKey = (word: LanguageLearningWord) => `${word.language}:${word.value}`
+const getAudioResourceKey = (key: string) => normalizeLanguageLearningWordUnicodeValue(key)
+
+const hasStoredAudioAlias = (word: LanguageLearningWord) => {
+  const key = getWordKey(word)
+  const resourceKey = getAudioResourceKey(key)
+  return readLanguageLearningWords().some(
+    (storedWord) =>
+      getWordKey(storedWord) !== key && getAudioResourceKey(getWordKey(storedWord)) === resourceKey,
+  )
+}
 
 interface PendingPronunciation extends PendingSettingsPronunciation {
   readonly audioOwner: string
@@ -35,7 +47,14 @@ interface ActivePronunciationRequest {
   readonly key: string
 }
 
-type AudioUrlMap = Readonly<Record<string, string>>
+interface AudioResource {
+  /** 정규화된 발음 자원을 공유하는 원문 행의 키입니다. */
+  readonly wordKeys: ReadonlyArray<string>
+  /** 마지막 원문 행이 해제될 때 폐기할 발음 URL입니다. */
+  readonly url: string
+}
+
+type AudioResourceMap = Readonly<Record<string, AudioResource>>
 
 const getFailureMessage = (reason: unknown) => {
   if (reason instanceof LanguageLearningWordAudioStorageError) {
@@ -54,10 +73,15 @@ const getFailureMessage = (reason: unknown) => {
 }
 
 interface AudioPublisherOptions {
-  readonly getAudioUrls: () => AudioUrlMap
+  /** 정규화된 자원과 원문 참조의 불변 snapshot을 읽습니다. */
+  readonly getAudioResources: () => AudioResourceMap
+  /** 이번 원문 행의 자동 재생 요청을 읽습니다. */
   readonly getAutoplayKey: () => string | null
+  /** owner 정리 이후 URL과 자동 재생 게시를 막습니다. */
   readonly isDisposed: () => boolean
-  readonly setAudioUrls: (value: AudioUrlMap) => void
+  /** 참조 소유권 변경을 새 snapshot으로 게시합니다. */
+  readonly setAudioResources: (value: AudioResourceMap) => void
+  /** 자동 재생할 원문 행을 게시하거나 요청을 해제합니다. */
   readonly setAutoplayKey: (value: string | null) => void
 }
 
@@ -83,15 +107,36 @@ const createAudioPublisher = (options: AudioPublisherOptions) => {
       return
     }
 
-    const key = getWordKey(word)
-    const currentUrls = options.getAudioUrls()
-    const url = replaceBlobObjectUrl(currentUrls[key] ?? null, () => audio, {order: 'create-first'})
-    options.setAudioUrls({...currentUrls, [key]: url})
-    requestAutoplay(key)
+    const wordKey = getWordKey(word)
+    const resourceKey = getAudioResourceKey(wordKey)
+    const currentResources = options.getAudioResources()
+    const existing = currentResources[resourceKey]
+    const url = existing?.url ?? replaceBlobObjectUrl(null, () => audio, {order: 'create-first'})
+    options.setAudioResources({
+      ...currentResources,
+      [resourceKey]: {
+        url,
+        wordKeys: [...(existing?.wordKeys ?? []), wordKey],
+      },
+    })
+    requestAutoplay(wordKey)
   }
 
   const replay = (word: LanguageLearningWord) => {
-    requestAutoplay(getWordKey(word))
+    const wordKey = getWordKey(word)
+    const resourceKey = getAudioResourceKey(wordKey)
+    const currentResources = options.getAudioResources()
+    const resource = currentResources[resourceKey]
+    if (resource !== undefined && !resource.wordKeys.includes(wordKey)) {
+      options.setAudioResources({
+        ...currentResources,
+        [resourceKey]: {
+          ...resource,
+          wordKeys: [...resource.wordKeys, wordKey],
+        },
+      })
+    }
+    requestAutoplay(wordKey)
   }
 
   return {publish, replay}
@@ -100,6 +145,8 @@ const createAudioPublisher = (options: AudioPublisherOptions) => {
 interface GeneratePronunciationOptions {
   readonly audioRepository: LanguageLearningWordAudioRepository
   readonly downloadIfMissing: boolean
+  /** 저장 완료 시점에 같은 자원을 사용하는 현재 참조를 확인합니다. */
+  readonly hasSharedAudioReference: () => boolean
   readonly isCurrent: () => boolean
   readonly modelAssets: ModelAssetManager
   readonly onMissingModel: (request: PendingPronunciation) => void
@@ -167,9 +214,16 @@ const generatePronunciation = (options: GeneratePronunciationOptions) => {
                 }
               }
               if (!options.isCurrent()) {
-                await options.audioRepository
-                  .delete(options.request.word, options.request.audioOwner)
-                  .catch(() => undefined)
+                const removal = options.hasSharedAudioReference()
+                  ? options.audioRepository.delete(
+                      options.request.word,
+                      options.request.audioOwner,
+                      {
+                        preserveSharedAudio: true,
+                      },
+                    )
+                  : options.audioRepository.delete(options.request.word, options.request.audioOwner)
+                await removal.catch(() => undefined)
                 return
               }
               options.publish(options.request.word, pronunciation.audio)
@@ -203,7 +257,7 @@ export interface LanguageLearningWordPronunciationState {
 export const useLanguageLearningWordPronunciation = (): LanguageLearningWordPronunciationState => {
   const modelAssets = useModelAssetManager()
   const [automaticSettings] = usePreference(createAutomaticDialoguePreferenceOptions())
-  const [audioUrls, setAudioUrls] = createSignal<AudioUrlMap>({})
+  const [audioResources, setAudioResources] = createSignal<AudioResourceMap>({})
   const [autoplayKey, setAutoplayKey] = createSignal<string | null>(null)
   const [error, setError] = createSignal<string | null>(null)
   const [loadingKey, setLoadingKey] = createSignal<string | null>(null)
@@ -214,10 +268,10 @@ export const useLanguageLearningWordPronunciation = (): LanguageLearningWordPron
   let activeRequest: ActivePronunciationRequest | null = null
   let disposed = false
   const publisher = createAudioPublisher({
-    getAudioUrls: audioUrls,
+    getAudioResources: audioResources,
     getAutoplayKey: autoplayKey,
     isDisposed: () => disposed,
-    setAudioUrls,
+    setAudioResources,
     setAutoplayKey,
   })
 
@@ -245,6 +299,15 @@ export const useLanguageLearningWordPronunciation = (): LanguageLearningWordPron
     generatePronunciation({
       audioRepository: getAudioRepository(),
       downloadIfMissing,
+      hasSharedAudioReference: () => {
+        const resourceKey = getAudioResourceKey(getWordKey(request.word))
+        return (
+          hasStoredAudioAlias(request.word) ||
+          (!disposed &&
+            (audioResources()[resourceKey] !== undefined ||
+              (activeRequest !== null && getAudioResourceKey(activeRequest.key) === resourceKey)))
+        )
+      },
       isCurrent: () => !disposed && !request.signal.aborted,
       modelAssets,
       onMissingModel: setPendingRequest,
@@ -289,8 +352,8 @@ export const useLanguageLearningWordPronunciation = (): LanguageLearningWordPron
 
   const request = (word: LanguageLearningWord) => {
     const key = getWordKey(word)
-    const currentUrls = audioUrls()
-    if (currentUrls[key] !== undefined) {
+    const currentResources = audioResources()
+    if (currentResources[getAudioResourceKey(key)] !== undefined) {
       cancelActiveRequest()
       publisher.replay(word)
       return
@@ -363,13 +426,19 @@ export const useLanguageLearningWordPronunciation = (): LanguageLearningWordPron
     if (loadingKey() === key) {
       setLoadingKey(null)
     }
-    const currentUrls = audioUrls()
-    const url = currentUrls[key]
-    if (url !== undefined) {
-      replaceBlobObjectUrl(url, () => null)
-      const nextUrls = {...currentUrls}
-      delete nextUrls[key]
-      setAudioUrls(nextUrls)
+    const resourceKey = getAudioResourceKey(key)
+    const currentResources = audioResources()
+    const resource = currentResources[resourceKey]
+    const remainingWordKeys = resource?.wordKeys.filter((wordKey) => wordKey !== key) ?? []
+    if (resource !== undefined) {
+      const nextResources = {...currentResources}
+      if (remainingWordKeys.length === 0) {
+        replaceBlobObjectUrl(resource.url, () => null)
+        delete nextResources[resourceKey]
+      } else {
+        nextResources[resourceKey] = {...resource, wordKeys: remainingWordKeys}
+      }
+      setAudioResources(nextResources)
     }
     const pending = pendingRequest()
     if (pending !== null && getWordKey(pending.word) === key) {
@@ -379,25 +448,34 @@ export const useLanguageLearningWordPronunciation = (): LanguageLearningWordPron
     if (settingsPending !== null && getWordKey(settingsPending.word) === key) {
       setPendingSettingsRequest(null)
     }
-    getAudioRepository()
-      .delete(word)
-      .catch((reason: unknown) => {
-        if (!disposed) {
-          setError(getFailureMessage(reason))
-        }
-      })
+    const otherRequestUsesResource =
+      activeRequest !== null && getAudioResourceKey(activeRequest.key) === resourceKey
+    const repository = getAudioRepository()
+    const removal =
+      remainingWordKeys.length > 0 || otherRequestUsesResource || hasStoredAudioAlias(word)
+        ? repository.delete(word, undefined, {preserveSharedAudio: true})
+        : repository.delete(word)
+    removal.catch((reason: unknown) => {
+      if (!disposed) {
+        setError(getFailureMessage(reason))
+      }
+    })
   }
 
   onCleanup(() => {
     disposed = true
     abortActiveRequest()
-    for (const url of Object.values(audioUrls())) {
-      replaceBlobObjectUrl(url, () => null)
+    for (const resource of Object.values(audioResources())) {
+      replaceBlobObjectUrl(resource.url, () => null)
     }
   })
 
   return {
-    audioUrl: (word) => audioUrls()[getWordKey(word)] ?? null,
+    audioUrl: (word) => {
+      const wordKey = getWordKey(word)
+      const resource = audioResources()[getAudioResourceKey(wordKey)]
+      return resource?.wordKeys.includes(wordKey) ? resource.url : null
+    },
     autoplayKey,
     cancelDownload,
     confirmDownload,

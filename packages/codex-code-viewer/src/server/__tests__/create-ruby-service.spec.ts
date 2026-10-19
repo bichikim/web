@@ -1,5 +1,7 @@
 /** @vitest-environment node */
 import {EventEmitter} from 'node:events'
+import {existsSync} from 'node:fs'
+import {delimiter, join} from 'node:path'
 import {PassThrough} from 'node:stream'
 import {pathToFileURL} from 'node:url'
 import {createMessageConnection} from 'vscode-jsonrpc/node.js'
@@ -63,7 +65,14 @@ describe('createRubyService', () => {
     })
     expect(spawn).toHaveBeenCalledWith(
       'ruby',
-      ['-r', 'rubygems', '-e', "load Gem.bin_path('solargraph', 'solargraph')", '--', 'stdio'],
+      [
+        '-r',
+        'rubygems',
+        '-e',
+        expect.stringContaining("load Gem.bin_path('solargraph', 'solargraph')"),
+        '--',
+        'stdio',
+      ],
       expect.objectContaining({cwd: root}),
     )
     expect(initialize.mock.calls[0][0]).toMatchObject({
@@ -99,12 +108,50 @@ describe('createRubyService', () => {
   it('should use a configured analyzer executable using its stdio mode', () => {
     service.dispose()
     vi.stubEnv('SOLARGRAPH_BINARY', '/custom/solargraph')
+    vi.stubEnv('RUBYOPT', '-W0')
+    vi.stubEnv('RUBYLIB', '/custom/libraries')
     service = createRubyService(root)
     expect(spawn).toHaveBeenLastCalledWith(
       '/custom/solargraph',
       ['stdio'],
-      expect.objectContaining({cwd: root}),
+      expect.objectContaining({
+        cwd: root,
+        env: expect.objectContaining({
+          RUBYLIB: expect.stringContaining(`${delimiter}/custom/libraries`),
+          RUBYOPT: '-W0 -rcode-viewer-solargraph-loader',
+        }),
+      }),
     )
+    const directory = vi.mocked(spawn).mock.calls.at(-1)?.[2]?.env?.RUBYLIB?.split(delimiter)[0]
+    if (directory === undefined) {
+      throw new Error('Missing Ruby preload directory')
+    }
+    expect(existsSync(join(directory, 'code-viewer-solargraph-loader.rb'))).toBe(true)
+    expect(existsSync(join(directory, 'reference-handler.rb'))).toBe(true)
+    service.dispose()
+    expect(existsSync(directory)).toBe(false)
+  })
+  it('should release the external preload if analyzer creation throws', () => {
+    service.dispose()
+    vi.stubEnv('SOLARGRAPH_BINARY', '/custom/solargraph')
+    vi.mocked(spawn).mockImplementationOnce(() => {
+      throw new Error('invalid executable')
+    })
+    expect(() => createRubyService(root)).toThrow('invalid executable')
+    const directory = vi.mocked(spawn).mock.calls.at(-1)?.[2]?.env?.RUBYLIB?.split(delimiter)[0]
+    expect(directory).toBeDefined()
+    expect(directory !== undefined && existsSync(directory)).toBe(false)
+  })
+  it('should release the external preload when the executable fails to start', async () => {
+    service.dispose()
+    vi.stubEnv('SOLARGRAPH_BINARY', '/custom/solargraph')
+    service = createRubyService(root)
+    const directory = vi.mocked(spawn).mock.calls.at(-1)?.[2]?.env?.RUBYLIB?.split(delimiter)[0]
+    const pending = service.lookupSymbols(path, 'Report.new', 0, {kind: 'definition'})
+    child.emit('error', new Error('missing executable'))
+    expect(await pending).toMatchObject({error: {code: 'ruby-analyzer-unavailable'}, ok: false})
+    expect(directory).toBeDefined()
+    expect(directory !== undefined && existsSync(directory)).toBe(false)
   })
   it('should use a configured Ruby interpreter for the gem launcher', () => {
     service.dispose()

@@ -4,9 +4,10 @@ import {readPathRevisions} from './read-path-revisions'
 export const readChangedPaths = async (
   entries: ReadonlyMap<string, string>,
   signal: AbortSignal,
+  read: typeof readPathRevisions = readPathRevisions,
 ): Promise<string[]> => {
-  const current = await readPathRevisions([...entries.keys()], signal)
+  const current = await read([...entries.keys()], signal)
   return [...entries]
-    .filter(([path, revision]) => current.get(path) !== revision)
+    .filter(([path, revision]) => (current.get(path) ?? 'unreadable') !== revision)
     .map(([path]) => path)
 }

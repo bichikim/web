@@ -14,11 +14,7 @@ export const SWorkspacePrompt = (props: SWorkspacePromptProps) => {
         fallback={
           <>
             <h2 class="m-0 text-base font-medium text-foreground">{t('파일을 열어 시작하세요')}</h2>
-            <p>
-              {t(
-                '연결된 작업 폴더가 없습니다. 위에 파일의 절대 경로를 입력하거나 Codex에서 파일을 열어 주세요.',
-              )}
-            </p>
+            <p>{t('연결된 작업 폴더가 없습니다. 위에 파일의 절대 경로를 입력해 주세요.')}</p>
           </>
         }
       >
