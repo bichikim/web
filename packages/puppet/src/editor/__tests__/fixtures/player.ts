@@ -8,6 +8,7 @@ export const createPlayerFixture = (): Player => ({
   getParameterValue: vi.fn(),
   getParameterValues: vi.fn(() => ({})),
   hitTest: vi.fn(),
+  patchParameterValues: vi.fn(),
   pause: vi.fn(),
   play: vi.fn(),
   playGroup: vi.fn(),

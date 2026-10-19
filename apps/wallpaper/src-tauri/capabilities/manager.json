@@ -1,0 +1,9 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "manager",
+  "description": "Local wallpaper management window permissions.",
+  "platforms": ["macOS", "windows"],
+  "local": true,
+  "windows": ["manager"],
+  "permissions": ["core:default", "desktop-surface:default"]
+}

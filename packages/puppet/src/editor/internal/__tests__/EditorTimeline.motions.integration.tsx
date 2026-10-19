@@ -81,8 +81,9 @@ describe('EditorTimeline', () => {
     expect(document().motions.some((motion) => motion.id === 'wave')).toBe(false)
   })
 
-  test('should edit the active motion duration and document frame rate', async () => {
-    const [document, setDocument] = createSignal<PuppetDocument>(createTimelineTestDocument())
+  test('should edit the active motion duration and frame rate without changing other motions', async () => {
+    const source = createTimelineTestDocument()
+    const [document, setDocument] = createSignal<PuppetDocument>(source)
     const view = render(() => (
       <EditorTimeline
         currentTime={0.52}
@@ -108,7 +109,9 @@ describe('EditorTimeline', () => {
     fireEvent.input(framesPerSecond, {target: {value: '30'}})
 
     await waitFor(() => expect(document().motions[0]?.duration).toBe(3))
-    expect(document().framesPerSecond).toBe(30)
+    expect(document().motions[0]?.framesPerSecond).toBe(30)
+    expect(document().framesPerSecond).toBe(source.framesPerSecond)
+    expect(document().motions.slice(1)).toEqual(source.motions.slice(1))
     expect(view.getByText('16f / 90f · 0.52s')).toBeVisible()
 
     duration.dispatchEvent(new MouseEvent('pointerdown', {bubbles: true, button: 0, clientX: 200}))

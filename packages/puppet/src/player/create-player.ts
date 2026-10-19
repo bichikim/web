@@ -47,6 +47,14 @@ export type {PuppetParameterBlend, PuppetParameterBlendMode} from './parameter-b
 export type {PuppetPhysicsOptions} from './physics-options'
 export type {CreatePlayerOptions, Player, PlayerFrame, PlayerPlaybackOptions} from './player-types'
 
+/** 문서에 존재하는 파라미터의 외부 값을 각 파라미터 범위에 맞춰 반환한다. */
+const resolveOverrides = (document: PreparedPuppetDocument, values: PuppetParameterValueMap) =>
+  Object.fromEntries(
+    (document.parameters ?? [])
+      .filter((parameter) => Object.hasOwn(values, parameter.id))
+      .map((parameter) => [parameter.id, resolveParameterValue(parameter, values[parameter.id])]),
+  )
+
 // eslint-disable-next-line max-lines-per-function -- Public operations share one lifecycle boundary.
 export const createPlayer = async (options: CreatePlayerOptions): Promise<Player> => {
   assertPreparedPuppetDocument(options.document)
@@ -345,6 +353,16 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
         vertices: (partId) => renderer.getPartVertices(partId),
       })
     },
+    patchParameterValues(values) {
+      if (destroyed) {
+        return
+      }
+      const resolved = resolveOverrides(document, values)
+      if (Object.entries(resolved).some(([id, value]) => parameterValues[id] !== value)) {
+        parameterValues = {...parameterValues, ...resolved}
+        refresh()
+      }
+    },
     pause() {
       if (destroyed) {
         return
@@ -479,14 +497,7 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
       if (destroyed) {
         return
       }
-      parameterValues = Object.fromEntries(
-        (document.parameters ?? [])
-          .filter((parameter) => Object.hasOwn(values, parameter.id))
-          .map((parameter) => [
-            parameter.id,
-            resolveParameterValue(parameter, values[parameter.id]),
-          ]),
-      )
+      parameterValues = resolveOverrides(document, values)
       refresh()
     },
     setPartOverride(partId, override) {

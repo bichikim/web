@@ -216,7 +216,9 @@ describe('EditorInspector', () => {
     expect(view.getByRole('spinbutton', {name: '파트 불투명도'})).toBeEnabled()
     fireEvent.click(view.getByRole('button', {name: '대상 추가'}))
     expect(view.getByRole('checkbox', {name: 'shape-circle에 마스크 적용'})).toBeEnabled()
-    expect(view.queryByRole('spinbutton', {name: '파트 그리기 순서'})).toBeNull()
+    const drawOrder = view.getByRole('spinbutton', {name: '파트 그리기 순서'})
+    expect(drawOrder).toBeEnabled()
+    fireEvent.input(drawOrder, {target: {value: '420'}})
     fireEvent.input(view.getByRole('spinbutton', {name: '파트 불투명도'}), {
       target: {value: '0.4'},
     })
@@ -233,6 +235,7 @@ describe('EditorInspector', () => {
     ).toEqual(['mesh-preview'])
     expect(document().parts[0]?.properties).toEqual({
       blendMode: 'screen',
+      drawOrder: 420,
       invertedMask: true,
       opacity: 0.4,
       renderWhenUsedAsMask: false,
