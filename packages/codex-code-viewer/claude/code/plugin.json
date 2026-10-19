@@ -1,7 +1,7 @@
 {
   "name": "code-viewer",
   "displayName": "Code Viewer",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "description": "Browse, edit, save and attach project code beside your Claude Code chat.",
   "author": {
     "name": "Bichi Kim"

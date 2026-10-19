@@ -26,6 +26,7 @@ import {createMcpStreams} from './create-mcp-streams'
 import {createWorkspaceNotifications} from './create-workspace-notifications'
 import {registerContextTool} from './register-context-tool'
 import {registerAttachmentTools} from './register-attachment-tools'
+import {registerUpdateTools} from './register-update-tools'
 
 const appOnly = {ui: {visibility: ['app']}}
 const MAX_ENTRY_NAME_LENGTH = 255
@@ -357,6 +358,7 @@ export const createServer = (html: string, options: ServerOptions = {}) => {
         }
       : undefined,
   )
+  registerUpdateTools(server, options.integration === 'standard' ? 'claude' : 'codex')
   const updates = createWorkspaceEvents()
   const streams = createMcpStreams()
   const notifications = createWorkspaceNotifications()
