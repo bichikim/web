@@ -5,7 +5,7 @@ const apiMocks = vi.hoisted(() => ({searchOpenWeatherLocations: vi.fn()}))
 const quotaMocks = vi.hoisted(() => ({reserveOpenWeatherRequest: vi.fn()}))
 
 vi.mock('src/env', () => ({
-  env: {},
+  env: {OPENWEATHER_API_KEY: 'secret-key'},
 }))
 vi.mock('../openweather-client', () => ({
   searchOpenWeatherLocations: apiMocks.searchOpenWeatherLocations,
@@ -70,6 +70,182 @@ it('should reserve, register, and return fixed coordinates from provider search'
       latitude: 35.69,
       longitude: 139.69,
     }),
+  ])
+})
+
+it('should register distinct OpenWeather coordinates and deduplicate exact duplicates', async () => {
+  const {searchOpenWeatherLocations} =
+    await vi.importActual<typeof import('../openweather-client')>('../openweather-client')
+  apiMocks.searchOpenWeatherLocations.mockImplementation(searchOpenWeatherLocations)
+  const fetcher = vi.fn<typeof fetch>().mockResolvedValue(
+    Response.json([
+      {
+        country: 'GB',
+        lat: 51.52001,
+        lon: -0.11001,
+        name: 'Location A',
+        state: 'England',
+      },
+      {
+        country: 'GB',
+        lat: 51.52004,
+        lon: -0.11004,
+        name: 'Location B',
+        state: 'England',
+      },
+      {
+        country: 'GB',
+        lat: 51.52001,
+        lon: -0.11001,
+        name: 'Location A',
+        state: 'England',
+      },
+    ]),
+  )
+  const mocks = createDatabase()
+
+  const locations = await searchWorldWeatherLocations({fetcher, query: 'nearby'}, mocks.database)
+
+  expect(locations).toEqual([
+    {
+      country: 'GB',
+      id: 'openweather:51.52001,-0.11001',
+      name: 'Location A',
+      names: {en: 'Location A'},
+      region: 'England',
+    },
+    {
+      country: 'GB',
+      id: 'openweather:51.52004,-0.11004',
+      name: 'Location B',
+      names: {en: 'Location B'},
+      region: 'England',
+    },
+  ])
+  expect(mocks.values).toHaveBeenCalledWith([
+    {
+      country: 'GB',
+      id: 'openweather:51.52001,-0.11001',
+      latitude: 51.52001,
+      longitude: -0.11001,
+      name: 'Location A',
+      providerLocationId: '51.52001,-0.11001',
+      region: 'England',
+    },
+    {
+      country: 'GB',
+      id: 'openweather:51.52004,-0.11004',
+      latitude: 51.52004,
+      longitude: -0.11004,
+      name: 'Location B',
+      providerLocationId: '51.52004,-0.11004',
+      region: 'England',
+    },
+  ])
+  expect(fetcher).toHaveBeenCalledOnce()
+})
+
+it('should preserve a rounded ID only for exact registered coordinates', async () => {
+  apiMocks.searchOpenWeatherLocations.mockResolvedValue([
+    {
+      country: 'GB',
+      latitude: 51.52001,
+      longitude: -0.11001,
+      name: 'Location A',
+      names: {en: 'Location A'},
+      providerLocationId: '51.52001,-0.11001',
+      region: 'England',
+    },
+    {
+      country: 'GB',
+      latitude: 51.52004,
+      longitude: -0.11004,
+      name: 'Location B',
+      names: {en: 'Location B'},
+      providerLocationId: '51.52004,-0.11004',
+      region: 'England',
+    },
+  ])
+  const registeredLocation = {
+    country: 'GB',
+    id: 'openweather:51.5200,-0.1100',
+    latitude: 51.52001,
+    longitude: -0.11001,
+    name: 'Location A',
+    providerLocationId: '51.5200,-0.1100',
+    region: 'England',
+  }
+  const mocks = createDatabase([registeredLocation])
+
+  await expect(searchWorldWeatherLocations({query: 'nearby'}, mocks.database)).resolves.toEqual([
+    {
+      country: 'GB',
+      id: 'openweather:51.5200,-0.1100',
+      name: 'Location A',
+      names: {en: 'Location A'},
+      region: 'England',
+    },
+    {
+      country: 'GB',
+      id: 'openweather:51.52004,-0.11004',
+      name: 'Location B',
+      names: {en: 'Location B'},
+      region: 'England',
+    },
+  ])
+  expect(mocks.values).toHaveBeenCalledWith([
+    {
+      country: 'GB',
+      id: 'openweather:51.5200,-0.1100',
+      latitude: 51.52001,
+      longitude: -0.11001,
+      name: 'Location A',
+      providerLocationId: '51.5200,-0.1100',
+      region: 'England',
+    },
+    {
+      country: 'GB',
+      id: 'openweather:51.52004,-0.11004',
+      latitude: 51.52004,
+      longitude: -0.11004,
+      name: 'Location B',
+      providerLocationId: '51.52004,-0.11004',
+      region: 'England',
+    },
+  ])
+})
+
+it('should preserve the legacy sign when negative coordinates round to zero', async () => {
+  apiMocks.searchOpenWeatherLocations.mockResolvedValue([
+    {
+      country: 'US',
+      latitude: -0.00001,
+      longitude: 12.34568,
+      name: 'Location C',
+      names: {en: 'Location C'},
+      providerLocationId: '-0.00001,12.34568',
+      region: 'Region C',
+    },
+  ])
+  const registeredLocation = {
+    country: 'US',
+    id: 'openweather:-0.0000,12.3457',
+    latitude: -0.00001,
+    longitude: 12.34568,
+    name: 'Location C',
+    providerLocationId: '-0.0000,12.3457',
+    region: 'Region C',
+  }
+  const mocks = createDatabase([registeredLocation])
+
+  await expect(searchWorldWeatherLocations({query: 'nearby'}, mocks.database)).resolves.toEqual([
+    {
+      country: 'US',
+      id: 'openweather:-0.0000,12.3457',
+      name: 'Location C',
+      names: {en: 'Location C'},
+      region: 'Region C',
+    },
   ])
 })
 

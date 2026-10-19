@@ -105,7 +105,7 @@ export interface SearchOpenWeatherLocationsOptions {
 }
 
 const createProviderLocationId = (latitude: number, longitude: number): string =>
-  `${latitude.toFixed(4)},${longitude.toFixed(4)}`
+  `${latitude.toString()},${longitude.toString()}`
 
 /** Searches OpenWeather without exposing provider DTOs or credentials to callers. */
 export const searchOpenWeatherLocations = async (

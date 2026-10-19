@@ -54,7 +54,7 @@ describe('searchOpenWeatherLocations', () => {
         longitude: -0.11,
         name: 'London',
         names: {en: 'London', ko: '런던'},
-        providerLocationId: '51.5200,-0.1100',
+        providerLocationId: '51.52,-0.11',
         region: 'England',
       },
     ])
@@ -73,7 +73,56 @@ describe('searchOpenWeatherLocations', () => {
       )
 
     await expect(searchOpenWeatherLocations({fetcher, query: 'Seoul'})).resolves.toEqual([
-      expect.objectContaining({providerLocationId: '37.5665,126.9780', region: ''}),
+      expect.objectContaining({providerLocationId: '37.5665,126.978', region: ''}),
+    ])
+  })
+
+  it('should preserve enough coordinate precision to distinguish nearby results', async () => {
+    const fetcher = vi.fn<typeof fetch>().mockResolvedValue(
+      Response.json([
+        {
+          country: 'GB',
+          lat: 51.52001,
+          lon: -0.11001,
+          name: 'Location A',
+          state: 'England',
+        },
+        {
+          country: 'GB',
+          lat: 51.52004,
+          lon: -0.11004,
+          name: 'Location B',
+          state: 'England',
+        },
+      ]),
+    )
+
+    const locations = await searchOpenWeatherLocations({fetcher, query: 'nearby'})
+
+    expect(locations.map((location) => location.providerLocationId)).toEqual([
+      '51.52001,-0.11001',
+      '51.52004,-0.11004',
+    ])
+  })
+
+  it('should use exact coordinate strings and normalize negative zero', async () => {
+    const fetcher = vi
+      .fn<typeof fetch>()
+      .mockResolvedValue(
+        new Response(
+          [
+            '[{"country":"GB","lat":-0,"lon":35.69,"name":"Zero"},',
+            '{"country":"GB","lat":1e-7,"lon":-1e-7,"name":"Precision"}]',
+          ].join('\n'),
+          {headers: {'Content-Type': 'application/json'}},
+        ),
+      )
+
+    const locations = await searchOpenWeatherLocations({fetcher, query: 'coordinates'})
+
+    expect(locations.map((location) => location.providerLocationId)).toEqual([
+      '0,35.69',
+      '1e-7,-1e-7',
     ])
   })
 
