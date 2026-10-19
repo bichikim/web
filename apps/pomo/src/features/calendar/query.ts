@@ -35,10 +35,14 @@ const createRelativeDayPattern = (phrase: string): RegExp =>
       `${RELATIVE_DAY_SELECTION_PARTICLE_PATTERN}(?=$|[\\s,.!?…]))`,
     'u',
   )
-const THIS_WEEK_PATTERN = new RegExp(`이번 ?주${CALENDAR_PERIOD_BOUNDARY_PATTERN.source}`, 'u')
-const THIS_MONTH_PATTERN = new RegExp(`이번 ?달${CALENDAR_PERIOD_BOUNDARY_PATTERN.source}`, 'u')
-const NEXT_MONTH_PATTERN = new RegExp(`다음 ?달${CALENDAR_PERIOD_BOUNDARY_PATTERN.source}`, 'u')
-const PREVIOUS_MONTH_PATTERN = new RegExp(`지난 ?달${CALENDAR_PERIOD_BOUNDARY_PATTERN.source}`, 'u')
+// 새 별칭만 단어 시작에서 받아 기존 '지난 달' 판별 계약은 유지한다.
+const PREVIOUS_MONTH_TERM = `(?:지난|${CALENDAR_WORD_START_PATTERN}저번) ?달`
+const createPeriodPattern = (termPattern: string): RegExp =>
+  new RegExp(`${termPattern}${CALENDAR_PERIOD_BOUNDARY_PATTERN.source}`, 'u')
+const THIS_WEEK_PATTERN = createPeriodPattern('이번 ?주')
+const THIS_MONTH_PATTERN = createPeriodPattern('이번 ?달')
+const NEXT_MONTH_PATTERN = createPeriodPattern('다음 ?달')
+const PREVIOUS_MONTH_PATTERN = createPeriodPattern(PREVIOUS_MONTH_TERM)
 const NEXT_WEEK_TERM_PATTERN = '(?<!다)다음 ?주'
 const NEXT_WEEK_TERM_REGEXP = new RegExp(NEXT_WEEK_TERM_PATTERN, 'u')
 const {
@@ -55,8 +59,6 @@ const {
 const WEEK_AFTER_NEXT_TERM_PATTERN = `${CALENDAR_WORD_START_PATTERN}다다음 ?주`
 const PREVIOUS_WEEK_TERM_PATTERN = `${CALENDAR_WORD_START_PATTERN}(?:지난|저번) ?주`
 const TWO_WEEKS_AGO_TERM_PATTERN = `${CALENDAR_WORD_START_PATTERN}지지난 ?주`
-const createCalendarWeekPattern = (termPattern: string): RegExp =>
-  new RegExp(`${termPattern}${CALENDAR_PERIOD_BOUNDARY_PATTERN.source}`, 'u')
 const THIS_WEEK_EXCLUSION_PATTERN = createCalendarExclusionPattern('이번 ?주', '다음 ?주')
 const NEXT_WEEK_EXCLUSION_PATTERN = createCalendarExclusionPattern(
   NEXT_WEEK_TERM_PATTERN,
@@ -74,10 +76,16 @@ const TWO_WEEKS_AGO_EXCLUSION_PATTERN = createCalendarExclusionPattern(
   TWO_WEEKS_AGO_TERM_PATTERN,
   '지난 ?주|저번 ?주|이번 ?주|다음 ?주',
 )
-const THIS_MONTH_EXCLUSION_PATTERN = createCalendarExclusionPattern('이번 ?달', '다음 ?달|지난 ?달')
-const NEXT_MONTH_EXCLUSION_PATTERN = createCalendarExclusionPattern('다음 ?달', '이번 ?달|지난 ?달')
-const PREVIOUS_MONTH_EXCLUSION_PATTERN = createCalendarExclusionPattern(
-  '지난 ?달',
+const THIS_MONTH_EXCLUSION = createCalendarExclusionPattern(
+  '이번 ?달',
+  `다음 ?달|${PREVIOUS_MONTH_TERM}`,
+)
+const NEXT_MONTH_EXCLUSION = createCalendarExclusionPattern(
+  '다음 ?달',
+  `이번 ?달|${PREVIOUS_MONTH_TERM}`,
+)
+const PREVIOUS_MONTH_EXCLUSION = createCalendarExclusionPattern(
+  PREVIOUS_MONTH_TERM,
   '이번 ?달|다음 ?달',
 )
 const NEXT_WEEKEND_PATTERN = /다음 ?주말/u
@@ -99,10 +107,9 @@ const RELATIVE_DAY_PATTERN = new RegExp(
   'u',
 )
 const CALENDAR_OTHER_PERIOD_TERM_PATTERN = new RegExp(
-  `(?:${WEEK_AFTER_NEXT_TERM_PATTERN}${CALENDAR_PERIOD_BOUNDARY_PATTERN.source}|` +
-    `${PREVIOUS_WEEK_TERM_PATTERN}${CALENDAR_PERIOD_BOUNDARY_PATTERN.source}|` +
-    `${TWO_WEEKS_AGO_TERM_PATTERN}${CALENDAR_PERIOD_BOUNDARY_PATTERN.source}|` +
-    `${CALENDAR_WORD_START_PATTERN}(?:이번 ?주|이번 ?달|다음 ?달|지난 ?달)${CALENDAR_PERIOD_BOUNDARY_PATTERN.source}|` +
+  `(?:(?:${WEEK_AFTER_NEXT_TERM_PATTERN}|${PREVIOUS_WEEK_TERM_PATTERN}|` +
+    `${TWO_WEEKS_AGO_TERM_PATTERN}|${CALENDAR_WORD_START_PATTERN}` +
+    `(?:이번 ?주|이번 ?달|다음 ?달|${PREVIOUS_MONTH_TERM}))${CALENDAR_PERIOD_BOUNDARY_PATTERN.source}|` +
     `${RELATIVE_DAY_PATTERN.source}|${CALENDAR_WORD_START_PATTERN}주말${CALENDAR_PERIOD_BOUNDARY_PATTERN.source})`,
   'u',
 )
@@ -127,12 +134,12 @@ const THREE_DAYS_AHEAD_EXCLUSION_PATTERN = createCalendarExclusionPattern(
   THREE_DAYS_AHEAD_PATTERN.source,
   `그저께|그제|어제|오늘|${TOMORROW_PATTERN.source}|모레`,
 )
-const NEXT_WEEK_PATTERN = createCalendarWeekPattern(
+const NEXT_WEEK_PATTERN = createPeriodPattern(
   `${NEXT_WEEK_TERM_PATTERN}(?:\\s*${WEEKDAY_PATTERN_SOURCE})?`,
 )
-const WEEK_AFTER_NEXT_PATTERN = createCalendarWeekPattern(WEEK_AFTER_NEXT_TERM_PATTERN)
-const PREVIOUS_WEEK_PATTERN = createCalendarWeekPattern(PREVIOUS_WEEK_TERM_PATTERN)
-const TWO_WEEKS_AGO_PATTERN = createCalendarWeekPattern(TWO_WEEKS_AGO_TERM_PATTERN)
+const WEEK_AFTER_NEXT_PATTERN = createPeriodPattern(WEEK_AFTER_NEXT_TERM_PATTERN)
+const PREVIOUS_WEEK_PATTERN = createPeriodPattern(PREVIOUS_WEEK_TERM_PATTERN)
+const TWO_WEEKS_AGO_PATTERN = createPeriodPattern(TWO_WEEKS_AGO_TERM_PATTERN)
 const IMPLICIT_SCHEDULE_PATTERN = new RegExp(
   `(?:${RELATIVE_DAY_PATTERN.source}|${THIS_WEEK_PATTERN.source}|${NEXT_WEEK_PATTERN.source}|` +
     `${WEEK_AFTER_NEXT_PATTERN.source}|${PREVIOUS_WEEK_PATTERN.source}|${TWO_WEEKS_AGO_PATTERN.source}|` +
@@ -264,11 +271,9 @@ const getCalendarQueryIntent = (text: string): CalendarQueryIntent => {
     includesWeekAfterNext:
       WEEK_AFTER_NEXT_PATTERN.test(text) && !WEEK_AFTER_NEXT_EXCLUSION_PATTERN.test(text),
     monthOffsets: [
-      ...(PREVIOUS_MONTH_PATTERN.test(text) && !PREVIOUS_MONTH_EXCLUSION_PATTERN.test(text)
-        ? [-1]
-        : []),
-      ...(THIS_MONTH_PATTERN.test(text) && !THIS_MONTH_EXCLUSION_PATTERN.test(text) ? [0] : []),
-      ...(NEXT_MONTH_PATTERN.test(text) && !NEXT_MONTH_EXCLUSION_PATTERN.test(text) ? [1] : []),
+      ...(PREVIOUS_MONTH_PATTERN.test(text) && !PREVIOUS_MONTH_EXCLUSION.test(text) ? [-1] : []),
+      ...(THIS_MONTH_PATTERN.test(text) && !THIS_MONTH_EXCLUSION.test(text) ? [0] : []),
+      ...(NEXT_MONTH_PATTERN.test(text) && !NEXT_MONTH_EXCLUSION.test(text) ? [1] : []),
     ],
     relativeDayOffsets: [
       ...(includesUnexcludedPhrase(
