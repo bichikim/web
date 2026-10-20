@@ -93,8 +93,6 @@ macOS에서 파일 트리의 **채팅창에 추가**는 클릭한 파일 하나�
 
 ![파일 트리로 탐색](https://raw.githubusercontent.com/bichikim/web/97cc070dac551d6e898a66a0be97af66730ece2c/packages/codex-code-viewer/docs/recordings/codex/0.5.0/file-tree.gif)
 
-[MP4 영상](https://raw.githubusercontent.com/bichikim/web/97cc070dac551d6e898a66a0be97af66730ece2c/packages/codex-code-viewer/docs/recordings/codex/0.5.0/file-tree.mp4)
-
 삭제되어 열 수 없는 파일은 건너뛰며, 현재 파일을 삭제해도 다른 방문 기록은 유지합니다. 보관 중인 초안은 삭제된 파일도 다시 열어 저장으로 복원할 수 있습니다. 외부에서 복원한 파일은 변경 감지나 새로고침 후 다시 탐색합니다. 읽기 권한 등 다른 오류는 건너뛰지 않고 안내합니다.
 
 트리 경계선을 드래그하면 너비를 조절합니다. 경계선에 포커스를 두면 좌우 방향키로 너비를 바꾸고 Home/End로 최소·최대 너비를 선택합니다. 트리에서는 위·아래 방향키와 Home/End로 항목을 선택하고, 좌우 방향키로 폴더를 접고 펼칩니다. 우클릭이나 `Shift+F10`으로 항목 메뉴를 엽니다.
@@ -109,19 +107,13 @@ macOS에서 파일 트리의 **채팅창에 추가**는 클릭한 파일 하나�
 
 ![import 경로로 이동](https://raw.githubusercontent.com/bichikim/web/97cc070dac551d6e898a66a0be97af66730ece2c/packages/codex-code-viewer/docs/recordings/codex/0.5.0/import.gif)
 
-[MP4 영상](https://raw.githubusercontent.com/bichikim/web/97cc070dac551d6e898a66a0be97af66730ece2c/packages/codex-code-viewer/docs/recordings/codex/0.5.0/import.mp4)
-
 ### 정의로 이동
 
 ![정의로 이동](https://raw.githubusercontent.com/bichikim/web/97cc070dac551d6e898a66a0be97af66730ece2c/packages/codex-code-viewer/docs/recordings/codex/0.5.0/definition.gif)
 
-[MP4 영상](https://raw.githubusercontent.com/bichikim/web/97cc070dac551d6e898a66a0be97af66730ece2c/packages/codex-code-viewer/docs/recordings/codex/0.5.0/definition.mp4)
-
 ### 사용처 찾기
 
 ![사용처 찾기](https://raw.githubusercontent.com/bichikim/web/97cc070dac551d6e898a66a0be97af66730ece2c/packages/codex-code-viewer/docs/recordings/codex/0.5.0/references.gif)
-
-[MP4 영상](https://raw.githubusercontent.com/bichikim/web/97cc070dac551d6e898a66a0be97af66730ece2c/packages/codex-code-viewer/docs/recordings/codex/0.5.0/references.mp4)
 
 정의·사용처 목록은 검색 중 찾은 결과부터 표시합니다. 제목 옆 필터로 파일 경로를 좁히고, 파일 그룹을 접고 펼치거나 오른쪽 이동 버튼으로 해당 파일을 열 수 있습니다.
 
@@ -130,8 +122,6 @@ macOS에서 파일 트리의 **채팅창에 추가**는 클릭한 파일 하나�
 ### 코드 접기와 펼치기
 
 ![코드 접기와 펼치기](https://raw.githubusercontent.com/bichikim/web/97cc070dac551d6e898a66a0be97af66730ece2c/packages/codex-code-viewer/docs/recordings/codex/0.5.0/fold.gif)
-
-[MP4 영상](https://raw.githubusercontent.com/bichikim/web/97cc070dac551d6e898a66a0be97af66730ece2c/packages/codex-code-viewer/docs/recordings/codex/0.5.0/fold.mp4)
 
 정의·사용처 이동은 TypeScript·JavaScript·Python·Ruby·Rust에서 지원합니다. JSON·JSONC·JSON5는 파일 경로 값으로만 이동합니다. 그 외 형식은 구문 강조가 있어도 심볼 이동은 제공하지 않습니다. 언어별 준비 사항은 [코드 탐색 설정](#코드-탐색-설정)을 참고하세요.
 
@@ -148,8 +138,6 @@ macOS에서 파일 트리의 **채팅창에 추가**는 클릭한 파일 하나�
 ### 텍스트 편집과 저장
 
 ![텍스트 편집과 저장](https://raw.githubusercontent.com/bichikim/web/97cc070dac551d6e898a66a0be97af66730ece2c/packages/codex-code-viewer/docs/recordings/codex/0.5.0/edit-save.gif)
-
-[MP4 영상](https://raw.githubusercontent.com/bichikim/web/97cc070dac551d6e898a66a0be97af66730ece2c/packages/codex-code-viewer/docs/recordings/codex/0.5.0/edit-save.mp4)
 
 편집 가능한 형식은 [지원 파일 형식](#지원-파일-형식)을 참고하세요. Markdown·CSV·TSV는 원문을 편집합니다.
 
@@ -184,8 +172,6 @@ TS·JS·JSON 탐색에는 여러 파일의 미저장 변경이 반영됩니다. 
 ### 새 파일 만들기
 
 ![새 파일 만들기](https://raw.githubusercontent.com/bichikim/web/97cc070dac551d6e898a66a0be97af66730ece2c/packages/codex-code-viewer/docs/recordings/codex/0.5.0/create-file.gif)
-
-[MP4 영상](https://raw.githubusercontent.com/bichikim/web/97cc070dac551d6e898a66a0be97af66730ece2c/packages/codex-code-viewer/docs/recordings/codex/0.5.0/create-file.mp4)
 
 파일·폴더 우클릭 메뉴에서 **이름 변경**·**복사**·**잘라내기**·**붙여넣기**·**삭제**를 선택합니다. 트리에 포커스가 있으면 `Cmd/Ctrl+C`·`Cmd/Ctrl+X`·`Cmd/Ctrl+V`와 Delete도 사용할 수 있습니다. 복사·잘라내기는 이 뷰어의 작업 폴더 안에서 사용하는 내부 클립보드입니다. 폴더에 붙여넣으면 그 안에, 파일에 붙여넣으면 같은 상위 폴더에 만듭니다. 빈 공간의 메뉴에서는 작업 폴더 루트에 붙여넣습니다. 복사 이름이 겹치면 복사본 이름을 만들고, 잘라내기·이름 변경은 오류를 안내합니다.
 
@@ -248,19 +234,13 @@ TS·JS 탐색은 완료된 결과와 파일별 인덱스 요약을 재사용하�
 
 ![Markdown 미리보기와 원문](https://raw.githubusercontent.com/bichikim/web/97cc070dac551d6e898a66a0be97af66730ece2c/packages/codex-code-viewer/docs/recordings/codex/0.5.0/markdown.gif)
 
-[MP4 영상](https://raw.githubusercontent.com/bichikim/web/97cc070dac551d6e898a66a0be97af66730ece2c/packages/codex-code-viewer/docs/recordings/codex/0.5.0/markdown.mp4)
-
 ### CSV 열 정렬
 
 ![CSV 열 정렬](https://raw.githubusercontent.com/bichikim/web/97cc070dac551d6e898a66a0be97af66730ece2c/packages/codex-code-viewer/docs/recordings/codex/0.5.0/csv-sort.gif)
 
-[MP4 영상](https://raw.githubusercontent.com/bichikim/web/97cc070dac551d6e898a66a0be97af66730ece2c/packages/codex-code-viewer/docs/recordings/codex/0.5.0/csv-sort.mp4)
-
 ### CSV 행 필터
 
 ![CSV 행 필터](https://raw.githubusercontent.com/bichikim/web/97cc070dac551d6e898a66a0be97af66730ece2c/packages/codex-code-viewer/docs/recordings/codex/0.5.0/csv-filter.gif)
-
-[MP4 영상](https://raw.githubusercontent.com/bichikim/web/97cc070dac551d6e898a66a0be97af66730ece2c/packages/codex-code-viewer/docs/recordings/codex/0.5.0/csv-filter.mp4)
 
 ## 제한과 문제 해결
 
