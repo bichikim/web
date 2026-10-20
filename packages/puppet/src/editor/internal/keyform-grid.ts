@@ -55,6 +55,12 @@ export const getKeyformMove = (
   const plane = values[PLANE_AXIS]
   const nextPlane = nextValues[PLANE_AXIS]
   if (samePoint(values, nextValues)) {
+    if (
+      plane !== nextPlane &&
+      binding.keyforms.some((keyform) => keyform.values[PLANE_AXIS] === nextPlane)
+    ) {
+      return undefined
+    }
     return (keyform) =>
       keyform[PLANE_AXIS] === plane ? [keyform[0] ?? 0, keyform[1] ?? 0, nextPlane ?? 0] : keyform
   }

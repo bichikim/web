@@ -1,7 +1,7 @@
 import {projectVolumePoint, VOLUME_PROJECTION} from './volume-projection'
 import {For} from 'solid-js'
 import type {PuppetParameter} from '../../../player/document'
-import {getParameterProgress} from '../parameter-value'
+import {formatParameterScaleValue, getParameterProgress} from '../parameter-value'
 import type {KeyformVolumeSource} from './keyform-volume'
 
 export interface EditorKeyformVolumeSpaceProps {
@@ -41,7 +41,6 @@ interface VolumeAxisScaleProps {
   readonly parameter: PuppetParameter
 }
 
-const SCALE_PRECISION = 12
 const axisScales = {
   x: {labelX: 0, labelY: 11, segments: 2, tickX: 0, tickY: 3},
   y: {labelX: -6, labelY: 2, segments: 2, tickX: -3, tickY: 0},
@@ -61,11 +60,8 @@ const VolumeAxisScale = (props: VolumeAxisScaleProps) => {
         ? projectVolumePoint(0, value, 0)
         : projectVolumePoint(1, 0, value)
   const label = (value: number) =>
-    Number(
-      (
-        props.parameter.minimum +
-        (props.parameter.maximum - props.parameter.minimum) * value
-      ).toPrecision(SCALE_PRECISION),
+    formatParameterScaleValue(
+      props.parameter.minimum + (props.parameter.maximum - props.parameter.minimum) * value,
     )
   return (
     <g class="parameter-volume-scale" classList={{'parameter-volume-scale-y': props.axis === 'y'}}>

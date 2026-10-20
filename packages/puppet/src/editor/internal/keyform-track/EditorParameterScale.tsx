@@ -1,6 +1,6 @@
 import {For} from 'solid-js'
 import type {PuppetParameter} from '../../../player/document'
-import {getParameterProgress} from '../parameter-value'
+import {formatParameterScaleValue, getParameterProgress} from '../parameter-value'
 
 export interface EditorParameterScaleProps {
   /** 2D 격자에서는 x를 아래쪽, y를 왼쪽에 배치한다. 생략하면 1D 트랙에 표시한다. */
@@ -45,7 +45,7 @@ export const EditorParameterScale = (props: EditorParameterScaleProps) => {
       <For each={values()}>
         {(value) => (
           <span style={{'--scale-progress': `${getParameterProgress(props.parameter, value)}%`}}>
-            {value}
+            {formatParameterScaleValue(value)}
           </span>
         )}
       </For>

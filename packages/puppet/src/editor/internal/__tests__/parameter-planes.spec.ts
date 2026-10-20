@@ -1,6 +1,7 @@
 import {createKeyedParameter3D} from './parameter-keyforms/fixtures'
 import {describe, expect, test} from 'vitest'
 
+import {isThreeDimensionalParameterBinding} from '../../../deformation'
 import {createDemoDocument, parseDocumentValue} from '../../../player'
 import type {PuppetDocument} from '../../../player/document'
 import {compareKeyformValues} from '../keyform-grid'
@@ -112,6 +113,35 @@ describe('three-parameter keyform editing', () => {
         document,
         nextValues: [0, 0, 0],
         values: [0, 0, 30],
+      }),
+    ).toBeUndefined()
+  })
+
+  test('should reject moving a sparse plane onto another occupied Z', () => {
+    const {binding, document} = createBinding()
+    if (!isThreeDimensionalParameterBinding(binding)) {
+      throw new Error('3차원 바인딩이 필요합니다.')
+    }
+    const sparse = {
+      ...document,
+      parameterBindings: [
+        {
+          ...binding,
+          keyforms: binding.keyforms.filter(
+            (keyform) =>
+              (keyform.values[2] === -30 && keyform.values[0] === -30) ||
+              (keyform.values[2] === 30 && keyform.values[0] === 30),
+          ),
+        },
+      ],
+    }
+    expect(parseDocumentValue(sparse).ok).toBe(true)
+    expect(
+      moveParameterKeyform({
+        bindingId: binding.id,
+        document: sparse,
+        nextValues: [-30, 0, 30],
+        values: [-30, 0, -30],
       }),
     ).toBeUndefined()
   })

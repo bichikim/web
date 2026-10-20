@@ -27,3 +27,11 @@ test('should always retain reference numbers when occupied values are nearby', (
   expect(view.getByText('7.5')).toBeDefined()
   expect(view.queryByText('1')).toBeNull()
 })
+
+test('should show readable reference values for fractional parameter ranges', () => {
+  const view = render(() => (
+    <EditorParameterScale parameter={{...parameter, maximum: 0.2, minimum: 0.1}} />
+  ))
+  expect(view.getByText('0.15')).toBeDefined()
+  expect(view.getByText('0.175')).toBeDefined()
+})
