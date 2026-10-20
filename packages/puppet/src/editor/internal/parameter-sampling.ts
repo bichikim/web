@@ -1,5 +1,7 @@
 import {composeParameterGlue, sampleParameterGlue} from '../../deformation/parameter-glue'
 import {
+  composeParameterGroupDrawOrder,
+  composeParameterGroupProperties,
   composeParameterPartDrawOrder,
   composeParameterPartProperties,
   composeParameterScene,
@@ -10,7 +12,12 @@ import {
   sampleParameterDeformer,
   sampleParameterVertices,
 } from '../../deformation'
-import type {PuppetDocument, PuppetParameterBinding, PuppetPart} from '../../player'
+import type {
+  PuppetDocument,
+  PuppetParameterBinding,
+  PuppetPart,
+  PuppetSceneNode,
+} from '../../player'
 import {resolveParameterValue} from '../../player/parameter-value'
 
 export interface CreateParameterPreviewOptions {
@@ -18,6 +25,47 @@ export interface CreateParameterPreviewOptions {
   readonly document: PuppetDocument
   readonly parameterValues?: PuppetParameterValueMap
 }
+
+/** 바인딩을 제거하기 전에 그룹의 키폼 색상·불투명도·그리기 순서를 장면에 반영한다. */
+const samplePreviewNodes = (
+  options: CreateParameterPreviewOptions,
+  nodes: ReadonlyArray<PuppetSceneNode>,
+): ReadonlyArray<PuppetSceneNode> =>
+  nodes.map((node) => {
+    if (node.kind === 'part') {
+      return node
+    }
+    const children = samplePreviewNodes(options, node.children)
+    if (node.kind !== 'group') {
+      return {...node, children}
+    }
+    const drawOrderGroup =
+      node.properties?.drawOrder !== undefined || node.properties?.offscreen === true
+    const {multiplyColor, opacity, screenColor} = composeParameterGroupProperties({
+      document: options.document,
+      group: node,
+      parameterValues: options.parameterValues,
+    })
+    return {
+      ...node,
+      children,
+      properties: {
+        ...node.properties,
+        multiplyColor,
+        opacity,
+        screenColor,
+        ...(drawOrderGroup
+          ? {
+              drawOrder: composeParameterGroupDrawOrder(
+                options.document,
+                node,
+                options.parameterValues,
+              ),
+            }
+          : {}),
+      },
+    }
+  })
 
 const sampleParameterPreview = (options: CreateParameterPreviewOptions): PuppetDocument => ({
   ...options.document,
@@ -48,7 +96,12 @@ const sampleParameterPreview = (options: CreateParameterPreviewOptions): PuppetD
       drawOrder: composeParameterPartDrawOrder(options.document, part.id, options.parameterValues),
     },
   })),
-  scene: composeParameterScene(options.document, options.parameterValues),
+  scene: {
+    roots: samplePreviewNodes(
+      options,
+      composeParameterScene(options.document, options.parameterValues).roots,
+    ),
+  },
 })
 
 export {createDeformerKeyform, sampleParameterDeformer, sampleParameterVertices}
