@@ -22,14 +22,14 @@ export const prepareClaudePlugin = async (options: PrepareClaudePluginOptions): 
         name.includes(':'),
     )
   ) {
-    throw new Error('Claude 패키지에 잘못된 경로가 있습니다.')
+    throw new Error('The Claude package contains an invalid path.')
   }
   const content = entries['.claude-plugin/plugin.json']
   const manifest = z
     .object({name: z.literal('code-viewer'), version: z.string()})
     .parse(JSON.parse(content === undefined ? '{}' : strFromU8(content)))
   if (manifest.version !== options.version) {
-    throw new Error('Claude 패키지 버전이 설치기와 다릅니다.')
+    throw new Error('The Claude package version does not match the installer.')
   }
   const executables = [
     'runtime/node',
@@ -44,7 +44,7 @@ export const prepareClaudePlugin = async (options: PrepareClaudePluginOptions): 
     ...executables,
   ]
   if (required.some((name) => entries[name] === undefined)) {
-    throw new Error('Claude 패키지의 실행 파일이 누락됐습니다.')
+    throw new Error('The Claude package is missing required executables.')
   }
   await Promise.all(
     files.map(async ([name, bytes]) => {

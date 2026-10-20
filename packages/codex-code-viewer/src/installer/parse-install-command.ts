@@ -47,7 +47,5 @@ export const parseInstallCommand = (
         return {command: 'install', target: args[2]}
     }
   }
-  throw new Error(
-    '지원하지 않는 명령입니다. install [--target codex|claude|all] [--install-codex]를 사용하세요.',
-  )
+  throw new Error('Unsupported command. Use install [--target codex|claude|all] [--install-codex].')
 }

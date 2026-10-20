@@ -294,7 +294,9 @@ describe('installPlugin', () => {
     await expect(installPlugin(options)).rejects.toMatchObject({
       cause: installation,
       errors: [installation, restoration],
-      message: expect.stringContaining('configuration is locked\n최초 설치 오류: download failed'),
+      message: expect.stringContaining(
+        'configuration is locked\nOriginal installation error: download failed',
+      ),
     })
   })
 })

@@ -30,7 +30,7 @@ it.each([
   ['install', '--target', 'claude', '--extra'],
   ['remove'],
 ])('should reject invalid arguments %j before installation', (...args) => {
-  expect(() => parseInstallCommand(args, true)).toThrow('지원하지 않는 명령')
+  expect(() => parseInstallCommand(args, true)).toThrow('Unsupported command')
 })
 
 it.each([

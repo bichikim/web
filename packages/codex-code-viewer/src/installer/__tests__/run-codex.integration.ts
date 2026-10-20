@@ -34,7 +34,7 @@ describe('runCodex', () => {
         home: tmpdir(),
         onStderr,
       }),
-    ).rejects.toThrow('Codex CLI 명령을 실행하지 못했습니다: download failed')
+    ).rejects.toThrow('Could not run Codex CLI command: download failed')
     expect(onStderr).toHaveBeenCalledExactlyOnceWith('download failed\n')
   })
 

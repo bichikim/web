@@ -39,7 +39,7 @@ it('should install both hosts and retain each successful result', async () => {
 it('should identify the installed host when the second host fails', async () => {
   vi.mocked(installClaudePlugin).mockRejectedValue(new Error('Claude CLI missing'))
   await expect(installTargets({...options, target: 'all'})).rejects.toThrow(
-    'Codex 설치 완료. Claude 설치 실패: Claude CLI missing',
+    'Codex installed. Claude installation failed: Claude CLI missing',
   )
 })
 

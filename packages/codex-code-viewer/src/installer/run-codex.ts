@@ -29,6 +29,6 @@ export const runCodex = async (options: RunCodexOptions): Promise<string> => {
         : error instanceof Error
           ? error.message
           : String(error)
-    throw new Error(`Codex CLI 명령을 실행하지 못했습니다: ${detail}`, {cause: error})
+    throw new Error(`Could not run Codex CLI command: ${detail}`, {cause: error})
   }
 }

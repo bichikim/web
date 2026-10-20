@@ -18,7 +18,7 @@ const confirmInstallation = async (): Promise<boolean> => {
   const prompt = createInterface({input: stdin, output: stdout})
   try {
     const answer = await prompt.question(
-      'Codex CLI가 없습니다. npm install -g @openai/codex로 전역 설치할까요? [y/N]: ',
+      'Codex CLI is missing. Install it globally with npm install -g @openai/codex? [y/N]: ',
     )
     return ['y', 'yes'].includes(answer.trim().toLowerCase())
   } finally {
@@ -33,14 +33,14 @@ const installCli = (): Promise<void> =>
       shell: windows,
       stdio: 'inherit',
     })
-    child.once('error', (cause) => reject(new Error('npm을 실행하지 못했습니다.', {cause})))
+    child.once('error', (cause) => reject(new Error('Could not run npm.', {cause})))
     child.once('close', (code) => {
       if (code === 0) {
         resolve()
       } else {
         reject(
           new Error(
-            `Codex CLI 설치 실패 (종료 코드: ${code}). npm 권한·네트워크 설정을 확인하세요.`,
+            `Codex CLI installation failed (exit code: ${code}). Check npm permissions and network settings.`,
           ),
         )
       }
@@ -60,7 +60,7 @@ export const ensureCodexCli = async (options: EnsureCodexCliOptions): Promise<vo
     }
     if (options.codex !== 'codex') {
       throw new Error(
-        `CODEX_BINARY 실행 파일을 찾을 수 없습니다: ${options.codex}. 경로를 수정하거나 설정을 해제하세요.`,
+        `CODEX_BINARY executable not found: ${options.codex}. Correct the path or unset CODEX_BINARY.`,
         {cause: error},
       )
     }
@@ -68,11 +68,11 @@ export const ensureCodexCli = async (options: EnsureCodexCliOptions): Promise<vo
   if (!options.installCodex) {
     if (!options.interactive) {
       throw new Error(
-        'Codex CLI가 없습니다. npm install -g @openai/codex를 실행하거나 install --install-codex로 다시 실행하세요.',
+        'Codex CLI is missing. Run npm install -g @openai/codex or retry with install --install-codex.',
       )
     }
     if (!(await confirmInstallation())) {
-      throw new Error('설치를 시작하지 않았습니다. Codex CLI가 필요합니다.')
+      throw new Error('Installation was not started. Codex CLI is required.')
     }
   }
   await installCli()
@@ -80,7 +80,7 @@ export const ensureCodexCli = async (options: EnsureCodexCliOptions): Promise<vo
     await verify()
   } catch (cause) {
     throw new Error(
-      '설치 후 Codex CLI를 실행하지 못했습니다. npm 전역 실행 경로를 PATH에 추가하거나 CODEX_BINARY를 지정하세요.',
+      'Could not run Codex CLI after installation. Add the npm global bin directory to PATH or set CODEX_BINARY.',
       {cause},
     )
   }

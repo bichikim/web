@@ -50,7 +50,7 @@ it.each(['y', 'Y', 'yes'])(
 )
 it.each(['', 'n', 'no', 'maybe'])('should stop without installing after %j', async (answer) => {
   question.mockResolvedValue(answer)
-  await expect(ensureCodexCli(options)).rejects.toThrow('설치를 시작하지 않았습니다')
+  await expect(ensureCodexCli(options)).rejects.toThrow('Installation was not started')
   expect(spawn).not.toHaveBeenCalled()
   expect(close).toHaveBeenCalledOnce()
 })
@@ -83,7 +83,7 @@ it('should ask to correct a missing custom binary rather than installing elsewhe
 })
 it('should stop when npm fails', async () => {
   const pending = ensureCodexCli({...options, installCodex: true})
-  const rejected = expect(pending).rejects.toThrow('Codex CLI 설치 실패')
+  const rejected = expect(pending).rejects.toThrow('Codex CLI installation failed')
   await vi.waitFor(() => expect(spawn).toHaveBeenCalled())
   installation.emit('close', 1)
   await rejected

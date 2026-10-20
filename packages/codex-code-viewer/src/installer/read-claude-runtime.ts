@@ -24,14 +24,14 @@ const matches = (bytes: Uint8Array, runtime: z.infer<typeof runtimeSchema>): boo
 const downloadRuntime = async (runtime: z.infer<typeof runtimeSchema>): Promise<Buffer> => {
   const response = await fetch(runtime.url)
   if (!response.ok || response.body === null) {
-    throw new Error(`Claude 런타임 다운로드 실패 (${response.status}): ${runtime.url}`)
+    throw new Error(`Claude runtime download failed (${response.status}): ${runtime.url}`)
   }
   const chunks: Uint8Array[] = []
   let received = 0
   for await (const chunk of response.body) {
     received += chunk.length
     if (received > runtime.bytes) {
-      throw new Error('Claude 런타임 크기·SHA-256 검증 실패')
+      throw new Error('Claude runtime size or SHA-256 verification failed.')
     }
     chunks.push(chunk)
   }
@@ -44,12 +44,14 @@ export const readClaudeRuntime = async (options: ReadClaudeRuntimeOptions): Prom
     JSON.parse(await readFile(join(options.packageRoot, 'dist/claude/manifest.json'), 'utf8')),
   )
   if (manifest.version !== options.version) {
-    throw new Error('Claude 런타임 목록과 설치기의 버전이 다릅니다.')
+    throw new Error('The Claude runtime manifest version does not match the installer.')
   }
   const host = `${platform()}-${arch()}`
   const runtime = manifest.hosts[host]
   if (runtime === undefined) {
-    throw new Error(`Claude ${host} 설치 파일이 없습니다. 현재 지원: macOS Apple Silicon.`)
+    throw new Error(
+      `No Claude runtime is available for ${host}. Currently supported: macOS Apple Silicon.`,
+    )
   }
   const cached = join(options.directory, `${options.version}-${host}.zip`)
   const existing = await readFile(options.archive ?? cached).catch((error: unknown) => {
@@ -67,11 +69,11 @@ export const readClaudeRuntime = async (options: ReadClaudeRuntimeOptions): Prom
     return existing
   }
   if (options.archive !== undefined) {
-    throw new Error('지정한 Claude 런타임 크기·SHA-256 검증 실패')
+    throw new Error('The specified Claude runtime failed size or SHA-256 verification.')
   }
   const bytes = await downloadRuntime(runtime)
   if (!matches(bytes, runtime)) {
-    throw new Error('Claude 런타임 크기·SHA-256 검증 실패')
+    throw new Error('Claude runtime size or SHA-256 verification failed.')
   }
   await mkdir(options.directory, {recursive: true})
   await writeFile(cached, bytes, {mode: 0o600})

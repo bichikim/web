@@ -16,13 +16,13 @@ try {
   if (command.command === 'help') {
     console.log(
       [
-        '사용법: npx @winter-love/codex-code-viewer@latest install [--target codex|claude|all] [--install-codex]',
-        '터미널에서는 Codex·Claude Desktop(Code 모드)·둘 다를 선택합니다.',
-        '비대화형 기본 대상은 Codex입니다. Claude는 현재 macOS Apple Silicon을 지원합니다.',
-        'Codex CLI가 없으면 설치 여부를 묻습니다. --install-codex는 전역 npm 설치에 미리 동의합니다.',
-        'CODEX_BINARY / CODEX_HOME: Codex CLI와 설정 폴더',
-        'CLAUDE_BINARY / CLAUDE_CONFIG_DIR: Claude CLI와 설정 폴더',
-        'CODE_VIEWER_RUNTIME_ARCHIVE: 같은 버전·SHA-256의 오프라인 Claude 런타임 ZIP',
+        'Usage: npx @winter-love/codex-code-viewer@latest install [--target codex|claude|all] [--install-codex]',
+        'In a terminal, choose Codex, Claude Desktop (Code mode), or both.',
+        'Non-interactive execution defaults to Codex. Claude currently supports macOS Apple Silicon.',
+        'If Codex CLI is missing, a terminal prompt asks to install it. --install-codex opts in.',
+        'CODEX_BINARY / CODEX_HOME: Codex CLI executable and configuration directory',
+        'CLAUDE_BINARY / CLAUDE_CONFIG_DIR: Claude CLI executable and configuration directory',
+        'CODE_VIEWER_RUNTIME_ARCHIVE: offline Claude runtime ZIP with the matching version and SHA-256',
       ].join('\n'),
     )
   } else {
@@ -31,13 +31,13 @@ try {
       .object({version: z.string()})
       .parse(JSON.parse(await readFile(new URL('../package.json', import.meta.url), 'utf8')))
     const progress = {
-      cleaning: '[4/4] 이전 버전 정리 중…',
-      installing: '[3/4] Code Viewer 다운로드 및 설치 중…',
-      preparing: '[1/4] 설치 준비 중…',
-      registering: '[2/4] Marketplace 등록 중…',
-      restoring: '설치 설정 복원 중…',
+      cleaning: '[4/4] Cleaning up previous versions…',
+      installing: '[3/4] Downloading and installing Code Viewer…',
+      preparing: '[1/4] Preparing installation…',
+      registering: '[2/4] Registering marketplace…',
+      restoring: 'Restoring installation settings…',
     }
-    console.error(`Code Viewer ${manifest.version} 설치를 시작합니다.`)
+    console.error(`Starting Code Viewer ${manifest.version} installation.`)
     const results = await installTargets({
       claude: {
         binary: process.env.CLAUDE_BINARY ?? 'claude',
@@ -63,18 +63,19 @@ try {
       switch (result.target) {
         case 'codex':
           console.log(
-            `Code Viewer ${manifest.version} 설치 완료. Codex 앱을 완전히 종료하고 다시 열어 주세요.`,
+            `Code Viewer ${manifest.version} installed. Quit Codex completely and reopen it.`,
           )
           break
         case 'claude':
           console.log(
             [
-              `Claude Code Viewer ${manifest.version} 설치 완료. MCP는 플러그인에 함께 등록됐습니다.`,
-              '원클릭 첨부·접힌 Browser 펼치기: 시스템 설정 → 개인정보 보호 및 보안 → 손쉬운 사용에서 아래 앱을 추가·허용하세요.',
+              `Claude Code Viewer ${manifest.version} installed. MCP is registered with the plugin.`,
+              'For attachments and Browser expansion, allow the app below in macOS settings:',
+              'System Settings → Privacy & Security → Accessibility',
               result.application,
-              '허용해도 권한 오류가 계속되면 기존 Code Viewer Attachment 항목만 제거하고 위 앱을 다시 추가하세요.',
-              'Claude Desktop의 Code 탭에서 새 로컬 세션을 연 뒤 입력창 아래 「코드 뷰어 열기」 또는 답변의 파일 링크를 누르세요.',
-              '버튼이 없으면 Desktop을 업데이트하세요(내장 Claude Code 2.1.286 이상). 기존 세션은 재로드하지 않았습니다.',
+              'If permission errors persist, remove the Code Viewer Attachment entry and add the app above again.',
+              'Start a local Code session in Claude Desktop. Use the Code Viewer button or a file link in a response.',
+              'If the button is missing, update Desktop (Claude Code 2.1.286+). Existing sessions were not reloaded.',
             ].join('\n'),
           )
           break
@@ -82,6 +83,8 @@ try {
     }
   }
 } catch (error) {
-  console.error(`Code Viewer 설치 실패: ${error instanceof Error ? error.message : String(error)}`)
+  console.error(
+    `Code Viewer installation failed: ${error instanceof Error ? error.message : String(error)}`,
+  )
   process.exitCode = 1
 }

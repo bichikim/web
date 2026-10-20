@@ -48,7 +48,7 @@ export const installTargets = async (
         ]
       } catch (error) {
         throw new Error(
-          `Codex 설치 완료. Claude 설치 실패: ${error instanceof Error ? error.message : String(error)}`,
+          `Codex installed. Claude installation failed: ${error instanceof Error ? error.message : String(error)}`,
           {cause: error},
         )
       }
