@@ -1,27 +1,31 @@
-// oxlint-disable no-magic-numbers, eslint/no-bitwise -- Ogg uses fixed binary fields and a bitwise CRC algorithm.
+// oxlint-disable no-magic-numbers, eslint/no-bitwise -- Ogg 필드와 CRC 연산은 파일 형식에 고정된 값이다.
 import {sumBy} from 'es-toolkit/math'
-import type {SampleRate} from 'libopus-wasm'
 
 const OPUS_MEDIA_TYPE = 'audio/ogg; codecs=opus'
-const OPUS_OUTPUT_SAMPLE_RATE = 48_000
-const OPUS_BITRATE = 32_000
 const OGG_MAXIMUM_SEGMENTS = 255
 const OGG_SEGMENT_SIZE = 255
 const OGG_CAPTURE_PATTERN = 'OggS'
-const OPUS_SAMPLE_RATES = [8000, 12_000, 16_000, 24_000, 48_000] as const
 const textEncoder = new TextEncoder()
 
-interface OggPacket {
+export interface OpusPacket {
+  /** 호출자가 소유한 압축 패킷이며 조립 중 변경하지 않는다. */
   readonly data: Uint8Array
+  /** 패킷이 끝나는 48 kHz 출력 기준 위치다. */
   readonly granulePosition: number
 }
 
 interface OggPageOptions {
+  /** 마지막 페이지 여부이며 생략하면 일반 페이지다. */
   readonly endOfStream?: boolean
+  /** 첫 페이지 여부이며 생략하면 일반 페이지다. */
   readonly firstPage?: boolean
+  /** 이 페이지의 마지막 패킷이 끝나는 출력 위치다. */
   readonly granulePosition: number
+  /** 순서대로 복사할 패킷 바이트다. */
   readonly packets: ReadonlyArray<Uint8Array>
+  /** 스트림 안의 페이지 순번이다. */
   readonly sequence: number
+  /** 호출자가 생성한 논리 스트림 식별자다. */
   readonly streamSerial: number
 }
 
@@ -131,9 +135,9 @@ const createOpusTags = () => {
   return packet
 }
 
-const createAudioPages = (packets: ReadonlyArray<OggPacket>, streamSerial: number) => {
-  const packetGroups: Array<Array<OggPacket>> = []
-  let currentGroup: Array<OggPacket> = []
+const createAudioPages = (packets: ReadonlyArray<OpusPacket>, streamSerial: number) => {
+  const packetGroups: Array<Array<OpusPacket>> = []
+  let currentGroup: Array<OpusPacket> = []
   let currentSegmentCount = 0
 
   for (const packet of packets) {
@@ -156,7 +160,7 @@ const createAudioPages = (packets: ReadonlyArray<OggPacket>, streamSerial: numbe
   packetGroups.push(currentGroup)
 
   return packetGroups.map((group, index) => {
-    const lastPacket = group.at(-1) as OggPacket
+    const lastPacket = group.at(-1) as OpusPacket
 
     return createOggPage({
       endOfStream: index === packetGroups.length - 1,
@@ -168,74 +172,34 @@ const createAudioPages = (packets: ReadonlyArray<OggPacket>, streamSerial: numbe
   })
 }
 
-const isOpusSampleRate = (sampleRate: number): sampleRate is SampleRate =>
-  OPUS_SAMPLE_RATES.some((supportedRate) => supportedRate === sampleRate)
+export interface CreateOpusContainerOptions {
+  /** 압축된 패킷과 출력 위치이며 하나 이상을 순서대로 전달한다. */
+  readonly packets: ReadonlyArray<OpusPacket>
+  /** 헤더에 기록할 원본 PCM 샘플링 주파수다. */
+  readonly sampleRate: number
+  /** 디코딩 앞부분에서 건너뛸 48 kHz 기준 샘플 수다. */
+  readonly preSkip: number
+  /** 호출자가 생성한 논리 스트림 식별자다. */
+  readonly streamSerial: number
+}
 
-/** Encodes mono PCM speech into a browser-playable Ogg Opus file. */
-export const encodeOpusBlob = async (samples: Float32Array, sampleRate: number): Promise<Blob> => {
-  if (samples.length === 0) {
-    throw new RangeError('Cannot encode empty audio.')
-  }
-
-  if (!isOpusSampleRate(sampleRate)) {
-    throw new RangeError(`Unsupported Opus sample rate: ${sampleRate}`)
-  }
-
-  const {Application, createEncoder, Signal} = await import('libopus-wasm')
-  const encoder = await createEncoder({
-    application: Application.Voip,
-    bitrate: OPUS_BITRATE,
-    channels: 1,
-    complexity: 10,
-    sampleRate,
-    signal: Signal.Voice,
-    vbr: true,
-  })
-
-  try {
-    const granuleScale = OPUS_OUTPUT_SAMPLE_RATE / sampleRate
-    const preSkip = Math.round(encoder.getLookahead() * granuleScale)
-    const packetCount = Math.ceil((samples.length + encoder.getLookahead()) / encoder.frameSize)
-    const packetDuration = encoder.frameSize * granuleScale
-    const finalGranulePosition = preSkip + Math.round(samples.length * granuleScale)
-    const packets: Array<OggPacket> = []
-
-    for (let packetIndex = 0; packetIndex < packetCount; packetIndex += 1) {
-      const frameStart = packetIndex * encoder.frameSize
-      const frame = new Float32Array(encoder.frameSize)
-
-      if (frameStart < samples.length) {
-        frame.set(samples.subarray(frameStart, frameStart + encoder.frameSize))
-      }
-
-      packets.push({
-        data: encoder.encodeFloat(frame),
-        granulePosition:
-          packetIndex === packetCount - 1
-            ? finalGranulePosition
-            : (packetIndex + 1) * packetDuration,
-      })
-    }
-
-    const streamSerial = Math.floor(Math.random() * 0x1_0000_0000)
-    const pages = [
-      createOggPage({
-        firstPage: true,
-        granulePosition: 0,
-        packets: [createOpusHead(sampleRate, preSkip)],
-        sequence: 0,
-        streamSerial,
-      }),
-      createOggPage({
-        granulePosition: 0,
-        packets: [createOpusTags()],
-        sequence: 1,
-        streamSerial,
-      }),
-      ...createAudioPages(packets, streamSerial),
-    ]
-    return new Blob(pages, {type: OPUS_MEDIA_TYPE})
-  } finally {
-    encoder.free()
-  }
+/** 압축된 Opus 패킷을 복사해 헤더와 CRC를 갖춘 Ogg Blob을 동기적으로 조립한다. */
+export const createOpusContainer = (options: CreateOpusContainerOptions): Blob => {
+  const pages = [
+    createOggPage({
+      firstPage: true,
+      granulePosition: 0,
+      packets: [createOpusHead(options.sampleRate, options.preSkip)],
+      sequence: 0,
+      streamSerial: options.streamSerial,
+    }),
+    createOggPage({
+      granulePosition: 0,
+      packets: [createOpusTags()],
+      sequence: 1,
+      streamSerial: options.streamSerial,
+    }),
+    ...createAudioPages(options.packets, options.streamSerial),
+  ]
+  return new Blob(pages, {type: OPUS_MEDIA_TYPE})
 }
