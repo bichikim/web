@@ -21,7 +21,8 @@ export const sampleTimelineRowValues = (options: {
   })
   const effects = getEffectRows(options.document).map((row) => {
     const track = options.motion?.tracks.find(
-      (candidate) => candidate.kind !== 'parameter' && getTrackRowId(candidate) === row.id,
+      (candidate) =>
+        candidate.kind !== 'parameter' && getTrackRowId(candidate, options.document) === row.id,
     )
     return [
       row.id,

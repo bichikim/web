@@ -87,12 +87,13 @@ export const setMotionEvent = (
 const getSelectedSegment = (
   motion: PuppetMotion | undefined,
   selection: KeyframeSelection | null,
+  document?: PuppetDocument,
 ) => {
   const track = motion?.tracks.find(
     (candidate) =>
       selection !== null &&
       selection !== undefined &&
-      isTrackForRow(candidate, selection.parameterId),
+      isTrackForRow(candidate, selection.parameterId, document),
   )
   const keyframes = track?.keyframes.toSorted((first, second) => first.time - second.time) ?? []
   const index = keyframes.findIndex((keyframe) => keyframe.time === selection?.time)
@@ -101,14 +102,15 @@ const getSelectedSegment = (
 }
 
 /**
- * Handles of the selected keyframe's `bezier` segment: the stored ones, or the flat default
- * handles at one third from each end. `undefined` unless the segment is a Bezier.
+ * 선택한 베지어 구간의 핸들. 생략된 핸들은 수평 기본값으로 반환하고, 베지어가 아니면 없다.
+ * 문서를 주면 파라미터와 효과 행의 ID 충돌을 구분하며, 생략하면 기존 행 ID를 사용한다.
  */
 export const getSelectedBezier = (
   motion: PuppetMotion | undefined,
   selection: KeyframeSelection | null,
+  document?: PuppetDocument,
 ): Bezier | undefined => {
-  const segment = getSelectedSegment(motion, selection)
+  const segment = getSelectedSegment(motion, selection, document)
   return segment?.keyframe.easing === 'bezier'
     ? (segment.keyframe.bezier ?? [
         ONE_THIRD,
@@ -126,14 +128,16 @@ export const setSelectedBezier = (
   selection: KeyframeSelection | null,
   handles: Bezier,
 ): PuppetDocument | undefined => {
-  if (motion === undefined || getSelectedBezier(motion, selection) === undefined) {
+  if (motion === undefined || getSelectedBezier(motion, selection, document) === undefined) {
     return undefined
   }
   const bezier: Bezier = [unit(handles[0]), handles[1], unit(handles[2]), handles[3]]
   return replaceMotion(document, motion.id, (current) => ({
     ...current,
     tracks: current.tracks.map((track) =>
-      selection !== null && selection !== undefined && isTrackForRow(track, selection.parameterId)
+      selection !== null &&
+      selection !== undefined &&
+      isTrackForRow(track, selection.parameterId, document)
         ? {
             ...track,
             keyframes: track.keyframes.map((keyframe) =>

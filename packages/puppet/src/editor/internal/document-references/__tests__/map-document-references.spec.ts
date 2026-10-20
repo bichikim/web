@@ -1,6 +1,7 @@
 import {expect, test} from 'vitest'
 import example from '../../../../../examples/rotation-skinning.json'
 import {parseDocumentValue} from '../../../../player/parse-document'
+import {createEmptyDocument, type PuppetDocument} from '../../../../player'
 import {mapDocumentReferences} from '../map-document-references'
 import {createDemoDocument} from '../../../../player/create-demo-document'
 
@@ -123,4 +124,44 @@ test('should transform references inside deformer bind shapes and preserve unrel
   expect(retained.boneWeights).toEqual([])
   expect(retained.binding!.steps[0]!.shape.vertexInfluences).toEqual([])
   expect(retained.binding!.rest.boneWeights).toEqual([])
+})
+
+test('should rename a legacy colliding parameter row while preserving typed model and group effect targets', () => {
+  const document: PuppetDocument = {
+    ...createEmptyDocument(),
+    motions: [
+      {
+        duration: 1,
+        id: 'motion',
+        timelineEffectRows: [
+          {kind: 'model', target: 'opacity'},
+          {groupId: 'group', kind: 'group-opacity'},
+        ],
+        timelineParameterIds: ['model:opacity'],
+        tracks: [
+          {keyframes: [{time: 0, value: 8}], kind: 'parameter', parameterId: 'model:opacity'},
+          {keyframes: [{time: 0, value: 0.5}], kind: 'model', target: 'opacity'},
+        ],
+      },
+    ],
+    parameters: [
+      {defaultValue: 0, id: 'model:opacity', maximum: 10, minimum: 0, name: 'Parameter'},
+    ],
+    scene: {
+      roots: [
+        {children: [], id: 'group', kind: 'group', locked: false, name: 'Group', visible: true},
+      ],
+    },
+  }
+  const renamed = mapDocumentReferences({document, rename: (id) => `copy:${id}`})
+  expect(renamed.motions[0]?.timelineParameterIds).toEqual(['copy:model:opacity'])
+  expect(renamed.motions[0]?.timelineEffectRows).toEqual([
+    {kind: 'model', target: 'opacity'},
+    {groupId: 'copy:group', kind: 'group-opacity'},
+  ])
+  expect(renamed.motions[0]?.tracks).toEqual([
+    {keyframes: [{time: 0, value: 8}], kind: 'parameter', parameterId: 'copy:model:opacity'},
+    {keyframes: [{time: 0, value: 0.5}], kind: 'model', target: 'opacity'},
+  ])
+  expect(parseDocumentValue(renamed).ok).toBe(true)
 })

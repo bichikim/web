@@ -98,6 +98,20 @@ export type PuppetTrack =
   | PuppetParameterTrack
   | PuppetVertexTrack
 
+/** 키프레임이 없어도 표시할 모델 효과 행. */
+export interface PuppetModelTimelineRow {
+  readonly kind: 'model'
+  readonly target: PuppetModelTrackTarget
+}
+
+/** 키프레임이 없어도 표시할 그룹 불투명도 행. */
+export interface PuppetGroupOpacityTimelineRow {
+  readonly groupId: string
+  readonly kind: 'group-opacity'
+}
+
+export type PuppetTimelineEffectRow = PuppetModelTimelineRow | PuppetGroupOpacityTimelineRow
+
 /**
  * Fades default to 0 (no fade), unlike Cubism's 1 second, so motions without them play as
  * before. A track's own fade times replace the motion's for that track.
@@ -115,6 +129,9 @@ export interface PuppetMotion extends PuppetMotionFade {
   /** Display name; the ID is shown when omitted. */
   readonly name?: string
   readonly sound?: PuppetMotionSound
+  /** 종류로 구분하는 효과 행. 생략하면 기존 문자열 효과 행도 읽는다. */
+  readonly timelineEffectRows?: ReadonlyArray<PuppetTimelineEffectRow>
+  /** 파라미터 행 ID. 기존 문서의 모델·그룹 효과 문자열도 불러올 수 있다. */
   readonly timelineParameterIds?: ReadonlyArray<string>
   readonly tracks: ReadonlyArray<PuppetTrack>
 }

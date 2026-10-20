@@ -1,3 +1,4 @@
+import {getTimelineRowIds} from '../../../player/motion-timeline-rows'
 import skinningExample from '../../../../examples/rotation-skinning.json'
 import {expect, test} from 'vitest'
 import {
@@ -171,18 +172,48 @@ test('should copy bindings that key only the copied group', () => {
   expect(parseDocumentValue(result.document).ok).toBe(true)
 })
 
-test('should append copied group opacity tracks and rows to an existing motion', () => {
-  const source = createGroupOpacityDocument()
-  const fragment = createLayerFragment(source, ['shapes'])!
-  const result = pasteLayerFragment(source, fragment, 'shapes')!
-  const [copyId] = result.nodeIds
-  const motion = getIdleMotion(result.document)
-  expect(
-    motion.tracks.flatMap((track) => (track.kind === 'group-opacity' ? [track.groupId] : [])),
-  ).toEqual(['shapes', copyId])
-  expect(motion.timelineParameterIds).toEqual(['group-opacity:shapes', `group-opacity:${copyId}`])
-  expect(parseDocumentValue(result.document).ok).toBe(true)
-})
+test.each([false, true])(
+  'should append copied group opacity tracks and rows with colliding parameter IDs: %s',
+  (collides) => {
+    const parsed = parseDocumentValue(createGroupOpacityDocument())
+    if (!parsed.ok) {
+      throw new Error('invalid fixture')
+    }
+    const source = {
+      ...parsed.document,
+      parameters: [
+        ...(parsed.document.parameters ?? []),
+        ...(collides
+          ? ['group-opacity:shapes', 'group-opacity:copy-1:shapes'].map((id) => ({
+              defaultValue: 0,
+              id,
+              maximum: 10,
+              minimum: 0,
+              name: id,
+            }))
+          : []),
+      ],
+    }
+    const fragment = createLayerFragment(source, ['shapes'])!
+    const result = pasteLayerFragment(source, fragment, 'shapes')!
+    const [copyId] = result.nodeIds
+    const motion = getIdleMotion(result.document)
+    expect(
+      motion.tracks.flatMap((track) => (track.kind === 'group-opacity' ? [track.groupId] : [])),
+    ).toEqual(['shapes', copyId])
+    expect(motion.timelineEffectRows).toEqual([
+      {groupId: 'shapes', kind: 'group-opacity'},
+      {groupId: copyId, kind: 'group-opacity'},
+    ])
+    expect(getTimelineRowIds(result.document, motion)).toEqual(
+      collides
+        ? ['effect:group-opacity:shapes', `effect:group-opacity:${copyId}`]
+        : ['group-opacity:shapes', `group-opacity:${copyId}`],
+    )
+    expect(result.document.parameters).toEqual(source.parameters)
+    expect(parseDocumentValue(result.document).ok).toBe(true)
+  },
+)
 
 test('should fit copied layer curves into a shorter motion of the target', () => {
   const source = createGroupOpacityDocument()

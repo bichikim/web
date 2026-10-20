@@ -1,3 +1,4 @@
+import {getMotionTimelineRows} from './motion-timeline-rows'
 import {isPsdSource} from './internal/parse-psd-source'
 import {hasValidSkinning} from './internal/parse-skinning'
 import {hasValidGlueKeyforms, isGlueKeyforms} from './internal/parse-glue'
@@ -519,6 +520,16 @@ export const parseDocumentValue = (value: unknown): ParseDocumentResult => {
   return {
     document: markPreparedPuppetDocument({
       ...normalizedValue,
+      motions: normalizedValue.motions.map((motion) => {
+        const rows = getMotionTimelineRows(normalizedValue, motion)
+        return rows.parameterIds.length === (motion.timelineParameterIds?.length ?? 0)
+          ? motion
+          : {
+              ...motion,
+              timelineEffectRows: rows.effectRows,
+              timelineParameterIds: rows.parameterIds,
+            }
+      }),
       parts: normalizedValue.parts.map((part) => ({...part, mesh: normalizeMesh(part.mesh)})),
     }),
     ok: true,

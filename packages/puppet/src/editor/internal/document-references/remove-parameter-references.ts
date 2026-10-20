@@ -1,3 +1,4 @@
+import {getTimelineRowIds, withTimelineRowIds} from '../../../player/motion-timeline-rows'
 import {removeMouthShapeParameters} from '../mouth-shapes'
 import type {PuppetDocument, PuppetPhysics} from '../../../player/document'
 
@@ -66,8 +67,7 @@ export const removeParameterReferences = (
     })),
     layerOrderRules: document.layerOrderRules?.filter((rule) => rule.when.parameterIds.every(kept)),
     motions: document.motions.map((motion) => ({
-      ...motion,
-      timelineParameterIds: motion.timelineParameterIds?.filter(kept),
+      ...withTimelineRowIds(document, motion, getTimelineRowIds(document, motion).filter(kept)),
       tracks: motion.tracks.filter(
         (track) => track.kind !== 'parameter' || kept(track.parameterId),
       ),

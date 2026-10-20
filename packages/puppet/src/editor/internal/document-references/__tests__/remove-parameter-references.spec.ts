@@ -1,3 +1,4 @@
+import {createEmptyDocument} from '../../../../player/create-empty-document'
 import {expect, test} from 'vitest'
 
 import {createDemoDocument} from '../../../../player/create-demo-document'
@@ -28,4 +29,25 @@ test('should drop physics when no pendulums, chains or world settings remain', (
   const removed = removeParameterReferences(document, new Set([pendulum!.inputParameterId]))
 
   expect(removed.physics).toBeUndefined()
+})
+
+test('should remove a colliding parameter row without removing its typed model effect row', () => {
+  const document = {
+    ...createEmptyDocument(),
+    motions: [
+      {
+        duration: 1,
+        id: 'motion',
+        timelineEffectRows: [{kind: 'model' as const, target: 'opacity' as const}],
+        timelineParameterIds: ['model:opacity'],
+        tracks: [],
+      },
+    ],
+    parameters: [
+      {defaultValue: 0, id: 'model:opacity', maximum: 10, minimum: 0, name: 'Parameter'},
+    ],
+  }
+  const removed = removeParameterReferences(document, new Set(['model:opacity']))
+  expect(removed.motions[0]?.timelineParameterIds).toEqual([])
+  expect(removed.motions[0]?.timelineEffectRows).toEqual([{kind: 'model', target: 'opacity'}])
 })

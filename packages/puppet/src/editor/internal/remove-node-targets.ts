@@ -1,3 +1,4 @@
+import {getTimelineRowIds, withTimelineRowIds} from '../../player/motion-timeline-rows'
 import {mapBindingKeyforms} from '../../deformation'
 import type {
   PuppetDocument,
@@ -11,12 +12,15 @@ const removeGroupOpacityTracks = (
   document: PuppetDocument,
   nodeIds: ReadonlySet<string>,
 ): PuppetDocument => {
-  const rowIds = new Set([...nodeIds].map(getGroupOpacityRowId))
+  const rowIds = new Set([...nodeIds].map((id) => getGroupOpacityRowId(id, document)))
   return {
     ...document,
     motions: document.motions.map((motion) => ({
-      ...motion,
-      timelineParameterIds: motion.timelineParameterIds?.filter((id) => !rowIds.has(id)),
+      ...withTimelineRowIds(
+        document,
+        motion,
+        getTimelineRowIds(document, motion).filter((id) => !rowIds.has(id)),
+      ),
       tracks: motion.tracks.filter(
         (track) => track.kind !== 'group-opacity' || !nodeIds.has(track.groupId),
       ),

@@ -1,5 +1,10 @@
-import type {PuppetDocument, PuppetMotion, PuppetTrack} from '../../../player/document'
-import {getGroupOpacityRowId, getRowGroupId, isModelRow} from '../../../player/timeline-rows'
+import type {
+  PuppetDocument,
+  PuppetMotion,
+  PuppetTimelineEffectRow,
+  PuppetTrack,
+} from '../../../player/document'
+import {getMotionTimelineRows} from '../../../player/motion-timeline-rows'
 import {getDocumentScene} from '../../../player/scene'
 import {mapBindingReferences} from './map-binding-references'
 import {mapSceneReferences} from './map-scene-references'
@@ -32,39 +37,47 @@ const renameModelMetadata = (document: PuppetDocument, rename: (id: string) => s
  * of dropped groups go.
  */
 const mapMotionReferences = (
-  motions: ReadonlyArray<PuppetMotion>,
+  document: PuppetDocument,
   transform: ReferenceTransform,
 ): Array<PuppetMotion> => {
   const {keepPart, rename} = transform
   const keepNode = (id: string) => transform.keepNode?.(id) !== false
-  const mapRow = (id: string): ReadonlyArray<string> => {
-    const groupId = getRowGroupId(id)
-    if (groupId !== undefined) {
-      return keepNode(groupId) ? [getGroupOpacityRowId(rename(groupId))] : []
-    }
-    return [isModelRow(id) ? id : rename(id)]
-  }
-  return motions.map((motion) => ({
-    ...motion,
-    id: rename(motion.id),
-    timelineParameterIds: motion.timelineParameterIds?.flatMap(mapRow),
-    tracks: motion.tracks.flatMap<PuppetTrack>((track) => {
-      switch (track.kind) {
-        case 'vertex':
-          return keepPart(track.partId) ? [{...track, partId: rename(track.partId)}] : []
-        case 'parameter':
-          return [{...track, parameterId: rename(track.parameterId)}]
-        case 'group-opacity':
-          return keepNode(track.groupId) ? [{...track, groupId: rename(track.groupId)}] : []
-        case 'model':
-          return [track]
-        default: {
-          const exhaustive: never = track
-          return exhaustive
+  return document.motions.map((motion) => {
+    const rows = getMotionTimelineRows(document, motion)
+    return {
+      ...motion,
+      id: rename(motion.id),
+      timelineParameterIds:
+        motion.timelineParameterIds === undefined ? undefined : rows.parameterIds.map(rename),
+      ...(rows.effectRows.length === 0 && motion.timelineEffectRows === undefined
+        ? {}
+        : {
+            timelineEffectRows: rows.effectRows.flatMap<PuppetTimelineEffectRow>((row) =>
+              row.kind === 'model'
+                ? [row]
+                : keepNode(row.groupId)
+                  ? [{...row, groupId: rename(row.groupId)}]
+                  : [],
+            ),
+          }),
+      tracks: motion.tracks.flatMap<PuppetTrack>((track) => {
+        switch (track.kind) {
+          case 'vertex':
+            return keepPart(track.partId) ? [{...track, partId: rename(track.partId)}] : []
+          case 'parameter':
+            return [{...track, parameterId: rename(track.parameterId)}]
+          case 'group-opacity':
+            return keepNode(track.groupId) ? [{...track, groupId: rename(track.groupId)}] : []
+          case 'model':
+            return [track]
+          default: {
+            const exhaustive: never = track
+            return exhaustive
+          }
         }
-      }
-    }),
-  }))
+      }),
+    }
+  })
 }
 
 interface MapDocumentReferencesOptions {
@@ -120,7 +133,7 @@ export const mapDocumentReferences = (options: MapDocumentReferencesOptions): Pu
           ]
         : []
     }),
-    motions: mapMotionReferences(document.motions, transform),
+    motions: mapMotionReferences(document, transform),
     parameterBindings: document.parameterBindings?.map((binding) =>
       mapBindingReferences(binding, transform),
     ),

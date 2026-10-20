@@ -1,3 +1,4 @@
+import {getTimelineRowIds} from '../../player/motion-timeline-rows'
 import {sortBy} from 'es-toolkit/array'
 import {clamp} from 'es-toolkit/math'
 
@@ -46,11 +47,14 @@ export const getParameterTracks = (
 ): ReadonlyArray<ParameterTimelineTrack> => {
   const tracks = new Map(
     motion?.tracks.flatMap((track) => {
-      const rowId = getTrackRowId(track)
+      const rowId = getTrackRowId(track, document)
       return rowId === undefined ? [] : [[rowId, track] as const]
     }),
   )
-  const visibleIds = new Set([...(motion?.timelineParameterIds ?? []), ...tracks.keys()])
+  const visibleIds = new Set([
+    ...(motion === undefined ? [] : getTimelineRowIds(document, motion)),
+    ...tracks.keys(),
+  ])
 
   return getTimelineRows(document)
     .filter((parameter) => visibleIds.has(parameter.id))
@@ -209,7 +213,7 @@ export const easeSelectedKeyframes = (options: EaseSelectedKeyframesOptions) => 
     (candidate) =>
       options.selection !== null &&
       options.selection !== undefined &&
-      isTrackForRow(candidate, options.selection.parameterId),
+      isTrackForRow(candidate, options.selection.parameterId, options.document),
   )
   const times = options.selection.times.filter((time) => {
     const index = track?.keyframes.findIndex((keyframe) => keyframe.time === time) ?? -1

@@ -199,14 +199,16 @@ export const setParameterKeyframe = (
 
   return replaceMotion(options.document, options.motionId, (motion) => {
     const time = clamp(options.time, 0, motion.duration)
-    const trackIndex = motion.tracks.findIndex((track) => isTrackForRow(track, options.parameterId))
+    const trackIndex = motion.tracks.findIndex((track) =>
+      isTrackForRow(track, options.parameterId, options.document),
+    )
     const keyframes = upsertKeyframe(
       trackIndex < 0 ? [] : (motion.tracks[trackIndex]?.keyframes ?? []),
       time,
       toKeyframeValue(parameter, options.value),
     )
     const track = {
-      ...createRowTrack(options.parameterId, keyframes),
+      ...createRowTrack(options.parameterId, keyframes, options.document),
       ...fadeOf(motion.tracks[trackIndex]),
     }
 
@@ -230,7 +232,7 @@ export const deleteParameterKeyframes = (
   replaceMotion(options.document, options.motionId, (motion) => ({
     ...motion,
     tracks: motion.tracks.flatMap((track) => {
-      if (!isTrackForRow(track, options.parameterId)) {
+      if (!isTrackForRow(track, options.parameterId, options.document)) {
         return [track]
       }
 
@@ -249,7 +251,9 @@ export const moveParameterKeyframes = (
   options: MoveParameterKeyframesOptions,
 ): PuppetDocument | undefined => {
   const motion = options.document.motions.find((candidate) => candidate.id === options.motionId)
-  const track = motion?.tracks.find((candidate) => isTrackForRow(candidate, options.parameterId))
+  const track = motion?.tracks.find((candidate) =>
+    isTrackForRow(candidate, options.parameterId, options.document),
+  )
   const sourceKeyframe = track?.keyframes.find((keyframe) =>
     hasSameTime(keyframe.time, options.time),
   )
@@ -287,7 +291,7 @@ export const moveParameterKeyframes = (
   return replaceMotion(options.document, options.motionId, (candidate) => ({
     ...candidate,
     tracks: candidate.tracks.map((candidateTrack) =>
-      isTrackForRow(candidateTrack, options.parameterId)
+      isTrackForRow(candidateTrack, options.parameterId, options.document)
         ? {
             ...candidateTrack,
             keyframes: sortBy(
@@ -314,7 +318,7 @@ export const setParameterKeyframesEasing = (
   replaceMotion(options.document, options.motionId, (motion) => ({
     ...motion,
     tracks: motion.tracks.map((track) =>
-      isTrackForRow(track, options.parameterId)
+      isTrackForRow(track, options.parameterId, options.document)
         ? {
             ...track,
             keyframes: track.keyframes.map((keyframe) =>

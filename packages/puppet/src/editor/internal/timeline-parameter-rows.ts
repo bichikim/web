@@ -1,3 +1,4 @@
+import {getTimelineRowIds, withTimelineRowIds} from '../../player/motion-timeline-rows'
 import type {PuppetDocument} from '../../player'
 import {createMemo} from 'solid-js'
 import {isTrackForRow} from '../../player/timeline-rows'
@@ -13,7 +14,7 @@ export const addTimelineParameterRow = (
   }
 
   const motion = document.motions.find((candidate) => candidate.id === motionId)
-  if (motion === undefined || motion.timelineParameterIds?.includes(parameterId)) {
+  if (motion === undefined || getTimelineRowIds(document, motion).includes(parameterId)) {
     return undefined
   }
 
@@ -21,10 +22,10 @@ export const addTimelineParameterRow = (
     ...document,
     motions: document.motions.map((candidate) =>
       candidate.id === motionId
-        ? {
-            ...candidate,
-            timelineParameterIds: [...(candidate.timelineParameterIds ?? []), parameterId],
-          }
+        ? withTimelineRowIds(document, candidate, [
+            ...getTimelineRowIds(document, candidate),
+            parameterId,
+          ])
         : candidate,
     ),
   }
@@ -38,8 +39,8 @@ export const removeTimelineParameterRow = (
   const motion = document.motions.find((candidate) => candidate.id === motionId)
   if (
     motion === undefined ||
-    (!motion.timelineParameterIds?.includes(parameterId) &&
-      !motion.tracks.some((track) => isTrackForRow(track, parameterId)))
+    (!getTimelineRowIds(document, motion).includes(parameterId) &&
+      !motion.tracks.some((track) => isTrackForRow(track, parameterId, document)))
   ) {
     return undefined
   }
@@ -49,11 +50,14 @@ export const removeTimelineParameterRow = (
     motions: document.motions.map((candidate) =>
       candidate.id === motionId
         ? {
-            ...candidate,
-            timelineParameterIds: candidate.timelineParameterIds?.filter(
-              (id) => id !== parameterId,
+            ...withTimelineRowIds(
+              document,
+              candidate,
+              getTimelineRowIds(document, candidate).filter((id) => id !== parameterId),
             ),
-            tracks: candidate.tracks.filter((track) => !isTrackForRow(track, parameterId)),
+            tracks: candidate.tracks.filter(
+              (track) => !isTrackForRow(track, parameterId, document),
+            ),
           }
         : candidate,
     ),

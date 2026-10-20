@@ -1,3 +1,4 @@
+import {getTimelineRowIds, withTimelineRowIds} from '../../player/motion-timeline-rows'
 import {
   getDocumentScene,
   isSceneContainerNode,
@@ -9,7 +10,7 @@ import {
 } from '../../player'
 import {sampleKeyframes} from '../../player/internal/motion'
 import {getSceneGroupIds} from '../../player/internal/scene-groups'
-import {getRowGroupId, isModelRow} from '../../player/timeline-rows'
+import {getGroupOpacityRowId, getRowGroupId, isModelRow} from '../../player/timeline-rows'
 import {collectDocumentIds, mapDocumentReferences} from './document-references'
 import {
   collectNodeIds,
@@ -136,15 +137,16 @@ export const createLayerFragment = (
     (track.kind === 'parameter' && parameterIds.has(track.parameterId)) ||
     (track.kind === 'group-opacity' && groupIds.has(track.groupId))
   const keepRow = (id: string) => {
-    const groupId = getRowGroupId(id)
-    return groupId === undefined ? !isModelRow(id) && parameterIds.has(id) : groupIds.has(groupId)
+    const groupId = getRowGroupId(id, mapped)
+    return groupId === undefined
+      ? !isModelRow(id, mapped) && parameterIds.has(id)
+      : groupIds.has(groupId)
   }
   return {
     ...mapped,
     motions: mapped.motions
       .map((motion) => ({
-        ...motion,
-        timelineParameterIds: motion.timelineParameterIds?.filter(keepRow),
+        ...withTimelineRowIds(mapped, motion, getTimelineRowIds(mapped, motion).filter(keepRow)),
         tracks: motion.tracks.filter(keepTrack),
       }))
       .filter((motion) => motion.tracks.length > 0),
@@ -236,18 +238,20 @@ export const pasteLayerFragment = (
   }
   // A motion the document already has gains the copied layers' own curves and rows; its
   // parameter curves stay the document's.
+  const destination = {...document, scene: nextScene}
   const motions = document.motions.map((motion) => {
     const copied = added.motions.find((candidate) => candidate.id === motion.id)
     if (copied === undefined) {
       return motion
     }
-    const rows = (copied.timelineParameterIds ?? []).filter((id) => getRowGroupId(id) !== undefined)
+    const rows = getTimelineRowIds(added, copied).flatMap((id) => {
+      const groupId = getRowGroupId(id, added)
+      return groupId === undefined ? [] : [getGroupOpacityRowId(groupId, destination)]
+    })
     return {
-      ...motion,
-      timelineParameterIds:
-        rows.length === 0
-          ? motion.timelineParameterIds
-          : [...(motion.timelineParameterIds ?? []), ...rows],
+      ...withTimelineRowIds(destination, motion, [
+        ...new Set([...getTimelineRowIds(destination, motion), ...rows]),
+      ]),
       tracks: [...motion.tracks, ...fitLayerTracks(copied.tracks, motion.duration)],
     }
   })

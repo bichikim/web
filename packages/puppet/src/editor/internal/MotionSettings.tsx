@@ -156,7 +156,7 @@ export const MotionSettings = (props: MotionSettingsProps) => {
       commit(setMotionSettings(props.document, motionId, changes))
     }
   }
-  const bezier = () => getSelectedBezier(props.motion, props.selection)
+  const bezier = () => getSelectedBezier(props.motion, props.selection, props.document)
 
   return (
     <Popover placement="top-start">

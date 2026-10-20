@@ -1,3 +1,4 @@
+import {getMotionTimelineRows} from '../motion-timeline-rows'
 import {
   PUPPET_EASINGS,
   PUPPET_MODEL_TRACK_TARGETS,
@@ -7,6 +8,7 @@ import {
   type PuppetMotion,
   type PuppetParameter,
   type PuppetPart,
+  type PuppetTimelineEffectRow,
   type PuppetTrack,
   type PuppetTrackAxis,
 } from '../document'
@@ -164,6 +166,25 @@ const hasValidMotionMetadata = (value: Record<string, unknown>) =>
   isOptionalFramesPerSecond(value.framesPerSecond) &&
   isOptionalSound(value.sound)
 
+/** 효과 행은 화면용 문자열 대신 실제 종류와 대상을 저장한다. */
+const isTimelineEffectRow = (value: unknown): value is PuppetTimelineEffectRow =>
+  isRecord(value) &&
+  (value.kind === 'model'
+    ? PUPPET_MODEL_TRACK_TARGETS.some((target) => target === value.target)
+    : value.kind === 'group-opacity' &&
+      typeof value.groupId === 'string' &&
+      value.groupId.length > 0)
+
+const hasTimelineEffects = (value: unknown) =>
+  value === undefined ||
+  (Array.isArray(value) &&
+    value.every(isTimelineEffectRow) &&
+    new Set(
+      value.map((row) =>
+        row.kind === 'model' ? `model:${row.target}` : `group-opacity:${row.groupId}`,
+      ),
+    ).size === value.length)
+
 export const isMotion = (value: unknown): value is PuppetMotion => {
   if (
     !isRecord(value) ||
@@ -175,6 +196,7 @@ export const isMotion = (value: unknown): value is PuppetMotion => {
       (!Array.isArray(value.timelineParameterIds) ||
         !value.timelineParameterIds.every((id) => typeof id === 'string') ||
         new Set(value.timelineParameterIds).size !== value.timelineParameterIds.length)) ||
+    !hasTimelineEffects(value.timelineEffectRows) ||
     !Array.isArray(value.tracks) ||
     !hasValidFade(value) ||
     !hasValidMotionMetadata(value)
@@ -280,10 +302,18 @@ export const hasValidTrackTargets = (
     parameters: new Map(parameters.map((parameter) => [parameter.id, parameter])),
     parts: new Map(parts.map((part) => [part.id, part])),
   }
-  return motions.every(
-    (motion) =>
+  return motions.every((motion) => {
+    const {effectRows} = getMotionTimelineRows({parameters}, motion)
+    return (
       hasUniqueTrackTargets(motion) &&
+      effectRows.every((row) => row.kind === 'model' || targets.groupIds.has(row.groupId)) &&
+      isUnique(
+        effectRows.map((row) =>
+          row.kind === 'model' ? getModelTrackRowId(row.target) : getGroupOpacityRowId(row.groupId),
+        ),
+      ) &&
       (motion.timelineParameterIds ?? []).every((id) => isTimelineRow(id, targets)) &&
-      motion.tracks.every((track) => hasTrackTarget(track, targets)),
-  )
+      motion.tracks.every((track) => hasTrackTarget(track, targets))
+    )
+  })
 }
