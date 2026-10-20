@@ -8,6 +8,7 @@
 // oxlint-disable unicorn/no-new-array -- Single arguments are intentional dynamic array dimensions.
 
 import {PRIMARY_LABELS} from './training-data.mjs'
+import {applyReluLayer} from './apply-relu-layer.mjs'
 
 const createRandom = (seed) => {
   let state = seed >>> 0
@@ -189,20 +190,15 @@ export const trainMlp = (rows) => {
   const secondMoments = parameters.map((values) => new Float64Array(values.length))
   const batchSize = 24
   let step = 0
+  const hiddenLayer = {
+    bias: hiddenBias,
+    inputSize: dimension,
+    outputSize: hiddenSize,
+    weights: hiddenWeights,
+  }
 
   const forward = (embedding) => {
-    const hidden = new Float64Array(hiddenSize)
-
-    for (let hiddenIndex = 0; hiddenIndex < hiddenSize; hiddenIndex += 1) {
-      let value = hiddenBias[hiddenIndex]
-      const offset = hiddenIndex * dimension
-
-      for (let feature = 0; feature < dimension; feature += 1) {
-        value += hiddenWeights[offset + feature] * embedding[feature]
-      }
-
-      hidden[hiddenIndex] = Math.max(0, value)
-    }
+    const hidden = applyReluLayer(embedding, hiddenLayer)
 
     return {
       hidden,
@@ -390,20 +386,15 @@ export const trainBinaryMlp = (rows, getTarget, options) => {
   const secondMoments = parameters.map((values) => new Float64Array(values.length))
   const positiveWeight = options.positiveWeight ?? 1
   let step = 0
+  const hiddenLayer = {
+    bias: hiddenBias,
+    inputSize: dimension,
+    outputSize: hiddenSize,
+    weights: hiddenWeights,
+  }
 
   const forward = (embedding) => {
-    const hidden = new Float64Array(hiddenSize)
-
-    for (let hiddenIndex = 0; hiddenIndex < hiddenSize; hiddenIndex += 1) {
-      let value = hiddenBias[hiddenIndex]
-      const offset = hiddenIndex * dimension
-
-      for (let feature = 0; feature < dimension; feature += 1) {
-        value += hiddenWeights[offset + feature] * embedding[feature]
-      }
-
-      hidden[hiddenIndex] = Math.max(0, value)
-    }
+    const hidden = applyReluLayer(embedding, hiddenLayer)
 
     let score = outputBias[0]
 
