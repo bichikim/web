@@ -10,7 +10,7 @@ See [Supported formats](#supported-formats) for the features available for each 
 
 ## 1. Install and open
 
-You need Node.js 24 or later and npm. For Codex, also use the Codex desktop app and a CLI supporting the `plugin` subcommand. If that CLI is missing or needs updating:
+You need Node.js 24 or later and npm. For Codex, also use the Codex desktop app and a CLI supporting the `plugin` subcommand. If the CLI is missing, the installer asks permission to install it globally with npm, then continues after installation. Non-interactive execution installs a missing CLI only with `install --install-codex`. To install or update it yourself:
 
 ```sh
 npm install -g @openai/codex

@@ -32,3 +32,20 @@ it.each([
 ])('should reject invalid arguments %j before installation', (...args) => {
   expect(() => parseInstallCommand(args, true)).toThrow('지원하지 않는 명령')
 })
+
+it.each([
+  ['install', '--install-codex'],
+  ['install', '--target', 'codex', '--install-codex'],
+  ['install', '--install-codex', '--target', 'codex'],
+])('should accept explicit CLI installation with %j', (...args) => {
+  expect(parseInstallCommand(args, false)).toEqual({
+    command: 'install',
+    installCodex: true,
+    target: 'codex',
+  })
+})
+it('should reject duplicate CLI installation flags', () => {
+  expect(() =>
+    parseInstallCommand(['install', '--install-codex', '--install-codex'], false),
+  ).toThrow()
+})

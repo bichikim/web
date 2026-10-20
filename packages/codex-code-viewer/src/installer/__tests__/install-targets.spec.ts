@@ -1,8 +1,10 @@
 import {beforeEach, expect, it, vi} from 'vitest'
+import {ensureCodexCli} from '../ensure-codex-cli'
 import {installTargets} from '../install-targets'
 import {installPlugin} from '../install-plugin'
 import {installClaudePlugin} from '../install-claude-plugin'
 
+vi.mock('../ensure-codex-cli', () => ({ensureCodexCli: vi.fn()}))
 vi.mock('../install-plugin', () => ({installPlugin: vi.fn()}))
 vi.mock('../install-claude-plugin', () => ({installClaudePlugin: vi.fn()}))
 beforeEach(() => vi.resetAllMocks())
@@ -22,6 +24,7 @@ it('should install Claude without touching Codex configuration', async () => {
   expect(await installTargets({...options, target: 'claude'})).toEqual([
     {application: '/claude/helper.app', target: 'claude'},
   ])
+  expect(ensureCodexCli).not.toHaveBeenCalled()
   expect(installPlugin).not.toHaveBeenCalled()
 })
 
@@ -38,4 +41,20 @@ it('should identify the installed host when the second host fails', async () => 
   await expect(installTargets({...options, target: 'all'})).rejects.toThrow(
     'Codex 설치 완료. Claude 설치 실패: Claude CLI missing',
   )
+})
+
+it('should stop before plugin installation when CLI setup is declined or fails', async () => {
+  vi.mocked(ensureCodexCli).mockRejectedValue(new Error('CLI setup stopped'))
+  await expect(installTargets({...options, target: 'all'})).rejects.toThrow('CLI setup stopped')
+  expect(installPlugin).not.toHaveBeenCalled()
+  expect(installClaudePlugin).not.toHaveBeenCalled()
+})
+it('should pass explicit installation consent and terminal availability to CLI setup', async () => {
+  await installTargets({...options, installCodex: true, interactive: false, target: 'codex'})
+  expect(ensureCodexCli).toHaveBeenCalledExactlyOnceWith({
+    codex: 'codex',
+    home: '/codex',
+    installCodex: true,
+    interactive: false,
+  })
 })

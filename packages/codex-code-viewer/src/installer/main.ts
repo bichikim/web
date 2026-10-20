@@ -11,16 +11,15 @@ const onStderr = (output: string) => {
   process.stderr.write(output)
 }
 try {
-  const command = parseInstallCommand(
-    process.argv.slice(2),
-    process.stdin.isTTY === true && process.stdout.isTTY === true,
-  )
+  const interactive = process.stdin.isTTY === true && process.stdout.isTTY === true
+  const command = parseInstallCommand(process.argv.slice(2), interactive)
   if (command.command === 'help') {
     console.log(
       [
-        '사용법: npx @winter-love/codex-code-viewer@latest install [--target codex|claude|all]',
+        '사용법: npx @winter-love/codex-code-viewer@latest install [--target codex|claude|all] [--install-codex]',
         '터미널에서는 Codex·Claude Desktop(Code 모드)·둘 다를 선택합니다.',
         '비대화형 기본 대상은 Codex입니다. Claude는 현재 macOS Apple Silicon을 지원합니다.',
+        'Codex CLI가 없으면 설치 여부를 묻습니다. --install-codex는 전역 npm 설치에 미리 동의합니다.',
         'CODEX_BINARY / CODEX_HOME: Codex CLI와 설정 폴더',
         'CLAUDE_BINARY / CLAUDE_CONFIG_DIR: Claude CLI와 설정 폴더',
         'CODE_VIEWER_RUNTIME_ARCHIVE: 같은 버전·SHA-256의 오프라인 Claude 런타임 ZIP',
@@ -56,6 +55,8 @@ try {
         onStderr,
         version: manifest.version,
       },
+      installCodex: command.installCodex,
+      interactive,
       target,
     })
     for (const result of results) {

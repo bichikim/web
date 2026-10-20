@@ -10,7 +10,7 @@ Code Viewer는 Codex 대화 옆에서 코드·문서·미디어를 여는 플러
 
 ## 1. 설치하고 시작하기
 
-Node.js 24 이상과 npm이 필요합니다. Codex를 선택할 때는 Codex 데스크톱 앱과 `plugin` 하위 명령을 지원하는 CLI도 필요합니다. Codex CLI가 없거나 업데이트가 필요하면 먼저 실행하세요.
+Node.js 24 이상과 npm이 필요합니다. Codex를 선택할 때는 Codex 데스크톱 앱과 `plugin` 하위 명령을 지원하는 CLI도 필요합니다. Codex CLI가 없으면 설치기가 전역 npm 설치 여부를 묻고, 동의하면 설치 후 이어서 진행합니다. 비대화형 실행에서는 `install --install-codex`를 지정해야 누락된 CLI를 설치합니다. 직접 설치하거나 업데이트하려면 다음 명령을 실행하세요.
 
 ```sh
 npm install -g @openai/codex
