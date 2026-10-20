@@ -152,7 +152,13 @@ const server = await bundle({
   target: 'node24',
 })
 const installer = await bundle({
-  banner: {js: '#!/usr/bin/env node'},
+  banner: {
+    js: [
+      '#!/usr/bin/env node',
+      'import {createRequire as nodeCreateRequire} from "node:module";',
+      'const require = nodeCreateRequire(import.meta.url);',
+    ].join('\n'),
+  },
   bundle: true,
   entryPoints: [`${root}/src/installer/main.ts`],
   format: 'esm',

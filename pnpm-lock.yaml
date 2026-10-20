@@ -1085,6 +1085,9 @@ importers:
       esbuild:
         specifier: ^0.28.2
         version: 0.28.2
+      execa:
+        specifier: 'catalog:'
+        version: 9.6.1
       fflate:
         specifier: 0.8.3
         version: 0.8.3
