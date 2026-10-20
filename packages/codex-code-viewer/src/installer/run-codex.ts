@@ -1,4 +1,6 @@
-import {execa} from 'execa'
+import {execFile} from 'node:child_process'
+import {promisify} from 'node:util'
+import {resolveCodexCommand} from './resolve-codex-command'
 
 export interface RunCodexOptions {
   /** Codex CLI에 순서대로 전달할 인수. */
@@ -10,18 +12,19 @@ export interface RunCodexOptions {
   /** stderr가 도착할 때 원문을 전달한다. 생략하면 출력은 실패 진단에만 사용한다. */
   onStderr?: (output: string) => void
 }
+const execute = promisify(execFile)
 const MAX_OUTPUT_BYTES = 4194304
 
 /** Runs Codex in the selected configuration directory, streaming stderr and returning stdout. */
 export const runCodex = async (options: RunCodexOptions): Promise<string> => {
   try {
-    const pending = execa(options.codex, options.args, {
+    const command = await resolveCodexCommand(options.codex)
+    const pending = execute(command.binary, [...command.args, ...options.args], {
       env: {...process.env, CODEX_HOME: options.home},
       maxBuffer: MAX_OUTPUT_BYTES,
-      stripFinalNewline: false,
     })
     if (options.onStderr !== undefined) {
-      pending.stderr?.setEncoding('utf8').on('data', options.onStderr)
+      pending.child.stderr?.setEncoding('utf8').on('data', options.onStderr)
     }
     const result = await pending
     return result.stdout

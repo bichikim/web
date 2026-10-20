@@ -63,25 +63,48 @@ describe('runCodex', () => {
     expect(output).toBe(`${JSON.stringify(args)}\n`)
   })
 
-  it('should report a missing executable with its original cause', async () => {
-    await expect(
-      runCodex({args: [], codex: join(tmpdir(), 'missing-code-viewer-cli'), home: tmpdir()}),
-    ).rejects.toMatchObject({
-      cause: expect.objectContaining({code: 'ENOENT'}),
-      message: expect.stringContaining('Codex CLI 명령을 실행하지 못했습니다:'),
-    })
-  })
+  it.each([join(tmpdir(), 'missing-code-viewer-cli'), 'missing-code-viewer-cli'])(
+    'should report missing executable %s with its original cause',
+    async (codex) => {
+      await expect(runCodex({args: [], codex, home: tmpdir()})).rejects.toMatchObject({
+        cause: expect.objectContaining({code: 'ENOENT'}),
+        message: expect.stringContaining('Codex CLI 명령을 실행하지 못했습니다:'),
+      })
+    },
+  )
+
+  it(
+    'should explain how to replace a Windows shim without the npm Codex package',
+    {skip: process.platform !== 'win32'},
+    async () => {
+      const root = await mkdtemp(join(tmpdir(), 'code-viewer-'))
+      try {
+        const codex = join(root, 'custom.cmd')
+        await writeFile(codex, '@ECHO off\r\nEXIT /b 97\r\n')
+        await expect(runCodex({args: [], codex, home: root})).rejects.toThrow(
+          'CODEX_BINARY에 codex.exe 경로를 지정하세요.',
+        )
+      } finally {
+        await rm(root, {force: true, recursive: true})
+      }
+    },
+  )
 
   it.each(['codex', 'codex.cmd'])(
-    'should execute an npm-style Windows %s shim with literal arguments',
+    'should execute the npm Codex CLI behind Windows %s with literal arguments',
     {skip: process.platform !== 'win32'},
     async (binary) => {
       const root = await mkdtemp(join(tmpdir(), 'code-viewer-'))
       try {
         const directory = join(root, '한글 npm & (tools)')
-        await mkdir(directory)
+        const packageRoot = join(directory, 'node_modules', '@openai', 'codex')
+        await mkdir(join(packageRoot, 'bin'), {recursive: true})
         await writeFile(
-          join(directory, 'cli.cjs'),
+          join(packageRoot, 'package.json'),
+          JSON.stringify({bin: {codex: 'bin/codex.js'}, name: '@openai/codex'}),
+        )
+        await writeFile(
+          join(packageRoot, 'bin', 'codex.js'),
           [
             'process.stderr.write("progress\\n");',
             'console.log(JSON.stringify({args:process.argv.slice(2), home:process.env.CODEX_HOME}))',
@@ -89,7 +112,7 @@ describe('runCodex', () => {
         )
         await writeFile(
           join(directory, 'codex.cmd'),
-          '@ECHO off\r\n"%CODE_VIEWER_TEST_NODE%" "%~dp0cli.cjs" %*\r\n',
+          '@ECHO off\r\n"%CODE_VIEWER_TEST_NODE%" "%~dp0node_modules\\@openai\\codex\\bin\\codex.js" %*\r\n',
         )
         const pathKey =
           Object.keys(process.env).find((key) => key.toLowerCase() === 'path') ?? 'PATH'
