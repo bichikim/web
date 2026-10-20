@@ -6,16 +6,11 @@ import type {
   PuppetSpatialMesh,
   PuppetSpatialSurface,
 } from '../document'
+import {isFiniteNumber, isRecord} from './parse-primitives'
 
 const COORDINATES_PER_VERTEX = 2
 const COORDINATES_PER_POINT = 3
 const WEIGHT_TOLERANCE = 0.00001
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null
-
-const isFiniteNumber = (value: unknown): value is number =>
-  typeof value === 'number' && Number.isFinite(value)
 
 const isAttachment = (value: unknown): boolean => {
   if (!isRecord(value) || !isFiniteNumber(value.triangleIndex)) {

@@ -62,6 +62,15 @@ export const mapSceneReferences = (
             ...node,
             children: mapSceneReferences(node.children, transform),
             id: transform.rename(node.id),
+            properties:
+              node.properties?.clippingMaskIds === undefined
+                ? node.properties
+                : {
+                    ...node.properties,
+                    clippingMaskIds: node.properties.clippingMaskIds
+                      .filter(transform.keepPart)
+                      .map(transform.rename),
+                  },
           },
         ]
       case 'deformer':

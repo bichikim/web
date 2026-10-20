@@ -1,5 +1,5 @@
 import {
-  isTwoDimensionalParameterBinding,
+  mapBindingKeyforms,
   parameterValuesEqual,
   type PuppetParameterValues,
 } from '../../deformation'
@@ -106,9 +106,7 @@ const setKeyformTransform = (
         }
       : candidate
   // Keep each binding's keyform value tuple width while replacing its deformer entry.
-  const updated = isTwoDimensionalParameterBinding(binding)
-    ? {...binding, keyforms: binding.keyforms.map(replace)}
-    : {...binding, keyforms: binding.keyforms.map(replace)}
+  const updated = mapBindingKeyforms(binding, replace)
   return {
     ...options.document,
     parameterBindings: getDocumentParameterBindings(options.document).map((candidate) =>

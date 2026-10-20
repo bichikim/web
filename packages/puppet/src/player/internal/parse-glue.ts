@@ -6,9 +6,8 @@ import type {
   PuppetPart,
   PuppetVertexReference,
 } from '../document'
+import {isRecord} from './parse-primitives'
 
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null
 const isRatio = (value: unknown): value is number =>
   typeof value === 'number' && Number.isFinite(value) && value >= 0 && value <= 1
 const isGlueKeyform = (value: unknown): boolean =>

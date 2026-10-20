@@ -1,5 +1,5 @@
 export * from './apply-document-scene'
-export * from './apply-part-render-properties'
+export * from './apply-effect-filters'
 export * from './apply-render-frame'
 export * from './create-player-renderer'
 export * from './initialize-runtime-parts'

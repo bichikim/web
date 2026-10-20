@@ -2,10 +2,12 @@ import {describe, expect, test} from 'vitest'
 
 import {
   createDemoDocument,
+  createEmptyDocument,
+  parseDocumentValue,
   type PuppetDocument,
   type PuppetParameterBinding1D,
 } from '../../../player'
-import {getPartRenderPlans} from '../../../player/internal/render-plan'
+import {getPartRenderFrame, getPartRenderPlans} from '../../../player/internal/render-plan'
 import {
   addParameter,
   insertParameterKeyform,
@@ -269,4 +271,100 @@ test('should show the original binding for editing without changing its runtime 
     ).toBe(320 + 32 * weight)
     expect(document.parameterBindings[0]!.influences[0]!.points[0]!.weight).toBe(weight)
   }
+})
+
+const createGroupPreviewDocument = (offscreen: boolean, hasDrawOrder = true): PuppetDocument => {
+  const vertices = [0, 0, 10, 0, 0, 10]
+  return {
+    ...createEmptyDocument(),
+    parameterBindings: [
+      {
+        id: 'appearance',
+        keyforms: [
+          {
+            groups: [{groupId: 'g', properties: {drawOrder: 100}}],
+            parts: [{partId: 'inside', vertices}],
+            values: [0],
+          },
+          {
+            groups: [
+              {
+                groupId: 'g',
+                properties: {
+                  drawOrder: 800,
+                  multiplyColor: [0.2, 0.4, 0.6],
+                  opacity: 0.25,
+                  screenColor: [0.1, 0.2, 0.3],
+                },
+              },
+            ],
+            parts: [{partId: 'inside', properties: {opacity: 0.6}, vertices}],
+            values: [1],
+          },
+        ],
+        parameterIds: ['p'],
+        targetGroupIds: ['g'],
+        targetPartIds: ['inside'],
+      },
+    ],
+    parameters: [{defaultValue: 0, id: 'p', maximum: 1, minimum: 0, name: 'P'}],
+    parts: ['inside', 'outside'].map((id) => ({
+      id,
+      mesh: {indices: [0, 1, 2], uvs: [0, 0, 1, 0, 0, 1], vertices},
+      texture: {height: 10, src: `${id}.png`, width: 10},
+    })),
+    scene: {
+      roots: [
+        {
+          children: [
+            {
+              children: [
+                {id: 'inside', kind: 'part', locked: false, name: 'Inside', visible: true},
+              ],
+              id: 'g',
+              kind: 'group',
+              locked: false,
+              name: 'G',
+              properties: {...(hasDrawOrder ? {drawOrder: 100} : {}), offscreen},
+              visible: true,
+            },
+          ],
+          id: 'parent',
+          kind: 'group',
+          locked: false,
+          name: 'Parent',
+          properties: {opacity: 0.75},
+          visible: true,
+        },
+        {id: 'outside', kind: 'part', locked: false, name: 'Outside', visible: true},
+      ],
+    },
+  }
+}
+
+describe('group keyform previews', () => {
+  test.each(
+    [
+      {hasDrawOrder: true, offscreen: false},
+      {hasDrawOrder: true, offscreen: true},
+      {hasDrawOrder: false, offscreen: true},
+    ].flatMap((group) => [0, 0.5, 1].map((value) => ({...group, value}))),
+  )(
+    'should retain nested group rendering at $value with offscreen=$offscreen and explicit order=$hasDrawOrder',
+    ({hasDrawOrder, offscreen, value}) => {
+      const document = createGroupPreviewDocument(offscreen, hasDrawOrder)
+      expect(parseDocumentValue(document).ok).toBe(true)
+      const parameterValues = {p: value}
+      const preview = createParameterPreview({document, parameterValues})
+      expect(preview.parameterBindings).toEqual([])
+      expect(parseDocumentValue(preview).ok).toBe(true)
+      expect(
+        preview.scene?.roots[0]?.kind === 'group' && preview.scene.roots[0].properties?.drawOrder,
+      ).toBeUndefined()
+      expect(getPartRenderFrame(preview)).toEqual(getPartRenderFrame(document, parameterValues))
+      expect(document.scene?.roots[0]).toEqual(
+        createGroupPreviewDocument(offscreen, hasDrawOrder).scene?.roots[0],
+      )
+    },
+  )
 })

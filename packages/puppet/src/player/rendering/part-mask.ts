@@ -65,30 +65,71 @@ export const createRuntimePartMask = (options: CreateRuntimePartMaskOptions): Ru
   return {container, filter, meshes, sprite, texture}
 }
 
+interface VertexBounds {
+  /** `undefined` without coordinates on that axis. */
+  readonly left: number | undefined
+  readonly right: number
+  readonly top: number | undefined
+  readonly bottom: number
+}
+
+/**
+ * Bounds of interleaved x, y vertex arrays. Loops instead of spreading into `Math.min`, which
+ * exceeds the call stack for large meshes and allocates per frame.
+ */
+export const getVertexBounds = (vertexSets: ReadonlyArray<ArrayLike<number>>): VertexBounds => {
+  let left = Number.POSITIVE_INFINITY
+  let right = Number.NEGATIVE_INFINITY
+  let top = Number.POSITIVE_INFINITY
+  let bottom = Number.NEGATIVE_INFINITY
+  let horizontalCount = 0
+  let verticalCount = 0
+  for (const vertices of vertexSets) {
+    for (let index = 0; index < vertices.length; index += 1) {
+      const coordinate = vertices[index]!
+      if (index % 2 === 0) {
+        left = Math.min(left, coordinate)
+        right = Math.max(right, coordinate)
+        horizontalCount += 1
+      } else {
+        top = Math.min(top, coordinate)
+        bottom = Math.max(bottom, coordinate)
+        verticalCount += 1
+      }
+    }
+  }
+  return {
+    bottom,
+    left: horizontalCount > 0 ? left : undefined,
+    right,
+    top: verticalCount > 0 ? top : undefined,
+  }
+}
+
+/** Renders the mask over the bounds of `vertexSets`, the receiving mesh or layer members. */
 export const renderRuntimeMask = (
   mask: RuntimePartMask,
   renderer: Renderer,
   resolution: number,
-  vertices: MeshSimple['vertices'],
+  vertexSets: ReadonlyArray<ArrayLike<number>>,
 ) => {
   for (const source of mask.meshes) {
     if (source.mask !== undefined) {
-      renderRuntimeMask(source.mask, renderer, resolution, source.mesh.vertices)
+      renderRuntimeMask(source.mask, renderer, resolution, [source.mesh.vertices])
     }
   }
   // Only the receiving mesh can display this mask; retain capacity while its bounds animate.
-  const horizontal = vertices.filter((_, index) => index % 2 === 0)
-  const vertical = vertices.filter((_, index) => index % 2 === 1)
-  const left = Math.floor(horizontal.length > 0 ? Math.min(...horizontal) : 0)
-  const top = Math.floor(vertical.length > 0 ? Math.min(...vertical) : 0)
+  const bounds = getVertexBounds(vertexSets)
+  const left = Math.floor(bounds.left ?? 0)
+  const top = Math.floor(bounds.top ?? 0)
   const width = Math.max(
     mask.texture.width,
-    Math.ceil((Math.max(left + 1, ...horizontal) - left) / MASK_TEXTURE_BLOCK_SIZE) *
+    Math.ceil((Math.max(left + 1, bounds.right) - left) / MASK_TEXTURE_BLOCK_SIZE) *
       MASK_TEXTURE_BLOCK_SIZE,
   )
   const height = Math.max(
     mask.texture.height,
-    Math.ceil((Math.max(top + 1, ...vertical) - top) / MASK_TEXTURE_BLOCK_SIZE) *
+    Math.ceil((Math.max(top + 1, bounds.bottom) - top) / MASK_TEXTURE_BLOCK_SIZE) *
       MASK_TEXTURE_BLOCK_SIZE,
   )
   if (

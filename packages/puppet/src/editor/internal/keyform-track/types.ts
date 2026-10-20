@@ -4,6 +4,8 @@ import type {PuppetParameter, PuppetParameterBinding} from '../../../player/docu
 export interface EditorKeyformTrackProps {
   readonly onKeyformAdd?: () => void
   readonly onKeyformDelete?: () => void
+  /** Deletes a 3D binding's plane at third value `value`. */
+  readonly onKeyformPlaneDelete?: (bindingId: string, value: number) => void
   readonly active: boolean
   readonly activeKeyformValues?: PuppetParameterValues | null
   readonly binding: PuppetParameterBinding

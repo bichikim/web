@@ -4,6 +4,7 @@ import type {
   PuppetMotion,
   PuppetParameter,
   PuppetParameterTrack,
+  PuppetTrack,
   PuppetVertexTrack,
 } from '../document'
 import type {PuppetParameterValueMap} from '../../deformation'
@@ -35,11 +36,62 @@ const EASING_MIDPOINT = 0.5
 const CUBIC_EXPONENT = 3
 const EASE_IN_OUT_SCALE = 4
 const DOUBLE = 2
+const CUBIC_WEIGHT = 3
+const BEZIER_ITERATIONS = 40
+const ONE_THIRD = 1 / CUBIC_WEIGHT
+const TWO_THIRDS = DOUBLE / CUBIC_WEIGHT
 
-const easeProgress = (easing: PuppetEasing | undefined, progress: number) => {
+type Bezier = readonly [number, number, number, number]
+
+/** The cubic Bezier through `points` (start, two handles, end) at parameter `t`. */
+const cubic = (points: readonly [number, number, number, number], t: number) => {
+  const [start, first, second, end] = points
+  const rest = 1 - t
+  return (
+    rest * rest * rest * start +
+    CUBIC_WEIGHT * rest * rest * t * first +
+    CUBIC_WEIGHT * rest * t * t * second +
+    t * t * t * end
+  )
+}
+
+/**
+ * The value at `progress` (0..1 of the segment's time) on the cubic Bezier from `from` to `to`.
+ * Handles are `[x1, y1, x2, y2]` with `x` in segment fractions; omitted, they are flat at one
+ * third from each end. The curve's `t` is found by bisection, so `x(t) = progress` holds to
+ * about 1e-12 and other runtimes reproduce it exactly.
+ */
+export const sampleBezier = (
+  from: number,
+  to: number,
+  progress: number,
+  handles: Bezier = [ONE_THIRD, from, TWO_THIRDS, to],
+) => {
+  const [x1, y1, x2, y2] = handles
+  let low = 0
+  let high = 1
+  for (let iteration = 0; iteration < BEZIER_ITERATIONS; iteration += 1) {
+    const middle = (low + high) / DOUBLE
+    if (cubic([0, x1, x2, 1], middle) < progress) {
+      low = middle
+    } else {
+      high = middle
+    }
+  }
+  return cubic([from, y1, y2, to], (low + high) / DOUBLE)
+}
+
+/** Eased progress 0..1 of a segment from 0 to 1 (a `bezier` uses its default handles). */
+export const easeProgress = (easing: PuppetEasing | undefined, progress: number) => {
   const activeEasing = easing ?? 'linear'
 
   switch (activeEasing) {
+    case 'bezier':
+      return sampleBezier(0, 1, progress)
+    case 'stepped':
+      return progress < 1 ? 0 : 1
+    case 'inverse-stepped':
+      return progress > 0 ? 1 : 0
     case 'ease-in':
       return progress ** CUBIC_EXPONENT
     case 'ease-in-out':
@@ -77,6 +129,14 @@ export const sampleKeyframes = (keyframes: ReadonlyArray<PuppetKeyframe>, time: 
 
   const duration = nextKeyframe.time - previousKeyframe.time
   const progress = duration === 0 ? 0 : (time - previousKeyframe.time) / duration
+  if (previousKeyframe.easing === 'bezier' && progress < 1) {
+    return sampleBezier(
+      previousKeyframe.value,
+      nextKeyframe.value,
+      progress,
+      previousKeyframe.bezier,
+    )
+  }
   const easedProgress = easeProgress(previousKeyframe.easing, progress)
 
   return previousKeyframe.value + (nextKeyframe.value - previousKeyframe.value) * easedProgress
@@ -89,9 +149,11 @@ export const sampleDiscreteKeyframes = (keyframes: ReadonlyArray<PuppetKeyframe>
     : (keyframes[Math.max(0, nextIndex - 1)]?.value ?? 0)
 }
 
-export const isParameterTrack = (
-  track: PuppetParameterTrack | PuppetVertexTrack,
-): track is PuppetParameterTrack => track.kind === 'parameter'
+export const isParameterTrack = (track: PuppetTrack): track is PuppetParameterTrack =>
+  track.kind === 'parameter'
+
+export const isVertexTrack = (track: PuppetTrack): track is PuppetVertexTrack =>
+  track.kind === 'vertex'
 
 export const getCoordinateIndex = (track: PuppetVertexTrack) =>
   track.vertexIndex * COORDINATES_PER_VERTEX + (track.axis === 'y' ? Y_COORDINATE_OFFSET : 0)
@@ -102,7 +164,7 @@ export const applyMotionVertices = (options: ApplyMotionVerticesOptions) => {
   }
 
   for (const track of options.motion.tracks) {
-    if (!isParameterTrack(track) && track.partId === options.partId) {
+    if (isVertexTrack(track) && track.partId === options.partId) {
       options.vertices[getCoordinateIndex(track)] = sampleKeyframes(track.keyframes, options.time)
     }
   }

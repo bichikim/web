@@ -1,9 +1,12 @@
 import {
-  isTwoDimensionalParameterBinding,
+  isThreeDimensionalParameterBinding,
   parameterValuesEqual,
   type PuppetParameterValues,
   sampleParameterDeformer,
+  withBindingKeyforms,
+  withKeyformValues,
 } from '../../deformation'
+import {compareKeyformValues, isCompleteKeyformGrid} from './keyform-grid'
 import {validateMesh} from '../../mesh'
 import type {
   PuppetDocument,
@@ -20,6 +23,7 @@ import {
 } from './parameter-keyforms'
 import {samplePartKeyform} from './parameter-sampling'
 import {getSceneNode, isSceneNodeLocked} from './scene-graph'
+import {sampleKeyformGroups} from './sample-keyform-groups'
 
 export interface KeyformGenerationTarget {
   readonly document: PuppetDocument
@@ -69,13 +73,12 @@ export const sampleBindingKeyform = (
   const partIds = new Set(getParameterTargetPartIds(binding))
   const geometry = {
     deformers: deformers.map((deformer) => sampleParameterDeformer({binding, deformer, values})),
+    groups: sampleKeyformGroups(options.document, binding, values),
     parts: options.document.parts
       .filter((part) => partIds.has(part.id))
       .map((part) => samplePartKeyform({...options, binding, part, values})),
   }
-  return values.length === 2
-    ? {...geometry, values: [values[0], values[1]]}
-    : {...geometry, values: [values[0]]}
+  return withKeyformValues(geometry, values)
 }
 
 export const replaceGeneratedKeyforms = (
@@ -96,22 +99,13 @@ export const replaceGeneratedKeyforms = (
     (keyform) =>
       !generated.some((candidate) => parameterValuesEqual(candidate.values, keyform.values)),
   )
-  const keyforms = [...retained, ...generated].toSorted(
-    (first, second) =>
-      (first.values[1] ?? 0) - (second.values[1] ?? 0) || first.values[0] - second.values[0],
+  const keyforms = [...retained, ...generated].toSorted((first, second) =>
+    compareKeyformValues(first.values, second.values),
   )
-  const updated: PuppetParameterBinding = isTwoDimensionalParameterBinding(binding)
-    ? {
-        ...binding,
-        keyforms: keyforms.map((keyform) => ({
-          ...keyform,
-          values: [keyform.values[0], keyform.values[1]!] as const,
-        })),
-      }
-    : {
-        ...binding,
-        keyforms: keyforms.map((keyform) => ({...keyform, values: [keyform.values[0]] as const})),
-      }
+  if (isThreeDimensionalParameterBinding(binding) && !isCompleteKeyformGrid(keyforms)) {
+    return {message: '3차원 Parameter는 모든 평면에 같은 키폼 위치가 있어야 합니다.', ok: false}
+  }
+  const updated = withBindingKeyforms(binding, keyforms)
   return {
     document: {
       ...options.document,

@@ -57,6 +57,11 @@ export const EditorKeyformPanel = (props: EditorKeyformPanelProps) => {
                             : props.onKeyformDelete
                         }
                         onKeyformMove={props.onKeyformMove}
+                        onKeyformPlaneDelete={
+                          props.previewBindingIds?.has(bindingId)
+                            ? undefined
+                            : props.onKeyformPlaneDelete
+                        }
                         onKeyformSelect={props.onKeyformSelect}
                         onValueChange={props.onValueChange}
                       />

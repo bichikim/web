@@ -1,6 +1,7 @@
 import {Button} from '@kobalte/core/button'
 
 import type {PuppetDocument} from '../../player'
+import {FlipSelectionMenu} from './FlipSelectionMenu'
 import {moveSceneNodeBy, moveSceneNodeToParent, type SceneSelection} from './scene-graph'
 
 interface EditorLayerToolbarProps {
@@ -72,6 +73,11 @@ export const EditorLayerToolbar = (props: EditorLayerToolbarProps) => (
         class="puppet-icon puppet-icon-indent-decrease layer-toolbar-icon puppet-layer-toolbar-icon"
       />
     </Button>
+    <FlipSelectionMenu
+      document={props.document}
+      nodeIds={props.selection.nodeIds}
+      onDocumentChange={props.onDocumentChange}
+    />
     <span class="layer-count" aria-label={`파츠 ${props.document.parts.length}개`}>
       {props.document.parts.length}
     </span>

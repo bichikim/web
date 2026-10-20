@@ -1,35 +1,43 @@
-import {type Container, MeshSimple, Texture} from 'pixi.js'
+import {limitAsync} from 'es-toolkit/promise'
+import {Container, MeshSimple, Texture} from 'pixi.js'
 import type {PuppetDocument} from '../document'
-import {getPartRenderPlans} from '../internal/render-plan'
+import {getPartRenderFrame} from '../internal/render-plan'
 import {applyDocumentScene} from './apply-document-scene'
 import {createRuntimePartMask} from './part-mask'
-import type {RuntimePart} from './types'
+import type {RuntimeLayer, RuntimePart} from './types'
 
-const loadTexture = async (source: string) => {
+// Chromium fails some decodes ("cannot be decoded") when many large images, such as texture
+// atlas pages, decode at once; a few at a time keeps loading parallel without that.
+const MAXIMUM_CONCURRENT_DECODES = 4
+
+const loadTexture = limitAsync(async (source: string) => {
   const image = new Image()
   image.decoding = 'async'
   image.src = source
   await image.decode()
 
   return Texture.from({autoGenerateMipmaps: true, resource: image, scaleMode: 'linear'})
-}
+}, MAXIMUM_CONCURRENT_DECODES)
 
 interface InitializeRuntimePartsOptions {
   readonly document: PuppetDocument
+  readonly layerById: Map<string, RuntimeLayer>
   readonly partById: Map<string, RuntimePart>
   readonly root: Container
 }
 
 export const initializeRuntimeParts = async (options: InitializeRuntimePartsOptions) => {
-  const textureResults = await Promise.allSettled(
-    options.document.parts.map((part) => loadTexture(part.texture.src)),
-  )
+  // Parts sharing an image (an atlas) share one texture.
+  const sources = [...new Set(options.document.parts.map((part) => part.texture.src))]
+  const loaded = await Promise.allSettled(sources.map(loadTexture))
+  const resultBySource = new Map(sources.map((source, index) => [source, loaded[index]!]))
+  const textureResults = options.document.parts.map((part) => resultBySource.get(part.texture.src)!)
   const failedTexture = textureResults.find(
     (result): result is PromiseRejectedResult => result.status === 'rejected',
   )
 
   if (failedTexture !== undefined) {
-    for (const result of textureResults) {
+    for (const result of loaded) {
       if (result.status === 'fulfilled') {
         result.value.destroy(true)
       }
@@ -58,22 +66,43 @@ export const initializeRuntimeParts = async (options: InitializeRuntimePartsOpti
     options.partById.set(part.id, {mesh, partId: part.id, restVertices, vertices})
   }
 
-  const plans = getPartRenderPlans(options.document)
+  const frame = getPartRenderFrame(options.document)
+  const {plans} = frame
   const planById = new Map(plans.map((plan) => [plan.partId, plan]))
+  // Masks draw other parts, so they are attached once every part exists.
   for (const runtimePart of options.partById.values()) {
     const plan = planById.get(runtimePart.partId)
-    runtimePart.mask =
-      plan?.mask === undefined
-        ? undefined
-        : createRuntimePartMask({
-            document: options.document,
-            partById: options.partById,
-            plan: plan.mask,
-          })
-    if (runtimePart.mask !== undefined) {
-      runtimePart.mask.filter.inverse = plan?.properties.invertedMask ?? false
+    if (plan?.mask !== undefined) {
+      const mask = createRuntimePartMask({
+        document: options.document,
+        partById: options.partById,
+        plan: plan.mask,
+      })
+      mask.filter.inverse = plan.properties.invertedMask
+      options.partById.set(runtimePart.partId, {...runtimePart, mask})
     }
   }
 
-  applyDocumentScene(plans, options.partById, options.root)
+  for (const layer of frame.layers.values()) {
+    options.layerById.set(layer.groupId, {
+      container: new Container(),
+      groupId: layer.groupId,
+      mask:
+        layer.mask === undefined
+          ? undefined
+          : createRuntimePartMask({
+              document: options.document,
+              partById: options.partById,
+              plan: layer.mask,
+            }),
+      memberPartIds: [],
+    })
+  }
+
+  applyDocumentScene({
+    frame,
+    layerById: options.layerById,
+    partById: options.partById,
+    root: options.root,
+  })
 }

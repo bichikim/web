@@ -1,8 +1,11 @@
 export * from './binding'
 export * from './composition'
+export * from './draw-order'
 export * from './glue'
 export * from './grid'
+export * from './group-properties'
 export * from './influence'
+export * from './keyed-color-effect'
 export * from './parameter'
 
 export * from './parameter-glue'

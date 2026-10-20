@@ -4,12 +4,15 @@ import {Application, Container, UPDATE_PRIORITY} from 'pixi.js'
 import type {PuppetParameterValueMap} from '../../deformation'
 import type {PuppetDocument} from '../document'
 import type {MotionMix} from '../playback'
-import {canReusePartResources} from '../internal/render-plan'
-import {layoutPlayerRoot} from '../internal/layout-player-root'
+import {canReuseLayerResources, canReusePartResources} from '../internal/render-plan'
+import {layoutPlayerRoot, type PuppetFraming} from '../internal/layout-player-root'
+import type {RenderOverrides} from '../internal/render-overrides'
 import {applyRenderFrame} from './apply-render-frame'
+import {replaceBackBufferPresentation} from './back-buffer-presentation'
+import {documentUsesBackdropBlend} from './part-blend-filter'
 import {initializeRuntimeParts} from './initialize-runtime-parts'
 import {destroyRuntimeMask, renderRuntimeMask} from './part-mask'
-import type {RuntimePart} from './types'
+import type {RuntimeLayer, RuntimePart} from './types'
 
 const MINIMUM_MASK_RESOLUTION = 0.01
 const MILLISECONDS_PER_SECOND = 1000
@@ -20,13 +23,25 @@ interface CreatePlayerRendererOptions {
   readonly onAfterRender?: () => void
   readonly onBeforeRender?: () => void
   readonly resolution?: number
+  readonly framing?: PuppetFraming
   readonly resizeTo?: HTMLElement
   readonly viewportPadding?: number
 }
 
 export interface PlayerRenderer {
-  applyFrame(mix: MotionMix, parameterValues: PuppetParameterValueMap): void
+  applyFrame(
+    mix: MotionMix,
+    parameterValues: PuppetParameterValueMap,
+    poseOpacityByPartId?: ReadonlyMap<string, number>,
+    overrides?: RenderOverrides,
+  ): void
   destroy(): void
+  /** Part IDs of the last applied frame in paint order, back to front. */
+  getPaintOrder(): ReadonlyArray<string>
+  /** Deformed vertices of the last applied frame in document coordinates. */
+  getPartVertices(partId: string): ArrayLike<number> | undefined
+  /** Converts canvas CSS pixels to document coordinates. */
+  toDocumentPoint(point: {readonly x: number; readonly y: number}): {x: number; y: number}
   redraw(): void
   resize(): void
   setViewCamera(camera: PlayerViewCamera): void
@@ -38,31 +53,51 @@ export interface PlayerRenderer {
 interface RenderPartMasksOptions {
   readonly application: Application
   readonly externalRendering: boolean
+  readonly layerById: ReadonlyMap<string, RuntimeLayer>
   readonly partById: ReadonlyMap<string, RuntimePart>
   readonly root: Container
 }
 
+/** Masks of visible parts and layers with the vertex arrays that bound them. */
+const visibleMasks = (options: RenderPartMasksOptions) => [
+  ...[...options.partById.values()].flatMap((part) =>
+    part.mask !== undefined && part.mesh.visible
+      ? [{mask: part.mask, vertexSets: [part.vertices]}]
+      : [],
+  ),
+  ...[...options.layerById.values()].flatMap((layer) =>
+    layer.mask !== undefined && layer.container.visible && layer.memberPartIds.length > 0
+      ? [
+          {
+            mask: layer.mask,
+            // The members' own arrays bound the layer; they are not copied into one.
+            vertexSets: layer.memberPartIds.flatMap((partId) => {
+              const vertices = options.partById.get(partId)?.vertices
+              return vertices === undefined ? [] : [vertices]
+            }),
+          },
+        ]
+      : [],
+  ),
+]
+
 const renderPartMasks = (options: RenderPartMasksOptions) => {
   let stateReset = false
-  for (const part of options.partById.values()) {
-    if (part.mask !== undefined && part.mesh.visible) {
-      if (!stateReset && options.externalRendering) {
-        // External drawing can change the shared WebGL state before this mask pass.
-        options.application.renderer.resetState()
-        stateReset = true
-      }
-      const resolution = Math.max(
-        MINIMUM_MASK_RESOLUTION,
-        options.application.renderer.resolution * options.root.scale.x,
-      )
-      renderRuntimeMask(part.mask, options.application.renderer, resolution, part.vertices)
+  for (const {mask, vertexSets} of visibleMasks(options)) {
+    if (!stateReset && options.externalRendering) {
+      // External drawing can change the shared WebGL state before this mask pass.
+      options.application.renderer.resetState()
+      stateReset = true
     }
+    const resolution = Math.max(
+      MINIMUM_MASK_RESOLUTION,
+      options.application.renderer.resolution * options.root.scale.x,
+    )
+    renderRuntimeMask(mask, options.application.renderer, resolution, vertexSets)
   }
 }
 
-export const createPlayerRenderer = async (
-  options: CreatePlayerRendererOptions,
-): Promise<PlayerRenderer> => {
+const createApplication = async (options: CreatePlayerRendererOptions) => {
   const application = new Application()
   const resizeTarget = options.resizeTo ?? options.canvas.parentElement
   await application.init({
@@ -73,13 +108,41 @@ export const createPlayerRenderer = async (
     height: options.document.viewport.height,
     ...(options.onAfterRender === undefined ? {} : {preference: 'webgl' as const}),
     resolution: options.resolution ?? Math.min(window.devicePixelRatio, 2),
+    // WebGL reads the drawn scene for backdrop blending only through a back buffer.
+    useBackBuffer: documentUsesBackdropBlend(options.document),
     width: options.document.viewport.width,
     ...(resizeTarget === null ? {} : {resizeTo: resizeTarget}),
   })
+  const presentation = replaceBackBufferPresentation(
+    (application.renderer as {backBuffer?: unknown} | undefined)?.backBuffer,
+  )
+  if (presentation === 'unsupported') {
+    console.warn('Puppet player could not replace the PixiJS back buffer presentation.')
+  }
+  return application
+}
+
+/** Releases the masks and filters of parts and offscreen layers. */
+const destroyRuntimeFilters = (items: ReadonlyArray<RuntimeLayer | RuntimePart>) => {
+  for (const item of items) {
+    if (item.mask !== undefined) {
+      destroyRuntimeMask(item.mask)
+    }
+    item.colorFilter?.destroy()
+    item.blendFilter?.filter.destroy()
+  }
+}
+
+export const createPlayerRenderer = async (
+  options: CreatePlayerRendererOptions,
+): Promise<PlayerRenderer> => {
+  const application = await createApplication(options)
   const root = new Container()
   const partById = new Map<string, RuntimePart>()
+  const layerById = new Map<string, RuntimeLayer>()
   let {document} = options
   let camera: PlayerViewCamera | undefined
+  let paintOrder: ReadonlyArray<string> = []
   let destroyed = false
   let running = true
   const destroy = () => {
@@ -87,19 +150,14 @@ export const createPlayerRenderer = async (
       return
     }
     destroyed = true
-    for (const part of partById.values()) {
-      if (part.mask !== undefined) {
-        destroyRuntimeMask(part.mask)
-      }
-      part.colorFilter?.destroy()
-    }
+    destroyRuntimeFilters([...partById.values(), ...layerById.values()])
     application.destroy(
       {removeView: false},
       {children: true, context: false, texture: true, textureSource: true},
     )
   }
   try {
-    await initializeRuntimeParts({document, partById, root})
+    await initializeRuntimeParts({document, layerById, partById, root})
     application.stage.addChild(root)
   } catch (error) {
     destroy()
@@ -109,6 +167,7 @@ export const createPlayerRenderer = async (
     layoutPlayerRoot({
       camera,
       document,
+      framing: options.framing,
       root,
       screen: application.screen,
       viewportPadding: options.viewportPadding,
@@ -138,16 +197,29 @@ export const createPlayerRenderer = async (
     }
   }
   return {
-    applyFrame(mix, parameterValues) {
-      applyRenderFrame({document, layoutRoot, mix, parameterValues, partById, root})
+    applyFrame(mix, parameterValues, poseOpacityByPartId, overrides) {
+      paintOrder = applyRenderFrame({
+        document,
+        layerById,
+        layoutRoot,
+        mix,
+        overrides,
+        parameterValues,
+        partById,
+        poseOpacityByPartId,
+        root,
+      })
       renderPartMasks({
         application,
         externalRendering: options.onAfterRender !== undefined,
+        layerById,
         partById,
         root,
       })
     },
     destroy,
+    getPaintOrder: () => paintOrder,
+    getPartVertices: (partId) => partById.get(partId)?.vertices,
     redraw,
     resize() {
       application.resize()
@@ -179,8 +251,17 @@ export const createPlayerRenderer = async (
         }
       })
     },
+    toDocumentPoint(point) {
+      const local = root.toLocal(point)
+      return {x: local.x, y: local.y}
+    },
     updateDocument(nextDocument) {
-      if (destroyed || !canReusePartResources(document, nextDocument)) {
+      if (
+        destroyed ||
+        !canReusePartResources(document, nextDocument) ||
+        !canReuseLayerResources(document, nextDocument) ||
+        documentUsesBackdropBlend(document) !== documentUsesBackdropBlend(nextDocument)
+      ) {
         return false
       }
       document = nextDocument

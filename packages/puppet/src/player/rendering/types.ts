@@ -6,10 +6,21 @@ import type {
   RenderTexture,
   Sprite,
 } from 'pixi.js'
+import type {PartBlendFilter} from './part-blend-filter'
 
-export interface RuntimePart {
+/**
+ * Filters created on demand for a part's or layer's render properties; the mask is fixed when
+ * the part or layer is created.
+ */
+export interface RuntimeEffects {
+  blendFilter?: PartBlendFilter
   colorFilter?: ColorMatrixFilter
-  mask?: RuntimePartMask
+  readonly mask?: RuntimePartMask
+}
+
+export interface RuntimePart extends RuntimeEffects {
+  /** Whether the drawn indices currently leave out turned-over triangles. */
+  culled?: boolean
   readonly mesh: MeshSimple
   readonly partId: string
   restVertices: ReadonlyArray<number>
@@ -28,4 +39,12 @@ export interface RuntimePartMask {
   readonly meshes: ReadonlyArray<RuntimePartMaskMesh>
   readonly sprite: Sprite
   readonly texture: RenderTexture
+}
+
+/** An offscreen group drawn as an isolated container. */
+export interface RuntimeLayer extends RuntimeEffects {
+  readonly container: Container
+  readonly groupId: string
+  /** Visible parts drawn into the layer in the last frame; they bound its mask. */
+  memberPartIds: ReadonlyArray<string>
 }
