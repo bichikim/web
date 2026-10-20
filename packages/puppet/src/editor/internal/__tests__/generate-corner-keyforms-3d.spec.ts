@@ -1,9 +1,9 @@
+import {createKeyedParameter3D} from './parameter-keyforms/fixtures'
 import {expect, test} from 'vitest'
 
 import {withBindingKeyforms} from '../../../deformation'
 import {createDemoDocument, parseDocumentValue, type PuppetDocument} from '../../../player'
 import {generateCornerKeyforms} from '../generate-corner-keyforms'
-import {addThreeDimensionalParameter} from '../parameter-keyforms'
 
 const PLANE_SHIFT = 0.1
 
@@ -16,7 +16,7 @@ const shifted = (rest: ReadonlyArray<number>, values: ReadonlyArray<number>) =>
 
 /** A 3D binding with linear keyforms, keeping only those `keep` accepts. */
 const createSource = (keep: (values: ReadonlyArray<number>) => boolean) => {
-  const added = addThreeDimensionalParameter({
+  const added = createKeyedParameter3D({
     document: {...createDemoDocument(), motions: [], parameterBindings: [], parameters: []},
     nodeIds: ['mesh-preview'],
   })!
@@ -48,7 +48,13 @@ const keyformAt = (document: PuppetDocument, values: ReadonlyArray<number>) =>
 test('should add new corners to every plane from that plane’s own forms', () => {
   const source = createSource((values) => !isCorner(values))
   const current = generateCornerKeyforms({...source, overwrite: false, plane: 0, planes: 'current'})
-  expect(current).toMatchObject({message: expect.stringContaining('모든 평면'), ok: false})
+  if (!current.ok) {
+    throw new Error(current.message)
+  }
+  expect(current.document.parameterBindings![0]!.keyforms).toHaveLength(19)
+  expect(keyformAt(current.document, [30, 30, 0])).toBeDefined()
+  expect(keyformAt(current.document, [30, 30, -30])).toBeUndefined()
+  expect(parseDocumentValue(current.document).ok).toBe(true)
 
   const result = generateCornerKeyforms({...source, overwrite: false, planes: 'all'})
   if (!result.ok) {
@@ -63,7 +69,7 @@ test('should add new corners to every plane from that plane’s own forms', () =
   expect(parseDocumentValue(result.document).ok).toBe(true)
 })
 
-test('should regenerate only the plane nearest the current third value', () => {
+test('should regenerate only the exact selected Z plane', () => {
   const complete = createSource(() => true)
   const scrambled: PuppetDocument = {
     ...complete.document,
@@ -82,7 +88,7 @@ test('should regenerate only the plane nearest the current third value', () => {
     ...complete,
     document: scrambled,
     overwrite: true,
-    plane: 20,
+    plane: 30,
     planes: 'current',
   })
   if (!result.ok) {
@@ -102,4 +108,11 @@ test('should name the plane missing a reference form', () => {
     message: expect.stringContaining('평면 0'),
     ok: false,
   })
+})
+
+test('should not generate corners on a neighboring plane when current Z has no keys', () => {
+  const source = createSource(() => true)
+  expect(
+    generateCornerKeyforms({...source, overwrite: true, plane: 20, planes: 'current'}),
+  ).toMatchObject({message: expect.stringContaining('평면 20'), ok: false})
 })

@@ -1,3 +1,4 @@
+import {isThreeDimensionalParameterBinding} from '../parameter'
 import {describe, expect, test} from 'vitest'
 
 import {
@@ -83,13 +84,34 @@ describe('three-parameter keyforms', () => {
     expect(firstX(document, {x: 0, y: 0, z: 0.75})).toBeCloseTo(25)
   })
 
-  test('should accept only planes that share their first and second values', () => {
+  test('should accept different XY keys in each plane and reject a fourth axis', () => {
     const document = createDocument([-1, 1])
     expect(parseDocumentValue(document).ok).toBe(true)
     const [binding] = document.parameterBindings!
     const missing = {...binding!, keyforms: binding!.keyforms.slice(1)}
-    expect(parseDocumentValue({...document, parameterBindings: [missing]}).ok).toBe(false)
+    expect(parseDocumentValue({...document, parameterBindings: [missing]}).ok).toBe(true)
     const fourAxes = {...binding!, parameterIds: ['x', 'y', 'z', 'w']}
     expect(parseDocumentValue({...document, parameterBindings: [fourAxes]}).ok).toBe(false)
   })
+})
+
+test('should sample sparse planes independently before blending in Z', () => {
+  const document = createDocument([-1, 1])
+  const binding = document.parameterBindings![0]!
+  if (!isThreeDimensionalParameterBinding(binding)) {
+    throw new Error('3차원 바인딩이 필요합니다.')
+  }
+  const sparse = {
+    ...document,
+    parameterBindings: [
+      {
+        ...binding,
+        keyforms: binding.keyforms.filter((key) => key.values[2] === -1 || key.values[0] === 0),
+      },
+    ],
+  }
+  expect(parseDocumentValue(sparse).ok).toBe(true)
+  expect(firstX(sparse, {x: 0.5, y: 0, z: -1})).toBeCloseTo(-95)
+  expect(firstX(sparse, {x: 0.5, y: 0, z: 1})).toBeCloseTo(100)
+  expect(firstX(sparse, {x: 0.5, y: 0, z: 0})).toBeCloseTo(2.5)
 })

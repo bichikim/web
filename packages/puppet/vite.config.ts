@@ -57,7 +57,10 @@ export default defineConfig(({command, mode}) => {
   const plugins = [UnoCSS({...unoConfig, configFile: false, mode: 'shadow-dom'}), solidPlugin()]
 
   if (command !== 'build') {
-    return {plugins: [...plugins, trackingAssets()]}
+    return {
+      optimizeDeps: {exclude: ['es-toolkit']},
+      plugins: [...plugins, trackingAssets()],
+    }
   }
 
   if (!isBuildTarget(mode)) {

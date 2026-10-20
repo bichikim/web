@@ -39,9 +39,18 @@ export const createTemporaryTarget = (
       : getParameterBinding(options.document, options.bindingId)
   if (binding === undefined || !getParameterTargetNodeIds(binding).includes(options.nodeId)) {
     const result = addParameter({document: options.document, nodeIds: [options.nodeId]})
-    return result === undefined
+    if (result === undefined) {
+      return undefined
+    }
+    // 임시 문서에만 편집용 키폼을 만들고 원본 문서는 비워 둔다.
+    const document = insertParameterKeyform({
+      bindingId: result.binding.id,
+      document: result.document,
+      values: [0],
+    })
+    return document === undefined
       ? undefined
-      : {bindingId: result.binding.id, document: result.document, values: [0]}
+      : {bindingId: result.binding.id, document, values: [0]}
   }
   const document = binding.keyforms.some((key) => parameterValuesEqual(key.values, options.values))
     ? options.document

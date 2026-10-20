@@ -1,5 +1,7 @@
 /** @vitest-environment jsdom */
 
+import {createKeyedParameter} from './parameter-keyforms/fixtures'
+
 import {fireEvent, render} from '@solidjs/testing-library'
 import {transformDeformerPoint} from '../../../deformation'
 import {createSignal} from 'solid-js'
@@ -8,7 +10,7 @@ import {createDemoDocument, type PuppetSceneDeformerNode} from '../../../player'
 import {DeformerEditor} from '../DeformerEditor'
 import {convertSceneContainers} from '../container-conversion'
 import {getSceneNode} from '../scene-graph'
-import {addParameter, insertParameterKeyform} from '../parameter-keyforms'
+import {insertParameterKeyform} from '../parameter-keyforms'
 import {createParameterPreview} from '../parameter-sampling'
 import {
   createDeformer,
@@ -138,7 +140,7 @@ describe('DeformerEditor', () => {
       nodeIds: ['shapes'],
       targetKind: 'spatial',
     })!
-    const added = addParameter({document: source, nodeIds: ['shapes']})!
+    const added = createKeyedParameter({document: source, nodeIds: ['shapes']})!
     const inserted = insertParameterKeyform({
       bindingId: added.binding.id,
       document: added.document,

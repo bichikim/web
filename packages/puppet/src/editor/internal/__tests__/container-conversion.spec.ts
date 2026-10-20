@@ -1,3 +1,4 @@
+import {createKeyedParameter} from './parameter-keyforms/fixtures'
 import {describe, expect, test} from 'vitest'
 
 import {
@@ -7,7 +8,7 @@ import {
   type PuppetDocument,
 } from '../../../player'
 import {setGroupRenderProperties} from '../group-properties'
-import {addParameter} from '../parameter-keyforms'
+
 import {createDeformer, createSceneGroup, setSceneNodeState} from '../scene-graph'
 import {convertSceneContainers, getContainerKind} from '../container-conversion'
 
@@ -79,7 +80,7 @@ describe('convertSceneContainers', () => {
       nodeId: deformer.id,
       visible: false,
     })!
-    const added = addParameter({document: hidden, nodeIds: [deformer.id]})!
+    const added = createKeyedParameter({document: hidden, nodeIds: [deformer.id]})!
     const converted = convertSceneContainers({
       document: added.document,
       nodeIds: [deformer.id],

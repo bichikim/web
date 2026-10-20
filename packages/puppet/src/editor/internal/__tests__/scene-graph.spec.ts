@@ -1,3 +1,4 @@
+import {createKeyedParameter, createKeyedParameter2D} from './parameter-keyforms/fixtures'
 import {describe, expect, test} from 'vitest'
 
 import {transformDeformerPoint} from '../../../deformation'
@@ -6,11 +7,7 @@ import {createDemoDocument, parseDocument, type PuppetSceneDeformerNode} from '.
 import {convertSceneContainers} from '../container-conversion'
 import {setSpatialMesh} from '../set-spatial-mesh'
 import {addDeformerCurveHandle, setDeformerCurveHandle} from '../deformer-curve-handles'
-import {
-  addParameter,
-  addTwoDimensionalParameter,
-  setParameterKeyformDeformerPoint,
-} from '../parameter-keyforms'
+import {setParameterKeyformDeformerPoint} from '../parameter-keyforms'
 import {getDocumentScene} from '../../../player/scene'
 import {
   createCurveDeformer,
@@ -262,11 +259,11 @@ describe('scene graph', () => {
     )
     const firstDeformer = deformers[0]!
     const secondDeformer = deformers[1]!
-    const added1D = addParameter({
+    const added1D = createKeyedParameter({
       document: secondDocument,
       nodeIds: deformers.map((deformer) => deformer.id),
     })!
-    const added2D = addTwoDimensionalParameter({
+    const added2D = createKeyedParameter2D({
       document: added1D.document,
       nodeIds: deformers.map((deformer) => deformer.id),
     })!
@@ -290,7 +287,7 @@ describe('scene graph', () => {
     const source = {...createDemoDocument(), motions: [], parameterBindings: [], parameters: []}
     const deformerDocument = createDeformer(source, ['mesh-preview'])!
     const deformer = getDocumentScene(deformerDocument).roots[0]!
-    const added = addParameter({document: deformerDocument, nodeIds: [deformer.id]})!
+    const added = createKeyedParameter({document: deformerDocument, nodeIds: [deformer.id]})!
     const edited = setParameterKeyformDeformerPoint({
       bindingId: added.binding.id,
       document: added.document,
@@ -348,7 +345,7 @@ describe('scene graph', () => {
       parameters: [],
       scene: {roots: [node]},
     }
-    const added = addParameter({document: source, nodeIds: [node.id]})!
+    const added = createKeyedParameter({document: source, nodeIds: [node.id]})!
     const resized = resizeDeformer({
       columns: 1,
       document: added.document,
@@ -400,7 +397,7 @@ describe('scene graph', () => {
       point: {x: neutralHandle.horizontal.x, y: neutralHandle.horizontal.y + 100},
       pointIndex: 0,
     })!
-    const added = addParameter({document: curved, nodeIds: [deformer.id]})!
+    const added = createKeyedParameter({document: curved, nodeIds: [deformer.id]})!
     const sourceDeformer = getDocumentScene(added.document).roots[0]!
 
     if (sourceDeformer.kind !== 'deformer') {

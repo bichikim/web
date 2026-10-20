@@ -1,3 +1,4 @@
+import {createKeyedParameter3D} from './parameter-keyforms/fixtures'
 import {describe, expect, test} from 'vitest'
 
 import {createDemoDocument, parseDocumentValue} from '../../../player'
@@ -13,7 +14,7 @@ import {
 
 const createBinding = () => {
   const source = {...createDemoDocument(), motions: [], parameterBindings: [], parameters: []}
-  const added = addThreeDimensionalParameter({document: source, nodeIds: ['mesh-preview']})
+  const added = createKeyedParameter3D({document: source, nodeIds: ['mesh-preview']})
   if (added === undefined) {
     throw new Error('the demo mesh should accept a parameter')
   }
@@ -28,39 +29,40 @@ const planesOf = (document: PuppetDocument | undefined) => [
 ]
 
 describe('three-parameter keyform editing', () => {
-  test('should create three planes of a three-by-three grid', () => {
-    const {binding, document} = createBinding()
+  test('should create a three-dimensional parameter without keyforms', () => {
+    const {binding, document} = addThreeDimensionalParameter({
+      document: {...createDemoDocument(), motions: [], parameterBindings: [], parameters: []},
+      nodeIds: ['mesh-preview'],
+    })!
     expect(document.parameters?.map((parameter) => parameter.name)).toEqual([
       'Parameter 1 X',
       'Parameter 1 Y',
       'Parameter 1 Z',
     ])
-    expect(binding.keyforms).toHaveLength(27)
-    expect(binding.keyforms.slice(0, 2).map((keyform) => keyform.values)).toEqual([
-      [-30, -30, -30],
-      [0, -30, -30],
-    ])
+    expect(binding.keyforms).toEqual([])
     expect(parseDocumentValue(document).ok).toBe(true)
   })
 
-  test('should keep the grid complete when inserting a point or a plane', () => {
+  test('should insert only the requested keyform in its Z plane', () => {
     const {binding, document} = createBinding()
     const point = insertParameterKeyform({bindingId: binding.id, document, values: [15, 0, 0]})
-    expect(valuesOf(point)).toHaveLength(30)
-    expect(valuesOf(point).filter((values) => values[0] === 15 && values[1] === 0)).toHaveLength(3)
+    expect(valuesOf(point)).toHaveLength(28)
+    expect(valuesOf(point).filter((values) => values[0] === 15 && values[1] === 0)).toHaveLength(1)
 
     const plane = insertParameterKeyform({bindingId: binding.id, document, values: [0, 0, 10]})
-    expect(valuesOf(plane)).toHaveLength(36)
+    expect(valuesOf(plane)).toHaveLength(28)
     expect(planesOf(plane)).toEqual([-30, 0, 10, 30])
     expect(parseDocumentValue(plane!).ok).toBe(true)
     const sorted = valuesOf(plane).toSorted(compareKeyformValues)
     expect(valuesOf(plane)).toEqual(sorted)
   })
 
-  test('should delete a point from every plane, or one plane', () => {
+  test('should delete only the selected keyform, or an explicit whole plane', () => {
     const {binding, document} = createBinding()
     const point = deleteParameterKeyform({bindingId: binding.id, document, values: [0, 0, 30]})
-    expect(valuesOf(point)).toHaveLength(24)
+    expect(valuesOf(point)).toHaveLength(26)
+    expect(valuesOf(point)).toContainEqual([0, 0, -30])
+    expect(valuesOf(point)).toContainEqual([0, 0, 0])
     expect(parseDocumentValue(point!).ok).toBe(true)
 
     const plane = deleteParameterKeyformPlane({bindingId: binding.id, document, value: 30})
@@ -76,7 +78,7 @@ describe('three-parameter keyform editing', () => {
     ).toBeUndefined()
   })
 
-  test('should move a point in every plane or a whole plane, not both', () => {
+  test('should move XY only in its plane or move an explicit whole plane', () => {
     const {binding, document} = createBinding()
     const plane = moveParameterKeyform({
       bindingId: binding.id,
@@ -92,7 +94,7 @@ describe('three-parameter keyform editing', () => {
       nextValues: [5, 5, 0],
       values: [0, 0, 0],
     })
-    expect(valuesOf(point).filter((values) => values[0] === 5 && values[1] === 5)).toHaveLength(3)
+    expect(valuesOf(point).filter((values) => values[0] === 5 && values[1] === 5)).toHaveLength(1)
     expect(parseDocumentValue(point!).ok).toBe(true)
 
     expect(

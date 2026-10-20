@@ -1,3 +1,4 @@
+import {createKeyedParameter} from './parameter-keyforms/fixtures'
 import {describe, expect, test} from 'vitest'
 
 import {
@@ -9,7 +10,6 @@ import {
 } from '../../../player'
 import {getPartRenderFrame, getPartRenderPlans} from '../../../player/internal/render-plan'
 import {
-  addParameter,
   insertParameterKeyform,
   setParameterKeyformDeformerControlPoints,
   setParameterKeyformDeformerCurveHandle,
@@ -137,7 +137,7 @@ describe('createParameterPreview', () => {
     if (deformer.kind !== 'deformer') {
       throw new Error('Expected a deformer node.')
     }
-    const added = addParameter({document: deformed, nodeIds: [deformer.id]})!
+    const added = createKeyedParameter({document: deformed, nodeIds: [deformer.id]})!
     const inserted = insertParameterKeyform({
       bindingId: added.binding.id,
       document: added.document,
@@ -197,7 +197,7 @@ describe('createParameterPreview', () => {
       throw new Error('Expected a curve handle.')
     }
     const restHandle = restDeformer.curveHandles[0]
-    const added = addParameter({document: withHandle, nodeIds: [deformer.id]})!
+    const added = createKeyedParameter({document: withHandle, nodeIds: [deformer.id]})!
     const inserted = insertParameterKeyform({
       bindingId: added.binding.id,
       document: added.document,

@@ -1,12 +1,13 @@
+import {createKeyedParameter2D} from './parameter-keyforms/fixtures'
 import {expect, test} from 'vitest'
 import {createDemoDocument} from '../../../player'
 import {isTwoDimensionalParameterBinding, type PuppetParameterValues} from '../../../deformation'
 import {connectParameterGroup, setKeyformGroupProperties} from '../group-keyforms'
-import {addTwoDimensionalParameter} from '../parameter-keyforms'
+
 import {generateCornerKeyforms} from '../generate-corner-keyforms'
 
 const createSource = () => {
-  const added = addTwoDimensionalParameter({
+  const added = createKeyedParameter2D({
     document: {
       ...createDemoDocument(),
       parameterBindings: [],

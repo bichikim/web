@@ -77,7 +77,7 @@ const getPlaneCorners = (options: PlaneCornersOptions, plane: number | undefined
     )
 }
 
-/** The planes to fill: every plane, or the one nearest the current third value. */
+/** 모든 기존 단면 또는 현재의 정확한 Z 단면을 선택한다. */
 const getPlanes = (binding: PuppetParameterBinding, options: GenerateCornerKeyformsOptions) => {
   if (!isThreeDimensionalParameterBinding(binding)) {
     return [undefined]
@@ -86,16 +86,10 @@ const getPlanes = (binding: PuppetParameterBinding, options: GenerateCornerKeyfo
   if (options.planes === 'all') {
     return planes
   }
-  const current = options.plane ?? 0
-  return planes
-    .toSorted((first, second) => Math.abs(first - current) - Math.abs(second - current))
-    .slice(0, 1)
+  return [options.plane ?? 0]
 }
 
-/**
- * Generates missing or explicitly replaceable corners from the center and four exact axial
- * forms. A 3D binding does so per plane; corners it does not have yet need every plane.
- */
+/** 선택한 단면의 기준·상하좌우 키폼에서 없거나 덮어쓰기로 지정한 모서리를 생성한다. */
 export const generateCornerKeyforms = (
   options: GenerateCornerKeyformsOptions,
 ): KeyformGenerationResult => {
@@ -133,16 +127,6 @@ export const generateCornerKeyforms = (
   const generated = corners.flatMap((result) => (typeof result === 'string' ? [] : result))
   if (generated.length === 0) {
     return {message: '네 모서리에 이미 키폼이 있습니다. 덮어쓰기를 선택하세요.', ok: false}
-  }
-  if (
-    isThreeDimensionalParameterBinding(binding) &&
-    options.planes !== 'all' &&
-    generated.some((keyform) => !exists(binding, keyform.values))
-  ) {
-    return {
-      message: '모서리 점이 없으면 모든 평면에 만들어야 합니다. 모든 평면을 선택하세요.',
-      ok: false,
-    }
   }
   return replaceGeneratedKeyforms(options, binding, generated)
 }

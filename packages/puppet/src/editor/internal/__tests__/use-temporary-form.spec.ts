@@ -1,5 +1,6 @@
-import {addGlue, setGlueKeyform} from '../glue'
 /** @vitest-environment jsdom */
+
+import {addGlue, setGlueKeyform} from '../glue'
 import {createRoot, createSignal} from 'solid-js'
 import {expect, test, vi} from 'vitest'
 import {createDemoDocument} from '../../../player/create-demo-document'
