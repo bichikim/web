@@ -24,6 +24,8 @@ npx @winter-love/codex-code-viewer@latest install
 
 터미널에서는 **Codex / Claude Desktop(Code 모드) / 둘 다**를 선택합니다. 자동화에서는 `install --target codex|claude|all`로 지정하며, 비대화형 기본값은 Codex입니다. Claude만 설치할 때는 Codex CLI가 필요하지 않습니다.
 
+**Claude 지원은 시험 버전입니다.** Claude의 플러그인·화면 연동 제약으로 일부 기능과 사용 흐름이 원활하지 않을 수 있습니다.
+
 Claude 설치는 현재 **macOS Apple Silicon**용입니다. [Claude Code CLI](https://code.claude.com/docs/en/setup) 2.1.287 이상과 Mods를 지원하는 Claude Desktop이 필요합니다. 설치기는 Claude를 선택한 경우에만 같은 버전의 GitHub Release 런타임을 내려받아 크기·SHA-256을 확인하고 `~/.claude/code-viewer/marketplace`에 보관하고 공식 CLI로 사용자 범위 플러그인을 등록합니다. 수동 MCP 등록·ZIP 업로드는 필요 없습니다. `CLAUDE_BINARY`와 `CLAUDE_CONFIG_DIR`로 CLI·설정 폴더를 지정할 수 있습니다. 오프라인 설치는 `CODE_VIEWER_RUNTIME_ARCHIVE`로 동일 버전의 ZIP을 지정하며 같은 무결성 검사를 거칩니다. 기존 업로드 버전은 새 설치 성공 후 비활성화하며 파일과 실행 중인 세션은 유지합니다.
 
 설치 후 표시되는 **Code Viewer Attachment.app** 경로를 시스템 설정 → 개인정보 보호 및 보안 → 손쉬운 사용에 추가·허용하세요. 이 권한은 원클릭 실제 첨부 카드 추가와 접힌 Browser 펼치기에 사용합니다. 허용했는데도 권한 오류가 계속되면 기존 **Code Viewer Attachment** 항목만 제거하고 안내한 새 경로의 앱을 다시 추가하세요. macOS가 같은 이름의 이전 ZIP 설치 경로를 유지할 수 있습니다. Claude Desktop **Code** 탭에서 새 **로컬** 세션을 시작하고, 입력창 아래 **코드 뷰어 열기** 또는 Claude 답변의 프로젝트 파일 링크를 누르세요. 새 세션 시작만으로는 뷰어를 열지 않습니다. 기존 세션은 설치기가 재로드하지 않습니다.
