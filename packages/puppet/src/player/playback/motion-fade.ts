@@ -22,8 +22,14 @@ export const getTrackFadeWeight = (frame: MotionFrame, track: PuppetTrack) =>
 export const getMotionFadeOutTime = (motion: PuppetMotion) => motion.fadeOutTime ?? 0
 
 /**
+ * 한 번의 갱신에서 이벤트를 모두 보고하는 반복 수 상한이다. 아주 큰 재생 속도로 멈췄던 프레임을
+ * 따라잡을 때 이벤트 목록이 끝없이 커지지 않게 한다. Rust 런타임의 `MAX_EVENT_LOOPS`와 같다.
+ */
+export const MAX_EVENT_LOOPS = 1024
+
+/**
  * `from < time <= to`를 지난 이벤트를 시간순으로 반환한다. `wraps`는 그 사이에 지난 반복
- * 경계 수이며, 완전히 지난 반복의 이벤트도 빠짐없이 반환한다.
+ * 경계 수이며, 완전히 지난 반복의 이벤트는 `MAX_EVENT_LOOPS`번까지 반환한다.
  */
 export const getPassedEvents = (
   motion: PuppetMotion,
@@ -40,7 +46,9 @@ export const getPassedEvents = (
   return wraps > 0
     ? [
         ...within(from, motion.duration),
-        ...Array.from({length: wraps - 1}, () => within(0, motion.duration)).flat(),
+        ...Array.from({length: Math.min(wraps - 1, MAX_EVENT_LOOPS)}, () =>
+          within(0, motion.duration),
+        ).flat(),
         ...within(0, to),
       ]
     : within(from, to)
