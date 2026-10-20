@@ -68,7 +68,7 @@ describe('runCodex', () => {
     async (codex) => {
       await expect(runCodex({args: [], codex, home: tmpdir()})).rejects.toMatchObject({
         cause: expect.objectContaining({code: 'ENOENT'}),
-        message: expect.stringContaining('Codex CLI 명령을 실행하지 못했습니다:'),
+        message: expect.stringContaining(codex),
       })
     },
   )
