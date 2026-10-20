@@ -210,6 +210,15 @@ describe('parseDocument', () => {
     ).toMatchObject({ok: false})
   })
 
+  it('should read the earlier format name as the current one and reject unknown names', () => {
+    const document = createDemoDocument()
+    const legacy = parseDocument(JSON.stringify({...document, format: 'winter-love-puppet'}))
+    expect(legacy).toMatchObject({document: {format: 'winter-love-poffo'}, ok: true})
+    expect(parseDocument(JSON.stringify({...document, format: 'winter-love'}))).toMatchObject({
+      ok: false,
+    })
+  })
+
   it('should normalize legacy untagged tracks to explicit kinds', () => {
     const document = createDemoDocument()
     const untaggedDocument = {

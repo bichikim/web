@@ -6,7 +6,7 @@
     {"offset": 0, "parameterId": "body-x", "peak": 4, "period": 15.5345, "weight": 0.5},
     {"offset": 0.5, "parameterId": "breath", "peak": 0.5, "period": 3.2345, "weight": 0.5}
   ],
-  "format": "winter-love-puppet",
+  "format": "winter-love-poffo",
   "look": [
     {"parameterId": "face-x", "x": 30, "xy": 0, "y": 0},
     {"parameterId": "face-y", "x": 0, "xy": 0, "y": 30},

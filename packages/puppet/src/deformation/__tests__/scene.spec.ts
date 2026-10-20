@@ -1,10 +1,11 @@
 import {createSkinDocument} from './fixtures/skin'
 import {composeParameterScene, sampleParameterDeformer} from '../scene'
 import {applySceneNodeDeformers} from '../vertices'
-import type {
-  PuppetDocument,
-  PuppetParameterBinding1D,
-  PuppetSceneDeformerNode,
+import {
+  PUPPET_DOCUMENT_FORMAT,
+  type PuppetDocument,
+  type PuppetParameterBinding1D,
+  type PuppetSceneDeformerNode,
 } from '../../player/document'
 import {expect, test} from 'vitest'
 
@@ -30,7 +31,7 @@ test('should interpolate spatial deformer transforms and mesh position through p
     visible: true,
   }
   const document: PuppetDocument = {
-    format: 'winter-love-puppet',
+    format: PUPPET_DOCUMENT_FORMAT,
     motions: [],
     parameterBindings: [
       {
