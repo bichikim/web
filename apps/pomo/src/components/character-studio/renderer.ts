@@ -9,6 +9,7 @@ import {Color3, Color4} from '@babylonjs/core/Maths/math.color'
 import {Vector3} from '@babylonjs/core/Maths/math.vector'
 import {Scene} from '@babylonjs/core/scene'
 import '@babylonjs/loaders/glTF'
+import {measureModelBounds} from './measure-model-bounds'
 import {attachCloth} from './cloth-renderer'
 import {applyFaceDeformation, type FaceSettings} from './face-deformation'
 import {applyExpressions, type ExpressionSettings} from './expressions'
@@ -48,7 +49,6 @@ const CAMERA_DEFAULTS = {
   radius: 5,
   wheelDeltaPercentage: 0.01,
 } as const
-const CENTER_SCALE = 0.5
 const AMBIENT_LIGHT_COLOR = '#e6edff'
 const AMBIENT_GROUND_COLOR = '#8d7160'
 const AMBIENT_LIGHT_INTENSITY = 0.85
@@ -75,19 +75,11 @@ const applyEyeNarrowing = (container: AssetContainer | null, value: number) => {
 }
 
 const fitCamera = (camera: ArcRotateCamera, scene: Scene, container: AssetContainer) => {
-  const modelMeshes = new Set(container.meshes.filter((mesh) => mesh.getTotalVertices() > 0))
-
-  if (modelMeshes.size === 0) {
+  const bounds = measureModelBounds(scene, container)
+  if (bounds === null) {
     return
   }
-
-  const {max, min} = scene.getWorldExtends((mesh) => modelMeshes.has(mesh))
-  const center = min.add(max).scale(CENTER_SCALE)
-  const diameter = Vector3.Distance(min, max)
-
-  if (!Number.isFinite(diameter) || diameter <= 0) {
-    return
-  }
+  const {center, diameter} = bounds
 
   const distanceScale = Math.tan(REFERENCE_FOV / 2) / Math.tan(CAMERA_DEFAULTS.fov / 2)
   const radius = diameter * CAMERA_PADDING * distanceScale
