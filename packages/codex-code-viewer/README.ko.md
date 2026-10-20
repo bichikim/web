@@ -4,6 +4,8 @@
 
 Code Viewer는 Codex 대화 옆에서 코드·문서·미디어를 여는 플러그인입니다. 관련 코드를 찾아가고, 텍스트 파일을 편집하고, 선택한 코드나 변경 내용을 다음 채팅의 참고 자료로 추가할 수 있습니다.
 
+아래 영상은 Codex의 Code Viewer 0.5.0을 영어 UI로 촬영했습니다.
+
 파일별 기능은 [지원 파일 형식](#지원-파일-형식)에서 확인하세요.
 
 ## 1. 설치하고 시작하기
@@ -87,6 +89,12 @@ macOS에서 파일 트리의 **채팅창에 추가**는 클릭한 파일 하나�
 - **폴더 둘러보기:** 검색 옆의 **파일 트리**를 누릅니다. 폴더를 클릭하면 펼치고 접으며, 파일을 클릭하면 엽니다. **파일 필터링**은 경로로 목록을 좁히고, **현재 파일 위치로 이동**은 필터를 비운 뒤 열린 파일까지 스크롤합니다.
 - **이전 위치로 돌아가기:** 뒤로·앞으로 버튼이나 `Alt+←/→`를 사용합니다.
 
+### 파일 트리로 탐색
+
+![파일 트리로 탐색](https://raw.githubusercontent.com/bichikim/web/97cc070dac551d6e898a66a0be97af66730ece2c/packages/codex-code-viewer/docs/recordings/codex/0.5.0/file-tree.gif)
+
+[MP4 영상](https://raw.githubusercontent.com/bichikim/web/97cc070dac551d6e898a66a0be97af66730ece2c/packages/codex-code-viewer/docs/recordings/codex/0.5.0/file-tree.mp4)
+
 삭제되어 열 수 없는 파일은 건너뛰며, 현재 파일을 삭제해도 다른 방문 기록은 유지합니다. 보관 중인 초안은 삭제된 파일도 다시 열어 저장으로 복원할 수 있습니다. 외부에서 복원한 파일은 변경 감지나 새로고침 후 다시 탐색합니다. 읽기 권한 등 다른 오류는 건너뛰지 않고 안내합니다.
 
 트리 경계선을 드래그하면 너비를 조절합니다. 경계선에 포커스를 두면 좌우 방향키로 너비를 바꾸고 Home/End로 최소·최대 너비를 선택합니다. 트리에서는 위·아래 방향키와 Home/End로 항목을 선택하고, 좌우 방향키로 폴더를 접고 펼칩니다. 우클릭이나 `Shift+F10`으로 항목 메뉴를 엽니다.
@@ -97,9 +105,33 @@ macOS에서 파일 트리의 **채팅창에 추가**는 클릭한 파일 하나�
 
 읽기 모드에서 import 경로를 클릭하면 모듈 파일을 열고, 심볼의 사용처를 클릭하면 정의로 이동합니다. 정의 이름을 클릭하면 사용처 목록을 엽니다. 결과는 파일별로 표시하며 항목을 선택해 이동합니다. 정의가 여러 개라면 목록에서 하나를 선택합니다.
 
+### import 경로로 이동
+
+![import 경로로 이동](https://raw.githubusercontent.com/bichikim/web/97cc070dac551d6e898a66a0be97af66730ece2c/packages/codex-code-viewer/docs/recordings/codex/0.5.0/import.gif)
+
+[MP4 영상](https://raw.githubusercontent.com/bichikim/web/97cc070dac551d6e898a66a0be97af66730ece2c/packages/codex-code-viewer/docs/recordings/codex/0.5.0/import.mp4)
+
+### 정의로 이동
+
+![정의로 이동](https://raw.githubusercontent.com/bichikim/web/97cc070dac551d6e898a66a0be97af66730ece2c/packages/codex-code-viewer/docs/recordings/codex/0.5.0/definition.gif)
+
+[MP4 영상](https://raw.githubusercontent.com/bichikim/web/97cc070dac551d6e898a66a0be97af66730ece2c/packages/codex-code-viewer/docs/recordings/codex/0.5.0/definition.mp4)
+
+### 사용처 찾기
+
+![사용처 찾기](https://raw.githubusercontent.com/bichikim/web/97cc070dac551d6e898a66a0be97af66730ece2c/packages/codex-code-viewer/docs/recordings/codex/0.5.0/references.gif)
+
+[MP4 영상](https://raw.githubusercontent.com/bichikim/web/97cc070dac551d6e898a66a0be97af66730ece2c/packages/codex-code-viewer/docs/recordings/codex/0.5.0/references.mp4)
+
 정의·사용처 목록은 검색 중 찾은 결과부터 표시합니다. 제목 옆 필터로 파일 경로를 좁히고, 파일 그룹을 접고 펼치거나 오른쪽 이동 버튼으로 해당 파일을 열 수 있습니다.
 
 읽기와 편집 화면에서 줄 번호 옆 화살표로 여러 줄 함수·객체·클래스·마크업 블록을 접고 펼칩니다. 접힌 자리의 **…**를 눌러도 펼쳐집니다. 검색 결과나 정의·사용처 위치로 이동하면 해당 줄을 가린 블록을 펼칩니다. 작은 파일의 접기 상태는 같은 탭에서 복원하며 원본이 변경되면 초기화합니다. Python·Ruby·Rust는 들여쓰기를 기준으로 접습니다.
+
+### 코드 접기와 펼치기
+
+![코드 접기와 펼치기](https://raw.githubusercontent.com/bichikim/web/97cc070dac551d6e898a66a0be97af66730ece2c/packages/codex-code-viewer/docs/recordings/codex/0.5.0/fold.gif)
+
+[MP4 영상](https://raw.githubusercontent.com/bichikim/web/97cc070dac551d6e898a66a0be97af66730ece2c/packages/codex-code-viewer/docs/recordings/codex/0.5.0/fold.mp4)
 
 정의·사용처 이동은 TypeScript·JavaScript·Python·Ruby·Rust에서 지원합니다. JSON·JSONC·JSON5는 파일 경로 값으로만 이동합니다. 그 외 형식은 구문 강조가 있어도 심볼 이동은 제공하지 않습니다. 언어별 준비 사항은 [코드 탐색 설정](#코드-탐색-설정)을 참고하세요.
 
@@ -112,6 +144,12 @@ macOS에서 파일 트리의 **채팅창에 추가**는 클릭한 파일 하나�
 1. 편집 가능한 파일을 열고 문서 도구 줄의 **편집**을 누릅니다.
 2. 내용을 수정합니다. `Cmd/Ctrl+Z`로 실행을 취소하고 `Cmd/Ctrl+Shift+Z`로 다시 실행합니다.
 3. **저장** 또는 `Cmd/Ctrl+S`를 누릅니다. 자동 저장이나 자동 서식 변경은 하지 않습니다.
+
+### 텍스트 편집과 저장
+
+![텍스트 편집과 저장](https://raw.githubusercontent.com/bichikim/web/97cc070dac551d6e898a66a0be97af66730ece2c/packages/codex-code-viewer/docs/recordings/codex/0.5.0/edit-save.gif)
+
+[MP4 영상](https://raw.githubusercontent.com/bichikim/web/97cc070dac551d6e898a66a0be97af66730ece2c/packages/codex-code-viewer/docs/recordings/codex/0.5.0/edit-save.mp4)
 
 편집 가능한 형식은 [지원 파일 형식](#지원-파일-형식)을 참고하세요. Markdown·CSV·TSV는 원문을 편집합니다.
 
@@ -142,6 +180,12 @@ TS·JS·JSON 탐색에는 여러 파일의 미저장 변경이 반영됩니다. 
 ## 6. 파일과 폴더 관리하기
 
 트리 도구 줄의 **새 파일**·**새 폴더**를 사용합니다. 폴더를 선택했다면 그 안에, 파일을 선택했다면 같은 상위 폴더에 만듭니다. 빈 작업 폴더에서는 루트에 만듭니다. 이름 입력창에서 생성 위치를 확인할 수 있으며 기존 항목은 덮어쓰지 않습니다.
+
+### 새 파일 만들기
+
+![새 파일 만들기](https://raw.githubusercontent.com/bichikim/web/97cc070dac551d6e898a66a0be97af66730ece2c/packages/codex-code-viewer/docs/recordings/codex/0.5.0/create-file.gif)
+
+[MP4 영상](https://raw.githubusercontent.com/bichikim/web/97cc070dac551d6e898a66a0be97af66730ece2c/packages/codex-code-viewer/docs/recordings/codex/0.5.0/create-file.mp4)
 
 파일·폴더 우클릭 메뉴에서 **이름 변경**·**복사**·**잘라내기**·**붙여넣기**·**삭제**를 선택합니다. 트리에 포커스가 있으면 `Cmd/Ctrl+C`·`Cmd/Ctrl+X`·`Cmd/Ctrl+V`와 Delete도 사용할 수 있습니다. 복사·잘라내기는 이 뷰어의 작업 폴더 안에서 사용하는 내부 클립보드입니다. 폴더에 붙여넣으면 그 안에, 파일에 붙여넣으면 같은 상위 폴더에 만듭니다. 빈 공간의 메뉴에서는 작업 폴더 루트에 붙여넣습니다. 복사 이름이 겹치면 복사본 이름을 만들고, 잘라내기·이름 변경은 오류를 안내합니다.
 
@@ -199,6 +243,24 @@ TS·JS 탐색은 완료된 결과와 파일별 인덱스 요약을 재사용하�
 - **PDF:** 페이지 번호·배율(25–400%)을 입력하거나 **화면에 맞춤**을 사용합니다. 텍스트를 드래그해 선택·복사합니다. `Cmd/Ctrl+F`로 문서를 검색하고 Enter/Shift+Enter로 결과를 이동합니다. 검색 한도는 2,048페이지·4,194,304자·10,000개 결과입니다. 스캔 PDF는 텍스트 레이어가 있어야 검색할 수 있으며 OCR·암호 입력은 지원하지 않습니다.
 - **이미지·SVG:** 배율 버튼·입력(1–1600%)·핀치·`Ctrl/Cmd+휠`로 확대·축소하고 드래그·방향키로 이동합니다. 이미지에 포커스가 있으면 `+`·`-`로 배율 조절, `0`으로 100%, Home으로 화면 맞춤을 사용합니다. SVG는 32 MiB까지 XML 원문을 볼 수 있으며 그보다 크면 미리보기만 제공합니다.
 - **영상·음악:** 재생 컨트롤을 사용합니다. 재생 가능 여부는 내장 브라우저의 코덱 지원에 따라 달라집니다. 음악은 재생 버튼을 눌러 시작하고 파일을 떠나면 멈춥니다.
+
+### Markdown 미리보기와 원문
+
+![Markdown 미리보기와 원문](https://raw.githubusercontent.com/bichikim/web/97cc070dac551d6e898a66a0be97af66730ece2c/packages/codex-code-viewer/docs/recordings/codex/0.5.0/markdown.gif)
+
+[MP4 영상](https://raw.githubusercontent.com/bichikim/web/97cc070dac551d6e898a66a0be97af66730ece2c/packages/codex-code-viewer/docs/recordings/codex/0.5.0/markdown.mp4)
+
+### CSV 열 정렬
+
+![CSV 열 정렬](https://raw.githubusercontent.com/bichikim/web/97cc070dac551d6e898a66a0be97af66730ece2c/packages/codex-code-viewer/docs/recordings/codex/0.5.0/csv-sort.gif)
+
+[MP4 영상](https://raw.githubusercontent.com/bichikim/web/97cc070dac551d6e898a66a0be97af66730ece2c/packages/codex-code-viewer/docs/recordings/codex/0.5.0/csv-sort.mp4)
+
+### CSV 행 필터
+
+![CSV 행 필터](https://raw.githubusercontent.com/bichikim/web/97cc070dac551d6e898a66a0be97af66730ece2c/packages/codex-code-viewer/docs/recordings/codex/0.5.0/csv-filter.gif)
+
+[MP4 영상](https://raw.githubusercontent.com/bichikim/web/97cc070dac551d6e898a66a0be97af66730ece2c/packages/codex-code-viewer/docs/recordings/codex/0.5.0/csv-filter.mp4)
 
 ## 제한과 문제 해결
 
