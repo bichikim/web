@@ -17,7 +17,9 @@ import type {
   PuppetPartRenderProperties,
 } from './document-render'
 import type {PuppetMotion} from './document-motion'
-export const PUPPET_DOCUMENT_FORMAT = 'winter-love-puppet'
+export const PUPPET_DOCUMENT_FORMAT = 'winter-love-poffo'
+/** Earlier format names; parsing reads them as `PUPPET_DOCUMENT_FORMAT`. */
+export const LEGACY_PUPPET_DOCUMENT_FORMATS: ReadonlyArray<string> = ['winter-love-puppet']
 export const PUPPET_DOCUMENT_VERSION = 1
 export const DEFAULT_PUPPET_FRAMES_PER_SECOND = 24
 export const MAXIMUM_PUPPET_FRAMES_PER_SECOND = 240

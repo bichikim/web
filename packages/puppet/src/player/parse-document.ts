@@ -4,6 +4,7 @@ import {hasValidSkinning} from './internal/parse-skinning'
 import {hasValidGlueKeyforms, isGlueKeyforms} from './internal/parse-glue'
 import {hasValidInfluences, isParameterInfluences} from './internal/parse-influence'
 import {
+  LEGACY_PUPPET_DOCUMENT_FORMATS,
   MAX_PARAMETER_DIMENSIONS,
   PUPPET_DOCUMENT_FORMAT,
   PUPPET_DOCUMENT_VERSION,
@@ -511,8 +512,18 @@ const isDocument = (value: unknown): value is PuppetDocument => {
   )
 }
 
+/** Documents saved under an earlier format name read, and save again, as the current one. */
+const normalizeLegacyFormat = (value: unknown): unknown =>
+  isRecord(value) &&
+  typeof value.format === 'string' &&
+  LEGACY_PUPPET_DOCUMENT_FORMATS.includes(value.format)
+    ? {...value, format: PUPPET_DOCUMENT_FORMAT}
+    : value
+
 export const parseDocumentValue = (value: unknown): ParseDocumentResult => {
-  const normalizedValue = normalizeLegacyTrackKinds(expandDocumentTextureAssets(value))
+  const normalizedValue = normalizeLegacyTrackKinds(
+    normalizeLegacyFormat(expandDocumentTextureAssets(value)),
+  )
   if (!isDocument(normalizedValue)) {
     return {error: {code: 'invalid-document'}, ok: false}
   }
