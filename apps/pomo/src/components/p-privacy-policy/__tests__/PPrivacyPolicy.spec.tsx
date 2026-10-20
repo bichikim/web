@@ -1,11 +1,13 @@
 /** @vitest-environment jsdom */
 
-import {render, screen} from '@solidjs/testing-library'
+import {render, screen, within} from '@solidjs/testing-library'
+import {batch, createSignal} from 'solid-js'
 import {afterEach, expect, it} from 'vitest'
 
 import {getLocale, overwriteGetLocale} from '@paraglide/runtime'
 
 import {PPrivacyPolicy} from '../PPrivacyPolicy'
+import type {PrivacyPolicyPlatform} from '../../privacy-policy/shared'
 
 const originalGetLocale = getLocale
 
@@ -79,4 +81,51 @@ it('should list web processing providers and contact details', () => {
   expect(screen.getByText(/cdn\.jsdelivr\.net/u)).toBeTruthy()
   expect(screen.getByText(/Hugging Face, Inc\.\(미국\)/u)).toBeTruthy()
   expect(screen.getAllByText(/전화번호: 070-5236-4741/u)).toHaveLength(2)
+})
+
+it('should link every contents item to its document section', () => {
+  renderWebPolicy()
+
+  const navigation = screen.getByRole('navigation', {name: '개인정보처리방침 목차'})
+  const links = within(navigation).getAllByRole('link')
+  expect(links).toHaveLength(12)
+  for (const link of links) {
+    const href = link.getAttribute('href')
+    expect(href).toMatch(/^#/u)
+    const section = document.getElementById(href?.slice(1) ?? '')
+    expect(section?.closest('article')).toBeInstanceOf(HTMLElement)
+    expect(section?.querySelector('h2')).toBeInstanceOf(HTMLHeadingElement)
+  }
+})
+
+it('should retain contents focus while platform and return details change', () => {
+  const [platform, setPlatform] = createSignal<PrivacyPolicyPlatform>('web')
+  const [backHref, setBackHref] = createSignal('/before')
+  const [backLabel, setBackLabel] = createSignal('이전 화면')
+  render(() => (
+    <PPrivacyPolicy backHref={backHref()} backLabel={backLabel()} platform={platform()} />
+  ))
+
+  const navigation = screen.getByRole('navigation', {name: '개인정보처리방침 목차'})
+  const link = within(navigation).getByRole('link', {name: '2. 처리 항목과 목적'})
+  const heading = screen.getByRole('heading', {name: 'Pomofi 개인정보처리방침'})
+  const returnLink = screen.getByRole('link', {name: '이전 화면'})
+  link.focus()
+
+  batch(() => {
+    setPlatform('apps-in-toss')
+    setBackHref('/after')
+    setBackLabel('다음 화면')
+  })
+
+  expect(screen.getByRole('heading', {name: '앱인토스 계정'})).toBeInTheDocument()
+  expect(screen.getByRole('link', {name: '서비스 이용약관'})).toHaveAttribute(
+    'href',
+    '/app-in-toss/terms',
+  )
+  expect(screen.getByRole('heading', {name: 'Pomofi 개인정보처리방침'})).toBe(heading)
+  expect(screen.getByRole('navigation', {name: '개인정보처리방침 목차'})).toBe(navigation)
+  expect(document.activeElement).toBe(link)
+  expect(screen.getByRole('link', {name: '다음 화면'})).toBe(returnLink)
+  expect(returnLink).toHaveAttribute('href', '/after')
 })
