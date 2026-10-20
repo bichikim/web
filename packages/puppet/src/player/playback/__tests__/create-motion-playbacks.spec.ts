@@ -123,3 +123,31 @@ describe('createMotionPlaybacks', () => {
     expect(onComplete).not.toHaveBeenCalled()
   })
 })
+
+test('should finish a requested fade while the motion time is frozen at zero speed', () => {
+  const playbacks = createMotionPlaybacks({
+    motions: [{...motions[0]!, fadeOutTime: 0.5}],
+    onChange: vi.fn(),
+  })
+  const handle = playbacks.start('idle', {speed: 0})!
+  handle.fadeOut()
+  expect(playbacks.isPlaying()).toBe(true)
+  playbacks.advance(0.25)
+  expect(playbacks.frames()[0]?.remaining).toBeCloseTo(0.25)
+  expect(handle.getState().time).toBe(0)
+  playbacks.advance(0.25)
+  expect(handle.getState().status).toBe('stopped')
+  expect(playbacks.frames()).toEqual([])
+})
+
+test('should report every event when one update crosses multiple loops', () => {
+  const onEvent = vi.fn()
+  const playbacks = createMotionPlaybacks({
+    motions: [{duration: 1, events: [{time: 0.25, value: 'mark'}], id: 'loop', tracks: []}],
+    onChange: vi.fn(),
+    onEvent,
+  })
+  playbacks.start('loop')
+  playbacks.advance(2.5).forEach((callback) => callback())
+  expect(onEvent).toHaveBeenCalledTimes(3)
+})

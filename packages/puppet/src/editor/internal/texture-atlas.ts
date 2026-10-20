@@ -26,10 +26,13 @@ export interface TextureAtlasPlan {
   readonly placements: ReadonlyMap<string, AtlasPlacement>
 }
 
-/** Each distinct image of the document's parts. */
+const canPackTexture = (part: PuppetPart) =>
+  part.mesh.uvs.every((value) => value >= 0 && value <= 1)
+
+/** 범위 안 UV를 쓰는 파트의 중복 없는 이미지 목록. */
 export const getAtlasImages = (document: PuppetDocument): ReadonlyArray<AtlasImage> => {
   const images = new Map<string, AtlasImage>()
-  for (const {texture} of document.parts) {
+  for (const {texture} of document.parts.filter(canPackTexture)) {
     images.set(texture.src, {height: texture.height, src: texture.src, width: texture.width})
   }
   return [...images.values()]
@@ -147,6 +150,10 @@ export const applyTextureAtlas = (
 ): PuppetDocument => ({
   ...document,
   parts: document.parts.map((part): PuppetPart => {
+    // 범위 밖 UV는 이미지 가장자리를 늘려 그리므로 아틀라스의 이웃 이미지를 읽지 않게 유지한다.
+    if (!canPackTexture(part)) {
+      return part
+    }
     const placement = plan.placements.get(part.texture.src)
     const page = placement === undefined ? undefined : plan.pages[placement.page]
     const src = placement === undefined ? undefined : pageSources[placement.page]

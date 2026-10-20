@@ -65,8 +65,8 @@ const drawPadded = (
 }
 
 /**
- * Packs every part image into shared PNG pages (Cubism's texture atlas): parts keep their
- * look, with UVs moved into their regions.
+ * UV가 0..1 안에 있는 파트 이미지를 공유 PNG 페이지에 배치하고 UV를 변환한다.
+ * 범위 밖 UV를 쓰는 파트는 가장자리 샘플링을 보존하도록 원본 이미지를 유지한다.
  */
 export const packTextureAtlas = async (
   document: PuppetDocument,

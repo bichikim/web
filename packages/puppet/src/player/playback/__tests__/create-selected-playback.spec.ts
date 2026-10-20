@@ -101,3 +101,13 @@ describe('createSelectedPlayback', () => {
     expect(playback.getFrame().time).toBe(2)
   })
 })
+
+test('should report every event when a selected motion crosses multiple loops', () => {
+  const onEvent = vi.fn()
+  const playback = createSelectedPlayback({
+    motions: [{duration: 1, events: [{time: 0.25, value: 'mark'}], id: 'loop', tracks: []}],
+    onEvent,
+  })
+  playback.advance(2.5)?.()
+  expect(onEvent).toHaveBeenCalledTimes(3)
+})

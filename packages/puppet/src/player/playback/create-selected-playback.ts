@@ -26,7 +26,7 @@ const stepTime = (motion: PuppetMotion, time: number, step: number, loop: boolea
   const wraps = loop && motion.duration > 0
   return {
     time: wraps ? next % motion.duration : Math.min(next, motion.duration),
-    wrapped: wraps && next >= motion.duration,
+    wraps: wraps ? Math.floor(next / motion.duration) : 0,
   }
 }
 
@@ -99,7 +99,7 @@ const advanceOutgoing = (outgoing: OutgoingMotion, deltaTime: number) => {
             time: next.time,
           }
         : undefined,
-    passed: getPassedEvents(outgoing.motion, outgoing.time, next.time, next.wrapped),
+    passed: getPassedEvents(outgoing.motion, outgoing.time, next.time, next.wraps),
   }
 }
 
@@ -215,7 +215,7 @@ export const createSelectedPlayback = (
       scrubbed &&= step <= 0
       const completed = !loop && time + step >= motion.duration
       const next = stepTime(motion, time, step, loop)
-      const passed = emit(motion, getPassedEvents(motion, time, next.time, next.wrapped))
+      const passed = emit(motion, getPassedEvents(motion, time, next.time, next.wraps))
       const events = () => {
         outgoingEvents?.()
         passed()

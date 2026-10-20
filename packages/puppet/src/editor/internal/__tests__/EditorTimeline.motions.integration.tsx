@@ -6,6 +6,7 @@ import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 
 import {
   createDemoDocument,
+  parseDocumentValue,
   PUPPET_DOCUMENT_FORMAT,
   PUPPET_DOCUMENT_VERSION,
   type PuppetDocument,
@@ -210,4 +211,16 @@ describe('EditorTimeline', () => {
     expect(onMotionSeek).toHaveBeenNthCalledWith(1, 'blink', 0.4)
     expect(onMotionSeek).toHaveBeenNthCalledWith(2, 'nod', 0.8)
   })
+})
+
+test('should keep motion events valid when reducing a motion duration', () => {
+  const source = createTimelineTestDocument()
+  const [document, setDocument] = createSignal<PuppetDocument>({
+    ...source,
+    motions: [{...source.motions[0]!, duration: 4, events: [{time: 3, value: 'end'}]}],
+  })
+  const view = render(() => <EditorTimeline document={document()} onDocumentChange={setDocument} />)
+  fireEvent.input(view.getByRole('spinbutton', {name: '모션 길이'}), {target: {value: '2'}})
+  expect(parseDocumentValue(document()).ok).toBe(true)
+  expect(document().motions[0]?.events).toHaveLength(1)
 })

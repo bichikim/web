@@ -44,18 +44,22 @@ const advancePlayback = (playback: Playback, deltaTime: number) => {
   const step = Math.max(0, deltaTime) * playback.speed
   const next = playback.time + step
   const finished = !playback.loop && next >= playback.motion.duration
-  const wrapped = playback.loop && playback.motion.duration > 0 && next >= playback.motion.duration
+  const wraps =
+    playback.loop && playback.motion.duration > 0 ? Math.floor(next / playback.motion.duration) : 0
   const time =
     playback.loop && playback.motion.duration > 0
       ? next % playback.motion.duration
       : Math.min(next, playback.motion.duration)
   return {
-    events: getPassedEvents(playback.motion, playback.time, time, wrapped),
+    events: getPassedEvents(playback.motion, playback.time, time, wraps),
     playback: {
       ...playback,
       elapsed: playback.elapsed + step,
       status: finished ? ('finished' as const) : ('playing' as const),
-      stopping: playback.stopping === undefined ? undefined : playback.stopping - step,
+      stopping:
+        playback.stopping === undefined
+          ? undefined
+          : playback.stopping - (playback.speed > 0 ? step : Math.max(0, deltaTime)),
       time,
     },
   }
@@ -181,7 +185,10 @@ export const createMotionPlaybacks = (options: CreateMotionPlaybacksOptions): Mo
     const callbacks: Array<() => void> = []
     for (const [id, entry] of playbacks) {
       const {playback} = entry
-      if (playback.status === 'playing' && playback.speed > 0) {
+      if (
+        playback.status === 'playing' &&
+        (playback.speed > 0 || playback.stopping !== undefined)
+      ) {
         const {events, playback: nextPlayback} = advancePlayback(playback, deltaTime)
         entry.playback = nextPlayback
         for (const event of events) {
@@ -239,7 +246,8 @@ export const createMotionPlaybacks = (options: CreateMotionPlaybacksOptions): Mo
       })),
     isPlaying: () =>
       [...playbacks.values()].some(
-        ({playback}) => playback.status === 'playing' && playback.speed > 0,
+        ({playback}) =>
+          playback.status === 'playing' && (playback.speed > 0 || playback.stopping !== undefined),
       ),
     pause: () => setStatus('playing', 'paused'),
     resume: () => setStatus('paused', 'playing'),

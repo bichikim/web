@@ -79,9 +79,15 @@ export const createExpressionPlayback = (
       if (active !== undefined && active.expression.id === expressionId) {
         return true
       }
-      const released = entries.map((entry): ExpressionEntry => ({...entry, fading: 'out'}))
+      const released = entries
+        .filter(
+          (entry) => (entry.expression.fadeOutTime ?? DEFAULT_PUPPET_EXPRESSION_FADE_TIME) > 0,
+        )
+        .map((entry): ExpressionEntry => ({...entry, fading: 'out'}))
       entries =
-        expression === undefined ? released : [...released, {expression, fading: 'in', progress: 0}]
+        expression === undefined
+          ? released
+          : [...released, {expression, fading: 'in', progress: expression.fadeInTime === 0 ? 1 : 0}]
       return true
     },
     update(nextExpressions) {

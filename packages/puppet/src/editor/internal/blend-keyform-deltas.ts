@@ -1,5 +1,11 @@
 import {clamp} from 'es-toolkit/math'
-import type {PuppetColor, PuppetParameterKeyform, PuppetPoint} from '../../player'
+import {
+  PUPPET_DEFAULT_DRAW_ORDER,
+  PUPPET_MAXIMUM_DRAW_ORDER,
+  type PuppetColor,
+  type PuppetParameterKeyform,
+  type PuppetPoint,
+} from '../../player'
 
 const blendVector = (
   first: readonly number[],
@@ -43,10 +49,23 @@ const blendScale = (first?: number, second?: number, base?: number) =>
 
 /** Opacity and colors keyed on a part, group or deformer keyform. */
 interface RenderProperties {
+  readonly drawOrder?: number
   readonly multiplyColor?: PuppetColor
   readonly opacity?: number
   readonly screenColor?: PuppetColor
 }
+
+/** 그리기 순서의 기준값에서 벗어난 차이를 합성한다. */
+const blendDrawOrder = (first?: number, second?: number, base?: number) =>
+  first === undefined && second === undefined && base === undefined
+    ? undefined
+    : clamp(
+        (first ?? base ?? PUPPET_DEFAULT_DRAW_ORDER) +
+          (second ?? base ?? PUPPET_DEFAULT_DRAW_ORDER) -
+          (base ?? PUPPET_DEFAULT_DRAW_ORDER),
+        0,
+        PUPPET_MAXIMUM_DRAW_ORDER,
+      )
 
 /** Composes both displacements from `base`, keeping opacity and colors within 0..1. */
 const blendRenderProperties = (
@@ -54,6 +73,7 @@ const blendRenderProperties = (
   second: RenderProperties | undefined,
   base: RenderProperties,
 ) => ({
+  drawOrder: blendDrawOrder(first?.drawOrder, second?.drawOrder, base.drawOrder),
   multiplyColor: constrainColor(
     blendTriple(first?.multiplyColor, second?.multiplyColor, base.multiplyColor),
   ),
