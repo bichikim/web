@@ -161,20 +161,15 @@ const completeQueuedSpeech = (speechQueue: Array<QueuedSpeech>) => {
 }
 
 const createPlaybackCompletion = (): PlaybackCompletionController => {
-  let completion = Promise.resolve()
-  let resolve: (() => void) | null = null
+  let completion = Promise.withResolvers<void>()
+  completion.resolve()
 
   return {
-    complete: () => {
-      resolve?.()
-      resolve = null
-    },
+    complete: () => completion.resolve(),
     reset: () => {
-      completion = new Promise<void>((complete) => {
-        resolve = complete
-      })
+      completion = Promise.withResolvers<void>()
     },
-    wait: () => completion,
+    wait: () => completion.promise,
   }
 }
 
