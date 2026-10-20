@@ -1,5 +1,5 @@
 import {EditorDiamondButton} from '../../design-system'
-import {createSignal, onCleanup} from 'solid-js'
+import {createSignal, onCleanup, Show} from 'solid-js'
 
 import type {PuppetParameter} from '../../player/document'
 import {
@@ -9,6 +9,10 @@ import {
 } from './parameter-value'
 
 export interface EditorKeyformMarkerProps {
+  /** 숫자 눈금을 별도로 그리면 false로 생략한다. 생략하면 표시하며 드래그 중에는 항상 표시한다. */
+  readonly showValue?: boolean
+  /** 표시 대상 이름. 생략하면 키폼이다. */
+  readonly label?: string
   readonly active: boolean
   readonly onContextMenu?: () => void
   readonly onMove?: (value: number, nextValue: number) => void
@@ -102,7 +106,7 @@ export const EditorKeyformMarker = (props: EditorKeyformMarkerProps) => {
   return (
     <EditorDiamondButton
       aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown Home End"
-      aria-label={`${props.parameter.name} ${displayValue()} 키폼`}
+      aria-label={`${props.parameter.name} ${displayValue()} ${props.label ?? '키폼'}`}
       aria-pressed={props.active}
       class="keyform-marker"
       classList={{draggable: props.onMove !== undefined, dragging: dragValue() !== null}}
@@ -117,7 +121,9 @@ export const EditorKeyformMarker = (props: EditorKeyformMarkerProps) => {
       onKeyDown={handleKeyDown}
       onPointerDown={handlePointerDown}
     >
-      <span>{displayValue()}</span>
+      <Show when={props.showValue !== false || dragValue() !== null}>
+        <span>{displayValue()}</span>
+      </Show>
     </EditorDiamondButton>
   )
 }

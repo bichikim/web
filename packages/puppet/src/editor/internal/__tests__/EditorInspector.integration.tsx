@@ -1,5 +1,7 @@
 /** @vitest-environment jsdom */
 
+import {createKeyedParameter} from './parameter-keyforms/fixtures'
+
 import {fireEvent, render, screen, within} from '@solidjs/testing-library'
 import {createSignal} from 'solid-js'
 import {describe, expect, test, vi} from 'vitest'
@@ -16,7 +18,6 @@ import {
 } from '../../../player'
 import {getDeformerAngle} from '../deformer-transform'
 import {
-  addParameter,
   connectParameterNodes,
   insertParameterKeyform,
   setParameterKeyformDeformerControlPoints,
@@ -115,7 +116,7 @@ describe('EditorInspector', () => {
       ],
     })
     const bound = setSpatialMesh({document: source, mesh, nodeId: 'shapes'})!
-    const added = addParameter({document: bound, nodeIds: ['shapes']})!
+    const added = createKeyedParameter({document: bound, nodeIds: ['shapes']})!
     const inserted = insertParameterKeyform({
       bindingId: added.binding.id,
       document: added.document,

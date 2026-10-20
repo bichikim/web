@@ -104,3 +104,38 @@ test('should discard a cancelled touch target before a context request in the ma
     vi.useRealTimers()
   }
 })
+
+test('should show five reference numbers on an empty one-dimensional track', () => {
+  const view = render(() => (
+    <EditorKeyformTrack
+      active={true}
+      binding={{id: 'empty', keyforms: [], parameterIds: ['value']}}
+      parameters={[{defaultValue: 0, id: 'value', maximum: 30, minimum: -30, name: 'Value'}]}
+    />
+  ))
+  expect(view.getByText('-30')).toBeDefined()
+  expect(view.getByText('-15')).toBeDefined()
+  expect(view.getByText('0')).toBeDefined()
+  expect(view.getByText('15')).toBeDefined()
+  expect(view.getByText('30')).toBeDefined()
+  expect(view.queryAllByRole('button', {name: /^Value .* 키폼$/})).toHaveLength(0)
+})
+
+test('should show independent X and Y reference values on an empty two-dimensional grid', () => {
+  const view = render(() => (
+    <EditorKeyformTrack
+      active={true}
+      binding={{id: 'xy', keyforms: [], parameterIds: ['x', 'y']}}
+      parameters={[
+        {defaultValue: 0, id: 'x', maximum: 30, minimum: -30, name: 'X'},
+        {defaultValue: 0, id: 'y', maximum: 30, minimum: -10, name: 'Y'},
+      ]}
+    />
+  ))
+  expect(view.getByText('-15')).toBeDefined()
+  expect(view.getByText('15')).toBeDefined()
+  expect(view.getByText('-10')).toBeDefined()
+  expect(view.getByText('20')).toBeDefined()
+  expect(view.getAllByText('0')).toHaveLength(2)
+  expect(view.getAllByText('30')).toHaveLength(2)
+})

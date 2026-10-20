@@ -1,4 +1,6 @@
 /** @vitest-environment jsdom */
+
+import {createKeyedParameter} from './parameter-keyforms/fixtures'
 import {cleanup, fireEvent, render} from '@solidjs/testing-library'
 import {createSignal} from 'solid-js'
 import {afterEach, expect, test, vi} from 'vitest'
@@ -6,7 +8,7 @@ import {createDemoDocument, type PuppetDocument} from '../../../player'
 import {useDocumentHistory} from '../../use-document-history'
 import {DeformerEditor} from '../DeformerEditor'
 import {convertSceneContainers} from '../container-conversion'
-import {addParameter, insertParameterKeyform} from '../parameter-keyforms'
+import {insertParameterKeyform} from '../parameter-keyforms'
 import {createParameterPreview} from '../parameter-sampling'
 import {createSceneGroup, getSceneNode} from '../scene-graph'
 import {
@@ -132,7 +134,7 @@ test('should close the spatial history transaction when the editor unmounts', ()
 test.each(['handle', 'brush'] as const)(
   'should discard a %s gesture when its keyform changes',
   (tool) => {
-    const added = addParameter({
+    const added = createKeyedParameter({
       document: {
         ...createDocument(createDeformer()),
         motions: [],

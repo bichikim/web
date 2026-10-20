@@ -24,11 +24,12 @@ export const EditorKeyformGridMarker = (props: EditorKeyformGridMarkerProps) => 
       props.onContextMenu?.()
     }
   }
+  const label = () => `키폼 선택: ${props.keyform.values.join(', ')}`
   return (
     <EditorDiamondButton
-      aria-label={`키폼 선택: ${props.keyform.values.join(', ')}`}
+      aria-label={label()}
       aria-pressed={props.active === true}
-      data-tooltip={`키폼 선택: ${props.keyform.values.join(', ')}`}
+      data-tooltip={label()}
       class="parameter-grid-keyform"
       classList={{selected: props.active === true}}
       style={{

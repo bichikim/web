@@ -1,3 +1,4 @@
+import {createKeyedParameter, createKeyedParameter2D} from './parameter-keyforms/fixtures'
 import {describe, expect, test} from 'vitest'
 import {
   createDemoDocument,
@@ -5,11 +6,7 @@ import {
   type PuppetSceneDeformerNode,
 } from '../../../player'
 import {updateDraggedDeformer} from '../deformer-drag'
-import {
-  addParameter,
-  addTwoDimensionalParameter,
-  setParameterKeyformDeformerControlPoints,
-} from '../parameter-keyforms'
+import {setParameterKeyformDeformerControlPoints} from '../parameter-keyforms'
 import {createParameterPreview} from '../parameter-sampling'
 import {getSceneNode} from '../scene-graph'
 
@@ -35,7 +32,7 @@ const createBindings = (twoDimensional: boolean) => {
     parameters: [],
     scene: {roots: [rest]},
   }
-  const first = (twoDimensional ? addTwoDimensionalParameter : addParameter)({
+  const first = (twoDimensional ? createKeyedParameter2D : createKeyedParameter)({
     document: initial,
     nodeIds: [rest.id],
   })!
@@ -51,7 +48,7 @@ const createBindings = (twoDimensional: boolean) => {
     rotationOrigin: {x: 60, y: 50},
     values,
   })!
-  const second = addParameter({document: firstPose, nodeIds: [rest.id]})!
+  const second = createKeyedParameter({document: firstPose, nodeIds: [rest.id]})!
   const document = setParameterKeyformDeformerControlPoints({
     bindingId: second.binding.id,
     controlPoints: rest.controlPoints.map(

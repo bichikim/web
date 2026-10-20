@@ -425,9 +425,8 @@ export interface PuppetParameterBinding2D extends PuppetParameterBindingBase {
 }
 
 /**
- * Keyforms over three parameters, as planes along the third: every plane (keyforms sharing a
- * third value) holds the same first/second value points, sampled like a 2D binding and blended
- * linearly between the neighboring planes (wrapping when the third parameter repeats).
+ * Z 값별 XY 키폼을 독립적으로 저장한다. 각 단면을 2D로 표본화한 뒤 이웃 단면 사이를
+ * 선형 보간하며, 세 번째 파라미터가 반복하면 마지막·첫 단면 사이도 순환한다.
  */
 export interface PuppetParameterBinding3D extends PuppetParameterBindingBase {
   readonly keyforms: ReadonlyArray<PuppetParameterKeyform3D>

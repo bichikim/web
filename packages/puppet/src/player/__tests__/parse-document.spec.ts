@@ -636,7 +636,7 @@ describe('parseDocument', () => {
     PLANE_TIMEOUT_MS,
   )
 
-  it('should reject three-dimensional planes with different point sets', () => {
+  it('should accept three-dimensional planes with different point sets', () => {
     const document = createDemoDocument()
     const depth = {defaultValue: 0, id: 'depth', maximum: 1, minimum: 0, name: 'Depth'}
     const binding = {
@@ -655,7 +655,7 @@ describe('parseDocument', () => {
         parameterBindings: [binding],
         parameters: [...(document.parameters ?? []), depth],
       }),
-    ).toMatchObject({ok: false})
+    ).toMatchObject({ok: true})
     expect(
       parseDocumentValue({
         ...document,

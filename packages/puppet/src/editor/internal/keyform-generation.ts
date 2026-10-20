@@ -1,12 +1,11 @@
 import {
-  isThreeDimensionalParameterBinding,
   parameterValuesEqual,
   type PuppetParameterValues,
   sampleParameterDeformer,
   withBindingKeyforms,
   withKeyformValues,
 } from '../../deformation'
-import {compareKeyformValues, isCompleteKeyformGrid} from './keyform-grid'
+import {compareKeyformValues} from './keyform-grid'
 import {validateMesh} from '../../mesh'
 import type {
   PuppetDocument,
@@ -102,9 +101,6 @@ export const replaceGeneratedKeyforms = (
   const keyforms = [...retained, ...generated].toSorted((first, second) =>
     compareKeyformValues(first.values, second.values),
   )
-  if (isThreeDimensionalParameterBinding(binding) && !isCompleteKeyformGrid(keyforms)) {
-    return {message: '3차원 Parameter는 모든 평면에 같은 키폼 위치가 있어야 합니다.', ok: false}
-  }
   const updated = withBindingKeyforms(binding, keyforms)
   return {
     document: {

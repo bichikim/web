@@ -17,7 +17,7 @@ import {
 } from '../../player'
 import {transformDeformerPoint} from '../../deformation'
 import {getDeformerAngle} from '../internal/deformer-transform'
-import {addParameter} from '../internal/parameter-keyforms'
+import {createKeyedParameter} from '../internal/__tests__/parameter-keyforms/fixtures'
 import {createDeformer, getSceneNode} from '../internal/scene-graph'
 import {PuppetEditor} from '../PuppetEditor'
 
@@ -115,7 +115,7 @@ describe('PuppetEditor', () => {
     const source = {...createDemoDocument(), motions: [], parameterBindings: [], parameters: []}
     const deformerDocument = createDeformer(source, ['mesh-preview'])!
     const deformer = getDocumentScene(deformerDocument).roots[0]!
-    const added = addParameter({document: deformerDocument, nodeIds: [deformer.id]})!
+    const added = createKeyedParameter({document: deformerDocument, nodeIds: [deformer.id]})!
     const onDocumentChange = vi.fn<(document: PuppetDocument) => void>()
     mocks.createPlayer.mockResolvedValue(player)
     const view = render(() => (
@@ -213,10 +213,11 @@ describe('PuppetEditor', () => {
     })
     fireEvent.click(view.getByRole('button', {name: '1차원 Parameter 추가'}))
 
-    const parameterValue = view.getByRole('spinbutton', {name: 'Parameter 3 값'})
-    fireEvent.input(parameterValue, {target: {value: '30'}})
     const track = view.getByLabelText('Parameter 3 키폼 트랙')
     vi.spyOn(track, 'getBoundingClientRect').mockReturnValue(new DOMRect(100, 0, 200, 40))
+    fireEvent.dblClick(track, {clientX: 200})
+    const parameterValue = view.getByRole('spinbutton', {name: 'Parameter 3 값'})
+    fireEvent.input(parameterValue, {target: {value: '30'}})
     fireEvent.dblClick(track, {clientX: 300})
     fireEvent.input(view.getByRole('spinbutton', {name: '자유 변형 각도'}), {
       target: {value: '60'},

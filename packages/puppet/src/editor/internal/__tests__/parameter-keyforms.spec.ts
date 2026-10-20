@@ -4,6 +4,7 @@ import {mapBindingKeyforms, parameterValuesEqual} from '../../../deformation'
 import {createDemoDocument, parseDocument} from '../../../player'
 import {
   addParameter,
+  addThreeDimensionalParameter,
   addTwoDimensionalParameter,
   connectParameterParts,
   createParameterPreview,
@@ -65,7 +66,7 @@ describe('parameter keyform editing', () => {
     const added = addParameter({document: source, nodeIds: ['mesh-preview']})
     const binding = added?.binding
 
-    expect(binding).toMatchObject({id: 'parameter-1', parameterIds: ['parameter-1']})
+    expect(binding).toMatchObject({id: 'parameter-1', keyforms: [], parameterIds: ['parameter-1']})
     expect(added?.document.parameters?.[0]).toMatchObject({
       defaultValue: 0,
       maximum: 30,
@@ -86,7 +87,6 @@ describe('parameter keyform editing', () => {
 
     expect(inserted?.parameters?.[0]?.name).toBe('Face Angle X')
     expect(inserted?.parameterBindings?.[0]?.keyforms.map((keyform) => keyform.values)).toEqual([
-      [0],
       [15],
     ])
 
@@ -95,32 +95,39 @@ describe('parameter keyform editing', () => {
       document: inserted!,
       values: [15],
     })
-    expect(deleted?.parameterBindings?.[0]?.keyforms.map((keyform) => keyform.values)).toEqual([
-      [0],
-    ])
+    expect(deleted?.parameterBindings?.[0]?.keyforms).toEqual([])
   })
 
-  test('should create a complete three-by-three two-dimensional grid', () => {
-    const source = {...createDemoDocument(), motions: [], parameterBindings: [], parameters: []}
-    const added = addTwoDimensionalParameter({document: source, nodeIds: ['mesh-preview']})
-
-    expect(added?.document.parameters?.map((parameter) => parameter.name)).toEqual([
-      'Parameter 1 X',
-      'Parameter 1 Y',
-    ])
-    expect(added?.binding.parameterIds).toHaveLength(2)
-    expect(added?.binding.keyforms.map((keyform) => keyform.values)).toEqual([
-      [-30, -30],
-      [0, -30],
-      [30, -30],
-      [-30, 0],
-      [0, 0],
-      [30, 0],
-      [-30, 30],
-      [0, 30],
-      [30, 30],
-    ])
-  })
+  test.each([
+    {add: addParameter, values: [15] as const},
+    {add: addTwoDimensionalParameter, values: [15, -10] as const},
+    {add: addThreeDimensionalParameter, values: [15, -10, 7] as const},
+  ])(
+    'should create an empty parameter for $values and add only the requested keyform',
+    ({add, values}) => {
+      const source = {...createDemoDocument(), motions: [], parameterBindings: [], parameters: []}
+      const added = add({document: source, nodeIds: ['mesh-preview']})!
+      expect(added.document.parameters).toHaveLength(values.length)
+      expect(added.binding.parameterIds).toHaveLength(values.length)
+      expect(added.binding.keyforms).toEqual([])
+      expect(added.binding.targetPartIds).toEqual(['mesh-preview'])
+      expect(parseDocument(JSON.stringify(added.document)).ok).toBe(true)
+      const preview = createParameterPreview({document: added.document, parameterValues: {}})
+      expect(preview.parts[0]?.mesh.vertices).toEqual(source.parts[0]?.mesh.vertices)
+      const inserted = insertParameterKeyform({
+        bindingId: added.binding.id,
+        document: added.document,
+        values,
+      })!
+      expect(inserted.parameterBindings?.[0]?.keyforms.map((keyform) => keyform.values)).toEqual([
+        values,
+      ])
+      expect(inserted.parameterBindings?.[0]?.keyforms[0]?.parts[0]?.vertices).toEqual(
+        source.parts[0]?.mesh.vertices,
+      )
+      expect(parseDocument(JSON.stringify(inserted)).ok).toBe(true)
+    },
+  )
 
   test('should create a unique two-dimensional binding ID for an imported document', () => {
     const source = {...createDemoDocument(), motions: [], parameterBindings: [], parameters: []}

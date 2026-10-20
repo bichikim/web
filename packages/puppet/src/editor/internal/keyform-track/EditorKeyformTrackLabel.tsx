@@ -54,6 +54,7 @@ export const EditorKeyformTrackLabel = (props: EditorKeyformTrackLabelProps) => 
       aria-label={`${props.parameters.map((parameter) => parameter.name).join(' / ')} 파라미터`}
       classList={{
         'parameter-grid-label': isTwoDimensionalParameterBinding(props.binding),
+        'parameter-line-label': props.binding.parameterIds.length === 1,
         'parameter-volume-label': isThreeDimensionalParameterBinding(props.binding),
       }}
     >

@@ -24,9 +24,7 @@ import {getDocumentScene} from '../../player/scene'
 import {
   canDeleteKeyformPlane,
   compareKeyformValues,
-  getInsertedKeyformValues,
   getKeyformMove,
-  isDeletedKeyform,
   toParameterValues,
 } from './keyform-grid'
 import {createParameterBindingId, createParameterIds} from './parameter-id'
@@ -43,11 +41,6 @@ const COORDINATES_PER_VERTEX = 2
 const DEFAULT_PARAMETER_MINIMUM = -30
 const DEFAULT_PARAMETER_MAXIMUM = 30
 const DEFAULT_PARAMETER_VALUE = 0
-const GRID_VALUES = [
-  DEFAULT_PARAMETER_MINIMUM,
-  DEFAULT_PARAMETER_VALUE,
-  DEFAULT_PARAMETER_MAXIMUM,
-] as const
 
 interface ParameterBindingTarget {
   readonly bindingId: string
@@ -207,13 +200,7 @@ export const addParameter = (options: AddParameterOptions): AddParameterResult |
   const parameter = createParameter(id, `Parameter ${index}`)
   const binding: PuppetParameterBinding1D = {
     id,
-    keyforms: [
-      {
-        deformers: deformers.map(createDeformerKeyform),
-        parts: parts.map((part) => ({partId: part.id, vertices: part.mesh.vertices})),
-        values: [DEFAULT_PARAMETER_VALUE],
-      },
-    ],
+    keyforms: [],
     parameterIds: [id],
     targetDeformerIds: deformers.map((deformer) => deformer.id),
     targetPartIds: parts.map((part) => part.id),
@@ -237,7 +224,7 @@ const createGridBinding = (id: string, ids: ReadonlyArray<string>): PuppetParame
     ? {id, keyforms: [], parameterIds: [ids[0]!, ids[1]!, ids[2]!]}
     : {id, keyforms: [], parameterIds: [ids[0]!, ids[1] ?? ids[0]!]}
 
-/** A parameter per axis and a binding keyed at every combination of minimum, default, maximum. */
+/** 각 축의 파라미터와 키폼이 없는 바인딩을 만든다. */
 const addGridParameter = (
   options: AddParameterOptions,
   axes: Exclude<ParameterDimensions, 1>,
@@ -252,22 +239,8 @@ const addGridParameter = (
   const parameters = ids.map((id, axis) =>
     createParameter(id, `Parameter ${index} ${AXIS_NAMES[axis]}`),
   )
-  const grid = ids.reduce<ReadonlyArray<ReadonlyArray<number>>>(
-    (combinations) =>
-      combinations.flatMap((values) => GRID_VALUES.map((value) => [...values, value])),
-    [[]],
-  )
   const binding: PuppetParameterBinding = {
-    ...withBindingKeyforms(
-      createGridBinding(bindingId, ids),
-      grid
-        .map((values) => ({
-          deformers: deformers.map(createDeformerKeyform),
-          parts: parts.map((part) => ({partId: part.id, vertices: part.mesh.vertices})),
-          values,
-        }))
-        .toSorted((first, second) => compareKeyformValues(first.values, second.values)),
-    ),
+    ...createGridBinding(bindingId, ids),
     targetDeformerIds: deformers.map((deformer) => deformer.id),
     targetPartIds: parts.map((part) => part.id),
   }
@@ -358,30 +331,31 @@ export const insertParameterKeyform = (options: ParameterValuesTarget) => {
     return undefined
   }
 
-  const inserted = getInsertedKeyformValues(binding, options.values).map((values) => ({
+  const {values} = options
+  const inserted = {
     deformers: deformers.map((deformer) => sampleParameterDeformer({binding, deformer, values})),
     groups: sampleKeyformGroups(options.document, binding, values),
     parts: parts.map((part) => samplePartKeyform({...options, binding, part, values})),
     values,
-  }))
+  }
   return replaceBinding(options.document, options.bindingId, (candidate) =>
     withBindingKeyforms(
       candidate,
-      [...candidate.keyforms, ...inserted].toSorted((first, second) =>
+      [...candidate.keyforms, inserted].toSorted((first, second) =>
         compareKeyformValues(first.values, second.values),
       ),
     ),
   )
 }
 
-/** Deletes the keyform at `values`; a 3D binding loses that point in every plane. */
+/** 모든 축이 일치하는 키폼 하나만 삭제한다. */
 export const deleteParameterKeyform = (options: ParameterValuesTarget) =>
   replaceBinding(options.document, options.bindingId, (binding) =>
     options.values.length === binding.parameterIds.length
       ? withBindingKeyforms(
           binding,
           binding.keyforms.filter(
-            (keyform) => !isDeletedKeyform(binding, options.values, keyform.values),
+            (keyform) => !parameterValuesEqual(options.values, keyform.values),
           ),
         )
       : binding,
@@ -494,7 +468,7 @@ export const disconnectParameterParts = (
   options: ParameterBindingTarget & {readonly partIds: ReadonlyArray<string>},
 ) => disconnectParameterNodes({...options, nodeIds: options.partIds})
 
-/** Moves a keyform; a 3D binding moves a point in every plane or a whole plane. */
+/** 현재 단면의 키폼 또는 Z 단면 전체의 좌표를 이동한다. */
 export const moveParameterKeyform = (options: MoveParameterKeyformOptions) => {
   const binding = getParameterBinding(options.document, options.bindingId)
   const parameters = binding === undefined ? [] : getBindingParameters(options.document, binding)

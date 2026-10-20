@@ -1,11 +1,13 @@
 /** @vitest-environment jsdom */
+
+import {createKeyedParameter} from './parameter-keyforms/fixtures'
 import {fireEvent, render, within} from '@solidjs/testing-library'
 import {createSignal} from 'solid-js'
 import {Portal} from 'solid-js/web'
 import {expect, test, vi} from 'vitest'
 import type {PuppetDocument, PuppetSceneDeformerNode} from '../../../player'
 import {DeformerEditor} from '../DeformerEditor'
-import {addParameter, insertParameterKeyform} from '../parameter-keyforms'
+import {insertParameterKeyform} from '../parameter-keyforms'
 import {
   createDeformer,
   createDocument,
@@ -160,7 +162,7 @@ test('should store grid and curvature handle movement in the selected keyform on
     ...createGrid(),
     curveHandles: [{horizontal: {x: 80, y: 60}, pointIndex: 4, vertical: {x: 70, y: 70}}],
   })
-  const added = addParameter({document: initial, nodeIds: ['deformer']})!
+  const added = createKeyedParameter({document: initial, nodeIds: ['deformer']})!
   const source = insertParameterKeyform({
     bindingId: added.binding.id,
     document: added.document,

@@ -1,3 +1,4 @@
+import {addParameter} from '../parameter-keyforms'
 import {expect, test} from 'vitest'
 import {createDemoDocument} from '../../../player/create-demo-document'
 import {applyTemporaryForm, createTemporaryTarget, readTemporaryForm} from '../temporary-form'
@@ -51,4 +52,23 @@ test('should isolate an unbound part and reject saving to an unrelated keyform',
       values: [0, 0],
     }),
   ).toBeUndefined()
+})
+
+test('should keep a new parameter empty while preparing an isolated temporary form', () => {
+  const added = addParameter({document: createDemoDocument(), nodeIds: ['shape-diamond']})!
+  const target = createTemporaryTarget({
+    bindingId: added.binding.id,
+    document: added.document,
+    nodeId: 'shape-diamond',
+    values: [12],
+  })!
+  expect(readTemporaryForm({...target, nodeId: 'shape-diamond'})?.parts[0]?.partId).toBe(
+    'shape-diamond',
+  )
+  expect(added.binding.keyforms).toEqual([])
+  expect(
+    target.document.parameterBindings
+      ?.find((binding) => binding.id === added.binding.id)
+      ?.keyforms.map((keyform) => keyform.values),
+  ).toEqual([[12]])
 })
