@@ -5,13 +5,14 @@ import {z} from 'zod'
 import manifest from '../../package.json'
 import {OpenAIExtensions, OpenAIFileEntrypointInputSchema} from '@openai/mcp-extensions/app'
 import {subscribeWorkspace} from './subscribe-workspace'
-import {connectionSchema, type ViewerConnection} from '../shared/contracts'
+import {connectionSchema, type ViewerConnection, workspaceSessionSchema} from '../shared/contracts'
 import type {ViewerPort} from './types'
 import {connectHostAppearance} from './connect-host-appearance'
 import {createHostContext} from './create-host-context'
 import {createPendingTasks} from './create-pending-tasks'
 import {subscribeWorkspaceChanges} from './subscribe-workspace-changes'
 import {errorMessage} from './error-message'
+import {callViewerTool} from './call-viewer-tool'
 import {createHostAttachments} from './create-host-attachments'
 
 const httpStreams = (app: App): boolean =>
@@ -66,6 +67,14 @@ const receiveConnection = (
     receive(connection)
   }
 }
+const changeWorkspace = (call: ViewerPort['call'], path: string) =>
+  callViewerTool({
+    input: {path},
+    name: 'code.workspace',
+    port: {call},
+    schema: workspaceSessionSchema,
+  })
+
 export const createHost = (options: HostOptions = {}): ViewerPort => {
   const standard = options.integration === 'standard'
   const app = new App({name: 'Code Viewer', version: manifest.version}, {}, {autoResize: standard})
@@ -101,6 +110,7 @@ export const createHost = (options: HostOptions = {}): ViewerPort => {
     standard,
   })
   return {
+    changeWorkspace: standard ? undefined : (path) => changeWorkspace(call, path),
     draftStorage: options.draftStorage,
     ...context,
     ...createHostAttachments({

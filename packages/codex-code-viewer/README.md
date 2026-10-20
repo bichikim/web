@@ -34,6 +34,8 @@ Fully quit and reopen Codex. In a project conversation, open the right panel's n
 
 The viewer connects to the conversation's workspace when its path is available. Otherwise, enter a file's absolute path, such as `/Users/yourname/projects/my-project/src/main.tsx`, and press Enter.
 
+In Codex, enter an absolute folder path under **Settings → Workspace** and select **Apply** to remember it only for Code Viewer in the current chat. It is restored when reopening the viewer or restarting the app, without changing the Codex chat’s own working directory. Unsaved changes require choosing whether to save, discard, or keep editing.
+
 To update, run the same installation command and reopen Codex. Check the installation with:
 
 ```sh

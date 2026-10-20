@@ -589,3 +589,17 @@ describe('createHost', () => {
     expect(close).toHaveBeenCalledOnce()
   })
 })
+
+it('should change the current chat workspace through the Codex host only', async () => {
+  const connection = {session: 'changed', workspace: '/new'}
+  const call = vi
+    .spyOn(App.prototype, 'callServerTool')
+    .mockResolvedValue({content: [], structuredContent: connection})
+  try {
+    expect(createHost({integration: 'standard'}).changeWorkspace).toBeUndefined()
+    expect(await createHost().changeWorkspace?.('/new')).toEqual(connection)
+    expect(call).toHaveBeenCalledWith({arguments: {path: '/new'}, name: 'code.workspace'})
+  } finally {
+    call.mockRestore()
+  }
+})

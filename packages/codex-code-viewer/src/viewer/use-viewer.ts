@@ -1,3 +1,4 @@
+import {createWorkspaceChanger} from './create-workspace-changer'
 import {createConnectionReceiver} from './create-connection-receiver'
 import {batch, createMemo, createSignal} from 'solid-js'
 import {z} from 'zod'
@@ -294,6 +295,7 @@ export const useViewer = (port: ViewerPort) => {
     busy: navigation.pending,
     canBack: history.canBack,
     canForward: history.canForward,
+    changeWorkspace: createWorkspaceChanger({beforeChange: editing.confirmLeave, port, receive}),
     ...definitions,
     copy,
     copyPath: (path: string): Promise<void> => copy(path, '경로를 복사했습니다.'),

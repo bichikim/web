@@ -155,6 +155,8 @@ export const SViewerWorkspace = (props: SViewerWorkspaceProps) => {
           <SUnsavedChanges editing={viewer.editing} />
           <SViewerSettings
             port={port}
+            workspace={viewer.workspaceSession()?.workspace}
+            onWorkspaceChange={viewer.changeWorkspace}
             open={settingsOpen()}
             previewLines={props.settings.previewLines()}
             language={props.settings.preference()}
