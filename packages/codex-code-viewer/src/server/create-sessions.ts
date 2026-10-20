@@ -48,9 +48,9 @@ export const createSessions = (events: SessionEvents = {}) => {
       return failure('read-failed')
     }
   }
-  const open = (path: string, line = 1, column = 1) => {
+  const open = (path: string, line = 1, column = 1, root?: string) => {
     try {
-      const workspace = createWorkspace(events.workspaceRoot ?? resolve(path))
+      const workspace = createWorkspace(events.workspaceRoot ?? root ?? resolve(path))
       const document = workspace.read(path, line, column)
       if (!document.ok) {
         workspace.dispose()

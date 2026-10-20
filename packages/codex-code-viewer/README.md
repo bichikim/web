@@ -10,7 +10,7 @@ See [Supported formats](#supported-formats) for the features available for each 
 
 ## 1. Install and open
 
-You need Node.js 24 or later and npm. For Codex, also use the Codex desktop app and a CLI supporting the `plugin` subcommand. If that CLI is missing or needs updating:
+You need Node.js 24 or later and npm. For Codex, also use the Codex desktop app and a CLI supporting the `plugin` subcommand. If the CLI is missing, the installer asks permission to install it globally with npm, then continues after installation. Non-interactive execution installs a missing CLI only with `install --install-codex`. To install or update it yourself:
 
 ```sh
 npm install -g @openai/codex
@@ -24,6 +24,8 @@ npx @winter-love/codex-code-viewer@latest install
 
 In a terminal, choose **Codex / Claude Desktop (Code mode) / Both**. For automation use `install --target codex|claude|all`; non-interactive execution defaults to Codex. Claude-only installation does not need the Codex CLI.
 
+**Claude support is experimental.** Limitations in Claude’s plugin and UI integration may affect some features and workflows.
+
 Claude installation currently supports **macOS Apple Silicon**. It requires [Claude Code CLI](https://code.claude.com/docs/en/setup) 2.1.287+ and a Claude Desktop version with Mods support. Only when Claude is selected, the installer downloads the matching GitHub Release runtime, verifies its size and SHA-256, and keeps it in `~/.claude/code-viewer/marketplace` and registers a user-scope plugin through the official CLI. No manual MCP configuration or ZIP upload is required. `CLAUDE_BINARY` and `CLAUDE_CONFIG_DIR` select another executable or configuration directory. For offline installation, `CODE_VIEWER_RUNTIME_ARCHIVE` selects a matching runtime ZIP with the same integrity checks. After replacement succeeds, the previous uploaded plugin is disabled; its files and running sessions are retained.
 
 Add and enable the printed **Code Viewer Attachment.app** path in System Settings → Privacy & Security → Accessibility. This permission enables one-click native composer attachments and expanding a collapsed Browser. If permission errors persist, remove only the existing **Code Viewer Attachment** entry and add the printed application path again: macOS can retain the old ZIP installation path under the same app name. Start a new **local** session in Claude Desktop's **Code** tab, then click **코드 뷰어 열기** below the composer or a project file link in Claude's response. The viewer opens on demand. Installation does not reload existing sessions.
@@ -31,6 +33,8 @@ Add and enable the printed **Code Viewer Attachment.app** path in System Setting
 Fully quit and reopen Codex. In a project conversation, open the right panel's new-tab menu and select **Code Viewer**. The default file viewer's **Open** menu launches external applications.
 
 The viewer connects to the conversation's workspace when its path is available. Otherwise, enter a file's absolute path, such as `/Users/yourname/projects/my-project/src/main.tsx`, and press Enter.
+
+In Codex, enter an absolute folder path under **Settings → Workspace** and select **Apply** to remember it only for Code Viewer in the current chat. It is restored when reopening the viewer or restarting the app, without changing the Codex chat’s own working directory. Unsaved changes require choosing whether to save, discard, or keep editing.
 
 To update, run the same installation command and reopen Codex. Check the installation with:
 

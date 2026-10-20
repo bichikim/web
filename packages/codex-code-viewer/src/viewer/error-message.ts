@@ -17,6 +17,7 @@ const messages: Record<ViewerError['code'], string> = {
   'invalid-name':
     '파일이나 폴더 이름을 확인해 주세요. 경로 구분자와 숨김·생성 폴더 이름은 사용할 수 없습니다.',
   'invalid-position': '이 위치에서는 이동할 대상을 찾을 수 없습니다.',
+  'invalid-workspace': '존재하는 작업 폴더의 절대 경로를 입력해 주세요.',
   'media-too-large': '128 MiB보다 큰 문서·이미지·영상·음악은 이 뷰어에서 열 수 없습니다.',
   'not-found': '파일을 찾을 수 없습니다.',
   'operation-too-large': '파일과 폴더가 10,000개를 넘는 항목은 한 번에 처리할 수 없습니다.',
@@ -38,8 +39,12 @@ const messages: Record<ViewerError['code'], string> = {
   'session-expired': '연결이 종료되었습니다. 파일을 다시 열어 주세요.',
   'stale-document': '파일이 변경되었습니다. 새로고침한 뒤 다시 이동해 주세요.',
   'text-too-large': '32 MiB보다 큰 텍스트 파일은 이 뷰어에서 열 수 없습니다.',
+  'thread-unavailable':
+    '채팅을 확인할 수 없어 작업 폴더를 기억할 수 없습니다. 채팅에서 뷰어를 다시 열어 주세요.',
   'too-large': '512 KiB보다 큰 파일은 편집할 수 없습니다.',
   'unsupported-file': '지원하지 않는 파일 형식입니다.',
+  'workspace-write-failed':
+    '작업 폴더를 기억하지 못했습니다. Codex 설정 폴더의 쓰기 권한을 확인해 주세요.',
   'write-conflict':
     '다른 곳에서 파일이 변경되어 저장하지 않았습니다. 초안을 복사하거나 변경을 버린 뒤 원본을 다시 확인해 주세요.',
   'write-failed':

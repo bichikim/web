@@ -1,5 +1,6 @@
 export * from './choose-install-target'
 export * from './create-claude-environment'
+export * from './ensure-codex-cli'
 export * from './install-claude-plugin'
 export * from './install-plugin'
 export * from './install-targets'

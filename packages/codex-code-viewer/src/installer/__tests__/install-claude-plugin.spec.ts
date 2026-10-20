@@ -126,7 +126,7 @@ it('should leave an existing catalog at a different location untouched', async (
         ? '[]'
         : JSON.stringify([{name: 'winter-love-code-viewer-npm', path: '/other/catalog'}]),
   )
-  await expect(installClaudePlugin(options)).rejects.toThrow('다른 위치')
+  await expect(installClaudePlugin(options)).rejects.toThrow('another location')
   expect(rename).not.toHaveBeenCalled()
 })
 

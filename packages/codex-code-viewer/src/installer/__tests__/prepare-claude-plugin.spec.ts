@@ -39,7 +39,7 @@ it('should extract the bundled plugin and restore executable permissions', async
 it('should reject a different plugin version before extracting', async () => {
   await expect(
     prepareClaudePlugin({archive: archive(), root: '/unused', version: '2.0.0'}),
-  ).rejects.toThrow('버전')
+  ).rejects.toThrow('version')
 })
 
 it.each(['../outside.txt', '/outside.txt', 'runtime/../../outside.txt', 'C:\\outside.txt'])(
@@ -51,6 +51,6 @@ it.each(['../outside.txt', '/outside.txt', 'runtime/../../outside.txt', 'C:\\out
         root: '/unused',
         version: '1.0.0',
       }),
-    ).rejects.toThrow('경로')
+    ).rejects.toThrow('path')
   },
 )

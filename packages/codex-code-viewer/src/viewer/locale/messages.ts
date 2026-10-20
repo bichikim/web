@@ -184,6 +184,7 @@ export const english = {
   '이 위치에 붙여넣을 수 없습니다. 다른 폴더를 선택해 주세요.':
     'Cannot paste here. Choose another folder.',
   '이 위치에서는 이동할 대상을 찾을 수 없습니다.': 'No navigation target at this position.',
+  '이 채팅의 코드뷰어에만 기억합니다.': 'Remembered only for Code Viewer in this chat.',
   '이 파일을': 'This file',
   '이 파일을 표시할 수 없습니다. 파일 형식과 브라우저가 지원하는 코덱을 확인해 주세요.':
     'Cannot display this file. Check the file format and codecs supported by your browser.',
@@ -217,12 +218,16 @@ export const english = {
   '작업 폴더': 'Workspace',
   '작업 폴더 밖의 파일은 열 수 없습니다.': 'Cannot open files outside the workspace.',
   '작업 폴더 안에서 {title}를 찾지 못했습니다.': 'No {title} found in the workspace.',
+  '작업 폴더를 기억하지 못했습니다. Codex 설정 폴더의 쓰기 권한을 확인해 주세요.':
+    'Could not remember the workspace. Check write permissions for the Codex settings folder.',
   '작업 폴더를 바꾸거나 닫기 전에 변경을 저장하세요.':
     'Save your changes before switching or closing the workspace.',
   잘라내기: 'Cut',
   저장: 'Save',
   '저장 중…': 'Saving…',
   '저장했습니다.': 'Saved.',
+  적용: 'Apply',
+  '적용 중…': 'Applying…',
   접기: 'Fold',
   '접힌 {count}줄 펼치기': 'Show {count} folded lines',
   '정의 선택': 'Choose definition',
@@ -230,10 +235,14 @@ export const english = {
   '정의·사용처 찾기': 'Find definitions and references',
   제거: 'Remove',
   '조회 연결이 끊겼습니다. 다시 조회해 주세요.': 'The search connection closed. Search again.',
+  '존재하는 작업 폴더의 절대 경로를 입력해 주세요.':
+    'Enter the absolute path of an existing folder.',
   '지원하지 않는 파일 형식입니다.': 'Unsupported file format.',
   '채팅 첨부 {count}개': 'Chat attachments: {count}',
   '채팅 첨부는 20개, 전체 64 KiB까지 추가할 수 있습니다.':
     'Chat attachments are limited to 20 items and 64 KiB in total.',
+  '채팅을 확인할 수 없어 작업 폴더를 기억할 수 없습니다. 채팅에서 뷰어를 다시 열어 주세요.':
+    'Cannot identify this chat. Reopen the viewer from the chat to remember its workspace.',
   '채팅창에 추가': 'Add to chat',
   '첨부 내용이 64 KiB를 넘습니다. 범위를 줄여서 추가해 주세요.':
     'Attachment exceeds 64 KiB. Select a smaller range.',
@@ -309,6 +318,7 @@ export const english = {
   '폴더 삭제': 'Delete folder',
   '폴더를 다음 채팅 메시지에 추가했습니다.': 'Added the folder to your next chat message.',
   '폴더와 그 안의 모든 항목을': 'This folder and all its contents',
+  '폴더의 절대 경로': 'Absolute folder path',
   '표 페이지 조절': 'Table pagination',
   '표는 처음 10,000행·100열까지 표시합니다. 전체 내용은 원문에서 확인하세요.':
     'Showing the first 10,000 rows and 100 columns. View the source for the full contents.',

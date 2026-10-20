@@ -73,7 +73,7 @@ it('should reject an unsupported host before making a network request', async ()
 })
 
 it('should reject a manifest for a different installer version', async () => {
-  await expect(readClaudeRuntime({...options, version: '2.0.0'})).rejects.toThrow('버전')
+  await expect(readClaudeRuntime({...options, version: '2.0.0'})).rejects.toThrow('version')
   expect(fetch).not.toHaveBeenCalled()
 })
 

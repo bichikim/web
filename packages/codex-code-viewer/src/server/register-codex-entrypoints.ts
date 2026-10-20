@@ -6,10 +6,20 @@ import {failure} from '../shared/contracts'
 import type {createSessions} from './create-sessions'
 import {toolResult} from './tool-result'
 
+interface CodexSessionOpener {
+  /** 채팅 메타데이터에 저장된 작업 폴더를 기준으로 파일을 엽니다. */
+  readonly open: (
+    path: string,
+    line?: number,
+    column?: number,
+    metadata?: unknown,
+  ) => ReturnType<ReturnType<typeof createSessions>['open']>
+}
+
 /** Registers the Codex file-entry tools against the shared viewer sessions. */
 export const registerCodexEntrypoints = (
   server: McpServer,
-  sessions: Pick<ReturnType<typeof createSessions>, 'open'>,
+  sessions: CodexSessionOpener,
   resourceUri: string,
 ): void => {
   const appMetadata = {ui: {resourceUri}}
@@ -45,7 +55,11 @@ export const registerCodexEntrypoints = (
     },
     async (_input, context) => {
       const path = getResourcePath(context._meta)
-      return toolResult(path === undefined ? failure('host-path-missing') : sessions.open(path))
+      return toolResult(
+        path === undefined
+          ? failure('host-path-missing')
+          : sessions.open(path, 1, 1, context._meta),
+      )
     },
   )
 }
