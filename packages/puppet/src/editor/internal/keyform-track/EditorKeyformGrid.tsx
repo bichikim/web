@@ -53,28 +53,44 @@ const getGridValues = (
       ]
 }
 
+const prepareKeyformFocus = (grid: HTMLDivElement | undefined, values: PuppetParameterValues) => {
+  if (grid === undefined) {
+    return
+  }
+  const root = grid.getRootNode()
+  if (!('activeElement' in root)) {
+    return
+  }
+  const focused = root.activeElement
+  if (!(focused instanceof HTMLButtonElement) || !grid.contains(focused)) {
+    return
+  }
+  const outerFocused = grid.ownerDocument.activeElement
+  // 문서 갱신으로 교체된 마커가 렌더링된 뒤 실제 트리 루트에 포커스를 복원한다.
+  return () =>
+    queueMicrotask(() => {
+      if (
+        grid.isConnected &&
+        !focused.isConnected &&
+        (root.activeElement === null || root.activeElement === grid.ownerDocument.body) &&
+        (grid.ownerDocument.activeElement === grid.ownerDocument.body ||
+          grid.ownerDocument.activeElement === outerFocused)
+      ) {
+        const label = `키폼 선택: ${values.join(', ')}`
+        const marker = [...grid.querySelectorAll<HTMLButtonElement>('button')].find(
+          (button) => button.getAttribute('aria-label') === label,
+        )
+        marker?.focus()
+      }
+    })
+}
+
 export const EditorKeyformGrid = (props: EditorKeyformGridProps) => {
   let gridElement: HTMLDivElement | undefined
   const handleKeyformMove = (from: PuppetParameterValues, to: PuppetParameterValues) => {
-    const focused = gridElement?.ownerDocument.activeElement
-    const restore = focused instanceof HTMLButtonElement && gridElement?.contains(focused)
+    const restoreFocus = prepareKeyformFocus(gridElement, to)
     props.onKeyformMove?.(props.binding.id, from, to)
-    if (restore) {
-      // 문서 갱신으로 교체된 마커가 렌더링된 뒤 포커스를 복원한다.
-      queueMicrotask(() => {
-        if (
-          gridElement?.isConnected &&
-          !focused.isConnected &&
-          gridElement.ownerDocument.activeElement === gridElement.ownerDocument.body
-        ) {
-          const label = `키폼 선택: ${to.join(', ')}`
-          const marker = [...gridElement.querySelectorAll<HTMLButtonElement>('button')].find(
-            (button) => button.getAttribute('aria-label') === label,
-          )
-          marker?.focus()
-        }
-      })
-    }
+    restoreFocus?.()
   }
   const xParameter = () => props.parameters[0]
   const yParameter = () => props.parameters[1]
