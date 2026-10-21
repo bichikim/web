@@ -5,13 +5,9 @@ const httpMocks = vi.hoisted(() => ({fetch: vi.fn()}))
 vi.mock('../../http-client', () => ({httpFetch: httpMocks.fetch}))
 
 import {createResumableModelFetch, type PartialDownloadStorage} from '../resumable-fetch'
+import {createPartialStorage, createTestBlob} from './support/partial-storage'
 
 type PartialMetadata = Parameters<PartialDownloadStorage['reset']>[0]
-
-interface StoredPartial {
-  body: Uint8Array
-  metadata: PartialMetadata
-}
 
 const createMetadata = (
   url = 'https://models.test/model.onnx',
@@ -29,50 +25,6 @@ afterEach(() => {
   vi.unstubAllGlobals()
   vi.restoreAllMocks()
 })
-
-const createPartialStorage = (initial?: StoredPartial) => {
-  let partial = initial
-  const storage: PartialDownloadStorage = {
-    append: vi.fn(async (_url, chunk) => {
-      if (partial === undefined) {
-        throw new Error('Partial metadata is missing.')
-      }
-
-      const body = new Uint8Array(partial.body.byteLength + chunk.byteLength)
-      body.set(partial.body)
-      body.set(chunk, partial.body.byteLength)
-      partial = {...partial, body}
-    }),
-    delete: vi.fn(async () => {
-      partial = undefined
-    }),
-    get: vi.fn(async () =>
-      partial === undefined
-        ? null
-        : {body: createTestBlob(partial.body), metadata: partial.metadata},
-    ),
-    reset: vi.fn(async (metadata) => {
-      partial = {body: new Uint8Array(), metadata}
-    }),
-  }
-
-  return {getPartial: () => partial, storage}
-}
-
-const createTestBlob = (body: Uint8Array, withStream = true): Blob =>
-  ({
-    arrayBuffer: async () => body.buffer,
-    size: body.byteLength,
-    stream: withStream
-      ? () =>
-          new ReadableStream({
-            start(controller) {
-              controller.enqueue(new Uint8Array(body))
-              controller.close()
-            },
-          })
-      : undefined,
-  }) as unknown as Blob
 
 const createHeaders = (length: number) => ({
   'accept-ranges': 'bytes',
