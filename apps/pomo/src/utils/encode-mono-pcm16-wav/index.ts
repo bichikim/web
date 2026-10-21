@@ -1,5 +1,6 @@
 import {clamp} from 'es-toolkit/math'
-import {writeTextBytes} from '../write-text-bytes'
+// Native Node ESM imports this module through server/ai-runner/audio.ts.
+import {writeTextBytes} from '../write-text-bytes/index.ts'
 // oxlint-disable no-magic-numbers -- These constants are fixed offsets and ranges in the PCM WAV specification.
 /** Encodes mono float samples as little-endian PCM16 RIFF/WAVE bytes. */
 export const encodeMonoPcm16Wav = (samples: Float32Array, sampleRate: number): ArrayBuffer => {
