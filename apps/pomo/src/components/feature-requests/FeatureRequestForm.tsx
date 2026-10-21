@@ -82,6 +82,10 @@ export const FeatureRequestForm = (props: FeatureRequestFormProps) => {
 
   const handleSubmit: JSX.EventHandler<HTMLFormElement, SubmitEvent> = async (event) => {
     event.preventDefault()
+    if (props.model.isSubmitting()) {
+      return
+    }
+
     setFormMessage(null)
     const validation = validateFeatureRequestInput(title(), description())
 
