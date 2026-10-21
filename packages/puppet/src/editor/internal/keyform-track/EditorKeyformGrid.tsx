@@ -1,3 +1,4 @@
+import type {EditorKeyformTrackProps} from './types'
 import {getVolumeSlicePosition, VOLUME_PROJECTION} from './volume-projection'
 import {EditorKeyformVolumeSpace} from './EditorKeyformVolumeSpace'
 import {EditorParameterScale} from './EditorParameterScale'
@@ -23,6 +24,7 @@ export interface EditorKeyformGridProps {
   readonly binding: PuppetParameterBinding
   readonly onKeyformAdd?: (values: PuppetParameterValues) => void
   readonly onKeyformContext?: (values: PuppetParameterValues) => void
+  readonly onKeyformMove?: EditorKeyformTrackProps['onKeyformMove']
   readonly onKeyformSelect?: (bindingId: string, values: PuppetParameterValues) => void
   readonly onValueChange?: (values: PuppetParameterValues) => void
   readonly parameters: ReadonlyArray<PuppetParameter>
@@ -52,6 +54,28 @@ const getGridValues = (
 }
 
 export const EditorKeyformGrid = (props: EditorKeyformGridProps) => {
+  let gridElement: HTMLDivElement | undefined
+  const handleKeyformMove = (from: PuppetParameterValues, to: PuppetParameterValues) => {
+    const focused = gridElement?.ownerDocument.activeElement
+    const restore = focused instanceof HTMLButtonElement && gridElement?.contains(focused)
+    props.onKeyformMove?.(props.binding.id, from, to)
+    if (restore) {
+      // 문서 갱신으로 교체된 마커가 렌더링된 뒤 포커스를 복원한다.
+      queueMicrotask(() => {
+        if (
+          gridElement?.isConnected &&
+          !focused.isConnected &&
+          gridElement.ownerDocument.activeElement === gridElement.ownerDocument.body
+        ) {
+          const label = `키폼 선택: ${to.join(', ')}`
+          const marker = [...gridElement.querySelectorAll<HTMLButtonElement>('button')].find(
+            (button) => button.getAttribute('aria-label') === label,
+          )
+          marker?.focus()
+        }
+      })
+    }
+  }
   const xParameter = () => props.parameters[0]
   const yParameter = () => props.parameters[1]
   const handleValueDrag = (event: PointerEvent, bounds: DOMRect) => {
@@ -115,6 +139,9 @@ export const EditorKeyformGrid = (props: EditorKeyformGridProps) => {
         {(volume) => <EditorKeyformVolumeSpace source={volume()} parameters={props.parameters} />}
       </Show>
       <div
+        ref={(element) => {
+          gridElement = element
+        }}
         class="parameter-grid"
         classList={{
           'parameter-grid-with-scale': props.volume === undefined,
@@ -158,6 +185,7 @@ export const EditorKeyformGrid = (props: EditorKeyformGridProps) => {
               keyform={keyform}
               parameters={props.parameters}
               onContextMenu={() => props.onKeyformContext?.(keyform.values)}
+              onMove={props.onKeyformMove === undefined ? undefined : handleKeyformMove}
               onSelect={() => props.onKeyformSelect?.(props.binding.id, keyform.values)}
             />
           )}

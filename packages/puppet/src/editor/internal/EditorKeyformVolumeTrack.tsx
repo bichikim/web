@@ -56,6 +56,9 @@ export const EditorKeyformVolumeTrack = (props: EditorKeyformVolumeTrackProps) =
     )?.values
     if (point !== undefined) {
       props.onKeyformMove?.(bindingId, point, inPlane(point, to))
+      if (values()[2] === to) {
+        props.onValueChange?.([x, y, to])
+      }
     }
   }
   const volume = createMemo(() => {

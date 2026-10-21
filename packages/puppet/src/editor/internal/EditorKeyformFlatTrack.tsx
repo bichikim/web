@@ -36,6 +36,29 @@ export const EditorKeyformFlatTrack = (props: EditorKeyformFlatTrackProps) => {
     handleGridContextMenu,
     restoreFocus,
   } = useKeyformTrack({source: () => props})
+  const blockVolumeBackground = (event: MouseEvent) => {
+    if (
+      props.volume !== undefined &&
+      (event.type === 'pointerdown' || event.button === 2) &&
+      event.target instanceof Element &&
+      event.target.closest('.parameter-grid') === null
+    ) {
+      event.preventDefault()
+      event.stopPropagation()
+      return true
+    }
+    return false
+  }
+  const handleTriggerContextMenu = (event: MouseEvent) => {
+    if (!blockVolumeBackground(event)) {
+      handleTriggerRequest(event)
+    }
+  }
+  const handleGridContextRequest = (event: MouseEvent) => {
+    if (!blockVolumeBackground(event)) {
+      handleGridContextMenu(event)
+    }
+  }
   const handleCloseAutoFocus = (event: Event) => {
     event.preventDefault()
     if (restoreFocus()) {
@@ -48,7 +71,7 @@ export const EditorKeyformFlatTrack = (props: EditorKeyformFlatTrackProps) => {
       label="키폼 작업"
       disabled={contextEntries().length === 0}
       onOpenChange={handleMenuOpenChange}
-      onContextMenu={handleTriggerRequest}
+      onContextMenu={handleTriggerContextMenu}
       onPointerDown={handleTriggerRequest}
       onInteractOutside={handleInteractOutside}
       onCloseAutoFocus={handleCloseAutoFocus}
@@ -115,7 +138,8 @@ export const EditorKeyformFlatTrack = (props: EditorKeyformFlatTrackProps) => {
           class="keyform-track parameter-grid-track"
           classList={{'parameter-volume-track': props.volume !== undefined}}
           ref={setTrackElement}
-          onContextMenu={handleGridContextMenu}
+          onContextMenu={handleGridContextRequest}
+          onPointerDown={blockVolumeBackground}
           aria-keyshortcuts="Backspace Delete"
           aria-label={`${firstParameter()?.name}와 ${secondParameter()?.name} 2차원 키폼 grid`}
           tabindex="0"
@@ -130,6 +154,7 @@ export const EditorKeyformFlatTrack = (props: EditorKeyformFlatTrackProps) => {
             values={props.values ?? [0, 0]}
             onKeyformContext={prepareContextMenu}
             onKeyformAdd={handleKeyformAdd}
+            onKeyformMove={props.onKeyformMove}
             onKeyformSelect={props.onKeyformSelect}
             onValueChange={handleValueChange}
           />
