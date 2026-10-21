@@ -2,6 +2,42 @@ import {describe, expect, it} from 'vitest'
 import {cloudTextRequestSchema, cloudTextResponseSchema, cloudTextUsageSchema} from '../contracts'
 
 const daily = {day: '2026-10-07', resetsAt: '2026-10-07T15:00:00.000Z', used: 10}
+
+describe('cloudTextRequestSchema message roles', () => {
+  const createRequest = (role: unknown) => ({
+    maximumTokens: 1,
+    messages: [{content: '  질문  ', role}],
+    requestId: '019d1990-1dc9-7255-a7b5-f9459dfaf781',
+  })
+
+  it.each(['assistant', 'system', 'user'])(
+    'should accept the %s role while preserving content whitespace',
+    (role) => {
+      const request = createRequest(role)
+
+      expect(cloudTextRequestSchema.parse(request)).toEqual(request)
+    },
+  )
+
+  it.each(['developer', 'tool', ' user ', null, undefined, 0])(
+    'should reject unsupported message role %s with the ordered role diagnostic',
+    (role) => {
+      const result = cloudTextRequestSchema.safeParse(createRequest(role))
+
+      expect(result.success).toBe(false)
+      if (!result.success) {
+        expect(result.error.issues).toEqual([
+          expect.objectContaining({
+            code: 'invalid_value',
+            path: ['messages', 0, 'role'],
+            values: ['assistant', 'system', 'user'],
+          }),
+        ])
+      }
+    },
+  )
+})
+
 it('should preserve the actual model ID and represent missing historical metadata as null', () => {
   const response = {text: '결과', tokenCount: 10, usage: {...daily, limit: null, remaining: null}}
   expect(cloudTextResponseSchema.parse({...response, modelId: 'fallback-model'}).modelId).toBe(

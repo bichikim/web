@@ -1,4 +1,5 @@
 import {z} from 'zod'
+import {TEXT_MESSAGE_ROLES} from 'src/features/ai-job/text-message-roles'
 
 import {AI_CAPABILITIES, type AiCapability} from './model-catalog.ts'
 
@@ -26,7 +27,7 @@ const IMAGE_DIMENSION_STEP = 16
 
 const textMessageSchema = z.object({
   content: z.string().trim().min(1).max(MAXIMUM_TEXT_LENGTH),
-  role: z.enum(['assistant', 'system', 'user']),
+  role: z.enum(TEXT_MESSAGE_ROLES),
 })
 
 export const textJobInputSchema = z.object({
