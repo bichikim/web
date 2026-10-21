@@ -45,6 +45,32 @@ describe('normalizeSpeechText', () => {
     },
   )
 
+  it.each([
+    '비율 3:5부터 12개까지',
+    '비율 03:5부터 12개까지',
+    '비율 03:05부터 12개까지',
+    '범위 25:05부터 12:30개까지',
+  ])('should preserve ranges that are not complete supported clock pairs: %s', (text) => {
+    expect(normalizeSpeechText({language: 'ko', text})).toBe(text)
+  })
+
+  it('should pronounce complete fullwidth colon clock ranges', () => {
+    expect(normalizeSpeechText({language: 'ko', text: '０９：05부터 12：30까지'})).toBe(
+      '아홉 시 오 분부터 열두 시 삼십 분까지',
+    )
+  })
+
+  it.each([
+    '점수 09:05부터 12:30까지',
+    '스코어는 09:05에서 12:30까지',
+    '비율 09:05부터 12:30까지',
+    '비율：０９：０５부터 １２：３０까지',
+    '오후 13:05부터 12:30까지',
+    '- 09:05부터 12:30까지',
+  ])('should preserve non-clock context across colon ranges: %s', (text) => {
+    expect(normalizeSpeechText({language: 'ko', text})).toBe(text)
+  })
+
   it('should pronounce Korean amounts and percentages', () => {
     expect(
       normalizeSpeechText({language: 'ko', text: '가격은 12,500원이고 진행률은 12.5%예요.'}),

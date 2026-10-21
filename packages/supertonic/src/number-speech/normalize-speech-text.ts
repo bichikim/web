@@ -1,8 +1,16 @@
 import type {SupertonicLanguage} from '../language'
 import {normalizeEnglishSpeechText} from './normalize-english-speech-text'
 import {normalizeKoreanSpeechText} from './normalize-korean-speech-text'
-import {UNSIGNED_INTEGER_PATTERN_SOURCE} from './number-patterns'
+import {
+  KOREAN_DIGIT_PATTERN_SOURCE,
+  KOREAN_UNIT_END_PATTERN_SOURCE,
+  NUMBER_TOKEN_START_PATTERN_SOURCE,
+  UNSIGNED_INTEGER_PATTERN_SOURCE,
+} from './number-patterns'
+import {parseClockTime} from './parse-clock-time'
 
+const RANGE_SEPARATOR_SOURCE = '(?:~|–|—|에서|부터|내지|to|through)'
+const CLOCK_EDGE_LENGTH = 3
 const PROTECTED_RANGE_NUMBER_SOURCE = `${UNSIGNED_INTEGER_PATTERN_SOURCE}(?:\\.\\d+)?`
 const PROTECTED_NUMBER_SOURCE = [
   'https?:\\/\\/\\S+',
@@ -10,12 +18,20 @@ const PROTECTED_NUMBER_SOURCE = [
   '[\\p{L}\\p{N}._%+-]+@[\\p{L}\\p{N}.-]+\\.[\\p{L}]{2,}',
   `\\b(?:between|from)\\s+${PROTECTED_RANGE_NUMBER_SOURCE}` +
     `\\s+(?:and|to|through)\\s+${PROTECTED_RANGE_NUMBER_SOURCE}\\b`,
-  `(?<!\\d)(?<![\\d０-９][:：])${PROTECTED_RANGE_NUMBER_SOURCE}` +
-    `\\s*(?:~|–|—|에서|부터|내지|to|through)\\s*${PROTECTED_RANGE_NUMBER_SOURCE}(?!\\d)`,
+  `(?<!\\d)${PROTECTED_RANGE_NUMBER_SOURCE}` +
+    `\\s*${RANGE_SEPARATOR_SOURCE}\\s*${PROTECTED_RANGE_NUMBER_SOURCE}(?!\\d)`,
   '\\b(?:version|model|room|chapter|episode|id)\\s+\\d+(?:\\.\\d+)*(?:st|nd|rd|th)?\\b',
   '\\b\\d+(?:[.-]\\d+){2,}\\b',
 ].join('|')
 const PROTECTED_NUMBER_PATTERN = new RegExp(PROTECTED_NUMBER_SOURCE, 'giu')
+const COLON_CLOCK_RANGE_PATTERN = new RegExp(
+  `${NUMBER_TOKEN_START_PATTERN_SOURCE}(?<!：)` +
+    `(${KOREAN_DIGIT_PATTERN_SOURCE}{2})[:：](${KOREAN_DIGIT_PATTERN_SOURCE}{2})` +
+    '\\s*(?:에서|부터)\\s*' +
+    `(${KOREAN_DIGIT_PATTERN_SOURCE}{2})[:：](${KOREAN_DIGIT_PATTERN_SOURCE}{2})` +
+    `(?![:：])${KOREAN_UNIT_END_PATTERN_SOURCE}`,
+  'giu',
+)
 
 export interface NormalizeSpeechTextOptions {
   readonly maximumLength?: number
@@ -39,10 +55,27 @@ export const normalizeSpeechText = (options: NormalizeSpeechTextOptions): string
     return options.text
   }
 
+  const clockRanges =
+    options.language === 'ko'
+      ? Array.from(options.text.matchAll(COLON_CLOCK_RANGE_PATTERN)).filter(
+          (match) =>
+            parseClockTime(match[1]!, match[2]!) !== null &&
+            parseClockTime(match[3]!, match[4]!) !== null,
+        )
+      : []
+  const protectedNumbers = Array.from(options.text.matchAll(PROTECTED_NUMBER_PATTERN)).filter(
+    (match) =>
+      !clockRanges.some(
+        (clock) =>
+          clock.index + CLOCK_EDGE_LENGTH === match.index &&
+          clock.index + clock[0].length - CLOCK_EDGE_LENGTH === match.index + match[0].length,
+      ),
+  )
+
   let result = ''
   let position = 0
 
-  for (const match of options.text.matchAll(PROTECTED_NUMBER_PATTERN)) {
+  for (const match of protectedNumbers) {
     const {index} = match
     result += normalize(options.text.slice(position, index))
     result += match[0]

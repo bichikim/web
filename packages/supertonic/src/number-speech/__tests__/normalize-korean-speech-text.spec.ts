@@ -123,6 +123,47 @@ describe('normalizeKoreanSpeechText clock and duration expressions', () => {
     expect(normalizeKoreanSpeechText(text)).toBe(text)
   })
 
+  it.each([
+    ['０９：０５에 시작합니다.', '아홉 시 오 분에 시작합니다.'],
+    ['현재 시각은 09:05.', '현재 시각은 아홉 시 오 분.'],
+    ['시각은 09:05.', '시각은 아홉 시 오 분.'],
+    ['현재 시간은 09:05.', '현재 시간은 아홉 시 오 분.'],
+  ])('should pronounce explicit clock contexts and fullwidth colons: %s', (text, expected) => {
+    expect(normalizeKoreanSpeechText(text)).toBe(expected)
+  })
+
+  it.each([
+    ['는', '은'],
+    ['가', '이'],
+    ['를', '을'],
+    ['와', '과'],
+    ['로', '으로'],
+    ['나', '이나'],
+    ['예요', '이에요'],
+    ['였어요', '이었어요'],
+    ['라고', '이라고'],
+  ])('should inflect the %s particle after the inserted minute unit', (particle, expected) => {
+    expect(normalizeKoreanSpeechText(`09:05${particle}`)).toBe(`아홉 시 오 분${expected}`)
+  })
+
+  it.each(['０９：０５：３０에', '비율： ０９：０５에', '남은 시간은 09:05.'])(
+    'should preserve unsupported or ambiguous clock contexts: %s',
+    (text) => {
+      expect(normalizeKoreanSpeechText(text)).toBe(text)
+    },
+  )
+
+  it.each([
+    '점수 09:05부터 12:30까지',
+    '스코어는 09:05에서 12:30까지',
+    '비율 09:05부터 12:30까지',
+    '비율：０９：０５부터 １２：３０까지',
+    '오후 13:05부터 12:30까지',
+    '- 09:05부터 12:30까지',
+  ])('should preserve non-clock context across colon ranges: %s', (text) => {
+    expect(normalizeKoreanSpeechText(text)).toBe(text)
+  })
+
   it('should retain June and October pronunciation when normalizing a colon time', () => {
     expect(normalizeKoreanSpeechText('6월 10일 09:05에 시작합니다.')).toBe(
       '유월 십 일 아홉 시 오 분에 시작합니다.',

@@ -46,13 +46,14 @@ const NATIVE_TENS = [
 const NATIVE_COUNTERS = '시간|개|명|마리|살|잔|권|대|장|점|곡'
 const SINO_UNITS = '개월|년대|년생|년형|년|초|층|월|일|도'
 const TOKEN_START_PATTERN = NUMBER_TOKEN_START_PATTERN_SOURCE
-const COLON_CLOCK_TOKEN_START_PATTERN = `${TOKEN_START_PATTERN}(?<![?&=%\\\\])`
+const COLON_CLOCK_TOKEN_START_PATTERN = `${TOKEN_START_PATTERN}(?<![?&=%\\\\：])`
 const COLON_CLOCK_CONTEXT_SUFFIX_PATTERN_SOURCE =
   `\\s*(?:${KOREAN_PARTICLE_PATTERN_SOURCE}|` +
   `(?:에서|부터|까지|에|쯤|경)${KOREAN_PARTICLE_PATTERN_SOURCE}|경(?=$|[^\\p{L}\\p{N}_]))`
 const COLON_CLOCK_NON_TIME_PREFIX_PATTERN = new RegExp(
   '(?:(?:비율|비례|버전|점수|스코어)|(?:^|[^\\p{L}\\p{N}_])(?:score|aspect\\s+ratio|ratio|version|ver|v))' +
-    '[:.]?\\s*(?:(?:은|는|이|가|을|를|의)\\s*)?$',
+    '[:：.]?\\s*(?:(?:은|는|이|가|을|를|의)\\s*)?' +
+    '(?:(?:오전|오후)?\\s*[\\d０-９]+[:：][\\d０-９]+\\s*(?:에서|부터)\\s*)*$',
   'iu',
 )
 const UNSIGNED_MONTH_NUMBER_PATTERN = /^[\d０-９]+$/u
@@ -84,14 +85,27 @@ const CLOCK_TIME_PATTERN = new RegExp(
   'gu',
 )
 const COLON_CLOCK_TIME_PATTERN = new RegExp(
-  `${COLON_CLOCK_TOKEN_START_PATTERN}((?:오전|오후)\\s*)?([\\d０-９]{2}):([\\d０-９]{2})` +
-    `(?=${COLON_CLOCK_CONTEXT_SUFFIX_PATTERN_SOURCE}|(?:$|[,.!?…](?=$|\\s))|\\s+)`,
+  `${COLON_CLOCK_TOKEN_START_PATTERN}((?:오전|오후)\\s*)?([\\d０-９]{2})[:：]([\\d０-９]{2})` +
+    `(?:(${COLON_CLOCK_CONTEXT_SUFFIX_PATTERN_SOURCE})|(?=$|[,.!?…](?=$|\\s)|\\s+))`,
   'gu',
 )
-const COLON_CLOCK_CONTEXT_SUFFIX_PATTERN = new RegExp(
-  `^${COLON_CLOCK_CONTEXT_SUFFIX_PATTERN_SOURCE}`,
+const COLON_CLOCK_RANGE_PREFIX_PATTERN = new RegExp(
+  `${COLON_CLOCK_TOKEN_START_PATTERN}((?:오전|오후)\\s*)?([\\d０-９]{2})[:：]([\\d０-９]{2})` +
+    '(\\s*(?:에서|부터))\\s*$',
   'u',
 )
+const EXPLICIT_CLOCK_PREFIX_PATTERN = /(?:시각|현재\s*시간)(?:은|이|[:：])?\s*$/u
+const CONSONANT_CLOCK_PARTICLES: ReadonlyMap<string, string> = new Map([
+  ['가', '이'],
+  ['나', '이나'],
+  ['는', '은'],
+  ['라고', '이라고'],
+  ['로', '으로'],
+  ['를', '을'],
+  ['였어요', '이었어요'],
+  ['예요', '이에요'],
+  ['와', '과'],
+])
 const CLOCK_MINUTE_PREFIX_PATTERN = new RegExp(`(?:${UNSIGNED_INTEGER_PATTERN})\\s*시\\s*$`, 'u')
 const NATIVE_COUNTER_PATTERN = new RegExp(
   `${TOKEN_START_PATTERN}(${UNSIGNED_INTEGER_PATTERN})\\s*` +
@@ -249,24 +263,43 @@ const replaceWhenPronounceable = (
 }
 
 const replaceColonClockTime = (
-  ...[match, timeOfDay, hour, minute, start, input]: [
+  ...[match, timeOfDay, hour, minute, suffix, start, input]: [
     string,
     string | undefined,
     string,
     string,
+    string | undefined,
     number,
     string,
   ]
-) => {
+): string => {
   if (COLON_CLOCK_NON_TIME_PREFIX_PATTERN.test(input.slice(0, start))) {
     return match
   }
 
-  const hasKoreanTimeSuffix = COLON_CLOCK_CONTEXT_SUFFIX_PATTERN.test(
-    input.slice(start + match.length),
-  )
+  if (
+    timeOfDay === undefined &&
+    suffix === undefined &&
+    !EXPLICIT_CLOCK_PREFIX_PATTERN.test(input.slice(0, start))
+  ) {
+    return match
+  }
 
-  if (timeOfDay === undefined && !hasKoreanTimeSuffix) {
+  const prefix = input.slice(0, start)
+  const previousClock = COLON_CLOCK_RANGE_PREFIX_PATTERN.exec(prefix)
+
+  if (
+    previousClock !== null &&
+    replaceColonClockTime(
+      previousClock[0],
+      previousClock[1],
+      previousClock[2]!,
+      previousClock[3]!,
+      previousClock[4],
+      previousClock.index,
+      prefix,
+    ) === previousClock[0]
+  ) {
     return match
   }
 
@@ -302,7 +335,9 @@ const replaceColonClockTime = (
   }
 
   const timeOfDayPrefix = timeOfDay === undefined ? '' : `${timeOfDay.trim()} `
-  return `${timeOfDayPrefix}${hourPronunciation} 시 ${minutePronunciation} 분`
+  const particle =
+    suffix?.replace(/\S+/u, (value) => CONSONANT_CLOCK_PARTICLES.get(value) ?? value) ?? ''
+  return `${timeOfDayPrefix}${hourPronunciation} 시 ${minutePronunciation} 분${particle}`
 }
 
 const parseDurationMinuteValue = (value: string): string | null => {
