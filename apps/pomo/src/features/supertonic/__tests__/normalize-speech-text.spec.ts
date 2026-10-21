@@ -38,6 +38,13 @@ describe('normalizeSpeechText', () => {
     )
   })
 
+  it.each(['범위:5부터 12개까지', '범위：5부터 12개까지'])(
+    'should preserve numeric ranges after label separators: %s',
+    (text) => {
+      expect(normalizeSpeechText({language: 'ko', text})).toBe(text)
+    },
+  )
+
   it('should pronounce Korean amounts and percentages', () => {
     expect(
       normalizeSpeechText({language: 'ko', text: '가격은 12,500원이고 진행률은 12.5%예요.'}),

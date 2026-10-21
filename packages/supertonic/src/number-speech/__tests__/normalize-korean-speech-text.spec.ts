@@ -105,6 +105,22 @@ describe('normalizeKoreanSpeechText clock and duration expressions', () => {
     expect(normalizeKoreanSpeechText(text)).toBe(text)
   })
 
+  it.each([
+    ['현재 시각은 09:05입니다.', '현재 시각은 아홉 시 오 분입니다.'],
+    ['09:05에는 시작해요.', '아홉 시 오 분에는 시작해요.'],
+    ['09:05부터는 시작해요.', '아홉 시 오 분부터는 시작해요.'],
+  ])('should pronounce colon clocks with Korean endings: %s', (text, expected) => {
+    expect(normalizeKoreanSpeechText(text)).toBe(expected)
+  })
+
+  it.each([
+    '경기 스코어는 09:05에서 끝났어요.',
+    '점수 09:05까지 올랐어요.',
+    'score 09:05에 도달했어요.',
+  ])('should preserve colon scores with explicit score cues: %s', (text) => {
+    expect(normalizeKoreanSpeechText(text)).toBe(text)
+  })
+
   it('should retain June and October pronunciation when normalizing a colon time', () => {
     expect(normalizeKoreanSpeechText('6월 10일 09:05에 시작합니다.')).toBe(
       '유월 십 일 아홉 시 오 분에 시작합니다.',

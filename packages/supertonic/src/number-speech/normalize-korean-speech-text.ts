@@ -48,9 +48,10 @@ const SINO_UNITS = '개월|년대|년생|년형|년|초|층|월|일|도'
 const TOKEN_START_PATTERN = NUMBER_TOKEN_START_PATTERN_SOURCE
 const COLON_CLOCK_TOKEN_START_PATTERN = `${TOKEN_START_PATTERN}(?<![?&=%\\\\])`
 const COLON_CLOCK_CONTEXT_SUFFIX_PATTERN_SOURCE =
-  '\\s*(?:에|부터|까지|에서|쯤|경)(?=$|[^\\p{L}\\p{N}_])'
+  `\\s*(?:${KOREAN_PARTICLE_PATTERN_SOURCE}|` +
+  `(?:에서|부터|까지|에|쯤|경)${KOREAN_PARTICLE_PATTERN_SOURCE}|경(?=$|[^\\p{L}\\p{N}_]))`
 const COLON_CLOCK_NON_TIME_PREFIX_PATTERN =
-  /(?:^|[^\p{L}\p{N}_])(?:비율|비례|버전|aspect\s+ratio|ratio|version|ver|v)[:.]?\s*(?:(?:은|는|이|가|을|를|의)\s*)?$/iu
+  /(?:^|[^\p{L}\p{N}_])(?:비율|비례|버전|점수|스코어|score|aspect\s+ratio|ratio|version|ver|v)[:.]?\s*(?:(?:은|는|이|가|을|를|의)\s*)?$/iu
 const UNSIGNED_MONTH_NUMBER_PATTERN = /^[\d０-９]+$/u
 const UNSIGNED_INTEGER_PATTERN = KOREAN_UNSIGNED_INTEGER_PATTERN_SOURCE
 const KOREAN_PARTICLE_PATTERN = KOREAN_PARTICLE_PATTERN_SOURCE
