@@ -2,6 +2,7 @@ import type {SupertonicLanguage} from '../language'
 import {normalizeEnglishSpeechText} from './normalize-english-speech-text'
 import {normalizeKoreanSpeechText} from './normalize-korean-speech-text'
 import {
+  KOREAN_CLOCK_END_PATTERN_SOURCE,
   KOREAN_CLOCK_RANGE_SEPARATOR_PATTERN_SOURCE,
   KOREAN_CLOCK_SUFFIX_PATTERN_SOURCE,
   KOREAN_DIGIT_PATTERN_SOURCE,
@@ -26,11 +27,11 @@ const PROTECTED_NUMBER_SOURCE = [
 ].join('|')
 const PROTECTED_NUMBER_PATTERN = new RegExp(PROTECTED_NUMBER_SOURCE, 'giu')
 const COLON_CLOCK_RANGE_PATTERN = new RegExp(
-  `${NUMBER_TOKEN_START_PATTERN_SOURCE}(?<!：)` +
+  `${NUMBER_TOKEN_START_PATTERN_SOURCE}` +
     `(${KOREAN_DIGIT_PATTERN_SOURCE}{2})[:：](${KOREAN_DIGIT_PATTERN_SOURCE}{2})` +
     `\\s*${KOREAN_CLOCK_RANGE_SEPARATOR_PATTERN_SOURCE}\\s*` +
     `(${KOREAN_DIGIT_PATTERN_SOURCE}{2})[:：](${KOREAN_DIGIT_PATTERN_SOURCE}{2})` +
-    `(?=${KOREAN_CLOCK_SUFFIX_PATTERN_SOURCE}|$|[,.!?…](?=$|\\s)|\\s+)`,
+    `(?=${KOREAN_CLOCK_SUFFIX_PATTERN_SOURCE}|${KOREAN_CLOCK_END_PATTERN_SOURCE})`,
   'giu',
 )
 

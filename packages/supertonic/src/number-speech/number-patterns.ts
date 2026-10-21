@@ -32,3 +32,5 @@ export const KOREAN_CLOCK_SUFFIX_PATTERN_SOURCE =
   `\\s*(?:${KOREAN_PARTICLE_PATTERN_SOURCE}|` +
   `(?:에서|부터|까지|에|쯤|경)${KOREAN_PARTICLE_PATTERN_SOURCE}|경(?=$|[^\\p{L}\\p{N}_]))`
 export const KOREAN_CLOCK_RANGE_SEPARATOR_PATTERN_SOURCE = `(?:에서|부터)(?:${KOREAN_PARTICLE_PATTERN_SOURCE})?`
+
+export const KOREAN_CLOCK_END_PATTERN_SOURCE = `(?=$|[,.!?…](?=$|[\\s\\p{Pe}\\p{Pf}"'])|[\\s\\p{Pe}\\p{Pf}"'])`

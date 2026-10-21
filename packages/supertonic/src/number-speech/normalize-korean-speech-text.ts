@@ -1,9 +1,10 @@
-import {classifySpeechNumber} from './classify-speech-number'
+import {classifySpeechNumber, hasEnglishIdentifierPrefix} from './classify-speech-number'
 import {hasNumberKind} from './has-number-kind'
 import {parseInteger} from './parse-integer'
 import {parseClockTime} from './parse-clock-time'
 import {KOREAN_DECIMAL_PERCENT_PATTERN, KOREAN_INTEGER_PERCENT_PATTERN} from './percent-patterns'
 import {
+  KOREAN_CLOCK_END_PATTERN_SOURCE,
   KOREAN_CLOCK_RANGE_SEPARATOR_PATTERN_SOURCE,
   KOREAN_CLOCK_SUFFIX_PATTERN_SOURCE,
   KOREAN_DIGIT_PATTERN_SOURCE,
@@ -48,12 +49,12 @@ const NATIVE_TENS = [
 const NATIVE_COUNTERS = '시간|개|명|마리|살|잔|권|대|장|점|곡'
 const SINO_UNITS = '개월|년대|년생|년형|년|초|층|월|일|도'
 const TOKEN_START_PATTERN = NUMBER_TOKEN_START_PATTERN_SOURCE
-const COLON_CLOCK_TOKEN_START_PATTERN = `${TOKEN_START_PATTERN}(?<![?&=%\\\\：])`
+const COLON_CLOCK_TOKEN_START_PATTERN = `${TOKEN_START_PATTERN}(?<![?&=%\\\\])`
 const COLON_CLOCK_NON_TIME_PREFIX_PATTERN = new RegExp(
   '(?:(?:비율|비례|버전|점수|스코어|(?:남은|경과|소요|재생|총)\\s*시간|타이머|타임스탬프|재생\\s*위치|영상\\s*길이)|' +
     '(?:^|[^\\p{L}\\p{N}_])(?:score|aspect\\s+ratio|ratio|version|ver|v|duration|timestamp|' +
     'remaining\\s+time|elapsed\\s+time))' +
-    '[:：.]?\\s*(?:(?:은|는|이|가|을|를|의)\\s*)?' +
+    '[:：.]?\\s*(?:(?:에서|에게|으로|부터|까지|로|에)?(?:은|는|이|가|을|를|의|도|만)?\\s*)' +
     `(?:(?:오전|오후)?\\s*[\\d０-９]+[:：][\\d０-９]+\\s*${KOREAN_CLOCK_RANGE_SEPARATOR_PATTERN_SOURCE}\\s*)*$`,
   'iu',
 )
@@ -88,7 +89,7 @@ const CLOCK_TIME_PATTERN = new RegExp(
 )
 const COLON_CLOCK_TIME_PATTERN = new RegExp(
   `${COLON_CLOCK_TOKEN_START_PATTERN}((?:오전|오후)\\s*)?([\\d０-９]{2})[:：]([\\d０-９]{2})` +
-    `(?:(${KOREAN_CLOCK_SUFFIX_PATTERN_SOURCE})|(?=$|[,.!?…](?=$|\\s)|\\s+))`,
+    `(?:(${KOREAN_CLOCK_SUFFIX_PATTERN_SOURCE})|${KOREAN_CLOCK_END_PATTERN_SOURCE})`,
   'gu',
 )
 const COLON_CLOCK_RANGE_PREFIX_PATTERN = new RegExp(
@@ -264,19 +265,13 @@ const replaceWhenPronounceable = (
   return `${pronunciation}${unitSeparator}${unit}`
 }
 
-const hasEnglishIdentifierContext = ({
-  input,
-  prefix,
-  value,
-}: {
-  input: string
-  prefix: string
-  value: string
-}) => /[A-Za-z]\s*$/u.test(prefix) && hasNumberKind('en', input, prefix.length, value, 'identifier')
-
 const hasNonClockPrefix = (prefix: string): boolean =>
   COLON_CLOCK_NON_TIME_PREFIX_PATTERN.test(prefix) ||
-  COLON_CLOCK_STRUCTURED_PREFIX_PATTERN.test(prefix)
+  (COLON_CLOCK_STRUCTURED_PREFIX_PATTERN.test(prefix) &&
+    !EXPLICIT_CLOCK_PREFIX_PATTERN.test(prefix))
+
+const hasClockContext = (prefix: string, previousClock: RegExpExecArray | null): boolean =>
+  previousClock !== null || EXPLICIT_CLOCK_PREFIX_PATTERN.test(prefix)
 
 const replaceColonClockTime = (
   ...[match, timeOfDay, hour, minute, suffix, start, input]: [
@@ -298,14 +293,6 @@ const replaceColonClockTime = (
     return match
   }
 
-  if (
-    timeOfDay === undefined &&
-    suffix === undefined &&
-    !EXPLICIT_CLOCK_PREFIX_PATTERN.test(prefix)
-  ) {
-    return match
-  }
-
   const previousClock = COLON_CLOCK_RANGE_PREFIX_PATTERN.exec(prefix)
 
   if (
@@ -323,6 +310,10 @@ const replaceColonClockTime = (
     return match
   }
 
+  if (timeOfDay === undefined && suffix === undefined && !hasClockContext(prefix, previousClock)) {
+    return match
+  }
+
   const clockTime = parseClockTime(hour, minute)
 
   if (
@@ -337,7 +328,7 @@ const replaceColonClockTime = (
   const canonicalHour = String(clockTime.hour)
   const clockContext = `${clockPrefix}${canonicalHour}시 ${minute}분${input.slice(start + match.length)}`
   if (
-    hasEnglishIdentifierContext({input: clockContext, prefix: clockPrefix, value: canonicalHour}) ||
+    hasEnglishIdentifierPrefix(clockPrefix) ||
     !hasCanonicalNumberKind({
       canonicalValue: canonicalHour,
       input: clockContext,

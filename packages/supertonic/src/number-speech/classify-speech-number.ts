@@ -30,6 +30,9 @@ const NUMBER_PATTERN = new RegExp(
 const STRUCTURED_SEPARATOR_PATTERN = /[/:~–—-]/u
 const ENGLISH_IDENTIFIER_PATTERN =
   /(?:^|[^A-Za-z])(?:channel|episode|formula|gpt|highway|id|iphone|iso|model|room|route|version)\s+$/iu
+export const hasEnglishIdentifierPrefix = (prefix: string): boolean =>
+  ENGLISH_IDENTIFIER_PATTERN.test(prefix)
+
 const ENGLISH_DIGIT_CUE_PATTERN =
   /(?:^|[^A-Za-z])(?:(?:access|verification)\s+)?(?:code|extension|passcode|pin)\s*$/iu
 const ENGLISH_YEAR_PATTERN = /(?:^|[^A-Za-z])(?:by|during|in|since|through|until|year)\s+$/iu
@@ -169,7 +172,7 @@ const classifyEnglishNumber = (context: NumberContext): SpeechNumberDecision => 
     return /^\s*%/u.test(context.suffix) ? CARDINAL_DECISION : AMBIGUOUS_DECISION
   }
 
-  if (ENGLISH_IDENTIFIER_PATTERN.test(context.prefix)) {
+  if (hasEnglishIdentifierPrefix(context.prefix)) {
     return IDENTIFIER_DECISION
   }
 
