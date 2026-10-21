@@ -11,7 +11,14 @@ import {forbiddenHooks} from '../rules/forbidden-hooks.mjs'
 // @ts-expect-error The JavaScript plugin intentionally has no TypeScript declaration file.
 import {hooksOnly} from '../rules/hooks-only.mjs'
 
+// @ts-expect-error The JavaScript plugin intentionally has no TypeScript declaration file.
+import {noUselessIndex} from '../rules/no-useless-index.mjs'
+
 describe('oxlint plugin entrypoint', () => {
+  it('should expose the no-useless-index rule', () => {
+    expect(plugin.rules['no-useless-index']).toBe(noUselessIndex)
+  })
+
   it('should expose the hooks-only rule', () => {
     expect(plugin.rules['hooks-only']).toBe(hooksOnly)
   })

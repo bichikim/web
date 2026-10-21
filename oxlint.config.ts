@@ -82,6 +82,16 @@ export default defineConfig({
         ],
       },
     },
+    // Bundler source modules may omit index when both paths resolve to the same file.
+    {
+      // These modules also run as native Node ESM, which requires explicit filenames.
+      excludeFiles: [
+        'apps/pomo/src/server/ai-runner/**',
+        'apps/pomo/src/utils/encode-mono-pcm16-wav/**',
+      ],
+      files: ['apps/*/src/**/*.{ts,tsx}', 'packages/*/src/**/*.{ts,tsx}'],
+      rules: {'project/no-useless-index': 'warn'},
+    },
     // Solid props를 구조 분해하도록 권하지 않는다.
     {
       files: ['**/*.tsx'],
