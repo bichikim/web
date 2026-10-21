@@ -95,6 +95,36 @@ describe('normalizeSpeechText', () => {
     )
   })
 
+  it.each([
+    'time = 09:05에',
+    'time= 09:05에',
+    'time = 오전 09:05에',
+    'time ? 09:05에',
+    'time % 09:05에',
+  ])('should preserve spaced structured clock delimiters: %s', (text) => {
+    expect(normalizeSpeechText({language: 'ko', text})).toBe(text)
+  })
+
+  it.each([
+    '남은 시간은 09:05입니다.',
+    '재생 시간은 09:05예요.',
+    '경과 시간: 09:05에',
+    '타임스탬프 09:05에서',
+    'duration: 09:05에',
+    '영상 길이는 09:05입니다.',
+  ])('should preserve duration and media colon contexts: %s', (text) => {
+    expect(normalizeSpeechText({language: 'ko', text})).toBe(text)
+  })
+
+  it.each(['model', 'room', '오전', '오후', 'duration', '타임스탬프'])(
+    'should normalize an independent clock after a URL path cue: %s',
+    (path) => {
+      expect(
+        normalizeSpeechText({language: 'ko', text: `https://example.com/${path} 09:05에`}),
+      ).toBe(`https://example.com/${path} 아홉 시 오 분에`)
+    },
+  )
+
   it('should pronounce Korean amounts and percentages', () => {
     expect(
       normalizeSpeechText({language: 'ko', text: '가격은 12,500원이고 진행률은 12.5%예요.'}),

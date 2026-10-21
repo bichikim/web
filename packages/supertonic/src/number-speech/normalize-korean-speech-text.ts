@@ -50,11 +50,14 @@ const SINO_UNITS = '개월|년대|년생|년형|년|초|층|월|일|도'
 const TOKEN_START_PATTERN = NUMBER_TOKEN_START_PATTERN_SOURCE
 const COLON_CLOCK_TOKEN_START_PATTERN = `${TOKEN_START_PATTERN}(?<![?&=%\\\\：])`
 const COLON_CLOCK_NON_TIME_PREFIX_PATTERN = new RegExp(
-  '(?:(?:비율|비례|버전|점수|스코어)|(?:^|[^\\p{L}\\p{N}_])(?:score|aspect\\s+ratio|ratio|version|ver|v))' +
+  '(?:(?:비율|비례|버전|점수|스코어|(?:남은|경과|소요|재생|총)\\s*시간|타이머|타임스탬프|재생\\s*위치|영상\\s*길이)|' +
+    '(?:^|[^\\p{L}\\p{N}_])(?:score|aspect\\s+ratio|ratio|version|ver|v|duration|timestamp|' +
+    'remaining\\s+time|elapsed\\s+time))' +
     '[:：.]?\\s*(?:(?:은|는|이|가|을|를|의)\\s*)?' +
     `(?:(?:오전|오후)?\\s*[\\d０-９]+[:：][\\d０-９]+\\s*${KOREAN_CLOCK_RANGE_SEPARATOR_PATTERN_SOURCE}\\s*)*$`,
   'iu',
 )
+const COLON_CLOCK_STRUCTURED_PREFIX_PATTERN = /[?&=%\\：]\s*$/u
 const UNSIGNED_MONTH_NUMBER_PATTERN = /^[\d０-９]+$/u
 const UNSIGNED_INTEGER_PATTERN = KOREAN_UNSIGNED_INTEGER_PATTERN_SOURCE
 const KOREAN_PARTICLE_PATTERN = KOREAN_PARTICLE_PATTERN_SOURCE
@@ -271,6 +274,10 @@ const hasEnglishIdentifierContext = ({
   value: string
 }) => /[A-Za-z]\s*$/u.test(prefix) && hasNumberKind('en', input, prefix.length, value, 'identifier')
 
+const hasNonClockPrefix = (prefix: string): boolean =>
+  COLON_CLOCK_NON_TIME_PREFIX_PATTERN.test(prefix) ||
+  COLON_CLOCK_STRUCTURED_PREFIX_PATTERN.test(prefix)
+
 const replaceColonClockTime = (
   ...[match, timeOfDay, hour, minute, suffix, start, input]: [
     string,
@@ -285,7 +292,7 @@ const replaceColonClockTime = (
   const prefix = input.slice(0, start)
 
   if (
-    COLON_CLOCK_NON_TIME_PREFIX_PATTERN.test(prefix) ||
+    hasNonClockPrefix(prefix) ||
     (timeOfDay === undefined && TIME_OF_DAY_PREFIX_PATTERN.test(prefix))
   ) {
     return match

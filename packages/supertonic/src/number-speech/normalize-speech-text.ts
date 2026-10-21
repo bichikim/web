@@ -13,9 +13,9 @@ import {parseClockTime} from './parse-clock-time'
 const RANGE_SEPARATOR_SOURCE = '(?:~|–|—|에서|부터|내지|to|through)'
 const CLOCK_EDGE_LENGTH = 3
 const PROTECTED_RANGE_NUMBER_SOURCE = `${UNSIGNED_INTEGER_PATTERN_SOURCE}(?:\\.\\d+)?`
+const PROTECTED_URL_SOURCE = '(?:https?:\\/\\/|www\\.)\\S+'
 const PROTECTED_NUMBER_SOURCE = [
-  'https?:\\/\\/\\S+',
-  'www\\.\\S+',
+  PROTECTED_URL_SOURCE,
   '[\\p{L}\\p{N}._%+-]+@[\\p{L}\\p{N}.-]+\\.[\\p{L}]{2,}',
   `\\b(?:between|from)\\s+${PROTECTED_RANGE_NUMBER_SOURCE}` +
     `\\s+(?:and|to|through)\\s+${PROTECTED_RANGE_NUMBER_SOURCE}\\b`,
@@ -50,6 +50,11 @@ const getNormalizer = (
   return language === 'ko' ? normalizeKoreanSpeechText : null
 }
 
+const getClockContextPrefix = (prefix: string): string =>
+  prefix.replace(new RegExp(PROTECTED_URL_SOURCE, 'giu'), (url) =>
+    /[?&][^?&#=\s]+=(?:오전|오후)?$/u.test(url) ? url : ' ',
+  )
+
 /** Produces deterministic model input while preserving ambiguous and unsupported number forms. */
 export const normalizeSpeechText = (options: NormalizeSpeechTextOptions): string => {
   const normalize = getNormalizer(options.language)
@@ -80,13 +85,17 @@ export const normalizeSpeechText = (options: NormalizeSpeechTextOptions): string
 
   for (const match of protectedNumbers) {
     const {index} = match
-    result += normalize(options.text.slice(position, index), options.text.slice(0, position))
+    result += normalize(
+      options.text.slice(position, index),
+      getClockContextPrefix(options.text.slice(0, position)),
+    )
     result += match[0]
     position = index + match[0].length
   }
 
   const normalized =
-    result + normalize(options.text.slice(position), options.text.slice(0, position))
+    result +
+    normalize(options.text.slice(position), getClockContextPrefix(options.text.slice(0, position)))
   return Array.from(normalized).length <= (options.maximumLength ?? Infinity)
     ? normalized
     : options.text
