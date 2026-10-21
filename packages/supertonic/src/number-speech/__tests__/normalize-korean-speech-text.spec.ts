@@ -270,4 +270,20 @@ describe('normalizeKoreanSpeechText clock and duration expressions', () => {
   ])('should retain clock labels and sentence boundary contracts: %s', (text, expected) => {
     expect(normalizeKoreanSpeechText(text)).toBe(expected)
   })
+  it.each([
+    ['field: (09:05에)', 'field: (09:05에)'],
+    ['오후 (09:05에)', '오후 (아홉 시 오 분에)'],
+    ['오후 (13:05에)', '오후 (13:05에)'],
+    ['time=오후 (09:05에)', 'time=오후 (09:05에)'],
+    ['대화는 (09:05에)', '대화는 (아홉 시 오 분에)'],
+    ['모델은 09:05입니다.', '모델은 09:05입니다.'],
+    ['모델에서는 09:05를 사용합니다.', '모델에서는 09:05를 사용합니다.'],
+    ['방은 09:05입니다.', '방은 09:05입니다.'],
+    ['ID는 09:05입니다.', 'ID는 09:05입니다.'],
+    ['model에는 09:05를 사용합니다.', 'model에는 09:05를 사용합니다.'],
+    ['오후 (09:05)', '오후 (아홉 시 오 분)'],
+    ['time=오후 (09:05)', 'time=오후 (09:05)'],
+  ])('should preserve decorated range and cue ownership contracts: %s', (text, expected) => {
+    expect(normalizeKoreanSpeechText(text)).toBe(expected)
+  })
 })

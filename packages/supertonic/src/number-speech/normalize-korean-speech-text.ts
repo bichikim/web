@@ -1,4 +1,9 @@
-import {classifySpeechNumber, hasEnglishIdentifierPrefix} from './classify-speech-number'
+import {
+  classifySpeechNumber,
+  hasEnglishIdentifierPrefix,
+  normalizeIdentifierCuePrefix,
+} from './classify-speech-number'
+import {correctClockParticle} from './correct-clock-particle'
 import {hasNumberKind} from './has-number-kind'
 import {parseInteger} from './parse-integer'
 import {parseClockTime} from './parse-clock-time'
@@ -8,6 +13,7 @@ import {
   KOREAN_CLOCK_RANGE_SEPARATOR_PATTERN_SOURCE,
   KOREAN_CLOCK_SUFFIX_PATTERN_SOURCE,
   KOREAN_CLOCK_TOKEN_START_PATTERN_SOURCE,
+  KOREAN_CONTEXT_PARTICLE_PATTERN_SOURCE,
   KOREAN_DIGIT_PATTERN_SOURCE,
   KOREAN_INTEGER_PATTERN_SOURCE,
   KOREAN_PARTICLE_PATTERN_SOURCE,
@@ -55,11 +61,12 @@ const COLON_CLOCK_NON_TIME_PREFIX_PATTERN = new RegExp(
   '(?:(?:비율|비례|버전|점수|스코어|(?:남은|경과|소요|재생|총)\\s*시간|타이머|타임스탬프|재생\\s*위치|영상\\s*길이)|' +
     '(?:^|[^\\p{L}\\p{N}_])(?:score|aspect\\s+ratio|ratio|version|ver\\.?|v\\.?|duration|timestamp|' +
     'remaining\\s+time|elapsed\\s+time))' +
-    '[:：]?\\s*(?:(?:에서|에게|으로|부터|까지|로|에)?(?:은|는|이|가|을|를|의|도|만)?\\s*)' +
+    `[:：]?\\s*(?:${KOREAN_CONTEXT_PARTICLE_PATTERN_SOURCE})?\\s*` +
     `(?:(?:오전|오후)?\\s*[\\d０-９]+[:：][\\d０-９]+\\s*${KOREAN_CLOCK_RANGE_SEPARATOR_PATTERN_SOURCE}\\s*)*$`,
   'iu',
 )
-const COLON_CLOCK_STRUCTURED_PREFIX_PATTERN = /[?&=%\\：]\s*$/u
+const COLON_CLOCK_STRUCTURED_PREFIX_PATTERN = /[?&=%\\]\s*(?:(?:오전|오후)[:：]?\s*)?$/u
+const COLON_CLOCK_LABEL_PREFIX_PATTERN = /[:：]\s*(?:(?:오전|오후)\s*)?$/u
 const UNSIGNED_MONTH_NUMBER_PATTERN = /^[\d０-９]+$/u
 const UNSIGNED_INTEGER_PATTERN = KOREAN_UNSIGNED_INTEGER_PATTERN_SOURCE
 const KOREAN_PARTICLE_PATTERN = KOREAN_PARTICLE_PATTERN_SOURCE
@@ -100,17 +107,6 @@ const COLON_CLOCK_RANGE_PREFIX_PATTERN = new RegExp(
   'u',
 )
 const EXPLICIT_CLOCK_PREFIX_PATTERN = /(?:시각|현재\s*시간)(?:은|이|[:：])?\s*$/u
-const CONSONANT_CLOCK_PARTICLES: ReadonlyMap<string, string> = new Map([
-  ['가', '이'],
-  ['나', '이나'],
-  ['는', '은'],
-  ['라고', '이라고'],
-  ['로', '으로'],
-  ['를', '을'],
-  ['였어요', '이었어요'],
-  ['예요', '이에요'],
-  ['와', '과'],
-])
 const CLOCK_MINUTE_PREFIX_PATTERN = new RegExp(`(?:${UNSIGNED_INTEGER_PATTERN})\\s*시\\s*$`, 'u')
 const NATIVE_COUNTER_PATTERN = new RegExp(
   `${TOKEN_START_PATTERN}(${UNSIGNED_INTEGER_PATTERN})\\s*` +
@@ -267,13 +263,17 @@ const replaceWhenPronounceable = (
   return `${pronunciation}${unitSeparator}${unit}`
 }
 
-const hasNonClockPrefix = (prefix: string): boolean =>
+const hasNonClockPrefix = (prefix: string, hasDayPeriod: boolean): boolean =>
   COLON_CLOCK_NON_TIME_PREFIX_PATTERN.test(prefix) ||
-  (COLON_CLOCK_STRUCTURED_PREFIX_PATTERN.test(prefix) &&
-    !EXPLICIT_CLOCK_PREFIX_PATTERN.test(prefix))
+  COLON_CLOCK_STRUCTURED_PREFIX_PATTERN.test(prefix) ||
+  (COLON_CLOCK_LABEL_PREFIX_PATTERN.test(prefix) &&
+    !EXPLICIT_CLOCK_PREFIX_PATTERN.test(prefix) &&
+    !hasDayPeriod)
 
 const hasClockContext = (prefix: string, previousClock: RegExpExecArray | null): boolean =>
-  previousClock !== null || EXPLICIT_CLOCK_PREFIX_PATTERN.test(prefix)
+  previousClock !== null ||
+  EXPLICIT_CLOCK_PREFIX_PATTERN.test(prefix) ||
+  TIME_OF_DAY_CONTEXT_PREFIX_PATTERN.test(prefix)
 
 const replaceColonClockTime = (
   ...[match, timeOfDay, hour, minute, suffix, start, input]: [
@@ -286,11 +286,15 @@ const replaceColonClockTime = (
     string,
   ]
 ): string => {
-  const prefix = input.slice(0, start).replace(/(?:[\p{Ps}\p{Pi}"']\s*)+$/u, '')
+  const originalPrefix = input.slice(0, start)
+  const prefix = originalPrefix.replace(/(?:[\p{Ps}\p{Pi}"']\s*)+$/u, '')
+  const hasDayPeriod = timeOfDay !== undefined || TIME_OF_DAY_CONTEXT_PREFIX_PATTERN.test(prefix)
 
   if (
-    hasNonClockPrefix(prefix) ||
-    (timeOfDay === undefined && TIME_OF_DAY_PREFIX_PATTERN.test(prefix))
+    hasNonClockPrefix(prefix, hasDayPeriod) ||
+    (timeOfDay === undefined &&
+      TIME_OF_DAY_PREFIX_PATTERN.test(prefix) &&
+      prefix === originalPrefix)
   ) {
     return match
   }
@@ -325,7 +329,7 @@ const replaceColonClockTime = (
     return match
   }
 
-  const clockPrefix = prefix.replace(/[:：]\s*$/u, ' ')
+  const clockPrefix = normalizeIdentifierCuePrefix(prefix.replace(/[:：]\s*$/u, ' '))
   const hourStart = clockPrefix.length
   const canonicalHour = String(clockTime.hour)
   const clockContext = `${clockPrefix}${canonicalHour}시 ${minute}분${input.slice(start + match.length)}`
@@ -350,11 +354,7 @@ const replaceColonClockTime = (
   }
 
   const timeOfDayPrefix = timeOfDay === undefined ? '' : `${timeOfDay.trim()} `
-  const particle =
-    suffix?.replace(
-      /[^\s\p{Pe}\p{Pf}"']+/u,
-      (value) => CONSONANT_CLOCK_PARTICLES.get(value) ?? value,
-    ) ?? ''
+  const particle = correctClockParticle(suffix ?? '')
   return `${timeOfDayPrefix}${hourPronunciation} 시 ${minutePronunciation} 분${particle}`
 }
 

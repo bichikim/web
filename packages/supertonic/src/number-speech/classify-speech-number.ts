@@ -2,6 +2,7 @@ import type {SupertonicLanguage} from '../language'
 import {classifyTinySpeechNumber} from './classify-tiny-speech-number'
 import {
   ENGLISH_COUNT_NOUNS,
+  KOREAN_CONTEXT_PARTICLE_PATTERN_SOURCE,
   KOREAN_PARTICLE_PATTERN_SOURCE,
   KOREAN_UNIT_END_PATTERN_SOURCE,
   NUMBER_SIGN_PATTERN_SOURCE,
@@ -70,6 +71,22 @@ const KOREAN_CARDINAL_PATTERN = new RegExp(
 const KOREAN_BARE_PARTICLE_PATTERN = new RegExp(`^\\s*${KOREAN_PARTICLE_PATTERN_SOURCE}`, 'u')
 const KOREAN_DIGIT_CUE_PATTERN =
   /(?:보안\s*)?(?:인증\s*)?(?:코드|번호|비밀번호)(?:은|는|이|가)?\s*$/u
+
+const KOREAN_DOCUMENT_NUMBER_PREFIX_PATTERN = /문서\s*번호\s*$/u
+const KOREAN_IDENTIFIER_PREFIX_PATTERN = /(?:방|버전|모델)\s*$/u
+const IDENTIFIER_CONTEXT_PARTICLE_PATTERN = new RegExp(
+  `${KOREAN_CONTEXT_PARTICLE_PATTERN_SOURCE}\\s*$`,
+  'u',
+)
+
+export const normalizeIdentifierCuePrefix = (prefix: string): string => {
+  const candidate = prefix.replace(IDENTIFIER_CONTEXT_PARTICLE_PATTERN, ' ')
+  return hasEnglishIdentifierPrefix(candidate) ||
+    KOREAN_DOCUMENT_NUMBER_PREFIX_PATTERN.test(candidate) ||
+    KOREAN_IDENTIFIER_PREFIX_PATTERN.test(candidate)
+    ? candidate
+    : prefix
+}
 
 const getContext = (options: ClassifySpeechNumberOptions): NumberContext | null => {
   if (options.start < 0 || options.end <= options.start || options.end > options.text.length) {
@@ -217,7 +234,7 @@ const classifyEnglishNumber = (context: NumberContext): SpeechNumberDecision => 
 }
 
 const classifyKoreanNumber = (context: NumberContext): SpeechNumberDecision => {
-  if (/문서\s*번호\s*$/u.test(context.prefix)) {
+  if (KOREAN_DOCUMENT_NUMBER_PREFIX_PATTERN.test(context.prefix)) {
     return IDENTIFIER_DECISION
   }
 
@@ -234,7 +251,7 @@ const classifyKoreanNumber = (context: NumberContext): SpeechNumberDecision => {
   }
 
   if (
-    /(?:방|버전|모델)\s*$/u.test(context.prefix) ||
+    KOREAN_IDENTIFIER_PREFIX_PATTERN.test(context.prefix) ||
     /^\s*호(?:$|[^\p{L}\p{N}_])/u.test(context.suffix)
   ) {
     return IDENTIFIER_DECISION

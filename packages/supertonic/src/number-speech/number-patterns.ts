@@ -28,6 +28,12 @@ export const KOREAN_PARTICLE_PATTERN_SOURCE =
   '이라|라고|처럼|보다|간)(?=$|[^\\p{L}\\p{N}_])'
 export const KOREAN_UNIT_END_PATTERN_SOURCE = `(?=$|[^\\p{L}\\p{N}_]|${KOREAN_PARTICLE_PATTERN_SOURCE})`
 
+const KOREAN_CONTEXT_CASE_PARTICLE_SOURCE = '(?:은|는|이|가|을|를|의|와|과|도|만)'
+export const KOREAN_CONTEXT_PARTICLE_PATTERN_SOURCE = [
+  `(?:(?:에서|에게|으로|부터|까지|로|에)${KOREAN_CONTEXT_CASE_PARTICLE_SOURCE}?|`,
+  `${KOREAN_CONTEXT_CASE_PARTICLE_SOURCE})`,
+].join('')
+
 const CLOCK_LABEL_START_SOURCE = '(?<=(?:시각|현재\\s*시간):)'
 export const KOREAN_CLOCK_TOKEN_START_PATTERN_SOURCE = [
   `(?:${NUMBER_TOKEN_START_PATTERN_SOURCE}|`,
