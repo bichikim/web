@@ -524,3 +524,44 @@ it('should resolve navigation within the dialog context', () => {
   fireEvent.click(screen.getByRole('button', {name: 'Navigation close'}))
   expect(onOpenChange).toHaveBeenCalledExactlyOnceWith(false)
 })
+
+it('should preserve navigation between visible header modes', () => {
+  const onCreate = vi.fn()
+  const onDispose = vi.fn()
+  const [mode, setMode] = createSignal<'closeOnly' | 'default'>('default')
+  const result = render(() => (
+    <Tabs defaultValue="general">
+      <PModal
+        headerMode={mode()}
+        isOpen
+        navigation={<CountedNavigation onCreate={onCreate} onDispose={onDispose} />}
+        onOpenChange={vi.fn()}
+        title="Counted modal"
+      >
+        <button onClick={() => setMode('closeOnly')} type="button">
+          Close-only header
+        </button>
+        <button onClick={() => setMode('default')} type="button">
+          Default header
+        </button>
+      </PModal>
+    </Tabs>
+  ))
+
+  const list = screen.getByRole('tablist', {name: 'Counted tabs'})
+  const tab = screen.getByRole('tab', {name: 'General'})
+  tab.focus()
+  list.scrollLeft = 17
+  fireEvent.click(screen.getByRole('button', {name: 'Close-only header'}))
+  expect(screen.getByRole('tablist', {name: 'Counted tabs'})).toBe(list)
+  expect(tab).toHaveFocus()
+  expect(list.scrollLeft).toBe(17)
+  fireEvent.click(screen.getByRole('button', {name: 'Default header'}))
+  expect(screen.getByRole('tablist', {name: 'Counted tabs'})).toBe(list)
+  expect(tab).toHaveFocus()
+  expect(list.scrollLeft).toBe(17)
+  expect(onCreate).toHaveBeenCalledTimes(1)
+  expect(onDispose).not.toHaveBeenCalled()
+  result.unmount()
+  expect(onDispose).toHaveBeenCalledTimes(1)
+})

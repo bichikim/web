@@ -148,13 +148,14 @@ const handleModalEscape = (event: KeyboardEvent, props: PModalProps) => {
 }
 
 const ModalBody = (props: PModalProps) => {
-  const navigation = children(() => (props.headerMode === 'hidden' ? undefined : props.navigation))
+  const hasHeader = createMemo(() => props.headerMode !== 'hidden')
+  const navigation = children(() => (hasHeader() ? props.navigation : undefined))
   const hasNavigation = createMemo(() => navigation() !== undefined)
 
   return (
     <>
       <Show
-        when={props.headerMode !== 'hidden'}
+        when={hasHeader()}
         fallback={<Dialog.Title class="sr-only">{props.title}</Dialog.Title>}
       >
         <header
