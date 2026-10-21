@@ -2,8 +2,9 @@ import type {SupertonicLanguage} from '../language'
 import {normalizeEnglishSpeechText} from './normalize-english-speech-text'
 import {normalizeKoreanSpeechText} from './normalize-korean-speech-text'
 import {
+  KOREAN_CLOCK_RANGE_SEPARATOR_PATTERN_SOURCE,
+  KOREAN_CLOCK_SUFFIX_PATTERN_SOURCE,
   KOREAN_DIGIT_PATTERN_SOURCE,
-  KOREAN_UNIT_END_PATTERN_SOURCE,
   NUMBER_TOKEN_START_PATTERN_SOURCE,
   UNSIGNED_INTEGER_PATTERN_SOURCE,
 } from './number-patterns'
@@ -27,9 +28,9 @@ const PROTECTED_NUMBER_PATTERN = new RegExp(PROTECTED_NUMBER_SOURCE, 'giu')
 const COLON_CLOCK_RANGE_PATTERN = new RegExp(
   `${NUMBER_TOKEN_START_PATTERN_SOURCE}(?<!：)` +
     `(${KOREAN_DIGIT_PATTERN_SOURCE}{2})[:：](${KOREAN_DIGIT_PATTERN_SOURCE}{2})` +
-    '\\s*(?:에서|부터)\\s*' +
+    `\\s*${KOREAN_CLOCK_RANGE_SEPARATOR_PATTERN_SOURCE}\\s*` +
     `(${KOREAN_DIGIT_PATTERN_SOURCE}{2})[:：](${KOREAN_DIGIT_PATTERN_SOURCE}{2})` +
-    `(?![:：])${KOREAN_UNIT_END_PATTERN_SOURCE}`,
+    `(?=${KOREAN_CLOCK_SUFFIX_PATTERN_SOURCE}|$|[,.!?…](?=$|\\s)|\\s+)`,
   'giu',
 )
 
@@ -39,7 +40,9 @@ export interface NormalizeSpeechTextOptions {
   readonly text: string
 }
 
-const getNormalizer = (language: SupertonicLanguage): ((text: string) => string) | null => {
+const getNormalizer = (
+  language: SupertonicLanguage,
+): ((text: string, contextPrefix?: string) => string) | null => {
   if (language === 'en') {
     return normalizeEnglishSpeechText
   }
@@ -77,12 +80,13 @@ export const normalizeSpeechText = (options: NormalizeSpeechTextOptions): string
 
   for (const match of protectedNumbers) {
     const {index} = match
-    result += normalize(options.text.slice(position, index))
+    result += normalize(options.text.slice(position, index), options.text.slice(0, position))
     result += match[0]
     position = index + match[0].length
   }
 
-  const normalized = result + normalize(options.text.slice(position))
+  const normalized =
+    result + normalize(options.text.slice(position), options.text.slice(0, position))
   return Array.from(normalized).length <= (options.maximumLength ?? Infinity)
     ? normalized
     : options.text

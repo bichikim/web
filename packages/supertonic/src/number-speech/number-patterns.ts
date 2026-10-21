@@ -27,3 +27,8 @@ export const KOREAN_PARTICLE_PATTERN_SOURCE =
   '은|는|이|가|을|를|의|와|과|도|만|에|로|씩|쯤|뿐|이나|나|인|이고|이며|' +
   '이라|라고|처럼|보다|간)(?=$|[^\\p{L}\\p{N}_])'
 export const KOREAN_UNIT_END_PATTERN_SOURCE = `(?=$|[^\\p{L}\\p{N}_]|${KOREAN_PARTICLE_PATTERN_SOURCE})`
+
+export const KOREAN_CLOCK_SUFFIX_PATTERN_SOURCE =
+  `\\s*(?:${KOREAN_PARTICLE_PATTERN_SOURCE}|` +
+  `(?:에서|부터|까지|에|쯤|경)${KOREAN_PARTICLE_PATTERN_SOURCE}|경(?=$|[^\\p{L}\\p{N}_]))`
+export const KOREAN_CLOCK_RANGE_SEPARATOR_PATTERN_SOURCE = `(?:에서|부터)(?:${KOREAN_PARTICLE_PATTERN_SOURCE})?`

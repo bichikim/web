@@ -71,6 +71,30 @@ describe('normalizeSpeechText', () => {
     expect(normalizeSpeechText({language: 'ko', text})).toBe(text)
   })
 
+  it.each([
+    ['09:05부터 12:30까지는 운영합니다.', '아홉 시 오 분부터 열두 시 삼십 분까지는 운영합니다.'],
+    ['09:05부터 12:30까지도 운영합니다.', '아홉 시 오 분부터 열두 시 삼십 분까지도 운영합니다.'],
+    ['０９：０５부터 １２：３０까지는', '아홉 시 오 분부터 열두 시 삼십 분까지는'],
+    ['09:05부터는 12:30까지', '아홉 시 오 분부터는 열두 시 삼십 분까지'],
+    ['점수 09:05부터는 12:30까지', '점수 09:05부터는 12:30까지'],
+  ])('should retain clock and score contexts across compound particles: %s', (text, expected) => {
+    expect(normalizeSpeechText({language: 'ko', text})).toBe(expected)
+  })
+
+  it.each([
+    'https://example.com/?time=오후 13:05에',
+    'https://example.com/?time=오전 00:05에',
+    'https://example.com/?time=오후 04:30에',
+  ])('should retain original day-period context across protected URLs: %s', (text) => {
+    expect(normalizeSpeechText({language: 'ko', text})).toBe(text)
+  })
+
+  it('should normalize an independent clock after a protected URL', () => {
+    expect(normalizeSpeechText({language: 'ko', text: 'https://example.com/ 09:05에'})).toBe(
+      'https://example.com/ 아홉 시 오 분에',
+    )
+  })
+
   it('should pronounce Korean amounts and percentages', () => {
     expect(
       normalizeSpeechText({language: 'ko', text: '가격은 12,500원이고 진행률은 12.5%예요.'}),

@@ -164,6 +164,33 @@ describe('normalizeKoreanSpeechText clock and duration expressions', () => {
     expect(normalizeKoreanSpeechText(text)).toBe(text)
   })
 
+  it.each(['문서 번호:', '모델:', '방:', 'ID:', 'model:', 'room：'])(
+    'should preserve identifier clock values after the %s label',
+    (label) => {
+      const text = `${label} 09:05에 접속해요.`
+      expect(normalizeKoreanSpeechText(text)).toBe(text)
+    },
+  )
+
+  it.each([
+    'time=오후 13:05에',
+    'time=오후 04:30에',
+    'time=오전 00:05에',
+    'time=오후 １３：０５에',
+    '문서=오전 09:05에',
+  ])('should not retry a blocked day-period clock without its prefix: %s', (text) => {
+    expect(normalizeKoreanSpeechText(text)).toBe(text)
+  })
+
+  it('should preserve score cues across compound range particles', () => {
+    const text = '점수 09:05부터는 12:30까지'
+    expect(normalizeKoreanSpeechText(text)).toBe(text)
+  })
+
+  it('should use the protected prefix only as context without including it in the output', () => {
+    expect(normalizeKoreanSpeechText(' 13:05에', 'https://example.com/?time=오후')).toBe(' 13:05에')
+  })
+
   it('should retain June and October pronunciation when normalizing a colon time', () => {
     expect(normalizeKoreanSpeechText('6월 10일 09:05에 시작합니다.')).toBe(
       '유월 십 일 아홉 시 오 분에 시작합니다.',

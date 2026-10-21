@@ -125,6 +125,10 @@ describe('generation', () => {
     ['현재 시각은 09:05.', '현재 시각은 아홉 시 오 분.'],
     ['점수 09:05부터 12:30까지', '점수 09:05부터 12:30까지'],
     ['오후 13:05부터 12:30까지', '오후 13:05부터 12:30까지'],
+    ['09:05부터 12:30까지는', '아홉 시 오 분부터 열두 시 삼십 분까지는'],
+    ['문서 번호: 09:05에 접속해요.', '문서 번호: 09:05에 접속해요.'],
+    ['time=오후 13:05에', 'time=오후 13:05에'],
+    ['https://example.com/?time=오후 13:05에', 'https://example.com/?time=오후 13:05에'],
   ])('should pass contextual colon times to the engine: %s', async (text, engineText) => {
     textMocks.split.mockReturnValue([text])
     const worker = await loadWorker()
