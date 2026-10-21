@@ -86,26 +86,32 @@ it('should send a background stored request with stable attempt idempotency to t
   })
   expect(new Headers(options.headers).get('Idempotency-Key')).toBe('attempt')
 })
-it('should preserve a rate rejection for fallback without hidden SDK retries', async () => {
-  const fetch = vi
-    .fn()
-    .mockResolvedValue(
-      Response.json(
-        {error: {code: 'rate_limit_exceeded', message: 'limited'}},
-        {headers: {'Retry-After': '90'}, status: 429},
-      ),
-    )
-  vi.stubGlobal('fetch', fetch)
-  const error = await responsesAdapter
-    .submit(provider, {input: 'hello'}, 'attempt')
-    .catch((cause: unknown) => cause)
-  expect(classifyApiAiSubmissionError(error, 1000)).toMatchObject({
-    acceptance: 'rejected',
-    fallback: true,
-    retryAt: 91000,
-  })
-  expect(fetch).toHaveBeenCalledOnce()
-})
+it.each([
+  ['90', 91_000],
+  ['1e2', 31_000],
+])(
+  'should preserve rate rejection with Retry-After %j without hidden SDK retries',
+  async (header, retryAt) => {
+    const fetch = vi
+      .fn()
+      .mockResolvedValue(
+        Response.json(
+          {error: {code: 'rate_limit_exceeded', message: 'limited'}},
+          {headers: {'Retry-After': header}, status: 429},
+        ),
+      )
+    vi.stubGlobal('fetch', fetch)
+    const error = await responsesAdapter
+      .submit(provider, {input: 'hello'}, 'attempt')
+      .catch((cause: unknown) => cause)
+    expect(classifyApiAiSubmissionError(error, 1000)).toMatchObject({
+      acceptance: 'rejected',
+      fallback: true,
+      retryAt,
+    })
+    expect(fetch).toHaveBeenCalledOnce()
+  },
+)
 it('should reject a complete result with missing usage instead of recording a free success', async () => {
   vi.stubGlobal(
     'fetch',

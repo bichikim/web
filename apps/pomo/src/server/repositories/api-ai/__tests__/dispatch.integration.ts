@@ -14,6 +14,7 @@ import {
 import {prepareApiAiQueue} from 'src/server/cloud-text/__tests__/fixtures/api-ai-queue'
 import type {ApiAiProvider, ApiAiResponse} from 'src/server/api-ai/types'
 import {classifyApiAiSubmissionError} from 'src/server/api-ai/submission-error'
+import {createOpenRouterAdapter} from 'src/server/api-ai/create-openrouter-adapter'
 import {
   claimApiAiAttemptRecovery,
   claimApiAiJob,
@@ -153,33 +154,54 @@ it('should release capacity on completion and reject a stale queued response', a
   })
   expect(await claimApiAiJob(await enqueue(), [provider], now, crypto.randomUUID())).not.toBeNull()
 })
-it('should switch models on actual rate-limit rejection without a duplicate active attempt', async () => {
-  const id = await enqueue()
-  const first = await claimApiAiJob(id, [provider], now, crypto.randomUUID())
-  if (first === null) {
-    throw new Error('Expected claim')
-  }
-  await recordApiAiSubmissionError(
-    first.attempt.id,
-    classifyApiAiSubmissionError(
-      {headers: new Headers({'Retry-After': '90'}), status: 429},
-      now.getTime(),
-    ),
-    now,
-  )
-  const second = await claimApiAiJob(
-    id,
-    [provider, {...provider, id: 'secondary', poolId: 'independent'}],
-    now,
-    crypto.randomUUID(),
-  )
-  expect(second?.provider.id).toBe('secondary')
-  await recordApiAiResponse(first.attempt.id, response, now)
-  expect(await findApiAiJob(id)).toMatchObject({
-    activeAttemptId: second?.attempt.id,
-    status: 'submitting',
-  })
-})
+it.each([
+  ['90', 90_000],
+  ['1e2', 30_000],
+  ['1000000000000000000000000000000', 30_000],
+])(
+  'should persist Retry-After %j and switch models immediately without duplicate active attempts',
+  async (header, delay) => {
+    const id = await enqueue()
+    const first = await claimApiAiJob(id, [provider], now, crypto.randomUUID())
+    if (first === null) {
+      throw new Error('Expected claim')
+    }
+    const fetch = vi
+      .fn()
+      .mockResolvedValue(
+        Response.json(
+          {error: {code: 'rate_limit_exceeded', message: 'limited'}},
+          {headers: {'Retry-After': header}, status: 429},
+        ),
+      )
+    const error = await createOpenRouterAdapter({fetch})
+      .submit(provider, {input: 'hello'}, first.attempt.id)
+      .catch((cause: unknown) => cause)
+    await recordApiAiSubmissionError(
+      first.attempt.id,
+      classifyApiAiSubmissionError(error, now.getTime()),
+      now,
+    )
+    expect(fetch).toHaveBeenCalledOnce()
+    const [attempt] = await client
+      .select()
+      .from(apiAiAttempts)
+      .where(eq(apiAiAttempts.id, first.attempt.id))
+    expect(attempt).toMatchObject({retryAt: new Date(now.getTime() + delay), state: 'rejected'})
+    const second = await claimApiAiJob(
+      id,
+      [provider, {...provider, id: 'secondary', poolId: 'independent'}],
+      now,
+      crypto.randomUUID(),
+    )
+    expect(second?.provider.id).toBe('secondary')
+    await recordApiAiResponse(first.attempt.id, response, now)
+    expect(await findApiAiJob(id)).toMatchObject({
+      activeAttemptId: second?.attempt.id,
+      status: 'submitting',
+    })
+  },
+)
 it('should avoid duplicate ambiguous submissions without blocking other jobs', async () => {
   const id = await enqueue()
   const claim = await claimApiAiJob(id, [provider], now, crypto.randomUUID())
