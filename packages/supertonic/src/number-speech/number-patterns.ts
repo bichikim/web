@@ -47,4 +47,7 @@ export const KOREAN_CLOCK_RANGE_SEPARATOR_PATTERN_SOURCE =
   `${KOREAN_CLOCK_CLOSING_DELIMITERS_PATTERN_SOURCE}(?:에서|부터)` +
   `(?:${KOREAN_PARTICLE_PATTERN_SOURCE})?`
 
-export const KOREAN_CLOCK_END_PATTERN_SOURCE = `(?=$|[,.!?…](?=$|[\\s\\p{Pe}\\p{Pf}"'])|[\\s\\p{Pe}\\p{Pf}"'])`
+export const KOREAN_CLOCK_END_PATTERN_SOURCE = [
+  `(?=$|[,.，．](?!${KOREAN_DIGIT_PATTERN_SOURCE})|`,
+  `[。!?！？…;；]|[\\s\\p{Pe}\\p{Pf}"'])`,
+].join('')

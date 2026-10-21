@@ -23,9 +23,11 @@ const CLOCK_RANGE_DECORATION_SOURCE = [
 ].join('')
 const PROTECTED_RANGE_NUMBER_SOURCE = `${UNSIGNED_INTEGER_PATTERN_SOURCE}(?:\\.\\d+)?`
 const PROTECTED_URL_SOURCE = '(?:https?:\\/\\/|www\\.)\\S+'
+const PROTECTED_EMAIL_SOURCE = '[\\p{L}\\p{N}._%+-]+@[\\p{L}\\p{N}.-]+\\.[\\p{L}]{2,}'
+const PROTECTED_ADDRESS_SOURCE = [PROTECTED_URL_SOURCE, PROTECTED_EMAIL_SOURCE].join('|')
+const PROTECTED_URL_PATTERN = new RegExp(`^${PROTECTED_URL_SOURCE}$`, 'iu')
 const PROTECTED_NUMBER_SOURCE = [
-  PROTECTED_URL_SOURCE,
-  '[\\p{L}\\p{N}._%+-]+@[\\p{L}\\p{N}.-]+\\.[\\p{L}]{2,}',
+  PROTECTED_ADDRESS_SOURCE,
   `\\b(?:between|from)\\s+${PROTECTED_RANGE_NUMBER_SOURCE}` +
     `\\s+(?:and|to|through)\\s+${PROTECTED_RANGE_NUMBER_SOURCE}\\b`,
   `(?<!\\d)${PROTECTED_RANGE_NUMBER_SOURCE}` +
@@ -91,13 +93,17 @@ const getNormalizer = (
 }
 
 const getClockContextPrefix = (prefix: string): string => {
-  const lastURL = Array.from(prefix.matchAll(new RegExp(PROTECTED_URL_SOURCE, 'giu'))).at(-1)
-  if (lastURL === undefined) {
+  const lastAddress = Array.from(prefix.matchAll(new RegExp(PROTECTED_ADDRESS_SOURCE, 'giu'))).at(
+    -1,
+  )
+  if (lastAddress === undefined) {
     return prefix
   }
 
-  const query = /[?&][^?&#=\s]+=(?:오전|오후)?$/u.exec(lastURL[0])?.[0] ?? ''
-  return `${query}${prefix.slice(lastURL.index + lastURL[0].length)}`
+  const query = PROTECTED_URL_PATTERN.test(lastAddress[0])
+    ? (/[?&][^?&#=\s]+=(?:오전|오후)?$/u.exec(lastAddress[0])?.[0] ?? '')
+    : ''
+  return `${query}${prefix.slice(lastAddress.index + lastAddress[0].length)}`
 }
 
 /** Produces deterministic model input while preserving ambiguous and unsupported number forms. */
