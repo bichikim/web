@@ -42,11 +42,13 @@ const readProviderError = (error: unknown): ProviderError => {
 }
 
 const readHttpDate = (header: string): number => {
+  // Date는 윤초를 표현하지 못하므로 직전 초에서 검증한 뒤 1초를 더한다.
+  const normalizedHeader = header.replace(/23:59:60(?= (?:GMT|[0-9]{4})$)/iu, '23:59:59')
   // asctime 형식은 시간대가 생략되어도 HTTP 계약의 GMT를 기준으로 해석한다.
   const timestamp = HTTP_DATE.test(header)
-    ? Date.parse(header)
+    ? Date.parse(normalizedHeader)
     : ASCTIME_DATE.test(header)
-      ? Date.parse(`${header} GMT`)
+      ? Date.parse(`${normalizedHeader} GMT`)
       : Number.NaN
   if (!Number.isFinite(timestamp)) {
     return Number.NaN
@@ -61,7 +63,9 @@ const readHttpDate = (header: string): number => {
     `${weekday.replace(',', '')} ${month} ${day} ${time} ${year}`,
     `${weekday.replace(',', '')} ${month} ${day.startsWith('0') ? ` ${day.slice(1)}` : day} ${time} ${year}`,
   ]
-  return forms.some((form) => form.toLowerCase() === header.toLowerCase()) ? timestamp : Number.NaN
+  return forms.some((form) => form.toLowerCase() === normalizedHeader.toLowerCase())
+    ? timestamp + (normalizedHeader === header ? 0 : MILLISECONDS_PER_SECOND)
+    : Number.NaN
 }
 
 const readRetryAt = (headers: Headers | undefined, now: number): number => {

@@ -157,6 +157,7 @@ it('should release capacity on completion and reject a stale queued response', a
 it.each([
   ['90', 90_000],
   ['1e2', 30_000],
+  ['Thu, 31 Dec 2026 23:59:60 GMT', Date.UTC(2027, 0, 1) - now.getTime()],
   ['1000000000000000000000000000000', 30_000],
 ])(
   'should persist Retry-After %j and switch models immediately without duplicate active attempts',

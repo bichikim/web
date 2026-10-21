@@ -91,3 +91,16 @@ it.each([
     retryAt: retryAt + 1000,
   })
 })
+
+it.each([
+  'Thu, 31 Dec 2026 23:59:60 GMT',
+  'Thursday, 31-Dec-26 23:59:60 GMT',
+  'Thu Dec 31 23:59:60 2026',
+])('should preserve leap-second Retry-After %j without shortening the delay', (header) => {
+  const headers = new Headers({'Retry-After': header})
+  const retryAt = Date.UTC(2027, 0, 1)
+  expect(classifyApiAiSubmissionError({headers, status: 429}, 1000)).toMatchObject({retryAt})
+  expect(classifyApiAiSubmissionError({headers, status: 429}, retryAt + 1000)).toMatchObject({
+    retryAt: retryAt + 1000,
+  })
+})

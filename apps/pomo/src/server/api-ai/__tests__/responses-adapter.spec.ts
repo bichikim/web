@@ -89,6 +89,7 @@ it('should send a background stored request with stable attempt idempotency to t
 it.each([
   ['90', 91_000],
   ['1e2', 31_000],
+  ['Thu, 31 Dec 2026 23:59:60 GMT', Date.UTC(2027, 0, 1)],
 ])(
   'should preserve rate rejection with Retry-After %j without hidden SDK retries',
   async (header, retryAt) => {
