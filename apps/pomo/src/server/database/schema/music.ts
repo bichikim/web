@@ -1,4 +1,5 @@
 import {sql} from 'drizzle-orm'
+import {ALBUM_STATUSES, TRACK_ASSET_STATUSES} from 'src/features/admin-music/catalog-values'
 import {
   bigint,
   check,
@@ -15,7 +16,7 @@ import {
   varchar,
 } from 'drizzle-orm/pg-core'
 
-export const musicAlbumStatusEnum = pgEnum('music_album_status', ['draft', 'published', 'archived'])
+export const musicAlbumStatusEnum = pgEnum('music_album_status', ALBUM_STATUSES)
 export const musicAlbumLocaleEnum = pgEnum('music_album_locale', ['ko', 'en', 'ja', 'zh-Hans'])
 export const musicCoverFallbackEnum = pgEnum('music_cover_fallback', ['lp', 'cd', 'music'])
 export const musicAlbumCoverReservationStatusEnum = pgEnum('music_album_cover_reservation_status', [
@@ -23,15 +24,7 @@ export const musicAlbumCoverReservationStatusEnum = pgEnum('music_album_cover_re
   'pending',
   'deleting',
 ])
-export const musicTrackAssetStatusEnum = pgEnum('music_track_asset_status', [
-  'pending',
-  'uploaded',
-  'ready',
-  'active',
-  'failed',
-  'retired',
-  'deleted',
-])
+export const musicTrackAssetStatusEnum = pgEnum('music_track_asset_status', TRACK_ASSET_STATUSES)
 
 export const musicAlbums = pgTable(
   'music_albums',
