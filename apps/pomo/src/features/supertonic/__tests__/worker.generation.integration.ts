@@ -110,6 +110,24 @@ describe('generation', () => {
     )
   })
 
+  it.each([
+    ['09:05에 시작합니다.', '아홉 시 오 분에 시작합니다.'],
+    ['09:05부터 12:30까지', '아홉 시 오 분부터 열두 시 삼십 분까지'],
+    ['− ０９:０５에 만나요.', '− ０９:０５에 만나요.'],
+    ['문서 번호 09:05에 만나요.', '문서 번호 09:05에 만나요.'],
+  ])('should pass contextual colon times to the engine: %s', async (text, engineText) => {
+    textMocks.split.mockReturnValue([text])
+    const worker = await loadWorker()
+    await initialize(worker)
+
+    await worker.dispatch(generateMessage({text}))
+
+    expect(textMocks.split).toHaveBeenCalledWith(text, fullModel.speechPolicy)
+    expect(currentEngine.generate).toHaveBeenCalledExactlyOnceWith(
+      expect.objectContaining({language: 'ko', text: engineText}),
+    )
+  })
+
   it('should pronounce leading-zero English verification codes as individual digits', async () => {
     const worker = await loadWorker()
     await initialize(worker)
