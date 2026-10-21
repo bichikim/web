@@ -31,6 +31,10 @@
       "dependsOn": ["^typecheck"],
       "inputs": ["$TURBO_DEFAULT$"]
     },
+    "@winter-love/puppet#typecheck": {
+      "dependsOn": ["^typecheck", "build"],
+      "inputs": ["$TURBO_DEFAULT$"]
+    },
     "lint": {
       "inputs": ["$TURBO_DEFAULT$", "oxlint.config.*"]
     }
