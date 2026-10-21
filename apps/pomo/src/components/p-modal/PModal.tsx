@@ -1,6 +1,6 @@
 import {Dialog} from '@kobalte/core/dialog'
 import {cva, cx} from 'class-variance-authority'
-import {type JSX, Show, untrack} from 'solid-js'
+import {children, createMemo, type JSX, Show, untrack} from 'solid-js'
 
 import * as m from '@paraglide/message'
 
@@ -75,10 +75,12 @@ export interface PModalProps {
   readonly titleVisibility?: 'visible' | 'visually-hidden'
 }
 
-type ModalHeaderControlsProps = Pick<
+interface ModalHeaderControlsProps extends Pick<
   PModalProps,
-  'closeButtonVisibility' | 'headerActions' | 'navigation' | 'titleVisibility'
->
+  'closeButtonVisibility' | 'headerActions' | 'titleVisibility'
+> {
+  readonly hasNavigation: boolean
+}
 
 const ModalHeaderControls = (props: ModalHeaderControlsProps) => (
   <div class="flex flex-none items-center gap-2">
@@ -89,8 +91,8 @@ const ModalHeaderControls = (props: ModalHeaderControlsProps) => (
       <div
         class={cx(
           'flex flex-none items-center justify-center',
-          props.navigation !== undefined && 'self-stretch',
-          props.navigation !== undefined &&
+          props.hasNavigation && 'self-stretch',
+          props.hasNavigation &&
             props.titleVisibility === 'visually-hidden' &&
             'border-l border-solid border-border px-3 ' +
               'max-md:col-start-2 max-md:row-start-1 ' +
@@ -145,6 +147,96 @@ const handleModalEscape = (event: KeyboardEvent, props: PModalProps) => {
   }
 }
 
+const ModalBody = (props: PModalProps) => {
+  const navigation = children(() => (props.headerMode === 'hidden' ? undefined : props.navigation))
+  const hasNavigation = createMemo(() => navigation() !== undefined)
+
+  return (
+    <>
+      <Show
+        when={props.headerMode !== 'hidden'}
+        fallback={<Dialog.Title class="sr-only">{props.title}</Dialog.Title>}
+      >
+        <header
+          class={MODAL_HEADER_CLASSES({
+            layout: resolveHeaderLayout(props.headerMode, hasNavigation(), props.titleVisibility),
+          })}
+          data-has-navigation={hasNavigation() ? '' : undefined}
+          data-mode={props.headerMode ?? 'default'}
+          data-title-visibility={props.titleVisibility ?? 'visible'}
+        >
+          <Show
+            fallback={<Dialog.Title class="sr-only">{props.title}</Dialog.Title>}
+            when={(props.headerMode ?? 'default') === 'default'}
+          >
+            <div
+              class={cx(
+                'min-w-0',
+                props.titleVisibility === 'visually-hidden' && 'sr-only',
+                hasNavigation() && 'self-center',
+              )}
+            >
+              <Dialog.Title class="m-0 text-lg font-750 leading-6 text-foreground">
+                {props.title}
+              </Dialog.Title>
+              <Show when={props.description}>
+                {(description) => (
+                  <Dialog.Description
+                    class={
+                      'mb-0 ml-0 mr-0 mt-1.5 text-sm leading-5 ' +
+                      'text-muted-foreground empty:hidden'
+                    }
+                  >
+                    {description()}
+                  </Dialog.Description>
+                )}
+              </Show>
+            </div>
+          </Show>
+          <Show when={navigation()}>
+            {(navigation) => (
+              <div
+                class={cx(
+                  'min-w-0 overflow-hidden',
+                  props.titleVisibility === 'visually-hidden'
+                    ? 'max-md:col-span-1 max-md:col-start-1 max-md:row-start-1'
+                    : 'mx-6 max-md:col-span-full max-md:row-start-2 max-md:mx-0',
+                )}
+              >
+                {navigation()}
+              </div>
+            )}
+          </Show>
+          <ModalHeaderControls
+            closeButtonVisibility={props.closeButtonVisibility}
+            headerActions={props.headerActions}
+            hasNavigation={hasNavigation()}
+            titleVisibility={props.titleVisibility}
+          />
+        </header>
+      </Show>
+      <div
+        class={cx(
+          'min-h-0 overscroll-contain ' +
+            '[scrollbar-color:var(--pomo-color-modal-scrollbar)_transparent] [scrollbar-width:thin]',
+          props.contentPadding === 'none' ? 'p-0' : 'p-5',
+          props.contentPadding !== 'none' && hasNavigation() && 'settings-compact:p-4',
+          (props.contentOverflow ?? 'auto') === 'hidden' ? 'overflow-hidden' : 'overflow-y-auto',
+        )}
+      >
+        {props.children}
+      </div>
+      <Show when={props.footer}>
+        {(footer) => (
+          <footer class="flex-none border-t border-solid border-border px-5 py-3">
+            {footer()}
+          </footer>
+        )}
+      </Show>
+    </>
+  )
+}
+
 export const PModal = (props: PModalProps) => {
   const handleOpenAutoFocus = (event: Event) => {
     const initialFocus = props.getInitialFocus?.()
@@ -189,94 +281,7 @@ export const PModal = (props: PModalProps) => {
           onEscapeKeyDown={(event) => handleModalEscape(event, props)}
           onOpenAutoFocus={handleOpenAutoFocus}
         >
-          <Show
-            when={props.headerMode !== 'hidden'}
-            fallback={<Dialog.Title class="sr-only">{props.title}</Dialog.Title>}
-          >
-            <header
-              class={MODAL_HEADER_CLASSES({
-                layout: resolveHeaderLayout(
-                  props.headerMode,
-                  props.navigation !== undefined,
-                  props.titleVisibility,
-                ),
-              })}
-              data-has-navigation={props.navigation === undefined ? undefined : ''}
-              data-mode={props.headerMode ?? 'default'}
-              data-title-visibility={props.titleVisibility ?? 'visible'}
-            >
-              <Show
-                fallback={<Dialog.Title class="sr-only">{props.title}</Dialog.Title>}
-                when={(props.headerMode ?? 'default') === 'default'}
-              >
-                <div
-                  class={cx(
-                    'min-w-0',
-                    props.titleVisibility === 'visually-hidden' && 'sr-only',
-                    props.navigation !== undefined && 'self-center',
-                  )}
-                >
-                  <Dialog.Title class="m-0 text-lg font-750 leading-6 text-foreground">
-                    {props.title}
-                  </Dialog.Title>
-                  <Show when={props.description}>
-                    {(description) => (
-                      <Dialog.Description
-                        class={
-                          'mb-0 ml-0 mr-0 mt-1.5 text-sm leading-5 ' +
-                          'text-muted-foreground empty:hidden'
-                        }
-                      >
-                        {description()}
-                      </Dialog.Description>
-                    )}
-                  </Show>
-                </div>
-              </Show>
-              <Show when={props.navigation}>
-                {(navigation) => (
-                  <div
-                    class={cx(
-                      'min-w-0 overflow-hidden',
-                      props.titleVisibility === 'visually-hidden'
-                        ? 'max-md:col-span-1 max-md:col-start-1 max-md:row-start-1'
-                        : 'mx-6 max-md:col-span-full max-md:row-start-2 max-md:mx-0',
-                    )}
-                  >
-                    {navigation()}
-                  </div>
-                )}
-              </Show>
-              <ModalHeaderControls
-                closeButtonVisibility={props.closeButtonVisibility}
-                headerActions={props.headerActions}
-                navigation={props.navigation}
-                titleVisibility={props.titleVisibility}
-              />
-            </header>
-          </Show>
-          <div
-            class={cx(
-              'min-h-0 overscroll-contain ' +
-                '[scrollbar-color:var(--pomo-color-modal-scrollbar)_transparent] [scrollbar-width:thin]',
-              props.contentPadding === 'none' ? 'p-0' : 'p-5',
-              props.contentPadding !== 'none' &&
-                props.navigation !== undefined &&
-                'settings-compact:p-4',
-              (props.contentOverflow ?? 'auto') === 'hidden'
-                ? 'overflow-hidden'
-                : 'overflow-y-auto',
-            )}
-          >
-            {props.children}
-          </div>
-          <Show when={props.footer}>
-            {(footer) => (
-              <footer class="flex-none border-t border-solid border-border px-5 py-3">
-                {footer()}
-              </footer>
-            )}
-          </Show>
+          <ModalBody {...props} />
         </Dialog.Content>
       </Dialog.Portal>
     </Dialog>

@@ -1,8 +1,9 @@
 /** @vitest-environment jsdom */
 
+import {Dialog} from '@kobalte/core/dialog'
 import {Tabs} from '@kobalte/core/tabs'
 import {fireEvent, render, screen, waitFor} from '@solidjs/testing-library'
-import {createSignal} from 'solid-js'
+import {createSignal, onCleanup} from 'solid-js'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
 import * as m from '@paraglide/message'
@@ -355,4 +356,171 @@ it.each(['close', 'unmount'])('should cancel pending initial focus on %s', async
   }
   await Promise.resolve()
   expect(focus).not.toHaveBeenCalled()
+})
+
+interface CountedNavigationProps {
+  readonly onCreate: () => void
+  readonly onDispose: () => void
+}
+
+const CountedNavigation = (props: CountedNavigationProps) => {
+  props.onCreate()
+  onCleanup(props.onDispose)
+  return (
+    <PModalTabList
+      accessibleLabel="Counted tabs"
+      items={[
+        {icon: 'i-tabler-settings', label: 'General', value: 'general'},
+        {icon: 'i-tabler-photo', label: 'Background', value: 'background'},
+      ]}
+    />
+  )
+}
+
+it('should reuse one navigation instance while changing content padding', () => {
+  const onCreate = vi.fn()
+  const onDispose = vi.fn()
+  const [padding, setPadding] = createSignal<'default' | 'none'>('default')
+  const result = render(() => (
+    <Tabs defaultValue="general">
+      <PModal
+        contentPadding={padding()}
+        isOpen
+        navigation={<CountedNavigation onCreate={onCreate} onDispose={onDispose} />}
+        onOpenChange={vi.fn()}
+        title="Counted modal"
+      >
+        <button onClick={() => setPadding('none')} type="button">
+          Remove padding
+        </button>
+        <button onClick={() => setPadding('default')} type="button">
+          Restore padding
+        </button>
+      </PModal>
+    </Tabs>
+  ))
+
+  const list = screen.getByRole('tablist', {name: 'Counted tabs'})
+  expect(onCreate).toHaveBeenCalledTimes(1)
+  fireEvent.click(screen.getByRole('button', {name: 'Remove padding'}))
+  fireEvent.click(screen.getByRole('button', {name: 'Restore padding'}))
+  expect(screen.getByRole('tablist', {name: 'Counted tabs'})).toBe(list)
+  expect(screen.getAllByRole('tab')).toHaveLength(2)
+  expect(onCreate).toHaveBeenCalledTimes(1)
+  expect(onDispose).not.toHaveBeenCalled()
+  result.unmount()
+  expect(onDispose).toHaveBeenCalledTimes(1)
+})
+
+it('should create navigation only for each visible modal lifetime', async () => {
+  // jsdom has no stylesheet animation defaults; represent the browser's no-animation state.
+  const readStyles = globalThis.getComputedStyle
+  vi.spyOn(globalThis, 'getComputedStyle').mockImplementation((element) => {
+    const styles = readStyles(element)
+    if (styles.animationName === '') {
+      styles.animationName = 'none'
+    }
+    return styles
+  })
+  const onCreate = vi.fn()
+  const onDispose = vi.fn()
+  const [isOpen, setIsOpen] = createSignal(false)
+  const result = render(() => (
+    <Tabs defaultValue="general">
+      <PModal
+        isOpen={isOpen()}
+        navigation={<CountedNavigation onCreate={onCreate} onDispose={onDispose} />}
+        onOpenChange={setIsOpen}
+        title="Counted modal"
+      >
+        Modal content
+      </PModal>
+      <button onClick={() => setIsOpen(true)} type="button">
+        Open counted modal
+      </button>
+    </Tabs>
+  ))
+
+  expect(onCreate).not.toHaveBeenCalled()
+  fireEvent.click(screen.getByRole('button', {name: 'Open counted modal'}))
+  expect(screen.getByRole('tablist', {name: 'Counted tabs'})).toBeInTheDocument()
+  expect(onCreate).toHaveBeenCalledTimes(1)
+  fireEvent.click(screen.getByRole('button', {name: m.common_close()}))
+  await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
+  expect(onDispose).toHaveBeenCalledTimes(1)
+  fireEvent.click(screen.getByRole('button', {name: 'Open counted modal'}))
+  expect(screen.getByRole('tablist', {name: 'Counted tabs'})).toBeInTheDocument()
+  expect(onCreate).toHaveBeenCalledTimes(2)
+  result.unmount()
+  expect(onDispose).toHaveBeenCalledTimes(2)
+})
+
+it('should resolve changing navigation only while the header is visible', () => {
+  const onCreate = vi.fn()
+  const onDispose = vi.fn()
+  const [header, setHeader] = createSignal<'default' | 'hidden'>('hidden')
+  const [hasNavigation, setHasNavigation] = createSignal(true)
+  const result = render(() => (
+    <Tabs defaultValue="general">
+      <PModal
+        headerMode={header()}
+        isOpen
+        navigation={
+          hasNavigation() ? (
+            <CountedNavigation onCreate={onCreate} onDispose={onDispose} />
+          ) : undefined
+        }
+        onOpenChange={vi.fn()}
+        title="Counted modal"
+      >
+        <button onClick={() => setHeader('default')} type="button">
+          Show header
+        </button>
+        <button onClick={() => setHeader('hidden')} type="button">
+          Hide header
+        </button>
+        <button onClick={() => setHasNavigation(false)} type="button">
+          Remove navigation
+        </button>
+        <button onClick={() => setHasNavigation(true)} type="button">
+          Restore navigation
+        </button>
+      </PModal>
+    </Tabs>
+  ))
+
+  expect(onCreate).not.toHaveBeenCalled()
+  fireEvent.click(screen.getByRole('button', {name: 'Show header'}))
+  expect(screen.getByRole('tablist', {name: 'Counted tabs'})).toBeInTheDocument()
+  expect(onCreate).toHaveBeenCalledTimes(1)
+  fireEvent.click(screen.getByRole('button', {name: 'Remove navigation'}))
+  expect(screen.queryByRole('tablist')).not.toBeInTheDocument()
+  expect(onDispose).toHaveBeenCalledTimes(1)
+  fireEvent.click(screen.getByRole('button', {name: 'Restore navigation'}))
+  expect(screen.getByRole('tablist', {name: 'Counted tabs'})).toBeInTheDocument()
+  expect(onCreate).toHaveBeenCalledTimes(2)
+  fireEvent.click(screen.getByRole('button', {name: 'Hide header'}))
+  expect(screen.queryByRole('tablist')).not.toBeInTheDocument()
+  expect(onDispose).toHaveBeenCalledTimes(2)
+  result.unmount()
+  expect(onDispose).toHaveBeenCalledTimes(2)
+})
+
+it('should resolve navigation within the dialog context', () => {
+  const onOpenChange = vi.fn()
+  render(() => (
+    <PModal
+      isOpen
+      navigation={
+        <Dialog.CloseButton aria-label="Navigation close">Navigation close</Dialog.CloseButton>
+      }
+      onOpenChange={onOpenChange}
+      title="Context modal"
+    >
+      Modal content
+    </PModal>
+  ))
+
+  fireEvent.click(screen.getByRole('button', {name: 'Navigation close'}))
+  expect(onOpenChange).toHaveBeenCalledExactlyOnceWith(false)
 })
