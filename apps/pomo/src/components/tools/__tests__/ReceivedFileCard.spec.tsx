@@ -1,11 +1,23 @@
 /** @vitest-environment jsdom */
 import {cleanup, render, screen} from '@solidjs/testing-library'
 import {createSignal} from 'solid-js'
-import {afterEach, describe, expect, it} from 'vitest'
+import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 import type {ReceivedFile} from 'src/features/file-transfer/received-files'
+import {PButton} from '../../p-button/PButton'
 import {ReceivedFileCard} from '../ReceivedFileCard'
 
-afterEach(cleanup)
+vi.mock('src/features/file-transfer/session', () => ({
+  receivedFiles: {remove: vi.fn(), save: vi.fn(), state: {saving: false}},
+}))
+vi.mock('../../p-button/PButton', () => ({PButton: vi.fn()}))
+
+beforeEach(() => {
+  vi.mocked(PButton).mockImplementation((props) => <button>{props.children}</button>)
+})
+afterEach(() => {
+  cleanup()
+  vi.clearAllMocks()
+})
 
 const file = (name: string, mimeType: string): ReceivedFile => ({
   id: 'file',
@@ -17,8 +29,13 @@ const file = (name: string, mimeType: string): ReceivedFile => ({
   url: null,
 })
 
-const icon = (name: string) =>
-  screen.getByRole('article', {name}).querySelector('span[aria-hidden="true"]')
+// CSS 가시성과 접근 가능한 이름은 실제 브라우저에서 검증합니다.
+const card = (name: string) => {
+  const element = screen.getByRole('article', {hidden: true})
+  expect(element).toHaveAttribute('aria-label', name)
+  return element
+}
+const icon = (name: string) => card(name).querySelector('span[aria-hidden="true"]')
 
 describe('ReceivedFileCard', () => {
   it.each([
@@ -33,9 +50,7 @@ describe('ReceivedFileCard', () => {
 
     // 장식 아이콘의 class 자체가 파일 종류 출력 계약입니다.
     expect(icon(name)).toHaveClass(expected)
-    expect(screen.getByRole('article', {name})).toHaveTextContent(
-      name.split('.').at(-1)!.toUpperCase(),
-    )
+    expect(card(name)).toHaveTextContent(name.split('.').at(-1)!.toUpperCase())
   })
 
   it.each([
