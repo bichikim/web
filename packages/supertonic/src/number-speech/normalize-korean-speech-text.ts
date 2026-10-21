@@ -284,7 +284,7 @@ const replaceColonClockTime = (
     string,
   ]
 ): string => {
-  const prefix = input.slice(0, start)
+  const prefix = input.slice(0, start).replace(/(?:[\p{Ps}\p{Pi}"']\s*)+$/u, '')
 
   if (
     hasNonClockPrefix(prefix) ||

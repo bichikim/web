@@ -239,4 +239,14 @@ describe('normalizeKoreanSpeechText clock and duration expressions', () => {
   ])('should retain explicit clock and non-time boundary contracts: %s', (text, expected) => {
     expect(normalizeKoreanSpeechText(text)).toBe(expected)
   })
+  it.each([
+    ['duration: (09:05에)', 'duration: (09:05에)'],
+    ['문서 번호: (09:05에)', '문서 번호: (09:05에)'],
+    ['time=(09:05에)', 'time=(09:05에)'],
+    ['점수에서는 “09:05에서”', '점수에서는 “09:05에서”'],
+    ['model: [09:05에]', 'model: [09:05에]'],
+    ['현재 시간：(09:05).', '현재 시간：(아홉 시 오 분).'],
+  ])('should retain clock context across opening delimiters: %s', (text, expected) => {
+    expect(normalizeKoreanSpeechText(text)).toBe(expected)
+  })
 })
