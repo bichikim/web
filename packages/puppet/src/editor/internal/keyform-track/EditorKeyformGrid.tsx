@@ -1,3 +1,4 @@
+import type {EditorKeyformTrackProps} from './types'
 import {getVolumeSlicePosition, VOLUME_PROJECTION} from './volume-projection'
 import {EditorKeyformVolumeSpace} from './EditorKeyformVolumeSpace'
 import {EditorParameterScale} from './EditorParameterScale'
@@ -23,6 +24,7 @@ export interface EditorKeyformGridProps {
   readonly binding: PuppetParameterBinding
   readonly onKeyformAdd?: (values: PuppetParameterValues) => void
   readonly onKeyformContext?: (values: PuppetParameterValues) => void
+  readonly onKeyformMove?: EditorKeyformTrackProps['onKeyformMove']
   readonly onKeyformSelect?: (bindingId: string, values: PuppetParameterValues) => void
   readonly onValueChange?: (values: PuppetParameterValues) => void
   readonly parameters: ReadonlyArray<PuppetParameter>
@@ -51,7 +53,45 @@ const getGridValues = (
       ]
 }
 
+const prepareKeyformFocus = (grid: HTMLDivElement | undefined, values: PuppetParameterValues) => {
+  if (grid === undefined) {
+    return
+  }
+  const root = grid.getRootNode()
+  if (!('activeElement' in root)) {
+    return
+  }
+  const focused = root.activeElement
+  if (!(focused instanceof HTMLButtonElement) || !grid.contains(focused)) {
+    return
+  }
+  const outerFocused = grid.ownerDocument.activeElement
+  // 문서 갱신으로 교체된 마커가 렌더링된 뒤 실제 트리 루트에 포커스를 복원한다.
+  return () =>
+    queueMicrotask(() => {
+      if (
+        grid.isConnected &&
+        !focused.isConnected &&
+        (root.activeElement === null || root.activeElement === grid.ownerDocument.body) &&
+        (grid.ownerDocument.activeElement === grid.ownerDocument.body ||
+          grid.ownerDocument.activeElement === outerFocused)
+      ) {
+        const label = `키폼 선택: ${values.join(', ')}`
+        const marker = [...grid.querySelectorAll<HTMLButtonElement>('button')].find(
+          (button) => button.getAttribute('aria-label') === label,
+        )
+        marker?.focus()
+      }
+    })
+}
+
 export const EditorKeyformGrid = (props: EditorKeyformGridProps) => {
+  let gridElement: HTMLDivElement | undefined
+  const handleKeyformMove = (from: PuppetParameterValues, to: PuppetParameterValues) => {
+    const restoreFocus = prepareKeyformFocus(gridElement, to)
+    props.onKeyformMove?.(props.binding.id, from, to)
+    restoreFocus?.()
+  }
   const xParameter = () => props.parameters[0]
   const yParameter = () => props.parameters[1]
   const handleValueDrag = (event: PointerEvent, bounds: DOMRect) => {
@@ -115,6 +155,9 @@ export const EditorKeyformGrid = (props: EditorKeyformGridProps) => {
         {(volume) => <EditorKeyformVolumeSpace source={volume()} parameters={props.parameters} />}
       </Show>
       <div
+        ref={(element) => {
+          gridElement = element
+        }}
         class="parameter-grid"
         classList={{
           'parameter-grid-with-scale': props.volume === undefined,
@@ -158,6 +201,7 @@ export const EditorKeyformGrid = (props: EditorKeyformGridProps) => {
               keyform={keyform}
               parameters={props.parameters}
               onContextMenu={() => props.onKeyformContext?.(keyform.values)}
+              onMove={props.onKeyformMove === undefined ? undefined : handleKeyformMove}
               onSelect={() => props.onKeyformSelect?.(props.binding.id, keyform.values)}
             />
           )}
