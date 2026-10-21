@@ -5,8 +5,8 @@ import {
   KOREAN_CLOCK_END_PATTERN_SOURCE,
   KOREAN_CLOCK_RANGE_SEPARATOR_PATTERN_SOURCE,
   KOREAN_CLOCK_SUFFIX_PATTERN_SOURCE,
+  KOREAN_CLOCK_TOKEN_START_PATTERN_SOURCE,
   KOREAN_DIGIT_PATTERN_SOURCE,
-  NUMBER_TOKEN_START_PATTERN_SOURCE,
   UNSIGNED_INTEGER_PATTERN_SOURCE,
 } from './number-patterns'
 import {parseClockTime} from './parse-clock-time'
@@ -27,7 +27,7 @@ const PROTECTED_NUMBER_SOURCE = [
 ].join('|')
 const PROTECTED_NUMBER_PATTERN = new RegExp(PROTECTED_NUMBER_SOURCE, 'giu')
 const COLON_CLOCK_RANGE_PATTERN = new RegExp(
-  `${NUMBER_TOKEN_START_PATTERN_SOURCE}` +
+  `${KOREAN_CLOCK_TOKEN_START_PATTERN_SOURCE}((?:오전|오후)\\s*)?` +
     `(${KOREAN_DIGIT_PATTERN_SOURCE}{2})[:：](${KOREAN_DIGIT_PATTERN_SOURCE}{2})` +
     `\\s*${KOREAN_CLOCK_RANGE_SEPARATOR_PATTERN_SOURCE}\\s*` +
     `(${KOREAN_DIGIT_PATTERN_SOURCE}{2})[:：](${KOREAN_DIGIT_PATTERN_SOURCE}{2})` +
@@ -68,15 +68,15 @@ export const normalizeSpeechText = (options: NormalizeSpeechTextOptions): string
     options.language === 'ko'
       ? Array.from(options.text.matchAll(COLON_CLOCK_RANGE_PATTERN)).filter(
           (match) =>
-            parseClockTime(match[1]!, match[2]!) !== null &&
-            parseClockTime(match[3]!, match[4]!) !== null,
+            parseClockTime(match[2]!, match[3]!) !== null &&
+            parseClockTime(match[4]!, match[5]!) !== null,
         )
       : []
   const protectedNumbers = Array.from(options.text.matchAll(PROTECTED_NUMBER_PATTERN)).filter(
     (match) =>
       !clockRanges.some(
         (clock) =>
-          clock.index + CLOCK_EDGE_LENGTH === match.index &&
+          clock.index + (clock[1]?.length ?? 0) + CLOCK_EDGE_LENGTH === match.index &&
           clock.index + clock[0].length - CLOCK_EDGE_LENGTH === match.index + match[0].length,
       ),
   )

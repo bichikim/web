@@ -525,4 +525,32 @@ describe('normalizeSpeechText', () => {
       expect(normalizeSpeechText({language: 'ko', text})).toBe(text)
     },
   )
+  it.each([
+    ['현재 시간:09:05.', '현재 시간:아홉 시 오 분.'],
+    ['현재 시간:09:05부터 12:30', '현재 시간:아홉 시 오 분부터 열두 시 삼십 분'],
+    ['오후: 13:05에', '오후: 13:05에'],
+    ['오전: 00:05에', '오전: 00:05에'],
+    ['오후: 04:30에', '오후: 네 시 삼십 분에'],
+    ['오전09:05부터 12:30까지', '오전 아홉 시 오 분부터 열두 시 삼십 분까지'],
+    ['오후04:30부터 12:30까지', '오후 네 시 삼십 분부터 열두 시 삼십 분까지'],
+    ['오후13:05부터 12:30까지', '오후13:05부터 12:30까지'],
+    ['약속은 “09:05”에 시작합니다.', '약속은 “아홉 시 오 분”에 시작합니다.'],
+    ['알람을 「09:05」로 설정해요.', '알람을 「아홉 시 오 분」으로 설정해요.'],
+    ['마감은 [09:05]까지예요.', '마감은 [아홉 시 오 분]까지예요.'],
+    ['최종 점수. 09:05에 시작합니다.', '최종 점수. 아홉 시 오 분에 시작합니다.'],
+    ['버전. 09:05에 시작합니다.', '버전. 아홉 시 오 분에 시작합니다.'],
+    ['Check the score. 09:05에 시작합니다.', 'Check the score. 아홉 시 오 분에 시작합니다.'],
+    ['v. 09:05에', 'v. 09:05에'],
+    ['ver. 09:05에', 'ver. 09:05에'],
+    ['field:09:05에', 'field:09:05에'],
+  ])('should retain clock labels and sentence boundary contracts: %s', (text, expected) => {
+    expect(normalizeSpeechText({language: 'ko', text})).toBe(expected)
+  })
+
+  it.each(['9:05에 시작합니다.', '9:05부터 12:30까지'])(
+    'should preserve unsupported one-digit colon hours: %s',
+    (text) => {
+      expect(normalizeSpeechText({language: 'ko', text})).toBe(text)
+    },
+  )
 })

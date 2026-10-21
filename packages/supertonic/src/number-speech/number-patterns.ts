@@ -28,9 +28,17 @@ export const KOREAN_PARTICLE_PATTERN_SOURCE =
   '이라|라고|처럼|보다|간)(?=$|[^\\p{L}\\p{N}_])'
 export const KOREAN_UNIT_END_PATTERN_SOURCE = `(?=$|[^\\p{L}\\p{N}_]|${KOREAN_PARTICLE_PATTERN_SOURCE})`
 
+const CLOCK_LABEL_START_SOURCE = '(?<=(?:시각|현재\\s*시간):)'
+export const KOREAN_CLOCK_TOKEN_START_PATTERN_SOURCE = [
+  `(?:${NUMBER_TOKEN_START_PATTERN_SOURCE}|`,
+  `${CLOCK_LABEL_START_SOURCE})(?<![?&=%\\\\])`,
+].join('')
+const KOREAN_CLOCK_CLOSING_DELIMITERS_PATTERN_SOURCE = `(?:[\\p{Pe}\\p{Pf}"']\\s*)*`
 export const KOREAN_CLOCK_SUFFIX_PATTERN_SOURCE =
-  `\\s*(?:${KOREAN_PARTICLE_PATTERN_SOURCE}|` +
+  `\\s*${KOREAN_CLOCK_CLOSING_DELIMITERS_PATTERN_SOURCE}(?:${KOREAN_PARTICLE_PATTERN_SOURCE}|` +
   `(?:에서|부터|까지|에|쯤|경)${KOREAN_PARTICLE_PATTERN_SOURCE}|경(?=$|[^\\p{L}\\p{N}_]))`
-export const KOREAN_CLOCK_RANGE_SEPARATOR_PATTERN_SOURCE = `(?:에서|부터)(?:${KOREAN_PARTICLE_PATTERN_SOURCE})?`
+export const KOREAN_CLOCK_RANGE_SEPARATOR_PATTERN_SOURCE =
+  `${KOREAN_CLOCK_CLOSING_DELIMITERS_PATTERN_SOURCE}(?:에서|부터)` +
+  `(?:${KOREAN_PARTICLE_PATTERN_SOURCE})?`
 
 export const KOREAN_CLOCK_END_PATTERN_SOURCE = `(?=$|[,.!?…](?=$|[\\s\\p{Pe}\\p{Pf}"'])|[\\s\\p{Pe}\\p{Pf}"'])`
