@@ -20,7 +20,7 @@ describe('deletePreviewAudio', () => {
         new Response(
           '<ListBucketResult>' +
             '<Contents><Key>previews%2Fpr-123%2Fsource.mp3</Key></Contents>' +
-            '<Contents><Key>previews%2Fpr-123%2Fpreview%26one.mp3</Key></Contents>' +
+            '<Contents><Key>previews%2Fpr-123%2Fpreview%26%3C%3E%22%27one.mp3</Key></Contents>' +
             '</ListBucketResult>',
         ),
       )
@@ -52,7 +52,7 @@ describe('deletePreviewAudio', () => {
     expect(deleteRequest).toBeInstanceOf(Request)
     expect(deleteRequest?.method).toBe('POST')
     expect(await deleteRequest?.text()).toContain(
-      '<Object><Key>previews/pr-123/preview&amp;one.mp3</Key></Object>',
+      '<Object><Key>previews/pr-123/preview&amp;&lt;&gt;&quot;&apos;one.mp3</Key></Object>',
     )
     expect(emptyListRequest).toBeInstanceOf(Request)
     expect(write).toHaveBeenCalledWith('Deleted 2 R2 Preview objects under previews/pr-123/.')

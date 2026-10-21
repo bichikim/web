@@ -13,7 +13,7 @@ import {
 import {
   createCalendarWeekdayParser,
   isImplicitWeekdaySchedule,
-  type WeekdayIntent,
+  type RequestedWeekdayIntent,
   type WeekdayQueryPeriodContext,
 } from './weekday-expression'
 import {dayjs} from 'src/utils/zoned-dayjs'
@@ -35,15 +35,20 @@ const createRelativeDayPattern = (phrase: string): RegExp =>
       `${RELATIVE_DAY_SELECTION_PARTICLE_PATTERN}(?=$|[\\s,.!?…]))`,
     'u',
   )
-const THIS_WEEK_PATTERN = new RegExp(`이번 ?주${CALENDAR_PERIOD_BOUNDARY_PATTERN.source}`, 'u')
-const THIS_MONTH_PATTERN = new RegExp(`이번 ?달${CALENDAR_PERIOD_BOUNDARY_PATTERN.source}`, 'u')
-const NEXT_MONTH_PATTERN = new RegExp(`다음 ?달${CALENDAR_PERIOD_BOUNDARY_PATTERN.source}`, 'u')
-const PREVIOUS_MONTH_PATTERN = new RegExp(`지난 ?달${CALENDAR_PERIOD_BOUNDARY_PATTERN.source}`, 'u')
+// 새 별칭만 단어 시작에서 받아 기존 '지난 달' 판별 계약은 유지한다.
+const PREVIOUS_MONTH_TERM = `(?:지난|${CALENDAR_WORD_START_PATTERN}저번) ?달`
+const createPeriodPattern = (termPattern: string): RegExp =>
+  new RegExp(`${termPattern}${CALENDAR_PERIOD_BOUNDARY_PATTERN.source}`, 'u')
+const THIS_MONTH_PATTERN = createPeriodPattern('이번 ?달')
+const NEXT_MONTH_PATTERN = createPeriodPattern('다음 ?달')
+const PREVIOUS_MONTH_PATTERN = createPeriodPattern(PREVIOUS_MONTH_TERM)
 const NEXT_WEEK_TERM_PATTERN = '(?<!다)다음 ?주'
 const NEXT_WEEK_TERM_REGEXP = new RegExp(NEXT_WEEK_TERM_PATTERN, 'u')
 const {
+  getRequestedWeekdays,
   getStandaloneWeekdayIntent,
   getWeekdayIntent,
+  isWeekSchedule,
   weekdayPatternSource: WEEKDAY_PATTERN_SOURCE,
 } = createCalendarWeekdayParser({
   calendarIntentPattern: CALENDAR_INTENT_PATTERN,
@@ -52,11 +57,12 @@ const {
   calendarRemainingSchedulePattern: REMAINING_SCHEDULE_PATTERN,
   calendarWordStartPattern: CALENDAR_WORD_START_PATTERN,
 })
+const THIS_WEEK_PATTERN = createPeriodPattern(
+  `(?:이번 ?주|${CALENDAR_WORD_START_PATTERN}이번 ?주\\s*${WEEKDAY_PATTERN_SOURCE})`,
+)
 const WEEK_AFTER_NEXT_TERM_PATTERN = `${CALENDAR_WORD_START_PATTERN}다다음 ?주`
 const PREVIOUS_WEEK_TERM_PATTERN = `${CALENDAR_WORD_START_PATTERN}(?:지난|저번) ?주`
 const TWO_WEEKS_AGO_TERM_PATTERN = `${CALENDAR_WORD_START_PATTERN}지지난 ?주`
-const createCalendarWeekPattern = (termPattern: string): RegExp =>
-  new RegExp(`${termPattern}${CALENDAR_PERIOD_BOUNDARY_PATTERN.source}`, 'u')
 const THIS_WEEK_EXCLUSION_PATTERN = createCalendarExclusionPattern('이번 ?주', '다음 ?주')
 const NEXT_WEEK_EXCLUSION_PATTERN = createCalendarExclusionPattern(
   NEXT_WEEK_TERM_PATTERN,
@@ -74,10 +80,16 @@ const TWO_WEEKS_AGO_EXCLUSION_PATTERN = createCalendarExclusionPattern(
   TWO_WEEKS_AGO_TERM_PATTERN,
   '지난 ?주|저번 ?주|이번 ?주|다음 ?주',
 )
-const THIS_MONTH_EXCLUSION_PATTERN = createCalendarExclusionPattern('이번 ?달', '다음 ?달|지난 ?달')
-const NEXT_MONTH_EXCLUSION_PATTERN = createCalendarExclusionPattern('다음 ?달', '이번 ?달|지난 ?달')
-const PREVIOUS_MONTH_EXCLUSION_PATTERN = createCalendarExclusionPattern(
-  '지난 ?달',
+const THIS_MONTH_EXCLUSION = createCalendarExclusionPattern(
+  '이번 ?달',
+  `다음 ?달|${PREVIOUS_MONTH_TERM}`,
+)
+const NEXT_MONTH_EXCLUSION = createCalendarExclusionPattern(
+  '다음 ?달',
+  `이번 ?달|${PREVIOUS_MONTH_TERM}`,
+)
+const PREVIOUS_MONTH_EXCLUSION = createCalendarExclusionPattern(
+  PREVIOUS_MONTH_TERM,
   '이번 ?달|다음 ?달',
 )
 const NEXT_WEEKEND_PATTERN = /다음 ?주말/u
@@ -99,10 +111,9 @@ const RELATIVE_DAY_PATTERN = new RegExp(
   'u',
 )
 const CALENDAR_OTHER_PERIOD_TERM_PATTERN = new RegExp(
-  `(?:${WEEK_AFTER_NEXT_TERM_PATTERN}${CALENDAR_PERIOD_BOUNDARY_PATTERN.source}|` +
-    `${PREVIOUS_WEEK_TERM_PATTERN}${CALENDAR_PERIOD_BOUNDARY_PATTERN.source}|` +
-    `${TWO_WEEKS_AGO_TERM_PATTERN}${CALENDAR_PERIOD_BOUNDARY_PATTERN.source}|` +
-    `${CALENDAR_WORD_START_PATTERN}(?:이번 ?주|이번 ?달|다음 ?달|지난 ?달)${CALENDAR_PERIOD_BOUNDARY_PATTERN.source}|` +
+  `(?:(?:${WEEK_AFTER_NEXT_TERM_PATTERN}|${PREVIOUS_WEEK_TERM_PATTERN}|` +
+    `${TWO_WEEKS_AGO_TERM_PATTERN}|${CALENDAR_WORD_START_PATTERN}` +
+    `(?:이번 ?주|이번 ?달|다음 ?달|${PREVIOUS_MONTH_TERM}))${CALENDAR_PERIOD_BOUNDARY_PATTERN.source}|` +
     `${RELATIVE_DAY_PATTERN.source}|${CALENDAR_WORD_START_PATTERN}주말${CALENDAR_PERIOD_BOUNDARY_PATTERN.source})`,
   'u',
 )
@@ -127,12 +138,12 @@ const THREE_DAYS_AHEAD_EXCLUSION_PATTERN = createCalendarExclusionPattern(
   THREE_DAYS_AHEAD_PATTERN.source,
   `그저께|그제|어제|오늘|${TOMORROW_PATTERN.source}|모레`,
 )
-const NEXT_WEEK_PATTERN = createCalendarWeekPattern(
+const NEXT_WEEK_PATTERN = createPeriodPattern(
   `${NEXT_WEEK_TERM_PATTERN}(?:\\s*${WEEKDAY_PATTERN_SOURCE})?`,
 )
-const WEEK_AFTER_NEXT_PATTERN = createCalendarWeekPattern(WEEK_AFTER_NEXT_TERM_PATTERN)
-const PREVIOUS_WEEK_PATTERN = createCalendarWeekPattern(PREVIOUS_WEEK_TERM_PATTERN)
-const TWO_WEEKS_AGO_PATTERN = createCalendarWeekPattern(TWO_WEEKS_AGO_TERM_PATTERN)
+const WEEK_AFTER_NEXT_PATTERN = createPeriodPattern(WEEK_AFTER_NEXT_TERM_PATTERN)
+const PREVIOUS_WEEK_PATTERN = createPeriodPattern(PREVIOUS_WEEK_TERM_PATTERN)
+const TWO_WEEKS_AGO_PATTERN = createPeriodPattern(TWO_WEEKS_AGO_TERM_PATTERN)
 const IMPLICIT_SCHEDULE_PATTERN = new RegExp(
   `(?:${RELATIVE_DAY_PATTERN.source}|${THIS_WEEK_PATTERN.source}|${NEXT_WEEK_PATTERN.source}|` +
     `${WEEK_AFTER_NEXT_PATTERN.source}|${PREVIOUS_WEEK_PATTERN.source}|${TWO_WEEKS_AGO_PATTERN.source}|` +
@@ -176,29 +187,9 @@ const includesUnexcludedPhrase = (
   phrasePattern: RegExp,
   exclusionPattern: RegExp,
 ): boolean => phrasePattern.test(text) && !exclusionPattern.test(text)
-interface RequestedNextWeekdayIntent extends WeekdayIntent {
-  readonly hasOtherPeriod: boolean
-}
-
-const getRequestedNextWeekdayIntent = (text: string): RequestedNextWeekdayIntent => {
-  const nextWeekMatch = NEXT_WEEK_TERM_REGEXP.exec(text)
-  if (nextWeekMatch === null) {
-    return {hasExcludedWeekday: false, hasOtherPeriod: false, offsets: []}
-  }
-
-  const followingText = text.slice(nextWeekMatch.index + nextWeekMatch[0].length)
-  const nextPeriodMatch = CALENDAR_OTHER_PERIOD_TERM_PATTERN.exec(followingText)
-  const nextWeekClause =
-    nextPeriodMatch === null ? followingText : followingText.slice(0, nextPeriodMatch.index)
-  return {
-    ...getWeekdayIntent(nextWeekClause),
-    hasOtherPeriod: CALENDAR_OTHER_PERIOD_TERM_PATTERN.test(text),
-  }
-}
-
 const includesRequestedNextWeek = (
   text: string,
-  requestedWeekdayIntent: RequestedNextWeekdayIntent,
+  requestedWeekdayIntent: RequestedWeekdayIntent,
 ): boolean =>
   NEXT_WEEK_PATTERN.test(text) &&
   !NEXT_WEEK_EXCLUSION_PATTERN.test(text) &&
@@ -253,7 +244,11 @@ interface CreateStandaloneCalendarDateRangeOptions {
 }
 
 const getCalendarQueryIntent = (text: string): CalendarQueryIntent => {
-  const requestedNextWeekdayIntent = getRequestedNextWeekdayIntent(text)
+  const requestedNextWeekdayIntent = getRequestedWeekdays({
+    otherPeriodPattern: CALENDAR_OTHER_PERIOD_TERM_PATTERN,
+    periodPattern: NEXT_WEEK_TERM_REGEXP,
+    text,
+  })
   return {
     includesNextWeek: includesRequestedNextWeek(text, requestedNextWeekdayIntent),
     includesPreviousWeek:
@@ -264,11 +259,9 @@ const getCalendarQueryIntent = (text: string): CalendarQueryIntent => {
     includesWeekAfterNext:
       WEEK_AFTER_NEXT_PATTERN.test(text) && !WEEK_AFTER_NEXT_EXCLUSION_PATTERN.test(text),
     monthOffsets: [
-      ...(PREVIOUS_MONTH_PATTERN.test(text) && !PREVIOUS_MONTH_EXCLUSION_PATTERN.test(text)
-        ? [-1]
-        : []),
-      ...(THIS_MONTH_PATTERN.test(text) && !THIS_MONTH_EXCLUSION_PATTERN.test(text) ? [0] : []),
-      ...(NEXT_MONTH_PATTERN.test(text) && !NEXT_MONTH_EXCLUSION_PATTERN.test(text) ? [1] : []),
+      ...(PREVIOUS_MONTH_PATTERN.test(text) && !PREVIOUS_MONTH_EXCLUSION.test(text) ? [-1] : []),
+      ...(THIS_MONTH_PATTERN.test(text) && !THIS_MONTH_EXCLUSION.test(text) ? [0] : []),
+      ...(NEXT_MONTH_PATTERN.test(text) && !NEXT_MONTH_EXCLUSION.test(text) ? [1] : []),
     ],
     relativeDayOffsets: [
       ...(includesUnexcludedPhrase(
@@ -452,22 +445,33 @@ const createStandaloneCalendarDateRange = ({
   return null
 }
 
+interface StandaloneWeekdayOptions {
+  /** 요청 시간대에서 상대 날짜와 시각의 경계를 계산한다. */
+  readonly boundary: (days: number, time?: string) => Date
+  /** 현재 현지 요일이며 일요일은 0이다. */
+  readonly currentWeekday: number
+  /** 조회를 요청한 현재 시각이다. */
+  readonly now: Date
+  /** 시간대 및 남은 일정 한정 표현을 포함한 질의 원문이다. */
+  readonly text: string
+  /** true이면 지난 요일도 이번 주에 고정한다. 생략하면 다가오는 요일을 고른다. */
+  readonly thisWeek?: boolean
+  /** 월요일을 0으로 하는 요청 요일 목록이다. */
+  readonly weekdays: ReadonlyArray<number>
+}
+
 const createStandaloneCalendarWeekdayRange = ({
   boundary,
   currentWeekday,
   now,
   text,
+  thisWeek = false,
   weekdays,
-}: {
-  readonly boundary: (days: number, time?: string) => Date
-  readonly currentWeekday: number
-  readonly now: Date
-  readonly text: string
-  readonly weekdays: ReadonlyArray<number>
-}): CalendarEventQuery | null => {
+}: StandaloneWeekdayOptions): CalendarEventQuery | null => {
   const calendarRange = createCalendarWeekdayRange({
     boundary,
     currentWeekday,
+    thisWeek,
     weekdayOffsets: weekdays,
   })
   if (calendarRange === null) {
@@ -498,9 +502,7 @@ const createStandaloneCalendarWeekdayRange = ({
 }
 
 const hasCalendarQueryIntent = (text: string) =>
-  CALENDAR_INTENT_PATTERN.test(text) ||
-  IMPLICIT_SCHEDULE_PATTERN.test(text) ||
-  isImplicitWeekdaySchedule(text)
+  CALENDAR_INTENT_PATTERN.test(text) || IMPLICIT_SCHEDULE_PATTERN.test(text) || isWeekSchedule(text)
 
 /** Resolves a calendar lookup in the requested time zone. */
 export const createCalendarQuery = (
@@ -518,12 +520,13 @@ export const createCalendarQuery = (
     const date = dayjs.utc(local.format('YYYY-MM-DD')).add(days, 'day').format('YYYY-MM-DD')
     return dayjs.tz(`${date}T${time}`, timeZone).toDate()
   }
-  const createWeekdayRange = (text: string, weekdays: ReadonlyArray<number>) =>
+  const createWeekdayRange = (text: string, weekdays: ReadonlyArray<number>, thisWeek = false) =>
     createStandaloneCalendarWeekdayRange({
       boundary,
       currentWeekday: local.day(),
       now,
       text,
+      thisWeek,
       weekdays,
     })
 
@@ -543,9 +546,9 @@ export const createCalendarQuery = (
     requestedWeekdayOffsets,
     weekendIntent,
   } = queryIntent
-  const standaloneWeekdayIntent = getStandaloneWeekdayIntent(options.text, queryIntent)
-  if (standaloneWeekdayIntent !== null) {
-    return createWeekdayRange(options.text, standaloneWeekdayIntent.offsets)
+  const weekdayIntent = getStandaloneWeekdayIntent(options.text, queryIntent)
+  if (weekdayIntent !== null) {
+    return createWeekdayRange(options.text, weekdayIntent.offsets, weekdayIntent.thisWeek)
   }
   const standaloneDateRange = createStandaloneCalendarDateRange({
     boundary,

@@ -12,6 +12,12 @@ describe('SCodeViewer language', () => {
   const popover = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'showPopover')
   const scroll = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'scrollIntoView')
   beforeEach(() => {
+    const values = new Map<string, string>()
+    vi.stubGlobal('localStorage', {
+      clear: () => values.clear(),
+      getItem: (key: string) => values.get(key) ?? null,
+      setItem: (key: string, value: string) => values.set(key, value),
+    })
     vi.spyOn(navigator, 'language', 'get').mockReturnValue('en-US')
     Object.defineProperty(HTMLDialogElement.prototype, 'showModal', {
       configurable: true,
@@ -38,6 +44,7 @@ describe('SCodeViewer language', () => {
     cleanup()
     localStorage.clear()
     vi.restoreAllMocks()
+    vi.unstubAllGlobals()
     for (const [name, descriptor] of dialogs) {
       if (descriptor === undefined) {
         Reflect.deleteProperty(HTMLDialogElement.prototype, name)
@@ -119,11 +126,9 @@ describe('SCodeViewer language', () => {
     const report = vi.mocked(port.start).mock.calls[0]![1]
     locale('en-US')
     report({code: 'session-expired'})
-    expect(screen.getByText('The connection closed. Reopen the file in Codex.')).toBeInTheDocument()
+    expect(screen.getByText('The connection closed. Reopen the file.')).toBeInTheDocument()
     locale('ko-KR')
-    expect(
-      screen.getByText('연결이 종료되었습니다. Codex에서 파일을 다시 열어 주세요.'),
-    ).toBeInTheDocument()
+    expect(screen.getByText('연결이 종료되었습니다. 파일을 다시 열어 주세요.')).toBeInTheDocument()
     report(new Error('External service: custom failure'))
     expect(screen.getByText('External service: custom failure')).toBeInTheDocument()
   })

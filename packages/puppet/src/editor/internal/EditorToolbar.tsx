@@ -33,6 +33,8 @@ export interface EditorToolbarProps {
   readonly onStudioOpen?: () => void
   readonly onViewerOpen?: () => void
   readonly onExport: () => void
+  /** Exports with part images packed into shared texture atlas pages. */
+  readonly onAtlasExport?: () => void
   readonly onRecoveryOpen?: (returnFocus: () => void) => void
   readonly onExampleOpen?: (example: PuppetExampleDocument) => void
   readonly onFileImport: (file: File | undefined) => void
@@ -93,11 +95,34 @@ interface ToolbarMenuProps {
   readonly onStudioOpen?: () => void
   readonly onViewerOpen?: () => void
   readonly onExport: () => void
+  /** Exports with part images packed into shared texture atlas pages. */
+  readonly onAtlasExport?: () => void
   readonly onExampleOpen?: (example: PuppetExampleDocument) => void
   readonly onFileImport: (file: File | undefined) => void
   readonly onPsdReimport?: (file: File | undefined) => void
   readonly onFileOpen: (file: File | undefined) => void
 }
+
+/** A menu button that closes the menu and runs `onSelect`; hidden without it. */
+const MenuAction = (props: {
+  readonly label: string
+  readonly onClose: () => void
+  readonly onSelect?: () => void
+}) => (
+  <Show when={props.onSelect}>
+    {(select) => (
+      <Button
+        type="button"
+        onClick={() => {
+          props.onClose()
+          select()()
+        }}
+      >
+        {props.label}
+      </Button>
+    )}
+  </Show>
+)
 
 const ToolbarMenu = (props: ToolbarMenuProps) => {
   const macPlatform = /Mac|iPhone|iPad|iPod/u.test(globalThis.navigator?.platform ?? '')
@@ -106,6 +131,7 @@ const ToolbarMenu = (props: ToolbarMenuProps) => {
   const [menuOpen, setMenuOpen] = createSignal(false)
   const [trigger, setTrigger] = createSignal<HTMLButtonElement>()
   const portalMount = useEditorPortalMount()
+  const close = () => setMenuOpen(false)
   const handleExampleOpen = (example: PuppetExampleDocument) => {
     setMenuOpen(false)
     props.onExampleOpen?.(example)
@@ -167,15 +193,12 @@ const ToolbarMenu = (props: ToolbarMenuProps) => {
             </Button>
           </Show>
           <hr />
-          <Button
-            type="button"
-            onClick={() => {
-              setMenuOpen(false)
-              props.onExport()
-            }}
-          >
-            JSON 내보내기
-          </Button>
+          <MenuAction label="JSON 내보내기" onClose={close} onSelect={props.onExport} />
+          <MenuAction
+            label="텍스처 아틀라스로 JSON 내보내기"
+            onClose={close}
+            onSelect={props.onAtlasExport}
+          />
           <Show when={props.exportUrl}>
             {(url) => (
               <a href={url()} download="puppet-model.json">
@@ -183,28 +206,8 @@ const ToolbarMenu = (props: ToolbarMenuProps) => {
               </a>
             )}
           </Show>
-          <Show when={props.onStudioOpen}>
-            <Button
-              type="button"
-              onClick={() => {
-                setMenuOpen(false)
-                props.onStudioOpen?.()
-              }}
-            >
-              Studio로 열기
-            </Button>
-          </Show>
-          <Show when={props.onViewerOpen}>
-            <Button
-              type="button"
-              onClick={() => {
-                setMenuOpen(false)
-                props.onViewerOpen?.()
-              }}
-            >
-              뷰어로 열기
-            </Button>
-          </Show>
+          <MenuAction label="Studio로 열기" onClose={close} onSelect={props.onStudioOpen} />
+          <MenuAction label="뷰어로 열기" onClose={close} onSelect={props.onViewerOpen} />
           <hr />
           <Button
             aria-description={`${props.historyUndoCount ?? 0}단계 되돌릴 수 있음 · ${undoShortcut}`}
@@ -261,6 +264,7 @@ export const EditorToolbar = (props: EditorToolbarProps) => (
         onStudioOpen={props.onStudioOpen}
         onViewerOpen={props.onViewerOpen}
         onExport={props.onExport}
+        onAtlasExport={props.onAtlasExport}
         onRecoveryOpen={props.onRecoveryOpen}
         onExampleOpen={props.onExampleOpen}
         onFileImport={props.onFileImport}

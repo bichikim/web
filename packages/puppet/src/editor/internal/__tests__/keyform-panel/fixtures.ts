@@ -1,11 +1,12 @@
+import {createKeyedParameter} from '../parameter-keyforms/fixtures'
 import {createDemoDocument} from '../../../../player'
-import {addParameter, insertParameterKeyform} from '../../parameter-keyforms'
+import {insertParameterKeyform} from '../../parameter-keyforms'
 
 const PARAMETER_MINIMUM = -30
 const PARAMETER_MAXIMUM = 30
 
 export const createOneDimensionalDocument = () => {
-  const added = addParameter({document: createDemoDocument(), nodeIds: ['mesh-preview']})
+  const added = createKeyedParameter({document: createDemoDocument(), nodeIds: ['mesh-preview']})
   if (added === undefined) {
     throw new Error('Expected a one-dimensional parameter')
   }

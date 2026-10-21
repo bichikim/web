@@ -1,6 +1,6 @@
 import {getDeformerRotationOrigin} from './deformer-transform'
 import {getDocumentScene, type PuppetDocument, type PuppetSceneDeformerNode} from '../../player'
-import {isTwoDimensionalParameterBinding} from '../../deformation'
+import {mapBindingKeyforms} from '../../deformation'
 import {findNode, findNodeLock, updateNode} from './scene-tree'
 
 const COORDINATES = 2
@@ -123,9 +123,7 @@ export const editCurveTopology = (
             : deformer,
         ),
       })
-      return isTwoDimensionalParameterBinding(binding)
-        ? {...binding, keyforms: binding.keyforms.map(updateKeyform)}
-        : {...binding, keyforms: binding.keyforms.map(updateKeyform)}
+      return mapBindingKeyforms(binding, updateKeyform)
     }),
     scene: {...scene, roots: updateNode(scene.roots, node.id, () => nextNode)},
   }

@@ -1,5 +1,7 @@
 /** @vitest-environment jsdom */
 
+import {createKeyedParameter} from './parameter-keyforms/fixtures'
+
 import {fireEvent, render, screen, within} from '@solidjs/testing-library'
 import {createSignal} from 'solid-js'
 import {describe, expect, test, vi} from 'vitest'
@@ -16,7 +18,6 @@ import {
 } from '../../../player'
 import {getDeformerAngle} from '../deformer-transform'
 import {
-  addParameter,
   connectParameterNodes,
   insertParameterKeyform,
   setParameterKeyformDeformerControlPoints,
@@ -115,7 +116,7 @@ describe('EditorInspector', () => {
       ],
     })
     const bound = setSpatialMesh({document: source, mesh, nodeId: 'shapes'})!
-    const added = addParameter({document: bound, nodeIds: ['shapes']})!
+    const added = createKeyedParameter({document: bound, nodeIds: ['shapes']})!
     const inserted = insertParameterKeyform({
       bindingId: added.binding.id,
       document: added.document,
@@ -216,7 +217,9 @@ describe('EditorInspector', () => {
     expect(view.getByRole('spinbutton', {name: '파트 불투명도'})).toBeEnabled()
     fireEvent.click(view.getByRole('button', {name: '대상 추가'}))
     expect(view.getByRole('checkbox', {name: 'shape-circle에 마스크 적용'})).toBeEnabled()
-    expect(view.queryByRole('spinbutton', {name: '파트 그리기 순서'})).toBeNull()
+    const drawOrder = view.getByRole('spinbutton', {name: '파트 그리기 순서'})
+    expect(drawOrder).toBeEnabled()
+    fireEvent.input(drawOrder, {target: {value: '420'}})
     fireEvent.input(view.getByRole('spinbutton', {name: '파트 불투명도'}), {
       target: {value: '0.4'},
     })
@@ -233,6 +236,7 @@ describe('EditorInspector', () => {
     ).toEqual(['mesh-preview'])
     expect(document().parts[0]?.properties).toEqual({
       blendMode: 'screen',
+      drawOrder: 420,
       invertedMask: true,
       opacity: 0.4,
       renderWhenUsedAsMask: false,

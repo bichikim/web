@@ -1,6 +1,6 @@
 import {describe, expect, test} from 'vitest'
 
-import type {PuppetDocument, PuppetPart} from '../../document'
+import {PUPPET_DOCUMENT_FORMAT, type PuppetDocument, type PuppetPart} from '../../document'
 import {parseDocument} from '../../parse-document'
 import {getSpatialPartPose} from '../spatial-part'
 import {generateSpatialMesh} from '../../../deformation/generate-spatial-mesh'
@@ -17,7 +17,7 @@ const part: PuppetPart = {
 }
 
 const document: PuppetDocument = {
-  format: 'winter-love-puppet',
+  format: PUPPET_DOCUMENT_FORMAT,
   motions: [],
   parameters: [{defaultValue: 0, id: 'turn', maximum: 180, minimum: 0, name: 'Turn'}],
   parts: [part],

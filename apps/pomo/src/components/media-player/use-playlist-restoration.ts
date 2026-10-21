@@ -15,18 +15,29 @@ export interface PlaylistLoad {
 }
 
 export interface UsePlaylistRestorationProps {
+  /** 저장된 재생 목록이다. null이면 초기 저장소 복원 완료를 기다린다. */
   readonly savedPlaylist: Accessor<PlaylistPreference | null>
+  /** 현재 사용 가능한 트랙으로, 외부 제어 목록의 재생 상태 복원에도 사용한다. */
   readonly tracks: Accessor<readonly PTrack[]>
+  /** true이면 호출자가 큐를 소유하므로 저장 목록 대신 재생 상태만 복원한다. */
   readonly isQueueControlled: Accessor<boolean>
+  /** 복원 중 사용자의 재생 조작을 감지해 오래된 결과 적용을 막는 revision이다. */
   readonly playbackRevision: Accessor<number>
+  /** 복원 중 큐 편집을 감지해 저장 목록이 새 큐를 덮어쓰지 않게 하는 revision이다. */
   readonly queueRevision: Accessor<number>
+  /** 기본 목록 로드 결과를 반영하고 현재 복원에 사용할 목록을 반환한다. */
   readonly onLoad: (loaded: PlaylistLoad) => readonly PTrack[]
+  /** 목록 로드가 성공하거나 실패해 초기 준비가 끝났을 때 호출한다. */
   readonly onLoadSettled: () => void
+  /** 유효한 복원 결과를 적용한다. entryIds 생략 시 기존 트랙 ID 기반 목록을 사용한다. */
   readonly onRestore: (
     tracks: readonly PTrack[],
     playback: PPlaybackState | null,
     entryIds?: readonly string[],
   ) => void
+  /** 손상 레코드의 비치명 진단과 요청 ID를 전달하며, owner 폐기 후에는 호출하지 않는다. */
+  readonly onCorruptTrack: (error: unknown, trackId: string) => void
+  /** 목록·재생 상태·DB 복원 실패를 전달한다. 손상 건별 진단과 폐기 후 알림은 제외한다. */
   readonly onError: (error: unknown) => void
 }
 
@@ -48,6 +59,11 @@ export const usePlaylistRestoration = (props: UsePlaylistRestorationProps): void
   const handleError = (error: unknown) => {
     if (!disposed) {
       props.onError(error)
+    }
+  }
+  const handleCorruptTrack = (error: unknown, trackId: string) => {
+    if (!disposed) {
+      props.onCorruptTrack(error, trackId)
     }
   }
   const restoreControlledPlayback = (tracks: readonly PTrack[]) => {
@@ -138,6 +154,7 @@ export const usePlaylistRestoration = (props: UsePlaylistRestorationProps): void
           playlistRequest: effectivePlaylistRequest,
           resolveTracks: (storedTrackIds) =>
             resolveStoredPlaylistTracks({
+              onCorruptTrack: handleCorruptTrack,
               onError: handleError,
               sourceTracks: source.tracks,
               storedTrackIds: Promise.resolve(storedTrackIds),

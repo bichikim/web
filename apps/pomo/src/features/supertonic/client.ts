@@ -205,16 +205,13 @@ const createSupertonicInitializationController = (
       return existingInitialization.promise
     }
 
-    let resolve: ((result: Result<void, SupertonicError>) => void) | undefined
-    const promise = new Promise<Result<void, SupertonicError>>((nextResolve) => {
-      resolve = nextResolve
-    })
+    const {promise, resolve} = Promise.withResolvers<Result<void, SupertonicError>>()
     initializationQueue.push({
       modelId: initializeOptions.modelId,
       onProgressCallbacks: [initializeOptions.onProgress],
       onStatusCallbacks: [initializeOptions.onStatus],
       promise,
-      resolve: resolve!,
+      resolve,
     })
     startNextInitialization()
     return promise

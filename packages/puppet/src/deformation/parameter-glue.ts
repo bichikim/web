@@ -2,11 +2,17 @@ import {clamp} from 'es-toolkit/math'
 import type {PuppetDocument, PuppetGlue, PuppetParameterBinding} from '../player/document'
 import {getParameterBindingValues, type PuppetParameterValueMap} from './composition'
 import {getBindingInfluence} from './influence'
-import {type PuppetParameterValues, sampleParameterCoordinates} from './parameter'
+import {getRepeatRanges} from '../player/parameter-value'
+import {
+  type PuppetParameterValues,
+  type PuppetRepeatRanges,
+  sampleParameterCoordinates,
+} from './parameter'
 
 interface SampleGlueOptions {
   readonly binding: PuppetParameterBinding
   readonly glue: PuppetGlue
+  readonly repeatRanges?: PuppetRepeatRanges
   readonly values: PuppetParameterValues
 }
 
@@ -20,6 +26,7 @@ export const sampleParameterGlue = (options: SampleGlueOptions) => {
         ?.glue?.find((glue) => glue.id === options.glue.id)
       return value === undefined ? undefined : [value.weight, value.strength]
     }),
+    repeatRanges: options.repeatRanges,
     restCoordinates,
     values: options.values,
   })
@@ -45,6 +52,7 @@ export const composeParameterGlue = (options: ComposeGlueOptions): ReadonlyArray
         const sampled = sampleParameterGlue({
           binding,
           glue,
+          repeatRanges: getRepeatRanges(binding.parameterIds, options.document.parameters),
           values: getParameterBindingValues({...options, binding}),
         })
         const influence = getBindingInfluence({...options, binding})

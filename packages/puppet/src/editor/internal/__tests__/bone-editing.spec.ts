@@ -1,9 +1,9 @@
+import {createKeyedParameter} from './parameter-keyforms/fixtures'
 import {convertSceneContainers} from '../container-conversion'
 import {expect, test} from 'vitest'
 import {createDemoDocument, parseDocument, type PuppetSceneDeformerNode} from '../../../player'
 import {createBoneDeformer, editBoneRest} from '../bone-editing'
 import {getSceneNode} from '../scene-graph'
-import {addParameter} from '../parameter-keyforms'
 
 test('should create a bone chain, extend its bind pose, and round trip the document', () => {
   const document = createBoneDeformer(createDemoDocument(), ['mesh-preview'])!
@@ -18,7 +18,7 @@ test('should create a bone chain, extend its bind pose, and round trip the docum
   const edited = getSceneNode(next, 'bone')!
   expect(edited.kind === 'deformer' && edited.boneRestPoints).toHaveLength(6)
   expect(parseDocument(JSON.stringify(next)).ok).toBe(true)
-  const bound = addParameter({document: next, nodeIds: ['bone']})!
+  const bound = createKeyedParameter({document: next, nodeIds: ['bone']})!
   expect(
     editBoneRest({
       document: bound.document,
@@ -44,7 +44,7 @@ test('should project an inserted joint onto its bone without changing the endpoi
   expect(
     editBoneRest({document, index: 1, nodeId: 'bone', operation: 'insert', point: {x: 0, y: 240}}),
   ).toBeUndefined()
-  const bound = addParameter({document, nodeIds: ['bone']})!
+  const bound = createKeyedParameter({document, nodeIds: ['bone']})!
   expect(
     editBoneRest({
       document: bound.document,

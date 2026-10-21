@@ -5,7 +5,7 @@
       "source": {
         "package": "@winter-love/codex-code-viewer",
         "source": "npm",
-        "version": "0.5.0",
+        "version": "0.6.1",
         "registry": "https://registry.npmjs.org"
       },
       "policy": {

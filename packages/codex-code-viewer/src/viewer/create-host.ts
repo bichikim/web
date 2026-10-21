@@ -5,12 +5,15 @@ import {z} from 'zod'
 import manifest from '../../package.json'
 import {OpenAIExtensions, OpenAIFileEntrypointInputSchema} from '@openai/mcp-extensions/app'
 import {subscribeWorkspace} from './subscribe-workspace'
-import {connectionSchema} from '../shared/contracts'
+import {connectionSchema, type ViewerConnection, workspaceSessionSchema} from '../shared/contracts'
 import type {ViewerPort} from './types'
 import {connectHostAppearance} from './connect-host-appearance'
-import {formatContext} from './format-context'
+import {createHostContext} from './create-host-context'
 import {createPendingTasks} from './create-pending-tasks'
 import {subscribeWorkspaceChanges} from './subscribe-workspace-changes'
+import {errorMessage} from './error-message'
+import {callViewerTool} from './call-viewer-tool'
+import {createHostAttachments} from './create-host-attachments'
 
 const httpStreams = (app: App): boolean =>
   z
@@ -31,54 +34,94 @@ const createToolCall =
       return options === undefined ? app.callServerTool(input) : app.callServerTool(input, options)
     })
 
-export const createHost = (): ViewerPort => {
-  const app = new App({name: 'Code Viewer', version: manifest.version}, {}, {autoResize: false})
-  const extensions = new OpenAIExtensions(app)
+interface HostOptions {
+  readonly draftStorage?: ViewerPort['draftStorage']
+  readonly composerAttachment?: boolean
+  readonly fileClipboard?: boolean
+  readonly integration?: 'codex' | 'standard'
+}
+const stageContext = async (
+  call: ViewerPort['call'],
+  session: string | undefined,
+  content: readonly string[],
+): Promise<void> => {
+  if (session === undefined) {
+    throw new Error('파일을 먼저 열어 주세요.')
+  }
+  const result = await call('code.stage-context', {content, session})
+  if (result.isError) {
+    throw new Error(errorMessage(result.structuredContent))
+  }
+}
+const receiveConnection = (
+  receive: Parameters<ViewerPort['start']>[0],
+  connection: ViewerConnection,
+  metadata?: Record<string, unknown>,
+): void => {
+  const navigation = z
+    .object({restoreView: z.boolean()})
+    .safeParse(metadata?.['winter-love/code-viewer/navigation'])
+  if (navigation.success) {
+    receive(connection, navigation.data)
+  } else {
+    receive(connection)
+  }
+}
+const changeWorkspace = (call: ViewerPort['call'], path: string) =>
+  callViewerTool({
+    input: {path},
+    name: 'code.workspace',
+    port: {call},
+    schema: workspaceSessionSchema,
+  })
+
+export const createHost = (options: HostOptions = {}): ViewerPort => {
+  const standard = options.integration === 'standard'
+  const app = new App({name: 'Code Viewer', version: manifest.version}, {}, {autoResize: standard})
+  const extensions = standard ? undefined : new OpenAIExtensions(app)
   // The base protocol carries custom methods, as in the OpenAI extensions adapter.
   const protocol = app as unknown as Protocol<Request, Notification, Result>
   const requests = createPendingTasks()
-  const call = createToolCall(app, requests)
+  let session: string | undefined
+  const rememberSession = (result: {structuredContent?: Record<string, unknown>}): void => {
+    const parsed = connectionSchema.safeParse(result.structuredContent)
+    if (parsed.success) {
+      const {session: nextSession} = parsed.data
+      session = nextSession
+    }
+  }
+  const callTool = createToolCall(app, requests)
+  const call: ViewerPort['call'] = async (name, input, options) => {
+    const result = await callTool(name, input, options)
+    rememberSession(result)
+    return result
+  }
   const localeListeners = new Set<(locale: string | undefined) => void>()
   const publishLocale = (): void => {
     const locale = app.getHostContext()?.locale
     localeListeners.forEach((receive) => receive(locale))
   }
-  let contexts: string[] = []
-  let observedContextId: string | null | undefined
-  let contextQueue: Promise<void> = Promise.resolve()
-  const synchronizeContext = (): void => {
-    const current = extensions.modelContext?.getCurrent()
-    if (
-      current !== undefined &&
-      (current === null ? null : current.updateId) !== observedContextId
-    ) {
-      observedContextId = current?.updateId ?? null
-      contexts =
-        current === null
-          ? []
-          : (current.content ?? []).flatMap((entry) => (entry.type === 'text' ? [entry.text] : []))
-    }
-  }
-  return {
+  const {synchronize: synchronizeContext, ...context} = createHostContext({
+    app,
     call,
-    context: (selection) => {
-      const text = formatContext(selection)
-      const previous = contextQueue
-      const task = requests.run(async () => {
-        await previous
-        const next = [...contexts, text]
-        await app.updateModelContext({
-          content: next.map((entry) => ({text: entry, type: 'text'})),
-        })
-        contexts = next
-      })
-      // Each caller receives its failure; subsequent additions must still run.
-      contextQueue = task.then(
-        () => undefined,
-        () => undefined,
-      )
-      return task
-    },
+    current: () => extensions?.modelContext?.getCurrent(),
+    requests,
+    stage: standard ? (content) => stageContext(call, session, content) : undefined,
+    standard,
+  })
+  return {
+    changeWorkspace: standard ? undefined : (path) => changeWorkspace(call, path),
+    draftStorage: options.draftStorage,
+    ...context,
+    ...createHostAttachments({
+      call,
+      clear: context.removeContext,
+      clipboard: options.fileClipboard,
+      composer: options.composerAttachment,
+      session: () => session,
+      standard,
+    }),
+    call,
     location: async (location) => {
       const capability =
         app.getHostCapabilities()?.experimental?.['winter-love/file-viewer/location']
@@ -95,6 +138,7 @@ export const createHost = (): ViewerPort => {
     start: async (receive, report, _refresh, onTeardown) => {
       let stopped = false
       const handleResult = (result: {
+        _meta?: Record<string, unknown>
         isError?: boolean
         structuredContent?: Record<string, unknown>
       }): void => {
@@ -104,7 +148,8 @@ export const createHost = (): ViewerPort => {
         }
         const parsed = connectionSchema.safeParse(result.structuredContent)
         if (parsed.success) {
-          receive(parsed.data)
+          rememberSession(result)
+          receiveConnection(receive, parsed.data, result._meta)
         }
       }
       const handleFile = async (input: {arguments?: Record<string, unknown>}): Promise<void> => {
@@ -124,7 +169,9 @@ export const createHost = (): ViewerPort => {
         handleResult(result)
       }
       const handleInput = (input: {arguments?: Record<string, unknown>}): void => {
-        requests.run(() => handleFile(input)).catch(report)
+        if (!standard) {
+          requests.run(() => handleFile(input)).catch(report)
+        }
       }
       const removeListeners = (): void => {
         app.removeEventListener('toolresult', handleResult)

@@ -265,7 +265,7 @@ describe('SReferenceChoices', () => {
       />
     ))
     const menu = screen.getByRole('menu', {name: '사용처'})
-    expect(menu).toHaveAttribute('popover', 'auto')
+    expect(menu).toHaveAttribute('popover', 'manual')
     expect(menu.style.getPropertyValue('--menu-limit')).toBe('320px')
     expect(screen.getByText('사용처 30개')).toBeInTheDocument()
     const main = screen.getByRole('menuitem', {expanded: true, name: 'src/main.ts · 15개'})

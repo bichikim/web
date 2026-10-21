@@ -1,6 +1,6 @@
 import {describe, expect, test} from 'vitest'
 
-import type {PuppetDocument, PuppetPart} from '../../../player'
+import {PUPPET_DOCUMENT_FORMAT, type PuppetDocument, type PuppetPart} from '../../../player'
 import {
   createSpatialMeshAttachmentSampler,
   resolveSpatialMeshAttachment,
@@ -32,7 +32,7 @@ describe('reconcileSpatialSurface', () => {
       spatial: {...part.spatial!, attachments, controlPoints: [0, 0, 4, 10, 0, 4, 0, 10, 4]},
     }
     const document: PuppetDocument = {
-      format: 'winter-love-puppet',
+      format: PUPPET_DOCUMENT_FORMAT,
       motions: [],
       parts: [attached],
       scene: {
@@ -105,7 +105,7 @@ describe('reconcileSpatialSurface', () => {
       },
     }
     const document: PuppetDocument = {
-      format: 'winter-love-puppet',
+      format: PUPPET_DOCUMENT_FORMAT,
       motions: [],
       parts: [attached],
       scene: {

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>NSCameraUsageDescription</key>
+  <string>Poffo 캐릭터가 얼굴 위치를 따라가도록 카메라를 사용합니다. 영상은 저장하거나 전송하지 않습니다.</string>
+</dict>
+</plist>

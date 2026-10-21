@@ -97,10 +97,7 @@ export const usePEventController = (props: UsePEventControllerProps): PEventCont
   let activeDelayedEndEventDurationMinutes: number | null = null
   let delayedEndEventDurationRevision = 0
   const beforePlaybackCallbacks = new Set<() => void>()
-  let resolveInitialization: (() => void) | null = null
-  const initialization = new Promise<void>((resolve) => {
-    resolveInitialization = resolve
-  })
+  const {promise: initialization, resolve: resolveInitialization} = Promise.withResolvers<void>()
 
   const getRepository = () => {
     if (repository === null) {
@@ -172,7 +169,7 @@ export const usePEventController = (props: UsePEventControllerProps): PEventCont
         setIsLoading(false)
       }
 
-      resolveInitialization?.()
+      resolveInitialization()
     }
   }
 
@@ -580,7 +577,7 @@ export const usePEventController = (props: UsePEventControllerProps): PEventCont
     isDisposed = true
     eventActionRunner.dispose()
     beforePlaybackCallbacks.clear()
-    resolveInitialization?.()
+    resolveInitialization()
     playback.dispose()
     repository?.dispose()
   })

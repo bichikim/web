@@ -12,7 +12,7 @@ interface EditorKeyformPanelToolbarProps {
 
 export const EditorKeyformPanelToolbar = (props: EditorKeyformPanelToolbarProps) => (
   <EditorKeyformToolbar
-    center={props.source.keyformCenter}
+    centers={props.source.keyformCenters}
     parameters={props.activeBinding()?.parameterIds.flatMap((id) => {
       const parameter = props.source.parameters.find((entry) => entry.id === id)
       return parameter === undefined ? [] : [parameter]
@@ -22,6 +22,7 @@ export const EditorKeyformPanelToolbar = (props: EditorKeyformPanelToolbarProps)
     activeBinding={props.activeBinding()}
     activeKeyformValues={props.source.activeKeyformValues}
     onParameterAdd={props.source.onParameterAdd}
+    onThreeDimensionalParameterAdd={props.source.onThreeDimensionalParameterAdd}
     onTwoDimensionalParameterAdd={props.source.onTwoDimensionalParameterAdd}
     parameterCreationAvailable={props.source.parameterCreationAvailable}
     setBrushControlsMount={props.source.setBrushControlsMount}

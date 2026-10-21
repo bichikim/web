@@ -8,6 +8,38 @@ import {
   textJobInputSchema,
 } from '../contracts'
 
+describe('textJobInputSchema message roles', () => {
+  const createInput = (role: unknown) => ({messages: [{content: '  질문  ', role}]})
+
+  it.each(['assistant', 'system', 'user'])(
+    'should accept the %s role while retaining content trimming and parameter defaults',
+    (role) => {
+      expect(textJobInputSchema.parse(createInput(role))).toEqual({
+        messages: [{content: '질문', role}],
+        parameters: {maximumTokens: 4096},
+      })
+    },
+  )
+
+  it.each(['developer', 'tool', ' user ', null, undefined, 0])(
+    'should reject unsupported message role %s with the ordered role diagnostic',
+    (role) => {
+      const result = textJobInputSchema.safeParse(createInput(role))
+
+      expect(result.success).toBe(false)
+      if (!result.success) {
+        expect(result.error.issues).toEqual([
+          expect.objectContaining({
+            code: 'invalid_value',
+            path: ['messages', 0, 'role'],
+            values: ['assistant', 'system', 'user'],
+          }),
+        ])
+      }
+    },
+  )
+})
+
 describe('AI job contracts', () => {
   it('validates text input and maps capability names for the runner', () => {
     const input = parseAiJobInput('text', {

@@ -1,9 +1,10 @@
+import {createKeyedParameter} from './parameter-keyforms/fixtures'
 import {expect, test} from 'vitest'
 
 import {composeParameterScene} from '../../../deformation/scene'
 import {createDemoDocument, getDocumentScene} from '../../../player'
 import {convertSceneContainers} from '../container-conversion'
-import {addParameter} from '../parameter-keyforms'
+
 import {setSpatialDeformerTransform} from '../set-spatial-deformer-transform'
 
 test('should preserve other parameter rotations when editing one 3D keyform', () => {
@@ -12,8 +13,8 @@ test('should preserve other parameter rotations when editing one 3D keyform', ()
     nodeIds: ['shapes'],
     targetKind: 'spatial',
   })!
-  const first = addParameter({document: source, nodeIds: ['shapes']})!
-  const second = addParameter({document: first.document, nodeIds: ['shapes']})!
+  const first = createKeyedParameter({document: source, nodeIds: ['shapes']})!
+  const second = createKeyedParameter({document: first.document, nodeIds: ['shapes']})!
   const rest = getDocumentScene(second.document).roots.find((node) => node.id === 'shapes')
   if (rest?.kind !== 'deformer') {
     throw new Error('Expected a 3D deformer')
@@ -61,7 +62,7 @@ test('should store translation and scale in the active 3D parameter keyform', ()
     nodeIds: ['shapes'],
     targetKind: 'spatial',
   })!
-  const added = addParameter({document: source, nodeIds: ['shapes']})!
+  const added = createKeyedParameter({document: source, nodeIds: ['shapes']})!
   const translated = setSpatialDeformerTransform({
     activeBindingId: added.binding.id,
     activeKeyformValues: [0],

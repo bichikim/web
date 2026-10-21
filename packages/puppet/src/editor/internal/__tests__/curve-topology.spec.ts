@@ -1,5 +1,6 @@
+import {createKeyedParameter2D} from './parameter-keyforms/fixtures'
 import {sampleParameterDeformer} from '../../../deformation/scene'
-import {addTwoDimensionalParameter} from '../parameter-keyforms'
+
 import {setDeformerControlPoint} from '../deformer-control-points'
 import {expect, test} from 'vitest'
 import {createDemoDocument, parseDocument} from '../../../player'
@@ -60,7 +61,7 @@ test('should preserve curved keyforms when splitting a nonuniform interval', () 
     x: 150,
     y: 400,
   })!
-  const added = addTwoDimensionalParameter({document: bent, nodeIds: ['curve']})!
+  const added = createKeyedParameter2D({document: bent, nodeIds: ['curve']})!
   const split = editCurveTopology({
     document: added.document,
     index: 0,

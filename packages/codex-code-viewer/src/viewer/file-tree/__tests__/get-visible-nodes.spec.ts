@@ -72,4 +72,14 @@ describe('getVisibleNodes', () => {
     expect(getVisibleNodes([], expanded)).not.toBe(first)
     expect(expanded).not.toHaveBeenCalled()
   })
+
+  it('should reveal matching descendants and ancestors without changing expansion state', () => {
+    const expanded = vi.fn(() => false)
+    expect(getVisibleNodes(tree(), expanded, 'nested/item2').map((node) => node.path)).toEqual([
+      'src',
+      'src/nested',
+      'src/nested/item2.ts',
+    ])
+    expect(expanded).not.toHaveBeenCalled()
+  })
 })

@@ -27,12 +27,17 @@ export const english = {
     'This viewer cannot open text files larger than 32 MiB.',
   '128 MiB보다 큰 문서·이미지·영상·음악은 이 뷰어에서 열 수 없습니다.':
     'This viewer cannot open documents or media larger than 128 MiB.',
+  '512 KiB 이하 SVG에서 원문을 볼 수 있습니다.': 'Source is available for SVG files up to 512 KiB.',
+  '512 KiB보다 큰 파일은 이 뷰어에서 열 수 없습니다.':
+    'This viewer cannot open source files larger than 512 KiB.',
   '512 KiB보다 큰 파일은 읽기 전용입니다.': 'Files larger than 512 KiB are read-only.',
   '512 KiB보다 큰 파일은 편집할 수 없습니다.': 'Files larger than 512 KiB cannot be edited.',
+  'Claude 입력창에서 Cmd+V로 붙여넣으세요.': 'Press Cmd+V in the Claude composer to attach.',
+  'Claude 첨부로 복사': 'Copy for Claude attachment',
+  'Claude에 첨부': 'Attach to Claude',
   'Code Viewer 연결을 확인해 주세요.': 'Check the Code Viewer connection.',
   'Codex가 파일 경로를 전달하지 않았습니다. code.open 도구로 파일을 열어 주세요.':
     'Codex did not provide a file path. Open the file with code.open.',
-  'Codex에서 파일을 먼저 열어 주세요.': 'Open a file in Codex first.',
   'DOCX 미리보기': 'DOCX preview',
   'DOCX 파일을 읽을 수 없습니다. 손상되었거나 암호화된 파일인지 확인해 주세요.':
     'Cannot read this DOCX file. Check whether it is damaged or encrypted.',
@@ -83,6 +88,8 @@ export const english = {
     'Could not start the bundled Rust analyzer. Check the plugin installation and reopen the viewer.',
   '다른 곳에서 파일이 변경되어 저장하지 않았습니다. 초안을 복사하거나 변경을 버린 뒤 원본을 다시 확인해 주세요.':
     'The file changed elsewhere and was not saved. Copy your draft or discard changes, then check the original.',
+  '다른 창에서 업데이트를 설치 중입니다. 완료 후 다시 확인해 주세요.':
+    'Another window is installing an update. Check again when it finishes.',
   '다음 PDF 페이지': 'Next PDF page',
   '다음 검색 결과': 'Next search result',
   '다음 결과 (Enter)': 'Next result (Enter)',
@@ -111,6 +118,7 @@ export const english = {
   '미저장 변경을 먼저 저장하거나 버린 뒤 파일 작업을 해 주세요.':
     'Save or discard unsaved changes before performing file operations.',
   '미저장 변경이 있습니다': 'Unsaved changes',
+  '버전을 확인하지 못했습니다. 다시 시도해 주세요.': 'Could not check for updates. Try again.',
   변경: 'Rename',
   '변경 내용 채팅에 추가': 'Add changes to chat',
   '변경 내용을 다음 채팅 메시지에 추가했습니다.': 'Added changes to your next chat message.',
@@ -126,6 +134,7 @@ export const english = {
   사용처: 'References',
   삭제: 'Delete',
   '삭제 중…': 'Deleting…',
+  '새 버전 {version}': 'New version {version}',
   '새 파일': 'New file',
   '새 폴더': 'New folder',
   새로고침: 'Refresh',
@@ -136,6 +145,12 @@ export const english = {
     'Added the selected file and lines to your next chat message.',
   설정: 'Settings',
   '설정 닫기': 'Close settings',
+  '설치하지 못했습니다. 다시 시도하거나 터미널에서 실행해 주세요.':
+    'Installation failed. Retry or run in a terminal.',
+  '설치했습니다. Claude Desktop에서 새 로컬 세션을 열어 주세요.':
+    'Installed. Open a new local session in Claude Desktop.',
+  '설치했습니다. Codex 앱을 완전히 종료하고 다시 열어 주세요.':
+    'Installed. Quit Codex completely and reopen it.',
   '셀 내용을 표시합니다. 수식은 다시 계산하지 않습니다.':
     'Showing cell values. Formulas are not recalculated.',
   '소스 코드': 'Source code',
@@ -148,21 +163,28 @@ export const english = {
   '알림 닫기': 'Dismiss notification',
   '앞으로 이동': 'Go forward',
   언어: 'Language',
+  업데이트: 'Updates',
+  '업데이트 설치 중…': 'Installing update…',
+  '업데이트 확인': 'Check for updates',
+  '업데이트 확인 중…': 'Checking for updates…',
+  업데이트하기: 'Update',
   '엑셀 파일을 읽을 수 없습니다. 손상되었거나 암호화된 파일인지 확인해 주세요.':
     'Cannot read this spreadsheet. Check whether it is damaged or encrypted.',
-  '연결된 작업 폴더가 없습니다. 위에 파일의 절대 경로를 입력하거나 Codex에서 파일을 열어 주세요.':
-    'No workspace connected. Enter an absolute file path above or open a file in Codex.',
-  '연결이 종료되었습니다. Codex에서 파일을 다시 열어 주세요.':
-    'The connection closed. Reopen the file in Codex.',
+  '연결된 작업 폴더가 없습니다. 위에 파일의 절대 경로를 입력해 주세요.':
+    'No workspace connected. Enter an absolute file path above.',
+  '연결이 종료되었습니다. 파일을 다시 열어 주세요.': 'The connection closed. Reopen the file.',
   '열 {count}': 'Column {count}',
   원문: 'Source',
   '위치 확인': 'Resolve location',
   '위치 확인 중': 'Resolving location',
   '위치:': 'Location:',
   '이 PDF에는 검색 가능한 텍스트가 없습니다.': 'This PDF has no searchable text.',
+  '이 뷰어가 열린 Claude Code 세션을 화면에 표시해 주세요.':
+    'Show the Claude Code session containing this viewer.',
   '이 위치에 붙여넣을 수 없습니다. 다른 폴더를 선택해 주세요.':
     'Cannot paste here. Choose another folder.',
   '이 위치에서는 이동할 대상을 찾을 수 없습니다.': 'No navigation target at this position.',
+  '이 채팅의 코드뷰어에만 기억합니다.': 'Remembered only for Code Viewer in this chat.',
   '이 파일을': 'This file',
   '이 파일을 표시할 수 없습니다. 파일 형식과 브라우저가 지원하는 코덱을 확인해 주세요.':
     'Cannot display this file. Check the file format and codecs supported by your browser.',
@@ -188,27 +210,48 @@ export const english = {
   '일치하는 파일이 없습니다.': 'No matching files.',
   '읽기 전용': 'Read-only',
   자동: 'Automatic',
+  '자동 첨부를 위해 macOS 손쉬운 사용 권한을 허용해 주세요.':
+    'Allow macOS Accessibility access for automatic attachment.',
   '자동은 앱 언어를 따릅니다. 지원하지 않는 언어는 영어로 표시합니다.':
     'Automatic follows the app language. Unsupported languages use English.',
   작업: 'Actions',
   '작업 폴더': 'Workspace',
   '작업 폴더 밖의 파일은 열 수 없습니다.': 'Cannot open files outside the workspace.',
   '작업 폴더 안에서 {title}를 찾지 못했습니다.': 'No {title} found in the workspace.',
+  '작업 폴더를 기억하지 못했습니다. Codex 설정 폴더의 쓰기 권한을 확인해 주세요.':
+    'Could not remember the workspace. Check write permissions for the Codex settings folder.',
   '작업 폴더를 바꾸거나 닫기 전에 변경을 저장하세요.':
     'Save your changes before switching or closing the workspace.',
   잘라내기: 'Cut',
   저장: 'Save',
   '저장 중…': 'Saving…',
   '저장했습니다.': 'Saved.',
+  적용: 'Apply',
+  '적용 중…': 'Applying…',
   접기: 'Fold',
   '접힌 {count}줄 펼치기': 'Show {count} folded lines',
   '정의 선택': 'Choose definition',
   '정의 위치': 'Definitions',
   '정의·사용처 찾기': 'Find definitions and references',
+  제거: 'Remove',
   '조회 연결이 끊겼습니다. 다시 조회해 주세요.': 'The search connection closed. Search again.',
+  '존재하는 작업 폴더의 절대 경로를 입력해 주세요.':
+    'Enter the absolute path of an existing folder.',
   '지원하지 않는 파일 형식입니다.': 'Unsupported file format.',
+  '채팅 첨부 {count}개': 'Chat attachments: {count}',
+  '채팅 첨부는 20개, 전체 64 KiB까지 추가할 수 있습니다.':
+    'Chat attachments are limited to 20 items and 64 KiB in total.',
+  '채팅을 확인할 수 없어 작업 폴더를 기억할 수 없습니다. 채팅에서 뷰어를 다시 열어 주세요.':
+    'Cannot identify this chat. Reopen the viewer from the chat to remember its workspace.',
   '채팅창에 추가': 'Add to chat',
+  '첨부 내용이 64 KiB를 넘습니다. 범위를 줄여서 추가해 주세요.':
+    'Attachment exceeds 64 KiB. Select a smaller range.',
+  '첨부 비우기': 'Clear attachments',
+  '첨부 카드를 확인하지 못했습니다. Claude 입력창을 확인해 주세요.':
+    'Could not confirm the attachment card. Check the Claude composer.',
+  '첨부할 내용 {count}개': 'Pending context: {count}',
   '첫 행을 열 이름으로': 'Use first row as headers',
+  '최신 버전입니다.': 'You’re up to date.',
   취소: 'Cancel',
   '코드 복사': 'Copy code',
   '코드 작업': 'Code actions',
@@ -216,6 +259,7 @@ export const english = {
   '코드 편집 작업': 'Code editing actions',
   '코드 편집기': 'Code editor',
   '코드를 복사했습니다.': 'Copied code.',
+  '클립보드에 접근하지 못했습니다.': 'Could not access the clipboard.',
   '파이썬 분석기를 실행할 수 없습니다. 플러그인 설치 상태를 확인하고 뷰어를 다시 열어 주세요.':
     'Could not start the Python analyzer. Check the plugin installation and reopen the viewer.',
   '파이썬 정의를 분석하지 못했습니다. 프로젝트 설정을 확인하고 뷰어를 다시 열어 주세요.':
@@ -249,6 +293,7 @@ export const english = {
     'Cannot process more than 10,000 files and folders in one operation.',
   '파일로 이동': 'Go to file',
   '파일을 다음 채팅 메시지에 추가했습니다.': 'Added the file to your next chat message.',
+  '파일을 먼저 열어 주세요.': 'Open a file first.',
   '파일을 열어 시작하세요': 'Open a file to get started',
   '파일을 읽지 못했습니다. 연결과 파일 권한을 확인해 주세요.':
     'Could not read the file. Check the connection and permissions.',
@@ -273,6 +318,7 @@ export const english = {
   '폴더 삭제': 'Delete folder',
   '폴더를 다음 채팅 메시지에 추가했습니다.': 'Added the folder to your next chat message.',
   '폴더와 그 안의 모든 항목을': 'This folder and all its contents',
+  '폴더의 절대 경로': 'Absolute folder path',
   '표 페이지 조절': 'Table pagination',
   '표는 처음 10,000행·100열까지 표시합니다. 전체 내용은 원문에서 확인하세요.':
     'Showing the first 10,000 rows and 100 columns. View the source for the full contents.',
@@ -288,6 +334,7 @@ export const english = {
     'Pinch or Ctrl+wheel to zoom. Drag or use arrow keys to pan. Use +, -, 0, or Home to adjust zoom.',
   '행 필터링': 'Filter rows',
   '행 필터링…': 'Filter rows…',
+  '현재 버전 {version}': 'Current version {version}',
   '현재 파일 위치로 이동': 'Reveal current file',
   '현재 파일에서 찾기…': 'Find in current file…',
   '화면에 맞춤': 'Fit to view',

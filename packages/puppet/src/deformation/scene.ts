@@ -1,5 +1,6 @@
 import {getBindingInfluence} from './influence'
 import {getBoneChannels, poseBoneChannels} from './bone'
+import {sampleDeformerProperties} from './deformer-properties'
 import type {
   PuppetDocument,
   PuppetParameterBinding,
@@ -10,7 +11,12 @@ import type {
   PuppetSceneNode,
 } from '../player/document'
 import {getDocumentScene} from '../player/scene'
-import {type PuppetParameterValues, sampleParameterCoordinates} from './parameter'
+import {getRepeatRanges} from '../player/parameter-value'
+import {
+  type PuppetParameterValues,
+  type PuppetRepeatRanges,
+  sampleParameterCoordinates,
+} from './parameter'
 import {getParameterBindingValues, type PuppetParameterValueMap} from './composition'
 
 const CURVE_HANDLE_COORDINATE_COUNT = 4
@@ -104,6 +110,7 @@ const sampleSpatialCoordinates = (
           keyform.deformers?.find((candidate) => candidate.nodeId === options.deformer.id)?.[key] ??
           rest,
       ),
+      repeatRanges: options.repeatRanges,
       restCoordinates: rest,
       values: options.values,
     }),
@@ -186,9 +193,25 @@ const addDeformerDelta = (
       (current[index] ?? coordinate) + ((sampled[index] ?? coordinate) - coordinate) * weight,
   )
 
+const ROTATION_SCALE_REST = [1] as const
+
+/** A rotation deformer's keyed scale at the binding's values (1 where a keyform omits it). */
+const sampleRotationScale = (options: SampleParameterDeformerOptions) =>
+  sampleParameterCoordinates({
+    binding: options.binding,
+    keyformCoordinates: options.binding.keyforms.map((keyform) => [
+      keyform.deformers?.find((candidate) => candidate.nodeId === options.deformer.id)
+        ?.rotationScale ?? 1,
+    ]),
+    repeatRanges: options.repeatRanges,
+    restCoordinates: ROTATION_SCALE_REST,
+    values: options.values,
+  })[0] ?? 1
+
 export interface SampleParameterDeformerOptions {
   readonly binding: PuppetParameterBinding
   readonly deformer: PuppetSceneDeformerNode
+  readonly repeatRanges?: PuppetRepeatRanges
   readonly values: PuppetParameterValues
 }
 
@@ -202,6 +225,7 @@ export const sampleParameterDeformer = (
       keyformCoordinates: options.binding.keyforms.map((keyform) =>
         getKeyformCoordinates(keyform, options.deformer),
       ),
+      repeatRanges: options.repeatRanges,
       restCoordinates: getRestCoordinates(options.deformer),
       values: options.values,
     }),
@@ -214,6 +238,7 @@ export const sampleParameterDeformer = (
           options.deformer,
         ),
       ),
+      repeatRanges: options.repeatRanges,
       restCoordinates: getCurveHandleCoordinates(options.deformer.curveHandles, options.deformer),
       values: options.values,
     }),
@@ -222,20 +247,26 @@ export const sampleParameterDeformer = (
       keyformCoordinates: options.binding.keyforms.map((keyform) =>
         getKeyformRotationOrigin(keyform, options.deformer),
       ),
+      repeatRanges: options.repeatRanges,
       restCoordinates: Object.values(getRestRotationOrigin(options.deformer)),
       values: options.values,
     }),
   )
+  const properties = sampleDeformerProperties(options)
+  const keyed = properties === undefined ? sampled : {...sampled, properties}
+  if (options.deformer.deformerType === 'rotation') {
+    return {...keyed, rotationScale: sampleRotationScale(options)}
+  }
   return options.deformer.deformerType === 'spatial'
     ? {
-        ...sampled,
+        ...keyed,
         spatialMeshPosition: sampleSpatialCoordinates(options, 'spatialMeshPosition'),
         spatialOrigin: sampleSpatialCoordinates(options, 'spatialOrigin'),
         spatialRotation: sampleSpatialCoordinates(options, 'spatialRotation'),
         spatialScale: sampleSpatialCoordinates(options, 'spatialScale'),
         spatialTranslation: sampleSpatialCoordinates(options, 'spatialTranslation'),
       }
-    : sampled
+    : keyed
 }
 
 export const composeParameterDeformer = (
@@ -259,12 +290,14 @@ export const composeParameterDeformer = (
   let spatialRotationCoordinates: ReadonlyArray<number> = restSpatialRotation
   let spatialScaleCoordinates: ReadonlyArray<number> = restSpatialScale
   let spatialTranslationCoordinates: ReadonlyArray<number> = restSpatialTranslation
+  let rotationScale: ReadonlyArray<number> = ROTATION_SCALE_REST
 
   for (const binding of document.parameterBindings ?? []) {
     if (binding.targetDeformerIds?.includes(deformer.id) === true) {
       const sampled = sampleParameterDeformer({
         binding,
         deformer,
+        repeatRanges: getRepeatRanges(binding.parameterIds, document.parameters),
         values: getParameterBindingValues({binding, document, parameterValues}),
       })
       const weight = getBindingInfluence({binding, document, parameterValues})
@@ -286,6 +319,14 @@ export const composeParameterDeformer = (
         restRotationOrigin,
         weight,
       )
+      if (deformer.deformerType === 'rotation') {
+        rotationScale = addDeformerDelta(
+          rotationScale,
+          [sampled.rotationScale ?? 1],
+          ROTATION_SCALE_REST,
+          weight,
+        )
+      }
       if (deformer.deformerType === 'spatial') {
         spatialMeshPositionCoordinates = addDeformerDelta(
           spatialMeshPositionCoordinates,
@@ -332,6 +373,10 @@ export const composeParameterDeformer = (
     controlPoints: sampled.controlPoints,
     curveHandles: sampled.curveHandles,
     rotationOrigin: sampled.rotationOrigin,
+    // Bindings add their scale offsets; the sum stops at zero rather than mirroring the deformer.
+    ...(deformer.deformerType === 'rotation'
+      ? {rotationScale: Math.max(0, rotationScale[0] ?? 1)}
+      : {}),
     ...(deformer.deformerType === 'spatial'
       ? {
           spatialMeshPosition: toSpatialCoordinates(spatialMeshPositionCoordinates),

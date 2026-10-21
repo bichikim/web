@@ -20,6 +20,7 @@ describe('createSourceSynchronization', () => {
     vi.mocked(readNavigationFiles).mockResolvedValue({
       configurations: new Map(),
       directories: new Map(),
+      discovery: {directories: [], files: [], truncated: false},
       files: new Set(['main.py', 'closed.py', 'other.rb', 'core.rs', 'large.ts']),
     })
     vi.mocked(readPathRevisions).mockImplementation(
@@ -44,6 +45,7 @@ describe('createSourceSynchronization', () => {
     vi.mocked(readNavigationFiles).mockResolvedValue({
       configurations: new Map(),
       directories: new Map(),
+      discovery: {directories: [], files: [], truncated: false},
       files: new Set(['main.py', 'later.py']),
     })
     await sync.refresh('python', signal)
@@ -60,6 +62,7 @@ describe('createSourceSynchronization', () => {
     const listing = {
       configurations: new Map([['/root/pyproject.toml', '1']]),
       directories: new Map<string, string>(),
+      discovery: {directories: [], files: [], truncated: false},
       files: new Set(['main.py']),
     }
     vi.mocked(readNavigationFiles).mockResolvedValue(listing)
@@ -101,7 +104,12 @@ describe('createSourceSynchronization', () => {
     try {
       expect(cancelled).toBe(true)
     } finally {
-      discovered.resolve({configurations: new Map(), directories: new Map(), files: new Set()})
+      discovered.resolve({
+        configurations: new Map(),
+        directories: new Map(),
+        discovery: {directories: [], files: [], truncated: false},
+        files: new Set(),
+      })
       await active
       await queued
     }

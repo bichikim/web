@@ -1,11 +1,9 @@
 import {PUPPET_SPATIAL_OBJECT_MAX_DEPTH} from '../document'
+import {isRecord} from './parse-primitives'
 
 const COORDINATES = 3
 const MIN_RESOLUTION = 4
 const MAX_RESOLUTION = 32
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null
 
 const isFiniteNumbers = (value: unknown): value is number[] =>
   Array.isArray(value) && value.every((item) => typeof item === 'number' && Number.isFinite(item))

@@ -10,9 +10,10 @@ import {
   type PuppetSceneGroupNode,
   type PuppetSceneNode,
 } from '../../player'
-import {isTwoDimensionalParameterBinding} from '../../deformation'
+import {mapBindingKeyforms} from '../../deformation'
 import {getDeformerBounds} from './deformer-bounds'
 import {reconcileSpatialGroups} from './reconcile-spatial-groups'
+import {removeParameterNodeTargets} from './remove-node-targets'
 import {
   createDeformerControlPoints,
   isGridDivisionCount,
@@ -361,39 +362,8 @@ export const resizeDeformer = (options: ResizeDeformerOptions): PuppetDocument |
   return {
     ...document,
     parameterBindings: document.parameterBindings.map(
-      (binding): PuppetParameterBinding =>
-        isTwoDimensionalParameterBinding(binding)
-          ? {...binding, keyforms: binding.keyforms.map(resizeKeyform)}
-          : {...binding, keyforms: binding.keyforms.map(resizeKeyform)},
+      (binding): PuppetParameterBinding => mapBindingKeyforms(binding, resizeKeyform),
     ),
-  }
-}
-
-export const removeParameterDeformerTargets = (
-  document: PuppetDocument,
-  nodeIds: ReadonlySet<string>,
-): PuppetDocument => {
-  if (document.parameterBindings === undefined) {
-    return document
-  }
-
-  const removeKeyformTargets = <Keyform extends PuppetParameterKeyform>(
-    keyform: Keyform,
-  ): Keyform =>
-    ({
-      ...keyform,
-      deformers: keyform.deformers?.filter((deformer) => !nodeIds.has(deformer.nodeId)),
-    }) as Keyform
-
-  return {
-    ...document,
-    parameterBindings: document.parameterBindings.map((binding): PuppetParameterBinding => {
-      const targetDeformerIds = binding.targetDeformerIds?.filter((id) => !nodeIds.has(id))
-
-      return isTwoDimensionalParameterBinding(binding)
-        ? {...binding, keyforms: binding.keyforms.map(removeKeyformTargets), targetDeformerIds}
-        : {...binding, keyforms: binding.keyforms.map(removeKeyformTargets), targetDeformerIds}
-    }),
   }
 }
 
@@ -421,11 +391,7 @@ export const unwrapSceneNode = (
     return undefined
   }
   const nextDocument = withScene(document, nextScene)
-  const updated =
-    node.kind === 'deformer'
-      ? removeParameterDeformerTargets(nextDocument, new Set([nodeId]))
-      : nextDocument
-  return reconcileSpatialGroups(updated, scene)
+  return reconcileSpatialGroups(removeParameterNodeTargets(nextDocument, new Set([nodeId])), scene)
 }
 
 export const unwrapSceneNodes = (

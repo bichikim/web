@@ -6,6 +6,7 @@ interface JsonStreamOptions<Value extends object> {
   readonly call?: ViewerPort['call']
   readonly url: string
   readonly signal: AbortSignal
+  readonly headers?: HeadersInit
   readonly schema: z.ZodType<Value>
   readonly receive: (value: Value) => void | Promise<void>
 }
@@ -20,7 +21,7 @@ const readHttpStream = async <Value extends object>(
     z.object({error: z.string()}),
   ])
   options.signal.throwIfAborted()
-  const response = await fetch(options.url, {signal: options.signal})
+  const response = await fetch(options.url, {headers: options.headers, signal: options.signal})
   options.signal.throwIfAborted()
   if (!response.ok || response.body === null) {
     throw new Error('스트림에 연결할 수 없습니다.')

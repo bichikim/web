@@ -1,4 +1,8 @@
-import {parameterValuesEqual, type PuppetParameterValues} from '../../deformation'
+import {
+  parameterValuesEqual,
+  type PuppetParameterValues,
+  withKeyformValues,
+} from '../../deformation'
 import type {PuppetParameterDeformerKeyform, PuppetSceneDeformerNode} from '../../player'
 import {
   getDeformerAngle,
@@ -177,10 +181,7 @@ export const mirrorKeyform = (options: MirrorKeyformOptions): MirrorKeyformResul
       }
     }),
   }
-  const mirrored =
-    values.length === 2
-      ? {...geometry, values: [values[0], values[1]] as const}
-      : {...geometry, values: [values[0]] as const}
+  const mirrored = withKeyformValues(geometry, values)
   const result = replaceGeneratedKeyforms(options, binding, [mirrored])
   return result.ok ? {...result, values} : result
 }

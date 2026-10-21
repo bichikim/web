@@ -4,11 +4,13 @@
 
 Code Viewer opens code, documents and media beside your Codex conversation. Use it to find related code, edit text files and attach selected code or changes to your next message.
 
+The demos below show Code Viewer 0.5.0 in Codex with the English UI.
+
 See [Supported formats](#supported-formats) for the features available for each file type.
 
 ## 1. Install and open
 
-You need Node.js 24 or later, npm, the Codex desktop app and a Codex CLI that supports the `plugin` subcommand. If the CLI is missing or needs updating:
+You need Node.js 24 or later and npm. For Codex, also use the Codex desktop app and a CLI supporting the `plugin` subcommand. If the CLI is missing, the installer asks permission to install it globally with npm, then continues after installation. Non-interactive execution installs a missing CLI only with `install --install-codex`. To install or update it yourself:
 
 ```sh
 npm install -g @openai/codex
@@ -20,9 +22,19 @@ Install Code Viewer:
 npx @winter-love/codex-code-viewer@latest install
 ```
 
+In a terminal, choose **Codex / Claude Desktop (Code mode) / Both**. For automation use `install --target codex|claude|all`; non-interactive execution defaults to Codex. Claude-only installation does not need the Codex CLI.
+
+**Claude support is experimental.** Limitations in Claude’s plugin and UI integration may affect some features and workflows.
+
+Claude installation currently supports **macOS Apple Silicon**. It requires [Claude Code CLI](https://code.claude.com/docs/en/setup) 2.1.287+ and a Claude Desktop version with Mods support. Only when Claude is selected, the installer downloads the matching GitHub Release runtime, verifies its size and SHA-256, and keeps it in `~/.claude/code-viewer/marketplace` and registers a user-scope plugin through the official CLI. No manual MCP configuration or ZIP upload is required. `CLAUDE_BINARY` and `CLAUDE_CONFIG_DIR` select another executable or configuration directory. For offline installation, `CODE_VIEWER_RUNTIME_ARCHIVE` selects a matching runtime ZIP with the same integrity checks. After replacement succeeds, the previous uploaded plugin is disabled; its files and running sessions are retained.
+
+Add and enable the printed **Code Viewer Attachment.app** path in System Settings → Privacy & Security → Accessibility. This permission enables one-click native composer attachments and expanding a collapsed Browser. If permission errors persist, remove only the existing **Code Viewer Attachment** entry and add the printed application path again: macOS can retain the old ZIP installation path under the same app name. Start a new **local** session in Claude Desktop's **Code** tab, then click **코드 뷰어 열기** below the composer or a project file link in Claude's response. The viewer opens on demand. Installation does not reload existing sessions.
+
 Fully quit and reopen Codex. In a project conversation, open the right panel's new-tab menu and select **Code Viewer**. The default file viewer's **Open** menu launches external applications.
 
 The viewer connects to the conversation's workspace when its path is available. Otherwise, enter a file's absolute path, such as `/Users/yourname/projects/my-project/src/main.tsx`, and press Enter.
+
+In Codex, enter an absolute folder path under **Settings → Workspace** and select **Apply** to remember it only for Code Viewer in the current chat. It is restored when reopening the viewer or restarting the app, without changing the Codex chat’s own working directory. Unsaved changes require choosing whether to save, discard, or keep editing.
 
 To update, run the same installation command and reopen Codex. Check the installation with:
 
@@ -32,6 +44,48 @@ codex plugin list --json --marketplace winter-love-code-viewer-npm
 
 Set `CODEX_HOME` if you use another Codex configuration directory. If the CLI is not on `PATH`, set `CODEX_BINARY` to its executable path.
 
+### Claude Desktop (local extension)
+
+Build this package with `pnpm --filter @winter-love/codex-code-viewer build`. The build also produces `dist/code-viewer-<version>-<platform>-<arch>.mcpb` for the build machine, including its native analyzer and runtime assets. It requires a Node.js 24+ runtime. Install it through Claude Desktop **Settings → Extensions → Advanced settings → Install Extension…** and select the workspace folder. These are [local desktop extensions](https://support.claude.com/en/articles/10949351-getting-started-with-local-mcp-servers-on-claude-desktop), using [MCP Apps](https://modelcontextprotocol.io/extensions/apps/overview).
+
+Ask Claude to open a file with `code.open`, or open the configured folder with `code.panel`. The viewer appears as an MCP App inside the conversation; Codex's right-panel and file-menu entrypoints are specific to Codex. Reads, navigation, editing and file operations stay inside the selected folder, even when it is a subfolder of a larger repository. The Claude server does not read Codex's conversation database.
+
+The [public MCP Apps specification](https://github.com/modelcontextprotocol/ext-apps/blob/main/specification/2026-01-26/apps.mdx#display-modes) defines `inline`, `fullscreen`, and `pip` display modes, without a fixed right-panel registration API. [Claude's fullscreen view](https://support.claude.com/en/articles/13454812-use-interactive-connectors-in-claude) keeps the conversation input available, but this viewer does not yet implement display-mode switching. The Claude Desktop Code tab's [built-in file pane](https://code.claude.com/docs/en/desktop#open-and-edit-files) is a separate feature.
+
+Selected editor text and unsaved diffs are attached as snapshots. File attachments include a bounded text snapshot; folder attachments include a shallow listing. `code.context` lets Claude read additional text ranges. Context reads are limited to 200 lines or directory entries and 64 KiB; binary media can be previewed but is not attached as text. The attachment list supports removal and clearing, with a total limit of 20 attachments and 64 KiB. Adding context does not send a message or save a file. Snapshots are retained in the viewer session for Claude to retrieve through `code.attachments`. The standard context API is also updated, but an acknowledged update did not reach the next model turn in the installed Claude environment. Allow attachment tool retrieval when asking about selections. Closing the session removes its snapshots. Standard hosts do not report Codex's attachment consumption state: clear attachments explicitly when they are no longer needed. Reloading the app loses its local attachment list and unsaved drafts.
+
+For Code mode, use `install --target claude` above. Developers who need the ordinary Chat server can configure the built server directly with an external Node.js 24+ installation:
+
+```json
+{
+  "mcpServers": {
+    "code-viewer": {
+      "command": "/absolute/path/to/node",
+      "args": ["/absolute/path/to/dist/claude.js", "/absolute/workspace/folder"]
+    }
+  }
+}
+```
+
+### Claude Desktop Code mode: open in Browser on demand
+
+The build creates `dist/code-viewer-<version>-claude-code-<platform>-<architecture>.zip`, including Node and analyzers. Users do not install Node or register MCP manually.
+
+1. In Code mode, choose **+ → Add plugins → Add plugin → Upload plugin** and install the ZIP.
+2. Start a **local** session with the project folder. Disable **Worktree** to edit the current checkout.
+3. Click a project **file link** in Claude's reply or **코드 뷰어 열기** (Open Code Viewer) below the composer. `/code-viewer:open` also works.
+4. On macOS, grant the helper Accessibility permission so file links and the open button also reveal a collapsed Browser panel. Other hosts use the top **Browser** button.
+
+A new session does not open a viewer. Mods remembers successful main-conversation `Read`, `Edit` and `Write` locations until the user opens it. An already opened viewer follows in place, preserving per-file unsaved drafts and attachments. Subagents, denials, errors and staged changes are excluded. External links retain their normal behavior; the server also rejects files outside the project.
+
+The screen uses the original HTML and CodeMirror viewer shared with Codex, including the file tree, resizing, search, definitions/references, editing, saving, previews and chat attachments. Mods handles opening requests, location tracking and snapshot delivery. Browser attachments remain available after reading or changing files. For an opened viewer using pending context instead of native cards, Mods reads the retained snapshots with `code.attachments` when the user sends a composer message and adds them to that message’s context. This includes unsaved content that differs from disk. The limited permission handler covers only this Mod-owned read, preserving explicit denials and administrator restrictions. A failed read stops that message with an error instead of silently omitting its attachments. Unopened sessions do not perform this read; snapshots remain until explicitly removed.
+
+On macOS, **Add to chat** in the file tree attaches only the clicked file with its original filename and exact bytes. Other files and pending snapshots are excluded. Code selections attach as `original-filename.selection.txt`, and unsaved diffs as `original-filename.changes.patch`, containing only that selection or patch. The same names apply to already-running older viewers without reloading them. Native card delivery does not accumulate a **Pending context** list. Attaching an older pending list through **Attach to Claude** clears it after card confirmation and retains it on failure. **Copy for Claude attachment** remains a manual Cmd+V alternative.
+
+The local helper requires macOS Accessibility permission and checks the viewer URL, Code session and composer before pasting and confirming a native card. Existing prompt text, attachments and drafts remain unchanged; source files are not saved and messages are not sent. Tree attachment uses disk bytes; editor selection uses unsaved text. Exports use the short path `/tmp/cv-XXXXXX/original-filename` in private temporary directories retained for OS cleanup. For viewers already running before the update, the helper copies only their legacy temporary export to a short path without reloading the viewer. The clipboard is write-only. Desktop engine 2.1.299 displays full paths in composer card titles even through its built-in file picker; original filenames are preserved, but Claude controls that title display. Hosts without native cards retain the pending-context workflow.
+
+Unsaved drafts are stored locally and restored when reopening or reloading the same viewer session. Saved or discarded drafts are not restored. Following and repeated opening reuse the page. The previous [native Pane implementation](claude/code/hooks/README.md) and its stored session data are retained but are not registered by the default entrypoint. Previous Pane drafts are not automatically migrated into Browser. The `.mcpb` remains the inline viewer for regular Chat conversations.
+
 ## 2. Open and find files
 
 - **Open a path:** Enter an absolute path, or a relative path within the connected workspace, and press Enter or **Open file**. To jump to a position, use `src/main.tsx:20:5`.
@@ -39,19 +93,39 @@ Set `CODEX_HOME` if you use another Codex configuration directory. If the CLI is
 - **Browse folders:** Use **File tree** beside search. Click a folder to expand it or a file to open it. **Filter files** narrows the tree by path; **Reveal current file** clears the filter and scrolls to the open file.
 - **Return to a file:** Use the back/forward buttons or `Alt+←/→`.
 
+### Browse the file tree
+
+![Browse the file tree](https://raw.githubusercontent.com/bichikim/web/97cc070dac551d6e898a66a0be97af66730ece2c/packages/codex-code-viewer/docs/recordings/codex/0.5.0/file-tree.gif)
+
 History skips deleted files unless a retained draft can be reopened and saved to recreate them. Deleting the current file preserves other visits. Change notifications or refresh make externally restored files available again. Other read errors are reported instead of skipped.
 
 Drag the divider to resize the tree. With the divider focused, Left/Right changes its width and Home/End selects minimum/maximum width. With tree focus, Up/Down and Home/End select entries; Left/Right collapses/expands folders. Right-click or `Shift+F10` opens an entry's menu.
 
-Reopening a file in the same tab restores its selection, scrolling and applicable preview, zoom or page settings. An explicit line/column destination takes priority. The viewer remembers the 64 most recent files per workspace; closing or reloading clears this state.
+Reopening a file in the same tab restores its selection, scrolling and applicable preview, zoom or page settings. An explicit line/column destination takes priority. The viewer remembers the 64 most recent files per workspace; Claude Browser also restores it when reopening the same viewer session.
 
 ## 3. Read and navigate code
 
 In reading mode, click an import path to open its module, or a symbol usage to open its definition. Click a definition name to list its usages. Results are grouped by file; select a result to navigate. If there are multiple definitions, choose one from the list.
 
+### Follow an import
+
+![Follow an import](https://raw.githubusercontent.com/bichikim/web/97cc070dac551d6e898a66a0be97af66730ece2c/packages/codex-code-viewer/docs/recordings/codex/0.5.0/import.gif)
+
+### Go to definition
+
+![Go to definition](https://raw.githubusercontent.com/bichikim/web/97cc070dac551d6e898a66a0be97af66730ece2c/packages/codex-code-viewer/docs/recordings/codex/0.5.0/definition.gif)
+
+### Find references
+
+![Find references](https://raw.githubusercontent.com/bichikim/web/97cc070dac551d6e898a66a0be97af66730ece2c/packages/codex-code-viewer/docs/recordings/codex/0.5.0/references.gif)
+
 Definition and usage lists display verified results as the search proceeds. Filter file paths beside the title, collapse file groups, or use the right-hand navigation button to open a file.
 
 Use the arrows beside line numbers to fold multiline functions, objects, classes and markup in reading and editing views. Click **…** to expand a folded block. Search and definition/usage navigation reveal hidden destinations. Small-file folds are restored in the same tab and reset when the source changes. Python, Ruby and Rust folding follows indentation.
+
+### Fold and unfold code
+
+![Fold and unfold code](https://raw.githubusercontent.com/bichikim/web/97cc070dac551d6e898a66a0be97af66730ece2c/packages/codex-code-viewer/docs/recordings/codex/0.5.0/fold.gif)
 
 Definition and usage navigation supports TypeScript, JavaScript, Python, Ruby and Rust. JSON/JSONC/JSON5 supports file-path navigation only. Other highlighted formats do not provide symbol navigation. Language requirements are listed under [Navigation setup](#navigation-setup).
 
@@ -65,6 +139,10 @@ Press `Cmd/Ctrl+F` to find literal text without case sensitivity. Enter/Shift+En
 2. Make changes. Use `Cmd/Ctrl+Z` to undo and `Cmd/Ctrl+Shift+Z` to redo.
 3. Choose **Save** or press `Cmd/Ctrl+S`. There is no autosave or automatic formatting.
 
+### Edit and save text
+
+![Edit and save text](https://raw.githubusercontent.com/bichikim/web/97cc070dac551d6e898a66a0be97af66730ece2c/packages/codex-code-viewer/docs/recordings/codex/0.5.0/edit-save.gif)
+
 See [Supported formats](#supported-formats) for editable file types. Markdown and CSV/TSV are edited as source.
 
 You can move between files without losing drafts. Toggle **Edit** off to read unsaved content without editing it. For Markdown and CSV/TSV, turn **Edit** off to access **Preview / Source**; previews include unsaved content. To discard a draft, turn **Edit** on and choose **⋯ → Discard changes**.
@@ -73,7 +151,7 @@ TS/JS and JSON navigation includes unsaved changes from multiple files. Python, 
 
 If another program changes the original, saving is rejected and your draft remains. Attach its changes to chat for review, or discard it to reload the original. If the file was deleted externally, **Save** recreates it at the same path; **Discard changes** removes the draft and navigates to another visited file when available. If another program restores the file first, saving reports a conflict.
 
-When you change workspace or Codex requests viewer closure, choose save-all, discard or continue editing. Save drafts before closing or reloading. Unsaved content cannot be recovered after a forced shutdown.
+When you change workspace or Codex requests viewer closure, choose save-all, discard or continue editing. Claude Browser stores unsaved drafts locally and restores them in the same session. Clearing browser storage removes recovery data; save before quitting Codex.
 
 ## 5. Add files and changes to chat
 
@@ -94,6 +172,10 @@ Select text, then choose **Copy code** or **Copy** from its context menu to copy
 ## 6. Manage files and folders
 
 Use **New file** or **New folder** in the tree toolbar. A selected folder becomes the destination; a selected file uses its parent. An empty workspace uses its root. The name dialog shows the destination, and existing entries are never overwritten.
+
+### Create a file
+
+![Create a file](https://raw.githubusercontent.com/bichikim/web/97cc070dac551d6e898a66a0be97af66730ece2c/packages/codex-code-viewer/docs/recordings/codex/0.5.0/create-file.gif)
 
 Right-click a file or folder for **Rename**, **Copy**, **Cut**, **Paste** or **Delete**. With tree focus, `Cmd/Ctrl+C`, `Cmd/Ctrl+X`, `Cmd/Ctrl+V` and Delete are also available. Copy/cut uses an internal clipboard within this viewer's workspace. Paste on a folder places entries inside it; paste on a file uses its parent. The empty-space menu pastes at the workspace root. Copy collisions create a copy name; cut/rename collisions report an error.
 
@@ -152,6 +234,18 @@ Library definitions outside the workspace cannot be opened. Viewing, highlightin
 - **Images / SVG:** Use zoom buttons, a zoom value (1–1600%), pinch or `Ctrl/Cmd+wheel`. Drag or use arrow keys to pan. With image focus, `+`/`-` zoom, `0` restores 100% and Home fits to view. SVG also offers XML source up to 32 MiB; larger files provide preview only.
 - **Video / audio:** Use the playback controls. Playback depends on the embedded browser's codec support. Audio starts only when you choose Play and stops when you leave the file.
 
+### Markdown preview and source
+
+![Markdown preview and source](https://raw.githubusercontent.com/bichikim/web/97cc070dac551d6e898a66a0be97af66730ece2c/packages/codex-code-viewer/docs/recordings/codex/0.5.0/markdown.gif)
+
+### Sort a CSV column
+
+![Sort a CSV column](https://raw.githubusercontent.com/bichikim/web/97cc070dac551d6e898a66a0be97af66730ece2c/packages/codex-code-viewer/docs/recordings/codex/0.5.0/csv-sort.gif)
+
+### Filter CSV rows
+
+![Filter CSV rows](https://raw.githubusercontent.com/bichikim/web/97cc070dac551d6e898a66a0be97af66730ece2c/packages/codex-code-viewer/docs/recordings/codex/0.5.0/csv-filter.gif)
+
 ## Limits and troubleshooting
 
 | Situation                        | What to check or do                                                                                                          |
@@ -160,7 +254,7 @@ Library definitions outside the workspace cannot be opened. Viewing, highlightin
 | A file is missing or cannot open | Check its workspace, path permissions, encoding and size. Protected paths and generated/dependency directories are excluded. |
 | Symbols do not navigate          | Check the format and analyzer requirements above. Syntax highlighting alone does not provide navigation.                     |
 | Save reports a conflict          | Keep or attach the draft, then discard it to reload the disk version when ready.                                             |
-| Changes disappear after restart  | Drafts cannot be recovered after closing. Save before you close.                                                             |
+| Changes disappear after restart  | Use the same Claude Browser session and check local storage access; save before quitting Codex.                              |
 
 UTF-8 text files, including code, Markdown and CSV/TSV, can be up to 32 MiB each. Above 512 KiB, files are read-only and use viewport rendering with selection, search and code navigation. Large Markdown and CSV/TSV files display as source. Files containing NUL bytes cannot be opened as text. PDF, DOCX, XLSX, images, video and audio are limited to 128 MiB per file. Paths outside the workspace and `.git`, `.codex`, `.aws`, `.ssh` are excluded. The only hidden files you can open are `.dockerignore`, `.gitignore`, `.gitattributes`, `.gitmodules`, `.editorconfig`, `.prettierignore`, `.eslintignore`, `.npmignore` and `.browserslistrc`. `.env` cannot be opened. Search returns up to 100 results. Search and the tree exclude generated and dependency directories.
 

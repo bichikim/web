@@ -1,17 +1,19 @@
 /** @vitest-environment jsdom */
 
+import {createKeyedParameter} from './parameter-keyforms/fixtures'
+
 import {fireEvent, render, screen} from '@solidjs/testing-library'
 import {describe, expect, test, vi} from 'vitest'
 
 import {createDemoDocument} from '../../../player'
 import {EditorKeyformPanel} from '../EditorKeyformPanel'
-import {addParameter} from '../parameter-keyforms'
+
 import {createOneDimensionalDocument, dispatchPointerEvent} from './keyform-panel/fixtures'
 
 describe('EditorKeyformPanel values', () => {
   test('should select an inactive one-dimensional track and apply its clicked value', () => {
     const document = createDemoDocument()
-    const added = addParameter({document, nodeIds: ['mesh-preview']})
+    const added = createKeyedParameter({document, nodeIds: ['mesh-preview']})
     const onBindingSelect = vi.fn()
     const onValueChange = vi.fn()
     const view = render(() => (
@@ -52,7 +54,7 @@ describe('EditorKeyformPanel values', () => {
 
   test('should select an inactive two-dimensional track and apply its clicked values', () => {
     const document = createDemoDocument()
-    const added = addParameter({document, nodeIds: ['mesh-preview']})
+    const added = createKeyedParameter({document, nodeIds: ['mesh-preview']})
     const onBindingSelect = vi.fn()
     const onValueChange = vi.fn()
     const view = render(() => (

@@ -1,3 +1,4 @@
+import {createKeyedParameter} from './parameter-keyforms/fixtures'
 import {describe, expect, test} from 'vitest'
 
 import {
@@ -11,7 +12,7 @@ import {
   createDeformerCurveHandle,
   removeDeformerCurveHandle,
 } from '../deformer-curve-handles'
-import {addParameter} from '../parameter-keyforms'
+
 import {createDeformer, resizeDeformer} from '../scene-graph'
 
 describe('deformer curve handles', () => {
@@ -40,7 +41,10 @@ describe('deformer curve handles', () => {
     const source = {...createDemoDocument(), motions: [], parameterBindings: [], parameters: []}
     const deformerDocument = createDeformer(source, ['mesh-preview'])!
     const deformer = getDocumentScene(deformerDocument).roots[0]!
-    const addedParameter = addParameter({document: deformerDocument, nodeIds: [deformer.id]})!
+    const addedParameter = createKeyedParameter({
+      document: deformerDocument,
+      nodeIds: [deformer.id],
+    })!
     const withHandle = addDeformerCurveHandle(addedParameter.document, deformer.id, 4)!
     const sceneDeformer = getDocumentScene(withHandle).roots[0]
     const keyformDeformer = withHandle.parameterBindings?.[0]?.keyforms[0]?.deformers?.[0]

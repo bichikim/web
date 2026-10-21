@@ -1,5 +1,3 @@
-import {clampUnit} from 'src/utils/clamp-unit'
-
 const END_MARGIN = 0.05
 const MAX_SAMPLES = 24
 const SAMPLE_SECONDS = 5
@@ -13,11 +11,4 @@ export const sampleTimes = (duration: number): number[] => {
   return Array.from({length: count}, (_, index) => (end * index) / (count - 1))
 }
 
-/** Resolves the two surrounding samples and their interpolation weight. */
-export const sampleBlend = (times: readonly number[], time: number) => {
-  const later = times.findIndex((value) => value > time)
-  const first = later < 0 ? Math.max(0, times.length - 1) : Math.max(0, later - 1)
-  const next = Math.min(first + 1, times.length - 1)
-  const span = times[next] - times[first]
-  return {first, mix: span > 0 ? clampUnit((time - times[first]) / span) : 0, next}
-}
+export {sampleBlend} from '@winter-love/wallpaper/frame-renderer/sample-blend'

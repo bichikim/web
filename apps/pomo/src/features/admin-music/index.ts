@@ -1,6 +1,7 @@
 export {useAdminMusic} from './use-admin-music'
 export type {AdminMusicModel} from './use-admin-music'
 export {catalogSchema, getAlbumTranslation} from './catalog'
+export {ALBUM_STATUSES, TRACK_ASSET_STATUSES} from './catalog-values'
 export type {
   AdminAlbum,
   AdminAsset,

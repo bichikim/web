@@ -1,6 +1,12 @@
 import {describe, expect, test} from 'vitest'
 
-import {createDemoDocument, parseDocument} from '../../../player'
+import {
+  createDemoDocument,
+  createEmptyDocument,
+  getModelTrackRowId,
+  parseDocument,
+  parseDocumentValue,
+} from '../../../player'
 import {getParameterTracks} from '../timeline-keyframe-selection'
 import {addTimelineParameterRow, removeTimelineParameterRow} from '../timeline-parameter-rows'
 
@@ -65,4 +71,25 @@ describe('timeline parameter rows', () => {
     expect(removed.motions[0]?.timelineParameterIds).toEqual([])
     expect(removed.motions[1]).toEqual(document.motions[1])
   })
+})
+
+test('should retain a colliding empty parameter row after its model effect row is removed', () => {
+  const document = {
+    ...createEmptyDocument(),
+    motions: [{duration: 1, id: 'motion', timelineParameterIds: ['model:opacity'], tracks: []}],
+    parameters: [
+      {defaultValue: 0, id: 'model:opacity', maximum: 10, minimum: 0, name: 'Parameter'},
+    ],
+  }
+  const modelRow = getModelTrackRowId('opacity', document)
+  const added = addTimelineParameterRow(document, 'motion', modelRow)!
+  expect(getParameterTracks(added, added.motions[0]).map((row) => row.parameter.id)).toEqual([
+    'model:opacity',
+    modelRow,
+  ])
+  const removed = removeTimelineParameterRow(added, 'motion', modelRow)!
+  expect(getParameterTracks(removed, removed.motions[0]).map((row) => row.parameter.id)).toEqual([
+    'model:opacity',
+  ])
+  expect(parseDocumentValue(removed).ok).toBe(true)
 })
