@@ -1,12 +1,32 @@
 import {
+  composeColorEffects,
+  composeParameterDeformerProperties,
+  composeParameterGroupProperties,
   composeParameterPartProperties,
+  getGroupRenderProperties,
+  IDENTITY_COLOR_EFFECT,
   type PuppetParameterValueMap,
+  type ResolvedGroupRenderProperties,
   type ResolvedPartRenderProperties,
 } from '../../deformation'
-import type {PuppetDocument, PuppetPart, PuppetScene} from '../document'
-import {getScenePartStates} from '../scene'
+import type {
+  PuppetDocument,
+  PuppetPart,
+  PuppetScene,
+  PuppetSceneContainerNode,
+  PuppetSceneGroupNode,
+} from '../document'
 import {resolveParameterValue} from '../parameter-value'
+import {gatherLayers, getSceneLayerStructure, inheritGroupEffects} from './scene-layers'
 import {getSpatialPartPose, type SpatialPartPose} from './spatial-part'
+import {getDrawOrderedPartStates} from './scene-draw-order'
+import {mixGroupOpacity, type MotionMix} from '../playback/mix-motion-frames'
+import {
+  getOverrideColorProperties,
+  NO_RENDER_OVERRIDES,
+  type PuppetRenderOverride,
+  type RenderOverrides,
+} from './render-overrides'
 
 export interface PartMaskSourcePlan {
   readonly invertedMask: boolean
@@ -19,6 +39,8 @@ export interface PartMaskRenderPlan {
 }
 
 export interface PartRenderPlan {
+  /** Offscreen groups the part is drawn into, outermost first. */
+  readonly layerIds: ReadonlyArray<string>
   readonly mask?: PartMaskRenderPlan
   readonly partId: string
   readonly properties: ResolvedPartRenderProperties
@@ -26,7 +48,20 @@ export interface PartRenderPlan {
   readonly visible: boolean
 }
 
+/** An offscreen group: its members are drawn into a layer that these properties composite. */
+export interface LayerRenderPlan {
+  readonly groupId: string
+  /** Offscreen groups the layer is drawn into, outermost first. */
+  readonly layerIds: ReadonlyArray<string>
+  readonly mask?: PartMaskRenderPlan
+  /** Includes the effect inherited from the plain groups above it. */
+  readonly properties: Omit<ResolvedGroupRenderProperties, 'offscreen'>
+  readonly visible: boolean
+}
+
 export interface PartRenderFrame {
+  /** Offscreen groups by ID, outer layers before the layers inside them. */
+  readonly layers: ReadonlyMap<string, LayerRenderPlan>
   readonly plans: ReadonlyArray<PartRenderPlan>
   readonly spatialPoses: ReadonlyMap<string, SpatialPartPose>
 }
@@ -39,6 +74,7 @@ interface CreatePartMaskPlanOptions {
 }
 
 interface StaticMaskStructure {
+  readonly layerMaskByGroupId: ReadonlyMap<string, PartMaskRenderPlan | undefined>
   readonly maskPartIds: ReadonlySet<string>
   readonly partById: ReadonlyMap<string, PuppetPart>
   readonly planByPartId: Map<string, PartMaskRenderPlan | undefined>
@@ -49,14 +85,23 @@ const createPartMaskPlan = (options: CreatePartMaskPlanOptions): PartMaskRenderP
     return undefined
   }
 
-  const part = options.partById.get(options.partId)
-  const maskPartIds = part?.properties?.clippingMaskIds ?? []
+  const ancestorPartIds = new Set(options.ancestorPartIds)
+  ancestorPartIds.add(options.partId)
+  return createMaskPlan(options.partById.get(options.partId)?.properties?.clippingMaskIds ?? [], {
+    ...options,
+    ancestorPartIds,
+  })
+}
+
+const createMaskPlan = (
+  maskPartIds: ReadonlyArray<string>,
+  options: Omit<CreatePartMaskPlanOptions, 'partId'>,
+): PartMaskRenderPlan | undefined => {
   if (maskPartIds.length === 0) {
     return undefined
   }
 
-  const ancestorPartIds = new Set(options.ancestorPartIds)
-  ancestorPartIds.add(options.partId)
+  const {ancestorPartIds} = options
   const sources = maskPartIds.flatMap((partId): ReadonlyArray<PartMaskSourcePlan> => {
     const sourcePart = options.partById.get(partId)
     if (sourcePart === undefined) {
@@ -95,10 +140,22 @@ const getStaticMaskStructure = (document: PuppetDocument): StaticMaskStructure =
       }
     }
 
+    const {layers} = getSceneLayerStructure(document)
     structure = {
-      maskPartIds: new Set(
-        document.parts.flatMap((part) => part.properties?.clippingMaskIds ?? []),
+      layerMaskByGroupId: new Map(
+        layers.map(({group}) => [
+          group.id,
+          createMaskPlan(getGroupRenderProperties(group).clippingMaskIds, {
+            ancestorPartIds: new Set(),
+            document,
+            partById,
+          }),
+        ]),
       ),
+      maskPartIds: new Set([
+        ...document.parts.flatMap((part) => part.properties?.clippingMaskIds ?? []),
+        ...layers.flatMap(({group}) => getGroupRenderProperties(group).clippingMaskIds),
+      ]),
       partById,
       planByPartId: new Map(),
     }
@@ -128,39 +185,59 @@ const getPartMaskPlan = (
   return structure.planByPartId.get(partId)
 }
 
+/** Per-frame inputs from playback: pose selections, motions' opacity tracks and app overrides. */
+export interface FrameAdjustments {
+  readonly mix?: MotionMix
+  readonly overrides?: RenderOverrides
+  readonly poseOpacityByPartId?: ReadonlyMap<string, number>
+}
+
+/** Parts in draw order, then moved by the layer order rules whose conditions hold. */
+const getRuleOrderedPartStates = (
+  document: PuppetDocument,
+  parameterValues: PuppetParameterValueMap | undefined,
+) =>
+  (document.layerOrderRules ?? []).reduce(
+    (orderedStates, rule) => {
+      const total = rule.when.parameterIds.reduce((sum, id) => {
+        const parameter = document.parameters?.find((candidate) => candidate.id === id)
+        return (
+          sum +
+          (parameter === undefined ? 0 : resolveParameterValue(parameter, parameterValues?.[id]))
+        )
+      }, 0)
+      const matches =
+        rule.when.comparison === 'greater-than'
+          ? total > rule.when.threshold
+          : total < rule.when.threshold
+      if (!matches) {
+        return orderedStates
+      }
+
+      const selectedIds = new Set(rule.partIds)
+      const selected = orderedStates.filter((state) => selectedIds.has(state.partId))
+      const remaining = orderedStates.filter((state) => !selectedIds.has(state.partId))
+      return remaining.flatMap((state) => {
+        if (state.partId !== rule.referencePartId) {
+          return [state]
+        }
+        return rule.placement === 'before' ? [...selected, state] : [state, ...selected]
+      })
+    },
+    getDrawOrderedPartStates(document, parameterValues),
+  )
+
 export const getPartRenderFrame = (
   document: PuppetDocument,
   parameterValues?: PuppetParameterValueMap,
   posedScene?: PuppetScene,
+  adjustments: FrameAdjustments = {},
 ): PartRenderFrame => {
+  const {mix, poseOpacityByPartId} = adjustments
+  const overrides = adjustments.overrides ?? NO_RENDER_OVERRIDES
   const maskStructure = getStaticMaskStructure(document)
 
-  const states = (document.layerOrderRules ?? []).reduce((orderedStates, rule) => {
-    const total = rule.when.parameterIds.reduce((sum, id) => {
-      const parameter = document.parameters?.find((candidate) => candidate.id === id)
-      return (
-        sum +
-        (parameter === undefined ? 0 : resolveParameterValue(parameter, parameterValues?.[id]))
-      )
-    }, 0)
-    const matches =
-      rule.when.comparison === 'greater-than'
-        ? total > rule.when.threshold
-        : total < rule.when.threshold
-    if (!matches) {
-      return orderedStates
-    }
-
-    const selectedIds = new Set(rule.partIds)
-    const selected = orderedStates.filter((state) => selectedIds.has(state.partId))
-    const remaining = orderedStates.filter((state) => !selectedIds.has(state.partId))
-    return remaining.flatMap((state) => {
-      if (state.partId !== rule.referencePartId) {
-        return [state]
-      }
-      return rule.placement === 'before' ? [...selected, state] : [state, ...selected]
-    })
-  }, getScenePartStates(document))
+  const states = getRuleOrderedPartStates(document, parameterValues)
 
   const poseByPartId = new Map(
     document.parts.flatMap((part) => {
@@ -181,10 +258,50 @@ export const getPartRenderFrame = (
         poseByPartId.get(first.partId)!.depth - poseByPartId.get(second.partId)!.depth,
     )
   }
-  const orderedStates = states.map((state) => {
-    const groupId = maskStructure.partById.get(state.partId)?.spatial?.groupId
-    return groupId === undefined ? state : (spatialGroups.get(groupId)?.shift() ?? state)
-  })
+  const sceneLayers = getSceneLayerStructure(document)
+  const resolveSceneGroup = (group: PuppetSceneGroupNode) => {
+    const composed = composeParameterGroupProperties({document, group, parameterValues})
+    const opacity =
+      overrides.groups.get(group.id)?.opacity ?? mixGroupOpacity(mix, group.id, composed.opacity)
+    return {...composed, opacity}
+  }
+  const resolvedGroups = new Map<PuppetSceneContainerNode, ResolvedGroupRenderProperties>()
+  const resolveGroup = (group: PuppetSceneContainerNode) => {
+    const cached = resolvedGroups.get(group)
+    if (cached !== undefined) {
+      return cached
+    }
+    const resolved =
+      group.kind === 'group'
+        ? resolveSceneGroup(group)
+        : composeParameterDeformerProperties({deformer: group, document, parameterValues})
+    resolvedGroups.set(group, resolved)
+    return resolved
+  }
+  const inheritedByPartId = new Map(
+    [...sceneLayers.groupsByPartId].map(([partId, groups]) => [
+      partId,
+      inheritGroupEffects(groups, resolveGroup),
+    ]),
+  )
+  const layerIdsOf = (partId: string) => inheritedByPartId.get(partId)?.layerIds ?? []
+  const overrideColors = (
+    ancestors: ReadonlyArray<PuppetSceneContainerNode>,
+    own: PuppetRenderOverride | undefined,
+  ) =>
+    getOverrideColorProperties({
+      ancestors,
+      isOffscreen: (group) => resolveGroup(group).offscreen,
+      overrides,
+      own,
+    })
+  const orderedStates = gatherLayers(
+    states.map((state) => {
+      const groupId = maskStructure.partById.get(state.partId)?.spatial?.groupId
+      return groupId === undefined ? state : (spatialGroups.get(groupId)?.shift() ?? state)
+    }),
+    (state) => layerIdsOf(state.partId),
+  )
 
   const plans = orderedStates.flatMap((state): ReadonlyArray<PartRenderPlan> => {
     const part = maskStructure.partById.get(state.partId)
@@ -192,14 +309,26 @@ export const getPartRenderFrame = (
       return []
     }
 
-    const properties = composeParameterPartProperties({
+    const composed = composeParameterPartProperties({
       document,
       parameterValues,
       partId: state.partId,
     })
+    const override = overrides.parts.get(state.partId)
+    // Model opacity scales every part, as Cubism scales every drawable.
+    const opacity =
+      (override?.opacity ?? composed.opacity * (poseOpacityByPartId?.get(state.partId) ?? 1)) *
+      (mix?.modelOpacity ?? 1)
+    const inherited = inheritedByPartId.get(state.partId)
+    const properties = {
+      ...composeColorEffects({...composed, opacity}, inherited?.effect ?? IDENTITY_COLOR_EFFECT),
+      ...overrideColors(sceneLayers.groupsByPartId.get(state.partId) ?? [], override),
+      ...(override?.culling === undefined ? {} : {culling: override.culling}),
+    }
     const render = !maskStructure.maskPartIds.has(state.partId) || properties.renderWhenUsedAsMask
     return [
       {
+        layerIds: inherited?.layerIds ?? [],
         mask: getPartMaskPlan(document, maskStructure, state.partId),
         partId: state.partId,
         properties,
@@ -211,7 +340,27 @@ export const getPartRenderFrame = (
       },
     ]
   })
-  return {plans, spatialPoses: poseByPartId}
+  const layers = new Map(
+    sceneLayers.layers.map(({ancestors, group, visible}): [string, LayerRenderPlan] => {
+      const inherited = inheritGroupEffects(ancestors, resolveGroup)
+      const {offscreen: _offscreen, ...composed} = composeColorEffects(
+        resolveGroup(group),
+        inherited.effect,
+      )
+      const properties = {...composed, ...overrideColors(ancestors, overrides.groups.get(group.id))}
+      return [
+        group.id,
+        {
+          groupId: group.id,
+          layerIds: inherited.layerIds,
+          mask: maskStructure.layerMaskByGroupId.get(group.id),
+          properties,
+          visible,
+        },
+      ]
+    }),
+  )
+  return {layers, plans, spatialPoses: poseByPartId}
 }
 
 export const getPartRenderPlans = (
@@ -222,10 +371,12 @@ export const getPartRenderPlans = (
 const valuesEqual = (first: ReadonlyArray<number>, second: ReadonlyArray<number>) =>
   first.length === second.length && first.every((value, index) => value === second[index])
 
+/**
+ * 파트 리소스를 그대로 재사용할 수 있는지 판단한다. 마스크 메시는 생성 시점의 indices/uvs를
+ * 복사하므로, 파트 마스크와 offscreen 그룹 마스크의 소스 파트는 메시 토폴로지가 같아야 한다.
+ */
 export const canReusePartResources = (document: PuppetDocument, nextDocument: PuppetDocument) => {
-  const maskPartIds = new Set(
-    nextDocument.parts.flatMap((part) => part.properties?.clippingMaskIds ?? []),
-  )
+  const {maskPartIds} = getStaticMaskStructure(nextDocument)
 
   return (
     nextDocument.parts.length === document.parts.length &&
@@ -243,3 +394,14 @@ export const canReusePartResources = (document: PuppetDocument, nextDocument: Pu
     })
   )
 }
+
+const describeLayerResources = (document: PuppetDocument) =>
+  getSceneLayerStructure(document)
+    .layers.map(({group}) =>
+      [group.id, ...getGroupRenderProperties(group).clippingMaskIds].join('\0'),
+    )
+    .join('\n')
+
+/** Whether the offscreen groups and their mask sources are unchanged. */
+export const canReuseLayerResources = (document: PuppetDocument, nextDocument: PuppetDocument) =>
+  describeLayerResources(document) === describeLayerResources(nextDocument)

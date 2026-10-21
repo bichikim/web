@@ -1,8 +1,9 @@
 import {getBindingInfluence} from './influence'
 
 import type {PuppetDocument, PuppetParameter, PuppetParameterBinding} from '../player/document'
-import {resolveParameterValue} from '../player/parameter-value'
+import {getRepeatRanges, resolveParameterValue} from '../player/parameter-value'
 import {
+  isThreeDimensionalParameterBinding,
   isTwoDimensionalParameterBinding,
   type PuppetParameterValues,
   sampleParameterVertices,
@@ -48,14 +49,19 @@ export const getParameterBindingValues = (
     options.parameterValues,
   )
 
+  const valueAt = (index: number) =>
+    getParameterValue(
+      parameterById.get(options.binding.parameterIds[index] ?? ''),
+      options.parameterValues,
+    )
+  if (isThreeDimensionalParameterBinding(options.binding)) {
+    return [firstValue, valueAt(1), valueAt(2)]
+  }
   if (!isTwoDimensionalParameterBinding(options.binding)) {
     return [firstValue]
   }
 
-  return [
-    firstValue,
-    getParameterValue(parameterById.get(options.binding.parameterIds[1]), options.parameterValues),
-  ]
+  return [firstValue, valueAt(1)]
 }
 
 const addParameterDelta = (
@@ -108,6 +114,7 @@ export const composeParameterVertices = (
     const sampledVertices = sampleParameterVertices({
       binding,
       partId: options.partId,
+      repeatRanges: getRepeatRanges(binding.parameterIds, options.document.parameters),
       restVertices: options.restVertices,
       values: getParameterBindingValues({
         binding,

@@ -1,5 +1,6 @@
 import {describe, expect, test, vi} from 'vitest'
 import {createMotionPlaybacks} from '../create-motion-playbacks'
+import {MAX_EVENT_LOOPS} from '../motion-fade'
 
 const motions = [{duration: 2, id: 'idle', tracks: []}]
 const setup = () => createMotionPlaybacks({motions, onChange: vi.fn()})
@@ -122,4 +123,45 @@ describe('createMotionPlaybacks', () => {
     expect(handle.getState()).toMatchObject({status: 'stopped', time: 2})
     expect(onComplete).not.toHaveBeenCalled()
   })
+})
+
+test('should finish a requested fade while the motion time is frozen at zero speed', () => {
+  const playbacks = createMotionPlaybacks({
+    motions: [{...motions[0]!, fadeOutTime: 0.5}],
+    onChange: vi.fn(),
+  })
+  const handle = playbacks.start('idle', {speed: 0})!
+  handle.fadeOut()
+  expect(playbacks.isPlaying()).toBe(true)
+  playbacks.advance(0.25)
+  expect(playbacks.frames()[0]?.remaining).toBeCloseTo(0.25)
+  expect(handle.getState().time).toBe(0)
+  playbacks.advance(0.25)
+  expect(handle.getState().status).toBe('stopped')
+  expect(playbacks.frames()).toEqual([])
+})
+
+test('should report every event when one update crosses multiple loops', () => {
+  const onEvent = vi.fn()
+  const playbacks = createMotionPlaybacks({
+    motions: [{duration: 1, events: [{time: 0.25, value: 'mark'}], id: 'loop', tracks: []}],
+    onChange: vi.fn(),
+    onEvent,
+  })
+  playbacks.start('loop')
+  playbacks.advance(2.5).forEach((callback) => callback())
+  expect(onEvent).toHaveBeenCalledTimes(3)
+})
+
+test('should cap the full loops one update reports events for', () => {
+  const onEvent = vi.fn()
+  const playbacks = createMotionPlaybacks({
+    motions: [{duration: 1, events: [{time: 0.25, value: 'mark'}], id: 'loop', tracks: []}],
+    onChange: vi.fn(),
+    onEvent,
+  })
+  playbacks.start('loop')
+  playbacks.advance(1e9).forEach((callback) => callback())
+  // 처음 반복의 남은 구간, 상한만큼의 완전한 반복, 마지막 반복의 앞 구간
+  expect(onEvent).toHaveBeenCalledTimes(MAX_EVENT_LOOPS + 1)
 })

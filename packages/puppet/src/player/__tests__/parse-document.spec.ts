@@ -1,8 +1,13 @@
 import {describe, expect, it, test} from 'vitest'
 
 import {createDemoDocument} from '../create-demo-document'
-import {parseDocument} from '../parse-document'
+import {parseDocument, parseDocumentValue} from '../parse-document'
 import {serializeDocument} from '../serialize-document'
+
+const PLANE_COUNT = 60_000
+// 경과 시간을 단언하지 않고 결과만 확인한다. 평면마다 전체 키폼을 다시 거르던 제곱 시간 구현은 이
+// 입력에서 10초 넘게 걸려, 러너 제한 시간이 기기 속도에 둔감한 느슨한 안전장치로 남는다.
+const PLANE_TIMEOUT_MS = 5000
 
 const createLegacyDocument = () => {
   const document = createDemoDocument()
@@ -122,6 +127,25 @@ describe('parseDocument', () => {
     ).toBe(false)
   })
 
+  it('should accept motion sounds as WAV data URLs or paths', () => {
+    const document = createDemoDocument()
+    const withSound = (sound: unknown) =>
+      parseDocument(
+        JSON.stringify({
+          ...document,
+          motions: [{...document.motions[0], sound}, ...document.motions.slice(1)],
+        }),
+      ).ok
+
+    expect(withSound({src: 'sounds/talk.wav'})).toBe(true)
+    expect(withSound({src: 'data:audio/wav;base64,UklGRg=='})).toBe(true)
+    expect(withSound({src: 'data:audio/X-WAV;name=talk.wav;base64,UklGRg=='})).toBe(true)
+    expect(withSound({src: 'data:audio/mpeg;base64,AAAA'})).toBe(false)
+    expect(withSound({src: 'data:audio/wav,RIFF'})).toBe(false)
+    expect(withSound({src: ''})).toBe(false)
+    expect(withSound('sounds/talk.wav')).toBe(false)
+  })
+
   it('should accept a positive integer frame rate and retain the legacy default when omitted', () => {
     const document = createDemoDocument()
 
@@ -184,6 +208,15 @@ describe('parseDocument', () => {
         }),
       ),
     ).toMatchObject({ok: false})
+  })
+
+  it('should read the earlier format name as the current one and reject unknown names', () => {
+    const document = createDemoDocument()
+    const legacy = parseDocument(JSON.stringify({...document, format: 'winter-love-puppet'}))
+    expect(legacy).toMatchObject({document: {format: 'winter-love-poffo'}, ok: true})
+    expect(parseDocument(JSON.stringify({...document, format: 'winter-love'}))).toMatchObject({
+      ok: false,
+    })
   })
 
   it('should normalize legacy untagged tracks to explicit kinds', () => {
@@ -276,7 +309,10 @@ describe('parseDocument', () => {
       parseDocument(
         JSON.stringify({
           ...document,
-          parts: [{...part, properties: {...properties, drawOrder: 2}}, ...document.parts.slice(1)],
+          parts: [
+            {...part, properties: {...properties, drawOrder: 1001}},
+            ...document.parts.slice(1),
+          ],
         }),
       ),
     ).toMatchObject({ok: false})
@@ -529,5 +565,103 @@ describe('parseDocument', () => {
     const result = parseDocument(JSON.stringify({...legacyDocument, parameters: [legacyParameter]}))
 
     expect(result).toEqual({error: {code: 'invalid-document'}, ok: false})
+  })
+
+  it('should keep parameter tracks that reach the range end after repeat is turned on', () => {
+    const document = createDemoDocument()
+    const turn = {
+      duration: 1,
+      id: 'turn',
+      tracks: [
+        {
+          keyframes: [
+            {time: 0, value: -30},
+            {time: 1, value: 30},
+          ],
+          kind: 'parameter' as const,
+          parameterId: 'angle-x',
+        },
+      ],
+    }
+    const turned = {...document, motions: [turn]}
+    const repeated = {
+      ...turned,
+      parameters: document.parameters?.map((parameter) =>
+        parameter.id === 'angle-x' ? {...parameter, repeat: true} : parameter,
+      ),
+    }
+
+    expect(parseDocumentValue(turned)).toMatchObject({ok: true})
+    expect(parseDocumentValue(repeated)).toMatchObject({ok: true})
+  })
+
+  it('should reject non-array target group IDs without throwing', () => {
+    const document = createDemoDocument()
+    const binding = document.parameterBindings?.[0]
+
+    for (const targetGroupIds of [5, {}, true, 'shapes']) {
+      expect(
+        parseDocumentValue({...document, parameterBindings: [{...binding, targetGroupIds}]}),
+      ).toEqual({error: {code: 'invalid-document'}, ok: false})
+    }
+  })
+
+  it(
+    'should validate many three-dimensional keyform planes quickly',
+    () => {
+      const document = createDemoDocument()
+      const depth = {
+        defaultValue: 0,
+        id: 'depth',
+        maximum: PLANE_COUNT,
+        minimum: 0,
+        name: 'Depth',
+      }
+      const binding = {
+        id: 'planes',
+        keyforms: Array.from({length: PLANE_COUNT}, (_, plane) => ({
+          parts: [],
+          values: [0, 0, plane],
+        })),
+        parameterIds: ['angle-x', 'angle-y', 'depth'],
+      }
+      const value = {
+        ...document,
+        parameterBindings: [...(document.parameterBindings ?? []), binding],
+        parameters: [...(document.parameters ?? []), depth],
+      }
+
+      expect(parseDocumentValue(value)).toMatchObject({ok: true})
+    },
+    PLANE_TIMEOUT_MS,
+  )
+
+  it('should accept three-dimensional planes with different point sets', () => {
+    const document = createDemoDocument()
+    const depth = {defaultValue: 0, id: 'depth', maximum: 1, minimum: 0, name: 'Depth'}
+    const binding = {
+      id: 'planes',
+      keyforms: [
+        {parts: [], values: [0, 0, 0]},
+        {parts: [], values: [0, 0, 1]},
+        {parts: [], values: [1, 0, 1]},
+      ],
+      parameterIds: ['angle-x', 'angle-y', 'depth'],
+    }
+
+    expect(
+      parseDocumentValue({
+        ...document,
+        parameterBindings: [binding],
+        parameters: [...(document.parameters ?? []), depth],
+      }),
+    ).toMatchObject({ok: true})
+    expect(
+      parseDocumentValue({
+        ...document,
+        parameterBindings: [{...binding, keyforms: binding.keyforms.slice(0, 2)}],
+        parameters: [...(document.parameters ?? []), depth],
+      }),
+    ).toMatchObject({ok: true})
   })
 })

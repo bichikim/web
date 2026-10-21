@@ -9,6 +9,7 @@ import {
   type SpatialThreeOverlay,
   type SpatialThreeSurface,
 } from './internal/spatial-three-overlay'
+import {getEditorAudioDestination} from './internal/editor-audio'
 import {EDITOR_VIEWPORT_PADDING} from './internal/viewport'
 
 export type PlayerCanvasStatus = 'error' | 'loading' | 'ready'
@@ -27,6 +28,16 @@ export interface PlayerCanvasProps {
   readonly physicsPreview?: boolean
   readonly spatialSurface?: SpatialThreeSurface
 }
+
+/** Bounds the backing buffer while retaining the document's editing coordinates. */
+const getEditorResolution = (document: PuppetDocument) =>
+  Math.min(
+    window.devicePixelRatio,
+    2,
+    MAXIMUM_RENDER_DIMENSION /
+      (Math.max(document.viewport.width, document.viewport.height) *
+        (1 + 2 * EDITOR_VIEWPORT_PADDING)),
+  )
 
 export const PlayerCanvas = (props: PlayerCanvasProps) => {
   const [host, setHost] = createSignal<HTMLDivElement>()
@@ -138,6 +149,8 @@ export const PlayerCanvas = (props: PlayerCanvasProps) => {
     createPlayer({
       canvas: canvasElement,
       document: preparedDocument,
+      // Editing overlays need the whole canvas, not the document's layout.
+      framing: 'viewport',
       motionId: untrack(() => props.motionId),
       onAfterRender: () => overlay?.render(),
       onBeforeRender: () => overlay?.prepare(),
@@ -145,14 +158,8 @@ export const PlayerCanvas = (props: PlayerCanvasProps) => {
       parameterValues: untrack(() => props.parameterValues),
       physicsPreview: untrack(() => props.physicsPreview),
       resizeTo: hostElement,
-      // Bound the backing buffer while retaining the document's editing coordinates.
-      resolution: Math.min(
-        window.devicePixelRatio,
-        2,
-        MAXIMUM_RENDER_DIMENSION /
-          (Math.max(preparedDocument.viewport.width, preparedDocument.viewport.height) *
-            (1 + 2 * EDITOR_VIEWPORT_PADDING)),
-      ),
+      resolution: getEditorResolution(preparedDocument),
+      soundDestination: getEditorAudioDestination(),
       viewportPadding: EDITOR_VIEWPORT_PADDING,
     })
       .then((createdPlayer) => {

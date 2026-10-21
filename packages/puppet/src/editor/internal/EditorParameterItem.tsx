@@ -16,8 +16,11 @@ export interface EditorParameterItemProps {
   readonly onNameEdit?: () => void
   readonly onSecondaryNameChange?: (name: string) => void
   readonly onSelect?: () => void
+  readonly onTertiaryNameChange?: (name: string) => void
   readonly pressed?: boolean
   readonly secondaryName?: string
+  readonly tertiaryControl?: JSX.Element
+  readonly tertiaryName?: string
 }
 
 interface ParameterFooterProps {
@@ -79,8 +82,11 @@ export const EditorParameterItem = (props: EditorParameterItemProps) => {
           }}
           onSecondaryNameChange={props.onSecondaryNameChange}
           onSelect={handleSelect}
+          onTertiaryNameChange={props.onTertiaryNameChange}
           pressed={props.pressed}
           secondaryName={props.secondaryName}
+          tertiaryControl={props.tertiaryControl}
+          tertiaryName={props.tertiaryName}
         >
           {props.children}
         </EditorParameterNames>

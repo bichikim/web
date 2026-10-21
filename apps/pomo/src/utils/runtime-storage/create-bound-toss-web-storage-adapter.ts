@@ -7,7 +7,7 @@ export interface BoundTossWebStorageAdapterOptions<Value> {
   readonly parse: (value: unknown) => Value | null
 }
 
-/** Binds both runtime stores to one key and domain parser. */
+/** 두 런타임 저장소에 하나의 키와 도메인 파서를 연결한다. */
 export const createBoundTossWebStorageAdapter = <Value>(
   options: BoundTossWebStorageAdapterOptions<Value>,
 ) => {

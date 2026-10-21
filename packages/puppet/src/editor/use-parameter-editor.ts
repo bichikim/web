@@ -5,6 +5,8 @@ import {type Accessor, createEffect, createMemo, createSignal, type Setter} from
 import {
   getDefaultParameterValueMap,
   getParameterBindingValues,
+  MAX_PARAMETER_DIMENSIONS,
+  type ParameterDimensions,
   parameterValuesEqual,
   type PuppetParameterValueMap,
   type PuppetParameterValues,
@@ -17,10 +19,12 @@ import type {
 import {resolveParameterValue} from '../player/parameter-value'
 import {
   addParameter,
+  addThreeDimensionalParameter,
   addTwoDimensionalParameter,
   connectParameterNodes,
   deleteParameter,
   deleteParameterKeyform,
+  deleteParameterKeyformPlane,
   disconnectParameterNodes,
   getBindingParameters,
   getDefaultParameterValues,
@@ -59,9 +63,12 @@ export interface ParameterEditorResult {
   readonly allParametersVisible: Accessor<boolean>
   readonly addKeyform: () => void
   readonly addParameter: () => void
+  readonly addThreeDimensionalParameter: () => void
   readonly addTwoDimensionalParameter: () => void
   readonly connectSelection: () => void
   readonly deleteKeyform: () => void
+  /** Deletes the active 3D binding's plane at third value `value`. */
+  readonly deleteKeyformPlane: (value: number) => void
   readonly deleteParameter: (bindingId: string) => void
   readonly disconnectSelection: () => void
   readonly moveKeyform: (values: PuppetParameterValues, nextValues: PuppetParameterValues) => void
@@ -137,6 +144,20 @@ const selectBindingState = (
   setters.activeKeyformValues(getDefaultKeyformValues(document, binding, parameterValues))
 }
 
+/** Connects or disconnects the selection with the active binding, if any. */
+const createConnectionHandler =
+  (
+    props: UseParameterEditorProps,
+    activeBinding: Accessor<PuppetParameterBinding | undefined>,
+    operation: ParameterConnectionOperation,
+  ) =>
+  () => {
+    const binding = activeBinding()
+    if (binding !== undefined) {
+      updateParameterConnection(props, binding, operation)
+    }
+  }
+
 const getSelectableBindings = (
   document: PuppetDocument,
   candidates: ReadonlyArray<PuppetParameterBinding>,
@@ -167,12 +188,14 @@ const createParameterSelectionSync = (
   })
 }
 
+const PARAMETER_DIMENSIONS: ReadonlyArray<ParameterDimensions> = [1, 2, MAX_PARAMETER_DIMENSIONS]
+
 const createParameterBindingHandler =
   (
     props: UseParameterEditorProps,
     parameterValueMap: Accessor<PuppetParameterValueMap>,
     setters: ParameterSelectionSetters,
-    dimension: 1 | 2,
+    dimension: ParameterDimensions,
   ) =>
   () => {
     const nodeIds = props.selectedNodeIds()
@@ -181,10 +204,10 @@ const createParameterBindingHandler =
       return
     }
 
-    const result =
-      dimension === 1
-        ? addParameter({document: props.document(), nodeIds})
-        : addTwoDimensionalParameter({document: props.document(), nodeIds})
+    const add = [addParameter, addTwoDimensionalParameter, addThreeDimensionalParameter][
+      dimension - 1
+    ]!
+    const result = add({document: props.document(), nodeIds})
     if (result !== undefined) {
       props.onDocumentChange(result.document)
       selectBindingState(result.document, result.binding, parameterValueMap(), setters)
@@ -211,6 +234,25 @@ const createKeyformRemovalHandler =
       document: props.document(),
       values,
     })
+    if (document !== undefined) {
+      props.onDocumentChange(document)
+      setActiveKeyformValues(null)
+      props.onNotice(null)
+    }
+  }
+
+const createPlaneRemovalHandler =
+  (
+    props: UseParameterEditorProps,
+    activeBinding: Accessor<PuppetParameterBinding | undefined>,
+    setActiveKeyformValues: Setter<PuppetParameterValues | null>,
+  ) =>
+  (value: number) => {
+    const binding = activeBinding()
+    const document =
+      binding === undefined
+        ? undefined
+        : deleteParameterKeyformPlane({bindingId: binding.id, document: props.document(), value})
     if (document !== undefined) {
       props.onDocumentChange(document)
       setActiveKeyformValues(null)
@@ -360,6 +402,7 @@ interface KeyformGenerationHandlersOptions {
   readonly props: UseParameterEditorProps
   readonly activeBinding: Accessor<PuppetParameterBinding | undefined>
   readonly activeKeyformValues: Accessor<PuppetParameterValues | null>
+  readonly parameterValues: Accessor<PuppetParameterValues>
   readonly updateValues: (values: PuppetParameterValues) => void
 }
 
@@ -369,12 +412,13 @@ const createKeyformGenerationHandlers = (options: KeyformGenerationHandlersOptio
     generateCorners(settings: CornerKeyformSettings) {
       const binding = activeBinding()
       if (binding === undefined) {
-        return '2차원 파라미터를 선택하세요.'
+        return '2차원 이상 파라미터를 선택하세요.'
       }
       const result = generateCornerKeyforms({
         ...settings,
         bindingId: binding.id,
         document: props.document(),
+        plane: (activeKeyformValues() ?? options.parameterValues())[2],
       })
       if (!result.ok) {
         return result.message
@@ -465,8 +509,9 @@ export const useParameterEditor = (props: UseParameterEditorProps): ParameterEdi
     setActiveKeyformValues,
     setParameterValueMap,
   })
-  const createParameter = createParameterBindingHandler(props, parameterValueMap, setters, 1)
-  const create2dParameter = createParameterBindingHandler(props, parameterValueMap, setters, 2)
+  const [createParameter, create2dParameter, create3dParameter] = PARAMETER_DIMENSIONS.map(
+    (dimension) => createParameterBindingHandler(props, parameterValueMap, setters, dimension),
+  )
   const createKeyform = createKeyformInsertionHandler({
     activeBinding,
     activeTargetNodeIds,
@@ -489,22 +534,25 @@ export const useParameterEditor = (props: UseParameterEditorProps): ParameterEdi
     setParameterValueMap,
   })
   return {
-    ...createKeyformGenerationHandlers({activeBinding, activeKeyformValues, props, updateValues}),
+    ...createKeyformGenerationHandlers({
+      activeBinding,
+      activeKeyformValues,
+      parameterValues,
+      props,
+      updateValues,
+    }),
     activeBinding,
     activeBindingId,
     activeKeyformValues,
     activeTargetNodeIds,
     addKeyform: createKeyform,
     addParameter: createParameter,
+    addThreeDimensionalParameter: create3dParameter,
     addTwoDimensionalParameter: create2dParameter,
     allParametersVisible,
-    connectSelection: () => {
-      const binding = activeBinding()
-      if (binding !== undefined) {
-        updateParameterConnection(props, binding, 'connect')
-      }
-    },
+    connectSelection: createConnectionHandler(props, activeBinding, 'connect'),
     deleteKeyform: removeKeyform,
+    deleteKeyformPlane: createPlaneRemovalHandler(props, activeBinding, setActiveKeyformValues),
     deleteParameter(bindingId) {
       const document = deleteParameter({bindingId, document: props.document()})
       if (document === undefined) {
@@ -520,12 +568,7 @@ export const useParameterEditor = (props: UseParameterEditorProps): ParameterEdi
       }
       props.onNotice(null)
     },
-    disconnectSelection: () => {
-      const binding = activeBinding()
-      if (binding !== undefined) {
-        updateParameterConnection(props, binding, 'disconnect')
-      }
-    },
+    disconnectSelection: createConnectionHandler(props, activeBinding, 'disconnect'),
     influence,
     moveKeyform,
     parameterValueMap,

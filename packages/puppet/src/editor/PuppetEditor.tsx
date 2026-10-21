@@ -1,6 +1,7 @@
 import {useEditorWorkspace} from './use-editor-workspace'
 import {PsdReimportDialog} from './internal/PsdReimportDialog'
 import {useEditorImports} from './use-editor-imports'
+import {useInitialAtlasUnpack} from './use-initial-atlas-unpack'
 import {EditorWorkspacePanel} from './internal/EditorWorkspacePanel'
 import {DocumentHistoryPanel} from './internal/DocumentHistoryPanel'
 import {useTemporaryForm} from './internal/use-temporary-form'
@@ -51,6 +52,7 @@ import {EditorStyles} from './internal/EditorStyles'
 import {EditorToast} from '../design-system'
 import type {DocumentRecovery} from './document-recovery'
 import {DocumentRecoveryDialog} from './internal/DocumentRecoveryDialog'
+import {syncPlayerPlayback, togglePlayerPlayback} from './internal/player-playback'
 export interface PuppetEditorProps {
   readonly onDocumentCommit?: (document: PuppetDocument) => void
   readonly examples?: ReadonlyArray<PuppetExampleDocument>
@@ -59,24 +61,6 @@ export interface PuppetEditorProps {
   readonly initialWorkspace?: 'animation' | 'modeling'
   readonly onDocumentChange?: (document: PuppetDocument) => void
   readonly recovery?: DocumentRecovery
-}
-const setPlayerPlayback = (player: Player, isPlaying: boolean) => {
-  if (isPlaying) {
-    player.play()
-    return
-  }
-  player.pause()
-}
-const togglePlayerPlayback = (player: Player, isPlaying: boolean) => {
-  const nextIsPlaying = !isPlaying
-  setPlayerPlayback(player, nextIsPlaying)
-  return nextIsPlaying
-}
-const syncPlayerPlayback = (player: Player | null, isPlaying: boolean) => {
-  if (player !== null && !isPlaying) {
-    player.pause()
-  }
-  return player
 }
 const WORKSPACE_EDIT_MODES = {animation: 'motion', modeling: 'parameter'} as const
 
@@ -175,7 +159,7 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
     motionId: () => activeMotionId() ?? undefined,
     onError: setNotice,
   })
-  const documentExport = useDocumentExport(sourceDocument, temporary.hasChanges)
+  const documentExport = useDocumentExport(sourceDocument, temporary.hasChanges, setNotice)
   const parameterPreviewDocument = createMemo(() =>
     createParameterPreview({
       document: temporary.document(),
@@ -201,6 +185,12 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
     onDocumentChange: resetEditorDocument,
     onNotice: setNotice,
     onReimportDocumentChange: (document) => history.setDocument(document, 'PSD 다시 가져오기'),
+  })
+  useInitialAtlasUnpack({
+    document: sourceDocument,
+    initialDocument,
+    onDocumentChange: resetEditorDocument,
+    onNotice: setNotice,
   })
   const pausePlayback = () => {
     const currentPlayer = player()
@@ -492,6 +482,7 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
             onRedo={handleRedo}
             exportUrl={documentExport.url()}
             onExport={documentExport.exportDocument}
+            onAtlasExport={documentExport.exportAtlasDocument}
             onViewerOpen={import.meta.env.DEV ? runtimeLauncher.openViewer : undefined}
             onStudioOpen={import.meta.env.DEV ? runtimeLauncher.openStudio : undefined}
             onRecoveryOpen={props.recovery === undefined ? undefined : handleRecoveryOpen}

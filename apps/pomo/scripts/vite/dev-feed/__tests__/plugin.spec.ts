@@ -143,9 +143,9 @@ describe('createDevFeedDocument', () => {
     expect(document).toMatch(/<title>“[^”]+” — [^<]+ · 1970년 1월 1일 9시<\/title>/u)
   })
 
-  it('should escape the request origin in XML output', () => {
+  it.each(['rss', 'atom'] as const)('should escape the request origin in %s output', (format) => {
     const document = createDevFeedDocument({
-      format: 'rss',
+      format,
       now: new Date('2026-08-13T15:05:00.000Z'),
       origin: `http://localhost:3200?<source>&quote="double"&apostrophe='single'`,
     })

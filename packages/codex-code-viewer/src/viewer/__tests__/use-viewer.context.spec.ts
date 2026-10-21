@@ -74,9 +74,57 @@ describe('useViewer context', () => {
   it('should report a rejected tree attachment without announcing success', async () => {
     const port = createPort()
     vi.mocked(port.context).mockRejectedValue(new Error('context failed'))
+    port.attachContextFiles = vi.fn()
     const viewer = mount(port)
     await viewer.sharePath({kind: 'file', path: '/project/main.tsx'})
     expect(viewer.notice()?.message).toBe('context failed')
+    expect(port.attachContextFiles).not.toHaveBeenCalled()
+  })
+
+  it.each(['code', 'file'] as const)(
+    'should attach only the selected %s directly without staging or saving the draft',
+    async (kind) => {
+      const port = createPort()
+      port.attachSelection = vi.fn().mockResolvedValue(undefined)
+      const viewer = mount(port)
+      viewer.editing.change('unsaved native context')
+      const selection =
+        kind === 'file'
+          ? {kind: 'file' as const, path: '/project/main.tsx'}
+          : {
+              column: 1,
+              endColumn: 23,
+              endLine: 1,
+              kind: 'code' as const,
+              line: 1,
+              path: 'main.tsx',
+              text: 'unsaved native context',
+            }
+      if (selection.kind === 'file') {
+        await viewer.sharePath(selection)
+      } else {
+        await viewer.share(selection)
+      }
+      expect(port.attachSelection).toHaveBeenCalledExactlyOnceWith({
+        ...selection,
+        path: '/project/main.tsx',
+      })
+      expect(port.context).not.toHaveBeenCalled()
+      expect(viewer.editing.dirty()).toBe(true)
+      expect(port.call).not.toHaveBeenCalled()
+      expect(viewer.notice()).toBeNull()
+    },
+  )
+
+  it('should report a native paste failure without staging or announcing success', async () => {
+    const port = createPort()
+    port.attachSelection = vi.fn().mockRejectedValue(new Error('composer unavailable'))
+    const viewer = mount(port)
+    await viewer.sharePath({kind: 'file', path: '/project/main.tsx'})
+    expect(port.context).not.toHaveBeenCalled()
+    expect(port.attachSelection).toHaveBeenCalledOnce()
+    expect(port.call).not.toHaveBeenCalled()
+    expect(viewer.notice()?.message).toBe('composer unavailable')
   })
 
   it('should reject a tree attachment from a previous workspace', async () => {

@@ -1,6 +1,6 @@
 import {filter, map, pipe} from 'es-toolkit/fp'
 
-/** Splits on commas, trims items, and removes empty items. */
+/** 쉼표로 나누고 각 항목의 양쪽 공백과 빈 항목을 제거한다. */
 export const parseCommaSeparated = (values: string): string[] =>
   pipe(
     values.split(','),

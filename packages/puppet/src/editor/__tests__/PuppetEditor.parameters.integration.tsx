@@ -227,7 +227,7 @@ describe('PuppetEditor', () => {
     expect(view.container.querySelectorAll('.parameter-grid-keyform')).toHaveLength(9)
   })
 
-  test('should create a new two-dimensional parameter binding', async () => {
+  test('should create a new two-dimensional parameter binding without keyforms', async () => {
     const onDocumentChange = vi.fn()
     mocks.createPlayer.mockResolvedValue(player)
     const view = render(() => (
@@ -240,7 +240,7 @@ describe('PuppetEditor', () => {
       const document = onDocumentChange.mock.calls.at(-1)?.[0]
       expect(document?.parameters).toHaveLength(4)
       expect(document?.parameterBindings).toHaveLength(2)
-      expect(document?.parameterBindings?.[1]?.keyforms).toHaveLength(9)
+      expect(document?.parameterBindings?.[1]?.keyforms).toHaveLength(0)
     })
   })
 
@@ -408,6 +408,7 @@ describe('PuppetEditor', () => {
       x: 100,
       y: 0,
     })
+    fireEvent.dblClick(track, {clientX: 400})
     const marker = view.getByRole('button', {name: 'Parameter 3 0 키폼'})
 
     marker.dispatchEvent(new MouseEvent('pointerdown', {bubbles: true, button: 0, clientX: 400}))

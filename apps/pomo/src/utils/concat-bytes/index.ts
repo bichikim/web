@@ -1,6 +1,6 @@
 /**
- * Copies byte views in order into a new buffer, optionally using an already captured output length.
- * Extra capacity stays zero-filled; insufficient capacity throws the native RangeError.
+ * 바이트 뷰를 순서대로 새 버퍼에 복사하며, 미리 구한 출력 길이를 지정할 수 있다.
+ * 남는 공간은 0으로 유지하며, 공간이 부족하면 내장 RangeError를 던진다.
  */
 export const concatBytes = (
   chunks: ReadonlyArray<Uint8Array>,

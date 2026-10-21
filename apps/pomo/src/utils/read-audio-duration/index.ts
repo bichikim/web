@@ -2,16 +2,16 @@ const MAXIMUM_TIMEOUT_MS = 2_147_483_647
 
 export interface ReadAudioDurationOptions {
   readonly signal?: AbortSignal
-  /** Optional elapsed-time deadline in milliseconds, from 0 through 2,147,483,647. */
+  /** 선택적으로 지정하는 제한 시간이며, 단위는 밀리초이고 범위는 0~2,147,483,647이다. */
   readonly timeoutMs?: number
 }
 
 /**
- * Reads raw seconds at the first metadata event; a media error returns null.
- * Abort rejects with signal.reason; a deadline rejects with a TimeoutError.
- * The first event, abort, deadline or setup failure wins, including during setup.
- * Every acquired release is attempted before returning. A lone failure rejects unchanged;
- * combined failures reject with AggregateError (primary rejection first and as cause).
+ * 첫 메타데이터 이벤트에서 초 단위 값을 그대로 읽는다. 미디어 오류가 발생하면 null을 반환한다.
+ * 취소되면 signal.reason으로, 제한 시간을 넘기면 TimeoutError로 Promise를 거부한다.
+ * 설정 중에도 이벤트, 취소, 제한 시간 초과, 설정 실패 중 먼저 발생한 결과를 적용한다.
+ * 반환 전에 확보한 모든 자원의 해제를 시도한다. 실패가 하나면 원래 사유로 Promise를 거부한다.
+ * 실패가 여러 개면 최초 거부 사유를 첫 항목과 cause로 담은 AggregateError로 거부한다.
  */
 export const readAudioDuration = async (
   blob: Blob,

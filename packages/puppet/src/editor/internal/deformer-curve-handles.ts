@@ -1,4 +1,4 @@
-import {isTwoDimensionalParameterBinding} from '../../deformation'
+import {mapBindingKeyforms} from '../../deformation'
 import {
   getDocumentScene,
   type PuppetDeformerCurveHandle,
@@ -116,10 +116,7 @@ const updateParameterDeformerKeyforms = (
   return {
     ...document,
     parameterBindings: document.parameterBindings.map(
-      (binding): PuppetParameterBinding =>
-        isTwoDimensionalParameterBinding(binding)
-          ? {...binding, keyforms: binding.keyforms.map(updateKeyform)}
-          : {...binding, keyforms: binding.keyforms.map(updateKeyform)},
+      (binding): PuppetParameterBinding => mapBindingKeyforms(binding, updateKeyform),
     ),
   }
 }

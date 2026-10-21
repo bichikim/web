@@ -1,4 +1,7 @@
 import {SOURCE_CHUNK_LENGTH} from '../shared/reading-limits'
+import {registerClipboardTools} from './register-clipboard-tools'
+import type {ClipboardPort} from './create-clipboard'
+import {registerPreviewTools} from './register-preview-tools'
 import {resolveNavigation} from './resolve-navigation'
 import {MAX_CODE_BYTES, MAX_DRAFT_FILES} from '../shared/editing-limits'
 import {McpServer} from '@modelcontextprotocol/sdk/server/mcp.js'
@@ -14,19 +17,29 @@ import {
 } from '../shared/contracts'
 import {createSessions} from './create-sessions'
 import {toolResult} from './tool-result'
-import {FILE_EXTENSIONS} from '../shared/file-formats'
+import {registerCodexEntrypoints} from './register-codex-entrypoints'
 import {createWorkspaceEvents} from './create-workspace-events'
 import {filterScan} from './filter-scan'
 import {registerFileOperations} from './register-file-operations'
 import {registerViewerResource} from './register-viewer-resource'
 import {createMcpStreams} from './create-mcp-streams'
 import {createWorkspaceNotifications} from './create-workspace-notifications'
+import {registerContextTool} from './register-context-tool'
+import {registerAttachmentTools} from './register-attachment-tools'
+import type {createThreadWorkspaces} from './create-thread-workspaces'
+import {registerWorkspaceSettings} from './register-workspace-settings'
+import {registerUpdateTools} from './register-update-tools'
 
 const appOnly = {ui: {visibility: ['app']}}
 const MAX_ENTRY_NAME_LENGTH = 255
 const annotations = {destructiveHint: false, openWorldHint: false, readOnlyHint: true}
 
 interface ServerOptions {
+  /** 채팅별 작업 폴더 저장소입니다. 생략하면 폴더 변경 도구를 등록하지 않습니다. */
+  readonly threadWorkspaces?: ReturnType<typeof createThreadWorkspaces>
+  readonly clipboard?: ClipboardPort
+  readonly integration?: 'codex' | 'standard'
+  readonly workspaceRoot?: string
   readonly workspace?: (metadata: unknown) => Result<string | undefined>
 }
 
@@ -39,17 +52,29 @@ const registerPanel = (
   server.registerTool(
     'code.panel',
     {
-      _meta: {'openai/ui': {entrypoints: [{type: 'thread'}]}, ui: {resourceUri}},
+      _meta: {
+        ...(options.integration === 'standard'
+          ? {}
+          : {'openai/ui': {entrypoints: [{type: 'thread'}]}}),
+        ui: {resourceUri},
+      },
       annotations,
       inputSchema: {},
       title: 'Code Viewer',
     },
     async (_input, context) => {
-      const hostPath = getResourcePath(context._meta)
+      const hostPath =
+        options.integration === 'standard' ? options.workspaceRoot : getResourcePath(context._meta)
+      const saved = options.threadWorkspaces?.read(context._meta) ?? success(undefined)
+      if (!saved.ok) {
+        return toolResult(saved)
+      }
       const workspace =
-        hostPath === undefined
-          ? (options.workspace?.(context._meta) ?? success(undefined))
-          : success(hostPath)
+        saved.value === undefined
+          ? hostPath === undefined
+            ? (options.workspace?.(context._meta) ?? success(undefined))
+            : success(hostPath)
+          : saved
       if (!workspace.ok) {
         return toolResult(workspace)
       }
@@ -331,37 +356,62 @@ const registerRead = (
 }
 
 export const createServer = (html: string, options: ServerOptions = {}) => {
-  const server = new McpServer({
-    name: 'codex-code-viewer',
-    title: 'Code Viewer',
-    version: manifest.version,
-  })
+  const server = new McpServer(
+    {name: 'codex-code-viewer', title: 'Code Viewer', version: manifest.version},
+    options.integration === 'standard'
+      ? {
+          instructions: [
+            'When the user refers to Code Viewer attachments or selected/unsaved code, call code.attachments',
+            'with the session from code.open or code.panel before answering. Attached snapshots may differ from disk.',
+            'Do not open a new session to read existing attachments.',
+          ].join(' '),
+        }
+      : undefined,
+  )
+  registerUpdateTools(server, options.integration === 'standard' ? 'claude' : 'codex')
   const updates = createWorkspaceEvents()
   const streams = createMcpStreams()
   const notifications = createWorkspaceNotifications()
+  const contexts = new Map<string, readonly string[]>()
   const sessions = createSessions({
     onChange: (session) => {
       updates.changed(session)
       notifications.changed(session)
     },
     onClose: (session) => {
+      contexts.delete(session)
       updates.closed(session)
       streams.closeSession(session)
       notifications.close(session)
     },
+    workspaceRoot: options.workspaceRoot,
   })
-  const {open, withSession} = sessions
+  const {withSession} = sessions
+  const open = (path: string, line = 1, column = 1, metadata?: unknown) => {
+    const saved = options.threadWorkspaces?.read(metadata) ?? success(undefined)
+    return saved.ok ? sessions.open(path, line, column, saved.value) : saved
+  }
   const resourceUri = registerViewerResource(server, html)
   const appMetadata = {ui: {resourceUri}}
   const pathInput = {path: z.string(), session: z.string()}
   registerPanel(server, sessions, options, resourceUri)
+  if (options.threadWorkspaces !== undefined && options.integration !== 'standard') {
+    registerWorkspaceSettings(server, sessions, options.threadWorkspaces)
+  }
+  if (options.integration === 'standard') {
+    if (options.workspaceRoot === undefined) {
+      throw new Error('A workspace folder is required for the standard desktop server.')
+    }
+    registerContextTool(server, options.workspaceRoot)
+    registerAttachmentTools(server, withSession, contexts, options.clipboard)
+  }
   server.registerTool(
     'code.open',
     {
       _meta: {...appMetadata, ui: {...appMetadata.ui, visibility: ['app', 'model']}},
       annotations,
       description:
-        'Open local code inside Codex with import and definition navigation. Use an absolute path.',
+        'Open local code in Code Viewer with import and definition navigation. Use an absolute path.',
       inputSchema: {
         column: z.number().int().positive().default(1),
         line: z.number().int().positive().default(1),
@@ -369,41 +419,11 @@ export const createServer = (html: string, options: ServerOptions = {}) => {
       },
       title: 'Open code in Code Viewer',
     },
-    async ({path, line, column}) => toolResult(open(path, line, column)),
+    async ({path, line, column}, context) => toolResult(open(path, line, column, context._meta)),
   )
-  server.registerTool(
-    'code.file',
-    {
-      _meta: {
-        ...appMetadata,
-        'openai/ui': {
-          entrypoints: [
-            {
-              extensions: FILE_EXTENSIONS,
-              type: 'file',
-            },
-          ],
-        },
-      },
-      annotations,
-      inputSchema: {file: z.object({name: z.string().min(1), resourceUri: z.string().min(1)})},
-      title: 'Code Viewer',
-    },
-    async ({file}) => ({content: [], structuredContent: {file}}),
-  )
-  server.registerTool(
-    'code.attach',
-    {
-      _meta: appOnly,
-      annotations,
-      inputSchema: {},
-      title: 'Connect opened workspace file',
-    },
-    async (_input, context) => {
-      const path = getResourcePath(context._meta)
-      return toolResult(path === undefined ? failure('host-path-missing') : open(path))
-    },
-  )
+  if (options.integration !== 'standard') {
+    registerCodexEntrypoints(server, {open}, resourceUri)
+  }
   registerRead(server, withSession)
   registerNavigation(server, withSession, updates, streams)
   registerList(server, withSession, updates, streams)
@@ -454,6 +474,10 @@ export const createServer = (html: string, options: ServerOptions = {}) => {
   registerTree(server, withSession, updates, streams)
   registerEditing(server, withSession)
   registerFileOperations(server, withSession)
+  registerPreviewTools(server, withSession)
+  if (options.clipboard !== undefined) {
+    registerClipboardTools(server, withSession, options.clipboard)
+  }
   registerMedia(server, withSession)
   const dispose = async () => {
     sessions.dispose()

@@ -1,3 +1,4 @@
+import {createWorkspaceChanger} from './create-workspace-changer'
 import {createConnectionReceiver} from './create-connection-receiver'
 import {batch, createMemo, createSignal} from 'solid-js'
 import {z} from 'zod'
@@ -158,6 +159,21 @@ const createDocumentReceiver =
     options.synchronize({...current, document: nextDocument})
   }
 
+/** 새 연결의 화면·방문 기록을 복원하고 해당 파일 위치를 호스트에 전달합니다. */
+const receiveConnection = (
+  value: ViewerConnection,
+  navigation: NavigationOptions | undefined,
+  options: DocumentReceiverOptions,
+): void => {
+  options.onReset()
+  receiveView(value, navigation, options)
+  options.history.reset('document' in value ? value.document.location : undefined)
+  options.onNavigate()
+  if ('document' in value) {
+    options.synchronize(value)
+  }
+}
+
 const clearDocument = (value: ViewerConnection, options: DocumentReceiverOptions): void => {
   options.onReset()
   options.onNavigate()
@@ -177,7 +193,7 @@ export const useViewer = (port: ViewerPort) => {
     session,
   })
   const history = useFileHistory()
-  const feedback = useViewerFeedback({
+  const {dismiss: dismissNotice, ...feedback} = useViewerFeedback({
     clearDefinition: () => definitions.dismissFeedback(),
     clearEditing: editing.dismissFeedback,
     definition: () => definitions.feedback(),
@@ -195,7 +211,12 @@ export const useViewer = (port: ViewerPort) => {
       editing.editable() && (editing.enabled() || editing.dirty()) ? editing.source() : undefined,
     workspace: () => connection()?.workspace,
   })
-  const viewState = useSessionViewState({selection: codeSelection.selection, session})
+  const viewState = useSessionViewState({
+    onError: report,
+    selection: codeSelection.selection,
+    session,
+    storage: port.draftStorage,
+  })
   const view = {codeSelection, editing, setConnection, viewState}
   const navigation = useLatestRequest(report)
   const search = useFileSearch({onError: report, port, session: connection})
@@ -205,14 +226,8 @@ export const useViewer = (port: ViewerPort) => {
     connection,
     onReceive: (value, options) => {
       navigation.cancel()
-      refreshing.reset()
       search.reset()
-      receiveView(value, options, {codeSelection, editing, setConnection, viewState})
-      history.reset('document' in value ? value.document.location : undefined)
-      definitions.reset()
-      if ('document' in value) {
-        synchronizeLocation(value)
-      }
+      receiveConnection(value, options, documentView)
     },
     pending: () => editing.pendingFiles().length > 0 || editing.saving(),
     port,
@@ -275,15 +290,17 @@ export const useViewer = (port: ViewerPort) => {
   })
   return {
     ...opening,
+    ...feedback,
     address: () => codeSelection.address() || connection()?.workspace || '',
     busy: navigation.pending,
     canBack: history.canBack,
     canForward: history.canForward,
+    changeWorkspace: createWorkspaceChanger({beforeChange: editing.confirmLeave, port, receive}),
     ...definitions,
     copy,
     copyPath: (path: string): Promise<void> => copy(path, '경로를 복사했습니다.'),
     deleted: () => session() !== null && (refreshing.deleted() || editing.deleted()),
-    dismissNotice: feedback.dismiss,
+    dismissNotice,
     editing,
     fileMutation: createFileMutationHandler({
       go: files.go,
@@ -297,7 +314,6 @@ export const useViewer = (port: ViewerPort) => {
     finding: search.finding,
     go: files.go,
     move: files.move,
-    notice: feedback.notice,
     openLocation: createLocationOpener({go: files.go, open: opening.open, session}),
     refresh: refreshing.refresh,
     reportError: report,

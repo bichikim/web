@@ -142,19 +142,6 @@ const createGuardedPersistence =
     }
   }
 
-interface DraftRestorationBarrier {
-  readonly finish: () => void
-  readonly wait: () => Promise<void>
-}
-
-const createDraftRestorationBarrier = (): DraftRestorationBarrier => {
-  let finish!: () => void
-  const completion = new Promise<void>((resolve) => {
-    finish = resolve
-  })
-  return {finish, wait: () => completion}
-}
-
 interface AlbumCreationId {
   readonly get: () => string
   readonly renew: () => void
@@ -308,7 +295,8 @@ interface CreateCoverChangeHandlerOptions {
   readonly getDraftData: () => AlbumDraftData
   readonly getIsDisposed: () => boolean
   readonly markCoverEdited: () => void
-  readonly restorationBarrier: DraftRestorationBarrier
+  /** 복구가 끝나거나 훅이 정리되면 완료되는 대기. 이 소비자는 완료 권한을 소유하지 않는다. */
+  readonly restoration: Promise<void>
   readonly setCoverDraftId: Setter<string | null>
   readonly setCoverPreviewUrl: Setter<string | null>
   readonly setCoverStorageWarning: Setter<string | null>
@@ -324,7 +312,7 @@ const handleCoverClear = async (options: CreateCoverChangeHandlerOptions): Promi
   options.clearPreparedCover()
   options.setCoverDraftId(null)
   const clearingId = options.coverPreparation.id
-  await options.restorationBarrier.wait()
+  await options.restoration
   if (options.getIsDisposed() || clearingId !== options.coverPreparation.id) {
     return
   }
@@ -367,7 +355,7 @@ const createCoverChangeHandler =
       options.setPreparedCoverFile(preparedFile)
       options.setCoverDraftId(nextCoverDraftId)
       options.setCoverPreviewUrl(replaceBlobObjectUrl(null, () => preparedFile))
-      await options.restorationBarrier.wait()
+      await options.restoration
 
       if (options.getIsDisposed() || preparationId !== options.coverPreparation.id) {
         return
@@ -434,7 +422,7 @@ export const useAlbumDraft = (props: UseAlbumDraftProps) => {
   const coverPreparation = {id: 0}
   const editedFields = new Set<DraftField>()
   const lifecycle = {disposed: false}
-  const restorationBarrier = createDraftRestorationBarrier()
+  const restoration = Promise.withResolvers<void>()
   const getDraftData = createDraftDataGetter({
     getAlbumId: albumCreationId.get,
     getCoverDraftId: coverDraftId,
@@ -468,7 +456,7 @@ export const useAlbumDraft = (props: UseAlbumDraftProps) => {
     setPreparedCoverFile(null)
     setIsProcessingCover(false)
   }
-  registerAlbumDraftCleanup(lifecycle, restorationBarrier.finish, clearPreparedCover)
+  registerAlbumDraftCleanup(lifecycle, restoration.resolve, clearPreparedCover)
   registerDraftRestoration({
     applyDraft: (restoredDraft) => {
       applyRestoredDraft(restoredDraft, {
@@ -486,7 +474,7 @@ export const useAlbumDraft = (props: UseAlbumDraftProps) => {
     },
     getDraftReferenceCoverDraftId: draftReference.getCoverDraftId,
     getIsDisposed: () => lifecycle.disposed,
-    onFinished: restorationBarrier.finish,
+    onFinished: restoration.resolve,
     releaseDraftReference: draftReference.release,
     setDraftReferenceId: draftReference.setId,
     setIsRestoringDraft,
@@ -524,7 +512,7 @@ export const useAlbumDraft = (props: UseAlbumDraftProps) => {
     markCoverEdited: () => {
       editedFields.add('cover')
     },
-    restorationBarrier,
+    restoration: restoration.promise,
     setCoverDraftId,
     setCoverPreviewUrl,
     setCoverStorageWarning,

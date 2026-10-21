@@ -1,12 +1,18 @@
 import {TextField} from '@kobalte/core/text-field'
 import {ToggleButton} from '@kobalte/core/toggle-button'
-import {createSignal, type JSX, onMount, Show} from 'solid-js'
+import {createSignal, Index, type JSX, onMount, Show} from 'solid-js'
 
 import {EditorTextInput} from '../../design-system'
 
 const DOUBLE_CLICK_INTERVAL = 400
 
-type ParameterNameTarget = 'primary' | 'secondary'
+type ParameterNameTarget = 'primary' | 'secondary' | 'tertiary'
+
+interface ParameterNameRow {
+  readonly control?: JSX.Element
+  readonly name: string
+  readonly target: ParameterNameTarget
+}
 
 interface ParameterNameEditorProps {
   readonly name: string
@@ -70,8 +76,12 @@ export interface EditorParameterNamesProps {
   readonly onNameEdit?: () => void
   readonly onSecondaryNameChange?: (name: string) => void
   readonly onSelect?: () => void
+  readonly onTertiaryNameChange?: (name: string) => void
   readonly pressed?: boolean
   readonly secondaryName?: string
+  /** The third parameter of a 3D binding. */
+  readonly tertiaryControl?: JSX.Element
+  readonly tertiaryName?: string
 }
 
 export const EditorParameterNames = (props: EditorParameterNamesProps) => {
@@ -79,7 +89,26 @@ export const EditorParameterNames = (props: EditorParameterNamesProps) => {
   let lastClickTime = Number.NEGATIVE_INFINITY
   let lastClickTarget: ParameterNameTarget | null = null
   const getNameChange = (target: ParameterNameTarget) =>
-    target === 'primary' ? props.onNameChange : props.onSecondaryNameChange
+    ({
+      primary: props.onNameChange,
+      secondary: props.onSecondaryNameChange,
+      tertiary: props.onTertiaryNameChange,
+    })[target]
+  const rows = (): ReadonlyArray<ParameterNameRow> => [
+    {control: props.primaryControl, name: props.name, target: 'primary'},
+    ...(props.secondaryName === undefined
+      ? []
+      : [
+          {
+            control: props.secondaryControl,
+            name: props.secondaryName,
+            target: 'secondary' as const,
+          },
+        ]),
+    ...(props.tertiaryName === undefined
+      ? []
+      : [{control: props.tertiaryControl, name: props.tertiaryName, target: 'tertiary' as const}]),
+  ]
   const startNameEdit = (target: ParameterNameTarget) => {
     if (getNameChange(target) === undefined) {
       return
@@ -122,74 +151,42 @@ export const EditorParameterNames = (props: EditorParameterNamesProps) => {
           </div>
         </Show>
         <div class="parameter-name-values">
-          <div class="parameter-name-row">
-            <Show
-              when={editing() === 'primary'}
-              fallback={
-                <ToggleButton
-                  aria-describedby={props.descriptionId}
-                  aria-keyshortcuts="F2 Delete"
-                  aria-label={props.name}
-                  class="parameter-name-control"
-                  pressed={props.pressed}
-                  title="더블클릭하여 Parameter 이름 수정"
-                  onClick={(event) => handleClick(event, 'primary')}
-                  onDblClick={(event: MouseEvent) => {
-                    event.preventDefault()
-                    startNameEdit('primary')
-                  }}
-                  onKeyDown={(event) => handleKeyDown(event, 'primary')}
-                >
-                  <strong>{props.name}</strong>
-                </ToggleButton>
-              }
-            >
-              <ParameterNameEditor
-                name={props.name}
-                onCancel={() => setEditing(null)}
-                onCommit={(name) => handleNameCommit('primary', name)}
-              />
-            </Show>
-            <Show when={props.primaryControl !== undefined}>
-              <span class="parameter-value-control">{props.primaryControl}</span>
-            </Show>
-          </div>
-          <Show when={props.secondaryName}>
-            {(secondaryName) => (
+          <Index each={rows()}>
+            {(row) => (
               <div class="parameter-name-row">
                 <Show
-                  when={editing() === 'secondary'}
+                  when={editing() === row().target}
                   fallback={
                     <ToggleButton
                       aria-describedby={props.descriptionId}
                       aria-keyshortcuts="F2 Delete"
-                      aria-label={secondaryName()}
+                      aria-label={row().name}
                       class="parameter-name-control"
                       pressed={props.pressed}
                       title="더블클릭하여 Parameter 이름 수정"
-                      onClick={(event) => handleClick(event, 'secondary')}
+                      onClick={(event) => handleClick(event, row().target)}
                       onDblClick={(event: MouseEvent) => {
                         event.preventDefault()
-                        startNameEdit('secondary')
+                        startNameEdit(row().target)
                       }}
-                      onKeyDown={(event) => handleKeyDown(event, 'secondary')}
+                      onKeyDown={(event) => handleKeyDown(event, row().target)}
                     >
-                      <strong>{secondaryName()}</strong>
+                      <strong>{row().name}</strong>
                     </ToggleButton>
                   }
                 >
                   <ParameterNameEditor
-                    name={secondaryName()}
+                    name={row().name}
                     onCancel={() => setEditing(null)}
-                    onCommit={(name) => handleNameCommit('secondary', name)}
+                    onCommit={(name) => handleNameCommit(row().target, name)}
                   />
                 </Show>
-                <Show when={props.secondaryControl !== undefined}>
-                  <span class="parameter-value-control">{props.secondaryControl}</span>
+                <Show when={row().control !== undefined}>
+                  <span class="parameter-value-control">{row().control}</span>
                 </Show>
               </div>
             )}
-          </Show>
+          </Index>
         </div>
         <span aria-hidden="true" class="puppet-icon puppet-icon-arrow-left parameter-swipe-hint" />
       </div>

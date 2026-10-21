@@ -76,9 +76,11 @@ describe('createPlayer', () => {
       } as unknown as () => unknown,
     )
 
-    const preparedDocument = prepareDocument(puppetDocument)
+    // A motion to play, so pausing and playing stop and start the ticker.
+    const animatedDocument = {...puppetDocument, motions: [{duration: 1, id: 'idle', tracks: []}]}
+    const preparedDocument = prepareDocument(animatedDocument)
     const replacementDocument = prepareDocument({
-      ...puppetDocument,
+      ...animatedDocument,
       parts: [
         {
           id: 'new-part',
@@ -106,7 +108,8 @@ describe('createPlayer', () => {
     expect(application.stop).toHaveBeenCalledOnce()
     expect(application.start).toHaveBeenCalledOnce()
     expect(application.resize).toHaveBeenCalledOnce()
-    expect(application.render).toHaveBeenCalledTimes(3)
+    // Creation, pause (the stopped frame), seek and resize each draw once.
+    expect(application.render).toHaveBeenCalledTimes(4)
     expect(player.updateDocument(preparedDocument)).toBe(true)
     expect(player.updateDocument(replacementDocument)).toBe(false)
     expect(() => player.updateDocument(puppetDocument as PreparedPuppetDocument)).toThrow(

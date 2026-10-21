@@ -13,8 +13,13 @@ export const collectDocumentIds = (document: PuppetDocument): ReadonlySet<string
     ),
     ...sceneIds(getDocumentScene(document).roots),
     ...(document.parameters ?? []).map((parameter) => parameter.id),
+    ...(document.parameterGroups ?? []).map((group) => group.id),
     ...(document.parameterBindings ?? []).map((binding) => binding.id),
     ...(document.glue ?? []).map((glue) => glue.id),
     ...document.motions.map((motion) => motion.id),
     ...(document.physics?.pendulums ?? []).map((pendulum) => pendulum.id),
+    ...(document.physics?.chains ?? []).map((chain) => chain.id),
+    ...(document.expressions ?? []).map((expression) => expression.id),
+    ...(document.poseGroups ?? []).map((group) => group.id),
+    ...(document.hitAreas ?? []).map((area) => area.id),
   ])

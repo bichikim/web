@@ -2,7 +2,7 @@
 import {IDBFactory} from 'fake-indexeddb'
 import {afterEach, beforeEach, expect, test, vi} from 'vitest'
 import {createDocumentSession} from '../create-document-session'
-import {createDemoDocument, createEmptyDocument} from '../player'
+import {createDemoDocument, createEmptyDocument, PUPPET_DOCUMENT_FORMAT} from '../player'
 
 beforeEach(() => sessionStorage.clear())
 afterEach(() => vi.restoreAllMocks())
@@ -40,7 +40,7 @@ test('should restore edits with only the session key in sessionStorage', async (
   expect(restored?.motions[0]?.id).toBe('edited')
   expect(restored?.parts).toEqual(document.parts)
   expect(sessionStorage.length).toBe(1)
-  expect(sessionStorage.getItem(sessionStorage.key(0)!)).not.toContain('winter-love-puppet')
+  expect(sessionStorage.getItem(sessionStorage.key(0)!)).not.toContain(PUPPET_DOCUMENT_FORMAT)
 })
 
 test('should isolate documents between tab storage areas', async () => {

@@ -4,6 +4,7 @@ import type {PuppetExampleDocument} from './example-document'
 import {importPng, type ImportPngErrorCode} from './import-png'
 import {getPsdErrorMessage, importPsd} from './import-psd'
 import {mergeDocument} from './internal/merge-document'
+import {unpackTextureAtlas} from './internal/texture-atlas-canvas'
 import {usePsdReimport} from './use-psd-reimport'
 
 const getPngErrorMessage = (code: ImportPngErrorCode) => {
@@ -57,9 +58,15 @@ const readFile = async (
       signal,
       source: (await file.text()).replace(/^\uFEFF/u, ''),
     })
-    return result.ok
-      ? {...result, notice: ''}
-      : {notice: 'Puppet 문서가 아니거나 JSON 형식이 올바르지 않습니다.', ok: false}
+    if (!result.ok) {
+      return {notice: 'Puppet 문서가 아니거나 JSON 형식이 올바르지 않습니다.', ok: false}
+    }
+    // Editing tools work on each part's own image, so atlas pages are cut back into them.
+    try {
+      return {document: await unpackTextureAtlas(result.document), notice: '', ok: true}
+    } catch {
+      return {notice: '텍스처 아틀라스 이미지를 읽지 못했습니다.', ok: false}
+    }
   }
 
   switch (extension) {

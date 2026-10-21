@@ -1,3 +1,4 @@
+import {selectTableRows} from '../headless/select-table-rows'
 import {useTranslations} from './locale/use-translations'
 import {type Accessor, batch, createEffect, createMemo, createSignal} from 'solid-js'
 import {parseDelimitedText} from './parse-delimited-text'
@@ -14,20 +15,6 @@ interface TableSort {
   readonly descending: boolean
 }
 const PAGE_ROWS = 50
-const collator = new Intl.Collator(undefined, {numeric: true, sensitivity: 'base'})
-const DECIMAL = /^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?$/u
-
-const compareCells = (left: string, right: string): number => {
-  const first = Number(left)
-  const second = Number(right)
-  return DECIMAL.test(left.trim()) &&
-    DECIMAL.test(right.trim()) &&
-    Number.isFinite(first) &&
-    Number.isFinite(second)
-    ? first - second
-    : collator.compare(left, right)
-}
-
 export const useTableView = (options: TableViewOptions) => {
   const t = useTranslations()
   const data = createMemo(
@@ -66,20 +53,7 @@ export const useTableView = (options: TableViewOptions) => {
     if (!parsed.ok) {
       return []
     }
-    const text = query().toLocaleLowerCase()
-    const rows = parsed.rows.slice(header() ? 1 : 0)
-    const filtered =
-      text === ''
-        ? rows
-        : rows.filter((row) => row.some((cell) => cell.toLocaleLowerCase().includes(text)))
-    const ordering = sort()
-    return ordering === null
-      ? filtered
-      : filtered.toSorted(
-          (left, right) =>
-            compareCells(left[ordering.column] ?? '', right[ordering.column] ?? '') *
-            (ordering.descending ? -1 : 1),
-        )
+    return selectTableRows({header: header(), query: query(), rows: parsed.rows, sort: sort()})
   })
   const pages = createMemo(() => Math.max(1, Math.ceil(records().length / PAGE_ROWS)))
   const visible = createMemo(() => records().slice((page() - 1) * PAGE_ROWS, page() * PAGE_ROWS))

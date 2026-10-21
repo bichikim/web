@@ -1,6 +1,6 @@
 import {reconcileGlueKeyforms} from './glue'
 import {clearPartDeformerWeights} from './deformer-weights'
-import {isTwoDimensionalParameterBinding} from '../../deformation'
+import {mapBindingKeyforms} from '../../deformation'
 import type {
   PuppetDocument,
   PuppetParameterBinding,
@@ -43,9 +43,7 @@ const resetParameterBinding = (
   const resetKeyform = <Keyform extends PuppetParameterKeyform>(keyform: Keyform) =>
     resetParameterKeyform({keyform, partId, targetsPart, vertices})
 
-  return isTwoDimensionalParameterBinding(binding)
-    ? {...binding, keyforms: binding.keyforms.map(resetKeyform)}
-    : {...binding, keyforms: binding.keyforms.map(resetKeyform)}
+  return mapBindingKeyforms(binding, resetKeyform)
 }
 
 export const resetParameterPartKeyforms = (
@@ -71,6 +69,6 @@ export const resetPartDeformations = (
   ...resetParameterPartKeyforms(document, partId, vertices),
   motions: document.motions.map((motion) => ({
     ...motion,
-    tracks: motion.tracks.filter((track) => track.kind === 'parameter' || track.partId !== partId),
+    tracks: motion.tracks.filter((track) => track.kind !== 'vertex' || track.partId !== partId),
   })),
 })

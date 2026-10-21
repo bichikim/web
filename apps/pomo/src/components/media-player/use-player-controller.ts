@@ -415,6 +415,7 @@ export const usePlayerController = (props: UsePlayerControllerProps): PlayerCont
 
   usePlaylistRestoration({
     isQueueControlled: () => props.tracks !== undefined,
+    onCorruptTrack: handleStorageError,
     onError: handleAudioError,
     onLoad: queueController.onLoad,
     onLoadSettled: () => setIsPlaylistLoading(false),

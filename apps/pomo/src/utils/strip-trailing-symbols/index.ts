@@ -77,10 +77,10 @@ const getSymbolStart = (characters: readonly string[], index: number) => {
 }
 
 /**
- * Removes a suffix of Unicode Symbol code points and adjacent Unicode White_Space.
- * Supports keycaps, terminated pictographic tags, U+FE0E/FE0F/20E0 marks, and symbol-linked joiners.
- * Unsupported characters stop scanning; no-symbol inputs and unresolved mark/joiner tails stay unchanged.
- * Preserves remaining text verbatim without validating complete emoji sequences.
+ * 문자열 끝의 Unicode Symbol 코드 포인트와 인접한 Unicode White_Space를 제거한다.
+ * 키캡, 종료 문자가 있는 그림 태그, U+FE0E/FE0F/20E0 결합 문자, 기호 사이의 연결 문자를 지원한다.
+ * 지원하지 않는 문자를 만나면 탐색을 멈춘다. 기호가 없거나 끝의 결합·연결 문자를 처리하지 못하면 입력을 유지한다.
+ * 완전한 이모지 시퀀스인지 검증하지 않고 나머지 텍스트를 그대로 유지한다.
  */
 export const stripTrailingSymbols = (value: string): string => {
   const characters = Array.from(value)

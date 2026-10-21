@@ -6,7 +6,7 @@ export const removeMotionTracks = (document: PuppetDocument, partId: string, ver
     ...motion,
     tracks: motion.tracks.filter(
       (track) =>
-        track.kind === 'parameter' || track.partId !== partId || track.vertexIndex !== vertexIndex,
+        track.kind !== 'vertex' || track.partId !== partId || track.vertexIndex !== vertexIndex,
     ),
   }))
 
@@ -42,7 +42,7 @@ export const collapseMotionIndices = (options: CollapseMotionIndicesOptions) => 
     tracks: motion.tracks
       .filter(
         (track) =>
-          track.kind === 'parameter' ||
+          track.kind !== 'vertex' ||
           track.partId !== partId ||
           track.vertexIndex !== promotedVertexIndex ||
           !motion.tracks.some(
@@ -54,7 +54,7 @@ export const collapseMotionIndices = (options: CollapseMotionIndicesOptions) => 
           ),
       )
       .map((track) => {
-        if (track.kind === 'parameter' || track.partId !== partId) {
+        if (track.kind !== 'vertex' || track.partId !== partId) {
           return track
         }
 

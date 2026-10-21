@@ -1,4 +1,4 @@
-/** Excludes items by selected IDs while preserving order, duplicates, and identities. */
+/** 선택한 ID의 항목을 제외하고 순서, 중복, 객체 참조를 유지한다. */
 export const excludeByIds = <Item, Id>(
   items: ReadonlyArray<Item>,
   ids: ReadonlyArray<Id>,

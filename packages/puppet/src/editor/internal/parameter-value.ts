@@ -6,6 +6,11 @@ import {resolveParameterValue} from '../../player/parameter-value'
 const PERCENT = 100
 const VALUE_PRECISION = 6
 const VALUE_STEPS = 120
+const SCALE_PRECISION = 12
+
+/** 실제 좌표를 바꾸지 않고 눈금 표시의 부동소수점 잔여 자릿수만 줄인다. */
+export const formatParameterScaleValue = (value: number) =>
+  String(Number(value.toPrecision(SCALE_PRECISION)))
 
 export const getParameterProgress = (parameter: PuppetParameter, value: number) =>
   ((value - parameter.minimum) / (parameter.maximum - parameter.minimum)) * PERCENT

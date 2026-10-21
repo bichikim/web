@@ -1,4 +1,6 @@
 /** @vitest-environment jsdom */
+
+import {createKeyedParameter} from './parameter-keyforms/fixtures'
 import {fireEvent, render} from '@solidjs/testing-library'
 import {createSignal} from 'solid-js'
 import {expect, test, vi} from 'vitest'
@@ -7,7 +9,7 @@ import {transformDeformerPoint} from '../../../deformation'
 import {convertSceneContainers} from '../container-conversion'
 import {getSceneNode} from '../scene-graph'
 import {DeformerEditor} from '../DeformerEditor'
-import {addParameter, setParameterKeyformDeformerControlPoints} from '../parameter-keyforms'
+import {setParameterKeyformDeformerControlPoints} from '../parameter-keyforms'
 import {createParameterPreview} from '../parameter-sampling'
 
 const createDocument = () =>
@@ -98,7 +100,7 @@ test('should drag a pin and preserve its pose', () => {
 })
 
 test('should save pin motion into a keyform and lock the binding layout', () => {
-  const result = addParameter({document: createDocument(), nodeIds: ['shapes']})!
+  const result = createKeyedParameter({document: createDocument(), nodeIds: ['shapes']})!
   const [document, setDocument] = createSignal(result.document)
   const binding = () => document().parameterBindings!.at(-1)!
   const view = render(() => (
@@ -162,7 +164,7 @@ test('should stop captured dragging when pointer capture is lost', () => {
 test('should edit a composed pin without duplicating another parameter pose', () => {
   const initial = createDocument()
   const rest = getSceneNode(initial, 'shapes') as PuppetSceneDeformerNode
-  const first = addParameter({document: initial, nodeIds: ['shapes']})!
+  const first = createKeyedParameter({document: initial, nodeIds: ['shapes']})!
   const firstPose = setParameterKeyformDeformerControlPoints({
     bindingId: first.binding.id,
     controlPoints: rest.controlPoints.map((value, index) => value + (index % 2 === 0 ? 10 : 0)),
@@ -170,7 +172,7 @@ test('should edit a composed pin without duplicating another parameter pose', ()
     nodeId: 'shapes',
     values: [0],
   })!
-  const second = addParameter({document: firstPose, nodeIds: ['shapes']})!
+  const second = createKeyedParameter({document: firstPose, nodeIds: ['shapes']})!
   const source = setParameterKeyformDeformerControlPoints({
     bindingId: second.binding.id,
     controlPoints: rest.controlPoints.map((value, index) => value + (index % 2 === 0 ? 20 : 0)),

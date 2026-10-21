@@ -4,11 +4,13 @@
 
 Code Viewer는 Codex 대화 옆에서 코드·문서·미디어를 여는 플러그인입니다. 관련 코드를 찾아가고, 텍스트 파일을 편집하고, 선택한 코드나 변경 내용을 다음 채팅의 참고 자료로 추가할 수 있습니다.
 
+아래 영상은 Codex의 Code Viewer 0.5.0을 영어 UI로 촬영했습니다.
+
 파일별 기능은 [지원 파일 형식](#지원-파일-형식)에서 확인하세요.
 
 ## 1. 설치하고 시작하기
 
-Node.js 24 이상, npm, Codex 데스크톱 앱과 `plugin` 하위 명령을 지원하는 Codex CLI가 필요합니다. CLI가 없거나 업데이트가 필요하면 먼저 실행하세요.
+Node.js 24 이상과 npm이 필요합니다. Codex를 선택할 때는 Codex 데스크톱 앱과 `plugin` 하위 명령을 지원하는 CLI도 필요합니다. Codex CLI가 없으면 설치기가 전역 npm 설치 여부를 묻고, 동의하면 설치 후 이어서 진행합니다. 비대화형 실행에서는 `install --install-codex`를 지정해야 누락된 CLI를 설치합니다. 직접 설치하거나 업데이트하려면 다음 명령을 실행하세요.
 
 ```sh
 npm install -g @openai/codex
@@ -20,9 +22,19 @@ Code Viewer를 설치합니다.
 npx @winter-love/codex-code-viewer@latest install
 ```
 
+터미널에서는 **Codex / Claude Desktop(Code 모드) / 둘 다**를 선택합니다. 자동화에서는 `install --target codex|claude|all`로 지정하며, 비대화형 기본값은 Codex입니다. Claude만 설치할 때는 Codex CLI가 필요하지 않습니다.
+
+**Claude 지원은 시험 버전입니다.** Claude의 플러그인·화면 연동 제약으로 일부 기능과 사용 흐름이 원활하지 않을 수 있습니다.
+
+Claude 설치는 현재 **macOS Apple Silicon**용입니다. [Claude Code CLI](https://code.claude.com/docs/en/setup) 2.1.287 이상과 Mods를 지원하는 Claude Desktop이 필요합니다. 설치기는 Claude를 선택한 경우에만 같은 버전의 GitHub Release 런타임을 내려받아 크기·SHA-256을 확인하고 `~/.claude/code-viewer/marketplace`에 보관하고 공식 CLI로 사용자 범위 플러그인을 등록합니다. 수동 MCP 등록·ZIP 업로드는 필요 없습니다. `CLAUDE_BINARY`와 `CLAUDE_CONFIG_DIR`로 CLI·설정 폴더를 지정할 수 있습니다. 오프라인 설치는 `CODE_VIEWER_RUNTIME_ARCHIVE`로 동일 버전의 ZIP을 지정하며 같은 무결성 검사를 거칩니다. 기존 업로드 버전은 새 설치 성공 후 비활성화하며 파일과 실행 중인 세션은 유지합니다.
+
+설치 후 표시되는 **Code Viewer Attachment.app** 경로를 시스템 설정 → 개인정보 보호 및 보안 → 손쉬운 사용에 추가·허용하세요. 이 권한은 원클릭 실제 첨부 카드 추가와 접힌 Browser 펼치기에 사용합니다. 허용했는데도 권한 오류가 계속되면 기존 **Code Viewer Attachment** 항목만 제거하고 안내한 새 경로의 앱을 다시 추가하세요. macOS가 같은 이름의 이전 ZIP 설치 경로를 유지할 수 있습니다. Claude Desktop **Code** 탭에서 새 **로컬** 세션을 시작하고, 입력창 아래 **코드 뷰어 열기** 또는 Claude 답변의 프로젝트 파일 링크를 누르세요. 새 세션 시작만으로는 뷰어를 열지 않습니다. 기존 세션은 설치기가 재로드하지 않습니다.
+
 Codex 앱을 완전히 종료하고 다시 여세요. 프로젝트 대화 오른쪽 패널의 새 탭 메뉴에서 **Code Viewer**를 선택합니다. 기본 파일 뷰어의 **열기** 메뉴는 외부 앱을 실행하는 메뉴입니다.
 
 대화의 작업 폴더를 확인할 수 있으면 자동으로 연결합니다. 연결되지 않으면 `/Users/사용자명/projects/my-project/src/main.tsx`처럼 파일의 절대 경로를 입력하고 Enter를 누르세요.
+
+Codex에서는 **설정 → 작업 폴더**에 폴더의 절대 경로를 입력하고 **적용**하면 현재 채팅의 코드뷰어에만 기억합니다. 뷰어를 다시 열거나 앱을 재시작해도 복원하며, Codex 자체의 채팅 작업 경로는 바꾸지 않습니다. 미저장 변경이 있으면 저장·버리기·계속 편집 중에서 선택합니다.
 
 업데이트할 때도 같은 설치 명령을 실행한 뒤 Codex를 다시 엽니다. 설치 상태는 다음 명령으로 확인합니다.
 
@@ -32,6 +44,48 @@ codex plugin list --json --marketplace winter-love-code-viewer-npm
 
 다른 Codex 설정 폴더를 사용한다면 `CODEX_HOME`을 지정하세요. CLI가 PATH에 없으면 `CODEX_BINARY`에 실행 파일 경로를 지정합니다.
 
+### Claude Desktop 로컬 확장
+
+`pnpm --filter @winter-love/codex-code-viewer build`로 빌드하면 빌드한 컴퓨터용 `dist/code-viewer-<버전>-<플랫폼>-<아키텍처>.mcpb`도 생성됩니다. 실행 파일과 분석기가 포함되며 Node.js 24 이상이 필요합니다. Claude Desktop의 **Settings → Extensions → Advanced settings → Install Extension…**에서 설치하고 작업 폴더를 선택합니다. [로컬 데스크톱 확장](https://support.claude.com/en/articles/10949351-getting-started-with-local-mcp-servers-on-claude-desktop)과 [MCP Apps](https://modelcontextprotocol.io/extensions/apps/overview)를 사용합니다.
+
+Claude에게 `code.open`으로 파일을 열거나 `code.panel`로 설정한 폴더를 열도록 요청합니다. 뷰어는 대화 안에 표시됩니다. Codex의 우측 패널과 파일 메뉴 진입점은 Codex 전용입니다. 읽기·탐색·편집·파일 작업은 선택한 폴더 안으로 제한되며, 더 큰 저장소의 하위 폴더를 선택해도 범위가 넓어지지 않습니다. Claude 서버는 Codex의 대화 DB를 읽지 않습니다.
+
+[공개 MCP Apps 규격](https://github.com/modelcontextprotocol/ext-apps/blob/main/specification/2026-01-26/apps.mdx#display-modes)은 `inline`·`fullscreen`·`pip` 표시 모드를 정의하며, 고정 우측 패널 등록 API는 정의하지 않습니다. [Claude의 전체 화면 보기](https://support.claude.com/en/articles/13454812-use-interactive-connectors-in-claude)는 채팅 입력을 유지하지만, 현재 뷰어에는 전환 기능을 구현하지 않았습니다. Claude Desktop Code 모드의 [기본 파일 패널](https://code.claude.com/docs/en/desktop#open-and-edit-files)은 별도 기능입니다.
+
+선택한 편집기 텍스트와 미저장 diff는 스냅샷으로 첨부합니다. 파일 첨부에는 제한된 텍스트를, 폴더 첨부에는 바로 아래 항목 목록을 포함합니다. Claude는 `code.context`로 다른 줄 범위를 읽을 수 있습니다. 한 번에 최대 200줄 또는 200개 항목, 64 KiB까지 전달합니다. 바이너리 미디어는 미리볼 수 있지만 텍스트로 첨부하지 않습니다. 첨부 목록에서 개별 제거와 전체 비우기가 가능하며, 전체 한도는 20개·64 KiB입니다. 첨부는 메시지를 전송하거나 파일을 저장하지 않습니다. 선택 내용은 뷰어 세션에 보관하며 Claude가 `code.attachments`로 조회합니다. 표준 컨텍스트 API도 함께 갱신하지만, 설치한 Claude 환경에서는 API 응답 성공만으로 다음 턴 수신이 보장되지 않았습니다. 첨부를 물을 때는 조회 도구 호출을 허용해 주세요. 세션을 닫으면 스냅샷도 제거됩니다. 표준 호스트에서는 Codex의 첨부 소비 상태를 받을 수 없으므로 필요 없어진 첨부는 직접 비워 주세요. 뷰어를 다시 불러오면 로컬 첨부 목록과 미저장 초안이 사라집니다.
+
+일반 Chat용 서버를 직접 등록하려는 개발자는 다음 설정을 사용할 수 있습니다. Code 모드의 일반 설치는 위의 `install --target claude`를 사용하며 이 설정이 필요 없습니다.
+
+```json
+{
+  "mcpServers": {
+    "code-viewer": {
+      "command": "/absolute/path/to/node",
+      "args": ["/absolute/path/to/dist/claude.js", "/absolute/workspace/folder"]
+    }
+  }
+}
+```
+
+### Claude Desktop Code 모드: 필요할 때 Browser에서 열기
+
+빌드는 `dist/code-viewer-<버전>-claude-code-<플랫폼>-<아키텍처>.zip`을 생성합니다. Node 런타임과 분석기를 포함하므로 별도 Node 설치나 수동 MCP 등록이 필요 없습니다.
+
+1. Code 모드에서 **+ → 플러그인 추가 → 플러그인 추가 → 플러그인 업로드**로 ZIP을 설치합니다.
+2. 프로젝트 폴더를 선택해 **로컬** Code 세션을 시작합니다. 현재 체크아웃을 편집하려면 **워크트리**를 끕니다.
+3. Claude 답변의 프로젝트 **파일 링크** 또는 채팅 입력창 아래 **코드 뷰어 열기** 버튼으로 엽니다. `/code-viewer:open`도 사용할 수 있습니다.
+4. macOS에서는 보조 앱의 손쉬운 사용 권한을 허용하면 파일 링크·열기 버튼이 접힌 Browser도 자동으로 펼칩니다. 다른 호스트에서는 상단 **Browser** 버튼으로 펼칩니다.
+
+새 세션은 뷰어를 자동으로 열지 않습니다. 성공한 본 대화의 `Read`·`Edit`·`Write` 위치를 기억했다가 사용자가 열면 표시합니다. 이미 열린 뷰어는 같은 페이지에서 위치를 갱신하므로 파일별 미저장 초안과 첨부를 유지합니다. 하위 에이전트·거부·오류·미적용 수정은 추적하지 않습니다. 외부 웹 링크는 기존 동작을 유지하고, 프로젝트 밖 파일은 서버에서도 거부합니다.
+
+화면은 Codex와 공유하는 원본 HTML·CodeMirror 뷰어입니다. 파일 트리·너비 조절·검색·정의와 사용처 이동·편집·저장·미리보기·선택 및 변경 내용 첨부를 같은 UI에서 사용합니다. Mods는 열기 요청, 파일 추적, 채팅 첨부 연결을 맡습니다. 네이티브 카드 대신 누적 컨텍스트로 추가한 Browser 첨부는 `code.attachments`로 조회하며, 조회하거나 파일을 이동해도 소비되지 않습니다. 뷰어를 연 세션에서는 채팅을 보낼 때 Mods가 이 도구로 선택한 스냅샷을 읽어 해당 메시지의 컨텍스트에 추가합니다. 디스크와 다른 미저장 내용도 포함합니다. 제한 승인은 이 Mod의 첨부 읽기에만 적용하며 명시적 거부와 관리 정책을 유지합니다. 조회에 실패하면 첨부를 누락한 채 보내지 않고 오류와 함께 전송을 멈춥니다. 뷰어를 열지 않은 세션에서는 조회하지 않으며, 첨부는 직접 제거할 때까지 유지됩니다.
+
+macOS에서 파일 트리의 **채팅창에 추가**는 클릭한 파일 하나만 원래 파일명·바이트 그대로 입력창에 첨부합니다. 다른 파일이나 누적 스냅샷은 섞지 않습니다. 선택 코드는 `원래파일명.selection.txt`, 미저장 변경 내용은 `원래파일명.changes.patch`로 해당 선택·diff만 첨부합니다. 이미 실행 중인 이전 뷰어에도 새로고침 없이 같은 이름을 적용합니다. 실제 카드로 전달한 내용은 뷰어의 **첨부할 내용**에 쌓지 않습니다. 이전 목록을 하단 **Claude에 첨부**로 전달하면 카드 확인 후 목록을 비우며, 실패하면 남겨 둡니다. **Claude 첨부로 복사**는 수동 Cmd+V 대안입니다.
+
+로컬 보조 프로그램은 macOS 손쉬운 사용 권한으로 뷰어 주소·현재 Code 세션·입력창을 확인한 뒤 파일을 붙여넣고 실제 카드 생성을 확인합니다. 기존 입력·첨부·초안은 유지하며 원본 저장이나 메시지 전송은 하지 않습니다. 파일 트리는 디스크 파일을, 코드 선택은 미저장 편집 내용을 사용합니다. 첨부 경로는 `/tmp/cv-XXXXXX/원래파일명`으로 짧게 유지합니다. 업데이트 전부터 실행 중인 뷰어도 보조 프로그램이 기존 임시 파일만 짧은 경로로 복사하므로 새로고침 없이 적용됩니다. 임시 폴더·파일은 비공개로 만들고 OS 정리까지 유지하며, 클립보드는 쓰기만 합니다. Desktop 엔진 2.1.299는 기본 파일 선택창에서도 카드 제목에 전체 경로를 표시합니다. 원래 파일명은 보존하지만 이 제목 표시는 Claude가 결정합니다. 네이티브 첨부를 지원하지 않는 호스트는 기존 누적 컨텍스트 방식을 유지합니다.
+
+같은 뷰어 세션의 미저장 초안은 로컬에 보관하고 탭 재열기·새로고침 때 복원합니다. 저장하거나 버린 초안은 복원하지 않습니다. 파일 추적과 반복 열기는 페이지를 새로고침하지 않습니다. 이전 [네이티브 Pane 구현](claude/code/hooks/README.md)과 세션별 저장 데이터는 남겨 두며 기본 진입점에서는 실행하지 않습니다. 이전 Pane 초안은 Browser로 자동 이전하지 않습니다. 기존 `.mcpb`는 일반 Chat 대화 안의 뷰어용입니다.
+
 ## 2. 파일 열고 찾기
 
 - **경로로 열기:** 절대 경로나 연결된 작업 폴더 안의 상대 경로를 입력하고 Enter 또는 **파일 열기**를 누릅니다. 특정 위치로 이동하려면 `src/main.tsx:20:5`처럼 줄·열을 붙입니다.
@@ -39,19 +93,39 @@ codex plugin list --json --marketplace winter-love-code-viewer-npm
 - **폴더 둘러보기:** 검색 옆의 **파일 트리**를 누릅니다. 폴더를 클릭하면 펼치고 접으며, 파일을 클릭하면 엽니다. **파일 필터링**은 경로로 목록을 좁히고, **현재 파일 위치로 이동**은 필터를 비운 뒤 열린 파일까지 스크롤합니다.
 - **이전 위치로 돌아가기:** 뒤로·앞으로 버튼이나 `Alt+←/→`를 사용합니다.
 
+### 파일 트리로 탐색
+
+![파일 트리로 탐색](https://raw.githubusercontent.com/bichikim/web/97cc070dac551d6e898a66a0be97af66730ece2c/packages/codex-code-viewer/docs/recordings/codex/0.5.0/file-tree.gif)
+
 삭제되어 열 수 없는 파일은 건너뛰며, 현재 파일을 삭제해도 다른 방문 기록은 유지합니다. 보관 중인 초안은 삭제된 파일도 다시 열어 저장으로 복원할 수 있습니다. 외부에서 복원한 파일은 변경 감지나 새로고침 후 다시 탐색합니다. 읽기 권한 등 다른 오류는 건너뛰지 않고 안내합니다.
 
 트리 경계선을 드래그하면 너비를 조절합니다. 경계선에 포커스를 두면 좌우 방향키로 너비를 바꾸고 Home/End로 최소·최대 너비를 선택합니다. 트리에서는 위·아래 방향키와 Home/End로 항목을 선택하고, 좌우 방향키로 폴더를 접고 펼칩니다. 우클릭이나 `Shift+F10`으로 항목 메뉴를 엽니다.
 
-같은 탭에서 파일을 다시 열면 선택 범위·스크롤과 해당 형식의 미리보기·배율·페이지 설정을 복원합니다. 줄·열을 지정해 이동하면 그 위치를 우선합니다. 최근 64개 파일의 보기 상태를 작업 폴더별로 유지하며, 뷰어를 닫거나 다시 불러오면 초기화합니다.
+같은 탭에서 파일을 다시 열면 선택 범위·스크롤과 해당 형식의 미리보기·배율·페이지 설정을 복원합니다. 줄·열을 지정해 이동하면 그 위치를 우선합니다. 최근 64개 파일의 보기 상태를 작업 폴더별로 유지하며, Claude Browser에서는 같은 뷰어 세션을 다시 열 때도 복구합니다. 저장소 접근이 제한되면 안내합니다.
 
 ## 3. 코드 읽고 이동하기
 
 읽기 모드에서 import 경로를 클릭하면 모듈 파일을 열고, 심볼의 사용처를 클릭하면 정의로 이동합니다. 정의 이름을 클릭하면 사용처 목록을 엽니다. 결과는 파일별로 표시하며 항목을 선택해 이동합니다. 정의가 여러 개라면 목록에서 하나를 선택합니다.
 
+### import 경로로 이동
+
+![import 경로로 이동](https://raw.githubusercontent.com/bichikim/web/97cc070dac551d6e898a66a0be97af66730ece2c/packages/codex-code-viewer/docs/recordings/codex/0.5.0/import.gif)
+
+### 정의로 이동
+
+![정의로 이동](https://raw.githubusercontent.com/bichikim/web/97cc070dac551d6e898a66a0be97af66730ece2c/packages/codex-code-viewer/docs/recordings/codex/0.5.0/definition.gif)
+
+### 사용처 찾기
+
+![사용처 찾기](https://raw.githubusercontent.com/bichikim/web/97cc070dac551d6e898a66a0be97af66730ece2c/packages/codex-code-viewer/docs/recordings/codex/0.5.0/references.gif)
+
 정의·사용처 목록은 검색 중 찾은 결과부터 표시합니다. 제목 옆 필터로 파일 경로를 좁히고, 파일 그룹을 접고 펼치거나 오른쪽 이동 버튼으로 해당 파일을 열 수 있습니다.
 
 읽기와 편집 화면에서 줄 번호 옆 화살표로 여러 줄 함수·객체·클래스·마크업 블록을 접고 펼칩니다. 접힌 자리의 **…**를 눌러도 펼쳐집니다. 검색 결과나 정의·사용처 위치로 이동하면 해당 줄을 가린 블록을 펼칩니다. 작은 파일의 접기 상태는 같은 탭에서 복원하며 원본이 변경되면 초기화합니다. Python·Ruby·Rust는 들여쓰기를 기준으로 접습니다.
+
+### 코드 접기와 펼치기
+
+![코드 접기와 펼치기](https://raw.githubusercontent.com/bichikim/web/97cc070dac551d6e898a66a0be97af66730ece2c/packages/codex-code-viewer/docs/recordings/codex/0.5.0/fold.gif)
 
 정의·사용처 이동은 TypeScript·JavaScript·Python·Ruby·Rust에서 지원합니다. JSON·JSONC·JSON5는 파일 경로 값으로만 이동합니다. 그 외 형식은 구문 강조가 있어도 심볼 이동은 제공하지 않습니다. 언어별 준비 사항은 [코드 탐색 설정](#코드-탐색-설정)을 참고하세요.
 
@@ -65,6 +139,10 @@ codex plugin list --json --marketplace winter-love-code-viewer-npm
 2. 내용을 수정합니다. `Cmd/Ctrl+Z`로 실행을 취소하고 `Cmd/Ctrl+Shift+Z`로 다시 실행합니다.
 3. **저장** 또는 `Cmd/Ctrl+S`를 누릅니다. 자동 저장이나 자동 서식 변경은 하지 않습니다.
 
+### 텍스트 편집과 저장
+
+![텍스트 편집과 저장](https://raw.githubusercontent.com/bichikim/web/97cc070dac551d6e898a66a0be97af66730ece2c/packages/codex-code-viewer/docs/recordings/codex/0.5.0/edit-save.gif)
+
 편집 가능한 형식은 [지원 파일 형식](#지원-파일-형식)을 참고하세요. Markdown·CSV·TSV는 원문을 편집합니다.
 
 다른 파일로 이동해도 초안은 남습니다. **편집**을 끄면 미저장 내용을 읽기 전용으로 볼 수 있습니다. Markdown·CSV·TSV는 **편집**을 끈 뒤 **미리보기 / 원문**으로 전환하며, 미리보기에도 미저장 내용이 반영됩니다. 초안을 버리려면 편집을 켜고 **⋯ → 변경 버리기**를 선택합니다.
@@ -73,7 +151,7 @@ TS·JS·JSON 탐색에는 여러 파일의 미저장 변경이 반영됩니다. 
 
 다른 프로그램이 원본을 변경하면 저장을 거절하고 초안을 유지합니다. 변경 내용을 채팅에 첨부해 검토하거나, 변경을 버려 디스크의 원본을 다시 읽으세요. 외부에서 파일을 삭제했다면 **저장**으로 같은 경로에 다시 만들고, **변경 버리기**로 초안을 버리고 다른 방문 파일로 이동할 수 있습니다. 다른 프로그램이 먼저 파일을 복원했다면 저장 시 충돌을 안내합니다.
 
-작업 폴더를 바꾸거나 Codex가 뷰어 종료를 요청하면 모두 저장·변경 버리기·계속 편집 중에서 선택합니다. 종료하거나 다시 불러오기 전에 초안을 저장하세요. 저장하지 않은 내용은 강제 종료 뒤에 복구할 수 없습니다.
+작업 폴더를 바꾸거나 Codex가 뷰어 종료를 요청하면 모두 저장·변경 버리기·계속 편집 중에서 선택합니다. Claude Browser는 미저장 초안을 로컬에 보관해 같은 세션을 다시 열 때 복구합니다. 브라우저 저장소를 지우거나 다른 세션으로 열면 복구할 수 없습니다.
 
 ## 5. 채팅에 파일과 변경 내용 추가하기
 
@@ -94,6 +172,10 @@ TS·JS·JSON 탐색에는 여러 파일의 미저장 변경이 반영됩니다. 
 ## 6. 파일과 폴더 관리하기
 
 트리 도구 줄의 **새 파일**·**새 폴더**를 사용합니다. 폴더를 선택했다면 그 안에, 파일을 선택했다면 같은 상위 폴더에 만듭니다. 빈 작업 폴더에서는 루트에 만듭니다. 이름 입력창에서 생성 위치를 확인할 수 있으며 기존 항목은 덮어쓰지 않습니다.
+
+### 새 파일 만들기
+
+![새 파일 만들기](https://raw.githubusercontent.com/bichikim/web/97cc070dac551d6e898a66a0be97af66730ece2c/packages/codex-code-viewer/docs/recordings/codex/0.5.0/create-file.gif)
 
 파일·폴더 우클릭 메뉴에서 **이름 변경**·**복사**·**잘라내기**·**붙여넣기**·**삭제**를 선택합니다. 트리에 포커스가 있으면 `Cmd/Ctrl+C`·`Cmd/Ctrl+X`·`Cmd/Ctrl+V`와 Delete도 사용할 수 있습니다. 복사·잘라내기는 이 뷰어의 작업 폴더 안에서 사용하는 내부 클립보드입니다. 폴더에 붙여넣으면 그 안에, 파일에 붙여넣으면 같은 상위 폴더에 만듭니다. 빈 공간의 메뉴에서는 작업 폴더 루트에 붙여넣습니다. 복사 이름이 겹치면 복사본 이름을 만들고, 잘라내기·이름 변경은 오류를 안내합니다.
 
@@ -152,15 +234,27 @@ TS·JS 탐색은 완료된 결과와 파일별 인덱스 요약을 재사용하�
 - **이미지·SVG:** 배율 버튼·입력(1–1600%)·핀치·`Ctrl/Cmd+휠`로 확대·축소하고 드래그·방향키로 이동합니다. 이미지에 포커스가 있으면 `+`·`-`로 배율 조절, `0`으로 100%, Home으로 화면 맞춤을 사용합니다. SVG는 32 MiB까지 XML 원문을 볼 수 있으며 그보다 크면 미리보기만 제공합니다.
 - **영상·음악:** 재생 컨트롤을 사용합니다. 재생 가능 여부는 내장 브라우저의 코덱 지원에 따라 달라집니다. 음악은 재생 버튼을 눌러 시작하고 파일을 떠나면 멈춥니다.
 
+### Markdown 미리보기와 원문
+
+![Markdown 미리보기와 원문](https://raw.githubusercontent.com/bichikim/web/97cc070dac551d6e898a66a0be97af66730ece2c/packages/codex-code-viewer/docs/recordings/codex/0.5.0/markdown.gif)
+
+### CSV 열 정렬
+
+![CSV 열 정렬](https://raw.githubusercontent.com/bichikim/web/97cc070dac551d6e898a66a0be97af66730ece2c/packages/codex-code-viewer/docs/recordings/codex/0.5.0/csv-sort.gif)
+
+### CSV 행 필터
+
+![CSV 행 필터](https://raw.githubusercontent.com/bichikim/web/97cc070dac551d6e898a66a0be97af66730ece2c/packages/codex-code-viewer/docs/recordings/codex/0.5.0/csv-filter.gif)
+
 ## 제한과 문제 해결
 
-| 상황                         | 확인할 내용                                                                                 |
-| ---------------------------- | ------------------------------------------------------------------------------------------- |
-| 작업 폴더 트리가 보이지 않음 | 파일의 절대 경로를 입력해 작업 폴더를 연결하세요.                                           |
-| 파일이 없거나 열리지 않음    | 작업 폴더·경로 권한·인코딩·크기를 확인하세요. 보호 경로와 생성물·의존성 폴더는 제외합니다.  |
-| 심볼을 눌러도 이동하지 않음  | 위의 지원 형식과 분석기 준비 사항을 확인하세요. 구문 강조만으로 이동을 지원하지는 않습니다. |
-| 저장 충돌 안내               | 초안을 유지하거나 채팅에 첨부한 뒤, 준비되면 변경을 버려 디스크 원본을 다시 읽으세요.       |
-| 재시작 뒤 변경 내용이 사라짐 | 초안은 종료 뒤 복구할 수 없습니다. 종료 전에 저장하세요.                                    |
+| 상황                         | 확인할 내용                                                                                          |
+| ---------------------------- | ---------------------------------------------------------------------------------------------------- |
+| 작업 폴더 트리가 보이지 않음 | 파일의 절대 경로를 입력해 작업 폴더를 연결하세요.                                                    |
+| 파일이 없거나 열리지 않음    | 작업 폴더·경로 권한·인코딩·크기를 확인하세요. 보호 경로와 생성물·의존성 폴더는 제외합니다.           |
+| 심볼을 눌러도 이동하지 않음  | 위의 지원 형식과 분석기 준비 사항을 확인하세요. 구문 강조만으로 이동을 지원하지는 않습니다.          |
+| 저장 충돌 안내               | 초안을 유지하거나 채팅에 첨부한 뒤, 준비되면 변경을 버려 디스크 원본을 다시 읽으세요.                |
+| 재시작 뒤 변경 내용이 사라짐 | 같은 Claude Browser 세션인지와 로컬 저장소 접근 여부를 확인하세요. Codex에서는 종료 전에 저장하세요. |
 
 코드·Markdown·CSV·TSV를 포함한 UTF-8 텍스트는 파일당 32 MiB까지 읽습니다. 512 KiB를 넘는 파일은 읽기 전용으로 화면에 보이는 부분을 렌더링하며 선택·검색·코드 이동을 지원합니다. 큰 Markdown·CSV·TSV는 원문으로 표시합니다. NUL 바이트가 포함된 파일은 텍스트로 열 수 없습니다. PDF·DOCX·XLSX·이미지·영상·음악은 파일당 128 MiB까지 지원합니다. 작업 폴더 밖과 `.git`·`.codex`·`.aws`·`.ssh`는 열지 않습니다. 숨김 파일은 `.dockerignore`, `.gitignore`, `.gitattributes`, `.gitmodules`, `.editorconfig`, `.prettierignore`, `.eslintignore`, `.npmignore`, `.browserslistrc`만 열 수 있습니다. `.env`는 열 수 없습니다. 검색 결과는 최대 100개까지 표시합니다. 검색과 트리에서 생성물·의존성 폴더는 제외합니다.
 

@@ -82,7 +82,7 @@ export const installPlugin = async (options: InstallPluginOptions): Promise<void
       const detail = restoration instanceof Error ? restoration.message : String(restoration)
       throw new AggregateError(
         [error, restoration],
-        `설치 실패 후 설정 복원도 실패했습니다: ${detail}\n최초 설치 오류: ${initial}`,
+        `Could not restore settings after installation failed: ${detail}\nOriginal installation error: ${initial}`,
         {cause: error},
       )
     }

@@ -19,8 +19,10 @@ import {useFileTreeVisibility} from './use-file-tree-visibility'
 import {SViewerSettings} from './SViewerSettings'
 import {useViewerSettings} from './use-viewer-settings'
 import {SUnsavedChanges} from './editor/SUnsavedChanges'
+import {SContextAttachments} from './SContextAttachments'
 
 interface SViewerWorkspaceProps {
+  readonly embedded?: boolean
   settings: ReturnType<typeof useViewerSettings>
   port: ViewerPort
 }
@@ -79,7 +81,8 @@ export const SViewerWorkspace = (props: SViewerWorkspaceProps) => {
     <MediaCacheContext.Provider value={mediaCache}>
       <ViewStateContext.Provider value={viewer.viewState}>
         <main
-          class="h-screen min-h-0 flex flex-col bg-canvas font-sans text-foreground"
+          class="h-screen flex flex-col bg-canvas font-sans text-foreground"
+          classList={{'min-h-0': !props.embedded, 'min-h-120': props.embedded ?? false}}
           ref={setElement}
         >
           <SViewerToolbar
@@ -128,6 +131,7 @@ export const SViewerWorkspace = (props: SViewerWorkspaceProps) => {
               previewLines={props.settings.previewLines()}
             />
           </SResizablePanels>
+          <SContextAttachments port={port} onError={viewer.reportError} onNotice={viewer.notify} />
           <footer class="mt-auto flex shrink-0 items-center gap-3 border-t border-divider px-4 py-1">
             <span class="min-w-0 flex-1 truncate text-sm text-muted" title={viewer.address()}>
               {viewer.address()}
@@ -150,6 +154,9 @@ export const SViewerWorkspace = (props: SViewerWorkspaceProps) => {
           </Show>
           <SUnsavedChanges editing={viewer.editing} />
           <SViewerSettings
+            port={port}
+            workspace={viewer.workspaceSession()?.workspace}
+            onWorkspaceChange={viewer.changeWorkspace}
             open={settingsOpen()}
             previewLines={props.settings.previewLines()}
             language={props.settings.preference()}

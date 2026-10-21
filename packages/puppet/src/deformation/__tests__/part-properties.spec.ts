@@ -9,8 +9,10 @@ describe('part render properties', () => {
     const part = createDemoDocument().parts[0]!
 
     expect(getPartRenderProperties(part)).toEqual({
+      alphaBlendMode: 'over',
       blendMode: 'normal',
       clippingMaskIds: [],
+      culling: false,
       invertedMask: false,
       multiplyColor: [1, 1, 1],
       opacity: 1,
