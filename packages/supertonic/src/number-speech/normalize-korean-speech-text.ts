@@ -50,8 +50,11 @@ const COLON_CLOCK_TOKEN_START_PATTERN = `${TOKEN_START_PATTERN}(?<![?&=%\\\\])`
 const COLON_CLOCK_CONTEXT_SUFFIX_PATTERN_SOURCE =
   `\\s*(?:${KOREAN_PARTICLE_PATTERN_SOURCE}|` +
   `(?:에서|부터|까지|에|쯤|경)${KOREAN_PARTICLE_PATTERN_SOURCE}|경(?=$|[^\\p{L}\\p{N}_]))`
-const COLON_CLOCK_NON_TIME_PREFIX_PATTERN =
-  /(?:^|[^\p{L}\p{N}_])(?:비율|비례|버전|점수|스코어|score|aspect\s+ratio|ratio|version|ver|v)[:.]?\s*(?:(?:은|는|이|가|을|를|의)\s*)?$/iu
+const COLON_CLOCK_NON_TIME_PREFIX_PATTERN = new RegExp(
+  '(?:(?:비율|비례|버전|점수|스코어)|(?:^|[^\\p{L}\\p{N}_])(?:score|aspect\\s+ratio|ratio|version|ver|v))' +
+    '[:.]?\\s*(?:(?:은|는|이|가|을|를|의)\\s*)?$',
+  'iu',
+)
 const UNSIGNED_MONTH_NUMBER_PATTERN = /^[\d０-９]+$/u
 const UNSIGNED_INTEGER_PATTERN = KOREAN_UNSIGNED_INTEGER_PATTERN_SOURCE
 const KOREAN_PARTICLE_PATTERN = KOREAN_PARTICLE_PATTERN_SOURCE
@@ -277,8 +280,7 @@ const replaceColonClockTime = (
   }
 
   const hourStart = start + (timeOfDay?.length ?? 0)
-  const clockContext =
-    `${input.slice(0, hourStart)}${hour}시 ${minute}분` + input.slice(start + match.length)
+  const clockContext = `${input.slice(0, hourStart)}${hour}시 ${minute}분${input.slice(start + match.length)}`
 
   if (
     !hasCanonicalNumberKind({

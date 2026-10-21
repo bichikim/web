@@ -115,6 +115,8 @@ describe('normalizeKoreanSpeechText clock and duration expressions', () => {
 
   it.each([
     '경기 스코어는 09:05에서 끝났어요.',
+    '최종점수는 09:05에서 끝났어요.',
+    '경기스코어는 09:05에서 끝났어요.',
     '점수 09:05까지 올랐어요.',
     'score 09:05에 도달했어요.',
   ])('should preserve colon scores with explicit score cues: %s', (text) => {
