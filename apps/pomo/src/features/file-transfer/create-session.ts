@@ -512,7 +512,7 @@ class TransferSession implements FileTransfer {
     this.sendControl({id: this.state.incoming.id, type: 'accept'})
   }
   readonly join = (sessionId: string, secret: string): void => {
-    if (this.options.getOrigin() === undefined || secret.length === 0) {
+    if (this.options.getOrigin() === undefined || sessionId.length === 0 || secret.length === 0) {
       this.fail(m.transfer_error_invalid_link())
       return
     }
