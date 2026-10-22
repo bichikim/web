@@ -10,6 +10,48 @@ import {initial} from './fixtures/viewer'
 describe('createHost', () => {
   afterEach(() => vi.restoreAllMocks())
 
+  it('should serialize tree writes and finish them before closing the host', async () => {
+    vi.spyOn(App.prototype, 'connect').mockResolvedValue()
+    const close = vi.spyOn(App.prototype, 'close').mockResolvedValue()
+    const setter = vi.spyOn(App.prototype, 'onteardown', 'set')
+    const blocked = Promise.withResolvers<{content: []; structuredContent: {visible: boolean}}>()
+    const started = Promise.withResolvers<void>()
+    const call = vi
+      .spyOn(App.prototype, 'callServerTool')
+      .mockImplementationOnce(() => {
+        started.resolve()
+        return blocked.promise
+      })
+      .mockResolvedValue({content: [], structuredContent: {expanded: []}})
+    const host = createHost()
+    expect(createHost({integration: 'standard'}).saveTreeState).toBeUndefined()
+    const stop = await host.start(vi.fn(), vi.fn(), vi.fn())
+    const first = host.saveTreeState?.('one', {visible: false})
+    const second = host.saveTreeState?.('one', {expanded: []})
+    const closingSession = host.call('code.close', {session: 'one'})
+    const teardown = setter.mock.calls[0][0]?.(
+      {},
+      {
+        requestId: 'teardown',
+        sendNotification: vi.fn(),
+        sendRequest: vi.fn(),
+        signal: new AbortController().signal,
+      },
+    )
+    const closing = stop()
+    await started.promise
+    expect(call).toHaveBeenCalledTimes(1)
+    expect(close).not.toHaveBeenCalled()
+    blocked.resolve({content: [], structuredContent: {visible: false}})
+    await Promise.all([first, second, closingSession, closing, teardown])
+    expect(call.mock.calls.map(([input]) => input)).toEqual([
+      {arguments: {patch: {visible: false}, session: 'one'}, name: 'code.tree-state'},
+      {arguments: {patch: {expanded: []}, session: 'one'}, name: 'code.tree-state'},
+      {arguments: {session: 'one'}, name: 'code.close'},
+    ])
+    expect(close).toHaveBeenCalledOnce()
+  })
+
   it('should attach through the current Browser session only when native composer integration is enabled', async () => {
     vi.spyOn(App.prototype, 'connect').mockResolvedValue()
     vi.spyOn(App.prototype, 'close').mockResolvedValue()
