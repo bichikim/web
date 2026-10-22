@@ -1,5 +1,6 @@
 import {createSignal, type JSX, onMount} from 'solid-js'
 import * as m from '@paraglide/message'
+import {withPromiseFallback} from 'src/utils/with-promise-fallback'
 
 import type {AuthController} from '../../features/auth/controller'
 import {
@@ -147,9 +148,11 @@ export const FeatureRequestForm = (props: FeatureRequestFormProps) => {
         isCheckingAuthentication={isCheckingAuthentication()}
         isOpen={isOpen()}
         isSubmitting={props.model.isSubmitting()}
+        loadFailed={props.model.loadFailed()}
         onCloseAutoFocus={() => triggerElement()?.focus()}
         onDescriptionChange={handleDescriptionChange}
         onOpenChange={handleOpenChange}
+        onRetryList={() => withPromiseFallback(props.model.refresh(), undefined)}
         onSubmit={handleSubmit}
         onTitleChange={handleTitleChange}
         title={title()}

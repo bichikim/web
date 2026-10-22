@@ -303,3 +303,25 @@ it.each(['created', 'unavailable'] as const)(
     await waitFor(() => expect(isSubmitting()).toBe(false))
   },
 )
+
+it('should retry only the list after a created request and clear the recovered warning', async () => {
+  const [loadFailed, setLoadFailed] = createSignal(true)
+  const refresh = vi.fn(async () => {
+    setLoadFailed(false)
+  })
+  render(() => (
+    <FeatureRequestForm authentication={authentication} model={{...model, loadFailed, refresh}} />
+  ))
+  fireEvent.click(screen.getByRole('button', {name: m.feature_request_new()}))
+  expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+  const title = screen.getByRole('textbox', {name: m.feature_request_title_label()})
+  fireEvent.input(title, {target: {value: '목록 갱신 복구'}})
+  fireEvent.submit((title as HTMLInputElement).form!)
+  expect(await screen.findByRole('alert')).toHaveTextContent(m.feature_request_list_failed())
+  expect(screen.getByRole('status')).toHaveTextContent(m.feature_request_created())
+  fireEvent.click(screen.getByRole('button', {name: m.feature_request_retry()}))
+  await waitFor(() => expect(screen.queryByRole('alert')).not.toBeInTheDocument())
+  expect(screen.getByRole('status')).toHaveTextContent(m.feature_request_created())
+  expect(refresh).toHaveBeenCalledTimes(1)
+  expect(createRequest).toHaveBeenCalledTimes(1)
+})
