@@ -28,6 +28,8 @@ export function Generation(props: GenerationProps) {
 
   function handleResponse(response: SajuWorkerResponse) {
     switch (response.type) {
+      case 'skipped':
+        return
       case 'loading':
         setProgress(response.percentage)
         setState('loading')

@@ -1,4 +1,4 @@
-import {smoothStep} from 'src/utils/smooth-step'
+import {smoothStep} from 'src/utils/ease'
 import {clampUnit} from 'src/utils/clamp-unit'
 
 import type {PViseme} from '../lip-sync'
@@ -25,7 +25,7 @@ const DEFAULT_SCHEDULER: PMouthTransitionScheduler = {
 }
 
 export const getPVisemeTransitionProgress = (elapsedMs: number) =>
-  smoothStep(clampUnit(elapsedMs / P_MOUTH_TRANSITION_DURATION_MS))
+  smoothStep(clampUnit(elapsedMs / P_MOUTH_TRANSITION_DURATION_MS, {fallback: 0}))
 
 /** Owns the short requestAnimationFrame loop used to crossfade mouth sprites. */
 export const createPMouthTransitionController = (
@@ -78,7 +78,7 @@ export const createPMouthTransitionController = (
 
       startedAt ??= timestamp
 
-      const phase = smoothStep(clampUnit((timestamp - startedAt) / durationMs))
+      const phase = smoothStep(clampUnit((timestamp - startedAt) / durationMs, {fallback: 0}))
       const progress = startProgress + (endProgress - startProgress) * phase
       current = {from: transitionFrom, progress, to: transitionTo}
       onTransitionChange()

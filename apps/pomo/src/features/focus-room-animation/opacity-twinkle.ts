@@ -1,5 +1,5 @@
 import {randomInRange} from 'src/utils/random-in-range'
-import {cosineEaseInOut} from 'src/utils/cosine-ease-in-out'
+import {cosineEaseInOut} from 'src/utils/ease'
 import {clampUnit} from 'src/utils/clamp-unit'
 import type {Container} from 'pixi.js'
 
@@ -109,7 +109,7 @@ export const advanceOpacityTwinkle = (
     state.phase = 'transitioning'
   }
 
-  const progress = clampUnit(state.elapsedSeconds / state.durationSeconds)
+  const progress = clampUnit(state.elapsedSeconds / state.durationSeconds, {fallback: 0})
   const easedProgress = cosineEaseInOut(progress)
   state.currentOpacity =
     state.fromOpacity + (state.targetOpacity - state.fromOpacity) * easedProgress

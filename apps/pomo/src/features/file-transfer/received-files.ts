@@ -1,6 +1,6 @@
 import {replaceBlobObjectUrl} from 'src/features/blob-object-url'
 import {createStore} from 'solid-js/store'
-import {createBlobArchive} from 'src/utils/create-blob-archive'
+import {createBlobArchive} from './create-blob-archive'
 
 export const RECEIVED_BYTES_LIMIT = 300_000_000
 

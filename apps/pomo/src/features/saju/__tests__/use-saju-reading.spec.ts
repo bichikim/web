@@ -83,6 +83,19 @@ describe('useSajuReading', () => {
     expect(reading.answer()).toBe('쉬운 풀이')
   })
 
+  it('should retain the active reading when another request is skipped', async () => {
+    reading.submit({birth, gender: 'N', question: '제 일은 어떨까요?'})
+    await flush()
+    const request = mocks.generate.mock.lastCall?.[0]
+    receive?.({requestId: request.requestId, type: 'started'})
+    receive?.({reason: 'busy', request: {...request, requestId: 'rejected'}, type: 'skipped'})
+    expect(reading.status()).toBe('generating')
+    expect(mocks.dispose).not.toHaveBeenCalled()
+    receive?.({requestId: request.requestId, text: '진행하던 풀이', type: 'complete'})
+    expect(reading.status()).toBe('complete')
+    expect(reading.answer()).toBe('진행하던 풀이')
+  })
+
   it('should ignore a late Worker answer after cancellation', async () => {
     reading.submit({birth, gender: 'N', question: '제 일은 어떨까요?'})
     await flush()

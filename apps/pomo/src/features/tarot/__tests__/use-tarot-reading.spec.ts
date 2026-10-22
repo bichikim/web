@@ -70,6 +70,16 @@ describe('useTarotReading', () => {
     await flush()
 
     expect(fixture.reading.status()).toBe('generating')
+    const active = mocks.generate.mock.lastCall?.[0]
+    mocks.onResponse?.({
+      reason: 'busy',
+      request: {...active, requestId: 'rejected'},
+      type: 'skipped',
+    })
+    expect(fixture.reading.status()).toBe('generating')
+    mocks.onResponse?.({requestId: active.requestId, text: '진행하던 해석', type: 'complete'})
+    expect(fixture.reading.status()).toBe('complete')
+    expect(fixture.reading.output()).toBe('진행하던 해석')
     expect(mocks.generate).toHaveBeenCalledWith(
       expect.objectContaining({cards: selected, locale: 'ko', question: '오늘 운세'}),
     )

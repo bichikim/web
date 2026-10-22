@@ -3,80 +3,42 @@ name: typescript-conventions
 description: Apply project TypeScript conventions, functional error contracts, and library boundaries when editing .ts/.tsx files, APIs, cross-layer contracts, errors, or dependencies.
 ---
 
-# Typescript
+# TypeScript
 
-Open and apply the reference files for the relevant section before working. For exported APIs, reusable modules, or cross-layer changes, read [rules/library-boundaries.md](rules/library-boundaries.md) before editing. Solid component structure, reactivity, and JSX conventions: solidjs skill (also triggers on Solid `.tsx` / `.ts`).
+Apply project-specific typing, control-flow, and API design contracts.
+
+## Required Routing
+
+Read and apply each matching resource before editing:
+
+- Designing or implementing functions, decomposing logic, selecting dependencies, or changing inputs/results: [function design](references/function-design.md).
+- Exported APIs, reusable modules, or cross-layer changes: [library boundaries](rules/library-boundaries.md).
+- Designing, changing, or normalizing error contracts: [error contracts](references/error-contracts.md).
+- Creating or splitting modules under `src/features`: [feature layout](references/feature-layout.md).
+- Writing or changing comments or options: [comments](rules/comments.md).
+- Naming a single object parameter on a hook or util: [object parameters](rules/object-parameter.md).
+- Missing module types: [missing types](rules/no-types.md).
+- Handling `unknown` or writing type guards: [type guards](code-patterns/type-guard.md).
+- Importing a type and value from the same module: [type/value imports](code-patterns/type-and-value-import.md).
+- Writing or editing unit tests: apply [unit-test](../unit-test/SKILL.md).
+- Solid components, hooks, reactivity, or JSX: apply [solidjs](../solidjs/SKILL.md).
 
 ## Core Rules
 
-1. For observable behavior changes and bug fixes, first express the intended behavior in a relevant test, then implement it. For wording, naming, type-only, or other changes without behavior changes, choose verification appropriate to the change instead of requiring a new unit test. Apply the `unit-test` skill when writing or editing unit tests.
-2. Use PascalCase for classes, interfaces, and types; camelCase for variables, functions, and methods; UPPER_SNAKE_CASE for constants.
-3. Do not abbreviate variable names, keep them to at most three words, and avoid repeating outer object names in nested variables.
-4. Define and compose object shapes with named `interface`s; prefer `extends` over intersections, name boundary union members instead of reconstructing them with `Extract`, and reserve `type` for unions and type operators. Name files that collect types shared by multiple consumers `types.ts`.
-5. Avoid `any`; prefer `unknown` with type guards, `satisfies` over `as`, `as const` plus unions over `enum`, and `readonly` for immutable data.
-6. Keep fixed constants at the site of use unless they are genuinely shared or part of a boundary, contract, config, type, test, or file-size concern. For inexpensive caller-controlled variations, follow the parameterization workflow below.
-7. Read a mutable, reactive, or external getter once per decision and reuse that snapshot; repeated calls may differ and are not free.
-8. Do not make object-literal property value evaluation depend on property order through side effects, or make consuming logic depend on object key order. `sort-keys-fix` alphabetically reorders object properties; any behavior change from that is a violation of this coding contract. If evaluation order matters, use explicit statements before creating the object, and represent ordered data with arrays.
-9. Avoid `continue` (and `break` when skipping loop body logic). Prefer a straight `for...of` with one positive body or an early `return`; use array pipelines only when they are clearer and do not add wasteful passes or allocations.
-10. Make each function read as one level of story. Treat mixed reasons to change, deep nesting, combined network/time/global test setup, and operations whose purpose is unclear from their syntax as refactoring signals. Use guard clauses to keep the normal path linear. Also review decomposition when a function grows to roughly 30–40 lines; this is a review signal, not a hard limit or a reason to postpone earlier decomposition. Follow the reuse and naming workflow below; do not add wrappers that only add navigation. Do not introduce arrays, objects, or loops solely to enumerate fixed calls. Prefer direct calls when the abstraction does not clarify meaning or behavior; fewer lines or reuse of the same list alone does not justify it.
-11. Use exhaustive `switch` with a `never` check when dispatching a discriminated union or comparing three or more cases of one finite value (`type`, `status`, `kind`), including boolean membership written with chained `||`; reserve `if` for guards and binary conditions, and never hide cases behind a catch-all default.
-12. Use a generic only when it preserves a real relationship between values or members of a returned generic container; replace a naked type parameter used once with a concrete type or `unknown`.
-13. Follow [Comments](#comments) for function JSDoc, call-site comments, and option-property documentation.
-14. Check `null`/`undefined` with `=== null` / `=== undefined`.
-15. Run `oxlint --fix` after writing code, then fix remaining lint issues.
-16. See ./rules/object-parameter.md when naming a single object parameter on a hook or util.
-17. See ./rules/no-types.md when module types are missing.
-18. See ./code-patterns/type-guard.md when handling `unknown` or writing type guards.
-19. See ./code-patterns/type-and-value-import.md when importing both a type and a value from the same module.
-20. For every internal import, consider an available `src/*` alias and choose the shortest readable valid specifier.
-21. Group cohesive feature APIs in an entrypoint and prefer importing through it from outside the feature when practical. Direct subpath imports are also allowed; bypassing an available entrypoint alone is not a violation. Do not omit `index.ts` re-exports to hide internals. In folders exposing multiple independent features, `index.ts` must only re-export their modules; do not mix feature implementations with re-exports of other features. A folder dedicated to a single feature may implement that feature in `index.ts`.
-22. When implementing functions, prefer one primary exported function per file and name the file after that function in kebab-case.
-23. Do not directly use the built-in `performance` API or `eval` function, including through `globalThis` or `window`.
-
-## Comments
-
-- Write comments above the target code, never on its right side, and follow the repository’s comment-language policy.
-- Function JSDoc describes the contract (what), not the implementation. Call-site comments explain intent (why).
-- Document every property of a function's options object with JSDoc explaining its role and usage contract. For optional properties, explain the behavior when omitted. For callbacks, explain when they are called and the meaning of their arguments and return values. For resource-related properties, explain ownership and cleanup responsibilities.
-- When adding or changing option properties, update their JSDoc and verify that every property is documented before reporting completion.
-
-## Low-Cost Parameterization
-
-When designing a function's inputs, consider these steps in order:
-
-1. Expose foreseeable caller-controlled variations as parameters when supporting them adds little implementation or conceptual cost, rather than hardcoding one use case.
-2. Consider accepting multiple values when the same operation naturally applies to each. Support a collection when its practical flexibility outweighs the added implementation, validation, and maintenance cost; do not require callers to compose repeated single-value calls unnecessarily.
-
-Keep the contract explicit, including empty inputs, ordering, and duplicates where they affect behavior. State the foreseeable use being supported and why the added cost is small. Preserve fixed domain invariants, avoid speculative configuration, and do not add parallel single-value and collection APIs without a concrete need.
-
-## State Modeling
-
-Where practical, represent mutually exclusive states and their required data with a discriminated union instead of independent flags and optional values. Keep independently varying state separate.
-
-## Persistence Destination
-
-Make the storage destination explicit in the persistence function name or an argument at the composition site, including when injecting a persistence callback into a reusable function or hook.
-
-## Reuse Before Naming a Local Operation
-
-When implementing or decomposing logic, consider these levels in order:
-
-1. Prefer JavaScript built-in functions and APIs when they satisfy the required semantics and target runtime support, excluding the prohibited `performance` and `eval`. Otherwise, look for a suitable public API in general-purpose utility libraries, the framework, the runtime, and existing project code. If none fits, consider creating a domain-independent function with a broadly reusable contract.
-2. Consider expressing the remaining logic as a function in a broader domain than the immediate feature.
-3. Implement the current task's domain-specific function by composing the suitable operations identified above.
-
-Prefer composing existing general-purpose operations over implementing a combined operation from scratch. When the composition recurs, give that composition a reusable name while retaining the underlying operations.
-
-When deciding whether to separate a function or hook, prioritize its likelihood of reuse: operations meaningful across broader contexts are stronger candidates than feature-specific sequences. Extract when that reusable contract is useful, not merely to create an encapsulation boundary. A single use or one-line body does not rule out extraction when the name improves comprehension. Do not invent speculative abstractions merely to fill all three levels.
-
-Verify that a candidate's input semantics and behavior match the task; similar names or private internal helpers are not sufficient. Prefer a meaningful function name over a comment that merely explains the operation. Keep implementation comments for intent or constraints the name cannot express. Choose shared placement by the generality and credible reuse potential of the contract; multiple existing callers are not required.
-
-Read [references/error-contracts.md](references/error-contracts.md) when designing, changing, or normalizing error contracts.
-
-Read [references/feature-layout.md](references/feature-layout.md) when creating or splitting modules under `src/features`.
-
-## Input ownership and return values
-
-- Do not return unchanged inputs or re-expose them in result objects; the caller already has them. Return only meaningful results of the operation.
-- Changes to an object's contents count as changes even when its reference stays the same. When producing a changed object, prefer copying the portions being modified and returning the result without mutating caller-owned data. Do not copy unchanged input merely to justify returning it.
-- Do not clone DOM elements for this purpose or re-expose caller-provided elements in return values. Preserve their identity and return only the operation's results or capabilities.
+- For behavior changes and bug fixes, express the intended behavior in a relevant test before implementation. For wording, naming, type-only, or other nonbehavioral changes, choose proportionate verification without requiring a new unit test.
+- Use PascalCase for classes/interfaces/types, camelCase for variables/functions/methods, and UPPER_SNAKE_CASE for constants. Do not abbreviate variable names; use at most three words and avoid repeating outer object names in nested variables.
+- Use named `interface`s for object shapes and `extends` over intersections. Name boundary union members instead of reconstructing them with `Extract`; reserve `type` for unions and type operators. Put types shared by multiple consumers in `types.ts`.
+- Avoid `any`; prefer `unknown` with guards, `satisfies` over `as`, `as const` unions over `enum`, and `readonly` for immutable data. Use generics only to preserve a real relationship between values or returned container members; replace a naked type parameter used once with a concrete type or `unknown`.
+- Keep fixed constants at their use site unless shared or needed for a boundary, contract, config, type, test, or file-size concern.
+- Read mutable, reactive, or external getters once per decision and reuse the snapshot.
+- Never depend on object-key order or property-evaluation side effects that require a particular order: `sort-keys-fix` reorders properties. Evaluate ordered effects before object creation; represent ordered data with arrays.
+- Avoid `continue` and `break` used to skip loop bodies. Prefer a positive `for...of` body or early return; use array pipelines only when clearer without wasteful passes or allocations.
+- Keep functions at one abstraction level with guard clauses. Review decomposition for mixed responsibilities, deep nesting, combined network/time/global test setup, unclear operations, or roughly 30–40 lines; length is a signal, not a limit. Do not add wrappers that only add navigation or collections/loops solely to enumerate fixed calls; use direct calls unless abstraction clarifies meaning or behavior.
+- Use exhaustive `switch` with a `never` check for discriminated unions or three or more cases of a finite value, including membership expressed with chained `||`. Reserve `if` for guards and binary conditions; do not hide cases in catch-all defaults.
+- Check nullish values with `=== null` / `=== undefined`. Model mutually exclusive states and required data as discriminated unions where practical; keep independently varying state separate.
+- Make persistence destinations explicit in the function name or an argument at the composition site, including injected persistence callbacks.
+- For internal imports, consider available `src/*` aliases and choose the shortest readable valid specifier.
+- Group cohesive feature APIs in an entrypoint and prefer it for outside imports when practical; direct subpaths remain allowed. Do not hide internals by omitting re-exports. Multi-feature `index.ts` files only re-export; a single-feature folder may implement its feature there.
+- Prefer one primary exported function per file, named after the function in kebab-case.
+- Do not use built-in `performance` or `eval`, including via `globalThis` or `window`.
+- After writing code, run `oxlint --fix` and fix remaining issues.

@@ -18,9 +18,13 @@ describe('chat worker generation', () => {
     worker.dispatch(generateRequest())
     await generationStarted.promise
 
+    const rejected = worker.waitForNextResponse('skipped')
     worker.dispatch({modelId: 'qwen-4b', type: 'prepare'})
-    await new Promise<void>((resolve) => {
-      setImmediate(resolve)
+    await rejected
+    expect(worker.postMessage).toHaveBeenCalledWith({
+      reason: 'busy',
+      request: {modelId: 'qwen-4b', type: 'prepare'},
+      type: 'skipped',
     })
 
     expect(worker.postMessage).not.toHaveBeenCalledWith({type: 'ready'})
@@ -42,7 +46,16 @@ describe('chat worker generation', () => {
     worker.dispatch(generateRequest({replyId: 'reply-a'}))
     await generationStarted.promise
 
-    worker.dispatch(generateRequest({replyId: 'reply-b'}))
+    const rejected = worker.waitForNextResponse('skipped')
+    const rejectedRequest = generateRequest({replyId: 'reply-b'})
+    worker.dispatch(rejectedRequest)
+    await rejected
+    expect(worker.postMessage).toHaveBeenCalledWith({
+      reason: 'busy',
+      request: rejectedRequest,
+      type: 'skipped',
+    })
+    expect(runtimeMocks.generate).toHaveBeenCalledOnce()
     const completed = worker.waitForNextResponse('complete')
     firstGeneration.resolve(' 첫 답변 ')
     await completed
