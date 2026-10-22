@@ -1,7 +1,7 @@
 // @vitest-environment node
 import {unzipSync, Zip, ZipPassThrough} from 'fflate'
 import {describe, expect, it, vi} from 'vitest'
-import {createBlobArchive} from '..'
+import {createBlobArchive} from '../create-blob-archive'
 
 const readArchive = async (archive: Blob) => {
   const entries = unzipSync(new Uint8Array(await archive.arrayBuffer()))

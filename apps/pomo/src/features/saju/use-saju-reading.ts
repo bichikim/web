@@ -136,7 +136,7 @@ export function useSajuReading(props: UseSajuReadingProps = {}): SajuReadingCont
     downloads.cancel({kind: 'text', modelId: modelId()})
   }
   const handleResponse = (response: SajuGenerationResponse) => {
-    if (disposed || response.requestId !== activeRequestId) {
+    if (response.type === 'skipped' || disposed || response.requestId !== activeRequestId) {
       return
     }
     switch (response.type) {

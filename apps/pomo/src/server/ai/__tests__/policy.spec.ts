@@ -186,6 +186,16 @@ describe('credit arithmetic contracts', () => {
     ).toMatchObject({credits: 2})
   })
 
+  it('should reject a tiny increment above the ledger maximum', () => {
+    expect(
+      getAiCreditEstimate(
+        'sound',
+        {durationSeconds: 1, steps: 1},
+        {soundDuration: 2147483647, soundStep: Number.MIN_VALUE},
+      ),
+    ).toMatchObject({credits: null})
+  })
+
   it('should round image products once after summing both bases', () => {
     expect(
       getAiCreditEstimate(

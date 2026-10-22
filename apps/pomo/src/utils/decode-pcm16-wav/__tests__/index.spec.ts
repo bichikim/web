@@ -4,17 +4,47 @@ import {encodeMonoPcm16Wav} from '../../encode-mono-pcm16-wav'
 import {decodePcm16Wav} from '..'
 
 describe('decodePcm16Wav', () => {
-  it('should decode a byte view without including adjacent bytes and average stereo frames', () => {
+  it('should preserve interleaved stereo channels without including adjacent bytes', () => {
     const buffer = encodeMonoPcm16Wav(new Float32Array([-1, 1, 0, 0.5]), 24000)
-    new DataView(buffer).setUint16(22, 2, true)
+    const view = new DataView(buffer)
+    view.setUint16(22, 2, true)
+    view.setUint32(28, 96000, true)
+    view.setUint16(32, 4, true)
     const bytes = new Uint8Array(buffer.byteLength + 8)
     bytes.set(new Uint8Array(buffer), 4)
     const result = decodePcm16Wav(bytes.subarray(4, 4 + buffer.byteLength))
     expect(result?.channels).toBe(2)
     expect(result?.sampleRate).toBe(24000)
-    expect(result?.samples[0]).toBeCloseTo(-1 / 65536)
-    expect(result?.samples[1]).toBeCloseTo(16383 / 65536)
+    expect(result?.samples).toEqual(Float32Array.of(-1, 32767 / 32768, 0, 16383 / 32768))
   })
+  it('should preserve three channels in frame order', () => {
+    const buffer = encodeMonoPcm16Wav(Float32Array.of(-1, 0, 1, 0.5, -0.5, 0), 24000)
+    const view = new DataView(buffer)
+    view.setUint16(22, 3, true)
+    view.setUint32(28, 144000, true)
+    view.setUint16(32, 6, true)
+    expect(decodePcm16Wav(buffer)).toEqual({
+      channels: 3,
+      sampleRate: 24000,
+      samples: Float32Array.of(-1, 0, 32767 / 32768, 16383 / 32768, -0.5, 0),
+    })
+  })
+
+  it('should retain only complete channel frames when reading truncated data', () => {
+    const buffer = encodeMonoPcm16Wav(Float32Array.of(-1, 1, 0.5, 0.5), 24000)
+    const view = new DataView(buffer)
+    view.setUint16(22, 2, true)
+    view.setUint32(28, 96000, true)
+    view.setUint16(32, 4, true)
+    const bytes = new Uint8Array(buffer).slice(0, -2)
+    expect(decodePcm16Wav(bytes)).toBeNull()
+    expect(decodePcm16Wav(bytes, {truncatedData: 'read-available'})).toEqual({
+      channels: 2,
+      sampleRate: 24000,
+      samples: Float32Array.of(-1, 32767 / 32768),
+    })
+  })
+
   it('should honor odd unknown chunk padding', () => {
     const original = new Uint8Array(encodeMonoPcm16Wav(new Float32Array([-1]), 8000))
     const bytes = new Uint8Array(original.length + 10)

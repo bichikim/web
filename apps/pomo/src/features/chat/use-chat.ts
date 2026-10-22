@@ -221,6 +221,8 @@ export const useChat = (props: UseChatProps): ChatController => {
 
   const handleResponse = (response: ChatWorkerResponse) => {
     switch (response.type) {
+      case 'skipped':
+        return
       case 'compacting':
         setState({status: 'compacting'})
         return

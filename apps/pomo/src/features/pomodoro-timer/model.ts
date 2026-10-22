@@ -233,7 +233,7 @@ export const getPomodoroProgress = (
   const duration = getPomodoroPhaseDuration(state.phase, config)
   const remaining = getPomodoroRemainingSeconds(state, now)
 
-  return clampUnit((duration - remaining) / duration)
+  return clampUnit((duration - remaining) / duration, {fallback: 0})
 }
 
 const TIMER_DIGITS = 5

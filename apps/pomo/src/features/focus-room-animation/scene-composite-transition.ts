@@ -32,7 +32,7 @@ export class SceneCompositeTransitions {
 
   setProgress(progress: number) {
     if (this.#active !== null) {
-      this.#alphaFilter.alpha = clampUnit(progress)
+      this.#alphaFilter.alpha = clampUnit(progress, {fallback: 0})
     }
   }
 

@@ -205,7 +205,19 @@ describe('dialogue writer worker', () => {
     worker.dispatch({modelId: 'qwen-0.8b', request: '첫 번째 질문', type: 'generate'})
     await generationStarted.promise
 
-    worker.dispatch({modelId: 'qwen-0.8b', request: '두 번째 질문', type: 'generate'})
+    const rejectedRequest = {
+      modelId: 'qwen-0.8b',
+      request: '두 번째 질문',
+      type: 'generate',
+    } as const
+    const skipped = worker.waitForNextResponse('skipped')
+    worker.dispatch(rejectedRequest)
+    await skipped
+    expect(worker.postMessage).toHaveBeenCalledWith({
+      reason: 'busy',
+      request: rejectedRequest,
+      type: 'skipped',
+    })
     expect(transformers.generate).toHaveBeenCalledOnce()
     const complete = worker.waitForNextResponse('complete')
     firstGeneration.resolve()
@@ -362,6 +374,6 @@ describe('dialogue writer worker', () => {
 
     expect(() => {
       worker.dispatch({type: 'unsupported'} as unknown as DialogueWorkerRequest)
-    }).toThrow("Cannot read properties of undefined (reading 'catch')")
+    }).toThrow(TypeError)
   })
 })

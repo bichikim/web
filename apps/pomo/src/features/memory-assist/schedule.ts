@@ -68,7 +68,7 @@ const getScheduledReminderAt = (memo: MemoryMemo, kind: MemoryReminderKind) =>
   kind === 'exact' ? memo.nextExactReminderAt : memo.nextRecallAt
 
 const getRandomInterval = (random: () => number) => {
-  const ratio = clampUnit(random())
+  const ratio = clampUnit(random(), {fallback: 0})
   return RANDOM_MINIMUM + ratio * (RANDOM_MAXIMUM - RANDOM_MINIMUM)
 }
 

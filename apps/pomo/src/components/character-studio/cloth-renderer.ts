@@ -119,7 +119,11 @@ export const attachCloth = (container: AssetContainer) => {
             for (let axis = 0; axis < AXES; axis += 1) {
               length += (surface.positions[offset + axis] - surface.rest[offset + axis]) ** 2
             }
-            const scale = clampUnit(surface.limits[vertex] / Math.max(Math.sqrt(length), EPSILON))
+            // 무한대 제한은 변위를 제한하지 않는 정점이다.
+            const scale = clampUnit(surface.limits[vertex] / Math.max(Math.sqrt(length), EPSILON), {
+              fallback: 0,
+              isInvalid: Number.isNaN,
+            })
             for (let axis = 0; axis < AXES; axis += 1) {
               surface.positions[offset + axis] =
                 surface.rest[offset + axis] +

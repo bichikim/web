@@ -1,5 +1,5 @@
 import {randomInRange} from 'src/utils/random-in-range'
-import {cosineEaseInOut} from 'src/utils/cosine-ease-in-out'
+import {cosineEaseInOut} from 'src/utils/ease'
 import {Container, type Filter, type Texture, Ticker} from 'pixi.js'
 import {clampUnit} from 'src/utils/clamp-unit'
 import {destroyFilters} from './destroy-filters'
@@ -225,7 +225,8 @@ export class PixiLayerScene {
       const {channel} = layer.definition
       const channelState = channel === undefined ? undefined : state.channels?.[channel]
       layer.container.alpha =
-        clampUnit(layer.definition.opacity ?? 1) * clampUnit(channelState?.opacity ?? 1)
+        clampUnit(layer.definition.opacity, {fallback: 1}) *
+        clampUnit(channelState?.opacity, {fallback: 1})
       layer.container.visible = channelState?.visible ?? layer.definition.visible ?? true
       this.#updateStatePixelPush(layer, state)
 
@@ -257,11 +258,10 @@ export class PixiLayerScene {
   }
 
   #updateStatePixelPush(layer: LayerInstance, state: PixiLayerSceneState) {
-    const statePixelPushChannel = layer.definition.statePixelPush?.channel
-    const channelState =
-      statePixelPushChannel === undefined ? undefined : state.channels?.[statePixelPushChannel]
-
-    layer.statePixelPushFilter?.setProgress(clampUnit(channelState?.pixelPushProgress ?? 0))
+    const channel = layer.definition.statePixelPush?.channel
+    const channelState = channel === undefined ? undefined : state.channels?.[channel]
+    const progress = clampUnit(channelState?.pixelPushProgress, {fallback: 0})
+    layer.statePixelPushFilter?.setProgress(progress)
   }
 
   #syncTicker() {
@@ -370,7 +370,7 @@ export class PixiLayerScene {
       return
     }
 
-    const travelProgress = clampUnit(state.elapsedSeconds / state.travelSeconds)
+    const travelProgress = clampUnit(state.elapsedSeconds / state.travelSeconds, {fallback: 0})
     const transitionSeconds =
       motion.definition.kind === 'translation' || motion.definition.kind === 'opacity-pulse'
         ? motion.definition.transitionSeconds
@@ -380,7 +380,7 @@ export class PixiLayerScene {
     const activeProgress =
       transitionSeconds === undefined
         ? travelProgress
-        : clampUnit((state.elapsedSeconds - transitionStart) / transitionSeconds)
+        : clampUnit((state.elapsedSeconds - transitionStart) / transitionSeconds, {fallback: 0})
     const easedProgress = cosineEaseInOut(activeProgress)
     const motionProgress = state.direction === 1 ? easedProgress : 1 - easedProgress
 
@@ -431,7 +431,7 @@ export class PixiLayerScene {
       return
     }
 
-    const progress = clampUnit(state.elapsedSeconds / state.travelSeconds)
+    const progress = clampUnit(state.elapsedSeconds / state.travelSeconds, {fallback: 0})
     applyLoopingTranslation(layer.container, layer.sprite, motion.definition, progress)
 
     if (progress === 1) {

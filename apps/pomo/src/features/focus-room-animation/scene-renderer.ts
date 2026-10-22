@@ -398,7 +398,7 @@ export class PSceneRenderer {
 
       startedAt ??= timestamp
 
-      const progress = clampUnit((timestamp - startedAt) / SCENE_TRANSITION_DURATION)
+      const progress = clampUnit((timestamp - startedAt) / SCENE_TRANSITION_DURATION, {fallback: 0})
       this.#sceneTransitions.setProgress(progress)
       this.#depthFilter?.setDepthMix(progress)
       this.#application.render()

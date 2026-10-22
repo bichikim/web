@@ -119,8 +119,8 @@ export function createPcmEdgeBlend(options: PcmEdgeBlendOptions): ArrayBuffer {
   for (let frame = 0; frame < frames; frame += 1) {
     const generatedWeight =
       direction === 'generated-to-original'
-        ? clampUnit((frames - 1 - frame) / rampFrames)
-        : clampUnit(frame / rampFrames)
+        ? clampUnit((frames - 1 - frame) / rampFrames, {fallback: 0})
+        : clampUnit(frame / rampFrames, {fallback: 0})
     for (let channel = 0; channel < 2; channel += 1) {
       const offset = frame * STEREO_FRAME_BYTES + channel * 2
       const generatedOffset = (generatedStartFrame + frame) * STEREO_FRAME_BYTES + channel * 2

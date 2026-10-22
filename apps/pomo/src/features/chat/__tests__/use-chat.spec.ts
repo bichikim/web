@@ -238,6 +238,14 @@ describe('useChat', () => {
     clientRecord?.respond({text: '첫', type: 'token'})
     clientRecord?.respond({text: ' 답변', type: 'token'})
     expect(result.streamingText()).toBe('첫 답변')
+    clientRecord?.respond({
+      reason: 'busy',
+      request: {modelId: 'qwen-4b', type: 'prepare'},
+      type: 'skipped',
+    })
+    expect(result.state().status).toBe('generating')
+    expect(result.streamingText()).toBe('첫 답변')
+    expect(result.isBusy()).toBe(true)
 
     clientRecord?.respond({type: 'compacting'})
     expect(result.statusMessage()).toBe('오래된 대화를 기억 메모로 압축하고 있어요…')

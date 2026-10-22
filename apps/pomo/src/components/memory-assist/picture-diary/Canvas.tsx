@@ -38,8 +38,8 @@ const getPoint = (event: PointerEvent & {currentTarget: SVGSVGElement}): Picture
   const x = bounds.width === 0 ? 0 : (event.clientX - bounds.left) / bounds.width
   const y = bounds.height === 0 ? 0 : (event.clientY - bounds.top) / bounds.height
   return {
-    x: clampUnit(x),
-    y: clampUnit(y),
+    x: clampUnit(x, {fallback: 0}),
+    y: clampUnit(y, {fallback: 0}),
   }
 }
 

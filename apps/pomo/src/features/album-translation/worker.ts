@@ -6,7 +6,10 @@ import {trimRepetitiveTail} from '../text-generation/answer'
 import {createDeviceTarget} from '../text-generation/create-device-target'
 import {createRequestSequence} from '../text-generation/create-request-sequence'
 
-import {createExclusiveAsyncTask} from 'src/utils/create-exclusive-async-task'
+import {
+  createExclusiveAsyncTask,
+  type ExclusiveAsyncTaskResult,
+} from 'src/utils/create-exclusive-async-task'
 
 import {createTextGenerationExecutor} from '../text-generation/execution'
 import type {AlbumTranslationWorkerRequest, AlbumTranslationWorkerResponse} from './messages'
@@ -50,7 +53,9 @@ const translateAlbum = async (request: AlbumTranslationWorkerRequest) => {
   sendResponse({translations: parseAlbumTranslation(trimRepetitiveTail(output)), type: 'complete'})
 }
 
-const handleRequest = (request: AlbumTranslationWorkerRequest): Promise<void> => {
+const handleRequest = (
+  request: AlbumTranslationWorkerRequest,
+): Promise<ExclusiveAsyncTaskResult> => {
   return translation.run(() => translateAlbum(request))
 }
 
@@ -58,5 +63,6 @@ listenTextGenerationRequests<AlbumTranslationWorkerRequest>({
   fallback: 'Gemma 4 번역을 실행하지 못했습니다.',
   handle: handleRequest,
   onError: sendResponse,
+  onSkipped: (request) => sendResponse({reason: 'busy', request, type: 'skipped'}),
   scope: workerScope,
 })

@@ -79,7 +79,10 @@ export const createPAudioEnvelope = (options: CreatePAudioEnvelopeOptions): PAud
 
   return {
     frameDurationMs: ENVELOPE_FRAME_DURATION_MS,
-    levels: rawLevels.map((level) => clampUnit((level - silenceFloor) / audibleRange)),
+    // 잘못된 샘플을 무음으로 바꾸지 않고 NaN으로 보존한다.
+    levels: rawLevels.map((level) =>
+      clampUnit((level - silenceFloor) / audibleRange, {fallback: Number.NaN}),
+    ),
   }
 }
 
@@ -137,7 +140,7 @@ export const createPVisemeDriver = (): PVisemeDriver => {
         ? DEFAULT_FRAME_DURATION_MS
         : Math.max(1, frame.currentTimeMs - previousTimeMs)
     previousTimeMs = frame.currentTimeMs
-    intensity = smoothIntensity(intensity, clampUnit(frame.intensity), elapsedMs)
+    intensity = smoothIntensity(intensity, clampUnit(frame.intensity, {fallback: 0}), elapsedMs)
     let nextViseme = frame.viseme
 
     if (frame.viseme === 'closed') {

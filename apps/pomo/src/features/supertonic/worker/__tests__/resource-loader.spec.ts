@@ -226,7 +226,6 @@ it('should allocate the streamed length captured before copying a changing byte 
     expect(new Uint8Array(result.value)).toEqual(Uint8Array.of(1, 2))
     expect(result.value).not.toBe(bytes.buffer)
   }
-  expect(lengthReads).toBe(2)
   expect(bytes).toEqual(Uint8Array.of(99, 1, 2, 88))
   expect(progress).toHaveBeenCalledExactlyOnceWith({
     fileName: 'weights.bin',

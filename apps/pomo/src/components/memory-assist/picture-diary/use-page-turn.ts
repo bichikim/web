@@ -390,7 +390,7 @@ class PictureDiaryPageTurnMachine {
         return
       }
       startTime ??= time
-      const linearProgress = clampUnit((time - startTime) / PAGE_TURN_DURATION)
+      const linearProgress = clampUnit((time - startTime) / PAGE_TURN_DURATION, {fallback: 0})
       const progress = easeOutCubic(linearProgress)
       this.setFoldView(
         animation.currentGesture,

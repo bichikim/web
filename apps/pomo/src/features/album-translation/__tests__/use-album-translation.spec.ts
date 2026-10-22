@@ -44,6 +44,15 @@ it('should translate, expose worker progress, complete, and dispose', () => {
   expect(controller.state()).toMatchObject({progress: 42, status: 'loading'})
   options?.onResponse({type: 'started'})
   expect(controller.state()).toMatchObject({status: 'generating'})
+  options?.onResponse({
+    reason: 'busy',
+    request: {description: '중복', title: '중복', type: 'translate'},
+    type: 'skipped',
+  })
+  expect(controller.state()).toMatchObject({status: 'generating'})
+  expect(controller.isBusy()).toBe(true)
+  expect(complete).not.toHaveBeenCalled()
+  expect(dispose).not.toHaveBeenCalled()
   options?.onResponse({translations: TRANSLATIONS, type: 'complete'})
   expect(complete).toHaveBeenCalledWith(TRANSLATIONS)
   expect(controller.state()).toEqual({status: 'complete'})

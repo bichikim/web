@@ -1,4 +1,5 @@
 import {concatFloat32} from 'src/utils/concat-float32'
+import {intersperse} from 'src/utils/intersperse'
 
 interface JoinAudioChunksOptions {
   readonly chunks: ReadonlyArray<Float32Array>
@@ -8,10 +9,11 @@ interface JoinAudioChunksOptions {
 
 /** Joins mono PCM chunks with a fixed silence gap between adjacent utterances. */
 export const joinAudioChunks = (options: JoinAudioChunksOptions): Float32Array => {
-  if (options.chunks.length === 0) {
+  const {chunks} = options
+  if (chunks.length === 0) {
     return new Float32Array()
   }
 
   const silenceLength = Math.round(options.sampleRate * options.silenceDuration)
-  return concatFloat32(options, silenceLength)
+  return concatFloat32(intersperse(chunks, new Float32Array(silenceLength)))
 }

@@ -1,23 +1,33 @@
-export interface ExclusiveAsyncTask {
-  readonly run: (operation: () => Promise<void>) => Promise<void>
+export interface CompletedAsyncTask {
+  readonly status: 'completed'
 }
 
-/** 비동기 작업을 한 번에 하나씩 실행하고 실행 중 들어온 요청은 버린다. */
+export interface SkippedAsyncTask {
+  readonly reason: 'busy'
+  readonly status: 'skipped'
+}
+
+export type ExclusiveAsyncTaskResult = CompletedAsyncTask | SkippedAsyncTask
+
+export interface ExclusiveAsyncTask {
+  /** 빈 슬롯에서 작업을 실행한다. 실행 중이면 작업을 호출하지 않고 skipped를 반환하며, 실행한 작업의 오류는 그대로 전달한다. */
+  readonly run: (operation: () => Promise<void>) => Promise<ExclusiveAsyncTaskResult>
+}
+
+/** 비동기 작업을 한 번에 하나씩 실행하고, 추가 요청에는 busy 사유의 skipped 결과를 반환한다. */
 export const createExclusiveAsyncTask = (): ExclusiveAsyncTask => {
   let running = false
   return {
-    run(operation) {
+    async run(operation) {
       if (running) {
-        return Promise.resolve()
+        return {reason: 'busy', status: 'skipped'}
       }
       running = true
       try {
-        return operation().finally(() => {
-          running = false
-        })
-      } catch (error: unknown) {
+        await operation()
+        return {status: 'completed'}
+      } finally {
         running = false
-        return Promise.reject(error)
       }
     },
   }
