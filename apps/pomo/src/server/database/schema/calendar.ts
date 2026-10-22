@@ -10,9 +10,10 @@ import {
   varchar,
 } from 'drizzle-orm/pg-core'
 
+import {CALENDAR_PROVIDERS} from '../../../features/calendar/types'
 import {pomoUsers} from './users'
 
-export const calendarProviderEnum = pgEnum('calendar_provider', ['google', 'microsoft'])
+export const calendarProviderEnum = pgEnum('calendar_provider', CALENDAR_PROVIDERS)
 
 export const calendarConnections = pgTable(
   'calendar_connections',
