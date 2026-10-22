@@ -4,6 +4,9 @@ import {
   type PreparedPuppetDocument,
 } from './internal/prepared-document'
 import type {PreparePuppetDocumentRequest} from './internal/prepare-puppet-document-request'
+import {expandDocumentTextureAssets} from './texture-assets'
+import type {PuppetDocument} from './document'
+import type {PreparePuppetDocumentResponse} from './internal/prepare-puppet-document-response'
 import {
   parseDocument,
   type ParseDocumentFailure,
@@ -80,12 +83,19 @@ export const preparePuppetDocument = (
       dispose()
       reject(new Error('Puppet document validation Worker failed', {cause: event.error}))
     }
-    const handleMessage = (event: MessageEvent<ParseDocumentResult>) => {
+    const handleMessage = (event: MessageEvent<PreparePuppetDocumentResponse>) => {
       dispose()
       const result = event.data
 
       resolve(
-        result.ok ? {document: markPreparedPuppetDocument(result.document), ok: true} : result,
+        result.ok
+          ? {
+              document: markPreparedPuppetDocument(
+                expandDocumentTextureAssets(result.document) as PuppetDocument,
+              ),
+              ok: true,
+            }
+          : result,
       )
     }
     const handleMessageError = (event: MessageEvent<unknown>) => {

@@ -1,12 +1,43 @@
 import {unzipSync} from 'fflate'
 import {jsonObject} from './json-fields'
 
-const MAXIMUM_ARCHIVE_BYTES = 536_870_912
-const MAXIMUM_ENTRY_COUNT = 100_000
+export const MAXIMUM_ARCHIVE_BYTES = 536_870_912
+export const MAXIMUM_ENTRY_COUNT = 100_000
 
 export interface CubismArchive {
   readonly entries: ReadonlyMap<string, Uint8Array>
   readJson(path: string): Record<string, unknown>
+}
+
+/** ZIP과 폴더에서 같은 상대 경로와 JSON 읽기를 사용한다. */
+export const createCubismArchive = (files: ReadonlyMap<string, Uint8Array>): CubismArchive => {
+  const entries = new Map<string, Uint8Array>()
+  let size = 0
+  for (const [name, bytes] of files) {
+    const path = resolveCubismAsset('', name)
+    if (entries.has(path)) {
+      throw new Error(`Cubism asset path is duplicated: ${path}`)
+    }
+    size += bytes.length
+    if (
+      size > MAXIMUM_ARCHIVE_BYTES ||
+      bytes.length > MAXIMUM_ARCHIVE_BYTES / 2 ||
+      entries.size >= MAXIMUM_ENTRY_COUNT
+    ) {
+      throw new Error('Cubism archive exceeds the supported size')
+    }
+    entries.set(path, bytes)
+  }
+  return {
+    entries,
+    readJson: (path) => {
+      const entry = entries.get(path)
+      if (entry === undefined) {
+        throw new Error(`Cubism asset is missing: ${path}`)
+      }
+      return jsonObject(JSON.parse(new TextDecoder('utf-8', {fatal: true}).decode(entry)))
+    },
+  }
 }
 
 /** ZIP 내부 상대 경로를 해석하며 외부 URL과 아카이브 밖의 경로를 거부한다. */
@@ -50,15 +81,5 @@ export const readCubismArchive = (source: ArrayBuffer | Uint8Array): CubismArchi
       return !file.name.endsWith('/')
     },
   })
-  const entries = new Map(Object.entries(unzipped))
-  return {
-    entries,
-    readJson: (path) => {
-      const entry = entries.get(path)
-      if (entry === undefined) {
-        throw new Error(`Cubism asset is missing: ${path}`)
-      }
-      return jsonObject(JSON.parse(new TextDecoder('utf-8', {fatal: true}).decode(entry)))
-    },
-  }
+  return createCubismArchive(new Map(Object.entries(unzipped)))
 }

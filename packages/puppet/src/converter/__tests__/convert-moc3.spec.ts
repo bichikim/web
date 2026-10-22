@@ -101,7 +101,19 @@ test('should normalize the compiled reversed Y coordinate convention', () => {
 
 test('should require every referenced external texture instead of discarding meshes', () => {
   vi.mocked(readMoc3).mockReturnValue(fixture())
-  expect(() => convertMoc3(new Uint8Array(), {textures: []})).toThrow(/texture/i)
+  expect(() => convertMoc3(new Uint8Array(), {textures: []})).toThrow('인덱스 0')
+})
+
+test('should list all missing texture indices before converting any meshes', () => {
+  const model = fixture()
+  vi.mocked(readMoc3).mockReturnValue({
+    ...model,
+    tables: {
+      ...model.tables,
+      artMeshes: table({...model.tables.artMeshes!.columns, texture: [1, 3]}, ['first', 'second']),
+    },
+  })
+  expect(() => convertMoc3(new Uint8Array(), {textures: [texture]})).toThrow('인덱스 1, 3')
 })
 
 test('should reject incomplete keyform grids', () => {
@@ -267,3 +279,48 @@ test.each([
   })
   expect(() => convertMoc3(new Uint8Array(), {textures: [texture]})).toThrow(/parent|hierarchy/i)
 })
+
+test.each([4, 5])(
+  'should convert a compiled %s-axis grid without truncating default coordinates',
+  (dimensions) => {
+    const model = fixture()
+    const axes = Array.from({length: dimensions}, (_, index) => index)
+    const forms = Array.from({length: 2 ** dimensions}, (_, index) => index)
+    const tables = {
+      ...model.tables,
+      artMeshes: table({...model.tables.artMeshes!.columns, count: [forms.length]}, ['mesh']),
+      bindingIndices: table({values: axes}),
+      keyformBindings: table({begin: [0], count: [dimensions]}),
+      keys: table({values: axes.flatMap(() => [0, 1])}),
+      meshKeyforms: table({
+        opacity: forms.map(() => 1),
+        order: forms.map(() => 10),
+        positionBegin: forms.map((index) => index * 6),
+      }),
+      parameterBindings: table({begin: axes.map((index) => index * 2), count: axes.map(() => 2)}),
+      parameters: table(
+        {
+          bindingBegin: axes,
+          bindingCount: axes.map(() => 1),
+          default: axes.map(() => 0.5),
+          maximum: axes.map(() => 1),
+          minimum: axes.map(() => 0),
+          repeat: axes.map(() => 0),
+        },
+        axes.map((index) => `p${index}`),
+      ),
+      positions: table({values: forms.flatMap((index) => [index, 0, index + 1, 0, index, 1])}),
+    }
+    vi.mocked(readMoc3).mockReturnValue({...model, tables})
+    const {document} = convertMoc3(new Uint8Array(), {textures: [texture]})
+    expect(document.parts[0]!.mesh.vertices[0]).toBeCloseTo((forms.length - 1) / 2)
+    const posed = composeParameterVertices({
+      document,
+      parameterValues: Object.fromEntries(axes.map((index) => [`p${index}`, 1])),
+      partId: 'mesh',
+      restVertices: document.parts[0]!.mesh.vertices,
+    })
+    expect(posed[0]).toBeCloseTo(forms.length - 1)
+    expect(parseDocumentValue(document).ok).toBe(true)
+  },
+)

@@ -1,3 +1,5 @@
+export * from './document-glue'
+import type {PuppetGlue} from './document-glue'
 export * from './document-model'
 export * from './document-motion'
 export * from './document-physics'
@@ -436,6 +438,8 @@ export interface PuppetParameterInfluence {
 }
 
 export interface PuppetParameterBindingBase {
+  /** 영향 곡선의 합성 방식. 생략하면 기존 최솟값 규칙을 사용한다. */
+  readonly influenceMode?: 'minimum' | 'multiply'
   /** Additive samples may exceed display ranges; the composed properties are still clamped. */
   readonly keyformRange?: 'unbounded'
   /** 격자 샘플링의 축 정밀도와 키 경계 정책. 생략하면 기존 채널별 계산 방식을 유지한다. */
@@ -477,19 +481,6 @@ export type PuppetParameterBinding =
   | PuppetParameterBinding2D
   | PuppetParameterBinding3D
 
-export interface PuppetEdgeReference extends PuppetVertexReference {
-  readonly edge: {readonly endIndex: number; readonly position: number}
-}
-
-export interface PuppetGlue {
-  readonly id: string
-  readonly first: PuppetVertexReference
-  readonly second: PuppetVertexReference | PuppetEdgeReference
-  /** B's share of the joined position, from zero to one. */
-  readonly weight: number
-  readonly strength: number
-}
-
 export interface PuppetLayerOrderCondition {
   /** Compare the sum of resolved parameter values against the strict threshold. */
   readonly parameterIds: ReadonlyArray<string>
@@ -517,6 +508,8 @@ export interface PuppetExpressionParameter {
 
 /** A named parameter preset applied over motions and under external overrides. */
 export interface PuppetExpression {
+  /** Cubism 프리셋의 사인 페이드와 전환 합성. 생략하면 기존 Poffo 합성을 유지한다. */
+  readonly composition?: 'cubism'
   /** Seconds to reach full weight; defaults to `DEFAULT_PUPPET_EXPRESSION_FADE_TIME`. */
   readonly fadeInTime?: number
   /** Seconds to release; defaults to `DEFAULT_PUPPET_EXPRESSION_FADE_TIME`. */
@@ -564,6 +557,8 @@ export interface PuppetDocument {
   readonly breath?: ReadonlyArray<PuppetBreathParameter>
   readonly expressions?: ReadonlyArray<PuppetExpression>
   readonly framesPerSecond?: number
+  /** 공유 정점을 연결 순서대로 계산한다. 생략하면 기존 정점 독점 검증을 유지한다. */
+  readonly glueComposition?: 'sequential'
   readonly glue?: ReadonlyArray<PuppetGlue>
   readonly hitAreas?: ReadonlyArray<PuppetHitArea>
   /** Default framing; the whole viewport when omitted. */

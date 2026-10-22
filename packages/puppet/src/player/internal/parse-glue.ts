@@ -71,6 +71,7 @@ const validTarget = (
 export const hasValidGlue = (
   value: unknown,
   parts: ReadonlyArray<PuppetPart>,
+  composition?: 'sequential',
 ): value is ReadonlyArray<PuppetGlue> | undefined => {
   if (value === undefined) {
     return true
@@ -81,6 +82,8 @@ export const hasValidGlue = (
   const ids = new Set<string>()
   const references = new Set<string>()
   const targets = new Set<string>()
+  const overlaps = (keys: ReadonlyArray<string>, occupied: ReadonlySet<string>) =>
+    composition === undefined && keys.some((key) => occupied.has(key))
   return value.every((connection: unknown) => {
     if (
       !isRecord(connection) ||
@@ -103,7 +106,8 @@ export const hasValidGlue = (
       JSON.stringify([reference.partId, reference.vertexIndex]),
     )
     if (
-      keys.some((key) => references.has(key) || targets.has(key)) ||
+      overlaps(keys, references) ||
+      overlaps(keys, targets) ||
       !hasMeshVertex(connection.first, parts) ||
       !hasMeshVertex(connection.second, parts)
     ) {
@@ -114,7 +118,7 @@ export const hasValidGlue = (
       const targetKeys = [target.vertexIndex, target.edge.endIndex].map((index) =>
         JSON.stringify([target.partId, index]),
       )
-      if (targetKeys.some((key) => references.has(key))) {
+      if (overlaps(targetKeys, references)) {
         return false
       }
       targetKeys.forEach((key) => targets.add(key))
@@ -157,8 +161,12 @@ export const hasValidGlueKeyforms = (
   glue: unknown,
   bindings: ReadonlyArray<PuppetParameterBinding>,
   parts: ReadonlyArray<PuppetPart>,
+  composition?: unknown,
 ): boolean => {
-  if (!hasValidGlue(glue, parts)) {
+  if (composition !== undefined && composition !== 'sequential') {
+    return false
+  }
+  if (!hasValidGlue(glue, parts, composition)) {
     return false
   }
   const owners = new Map((glue ?? []).map((connection) => [connection.id, connection]))

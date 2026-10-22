@@ -65,3 +65,17 @@ test('should select discrete precision independently of continuous precision and
     sampleGridCoordinates({...options, binding: precise, sampling: 'step', values: [1]}),
   ).toEqual([1])
 })
+
+test('should evaluate the default coordinates of a five-axis import grid before slicing', () => {
+  const keyforms = Array.from({length: 32}, (_, index) => ({
+    values: Array.from({length: 5}, (_, axis) => Math.floor(index / 2 ** axis) % 2),
+  }))
+  expect(
+    sampleGridCoordinates({
+      binding: {keyforms, parameterIds: ['a', 'b', 'c', 'd', 'e']},
+      keyformCoordinates: keyforms.map((_, index) => [index === 31 ? 32 : 0]),
+      restCoordinates: [0],
+      values: [0.5, 0.5, 0.5, 0.5, 0.5],
+    }),
+  ).toEqual([1])
+})

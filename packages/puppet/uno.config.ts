@@ -1,5 +1,6 @@
 import {runtimeShortcuts, viewerShortcuts} from './uno/shortcuts/viewer'
 import {controlShortcuts} from './uno/shortcuts/controls'
+import {converterShortcuts} from './uno/shortcuts/converter'
 import {brushShortcuts} from './uno/shortcuts/brush'
 import {icons as tablerIcons} from '@iconify-json/tabler'
 import {defineConfig, presetIcons, presetWind3} from 'unocss'
@@ -30,6 +31,7 @@ const shortcuts = {
   ],
   ...iconShortcuts,
   ...controlShortcuts,
+  ...converterShortcuts,
   ...layoutShortcuts,
   ...layersShortcuts,
   ...layerOrderShortcuts,

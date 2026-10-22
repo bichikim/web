@@ -29,6 +29,8 @@ const model = convertCmo3(cmo3Bytes)
 
 변환 함수는 전달받은 바이트를 동기적으로 변환하고 `{document, warnings}`를 반환한다.
 파일 읽기와 저장은 호출자가 담당한다. 지원하지 않거나 잘못된 입력은 오류를 던진다.
+필수 모델·텍스처 누락은 변환을 중단한다. 선택 파일 누락은 `warnings`에 경로를 남기고
+해당 파일만 제외한다. 파일 분류는 [누락 검사](find-missing-cubism-assets.ts)를 따른다.
 
 CMO3를 명시하거나 ZIP에 CMO3가 하나 있으면 기존 편집 원본 변환을 사용한다.
 그 외에는 `model3.json`이 참조하는 `.moc3`를 직접 변환하며 편집 원본이 필요하지 않다. 여러 모델이 들어 있으면 `modelPath`로 `model3.json`의
@@ -59,7 +61,7 @@ MOC3 경로는 두 채널의 Float32, 일반 키폼의 파라미터 단위 0.001
 - 모션 `Sound`: ZIP의 WAV를 데이터 URL로 포함해 문서 하나로 재생한다. 가져온 오디오는
   `analysis: 'rms'`와 `volume: 'source'`를 각각 지정해 프레임별 채널 RMS 립싱크와
   모션 페이드에 영향받지 않는 원음 볼륨을 사용한다.
-  누락된 파일과 지원하지 않는 WAV 인코딩은 변환 오류로 보고한다.
+  WAV가 누락되면 경고를 남기고 모션을 음성 없이 가져온다. 지원하지 않는 WAV 인코딩은 변환 오류로 보고한다.
 
 확장 보간의 중간 키폼을 사용하는 이유는
 [Cubism의 SDK 내보내기 방식](https://docs.live2d.com/en/cubism-editor-manual/extended-interpolation/)과

@@ -31,6 +31,7 @@ export const DEFAULT_PUPPET_CHAIN_GRAVITY = [0, 1] as const
 /**
  * Maps a parameter's offset from its default onto `minimum..maximum` around `center`, each side
  * scaled separately (Cubism's normalization).
+ * The center may lie outside the endpoints, as permitted by Cubism runtime data.
  */
 export interface PuppetPhysicsRange {
   readonly center: number

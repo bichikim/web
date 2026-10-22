@@ -26,6 +26,7 @@ export const useRuntimeControls = (props: UseRuntimeControlsProps) => {
   const [manual, setManual] = createSignal<PuppetParameterValueMap>({})
   const [tracked, setTracked] = createSignal<PuppetParameterValueMap>({})
   const [activeExpression, setActiveExpression] = createSignal<string | null>(null)
+  const [modelExpression, setModelExpression] = createSignal<string | null>(null)
   const [raw, setRaw] = createSignal<TrackingValues | null>(null)
   const [trackingInputs, setTrackingInputs] = createSignal<TrackingValues | null>(null)
   const mappingInputs = createMemo<MappingValues>(() => ({
@@ -38,6 +39,7 @@ export const useRuntimeControls = (props: UseRuntimeControlsProps) => {
       setManual({})
       setTracked({})
       setActiveExpression(null)
+      setModelExpression(null)
       setRaw(null)
       setTrackingInputs(null)
       lastTimestamp = undefined
@@ -111,8 +113,10 @@ export const useRuntimeControls = (props: UseRuntimeControlsProps) => {
     manual,
     mappedValues,
     mappingInputs,
+    modelExpression: () => modelExpression() ?? undefined,
     profile,
     raw,
+    selectModelExpression: (id: string | undefined) => setModelExpression(id ?? null),
     setManual: (id: string, value: number | undefined) =>
       setManual((current) =>
         value === undefined

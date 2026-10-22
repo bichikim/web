@@ -1,41 +1,71 @@
 import type {Element} from '@xmldom/xmldom'
 
-export const elementChildren = (element: Element): ReadonlyArray<Element> =>
-  Array.from(element.childNodes).filter((node): node is Element => node.nodeType === 1)
+export const elementChildren = (element: Element | undefined): ReadonlyArray<Element> =>
+  element === undefined
+    ? []
+    : Array.from(element.childNodes).filter((node): node is Element => node.nodeType === 1)
 
-export const child = (element: Element, tag: string, name?: string): Element | undefined =>
+export const child = (
+  element: Element | undefined,
+  tag: string,
+  name?: string,
+): Element | undefined =>
   elementChildren(element).find(
     (candidate) =>
       candidate.tagName === tag && (name === undefined || candidate.getAttribute('xs.n') === name),
   )
 
-export const field = (element: Element, tag: string, name: string): Element | undefined =>
-  Array.from(element.getElementsByTagName(tag)).find(
-    (candidate) => candidate.getAttribute('xs.n') === name,
-  )
-
-export const numbers = (element: Element | undefined): ReadonlyArray<number> => {
-  const text = element?.textContent?.trim()
-  return text === undefined || text.length === 0 ? [] : text.split(/\s+/u).map(Number)
-}
-
-export const scalar = (element: Element | undefined): number | undefined => {
-  const value = Number(element?.textContent)
-  return element === undefined || !Number.isFinite(value) ? undefined : value
-}
+export const field = (
+  element: Element | undefined,
+  tag: string,
+  name: string,
+): Element | undefined =>
+  element === undefined
+    ? undefined
+    : Array.from(element.getElementsByTagName(tag)).find(
+        (candidate) => candidate.getAttribute('xs.n') === name,
+      )
 
 export const resolve = (
   element: Element | undefined,
   references: ReadonlyMap<string, Element>,
 ): Element | undefined => {
   const reference = element?.getAttribute('xs.ref')
-  return reference === null || reference === undefined ? element : references.get(reference)
+  if (reference === null || reference === undefined) {
+    return element
+  }
+  const resolved = references.get(reference)
+  if (resolved === undefined) {
+    throw new Error(`CMO3 reference is missing: ${reference}`)
+  }
+  return resolved
 }
 
 export const guid = (
   element: Element | undefined,
   references: ReadonlyMap<string, Element>,
 ): string | undefined => resolve(element, references)?.getAttribute('uuid') ?? undefined
+
+export const scalar = (
+  element: Element | undefined,
+  references?: ReadonlyMap<string, Element>,
+): number | undefined => {
+  const resolved = references === undefined ? element : resolve(element, references)
+  const value = Number(resolved?.textContent)
+  return resolved === undefined || !Number.isFinite(value) ? undefined : value
+}
+
+export const numbers = (element: Element | undefined): ReadonlyArray<number> => {
+  const text = element?.textContent?.trim() ?? ''
+  if (text.length === 0) {
+    return []
+  }
+  const values = text.split(/\s+/u).map(Number)
+  if (!values.every(Number.isFinite)) {
+    throw new Error('CMO3 coordinates must be finite numbers')
+  }
+  return values
+}
 
 export const getSources = (
   model: Element,

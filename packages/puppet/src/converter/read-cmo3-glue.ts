@@ -17,6 +17,7 @@ interface Cmo3Mesh {
 }
 
 export interface Cmo3Glue {
+  readonly warnings: ReadonlyArray<string>
   readonly glue: ReadonlyArray<PuppetGlue>
   readonly parameterBindings: ReadonlyArray<PuppetParameterBinding>
 }
@@ -48,11 +49,12 @@ export const readCmo3Glue = (
         ? []
         : numbers(resolve(field(mesh.source, 'int-array', 'pointUid'), references))
     const vertexIndex = identifiers.indexOf(uid)
-    if (mesh === undefined || vertexIndex < 0) {
+    if (mesh === undefined) {
       throw new Error('CMO3 glue refers to a missing mesh vertex')
     }
-    return {partId: mesh.part.id, vertexIndex}
+    return vertexIndex < 0 ? undefined : {partId: mesh.part.id, vertexIndex}
   }
+  let skipped = 0
   const parameterBindings: PuppetParameterBinding[] = []
   const glue = getSources(model, 'CAffecterSourceSet', references).flatMap((source) => {
     if (source.tagName !== 'CGlueSource') {
@@ -63,18 +65,30 @@ export const readCmo3Glue = (
     const strength = form === undefined ? 1 : (scalar(child(form, 'f', 'intensity')) ?? 1)
     const weights = numbers(resolve(child(source, 'float-array', 'weights'), references))
     const vertices = numbers(resolve(child(source, 'long-array', 'bindVertexUids'), references))
-    const id = field(source, 'CAffecterId', 'id')?.getAttribute('idstr') ?? 'glue'
-    const connections = Array.from({length: vertices.length / 2}, (_, index): PuppetGlue => {
-      const firstWeight = weights[index * 2]!
-      const secondWeight = weights[index * 2 + 1]!
-      return {
-        first: endpoint(source, 'targetArtMeshA_guid', vertices[index * 2]!),
-        id: `${id}:${index}`,
-        second: endpoint(source, 'targetArtMeshB_guid', vertices[index * 2 + 1]!),
-        strength: Math.min(1, Math.max(0, strength)),
-        weight: firstWeight + secondWeight === 0 ? 0 : firstWeight / (firstWeight + secondWeight),
-      }
-    })
+    const id =
+      resolve(field(source, 'CAffecterId', 'id'), references)?.getAttribute('idstr') ?? 'glue'
+    const connections = Array.from({length: vertices.length / 2}, (_, index) => index).flatMap(
+      (index): ReadonlyArray<PuppetGlue> => {
+        const first = endpoint(source, 'targetArtMeshA_guid', vertices[index * 2]!)
+        const second = endpoint(source, 'targetArtMeshB_guid', vertices[index * 2 + 1]!)
+        if (first === undefined || second === undefined) {
+          skipped += 1
+          return []
+        }
+        const firstWeight = weights[index * 2]!
+        const secondWeight = weights[index * 2 + 1]!
+        return [
+          {
+            first,
+            id: `${id}:${index}`,
+            second,
+            strength: Math.min(1, Math.max(0, strength)),
+            weight:
+              firstWeight + secondWeight === 0 ? 0 : firstWeight / (firstWeight + secondWeight),
+          },
+        ]
+      },
+    )
     if (forms.parameterGuids.length === 0 || connections.length === 0) {
       return connections
     }
@@ -119,5 +133,10 @@ export const readCmo3Glue = (
       strength: Math.min(1, Math.max(0, defaultStrength!)),
     }))
   })
-  return {glue, parameterBindings}
+  return {
+    glue,
+    parameterBindings,
+    warnings:
+      skipped === 0 ? [] : [`존재하지 않는 정점을 가리키는 Glue 연결 ${skipped}개를 제외했습니다.`],
+  }
 }
