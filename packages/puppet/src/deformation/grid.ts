@@ -10,6 +10,7 @@ import type {
 } from '../player/document'
 import {transformCurvePoint} from './curve'
 import {sampleDeformerSurface} from './internal/surface'
+import {sampleWarpGrid} from './sample-warp-grid'
 
 const bindingMatches = new WeakMap<PuppetSceneDeformerNode, boolean>()
 
@@ -30,6 +31,9 @@ const transformUnweightedShape = (
   }
   if (node.curveAxis !== undefined) {
     return transformCurvePoint(node, point)
+  }
+  if (node.interpolation !== undefined) {
+    return sampleWarpGrid(node, point)
   }
   return sampleDeformerSurface({
     horizontalProgress: (point.x - node.bounds.x) / node.bounds.width,
@@ -73,7 +77,7 @@ const transformUnweightedPoint = (
     bindingMatches.set(node, unchanged)
   }
   // Binding layouts never store a rotation scale, so a scaled pose still needs the node mapping.
-  return unchanged && (node.rotationScale ?? 1) === 1
+  return unchanged && (node.rotationScale ?? 1) === 1 && !node.rotationReflection?.some(Boolean)
     ? preserved
     : applyBindingStep(node, binding.rest, preserved, vertex)
 }

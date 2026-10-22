@@ -14,6 +14,13 @@ const withPoseGroups = (
     .map((group) => ({
       ...group,
       entries: group.entries.filter((entry) => entry.partIds.length > 0),
+      ...(group.sourceParameterIds === undefined
+        ? {}
+        : {
+            sourceParameterIds: group.sourceParameterIds.filter(
+              (_, index) => group.entries[index]!.partIds.length > 0,
+            ),
+          }),
     }))
     .filter((group) => group.entries.length > 0)
   return hasValidPoseGroups(kept, document.parts, document.parameters ?? [])
@@ -59,6 +66,7 @@ export const setPartPose = (
       const joined = group.entries.some((entry) => entry.value === target.value)
       return {
         ...group,
+        ...(joined ? {} : {sourceParameterIds: undefined}),
         entries: joined
           ? group.entries.map((entry) =>
               entry.value === target.value
@@ -107,7 +115,16 @@ export const updatePoseGroup = (
     : withPoseGroups(
         document,
         getPoseGroups(document).map((group) =>
-          group.id === groupId ? {...group, ...changes, id} : group,
+          group.id === groupId
+            ? {
+                ...group,
+                ...changes,
+                id,
+                ...(changes.parameterId === undefined || changes.parameterId === group.parameterId
+                  ? {}
+                  : {sourceParameterIds: undefined}),
+              }
+            : group,
         ),
       )
 }

@@ -1,6 +1,7 @@
 import {createSignal, For, onCleanup, Show} from 'solid-js'
 
 import {convertCmo3, type ConvertCmo3Result} from './convert-cmo3'
+import {convertCubismArchive} from './convert-cubism-archive'
 import {serializeDocument} from '../player/serialize-document'
 
 interface ConversionReady {
@@ -21,6 +22,8 @@ export const ConverterPage = () => {
   const [state, setState] = createSignal<ConversionState>({kind: 'idle'})
   let downloadUrl: string | undefined
   let conversionId = 0
+  let sourceFile: File | undefined
+  let sdkFile: File | undefined
 
   onCleanup(() => {
     conversionId += 1
@@ -29,15 +32,7 @@ export const ConverterPage = () => {
     }
   })
 
-  const handleFileChange = async (event: Event) => {
-    const input = event.currentTarget
-    if (!(input instanceof HTMLInputElement)) {
-      return
-    }
-    const file = input.files?.[0]
-    if (file === undefined) {
-      return
-    }
+  const convertFile = async (file: File, sdk?: File) => {
     conversionId += 1
     const currentConversionId = conversionId
     if (downloadUrl !== undefined) {
@@ -46,11 +41,14 @@ export const ConverterPage = () => {
     }
     setState({kind: 'working'})
     try {
-      const bytes = await file.arrayBuffer()
+      const [bytes, sdkBytes] = await Promise.all([file.arrayBuffer(), sdk?.arrayBuffer()])
       if (currentConversionId !== conversionId) {
         return
       }
-      const result = convertCmo3(bytes)
+      const result =
+        sdkBytes === undefined
+          ? convertCmo3(bytes)
+          : convertCubismArchive(sdkBytes, {modelSource: bytes})
       const blob = new Blob([serializeDocument(result.document)], {
         type: 'application/json',
       })
@@ -68,18 +66,36 @@ export const ConverterPage = () => {
     }
   }
 
+  const handleFileChange = async (event: Event) => {
+    const input = event.currentTarget
+    if (input instanceof HTMLInputElement && input.files?.[0] !== undefined) {
+      sourceFile = input.files[0]
+      await convertFile(sourceFile, sdkFile)
+    }
+  }
+
+  const handleSdkChange = async (event: Event) => {
+    const input = event.currentTarget
+    if (input instanceof HTMLInputElement) {
+      sdkFile = input.files?.[0]
+      if (sourceFile !== undefined) {
+        await convertFile(sourceFile, sdkFile)
+      }
+    }
+  }
+
   return (
     <main class="min-h-screen bg-slate-950 px-6 py-10 text-slate-100 font-sans">
       <style>{`@unocss-placeholder`}</style>
       <div class="mx-auto max-w-3xl space-y-8">
         <header class="space-y-4">
           <a class="text-sm text-cyan-300 underline underline-offset-3" href="/">
-            ← Puppet 편집기
+            ← Poffo 편집기
           </a>
-          <h1 class="text-3xl font-semibold">CMO3 변환기</h1>
+          <h1 class="editor-type-document-title">Poffo 변환기</h1>
           <p class="max-w-2xl text-slate-300 leading-relaxed">
-            Cubism Editor의 .cmo3 파일에서 메시의 기본 형태와 텍스처를 추출해 Puppet JSON으로
-            변환합니다. 디포머와 파라미터 키폼을 포함한 리깅 데이터는 현재 변환하지 않습니다.
+            .cmo3의 메시·디포머·파라미터를 변환합니다. SDK ZIP을 함께 선택하면 모션과 물리 설정도
+            가져옵니다.
           </p>
         </header>
 
@@ -94,6 +110,16 @@ export const ConverterPage = () => {
               aria-label="CMO3 파일"
               class="block w-full rounded-md border border-slate-600 bg-slate-950 p-3 text-sm text-slate-100"
               onChange={handleFileChange}
+              type="file"
+            />
+          </label>
+          <label class="block space-y-2">
+            <span class="block text-slate-300">SDK 모델 ZIP (선택)</span>
+            <input
+              accept=".zip"
+              aria-label="SDK 모델 ZIP"
+              class="block w-full rounded-md border border-slate-600 bg-slate-950 p-3 text-slate-100"
+              onChange={handleSdkChange}
               type="file"
             />
           </label>
@@ -119,20 +145,26 @@ export const ConverterPage = () => {
                   <h2 id="result-heading" class="text-lg font-medium">
                     변환 결과
                   </h2>
-                  <p>{ready.result.document.parts.length}개 메시를 Puppet 문서에 담았습니다.</p>
+                  <p>
+                    {ready.result.document.parts.length}개 메시 ·{' '}
+                    {ready.result.document.parameters?.length ?? 0}개 파라미터 ·{' '}
+                    {ready.result.document.motions.length}개 모션
+                  </p>
                   <a
                     class="inline-block rounded-md bg-cyan-300 px-4 py-2 font-medium text-slate-950"
-                    download={`${ready.name}.puppet.json`}
+                    download={`${ready.name}.poffo.json`}
                     href={ready.url}
                   >
-                    Puppet JSON 다운로드
+                    Poffo JSON 다운로드
                   </a>
-                  <div class="space-y-2">
-                    <h3 class="font-medium">변환 범위</h3>
-                    <ul class="list-disc space-y-1 pl-5 text-sm text-slate-300">
-                      <For each={ready.result.warnings}>{(warning) => <li>{warning}</li>}</For>
-                    </ul>
-                  </div>
+                  <Show when={ready.result.warnings.length > 0}>
+                    <div class="space-y-2">
+                      <h3 class="font-medium">확인 사항</h3>
+                      <ul class="list-disc space-y-1 pl-5 text-sm text-slate-300">
+                        <For each={ready.result.warnings}>{(warning) => <li>{warning}</li>}</For>
+                      </ul>
+                    </div>
+                  </Show>
                 </section>
               )
             })()}

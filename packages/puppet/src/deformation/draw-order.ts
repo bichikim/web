@@ -12,6 +12,8 @@ import {getParameterBindingValues, type PuppetParameterValueMap} from './composi
 import {getBindingInfluence} from './influence'
 import {sampleParameterCoordinates} from './parameter'
 
+const CUBISM_ORDER_TOLERANCE = 0.001
+
 interface ComposeKeyedDrawOrderOptions {
   readonly document: PuppetDocument
   /** Keyed draw orders per keyform of a targeting binding; `undefined` keeps the rest value. */
@@ -48,7 +50,11 @@ const composeKeyedDrawOrder = (options: ComposeKeyedDrawOrderOptions) => {
     })
     return current + (sampled - options.rest) * weight
   }, options.rest)
-  return clamp(drawOrder, 0, PUPPET_MAXIMUM_DRAW_ORDER)
+  const rounded =
+    options.document.drawOrderRounding === 'cubism'
+      ? Math.trunc(Math.fround(Math.fround(drawOrder) + CUBISM_ORDER_TOLERANCE))
+      : drawOrder
+  return clamp(rounded, 0, PUPPET_MAXIMUM_DRAW_ORDER)
 }
 
 /** A part's draw order with its keyforms (`targetPartIds` bindings) applied. */

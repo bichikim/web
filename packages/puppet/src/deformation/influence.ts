@@ -1,9 +1,12 @@
 import type {
   PuppetDocument,
+  PuppetKeyformSampling,
   PuppetParameterBinding,
   PuppetParameterInfluence,
 } from '../player/document'
 import type {PuppetParameterValueMap} from './composition'
+
+const DEFAULT_KEY_TOLERANCE = 0.0001
 
 export interface GetBindingInfluenceOptions {
   readonly binding: PuppetParameterBinding
@@ -11,8 +14,20 @@ export interface GetBindingInfluenceOptions {
   readonly parameterValues?: PuppetParameterValueMap
 }
 
-export const sampleInfluence = (relation: PuppetParameterInfluence, value: number): number => {
-  const nextIndex = relation.points.findIndex((point) => point.value >= value)
+export const sampleInfluence = (
+  relation: PuppetParameterInfluence,
+  value: number,
+  sampling?: PuppetKeyformSampling,
+): number => {
+  const rounded = sampling?.continuousPrecision === 'float32' ? Math.fround(value) : value
+  const input =
+    sampling?.keyToleranceUnit === 'parameter'
+      ? (relation.points.find(
+          (point) =>
+            Math.abs(point.value - rounded) < (sampling.keyTolerance ?? DEFAULT_KEY_TOLERANCE),
+        )?.value ?? rounded)
+      : rounded
+  const nextIndex = relation.points.findIndex((point) => point.value >= input)
   const next = relation.points[nextIndex]
   if (next === undefined) {
     return relation.points.at(-1)?.weight ?? 1
@@ -21,7 +36,7 @@ export const sampleInfluence = (relation: PuppetParameterInfluence, value: numbe
   if (previous === undefined) {
     return next.weight
   }
-  const progress = (value - previous.value) / (next.value - previous.value)
+  const progress = (input - previous.value) / (next.value - previous.value)
   return previous.weight + (next.weight - previous.weight) * progress
 }
 
@@ -38,7 +53,7 @@ export const getBindingInfluence = (options: GetBindingInfluenceOptions): number
         input === undefined || !Number.isFinite(input)
           ? parameter.defaultValue
           : Math.max(parameter.minimum, Math.min(parameter.maximum, input))
-      weight = Math.min(weight, sampleInfluence(relation, value))
+      weight = Math.min(weight, sampleInfluence(relation, value, options.binding.sampling))
     }
   }
   return weight

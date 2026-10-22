@@ -30,6 +30,9 @@ export const PUPPET_PART_BLEND_MODES = [
   'color',
   'luminosity',
   'add-glow',
+  'add-compatible',
+  'multiply-compatible',
+  'multiply-over',
 ] as const
 
 /**

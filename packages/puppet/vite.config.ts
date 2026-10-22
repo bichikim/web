@@ -1,4 +1,4 @@
-import {readFile} from 'node:fs'
+import {readFile, readFileSync} from 'node:fs'
 import {fileURLToPath} from 'node:url'
 import UnoCSS from 'unocss/vite'
 import solidPlugin from 'vite-plugin-solid'
@@ -53,6 +53,11 @@ const trackingAssets = (): Plugin => ({
   name: 'puppet-tracking-assets',
 })
 
+const converterBanner = () => {
+  const notices = readFileSync(new URL('./licenses/converter.txt', import.meta.url), 'utf8')
+  return `/*!\n${notices.replaceAll('*/', '* /')}*/`
+}
+
 export default defineConfig(({command, mode}) => {
   const plugins = [UnoCSS({...unoConfig, configFile: false, mode: 'shadow-dom'}), solidPlugin()]
 
@@ -60,6 +65,11 @@ export default defineConfig(({command, mode}) => {
     return {
       optimizeDeps: {exclude: ['es-toolkit']},
       plugins: [...plugins, trackingAssets()],
+      resolve: {
+        alias: {
+          '/converter.js': fileURLToPath(new URL(BUILD_TARGETS.converter, import.meta.url)),
+        },
+      },
     }
   }
 
@@ -79,6 +89,12 @@ export default defineConfig(({command, mode}) => {
       },
       rollupOptions: {
         external: mode === 'editor' ? ['solid-js', 'solid-js/web'] : [],
+        output:
+          mode === 'converter'
+            ? {
+                banner: converterBanner,
+              }
+            : undefined,
       },
     },
     plugins,

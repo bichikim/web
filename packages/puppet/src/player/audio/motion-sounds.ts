@@ -13,7 +13,7 @@ export interface CreateMotionSoundsOptions {
 export interface MotionSounds {
   load(document: Pick<PuppetDocument, 'motions'>): void
   /** The mouth the frames' sounds ask for; `undefined` while none is sounding. */
-  mouth(frames: ReadonlyArray<MotionFrame>): MotionSoundMouth | undefined
+  mouth(frames: ReadonlyArray<MotionFrame>, deltaTime?: number): MotionSoundMouth | undefined
   /** Keeps the audio output in step with the frames. */
   sync(frames: ReadonlyArray<MotionFrame>): void
   stop(): void
@@ -30,7 +30,7 @@ export const createMotionSounds = (options: CreateMotionSoundsOptions = {}): Mot
         )
   return {
     load: (document) => loader.load(document),
-    mouth: (frames) => getMotionSoundMouth(frames, loader.get),
+    mouth: (frames, deltaTime) => getMotionSoundMouth(frames, loader.get, deltaTime),
     stop: () => output?.stop(),
     sync: (frames) => output?.sync(frames, loader.get),
   }

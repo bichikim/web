@@ -136,7 +136,16 @@ interface SamplePartKeyformOptions {
 
 export const samplePartKeyform = (options: SamplePartKeyformOptions) => ({
   glue: options.document.glue
-    ?.filter((glue) => glue.first.partId === options.part.id)
+    ?.filter(
+      (glue) =>
+        glue.first.partId === options.part.id &&
+        !(
+          options.binding.targetGlueIds?.includes(glue.id) === true ||
+          options.binding.keyforms.some((form) =>
+            form.glue?.some((sample) => sample.id === glue.id),
+          )
+        ),
+    )
     .map((glue) => sampleParameterGlue({...options, glue})),
   partId: options.part.id,
   properties: samplePartProperties(options),

@@ -2,6 +2,9 @@ import {DEFAULT_PUPPET_POSE_FADE_TIME, type PuppetDocument, type PuppetPoseGroup
 import type {PuppetParameterValueMap} from '../../deformation'
 import {resolveParameterValue} from '../parameter-value'
 
+const MAXIMUM_BACKGROUND_OPACITY = 0.15
+const POSE_PARAMETER_EPSILON = 0.001
+
 /** A pose group's selected entry and entry opacities, indexed like the group's entries. */
 export interface PoseGroupState {
   readonly selected: number
@@ -55,6 +58,15 @@ const fadeGroup = ({
   const duration = group.fadeTime ?? DEFAULT_PUPPET_POSE_FADE_TIME
   const step = duration > 0 ? Math.max(0, deltaTime) / duration : 1
   const shown = Math.min(1, previous[selected]! + step)
+  if (group.sourceParameterIds !== undefined) {
+    const maximumHidden = Math.max(
+      1 - shown,
+      shown < 1 ? 1 - MAXIMUM_BACKGROUND_OPACITY / (1 - shown) : 0,
+    )
+    return previous.map((weight, index) =>
+      index === selected ? shown : Math.min(weight, maximumHidden),
+    )
+  }
   // Fading entries never exceed the selected entry's remainder, so the stack stays covered.
   return previous.map((weight, index) =>
     index === selected ? shown : Math.min(Math.max(0, weight - step), 1 - shown),
@@ -70,10 +82,18 @@ export const evaluatePose = (options: EvaluatePoseOptions): PoseEvaluation => {
     if (parameter === undefined) {
       return []
     }
-    const selected = selectPoseEntry(
-      group,
-      resolveParameterValue(parameter, options.parameterValues[group.parameterId]),
+    const sourceSelection = group.sourceParameterIds?.findIndex(
+      (id) =>
+        (options.parameterValues[id] ?? parameterById.get(id)?.defaultValue ?? 0) >
+        POSE_PARAMETER_EPSILON,
     )
+    const selected =
+      sourceSelection !== undefined && sourceSelection >= 0
+        ? sourceSelection
+        : selectPoseEntry(
+            group,
+            resolveParameterValue(parameter, options.parameterValues[group.parameterId]),
+          )
     const weights = fadeGroup({
       deltaTime: options.deltaTime,
       group,

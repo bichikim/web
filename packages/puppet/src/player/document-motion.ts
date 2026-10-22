@@ -53,6 +53,10 @@ export const PUPPET_SOUND_MEDIA_TYPES = ['audio/wav', 'audio/wave', 'audio/x-wav
  * document.
  */
 export interface PuppetMotionSound {
+  /** 입 열림 분석 방식. RMS는 프레임별 채널 파워, voice는 기존 음성 분석이며 생략하면 voice를 쓴다. */
+  readonly analysis?: 'rms' | 'voice'
+  /** source는 원음 볼륨, motion은 모션 가중치를 따른다. 생략하면 기존 RMS의 원음 볼륨, 나머지는 모션 페이드를 유지한다. */
+  readonly volume?: 'source' | 'motion'
   readonly src: string
 }
 

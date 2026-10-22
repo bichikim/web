@@ -1,8 +1,10 @@
 import {removeInfluenceSources} from './parameter-influences'
+import {sampleParameterGlue} from '../../deformation/parameter-glue'
 import {removeParameterReferences} from './document-references/remove-parameter-references'
 import {difference, union, uniq} from 'es-toolkit/array'
 
 import {
+  getDirectGlueIds,
   mapBindingKeyforms,
   MAX_PARAMETER_DIMENSIONS,
   type ParameterDimensions,
@@ -21,6 +23,7 @@ import type {
   PuppetSceneNode,
 } from '../../player/document'
 import {getDocumentScene} from '../../player/scene'
+import {getRepeatRanges} from '../../player/parameter-value'
 import {
   canDeleteKeyformPlane,
   compareKeyformValues,
@@ -97,8 +100,22 @@ export const getParameterTargetDeformerIds = (binding: PuppetParameterBinding) =
     ),
   )
 
-export const getParameterTargetNodeIds = (binding: PuppetParameterBinding) =>
-  uniq([...getParameterTargetPartIds(binding), ...getParameterTargetDeformerIds(binding)])
+/** 직접 편집 대상을 반환한다. document를 주면 직접 연결한 Glue의 양 끝 파트도 포함한다. */
+export const getParameterTargetNodeIds = (
+  binding: PuppetParameterBinding,
+  document?: PuppetDocument,
+) => {
+  const glueIds = new Set(getDirectGlueIds(binding))
+  const endpoints =
+    document?.glue
+      ?.filter((glue) => glueIds.has(glue.id))
+      .flatMap((glue) => [glue.first.partId, glue.second.partId]) ?? []
+  return uniq([
+    ...getParameterTargetPartIds(binding),
+    ...getParameterTargetDeformerIds(binding),
+    ...endpoints,
+  ])
+}
 
 export const getParameterBindingsForNodeIds = (
   document: PuppetDocument,
@@ -106,7 +123,7 @@ export const getParameterBindingsForNodeIds = (
 ) => {
   const selectedNodeIds = new Set(nodeIds)
   return getDocumentParameterBindings(document).filter((binding) =>
-    getParameterTargetNodeIds(binding).some((nodeId) => selectedNodeIds.has(nodeId)),
+    getParameterTargetNodeIds(binding, document).some((nodeId) => selectedNodeIds.has(nodeId)),
   )
 }
 
@@ -316,10 +333,12 @@ export const insertParameterKeyform = (options: ParameterValuesTarget) => {
   const keysGroups = (binding?.targetGroupIds ?? []).some(
     (groupId) => getSceneGroup(options.document, groupId) !== undefined,
   )
+  const glueIds = binding === undefined ? [] : getDirectGlueIds(binding)
+  const glue = options.document.glue?.filter((connection) => glueIds.includes(connection.id)) ?? []
 
   if (
     binding === undefined ||
-    (parts.length === 0 && deformers.length === 0 && !keysGroups) ||
+    (parts.length === 0 && deformers.length === 0 && !keysGroups && glue.length === 0) ||
     options.values.length !== binding.parameterIds.length ||
     parameters.length !== binding.parameterIds.length ||
     binding.keyforms.some((keyform) => parameterValuesEqual(keyform.values, options.values)) ||
@@ -335,6 +354,18 @@ export const insertParameterKeyform = (options: ParameterValuesTarget) => {
   const inserted = {
     deformers: deformers.map((deformer) => sampleParameterDeformer({binding, deformer, values})),
     groups: sampleKeyformGroups(options.document, binding, values),
+    ...(glue.length > 0
+      ? {
+          glue: glue.map((connection) =>
+            sampleParameterGlue({
+              binding,
+              glue: connection,
+              repeatRanges: getRepeatRanges(binding.parameterIds, options.document.parameters),
+              values,
+            }),
+          ),
+        }
+      : {}),
     parts: parts.map((part) => samplePartKeyform({...options, binding, part, values})),
     values,
   }

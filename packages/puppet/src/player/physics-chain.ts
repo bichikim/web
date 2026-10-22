@@ -88,10 +88,11 @@ const angleBetween = (from: Vector, to: Vector) => {
 const getWorld = (
   physics: PuppetPhysics | undefined,
   parameters: ReadonlyMap<string, PuppetParameter>,
+  deltaTime = 1 / DEFAULT_PUPPET_CHAIN_FPS,
 ): ChainWorld => ({
   gravity: unit(physics?.gravity ?? DEFAULT_PUPPET_CHAIN_GRAVITY, DEFAULT_PUPPET_CHAIN_GRAVITY),
   parameters,
-  step: 1 / (physics?.fps ?? DEFAULT_PUPPET_CHAIN_FPS),
+  step: physics?.fps === 0 ? deltaTime : 1 / (physics?.fps ?? DEFAULT_PUPPET_CHAIN_FPS),
   wind: physics?.wind ?? [0, 0],
 })
 
@@ -341,7 +342,11 @@ export const advanceChains = (options: {
   readonly state: ChainsState
   readonly values: Values
 }): {readonly state: ChainsState; readonly values: Values} => {
-  const world = getWorld(options.physics, options.parameters)
+  const world = getWorld(
+    options.physics,
+    options.parameters,
+    options.deltaTime > 0 ? options.deltaTime : undefined,
+  )
   const target = snapshot(world, options.values)
   const deltaTime = Number.isFinite(options.deltaTime) ? Math.max(0, options.deltaTime) : 0
   let accumulator = options.state.accumulator + deltaTime

@@ -1,3 +1,6 @@
+import {sampleGridCoordinates} from './sample-grid-coordinates'
+import {locateOneDimensionalKeyform} from './locate-keyform-segment'
+export {locateOneDimensionalKeyform, type KeyformSegment} from './locate-keyform-segment'
 import Delaunator from 'delaunator'
 
 import {
@@ -29,13 +32,6 @@ export interface SampleParameterVerticesOptions {
   readonly values: PuppetParameterValues
 }
 
-/** Two keyform indices of a 1D binding and the progress from the first to the second. */
-export interface KeyformSegment {
-  readonly from: number
-  readonly progress: number
-  readonly to: number
-}
-
 const getPartVertices = (
   keyform: PuppetParameterKeyform,
   partId: string,
@@ -53,46 +49,6 @@ const interpolateVertices = (
   first.map(
     (coordinate, index) => coordinate + ((second[index] ?? coordinate) - coordinate) * progress,
   )
-
-const getProgress = (minimum: number, maximum: number, value: number) =>
-  maximum === minimum ? 0 : (value - minimum) / (maximum - minimum)
-
-/**
- * Where `value` falls among a 1D binding's increasing keyform values. With a repeat range, the
- * keyform at the maximum is ignored and values past the last keyform, or before the first,
- * blend from the last keyform into the first one placed one range later.
- */
-export const locateOneDimensionalKeyform = (
-  keys: ReadonlyArray<number>,
-  value: number,
-  repeatRange?: readonly [number, number],
-): KeyformSegment | undefined => {
-  const indices = keys.flatMap((key, index) =>
-    repeatRange === undefined || key < repeatRange[1] ? [index] : [],
-  )
-  const [first] = indices
-  const last = indices.at(-1)
-  if (first === undefined || last === undefined) {
-    return undefined
-  }
-  if (repeatRange !== undefined && (value >= keys[last]! || value < keys[first]!)) {
-    const span = repeatRange[1] - repeatRange[0]
-    const unwrapped = value < keys[first]! ? value + span : value
-    return {
-      from: last,
-      progress: getProgress(keys[last]!, keys[first]! + span, unwrapped),
-      to: first,
-    }
-  }
-  const next = indices.find((index) => keys[index]! >= value)
-  if (next === undefined) {
-    return {from: last, progress: 0, to: last}
-  }
-  const previous = indices[indices.indexOf(next) - 1]
-  return previous === undefined
-    ? {from: next, progress: 0, to: next}
-    : {from: previous, progress: getProgress(keys[previous]!, keys[next]!, value), to: next}
-}
 
 const sampleOneDimensionalVertices = (options: SampleParameterVerticesOptions) => {
   const {binding} = options
@@ -454,6 +410,17 @@ export const sampleParameterVertices = (options: SampleParameterVerticesOptions)
   if (!targetsPart) {
     return options.restVertices
   }
+  if (binding?.interpolation === 'grid') {
+    return sampleParameterCoordinates({
+      binding,
+      keyformCoordinates: binding.keyforms.map((keyform) =>
+        getPartVertices(keyform, options.partId, options.restVertices),
+      ),
+      repeatRanges: options.repeatRanges,
+      restCoordinates: options.restVertices,
+      values: options.values,
+    })
+  }
 
   if (binding !== undefined && isThreeDimensionalParameterBinding(binding)) {
     return sampleThreeDimensionalVertices(options, binding)
@@ -467,6 +434,8 @@ export const parameterValuesEqual = (first: ReadonlyArray<number>, second: Reado
   first.length === second.length && first.every((value, index) => value === second[index])
 
 export interface SampleParameterCoordinatesOptions {
+  /** 낮은 키폼을 유지하고 다음 키에서 전환한다. 생략하면 바인딩의 보간을 쓰며, 축 정밀도는 binding.sampling을 따른다. */
+  readonly sampling?: 'step'
   readonly binding: PuppetParameterBinding
   readonly keyformCoordinates: ReadonlyArray<ReadonlyArray<number> | undefined>
   readonly repeatRanges?: PuppetRepeatRanges
@@ -571,6 +540,9 @@ const sampleThreeDimensionalCoordinates = (
 }
 
 export const sampleParameterCoordinates = (options: SampleParameterCoordinatesOptions) => {
+  if (options.binding.interpolation === 'grid' || options.sampling === 'step') {
+    return sampleGridCoordinates(options)
+  }
   if (isThreeDimensionalParameterBinding(options.binding)) {
     return sampleThreeDimensionalCoordinates(options, options.binding)
   }

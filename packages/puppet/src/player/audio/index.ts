@@ -8,6 +8,7 @@ export {
   type WavHeader,
 } from './decode-wav'
 export type {MotionSoundError} from './motion-sound-loader'
+export {measureSoundRms} from './measure-sound-rms'
 export {
   getMotionSoundMouth,
   getMotionSoundWindow,
