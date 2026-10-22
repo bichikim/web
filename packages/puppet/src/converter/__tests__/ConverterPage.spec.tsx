@@ -35,17 +35,17 @@ test('keeps the latest selected file when an earlier read finishes later', async
   fireEvent.change(input, {target: {files: [first]}})
   fireEvent.change(input, {target: {files: [second]}})
   await waitFor(() =>
-    expect(view.getByRole('link', {name: 'Puppet JSON 다운로드'})).toHaveAttribute(
+    expect(view.getByRole('link', {name: 'Poffo JSON 다운로드'})).toHaveAttribute(
       'download',
-      'second.puppet.json',
+      'second.poffo.json',
     ),
   )
 
   finishFirst(new ArrayBuffer(1))
   await waitFor(() => expect(convertCmo3).toHaveBeenCalledTimes(1))
-  expect(view.getByRole('link', {name: 'Puppet JSON 다운로드'})).toHaveAttribute(
+  expect(view.getByRole('link', {name: 'Poffo JSON 다운로드'})).toHaveAttribute(
     'download',
-    'second.puppet.json',
+    'second.poffo.json',
   )
   expect(createObjectURL).toHaveBeenCalledTimes(1)
 })

@@ -154,3 +154,32 @@ describe('physics chains', () => {
     expect(parseDocumentValue(createDocument({gravity: [0, 0]})).ok).toBe(false)
   })
 })
+
+test('should use each frame duration when chain fps is zero', () => {
+  const frameTime = createDocument({fps: 0})
+  expect(parseDocumentValue(frameTime).ok).toBe(true)
+  const run = (document: PuppetDocument) => {
+    const start = evaluatePhysics({
+      deltaTime: 0,
+      document,
+      parameterValues: {},
+      physicsState: new Map(),
+    })
+    const first = evaluatePhysics({
+      chainState: start.chainState,
+      deltaTime: 1 / 30,
+      document,
+      parameterValues: {'head-x': 10},
+      physicsState: start.physicsState,
+    })
+    return evaluatePhysics({
+      chainState: first.chainState,
+      deltaTime: 1 / 30,
+      document,
+      parameterValues: {'head-x': 10},
+      physicsState: first.physicsState,
+    })
+  }
+  expect(run(frameTime).parameterValues).toEqual(run(createDocument({fps: 30})).parameterValues)
+  expect(run(frameTime).parameterValues).not.toEqual(run(createDocument({fps: 60})).parameterValues)
+})

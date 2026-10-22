@@ -2,6 +2,7 @@ import {getMotionTimelineRows} from './motion-timeline-rows'
 import {isPsdSource} from './internal/parse-psd-source'
 import {hasValidSkinning} from './internal/parse-skinning'
 import {hasValidGlueKeyforms, isGlueKeyforms} from './internal/parse-glue'
+import {isOptionalPrecision, isOptionalSampling} from './internal/parse-sampling'
 import {hasValidInfluences, isParameterInfluences} from './internal/parse-influence'
 import {
   LEGACY_PUPPET_DOCUMENT_FORMATS,
@@ -56,6 +57,10 @@ import {hasValidHitAreas} from './internal/parse-hit-area'
 import {hasValidPoseGroups} from './internal/parse-pose'
 import {hasValidSpatialAttachments, isSpatialSurface} from './internal/parse-spatial'
 import {expandDocumentTextureAssets} from './texture-assets'
+import {
+  hasValidParameterVisibility,
+  isParameterVisibility,
+} from './internal/parse-parameter-visibility'
 import {isFiniteNumber, isFiniteNumberArray, isRecord} from './internal/parse-primitives'
 
 export type ParseDocumentErrorCode = 'invalid-document' | 'invalid-json'
@@ -117,6 +122,7 @@ const isMesh = (value: unknown): value is PuppetMesh => {
     !isFiniteNumberArray(value.vertices) ||
     !isFiniteNumberArray(value.uvs) ||
     !isFiniteNumberArray(value.indices) ||
+    (value.validationSpace !== undefined && value.validationSpace !== 'indices') ||
     (value.boundaryLoops !== undefined &&
       (!Array.isArray(value.boundaryLoops) || !value.boundaryLoops.every(isFiniteNumberArray)))
   ) {
@@ -129,7 +135,6 @@ const isMesh = (value: unknown): value is PuppetMesh => {
     vertexCount >= MINIMUM_VERTEX_COUNT &&
     value.uvs.length === value.vertices.length
   const hasValidTriangles =
-    value.indices.length > 0 &&
     value.indices.length % INDICES_PER_TRIANGLE === 0 &&
     value.indices.every((index) => Number.isInteger(index) && index >= 0 && index < vertexCount)
   const mesh: PuppetMesh = {
@@ -139,7 +144,11 @@ const isMesh = (value: unknown): value is PuppetMesh => {
     vertices: value.vertices,
   }
 
-  return hasValidCoordinates && hasValidTriangles && validateMesh(mesh).valid
+  return (
+    hasValidCoordinates &&
+    hasValidTriangles &&
+    (value.validationSpace === 'indices' || validateMesh(mesh).valid)
+  )
 }
 
 const isPart = (value: unknown): value is PuppetPart =>
@@ -199,7 +208,8 @@ const isScene = (value: unknown, parts: ReadonlyArray<PuppetPart>): value is Pup
       typeof node.name !== 'string' ||
       node.name.length === 0 ||
       typeof node.visible !== 'boolean' ||
-      typeof node.locked !== 'boolean'
+      typeof node.locked !== 'boolean' ||
+      !isParameterVisibility(node.parameterVisibility)
     ) {
       return false
     }
@@ -223,13 +233,16 @@ const isScene = (value: unknown, parts: ReadonlyArray<PuppetPart>): value is Pup
   )
 }
 
-const isParameterPartKeyform = (value: unknown): value is PuppetParameterPartKeyform =>
+const isParameterPartKeyform = (
+  value: unknown,
+  unbounded: boolean,
+): value is PuppetParameterPartKeyform =>
   isRecord(value) &&
-  isGlueKeyforms(value.glue) &&
+  isGlueKeyforms(value.glue, unbounded) &&
   typeof value.partId === 'string' &&
   value.partId.length > 0 &&
   (value.properties === undefined ||
-    (isPartRenderProperties(value.properties) &&
+    (isPartRenderProperties(value.properties, unbounded) &&
       value.properties.alphaBlendMode === undefined &&
       value.properties.blendMode === undefined &&
       value.properties.clippingMaskIds === undefined &&
@@ -258,29 +271,40 @@ const isParameterDefinition = (value: unknown): value is PuppetParameter =>
   (value.groupId === undefined || typeof value.groupId === 'string') &&
   hasValidParameterOptions(value)
 
-const isParameterKeyform = (value: unknown): value is PuppetParameterKeyform =>
+const isParameterKeyform = (value: unknown, unbounded: boolean): value is PuppetParameterKeyform =>
   isRecord(value) &&
+  isGlueKeyforms(value.glue, unbounded) &&
   Array.isArray(value.values) &&
   value.values.length >= 1 &&
   value.values.length <= MAX_PARAMETER_DIMENSIONS &&
   value.values.every(isFiniteNumber) &&
   (value.deformers === undefined ||
     (Array.isArray(value.deformers) &&
-      value.deformers.every(isParameterDeformerKeyform) &&
+      value.deformers.every((deformer) => isParameterDeformerKeyform(deformer, unbounded)) &&
       new Set(value.deformers.map((deformer) => deformer.nodeId)).size ===
         value.deformers.length)) &&
   Array.isArray(value.parts) &&
-  value.parts.every(isParameterPartKeyform) &&
+  value.parts.every((part) => isParameterPartKeyform(part, unbounded)) &&
   new Set(value.parts.map((part) => part.partId)).size === value.parts.length
+
+const hasBindingOptions = (value: Record<string, unknown>) =>
+  (value.interpolation === undefined || value.interpolation === 'grid') &&
+  (value.keyformRange === undefined || value.keyformRange === 'unbounded') &&
+  isOptionalSampling(value.sampling) &&
+  hasValidTargetIds(value.targetGlueIds) &&
+  (value.influences === undefined || isParameterInfluences(value.influences)) &&
+  hasValidTargetIds(value.targetDeformerIds) &&
+  hasValidTargetIds(value.targetPartIds) &&
+  hasValidTargetIds(value.targetGroupIds)
 
 const isParameterBinding = (value: unknown): value is PuppetParameterBinding => {
   if (!isRecord(value)) {
     return false
   }
 
-  const {keyforms, parameterIds, targetDeformerIds, targetPartIds} = value
+  const {keyforms, parameterIds} = value
   if (
-    (value.influences !== undefined && !isParameterInfluences(value.influences)) ||
+    !hasBindingOptions(value) ||
     typeof value.id !== 'string' ||
     value.id.length === 0 ||
     !Array.isArray(parameterIds) ||
@@ -290,11 +314,8 @@ const isParameterBinding = (value: unknown): value is PuppetParameterBinding => 
       (parameterId) => typeof parameterId === 'string' && parameterId.length > 0,
     ) ||
     new Set(parameterIds).size !== parameterIds.length ||
-    !hasValidTargetIds(targetDeformerIds) ||
-    !hasValidTargetIds(targetPartIds) ||
-    !hasValidTargetIds(value.targetGroupIds) ||
     !Array.isArray(keyforms) ||
-    !keyforms.every(isParameterKeyform) ||
+    !keyforms.every((keyform) => isParameterKeyform(keyform, value.keyformRange === 'unbounded')) ||
     !keyforms.every((keyform) => keyform.values.length === parameterIds.length)
   ) {
     return false
@@ -423,10 +444,18 @@ interface CurrentDocumentValue {
   readonly viewport: PuppetViewport
 }
 
+const hasValidRenderPolicies = (value: Record<string, unknown>) =>
+  (value.colorComposition === undefined || value.colorComposition === 'cubism') &&
+  (value.drawOrderRounding === undefined || value.drawOrderRounding === 'cubism') &&
+  (value.motionParameterBase === undefined || value.motionParameterBase === 'previous-frame') &&
+  isOptionalPrecision(value.motionParameterPrecision) &&
+  (value.drawOrderTieBreak === undefined || value.drawOrderTieBreak === 'parts')
+
 const hasValidDocumentCollections = (
   value: Record<string, unknown>,
 ): value is Record<string, unknown> & CurrentDocumentValue =>
   isOptionalFramesPerSecond(value.framesPerSecond) &&
+  hasValidRenderPolicies(value) &&
   isViewport(value.viewport) &&
   isOptionalLayout(value.layout) &&
   Array.isArray(value.parts) &&
@@ -449,7 +478,8 @@ const hasValidModelMetadata = (
   hasValidParameterGroups(value.parameterGroups, parameters) &&
   hasValidMouthShapes(value.mouthShapes, parameters) &&
   hasValidBreath(value.breath, parameters) &&
-  hasValidLook(value.look, parameters)
+  hasValidLook(value.look, parameters) &&
+  hasValidParameterVisibility(value.scene, parameters)
 
 const isDocument = (value: unknown): value is PuppetDocument => {
   if (

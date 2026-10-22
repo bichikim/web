@@ -38,6 +38,37 @@ describe('getMotionSoundMouth', () => {
   const sound = createSound()
   const getSound = (src: string) => (src === 'talk.wav' ? sound : undefined)
 
+  test('should measure imported audio as per-channel RMS over the current frame, without motion fading', () => {
+    const samples = Float32Array.from({length: 160}, (_, index) => (index < 80 ? 0.25 : 0.75))
+    const stereo: PuppetSound = {
+      channels: [samples, samples.map((value) => -value)],
+      mono: new Float32Array(160),
+      sampleRate: 8000,
+    }
+    const rms = {
+      ...frame(0.02, 0.1),
+      motion: {...motion, sound: {analysis: 'rms' as const, src: 'talk.wav'}},
+    }
+    expect(getMotionSoundMouth([rms], () => stereo, 0.01)?.level).toBeCloseTo(0.75)
+    expect(
+      getMotionSoundMouth(
+        [
+          {
+            ...rms,
+            motion: {...rms.motion, sound: {...rms.motion.sound, volume: 'motion' as const}},
+          },
+        ],
+        () => stereo,
+        0.01,
+      ),
+    ).toEqual(getMotionSoundMouth([rms], () => stereo, 0.01))
+    expect(getMotionSoundMouth([{...rms, time: 0.01}], () => stereo, 0.01)?.level).toBeCloseTo(0.25)
+    expect(getMotionSoundMouth([{...rms, time: 0.025}], () => stereo, 0.01)?.level).toBeCloseTo(
+      0.75,
+    )
+    expect(getMotionSoundMouth([{...rms, time: 0.04}], () => stereo, 0.01)).toBeUndefined()
+  })
+
   test('should take the window before the motion time until the sound ends', () => {
     expect(getMotionSoundWindow(sound, 0.5)).toHaveLength(MOTION_SOUND_WINDOW * RATE)
     // Shorter at the start, then nothing once the sound has ended.
@@ -49,6 +80,14 @@ describe('getMotionSoundMouth', () => {
   test('should analyze the sound at each frame time, weighted by the frame', () => {
     const talking = getMotionSoundMouth([frame(0.5)], getSound)
     expect(talking?.level).toBe(1)
+    const explicit = {
+      ...frame(0.5),
+      motion: {
+        ...motion,
+        sound: {analysis: 'voice' as const, src: 'talk.wav', volume: 'source' as const},
+      },
+    }
+    expect(getMotionSoundMouth([explicit], getSound)).toEqual(talking)
     expect(strongest(talking!.weights)).toBe('a')
     const half = getMotionSoundMouth([frame(0.5, 0.5)], getSound)
     expect(half?.level).toBe(0.5)

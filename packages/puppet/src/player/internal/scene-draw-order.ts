@@ -5,6 +5,7 @@ import {
 import type {PuppetParameterValueMap} from '../../deformation'
 import type {PuppetDocument, PuppetSceneNode} from '../document'
 import {getDocumentScene, getScenePartStates, type PuppetScenePartState} from '../scene'
+import {isParameterVisible} from '../parameter-visibility'
 
 interface DrawOrderItem {
   readonly drawOrder: number
@@ -14,6 +15,7 @@ interface DrawOrderItem {
 interface SortContext {
   readonly document: PuppetDocument
   readonly parameterValues?: PuppetParameterValueMap
+  readonly sourceOrder?: ReadonlyMap<string, number>
 }
 
 const isDrawOrderGroup = (node: PuppetSceneNode) =>
@@ -56,7 +58,8 @@ const collectItems = (
   nodes.flatMap((node): Array<DrawOrderItem> => {
     const flags = {
       locked: inherited.locked || node.locked,
-      visible: inherited.visible && node.visible,
+      visible:
+        inherited.visible && isParameterVisible(node, context.document, context.parameterValues),
     }
     if (node.kind === 'part') {
       return [
@@ -78,7 +81,7 @@ const collectItems = (
             node,
             context.parameterValues,
           ),
-          states: sortItems(collectItems(node.children, flags, context)),
+          states: sortItems(collectItems(node.children, flags, context), context),
         },
       ]
     }
@@ -86,9 +89,21 @@ const collectItems = (
   })
 
 /** Stable sort by draw order, back (low) to front (high); ties keep scene order. */
-const sortItems = (items: ReadonlyArray<DrawOrderItem>) =>
+const sortItems = (items: ReadonlyArray<DrawOrderItem>, context: SortContext) =>
   items
-    .toSorted((first, second) => first.drawOrder - second.drawOrder)
+    .map((item) => ({
+      ...item,
+      sourceOrder:
+        context.sourceOrder === undefined
+          ? 0
+          : Math.min(
+              ...item.states.map((state) => context.sourceOrder!.get(state.partId) ?? Infinity),
+            ),
+    }))
+    .toSorted(
+      (first, second) =>
+        first.drawOrder - second.drawOrder || first.sourceOrder - second.sourceOrder,
+    )
     .flatMap((item) => item.states)
 
 /**
@@ -98,16 +113,19 @@ const sortItems = (items: ReadonlyArray<DrawOrderItem>) =>
 export const getDrawOrderedPartStates = (
   document: PuppetDocument,
   parameterValues?: PuppetParameterValueMap,
-): ReadonlyArray<PuppetScenePartState> =>
-  usesDrawOrder(document)
+): ReadonlyArray<PuppetScenePartState> => {
+  const context: SortContext = {
+    document,
+    parameterValues,
+    sourceOrder:
+      document.drawOrderTieBreak === 'parts'
+        ? new Map(document.parts.map((part, index) => [part.id, index]))
+        : undefined,
+  }
+  return usesDrawOrder(document) || document.drawOrderTieBreak === 'parts'
     ? sortItems(
-        collectItems(
-          getDocumentScene(document).roots,
-          {locked: false, visible: true},
-          {
-            document,
-            parameterValues,
-          },
-        ),
+        collectItems(getDocumentScene(document).roots, {locked: false, visible: true}, context),
+        context,
       )
-    : getScenePartStates(document)
+    : getScenePartStates(document, parameterValues)
+}

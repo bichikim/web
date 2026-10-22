@@ -5,7 +5,7 @@ import {
   type PuppetParameterBinding2D,
   type PuppetParameterBinding3D,
 } from '../../player'
-import {getKeyformPlanes, sampleParameterVertices} from '../parameter'
+import {getKeyformPlanes, sampleParameterCoordinates, sampleParameterVertices} from '../parameter'
 
 const PLANE_COUNT = 60_000
 // 경과 시간을 단언하지 않고 결과만 확인한다. 평면마다 전체 키폼을 다시 거르던 제곱 시간 구현은 이
@@ -18,6 +18,32 @@ const createPlaneBinding = (
   id: 'planes',
   keyforms: values.map((value) => ({parts: [], values: value})),
   parameterIds: ['x', 'y', 'z'],
+})
+
+test('should hold the lower grid corner and switch exactly at a key for discrete channels', () => {
+  const values = [
+    [0, 0, 0],
+    [1, 0, 0],
+    [0, 1, 0],
+    [1, 1, 0],
+    [0, 0, 1],
+    [1, 0, 1],
+    [0, 1, 1],
+    [1, 1, 1],
+  ] as const
+  const binding = createPlaneBinding(values)
+  const options = {
+    binding,
+    keyformCoordinates: values.map((_, index) => [index]),
+    restCoordinates: [-1],
+    sampling: 'step' as const,
+  }
+  expect(sampleParameterCoordinates({...options, values: [0.99, 0.99, 0.99]})).toEqual([0])
+  expect(sampleParameterCoordinates({...options, values: [1, 0.99, 1]})).toEqual([5])
+  expect(sampleParameterCoordinates({...options, values: [1, 1, 1]})).toEqual([7])
+  expect(sampleParameterCoordinates({...options, values: [1 - Number.EPSILON, 1, 1]})).toEqual([7])
+  expect(sampleParameterCoordinates({...options, values: [0.99999, 1, 1]})).toEqual([7])
+  expect(sampleParameterCoordinates({...options, values: [0.9998, 1, 1]})).toEqual([6])
 })
 
 describe('sampleParameterVertices', () => {
@@ -145,4 +171,43 @@ describe('getKeyformPlanes', () => {
     },
     PLANE_TIMEOUT_MS,
   )
+})
+
+test('should interpolate a complete Cubism keyform grid with products of axis weights', () => {
+  const binding: PuppetParameterBinding2D = {
+    id: 'grid',
+    interpolation: 'grid',
+    keyforms: [
+      {parts: [{partId: 'mesh', vertices: [0, 0]}], values: [0, 0]},
+      {parts: [{partId: 'mesh', vertices: [0, 0]}], values: [0, 1]},
+      {parts: [{partId: 'mesh', vertices: [0, 0]}], values: [1, 0]},
+      {parts: [{partId: 'mesh', vertices: [4, 8]}], values: [1, 1]},
+    ],
+    parameterIds: ['x', 'y'],
+  }
+  expect(
+    sampleParameterVertices({binding, partId: 'mesh', restVertices: [0, 0], values: [0.5, 0.5]}),
+  ).toEqual([1, 2])
+})
+
+test('should retain exactly constant draw orders across fractional grid weights', () => {
+  const binding: PuppetParameterBinding2D = {
+    id: 'order',
+    interpolation: 'grid',
+    keyforms: [
+      [0, 0],
+      [0, 1],
+      [1, 0],
+      [1, 1],
+    ].map(([x, y]) => ({parts: [], values: [x!, y!]})),
+    parameterIds: ['x', 'y'],
+  }
+  expect(
+    sampleParameterCoordinates({
+      binding,
+      keyformCoordinates: [[750], [750], [750], [750]],
+      restCoordinates: [750],
+      values: [0.257, 0.847],
+    }),
+  ).toEqual([750])
 })

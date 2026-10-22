@@ -14,6 +14,8 @@ interface MotionSample {
 }
 
 interface MixMotionFramesOptions {
+  /** 모션 합성 전 값. 생략하면 각 파라미터의 기본값을 사용한다. */
+  readonly baseParameterValues?: PuppetParameterValueMap
   readonly document: PuppetDocument
   /** Applied after motions and before external overrides. */
   readonly expressions?: ReadonlyArray<ExpressionLayer>
@@ -26,6 +28,8 @@ interface MixMotionFramesOptions {
 }
 
 export interface MotionMix {
+  /** 표현식·직접 입력·물리 효과를 제외한 이번 모션의 값. 다음 프레임의 기준으로 사용할 수 있다. */
+  readonly motionParameterValues: PuppetParameterValueMap
   /** Group opacity samples, mixed over each group's own opacity by `mixGroupOpacity`. */
   readonly groupOpacitySamples: ReadonlyMap<string, ReadonlyArray<MotionSample>>
   readonly modelOpacity: number
@@ -214,18 +218,21 @@ export const mixMotionFrames = (options: MixMotionFramesOptions): MotionMix => {
   for (const frame of options.frames.filter((candidate) => candidate.weight > 0)) {
     mixFrame(frame, {parameters, roles}, mix)
   }
+  const precision =
+    options.document.motionParameterPrecision ??
+    (options.document.motionParameterBase === 'previous-frame' ? 'float32' : 'float64')
   const motionValues = Object.fromEntries(
     [...parameters.values()].map((parameter) => {
       const value = mixSamples(
         mix.parameters.get(parameter.id) ?? [],
-        parameter.defaultValue,
+        resolveParameterValue(parameter, options.baseParameterValues?.[parameter.id]),
         parameter.defaultValue,
       )
       const blinking = options.eyeOpenness !== undefined && roles.eyeBlink.has(parameter.id)
-      return [
-        parameter.id,
-        blinking ? openTo(parameter, parameter.defaultValue, options.eyeOpenness!) : value,
-      ]
+      const posed = blinking
+        ? openTo(parameter, parameter.defaultValue, options.eyeOpenness!)
+        : value
+      return [parameter.id, precision === 'float32' ? Math.fround(posed) : posed]
     }),
   )
   const sampledValues = applyExpressionLayers(
@@ -248,6 +255,12 @@ export const mixMotionFrames = (options: MixMotionFramesOptions): MotionMix => {
   return {
     groupOpacitySamples: mix.groupOpacity,
     modelOpacity: Math.min(1, Math.max(0, mixSamples(mix.modelOpacity, baseOpacity, baseOpacity))),
+    motionParameterValues: Object.fromEntries(
+      [...parameters.values()].map((parameter) => [
+        parameter.id,
+        resolveParameterValue(parameter, motionValues[parameter.id]),
+      ]),
+    ),
     parameterValues,
     vertexSamples: mix.vertices,
   }

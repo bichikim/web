@@ -2,6 +2,38 @@ import {expect, test} from 'vitest'
 import {createDemoDocument, parseDocument, serializeDocument} from '../index'
 import {addGlue, setGlueKeyform} from '../../editor/internal/glue'
 
+test('should validate independent Glue targets and reject ambiguous or dangling direct samples', () => {
+  const legacy = createDocument()
+  const source = legacy.parameterBindings![0]!
+  const sample = {id: 'glue-1', strength: 0.4, weight: 0.5}
+  const binding = {
+    ...source,
+    keyforms: source.keyforms.map((form) => ({glue: [sample], parts: [], values: form.values})),
+    targetGlueIds: ['glue-1'],
+    targetPartIds: undefined,
+  }
+  const valid = {...legacy, parameterBindings: [binding]}
+  expect(parseDocument(JSON.stringify(valid)).ok).toBe(true)
+  for (const changes of [
+    {targetGlueIds: ['missing']},
+    {targetGlueIds: ['glue-1', 'glue-1']},
+    {keyforms: binding.keyforms.map((form) => ({...form, glue: []}))},
+    {keyforms: binding.keyforms.map((form) => ({...form, glue: [sample, sample]}))},
+    {keyforms: binding.keyforms.map((form) => ({...form, glue: [{...sample, id: 'missing'}]}))},
+    {keyforms: binding.keyforms.map((form) => ({...form, glue: [{...sample, strength: 2}]}))},
+    {
+      keyforms: binding.keyforms.map((form) => ({
+        ...form,
+        parts: [{glue: [sample], partId: 'mesh-preview', vertices: []}],
+      })),
+    },
+  ]) {
+    expect(
+      parseDocument(JSON.stringify({...valid, parameterBindings: [{...binding, ...changes}]})).ok,
+    ).toBe(false)
+  }
+})
+
 const createDocument = () => {
   const document = addGlue(
     createDemoDocument(),

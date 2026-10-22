@@ -4,6 +4,7 @@ import type {MotionEvent, MotionFrame, MotionPlaybackStatus} from './types'
 import {validatePlaybackNumber} from './validate-playback-number'
 
 interface CreateSelectedPlaybackOptions {
+  readonly fadeIn?: boolean
   readonly motions: ReadonlyArray<PuppetMotion>
   readonly motionId?: string
   readonly onEvent?: (event: MotionEvent) => void
@@ -196,7 +197,7 @@ export const createSelectedPlayback = (
   let time = 0
   let onComplete: (() => void) | undefined
   // Motion seconds since the selection started fading in; undefined when it started settled.
-  let elapsed: number | undefined
+  let elapsed: number | undefined = options.fadeIn === true ? 0 : undefined
   // A time reached by seeking or selecting shows without fades until playback resumes.
   let scrubbed = false
   // A pause also holds the fading motions, even once a one-shot selection finished.

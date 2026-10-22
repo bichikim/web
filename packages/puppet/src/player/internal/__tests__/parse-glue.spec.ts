@@ -8,6 +8,14 @@ const glue = {
   strength: 1,
   weight: 0.5,
 }
+test('should accept glue vertices in meshes without rendered triangles', () => {
+  const parts = createDemoDocument().parts.map((part) => ({
+    ...part,
+    mesh: {...part.mesh, indices: []},
+  }))
+  expect(hasValidGlue([glue], parts)).toBe(true)
+  expect(hasValidGlue([{...glue, first: {...glue.first, vertexIndex: 999}}], parts)).toBe(false)
+})
 test('should reject malformed, overlapping and dangling glue references', () => {
   const document = createDemoDocument()
   expect(hasValidGlue(undefined, document.parts)).toBe(true)
@@ -17,7 +25,7 @@ test('should reject malformed, overlapping and dangling glue references', () => 
     {},
     [glue, {...glue, id: 'other'}],
     [{...glue, strength: 2}],
-    [{...glue, first: {...glue.first, vertexIndex: 4}}],
+    [{...glue, first: {...glue.first, vertexIndex: 999}}],
     [{...glue, second: {...glue.second, partId: 'missing'}}],
   ]) {
     expect(hasValidGlue(value, document.parts)).toBe(false)

@@ -6,16 +6,16 @@ import type {
   PuppetPart,
   PuppetVertexReference,
 } from '../document'
-import {isRecord} from './parse-primitives'
+import {isFiniteNumber, isRecord} from './parse-primitives'
 
 const isRatio = (value: unknown): value is number =>
   typeof value === 'number' && Number.isFinite(value) && value >= 0 && value <= 1
-const isGlueKeyform = (value: unknown): boolean =>
+const isGlueKeyform = (value: unknown, unbounded: boolean): boolean =>
   isRecord(value) &&
   typeof value.id === 'string' &&
   value.id.length > 0 &&
   isRatio(value.weight) &&
-  isRatio(value.strength)
+  (unbounded ? isFiniteNumber(value.strength) : isRatio(value.strength))
 
 const isReference = (value: unknown): value is PuppetVertexReference =>
   isRecord(value) &&
@@ -36,6 +36,11 @@ export const isBoundaryReference = (
         edge.firstIndex === reference.vertexIndex || edge.secondIndex === reference.vertexIndex,
     )
   )
+}
+
+const hasMeshVertex = (reference: PuppetVertexReference, parts: ReadonlyArray<PuppetPart>) => {
+  const part = parts.find((candidate) => candidate.id === reference.partId)
+  return part !== undefined && reference.vertexIndex * 2 + 1 < part.mesh.vertices.length
 }
 
 const isEdgeReference = (
@@ -99,8 +104,8 @@ export const hasValidGlue = (
     )
     if (
       keys.some((key) => references.has(key) || targets.has(key)) ||
-      !isBoundaryReference(connection.first, parts) ||
-      !isBoundaryReference(connection.second, parts)
+      !hasMeshVertex(connection.first, parts) ||
+      !hasMeshVertex(connection.second, parts)
     ) {
       return false
     }
@@ -120,6 +125,34 @@ export const hasValidGlue = (
   })
 }
 
+const hasDirectGlue = (
+  binding: PuppetParameterBinding,
+  owners: ReadonlyMap<string, PuppetGlue>,
+): boolean => {
+  const targets = binding.targetGlueIds === undefined ? undefined : new Set(binding.targetGlueIds)
+  return (
+    (binding.targetGlueIds ?? []).every((id) => owners.has(id)) &&
+    binding.keyforms.every((form) => {
+      const samples = form.glue ?? []
+      const legacy = new Set(
+        form.parts.flatMap((part) => part.glue?.map((sample) => sample.id) ?? []),
+      )
+      return (
+        (targets === undefined ||
+          (samples.length === targets.size && samples.every((sample) => targets.has(sample.id)))) &&
+        samples.every((sample) => {
+          const connection = owners.get(sample.id)
+          return (
+            connection !== undefined &&
+            !legacy.has(sample.id) &&
+            (!('edge' in connection.second) || sample.weight === 1)
+          )
+        })
+      )
+    })
+  )
+}
+
 export const hasValidGlueKeyforms = (
   glue: unknown,
   bindings: ReadonlyArray<PuppetParameterBinding>,
@@ -129,21 +162,25 @@ export const hasValidGlueKeyforms = (
     return false
   }
   const owners = new Map((glue ?? []).map((connection) => [connection.id, connection]))
+  const directValid = bindings.every((binding) => hasDirectGlue(binding, owners))
   const samples = bindings.flatMap((binding) => binding.keyforms.flatMap((form) => form.parts))
-  return samples.every((part) =>
-    (part.glue ?? []).every((sample) => {
-      const connection = owners.get(sample.id)
-      return (
-        connection !== undefined &&
-        connection.first.partId === part.partId &&
-        (!('edge' in connection.second) || sample.weight === 1)
-      )
-    }),
+  return (
+    directValid &&
+    samples.every((part) =>
+      (part.glue ?? []).every((sample) => {
+        const connection = owners.get(sample.id)
+        return (
+          connection !== undefined &&
+          connection.first.partId === part.partId &&
+          (!('edge' in connection.second) || sample.weight === 1)
+        )
+      }),
+    )
   )
 }
 
-export const isGlueKeyforms = (value: unknown): boolean =>
+export const isGlueKeyforms = (value: unknown, unbounded = false): boolean =>
   value === undefined ||
   (Array.isArray(value) &&
-    value.every(isGlueKeyform) &&
+    value.every((form) => isGlueKeyform(form, unbounded)) &&
     new Set(value.map((sample) => sample.id)).size === value.length)

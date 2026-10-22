@@ -80,6 +80,7 @@ export const inheritGroupEffects = (
   resolve: (
     group: PuppetSceneContainerNode,
   ) => ResolvedGroupRenderProperties = getContainerRenderProperties,
+  composition?: 'cubism',
 ): InheritedGroupEffect =>
   groups.reduce<InheritedGroupEffect>(
     (inherited, group) => {
@@ -94,6 +95,7 @@ export const inheritGroupEffects = (
                 screenColor: properties.screenColor,
               },
               inherited.effect,
+              composition,
             ),
             layerIds: inherited.layerIds,
           }

@@ -2,6 +2,8 @@ export * from './document-model'
 export * from './document-motion'
 export * from './document-physics'
 export * from './document-render'
+export * from './document-sampling'
+import type {PuppetKeyformSampling, PuppetNumberPrecision} from './document-sampling'
 import type {
   PuppetLayout,
   PuppetLookParameter,
@@ -59,7 +61,10 @@ export interface PuppetTexture {
 }
 
 export interface PuppetMesh {
+  /** Native compiled triangle meshes may overlap or collapse. Validate index connectivity; omission also validates planar rest geometry. */
+  readonly validationSpace?: 'indices'
   readonly boundaryLoops?: ReadonlyArray<ReadonlyArray<number>>
+  /** 빈 배열은 글루 연결점처럼 삼각형을 그리지 않는 메시를 나타낸다. */
   readonly indices: ReadonlyArray<number>
   readonly uvs: ReadonlyArray<number>
   readonly vertices: ReadonlyArray<number>
@@ -168,6 +173,8 @@ export interface PuppetSpatialMesh {
 }
 
 export interface PuppetSceneNodeBase {
+  /** All mapped intervals must contain the parameter value. Omission keeps static visibility. */
+  readonly parameterVisibility?: ReadonlyArray<PuppetParameterVisibility>
   readonly id: string
   readonly locked: boolean
   readonly name: string
@@ -177,6 +184,14 @@ export interface PuppetSceneNodeBase {
 export interface PuppetPoint {
   readonly x: number
   readonly y: number
+}
+
+export interface PuppetParameterVisibility {
+  readonly parameterId: string
+  readonly minimum: number
+  readonly maximum: number
+  /** Input precision; omission keeps Float64. */
+  readonly precision?: 'float32' | 'float64'
 }
 
 export interface PuppetDeformerCurveHandle {
@@ -214,9 +229,17 @@ export interface PuppetVertexInfluence extends PuppetVertexReference {
 }
 
 export interface PuppetDeformerShape {
+  /** Unwrapped local X-axis angle in radians for a rotation deformer. Omission derives the shortest angle from its handle. */
+  readonly rotationAngle?: number
+  /** Signed local distance used to derive a parent-space rotation frame; defaults to 0.1. */
+  readonly rotationReferenceDistance?: number
+  /** 회전 전 로컬 X/Y 축의 반전. 생략하면 반전하지 않는다. */
+  readonly rotationReflection?: readonly [boolean, boolean]
+  /** 워프 셀의 대각선으로 나눈 삼각형 보간. 생략하면 기존 곡면 보간을 쓴다. */
+  readonly interpolation?: 'triangles' | 'triangles-mirrored' | 'bilinear'
   /**
    * Posed scale of a rotation deformer about its pivot (Cubism's rotation deformer scale), from
-   * its keyforms' `rotationScale`; 1 when omitted. Scene nodes and binding layouts never store it.
+   * its keyforms' `rotationScale`; 1 when omitted.
    */
   readonly rotationScale?: number
   /** A rigid pivot and direction handle represented by exactly one bone segment. */
@@ -254,6 +277,8 @@ export interface PuppetDeformerBinding {
 }
 
 export interface PuppetSceneDeformerNode extends PuppetSceneContainerNodeBase, PuppetDeformerShape {
+  /** 부모의 로컬 좌표로 저장한 Cubism 디포머. 생략하면 기존 문서 좌표 합성을 쓴다. */
+  readonly coordinateSpace?: 'parent'
   readonly kind: 'deformer'
   readonly properties?: PuppetDeformerRenderProperties
   readonly spatialMesh?: PuppetSpatialMesh
@@ -323,6 +348,10 @@ export interface PuppetParameterPartKeyform {
 }
 
 export interface PuppetParameterDeformerKeyform {
+  /** Unwrapped local X-axis angle in radians. Omission retains handle-based interpolation. */
+  readonly rotationAngle?: number
+  /** 낮은 키폼의 회전 로컬 축 반전. 다음 키에서 전환하며, 생략하면 장면의 반전값을 유지한다. */
+  readonly rotationReflection?: readonly [boolean, boolean]
   readonly controlPoints: ReadonlyArray<number>
   readonly curveHandles?: ReadonlyArray<PuppetDeformerCurveHandle>
   readonly kind: 'deformer'
@@ -330,7 +359,7 @@ export interface PuppetParameterDeformerKeyform {
   /** Keyed opacity and colors. */
   readonly properties?: PuppetDeformerRenderProperties
   readonly rotationOrigin?: PuppetPoint
-  /** Scale of a rotation deformer about its pivot, positive; 1 when omitted. */
+  /** 회전 중심의 양수 배율. 생략하면 장면의 기본 배율을 유지한다. */
   readonly rotationScale?: number
   readonly spatialOrigin?: readonly [number, number, number]
   readonly spatialMeshPosition?: readonly [number, number, number]
@@ -349,6 +378,8 @@ export interface PuppetParameterGroupKeyform {
 }
 
 export interface PuppetParameterKeyformBase {
+  /** 파트와 독립적으로 연결한 Glue 값. 생략하면 파트 안의 기존 Glue 키폼을 사용한다. */
+  readonly glue?: ReadonlyArray<PuppetGlueKeyform>
   readonly deformers?: ReadonlyArray<PuppetParameterDeformerKeyform>
   /** One entry per `targetGroupIds` group. */
   readonly groups?: ReadonlyArray<PuppetParameterGroupKeyform>
@@ -405,6 +436,14 @@ export interface PuppetParameterInfluence {
 }
 
 export interface PuppetParameterBindingBase {
+  /** Additive samples may exceed display ranges; the composed properties are still clamped. */
+  readonly keyformRange?: 'unbounded'
+  /** 격자 샘플링의 축 정밀도와 키 경계 정책. 생략하면 기존 채널별 계산 방식을 유지한다. */
+  readonly sampling?: PuppetKeyformSampling
+  /** 직접 연결한 Glue ID. 생략하면 키폼의 직접 Glue와 기존 파트 연결에서 대상을 찾는다. */
+  readonly targetGlueIds?: ReadonlyArray<string>
+  /** 직교 격자 보간. 편집으로 비어 있는 모서리는 기본 형상을 쓴다. 생략하면 기존 산점 보간을 쓴다. */
+  readonly interpolation?: 'grid'
   readonly influences?: ReadonlyArray<PuppetParameterInfluence>
   readonly id: string
   readonly name?: string
@@ -495,6 +534,8 @@ export interface PuppetPoseEntry {
 
 /** Mutually exclusive part sets, such as alternative arm poses, chosen by one parameter. */
 export interface PuppetPoseGroup {
+  /** Cubism 포즈 입력. 항목 순서대로 대응하며, 처음으로 0보다 큰 입력의 항목을 선택한다. 생략하면 parameterId의 선택값을 쓴다. */
+  readonly sourceParameterIds?: ReadonlyArray<string>
   readonly entries: ReadonlyArray<PuppetPoseEntry>
   /** Seconds to cross-fade; defaults to `DEFAULT_PUPPET_POSE_FADE_TIME`. */
   readonly fadeTime?: number
@@ -509,6 +550,16 @@ export interface PuppetHitArea {
 }
 
 export interface PuppetDocument {
+  /** Cubism combines inherited multiply and screen colors independently. Omission composes sequential color effects. */
+  readonly colorComposition?: 'cubism'
+  /** 모션 합성 결과의 정밀도. 생략하면 이전 프레임 모드는 기존 Float32, 나머지는 Float64를 유지한다. */
+  readonly motionParameterPrecision?: PuppetNumberPrecision
+  /** 모션의 페이드를 이전 모션 값에서 이어 계산한다. 생략하면 기본값을 기준으로 합성한다. */
+  readonly motionParameterBase?: 'previous-frame'
+  /** 같은 그리기 순서의 기준. 'parts'는 원본 메시 배열 순서, 생략하면 장면 순서를 따른다. */
+  readonly drawOrderTieBreak?: 'parts'
+  /** Cubism integer draw order: Float32 plus 0.001, then truncation. Omission keeps fractional orders. */
+  readonly drawOrderRounding?: 'cubism'
   /** Automatic breathing, one entry per parameter. */
   readonly breath?: ReadonlyArray<PuppetBreathParameter>
   readonly expressions?: ReadonlyArray<PuppetExpression>

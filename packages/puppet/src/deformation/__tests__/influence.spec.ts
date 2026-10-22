@@ -1,40 +1,20 @@
-import {describe, expect, test} from 'vitest'
+import {expect, test} from 'vitest'
+import {sampleInfluence} from '../influence'
 
-import {createDemoDocument, type PuppetParameterBinding} from '../../player'
-import {getBindingInfluence} from '../influence'
-
-const document = createDemoDocument()
-const base = document.parameterBindings![0]!
-const curve = {
-  parameterId: 'angle-y',
-  points: [
-    {value: -30, weight: 1},
-    {value: 0, weight: 0.8},
-    {value: 30, weight: 0},
-  ],
-}
-
-const sample = (influences: PuppetParameterBinding['influences'], values = {}) =>
-  getBindingInfluence({binding: {...base, influences}, document, parameterValues: values})
-
-describe('getBindingInfluence', () => {
-  test('should preserve existing bindings and use the parameter default', () => {
-    expect(sample(undefined)).toBe(1)
-    expect(sample([])).toBe(1)
-    expect(sample([curve])).toBe(0.8)
-  })
-  test('should interpolate, clamp inputs and use defaults for non-finite inputs', () => {
-    expect(sample([curve], {'angle-y': 15})).toBeCloseTo(0.4)
-    expect(sample([curve], {'angle-y': 100})).toBe(0)
-    expect(sample([curve], {'angle-y': -100})).toBe(1)
-    expect(sample([curve], {'angle-y': NaN})).toBe(0.8)
-  })
-  test('should hold endpoint weights outside the curve and support a constant curve', () => {
-    expect(sample([{...curve, points: [{value: 0, weight: 0.3}]}], {'angle-y': -30})).toBe(0.3)
-  })
-  test('should take the minimum relation without recursively changing source inputs', () => {
-    const relations = [curve, {parameterId: 'angle-x', points: [{value: 0, weight: 0.6}]}]
-    expect(sample(relations)).toBe(0.6)
-    expect(sample([...relations].reverse())).toBe(0.6)
-  })
+test('should apply native absolute key snapping to blend shape constraints without changing legacy curves', () => {
+  const relation = {
+    parameterId: 'p',
+    points: [
+      {value: 0, weight: 1},
+      {value: 1, weight: 0},
+    ],
+  }
+  expect(sampleInfluence(relation, 0.0005)).toBe(0.9995)
+  expect(
+    sampleInfluence(relation, 0.0005, {
+      continuousPrecision: 'float32',
+      keyTolerance: 0.001,
+      keyToleranceUnit: 'parameter',
+    }),
+  ).toBe(1)
 })

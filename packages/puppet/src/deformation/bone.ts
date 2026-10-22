@@ -114,6 +114,8 @@ export const transformBonePoint = (
   const weights = getBoneWeights(node, point, vertex)
   // Rotation deformers also scale about their pivot.
   const scale = node.deformerType === 'rotation' ? (node.rotationScale ?? 1) : 1
+  const [reflectX, reflectY] =
+    node.deformerType === 'rotation' ? (node.rotationReflection ?? [false, false]) : [false, false]
   const influences = Array.from({length: rest.length / COORDINATES - 1}, (_, index) => {
     const start = joint(rest, index)
     const end = joint(rest, index + 1)
@@ -125,10 +127,12 @@ export const transformBonePoint = (
       Math.atan2(target.y - origin.y, target.x - origin.x) - Math.atan2(vertical, horizontal)
     const cosine = Math.cos(angle) * scale
     const sine = Math.sin(angle) * scale
+    const localX = (point.x - start.x) * (reflectX ? -1 : 1)
+    const localY = (point.y - start.y) * (reflectY ? -1 : 1)
     return {
       weight: weights[index]!,
-      x: origin.x + (point.x - start.x) * cosine - (point.y - start.y) * sine,
-      y: origin.y + (point.x - start.x) * sine + (point.y - start.y) * cosine,
+      x: origin.x + localX * cosine - localY * sine,
+      y: origin.y + localX * sine + localY * cosine,
     }
   })
   if (influences.length === 1) {

@@ -27,6 +27,85 @@ const node: PuppetSceneDeformerNode = {
   visible: true,
 }
 
+test('should carry a parent-space rotation rigidly through its parent warp', () => {
+  const rotation: PuppetSceneDeformerNode = {
+    ...node,
+    boneRestPoints: [0, 0, 1, 0],
+    boneWeights: undefined,
+    children: [node.children[0]!],
+    columns: 1,
+    controlPoints: [0.5, 0.5, 1.5, 0.5],
+    coordinateSpace: 'parent',
+    deformerType: 'rotation',
+    rows: 1,
+  }
+  const warp: PuppetSceneDeformerNode = {
+    ...node,
+    boneRestPoints: undefined,
+    boneWeights: undefined,
+    bounds: {height: 1, width: 1, x: 0, y: 0},
+    children: [rotation],
+    columns: 1,
+    controlPoints: [0, 0, 200, 0, 0, 100, 200, 100],
+    coordinateSpace: 'parent',
+    id: 'warp',
+    rows: 1,
+  }
+  const vertices = new Map([['a', [0, 0, 10, 0, 0, 10]]])
+  applySceneNodeDeformers([warp], vertices)
+  expect(vertices.get('a')).toEqual([100, 50, 110, 50, 100, 60])
+})
+
+test('should reflect a nested rotation pivot and inherit scale while keeping its local handedness', () => {
+  const child: PuppetSceneDeformerNode = {
+    ...node,
+    boneRestPoints: [0, 0, 1, 0],
+    boneWeights: undefined,
+    children: [node.children[0]!],
+    controlPoints: [2, 3, 3, 3],
+    coordinateSpace: 'parent',
+    deformerType: 'rotation',
+  }
+  const parent: PuppetSceneDeformerNode = {
+    ...child,
+    children: [
+      {children: [child], id: 'group', kind: 'group', locked: false, name: 'Group', visible: true},
+    ],
+    controlPoints: [100, 50, 100, 51],
+    id: 'parent',
+    rotationReflection: [true, false],
+    rotationScale: 2,
+  }
+  const vertices = new Map([['a', [4, 5]]])
+  applySceneNodeDeformers([parent], vertices)
+  expect(vertices.get('a')![0]).toBeCloseTo(84)
+  expect(vertices.get('a')![1]).toBeCloseTo(54)
+})
+
+test('should transform a child parent-space warp control grid before sampling its vertices', () => {
+  const child: PuppetSceneDeformerNode = {
+    ...node,
+    boneRestPoints: undefined,
+    boneWeights: undefined,
+    bounds: {height: 1, width: 1, x: 0, y: 0},
+    children: [node.children[0]!],
+    columns: 1,
+    controlPoints: [0, 0, 1, 0, 0, 1, 1, 1],
+    coordinateSpace: 'parent',
+    rows: 1,
+  }
+  const parent: PuppetSceneDeformerNode = {
+    ...child,
+    children: [child],
+    columns: 2,
+    controlPoints: [0, 0, 10, 0, 100, 0, 0, 100, 10, 100, 100, 100],
+    id: 'parent',
+  }
+  const vertices = new Map([['a', [0.5, 0.5]]])
+  applySceneNodeDeformers([parent], vertices)
+  expect(vertices.get('a')).toEqual([50, 50])
+})
+
 test('should apply different bone weights to coincident vertices and retain automatic weights for other parts', () => {
   const vertices = new Map([
     ['a', [75, 0, 75, 0]],

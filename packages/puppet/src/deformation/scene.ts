@@ -32,6 +32,7 @@ export const createDeformerKeyform = (
   kind: node.kind,
   nodeId: node.id,
   ...(node.rotationOrigin === undefined ? {} : {rotationOrigin: node.rotationOrigin}),
+  ...(node.rotationAngle === undefined ? {} : {rotationAngle: node.rotationAngle}),
   ...(node.spatialOrigin === undefined ? {} : {spatialOrigin: node.spatialOrigin}),
   ...(node.spatialMeshPosition === undefined
     ? {}
@@ -44,23 +45,50 @@ export const createDeformerKeyform = (
 const getDeformerCoordinates = (
   deformer: PuppetSceneDeformerNode,
   coordinates: ReadonlyArray<number>,
-) =>
-  deformer.boneRestPoints === undefined
+  rotationAngle?: number,
+) => {
+  if (deformer.deformerType === 'rotation' && rotationAngle !== undefined) {
+    const rest = deformer.boneRestPoints ?? [0, 0, 1, 0]
+    const angle = Math.atan2(rest[3]! - rest[1]!, rest[2]! - rest[0]!)
+    const direction = Math.atan2(
+      coordinates[3]! - coordinates[1]!,
+      coordinates[2]! - coordinates[0]!,
+    )
+    const offset = direction - rotationAngle
+    const unwrapped = rotationAngle + Math.atan2(Math.sin(offset), Math.cos(offset))
+    return [coordinates[0]!, coordinates[1]!, unwrapped - angle]
+  }
+  return deformer.boneRestPoints === undefined
     ? coordinates
     : getBoneChannels(deformer.boneRestPoints, coordinates)
+}
 
 const getKeyformCoordinates = (
   keyform: PuppetParameterKeyform,
   deformer: PuppetSceneDeformerNode,
 ) => {
-  const coordinates = keyform.deformers?.find(
-    (candidate) => candidate.nodeId === deformer.id,
-  )?.controlPoints
-  return coordinates === undefined ? undefined : getDeformerCoordinates(deformer, coordinates)
+  const keyed = keyform.deformers?.find((candidate) => candidate.nodeId === deformer.id)
+  const coordinates = keyed?.controlPoints
+  if (coordinates === undefined) {
+    return undefined
+  }
+  const sampled = getDeformerCoordinates(deformer, coordinates, keyed?.rotationAngle)
+  if (deformer.boneRestPoints === undefined || keyed?.rotationAngle !== undefined) {
+    return sampled
+  }
+  const reference = getRestCoordinates(deformer)
+  return sampled.map((value, index) => {
+    if (index < 2) {
+      return value
+    }
+    const center = reference[index] ?? 0
+    const offset = value - center
+    return center + Math.atan2(Math.sin(offset), Math.cos(offset))
+  })
 }
 
 const getRestCoordinates = (deformer: PuppetSceneDeformerNode) =>
-  getDeformerCoordinates(deformer, deformer.controlPoints)
+  getDeformerCoordinates(deformer, deformer.controlPoints, deformer.rotationAngle)
 
 const getControlPointCenter = (controlPoints: ReadonlyArray<number>) => {
   const pointCount = controlPoints.length / 2
@@ -158,6 +186,17 @@ const createCurveHandles = (
     },
   }))
 
+const getRotationAngle = (
+  deformer: PuppetSceneDeformerNode,
+  coordinates: ReadonlyArray<number>,
+) => {
+  if (deformer.rotationAngle === undefined) {
+    return {}
+  }
+  const rest = deformer.boneRestPoints ?? [0, 0, 1, 0]
+  return {rotationAngle: coordinates[2]! + Math.atan2(rest[3]! - rest[1]!, rest[2]! - rest[0]!)}
+}
+
 const createSampledDeformer = (
   deformer: PuppetSceneDeformerNode,
   coordinates: ReadonlyArray<number>,
@@ -167,6 +206,7 @@ const createSampledDeformer = (
   ),
   rotationOriginCoordinates: ReadonlyArray<number> = Object.values(getRestRotationOrigin(deformer)),
 ): PuppetParameterDeformerKeyform => ({
+  ...getRotationAngle(deformer, coordinates),
   controlPoints:
     deformer.boneRestPoints === undefined
       ? coordinates
@@ -193,20 +233,40 @@ const addDeformerDelta = (
       (current[index] ?? coordinate) + ((sampled[index] ?? coordinate) - coordinate) * weight,
   )
 
-const ROTATION_SCALE_REST = [1] as const
-
-/** A rotation deformer's keyed scale at the binding's values (1 where a keyform omits it). */
+/** 기본 배율을 기준으로 회전 디포머의 키폼 배율을 계산한다. */
 const sampleRotationScale = (options: SampleParameterDeformerOptions) =>
   sampleParameterCoordinates({
     binding: options.binding,
     keyformCoordinates: options.binding.keyforms.map((keyform) => [
       keyform.deformers?.find((candidate) => candidate.nodeId === options.deformer.id)
-        ?.rotationScale ?? 1,
+        ?.rotationScale ??
+        options.deformer.rotationScale ??
+        1,
     ]),
     repeatRanges: options.repeatRanges,
-    restCoordinates: ROTATION_SCALE_REST,
+    restCoordinates: [options.deformer.rotationScale ?? 1],
     values: options.values,
   })[0] ?? 1
+
+const sampleRotationReflection = (
+  options: SampleParameterDeformerOptions,
+): readonly [boolean, boolean] => {
+  const values = sampleParameterCoordinates({
+    binding: options.binding,
+    keyformCoordinates: options.binding.keyforms.map((keyform) =>
+      (
+        keyform.deformers?.find((candidate) => candidate.nodeId === options.deformer.id)
+          ?.rotationReflection ??
+        options.deformer.rotationReflection ?? [false, false]
+      ).map(Number),
+    ),
+    repeatRanges: options.repeatRanges,
+    restCoordinates: (options.deformer.rotationReflection ?? [false, false]).map(Number),
+    sampling: 'step',
+    values: options.values,
+  })
+  return [values[0]! > 0, values[1]! > 0]
+}
 
 export interface SampleParameterDeformerOptions {
   readonly binding: PuppetParameterBinding
@@ -255,7 +315,11 @@ export const sampleParameterDeformer = (
   const properties = sampleDeformerProperties(options)
   const keyed = properties === undefined ? sampled : {...sampled, properties}
   if (options.deformer.deformerType === 'rotation') {
-    return {...keyed, rotationScale: sampleRotationScale(options)}
+    return {
+      ...keyed,
+      rotationReflection: sampleRotationReflection(options),
+      rotationScale: sampleRotationScale(options),
+    }
   }
   return options.deformer.deformerType === 'spatial'
     ? {
@@ -268,6 +332,11 @@ export const sampleParameterDeformer = (
       }
     : keyed
 }
+
+const getExplicitAngle = (
+  deformer: PuppetSceneDeformerNode,
+  sampled: {readonly rotationAngle?: number},
+) => (deformer.rotationAngle === undefined ? {} : {rotationAngle: sampled.rotationAngle})
 
 export const composeParameterDeformer = (
   document: PuppetDocument,
@@ -290,7 +359,10 @@ export const composeParameterDeformer = (
   let spatialRotationCoordinates: ReadonlyArray<number> = restSpatialRotation
   let spatialScaleCoordinates: ReadonlyArray<number> = restSpatialScale
   let spatialTranslationCoordinates: ReadonlyArray<number> = restSpatialTranslation
-  let rotationScale: ReadonlyArray<number> = ROTATION_SCALE_REST
+  const restRotationScale = [deformer.rotationScale ?? 1]
+  let rotationScale: ReadonlyArray<number> = restRotationScale
+  const restReflection = (deformer.rotationReflection ?? [false, false]).map(Number)
+  let rotationReflection: ReadonlyArray<number> = restReflection
 
   for (const binding of document.parameterBindings ?? []) {
     if (binding.targetDeformerIds?.includes(deformer.id) === true) {
@@ -303,7 +375,7 @@ export const composeParameterDeformer = (
       const weight = getBindingInfluence({binding, document, parameterValues})
       coordinates = addDeformerDelta(
         coordinates,
-        getDeformerCoordinates(deformer, sampled.controlPoints),
+        getDeformerCoordinates(deformer, sampled.controlPoints, sampled.rotationAngle),
         restCoordinates,
         weight,
       )
@@ -320,10 +392,16 @@ export const composeParameterDeformer = (
         weight,
       )
       if (deformer.deformerType === 'rotation') {
+        rotationReflection = addDeformerDelta(
+          rotationReflection,
+          (sampled.rotationReflection ?? [false, false]).map(Number),
+          restReflection,
+          weight,
+        )
         rotationScale = addDeformerDelta(
           rotationScale,
           [sampled.rotationScale ?? 1],
-          ROTATION_SCALE_REST,
+          restRotationScale,
           weight,
         )
       }
@@ -371,11 +449,15 @@ export const composeParameterDeformer = (
   return {
     ...deformer,
     controlPoints: sampled.controlPoints,
+    ...getExplicitAngle(deformer, sampled),
     curveHandles: sampled.curveHandles,
     rotationOrigin: sampled.rotationOrigin,
     // Bindings add their scale offsets; the sum stops at zero rather than mirroring the deformer.
     ...(deformer.deformerType === 'rotation'
-      ? {rotationScale: Math.max(0, rotationScale[0] ?? 1)}
+      ? {
+          rotationReflection: [rotationReflection[0]! > 0, rotationReflection[1]! > 0] as const,
+          rotationScale: Math.max(0, rotationScale[0] ?? 1),
+        }
       : {}),
     ...(deformer.deformerType === 'spatial'
       ? {
