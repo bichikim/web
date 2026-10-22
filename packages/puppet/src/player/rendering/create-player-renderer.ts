@@ -82,18 +82,27 @@ const visibleMasks = (options: RenderPartMasksOptions) => [
 ]
 
 const renderPartMasks = (options: RenderPartMasksOptions) => {
+  const masks = visibleMasks(options)
+  if (masks.length === 0) {
+    return
+  }
+  const {application, root} = options
+  const zoom = root.scale.x
+  const viewport = {
+    height: application.screen.height / zoom,
+    width: application.screen.width / zoom,
+    x: -root.position.x / zoom,
+    y: -root.position.y / zoom,
+  }
+  const resolution = Math.max(MINIMUM_MASK_RESOLUTION, application.renderer.resolution * zoom)
   let stateReset = false
-  for (const {mask, vertexSets} of visibleMasks(options)) {
+  for (const {mask, vertexSets} of masks) {
     if (!stateReset && options.externalRendering) {
       // External drawing can change the shared WebGL state before this mask pass.
       options.application.renderer.resetState()
       stateReset = true
     }
-    const resolution = Math.max(
-      MINIMUM_MASK_RESOLUTION,
-      options.application.renderer.resolution * options.root.scale.x,
-    )
-    renderRuntimeMask(mask, options.application.renderer, resolution, vertexSets)
+    renderRuntimeMask({mask, renderer: application.renderer, resolution, vertexSets, viewport})
   }
 }
 
@@ -172,6 +181,14 @@ export const createPlayerRenderer = async (
       screen: application.screen,
       viewportPadding: options.viewportPadding,
     })
+  const renderMasks = () =>
+    renderPartMasks({
+      application,
+      externalRendering: options.onAfterRender !== undefined,
+      layerById,
+      partById,
+      root,
+    })
   const finishRender = () => {
     options.onAfterRender?.()
     application.renderer.resetState()
@@ -209,13 +226,7 @@ export const createPlayerRenderer = async (
         poseOpacityByPartId,
         root,
       })
-      renderPartMasks({
-        application,
-        externalRendering: options.onAfterRender !== undefined,
-        layerById,
-        partById,
-        root,
-      })
+      renderMasks()
     },
     destroy,
     getPaintOrder: () => paintOrder,
@@ -224,6 +235,7 @@ export const createPlayerRenderer = async (
     resize() {
       application.resize()
       layoutRoot()
+      renderMasks()
       redraw()
     },
     setRunning(nextRunning) {
@@ -243,6 +255,7 @@ export const createPlayerRenderer = async (
       }
       camera = nextCamera
       layoutRoot()
+      renderMasks()
     },
     subscribeFrame(onFrame) {
       application.ticker.add((ticker) => {
