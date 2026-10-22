@@ -1,4 +1,5 @@
 /** @vitest-environment node */
+import {concatUint8Arrays} from 'uint8array-extras'
 import {describe, expect, it} from 'vitest'
 
 import {extractMp3Preview} from '../mp3-preview'
@@ -17,18 +18,6 @@ const createMp3 = (frameCount: number): Uint8Array => {
 
   for (let index = 0; index < frameCount; index += 1) {
     bytes.set(createFrame(), index * FRAME_BYTES)
-  }
-
-  return bytes
-}
-
-const concatenate = (...parts: ReadonlyArray<Uint8Array>): Uint8Array => {
-  const bytes = new Uint8Array(parts.reduce((length, part) => length + part.byteLength, 0))
-  let offset = 0
-
-  for (const part of parts) {
-    bytes.set(part, offset)
-    offset += part.byteLength
   }
 
   return bytes
@@ -104,7 +93,7 @@ describe('MP3 header boundaries', () => {
     ['a non-ID3 third byte', [0x49, 0x44, 0x00]],
   ] as const)('should scan audio after %s', (_name, prefix) => {
     const result = extractMp3Preview(
-      concatenate(new Uint8Array(prefix), createMp3(3)),
+      concatUint8Arrays([new Uint8Array(prefix), createMp3(3)]),
       Math.ceil(FRAME_DURATION_MS),
     )
 
@@ -142,7 +131,10 @@ describe('MP3 header boundaries', () => {
     const id3 = new Uint8Array(20)
     id3.set([0x49, 0x44, 0x33, 0x04, 0, 0x10, 0, 0, 0, 0])
 
-    const result = extractMp3Preview(concatenate(id3, createMp3(3)), Math.ceil(FRAME_DURATION_MS))
+    const result = extractMp3Preview(
+      concatUint8Arrays([id3, createMp3(3)]),
+      Math.ceil(FRAME_DURATION_MS),
+    )
 
     expect(result.byteLength).toBe(FRAME_BYTES)
   })
@@ -158,7 +150,7 @@ describe('MP3 header boundaries', () => {
     malformed.set(header)
 
     const result = extractMp3Preview(
-      concatenate(malformed, createMp3(3)),
+      concatUint8Arrays([malformed, createMp3(3)]),
       Math.ceil(FRAME_DURATION_MS),
     )
 
@@ -190,7 +182,7 @@ describe('MP3 header boundaries', () => {
     const gap = new Uint8Array(FRAME_BYTES)
 
     const result = extractMp3Preview(
-      concatenate(loneFrame, gap, createMp3(3)),
+      concatUint8Arrays([loneFrame, gap, createMp3(3)]),
       Math.ceil(FRAME_DURATION_MS),
     )
 
@@ -203,7 +195,7 @@ describe('MP3 header boundaries', () => {
     ['a truncated complete-frame header', new Uint8Array([0xff, 0xfb, 0x90, 0])],
   ] as const)('should stop before %s at the tail', (_name, tail) => {
     const result = extractMp3Preview(
-      concatenate(createMp3(2), tail),
+      concatUint8Arrays([createMp3(2), tail]),
       Math.ceil(FRAME_DURATION_MS * 3),
     )
 
