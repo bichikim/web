@@ -5,7 +5,12 @@ import {drizzle} from 'drizzle-orm/pglite'
 import {eq} from 'drizzle-orm'
 import {readFile} from 'node:fs/promises'
 import {afterAll, afterEach, beforeAll, expect, it, vi} from 'vitest'
-import {apiAiJobs, getDatabase, withTransactionalDatabase} from 'src/server/database'
+import {
+  apiAiJobs,
+  cloudTextRequests,
+  getDatabase,
+  withTransactionalDatabase,
+} from 'src/server/database'
 import {prepareApiAiQueue} from './fixtures/api-ai-queue'
 import {prepareProductLimits} from './fixtures/product-limits'
 import {completeCloudText, releaseCloudText, reserveCloudText} from '../quota'
@@ -24,7 +29,12 @@ const now = new Date()
 
 beforeAll(async () => {
   await database.exec('create table pomo_users (id uuid primary key, deleted_at timestamptz)')
-  for (const name of ['0023_cloud_text', '0024_cloud_text_limits', '0025_cloud_text_usage_reset']) {
+  for (const name of [
+    '0023_cloud_text',
+    '0024_cloud_text_limits',
+    '0025_cloud_text_usage_reset',
+    '0029_cloud_text_cancellation',
+  ]) {
     await database.exec(
       await readFile(new URL(`../../../../drizzle/${name}.sql`, import.meta.url), 'utf8'),
     )
@@ -84,6 +94,28 @@ it.each(['failed', 'cancelled'] as const)(
 it('should not expose a queued generation belonging to another account', async () => {
   await reserveCloudText({now, requestHash: 'a'.repeat(64), requestId, userId})
   expect(await readCloudTextJob('00000000-0000-4000-8000-000000000003', requestId)).toBeNull()
+})
+it('should expose a charged cancellation without a generated result or a pending subscription', async () => {
+  await reserveCloudText({now, requestHash: 'a'.repeat(64), requestId, userId})
+  await client.insert(apiAiJobs).values({
+    body: {max_output_tokens: 100},
+    cancelRequestedAt: now,
+    generationMilliseconds: 120000,
+    id: requestId,
+    kind: 'cloud-text',
+    ownerId: userId,
+    queueExpiresAt: new Date(now.getTime() + 900000),
+    requestHash: 'a'.repeat(64),
+    status: 'cancelled',
+  })
+  await client
+    .update(cloudTextRequests)
+    .set({status: 'cancelled'})
+    .where(eq(cloudTextRequests.id, requestId))
+
+  const result = await readCloudTextJob(userId, requestId)
+  expect(result).toMatchObject({kind: 'cancelled', requestId, usage: {remaining: 2, used: 1}})
+  expect(result).not.toHaveProperty('text')
 })
 it('should expose the model from the final response after fallback', async () => {
   await reserveCloudText({now, requestHash: 'a'.repeat(64), requestId, userId})

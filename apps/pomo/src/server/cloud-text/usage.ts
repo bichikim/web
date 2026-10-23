@@ -1,15 +1,15 @@
-import {and, eq, gt, isNotNull, isNull, or} from 'drizzle-orm'
+import {and, eq, gt, inArray, isNotNull, isNull, or} from 'drizzle-orm'
 import {CLOUD_TEXT_DAILY_LIMIT, type CloudTextUsage} from 'src/features/cloud-text/contracts'
 import {cloudTextRequests} from '../database'
 import {getCloudTextDay} from './day'
 
-/** Matches completed generations and reservations still owning their daily slot. */
+/** 완료된 생성, 차감된 취소, 유효한 예약을 일일 사용량에 포함한다. */
 export const getCloudTextUsageCondition = (now: Date) =>
   and(
     eq(cloudTextRequests.day, getCloudTextDay(now).day),
     isNull(cloudTextRequests.usageResetAt),
     or(
-      eq(cloudTextRequests.status, 'complete'),
+      inArray(cloudTextRequests.status, ['complete', 'cancelled']),
       and(
         eq(cloudTextRequests.status, 'pending'),
         or(gt(cloudTextRequests.expiresAt, now), isNotNull(cloudTextRequests.queueJobId)),
