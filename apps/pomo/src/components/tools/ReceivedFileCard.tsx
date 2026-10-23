@@ -19,16 +19,25 @@ export const formatFileSize = (size: number): string => {
 
 const formats = [
   {
+    extension: /\.(?:png|jpe?g|gif|webp|avif|bmp|svg)$/iu,
     icon: 'i-tabler-file-type-jpg',
-    pattern: /^(?:image\/)|\.(?:png|jpe?g|gif|webp|avif|bmp|svg)$/iu,
+    mimeType: /^image\//iu,
   },
-  {icon: 'i-tabler-file-music', pattern: /^(?:audio\/)|\.(?:mp3|wav|ogg|flac|m4a)$/iu},
-  {icon: 'i-tabler-movie', pattern: /^(?:video\/)|\.(?:mp4|mov|webm|mkv)$/iu},
-  {icon: 'i-tabler-file-type-pdf', pattern: /pdf|\.pdf$/iu},
-  {icon: 'i-tabler-file-zip', pattern: /zip|compressed|\.(?:zip|7z|rar|tar|gz)$/iu},
-  {icon: 'i-tabler-table', pattern: /spreadsheet|excel|\.(?:xlsx?|csv|ods)$/iu},
-  {icon: 'i-tabler-presentation', pattern: /presentation|\.(?:pptx?|odp)$/iu},
-  {icon: 'i-tabler-file-text', pattern: /^(?:text\/)|document|\.(?:txt|md|docx?|odt)$/iu},
+  {extension: /\.(?:mp3|wav|ogg|flac|m4a)$/iu, icon: 'i-tabler-file-music', mimeType: /^audio\//iu},
+  {extension: /\.(?:mp4|mov|webm|mkv)$/iu, icon: 'i-tabler-movie', mimeType: /^video\//iu},
+  {extension: /\.pdf$/iu, icon: 'i-tabler-file-type-pdf', mimeType: /pdf/iu},
+  {
+    extension: /\.(?:zip|7z|rar|tar|gz)$/iu,
+    icon: 'i-tabler-file-zip',
+    mimeType: /zip|compressed/iu,
+  },
+  {extension: /\.(?:xlsx?|csv|ods)$/iu, icon: 'i-tabler-table', mimeType: /spreadsheet|excel/iu},
+  {extension: /\.(?:pptx?|odp)$/iu, icon: 'i-tabler-presentation', mimeType: /presentation/iu},
+  {
+    extension: /\.(?:txt|md|docx?|odt)$/iu,
+    icon: 'i-tabler-file-text',
+    mimeType: /^text\/|document/iu,
+  },
 ]
 
 export interface ReceivedFileCardProps {
@@ -39,8 +48,10 @@ export const ReceivedFileCard = (props: ReceivedFileCardProps) => {
   const [failedPreview, setFailedPreview] = createSignal(false)
   const icon = createMemo(
     () =>
-      formats.find((format) => format.pattern.test(`${props.file.mimeType} ${props.file.name}`))
-        ?.icon ?? 'i-tabler-file',
+      formats.find(
+        (format) =>
+          format.mimeType.test(props.file.mimeType) || format.extension.test(props.file.name),
+      )?.icon ?? 'i-tabler-file',
   )
   const image = () =>
     (props.file.url !== null && !failedPreview() && /^image\//iu.test(props.file.mimeType)) ||
