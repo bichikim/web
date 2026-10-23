@@ -79,6 +79,22 @@ const settle = (document: PuppetDocument, parameterValues: Readonly<Record<strin
     settle: true,
   }).parameterValues
 
+test('should preserve a Cubism normalization center outside equal endpoints', () => {
+  const document = createDocument({
+    chains: [
+      {
+        ...chain,
+        normalization: {
+          angle: {center: 90, maximum: -90, minimum: -90},
+          position: {center: 0, maximum: -10, minimum: -10},
+        },
+      },
+    ],
+  })
+  expect(parseDocumentValue(document).ok).toBe(true)
+  expect(Object.values(settle(document, {'head-angle': 15})).every(Number.isFinite)).toBe(true)
+})
+
 describe('physics chains', () => {
   test('should hang along gravity turned by the tilt input', () => {
     // 15 of 30 maps to 5 of 10 normalized degrees, negated as in Cubism: gravity turns so the

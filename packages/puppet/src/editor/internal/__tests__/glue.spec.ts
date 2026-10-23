@@ -145,3 +145,20 @@ test('should remove stored samples when unlinking a connection', () => {
   ).toEqual([])
   expect(parseDocument(serializeDocument(document)).ok).toBe(true)
 })
+
+test('should edit an imported sequential connection even when another connection shares its vertex', () => {
+  const document = {
+    ...createDemoDocument(),
+    glue: [0, 1].map((vertexIndex) => ({
+      first,
+      id: `shared-${vertexIndex}`,
+      second: {...second, vertexIndex},
+      strength: 1,
+      weight: 1,
+    })),
+    glueComposition: 'sequential' as const,
+  }
+  const updated = updateGlue(document, 'shared-0', {strength: 0.5, weight: 1})
+  expect(updated?.glue?.[0]?.strength).toBe(0.5)
+  expect(updated === undefined ? false : parseDocument(serializeDocument(updated)).ok).toBe(true)
+})

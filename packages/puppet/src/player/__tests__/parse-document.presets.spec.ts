@@ -46,6 +46,7 @@ describe('parseDocument expressions, pose groups and hit areas', () => {
       {...expression, parameters: [{blend: 'screen', parameterId, value: 1}]},
       {...expression, parameters: [...expression.parameters, ...expression.parameters]},
       {...expression, fadeOutTime: -1},
+      {...expression, composition: 'unknown'},
     ]
     for (const variant of variants) {
       expect(parses(withPresets({expressions: [variant as never]}))).toBe(false)
@@ -81,4 +82,10 @@ describe('parseDocument expressions, pose groups and hit areas', () => {
       ),
     ).toBe(false)
   })
+})
+
+test('should preserve Cubism expression composition through document serialization', () => {
+  const expression = withPresets({}).expressions![0]!
+  const document = withPresets({expressions: [{...expression, composition: 'cubism'}]})
+  expect(parseDocument(JSON.stringify(document))).toEqual({document, ok: true})
 })

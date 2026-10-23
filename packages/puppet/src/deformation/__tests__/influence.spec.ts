@@ -1,5 +1,6 @@
 import {expect, test} from 'vitest'
-import {sampleInfluence} from '../influence'
+import {createDemoDocument} from '../../player/create-demo-document'
+import {getBindingInfluence, sampleInfluence} from '../influence'
 
 test('should apply native absolute key snapping to blend shape constraints without changing legacy curves', () => {
   const relation = {
@@ -17,4 +18,19 @@ test('should apply native absolute key snapping to blend shape constraints witho
       keyToleranceUnit: 'parameter',
     }),
   ).toBe(1)
+})
+
+test('should multiply independent slice weights only when requested', () => {
+  const document = createDemoDocument()
+  const binding = document.parameterBindings![0]!
+  const influences = [
+    {parameterId: binding.parameterIds[0]!, points: [{value: 0, weight: 0.8}]},
+    {parameterId: binding.parameterIds[1]!, points: [{value: 0, weight: 0.5}]},
+  ]
+  expect(
+    getBindingInfluence({binding: {...binding, influenceMode: 'multiply', influences}, document}),
+  ).toBeCloseTo(0.4)
+  expect(
+    getBindingInfluence({binding: {...binding, influenceMode: 'minimum', influences}, document}),
+  ).toBe(0.5)
 })

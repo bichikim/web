@@ -1,5 +1,6 @@
 import {parseDocumentValue, type PuppetDocument} from './player'
 import type {DocumentRecovery, DocumentRecoveryEntry} from './editor/document-recovery'
+import {compactDocumentTextures} from './player/texture-assets'
 
 interface CreateDocumentSessionOptions {
   readonly databaseName?: string
@@ -110,7 +111,9 @@ export const createDocumentSession = (options: CreateDocumentSessionOptions): Do
       try {
         const transaction = database.transaction(STORE_NAME, 'readwrite')
         const completed = finishTransaction(transaction)
-        transaction.objectStore(STORE_NAME).put({document, savedAt: Date.now()}, key)
+        transaction
+          .objectStore(STORE_NAME)
+          .put({document: compactDocumentTextures(document), savedAt: Date.now()}, key)
         await completed
       } finally {
         database.close()

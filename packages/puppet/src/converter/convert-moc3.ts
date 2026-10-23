@@ -34,6 +34,18 @@ export const convertMoc3 = (
   options: ConvertMoc3Options,
 ): ConvertCmo3Result => {
   const model = readMoc3(source)
+  const missing = [
+    ...new Set(
+      model.tables.artMeshes!.ids.map((_, index) => numberAt(model, 'artMeshes', 'texture', index)),
+    ),
+  ]
+    .filter((index) => options.textures[index] === undefined)
+    .sort((first, second) => first - second)
+  if (missing.length > 0) {
+    throw new Error(
+      `PNG 텍스처 누락: 인덱스 ${missing.join(', ')} (0부터 시작). model3.json의 Textures 목록에 맞게 PNG를 추가하세요.`,
+    )
+  }
   const parameters = readParameters(model)
   const meshes = readMeshes(model, parameters, options.textures)
   if (meshes.parts.length === 0) {
@@ -57,6 +69,7 @@ export const convertMoc3 = (
     drawOrderTieBreak: 'parts',
     format: PUPPET_DOCUMENT_FORMAT,
     glue: glue.glue,
+    glueComposition: 'sequential',
     motions: [],
     parameterBindings: [
       ...rig.parameterBindings,

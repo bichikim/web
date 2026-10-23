@@ -3,8 +3,10 @@ import {expect, test} from 'vitest'
 
 import {convertCmo3} from '../convert-cmo3'
 import {readCmo3Archive} from '../read-cmo3-archive'
+import {parseDocument} from '../../player/parse-document'
+import {serializeDocument} from '../../player/serialize-document'
 import {composeParameterVertices} from '../../deformation/composition'
-import {getPartRenderPlans} from '../../player/internal/render-plan'
+import {getPartRenderFrame, getPartRenderPlans} from '../../player/internal/render-plan'
 import {composeParameterPartDrawOrder} from '../../deformation/draw-order'
 
 interface ArchiveEntry {
@@ -296,4 +298,51 @@ test('should retain independent Cubism multiply and screen colors through the co
   const plan = getPartRenderPlans(document)[0]!
   expect(plan.properties.multiplyColor).toEqual([0.25, 0.25, 0.25])
   expect(plan.properties.screenColor).toEqual([0.625, 0.625, 0.625])
+})
+
+test('should retain an empty drawable used as a clipping source across export and reload', () => {
+  const source = modelXml().replace(
+    '<int-array xs.n="indices">0 1 2</int-array>',
+    '<int-array xs.n="indices"></int-array>',
+  )
+  const {document} = convertCmo3(archive(source))
+  const reloaded = parseDocument(serializeDocument(document))
+  expect(reloaded.ok).toBe(true)
+  if (!reloaded.ok) {
+    throw new Error('Expected converted mask to reload')
+  }
+  const eye = getPartRenderFrame(reloaded.document).plans.find((plan) => plan.partId === 'eye')
+  expect(eye?.mask?.sources.map((entry) => entry.partId)).toEqual(['mask'])
+  expect(reloaded.document.parts.find((part) => part.id === 'mask')?.mesh.indices).toEqual([])
+})
+
+test.each([
+  ['MULTIPLY', 'multiply-compatible'],
+  ['ADD', 'add-compatible'],
+])('should retain %s blending and backface culling', (sourceMode, blendMode) => {
+  const source = modelXml().replaceAll(
+    '</CArtMeshSource>',
+    `<ColorComposition xs.n="colorComposition" v="${sourceMode}"/>
+      <b xs.n="culling">true</b></CArtMeshSource>`,
+  )
+  const {document} = convertCmo3(archive(source))
+  expect(getPartRenderFrame(document).plans[0]?.properties).toMatchObject({
+    blendMode,
+    culling: true,
+  })
+})
+
+test('should preserve topology when a default keyform collapses its triangles', () => {
+  const forms = `<carray_list xs.n="keyforms"><CArtMeshForm>
+    <float-array xs.n="positions">0 0 0 0 0 0</float-array>
+  </CArtMeshForm></carray_list>`
+  const source = modelXml().replaceAll('</CArtMeshSource>', `${forms}</CArtMeshSource>`)
+  const {document} = convertCmo3(archive(source))
+  expect(document.parts).toHaveLength(2)
+  expect(document.parts[0]?.mesh).toMatchObject({
+    indices: [0, 1, 2],
+    validationSpace: 'indices',
+    vertices: [0, 0, 0, 0, 0, 0],
+  })
+  expect(parseDocument(serializeDocument(document)).ok).toBe(true)
 })

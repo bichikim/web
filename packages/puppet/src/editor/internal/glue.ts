@@ -75,7 +75,7 @@ export const updateGlue = (
     changes === null
       ? document.glue?.filter((glue) => glue.id !== id)
       : document.glue?.map((glue) => (glue.id === id ? {...glue, ...changes} : glue))
-  if (!hasValidGlue(glue, document.parts)) {
+  if (!hasValidGlue(glue, document.parts, document.glueComposition)) {
     return undefined
   }
   return changes === null ? reconcileGlueKeyforms({...document, glue}) : {...document, glue}

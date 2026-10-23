@@ -2,7 +2,7 @@ import type {PuppetParameter, PuppetSceneDeformerNode, PuppetSceneNode} from '..
 import type {Moc3Model} from '../read-moc3'
 import type {NativeObject} from './types'
 import {column, numberAt, readColors, readWarpPosition} from './tables'
-import {createBinding, defaultCoordinates, readForms} from './keyforms'
+import {createBindings, defaultCoordinates, readForms} from './keyforms'
 import {baseNode} from './scene-node'
 import {readOffscreen, readOffscreenKeyform} from './offscreen'
 
@@ -327,7 +327,7 @@ const buildScene = (
     objects: [...objects.values()],
     parameterBindings: [...objects.values()]
       .filter((object) => object.axes.length > 0)
-      .map(createBinding),
+      .flatMap(createBindings),
     scene: {roots: [root]},
   }
 }

@@ -1,6 +1,6 @@
 import type {PuppetGlue, PuppetParameter, PuppetParameterBinding} from '../../player/document'
 import type {Moc3Model} from '../read-moc3'
-import {createCubismBinding} from '../create-cubism-binding'
+import {createCubismBindings} from '../create-cubism-bindings'
 import type {NativeObject} from './types'
 import {numberAt} from './tables'
 import {defaultCoordinates, readForms} from './keyforms'
@@ -49,7 +49,7 @@ export const readGlue = (model: Moc3Model, parameters: ReadonlyArray<PuppetParam
     const object: NativeObject = {...forms, id, node: {...baseNode(id), kind: 'part'}, parent: -1}
     if (forms.axes.length > 0) {
       bindings.push(
-        createCubismBinding({
+        ...createCubismBindings({
           id: `moc3:glue:${id}`,
           interpolation: 'grid',
           keyforms: forms.forms,

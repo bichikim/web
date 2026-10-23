@@ -9,7 +9,7 @@ interface Keyform extends PuppetParameterKeyformBase {
   readonly values: ReadonlyArray<number>
 }
 
-interface CubismBinding extends PuppetParameterBindingBase {
+export interface CubismBinding extends PuppetParameterBindingBase {
   readonly parameterIds: ReadonlyArray<string>
   readonly keyforms: ReadonlyArray<Keyform>
 }

@@ -79,3 +79,42 @@ test('should convert parameter-driven glue strength and apply it between mesh ve
     expect(vertices.get(demo.parts[1]!.id)).toEqual([8 - 6 * value, 0])
   }
 })
+
+test('should report stale vertex UIDs while retaining the other glue connections', () => {
+  const xml = new DOMParser().parseFromString(
+    `<CModelSource>
+    <CAffecterSourceSet><carray_list xs.n="_sources"><CGlueSource>
+      <CAffecterId xs.n="id" idstr="seam"/>
+      <CDrawableGuid xs.n="targetArtMeshA_guid" uuid="a"/>
+      <CDrawableGuid xs.n="targetArtMeshB_guid" uuid="b"/>
+      <float-array xs.n="weights">0.25 0.75 0.5 0.5</float-array>
+      <long-array xs.n="bindVertexUids">10 20 999 20</long-array>
+    </CGlueSource></carray_list></CAffecterSourceSet>
+  </CModelSource>`,
+    'application/xml',
+  )
+  const source = (id: string, uid: number) =>
+    new DOMParser().parseFromString(
+      `<CArtMeshSource><CDrawableGuid xs.n="guid" uuid="${id}"/>
+      <int-array xs.n="pointUid">${uid}</int-array></CArtMeshSource>`,
+      'application/xml',
+    ).documentElement!
+  const demo = createDemoDocument()
+  const result = readCmo3Glue(
+    xml.documentElement!,
+    new Map(),
+    [
+      {part: demo.parts[0]!, source: source('a', 10)},
+      {part: demo.parts[1]!, source: source('b', 20)},
+    ],
+    new Map(),
+  )
+  expect(result.glue).toHaveLength(1)
+  expect(result.glue[0]).toMatchObject({
+    first: {partId: demo.parts[0]!.id, vertexIndex: 0},
+    second: {partId: demo.parts[1]!.id, vertexIndex: 0},
+    weight: 0.25,
+  })
+  expect(result.warnings).toHaveLength(1)
+  expect(result.warnings[0]).toContain('1')
+})

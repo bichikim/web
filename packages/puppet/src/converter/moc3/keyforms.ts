@@ -3,8 +3,8 @@ import type {
   PuppetParameterBinding,
   PuppetParameterKeyformBase,
 } from '../../player/document'
-import {type PuppetParameterValues, sampleParameterCoordinates} from '../../deformation/parameter'
-import {createCubismBinding} from '../create-cubism-binding'
+import {sampleGridCoordinates} from '../../deformation/sample-grid-coordinates'
+import {createCubismBindings} from '../create-cubism-bindings'
 import type {Moc3Model} from '../read-moc3'
 import type {Moc3Record, NativeForm, NativeObject} from './types'
 import {column, numberAt, range} from './tables'
@@ -88,8 +88,8 @@ export const readForms = (
   return {axes: axes.map((axis) => axis.parameter), forms, visibilityRanges}
 }
 
-export const createBinding = (object: NativeObject): PuppetParameterBinding =>
-  createCubismBinding({
+export const createBindings = (object: NativeObject): ReadonlyArray<PuppetParameterBinding> =>
+  createCubismBindings({
     id: `moc3:${object.id}`,
     interpolation: 'grid',
     keyforms: object.forms,
@@ -115,20 +115,18 @@ export const defaultCoordinates = (
     return read(first)
   }
   const values = object.axes.map((axis) => axis.defaultValue)
-  const tuple: PuppetParameterValues =
-    values.length === 1
-      ? [values[0]!]
-      : values.length === 2
-        ? [values[0]!, values[1]!]
-        : [values[0]!, values[1]!, values[2]!]
-  return sampleParameterCoordinates({
-    binding: createBinding(object),
+  return sampleGridCoordinates({
+    binding: {
+      keyforms: object.forms,
+      parameterIds: object.axes.map((axis) => axis.id),
+      sampling: MOC3_SAMPLING,
+    },
     keyformCoordinates: object.forms.map(read),
     repeatRanges: object.axes.map((axis) =>
       axis.repeat === true ? [axis.minimum, axis.maximum] : undefined,
     ),
     restCoordinates: read(first),
     ...(step ? {sampling: 'step' as const} : {}),
-    values: tuple,
+    values,
   })
 }
