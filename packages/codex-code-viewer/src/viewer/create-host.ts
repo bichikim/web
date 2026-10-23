@@ -14,6 +14,7 @@ import {subscribeWorkspaceChanges} from './subscribe-workspace-changes'
 import {errorMessage} from './error-message'
 import {callViewerTool} from './call-viewer-tool'
 import {createHostAttachments} from './create-host-attachments'
+import {createTreeStateWriter} from './create-tree-state-writer'
 
 const httpStreams = (app: App): boolean =>
   z
@@ -75,6 +76,15 @@ const changeWorkspace = (call: ViewerPort['call'], path: string) =>
     schema: workspaceSessionSchema,
   })
 
+const finishTeardown = async (
+  cleanup: (() => Promise<void>) | undefined,
+  settle: () => Promise<void>,
+): Promise<Record<string, never>> => {
+  await cleanup?.()
+  await settle()
+  return {}
+}
+
 export const createHost = (options: HostOptions = {}): ViewerPort => {
   const standard = options.integration === 'standard'
   const app = new App({name: 'Code Viewer', version: manifest.version}, {}, {autoResize: standard})
@@ -92,10 +102,14 @@ export const createHost = (options: HostOptions = {}): ViewerPort => {
   }
   const callTool = createToolCall(app, requests)
   const call: ViewerPort['call'] = async (name, input, options) => {
+    if (name === 'code.close') {
+      await treeWriter.settle()
+    }
     const result = await callTool(name, input, options)
     rememberSession(result)
     return result
   }
+  const treeWriter = createTreeStateWriter({call, requests})
   const localeListeners = new Set<(locale: string | undefined) => void>()
   const publishLocale = (): void => {
     const locale = app.getHostContext()?.locale
@@ -112,6 +126,7 @@ export const createHost = (options: HostOptions = {}): ViewerPort => {
   return {
     changeWorkspace: standard ? undefined : (path) => changeWorkspace(call, path),
     draftStorage: options.draftStorage,
+    saveTreeState: standard ? undefined : treeWriter.save,
     ...context,
     ...createHostAttachments({
       call,
@@ -183,10 +198,7 @@ export const createHost = (options: HostOptions = {}): ViewerPort => {
       app.addEventListener('toolinput', handleInput)
       app.addEventListener('hostcontextchanged', synchronizeContext)
       app.addEventListener('hostcontextchanged', publishLocale)
-      app.onteardown = async () => {
-        await onTeardown?.()
-        return {}
-      }
+      app.onteardown = () => finishTeardown(onTeardown, treeWriter.settle)
       const connected = app.connect()
       try {
         await connected

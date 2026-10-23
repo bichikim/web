@@ -29,18 +29,39 @@ import {registerAttachmentTools} from './register-attachment-tools'
 import type {createThreadWorkspaces} from './create-thread-workspaces'
 import {registerWorkspaceSettings} from './register-workspace-settings'
 import {registerUpdateTools} from './register-update-tools'
+import type {createThreadTreeState} from './create-thread-tree-state'
+import {restoreTreeState} from './restore-tree-state'
+import {registerTreeState} from './register-tree-state'
 
 const appOnly = {ui: {visibility: ['app']}}
 const MAX_ENTRY_NAME_LENGTH = 255
 const annotations = {destructiveHint: false, openWorldHint: false, readOnlyHint: true}
 
 interface ServerOptions {
+  /** 채팅별 파일트리 저장소입니다. 생략하면 상태를 저장하지 않습니다. */
+  readonly threadTreeState?: ReturnType<typeof createThreadTreeState>
   /** 채팅별 작업 폴더 저장소입니다. 생략하면 폴더 변경 도구를 등록하지 않습니다. */
   readonly threadWorkspaces?: ReturnType<typeof createThreadWorkspaces>
   readonly clipboard?: ClipboardPort
   readonly integration?: 'codex' | 'standard'
   readonly workspaceRoot?: string
   readonly workspace?: (metadata: unknown) => Result<string | undefined>
+}
+
+const registerChatSettings = (
+  server: McpServer,
+  sessions: ReturnType<typeof createSessions>,
+  options: ServerOptions,
+): void => {
+  if (options.integration === 'standard') {
+    return
+  }
+  if (options.threadWorkspaces !== undefined) {
+    registerWorkspaceSettings(server, sessions, options.threadWorkspaces, options.threadTreeState)
+  }
+  if (options.threadTreeState !== undefined) {
+    registerTreeState(server, sessions.withSession, options.threadTreeState)
+  }
 }
 
 const registerPanel = (
@@ -80,7 +101,13 @@ const registerPanel = (
       }
       return workspace.value === undefined
         ? {content: [], structuredContent: {panel: true}}
-        : toolResult(sessions.connect(workspace.value))
+        : toolResult(
+            restoreTreeState(
+              sessions.connect(workspace.value),
+              options.threadTreeState,
+              context._meta,
+            ),
+          )
     },
   )
 }
@@ -389,15 +416,17 @@ export const createServer = (html: string, options: ServerOptions = {}) => {
   const {withSession} = sessions
   const open = (path: string, line = 1, column = 1, metadata?: unknown) => {
     const saved = options.threadWorkspaces?.read(metadata) ?? success(undefined)
-    return saved.ok ? sessions.open(path, line, column, saved.value) : saved
+    return restoreTreeState(
+      saved.ok ? sessions.open(path, line, column, saved.value) : saved,
+      options.threadTreeState,
+      metadata,
+    )
   }
   const resourceUri = registerViewerResource(server, html)
   const appMetadata = {ui: {resourceUri}}
   const pathInput = {path: z.string(), session: z.string()}
   registerPanel(server, sessions, options, resourceUri)
-  if (options.threadWorkspaces !== undefined && options.integration !== 'standard') {
-    registerWorkspaceSettings(server, sessions, options.threadWorkspaces)
-  }
+  registerChatSettings(server, sessions, options)
   if (options.integration === 'standard') {
     if (options.workspaceRoot === undefined) {
       throw new Error('A workspace folder is required for the standard desktop server.')
