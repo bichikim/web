@@ -4,7 +4,6 @@ import {createSignal} from 'solid-js'
 import {createEmptyAlbumTranslations} from 'src/features/admin-music'
 import {afterEach, expect, it, vi} from 'vitest'
 import {AlbumDraftForm} from '../AlbumDraftForm'
-import {createModelHarness} from './fixtures/model'
 vi.mock('@solidjs/start', () => ({clientOnly: vi.fn(() => () => null)}))
 
 afterEach(() => {
@@ -13,11 +12,9 @@ afterEach(() => {
 })
 
 it('should show cover previews and block submission while processing the cover', () => {
-  const {model} = createModelHarness()
   const [processing, setProcessing] = createSignal(false)
   const handleAlbumSubmit = vi.fn((event: SubmitEvent) => event.preventDefault())
   const draftModel = {
-    ...model,
     albumTranslations: createEmptyAlbumTranslations,
     coverFallback: () => 'lp' as const,
     coverImageUrl: () => '',

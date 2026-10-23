@@ -1,8 +1,8 @@
 import {PInput} from 'src/components/p-input/PInput'
 import {clientOnly} from '@solidjs/start'
 import {cx} from 'class-variance-authority'
-import {Show} from 'solid-js'
-import {type AdminMusicModel} from '../../features/admin-music'
+import {type Accessor, type JSX, Show} from 'solid-js'
+import {type AlbumDraftData, type AlbumDraftTranslations} from '../../features/admin-music'
 import {BUTTON_CLASSES} from './draft-button-classes'
 
 const AlbumTranslationFields = clientOnly(
@@ -25,8 +25,23 @@ const COVER_PREVIEW_CLASSES = cx(
   'border-white/15 bg-#27211c text-sm font-700 text-white/45',
 )
 
+interface AlbumDraftModel {
+  readonly albumTranslations: Accessor<AlbumDraftTranslations>
+  readonly coverFallback: Accessor<AlbumDraftData['coverFallback']>
+  readonly coverImageUrl: Accessor<string>
+  readonly coverPreviewUrl: Accessor<string | null>
+  readonly handleAlbumSubmit: JSX.EventHandler<HTMLFormElement, SubmitEvent>
+  readonly handleCoverChange: JSX.EventHandler<HTMLInputElement, Event>
+  readonly handleCoverFallbackChange: (event: Event & {currentTarget: HTMLSelectElement}) => void
+  readonly handleCoverImageUrlInput: (event: InputEvent & {currentTarget: HTMLInputElement}) => void
+  readonly handleTranslationsChange: (translations: AlbumDraftTranslations) => void
+  readonly isProcessingCover: Accessor<boolean>
+  readonly isRestoringDraft: Accessor<boolean>
+  readonly isSavingAlbum: Accessor<boolean>
+}
+
 interface AdminMusicFormProps {
-  readonly model: AdminMusicModel
+  readonly model: AlbumDraftModel
 }
 
 export const AlbumDraftForm = (props: AdminMusicFormProps) => (
