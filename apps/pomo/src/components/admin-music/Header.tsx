@@ -1,7 +1,6 @@
 import {A} from '@solidjs/router'
 import {cx} from 'class-variance-authority'
-import {Show} from 'solid-js'
-import {type AdminMusicModel} from '../../features/admin-music'
+import {type Accessor, type Setter, Show} from 'solid-js'
 import {BUTTON_CLASSES} from './draft-button-classes'
 
 const SECONDARY_BUTTON_CLASSES = cx(
@@ -10,8 +9,21 @@ const SECONDARY_BUTTON_CLASSES = cx(
   'focus-visible:outline-#e8bc88',
 )
 
+interface AlbumStats {
+  readonly draft: number
+  readonly published: number
+  readonly total: number
+}
+
+interface HeaderModel {
+  readonly albumStats: Accessor<AlbumStats>
+  readonly isAlbumEditorOpen: Accessor<boolean>
+  readonly isLoading: Accessor<boolean>
+  readonly setIsAlbumEditorOpen: Setter<boolean>
+}
+
 interface AdminMusicHeaderProps {
-  readonly model: AdminMusicModel
+  readonly model: HeaderModel
 }
 
 export const AdminMusicHeader = (props: AdminMusicHeaderProps) => (
