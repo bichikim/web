@@ -65,3 +65,12 @@ Deploy Pomo and Audio Gateway 선택
 [![Wallaby.js](https://img.shields.io/badge/wallaby.js-powered-blue.svg?style=for-the-badge&logo=github)](https://wallabyjs.com/oss/)
 
 저장소 기여자는 [Wallaby.js OSS License](https://wallabyjs.com/oss/)를 사용할 수 있다.
+
+## 라이선스
+
+Copyright (c) Bichi Kim and contributors.
+
+이 프로젝트는 [GNU Affero General Public License v3.0](./LICENSE) (`AGPL-3.0-only`)에 따라 배포한다.
+수정한 버전을 네트워크 서비스로 제공할 경우, 해당 버전과 원격으로 상호작용하는 사용자에게 대응 소스를 제공해야 한다.
+외부 코드·라이브러리·에셋의 별도 라이선스와 저작권 고지는 각 파일에 명시된 조건을 따른다.
+이 변경 이전에 MIT로 제공된 버전에는 당시의 MIT 라이선스가 계속 적용된다.

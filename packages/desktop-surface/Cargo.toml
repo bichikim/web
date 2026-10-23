@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2024"
 links = "tauri-plugin-desktop-surface"
 description = "Tauri desktop background and transparent control surfaces"
-license = "MIT"
+license = "AGPL-3.0-only"
 
 [package.metadata.platforms.support]
 macos = { level = "full", notes = "Background placement uses public AppKit and Core Graphics APIs. Transparent WebViews require Tauri's macOS private API feature." }

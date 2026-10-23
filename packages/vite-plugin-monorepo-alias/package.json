@@ -9,7 +9,7 @@
     "vite",
     "vitest"
   ],
-  "license": "MIT",
+  "license": "AGPL-3.0-only",
   "author": "bichi@live.co.kr",
   "repository": {
     "type": "git",
