@@ -1,6 +1,7 @@
-import {and, count, eq, gt, isNotNull, or} from 'drizzle-orm'
+import {and, count, eq, exists, gt, isNotNull, ne, or, sql} from 'drizzle-orm'
 import {type CloudTextUsage} from 'src/features/cloud-text/contracts'
 import {
+  apiAiAttempts,
   cloudTextRequests,
   type Database,
   getDatabase,
@@ -173,6 +174,28 @@ export const releaseCloudText = async (userId: string, requestId: string): Promi
   await getDatabase()
     .update(cloudTextRequests)
     .set({status: 'failed'})
+    .where(
+      and(
+        eq(cloudTextRequests.userId, userId),
+        eq(cloudTextRequests.id, requestId),
+        eq(cloudTextRequests.status, 'pending'),
+      ),
+    )
+}
+
+/** 사용자 취소를 정산하고, 접수되었거나 접수 여부가 불명확한 시도의 횟수는 유지한다. */
+export const settleCloudTextCancellation = async (
+  userId: string,
+  requestId: string,
+): Promise<void> => {
+  const database = getDatabase()
+  const submitted = database
+    .select({id: apiAiAttempts.id})
+    .from(apiAiAttempts)
+    .where(and(eq(apiAiAttempts.jobId, requestId), ne(apiAiAttempts.state, 'rejected')))
+  await database
+    .update(cloudTextRequests)
+    .set({status: sql`case when ${exists(submitted)} then 'cancelled' else 'failed' end`})
     .where(
       and(
         eq(cloudTextRequests.userId, userId),
