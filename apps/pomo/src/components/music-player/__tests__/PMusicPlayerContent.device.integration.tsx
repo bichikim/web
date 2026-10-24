@@ -24,6 +24,7 @@ const dispatchMediaSessionAction = (
 
 describe('PMusicPlayerContent device integration', () => {
   beforeEach(() => {
+    localStorage.clear()
     vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue()
     vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => undefined)
   })
