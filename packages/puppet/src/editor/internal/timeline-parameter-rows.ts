@@ -1,19 +1,20 @@
+import {getTimelineRowIds, withTimelineRowIds} from '../../player/motion-timeline-rows'
 import type {PuppetDocument} from '../../player'
 import {createMemo} from 'solid-js'
-import {getVisibleParameters} from './parameter-presentation'
-import type {ParameterTimelineTrack} from './timeline-keyframe-selection'
+import {isTrackForRow} from '../../player/timeline-rows'
+import {getTimelineRows, type ParameterTimelineTrack} from './timeline-keyframe-selection'
 
 export const addTimelineParameterRow = (
   document: PuppetDocument,
   motionId: string,
   parameterId: string,
 ): PuppetDocument | undefined => {
-  if (!getVisibleParameters(document).some((parameter) => parameter.id === parameterId)) {
+  if (!getTimelineRows(document).some((parameter) => parameter.id === parameterId)) {
     return undefined
   }
 
   const motion = document.motions.find((candidate) => candidate.id === motionId)
-  if (motion === undefined || motion.timelineParameterIds?.includes(parameterId)) {
+  if (motion === undefined || getTimelineRowIds(document, motion).includes(parameterId)) {
     return undefined
   }
 
@@ -21,10 +22,10 @@ export const addTimelineParameterRow = (
     ...document,
     motions: document.motions.map((candidate) =>
       candidate.id === motionId
-        ? {
-            ...candidate,
-            timelineParameterIds: [...(candidate.timelineParameterIds ?? []), parameterId],
-          }
+        ? withTimelineRowIds(document, candidate, [
+            ...getTimelineRowIds(document, candidate),
+            parameterId,
+          ])
         : candidate,
     ),
   }
@@ -38,10 +39,8 @@ export const removeTimelineParameterRow = (
   const motion = document.motions.find((candidate) => candidate.id === motionId)
   if (
     motion === undefined ||
-    (!motion.timelineParameterIds?.includes(parameterId) &&
-      !motion.tracks.some(
-        (track) => track.kind === 'parameter' && track.parameterId === parameterId,
-      ))
+    (!getTimelineRowIds(document, motion).includes(parameterId) &&
+      !motion.tracks.some((track) => isTrackForRow(track, parameterId, document)))
   ) {
     return undefined
   }
@@ -51,12 +50,13 @@ export const removeTimelineParameterRow = (
     motions: document.motions.map((candidate) =>
       candidate.id === motionId
         ? {
-            ...candidate,
-            timelineParameterIds: candidate.timelineParameterIds?.filter(
-              (id) => id !== parameterId,
+            ...withTimelineRowIds(
+              document,
+              candidate,
+              getTimelineRowIds(document, candidate).filter((id) => id !== parameterId),
             ),
             tracks: candidate.tracks.filter(
-              (track) => track.kind !== 'parameter' || track.parameterId !== parameterId,
+              (track) => !isTrackForRow(track, parameterId, document),
             ),
           }
         : candidate,
@@ -75,7 +75,7 @@ interface TimelineParameterRowActions {
 export const createTimelineParameterRowActions = (options: TimelineParameterRowActions) => {
   const available = createMemo(() => {
     const displayedIds = new Set(options.tracks().map((track) => track.parameter.id))
-    return getVisibleParameters(options.document()).filter(
+    return getTimelineRows(options.document()).filter(
       (parameter) => !displayedIds.has(parameter.id),
     )
   })

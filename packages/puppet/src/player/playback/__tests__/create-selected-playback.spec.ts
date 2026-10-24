@@ -8,6 +8,12 @@ const motions = [
 const setup = () => createSelectedPlayback({motions})
 
 describe('createSelectedPlayback', () => {
+  test('should not play without a motion until one arrives', () => {
+    const playback = createSelectedPlayback({motions: []})
+    expect(playback.isPlaying()).toBe(false)
+    playback.update(motions)
+    expect(playback.isPlaying()).toBe(true)
+  })
   test('should loop the selected motion and freeze its time while paused', () => {
     const playback = setup()
     playback.advance(2.5)
@@ -94,4 +100,14 @@ describe('createSelectedPlayback', () => {
     playback.seek(9)
     expect(playback.getFrame().time).toBe(2)
   })
+})
+
+test('should report every event when a selected motion crosses multiple loops', () => {
+  const onEvent = vi.fn()
+  const playback = createSelectedPlayback({
+    motions: [{duration: 1, events: [{time: 0.25, value: 'mark'}], id: 'loop', tracks: []}],
+    onEvent,
+  })
+  playback.advance(2.5)?.()
+  expect(onEvent).toHaveBeenCalledTimes(3)
 })

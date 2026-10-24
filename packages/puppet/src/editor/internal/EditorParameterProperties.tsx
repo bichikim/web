@@ -9,6 +9,10 @@ import {
 } from './EditorPhysicsProperties'
 import {InfluenceEditor} from './InfluenceEditor'
 import {LayerOrderProperties} from './LayerOrderProperties'
+import {ParameterExpressionProperties} from './ParameterExpressionProperties'
+import {ParameterRepeatProperties} from './ParameterRepeatProperties'
+import {ParameterRoleProperties} from './ParameterRoleProperties'
+import {MouthShapeProperties} from './MouthShapeProperties'
 import {EditorPropertyGroup} from './EditorPropertyGroup'
 
 interface EditorParameterPropertiesProps extends EditorPhysicsPropertiesSource {
@@ -54,6 +58,31 @@ export const EditorParameterProperties = (props: EditorParameterPropertiesProps)
             onEditStart={props.onEditStart}
           />
         </EditorPropertyGroup>
+        <ParameterRepeatProperties
+          document={props.document}
+          parameterIds={props.binding.parameterIds}
+          onDocumentChange={props.onDocumentChange}
+        />
+        <ParameterRoleProperties
+          document={props.document}
+          parameterIds={props.binding.parameterIds}
+          onDocumentChange={props.onDocumentChange}
+        />
+        <MouthShapeProperties
+          document={props.document}
+          parameterValues={props.editor.parameterValueMap()}
+          onDocumentChange={props.onDocumentChange}
+          onEditEnd={props.onEditEnd}
+          onEditStart={props.onEditStart}
+        />
+        <ParameterExpressionProperties
+          document={props.document}
+          parameterIds={props.binding.parameterIds}
+          parameterValues={props.editor.parameterValueMap()}
+          onDocumentChange={props.onDocumentChange}
+          onEditEnd={props.onEditEnd}
+          onEditStart={props.onEditStart}
+        />
         <LayerOrderProperties
           document={props.document}
           onDocumentChange={props.onDocumentChange}

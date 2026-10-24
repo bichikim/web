@@ -34,6 +34,9 @@ it('should send the displayed messages to the worker and render its completed an
   expect(send).toHaveBeenCalledWith({messages, type: 'generate'})
   expect(screen.queryByRole('button')).toBeNull()
   receive?.({type: 'started'})
+  receive?.({reason: 'busy', request: {messages: [], type: 'generate'}, type: 'skipped'})
+  expect(screen.queryByRole('button')).toBeNull()
+  expect(screen.queryByRole('region', {name: '생성된 사주 풀이'})).toBeNull()
   receive?.({text: '재성은 한 가지 근거입니다.', type: 'complete'})
 
   expect(screen.getByRole('region', {name: '생성된 사주 풀이'}).textContent).toBe(

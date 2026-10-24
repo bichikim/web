@@ -250,3 +250,78 @@ it('should keep the blank-title message for whitespace-only titles', () => {
   expect(screen.getByText(m.feature_request_invalid())).toBeInTheDocument()
   expect(screen.queryByText(m.feature_request_length_limit())).not.toBeInTheDocument()
 })
+
+it.each(['created', 'unavailable'] as const)(
+  'should ignore in-flight submits and allow another submit after %s',
+  async (status) => {
+    const [isSubmitting, setIsSubmitting] = createSignal(false)
+    let finishRequest: ((result: {status: typeof status}) => void) | undefined
+    const submitRequest = vi.fn(() => {
+      setIsSubmitting(true)
+      return new Promise<{status: typeof status}>((resolve) => {
+        finishRequest = (result) => {
+          setIsSubmitting(false)
+          resolve(result)
+        }
+      })
+    })
+    render(() => (
+      <FeatureRequestForm
+        authentication={authentication}
+        model={{...model, createRequest: submitRequest, isSubmitting}}
+      />
+    ))
+    fireEvent.click(screen.getByRole('button', {name: m.feature_request_new()}))
+    const titleInput = screen.getByRole('textbox', {name: m.feature_request_title_label()})
+    fireEvent.input(titleInput, {target: {value: '중복 제출 방지'}})
+    const form = (titleInput as HTMLInputElement).form!
+
+    fireEvent.submit(form)
+    expect(isSubmitting()).toBe(true)
+    fireEvent.submit(form)
+    expect(submitRequest).toHaveBeenCalledTimes(1)
+    expect(submitRequest).toHaveBeenLastCalledWith({description: '', title: '중복 제출 방지'})
+
+    finishRequest?.({status})
+    await waitFor(() =>
+      expect(screen.getByRole('button', {name: m.feature_request_submit()})).toBeEnabled(),
+    )
+    if (status === 'created') {
+      expect(titleInput).toHaveValue('')
+      expect(screen.getByText(m.feature_request_created())).toBeInTheDocument()
+      expect(sessionStorage.getItem('pomo:feature-request:draft:v1')).toBeNull()
+    } else {
+      expect(titleInput).toHaveValue('중복 제출 방지')
+      expect(screen.getByText(m.feature_request_create_failed())).toBeInTheDocument()
+      expect(sessionStorage.getItem('pomo:feature-request:draft:v1')).toContain('중복 제출 방지')
+    }
+    fireEvent.input(titleInput, {target: {value: '다음 요청'}})
+    fireEvent.submit(form)
+    expect(submitRequest).toHaveBeenCalledTimes(2)
+    expect(submitRequest).toHaveBeenLastCalledWith({description: '', title: '다음 요청'})
+    finishRequest?.({status})
+    await waitFor(() => expect(isSubmitting()).toBe(false))
+  },
+)
+
+it('should retry only the list after a created request and clear the recovered warning', async () => {
+  const [loadFailed, setLoadFailed] = createSignal(true)
+  const refresh = vi.fn(async () => {
+    setLoadFailed(false)
+  })
+  render(() => (
+    <FeatureRequestForm authentication={authentication} model={{...model, loadFailed, refresh}} />
+  ))
+  fireEvent.click(screen.getByRole('button', {name: m.feature_request_new()}))
+  expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+  const title = screen.getByRole('textbox', {name: m.feature_request_title_label()})
+  fireEvent.input(title, {target: {value: '목록 갱신 복구'}})
+  fireEvent.submit((title as HTMLInputElement).form!)
+  expect(await screen.findByRole('alert')).toHaveTextContent(m.feature_request_list_failed())
+  expect(screen.getByRole('status')).toHaveTextContent(m.feature_request_created())
+  fireEvent.click(screen.getByRole('button', {name: m.feature_request_retry()}))
+  await waitFor(() => expect(screen.queryByRole('alert')).not.toBeInTheDocument())
+  expect(screen.getByRole('status')).toHaveTextContent(m.feature_request_created())
+  expect(refresh).toHaveBeenCalledTimes(1)
+  expect(createRequest).toHaveBeenCalledTimes(1)
+})

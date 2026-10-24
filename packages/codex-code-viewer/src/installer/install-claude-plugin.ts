@@ -57,13 +57,16 @@ const restoreInstallation = async (options: RestoreInstallationOptions): Promise
     failures.push(error)
   }
   if (failures.length > 0) {
-    throw new AggregateError(failures, 'Claude 설치 상태 일부를 복원하지 못했습니다.')
+    throw new AggregateError(
+      failures,
+      'Could not restore part of the previous Claude installation state.',
+    )
   }
 }
 
 const readState = async (options: InstallClaudePluginOptions, root: string) => {
   const run = (args: readonly string[]) => runClaude({...options, args})
-  options.onProgress?.('Claude CLI와 설치 파일 확인 중…')
+  options.onProgress?.('Checking Claude CLI and installation files…')
   const version = await run(['--version'])
   const match = /^(?<major>\d+)\.(?<minor>\d+)\.(?<patch>\d+)/u.exec(version)?.groups
   const minimumPatch = 287
@@ -74,7 +77,7 @@ const readState = async (options: InstallClaudePluginOptions, root: string) => {
         (Number(match.minor) > 1 ||
           (Number(match.minor) === 1 && Number(match.patch) >= minimumPatch))))
   if (!supported) {
-    throw new Error('Claude Code CLI 2.1.287 이상이 필요합니다. Claude CLI를 업데이트하세요.')
+    throw new Error('Claude Code CLI 2.1.287 or later is required. Update Claude CLI.')
   }
   const archive = await readClaudeRuntime({
     archive: options.runtimeArchive,
@@ -89,7 +92,8 @@ const readState = async (options: InstallClaudePluginOptions, root: string) => {
   const marketplace = marketplaces.find(({name}) => name === MARKETPLACE)
   if (marketplace !== undefined && marketplace.path !== root) {
     throw new Error(
-      `${MARKETPLACE}가 다른 위치에 등록되어 있습니다: ${marketplace.path ?? '원격 소스'}. 기존 등록은 변경하지 않았습니다.`,
+      `${MARKETPLACE} is registered at another location: ${marketplace.path ?? 'remote source'}. ` +
+        'The existing registration was not changed.',
     )
   }
   return {archive, marketplace, plugins}
@@ -131,7 +135,7 @@ export const installClaudePlugin = async (options: InstallClaudePluginOptions): 
   let committed = false
   let registered = false
   try {
-    options.onProgress?.('Claude 플러그인 준비 중…')
+    options.onProgress?.('Preparing Claude plugin…')
     await prepareMarketplace(options, archive, staging)
     try {
       await rename(root, backup)
@@ -143,14 +147,14 @@ export const installClaudePlugin = async (options: InstallClaudePluginOptions): 
     }
     await rename(staging, root)
     committed = true
-    options.onProgress?.('Claude 마켓플레이스 등록 중…')
+    options.onProgress?.('Registering Claude marketplace…')
     if (marketplace === undefined) {
       await run(['plugin', 'marketplace', 'add', root])
       registered = true
     } else {
       await run(['plugin', 'marketplace', 'update', MARKETPLACE])
     }
-    options.onProgress?.('Claude 플러그인 설치 중…')
+    options.onProgress?.('Installing Claude plugin…')
     const installed = plugins.find(({id, scope}) => id === identifier && scope === 'user')
     await run([
       'plugin',
@@ -163,13 +167,13 @@ export const installClaudePlugin = async (options: InstallClaudePluginOptions): 
       await run(['plugin', 'enable', identifier, '--scope', 'user'])
     }
   } catch (error) {
-    options.onProgress?.('이전 Claude 설치 복원 중…')
+    options.onProgress?.('Restoring previous Claude installation…')
     try {
       await restoreInstallation({...options, backup, committed, registered, replaced, root})
     } catch (restoration) {
       throw new AggregateError(
         [error, restoration],
-        'Claude 설치와 이전 설정 복원에 실패했습니다.',
+        'Claude installation and restoration of previous settings failed.',
         {cause: error},
       )
     }

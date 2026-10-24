@@ -4,6 +4,7 @@ import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 import {EditorView} from '@codemirror/view'
 import {SCodeViewer} from '../SCodeViewer'
 import type {ViewerPort} from '../types'
+import type {TreeState} from '../../shared/tree-state'
 
 Object.defineProperty(Range.prototype, 'getClientRects', {
   configurable: true,
@@ -84,6 +85,38 @@ describe('SCodeViewer', () => {
     } else {
       Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', originalScroll)
     }
+  })
+
+  it('should restore panel visibility and folder expansion when the viewer is reopened', async () => {
+    let saved: TreeState = {expanded: ['src'], visible: true}
+    const mount = (session: string) => {
+      const port: ViewerPort = {
+        call: vi.fn().mockResolvedValue({
+          content: [],
+          structuredContent: {files: [{openable: true, path: 'src/main.ts'}], truncated: false},
+        }),
+        context: vi.fn(),
+        saveTreeState: vi.fn(async (_session, patch) => {
+          saved = {...saved, ...patch}
+        }),
+        start: vi.fn<ViewerPort['start']>().mockResolvedValue(() => {}),
+      }
+      const mounted = render(() => <SCodeViewer port={port} />)
+      vi.mocked(port.start).mock.calls[0]![0]({session, treeState: saved, workspace: '/project'})
+      return mounted
+    }
+    const first = mount('first')
+    await screen.findByRole('treeitem', {name: 'main.ts'})
+    fireEvent.click(screen.getByRole('treeitem', {name: 'src'}))
+    fireEvent.click(screen.getByRole('button', {name: '파일 트리'}))
+    expect(saved).toEqual({expanded: [], visible: false})
+    first.unmount()
+    mount('reopened')
+    expect(screen.queryByRole('tree')).toBeNull()
+    fireEvent.click(screen.getByRole('button', {name: '파일 트리'}))
+    const folder = await screen.findByRole('treeitem', {name: 'src'})
+    expect(folder.getAttribute('aria-expanded')).toBe('false')
+    expect(screen.queryByRole('treeitem', {name: 'main.ts'})).toBeNull()
   })
 
   it('should reopen the draft with its cursor beyond the disk document', () => {

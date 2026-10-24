@@ -102,3 +102,31 @@ test('should preserve skinning and deformer references when importing a rigged m
       .every((binding) => binding.targetDeformerIds?.every((id) => id.startsWith('import-1:'))),
   ).toBe(true)
 })
+
+test.each(['existing', 'incoming'])(
+  'should retain sequential glue from the %s model when appending',
+  (placement) => {
+    const original = createDemoDocument()
+    const sequential = {
+      ...original,
+      glue: [0, 1].map((vertexIndex) => ({
+        first: {partId: original.parts[0]!.id, vertexIndex: 0},
+        id: `shared-${vertexIndex}`,
+        second: {partId: original.parts[1]!.id, vertexIndex},
+        strength: 1,
+        weight: 1,
+      })),
+      glueComposition: 'sequential' as const,
+    }
+    const result =
+      placement === 'existing'
+        ? mergeDocument(sequential, original)
+        : mergeDocument(original, sequential)
+    expect(result.ok).toBe(true)
+    if (result.ok) {
+      expect(result.document.glueComposition).toBe('sequential')
+      expect(result.document.glue).toHaveLength(2)
+      expect(parseDocument(serializeDocument(result.document)).ok).toBe(true)
+    }
+  },
+)

@@ -1,6 +1,6 @@
 import {isTwoDimensionalParameterBinding} from '../parameter'
 import {expect, test} from 'vitest'
-import {createDemoDocument} from '../../player'
+import {createDemoDocument, type PuppetParameterBinding1D} from '../../player'
 import {addGlue} from '../../editor/internal/glue'
 import {composeParameterGlue} from '../parameter-glue'
 
@@ -115,4 +115,65 @@ test('should interpolate one-dimensional Glue samples and use rest values for mi
     strength: 0,
     weight: 0,
   })
+})
+
+const demo = createDemoDocument()
+const glue = {
+  first: {partId: demo.parts[0]!.id, vertexIndex: 0},
+  id: 'seam',
+  second: {partId: demo.parts[1]!.id, vertexIndex: 0},
+  strength: 0,
+  weight: 0.5,
+}
+const parameter = {defaultValue: 0, id: 'join', maximum: 1, minimum: 0, name: 'Join'}
+const binding: PuppetParameterBinding1D = {
+  id: 'join',
+  interpolation: 'grid',
+  keyforms: [0, 1].map((value) => ({
+    glue: [{id: 'seam', strength: value, weight: 0.5}],
+    parts: [],
+    values: [value],
+  })),
+  parameterIds: ['join'],
+  targetGlueIds: ['seam'],
+}
+
+test('should match legacy Glue animation without a part target or empty mesh entry', () => {
+  const direct = {...demo, glue: [glue], parameterBindings: [binding], parameters: [parameter]}
+  const legacy: PuppetParameterBinding1D = {
+    ...binding,
+    keyforms: binding.keyforms.map((form) => ({
+      parts: [{glue: form.glue, partId: glue.first.partId, vertices: []}],
+      values: form.values,
+    })),
+    targetGlueIds: undefined,
+    targetPartIds: [glue.first.partId],
+  }
+  for (const value of [0, 0.25, 0.5, 0.99999, 1]) {
+    const actual = composeParameterGlue({document: direct, parameterValues: {join: value}})
+    expect(actual).toEqual(
+      composeParameterGlue({
+        document: {...direct, parameterBindings: [legacy]},
+        parameterValues: {join: value},
+      }),
+    )
+    expect(actual).toEqual(
+      composeParameterGlue({
+        document: {...direct, parameterBindings: [{...binding, targetGlueIds: undefined}]},
+        parameterValues: {join: value},
+      }),
+    )
+    expect(actual[0]!.strength).toBe(value > 0.9999 ? 1 : value)
+  }
+})
+
+test('should leave an unlisted Glue connection at its base values', () => {
+  const other = {...glue, id: 'other', strength: 0.3}
+  const document = {
+    ...demo,
+    glue: [glue, other],
+    parameterBindings: [binding],
+    parameters: [parameter],
+  }
+  expect(composeParameterGlue({document, parameterValues: {join: 1}})[1]).toEqual(other)
 })

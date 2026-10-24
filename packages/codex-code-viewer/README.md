@@ -4,11 +4,13 @@
 
 Code Viewer opens code, documents and media beside your Codex conversation. Use it to find related code, edit text files and attach selected code or changes to your next message.
 
+The demos below show Code Viewer 0.5.0 in Codex with the English UI.
+
 See [Supported formats](#supported-formats) for the features available for each file type.
 
 ## 1. Install and open
 
-You need Node.js 24 or later and npm. For Codex, also use the Codex desktop app and a CLI supporting the `plugin` subcommand. If that CLI is missing or needs updating:
+You need Node.js 24 or later and npm. For Codex, also use the Codex desktop app and a CLI supporting the `plugin` subcommand. If the CLI is missing, the installer asks permission to install it globally with npm, then continues after installation. Non-interactive execution installs a missing CLI only with `install --install-codex`. To install or update it yourself:
 
 ```sh
 npm install -g @openai/codex
@@ -22,6 +24,8 @@ npx @winter-love/codex-code-viewer@latest install
 
 In a terminal, choose **Codex / Claude Desktop (Code mode) / Both**. For automation use `install --target codex|claude|all`; non-interactive execution defaults to Codex. Claude-only installation does not need the Codex CLI.
 
+**Claude support is experimental.** Limitations in Claude’s plugin and UI integration may affect some features and workflows.
+
 Claude installation currently supports **macOS Apple Silicon**. It requires [Claude Code CLI](https://code.claude.com/docs/en/setup) 2.1.287+ and a Claude Desktop version with Mods support. Only when Claude is selected, the installer downloads the matching GitHub Release runtime, verifies its size and SHA-256, and keeps it in `~/.claude/code-viewer/marketplace` and registers a user-scope plugin through the official CLI. No manual MCP configuration or ZIP upload is required. `CLAUDE_BINARY` and `CLAUDE_CONFIG_DIR` select another executable or configuration directory. For offline installation, `CODE_VIEWER_RUNTIME_ARCHIVE` selects a matching runtime ZIP with the same integrity checks. After replacement succeeds, the previous uploaded plugin is disabled; its files and running sessions are retained.
 
 Add and enable the printed **Code Viewer Attachment.app** path in System Settings → Privacy & Security → Accessibility. This permission enables one-click native composer attachments and expanding a collapsed Browser. If permission errors persist, remove only the existing **Code Viewer Attachment** entry and add the printed application path again: macOS can retain the old ZIP installation path under the same app name. Start a new **local** session in Claude Desktop's **Code** tab, then click **코드 뷰어 열기** below the composer or a project file link in Claude's response. The viewer opens on demand. Installation does not reload existing sessions.
@@ -29,6 +33,8 @@ Add and enable the printed **Code Viewer Attachment.app** path in System Setting
 Fully quit and reopen Codex. In a project conversation, open the right panel's new-tab menu and select **Code Viewer**. The default file viewer's **Open** menu launches external applications.
 
 The viewer connects to the conversation's workspace when its path is available. Otherwise, enter a file's absolute path, such as `/Users/yourname/projects/my-project/src/main.tsx`, and press Enter.
+
+In Codex, enter an absolute folder path under **Settings → Workspace** and select **Apply** to remember it only for Code Viewer in the current chat. It is restored when reopening the viewer or restarting the app, without changing the Codex chat’s own working directory. Unsaved changes require choosing whether to save, discard, or keep editing.
 
 To update, run the same installation command and reopen Codex. Check the installation with:
 
@@ -87,6 +93,10 @@ Unsaved drafts are stored locally and restored when reopening or reloading the s
 - **Browse folders:** Use **File tree** beside search. Click a folder to expand it or a file to open it. **Filter files** narrows the tree by path; **Reveal current file** clears the filter and scrolls to the open file.
 - **Return to a file:** Use the back/forward buttons or `Alt+←/→`.
 
+### Browse the file tree
+
+![Browse the file tree](https://raw.githubusercontent.com/bichikim/web/97cc070dac551d6e898a66a0be97af66730ece2c/packages/codex-code-viewer/docs/recordings/codex/0.5.0/file-tree.gif)
+
 History skips deleted files unless a retained draft can be reopened and saved to recreate them. Deleting the current file preserves other visits. Change notifications or refresh make externally restored files available again. Other read errors are reported instead of skipped.
 
 Drag the divider to resize the tree. With the divider focused, Left/Right changes its width and Home/End selects minimum/maximum width. With tree focus, Up/Down and Home/End select entries; Left/Right collapses/expands folders. Right-click or `Shift+F10` opens an entry's menu.
@@ -97,9 +107,25 @@ Reopening a file in the same tab restores its selection, scrolling and applicabl
 
 In reading mode, click an import path to open its module, or a symbol usage to open its definition. Click a definition name to list its usages. Results are grouped by file; select a result to navigate. If there are multiple definitions, choose one from the list.
 
+### Follow an import
+
+![Follow an import](https://raw.githubusercontent.com/bichikim/web/97cc070dac551d6e898a66a0be97af66730ece2c/packages/codex-code-viewer/docs/recordings/codex/0.5.0/import.gif)
+
+### Go to definition
+
+![Go to definition](https://raw.githubusercontent.com/bichikim/web/97cc070dac551d6e898a66a0be97af66730ece2c/packages/codex-code-viewer/docs/recordings/codex/0.5.0/definition.gif)
+
+### Find references
+
+![Find references](https://raw.githubusercontent.com/bichikim/web/97cc070dac551d6e898a66a0be97af66730ece2c/packages/codex-code-viewer/docs/recordings/codex/0.5.0/references.gif)
+
 Definition and usage lists display verified results as the search proceeds. Filter file paths beside the title, collapse file groups, or use the right-hand navigation button to open a file.
 
 Use the arrows beside line numbers to fold multiline functions, objects, classes and markup in reading and editing views. Click **…** to expand a folded block. Search and definition/usage navigation reveal hidden destinations. Small-file folds are restored in the same tab and reset when the source changes. Python, Ruby and Rust folding follows indentation.
+
+### Fold and unfold code
+
+![Fold and unfold code](https://raw.githubusercontent.com/bichikim/web/97cc070dac551d6e898a66a0be97af66730ece2c/packages/codex-code-viewer/docs/recordings/codex/0.5.0/fold.gif)
 
 Definition and usage navigation supports TypeScript, JavaScript, Python, Ruby and Rust. JSON/JSONC/JSON5 supports file-path navigation only. Other highlighted formats do not provide symbol navigation. Language requirements are listed under [Navigation setup](#navigation-setup).
 
@@ -112,6 +138,10 @@ Press `Cmd/Ctrl+F` to find literal text without case sensitivity. Enter/Shift+En
 1. Open an editable file and choose **Edit** in the document toolbar.
 2. Make changes. Use `Cmd/Ctrl+Z` to undo and `Cmd/Ctrl+Shift+Z` to redo.
 3. Choose **Save** or press `Cmd/Ctrl+S`. There is no autosave or automatic formatting.
+
+### Edit and save text
+
+![Edit and save text](https://raw.githubusercontent.com/bichikim/web/97cc070dac551d6e898a66a0be97af66730ece2c/packages/codex-code-viewer/docs/recordings/codex/0.5.0/edit-save.gif)
 
 See [Supported formats](#supported-formats) for editable file types. Markdown and CSV/TSV are edited as source.
 
@@ -142,6 +172,10 @@ Select text, then choose **Copy code** or **Copy** from its context menu to copy
 ## 6. Manage files and folders
 
 Use **New file** or **New folder** in the tree toolbar. A selected folder becomes the destination; a selected file uses its parent. An empty workspace uses its root. The name dialog shows the destination, and existing entries are never overwritten.
+
+### Create a file
+
+![Create a file](https://raw.githubusercontent.com/bichikim/web/97cc070dac551d6e898a66a0be97af66730ece2c/packages/codex-code-viewer/docs/recordings/codex/0.5.0/create-file.gif)
 
 Right-click a file or folder for **Rename**, **Copy**, **Cut**, **Paste** or **Delete**. With tree focus, `Cmd/Ctrl+C`, `Cmd/Ctrl+X`, `Cmd/Ctrl+V` and Delete are also available. Copy/cut uses an internal clipboard within this viewer's workspace. Paste on a folder places entries inside it; paste on a file uses its parent. The empty-space menu pastes at the workspace root. Copy collisions create a copy name; cut/rename collisions report an error.
 
@@ -199,6 +233,18 @@ Library definitions outside the workspace cannot be opened. Viewing, highlightin
 - **PDF:** Enter a page or zoom (25–400%), or choose **Fit to width**. Drag text to select/copy. `Cmd/Ctrl+F` searches document text; Enter/Shift+Enter moves between results. Search is limited to 2,048 pages, 4,194,304 characters and 10,000 results. Scanned PDFs require a text layer; OCR and password entry are unsupported.
 - **Images / SVG:** Use zoom buttons, a zoom value (1–1600%), pinch or `Ctrl/Cmd+wheel`. Drag or use arrow keys to pan. With image focus, `+`/`-` zoom, `0` restores 100% and Home fits to view. SVG also offers XML source up to 32 MiB; larger files provide preview only.
 - **Video / audio:** Use the playback controls. Playback depends on the embedded browser's codec support. Audio starts only when you choose Play and stops when you leave the file.
+
+### Markdown preview and source
+
+![Markdown preview and source](https://raw.githubusercontent.com/bichikim/web/97cc070dac551d6e898a66a0be97af66730ece2c/packages/codex-code-viewer/docs/recordings/codex/0.5.0/markdown.gif)
+
+### Sort a CSV column
+
+![Sort a CSV column](https://raw.githubusercontent.com/bichikim/web/97cc070dac551d6e898a66a0be97af66730ece2c/packages/codex-code-viewer/docs/recordings/codex/0.5.0/csv-sort.gif)
+
+### Filter CSV rows
+
+![Filter CSV rows](https://raw.githubusercontent.com/bichikim/web/97cc070dac551d6e898a66a0be97af66730ece2c/packages/codex-code-viewer/docs/recordings/codex/0.5.0/csv-filter.gif)
 
 ## Limits and troubleshooting
 

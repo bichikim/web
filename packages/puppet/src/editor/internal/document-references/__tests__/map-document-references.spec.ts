@@ -1,8 +1,46 @@
+import {getDocumentScene} from '../../../../player/scene'
 import {expect, test} from 'vitest'
 import example from '../../../../../examples/rotation-skinning.json'
 import {parseDocumentValue} from '../../../../player/parse-document'
+import {createEmptyDocument, type PuppetDocument} from '../../../../player'
 import {mapDocumentReferences} from '../map-document-references'
 import {createDemoDocument} from '../../../../player/create-demo-document'
+
+test('should rename and remove direct Glue targets with their endpoint parts', () => {
+  const demo = createDemoDocument()
+  const document: PuppetDocument = {
+    ...demo,
+    glue: [
+      {
+        first: {partId: demo.parts[0]!.id, vertexIndex: 0},
+        id: 'seam',
+        second: {partId: demo.parts[1]!.id, vertexIndex: 0},
+        strength: 1,
+        weight: 0.5,
+      },
+    ],
+    parameterBindings: [
+      {
+        id: 'join',
+        keyforms: [{glue: [{id: 'seam', strength: 0.5, weight: 0.5}], parts: [], values: [0]}],
+        parameterIds: ['angle-x'],
+        targetGlueIds: ['seam'],
+      },
+    ],
+  }
+  const renamed = mapDocumentReferences({document, rename: (id) => `copy:${id}`})
+  expect(renamed.parameterBindings![0]!.targetGlueIds).toEqual(['copy:seam'])
+  expect(renamed.parameterBindings![0]!.keyforms[0]!.glue![0]!.id).toBe('copy:seam')
+  expect(parseDocumentValue(renamed).ok).toBe(true)
+  const removed = mapDocumentReferences({
+    document,
+    keepPart: (id) => id !== demo.parts[1]!.id,
+    rename: (id) => id,
+  })
+  expect(removed.parameterBindings![0]!.targetGlueIds).toEqual([])
+  expect(removed.parameterBindings![0]!.keyforms[0]!.glue).toEqual([])
+  expect(parseDocumentValue(removed).ok).toBe(true)
+})
 
 test('should rename saved timeline parameter rows with their parameter definitions', () => {
   const source = createDemoDocument()
@@ -123,4 +161,69 @@ test('should transform references inside deformer bind shapes and preserve unrel
   expect(retained.boneWeights).toEqual([])
   expect(retained.binding!.steps[0]!.shape.vertexInfluences).toEqual([])
   expect(retained.binding!.rest.boneWeights).toEqual([])
+})
+
+test('should rename a legacy colliding parameter row while preserving typed model and group effect targets', () => {
+  const document: PuppetDocument = {
+    ...createEmptyDocument(),
+    motions: [
+      {
+        duration: 1,
+        id: 'motion',
+        timelineEffectRows: [
+          {kind: 'model', target: 'opacity'},
+          {groupId: 'group', kind: 'group-opacity'},
+        ],
+        timelineParameterIds: ['model:opacity'],
+        tracks: [
+          {keyframes: [{time: 0, value: 8}], kind: 'parameter', parameterId: 'model:opacity'},
+          {keyframes: [{time: 0, value: 0.5}], kind: 'model', target: 'opacity'},
+        ],
+      },
+    ],
+    parameters: [
+      {defaultValue: 0, id: 'model:opacity', maximum: 10, minimum: 0, name: 'Parameter'},
+    ],
+    scene: {
+      roots: [
+        {children: [], id: 'group', kind: 'group', locked: false, name: 'Group', visible: true},
+      ],
+    },
+  }
+  const renamed = mapDocumentReferences({document, rename: (id) => `copy:${id}`})
+  expect(renamed.motions[0]?.timelineParameterIds).toEqual(['copy:model:opacity'])
+  expect(renamed.motions[0]?.timelineEffectRows).toEqual([
+    {kind: 'model', target: 'opacity'},
+    {groupId: 'copy:group', kind: 'group-opacity'},
+  ])
+  expect(renamed.motions[0]?.tracks).toEqual([
+    {keyframes: [{time: 0, value: 8}], kind: 'parameter', parameterId: 'copy:model:opacity'},
+    {keyframes: [{time: 0, value: 0.5}], kind: 'model', target: 'opacity'},
+  ])
+  expect(parseDocumentValue(renamed).ok).toBe(true)
+})
+
+test('should rename compiled visibility parameter references with the model', () => {
+  const demo = createDemoDocument()
+  const document: PuppetDocument = {
+    ...demo,
+    scene: {
+      roots: [
+        {
+          children: getDocumentScene(demo).roots,
+          id: 'visibility',
+          kind: 'group',
+          locked: false,
+          name: 'Visible group',
+          parameterVisibility: [{maximum: 10, minimum: -10, parameterId: demo.parameters![0]!.id}],
+          visible: true,
+        },
+      ],
+    },
+  }
+  const renamed = mapDocumentReferences({document, rename: (id) => `copy:${id}`})
+  expect(renamed.scene?.roots[0]?.parameterVisibility?.[0]?.parameterId).toBe(
+    `copy:${demo.parameters![0]!.id}`,
+  )
+  expect(parseDocumentValue(renamed).ok).toBe(true)
 })

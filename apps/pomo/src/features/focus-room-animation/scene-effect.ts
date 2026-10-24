@@ -31,26 +31,13 @@ export const createSceneEffect = (options: CreateSceneEffectOptions): SceneEffec
     throw new Error(`Scene effect mask dimensions must match the scene: ${options.definition.id}`)
   }
 
-  switch (options.definition.kind) {
-    case 'falling-flakes': {
-      const effect = new FallingFlakesEffect({
-        height: options.height,
-        maskTexture,
-        random: options.random,
-        width: options.width,
-      })
-      effect.container.alpha = options.definition.opacity ?? 1
+  const effectKind = options.definition.kind
 
-      return {
-        advance: (deltaSeconds) => effect.advance(deltaSeconds),
-        container: effect.container,
-        definition: options.definition,
-        destroy: () => effect.destroy(),
-        setAnimationEnabled: (animationEnabled) => effect.setAnimationEnabled(animationEnabled),
-      }
-    }
+  switch (effectKind) {
+    case 'falling-flakes':
     case 'falling-streaks': {
-      const effect = new FallingStreaksEffect({
+      const Effect = effectKind === 'falling-flakes' ? FallingFlakesEffect : FallingStreaksEffect
+      const effect = new Effect({
         height: options.height,
         maskTexture,
         random: options.random,

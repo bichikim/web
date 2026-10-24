@@ -115,6 +115,7 @@ const projectInitial = (targets: readonly Vector3[], capsules: readonly ClothCap
         const amount = clampUnit(
           Vector3.Dot(point.subtract(capsule.start), direction) /
             Math.max(direction.lengthSquared(), SETTINGS.epsilon),
+          {fallback: 0},
         )
         const nearest = capsule.start.add(direction.scale(amount))
         const offset = point.subtract(nearest)

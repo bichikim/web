@@ -35,9 +35,7 @@ export const runClaude = async (options: RunClaudeOptions): Promise<string> => {
           ? error.message
           : String(error)
     const missing = error instanceof Error && 'code' in error && error.code === 'ENOENT'
-    const guidance = missing
-      ? '\nhttps://code.claude.com/docs/en/setup 에서 Claude CLI를 설치하세요.'
-      : ''
-    throw new Error(`Claude CLI 실행 실패: ${detail}${guidance}`, {cause: error})
+    const guidance = missing ? '\nInstall Claude CLI: https://code.claude.com/docs/en/setup' : ''
+    throw new Error(`Could not run Claude CLI: ${detail}${guidance}`, {cause: error})
   }
 }

@@ -1,24 +1,38 @@
 import {removeInfluenceSources} from './parameter-influences'
+import {sampleParameterGlue} from '../../deformation/parameter-glue'
+import {removeParameterReferences} from './document-references/remove-parameter-references'
 import {difference, union, uniq} from 'es-toolkit/array'
 
 import {
-  isTwoDimensionalParameterBinding,
+  getDirectGlueIds,
+  mapBindingKeyforms,
+  MAX_PARAMETER_DIMENSIONS,
+  type ParameterDimensions,
   parameterValuesEqual,
   type PuppetParameterValues,
   sampleParameterVertices,
+  withBindingKeyforms,
 } from '../../deformation'
 import type {
   PuppetDocument,
   PuppetParameter,
   PuppetParameterBinding,
   PuppetParameterBinding1D,
-  PuppetParameterBinding2D,
   PuppetParameterKeyform,
   PuppetSceneDeformerNode,
   PuppetSceneNode,
 } from '../../player/document'
 import {getDocumentScene} from '../../player/scene'
+import {getRepeatRanges} from '../../player/parameter-value'
+import {
+  canDeleteKeyformPlane,
+  compareKeyformValues,
+  getKeyformMove,
+  toParameterValues,
+} from './keyform-grid'
 import {createParameterBindingId, createParameterIds} from './parameter-id'
+import {getSceneGroup} from './group-properties'
+import {sampleKeyformGroups} from './sample-keyform-groups'
 import {
   createDeformerKeyform,
   createParameterPreview,
@@ -30,11 +44,6 @@ const COORDINATES_PER_VERTEX = 2
 const DEFAULT_PARAMETER_MINIMUM = -30
 const DEFAULT_PARAMETER_MAXIMUM = 30
 const DEFAULT_PARAMETER_VALUE = 0
-const TWO_DIMENSIONAL_VALUES = [
-  DEFAULT_PARAMETER_MINIMUM,
-  DEFAULT_PARAMETER_VALUE,
-  DEFAULT_PARAMETER_MAXIMUM,
-] as const
 
 interface ParameterBindingTarget {
   readonly bindingId: string
@@ -91,8 +100,22 @@ export const getParameterTargetDeformerIds = (binding: PuppetParameterBinding) =
     ),
   )
 
-export const getParameterTargetNodeIds = (binding: PuppetParameterBinding) =>
-  uniq([...getParameterTargetPartIds(binding), ...getParameterTargetDeformerIds(binding)])
+/** 직접 편집 대상을 반환한다. document를 주면 직접 연결한 Glue의 양 끝 파트도 포함한다. */
+export const getParameterTargetNodeIds = (
+  binding: PuppetParameterBinding,
+  document?: PuppetDocument,
+) => {
+  const glueIds = new Set(getDirectGlueIds(binding))
+  const endpoints =
+    document?.glue
+      ?.filter((glue) => glueIds.has(glue.id))
+      .flatMap((glue) => [glue.first.partId, glue.second.partId]) ?? []
+  return uniq([
+    ...getParameterTargetPartIds(binding),
+    ...getParameterTargetDeformerIds(binding),
+    ...endpoints,
+  ])
+}
 
 export const getParameterBindingsForNodeIds = (
   document: PuppetDocument,
@@ -100,7 +123,7 @@ export const getParameterBindingsForNodeIds = (
 ) => {
   const selectedNodeIds = new Set(nodeIds)
   return getDocumentParameterBindings(document).filter((binding) =>
-    getParameterTargetNodeIds(binding).some((nodeId) => selectedNodeIds.has(nodeId)),
+    getParameterTargetNodeIds(binding, document).some((nodeId) => selectedNodeIds.has(nodeId)),
   )
 }
 
@@ -109,9 +132,10 @@ export const getDefaultParameterValues = (
   binding: PuppetParameterBinding | undefined,
 ): PuppetParameterValues => {
   const parameters = binding === undefined ? [] : getBindingParameters(document, binding)
-  return binding !== undefined && isTwoDimensionalParameterBinding(binding)
-    ? [parameters[0]?.defaultValue ?? 0, parameters[1]?.defaultValue ?? 0]
-    : [parameters[0]?.defaultValue ?? 0]
+  return toParameterValues(
+    parameters.map((parameter) => parameter.defaultValue),
+    binding?.parameterIds.length ?? 1,
+  )
 }
 
 const getDocumentParts = (document: PuppetDocument, partIds: ReadonlyArray<string>) => {
@@ -193,13 +217,7 @@ export const addParameter = (options: AddParameterOptions): AddParameterResult |
   const parameter = createParameter(id, `Parameter ${index}`)
   const binding: PuppetParameterBinding1D = {
     id,
-    keyforms: [
-      {
-        deformers: deformers.map(createDeformerKeyform),
-        parts: parts.map((part) => ({partId: part.id, vertices: part.mesh.vertices})),
-        values: [DEFAULT_PARAMETER_VALUE],
-      },
-    ],
+    keyforms: [],
     parameterIds: [id],
     targetDeformerIds: deformers.map((deformer) => deformer.id),
     targetPartIds: parts.map((part) => part.id),
@@ -215,32 +233,31 @@ export const addParameter = (options: AddParameterOptions): AddParameterResult |
   }
 }
 
-export const addTwoDimensionalParameter = (
+const AXIS_NAMES = ['X', 'Y', 'Z'] as const
+
+/** An empty binding over the parameters `ids`, two or three of them. */
+const createGridBinding = (id: string, ids: ReadonlyArray<string>): PuppetParameterBinding =>
+  ids.length === AXIS_NAMES.length
+    ? {id, keyforms: [], parameterIds: [ids[0]!, ids[1]!, ids[2]!]}
+    : {id, keyforms: [], parameterIds: [ids[0]!, ids[1] ?? ids[0]!]}
+
+/** 각 축의 파라미터와 키폼이 없는 바인딩을 만든다. */
+const addGridParameter = (
   options: AddParameterOptions,
+  axes: Exclude<ParameterDimensions, 1>,
 ): AddParameterResult | undefined => {
   const {deformers, parts} = getParameterTargets(options.document, options.nodeIds)
   if (parts.length === 0 && deformers.length === 0) {
     return undefined
   }
 
-  const {ids, index} = createParameterIds(options.document, 2)
-  const xId = ids[0]!
-  const yId = ids[1]!
-  const bindingId = createParameterBindingId(options.document, `${xId}-${yId}`)
-  const parameters = [
-    createParameter(xId, `Parameter ${index} X`),
-    createParameter(yId, `Parameter ${index} Y`),
-  ]
-  const binding: PuppetParameterBinding2D = {
-    id: bindingId,
-    keyforms: TWO_DIMENSIONAL_VALUES.flatMap((y) =>
-      TWO_DIMENSIONAL_VALUES.map((x) => ({
-        deformers: deformers.map(createDeformerKeyform),
-        parts: parts.map((part) => ({partId: part.id, vertices: part.mesh.vertices})),
-        values: [x, y] as const,
-      })),
-    ),
-    parameterIds: [xId, yId],
+  const {ids, index} = createParameterIds(options.document, axes)
+  const bindingId = createParameterBindingId(options.document, ids.join('-'))
+  const parameters = ids.map((id, axis) =>
+    createParameter(id, `Parameter ${index} ${AXIS_NAMES[axis]}`),
+  )
+  const binding: PuppetParameterBinding = {
+    ...createGridBinding(bindingId, ids),
     targetDeformerIds: deformers.map((deformer) => deformer.id),
     targetPartIds: parts.map((part) => part.id),
   }
@@ -254,6 +271,13 @@ export const addTwoDimensionalParameter = (
     },
   }
 }
+
+export const addTwoDimensionalParameter = (options: AddParameterOptions) =>
+  addGridParameter(options, 2)
+
+/** Planes of X/Y keyforms along a third parameter, Cubism's three-parameter keyforms. */
+export const addThreeDimensionalParameter = (options: AddParameterOptions) =>
+  addGridParameter(options, MAX_PARAMETER_DIMENSIONS)
 
 export const renameParameter = (
   options: ParameterBindingTarget & {readonly name: string; readonly parameterId?: string},
@@ -286,30 +310,12 @@ export const deleteParameter = (options: ParameterBindingTarget): PuppetDocument
   const removedParameterIds = new Set(
     binding.parameterIds.filter((id) => !retainedParameterIds.has(id)),
   )
-  const pendulums = options.document.physics?.pendulums.filter(
-    (pendulum) =>
-      !removedParameterIds.has(pendulum.inputParameterId) &&
-      !removedParameterIds.has(pendulum.outputParameterId),
-  )
   return {
-    ...options.document,
-    layerOrderRules: options.document.layerOrderRules?.filter((rule) =>
-      rule.when.parameterIds.every((id) => !removedParameterIds.has(id)),
-    ),
-    motions: options.document.motions.map((motion) => ({
-      ...motion,
-      timelineParameterIds: motion.timelineParameterIds?.filter(
-        (id) => !removedParameterIds.has(id),
-      ),
-      tracks: motion.tracks.filter(
-        (track) => track.kind !== 'parameter' || !removedParameterIds.has(track.parameterId),
-      ),
-    })),
+    ...removeParameterReferences(options.document, removedParameterIds),
     parameterBindings: removeInfluenceSources(remainingBindings, removedParameterIds),
     parameters: getDocumentParameters(options.document).filter(
       (parameter) => !removedParameterIds.has(parameter.id),
     ),
-    physics: pendulums === undefined || pendulums.length === 0 ? undefined : {pendulums},
   }
 }
 
@@ -324,10 +330,15 @@ export const insertParameterKeyform = (options: ParameterValuesTarget) => {
     binding === undefined
       ? []
       : getDocumentDeformers(options.document, getParameterTargetDeformerIds(binding))
+  const keysGroups = (binding?.targetGroupIds ?? []).some(
+    (groupId) => getSceneGroup(options.document, groupId) !== undefined,
+  )
+  const glueIds = binding === undefined ? [] : getDirectGlueIds(binding)
+  const glue = options.document.glue?.filter((connection) => glueIds.includes(connection.id)) ?? []
 
   if (
     binding === undefined ||
-    (parts.length === 0 && deformers.length === 0) ||
+    (parts.length === 0 && deformers.length === 0 && !keysGroups && glue.length === 0) ||
     options.values.length !== binding.parameterIds.length ||
     parameters.length !== binding.parameterIds.length ||
     binding.keyforms.some((keyform) => parameterValuesEqual(keyform.values, options.values)) ||
@@ -339,61 +350,62 @@ export const insertParameterKeyform = (options: ParameterValuesTarget) => {
     return undefined
   }
 
-  const partsKeyforms = parts.map((part) => samplePartKeyform({...options, binding, part}))
-  const deformerKeyforms = deformers.map((deformer) =>
-    sampleParameterDeformer({binding, deformer, values: options.values}),
-  )
-
-  return replaceBinding(options.document, options.bindingId, (candidate) => {
-    if (isTwoDimensionalParameterBinding(candidate)) {
-      const [x, y] = options.values
-      if (x === undefined || y === undefined) {
-        return candidate
-      }
-
-      const keyform = {deformers: deformerKeyforms, parts: partsKeyforms, values: [x, y] as const}
-      return {
-        ...candidate,
-        keyforms: [...candidate.keyforms, keyform].sort(
-          (first, second) =>
-            first.values[1] - second.values[1] || first.values[0] - second.values[0],
-        ),
-      }
-    }
-
-    const [value] = options.values
-    if (value === undefined) {
-      return candidate
-    }
-
-    const keyform = {
-      deformers: deformerKeyforms,
-      parts: partsKeyforms,
-      values: [value] as const,
-    }
-
-    return {
-      ...candidate,
-      keyforms: [...candidate.keyforms, keyform].sort(
-        (first, second) => first.values[0] - second.values[0],
+  const {values} = options
+  const inserted = {
+    deformers: deformers.map((deformer) => sampleParameterDeformer({binding, deformer, values})),
+    groups: sampleKeyformGroups(options.document, binding, values),
+    ...(glue.length > 0
+      ? {
+          glue: glue.map((connection) =>
+            sampleParameterGlue({
+              binding,
+              glue: connection,
+              repeatRanges: getRepeatRanges(binding.parameterIds, options.document.parameters),
+              values,
+            }),
+          ),
+        }
+      : {}),
+    parts: parts.map((part) => samplePartKeyform({...options, binding, part, values})),
+    values,
+  }
+  return replaceBinding(options.document, options.bindingId, (candidate) =>
+    withBindingKeyforms(
+      candidate,
+      [...candidate.keyforms, inserted].toSorted((first, second) =>
+        compareKeyformValues(first.values, second.values),
       ),
-    }
-  })
+    ),
+  )
 }
 
+/** 모든 축이 일치하는 키폼 하나만 삭제한다. */
 export const deleteParameterKeyform = (options: ParameterValuesTarget) =>
-  replaceBinding(options.document, options.bindingId, (binding) => {
-    if (options.values.length !== binding.parameterIds.length) {
-      return binding
-    }
+  replaceBinding(options.document, options.bindingId, (binding) =>
+    options.values.length === binding.parameterIds.length
+      ? withBindingKeyforms(
+          binding,
+          binding.keyforms.filter(
+            (keyform) => !parameterValuesEqual(options.values, keyform.values),
+          ),
+        )
+      : binding,
+  )
 
-    return {
-      ...binding,
-      keyforms: binding.keyforms.filter(
-        (keyform) => !parameterValuesEqual(keyform.values, options.values),
-      ),
-    } as PuppetParameterBinding
-  })
+/** Deletes a 3D binding's plane at third value `value`, keeping at least one plane. */
+export const deleteParameterKeyformPlane = (
+  options: ParameterBindingTarget & {readonly value: number},
+) => {
+  const binding = getParameterBinding(options.document, options.bindingId)
+  return binding === undefined || !canDeleteKeyformPlane(binding, options.value)
+    ? undefined
+    : replaceBinding(options.document, options.bindingId, (candidate) =>
+        withBindingKeyforms(
+          candidate,
+          candidate.keyforms.filter((keyform) => keyform.values[2] !== options.value),
+        ),
+      )
+}
 
 const synchronizeKeyformParts = (
   keyform: PuppetParameterKeyform,
@@ -421,31 +433,15 @@ const synchronizeBindingTargets = (
   binding: PuppetParameterBinding,
   parts: ReadonlyArray<PuppetDocument['parts'][number]>,
   deformers: ReadonlyArray<PuppetSceneDeformerNode>,
-): PuppetParameterBinding => {
-  if (isTwoDimensionalParameterBinding(binding)) {
-    return {
-      ...binding,
-      keyforms: binding.keyforms.map((keyform) => ({
-        ...keyform,
-        deformers: synchronizeKeyformDeformers(keyform, deformers),
-        parts: synchronizeKeyformParts(keyform, parts),
-      })),
-      targetDeformerIds: deformers.map((deformer) => deformer.id),
-      targetPartIds: parts.map((part) => part.id),
-    }
-  }
-
-  return {
-    ...binding,
-    keyforms: binding.keyforms.map((keyform) => ({
-      ...keyform,
-      deformers: synchronizeKeyformDeformers(keyform, deformers),
-      parts: synchronizeKeyformParts(keyform, parts),
-    })),
-    targetDeformerIds: deformers.map((deformer) => deformer.id),
-    targetPartIds: parts.map((part) => part.id),
-  }
-}
+): PuppetParameterBinding => ({
+  ...mapBindingKeyforms(binding, (keyform) => ({
+    ...keyform,
+    deformers: synchronizeKeyformDeformers(keyform, deformers),
+    parts: synchronizeKeyformParts(keyform, parts),
+  })),
+  targetDeformerIds: deformers.map((deformer) => deformer.id),
+  targetPartIds: parts.map((part) => part.id),
+})
 
 interface UpdateParameterTargetsOptions extends ParameterBindingTarget {
   readonly nodeIds: ReadonlyArray<string>
@@ -484,33 +480,15 @@ export const disconnectParameterNodes = (options: UpdateParameterTargetsOptions)
 
   const targetPartIds = new Set(parts.map((part) => part.id))
   const targetDeformerIds = new Set(deformers.map((deformer) => deformer.id))
-  return replaceBinding(options.document, binding.id, (candidate) => {
-    if (isTwoDimensionalParameterBinding(candidate)) {
-      return {
-        ...candidate,
-        keyforms: candidate.keyforms.map((keyform) => ({
-          ...keyform,
-          deformers: keyform.deformers?.filter((deformer) =>
-            targetDeformerIds.has(deformer.nodeId),
-          ),
-          parts: keyform.parts.filter((part) => targetPartIds.has(part.partId)),
-        })),
-        targetDeformerIds: [...targetDeformerIds],
-        targetPartIds: parts.map((part) => part.id),
-      }
-    }
-
-    return {
-      ...candidate,
-      keyforms: candidate.keyforms.map((keyform) => ({
-        ...keyform,
-        deformers: keyform.deformers?.filter((deformer) => targetDeformerIds.has(deformer.nodeId)),
-        parts: keyform.parts.filter((part) => targetPartIds.has(part.partId)),
-      })),
-      targetDeformerIds: [...targetDeformerIds],
-      targetPartIds: parts.map((part) => part.id),
-    }
-  })
+  return replaceBinding(options.document, binding.id, (candidate) => ({
+    ...mapBindingKeyforms(candidate, (keyform) => ({
+      ...keyform,
+      deformers: keyform.deformers?.filter((deformer) => targetDeformerIds.has(deformer.nodeId)),
+      parts: keyform.parts.filter((part) => targetPartIds.has(part.partId)),
+    })),
+    targetDeformerIds: [...targetDeformerIds],
+    targetPartIds: parts.map((part) => part.id),
+  }))
 }
 
 export const connectParameterParts = (
@@ -521,20 +499,21 @@ export const disconnectParameterParts = (
   options: ParameterBindingTarget & {readonly partIds: ReadonlyArray<string>},
 ) => disconnectParameterNodes({...options, nodeIds: options.partIds})
 
+/** 현재 단면의 키폼 또는 Z 단면 전체의 좌표를 이동한다. */
 export const moveParameterKeyform = (options: MoveParameterKeyformOptions) => {
   const binding = getParameterBinding(options.document, options.bindingId)
   const parameters = binding === undefined ? [] : getBindingParameters(options.document, binding)
+  const move =
+    binding === undefined ? undefined : getKeyformMove(binding, options.values, options.nextValues)
+  const moved = binding?.keyforms.map((keyform) => move?.(keyform.values) ?? keyform.values) ?? []
 
   if (
     binding === undefined ||
+    move === undefined ||
     options.values.length !== binding.parameterIds.length ||
     options.nextValues.length !== binding.parameterIds.length ||
     !binding.keyforms.some((keyform) => parameterValuesEqual(keyform.values, options.values)) ||
-    binding.keyforms.some(
-      (keyform) =>
-        !parameterValuesEqual(keyform.values, options.values) &&
-        parameterValuesEqual(keyform.values, options.nextValues),
-    ) ||
+    new Set(moved.map((values) => values.join(':'))).size !== moved.length ||
     options.nextValues.some((value, index) => {
       const parameter = parameters[index]
       return (
@@ -552,44 +531,14 @@ export const moveParameterKeyform = (options: MoveParameterKeyformOptions) => {
     return options.document
   }
 
-  return replaceBinding(options.document, options.bindingId, (candidate) => {
-    if (isTwoDimensionalParameterBinding(candidate)) {
-      const [x, y] = options.nextValues
-      if (x === undefined || y === undefined) {
-        return candidate
-      }
-
-      return {
-        ...candidate,
-        keyforms: candidate.keyforms
-          .map((keyform) =>
-            parameterValuesEqual(keyform.values, options.values)
-              ? {...keyform, values: [x, y] as const}
-              : keyform,
-          )
-          .sort(
-            (first, second) =>
-              first.values[1] - second.values[1] || first.values[0] - second.values[0],
-          ),
-      }
-    }
-
-    const [value] = options.nextValues
-    if (value === undefined) {
-      return candidate
-    }
-
-    return {
-      ...candidate,
-      keyforms: candidate.keyforms
-        .map((keyform) =>
-          parameterValuesEqual(keyform.values, options.values)
-            ? {...keyform, values: [value] as const}
-            : keyform,
-        )
-        .sort((first, second) => first.values[0] - second.values[0]),
-    }
-  })
+  return replaceBinding(options.document, options.bindingId, (candidate) =>
+    withBindingKeyforms(
+      candidate,
+      candidate.keyforms
+        .map((keyform) => ({...keyform, values: move(keyform.values)}))
+        .toSorted((first, second) => compareKeyformValues(first.values, second.values)),
+    ),
+  )
 }
 export {createParameterPreview, sampleParameterVertices}
 export {

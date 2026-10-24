@@ -1,5 +1,5 @@
-import {getDefaultParameterValueMap, type PuppetParameterValueMap} from '../../deformation'
-import {sampleMotionParameterValues} from '../../player/internal/motion'
+import type {PuppetParameterValueMap} from '../../deformation'
+import {sampleTimelineRowValues} from './timeline-row-values'
 import {type EditParameterKeyframeOptions, setParameterKeyframe} from './motion-keyframes'
 
 export interface InsertParameterKeyframeOptions extends EditParameterKeyframeOptions {
@@ -11,10 +11,10 @@ export const insertParameterKeyframe = (options: InsertParameterKeyframeOptions)
   if (motion === undefined) {
     return undefined
   }
-  const values = sampleMotionParameterValues({
+  const values = sampleTimelineRowValues({
+    document: options.document,
     motion,
-    parameters: options.document.parameters,
-    parameterValues: options.parameterValues ?? getDefaultParameterValueMap(options.document),
+    parameterValues: options.parameterValues,
     time: options.time,
   })
   const value = values[options.parameterId]

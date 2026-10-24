@@ -1,4 +1,5 @@
 import type {PuppetDocument} from '../../player'
+import {getMirrorAxisReferences} from './mirror-axis-references'
 import type {ParameterEditorResult} from '../use-parameter-editor'
 import {createMemo} from 'solid-js'
 import {getBindingInfluence, type PuppetParameterValues} from '../../deformation'
@@ -70,7 +71,7 @@ export const EditorModelingKeyformPanel = (props: EditorModelingKeyformPanelProp
     )
   return (
     <EditorKeyformPanel
-      keyformCenter={{x: props.document.viewport.width / 2, y: props.document.viewport.height / 2}}
+      keyformCenters={getMirrorAxisReferences(props.document)}
       onKeyformMirror={props.editor.mirrorKeyform}
       onCornersGenerate={props.editor.generateCorners}
       setBrushControlsMount={props.setBrushControlsMount}
@@ -90,6 +91,10 @@ export const EditorModelingKeyformPanel = (props: EditorModelingKeyformPanelProp
       onEditStart={props.onEditStart}
       onKeyformAdd={props.editor.addKeyform}
       onKeyformDelete={props.editor.deleteKeyform}
+      onKeyformPlaneDelete={(bindingId, value) => {
+        props.editor.selectBinding(bindingId)
+        props.editor.deleteKeyformPlane(value)
+      }}
       onKeyformMove={(bindingId, values, nextValues) => {
         props.editor.selectBinding(bindingId)
         props.editor.moveKeyform(values, nextValues)
@@ -108,6 +113,7 @@ export const EditorModelingKeyformPanel = (props: EditorModelingKeyformPanelProp
       onSelectionConnect={props.editor.connectSelection}
       onSelectionDisconnect={props.editor.disconnectSelection}
       onAllParametersVisibleChange={props.editor.setAllParametersVisible}
+      onThreeDimensionalParameterAdd={props.editor.addThreeDimensionalParameter}
       onTwoDimensionalParameterAdd={props.editor.addTwoDimensionalParameter}
       onValueChange={handleValueChange}
     />

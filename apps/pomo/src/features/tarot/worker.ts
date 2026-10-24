@@ -65,5 +65,6 @@ listenTextGenerationRequests<TarotWorkerRequest>({
   fallback: '타로 해석을 만들지 못했어요.',
   handle: (request) => generation.run(() => generateReading(request)),
   onError: (error, request) => sendResponse({...error, requestId: request.requestId}),
+  onSkipped: (request) => sendResponse({reason: 'busy', request, type: 'skipped'}),
   scope: workerScope,
 })

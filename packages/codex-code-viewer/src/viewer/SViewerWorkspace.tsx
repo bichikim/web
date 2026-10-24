@@ -33,7 +33,11 @@ export const SViewerWorkspace = (props: SViewerWorkspaceProps) => {
   const [settingsOpen, setSettingsOpen] = createSignal(false)
   const mediaCache = useMediaCache(() => viewer.session()?.session ?? null)
   const [focusRequest, setFocusRequest] = createSignal(0)
-  const tree = useFileTreeVisibility(viewer.workspaceSession)
+  const tree = useFileTreeVisibility(
+    viewer.workspaceSession,
+    port.saveTreeState,
+    viewer.reportError,
+  )
   const [element, setElement] = createSignal<HTMLElement | null>(null)
   const search = useDocumentSearch({source: viewer.editing.source})
   const sourceAvailable = (): boolean => {
@@ -155,6 +159,8 @@ export const SViewerWorkspace = (props: SViewerWorkspaceProps) => {
           <SUnsavedChanges editing={viewer.editing} />
           <SViewerSettings
             port={port}
+            workspace={viewer.workspaceSession()?.workspace}
+            onWorkspaceChange={viewer.changeWorkspace}
             open={settingsOpen()}
             previewLines={props.settings.previewLines()}
             language={props.settings.preference()}

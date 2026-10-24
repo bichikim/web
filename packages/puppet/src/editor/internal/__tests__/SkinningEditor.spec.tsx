@@ -1,5 +1,6 @@
-import {createSkinSession, SkinSessionContext} from '../skin-session'
 /** @vitest-environment jsdom */
+
+import {createSkinSession, SkinSessionContext} from '../skin-session'
 import {createSignal} from 'solid-js'
 import smoothExample from '../../../../examples/three-parts-skinning.json'
 import {fireEvent, render} from '@solidjs/testing-library'

@@ -1,10 +1,9 @@
 /** @vitest-environment node */
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
+import {createWorkerHarness} from 'src/__tests__/create-worker-harness'
 
 import {createTextMoodAnalyzer, type TextMoodAnalysis} from '../index'
 import type {TextMoodWorkerResponse} from '../messages'
-
-type WorkerListener = (event: ErrorEvent | MessageEvent<TextMoodWorkerResponse>) => void
 
 const ANALYSIS: TextMoodAnalysis = {
   margin: 0.4,
@@ -18,41 +17,9 @@ const ANALYSIS: TextMoodAnalysis = {
   uncertain: false,
 }
 
-class FakeWorker {
-  static current: FakeWorker | null = null
-
-  readonly postMessage = vi.fn()
-  readonly terminate = vi.fn()
-  readonly #listeners = new Map<string, Array<WorkerListener>>()
-
-  constructor() {
-    FakeWorker.current = this
-  }
-
-  addEventListener(type: string, listener: WorkerListener) {
-    const listeners = this.#listeners.get(type) ?? []
-    listeners.push(listener)
-    this.#listeners.set(type, listeners)
-  }
-
-  emitError(message: string, error?: unknown) {
-    for (const listener of this.#listeners.get('error') ?? []) {
-      listener({error, message} as ErrorEvent)
-    }
-  }
-
-  emitMessage(message: TextMoodWorkerResponse) {
-    for (const listener of this.#listeners.get('message') ?? []) {
-      listener({data: message} as MessageEvent<TextMoodWorkerResponse>)
-    }
-  }
-
-  emitMessageError() {
-    for (const listener of this.#listeners.get('messageerror') ?? []) {
-      listener({} as MessageEvent)
-    }
-  }
-}
+const FakeWorker = createWorkerHarness<TextMoodWorkerResponse>({
+  createErrorEvent: (message, error) => ({error, message}),
+})
 
 const getWorker = () => {
   const worker = FakeWorker.current

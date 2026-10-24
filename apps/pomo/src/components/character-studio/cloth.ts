@@ -107,6 +107,7 @@ export const createCloth = (data: ClothData) => {
       }
       const scale = clampUnit(
         (MAX_DISPLACEMENT * data.mobility[index]) / Math.max(Math.sqrt(distance), EPSILON),
+        {fallback: 0},
       )
       let contact = data.contacts[index * CONTACT_STRIDE + AXES]
       for (let axis = 0; axis < AXES; axis += 1) {

@@ -1,22 +1,27 @@
 import type {PuppetDocument, PuppetParameter} from '../document'
 import {advancePendulum, createPendulumState, type PendulumState} from '../physics'
 import type {PuppetParameterValueMap} from '../../deformation'
+import {boundParameterValue} from '../parameter-value'
+import {advanceChains, type ChainsState, matchesChains, settleChains} from '../physics-chain'
+import {applyPhysicsOptions, type PuppetPhysicsOptions} from '../physics-options'
 
 export interface EvaluatePhysicsOptions {
+  /** Chain state from the previous evaluation; without it (or after chain edits) chains settle. */
+  readonly chainState?: ChainsState
   readonly deltaTime: number
   readonly document: PuppetDocument
   readonly parameterValues: PuppetParameterValueMap
+  /** The app's gravity and wind for chains, in place of the document's. */
+  readonly physicsOptions?: PuppetPhysicsOptions
   readonly physicsState: ReadonlyMap<string, PendulumState>
   readonly settle?: boolean
 }
 
 export interface PhysicsEvaluationResult {
+  readonly chainState: ChainsState
   readonly parameterValues: PuppetParameterValueMap
   readonly physicsState: ReadonlyMap<string, PendulumState>
 }
-
-const clamp = (value: number, minimum: number, maximum: number) =>
-  Math.min(maximum, Math.max(minimum, value))
 
 const getParameterValue = (
   parameter: PuppetParameter,
@@ -26,7 +31,7 @@ const getParameterValue = (
   const resolvedValue =
     value === undefined || !Number.isFinite(value) ? parameter.defaultValue : value
 
-  return clamp(resolvedValue, parameter.minimum, parameter.maximum)
+  return boundParameterValue(parameter, resolvedValue)
 }
 
 const getParameterById = (document: PuppetDocument) =>
@@ -70,7 +75,7 @@ export const evaluatePhysics = (options: EvaluatePhysicsOptions): PhysicsEvaluat
       const displacement = position * pendulum.outputScale
       const outputCandidate = baseOutputValue + displacement
       const outputValue = Number.isFinite(outputCandidate)
-        ? clamp(outputCandidate, outputParameter.minimum, outputParameter.maximum)
+        ? boundParameterValue(outputParameter, outputCandidate)
         : baseOutputValue
 
       parameterValues = {...parameterValues, [outputParameter.id]: outputValue}
@@ -78,5 +83,25 @@ export const evaluatePhysics = (options: EvaluatePhysicsOptions): PhysicsEvaluat
     }
   }
 
-  return {parameterValues, physicsState}
+  const chained = evaluateChains({...options, parameterById, parameterValues})
+  return {chainState: chained.chainState, parameterValues: chained.parameterValues, physicsState}
+}
+
+/** Settles chains on `settle`, without state, or after chain edits; otherwise advances them. */
+const evaluateChains = (
+  options: EvaluatePhysicsOptions & {readonly parameterById: ReadonlyMap<string, PuppetParameter>},
+) => {
+  const physics = applyPhysicsOptions(options.document.physics, options.physicsOptions)
+  const common = {
+    parameters: options.parameterById,
+    physics,
+    values: options.parameterValues,
+  }
+  const {state, values} =
+    options.settle === true ||
+    options.chainState === undefined ||
+    !matchesChains(options.chainState, physics)
+      ? settleChains(common)
+      : advanceChains({...common, deltaTime: options.deltaTime, state: options.chainState})
+  return {chainState: state, parameterValues: values}
 }

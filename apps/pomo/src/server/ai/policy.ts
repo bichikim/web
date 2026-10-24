@@ -1,4 +1,4 @@
-import {ceilWeightedSum} from 'src/utils/ceil-weighted-sum'
+import BigNumber from 'bignumber.js'
 import type {AiCapability} from './model-catalog.ts'
 
 const MILLISECONDS_PER_SECOND = 1000
@@ -105,14 +105,12 @@ const calculateCredits = (values: ReadonlyArray<[number | null, number | null]>)
     return null
   }
 
-  // Decimal rates must not reserve an extra credit because of binary floating-point residue.
-  const credits = ceilWeightedSum({
-    products: values.map(([value, rate]) => ({
-      multiplier: rate ?? 0,
-      quantity: BigInt(value ?? 0),
-    })),
-  })
-  return credits <= BigInt(MAXIMUM_CREDITS) ? Number(credits) : null
+  // 소수 연산 결과를 유지한 채 합산한 뒤 한 번만 올림한다.
+  const credits = values
+    .map(([value, rate]) => new BigNumber(value ?? 0).multipliedBy(rate ?? 0))
+    .reduce((total, product) => total.plus(product), new BigNumber(0))
+    .integerValue(BigNumber.ROUND_CEIL)
+  return credits.isLessThanOrEqualTo(MAXIMUM_CREDITS) ? credits.toNumber() : null
 }
 
 /** Returns the subscription-renewal anchored usage period for one entitlement. */

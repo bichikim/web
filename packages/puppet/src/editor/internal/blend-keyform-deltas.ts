@@ -1,5 +1,11 @@
 import {clamp} from 'es-toolkit/math'
-import type {PuppetColor, PuppetParameterKeyform, PuppetPoint} from '../../player'
+import {
+  PUPPET_DEFAULT_DRAW_ORDER,
+  PUPPET_MAXIMUM_DRAW_ORDER,
+  type PuppetColor,
+  type PuppetParameterKeyform,
+  type PuppetPoint,
+} from '../../player'
 
 const blendVector = (
   first: readonly number[],
@@ -34,12 +40,64 @@ const blendPoint = (
         y: (first?.y ?? base.y) + (second?.y ?? base.y) - base.y,
       }
 
-/** Adds two forms' displacement from the same reference, including render and connection properties. */
+// Keyforms require a positive scale.
+const MINIMUM_SCALE = 0.01
+const blendScale = (first?: number, second?: number, base?: number) =>
+  base === undefined
+    ? undefined
+    : Math.max(MINIMUM_SCALE, (first ?? base) + (second ?? base) - base)
+
+/** Opacity and colors keyed on a part, group or deformer keyform. */
+interface RenderProperties {
+  readonly drawOrder?: number
+  readonly multiplyColor?: PuppetColor
+  readonly opacity?: number
+  readonly screenColor?: PuppetColor
+}
+
+/** 그리기 순서의 기준값에서 벗어난 차이를 합성한다. */
+const blendDrawOrder = (first?: number, second?: number, base?: number) =>
+  first === undefined && second === undefined && base === undefined
+    ? undefined
+    : clamp(
+        (first ?? base ?? PUPPET_DEFAULT_DRAW_ORDER) +
+          (second ?? base ?? PUPPET_DEFAULT_DRAW_ORDER) -
+          (base ?? PUPPET_DEFAULT_DRAW_ORDER),
+        0,
+        PUPPET_MAXIMUM_DRAW_ORDER,
+      )
+
+/** Composes both displacements from `base`, keeping opacity and colors within 0..1. */
+const blendRenderProperties = (
+  first: RenderProperties | undefined,
+  second: RenderProperties | undefined,
+  base: RenderProperties,
+) => ({
+  drawOrder: blendDrawOrder(first?.drawOrder, second?.drawOrder, base.drawOrder),
+  multiplyColor: constrainColor(
+    blendTriple(first?.multiplyColor, second?.multiplyColor, base.multiplyColor),
+  ),
+  opacity: clamp(
+    (first?.opacity ?? base.opacity ?? 1) +
+      (second?.opacity ?? base.opacity ?? 1) -
+      (base.opacity ?? 1),
+    0,
+    1,
+  ),
+  screenColor: constrainColor(
+    blendTriple(first?.screenColor, second?.screenColor, base.screenColor),
+  ),
+})
+
+/**
+ * Adds two forms' displacement from the same reference, including part, group and deformer render
+ * properties and connection properties. Entries missing from `base` are dropped.
+ */
 export const blendKeyformDeltas = (
   first: PuppetParameterKeyform,
   second: PuppetParameterKeyform,
   base: PuppetParameterKeyform,
-): Pick<PuppetParameterKeyform, 'deformers' | 'parts'> => ({
+): Pick<PuppetParameterKeyform, 'deformers' | 'groups' | 'parts'> => ({
   deformers: base.deformers?.map((node) => {
     const x = first.deformers?.find((entry) => entry.nodeId === node.nodeId) ?? node
     const y = second.deformers?.find((entry) => entry.nodeId === node.nodeId) ?? node
@@ -57,7 +115,12 @@ export const blendKeyformDeltas = (
           vertical: blendPoint(horizontal.vertical, vertical.vertical, handle.vertical)!,
         }
       }),
+      properties:
+        node.properties === undefined
+          ? undefined
+          : blendRenderProperties(x.properties, y.properties, node.properties),
       rotationOrigin: blendPoint(x.rotationOrigin, y.rotationOrigin, node.rotationOrigin),
+      rotationScale: blendScale(x.rotationScale, y.rotationScale, node.rotationScale),
       spatialMeshPosition: blendTriple(
         x.spatialMeshPosition,
         y.spatialMeshPosition,
@@ -73,6 +136,14 @@ export const blendKeyformDeltas = (
       ),
     }
   }),
+  groups: base.groups?.map((group) => ({
+    ...group,
+    properties: blendRenderProperties(
+      first.groups?.find((entry) => entry.groupId === group.groupId)?.properties,
+      second.groups?.find((entry) => entry.groupId === group.groupId)?.properties,
+      group.properties,
+    ),
+  })),
   parts: base.parts.map((part) => {
     const x = first.parts.find((entry) => entry.partId === part.partId) ?? part
     const y = second.parts.find((entry) => entry.partId === part.partId) ?? part
@@ -90,29 +161,7 @@ export const blendKeyformDeltas = (
       properties:
         part.properties === undefined
           ? undefined
-          : {
-              multiplyColor: constrainColor(
-                blendTriple(
-                  x.properties?.multiplyColor,
-                  y.properties?.multiplyColor,
-                  part.properties.multiplyColor,
-                ),
-              ),
-              opacity: clamp(
-                (x.properties?.opacity ?? part.properties.opacity ?? 1) +
-                  (y.properties?.opacity ?? part.properties.opacity ?? 1) -
-                  (part.properties.opacity ?? 1),
-                0,
-                1,
-              ),
-              screenColor: constrainColor(
-                blendTriple(
-                  x.properties?.screenColor,
-                  y.properties?.screenColor,
-                  part.properties.screenColor,
-                ),
-              ),
-            },
+          : blendRenderProperties(x.properties, y.properties, part.properties),
       vertices: blendVector(x.vertices, y.vertices, part.vertices),
     }
   }),

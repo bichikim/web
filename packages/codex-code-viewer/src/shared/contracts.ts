@@ -1,6 +1,7 @@
 import {MAX_TEXT_BYTES, SOURCE_CHUNK_LENGTH} from './reading-limits'
 import {MAX_CODE_BYTES} from './editing-limits'
 import {z} from 'zod'
+import {treeStateSchema} from './tree-state'
 
 export const locationSchema = z.object({
   column: z.number().int().positive(),
@@ -36,6 +37,7 @@ export const sourceChunkSchema = z.object({
 export const mediaChunkSchema = z.object({data: z.string(), next: z.number().int().nonnegative()})
 export const workspaceSessionSchema = z.object({
   session: z.string(),
+  treeState: treeStateSchema.optional(),
   workspace: z.string(),
 })
 export const sessionSchema = workspaceSessionSchema.extend({document: documentSchema})
@@ -131,6 +133,9 @@ export const errorSchema = z.object({
     'context-too-large',
     'media-too-large',
     'host-path-missing',
+    'thread-unavailable',
+    'invalid-workspace',
+    'workspace-write-failed',
     'session-expired',
     'invalid-position',
     'read-failed',

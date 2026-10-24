@@ -1,4 +1,6 @@
 /** @vitest-environment jsdom */
+
+import {createKeyedParameter} from './parameter-keyforms/fixtures'
 import {getBoneChannels, moveBoneJoint, poseBoneChannels} from '../../../deformation/bone'
 import {convertSceneContainers} from '../container-conversion'
 import {fireEvent, render} from '@solidjs/testing-library'
@@ -8,7 +10,7 @@ import {createDemoDocument, parseDocument, type PuppetSceneDeformerNode} from '.
 import {BoneEditor} from '../BoneEditor'
 import {createBoneDeformer, editBoneRest} from '../bone-editing'
 import {getSceneNode} from '../scene-graph'
-import {addParameter, setParameterKeyformDeformerControlPoints} from '../parameter-keyforms'
+import {setParameterKeyformDeformerControlPoints} from '../parameter-keyforms'
 import {createParameterPreview} from '../parameter-sampling'
 
 test('should place bind joints, pose a chain with fixed lengths, and preserve the document contract', () => {
@@ -63,7 +65,7 @@ test('should place bind joints, pose a chain with fixed lengths, and preserve th
 
 test('should save a bone pose into the selected keyform while preserving bind joints', () => {
   const source = createBoneDeformer(createDemoDocument(), ['mesh-preview'])!
-  const added = addParameter({document: source, nodeIds: ['bone']})!
+  const added = createKeyedParameter({document: source, nodeIds: ['bone']})!
   const binding = added.document.parameterBindings!.at(-1)!
   const [document, setDocument] = createSignal(added.document)
   const preview = () => createParameterPreview({document: document()})
@@ -219,7 +221,7 @@ test('should save a rotation pose into the selected keyform while preserving bin
     nodeIds: ['bone'],
     targetKind: 'rotation',
   })!
-  const added = addParameter({document: source, nodeIds: ['bone']})!
+  const added = createKeyedParameter({document: source, nodeIds: ['bone']})!
   const binding = added.document.parameterBindings!.at(-1)!
   const [document, setDocument] = createSignal(added.document)
   const preview = () => createParameterPreview({document: document()})
@@ -258,7 +260,7 @@ test('should save a rotation pose into the selected keyform while preserving bin
 test('should edit composed bone translation and rotation in binding channels', () => {
   const initial = createBoneDeformer(createDemoDocument(), ['mesh-preview'])!
   const rest = getSceneNode(initial, 'bone') as PuppetSceneDeformerNode
-  const first = addParameter({document: initial, nodeIds: ['bone']})!
+  const first = createKeyedParameter({document: initial, nodeIds: ['bone']})!
   const channels = getBoneChannels(rest.boneRestPoints!, rest.controlPoints)
   const firstPose = setParameterKeyformDeformerControlPoints({
     bindingId: first.binding.id,
@@ -271,7 +273,7 @@ test('should edit composed bone translation and rotation in binding channels', (
     nodeId: 'bone',
     values: [0],
   })!
-  const second = addParameter({document: firstPose, nodeIds: ['bone']})!
+  const second = createKeyedParameter({document: firstPose, nodeIds: ['bone']})!
   const source = setParameterKeyformDeformerControlPoints({
     bindingId: second.binding.id,
     controlPoints: poseBoneChannels(rest.boneRestPoints!, [

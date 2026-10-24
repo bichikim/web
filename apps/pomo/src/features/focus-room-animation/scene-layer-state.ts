@@ -20,7 +20,8 @@ export interface PVisemeTransition {
 
 type SupportsMouthTransitionStage = (stage: PMouthTransitionStage) => boolean
 
-const getEqualPowerOpacity = (linearOpacity: number) => Math.sqrt(clampUnit(linearOpacity))
+const getEqualPowerOpacity = (linearOpacity: number) =>
+  Math.sqrt(clampUnit(linearOpacity, {fallback: 1}))
 const VISEME_JAW_PROGRESS = {
   closed: 0,
   narrow: 0.12,
@@ -39,7 +40,7 @@ const getMouthOpacities = (
     return {[FOCUS_ROOM_MOUTH_CHANNELS[activeViseme]]: 1}
   }
 
-  const progress = clampUnit(transition.progress)
+  const progress = clampUnit(transition.progress, {fallback: 0})
   const path = getMouthTransitionPath(transition, supportsMouthTransitionStage)
 
   if (path === undefined) {
@@ -90,7 +91,7 @@ const getJawProgress = (activeViseme: PViseme, transition: PVisemeTransition | u
     return VISEME_JAW_PROGRESS[activeViseme]
   }
 
-  const progress = clampUnit(transition.progress)
+  const progress = clampUnit(transition.progress, {fallback: 0})
   const fromProgress = VISEME_JAW_PROGRESS[transition.from]
   const toProgress = VISEME_JAW_PROGRESS[transition.to]
 

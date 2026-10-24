@@ -9,7 +9,10 @@ import {
   trimRepetitiveTail,
 } from '../text-generation'
 
-import {createExclusiveAsyncTask} from 'src/utils/create-exclusive-async-task'
+import {
+  createExclusiveAsyncTask,
+  type ExclusiveAsyncTaskResult,
+} from 'src/utils/create-exclusive-async-task'
 
 import {createTextGenerationExecutor} from '../text-generation/execution'
 import {normalizeKoreanSpeechStyle} from './answer'
@@ -84,7 +87,9 @@ const generateDirectAnswer = async (
   sendResponse({text: answer, type: 'complete'})
 }
 
-const handleRequest = (request: DialogueWorkerRequest): Promise<void> => {
+const handleRequest = (
+  request: DialogueWorkerRequest,
+): Promise<ExclusiveAsyncTaskResult | void> => {
   switch (request.type) {
     case 'generate': {
       return generation.run(() =>
@@ -102,5 +107,6 @@ listenTextGenerationRequests<DialogueWorkerRequest>({
   fallback: FAILURE_MESSAGE,
   handle: handleRequest,
   onError: sendResponse,
+  onSkipped: (request) => sendResponse({reason: 'busy', request, type: 'skipped'}),
   scope: workerScope,
 })

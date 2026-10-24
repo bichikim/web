@@ -44,8 +44,8 @@ export const PGenerationStatus = (props: PGenerationStatusProps) => {
       <span class="min-w-0 flex-1">{props.message}</span>
       <Show when={progressState()}>
         {(progress) => {
-          const presentedProgress = createMemo(
-            () => clampFiniteNumber(progress().value, 0, MAXIMUM_PRESENTED_PROGRESS) ?? 0,
+          const presentedProgress = createMemo(() =>
+            clampFiniteNumber(progress().value, 0, MAXIMUM_PRESENTED_PROGRESS, {fallback: 0}),
           )
 
           return (

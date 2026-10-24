@@ -1,6 +1,7 @@
 import {sampleParameterGlue} from '../../deformation/parameter-glue'
 import type {PuppetParameterValues} from '../../deformation'
-import {getParameterBinding, getParameterTargetPartIds} from './parameter-keyforms'
+import {getParameterBinding} from './parameter-keyforms'
+import {isParameterGlueTarget} from '../../deformation/is-parameter-glue-target'
 import {createSignal} from 'solid-js'
 import type {PuppetDocument, PuppetGlue, PuppetVertexReference} from '../../player'
 import {addGlue, canGlueVertex, setGlueKeyform, updateGlue} from './glue'
@@ -68,21 +69,23 @@ export const useGlueEditor = (props: UseGlueEditorProps) => {
       ? undefined
       : getParameterBinding(editingDocument(), props.activeBindingId)
   const hasParameter = (glue: PuppetGlue) =>
-    props.document.parameterBindings?.some((binding) =>
-      getParameterTargetPartIds(binding).includes(glue.first.partId),
-    ) === true
-  const canEdit = (glue: PuppetGlue) =>
-    props.editMode !== 'motion' &&
-    !isSceneNodeLocked(props.document, glue.first.partId) &&
-    !isSceneNodeLocked(props.document, glue.second.partId) &&
-    (props.editMode !== 'parameter' ||
-      !hasParameter(glue) ||
-      (props.partId === glue.first.partId &&
-        props.activeKeyformValues !== undefined &&
-        props.activeKeyformValues !== null &&
-        binding()?.keyforms.some((form) =>
-          form.parts.some((part) => part.partId === glue.first.partId),
-        ) === true))
+    props.document.parameterBindings?.some((binding) => isParameterGlueTarget(binding, glue)) ===
+    true
+  const canEdit = (glue: PuppetGlue) => {
+    const current = binding()
+    return (
+      props.editMode !== 'motion' &&
+      !isSceneNodeLocked(props.document, glue.first.partId) &&
+      !isSceneNodeLocked(props.document, glue.second.partId) &&
+      (props.editMode !== 'parameter' ||
+        !hasParameter(glue) ||
+        (props.partId === glue.first.partId &&
+          props.activeKeyformValues !== undefined &&
+          props.activeKeyformValues !== null &&
+          current !== undefined &&
+          isParameterGlueTarget(current, glue)))
+    )
+  }
   const sampled = (glue: PuppetGlue) => {
     const current = binding()
     const values = props.activeKeyformValues

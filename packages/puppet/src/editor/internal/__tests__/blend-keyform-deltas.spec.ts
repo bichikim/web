@@ -88,3 +88,43 @@ test('should compose geometry and constrain colors and connection weights', () =
   })
   expect(base.parts[0]!.vertices).toEqual([0, 0])
 })
+
+test('should compose deformer opacity, colors and rotation scales, keeping scales positive', () => {
+  const rotation = (rotationScale: number, opacity: number): PuppetParameterKeyform => ({
+    deformers: [
+      {
+        controlPoints: [0, 0],
+        kind: 'deformer',
+        nodeId: 'rot',
+        properties: {opacity},
+        rotationScale,
+      },
+    ],
+    parts: [],
+    values: [0],
+  })
+  const [blended] = blendKeyformDeltas(
+    rotation(2, 0.8),
+    rotation(0.25, 0.4),
+    rotation(1, 0.5),
+  ).deformers!
+  expect(blended?.rotationScale).toBeCloseTo(1.25)
+  expect(blended?.properties?.opacity).toBeCloseTo(0.7)
+  const [shrunk] = blendKeyformDeltas(
+    rotation(0.2, 0.5),
+    rotation(0.2, 0.5),
+    rotation(1, 0.5),
+  ).deformers!
+  expect(shrunk?.rotationScale).toBe(0.01)
+})
+
+test('should compose keyed part and group draw order offsets when generating a corner', () => {
+  const form = (drawOrder: number): PuppetParameterKeyform => ({
+    groups: [{groupId: 'group', properties: {drawOrder}}],
+    parts: [{partId: 'part', properties: {drawOrder}, vertices: []}],
+    values: [0, 0],
+  })
+  const blended = blendKeyformDeltas(form(600), form(650), form(500))
+  expect(blended.parts[0]?.properties?.drawOrder).toBe(750)
+  expect(blended.groups?.[0]?.properties.drawOrder).toBe(750)
+})

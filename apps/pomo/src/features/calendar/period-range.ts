@@ -121,24 +121,33 @@ export const createCalendarMonthRange = ({
   return toRange(start, boundary(monthOffset + 1))
 }
 
+interface WeekdayRangeOptions {
+  /** 요청 시간대에서 상대 날짜의 자정 경계를 계산한다. */
+  readonly boundary: (days: number) => Date
+  /** 현재 현지 요일이며 일요일은 0이다. */
+  readonly currentWeekday: number
+  /** true이면 이번 주의 요일을 고른다. 생략하면 다음 7일 안의 요일을 고른다. */
+  readonly thisWeek?: boolean
+  /** 월요일을 0으로 하는 요청 요일 목록이다. 비어 있으면 범위를 만들지 않는다. */
+  readonly weekdayOffsets: ReadonlyArray<number>
+}
+
 export const createCalendarWeekdayRange = ({
   boundary,
   currentWeekday,
+  thisWeek = false,
   weekdayOffsets,
-}: {
-  readonly boundary: (days: number) => Date
-  readonly currentWeekday: number
-  readonly weekdayOffsets: ReadonlyArray<number>
-}): {
+}: WeekdayRangeOptions): {
   readonly end: Date
   readonly firstDayOffset: number
   readonly lastDayOffset: number
   readonly start: Date
 } | null => {
   const currentWeekdayFromMonday = currentWeekday === 0 ? DAYS_PER_WEEK - 1 : currentWeekday - 1
-  const dayOffsets = weekdayOffsets.map(
-    (weekdayOffset) => (weekdayOffset - currentWeekdayFromMonday + DAYS_PER_WEEK) % DAYS_PER_WEEK,
-  )
+  const dayOffsets = weekdayOffsets.map((weekdayOffset) => {
+    const dayOffset = weekdayOffset - currentWeekdayFromMonday
+    return thisWeek ? dayOffset : (dayOffset + DAYS_PER_WEEK) % DAYS_PER_WEEK
+  })
   const calendarRange = createCalendarRangeFromDayOffsets({boundary, dayOffsets})
   if (calendarRange === null) {
     return null

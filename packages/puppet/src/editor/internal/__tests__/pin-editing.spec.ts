@@ -1,8 +1,9 @@
+import {createKeyedParameter} from './parameter-keyforms/fixtures'
 import {expect, test} from 'vitest'
 import {createDemoDocument} from '../../../player'
 import {convertSceneContainers} from '../container-conversion'
 import {editPinLayout} from '../pin-editing'
-import {addParameter} from '../parameter-keyforms'
+
 import {setSceneNodeState} from '../scene-graph'
 
 const createDocument = () =>
@@ -21,7 +22,7 @@ test('should reject layout edits after locking or connecting a parameter', () =>
   const source = createDocument()
   for (const document of [
     setSceneNodeState({document: source, locked: true, nodeId: 'shapes'})!,
-    addParameter({document: source, nodeIds: ['shapes']})!.document,
+    createKeyedParameter({document: source, nodeIds: ['shapes']})!.document,
   ]) {
     expect(
       editPinLayout({

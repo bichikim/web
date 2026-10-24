@@ -292,7 +292,7 @@ export class PLayerReviewRenderer {
   }
 
   #toSceneState(state: PLayerReviewState) {
-    const referenceOpacity = clampUnit(state.referenceOpacity)
+    const referenceOpacity = clampUnit(state.referenceOpacity, {fallback: 1})
     const mouthState = createFocusRoomLayerState(
       state.viseme,
       false,

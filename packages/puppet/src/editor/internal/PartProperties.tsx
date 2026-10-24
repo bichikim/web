@@ -1,10 +1,18 @@
-import {EditorColorField, EditorNumberField, EditorSelect} from '../../design-system'
+import {
+  EditorCheckbox,
+  EditorColorField,
+  EditorNumberField,
+  EditorSelect,
+} from '../../design-system'
 import {For, Show} from 'solid-js'
 
 import {getPartRenderProperties} from '../../deformation'
 import {
+  PUPPET_ALPHA_BLEND_MODES,
+  PUPPET_DEFAULT_DRAW_ORDER,
+  PUPPET_MAXIMUM_DRAW_ORDER,
   PUPPET_PART_BLEND_MODES,
-  type PuppetColor,
+  type PuppetAlphaBlendMode,
   type PuppetDocument,
   type PuppetPart,
   type PuppetPartBlendMode,
@@ -12,14 +20,18 @@ import {
 } from '../../player'
 import {type MaskTargetOption, PartMaskProperties} from './PartMaskProperties'
 import {SpatialPartProperties} from './SpatialPartProperties'
+import {PartPresetProperties} from './PartPresetProperties'
 import {EditorPropertyGroup} from './EditorPropertyGroup'
+import {colorToHex, hexToColor} from './color-hex'
 import {EditorInspectorActions} from './EditorInspectorActions'
+import {CommitTextField} from './CommitTextField'
+import {setPartUserData} from './part-user-data'
 
 export type {MaskTargetOption} from './PartMaskProperties'
 
 type InterpolatedPartProperties = Pick<
   PuppetPartRenderProperties,
-  'multiplyColor' | 'opacity' | 'screenColor'
+  'drawOrder' | 'multiplyColor' | 'opacity' | 'screenColor'
 >
 
 export interface PartPropertiesProps {
@@ -42,32 +54,31 @@ export interface PartPropertiesProps {
   readonly onStaticChange: (properties: PuppetPartRenderProperties) => void
 }
 
-const COLOR_CHANNEL_MAXIMUM = 255
-const HEX_RADIX = 16
-const HEX_COLOR_PATTERN = /^#(?<red>[\da-f]{2})(?<green>[\da-f]{2})(?<blue>[\da-f]{2})$/iu
-
-const colorToHex = (color: PuppetColor) =>
-  `#${color
-    .map((channel) =>
-      Math.round(channel * COLOR_CHANNEL_MAXIMUM)
-        .toString(HEX_RADIX)
-        .padStart(2, '0'),
-    )
-    .join('')}`
-
-const hexToColor = (value: string): PuppetColor | undefined => {
-  const groups = HEX_COLOR_PATTERN.exec(value)?.groups
-  return groups === undefined
-    ? undefined
-    : [
-        Number.parseInt(groups.red!, HEX_RADIX) / COLOR_CHANNEL_MAXIMUM,
-        Number.parseInt(groups.green!, HEX_RADIX) / COLOR_CHANNEL_MAXIMUM,
-        Number.parseInt(groups.blue!, HEX_RADIX) / COLOR_CHANNEL_MAXIMUM,
-      ]
-}
-
 const isPartBlendMode = (value: string): value is PuppetPartBlendMode =>
   PUPPET_PART_BLEND_MODES.some((blendMode) => blendMode === value)
+
+const isAlphaBlendMode = (value: string): value is PuppetAlphaBlendMode =>
+  PUPPET_ALPHA_BLEND_MODES.some((alphaBlendMode) => alphaBlendMode === value)
+
+/** Free text an app reads for the part (Cubism's userdata3). */
+const PartUserDataProperties = (props: {
+  readonly disabled: boolean
+  readonly document: PuppetDocument
+  readonly part: PuppetPart
+  readonly onDocumentChange?: (document: PuppetDocument) => void
+}) => (
+  <EditorPropertyGroup class="part-properties" title="사용자 데이터">
+    <CommitTextField
+      disabled={props.disabled}
+      label="파트 사용자 데이터"
+      placeholder="앱에 전달할 문자열"
+      value={props.part.userData ?? ''}
+      onCommit={(text) =>
+        props.onDocumentChange?.(setPartUserData(props.document, props.part.id, text))
+      }
+    />
+  </EditorPropertyGroup>
+)
 
 export const PartProperties = (props: PartPropertiesProps) => {
   const properties = () => getPartRenderProperties(props.part)
@@ -101,6 +112,21 @@ export const PartProperties = (props: PartPropertiesProps) => {
           />
         </label>
         <label>
+          그리기 순서
+          <EditorNumberField
+            disabled={props.visualDisabled}
+            label="파트 그리기 순서"
+            maximum={PUPPET_MAXIMUM_DRAW_ORDER}
+            minimum={0}
+            name="part-draw-order"
+            step={1}
+            value={props.part.properties?.drawOrder ?? PUPPET_DEFAULT_DRAW_ORDER}
+            onEditEnd={props.onEditEnd}
+            onEditStart={props.onEditStart}
+            onValueChange={(drawOrder) => props.onInterpolatedChange({drawOrder})}
+          />
+        </label>
+        <label>
           블렌드 모드
           <EditorSelect
             label="파트 블렌드 모드"
@@ -114,6 +140,29 @@ export const PartProperties = (props: PartPropertiesProps) => {
             }}
           />
         </label>
+        <label>
+          알파 합성
+          <EditorSelect
+            label="파트 알파 합성"
+            disabled={props.staticDisabled}
+            value={properties().alphaBlendMode}
+            options={PUPPET_ALPHA_BLEND_MODES}
+            onChange={(alphaBlendMode) => {
+              if (isAlphaBlendMode(alphaBlendMode)) {
+                props.onStaticChange({alphaBlendMode})
+              }
+            }}
+          />
+        </label>
+        <div class="editor-color-row">
+          <span>컬링</span>
+          <EditorCheckbox
+            checked={properties().culling}
+            disabled={props.staticDisabled}
+            label="뒤집힌 면 숨기기"
+            onChange={(culling) => props.onStaticChange({culling})}
+          />
+        </div>
         <div class="editor-color-row">
           <span>곱하기 색상</span>
           <EditorColorField
@@ -149,14 +198,30 @@ export const PartProperties = (props: PartPropertiesProps) => {
       </EditorPropertyGroup>
       <Show when={props.document}>
         {(document) => (
-          <SpatialPartProperties
-            disabled={props.spatialDisabled}
-            document={document()}
-            part={props.part}
-            onDocumentChange={props.onDocumentChange}
-            onEditEnd={props.onEditEnd}
-            onEditStart={props.onEditStart}
-          />
+          <>
+            <SpatialPartProperties
+              disabled={props.spatialDisabled}
+              document={document()}
+              part={props.part}
+              onDocumentChange={props.onDocumentChange}
+              onEditEnd={props.onEditEnd}
+              onEditStart={props.onEditStart}
+            />
+            <PartPresetProperties
+              disabled={props.staticDisabled}
+              document={document()}
+              part={props.part}
+              onDocumentChange={props.onDocumentChange}
+              onEditEnd={props.onEditEnd}
+              onEditStart={props.onEditStart}
+            />
+            <PartUserDataProperties
+              disabled={props.staticDisabled || props.onDocumentChange === undefined}
+              document={document()}
+              part={props.part}
+              onDocumentChange={props.onDocumentChange}
+            />
+          </>
         )}
       </Show>
     </>

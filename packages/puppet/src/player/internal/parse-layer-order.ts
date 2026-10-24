@@ -1,7 +1,5 @@
 import type {PuppetLayerOrderRule, PuppetParameter, PuppetPart} from '../document'
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null
+import {isRecord} from './parse-primitives'
 
 const hasKnownIds = (
   value: unknown,

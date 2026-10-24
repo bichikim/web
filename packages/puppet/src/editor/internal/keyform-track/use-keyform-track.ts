@@ -118,14 +118,14 @@ export const useKeyformTrack = (props: UseKeyformTrackProps): UseKeyformTrackRes
       {
         disabled: source.onKeyformAdd === undefined || occupied,
         id: 'add-keyform',
-        label: '키폼 추가',
+        label: `${source.markerLabel ?? '키폼'} 추가`,
         onSelect: () => handleKeyformAdd(contextValues()),
         type: 'action',
       },
       {
         disabled: source.onKeyformDelete === undefined || !occupied,
         id: 'delete-keyform',
-        label: '키폼 삭제',
+        label: `${source.markerLabel ?? '키폼'} 삭제`,
         onSelect: handleContextDelete,
         shortcut: 'Backspace',
         tone: 'danger',

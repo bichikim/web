@@ -1,4 +1,4 @@
-import {createLazyInitializer} from 'src/utils/create-lazy-initializer'
+import {memoizeAsync} from 'src/utils/memoize-async'
 import {createSignal, getOwner, onCleanup, runWithOwner} from 'solid-js'
 
 import type {ChatVoiceController, ChatVoiceState, UseChatVoiceProps} from './index'
@@ -24,7 +24,7 @@ export const useLazyChatVoice = (props: UseChatVoiceProps = {}): ChatVoiceContro
 
     return loadController()
   }
-  const loadController = createLazyInitializer(() => {
+  const loadController = memoizeAsync(() => {
     return import('./index').then(({useChatVoice}) => {
       if (disposed) {
         throw new DOMException('Voice runtime was disposed.', 'AbortError')

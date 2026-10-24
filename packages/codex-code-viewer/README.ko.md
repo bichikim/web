@@ -4,11 +4,13 @@
 
 Code Viewer는 Codex 대화 옆에서 코드·문서·미디어를 여는 플러그인입니다. 관련 코드를 찾아가고, 텍스트 파일을 편집하고, 선택한 코드나 변경 내용을 다음 채팅의 참고 자료로 추가할 수 있습니다.
 
+아래 영상은 Codex의 Code Viewer 0.5.0을 영어 UI로 촬영했습니다.
+
 파일별 기능은 [지원 파일 형식](#지원-파일-형식)에서 확인하세요.
 
 ## 1. 설치하고 시작하기
 
-Node.js 24 이상과 npm이 필요합니다. Codex를 선택할 때는 Codex 데스크톱 앱과 `plugin` 하위 명령을 지원하는 CLI도 필요합니다. Codex CLI가 없거나 업데이트가 필요하면 먼저 실행하세요.
+Node.js 24 이상과 npm이 필요합니다. Codex를 선택할 때는 Codex 데스크톱 앱과 `plugin` 하위 명령을 지원하는 CLI도 필요합니다. Codex CLI가 없으면 설치기가 전역 npm 설치 여부를 묻고, 동의하면 설치 후 이어서 진행합니다. 비대화형 실행에서는 `install --install-codex`를 지정해야 누락된 CLI를 설치합니다. 직접 설치하거나 업데이트하려면 다음 명령을 실행하세요.
 
 ```sh
 npm install -g @openai/codex
@@ -22,6 +24,8 @@ npx @winter-love/codex-code-viewer@latest install
 
 터미널에서는 **Codex / Claude Desktop(Code 모드) / 둘 다**를 선택합니다. 자동화에서는 `install --target codex|claude|all`로 지정하며, 비대화형 기본값은 Codex입니다. Claude만 설치할 때는 Codex CLI가 필요하지 않습니다.
 
+**Claude 지원은 시험 버전입니다.** Claude의 플러그인·화면 연동 제약으로 일부 기능과 사용 흐름이 원활하지 않을 수 있습니다.
+
 Claude 설치는 현재 **macOS Apple Silicon**용입니다. [Claude Code CLI](https://code.claude.com/docs/en/setup) 2.1.287 이상과 Mods를 지원하는 Claude Desktop이 필요합니다. 설치기는 Claude를 선택한 경우에만 같은 버전의 GitHub Release 런타임을 내려받아 크기·SHA-256을 확인하고 `~/.claude/code-viewer/marketplace`에 보관하고 공식 CLI로 사용자 범위 플러그인을 등록합니다. 수동 MCP 등록·ZIP 업로드는 필요 없습니다. `CLAUDE_BINARY`와 `CLAUDE_CONFIG_DIR`로 CLI·설정 폴더를 지정할 수 있습니다. 오프라인 설치는 `CODE_VIEWER_RUNTIME_ARCHIVE`로 동일 버전의 ZIP을 지정하며 같은 무결성 검사를 거칩니다. 기존 업로드 버전은 새 설치 성공 후 비활성화하며 파일과 실행 중인 세션은 유지합니다.
 
 설치 후 표시되는 **Code Viewer Attachment.app** 경로를 시스템 설정 → 개인정보 보호 및 보안 → 손쉬운 사용에 추가·허용하세요. 이 권한은 원클릭 실제 첨부 카드 추가와 접힌 Browser 펼치기에 사용합니다. 허용했는데도 권한 오류가 계속되면 기존 **Code Viewer Attachment** 항목만 제거하고 안내한 새 경로의 앱을 다시 추가하세요. macOS가 같은 이름의 이전 ZIP 설치 경로를 유지할 수 있습니다. Claude Desktop **Code** 탭에서 새 **로컬** 세션을 시작하고, 입력창 아래 **코드 뷰어 열기** 또는 Claude 답변의 프로젝트 파일 링크를 누르세요. 새 세션 시작만으로는 뷰어를 열지 않습니다. 기존 세션은 설치기가 재로드하지 않습니다.
@@ -29,6 +33,8 @@ Claude 설치는 현재 **macOS Apple Silicon**용입니다. [Claude Code CLI](h
 Codex 앱을 완전히 종료하고 다시 여세요. 프로젝트 대화 오른쪽 패널의 새 탭 메뉴에서 **Code Viewer**를 선택합니다. 기본 파일 뷰어의 **열기** 메뉴는 외부 앱을 실행하는 메뉴입니다.
 
 대화의 작업 폴더를 확인할 수 있으면 자동으로 연결합니다. 연결되지 않으면 `/Users/사용자명/projects/my-project/src/main.tsx`처럼 파일의 절대 경로를 입력하고 Enter를 누르세요.
+
+Codex에서는 **설정 → 작업 폴더**에 폴더의 절대 경로를 입력하고 **적용**하면 현재 채팅의 코드뷰어에만 기억합니다. 뷰어를 다시 열거나 앱을 재시작해도 복원하며, Codex 자체의 채팅 작업 경로는 바꾸지 않습니다. 미저장 변경이 있으면 저장·버리기·계속 편집 중에서 선택합니다.
 
 업데이트할 때도 같은 설치 명령을 실행한 뒤 Codex를 다시 엽니다. 설치 상태는 다음 명령으로 확인합니다.
 
@@ -87,6 +93,10 @@ macOS에서 파일 트리의 **채팅창에 추가**는 클릭한 파일 하나�
 - **폴더 둘러보기:** 검색 옆의 **파일 트리**를 누릅니다. 폴더를 클릭하면 펼치고 접으며, 파일을 클릭하면 엽니다. **파일 필터링**은 경로로 목록을 좁히고, **현재 파일 위치로 이동**은 필터를 비운 뒤 열린 파일까지 스크롤합니다.
 - **이전 위치로 돌아가기:** 뒤로·앞으로 버튼이나 `Alt+←/→`를 사용합니다.
 
+### 파일 트리로 탐색
+
+![파일 트리로 탐색](https://raw.githubusercontent.com/bichikim/web/97cc070dac551d6e898a66a0be97af66730ece2c/packages/codex-code-viewer/docs/recordings/codex/0.5.0/file-tree.gif)
+
 삭제되어 열 수 없는 파일은 건너뛰며, 현재 파일을 삭제해도 다른 방문 기록은 유지합니다. 보관 중인 초안은 삭제된 파일도 다시 열어 저장으로 복원할 수 있습니다. 외부에서 복원한 파일은 변경 감지나 새로고침 후 다시 탐색합니다. 읽기 권한 등 다른 오류는 건너뛰지 않고 안내합니다.
 
 트리 경계선을 드래그하면 너비를 조절합니다. 경계선에 포커스를 두면 좌우 방향키로 너비를 바꾸고 Home/End로 최소·최대 너비를 선택합니다. 트리에서는 위·아래 방향키와 Home/End로 항목을 선택하고, 좌우 방향키로 폴더를 접고 펼칩니다. 우클릭이나 `Shift+F10`으로 항목 메뉴를 엽니다.
@@ -97,9 +107,25 @@ macOS에서 파일 트리의 **채팅창에 추가**는 클릭한 파일 하나�
 
 읽기 모드에서 import 경로를 클릭하면 모듈 파일을 열고, 심볼의 사용처를 클릭하면 정의로 이동합니다. 정의 이름을 클릭하면 사용처 목록을 엽니다. 결과는 파일별로 표시하며 항목을 선택해 이동합니다. 정의가 여러 개라면 목록에서 하나를 선택합니다.
 
+### import 경로로 이동
+
+![import 경로로 이동](https://raw.githubusercontent.com/bichikim/web/97cc070dac551d6e898a66a0be97af66730ece2c/packages/codex-code-viewer/docs/recordings/codex/0.5.0/import.gif)
+
+### 정의로 이동
+
+![정의로 이동](https://raw.githubusercontent.com/bichikim/web/97cc070dac551d6e898a66a0be97af66730ece2c/packages/codex-code-viewer/docs/recordings/codex/0.5.0/definition.gif)
+
+### 사용처 찾기
+
+![사용처 찾기](https://raw.githubusercontent.com/bichikim/web/97cc070dac551d6e898a66a0be97af66730ece2c/packages/codex-code-viewer/docs/recordings/codex/0.5.0/references.gif)
+
 정의·사용처 목록은 검색 중 찾은 결과부터 표시합니다. 제목 옆 필터로 파일 경로를 좁히고, 파일 그룹을 접고 펼치거나 오른쪽 이동 버튼으로 해당 파일을 열 수 있습니다.
 
 읽기와 편집 화면에서 줄 번호 옆 화살표로 여러 줄 함수·객체·클래스·마크업 블록을 접고 펼칩니다. 접힌 자리의 **…**를 눌러도 펼쳐집니다. 검색 결과나 정의·사용처 위치로 이동하면 해당 줄을 가린 블록을 펼칩니다. 작은 파일의 접기 상태는 같은 탭에서 복원하며 원본이 변경되면 초기화합니다. Python·Ruby·Rust는 들여쓰기를 기준으로 접습니다.
+
+### 코드 접기와 펼치기
+
+![코드 접기와 펼치기](https://raw.githubusercontent.com/bichikim/web/97cc070dac551d6e898a66a0be97af66730ece2c/packages/codex-code-viewer/docs/recordings/codex/0.5.0/fold.gif)
 
 정의·사용처 이동은 TypeScript·JavaScript·Python·Ruby·Rust에서 지원합니다. JSON·JSONC·JSON5는 파일 경로 값으로만 이동합니다. 그 외 형식은 구문 강조가 있어도 심볼 이동은 제공하지 않습니다. 언어별 준비 사항은 [코드 탐색 설정](#코드-탐색-설정)을 참고하세요.
 
@@ -112,6 +138,10 @@ macOS에서 파일 트리의 **채팅창에 추가**는 클릭한 파일 하나�
 1. 편집 가능한 파일을 열고 문서 도구 줄의 **편집**을 누릅니다.
 2. 내용을 수정합니다. `Cmd/Ctrl+Z`로 실행을 취소하고 `Cmd/Ctrl+Shift+Z`로 다시 실행합니다.
 3. **저장** 또는 `Cmd/Ctrl+S`를 누릅니다. 자동 저장이나 자동 서식 변경은 하지 않습니다.
+
+### 텍스트 편집과 저장
+
+![텍스트 편집과 저장](https://raw.githubusercontent.com/bichikim/web/97cc070dac551d6e898a66a0be97af66730ece2c/packages/codex-code-viewer/docs/recordings/codex/0.5.0/edit-save.gif)
 
 편집 가능한 형식은 [지원 파일 형식](#지원-파일-형식)을 참고하세요. Markdown·CSV·TSV는 원문을 편집합니다.
 
@@ -142,6 +172,10 @@ TS·JS·JSON 탐색에는 여러 파일의 미저장 변경이 반영됩니다. 
 ## 6. 파일과 폴더 관리하기
 
 트리 도구 줄의 **새 파일**·**새 폴더**를 사용합니다. 폴더를 선택했다면 그 안에, 파일을 선택했다면 같은 상위 폴더에 만듭니다. 빈 작업 폴더에서는 루트에 만듭니다. 이름 입력창에서 생성 위치를 확인할 수 있으며 기존 항목은 덮어쓰지 않습니다.
+
+### 새 파일 만들기
+
+![새 파일 만들기](https://raw.githubusercontent.com/bichikim/web/97cc070dac551d6e898a66a0be97af66730ece2c/packages/codex-code-viewer/docs/recordings/codex/0.5.0/create-file.gif)
 
 파일·폴더 우클릭 메뉴에서 **이름 변경**·**복사**·**잘라내기**·**붙여넣기**·**삭제**를 선택합니다. 트리에 포커스가 있으면 `Cmd/Ctrl+C`·`Cmd/Ctrl+X`·`Cmd/Ctrl+V`와 Delete도 사용할 수 있습니다. 복사·잘라내기는 이 뷰어의 작업 폴더 안에서 사용하는 내부 클립보드입니다. 폴더에 붙여넣으면 그 안에, 파일에 붙여넣으면 같은 상위 폴더에 만듭니다. 빈 공간의 메뉴에서는 작업 폴더 루트에 붙여넣습니다. 복사 이름이 겹치면 복사본 이름을 만들고, 잘라내기·이름 변경은 오류를 안내합니다.
 
@@ -199,6 +233,18 @@ TS·JS 탐색은 완료된 결과와 파일별 인덱스 요약을 재사용하�
 - **PDF:** 페이지 번호·배율(25–400%)을 입력하거나 **화면에 맞춤**을 사용합니다. 텍스트를 드래그해 선택·복사합니다. `Cmd/Ctrl+F`로 문서를 검색하고 Enter/Shift+Enter로 결과를 이동합니다. 검색 한도는 2,048페이지·4,194,304자·10,000개 결과입니다. 스캔 PDF는 텍스트 레이어가 있어야 검색할 수 있으며 OCR·암호 입력은 지원하지 않습니다.
 - **이미지·SVG:** 배율 버튼·입력(1–1600%)·핀치·`Ctrl/Cmd+휠`로 확대·축소하고 드래그·방향키로 이동합니다. 이미지에 포커스가 있으면 `+`·`-`로 배율 조절, `0`으로 100%, Home으로 화면 맞춤을 사용합니다. SVG는 32 MiB까지 XML 원문을 볼 수 있으며 그보다 크면 미리보기만 제공합니다.
 - **영상·음악:** 재생 컨트롤을 사용합니다. 재생 가능 여부는 내장 브라우저의 코덱 지원에 따라 달라집니다. 음악은 재생 버튼을 눌러 시작하고 파일을 떠나면 멈춥니다.
+
+### Markdown 미리보기와 원문
+
+![Markdown 미리보기와 원문](https://raw.githubusercontent.com/bichikim/web/97cc070dac551d6e898a66a0be97af66730ece2c/packages/codex-code-viewer/docs/recordings/codex/0.5.0/markdown.gif)
+
+### CSV 열 정렬
+
+![CSV 열 정렬](https://raw.githubusercontent.com/bichikim/web/97cc070dac551d6e898a66a0be97af66730ece2c/packages/codex-code-viewer/docs/recordings/codex/0.5.0/csv-sort.gif)
+
+### CSV 행 필터
+
+![CSV 행 필터](https://raw.githubusercontent.com/bichikim/web/97cc070dac551d6e898a66a0be97af66730ece2c/packages/codex-code-viewer/docs/recordings/codex/0.5.0/csv-filter.gif)
 
 ## 제한과 문제 해결
 

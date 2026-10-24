@@ -161,7 +161,7 @@ export const useTarotReading = (props: UseTarotReadingProps): TarotReadingContro
     }
   }
   const handleResponse = (response: TarotWorkerResponse) => {
-    if (disposed || response.requestId !== activeRequestId) {
+    if (response.type === 'skipped' || disposed || response.requestId !== activeRequestId) {
       return
     }
 

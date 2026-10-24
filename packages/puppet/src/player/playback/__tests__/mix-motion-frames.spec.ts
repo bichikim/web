@@ -10,6 +10,40 @@ const document = {
     {defaultValue: 0, id: 'mouth', maximum: 1, minimum: 0, name: 'Mouth'},
   ],
 }
+
+test('should select motion precision independently of the history base', () => {
+  const value = 10 - 1e-8
+  const options = {baseParameterValues: {angle: value}, frames: []}
+  expect(
+    mixMotionFrames({
+      ...options,
+      document: {
+        ...document,
+        motionParameterBase: 'previous-frame',
+        motionParameterPrecision: 'float64',
+      },
+    }).motionParameterValues.angle,
+  ).toBe(value)
+  expect(
+    mixMotionFrames({
+      ...options,
+      document: {...document, motionParameterPrecision: 'float32'},
+    }).motionParameterValues.angle,
+  ).toBe(10)
+})
+
+test('should retain SDK motion history at Float32 precision at discrete key boundaries', () => {
+  const value = 10 - 1e-8
+  const native = mixMotionFrames({baseParameterValues: {angle: value}, document, frames: []})
+  const sdk = mixMotionFrames({
+    baseParameterValues: {angle: value},
+    document: {...document, motionParameterBase: 'previous-frame'},
+    frames: [],
+  })
+  expect(native.parameterValues.angle).toBe(value)
+  expect(sdk.parameterValues.angle).toBe(10)
+  expect(sdk.motionParameterValues.angle).toBe(10)
+})
 const frame = (value: number, options: Partial<MotionFrame> = {}): MotionFrame => ({
   blend: 'replace',
   motion: {
@@ -24,6 +58,30 @@ const frame = (value: number, options: Partial<MotionFrame> = {}): MotionFrame =
 })
 
 describe('mixMotionFrames', () => {
+  test('should apply expressions over motions and under external overrides', () => {
+    const expressions = [
+      {
+        expression: {
+          id: 'look',
+          parameters: [
+            {blend: 'add' as const, parameterId: 'angle', value: 5},
+            {blend: 'overwrite' as const, parameterId: 'mouth', value: 1},
+          ],
+        },
+        weight: 1,
+      },
+    ]
+    const mixed = mixMotionFrames({document, expressions, frames: [frame(30)]}).parameterValues
+    expect(mixed).toEqual({angle: 35, mouth: 1})
+    const overridden = mixMotionFrames({
+      document,
+      expressions,
+      frames: [frame(30)],
+      parameterValues: {angle: -20},
+    }).parameterValues
+    expect(overridden.angle).toBe(-20)
+  })
+
   test('should normalize large finite weights without overflowing their sum', () => {
     const frames = [frame(30, {weight: 1e308}), frame(70, {weight: 1e308})]
     expect(mixMotionFrames({document, frames}).parameterValues.angle).toBeCloseTo(50)
@@ -129,4 +187,21 @@ describe('mixMotionVertices', () => {
       }),
     ).toEqual([60, 40])
   })
+})
+
+test('should blend imported fades from previous motion values without retaining expressions or overrides', () => {
+  const motion = {...frame(30).motion, fadeInTime: 0.5}
+  const first = mixMotionFrames({
+    document,
+    frames: [frame(10, {elapsed: 0.25, motion})],
+    parameterValues: {angle: 90},
+  })
+  expect(first.motionParameterValues.angle).toBeCloseTo(20)
+  expect(first.parameterValues.angle).toBe(90)
+  const second = mixMotionFrames({
+    baseParameterValues: first.motionParameterValues,
+    document,
+    frames: [frame(10, {elapsed: 0.25, motion})],
+  })
+  expect(second.motionParameterValues.angle).toBeCloseTo(25)
 })

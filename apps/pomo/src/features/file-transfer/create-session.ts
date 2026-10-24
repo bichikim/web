@@ -348,7 +348,7 @@ class TransferSession implements FileTransfer {
       }
       checksum = updateChecksum(checksum, new Uint8Array(chunk))
       dataChannel.send(chunk)
-      this.setState({progress: clampUnit((offset + chunk.byteLength) / file.size)})
+      this.setState({progress: clampUnit((offset + chunk.byteLength) / file.size, {fallback: 0})})
     }
     this.sendControl({checksum: (checksum ^ 0xffffffff) >>> 0, id, type: 'end'})
   }

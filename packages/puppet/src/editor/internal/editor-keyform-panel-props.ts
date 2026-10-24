@@ -1,11 +1,12 @@
 import type {PuppetParameter, PuppetParameterBinding} from '../../player/document'
 import type {PuppetParameterValueMap, PuppetParameterValues} from '../../deformation'
-import type {PuppetPoint} from '../../player'
+import type {MirrorAxisReference} from './mirror-axis-references'
 import type {CornerKeyformSettings} from './generate-corner-keyforms'
 import type {MirrorKeyformSettings} from './mirror-keyform'
 
 export interface EditorKeyformPanelProps {
-  readonly keyformCenter?: PuppetPoint
+  /** Mirror axis points; the first is the default. */
+  readonly keyformCenters?: ReadonlyArray<MirrorAxisReference>
   readonly onKeyformMirror?: (settings: MirrorKeyformSettings) => string | null
   readonly onCornersGenerate?: (settings: CornerKeyformSettings) => string | null
   readonly activeBindingId?: string
@@ -20,6 +21,8 @@ export interface EditorKeyformPanelProps {
   readonly onEditStart?: () => void
   readonly onKeyformAdd?: () => void
   readonly onKeyformDelete?: () => void
+  /** Deletes a 3D binding's plane at third value `value`. */
+  readonly onKeyformPlaneDelete?: (bindingId: string, value: number) => void
   readonly onKeyformMove?: (
     bindingId: string,
     values: PuppetParameterValues,
@@ -30,6 +33,7 @@ export interface EditorKeyformPanelProps {
   readonly onParameterNameChange?: (bindingId: string, parameterId: string, name: string) => void
   readonly onSelectionConnect?: () => void
   readonly onSelectionDisconnect?: () => void
+  readonly onThreeDimensionalParameterAdd?: () => void
   readonly onTwoDimensionalParameterAdd?: () => void
   readonly onValueChange?: (values: PuppetParameterValues) => void
   readonly parameterCreationAvailable?: boolean

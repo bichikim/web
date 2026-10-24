@@ -1,11 +1,18 @@
 import {isEqual} from 'es-toolkit'
+import {
+  getDeformerRenderProperties,
+  getGroupRenderProperties,
+  type ResolvedGroupRenderProperties,
+} from '../deformation/group-properties'
 import {getPartRenderProperties} from '../deformation/part-properties'
 import {
   getDocumentScene,
   isSceneContainerNode,
+  type PuppetDeformerRenderProperties,
   type PuppetDocument,
   type PuppetParameterBinding,
   type PuppetParameterDeformerKeyform,
+  type PuppetParameterGroupKeyform,
   type PuppetParameterPartKeyform,
   type PuppetPart,
   type PuppetPartRenderProperties,
@@ -26,11 +33,37 @@ interface TargetChange {
 const RENDER_FIELDS: ReadonlyArray<ChangeField<PuppetPartRenderProperties>> = [
   {key: 'opacity', title: '불투명도 변경'},
   {key: 'blendMode', title: '블렌드 모드 변경'},
+  {key: 'alphaBlendMode', title: '알파 합성 변경'},
+  {key: 'culling', title: '컬링 변경'},
   {key: 'multiplyColor', title: '곱하기 색상 변경'},
   {key: 'screenColor', title: '스크린 색상 변경'},
   {key: 'clippingMaskIds', title: '마스크 적용 대상 변경'},
   {key: 'invertedMask', title: '마스크 반전 변경'},
   {key: 'renderWhenUsedAsMask', title: '마스크 사용 시 파츠 표시 변경'},
+]
+
+const GROUP_FIELDS: ReadonlyArray<ChangeField<ResolvedGroupRenderProperties>> = [
+  {key: 'offscreen', title: '오프스크린 합성 변경'},
+  {key: 'opacity', title: '불투명도 변경'},
+  {key: 'blendMode', title: '블렌드 모드 변경'},
+  {key: 'alphaBlendMode', title: '알파 합성 변경'},
+  {key: 'multiplyColor', title: '곱하기 색상 변경'},
+  {key: 'screenColor', title: '스크린 색상 변경'},
+  {key: 'clippingMaskIds', title: '클리핑 마스크 변경'},
+  {key: 'invertedMask', title: '마스크 반전 변경'},
+]
+
+const COLOR_FIELDS: ReadonlyArray<ChangeField<PuppetDeformerRenderProperties>> = [
+  {key: 'opacity', title: '불투명도 변경'},
+  {key: 'multiplyColor', title: '곱하기 색상 변경'},
+  {key: 'screenColor', title: '스크린 색상 변경'},
+]
+
+const DRAW_ORDER_TITLE = '그리기 순서 변경'
+
+const KEYED_GROUP_FIELDS: ReadonlyArray<ChangeField<PuppetParameterGroupKeyform['properties']>> = [
+  ...COLOR_FIELDS,
+  {key: 'drawOrder', title: DRAW_ORDER_TITLE},
 ]
 
 const NODE_FIELDS: ReadonlyArray<ChangeField<PuppetSceneNode>> = [
@@ -67,6 +100,15 @@ const getChangedFields = <Value>(
   after: Value,
   fields: ReadonlyArray<ChangeField<Value>>,
 ) => fields.filter(({key}) => !isEqual(before[key], after[key])).map(({title}) => title)
+
+/**
+ * The draw order title when the stored draw orders differ. Omission is compared as its own value
+ * because a group without one passes its descendants' draw orders through.
+ */
+const getDrawOrderChange = (
+  before: {readonly drawOrder?: number} | undefined,
+  after: {readonly drawOrder?: number} | undefined,
+) => (before?.drawOrder === after?.drawOrder ? [] : [DRAW_ORDER_TITLE])
 
 const getNodes = (nodes: ReadonlyArray<PuppetSceneNode>): ReadonlyArray<PuppetSceneNode> =>
   nodes.flatMap((node) => [node, ...(isSceneContainerNode(node) ? getNodes(node.children) : [])])
@@ -123,12 +165,30 @@ const getPartDetails = (before: PuppetPart, after: PuppetPart) => [
     getPartRenderProperties(after),
     RENDER_FIELDS,
   ),
+  ...getDrawOrderChange(before.properties, after.properties),
 ]
 
 const getNodeDetails = (before: PuppetSceneNode, after: PuppetSceneNode) => [
   ...getChangedFields(before, after, NODE_FIELDS),
   ...(before.kind === 'deformer' && after.kind === 'deformer'
-    ? getChangedFields(before, after, DEFORMER_FIELDS)
+    ? [
+        ...getChangedFields(before, after, DEFORMER_FIELDS),
+        ...getChangedFields(
+          getDeformerRenderProperties(before),
+          getDeformerRenderProperties(after),
+          COLOR_FIELDS,
+        ),
+      ]
+    : []),
+  ...(before.kind === 'group' && after.kind === 'group'
+    ? [
+        ...getChangedFields(
+          getGroupRenderProperties(before),
+          getGroupRenderProperties(after),
+          GROUP_FIELDS,
+        ),
+        ...getDrawOrderChange(before.properties, after.properties),
+      ]
     : []),
   ...(before.kind === 'part' && after.kind === 'part' && !isEqual(before.skinning, after.skinning)
     ? ['스키닝 변경']
@@ -169,7 +229,17 @@ const getKeyformPartDetails = (
     getPartRenderProperties({...rest, properties: {...rest.properties, ...after.properties}}),
     RENDER_FIELDS,
   ),
+  ...getDrawOrderChange(before.properties, after.properties),
   ...(isEqual(before.glue, after.glue) ? [] : ['글루 편집']),
+]
+
+const getKeyformDeformerDetails = (
+  before: PuppetParameterDeformerKeyform,
+  after: PuppetParameterDeformerKeyform,
+) => [
+  ...getChangedFields(before, after, POSE_FIELDS),
+  ...(before.rotationScale === after.rotationScale ? [] : ['배율 변경']),
+  ...getChangedFields(before.properties ?? {}, after.properties ?? {}, COLOR_FIELDS),
 ]
 
 const getKeyformChanges = (
@@ -186,6 +256,7 @@ const getKeyformChanges = (
     }
     const previousParts = new Map(previous.parts.map((part) => [part.partId, part]))
     const previousDeformers = new Map(previous.deformers?.map((node) => [node.nodeId, node]))
+    const previousGroups = new Map(previous.groups?.map((group) => [group.groupId, group]))
     return [
       ...keyform.parts.flatMap((part) => {
         const previousPart = previousParts.get(part.partId)
@@ -199,7 +270,22 @@ const getKeyformChanges = (
         const previousNode = previousDeformers.get(node.nodeId)
         return previousNode === undefined || node === previousNode
           ? []
-          : [{details: getChangedFields(previousNode, node, POSE_FIELDS), id: node.nodeId}]
+          : [{details: getKeyformDeformerDetails(previousNode, node), id: node.nodeId}]
+      }),
+      ...(keyform.groups ?? []).flatMap((group) => {
+        const previousGroup = previousGroups.get(group.groupId)
+        return previousGroup === undefined || group === previousGroup
+          ? []
+          : [
+              {
+                details: getChangedFields(
+                  previousGroup.properties,
+                  group.properties,
+                  KEYED_GROUP_FIELDS,
+                ),
+                id: group.groupId,
+              },
+            ]
       }),
     ]
   })
@@ -240,11 +326,38 @@ const getSettingsTitle = (before: PuppetDocument, after: PuppetDocument) => {
   if (before.layerOrderRules !== after.layerOrderRules) {
     return '레이어 순서 규칙 변경'
   }
+  if (before.expressions !== after.expressions) {
+    return '표정 편집'
+  }
+  if (before.poseGroups !== after.poseGroups) {
+    return '포즈 편집'
+  }
+  if (before.hitAreas !== after.hitAreas) {
+    return '히트 영역 편집'
+  }
+  if (before.breath !== after.breath) {
+    return '자동 호흡 편집'
+  }
+  if (before.look !== after.look) {
+    return '시선 따라가기 편집'
+  }
+  if (before.mouthShapes !== after.mouthShapes) {
+    return '입 모양 편집'
+  }
+  if (before.parameterRoles !== after.parameterRoles) {
+    return '파라미터 역할 변경'
+  }
+  if (before.parameterGroups !== after.parameterGroups) {
+    return '파라미터 그룹 편집'
+  }
   if (before.framesPerSecond !== after.framesPerSecond) {
     return '프레임 속도 변경'
   }
   if (before.viewport !== after.viewport) {
     return '캔버스 크기 변경'
+  }
+  if (before.layout !== after.layout) {
+    return '기본 화면 변경'
   }
   return undefined
 }

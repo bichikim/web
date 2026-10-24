@@ -94,7 +94,9 @@ export function assembleJoin(plan: JoinPlan, generated: StereoAudio): Blob {
   const patches = [generated.left, generated.right]
   for (let channel = 0; channel < 2; channel += 1) {
     for (let index = start; index < end; index += 1) {
-      const weight = clampUnit(Math.min((index - start) / blend, (end - 1 - index) / blend))
+      const weight = clampUnit(Math.min((index - start) / blend, (end - 1 - index) / blend), {
+        fallback: 0,
+      })
       const target = plan.offset + index
       const sample = patches[channel][index]
       if (!Number.isFinite(sample)) {

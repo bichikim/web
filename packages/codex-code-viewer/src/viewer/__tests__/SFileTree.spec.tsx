@@ -51,6 +51,44 @@ afterEach(() => {
 })
 
 describe('SFileTree', () => {
+  it('should preserve local expansion while replacing sessions with stale saved snapshots', async () => {
+    const saving = Promise.withResolvers<void>()
+    const port = {...createPort(), saveTreeState: vi.fn(() => saving.promise)}
+    const [current, setCurrent] = createSignal({...session, treeState: {expanded: ['src']}})
+    render(() => <SFileTree port={port} session={current()} visible />)
+    await screen.findByRole('treeitem', {name: 'main.ts'})
+    fireEvent.click(screen.getByRole('treeitem', {name: 'src'}))
+    setCurrent({...current(), session: 'replacement'})
+    const folder = await screen.findByRole('treeitem', {name: 'src'})
+    expect(folder.getAttribute('aria-expanded')).toBe('false')
+    expect(screen.queryByRole('treeitem', {name: 'main.ts'})).toBeNull()
+    saving.resolve()
+  })
+
+  it('should restore saved expansion including a collapsed current-file ancestor and persist changes', async () => {
+    const port = {...createPort(), saveTreeState: vi.fn().mockResolvedValue(undefined)}
+    const [current, setCurrent] = createSignal({...session, treeState: {expanded: ['test']}})
+    const mounted = render(() => <SFileTree port={port} session={current()} visible />)
+    await screen.findByRole('treeitem', {name: 'other.js'})
+    expect(screen.getByRole('treeitem', {name: 'src'}).getAttribute('aria-expanded')).toBe('false')
+    expect(screen.queryByRole('treeitem', {name: 'main.ts'})).toBeNull()
+    setCurrent({...current(), document: {...current().document, revision: 'refreshed'}})
+    expect(screen.queryByRole('treeitem', {name: 'main.ts'})).toBeNull()
+    fireEvent.click(screen.getByRole('treeitem', {name: 'test'}))
+    expect(port.saveTreeState).toHaveBeenLastCalledWith('first', {expanded: []})
+    mounted.unmount()
+    render(() => (
+      <SFileTree
+        port={port}
+        session={{...current(), session: 'reopened', treeState: {expanded: []}}}
+        visible
+      />
+    ))
+    await screen.findByRole('treeitem', {name: 'src'})
+    expect(screen.queryByRole('treeitem', {name: 'main.ts'})).toBeNull()
+    expect(screen.queryByRole('treeitem', {name: 'other.js'})).toBeNull()
+  })
+
   const recordScroll = (): void => {
     scrollIntoView.mockClear()
     Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', {

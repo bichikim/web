@@ -1,3 +1,4 @@
+import type {TextGenerationSkippedResponse} from '../text-generation/messages'
 import type {TextModelId} from '../text-generation/model'
 import type {DrawnTarotCard, TarotLocale} from './cards'
 
@@ -43,6 +44,7 @@ export interface TarotErrorResponse {
 }
 
 export type TarotWorkerResponse =
+  | TextGenerationSkippedResponse<TarotWorkerRequest>
   | TarotCompleteResponse
   | TarotErrorResponse
   | TarotProgressResponse

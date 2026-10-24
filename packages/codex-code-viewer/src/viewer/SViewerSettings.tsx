@@ -13,10 +13,15 @@ import {SIcon} from './SIcon'
 import {MAX_NAVIGATION_PREVIEW_LINES} from '../shared/contracts'
 import {useTranslations} from './locale/use-translations'
 import type {LanguagePreference} from './locale/types'
+import {SWorkspaceSettings} from './SWorkspaceSettings'
 import {SPluginUpdates} from './SPluginUpdates'
 import type {ViewerPort} from './types'
 
 interface SViewerSettingsProps {
+  /** 현재 작업 폴더입니다. 생략하면 연결되지 않은 상태로 표시합니다. */
+  readonly workspace?: string
+  /** 현재 채팅의 작업 폴더를 변경합니다. 생략하면 변경란을 표시하지 않습니다. */
+  readonly onWorkspaceChange?: (path: string) => Promise<boolean>
   readonly port?: Pick<ViewerPort, 'call'>
   readonly open?: boolean
   readonly previewLines?: number
@@ -102,6 +107,15 @@ export const SViewerSettings = (props: SViewerSettingsProps) => {
         </STooltip>
       </div>
       <div class="min-h-0 overflow-y-auto overscroll-contain px-6 pb-2">
+        <Show when={props.onWorkspaceChange}>
+          {(change) => (
+            <SWorkspaceSettings
+              active={props.open}
+              workspace={props.workspace}
+              onChange={change()}
+            />
+          )}
+        </Show>
         <div class="mb-6 space-y-2">
           <span class="block text-sm font-medium">{t('언어')}</span>
           <SSelect

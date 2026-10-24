@@ -1,16 +1,13 @@
 /** @vitest-environment jsdom */
 
+import {createKeyedParameter, createKeyedParameter2D} from './parameter-keyforms/fixtures'
+
 import {fireEvent, render} from '@solidjs/testing-library'
 import {createSignal} from 'solid-js'
 import {describe, expect, test, vi} from 'vitest'
 import {type PuppetDocument} from '../../../player'
 import {DeformerEditor} from '../DeformerEditor'
-import {
-  addParameter,
-  addTwoDimensionalParameter,
-  insertParameterKeyform,
-  setParameterKeyformDeformerPoint,
-} from '../parameter-keyforms'
+import {insertParameterKeyform, setParameterKeyformDeformerPoint} from '../parameter-keyforms'
 import {createParameterPreview} from '../parameter-sampling'
 import {getSceneNode} from '../scene-graph'
 import {
@@ -28,7 +25,7 @@ describe('DeformerEditor parameters', () => {
       parameterBindings: [],
       parameters: [],
     }
-    const added = addParameter({document: initial, nodeIds: ['deformer']})!
+    const added = createKeyedParameter({document: initial, nodeIds: ['deformer']})!
     const inserted = insertParameterKeyform({
       bindingId: added.binding.id,
       document: added.document,
@@ -83,7 +80,7 @@ describe('DeformerEditor parameters', () => {
     'should preserve other binding contributions during repeated point edits (2D: %s)',
     (twoDimensional) => {
       const initial = {...createDocument(createDeformer()), parameterBindings: [], parameters: []}
-      const first = addParameter({document: initial, nodeIds: ['deformer']})!
+      const first = createKeyedParameter({document: initial, nodeIds: ['deformer']})!
       const inserted = insertParameterKeyform({
         bindingId: first.binding.id,
         document: first.document,
@@ -98,7 +95,7 @@ describe('DeformerEditor parameters', () => {
         x: 10,
         y: 0,
       })!
-      const second = (twoDimensional ? addTwoDimensionalParameter : addParameter)({
+      const second = (twoDimensional ? createKeyedParameter2D : createKeyedParameter)({
         document: firstPose,
         nodeIds: ['deformer'],
       })!

@@ -51,9 +51,7 @@ const generate = async (request: GenerationRequest) => {
 
       const prompt = resultValue.trim()
       if (!/[a-z]/iu.test(prompt) || /[\p{Script=Hangul}\p{Script=Han}]/u.test(prompt)) {
-        throw new Error(
-          '이미지 생성을 위한 프롬프트를 만들지 못했어요. 내용을 조금 더 구체적으로 적고 다시 시도해 주세요.',
-        )
+        throw new Error('이미지 생성을 위한 영어 프롬프트를 만들지 못했어요. 다시 시도해 주세요.')
       }
       send({prompt, type: 'prompt'})
       return

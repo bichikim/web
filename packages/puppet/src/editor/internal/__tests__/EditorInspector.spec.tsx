@@ -1,5 +1,7 @@
 /** @vitest-environment jsdom */
 
+import {createKeyedParameter} from './parameter-keyforms/fixtures'
+
 import {fireEvent, render, screen, within} from '@solidjs/testing-library'
 import {createSignal} from 'solid-js'
 import {describe, expect, test, vi} from 'vitest'
@@ -17,7 +19,6 @@ import {
 import {createEmptyDocument} from '../../../player/create-empty-document'
 import {getDeformerAngle} from '../deformer-transform'
 import {
-  addParameter,
   connectParameterNodes,
   insertParameterKeyform,
   setParameterKeyformDeformerControlPoints,
@@ -137,7 +138,7 @@ describe('EditorInspector', () => {
       nodeIds: ['shapes'],
       targetKind: 'spatial',
     })!
-    const added = addParameter({document: source, nodeIds: ['mesh-preview']})!
+    const added = createKeyedParameter({document: source, nodeIds: ['mesh-preview']})!
     const connected = connectParameterNodes({
       bindingId: added.binding.id,
       document: added.document,
@@ -583,7 +584,7 @@ describe('EditorInspector', () => {
     const source = {...createDemoDocument(), motions: [], parameterBindings: [], parameters: []}
     const deformerDocument = createDeformer(source, ['mesh-preview'])!
     const deformer = getDocumentScene(deformerDocument).roots[0]!
-    const added = addParameter({document: deformerDocument, nodeIds: [deformer.id]})!
+    const added = createKeyedParameter({document: deformerDocument, nodeIds: [deformer.id]})!
     const [document, setDocument] = createSignal(added.document)
     const view = render(() => (
       <EditorInspector
@@ -618,7 +619,7 @@ describe('EditorInspector', () => {
     const source = {...createDemoDocument(), motions: [], parameterBindings: [], parameters: []}
     const deformerDocument = createDeformer(source, ['mesh-preview'])!
     const deformer = getDocumentScene(deformerDocument).roots[0]!
-    const added = addParameter({document: deformerDocument, nodeIds: [deformer.id]})!
+    const added = createKeyedParameter({document: deformerDocument, nodeIds: [deformer.id]})!
     const inserted = insertParameterKeyform({
       bindingId: added.binding.id,
       document: added.document,
@@ -665,8 +666,8 @@ describe('EditorInspector', () => {
     if (rest.kind !== 'deformer') {
       throw new Error('Expected a deformer')
     }
-    const first = addParameter({document: deformerDocument, nodeIds: [rest.id]})!
-    const second = addParameter({document: first.document, nodeIds: [rest.id]})!
+    const first = createKeyedParameter({document: deformerDocument, nodeIds: [rest.id]})!
+    const second = createKeyedParameter({document: first.document, nodeIds: [rest.id]})!
     const posed = setParameterKeyformDeformerControlPoints({
       bindingId: second.binding.id,
       controlPoints: rest.controlPoints.map((value, index) => value + (index % 2 === 0 ? 20 : 5)),

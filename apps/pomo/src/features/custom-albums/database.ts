@@ -1,6 +1,6 @@
 import {z} from 'zod'
 
-import {createLazyInitializer} from 'src/utils/create-lazy-initializer'
+import {memoizeAsync} from 'src/utils/memoize-async'
 
 import {
   CUSTOM_ALBUM_COVER_SOURCES,
@@ -68,7 +68,7 @@ const openDatabase = (): Promise<IDBDatabase> =>
       reject(new CustomAlbumError('database-unavailable', {cause: request.error}))
   })
 
-export const openCustomAlbumDatabase = createLazyInitializer(openDatabase)
+export const openCustomAlbumDatabase = memoizeAsync(openDatabase)
 
 export const readRequest = <Value>(request: IDBRequest<Value>): Promise<Value> =>
   new Promise((resolve, reject) => {

@@ -1,4 +1,4 @@
-import type {PuppetParameter, PuppetParameterInfluence} from '../document'
+import type {PuppetParameter, PuppetParameterBinding, PuppetParameterInfluence} from '../document'
 
 export const isParameterInfluences = (
   value: unknown,
@@ -52,3 +52,16 @@ export const hasValidInfluences = (
       )
     )
   })
+
+export const isInfluenceMode = (
+  value: unknown,
+): value is PuppetParameterBinding['influenceMode'] => {
+  switch (value) {
+    case undefined:
+    case 'minimum':
+    case 'multiply':
+      return true
+    default:
+      return false
+  }
+}

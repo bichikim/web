@@ -29,3 +29,10 @@ export type TextModelPreparationResponse =
   | TextGenerationErrorResponse
   | TextGenerationLoadingResponse
   | TextGenerationReadyResponse
+
+/** 다른 작업이 실행 중이어서 해당 요청을 접수하지 않았다는 응답이다. */
+export interface TextGenerationSkippedResponse<Request> {
+  readonly reason: 'busy'
+  readonly request: Request
+  readonly type: 'skipped'
+}
