@@ -2,8 +2,8 @@
   "name": "@winter-love/web",
   "version": "0.0.1",
   "private": true,
-  "license": "AGPL-3.0-only",
   "description": "web & app service",
+  "license": "AGPL-3.0-only",
   "author": "Bichi Kim <bichi@live.co.kr>",
   "workspaces": [
     "./apps/*",
