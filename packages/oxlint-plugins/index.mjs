@@ -1,3 +1,4 @@
+import {noUselessIndex} from './rules/no-useless-index.mjs'
 import {hooksOnly} from './rules/hooks-only.mjs'
 import {forbiddenHooks} from './rules/forbidden-hooks.mjs'
 import {sortKeysFix} from './rules/sort-keys-fix.mjs'
@@ -7,6 +8,7 @@ export default {
   rules: {
     'forbidden-hooks': forbiddenHooks,
     'hooks-only': hooksOnly,
+    'no-useless-index': noUselessIndex,
     'sort-keys-fix': sortKeysFix,
   },
 }
