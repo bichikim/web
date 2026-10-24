@@ -231,7 +231,7 @@ it('should fail after all models reject without retrying previously rejected mod
   expect(await findApiAiJob(id)).toMatchObject({status: 'failed'})
   expect(await client.select().from(apiAiAttempts)).toHaveLength(2)
 })
-it('should refund cancellation semantics without reopening a job when the provider reports completion', async () => {
+it('should preserve cancellation without reopening a job when the provider reports completion', async () => {
   const id = await enqueue()
   const claim = await claimApiAiJob(id, [provider], now, crypto.randomUUID())
   if (claim === null) {

@@ -8,11 +8,11 @@ describe('createExclusiveAsyncTask', () => {
     const operation = vi.fn(() => first.promise)
 
     const running = task.run(operation)
-    await expect(task.run(operation)).resolves.toBeUndefined()
+    await expect(task.run(operation)).resolves.toEqual({reason: 'busy', status: 'skipped'})
     expect(operation).toHaveBeenCalledTimes(1)
     first.resolve()
-    await running
-    await task.run(operation)
+    await expect(running).resolves.toEqual({status: 'completed'})
+    await expect(task.run(operation)).resolves.toEqual({status: 'completed'})
     expect(operation).toHaveBeenCalledTimes(2)
   })
 
@@ -21,6 +21,16 @@ describe('createExclusiveAsyncTask', () => {
     await expect(task.run(async () => Promise.reject(new Error('failed')))).rejects.toThrow(
       'failed',
     )
-    await expect(task.run(async () => undefined)).resolves.toBeUndefined()
+    await expect(task.run(async () => undefined)).resolves.toEqual({status: 'completed'})
+  })
+
+  it('should release the slot after a synchronous exception', async () => {
+    const task = createExclusiveAsyncTask()
+    await expect(
+      task.run(() => {
+        throw new Error('failed')
+      }),
+    ).rejects.toThrow('failed')
+    await expect(task.run(async () => undefined)).resolves.toEqual({status: 'completed'})
   })
 })

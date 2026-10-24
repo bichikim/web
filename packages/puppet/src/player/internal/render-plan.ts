@@ -1,3 +1,4 @@
+import {isParameterVisible} from '../parameter-visibility'
 import {
   composeColorEffects,
   composeParameterDeformerProperties,
@@ -281,7 +282,7 @@ export const getPartRenderFrame = (
   const inheritedByPartId = new Map(
     [...sceneLayers.groupsByPartId].map(([partId, groups]) => [
       partId,
-      inheritGroupEffects(groups, resolveGroup),
+      inheritGroupEffects(groups, resolveGroup, document.colorComposition),
     ]),
   )
   const layerIdsOf = (partId: string) => inheritedByPartId.get(partId)?.layerIds ?? []
@@ -321,7 +322,11 @@ export const getPartRenderFrame = (
       (mix?.modelOpacity ?? 1)
     const inherited = inheritedByPartId.get(state.partId)
     const properties = {
-      ...composeColorEffects({...composed, opacity}, inherited?.effect ?? IDENTITY_COLOR_EFFECT),
+      ...composeColorEffects(
+        {...composed, opacity},
+        inherited?.effect ?? IDENTITY_COLOR_EFFECT,
+        document.colorComposition,
+      ),
       ...overrideColors(sceneLayers.groupsByPartId.get(state.partId) ?? [], override),
       ...(override?.culling === undefined ? {} : {culling: override.culling}),
     }
@@ -342,10 +347,11 @@ export const getPartRenderFrame = (
   })
   const layers = new Map(
     sceneLayers.layers.map(({ancestors, group, visible}): [string, LayerRenderPlan] => {
-      const inherited = inheritGroupEffects(ancestors, resolveGroup)
+      const inherited = inheritGroupEffects(ancestors, resolveGroup, document.colorComposition)
       const {offscreen: _offscreen, ...composed} = composeColorEffects(
         resolveGroup(group),
         inherited.effect,
+        document.colorComposition,
       )
       const properties = {...composed, ...overrideColors(ancestors, overrides.groups.get(group.id))}
       return [
@@ -355,7 +361,11 @@ export const getPartRenderFrame = (
           layerIds: inherited.layerIds,
           mask: maskStructure.layerMaskByGroupId.get(group.id),
           properties,
-          visible,
+          visible:
+            visible &&
+            [group, ...ancestors].every((node) =>
+              isParameterVisible(node, document, parameterValues),
+            ),
         },
       ]
     }),

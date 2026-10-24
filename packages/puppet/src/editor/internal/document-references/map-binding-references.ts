@@ -13,6 +13,9 @@ const mapForm = <T extends PuppetParameterKeyform>(form: T, transform: Reference
       ...deformer,
       nodeId: transform.rename(deformer.nodeId),
     })),
+  glue: form.glue
+    ?.filter((glue) => transform.keepGlue(glue.id))
+    .map((glue) => ({...glue, id: transform.rename(glue.id)})),
   groups: form.groups
     ?.filter((group) => transform.keepNode?.(group.groupId) !== false)
     .map((group) => ({...group, groupId: transform.rename(group.groupId)})),
@@ -41,6 +44,7 @@ export const mapBindingReferences = (
     targetDeformerIds: binding.targetDeformerIds
       ?.filter((id) => transform.keepNode?.(id) !== false)
       .map(transform.rename),
+    targetGlueIds: binding.targetGlueIds?.filter(transform.keepGlue).map(transform.rename),
     targetGroupIds: binding.targetGroupIds
       ?.filter((id) => transform.keepNode?.(id) !== false)
       .map(transform.rename),

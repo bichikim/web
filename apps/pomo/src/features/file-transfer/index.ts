@@ -1,4 +1,5 @@
 export * from './checksum'
+export * from './create-blob-archive'
 export * from './create-session'
 export * from './received-files'
 export * from './session'

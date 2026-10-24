@@ -195,7 +195,7 @@ export class RelaxGlassRenderer {
     if (this.#disposed || !Number.isFinite(intensity)) {
       return
     }
-    this.#mistIntensity = clampUnit(intensity)
+    this.#mistIntensity = clampUnit(intensity, {fallback: 0})
     this.#rainFilter?.setMistIntensity(this.#mistIntensity)
     if (this.#runtime.initialized && !this.#application.ticker.started) {
       this.#application.render()

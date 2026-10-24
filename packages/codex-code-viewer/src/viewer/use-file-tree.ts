@@ -1,9 +1,10 @@
-import {type Accessor, batch, createEffect, createMemo, createSignal, on, untrack} from 'solid-js'
+import {type Accessor, batch, createEffect, createMemo, createSignal, on} from 'solid-js'
 import {type CodeLocation, type ViewerConnection} from '../shared/contracts'
 import {useTreeListing} from './use-tree-listing'
 import {getTreePositions} from './file-tree/get-tree-positions'
 import {getTreeDestination, getVisibleNodes} from './file-tree'
 import type {ViewerPort} from './types'
+import {createBoundedCache} from '../shared/create-bounded-cache'
 
 interface UseFileTreeProps {
   onError: (error: unknown) => void
@@ -22,6 +23,17 @@ const parents = (path: string): string[] =>
 
 const documentPath = (session: ViewerConnection | null): string =>
   session !== null && 'document' in session ? session.document.location.path : ''
+
+const restoreExpansion = (
+  session: ViewerConnection | null,
+  local: ReadonlySet<string> | undefined,
+): Set<string> => new Set(local ?? session?.treeState?.expanded ?? parents(documentPath(session)))
+
+const visibleDirectories = (expanded: ReadonlySet<string>): string[] =>
+  [
+    '',
+    ...[...expanded].filter((path) => parents(path).every((parent) => expanded.has(parent))),
+  ].sort()
 
 const toggleExpansion = (previous: Set<string>, path: string): Set<string> => {
   const next = new Set(previous)
@@ -45,6 +57,11 @@ const visibleSelection = (props: {
       : (props.paths[0] ?? null)
 
 export const useFileTree = (props: UseFileTreeProps) => {
+  const local = createBoundedCache<ReadonlySet<string>>({
+    maxEntries: 16,
+    maxWeight: 16,
+    weight: () => 1,
+  })
   const [query, setQuery] = createSignal('')
   const [expanded, setExpanded] = createSignal(new Set<string>())
   const [collapsed, setCollapsed] = createSignal(new Set<string>())
@@ -53,23 +70,19 @@ export const useFileTree = (props: UseFileTreeProps) => {
   const currentPath = () => documentPath(props.session())
   createEffect(
     on(sessionId, () => {
+      const current = props.session()
       batch(() => {
         setQuery('')
-        setExpanded(new Set(parents(untrack(currentPath))))
+        setExpanded(
+          restoreExpansion(current, current === null ? undefined : local.get(current.workspace)),
+        )
         setCollapsed(new Set<string>())
         setFocused(null)
       })
     }),
   )
   const scope = createMemo(() =>
-    query().trim() === ''
-      ? [
-          '',
-          ...[...expanded()].filter((path) =>
-            parents(path).every((parent) => expanded().has(parent)),
-          ),
-        ].sort()
-      : undefined,
+    query().trim() === '' ? visibleDirectories(expanded()) : undefined,
   )
   const listing = useTreeListing({
     directories: scope,
@@ -89,19 +102,33 @@ export const useFileTree = (props: UseFileTreeProps) => {
   const activePath = createMemo(() =>
     visibleSelection({current: currentPath(), focused: focused(), paths: paths()}),
   )
+  const expand = (paths: readonly string[]): void => {
+    const previous = expanded()
+    if (paths.every((path) => previous.has(path))) {
+      return
+    }
+    const next = new Set([...previous, ...paths])
+    setExpanded(next)
+    persist(next)
+  }
+  const persist = (paths: ReadonlySet<string>): void => {
+    const current = props.session()
+    if (current !== null) {
+      local.set(current.workspace, paths)
+      props.port.saveTreeState?.(current.session, {expanded: [...paths]}).catch(props.onError)
+    }
+  }
   createEffect(
-    on(currentPath, (path) => {
-      setExpanded((previous) =>
-        parents(path).every((parent) => previous.has(parent))
-          ? previous
-          : new Set([...previous, ...parents(path)]),
-      )
+    on([sessionId, currentPath], ([session, path], previous) => {
+      if (previous !== undefined && previous[0] === session && previous[1] !== path) {
+        expand(parents(path))
+      }
     }),
   )
   const toggle = (path: string): void => {
     const change = (previous: Set<string>): Set<string> => toggleExpansion(previous, path)
     if (query().trim() === '') {
-      setExpanded(change)
+      persist(setExpanded(change))
     } else {
       setCollapsed(change)
     }
@@ -151,11 +178,7 @@ export const useFileTree = (props: UseFileTreeProps) => {
     }
     batch(() => {
       change('')
-      setExpanded((previous) =>
-        parents(path).every((parent) => previous.has(parent))
-          ? previous
-          : new Set([...previous, ...parents(path)]),
-      )
+      expand(parents(path))
       setFocused(path)
     })
   }

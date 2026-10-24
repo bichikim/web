@@ -36,6 +36,26 @@ const createLegacyDocument = () => {
 }
 
 describe('parseDocument', () => {
+  test('should preserve a compiled collapsed pose while validating index connectivity', () => {
+    const source = createDemoDocument()
+    const parts = source.parts.map((part) => ({
+      ...part,
+      mesh: {...part.mesh, validationSpace: 'indices', vertices: part.mesh.vertices.map(() => 0)},
+    }))
+    expect(parseDocumentValue({...source, parts})).toMatchObject({document: {parts}, ok: true})
+    expect(
+      parseDocumentValue({
+        ...source,
+        parts: parts.map((part) => ({...part, mesh: {...part.mesh, validationSpace: undefined}})),
+      }),
+    ).toMatchObject({ok: false})
+    expect(
+      parseDocumentValue({
+        ...source,
+        parts: parts.map((part) => ({...part, mesh: {...part.mesh, indices: [0, 1, 9999]}})),
+      }),
+    ).toMatchObject({ok: false})
+  })
   test('should round-trip conditional layer rules and reject invalid references and conditions', () => {
     const document = createDemoDocument()
     const rule = {

@@ -182,7 +182,7 @@ const getDialogueWriterStatusMessage = (currentState: DialogueWriterState): stri
       }
 
       return m.dialogue_writer_downloading_status({
-        percentage: clampFiniteNumber(currentState.percentage, 0, MAXIMUM_PROGRESS) ?? 0,
+        percentage: clampFiniteNumber(currentState.percentage, 0, MAXIMUM_PROGRESS, {fallback: 0}),
       })
     case 'ready':
       return m.dialogue_writer_ready_status()
@@ -216,6 +216,8 @@ export const useDialogueWriter = (props: UseDialogueWriterProps): DialogueWriter
 
   const handleResponse = (response: DialogueWorkerResponse) => {
     switch (response.type) {
+      case 'skipped':
+        return
       case 'complete':
         generationInFlight = false
         setOutput(response.text)

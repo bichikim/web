@@ -8,6 +8,7 @@ import type {
   WorkspaceSession,
 } from '../shared/contracts'
 import type {DraftStorage} from './drafts/types'
+import type {TreeState} from '../shared/tree-state'
 
 export interface CodeSelection extends CodeLocation {
   endLine: number
@@ -77,6 +78,8 @@ export interface ViewerSettingsEnvironment {
 }
 
 export interface ViewerPort {
+  /** 현재 채팅의 파일트리 상태를 저장합니다. 미지원 호스트에서는 생략합니다. */
+  readonly saveTreeState?: (session: string, patch: TreeState) => Promise<void>
   /** 현재 채팅의 작업 폴더를 저장하고 연결합니다. 미지원 호스트에서는 생략합니다. */
   readonly changeWorkspace?: (path: string) => Promise<WorkspaceSession>
   readonly draftStorage?: DraftStorage

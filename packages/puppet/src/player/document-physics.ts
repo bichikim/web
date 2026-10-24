@@ -31,6 +31,7 @@ export const DEFAULT_PUPPET_CHAIN_GRAVITY = [0, 1] as const
 /**
  * Maps a parameter's offset from its default onto `minimum..maximum` around `center`, each side
  * scaled separately (Cubism's normalization).
+ * The center may lie outside the endpoints, as permitted by Cubism runtime data.
  */
 export interface PuppetPhysicsRange {
   readonly center: number
@@ -100,7 +101,7 @@ export interface PuppetPhysicsChain {
 
 export interface PuppetPhysics {
   readonly chains?: ReadonlyArray<PuppetPhysicsChain>
-  /** Fixed simulation steps per second for chains. */
+  /** 체인의 초당 고정 계산 횟수. 0이면 현재 프레임의 경과 시간을 사용한다. */
   readonly fps?: number
   /** Gravity direction for chains, `[x, y]` with `y` down; its length is ignored. */
   readonly gravity?: readonly [number, number]

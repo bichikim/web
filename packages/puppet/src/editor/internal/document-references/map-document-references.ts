@@ -199,12 +199,27 @@ export const mapDocumentReferences = (options: MapDocumentReferencesOptions): Pu
             })),
           },
     poseGroups: document.poseGroups?.flatMap((group) => {
-      const entries = group.entries.flatMap((entry) => {
+      const keptIndices: number[] = []
+      const entries = group.entries.flatMap((entry, index) => {
         const partIds = entry.partIds.filter(keepPart).map(rename)
+        if (partIds.length > 0) {
+          keptIndices.push(index)
+        }
         return partIds.length > 0 ? [{...entry, partIds}] : []
       })
       return entries.length > 0
-        ? [{...group, entries, id: rename(group.id), parameterId: rename(group.parameterId)}]
+        ? [
+            {
+              ...group,
+              entries,
+              id: rename(group.id),
+              parameterId: rename(group.parameterId),
+              sourceParameterIds:
+                group.sourceParameterIds === undefined
+                  ? undefined
+                  : keptIndices.map((index) => rename(group.sourceParameterIds![index]!)),
+            },
+          ]
         : []
     }),
     scene: {roots: mapSceneReferences(getDocumentScene(document).roots, transform)},

@@ -1,12 +1,16 @@
+/** @vitest-environment jsdom */
+import {Meta} from '@solidjs/meta'
 import {cleanup, render} from '@solidjs/testing-library'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
 import {PDocumentMetadata} from '../PDocumentMetadata'
 
 const metadata = vi.hoisted(() => ({
+  elements: [] as HTMLMetaElement[],
   links: [] as Array<{href: string; rel: string; type?: string}>,
   location: {pathname: '/'},
   metas: [] as Array<{content: string; name?: string; property?: string}>,
+  serverContents: {} as Record<string, string>,
   titles: [] as string[],
 }))
 
@@ -15,14 +19,7 @@ vi.mock('@solidjs/meta', () => ({
     metadata.links.push({href: props.href, rel: props.rel, type: props.type})
     return null
   },
-  Meta: (props: {content: string; name?: string; property?: string}) => {
-    metadata.metas.push({
-      content: props.content,
-      ...(props.name === undefined ? {} : {name: props.name}),
-      ...(props.property === undefined ? {} : {property: props.property}),
-    })
-    return null
-  },
+  Meta: vi.fn(),
   Title: (props: {children: unknown}) => {
     metadata.titles.push(String(props.children))
     return null
@@ -61,14 +58,42 @@ vi.mock('../../pomo-route', () => ({
 }))
 
 beforeEach(() => {
+  vi.mocked(Meta).mockImplementation((props) => {
+    const element = document.createElement('meta')
+    const key = props.name ?? props.property ?? ''
+    element.content = metadata.serverContents[key] ?? props.content ?? ''
+    if (props.name) {
+      element.name = props.name
+    }
+    if (props.property) {
+      element.setAttribute('property', props.property)
+    }
+    document.head.append(element)
+    metadata.elements.push(element)
+    if (typeof props.ref === 'function') {
+      props.ref(element)
+    }
+    metadata.metas.push({
+      content: props.content ?? '',
+      ...(props.name === undefined ? {} : {name: props.name}),
+      ...(props.property === undefined ? {} : {property: props.property}),
+    })
+    return null
+  })
   document.documentElement.dir = 'rtl'
   document.documentElement.lang = 'ko'
+  metadata.location.pathname = '/'
+  metadata.serverContents = {}
   metadata.links.length = 0
   metadata.metas.length = 0
   metadata.titles.length = 0
 })
 
-afterEach(cleanup)
+afterEach(() => {
+  cleanup()
+  vi.clearAllMocks()
+  metadata.elements.splice(0).forEach((element) => element.remove())
+})
 
 it('should synchronize the document language with the hydrated locale', () => {
   render(() => <PDocumentMetadata />)
@@ -113,4 +138,32 @@ it.each([
     },
     {href: '/llms.txt', rel: 'describedby', type: 'text/markdown'},
   ])
+})
+
+it('should replace server-language metadata with the hydrated page language', () => {
+  // Model the adopted static head: hydration initially retains server attributes.
+  metadata.serverContents = {
+    description: '서버 설명',
+    'og:description': '서버 설명',
+    'og:locale': 'ko_KR',
+    'og:title': '서버 제목',
+    'twitter:description': '서버 설명',
+    'twitter:title': '서버 제목',
+  }
+
+  render(() => <PDocumentMetadata />)
+
+  for (const [key, content] of Object.entries({
+    description: 'Home description',
+    'og:description': 'Home description',
+    'og:locale': 'en_US',
+    'og:title': 'Home title',
+    'twitter:description': 'Home description',
+    'twitter:title': 'Home title',
+  })) {
+    const attribute = key.startsWith('og:') ? 'property' : 'name'
+    const elements = document.head.querySelectorAll(`meta[${attribute}="${key}"]`)
+    expect(elements).toHaveLength(1)
+    expect(elements[0]?.getAttribute('content')).toBe(content)
+  }
 })

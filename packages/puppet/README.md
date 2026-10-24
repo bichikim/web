@@ -94,6 +94,8 @@ Studio에서 카메라를 시작한 뒤 입력 포트를 보정 카드나 파라
 - `@winter-love/puppet/player`: SolidJS에 의존하지 않는 Canvas/PixiJS 플레이어와 문서 계약
 - `@winter-love/puppet/editor`: SolidJS 애플리케이션에 넣는 `PuppetEditor` 컴포넌트
 - `@winter-love/puppet/editor-element`: 가져오면 `<puppet-editor>`를 등록하는 독립 웹 컴포넌트
+- `@winter-love/puppet/converter`: Cubism 파일을 Poffo 문서로 변환하는 함수 API.
+  [사용 방법](src/converter/convert-cubism-archive.md)을 따른다.
 
 편집기는 변경한 문서를 JSON으로 직렬화하고 다시 검증한 뒤 `player`로 미리 본다. 따라서 내보낸
 데이터와 편집기 미리보기가 같은 재생 경로를 사용한다.
@@ -406,7 +408,7 @@ scene 그룹 노드의 `properties`(`PuppetGroupRenderProperties`)로 그룹 전
   반전)가 뿌리를 움직이고 중력 방향을 기울인다. 진자의 `length`·`mobility`·`reaction`·
   `acceleration`은 Cubism의 반지름·이동성·지연·가속도이고, `physics.fps`(기본 60) 고정 스텝 사이에서
   입력과 출력을 보간한다. 출력은 진자 하나의 각도(라디안)나 X·Y 변위 × `scale`을 파라미터 범위로
-  자르고 `weight`로 섞는다. `physics.gravity`는 방향(기본 `[0, 1]`), `physics.wind`는 모든 진자에
+  자르고 `weight`로 섞는다. `physics.fps`가 0이면 현재 프레임의 경과 시간으로 계산한다. `physics.gravity`는 방향(기본 `[0, 1]`), `physics.wind`는 모든 진자에
   더하는 힘이다. 물리 속성의 체인 목록(`진자 체인 추가`)에서 편집한다.
 - Rust 플레이어와의 일치는 Rust 저장소의 `puppet-runtime/tests/golden/deformation.mts` 골든으로
   확인한다.

@@ -16,6 +16,18 @@ const MAXIMUM_FILE_BYTES = 100 * 1024 * 1024
 const CHUNK_BYTES = 32 * 1024
 const BUFFERED_BYTES = 512 * 1024
 const SOCKET_OPEN = 1
+const MAXIMUM_NAME_LENGTH = 200
+
+const receivedName = (value: string): string => {
+  const name = value.replaceAll(/[/\\]/gu, '_')
+  if (name.length <= MAXIMUM_NAME_LENGTH) {
+    return name
+  }
+  const dot = name.lastIndexOf('.')
+  const extension = dot > 0 && name.length - dot < MAXIMUM_NAME_LENGTH ? name.slice(dot) : ''
+  const stem = name.slice(0, MAXIMUM_NAME_LENGTH - extension.length)
+  return stem.replace(/[\uD800-\uDBFF]$/u, '') + extension
+}
 
 export interface CreateTransferSessionOptions {
   readonly createConnection: () => RTCPeerConnection
@@ -348,7 +360,7 @@ class TransferSession implements FileTransfer {
       }
       checksum = updateChecksum(checksum, new Uint8Array(chunk))
       dataChannel.send(chunk)
-      this.setState({progress: clampUnit((offset + chunk.byteLength) / file.size)})
+      this.setState({progress: clampUnit((offset + chunk.byteLength) / file.size, {fallback: 0})})
     }
     this.sendControl({checksum: (checksum ^ 0xffffffff) >>> 0, id, type: 'end'})
   }
@@ -396,7 +408,7 @@ class TransferSession implements FileTransfer {
           incoming: {
             id: message.id,
             mimeType: typeof message.mimeType === 'string' ? message.mimeType : '',
-            name: message.name.replaceAll(/[/\\]/gu, '_').slice(0, 200),
+            name: receivedName(message.name),
             size: message.size,
           },
           progress: 0,

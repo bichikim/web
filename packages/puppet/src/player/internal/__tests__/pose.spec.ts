@@ -94,3 +94,27 @@ describe('evaluatePose', () => {
     expect(isPoseFading(selected.poseState)).toBe(true)
   })
 })
+
+test('should select imported pose controls and limit background reveal during their fade', () => {
+  const imported = {...document, poseGroups: [{...arms, sourceParameterIds: ['down', 'up']}]}
+  const start = evaluatePose({
+    deltaTime: 0,
+    document: imported,
+    parameterValues: {down: 1, up: 0},
+    poseState: new Map(),
+  })
+  const halfway = evaluatePose({
+    deltaTime: 0.25,
+    document: imported,
+    parameterValues: {down: 0, up: 1},
+    poseState: start.poseState,
+  })
+  expect(halfway.poseState.get('arms')).toEqual({selected: 1, weights: [0.7, 0.5]})
+  const firstPositive = evaluatePose({
+    deltaTime: 0,
+    document: imported,
+    parameterValues: {down: 1, up: 1},
+    poseState: new Map(),
+  })
+  expect(firstPositive.poseState.get('arms')?.selected).toBe(0)
+})

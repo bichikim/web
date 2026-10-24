@@ -51,12 +51,18 @@ async function generate(request: SajuGenerateRequest) {
 }
 
 workerScope.addEventListener('message', (event: MessageEvent<SajuGenerateRequest>) => {
+  const request = event.data
   generation
-    .run(() => generate(event.data))
+    .run(() => generate(request))
+    .then((result) => {
+      if (result.status === 'skipped') {
+        respond({reason: result.reason, request, type: 'skipped'})
+      }
+    })
     .catch((cause: unknown) => {
       respond({
         message: getErrorMessage(cause, '사주 풀이를 생성하지 못했어요.'),
-        requestId: event.data.requestId,
+        requestId: request.requestId,
         type: 'error',
       })
     })

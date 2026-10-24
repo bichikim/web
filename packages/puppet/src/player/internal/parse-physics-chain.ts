@@ -20,8 +20,7 @@ const isRange = (value: unknown) =>
   isFiniteNumber(value.minimum) &&
   isFiniteNumber(value.center) &&
   isFiniteNumber(value.maximum) &&
-  value.minimum <= value.center &&
-  value.center <= value.maximum
+  value.minimum <= value.maximum
 
 const isPendulum = (value: unknown) =>
   isRecord(value) &&
@@ -80,7 +79,7 @@ const isChain = (value: unknown, parameterIds: ReadonlySet<string>) => {
 
 /**
  * Chains with unique IDs whose inputs and outputs name parameters (an output never feeds its
- * own chain), plus optional positive `fps`, non-zero `[x, y]` gravity and `[x, y]` wind.
+ * own chain), plus optional non-negative `fps`, non-zero `[x, y]` gravity and `[x, y]` wind.
  */
 export const hasValidPhysicsChains = (
   physics: Record<string, unknown>,
@@ -95,7 +94,7 @@ export const hasValidPhysicsChains = (
       chains.length &&
     (physics.fps === undefined ||
       (isFiniteNumber(physics.fps) &&
-        physics.fps > 0 &&
+        physics.fps >= 0 &&
         physics.fps <= MAXIMUM_PUPPET_FRAMES_PER_SECOND)) &&
     isVector(physics.gravity) &&
     (physics.gravity === undefined ||

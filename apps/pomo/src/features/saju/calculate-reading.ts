@@ -27,7 +27,10 @@ export type SajuReadingResult =
 export function calculateSajuReading(input: SajuReadingInput): SajuReadingResult {
   const {birth} = input
   const question = input.question.trim()
-  if (birth.date === '' || birth.date < '1900-01-01' || birth.date > '2050-12-31') {
+  if (birth.date === '') {
+    throw new Error('생년월일을 선택해 주세요.')
+  }
+  if (birth.date < '1900-01-01' || birth.date > '2050-12-31') {
     throw new Error('생년월일은 1900년부터 2050년까지 선택해 주세요.')
   }
   if (question === '') {

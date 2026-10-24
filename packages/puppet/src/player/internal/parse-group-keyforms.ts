@@ -25,8 +25,9 @@ const collectDrawOrderGroupIds = (nodes: ReadonlyArray<PuppetSceneNode>, ids: Se
   return ids
 }
 
-const isKeyedProperties = (value: unknown) =>
-  isPartRenderProperties(value) && Object.keys(value).every((key) => KEYED_PROPERTIES.has(key))
+const isKeyedProperties = (value: unknown, unbounded: boolean) =>
+  isPartRenderProperties(value, unbounded) &&
+  Object.keys(value).every((key) => KEYED_PROPERTIES.has(key))
 
 /**
  * Group keyforms: distinct `targetGroupIds` naming scene groups, and in every keyform exactly
@@ -60,7 +61,7 @@ export const hasValidGroupKeyforms = (
               'properties' in entry &&
               typeof entry.groupId === 'string' &&
               targetSet.has(entry.groupId) &&
-              isKeyedProperties(entry.properties) &&
+              isKeyedProperties(entry.properties, binding.keyformRange === 'unbounded') &&
               // Only draw order groups have a draw order to key.
               ((entry.properties as {drawOrder?: unknown}).drawOrder === undefined ||
                 drawOrderGroupIds.has(entry.groupId)),

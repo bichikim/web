@@ -51,3 +51,23 @@ test('should remove a colliding parameter row without removing its typed model e
   expect(removed.motions[0]?.timelineParameterIds).toEqual([])
   expect(removed.motions[0]?.timelineEffectRows).toEqual([{kind: 'model', target: 'opacity'}])
 })
+
+test('should remove visibility ranges without removing their scene nodes', () => {
+  const demo = createDemoDocument()
+  const id = demo.parameters![0]!.id
+  const scene = {
+    roots: [
+      {
+        id: demo.parts[0]!.id,
+        kind: 'part' as const,
+        locked: false,
+        name: 'Part',
+        parameterVisibility: [{maximum: 10, minimum: -10, parameterId: id}],
+        visible: true,
+      },
+    ],
+  }
+  const removed = removeParameterReferences({...demo, scene}, new Set([id]))
+  expect(removed.scene?.roots[0]?.id).toBe(demo.parts[0]!.id)
+  expect(removed.scene?.roots[0]?.parameterVisibility).toEqual([])
+})

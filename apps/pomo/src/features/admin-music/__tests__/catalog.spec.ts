@@ -54,6 +54,51 @@ const offer = {
 const catalog = {albums: [], assets: [], offers: [offer], pendingTracks: [], tracks: []}
 
 describe('catalogSchema', () => {
+  it.each(['draft', 'published', 'archived'] as const)(
+    'should preserve the album status %s in a catalog response',
+    (status) => {
+      const input = {...catalog, albums: [{...albumWithTranslations, status}]}
+
+      expect(catalogSchema.parse(input)).toEqual(input)
+    },
+  )
+
+  it.each(['pending', 'uploaded', 'ready', 'active', 'failed', 'retired', 'deleted'] as const)(
+    'should preserve the track asset status %s in a catalog response',
+    (status) => {
+      const input = {...catalog, assets: [{id: 'asset-1', status, trackId: 'track-1'}]}
+
+      expect(catalogSchema.parse(input)).toEqual(input)
+    },
+  )
+
+  it.each([
+    {
+      input: {...catalog, albums: [{...albumWithTranslations, status: 'pending'}]},
+      path: ['albums', 0, 'status'],
+      values: ['draft', 'published', 'archived'],
+    },
+    {
+      input: {...catalog, assets: [{id: 'asset-1', status: 'published', trackId: 'track-1'}]},
+      path: ['assets', 0, 'status'],
+      values: ['pending', 'uploaded', 'ready', 'active', 'failed', 'retired', 'deleted'],
+    },
+  ])('should retain the distinct allowed values and diagnostic order for $path', (test) => {
+    const result = catalogSchema.safeParse(test.input)
+
+    expect(result.success).toBe(false)
+    if (!result.success) {
+      expect(result.error.issues).toEqual([
+        {
+          code: 'invalid_value',
+          message: expect.any(String),
+          path: test.path,
+          values: test.values,
+        },
+      ])
+    }
+  })
+
   it.each([
     ['one_time', 'active', 'active'],
     ['one_time', 'active', 'inactive'],

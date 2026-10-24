@@ -1,3 +1,4 @@
+export * from './create-motion-parameter-history'
 export * from './create-motion-playbacks'
 export * from './create-selected-playback'
 export * from './expression-playback'

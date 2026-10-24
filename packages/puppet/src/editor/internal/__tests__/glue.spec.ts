@@ -1,10 +1,82 @@
 import {expect, test} from 'vitest'
 import {createDemoDocument, parseDocument, serializeDocument} from '../../../player'
 import {addGlue, canGlueVertex, setGlueKeyform, updateGlue} from '../glue'
+import {insertParameterKeyform} from '../parameter-keyforms'
 import {setSceneNodeState} from '../scene-graph'
 
 const first = {partId: 'mesh-preview', vertexIndex: 0}
 const second = {partId: 'shape-diamond', vertexIndex: 0}
+const directDocument = () => {
+  const document = addGlue(createDemoDocument(), first, second)!
+  return {
+    ...document,
+    parameterBindings: [
+      {
+        id: 'direct',
+        interpolation: 'grid' as const,
+        keyforms: [-30, 30].map((value) => ({
+          glue: [{id: 'glue-1', strength: (value + 30) / 60, weight: 0.5}],
+          parts: [],
+          values: [value] as const,
+        })),
+        parameterIds: ['angle-x'] as const,
+        targetGlueIds: ['glue-1'],
+      },
+    ],
+  }
+}
+
+test('should edit a direct Glue keyform and remove its references when unlinked', () => {
+  const document = setGlueKeyform({
+    bindingId: 'direct',
+    changes: {strength: 0.2, weight: 0.7},
+    document: directDocument(),
+    glueId: 'glue-1',
+    values: [-30],
+  })!
+  expect(document).toBeDefined()
+  expect(document.parameterBindings![0]!.keyforms[0]!.glue).toEqual([
+    {id: 'glue-1', strength: 0.2, weight: 0.7},
+  ])
+  expect(parseDocument(serializeDocument(document)).ok).toBe(true)
+  const removed = updateGlue(document, 'glue-1', null)!
+  expect(removed.parameterBindings![0]!.targetGlueIds).toEqual([])
+  expect(removed.parameterBindings![0]!.keyforms.every((form) => form.glue?.length === 0)).toBe(
+    true,
+  )
+  expect(parseDocument(serializeDocument(removed)).ok).toBe(true)
+})
+
+test('should insert interpolated keys into a Glue-only binding', () => {
+  const document = insertParameterKeyform({
+    bindingId: 'direct',
+    document: directDocument(),
+    values: [0],
+  })!
+  expect(document).toBeDefined()
+  expect(document.parameterBindings![0]!.keyforms[1]!.glue).toEqual([
+    {id: 'glue-1', strength: 0.5, weight: 0.5},
+  ])
+  expect(parseDocument(serializeDocument(document)).ok).toBe(true)
+})
+
+test('should preserve a repeating Glue binding when inserting at its wrapped maximum', () => {
+  const source = directDocument()
+  const document = {
+    ...source,
+    parameterBindings: source.parameterBindings.map((binding) => ({
+      ...binding,
+      keyforms: binding.keyforms.map((form, index) => ({
+        ...form,
+        values: [index === 0 ? -30 : 0] as const,
+      })),
+    })),
+    parameters: source.parameters!.map((parameter) => ({...parameter, repeat: true})),
+  }
+  const inserted = insertParameterKeyform({bindingId: 'direct', document, values: [30]})!
+  expect(inserted.parameterBindings![0]!.keyforms[2]!.glue![0]!.strength).toBe(0)
+  expect(parseDocument(serializeDocument(inserted)).ok).toBe(true)
+})
 test('should connect boundary vertices and round trip editable weights', () => {
   const joined = addGlue(createDemoDocument(), first, second)!
   expect(joined.glue).toHaveLength(1)
@@ -72,4 +144,21 @@ test('should remove stored samples when unlinking a connection', () => {
     ),
   ).toEqual([])
   expect(parseDocument(serializeDocument(document)).ok).toBe(true)
+})
+
+test('should edit an imported sequential connection even when another connection shares its vertex', () => {
+  const document = {
+    ...createDemoDocument(),
+    glue: [0, 1].map((vertexIndex) => ({
+      first,
+      id: `shared-${vertexIndex}`,
+      second: {...second, vertexIndex},
+      strength: 1,
+      weight: 1,
+    })),
+    glueComposition: 'sequential' as const,
+  }
+  const updated = updateGlue(document, 'shared-0', {strength: 0.5, weight: 1})
+  expect(updated?.glue?.[0]?.strength).toBe(0.5)
+  expect(updated === undefined ? false : parseDocument(serializeDocument(updated)).ok).toBe(true)
 })

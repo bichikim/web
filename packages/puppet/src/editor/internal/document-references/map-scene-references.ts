@@ -1,5 +1,6 @@
 import type {
   PuppetDeformerShape,
+  PuppetParameterVisibility,
   PuppetSceneNode,
   PuppetSkinBinding,
 } from '../../../player/document'
@@ -37,6 +38,14 @@ const mapShape = (
     .map((value) => ({...value, partId: transform.rename(value.partId)})),
 })
 
+const mapVisibility = (
+  visibility: ReadonlyArray<PuppetParameterVisibility> | undefined,
+  transform: ReferenceTransform,
+) =>
+  visibility
+    ?.filter((range) => transform.keepParameter?.(range.parameterId) !== false)
+    .map((range) => ({...range, parameterId: transform.rename(range.parameterId)}))
+
 export const mapSceneReferences = (
   nodes: ReadonlyArray<PuppetSceneNode>,
   transform: ReferenceTransform,
@@ -52,6 +61,7 @@ export const mapSceneReferences = (
               {
                 ...node,
                 id: transform.rename(node.id),
+                parameterVisibility: mapVisibility(node.parameterVisibility, transform),
                 skinning: mapSkinning(node.skinning, transform),
               },
             ]
@@ -62,6 +72,7 @@ export const mapSceneReferences = (
             ...node,
             children: mapSceneReferences(node.children, transform),
             id: transform.rename(node.id),
+            parameterVisibility: mapVisibility(node.parameterVisibility, transform),
             properties:
               node.properties?.clippingMaskIds === undefined
                 ? node.properties
@@ -77,6 +88,7 @@ export const mapSceneReferences = (
         return [
           {
             ...node,
+            parameterVisibility: mapVisibility(node.parameterVisibility, transform),
             ...mapShape(node, transform),
             binding:
               node.binding === undefined

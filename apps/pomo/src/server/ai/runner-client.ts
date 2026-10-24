@@ -2,7 +2,7 @@ import {AiRunnerError} from './runner-error'
 // oxlint-disable no-await-in-loop -- The response must be read incrementally to enforce the byte limit.
 
 import {env} from 'src/env'
-import {concatBytes} from 'src/utils/concat-bytes'
+import {concatUint8Arrays} from 'uint8array-extras'
 
 import {
   type AiRunnerJobRequest,
@@ -83,7 +83,7 @@ const readBoundedResponseBody = async (response: Response): Promise<string> => {
     reader.releaseLock()
   }
 
-  return new TextDecoder().decode(concatBytes(chunks))
+  return new TextDecoder().decode(concatUint8Arrays(chunks))
 }
 
 const parseJsonResponse = async <Value>(

@@ -12,7 +12,7 @@
     "@winter-love/supertonic": "workspace:*",
     "dexie": "^4.4.4",
     "es-toolkit": "catalog:",
-    "pixi.js": "^8.21.0",
+    "pixi.js": "^8.22.0",
     "zod": "catalog:"
   },
   "peerDependencies": {

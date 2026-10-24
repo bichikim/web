@@ -74,12 +74,15 @@ export const createPartBlendFilter = (): PartBlendFilter => {
   })
   const source = gpuSource()
   const filter = new Filter({
+    antialias: 'inherit',
     blendRequired: true,
     glProgram: GlProgram.from({fragment: glFragment(), vertex: blendTemplateVert}),
     gpuProgram: GpuProgram.from({
       fragment: {entryPoint: 'mainFragment', source},
       vertex: {entryPoint: 'mainVertex', source},
     }),
+    // Front and backdrop must share the same texture coordinates at every display resolution.
+    resolution: 'inherit',
     resources: {blendUniforms: uniforms, uBackTexture: Texture.EMPTY},
   })
   // The shader already composites over the backdrop, so the result replaces the target.

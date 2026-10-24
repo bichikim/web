@@ -129,7 +129,7 @@ export const cancelQueuedApiAiJob = async (
 ): Promise<ApiAiJob | null> => {
   const [job] = await getDatabase()
     .update(apiAiJobs)
-    .set({completedAt: now, nextAttemptAt: now, status: 'cancelled'})
+    .set({cancelRequestedAt: now, completedAt: now, nextAttemptAt: now, status: 'cancelled'})
     .where(
       and(eq(apiAiJobs.id, jobId), eq(apiAiJobs.ownerId, ownerId), eq(apiAiJobs.status, 'queued')),
     )

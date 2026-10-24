@@ -79,6 +79,22 @@ const settle = (document: PuppetDocument, parameterValues: Readonly<Record<strin
     settle: true,
   }).parameterValues
 
+test('should preserve a Cubism normalization center outside equal endpoints', () => {
+  const document = createDocument({
+    chains: [
+      {
+        ...chain,
+        normalization: {
+          angle: {center: 90, maximum: -90, minimum: -90},
+          position: {center: 0, maximum: -10, minimum: -10},
+        },
+      },
+    ],
+  })
+  expect(parseDocumentValue(document).ok).toBe(true)
+  expect(Object.values(settle(document, {'head-angle': 15})).every(Number.isFinite)).toBe(true)
+})
+
 describe('physics chains', () => {
   test('should hang along gravity turned by the tilt input', () => {
     // 15 of 30 maps to 5 of 10 normalized degrees, negated as in Cubism: gravity turns so the
@@ -153,4 +169,33 @@ describe('physics chains', () => {
     expect(parseDocumentValue(createDocument({chains: [loose]})).ok).toBe(false)
     expect(parseDocumentValue(createDocument({gravity: [0, 0]})).ok).toBe(false)
   })
+})
+
+test('should use each frame duration when chain fps is zero', () => {
+  const frameTime = createDocument({fps: 0})
+  expect(parseDocumentValue(frameTime).ok).toBe(true)
+  const run = (document: PuppetDocument) => {
+    const start = evaluatePhysics({
+      deltaTime: 0,
+      document,
+      parameterValues: {},
+      physicsState: new Map(),
+    })
+    const first = evaluatePhysics({
+      chainState: start.chainState,
+      deltaTime: 1 / 30,
+      document,
+      parameterValues: {'head-x': 10},
+      physicsState: start.physicsState,
+    })
+    return evaluatePhysics({
+      chainState: first.chainState,
+      deltaTime: 1 / 30,
+      document,
+      parameterValues: {'head-x': 10},
+      physicsState: first.physicsState,
+    })
+  }
+  expect(run(frameTime).parameterValues).toEqual(run(createDocument({fps: 30})).parameterValues)
+  expect(run(frameTime).parameterValues).not.toEqual(run(createDocument({fps: 60})).parameterValues)
 })

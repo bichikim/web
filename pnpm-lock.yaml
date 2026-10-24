@@ -731,6 +731,9 @@ importers:
       aws4fetch:
         specifier: 1.0.20
         version: 1.0.20
+      bignumber.js:
+        specifier: 11.1.5
+        version: 11.1.5
       class-variance-authority:
         specifier: 'catalog:'
         version: 0.7.1
@@ -792,8 +795,8 @@ importers:
         specifier: ^7.4.0
         version: 7.4.0(ws@8.21.3)(zod@4.6.5)
       pixi.js:
-        specifier: ^8.21.0
-        version: 8.21.0
+        specifier: ^8.22.0
+        version: 8.22.0
       qrcode-generator:
         specifier: 2.0.4
         version: 2.0.4
@@ -803,6 +806,9 @@ importers:
       tone:
         specifier: ^15.1.22
         version: 15.1.22
+      uint8array-extras:
+        specifier: 1.5.0
+        version: 1.5.0
       unocss:
         specifier: 'catalog:'
         version: 66.7.5(vite@8.1.5(@types/node@24.13.6)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.46.2)(tsx@4.21.0))
@@ -925,25 +931,6 @@ importers:
       wrangler:
         specifier: ^4.125.0
         version: 4.125.0(@cloudflare/workers-types@5.20260822.1)(@types/node@24.13.6)
-
-  apps/sidebuy-api:
-    dependencies:
-      '@t3-oss/env-core':
-        specifier: ^0.13.11
-        version: 0.13.11(typescript@7.0.2)(valibot@1.4.2(typescript@7.0.2))(zod@4.6.5)
-      zod:
-        specifier: 'catalog:'
-        version: 4.6.5
-    devDependencies:
-      '@types/node':
-        specifier: 'catalog:'
-        version: 24.13.6
-      tsx:
-        specifier: ^4.21.0
-        version: 4.21.0
-      typescript:
-        specifier: 'catalog:'
-        version: 7.0.2
 
   apps/wallpaper:
     dependencies:
@@ -1294,8 +1281,8 @@ importers:
         specifier: ^0.8.3
         version: 0.8.3
       pixi.js:
-        specifier: ^8.21.0
-        version: 8.21.0
+        specifier: ^8.22.0
+        version: 8.22.0
       three:
         specifier: ^0.186.1
         version: 0.186.1
@@ -1741,8 +1728,8 @@ importers:
         specifier: 'catalog:'
         version: 1.52.0
       pixi.js:
-        specifier: ^8.21.0
-        version: 8.21.0
+        specifier: ^8.22.0
+        version: 8.22.0
       solid-js:
         specifier: 'catalog:'
         version: 1.9.14
@@ -4513,6 +4500,7 @@ packages:
 
   '@mediapipe/tasks-vision@1.1.0':
     resolution: {integrity: sha512-ZJqh0wMKOINorfSffvDAxzyO1//c+FiG3IkzOdNDnLqvBB3DbMfj0bB/tys2SNf9S914sgoIbIpF4HTOi336cg==}
+
   '@mediapipe/tasks-vision@1.1.1':
     resolution: {integrity: sha512-jwntgT5tzDrKOkqg6xNDNpRcTUnGvmylZE5DFnzPXossiWOIDdZX+C81LI75hlXhsG58YZW+lGzcmjH1qrQE/Q==}
 
@@ -8564,6 +8552,9 @@ packages:
       zod:
         optional: true
 
+  bignumber.js@11.1.5:
+    resolution: {integrity: sha512-6WmzCNtUnfKpbozq+hOgWaZMMzORmYBwF1xZScyoIX3QRYWeKTtxxwDOW5tIz7C9BdjkIYHGTcelCLkXg0mndw==}
+
   binary-extensions@2.3.0:
     resolution: {integrity: sha512-Ceh+7ox5qe7LJuLHoY0feh3pHuUDHAcRUeyL2VYghZwfpkNIy/+8Ocg0a3UuSoYzavmylwuLWQOf3hl0jjMMIw==}
     engines: {node: '>=8'}
@@ -11649,8 +11640,8 @@ packages:
     resolution: {integrity: sha512-TfySrs/5nm8fQJDcBDuUng3VOUKsd7S+zqvbOTiGXHfxX4wK31ard+hoNuvkicM/2YFzlpDgABOevKSsB4G/FA==}
     engines: {node: '>= 6'}
 
-  pixi.js@8.21.0:
-    resolution: {integrity: sha512-GJ/KqBtUuWDBPMQu2D0ZHsRCYOcWRjjKrpyC+3jPQI5JTqHMC5dH8l9sSyvoUT4qJidvRzs1fwFWRWceno2Ltw==}
+  pixi.js@8.22.0:
+    resolution: {integrity: sha512-QbTANHMZ751MIjLiLSUSM8a7LNMWwMIf0KbRCqlW+SPS9hNLfSVS+cl1O2SEp9g1K/wyLzj/OJHv+1TUfiPr/w==}
 
   pkce-challenge@5.0.1:
     resolution: {integrity: sha512-wQ0b/W4Fr01qtpHlqSqspcj3EhBvimsdh0KlHhH8HRZnMsEa0ea2fTULOXOS9ccQr3om+GcGRk4e+isrZWV8qQ==}
@@ -16869,6 +16860,7 @@ snapshots:
       react: 19.2.5
 
   '@mediapipe/tasks-vision@1.1.0': {}
+
   '@mediapipe/tasks-vision@1.1.1': {}
 
   '@microsoft/api-extractor-model@7.33.8(@types/node@24.13.6)':
@@ -20942,6 +20934,8 @@ snapshots:
     optionalDependencies:
       zod: 4.6.5
 
+  bignumber.js@11.1.5: {}
+
   binary-extensions@2.3.0: {}
 
   bindings@1.5.0:
@@ -24555,7 +24549,7 @@ snapshots:
 
   pirates@4.0.7: {}
 
-  pixi.js@8.21.0:
+  pixi.js@8.22.0:
     dependencies:
       '@pixi/colord': 2.9.6
       '@types/earcut': 3.0.0

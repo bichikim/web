@@ -1,4 +1,4 @@
-import {describe, expect, it, vi} from 'vitest'
+import {describe, expect, expectTypeOf, it, vi} from 'vitest'
 import {createSerialTaskQueue} from '../create-serial-task-queue'
 
 describe('createSerialTaskQueue', () => {
@@ -10,6 +10,7 @@ describe('createSerialTaskQueue', () => {
     const firstResult = queue.run(() => blocked.promise)
     const rejection = expect(firstResult).rejects.toBe(failure)
     const secondResult = queue.run(second)
+    expectTypeOf(secondResult).toEqualTypeOf<Promise<string>>()
     await Promise.resolve()
     expect(second).not.toHaveBeenCalled()
     blocked.reject(failure)
@@ -27,5 +28,45 @@ describe('createSerialTaskQueue', () => {
     )
     blocked.resolve()
     await first
+  })
+
+  it('should settle only the work submitted before the settle call', async () => {
+    const queue = createSerialTaskQueue()
+    const first = Promise.withResolvers<void>()
+    const later = Promise.withResolvers<void>()
+    let settled = false
+    let laterFinished = false
+    const firstResult = queue.run(() => first.promise)
+    const completion = queue.settle().then(() => {
+      settled = true
+    })
+    const laterResult = queue.run(async () => {
+      await later.promise
+      laterFinished = true
+    })
+    await Promise.resolve()
+    expect(settled).toBe(false)
+    first.resolve()
+    await completion
+    expect(laterFinished).toBe(false)
+    later.resolve()
+    await Promise.all([firstResult, laterResult, queue.settle()])
+    expect(laterFinished).toBe(true)
+  })
+
+  it('should settle after a synchronous failure without rejecting and allow later work', async () => {
+    const queue = createSerialTaskQueue()
+    const failure = new Error('failed')
+    const result = queue.run(() => {
+      throw failure
+    })
+    const completion = queue.settle()
+    await expect(result).rejects.toBe(failure)
+    await expect(completion).resolves.toBeUndefined()
+    await expect(queue.run(async () => 42)).resolves.toBe(42)
+  })
+
+  it('should settle an empty queue', async () => {
+    await expect(createSerialTaskQueue().settle()).resolves.toBeUndefined()
   })
 })

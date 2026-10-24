@@ -10,6 +10,7 @@ import {EditorStyles} from '../editor/internal/EditorStyles'
 import {type PlayerFrame, type PuppetDocument} from '../player'
 import {useRuntimeDocument} from './use-runtime-document'
 import {PlaybackCanvas} from './PlaybackCanvas'
+import {ExpressionSelect} from './ExpressionSelect'
 
 interface RuntimePageProps {
   readonly mode?: 'studio' | 'viewer'
@@ -111,6 +112,12 @@ export const RuntimePage = (props: RuntimePageProps) => {
                     >
                       {playing() ? '일시정지' : '재생'}
                     </EditorButton>
+                    <ExpressionSelect
+                      expressions={current.expressions}
+                      value={controls.modelExpression()}
+                      disabled={!ready()}
+                      onChange={controls.selectModelExpression}
+                    />
                     <div class="puppet-viewer-background">
                       <EditorColorField
                         size="md"
@@ -134,6 +141,7 @@ export const RuntimePage = (props: RuntimePageProps) => {
                       onViewChange={handleViewChange}
                       document={current}
                       motionId={selectedMotion()}
+                      expressionId={controls.modelExpression()}
                       playing={playing()}
                       onFrame={setFrame}
                       onReady={setReady}

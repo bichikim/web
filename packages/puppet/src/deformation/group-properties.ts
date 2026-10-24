@@ -121,7 +121,20 @@ const scale = (effect: PuppetColorEffect, index: 0 | 1 | 2) =>
 export const composeColorEffects = <Effect extends PuppetColorEffect>(
   inner: Effect,
   outer: PuppetColorEffect,
+  composition?: 'cubism',
 ): Effect => {
+  if (composition === 'cubism') {
+    return {
+      ...inner,
+      multiplyColor: mapChannels(
+        (index) => inner.multiplyColor[index] * outer.multiplyColor[index],
+      ),
+      opacity: inner.opacity * outer.opacity,
+      screenColor: mapChannels(
+        (index) => 1 - (1 - inner.screenColor[index]) * (1 - outer.screenColor[index]),
+      ),
+    }
+  }
   const screenColor = mapChannels((index) =>
     Math.min(1, inner.screenColor[index] * scale(outer, index) + outer.screenColor[index]),
   )
