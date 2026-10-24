@@ -1,21 +1,8 @@
 /** @vitest-environment node */
-import {Buffer} from 'node:buffer'
 import {afterEach, expect, it, vi} from 'vitest'
 import {generateExtendedSound} from '../extension'
 import {generateSound} from '../runtime'
-import {createStereoWave} from '../audio'
-
-async function createWave(seconds: number, sample = 0): Promise<Blob> {
-  const header = await createStereoWave(new Int32Array(0), 0).arrayBuffer()
-  const bytes = seconds * 44100 * 4
-  const view = new DataView(header)
-  view.setUint32(4, bytes + 36, true)
-  view.setUint32(40, bytes, true)
-  const pattern = Buffer.alloc(2)
-  pattern.writeInt16LE(sample)
-  const pcm = Buffer.alloc(bytes, pattern)
-  return new Blob([header, pcm], {type: 'audio/wav'})
-}
+import {createWave} from './create-wave'
 
 vi.mock('../runtime', () => ({generateSound: vi.fn()}))
 afterEach(() => vi.resetAllMocks())
