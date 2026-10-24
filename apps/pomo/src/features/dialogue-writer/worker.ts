@@ -83,7 +83,9 @@ const generateDirectAnswer = async (
   const output = resultValue
   const trimmedOutput = trimRepetitiveTail(output)
   const answer =
-    outputLanguage === 'ko' ? normalizeKoreanSpeechStyle(trimmedOutput) : trimmedOutput.trim()
+    outputLanguage === 'ko'
+      ? normalizeKoreanSpeechStyle(trimmedOutput).trim()
+      : trimmedOutput.trim()
   sendResponse({text: answer, type: 'complete'})
 }
 
