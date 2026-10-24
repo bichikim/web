@@ -22,15 +22,12 @@ export function createStereoWave(pcm: Int32Array, frames: number): Blob {
   }
   const buffer = new ArrayBuffer(WAV_HEADER_BYTES + frames * STEREO_FRAME_BYTES)
   const view = new DataView(buffer)
-  const text = (offset: number, value: string) => {
-    for (let index = 0; index < value.length; index += 1) {
-      view.setUint8(offset + index, value.charCodeAt(index))
-    }
-  }
-  text(0, 'RIFF')
+  const bytes = new Uint8Array(buffer)
+  const encoder = new TextEncoder()
+  encoder.encodeInto('RIFF', bytes.subarray(0, 4))
   view.setUint32(4, buffer.byteLength - 8, true)
-  text(8, 'WAVE')
-  text(12, 'fmt ')
+  encoder.encodeInto('WAVE', bytes.subarray(8, 12))
+  encoder.encodeInto('fmt ', bytes.subarray(12, 16))
   view.setUint32(16, 16, true)
   view.setUint16(20, 1, true)
   view.setUint16(22, 2, true)
@@ -38,7 +35,7 @@ export function createStereoWave(pcm: Int32Array, frames: number): Blob {
   view.setUint32(28, SAMPLE_RATE * STEREO_FRAME_BYTES, true)
   view.setUint16(32, STEREO_FRAME_BYTES, true)
   view.setUint16(34, 16, true)
-  text(36, 'data')
+  encoder.encodeInto('data', bytes.subarray(36, 40))
   view.setUint32(40, frames * STEREO_FRAME_BYTES, true)
   for (let index = 0; index < frames * 2; index += 1) {
     view.setInt16(WAV_HEADER_BYTES + index * 2, clamp(pcm[index], -32768, 32767), true)
