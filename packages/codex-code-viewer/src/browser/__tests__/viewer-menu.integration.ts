@@ -5,7 +5,7 @@ import {Client} from '@modelcontextprotocol/sdk/client/index.js'
 import {InMemoryTransport} from '@modelcontextprotocol/sdk/inMemory.js'
 import {type BrowserType, chromium, type FrameLocator, webkit} from 'playwright'
 import {expect as browserExpect} from 'playwright/test'
-import {expect, it, type Mock, vi} from 'vitest'
+import {aroundEach, describe, expect, it, type Mock, vi} from 'vitest'
 import {createServer} from '../../server/create-server'
 import type {Result} from '../../shared/contracts'
 import {createBrowserServer} from '../create-browser-server'
@@ -68,7 +68,8 @@ const withViewerMenu = async (
     const {session, url} = await viewer.open()
     await viewer.navigate({column: 1, line: 1, path: 'main.ts'})
     const page = await browser.newPage({locale: 'ko-KR'})
-    await page.goto(url)
+    page.setDefaultTimeout(5000)
+    await page.goto(url, {timeout: 20_000})
     const frame = page.frameLocator('iframe[title="Code Viewer"]')
     await exercise({client, composer, frame, session, url, writeAttachment})
   } catch (error) {
@@ -90,61 +91,61 @@ const withViewerMenu = async (
   }
 }
 
-it.each(engines)(
-  'should keep the source context menu open after secondary-button release in $name',
-  async ({engine}) => {
-    await withViewerMenu(engine, async ({frame}) => {
-      const menu = frame.getByRole('menu', {name: '코드 작업'})
-      const exercise = async (line: number): Promise<void> => {
-        await frame.getByRole('button', {name: `${line}줄 선택`}).click({button: 'right'})
-        await browserExpect(menu).toBeVisible({timeout: 1500})
-        await menu.press('Escape')
-        await browserExpect(menu).toHaveCount(0)
-      }
-      await [1, 2, 1, 2].reduce(async (previous, line) => {
-        await previous
-        await exercise(line)
-      }, Promise.resolve())
-      await frame.getByRole('button', {name: '1줄 선택'}).click({button: 'right'})
-      await browserExpect(menu).toBeVisible()
-      await frame.getByRole('combobox', {name: '파일 경로 또는 검색어'}).click()
-      await browserExpect(menu).toHaveCount(0)
-    })
-  },
-)
+describe.sequential.each(engines)('source context menus in $name', ({engine}) => {
+  let viewer: ViewerMenuFixture
 
-it.each(engines)(
-  'should attach source and tree selections from their context menus in $name',
-  async ({engine}) => {
-    await withViewerMenu(
-      engine,
-      async ({client, composer, frame, session, url, writeAttachment}) => {
-        const menu = frame.getByRole('menu', {name: '코드 작업'})
-        await frame.getByRole('button', {name: '2줄 선택'}).click({button: 'right'})
-        await browserExpect(menu).toBeVisible()
-        await frame.getByRole('menuitem', {name: '채팅창에 추가'}).click()
-        await browserExpect(frame.getByRole('menu', {name: '코드 작업'})).toHaveCount(0)
-        await vi.waitFor(() => expect(composer).toHaveBeenCalledOnce())
-        expect(composer).toHaveBeenCalledOnce()
-        expect(composer).toHaveBeenCalledWith(url, expect.any(Function))
-        expect(writeAttachment).toHaveBeenCalledWith(
-          expect.stringContaining('export const second = 2'),
-          'main.ts.selection.txt',
-        )
-        await browserExpect(frame.getByText(/첨부할 내용 \d+개/u)).toHaveCount(0)
-        await frame.getByRole('button', {exact: true, name: '파일 트리'}).click()
-        await frame.getByRole('treeitem', {exact: true, name: 'main.ts'}).click({button: 'right'})
-        await frame.getByRole('menuitem', {name: '채팅창에 추가'}).click()
-        await vi.waitFor(() => expect(composer).toHaveBeenCalledTimes(2))
-        expect(writeAttachment).toHaveBeenLastCalledWith(
-          Buffer.from('export const first = 1\nexport const second = 2\n'),
-          'main.ts',
-        )
-        await browserExpect(frame.getByText(/첨부할 내용 \d+개/u)).toHaveCount(0)
-        expect(
-          await client.callTool({arguments: {session}, name: 'code.attachments'}),
-        ).toMatchObject({content: []})
-      },
+  aroundEach(async (runTest) => {
+    await withViewerMenu(engine, async (fixture) => {
+      viewer = fixture
+      await runTest()
+    })
+  }, 20_000)
+
+  it('should keep the source context menu open after secondary-button release', async () => {
+    const {frame} = viewer
+    const menu = frame.getByRole('menu', {name: '코드 작업'})
+    const exercise = async (line: number): Promise<void> => {
+      await frame.getByRole('button', {name: `${line}줄 선택`}).click({button: 'right'})
+      await browserExpect(menu).toBeVisible({timeout: 1500})
+      await menu.press('Escape')
+      await browserExpect(menu).toHaveCount(0)
+    }
+    await [1, 2, 1, 2].reduce(async (previous, line) => {
+      await previous
+      await exercise(line)
+    }, Promise.resolve())
+    await frame.getByRole('button', {name: '1줄 선택'}).click({button: 'right'})
+    await browserExpect(menu).toBeVisible()
+    await frame.getByRole('combobox', {name: '파일 경로 또는 검색어'}).click()
+    await browserExpect(menu).toHaveCount(0)
+  })
+
+  it('should attach source and tree selections from their context menus', async () => {
+    const {client, composer, frame, session, url, writeAttachment} = viewer
+    const menu = frame.getByRole('menu', {name: '코드 작업'})
+    await frame.getByRole('button', {name: '2줄 선택'}).click({button: 'right'})
+    await browserExpect(menu).toBeVisible()
+    await frame.getByRole('menuitem', {name: '채팅창에 추가'}).click()
+    await browserExpect(frame.getByRole('menu', {name: '코드 작업'})).toHaveCount(0)
+    await vi.waitFor(() => expect(composer).toHaveBeenCalledOnce())
+    expect(composer).toHaveBeenCalledOnce()
+    expect(composer).toHaveBeenCalledWith(url, expect.any(Function))
+    expect(writeAttachment).toHaveBeenCalledWith(
+      expect.stringContaining('export const second = 2'),
+      'main.ts.selection.txt',
     )
-  },
-)
+    await browserExpect(frame.getByText(/첨부할 내용 \d+개/u)).toHaveCount(0)
+    await frame.getByRole('button', {exact: true, name: '파일 트리'}).click()
+    await frame.getByRole('treeitem', {exact: true, name: 'main.ts'}).click({button: 'right'})
+    await frame.getByRole('menuitem', {name: '채팅창에 추가'}).click()
+    await vi.waitFor(() => expect(composer).toHaveBeenCalledTimes(2))
+    expect(writeAttachment).toHaveBeenLastCalledWith(
+      Buffer.from('export const first = 1\nexport const second = 2\n'),
+      'main.ts',
+    )
+    await browserExpect(frame.getByText(/첨부할 내용 \d+개/u)).toHaveCount(0)
+    expect(await client.callTool({arguments: {session}, name: 'code.attachments'})).toMatchObject({
+      content: [],
+    })
+  })
+})
