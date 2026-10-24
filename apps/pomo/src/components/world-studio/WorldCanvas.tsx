@@ -269,10 +269,14 @@ export function WorldCanvas(props: WorldCanvasProps) {
 
     const lighting = createLighting(scene)
     const postProcessing = createPostProcessing(scene, camera)
+    let disposed = false
     let environmentReady = false
     let modelReady = false
     let hasLoadingError = false
     const publishStatus = () => {
+      if (disposed) {
+        return
+      }
       if (hasLoadingError) {
         props.onStatus('error')
       } else if (environmentReady && modelReady) {
@@ -281,12 +285,18 @@ export function WorldCanvas(props: WorldCanvasProps) {
     }
 
     const applyEnvironment = () => {
+      if (disposed) {
+        return
+      }
       scene.environmentIntensity = ENVIRONMENT_INTENSITY
       scene.createDefaultSkybox(environment, true, SKYBOX_SCALE, SKYBOX_BLUR)
       environmentReady = true
       publishStatus()
     }
     const reportEnvironmentError = (message?: string, exception?: unknown) => {
+      if (disposed) {
+        return
+      }
       reportClientError(exception ?? message ?? 'EXR environment texture failed to load', {
         feature: 'world-renderer',
         source: 'direct',
@@ -336,6 +346,7 @@ export function WorldCanvas(props: WorldCanvasProps) {
     engine.runRenderLoop(() => scene.render())
 
     onCleanup(() => {
+      disposed = true
       activeCamera = null
       observer.stop()
       engine.stopRenderLoop()
