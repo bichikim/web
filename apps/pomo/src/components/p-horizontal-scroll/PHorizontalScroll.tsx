@@ -17,7 +17,25 @@ export interface PHorizontalScrollProps {
 
 export const PHorizontalScroll = (props: PHorizontalScrollProps) => {
   const [viewport, setViewport] = createSignal<HTMLDivElement | null>(null)
-  const scroll = useHorizontalScroll({pageRatio: () => props.pageRatio, viewport})
+  let leftButton: HTMLButtonElement | undefined
+  let rightButton: HTMLButtonElement | undefined
+  const scroll = useHorizontalScroll({
+    onBeforeAvailabilityChange: (next) => {
+      const element = viewport()
+      if (!element?.isConnected) {
+        return
+      }
+      const active = element.ownerDocument.activeElement
+      if (
+        (!next.canScrollLeft && active === leftButton) ||
+        (!next.canScrollRight && active === rightButton)
+      ) {
+        element.focus({preventScroll: true})
+      }
+    },
+    pageRatio: () => props.pageRatio,
+    viewport,
+  })
 
   return (
     <div class={cx('relative min-w-0', props.class)}>
@@ -62,6 +80,13 @@ export const PHorizontalScroll = (props: PHorizontalScrollProps) => {
                       'focus-visible:outline-highlight',
                 )}
                 onClick={direction === -1 ? scroll.scrollLeft : scroll.scrollRight}
+                ref={(element) => {
+                  if (direction === -1) {
+                    leftButton = element
+                  } else {
+                    rightButton = element
+                  }
+                }}
                 type="button"
               >
                 <span

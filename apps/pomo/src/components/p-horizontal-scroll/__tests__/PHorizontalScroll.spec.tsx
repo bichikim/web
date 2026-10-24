@@ -80,3 +80,91 @@ it('should refresh nested content overflow and accept caller labels and presenta
   setText('Short')
   await waitFor(() => expect(screen.queryAllByRole('button')).toHaveLength(0))
 })
+
+it.each([
+  {direction: 'ltr', label: 'Next', offset: 700},
+  {direction: 'ltr', label: 'Previous', offset: 0},
+  {direction: 'rtl', label: 'Previous', offset: -700},
+])(
+  'should retain focus when scrolling removes the $label edge in $direction',
+  ({direction, label, offset}) => {
+    render(() => (
+      <PHorizontalScroll accessibleLabel="Cards" leftLabel="Previous" rightLabel="Next">
+        <div>Cards</div>
+      </PHorizontalScroll>
+    ))
+    const region = screen.getByRole('region', {name: 'Cards'})
+    region.style.direction = direction
+    Object.defineProperties(region, {
+      clientWidth: {value: 300},
+      scrollWidth: {value: 1000},
+    })
+    region.scrollLeft = direction === 'rtl' ? -350 : 350
+    fireEvent.scroll(region)
+    const edge = screen.getByRole('button', {name: label})
+    edge.focus()
+    const focus = vi.spyOn(region, 'focus')
+
+    region.scrollLeft = offset
+    fireEvent.scroll(region)
+
+    expect(screen.queryByRole('button', {name: label})).toBeNull()
+    expect(region).toHaveFocus()
+    expect(focus).toHaveBeenCalledExactlyOnceWith({preventScroll: true})
+  },
+)
+
+it('should retain focused edge navigation when resizing removes overflow', () => {
+  let resize = () => {}
+  vi.stubGlobal(
+    'ResizeObserver',
+    class {
+      constructor(callback: () => void) {
+        resize = callback
+      }
+      observe = vi.fn()
+      unobserve = vi.fn()
+      disconnect = vi.fn()
+    },
+  )
+  render(() => (
+    <PHorizontalScroll accessibleLabel="Cards">
+      <div>Cards</div>
+    </PHorizontalScroll>
+  ))
+  const region = screen.getByRole('region', {name: 'Cards'})
+  Object.defineProperties(region, {
+    clientWidth: {configurable: true, value: 300},
+    scrollWidth: {value: 1000},
+  })
+  resize()
+  screen.getByRole('button', {name: '오른쪽으로 이동'}).focus()
+  Object.defineProperty(region, 'clientWidth', {value: 1000})
+
+  resize()
+
+  expect(screen.queryAllByRole('button')).toHaveLength(0)
+  expect(region).toHaveFocus()
+})
+
+it('should preserve external focus and avoid focusing on unchanged measurements or unmount', () => {
+  const rendered = render(() => (
+    <>
+      <input aria-label="Other" />
+      <PHorizontalScroll accessibleLabel="Cards">
+        <div>Cards</div>
+      </PHorizontalScroll>
+    </>
+  ))
+  const region = screen.getByRole('region', {name: 'Cards'})
+  Object.defineProperties(region, {clientWidth: {value: 300}, scrollWidth: {value: 1000}})
+  fireEvent.scroll(region)
+  const focus = vi.spyOn(region, 'focus')
+  screen.getByRole('textbox', {name: 'Other'}).focus()
+  region.scrollLeft = 700
+  fireEvent.scroll(region)
+  expect(screen.getByRole('textbox', {name: 'Other'})).toHaveFocus()
+  fireEvent.scroll(region)
+  rendered.unmount()
+  expect(focus).not.toHaveBeenCalled()
+})

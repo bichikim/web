@@ -152,3 +152,34 @@ it('should reject a nonpositive or nonfinite page ratio when scrolling', () => {
   expect(scroll.scrollLeft).toThrow(RangeError)
   dispose()
 })
+
+it('should notify availability before publishing changed signals without tracking callback reads', () => {
+  const {viewport} = createViewport()
+  const [unrelated, setUnrelated] = createSignal(0)
+  const observations: Array<{
+    next: {canScrollLeft: boolean; canScrollRight: boolean}
+    previous: boolean[]
+  }> = []
+  let scroll: ReturnType<typeof useHorizontalScroll>
+  const dispose = createRoot((dispose) => {
+    scroll = useHorizontalScroll({
+      onBeforeAvailabilityChange: (next) => {
+        unrelated()
+        observations.push({next, previous: [scroll.canScrollLeft(), scroll.canScrollRight()]})
+      },
+      viewport: () => viewport,
+    })
+    return dispose
+  })
+  observations.length = 0
+
+  viewport.scrollLeft = 700
+  scroll!.onScroll()
+  expect(observations).toEqual([
+    {next: {canScrollLeft: true, canScrollRight: false}, previous: [false, true]},
+  ])
+  scroll!.onScroll()
+  setUnrelated(1)
+  expect(observations).toHaveLength(1)
+  dispose()
+})
