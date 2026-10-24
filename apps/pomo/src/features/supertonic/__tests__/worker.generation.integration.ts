@@ -110,6 +110,64 @@ describe('generation', () => {
     )
   })
 
+  it.each([
+    ['09:05에 시작합니다.', '아홉 시 오 분에 시작합니다.'],
+    ['현재 시각은 09:05;다음 일정입니다.', '현재 시각은 아홉 시 오 분;다음 일정입니다.'],
+    ['문의는 user@example.id 09:05에 주세요.', '문의는 user@example.id 아홉 시 오 분에 주세요.'],
+    ['field: (09:05에)', 'field: (09:05에)'],
+    ['오후 (09:05에)', '오후 (아홉 시 오 분에)'],
+    ['모델은 09:05입니다.', '모델은 09:05입니다.'],
+    ['model https://example.com/ 09:05에', 'model https://example.com/ 아홉 시 오 분에'],
+    ['09:05부터 오후 13:30까지', '09:05부터 오후 13:30까지'],
+
+    ['현재 시간:09:05.', '현재 시간:아홉 시 오 분.'],
+    ['오후: 13:05에', '오후: 13:05에'],
+    ['오전09:05부터 12:30까지', '오전 아홉 시 오 분부터 열두 시 삼십 분까지'],
+    ['약속은 “09:05”에 시작합니다.', '약속은 “아홉 시 오 분”에 시작합니다.'],
+    ['최종 점수. 09:05에 시작합니다.', '최종 점수. 아홉 시 오 분에 시작합니다.'],
+
+    ['duration: (09:05에)', 'duration: (09:05에)'],
+    ['문서 번호: (09:05에)', '문서 번호: (09:05에)'],
+    ['time=(09:05에)', 'time=(09:05에)'],
+    ['09:05부터 12:30', '아홉 시 오 분부터 열두 시 삼십 분'],
+    ['Meeting 09:05에', 'Meeting 아홉 시 오 분에'],
+    ['점수에서는 09:05에서 끝났어요.', '점수에서는 09:05에서 끝났어요.'],
+    ['그는 “현재 시각은 09:05.”라고 말했다.', '그는 “현재 시각은 아홉 시 오 분.”라고 말했다.'],
+    ['현재 시간： 09:05.', '현재 시간： 아홉 시 오 분.'],
+
+    ['time = 09:05에', 'time = 09:05에'],
+    ['남은 시간은 09:05입니다.', '남은 시간은 09:05입니다.'],
+    ['https://example.com/model 09:05에', 'https://example.com/model 아홉 시 오 분에'],
+    ['09:05부터 12:30까지', '아홉 시 오 분부터 열두 시 삼십 분까지'],
+    ['− ０９:０５에 만나요.', '− ０９:０５에 만나요.'],
+    ['문서 번호 09:05에 만나요.', '문서 번호 09:05에 만나요.'],
+    ['현재 시각은 09:05입니다.', '현재 시각은 아홉 시 오 분입니다.'],
+    ['09:05에는 시작해요.', '아홉 시 오 분에는 시작해요.'],
+    ['경기 스코어는 09:05에서 끝났어요.', '경기 스코어는 09:05에서 끝났어요.'],
+    ['범위:5부터 12개까지', '범위:5부터 12개까지'],
+    ['비율 3:5부터 12개까지', '비율 3:5부터 12개까지'],
+    ['０９：０５에 시작합니다.', '아홉 시 오 분에 시작합니다.'],
+    ['09:05는', '아홉 시 오 분은'],
+    ['현재 시각은 09:05.', '현재 시각은 아홉 시 오 분.'],
+    ['점수 09:05부터 12:30까지', '점수 09:05부터 12:30까지'],
+    ['오후 13:05부터 12:30까지', '오후 13:05부터 12:30까지'],
+    ['09:05부터 12:30까지는', '아홉 시 오 분부터 열두 시 삼십 분까지는'],
+    ['문서 번호: 09:05에 접속해요.', '문서 번호: 09:05에 접속해요.'],
+    ['time=오후 13:05에', 'time=오후 13:05에'],
+    ['https://example.com/?time=오후 13:05에', 'https://example.com/?time=오후 13:05에'],
+  ])('should pass contextual colon times to the engine: %s', async (text, engineText) => {
+    textMocks.split.mockReturnValue([text])
+    const worker = await loadWorker()
+    await initialize(worker)
+
+    await worker.dispatch(generateMessage({text}))
+
+    expect(textMocks.split).toHaveBeenCalledWith(text, fullModel.speechPolicy)
+    expect(currentEngine.generate).toHaveBeenCalledExactlyOnceWith(
+      expect.objectContaining({language: 'ko', text: engineText}),
+    )
+  })
+
   it('should pronounce leading-zero English verification codes as individual digits', async () => {
     const worker = await loadWorker()
     await initialize(worker)

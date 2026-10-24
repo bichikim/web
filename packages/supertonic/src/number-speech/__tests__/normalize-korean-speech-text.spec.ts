@@ -63,4 +63,247 @@ describe('normalizeKoreanSpeechText clock and duration expressions', () => {
     expect(normalizeKoreanSpeechText('009시 05분에 만나요.')).toBe('009시 05분에 만나요.')
     expect(normalizeKoreanSpeechText('005분 남았어요.')).toBe('005분 남았어요.')
   })
+
+  it('should pronounce colon clock times in Korean time contexts', () => {
+    expect(normalizeKoreanSpeechText('09:05에 시작합니다.')).toBe('아홉 시 오 분에 시작합니다.')
+    expect(normalizeKoreanSpeechText('12:30에 만나요.')).toBe('열두 시 삼십 분에 만나요.')
+    expect(normalizeKoreanSpeechText('오전 09:05에 만나요.')).toBe('오전 아홉 시 오 분에 만나요.')
+    expect(normalizeKoreanSpeechText('오후 04:30에 만나요.')).toBe('오후 네 시 삼십 분에 만나요.')
+    expect(normalizeKoreanSpeechText('오전 09:05')).toBe('오전 아홉 시 오 분')
+    expect(normalizeKoreanSpeechText('０９:０５에 만나요.')).toBe('아홉 시 오 분에 만나요.')
+    expect(normalizeKoreanSpeechText('00:00에, 23:59에')).toBe(
+      '영 시 영 분에, 이십삼 시 오십구 분에',
+    )
+    expect(normalizeKoreanSpeechText('24:00에 만나요.')).toBe('이십사 시 영 분에 만나요.')
+  })
+
+  it.each(['에', '부터', '까지', '에서', '쯤', '경'])(
+    'should pronounce colon clock times with the %s suffix',
+    (suffix) => {
+      expect(normalizeKoreanSpeechText(`09:05${suffix}`)).toBe(`아홉 시 오 분${suffix}`)
+    },
+  )
+
+  it('should preserve invalid, structured, and context-free colon numbers', () => {
+    const text =
+      '24:01에, 12:60에, 오전 00:00에, 오전 24:00에, 오후 00:00에, 오후 13:00에, ' +
+      '124:05에, 09:051에, v09:05에, 1.09:05에, ' +
+      '\\09:05에, -09:05에, +09:05에, 09:05:30에, https://example.com/09:05에, https://example.com/?time=09:05에, 09:05, ' +
+      '비율 09:05, 버전 09:05. 비율 09:05에, 비율: 09:05에, 버전 오전 09:05에, ' +
+      'version: 오전 09:05에, aspect ratio 09:05에.'
+
+    expect(normalizeKoreanSpeechText(text)).toBe(text)
+  })
+
+  it.each([
+    '- 09:05에 만나요.',
+    '+ 09:05에 만나요.',
+    '− ０９:０５에 만나요.',
+    '문서 번호 09:05에 만나요.',
+    '모델 09:05에',
+  ])('should preserve signed and identifier colon expressions: %s', (text) => {
+    expect(normalizeKoreanSpeechText(text)).toBe(text)
+  })
+
+  it.each([
+    ['현재 시각은 09:05입니다.', '현재 시각은 아홉 시 오 분입니다.'],
+    ['09:05에는 시작해요.', '아홉 시 오 분에는 시작해요.'],
+    ['09:05부터는 시작해요.', '아홉 시 오 분부터는 시작해요.'],
+  ])('should pronounce colon clocks with Korean endings: %s', (text, expected) => {
+    expect(normalizeKoreanSpeechText(text)).toBe(expected)
+  })
+
+  it.each([
+    '경기 스코어는 09:05에서 끝났어요.',
+    '최종점수는 09:05에서 끝났어요.',
+    '경기스코어는 09:05에서 끝났어요.',
+    '점수 09:05까지 올랐어요.',
+    'score 09:05에 도달했어요.',
+  ])('should preserve colon scores with explicit score cues: %s', (text) => {
+    expect(normalizeKoreanSpeechText(text)).toBe(text)
+  })
+
+  it.each([
+    ['０９：０５에 시작합니다.', '아홉 시 오 분에 시작합니다.'],
+    ['현재 시각은 09:05.', '현재 시각은 아홉 시 오 분.'],
+    ['시각은 09:05.', '시각은 아홉 시 오 분.'],
+    ['현재 시간은 09:05.', '현재 시간은 아홉 시 오 분.'],
+  ])('should pronounce explicit clock contexts and fullwidth colons: %s', (text, expected) => {
+    expect(normalizeKoreanSpeechText(text)).toBe(expected)
+  })
+
+  it.each([
+    ['는', '은'],
+    ['가', '이'],
+    ['를', '을'],
+    ['와', '과'],
+    ['로', '으로'],
+    ['나', '이나'],
+    ['예요', '이에요'],
+    ['였어요', '이었어요'],
+    ['라고', '이라고'],
+  ])('should inflect the %s particle after the inserted minute unit', (particle, expected) => {
+    expect(normalizeKoreanSpeechText(`09:05${particle}`)).toBe(`아홉 시 오 분${expected}`)
+  })
+
+  it.each(['０９：０５：３０에', '비율： ０９：０５에', '남은 시간은 09:05.'])(
+    'should preserve unsupported or ambiguous clock contexts: %s',
+    (text) => {
+      expect(normalizeKoreanSpeechText(text)).toBe(text)
+    },
+  )
+
+  it.each([
+    '점수 09:05부터 12:30까지',
+    '스코어는 09:05에서 12:30까지',
+    '비율 09:05부터 12:30까지',
+    '비율：０９：０５부터 １２：３０까지',
+    '오후 13:05부터 12:30까지',
+    '- 09:05부터 12:30까지',
+  ])('should preserve non-clock context across colon ranges: %s', (text) => {
+    expect(normalizeKoreanSpeechText(text)).toBe(text)
+  })
+
+  it.each(['문서 번호:', '모델:', '방:', 'ID:', 'model:', 'room：'])(
+    'should preserve identifier clock values after the %s label',
+    (label) => {
+      const text = `${label} 09:05에 접속해요.`
+      expect(normalizeKoreanSpeechText(text)).toBe(text)
+    },
+  )
+
+  it.each([
+    'time=오후 13:05에',
+    'time=오후 04:30에',
+    'time=오전 00:05에',
+    'time=오후 １３：０５에',
+    '문서=오전 09:05에',
+  ])('should not retry a blocked day-period clock without its prefix: %s', (text) => {
+    expect(normalizeKoreanSpeechText(text)).toBe(text)
+  })
+
+  it('should preserve score cues across compound range particles', () => {
+    const text = '점수 09:05부터는 12:30까지'
+    expect(normalizeKoreanSpeechText(text)).toBe(text)
+  })
+
+  it('should use the protected prefix only as context without including it in the output', () => {
+    expect(normalizeKoreanSpeechText(' 13:05에', 'https://example.com/?time=오후')).toBe(' 13:05에')
+  })
+
+  it.each([
+    'time = 09:05에',
+    'time= 09:05에',
+    'time = 오전 09:05에',
+    'time ? 09:05에',
+    'time % 09:05에',
+  ])('should preserve spaced structured clock delimiters: %s', (text) => {
+    expect(normalizeKoreanSpeechText(text)).toBe(text)
+  })
+
+  it.each([
+    '남은 시간은 09:05입니다.',
+    '재생 시간은 09:05예요.',
+    '경과 시간: 09:05에',
+    '타임스탬프 09:05에서',
+    'duration: 09:05에',
+    '영상 길이는 09:05입니다.',
+  ])('should preserve duration and media colon contexts: %s', (text) => {
+    expect(normalizeKoreanSpeechText(text)).toBe(text)
+  })
+
+  it('should retain June and October pronunciation when normalizing a colon time', () => {
+    expect(normalizeKoreanSpeechText('6월 10일 09:05에 시작합니다.')).toBe(
+      '유월 십 일 아홉 시 오 분에 시작합니다.',
+    )
+    expect(normalizeKoreanSpeechText('10월 2일 오전 09:05에 시작합니다.')).toBe(
+      '시월 이 일 오전 아홉 시 오 분에 시작합니다.',
+    )
+  })
+  it.each([
+    ['09:05부터 12:30', '아홉 시 오 분부터 열두 시 삼십 분'],
+    ['09:05에서 12:30 사이', '아홉 시 오 분에서 열두 시 삼십 분 사이'],
+    ['Meeting 09:05에', 'Meeting 아홉 시 오 분에'],
+    ['appointment 09:05에', 'appointment 아홉 시 오 분에'],
+    ['Zoom 09:05에', 'Zoom 아홉 시 오 분에'],
+    ['Call 09:05에', 'Call 아홉 시 오 분에'],
+    ['점수에서는 09:05에서 끝났어요.', '점수에서는 09:05에서 끝났어요.'],
+    ['스코어로는 09:05입니다.', '스코어로는 09:05입니다.'],
+    ['비율에서는 09:05에 해당합니다.', '비율에서는 09:05에 해당합니다.'],
+    ['버전에서는 09:05에 해당합니다.', '버전에서는 09:05에 해당합니다.'],
+    ['그는 “현재 시각은 09:05.”라고 말했다.', '그는 “현재 시각은 아홉 시 오 분.”라고 말했다.'],
+    ['알림: (오전 09:05).', '알림: (오전 아홉 시 오 분).'],
+    ['현재 시간： 09:05.', '현재 시간： 아홉 시 오 분.'],
+    ['현재 시간：09:05.', '현재 시간：아홉 시 오 분.'],
+    ['현재 시간：09:05부터 12:30', '현재 시간：아홉 시 오 분부터 열두 시 삼십 분'],
+  ])('should retain explicit clock and non-time boundary contracts: %s', (text, expected) => {
+    expect(normalizeKoreanSpeechText(text)).toBe(expected)
+  })
+  it.each([
+    ['duration: (09:05에)', 'duration: (09:05에)'],
+    ['문서 번호: (09:05에)', '문서 번호: (09:05에)'],
+    ['time=(09:05에)', 'time=(09:05에)'],
+    ['점수에서는 “09:05에서”', '점수에서는 “09:05에서”'],
+    ['model: [09:05에]', 'model: [09:05에]'],
+    ['현재 시간：(09:05).', '현재 시간：(아홉 시 오 분).'],
+  ])('should retain clock context across opening delimiters: %s', (text, expected) => {
+    expect(normalizeKoreanSpeechText(text)).toBe(expected)
+  })
+  it.each([
+    ['현재 시간:09:05.', '현재 시간:아홉 시 오 분.'],
+    ['현재 시간:09:05부터 12:30', '현재 시간:아홉 시 오 분부터 열두 시 삼십 분'],
+    ['오후: 13:05에', '오후: 13:05에'],
+    ['오전: 00:05에', '오전: 00:05에'],
+    ['오후: 04:30에', '오후: 네 시 삼십 분에'],
+    ['오전09:05부터 12:30까지', '오전 아홉 시 오 분부터 열두 시 삼십 분까지'],
+    ['오후04:30부터 12:30까지', '오후 네 시 삼십 분부터 열두 시 삼십 분까지'],
+    ['오후13:05부터 12:30까지', '오후13:05부터 12:30까지'],
+    ['약속은 “09:05”에 시작합니다.', '약속은 “아홉 시 오 분”에 시작합니다.'],
+    ['알람을 「09:05」로 설정해요.', '알람을 「아홉 시 오 분」으로 설정해요.'],
+    ['마감은 [09:05]까지예요.', '마감은 [아홉 시 오 분]까지예요.'],
+    ['최종 점수. 09:05에 시작합니다.', '최종 점수. 아홉 시 오 분에 시작합니다.'],
+    ['버전. 09:05에 시작합니다.', '버전. 아홉 시 오 분에 시작합니다.'],
+    ['Check the score. 09:05에 시작합니다.', 'Check the score. 아홉 시 오 분에 시작합니다.'],
+    ['v. 09:05에', 'v. 09:05에'],
+    ['ver. 09:05에', 'ver. 09:05에'],
+    ['field:09:05에', 'field:09:05에'],
+  ])('should retain clock labels and sentence boundary contracts: %s', (text, expected) => {
+    expect(normalizeKoreanSpeechText(text)).toBe(expected)
+  })
+  it.each([
+    ['field: (09:05에)', 'field: (09:05에)'],
+    ['오후 (09:05에)', '오후 (아홉 시 오 분에)'],
+    ['오후 (13:05에)', '오후 (13:05에)'],
+    ['time=오후 (09:05에)', 'time=오후 (09:05에)'],
+    ['대화는 (09:05에)', '대화는 (아홉 시 오 분에)'],
+    ['모델은 09:05입니다.', '모델은 09:05입니다.'],
+    ['모델에서는 09:05를 사용합니다.', '모델에서는 09:05를 사용합니다.'],
+    ['방은 09:05입니다.', '방은 09:05입니다.'],
+    ['ID는 09:05입니다.', 'ID는 09:05입니다.'],
+    ['model에는 09:05를 사용합니다.', 'model에는 09:05를 사용합니다.'],
+    ['오후 (09:05)', '오후 (아홉 시 오 분)'],
+    ['time=오후 (09:05)', 'time=오후 (09:05)'],
+  ])('should preserve decorated range and cue ownership contracts: %s', (text, expected) => {
+    expect(normalizeKoreanSpeechText(text)).toBe(expected)
+  })
+  it.each([
+    ['현재 시각은 09:05,다음 일정입니다.', '현재 시각은 아홉 시 오 분,다음 일정입니다.'],
+    ['현재 시각은 09:05，다음 일정입니다.', '현재 시각은 아홉 시 오 분，다음 일정입니다.'],
+    ['현재 시각은 09:05.다음 일정입니다.', '현재 시각은 아홉 시 오 분.다음 일정입니다.'],
+    ['현재 시각은 09:05．다음 일정입니다.', '현재 시각은 아홉 시 오 분．다음 일정입니다.'],
+    ['현재 시각은 09:05。다음 일정입니다.', '현재 시각은 아홉 시 오 분。다음 일정입니다.'],
+    ['현재 시각은 09:05!다음 일정입니다.', '현재 시각은 아홉 시 오 분!다음 일정입니다.'],
+    ['현재 시각은 09:05！다음 일정입니다.', '현재 시각은 아홉 시 오 분！다음 일정입니다.'],
+    ['현재 시각은 09:05?다음 일정입니다.', '현재 시각은 아홉 시 오 분?다음 일정입니다.'],
+    ['현재 시각은 09:05？다음 일정입니다.', '현재 시각은 아홉 시 오 분？다음 일정입니다.'],
+    ['현재 시각은 09:05…다음 일정입니다.', '현재 시각은 아홉 시 오 분…다음 일정입니다.'],
+    ['현재 시각은 09:05;다음 일정입니다.', '현재 시각은 아홉 시 오 분;다음 일정입니다.'],
+    ['현재 시각은 09:05；다음 일정입니다.', '현재 시각은 아홉 시 오 분；다음 일정입니다.'],
+    ['현재 시각은 09:05.30', '현재 시각은 09:05.30'],
+    ['현재 시각은 09:05,300', '현재 시각은 09:05,300'],
+    ['현재 시각은 ０９：０５．３０', '현재 시각은 ０９：０５．３０'],
+    ['현재 시각은 ０９：０５，３００', '현재 시각은 ０９：０５，３００'],
+  ])('should retain clock punctuation boundaries: %s', (text, expected) => {
+    expect(normalizeKoreanSpeechText(text)).toBe(expected)
+  })
 })
