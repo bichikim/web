@@ -18,8 +18,7 @@ const MAX_DAY_PERIOD_HOUR = 12
 const CLOCK_OPENING_SOURCE = `(?:[\\p{Ps}\\p{Pi}"']\\s*)*`
 const CLOCK_RANGE_DECORATION_SOURCE = [
   CLOCK_OPENING_SOURCE,
-  '(?:(?:오전|오후)[:：]?\\s*)?',
-  CLOCK_OPENING_SOURCE,
+  `(?:(?:오전|오후)[:：]?\\s*${CLOCK_OPENING_SOURCE})?`,
 ].join('')
 const PROTECTED_RANGE_NUMBER_SOURCE = `${UNSIGNED_INTEGER_PATTERN_SOURCE}(?:\\.\\d+)?`
 const PROTECTED_URL_SOURCE = '(?:https?:\\/\\/|www\\.)\\S+'

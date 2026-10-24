@@ -3,6 +3,17 @@ import {describe, expect, it} from 'vitest'
 import {normalizeSpeechText} from '../index'
 
 describe('normalizeSpeechText boundary contexts', () => {
+  it('should process long opening-delimiter context within the unit budget', () => {
+    const prefix = '( “ [ '.repeat(334).slice(0, 2_000)
+    const maximumProcessingMilliseconds = 150
+    const startedAt = performance.now()
+    const normalized = normalizeSpeechText({language: 'ko', text: `${prefix}09:05에`})
+    const elapsed = performance.now() - startedAt
+
+    expect(normalized).toBe(`${prefix}아홉 시 오 분에`)
+    expect(elapsed).toBeLessThan(maximumProcessingMilliseconds)
+  })
+
   it.each([
     ['현재 시각은 09:05,다음 일정입니다.', '현재 시각은 아홉 시 오 분,다음 일정입니다.'],
     ['현재 시각은 09:05，다음 일정입니다.', '현재 시각은 아홉 시 오 분，다음 일정입니다.'],
