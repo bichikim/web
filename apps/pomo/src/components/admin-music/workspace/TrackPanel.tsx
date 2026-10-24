@@ -9,7 +9,7 @@ import {
 } from '../../../features/admin-music'
 import {BUTTON_CLASSES, DANGER_BUTTON_CLASSES, SECONDARY_BUTTON_CLASSES} from '../button-classes'
 import {PendingTrackList} from '../PendingTrackList'
-import {type AlbumTaskFormProps} from './form-props'
+import {type AlbumTaskFormProps} from './types'
 import {TrackForm} from './TrackForm'
 
 const AdminTrackPreview = clientOnly(

@@ -1,15 +1,12 @@
 import {Tabs} from '@kobalte/core/tabs'
 import {cx} from 'class-variance-authority'
 import {createSignal, For, Show} from 'solid-js'
-import {
-  type AdminAlbum,
-  type AdminMusicModel,
-  getAlbumTranslation,
-} from '../../features/admin-music'
+import {type AdminAlbum, getAlbumTranslation} from '../../features/admin-music'
 import {AlbumReleaseCard} from './AlbumReleaseCard'
 import {AlbumDetailsPanel} from './workspace/AlbumDetailsPanel'
 import {TrackPanel} from './workspace/TrackPanel'
 import {SalesPanel} from './workspace/SalesPanel'
+import type {AlbumWorkspaceModel} from './workspace/types'
 
 const TAB_CLASSES = cx(
   'min-h-11 whitespace-nowrap border-b-2 px-1 text-sm font-750 transition',
@@ -26,7 +23,7 @@ type WorkspaceTab = (typeof WORKSPACE_TABS)[number]['id']
 
 export interface AlbumWorkspaceProps {
   readonly album: AdminAlbum
-  readonly model: AdminMusicModel
+  readonly model: AlbumWorkspaceModel
 }
 
 export const AlbumWorkspace = (props: AlbumWorkspaceProps) => {
