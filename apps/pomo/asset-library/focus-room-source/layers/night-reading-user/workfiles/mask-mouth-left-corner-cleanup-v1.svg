@@ -1,0 +1,9 @@
+<svg width="260" height="180" viewBox="0 0 260 180" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <filter id="feather" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="2" />
+    </filter>
+  </defs>
+  <rect width="260" height="180" fill="black" />
+  <ellipse cx="70" cy="94" rx="11" ry="9" fill="white" filter="url(#feather)" />
+</svg>

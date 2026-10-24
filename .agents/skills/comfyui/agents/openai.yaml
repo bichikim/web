@@ -1,0 +1,4 @@
+interface:
+  display_name: 'ComfyUI'
+  short_description: 'Run ComfyUI workflows with installed local models first'
+  default_prompt: 'Use ComfyUI for this media task and prefer installed local models whenever feasible.'

@@ -1,0 +1,8 @@
+# Build output
+.output
+.vinxi
+
+# Environment (keep .env.example)
+.env
+.env.local
+.env.*.local

@@ -1,0 +1,4 @@
+interface:
+  display_name: 'Logic-Driven UI Design'
+  short_description: 'Design and review clear, accessible interfaces'
+  default_prompt: 'Use $logic-driven-ui-design to improve this interface with clear hierarchy, semantics, and accessibility.'

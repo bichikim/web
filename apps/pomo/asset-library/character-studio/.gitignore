@@ -1,0 +1,8 @@
+/*
+!/.gitignore
+!/realtime/
+/realtime/*
+!/realtime/prepare.py
+!/realtime/verify.py
+!/realtime/validation.json
+!/realtime/README.md

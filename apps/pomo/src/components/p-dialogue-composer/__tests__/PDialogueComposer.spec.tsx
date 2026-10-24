@@ -1,0 +1,336 @@
+/** @vitest-environment jsdom */
+
+import {fireEvent, render, screen, waitFor} from '@solidjs/testing-library'
+import {createSignal} from 'solid-js'
+import {afterEach, expect, it, vi} from 'vitest'
+
+import {getLocale, overwriteGetLocale} from '@paraglide/runtime'
+import {PDialogueComposer} from '../PDialogueComposer'
+
+const originalGetLocale = getLocale
+
+afterEach(() => {
+  overwriteGetLocale(originalGetLocale)
+})
+
+const dispatchEscape = (input: HTMLInputElement, isComposing: boolean) => {
+  const event = new KeyboardEvent('keydown', {
+    bubbles: true,
+    cancelable: true,
+    isComposing,
+    key: 'Escape',
+  })
+  input.dispatchEvent(event)
+  return event
+}
+
+it('should expand the initial dialogue button into a focused input', async () => {
+  render(() => <PDialogueComposer />)
+
+  const trigger = screen.getByRole('button', {name: '대화 시작하기'})
+  expect(trigger).toHaveAttribute('aria-expanded', 'false')
+  expect(screen.queryByRole('textbox', {name: '대화 입력'})).not.toBeInTheDocument()
+
+  fireEvent.click(trigger)
+
+  const input = screen.getByRole('textbox', {name: '대화 입력'})
+  const composer = input.closest('form')
+  expect(input).toHaveAttribute('placeholder', '어떤 대화를 나눌까요?')
+  expect(input).toHaveValue('')
+  expect(composer).toHaveClass('[&[data-expanded]]:w-full', '[&[data-expanded]]:[flex:none]')
+  expect(composer).toHaveClass('[&[data-expanded]]:self-start')
+  expect(composer).toHaveClass('self-end', 'sm:self-start')
+  expect(composer).not.toHaveClass('[&[data-expanded]]:[flex:1_1_36rem]')
+  expect(composer).not.toHaveClass('[&[data-expanded]]:w-[min(36rem,_100%)]')
+  expect(composer).toHaveClass('focus-within:border-highlight')
+  expect(composer).not.toHaveClass('focus-within:shadow-focus')
+  await waitFor(() => expect(input).toHaveFocus())
+})
+
+it('should localize the dialogue placeholder in English', () => {
+  overwriteGetLocale(() => 'en')
+  render(() => <PDialogueComposer />)
+
+  fireEvent.click(screen.getByRole('button', {name: 'Start a conversation'}))
+
+  expect(screen.getByRole('textbox', {name: 'Dialogue input'})).toHaveAttribute(
+    'placeholder',
+    'What would you like to talk about?',
+  )
+  expect(screen.getByRole('button', {name: 'Send dialogue'})).toBeDisabled()
+})
+
+it('should expose the device and entitled server execution choices', () => {
+  const onExecutionModeChange = vi.fn()
+  render(() => (
+    <PDialogueComposer
+      executionMode="local"
+      onExecutionModeChange={onExecutionModeChange}
+      serverAccessStatus="available"
+      serverAvailable
+    />
+  ))
+
+  fireEvent.click(screen.getByRole('button', {name: '대화 시작하기'}))
+  const selector = screen.getByRole('combobox', {name: 'AI 실행 위치'})
+  expect(selector).toHaveValue('local')
+  expect(screen.getByRole('option', {name: '서버 Luna (구독)'})).toBeEnabled()
+
+  fireEvent.change(selector, {target: {value: 'server'}})
+
+  expect(onExecutionModeChange).toHaveBeenCalledWith('server')
+})
+
+it('should update and restore a draft owned by the caller', () => {
+  const [draft, setDraft] = createSignal('')
+  render(() => <PDialogueComposer draft={draft} onDraftChange={setDraft} />)
+
+  fireEvent.click(screen.getByRole('button', {name: '대화 시작하기'}))
+  const input = screen.getByRole('textbox', {name: '대화 입력'})
+
+  fireEvent.input(input, {target: {value: '입력 중인 대화'}})
+  expect(draft()).toBe('입력 중인 대화')
+
+  setDraft('복구된 대화')
+  expect(input).toHaveValue('복구된 대화')
+})
+
+it('should leave a focused composer open while Escape cancels an IME composition', async () => {
+  render(() => <PDialogueComposer />)
+  fireEvent.click(screen.getByRole('button', {name: '대화 시작하기'}))
+  const input = screen.getByRole('textbox', {name: '대화 입력'}) as HTMLInputElement
+  await Promise.resolve()
+  expect(input).toHaveFocus()
+  fireEvent.input(input, {target: {value: '이어 쓸 대화'}})
+
+  const compositionEscape = dispatchEscape(input, true)
+  expect(compositionEscape.defaultPrevented).toBe(false)
+  expect(screen.getByRole('textbox', {name: '대화 입력'})).toBe(input)
+  expect(input).toHaveFocus()
+
+  fireEvent.compositionEnd(input)
+  const collapseEscape = dispatchEscape(input, false)
+  expect(collapseEscape.defaultPrevented).toBe(true)
+  expect(screen.queryByRole('textbox', {name: '대화 입력'})).not.toBeInTheDocument()
+
+  const trigger = screen.getByRole('button', {name: '대화 시작하기'})
+  await Promise.resolve()
+  expect(trigger).toHaveFocus()
+  fireEvent.click(trigger)
+  const reopenedInput = screen.getByRole('textbox', {name: '대화 입력'})
+  expect(reopenedInput).toHaveValue('이어 쓸 대화')
+  await Promise.resolve()
+  expect(reopenedInput).toHaveFocus()
+})
+
+it('should preserve a caller-controlled draft through composing Escape and reopen', async () => {
+  const [draft, setDraft] = createSignal('')
+  render(() => <PDialogueComposer draft={draft} onDraftChange={setDraft} />)
+  fireEvent.click(screen.getByRole('button', {name: '대화 시작하기'}))
+  const input = screen.getByRole('textbox', {name: '대화 입력'}) as HTMLInputElement
+  await Promise.resolve()
+  expect(input).toHaveFocus()
+  fireEvent.input(input, {target: {value: 'caller draft'}})
+
+  const compositionEscape = dispatchEscape(input, true)
+  expect(compositionEscape.defaultPrevented).toBe(false)
+  expect(screen.getByRole('textbox', {name: '대화 입력'})).toBe(input)
+  expect(input).toHaveFocus()
+
+  fireEvent.compositionEnd(input)
+  const collapseEscape = dispatchEscape(input, false)
+  expect(collapseEscape.defaultPrevented).toBe(true)
+  const trigger = screen.getByRole('button', {name: '대화 시작하기'})
+  await Promise.resolve()
+  expect(trigger).toHaveFocus()
+  fireEvent.click(trigger)
+
+  const reopenedInput = screen.getByRole('textbox', {name: '대화 입력'})
+  await Promise.resolve()
+  expect(draft()).toBe('caller draft')
+  expect(reopenedInput).toHaveValue('caller draft')
+  expect(reopenedInput).toHaveFocus()
+})
+
+it('should auto-expand once without moving focus', async () => {
+  const [autoExpand, setAutoExpand] = createSignal(false)
+  render(() => <PDialogueComposer autoExpand={autoExpand()} />)
+
+  expect(screen.queryByRole('textbox', {name: '대화 입력'})).not.toBeInTheDocument()
+
+  setAutoExpand(true)
+
+  const input = await screen.findByRole('textbox', {name: '대화 입력'})
+  expect(input).not.toHaveFocus()
+
+  fireEvent.blur(input)
+  expect(screen.getByRole('textbox', {name: '대화 입력'})).toBeInTheDocument()
+
+  setAutoExpand(false)
+  fireEvent.keyDown(input, {key: 'Escape'})
+  expect(screen.getByRole('button', {name: '대화 시작하기'})).toBeInTheDocument()
+
+  setAutoExpand(true)
+
+  expect(await screen.findByRole('textbox', {name: '대화 입력'})).not.toHaveFocus()
+})
+
+it('should collapse an untouched mobile composer when media messages appear', async () => {
+  const [autoExpand, setAutoExpand] = createSignal(true)
+  render(() => <PDialogueComposer autoExpand={autoExpand()} />)
+
+  expect(await screen.findByRole('textbox', {name: '대화 입력'})).not.toHaveFocus()
+
+  setAutoExpand(false)
+
+  expect(screen.getByRole('button', {name: '대화 시작하기'})).toBeInTheDocument()
+})
+
+it('should keep a focused or drafted mobile composer open when media messages appear', async () => {
+  const [autoExpand, setAutoExpand] = createSignal(true)
+  render(() => <PDialogueComposer autoExpand={autoExpand()} />)
+  const input = await screen.findByRole('textbox', {name: '대화 입력'})
+
+  input.focus()
+  setAutoExpand(false)
+  expect(input).toBeInTheDocument()
+
+  fireEvent.input(input, {target: {value: '이어 쓸 대화'}})
+  input.blur()
+  expect(input).toBeInTheDocument()
+})
+
+it('should submit trimmed dialogue text, clear it, and restore input focus', async () => {
+  const onSubmit = vi.fn()
+  const [loading, setLoading] = createSignal(false)
+  render(() => (
+    <PDialogueComposer
+      loading={loading()}
+      onSubmit={(text) => {
+        onSubmit(text)
+        setLoading(true)
+      }}
+    />
+  ))
+  fireEvent.click(screen.getByRole('button', {name: '대화 시작하기'}))
+  const input = screen.getByRole('textbox', {name: '대화 입력'})
+  const button = screen.getByRole('button', {name: '대화 보내기'})
+
+  expect(button).toBeDisabled()
+
+  fireEvent.input(input, {target: {value: '  오늘은 무엇을 할까?  '}})
+  expect(button).toBeEnabled()
+  button.focus()
+  expect(button).toHaveFocus()
+  fireEvent.click(button)
+
+  expect(onSubmit).toHaveBeenCalledWith('오늘은 무엇을 할까?')
+  await waitFor(() => expect(input).toHaveValue(''))
+  await waitFor(() => expect(input).toHaveFocus())
+})
+
+it('should preserve the submitted draft when the submission is rejected', async () => {
+  const onSubmit = vi.fn(async () => false)
+  render(() => <PDialogueComposer onSubmit={onSubmit} />)
+  fireEvent.click(screen.getByRole('button', {name: '대화 시작하기'}))
+  const input = screen.getByRole('textbox', {name: '대화 입력'})
+  fireEvent.input(input, {target: {value: '남겨 둘 대화'}})
+
+  fireEvent.click(screen.getByRole('button', {name: '대화 보내기'}))
+
+  await waitFor(() => expect(onSubmit).toHaveBeenCalledWith('남겨 둘 대화'))
+  expect(input).toHaveValue('남겨 둘 대화')
+  await waitFor(() => expect(input).toHaveFocus())
+})
+
+it('should keep focus and accept the next draft while dialogue creation is busy', async () => {
+  const [loading, setLoading] = createSignal(false)
+  const onSubmit = vi.fn()
+  render(() => <PDialogueComposer loading={loading()} onSubmit={onSubmit} />)
+  fireEvent.click(screen.getByRole('button', {name: '대화 시작하기'}))
+  const input = screen.getByRole('textbox', {name: '대화 입력'})
+  await waitFor(() => expect(input).toHaveFocus())
+
+  setLoading(true)
+
+  expect(input).toHaveFocus()
+  expect(input).not.toHaveAttribute('readonly')
+  expect(input).toBeEnabled()
+  fireEvent.input(input, {target: {value: '다음에 보낼 대화'}})
+  expect(input).toHaveValue('다음에 보낼 대화')
+  const submitButton = screen.getByRole('button', {name: '대화 준비 중'})
+  expect(submitButton).toBeDisabled()
+  const composer = input.closest('form')
+  fireEvent.submit(composer!)
+  expect(onSubmit).not.toHaveBeenCalled()
+  expect(submitButton.querySelector('span[aria-hidden="true"]')).toHaveClass('animate-spin')
+  expect(composer).toHaveAttribute('aria-busy', 'true')
+})
+
+it('should replace the collapsed dialogue button with a disabled loading indicator', () => {
+  render(() => <PDialogueComposer loading />)
+
+  const trigger = screen.getByRole('button', {name: '대화 준비 중'})
+  const composer = trigger.closest('form')
+  expect(trigger).toBeDisabled()
+  expect(trigger.querySelector('span[aria-hidden="true"]')).toHaveClass('animate-spin')
+  expect(composer).toHaveAttribute('aria-busy', 'true')
+})
+
+it('should collapse an empty input after focus leaves the composer', () => {
+  render(() => <PDialogueComposer />)
+  fireEvent.click(screen.getByRole('button', {name: '대화 시작하기'}))
+
+  fireEvent.blur(screen.getByRole('textbox', {name: '대화 입력'}))
+
+  expect(screen.getByRole('button', {name: '대화 시작하기'})).toBeInTheDocument()
+})
+
+it('should preserve a draft while focus moves away or the composer is reopened', () => {
+  render(() => <PDialogueComposer />)
+  fireEvent.click(screen.getByRole('button', {name: '대화 시작하기'}))
+  const input = screen.getByRole('textbox', {name: '대화 입력'})
+  fireEvent.input(input, {target: {value: '이어 쓸 대화'}})
+
+  fireEvent.blur(input)
+  expect(input).toBeInTheDocument()
+
+  fireEvent.keyDown(input, {key: 'Escape'})
+  fireEvent.click(screen.getByRole('button', {name: '대화 시작하기'}))
+
+  expect(screen.getByRole('textbox', {name: '대화 입력'})).toHaveValue('이어 쓸 대화')
+})
+
+it('should collapse an empty composer when a non-focusable outside area is pressed', async () => {
+  render(() => (
+    <>
+      <div data-testid="scene" />
+      <PDialogueComposer />
+    </>
+  ))
+  fireEvent.click(screen.getByRole('button', {name: '대화 시작하기'}))
+  const input = screen.getByRole('textbox', {name: '대화 입력'})
+  await waitFor(() => expect(input).toHaveFocus())
+
+  fireEvent.pointerDown(screen.getByTestId('scene'))
+
+  expect(screen.getByRole('button', {name: '대화 시작하기'})).toBeInTheDocument()
+})
+
+it('should remove focus without discarding a draft when the scene is pressed', async () => {
+  render(() => (
+    <>
+      <div data-testid="scene" />
+      <PDialogueComposer />
+    </>
+  ))
+  fireEvent.click(screen.getByRole('button', {name: '대화 시작하기'}))
+  const input = screen.getByRole('textbox', {name: '대화 입력'})
+  fireEvent.input(input, {target: {value: '남겨 둘 대화'}})
+  await waitFor(() => expect(input).toHaveFocus())
+
+  fireEvent.pointerDown(screen.getByTestId('scene'))
+
+  expect(input).not.toHaveFocus()
+  expect(input).toHaveValue('남겨 둘 대화')
+})

@@ -1,0 +1,13 @@
+{
+  "name": "@winter-love/oxlint-plugins",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "main": "index.mjs",
+  "exports": {
+    ".": "./index.mjs"
+  },
+  "dependencies": {
+    "@typescript/typescript6": "catalog:"
+  }
+}

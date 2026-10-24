@@ -1,0 +1,10 @@
+name: knowledge-local
+services:
+  qdrant:
+    image: qdrant/qdrant:v1.19.0
+    ports:
+      - '127.0.0.1:6333:6333'
+    volumes:
+      - storage:/qdrant/storage
+volumes:
+  storage:

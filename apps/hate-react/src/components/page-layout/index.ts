@@ -1,0 +1,1 @@
+export {SHomeLayout} from './SHomeLayout'

@@ -1,0 +1,41 @@
+/** @vitest-environment jsdom */
+
+import {cleanup, render, screen} from '@solidjs/testing-library'
+import {afterEach, expect, it, vi} from 'vitest'
+
+vi.mock('@solidjs/meta', () => ({
+  Title: (props: {readonly children: unknown}) => <>{props.children}</>,
+}))
+vi.mock('../../p-tools/PToolsDialog', () => ({PToolsDialog: () => <p>tools dialog ready</p>}))
+vi.mock('../../p-studio/PStudio', () => ({PStudio: () => <p>studio ready</p>}))
+
+afterEach(() => {
+  cleanup()
+  vi.unstubAllEnvs()
+  vi.resetModules()
+})
+
+it.each([false, true])('should render the home studio for Toss=%s', async (isAppsInToss) => {
+  vi.stubEnv('VITE_POMO_IS_APPS_IN_TOSS', isAppsInToss ? 'true' : '')
+  const {PHomePage} = await import('../PHomePage')
+
+  render(() => <PHomePage />)
+
+  expect(screen.getByText('studio ready')).toBeInTheDocument()
+  expect(screen.getByText('tools dialog ready')).toBeInTheDocument()
+  expect(screen.queryByRole('status')).toBeNull()
+  const main = screen.getByRole('main')
+  expect(main.className.includes('radial-gradient')).toBe(!isAppsInToss)
+})
+
+it('should keep the desktop app canvas transparent for native website backgrounds', async () => {
+  vi.stubEnv('VITE_POMO_IS_DESKTOP', 'true')
+  vi.stubEnv('VITE_POMO_IS_APPS_IN_TOSS', '')
+  const {PHomePage} = await import('../PHomePage')
+
+  render(() => <PHomePage />)
+
+  const main = screen.getByRole('main')
+  expect(main).toHaveClass('bg-transparent', 'pomo-desktop-background')
+  expect(main.className.includes('radial-gradient')).toBe(false)
+})

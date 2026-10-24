@@ -1,0 +1,42 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "globalDependencies": ["**/.env.*local"],
+  "globalPassThroughEnv": ["COREPACK_HOME", "pnpm_config_verify_deps_before_run"],
+  "globalEnv": [
+    "VITE_API_URL",
+    "VITE_APP_URL",
+    "VITE_GITHUB_CLIENT_ID",
+    "VITE_GITHUB_CLIENT_SECRET",
+    "VITE_SUPABASE_PUBLISHABLE_KEY",
+    "VITE_SUPABASE_URL"
+  ],
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"],
+      "inputs": ["$TURBO_DEFAULT$", "!.output/**"],
+      "outputs": ["dist/**", "es-tone/**", ".output/**"]
+    },
+    "prepare-build": {
+      "dependsOn": ["^prepare-build"],
+      "inputs": ["$TURBO_DEFAULT$", "!.output/**", ".env"],
+      "outputs": ["dist/**", "es-tone/**", ".i18n/**", ".supabase/**"],
+      "env": ["SUPABASE_PROJECT_ID"],
+      "passThroughEnv": ["SUPABASE_ACCESS_TOKEN"]
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true
+    },
+    "typecheck": {
+      "dependsOn": ["^typecheck"],
+      "inputs": ["$TURBO_DEFAULT$"]
+    },
+    "@winter-love/puppet#typecheck": {
+      "dependsOn": ["^typecheck", "build"],
+      "inputs": ["$TURBO_DEFAULT$"]
+    },
+    "lint": {
+      "inputs": ["$TURBO_DEFAULT$", "oxlint.config.*"]
+    }
+  }
+}

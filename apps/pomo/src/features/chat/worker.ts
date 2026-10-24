@@ -1,0 +1,272 @@
+/// <reference lib="webworker" />
+import {listenTextGenerationRequests} from '../text-generation/listen-text-generation-requests'
+import {unwrapGenerationResult} from '../text-generation/unwrap-generation-result'
+
+import {
+  createExclusiveAsyncTask,
+  type ExclusiveAsyncTaskResult,
+} from 'src/utils/create-exclusive-async-task'
+import {
+  createDeviceTarget,
+  createRequestSequence,
+  type TextGenerationMessage,
+  type TextModelId,
+  trimRepetitiveTail,
+} from '../text-generation'
+
+// oxlint-disable no-await-in-loop -- Contaminated sentences share one WebGPU model and must be refined sequentially.
+
+import {
+  containsForeignCjk,
+  createForeignCjkTokenIds,
+  createKoreanRefinementMessages,
+  createKoreanTextSegments,
+  type KoreanTextSegment,
+  replaceUnrefinedSentences,
+} from '../korean-text-postprocessor'
+import {createTextGenerationExecutor} from '../text-generation/execution'
+import {partitionChatHistory} from './context'
+import type {ChatContext, ChatMessage, ChatWorkerRequest, ChatWorkerResponse} from './messages'
+import {createChatMessages, createSummaryMessages} from './prompt'
+
+const FAILURE_MESSAGE = '채팅 모델을 실행하지 못했어요.'
+
+const CONTEXT_COMPACTION_TOKENS = 4608
+const MAXIMUM_ANSWER_TOKENS = 2048
+const MAXIMUM_SUMMARY_TOKENS = 384
+const workerScope = globalThis.self as DedicatedWorkerGlobalScope
+
+const sendResponse = (response: ChatWorkerResponse) => workerScope.postMessage(response)
+const textExecutor = createTextGenerationExecutor({
+  onProgress: (progress) => sendResponse({...progress, type: 'loading'}),
+})
+const generation = createExclusiveAsyncTask()
+let suppressedCjkTokenIds: Array<number> | null = null
+const createRequestId = createRequestSequence('chat')
+
+const prepareModel = async (modelId: TextModelId) => {
+  const result = await textExecutor.prepare(createDeviceTarget(modelId))
+  const resultValue = unwrapGenerationResult(result, FAILURE_MESSAGE)
+
+  sendResponse({type: 'ready'})
+}
+
+const countPromptTokens = async (
+  context: ChatContext,
+  modelId: TextModelId,
+  supplementaryContext?: string,
+) => {
+  const result = await textExecutor.countTokens(
+    createDeviceTarget(modelId),
+    createChatMessages({...context, supplementaryContext}),
+  )
+  const resultValue = unwrapGenerationResult(result, FAILURE_MESSAGE)
+
+  return resultValue
+}
+
+interface GenerateChatTextOptions {
+  readonly maximumTokens: number
+  readonly messages: Array<TextGenerationMessage>
+  readonly modelId: TextModelId
+  readonly onToken?: (text: string) => void
+  readonly suppressedTokenIds?: Array<number>
+}
+
+const generateText = async (options: GenerateChatTextOptions) => {
+  const result = await textExecutor.generate(
+    {
+      execution: createDeviceTarget(options.modelId),
+      messages: options.messages,
+      parameters: {
+        maximumTokens: options.maximumTokens,
+        noRepeatNgramSize: 4,
+        repetitionPenalty: 1.1,
+        suppressedTokenIds: options.suppressedTokenIds,
+        temperature: 0.65,
+        topK: 40,
+        topP: 0.9,
+      },
+      requestId: createRequestId(),
+    },
+    {
+      onResponse: (response) => {
+        if (response.type === 'token') {
+          options.onToken?.(response.text)
+        }
+      },
+    },
+  )
+  const resultValue = unwrapGenerationResult(result, FAILURE_MESSAGE)
+
+  const output = resultValue
+
+  return trimRepetitiveTail(output).trim()
+}
+
+const refineKoreanSegment = async (
+  segment: KoreanTextSegment,
+  modelId: TextModelId,
+  suppressedTokenIds: Array<number>,
+) => {
+  switch (segment.kind) {
+    case 'refining': {
+      const leadingWhitespace = segment.text.match(/^\s*/u)?.[0] ?? ''
+      const refinedText = await generateText({
+        maximumTokens: MAXIMUM_ANSWER_TOKENS,
+        messages: createKoreanRefinementMessages(segment.text.trim()),
+        modelId,
+        suppressedTokenIds,
+      })
+      return containsForeignCjk(refinedText)
+        ? replaceUnrefinedSentences(segment.text)
+        : `${leadingWhitespace}${refinedText}`
+    }
+    case 'text':
+      return segment.text
+  }
+
+  segment satisfies never
+}
+
+const refineKoreanAnswer = async (text: string, modelId: TextModelId) => {
+  const segments = createKoreanTextSegments(text)
+
+  if (!segments.some((segment) => segment.kind === 'refining')) {
+    return text
+  }
+
+  sendResponse({type: 'refining'})
+  const tokenizerResult = textExecutor.getTokenizer(createDeviceTarget(modelId))
+  const tokenizerResultValue = unwrapGenerationResult(tokenizerResult, FAILURE_MESSAGE)
+  suppressedCjkTokenIds ??= createForeignCjkTokenIds(tokenizerResultValue)
+  const refinedSegments: Array<string> = []
+
+  for (const segment of segments) {
+    refinedSegments.push(await refineKoreanSegment(segment, modelId, suppressedCjkTokenIds))
+  }
+
+  return refinedSegments.join('')
+}
+
+interface CompactedContext {
+  readonly context: ChatContext
+  readonly wasCompacted: boolean
+}
+
+const compactContext = async (
+  context: ChatContext,
+  modelId: TextModelId,
+): Promise<CompactedContext> => {
+  const tokenCount = await countPromptTokens(context, modelId)
+
+  if (tokenCount <= CONTEXT_COMPACTION_TOKENS) {
+    return {context, wasCompacted: false}
+  }
+
+  const {messagesToSummarize, recentMessages} = partitionChatHistory(context.messages)
+
+  if (messagesToSummarize.length === 0) {
+    return {context, wasCompacted: false}
+  }
+
+  sendResponse({type: 'compacting'})
+  const summary = await generateText({
+    maximumTokens: MAXIMUM_SUMMARY_TOKENS,
+    messages: createSummaryMessages({
+      messages: messagesToSummarize,
+      previousSummary: context.summary,
+    }),
+    modelId,
+  })
+
+  if (summary.length === 0) {
+    return {context, wasCompacted: false}
+  }
+
+  return {
+    context: {messages: recentMessages, summary},
+    wasCompacted: true,
+  }
+}
+
+interface GenerateAnswerOptions {
+  readonly context: ChatContext
+  readonly modelId: TextModelId
+  readonly refineAnswer: boolean
+  readonly replyId: string
+  readonly supplementaryContext?: string
+}
+
+const generateAnswer = async (options: GenerateAnswerOptions) => {
+  const preparation = await textExecutor.prepare(createDeviceTarget(options.modelId))
+  unwrapGenerationResult(preparation, FAILURE_MESSAGE)
+
+  const compacted = await compactContext(options.context, options.modelId)
+  const contextTokens = await countPromptTokens(
+    compacted.context,
+    options.modelId,
+    options.supplementaryContext,
+  )
+  sendResponse({contextTokens, type: 'started', wasCompacted: compacted.wasCompacted})
+  const rawGeneratedText = await generateText({
+    maximumTokens: MAXIMUM_ANSWER_TOKENS,
+    messages: createChatMessages({
+      ...compacted.context,
+      supplementaryContext: options.supplementaryContext,
+    }),
+    modelId: options.modelId,
+    onToken: (token) => {
+      if (token.length > 0) {
+        sendResponse({text: token, type: 'token'})
+      }
+    },
+  })
+  const generatedText = rawGeneratedText
+  sendResponse({draft: {content: generatedText, id: options.replyId}, type: 'draft'})
+  const refinedText = options.refineAnswer
+    ? await refineKoreanAnswer(generatedText, options.modelId)
+    : generatedText
+  const text = refinedText
+  const message: ChatMessage = {content: text, id: options.replyId, role: 'assistant'}
+  const completedContext: ChatContext = {
+    messages: [...compacted.context.messages, message],
+    summary: compacted.context.summary,
+  }
+  // Keep a completed reply when its display-only token count cannot be refreshed.
+  const completedContextTokens = await countPromptTokens(
+    completedContext,
+    options.modelId,
+    options.supplementaryContext,
+  ).catch(() => contextTokens)
+
+  sendResponse({
+    context: completedContext,
+    contextTokens: completedContextTokens,
+    message,
+    type: 'complete',
+    wasCompacted: compacted.wasCompacted,
+  })
+}
+
+const handleRequest = async (
+  request: ChatWorkerRequest,
+): Promise<ExclusiveAsyncTaskResult | void> => {
+  switch (request.type) {
+    case 'generate':
+      return generation.run(() => generateAnswer(request))
+    case 'prepare':
+      return generation.run(() => prepareModel(request.modelId))
+    default:
+      request satisfies never
+      throw new Error('지원하지 않는 채팅 요청이에요.')
+  }
+}
+
+listenTextGenerationRequests<ChatWorkerRequest>({
+  fallback: FAILURE_MESSAGE,
+  handle: handleRequest,
+  onError: sendResponse,
+  onSkipped: (request) => sendResponse({reason: 'busy', request, type: 'skipped'}),
+  scope: workerScope,
+})

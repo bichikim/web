@@ -1,0 +1,629 @@
+{
+  "schemaVersion": 1,
+  "items": [
+    {
+      "id": "hard-cheerful-01",
+      "text": "마지막 주자가 결승선을 통과하자 동료들은 환호하며 서로를 번쩍 들어 올렸다.",
+      "primary": "cheerful",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "hard-cheerful-02",
+      "text": "오랜만에 다시 만난 친구들은 밤이 깊어지는 줄도 모르고 웃고 떠들었다.",
+      "primary": "cheerful",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "hard-cheerful-03",
+      "text": "새 서비스를 공개한 팀원들이 박수를 치며 힘차게 성공을 축하했다.",
+      "primary": "cheerful",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "hard-cheerful-04",
+      "text": "소풍을 나온 아이들이 알록달록한 공을 쫓아 잔디밭을 신나게 뛰어다녔다.",
+      "primary": "cheerful",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "hard-calm-01",
+      "text": "잔잔한 호수 위로 저녁 노을이 번지고 작은 배가 천천히 지나갔다.",
+      "primary": "calm",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "hard-calm-02",
+      "text": "한적한 도서관에는 책장을 넘기는 소리만 조용히 이어졌다.",
+      "primary": "calm",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "hard-calm-03",
+      "text": "파도가 낮게 밀려오는 해변에서 그는 맨발로 모래를 천천히 걸었다.",
+      "primary": "calm",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "hard-calm-04",
+      "text": "고요한 오후의 찻집에는 은은한 음악과 차 끓는 소리만 흘렀다.",
+      "primary": "calm",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "hard-warm-01",
+      "text": "할머니는 늦게 돌아온 손자를 위해 식지 않은 국을 다시 데웠다.",
+      "primary": "warm",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "hard-warm-02",
+      "text": "오래된 편지에는 멀리 있는 가족의 건강을 걱정하는 마음이 빼곡했다.",
+      "primary": "warm",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "hard-warm-03",
+      "text": "간호사는 잠든 환자의 손이 차가워지지 않도록 담요를 한 겹 더 덮어 주었다.",
+      "primary": "warm",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "hard-warm-04",
+      "text": "이웃은 혼자 사는 노인의 문 앞에 따뜻한 반찬과 짧은 안부 쪽지를 놓았다.",
+      "primary": "warm",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "hard-hopeful-01",
+      "text": "몇 번의 실패에도 그는 다음 시험을 위한 책을 다시 펼쳤다.",
+      "primary": "hopeful",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "hard-hopeful-02",
+      "text": "무너진 마을에 새 지붕이 올라가고 사람들은 다시 장터를 준비했다.",
+      "primary": "hopeful",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "hard-hopeful-03",
+      "text": "동쪽 하늘이 밝아지자 구조대는 정상으로 향하는 발걸음을 재촉했다.",
+      "primary": "hopeful",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "hard-hopeful-04",
+      "text": "갈라진 아스팔트 틈에서도 연두색 새싹이 햇빛을 향해 자라고 있었다.",
+      "primary": "hopeful",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "hard-dreamlike-01",
+      "text": "안개 속 계단은 하늘까지 이어졌고 끝에는 푸른 문 하나가 떠 있었다.",
+      "primary": "dreamlike",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "hard-dreamlike-02",
+      "text": "달이 호수 아래에서 떠오르자 나무들의 그림자가 물 위를 걷기 시작했다.",
+      "primary": "dreamlike",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "hard-dreamlike-03",
+      "text": "잠든 도시 위로 유리로 된 고래들이 별가루를 흩뿌리며 날아갔다.",
+      "primary": "dreamlike",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "hard-dreamlike-04",
+      "text": "서가의 책들이 새가 되어 날아오르자 천장에 보랏빛 숲이 펼쳐졌다.",
+      "primary": "dreamlike",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "hard-awe-01",
+      "text": "빙하가 갈라지며 푸른 절벽 전체가 굉음과 함께 바다로 무너져 내렸다.",
+      "primary": "awe",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "hard-awe-02",
+      "text": "거대한 고래가 수면 위로 솟구치자 배 위의 사람들은 동시에 탄성을 질렀다.",
+      "primary": "awe",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "hard-awe-03",
+      "text": "천문대 화면에 처음 보는 은하의 선명한 나선이 나타나자 연구실이 조용해졌다.",
+      "primary": "awe",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "hard-awe-04",
+      "text": "수천 명의 합창이 대성당을 가득 채우자 관객들은 숨조차 쉬지 못했다.",
+      "primary": "awe",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "hard-nostalgic-01",
+      "text": "낡은 집은 무너질 듯 위태로웠지만 창가에는 작은 꽃이 피어 있었다.",
+      "primary": "nostalgic",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "hard-nostalgic-02",
+      "text": "멀리 떠나는 기차가 시야에서 사라질 때까지 그는 플랫폼에 서 있었다.",
+      "primary": "nostalgic",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "hard-nostalgic-03",
+      "text": "폐교의 책상 위에는 졸업하던 날 새긴 이름이 아직 희미하게 남아 있었다.",
+      "primary": "nostalgic",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "hard-nostalgic-04",
+      "text": "오래전에 문을 닫은 바닷가 역에는 녹슨 시간표만 바람에 흔들렸다.",
+      "primary": "nostalgic",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "hard-sad-01",
+      "text": "주인을 기다리던 강아지의 빈 밥그릇만 현관 옆에 그대로 놓여 있었다.",
+      "primary": "sad",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "hard-sad-02",
+      "text": "그는 끝내 전하지 못한 편지를 접어 서랍 가장 깊은 곳에 넣었다.",
+      "primary": "sad",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "hard-sad-03",
+      "text": "모두 떠난 병실에서 보호자는 차가워진 손을 붙잡고 소리 없이 울었다.",
+      "primary": "sad",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "hard-sad-04",
+      "text": "기대했던 결과가 무산되자 그는 불 꺼진 방에 홀로 앉아 고개를 숙였다.",
+      "primary": "sad",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "hard-anxious-01",
+      "text": "면접실 문이 열리기 직전 심장 소리가 복도에 들릴 만큼 크게 뛰었다.",
+      "primary": "anxious",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "hard-anxious-02",
+      "text": "검사 결과를 기다리는 동안 휴대전화 화면을 확인하는 손끝이 계속 떨렸다.",
+      "primary": "anxious",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "hard-anxious-03",
+      "text": "마감 시각은 다가오는데 저장되지 않은 문서가 갑자기 멈춰 버렸다.",
+      "primary": "anxious",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "hard-anxious-04",
+      "text": "아이가 돌아올 시간이 지났지만 현관문 밖에서는 아무 소리도 들리지 않았다.",
+      "primary": "anxious",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "hard-fearful-01",
+      "text": "창문 밖의 검은 형체는 번개가 칠 때마다 집 쪽으로 조금씩 가까워졌다.",
+      "primary": "fearful",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "hard-fearful-02",
+      "text": "잠긴 방문 안쪽에서 손톱으로 나무를 긁는 소리가 밤새 이어졌다.",
+      "primary": "fearful",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "hard-fearful-03",
+      "text": "정전된 계단 아래에서 낯선 사람이 숨을 몰아쉬며 천천히 올라오고 있었다.",
+      "primary": "fearful",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "hard-fearful-04",
+      "text": "숲길을 비추던 손전등이 꺼진 순간 바로 앞에서 낮은 울음소리가 들렸다.",
+      "primary": "fearful",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "hard-angry-01",
+      "text": "거센 불길이 치솟는 가운데 성난 군중의 외침이 거리를 뒤흔들었다.",
+      "primary": "angry",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "hard-angry-02",
+      "text": "상대편의 모욕적인 발언에 선수들은 서로를 밀치며 험악하게 맞섰다.",
+      "primary": "angry",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "hard-angry-03",
+      "text": "책임자가 또다시 거짓말을 하자 시민들은 분노하며 거세게 항의했다.",
+      "primary": "angry",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "hard-angry-04",
+      "text": "그는 동료를 모욕한 사람의 멱살을 붙잡고 당장 사과하라고 소리쳤다.",
+      "primary": "angry",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "hard-neutral-01",
+      "text": "열차는 오전 아홉 시에 출발하여 세 개의 역을 거쳐 목적지에 도착했다.",
+      "primary": "neutral",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "hard-neutral-02",
+      "text": "문서는 작성자 검토를 거친 뒤 금요일 오전에 담당 부서로 전달된다.",
+      "primary": "neutral",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "hard-neutral-03",
+      "text": "기상 관측소는 매시간 풍속과 강수량을 측정해 중앙 서버로 전송한다.",
+      "primary": "neutral",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "hard-neutral-04",
+      "text": "엘리베이터는 십 층에 정차한 다음 일 층으로 이동하도록 설정되어 있다.",
+      "primary": "neutral",
+      "modifiers": [],
+      "split": "train"
+    },
+    {
+      "id": "hard-playful-01",
+      "text": "고양이 회장님은 오늘도 책상 위 서류를 바닥으로 결재하셨다.",
+      "primary": "cheerful",
+      "modifiers": ["playful"],
+      "primaryTraining": false,
+      "split": "train"
+    },
+    {
+      "id": "hard-playful-02",
+      "text": "냉장고의 케이크가 사라진 사건에서 입가에 크림을 묻힌 동생만은 결백을 주장했다.",
+      "primary": "cheerful",
+      "modifiers": ["playful"],
+      "primaryTraining": false,
+      "split": "train"
+    },
+    {
+      "id": "hard-playful-03",
+      "text": "월요일 아침 침대는 출근하려는 사람을 붙잡는 데 누구보다 진심이었다.",
+      "primary": "cheerful",
+      "modifiers": ["playful"],
+      "primaryTraining": false,
+      "split": "train"
+    },
+    {
+      "id": "hard-playful-04",
+      "text": "짝을 잃은 양말은 세탁기 왕국으로 동료를 찾는 대탐험을 떠났다.",
+      "primary": "cheerful",
+      "modifiers": ["playful"],
+      "primaryTraining": false,
+      "split": "train"
+    },
+    {
+      "id": "hard-playful-05",
+      "text": "알람 시계와 오 분만 더 자겠다는 협상은 오늘도 사람 쪽의 완패로 끝났다.",
+      "primary": "cheerful",
+      "modifiers": ["playful"],
+      "primaryTraining": false,
+      "split": "train"
+    },
+    {
+      "id": "hard-playful-06",
+      "text": "당근을 거부한 토끼는 식단에 대한 강력한 정치적 소신을 굽히지 않았다.",
+      "primary": "cheerful",
+      "modifiers": ["playful"],
+      "primaryTraining": false,
+      "split": "train"
+    },
+    {
+      "id": "hard-playful-07",
+      "text": "로봇 청소기는 양말 한 짝을 포획한 뒤 의기양양하게 충전대로 돌아갔다.",
+      "primary": "cheerful",
+      "modifiers": ["playful"],
+      "primaryTraining": false,
+      "split": "train"
+    },
+    {
+      "id": "hard-playful-08",
+      "text": "비둘기 조사관은 벤치 위 과자 봉지를 꼼꼼히 검사한 뒤 전부 압수했다.",
+      "primary": "cheerful",
+      "modifiers": ["playful"],
+      "primaryTraining": false,
+      "split": "train"
+    },
+    {
+      "id": "hard-playful-09",
+      "text": "프린터는 종이를 세 장이나 먹고도 배가 고픈지 오류등을 깜빡였다.",
+      "primary": "cheerful",
+      "modifiers": ["playful"],
+      "primaryTraining": false,
+      "split": "train"
+    },
+    {
+      "id": "hard-playful-10",
+      "text": "빈 커피잔은 회의가 끝날 때까지 누구보다 진지한 표정으로 자리를 지켰다.",
+      "primary": "cheerful",
+      "modifiers": ["playful"],
+      "primaryTraining": false,
+      "split": "train"
+    },
+    {
+      "id": "hard-playful-11",
+      "text": "바람에 뒤집힌 우산은 빗속에서 자유를 얻었다며 혼자 신나게 춤을 췄다.",
+      "primary": "cheerful",
+      "modifiers": ["playful"],
+      "primaryTraining": false,
+      "split": "train"
+    },
+    {
+      "id": "hard-playful-12",
+      "text": "화분의 새싹은 매일 출석 도장을 찍듯 어제보다 조금씩 키가 커졌다.",
+      "primary": "cheerful",
+      "modifiers": ["playful"],
+      "primaryTraining": false,
+      "split": "train"
+    },
+    {
+      "id": "hard-playful-13",
+      "text": "냉장고 문을 연 그는 한밤중 간식 순찰이라는 막중한 임무를 시작했다.",
+      "primary": "cheerful",
+      "modifiers": ["playful"],
+      "primaryTraining": false,
+      "split": "train"
+    },
+    {
+      "id": "hard-playful-14",
+      "text": "강아지는 택배 상자를 지키는 보안 요원처럼 현관 앞에 당당히 앉았다.",
+      "primary": "cheerful",
+      "modifiers": ["playful"],
+      "primaryTraining": false,
+      "split": "train"
+    },
+    {
+      "id": "hard-playful-15",
+      "text": "몽당연필은 이제 현역에서 은퇴할 때가 됐다며 필통 구석에 누웠다.",
+      "primary": "cheerful",
+      "modifiers": ["playful"],
+      "primaryTraining": false,
+      "split": "train"
+    },
+    {
+      "id": "hard-playful-16",
+      "text": "엘리베이터 문은 뛰어오는 사람을 보고도 모르는 척 냉정하게 닫혀 버렸다.",
+      "primary": "cheerful",
+      "modifiers": ["playful"],
+      "primaryTraining": false,
+      "split": "train"
+    },
+    {
+      "id": "hard-playful-17",
+      "text": "빨래를 널기만 기다리던 비구름이 오늘도 정확한 출근 시간을 지켰다.",
+      "primary": "cheerful",
+      "modifiers": ["playful"],
+      "primaryTraining": false,
+      "split": "train"
+    },
+    {
+      "id": "hard-playful-18",
+      "text": "키보드는 보고서 마감 날에만 중요한 글쇠를 숨기는 특별한 취미가 있었다.",
+      "primary": "cheerful",
+      "modifiers": ["playful"],
+      "primaryTraining": false,
+      "split": "train"
+    },
+    {
+      "id": "hard-sarcastic-01",
+      "text": "기대했던 여행은 폭우와 휴업일과 분실한 지갑 덕분에 완벽해졌다.",
+      "primary": "angry",
+      "modifiers": ["sarcastic"],
+      "primaryTraining": false,
+      "split": "train"
+    },
+    {
+      "id": "hard-sarcastic-02",
+      "text": "인터넷은 끊기고 마이크는 고장 났으니 정말 완벽한 재택근무 환경이다.",
+      "primary": "angry",
+      "modifiers": ["sarcastic"],
+      "primaryTraining": false,
+      "split": "train"
+    },
+    {
+      "id": "hard-sarcastic-03",
+      "text": "석 달 동안 작업한 파일이 사라지다니 백업 시스템이 참 믿음직스럽다.",
+      "primary": "sad",
+      "modifiers": ["sarcastic"],
+      "primaryTraining": false,
+      "split": "train"
+    },
+    {
+      "id": "hard-sarcastic-04",
+      "text": "네 시간 동안 회의하고 아무 결론도 내리지 못했으니 아주 생산적인 시간이었다.",
+      "primary": "angry",
+      "modifiers": ["sarcastic"],
+      "primaryTraining": false,
+      "split": "train"
+    },
+    {
+      "id": "hard-sarcastic-05",
+      "text": "발표 직전에 노트북 업데이트가 시작되다니 타이밍 하나는 기가 막힌다.",
+      "primary": "anxious",
+      "modifiers": ["sarcastic"],
+      "primaryTraining": false,
+      "split": "train"
+    },
+    {
+      "id": "hard-sarcastic-06",
+      "text": "버스를 놓친 순간 비까지 쏟아지니 오늘은 운이 정말 좋은 날이다.",
+      "primary": "sad",
+      "modifiers": ["sarcastic"],
+      "primaryTraining": false,
+      "split": "train"
+    },
+    {
+      "id": "hard-sarcastic-07",
+      "text": "규칙을 만든 사람부터 규칙을 어겼으니 역시 훌륭한 모범을 보여 주었다.",
+      "primary": "angry",
+      "modifiers": ["sarcastic"],
+      "primaryTraining": false,
+      "split": "train"
+    },
+    {
+      "id": "hard-sarcastic-08",
+      "text": "한 줄만 고치면 된다던 문서에 수정 의견이 마흔일곱 개나 달리다니 정말 간단한 작업이다.",
+      "primary": "angry",
+      "modifiers": ["sarcastic"],
+      "primaryTraining": false,
+      "split": "train"
+    },
+    {
+      "id": "hard-sarcastic-09",
+      "text": "금요일 밤에 서버를 배포하자마자 장애가 났으니 주말을 알차게 보내게 생겼다.",
+      "primary": "angry",
+      "modifiers": ["sarcastic"],
+      "primaryTraining": false,
+      "split": "train"
+    },
+    {
+      "id": "hard-sarcastic-10",
+      "text": "한파가 닥친 날 난방기가 고장 났으니 실내에서 겨울을 제대로 즐길 수 있겠다.",
+      "primary": "anxious",
+      "modifiers": ["sarcastic"],
+      "primaryTraining": false,
+      "split": "train"
+    },
+    {
+      "id": "hard-sarcastic-11",
+      "text": "한 시간을 기다려 받은 음식이 차갑다니 이 식당은 참 신속하고 세심하다.",
+      "primary": "angry",
+      "modifiers": ["sarcastic"],
+      "primaryTraining": false,
+      "split": "train"
+    },
+    {
+      "id": "hard-sarcastic-12",
+      "text": "알람이 울리지 않은 덕분에 면접장에 가장 늦게 도착하는 영광을 얻었다.",
+      "primary": "anxious",
+      "modifiers": ["sarcastic"],
+      "primaryTraining": false,
+      "split": "train"
+    },
+    {
+      "id": "hard-sarcastic-13",
+      "text": "이십 층 건물의 엘리베이터가 멈췄으니 오늘 운동량은 걱정하지 않아도 되겠다.",
+      "primary": "angry",
+      "modifiers": ["sarcastic"],
+      "primaryTraining": false,
+      "split": "train"
+    },
+    {
+      "id": "hard-sarcastic-14",
+      "text": "휴대전화 배터리는 일 퍼센트고 충전기는 집에 두었으니 준비가 아주 철저했다.",
+      "primary": "anxious",
+      "modifiers": ["sarcastic"],
+      "primaryTraining": false,
+      "split": "train"
+    },
+    {
+      "id": "hard-sarcastic-15",
+      "text": "공사와 사고와 우회로가 한꺼번에 겹쳤으니 역시 가장 빠른 출근길이다.",
+      "primary": "angry",
+      "modifiers": ["sarcastic"],
+      "primaryTraining": false,
+      "split": "train"
+    },
+    {
+      "id": "hard-sarcastic-16",
+      "text": "예산은 절반으로 줄이고 마감은 앞당겼으니 회사의 지원이 참 든든하다.",
+      "primary": "angry",
+      "modifiers": ["sarcastic"],
+      "primaryTraining": false,
+      "split": "train"
+    },
+    {
+      "id": "hard-sarcastic-17",
+      "text": "일할 때는 사라졌던 동료가 발표 자리에서 공을 가져가니 훌륭한 팀워크다.",
+      "primary": "angry",
+      "modifiers": ["sarcastic"],
+      "primaryTraining": false,
+      "split": "train"
+    },
+    {
+      "id": "hard-sarcastic-18",
+      "text": "방수 신발 안에 빗물이 가득 찼으니 제품 설명이 아주 믿을 만하다.",
+      "primary": "sad",
+      "modifiers": ["sarcastic"],
+      "primaryTraining": false,
+      "split": "train"
+    }
+  ]
+}

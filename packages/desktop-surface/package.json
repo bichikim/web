@@ -1,0 +1,21 @@
+{
+  "name": "@winter-love/desktop-surface",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./guest-js/index.ts"
+  },
+  "scripts": {
+    "lint": "oxlint guest-js",
+    "runtime:macos": "cargo run --manifest-path examples/harness/Cargo.toml",
+    "test:runtime:macos": "node scripts/runtime-smoke.mjs",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@tauri-apps/api": "^2.8.0"
+  },
+  "devDependencies": {
+    "typescript": "catalog:"
+  }
+}

@@ -1,0 +1,1 @@
+export const GEOMETRY_EPSILON = 0.000_001

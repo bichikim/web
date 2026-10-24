@@ -1,0 +1,464 @@
+import {createTestBroadcastChannel} from 'src/__tests__/create-test-broadcast-channel'
+/** @vitest-environment jsdom */
+
+import {BroadcastChannel as NativeBroadcastChannel} from 'node:worker_threads'
+import {renderHook} from '@solidjs/testing-library'
+import {afterEach, beforeEach, expect, it, vi} from 'vitest'
+
+import {useDesktopSceneSettingsListener, useDesktopSceneSettingsPublisher} from '../scene-settings'
+import {LEGACY_WEATHER_LOCATIONS} from '../../weather'
+
+const TestBroadcastChannel = createTestBroadcastChannel()
+
+const validSettings = [
+  {name: 'activity', value: 'writing'},
+  {name: 'gaze', value: 'user'},
+  {name: 'motionInput', value: 'gyroscope'},
+  {name: 'motionMode', value: 'pan'},
+  {name: 'sceneStyle', value: 'scribble'},
+  {name: 'screenSaverDelay', value: '1h'},
+  {name: 'timeMode', value: 'night'},
+  {name: 'weatherCity', value: 'jeju'},
+  {name: 'weatherEnabled', value: true},
+  {name: 'weatherLocation', value: LEGACY_WEATHER_LOCATIONS.seoul},
+  {name: 'weatherSceneMode', value: 'overcast'},
+] as const
+
+beforeEach(() => {
+  TestBroadcastChannel.instances = []
+  vi.stubEnv('VITE_POMO_IS_DESKTOP', 'true')
+  vi.stubGlobal('BroadcastChannel', TestBroadcastChannel)
+})
+
+afterEach(() => {
+  vi.unstubAllEnvs()
+  vi.unstubAllGlobals()
+})
+
+it.each(['listener', 'publisher'] as const)(
+  'should validate and apply every remote setting through the %s',
+  (mode) => {
+    const handlers = {
+      onActivityChange: vi.fn(),
+      onGazeChange: vi.fn(),
+      onMotionInputChange: vi.fn(),
+      onMotionModeChange: vi.fn(),
+      onSceneStyleChange: vi.fn(),
+      onScreenSaverDelayChange: vi.fn(),
+      onTimeModeChange: vi.fn(),
+      onWeatherEnabledChange: vi.fn(),
+      onWeatherLocationChange: vi.fn(),
+      onWeatherSceneModeChange: vi.fn(),
+    }
+    const view = renderHook(() =>
+      mode === 'listener'
+        ? useDesktopSceneSettingsListener(handlers)
+        : useDesktopSceneSettingsPublisher({handlers}),
+    )
+    const channel = TestBroadcastChannel.instances[0]
+
+    for (const setting of validSettings) {
+      channel?.dispatch(setting)
+    }
+
+    expect(handlers.onActivityChange).toHaveBeenCalledWith('writing')
+    expect(handlers.onGazeChange).toHaveBeenCalledWith('user')
+    expect(handlers.onMotionInputChange).toHaveBeenCalledWith('gyroscope')
+    expect(handlers.onMotionModeChange).toHaveBeenCalledWith('pan')
+    expect(handlers.onSceneStyleChange).toHaveBeenCalledWith('scribble')
+    expect(handlers.onScreenSaverDelayChange).toHaveBeenCalledWith('1h')
+    expect(handlers.onTimeModeChange).toHaveBeenCalledWith('night')
+    expect(handlers.onWeatherLocationChange).toHaveBeenCalledWith(LEGACY_WEATHER_LOCATIONS.jeju)
+    expect(handlers.onWeatherLocationChange).toHaveBeenCalledWith(LEGACY_WEATHER_LOCATIONS.seoul)
+    expect(handlers.onWeatherEnabledChange).toHaveBeenCalledWith(true)
+    expect(handlers.onWeatherSceneModeChange).toHaveBeenCalledWith('overcast')
+
+    view.cleanup()
+    expect(channel?.close).toHaveBeenCalledOnce()
+  },
+)
+
+it.each(['listener', 'publisher'] as const)(
+  'should normalize legacy evening time mode updates through the %s',
+  (mode) => {
+    const onTimeModeChange = vi.fn()
+    renderHook(() =>
+      mode === 'listener'
+        ? useDesktopSceneSettingsListener({onTimeModeChange})
+        : useDesktopSceneSettingsPublisher({handlers: {onTimeModeChange}}),
+    )
+    const channel = TestBroadcastChannel.instances[0]
+
+    channel?.dispatch({name: 'timeMode', value: 'evening'})
+
+    expect(onTimeModeChange).toHaveBeenCalledExactlyOnceWith('night')
+  },
+)
+
+it.each(['listener', 'publisher'] as const)(
+  'should ignore malformed settings and allow partial handlers through the %s',
+  (mode) => {
+    const onActivityChange = vi.fn()
+    renderHook(() =>
+      mode === 'listener'
+        ? useDesktopSceneSettingsListener({onActivityChange})
+        : useDesktopSceneSettingsPublisher({handlers: {onActivityChange}}),
+    )
+    const channel = TestBroadcastChannel.instances[0]
+
+    for (const setting of validSettings) {
+      channel?.dispatch(setting)
+      channel?.dispatch({...setting, value: Symbol('invalid')})
+    }
+    for (const value of [null, 'invalid', {}, {name: 'activity'}, {name: 'unknown', value: true}]) {
+      channel?.dispatch(value)
+    }
+
+    expect(channel?.listeners).toHaveLength(1)
+    expect(onActivityChange).toHaveBeenCalledExactlyOnceWith('writing')
+  },
+)
+
+it('should publish settings only in the desktop runtime and release its channel', () => {
+  const desktop = renderHook(() => useDesktopSceneSettingsPublisher())
+  const channel = TestBroadcastChannel.instances[0]
+
+  desktop.result.publish({name: 'activity', value: 'reading'})
+  expect(channel?.postMessage).toHaveBeenCalledWith({name: 'activity', value: 'reading'})
+  desktop.cleanup()
+  expect(channel?.close).toHaveBeenCalledOnce()
+  desktop.result.publish({name: 'activity', value: 'writing'})
+  expect(channel?.postMessage).toHaveBeenCalledOnce()
+
+  vi.stubEnv('VITE_POMO_IS_DESKTOP', '')
+  const webListener = renderHook(() => useDesktopSceneSettingsListener({}))
+  const webPublisher = renderHook(() =>
+    useDesktopSceneSettingsPublisher({handlers: {onActivityChange: vi.fn()}}),
+  )
+  webPublisher.result.publish({name: 'gaze', value: 'focused'})
+
+  expect(TestBroadcastChannel.instances).toHaveLength(1)
+  webListener.cleanup()
+  webPublisher.cleanup()
+})
+
+it('should deliver changes to the other endpoint without replaying them locally', async () => {
+  vi.stubGlobal('BroadcastChannel', NativeBroadcastChannel)
+  const localChange = vi.fn()
+  const remoteChange = vi.fn()
+  const local = renderHook(() =>
+    useDesktopSceneSettingsPublisher({handlers: {onActivityChange: localChange}}),
+  )
+  const remote = renderHook(() =>
+    useDesktopSceneSettingsPublisher({handlers: {onActivityChange: remoteChange}}),
+  )
+  try {
+    localChange('writing')
+    local.result.publish({name: 'activity', value: 'writing'})
+    await vi.waitFor(() => expect(remoteChange).toHaveBeenCalledWith('writing'))
+    expect(localChange).toHaveBeenCalledTimes(1)
+    expect(remoteChange).toHaveBeenCalledTimes(1)
+
+    remoteChange('reading')
+    remote.result.publish({name: 'activity', value: 'reading'})
+    await vi.waitFor(() => expect(localChange).toHaveBeenLastCalledWith('reading'))
+    expect(localChange).toHaveBeenCalledTimes(2)
+    expect(remoteChange).toHaveBeenCalledTimes(2)
+  } finally {
+    local.cleanup()
+    remote.cleanup()
+  }
+})
+
+it('should hydrate each reopened settings endpoint from the current owner motion', async () => {
+  vi.stubGlobal('BroadcastChannel', NativeBroadcastChannel)
+  let motionMode = 'pan' as 'pan' | 'depth'
+  const ownerChange = vi.fn()
+  const owner = renderHook(() =>
+    useDesktopSceneSettingsPublisher({
+      handlers: {onMotionModeChange: ownerChange},
+      snapshot: () => [
+        {name: 'motionMode', value: motionMode},
+        {name: 'motionInput', value: 'drag'},
+      ],
+    }),
+  )
+  const checkReopened = async (expected: 'pan' | 'depth') => {
+    motionMode = expected
+    const onMotionModeChange = vi.fn()
+    const onMotionInputChange = vi.fn()
+    const surface = renderHook(() =>
+      useDesktopSceneSettingsPublisher({
+        handlers: {onMotionInputChange, onMotionModeChange},
+        requestSnapshot: true,
+      }),
+    )
+    try {
+      await vi.waitFor(() => expect(onMotionModeChange).toHaveBeenCalledExactlyOnceWith(expected))
+      expect(onMotionInputChange).toHaveBeenCalledExactlyOnceWith('drag')
+      expect(ownerChange).not.toHaveBeenCalled()
+    } finally {
+      surface.cleanup()
+    }
+  }
+  try {
+    await checkReopened('pan')
+    await checkReopened('depth')
+  } finally {
+    owner.cleanup()
+  }
+})
+
+it('should preserve edits made while the initial snapshot is in flight', () => {
+  const ownerChange = vi.fn()
+  const owner = renderHook(() =>
+    useDesktopSceneSettingsPublisher({
+      handlers: {onMotionModeChange: ownerChange},
+      snapshot: () => [
+        {name: 'motionMode', value: 'pan'},
+        {name: 'motionInput', value: 'gyroscope'},
+      ],
+    }),
+  )
+  const receivedMode = vi.fn()
+  const receivedInput = vi.fn()
+  const surface = renderHook(() =>
+    useDesktopSceneSettingsPublisher({
+      handlers: {onMotionInputChange: receivedInput, onMotionModeChange: receivedMode},
+      requestSnapshot: true,
+    }),
+  )
+  const [ownerChannel, surfaceChannel] = TestBroadcastChannel.instances
+  ownerChannel?.dispatch(surfaceChannel?.postMessage.mock.calls[0]?.[0])
+  surface.result.publish({name: 'motionMode', value: 'depth'})
+  ownerChannel?.dispatch(surfaceChannel?.postMessage.mock.calls[1]?.[0])
+  surfaceChannel?.dispatch(ownerChannel?.postMessage.mock.calls[0]?.[0])
+  expect(ownerChange).toHaveBeenCalledExactlyOnceWith('depth')
+  expect(receivedMode).not.toHaveBeenCalled()
+  expect(receivedInput).toHaveBeenCalledExactlyOnceWith('gyroscope')
+  surfaceChannel?.dispatch({name: 'motionMode', value: 'pan'})
+  expect(receivedMode).toHaveBeenCalledExactlyOnceWith('pan')
+  owner.cleanup()
+  surface.cleanup()
+})
+
+it('should ignore unsolicited, malformed, and repeated snapshots', () => {
+  const ownerChange = vi.fn()
+  const remoteChange = vi.fn()
+  const owner = renderHook(() =>
+    useDesktopSceneSettingsPublisher({handlers: {onMotionModeChange: ownerChange}}),
+  )
+  const surface = renderHook(() =>
+    useDesktopSceneSettingsPublisher({
+      handlers: {onMotionModeChange: remoteChange},
+      requestSnapshot: true,
+    }),
+  )
+  const [ownerChannel, surfaceChannel] = TestBroadcastChannel.instances
+  const snapshot = {settings: [{name: 'motionMode', value: 'pan'}], type: 'snapshot'}
+  ownerChannel?.dispatch(snapshot)
+  surfaceChannel?.dispatch({settings: [{name: 'motionMode', value: 'invalid'}], type: 'snapshot'})
+  expect(remoteChange).not.toHaveBeenCalled()
+  surfaceChannel?.dispatch(snapshot)
+  surfaceChannel?.dispatch(snapshot)
+  expect(ownerChange).not.toHaveBeenCalled()
+  expect(remoteChange).toHaveBeenCalledExactlyOnceWith('pan')
+  owner.cleanup()
+  surface.cleanup()
+})
+
+it('should normalize legacy evening time mode in the initial snapshot', () => {
+  const onTimeModeChange = vi.fn()
+  renderHook(() =>
+    useDesktopSceneSettingsPublisher({
+      handlers: {onTimeModeChange},
+      requestSnapshot: true,
+    }),
+  )
+  const channel = TestBroadcastChannel.instances[0]
+
+  channel?.dispatch({
+    settings: [{name: 'timeMode', value: 'evening'}],
+    type: 'snapshot',
+  })
+
+  expect(onTimeModeChange).toHaveBeenCalledExactlyOnceWith('night')
+})
+
+it('should preserve a received update ahead of an older snapshot', () => {
+  const onMotionModeChange = vi.fn()
+  const onMotionInputChange = vi.fn()
+  const surface = renderHook(() =>
+    useDesktopSceneSettingsPublisher({
+      handlers: {onMotionInputChange, onMotionModeChange},
+      requestSnapshot: true,
+    }),
+  )
+  const channel = TestBroadcastChannel.instances[0]
+  channel?.dispatch({name: 'motionMode', value: 'depth'})
+  channel?.dispatch({
+    settings: [
+      {name: 'motionMode', value: 'pan'},
+      {name: 'motionInput', value: 'gyroscope'},
+    ],
+    type: 'snapshot',
+  })
+  expect(onMotionModeChange).toHaveBeenCalledExactlyOnceWith('depth')
+  expect(onMotionInputChange).toHaveBeenCalledExactlyOnceWith('gyroscope')
+  surface.cleanup()
+})
+
+it.each(['listener', 'publisher'] as const)(
+  'should accept only exact scene styles without coercing remote values through the %s',
+  (mode) => {
+    const onSceneStyleChange = vi.fn()
+    const view = renderHook(() =>
+      mode === 'listener'
+        ? useDesktopSceneSettingsListener({onSceneStyleChange})
+        : useDesktopSceneSettingsPublisher({handlers: {onSceneStyleChange}}),
+    )
+    const channel = TestBroadcastChannel.instances[0]
+    const access = vi.fn(() => {
+      throw new Error('remote style must not be coerced')
+    })
+
+    for (const value of [
+      'Original',
+      'scribble ',
+      '',
+      null,
+      Symbol('original'),
+      Object('original'),
+      new Proxy({}, {get: access}),
+    ]) {
+      channel?.dispatch({name: 'sceneStyle', value})
+    }
+    expect(onSceneStyleChange).not.toHaveBeenCalled()
+    expect(access).not.toHaveBeenCalled()
+
+    channel?.dispatch({name: 'sceneStyle', value: 'original'})
+    channel?.dispatch({name: 'sceneStyle', value: 'scribble'})
+    expect(onSceneStyleChange.mock.calls).toEqual([['original'], ['scribble']])
+    view.cleanup()
+  },
+)
+
+it.each(['listener', 'publisher'] as const)(
+  'should retain separate scene style validation and application reads through the %s',
+  (mode) => {
+    const onSceneStyleChange = vi.fn()
+    const view = renderHook(() =>
+      mode === 'listener'
+        ? useDesktopSceneSettingsListener({onSceneStyleChange})
+        : useDesktopSceneSettingsPublisher({handlers: {onSceneStyleChange}}),
+    )
+    const channel = TestBroadcastChannel.instances[0]
+    const readValue = vi.fn().mockReturnValueOnce('original').mockReturnValue('scribble')
+
+    channel?.dispatch({
+      name: 'sceneStyle',
+      get value() {
+        return readValue()
+      },
+    })
+
+    expect(readValue).toHaveBeenCalledTimes(2)
+    expect(onSceneStyleChange).toHaveBeenCalledExactlyOnceWith('scribble')
+    view.cleanup()
+  },
+)
+
+it.each(['listener', 'publisher'] as const)(
+  'should preserve a scene style getter failure through the %s',
+  (mode) => {
+    const onSceneStyleChange = vi.fn()
+    const view = renderHook(() =>
+      mode === 'listener'
+        ? useDesktopSceneSettingsListener({onSceneStyleChange})
+        : useDesktopSceneSettingsPublisher({handlers: {onSceneStyleChange}}),
+    )
+    const channel = TestBroadcastChannel.instances[0]
+    const error = new Error('style unavailable')
+    const readValue = vi.fn(() => {
+      throw error
+    })
+
+    let received: unknown
+    try {
+      channel?.dispatch({
+        name: 'sceneStyle',
+        get value() {
+          return readValue()
+        },
+      })
+    } catch (caught: unknown) {
+      received = caught
+    }
+
+    expect(received).toBe(error)
+    expect(readValue).toHaveBeenCalledOnce()
+    expect(onSceneStyleChange).not.toHaveBeenCalled()
+    view.cleanup()
+  },
+)
+
+it('should reject an entire invalid style snapshot and accept the following valid snapshot', () => {
+  const onSceneStyleChange = vi.fn()
+  const onMotionModeChange = vi.fn()
+  const view = renderHook(() =>
+    useDesktopSceneSettingsPublisher({
+      handlers: {onMotionModeChange, onSceneStyleChange},
+      requestSnapshot: true,
+    }),
+  )
+  const channel = TestBroadcastChannel.instances[0]
+
+  channel?.dispatch({
+    settings: [
+      {name: 'motionMode', value: 'pan'},
+      {name: 'sceneStyle', value: 'scribble '},
+    ],
+    type: 'snapshot',
+  })
+  expect(onMotionModeChange).not.toHaveBeenCalled()
+  expect(onSceneStyleChange).not.toHaveBeenCalled()
+
+  channel?.dispatch({
+    settings: [
+      {name: 'motionMode', value: 'depth'},
+      {name: 'sceneStyle', value: 'original'},
+    ],
+    type: 'snapshot',
+  })
+  expect(onMotionModeChange).toHaveBeenCalledExactlyOnceWith('depth')
+  expect(onSceneStyleChange).toHaveBeenCalledExactlyOnceWith('original')
+  view.cleanup()
+})
+
+it('should synchronize scene style snapshots and subsequent changes over the native channel', async () => {
+  vi.stubGlobal('BroadcastChannel', NativeBroadcastChannel)
+  const ownerChange = vi.fn()
+  const remoteChange = vi.fn()
+  const owner = renderHook(() =>
+    useDesktopSceneSettingsPublisher({
+      handlers: {onSceneStyleChange: ownerChange},
+      snapshot: () => [{name: 'sceneStyle', value: 'original'}],
+    }),
+  )
+  const remote = renderHook(() =>
+    useDesktopSceneSettingsPublisher({
+      handlers: {onSceneStyleChange: remoteChange},
+      requestSnapshot: true,
+    }),
+  )
+  try {
+    await vi.waitFor(() => expect(remoteChange).toHaveBeenCalledExactlyOnceWith('original'))
+    owner.result.publish({name: 'sceneStyle', value: 'scribble'})
+    await vi.waitFor(() => expect(remoteChange).toHaveBeenLastCalledWith('scribble'))
+    expect(remoteChange).toHaveBeenCalledTimes(2)
+    expect(ownerChange).not.toHaveBeenCalled()
+  } finally {
+    remote.cleanup()
+    owner.cleanup()
+  }
+})

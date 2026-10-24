@@ -1,0 +1,80 @@
+import {fileURLToPath} from 'node:url'
+import {defineConfig, devices} from '@playwright/test'
+
+const webBaseUrl = 'http://127.0.0.1:44173'
+const appsInTossBaseUrl = 'http://127.0.0.1:44174'
+const clientActionsBaseUrl = 'http://127.0.0.1:44175'
+const clientActionsFixtureDirectory = fileURLToPath(
+  new URL('./e2e/fixtures/client-actions/', import.meta.url),
+)
+const DEFAULT_LOCALE_STORAGE = [{name: 'PARAGLIDE_LOCALE', value: 'ko'}]
+
+export default defineConfig({
+  expect: {
+    timeout: 10_000,
+  },
+  forbidOnly: Boolean(process.env.CI),
+  fullyParallel: true,
+  outputDir: './test-results',
+  projects: [
+    {
+      name: 'web',
+      testMatch: ['**/e2e/shared/**/*.e2e.ts', '**/e2e/web/**/*.e2e.ts'],
+      use: {
+        ...devices['Desktop Chrome'],
+        baseURL: webBaseUrl,
+      },
+    },
+    {
+      name: 'apps-in-toss',
+      testMatch: ['**/e2e/shared/**/*.e2e.ts', '**/e2e/apps-in-toss/**/*.e2e.ts'],
+      use: {
+        ...devices['Desktop Chrome'],
+        baseURL: appsInTossBaseUrl,
+      },
+    },
+  ],
+  reporter: process.env.CI ? [['github'], ['html', {open: 'never'}]] : [['list']],
+  retries: process.env.CI ? 2 : 0,
+  testDir: './e2e',
+  timeout: 30_000,
+  use: {
+    contextOptions: {
+      reducedMotion: 'reduce',
+    },
+    locale: 'ko-KR',
+    screenshot: 'only-on-failure',
+    storageState: {
+      cookies: [],
+      origins: [webBaseUrl, appsInTossBaseUrl].map((origin) => ({
+        localStorage: DEFAULT_LOCALE_STORAGE,
+        origin,
+      })),
+    },
+    trace: 'on-first-retry',
+    video: 'off',
+  },
+  webServer: [
+    {
+      command: 'pnpm exec vite dev --host 127.0.0.1 --port 44173 --strictPort',
+      reuseExistingServer: false,
+      timeout: 120_000,
+      url: webBaseUrl,
+    },
+    {
+      command:
+        'pnpm exec cross-env POMO_PUBLIC_ORIGIN=http://127.0.0.1:44173 pnpm run dev:apps-in-toss --host 127.0.0.1 --port 44174 --strictPort',
+      reuseExistingServer: false,
+      timeout: 120_000,
+      url: appsInTossBaseUrl,
+    },
+    {
+      command:
+        'node ../../../../../node_modules/vite/bin/vite.js dev --host 127.0.0.1 --port 44175 --strictPort',
+      cwd: clientActionsFixtureDirectory,
+      reuseExistingServer: false,
+      timeout: 120_000,
+      url: clientActionsBaseUrl,
+    },
+  ],
+})

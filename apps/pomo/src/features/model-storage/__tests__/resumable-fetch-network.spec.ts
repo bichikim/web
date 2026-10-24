@@ -1,0 +1,232 @@
+import {afterEach, describe, expect, it, vi} from 'vitest'
+
+const httpMocks = vi.hoisted(() => ({fetch: vi.fn()}))
+
+vi.mock('../../http-client', () => ({httpFetch: httpMocks.fetch}))
+
+import {createResumableModelFetch, type PartialDownloadStorage} from '../resumable-fetch'
+import {createPartialStorage} from './support/partial-storage'
+
+type PartialMetadata = Parameters<PartialDownloadStorage['reset']>[0]
+
+const createMetadata = (
+  url = 'https://models.test/model.onnx',
+  overrides: Partial<PartialMetadata> = {},
+): PartialMetadata => ({
+  contentType: 'application/octet-stream',
+  etag: 'model-v1',
+  lastModified: null,
+  totalBytes: 8,
+  url,
+  ...overrides,
+})
+
+afterEach(() => {
+  vi.unstubAllGlobals()
+  vi.restoreAllMocks()
+})
+
+const createHeaders = (length: number) => ({
+  'accept-ranges': 'bytes',
+  'content-length': length.toString(),
+  'content-type': 'application/octet-stream',
+  etag: 'model-v1',
+})
+
+describe('createResumableModelFetch network behavior', () => {
+  it('should persist a range-capable download while it is consumed', async () => {
+    const partial = createPartialStorage()
+    const fetcher = vi.fn<typeof fetch>(
+      async () => new Response('complete', {headers: createHeaders(8)}),
+    )
+    const resumable = createResumableModelFetch({fetcher, partialStorage: partial.storage})
+
+    const response = await resumable.fetch('https://models.test/model.onnx')
+
+    expect(await response.text()).toBe('complete')
+    expect(new TextDecoder().decode(partial.getPartial()?.body)).toBe('complete')
+  })
+
+  it('should request and combine only the missing byte range', async () => {
+    const url = 'https://models.test/model.onnx'
+    const metadata = {
+      contentType: 'application/octet-stream',
+      etag: 'model-v1',
+      lastModified: null,
+      totalBytes: 8,
+      url,
+    }
+    const partial = createPartialStorage({body: new TextEncoder().encode('comp'), metadata})
+    const fetcher = vi.fn<typeof fetch>(
+      async () =>
+        new Response('lete', {
+          headers: {...createHeaders(4), 'content-range': 'bytes 4-7/8'},
+          status: 206,
+        }),
+    )
+    const resumable = createResumableModelFetch({fetcher, partialStorage: partial.storage})
+
+    const response = await resumable.fetch(url)
+
+    expect(await response.text()).toBe('complete')
+    const request = fetcher.mock.calls[0]
+    expect(new Headers(request?.[1]?.headers).get('range')).toBe('bytes=4-')
+    expect(new Headers(request?.[1]?.headers).get('if-range')).toBe('model-v1')
+  })
+
+  it('should restart the file when the server does not accept the byte range', async () => {
+    const url = 'https://models.test/model.onnx'
+    const metadata = {
+      contentType: 'application/octet-stream',
+      etag: 'model-v1',
+      lastModified: null,
+      totalBytes: 8,
+      url,
+    }
+    const partial = createPartialStorage({body: new TextEncoder().encode('old'), metadata})
+    const fetcher = vi.fn<typeof fetch>(
+      async () => new Response('complete', {headers: createHeaders(8)}),
+    )
+    const resumable = createResumableModelFetch({fetcher, partialStorage: partial.storage})
+
+    const response = await resumable.fetch(url)
+
+    expect(await response.text()).toBe('complete')
+    expect(new TextDecoder().decode(partial.getPartial()?.body)).toBe('complete')
+  })
+
+  it('should return a completed partial file without another network request', async () => {
+    const url = 'https://models.test/model.onnx'
+    const metadata = {
+      contentType: 'application/octet-stream',
+      etag: 'model-v1',
+      lastModified: null,
+      totalBytes: 8,
+      url,
+    }
+    const partial = createPartialStorage({body: new TextEncoder().encode('complete'), metadata})
+    const fetcher = vi.fn<typeof fetch>()
+    const resumable = createResumableModelFetch({fetcher, partialStorage: partial.storage})
+
+    const response = await resumable.fetch(url)
+
+    expect(await response.text()).toBe('complete')
+    expect(fetcher).not.toHaveBeenCalled()
+  })
+
+  it('should use the default fetcher when OPFS is unavailable', async () => {
+    vi.stubGlobal('navigator', undefined)
+    httpMocks.fetch.mockResolvedValue(new Response('default'))
+    const resumable = createResumableModelFetch()
+
+    expect(await (await resumable.fetch('https://models.test/model.onnx')).text()).toBe('default')
+    expect(httpMocks.fetch).toHaveBeenCalledOnce()
+  })
+
+  it('should bypass persistence when partial storage is explicitly unavailable', async () => {
+    const fetcher = vi.fn<typeof fetch>(async () => new Response('direct'))
+    const resumable = createResumableModelFetch({fetcher, partialStorage: undefined})
+
+    expect(await (await resumable.fetch('https://models.test/model.onnx')).text()).toBe('direct')
+    await resumable.deletePartial('https://models.test/model.onnx')
+    expect(fetcher).toHaveBeenCalledOnce()
+  })
+
+  it.each([
+    {
+      init: {method: 'POST'},
+      input: new Request('https://models.test/model.onnx', {headers: {'x-input': 'yes'}}),
+    },
+    {
+      init: {headers: {range: 'bytes=0-3'}},
+      input: 'https://models.test/model.onnx',
+    },
+    {init: undefined, input: new URL('ftp://models.test/model.onnx')},
+    {init: undefined, input: 'not a url'},
+  ])('should bypass non-resumable requests', async ({init, input}) => {
+    const partial = createPartialStorage()
+    const fetcher = vi.fn<typeof fetch>(async () => new Response('direct'))
+    const resumable = createResumableModelFetch({fetcher, partialStorage: partial.storage})
+
+    expect(await (await resumable.fetch(input, init)).text()).toBe('direct')
+    expect(partial.storage.get).not.toHaveBeenCalled()
+  })
+
+  it.each([
+    {'accept-ranges': 'none', 'content-length': '8', etag: 'v1'},
+    {'accept-ranges': 'bytes', 'content-length': '8.5', etag: 'v1'},
+    {'accept-ranges': 'bytes', 'content-length': '0', etag: 'v1'},
+    {'accept-ranges': 'bytes', 'content-length': '8'},
+  ])('should skip persistence for invalid response metadata', async (headers) => {
+    const partial = createPartialStorage()
+    const fetcher = vi.fn<typeof fetch>(
+      async () => new Response('complete', {headers: headers as HeadersInit}),
+    )
+    const resumable = createResumableModelFetch({fetcher, partialStorage: partial.storage})
+
+    expect(await (await resumable.fetch('https://models.test/model.onnx')).text()).toBe('complete')
+    expect(partial.storage.reset).not.toHaveBeenCalled()
+  })
+
+  it('should preserve last-modified metadata without optional content headers', async () => {
+    const partial = createPartialStorage()
+    const fetcher = vi.fn<typeof fetch>(
+      async () =>
+        new Response(
+          new ReadableStream({
+            start(controller) {
+              controller.enqueue(new TextEncoder().encode('complete'))
+              controller.close()
+            },
+          }),
+          {
+            headers: {
+              'accept-ranges': 'bytes',
+              'content-length': '8',
+              'last-modified': 'Wed, 21 Oct 2015 07:28:00 GMT',
+            },
+          },
+        ),
+    )
+    const resumable = createResumableModelFetch({fetcher, partialStorage: partial.storage})
+
+    const first = await resumable.fetch('https://models.test/model.onnx')
+    await first.arrayBuffer()
+    const completed = await resumable.fetch('https://models.test/model.onnx')
+
+    expect(completed.headers.get('content-type')).toBeNull()
+    expect(completed.headers.get('etag')).toBeNull()
+    expect(completed.headers.get('last-modified')).toBe('Wed, 21 Oct 2015 07:28:00 GMT')
+  })
+
+  it('should return a bodyless range-capable response without initializing storage', async () => {
+    const partial = createPartialStorage()
+    const response = new Response(null, {headers: createHeaders(8)})
+    const fetcher = vi.fn<typeof fetch>(async () => response)
+    const resumable = createResumableModelFetch({fetcher, partialStorage: partial.storage})
+
+    expect(await resumable.fetch('https://models.test/model.onnx')).toBe(response)
+    expect(partial.storage.reset).not.toHaveBeenCalled()
+  })
+
+  it('should return the original response when its body disappears after storage reset', async () => {
+    const partial = createPartialStorage()
+    let bodyReadCount = 0
+    const response = {
+      get body() {
+        bodyReadCount += 1
+        return bodyReadCount === 1
+          ? new ReadableStream<Uint8Array>({start: (controller) => controller.close()})
+          : null
+      },
+      headers: new Headers(createHeaders(8)),
+    } as Response
+    const resumable = createResumableModelFetch({
+      fetcher: vi.fn(async () => response),
+      partialStorage: partial.storage,
+    })
+
+    expect(await resumable.fetch('https://models.test/model.onnx')).toBe(response)
+    expect(partial.storage.reset).toHaveBeenCalledOnce()
+  })
+})

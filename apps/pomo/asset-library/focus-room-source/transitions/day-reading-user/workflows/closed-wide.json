@@ -1,0 +1,199 @@
+{
+  "92": {
+    "inputs": {
+      "filename_prefix": "video/pomo_day_mouth_closed_to_wide_v1",
+      "format": "auto",
+      "codec": "auto",
+      "video": ["105:91", 0]
+    },
+    "class_type": "SaveVideo",
+    "_meta": {
+      "title": "Save Video"
+    }
+  },
+  "120": {
+    "class_type": "GetImageSize",
+    "inputs": {
+      "image": ["121", 0]
+    },
+    "_meta": {
+      "title": "GetImageSize"
+    }
+  },
+  "121": {
+    "inputs": {
+      "image": "pomo-day-mouth-closed-1024x576.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "Load Image 1"
+    }
+  },
+  "125": {
+    "inputs": {
+      "image": "pomo-day-mouth-wide-1024x576.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "Load Image 2"
+    }
+  },
+  "105:11": {
+    "inputs": {
+      "vae_name": "minimax_h3_video_vae_fp16.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "Load VAE"
+    }
+  },
+  "105:24": {
+    "inputs": {
+      "vae_name": "minimax_h3_audio_vae_fp32.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "Load VAE"
+    }
+  },
+  "105:23": {
+    "inputs": {
+      "samples": ["105:14", 0],
+      "vae": ["105:24", 0]
+    },
+    "class_type": "VAEDecodeAudio",
+    "_meta": {
+      "title": "VAE Decode Audio"
+    }
+  },
+  "105:10": {
+    "inputs": {
+      "samples": ["105:14", 0],
+      "vae": ["105:11", 0]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "VAE Decode"
+    }
+  },
+  "105:17": {
+    "inputs": {
+      "sampler_name": "euler"
+    },
+    "class_type": "KSamplerSelect",
+    "_meta": {
+      "title": "KSamplerSelect"
+    }
+  },
+  "105:9": {
+    "inputs": {
+      "scheduler": "simple",
+      "steps": 10,
+      "denoise": 1,
+      "model": ["105:119", 0]
+    },
+    "class_type": "BasicScheduler",
+    "_meta": {
+      "title": "BasicScheduler"
+    }
+  },
+  "105:14": {
+    "inputs": {
+      "noise": ["105:15", 0],
+      "guider": ["105:16", 0],
+      "sampler": ["105:17", 0],
+      "sigmas": ["105:9", 0],
+      "latent_image": ["105:104", 1]
+    },
+    "class_type": "SamplerCustomAdvanced",
+    "_meta": {
+      "title": "SamplerCustomAdvanced"
+    }
+  },
+  "105:16": {
+    "inputs": {
+      "model": ["105:119", 0],
+      "conditioning": ["105:104", 0]
+    },
+    "class_type": "BasicGuider",
+    "_meta": {
+      "title": "Basic Guider"
+    }
+  },
+  "105:15": {
+    "inputs": {
+      "noise_seed": 6120072732051
+    },
+    "class_type": "RandomNoise",
+    "_meta": {
+      "title": "RandomNoise"
+    }
+  },
+  "105:91": {
+    "inputs": {
+      "fps": 24,
+      "bit_depth": 8,
+      "images": ["105:10", 0],
+      "audio": ["105:23", 0]
+    },
+    "class_type": "CreateVideo",
+    "_meta": {
+      "title": "Create Video"
+    }
+  },
+  "105:104": {
+    "inputs": {
+      "prompt": "Single continuous locked-camera transition using the exact provided first and last frames. Preserve the same user-facing young woman, direct gaze, identity, hairstyle, hair clip, eyes, nose, skin tone, clothing, book, hands, lighting, background, framing, and color palette. Only her mouth, lips, and lower jaw may change. Begin exactly with the supplied fully closed Korean bilabial M/B/P mouth. Move gradually through three visibly distinct, evenly spaced intermediate mouth and lower-jaw poses, and finish exactly at the supplied natural wide Korean AE/E/I vowel mouth. The lips, mouth corners, lower lip, jaw, and chin move smoothly and monotonically with no pop; the mouth center remains registered. Hold eye direction and head position perfectly still. No speech audio, no blinking, no eye widening, no eye movement, no head turn, no camera movement, no expression change outside the supplied mouth endpoints, no new teeth, no tongue, no lip duplication, no face morphing, no motion blur, no color or lighting shift, no hand movement, no book movement, no background movement.",
+      "width": ["120", 0],
+      "height": ["120", 1],
+      "length": ["105:107", 1],
+      "clip": ["105:120", 0],
+      "vae": ["105:11", 0],
+      "first_frame": ["121", 0],
+      "last_frame": ["125", 0]
+    },
+    "class_type": "MiniMaxH3ImageToVideo",
+    "_meta": {
+      "title": "MiniMax H3 Image to Video"
+    }
+  },
+  "105:107": {
+    "inputs": {
+      "expression": "max(5, round(a * 24)) + (5 - (max(5, round(a * 24)) % 17)) % 17",
+      "values.a": ["105:111", 0]
+    },
+    "class_type": "ComfyMathExpression",
+    "_meta": {
+      "title": "Math Expression"
+    }
+  },
+  "105:111": {
+    "inputs": {
+      "value": 3
+    },
+    "class_type": "PrimitiveFloat",
+    "_meta": {
+      "title": "Float (duration)"
+    }
+  },
+  "105:119": {
+    "class_type": "UNETLoader",
+    "inputs": {
+      "unet_name": "minimax_h3_fl2va_pruned_int8_convrot.safetensors",
+      "weight_dtype": "default"
+    },
+    "_meta": {
+      "title": "UNETLoader"
+    }
+  },
+  "105:120": {
+    "inputs": {
+      "clip_name": "qwen3vl-32B-MiniMax-H3-Q4_K_M.gguf",
+      "type": "minimax"
+    },
+    "class_type": "CLIPLoaderGGUF",
+    "_meta": {
+      "title": "CLIPLoader (GGUF)"
+    }
+  }
+}

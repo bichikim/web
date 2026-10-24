@@ -1,0 +1,44 @@
+{
+  "name": "@winter-love/tonejs-midi",
+  "version": "1.0.38",
+  "description": "",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bichikim/web.git",
+    "directory": "packages/tonejs-midi"
+  },
+  "files": [
+    "dist/*",
+    "es-tone/*"
+  ],
+  "main": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs"
+    },
+    "./*": "./*"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "pnpm run build:ts && vite build",
+    "build:dev": "vite build --minify false",
+    "prepare-build": "pnpm run build",
+    "build:ts": "tsc -p tsconfig.tone.json",
+    "typecheck": "tsc --noEmit",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "array-flatten": "^3.0.0",
+    "midi-file": "^1.2.4"
+  },
+  "devDependencies": {
+    "@tonejs/midi": "catalog:",
+    "@types/node": "catalog:",
+    "@winter-love/vite-lib-config": "workspace:*",
+    "vite": "catalog:"
+  }
+}

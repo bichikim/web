@@ -1,0 +1,62 @@
+{
+  "name": "@winter-love/puppet",
+  "version": "0.0.0",
+  "private": true,
+  "files": [
+    "dist"
+  ],
+  "type": "module",
+  "sideEffects": [
+    "./dist/*.js"
+  ],
+  "exports": {
+    "./converter": {
+      "types": "./dist/types/converter/index.d.ts",
+      "import": "./dist/converter.js"
+    },
+    "./player": {
+      "types": "./dist/types/player/index.d.ts",
+      "import": "./dist/player.js"
+    },
+    "./editor": {
+      "types": "./dist/types/editor/index.d.ts",
+      "import": "./dist/editor.js"
+    },
+    "./editor-element": {
+      "types": "./dist/types/editor-element/index.d.ts",
+      "import": "./dist/editor-element.js"
+    }
+  },
+  "scripts": {
+    "build": "vite build --mode player && vite build --mode editor && vite build --mode editor-element && vite build --mode converter && tsc -p tsconfig.build.json",
+    "dev": "vite",
+    "lint": "oxlint src visual vite.config.ts vitest.browser.config.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@kobalte/core": "^0.13.13",
+    "@xmldom/xmldom": "^0.9.12",
+    "ag-psd": "^31.0.2",
+    "delaunator": "^5.1.0",
+    "es-toolkit": "catalog:",
+    "fflate": "^0.8.3",
+    "pixi.js": "^8.22.0",
+    "three": "^0.186.1"
+  },
+  "devDependencies": {
+    "@dschz/solid-flow": "0.2.6",
+    "@mediapipe/tasks-vision": "^1.1.0",
+    "@types/three": "^0.186.0",
+    "solid-js": "catalog:",
+    "typescript": "catalog:",
+    "unocss": "catalog:",
+    "vite": "catalog:",
+    "vite-plugin-solid": "catalog:"
+  },
+  "peerDependencies": {
+    "solid-js": "catalog:"
+  },
+  "engines": {
+    "node": ">=24"
+  }
+}

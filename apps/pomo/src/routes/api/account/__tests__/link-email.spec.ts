@@ -1,0 +1,130 @@
+/** @vitest-environment node */
+import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
+
+const repositoryMocks = vi.hoisted(() => ({
+  createAccountLinkChallenge: vi.fn(),
+  invalidateAccountLinkChallenge: vi.fn(),
+}))
+const authMocks = vi.hoisted(() => ({authenticateAppRequest: vi.fn()}))
+const emailMocks = vi.hoisted(() => ({sendAccountLinkEmail: vi.fn()}))
+
+vi.mock('src/server/auth/authenticate-app-request', () => authMocks)
+vi.mock('src/server/auth/magic-link', () => emailMocks)
+vi.mock('src/server/auth/account-link', () => repositoryMocks)
+
+import {POST} from '../link-email'
+import {invokeApiRoute} from '../../__tests__/invoke'
+
+const createRequest = (): Request =>
+  new Request('https://www.pomofi.io/api/account/link-email', {
+    body: JSON.stringify({email: 'User@Example.com'}),
+    headers: {'Content-Type': 'application/json'},
+    method: 'POST',
+  })
+
+describe('account link email route', () => {
+  beforeEach(() => {
+    authMocks.authenticateAppRequest.mockReset().mockResolvedValue({
+      token: 'app-token',
+      userId: 'user-id',
+    })
+    emailMocks.sendAccountLinkEmail.mockReset().mockResolvedValue(true)
+    repositoryMocks.createAccountLinkChallenge.mockReset().mockResolvedValue({
+      expiresAt: new Date('2026-08-22T00:30:00.000Z'),
+      status: 'created',
+      token: 'challenge-token',
+    })
+    repositoryMocks.invalidateAccountLinkChallenge.mockReset().mockResolvedValue(undefined)
+  })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  it('should reject repeated link requests before sending another email', async () => {
+    repositoryMocks.createAccountLinkChallenge.mockResolvedValue({
+      retryAfterSeconds: 42,
+      status: 'rate-limited',
+    })
+
+    const response = await invokeApiRoute(POST, createRequest())
+
+    expect(response.status).toBe(429)
+    expect(response.headers.get('Retry-After')).toBe('42')
+    expect(emailMocks.sendAccountLinkEmail).not.toHaveBeenCalled()
+  })
+
+  it('should require an authenticated app session', async () => {
+    authMocks.authenticateAppRequest.mockResolvedValue(null)
+
+    const response = await invokeApiRoute(POST, createRequest())
+
+    expect(response.status).toBe(401)
+    await expect(response.json()).resolves.toEqual({error: 'unauthorized'})
+    expect(repositoryMocks.createAccountLinkChallenge).not.toHaveBeenCalled()
+  })
+
+  it('should reject invalid and oversized email requests', async () => {
+    const createRequestWithBody = (body: string) =>
+      new Request('https://www.pomofi.io/api/account/link-email', {
+        body,
+        headers: {'Content-Type': 'application/json'},
+        method: 'POST',
+      })
+    const invalidResponse = await invokeApiRoute(
+      POST,
+      createRequestWithBody(JSON.stringify({email: 'invalid'})),
+    )
+    const oversizedResponse = await invokeApiRoute(POST, createRequestWithBody('x'.repeat(4097)))
+
+    expect(invalidResponse.status).toBe(400)
+    expect(oversizedResponse.status).toBe(413)
+    expect(repositoryMocks.createAccountLinkChallenge).not.toHaveBeenCalled()
+  })
+
+  it('should bind a new challenge to the requested email', async () => {
+    const response = await invokeApiRoute(POST, createRequest())
+
+    expect(response.status).toBe(200)
+    expect(repositoryMocks.createAccountLinkChallenge).toHaveBeenCalledWith(
+      'user-id',
+      'User@Example.com',
+    )
+    expect(emailMocks.sendAccountLinkEmail).toHaveBeenCalledWith(
+      expect.objectContaining({challengeToken: 'challenge-token', email: 'User@Example.com'}),
+    )
+    expect(repositoryMocks.invalidateAccountLinkChallenge).not.toHaveBeenCalled()
+  })
+
+  it('should invalidate the challenge when email delivery is rejected', async () => {
+    emailMocks.sendAccountLinkEmail.mockResolvedValue(false)
+
+    const response = await invokeApiRoute(POST, createRequest())
+
+    expect(response.status).toBe(502)
+    expect(repositoryMocks.invalidateAccountLinkChallenge).toHaveBeenCalledWith('challenge-token')
+  })
+
+  it('should not retry challenge invalidation when the repository rejects it', async () => {
+    const error = new Error('Database unavailable')
+    emailMocks.sendAccountLinkEmail.mockResolvedValue(false)
+    repositoryMocks.invalidateAccountLinkChallenge.mockRejectedValue(error)
+
+    const response = await invokeApiRoute(POST, createRequest())
+
+    expect(response.status).toBe(500)
+    expect(repositoryMocks.invalidateAccountLinkChallenge).toHaveBeenCalledOnce()
+  })
+
+  it('should invalidate the challenge when email delivery throws', async () => {
+    const error = new Error('Email provider unavailable')
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    emailMocks.sendAccountLinkEmail.mockRejectedValue(error)
+
+    const response = await invokeApiRoute(POST, createRequest())
+
+    expect(response.status).toBe(502)
+    expect(errorSpy).toHaveBeenCalledWith('Failed to send an account link email', error)
+    expect(repositoryMocks.invalidateAccountLinkChallenge).toHaveBeenCalledWith('challenge-token')
+  })
+})

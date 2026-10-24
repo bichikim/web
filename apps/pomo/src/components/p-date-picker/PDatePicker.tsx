@@ -1,0 +1,190 @@
+import {createUniqueId, For, Show} from 'solid-js'
+import {getLocale} from '@paraglide/runtime'
+import * as m from '@paraglide/message'
+import {formatDate} from 'src/features/civil-date'
+import {PSelect} from '../p-select/PSelect'
+import {usePicker, type UsePickerProps} from '../date-picker/use-picker'
+import {FIELD_LABEL} from '../field-classes'
+
+const MONTH_LENGTH = 7
+const REFERENCE_SUNDAY = 4
+const REFERENCE_YEAR = 2026
+const YEAR_LENGTH = 4
+
+const dateOptionsByLocale = new Map<
+  string,
+  {
+    readonly months: ReadonlyArray<{readonly label: string; readonly value: string}>
+    readonly weekdays: ReadonlyArray<string>
+  }
+>()
+
+const getDateOptions = (locale: string) => {
+  const cached = dateOptionsByLocale.get(locale)
+  if (cached) {
+    return cached
+  }
+
+  const monthFormatter = new Intl.DateTimeFormat(locale, {month: 'short', timeZone: 'UTC'})
+  const weekdayFormatter = new Intl.DateTimeFormat(locale, {timeZone: 'UTC', weekday: 'narrow'})
+  const options = {
+    months: Array.from({length: 12}, (_, index) => ({
+      label: monthFormatter.format(Date.UTC(REFERENCE_YEAR, index, 1)),
+      value: String(index + 1),
+    })),
+    weekdays: Array.from({length: 7}, (_, index) =>
+      weekdayFormatter.format(Date.UTC(REFERENCE_YEAR, 0, REFERENCE_SUNDAY + index)),
+    ),
+  }
+  dateOptionsByLocale.set(locale, options)
+  return options
+}
+
+const months = () => getDateOptions(getLocale()).months
+const weekdays = () => getDateOptions(getLocale()).weekdays
+const monthKey = (date: string) => date.slice(0, MONTH_LENGTH)
+const yearOptions = (minimum: string, maximum: string) =>
+  Array.from(
+    {
+      length: Number(maximum.slice(0, YEAR_LENGTH)) - Number(minimum.slice(0, YEAR_LENGTH)) + 1,
+    },
+    (_, index) => {
+      const year = String(Number(minimum.slice(0, YEAR_LENGTH)) + index)
+      return {label: year, value: year}
+    },
+  )
+
+export interface PDatePickerProps extends UsePickerProps {
+  readonly label?: string
+  readonly clearable?: boolean
+}
+/** Selects an ISO date without a native date input; value overrides internal selection when supplied. */
+export const PDatePicker = (props: PDatePickerProps) => {
+  const picker = usePicker(props)
+  const id = createUniqueId()
+  const label = () => props.label ?? m.picker_date()
+
+  const calendar = () => (
+    <div
+      ref={picker.setPanel}
+      onKeyDown={picker.onPanelKeyDown}
+      id={`${id}-calendar`}
+      role="group"
+      aria-labelledby={`${id}-label`}
+      class="grid min-w-0 gap-3 rounded-panel-inner border border-solid border-border bg-content-surface p-3"
+    >
+      <div class="grid grid-cols-[auto_minmax(0,1fr)_minmax(0,1fr)_auto] items-center gap-1.5">
+        <button
+          type="button"
+          aria-label={m.picker_previous()}
+          disabled={monthKey(formatDate(picker.view())) <= monthKey(picker.minimum())}
+          onClick={() => picker.moveMonth(-1)}
+          class={
+            'size-10 sm:size-control-md rounded-control border-0 bg-surface text-foreground outline-none ' +
+            'focus-visible:shadow-focus disabled:opacity-45'
+          }
+        >
+          ‹
+        </button>
+        <PSelect
+          label={m.picker_year()}
+          hideLabel
+          class="[&_button]:gap-1 [&_button]:px-2 [&_button_span]:whitespace-nowrap"
+          options={yearOptions(picker.minimum(), picker.maximum())}
+          value={String(picker.view().year)}
+          onChange={(value) => picker.changeMonth(Number(value), picker.view().month)}
+        />
+        <PSelect
+          label={m.picker_month()}
+          hideLabel
+          class="[&_button]:gap-1 [&_button]:px-2 [&_button_span]:whitespace-nowrap"
+          options={months()}
+          value={String(picker.view().month)}
+          onChange={(value) => picker.changeMonth(picker.view().year, Number(value))}
+        />
+        <button
+          type="button"
+          aria-label={m.picker_next()}
+          disabled={monthKey(formatDate(picker.view())) >= monthKey(picker.maximum())}
+          onClick={() => picker.moveMonth(1)}
+          class={
+            'size-10 sm:size-control-md rounded-control border-0 bg-surface text-foreground outline-none ' +
+            'focus-visible:shadow-focus disabled:opacity-45'
+          }
+        >
+          ›
+        </button>
+      </div>
+      <div class="grid grid-cols-7 gap-1 text-center text-sm">
+        <For each={weekdays()}>
+          {(day) => (
+            <span class="py-1 text-muted-foreground" aria-hidden="true">
+              {day}
+            </span>
+          )}
+        </For>
+        <For each={picker.cells()}>
+          {(date) => (
+            <Show when={date} fallback={<span />} keyed>
+              {(day) => (
+                <button
+                  type="button"
+                  data-date={formatDate(day)}
+                  aria-label={formatDate(day)}
+                  aria-pressed={picker.value() === formatDate(day)}
+                  disabled={!picker.allowed(formatDate(day))}
+                  tabIndex={picker.view().day === day.day ? 0 : -1}
+                  onClick={() => picker.select(formatDate(day))}
+                  onKeyDown={(event) => picker.onKeyDown(event, day)}
+                  class={
+                    'min-h-10 min-w-0 rounded-control border-0 bg-transparent text-foreground outline-none ' +
+                    'hover:bg-surface-interactive focus-visible:shadow-focus aria-pressed:bg-primary-soft ' +
+                    'aria-pressed:hover:bg-primary-soft ' +
+                    'aria-pressed:font-750 disabled:opacity-30'
+                  }
+                >
+                  {day.day}
+                </button>
+              )}
+            </Show>
+          )}
+        </For>
+      </div>
+      <Show when={props.clearable}>
+        <button
+          type="button"
+          onClick={() => picker.select('')}
+          class={
+            'min-h-10 rounded-control border border-solid border-border bg-surface text-foreground ' +
+            'focus-visible:shadow-focus'
+          }
+        >
+          {m.picker_clear()}
+        </button>
+      </Show>
+    </div>
+  )
+  return (
+    <div class="grid min-w-0 gap-1.5">
+      <span id={`${id}-label`} class={FIELD_LABEL}>
+        {label()}
+      </span>
+      <button
+        ref={picker.setTrigger}
+        type="button"
+        disabled={props.disabled}
+        aria-label={`${label()}: ${picker.value() || m.picker_choose()}`}
+        aria-expanded={picker.open()}
+        aria-controls={`${id}-calendar`}
+        onClick={picker.toggle}
+        class="flex min-h-control-md w-full items-center justify-between gap-2 rounded-control border
+          border-solid border-border bg-surface px-4 py-2 text-base text-foreground outline-none
+          hover:border-border-hover focus-visible:shadow-focus disabled:opacity-45"
+      >
+        <span>{picker.value() || m.picker_choose()}</span>
+        <span aria-hidden="true" class="i-tabler-calendar size-5" />
+      </button>
+      <Show when={picker.open()}>{calendar()}</Show>
+    </div>
+  )
+}

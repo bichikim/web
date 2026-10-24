@@ -1,0 +1,151 @@
+import {
+  type RouteDefinition,
+  RouteSectionProps,
+  useLocation,
+  useNavigate,
+  useSearchParams,
+} from '@solidjs/router'
+import {useStorage} from '@winter-love/solid-use'
+import {createEffect, createMemo, createResource, createSignal} from 'solid-js'
+import {
+  LinkType,
+  MusicInfo,
+  SettingContext,
+  SettingData,
+  SHiddenPlayer,
+} from 'src/components/midi-player'
+import {emitAllIds} from 'src/components/real-button/use-global-touch'
+import {useCookieStorage} from 'src/use/storage'
+import {createSplendidGrandPiano, SplendidGrandPianoContext} from 'src/use/instruments'
+import {getStorageKey} from 'src/utils/storage-key'
+import {getPresetEnforceMusics, type Preset} from 'src/features/preset'
+import {MidiPlayerProvider} from 'src/components/midi-player/MidiPlayerProvider'
+
+export const route = {
+  info: {
+    public: true,
+  },
+} satisfies RouteDefinition
+
+const getPreset = async (id?: string): Promise<Preset | undefined> => {
+  'use server'
+
+  if (!id) {
+    return
+  }
+
+  const {getPresetData} = await import('src/server/preset')
+
+  return getPresetData(id)
+}
+
+const layoutStyle = `:uno:
+absolute overflow-hidden top-0 left-0 bottom-0 right-0 before:content-[""] before:absolute before:top-0
+before:bottom-0 before:left-0 before:right-0 before:pointer-events-none
+`
+
+const navGroupStyle = `:uno:
+absolute top-0 left-0 right-0 bottom-0 flex  flex-col justify-end items-end pointer-events-none
+`
+
+const PIANO_PATH = '/piano'
+const MUSIC_PATH = '/musics'
+
+/**
+ * 음악 레이아웃 입니다
+ * @param props
+ * @returns
+ */
+export default function MusicLayout(props: RouteSectionProps) {
+  const [splendidGrandPiano, splendidGrandPianoController] = createSplendidGrandPiano({
+    baseUrl: '/instruments/splendid-grand-piano',
+    onEmitInstrument: emitAllIds,
+  })
+  const [searchParams] = useSearchParams<{preset?: string}>()
+  const [preset] = createResource(() => searchParams.preset, getPreset)
+  const location = useLocation()
+  const navigate = useNavigate()
+
+  const [settingData, setSettingData] = useCookieStorage<SettingData>(
+    getStorageKey('piano-setting'),
+    {
+      keepPlayList: true,
+      pianoSize: 100,
+      showKeyName: false,
+    },
+  )
+
+  const isActiveStore = createMemo(() => Boolean(settingData().keepPlayList))
+
+  const linkType = createMemo(() => {
+    return location.pathname === PIANO_PATH ? 'music' : 'piano'
+  })
+
+  const [savedMusics, setSavedMusics] = useStorage<MusicInfo[]>(
+    'local',
+    getStorageKey('piano-musics-default'),
+    {
+      active: isActiveStore,
+      initValue: [],
+      mounted: true,
+    },
+  )
+
+  const [presetMusics, setPresetMusics] = createSignal<MusicInfo[] | null>(null)
+  const musics = createMemo(() => presetMusics() ?? savedMusics())
+
+  // Keep preset edits separate so leaving or reloading a deep link preserves the user's list.
+  createEffect(() => {
+    const presetId = searchParams.preset
+    const data = preset.state === 'ready' ? preset() : undefined
+    setPresetMusics(getPresetEnforceMusics(presetId, data) ?? null)
+  })
+
+  const handleSettingDataChange = (data: SettingData) => {
+    setSettingData((prev) => ({...prev, ...data}))
+  }
+
+  const handleMusicsChange = (musics: MusicInfo[]) => {
+    if (presetMusics() !== null) {
+      setPresetMusics(musics)
+      return
+    }
+
+    setSavedMusics(musics)
+  }
+
+  const handleLinkTypeChange = (linkType: LinkType) => {
+    navigate(linkType === 'piano' ? PIANO_PATH : MUSIC_PATH)
+  }
+
+  return (
+    <>
+      <SettingContext.Provider value={settingData}>
+        <SplendidGrandPianoContext.Provider
+          value={[splendidGrandPiano, splendidGrandPianoController]}
+        >
+          <MidiPlayerProvider
+            initMusics={musics()}
+            pianoController={splendidGrandPianoController}
+            playState={splendidGrandPiano()}
+            onMusicsChange={handleMusicsChange}
+          >
+            <div id="layout" class={layoutStyle}>
+              {props.children}
+              <div class={navGroupStyle}>
+                <SHiddenPlayer
+                  linkType={linkType()}
+                  settingData={settingData()}
+                  playState={splendidGrandPiano()}
+                  onSettingDataChange={handleSettingDataChange}
+                  onLink={handleLinkTypeChange}
+                  class="relative bottom-1 right-1"
+                />
+              </div>
+            </div>
+          </MidiPlayerProvider>
+        </SplendidGrandPianoContext.Provider>
+      </SettingContext.Provider>
+    </>
+  )
+}

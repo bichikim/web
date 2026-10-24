@@ -1,0 +1,157 @@
+/** @vitest-environment jsdom */
+
+import {A} from '@solidjs/router'
+import {render, screen, waitFor, within} from '@solidjs/testing-library'
+import {afterEach, beforeEach, expect, it, vi} from 'vitest'
+
+import catalog from '../../../public/versions/v2/ko.json' with {type: 'json'}
+
+import WhatsNewPage from '../whats-new'
+
+const versionCatalogMocks = vi.hoisted(() => ({
+  write: vi.fn(),
+}))
+
+vi.mock('@solidjs/router', () => ({A: vi.fn()}))
+vi.mock('src/features/version-catalog', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('src/features/version-catalog')>()
+  return {...actual, writeViewedRelease: versionCatalogMocks.write}
+})
+
+beforeEach(() => {
+  vi.clearAllMocks()
+  versionCatalogMocks.write.mockResolvedValue(undefined)
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async () => new Response(JSON.stringify(catalog))),
+  )
+  vi.mocked(A).mockImplementation((props) => <a href={props.href}>{props.children}</a>)
+})
+
+afterEach(() => {
+  vi.restoreAllMocks()
+  vi.unstubAllGlobals()
+})
+
+it('should show the newest changes and the first release from the public catalog', async () => {
+  render(() => <WhatsNewPage />)
+
+  expect(await screen.findByRole('heading', {name: '새로운 소식'})).toBeTruthy()
+  expect(screen.getAllByRole('heading', {name: 'Pomo 업데이트 안내'})).toHaveLength(5)
+
+  const release = (date: string) => {
+    const releaseDate = screen.getByText(date)
+    expect(releaseDate).toBeVisible()
+    const article = releaseDate.closest('article')
+    if (article === null) {
+      throw new Error(`Expected the release dated ${date} to have an article.`)
+    }
+    return within(article)
+  }
+  const october06 = release('2026. 10. 06 14:32')
+  const september18 = release('2026. 09. 18 03:03')
+  const september13 = release('2026. 09. 13 10:43')
+  const september09 = release('2026. 09. 09 18:40')
+  const september08 = release('2026. 09. 08 11:44')
+  const september03 = release('2026. 09. 03 00:57')
+  const firstRelease = release('2026. 08. 25 05:26')
+
+  expect(october06.getByText('AI 타로 리딩')).toBeVisible()
+  expect(october06.getByText('내 음악으로 만드는 앨범')).toBeVisible()
+  expect(october06.getByText('기기 간 파일 전송')).toBeVisible()
+  expect(october06.getAllByRole('listitem')).toHaveLength(14)
+  expect(september18.getByText('기능 제안과 투표')).toBeVisible()
+  expect(
+    september13.getByText(
+      '집중 화면을 원하는 대로 정리하고, 피드 음성과 기록 기능을 더 편하게 사용해 보세요.',
+    ),
+  ).toBeVisible()
+  expect(september13.getByText('플레이어와 타이머 표시 설정')).toBeVisible()
+  expect(september13.getByText('토스 로그인 유지 개선')).toBeVisible()
+  expect(september09.getByText('사진과 동영상으로 꾸미는 배경')).toBeVisible()
+  expect(
+    september08.getByText('기억할 일부터 하루의 기록까지, Pomo에서 할 수 있는 일이 늘어났어요.'),
+  ).toBeVisible()
+  expect(september08.getByText('메모와 알림')).toBeVisible()
+  expect(
+    september03.getByText('집중 공간의 캐릭터 움직임과 표정을 더 자연스럽게 다듬었습니다.'),
+  ).toBeVisible()
+  expect(screen.getAllByRole('listitem')).toHaveLength(58)
+  expect(screen.getByRole('heading', {name: '첫 출시'})).toBeTruthy()
+  expect(firstRelease.getByRole('heading', {name: '첫 출시'})).toBeTruthy()
+  const returnLinks = screen.getAllByRole('link', {name: '앱으로 돌아가기'})
+  expect(returnLinks).toHaveLength(2)
+  expect(returnLinks[0]).toHaveClass('min-h-11', 'rounded-full', 'text-base', 'text-foreground')
+  expect(returnLinks[0].parentElement).toHaveClass('flex', 'justify-end')
+  for (const link of returnLinks) {
+    expect(link).toHaveAttribute('href', '/')
+  }
+})
+
+it('should persist the newest release after loading the public catalog', async () => {
+  vi.mocked(fetch).mockResolvedValueOnce(
+    new Response(JSON.stringify({releases: catalog.releases.toReversed()})),
+  )
+  render(() => <WhatsNewPage />)
+
+  expect(await screen.findByRole('heading', {name: '새로운 소식'})).toBeVisible()
+  await waitFor(() =>
+    expect(versionCatalogMocks.write).toHaveBeenCalledWith({
+      formatVersion: 1,
+      releasedAt: '2026-10-06T14:32:00+09:00',
+      version: '2026. 10. 06 14:32',
+    }),
+  )
+})
+
+it('should retain the first newest instant and document order including future releases', async () => {
+  const earlier = {
+    ...catalog.releases[0],
+    releasedAt: '2099-01-01T08:30:00+09:00',
+    title: 'Earlier zoned release',
+    version: '2099. 01. 01 08:30',
+  }
+  const first = {
+    ...catalog.releases[0],
+    releasedAt: '2099-01-01T09:00:00+09:00',
+    title: 'First newest release',
+    version: '2099. 01. 01 09:00',
+  }
+  const second = {
+    ...catalog.releases[0],
+    releasedAt: '2099-01-01T00:00:00Z',
+    title: 'Second newest release',
+    version: '2099. 01. 01 00:00',
+  }
+  const releases = [earlier, first, second]
+  vi.mocked(fetch).mockResolvedValueOnce(new Response(JSON.stringify({releases})))
+  const parse = vi.spyOn(Date, 'parse')
+
+  render(() => <WhatsNewPage />)
+
+  expect(await screen.findByRole('heading', {name: '새로운 소식'})).toBeVisible()
+  await waitFor(() =>
+    expect(versionCatalogMocks.write).toHaveBeenCalledWith({
+      formatVersion: 1,
+      releasedAt: first.releasedAt,
+      version: first.version,
+    }),
+  )
+  expect(screen.getAllByRole('heading', {level: 2}).map((heading) => heading.textContent)).toEqual(
+    releases.map((release) => release.title),
+  )
+  for (const release of releases) {
+    expect(parse.mock.calls.filter(([timestamp]) => timestamp === release.releasedAt)).toHaveLength(
+      1,
+    )
+  }
+})
+
+it('should report a catalog fetch failure', async () => {
+  vi.mocked(fetch).mockRejectedValue(new Error('offline'))
+
+  render(() => <WhatsNewPage />)
+
+  expect(await screen.findByRole('alert')).toHaveTextContent('업데이트 내역을 불러오지 못했습니다.')
+  expect(versionCatalogMocks.write).not.toHaveBeenCalled()
+})

@@ -1,0 +1,244 @@
+import {expect, it, vi} from 'vitest'
+
+import type {ModelStorage} from '../../model-storage'
+import type {LanguageLearningWord} from '../word-schema'
+import {
+  createLanguageLearningWordAudioRepository,
+  LanguageLearningWordAudioStorageError,
+} from '../word-audio-storage'
+
+const word: LanguageLearningWord = {
+  createdAt: '2026-09-03T00:00:00.000Z',
+  language: 'en',
+  memorized: false,
+  value: 'Home & hearth',
+  version: 1,
+}
+
+const createStorage = (): ModelStorage => ({
+  delete: vi.fn(async () => ({ok: true as const, value: true})),
+  get: vi.fn(async () => ({ok: true as const, value: null})),
+  set: vi.fn(async () => ({ok: true as const, value: undefined})),
+})
+
+it('should store and read compressed word audio without a WAV entry', async () => {
+  const storage = createStorage()
+  const repository = createLanguageLearningWordAudioRepository(storage)
+  const audio = new Blob(['opus'], {type: 'audio/ogg; codecs=opus'})
+  const path = `/__pomo/language-learning-word-audio/en/${encodeURIComponent(word.value)}.opus`
+
+  await repository.save(word, audio, 'request-1')
+  expect(storage.set).toHaveBeenCalledWith(path, expect.objectContaining({}))
+  expect(storage.set).not.toHaveBeenCalledWith(expect.stringMatching(/\.wav$/u), expect.anything())
+
+  vi.mocked(storage.get).mockResolvedValueOnce({
+    ok: true,
+    value: new Response(audio),
+  })
+  await expect(repository.get(word)).resolves.toEqual(audio)
+})
+
+it('should share pronunciation cache paths for Unicode-equivalent spellings', async () => {
+  const storage = createStorage()
+  const repository = createLanguageLearningWordAudioRepository(storage)
+  const composedWord = {...word, language: 'ko' as const, value: '한글'}
+  const decomposedWord = {...composedWord, value: composedWord.value.normalize('NFD')}
+  const path = `/__pomo/language-learning-word-audio/ko/${encodeURIComponent(composedWord.value)}.opus`
+
+  await repository.save(composedWord, new Blob(['audio']), 'request-1')
+  await repository.get(decomposedWord)
+
+  expect(storage.set).toHaveBeenCalledWith(path, expect.any(Response))
+  expect(storage.get).toHaveBeenCalledWith(path)
+})
+
+it('should read an existing pronunciation cache entry from its previous Unicode path', async () => {
+  const storage = createStorage()
+  const repository = createLanguageLearningWordAudioRepository(storage)
+  const composedWord = {...word, language: 'ko' as const, value: '한글'}
+  const decomposedWord = {...composedWord, value: composedWord.value.normalize('NFD')}
+  const normalizedPath = `/__pomo/language-learning-word-audio/ko/${encodeURIComponent(composedWord.value)}.opus`
+  const previousPath = `/__pomo/language-learning-word-audio/ko/${encodeURIComponent(decomposedWord.value)}.opus`
+  const audio = new Blob(['legacy audio'])
+  vi.mocked(storage.get)
+    .mockResolvedValueOnce({ok: true, value: null})
+    .mockResolvedValueOnce({ok: true, value: new Response(audio)})
+
+  await expect(repository.get(decomposedWord)).resolves.toEqual(audio)
+
+  expect(storage.get).toHaveBeenNthCalledWith(1, normalizedPath)
+  expect(storage.get).toHaveBeenNthCalledWith(2, previousPath)
+})
+
+it('should delete both pronunciation cache paths when a word is removed', async () => {
+  const storage = createStorage()
+  const repository = createLanguageLearningWordAudioRepository(storage)
+  const composedWord = {...word, language: 'ko' as const, value: '한글'}
+  const decomposedWord = {...composedWord, value: composedWord.value.normalize('NFD')}
+  const normalizedPath = `/__pomo/language-learning-word-audio/ko/${encodeURIComponent(composedWord.value)}.opus`
+  const previousPath = `/__pomo/language-learning-word-audio/ko/${encodeURIComponent(decomposedWord.value)}.opus`
+
+  await repository.delete(decomposedWord)
+
+  expect(storage.delete).toHaveBeenNthCalledWith(1, normalizedPath)
+  expect(storage.delete).toHaveBeenNthCalledWith(2, previousPath)
+})
+
+it('should delete the saved word audio entry', async () => {
+  const storage = createStorage()
+  const repository = createLanguageLearningWordAudioRepository(storage)
+
+  await repository.delete(word)
+
+  expect(storage.delete).toHaveBeenCalledWith(expect.stringMatching(/\.opus$/u))
+})
+
+it('should expose a stable storage operation instead of a localized error message', async () => {
+  const storage = createStorage()
+  const cause = new Error('cache unavailable')
+  vi.mocked(storage.set).mockResolvedValueOnce({
+    error: {cause, operation: 'write'},
+    ok: false,
+  })
+  const repository = createLanguageLearningWordAudioRepository(storage)
+
+  await expect(repository.save(word, new Blob(['audio']), 'request-1')).rejects.toMatchObject({
+    cause,
+    name: 'LanguageLearningWordAudioStorageError',
+    operation: 'write',
+  } satisfies Partial<LanguageLearningWordAudioStorageError>)
+})
+
+it('should not let an older request delete audio saved by a newer request', async () => {
+  let storedResponse: Response | null = null
+  let resolveFirstWrite: (() => void) | undefined
+  let writeCount = 0
+  const storage: ModelStorage = {
+    delete: vi.fn(async () => {
+      storedResponse = null
+      return {ok: true as const, value: true}
+    }),
+    get: vi.fn(async () => ({ok: true as const, value: storedResponse?.clone() ?? null})),
+    set: vi.fn(async (_key, response) => {
+      writeCount += 1
+      if (writeCount === 1) {
+        await new Promise<void>((resolve) => {
+          resolveFirstWrite = resolve
+        })
+      }
+      storedResponse = response.clone()
+      return {ok: true as const, value: undefined}
+    }),
+  }
+  const repository = createLanguageLearningWordAudioRepository(storage)
+
+  const olderSave = repository.save(word, new Blob(['old']), 'request-1')
+  const removal = repository.delete(word)
+  const newerSave = repository.save(word, new Blob(['newer audio']), 'request-2')
+  await vi.waitFor(() => expect(resolveFirstWrite).toBeTypeOf('function'))
+  resolveFirstWrite?.()
+  await Promise.all([olderSave, removal, newerSave])
+  await repository.delete(word, 'request-1')
+
+  const storedResult = await storage.get('unused')
+  expect(storedResult.ok).toBe(true)
+  if (!storedResult.ok) {
+    throw new Error('Expected stored audio')
+  }
+  expect(storedResult.value?.headers.get('X-Pomo-Word-Audio-Owner')).toBe('request-2')
+})
+
+it('should order writes across repository instances sharing the audio cache', async () => {
+  let storedResponse: Response | null = null
+  let resolveFirstWrite: (() => void) | undefined
+  let writeCount = 0
+  const storage: ModelStorage = {
+    delete: vi.fn(async () => {
+      storedResponse = null
+      return {ok: true as const, value: true}
+    }),
+    get: vi.fn(async () => ({ok: true as const, value: storedResponse?.clone() ?? null})),
+    set: vi.fn(async (_key, response) => {
+      writeCount += 1
+      if (writeCount === 1) {
+        await new Promise<void>((resolve) => {
+          resolveFirstWrite = resolve
+        })
+      }
+      storedResponse = response.clone()
+      return {ok: true as const, value: undefined}
+    }),
+  }
+  const olderRepository = createLanguageLearningWordAudioRepository(storage)
+  const newerRepository = createLanguageLearningWordAudioRepository(storage)
+
+  const olderSave = olderRepository.save(word, new Blob(['old']), 'request-1')
+  const newerSave = newerRepository.save(word, new Blob(['newer audio']), 'request-2')
+  await vi.waitFor(() => expect(resolveFirstWrite).toBeTypeOf('function'))
+  resolveFirstWrite?.()
+  await Promise.all([olderSave, newerSave])
+  await olderRepository.delete(word, 'request-1')
+
+  const storedResult = await storage.get('unused')
+  expect(storedResult.ok).toBe(true)
+  if (!storedResult.ok) {
+    throw new Error('Expected stored audio')
+  }
+  expect(storedResult.value?.headers.get('X-Pomo-Word-Audio-Owner')).toBe('request-2')
+})
+
+it('should keep injected storage backends independently writable', async () => {
+  let resolveFirstWrite: (() => void) | undefined
+  const firstStorage = createStorage()
+  const secondStorage = createStorage()
+  vi.mocked(firstStorage.set).mockImplementationOnce(
+    () =>
+      new Promise((resolve) => {
+        resolveFirstWrite = () => resolve({ok: true as const, value: undefined})
+      }),
+  )
+  const firstRepository = createLanguageLearningWordAudioRepository(firstStorage)
+  const secondRepository = createLanguageLearningWordAudioRepository(secondStorage)
+
+  const firstSave = firstRepository.save(word, new Blob(['first']), 'request-1')
+  await vi.waitFor(() => expect(firstStorage.set).toHaveBeenCalledOnce())
+  const secondSave = secondRepository.save(word, new Blob(['second']), 'request-2')
+
+  await expect(secondSave).resolves.toBeUndefined()
+  expect(secondStorage.set).toHaveBeenCalledOnce()
+  resolveFirstWrite?.()
+  await expect(firstSave).resolves.toBeUndefined()
+})
+
+it('should share coordination across default repositories for the same cache namespace', async () => {
+  let resolveFirstWrite: (() => void) | undefined
+  let writeCount = 0
+  const cache = {
+    delete: vi.fn(async () => true),
+    match: vi.fn(async () => undefined),
+    put: vi.fn(async () => {
+      writeCount += 1
+      if (writeCount === 1) {
+        await new Promise<void>((resolve) => {
+          resolveFirstWrite = resolve
+        })
+      }
+    }),
+  }
+  vi.stubGlobal('caches', {open: vi.fn(async () => cache)})
+
+  try {
+    const firstRepository = createLanguageLearningWordAudioRepository()
+    const secondRepository = createLanguageLearningWordAudioRepository()
+    const firstSave = firstRepository.save(word, new Blob(['first']), 'request-1')
+    await vi.waitFor(() => expect(cache.put).toHaveBeenCalledOnce())
+    const secondSave = secondRepository.save(word, new Blob(['second']), 'request-2')
+
+    expect(cache.put).toHaveBeenCalledOnce()
+    resolveFirstWrite?.()
+    await Promise.all([firstSave, secondSave])
+    expect(cache.put).toHaveBeenCalledTimes(2)
+  } finally {
+    vi.unstubAllGlobals()
+  }
+})

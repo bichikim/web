@@ -1,0 +1,200 @@
+{
+  "1": {
+    "class_type": "EmptyImage",
+    "inputs": {
+      "batch_size": 1,
+      "color": 0,
+      "height": 180,
+      "width": 260
+    }
+  },
+  "2": {
+    "class_type": "EmptyImage",
+    "inputs": {
+      "batch_size": 1,
+      "color": 65535,
+      "height": 180,
+      "width": 260
+    }
+  },
+  "3": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "layer-mouth-rest.png"
+    }
+  },
+  "4": {
+    "class_type": "InvertMask",
+    "inputs": {
+      "mask": ["3", 1]
+    }
+  },
+  "5": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["1", 0],
+      "mask": ["4", 0],
+      "resize_source": false,
+      "source": ["2", 0],
+      "x": 0,
+      "y": 0
+    }
+  },
+  "6": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "filename_prefix": "pomo/day-mouth-rest-alpha-qa-v1",
+      "images": ["5", 0]
+    }
+  },
+  "7": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "layer-mouth-closed.png"
+    }
+  },
+  "8": {
+    "class_type": "InvertMask",
+    "inputs": {
+      "mask": ["7", 1]
+    }
+  },
+  "9": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["1", 0],
+      "mask": ["8", 0],
+      "resize_source": false,
+      "source": ["2", 0],
+      "x": 0,
+      "y": 0
+    }
+  },
+  "10": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "filename_prefix": "pomo/day-mouth-closed-alpha-qa-v1",
+      "images": ["9", 0]
+    }
+  },
+  "11": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "layer-mouth-open.png"
+    }
+  },
+  "12": {
+    "class_type": "InvertMask",
+    "inputs": {
+      "mask": ["11", 1]
+    }
+  },
+  "13": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["1", 0],
+      "mask": ["12", 0],
+      "resize_source": false,
+      "source": ["2", 0],
+      "x": 0,
+      "y": 0
+    }
+  },
+  "14": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "filename_prefix": "pomo/day-mouth-open-alpha-qa-v1",
+      "images": ["13", 0]
+    }
+  },
+  "15": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "layer-mouth-wide.png"
+    }
+  },
+  "16": {
+    "class_type": "InvertMask",
+    "inputs": {
+      "mask": ["15", 1]
+    }
+  },
+  "17": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["1", 0],
+      "mask": ["16", 0],
+      "resize_source": false,
+      "source": ["2", 0],
+      "x": 0,
+      "y": 0
+    }
+  },
+  "18": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "filename_prefix": "pomo/day-mouth-wide-alpha-qa-v1",
+      "images": ["17", 0]
+    }
+  },
+  "19": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "layer-mouth-round.png"
+    }
+  },
+  "20": {
+    "class_type": "InvertMask",
+    "inputs": {
+      "mask": ["19", 1]
+    }
+  },
+  "21": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["1", 0],
+      "mask": ["20", 0],
+      "resize_source": false,
+      "source": ["2", 0],
+      "x": 0,
+      "y": 0
+    }
+  },
+  "22": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "filename_prefix": "pomo/day-mouth-round-alpha-qa-v1",
+      "images": ["21", 0]
+    }
+  },
+  "23": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "layer-mouth-narrow.png"
+    }
+  },
+  "24": {
+    "class_type": "InvertMask",
+    "inputs": {
+      "mask": ["23", 1]
+    }
+  },
+  "25": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["1", 0],
+      "mask": ["24", 0],
+      "resize_source": false,
+      "source": ["2", 0],
+      "x": 0,
+      "y": 0
+    }
+  },
+  "26": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "filename_prefix": "pomo/day-mouth-narrow-alpha-qa-v1",
+      "images": ["25", 0]
+    }
+  }
+}

@@ -1,0 +1,137 @@
+# AGENTS.md
+
+## Interaction
+
+- **Examples**: If the user asks only to see an example, provide it in the chat response without creating or editing files. If the user asks to build something from an example and its implementation code is available, study that implementation before implementing it.
+- **Intent gate**: State the concrete interpretation at task start and when the scope or direction changes.
+- **Existing code references**: When discussing existing code, always include a clickable link to its exact file and line number so the link opens at that line.
+
+## UI communication
+
+Explanations and notices tend to accumulate as AI adds features, crowding the workspace and competing with the user's actual task. Keep feedback proportionate so the interface remains focused on the work.
+
+- Keep user-facing UI text concise; avoid verbose explanations and persistent status text whenever possible.
+- Prefer toasts or other transient feedback that does not consume layout space. Keep routine success silent; show concise feedback when the user needs to act.
+- Use persistent inline guidance only when it is necessary to complete the current task or understand the current state.
+
+## Code review
+
+- For Codex code reviews, read and follow the `critical-review` skill at `.agents/skills/critical-review/SKILL.md`.
+
+## Styling ownership
+
+- Do not create standalone `.css` files on your own initiative. Before creating or adding usage of a standalone `.css` file, explain why it is needed and obtain explicit user approval.
+- Follow UnoCSS styling methods for all visual style values.
+- JavaScript and TypeScript may communicate semantic state through classes or data attributes and inject runtime values through CSS custom properties.
+- If other style handling in JavaScript or TypeScript is needed, first present the concrete reason and alternatives and obtain explicit user approval.
+
+## Scripts
+
+- Before adding a script entry to any `package.json`, obtain explicit user approval.
+- Treat code under `scripts` as standalone; it must not import or use code from `src`.
+- If reusing `src` from a script appears necessary, obtain explicit user approval before adding the dependency.
+
+## React dependencies
+
+- Do not introduce React or React-specific libraries, whether directly or through a new transitive dependency.
+
+## File naming
+
+- Across source code, tests, documentation, configuration, scripts, and assets, name files by their role within the containing directory; use meaningful subdirectories for context shared by siblings.
+- Keep authoring and generation details in archive filenames or metadata, not runtime filenames.
+
+## Decision quality
+
+- When implementing a feature, prefer event-driven work whenever the relevant event or completion signal is available. Before using `setTimeout` or `setInterval`, explain why an event-driven approach is insufficient and obtain explicit user approval.
+- **Declarative programming (required; very important)**: Write code declaratively by composing reusable operations. Judge readability by how clearly the composition expresses intent, not by code length.
+- Evaluate changes in repository-wide context, prioritizing compatibility, reusability, and readability over local optimization.
+
+## Side effects
+
+- Write computation and transformation logic as pure functions whenever possible, and concentrate side effects at input/output boundaries.
+- Implement ordinary side effects needed to fulfill the user's requested functionality without separate approval.
+- Obtain approval before implementing external changes beyond the requested scope, destructive operations, or actions requiring new permissions or costs.
+
+## Evidence
+
+- Establish factual or technical conclusions only from evidence capable of proving them: the actual project's files, configuration, data, runtime, executed tests, current authoritative documentation, or a focused experiment.
+- Match the evidence to the claim: source inspection does not prove runtime behavior, an unexecuted test does not prove behavior, and a passing test proves only the assertions and environment it exercised. For changeable external information, verify the exact meaning and relevant consequence from a current authoritative source in the same turn.
+- When direct evidence is missing, run the smallest relevant test or runtime experiment and distinguish product defects from setup, runner, sandbox, and environment failures.
+- Show the decisive evidence. If no permitted source or viable experiment can establish the claim, state that it cannot be determined instead of guessing.
+
+## Completion
+
+- Keep the user's requested outcome, scope, constraints, and completion criteria as the task's authority throughout the work. Do not silently narrow or replace them with intermediate artifacts or checks.
+- Before reporting completion, compare the actual result against each of the user's original completion criteria. For each criterion, cite evidence that proves that criterion; a plan, edited file, or passing partial check cannot substitute for a different requested outcome.
+- Keep source inspection, executed checks, and user-goal completion as separate claims. Verify runtime behavior when the requested outcome depends on it. Do not infer that the whole task is complete from implementation or test progress alone.
+- If a criterion remains unmet or unverified, report the exact remaining work or blocker and the verified progress; do not label the whole task complete.
+
+## Architecture authority
+
+- Follow explicit requirements in current official documentation. Disclose conflicts with those requirements before implementation; do not deviate unless the user explicitly directs it.
+- Where official documentation leaves design or folder structure open, decide using project contracts and relevant evidence. Consult authoritative implementations when needed to resolve a material uncertainty.
+
+## Layering without z-index
+
+- Preserve the requested visual composition and interaction behavior. The `z-index` restriction does not permit removing, flattening, inlining, relocating, or simplifying overlapping, floating, sticky, fixed, or overlay elements.
+- Do not use `z-index`, including utility classes and rendering-library equivalents.
+- When layering is required, reproduce the intended result by diagnosing painting and clipping first, then use the appropriate platform mechanism: the top layer, an existing portal or headless primitive, DOM order, overflow or containing-block correction, layout structure, or non-numeric stacking-context structure.
+- Treat the solution as complete only when the intended visual hierarchy, overlap and placement, clipping, pointer interaction, keyboard focus, and accessibility semantics are preserved in every relevant state.
+- If exact equivalence is impossible without `z-index`, do not silently weaken or abandon the design. Show the concrete blocker and obtain explicit user approval before using the smallest necessary `z-index`.
+
+## Proportionate future-proofing
+
+- Include a foreseeable future need now when the implementation and complexity costs are small.
+- Explicitly state the future need being covered and why the added effort is small.
+- Do not use future-proofing to justify speculative abstractions with uncertain value.
+
+## Terminology
+
+- Never call code, APIs, exports, types, or control flow "safe" except when the claim is about security. There is nothing else in code to label safe.
+
+## Worktree initialization
+
+- Start new worktrees from the latest `origin/dev` commit.
+- Do not automatically merge, rebase, or reset an existing worktree with in-progress changes.
+
+## Pomo local servers
+
+- Run Pomo commands that bind a local port—including Vite, Playwright, Storybook browser tests, Wallaby, and Wrangler local tooling—with escalated permissions on the first attempt. Treat loopback `listen EPERM` as a sandbox restriction, retry the same command in the approved context, and verify it there before attributing the failure to product code.
+
+## Unit test execution time
+
+- Write each Vitest unit test to complete within 150ms when that individual test is run by itself. This is per-test authoring guidance, not a timeout for a whole file or parallel suite.
+- When an individual unit test exceeds 150ms, diagnose in order: missing mocks; too many independent scenarios combined in one test; whether the test has integration-test characteristics. Preserve assertions, scenarios that require the same mount, and required coverage. Mock missing boundaries where appropriate, split only independent scenarios, and keep genuine integration behavior in integration tests.
+
+## Required after changes
+
+1. Fix oxlint errors
+2. Run oxfmt (`pnpm format`)
+
+## GitHub CLI authentication
+
+- `gh` credentials are stored in the macOS Keychain and may appear invalid in the default sandbox.
+- If `gh auth status` fails in the sandbox, retry the command with escalated permissions before asking the user to authenticate again.
+- Ask the user to run `gh auth login` only when authentication also fails with escalated permissions.
+
+## Dependency installation
+
+When dependency installation is required:
+
+- Do not run `pnpm install` or `pnpm i` inside the sandbox first.
+- Always request escalated execution for `pnpm install` or `pnpm i` from the first attempt.
+- Use the global pnpm store.
+- Do not create or use a local `.pnpm-store`.
+- Do not add `store-dir=.pnpm-store` to `.npmrc`.
+
+## Cursor Cloud
+
+pnpm + Turborepo (`@winter-love/web`) · Node ≥24 · pnpm 11.x (`package.json`). `pnpm install` runs root `postinstall` → `turbo prepare-build` (package builds; Coong Supabase type gen; Turbo-cached). `optimisticRepeatInstall: false` in `pnpm-workspace.yaml` so postinstall still runs when Already up to date. `globalPassThroughEnv` includes `pnpm_config_verify_deps_before_run` so Turbo strict mode does not strip pnpm 11’s lifecycle marker (which would re-enter `pnpm install` → postinstall).
+
+- **Coong** — `apps/coong` (SolidStart SSR). `pnpm dev` (:3000). Copy `apps/coong/.env.e2e` → `.env` for dev without Supabase (see `.env.example`).
+- **Pomo** — `apps/pomo` (SolidStart SSR). `pnpm dev --port 3300` (:3300).
+- **Storybook** — root. `pnpm storybook:dev` (:6006).
+
+**Commands:** `pnpm lint` · `pnpm test` · `turbo prepare-build` · `pnpm typecheck` (`apps/coong`)
+
+**Gotcha:** Without Supabase, auth/DB features error but the app renders. Re-run `turbo prepare-build` after cleaning `node_modules` or `dist/`.

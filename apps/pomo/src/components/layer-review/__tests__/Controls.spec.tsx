@@ -1,0 +1,184 @@
+/** @vitest-environment jsdom */
+
+import {fireEvent, render, screen} from '@solidjs/testing-library'
+import {describe, expect, it, vi} from 'vitest'
+import type {PEyeMode} from '../../../features/focus-room-animation'
+import type {PReviewMouthFrame} from 'src/features/focus-room-layer-review'
+import type {PViseme} from '../../../features/lip-sync'
+
+vi.mock('../LayerToggle', () => ({
+  LayerToggle: (props: {
+    readonly checked: boolean
+    readonly description: string
+    readonly label: string
+    readonly onChange: (checked: boolean) => void
+  }) => (
+    <button
+      aria-pressed={props.checked}
+      data-description={props.description}
+      onClick={() => props.onChange(!props.checked)}
+      type="button"
+    >
+      {props.label}
+    </button>
+  ),
+}))
+
+vi.mock('../EyeModePicker', () => ({
+  EyeModePicker: (props: {
+    readonly eyeMode: PEyeMode
+    readonly onChange: (eyeMode: PEyeMode) => void
+  }) => (
+    <button data-eye-mode={props.eyeMode} onClick={() => props.onChange('closed')} type="button">
+      눈 단계
+    </button>
+  ),
+}))
+
+vi.mock('../VisemePicker', () => ({
+  VisemePicker: (props: {
+    readonly onChange: (viseme: PViseme) => void
+    readonly viseme: PViseme
+  }) => (
+    <button data-viseme={props.viseme} onClick={() => props.onChange('wide')} type="button">
+      입 모양
+    </button>
+  ),
+}))
+
+vi.mock('../MouthFramePicker', () => ({
+  MouthFramePicker: (props: {
+    readonly mouthFrame: PReviewMouthFrame | null
+    readonly mouthPositionComparison: boolean
+    readonly onChange: (mouthFrame: PReviewMouthFrame | null) => void
+    readonly onPositionComparisonChange: (enabled: boolean) => void
+  }) => (
+    <div data-mouth-frame={props.mouthFrame ?? 'transition'}>
+      <button onClick={() => props.onChange('round')} type="button">
+        입 프레임
+      </button>
+      <button
+        onClick={() => props.onPositionComparisonChange(!props.mouthPositionComparison)}
+        type="button"
+      >
+        입 위치 비교
+      </button>
+    </div>
+  ),
+}))
+
+import {ReviewControls} from '../Controls'
+
+const createProps = () => ({
+  animationEnabled: true,
+  eyeMode: 'open' as const,
+  eyesVisible: true,
+  handsVisible: false,
+  headVisible: true,
+  mouthFrame: null,
+  mouthPositionComparison: false,
+  mouthVisible: true,
+  onAnimationChange: vi.fn(),
+  onCollapse: vi.fn(),
+  onEyeModeChange: vi.fn(),
+  onEyesChange: vi.fn(),
+  onHandsChange: vi.fn(),
+  onHeadChange: vi.fn(),
+  onHideAll: vi.fn(),
+  onMouthChange: vi.fn(),
+  onMouthFrameChange: vi.fn(),
+  onMouthPositionComparisonChange: vi.fn(),
+  onReferenceChange: vi.fn(),
+  onSceneStyleChange: vi.fn(),
+  onShowAll: vi.fn(),
+  onVisemeChange: vi.fn(),
+  referenceOpacity: 0.5,
+  referencePercentage: 50,
+  sceneStyle: 'scribble' as const,
+  viseme: 'rest' as const,
+})
+
+describe('ReviewControls', () => {
+  it('should render scribble controls and forward every child control change', () => {
+    const props = createProps()
+    const view = render(() => <ReviewControls {...props} />)
+    const controlButtons = new Map<string, HTMLButtonElement>()
+    const getControlButton = (name: string) => {
+      const cachedButton = controlButtons.get(name)
+      if (cachedButton) {
+        return cachedButton
+      }
+
+      const matchingButtons = Array.from(view.container.querySelectorAll('button')).filter(
+        (candidate) =>
+          candidate.getAttribute('aria-label') === name || candidate.textContent?.trim() === name,
+      )
+      if (matchingButtons.length !== 1) {
+        throw new Error(`Expected a button named "${name}"`)
+      }
+      const button = matchingButtons[0]!
+      expect(button).toBeVisible()
+      expect(button).not.toHaveAttribute('role')
+      expect(button.closest('[aria-hidden="true"], [inert]')).toBeNull()
+      expect(button).toHaveAccessibleName(name)
+      controlButtons.set(name, button)
+      return button
+    }
+
+    expect(screen.getByRole('complementary', {name: '레이어 검사 도구'})).toHaveAttribute(
+      'id',
+      'layer-review-controls',
+    )
+    expect(screen.getByText('하찮은 픽셀')).toBeInTheDocument()
+    expect(getControlButton('하찮은 스타일')).toHaveAttribute('aria-pressed', 'true')
+    expect(getControlButton('미세 애니메이션')).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByText('50%')).toBeInTheDocument()
+    expect(screen.getByRole('slider', {name: '원본 오버레이'})).toHaveAttribute(
+      'aria-valuenow',
+      '0.5',
+    )
+
+    fireEvent.click(getControlButton('레이어 패널 축소'))
+    fireEvent.click(getControlButton('하찮은 스타일'))
+    fireEvent.click(getControlButton('미세 애니메이션'))
+    fireEvent.click(getControlButton('머리 레이어'))
+    fireEvent.click(getControlButton('눈 레이어'))
+    fireEvent.click(getControlButton('입 레이어'))
+    fireEvent.click(getControlButton('손 레이어'))
+    fireEvent.click(getControlButton('눈 단계'))
+    fireEvent.click(getControlButton('입 모양'))
+    fireEvent.click(getControlButton('입 프레임'))
+    fireEvent.click(getControlButton('입 위치 비교'))
+    fireEvent.click(getControlButton('모두 표시'))
+    fireEvent.click(getControlButton('모두 숨김'))
+    fireEvent.keyDown(screen.getByRole('slider', {name: '원본 오버레이'}), {
+      key: 'ArrowRight',
+    })
+
+    expect(props.onCollapse).toHaveBeenCalledOnce()
+    expect(props.onSceneStyleChange).toHaveBeenCalledWith('original')
+    expect(props.onAnimationChange).toHaveBeenCalledWith(false)
+    expect(props.onHeadChange).toHaveBeenCalledWith(false)
+    expect(props.onEyesChange).toHaveBeenCalledWith(false)
+    expect(props.onMouthChange).toHaveBeenCalledWith(false)
+    expect(props.onHandsChange).toHaveBeenCalledWith(true)
+    expect(props.onEyeModeChange).toHaveBeenCalledWith('closed')
+    expect(props.onVisemeChange).toHaveBeenCalledWith('wide')
+    expect(props.onMouthFrameChange).toHaveBeenCalledWith('round')
+    expect(props.onMouthPositionComparisonChange).toHaveBeenCalledWith(true)
+    expect(props.onShowAll).toHaveBeenCalledOnce()
+    expect(props.onHideAll).toHaveBeenCalledOnce()
+    expect(props.onReferenceChange).toHaveBeenCalledOnce()
+  })
+
+  it('should present the original style and enable scribble from an unchecked switch', () => {
+    const props = {...createProps(), sceneStyle: 'original' as const}
+    render(() => <ReviewControls {...props} />)
+
+    expect(screen.getByText('원본 픽셀')).toBeInTheDocument()
+    const styleToggle = screen.getByRole('button', {name: '하찮은 스타일'})
+    expect(styleToggle).toHaveAttribute('aria-pressed', 'false')
+    fireEvent.click(styleToggle)
+    expect(props.onSceneStyleChange).toHaveBeenCalledWith('scribble')
+  })
+})

@@ -1,0 +1,589 @@
+/** @vitest-environment jsdom */
+
+import {render, screen} from '@solidjs/testing-library'
+import flushPromises from 'flush-promises'
+import {PreferenceProvider} from 'src/hooks/use-preference'
+import {afterEach, beforeEach, expect, it, vi} from 'vitest'
+
+import {getLocale, overwriteGetLocale} from '@paraglide/runtime'
+import {
+  createLanguageLearningWordAudioRepository,
+  type LanguageLearningWord,
+  type LanguageLearningWordAudioRepository,
+  LanguageLearningWordAudioStorageError,
+} from '../../../features/language-learning'
+import * as automaticDialogueSettings from '../../../features/focus-room-dialogue/automatic-dialogue-settings'
+import {type ModelAssetManager, useModelAssetManager} from '../../../features/model-download'
+import {isSupertonicModelDownloaded} from '../../../features/supertonic'
+import {useLanguageLearningWordPronunciation} from '../use-word-pronunciation'
+import {generateLanguageLearningWordPronunciation} from '../word-pronunciation'
+
+vi.mock('../../../features/model-download', () => ({useModelAssetManager: vi.fn()}))
+vi.mock('../../../features/language-learning', async () => {
+  const actual = await vi.importActual<typeof import('../../../features/language-learning')>(
+    '../../../features/language-learning',
+  )
+  return {...actual, createLanguageLearningWordAudioRepository: vi.fn()}
+})
+vi.mock('../../../features/supertonic', () => ({isSupertonicModelDownloaded: vi.fn()}))
+vi.mock('../word-pronunciation', () => ({generateLanguageLearningWordPronunciation: vi.fn()}))
+
+const word: LanguageLearningWord = {
+  createdAt: '2026-09-03T00:00:00.000Z',
+  language: 'en',
+  memorized: false,
+  value: 'Home',
+  version: 1,
+}
+const secondWord: LanguageLearningWord = {...word, value: 'Wave'}
+const originalGetLocale = getLocale
+
+const createManager = () => ({
+  runAfterModel: vi.fn(),
+  runAfterVoiceModel: vi.fn(),
+})
+
+const createAudioRepository = () => {
+  const remove = vi.fn<LanguageLearningWordAudioRepository['delete']>(async () => undefined)
+  const get = vi.fn<LanguageLearningWordAudioRepository['get']>(async () => null)
+  const save = vi.fn<LanguageLearningWordAudioRepository['save']>(async () => undefined)
+  return {delete: remove, get, save}
+}
+
+let manager: ReturnType<typeof createManager>
+let audioRepository: ReturnType<typeof createAudioRepository>
+let pendingWord: () => LanguageLearningWord | null
+let requestWord: (value: LanguageLearningWord) => void
+let getPronunciationAudioUrl: (value: LanguageLearningWord) => string | null
+let confirmDownload: () => void
+let cancelDownload: () => void
+let removeWord: (value: LanguageLearningWord) => void
+
+const Harness = () => {
+  const pronunciation = useLanguageLearningWordPronunciation()
+  pendingWord = pronunciation.pendingWord
+  requestWord = pronunciation.request
+  getPronunciationAudioUrl = pronunciation.audioUrl
+  confirmDownload = pronunciation.confirmDownload
+  cancelDownload = pronunciation.cancelDownload
+  removeWord = pronunciation.remove
+  return (
+    <div>
+      <span data-testid="pending">{pendingWord()?.value ?? ''}</span>
+      <span data-testid="loading">{String(pronunciation.isLoading(word))}</span>
+      <span data-testid="loading-second">{String(pronunciation.isLoading(secondWord))}</span>
+      <span data-testid="audio">{pronunciation.audioUrl(word) ?? ''}</span>
+      <span data-testid="audio-second">{pronunciation.audioUrl(secondWord) ?? ''}</span>
+      <span data-testid="error">{pronunciation.error() ?? ''}</span>
+    </div>
+  )
+}
+
+const renderPronunciation = () => render(() => <Harness />, {wrapper: PreferenceProvider})
+
+beforeEach(() => {
+  overwriteGetLocale(() => 'ko')
+  vi.clearAllMocks()
+  manager = createManager()
+  audioRepository = createAudioRepository()
+  vi.mocked(createLanguageLearningWordAudioRepository).mockReturnValue(
+    audioRepository as LanguageLearningWordAudioRepository,
+  )
+  vi.mocked(useModelAssetManager).mockReturnValue(manager as ModelAssetManager)
+  vi.mocked(isSupertonicModelDownloaded).mockResolvedValue(true)
+  localStorage.setItem(
+    'pomo:automatic-dialogue-settings:v1',
+    JSON.stringify({modelId: 'int8', version: 1, voiceId: 'Hana'}),
+  )
+  vi.mocked(generateLanguageLearningWordPronunciation).mockResolvedValue({
+    audio: new Blob(['audio']),
+    status: 'complete',
+  })
+  vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:pronunciation')
+  vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => undefined)
+})
+
+afterEach(() => {
+  vi.restoreAllMocks()
+  overwriteGetLocale(originalGetLocale)
+})
+
+it('should localize word-audio storage failures at the UI boundary', async () => {
+  overwriteGetLocale(() => 'en')
+  audioRepository.get.mockRejectedValueOnce(
+    new LanguageLearningWordAudioStorageError('read', {cause: new Error('cache unavailable')}),
+  )
+  renderPronunciation()
+
+  requestWord(word)
+
+  await vi.waitFor(() =>
+    expect(screen.getByTestId('error')).toHaveTextContent(
+      'The saved word pronunciation could not be loaded.',
+    ),
+  )
+})
+
+it('should generate a pronunciation with a ready model and expose the audio URL', async () => {
+  vi.mocked(manager.runAfterVoiceModel).mockImplementation(async ({task}) => ({
+    status: 'complete',
+    value: await task(),
+  }))
+  renderPronunciation()
+
+  requestWord(word)
+
+  await vi.waitFor(() =>
+    expect(screen.getByTestId('audio')).toHaveTextContent('blob:pronunciation'),
+  )
+  expect(generateLanguageLearningWordPronunciation).toHaveBeenCalledWith(
+    expect.objectContaining({
+      language: 'en',
+      modelId: 'int8',
+      signal: expect.any(AbortSignal),
+      text: 'Home',
+      voiceId: 'Hana',
+    }),
+  )
+  expect(audioRepository.save).toHaveBeenCalledOnce()
+  expect(manager.runAfterVoiceModel).toHaveBeenCalledWith(
+    expect.objectContaining({
+      downloadIfMissing: false,
+      modelId: 'int8',
+      task: expect.any(Function),
+    }),
+  )
+  expect(screen.getByTestId('loading')).toHaveTextContent('false')
+})
+
+it('should reuse an in-memory pronunciation for Unicode-equivalent spellings', async () => {
+  vi.spyOn(globalThis.crypto, 'randomUUID').mockReturnValue('00000000-0000-4000-8000-000000000001')
+  vi.mocked(manager.runAfterVoiceModel).mockImplementation(async ({task}) => ({
+    status: 'complete',
+    value: await task(),
+  }))
+  renderPronunciation()
+  const composedWord = {...word, language: 'ko' as const, value: '한글'}
+  const decomposedWord = {...composedWord, value: composedWord.value.normalize('NFD')}
+
+  requestWord(composedWord)
+
+  await vi.waitFor(() => expect(getPronunciationAudioUrl(composedWord)).toBe('blob:pronunciation'))
+  requestWord(decomposedWord)
+
+  expect(getPronunciationAudioUrl(decomposedWord)).toBe('blob:pronunciation')
+  expect(audioRepository.get).toHaveBeenCalledOnce()
+  expect(generateLanguageLearningWordPronunciation).toHaveBeenCalledOnce()
+})
+
+it('should resume pronunciation when settings hydrate after a cache miss', async () => {
+  let resolveSettings: ((settings: unknown) => void) | undefined
+  let resolveCachedAudio: ((audio: Blob | null) => void) | undefined
+  vi.spyOn(
+    automaticDialogueSettings.createAutomaticDialoguePreferenceOptions().storage,
+    'read',
+  ).mockImplementation(
+    () =>
+      new Promise((resolve) => {
+        resolveSettings = resolve
+      }),
+  )
+  audioRepository.get.mockImplementationOnce(
+    () =>
+      new Promise((resolve) => {
+        resolveCachedAudio = resolve
+      }),
+  )
+  vi.mocked(manager.runAfterVoiceModel).mockImplementation(async ({task}) => ({
+    status: 'complete',
+    value: await task(),
+  }))
+  renderPronunciation()
+
+  requestWord(word)
+  await vi.waitFor(() => expect(audioRepository.get).toHaveBeenCalledOnce())
+  resolveCachedAudio?.(null)
+  await Promise.resolve()
+
+  expect(screen.getByTestId('error')).toHaveTextContent('')
+  expect(screen.getByTestId('loading')).toHaveTextContent('true')
+  expect(isSupertonicModelDownloaded).not.toHaveBeenCalled()
+
+  resolveSettings?.({modelId: 'int8', version: 1, voiceId: 'Hana'})
+  await vi.waitFor(() =>
+    expect(screen.getByTestId('audio')).toHaveTextContent('blob:pronunciation'),
+  )
+  expect(generateLanguageLearningWordPronunciation).toHaveBeenCalledOnce()
+  expect(screen.getByTestId('loading')).toHaveTextContent('false')
+})
+
+it('should cancel pending settings pronunciation when another cached word is replayed', async () => {
+  let settingsRead: Promise<unknown> | undefined
+  let resolveSettings: ((settings: unknown) => void) | undefined
+  let missingAudioRead: Promise<Blob | null> | undefined
+  let resolveMissingAudio: ((audio: Blob | null) => void) | undefined
+  vi.spyOn(
+    automaticDialogueSettings.createAutomaticDialoguePreferenceOptions().storage,
+    'read',
+  ).mockImplementation(
+    () =>
+      (settingsRead = new Promise((resolve) => {
+        resolveSettings = resolve
+      })),
+  )
+  audioRepository.get.mockResolvedValueOnce(new Blob(['cached audio'])).mockImplementationOnce(
+    () =>
+      (missingAudioRead = new Promise((resolve) => {
+        resolveMissingAudio = resolve
+      })),
+  )
+  renderPronunciation()
+
+  await vi.waitFor(() => expect(resolveSettings).toBeDefined())
+  requestWord(secondWord)
+  await vi.waitFor(() =>
+    expect(screen.getByTestId('audio-second')).toHaveTextContent('blob:pronunciation'),
+  )
+
+  requestWord(word)
+  await vi.waitFor(() => expect(audioRepository.get).toHaveBeenCalledTimes(2))
+  resolveMissingAudio?.(null)
+  await missingAudioRead
+
+  expect(screen.getByTestId('loading')).toHaveTextContent('true')
+  expect(isSupertonicModelDownloaded).not.toHaveBeenCalled()
+
+  requestWord(secondWord)
+
+  expect(screen.getByTestId('loading')).toHaveTextContent('false')
+  resolveSettings?.({modelId: 'int8', version: 1, voiceId: 'Hana'})
+  await settingsRead
+  await Promise.resolve()
+
+  expect(isSupertonicModelDownloaded).not.toHaveBeenCalled()
+  expect(generateLanguageLearningWordPronunciation).not.toHaveBeenCalled()
+})
+
+it.each([word, secondWord])(
+  'should replace an active pronunciation when $value is requested',
+  async (replacement) => {
+    let firstSignal: AbortSignal | undefined
+    let resolveSecond: (() => void) | undefined
+    let generationCount = 0
+    vi.mocked(manager.runAfterVoiceModel).mockImplementation(async ({task}) => ({
+      status: 'complete',
+      value: await task(),
+    }))
+    vi.mocked(generateLanguageLearningWordPronunciation).mockImplementation((options) => {
+      generationCount += 1
+      if (generationCount === 1) {
+        firstSignal = options.signal
+        return new Promise((resolve) => {
+          options.signal?.addEventListener('abort', () => resolve({status: 'cancelled'}), {
+            once: true,
+          })
+        })
+      }
+
+      return new Promise((resolve) => {
+        resolveSecond = () => resolve({audio: new Blob(['second']), status: 'complete'})
+      })
+    })
+    renderPronunciation()
+
+    requestWord(word)
+    await flushPromises()
+    expect(firstSignal).toBeInstanceOf(AbortSignal)
+
+    requestWord(replacement)
+
+    expect(
+      screen.getByTestId(replacement === word ? 'loading' : 'loading-second'),
+    ).toHaveTextContent('true')
+    expect(firstSignal?.aborted).toBe(true)
+    await flushPromises()
+    expect(generationCount).toBe(2)
+    expect(
+      screen.getByTestId(replacement === word ? 'loading' : 'loading-second'),
+    ).toHaveTextContent('true')
+    resolveSecond?.()
+    await flushPromises()
+    expect(screen.getByTestId(replacement === word ? 'audio' : 'audio-second')).toHaveTextContent(
+      'blob:pronunciation',
+    )
+    expect(generateLanguageLearningWordPronunciation).toHaveBeenCalledTimes(2)
+  },
+)
+
+it('should ignore stale cache preparation after another word is requested', async () => {
+  let resolveFirstRead: ((audio: Blob | null) => void) | undefined
+  audioRepository.get.mockImplementationOnce(
+    () =>
+      new Promise((resolve) => {
+        resolveFirstRead = resolve
+      }),
+  )
+  vi.mocked(manager.runAfterVoiceModel).mockImplementation(async ({task}) => ({
+    status: 'complete',
+    value: await task(),
+  }))
+  renderPronunciation()
+
+  requestWord(word)
+  await vi.waitFor(() => expect(audioRepository.get).toHaveBeenCalledOnce())
+  requestWord(secondWord)
+  await vi.waitFor(() =>
+    expect(screen.getByTestId('audio-second')).toHaveTextContent('blob:pronunciation'),
+  )
+
+  resolveFirstRead?.(null)
+  await vi.waitFor(() => expect(generateLanguageLearningWordPronunciation).toHaveBeenCalledOnce())
+})
+
+it('should ask for consent when the model disappears after the initial readiness check', async () => {
+  vi.mocked(manager.runAfterVoiceModel)
+    .mockResolvedValueOnce({status: 'missing'})
+    .mockImplementationOnce(async ({task}) => ({status: 'complete', value: await task()}))
+  renderPronunciation()
+
+  requestWord(word)
+
+  await vi.waitFor(() => expect(screen.getByTestId('pending')).toHaveTextContent('Home'))
+  expect(generateLanguageLearningWordPronunciation).not.toHaveBeenCalled()
+
+  confirmDownload()
+  await vi.waitFor(() =>
+    expect(screen.getByTestId('audio')).toHaveTextContent('blob:pronunciation'),
+  )
+  expect(manager.runAfterVoiceModel).toHaveBeenLastCalledWith(
+    expect.objectContaining({downloadIfMissing: true}),
+  )
+})
+
+it('should invalidate active pronunciation work before deleting its cached audio', async () => {
+  let resolveResult:
+    | ((value: {
+        readonly status: 'complete'
+        readonly value: {
+          readonly audio: Blob
+          readonly status: 'complete'
+        }
+      }) => void)
+    | undefined
+  vi.mocked(manager.runAfterVoiceModel).mockReturnValue(
+    new Promise((resolve) => {
+      resolveResult = resolve
+    }),
+  )
+  renderPronunciation()
+
+  requestWord(word)
+  await vi.waitFor(() => expect(manager.runAfterVoiceModel).toHaveBeenCalledOnce())
+  removeWord(word)
+  expect(screen.getByTestId('loading')).toHaveTextContent('false')
+  resolveResult?.({status: 'complete', value: {audio: new Blob(['late']), status: 'complete'}})
+  await Promise.resolve()
+
+  expect(audioRepository.delete).toHaveBeenCalledWith(word)
+  expect(audioRepository.save).not.toHaveBeenCalled()
+  expect(screen.getByTestId('audio')).toHaveTextContent('')
+})
+
+it('should preserve newer cached audio when an older save finishes late', async () => {
+  const storedAudio = new Map<string, {readonly audio: Blob; readonly owner: string}>()
+  let resolveOlderSave: (() => void) | undefined
+  let saveCount = 0
+  audioRepository.save.mockImplementation(async (savedWord, audio, owner) => {
+    saveCount += 1
+    storedAudio.set(`${savedWord.language}:${savedWord.value}`, {audio, owner})
+    if (saveCount === 1) {
+      await new Promise<void>((resolve) => {
+        resolveOlderSave = resolve
+      })
+    }
+  })
+  audioRepository.delete.mockImplementation(async (deletedWord, owner) => {
+    const key = `${deletedWord.language}:${deletedWord.value}`
+    if (owner === undefined || storedAudio.get(key)?.owner === owner) {
+      storedAudio.delete(key)
+    }
+  })
+  vi.mocked(manager.runAfterVoiceModel).mockImplementation(async ({task}) => ({
+    status: 'complete',
+    value: await task(),
+  }))
+  vi.mocked(generateLanguageLearningWordPronunciation)
+    .mockResolvedValueOnce({audio: new Blob(['old']), status: 'complete'})
+    .mockResolvedValueOnce({audio: new Blob(['newer audio']), status: 'complete'})
+  renderPronunciation()
+
+  requestWord(word)
+  await vi.waitFor(() => expect(audioRepository.save).toHaveBeenCalledOnce())
+  removeWord(word)
+  requestWord(word)
+  await vi.waitFor(() => expect(audioRepository.save).toHaveBeenCalledTimes(2))
+  resolveOlderSave?.()
+  await vi.waitFor(() => expect(audioRepository.delete).toHaveBeenCalledTimes(2))
+
+  const savedAudio = storedAudio.get('en:Home')?.audio
+  expect(savedAudio).toBeDefined()
+  expect(savedAudio?.size).toBe(11)
+})
+
+it('should abort active pronunciation work when its owner unmounts', async () => {
+  let generationSignal: AbortSignal | undefined
+  vi.mocked(manager.runAfterVoiceModel).mockImplementation(async ({task}) => ({
+    status: 'complete',
+    value: await task(),
+  }))
+  vi.mocked(generateLanguageLearningWordPronunciation).mockImplementation(
+    (options) =>
+      new Promise((resolve) => {
+        generationSignal = options.signal
+        options.signal?.addEventListener('abort', () => resolve({status: 'cancelled'}), {
+          once: true,
+        })
+      }),
+  )
+  const result = renderPronunciation()
+
+  requestWord(word)
+  await vi.waitFor(() => expect(generationSignal).toBeInstanceOf(AbortSignal))
+  result.unmount()
+
+  expect(generationSignal?.aborted).toBe(true)
+})
+
+it('should ask before downloading a missing model and continue the word after confirmation', async () => {
+  vi.mocked(isSupertonicModelDownloaded).mockResolvedValue(false)
+  vi.mocked(manager.runAfterVoiceModel).mockImplementation(async ({task}) => ({
+    status: 'complete',
+    value: await task(),
+  }))
+  renderPronunciation()
+
+  requestWord(word)
+  await vi.waitFor(() => expect(screen.getByTestId('pending')).toHaveTextContent('Home'))
+  expect(manager.runAfterVoiceModel).not.toHaveBeenCalled()
+
+  confirmDownload()
+  await vi.waitFor(() =>
+    expect(screen.getByTestId('audio')).toHaveTextContent('blob:pronunciation'),
+  )
+  expect(manager.runAfterVoiceModel).toHaveBeenCalledOnce()
+})
+
+it('should reuse saved word audio without checking the model or generating again', async () => {
+  audioRepository.get.mockResolvedValueOnce(new Blob(['saved audio']))
+  renderPronunciation()
+
+  requestWord(word)
+
+  await vi.waitFor(() =>
+    expect(screen.getByTestId('audio')).toHaveTextContent('blob:pronunciation'),
+  )
+  expect(isSupertonicModelDownloaded).not.toHaveBeenCalled()
+  expect(manager.runAfterVoiceModel).not.toHaveBeenCalled()
+  expect(generateLanguageLearningWordPronunciation).not.toHaveBeenCalled()
+})
+
+it('should cancel a pending download without running a task', async () => {
+  vi.mocked(isSupertonicModelDownloaded).mockResolvedValue(false)
+  renderPronunciation()
+
+  requestWord(word)
+  await vi.waitFor(() => expect(screen.getByTestId('pending')).toHaveTextContent('Home'))
+  cancelDownload()
+
+  expect(screen.getByTestId('pending')).toHaveTextContent('')
+  expect(manager.runAfterVoiceModel).not.toHaveBeenCalled()
+})
+
+it('should report preparation, generation, and download failures', async () => {
+  vi.mocked(isSupertonicModelDownloaded).mockRejectedValueOnce(new Error('storage unavailable'))
+  renderPronunciation()
+  requestWord(word)
+  await vi.waitFor(() =>
+    expect(screen.getByTestId('error')).toHaveTextContent('storage unavailable'),
+  )
+
+  vi.mocked(isSupertonicModelDownloaded).mockResolvedValue(true)
+  vi.mocked(manager.runAfterVoiceModel).mockResolvedValue({
+    message: 'download failed',
+    status: 'error',
+  })
+  requestWord(word)
+  await vi.waitFor(() => expect(screen.getByTestId('error')).toHaveTextContent('download failed'))
+
+  vi.mocked(manager.runAfterVoiceModel).mockResolvedValue({
+    status: 'complete',
+    value: {message: 'generation failed', status: 'error'},
+  })
+  requestWord(word)
+  await vi.waitFor(() => expect(screen.getByTestId('error')).toHaveTextContent('generation failed'))
+})
+
+it.each(['audio', 'missing', 'error'] as const)(
+  'should ignore a late %s cache result from an earlier request for the same word',
+  async (outcome) => {
+    const older = Promise.withResolvers<Blob | null>()
+    const newer = Promise.withResolvers<Blob | null>()
+    audioRepository.get.mockReturnValueOnce(older.promise).mockReturnValueOnce(newer.promise)
+    renderPronunciation()
+
+    requestWord(word)
+    await flushPromises()
+    requestWord(word)
+    await flushPromises()
+    if (outcome === 'error') {
+      older.reject(new Error('stale read failed'))
+    } else {
+      older.resolve(outcome === 'audio' ? new Blob(['older']) : null)
+    }
+    await flushPromises()
+
+    expect(screen.getByTestId('loading')).toHaveTextContent('true')
+    expect(screen.getByTestId('audio')).toBeEmptyDOMElement()
+    expect(screen.getByTestId('error')).toBeEmptyDOMElement()
+    expect(isSupertonicModelDownloaded).not.toHaveBeenCalled()
+    newer.resolve(new Blob(['newer']))
+    await flushPromises()
+
+    expect(screen.getByTestId('audio')).toHaveTextContent('blob:pronunciation')
+    expect(screen.getByTestId('loading')).toHaveTextContent('false')
+    expect(URL.createObjectURL).toHaveBeenCalledOnce()
+    expect(audioRepository.save).not.toHaveBeenCalled()
+  },
+)
+
+it.each(['replace', 'remove', 'unmount'] as const)(
+  'should ignore model preparation completed after %s',
+  async (action) => {
+    const readiness = Promise.withResolvers<boolean>()
+    vi.mocked(isSupertonicModelDownloaded).mockReturnValueOnce(readiness.promise)
+    const result = renderPronunciation()
+
+    requestWord(word)
+    await flushPromises()
+    expect(isSupertonicModelDownloaded).toHaveBeenCalledOnce()
+    switch (action) {
+      case 'replace':
+        audioRepository.get.mockResolvedValueOnce(new Blob(['cached']))
+        requestWord(secondWord)
+        break
+      case 'remove':
+        removeWord(word)
+        break
+      case 'unmount':
+        result.unmount()
+        break
+    }
+    readiness.resolve(false)
+    await flushPromises()
+
+    expect(pendingWord()).toBeNull()
+    expect(manager.runAfterVoiceModel).not.toHaveBeenCalled()
+    expect(generateLanguageLearningWordPronunciation).not.toHaveBeenCalled()
+    expect(audioRepository.save).not.toHaveBeenCalled()
+  },
+)

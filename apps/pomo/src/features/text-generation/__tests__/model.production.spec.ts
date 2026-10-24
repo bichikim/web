@@ -1,0 +1,30 @@
+/** @vitest-environment node */
+import {afterEach, expect, it, vi} from 'vitest'
+
+afterEach(() => {
+  vi.unstubAllEnvs()
+  vi.resetModules()
+})
+
+it('should expose only production models outside development', async () => {
+  vi.stubEnv('DEV', false)
+  const {getTextModel, TEXT_MODEL_IDS, TEXT_MODELS} = await import('../model')
+
+  expect(TEXT_MODEL_IDS).toEqual(['gemma-4-e2b', 'gemma-4-e2b-mobile', 'lfm-2.6b-qad'])
+  expect(TEXT_MODELS.map((model) => model.id)).toEqual(TEXT_MODEL_IDS)
+  expect(getTextModel('gemma-4-e2b-mobile')).toMatchObject({id: 'gemma-4-e2b-mobile'})
+})
+
+it('should use versioned R2 assets for the production LFM model', async () => {
+  vi.stubEnv('DEV', false)
+  const {getTextModelImplementation} = await import('../model')
+  expect(getTextModelImplementation('lfm-2.6b-qad')).toMatchObject({
+    assetSource: {
+      host: 'https://storage.pomofi.io/',
+      pathTemplate: 'models/text-generation/{model}/{revision}/',
+      revision: 'e7caca5d835a3901a8e0d63e94009429bafafdfc',
+    },
+    tokenizerSubfolder: 'qad',
+    weightFile: 'LFM2.5-2.6B-QAD-Q4_0.gguf',
+  })
+})

@@ -1,0 +1,4 @@
+interface:
+  display_name: 'AGENTS.md 다이어트'
+  short_description: 'Compress AGENTS.md while preserving inherited behavior'
+  default_prompt: 'Use $agents-md-diet to reduce this AGENTS.md without changing effective instructions.'

@@ -1,0 +1,20 @@
+{
+  "name": "@apps/ai-director",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@solidjs/router": "catalog:",
+    "@solidjs/start": "catalog:",
+    "solid-js": "catalog:"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "2.11.1",
+    "@types/node": "catalog:",
+    "@winter-love/unocss-config": "workspace:*",
+    "nitro": "catalog:",
+    "typescript": "catalog:",
+    "unocss": "catalog:",
+    "vite": "catalog:"
+  }
+}

@@ -1,0 +1,76 @@
+{
+  "1": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "layer-mouth-closed (1).png"
+    }
+  },
+  "2": {
+    "class_type": "GrowMask",
+    "inputs": {
+      "expand": 4,
+      "mask": ["1", 1],
+      "tapered_corners": false
+    }
+  },
+  "3": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "alpha": ["2", 0],
+      "image": ["1", 0]
+    }
+  },
+  "4": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "filename_prefix": "night-reading-mouth-closed-v7-shrink-4px",
+      "images": ["3", 0]
+    }
+  },
+  "5": {
+    "class_type": "MaskToImage",
+    "inputs": {
+      "mask": ["7", 0]
+    }
+  },
+  "6": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "filename_prefix": "night-reading-mouth-closed-v7-shrink-4px-mask",
+      "images": ["5", 0]
+    }
+  },
+  "7": {
+    "class_type": "InvertMask",
+    "inputs": {
+      "mask": ["2", 0]
+    }
+  },
+  "8": {
+    "class_type": "EmptyImage",
+    "inputs": {
+      "batch_size": 1,
+      "color": 16711935,
+      "height": 180,
+      "width": 260
+    }
+  },
+  "9": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["8", 0],
+      "mask": ["7", 0],
+      "resize_source": false,
+      "source": ["1", 0],
+      "x": 0,
+      "y": 0
+    }
+  },
+  "10": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "filename_prefix": "night-reading-mouth-closed-v7-shrink-4px-preview",
+      "images": ["9", 0]
+    }
+  }
+}

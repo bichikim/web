@@ -1,0 +1,37 @@
+import * as m from '@paraglide/message'
+import {type PModalTabItem, PModalTabList} from '../p-modal-tab-list/PModalTabList'
+
+const getItems = () =>
+  [
+    {
+      icon: 'i-tabler-adjustments-horizontal',
+      label: m.settings_tab_general(),
+      value: 'general',
+    },
+    ...(import.meta.env.VITE_POMO_IS_DESKTOP === 'true'
+      ? [{icon: 'i-tabler-device-desktop', label: m.settings_tab_app(), value: 'app'}]
+      : []),
+    {icon: 'i-tabler-photo', label: m.settings_tab_background(), value: 'background'},
+    {icon: 'i-tabler-bolt', label: m.settings_tab_events(), value: 'events'},
+    {icon: 'i-tabler-rss', label: m.settings_tab_feeds(), value: 'feeds'},
+    {
+      icon: 'i-tabler-message-circle',
+      label: m.settings_tab_dialogue(),
+      value: 'dialogue-library',
+    },
+    {icon: 'i-tabler-sparkles', label: m.settings_tab_ai(), value: 'ai'},
+    {icon: 'i-tabler-user-circle', label: m.settings_tab_user(), value: 'user'},
+    {icon: 'i-tabler-help-circle', label: m.settings_tab_guide(), value: 'guide'},
+    {icon: 'i-tabler-heart', label: m.settings_tab_credits(), value: 'credits'},
+  ] satisfies ReadonlyArray<PModalTabItem>
+
+export const PSettingsTabList = () => (
+  <PModalTabList
+    accessibleLabel={m.settings_category_label()}
+    items={getItems()}
+    scrollControls={{
+      nextLabel: m.settings_next_tab(),
+      previousLabel: m.settings_previous_tab(),
+    }}
+  />
+)

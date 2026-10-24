@@ -1,0 +1,6 @@
+version: 1
+repoId: demo/inspection-workplace
+embedding:
+  model: bge-m3
+include:
+  - docs/*.md

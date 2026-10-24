@@ -1,0 +1,49 @@
+---
+globs: apps/coong/*
+alwaysApply: false
+---
+# Coong Client Application Guidelines
+
+Project path: apps/coong
+
+## Project Overview
+
+Coong Client is a SolidStart SSR application.
+
+## Directory Structure
+
+See each folder’s `README.md` for a description of that folder.
+
+## Component Structure
+
+- Components should be placed in `src/components/`
+- Each component should have its own directory with the following structure:
+- All components must be Solid.js components
+
+```text
+component-name/
+├── index.ts           # Export file for components, types, and hooks
+├── Component1.tsx     # Component implementation
+├── Component2.tsx     # Additional component implementation
+├── types.ts           # Type definitions and interfaces for components
+└── use-component.ts   # Component-specific custom hooks (optional)
+```
+
+## API Structure
+
+- Prefer SolidStart `query`/`action` and server functions for APIs and server logic.
+- Keep existing RESTful API calls only when already in place.
+- Add `'use server'` inside server functions when possible.
+
+## Routing
+
+- Routes are file-based in `src/routes/`
+- Consider route-level error boundaries when adding or changing routes.
+
+## Environment Configuration
+
+- Manage environment variables according to `.env.example`.
+
+## Deployment Environment
+
+- This project is deployed on Vercel

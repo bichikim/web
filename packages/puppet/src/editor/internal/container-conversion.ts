@@ -1,0 +1,219 @@
+import {pick} from 'es-toolkit/object'
+import {
+  getDocumentScene,
+  type PuppetDeformerRenderProperties,
+  type PuppetDocument,
+  type PuppetGroupRenderProperties,
+  type PuppetSceneDeformerNode,
+  type PuppetSceneGroupNode,
+  type PuppetSceneNode,
+} from '../../player'
+import {getDeformerBounds} from './deformer-bounds'
+import {createDeformerControlPoints} from './grid-control-points'
+import {isSceneNodeLocked} from './scene-graph'
+import {removeParameterNodeTargets} from './remove-node-targets'
+import {collectPartIds, findNode, updateNode} from './scene-tree'
+import {createSpatialSurface} from './create-spatial-surface'
+
+export type SceneContainerConversionTarget =
+  | 'deformer'
+  | 'group'
+  | 'curve'
+  | 'bone'
+  | 'pin'
+  | 'rotation'
+  | 'spatial'
+
+export interface SceneContainerConversion {
+  readonly nodeIds: ReadonlyArray<string>
+  readonly targetKind: SceneContainerConversionTarget
+}
+
+export interface ConvertSceneContainersOptions extends SceneContainerConversion {
+  readonly document: PuppetDocument
+}
+
+/**
+ * The opacity and colors of `properties`, which deformers share with groups; `undefined` when
+ * none is set. Group-only settings (offscreen, blending, masks, draw order) have no deformer
+ * counterpart and are left out.
+ */
+const getSharedRenderProperties = (
+  properties: PuppetGroupRenderProperties | undefined,
+): PuppetDeformerRenderProperties | undefined => {
+  const shared =
+    properties === undefined ? {} : pick(properties, ['multiplyColor', 'opacity', 'screenColor'])
+  return Object.values(shared).some((value) => value !== undefined) ? shared : undefined
+}
+
+const createConvertedDeformer = (
+  document: PuppetDocument,
+  node: PuppetSceneGroupNode,
+): PuppetSceneDeformerNode => {
+  const partIds = new Set<string>()
+  collectPartIds(node, partIds)
+  const bounds = getDeformerBounds(document, [...partIds]) ?? {
+    height: document.viewport.height,
+    width: document.viewport.width,
+    x: 0,
+    y: 0,
+  }
+  const deformer = {
+    bounds,
+    children: node.children,
+    columns: 2,
+    id: node.id,
+    kind: 'deformer',
+    locked: node.locked,
+    name: node.name,
+    properties: getSharedRenderProperties(node.properties),
+    rotationOrigin: {x: bounds.x + bounds.width / 2, y: bounds.y + bounds.height / 2},
+    rows: 2,
+    visible: node.visible,
+  } as const
+
+  return {...deformer, controlPoints: createDeformerControlPoints(deformer)}
+}
+
+const createConvertedGroup = (node: PuppetSceneDeformerNode): PuppetSceneGroupNode => ({
+  children: node.children,
+  id: node.id,
+  kind: 'group',
+  locked: node.locked,
+  name: node.name,
+  properties: getSharedRenderProperties(node.properties),
+  visible: node.visible,
+})
+
+export const getContainerKind = (node: PuppetSceneNode): SceneContainerConversionTarget =>
+  node.kind === 'deformer'
+    ? node.deformerType === 'rotation'
+      ? 'rotation'
+      : node.deformerType === 'spatial'
+        ? 'spatial'
+        : node.pins === undefined
+          ? node.boneRestPoints === undefined
+            ? node.curveAxis === undefined
+              ? 'deformer'
+              : 'curve'
+            : 'bone'
+          : 'pin'
+    : 'group'
+
+const convertContainer = (
+  document: PuppetDocument,
+  node: PuppetSceneNode,
+  targetKind: SceneContainerConversionTarget,
+): PuppetSceneNode => {
+  if (node.kind === 'part') {
+    return node
+  }
+  const group = node.kind === 'group' ? node : createConvertedGroup(node)
+  if (targetKind === 'group') {
+    return group
+  }
+  const base = createConvertedDeformer(document, group)
+  if (targetKind === 'deformer') {
+    return base
+  }
+  const {bounds} = base
+  if (targetKind === 'spatial') {
+    return {
+      ...base,
+      deformerType: 'spatial',
+      spatialOrigin: [bounds.x + bounds.width / 2, bounds.y + bounds.height / 2, 0],
+      spatialRotation: [0, 0, 0],
+      spatialScale: [1, 1, 1],
+      spatialTranslation: [0, 0, 0],
+    }
+  }
+  if (targetKind === 'pin') {
+    const x = bounds.x + bounds.width / 2
+    const y = bounds.y + bounds.height / 2
+    return {
+      ...base,
+      columns: 1,
+      controlPoints: [x, y],
+      pins: [{radius: Math.max(bounds.width, bounds.height) / 2, strength: 1, x, y}],
+      rotationOrigin: undefined,
+      rows: 1,
+    }
+  }
+  const axis = bounds.height > bounds.width ? 'y' : 'x'
+  const CUBIC_POINTS = 4
+  const rigid = targetKind === 'bone' || targetKind === 'rotation'
+  const count = rigid ? 2 : CUBIC_POINTS
+  const controlPoints = Array.from({length: count}, (_, index) =>
+    axis === 'x'
+      ? [bounds.x + (bounds.width * index) / (count - 1), bounds.y + bounds.height / 2]
+      : [bounds.x + bounds.width / 2, bounds.y + (bounds.height * index) / (count - 1)],
+  ).flat()
+  return {
+    ...base,
+    boneRestPoints: rigid ? controlPoints : undefined,
+    columns: 1,
+    controlPoints,
+    curveAxis: targetKind === 'curve' ? axis : undefined,
+    deformerType: targetKind === 'rotation' ? 'rotation' : undefined,
+    rotationOrigin: undefined,
+    rows: 1,
+  }
+}
+
+export const convertSceneContainers = (
+  options: ConvertSceneContainersOptions,
+): PuppetDocument | undefined => {
+  const scene = getDocumentScene(options.document)
+  const nodeIds = new Set(options.nodeIds)
+  const nodes = options.nodeIds.flatMap((nodeId) => {
+    const node = findNode(scene.roots, nodeId)
+    return node === undefined ? [] : [node]
+  })
+
+  if (
+    nodeIds.size === 0 ||
+    nodes.length !== nodeIds.size ||
+    nodes.some(
+      (node) =>
+        node.kind === 'part' ||
+        getContainerKind(node) === options.targetKind ||
+        isSceneNodeLocked(options.document, node.id),
+    )
+  ) {
+    return undefined
+  }
+
+  let {roots} = scene
+  for (const node of nodes) {
+    roots = updateNode(roots, node.id, (candidate) =>
+      convertContainer(options.document, candidate, options.targetKind),
+    )
+  }
+
+  const spatialNodes = nodes.filter((node) => getContainerKind(node) === 'spatial')
+  const spatialPartIds = new Map<string, string>()
+  if (options.targetKind === 'spatial') {
+    for (const node of nodes) {
+      const childIds = new Set<string>()
+      collectPartIds(node, childIds)
+      for (const id of childIds) {
+        spatialPartIds.set(id, node.id)
+      }
+    }
+  }
+  const document = {
+    ...options.document,
+    parts: options.document.parts.map((part) => {
+      const groupId = spatialPartIds.get(part.id)
+      if (groupId !== undefined) {
+        return {...part, spatial: {...(part.spatial ?? createSpatialSurface(part)), groupId}}
+      }
+      return spatialNodes.some((node) => part.spatial?.groupId === node.id)
+        ? {...part, spatial: undefined}
+        : part
+    }),
+    scene: {...scene, roots},
+  }
+  // A converted node can no longer be the kind of target its bindings expect.
+  return removeParameterNodeTargets(document, new Set(nodes.map((node) => node.id)))
+}

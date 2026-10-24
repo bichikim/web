@@ -1,0 +1,323 @@
+import {PreferenceProvider} from 'src/hooks/use-preference'
+import {useModelDownload} from 'src/features/model-download'
+import {createFeeds, createModelDownload} from '../../__tests__/feed-status/fixtures'
+/** @vitest-environment jsdom */
+
+import {Tabs} from '@kobalte/core/tabs'
+import {fireEvent, render, screen} from '@solidjs/testing-library'
+import {For} from 'solid-js'
+import {afterEach, beforeEach, expect, it, vi} from 'vitest'
+
+import {getLocale, overwriteGetLocale} from '@paraglide/runtime'
+import {PSelect} from 'src/components/p-select/PSelect'
+import {PFeedContext} from 'src/features/focus-room-feed'
+import {PFeedSettingsContent} from '../Content'
+
+vi.mock('src/features/model-download', () => ({useModelDownload: vi.fn()}))
+vi.mock('@kobalte/core/tabs', () => ({Tabs: {Content: vi.fn()}}))
+vi.mock('src/components/p-select/PSelect', () => ({PSelect: vi.fn()}))
+
+const renderSettings = () => render(() => <PFeedSettingsContent />, {wrapper: PreferenceProvider})
+const originalGetLocale = getLocale
+
+beforeEach(() => {
+  vi.mocked(useModelDownload).mockReturnValue(createModelDownload())
+  overwriteGetLocale(() => 'ko')
+  localStorage.clear()
+  vi.mocked(Tabs.Content).mockImplementation((props) => <>{props.children}</>)
+  vi.mocked(PSelect).mockImplementation((props) => {
+    if (props.multiple === true) {
+      return null
+    }
+
+    return (
+      <label>
+        {props.label}
+        <select
+          aria-label={`${props.label} ${props.accessibleLabel ?? ''}`.trim()}
+          onChange={(event) => props.onChange(event.currentTarget.value)}
+          value={props.value}
+        >
+          <For each={props.options}>
+            {(option) => <option value={option.value}>{option.label}</option>}
+          </For>
+        </select>
+      </label>
+    )
+  })
+})
+
+afterEach(() => {
+  overwriteGetLocale(originalGetLocale)
+  vi.unstubAllEnvs()
+})
+
+it('should render feed settings in English', () => {
+  overwriteGetLocale(() => 'en')
+  renderSettings()
+
+  expect(screen.getByRole('textbox', {name: 'Feed URL'})).toBeDefined()
+  expect(screen.getByRole('button', {name: 'Add'})).toBeDefined()
+  expect(screen.getByRole('heading', {name: 'Saved feeds'})).toBeDefined()
+  expect(screen.getByRole('heading', {name: 'Recommended feeds'})).toBeDefined()
+  expect(screen.getByText('Today in history')).toBeDefined()
+})
+
+it('should add, update, restore, and delete a feed connection with its voice', () => {
+  const firstRender = renderSettings()
+  const address = 'https://example.com/feed.xml'
+
+  expect(screen.queryByRole('heading', {name: '구독 피드'})).toBeNull()
+  expect(
+    screen.queryByText('대화 탭의 공통 모델과 각 피드에 저장된 음성으로 새 글을 읽어 줘요.'),
+  ).toBeNull()
+  fireEvent.input(screen.getByRole('textbox', {name: '피드 주소'}), {
+    target: {value: address},
+  })
+  fireEvent.click(screen.getByRole('button', {name: '추가'}))
+
+  expect(screen.getByText(address)).toBeDefined()
+  expect(screen.getByText('피드 주소를 저장했어요.')).toBeDefined()
+  expect(screen.getByRole('option', {name: '기본값'})).toBeDefined()
+  expect(localStorage.getItem('pomo:focus-room-feed-connections:v1')).toContain(
+    '"voiceId":"default"',
+  )
+
+  fireEvent.change(screen.getByRole('combobox', {name: `음성 ${address} 피드 음성`}), {
+    target: {value: 'M2'},
+  })
+  expect(screen.getByText('피드 음성을 변경했어요.')).toBeDefined()
+  expect(localStorage.getItem('pomo:focus-room-feed-connections:v1')).toContain('"voiceId":"M2"')
+
+  firstRender.unmount()
+  renderSettings()
+
+  expect(screen.getByText(address)).toBeDefined()
+  fireEvent.click(screen.getByRole('button', {name: `${address} 피드 삭제`}))
+  expect(screen.queryByText(address)).toBeNull()
+  expect(localStorage.getItem('pomo:focus-room-feed-connections:v1')).toContain('"connections":[]')
+})
+
+it('should reject invalid and duplicate feed addresses', () => {
+  renderSettings()
+  const addressInput = screen.getByRole('textbox', {name: '피드 주소'})
+
+  fireEvent.input(addressInput, {target: {value: 'not-a-feed-address'}})
+  fireEvent.submit(addressInput.closest('form')!)
+  expect(screen.getByText('HTTP 또는 HTTPS 피드 주소를 입력해 주세요.')).toBeDefined()
+
+  fireEvent.input(addressInput, {target: {value: 'https://example.com/feed.xml'}})
+  fireEvent.submit(addressInput.closest('form')!)
+  fireEvent.input(addressInput, {target: {value: 'https://example.com/feed.xml'}})
+  fireEvent.submit(addressInput.closest('form')!)
+
+  expect(screen.getByText('이미 추가한 피드 주소예요.')).toBeDefined()
+  expect(screen.getAllByText('https://example.com/feed.xml')).toHaveLength(1)
+})
+
+it.each(['', 'true'])(
+  'should store local recommendations in development with mobile=%s',
+  (mobile) => {
+    vi.stubEnv('DEV', true)
+    vi.stubEnv('VITE_POMO_IS_MOBILE', mobile)
+    renderSettings()
+    const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
+    const recommendedAddress = new URL('/__dev/feeds/rss.xml', globalThis.location.origin)
+    const historyAddress = new URL(
+      '/api/feeds/today-in-history/rss.xml',
+      globalThis.location.origin,
+    )
+    recommendedAddress.searchParams.set('timeZone', timeZone)
+    historyAddress.searchParams.set('timeZone', timeZone)
+
+    expect(screen.queryByText('아직 저장된 피드가 없어요. 피드 주소를 추가해 주세요.')).toBeNull()
+    expect(screen.getByText('오늘의 역사')).toBeDefined()
+    expect(screen.getByText('Pomofi 5분 RSS')).toBeDefined()
+    expect(screen.getByText('Pomofi 5분 Atom')).toBeDefined()
+
+    fireEvent.click(screen.getByRole('button', {name: '오늘의 역사 추천 피드 추가'}))
+
+    expect(screen.queryByText('오늘의 역사')).toBeNull()
+    expect(screen.getByText(historyAddress.href)).toBeDefined()
+
+    fireEvent.click(screen.getByRole('button', {name: 'Pomofi 5분 RSS 추천 피드 추가'}))
+
+    expect(screen.queryByText('Pomofi 5분 RSS')).toBeNull()
+    expect(screen.getByText('Pomofi 5분 Atom')).toBeDefined()
+    expect(screen.getByText(recommendedAddress.href)).toBeDefined()
+    expect(localStorage.getItem('pomo:focus-room-feed-connections:v1')).toContain(
+      '"voiceId":"default"',
+    )
+  },
+)
+
+it.each(['VITE_POMO_IS_APPS_IN_TOSS', 'VITE_POMO_IS_DESKTOP'] as const)(
+  'should use the public server origin for %s recommendations',
+  (runtime) => {
+    vi.stubEnv(runtime, 'true')
+    vi.stubEnv('VITE_POMO_PUBLIC_ORIGIN', 'https://www.pomofi.io')
+    renderSettings()
+    const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
+    const developmentAddress = new URL('/__dev/feeds/rss.xml', globalThis.location.origin)
+    developmentAddress.searchParams.set('timeZone', timeZone)
+    const historyAddress = new URL(
+      `/api/feeds/today-in-history/rss.xml?timeZone=${encodeURIComponent(timeZone)}`,
+      'https://www.pomofi.io',
+    ).href
+
+    fireEvent.click(screen.getByRole('button', {name: '오늘의 역사 추천 피드 추가'}))
+    fireEvent.click(screen.getByRole('button', {name: 'Pomofi 5분 RSS 추천 피드 추가'}))
+
+    expect(screen.getByText(historyAddress)).toBeDefined()
+    expect(screen.getByText(developmentAddress.href)).toBeDefined()
+  },
+)
+
+it('should hide a recommendation already saved without a timezone query', () => {
+  vi.stubEnv('VITE_POMO_IS_APPS_IN_TOSS', 'true')
+  vi.stubEnv('VITE_POMO_PUBLIC_ORIGIN', 'https://www.pomofi.io')
+  localStorage.setItem(
+    'pomo:focus-room-feed-connections:v1',
+    JSON.stringify({
+      connections: [
+        {
+          createdAt: '2026-01-01T00:00:00.000Z',
+          id: 'legacy-history',
+          updatedAt: '2026-01-01T00:00:00.000Z',
+          url: 'https://www.pomofi.io/api/feeds/today-in-history/rss.xml',
+          version: 1,
+          voiceId: 'default',
+        },
+      ],
+      version: 1,
+    }),
+  )
+
+  renderSettings()
+
+  expect(screen.queryByRole('button', {name: '오늘의 역사 추천 피드 추가'})).toBeNull()
+  expect(screen.getByText('https://www.pomofi.io/api/feeds/today-in-history/rss.xml')).toBeDefined()
+})
+
+it('should hide the local recommendation for a saved public today-in-history feed', () => {
+  vi.stubEnv('DEV', true)
+  vi.stubEnv('VITE_POMO_PUBLIC_ORIGIN', 'https://www.pomofi.io')
+  localStorage.setItem(
+    'pomo:focus-room-feed-connections:v1',
+    JSON.stringify({
+      connections: [
+        {
+          createdAt: '2026-01-01T00:00:00.000Z',
+          id: 'public-history',
+          updatedAt: '2026-01-01T00:00:00.000Z',
+          url: 'https://www.pomofi.io/api/feeds/today-in-history/rss.xml',
+          version: 1,
+          voiceId: 'default',
+        },
+      ],
+      version: 1,
+    }),
+  )
+
+  renderSettings()
+
+  expect(screen.queryByRole('button', {name: '오늘의 역사 추천 피드 추가'})).toBeNull()
+  expect(screen.getByText('https://www.pomofi.io/api/feeds/today-in-history/rss.xml')).toBeDefined()
+})
+
+it('should omit development recommendations in production', () => {
+  vi.stubEnv('DEV', false)
+  vi.stubEnv('VITE_POMO_IS_MOBILE', 'true')
+  vi.stubEnv('VITE_POMO_PUBLIC_ORIGIN', 'https://www.pomofi.io')
+
+  renderSettings()
+
+  expect(screen.getByText('오늘의 역사')).toBeDefined()
+  expect(screen.queryByText('Pomofi 5분 RSS')).toBeNull()
+  expect(screen.queryByText('Pomofi 5분 Atom')).toBeNull()
+  fireEvent.click(screen.getByRole('button', {name: '오늘의 역사 추천 피드 추가'}))
+  const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
+  expect(
+    screen.getByText(
+      `https://www.pomofi.io/api/feeds/today-in-history/rss.xml?timeZone=${encodeURIComponent(timeZone)}`,
+    ),
+  ).toBeDefined()
+})
+
+it('should render saved dialogues when a feed runtime is available', () => {
+  const runtime = createFeeds([], false, [], {
+    state: () => ({message: '음성 준비 중', progress: 25, status: 'preparing'}),
+  })
+
+  render(
+    () => (
+      <PFeedContext.Provider value={runtime}>
+        <PFeedSettingsContent />
+      </PFeedContext.Provider>
+    ),
+    {wrapper: PreferenceProvider},
+  )
+
+  const heading = screen.getByRole('heading', {name: '피드 대화'})
+  expect(screen.getByRole('status').compareDocumentPosition(heading)).toBe(
+    Node.DOCUMENT_POSITION_FOLLOWING,
+  )
+  expect(screen.getByRole('button', {name: '중지'})).toBeInTheDocument()
+  expect(
+    screen.getByText('아직 완성된 피드 대화가 없어요. 새 항목을 확인하면 자동으로 만들어요.'),
+  ).toBeDefined()
+})
+
+it('should apply compact spacing to feed settings groups', () => {
+  const result = renderSettings()
+  const section = result.container.firstElementChild
+  const form = screen.getByRole('textbox', {name: '피드 주소'}).closest('form')
+  const list = screen.getByRole('list', {name: '추천 피드'})
+
+  if (!(section instanceof HTMLElement) || !(form instanceof HTMLFormElement)) {
+    throw new TypeError('Expected the feed settings layout to be rendered')
+  }
+
+  expect(section.classList.contains('settings-compact:gap-4')).toBe(true)
+  expect(form.classList.contains('settings-compact:gap-2')).toBe(true)
+  expect(list.classList.contains('settings-compact:gap-2')).toBe(true)
+  expect(list.classList.contains('settings-compact:[&_>_li]:gap-2')).toBe(true)
+  expect(list).toHaveClass('[&_>_li]:border-content-border', '[&_>_li]:bg-content-surface')
+})
+
+it('should persist the feed reading progress visibility switch', () => {
+  const first = renderSettings()
+  const toggle = screen.getByRole('switch', {name: '피드 읽는 중 표시'})
+  expect(toggle).toBeChecked()
+  fireEvent.click(toggle)
+  expect(toggle).not.toBeChecked()
+  first.unmount()
+  renderSettings()
+  expect(screen.getByRole('switch', {name: '피드 읽는 중 표시'})).not.toBeChecked()
+})
+
+it('should save the automatic feed audio preparation switch', () => {
+  const first = renderSettings()
+  const toggle = screen.getByRole('switch', {name: '새 피드 음성 자동 준비'})
+  expect(toggle).toBeChecked()
+  fireEvent.click(toggle)
+  first.unmount()
+  renderSettings()
+  expect(screen.getByRole('switch', {name: '새 피드 음성 자동 준비'})).not.toBeChecked()
+})
+
+it('should preserve the feed voice control and focus after a voice update', () => {
+  renderSettings()
+  const address = 'https://example.com/identity.xml'
+  fireEvent.input(screen.getByRole('textbox', {name: '피드 주소'}), {target: {value: address}})
+  fireEvent.click(screen.getByRole('button', {name: '추가'}))
+  const voice = screen.getByRole('combobox', {name: `음성 ${address} 피드 음성`})
+  voice.focus()
+  expect(document.activeElement).toBe(voice)
+  fireEvent.change(voice, {target: {value: 'M2'}})
+  const nextVoice = screen.getByRole('combobox', {name: `음성 ${address} 피드 음성`})
+  expect(nextVoice).toHaveValue('M2')
+  expect(nextVoice).toBe(voice)
+  expect(voice.isConnected).toBe(true)
+  expect(document.activeElement).toBe(nextVoice)
+})

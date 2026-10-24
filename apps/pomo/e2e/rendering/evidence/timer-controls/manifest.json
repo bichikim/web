@@ -1,0 +1,220 @@
+{
+  "runId": "c6bcee98-9b04-4378-8a4a-5ec5efd5eed6",
+  "baseSha": "914873aaeb2d15480b3ec59066d9ed91b594b317",
+  "os": "ProductName:\t\tmacOS\nProductVersion:\t\t26.5.2\nBuildVersion:\t\t25F84\n",
+  "arch": "arm64",
+  "node": "v24.15.0",
+  "playwright": "1.59.1",
+  "command": "node node_modules/@playwright/test/cli.js test --config playwright.rendering.config.ts e2e/rendering/pomodoro.spec.ts",
+  "video": "off",
+  "trace": "off",
+  "scope": "Actual regular-web SolidStart home, localStorage, browser UI and scene. Only unrelated empty playlist fixture; fixed clock. Placeholder DB/auth, no real native/server-provider/voice verification.",
+  "testSourceSha256": "863b11c971b9f1cbc15a502f6c97099e3515a7f1e008f022dbac7349d7c7d9d7",
+  "verification": {
+    "existing": "2 passed in worktree-first.json",
+    "new": "1 passed in worktree-normal.json after two initial missing-baseline failures",
+    "skipped": 0,
+    "baselineUpdate": false,
+    "productChanges": false
+  },
+  "screenshots": [
+    {
+      "name": "timer-dark",
+      "test": "should render timer settings and preserve saved durations and automatic playback",
+      "testStatus": "passed",
+      "result": "변경 있음",
+      "baselineCodeSha": "914873aaeb2d15480b3ec59066d9ed91b594b317",
+      "currentProductSha": "914873aaeb2d15480b3ec59066d9ed91b594b317",
+      "baseline": "apps/pomo/e2e/rendering/pomodoro.spec.ts-snapshots/timer-dark-web-darwin.png",
+      "current": "apps/pomo/e2e/rendering/evidence/timer-controls/timer-dark-current.png",
+      "diff": "apps/pomo/e2e/rendering/evidence/timer-controls/timer-dark-diff.png",
+      "environment": {
+        "devicePixelRatio": 1,
+        "fonts": [
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded",
+            "faces": 83
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "loaded",
+            "faces": 9
+          }
+        ],
+        "locale": "ko-KR",
+        "theme": "dark",
+        "time": "2026-09-09T00:01:01.200Z",
+        "timezone": "Asia/Seoul",
+        "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.7727.15 Safari/537.36",
+        "viewport": {
+          "height": 960,
+          "width": 1280
+        }
+      },
+      "sha256": {
+        "baseline": "50ac351c2fe55521a5604b4a86ed38b8d6905e369b6cf161352f70b74fa8e7fd",
+        "current": "c294abb8c82680aa6d735d5d0e25dbedc2fe9cd5af7cae273fa964830e39207e",
+        "diff": "3a05a19f8fbf0a639225bb451715863346f615578a3787409842eac9d18b3214"
+      },
+      "rawDifference": {
+        "pixels": 78023,
+        "maximum": 26,
+        "bbox": [23, 18, 1279, 938]
+      },
+      "playwrightComparison": "passed",
+      "notes": "Raw pixels changed despite unchanged default Playwright comparator passing; cause unconfirmed. Baseline unchanged."
+    },
+    {
+      "name": "duration-editor-dark",
+      "test": "should render timer settings and preserve saved durations and automatic playback",
+      "testStatus": "passed",
+      "result": "변경 있음",
+      "baselineCodeSha": "914873aaeb2d15480b3ec59066d9ed91b594b317",
+      "currentProductSha": "914873aaeb2d15480b3ec59066d9ed91b594b317",
+      "baseline": "apps/pomo/e2e/rendering/pomodoro.spec.ts-snapshots/duration-editor-dark-web-darwin.png",
+      "current": "apps/pomo/e2e/rendering/evidence/timer-controls/duration-editor-dark-current.png",
+      "diff": "apps/pomo/e2e/rendering/evidence/timer-controls/duration-editor-dark-diff.png",
+      "environment": {
+        "devicePixelRatio": 1,
+        "fonts": [
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded",
+            "faces": 83
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "loaded",
+            "faces": 9
+          }
+        ],
+        "locale": "ko-KR",
+        "theme": "dark",
+        "time": "2026-09-09T00:01:01.400Z",
+        "timezone": "Asia/Seoul",
+        "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.7727.15 Safari/537.36",
+        "viewport": {
+          "height": 960,
+          "width": 1280
+        }
+      },
+      "sha256": {
+        "baseline": "3f79e85d2f22d3ed903cb9dcf1b747cb1d4c5b0c20e59777575e673fbe8b5726",
+        "current": "dac57330ba2e7aab5ad99b1a593bd1ea0f053da49868bcd5276138c9794a2e9e",
+        "diff": "d5fb2159425eedae4f8be85a5f66f5eaf5cd86ba4ae526319c52d1ba170bf483"
+      },
+      "rawDifference": {
+        "pixels": 78038,
+        "maximum": 26,
+        "bbox": [23, 18, 1279, 938]
+      },
+      "playwrightComparison": "passed",
+      "notes": "Raw pixels changed despite unchanged default Playwright comparator passing; cause unconfirmed. Baseline unchanged."
+    },
+    {
+      "name": "paused-timer-dark",
+      "test": "should use quick controls and persist a completed-session reset",
+      "testStatus": "passed",
+      "result": "최초 기준 생성",
+      "baselineCodeSha": null,
+      "currentProductSha": "914873aaeb2d15480b3ec59066d9ed91b594b317",
+      "baseline": "apps/pomo/e2e/rendering/pomodoro.spec.ts-snapshots/paused-timer-dark-web-darwin.png",
+      "current": "apps/pomo/e2e/rendering/evidence/timer-controls/paused-timer-dark-current.png",
+      "diff": null,
+      "environment": {
+        "devicePixelRatio": 1,
+        "fonts": [
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded",
+            "faces": 82
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "loaded",
+            "faces": 10
+          }
+        ],
+        "locale": "ko-KR",
+        "theme": "dark",
+        "time": "2026-09-09T00:02:11.400Z",
+        "timezone": "Asia/Seoul",
+        "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.7727.15 Safari/537.36",
+        "viewport": {
+          "height": 960,
+          "width": 1280
+        }
+      },
+      "sha256": {
+        "baseline": "cd0c1a93e5eb8d56e50b9edcb4cf687399452db520a2c658584b46831626c469",
+        "current": "cd0c1a93e5eb8d56e50b9edcb4cf687399452db520a2c658584b46831626c469",
+        "diff": null
+      },
+      "rawDifference": {
+        "pixels": 0,
+        "maximum": 0,
+        "bbox": null
+      },
+      "playwrightComparison": "passed",
+      "notes": "No prior committed baseline for this state. First baseline generation followed by normal comparison."
+    },
+    {
+      "name": "completed-session-dark",
+      "test": "should use quick controls and persist a completed-session reset",
+      "testStatus": "passed",
+      "result": "최초 기준 생성",
+      "baselineCodeSha": null,
+      "currentProductSha": "914873aaeb2d15480b3ec59066d9ed91b594b317",
+      "baseline": "apps/pomo/e2e/rendering/pomodoro.spec.ts-snapshots/completed-session-dark-web-darwin.png",
+      "current": "apps/pomo/e2e/rendering/evidence/timer-controls/completed-session-dark-current.png",
+      "diff": null,
+      "environment": {
+        "devicePixelRatio": 1,
+        "fonts": [
+          {
+            "family": "Pretendard Variable",
+            "status": "unloaded",
+            "faces": 82
+          },
+          {
+            "family": "Pretendard Variable",
+            "status": "loaded",
+            "faces": 10
+          }
+        ],
+        "locale": "ko-KR",
+        "theme": "dark",
+        "time": "2026-09-09T00:03:01.800Z",
+        "timezone": "Asia/Seoul",
+        "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/147.0.7727.15 Safari/537.36",
+        "viewport": {
+          "height": 960,
+          "width": 1280
+        }
+      },
+      "sha256": {
+        "baseline": "95171b19e851e938485f84973baa96e5aaf9df3aab87bc2c2c603cc68a8599a3",
+        "current": "95171b19e851e938485f84973baa96e5aaf9df3aab87bc2c2c603cc68a8599a3",
+        "diff": null
+      },
+      "rawDifference": {
+        "pixels": 0,
+        "maximum": 0,
+        "bbox": null
+      },
+      "playwrightComparison": "passed",
+      "notes": "No prior committed baseline for this state. First baseline generation followed by normal comparison."
+    }
+  ],
+  "visualInspection": "New paused 00:50 and completed1/2 short-break01:00 screens are legible. Existing difference images mainly show blurred upper-right background plus faint scattered background edges. Cause remains unconfirmed; original baselines retained.",
+  "sources": [
+    "https://playwright.dev/docs/test-snapshots",
+    "https://docs.github.com/en/get-started/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax#images"
+  ],
+  "baselineEnvironmentVerification": {
+    "osBrowserViewportDprLocaleTimezoneThemeClock": "exact match to committed baseline manifest",
+    "fontAssets": "git diff ab5b0f..914873 -- apps/pomo/public/fonts is empty",
+    "fontFaces": "Existing snapshots recorded9 loaded/83 unloaded vs baseline10 loaded/82 unloaded; visible fonts.ready awaited. Full rendering equivalence unconfirmed. New checkpoint faces same across baseline and normal comparison."
+  }
+}

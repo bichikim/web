@@ -1,0 +1,149 @@
+/** @vitest-environment jsdom */
+import {fireEvent, render, screen} from '@solidjs/testing-library'
+import {createSignal} from 'solid-js'
+import {afterEach, beforeEach, expect, it, vi} from 'vitest'
+import {
+  type BackgroundController,
+  type BackgroundPreferences,
+  DEFAULT_BACKGROUND,
+} from 'src/features/background'
+import {createBackground} from 'src/features/background/__tests__/fixtures/controller'
+import {Background} from '../Background'
+import {Scene} from '../Scene'
+import {Style} from '../Style'
+import {Website} from '../Website'
+
+vi.mock('../Scene', () => ({Scene: vi.fn()}))
+vi.mock('../Style', () => ({Style: vi.fn()}))
+vi.mock('../Website', () => ({Website: vi.fn()}))
+
+beforeEach(() => {
+  vi.clearAllMocks()
+  vi.mocked(Scene).mockImplementation(() => <div>character scene controls</div>)
+  vi.mocked(Style).mockImplementation(() => <div>character style controls</div>)
+  vi.mocked(Website).mockImplementation(() => <div>website background controls</div>)
+})
+
+afterEach(() => {
+  vi.unstubAllEnvs()
+})
+
+const createInteractiveBackground = () => {
+  const [preferences, setPreferences] = createSignal<BackgroundPreferences>(DEFAULT_BACKGROUND)
+  const background: BackgroundController = {
+    add: vi.fn(),
+    busy: () => false,
+    configure: vi.fn(async (patch) => {
+      setPreferences((value) => ({...value, ...patch}))
+    }),
+    error: () => null,
+    failedIds: () => [],
+    items: () => [],
+    load: vi.fn(),
+    markFailed: vi.fn(),
+    pick: vi.fn(),
+    preferences,
+    ready: () => true,
+    remove: vi.fn(),
+    retry: vi.fn(),
+  }
+
+  return {background, preferences}
+}
+
+it('should add the URL background option only to the desktop build', () => {
+  vi.stubEnv('VITE_POMO_IS_DESKTOP', 'true')
+  const [preferences, setPreferences] = createSignal<BackgroundPreferences>(DEFAULT_BACKGROUND)
+  const background: BackgroundController = {
+    add: vi.fn(),
+    busy: () => false,
+    configure: vi.fn(async (patch) => {
+      setPreferences((value) => ({...value, ...patch}))
+    }),
+    error: () => null,
+    failedIds: () => [],
+    items: () => [],
+    load: vi.fn(),
+    markFailed: vi.fn(),
+    pick: vi.fn(),
+    preferences,
+    ready: () => true,
+    remove: vi.fn(),
+    retry: vi.fn(),
+  }
+
+  render(() => <Background background={background} />)
+
+  fireEvent.click(screen.getByRole('radio', {name: 'URL'}))
+
+  expect(background.configure).toHaveBeenCalledWith({mode: 'website'})
+  expect(screen.getByText('website background controls')).toBeInTheDocument()
+})
+
+it('should recover a persisted website mode to frame settings in the web build', () => {
+  const [preferences] = createSignal<BackgroundPreferences>({
+    ...DEFAULT_BACKGROUND,
+    mode: 'website',
+    websiteUrl: 'https://example.com',
+  })
+  const background = {...createBackground(), preferences}
+
+  render(() => <Background background={background} />)
+
+  expect(screen.getByRole('radio', {name: '캐릭터'})).toBeChecked()
+  expect(screen.queryByText('website background controls')).not.toBeInTheDocument()
+})
+
+it('should switch between character controls and frame media settings', () => {
+  const {background} = createInteractiveBackground()
+
+  render(() => <Background background={background} />)
+
+  expect(screen.getByText('character scene controls')).toBeInTheDocument()
+  expect(screen.queryByRole('radio', {name: 'URL'})).not.toBeInTheDocument()
+  fireEvent.click(screen.getByRole('radio', {name: '액자'}))
+  expect(screen.queryByText('character scene controls')).not.toBeInTheDocument()
+  expect(screen.getByText('보여줄 사진 또는 동영상이 없어요')).toBeInTheDocument()
+})
+
+it('should update slideshow preferences in frame media settings', () => {
+  const {background, preferences} = createInteractiveBackground()
+
+  render(() => <Background background={background} />)
+
+  fireEvent.click(screen.getByRole('radio', {name: '액자'}))
+  fireEvent.click(screen.getByRole('radio', {name: '랜덤'}))
+
+  expect(preferences().order).toBe('random')
+
+  fireEvent.click(screen.getByRole('switch', {name: '최대 2장 함께 보기'}))
+
+  expect(preferences().pairPhotos).toBe(true)
+})
+
+it('should forward added frame media to the background controller', () => {
+  const {background} = createInteractiveBackground()
+
+  render(() => <Background background={background} />)
+
+  fireEvent.click(screen.getByRole('radio', {name: '액자'}))
+  const input = screen.getByLabelText('사진 및 동영상 추가', {selector: 'input'})
+  const file = new File(['media'], 'photo.png', {type: 'image/png'})
+
+  fireEvent.change(input, {target: {files: [file]}})
+
+  expect(background.add).toHaveBeenCalledWith([file])
+})
+
+it('should return to character controls after switching to frame settings', () => {
+  const {background} = createInteractiveBackground()
+
+  render(() => <Background background={background} />)
+
+  fireEvent.click(screen.getByRole('radio', {name: '액자'}))
+
+  fireEvent.click(screen.getByRole('radio', {name: '캐릭터'}))
+
+  expect(screen.getByText('character scene controls')).toBeInTheDocument()
+  expect(screen.getByText('character style controls')).toBeInTheDocument()
+})

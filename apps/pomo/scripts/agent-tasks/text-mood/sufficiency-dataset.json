@@ -1,0 +1,338 @@
+{
+  "schemaVersion": 1,
+  "items": [
+    {"id": "sufficient-train-001", "text": "무서워", "sufficient": true, "split": "train"},
+    {"id": "sufficient-train-002", "text": "아쉽다", "sufficient": true, "split": "train"},
+    {"id": "sufficient-train-003", "text": "망했다", "sufficient": true, "split": "train"},
+    {"id": "sufficient-train-004", "text": "예쁘다", "sufficient": true, "split": "train"},
+    {"id": "sufficient-train-005", "text": "헐", "sufficient": true, "split": "train"},
+    {"id": "sufficient-train-006", "text": "대박", "sufficient": true, "split": "train"},
+    {
+      "id": "sufficient-train-007",
+      "text": "ㅋㅋㅋ 진짜 웃겨",
+      "sufficient": true,
+      "split": "train"
+    },
+    {
+      "id": "sufficient-train-008",
+      "text": "문이 쾅 닫히자 모두가 놀랐다.",
+      "sufficient": true,
+      "split": "train"
+    },
+    {
+      "id": "sufficient-train-009",
+      "text": "거센 불길이 치솟는 가운데 성난 군중의 외침이 거리를 뒤흔들었다.",
+      "sufficient": true,
+      "split": "train"
+    },
+    {
+      "id": "sufficient-train-010",
+      "text": "오늘 회의는 오후 세 시에 시작한다.",
+      "sufficient": true,
+      "split": "train"
+    },
+    {
+      "id": "sufficient-train-011",
+      "text": "비가 오지만 마음은 이상하게 편안했다.",
+      "sufficient": true,
+      "split": "train"
+    },
+    {
+      "id": "sufficient-train-012",
+      "text": "완전 잘햇네 진짜 최고다.",
+      "sufficient": true,
+      "split": "train"
+    },
+    {
+      "id": "sufficient-train-013",
+      "text": "기차가 떠나는 걸 보니 괜히 쓸쓸해졋다.",
+      "sufficient": true,
+      "split": "train"
+    },
+    {
+      "id": "sufficient-train-014",
+      "text": "꿈속에서 하늘을 나는 고래를 만났다.",
+      "sufficient": true,
+      "split": "train"
+    },
+    {
+      "id": "sufficient-train-015",
+      "text": "그 소식 듣고 심장이 철렁했어.",
+      "sufficient": true,
+      "split": "train"
+    },
+    {
+      "id": "sufficient-train-016",
+      "text": "별일 없이 조용한 하루였다.",
+      "sufficient": true,
+      "split": "train"
+    },
+    {
+      "id": "sufficient-train-017",
+      "text": "아 진짜 잘도 하셨네요.",
+      "sufficient": true,
+      "split": "train"
+    },
+    {
+      "id": "sufficient-train-018",
+      "text": "와우 파일을 싹 날려서 정말 고맙다.",
+      "sufficient": true,
+      "split": "train"
+    },
+    {
+      "id": "sufficient-train-019",
+      "text": "기다리던 답장이 와서 기분이 좋다.",
+      "sufficient": true,
+      "split": "train"
+    },
+    {
+      "id": "sufficient-train-020",
+      "text": "바람이 선선해서 걷기 좋았어.",
+      "sufficient": true,
+      "split": "train"
+    },
+    {
+      "id": "sufficient-train-021",
+      "text": "뭔가 뒤에서 따라오는 느낌이야.",
+      "sufficient": true,
+      "split": "train"
+    },
+    {
+      "id": "sufficient-train-022",
+      "text": "그러든가 말든가.",
+      "sufficient": true,
+      "split": "train"
+    },
+    {
+      "id": "sufficient-train-023",
+      "text": "두두둥 소리와 함께 공연이 시작됐다.",
+      "sufficient": true,
+      "split": "train"
+    },
+    {
+      "id": "sufficient-train-024",
+      "text": "ㅎㅎ 오늘은 좀 행복하네",
+      "sufficient": true,
+      "split": "train"
+    },
+    {
+      "id": "sufficient-train-025",
+      "text": "너무 조아서 말이 안 나와",
+      "sufficient": true,
+      "split": "train"
+    },
+    {
+      "id": "sufficient-train-026",
+      "text": "진짜 조아서 눈물날 거 같아",
+      "sufficient": true,
+      "split": "train"
+    },
+    {"id": "sufficient-train-027", "text": "헉 너무 예뻐", "sufficient": true, "split": "train"},
+    {"id": "sufficient-train-028", "text": "보고싶다 진짜", "sufficient": true, "split": "train"},
+    {
+      "id": "sufficient-train-029",
+      "text": "으악 이게 대체 뭐야",
+      "sufficient": true,
+      "split": "train"
+    },
+    {
+      "id": "sufficient-train-030",
+      "text": "그냥 그런가 보다",
+      "sufficient": true,
+      "split": "train"
+    },
+
+    {
+      "id": "sufficient-validation-001",
+      "text": "와, 정말 완벽하게 해냈네. 파일을 전부 지워 버리다니.",
+      "sufficient": true,
+      "split": "validation"
+    },
+    {
+      "id": "sufficient-validation-002",
+      "text": "낼 여행 가는데 너무 설렌당",
+      "sufficient": true,
+      "split": "validation"
+    },
+    {
+      "id": "sufficient-validation-003",
+      "text": "헉 이게 진짜 된다고?",
+      "sufficient": true,
+      "split": "validation"
+    },
+    {
+      "id": "sufficient-validation-004",
+      "text": "쿵 하는 소리에 잠이 확 깼다.",
+      "sufficient": true,
+      "split": "validation"
+    },
+    {
+      "id": "sufficient-validation-005",
+      "text": "그냥 그래",
+      "sufficient": true,
+      "split": "validation"
+    },
+    {
+      "id": "sufficient-validation-006",
+      "text": "오늘은 구름이 많고 기온은 낮다.",
+      "sufficient": true,
+      "split": "validation"
+    },
+
+    {
+      "id": "sufficient-test-001",
+      "text": "여행을 망쳐 줘서 정말 고맙네.",
+      "sufficient": true,
+      "split": "test"
+    },
+    {
+      "id": "sufficient-test-002",
+      "text": "넘 조아서 말이 안나와",
+      "sufficient": true,
+      "split": "test"
+    },
+    {"id": "sufficient-test-003", "text": "으악 깜짝이야", "sufficient": true, "split": "test"},
+    {
+      "id": "sufficient-test-004",
+      "text": "빗소리가 토도독 들려 마음이 편해졌다.",
+      "sufficient": true,
+      "split": "test"
+    },
+    {"id": "sufficient-test-005", "text": "보고 싶다", "sufficient": true, "split": "test"},
+    {
+      "id": "sufficient-test-006",
+      "text": "택배는 현관 앞에 놓여 있었다.",
+      "sufficient": true,
+      "split": "test"
+    },
+
+    {"id": "insufficient-train-001", "text": "헉윽훅", "sufficient": false, "split": "train"},
+    {"id": "insufficient-train-002", "text": "뚜두둥", "sufficient": false, "split": "train"},
+    {"id": "insufficient-train-003", "text": "두두", "sufficient": false, "split": "train"},
+    {"id": "insufficient-train-004", "text": "쿵쾅쿵쾅", "sufficient": false, "split": "train"},
+    {"id": "insufficient-train-005", "text": "타다다닥", "sufficient": false, "split": "train"},
+    {"id": "insufficient-train-006", "text": "삐리리리", "sufficient": false, "split": "train"},
+    {"id": "insufficient-train-007", "text": "우다다다", "sufficient": false, "split": "train"},
+    {"id": "insufficient-train-008", "text": "데구르르르", "sufficient": false, "split": "train"},
+    {"id": "insufficient-train-009", "text": "ㄱㄴㄷㄹ", "sufficient": false, "split": "train"},
+    {"id": "insufficient-train-010", "text": "ㅋㅋㅋㅋㅋㅋ", "sufficient": false, "split": "train"},
+    {"id": "insufficient-train-011", "text": "ㅎㅎㅎㅎㅎ", "sufficient": false, "split": "train"},
+    {"id": "insufficient-train-012", "text": "ㅁㄴㅇㄹ", "sufficient": false, "split": "train"},
+    {"id": "insufficient-train-013", "text": "ㅇㅈㄹㄴㅁ", "sufficient": false, "split": "train"},
+    {"id": "insufficient-train-014", "text": "qwerasdf", "sufficient": false, "split": "train"},
+    {"id": "insufficient-train-015", "text": "asdfghjkl", "sufficient": false, "split": "train"},
+    {"id": "insufficient-train-016", "text": "123456789", "sufficient": false, "split": "train"},
+    {"id": "insufficient-train-017", "text": "......", "sufficient": false, "split": "train"},
+    {"id": "insufficient-train-018", "text": "?!?!?!", "sufficient": false, "split": "train"},
+    {"id": "insufficient-train-019", "text": "🌧️🚂💥", "sufficient": false, "split": "train"},
+    {
+      "id": "insufficient-train-020",
+      "text": "https://example.com/a",
+      "sufficient": false,
+      "split": "train"
+    },
+    {
+      "id": "insufficient-train-021",
+      "text": "const x = () => 1;",
+      "sufficient": false,
+      "split": "train"
+    },
+    {
+      "id": "insufficient-train-022",
+      "text": "가나다라마바사",
+      "sufficient": false,
+      "split": "train"
+    },
+    {"id": "insufficient-train-023", "text": "하허호후히헤", "sufficient": false, "split": "train"},
+    {"id": "insufficient-train-024", "text": "마바다사라가", "sufficient": false, "split": "train"},
+    {"id": "insufficient-train-025", "text": "가가가가가가", "sufficient": false, "split": "train"},
+    {"id": "insufficient-train-026", "text": "으어으어으어", "sufficient": false, "split": "train"},
+    {"id": "insufficient-train-027", "text": "치키치키차카", "sufficient": false, "split": "train"},
+    {"id": "insufficient-train-028", "text": "따다다다단", "sufficient": false, "split": "train"},
+    {"id": "insufficient-train-029", "text": "뿌슝빠슝", "sufficient": false, "split": "train"},
+    {"id": "insufficient-train-030", "text": "아아아아아아", "sufficient": false, "split": "train"},
+    {
+      "id": "insufficient-train-031",
+      "text": "나나나 너너너 다다다 라라라 마마마",
+      "sufficient": false,
+      "split": "train"
+    },
+    {
+      "id": "insufficient-train-032",
+      "text": "두두두 쿵쿵 타다닥 슈우웅 와장창 빠바밤",
+      "sufficient": false,
+      "split": "train"
+    },
+    {"id": "insufficient-train-033", "text": "헉윽훅훅", "sufficient": false, "split": "train"},
+    {"id": "insufficient-train-034", "text": "으헉윽훅", "sufficient": false, "split": "train"},
+    {"id": "insufficient-train-035", "text": "헉윽흑윽", "sufficient": false, "split": "train"},
+    {"id": "insufficient-train-036", "text": "뚜두둥둥", "sufficient": false, "split": "train"},
+    {"id": "insufficient-train-037", "text": "두두두두", "sufficient": false, "split": "train"},
+    {"id": "insufficient-train-038", "text": "두둥두둥", "sufficient": false, "split": "train"},
+    {"id": "insufficient-train-039", "text": "쿵두두쿵", "sufficient": false, "split": "train"},
+    {"id": "insufficient-train-040", "text": "빠밤뚜두둥", "sufficient": false, "split": "train"},
+
+    {
+      "id": "insufficient-validation-001",
+      "text": "훅헉윽",
+      "sufficient": false,
+      "split": "validation"
+    },
+    {
+      "id": "insufficient-validation-002",
+      "text": "빠라바밤",
+      "sufficient": false,
+      "split": "validation"
+    },
+    {
+      "id": "insufficient-validation-003",
+      "text": "ㄷㄷㄷㄷㄷ",
+      "sufficient": false,
+      "split": "validation"
+    },
+    {
+      "id": "insufficient-validation-004",
+      "text": "zxcvzxcv",
+      "sufficient": false,
+      "split": "validation"
+    },
+    {
+      "id": "insufficient-validation-005",
+      "text": "00000000",
+      "sufficient": false,
+      "split": "validation"
+    },
+    {
+      "id": "insufficient-validation-006",
+      "text": "💥💥💥💥",
+      "sufficient": false,
+      "split": "validation"
+    },
+    {
+      "id": "insufficient-validation-007",
+      "text": "라라라라라라라라",
+      "sufficient": false,
+      "split": "validation"
+    },
+    {
+      "id": "insufficient-validation-008",
+      "text": "쿵 쿵 쾅 타다닥 두두둥 슈웅",
+      "sufficient": false,
+      "split": "validation"
+    },
+
+    {"id": "insufficient-test-001", "text": "헉헉윽윽", "sufficient": false, "split": "test"},
+    {"id": "insufficient-test-002", "text": "뚜루뚜뚜", "sufficient": false, "split": "test"},
+    {"id": "insufficient-test-003", "text": "ㅂㅈㄷㄱㅅ", "sufficient": false, "split": "test"},
+    {"id": "insufficient-test-004", "text": "poiuytrewq", "sufficient": false, "split": "test"},
+    {"id": "insufficient-test-005", "text": "314159265", "sufficient": false, "split": "test"},
+    {"id": "insufficient-test-006", "text": "😶😶😶😶", "sufficient": false, "split": "test"},
+    {"id": "insufficient-test-007", "text": "바바바바바바바", "sufficient": false, "split": "test"},
+    {
+      "id": "insufficient-test-008",
+      "text": "우당탕 쾅쾅 따르릉 삐용삐용 두두두",
+      "sufficient": false,
+      "split": "test"
+    }
+  ]
+}

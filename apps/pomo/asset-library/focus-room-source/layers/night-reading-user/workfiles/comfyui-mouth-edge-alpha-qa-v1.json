@@ -1,0 +1,26 @@
+{
+  "1": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "layer-mouth-rest.png"
+    }
+  },
+  "2": {
+    "class_type": "MaskPreview",
+    "inputs": {
+      "mask": ["1", 1]
+    }
+  },
+  "3": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "layer-mouth-closed.png"
+    }
+  },
+  "4": {
+    "class_type": "MaskPreview",
+    "inputs": {
+      "mask": ["3", 1]
+    }
+  }
+}

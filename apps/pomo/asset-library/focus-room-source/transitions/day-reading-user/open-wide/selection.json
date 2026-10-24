@@ -1,0 +1,13 @@
+{
+  "early": "generated-full-h3-v7-v2/01-a-frame-012.png",
+  "middle": "generated-full-h3-v7-v2/02-transition-frame-018.png",
+  "late": "generated-full-h3-v7-v2/03-e-frame-022.png",
+  "runtimeApplied": false,
+  "crop": {
+    "left": 930,
+    "top": 285,
+    "width": 260,
+    "height": 180
+  },
+  "reason": "Retain the three approved GPT-restored H3 v7 frames as source material only. Runtime now transitions directly from open to wide."
+}

@@ -1,0 +1,128 @@
+/** @vitest-environment jsdom */
+
+import {render} from '@solidjs/testing-library'
+import {beforeEach, expect, it, vi} from 'vitest'
+
+import {PreferenceProvider} from 'src/hooks/use-preference'
+import {type PSceneStyle, type PSceneStyleController, usePSceneStyle} from '../index'
+
+const storageMocks = vi.hoisted(() => ({
+  read: vi.fn(),
+  write: vi.fn(),
+}))
+
+vi.mock('../style-storage', () => ({
+  readPSceneStyle: storageMocks.read,
+  writePSceneStyle: storageMocks.write,
+}))
+
+interface SceneStyleHarnessProps {
+  readonly onController: (controller: PSceneStyleController) => void
+}
+
+const SceneStyleHarness = (props: SceneStyleHarnessProps) => {
+  const controller = usePSceneStyle()
+  props.onController(controller)
+
+  return null
+}
+
+const renderSceneStyle = (onController: SceneStyleHarnessProps['onController']) =>
+  render(() => (
+    <PreferenceProvider>
+      <SceneStyleHarness onController={onController} />
+    </PreferenceProvider>
+  ))
+
+beforeEach(() => {
+  storageMocks.read.mockReset().mockResolvedValue('scribble')
+  storageMocks.write.mockReset().mockResolvedValue(undefined)
+})
+
+it('should restore the stored scene style after mounting', async () => {
+  let controller: PSceneStyleController | undefined
+
+  renderSceneStyle((nextController) => {
+    controller = nextController
+  })
+
+  expect(controller?.isReady()).toBe(false)
+  await vi.waitFor(() => expect(controller?.sceneStyle()).toBe('scribble'))
+  expect(controller?.isReady()).toBe(true)
+})
+
+it('should update and persist both scene style choices', async () => {
+  let controller: PSceneStyleController | undefined
+
+  renderSceneStyle((nextController) => {
+    controller = nextController
+  })
+
+  controller?.onSceneStyleChange('original')
+  expect(controller?.isReady()).toBe(true)
+  expect(controller?.sceneStyle()).toBe('original')
+  await vi.waitFor(() => expect(storageMocks.write).toHaveBeenLastCalledWith('original'))
+
+  controller?.onSceneStyleChange('scribble')
+  expect(controller?.sceneStyle()).toBe('scribble')
+  await vi.waitFor(() => expect(storageMocks.write).toHaveBeenLastCalledWith('scribble'))
+})
+
+it('should not overwrite a newer choice when stored style restoration finishes late', async () => {
+  let completeRead: (sceneStyle: PSceneStyle) => void = () => undefined
+  storageMocks.read.mockReturnValue(
+    new Promise((resolve) => {
+      completeRead = resolve
+    }),
+  )
+  let controller: PSceneStyleController | undefined
+
+  renderSceneStyle((nextController) => {
+    controller = nextController
+  })
+
+  controller?.onSceneStyleChange('original')
+  completeRead('scribble')
+
+  await Promise.resolve()
+  expect(controller?.sceneStyle()).toBe('original')
+  await vi.waitFor(() => expect(storageMocks.write).toHaveBeenLastCalledWith('original'))
+})
+
+it('should ignore stored style restoration after cleanup', async () => {
+  let completeRead: (sceneStyle: PSceneStyle) => void = () => undefined
+  storageMocks.read.mockReturnValue(
+    new Promise((resolve) => {
+      completeRead = resolve
+    }),
+  )
+  let controller: PSceneStyleController | undefined
+  const result = renderSceneStyle((nextController) => {
+    controller = nextController
+  })
+
+  result.unmount()
+  completeRead('scribble')
+  await Promise.resolve()
+
+  expect(controller?.sceneStyle()).toBe('original')
+  expect(controller?.isReady()).toBe(false)
+})
+
+it('should reject coercible stored values through the preference adapter', async () => {
+  const convert = vi.fn(() => 'scribble')
+  storageMocks.read.mockResolvedValue({
+    [Symbol.toPrimitive]: convert,
+    toString: convert,
+    valueOf: convert,
+  })
+  let controller: PSceneStyleController | undefined
+  renderSceneStyle((nextController) => {
+    controller = nextController
+  })
+
+  await vi.waitFor(() => expect(controller?.isReady()).toBe(true))
+  expect(controller?.sceneStyle()).toBe('original')
+  expect(convert).not.toHaveBeenCalled()
+  expect(storageMocks.write).not.toHaveBeenCalled()
+})

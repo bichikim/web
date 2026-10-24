@@ -1,0 +1,506 @@
+import {useDefaultTextModel} from 'src/features/text-generation/use-default-text-model'
+import type {DefaultTextModelId} from 'src/features/text-generation/settings'
+import {supportsTextModel} from 'src/features/text-generation/supports-text-model'
+import * as m from '@paraglide/message'
+import {PInput} from 'src/components/p-input/PInput'
+import {isNonBlankString} from 'src/utils/is-non-blank-string'
+import {cx} from 'class-variance-authority'
+import {
+  type Accessor,
+  createEffect,
+  createMemo,
+  createSignal,
+  onCleanup,
+  Show,
+  untrack,
+} from 'solid-js'
+
+import {
+  type DialogueWriterController,
+  type DialogueWriterState,
+  useDialogueWriter,
+} from '../../features/dialogue-writer'
+import {
+  calculateDialogueScriptProgress,
+  createDialogueScriptRequest,
+  DEFAULT_DIALOGUE_SCRIPT_LENGTH,
+  MAXIMUM_DIALOGUE_SCRIPT_LENGTH,
+  MINIMUM_DIALOGUE_SCRIPT_LENGTH,
+} from '../../features/focus-room-dialogue'
+import {localizeErrorMessage} from '../../features/localization/localized-messages'
+import {type ModelDownloadState, useModelDownload} from '../../features/model-download'
+import {getTextModel, isTextModelDownloaded} from '../../features/text-generation'
+import {PGenerationStatus} from '../p-generation-status/PGenerationStatus'
+import {PModelDownloadConsent} from '../p-model-download-consent/PModelDownloadConsent'
+
+const MAXIMUM_PROGRESS = 100
+const GENERATED_CONTENT_PROGRESS = 96
+const FINAL_GENERATING_PROGRESS = 99
+const FINISHING_PROGRESS_INTERVAL_MS = 700
+const FINISHING_PROGRESS_STEPS = [
+  GENERATED_CONTENT_PROGRESS + 1,
+  GENERATED_CONTENT_PROGRESS + 2,
+  FINAL_GENERATING_PROGRESS,
+] as const
+const BUTTON_CLASSES = cx(
+  'min-h-11 cursor-pointer border-0 rounded-full bg-highlight py-0 px-[1.2rem]',
+  'font-[750] text-background [&:disabled]:[cursor:not-allowed] [&:disabled]:[opacity:0.4]',
+  'focus-visible:outline-2 focus-visible:outline-solid focus-visible:outline-highlight',
+  'focus-visible:outline-offset-2',
+)
+const FIELD_CLASSES = cx(
+  'grid gap-2 text-foreground text-[0.82rem] font-bold',
+  '[&_input[type=text]]:min-h-12 [&_input[type=text]]:w-full [&_input[type=text]]:box-border',
+  '[&_input[type=text]]:border [&_input[type=text]]:border-solid [&_input[type=text]]:border-border',
+  '[&_input[type=text]]:rounded-xl [&_input[type=text]]:bg-surface-strong',
+  '[&_input[type=text]]:px-[0.9rem] [&_input[type=text]]:text-foreground',
+  '[&_input[type=text]]:[font:inherit] [&_input[type=text]]:font-[500]',
+  '[&_input[type=text]]:outline-none',
+  '[&_input[type=text]:focus-visible]:outline-2 [&_input[type=text]:focus-visible]:outline-solid',
+  '[&_input[type=text]:focus-visible]:outline-highlight',
+  '[&_input[type=text]:focus-visible]:[outline-offset:2px]',
+)
+const ACTION_CLASSES = 'flex justify-end gap-3'
+
+export interface PDialogueDraftGeneratorProps {
+  readonly disabled?: boolean
+  readonly onBusyChange?: (busy: boolean) => void
+  readonly onGenerated: (text: string) => void
+}
+
+interface UseDialogueGenerationStatusProps {
+  readonly defaultModelId: Accessor<DefaultTextModelId>
+  readonly downloadError: Accessor<DialogueDraftDownloadError | null>
+  readonly downloadState: Accessor<ModelDownloadState>
+  readonly isCheckingModel: Accessor<boolean>
+  readonly isCurrentModelSupported: Accessor<boolean>
+  readonly length: Accessor<number>
+  readonly writer: DialogueWriterController
+}
+
+interface DialogueGenerationStatus {
+  readonly message: string
+  readonly progress: number | null
+}
+
+interface DialogueDraftDownloadError {
+  readonly message: string
+  readonly modelId: DefaultTextModelId
+}
+
+interface UseDialogueDraftModelProps {
+  readonly defaultModelId: Accessor<DefaultTextModelId>
+  readonly disabled: Accessor<boolean>
+  readonly length: Accessor<number>
+  readonly onBusyChange: (busy: boolean) => void
+  readonly topic: Accessor<string>
+  readonly writer: DialogueWriterController
+}
+
+interface DialogueDraftModelController {
+  readonly canCancelDownload: Accessor<boolean>
+  readonly cancelDownload: () => void
+  readonly canGenerate: Accessor<boolean>
+  readonly cancelDownloadConsent: () => void
+  readonly downloadConsentOpen: Accessor<boolean>
+  readonly generate: () => Promise<void>
+  readonly generationStatus: Accessor<DialogueGenerationStatus>
+  readonly isBusy: Accessor<boolean>
+  readonly startDownload: () => Promise<void>
+}
+
+const getCurrentDownloadErrorMessage = (
+  downloadError: DialogueDraftDownloadError | null,
+  currentModelId: DefaultTextModelId,
+): string | null => {
+  if (downloadError === null || downloadError.modelId !== currentModelId) {
+    return null
+  }
+
+  return localizeErrorMessage(downloadError.message, m.dialogue_model_download_error())
+}
+
+const shouldShowUnsupportedModelStatus = (
+  isCurrentModelSupported: boolean,
+  state: DialogueWriterState,
+): boolean =>
+  !isCurrentModelSupported && state.status !== 'loading' && state.status !== 'generating'
+
+const useDialogueGenerationStatus = (props: UseDialogueGenerationStatusProps) => {
+  const calculatedProgress = createMemo<number | null>(() => {
+    const currentState = props.writer.state()
+
+    switch (currentState.status) {
+      case 'complete':
+        return calculateDialogueScriptProgress({
+          completed: true,
+          generatedLength: props.writer.output().length,
+          targetLength: props.length(),
+        })
+      case 'generating':
+        return calculateDialogueScriptProgress({
+          completed: false,
+          generatedLength: props.writer.output().length,
+          targetLength: props.length(),
+        })
+      case 'error':
+      case 'idle':
+      case 'loading':
+      case 'ready':
+      case 'unsupported':
+        return null
+    }
+  })
+  const [progress, setProgress] = createSignal<number | null>(null)
+
+  createEffect(() => {
+    const nextProgress = calculatedProgress()
+    setProgress(nextProgress)
+
+    if (nextProgress !== GENERATED_CONTENT_PROGRESS) {
+      return
+    }
+
+    const timers = FINISHING_PROGRESS_STEPS.map((step, index) =>
+      setTimeout(() => setProgress(step), FINISHING_PROGRESS_INTERVAL_MS * (index + 1)),
+    )
+    onCleanup(() => timers.forEach(clearTimeout))
+  })
+
+  const status = createMemo((): DialogueGenerationStatus => {
+    if (props.isCheckingModel()) {
+      return {message: m.dialogue_status_checking_model(), progress: null}
+    }
+
+    const downloadErrorMessage = getCurrentDownloadErrorMessage(
+      props.downloadError(),
+      props.defaultModelId(),
+    )
+
+    if (downloadErrorMessage !== null) {
+      return {message: downloadErrorMessage, progress: null}
+    }
+
+    const downloadState = props.downloadState()
+
+    if (
+      downloadState.status === 'loading' &&
+      downloadState.target.kind === 'text' &&
+      downloadState.target.modelId === props.writer.modelId()
+    ) {
+      return {
+        message: m.dialogue_status_downloading_model_background(),
+        progress: downloadState.percentage,
+      }
+    }
+
+    const currentState = props.writer.state()
+
+    if (shouldShowUnsupportedModelStatus(props.isCurrentModelSupported(), currentState)) {
+      return {message: m.dialogue_writer_unsupported_status(), progress: null}
+    }
+
+    const currentProgress = progress()
+
+    switch (currentState.status) {
+      case 'complete':
+        return {message: m.dialogue_status_generated(), progress: currentProgress}
+      case 'error':
+        return {
+          message: localizeErrorMessage(currentState.message, m.dialogue_writer_error()),
+          progress: null,
+        }
+      case 'generating':
+        if (currentProgress === FINAL_GENERATING_PROGRESS) {
+          return {
+            message: m.dialogue_status_generating(),
+            progress: currentProgress,
+          }
+        }
+
+        if (currentProgress !== null && currentProgress > GENERATED_CONTENT_PROGRESS) {
+          return {message: m.dialogue_status_finishing(), progress: currentProgress}
+        }
+
+        return {message: m.dialogue_status_writing(), progress: currentProgress}
+      case 'idle':
+        return {message: m.dialogue_status_choose_topic(), progress: null}
+      case 'loading':
+        return {
+          message:
+            currentState.percentage === MAXIMUM_PROGRESS
+              ? m.dialogue_status_prepare_model()
+              : m.dialogue_status_downloading_model(),
+          progress: currentState.percentage,
+        }
+      case 'ready':
+        return {message: m.dialogue_status_model_ready(), progress: null}
+      case 'unsupported':
+        return {
+          message: props.isCurrentModelSupported()
+            ? m.dialogue_status_choose_topic()
+            : m.dialogue_writer_unsupported_status(),
+          progress: null,
+        }
+    }
+  })
+
+  return status
+}
+
+const useDialogueDraftModel = (props: UseDialogueDraftModelProps): DialogueDraftModelController => {
+  const length = untrack(() => props.length)
+  const writer = untrack(() => props.writer)
+  const [downloadConsentModelId, setDownloadConsentModelId] =
+    createSignal<DefaultTextModelId | null>(null)
+  const [isCheckingModel, setIsCheckingModel] = createSignal(false)
+  const [downloadError, setDownloadError] = createSignal<DialogueDraftDownloadError | null>(null)
+  const isCurrentModelSupported = createMemo(() =>
+    supportsTextModel({modelId: props.defaultModelId()}),
+  )
+  const downloadConsentOpen = createMemo(() => {
+    const consentModelId = downloadConsentModelId()
+
+    return (
+      consentModelId !== null &&
+      consentModelId === props.defaultModelId() &&
+      consentModelId === writer.modelId() &&
+      isCurrentModelSupported()
+    )
+  })
+  const modelDownload = useModelDownload()
+  let isDisposed = false
+  onCleanup(() => {
+    isDisposed = true
+  })
+  const isModelDownloading = () => modelDownload.state().status === 'loading'
+  const isDraftModelDownloading = () => {
+    const downloadState = modelDownload.state()
+    return (
+      downloadState.status === 'loading' &&
+      downloadState.target.kind === 'text' &&
+      downloadState.target.modelId === props.writer.modelId()
+    )
+  }
+  const isBusy = () => writer.isBusy() || isCheckingModel() || isModelDownloading()
+  const generationStatus = useDialogueGenerationStatus({
+    defaultModelId: props.defaultModelId,
+    downloadError,
+    downloadState: modelDownload.state,
+    isCheckingModel,
+    isCurrentModelSupported,
+    length,
+    writer,
+  })
+  createEffect(() => {
+    const busy = isBusy()
+    untrack(() => props.onBusyChange(busy))
+  })
+  const canGenerate = () =>
+    !props.disabled() && !isBusy() && isNonBlankString(props.topic()) && isCurrentModelSupported()
+  const downloadAndGenerate = async (modelId: DefaultTextModelId) => {
+    const result = await modelDownload.startTextModel(modelId)
+
+    if (isDisposed || props.defaultModelId() !== modelId) {
+      return
+    }
+
+    if (result.status === 'complete') {
+      writer.generateWithPreparation()
+      return
+    }
+
+    if (result.status === 'error') {
+      setDownloadError({message: result.message, modelId})
+    }
+  }
+  const generate = async () => {
+    const modelId = props.defaultModelId()
+
+    if (!supportsTextModel({modelId})) {
+      return
+    }
+
+    setDownloadConsentModelId(null)
+    writer.selectModel(modelId)
+    setDownloadError(null)
+    writer.setRequest(createDialogueScriptRequest({length: length(), topic: props.topic()}))
+
+    if (writer.isModelReady()) {
+      writer.generateWithPreparation()
+      return
+    }
+
+    if (isDraftModelDownloading()) {
+      await downloadAndGenerate(modelId)
+      return
+    }
+
+    setIsCheckingModel(true)
+    const isDownloaded = await isTextModelDownloaded({modelId})
+
+    if (isDisposed) {
+      return
+    }
+
+    setIsCheckingModel(false)
+
+    if (props.defaultModelId() !== modelId) {
+      return
+    }
+
+    if (isDownloaded) {
+      writer.generateWithPreparation()
+      return
+    }
+
+    setDownloadConsentModelId(modelId)
+  }
+  const startDownload = async () => {
+    const modelId = downloadConsentModelId()
+
+    if (
+      modelId === null ||
+      modelId !== props.defaultModelId() ||
+      modelId !== writer.modelId() ||
+      !isCurrentModelSupported()
+    ) {
+      return
+    }
+
+    setDownloadConsentModelId(null)
+    await downloadAndGenerate(modelId)
+  }
+
+  return {
+    canCancelDownload: isDraftModelDownloading,
+    cancelDownload: modelDownload.cancel,
+    cancelDownloadConsent: () => setDownloadConsentModelId(null),
+    canGenerate,
+    downloadConsentOpen,
+    generate,
+    generationStatus,
+    isBusy,
+    startDownload,
+  }
+}
+
+export function PDialogueDraftGenerator(props: PDialogueDraftGeneratorProps) {
+  const [topic, setTopic] = createSignal<string>(m.dialogue_draft_default_topic())
+  const [length, setLength] = createSignal(DEFAULT_DIALOGUE_SCRIPT_LENGTH)
+  const [isExpanded, setIsExpanded] = createSignal(false)
+  const defaultModelId = useDefaultTextModel()
+  const writer = useDialogueWriter({
+    modelId: defaultModelId(),
+    onComplete: (text) => props.onGenerated(text),
+  })
+  const draftModel = useDialogueDraftModel({
+    defaultModelId,
+    disabled: () => props.disabled ?? false,
+    length,
+    onBusyChange: (busy) => props.onBusyChange?.(busy),
+    topic,
+    writer,
+  })
+
+  return (
+    <section aria-labelledby="dialogue-draft-title" class="rounded-xl bg-content-surface">
+      <button
+        aria-controls="dialogue-draft-content"
+        aria-expanded={isExpanded()}
+        class={cx(
+          'flex min-h-16 w-full cursor-pointer items-center gap-3 border-0 rounded-xl',
+          'bg-transparent px-4 py-3 text-left text-foreground outline-none',
+          'hover:bg-primary-soft focus-visible:outline-2 focus-visible:outline-highlight',
+          'focus-visible:outline-offset-2',
+        )}
+        onClick={() => setIsExpanded((expanded) => !expanded)}
+        type="button"
+      >
+        <span class="grid min-w-0 flex-1 gap-1">
+          <span class="text-[0.95rem] font-[750]" id="dialogue-draft-title">
+            {m.dialogue_draft_title()}
+          </span>
+          <span class="text-muted-foreground text-xs leading-[1.5]">
+            {m.dialogue_draft_optional()}
+          </span>
+        </span>
+        <span
+          aria-hidden="true"
+          class="i-tabler-chevron-down size-5 flex-none text-highlight transition-transform"
+          classList={{'rotate-180': isExpanded()}}
+        />
+      </button>
+
+      <div hidden={!isExpanded()} id="dialogue-draft-content">
+        <div class="grid gap-4 px-4 pb-4">
+          <p class="m-0 text-muted-foreground text-xs leading-[1.5]">
+            {m.dialogue_draft_description()}
+          </p>
+          <label class={FIELD_CLASSES}>
+            <span>{m.dialogue_draft_topic_label()}</span>
+            <PInput
+              unstyled
+              disabled={props.disabled || draftModel.isBusy()}
+              maxlength="200"
+              onInput={(event) => setTopic(event.currentTarget.value)}
+              placeholder={m.dialogue_draft_topic_placeholder()}
+              type="text"
+              value={topic()}
+            />
+          </label>
+
+          <label class="grid gap-2 text-foreground text-[0.82rem] font-bold">
+            <span class="flex justify-between gap-4">
+              {m.dialogue_draft_length_label()}
+              <strong class="text-highlight">
+                {m.dialogue_draft_characters({count: length()})}
+              </strong>
+            </span>
+            <input
+              aria-label={m.dialogue_draft_length_label()}
+              aria-valuetext={m.dialogue_draft_characters({count: length()})}
+              class="w-full accent-highlight"
+              disabled={props.disabled || draftModel.isBusy()}
+              max={MAXIMUM_DIALOGUE_SCRIPT_LENGTH}
+              min={MINIMUM_DIALOGUE_SCRIPT_LENGTH}
+              onInput={(event) => setLength(event.currentTarget.valueAsNumber)}
+              step="1"
+              type="range"
+              value={length()}
+            />
+            <span class="flex justify-between text-muted-foreground text-[0.72rem] font-[550]">
+              <span>{m.dialogue_draft_characters({count: MINIMUM_DIALOGUE_SCRIPT_LENGTH})}</span>
+              <span>{m.dialogue_draft_characters({count: MAXIMUM_DIALOGUE_SCRIPT_LENGTH})}</span>
+            </span>
+          </label>
+
+          <PGenerationStatus
+            kind="draft"
+            message={draftModel.generationStatus().message}
+            onCancel={draftModel.canCancelDownload() ? draftModel.cancelDownload : undefined}
+            progress={draftModel.generationStatus().progress}
+            progressLabel={m.dialogue_draft_progress()}
+          />
+          <div class={ACTION_CLASSES}>
+            <button
+              class={BUTTON_CLASSES}
+              disabled={!draftModel.canGenerate()}
+              onClick={draftModel.generate}
+              type="button"
+            >
+              {m.dialogue_draft_create()}
+            </button>
+          </div>
+        </div>
+      </div>
+      <PModelDownloadConsent
+        actionLabel={m.dialogue_draft_create()}
+        downloadSize={getTextModel(defaultModelId()).downloadSize}
+        isOpen={draftModel.downloadConsentOpen()}
+        onCancel={draftModel.cancelDownloadConsent}
+        onConfirm={draftModel.startDownload}
+      />
+    </section>
+  )
+}

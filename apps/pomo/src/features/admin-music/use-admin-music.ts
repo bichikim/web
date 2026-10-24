@@ -1,0 +1,175 @@
+import type {TrackImportTask} from './types'
+import {countBy} from 'es-toolkit/array'
+import {useImportNavigation} from './use-import-navigation'
+import {useAsyncTask} from '../async-task'
+import {createAsync, revalidate, useAction, useSubmission, useSubmissions} from '@solidjs/router'
+import {createEffect, createMemo, createSignal, type JSX, onMount} from 'solid-js'
+
+import {changeAdminAlbumStatusAction, connectAdminAlbumOfferAction} from './actions'
+import {type AdminCatalog, type AlbumStatusAction} from './catalog'
+import {adminCatalogQuery} from './catalog-query'
+import {getCatalogTrackCounts} from './catalog-track-counts'
+import {useAlbumDraft} from './use-album-draft'
+import {useTrackManagement} from './use-track-management'
+
+const getAlbumStats = (albums: AdminCatalog['albums']) => {
+  const counts = countBy(albums, (album) => album.status)
+  return {draft: counts.draft ?? 0, published: counts.published ?? 0, total: albums.length}
+}
+
+export const useAdminMusic = () => {
+  const changeAlbumStatus = useAction(changeAdminAlbumStatusAction)
+  const albumStatusSubmissions = useSubmissions(changeAdminAlbumStatusAction)
+  const connectOffer = useAction(connectAdminAlbumOfferAction)
+  const offerSubmission = useSubmission(connectAdminAlbumOfferAction)
+  const [catalog, setCatalog] = createSignal<AdminCatalog>({
+    albums: [],
+    assets: [],
+    offers: [],
+    pendingTracks: [],
+    tracks: [],
+  })
+  const [catalogActive, setCatalogActive] = createSignal(false)
+  const [catalogLoading, setCatalogLoading] = createSignal(true)
+  const [isAlbumEditorOpen, setIsAlbumEditorOpen] = createSignal(false)
+  const [selectedAlbumId, setSelectedAlbumId] = createSignal<string | null>(null)
+  const [message, setMessage] = createSignal<string | null>(null)
+
+  const catalogResult = createAsync(async () => {
+    if (!catalogActive()) {
+      return
+    }
+
+    return adminCatalogQuery()
+  })
+  const applyCatalog = (nextCatalog: AdminCatalog): void => {
+    setCatalog(nextCatalog)
+    setSelectedAlbumId((currentAlbumId) =>
+      nextCatalog.albums.some((album) => album.id === currentAlbumId)
+        ? currentAlbumId
+        : (nextCatalog.albums[0]?.id ?? null),
+    )
+  }
+  let catalogRevision = 0
+  const refreshCatalog = async (): Promise<void> => {
+    catalogRevision += 1
+    const revision = catalogRevision
+    await revalidate(adminCatalogQuery.key)
+    const result = await adminCatalogQuery()
+    if (revision !== catalogRevision) {
+      return
+    }
+
+    if (result.status === 'failed') {
+      throw new Error(result.message)
+    }
+
+    applyCatalog(result.catalog)
+  }
+
+  const trackManagement = useTrackManagement({refreshCatalog, setMessage})
+  const trackImport = useAsyncTask({
+    concurrency: 'exhaust',
+    task: async (importTracks: TrackImportTask) => {
+      const summary = await importTracks()
+      if (summary !== undefined) {
+        await trackManagement.completeTrackImport(summary)
+      }
+    },
+  })
+  const isImportingTracks = () => trackImport.state().status === 'pending'
+  const importNavigation = useImportNavigation(isImportingTracks)
+  const albumDraft = useAlbumDraft({
+    onAlbumCreated: (albumId) => {
+      if (!isImportingTracks()) {
+        setSelectedAlbumId(albumId)
+      }
+      setIsAlbumEditorOpen(false)
+    },
+    refreshCatalog,
+    setMessage,
+  })
+  const albumStats = createMemo(() => getAlbumStats(catalog().albums))
+  const trackCounts = createMemo(() => getCatalogTrackCounts(catalog()))
+  const getTrackCount = (albumId: string): number => trackCounts().get(albumId) ?? 0
+
+  createEffect(() => {
+    const result = catalogResult()
+
+    if (result?.status === 'ready') {
+      setCatalogLoading(false)
+      applyCatalog(result.catalog)
+      return
+    }
+
+    if (result?.status === 'failed') {
+      setCatalogLoading(false)
+      setMessage(result.message)
+    }
+  })
+
+  onMount(() => setCatalogActive(true))
+
+  const handleAlbumStatusChange = async (
+    albumId: string,
+    action: AlbumStatusAction,
+  ): Promise<void> => {
+    setMessage(null)
+    const result = await changeAlbumStatus(albumId, action)
+    albumStatusSubmissions
+      .filter((submission) => !submission.pending && submission.input[0] === albumId)
+      .forEach((submission) => submission.clear())
+    if (result.status === 'succeeded') {
+      await refreshCatalog()
+      setMessage(action === 'publish' ? '앨범을 공개했습니다.' : '앨범을 보관했습니다.')
+      return
+    }
+
+    setMessage(result.detail)
+  }
+
+  const handleOfferSubmit: JSX.EventHandler<HTMLFormElement, SubmitEvent> = async (event) => {
+    event.preventDefault()
+    const offerForm = event.currentTarget
+    const form = new FormData(offerForm)
+    setMessage(null)
+    const result = await connectOffer(form)
+    offerSubmission.clear()
+    if (result.status === 'succeeded') {
+      offerForm.reset()
+      await refreshCatalog()
+      setMessage('앱인토스 일회성 판매 상품을 연결했습니다.')
+      return
+    }
+
+    setMessage(result.detail)
+  }
+
+  return {
+    ...albumDraft,
+    ...trackManagement,
+    ...importNavigation,
+    albumStats,
+    catalog,
+    getTrackCount,
+    handleAlbumStatusChange,
+    handleOfferSubmit,
+    isAlbumEditorOpen,
+    isImportingTracks,
+    isLoading: catalogLoading,
+    isSavingOffer: () => offerSubmission.pending === true,
+    isUpdatingAlbum: (albumId: string) =>
+      albumStatusSubmissions.some(
+        (submission) => submission.pending && submission.input[0] === albumId,
+      ),
+    message,
+    runTrackImport: trackImport.execute,
+    selectedAlbumId,
+    setIsAlbumEditorOpen,
+    setSelectedAlbumId,
+    updatingAlbumId: () =>
+      albumStatusSubmissions.findLast((submission) => submission.pending)?.input[0] ?? null,
+  }
+}
+
+export type AdminMusicModel = ReturnType<typeof useAdminMusic>

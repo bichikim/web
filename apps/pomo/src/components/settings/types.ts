@@ -1,0 +1,55 @@
+import type {useUiAutoHide} from 'src/features/ui-auto-hide'
+import type {BackgroundController} from 'src/features/background'
+import type {PSceneMotionInput, PSceneMotionMode} from '../../features/focus-room-animation'
+import type {PSceneStyle} from '../../features/focus-room-animation/scene-style'
+import type {PActivity, PGaze} from '../../features/focus-room-scene-preferences'
+import type {SceneTimeMode} from '../../features/focus-room-time'
+import type {ScreenSaverDelay} from '../../features/screen-saver'
+import type {WeatherLocation, WeatherSceneMode} from '../../features/weather'
+import type {DesktopMode} from '../../features/desktop-mode'
+
+export interface PSettingsProps {
+  readonly desktopSurface?: boolean
+  readonly desktopMode?: DesktopMode
+  readonly desktopModeError?: string | null
+  readonly isDesktopModeChanging?: boolean
+  readonly onDesktopModeChange?: (mode: DesktopMode) => Promise<void>
+  readonly uiAutoHide?: ReturnType<typeof useUiAutoHide>
+  readonly pomodoroVisible?: boolean
+  readonly onPomodoroVisibleChange?: (visible: boolean) => void
+  readonly playerVisible?: boolean
+  readonly onPlayerVisibleChange?: (visible: boolean) => void
+  readonly background?: BackgroundController
+
+  readonly toolsButtonVisible?: boolean
+  readonly onToolsButtonVisibleChange?: (visible: boolean) => void
+  readonly memoryAssistVisible?: boolean
+  readonly onMemoryAssistVisibleChange?: (visible: boolean) => void
+  readonly featureRequestVisible?: boolean
+  readonly onFeatureRequestVisibleChange?: (visible: boolean) => void
+  readonly tourButtonVisible?: boolean
+  readonly onTourButtonVisibleChange?: (visible: boolean) => void
+  readonly activity?: PActivity
+  readonly canUseGyroscope?: boolean
+  readonly dialogueComposerVisible?: boolean
+  readonly gaze?: PGaze
+  readonly onActivityChange?: (activity: PActivity) => void
+  readonly onDialogueComposerVisibleChange?: (visible: boolean) => void
+  readonly onGazeChange?: (gaze: PGaze) => void
+  readonly onMotionInputChange?: (motionInput: PSceneMotionInput) => void
+  readonly onMotionModeChange?: (motionMode: PSceneMotionMode) => void
+  readonly onScreenSaverDelayChange?: (delay: ScreenSaverDelay) => void
+  readonly onSceneStyleChange?: (sceneStyle: PSceneStyle) => void
+  readonly onTimeModeChange?: (timeMode: SceneTimeMode) => void
+  readonly onWeatherEnabledChange?: (enabled: boolean) => void
+  readonly onWeatherLocationChange?: (location: WeatherLocation) => void
+  readonly onWeatherSceneModeChange?: (mode: WeatherSceneMode) => void
+  readonly screenSaverDelay?: ScreenSaverDelay
+  readonly sceneStyle?: PSceneStyle
+  readonly motionInput?: PSceneMotionInput
+  readonly motionMode?: PSceneMotionMode
+  readonly timeMode?: SceneTimeMode
+  readonly weatherEnabled?: boolean
+  readonly weatherLocation?: WeatherLocation
+  readonly weatherSceneMode?: WeatherSceneMode
+}

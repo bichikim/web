@@ -1,0 +1,4 @@
+interface:
+  display_name: '스킬 다이어트'
+  short_description: 'Bloated skills reduced to minimal useful rules'
+  default_prompt: 'Use $skill-diet to reduce a skill to its minimum useful form.'

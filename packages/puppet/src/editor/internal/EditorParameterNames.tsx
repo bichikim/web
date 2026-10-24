@@ -1,0 +1,211 @@
+import {TextField} from '@kobalte/core/text-field'
+import {ToggleButton} from '@kobalte/core/toggle-button'
+import {createSignal, Index, type JSX, onMount, Show} from 'solid-js'
+
+import {EditorTextInput} from '../../design-system'
+
+const DOUBLE_CLICK_INTERVAL = 400
+
+type ParameterNameTarget = 'primary' | 'secondary' | 'tertiary'
+
+interface ParameterNameRow {
+  readonly control?: JSX.Element
+  readonly name: string
+  readonly target: ParameterNameTarget
+}
+
+interface ParameterNameEditorProps {
+  readonly name: string
+  readonly onCancel: () => void
+  readonly onCommit: (name: string) => void
+}
+
+const ParameterNameEditor = (props: ParameterNameEditorProps) => {
+  const [input, setInput] = createSignal<HTMLInputElement | undefined>()
+  const [name, setName] = createSignal<string>()
+  let finished = false
+  const commit = () => {
+    if (finished) {
+      return
+    }
+
+    finished = true
+    const nextName = (name() ?? props.name).trim()
+    props.onCommit(nextName.length > 0 ? nextName : props.name)
+  }
+  const cancel = () => {
+    finished = true
+    props.onCancel()
+  }
+
+  onMount(() => {
+    input()?.focus()
+    input()?.select()
+  })
+
+  return (
+    <TextField class="parameter-name-editor" value={name() ?? props.name} onChange={setName}>
+      <EditorTextInput
+        ref={setInput}
+        aria-label="Parameter 이름"
+        onBlur={commit}
+        onKeyDown={(event) => {
+          if (event.key === 'Enter') {
+            event.preventDefault()
+            commit()
+          } else if (event.key === 'Escape') {
+            event.preventDefault()
+            cancel()
+          }
+        }}
+      />
+    </TextField>
+  )
+}
+
+export interface EditorParameterNamesProps {
+  readonly children?: JSX.Element
+  readonly descriptionId: string
+  readonly groupName?: string
+  readonly primaryControl?: JSX.Element
+  readonly secondaryControl?: JSX.Element
+  readonly status?: JSX.Element
+  readonly name: string
+  readonly onKeyDown?: (event: KeyboardEvent) => void
+  readonly onNameChange?: (name: string) => void
+  readonly onNameEdit?: () => void
+  readonly onSecondaryNameChange?: (name: string) => void
+  readonly onSelect?: () => void
+  readonly onTertiaryNameChange?: (name: string) => void
+  readonly pressed?: boolean
+  readonly secondaryName?: string
+  /** The third parameter of a 3D binding. */
+  readonly tertiaryControl?: JSX.Element
+  readonly tertiaryName?: string
+}
+
+export const EditorParameterNames = (props: EditorParameterNamesProps) => {
+  const [editing, setEditing] = createSignal<ParameterNameTarget | null>(null)
+  let lastClickTime = Number.NEGATIVE_INFINITY
+  let lastClickTarget: ParameterNameTarget | null = null
+  const getNameChange = (target: ParameterNameTarget) =>
+    ({
+      primary: props.onNameChange,
+      secondary: props.onSecondaryNameChange,
+      tertiary: props.onTertiaryNameChange,
+    })[target]
+  const rows = (): ReadonlyArray<ParameterNameRow> => [
+    {control: props.primaryControl, name: props.name, target: 'primary'},
+    ...(props.secondaryName === undefined
+      ? []
+      : [
+          {
+            control: props.secondaryControl,
+            name: props.secondaryName,
+            target: 'secondary' as const,
+          },
+        ]),
+    ...(props.tertiaryName === undefined
+      ? []
+      : [{control: props.tertiaryControl, name: props.tertiaryName, target: 'tertiary' as const}]),
+  ]
+  const startNameEdit = (target: ParameterNameTarget) => {
+    if (getNameChange(target) === undefined) {
+      return
+    }
+    props.onNameEdit?.()
+    setEditing(target)
+  }
+  const handleClick = (event: MouseEvent, target: ParameterNameTarget) => {
+    if (target === lastClickTarget && event.timeStamp - lastClickTime <= DOUBLE_CLICK_INTERVAL) {
+      event.preventDefault()
+      lastClickTime = Number.NEGATIVE_INFINITY
+      lastClickTarget = null
+      startNameEdit(target)
+      return
+    }
+    lastClickTime = event.timeStamp
+    lastClickTarget = target
+    props.onSelect?.()
+  }
+  const handleKeyDown = (event: KeyboardEvent, target: ParameterNameTarget) => {
+    if (event.key === 'F2') {
+      event.preventDefault()
+      startNameEdit(target)
+      return
+    }
+    props.onKeyDown?.(event)
+  }
+  const handleNameCommit = (target: ParameterNameTarget, name: string) => {
+    getNameChange(target)?.(name)
+    setEditing(null)
+  }
+
+  return (
+    <div class="parameter-item-main">
+      <div class="parameter-item" data-selected={props.pressed ? '' : undefined}>
+        <Show when={props.onSelect !== undefined}>
+          <ToggleButton
+            aria-describedby={props.descriptionId}
+            aria-label={`${rows()
+              .map((row) => row.name)
+              .join(' / ')} 파라미터 선택`}
+            aria-keyshortcuts="Delete"
+            class="parameter-header-select"
+            pressed={props.pressed}
+            onClick={() => props.onSelect?.()}
+            onKeyDown={props.onKeyDown}
+          />
+        </Show>
+        <Show when={props.groupName !== undefined || props.status !== undefined}>
+          <div class="parameter-item-heading">
+            <small>{props.groupName}</small>
+            {props.status}
+          </div>
+        </Show>
+        <div class="parameter-name-values">
+          <Index each={rows()}>
+            {(row) => (
+              <div class="parameter-name-row">
+                <Show
+                  when={editing() === row().target}
+                  fallback={
+                    <ToggleButton
+                      aria-describedby={props.descriptionId}
+                      aria-keyshortcuts="F2 Delete"
+                      aria-label={row().name}
+                      class="parameter-name-control"
+                      pressed={props.pressed}
+                      title="더블클릭하여 Parameter 이름 수정"
+                      onClick={(event) => handleClick(event, row().target)}
+                      onDblClick={(event: MouseEvent) => {
+                        event.preventDefault()
+                        startNameEdit(row().target)
+                      }}
+                      onKeyDown={(event) => handleKeyDown(event, row().target)}
+                    >
+                      <strong>{row().name}</strong>
+                    </ToggleButton>
+                  }
+                >
+                  <ParameterNameEditor
+                    name={row().name}
+                    onCancel={() => setEditing(null)}
+                    onCommit={(name) => handleNameCommit(row().target, name)}
+                  />
+                </Show>
+                <Show when={row().control !== undefined}>
+                  <span class="parameter-value-control">{row().control}</span>
+                </Show>
+              </div>
+            )}
+          </Index>
+        </div>
+        <span aria-hidden="true" class="puppet-icon puppet-icon-arrow-left parameter-swipe-hint" />
+      </div>
+      <Show when={editing() === null && props.children !== undefined}>
+        <div class="parameter-item-details">{props.children}</div>
+      </Show>
+    </div>
+  )
+}

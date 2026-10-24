@@ -1,0 +1,1 @@
+ALTER TABLE "ai_jobs" ADD COLUMN "intermediate_cleanup_at" timestamp with time zone;

@@ -1,0 +1,37 @@
+import type {
+  PrepareTextModelRequest,
+  TextGenerationErrorResponse,
+  TextGenerationLoadingResponse,
+  TextGenerationReadyResponse,
+  TextGenerationSkippedResponse,
+  TextGenerationTokenResponse,
+} from '../text-generation/messages'
+import type {TextModelId} from '../text-generation/model'
+import type {DialogueOutputLanguage} from './prompt'
+
+export interface GenerateDialogueRequest {
+  readonly modelId: TextModelId
+  readonly outputLanguage?: DialogueOutputLanguage
+  readonly request: string
+  readonly type: 'generate'
+}
+
+export type DialogueWorkerRequest = GenerateDialogueRequest | PrepareTextModelRequest
+
+export interface DialogueStartedResponse {
+  readonly type: 'started'
+}
+
+export interface DialogueCompleteResponse {
+  readonly text: string
+  readonly type: 'complete'
+}
+
+export type DialogueWorkerResponse =
+  | TextGenerationSkippedResponse<DialogueWorkerRequest>
+  | DialogueCompleteResponse
+  | DialogueStartedResponse
+  | TextGenerationErrorResponse
+  | TextGenerationLoadingResponse
+  | TextGenerationReadyResponse
+  | TextGenerationTokenResponse

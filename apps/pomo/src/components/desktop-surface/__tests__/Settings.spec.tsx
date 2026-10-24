@@ -1,0 +1,318 @@
+/** @vitest-environment jsdom */
+
+import {PreferenceProvider} from 'src/hooks/use-preference'
+
+import {render, screen} from '@solidjs/testing-library'
+import {createSignal} from 'solid-js'
+import {afterEach, beforeEach, expect, it, vi} from 'vitest'
+
+import {useDesktopMode, useDesktopSceneSettingsPublisher} from '../../../features/desktop-mode'
+import {supportsPSceneGyroscope, usePSceneStyle} from '../../../features/focus-room-animation'
+import {usePScenePreferences} from '../../../features/focus-room-scene-preferences'
+import {
+  type PDisplayPreferencesController,
+  usePDisplayPreferences,
+} from '../../../features/focus-room-display-preferences'
+import {useScreenSaver} from '../../../features/screen-saver'
+import {useWeather, type WeatherLocation} from '../../../features/weather'
+import {SceneToolbar} from '../../p-studio/Toolbar'
+import {DesktopSettings} from '../Settings'
+
+vi.mock('@solidjs/meta', () => ({Title: (props: {readonly children?: unknown}) => props.children}))
+vi.mock('../../../features/focus-room-animation', () => ({
+  supportsPSceneGyroscope: vi.fn(),
+  usePSceneStyle: vi.fn(),
+}))
+vi.mock('../../../features/focus-room-display-preferences', () => ({
+  usePDisplayPreferences: vi.fn(),
+}))
+vi.mock('../../../features/focus-room-scene-preferences', () => ({
+  usePScenePreferences: vi.fn(),
+}))
+vi.mock('../../../features/screen-saver', () => ({useScreenSaver: vi.fn()}))
+vi.mock('../../../features/desktop-mode', () => ({
+  useDesktopMode: vi.fn(),
+  useDesktopSceneSettingsPublisher: vi.fn(),
+  useDesktopSurfaceSize: vi.fn(),
+}))
+vi.mock('../../../features/weather', () => ({useWeather: vi.fn()}))
+vi.mock('../../p-music-player/PMusicPlayer', () => ({
+  PMusicPlayer: vi.fn((props) => (
+    <div data-expanded={String(props.expanded)} data-style={props.sceneStyle}>
+      플레이어
+    </div>
+  )),
+}))
+vi.mock('../../p-pomodoro/PPomodoro', () => ({
+  PPomodoro: vi.fn((props) => <div data-style={props.sceneStyle}>포모도로</div>),
+}))
+vi.mock('../../p-studio/Toolbar', () => ({
+  SceneToolbar: vi.fn((props) => {
+    return <span data-layout={props.layout}>설정</span>
+  }),
+}))
+
+const seoulLocation = {
+  country: '대한민국',
+  id: 'openweather:legacy:seoul',
+  legacyCitySlug: 'seoul',
+  name: '서울',
+  region: '서울특별시',
+} as const satisfies WeatherLocation
+
+const jejuLocation = {
+  country: '대한민국',
+  id: 'openweather:legacy:jeju',
+  legacyCitySlug: 'jeju',
+  name: '제주',
+  region: '제주특별자치도',
+} as const satisfies WeatherLocation
+
+const publish = vi.fn()
+const onModeChange = vi.fn().mockResolvedValue(undefined)
+let mode: 'desktop' | 'interactiveDesktop' | 'normal' = 'desktop'
+const displayPreferences: PDisplayPreferencesController = {
+  dialogueComposerVisible: () => false,
+  featureRequestVisible: () => true,
+  isReady: () => true,
+  memoryAssistVisible: () => true,
+  onDialogueComposerVisibleChange: vi.fn(),
+  onFeatureRequestVisibleChange: vi.fn(),
+  onMemoryAssistVisibleChange: vi.fn(),
+  onPlayerVisibleChange: vi.fn(),
+  onPomodoroVisibleChange: vi.fn(),
+  onToolsButtonVisibleChange: vi.fn(),
+  onTourButtonVisibleChange: vi.fn(),
+  playerVisible: () => true,
+  pomodoroVisible: () => true,
+  toolsButtonVisible: () => true,
+  tourButtonVisible: () => true,
+}
+
+beforeEach(() => {
+  vi.useFakeTimers()
+  vi.clearAllMocks()
+  mode = 'desktop'
+  vi.mocked(usePDisplayPreferences).mockReturnValue(displayPreferences)
+  vi.mocked(useDesktopMode).mockImplementation(() => ({
+    error: () => null,
+    isChanging: () => false,
+    mode: () => mode,
+    onModeChange,
+  }))
+  vi.mocked(usePSceneStyle).mockImplementation(() => {
+    const [sceneStyle, onSceneStyleChange] = createSignal<'original' | 'scribble'>('original')
+    return {isReady: () => true, onSceneStyleChange, sceneStyle}
+  })
+  vi.mocked(usePScenePreferences).mockImplementation(() => {
+    const [activity, onActivityChange] = createSignal<'reading' | 'writing'>('reading')
+    const [gaze, onGazeChange] = createSignal<'focused' | 'user'>('focused')
+    const [timeMode, onTimeModeChange] = createSignal<'auto' | 'day'>('day')
+    return {
+      activity,
+      gaze,
+      isReady: () => true,
+      onActivityChange,
+      onGazeChange,
+      onTimeModeChange,
+      timeMode,
+    }
+  })
+  vi.mocked(useScreenSaver).mockReturnValue({
+    delay: () => '10m',
+    isActive: () => false,
+    onDelayChange: vi.fn(),
+    onDismiss: vi.fn(),
+  })
+  vi.mocked(useWeather).mockReturnValue({
+    enabled: () => false,
+    isReady: () => true,
+    location: () => seoulLocation,
+    onEnabledChange: vi.fn(),
+    onLocationChange: vi.fn(),
+    onSceneModeChange: vi.fn(),
+    sceneCondition: () => 'clear',
+    sceneMode: () => 'auto',
+    state: () => ({status: 'disabled'}),
+  })
+  vi.mocked(useDesktopSceneSettingsPublisher).mockReturnValue({publish})
+  vi.mocked(supportsPSceneGyroscope).mockReturnValue(true)
+})
+
+afterEach(() => {
+  vi.useRealTimers()
+  document.documentElement.style.removeProperty('background')
+  document.body.style.removeProperty('background')
+})
+it('should publish every setting change from the separate scene toolbar', () => {
+  render(() => (
+    <PreferenceProvider>
+      <DesktopSettings />
+    </PreferenceProvider>
+  ))
+
+  expect(SceneToolbar).toHaveBeenCalledOnce()
+  expect(useDesktopMode).toHaveBeenCalledWith({isHandoffOwner: true})
+  expect(screen.getByText('설정')).toHaveAttribute('data-layout', 'surface')
+  const toolbarProps = vi.mocked(SceneToolbar).mock.calls[0]?.[0]
+  if (toolbarProps === undefined) {
+    throw new Error('Missing scene toolbar props')
+  }
+  const onActivityChange = toolbarProps.onActivityChange
+  if (onActivityChange === undefined) {
+    throw new Error('Missing activity change handler')
+  }
+  const onMotionInputChange = toolbarProps.onMotionInputChange
+  if (onMotionInputChange === undefined) {
+    throw new Error('Missing motion input change handler')
+  }
+  const onDesktopModeChange = toolbarProps.onDesktopModeChange
+  if (onDesktopModeChange === undefined) {
+    throw new Error('Missing desktop mode change handler')
+  }
+  onActivityChange('writing')
+  toolbarProps.onGazeChange('user')
+  onMotionInputChange('drag')
+  toolbarProps.onMotionModeChange('pan')
+  toolbarProps.onSceneStyleChange('scribble')
+  toolbarProps.onScreenSaverDelayChange('1h')
+  toolbarProps.onTimeModeChange('auto')
+  toolbarProps.onWeatherLocationChange(jejuLocation)
+  toolbarProps.onWeatherEnabledChange(true)
+  toolbarProps.onWeatherSceneModeChange('rain')
+  onDesktopModeChange('interactiveDesktop')
+
+  expect(publish.mock.calls.map(([setting]) => setting)).toEqual([
+    {name: 'activity', value: 'writing'},
+    {name: 'gaze', value: 'user'},
+    {name: 'motionInput', value: 'drag'},
+    {name: 'motionMode', value: 'pan'},
+    {name: 'sceneStyle', value: 'scribble'},
+    {name: 'screenSaverDelay', value: '1h'},
+    {name: 'timeMode', value: 'auto'},
+    {name: 'weatherLocation', value: jejuLocation},
+    {name: 'weatherEnabled', value: true},
+    {name: 'weatherSceneMode', value: 'rain'},
+  ])
+  expect(vi.mocked(SceneToolbar).mock.calls[0]?.[0]).toMatchObject({
+    activity: 'writing',
+    gaze: 'user',
+    motionInput: 'drag',
+    motionMode: 'pan',
+    sceneStyle: 'scribble',
+    timeMode: 'auto',
+  })
+  expect(useScreenSaver().onDelayChange).toHaveBeenCalledWith('1h')
+  expect(useWeather().onEnabledChange).toHaveBeenCalledWith(true)
+  expect(useWeather().onLocationChange).toHaveBeenCalledWith(jejuLocation)
+  expect(useWeather().onSceneModeChange).toHaveBeenCalledWith('rain')
+  expect(onModeChange).toHaveBeenCalledWith('interactiveDesktop')
+})
+
+it('should not render the separate settings surface for interactive desktop mode', () => {
+  mode = 'interactiveDesktop'
+
+  render(() => (
+    <PreferenceProvider>
+      <DesktopSettings />
+    </PreferenceProvider>
+  ))
+
+  expect(SceneToolbar).not.toHaveBeenCalled()
+  expect(screen.queryByText('설정')).not.toBeInTheDocument()
+})
+
+it('should retain drag input when the desktop has no gyroscope', () => {
+  vi.mocked(supportsPSceneGyroscope).mockReturnValue(false)
+  render(() => (
+    <PreferenceProvider>
+      <DesktopSettings />
+    </PreferenceProvider>
+  ))
+
+  expect(vi.mocked(SceneToolbar).mock.calls[0]?.[0].motionInput).toBe('drag')
+})
+
+it('should apply every received scene setting without echoing it to other WebViews', () => {
+  render(() => (
+    <PreferenceProvider>
+      <DesktopSettings />
+    </PreferenceProvider>
+  ))
+  expect(useDesktopSceneSettingsPublisher).toHaveBeenCalledOnce()
+  const listener = vi.mocked(useDesktopSceneSettingsPublisher).mock.calls[0]?.[0]?.handlers
+  if (listener === undefined) {
+    throw new Error('Missing scene-settings listener')
+  }
+  listener.onActivityChange?.('writing')
+  listener.onGazeChange?.('user')
+  listener.onMotionInputChange?.('drag')
+  listener.onMotionModeChange?.('pan')
+  listener.onSceneStyleChange?.('scribble')
+  listener.onScreenSaverDelayChange?.('1h')
+  listener.onTimeModeChange?.('auto')
+  listener.onWeatherEnabledChange?.(true)
+  listener.onWeatherLocationChange?.(jejuLocation)
+  listener.onWeatherSceneModeChange?.('rain')
+
+  expect(vi.mocked(SceneToolbar).mock.calls[0]?.[0]).toMatchObject({
+    activity: 'writing',
+    gaze: 'user',
+    motionInput: 'drag',
+    motionMode: 'pan',
+    sceneStyle: 'scribble',
+    timeMode: 'auto',
+  })
+  expect(useScreenSaver().onDelayChange).toHaveBeenCalledWith('1h')
+  expect(useWeather().onEnabledChange).toHaveBeenCalledWith(true)
+  expect(useWeather().onLocationChange).toHaveBeenCalledWith(jejuLocation)
+  expect(useWeather().onSceneModeChange).toHaveBeenCalledWith('rain')
+  expect(publish).not.toHaveBeenCalled()
+  const toolbarProps = vi.mocked(SceneToolbar).mock.calls[0]?.[0]
+  if (toolbarProps === undefined) {
+    throw new Error('Missing scene toolbar props')
+  }
+  const onActivityChange = toolbarProps.onActivityChange
+  if (onActivityChange === undefined) {
+    throw new Error('Missing activity change handler')
+  }
+  onActivityChange('writing')
+  expect(publish).toHaveBeenCalledExactlyOnceWith({name: 'activity', value: 'writing'})
+})
+
+it('should request owner motion without choosing gyroscope locally', () => {
+  vi.mocked(supportsPSceneGyroscope).mockReturnValue(true)
+  render(() => (
+    <PreferenceProvider>
+      <DesktopSettings />
+    </PreferenceProvider>
+  ))
+  expect(vi.mocked(useDesktopSceneSettingsPublisher).mock.calls[0]?.[0]?.requestSnapshot).toBe(true)
+  expect(vi.mocked(SceneToolbar).mock.calls[0]?.[0]).toMatchObject({
+    canUseGyroscope: true,
+    motionInput: 'drag',
+  })
+  expect(publish).not.toHaveBeenCalled()
+})
+
+it('should wait for restored display preferences before mounting the toolbar', () => {
+  const [isReady, setIsReady] = createSignal(false)
+  vi.mocked(usePDisplayPreferences).mockReturnValue({
+    ...displayPreferences,
+    featureRequestVisible: () => false,
+    isReady,
+  })
+
+  render(() => (
+    <PreferenceProvider>
+      <DesktopSettings />
+    </PreferenceProvider>
+  ))
+
+  expect(SceneToolbar).not.toHaveBeenCalled()
+
+  setIsReady(true)
+
+  expect(SceneToolbar).toHaveBeenCalledOnce()
+  expect(vi.mocked(SceneToolbar).mock.calls[0]?.[0].featureRequestVisible).toBe(false)
+})

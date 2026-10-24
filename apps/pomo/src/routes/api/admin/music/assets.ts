@@ -1,0 +1,149 @@
+import {invalidJsonBodyResponse} from 'src/server/http/invalid-json-body-response'
+import type {APIEvent} from '@solidjs/start/server'
+import {z} from 'zod'
+
+import {authorizeAdminRequest} from 'src/server/auth/authorize-admin-request'
+import {readJsonBody} from 'src/server/http/body'
+import {noStoreJson} from 'src/server/http/response'
+import {storeTrackArtwork} from 'src/server/music/cover-upload'
+import {reserveTrackAsset} from 'src/server/music/reserve-track-asset'
+import {deleteTrackAssetStorage} from 'src/server/music/track-storage-deletion'
+import {
+  createTrackPreviewObject,
+  createTrackUpload,
+  inspectTrackUpload,
+  isTrackValidationError,
+} from 'src/server/music/track-upload'
+import {
+  completeTrackRegistration,
+  failTrackAsset,
+  findTrackAsset,
+} from 'src/server/repositories/music-track-registration'
+
+const MAXIMUM_BODY_SIZE = 1024
+const HTTP_BAD_REQUEST = 400
+const HTTP_NOT_FOUND = 404
+const HTTP_CONFLICT = 409
+const HTTP_SERVICE_UNAVAILABLE = 503
+const reserveSchema = z.object({trackId: z.string().uuid()})
+const completeSchema = z.object({assetId: z.string().uuid()})
+
+export const POST = async (event: APIEvent): Promise<Response> => {
+  const authorization = await authorizeAdminRequest(event.request)
+
+  if (!authorization.authorized) {
+    return authorization.response
+  }
+
+  const bodyResult = await readJsonBody(event, MAXIMUM_BODY_SIZE)
+  const parsedBody = reserveSchema.safeParse(bodyResult.success ? bodyResult.body : null)
+
+  if (!parsedBody.success) {
+    return invalidJsonBodyResponse(bodyResult, {
+      cookies: authorization.cookies,
+      error: 'invalid_request',
+    })
+  }
+
+  try {
+    const asset = await reserveTrackAsset(parsedBody.data.trackId)
+
+    if (asset === null) {
+      return noStoreJson(
+        {error: 'track_not_found'},
+        {cookies: authorization.cookies, status: HTTP_NOT_FOUND},
+      )
+    }
+
+    return noStoreJson(
+      {assetId: asset.assetId, ...(await createTrackUpload(asset.objectKey))},
+      {cookies: authorization.cookies},
+    )
+  } catch (error) {
+    console.error('Failed to reserve a music track asset', error)
+    return noStoreJson(
+      {error: 'track_upload_unavailable'},
+      {cookies: authorization.cookies, status: HTTP_SERVICE_UNAVAILABLE},
+    )
+  }
+}
+
+export const PUT = async (event: APIEvent): Promise<Response> => {
+  const authorization = await authorizeAdminRequest(event.request)
+
+  if (!authorization.authorized) {
+    return authorization.response
+  }
+
+  const bodyResult = await readJsonBody(event, MAXIMUM_BODY_SIZE)
+  const parsedBody = completeSchema.safeParse(bodyResult.success ? bodyResult.body : null)
+
+  if (!parsedBody.success) {
+    return invalidJsonBodyResponse(bodyResult, {
+      cookies: authorization.cookies,
+      error: 'invalid_request',
+    })
+  }
+
+  const asset = await findTrackAsset(parsedBody.data.assetId)
+
+  if (asset === null) {
+    return noStoreJson(
+      {error: 'asset_not_found'},
+      {cookies: authorization.cookies, status: HTTP_NOT_FOUND},
+    )
+  }
+
+  if (asset.status === 'active') {
+    return noStoreJson({assetId: asset.id, status: 'active'}, {cookies: authorization.cookies})
+  }
+
+  if (asset.status !== 'pending') {
+    return noStoreJson(
+      {error: 'asset_state_conflict'},
+      {cookies: authorization.cookies, status: HTTP_CONFLICT},
+    )
+  }
+
+  try {
+    const inspection = await inspectTrackUpload(asset.objectKey)
+    await createTrackPreviewObject(asset.objectKey, inspection.durationMs)
+    const artworkUrl =
+      inspection.artwork === undefined
+        ? null
+        : (await storeTrackArtwork(asset.id, inspection.artwork)).artworkUrl
+    const activated = await completeTrackRegistration({
+      artworkUrl,
+      assetId: asset.id,
+      durationMs: inspection.durationMs,
+      etag: inspection.etag,
+      sizeBytes: inspection.sizeBytes,
+    })
+
+    if (!activated) {
+      await deleteTrackAssetStorage(asset.objectKey)
+    }
+
+    return activated
+      ? noStoreJson({assetId: asset.id, status: 'active'}, {cookies: authorization.cookies})
+      : noStoreJson(
+          {error: 'asset_state_conflict'},
+          {cookies: authorization.cookies, status: HTTP_CONFLICT},
+        )
+  } catch (error) {
+    console.error('Failed to validate a music track asset', error)
+
+    if (!isTrackValidationError(error)) {
+      return noStoreJson(
+        {error: 'track_validation_unavailable'},
+        {cookies: authorization.cookies, status: HTTP_SERVICE_UNAVAILABLE},
+      )
+    }
+
+    await failTrackAsset(asset.id, error.message)
+    return noStoreJson(
+      {error: 'invalid_mp3'},
+      {cookies: authorization.cookies, status: HTTP_BAD_REQUEST},
+    )
+  }
+}

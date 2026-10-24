@@ -1,0 +1,116 @@
+import type {PuppetParameterBindingBase} from '../player/document'
+import type {SampleParameterCoordinatesOptions} from './parameter'
+
+interface GridBinding extends Pick<PuppetParameterBindingBase, 'sampling'> {
+  readonly parameterIds: ReadonlyArray<string>
+  readonly keyforms: ReadonlyArray<{readonly values: ReadonlyArray<number>}>
+}
+
+export interface SampleGridCoordinatesOptions extends Omit<
+  SampleParameterCoordinatesOptions,
+  'binding' | 'values'
+> {
+  /** 축 개수 제한 없이 표본화하는 격자와 샘플링 정책. */
+  readonly binding: GridBinding
+  /** 각 격자 축의 입력값. */
+  readonly values: ReadonlyArray<number>
+}
+import {locateOneDimensionalKeyform} from './locate-keyform-segment'
+
+const KEY_PROGRESS_EPSILON = 0.0001
+
+const getCoordinates = (options: SampleGridCoordinatesOptions, index: number) =>
+  options.keyformCoordinates[index] ?? options.restCoordinates
+
+const grids = new WeakMap<
+  SampleGridCoordinatesOptions['binding'],
+  {
+    readonly axes: ReadonlyArray<{readonly keys: number[]; readonly rounded: number[]}>
+    readonly corners: ReadonlyMap<string, number>
+  }
+>()
+
+const getGrid = (binding: SampleGridCoordinatesOptions['binding']) => {
+  let grid = grids.get(binding)
+  if (grid === undefined) {
+    const axes = binding.parameterIds.map((_, axis) => {
+      const keys = [...new Set(binding.keyforms.map((form) => form.values[axis]!))].sort(
+        (first, second) => first - second,
+      )
+      return {keys, rounded: keys.map(Math.fround)}
+    })
+    const corners = new Map<string, number>()
+    binding.keyforms.forEach((form, index) => {
+      const key = JSON.stringify(form.values)
+      if (!corners.has(key)) {
+        corners.set(key, index)
+      }
+    })
+    grid = {axes, corners}
+    grids.set(binding, grid)
+  }
+  return grid
+}
+
+/** 직교 키폼 격자를 보간하며, 이산 채널은 각 축의 낮은 키를 유지한다. */
+export const sampleGridCoordinates = (options: SampleGridCoordinatesOptions) => {
+  const policy = options.binding.sampling
+  const precision =
+    options.sampling === 'step'
+      ? (policy?.discretePrecision ?? 'float32')
+      : (policy?.continuousPrecision ?? 'float64')
+  const tolerance = policy?.keyTolerance ?? KEY_PROGRESS_EPSILON
+  const grid = getGrid(options.binding)
+  const axes = grid.axes.map(({keys, rounded}, axis) => {
+    const roundedKeys = precision === 'float32' ? rounded : keys
+    const input =
+      precision === 'float32' ? Math.fround(options.values[axis]!) : options.values[axis]!
+    const value =
+      policy?.keyToleranceUnit === 'parameter'
+        ? (roundedKeys.find((key) => Math.abs(key - input) < tolerance) ?? input)
+        : input
+    const segment = locateOneDimensionalKeyform(roundedKeys, value, options.repeatRanges?.[axis])
+    const progress =
+      segment === undefined
+        ? 0
+        : policy?.keyToleranceUnit === 'parameter'
+          ? segment.progress
+          : segment.progress <= tolerance
+            ? 0
+            : segment.progress >= 1 - tolerance
+              ? 1
+              : segment.progress
+    return segment === undefined
+      ? []
+      : segment.from === segment.to || options.sampling === 'step'
+        ? [{value: keys[progress === 1 ? segment.to : segment.from]!, weight: 1}]
+        : [
+            {value: keys[segment.from]!, weight: 1 - progress},
+            {value: keys[segment.to]!, weight: progress},
+          ]
+  })
+  const corners = axes.reduce<Array<{values: number[]; weight: number}>>(
+    (previous, axis) =>
+      previous.flatMap((corner) =>
+        axis.map((key) => ({
+          values: [...corner.values, key.value],
+          weight: corner.weight * key.weight,
+        })),
+      ),
+    [{values: [], weight: 1}],
+  )
+  if (corners.length === 0) {
+    return options.restCoordinates
+  }
+  const samples = corners.map((corner) => ({
+    coordinates: getCoordinates(options, grid.corners.get(JSON.stringify(corner.values)) ?? -1),
+    weight: corner.weight,
+  }))
+  return options.restCoordinates.map((rest, index) => {
+    const origin = samples[0]?.coordinates[index] ?? rest
+    return samples.reduce(
+      (sum, sample) => sum + ((sample.coordinates[index] ?? rest) - origin) * sample.weight,
+      origin,
+    )
+  })
+}

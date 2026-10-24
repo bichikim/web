@@ -1,0 +1,224 @@
+import {KeyedList} from '../keyed-list'
+import {getRuntimePublicOrigin} from '../../features/http-client/runtime-origin'
+import {PFeedProgress} from './Progress'
+import {useReadingStatusPreference} from 'src/features/feed-display-preferences'
+import {PSwitch} from '../p-switch/PSwitch'
+import {PInput} from 'src/components/p-input/PInput'
+import {Tabs} from '@kobalte/core/tabs'
+import {createMemo, For, Show} from 'solid-js'
+
+import {PSelect, type PSelectOption} from '../p-select/PSelect'
+import {PSettingsActionButton} from '../settings/ActionButton'
+import {
+  DEFAULT_FEED_VOICE_ID,
+  type FeedUrlEnvironment,
+  type FeedVoiceId,
+  getFeedConnectionKey,
+  getFeedRequestUrl,
+  useAutoPreparePreference,
+  useFeedConnections,
+  useOptionalPFeeds,
+} from '../../features/focus-room-feed'
+import {SUPERTONIC_VOICES} from '../../features/supertonic'
+import * as m from '@paraglide/message'
+import {PFeedDialogueList} from './DialogueList'
+import {RecommendedFeedItem} from './RecommendedItem'
+import {CLASSES, RecommendedFeed} from './shared'
+
+const getVoiceOptions = (): ReadonlyArray<PSelectOption<FeedVoiceId>> => [
+  {label: m.settings_feed_default_voice(), value: DEFAULT_FEED_VOICE_ID},
+  ...SUPERTONIC_VOICES.map((voice) => ({label: voice.label, value: voice.id})),
+]
+const getRecommendedPublicFeeds = () =>
+  [
+    {
+      description: m.settings_feed_today_history_description(),
+      id: 'pomo-today-in-history',
+      label: m.settings_feed_today_history(),
+      path: '/api/feeds/today-in-history/rss.xml',
+    },
+  ] as const
+const getRecommendedDevFeeds = () =>
+  [
+    {
+      description: m.settings_feed_dev_rss_description(),
+      id: 'pomo-dev-rss',
+      label: m.settings_feed_dev_rss(),
+      path: '/__dev/feeds/rss.xml',
+    },
+    {
+      description: m.settings_feed_dev_atom_description(),
+      id: 'pomo-dev-atom',
+      label: m.settings_feed_dev_atom(),
+      path: '/__dev/feeds/atom.xml',
+    },
+  ] as const
+
+const getRecommendedFeeds = (environment: FeedUrlEnvironment): ReadonlyArray<RecommendedFeed> => {
+  const {localOrigin, publicOrigin, timeZone} = environment
+
+  return [
+    ...getRecommendedPublicFeeds().map((feed) => ({
+      ...feed,
+      url: getFeedRequestUrl(feed.path, {publicOrigin, timeZone}),
+    })),
+    ...(import.meta.env.DEV
+      ? getRecommendedDevFeeds().map((feed) => ({
+          ...feed,
+          url: getFeedRequestUrl(feed.path, {
+            localOrigin,
+            timeZone,
+          }),
+        }))
+      : []),
+  ]
+}
+
+export function PFeedSettingsContent() {
+  const runtime = useOptionalPFeeds()
+  const automatic = runtime?.automaticPreparation ?? useAutoPreparePreference()
+  const preference = useReadingStatusPreference()
+  const feeds = useFeedConnections()
+  const publicOrigin = getRuntimePublicOrigin()
+  const {origin: localOrigin} = globalThis.location
+  const {timeZone} = Intl.DateTimeFormat().resolvedOptions()
+  const feedUrlEnvironment = {
+    localOrigin,
+    publicOrigin: import.meta.env.VITE_POMO_PUBLIC_ORIGIN,
+    timeZone,
+  }
+  const recommendedFeeds = getRecommendedFeeds({localOrigin, publicOrigin, timeZone})
+  const availableRecommendations = createMemo(() => {
+    const storedUrls = new Set(
+      feeds
+        .connections()
+        .map((connection) => getFeedConnectionKey(connection.url, feedUrlEnvironment)),
+    )
+    return recommendedFeeds.filter(
+      (feed) => !storedUrls.has(getFeedConnectionKey(feed.url, feedUrlEnvironment)),
+    )
+  })
+
+  const handleSubmit = (event: SubmitEvent) => {
+    event.preventDefault()
+    feeds.onAdd()
+  }
+
+  return (
+    <Tabs.Content value="feeds">
+      <section class={CLASSES.feedSettings}>
+        <Show when={automatic.enabled() !== null && preference.visible() !== null}>
+          <PSwitch
+            checked={automatic.enabled() === true}
+            onChange={automatic.onEnabledChange}
+            label={m.settings_feed_auto_prepare()}
+            description={m.settings_feed_auto_prepare_description()}
+          />
+          <PSwitch
+            checked={preference.visible() === true}
+            onChange={preference.onVisibleChange}
+            label={m.settings_feed_reading_visible()}
+            description={m.settings_feed_reading_visible_description()}
+          />
+        </Show>
+        <form class={CLASSES.feedSettingsForm} onSubmit={handleSubmit}>
+          <label class={CLASSES.feedSettingsUrlField} for="pomo-feed-url">
+            <span>{m.settings_feed_url()}</span>
+            <PInput
+              unstyled
+              autocomplete="url"
+              id="pomo-feed-url"
+              inputmode="url"
+              onInput={(event) => feeds.onDraftUrlChange(event.currentTarget.value)}
+              placeholder="https://example.com/feed.xml"
+              type="url"
+              value={feeds.draftUrl()}
+            />
+          </label>
+          <PSettingsActionButton
+            class="max-sm:w-full"
+            disabled={feeds.isLoading()}
+            icon="i-tabler-plus"
+            size="medium"
+            type="submit"
+          >
+            {m.settings_feed_add()}
+          </PSettingsActionButton>
+        </form>
+
+        <div class={CLASSES.feedSettingsListHeading}>
+          <h3 id="pomo-feed-list-title">{m.settings_feed_saved()}</h3>
+          <span>{m.settings_count({count: feeds.connections().length})}</span>
+        </div>
+
+        <Show
+          when={!feeds.isLoading()}
+          fallback={<p class={CLASSES.feedSettingsStatus}>{m.settings_feed_loading()}</p>}
+        >
+          <Show when={feeds.connections().length > 0}>
+            <ul aria-labelledby="pomo-feed-list-title" class={CLASSES.feedSettingsList}>
+              <KeyedList each={feeds.connections()} by={(connection) => connection.id}>
+                {(connection) => (
+                  <li>
+                    <div class={CLASSES.feedSettingsAddress}>
+                      <span aria-hidden="true" class="i-tabler-rss size-5" />
+                      <span class={CLASSES.feedSettingsAddressCopy}>
+                        <strong>{connection().url}</strong>
+                      </span>
+                    </div>
+                    <PSelect
+                      accessibleLabel={m.settings_feed_voice_label({url: connection().url})}
+                      hideLabel
+                      label={m.settings_feed_voice()}
+                      onChange={(voiceId) => feeds.onVoiceChange(connection().id, voiceId)}
+                      options={getVoiceOptions()}
+                      value={connection().voiceId}
+                    />
+                    <button
+                      aria-label={m.settings_feed_delete_label({url: connection().url})}
+                      class={CLASSES.feedSettingsDelete}
+                      onClick={() => feeds.onDelete(connection().id)}
+                      type="button"
+                    >
+                      <span aria-hidden="true" class="i-tabler-trash size-4" />
+                      {m.settings_feed_delete()}
+                    </button>
+                  </li>
+                )}
+              </KeyedList>
+            </ul>
+          </Show>
+
+          <Show when={availableRecommendations().length > 0}>
+            <div class={CLASSES.feedSettingsRecommendationHeading}>
+              <h4 id="pomo-feed-recommendations-title">{m.settings_feed_recommended()}</h4>
+              <span>{m.settings_count({count: availableRecommendations().length})}</span>
+            </div>
+            <ul aria-labelledby="pomo-feed-recommendations-title" class={CLASSES.feedSettingsList}>
+              <For each={availableRecommendations()}>
+                {(feed) => <RecommendedFeedItem feed={feed} onAdd={feeds.onAddRecommendation} />}
+              </For>
+            </ul>
+          </Show>
+        </Show>
+
+        <Show when={feeds.message()}>
+          {(message) => (
+            <p aria-live="polite" class={CLASSES.feedSettingsMessage} role="status">
+              {message()}
+            </p>
+          )}
+        </Show>
+
+        <Show when={runtime}>
+          {(controller) => (
+            <>
+              <PFeedProgress controller={controller()} />
+              <PFeedDialogueList controller={controller()} />
+            </>
+          )}
+        </Show>
+      </section>
+    </Tabs.Content>
+  )
+}

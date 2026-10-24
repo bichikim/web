@@ -1,0 +1,142 @@
+import {createAnimationLoop} from '@winter-love/solid-use/animation-loop'
+import {clamp} from 'es-toolkit/math'
+import {type Accessor, createSignal, onCleanup} from 'solid-js'
+
+/* oxlint-disable eslint/no-magic-numbers -- Deliberate idle VU-meter silhouette. */
+const IDLE_LEVELS = [
+  18, 26, 36, 48, 38, 58, 74, 60, 42, 52, 70, 88, 72, 48, 60, 78, 62, 44, 56, 72, 52, 38, 28, 20,
+] as const
+/* oxlint-enable eslint/no-magic-numbers */
+const LEVEL_COUNT = IDLE_LEVELS.length
+const MINIMUM_LEVEL = 12
+const MAXIMUM_LEVEL = 100
+const BYTE_MAXIMUM = 255
+const LEVEL_GAIN = 112
+const OUTPUT_GAIN_TIME_CONSTANT_SECONDS = 0.03
+
+export interface PAudioVisualizer {
+  readonly levels: Accessor<readonly number[]>
+  readonly setOutputGain: (gain: number) => void
+  readonly start: (audioElement: HTMLAudioElement) => void
+  readonly stop: () => void
+}
+
+export const usePAudioVisualizer = (): PAudioVisualizer => {
+  const [levels, setLevels] = createSignal<readonly number[]>(IDLE_LEVELS)
+  let audioContext: AudioContext | undefined
+  let analyserNode: AnalyserNode | undefined
+  let mediaSource: MediaElementAudioSourceNode | undefined
+  let outputGainNode: GainNode | undefined
+  let spectrumData: Uint8Array<ArrayBuffer> | undefined
+  const animation = createAnimationLoop()
+  let active = false
+  let disposed = false
+  let outputGain = 1
+
+  const setOutputGain = (gain: number) => {
+    outputGain = gain
+    const context = audioContext
+    const gainNode = outputGainNode
+
+    if (context === undefined || gainNode === undefined) {
+      return
+    }
+
+    gainNode.gain.setTargetAtTime(gain, context.currentTime, OUTPUT_GAIN_TIME_CONSTANT_SECONDS)
+  }
+
+  const stopAnimation = () => {
+    animation.stop()
+    if (!disposed) {
+      setLevels(IDLE_LEVELS)
+    }
+  }
+
+  const initialize = async (audioElement: HTMLAudioElement) => {
+    const context = (audioContext ??= new AudioContext())
+
+    if (context.state === 'suspended') {
+      await context.resume()
+    }
+
+    analyserNode ??= context.createAnalyser()
+    outputGainNode ??= context.createGain()
+    analyserNode.fftSize = 128
+    analyserNode.smoothingTimeConstant = 0.78
+    outputGainNode.gain.value = outputGain
+    spectrumData ??= new Uint8Array(analyserNode.frequencyBinCount)
+
+    if (!mediaSource) {
+      mediaSource = context.createMediaElementSource(audioElement)
+      mediaSource.connect(analyserNode)
+      analyserNode.connect(outputGainNode)
+      outputGainNode.connect(context.destination)
+    }
+  }
+
+  const updateLevels = () => {
+    const analyser = analyserNode
+    const spectrum = spectrumData
+
+    if (!active || analyser === undefined || spectrum === undefined) {
+      return
+    }
+
+    analyser.getByteFrequencyData(spectrum)
+    const bucketSize = Math.max(1, Math.floor(spectrum.length / LEVEL_COUNT))
+    const nextLevels = Array.from({length: LEVEL_COUNT}, (_, index) => {
+      const start = index * bucketSize
+      const end = Math.min(spectrum.length, start + bucketSize)
+      let sum = 0
+
+      for (let spectrumIndex = start; spectrumIndex < end; spectrumIndex += 1) {
+        sum += spectrum[spectrumIndex]
+      }
+
+      const average = sum / Math.max(1, end - start)
+
+      return clamp(Math.round((average / BYTE_MAXIMUM) * LEVEL_GAIN), MINIMUM_LEVEL, MAXIMUM_LEVEL)
+    })
+
+    setLevels(nextLevels)
+  }
+
+  const start = (audioElement: HTMLAudioElement) => {
+    active = true
+    initialize(audioElement)
+      .then(() => {
+        if (disposed || !active) {
+          return
+        }
+
+        animation.stop()
+        updateLevels()
+        animation.start(() => {
+          try {
+            updateLevels()
+          } catch (error) {
+            animation.stop()
+            throw error
+          }
+        })
+      })
+      .catch(stopAnimation)
+  }
+
+  const stop = () => {
+    active = false
+    stopAnimation()
+  }
+
+  onCleanup(() => {
+    disposed = true
+    active = false
+    animation.stop()
+    mediaSource?.disconnect()
+    analyserNode?.disconnect()
+    outputGainNode?.disconnect()
+    audioContext?.close().catch(() => undefined)
+  })
+
+  return {levels, setOutputGain, start, stop}
+}

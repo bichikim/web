@@ -1,0 +1,32 @@
+import * as m from '@paraglide/message'
+
+import {
+  LANGUAGE_LEARNING_LANGUAGES,
+  type LanguageLearningLanguage,
+} from '../../features/language-learning'
+import {PSelect, type PSelectOption} from '../p-select/PSelect'
+import {getLanguageLabel} from './get-language-label'
+
+const getLanguageOptions = () =>
+  LANGUAGE_LEARNING_LANGUAGES.map((language) => ({
+    label: getLanguageLabel(language),
+    value: language,
+  })) satisfies ReadonlyArray<PSelectOption<LanguageLearningLanguage>>
+
+export interface LanguageLearningLanguageSelectProps {
+  readonly class?: string
+  readonly onChange?: (language: LanguageLearningLanguage) => void
+  readonly value?: LanguageLearningLanguage
+}
+
+export const LanguageLearningLanguageSelect = (props: LanguageLearningLanguageSelectProps) => {
+  return (
+    <PSelect
+      class={props.class}
+      label={m.learning_filter_language()}
+      onChange={(language) => props.onChange?.(language)}
+      options={getLanguageOptions()}
+      value={props.value ?? 'en'}
+    />
+  )
+}

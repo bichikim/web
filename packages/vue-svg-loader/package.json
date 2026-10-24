@@ -1,0 +1,14 @@
+{
+  "name": "@winter-love/vue-svg-loader",
+  "version": "1.0.29",
+  "gitHead": "162bc0badb2b0932df3c9dc51cc1ff7af3587140",
+  "private": true,
+  "description": "vue-svg-loader 🧪 experimental",
+  "main": "src/index.js",
+  "scripts": {
+    "dev": "echo doing notting"
+  },
+  "dependencies": {
+    "svgo": "^4.1.0"
+  }
+}

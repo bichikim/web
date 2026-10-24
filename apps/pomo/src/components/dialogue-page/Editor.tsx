@@ -1,0 +1,394 @@
+import {useAudioGeneration} from './use-audio-generation'
+import {formatDuration} from 'src/utils/format-duration'
+import {PTextarea} from 'src/components/p-textarea/PTextarea'
+import * as m from '@paraglide/message'
+import {getLocale} from '@paraglide/runtime'
+
+import {A, useNavigate} from '@solidjs/router'
+import {cx} from 'class-variance-authority'
+import {createSignal, For, Show} from 'solid-js'
+
+import {usePSceneStyle} from '../../features/focus-room-animation'
+import {
+  usePDialogueEditor,
+  type UsePDialogueEditorProps,
+  usePEvents,
+} from '../../features/focus-room-dialogue'
+import {getLocalizedPrimaryMoodLabel} from '../../features/localization/localized-messages'
+import {formatModelDownloadSize} from '../../features/model-storage'
+import {
+  getSupertonicModel,
+  SUPERTONIC_LANGUAGE_OPTIONS,
+  SUPERTONIC_MODELS,
+  SUPERTONIC_VOICES,
+} from '../../features/supertonic'
+import {getPrimaryMood} from '../../features/text-mood'
+import {PDialogueDraftGenerator} from './DraftGenerator'
+import {PSelect} from '../p-select/PSelect'
+import {PFaceIcon} from '../p-face-icon/PFaceIcon'
+import {PGenerationStatus} from '../p-generation-status/PGenerationStatus'
+import {PAudioPreview} from '../p-audio-preview/PAudioPreview'
+import {PModelDownloadConsent} from '../p-model-download-consent/PModelDownloadConsent'
+
+const CLASSES = {
+  dialogueEditor: cx(
+    'min-h-dvh box-border',
+    '[background:var(--pomo-editor-background)]',
+    'pt-safe-top-compact',
+    'pr-[max(1.25rem,_var(--pomo-safe-area-inset-right))]',
+    'pb-safe-bottom-compact',
+    'pl-[max(1.25rem,_var(--pomo-safe-area-inset-left))]',
+    'text-foreground',
+  ),
+  dialogueEditorBack: cx(
+    'flex min-h-11 box-border flex-none items-center gap-2',
+    'border border-solid border-border rounded-full py-0 px-4 text-foreground no-underline',
+    'focus-visible:outline-2 focus-visible:outline-solid focus-visible:outline-highlight',
+    'focus-visible:outline-offset-2',
+    'max-xl:[justify-self:start]',
+  ),
+  dialogueEditorButton: cx(
+    'focus-visible:outline-2 focus-visible:outline-solid',
+    'focus-visible:outline-highlight focus-visible:outline-offset-2 min-h-11 cursor-pointer border-0 rounded-full py-0',
+    'px-[1.2rem] font-[750] [&:disabled]:[cursor:not-allowed] [&:disabled]:[opacity:0.4]',
+  ),
+  dialogueEditorButtonPrimary: 'bg-highlight text-background',
+  dialogueEditorButtonSecondary: cx(
+    'border border-solid border-border',
+    'bg-transparent text-foreground',
+  ),
+  dialogueEditorEmpty: cx(
+    'm-0 text-muted-foreground text-[0.85rem] leading-[1.6] rounded-xl',
+    'bg-content-surface p-6 text-center',
+  ),
+  dialogueEditorField: cx(
+    'grid gap-2 text-foreground text-[0.82rem] font-bold',
+    '[&_small]:text-muted-foreground [&_small]:font-[550] [&_select]:w-full [&_select]:box-border',
+    '[&_select]:border [&_select]:border-solid [&_select]:border-border [&_select]:rounded-xl',
+    '[&_select]:bg-surface-strong [&_select]:text-foreground [&_select]:[font:inherit]',
+    '[&_select]:font-[500] [&_select]:outline-none [&_textarea]:w-full [&_textarea]:box-border',
+    '[&_textarea]:border [&_textarea]:border-solid [&_textarea]:border-border [&_textarea]:rounded-xl',
+    '[&_textarea]:bg-surface-strong [&_textarea]:text-foreground [&_textarea]:[font:inherit]',
+    '[&_textarea]:font-[500] [&_textarea]:outline-none [&_select]:min-h-12 [&_select]:py-0',
+    '[&_select]:px-[0.9rem] [&_textarea]:min-h-[12rem] [&_textarea]:[resize:vertical]',
+    '[&_textarea]:p-[0.9rem] [&_textarea]:leading-[1.6]',
+    '[&_select:focus-visible]:outline-2 [&_select:focus-visible]:outline-solid',
+    '[&_select:focus-visible]:outline-highlight',
+    '[&_select:focus-visible]:[outline-offset:2px]',
+    '[&_textarea:focus-visible]:outline-2 [&_textarea:focus-visible]:outline-solid',
+    '[&_textarea:focus-visible]:outline-highlight',
+    '[&_textarea:focus-visible]:[outline-offset:2px]',
+  ),
+  dialogueEditorFieldLabel: 'flex justify-between gap-4',
+  dialogueEditorFooter: cx(
+    'w-[min(100%,_68rem)] [margin:1rem_auto_0] flex justify-end',
+    'gap-3 items-center border border-solid border-border rounded-2xl',
+    'bg-modal-surface p-3 shadow-panel backdrop-blur-surface [&_p]:m-[0_auto_0_0]',
+    '[&_p]:text-muted-foreground [&_p]:text-xs max-xl:[&_p]:hidden',
+  ),
+  dialogueEditorHeader: cx(
+    'w-[min(100%,_68rem)] [margin-inline:auto] flex items-center',
+    'justify-between gap-8 pb-4 [&_h1]:m-0',
+    '[&_h1]:text-[clamp(1.75rem,_4vw,_2.5rem)] [&_h1]:leading-[1.2]',
+    'max-xl:gap-4',
+  ),
+  dialogueEditorLayout: cx(
+    'w-[min(100%,_68rem)] [margin-inline:auto] grid',
+    'grid-cols-[repeat(2,_minmax(0,_1fr))] gap-4 max-xl:grid-cols-[1fr]',
+  ),
+  dialogueEditorMood: cx(
+    'grid grid-cols-[2.75rem_minmax(0,_1fr)] items-center',
+    'gap-[0.55rem] text-muted-foreground [&_img]:w-11 [&_img]:h-11 [&_img]:object-contain',
+    '[&_span]:text-foreground [&_span]:leading-[1.35]',
+  ),
+  dialogueEditorPanel: cx(
+    'grid content-start gap-5',
+    'border border-solid border-border rounded-[1.25rem] bg-modal-surface',
+    'p-[clamp(1.1rem,_3vw,_1.5rem)] shadow-panel backdrop-blur-surface',
+  ),
+  dialogueEditorPreview: cx(
+    'grid gap-3 [&_>_div]:flex [&_>_div]:justify-between',
+    '[&_>_div]:gap-4 [&_>_div]:text-[0.8rem] [&_span]:text-muted-foreground',
+  ),
+  dialogueEditorSectionHeading: cx(
+    'flex items-start gap-3 [&_>_span]:grid [&_>_span]:w-8',
+    '[&_>_span]:h-8 [&_>_span]:flex-none [&_>_span]:place-items-center [&_>_span]:rounded-full',
+    '[&_>_span]:bg-highlight [&_>_span]:text-background [&_>_span]:text-[0.8rem]',
+    '[&_>_span]:font-extrabold [&_h2]:m-0 [&_h2]:text-[1.05rem] [&_p]:m-[0.3rem_0_0]',
+    '[&_p]:text-muted-foreground [&_p]:text-[0.8rem] [&_p]:leading-[1.5]',
+  ),
+  dialogueEditorSegmentButton: cx(
+    'min-h-9 px-[0.9rem] text-xs whitespace-nowrap',
+    'flex-none max-sm:ml-auto',
+  ),
+  dialogueEditorSegmentContent: cx(
+    'grid min-w-0',
+    'grid-cols-[minmax(0,_1fr)_auto] items-center gap-3 max-xl:grid-cols-[1fr]',
+  ),
+  dialogueEditorSegmentMeta: cx(
+    'flex min-w-0 items-center justify-between gap-3',
+    'max-sm:flex-wrap',
+  ),
+  dialogueEditorSegments: cx(
+    'grid gap-[0.6rem] m-0 p-0 list-none [&_li]:grid',
+    '[&_li]:grid-cols-[3.5rem_minmax(0,_1fr)] [&_li]:items-center [&_li]:gap-3',
+    '[&_li]:rounded-xl [&_li]:bg-content-surface [&_li]:p-3 [&_span]:text-highlight',
+    '[&_span]:text-xs [&_span]:font-[750] [&_p]:m-0 [&_p]:text-foreground [&_p]:text-[0.85rem]',
+    '[&_p]:leading-[1.6]',
+  ),
+  dialogueEditorSelects: cx(
+    'grid grid-cols-[repeat(3,_minmax(0,_1fr))] gap-3',
+    'max-sm:grid-cols-[1fr]',
+  ),
+  dialogueEditorTimelinePanel: 'col-span-full max-xl:[grid-column:auto]',
+  dialogueEditorVoiceActions: 'flex justify-end gap-3',
+} as const
+
+const MAXIMUM_TEXT_LENGTH = 10000
+
+const getLanguageOptions = () => {
+  const displayNames = new Intl.DisplayNames([getLocale()], {type: 'language'})
+
+  return SUPERTONIC_LANGUAGE_OPTIONS.map((option) => ({
+    label:
+      option.value === 'na'
+        ? m.dialogue_language_neutral()
+        : (displayNames.of(option.value) ?? option.value),
+    value: option.value,
+  }))
+}
+
+export interface PDialogueEditorProps {
+  readonly dialogueId: string | null
+}
+
+// oxlint-disable-next-line eslint/max-lines-per-function -- The form follows one numbered authoring workflow and shares one controller.
+export function PDialogueEditor(props: PDialogueEditorProps) {
+  const navigate = useNavigate()
+  const events = usePEvents()
+  const sceneStyleController = usePSceneStyle()
+  const editorProps: UsePDialogueEditorProps = {dialogueId: () => props.dialogueId}
+  const editor = usePDialogueEditor(editorProps)
+  const [draftGenerationBusy, setDraftGenerationBusy] = createSignal(false)
+  const audio = useAudioGeneration({draftBusy: draftGenerationBusy, editor})
+  const handleSave = async () => {
+    const dialogueId = await editor.save()
+
+    if (dialogueId !== null) {
+      try {
+        await events.refreshDialogues()
+      } catch (error: unknown) {
+        console.error('Failed to refresh saved focus room dialogues.', error)
+      }
+
+      navigate('/')
+    }
+  }
+
+  return (
+    <main class={CLASSES.dialogueEditor}>
+      <header class={CLASSES.dialogueEditorHeader}>
+        <h1>
+          {props.dialogueId === null
+            ? m.dialogue_editor_new_title()
+            : m.dialogue_editor_edit_title()}
+        </h1>
+        <A class={CLASSES.dialogueEditorBack} href="/">
+          <span aria-hidden="true" class="i-tabler-arrow-left size-5" />
+          {m.app_return()}
+        </A>
+      </header>
+
+      <div class={CLASSES.dialogueEditorLayout}>
+        <section aria-labelledby="dialogue-content-title" class={CLASSES.dialogueEditorPanel}>
+          <div class={CLASSES.dialogueEditorSectionHeading}>
+            <span>1</span>
+            <div>
+              <h2 id="dialogue-content-title">{m.dialogue_editor_script_section()}</h2>
+            </div>
+          </div>
+
+          <PDialogueDraftGenerator
+            disabled={audio.audioBusy()}
+            onBusyChange={setDraftGenerationBusy}
+            onGenerated={editor.setText}
+          />
+
+          <label class={CLASSES.dialogueEditorField}>
+            <span class={CLASSES.dialogueEditorFieldLabel}>
+              {m.dialogue_editor_script_label()}
+              <small>
+                {editor.text().length} / {MAXIMUM_TEXT_LENGTH}
+              </small>
+            </span>
+            <PTextarea
+              unstyled
+              disabled={audio.busy()}
+              maxlength={MAXIMUM_TEXT_LENGTH}
+              onInput={(event) => editor.setText(event.currentTarget.value)}
+              placeholder={m.dialogue_editor_script_placeholder()}
+              value={editor.text()}
+            />
+          </label>
+        </section>
+
+        <section aria-labelledby="dialogue-voice-title" class={CLASSES.dialogueEditorPanel}>
+          <div class={CLASSES.dialogueEditorSectionHeading}>
+            <span>2</span>
+            <div>
+              <h2 id="dialogue-voice-title">{m.dialogue_editor_voice_section()}</h2>
+              <p>{m.dialogue_editor_voice_notice()}</p>
+            </div>
+          </div>
+
+          <div class={CLASSES.dialogueEditorSelects}>
+            <PSelect
+              label={m.dialogue_editor_voice_label()}
+              disabled={audio.busy()}
+              onChange={(voiceId) => editor.setVoiceId(voiceId)}
+              value={editor.voiceId()}
+              options={SUPERTONIC_VOICES.map((voice) => ({label: voice.label, value: voice.id}))}
+            />
+            <PSelect
+              label={m.dialogue_editor_language_label()}
+              disabled={audio.busy()}
+              onChange={(language) => editor.setLanguage(language)}
+              value={editor.language()}
+              options={getLanguageOptions()}
+            />
+            <PSelect
+              label={m.dialogue_editor_model_label()}
+              disabled={audio.busy()}
+              onChange={(modelId) => editor.setModelId(modelId)}
+              value={editor.modelId()}
+              options={SUPERTONIC_MODELS.map((model) => ({label: model.label, value: model.id}))}
+            />
+          </div>
+
+          <PGenerationStatus
+            kind="voice"
+            message={audio.message()}
+            onCancel={audio.cancelDownload()}
+            progress={audio.progress()}
+            progressLabel={m.dialogue_editor_voice_progress()}
+          />
+
+          <div class={CLASSES.dialogueEditorVoiceActions}>
+            <button
+              class={cx(CLASSES.dialogueEditorButton, CLASSES.dialogueEditorButtonPrimary)}
+              disabled={audio.busy() || !editor.canGenerate()}
+              onClick={audio.generate}
+              type="button"
+            >
+              {m.dialogue_editor_create_voice()}
+            </button>
+          </div>
+
+          <Show when={editor.audioUrl()}>
+            {(audioUrl) => (
+              <div class={CLASSES.dialogueEditorPreview}>
+                <div>
+                  <strong>{m.dialogue_editor_full_preview()}</strong>
+                  <span>
+                    {m.dialogue_editor_ai_voice_duration({
+                      duration: formatDuration(editor.durationMs()),
+                    })}
+                  </span>
+                </div>
+                <PAudioPreview src={audioUrl()} title={m.dialogue_editor_full_preview()} />
+              </div>
+            )}
+          </Show>
+          <PModelDownloadConsent
+            actionLabel={m.dialogue_editor_create_voice()}
+            downloadSize={formatModelDownloadSize(getSupertonicModel(editor.modelId()).size)}
+            isOpen={audio.consentOpen()}
+            onCancel={audio.dismissConsent}
+            onConfirm={audio.confirmDownload}
+          />
+        </section>
+
+        <section
+          aria-labelledby="dialogue-timeline-title"
+          class={cx(CLASSES.dialogueEditorPanel, CLASSES.dialogueEditorTimelinePanel)}
+        >
+          <div class={CLASSES.dialogueEditorSectionHeading}>
+            <span>3</span>
+            <div>
+              <h2 id="dialogue-timeline-title">{m.dialogue_editor_timeline_section()}</h2>
+            </div>
+          </div>
+
+          <Show
+            when={editor.segments().length > 0}
+            fallback={
+              <p class={CLASSES.dialogueEditorEmpty}>{m.dialogue_editor_timeline_empty()}</p>
+            }
+          >
+            <ol class={CLASSES.dialogueEditorSegments}>
+              <For each={editor.segments()}>
+                {(segment, position) => (
+                  <li>
+                    <span>{formatDuration(segment.startMs)}</span>
+                    <div class={CLASSES.dialogueEditorSegmentContent}>
+                      <p>{segment.text}</p>
+                      <div class={CLASSES.dialogueEditorSegmentMeta}>
+                        <Show when={segment.mood}>
+                          {(mood) => {
+                            const definition = getPrimaryMood(mood().primary.id)
+
+                            return (
+                              <div class={CLASSES.dialogueEditorMood}>
+                                <PFaceIcon
+                                  alt=""
+                                  mood={definition.id}
+                                  sceneStyle={sceneStyleController.sceneStyle()}
+                                />
+                                <span>{getLocalizedPrimaryMoodLabel(definition.id)}</span>
+                              </div>
+                            )
+                          }}
+                        </Show>
+                        <button
+                          aria-description={m.dialogue_editor_regenerate_description()}
+                          aria-label={m.dialogue_editor_regenerate_label({number: position() + 1})}
+                          class={cx(
+                            CLASSES.dialogueEditorButton,
+                            CLASSES.dialogueEditorButtonSecondary,
+                            CLASSES.dialogueEditorSegmentButton,
+                          )}
+                          disabled={audio.busy() || !editor.canRegenerateSegments()}
+                          onClick={() => editor.regenerateSegment(position())}
+                          type="button"
+                        >
+                          <Show
+                            when={editor.regeneratingSegmentIndex() === position()}
+                            fallback={m.dialogue_editor_regenerate()}
+                          >
+                            {m.dialogue_editor_regenerating()}
+                          </Show>
+                        </button>
+                      </div>
+                    </div>
+                  </li>
+                )}
+              </For>
+            </ol>
+          </Show>
+        </section>
+      </div>
+
+      <footer class={CLASSES.dialogueEditorFooter}>
+        <p>{m.dialogue_editor_save_notice()}</p>
+        <button
+          class={cx(CLASSES.dialogueEditorButton, CLASSES.dialogueEditorButtonPrimary)}
+          disabled={audio.busy() || !editor.canSave()}
+          onClick={handleSave}
+          type="button"
+        >
+          {m.dialogue_editor_save()}
+        </button>
+      </footer>
+    </main>
+  )
+}

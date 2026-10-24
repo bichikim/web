@@ -1,0 +1,20 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "declaration": true,
+    "declarationMap": true,
+    "emitDeclarationOnly": true,
+    "noEmit": false,
+    "outDir": "dist/types",
+    "rootDir": "src"
+  },
+  "include": [
+    "src/global.d.ts",
+    "src/player",
+    "src/mesh",
+    "src/editor",
+    "src/editor-element",
+    "src/converter"
+  ],
+  "exclude": ["src/**/__tests__/**"]
+}

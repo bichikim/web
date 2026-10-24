@@ -1,0 +1,78 @@
+/** @vitest-environment node */
+import {expect, it, vi} from 'vitest'
+import {SUPERTONIC_VOICES} from '../../supertonic/model'
+
+import {
+  AUTOMATIC_DIALOGUE_SETTINGS_STORAGE_KEY,
+  createAutomaticDialogueSettingsRepository,
+  DEFAULT_AUTOMATIC_DIALOGUE_SETTINGS,
+  parseAutomaticDialogueSettings,
+} from '../automatic-dialogue-settings'
+
+const createStorage = (storedValue: string | null = null) => ({
+  getItem: vi.fn(() => storedValue),
+  setItem: vi.fn(),
+})
+
+it.each(SUPERTONIC_VOICES)('should parse the registered $id voice with legacy defaults', ({id}) => {
+  expect(parseAutomaticDialogueSettings({modelId: 'int8', voiceId: id})).toEqual({
+    modelId: 'int8',
+    version: 1,
+    voiceId: id,
+  })
+})
+
+it.each(['default', 'Sarah', 'yuna', ' Yuna ', null])(
+  'should return absence for the unregistered voice %s',
+  (voiceId) => {
+    expect(parseAutomaticDialogueSettings({modelId: 'int8', voiceId})).toBeNull()
+  },
+)
+
+it('should use the compatible automatic generation defaults when no setting exists', () => {
+  const repository = createAutomaticDialogueSettingsRepository(createStorage())
+
+  expect(DEFAULT_AUTOMATIC_DIALOGUE_SETTINGS.modelId).toBe('int8')
+  expect(repository.load()).toEqual(DEFAULT_AUTOMATIC_DIALOGUE_SETTINGS)
+})
+
+it('should parse only supported automatic generation settings', () => {
+  const settings = {modelId: 'int8', version: 1, voiceId: 'Yuna'} as const
+
+  expect(parseAutomaticDialogueSettings(settings)).toEqual(settings)
+  expect(parseAutomaticDialogueSettings({...settings, modelId: 'unknown'})).toBeNull()
+  expect(parseAutomaticDialogueSettings({...settings, version: 2})).toBeNull()
+})
+
+it('should restore legacy automatic generation settings without a version', () => {
+  const repository = createAutomaticDialogueSettingsRepository(
+    createStorage('{"modelId":"int8","voiceId":"M2"}'),
+  )
+
+  expect(repository.load()).toEqual({modelId: 'int8', version: 1, voiceId: 'M2'})
+})
+
+it('should persist and restore the selected model and voice', () => {
+  const storage = createStorage()
+  const repository = createAutomaticDialogueSettingsRepository(storage)
+  const settings = {modelId: 'int8', version: 1, voiceId: 'M2'} as const
+
+  repository.save(settings)
+  expect(storage.setItem).toHaveBeenCalledWith(
+    AUTOMATIC_DIALOGUE_SETTINGS_STORAGE_KEY,
+    JSON.stringify(settings),
+  )
+
+  const savedValue = storage.setItem.mock.calls[0]?.[1] ?? null
+  expect(createAutomaticDialogueSettingsRepository(createStorage(savedValue)).load()).toEqual(
+    settings,
+  )
+})
+
+it('should reject unsupported stored settings', () => {
+  const repository = createAutomaticDialogueSettingsRepository(
+    createStorage('{"modelId":"unknown","version":1,"voiceId":"Yuna"}'),
+  )
+
+  expect(() => repository.load()).toThrow('저장된 자동 음성 생성 설정이 올바르지 않아요.')
+})

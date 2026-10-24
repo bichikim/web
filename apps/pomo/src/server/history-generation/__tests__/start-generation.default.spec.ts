@@ -1,0 +1,53 @@
+/** @vitest-environment node */
+import {beforeEach, expect, it, vi} from 'vitest'
+import {startHistoryGeneration} from '../start-generation'
+
+const generationMocks = vi.hoisted(() => ({
+  markFailed: vi.fn(),
+  markSubmitted: vi.fn(),
+  markUnknown: vi.fn(),
+  prepare: vi.fn(),
+  submit: vi.fn(),
+}))
+
+vi.mock('src/env', () => ({env: {}}))
+vi.mock('../../repositories/history-generation', () => ({
+  markGenerationFailed: generationMocks.markFailed,
+  markGenerationSubmissionUnknown: generationMocks.markUnknown,
+  markGenerationSubmitted: generationMocks.markSubmitted,
+  prepareGenerationRun: generationMocks.prepare,
+}))
+
+vi.mock('../openai-client', async (importOriginal) => {
+  const original = await importOriginal<typeof import('../openai-client')>()
+  return {...original, submitHistoryResponse: generationMocks.submit}
+})
+
+vi.mock('../submission-lock', () => ({
+  withHistoryGenerationLock: vi.fn(async (_targetDate: string, operation: () => Promise<unknown>) =>
+    operation(),
+  ),
+}))
+
+beforeEach(() => {
+  vi.clearAllMocks()
+})
+
+it('should use the production dependencies by default', async () => {
+  generationMocks.prepare.mockResolvedValue({
+    created: false,
+    run: {
+      id: 'run-default',
+      openAiResponseId: 'response-default',
+      targetDate: '2026-08-27',
+    },
+  })
+
+  await expect(startHistoryGeneration()).resolves.toEqual({
+    responseId: 'response-default',
+    runId: 'run-default',
+    status: 'existing',
+    targetDate: '2026-08-27',
+  })
+  expect(generationMocks.prepare).toHaveBeenCalledOnce()
+})

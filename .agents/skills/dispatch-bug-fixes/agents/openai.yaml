@@ -1,0 +1,7 @@
+interface:
+  display_name: 'Dispatch Bug Fixes'
+  short_description: 'Dispatch three WIP-free bug fixes'
+  default_prompt: 'Use $dispatch-bug-fixes to dispatch three WIP-free bug issues into separate Luna max worktrees.'
+
+policy:
+  allow_implicit_invocation: false

@@ -1,0 +1,346 @@
+import {describe, expect, test} from 'vitest'
+
+import {
+  createDemoDocument,
+  createEmptyDocument,
+  getModelTrackRowId,
+  parseDocumentValue,
+} from '../../../player'
+import {
+  deleteParameterKeyframe,
+  deleteParameterKeyframes,
+  deleteVertexKeyframe,
+  insertVertexKeyframe,
+  moveParameterKeyframe,
+  moveParameterKeyframes,
+  setParameterKeyframe,
+  setParameterKeyframeEasing,
+  setParameterKeyframesEasing,
+  setVertexKeyframe,
+  setVertexKeyframeEasing,
+} from '../motion-keyframes'
+
+const createEmptyMotionDocument = () => {
+  const document = createDemoDocument()
+  return {
+    ...document,
+    motions: document.motions.map((motion) => ({...motion, tracks: []})),
+  }
+}
+
+describe('insertVertexKeyframe', () => {
+  test('should create both coordinate tracks from the sampled pose', () => {
+    const document = createEmptyMotionDocument()
+
+    const nextDocument = insertVertexKeyframe({
+      document,
+      motionId: 'idle-deform',
+      partId: 'mesh-preview',
+      time: 0.5,
+      vertexIndex: 4,
+    })
+
+    expect(nextDocument?.motions[0]?.tracks).toEqual([
+      {
+        axis: 'x',
+        keyframes: [{time: 0.5, value: 320}],
+        kind: 'vertex',
+        partId: 'mesh-preview',
+        vertexIndex: 4,
+      },
+      {
+        axis: 'y',
+        keyframes: [{time: 0.5, value: 240}],
+        kind: 'vertex',
+        partId: 'mesh-preview',
+        vertexIndex: 4,
+      },
+    ])
+    expect(document.motions[0]?.tracks).toHaveLength(0)
+  })
+
+  test('should return absence for a missing target', () => {
+    expect(
+      insertVertexKeyframe({
+        document: createEmptyMotionDocument(),
+        motionId: 'missing',
+        partId: 'mesh-preview',
+        time: 0.5,
+        vertexIndex: 4,
+      }),
+    ).toBeUndefined()
+  })
+})
+
+describe('setVertexKeyframe', () => {
+  test('should replace the pose at an existing time without changing the rest mesh', () => {
+    const document = createEmptyMotionDocument()
+
+    const nextDocument = setVertexKeyframe({
+      document,
+      motionId: 'idle-deform',
+      partId: 'mesh-preview',
+      point: {x: 300, y: 180},
+      time: 1,
+      vertexIndex: 4,
+    })
+
+    expect(nextDocument?.motions[0]?.tracks[0]?.keyframes[0]).toEqual({time: 1, value: 300})
+    expect(nextDocument?.motions[0]?.tracks[1]?.keyframes).toEqual([{time: 1, value: 180}])
+    expect(nextDocument?.parts[0]?.mesh.vertices).toBe(document.parts[0]?.mesh.vertices)
+  })
+})
+
+describe('setVertexKeyframeEasing', () => {
+  test('should assign easing to both coordinate tracks at the selected vertex frame', () => {
+    const document = insertVertexKeyframe({
+      document: createEmptyMotionDocument(),
+      motionId: 'idle-deform',
+      partId: 'mesh-preview',
+      time: 0.5,
+      vertexIndex: 4,
+    })!
+
+    const nextDocument = setVertexKeyframeEasing({
+      document,
+      easing: 'ease-in-out',
+      motionId: 'idle-deform',
+      partId: 'mesh-preview',
+      time: 0.5,
+      vertexIndex: 4,
+    })
+
+    expect(nextDocument?.motions[0]?.tracks[0]?.keyframes[0]).toEqual({
+      easing: 'ease-in-out',
+      time: 0.5,
+      value: 320,
+    })
+    expect(nextDocument?.motions[0]?.tracks[1]?.keyframes[0]).toEqual({
+      easing: 'ease-in-out',
+      time: 0.5,
+      value: 240,
+    })
+  })
+})
+
+describe('deleteVertexKeyframe', () => {
+  test('should delete the selected frame from both coordinate tracks', () => {
+    const document = insertVertexKeyframe({
+      document: createEmptyMotionDocument(),
+      motionId: 'idle-deform',
+      partId: 'mesh-preview',
+      time: 0.5,
+      vertexIndex: 4,
+    })!
+
+    const nextDocument = deleteVertexKeyframe({
+      document,
+      motionId: 'idle-deform',
+      partId: 'mesh-preview',
+      time: 0.5,
+      vertexIndex: 4,
+    })
+
+    expect(nextDocument?.motions[0]?.tracks).toEqual([])
+  })
+})
+
+describe('parameter keyframes', () => {
+  test('should move selected keyframes together without replacing an occupied frame', () => {
+    const document = createDemoDocument()
+    const moved = moveParameterKeyframes({
+      document,
+      motionId: 'idle-deform',
+      nextTime: 1.5,
+      parameterId: 'angle-y',
+      time: 1,
+      times: [0, 1],
+    })
+
+    expect(moved?.motions[0]?.tracks[0]?.keyframes).toEqual([
+      {time: 0.5, value: 0},
+      {time: 1.5, value: -30},
+      {time: 2, value: 0},
+    ])
+    expect(
+      moveParameterKeyframes({
+        document,
+        motionId: 'idle-deform',
+        nextTime: 2,
+        parameterId: 'angle-y',
+        time: 1,
+        times: [0, 1],
+      }),
+    ).toBeUndefined()
+  })
+
+  test('should ease and delete selected parameter keyframes together', () => {
+    const document = createDemoDocument()
+    const eased = setParameterKeyframesEasing({
+      document,
+      easing: 'ease-in-out',
+      motionId: 'idle-deform',
+      parameterId: 'angle-y',
+      times: [0, 1],
+    })!
+
+    expect(eased.motions[0]?.tracks[0]?.keyframes).toEqual([
+      {easing: 'ease-in-out', time: 0, value: 0},
+      {easing: 'ease-in-out', time: 1, value: -30},
+      {time: 2, value: 0},
+    ])
+
+    const deleted = deleteParameterKeyframes({
+      document: eased,
+      motionId: 'idle-deform',
+      parameterId: 'angle-y',
+      times: [0, 1],
+    })
+    expect(deleted?.motions[0]?.tracks[0]?.keyframes).toEqual([{time: 2, value: 0}])
+  })
+
+  test('should move one keyframe without replacing an occupied frame', () => {
+    const document = createDemoDocument()
+    const moved = moveParameterKeyframe({
+      document,
+      motionId: 'idle-deform',
+      nextTime: 1.5,
+      parameterId: 'angle-y',
+      time: 1,
+    })
+
+    expect(moved?.motions[0]?.tracks[0]?.keyframes).toEqual([
+      {time: 0, value: 0},
+      {time: 1.5, value: -30},
+      {time: 2, value: 0},
+    ])
+    expect(
+      moveParameterKeyframe({
+        document,
+        motionId: 'idle-deform',
+        nextTime: 2,
+        parameterId: 'angle-y',
+        time: 1,
+      }),
+    ).toBeUndefined()
+    expect(document.motions[0]?.tracks[0]?.keyframes[1]?.time).toBe(1)
+  })
+
+  test('should set, clamp, ease, and delete one parameter track', () => {
+    const document = createEmptyMotionDocument()
+    const inserted = setParameterKeyframe({
+      document,
+      motionId: 'idle-deform',
+      parameterId: 'angle-x',
+      time: 1,
+      value: 100,
+    })!
+
+    expect(inserted.motions[0]?.tracks).toEqual([
+      {keyframes: [{time: 1, value: 30}], kind: 'parameter', parameterId: 'angle-x'},
+    ])
+
+    const eased = setParameterKeyframeEasing({
+      document: inserted,
+      easing: 'ease-out',
+      motionId: 'idle-deform',
+      parameterId: 'angle-x',
+      time: 1,
+    })!
+    expect(eased.motions[0]?.tracks[0]?.keyframes[0]).toEqual({
+      easing: 'ease-out',
+      time: 1,
+      value: 30,
+    })
+
+    const deleted = deleteParameterKeyframe({
+      document: eased,
+      motionId: 'idle-deform',
+      parameterId: 'angle-x',
+      time: 1,
+    })
+    expect(deleted?.motions[0]?.tracks).toEqual([])
+  })
+
+  test('should store a repeat parameter keyframe limited to its range without wrapping', () => {
+    const document = createEmptyMotionDocument()
+    const repeatDocument = {
+      ...document,
+      parameters: document.parameters?.map((parameter) =>
+        parameter.id === 'angle-x' ? {...parameter, repeat: true} : parameter,
+      ),
+    }
+    const keyframeAt = (time: number, value: number) =>
+      setParameterKeyframe({
+        document: repeatDocument,
+        motionId: 'idle-deform',
+        parameterId: 'angle-x',
+        time,
+        value,
+      })?.motions[0]?.tracks[0]?.keyframes
+
+    expect(keyframeAt(1, 30)).toEqual([{time: 1, value: 30}])
+    expect(keyframeAt(1, 100)).toEqual([{time: 1, value: 30}])
+    expect(keyframeAt(1, -100)).toEqual([{time: 1, value: -30}])
+  })
+
+  test('should return absence for an invalid parameter value or target', () => {
+    const document = createEmptyMotionDocument()
+
+    expect(
+      setParameterKeyframe({
+        document,
+        motionId: 'idle-deform',
+        parameterId: 'missing',
+        time: 0,
+        value: 0,
+      }),
+    ).toBeUndefined()
+    expect(
+      setParameterKeyframe({
+        document,
+        motionId: 'idle-deform',
+        parameterId: 'angle-x',
+        time: 0,
+        value: Number.NaN,
+      }),
+    ).toBeUndefined()
+  })
+})
+
+test('should preserve both colliding tracks when keying and deleting only a parameter keyframe', () => {
+  const document = {
+    ...createEmptyDocument(),
+    motions: [{duration: 1, id: 'motion', tracks: []}],
+    parameters: [
+      {defaultValue: 0, id: 'model:opacity', maximum: 10, minimum: 0, name: 'Parameter'},
+    ],
+  }
+  const parameter = setParameterKeyframe({
+    document,
+    motionId: 'motion',
+    parameterId: 'model:opacity',
+    time: 0,
+    value: 8,
+  })!
+  const modelRow = getModelTrackRowId('opacity', parameter)
+  const keyed = setParameterKeyframe({
+    document: parameter,
+    motionId: 'motion',
+    parameterId: modelRow,
+    time: 0,
+    value: 0.5,
+  })!
+  expect(keyed.motions[0]?.tracks).toEqual([
+    {keyframes: [{time: 0, value: 8}], kind: 'parameter', parameterId: 'model:opacity'},
+    {keyframes: [{time: 0, value: 0.5}], kind: 'model', target: 'opacity'},
+  ])
+  const deleted = deleteParameterKeyframe({
+    document: keyed,
+    motionId: 'motion',
+    parameterId: 'model:opacity',
+    time: 0,
+  })!
+  expect(deleted.motions[0]?.tracks).toEqual([keyed.motions[0]!.tracks[1]])
+  expect(parseDocumentValue(deleted).ok).toBe(true)
+})

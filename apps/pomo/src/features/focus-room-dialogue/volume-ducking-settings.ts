@@ -1,0 +1,184 @@
+import {createPreferenceOptions} from 'src/features/preference-options'
+import {createTossWebStorageAdapter} from 'src/utils/runtime-storage'
+import {createAuthoritativePreferenceRepository} from '../authoritative-preference'
+import {createParsedPreferenceStorage} from '../parsed-preference-storage'
+import {z} from 'zod'
+
+import {webLocalStorage} from 'src/utils/preference-storage'
+
+export interface DialogueVolumeDuckingSettings {
+  readonly enabled: boolean
+  readonly playerVolumePercent: number
+  readonly version: 2
+}
+
+export interface DialogueVolumeDuckingSettingsStorage {
+  readonly usesTossStorage: () => boolean
+  readonly readToss: (key: string) => Promise<unknown | null>
+  readonly readWeb: (key: string) => unknown | null
+  readonly writeToss: (key: string, value: unknown) => Promise<void>
+  readonly writeWeb: (key: string, value: unknown) => void
+}
+
+export interface DialogueVolumeDuckingSettingsRepository {
+  readonly read: () => Promise<DialogueVolumeDuckingSettings>
+  readonly write: (settings: DialogueVolumeDuckingSettings) => Promise<void>
+}
+
+export interface CreateDialogueVolumeDuckingSettingsRepositoryOptions {
+  readonly storage: DialogueVolumeDuckingSettingsStorage
+}
+
+export const DEFAULT_DIALOGUE_VOLUME_DUCKING_SETTINGS = {
+  enabled: true,
+  playerVolumePercent: 50,
+  version: 2,
+} as const satisfies DialogueVolumeDuckingSettings
+
+interface LegacyDialogueVolumeDuckingSettings {
+  readonly enabled: boolean
+  readonly reductionPercent: number
+  readonly version: 1
+}
+
+const STORAGE_KEY = 'pomo:dialogue-volume-ducking-settings:v2'
+const LEGACY_STORAGE_KEY = 'pomo:dialogue-volume-ducking-settings:v1'
+const MINIMUM_PLAYER_VOLUME_PERCENT = 0
+const MAXIMUM_PLAYER_VOLUME_PERCENT = 100
+const settingsSchema: z.ZodType<DialogueVolumeDuckingSettings> = z.object({
+  enabled: z.boolean(),
+  playerVolumePercent: z
+    .number()
+    .int()
+    .min(MINIMUM_PLAYER_VOLUME_PERCENT)
+    .max(MAXIMUM_PLAYER_VOLUME_PERCENT),
+  version: z.literal(2),
+})
+const legacySettingsSchema: z.ZodType<LegacyDialogueVolumeDuckingSettings> = z.object({
+  enabled: z.boolean(),
+  reductionPercent: z
+    .number()
+    .int()
+    .min(MINIMUM_PLAYER_VOLUME_PERCENT)
+    .max(MAXIMUM_PLAYER_VOLUME_PERCENT),
+  version: z.literal(1),
+})
+
+export const parseDialogueVolumeDuckingSettings = (
+  value: unknown,
+): DialogueVolumeDuckingSettings | null => {
+  const result = settingsSchema.safeParse(value)
+  return result.success ? result.data : null
+}
+
+const parseLegacySettings = (value: unknown): LegacyDialogueVolumeDuckingSettings | null => {
+  const result = legacySettingsSchema.safeParse(value)
+  return result.success ? result.data : null
+}
+
+const migrateLegacySettings = (
+  settings: LegacyDialogueVolumeDuckingSettings,
+): DialogueVolumeDuckingSettings => ({
+  enabled: settings.enabled,
+  playerVolumePercent: settings.reductionPercent,
+  version: 2,
+})
+
+/** Creates the persistence policy for dialogue volume settings over one storage boundary. */
+export const createDialogueVolumeDuckingSettingsRepository = (
+  options: CreateDialogueVolumeDuckingSettingsRepositoryOptions,
+): DialogueVolumeDuckingSettingsRepository => {
+  const {storage} = options
+
+  const writeWebSettings = (settings: DialogueVolumeDuckingSettings) => {
+    try {
+      storage.writeWeb(STORAGE_KEY, settings)
+      return null
+    } catch (error: unknown) {
+      return error
+    }
+  }
+
+  const readWebSettings = (): DialogueVolumeDuckingSettings | null => {
+    const settings = parseDialogueVolumeDuckingSettings(storage.readWeb(STORAGE_KEY))
+
+    if (settings !== null) {
+      return settings
+    }
+
+    const legacySettings = parseLegacySettings(storage.readWeb(LEGACY_STORAGE_KEY))
+
+    if (legacySettings === null) {
+      return null
+    }
+
+    const migratedSettings = migrateLegacySettings(legacySettings)
+    writeWebSettings(migratedSettings)
+    return migratedSettings
+  }
+
+  const readTossSettings = async (): Promise<DialogueVolumeDuckingSettings | null> => {
+    const settings = parseDialogueVolumeDuckingSettings(await storage.readToss(STORAGE_KEY))
+
+    if (settings !== null) {
+      return settings
+    }
+
+    const legacySettings = parseLegacySettings(await storage.readToss(LEGACY_STORAGE_KEY))
+    return legacySettings === null ? null : migrateLegacySettings(legacySettings)
+  }
+
+  const repository = createAuthoritativePreferenceRepository({
+    defaultValue: DEFAULT_DIALOGUE_VOLUME_DUCKING_SETTINGS,
+    readFailureMessage: 'Failed to read dialogue volume ducking settings.',
+    storage: {
+      isNative: () => storage.usesTossStorage(),
+      readNative: readTossSettings,
+      readWeb: readWebSettings,
+      writeNative: (value) => storage.writeToss(STORAGE_KEY, value),
+      writeWeb: writeWebSettings,
+    },
+    writeFailureMessage: 'Failed to persist dialogue volume ducking settings.',
+  })
+  const read = () => repository.read()
+  const write = async (value: DialogueVolumeDuckingSettings): Promise<void> => {
+    const snapshot = settingsSchema.parse(value)
+    await repository.write(snapshot)
+  }
+
+  return {read, write}
+}
+
+const runtimeRepository = createDialogueVolumeDuckingSettingsRepository({
+  storage: {
+    ...createTossWebStorageAdapter(),
+  },
+})
+
+const preferenceStorage = createParsedPreferenceStorage({
+  invalidMessage: 'Invalid dialogue volume ducking settings.',
+  parse: parseDialogueVolumeDuckingSettings,
+  read: () => runtimeRepository.read(),
+  subscribe: webLocalStorage.subscribe,
+  write: (settings) => runtimeRepository.write(settings).then(() => undefined),
+})
+
+export interface DialogueVolumeDuckingPreferenceOptions {
+  readonly onError?: (error: unknown) => void
+  readonly onSaved?: () => void
+}
+
+/** Creates the shared preference definition for dialogue volume settings. */
+export const createDialogueVolumeDuckingPreferenceOptions = createPreferenceOptions({
+  defaultValue: DEFAULT_DIALOGUE_VOLUME_DUCKING_SETTINGS,
+  key: STORAGE_KEY,
+  parse: parseDialogueVolumeDuckingSettings,
+  storage: preferenceStorage,
+})
+
+/** Reads the dialogue volume setting from the authoritative storage for the current runtime. */
+export const readDialogueVolumeDuckingSettings = () => runtimeRepository.read()
+
+/** Persists the dialogue volume setting until the host app or browser data is removed. */
+export const writeDialogueVolumeDuckingSettings = (settings: DialogueVolumeDuckingSettings) =>
+  runtimeRepository.write(settings)

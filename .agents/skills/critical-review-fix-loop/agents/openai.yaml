@@ -1,0 +1,7 @@
+interface:
+  display_name: '중요 이슈 리뷰·수정 루프'
+  short_description: 'P0–P2가 없어질 때까지 리뷰와 수정을 반복'
+  default_prompt: 'Use $critical-review-fix-loop to review and fix until no P0-P2 findings remain, then report P3-P4 findings.'
+
+policy:
+  allow_implicit_invocation: false

@@ -1,0 +1,39 @@
+{
+  "name": "@winter-love/unocss-config",
+  "version": "1.0.29",
+  "private": true,
+  "files": [
+    "dist/*"
+  ],
+  "main": "dist/index.mjs",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    },
+    "./*": "./*"
+  },
+  "scripts": {
+    "build": "vite build",
+    "prepare-build": "pnpm run build"
+  },
+  "dependencies": {
+    "@unocss/core": "catalog:",
+    "@unocss/preset-attributify": "catalog:",
+    "@unocss/preset-icons": "catalog:",
+    "@unocss/preset-legacy-compat": "catalog:",
+    "@unocss/preset-mini": "catalog:",
+    "@unocss/preset-uno": "catalog:",
+    "@unocss/transformer-directives": "catalog:",
+    "@unocss/transformer-variant-group": "catalog:",
+    "@unocss/vite": "catalog:",
+    "@winter-love/unocss-preset-var": "workspace:*",
+    "unocss": "catalog:",
+    "unocss-preset-animations": "catalog:",
+    "unocss-preset-useful": "^1.0.1"
+  },
+  "devDependencies": {
+    "@winter-love/vite-lib-config": "workspace:*",
+    "vite": "catalog:"
+  }
+}

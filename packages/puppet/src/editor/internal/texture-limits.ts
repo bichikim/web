@@ -1,0 +1,1 @@
+export const MAXIMUM_TEXTURE_PIXELS = 16_777_216

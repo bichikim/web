@@ -1,0 +1,90 @@
+import {getDocument} from '@winter-love/utils'
+import {getMonotonicTime} from 'src/utils/get-monotonic-time'
+import {visibility} from 'src/utils/visibility'
+
+export interface VisibilityIntervalOptions {
+  readonly callback: () => void
+  readonly interval: number
+  readonly runOnVisible?: boolean
+  readonly runOverdueOnVisible?: boolean
+}
+
+/** 문서가 숨겨져 있는 동안 주기 실행을 멈추고, 다시 보이면 재개한다. */
+export function visibilityInterval(options: VisibilityIntervalOptions): () => void
+export function visibilityInterval(
+  callback: () => void,
+  interval: number,
+  runOverdueOnVisible?: boolean,
+): () => void
+export function visibilityInterval(
+  optionsOrCallback: VisibilityIntervalOptions | (() => void),
+  interval?: number,
+  runOverdueOnVisible = false,
+) {
+  let options: VisibilityIntervalOptions
+  if (typeof optionsOrCallback === 'function') {
+    if (interval === undefined) {
+      throw new TypeError('visibilityInterval requires an interval.')
+    }
+
+    options = {
+      callback: optionsOrCallback,
+      interval,
+      runOverdueOnVisible,
+    }
+  } else {
+    options = optionsOrCallback
+  }
+
+  let nextExecution = getMonotonicTime() + options.interval
+  const run = () => {
+    const now = getMonotonicTime()
+    nextExecution = now + options.interval
+    options.callback()
+  }
+  let intervalId: ReturnType<typeof globalThis.setInterval> | null = null
+
+  const startInterval = (isReturningToVisible: boolean) => {
+    if (intervalId !== null) {
+      return
+    }
+
+    const now = getMonotonicTime()
+    const isOverdue = now >= nextExecution
+    nextExecution = now + options.interval
+    intervalId = globalThis.setInterval(run, options.interval)
+    if (
+      isReturningToVisible &&
+      (options.runOnVisible === true || (options.runOverdueOnVisible === true && isOverdue))
+    ) {
+      run()
+    }
+  }
+
+  const stopInterval = () => {
+    if (intervalId === null) {
+      return
+    }
+
+    globalThis.clearInterval(intervalId)
+    intervalId = null
+  }
+
+  const clearVisibilityWatch = visibility((isHidden) => {
+    if (isHidden) {
+      stopInterval()
+      return
+    }
+
+    startInterval(true)
+  })
+
+  if (getDocument()?.hidden === false) {
+    startInterval(false)
+  }
+
+  return () => {
+    stopInterval()
+    clearVisibilityWatch()
+  }
+}

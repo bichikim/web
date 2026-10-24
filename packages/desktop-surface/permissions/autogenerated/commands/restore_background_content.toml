@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-restore-background-content"
+description = "Enables the restore_background_content command without any pre-configured scope."
+commands.allow = ["restore_background_content"]
+
+[[permission]]
+identifier = "deny-restore-background-content"
+description = "Denies the restore_background_content command without any pre-configured scope."
+commands.deny = ["restore_background_content"]

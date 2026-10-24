@@ -1,0 +1,169 @@
+import {createRoot} from 'solid-js'
+import {afterEach, describe, expect, it, vi} from 'vitest'
+
+import {
+  type CharacterRendererController,
+  type CharacterRendererRuntime,
+  useCharacterRenderer,
+} from '../index'
+
+interface CharacterRendererTestRoot {
+  readonly controller: CharacterRendererController
+  readonly dispose: () => void
+}
+
+const createRuntime = () =>
+  ({
+    createObjectUrl: vi.fn((_file: File) => 'blob:character'),
+    revokeObjectUrl: vi.fn((_url: string) => undefined),
+  }) satisfies CharacterRendererRuntime
+
+const createRendererRoot = (runtime: CharacterRendererRuntime): CharacterRendererTestRoot => {
+  let disposeRoot: () => void = () => undefined
+  const controller = createRoot((dispose) => {
+    disposeRoot = dispose
+    return useCharacterRenderer({
+      defaultModelName: '기본 캐릭터',
+      defaultModelUrl: '/character.glb',
+      runtime,
+    })
+  })
+
+  return {controller, dispose: disposeRoot}
+}
+
+afterEach(() => {
+  vi.restoreAllMocks()
+})
+
+describe('useCharacterRenderer', () => {
+  it('should use the browser object URL runtime when no runtime is provided', () => {
+    const createObjectUrl = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:browser')
+    const revokeObjectUrl = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => undefined)
+    let disposeRoot: () => void = () => undefined
+    const controller = createRoot((dispose) => {
+      disposeRoot = dispose
+      return useCharacterRenderer({
+        defaultModelName: '기본 캐릭터',
+        defaultModelUrl: '/character.glb',
+      })
+    })
+    const file = new File(['model'], 'browser.glb', {type: 'model/gltf-binary'})
+
+    controller.loadFile(file)
+
+    expect(createObjectUrl).toHaveBeenCalledWith(file)
+    expect(controller.modelUrl()).toBe('blob:browser')
+
+    disposeRoot()
+    expect(revokeObjectUrl).toHaveBeenCalledWith('blob:browser')
+  })
+
+  it('should expose the default model in the loading state', () => {
+    const renderer = createRendererRoot(createRuntime())
+
+    expect(renderer.controller.modelName()).toBe('기본 캐릭터')
+    expect(renderer.controller.modelUrl()).toBe('/character.glb')
+    expect(renderer.controller.progress()).toBe(0)
+    expect(renderer.controller.status()).toBe('loading')
+    renderer.dispose()
+  })
+
+  it('should report bounded loading progress, success, and failure', () => {
+    const renderer = createRendererRoot(createRuntime())
+
+    renderer.controller.handleLoadProgress(42.4)
+    expect(renderer.controller.progress()).toBe(42)
+
+    renderer.controller.handleLoadProgress(150)
+    expect(renderer.controller.progress()).toBe(100)
+
+    renderer.controller.handleLoadSuccess()
+    expect(renderer.controller.progress()).toBe(100)
+    expect(renderer.controller.status()).toBe('ready')
+
+    renderer.controller.handleLoadError()
+    expect(renderer.controller.progress()).toBe(0)
+    expect(renderer.controller.status()).toBe('error')
+
+    renderer.controller.handleLoadStart()
+    expect(renderer.controller.progress()).toBe(0)
+    expect(renderer.controller.status()).toBe('loading')
+    renderer.dispose()
+  })
+
+  it('should ignore late progress after loading succeeds', () => {
+    const renderer = createRendererRoot(createRuntime())
+
+    renderer.controller.handleLoadProgress(42)
+    expect(renderer.controller.progress()).toBe(42)
+    expect(renderer.controller.status()).toBe('loading')
+
+    renderer.controller.handleLoadSuccess()
+    renderer.controller.handleLoadProgress(12)
+
+    expect(renderer.controller.progress()).toBe(100)
+    expect(renderer.controller.status()).toBe('ready')
+    renderer.dispose()
+  })
+
+  it('should reset partial progress when loading fails', () => {
+    const renderer = createRendererRoot(createRuntime())
+
+    renderer.controller.handleLoadProgress(42)
+    renderer.controller.handleLoadError()
+
+    expect(renderer.controller.progress()).toBe(0)
+    expect(renderer.controller.status()).toBe('error')
+    renderer.dispose()
+  })
+
+  it('should own and revoke local model URLs when the model changes or the root disposes', () => {
+    const runtime = createRuntime()
+    const renderer = createRendererRoot(runtime)
+    const firstFile = new File(['first'], 'first.glb', {type: 'model/gltf-binary'})
+    const secondFile = new File(['second'], 'second.glb', {type: 'model/gltf-binary'})
+
+    renderer.controller.loadFile(firstFile)
+    renderer.controller.loadFile(secondFile)
+
+    expect(renderer.controller.modelName()).toBe('second.glb')
+    expect(renderer.controller.status()).toBe('loading')
+    expect(runtime.revokeObjectUrl).toHaveBeenCalledTimes(1)
+    renderer.dispose()
+    expect(runtime.revokeObjectUrl).toHaveBeenCalledTimes(2)
+  })
+
+  it('should keep the current model URL when creating its replacement fails', () => {
+    const runtime = createRuntime()
+    runtime.createObjectUrl.mockReturnValueOnce('blob:first').mockImplementationOnce(() => {
+      throw new Error('creation failed')
+    })
+    const renderer = createRendererRoot(runtime)
+    const firstFile = new File(['first'], 'first.glb')
+
+    renderer.controller.loadFile(firstFile)
+    expect(() => renderer.controller.loadFile(new File(['second'], 'second.glb'))).toThrow(
+      'creation failed',
+    )
+
+    expect(renderer.controller.modelUrl()).toBe('blob:first')
+    expect(runtime.revokeObjectUrl).not.toHaveBeenCalled()
+    renderer.dispose()
+    expect(runtime.revokeObjectUrl).toHaveBeenCalledExactlyOnceWith('blob:first')
+  })
+
+  it('should normalize external URLs and restore the default model', () => {
+    const renderer = createRendererRoot(createRuntime())
+
+    expect(renderer.controller.loadUrl('   ')).toBe(false)
+    expect(renderer.controller.loadUrl(' https://example.com/hero.glb ')).toBe(true)
+    expect(renderer.controller.modelName()).toBe('Blender / 외부 GLB')
+    expect(renderer.controller.modelUrl()).toBe('https://example.com/hero.glb')
+
+    renderer.controller.loadDefaultModel()
+    expect(renderer.controller.modelName()).toBe('기본 캐릭터')
+    expect(renderer.controller.modelUrl()).toBe('/character.glb')
+    renderer.dispose()
+  })
+})

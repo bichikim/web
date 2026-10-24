@@ -1,0 +1,216 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1786755602437,
+      "tag": "0000_sudden_klaw",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1786768852442,
+      "tag": "0001_seed_today_in_history_channel",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1786773717557,
+      "tag": "0002_fuzzy_praxagora",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1787325920426,
+      "tag": "0003_round_mister_sinister",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1787408352261,
+      "tag": "0004_tiny_morlun",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1787410399070,
+      "tag": "0005_sweet_reavers",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1787415488072,
+      "tag": "0006_quiet_molly_hayes",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1787536969378,
+      "tag": "0007_silly_pestilence",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1787571005545,
+      "tag": "0008_common_rockslide",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1787576469453,
+      "tag": "0009_handy_thanos",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1787583067011,
+      "tag": "0010_special_tyrannus",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1787634999422,
+      "tag": "0011_great_ego",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1787654840318,
+      "tag": "0012_short_zemo",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1788027670960,
+      "tag": "0013_amazing_gauntlet",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1788067402765,
+      "tag": "0014_closed_maddog",
+      "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1788252790108,
+      "tag": "0015_overconfident_owl",
+      "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1788334168370,
+      "tag": "0016_silky_true_believers",
+      "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1788347726181,
+      "tag": "0017_perpetual_zodiak",
+      "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1788517330501,
+      "tag": "0018_gifted_jack_murdock",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1789633501872,
+      "tag": "0019_mature_arachne",
+      "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1789904628436,
+      "tag": "0020_tough_timeslip",
+      "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1789906279111,
+      "tag": "0021_youthful_vapor",
+      "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1789908802509,
+      "tag": "0022_organic_darwin",
+      "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1791377215285,
+      "tag": "0023_cloud_text",
+      "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1791378940077,
+      "tag": "0024_cloud_text_limits",
+      "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1791382250104,
+      "tag": "0025_cloud_text_usage_reset",
+      "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1791383997585,
+      "tag": "0026_cloud_text_product_limits",
+      "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "7",
+      "when": 1791441668548,
+      "tag": "0027_api_ai_queue",
+      "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "7",
+      "when": 1791459918083,
+      "tag": "0028_api_ai_routing",
+      "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1792727040120,
+      "tag": "0029_cloud_text_cancellation",
+      "breakpoints": true
+    }
+  ]
+}

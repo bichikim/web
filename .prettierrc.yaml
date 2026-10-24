@@ -1,0 +1,12 @@
+semi: false
+tabWidth: 2
+useTabs: false
+singleQuote: true
+trailingComma: all
+bracketSpacing: false
+bracketSameLine: false
+arrowParens: always
+endOfLine: lf
+printWidth: 120
+jsxSingleQuote: false
+embeddedLanguageFormatting: auto

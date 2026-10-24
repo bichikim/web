@@ -1,0 +1,139 @@
+import {createMemo, ErrorBoundary, For, Show, Suspense} from 'solid-js'
+import {PButton} from '../p-button/PButton'
+import {reportClientError} from '../../features/client-error-reporter'
+import {type PResolvedAlbum, type PTrack, useTrackPreview} from '../../features/focus-room-audio'
+import {AlbumCard} from './Card'
+import {CustomAlbumSection} from './CustomAlbumSection'
+import {LoadingStatus} from './LoadingStatus'
+import {useAlbumLibrary} from './use-album-library'
+import * as m from '@paraglide/message'
+import {PublishedCatalogError} from './PublishedCatalogError'
+import {PStatus} from './PStatus'
+
+export interface PAlbumLibraryContentProps {
+  readonly onAddTracks: (tracks: readonly PTrack[]) => void
+  readonly onRemoveTracks?: (trackIds: ReadonlySet<string>) => void
+  readonly onPreviewEnd?: () => void
+  readonly onPreviewStart?: (stopPreview: () => void) => void
+  readonly tracks: readonly PTrack[]
+}
+
+export function PAlbumLibraryContent(props: PAlbumLibraryContentProps) {
+  const albumLibrary = useAlbumLibrary()
+  const trackIds = createMemo(() => new Set(props.tracks.map((track) => track.id)))
+  const isAlbumInPlayer = (album: PResolvedAlbum) =>
+    album.tracks.length > 0 && album.tracks.every((track) => trackIds().has(track.id))
+  const handleAlbumAdd = (album: PResolvedAlbum) =>
+    props.onAddTracks(album.tracks.filter((track) => !trackIds().has(track.id)))
+  const handleTrackAdd = (track: PTrack) => props.onAddTracks([track])
+  const preview = useTrackPreview({
+    onEnd: () => props.onPreviewEnd?.(),
+    onStart: (stopPreview) => props.onPreviewStart?.(stopPreview),
+  })
+
+  return (
+    <>
+      <audio
+        class="hidden"
+        onEnded={preview.handleEnded}
+        onError={preview.handleError}
+        preload="none"
+        ref={(element) => preview.setAudioElement(element)}
+      />
+      <Show when={preview.errorMessage()}>
+        {(message) => (
+          <p
+            aria-live="polite"
+            class="mb-3 mt-0 rounded-control border border-solid border-danger/45 bg-danger/10
+              px-3 py-2 text-sm leading-5 text-danger"
+            role="status"
+          >
+            {message()}
+          </p>
+        )}
+      </Show>
+      <CustomAlbumSection
+        albums={albumLibrary.customAlbums()}
+        error={albumLibrary.customAlbumError()}
+        isLoading={albumLibrary.isCustomAlbumsLoading()}
+        onAddAlbum={handleAlbumAdd}
+        onAddTrack={handleTrackAdd}
+        onDeleteAlbum={albumLibrary.deleteCustomAlbum}
+        onRemoveTracks={props.onRemoveTracks}
+        onSaved={albumLibrary.reloadCustomAlbums}
+        onPreview={(request) => {
+          preview.togglePreview(request).catch((error: unknown) => {
+            console.error('Failed to toggle custom album track preview.', error)
+          })
+        }}
+        onRetry={albumLibrary.reloadCustomAlbums}
+        pendingTrackId={preview.pendingTrackId()}
+        playingTrackId={preview.playingTrackId()}
+        trackIds={trackIds()}
+      />
+      <ErrorBoundary
+        fallback={(error, reset) => {
+          reportClientError(error, {feature: 'album-library', source: 'error-boundary'})
+
+          return (
+            <PStatus message={m.album_load_failed()}>
+              <PButton
+                bordered
+                transparent
+                class="mt-3"
+                onPress={() => albumLibrary.retryLibrary().then(reset)}
+                size="small"
+                tone="secondary"
+              >
+                {m.album_retry()}
+              </PButton>
+            </PStatus>
+          )
+        }}
+      >
+        <Suspense fallback={<LoadingStatus />}>
+          <Show when={albumLibrary.catalogError()}>
+            {(error) => (
+              <PublishedCatalogError
+                error={error()}
+                isRetrying={albumLibrary.isCatalogRetrying()}
+                onRetry={albumLibrary.retryCatalog}
+              />
+            )}
+          </Show>
+          <Show
+            fallback={
+              <Show when={albumLibrary.catalogError() === null}>
+                <PStatus message={m.album_empty()} />
+              </Show>
+            }
+            when={albumLibrary.albums().length > 0}
+          >
+            <div class="grid gap-3 2xl:grid-cols-2">
+              <For each={albumLibrary.albums()}>
+                {(album, index) => (
+                  <AlbumCard
+                    album={album}
+                    index={index()}
+                    isInPlayer={isAlbumInPlayer(album)}
+                    onAddAlbum={handleAlbumAdd}
+                    onAddTrack={handleTrackAdd}
+                    onRemoveTracks={props.onRemoveTracks}
+                    onPreview={(request) => {
+                      preview.togglePreview(request).catch((error: unknown) => {
+                        console.error('Failed to toggle album track preview.', error)
+                      })
+                    }}
+                    pendingTrackId={preview.pendingTrackId()}
+                    playingTrackId={preview.playingTrackId()}
+                    trackIds={trackIds()}
+                  />
+                )}
+              </For>
+            </div>
+          </Show>
+        </Suspense>
+      </ErrorBoundary>
+    </>
+  )
+}

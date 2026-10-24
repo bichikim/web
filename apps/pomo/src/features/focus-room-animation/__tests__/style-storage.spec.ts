@@ -1,0 +1,253 @@
+/** @vitest-environment jsdom */
+
+import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
+
+import {createPSceneStyleRepository, readPSceneStyle, writePSceneStyle} from '../style-storage'
+
+const storageMocks = vi.hoisted(() => ({
+  getItem: vi.fn<(key: string) => Promise<string | null>>(),
+  setItem: vi.fn<(key: string, value: string) => Promise<void>>(),
+}))
+
+vi.mock('@apps-in-toss/web-framework', () => ({
+  Storage: storageMocks,
+}))
+
+beforeEach(() => {
+  vi.restoreAllMocks()
+  vi.unstubAllEnvs()
+  localStorage.clear()
+  storageMocks.getItem.mockReset()
+  storageMocks.setItem.mockReset()
+})
+
+afterEach(() => {
+  Reflect.deleteProperty(globalThis, 'ReactNativeWebView')
+})
+
+describe('readPSceneStyle', () => {
+  it('should default to the original style on the web', async () => {
+    vi.stubEnv('VITE_POMO_IS_APPS_IN_TOSS', '')
+
+    expect(await readPSceneStyle()).toBe('original')
+
+    localStorage.setItem('pomo:focus-room-scene-style:v1', '"unknown"')
+    expect(await readPSceneStyle()).toBe('original')
+
+    localStorage.setItem('pomo:focus-room-scene-style:v1', '{invalid')
+    expect(await readPSceneStyle()).toBe('original')
+  })
+
+  it('should default to the scribble style in Apps in Toss', async () => {
+    vi.stubEnv('VITE_POMO_IS_APPS_IN_TOSS', 'true')
+
+    expect(await readPSceneStyle()).toBe('scribble')
+
+    localStorage.setItem('pomo:focus-room-scene-style:v1', '"unknown"')
+    expect(await readPSceneStyle()).toBe('scribble')
+  })
+
+  it('should prefer a stored style over the runtime default', async () => {
+    vi.stubEnv('VITE_POMO_IS_APPS_IN_TOSS', 'true')
+    localStorage.setItem('pomo:focus-room-scene-style:v1', '"original"')
+    expect(await readPSceneStyle()).toBe('original')
+
+    vi.stubEnv('VITE_POMO_IS_APPS_IN_TOSS', '')
+    localStorage.setItem('pomo:focus-room-scene-style:v1', '"scribble"')
+    expect(await readPSceneStyle()).toBe('scribble')
+  })
+
+  it('should keep the preference usable when browser storage is unavailable', async () => {
+    vi.stubEnv('VITE_POMO_IS_APPS_IN_TOSS', '')
+    vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+      throw new Error('storage unavailable')
+    })
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new Error('storage unavailable')
+    })
+
+    expect(await readPSceneStyle()).toBe('original')
+    await expect(writePSceneStyle('scribble')).resolves.toBeUndefined()
+  })
+
+  it('should restore an Apps in Toss preference after browser storage is cleared', async () => {
+    vi.stubEnv('VITE_POMO_IS_APPS_IN_TOSS', 'true')
+    Object.defineProperty(globalThis, 'ReactNativeWebView', {configurable: true, value: {}})
+    storageMocks.getItem.mockResolvedValue('"original"')
+
+    expect(await readPSceneStyle()).toBe('original')
+    expect(localStorage.getItem('pomo:focus-room-scene-style:v1')).toBe('"original"')
+  })
+
+  it('should prefer native style over a stale browser copy', async () => {
+    Object.defineProperty(globalThis, 'ReactNativeWebView', {configurable: true, value: {}})
+    localStorage.setItem('pomo:focus-room-scene-style:v1', '"original"')
+    storageMocks.getItem.mockResolvedValue('"scribble"')
+
+    await expect(readPSceneStyle()).resolves.toBe('scribble')
+    expect(storageMocks.getItem).toHaveBeenCalledWith('pomo:focus-room-scene-style:v1')
+    expect(storageMocks.setItem).not.toHaveBeenCalled()
+    expect(localStorage.getItem('pomo:focus-room-scene-style:v1')).toBe('"scribble"')
+  })
+
+  it('should keep a browser style when native storage has no saved style', async () => {
+    Object.defineProperty(globalThis, 'ReactNativeWebView', {configurable: true, value: {}})
+    localStorage.setItem('pomo:focus-room-scene-style:v1', '"scribble"')
+    storageMocks.getItem.mockResolvedValue(null)
+
+    await expect(readPSceneStyle()).resolves.toBe('scribble')
+    expect(storageMocks.getItem).toHaveBeenCalledWith('pomo:focus-room-scene-style:v1')
+    expect(storageMocks.setItem).not.toHaveBeenCalled()
+  })
+
+  it('should use the runtime default when native storage is empty or unavailable', async () => {
+    vi.stubEnv('VITE_POMO_IS_APPS_IN_TOSS', '')
+    Object.defineProperty(globalThis, 'ReactNativeWebView', {configurable: true, value: {}})
+    storageMocks.getItem.mockResolvedValueOnce(null).mockRejectedValueOnce(new Error('unavailable'))
+
+    await expect(readPSceneStyle()).resolves.toBe('original')
+    await expect(readPSceneStyle()).resolves.toBe('original')
+  })
+
+  it('should recover a browser choice when a native read fails', async () => {
+    Object.defineProperty(globalThis, 'ReactNativeWebView', {configurable: true, value: {}})
+    let rejectRead: (error: Error) => void = () => undefined
+    storageMocks.getItem.mockReturnValue(
+      new Promise((_resolve, reject) => {
+        rejectRead = reject
+      }),
+    )
+
+    const pendingRead = readPSceneStyle()
+    localStorage.setItem('pomo:focus-room-scene-style:v1', '"scribble"')
+    rejectRead(new Error('unavailable'))
+
+    await expect(pendingRead).resolves.toBe('scribble')
+  })
+
+  it('should use the default when a newer choice is no longer readable', async () => {
+    vi.stubEnv('VITE_POMO_IS_APPS_IN_TOSS', '')
+    Object.defineProperty(globalThis, 'ReactNativeWebView', {configurable: true, value: {}})
+    let completeRead: (value: string) => void = () => undefined
+    storageMocks.getItem.mockReturnValue(
+      new Promise((resolve) => {
+        completeRead = resolve
+      }),
+    )
+    storageMocks.setItem.mockResolvedValue()
+
+    const pendingRead = readPSceneStyle()
+    await writePSceneStyle('scribble')
+    localStorage.clear()
+    completeRead('"original"')
+
+    await expect(pendingRead).resolves.toBe('original')
+  })
+})
+
+describe('writePSceneStyle', () => {
+  it('should persist and restore both scene styles', async () => {
+    await writePSceneStyle('scribble')
+    expect(await readPSceneStyle()).toBe('scribble')
+
+    await writePSceneStyle('original')
+    expect(await readPSceneStyle()).toBe('original')
+  })
+
+  it('should preserve native write order during rapid preference changes', async () => {
+    Object.defineProperty(globalThis, 'ReactNativeWebView', {configurable: true, value: {}})
+    const nativeWrites: string[] = []
+    storageMocks.setItem.mockImplementation(async (_key, value) => {
+      nativeWrites.push(value)
+    })
+
+    await Promise.all([writePSceneStyle('scribble'), writePSceneStyle('original')])
+
+    expect(nativeWrites).toEqual(['"scribble"', '"original"'])
+  })
+})
+
+describe('createPSceneStyleRepository', () => {
+  const createStorage = () => ({
+    getDefault: () => 'original' as const,
+    readToss: vi.fn<(key: string) => Promise<unknown>>().mockResolvedValue(null),
+    readWeb: vi.fn<(key: string) => unknown>().mockReturnValue(null),
+    usesTossStorage: () => true,
+    writeToss: vi.fn<(key: string, value: unknown) => Promise<void>>().mockResolvedValue(),
+    writeWeb: vi.fn<(key: string, value: unknown) => void>(),
+  })
+
+  it('should reject coercible web values without invoking their conversion methods', async () => {
+    const convert = vi.fn(() => 'scribble')
+    const storage = createStorage()
+    storage.usesTossStorage = () => false
+    storage.readWeb.mockReturnValue({
+      [Symbol.toPrimitive]: convert,
+      toString: convert,
+      valueOf: convert,
+    })
+    const repository = createPSceneStyleRepository(storage)
+
+    await expect(repository.read()).resolves.toBe('original')
+    expect(convert).not.toHaveBeenCalled()
+    expect(storage.readToss).not.toHaveBeenCalled()
+    expect(storage.writeWeb).not.toHaveBeenCalled()
+  })
+
+  it('should restore a pending read despite writes in another repository', async () => {
+    const firstStorage = createStorage()
+    const secondStorage = createStorage()
+    const nativeRead = Promise.withResolvers<unknown>()
+    firstStorage.readToss.mockReturnValue(nativeRead.promise)
+    const first = createPSceneStyleRepository(firstStorage)
+    const second = createPSceneStyleRepository(secondStorage)
+
+    const pendingRead = first.read()
+    await second.write('original')
+    nativeRead.resolve('scribble')
+
+    await expect(pendingRead).resolves.toBe('scribble')
+    expect(firstStorage.writeWeb).toHaveBeenCalledWith('pomo:focus-room-scene-style:v1', 'scribble')
+  })
+
+  it('should keep a newer write when a native read completes late', async () => {
+    const storage = createStorage()
+    const webValues = new Map<string, unknown>()
+    const nativeRead = Promise.withResolvers<unknown>()
+    storage.readToss.mockReturnValue(nativeRead.promise)
+    storage.readWeb.mockImplementation((key) => webValues.get(key) ?? null)
+    storage.writeWeb.mockImplementation((key, value) => {
+      webValues.set(key, value)
+    })
+    const repository = createPSceneStyleRepository(storage)
+
+    const pendingRead = repository.read()
+    await repository.write('scribble')
+    nativeRead.resolve('original')
+
+    await expect(pendingRead).resolves.toBe('scribble')
+    expect(webValues.get('pomo:focus-room-scene-style:v1')).toBe('scribble')
+  })
+
+  it('should complete writes independently while another repository has a pending write', async () => {
+    const firstStorage = createStorage()
+    const secondStorage = createStorage()
+    const nativeWrite = Promise.withResolvers<void>()
+    firstStorage.writeToss.mockReturnValue(nativeWrite.promise)
+    const first = createPSceneStyleRepository(firstStorage)
+    const second = createPSceneStyleRepository(secondStorage)
+
+    const pendingWrite = first.write('scribble')
+    try {
+      await second.write('original')
+      expect(secondStorage.writeToss).toHaveBeenCalledWith(
+        'pomo:focus-room-scene-style:v1',
+        'original',
+      )
+      expect(firstStorage.writeToss).toHaveBeenCalledTimes(1)
+    } finally {
+      nativeWrite.resolve()
+      await pendingWrite
+    }
+  })
+})

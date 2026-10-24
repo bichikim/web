@@ -1,0 +1,57 @@
+import {createTestBroadcastChannel} from 'src/__tests__/create-test-broadcast-channel'
+/** @vitest-environment jsdom */
+
+import {afterEach, beforeEach, expect, it, vi} from 'vitest'
+
+import {
+  createDesktopMusicActionChannel,
+  isDesktopMusicActionConnectionMessage,
+  isDesktopMusicActionMessage,
+} from '../desktop-music-actions'
+
+const TestBroadcastChannel = createTestBroadcastChannel()
+
+beforeEach(() => {
+  TestBroadcastChannel.instances = []
+  vi.stubGlobal('BroadcastChannel', TestBroadcastChannel)
+})
+
+afterEach(() => {
+  vi.unstubAllGlobals()
+})
+
+it.each([{actionId: 'music-start'}, {actionId: 'music-stop'}] as const)(
+  'should accept the desktop music action $actionId',
+  (message) => {
+    expect(isDesktopMusicActionMessage(message)).toBe(true)
+  },
+)
+
+it.each([null, {}, {actionId: 'sound-effects-start'}, {actionId: 1}])(
+  'should reject an unsupported desktop music action message %#',
+  (message) => {
+    expect(isDesktopMusicActionMessage(message)).toBe(false)
+  },
+)
+
+it.each([
+  {type: 'player-ready'},
+  {type: 'request-player-ready'},
+  {type: 'player-unavailable'},
+] as const)('should accept desktop music connection message $type', (message) => {
+  expect(isDesktopMusicActionConnectionMessage(message)).toBe(true)
+})
+
+it.each([null, {}, {type: 'unrecognized'}, {type: 1}])(
+  'should reject an unsupported desktop music connection message %#',
+  (message) => {
+    expect(isDesktopMusicActionConnectionMessage(message)).toBe(false)
+  },
+)
+
+it('should create a browser channel for desktop music actions', () => {
+  const channel = createDesktopMusicActionChannel()
+
+  expect(channel).toBe(TestBroadcastChannel.instances[0])
+  expect(TestBroadcastChannel.instances[0]?.name).toBe('pomo:desktop-music-action')
+})

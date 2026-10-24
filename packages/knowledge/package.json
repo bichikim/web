@@ -1,0 +1,38 @@
+{
+  "name": "@winter-love/knowledge",
+  "version": "0.0.0",
+  "private": true,
+  "bin": {
+    "know": "./bin/know.mjs"
+  },
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./adapters": "./src/adapters/index.ts",
+    "./config": "./src/config/index.ts",
+    "./domain": "./src/domain/index.ts",
+    "./indexing": "./src/indexing/index.ts",
+    "./mcp": "./src/mcp/index.ts",
+    "./parsing": "./src/parsing/index.ts",
+    "./source": "./src/source/index.ts"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.30.0",
+    "@qdrant/js-client-rest": "1.19.0",
+    "ignore": "7.0.8",
+    "jiti": "2.7.0",
+    "mdast-util-from-markdown": "2.0.3",
+    "mdast-util-frontmatter": "2.0.1",
+    "mdast-util-to-string": "4.0.0",
+    "micromark-extension-frontmatter": "2.0.0",
+    "picomatch": "4.0.7",
+    "yaml": "2.9.0",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@types/mdast": "4.0.4",
+    "@types/node": "catalog:",
+    "@types/picomatch": "4.0.3",
+    "typescript": "catalog:"
+  }
+}

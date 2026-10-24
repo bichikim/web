@@ -1,0 +1,39 @@
+{
+  "status": "approved-source-retained",
+  "runtimeApplied": false,
+  "generator": "built-in imagegen",
+  "authoritativeOriginal": {
+    "path": "source/00-authoritative-open-original.png",
+    "width": 1672,
+    "height": 941,
+    "sha256": "19f2f4145e4456364c25326fb87aa63b7e68986ad1861b62c749b7866d219a59"
+  },
+  "outputs": [
+    {
+      "path": "01-a-frame-012.png",
+      "sha256": "f0aac99170905934979c6042fb585691a84a4173fa94c6229e6e6f64be77d933",
+      "dimensions": {"width": 1672, "height": 941}
+    },
+    {
+      "path": "02-transition-frame-018.png",
+      "sha256": "18bd1a7187688f9765a9ca6a1c86e6f0554d673d241f8cdcb8e4368f6ca264ae",
+      "dimensions": {"width": 1672, "height": 941}
+    },
+    {
+      "path": "03-e-frame-022.png",
+      "sha256": "e8f85df8b5a23578522601a210ec9418a452bdabe6436b5410d80eb05d9b06b9",
+      "dimensions": {"width": 1672, "height": 941}
+    }
+  ],
+  "prompt": {
+    "editTarget": "Image 1 is the authoritative full-resolution daytime scene.",
+    "poseReferences": "The selected H3 full frame and its enlarged mouth crop are pose references only.",
+    "editableRegion": "Change only the lips, visible inner mouth, and the smallest necessary nearby lower cheek, jawline, and chin deformation.",
+    "sequence": "A natural moderately open /a/ pose, then a slightly shallower and more lateral intermediate pose, then a visibly shallower lateral /e/ pose.",
+    "invariants": "Preserve the exact full scene, character identity, 1x mouth scale, camera, composition, lighting, colors, body, head, hands, objects, and background.",
+    "avoid": "No exaggerated mouth, oversized lips, face movement, skin-tone drift, global repainting, crop, transparency, blur, feathering, text, watermark, unsupported teeth, or unsupported tongue."
+  },
+  "review": {
+    "note": "User-approved full-scene sources retained without review media. The three runtime bridge assets were removed so open transitions directly to wide."
+  }
+}

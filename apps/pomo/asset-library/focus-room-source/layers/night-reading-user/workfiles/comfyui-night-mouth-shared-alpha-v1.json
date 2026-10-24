@@ -1,0 +1,507 @@
+{
+  "1": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "shared-alpha-reference-v1.png"
+    }
+  },
+  "2": {
+    "class_type": "InvertMask",
+    "inputs": {
+      "mask": ["1", 1]
+    }
+  },
+  "3": {
+    "class_type": "MaskToImage",
+    "inputs": {
+      "mask": ["2", 0]
+    }
+  },
+  "4": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": ["3", 0],
+      "filename_prefix": "pomo-night-mouth-shared-alpha-v1/mask"
+    }
+  },
+  "10": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "layer-mouth-closed-round-early.png"
+    }
+  },
+  "11": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["10", 0],
+      "alpha": ["1", 1]
+    }
+  },
+  "12": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": ["11", 0],
+      "filename_prefix": "pomo-night-mouth-shared-alpha-v1/layer-mouth-closed-round-early"
+    }
+  },
+  "13": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "layer-mouth-closed-round-late.png"
+    }
+  },
+  "14": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["13", 0],
+      "alpha": ["1", 1]
+    }
+  },
+  "15": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": ["14", 0],
+      "filename_prefix": "pomo-night-mouth-shared-alpha-v1/layer-mouth-closed-round-late"
+    }
+  },
+  "16": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "layer-mouth-closed-wide-early.png"
+    }
+  },
+  "17": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["16", 0],
+      "alpha": ["1", 1]
+    }
+  },
+  "18": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": ["17", 0],
+      "filename_prefix": "pomo-night-mouth-shared-alpha-v1/layer-mouth-closed-wide-early"
+    }
+  },
+  "19": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "layer-mouth-closed-wide-late.png"
+    }
+  },
+  "20": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["19", 0],
+      "alpha": ["1", 1]
+    }
+  },
+  "21": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": ["20", 0],
+      "filename_prefix": "pomo-night-mouth-shared-alpha-v1/layer-mouth-closed-wide-late"
+    }
+  },
+  "22": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "layer-mouth-closed.png"
+    }
+  },
+  "23": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["22", 0],
+      "alpha": ["1", 1]
+    }
+  },
+  "24": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": ["23", 0],
+      "filename_prefix": "pomo-night-mouth-shared-alpha-v1/layer-mouth-closed"
+    }
+  },
+  "25": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "layer-mouth-half-open.png"
+    }
+  },
+  "26": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["25", 0],
+      "alpha": ["1", 1]
+    }
+  },
+  "27": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": ["26", 0],
+      "filename_prefix": "pomo-night-mouth-shared-alpha-v1/layer-mouth-half-open"
+    }
+  },
+  "28": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "layer-mouth-narrow-round-early.png"
+    }
+  },
+  "29": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["28", 0],
+      "alpha": ["1", 1]
+    }
+  },
+  "30": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": ["29", 0],
+      "filename_prefix": "pomo-night-mouth-shared-alpha-v1/layer-mouth-narrow-round-early"
+    }
+  },
+  "31": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "layer-mouth-narrow-round-late.png"
+    }
+  },
+  "32": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["31", 0],
+      "alpha": ["1", 1]
+    }
+  },
+  "33": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": ["32", 0],
+      "filename_prefix": "pomo-night-mouth-shared-alpha-v1/layer-mouth-narrow-round-late"
+    }
+  },
+  "34": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "layer-mouth-narrow-round-middle.png"
+    }
+  },
+  "35": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["34", 0],
+      "alpha": ["1", 1]
+    }
+  },
+  "36": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": ["35", 0],
+      "filename_prefix": "pomo-night-mouth-shared-alpha-v1/layer-mouth-narrow-round-middle"
+    }
+  },
+  "37": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "layer-mouth-narrow-wide-early.png"
+    }
+  },
+  "38": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["37", 0],
+      "alpha": ["1", 1]
+    }
+  },
+  "39": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": ["38", 0],
+      "filename_prefix": "pomo-night-mouth-shared-alpha-v1/layer-mouth-narrow-wide-early"
+    }
+  },
+  "40": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "layer-mouth-narrow-wide-late.png"
+    }
+  },
+  "41": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["40", 0],
+      "alpha": ["1", 1]
+    }
+  },
+  "42": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": ["41", 0],
+      "filename_prefix": "pomo-night-mouth-shared-alpha-v1/layer-mouth-narrow-wide-late"
+    }
+  },
+  "43": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "layer-mouth-narrow-wide-middle.png"
+    }
+  },
+  "44": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["43", 0],
+      "alpha": ["1", 1]
+    }
+  },
+  "45": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": ["44", 0],
+      "filename_prefix": "pomo-night-mouth-shared-alpha-v1/layer-mouth-narrow-wide-middle"
+    }
+  },
+  "46": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "layer-mouth-narrow.png"
+    }
+  },
+  "47": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["46", 0],
+      "alpha": ["1", 1]
+    }
+  },
+  "48": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": ["47", 0],
+      "filename_prefix": "pomo-night-mouth-shared-alpha-v1/layer-mouth-narrow"
+    }
+  },
+  "49": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "layer-mouth-open-round-early.png"
+    }
+  },
+  "50": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["49", 0],
+      "alpha": ["1", 1]
+    }
+  },
+  "51": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": ["50", 0],
+      "filename_prefix": "pomo-night-mouth-shared-alpha-v1/layer-mouth-open-round-early"
+    }
+  },
+  "52": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "layer-mouth-open-round-late.png"
+    }
+  },
+  "53": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["52", 0],
+      "alpha": ["1", 1]
+    }
+  },
+  "54": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": ["53", 0],
+      "filename_prefix": "pomo-night-mouth-shared-alpha-v1/layer-mouth-open-round-late"
+    }
+  },
+  "55": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "layer-mouth-open-round-middle.png"
+    }
+  },
+  "56": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["55", 0],
+      "alpha": ["1", 1]
+    }
+  },
+  "57": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": ["56", 0],
+      "filename_prefix": "pomo-night-mouth-shared-alpha-v1/layer-mouth-open-round-middle"
+    }
+  },
+  "58": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "layer-mouth-open-wide-early.png"
+    }
+  },
+  "59": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["58", 0],
+      "alpha": ["1", 1]
+    }
+  },
+  "60": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": ["59", 0],
+      "filename_prefix": "pomo-night-mouth-shared-alpha-v1/layer-mouth-open-wide-early"
+    }
+  },
+  "61": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "layer-mouth-open-wide-late.png"
+    }
+  },
+  "62": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["61", 0],
+      "alpha": ["1", 1]
+    }
+  },
+  "63": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": ["62", 0],
+      "filename_prefix": "pomo-night-mouth-shared-alpha-v1/layer-mouth-open-wide-late"
+    }
+  },
+  "64": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "layer-mouth-open.png"
+    }
+  },
+  "65": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["64", 0],
+      "alpha": ["1", 1]
+    }
+  },
+  "66": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": ["65", 0],
+      "filename_prefix": "pomo-night-mouth-shared-alpha-v1/layer-mouth-open"
+    }
+  },
+  "67": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "layer-mouth-release.png"
+    }
+  },
+  "68": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["67", 0],
+      "alpha": ["1", 1]
+    }
+  },
+  "69": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": ["68", 0],
+      "filename_prefix": "pomo-night-mouth-shared-alpha-v1/layer-mouth-release"
+    }
+  },
+  "70": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "layer-mouth-rest.png"
+    }
+  },
+  "71": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["70", 0],
+      "alpha": ["1", 1]
+    }
+  },
+  "72": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": ["71", 0],
+      "filename_prefix": "pomo-night-mouth-shared-alpha-v1/layer-mouth-rest"
+    }
+  },
+  "73": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "layer-mouth-round.png"
+    }
+  },
+  "74": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["73", 0],
+      "alpha": ["1", 1]
+    }
+  },
+  "75": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": ["74", 0],
+      "filename_prefix": "pomo-night-mouth-shared-alpha-v1/layer-mouth-round"
+    }
+  },
+  "76": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "layer-mouth-small-open.png"
+    }
+  },
+  "77": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["76", 0],
+      "alpha": ["1", 1]
+    }
+  },
+  "78": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": ["77", 0],
+      "filename_prefix": "pomo-night-mouth-shared-alpha-v1/layer-mouth-small-open"
+    }
+  },
+  "79": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "layer-mouth-wide.png"
+    }
+  },
+  "80": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["79", 0],
+      "alpha": ["1", 1]
+    }
+  },
+  "81": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": ["80", 0],
+      "filename_prefix": "pomo-night-mouth-shared-alpha-v1/layer-mouth-wide"
+    }
+  }
+}

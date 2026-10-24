@@ -1,0 +1,45 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "skipLibCheck": true,
+    "skipDefaultLibCheck": true,
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "jsx": "preserve",
+    "resolveJsonModule": true,
+    "jsxImportSource": "solid-js",
+    "allowJs": true,
+    "strict": true,
+    "noEmit": true,
+    "isolatedModules": true,
+    "verbatimModuleSyntax": false,
+    "paths": {
+      "@paraglide/message": ["./.i18n/paraglide/messages.js"],
+      "@paraglide/runtime": ["./.i18n/paraglide/runtime.js"],
+      "@paraglide/server": ["./.i18n/paraglide/server.js"],
+      "assets/*": ["./assets/*"],
+      "i18n/*": ["./.i18n/*"],
+      "scripts/*": ["./scripts/*"],
+      "src/*": ["./src/*"]
+    },
+    "forceConsistentCasingInFileNames": true
+  },
+  "include": [
+    ".i18n/paraglide/**/*.d.ts",
+    "__tests__/**/*.ts",
+    "__tests__/**/*.tsx",
+    "e2e/**/*.ts",
+    "playwright*.config.ts",
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    "src/**/*.mjs",
+    "src/**/*.d.ts",
+    "vite.config.ts",
+    "scripts/vite/**/*.ts",
+    "uno.config.ts",
+    "vitest.storybook.config.mts"
+  ]
+}

@@ -1,0 +1,39 @@
+{
+  "name": "@winter-love/player",
+  "version": "1.0.0",
+  "private": true,
+  "description": "",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/bichikim/web.git"
+  },
+  "files": [
+    "dist/*"
+  ],
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs"
+    },
+    "./*": "./*"
+  },
+  "scripts": {
+    "build": "vite build",
+    "prepare-build": "pnpm run build",
+    "typecheck": "tsc --noEmit",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "@winter-love/solid-use": "workspace:*",
+    "@winter-love/utils": "workspace:*",
+    "shaka-player": "^4.16.29",
+    "solid-js": "catalog:"
+  },
+  "devDependencies": {
+    "@winter-love/vite-lib-config": "workspace:*",
+    "vite": "catalog:",
+    "vite-plugin-dts": "catalog:"
+  }
+}

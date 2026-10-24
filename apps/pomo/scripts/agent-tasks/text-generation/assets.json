@@ -1,0 +1,25 @@
+{
+  "bucket": "pomofi-audio",
+  "publicBaseUrl": "https://storage.pomofi.io/",
+  "repositoryId": "onnx-community/gemma-4-E2B-it-ONNX",
+  "revision": "9f4bef82ea6e296bc69f8a2f5939f73af81b07a6",
+  "revisionObjects": [
+    {"path": "chat_template.jinja", "bytes": 16317},
+    {"path": "config.json", "bytes": 5549},
+    {"path": "generation_config.json", "bytes": 238},
+    {"path": "preprocessor_config.json", "bytes": 43},
+    {"path": "processor_config.json", "bytes": 1689},
+    {"path": "tokenizer.json", "bytes": 19439251},
+    {"path": "tokenizer_config.json", "bytes": 18807},
+    {"path": "onnx/embed_tokens_q4.onnx", "bytes": 5142},
+    {"path": "onnx/embed_tokens_q4.onnx_data", "bytes": 1762656256},
+    {"path": "onnx/decoder_model_merged_q4.onnx", "bytes": 647599},
+    {"path": "onnx/decoder_model_merged_q4.onnx_data", "bytes": 1864102912}
+  ],
+  "aliases": [
+    {
+      "key": "models/text-generation/onnx-community/gemma-4-E2B-it-ONNX/main/tokenizer_config.json",
+      "bytes": 18807
+    }
+  ]
+}

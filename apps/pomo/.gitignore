@@ -1,0 +1,13 @@
+# Build output
+.i18n/paraglide
+.i18n/paraglide-development
+.granite
+.output
+.vinxi
+*.ait
+
+# Environment files
+.env
+.env.local
+.env.*.local
+.vercel

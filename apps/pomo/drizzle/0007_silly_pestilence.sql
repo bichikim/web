@@ -1,0 +1,1 @@
+ALTER TABLE "historical_generation_runs" ADD COLUMN "open_ai_submission_key" uuid DEFAULT gen_random_uuid() NOT NULL;

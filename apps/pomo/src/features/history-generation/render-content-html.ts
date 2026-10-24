@@ -1,0 +1,22 @@
+import {escape as escapeHtml} from 'es-toolkit/string'
+
+import type {HistoricalMomentDraft} from './contract'
+
+/** Renders validated historical prose and source links into safe feed HTML. */
+export const renderHistoryContentHtml = (moment: HistoricalMomentDraft): string => {
+  const sources = moment.sources
+    .map((source) => {
+      const label = `${escapeHtml(source.publisher)} — ${escapeHtml(source.title)}`
+
+      return `<li><a href="${escapeHtml(source.url)}">${label}</a></li>`
+    })
+    .join('')
+
+  const event = `<p>${escapeHtml(moment.sections.event.text)}</p>`
+  const context = `<p>${escapeHtml(moment.sections.context.text)}</p>`
+  const significance = `<p>${escapeHtml(moment.sections.significance.text)}</p>`
+
+  const sourceList = `<footer data-pomo-speech="exclude"><p><strong>출처</strong></p><ol>${sources}</ol></footer>`
+
+  return `${event}${context}${significance}${sourceList}`
+}

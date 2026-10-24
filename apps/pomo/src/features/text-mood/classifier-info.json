@@ -1,0 +1,23 @@
+{
+  "evaluation": {
+    "accuracy": 0.75,
+    "insufficiency": {
+      "f1": 0.7692307692307693,
+      "falsePositiveRate": 0,
+      "precision": 1,
+      "recall": 0.625,
+      "totalSamples": 50
+    },
+    "macroF1": 0.7329365079365079,
+    "modifierF1": {
+      "playful": 0.5,
+      "sarcastic": 0.5
+    },
+    "topTwoAccuracy": 0.8611111111111112,
+    "totalSamples": 324
+  },
+  "modelKind": "centroid",
+  "schemaVersion": 2,
+  "temperature": 0.05,
+  "uncertainMargin": 0.075
+}

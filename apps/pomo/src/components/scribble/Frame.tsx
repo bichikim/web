@@ -1,0 +1,55 @@
+import {cx} from 'class-variance-authority'
+
+const SCRIBBLE_BORDER_PATH = cx(
+  'M 0 12 Q 0 5 8 4',
+  'C 31 3 70 5 92 4 Q 100 5 100 14',
+  'C 100 36 99 64 100 87 Q 100 96 92 95',
+  'C 67 97 34 94 8 96 Q 0 94 0 86',
+  'C 0 63 1 34 0 12 Z',
+)
+const SCRIBBLE_ACCENT_PATH = cx(
+  'M 3 8 C 28 6 69 8 97 7',
+  'M 100 18 C 98 39 101 68 98 91',
+  'M 91 96 C 64 94 33 97 7 94',
+  'M 0 82 C 2 61 -1 37 2 17',
+)
+
+export interface ScribbleFramePaths {
+  /** 바깥쪽 테두리의 SVG 경로 데이터. */
+  readonly border: string
+  /** 안쪽 강조선의 SVG 경로 데이터. */
+  readonly accent: string
+}
+
+interface PScribbleFrameProps {
+  readonly class?: string
+  /** 생략하면 기본 사각형의 테두리와 강조선을 표시한다. */
+  readonly paths?: ScribbleFramePaths
+}
+
+export const PScribbleFrame = (props: PScribbleFrameProps) => (
+  <svg
+    aria-hidden="true"
+    class={cx('pointer-events-none absolute inset-0 h-full w-full overflow-visible', props.class)}
+    preserveAspectRatio="none"
+    viewBox="0 0 100 100"
+  >
+    <path
+      d={props.paths?.border ?? SCRIBBLE_BORDER_PATH}
+      fill="none"
+      stroke="rgb(0 0 0 / 92%)"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      stroke-width="6"
+      vector-effect="non-scaling-stroke"
+    />
+    <path
+      d={props.paths?.accent ?? SCRIBBLE_ACCENT_PATH}
+      fill="none"
+      stroke="rgb(0 0 0 / 48%)"
+      stroke-linecap="round"
+      stroke-width="3"
+      vector-effect="non-scaling-stroke"
+    />
+  </svg>
+)

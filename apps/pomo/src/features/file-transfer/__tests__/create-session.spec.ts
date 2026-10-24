@@ -1,0 +1,244 @@
+/** @vitest-environment jsdom */
+import {File} from 'node:buffer'
+import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
+import {createTransferSession} from '../create-session'
+import * as m from '@paraglide/message'
+import type {FileTransfer} from '../types'
+
+let fileTransfer: FileTransfer
+const receivedFiles = {add: vi.fn(), save: vi.fn(), state: {files: []}}
+const createConnection = vi.fn(() => new Peer() as unknown as RTCPeerConnection)
+const createSocket = vi.fn(() => new Socket() as unknown as WebSocket)
+const options = {
+  createConnection,
+  createId: () => 'outgoing-id',
+  createSocket,
+  getOrigin: () => 'http://localhost:3300',
+  receivedFiles,
+}
+
+class Socket extends EventTarget {
+  static OPEN = 1
+  static instances: Socket[] = []
+  readyState = 1
+  send = vi.fn()
+  close = vi.fn()
+  constructor() {
+    super()
+    Socket.instances.push(this)
+  }
+  message(value: unknown): void {
+    this.dispatchEvent(new MessageEvent('message', {data: JSON.stringify(value)}))
+  }
+}
+
+class Channel extends EventTarget {
+  readyState = 'open'
+  bufferedAmount = 0
+  send = vi.fn()
+  close = vi.fn()
+  message(value: unknown): void {
+    this.dispatchEvent(new MessageEvent('message', {data: JSON.stringify(value)}))
+  }
+}
+
+class Peer extends EventTarget {
+  static instances: Peer[] = []
+  channel = new Channel()
+  connectionState = 'new'
+  remoteDescription = null
+  createOffer = vi.fn(async () => ({sdp: 'v=0\r\n', type: 'offer'}))
+  setLocalDescription = vi.fn(async () => {})
+  close = vi.fn()
+  constructor() {
+    super()
+    Peer.instances.push(this)
+  }
+  createDataChannel(): Channel {
+    return this.channel
+  }
+}
+
+const connect = async () => {
+  await fileTransfer.create()
+  Socket.instances.at(-1)!.message({type: 'approved'})
+  const peer = Peer.instances.at(-1)!
+  await vi.waitFor(() => expect(peer.setLocalDescription).toHaveBeenCalled())
+  peer.channel.dispatchEvent(new Event('open'))
+  return peer
+}
+
+beforeEach(() => {
+  Socket.instances = []
+  Peer.instances = []
+  fileTransfer = createTransferSession(options)
+})
+afterEach(() => {
+  fileTransfer.cancel()
+  vi.restoreAllMocks()
+  vi.clearAllMocks()
+})
+
+describe('createTransferSession', () => {
+  it.each([
+    {id: '', label: 'empty session', origin: 'http://localhost:3300', secret: 'secret'},
+    {id: 'invitation', label: 'empty secret', origin: 'http://localhost:3300', secret: ''},
+    {id: 'invitation', label: 'unconfigured origin', origin: undefined, secret: 'secret'},
+  ])('should reject $label without allocating transport resources', ({id, origin, secret}) => {
+    fileTransfer = createTransferSession({...options, getOrigin: () => origin})
+    fileTransfer.join(id, secret)
+    expect(fileTransfer.state.phase).toBe('error')
+    expect(fileTransfer.state.error).toBe(m.transfer_error_invalid_link())
+    expect(createSocket).not.toHaveBeenCalled()
+    expect(createConnection).not.toHaveBeenCalled()
+  })
+
+  it('should allow a valid invitation after rejecting an empty session', () => {
+    fileTransfer.join('', 'secret')
+    fileTransfer.join('invitation', 'secret')
+    expect(fileTransfer.state.phase).toBe('connecting')
+    expect(fileTransfer.state.error).toBeNull()
+    expect(Socket.instances).toHaveLength(1)
+    Socket.instances[0].dispatchEvent(new Event('open'))
+    expect(Socket.instances[0].send).toHaveBeenCalledExactlyOnceWith(
+      JSON.stringify({id: 'invitation', secret: 'secret', type: 'join'}),
+    )
+  })
+
+  it('should enter connecting immediately after approval and ignore repeated approval', async () => {
+    await fileTransfer.create()
+    const socket = Socket.instances[0]
+    socket.message({type: 'join-request'})
+    fileTransfer.approve()
+    expect(fileTransfer.state.phase).toBe('connecting')
+    fileTransfer.approve()
+    expect(socket.send).toHaveBeenCalledExactlyOnceWith(JSON.stringify({type: 'approve'}))
+  })
+
+  it('should identify a direct connection failure and clear its guidance on retry', async () => {
+    const peer = await connect()
+    peer.connectionState = 'failed'
+    peer.dispatchEvent(new Event('connectionstatechange'))
+    expect(fileTransfer.state.errorCode).toBe('direct-connection')
+    await fileTransfer.create()
+    expect(fileTransfer.state.errorCode).toBeNull()
+  })
+  it('should ignore failures from an offer belonging to a replaced connection', async () => {
+    const offer = Promise.withResolvers<{type: string; sdp: string}>()
+    const oldPeer = new Peer()
+    oldPeer.createOffer.mockReturnValue(offer.promise)
+    createConnection.mockReturnValueOnce(oldPeer as unknown as RTCPeerConnection)
+    await fileTransfer.create()
+    Socket.instances[0].message({type: 'approved'})
+    await fileTransfer.create()
+    offer.reject(new Error('Old peer closed'))
+    await offer.promise.catch(() => {})
+    await Promise.resolve()
+    expect(fileTransfer.state.phase).toBe('creating')
+    expect(fileTransfer.state.error).toBeNull()
+  })
+
+  it('should ignore events from a closed peer after a new session starts', async () => {
+    const oldPeer = await connect()
+    await fileTransfer.create()
+    oldPeer.connectionState = 'failed'
+    oldPeer.dispatchEvent(new Event('connectionstatechange'))
+    expect(fileTransfer.state.phase).toBe('creating')
+  })
+
+  it('should retain the original pending request and reject another offer', async () => {
+    const peer = await connect()
+    peer.channel.message({id: 'first', name: 'first.txt', size: 1, type: 'file'})
+    peer.channel.message({id: 'second', name: 'second.txt', size: 1, type: 'file'})
+    expect(fileTransfer.state.incoming?.id).toBe('first')
+    expect(peer.channel.send).toHaveBeenCalledWith(JSON.stringify({id: 'second', type: 'reject'}))
+  })
+
+  it.each([
+    ['boundary emoji', `${'a'.repeat(199)}😀.txt`, `${'a'.repeat(196)}.txt`],
+    ['emoji prefix', `${'a'.repeat(195)}😀${'b'.repeat(10)}.txt`, `${'a'.repeat(195)}.txt`],
+    ['long text name', `${'a'.repeat(220)}.PDF`, `${'a'.repeat(196)}.PDF`],
+    ['no extension', `${'a'.repeat(199)}😀`, 'a'.repeat(199)],
+    ['exact limit', `${'a'.repeat(194)}😀.txt`, `${'a'.repeat(194)}😀.txt`],
+    ['hidden name', `.${'a'.repeat(220)}`, `.${'a'.repeat(199)}`],
+    ['oversized extension', `a.${'b'.repeat(220)}`, `a.${'b'.repeat(198)}`],
+    ['trailing dot', `${'a'.repeat(220)}.`, `${'a'.repeat(199)}.`],
+    ['extension emoji', `${'a'.repeat(220)}.😀`, `${'a'.repeat(197)}.😀`],
+    ['ordinary emoji', '메모😀.txt', '메모😀.txt'],
+    ['path separators', 'folder/메모\\😀.txt', 'folder_메모_😀.txt'],
+  ])('should retain a valid bounded received name for %s', async (_label, name, expected) => {
+    const peer = await connect()
+    peer.channel.message({id: 'first', name, size: 1, type: 'file'})
+    expect(fileTransfer.state.incoming?.name).toBe(expected)
+    expect(fileTransfer.state.incoming?.name.isWellFormed()).toBe(true)
+    expect(fileTransfer.state.incoming?.name.length).toBeLessThanOrEqual(200)
+    fileTransfer.accept()
+    peer.channel.dispatchEvent(new MessageEvent('message', {data: new Uint8Array([97]).buffer}))
+    peer.channel.message({checksum: 0xe8b7be43, id: 'first', type: 'end'})
+    expect(receivedFiles.add).toHaveBeenCalledExactlyOnceWith(
+      expect.objectContaining({size: 1}),
+      expected,
+    )
+  })
+
+  it('should stream an outgoing file only once when acceptance is repeated', async () => {
+    const peer = await connect()
+    const file = new File(['content'], 'notes.txt')
+    const slice = vi.spyOn(file, 'slice')
+    fileTransfer.send(file as unknown as globalThis.File)
+    const id = fileTransfer.state.outgoing?.id
+    peer.channel.message({id, type: 'accept'})
+    peer.channel.message({id, type: 'accept'})
+    await vi.waitFor(() =>
+      expect(peer.channel.send).toHaveBeenCalledWith(expect.stringContaining('"type":"end"')),
+    )
+    expect(slice).toHaveBeenCalledTimes(1)
+  })
+
+  it('should accept the existing request when automatic reception is enabled', async () => {
+    const peer = await connect()
+    peer.channel.message({id: 'first', name: 'first.txt', size: 1, type: 'file'})
+    fileTransfer.setAutoAccept(true)
+    expect(fileTransfer.state.phase).toBe('receiving')
+    expect(peer.channel.send).toHaveBeenCalledWith(JSON.stringify({id: 'first', type: 'accept'}))
+    fileTransfer.cancel()
+    expect(fileTransfer.state.autoAccept).toBe(false)
+  })
+
+  it.each([0xe8b7be43, 0])(
+    'should retain received contents only when checksum %s matches',
+    async (checksum) => {
+      const peer = await connect()
+      peer.channel.message({id: 'first', name: 'first.txt', size: 1, type: 'file'})
+      fileTransfer.accept()
+      peer.channel.dispatchEvent(new MessageEvent('message', {data: new Uint8Array([97]).buffer}))
+      peer.channel.message({checksum, id: 'first', type: 'end'})
+      if (checksum === 0) {
+        expect(fileTransfer.state.phase).toBe('error')
+        expect(receivedFiles.add).not.toHaveBeenCalled()
+      } else {
+        expect(fileTransfer.state.phase).toBe('connected')
+        expect(receivedFiles.add).toHaveBeenCalledExactlyOnceWith(
+          expect.objectContaining({size: 1}),
+          'first.txt',
+        )
+      }
+    },
+  )
+  it('should keep independently created sessions and their cancellation separate', async () => {
+    const first = fileTransfer
+    await first.create()
+    const firstSocket = Socket.instances[0]
+    const second = createTransferSession(options)
+    await second.create()
+    const secondSocket = Socket.instances[1]
+    firstSocket.message({id: 'first', joinerSecret: 'secret', type: 'created'})
+    expect(first.state.phase).toBe('waiting')
+    expect(second.state.phase).toBe('creating')
+    first.cancel()
+    expect(firstSocket.close).toHaveBeenCalledOnce()
+    expect(secondSocket.close).not.toHaveBeenCalled()
+    expect(second.state.phase).toBe('creating')
+    second.cancel()
+  })
+})

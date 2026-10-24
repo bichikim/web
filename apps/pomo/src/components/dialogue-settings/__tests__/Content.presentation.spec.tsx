@@ -1,0 +1,401 @@
+/** @vitest-environment jsdom */
+
+import {Tabs} from '@kobalte/core/tabs'
+import {fireEvent, render, screen, within} from '@solidjs/testing-library'
+import {For, type JSX} from 'solid-js'
+import {afterEach, beforeEach, expect, it, vi} from 'vitest'
+
+import {getLocale, overwriteGetLocale} from '@paraglide/runtime'
+import {PSelect} from 'src/components/p-select/PSelect'
+import {PreferenceProvider} from 'src/hooks/use-preference'
+import {type PDialogue, type PEventContextValue, usePEvents} from 'src/features/focus-room-dialogue'
+import {type PFeedController, usePFeedContext} from 'src/features/focus-room-feed'
+import {writeLanguageLearningSentences} from 'src/features/language-learning'
+import {PDialogueSettingsContent} from '../Content'
+
+vi.mock('@kobalte/core/tabs', () => ({Tabs: {Content: vi.fn()}}))
+vi.mock('@kobalte/core/dropdown-menu', () => {
+  const Container = (props: {children?: JSX.Element}) => <>{props.children}</>
+
+  return {
+    DropdownMenu: Object.assign(Container, {
+      CheckboxItem: Container,
+      Content: Container,
+      Icon: Container,
+      Item: Container,
+      ItemIndicator: Container,
+      Portal: Container,
+      Trigger: Container,
+    }),
+  }
+})
+vi.mock('@solidjs/router', () => ({
+  A: (props: {children: JSX.Element; class?: string; href: string}) => (
+    <a class={props.class} href={props.href}>
+      {props.children}
+    </a>
+  ),
+}))
+vi.mock('src/components/p-select/PSelect', () => ({PSelect: vi.fn()}))
+vi.mock('src/features/focus-room-dialogue', async () => {
+  const actual: typeof import('src/features/focus-room-dialogue') = await vi.importActual(
+    'src/features/focus-room-dialogue',
+  )
+
+  return {...actual, usePEvents: vi.fn()}
+})
+vi.mock('src/features/focus-room-feed', () => ({
+  excludeFeedDialogues: (dialogues: ReadonlyArray<PDialogue>) => dialogues,
+  usePFeedContext: vi.fn(),
+}))
+vi.mock('../use-volume-ducking', () => ({
+  useVolumeDucking: () => ({
+    changeEnabled: () => undefined,
+    changeVolume: () => undefined,
+    isLoading: () => false,
+    message: () => null,
+    settings: () => ({enabled: true, playerVolumePercent: 50, version: 2}),
+  }),
+}))
+
+const DIALOGUE: PDialogue = {
+  audioKey: 'audio-saved',
+  createdAt: '2026-08-15T00:00:00.000Z',
+  durationMs: 1000,
+  id: 'saved-dialogue',
+  language: 'ko',
+  modelId: 'full',
+  segments: [{durationMs: 1000, index: 0, startMs: 0, text: '저장된 대화'}],
+  text: '저장된 대화',
+  updatedAt: '2026-08-15T00:00:00.000Z',
+  version: 1,
+  voiceId: 'Yuna',
+}
+
+const createEvents = (overrides: Partial<PEventContextValue> = {}): PEventContextValue => ({
+  activeDialogueId: () => null,
+  activeSegmentCount: () => 0,
+  activeSegmentMood: () => null,
+  activeSegmentPosition: () => null,
+  activeText: () => null,
+  activeViseme: () => 'rest',
+  cancelDelayedEndEvent: vi.fn(),
+  delayedEndEventDurationMinutes: () => 30,
+  delayedEndEventIsRunning: () => false,
+  deleteDialogue: vi.fn(async () => undefined),
+  dialogues: () => [DIALOGUE],
+  enterFocusRoom: vi.fn(),
+  entryDialogueId: () => null,
+  entryDialogueIds: () => [],
+  errorMessage: () => null,
+  eventActionIds: () => ({}),
+  eventDialogueIds: () => ({}),
+  eventPlaybackModes: () => ({}),
+  getAudio: vi.fn(async () => null),
+  hasEnteredFocusRoom: () => true,
+  isDialoguePlaybackBlocked: () => false,
+  isDialoguePlaying: () => false,
+  isDialogueScheduled: () => false,
+  isEntryPlaybackBlocked: () => false,
+  isLoading: () => false,
+  onStopDialoguePlayback: vi.fn(),
+  onStopEntryPlayback: vi.fn(),
+  playDialogue: vi.fn(async () => true),
+  playDialogueEvents: vi.fn(async () => undefined),
+  playDialogueSequence: vi.fn(async () => undefined),
+  refreshDialogues: vi.fn(async () => undefined),
+  registerEventActionExecutor: vi.fn(() => vi.fn()),
+  retryDialoguePlayback: vi.fn(),
+  retryEntryPlayback: vi.fn(),
+  scheduledDialogueCount: () => 0,
+  setDelayedEndEventDuration: vi.fn(async () => undefined),
+  setEntryDialogue: vi.fn(async () => undefined),
+  setEntryDialogues: vi.fn(async () => undefined),
+  setEventDialogue: vi.fn(async () => undefined),
+  setEventDialogues: vi.fn(async () => undefined),
+  setEventItems: vi.fn(async () => undefined),
+  setEventPlaybackMode: vi.fn(async () => undefined),
+  skipDialoguePlayback: vi.fn(),
+  startDelayedEndEvent: vi.fn(),
+  ...overrides,
+})
+
+const createFeeds = (): PFeedController => ({
+  cancelProcessing: vi.fn(async () => undefined),
+  deleteRecovery: vi.fn(async () => undefined),
+  dialogues: () => [],
+  dismissRecovery: vi.fn(),
+  isListening: () => false,
+  issues: () => [],
+  latestReady: () => null,
+  listen: vi.fn(async () => undefined),
+  listenAll: vi.fn(async () => undefined),
+  onDeleteDialogue: vi.fn(async () => undefined),
+  recoveryJobs: () => [],
+  retryRecovery: vi.fn(async () => undefined),
+  state: () => ({message: '대기 중', status: 'idle'}),
+  syncNow: vi.fn(async () => undefined),
+  unlistenedDialogues: () => [],
+})
+
+const originalGetLocale = getLocale
+
+beforeEach(() => {
+  overwriteGetLocale(() => 'ko')
+  vi.clearAllMocks()
+  localStorage.clear()
+  vi.mocked(Tabs.Content).mockImplementation((props) => <>{props.children}</>)
+  vi.mocked(PSelect).mockImplementation(() => null)
+  vi.mocked(usePFeedContext).mockReturnValue(createFeeds())
+})
+
+afterEach(() => {
+  overwriteGetLocale(originalGetLocale)
+})
+
+it('should render event and dialogue settings in English', () => {
+  overwriteGetLocale(() => 'en')
+  vi.mocked(usePEvents).mockReturnValue(createEvents())
+
+  render(() => <PDialogueSettingsContent />, {wrapper: PreferenceProvider})
+
+  expect(screen.getByRole('heading', {name: 'Events'})).toBeDefined()
+  expect(screen.getByRole('heading', {name: 'Enter Pomofi'})).toBeDefined()
+  expect(screen.getByText('Play once when entering Pomofi')).toBeDefined()
+  expect(screen.getByRole('heading', {name: 'Dialogue options'})).toBeDefined()
+  expect(screen.getByRole('heading', {name: 'Saved dialogue'})).toBeDefined()
+  expect(screen.getByRole('link', {name: 'New dialogue'})).toBeDefined()
+  expect(screen.getByText('Yuna · 0:01 · 1 speech bubble')).toBeDefined()
+})
+
+it('should keep saved dialogue content full-width with bounded text and actions', () => {
+  vi.mocked(usePEvents).mockReturnValue(createEvents())
+
+  render(() => <PDialogueSettingsContent />, {wrapper: PreferenceProvider})
+
+  expect(screen.queryByRole('heading', {name: '이벤트별 대화'})).toBeNull()
+  expect(
+    screen.queryByText('여러 대화를 연결하고 이벤트별 재생 방식을 선택할 수 있어요.'),
+  ).toBeNull()
+  expect(screen.queryByRole('heading', {name: '내 대화'})).toBeNull()
+  expect(screen.queryByText('저장된 대화를 듣거나 관리할 수 있어요.')).toBeNull()
+  const library = screen.getByRole('list', {name: '저장된 대화'})
+  const summary = within(library).getByText(DIALOGUE.text)
+  const row = summary.parentElement?.parentElement
+  const listenButton = within(library).getByRole('button', {name: '듣기'})
+  const createLink = screen.getByRole('link', {name: '새 대화'})
+
+  expect(row?.className).toContain('flex-col')
+  expect(row?.className).toContain('items-stretch')
+  expect(summary.className).toContain('[-webkit-line-clamp:3]')
+  expect(listenButton.textContent).toBe('듣기')
+  expect(createLink.getAttribute('href')).toBe('/dialogue')
+  const inactiveEvent = screen.getByRole('heading', {name: '포모도르 집중 시작'}).closest('li')
+  const eventList = inactiveEvent?.parentElement
+  expect(inactiveEvent).not.toHaveAttribute('data-connected')
+  expect(eventList).toHaveClass('[&_>_li]:border-content-border', '[&_>_li]:bg-content-surface')
+  expect(within(library).getByRole('link', {name: '편집'}).getAttribute('href')).toBe(
+    '/dialogue?dialogueId=saved-dialogue',
+  )
+
+  fireEvent.click(within(library).getByRole('button', {name: '삭제'}))
+  const deleteConfirmation = within(library).getByRole('button', {name: '삭제 확인'})
+  expect(deleteConfirmation.hasAttribute('data-pomo-dialogue-delete-confirm')).toBe(true)
+  expect(deleteConfirmation.parentElement?.className).toContain(
+    '[&_[data-pomo-dialogue-delete-confirm]]:text-danger',
+  )
+})
+
+it('should hide learning dialogues only from the saved dialogue library', () => {
+  const manualDialogue = {
+    ...DIALOGUE,
+    audioKey: 'audio-manual',
+    id: 'manual-dialogue',
+    text: '직접 만든 대화',
+  } satisfies PDialogue
+  writeLanguageLearningSentences([
+    {
+      createdAt: '2026-08-29T00:00:00.000Z',
+      dialogueId: DIALOGUE.id,
+      language: 'ko',
+      tags: ['학습'],
+      text: DIALOGUE.text,
+      version: 1,
+    },
+  ])
+  vi.mocked(usePEvents).mockReturnValue(createEvents({dialogues: () => [DIALOGUE, manualDialogue]}))
+
+  render(() => <PDialogueSettingsContent />, {wrapper: PreferenceProvider})
+
+  const library = screen.getByRole('list', {name: '저장된 대화'})
+  expect(within(library).queryByText(DIALOGUE.text)).toBeNull()
+  expect(within(library).getByText(manualDialogue.text)).toBeDefined()
+  expect(PSelect).toHaveBeenCalledWith(
+    expect.objectContaining({
+      accessibleLabel: '입장 대화 및 행동 연결',
+      options: [
+        {
+          description: 'Yuna · 0:01 · 1개 말풍선',
+          label: DIALOGUE.text,
+          value: `dialogue:${DIALOGUE.id}`,
+        },
+        {
+          description: 'Yuna · 0:01 · 1개 말풍선',
+          label: manualDialogue.text,
+          value: `dialogue:${manualDialogue.id}`,
+        },
+        {
+          description: '현재 음악을 일시 정지해요.',
+          icon: 'i-tabler-player-stop',
+          label: '음악 종료',
+          value: 'action:music-stop',
+        },
+        {
+          description: '현재 음악을 재생해요.',
+          icon: 'i-tabler-player-play',
+          label: '음악 시작',
+          value: 'action:music-start',
+        },
+        {
+          description: '모든 효과음을 멈춰요.',
+          icon: 'i-tabler-volume-off',
+          label: '효과음 모두 끄기',
+          value: 'action:sound-effects-stop',
+        },
+        {
+          description: '모든 효과음을 다시 재생해요.',
+          icon: 'i-tabler-volume-2',
+          label: '효과음 모두 켜기',
+          value: 'action:sound-effects-start',
+        },
+      ],
+    }),
+  )
+})
+
+it('should apply compact spacing to dialogue settings groups', () => {
+  vi.mocked(usePEvents).mockReturnValue(createEvents())
+
+  render(() => <PDialogueSettingsContent />, {wrapper: PreferenceProvider})
+  const [list] = screen.getAllByRole('list')
+  const section = list?.parentElement
+
+  expect(section).toHaveClass('settings-compact:gap-4')
+  expect(list).toHaveClass('settings-compact:gap-2', 'settings-compact:[&_>_li]:gap-2')
+  expect(screen.queryByRole('region', {name: '기본 자동 음성 생성'})).not.toBeInTheDocument()
+})
+
+it('should use the theme surface for an empty dialogue library', () => {
+  vi.mocked(usePEvents).mockReturnValue(createEvents({dialogues: () => []}))
+
+  render(() => <PDialogueSettingsContent />, {wrapper: PreferenceProvider})
+
+  expect(screen.getByText('아직 저장된 대화가 없어요. 새 대화를 만들어 보세요.')).toHaveClass(
+    'bg-content-surface',
+  )
+})
+
+it('should offer and save a playback mode when an event has multiple dialogues', () => {
+  const secondDialogue = {
+    ...DIALOGUE,
+    audioKey: 'audio-second',
+    id: 'second-dialogue',
+    text: '두 번째 대화',
+  } satisfies PDialogue
+  const events = createEvents({
+    dialogues: () => [DIALOGUE, secondDialogue],
+    eventDialogueIds: () => ({'focus-start': [DIALOGUE.id, secondDialogue.id]}),
+    eventPlaybackModes: () => ({'focus-start': 'random-all'}),
+  })
+  vi.mocked(PSelect).mockImplementation((selectProps) => {
+    if (selectProps.multiple === true) {
+      const selectedOptions = selectProps.options.filter((option) =>
+        selectProps.value.includes(option.value),
+      )
+
+      return (
+        <button aria-label={selectProps.accessibleLabel} type="button">
+          {selectedOptions.length === 0
+            ? selectProps.placeholder
+            : selectProps.selectionLabel?.(selectedOptions)}
+        </button>
+      )
+    }
+
+    return (
+      <label>
+        {selectProps.label}
+        <select
+          aria-label={selectProps.accessibleLabel}
+          onChange={(event) => selectProps.onChange(event.currentTarget.value)}
+          value={selectProps.value}
+        >
+          <For each={selectProps.options}>
+            {(option) => <option value={option.value}>{option.label}</option>}
+          </For>
+        </select>
+      </label>
+    )
+  })
+  vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => undefined)
+  vi.spyOn(HTMLMediaElement.prototype, 'load').mockImplementation(() => undefined)
+  vi.mocked(usePEvents).mockReturnValue(events)
+
+  render(() => <PDialogueSettingsContent />, {wrapper: PreferenceProvider})
+
+  const modeSelect = screen.getByRole('combobox', {name: '포모도르 집중 시작 재생 방식'})
+  const modeLayout = modeSelect.parentElement?.parentElement?.parentElement
+  const modeControlLayout = modeLayout?.lastElementChild
+  expect((modeSelect as HTMLSelectElement).value).toBe('random-all')
+  expect(screen.getByText('발생 간격')).toBeInTheDocument()
+  expect(modeLayout?.firstElementChild).toHaveTextContent('재생 방식')
+  expect(screen.queryByText('대화 연결')).toBeNull()
+  expect(screen.queryByText('이 이벤트에서 재생할 대화를 선택해요.')).toBeNull()
+  expect(modeLayout?.classList).toContain('grid-cols-[minmax(12rem,_2fr)_minmax(16rem,_5fr)]')
+  expect(modeLayout?.classList).toContain('settings-compact:grid-cols-[1fr]')
+  expect(modeControlLayout?.classList).toContain('w-full')
+  expect(screen.getByText('2개 대화/행동 연결됨')).toBeDefined()
+  expect(screen.getAllByText('대화 또는 행동 선택')).toHaveLength(8)
+  expect(screen.getByRole('button', {name: '포모도르 집중 시작 대화 및 행동 연결'})).toBeDefined()
+  expect(screen.getByRole('button', {name: '포모도르 집중 종료 대화 및 행동 연결'})).toBeDefined()
+  expect(screen.getByRole('button', {name: '포모도르 휴식 시작 대화 및 행동 연결'})).toBeDefined()
+  expect(screen.getByRole('button', {name: '포모도르 휴식 종료 대화 및 행동 연결'})).toBeDefined()
+  expect(
+    screen.getByRole('button', {name: '포모도르 긴 휴식 시작 대화 및 행동 연결'}),
+  ).toBeDefined()
+  expect(
+    screen.getByRole('button', {name: '포모도르 긴 휴식 종료 대화 및 행동 연결'}),
+  ).toBeDefined()
+  expect(screen.getByRole('button', {name: '지정 시간 후 종료 대화 및 행동 연결'})).toBeDefined()
+  expect(screen.getByRole('button', {name: '랜덤 이벤트 대화 및 행동 연결'})).toBeDefined()
+  expect(
+    screen.queryByText('시작 버튼을 누른 뒤 지정한 시간이 지나면 연결한 대화와 행동을 실행'),
+  ).toBeNull()
+  expect(screen.queryByRole('switch', {name: '랜덤 이벤트 사용'})).toBeNull()
+  expect(screen.getByRole('button', {name: '입장 대화 및 행동 연결'})).toBeDefined()
+  expect(screen.getByText('이벤트가 발생할 때마다 모든 대화의 순서를 섞어요.')).toBeDefined()
+  expect(screen.queryByRole('list', {name: '포모도르 집중 시작 대화 재생 대상'})).toBeNull()
+
+  fireEvent.change(modeSelect, {target: {value: 'random-one'}})
+  expect(events.setEventPlaybackMode).toHaveBeenCalledWith('focus-start', 'random-one')
+})
+
+it('should queue a saved dialogue through the character without stopping existing playback', async () => {
+  const events = createEvents({getAudio: vi.fn(async () => new Blob(['audio']))})
+  const pauseAudio = vi
+    .spyOn(HTMLMediaElement.prototype, 'pause')
+    .mockImplementation(() => undefined)
+  const loadAudio = vi.spyOn(HTMLMediaElement.prototype, 'load').mockImplementation(() => undefined)
+  vi.mocked(usePEvents).mockReturnValue(events)
+
+  render(() => <PDialogueSettingsContent />, {
+    wrapper: PreferenceProvider,
+  })
+  fireEvent.click(screen.getByRole('button', {name: '캐릭터로 듣기'}))
+
+  expect(pauseAudio).toHaveBeenCalledOnce()
+  expect(loadAudio).toHaveBeenCalledOnce()
+  expect(events.onStopDialoguePlayback).not.toHaveBeenCalled()
+  await vi.waitFor(() => expect(events.playDialogue).toHaveBeenCalledWith(DIALOGUE.id))
+  expect(events.setEventItems).not.toHaveBeenCalled()
+})

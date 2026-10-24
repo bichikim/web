@@ -1,0 +1,70 @@
+import {render} from 'solid-js/web'
+
+import {PuppetEditor} from '../editor'
+import {EditorPortalProvider} from '../design-system'
+import {createEmptyDocument, type PuppetDocument} from '../player'
+
+export const PUPPET_EDITOR_TAG_NAME = 'puppet-editor'
+
+export class PuppetEditorElement extends HTMLElement {
+  #currentDocument = createEmptyDocument()
+  #dispose: (() => void) | null = null
+
+  get document(): PuppetDocument {
+    return this.#currentDocument
+  }
+
+  set document(document: PuppetDocument) {
+    this.#currentDocument = document
+
+    if (this.#dispose !== null) {
+      this.#dispose()
+      this.#dispose = null
+      this.connectedCallback()
+    }
+  }
+
+  connectedCallback() {
+    if (this.#dispose !== null) {
+      return
+    }
+
+    const shadowRoot = this.shadowRoot ?? this.attachShadow({mode: 'open'})
+
+    this.#dispose = render(
+      () => (
+        <EditorPortalProvider mount={shadowRoot}>
+          <PuppetEditor
+            initialDocument={this.#currentDocument}
+            onDocumentChange={(nextDocument) => {
+              this.#currentDocument = nextDocument
+              this.dispatchEvent(
+                new CustomEvent<PuppetDocument>('puppet-document-change', {
+                  bubbles: true,
+                  composed: true,
+                  detail: nextDocument,
+                }),
+              )
+            }}
+          />
+        </EditorPortalProvider>
+      ),
+      shadowRoot,
+    )
+  }
+
+  disconnectedCallback() {
+    this.#dispose?.()
+    this.#dispose = null
+  }
+
+  exportDocument(): PuppetDocument {
+    return this.#currentDocument
+  }
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'puppet-editor': PuppetEditorElement
+  }
+}

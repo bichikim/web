@@ -1,0 +1,57 @@
+import type {ChatContext, ChatWorkerRequest, ChatWorkerResponse} from './messages'
+import {createWorkerFailureHandler} from '../worker-failure'
+import type {TextModelId} from '../text-generation/model'
+import {createWorkerTransport} from 'src/utils/worker-transport'
+import {createCloudChatClient} from './create-cloud-chat-client'
+
+export interface CreateChatClientOptions {
+  readonly modelId: TextModelId
+  readonly onResponse: (response: ChatWorkerResponse) => void
+}
+
+export interface ChatClient {
+  readonly dispose: () => void
+  readonly generate: (context: ChatContext, replyId: string, options?: GenerateChatOptions) => void
+  readonly prepare: () => void
+}
+
+export interface GenerateChatOptions {
+  readonly refineAnswer?: boolean
+  readonly supplementaryContext?: string
+}
+
+/** Creates a local or cloud text client for one chat session. */
+export const createChatClient = (options: CreateChatClientOptions): ChatClient => {
+  if (options.modelId === 'cloud') {
+    return createCloudChatClient(options)
+  }
+  const worker = new Worker(new URL('./worker.ts', import.meta.url), {
+    name: 'pomo-chat',
+    type: 'module',
+  })
+  const transport = createWorkerTransport<ChatWorkerRequest, ChatWorkerResponse>({
+    onFailure: createWorkerFailureHandler({
+      fallbackDetail: '채팅 모델 Worker 실행 오류',
+      feature: 'chat-model',
+      onResponse: options.onResponse,
+    }),
+    onResponse: options.onResponse,
+    worker,
+  })
+
+  return {
+    dispose: transport.dispose,
+    generate: (context, replyId, generateOptions = {}) =>
+      transport.send({
+        context,
+        modelId: options.modelId,
+        refineAnswer: generateOptions.refineAnswer ?? true,
+        replyId,
+        ...(generateOptions.supplementaryContext === undefined
+          ? {}
+          : {supplementaryContext: generateOptions.supplementaryContext}),
+        type: 'generate',
+      }),
+    prepare: () => transport.send({modelId: options.modelId, type: 'prepare'}),
+  }
+}

@@ -1,0 +1,135 @@
+/** @vitest-environment jsdom */
+
+import {fireEvent, render, screen} from '@solidjs/testing-library'
+import {createSignal} from 'solid-js'
+import {afterEach, expect, it, vi} from 'vitest'
+
+import {
+  type AlbumDraftTranslation,
+  type AlbumDraftTranslations,
+  createEmptyAlbumTranslations,
+} from '../../../features/admin-music'
+
+const translate = vi.fn()
+const [isBusy, setIsBusy] = createSignal(false)
+const state = vi.fn<() => {readonly message?: string; readonly status: string}>(() => ({
+  status: 'idle',
+}))
+let complete: ((values: Partial<AlbumDraftTranslations>) => boolean | void) | undefined
+
+vi.mock('../../../features/album-translation/use-album-translation', () => ({
+  useAlbumTranslation: (options: {
+    readonly onComplete: (values: Partial<AlbumDraftTranslations>) => boolean | void
+  }) => {
+    complete = options.onComplete
+    return {isBusy, state, translate}
+  },
+}))
+
+import {AlbumTranslationFields} from '../AlbumTranslationFields'
+
+const renderFields = (initial = createEmptyAlbumTranslations()) => {
+  const [values, setValues] = createSignal(initial)
+  const onValuesChange = vi.fn(setValues)
+  const view = render(() => (
+    <AlbumTranslationFields onValuesChange={onValuesChange} values={values()} />
+  ))
+  return {onValuesChange, values, view}
+}
+
+afterEach(() => {
+  vi.clearAllMocks()
+  setIsBusy(false)
+  state.mockReturnValue({status: 'idle'})
+  complete = undefined
+})
+
+it('should edit localized fields, translate Korean input, and merge completed drafts', () => {
+  const initial = createEmptyAlbumTranslations()
+  initial.ko = {description: '설명', title: '밤'}
+  state.mockReturnValue({status: 'complete'})
+  const {onValuesChange, view} = renderFields(initial)
+
+  const translationSummary = view.container.querySelector('details > summary')
+  expect(translationSummary).toBeVisible()
+  expect(translationSummary?.tagName).toBe('SUMMARY')
+  expect(translationSummary).not.toHaveAttribute('role')
+  expect(translationSummary?.closest('[aria-hidden="true"], [inert]')).toBeNull()
+  expect(translationSummary).toHaveTextContent('다국어 제목·설명 선택')
+  expect(translationSummary).toHaveAccessibleName('다국어 제목·설명 선택')
+  fireEvent.click(translationSummary!)
+  expect(view.container.querySelector('details')).toHaveAttribute('open')
+
+  fireEvent.input(screen.getAllByLabelText(/^앨범명/u)[1]!, {target: {value: 'Night'}})
+  fireEvent.input(screen.getAllByLabelText(/^설명/u)[1]!, {target: {value: 'Description'}})
+  const translateButton = screen.getByText('한국어에서 자동 번역', {exact: true}).closest('button')
+  expect(translateButton).toBeVisible()
+  expect(translateButton).not.toHaveAttribute('role')
+  expect(translateButton?.closest('[aria-hidden="true"], [inert]')).toBeNull()
+  expect(translateButton).toHaveAccessibleName('한국어에서 자동 번역')
+  fireEvent.click(translateButton!)
+  expect(translate).toHaveBeenCalledWith(initial.ko)
+  expect(onValuesChange).toHaveBeenCalledWith(
+    expect.objectContaining({en: expect.objectContaining({description: 'Description'})}),
+  )
+
+  const japanese: AlbumDraftTranslation = {description: '説明', title: '夜'}
+  complete?.({ja: japanese})
+  expect(onValuesChange).toHaveBeenLastCalledWith(expect.objectContaining({ja: japanese}))
+  expect(screen.getByText(/번역 초안을 채웠습니다/u)).toBeInTheDocument()
+})
+
+it('should ignore translations generated from Korean text edited during translation', () => {
+  const initial = createEmptyAlbumTranslations()
+  initial.ko = {description: '기존 설명', title: '기존 제목'}
+  const {onValuesChange, values} = renderFields(initial)
+
+  fireEvent.click(screen.getByRole('button', {name: '한국어에서 자동 번역'}))
+  fireEvent.input(screen.getAllByLabelText(/^앨범명/u)[0]!, {target: {value: '수정한 제목'}})
+  fireEvent.input(screen.getAllByLabelText(/^설명/u)[0]!, {target: {value: '수정한 설명'}})
+
+  expect(
+    complete?.({
+      en: {description: 'old en description', title: 'old en title'},
+      ja: {description: 'old ja description', title: 'old ja title'},
+      'zh-Hans': {description: 'old zh description', title: 'old zh title'},
+    }),
+  ).toBe(false)
+
+  expect(onValuesChange).toHaveBeenCalled()
+  expect(values().ko).toEqual({description: '수정한 설명', title: '수정한 제목'})
+  expect(values().en).toEqual({description: '', title: ''})
+  expect(values().ja).toEqual({description: '', title: ''})
+  expect(values()['zh-Hans']).toEqual({description: '', title: ''})
+})
+
+it.each([
+  ['error', '실패'],
+  ['generating', '생성 중'],
+  ['loading', '불러오는 중'],
+] as const)('should display the %s translation message', (status, message) => {
+  state.mockReturnValue({message, status})
+  renderFields()
+
+  expect(screen.getByText(message)).toBeInTheDocument()
+})
+
+it('should display unsupported, busy, internally idle, and unexpected states safely', () => {
+  state.mockReturnValue({status: 'unsupported'})
+  const first = renderFields()
+  expect(screen.getByText(/WebGPU/u)).toBeInTheDocument()
+  first.onValuesChange.mockClear()
+
+  setIsBusy(true)
+  expect(screen.getByRole('button', {name: 'Gemma 4 번역 중…'})).toBeDisabled()
+
+  state.mockReset()
+  state.mockReturnValueOnce({status: 'complete'}).mockReturnValueOnce({status: 'idle'})
+  const second = renderFields()
+  expect(second.values().ko.title).toBe('')
+
+  state.mockReset()
+  state.mockReturnValueOnce({status: 'complete'}).mockReturnValue({status: 'unexpected'})
+  renderFields()
+  expect(screen.getAllByText('한국어 기본 정보')).toHaveLength(3)
+})

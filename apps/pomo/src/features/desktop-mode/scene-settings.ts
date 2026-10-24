@@ -1,0 +1,256 @@
+import {isPlainObject} from 'es-toolkit/predicate'
+import {type Accessor, onCleanup, onMount} from 'solid-js'
+
+import type {PSceneMotionInput, PSceneMotionMode, PSceneStyle} from '../focus-room-animation'
+import {parseSceneStyle} from '../focus-room-animation/parse-scene-style'
+import type {PActivity, PGaze} from '../focus-room-scene-preferences'
+import type {SceneTimeMode} from '../focus-room-time'
+import type {ScreenSaverDelay} from '../screen-saver'
+import {
+  LEGACY_WEATHER_LOCATIONS,
+  WEATHER_SCENE_MODES,
+  type WeatherCitySlug,
+  type WeatherLocation,
+  weatherLocationSchema,
+  type WeatherSceneMode,
+} from '../weather'
+
+const SCENE_SETTINGS_CHANNEL = 'pomo:desktop-scene-settings'
+
+type DesktopSceneSetting =
+  | {readonly name: 'activity'; readonly value: PActivity}
+  | {readonly name: 'gaze'; readonly value: PGaze}
+  | {readonly name: 'motionInput'; readonly value: PSceneMotionInput}
+  | {readonly name: 'motionMode'; readonly value: PSceneMotionMode}
+  | {readonly name: 'sceneStyle'; readonly value: PSceneStyle}
+  | {readonly name: 'screenSaverDelay'; readonly value: ScreenSaverDelay}
+  | {readonly name: 'timeMode'; readonly value: SceneTimeMode}
+  | {readonly name: 'weatherCity'; readonly value: WeatherCitySlug}
+  | {readonly name: 'weatherEnabled'; readonly value: boolean}
+  | {readonly name: 'weatherLocation'; readonly value: WeatherLocation}
+  | {readonly name: 'weatherSceneMode'; readonly value: WeatherSceneMode}
+
+interface LegacyDesktopSceneTimeModeSetting {
+  readonly name: 'timeMode'
+  readonly value: 'evening'
+}
+
+type DesktopSceneSettingMessage = DesktopSceneSetting | LegacyDesktopSceneTimeModeSetting
+
+export interface DesktopSceneSettingsHandlers {
+  readonly onActivityChange?: (value: PActivity) => void
+  readonly onGazeChange?: (value: PGaze) => void
+  readonly onMotionInputChange?: (value: PSceneMotionInput) => void
+  readonly onMotionModeChange?: (value: PSceneMotionMode) => void
+  readonly onSceneStyleChange?: (value: PSceneStyle) => void
+  readonly onScreenSaverDelayChange?: (value: ScreenSaverDelay) => void
+  readonly onTimeModeChange?: (value: SceneTimeMode) => void
+  readonly onWeatherEnabledChange?: (value: boolean) => void
+  readonly onWeatherLocationChange?: (value: WeatherLocation) => void
+  readonly onWeatherSceneModeChange?: (value: WeatherSceneMode) => void
+}
+
+export interface DesktopSceneSettingsPublisher {
+  readonly publish: (setting: DesktopSceneSetting) => void
+}
+
+export interface UseDesktopSceneSettingsPublisherProps {
+  readonly handlers?: DesktopSceneSettingsHandlers
+  readonly requestSnapshot?: boolean
+  readonly snapshot?: Accessor<ReadonlyArray<DesktopSceneSetting>>
+}
+
+type DesktopWeatherSceneSetting = Extract<
+  DesktopSceneSetting,
+  {readonly name: 'weatherCity' | 'weatherEnabled' | 'weatherLocation' | 'weatherSceneMode'}
+>
+
+const isOneOf = <TValue extends string>(
+  value: unknown,
+  options: ReadonlyArray<TValue>,
+): value is TValue => typeof value === 'string' && options.includes(value as TValue)
+
+const isDesktopSceneSetting = (value: unknown): value is DesktopSceneSettingMessage => {
+  if (!isPlainObject(value) || !('name' in value) || !('value' in value)) {
+    return false
+  }
+
+  const setting = value as {readonly name: unknown; readonly value: unknown}
+  switch (setting.name) {
+    case 'activity':
+      return isOneOf(setting.value, ['reading', 'typing', 'writing'])
+    case 'gaze':
+      return isOneOf(setting.value, ['focused', 'user'])
+    case 'motionInput':
+      return isOneOf(setting.value, ['drag', 'gyroscope'])
+    case 'motionMode':
+      return isOneOf(setting.value, ['depth', 'pan'])
+    case 'sceneStyle':
+      return parseSceneStyle(setting.value) !== null
+    case 'screenSaverDelay':
+      return import.meta.env.DEV
+        ? isOneOf(setting.value, ['off', '5s', '1m', '10m', '20m', '1h'])
+        : isOneOf(setting.value, ['off', '1m', '10m', '20m', '1h'])
+    case 'timeMode':
+      return isOneOf(setting.value, ['auto', 'day', 'evening', 'night'])
+    case 'weatherCity':
+      return isOneOf(setting.value, [
+        'busan',
+        'daegu',
+        'daejeon',
+        'gwangju',
+        'incheon',
+        'jeju',
+        'seoul',
+        'ulsan',
+      ])
+    case 'weatherEnabled':
+      return typeof setting.value === 'boolean'
+    case 'weatherLocation':
+      return weatherLocationSchema.safeParse(setting.value).success
+    case 'weatherSceneMode':
+      return isOneOf(setting.value, WEATHER_SCENE_MODES)
+    default:
+      return false
+  }
+}
+
+interface DesktopSceneSnapshot {
+  readonly type: 'snapshot'
+  readonly settings: ReadonlyArray<DesktopSceneSettingMessage>
+}
+
+const isDesktopSceneSnapshot = (value: unknown): value is DesktopSceneSnapshot =>
+  isPlainObject(value) &&
+  'type' in value &&
+  value.type === 'snapshot' &&
+  'settings' in value &&
+  Array.isArray(value.settings) &&
+  value.settings.every(isDesktopSceneSetting)
+
+const applyDesktopWeatherSceneSetting = (
+  handlers: DesktopSceneSettingsHandlers,
+  setting: DesktopWeatherSceneSetting,
+) => {
+  switch (setting.name) {
+    case 'weatherCity':
+      handlers.onWeatherLocationChange?.(LEGACY_WEATHER_LOCATIONS[setting.value])
+      return
+    case 'weatherEnabled':
+      handlers.onWeatherEnabledChange?.(setting.value)
+      return
+    case 'weatherLocation':
+      handlers.onWeatherLocationChange?.(setting.value)
+      return
+    case 'weatherSceneMode':
+      handlers.onWeatherSceneModeChange?.(setting.value)
+  }
+}
+
+const applyDesktopSceneSetting = (
+  handlers: DesktopSceneSettingsHandlers,
+  setting: DesktopSceneSettingMessage,
+) => {
+  switch (setting.name) {
+    case 'activity':
+      handlers.onActivityChange?.(setting.value)
+      return
+    case 'gaze':
+      handlers.onGazeChange?.(setting.value)
+      return
+    case 'motionInput':
+      handlers.onMotionInputChange?.(setting.value)
+      return
+    case 'motionMode':
+      handlers.onMotionModeChange?.(setting.value)
+      return
+    case 'sceneStyle':
+      handlers.onSceneStyleChange?.(setting.value)
+      return
+    case 'screenSaverDelay':
+      handlers.onScreenSaverDelayChange?.(setting.value)
+      return
+    case 'timeMode':
+      handlers.onTimeModeChange?.(setting.value === 'evening' ? 'night' : setting.value)
+      return
+    case 'weatherCity':
+    case 'weatherEnabled':
+    case 'weatherLocation':
+    case 'weatherSceneMode':
+      applyDesktopWeatherSceneSetting(handlers, setting)
+  }
+}
+
+/** Applies validated scene-setting changes sent by another desktop WebView. */
+export const useDesktopSceneSettingsListener = (handlers: DesktopSceneSettingsHandlers): void => {
+  onMount(() => {
+    if (!(import.meta.env.VITE_POMO_IS_DESKTOP === 'true')) {
+      return
+    }
+
+    const channel = new BroadcastChannel(SCENE_SETTINGS_CHANNEL)
+    channel.addEventListener('message', (event) => {
+      if (isDesktopSceneSetting(event.data)) {
+        applyDesktopSceneSetting(handlers, event.data)
+      }
+    })
+    onCleanup(() => channel.close())
+  })
+}
+
+/** Publishes changes and optionally receives remote changes on the same desktop channel. */
+export const useDesktopSceneSettingsPublisher = (
+  props: UseDesktopSceneSettingsPublisherProps = {},
+): DesktopSceneSettingsPublisher => {
+  let channel: BroadcastChannel | null = null
+  const editedSettings = new Set<DesktopSceneSetting['name']>()
+  let awaitingSnapshot = props.requestSnapshot === true
+
+  onMount(() => {
+    if (!(import.meta.env.VITE_POMO_IS_DESKTOP === 'true')) {
+      return
+    }
+
+    channel = new BroadcastChannel(SCENE_SETTINGS_CHANNEL)
+    channel.addEventListener('message', (event) => {
+      if (event.data === 'request-snapshot') {
+        const settings = props.snapshot?.()
+        if (settings !== undefined) {
+          channel?.postMessage({settings, type: 'snapshot'})
+        }
+        return
+      }
+      const {handlers} = props
+      const message: unknown = event.data
+      if (isDesktopSceneSnapshot(message)) {
+        if (awaitingSnapshot && handlers !== undefined) {
+          awaitingSnapshot = false
+          for (const setting of message.settings) {
+            if (!editedSettings.has(setting.name)) {
+              applyDesktopSceneSetting(handlers, setting)
+            }
+          }
+        }
+        return
+      }
+      if (handlers !== undefined && isDesktopSceneSetting(event.data)) {
+        editedSettings.add(event.data.name)
+        applyDesktopSceneSetting(handlers, event.data)
+      }
+    })
+    if (props.requestSnapshot) {
+      channel.postMessage('request-snapshot')
+    }
+    onCleanup(() => {
+      channel?.close()
+      channel = null
+    })
+  })
+
+  return {
+    publish: (setting) => {
+      editedSettings.add(setting.name)
+      channel?.postMessage(setting)
+    },
+  }
+}

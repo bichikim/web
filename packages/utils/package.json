@@ -1,0 +1,102 @@
+{
+  "name": "@winter-love/utils",
+  "version": "1.0.38",
+  "description": "Useful javascript utils",
+  "keywords": [
+    "functional",
+    "typescript",
+    "utils"
+  ],
+  "license": "AGPL-3.0-only",
+  "author": "bichi@live.co.kr",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bichikim/web.git",
+    "directory": "packages/utils"
+  },
+  "source": "src/index.ts",
+  "files": [
+    "dist"
+  ],
+  "sideEffects": false,
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "unpkg": "dist/index.global.js",
+  "jsdelivr": "dist/index.global.js",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    },
+    "./browser/scheduling/request-idle-callback/*": {
+      "types": "./dist/browser/scheduling/request-idle-callback/*.d.ts",
+      "import": "./dist/browser/scheduling/request-idle-callback/*.mjs",
+      "require": "./dist/browser/scheduling/request-idle-callback/*.js",
+      "default": "./dist/browser/scheduling/request-idle-callback/*.mjs"
+    },
+    "./core/types/shared/*": {
+      "types": "./dist/core/types/shared/*.d.ts"
+    },
+    "./data/path/url/*": {
+      "types": "./dist/data/path/url/*.d.ts",
+      "import": "./dist/data/path/url/*.mjs",
+      "require": "./dist/data/path/url/*.js",
+      "default": "./dist/data/path/url/*.mjs"
+    },
+    "./domain/spatial-navigation/neighbor/*": {
+      "types": "./dist/domain/spatial-navigation/neighbor/*.d.ts",
+      "import": "./dist/domain/spatial-navigation/neighbor/*.mjs",
+      "require": "./dist/domain/spatial-navigation/neighbor/*.js",
+      "default": "./dist/domain/spatial-navigation/neighbor/*.mjs"
+    },
+    "./*": {
+      "types": "./dist/*/index.d.ts",
+      "import": "./dist/*/index.mjs",
+      "require": "./dist/*/index.js",
+      "default": "./dist/*/index.mjs"
+    }
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "vite build",
+    "build:dev": "vite build --minify false",
+    "prepare-build": "pnpm run build",
+    "typecheck": "tsc --noEmit",
+    "dev": "vite build --watch --minify false"
+  },
+  "dependencies": {
+    "es-toolkit": "catalog:",
+    "safe-stable-stringify": "^2.5.0",
+    "scroll-into-view-if-needed": "^3.1.0",
+    "smooth-scroll-into-view-if-needed": "^2.0.2"
+  },
+  "devDependencies": {
+    "@types/js-cookie": "catalog:",
+    "@types/node": "catalog:",
+    "@winter-love/vite-lib-config": "workspace:*",
+    "js-cookie": "catalog:",
+    "micro-memoize": "^4.2.0",
+    "solid-js": "catalog:",
+    "tsd": "^0.31.2",
+    "typescript": "catalog:",
+    "vite": "catalog:"
+  },
+  "tsup": {
+    "entry": [
+      "src/index.ts"
+    ],
+    "clean": true,
+    "format": [
+      "cjs",
+      "esm",
+      "iife"
+    ],
+    "outDir": "dist",
+    "sourcemap": true,
+    "splitting": false
+  }
+}

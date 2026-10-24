@@ -1,0 +1,7 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "runtime",
+  "description": "Allows the runtime harness windows to exercise the desktop surface plugin.",
+  "windows": ["background", "controls"],
+  "permissions": ["core:default", "desktop-surface:default"]
+}

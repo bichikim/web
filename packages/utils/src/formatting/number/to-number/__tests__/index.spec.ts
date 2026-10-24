@@ -1,0 +1,76 @@
+import {toNumber, toNumberOrUndefined} from '../'
+import {describe, expect, it} from 'vitest'
+
+describe('to-number', () => {
+  it('should return number with a string number', () => {
+    const result = toNumber('20')
+
+    expect(result).toBe(20)
+  })
+
+  it('should return number with a string but no number', () => {
+    const result = toNumber('foo', 20)
+
+    expect(result).toBe(20)
+  })
+
+  it('should return number with a function but no number', () => {
+    const result = toNumber(() => 'foo', 20)
+
+    expect(result).toBe(20)
+  })
+
+  it('should return number with an object but no number', () => {
+    const result = toNumber({name: 'foo'}, 20)
+
+    expect(result).toBe(20)
+  })
+
+  it('should return number with a number', () => {
+    const result = toNumber(20)
+
+    expect(result).toBe(20)
+  })
+
+  it('should return the fallback with a symbol', () => {
+    const result = toNumber(Symbol('value'), 20)
+
+    expect(result).toBe(20)
+  })
+})
+
+describe('to-number-or-undefined', () => {
+  it('should return number if value is a number', () => {
+    const result = toNumberOrUndefined(20)
+
+    expect(result).toBe(20)
+  })
+
+  it('should return undefined if value is not a number', () => {
+    const result = toNumberOrUndefined('foo')
+
+    expect(result).toBeUndefined()
+  })
+
+  it('should return undefined if value is a function', () => {
+    const result = toNumberOrUndefined(() => 'foo')
+
+    expect(result).toBeUndefined()
+  })
+
+  it('should return undefined if value is an object', () => {
+    const result = toNumberOrUndefined({name: 'foo'})
+
+    expect(result).toBeUndefined()
+  })
+
+  it('should return undefined if number conversion throws', () => {
+    const result = toNumberOrUndefined({
+      valueOf: () => {
+        throw new Error('conversion failed')
+      },
+    })
+
+    expect(result).toBeUndefined()
+  })
+})

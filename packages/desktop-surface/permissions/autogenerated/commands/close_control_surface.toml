@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-close-control-surface"
+description = "Enables the close_control_surface command without any pre-configured scope."
+commands.allow = ["close_control_surface"]
+
+[[permission]]
+identifier = "deny-close-control-surface"
+description = "Denies the close_control_surface command without any pre-configured scope."
+commands.deny = ["close_control_surface"]

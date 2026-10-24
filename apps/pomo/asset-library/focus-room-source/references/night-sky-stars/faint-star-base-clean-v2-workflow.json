@@ -1,0 +1,272 @@
+{
+  "1": {
+    "class_type": "LoadImage",
+    "inputs": {"image": "pomo-night-reading-faint-trial-source.png"}
+  },
+  "10": {
+    "class_type": "LoadImage",
+    "inputs": {"image": "pomo-faint-star-mask-01.png"}
+  },
+  "11": {
+    "class_type": "ImageToMask",
+    "inputs": {"channel": "red", "image": ["10", 0]}
+  },
+  "12": {
+    "class_type": "CropMask",
+    "inputs": {"height": 16, "mask": ["11", 0], "width": 16, "x": 535, "y": 52}
+  },
+  "13": {
+    "class_type": "PrimitiveBoundingBox",
+    "inputs": {"height": 16, "width": 16, "x": 559, "y": 52}
+  },
+  "14": {
+    "class_type": "ImageCropV2",
+    "inputs": {"crop_region": ["13", 0], "image": ["1", 0]}
+  },
+  "15": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["1", 0],
+      "mask": ["12", 0],
+      "resize_source": false,
+      "source": ["14", 0],
+      "x": 535,
+      "y": 52
+    }
+  },
+  "20": {
+    "class_type": "LoadImage",
+    "inputs": {"image": "pomo-faint-star-mask-02.png"}
+  },
+  "21": {
+    "class_type": "ImageToMask",
+    "inputs": {"channel": "red", "image": ["20", 0]}
+  },
+  "22": {
+    "class_type": "CropMask",
+    "inputs": {"height": 16, "mask": ["21", 0], "width": 16, "x": 449, "y": 83}
+  },
+  "23": {
+    "class_type": "PrimitiveBoundingBox",
+    "inputs": {"height": 16, "width": 16, "x": 473, "y": 83}
+  },
+  "24": {
+    "class_type": "ImageCropV2",
+    "inputs": {"crop_region": ["23", 0], "image": ["1", 0]}
+  },
+  "25": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["15", 0],
+      "mask": ["22", 0],
+      "resize_source": false,
+      "source": ["24", 0],
+      "x": 449,
+      "y": 83
+    }
+  },
+  "30": {
+    "class_type": "LoadImage",
+    "inputs": {"image": "pomo-faint-star-mask-03.png"}
+  },
+  "31": {
+    "class_type": "ImageToMask",
+    "inputs": {"channel": "red", "image": ["30", 0]}
+  },
+  "32": {
+    "class_type": "CropMask",
+    "inputs": {"height": 16, "mask": ["31", 0], "width": 16, "x": 601, "y": 12}
+  },
+  "33": {
+    "class_type": "PrimitiveBoundingBox",
+    "inputs": {"height": 16, "width": 16, "x": 577, "y": 12}
+  },
+  "34": {
+    "class_type": "ImageCropV2",
+    "inputs": {"crop_region": ["33", 0], "image": ["1", 0]}
+  },
+  "35": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["25", 0],
+      "mask": ["32", 0],
+      "resize_source": false,
+      "source": ["34", 0],
+      "x": 601,
+      "y": 12
+    }
+  },
+  "40": {
+    "class_type": "LoadImage",
+    "inputs": {"image": "pomo-faint-star-mask-04.png"}
+  },
+  "41": {
+    "class_type": "ImageToMask",
+    "inputs": {"channel": "red", "image": ["40", 0]}
+  },
+  "42": {
+    "class_type": "CropMask",
+    "inputs": {"height": 16, "mask": ["41", 0], "width": 16, "x": 792, "y": 46}
+  },
+  "43": {
+    "class_type": "PrimitiveBoundingBox",
+    "inputs": {"height": 16, "width": 16, "x": 816, "y": 46}
+  },
+  "44": {
+    "class_type": "ImageCropV2",
+    "inputs": {"crop_region": ["43", 0], "image": ["1", 0]}
+  },
+  "45": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["35", 0],
+      "mask": ["42", 0],
+      "resize_source": false,
+      "source": ["44", 0],
+      "x": 792,
+      "y": 46
+    }
+  },
+  "50": {
+    "class_type": "LoadImage",
+    "inputs": {"image": "pomo-faint-star-mask-05.png"}
+  },
+  "51": {
+    "class_type": "ImageToMask",
+    "inputs": {"channel": "red", "image": ["50", 0]}
+  },
+  "52": {
+    "class_type": "CropMask",
+    "inputs": {"height": 16, "mask": ["51", 0], "width": 16, "x": 776, "y": 101}
+  },
+  "53": {
+    "class_type": "PrimitiveBoundingBox",
+    "inputs": {"height": 16, "width": 16, "x": 752, "y": 101}
+  },
+  "54": {
+    "class_type": "ImageCropV2",
+    "inputs": {"crop_region": ["53", 0], "image": ["1", 0]}
+  },
+  "55": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["45", 0],
+      "mask": ["52", 0],
+      "resize_source": false,
+      "source": ["54", 0],
+      "x": 776,
+      "y": 101
+    }
+  },
+  "60": {
+    "class_type": "LoadImage",
+    "inputs": {"image": "pomo-faint-star-mask-06.png"}
+  },
+  "61": {
+    "class_type": "ImageToMask",
+    "inputs": {"channel": "red", "image": ["60", 0]}
+  },
+  "62": {
+    "class_type": "CropMask",
+    "inputs": {"height": 16, "mask": ["61", 0], "width": 16, "x": 715, "y": 126}
+  },
+  "63": {
+    "class_type": "PrimitiveBoundingBox",
+    "inputs": {"height": 16, "width": 16, "x": 739, "y": 126}
+  },
+  "64": {
+    "class_type": "ImageCropV2",
+    "inputs": {"crop_region": ["63", 0], "image": ["1", 0]}
+  },
+  "65": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["55", 0],
+      "mask": ["62", 0],
+      "resize_source": false,
+      "source": ["64", 0],
+      "x": 715,
+      "y": 126
+    }
+  },
+  "70": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "filename_prefix": "pomo-faint-star-trial/base-faint-stars-removed-v2",
+      "images": ["65", 0]
+    }
+  },
+  "71": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["65", 0],
+      "mask": ["11", 0],
+      "resize_source": false,
+      "source": ["1", 0],
+      "x": 0,
+      "y": 0
+    }
+  },
+  "72": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["71", 0],
+      "mask": ["21", 0],
+      "resize_source": false,
+      "source": ["1", 0],
+      "x": 0,
+      "y": 0
+    }
+  },
+  "73": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["72", 0],
+      "mask": ["31", 0],
+      "resize_source": false,
+      "source": ["1", 0],
+      "x": 0,
+      "y": 0
+    }
+  },
+  "74": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["73", 0],
+      "mask": ["41", 0],
+      "resize_source": false,
+      "source": ["1", 0],
+      "x": 0,
+      "y": 0
+    }
+  },
+  "75": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["74", 0],
+      "mask": ["51", 0],
+      "resize_source": false,
+      "source": ["1", 0],
+      "x": 0,
+      "y": 0
+    }
+  },
+  "76": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["75", 0],
+      "mask": ["61", 0],
+      "resize_source": false,
+      "source": ["1", 0],
+      "x": 0,
+      "y": 0
+    }
+  },
+  "77": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "filename_prefix": "pomo-faint-star-trial/faint-stars-all-on-single-v2",
+      "images": ["76", 0]
+    }
+  }
+}

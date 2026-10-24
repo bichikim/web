@@ -1,0 +1,148 @@
+{
+  "1": {
+    "class_type": "LoadImage",
+    "inputs": {"image": "layer-head-eye-base (1).png"}
+  },
+  "2": {
+    "class_type": "LoadImage",
+    "inputs": {"image": "exec-d2ad4937-645e-4591-a5be-7f00f2a96d8c.png"}
+  },
+  "3": {
+    "class_type": "LoadImage",
+    "inputs": {"image": "exec-22d6cf08-b496-43ea-ae66-390267e807c7.png"}
+  },
+  "4": {
+    "class_type": "LoadImage",
+    "inputs": {"image": "exec-4525775a-b8ce-4b40-98c3-99309e97ba3d.png"}
+  },
+  "5": {
+    "class_type": "ImageCrop",
+    "inputs": {"image": ["2", 0], "width": 24, "height": 20, "x": 1034, "y": 320}
+  },
+  "6": {
+    "class_type": "ImageCrop",
+    "inputs": {"image": ["3", 0], "width": 24, "height": 20, "x": 1034, "y": 320}
+  },
+  "7": {
+    "class_type": "ImageCrop",
+    "inputs": {"image": ["4", 0], "width": 24, "height": 20, "x": 1034, "y": 320}
+  },
+  "8": {
+    "class_type": "SolidMask",
+    "inputs": {"value": 1, "width": 24, "height": 20}
+  },
+  "9": {
+    "class_type": "FeatherMask",
+    "inputs": {"mask": ["8", 0], "left": 4, "top": 4, "right": 4, "bottom": 4}
+  },
+  "10": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["2", 0],
+      "source": ["5", 0],
+      "x": 1034,
+      "y": 338,
+      "resize_source": false,
+      "mask": ["9", 0]
+    }
+  },
+  "11": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["3", 0],
+      "source": ["6", 0],
+      "x": 1034,
+      "y": 338,
+      "resize_source": false,
+      "mask": ["9", 0]
+    }
+  },
+  "12": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["4", 0],
+      "source": ["7", 0],
+      "x": 1034,
+      "y": 338,
+      "resize_source": false,
+      "mask": ["9", 0]
+    }
+  },
+  "13": {
+    "class_type": "ImageCrop",
+    "inputs": {"image": ["10", 0], "width": 100, "height": 45, "x": 965, "y": 344}
+  },
+  "14": {
+    "class_type": "ImageCrop",
+    "inputs": {"image": ["11", 0], "width": 100, "height": 45, "x": 965, "y": 344}
+  },
+  "15": {
+    "class_type": "ImageCrop",
+    "inputs": {"image": ["12", 0], "width": 100, "height": 45, "x": 965, "y": 344}
+  },
+  "16": {
+    "class_type": "SolidMask",
+    "inputs": {"value": 1, "width": 100, "height": 45}
+  },
+  "17": {
+    "class_type": "FeatherMask",
+    "inputs": {"mask": ["16", 0], "left": 7, "top": 7, "right": 7, "bottom": 7}
+  },
+  "18": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["1", 0],
+      "source": ["13", 0],
+      "x": 965,
+      "y": 344,
+      "resize_source": false,
+      "mask": ["17", 0]
+    }
+  },
+  "19": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["1", 0],
+      "source": ["14", 0],
+      "x": 965,
+      "y": 344,
+      "resize_source": false,
+      "mask": ["17", 0]
+    }
+  },
+  "20": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["1", 0],
+      "source": ["15", 0],
+      "x": 965,
+      "y": 344,
+      "resize_source": false,
+      "mask": ["17", 0]
+    }
+  },
+  "21": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {"image": ["18", 0], "alpha": ["1", 1]}
+  },
+  "22": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {"image": ["19", 0], "alpha": ["1", 1]}
+  },
+  "23": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {"image": ["20", 0], "alpha": ["1", 1]}
+  },
+  "24": {
+    "class_type": "SaveImage",
+    "inputs": {"images": ["21", 0], "filename_prefix": "pomo_closed_head_v3_a"}
+  },
+  "25": {
+    "class_type": "SaveImage",
+    "inputs": {"images": ["22", 0], "filename_prefix": "pomo_closed_head_v3_b"}
+  },
+  "26": {
+    "class_type": "SaveImage",
+    "inputs": {"images": ["23", 0], "filename_prefix": "pomo_closed_head_v3_c"}
+  }
+}

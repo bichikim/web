@@ -1,0 +1,444 @@
+import {createRoot, createSignal} from 'solid-js'
+import {describe, expect, it, vi} from 'vitest'
+
+import {type ChatVoiceController, type ChatVoiceRuntime, useChatVoice} from '../index'
+import {
+  type CreateSupertonicAudioPlayerOptions,
+  type InitializeSupertonicOptions,
+  type SupertonicAudioPlayer,
+  type SupertonicClient,
+} from '../../supertonic'
+import {failureResult, successResult} from 'src/features/result'
+import {type PViseme} from '../../lip-sync'
+
+vi.mock('solid-js', async () => {
+  const actual = await vi.importActual<typeof import('solid-js')>('solid-js')
+
+  return {...actual, createSignal: vi.fn(actual.createSignal)}
+})
+
+const SAMPLE_RATE = 24_000
+
+interface ChatVoiceTestRoot {
+  readonly controller: ChatVoiceController
+  readonly dispose: () => void
+}
+
+interface TestAudioPlayer extends SupertonicAudioPlayer {
+  readonly end: () => void
+  readonly viseme: (viseme: PViseme) => void
+}
+
+const createAudio = () => ({
+  generationTime: 100,
+  sampleRate: SAMPLE_RATE,
+  samples: Float32Array.of(0.1),
+})
+
+const createAudioChunk = () => ({...createAudio(), index: 0, total: 1})
+
+const createClient = (): SupertonicClient => ({
+  cancelGeneration: vi.fn(),
+  dispose: vi.fn(),
+  generate: vi.fn(async () => successResult(createAudio())),
+  generateStream: vi.fn(async function* generateStream() {
+    yield successResult({audio: createAudioChunk(), type: 'chunk' as const})
+    yield successResult({audio: createAudio(), type: 'complete' as const})
+  }),
+  initialize: vi.fn(async (options) => {
+    options.onProgress({fileName: '음성 모델', loadedBytes: 1, totalBytes: 2})
+    return successResult(undefined)
+  }),
+})
+
+const createAudioPlayer = (options: CreateSupertonicAudioPlayerOptions): TestAudioPlayer => ({
+  dispose: vi.fn(),
+  end: () => options.onPlaybackEnd?.(),
+  enqueue: vi.fn(),
+  finish: vi.fn(),
+  viseme: (viseme) => options.onVisemeChange?.(viseme),
+})
+
+const createRuntime = (client: SupertonicClient) => {
+  const players: Array<TestAudioPlayer> = []
+  const runtime: ChatVoiceRuntime = {
+    createAudioPlayer: (options) => {
+      const player = createAudioPlayer(options)
+      players.push(player)
+      return player
+    },
+    createClient: () => client,
+  }
+
+  return {players, runtime}
+}
+
+const createTestRoot = (runtime: ChatVoiceRuntime): ChatVoiceTestRoot => {
+  let disposeRoot: () => void = () => undefined
+  const controller = createRoot((dispose) => {
+    disposeRoot = dispose
+    return useChatVoice({runtime})
+  })
+
+  return {controller, dispose: disposeRoot}
+}
+
+describe('useChatVoice preparation', () => {
+  it('should expose the default unprepared controller without creating the runtime', () => {
+    let disposeRoot: () => void = () => undefined
+    const chatVoice = createRoot((dispose) => {
+      disposeRoot = dispose
+      return useChatVoice()
+    })
+
+    expect(chatVoice.state()).toEqual({status: 'unprepared'})
+    expect(chatVoice.canPrepare()).toBe(true)
+    expect(chatVoice.statusMessage()).toBe('채팅 모델과 함께 답변 음성 모델을 준비해 주세요.')
+    disposeRoot()
+  })
+
+  it('should leave an unsupported internal state without a status message', () => {
+    const createSignalMock = vi.mocked(createSignal)
+    const createSignalImplementation = createSignalMock.getMockImplementation()
+
+    if (createSignalImplementation === undefined) {
+      throw new Error('Expected the Solid signal mock to retain its implementation')
+    }
+
+    createSignalMock.mockImplementationOnce((initialValue, options) =>
+      createSignalImplementation(
+        {status: 'unsupported-test-state'} as typeof initialValue,
+        options,
+      ),
+    )
+    const client = createClient()
+    const {runtime} = createRuntime(client)
+    const chatVoice = createTestRoot(runtime)
+
+    expect(chatVoice.controller.statusMessage()).toBeUndefined()
+    chatVoice.dispose()
+  })
+
+  it('should prepare the Full GPU model and play a completed assistant answer', async () => {
+    const client = createClient()
+    const {players, runtime} = createRuntime(client)
+    const chatVoice = createTestRoot(runtime)
+
+    await chatVoice.controller.prepare()
+    chatVoice.controller.arm()
+    await chatVoice.controller.speak(' 안녕하세요. ')
+    const playback = chatVoice.controller.finish()
+
+    expect(client.initialize).toHaveBeenCalledWith(expect.objectContaining({modelId: 'full'}))
+    expect(client.generateStream).toHaveBeenCalledWith({
+      text: '안녕하세요.',
+      voice: {id: 'Yuna', kind: 'preset'},
+    })
+    expect(players[0]?.enqueue).toHaveBeenCalledWith(createAudioChunk(), 0.3, '안녕하세요.')
+    expect(chatVoice.controller.isGenerating()).toBe(false)
+    expect(chatVoice.controller.isPlaying()).toBe(true)
+
+    players[0]?.end()
+    await playback
+    expect(chatVoice.controller.isPlaying()).toBe(false)
+    expect(chatVoice.controller.statusMessage()).toBe('답변 음성 재생을 마쳤어요.')
+    chatVoice.dispose()
+  })
+
+  it('should report preparation progress and ignore callbacks after disposal', async () => {
+    let initializeOptions: InitializeSupertonicOptions | undefined
+    let releaseInitialization: () => void = () => undefined
+    const initialization = new Promise<void>((resolve) => {
+      releaseInitialization = resolve
+    })
+    const client = createClient()
+    vi.mocked(client.initialize).mockImplementationOnce(async (options) => {
+      initializeOptions = options
+      await initialization
+      return successResult(undefined)
+    })
+    const {runtime} = createRuntime(client)
+    const chatVoice = createTestRoot(runtime)
+
+    const preparation = chatVoice.controller.prepare()
+    await vi.waitFor(() => expect(initializeOptions).toBeDefined())
+    initializeOptions?.onStatus('모델을 준비하고 있어요.')
+    initializeOptions?.onProgress({fileName: '음성 모델', loadedBytes: 12, totalBytes: 10})
+
+    expect(chatVoice.controller.statusMessage()).toBe('답변 음성 모델 준비 중 · 100%')
+    initializeOptions?.onProgress({fileName: '음성 모델', loadedBytes: 0, totalBytes: 0})
+    expect(chatVoice.controller.state()).toEqual({progress: 0, status: 'preparing'})
+    chatVoice.dispose()
+    initializeOptions?.onProgress({fileName: '음성 모델', loadedBytes: 1, totalBytes: 10})
+    releaseInitialization()
+    await preparation
+
+    expect(client.dispose).toHaveBeenCalledOnce()
+  })
+
+  it.each([
+    {cancel: (controller: ChatVoiceController) => controller.arm(), name: 'arm'},
+    {cancel: (controller: ChatVoiceController) => controller.stop(), name: 'stop'},
+  ])('should cancel in-flight preparation when $name is called', async ({cancel}) => {
+    let releaseInitialization: () => void = () => undefined
+    const initialization = new Promise<void>((resolve) => {
+      releaseInitialization = resolve
+    })
+    const client = createClient()
+    vi.mocked(client.initialize).mockImplementationOnce(async () => {
+      await initialization
+      return successResult(undefined)
+    })
+    const {runtime} = createRuntime(client)
+    const chatVoice = createTestRoot(runtime)
+
+    const preparation = chatVoice.controller.prepare()
+    expect(chatVoice.controller.state()).toEqual({progress: 0, status: 'preparing'})
+
+    cancel(chatVoice.controller)
+
+    expect(client.dispose).toHaveBeenCalledOnce()
+    expect(chatVoice.controller.state()).toEqual({status: 'unprepared'})
+
+    releaseInitialization()
+    await preparation
+
+    expect(chatVoice.controller.state()).toEqual({status: 'unprepared'})
+    chatVoice.dispose()
+  })
+
+  it('should start a fresh preparation when stop settles a pending initialization', async () => {
+    let releaseInitialization: () => void = () => undefined
+    const initialization = new Promise<void>((resolve) => {
+      releaseInitialization = resolve
+    })
+    const cancelledClient = createClient()
+    vi.mocked(cancelledClient.initialize).mockImplementationOnce(async () => {
+      await initialization
+      return successResult(undefined)
+    })
+    vi.mocked(cancelledClient.dispose).mockImplementationOnce(releaseInitialization)
+    const readyClient = createClient()
+    const {runtime} = createRuntime(cancelledClient)
+    vi.spyOn(runtime, 'createClient')
+      .mockReturnValueOnce(cancelledClient)
+      .mockReturnValueOnce(readyClient)
+    const chatVoice = createTestRoot(runtime)
+
+    try {
+      const cancelledPreparation = chatVoice.controller.prepare()
+      chatVoice.controller.stop()
+      const nextPreparation = chatVoice.controller.prepare()
+
+      expect(nextPreparation).not.toBe(cancelledPreparation)
+      expect(cancelledClient.initialize).toHaveBeenCalledOnce()
+      expect(readyClient.initialize).toHaveBeenCalledOnce()
+
+      await nextPreparation
+      expect(chatVoice.controller.state().status).toBe('ready')
+      await cancelledPreparation
+      expect(chatVoice.controller.state().status).toBe('ready')
+    } finally {
+      releaseInitialization()
+      chatVoice.dispose()
+    }
+  })
+
+  it('should discard queued speech after an initialization failure before retrying', async () => {
+    const client = createClient()
+    vi.mocked(client.initialize)
+      .mockResolvedValueOnce(
+        failureResult({
+          code: 'worker-failed',
+          detail: '초기화 실패',
+          phase: 'initialize',
+          retryable: true,
+        }),
+      )
+      .mockResolvedValueOnce(successResult(undefined))
+    const {runtime} = createRuntime(client)
+    const chatVoice = createTestRoot(runtime)
+    const queuedSpeechBeforeFailure = chatVoice.controller.speak('실패 전에 큐에 넣은 문장')
+
+    try {
+      await chatVoice.controller.prepare()
+
+      expect(chatVoice.controller.state()).toMatchObject({modelReady: false, status: 'error'})
+      expect(chatVoice.controller.canPrepare()).toBe(true)
+
+      await chatVoice.controller.prepare()
+      await queuedSpeechBeforeFailure
+
+      expect(chatVoice.controller.state().status).toBe('ready')
+      expect(client.generateStream).not.toHaveBeenCalled()
+
+      await chatVoice.controller.speak('재시도 이후 새 문장')
+
+      expect(client.initialize).toHaveBeenCalledTimes(2)
+      expect(client.dispose).toHaveBeenCalledOnce()
+      expect(client.generateStream).toHaveBeenCalledOnce()
+      expect(client.generateStream).toHaveBeenCalledWith(
+        expect.objectContaining({text: '재시도 이후 새 문장'}),
+      )
+    } finally {
+      chatVoice.dispose()
+    }
+  })
+
+  it('should settle queued playback when initialization fails', async () => {
+    const client = createClient()
+    vi.mocked(client.initialize).mockResolvedValueOnce(
+      failureResult({
+        code: 'worker-failed',
+        detail: '초기화 실패',
+        phase: 'initialize',
+        retryable: true,
+      }),
+    )
+    const {runtime} = createRuntime(client)
+    const chatVoice = createTestRoot(runtime)
+
+    chatVoice.controller.arm()
+    const speech = chatVoice.controller.speak('준비 실패 뒤 정리')
+    const playback = chatVoice.controller.finish()
+    let isSpeechSettled = false
+    let isPlaybackSettled = false
+    void speech.then(() => {
+      isSpeechSettled = true
+    })
+    void playback.then(() => {
+      isPlaybackSettled = true
+    })
+
+    try {
+      await chatVoice.controller.prepare()
+      await Promise.resolve()
+
+      expect(isSpeechSettled).toBe(true)
+      expect(isPlaybackSettled).toBe(true)
+      expect(client.generateStream).not.toHaveBeenCalled()
+      expect(chatVoice.controller.state()).toMatchObject({modelReady: false, status: 'error'})
+    } finally {
+      chatVoice.dispose()
+    }
+  })
+
+  it('should discard queued speech after an unexpected initialization failure before retrying', async () => {
+    const error = new Error('Initialization crashed')
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    const client = createClient()
+    vi.mocked(client.initialize)
+      .mockRejectedValueOnce(error)
+      .mockResolvedValueOnce(successResult(undefined))
+    const {runtime} = createRuntime(client)
+    const chatVoice = createTestRoot(runtime)
+    chatVoice.controller.arm()
+    const queuedSpeechBeforeFailure = chatVoice.controller.speak('실패 전에 큐에 넣은 문장')
+    const playbackBeforeFailure = chatVoice.controller.finish()
+    let isSpeechSettled = false
+    let isPlaybackSettled = false
+    void queuedSpeechBeforeFailure.then(() => {
+      isSpeechSettled = true
+    })
+    void playbackBeforeFailure.then(() => {
+      isPlaybackSettled = true
+    })
+
+    try {
+      await chatVoice.controller.prepare()
+      await Promise.resolve()
+
+      expect(consoleError).toHaveBeenCalledWith('Unexpected chat voice failure', error)
+      expect(isSpeechSettled).toBe(true)
+      expect(isPlaybackSettled).toBe(true)
+      expect(chatVoice.controller.state()).toMatchObject({modelReady: false, status: 'error'})
+
+      await chatVoice.controller.prepare()
+      await queuedSpeechBeforeFailure
+      await playbackBeforeFailure
+
+      expect(chatVoice.controller.state().status).toBe('ready')
+      expect(client.generateStream).not.toHaveBeenCalled()
+
+      await chatVoice.controller.speak('재시도 이후 새 문장')
+
+      expect(client.initialize).toHaveBeenCalledTimes(2)
+      expect(client.generateStream).toHaveBeenCalledOnce()
+      expect(client.generateStream).toHaveBeenCalledWith(
+        expect.objectContaining({text: '재시도 이후 새 문장'}),
+      )
+    } finally {
+      chatVoice.dispose()
+      consoleError.mockRestore()
+    }
+  })
+
+  it('should ignore an initialization rejection after disposal', async () => {
+    let rejectInitialization: (error: Error) => void = () => undefined
+    const client = createClient()
+    vi.mocked(client.initialize).mockImplementationOnce(
+      () =>
+        new Promise((_resolve, reject) => {
+          rejectInitialization = reject
+        }),
+    )
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    const {runtime} = createRuntime(client)
+    const chatVoice = createTestRoot(runtime)
+
+    const preparation = chatVoice.controller.prepare()
+    chatVoice.dispose()
+    rejectInitialization(new Error('Late initialization failure'))
+    await preparation
+
+    expect(consoleError).not.toHaveBeenCalled()
+    consoleError.mockRestore()
+  })
+
+  it('should keep an answer queued until the voice model is ready', async () => {
+    const client = createClient()
+    const {players, runtime} = createRuntime(client)
+    const chatVoice = createTestRoot(runtime)
+
+    chatVoice.controller.arm()
+    const speech = chatVoice.controller.speak('준비 뒤 재생')
+    chatVoice.controller.finish()
+    expect(client.generateStream).not.toHaveBeenCalled()
+
+    await chatVoice.controller.prepare()
+    await speech
+
+    expect(client.generateStream).toHaveBeenCalledWith({
+      text: '준비 뒤 재생',
+      voice: {id: 'Yuna', kind: 'preset'},
+    })
+    expect(players[0]?.enqueue).toHaveBeenCalledTimes(1)
+    chatVoice.dispose()
+  })
+
+  it('should share an in-flight model preparation with concurrent callers', async () => {
+    let releaseInitialization: () => void = () => undefined
+    const initialization = new Promise<void>((resolve) => {
+      releaseInitialization = resolve
+    })
+    const client = createClient()
+    vi.mocked(client.initialize).mockImplementationOnce(async () => {
+      await initialization
+      return successResult(undefined)
+    })
+    const {runtime} = createRuntime(client)
+    const chatVoice = createTestRoot(runtime)
+
+    const firstPreparation = chatVoice.controller.prepare()
+    const secondPreparation = chatVoice.controller.prepare()
+
+    expect(secondPreparation).toBe(firstPreparation)
+    expect(client.initialize).toHaveBeenCalledOnce()
+
+    releaseInitialization()
+    await Promise.all([firstPreparation, secondPreparation])
+
+    expect(chatVoice.controller.state().status).toBe('ready')
+    chatVoice.dispose()
+  })
+})

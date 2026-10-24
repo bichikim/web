@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "codex-code-viewer": {
+      "command": "node",
+      "args": ["./dist/server.js"],
+      "cwd": ".",
+      "env_vars": ["CODEX_HOME"]
+    }
+  }
+}

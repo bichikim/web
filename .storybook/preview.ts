@@ -1,0 +1,44 @@
+// oxlint-disable eslint-js/require-unicode-regexp
+// oxlint-disable eslint-js/prefer-named-capture-group
+import type {Preview} from 'storybook-solidjs-vite'
+import 'virtual:uno.css'
+
+const preview: Preview = {
+  parameters: {
+    // automatically create action args for all props that start with "on"
+    actions: {argTypesRegex: '^on.*'},
+    backgrounds: {
+      // values: [
+
+      //   {
+      //     name: 'chessboard',
+      //     value: 'repeating-linear-gradient(45deg, #000 0, #000 25px, #fff 25px, #fff 50px)',
+      //   },
+      // ],
+      options: {
+        black: {name: 'black', value: 'black'},
+        blur: {name: '블러 확인', value: 'var(--storybook-blur-background)'},
+        chessboard: {
+          name: 'chessboard',
+          value: 'repeating-linear-gradient(45deg, #000 0, #000 25px, #fff 25px, #fff 50px)',
+        },
+        white: {name: 'white', value: 'white'},
+      },
+    },
+    controls: {
+      matchers: {
+        color: /(background|color)$/i,
+        date: /Date$/,
+      },
+    },
+    docs: {
+      codePanel: true,
+    },
+    initialGlobals: {
+      background: 'chessboard',
+    },
+  },
+  // tags: ['autodocs'],
+}
+
+export default preview

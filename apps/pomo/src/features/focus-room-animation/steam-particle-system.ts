@@ -1,0 +1,205 @@
+import {smoothStep} from 'src/utils/ease'
+import {clampUnit} from 'src/utils/clamp-unit'
+/* eslint-disable no-magic-numbers -- Particle timing and placement are visually tuned against the fixed 1672x941 focus-room masters. */
+import {Container, Sprite, type Texture} from 'pixi.js'
+
+interface SteamParticle {
+  readonly horizontalDrift: number
+  readonly lifetime: number
+  readonly phase: number
+  readonly rotation: number
+  readonly sprite: Sprite
+}
+
+export interface SteamParticleSystemOptions {
+  readonly onRender: () => void
+  readonly prefersReducedMotion: boolean
+  readonly textures: readonly Texture[]
+}
+
+const SOURCE_X = 1_280
+const SOURCE_Y = 686
+const RISE_DISTANCE = 12
+const PARTICLE_COUNT = 4
+const MINIMUM_LIFETIME = 6_000
+const LIFETIME_VARIANCE = 2_000
+const MAXIMUM_ALPHA = 0.24
+const INITIAL_SCALE = 0.36
+const SCALE_GROWTH = 0.04
+
+const getOpacity = (progress: number) => {
+  const fadeIn = smoothStep(clampUnit(progress / 0.2, {fallback: 0}))
+  const fadeOut = 1 - smoothStep(clampUnit((progress - 0.48) / 0.52, {fallback: 0}))
+
+  return fadeIn * fadeOut * MAXIMUM_ALPHA
+}
+
+export class SteamParticleSystem {
+  readonly container = new Container()
+  readonly #onRender: () => void
+  readonly #particles: readonly SteamParticle[]
+  #prefersReducedMotion: boolean
+  #destroyed = false
+  #frame: number | null = null
+  #started = false
+  #startedAt: number | undefined
+  #visible = true
+
+  constructor(options: SteamParticleSystemOptions) {
+    this.#onRender = options.onRender
+    this.#prefersReducedMotion = options.prefersReducedMotion
+    this.#particles = Array.from({length: PARTICLE_COUNT}, (_, index) => {
+      const sprite = new Sprite(options.textures[index % options.textures.length])
+      const phase = index / PARTICLE_COUNT
+
+      sprite.anchor.set(0.5)
+      sprite.alpha = 0
+      sprite.rotation = ((index % 3) - 1) * 0.12
+      this.container.addChild(sprite)
+
+      return {
+        horizontalDrift: 3 + (index % 4),
+        lifetime: MINIMUM_LIFETIME + (index % 5) * (LIFETIME_VARIANCE / 4),
+        phase,
+        rotation: (index % 2 === 0 ? 1 : -1) * 0.012,
+        sprite,
+      }
+    })
+  }
+
+  start() {
+    if (this.#destroyed || this.#started) {
+      return
+    }
+
+    this.#started = true
+    this.#startedAt = undefined
+
+    if (!this.#visible) {
+      return
+    }
+
+    if (this.#prefersReducedMotion) {
+      this.#renderParticles(MINIMUM_LIFETIME * 0.42)
+      this.#onRender()
+      return
+    }
+
+    this.#requestFrame()
+  }
+
+  setReducedMotion(prefersReducedMotion: boolean) {
+    if (this.#destroyed || prefersReducedMotion === this.#prefersReducedMotion) {
+      return
+    }
+
+    this.#prefersReducedMotion = prefersReducedMotion
+
+    if (!this.#started) {
+      return
+    }
+
+    if (this.#frame !== null) {
+      globalThis.cancelAnimationFrame(this.#frame)
+      this.#frame = null
+    }
+
+    if (!this.#visible) {
+      return
+    }
+
+    if (prefersReducedMotion) {
+      this.#renderParticles(MINIMUM_LIFETIME * 0.42)
+      this.#onRender()
+      return
+    }
+
+    this.#startedAt = undefined
+    this.#requestFrame()
+  }
+
+  setVisible(visible: boolean) {
+    if (this.#destroyed || visible === this.#visible) {
+      return
+    }
+
+    this.#visible = visible
+    this.container.visible = visible
+
+    if (!this.#started) {
+      return
+    }
+
+    if (this.#frame !== null) {
+      globalThis.cancelAnimationFrame(this.#frame)
+      this.#frame = null
+    }
+
+    if (!visible) {
+      this.#onRender()
+      return
+    }
+
+    this.#startedAt = undefined
+
+    if (this.#prefersReducedMotion) {
+      this.#renderParticles(MINIMUM_LIFETIME * 0.42)
+      this.#onRender()
+      return
+    }
+
+    this.#requestFrame()
+    this.#onRender()
+  }
+
+  setParallaxOffset(x: number, y: number) {
+    this.container.position.set(x, y)
+  }
+
+  destroy() {
+    if (this.#destroyed) {
+      return
+    }
+
+    this.#destroyed = true
+
+    if (this.#frame !== null) {
+      globalThis.cancelAnimationFrame(this.#frame)
+      this.#frame = null
+    }
+
+    this.container.removeFromParent()
+    this.container.destroy({children: true})
+  }
+
+  #requestFrame() {
+    if (this.#frame !== null || this.#destroyed || !this.#visible) {
+      return
+    }
+
+    this.#frame = globalThis.requestAnimationFrame((timestamp) => {
+      this.#frame = null
+      this.#startedAt ??= timestamp
+      this.#renderParticles(timestamp - this.#startedAt)
+      this.#onRender()
+      this.#requestFrame()
+    })
+  }
+
+  #renderParticles(elapsed: number) {
+    for (const particle of this.#particles) {
+      const progress = (elapsed / particle.lifetime + particle.phase) % 1
+      const rise = smoothStep(progress)
+      const horizontalWave = Math.sin(progress * Math.PI * 2 + particle.phase * Math.PI)
+      const scale = INITIAL_SCALE + rise * SCALE_GROWTH
+
+      particle.sprite.position.set(
+        SOURCE_X + horizontalWave * particle.horizontalDrift,
+        SOURCE_Y - rise * RISE_DISTANCE,
+      )
+      particle.sprite.scale.set(scale, scale)
+      particle.sprite.rotation = particle.rotation * horizontalWave
+      particle.sprite.alpha = getOpacity(progress)
+    }
+  }
+}

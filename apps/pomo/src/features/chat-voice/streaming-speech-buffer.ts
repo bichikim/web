@@ -1,0 +1,194 @@
+import {isEnglishTitleAbbreviation} from 'src/utils/english-title-abbreviation'
+/* istanbul ignore next -- Wallaby inconsistently counts module initialization across workers. */
+const SENTENCE_END = /(?:[.!?…。！？]["'”’)}\]]*|\n)\s*$/u
+const TERMINAL_PUNCTUATION = /(?<punctuation>[.!?…。！？])(?<closingCharacters>["'”’)}\]]*)$/u
+const DOTTED_ABBREVIATION = /^(?:[A-Z]\.){2,}$/iu
+const SINGLE_INITIAL = /^[A-Z]\.$/u
+const KOREAN_LOCALE = /^ko(?:-|$)/iu
+const KOREAN_LIST_NUMBER_ABBREVIATION = /^No\.$/u
+const KOREAN_LIST_NUMBER_START = /^\s*\d/u
+const SINGLE_LETTER_LABEL_END =
+  /(?:^|\s)(?:category|option|answer|choice|part|section|step|level|plan)\s+[A-Z]\.\s*$/iu
+const LAST_TOKEN = /(?:^|\s)[["'“‘({]*(?<token>\S+?)["'”’)}\]]*\s*$/u
+const UNRESOLVED_DECIMAL_POINT = /\p{Nd}\.$/u
+
+export interface CreateStreamingSpeechBufferOptions {
+  readonly locale: string
+}
+
+export interface StreamingSpeechBuffer {
+  readonly flush: (text: string) => string | null
+  readonly reset: () => void
+  readonly update: (text: string) => ReadonlyArray<string>
+}
+
+const endsWithAbbreviation = (segment: string, locale: string) => {
+  if (SINGLE_LETTER_LABEL_END.test(segment)) {
+    return false
+  }
+
+  const lastToken = LAST_TOKEN.exec(segment)?.groups?.token
+
+  return (
+    lastToken !== undefined &&
+    ((KOREAN_LOCALE.test(locale) && KOREAN_LIST_NUMBER_ABBREVIATION.test(lastToken)) ||
+      isEnglishTitleAbbreviation(lastToken) ||
+      DOTTED_ABBREVIATION.test(lastToken) ||
+      SINGLE_INITIAL.test(lastToken))
+  )
+}
+
+const shouldMergeSegments = (previousSegment: string, nextSegment: string, locale: string) => {
+  const lastToken = LAST_TOKEN.exec(previousSegment)?.groups?.token
+
+  if (
+    KOREAN_LOCALE.test(locale) &&
+    lastToken !== undefined &&
+    KOREAN_LIST_NUMBER_ABBREVIATION.test(lastToken)
+  ) {
+    return KOREAN_LIST_NUMBER_START.test(nextSegment)
+  }
+
+  return endsWithAbbreviation(previousSegment, locale)
+}
+
+const isCompletedSentence = (segment: string, locale: string) =>
+  SENTENCE_END.test(segment) &&
+  !endsWithAbbreviation(segment, locale) &&
+  !UNRESOLVED_DECIMAL_POINT.test(segment)
+
+const isCompletedSegment = (segment: string, hasFollowingSegment: boolean, locale: string) =>
+  hasFollowingSegment || isCompletedSentence(segment, locale)
+
+const isOnlyTerminalPunctuationChanged = (previousText: string, nextText: string) => {
+  const previousEnding = TERMINAL_PUNCTUATION.exec(previousText)
+  const nextEnding = TERMINAL_PUNCTUATION.exec(nextText)
+  const previousPunctuation = previousEnding?.groups?.punctuation
+  const nextPunctuation = nextEnding?.groups?.punctuation
+  const previousClosingCharacters = previousEnding?.groups?.closingCharacters
+  const nextClosingCharacters = nextEnding?.groups?.closingCharacters
+
+  return (
+    previousEnding !== null &&
+    nextEnding !== null &&
+    previousPunctuation !== undefined &&
+    nextPunctuation !== undefined &&
+    previousClosingCharacters !== undefined &&
+    nextClosingCharacters !== undefined &&
+    previousEnding.index === nextEnding.index &&
+    previousText.slice(0, previousEnding.index) === nextText.slice(0, nextEnding.index) &&
+    previousPunctuation !== nextPunctuation &&
+    previousClosingCharacters === nextClosingCharacters
+  )
+}
+
+/** Holds the unstable streaming tail and emits only completed sentences once. */
+export const createStreamingSpeechBuffer = (
+  options: CreateStreamingSpeechBufferOptions,
+): StreamingSpeechBuffer => {
+  const segmenter = new Intl.Segmenter(options.locale, {granularity: 'sentence'})
+  let consumedLength = 0
+  let consumedText = ''
+
+  const reset = () => {
+    consumedLength = 0
+    consumedText = ''
+  }
+
+  const getCompletedSegments = (text: string) => {
+    const segments = Array.from(segmenter.segment(text))
+    const combinedSegments = segments.reduce(
+      (mergedSegments, segment) => {
+        const previousSegment = mergedSegments.at(-1)
+
+        if (
+          previousSegment !== undefined &&
+          shouldMergeSegments(previousSegment.segment, segment.segment, options.locale)
+        ) {
+          mergedSegments[mergedSegments.length - 1] = {
+            ...previousSegment,
+            segment: `${previousSegment.segment}${segment.segment}`,
+          }
+          return mergedSegments
+        }
+
+        mergedSegments.push(segment)
+        return mergedSegments
+      },
+      [] as typeof segments,
+    )
+
+    return combinedSegments.filter(({segment}, index) =>
+      isCompletedSegment(segment, index < combinedSegments.length - 1, options.locale),
+    )
+  }
+
+  const reconcileConsumedText = (text: string) => {
+    const extendsConsumedDecimalPrefix =
+      text.length > consumedText.length &&
+      text.startsWith(consumedText) &&
+      UNRESOLVED_DECIMAL_POINT.test(consumedText)
+
+    if (!text.startsWith(consumedText) || extendsConsumedDecimalPrefix) {
+      if (consumedText.startsWith(text)) {
+        return
+      }
+
+      const currentConsumedText = text.slice(0, consumedText.length)
+
+      if (isOnlyTerminalPunctuationChanged(consumedText, currentConsumedText)) {
+        consumedText = currentConsumedText
+        return
+      }
+
+      let commonPrefixLength = 0
+
+      while (
+        commonPrefixLength < consumedText.length &&
+        consumedText[commonPrefixLength] === text[commonPrefixLength]
+      ) {
+        commonPrefixLength += 1
+      }
+
+      // Keep current lookahead for boundary detection, but retain only the unchanged prefix.
+      const lastUnchangedSegment = getCompletedSegments(text)
+        .filter(({index, segment}) => index + segment.trimEnd().length <= commonPrefixLength)
+        .at(-1)
+      consumedLength =
+        lastUnchangedSegment === undefined
+          ? 0
+          : lastUnchangedSegment.index + lastUnchangedSegment.segment.trimEnd().length
+      consumedText = text.slice(0, consumedLength)
+    }
+  }
+
+  const update = (text: string) => {
+    reconcileConsumedText(text)
+    const remainingText = text.slice(consumedLength)
+    const completedSegments = getCompletedSegments(remainingText)
+    const lastSegment = completedSegments.at(-1)
+
+    if (lastSegment !== undefined) {
+      consumedLength += lastSegment.index + lastSegment.segment.trimEnd().length
+      consumedText = text.slice(0, consumedLength)
+    }
+
+    return completedSegments
+      .map(({segment}) => segment.trim())
+      .filter((segment) => segment.length > 0)
+  }
+
+  const flush = (text: string) => {
+    if (text.length < consumedLength) {
+      return null
+    }
+
+    reconcileConsumedText(text)
+    const remainingText = text.slice(consumedLength).trim()
+    consumedLength = text.length
+    consumedText = text
+    return remainingText.length > 0 ? remainingText : null
+  }
+
+  return {flush, reset, update}
+}

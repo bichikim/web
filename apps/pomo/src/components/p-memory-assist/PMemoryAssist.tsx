@@ -1,0 +1,136 @@
+import {PLoadingStatus} from '../p-loading-status/PLoadingStatus'
+import {Tabs} from '@kobalte/core/tabs'
+import {createSignal, ErrorBoundary, lazy, onMount, Suspense} from 'solid-js'
+
+import * as m from '@paraglide/message'
+
+import type {PSceneStyle} from '../../features/focus-room-animation'
+import type {WeatherState} from '../../features/weather'
+import {getPomoIconClass} from '../icon-style'
+import {GLASS_ICON_BUTTON} from '../button-presets'
+import {PButton} from '../p-button/PButton'
+import {PModal} from '../p-modal/PModal'
+import {MEMORY_ASSIST_ICON} from '../memory-assist/icon'
+import {PMemoryAssistTabList} from '../memory-assist/TabList'
+import {PScribbleCircleControl} from '../scribble/CircleControl'
+import {openDesktopDialog} from '../../features/desktop-mode/dialogs'
+import {getLocale} from '@paraglide/runtime'
+import {useTarotReading, useTarotSpeech} from '../../features/tarot'
+import {useSajuReading} from '../../features/saju'
+
+export interface PMemoryAssistProps {
+  readonly desktopSurface?: boolean
+  readonly sceneStyle?: PSceneStyle
+  readonly weatherState?: WeatherState
+}
+
+const PMemoryAssistContent = lazy(async () => {
+  try {
+    const module = await import('../memory-assist/Content')
+    return {default: module.PMemoryAssistContent}
+  } catch (error) {
+    // Preload must settle so module failures reach the modal's error boundary.
+    return {
+      default: () => {
+        throw error
+      },
+    }
+  }
+})
+
+export const PMemoryAssist = (props: PMemoryAssistProps) => {
+  onMount(() => PMemoryAssistContent.preload())
+  const tarot = useTarotReading({locale: getLocale})
+  const saju = useSajuReading()
+  const tarotSpeech = useTarotSpeech({
+    locale: getLocale,
+    text: () => (tarot.status() === 'complete' ? tarot.output() : ''),
+  })
+  const [isOpen, setIsOpen] = createSignal(false)
+  const [activeTab, setActiveTab] = createSignal('sentences')
+  const [calendarRevision, setCalendarRevision] = createSignal(0)
+  const [triggerElement, setTriggerElement] = createSignal<HTMLButtonElement | null>(null)
+  const refreshCalendar = () => setCalendarRevision((revision) => revision + 1)
+  const handleOpen = (source: HTMLButtonElement) => {
+    setTriggerElement(source)
+
+    if (props.desktopSurface) {
+      openDesktopDialog('memoryAssist').catch((error: unknown) => {
+        console.error('Failed to open the desktop memory assist dialog.', error)
+      })
+      return
+    }
+
+    if (activeTab() === 'calendar') {
+      refreshCalendar()
+    }
+    setIsOpen(true)
+  }
+  const handleTabChange = (value: string) => {
+    if (value !== 'tarot') {
+      tarot.cancel()
+    }
+    if (value !== 'saju') {
+      saju.cancel()
+    }
+    setActiveTab(value)
+    if (value === 'calendar') {
+      refreshCalendar()
+    }
+  }
+  const handleCloseAutoFocus = () => triggerElement()?.focus()
+  const handleOpenChange = (open: boolean) => {
+    if (!open) {
+      tarot.cancel()
+      saju.cancel()
+    }
+    setIsOpen(open)
+  }
+
+  return (
+    <>
+      <PScribbleCircleControl enabled={props.sceneStyle === 'scribble'}>
+        <PButton
+          {...GLASS_ICON_BUTTON}
+          pill
+          accessibleLabel={m.memory_assist_open()}
+          tooltip={m.memory_assist_open()}
+          icon={getPomoIconClass(MEMORY_ASSIST_ICON, props.sceneStyle)}
+          onPress={handleOpen}
+        />
+      </PScribbleCircleControl>
+      <Tabs class="contents" value={activeTab()} onChange={handleTabChange}>
+        <PModal
+          contentPadding={activeTab() === 'tarot' || activeTab() === 'saju' ? 'none' : 'default'}
+          isOpen={isOpen()}
+          navigation={<PMemoryAssistTabList />}
+          onCloseAutoFocus={handleCloseAutoFocus}
+          onOpenChange={handleOpenChange}
+          placement="top"
+          size="expanded"
+          title={m.memory_assist_title()}
+          titleVisibility="visually-hidden"
+        >
+          <ErrorBoundary fallback={<p role="alert">{m.modal_content_load_error()}</p>}>
+            <Suspense
+              fallback={
+                <div role="status">
+                  <PLoadingStatus message={m.modal_content_loading()} />
+                </div>
+              }
+            >
+              <PMemoryAssistContent
+                tarot={tarot}
+                tarotSpeech={tarotSpeech}
+                saju={saju}
+                weatherState={props.weatherState}
+                calendarRevision={calendarRevision()}
+                onRefreshCalendar={refreshCalendar}
+              />
+            </Suspense>
+          </ErrorBoundary>
+        </PModal>
+      </Tabs>
+    </>
+  )
+}

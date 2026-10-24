@@ -1,0 +1,252 @@
+import {isObject} from 'src/utils/is-object'
+import {sumBy} from 'es-toolkit/math'
+import {normalizePasteNumericInput} from 'src/utils/normalize-paste-numeric-input'
+import {parseDate} from 'src/features/civil-date'
+import {iterateJsonObjectSlices} from 'src/utils/json'
+import {isNonBlankString} from 'src/utils/is-non-blank-string'
+
+export interface ExpenseItem {
+  readonly amount: number
+  readonly name: string
+  readonly quantity: number
+  readonly unitPrice: number
+}
+
+export interface ExpenseForm {
+  readonly date: string | null
+  readonly items: ReadonlyArray<ExpenseItem>
+  readonly questions: ReadonlyArray<string>
+  readonly total: number
+}
+
+export interface ExpenseParseError {
+  readonly code: 'invalid-input' | 'invalid-json' | 'invalid-shape'
+}
+
+export interface ExpenseFieldValue {
+  readonly name: string
+  readonly value: string
+}
+
+export type ExpenseParseResult =
+  | {readonly ok: true; readonly value: ExpenseForm}
+  | {readonly error: ExpenseParseError; readonly ok: false}
+
+const MAXIMUM_ITEMS = 20
+const EXPENSE_LINE_PATTERN =
+  /^\s*(?<name>.+?)\s+(?<unitPrice>[\d０-９,]+)\s*원(?:\s+(?<quantity>[\d,]+)\s*개)?\s*$/u
+const DATE_LINE_PATTERN =
+  /^\s*(?<year>[0-9０-９]{4})-(?<month>[0-9０-９]{1,2})-(?<day>[0-9０-９]{1,2})(?:\s+[월화수목금토일]요일)?\s*$/u
+
+const invalid = (code: ExpenseParseError['code']): ExpenseParseResult => ({
+  error: {code},
+  ok: false,
+})
+
+const toPositiveInteger = (value: unknown) => {
+  if (typeof value === 'number' && Number.isSafeInteger(value) && value > 0) {
+    return value
+  }
+
+  if (typeof value !== 'string') {
+    return null
+  }
+
+  const normalized = value
+    .replaceAll(',', '')
+    .replace(/원|개/gu, '')
+    .trim()
+  const parsed = Number(normalized)
+  return Number.isSafeInteger(parsed) && parsed > 0 ? parsed : null
+}
+
+const readExpenseDate = (value: string, allowFullwidthDateDigits = false) => {
+  const dateMatch = DATE_LINE_PATTERN.exec(value)
+  const year = dateMatch?.groups?.year
+  const month = dateMatch?.groups?.month
+  const day = dateMatch?.groups?.day
+  if (year === undefined || month === undefined || day === undefined) {
+    return null
+  }
+
+  if (!allowFullwidthDateDigits && [year, month, day].some((part) => /[０-９]/u.test(part))) {
+    return null
+  }
+
+  const normalizedYear = normalizePasteNumericInput(year)
+  const normalizedMonth = normalizePasteNumericInput(month)
+  const normalizedDay = normalizePasteNumericInput(day)
+  const normalizedDate = `${normalizedYear}-${normalizedMonth.padStart(2, '0')}-${normalizedDay.padStart(2, '0')}`
+  return parseDate(normalizedDate) === null
+    ? null
+    : `${normalizedYear}-${normalizedMonth}-${normalizedDay}`
+}
+
+const readDate = (value: unknown) => {
+  if (value === undefined || value === null) {
+    return null
+  }
+
+  if (typeof value !== 'string' || !isNonBlankString(value)) {
+    return null
+  }
+
+  return readExpenseDate(value.trim())
+}
+
+const readQuestions = (value: unknown) => {
+  if (value === undefined) {
+    return []
+  }
+
+  if (!Array.isArray(value) || value.some((question) => typeof question !== 'string')) {
+    return null
+  }
+
+  return value.map((question) => question.trim()).filter((question) => question.length > 0)
+}
+
+const readItems = (value: unknown) => {
+  if (!Array.isArray(value) || value.length === 0 || value.length > MAXIMUM_ITEMS) {
+    return null
+  }
+
+  const items: Array<ExpenseItem> = []
+  for (const item of value) {
+    if (!isObject(item) || typeof item.name !== 'string' || !isNonBlankString(item.name)) {
+      return null
+    }
+
+    const unitPrice = toPositiveInteger(item.unitPrice)
+    const quantity = toPositiveInteger(item.quantity)
+    if (unitPrice === null || quantity === null) {
+      return null
+    }
+
+    const amount = unitPrice * quantity
+    if (!Number.isSafeInteger(amount)) {
+      return null
+    }
+
+    items.push({
+      amount,
+      name: item.name.trim(),
+      quantity,
+      unitPrice,
+    })
+  }
+
+  return items
+}
+
+const createExpenseForm = (
+  date: string | null,
+  items: ReadonlyArray<ExpenseItem>,
+  questions: ReadonlyArray<string>,
+  overflowCode: ExpenseParseError['code'] = 'invalid-shape',
+): ExpenseParseResult => {
+  const total = sumBy(items, (item) => item.amount)
+  if (!Number.isSafeInteger(total)) {
+    return invalid(overflowCode)
+  }
+
+  return {ok: true, value: {date, items, questions, total}}
+}
+
+const parseExpenseAssistantCandidate = (json: string): ExpenseParseResult => {
+  let parsed: unknown
+  try {
+    parsed = JSON.parse(json)
+  } catch {
+    return invalid('invalid-json')
+  }
+
+  if (!isObject(parsed)) {
+    return invalid('invalid-shape')
+  }
+
+  const dateValue = typeof parsed.date === 'string' ? parsed.date.trim() : parsed.date
+  const date = readDate(dateValue)
+  const questions = readQuestions(parsed.questions)
+  const items = readItems(parsed.items)
+  if (dateValue !== undefined && dateValue !== null && dateValue !== '' && date === null) {
+    return invalid('invalid-shape')
+  }
+  if (questions === null || items === null) {
+    return invalid('invalid-shape')
+  }
+
+  return createExpenseForm(date, items, questions)
+}
+
+export const parseExpenseAssistantResponse = (text: string): ExpenseParseResult => {
+  let invalidShape: ExpenseParseResult | null = null
+  const candidates = iterateJsonObjectSlices(text)
+  let candidate = candidates.next()
+  while (!candidate.done) {
+    const result = parseExpenseAssistantCandidate(candidate.value.slice)
+    if (result.ok) {
+      return result
+    }
+    const skipNested = result.error.code === 'invalid-shape'
+    if (skipNested) {
+      invalidShape = result
+    }
+    candidate = candidates.next(skipNested ? candidate.value.end + 1 : undefined)
+  }
+
+  return invalidShape ?? invalid('invalid-json')
+}
+
+export const parseExpenseText = (text: string): ExpenseParseResult => {
+  const lines = text
+    .split(/\r?\n/u)
+    .map((line) => line.replace(/^\s*[•*-]\s*/u, '').trim())
+    .filter((line) => line.length > 0)
+  let date: string | null = null
+  const items: Array<ExpenseItem> = []
+
+  for (const line of lines) {
+    const dateValue = readExpenseDate(line, true)
+    if (dateValue === null) {
+      const expenseMatch = EXPENSE_LINE_PATTERN.exec(line)
+      if (expenseMatch?.groups === undefined) {
+        return invalid('invalid-input')
+      }
+
+      const unitPrice = toPositiveInteger(normalizePasteNumericInput(expenseMatch.groups.unitPrice))
+      const quantity = toPositiveInteger(expenseMatch.groups.quantity ?? '1')
+      const name = expenseMatch.groups.name.trim()
+      if (unitPrice === null || quantity === null || name.length === 0) {
+        return invalid('invalid-input')
+      }
+
+      items.push({amount: unitPrice * quantity, name, quantity, unitPrice})
+    } else if (date === null) {
+      date = dateValue
+    }
+  }
+
+  if (items.length === 0 || items.length > MAXIMUM_ITEMS) {
+    return invalid('invalid-input')
+  }
+
+  return createExpenseForm(date, items, [], 'invalid-input')
+}
+
+export const createExpenseFieldValues = (form: ExpenseForm): ReadonlyArray<ExpenseFieldValue> => {
+  const fields: Array<ExpenseFieldValue> = [{name: 'date', value: form.date ?? ''}]
+
+  form.items.forEach((item, index) => {
+    const row = index + 1
+    fields.push(
+      {name: `item_${row}`, value: item.name},
+      {name: `unitPrice_${row}`, value: String(item.unitPrice)},
+      {name: `quantity_${row}`, value: String(item.quantity)},
+      {name: `amount_${row}`, value: String(item.amount)},
+    )
+  })
+
+  fields.push({name: 'total', value: String(form.total)})
+  return fields
+}

@@ -1,0 +1,4 @@
+ALTER TYPE "public"."ai_artifact_lifecycle" ADD VALUE 'archive_cleanup_pending' BEFORE 'saved';--> statement-breakpoint
+ALTER TABLE "ai_job_artifacts" DROP CONSTRAINT "ai_job_artifacts_pending_key_check";--> statement-breakpoint
+ALTER TABLE "ai_job_artifacts" ADD CONSTRAINT "ai_job_artifacts_pending_key_check" CHECK (("ai_job_artifacts"."lifecycle"::text in ('archiving', 'archive_cleanup_pending', 'deletion_pending') and "ai_job_artifacts"."pending_object_key" is not null)
+        or ("ai_job_artifacts"."lifecycle"::text not in ('archiving', 'archive_cleanup_pending', 'deletion_pending') and "ai_job_artifacts"."pending_object_key" is null));

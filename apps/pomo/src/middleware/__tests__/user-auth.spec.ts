@@ -1,0 +1,161 @@
+/** @vitest-environment node */
+import {beforeEach, describe, expect, it, vi} from 'vitest'
+
+const authMocks = vi.hoisted(() => ({handleAuthProxyRequest: vi.fn()}))
+
+vi.mock('@neondatabase/auth/server', () => authMocks)
+vi.mock('src/server/auth/neon-config', () => ({
+  readNeonAuthProxyConfig: () => ({
+    baseUrl: 'https://example.neonauth.aws.neon.tech/neondb/auth',
+    cookieSecret: 'a-secure-cookie-secret-that-is-long-enough',
+    sameSite: 'lax',
+  }),
+}))
+
+import {handleUserAuthRequest} from '../user-auth'
+
+describe('handleUserAuthRequest', () => {
+  beforeEach(() => {
+    authMocks.handleAuthProxyRequest.mockReset()
+  })
+
+  it('should ignore routes outside the account page', async () => {
+    await expect(
+      handleUserAuthRequest({
+        request: new Request('https://pomo.example/'),
+        responseHeaders: new Headers(),
+        url: new URL('https://pomo.example/'),
+      }),
+    ).resolves.toBeNull()
+  })
+
+  it('should ignore retired locale-prefixed account routes', async () => {
+    const headers = new Headers()
+    const url = new URL('https://pomo.example/ko/account/?neon_auth_session_verifier=verifier')
+
+    await expect(
+      handleUserAuthRequest({
+        request: new Request(url),
+        responseHeaders: headers,
+        url,
+      }),
+    ).resolves.toBeNull()
+    expect(headers.get('Cache-Control')).toBeNull()
+    expect(authMocks.handleAuthProxyRequest).not.toHaveBeenCalled()
+  })
+
+  it.each(['/account', '/account/'])(
+    'should protect account response %s from caching and referrer leaks',
+    async (pathname) => {
+      const headers = new Headers()
+      const url = new URL(pathname, 'https://pomo.example')
+
+      await expect(
+        handleUserAuthRequest({
+          request: new Request(url),
+          responseHeaders: headers,
+          url,
+        }),
+      ).resolves.toBeNull()
+      expect(headers.get('Cache-Control')).toBe('no-store')
+      expect(headers.get('Referrer-Policy')).toBe('no-referrer')
+    },
+  )
+
+  it('should exchange a verifier on the account route', async () => {
+    authMocks.handleAuthProxyRequest.mockResolvedValue(
+      Response.json(
+        {session: {id: 'session'}, user: {email: 'user@example.com', id: 'user'}},
+        {headers: {'Set-Cookie': 'session=signed; HttpOnly'}},
+      ),
+    )
+    const url = new URL(
+      '/account/?link_token=challenge&neon_auth_session_verifier=verifier',
+      'https://pomo.example',
+    )
+    const response = await handleUserAuthRequest({
+      request: new Request(url, {headers: {Authorization: 'Bearer app-token'}}),
+      responseHeaders: new Headers(),
+      url,
+    })
+
+    expect(response?.status).toBe(302)
+    expect(response?.headers.get('Cache-Control')).toBe('no-store')
+    expect(response?.headers.get('Location')).toBe(
+      'https://pomo.example/account/?link_token=challenge',
+    )
+  })
+
+  it('should exchange the verifier and remove only that callback parameter', async () => {
+    authMocks.handleAuthProxyRequest.mockResolvedValue(
+      Response.json(
+        {session: {id: 'session'}, user: {email: 'user@example.com', id: 'user'}},
+        {headers: {'Set-Cookie': 'session=signed; HttpOnly'}},
+      ),
+    )
+    const url = new URL(
+      'https://pomo.example/account?link_token=challenge&neon_auth_session_verifier=verifier',
+    )
+    const response = await handleUserAuthRequest({
+      request: new Request(url),
+      responseHeaders: new Headers(),
+      url,
+    })
+
+    expect(response?.status).toBe(302)
+    expect(response?.headers.get('Location')).toBe(
+      'https://pomo.example/account?link_token=challenge',
+    )
+    expect(response?.headers.getSetCookie()).toEqual(['session=signed; HttpOnly'])
+  })
+
+  it('should keep the verifier available for retry when the exchange fails', async () => {
+    authMocks.handleAuthProxyRequest.mockResolvedValue(
+      new Response(null, {headers: {'Set-Cookie': 'session=; Max-Age=0'}, status: 502}),
+    )
+    const url = new URL(
+      'https://pomo.example/account?link_token=challenge&neon_auth_session_verifier=verifier',
+    )
+    const response = await handleUserAuthRequest({
+      request: new Request(url),
+      responseHeaders: new Headers(),
+      url,
+    })
+
+    expect(response?.status).toBe(503)
+    expect(response?.headers.get('Location')).toBeNull()
+    expect(response?.headers.getSetCookie()).toEqual(['session=; Max-Age=0'])
+  })
+
+  it('should keep the verifier available when the session payload is invalid', async () => {
+    authMocks.handleAuthProxyRequest.mockResolvedValue(Response.json({user: null}))
+    const url = new URL(
+      'https://pomo.example/account?link_token=challenge&neon_auth_session_verifier=verifier',
+    )
+    const response = await handleUserAuthRequest({
+      request: new Request(url),
+      responseHeaders: new Headers(),
+      url,
+    })
+
+    expect(response?.status).toBe(503)
+    expect(response?.headers.get('Location')).toBeNull()
+  })
+
+  it('should return a controlled response when the session exchange throws', async () => {
+    const error = new Error('Neon Auth unavailable')
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    authMocks.handleAuthProxyRequest.mockRejectedValue(error)
+    const url = new URL('https://pomo.example/account?neon_auth_session_verifier=verifier')
+
+    const response = await handleUserAuthRequest({
+      request: new Request(url),
+      responseHeaders: new Headers(),
+      url,
+    })
+
+    expect(response?.status).toBe(503)
+    expect(await response?.text()).toBe('Authentication is unavailable')
+    expect(consoleError).toHaveBeenCalledWith('Pomo user authentication callback failed', error)
+  })
+})

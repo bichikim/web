@@ -1,0 +1,462 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pomofi showcase</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        overflow: hidden;
+        font-family: Pretendard, 'Apple SD Gothic Neo', Arial, sans-serif;
+        color: #fffaf1;
+      }
+
+      .artboard {
+        position: relative;
+        display: none;
+        width: 100vw;
+        height: 100vh;
+        overflow: hidden;
+      }
+
+      body[data-art='portrait-1'] .portrait-1,
+      body[data-art='portrait-2'] .portrait-2,
+      body[data-art='portrait-3'] .portrait-3,
+      body[data-art='landscape'] .landscape {
+        display: block;
+      }
+
+      .wordmark {
+        position: absolute;
+        top: 2.625rem;
+        left: 3rem;
+        display: flex;
+        align-items: center;
+        gap: 0.6875rem;
+        font-size: 1.5rem;
+        font-weight: 850;
+        letter-spacing: -0.05rem;
+      }
+
+      .wordmark img {
+        width: 2rem;
+        height: 2rem;
+        object-fit: contain;
+        filter: drop-shadow(0 0.1875rem 0.3125rem rgb(0 0 0 / 18%));
+      }
+
+      .eyebrow {
+        margin: 0 0 0.875rem;
+        color: #d86845;
+        font-size: 1.0625rem;
+        font-weight: 850;
+        letter-spacing: 0.175rem;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: 3.375rem;
+        font-weight: 900;
+        line-height: 1.14;
+        letter-spacing: -0.21875rem;
+      }
+
+      .description {
+        margin: 1.125rem 0 0;
+        color: rgb(255 250 241 / 72%);
+        font-size: 1.25rem;
+        font-weight: 550;
+        line-height: 1.5;
+        letter-spacing: -0.04375rem;
+      }
+
+      .phone-shot {
+        position: absolute;
+        overflow: hidden;
+        border: 0.0625rem solid rgb(255 250 241 / 16%);
+        border-radius: 2.125rem;
+        background: #120f0d;
+        box-shadow: 0 1.625rem 3.5rem rgb(0 0 0 / 34%);
+      }
+
+      .phone-shot img {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      .portrait-1 {
+        background:
+          radial-gradient(circle at 90% 2%, #e8b28d 0%, transparent 42%),
+          linear-gradient(145deg, #c86341, #8f3f2a 54%, #40231a);
+      }
+
+      .portrait-1 .decor-circle {
+        position: absolute;
+        top: 9.375rem;
+        right: -7.1875rem;
+        width: 18.75rem;
+        height: 18.75rem;
+        border: 0.0625rem solid rgb(255 250 241 / 18%);
+        border-radius: 50%;
+      }
+
+      .portrait-1 .copy {
+        position: absolute;
+        top: 6.875rem;
+        left: 3rem;
+      }
+
+      .portrait-1 h1 {
+        font-size: 3.125rem;
+      }
+
+      .portrait-1 .phone-shot {
+        top: 19.75rem;
+        left: 4.5rem;
+        width: 30.75rem;
+        height: 50.375rem;
+        border-color: rgb(255 250 241 / 24%);
+      }
+
+      .portrait-1 .phone-shot img {
+        object-position: center top;
+      }
+
+      .companion-badge {
+        position: absolute;
+        top: 17.875rem;
+        right: 3.25rem;
+        display: flex;
+        min-width: 11.875rem;
+        height: 3.625rem;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5625rem;
+        padding: 0 1.375rem;
+        border: 0.0625rem solid rgb(255 250 241 / 20%);
+        border-radius: 1.8125rem;
+        background: rgb(18 15 13 / 88%);
+        box-shadow: 0 0.875rem 1.875rem rgb(0 0 0 / 28%);
+        font-size: 1.0625rem;
+        font-weight: 800;
+      }
+
+      .companion-badge::before {
+        width: 0.5rem;
+        height: 0.5rem;
+        border-radius: 50%;
+        background: #ef9b72;
+        box-shadow: 0 0 0 0.3125rem rgb(239 155 114 / 14%);
+        content: '';
+      }
+
+      .portrait-2 {
+        background: radial-gradient(circle at 16% 0%, #514238 0%, transparent 40%), #120f0d;
+      }
+
+      .portrait-2 .accent-line {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 0.5rem;
+        background: linear-gradient(90deg, #d86845, #f1a179, #84916f);
+      }
+
+      .portrait-2 .copy,
+      .portrait-3 .copy {
+        position: absolute;
+        top: 7.5rem;
+        left: 3rem;
+      }
+
+      .portrait-2 .phone-shot {
+        top: 24.25rem;
+        left: 3rem;
+        width: 33.75rem;
+        height: 36.875rem;
+      }
+
+      .portrait-2 .phone-shot img {
+        object-position: center center;
+      }
+
+      .timer-badge {
+        position: absolute;
+        top: 22.25rem;
+        right: 4.125rem;
+        display: grid;
+        width: 7.75rem;
+        height: 3.875rem;
+        border-radius: 1.9375rem;
+        background: #d86845;
+        box-shadow: 0 0.875rem 1.875rem rgb(0 0 0 / 32%);
+        color: #fffaf1;
+        font-size: 1.125rem;
+        font-weight: 850;
+        place-items: center;
+      }
+
+      .footer-label {
+        position: absolute;
+        bottom: 1.875rem;
+        left: 3rem;
+        margin: 0;
+        color: rgb(255 250 241 / 48%);
+        font-size: 0.875rem;
+        font-weight: 750;
+        letter-spacing: 0.075rem;
+      }
+
+      .portrait-3 {
+        background: linear-gradient(155deg, #e8ded0 0%, #cbbba8 52%, #9c7966 100%);
+        color: #241812;
+      }
+
+      .portrait-3 .wordmark {
+        color: #241812;
+      }
+
+      .portrait-3 .eyebrow {
+        color: #a5472d;
+      }
+
+      .portrait-3 .description {
+        color: rgb(36 24 18 / 68%);
+      }
+
+      .portrait-3 .vinyl {
+        position: absolute;
+        top: -6.75rem;
+        right: -6.375rem;
+        width: 17.5rem;
+        height: 17.5rem;
+        border: 2.875rem solid rgb(36 24 18 / 7%);
+        border-radius: 50%;
+        box-shadow: inset 0 0 0 0.125rem rgb(36 24 18 / 7%);
+      }
+
+      .portrait-3 .phone-shot {
+        top: 23rem;
+        left: 3rem;
+        width: 33.75rem;
+        height: 39.25rem;
+        border-color: rgb(36 24 18 / 12%);
+        box-shadow: 0 1.625rem 3.5rem rgb(55 32 22 / 28%);
+      }
+
+      .portrait-3 .phone-shot img {
+        object-position: center bottom;
+      }
+
+      .music-badge {
+        position: absolute;
+        top: 21.125rem;
+        right: 4.25rem;
+        display: flex;
+        height: 3.75rem;
+        align-items: center;
+        gap: 0.625rem;
+        padding: 0 1.375rem;
+        border-radius: 1.875rem;
+        background: #241812;
+        box-shadow: 0 0.875rem 1.875rem rgb(55 32 22 / 28%);
+        color: #fffaf1;
+        font-size: 1.0625rem;
+        font-weight: 800;
+      }
+
+      .music-badge span {
+        color: #e77b56;
+        font-size: 1.4375rem;
+      }
+
+      .portrait-3 .footer-label {
+        color: rgb(36 24 18 / 50%);
+      }
+
+      .landscape {
+        background: #120f0d;
+      }
+
+      .landscape .warm-glow {
+        position: absolute;
+        top: -13.75rem;
+        left: -8.125rem;
+        width: 45rem;
+        height: 45rem;
+        border-radius: 50%;
+        background: radial-gradient(circle, #59372b 0%, transparent 68%);
+      }
+
+      .landscape .wordmark {
+        top: 3.5rem;
+        left: 4.5rem;
+        font-size: 1.625rem;
+      }
+
+      .landscape .copy {
+        position: absolute;
+        top: 11.125rem;
+        left: 4.5rem;
+      }
+
+      .landscape h1 {
+        font-size: 4.375rem;
+        line-height: 1.08;
+        letter-spacing: -0.3rem;
+      }
+
+      .landscape .description {
+        margin-top: 1.75rem;
+        font-size: 1.375rem;
+      }
+
+      .feature-row {
+        position: absolute;
+        bottom: 4.5rem;
+        left: 4.5rem;
+        display: flex;
+        gap: 0.75rem;
+      }
+
+      .feature-pill {
+        display: flex;
+        height: 2.75rem;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0 1rem;
+        border: 0.0625rem solid rgb(255 250 241 / 14%);
+        border-radius: 1.375rem;
+        background: rgb(255 250 241 / 7%);
+        color: rgb(255 250 241 / 82%);
+        font-size: 0.9375rem;
+        font-weight: 750;
+      }
+
+      .feature-pill::before {
+        width: 0.4375rem;
+        height: 0.4375rem;
+        border-radius: 50%;
+        background: #d86845;
+        content: '';
+      }
+
+      .landscape .day-shot {
+        top: 3.625rem;
+        left: 51.75rem;
+        width: 25.625rem;
+        height: 42.125rem;
+        transform: rotate(-5deg);
+      }
+
+      .landscape .night-shot {
+        top: 5.5rem;
+        right: -1.5rem;
+        width: 23.75rem;
+        height: 39rem;
+        transform: rotate(5deg);
+      }
+
+      .landscape .phone-shot {
+        border-radius: 1.875rem;
+        box-shadow: 0 1.875rem 4rem rgb(0 0 0 / 42%);
+      }
+
+      .landscape .phone-shot img {
+        object-position: center;
+      }
+
+      .day-night-badge {
+        position: absolute;
+        top: 4.625rem;
+        right: 4.5rem;
+        display: flex;
+        height: 2.875rem;
+        align-items: center;
+        gap: 0.5625rem;
+        padding: 0 1.125rem;
+        border: 0.0625rem solid rgb(255 250 241 / 18%);
+        border-radius: 1.4375rem;
+        background: rgb(18 15 13 / 86%);
+        box-shadow: 0 0.75rem 1.625rem rgb(0 0 0 / 28%);
+        font-size: 0.9375rem;
+        font-weight: 800;
+      }
+    </style>
+  </head>
+  <body>
+    <section class="artboard portrait-1">
+      <span class="decor-circle"></span>
+      <div class="wordmark"><img src="source/brand-mark.png" alt="" />Pomofi</div>
+      <div class="copy">
+        <p class="eyebrow">YOUR FOCUS COMPANION</p>
+        <h1>집중도,<br />함께라면 다정하게.</h1>
+      </div>
+      <div class="phone-shot"><img src="source/entry.png" alt="" /></div>
+      <div class="companion-badge">Pomo와 함께 시작</div>
+    </section>
+
+    <section class="artboard portrait-2">
+      <span class="accent-line"></span>
+      <div class="wordmark"><img src="source/brand-mark.png" alt="" />Pomofi</div>
+      <div class="copy">
+        <p class="eyebrow">FOCUS · BREAK · REPEAT</p>
+        <h1>25분,<br />몰입의 시작.</h1>
+        <p class="description">집중과 휴식을 자연스럽게 이어주는<br />나만의 포모도로 루틴.</p>
+      </div>
+      <div class="phone-shot"><img src="source/timer.png" alt="" /></div>
+      <div class="timer-badge">25:00</div>
+      <p class="footer-label">POMOFI · POMODORO FOCUS</p>
+    </section>
+
+    <section class="artboard portrait-3">
+      <span class="vinyl"></span>
+      <div class="wordmark"><img src="source/brand-mark.png" alt="" />Pomofi</div>
+      <div class="copy">
+        <p class="eyebrow">FOCUS IN YOUR RHYTHM</p>
+        <h1>집중할 때도,<br />내 리듬대로.</h1>
+        <p class="description">포근한 음악과 함께<br />집중의 흐름을 오래 이어가세요.</p>
+      </div>
+      <div class="phone-shot"><img src="source/music.png" alt="" /></div>
+      <div class="music-badge"><span>♪</span>Focus playlist</div>
+      <p class="footer-label">POMOFI · MUSIC FOR FOCUS</p>
+    </section>
+
+    <section class="artboard landscape">
+      <span class="warm-glow"></span>
+      <div class="wordmark"><img src="source/brand-mark.png" alt="" />Pomofi</div>
+      <div class="copy">
+        <p class="eyebrow">A GENTLER WAY TO FOCUS</p>
+        <h1>혼자보다 오래,<br />Pomo와 함께 집중.</h1>
+        <p class="description">
+          포모도로와 음악, 낮과 밤의 장면까지.<br />
+          집중에 필요한 모든 것을 한 공간에서.
+        </p>
+      </div>
+      <div class="feature-row">
+        <span class="feature-pill">포모도로</span>
+        <span class="feature-pill">집중 음악</span>
+        <span class="feature-pill">낮·밤 장면</span>
+      </div>
+      <div class="phone-shot day-shot"><img src="source/studio.png" alt="" /></div>
+      <div class="phone-shot night-shot"><img src="source/night.png" alt="" /></div>
+      <div class="day-night-badge">☀ 낮에도 · ☾ 밤에도</div>
+    </section>
+
+    <script>
+      const art = new URLSearchParams(location.search).get('art') ?? 'portrait-1'
+      document.body.dataset.art = art
+    </script>
+  </body>
+</html>

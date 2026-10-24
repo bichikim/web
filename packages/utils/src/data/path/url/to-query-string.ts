@@ -1,0 +1,78 @@
+import {trim} from 'es-toolkit/string'
+import {joinStringQueries} from './join-string-queries'
+
+export interface ToQueryStringOptions {
+  encodeKey?: EncodeQueryKey
+  encodeValue?: EncodeQueryValue
+  sort?: (
+    aEntry: [string, string | number | boolean],
+    bEntry: [string, string | number | boolean],
+  ) => number
+}
+
+export type EncodeQueryKey = (key: string) => string
+export type EncodeQueryValue = (value: string | number | boolean) => string
+
+const TRIM_QUERY_REGEX = /^[?&]/u
+/**
+ * @deprecated
+ */
+export const removeQueryChar = (value: string) => trim(value).replace(TRIM_QUERY_REGEX, '')
+/**
+ * @deprecated
+ */
+export const encodeQueryKey = (key: string) => encodeURIComponent(key)
+
+const trimQueryKey = (key: string): string => {
+  const _key = removeQueryChar(trim(key))
+
+  if (_key.length === 0) {
+    return ''
+  }
+
+  return _key
+}
+/**
+ * @deprecated
+ */
+export const encodeQueryValue = (value: string | number | boolean) => encodeURIComponent(value)
+
+/**
+ * @deprecated
+ */
+export const encodeQueryItem = (
+  key: string,
+  value: string | number | boolean,
+  options: Omit<ToQueryStringOptions, 'sort'> = {},
+) => {
+  const {encodeKey = encodeQueryKey, encodeValue = encodeQueryValue} = options
+
+  return `${encodeKey(trimQueryKey(key))}=${encodeValue(value)}`
+}
+
+/**
+ * @deprecated
+ */
+export const encodeQueryRecord = (
+  record: Record<string, string | number | boolean>,
+  options: ToQueryStringOptions = {},
+) => {
+  const {sort} = options
+  let entries = Object.entries(record)
+
+  if (sort) {
+    entries = entries.sort(sort)
+  }
+
+  return entries.map(([key, value]) => encodeQueryItem(key, value, options))
+}
+
+/**
+ * @deprecated
+ */
+export const toQueryString = (
+  record: Record<string, string | number | boolean>,
+  options?: ToQueryStringOptions,
+) => {
+  return joinStringQueries(encodeQueryRecord(record, options))
+}

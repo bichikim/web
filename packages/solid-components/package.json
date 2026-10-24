@@ -1,0 +1,50 @@
+{
+  "name": "@winter-love/solid-components",
+  "version": "1.0.38",
+  "description": "",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bichikim/web.git",
+    "directory": "packages/solid-components"
+  },
+  "files": [
+    "dist/*"
+  ],
+  "type": "module",
+  "sideEffects": false,
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "solid": "./dist/solid/index.jsx",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "vite build && tsc -p tsconfig.solid.json",
+    "build:dev": "vite build --minify false && tsc -p tsconfig.solid.json",
+    "build:solid": "tsc -p tsconfig.solid.json",
+    "prepare-build": "pnpm run build",
+    "typecheck": "tsc --noEmit",
+    "dev": "concurrently \"vite build --watch\" \"tsc -p tsconfig.solid.json --watch\"",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "@winter-love/solid-use": "workspace:*",
+    "@winter-love/utils": "workspace:*",
+    "class-variance-authority": "catalog:",
+    "solid-js": "catalog:"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "@winter-love/vite-lib-config": "workspace:*",
+    "concurrently": "^9.2.3",
+    "vite": "catalog:"
+  }
+}

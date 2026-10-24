@@ -1,0 +1,1 @@
+ALTER TABLE "cloud_text_requests" ADD COLUMN "usage_reset_at" timestamp with time zone;

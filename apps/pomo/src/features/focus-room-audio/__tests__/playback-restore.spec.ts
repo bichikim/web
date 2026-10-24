@@ -1,0 +1,207 @@
+/** @vitest-environment node */
+import {describe, expect, it} from 'vitest'
+
+import {resolvePlaybackRestore} from '../playback-restore'
+
+const TRACKS = [
+  {artist: 'Artist', durationSeconds: 10, id: 'one', source: '/one.mp3', title: 'One'},
+  {artist: 'Artist', durationSeconds: 10, id: 'two', source: '/two.mp3', title: 'Two'},
+] as const
+
+const DUPLICATE_TRACKS = [TRACKS[0], TRACKS[0], TRACKS[1]] as const
+
+describe('resolvePlaybackRestore', () => {
+  it('should return an empty restore when no tracks are available', () => {
+    expect(
+      resolvePlaybackRestore({
+        fallbackIndex: 4,
+        storedPlayback: {isPlaying: true, positionSeconds: 8, trackId: 'removed'},
+        tracks: [],
+      }),
+    ).toEqual({currentIndex: 0, playback: null, shouldPersist: false})
+  })
+
+  it('should preserve the fallback selection without stored playback', () => {
+    expect(
+      resolvePlaybackRestore({fallbackIndex: 1, storedPlayback: null, tracks: TRACKS}),
+    ).toEqual({currentIndex: 1, playback: null, shouldPersist: false})
+  })
+
+  it('should fall back to the first track for a non-integer fallback index', () => {
+    expect(
+      resolvePlaybackRestore({fallbackIndex: 1.5, storedPlayback: null, tracks: TRACKS}),
+    ).toEqual({currentIndex: 0, playback: null, shouldPersist: false})
+  })
+
+  it.each([
+    {expectedIndex: 1, fallbackIndex: -1},
+    {expectedIndex: 1, fallbackIndex: -3},
+    {expectedIndex: 1, fallbackIndex: 3},
+  ])(
+    'should wrap fallback index $fallbackIndex to $expectedIndex',
+    ({expectedIndex, fallbackIndex}) => {
+      expect(resolvePlaybackRestore({fallbackIndex, storedPlayback: null, tracks: TRACKS})).toEqual(
+        {
+          currentIndex: expectedIndex,
+          playback: null,
+          shouldPersist: false,
+        },
+      )
+    },
+  )
+
+  it('should restore a track that remains in the playlist', () => {
+    const storedPlayback = {isPlaying: true, positionSeconds: 8, trackId: 'two'}
+
+    expect(resolvePlaybackRestore({fallbackIndex: 0, storedPlayback, tracks: TRACKS})).toEqual({
+      currentIndex: 1,
+      playback: storedPlayback,
+      shouldPersist: false,
+    })
+  })
+
+  it('should restore the saved playlist occurrence when track IDs repeat', () => {
+    const storedPlayback = {
+      isPlaying: true,
+      positionSeconds: 8,
+      trackId: 'one',
+      trackIndex: 1,
+    }
+
+    expect(
+      resolvePlaybackRestore({fallbackIndex: 0, storedPlayback, tracks: DUPLICATE_TRACKS}),
+    ).toEqual({
+      currentIndex: 1,
+      playback: storedPlayback,
+      shouldPersist: false,
+    })
+  })
+
+  it('should not rewrite an unchanged duplicate entry when its stable ID still matches', () => {
+    const storedPlayback = {
+      isPlaying: true,
+      positionSeconds: 8,
+      queueEntryId: 'one-second',
+      trackId: 'one',
+      trackIndex: 1,
+    }
+
+    expect(
+      resolvePlaybackRestore({
+        fallbackIndex: 0,
+        queueEntryIds: ['one-first', 'one-second', 'two'],
+        storedPlayback,
+        tracks: DUPLICATE_TRACKS,
+      }),
+    ).toEqual({currentIndex: 1, playback: storedPlayback, shouldPersist: false})
+  })
+
+  it('should restore the same duplicate playlist entry after its track moves', () => {
+    const storedPlayback = {
+      isPlaying: true,
+      positionSeconds: 8,
+      queueEntryId: 'one-second',
+      trackId: 'one',
+      trackIndex: 2,
+    }
+
+    expect(
+      resolvePlaybackRestore({
+        fallbackIndex: 0,
+        queueEntryIds: ['one-first', 'two-first', 'two-second', 'one-second'],
+        storedPlayback,
+        tracks: [TRACKS[0], TRACKS[1], TRACKS[1], TRACKS[0]],
+      }),
+    ).toEqual({
+      currentIndex: 3,
+      playback: {...storedPlayback, trackIndex: 3},
+      shouldPersist: true,
+    })
+  })
+
+  it.each([
+    {
+      description: 'is missing from the active queue',
+      queueEntryId: 'removed-entry',
+      queueEntryIds: ['one-first', 'two', 'one-second'],
+    },
+    {
+      description: 'now identifies a different track',
+      queueEntryId: 'two',
+      queueEntryIds: ['one-first', 'two', 'one-second'],
+    },
+    {
+      description: 'cannot be resolved because entry metadata is unavailable',
+      queueEntryId: 'removed-entry',
+      queueEntryIds: undefined,
+    },
+  ])(
+    'should not restore a saved position when identity $description',
+    ({queueEntryId, queueEntryIds}) => {
+      const storedPlayback = {
+        isPlaying: true,
+        positionSeconds: 17,
+        queueEntryId,
+        trackId: 'one',
+        trackIndex: 2,
+      }
+
+      expect(
+        resolvePlaybackRestore({
+          fallbackIndex: 0,
+          ...(queueEntryIds === undefined ? {} : {queueEntryIds}),
+          storedPlayback,
+          tracks: [TRACKS[0]!, TRACKS[1]!, TRACKS[0]!],
+        }),
+      ).toEqual({currentIndex: 0, playback: null, shouldPersist: false})
+    },
+  )
+
+  it('should preserve legacy index behavior when stable queue identity is unavailable', () => {
+    const storedPlayback = {
+      isPlaying: true,
+      positionSeconds: 8,
+      trackId: 'one',
+      trackIndex: 2,
+    }
+
+    expect(
+      resolvePlaybackRestore({
+        fallbackIndex: 0,
+        queueEntryIds: ['one-first', 'two-first', 'two-second', 'one-second'],
+        storedPlayback,
+        tracks: [TRACKS[0], TRACKS[1], TRACKS[1], TRACKS[0]],
+      }),
+    ).toEqual({
+      currentIndex: 0,
+      playback: {...storedPlayback, queueEntryId: 'one-first', trackIndex: 0},
+      shouldPersist: true,
+    })
+  })
+
+  it('should fall back to the first matching occurrence for legacy playback', () => {
+    const storedPlayback = {isPlaying: true, positionSeconds: 8, trackId: 'one'}
+
+    expect(
+      resolvePlaybackRestore({fallbackIndex: 0, storedPlayback, tracks: DUPLICATE_TRACKS}),
+    ).toEqual({
+      currentIndex: 0,
+      playback: storedPlayback,
+      shouldPersist: false,
+    })
+  })
+
+  it('should reset missing playback to the first track', () => {
+    expect(
+      resolvePlaybackRestore({
+        fallbackIndex: 1,
+        storedPlayback: {isPlaying: true, positionSeconds: 8, trackId: 'removed'},
+        tracks: TRACKS,
+      }),
+    ).toEqual({
+      currentIndex: 0,
+      playback: {isPlaying: false, positionSeconds: 0, trackId: 'one', trackIndex: 0},
+      shouldPersist: true,
+    })
+  })
+})

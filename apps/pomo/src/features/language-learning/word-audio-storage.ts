@@ -1,0 +1,149 @@
+import {createModelStorage, type ModelStorage, type ModelStorageError} from '../model-storage'
+import {createKeyedTaskQueue, type KeyedTaskQueue} from 'src/utils/create-keyed-task-queue'
+import {type LanguageLearningWord, normalizeLanguageLearningWordUnicodeValue} from './word-schema'
+
+const AUDIO_CACHE_NAME = 'pomo-language-learning-word-audio-v1'
+const AUDIO_OWNER_HEADER = 'X-Pomo-Word-Audio-Owner'
+const AUDIO_PATH_PREFIX = '/__pomo/language-learning-word-audio'
+
+const defaultAudioCoordinator = createKeyedTaskQueue()
+const injectedAudioCoordinators = new WeakMap<ModelStorage, KeyedTaskQueue>()
+
+export interface LanguageLearningWordAudioDeleteOptions {
+  /** 생략하면 전체 경로를 지웁니다. true이면 다른 행이 사용하는 NFC 캐시는 보존하고
+   * 이 단어의 legacy 원문 경로만 지웁니다. NFC 단어는 삭제할 legacy 경로가 없습니다.
+   * owner를 지정한 경우 각 삭제 경로의 기존 소유자 검사도 유지합니다. */
+  readonly preserveSharedAudio?: boolean
+}
+
+export interface LanguageLearningWordAudioRepository {
+  /** 원문 경로와 공유 캐시의 삭제 범위를 구분하며 같은 NFC 자원 queue에서 처리합니다. */
+  readonly delete: (
+    word: LanguageLearningWord,
+    owner?: string,
+    options?: LanguageLearningWordAudioDeleteOptions,
+  ) => Promise<void>
+  readonly get: (word: LanguageLearningWord) => Promise<Blob | null>
+  readonly save: (word: LanguageLearningWord, audio: Blob, owner: string) => Promise<void>
+}
+
+export class LanguageLearningWordAudioStorageError extends Error {
+  override readonly name = 'LanguageLearningWordAudioStorageError'
+
+  constructor(
+    readonly operation: ModelStorageError['operation'],
+    options: ErrorOptions,
+  ) {
+    super('Language learning word audio storage failed', options)
+  }
+}
+
+const getAudioPath = (word: LanguageLearningWord) => {
+  const value = encodeURIComponent(normalizeLanguageLearningWordUnicodeValue(word.value))
+  return `${AUDIO_PATH_PREFIX}/${word.language}/${value}.opus`
+}
+const getAudioPaths = (word: LanguageLearningWord): ReadonlyArray<string> => {
+  const normalizedPath = getAudioPath(word)
+  const previousPath = `${AUDIO_PATH_PREFIX}/${word.language}/${encodeURIComponent(word.value)}.opus`
+
+  return normalizedPath === previousPath ? [normalizedPath] : [normalizedPath, previousPath]
+}
+
+const throwStorageError = (error: ModelStorageError): never => {
+  throw new LanguageLearningWordAudioStorageError(error.operation, {cause: error.cause})
+}
+
+const getInjectedAudioCoordinator = (storage: ModelStorage): KeyedTaskQueue => {
+  const existingCoordinator = injectedAudioCoordinators.get(storage)
+  if (existingCoordinator !== undefined) {
+    return existingCoordinator
+  }
+
+  const createdCoordinator = createKeyedTaskQueue()
+  injectedAudioCoordinators.set(storage, createdCoordinator)
+  return createdCoordinator
+}
+
+/** Persists compressed word pronunciation audio in the browser cache. */
+export const createLanguageLearningWordAudioRepository = (
+  storage?: ModelStorage,
+  coordinator?: KeyedTaskQueue,
+): LanguageLearningWordAudioRepository => {
+  const resolvedStorage = storage ?? createModelStorage({cacheName: AUDIO_CACHE_NAME})
+  const resolvedCoordinator =
+    coordinator ??
+    (storage === undefined ? defaultAudioCoordinator : getInjectedAudioCoordinator(resolvedStorage))
+
+  return {
+    delete(word, owner, options) {
+      const sharedPath = getAudioPath(word)
+      const paths = getAudioPaths(word).filter(
+        (path) => options?.preserveSharedAudio !== true || path !== sharedPath,
+      )
+      return resolvedCoordinator.run(sharedPath, async () => {
+        await paths.reduce<Promise<void>>(async (previous, path) => {
+          await previous
+
+          if (owner !== undefined) {
+            const storedResult = await resolvedStorage.get(path)
+            if (!storedResult.ok) {
+              return throwStorageError(storedResult.error)
+            }
+            if (
+              storedResult.value === null ||
+              storedResult.value.headers.get(AUDIO_OWNER_HEADER) !== owner
+            ) {
+              return
+            }
+          }
+
+          const result = await resolvedStorage.delete(path)
+
+          if (!result.ok) {
+            throwStorageError(result.error)
+          }
+        }, Promise.resolve())
+      })
+    },
+    get(word) {
+      const paths = getAudioPaths(word)
+      return resolvedCoordinator.run(paths[0]!, async () => {
+        return paths.reduce<Promise<Blob | null>>(async (previous, path) => {
+          const previousAudio = await previous
+          if (previousAudio !== null) {
+            return previousAudio
+          }
+
+          const result = await resolvedStorage.get(path)
+
+          if (!result.ok) {
+            return throwStorageError(result.error)
+          }
+
+          if (result.value !== null) {
+            return result.value.blob()
+          }
+          return null
+        }, Promise.resolve(null))
+      })
+    },
+    save(word, audio, owner) {
+      const path = getAudioPath(word)
+      return resolvedCoordinator.run(path, async () => {
+        const result = await resolvedStorage.set(
+          path,
+          new Response(audio, {
+            headers: {
+              [AUDIO_OWNER_HEADER]: owner,
+              'Content-Type': 'audio/ogg; codecs=opus',
+            },
+          }),
+        )
+
+        if (!result.ok) {
+          throwStorageError(result.error)
+        }
+      })
+    },
+  }
+}

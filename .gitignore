@@ -1,0 +1,114 @@
+# System Files
+.DS_Store
+.thumbs.db
+
+# Dependencies
+node_modules
+
+# Caches
+__pycache__/
+*.py[cod]
+.eslintcache
+.parcel-cache
+/storybook-static
+/.keystone
+
+# Quasar core related directories
+.quasar
+dist
+
+# Cordova related directories and files
+src-cordova/node_modules
+src-cordova/platforms
+src-cordova/plugins
+src-cordova/www
+
+# Capacitor related directories and files
+src-capacitor/www
+src-capacitor/node_modules
+
+# BEX related directories and files
+src-bex/www
+src-bex/js/core
+
+# Log files
+*.timestamp-*.mjs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Environment files
+.env
+
+# IDEs and editors
+.trunk
+.idea
+.fleet
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+
+# IDE - VSCode
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# Yarn
+.yarn/*
+!.yarn/cache
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions
+
+# Misc
+/.sass-cache
+/connect.lock
+/coverage
+/libpeerconnection.log
+npm-debug.log
+yarn-error.log
+testem.log
+/typings
+
+# coverage
+coverage
+
+#
+/__scratch__
+
+.temp
+.cache
+apps/pomo/scripts/agent-tasks/text-mood/embeddings.*.json
+.vitest-attachments
+apps/pomo/playwright-report
+apps/pomo/test-results
+.turbo
+.cert
+
+docs/.vitepress/cache
+docs/.vitepress/dist
+*storybook.log
+
+.history
+
+# opencode
+.opencode/
+opencode.jsonc
+
+.pnpm-store
+.worktrees
+.vercel
+.env*

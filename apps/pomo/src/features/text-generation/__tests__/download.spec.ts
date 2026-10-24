@@ -1,0 +1,92 @@
+/** @vitest-environment node */
+import {afterEach, describe, expect, it, vi} from 'vitest'
+
+import type {ModelStorage} from '../../model-storage'
+import * as modelStorage from '../../model-storage'
+import {successResult} from 'src/features/result'
+import {isTextModelDownloaded} from '../download'
+
+afterEach(() => {
+  vi.unstubAllEnvs()
+})
+
+const createStorage = (): ModelStorage => ({
+  delete: vi.fn(async () => successResult(false)),
+  get: vi.fn(async () => successResult(new Response('model'))),
+  set: vi.fn(async () => successResult(undefined)),
+})
+
+describe('isTextModelDownloaded', () => {
+  it('should allow cloud generation without accessing model storage', async () => {
+    const storage = createStorage()
+    await expect(isTextModelDownloaded({modelId: 'cloud', storage})).resolves.toBe(true)
+    expect(storage.get).not.toHaveBeenCalled()
+  })
+  it('should require every Gemma model weight file to be stored', async () => {
+    const storage = createStorage()
+
+    await expect(isTextModelDownloaded({modelId: 'gemma-4-e2b', storage})).resolves.toBe(true)
+    expect(storage.get).toHaveBeenCalledTimes(4)
+    expect(storage.get).toHaveBeenCalledWith(
+      'https://storage.pomofi.io/models/text-generation/onnx-community/gemma-4-E2B-it-ONNX/9f4bef82ea6e296bc69f8a2f5939f73af81b07a6/onnx/embed_tokens_q4.onnx',
+    )
+    expect(storage.get).toHaveBeenCalledWith(
+      'https://storage.pomofi.io/models/text-generation/onnx-community/gemma-4-E2B-it-ONNX/9f4bef82ea6e296bc69f8a2f5939f73af81b07a6/onnx/decoder_model_merged_q4.onnx_data',
+    )
+  })
+
+  it('should require the LFM graph and external weights to be stored', async () => {
+    const storage = createStorage()
+    await expect(isTextModelDownloaded({modelId: 'lfm-1.2b', storage})).resolves.toBe(true)
+    expect(storage.get).toHaveBeenCalledTimes(2)
+    expect(storage.get).toHaveBeenCalledWith(
+      'https://huggingface.co/LiquidAI/LFM2.5-1.2B-Instruct-ONNX/resolve/main/onnx/model_q4.onnx',
+    )
+    expect(storage.get).toHaveBeenCalledWith(
+      'https://huggingface.co/LiquidAI/LFM2.5-1.2B-Instruct-ONNX/resolve/main/onnx/model_q4.onnx_data',
+    )
+    vi.mocked(storage.get).mockResolvedValueOnce(successResult(null))
+    await expect(isTextModelDownloaded({modelId: 'lfm-1.2b', storage})).resolves.toBe(false)
+  })
+
+  it('should check the exact QAD GGUF file instead of ONNX weights', async () => {
+    const storage = createStorage()
+    await expect(isTextModelDownloaded({modelId: 'lfm-2.6b-qad', storage})).resolves.toBe(true)
+    expect(storage.get).toHaveBeenCalledExactlyOnceWith(
+      'https://storage.pomofi.io/models/text-generation/LiquidAI/LFM2.5-2.6B-GGUF/e7caca5d835a3901a8e0d63e94009429bafafdfc/LFM2.5-2.6B-QAD-Q4_0.gguf',
+    )
+  })
+
+  it('should report a missing or unreadable model weight as not downloaded', async () => {
+    const missingStorage = createStorage()
+    vi.mocked(missingStorage.get).mockResolvedValueOnce(successResult(null))
+
+    await expect(
+      isTextModelDownloaded({modelId: 'gemma-4-e2b', storage: missingStorage}),
+    ).resolves.toBe(false)
+
+    const unreadableStorage = createStorage()
+    vi.mocked(unreadableStorage.get).mockResolvedValueOnce({
+      error: {cause: new Error('cache unavailable'), operation: 'read'},
+      ok: false,
+    })
+    await expect(
+      isTextModelDownloaded({modelId: 'gemma-4-e2b', storage: unreadableStorage}),
+    ).resolves.toBe(false)
+  })
+
+  it('should create browser model storage by default', async () => {
+    const storage = createStorage()
+    vi.spyOn(modelStorage, 'createModelStorage').mockReturnValue(storage)
+
+    await expect(isTextModelDownloaded({modelId: 'gemma-4-e2b'})).resolves.toBe(true)
+  })
+
+  it('should treat the R2-backed product model as packaged on Steam', async () => {
+    vi.stubEnv('VITE_POMO_DISTRIBUTION_TARGET', 'steam')
+    const storage = createStorage()
+
+    await expect(isTextModelDownloaded({modelId: 'gemma-4-e2b', storage})).resolves.toBe(true)
+    expect(storage.get).not.toHaveBeenCalled()
+  })
+})

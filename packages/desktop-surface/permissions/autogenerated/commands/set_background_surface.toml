@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-set-background-surface"
+description = "Enables the set_background_surface command without any pre-configured scope."
+commands.allow = ["set_background_surface"]
+
+[[permission]]
+identifier = "deny-set-background-surface"
+description = "Denies the set_background_surface command without any pre-configured scope."
+commands.deny = ["set_background_surface"]

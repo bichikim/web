@@ -1,0 +1,81 @@
+{
+  "1": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "layer-head.png"
+    }
+  },
+  "2": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "exec-2d6dd203-0556-444f-a4bd-b794965cbd25.png"
+    }
+  },
+  "3": {
+    "class_type": "SolidMask",
+    "inputs": {
+      "value": 0,
+      "width": 1672,
+      "height": 941
+    }
+  },
+  "4": {
+    "class_type": "SolidMask",
+    "inputs": {
+      "value": 1,
+      "width": 96,
+      "height": 56
+    }
+  },
+  "5": {
+    "class_type": "MaskComposite",
+    "inputs": {
+      "destination": ["3", 0],
+      "source": ["4", 0],
+      "x": 970,
+      "y": 330,
+      "operation": "add"
+    }
+  },
+  "6": {
+    "class_type": "FeatherMask",
+    "inputs": {
+      "mask": ["5", 0],
+      "left": 12,
+      "top": 12,
+      "right": 12,
+      "bottom": 12
+    }
+  },
+  "7": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["1", 0],
+      "source": ["2", 0],
+      "x": 0,
+      "y": 0,
+      "resize_source": false,
+      "mask": ["6", 0]
+    }
+  },
+  "8": {
+    "class_type": "MaskToImage",
+    "inputs": {
+      "mask": ["6", 0]
+    }
+  },
+  "9": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": ["7", 0],
+      "filename_prefix": "pomo-night-head-mouthless-v2"
+    }
+  },
+  "10": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": ["8", 0],
+      "filename_prefix": "pomo-night-head-mouthless-v2-mask"
+    }
+  }
+}

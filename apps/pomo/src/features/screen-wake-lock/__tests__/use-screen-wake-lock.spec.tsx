@@ -1,0 +1,632 @@
+/** @vitest-environment jsdom */
+
+import {render, waitFor} from '@solidjs/testing-library'
+import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
+
+import {type ScreenWakeLockController, useScreenWakeLock} from '..'
+import {browserWakeLock} from '../browser-wake-lock'
+
+vi.mock('../browser-wake-lock', () => ({
+  browserWakeLock: {
+    isSupported: vi.fn(),
+    isVisible: vi.fn(),
+    request: vi.fn(),
+    subscribeVisibility: vi.fn(),
+  },
+}))
+
+const appsInTossMocks = vi.hoisted(() => ({
+  setAwakeMode: vi.fn(),
+}))
+
+vi.mock('@apps-in-toss/web-framework', () => ({
+  Screen: {setAwakeMode: appsInTossMocks.setAwakeMode},
+}))
+
+interface ScreenWakeLockHarnessProps {
+  readonly onController: (controller: ScreenWakeLockController) => void
+}
+
+const ScreenWakeLockHarness = (props: ScreenWakeLockHarnessProps) => {
+  props.onController(useScreenWakeLock())
+
+  return null
+}
+
+describe('useScreenWakeLock', () => {
+  beforeEach(() => {
+    vi.resetAllMocks()
+    vi.mocked(browserWakeLock.isSupported).mockReturnValue(false)
+    vi.mocked(browserWakeLock.isVisible).mockReturnValue(true)
+    vi.mocked(browserWakeLock.subscribeVisibility).mockReturnValue(vi.fn())
+    vi.stubEnv('VITE_POMO_IS_APPS_IN_TOSS', 'true')
+    appsInTossMocks.setAwakeMode
+      .mockReset()
+      .mockImplementation(({enabled}) => Promise.resolve({enabled}))
+  })
+
+  afterEach(() => {
+    vi.unstubAllEnvs()
+    vi.restoreAllMocks()
+  })
+
+  const renderController = () => {
+    let controller: ScreenWakeLockController | undefined
+    const view = render(() => (
+      <ScreenWakeLockHarness
+        onController={(nextController) => {
+          controller = nextController
+        }}
+      />
+    ))
+
+    return {getController: () => controller, view}
+  }
+
+  const createSentinel = () => {
+    let releaseListener: (() => void) | undefined
+    const sentinel = {
+      addEventListener: vi.fn((_eventName: string, listener: () => void) => {
+        releaseListener = listener
+      }),
+      release: vi.fn().mockResolvedValue(undefined),
+      released: false,
+    } as unknown as WakeLockSentinel
+
+    return {getReleaseListener: () => releaseListener, sentinel}
+  }
+
+  const setBrowserWakeLock = (request: () => Promise<WakeLockSentinel>) => {
+    vi.stubEnv('VITE_POMO_IS_APPS_IN_TOSS', '')
+    vi.mocked(browserWakeLock.isSupported).mockReturnValue(true)
+    vi.mocked(browserWakeLock.request).mockImplementation(request)
+  }
+
+  it.each(['', 'true'])(
+    'should unsubscribe visibility when the owner unmounts with Toss target %s',
+    async (target) => {
+      vi.stubEnv('VITE_POMO_IS_APPS_IN_TOSS', target)
+      vi.mocked(browserWakeLock.isSupported).mockReturnValue(true)
+      const unsubscribe = vi.fn()
+      vi.mocked(browserWakeLock.subscribeVisibility).mockReturnValue(unsubscribe)
+      const {getController, view} = renderController()
+      await waitFor(() => expect(getController()?.availability()).toBe('supported'))
+      expect(browserWakeLock.subscribeVisibility).toHaveBeenCalledOnce()
+      expect(unsubscribe).not.toHaveBeenCalled()
+      view.unmount()
+      expect(unsubscribe).toHaveBeenCalledOnce()
+    },
+  )
+
+  it('should use the native awake mode and restore it when the owner unmounts', async () => {
+    let controller: ScreenWakeLockController | undefined
+    const view = render(() => (
+      <ScreenWakeLockHarness
+        onController={(nextController) => {
+          controller = nextController
+        }}
+      />
+    ))
+
+    await waitFor(() => expect(controller?.availability()).toBe('supported'))
+    controller?.onEnabledChange(true)
+    await waitFor(() => expect(appsInTossMocks.setAwakeMode).toHaveBeenCalledWith({enabled: true}))
+    expect(controller?.isEnabled()).toBe(true)
+    expect(controller?.isRequestPending()).toBe(false)
+
+    view.unmount()
+
+    await waitFor(() =>
+      expect(appsInTossMocks.setAwakeMode).toHaveBeenLastCalledWith({enabled: false}),
+    )
+  })
+
+  it('should reapply native awake mode when the app becomes visible again', async () => {
+    let controller: ScreenWakeLockController | undefined
+    vi.mocked(browserWakeLock.isVisible).mockReturnValue(true)
+    render(() => (
+      <ScreenWakeLockHarness
+        onController={(nextController) => {
+          controller = nextController
+        }}
+      />
+    ))
+    await waitFor(() => expect(controller?.availability()).toBe('supported'))
+    controller?.onEnabledChange(true)
+    await waitFor(() => expect(appsInTossMocks.setAwakeMode).toHaveBeenCalledTimes(1))
+
+    vi.mocked(browserWakeLock.subscribeVisibility).mock.calls.at(-1)?.[0]()
+
+    await waitFor(() => expect(appsInTossMocks.setAwakeMode).toHaveBeenCalledTimes(2))
+    expect(appsInTossMocks.setAwakeMode).toHaveBeenLastCalledWith({enabled: true})
+  })
+
+  it('should expose a recoverable error when the native request fails', async () => {
+    let controller: ScreenWakeLockController | undefined
+    appsInTossMocks.setAwakeMode.mockRejectedValueOnce(new Error('bridge unavailable'))
+    render(() => (
+      <ScreenWakeLockHarness
+        onController={(nextController) => {
+          controller = nextController
+        }}
+      />
+    ))
+    await waitFor(() => expect(controller?.availability()).toBe('supported'))
+
+    controller?.onEnabledChange(true)
+
+    await waitFor(() => expect(controller?.isRequestPending()).toBe(false))
+    expect(controller?.isEnabled()).toBe(false)
+    expect(controller?.errorMessage()).toBe(
+      '화면 유지 요청을 허용하지 못했어요. 앱 설정을 확인해 주세요.',
+    )
+  })
+
+  it.each(['success', 'failure'] as const)(
+    'should ignore an older native %s while the latest enable is pending',
+    async (outcome) => {
+      const first = Promise.withResolvers<{enabled: boolean}>()
+      const latest = Promise.withResolvers<{enabled: boolean}>()
+      appsInTossMocks.setAwakeMode
+        .mockImplementationOnce(() => first.promise)
+        .mockResolvedValueOnce({enabled: false})
+        .mockImplementationOnce(() => latest.promise)
+      const {getController} = renderController()
+      await waitFor(() => expect(getController()?.availability()).toBe('supported'))
+      getController()?.onEnabledChange(true)
+      await waitFor(() => expect(appsInTossMocks.setAwakeMode).toHaveBeenCalledTimes(1))
+      getController()?.onEnabledChange(false)
+      getController()?.onEnabledChange(true)
+
+      if (outcome === 'success') {
+        first.resolve({enabled: true})
+      } else {
+        first.reject(new Error('older enable failed'))
+      }
+
+      await waitFor(() => expect(appsInTossMocks.setAwakeMode).toHaveBeenCalledTimes(3))
+      expect(appsInTossMocks.setAwakeMode.mock.calls).toEqual([
+        [{enabled: true}],
+        [{enabled: false}],
+        [{enabled: true}],
+      ])
+      const pending = getController()?.isRequestPending()
+      const enabled = getController()?.isEnabled()
+      const error = getController()?.errorMessage()
+      latest.resolve({enabled: true})
+      await waitFor(() => expect(getController()?.isRequestPending()).toBe(false))
+      expect(getController()?.isEnabled()).toBe(true)
+      expect(getController()?.errorMessage()).toBeNull()
+      expect(pending).toBe(true)
+      expect(enabled).toBe(true)
+      expect(error).toBeNull()
+    },
+  )
+
+  it('should report the latest native failure after an older enable succeeds', async () => {
+    const first = Promise.withResolvers<{enabled: boolean}>()
+    const latest = Promise.withResolvers<{enabled: boolean}>()
+    appsInTossMocks.setAwakeMode
+      .mockImplementationOnce(() => first.promise)
+      .mockResolvedValueOnce({enabled: false})
+      .mockImplementationOnce(() => latest.promise)
+    const {getController} = renderController()
+    await waitFor(() => expect(getController()?.availability()).toBe('supported'))
+    getController()?.onEnabledChange(true)
+    await waitFor(() => expect(appsInTossMocks.setAwakeMode).toHaveBeenCalledTimes(1))
+    getController()?.onEnabledChange(false)
+    getController()?.onEnabledChange(true)
+    first.resolve({enabled: true})
+    await waitFor(() => expect(appsInTossMocks.setAwakeMode).toHaveBeenCalledTimes(3))
+    latest.reject(new Error('latest enable failed'))
+
+    await waitFor(() =>
+      expect(getController()?.errorMessage()).toBe(
+        '화면 유지 요청을 허용하지 못했어요. 앱 설정을 확인해 주세요.',
+      ),
+    )
+    expect(getController()?.isEnabled()).toBe(false)
+    expect(getController()?.isRequestPending()).toBe(false)
+  })
+
+  it.each(['success', 'failure'] as const)(
+    'should release queued native requests after unmount despite an older %s',
+    async (outcome) => {
+      const first = Promise.withResolvers<{enabled: boolean}>()
+      appsInTossMocks.setAwakeMode.mockImplementationOnce(() => first.promise)
+      const {getController, view} = renderController()
+      await waitFor(() => expect(getController()?.availability()).toBe('supported'))
+      getController()?.onEnabledChange(true)
+      await waitFor(() => expect(appsInTossMocks.setAwakeMode).toHaveBeenCalledTimes(1))
+      getController()?.onEnabledChange(false)
+      getController()?.onEnabledChange(true)
+      view.unmount()
+
+      if (outcome === 'success') {
+        first.resolve({enabled: true})
+      } else {
+        first.reject(new Error('older enable failed after unmount'))
+      }
+
+      await waitFor(() => expect(appsInTossMocks.setAwakeMode).toHaveBeenCalledTimes(4))
+      expect(appsInTossMocks.setAwakeMode.mock.calls).toEqual([
+        [{enabled: true}],
+        [{enabled: false}],
+        [{enabled: true}],
+        [{enabled: false}],
+      ])
+      expect(getController()?.isEnabled()).toBe(false)
+      expect(getController()?.errorMessage()).toBeNull()
+    },
+  )
+
+  it('should report a synchronous native bridge failure and allow a retry', async () => {
+    appsInTossMocks.setAwakeMode.mockImplementationOnce(() => {
+      throw new Error('bridge threw')
+    })
+    const {getController} = renderController()
+    getController()?.onEnabledChange(true)
+    await waitFor(() => expect(getController()?.isRequestPending()).toBe(false))
+    expect(getController()?.isEnabled()).toBe(false)
+    expect(getController()?.errorMessage()).toBe(
+      '화면 유지 요청을 허용하지 못했어요. 앱 설정을 확인해 주세요.',
+    )
+
+    getController()?.onEnabledChange(true)
+    await waitFor(() => expect(getController()?.isRequestPending()).toBe(false))
+    expect(getController()?.isEnabled()).toBe(true)
+    expect(getController()?.errorMessage()).toBeNull()
+  })
+
+  it.each(['success', 'failure'] as const)(
+    'should keep the latest disable pending after an older native %s',
+    async (outcome) => {
+      const first = Promise.withResolvers<{enabled: boolean}>()
+      const disable = Promise.withResolvers<{enabled: boolean}>()
+      appsInTossMocks.setAwakeMode
+        .mockImplementationOnce(() => first.promise)
+        .mockImplementationOnce(() => disable.promise)
+      const {getController} = renderController()
+      getController()?.onEnabledChange(true)
+      await Promise.resolve()
+      getController()?.onEnabledChange(false)
+      expect(getController()?.isRequestPending()).toBe(true)
+
+      if (outcome === 'success') {
+        first.resolve({enabled: true})
+      } else {
+        first.reject(new Error('superseded enable failed'))
+      }
+      await waitFor(() => expect(appsInTossMocks.setAwakeMode).toHaveBeenCalledTimes(2))
+      expect(getController()?.isRequestPending()).toBe(true)
+      expect(getController()?.isEnabled()).toBe(false)
+      expect(getController()?.errorMessage()).toBeNull()
+
+      disable.resolve({enabled: false})
+      await waitFor(() => expect(getController()?.isRequestPending()).toBe(false))
+      expect(getController()?.errorMessage()).toBeNull()
+    },
+  )
+
+  it('should retain each native visibility reapply before the final cleanup disable', async () => {
+    const first = Promise.withResolvers<{enabled: boolean}>()
+    appsInTossMocks.setAwakeMode.mockImplementationOnce(() => first.promise)
+    const {getController, view} = renderController()
+    getController()?.onEnabledChange(true)
+    await Promise.resolve()
+    const visibilityChanged = vi.mocked(browserWakeLock.subscribeVisibility).mock.calls.at(-1)?.[0]
+    visibilityChanged?.()
+    visibilityChanged?.()
+    view.unmount()
+    expect(getController()?.isRequestPending()).toBe(false)
+    first.resolve({enabled: true})
+
+    await waitFor(() => expect(appsInTossMocks.setAwakeMode).toHaveBeenCalledTimes(4))
+    expect(appsInTossMocks.setAwakeMode.mock.calls).toEqual([
+      [{enabled: true}],
+      [{enabled: true}],
+      [{enabled: true}],
+      [{enabled: false}],
+    ])
+    expect(getController()?.errorMessage()).toBeNull()
+  })
+
+  it('should keep the browser capability boundary in a regular web build', async () => {
+    let controller: ScreenWakeLockController | undefined
+    vi.stubEnv('VITE_POMO_IS_APPS_IN_TOSS', '')
+    render(() => (
+      <ScreenWakeLockHarness
+        onController={(nextController) => {
+          controller = nextController
+        }}
+      />
+    ))
+
+    await waitFor(() => expect(controller?.availability()).toBe('unsupported'))
+    expect(appsInTossMocks.setAwakeMode).not.toHaveBeenCalled()
+  })
+
+  it('should acquire and release the browser wake lock', async () => {
+    const {sentinel} = createSentinel()
+    const request = vi.fn().mockResolvedValue(sentinel)
+    setBrowserWakeLock(request)
+    vi.mocked(browserWakeLock.isVisible).mockReturnValue(true)
+    const {getController, view} = renderController()
+    await waitFor(() => expect(getController()?.availability()).toBe('supported'))
+
+    getController()?.onEnabledChange(true)
+    await waitFor(() => expect(request).toHaveBeenCalledWith())
+    expect(getController()?.isRequestPending()).toBe(false)
+    vi.mocked(browserWakeLock.subscribeVisibility).mock.calls.at(-1)?.[0]()
+    await Promise.resolve()
+    expect(request).toHaveBeenCalledOnce()
+
+    getController()?.onEnabledChange(false)
+    await waitFor(() => expect(sentinel.release).toHaveBeenCalledOnce())
+    view.unmount()
+  })
+
+  it('should re-acquire a released browser wake lock when the document becomes visible', async () => {
+    const first = createSentinel()
+    const second = createSentinel()
+    const request = vi
+      .fn()
+      .mockResolvedValueOnce(first.sentinel)
+      .mockResolvedValueOnce(second.sentinel)
+    setBrowserWakeLock(request)
+    vi.mocked(browserWakeLock.isVisible).mockReturnValue(true)
+    const {getController} = renderController()
+    await waitFor(() => expect(getController()?.availability()).toBe('supported'))
+    getController()?.onEnabledChange(true)
+    await waitFor(() => expect(request).toHaveBeenCalledTimes(1))
+    Object.defineProperty(first.sentinel, 'released', {value: true})
+
+    vi.mocked(browserWakeLock.subscribeVisibility).mock.calls.at(-1)?.[0]()
+
+    await waitFor(() => expect(request).toHaveBeenCalledTimes(2))
+  })
+
+  it('should expose a browser permission error when acquisition fails', async () => {
+    const request = vi.fn().mockRejectedValue(new Error('denied'))
+    setBrowserWakeLock(request)
+    const {getController} = renderController()
+    await waitFor(() => expect(getController()?.availability()).toBe('supported'))
+
+    getController()?.onEnabledChange(true)
+
+    await waitFor(() => expect(getController()?.isRequestPending()).toBe(false))
+    expect(getController()?.isEnabled()).toBe(false)
+    expect(getController()?.errorMessage()).toBe(
+      '화면 유지 요청을 허용하지 못했어요. 브라우저 설정을 확인해 주세요.',
+    )
+  })
+
+  it('should release a browser wake lock that resolves after being disabled', async () => {
+    const {sentinel} = createSentinel()
+    let resolveRequest: ((sentinel: WakeLockSentinel) => void) | undefined
+    const request = vi.fn(
+      () =>
+        new Promise<WakeLockSentinel>((resolve) => {
+          resolveRequest = resolve
+        }),
+    )
+    setBrowserWakeLock(request)
+    const {getController} = renderController()
+    await waitFor(() => expect(getController()?.availability()).toBe('supported'))
+    getController()?.onEnabledChange(true)
+    getController()?.onEnabledChange(false)
+
+    resolveRequest?.(sentinel)
+
+    await waitFor(() => expect(sentinel.release).toHaveBeenCalledOnce())
+  })
+
+  it.each(['disable', 'unmount'] as const)(
+    'should ignore a browser acquire rejection after %s',
+    async (action) => {
+      const pending = Promise.withResolvers<WakeLockSentinel>()
+      const request = vi.fn(() => pending.promise)
+      setBrowserWakeLock(request)
+      const {getController, view} = renderController()
+      await waitFor(() => expect(getController()?.availability()).toBe('supported'))
+      getController()?.onEnabledChange(true)
+      await waitFor(() => expect(request).toHaveBeenCalledOnce())
+
+      if (action === 'disable') {
+        getController()?.onEnabledChange(false)
+      } else {
+        view.unmount()
+      }
+      pending.reject(new Error('cancelled request failed'))
+      await pending.promise.catch(() => undefined)
+
+      expect(getController()?.isRequestPending()).toBe(false)
+      expect(getController()?.isEnabled()).toBe(false)
+      expect(getController()?.errorMessage()).toBeNull()
+    },
+  )
+
+  it.each(['success', 'failure'] as const)(
+    'should preserve a newer browser request after an older %s',
+    async (outcome) => {
+      const first = Promise.withResolvers<WakeLockSentinel>()
+      const latest = Promise.withResolvers<WakeLockSentinel>()
+      const {sentinel} = createSentinel()
+      const request = vi.fn().mockReturnValueOnce(first.promise).mockReturnValueOnce(latest.promise)
+      setBrowserWakeLock(request)
+      const {getController} = renderController()
+      await waitFor(() => expect(getController()?.availability()).toBe('supported'))
+      getController()?.onEnabledChange(true)
+      await waitFor(() => expect(request).toHaveBeenCalledOnce())
+      getController()?.onEnabledChange(false)
+      getController()?.onEnabledChange(true)
+
+      if (outcome === 'success') {
+        first.resolve(sentinel)
+      } else {
+        first.reject(new Error('older request failed'))
+      }
+      await first.promise.catch(() => undefined)
+      await Promise.resolve()
+      expect(request).toHaveBeenCalledTimes(2)
+      expect(getController()?.isRequestPending()).toBe(true)
+      expect(getController()?.isEnabled()).toBe(true)
+      expect(getController()?.errorMessage()).toBeNull()
+      if (outcome === 'success') {
+        expect(sentinel.release).toHaveBeenCalledOnce()
+      }
+
+      latest.reject(new Error('latest request failed'))
+      await latest.promise.catch(() => undefined)
+      expect(getController()?.isRequestPending()).toBe(false)
+      expect(getController()?.isEnabled()).toBe(false)
+      expect(getController()?.errorMessage()).toBe(
+        '화면 유지 요청을 허용하지 못했어요. 브라우저 설정을 확인해 주세요.',
+      )
+    },
+  )
+
+  it('should ignore an older release failure after enabling again', async () => {
+    const pending = Promise.withResolvers<void>()
+    const first = createSentinel()
+    const latest = createSentinel()
+    vi.mocked(first.sentinel.release).mockReturnValue(pending.promise)
+    setBrowserWakeLock(
+      vi.fn().mockResolvedValueOnce(first.sentinel).mockResolvedValueOnce(latest.sentinel),
+    )
+    const {getController} = renderController()
+    await waitFor(() => expect(getController()?.availability()).toBe('supported'))
+    getController()?.onEnabledChange(true)
+    await waitFor(() => expect(getController()?.isRequestPending()).toBe(false))
+    getController()?.onEnabledChange(false)
+    getController()?.onEnabledChange(true)
+    await waitFor(() => expect(getController()?.isRequestPending()).toBe(false))
+    pending.reject(new Error('older release failed'))
+    await pending.promise.catch(() => undefined)
+    expect(getController()?.isEnabled()).toBe(true)
+    expect(getController()?.errorMessage()).toBeNull()
+  })
+
+  it.each(['success', 'failure'] as const)(
+    'should release a late browser sentinel after unmount and contain cleanup %s',
+    async (outcome) => {
+      const pending = Promise.withResolvers<WakeLockSentinel>()
+      const {sentinel} = createSentinel()
+      if (outcome === 'failure') {
+        vi.mocked(sentinel.release).mockRejectedValue(new Error('cleanup failed'))
+      }
+      setBrowserWakeLock(vi.fn(() => pending.promise))
+      const {getController, view} = renderController()
+      await waitFor(() => expect(getController()?.availability()).toBe('supported'))
+      getController()?.onEnabledChange(true)
+      view.unmount()
+      pending.resolve(sentinel)
+      await pending.promise
+      await Promise.resolve()
+      expect(sentinel.release).toHaveBeenCalledOnce()
+      expect(getController()?.isEnabled()).toBe(false)
+      expect(getController()?.isRequestPending()).toBe(false)
+      expect(getController()?.errorMessage()).toBeNull()
+    },
+  )
+
+  it('should surface an unexpected browser wake-lock release while visible', async () => {
+    const {getReleaseListener, sentinel} = createSentinel()
+    const request = vi.fn().mockResolvedValue(sentinel)
+    setBrowserWakeLock(request)
+    vi.mocked(browserWakeLock.isVisible).mockReturnValue(true)
+    const {getController} = renderController()
+    await waitFor(() => expect(getController()?.availability()).toBe('supported'))
+    getController()?.onEnabledChange(true)
+    await waitFor(() => expect(getReleaseListener()).toBeTypeOf('function'))
+
+    getReleaseListener()?.()
+
+    expect(getController()?.isEnabled()).toBe(false)
+    expect(getController()?.errorMessage()).toBe('화면 유지가 해제되었어요. 다시 켜 주세요.')
+  })
+
+  it('should preserve the current state for a stale or hidden release event', async () => {
+    const first = createSentinel()
+    const second = createSentinel()
+    const request = vi
+      .fn()
+      .mockResolvedValueOnce(first.sentinel)
+      .mockResolvedValueOnce(second.sentinel)
+    setBrowserWakeLock(request)
+    vi.mocked(browserWakeLock.isVisible).mockReturnValue(false)
+    const {getController} = renderController()
+    await waitFor(() => expect(getController()?.availability()).toBe('supported'))
+    getController()?.onEnabledChange(true)
+    await waitFor(() => expect(first.getReleaseListener()).toBeTypeOf('function'))
+    first.getReleaseListener()?.()
+    expect(getController()?.isEnabled()).toBe(true)
+
+    vi.mocked(browserWakeLock.subscribeVisibility).mock.calls.at(-1)?.[0]()
+    expect(request).toHaveBeenCalledOnce()
+    getController()?.onEnabledChange(false)
+    first.getReleaseListener()?.()
+    expect(getController()?.errorMessage()).toBeNull()
+  })
+
+  it('should report a browser wake-lock release failure', async () => {
+    const {sentinel} = createSentinel()
+    vi.mocked(sentinel.release).mockRejectedValue(new Error('release failed'))
+    const request = vi.fn().mockResolvedValue(sentinel)
+    setBrowserWakeLock(request)
+    const {getController} = renderController()
+    await waitFor(() => expect(getController()?.availability()).toBe('supported'))
+    getController()?.onEnabledChange(true)
+    await waitFor(() => expect(request).toHaveBeenCalledOnce())
+
+    getController()?.onEnabledChange(false)
+
+    await waitFor(() =>
+      expect(getController()?.errorMessage()).toBe(
+        '화면 유지 기능을 해제하지 못했어요. 잠시 후 다시 시도해 주세요.',
+      ),
+    )
+  })
+
+  it('should report an unexpected native response and a failed native disable request', async () => {
+    const {getController} = renderController()
+    await waitFor(() => expect(getController()?.availability()).toBe('supported'))
+    appsInTossMocks.setAwakeMode.mockResolvedValueOnce({enabled: false})
+    getController()?.onEnabledChange(true)
+    await waitFor(() => expect(getController()?.isRequestPending()).toBe(false))
+    expect(getController()?.isEnabled()).toBe(false)
+
+    appsInTossMocks.setAwakeMode.mockRejectedValueOnce(new Error('disable failed'))
+    getController()?.onEnabledChange(false)
+    await waitFor(() => expect(getController()?.isRequestPending()).toBe(false))
+    expect(getController()?.errorMessage()).toBe(
+      '화면 유지 기능을 해제하지 못했어요. 잠시 후 다시 시도해 주세요.',
+    )
+  })
+
+  it('should not restore native awake mode when it was never requested', async () => {
+    vi.mocked(browserWakeLock.isVisible).mockReturnValue(false)
+    const {view} = renderController()
+    await Promise.resolve()
+
+    vi.mocked(browserWakeLock.subscribeVisibility).mock.calls.at(-1)?.[0]()
+
+    view.unmount()
+
+    expect(appsInTossMocks.setAwakeMode).not.toHaveBeenCalled()
+  })
+
+  it('should contain a native cleanup failure after the owner unmounts', async () => {
+    appsInTossMocks.setAwakeMode
+      .mockResolvedValueOnce({enabled: true})
+      .mockRejectedValueOnce(new Error('cleanup failed'))
+    const {getController, view} = renderController()
+    await waitFor(() => expect(getController()?.availability()).toBe('supported'))
+    getController()?.onEnabledChange(true)
+    await waitFor(() => expect(getController()?.isRequestPending()).toBe(false))
+
+    view.unmount()
+
+    await waitFor(() => expect(appsInTossMocks.setAwakeMode).toHaveBeenCalledTimes(2))
+  })
+})

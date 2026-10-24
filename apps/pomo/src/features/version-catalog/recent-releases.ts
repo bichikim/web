@@ -1,0 +1,47 @@
+import type {VersionCatalog, VersionRelease} from './index'
+import type {ViewedRelease} from './viewed-release-storage'
+
+const RECENT_RELEASE_DAYS = 5
+const HOURS_PER_DAY = 24
+const MINUTES_PER_HOUR = 60
+const SECONDS_PER_MINUTE = 60
+const MILLISECONDS_PER_SECOND = 1_000
+const RECENT_RELEASE_DURATION_MS =
+  RECENT_RELEASE_DAYS *
+  HOURS_PER_DAY *
+  MINUTES_PER_HOUR *
+  SECONDS_PER_MINUTE *
+  MILLISECONDS_PER_SECOND
+
+interface SelectNoticeReleasesOptions {
+  readonly catalog: VersionCatalog
+  readonly now: Date
+  readonly viewedRelease: ViewedRelease | null
+}
+
+/** Selects all releases from the preceding five elapsed days when any are unseen. */
+export const selectNoticeReleases = (
+  options: SelectNoticeReleasesOptions,
+): ReadonlyArray<VersionRelease> => {
+  const now = options.now.getTime()
+  const viewedAt =
+    options.viewedRelease === null
+      ? Number.NEGATIVE_INFINITY
+      : Date.parse(options.viewedRelease.releasedAt)
+
+  const releases = options.catalog.releases
+    .map((release) => ({release, releasedAt: Date.parse(release.releasedAt)}))
+    .filter(({releasedAt}) => {
+      const age = now - releasedAt
+
+      return age >= 0 && age < RECENT_RELEASE_DURATION_MS
+    })
+
+  if (!releases.some(({releasedAt}) => releasedAt > viewedAt)) {
+    return []
+  }
+
+  return releases
+    .sort((left, right) => right.releasedAt - left.releasedAt)
+    .map(({release}) => release)
+}

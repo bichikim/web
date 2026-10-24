@@ -1,0 +1,63 @@
+import type {ChatMessage} from './messages'
+
+interface CreateChatPromptOptions {
+  readonly messages: ReadonlyArray<ChatMessage>
+  readonly summary: string
+  readonly supplementaryContext?: string
+}
+
+interface CreateSummaryPromptOptions {
+  readonly messages: ReadonlyArray<ChatMessage>
+  readonly previousSummary: string
+}
+
+interface ChatModelMessage {
+  readonly content: string
+  readonly role: 'assistant' | 'system' | 'user'
+}
+
+const CHAT_SYSTEM_PROMPT = `당신은 자연스러운 표준 한국어로만 답합니다.
+번역투·오타·외국 문자·문어체·어색한 단어 조합·잘못된 높임말을 쓰지 말고 문법과 문맥을 점검하세요.
+추측·과장된 감탄사·비유·상투적인 질문이나 덕담 없이 끝내세요.
+감정 표현에는 "당신"이라는 호칭이나 말의 반복, 요청하지 않은 훈계·평가·조언 없이 담백하게 공감하세요.
+정확히 말하고 모르면 지어내지 마세요.
+이전 대화 요약이 있으면 사실과 사용자 선호만 참고하세요.`
+
+const toTranscript = (messages: ReadonlyArray<ChatMessage>) =>
+  messages
+    .map((message) => `${message.role === 'user' ? '사용자' : '어시스턴트'}: ${message.content}`)
+    .join('\n')
+
+export const createChatMessages = (options: CreateChatPromptOptions): Array<ChatModelMessage> => {
+  let systemContent =
+    options.summary.length > 0
+      ? `${CHAT_SYSTEM_PROMPT}\n\n이전 대화 요약:\n${options.summary}`
+      : CHAT_SYSTEM_PROMPT
+
+  if (options.supplementaryContext !== undefined && options.supplementaryContext.length > 0) {
+    systemContent = `${systemContent}\n\n현재 질문을 위한 외부 정보:\n${options.supplementaryContext}`
+  }
+
+  return [
+    {content: systemContent, role: 'system'},
+    ...options.messages.map((message) => ({content: message.content, role: message.role})),
+  ]
+}
+
+export const createSummaryMessages = (
+  options: CreateSummaryPromptOptions,
+): Array<ChatModelMessage> => [
+  {
+    content: `대화 기록을 다음 대화에서 기억해야 할 짧은 메모로 압축하세요.
+사용자의 사실, 선호, 약속, 결정, 미해결 질문을 우선 보존하세요.
+이미 지난 잡담과 반복은 버리고, 추측을 추가하지 마세요.
+시간 순서를 유지한 한국어 글머리표만 출력하세요.`,
+    role: 'system',
+  },
+  {
+    content: `${
+      options.previousSummary.length > 0 ? `기존 메모:\n${options.previousSummary}\n\n` : ''
+    }새로 압축할 대화:\n${toTranscript(options.messages)}`,
+    role: 'user',
+  },
+]

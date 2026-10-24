@@ -1,0 +1,687 @@
+import {describe, expect, it, test} from 'vitest'
+
+import {createDemoDocument} from '../create-demo-document'
+import {parseDocument, parseDocumentValue} from '../parse-document'
+import {serializeDocument} from '../serialize-document'
+
+const PLANE_COUNT = 60_000
+// 경과 시간을 단언하지 않고 결과만 확인한다. 평면마다 전체 키폼을 다시 거르던 제곱 시간 구현은 이
+// 입력에서 10초 넘게 걸려, 러너 제한 시간이 기기 속도에 둔감한 느슨한 안전장치로 남는다.
+const PLANE_TIMEOUT_MS = 5000
+
+const createLegacyDocument = () => {
+  const document = createDemoDocument()
+  const [parameter] = document.parameters ?? []
+  const [binding] = document.parameterBindings ?? []
+
+  if (parameter === undefined || binding === undefined) {
+    throw new Error('Expected demo parameters')
+  }
+
+  return {
+    ...document,
+    motions: [],
+    parameterBindings: undefined,
+    parameters: [
+      {
+        ...parameter,
+        keyforms: binding.keyforms
+          .filter((keyform) => keyform.values[1] === 0)
+          .map((keyform) => ({parts: keyform.parts, value: keyform.values[0]})),
+        targetPartIds: binding.targetPartIds,
+      },
+    ],
+    version: 1,
+  }
+}
+
+describe('parseDocument', () => {
+  test('should preserve a compiled collapsed pose while validating index connectivity', () => {
+    const source = createDemoDocument()
+    const parts = source.parts.map((part) => ({
+      ...part,
+      mesh: {...part.mesh, validationSpace: 'indices', vertices: part.mesh.vertices.map(() => 0)},
+    }))
+    expect(parseDocumentValue({...source, parts})).toMatchObject({document: {parts}, ok: true})
+    expect(
+      parseDocumentValue({
+        ...source,
+        parts: parts.map((part) => ({...part, mesh: {...part.mesh, validationSpace: undefined}})),
+      }),
+    ).toMatchObject({ok: false})
+    expect(
+      parseDocumentValue({
+        ...source,
+        parts: parts.map((part) => ({...part, mesh: {...part.mesh, indices: [0, 1, 9999]}})),
+      }),
+    ).toMatchObject({ok: false})
+  })
+  test('should round-trip conditional layer rules and reject invalid references and conditions', () => {
+    const document = createDemoDocument()
+    const rule = {
+      partIds: [document.parts[0]!.id],
+      placement: 'after',
+      referencePartId: document.parts[1]!.id,
+      when: {
+        comparison: 'greater-than',
+        parameterIds: [document.parameters![0]!.id],
+        threshold: 20,
+      },
+    }
+    const source = {...document, layerOrderRules: [rule]}
+    const parsed = parseDocument(JSON.stringify(source))
+    expect(parsed).toMatchObject({document: {layerOrderRules: [rule]}, ok: true})
+    if (parsed.ok) {
+      expect(parseDocument(serializeDocument(parsed.document))).toEqual(parsed)
+    }
+    const invalidRules = [
+      null,
+      {...rule, partIds: []},
+      {...rule, partIds: ['missing']},
+      {...rule, partIds: [...rule.partIds, ...rule.partIds]},
+      {...rule, referencePartId: rule.partIds[0]},
+      {...rule, referencePartId: 'missing'},
+      {...rule, placement: 'front'},
+      {...rule, when: null},
+      {...rule, when: {...rule.when, parameterIds: []}},
+      {...rule, when: {...rule.when, parameterIds: ['missing']}},
+      {
+        ...rule,
+        when: {...rule.when, parameterIds: [...rule.when.parameterIds, ...rule.when.parameterIds]},
+      },
+      {...rule, when: {...rule.when, comparison: 'equal'}},
+      {...rule, when: {...rule.when, threshold: '20'}},
+      {...rule, when: {...rule.when, threshold: null}},
+    ]
+    for (const invalidRule of invalidRules) {
+      expect(
+        parseDocument(JSON.stringify({...document, layerOrderRules: [invalidRule]})),
+      ).toMatchObject({ok: false})
+    }
+    expect(parseDocument(JSON.stringify({...document, layerOrderRules: {}}))).toMatchObject({
+      ok: false,
+    })
+    expect(parseDocument(JSON.stringify({...document, layerOrderRules: []}))).toMatchObject({
+      ok: true,
+    })
+  })
+
+  it('should parse a serialized valid document', () => {
+    const document = createDemoDocument()
+
+    expect(parseDocument(serializeDocument(document))).toEqual({document, ok: true})
+  })
+
+  it('should store a repeated embedded texture once and restore it for every part', () => {
+    const document = createDemoDocument()
+    const texture = {height: 2, src: 'data:image/png;base64,AAAA', width: 2}
+    const source = {...document, parts: document.parts.map((part) => ({...part, texture}))}
+    const serialized = serializeDocument(source)
+    const wire = JSON.parse(serialized)
+
+    expect(wire.textureAssets).toEqual({'texture-0': texture.src})
+    for (const part of wire.parts) {
+      expect(part.texture).toEqual({assetId: 'texture-0', height: 2, width: 2})
+    }
+    expect(serialized.split(texture.src)).toHaveLength(2)
+    expect(parseDocument(serialized)).toEqual({document: source, ok: true})
+  })
+
+  it('should reject missing or conflicting embedded texture references', () => {
+    const document = createDemoDocument()
+    const texture = {assetId: 'missing', height: 2, width: 2}
+    const parts = [{...document.parts[0], texture}, ...document.parts.slice(1)]
+
+    expect(parseDocument(JSON.stringify({...document, parts, textureAssets: {}})).ok).toBe(false)
+    expect(
+      parseDocument(
+        JSON.stringify({
+          ...document,
+          parts: [
+            {...parts[0], texture: {...texture, src: 'data:image/png;base64,AAAA'}},
+            ...parts.slice(1),
+          ],
+          textureAssets: {missing: 'data:image/png;base64,AAAA'},
+        }),
+      ).ok,
+    ).toBe(false)
+  })
+
+  it('should accept motion sounds as WAV data URLs or paths', () => {
+    const document = createDemoDocument()
+    const withSound = (sound: unknown) =>
+      parseDocument(
+        JSON.stringify({
+          ...document,
+          motions: [{...document.motions[0], sound}, ...document.motions.slice(1)],
+        }),
+      ).ok
+
+    expect(withSound({src: 'sounds/talk.wav'})).toBe(true)
+    expect(withSound({src: 'data:audio/wav;base64,UklGRg=='})).toBe(true)
+    expect(withSound({src: 'data:audio/X-WAV;name=talk.wav;base64,UklGRg=='})).toBe(true)
+    expect(withSound({src: 'data:audio/mpeg;base64,AAAA'})).toBe(false)
+    expect(withSound({src: 'data:audio/wav,RIFF'})).toBe(false)
+    expect(withSound({src: ''})).toBe(false)
+    expect(withSound('sounds/talk.wav')).toBe(false)
+  })
+
+  it('should accept a positive integer frame rate and retain the legacy default when omitted', () => {
+    const document = createDemoDocument()
+
+    expect(parseDocument(JSON.stringify({...document, framesPerSecond: 30}))).toMatchObject({
+      document: {framesPerSecond: 30},
+      ok: true,
+    })
+    expect(parseDocument(JSON.stringify(document))).toMatchObject({ok: true})
+    expect(parseDocument(JSON.stringify({...document, framesPerSecond: 0}))).toMatchObject({
+      ok: false,
+    })
+    expect(parseDocument(JSON.stringify({...document, framesPerSecond: 23.5}))).toMatchObject({
+      ok: false,
+    })
+    expect(parseDocument(JSON.stringify({...document, framesPerSecond: 241}))).toMatchObject({
+      ok: false,
+    })
+  })
+
+  it('should validate discrete parameter options', () => {
+    const document = createDemoDocument()
+    const options = [
+      {label: '기본', value: 0},
+      {label: '하트', value: 1},
+      {label: '표고버섯', value: 2},
+    ]
+    const discreteParameter = {
+      defaultValue: 0,
+      id: 'eye-symbol',
+      maximum: 2,
+      minimum: 0,
+      name: '눈동자 무늬',
+      options,
+    }
+
+    expect(
+      parseDocument(
+        JSON.stringify({
+          ...document,
+          parameters: [...document.parameters!, discreteParameter],
+        }),
+      ),
+    ).toMatchObject({ok: true})
+    expect(
+      parseDocument(
+        JSON.stringify({
+          ...document,
+          parameters: [
+            {...discreteParameter, options: [...options, {label: '중복', value: 1}]},
+            ...document.parameters!,
+          ],
+        }),
+      ),
+    ).toMatchObject({ok: false})
+    expect(
+      parseDocument(
+        JSON.stringify({
+          ...document,
+          parameters: [{...discreteParameter, defaultValue: 0.5}, ...document.parameters!],
+        }),
+      ),
+    ).toMatchObject({ok: false})
+  })
+
+  it('should read the earlier format name as the current one and reject unknown names', () => {
+    const document = createDemoDocument()
+    const legacy = parseDocument(JSON.stringify({...document, format: 'winter-love-puppet'}))
+    expect(legacy).toMatchObject({document: {format: 'winter-love-poffo'}, ok: true})
+    expect(parseDocument(JSON.stringify({...document, format: 'winter-love'}))).toMatchObject({
+      ok: false,
+    })
+  })
+
+  it('should normalize legacy untagged tracks to explicit kinds', () => {
+    const document = createDemoDocument()
+    const untaggedDocument = {
+      ...document,
+      motions: document.motions.map((motion) => ({
+        ...motion,
+        tracks: motion.tracks.map(({kind: _kind, ...track}) => track),
+      })),
+    }
+
+    const result = parseDocument(JSON.stringify(untaggedDocument))
+
+    expect(result).toMatchObject({ok: true})
+    if (result.ok) {
+      expect(result.document.motions).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            tracks: expect.arrayContaining([expect.objectContaining({kind: 'parameter'})]),
+          }),
+        ]),
+      )
+    }
+  })
+
+  it('should reject a track whose declared kind contradicts its target', () => {
+    const document = createDemoDocument()
+    const parameterTrack = document.motions[0]!.tracks[0]!
+    const invalidDocument = {
+      ...document,
+      motions: [
+        {
+          ...document.motions[0]!,
+          tracks: [{...parameterTrack, kind: 'vertex'}],
+        },
+      ],
+    }
+
+    expect(parseDocument(JSON.stringify(invalidDocument))).toEqual({
+      error: {code: 'invalid-document'},
+      ok: false,
+    })
+  })
+
+  it('should reject fractional texture pixel dimensions', () => {
+    const document = createDemoDocument()
+    const fractionalDocument = {
+      ...document,
+      parts: document.parts.map((part, index) =>
+        index === 0 ? {...part, texture: {...part.texture, width: part.texture.width + 0.5}} : part,
+      ),
+    }
+
+    expect(parseDocument(JSON.stringify(fractionalDocument))).toEqual({
+      error: {code: 'invalid-document'},
+      ok: false,
+    })
+  })
+
+  it('should validate optional part render properties while retaining legacy defaults', () => {
+    const source = createDemoDocument()
+    const document = {
+      ...source,
+      parts: source.parts.map((part) =>
+        part.id === 'shape-circle' ? {...part, properties: undefined} : part,
+      ),
+    }
+    const part = document.parts[0]!
+    const properties = {
+      blendMode: 'multiply',
+      clippingMaskIds: ['shape-circle'],
+      invertedMask: true,
+      multiplyColor: [1, 0.5, 0.25],
+      opacity: 0.5,
+      renderWhenUsedAsMask: true,
+      screenColor: [0, 0.25, 0.5],
+    }
+
+    const result = parseDocument(
+      JSON.stringify({
+        ...document,
+        parts: [{...part, properties}, ...document.parts.slice(1)],
+      }),
+    )
+
+    expect(result.ok).toBe(true)
+    expect(result.ok ? result.document.parts[0]?.properties : undefined).toEqual(properties)
+    expect(
+      parseDocument(
+        JSON.stringify({
+          ...document,
+          parts: [
+            {...part, properties: {...properties, drawOrder: 1001}},
+            ...document.parts.slice(1),
+          ],
+        }),
+      ),
+    ).toMatchObject({ok: false})
+    expect(
+      parseDocument(
+        JSON.stringify({
+          ...document,
+          parts: [
+            {...part, properties: {...properties, renderWhenUsedAsMask: 'yes'}},
+            ...document.parts.slice(1),
+          ],
+        }),
+      ),
+    ).toMatchObject({ok: false})
+    expect(
+      parseDocument(
+        JSON.stringify({
+          ...document,
+          parts: [{...part, properties: {...properties, opacity: 1.1}}, ...document.parts.slice(1)],
+        }),
+      ),
+    ).toMatchObject({ok: false})
+    expect(
+      parseDocument(
+        JSON.stringify({
+          ...document,
+          parts: [
+            {...part, properties: {...properties, clippingMaskIds: [part.id]}},
+            ...document.parts.slice(1),
+          ],
+        }),
+      ),
+    ).toMatchObject({ok: false})
+  })
+
+  test('should accept chained masks and reject cyclic masks', () => {
+    const document = createDemoDocument()
+    const chain = {
+      ...document,
+      parts: document.parts.map((part) => {
+        if (part.id === 'mesh-preview') {
+          return {...part, properties: {clippingMaskIds: ['shape-circle']}}
+        }
+        if (part.id === 'shape-diamond') {
+          return {...part, properties: {clippingMaskIds: ['mesh-preview']}}
+        }
+        return {...part, properties: undefined}
+      }),
+    }
+    const cycle = {
+      ...chain,
+      parts: chain.parts.map((part) =>
+        part.id === 'shape-circle'
+          ? {...part, properties: {clippingMaskIds: ['mesh-preview']}}
+          : part,
+      ),
+    }
+
+    expect(parseDocument(JSON.stringify(chain)).ok).toBe(true)
+    expect(parseDocument(JSON.stringify(cycle))).toEqual({
+      error: {code: 'invalid-document'},
+      ok: false,
+    })
+  })
+
+  it('should parse sparse two-dimensional keyforms', () => {
+    const document = createDemoDocument()
+    const binding = document.parameterBindings?.[0]
+    const sparseDocument = {
+      ...document,
+      parameterBindings: [
+        {
+          ...binding!,
+          keyforms: binding!.keyforms.filter(
+            (keyform) => keyform.values[0] !== 0 || keyform.values[1] !== 0,
+          ),
+        },
+      ],
+    }
+
+    expect(parseDocument(JSON.stringify(sparseDocument))).toEqual({
+      document: sparseDocument,
+      ok: true,
+    })
+  })
+
+  it('should preserve supported easing and reject unknown easing', () => {
+    const document = createDemoDocument()
+    const track = document.motions[0]!.tracks[0]!
+    const easedDocument = {
+      ...document,
+      motions: [
+        {
+          ...document.motions[0]!,
+          tracks: [
+            {
+              ...track,
+              keyframes: [
+                {...track.keyframes[0]!, easing: 'ease-out'},
+                ...track.keyframes.slice(1),
+              ],
+            },
+          ],
+        },
+      ],
+    }
+
+    expect(parseDocument(JSON.stringify(easedDocument))).toMatchObject({
+      document: easedDocument,
+      ok: true,
+    })
+    expect(
+      parseDocument(
+        JSON.stringify({
+          ...easedDocument,
+          motions: [
+            {
+              ...easedDocument.motions[0],
+              tracks: [
+                {
+                  ...easedDocument.motions[0].tracks[0],
+                  keyframes: [{easing: 'bounce', time: 0, value: 240}],
+                },
+              ],
+            },
+          ],
+        }),
+      ),
+    ).toEqual({error: {code: 'invalid-document'}, ok: false})
+  })
+
+  it('should reject a motion track for an unknown parameter', () => {
+    const document = createDemoDocument()
+    const invalidDocument = {
+      ...document,
+      motions: document.motions.map((motion) => ({
+        ...motion,
+        tracks: [{keyframes: [{time: 0, value: 0}], parameterId: 'missing'}],
+      })),
+    }
+
+    expect(parseDocument(JSON.stringify(invalidDocument))).toEqual({
+      error: {code: 'invalid-document'},
+      ok: false,
+    })
+  })
+
+  it('should reject duplicate tracks for one parameter', () => {
+    const document = createDemoDocument()
+    const track = document.motions[0]?.tracks[0]
+    const invalidDocument = {
+      ...document,
+      motions: document.motions.map((motion) => ({...motion, tracks: [track, track]})),
+    }
+
+    expect(parseDocument(JSON.stringify(invalidDocument))).toMatchObject({ok: false})
+  })
+
+  it('should reject ambiguous and out-of-range parameter tracks', () => {
+    const document = createDemoDocument()
+    const parameterTrack = document.motions[0]?.tracks[0]
+
+    expect(
+      parseDocument(
+        JSON.stringify({
+          ...document,
+          motions: [
+            {
+              ...document.motions[0],
+              tracks: [{...parameterTrack, axis: 'x', partId: 'mesh-preview', vertexIndex: 0}],
+            },
+          ],
+        }),
+      ),
+    ).toMatchObject({ok: false})
+    expect(
+      parseDocument(
+        JSON.stringify({
+          ...document,
+          motions: [
+            {
+              ...document.motions[0],
+              tracks: [{keyframes: [{time: 0, value: 31}], parameterId: 'angle-y'}],
+            },
+          ],
+        }),
+      ),
+    ).toMatchObject({ok: false})
+  })
+
+  it('should validate parameter keyform targets and coordinate counts', () => {
+    const document = createDemoDocument()
+    const binding = document.parameterBindings?.[0]
+
+    expect(binding).toBeDefined()
+
+    const invalidDocument = {
+      ...document,
+      parameterBindings: [
+        {
+          ...binding!,
+          keyforms: [
+            {
+              parts: [{partId: 'mesh-preview', vertices: [0, 0]}],
+              values: [0, 0],
+            },
+          ],
+        },
+      ],
+    }
+
+    expect(parseDocument(JSON.stringify(invalidDocument))).toEqual({
+      error: {code: 'invalid-document'},
+      ok: false,
+    })
+  })
+
+  it('should validate explicit parameter target membership', () => {
+    const document = createDemoDocument()
+    const binding = document.parameterBindings?.[0]
+
+    expect(binding).toBeDefined()
+    expect(
+      parseDocument(
+        JSON.stringify({
+          ...document,
+          parameterBindings: [{...binding, targetPartIds: ['missing-part']}],
+        }),
+      ),
+    ).toMatchObject({ok: false})
+    expect(
+      parseDocument(
+        JSON.stringify({
+          ...document,
+          parameterBindings: [{...binding, targetPartIds: ['mesh-preview', 'shape-circle']}],
+        }),
+      ),
+    ).toMatchObject({ok: false})
+  })
+
+  it('should continue accepting documents created before parameters were added', () => {
+    const legacyDocument = {...createLegacyDocument(), parameters: undefined, scene: undefined}
+
+    expect(parseDocument(JSON.stringify(legacyDocument))).toMatchObject({ok: true})
+  })
+
+  it('should reject the obsolete inline parameter shape without changing the document version', () => {
+    const legacyDocument = createLegacyDocument()
+    const legacyParameter = {...legacyDocument.parameters[0]!, targetPartIds: undefined}
+    const result = parseDocument(JSON.stringify({...legacyDocument, parameters: [legacyParameter]}))
+
+    expect(result).toEqual({error: {code: 'invalid-document'}, ok: false})
+  })
+
+  it('should keep parameter tracks that reach the range end after repeat is turned on', () => {
+    const document = createDemoDocument()
+    const turn = {
+      duration: 1,
+      id: 'turn',
+      tracks: [
+        {
+          keyframes: [
+            {time: 0, value: -30},
+            {time: 1, value: 30},
+          ],
+          kind: 'parameter' as const,
+          parameterId: 'angle-x',
+        },
+      ],
+    }
+    const turned = {...document, motions: [turn]}
+    const repeated = {
+      ...turned,
+      parameters: document.parameters?.map((parameter) =>
+        parameter.id === 'angle-x' ? {...parameter, repeat: true} : parameter,
+      ),
+    }
+
+    expect(parseDocumentValue(turned)).toMatchObject({ok: true})
+    expect(parseDocumentValue(repeated)).toMatchObject({ok: true})
+  })
+
+  it('should reject non-array target group IDs without throwing', () => {
+    const document = createDemoDocument()
+    const binding = document.parameterBindings?.[0]
+
+    for (const targetGroupIds of [5, {}, true, 'shapes']) {
+      expect(
+        parseDocumentValue({...document, parameterBindings: [{...binding, targetGroupIds}]}),
+      ).toEqual({error: {code: 'invalid-document'}, ok: false})
+    }
+  })
+
+  it(
+    'should validate many three-dimensional keyform planes quickly',
+    () => {
+      const document = createDemoDocument()
+      const depth = {
+        defaultValue: 0,
+        id: 'depth',
+        maximum: PLANE_COUNT,
+        minimum: 0,
+        name: 'Depth',
+      }
+      const binding = {
+        id: 'planes',
+        keyforms: Array.from({length: PLANE_COUNT}, (_, plane) => ({
+          parts: [],
+          values: [0, 0, plane],
+        })),
+        parameterIds: ['angle-x', 'angle-y', 'depth'],
+      }
+      const value = {
+        ...document,
+        parameterBindings: [...(document.parameterBindings ?? []), binding],
+        parameters: [...(document.parameters ?? []), depth],
+      }
+
+      expect(parseDocumentValue(value)).toMatchObject({ok: true})
+    },
+    PLANE_TIMEOUT_MS,
+  )
+
+  it('should accept three-dimensional planes with different point sets', () => {
+    const document = createDemoDocument()
+    const depth = {defaultValue: 0, id: 'depth', maximum: 1, minimum: 0, name: 'Depth'}
+    const binding = {
+      id: 'planes',
+      keyforms: [
+        {parts: [], values: [0, 0, 0]},
+        {parts: [], values: [0, 0, 1]},
+        {parts: [], values: [1, 0, 1]},
+      ],
+      parameterIds: ['angle-x', 'angle-y', 'depth'],
+    }
+
+    expect(
+      parseDocumentValue({
+        ...document,
+        parameterBindings: [binding],
+        parameters: [...(document.parameters ?? []), depth],
+      }),
+    ).toMatchObject({ok: true})
+    expect(
+      parseDocumentValue({
+        ...document,
+        parameterBindings: [{...binding, keyforms: binding.keyforms.slice(0, 2)}],
+        parameters: [...(document.parameters ?? []), depth],
+      }),
+    ).toMatchObject({ok: true})
+  })
+})

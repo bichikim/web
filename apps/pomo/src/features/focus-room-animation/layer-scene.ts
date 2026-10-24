@@ -1,0 +1,600 @@
+import {randomInRange} from 'src/utils/random-in-range'
+import {cosineEaseInOut} from 'src/utils/ease'
+import {Container, type Filter, type Texture, Ticker} from 'pixi.js'
+import {clampUnit} from 'src/utils/clamp-unit'
+import {destroyFilters} from './destroy-filters'
+import {positionLayerContainer, validateTextureSizes} from './layer-layout'
+import {createLayerMaskFilter, detachLayerMasks} from './layer-mask'
+import type {LayerInstance, MotionInstance, MotionState} from './layer-runtime-state'
+import {attachLayerView, createLayerView} from './layer-view'
+import {applyLoopingTranslation} from './looping-translation'
+import {getLayerMotions, getMotionEffects} from './motion-definition'
+import {resetMotionPresentation} from './motion-reset'
+import {getMotionTarget, getNextMotionTarget} from './motion-targets'
+import {applyOpacityPulse} from './opacity-pulse'
+import {
+  advanceSpriteOpacityTwinkle,
+  applyOpacityTwinkle,
+  createOpacityTwinkleState,
+} from './opacity-twinkle'
+import {createPushFilter, createPushFilters} from './push-filter-factory'
+import {createSceneEffects, type SceneEffectsInstance} from './scene-effect'
+import {validateLayerSceneDefinition} from './scene-definition-validation'
+import {getSceneMaskSources} from './scene-mask-sources'
+import {acquireTextureGroup, releaseTextureGroup, type TextureLease} from './texture-leases'
+import {applyVisibilityCycle} from './visibility-cycle'
+import type {
+  CreateStaticLayerSceneOptions,
+  PixiLayerSceneDefinition,
+  PixiLayerSceneState,
+  PixiSceneLayerDefinition,
+  PixiSceneMotion,
+  PixiSceneTravelRange,
+} from './layer-scene-definition'
+
+export type * from './layer-scene-definition'
+
+export interface PixiLayerSceneOptions {
+  readonly onRender: () => void
+  readonly random?: () => number
+}
+
+const MILLISECONDS_PER_SECOND = 1000
+const DEGREES_PER_HALF_TURN = 180
+
+export const createStaticLayerScene = (
+  options: CreateStaticLayerSceneOptions,
+): PixiLayerSceneDefinition => ({
+  background: options.background,
+  height: options.height,
+  id: options.id,
+  layers: [{id: 'scene', source: options.source}],
+  width: options.width,
+})
+
+/** Renders an ordered layer definition and owns its Pixi textures and animation ticker. */
+export class PixiLayerScene {
+  readonly container = new Container()
+  readonly #channels: ReadonlySet<string>
+  readonly #definition: PixiLayerSceneDefinition
+  readonly #onRender: () => void
+  readonly #random: () => number
+  readonly #ticker = new Ticker()
+  #animationEnabled = false
+  #destroyed = false
+  #initialized = false
+  #layers: readonly LayerInstance[] = []
+  #effects: SceneEffectsInstance | null = null
+  #textures: readonly TextureLease[] = []
+
+  constructor(definition: PixiLayerSceneDefinition, options: PixiLayerSceneOptions) {
+    this.#channels = new Set(
+      definition.layers.flatMap((layer) => (layer.channel === undefined ? [] : [layer.channel])),
+    )
+    this.#definition = definition
+    this.#onRender = options.onRender
+    this.#random = options.random ?? Math.random
+    this.#ticker.add(this.#advance)
+  }
+
+  async initialize(state: PixiLayerSceneState) {
+    if (this.#destroyed || this.#initialized) {
+      throw new Error(`Layer scene can only be initialized once: ${this.#definition.id}`)
+    }
+
+    this.#initialized = true
+
+    try {
+      validateLayerSceneDefinition(this.#definition)
+    } catch (error: unknown) {
+      this.#destroyAfterFailure(error)
+    }
+
+    const layerSources = this.#definition.layers.map((layer) => layer.source)
+    const maskSources = getSceneMaskSources(this.#definition)
+    let textures: readonly TextureLease[]
+
+    try {
+      textures = await acquireTextureGroup([...layerSources, ...maskSources])
+    } catch (error: unknown) {
+      this.#destroyAfterFailure(error)
+    }
+
+    if (this.#destroyed) {
+      releaseTextureGroup(textures)
+      return
+    }
+
+    this.#initializeScene(textures, layerSources.length, state)
+  }
+
+  #initializeScene(
+    textures: readonly TextureLease[],
+    layerSourceCount: number,
+    state: PixiLayerSceneState,
+  ) {
+    this.#textures = textures
+    const layers: LayerInstance[] = []
+    const pendingFilters: Filter[] = []
+    try {
+      validateTextureSizes({
+        definition: this.#definition,
+        layerSourceCount,
+        textures,
+      })
+      const maskTextures = new Map<string, Texture>(
+        textures.slice(layerSourceCount).map((lease) => [lease.source, lease.texture]),
+      )
+
+      this.#effects = createSceneEffects({
+        definitions: this.#definition.effects ?? [],
+        height: this.#definition.height,
+        maskTextures,
+        random: this.#random,
+        sceneContainer: this.container,
+        width: this.#definition.width,
+      })
+
+      for (const [index, definition] of this.#definition.layers.entries()) {
+        const sprite = createLayerView(definition, textures[index].texture)
+        const motions = getLayerMotions(definition)
+        const pivotMotion = motions.find((motion) => motion.kind === 'pivot-rotation')
+        const container = new Container()
+
+        positionLayerContainer({
+          container,
+          pivotMotion,
+          position: definition.position,
+          rotationDegrees: definition.rotationDegrees,
+          size: textures[index].texture,
+        })
+
+        const motionInstances = this.#createMotionInstances(
+          motions,
+          maskTextures,
+          textures[index].texture,
+        )
+        for (const motion of motionInstances) {
+          pendingFilters.push(...motion.pixelPushFilters)
+        }
+        const statePixelPushFilter =
+          definition.statePixelPush === undefined
+            ? null
+            : createPushFilter(
+                definition.statePixelPush.effect,
+                maskTextures,
+                textures[index].texture,
+              )
+        if (statePixelPushFilter !== null) {
+          pendingFilters.push(statePixelPushFilter)
+        }
+        const layerMaskFilter = createLayerMaskFilter(
+          definition,
+          maskTextures,
+          textures[index].texture,
+        )
+        if (layerMaskFilter !== null) {
+          pendingFilters.push(layerMaskFilter)
+        }
+        sprite.filters = [
+          ...(layerMaskFilter === null ? [] : [layerMaskFilter]),
+          ...(statePixelPushFilter === null ? [] : [statePixelPushFilter]),
+          ...motionInstances.flatMap((motion) => motion.pixelPushFilters),
+        ]
+        this.#effects.attachBefore(definition.id)
+        attachLayerView({
+          definition,
+          layerContainer: container,
+          maskTextures,
+          sceneContainer: this.container,
+          view: sprite,
+        })
+        layers.push({
+          container,
+          definition,
+          layerMaskFilter,
+          motions: motionInstances,
+          sprite,
+          statePixelPushFilter,
+        })
+        pendingFilters.length = 0
+      }
+
+      this.#effects.attachTrailing()
+
+      this.#attachChildLayers(layers)
+
+      this.#initializeLayers(layers, state)
+    } catch (error: unknown) {
+      try {
+        destroyFilters(pendingFilters)
+      } catch (cleanupError: unknown) {
+        console.error('Failed to destroy pending layer filters.', cleanupError)
+      }
+      this.#layers = layers
+      this.#destroyAfterFailure(error)
+    }
+  }
+
+  update(state: PixiLayerSceneState) {
+    this.#animationEnabled = state.animationEnabled
+
+    this.#effects?.setAnimationEnabled(this.#animationEnabled)
+
+    for (const layer of this.#layers) {
+      const {channel} = layer.definition
+      const channelState = channel === undefined ? undefined : state.channels?.[channel]
+      layer.container.alpha =
+        clampUnit(layer.definition.opacity, {fallback: 1}) *
+        clampUnit(channelState?.opacity, {fallback: 1})
+      layer.container.visible = channelState?.visible ?? layer.definition.visible ?? true
+      this.#updateStatePixelPush(layer, state)
+
+      for (const motion of layer.motions) {
+        const motionChannel = motion.definition.channel
+        const motionChannelState =
+          motionChannel === undefined ? undefined : state.channels?.[motionChannel]
+        motion.enabled = layer.container.visible && (motionChannelState?.visible ?? true)
+
+        if (!motion.enabled) {
+          this.#resetMotionInstance(layer, motion)
+        }
+      }
+    }
+
+    this.#syncTicker()
+    this.#onRender()
+  }
+
+  setAnimationEnabled(animationEnabled: boolean) {
+    if (animationEnabled === this.#animationEnabled) {
+      return
+    }
+
+    this.#animationEnabled = animationEnabled
+    this.#effects?.setAnimationEnabled(animationEnabled)
+    this.#syncTicker()
+    this.#onRender()
+  }
+
+  #updateStatePixelPush(layer: LayerInstance, state: PixiLayerSceneState) {
+    const channel = layer.definition.statePixelPush?.channel
+    const channelState = channel === undefined ? undefined : state.channels?.[channel]
+    const progress = clampUnit(channelState?.pixelPushProgress, {fallback: 0})
+    layer.statePixelPushFilter?.setProgress(progress)
+  }
+
+  #syncTicker() {
+    if (this.#animationEnabled && this.#hasMotion()) {
+      this.#ticker.start()
+    } else {
+      this.#ticker.stop()
+      this.#resetMotion()
+    }
+  }
+
+  getAttachment(name: string) {
+    return this.#layers.find((layer) => layer.definition.attachmentId === name)?.container ?? null
+  }
+
+  hasChannel(channel: string) {
+    return this.#channels.has(channel)
+  }
+
+  destroy() {
+    if (this.#destroyed) {
+      return
+    }
+    this.#destroyed = true
+    const layers = this.#layers
+    const effects = this.#effects
+    const textures = this.#textures
+    this.#textures = []
+    this.#layers = []
+    this.#effects = null
+    const errors: unknown[] = []
+    const cleanup = (action: () => void) => {
+      try {
+        action()
+      } catch (error: unknown) {
+        errors.push(error)
+      }
+    }
+    cleanup(() => this.#ticker.destroy())
+    cleanup(() => detachLayerMasks(layers))
+    for (const layer of layers) {
+      cleanup(() => layer.layerMaskFilter?.destroy())
+      cleanup(() => layer.statePixelPushFilter?.destroy())
+
+      for (const motion of layer.motions) {
+        cleanup(() => destroyFilters(motion.pixelPushFilters))
+      }
+    }
+
+    cleanup(() => effects?.destroy())
+    cleanup(() => this.container.destroy({children: true}))
+    cleanup(() => releaseTextureGroup(textures))
+    if (errors.length > 0) {
+      throw errors[0]
+    }
+  }
+
+  #destroyAfterFailure(error: unknown): never {
+    try {
+      this.destroy()
+    } catch (cleanupError: unknown) {
+      console.error('Failed to destroy a failed layer scene.', cleanupError)
+    }
+    throw error
+  }
+
+  readonly #advance = (ticker: Ticker) => {
+    const deltaSeconds = ticker.deltaMS / MILLISECONDS_PER_SECOND
+
+    this.#effects?.advance(deltaSeconds)
+
+    for (const layer of this.#layers) {
+      for (const motion of layer.motions) {
+        if (motion.enabled) {
+          this.#advanceMotion(layer, motion, deltaSeconds)
+        }
+      }
+    }
+
+    this.#onRender()
+  }
+
+  #advanceMotion(layer: LayerInstance, motion: MotionInstance, deltaSeconds: number) {
+    const {state} = motion
+
+    if (motion.definition.kind === 'opacity-twinkle') {
+      advanceSpriteOpacityTwinkle({
+        deltaSeconds,
+        motion: motion.definition,
+        random: this.#random,
+        sprite: layer.sprite,
+        state: state.twinkleState,
+      })
+      return
+    }
+
+    state.elapsedSeconds += deltaSeconds
+
+    if (motion.definition.kind === 'visibility-cycle') {
+      this.#advanceVisibilityCycle(layer, motion)
+      return
+    }
+
+    if (motion.definition.kind === 'looping-translation') {
+      this.#advanceLoopingTranslation(layer, motion)
+      return
+    }
+
+    const travelProgress = clampUnit(state.elapsedSeconds / state.travelSeconds, {fallback: 0})
+    const transitionSeconds =
+      motion.definition.kind === 'translation' || motion.definition.kind === 'opacity-pulse'
+        ? motion.definition.transitionSeconds
+        : undefined
+    const transitionStart =
+      transitionSeconds === undefined ? 0 : state.travelSeconds - transitionSeconds
+    const activeProgress =
+      transitionSeconds === undefined
+        ? travelProgress
+        : clampUnit((state.elapsedSeconds - transitionStart) / transitionSeconds, {fallback: 0})
+    const easedProgress = cosineEaseInOut(activeProgress)
+    const motionProgress = state.direction === 1 ? easedProgress : 1 - easedProgress
+
+    if (motion.definition.kind === 'pivot-rotation') {
+      layer.container.rotation =
+        (motionProgress * (motion.definition.degrees * Math.PI)) / DEGREES_PER_HALF_TURN
+    }
+
+    if (motion.definition.kind === 'translation') {
+      const {currentTarget, nextTarget} = state
+      const x = currentTarget.x + (nextTarget.x - currentTarget.x) * easedProgress
+      const y = currentTarget.y + (nextTarget.y - currentTarget.y) * easedProgress
+      layer.container.position.set(x, y)
+    }
+
+    if (motion.definition.kind === 'opacity-pulse') {
+      applyOpacityPulse(layer.sprite, motion.definition, motionProgress)
+    }
+
+    for (const filter of motion.pixelPushFilters) {
+      filter.setProgress(motionProgress)
+    }
+
+    if (travelProgress === 1) {
+      if (motion.definition.kind === 'translation' && 'targets' in motion.definition) {
+        state.currentTarget = state.nextTarget
+        state.nextTarget =
+          getNextMotionTarget(
+            motion.definition,
+            state.currentTarget,
+            state.direction,
+            this.#random,
+          ) ?? state.currentTarget
+      } else {
+        state.direction = state.direction === 1 ? -1 : 1
+        state.currentTarget = state.nextTarget
+        state.nextTarget = getMotionTarget(motion.definition, state.direction)
+      }
+      state.elapsedSeconds = 0
+      state.travelSeconds = this.#randomDuration(motion.definition.travel)
+    }
+  }
+
+  #advanceLoopingTranslation(layer: LayerInstance, motion: MotionInstance) {
+    const {state} = motion
+
+    if (motion.definition.kind !== 'looping-translation') {
+      return
+    }
+
+    const progress = clampUnit(state.elapsedSeconds / state.travelSeconds, {fallback: 0})
+    applyLoopingTranslation(layer.container, layer.sprite, motion.definition, progress)
+
+    if (progress === 1) {
+      state.elapsedSeconds = 0
+      state.travelSeconds = this.#randomDuration(motion.definition.travel)
+    }
+  }
+
+  #advanceVisibilityCycle(layer: LayerInstance, motion: MotionInstance) {
+    const {state} = motion
+
+    if (motion.definition.kind !== 'visibility-cycle') {
+      return
+    }
+
+    if (state.elapsedSeconds >= state.travelSeconds) {
+      state.elapsedSeconds %= state.travelSeconds
+      state.travelSeconds = this.#randomDuration(motion.definition.travel)
+    }
+
+    applyVisibilityCycle(
+      layer.sprite,
+      motion.definition,
+      state.elapsedSeconds / state.travelSeconds,
+    )
+  }
+
+  #createMotionState(motion: PixiSceneMotion): MotionState {
+    const currentTarget = getMotionTarget(motion, -1)
+    const travelSeconds = this.#randomDuration(motion.travel)
+
+    return {
+      currentTarget,
+      direction: 1,
+      elapsedSeconds:
+        motion.kind === 'looping-translation' ||
+        motion.kind === 'opacity-pulse' ||
+        motion.kind === 'visibility-cycle'
+          ? (motion.phase ?? 0) * travelSeconds
+          : 0,
+      nextTarget: getNextMotionTarget(motion, currentTarget, 1, this.#random) ?? currentTarget,
+      travelSeconds,
+      twinkleState:
+        motion.kind === 'opacity-twinkle'
+          ? createOpacityTwinkleState(motion, this.#random)
+          : undefined,
+    }
+  }
+
+  #initializeLayers(layers: readonly LayerInstance[], state: PixiLayerSceneState) {
+    this.#layers = layers
+    this.#resetMotion()
+    this.update(state)
+  }
+
+  #attachChildLayers(layers: readonly LayerInstance[]) {
+    const attachments = new Map(
+      layers.flatMap((layer) =>
+        layer.definition.attachmentId === undefined
+          ? []
+          : [[layer.definition.attachmentId, layer.container] as const],
+      ),
+    )
+
+    for (const layer of layers) {
+      const {parentAttachmentId} = layer.definition
+
+      if (parentAttachmentId !== undefined) {
+        attachments.get(parentAttachmentId)?.addChild(layer.container)
+      }
+    }
+  }
+
+  #createMotionInstances(
+    motions: readonly PixiSceneMotion[],
+    maskTextures: ReadonlyMap<string, Texture>,
+    layerTexture: Texture,
+  ) {
+    const instances: MotionInstance[] = []
+    const filters: Filter[] = []
+
+    try {
+      for (const motion of motions) {
+        const pixelPushFilters = createPushFilters(
+          getMotionEffects(motion),
+          maskTextures,
+          layerTexture,
+        )
+        filters.push(...pixelPushFilters)
+        const state = this.#createMotionState(motion)
+        instances.push({
+          definition: motion,
+          enabled: true,
+          pixelPushFilters,
+          state,
+        })
+      }
+
+      return instances
+    } catch (error: unknown) {
+      try {
+        destroyFilters(filters)
+      } catch (cleanupError: unknown) {
+        console.error('Failed to destroy partially created motion filters.', cleanupError)
+      }
+
+      throw error
+    }
+  }
+
+  #hasMotion() {
+    return (
+      (this.#effects?.hasMotion ?? false) ||
+      this.#layers.some((layer) => layer.motions.some((motion) => motion.enabled))
+    )
+  }
+
+  #randomDuration(range: PixiSceneTravelRange) {
+    return randomInRange(range.minimumSeconds, range.maximumSeconds, this.#random)
+  }
+
+  #resetMotion() {
+    for (const layer of this.#layers) {
+      for (const motion of layer.motions) {
+        this.#resetMotionInstance(layer, motion)
+      }
+    }
+  }
+
+  #resetMotionInstance(layer: LayerInstance, motion: MotionInstance) {
+    const currentTarget = getMotionTarget(motion.definition, -1)
+    motion.state.direction = 1
+    motion.state.elapsedSeconds = 0
+    motion.state.currentTarget = currentTarget
+    motion.state.nextTarget =
+      getNextMotionTarget(motion.definition, currentTarget, 1, this.#random) ?? currentTarget
+    motion.state.travelSeconds = this.#randomDuration(motion.definition.travel)
+    motion.state.elapsedSeconds =
+      motion.definition.kind === 'looping-translation' ||
+      motion.definition.kind === 'opacity-pulse' ||
+      motion.definition.kind === 'visibility-cycle'
+        ? (motion.definition.phase ?? 0) * motion.state.travelSeconds
+        : 0
+
+    motion.state.twinkleState =
+      motion.definition.kind === 'opacity-twinkle'
+        ? createOpacityTwinkleState(motion.definition, this.#random)
+        : undefined
+
+    resetMotionPresentation({
+      container: layer.container,
+      currentTarget,
+      motion: motion.definition,
+      phase: motion.state.elapsedSeconds / motion.state.travelSeconds,
+      sprite: layer.sprite,
+    })
+
+    if (motion.state.twinkleState !== undefined) {
+      applyOpacityTwinkle(layer.sprite, motion.state.twinkleState)
+    }
+
+    for (const filter of motion.pixelPushFilters) {
+      filter.setProgress(0)
+    }
+  }
+}

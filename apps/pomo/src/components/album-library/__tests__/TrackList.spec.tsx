@@ -1,0 +1,347 @@
+/** @vitest-environment jsdom */
+
+import {cleanup, fireEvent, render, screen} from '@solidjs/testing-library'
+import {createSignal} from 'solid-js'
+import {afterEach, beforeEach, expect, it, vi} from 'vitest'
+import {PAlbumTrackList} from '../TrackList'
+
+const audioMocks = vi.hoisted(() => ({
+  requestTrackAccessAction: vi.fn(),
+  resolveTrackPreviewAccess: vi.fn(),
+}))
+
+const getOverflowIndicator = () =>
+  screen.getByRole('list').parentElement?.querySelector('[aria-hidden="true"] > span') ?? null
+const routerMocks = vi.hoisted(() => ({
+  submissions: [] as Array<{
+    readonly clear: () => void
+    readonly input: ReadonlyArray<unknown>
+    readonly pending: boolean
+  }>,
+}))
+
+vi.mock('../../../features/focus-room-audio', () => audioMocks)
+vi.mock('@solidjs/router', () => ({
+  useAction: vi.fn((clientAction) => clientAction),
+  useSubmissions: vi.fn(() => routerMocks.submissions),
+}))
+
+class TestResizeObserver {
+  static instances: TestResizeObserver[] = []
+
+  readonly disconnect = vi.fn()
+  readonly observe = vi.fn()
+
+  constructor(private readonly callback: ResizeObserverCallback) {
+    TestResizeObserver.instances.push(this)
+  }
+
+  trigger() {
+    this.callback([], this as unknown as ResizeObserver)
+  }
+}
+
+beforeEach(() => {
+  TestResizeObserver.instances.length = 0
+  routerMocks.submissions.length = 0
+  audioMocks.requestTrackAccessAction.mockResolvedValue({
+    access: {mode: 'preview', url: '/api/music/tracks/unowned-track/preview'},
+    status: 'granted',
+  })
+  audioMocks.resolveTrackPreviewAccess.mockResolvedValue({
+    ok: true,
+    source: '/audio/preview.mp3',
+  })
+})
+
+afterEach(() => {
+  cleanup()
+  vi.clearAllMocks()
+  vi.restoreAllMocks()
+  vi.unstubAllGlobals()
+})
+
+it('should use full sources for playable tracks and access resolution for catalog tracks', async () => {
+  const onPreview = vi.fn()
+  const playableTrack = {
+    artist: 'Artist',
+    durationSeconds: 180,
+    id: 'playable-track',
+    source: '/audio/playable.mp3',
+    title: 'Playable Track',
+  }
+
+  render(() => (
+    <PAlbumTrackList
+      albumTitle="Album"
+      onAddTrack={vi.fn()}
+      onPreview={onPreview}
+      pendingTrackId={null}
+      playableTracks={[playableTrack]}
+      playingTrackId={null}
+      trackIds={new Set()}
+      tracks={[playableTrack, {artist: 'Artist', id: 'unowned-track', title: 'Unowned Track'}]}
+    />
+  ))
+
+  fireEvent.click(screen.getByRole('button', {name: 'Playable Track 미리듣기'}))
+  fireEvent.click(screen.getByRole('button', {name: 'Unowned Track 30초 미리듣기'}))
+
+  expect(onPreview).toHaveBeenNthCalledWith(1, {
+    id: 'playable-track',
+    source: '/audio/playable.mp3',
+  })
+  expect(onPreview).toHaveBeenNthCalledWith(2, {
+    id: 'unowned-track',
+    loadSource: expect.any(Function),
+  })
+
+  const limitedPreviewRequest = onPreview.mock.calls[1]?.[0]
+  if (
+    limitedPreviewRequest === undefined ||
+    !('loadSource' in limitedPreviewRequest) ||
+    typeof limitedPreviewRequest.loadSource !== 'function'
+  ) {
+    throw new TypeError('Expected the catalog track to provide a preview source loader')
+  }
+
+  const clearSubmission = vi.fn()
+  routerMocks.submissions.push({
+    clear: clearSubmission,
+    input: ['unowned-track'],
+    pending: false,
+  })
+  await limitedPreviewRequest.loadSource()
+  expect(audioMocks.requestTrackAccessAction).toHaveBeenCalledWith('unowned-track')
+  expect(audioMocks.resolveTrackPreviewAccess).toHaveBeenCalledWith(
+    {mode: 'preview', url: '/api/music/tracks/unowned-track/preview'},
+    'unowned-track',
+  )
+  expect(clearSubmission).toHaveBeenCalledOnce()
+})
+
+it('should visibly identify a limited preview only while it is playing', () => {
+  const [playingTrackId, setPlayingTrackId] = createSignal<string | null>(null)
+  const playableTrack = {
+    artist: 'Artist',
+    durationSeconds: 180,
+    id: 'playable-track',
+    source: '/audio/playable.mp3',
+    title: 'Playable Track',
+  }
+
+  render(() => (
+    <PAlbumTrackList
+      albumTitle="Album"
+      onAddTrack={vi.fn()}
+      onPreview={vi.fn()}
+      pendingTrackId={null}
+      playableTracks={[playableTrack]}
+      playingTrackId={playingTrackId()}
+      trackIds={new Set()}
+      tracks={[playableTrack, {artist: 'Artist', id: 'limited-track', title: 'Limited Track'}]}
+    />
+  ))
+
+  expect(screen.queryByText('30초 미리듣기')).toBeNull()
+
+  setPlayingTrackId('limited-track')
+  expect(screen.getByText('30초 미리듣기')).toHaveClass(
+    'border-highlight/30',
+    'bg-highlight/12',
+    'text-highlight',
+  )
+
+  setPlayingTrackId('playable-track')
+  expect(screen.queryByText('30초 미리듣기')).toBeNull()
+})
+
+it('should indicate that more tracks remain below until the list reaches the bottom', () => {
+  const tracks = Array.from({length: 6}, (_, index) => ({
+    artist: 'Artist',
+    id: `track-${index}`,
+    title: `Track ${index + 1}`,
+  }))
+  render(() => (
+    <PAlbumTrackList
+      albumTitle="Album"
+      onAddTrack={vi.fn()}
+      onPreview={vi.fn()}
+      pendingTrackId={null}
+      playableTracks={[]}
+      playingTrackId={null}
+      trackIds={new Set()}
+      tracks={tracks}
+    />
+  ))
+  const list = screen.getByRole('list', {name: 'Album 수록곡'})
+  let scrollTop = 0
+
+  expect(list).toHaveClass(
+    'max-h-[10.5rem]',
+    'overflow-y-auto',
+    'sm:max-h-[5.25rem]',
+    'sm:grid-cols-2',
+    '2xl:max-h-[10.5rem]',
+    '2xl:grid-cols-1',
+  )
+  expect(list.tabIndex).toBe(0)
+  expect(list.classList.contains('overscroll-auto')).toBe(true)
+  expect(list.classList.contains('overscroll-contain')).toBe(false)
+
+  Object.defineProperties(list, {
+    clientHeight: {configurable: true, value: 84},
+    scrollHeight: {configurable: true, value: 126},
+    scrollTop: {
+      configurable: true,
+      get: () => scrollTop,
+      set: (value: number) => {
+        scrollTop = value
+      },
+    },
+  })
+
+  fireEvent.scroll(list)
+  expect(getOverflowIndicator()).toHaveClass('i-tabler-chevron-down')
+
+  list.scrollTop = 42
+  fireEvent.scroll(list)
+  expect(getOverflowIndicator()).toBeNull()
+})
+
+it('should show loading state, add available tracks, and disable tracks already in the player', () => {
+  const onAddTrack = vi.fn()
+  const playableTrack = {
+    artist: 'Artist',
+    durationSeconds: 180,
+    id: 'playable-track',
+    source: '/audio/playable.mp3',
+    title: 'Playable Track',
+  }
+  const firstView = render(() => (
+    <PAlbumTrackList
+      albumTitle="Album"
+      onAddTrack={onAddTrack}
+      onPreview={vi.fn()}
+      pendingTrackId="playable-track"
+      playableTracks={[playableTrack]}
+      playingTrackId={null}
+      trackIds={new Set()}
+      tracks={[playableTrack]}
+    />
+  ))
+
+  expect(
+    screen
+      .getByRole('button', {name: 'Playable Track 미리듣기'})
+      .querySelector('span[aria-hidden="true"]'),
+  ).toHaveClass('i-tabler-loader-2')
+  fireEvent.click(screen.getAllByRole('button')[1]!)
+  expect(onAddTrack).toHaveBeenCalledWith(playableTrack)
+  firstView.unmount()
+
+  render(() => (
+    <PAlbumTrackList
+      albumTitle="Album"
+      onAddTrack={onAddTrack}
+      onPreview={vi.fn()}
+      pendingTrackId={null}
+      playableTracks={[playableTrack]}
+      playingTrackId={null}
+      trackIds={new Set([playableTrack.id])}
+      tracks={[playableTrack]}
+    />
+  ))
+
+  const addButton = screen.getAllByRole('button')[1]
+  expect(addButton?.hasAttribute('disabled')).toBe(true)
+  fireEvent.click(addButton!)
+  expect(onAddTrack).toHaveBeenCalledOnce()
+})
+
+it('should hide the limited preview marker while its preview is pending', () => {
+  const limitedTrack = {artist: 'Artist', id: 'limited-track', title: 'Limited Track'}
+  render(() => (
+    <PAlbumTrackList
+      albumTitle="Album"
+      onAddTrack={vi.fn()}
+      onPreview={vi.fn()}
+      pendingTrackId="limited-track"
+      playableTracks={[]}
+      playingTrackId="limited-track"
+      trackIds={new Set()}
+      tracks={[limitedTrack]}
+    />
+  ))
+
+  expect(
+    screen
+      .getByRole('button', {name: 'Limited Track 30초 미리듣기 정지'})
+      .querySelector('span[aria-hidden="true"]'),
+  ).toHaveClass('i-tabler-loader-2')
+  expect(screen.queryByText('30초 미리듣기')).toBeNull()
+})
+
+it('should update overflow through ResizeObserver and disconnect it during cleanup', () => {
+  vi.stubGlobal('ResizeObserver', TestResizeObserver)
+  const tracks = Array.from({length: 6}, (_, index) => ({
+    artist: 'Artist',
+    id: `track-${index}`,
+    title: `Track ${index + 1}`,
+  }))
+  const view = render(() => (
+    <PAlbumTrackList
+      albumTitle="Album"
+      onAddTrack={vi.fn()}
+      onPreview={vi.fn()}
+      pendingTrackId={null}
+      playableTracks={[]}
+      playingTrackId={null}
+      trackIds={new Set()}
+      tracks={tracks}
+    />
+  ))
+  const list = screen.getByRole('list', {name: 'Album 수록곡'})
+  Object.defineProperties(list, {
+    clientHeight: {configurable: true, value: 84},
+    scrollHeight: {configurable: true, value: 126},
+  })
+  const observer = TestResizeObserver.instances[0]
+
+  expect(observer?.observe).toHaveBeenCalledWith(list)
+  observer?.trigger()
+  expect(getOverflowIndicator()).toHaveClass('i-tabler-chevron-down')
+
+  view.unmount()
+  expect(observer?.disconnect).toHaveBeenCalledOnce()
+})
+
+it('should update overflow from window resize when ResizeObserver is unavailable', () => {
+  vi.stubGlobal('ResizeObserver', undefined)
+  const addEventListener = vi.spyOn(globalThis, 'addEventListener')
+  const removeEventListener = vi.spyOn(globalThis, 'removeEventListener')
+  const view = render(() => (
+    <PAlbumTrackList
+      albumTitle="Album"
+      onAddTrack={vi.fn()}
+      onPreview={vi.fn()}
+      pendingTrackId={null}
+      playableTracks={[]}
+      playingTrackId={null}
+      trackIds={new Set()}
+      tracks={[{artist: 'Artist', id: 'limited-track', title: 'Limited Track'}]}
+    />
+  ))
+  const list = screen.getByRole('list', {name: 'Album 수록곡'})
+  Object.defineProperties(list, {
+    clientHeight: {configurable: true, value: 84},
+    scrollHeight: {configurable: true, value: 126},
+  })
+
+  globalThis.dispatchEvent(new Event('resize'))
+  expect(addEventListener).toHaveBeenCalledWith('resize', expect.any(Function))
+  expect(getOverflowIndicator()).toHaveClass('i-tabler-chevron-down')
+
+  view.unmount()
+  expect(removeEventListener).toHaveBeenCalledWith('resize', expect.any(Function))
+})

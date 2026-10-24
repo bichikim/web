@@ -1,0 +1,16 @@
+{
+  "particles": 1070,
+  "springs": 3210,
+  "render_vertices": 7688,
+  "moving_vertices": 2275,
+  "max_surface_motion_m": 0.0048000000000000004,
+  "body_faces": 24883,
+  "fabric_thickness_m_assumption": 0.005,
+  "binary_geometry_materials_unchanged": true,
+  "collision_method": "Body nearest-surface contact planes with per-vertex clearance bounds reserving fabric thickness for the fixed wearing pose",
+  "sampled_frames": 20,
+  "baseline_triangle_intersections": 38,
+  "maximum_triangle_intersections": 38,
+  "maximum_new_triangle_intersections": 0,
+  "maximum_thickness_motion_budget_overshoot_m": 5.914265530099086e-8
+}

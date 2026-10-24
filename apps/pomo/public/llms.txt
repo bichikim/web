@@ -1,0 +1,21 @@
+# Pomofi
+
+> Pomofi is a multilingual focus app supporting Korean and English, where Pomo accompanies pomodoro sessions with scenes, music, dialogue, feeds, and in-browser speech.
+
+The canonical site is https://www.pomofi.io. Public pages may be retrieved by the search and user-directed crawlers explicitly allowed in robots.txt. Account, admin, development, and non-feed API routes are not public information sources. The listed model-training crawlers are excluded; Google-Extended is also excluded, which can limit Gemini grounding without affecting Google Search. Permitted access does not grant broader content or trademark rights.
+
+## Public pages
+
+- [Pomofi home](https://www.pomofi.io/): Open the focus app and interact with Pomo.
+- [Refund policy](https://www.pomofi.io/refund-policy): Refund and withdrawal terms for goods and service access passes.
+- [AI access guide](https://www.pomofi.io/ai-access.md): Machine-readable access policy and WebMCP interaction guide.
+
+## Public feeds
+
+- [Today in history RSS](https://www.pomofi.io/api/feeds/today-in-history/rss.xml): Public RSS 2.0 feed.
+- [Today in history Atom](https://www.pomofi.io/api/feeds/today-in-history/atom.xml): Public Atom 1.0 feed.
+
+## Optional
+
+- [Crawler policy](https://www.pomofi.io/robots.txt): Search and AI crawler permissions.
+- [Sitemap](https://www.pomofi.io/sitemap.xml): Canonical pages intended for search indexing.

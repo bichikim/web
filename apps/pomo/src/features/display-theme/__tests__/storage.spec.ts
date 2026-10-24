@@ -1,0 +1,348 @@
+/** @vitest-environment jsdom */
+
+import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
+
+import {
+  createDisplayThemePreferenceRepository,
+  type DisplayThemePreferenceRepository,
+  type DisplayThemePreferenceStorage,
+  readDisplayThemePreference,
+  writeDisplayThemePreference,
+} from '../index'
+
+const storageMocks = vi.hoisted(() => ({
+  getItem: vi.fn<(key: string) => Promise<string | null>>(),
+  setItem: vi.fn<(key: string, value: string) => Promise<void>>(),
+}))
+
+vi.mock('@apps-in-toss/web-framework', () => ({Storage: storageMocks}))
+
+const STORAGE_KEY = 'pomo:display-theme:v1'
+
+const createStorageHarness = () => {
+  const tossValues = new Map<string, unknown>()
+  const webValues = new Map<string, unknown>()
+  const storage = {
+    readToss: vi.fn<(key: string) => Promise<unknown | null>>(async (key) => {
+      return tossValues.get(key) ?? null
+    }),
+    readWeb: vi.fn<(key: string) => unknown | null>((key) => webValues.get(key) ?? null),
+    removeWeb: vi.fn((key: string) => {
+      webValues.delete(key)
+      return null as unknown
+    }),
+    usesTossStorage: vi.fn(() => false),
+    writeToss: vi.fn(async (key: string, value: unknown) => {
+      tossValues.set(key, value)
+    }),
+    writeWeb: vi.fn((key: string, value: unknown) => {
+      webValues.set(key, value)
+    }),
+  } satisfies DisplayThemePreferenceStorage
+
+  return {
+    repository: createDisplayThemePreferenceRepository({now: () => 100, storage}),
+    storage,
+    tossValues,
+    webValues,
+  }
+}
+
+let tossValues: Map<string, unknown>
+let repository: DisplayThemePreferenceRepository
+let storage: ReturnType<typeof createStorageHarness>['storage']
+let webValues: Map<string, unknown>
+
+beforeEach(() => {
+  ;({tossValues, repository, storage, webValues} = createStorageHarness())
+  localStorage.clear()
+  storageMocks.getItem.mockReset()
+  storageMocks.setItem.mockReset()
+})
+
+afterEach(() => {
+  Reflect.deleteProperty(globalThis, 'ReactNativeWebView')
+  vi.restoreAllMocks()
+})
+
+describe('display theme preference repository', () => {
+  it('should default invalid or missing browser preferences to dark', async () => {
+    await expect(repository.read()).resolves.toBe('dark')
+
+    webValues.set(STORAGE_KEY, 'unknown')
+    await expect(repository.read()).resolves.toBe('dark')
+  })
+
+  it('should persist and restore a browser preference', async () => {
+    await repository.write('bright')
+
+    await expect(repository.read()).resolves.toBe('bright')
+    expect(webValues.get(STORAGE_KEY)).toMatchObject({
+      preference: 'bright',
+      savedAt: expect.any(Number),
+    })
+    expect(storage.writeToss).not.toHaveBeenCalled()
+  })
+
+  it('should reject a browser save when browser storage fails', async () => {
+    storage.writeWeb.mockImplementation(() => {
+      return new Error('Browser storage unavailable')
+    })
+
+    await expect(repository.write('bright')).rejects.toThrow(
+      'Failed to persist display theme preference.',
+    )
+  })
+
+  it('should restore a toss preference and rebuild the browser copy', async () => {
+    storage.usesTossStorage.mockReturnValue(true)
+    tossValues.set(STORAGE_KEY, {preference: 'dark', savedAt: 10})
+
+    await expect(repository.read()).resolves.toBe('dark')
+    expect(webValues.get(STORAGE_KEY)).toEqual({preference: 'dark', savedAt: 10})
+  })
+
+  it('should preserve and repair a browser preference when toss storage is empty', async () => {
+    storage.usesTossStorage.mockReturnValue(true)
+    webValues.set(STORAGE_KEY, 'bright')
+
+    await expect(repository.read()).resolves.toBe('bright')
+    await vi.waitFor(() =>
+      expect(storage.writeToss).toHaveBeenCalledWith(STORAGE_KEY, {
+        preference: 'bright',
+        savedAt: 0,
+      }),
+    )
+    expect(webValues.get(STORAGE_KEY)).toBe('bright')
+  })
+
+  it('should prefer and repair a newer browser copy over a stale toss preference', async () => {
+    storage.usesTossStorage.mockReturnValue(true)
+    webValues.set(STORAGE_KEY, {preference: 'bright', savedAt: 20})
+    tossValues.set(STORAGE_KEY, {preference: 'dark', savedAt: 10})
+
+    await expect(repository.read()).resolves.toBe('bright')
+    await vi.waitFor(() =>
+      expect(storage.writeToss).toHaveBeenCalledWith(STORAGE_KEY, {
+        preference: 'bright',
+        savedAt: 20,
+      }),
+    )
+    expect(storage.readToss).toHaveBeenCalledOnce()
+    expect(webValues.get(STORAGE_KEY)).toEqual({preference: 'bright', savedAt: 20})
+  })
+
+  it('should prefer a newer toss preference over a stale browser cache', async () => {
+    storage.usesTossStorage.mockReturnValue(true)
+    webValues.set(STORAGE_KEY, {preference: 'bright', savedAt: 10})
+    tossValues.set(STORAGE_KEY, {preference: 'dark', savedAt: 20})
+
+    await expect(repository.read()).resolves.toBe('dark')
+
+    expect(webValues.get(STORAGE_KEY)).toEqual({preference: 'dark', savedAt: 20})
+    expect(storage.writeToss).not.toHaveBeenCalled()
+  })
+
+  it('should refresh its fallback when a native value wins a timestamp tie', async () => {
+    storage.usesTossStorage.mockReturnValue(true)
+    webValues.set(STORAGE_KEY, {preference: 'bright', savedAt: 10})
+    tossValues.set(STORAGE_KEY, {preference: 'dark', savedAt: 20})
+    storage.writeWeb.mockImplementationOnce(() => {
+      return new Error('Browser storage unavailable')
+    })
+
+    await expect(repository.read()).resolves.toBe('dark')
+
+    tossValues.set(STORAGE_KEY, {preference: 'system', savedAt: 20})
+
+    await expect(repository.read()).resolves.toBe('system')
+    expect(webValues.get(STORAGE_KEY)).toEqual({preference: 'system', savedAt: 20})
+
+    storage.usesTossStorage.mockReturnValue(false)
+
+    await expect(repository.read()).resolves.toBe('system')
+  })
+
+  it('should prefer the toss preference when legacy copies have no timestamps', async () => {
+    storage.usesTossStorage.mockReturnValue(true)
+    webValues.set(STORAGE_KEY, 'bright')
+    tossValues.set(STORAGE_KEY, 'dark')
+
+    await expect(repository.read()).resolves.toBe('dark')
+    expect(webValues.get(STORAGE_KEY)).toEqual({preference: 'dark', savedAt: 0})
+  })
+
+  it('should replace invalid or missing preferences with the default', async () => {
+    storage.usesTossStorage.mockReturnValue(true)
+
+    await expect(repository.read()).resolves.toBe('dark')
+    expect(webValues.get(STORAGE_KEY)).toEqual({preference: 'dark', savedAt: 0})
+
+    webValues.clear()
+    tossValues.set(STORAGE_KEY, 'unknown')
+    await expect(repository.read()).resolves.toBe('dark')
+    expect(webValues.get(STORAGE_KEY)).toEqual({preference: 'dark', savedAt: 0})
+  })
+
+  it('should reject a toss read failure when the browser copy is unavailable', async () => {
+    storage.usesTossStorage.mockReturnValue(true)
+    storage.readToss.mockRejectedValue(new Error('Toss storage unavailable'))
+
+    await expect(repository.read()).rejects.toThrow('Failed to read display theme preference.')
+  })
+
+  it('should persist through toss storage when the browser cache is unavailable', async () => {
+    storage.usesTossStorage.mockReturnValue(true)
+    storage.writeWeb.mockImplementation(() => {
+      return new Error('Browser storage unavailable')
+    })
+
+    await expect(repository.write('dark')).resolves.toBeUndefined()
+    expect(tossValues.get(STORAGE_KEY)).toMatchObject({
+      preference: 'dark',
+      savedAt: expect.any(Number),
+    })
+  })
+
+  it('should remove a stale browser copy after native persistence succeeds', async () => {
+    storage.usesTossStorage.mockReturnValue(true)
+    webValues.set(STORAGE_KEY, 'dark')
+    storage.writeWeb.mockImplementationOnce(() => {
+      return new Error('Browser storage unavailable')
+    })
+
+    await expect(repository.write('bright')).resolves.toBeUndefined()
+
+    expect(tossValues.get(STORAGE_KEY)).toMatchObject({
+      preference: 'bright',
+      savedAt: expect.any(Number),
+    })
+    expect(storage.removeWeb).toHaveBeenCalledWith(STORAGE_KEY)
+    expect(webValues.get(STORAGE_KEY)).toBeUndefined()
+    await expect(repository.read()).resolves.toBe('bright')
+    expect(tossValues.get(STORAGE_KEY)).toMatchObject({preference: 'bright'})
+  })
+
+  it('should keep a newer write when a native read completes late', async () => {
+    storage.usesTossStorage.mockReturnValue(true)
+    const nativeRead = Promise.withResolvers<unknown | null>()
+    storage.readToss.mockReturnValueOnce(nativeRead.promise)
+
+    const pendingRead = repository.read()
+    await repository.write('bright')
+    nativeRead.resolve('dark')
+
+    await expect(pendingRead).resolves.toBe('bright')
+    expect(webValues.get(STORAGE_KEY)).not.toMatchObject({preference: 'dark'})
+  })
+
+  it('should reject a toss save when toss storage fails', async () => {
+    storage.usesTossStorage.mockReturnValue(true)
+    storage.writeToss.mockRejectedValue(new Error('Toss storage unavailable'))
+
+    await expect(repository.write('bright')).rejects.toThrow(
+      'Failed to persist display theme preference.',
+    )
+    expect(webValues.get(STORAGE_KEY)).toMatchObject({preference: 'bright'})
+  })
+
+  it('should retain browser state after a failed toss save', async () => {
+    storage.usesTossStorage.mockReturnValue(true)
+    tossValues.set(STORAGE_KEY, 'dark')
+    storage.writeToss.mockRejectedValueOnce(new Error('Toss storage unavailable'))
+
+    await expect(repository.write('bright')).rejects.toThrow(
+      'Failed to persist display theme preference.',
+    )
+    await expect(repository.read()).resolves.toBe('bright')
+    await vi.waitFor(() => expect(storage.writeToss).toHaveBeenCalledTimes(2))
+    expect(tossValues.get(STORAGE_KEY)).toMatchObject({preference: 'bright'})
+    expect(webValues.get(STORAGE_KEY)).toMatchObject({preference: 'bright'})
+  })
+
+  it('should continue toss writes after an earlier write fails', async () => {
+    storage.usesTossStorage.mockReturnValue(true)
+    storage.writeToss
+      .mockRejectedValueOnce(new Error('Toss storage unavailable'))
+      .mockImplementationOnce(async (key, value) => {
+        tossValues.set(key, value)
+      })
+
+    await expect(repository.write('dark')).rejects.toThrow(
+      'Failed to persist display theme preference.',
+    )
+    await expect(repository.write('bright')).resolves.toBeUndefined()
+    expect(tossValues.get(STORAGE_KEY)).toMatchObject({preference: 'bright'})
+  })
+
+  it('should wait for an active toss write before reading the preference', async () => {
+    storage.usesTossStorage.mockReturnValue(true)
+    tossValues.set(STORAGE_KEY, 'dark')
+    let completeWrite: () => void = () => undefined
+    storage.writeToss.mockImplementationOnce(
+      (key, value) =>
+        new Promise((resolve) => {
+          completeWrite = () => {
+            tossValues.set(key, value)
+            resolve()
+          }
+        }),
+    )
+
+    const pendingWrite = repository.write('bright')
+    await vi.waitFor(() => expect(storage.writeToss).toHaveBeenCalledOnce())
+    const pendingRead = repository.read()
+    completeWrite()
+
+    await expect(pendingWrite).resolves.toBeUndefined()
+    await expect(pendingRead).resolves.toBe('bright')
+    await vi.waitFor(() => expect(storage.writeToss).toHaveBeenCalledTimes(2))
+    expect(storage.readToss).toHaveBeenCalledOnce()
+  })
+})
+
+describe('display theme runtime storage adapter', () => {
+  it('should prefer native storage over a stale browser cache', async () => {
+    Object.defineProperty(globalThis, 'ReactNativeWebView', {configurable: true, value: {}})
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({preference: 'bright', savedAt: 10}))
+    storageMocks.getItem.mockResolvedValue(JSON.stringify({preference: 'dark', savedAt: 20}))
+
+    await expect(readDisplayThemePreference()).resolves.toBe('dark')
+    expect(storageMocks.getItem).toHaveBeenCalledWith(STORAGE_KEY)
+    expect(storageMocks.setItem).not.toHaveBeenCalled()
+    expect(localStorage.getItem(STORAGE_KEY)).toBe(
+      JSON.stringify({preference: 'dark', savedAt: 20}),
+    )
+  })
+
+  it('should restore a native preference after its web mirror fails and the bridge disappears', async () => {
+    Object.defineProperty(globalThis, 'ReactNativeWebView', {configurable: true, value: {}})
+    const staleBrowserPreference = JSON.stringify({preference: 'bright', savedAt: 10})
+    localStorage.setItem(STORAGE_KEY, staleBrowserPreference)
+    storageMocks.getItem.mockResolvedValueOnce(JSON.stringify({preference: 'dark', savedAt: 20}))
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementationOnce(() => {
+      throw new Error('Browser storage unavailable')
+    })
+
+    await expect(readDisplayThemePreference()).resolves.toBe('dark')
+    expect(localStorage.getItem(STORAGE_KEY)).toBe(staleBrowserPreference)
+
+    Reflect.deleteProperty(globalThis, 'ReactNativeWebView')
+
+    await expect(readDisplayThemePreference()).resolves.toBe('dark')
+    expect(storageMocks.getItem).toHaveBeenCalledOnce()
+
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({preference: 'system', savedAt: 30}))
+
+    await expect(readDisplayThemePreference()).resolves.toBe('system')
+  })
+
+  it('should propagate a toss storage error as a rejected save', async () => {
+    Object.defineProperty(globalThis, 'ReactNativeWebView', {configurable: true, value: {}})
+    storageMocks.setItem.mockRejectedValue(new Error('Toss storage unavailable'))
+
+    await expect(writeDisplayThemePreference('bright')).rejects.toThrow(
+      'Failed to persist display theme preference.',
+    )
+  })
+})

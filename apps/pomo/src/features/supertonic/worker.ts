@@ -1,0 +1,351 @@
+/// <reference lib="webworker" />
+import {getMonotonicTime} from 'src/utils/get-monotonic-time'
+
+// oxlint-disable no-await-in-loop -- Model streams and sessions are loaded sequentially to cap peak browser memory.
+
+import {createModelStorage} from '../model-storage'
+import {joinAudioChunks} from './audio'
+import {
+  createSupertonicVoice,
+  parseSupertonicVoice,
+  SupertonicEngine,
+  type SupertonicSessions,
+  type SupertonicVoice,
+} from './engine'
+import {type CancelledError, type SupertonicError} from './errors'
+import type {SupertonicVoiceSource, SupertonicWorkerInput, SupertonicWorkerOutput} from './messages'
+import {
+  getVoiceStyleUrl,
+  type InitializationAssets,
+  type ModelAssets,
+  parseInitializationAssets,
+} from './model-assets'
+import {
+  getSupertonicAssetUrl,
+  SUPERTONIC_MODEL_ASSETS_URL,
+  type SupertonicModel,
+  type SupertonicVoiceId,
+} from './model'
+import {loadSupertonicRuntime, type SupertonicBackend, type SupertonicRuntime} from './runtime'
+import {loadSessions, releaseSessions} from './sessions'
+import {failureResult, type Result, successResult} from 'src/features/result'
+import {splitSpeechText} from './text-chunking'
+import {normalizeSpeechText} from './number-speech'
+import {createSupertonicWorkerDispatch} from './worker/dispatch'
+import {createWorkerError} from './worker/create-worker-error'
+import {createSupertonicResourceLoader} from './worker/resource-loader'
+
+const workerScope = globalThis.self as DedicatedWorkerGlobalScope
+const modelStorage = createModelStorage()
+const voiceCache = new Map<SupertonicVoiceId, SupertonicVoice>()
+let engine: SupertonicEngine | null = null
+let activeModel: SupertonicModel | null = null
+let activeModelAssets: ModelAssets | null = null
+let activeAbortController: AbortController | null = null
+let activeGenerationAbortController: AbortController | null = null
+let activeRuntime: SupertonicRuntime | null = null
+
+interface GeneratedAudio {
+  readonly generationTime: number
+  readonly sampleRate: number
+  readonly samples: Float32Array
+}
+
+type Backend = SupertonicBackend
+
+const postMessage = (
+  message: SupertonicWorkerOutput,
+  transfer: ReadonlyArray<Transferable> = [],
+) => {
+  workerScope.postMessage(message, Array.from(transfer))
+}
+
+const createCancelledError = (phase: CancelledError['phase']): CancelledError => ({
+  code: 'cancelled',
+  phase,
+  retryable: false,
+})
+
+const {
+  loadBuffer: fetchBuffer,
+  loadJson: fetchJson,
+  loadManifest,
+} = createSupertonicResourceLoader({
+  onProgress: (progress) => postMessage({progress, type: 'progress'}),
+  storage: modelStorage,
+})
+
+const fetchModelAssets = async (signal: AbortSignal) =>
+  loadManifest({
+    fileName: '모델 자산 설정',
+    signal,
+    url: new URL(SUPERTONIC_MODEL_ASSETS_URL, workerScope.location.origin).href,
+  })
+
+const loadInitializationAssets = async (
+  signal: AbortSignal,
+): Promise<Result<InitializationAssets, SupertonicError>> => {
+  const [assetsResponse, configResponse, indexerResponse] = await Promise.all([
+    fetchModelAssets(signal),
+    fetchJson({
+      fileName: '모델 설정',
+      signal,
+      url: getSupertonicAssetUrl('onnx/tts.json'),
+    }),
+    fetchJson({
+      fileName: '문자 인덱서',
+      signal,
+      url: getSupertonicAssetUrl('onnx/unicode_indexer.json'),
+    }),
+  ])
+
+  if (!assetsResponse.ok) {
+    return failureResult(assetsResponse.error)
+  }
+
+  if (!configResponse.ok) {
+    return failureResult(configResponse.error)
+  }
+
+  if (!indexerResponse.ok) {
+    return failureResult(indexerResponse.error)
+  }
+
+  return parseInitializationAssets({
+    config: configResponse.value,
+    indexer: indexerResponse.value,
+    modelAssets: assetsResponse.value,
+  })
+}
+
+const initialize = async (model: SupertonicModel): Promise<Result<Backend, SupertonicError>> => {
+  const abortController = new AbortController()
+  activeAbortController = abortController
+  const workerNavigator = workerScope.navigator as WorkerNavigator & {gpu?: unknown}
+  const canUseWebGpu = workerNavigator.gpu !== undefined && model.preferredBackend === 'webgpu'
+  let backend: Backend = canUseWebGpu ? 'webgpu' : 'wasm'
+  let runtime: SupertonicRuntime
+  let sessions: SupertonicSessions
+
+  try {
+    runtime = await loadSupertonicRuntime(backend)
+    const assetsResult = await loadInitializationAssets(abortController.signal)
+
+    if (!assetsResult.ok) {
+      return failureResult(assetsResult.error)
+    }
+
+    let sessionResult = await loadSessions({
+      backend,
+      loadBuffer: fetchBuffer,
+      model,
+      runtime,
+      signal: abortController.signal,
+    })
+
+    if (
+      !sessionResult.ok &&
+      sessionResult.error.code === 'backend-failed' &&
+      backend === 'webgpu'
+    ) {
+      postMessage({
+        message: 'WebGPU를 사용할 수 없어 WASM으로 다시 준비하고 있어요.',
+        type: 'status',
+      })
+      backend = 'wasm'
+      runtime = await loadSupertonicRuntime(backend)
+      sessionResult = await loadSessions({
+        backend,
+        loadBuffer: fetchBuffer,
+        model,
+        runtime,
+        signal: abortController.signal,
+      })
+    }
+
+    if (!sessionResult.ok) {
+      return sessionResult
+    }
+
+    sessions = sessionResult.value
+
+    if (abortController.signal.aborted) {
+      await releaseSessions(sessions)
+      return failureResult(createCancelledError('initialize'))
+    }
+
+    engine = new SupertonicEngine(
+      assetsResult.value.config,
+      assetsResult.value.indexer,
+      sessions,
+      runtime,
+    )
+    activeModel = model
+    activeModelAssets = assetsResult.value.modelAssets
+    activeRuntime = runtime
+    voiceCache.clear()
+    return successResult(backend)
+  } finally {
+    if (activeAbortController === abortController) {
+      activeAbortController = null
+    }
+  }
+}
+
+const getVoice = async (
+  voice: SupertonicVoiceSource,
+  signal: AbortSignal,
+): Promise<Result<SupertonicVoice, SupertonicError>> => {
+  const runtime = activeRuntime
+
+  if (runtime === null) {
+    return failureResult({
+      code: 'model-not-ready',
+      phase: 'generate',
+      retryable: false,
+    })
+  }
+
+  if (voice.kind === 'custom') {
+    return successResult(createSupertonicVoice(runtime, voice.value))
+  }
+
+  const cachedVoice = voiceCache.get(voice.id)
+
+  if (cachedVoice !== undefined) {
+    return successResult(cachedVoice)
+  }
+
+  if (activeModelAssets === null) {
+    return failureResult({
+      code: 'model-not-ready',
+      phase: 'generate',
+      retryable: false,
+    })
+  }
+
+  const response = await fetchJson({
+    fileName: `${voice.id} 목소리`,
+    signal,
+    url: getVoiceStyleUrl(activeModelAssets, voice.id),
+  })
+
+  if (!response.ok) {
+    return response
+  }
+
+  const voiceResult = parseSupertonicVoice(runtime, response.value)
+
+  if (voiceResult.ok) {
+    voiceCache.set(voice.id, voiceResult.value)
+  }
+
+  return voiceResult
+}
+
+const generate = async (
+  message: Extract<SupertonicWorkerInput, {type: 'generate'}>,
+): Promise<Result<GeneratedAudio, SupertonicError>> => {
+  if (engine === null || activeModel === null) {
+    return failureResult({
+      code: 'model-not-ready',
+      phase: 'generate',
+      retryable: false,
+    })
+  }
+
+  const currentEngine = engine
+  const currentModel = activeModel
+  const abortController = new AbortController()
+  activeAbortController = abortController
+  activeGenerationAbortController = abortController
+  const startedAt = getMonotonicTime()
+
+  try {
+    const voiceResult = await getVoice(message.voice, abortController.signal)
+
+    if (!voiceResult.ok) {
+      return voiceResult
+    }
+
+    const textChunks = splitSpeechText(message.text, currentModel.speechPolicy)
+    const audioChunks: Array<Float32Array> = []
+
+    for (const [chunkIndex, text] of textChunks.entries()) {
+      const chunkNumber = chunkIndex + 1
+      const chunkStartedAt = getMonotonicTime()
+      const engineText = normalizeSpeechText({
+        language: message.language,
+        maximumLength: currentModel.speechPolicy.maximumLength,
+        text,
+      })
+      const samples = await currentEngine.generate({
+        language: message.language,
+        onProgress: (step, total) => {
+          postMessage({
+            message: `음성 ${chunkNumber}/${textChunks.length} 다듬는 중 ${step}/${total}`,
+            type: 'status',
+          })
+        },
+        speed: message.speed,
+        text: engineText,
+        voice: voiceResult.value,
+      })
+      audioChunks.push(samples)
+      postMessage({
+        generationTime: Math.round(getMonotonicTime() - chunkStartedAt),
+        index: chunkIndex,
+        requestId: message.requestId,
+        sampleRate: currentEngine.sampleRate,
+        samples,
+        total: textChunks.length,
+        type: 'chunk',
+      })
+
+      if (abortController.signal.aborted) {
+        return failureResult(createCancelledError('generate'))
+      }
+    }
+
+    const samples = joinAudioChunks({
+      chunks: audioChunks,
+      sampleRate: currentEngine.sampleRate,
+      silenceDuration: currentModel.speechPolicy.silenceDuration,
+    })
+
+    if (abortController.signal.aborted) {
+      return failureResult(createCancelledError('generate'))
+    }
+
+    return successResult({
+      generationTime: Math.round(getMonotonicTime() - startedAt),
+      sampleRate: currentEngine.sampleRate,
+      samples,
+    })
+  } catch (error: unknown) {
+    return failureResult(createWorkerError('generate', error))
+  } finally {
+    if (activeAbortController === abortController) {
+      activeAbortController = null
+    }
+
+    if (activeGenerationAbortController === abortController) {
+      activeGenerationAbortController = null
+    }
+  }
+}
+
+workerScope.onmessage = createSupertonicWorkerDispatch({
+  cancelGeneration: () => activeGenerationAbortController?.abort(),
+  async dispose() {
+    activeAbortController?.abort()
+    await engine?.release()
+    engine = null
+    activeModel = null
+    activeRuntime = null
+    voiceCache.clear()
+  },
+  generate,
+  initialize,
+  postMessage,
+})

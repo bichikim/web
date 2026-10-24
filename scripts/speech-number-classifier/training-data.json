@@ -1,0 +1,454 @@
+[
+  {"language": "ko", "text": "표 #장을 예매했어요", "label": "count", "split": "train"},
+  {"language": "ko", "text": "사진 #장을 인쇄했어요", "label": "count", "split": "train"},
+  {"language": "ko", "text": "초대장 #장을 보냈어요", "label": "count", "split": "train"},
+  {"language": "ko", "text": "서류 #장을 제출했어요", "label": "count", "split": "train"},
+  {"language": "ko", "text": "종이 #장을 접었어요", "label": "count", "split": "train"},
+  {"language": "ko", "text": "쿠폰 #장을 받았어요", "label": "count", "split": "train"},
+  {"language": "ko", "text": "자동차 #대가 출발했어요", "label": "count", "split": "train"},
+  {"language": "ko", "text": "기기 #대를 설치했어요", "label": "count", "split": "train"},
+  {"language": "ko", "text": "트럭 #대가 지나갔어요", "label": "count", "split": "train"},
+  {"language": "ko", "text": "버스 #대가 멈췄어요", "label": "count", "split": "train"},
+  {"language": "ko", "text": "택시 #대가 기다려요", "label": "count", "split": "train"},
+  {"language": "ko", "text": "컴퓨터 #대를 교체했어요", "label": "count", "split": "train"},
+  {"language": "ko", "text": "소설 #권을 구입했어요", "label": "count", "split": "train"},
+  {"language": "ko", "text": "교재 #권을 주문했어요", "label": "count", "split": "train"},
+  {"language": "ko", "text": "만화책 #권을 빌렸어요", "label": "count", "split": "train"},
+  {"language": "ko", "text": "잡지 #권을 정리했어요", "label": "count", "split": "train"},
+  {"language": "ko", "text": "사전 #권을 기증했어요", "label": "count", "split": "train"},
+  {"language": "ko", "text": "연구 자료 #권을 보관했어요", "label": "count", "split": "train"},
+  {"language": "en", "text": "we packed # boxes", "label": "count", "split": "train"},
+  {"language": "en", "text": "they delivered # parcels", "label": "count", "split": "train"},
+  {"language": "en", "text": "she bought # tickets", "label": "count", "split": "train"},
+  {"language": "en", "text": "he rescued # kittens", "label": "count", "split": "train"},
+  {"language": "en", "text": "we served # guests", "label": "count", "split": "train"},
+  {"language": "en", "text": "the crew moved # chairs", "label": "count", "split": "train"},
+  {"language": "en", "text": "customers ordered # notebooks", "label": "count", "split": "train"},
+  {"language": "en", "text": "workers unloaded # pallets", "label": "count", "split": "train"},
+  {"language": "en", "text": "the team mailed # letters", "label": "count", "split": "train"},
+  {"language": "en", "text": "the store received # packages", "label": "count", "split": "train"},
+  {
+    "language": "en",
+    "text": "a volunteer collected # blankets",
+    "label": "count",
+    "split": "train"
+  },
+  {"language": "en", "text": "the driver carried # passengers", "label": "count", "split": "train"},
+  {"language": "en", "text": "the printer produced # copies", "label": "count", "split": "train"},
+  {"language": "en", "text": "the library lent # books", "label": "count", "split": "train"},
+  {"language": "en", "text": "the shelter adopted # puppies", "label": "count", "split": "train"},
+  {
+    "language": "en",
+    "text": "the warehouse stored # containers",
+    "label": "count",
+    "split": "train"
+  },
+  {"language": "en", "text": "the agency rented # vehicles", "label": "count", "split": "train"},
+  {"language": "en", "text": "the shop displayed # lamps", "label": "count", "split": "train"},
+  {
+    "language": "en",
+    "text": "the technician calibrated # gauges",
+    "label": "count",
+    "split": "train"
+  },
+  {"language": "en", "text": "the curator framed # drawings", "label": "count", "split": "train"},
+  {"language": "en", "text": "the terminal dispatched # buses", "label": "count", "split": "train"},
+  {"language": "en", "text": "the courier dispatched # trucks", "label": "count", "split": "train"},
+  {"language": "en", "text": "the company dispatched # vans", "label": "count", "split": "train"},
+
+  {"language": "ko", "text": "기온은 #도입니다", "label": "cardinal", "split": "train"},
+  {"language": "ko", "text": "온도가 #도예요", "label": "cardinal", "split": "train"},
+  {"language": "ko", "text": "무게는 #킬로그램입니다", "label": "cardinal", "split": "train"},
+  {"language": "ko", "text": "거리는 #미터예요", "label": "cardinal", "split": "train"},
+  {"language": "ko", "text": "습도는 #퍼센트예요", "label": "cardinal", "split": "train"},
+  {"language": "ko", "text": "속도는 #킬로미터입니다", "label": "cardinal", "split": "train"},
+  {"language": "en", "text": "the temperature is # degrees", "label": "cardinal", "split": "train"},
+  {"language": "en", "text": "the distance is # kilometers", "label": "cardinal", "split": "train"},
+  {"language": "en", "text": "it weighs # kilograms", "label": "cardinal", "split": "train"},
+  {
+    "language": "en",
+    "text": "the speed is # miles per hour",
+    "label": "cardinal",
+    "split": "train"
+  },
+  {"language": "en", "text": "humidity is # percent", "label": "cardinal", "split": "train"},
+  {"language": "en", "text": "the pressure reached # bars", "label": "cardinal", "split": "train"},
+
+  {"language": "ko", "text": "인증 코드는 #입니다", "label": "digits", "split": "train"},
+  {"language": "ko", "text": "핀 번호 #를 입력하세요", "label": "digits", "split": "train"},
+  {"language": "ko", "text": "비밀번호는 #예요", "label": "digits", "split": "train"},
+  {"language": "ko", "text": "일회용 번호 #를 확인하세요", "label": "digits", "split": "train"},
+  {"language": "ko", "text": "보안 코드는 #입니다", "label": "digits", "split": "train"},
+  {"language": "en", "text": "enter pin # now", "label": "digits", "split": "train"},
+  {"language": "en", "text": "verification code # is valid", "label": "digits", "split": "train"},
+  {"language": "en", "text": "use passcode # to continue", "label": "digits", "split": "train"},
+  {"language": "en", "text": "dial extension # please", "label": "digits", "split": "train"},
+  {"language": "en", "text": "access code # expires soon", "label": "digits", "split": "train"},
+
+  {"language": "ko", "text": "제 #장 내용을 읽어요", "label": "identifier", "split": "train"},
+  {"language": "ko", "text": "모델 # 제품입니다", "label": "identifier", "split": "train"},
+  {"language": "ko", "text": "방 #호로 이동해요", "label": "identifier", "split": "train"},
+  {"language": "ko", "text": "시리즈 #권입니다", "label": "identifier", "split": "train"},
+  {"language": "ko", "text": "#대 대통령을 소개해요", "label": "identifier", "split": "train"},
+  {"language": "ko", "text": "노선 #번 버스예요", "label": "identifier", "split": "train"},
+  {"language": "ko", "text": "채널 #에서 방송해요", "label": "identifier", "split": "train"},
+  {"language": "en", "text": "boeing # aircraft", "label": "identifier", "split": "train"},
+  {"language": "en", "text": "model # vehicles", "label": "identifier", "split": "train"},
+  {"language": "en", "text": "channel # news", "label": "identifier", "split": "train"},
+  {"language": "en", "text": "iso # standards", "label": "identifier", "split": "train"},
+  {"language": "en", "text": "chapter # explains it", "label": "identifier", "split": "train"},
+  {"language": "en", "text": "route # crosses town", "label": "identifier", "split": "train"},
+  {"language": "en", "text": "room # is upstairs", "label": "identifier", "split": "train"},
+  {"language": "en", "text": "version # was released", "label": "identifier", "split": "train"},
+
+  {"language": "ko", "text": "숫자 #이 보여요", "label": "preserve", "split": "train"},
+  {"language": "ko", "text": "값은 #이라고 했어요", "label": "preserve", "split": "train"},
+  {"language": "ko", "text": "# 관련 내용입니다", "label": "preserve", "split": "train"},
+  {"language": "ko", "text": "결과 #가 표시됐어요", "label": "preserve", "split": "train"},
+  {"language": "ko", "text": "화면에 #가 나타났어요", "label": "preserve", "split": "train"},
+  {"language": "ko", "text": "#대, #장, #권", "label": "preserve", "split": "train"},
+  {"language": "ko", "text": "기준값은 #입니다", "label": "preserve", "split": "train"},
+  {"language": "ko", "text": "번호 없이 #만 적혀 있어요", "label": "preserve", "split": "train"},
+  {"language": "ko", "text": "#장인지 알 수 없어요", "label": "preserve", "split": "train"},
+  {"language": "ko", "text": "#대인지 모르겠어요", "label": "preserve", "split": "train"},
+  {"language": "ko", "text": "#권인지 확인이 안 돼요", "label": "preserve", "split": "train"},
+  {"language": "en", "text": "the number # appeared", "label": "preserve", "split": "train"},
+  {"language": "en", "text": "value # was shown", "label": "preserve", "split": "train"},
+  {"language": "en", "text": "# related information", "label": "preserve", "split": "train"},
+  {"language": "en", "text": "the result was #", "label": "preserve", "split": "train"},
+  {"language": "en", "text": "the screen displayed #", "label": "preserve", "split": "train"},
+  {"language": "en", "text": "a value of # appeared", "label": "preserve", "split": "train"},
+  {"language": "en", "text": "only # was written", "label": "preserve", "split": "train"},
+  {"language": "en", "text": "record # without context", "label": "preserve", "split": "train"},
+  {"language": "en", "text": "the monitor showed #", "label": "preserve", "split": "train"},
+  {"language": "en", "text": "the display contained #", "label": "preserve", "split": "train"},
+  {"language": "en", "text": "the output showed #", "label": "preserve", "split": "train"},
+
+  {"language": "ko", "text": "그릇 #개를 정리했어요", "label": "count", "split": "train"},
+  {"language": "ko", "text": "참가자 #명이 모였어요", "label": "count", "split": "train"},
+  {"language": "ko", "text": "토끼 #마리를 키워요", "label": "count", "split": "train"},
+  {"language": "ko", "text": "차 #잔을 마셨어요", "label": "count", "split": "train"},
+  {"language": "ko", "text": "음악 #곡을 골랐어요", "label": "count", "split": "train"},
+  {"language": "en", "text": "the analyst checked # reports", "label": "count", "split": "train"},
+  {"language": "en", "text": "the gardener planted # flowers", "label": "count", "split": "train"},
+  {"language": "en", "text": "the kitchen prepared # meals", "label": "count", "split": "train"},
+  {
+    "language": "en",
+    "text": "the gallery exhibited # paintings",
+    "label": "count",
+    "split": "train"
+  },
+  {"language": "en", "text": "the clinic treated # visitors", "label": "count", "split": "train"},
+
+  {"language": "ko", "text": "바깥 기온은 #도예요", "label": "cardinal", "split": "train"},
+  {"language": "ko", "text": "화물은 #킬로그램입니다", "label": "cardinal", "split": "train"},
+  {"language": "ko", "text": "남은 거리는 #미터예요", "label": "cardinal", "split": "train"},
+  {"language": "ko", "text": "충전량은 #퍼센트입니다", "label": "cardinal", "split": "train"},
+  {"language": "ko", "text": "물은 #리터 들어 있어요", "label": "cardinal", "split": "train"},
+  {"language": "ko", "text": "길이는 #센티미터예요", "label": "cardinal", "split": "train"},
+  {"language": "ko", "text": "총액은 #원입니다", "label": "cardinal", "split": "train"},
+  {"language": "ko", "text": "#분 후에 출발해요", "label": "cardinal", "split": "train"},
+  {"language": "ko", "text": "남은 시간은 #초예요", "label": "cardinal", "split": "train"},
+  {"language": "ko", "text": "해발 #미터 지점입니다", "label": "cardinal", "split": "train"},
+  {"language": "en", "text": "the rope measures # meters", "label": "cardinal", "split": "train"},
+  {"language": "en", "text": "the bottle contains # liters", "label": "cardinal", "split": "train"},
+  {"language": "en", "text": "battery level is # percent", "label": "cardinal", "split": "train"},
+  {
+    "language": "en",
+    "text": "the board is # centimeters tall",
+    "label": "cardinal",
+    "split": "train"
+  },
+  {"language": "en", "text": "the ticket costs # dollars", "label": "cardinal", "split": "train"},
+  {"language": "en", "text": "the wait takes # minutes", "label": "cardinal", "split": "train"},
+  {"language": "en", "text": "noise reached # decibels", "label": "cardinal", "split": "train"},
+  {"language": "en", "text": "the gauge reads # bars", "label": "cardinal", "split": "train"},
+  {"language": "en", "text": "the tower rises # feet", "label": "cardinal", "split": "train"},
+  {
+    "language": "en",
+    "text": "the office covers # square meters",
+    "label": "cardinal",
+    "split": "train"
+  },
+
+  {"language": "ko", "text": "로그인 코드 #를 입력하세요", "label": "digits", "split": "train"},
+  {"language": "ko", "text": "문자 핀 번호는 #예요", "label": "digits", "split": "train"},
+  {"language": "ko", "text": "임시 암호 #를 확인하세요", "label": "digits", "split": "train"},
+  {"language": "ko", "text": "일회용 코드 #를 사용해요", "label": "digits", "split": "train"},
+  {"language": "ko", "text": "확인 번호 #를 눌러주세요", "label": "digits", "split": "train"},
+  {"language": "ko", "text": "복구 번호 #를 보관하세요", "label": "digits", "split": "train"},
+  {"language": "ko", "text": "승인 코드 #가 발급됐어요", "label": "digits", "split": "train"},
+  {"language": "ko", "text": "잠금 암호 #를 입력해요", "label": "digits", "split": "train"},
+  {"language": "ko", "text": "접속 코드 #가 만료됩니다", "label": "digits", "split": "train"},
+  {"language": "ko", "text": "보안 핀 #를 읽어주세요", "label": "digits", "split": "train"},
+  {
+    "language": "en",
+    "text": "temporary passcode # expires soon",
+    "label": "digits",
+    "split": "train"
+  },
+  {"language": "en", "text": "read confirmation code # aloud", "label": "digits", "split": "train"},
+  {"language": "en", "text": "recovery number # is available", "label": "digits", "split": "train"},
+  {"language": "en", "text": "enter the security pin #", "label": "digits", "split": "train"},
+  {"language": "en", "text": "login code # was delivered", "label": "digits", "split": "train"},
+  {
+    "language": "en",
+    "text": "your temporary password is # today",
+    "label": "digits",
+    "split": "train"
+  },
+  {"language": "en", "text": "call extension # for support", "label": "digits", "split": "train"},
+  {
+    "language": "en",
+    "text": "backup passcode # remains valid",
+    "label": "digits",
+    "split": "train"
+  },
+  {"language": "en", "text": "security number # has expired", "label": "digits", "split": "train"},
+  {"language": "en", "text": "use authentication code #", "label": "digits", "split": "train"},
+
+  {"language": "ko", "text": "제#절의 내용을 살펴봐요", "label": "identifier", "split": "train"},
+  {"language": "ko", "text": "자료 #번을 선택하세요", "label": "identifier", "split": "train"},
+  {"language": "ko", "text": "열차 #호를 기다려요", "label": "identifier", "split": "train"},
+  {"language": "ko", "text": "좌석 번호는 #번입니다", "label": "identifier", "split": "train"},
+  {"language": "ko", "text": "장비 모델 #를 주문했어요", "label": "identifier", "split": "train"},
+  {"language": "ko", "text": "고속도로 #호선을 이용해요", "label": "identifier", "split": "train"},
+  {"language": "ko", "text": "에피소드 #가 공개됐어요", "label": "identifier", "split": "train"},
+  {"language": "ko", "text": "방송 채널 #번입니다", "label": "identifier", "split": "train"},
+  {"language": "ko", "text": "제#장에 예시가 있어요", "label": "identifier", "split": "train"},
+  {"language": "ko", "text": "규격 #형 모델이에요", "label": "identifier", "split": "train"},
+  {
+    "language": "en",
+    "text": "chapter # describes the process",
+    "label": "identifier",
+    "split": "train"
+  },
+  {"language": "en", "text": "episode # airs tonight", "label": "identifier", "split": "train"},
+  {"language": "en", "text": "platform # opens shortly", "label": "identifier", "split": "train"},
+  {
+    "language": "en",
+    "text": "flight # arrives this evening",
+    "label": "identifier",
+    "split": "train"
+  },
+  {
+    "language": "en",
+    "text": "highway # reaches the coast",
+    "label": "identifier",
+    "split": "train"
+  },
+  {
+    "language": "en",
+    "text": "formula # defines the ratio",
+    "label": "identifier",
+    "split": "train"
+  },
+  {
+    "language": "en",
+    "text": "iphone # cases are available",
+    "label": "identifier",
+    "split": "train"
+  },
+  {"language": "en", "text": "series # returns in spring", "label": "identifier", "split": "train"},
+  {
+    "language": "en",
+    "text": "airbus # completed the route",
+    "label": "identifier",
+    "split": "train"
+  },
+  {
+    "language": "en",
+    "text": "section # explains the details",
+    "label": "identifier",
+    "split": "train"
+  },
+
+  {"language": "ko", "text": "컵 #개를 선반에 놓았어요", "label": "count", "split": "train"},
+  {"language": "ko", "text": "새 #마리를 관찰했어요", "label": "count", "split": "train"},
+  {"language": "ko", "text": "질문 #개에 답했어요", "label": "count", "split": "train"},
+  {"language": "en", "text": "the reviewer approved # essays", "label": "count", "split": "train"},
+  {"language": "ko", "text": "정류장까지 #미터 남았어요", "label": "cardinal", "split": "train"},
+  {"language": "ko", "text": "현재 잔량은 #퍼센트예요", "label": "cardinal", "split": "train"},
+  {"language": "ko", "text": "결제 금액은 #원이에요", "label": "cardinal", "split": "train"},
+  {"language": "en", "text": "the reservoir holds # liters", "label": "cardinal", "split": "train"},
+  {"language": "en", "text": "the recovery passcode is #", "label": "digits", "split": "train"},
+  {
+    "language": "en",
+    "text": "backup security code # is unused",
+    "label": "digits",
+    "split": "train"
+  },
+  {"language": "ko", "text": "지정 좌석은 #번이에요", "label": "identifier", "split": "train"},
+  {"language": "ko", "text": "지방도 #호선으로 진입해요", "label": "identifier", "split": "train"},
+  {"language": "ko", "text": "방송 회차 #를 다시 봐요", "label": "identifier", "split": "train"},
+  {
+    "language": "en",
+    "text": "section # summarizes the findings",
+    "label": "identifier",
+    "split": "train"
+  },
+  {
+    "language": "ko",
+    "text": "화면 구석에는 값 #만 있었어요",
+    "label": "preserve",
+    "split": "train"
+  },
+  {
+    "language": "ko",
+    "text": "뜻을 모르는 숫자 #가 나왔어요",
+    "label": "preserve",
+    "split": "train"
+  },
+  {"language": "ko", "text": "설명되지 않은 값 #입니다", "label": "preserve", "split": "train"},
+  {
+    "language": "en",
+    "text": "an unexplained value # appeared",
+    "label": "preserve",
+    "split": "train"
+  },
+  {"language": "en", "text": "only # remained on the panel", "label": "preserve", "split": "train"},
+  {"language": "en", "text": "the unknown number was #", "label": "preserve", "split": "train"},
+  {"language": "ko", "text": "접시 #개를 닦았어요", "label": "count", "split": "train"},
+  {"language": "ko", "text": "반려견 #마리와 산책해요", "label": "count", "split": "train"},
+  {"language": "ko", "text": "연습 문제 #개를 해결했어요", "label": "count", "split": "train"},
+  {"language": "ko", "text": "길고양이 #마리에게 밥을 줘요", "label": "count", "split": "train"},
+  {
+    "language": "en",
+    "text": "the publisher reviewed # manuscripts",
+    "label": "count",
+    "split": "train"
+  },
+  {"language": "ko", "text": "오늘 체감 온도는 #도예요", "label": "cardinal", "split": "train"},
+  {"language": "ko", "text": "도착지까지 #미터 남았습니다", "label": "cardinal", "split": "train"},
+  {"language": "ko", "text": "남은 배터리는 #퍼센트입니다", "label": "cardinal", "split": "train"},
+  {"language": "ko", "text": "이용 요금은 #원입니다", "label": "cardinal", "split": "train"},
+  {
+    "language": "en",
+    "text": "recovery access code # is shown",
+    "label": "digits",
+    "split": "train"
+  },
+  {"language": "en", "text": "confirmation code # arrived", "label": "digits", "split": "train"},
+  {"language": "ko", "text": "국도 #호선을 이용했어요", "label": "identifier", "split": "train"},
+  {"language": "ko", "text": "에피소드 #를 이어서 봐요", "label": "identifier", "split": "train"},
+  {"language": "ko", "text": "에피소드 #가 목록에 있어요", "label": "identifier", "split": "train"},
+  {"language": "ko", "text": "프로그램 회차 #를 선택해요", "label": "identifier", "split": "train"},
+  {
+    "language": "en",
+    "text": "platform # serves this route",
+    "label": "identifier",
+    "split": "train"
+  },
+  {
+    "language": "en",
+    "text": "series # arrives next month",
+    "label": "identifier",
+    "split": "train"
+  },
+
+  {"language": "ko", "text": "간식 #개를 준비했어요", "label": "count", "split": "calibration"},
+  {"language": "ko", "text": "직원 #명이 참석했어요", "label": "count", "split": "calibration"},
+  {"language": "ko", "text": "가격은 #원입니다", "label": "cardinal", "split": "calibration"},
+  {"language": "ko", "text": "확인 코드는 #예요", "label": "digits", "split": "calibration"},
+  {"language": "ko", "text": "노선 #번을 타세요", "label": "identifier", "split": "calibration"},
+  {"language": "ko", "text": "값 #만 표시됐어요", "label": "preserve", "split": "calibration"},
+  {
+    "language": "ko",
+    "text": "#대인지 #권인지 불분명해요",
+    "label": "preserve",
+    "split": "calibration"
+  },
+  {"language": "en", "text": "the shelter needs # tents", "label": "count", "split": "calibration"},
+  {
+    "language": "en",
+    "text": "the package weighs # kilograms",
+    "label": "cardinal",
+    "split": "calibration"
+  },
+  {"language": "en", "text": "enter access code #", "label": "digits", "split": "calibration"},
+  {
+    "language": "en",
+    "text": "route # reaches downtown",
+    "label": "identifier",
+    "split": "calibration"
+  },
+  {
+    "language": "en",
+    "text": "only the value # appeared",
+    "label": "preserve",
+    "split": "calibration"
+  },
+  {
+    "language": "en",
+    "text": "# was shown with no explanation",
+    "label": "preserve",
+    "split": "calibration"
+  },
+  {"language": "ko", "text": "병 #개를 상자에 넣었어요", "label": "count", "split": "calibration"},
+  {
+    "language": "ko",
+    "text": "목표까지 #미터 남았어요",
+    "label": "cardinal",
+    "split": "calibration"
+  },
+  {
+    "language": "ko",
+    "text": "임시 보안 번호 #를 입력해요",
+    "label": "digits",
+    "split": "calibration"
+  },
+  {
+    "language": "ko",
+    "text": "도로 #호선을 이용하세요",
+    "label": "identifier",
+    "split": "calibration"
+  },
+  {
+    "language": "ko",
+    "text": "화면에는 설명 없는 값 #만 있어요",
+    "label": "preserve",
+    "split": "calibration"
+  },
+  {
+    "language": "en",
+    "text": "the editor accepted # stories",
+    "label": "count",
+    "split": "calibration"
+  },
+  {
+    "language": "en",
+    "text": "the container holds # liters",
+    "label": "cardinal",
+    "split": "calibration"
+  },
+  {
+    "language": "en",
+    "text": "temporary security code # is ready",
+    "label": "digits",
+    "split": "calibration"
+  },
+  {
+    "language": "en",
+    "text": "section # lists the requirements",
+    "label": "identifier",
+    "split": "calibration"
+  },
+  {
+    "language": "en",
+    "text": "an unexplained value # was present",
+    "label": "preserve",
+    "split": "calibration"
+  },
+  {
+    "language": "ko",
+    "text": "에피소드 #를 선택하세요",
+    "label": "identifier",
+    "split": "calibration"
+  },
+  {
+    "language": "ko",
+    "text": "최종 출력 값은 #였습니다",
+    "label": "preserve",
+    "split": "calibration"
+  }
+]

@@ -1,0 +1,179 @@
+import {getErrorMessage} from 'src/utils/get-error-message'
+import {createWorkerTransport} from 'src/utils/worker-transport'
+
+export type WorkerRpcFailureCode = 'disposed' | 'message-error' | 'send-error' | 'worker-error'
+
+export interface WorkerRpcFailure {
+  readonly cause?: unknown
+  readonly code: WorkerRpcFailureCode
+  readonly detail: string
+}
+
+export const isWorkerRpcFailure = (value: unknown): value is WorkerRpcFailure => {
+  if (typeof value !== 'object' || value === null) {
+    return false
+  }
+
+  if (!('code' in value) || !('detail' in value) || typeof value.detail !== 'string') {
+    return false
+  }
+
+  switch (value.code) {
+    case 'disposed':
+    case 'message-error':
+    case 'send-error':
+    case 'worker-error':
+      return true
+  }
+
+  return false
+}
+
+export interface WorkerRpcRequestOptions<Request> {
+  readonly createRequest: (requestId: number) => Request
+  readonly transfer?: Array<Transferable>
+}
+
+type WorkerRpcEvent<Response> = Exclude<Response, {readonly requestId: number}>
+type WorkerRpcReply<Response> = Extract<Response, {readonly requestId: number}>
+
+export interface WorkerRpcTransport<Request, Response> {
+  readonly dispose: () => void
+  readonly getFailure: () => WorkerRpcFailure | null
+  readonly request: (options: WorkerRpcRequestOptions<Request>) => Promise<WorkerRpcReply<Response>>
+}
+
+export interface CreateWorkerRpcTransportOptions<Response> {
+  readonly workerFailureMessage?: string
+  readonly messageFailureMessage?: string
+  readonly getRequestId: (response: Response) => number | null
+  readonly onFailure?: (failure: WorkerRpcFailure) => void
+  readonly onEvent: (response: WorkerRpcEvent<Response>) => void
+  readonly worker: Worker
+}
+
+interface PendingRequest<Response> {
+  readonly reject: (failure: WorkerRpcFailure) => void
+  readonly resolve: (response: Response) => void
+}
+
+class WorkerRpcError extends Error implements WorkerRpcFailure {
+  readonly code: WorkerRpcFailureCode
+  readonly detail: string
+
+  constructor(code: WorkerRpcFailureCode, detail: string, cause?: unknown) {
+    super(detail, cause === undefined ? undefined : {cause})
+    this.name = 'WorkerRpcError'
+    this.code = code
+    this.detail = detail
+  }
+}
+
+/** Owns request correlation and the fatal lifecycle of one Worker. */
+export const createWorkerRpcTransport = <Request, Response>(
+  options: CreateWorkerRpcTransportOptions<Response>,
+): WorkerRpcTransport<Request, Response> => {
+  const pendingRequests = new Map<number, PendingRequest<WorkerRpcReply<Response>>>()
+  let failure: WorkerRpcError | null = null
+  let nextRequestId = 1
+
+  const fail = (nextFailure: WorkerRpcError) => {
+    if (failure !== null) {
+      return
+    }
+
+    failure = nextFailure
+
+    try {
+      options.onFailure?.(nextFailure)
+    } catch {
+      // Failure observation must not replace Worker lifecycle cleanup.
+    }
+
+    for (const pendingRequest of pendingRequests.values()) {
+      pendingRequest.reject(nextFailure)
+    }
+
+    pendingRequests.clear()
+    transport.dispose()
+  }
+
+  const handleResponse = (response: Response) => {
+    if (failure !== null) {
+      return
+    }
+
+    const requestId = options.getRequestId(response)
+
+    if (requestId === null) {
+      options.onEvent(response as WorkerRpcEvent<Response>)
+      return
+    }
+
+    const pendingRequest = pendingRequests.get(requestId)
+
+    if (pendingRequest === undefined) {
+      return
+    }
+
+    pendingRequests.delete(requestId)
+    pendingRequest.resolve(response as WorkerRpcReply<Response>)
+  }
+
+  const transport = createWorkerTransport<Request, Response>({
+    onFailure: (workerFailure) => {
+      const detail =
+        workerFailure.code === 'worker-error'
+          ? workerFailure.detail || options.workerFailureMessage || 'Worker 실행 오류'
+          : (options.messageFailureMessage ?? 'Worker 응답을 읽지 못했습니다.')
+
+      fail(new WorkerRpcError(workerFailure.code, detail, workerFailure.cause))
+    },
+    onResponse: (response) => {
+      try {
+        handleResponse(response)
+      } catch (error) {
+        fail(
+          new WorkerRpcError(
+            'message-error',
+            getErrorMessage(error, 'Worker 응답 처리 오류'),
+            error,
+          ),
+        )
+      }
+    },
+    worker: options.worker,
+  })
+
+  const request: WorkerRpcTransport<Request, Response>['request'] = (requestOptions) => {
+    if (failure !== null) {
+      return Promise.reject(failure)
+    }
+
+    const requestId = nextRequestId
+    nextRequestId += 1
+
+    return new Promise((resolve, reject) => {
+      pendingRequests.set(requestId, {reject, resolve})
+
+      try {
+        transport.send(requestOptions.createRequest(requestId), requestOptions.transfer ?? [])
+      } catch (error) {
+        pendingRequests.delete(requestId)
+        reject(
+          new WorkerRpcError('send-error', getErrorMessage(error, 'Worker 요청 전송 오류'), error),
+        )
+      }
+    })
+  }
+
+  return {
+    dispose: () => {
+      fail(new WorkerRpcError('disposed', 'Worker가 종료되었습니다.'))
+    },
+    getFailure: () => failure,
+    request,
+  }
+}
+
+export * from './phase-errors'

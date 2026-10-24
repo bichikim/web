@@ -1,0 +1,37 @@
+{
+  "name": "@winter-love/unocss-preset-var",
+  "version": "1.0.29",
+  "private": true,
+  "files": [
+    "dist"
+  ],
+  "type": "module",
+  "main": "./dist/index.mjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.mts",
+  "exports": {
+    ".": "./dist/index.mjs"
+  },
+  "scripts": {
+    "build": "unbuild",
+    "prepare-build": "pnpm run build"
+  },
+  "dependencies": {
+    "@unocss/core": "catalog:",
+    "@unocss/preset-attributify": "catalog:",
+    "@unocss/preset-icons": "catalog:",
+    "@unocss/preset-legacy-compat": "catalog:",
+    "@unocss/preset-mini": "catalog:",
+    "@unocss/preset-uno": "catalog:",
+    "@unocss/rule-utils": "catalog:",
+    "@unocss/transformer-directives": "catalog:",
+    "@unocss/transformer-variant-group": "catalog:",
+    "@unocss/vite": "catalog:",
+    "unocss": "catalog:",
+    "unocss-preset-animations": "catalog:",
+    "unocss-preset-useful": "^0.9.2"
+  },
+  "devDependencies": {
+    "unbuild": "^3.6.1"
+  }
+}

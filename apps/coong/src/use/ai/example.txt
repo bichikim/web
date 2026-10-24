@@ -1,0 +1,276 @@
+                let model, soundfontPlayer;
+                let selectedFile = null;
+                let isPlaying = false;
+                let isConverting = false;
+                let conversionCompleted = false;
+                const dropzone = document.getElementById('dropzone');
+                const fileInput = document.getElementById('fileInput');
+                const audioPreview = document.getElementById('audioPreview');
+                const removeFile = document.getElementById('removeFile');
+                const playButton = document.getElementById('playButton');
+                const audioElement = document.getElementById('audioElement');
+                const timelineContainer = document.getElementById('timelineContainer');
+                const timeline = document.getElementById('timeline');
+                const fileNameDisplay = document.getElementById('fileName');
+                const convertButton = document.getElementById('convertButton');
+                const conversionProgress = document.getElementById('conversionProgress');
+                const progressBar = document.getElementById('progressBar');
+                const progressPercentage = document.getElementById('progressPercentage');
+                const progressText = document.querySelector('.progress-text');
+                const errorMessage = document.getElementById('errorMessage');
+                let progressAnimationFrame;
+                let startTime;
+                let midiDownloadUrl;
+
+                const ALLOWED_FORMATS = ['audio/mp3', 'audio/mpeg', 'audio/mp4', 'audio/wav', 'audio/x-wav', 'audio/m4a', 'audio/x-m4a', 'audio/flac', 'audio/x-flac', 'audio/aac', 'audio/x-aac', 'audio/aiff', 'audio/x-aiff'];
+
+                const ALLOWED_EXTENSIONS = ['.mp3', '.mp4', '.wav', '.m4a', '.flac', '.aac', '.aiff'];
+
+                function isValidAudioFile(file) {
+                    const extension = '.' + file.name.split('.').pop().toLowerCase();
+                    return ALLOWED_EXTENSIONS.includes(extension) && ALLOWED_FORMATS.includes(file.type);
+                }
+
+                function showError() {
+                    errorMessage.classList.remove('hidden');
+                    setTimeout( () => {
+                        errorMessage.classList.add('hidden');
+                    }
+                    , 5000);
+                }
+
+                async function initModel() {
+                    model = new mm.OnsetsAndFrames('https://storage.googleapis.com/magentadata/js/checkpoints/transcription/onsets_frames_uni');
+                    await model.initialize();
+                    soundfontPlayer = new mm.SoundFontPlayer('https://storage.googleapis.com/magentadata/js/soundfonts/salamander');
+                }
+
+                function resetUI() {
+                    audioPreview.classList.add('hidden');
+                    convertButton.classList.add('hidden');
+                    conversionProgress.classList.add('hidden');
+                    errorMessage.classList.add('hidden');
+                    selectedFile = null;
+                    fileNameDisplay.textContent = '';
+                    timeline.style.width = '0%';
+                    isPlaying = false;
+                    updatePlayButton();
+                    audioElement.src = '';
+                    if (progressAnimationFrame) {
+                        cancelAnimationFrame(progressAnimationFrame);
+                    }
+                    progressBar.style.width = '0%';
+                    progressPercentage.textContent = 'Converting: 0%';
+                    isConverting = false;
+                    conversionCompleted = false;
+                    progressText.classList.remove('hidden');
+
+                    convertButton.textContent = 'Convert to MIDI';
+                    convertButton.classList.remove('bg-[#15283d]');
+                    convertButton.removeEventListener('click', handleMidiDownload);
+                    convertButton.addEventListener('click', startConversion);
+
+                    if (midiDownloadUrl) {
+                        URL.revokeObjectURL(midiDownloadUrl);
+                        midiDownloadUrl = null;
+                    }
+                }
+
+                function updatePlayButton() {
+                    playButton.innerHTML = isPlaying ? `<svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>` : `<svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3-2.132a1 1 0 000-1.664z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>`;
+                }
+
+                async function handleFiles(files) {
+                    resetUI();
+                    if (files.length > 0) {
+                        const file = files[0];
+                        if (!isValidAudioFile(file)) {
+                            showError();
+                            return;
+                        }
+                        selectedFile = file;
+                        const objectURL = URL.createObjectURL(selectedFile);
+                        audioElement.src = objectURL;
+                        fileNameDisplay.textContent = selectedFile.name;
+                        audioPreview.classList.remove('hidden');
+                        convertButton.classList.remove('hidden');
+                    }
+                }
+
+                function showWorkingMessage() {
+                    progressPercentage.textContent = "Working on your MIDI file, be patient! :)";
+                    progressBar.style.width = "50%";
+                    progressBar.style.transition = "width 0.5s ease-in-out";
+                }
+
+                function simulateFakeProgress() {
+                    return new Promise( (resolve) => {
+                        progressBar.style.width = "0%";
+                        progressBar.style.transition = "width 6s linear";
+
+                        progressBar.offsetHeight;
+                        progressBar.style.width = "100%";
+
+                        const updateText = () => {
+                            const width = parseFloat(getComputedStyle(progressBar).width);
+                            const containerWidth = parseFloat(getComputedStyle(progressBar.parentElement).width);
+                            const percentage = Math.round((width / containerWidth) * 100);
+
+                            if (percentage < 100) {
+                                progressPercentage.textContent = `Converting: ${percentage}%`;
+                                requestAnimationFrame(updateText);
+                            } else {
+                                progressPercentage.textContent = "Completed";
+                                progressText.classList.add('hidden');
+                                resolve();
+                            }
+                        }
+                        ;
+
+                        requestAnimationFrame(updateText);
+                        setTimeout(resolve, 6000);
+                    }
+                    );
+                }
+
+                function handleMidiDownload() {
+                    if (!midiDownloadUrl || !selectedFile)
+                        return;
+
+                    const downloadLink = document.createElement('a');
+                    downloadLink.href = midiDownloadUrl;
+                    downloadLink.download = `${selectedFile.name.split('.')[0]}.mid`;
+                    downloadLink.click();
+                }
+
+                async function cleanupAudioResources() {
+                    if (isPlaying) {
+                        audioElement.pause();
+                        audioElement.currentTime = 0;
+                        isPlaying = false;
+                        updatePlayButton();
+                    }
+                }
+
+                function delay(ms) {
+                    return new Promise(resolve => setTimeout(resolve, ms));
+                }
+
+                async function startConversion() {
+                    if (!selectedFile)
+                        return;
+
+                    convertButton.classList.add('hidden');
+                    conversionProgress.classList.remove('hidden');
+                    isConverting = true;
+
+                    // Clean up audio if playing
+                    await cleanupAudioResources();
+
+                    // Add 3-second delay
+                    progressPercentage.textContent = "Preparing for conversion...";
+                    await delay(3000);
+
+                    showWorkingMessage();
+
+                    try {
+                        const ns = await model.transcribeFromAudioFile(selectedFile);
+                        const midiData = mm.sequenceProtoToMidi(ns);
+                        const file = new Blob([midiData],{
+                            type: 'audio/midi'
+                        });
+
+                        if (midiDownloadUrl) {
+                            URL.revokeObjectURL(midiDownloadUrl);
+                        }
+                        midiDownloadUrl = URL.createObjectURL(file);
+
+                        await simulateFakeProgress();
+
+                        convertButton.textContent = 'Download MIDI';
+                        convertButton.classList.remove('hidden');
+                        convertButton.classList.add('bg-[#15283d]');
+                        convertButton.removeEventListener('click', startConversion);
+                        convertButton.addEventListener('click', handleMidiDownload);
+                    } catch (error) {
+                        console.error('Conversion failed:', error);
+                        isConverting = false;
+                        progressPercentage.textContent = "Conversion failed";
+                        progressText.textContent = "An error occurred during conversion. Please try again.";
+                        progressBar.style.width = "0%";
+                    }
+                }
+
+                playButton.addEventListener('click', () => {
+                    if (isPlaying) {
+                        audioElement.pause();
+                    } else {
+                        audioElement.play();
+                    }
+                    isPlaying = !isPlaying;
+                    updatePlayButton();
+                }
+                );
+
+                audioElement.addEventListener('timeupdate', () => {
+                    const percentage = (audioElement.currentTime / audioElement.duration) * 100;
+                    timeline.style.width = `${percentage}%`;
+                }
+                );
+
+                audioElement.addEventListener('ended', () => {
+                    isPlaying = false;
+                    updatePlayButton();
+                }
+                );
+
+                audioElement.addEventListener('pause', () => {
+                    isPlaying = false;
+                    updatePlayButton();
+                }
+                );
+
+                audioElement.addEventListener('play', () => {
+                    isPlaying = true;
+                    updatePlayButton();
+                }
+                );
+
+                timelineContainer.addEventListener('click', (e) => {
+                    const rect = timelineContainer.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    const percentage = x / rect.width;
+                    audioElement.currentTime = percentage * audioElement.duration;
+                }
+                );
+
+                dropzone.addEventListener('click', () => fileInput.click());
+
+                dropzone.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    dropzone.style.borderColor = 'rgb(11, 31, 49)';
+                }
+                );
+
+                dropzone.addEventListener('dragleave', () => {
+                    dropzone.style.borderColor = 'rgb(223, 223, 219)';
+                }
+                );
+
+                dropzone.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    dropzone.style.borderColor = 'rgb(223, 223, 219)';
+                    handleFiles(e.dataTransfer.files);
+                }
+                );
+
+                fileInput.addEventListener('change', (e) => {
+                    handleFiles(e.target.files);
+                    fileInput.value = '';
+                }
+                );
+
+                removeFile.addEventListener('click', resetUI);
+                convertButton.addEventListener('click', startConversion);
+
+                window.addEventListener('load', initModel);

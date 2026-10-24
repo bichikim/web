@@ -1,0 +1,525 @@
+import {replaceBlobObjectUrl} from 'src/features/blob-object-url'
+import {readBlobAsArrayBuffer} from 'src/utils/read-blob-as-array-buffer'
+// oxlint-disable eslint/no-await-in-loop -- Dialogue audio must finish before the next queued item starts.
+import {type Accessor, createSignal} from 'solid-js'
+
+import {
+  createPVisemeDriver,
+  createPVisemeTrack,
+  createPWaveEnvelope,
+  getPAudioEnvelopeLevel,
+  type PAudioEnvelope,
+  type PViseme,
+} from '../lip-sync'
+import {
+  createPBrowserAudioVisemeAnalyzer,
+  type PBrowserAudioVisemeAnalyzer,
+} from '../lip-sync/browser-audio-viseme'
+import {createPSilentMouthReturn} from '../lip-sync/silent-mouth-return'
+import type {PDialogueRepository} from './repository'
+import type {DialogueSegmentMood, PDialogue} from './schema'
+import {getDialoguePositionAtTime, getDialogueVisemeAtTime} from './timeline'
+import {
+  createDialoguePlaybackQueue,
+  type DialoguePlaybackRequest,
+  type PlaybackCompletion,
+  type PlayPDialogueSequenceOptions,
+} from './entry-playback-controller/queue'
+
+export type {PlayPDialogueSequenceOptions} from './entry-playback-controller/queue'
+
+const MILLISECONDS_PER_SECOND = 1000
+
+type VisemeResetTiming = 'delayed' | 'immediate'
+type PlaybackItemCompletion = PlaybackCompletion | 'skipped'
+
+const readAudioEnvelope = async (audioBlob: Blob) => {
+  try {
+    return createPWaveEnvelope(await readBlobAsArrayBuffer(audioBlob))
+  } catch {
+    return null
+  }
+}
+
+export interface EntryPlaybackController {
+  readonly activeDialogueId: () => string | null
+  readonly activeSegmentCount: Accessor<number>
+  readonly activeSegmentMood: Accessor<DialogueSegmentMood | null>
+  readonly activeSegmentPosition: Accessor<number | null>
+  readonly activeText: Accessor<string | null>
+  readonly activeViseme: Accessor<PViseme>
+  readonly cancel: () => void
+  readonly dispose: () => void
+  readonly isBlocked: Accessor<boolean>
+  readonly isDialogueScheduled: (dialogueId: string) => boolean
+  readonly isPlaying: Accessor<boolean>
+  readonly prepare: (repository: PDialogueRepository, dialogueId: string) => Promise<boolean>
+  readonly playSequence: (
+    repository: PDialogueRepository,
+    options: PlayPDialogueSequenceOptions,
+  ) => Promise<PlaybackCompletion>
+  readonly retry: () => void
+  readonly scheduledDialogueCount: Accessor<number>
+  readonly skip: () => void
+  readonly stop: () => void
+}
+
+interface PlaySequenceItemOptions {
+  readonly dialogueId: string
+  readonly generation: number
+  readonly onDialogueStart: PlayPDialogueSequenceOptions['onDialogueStart']
+  readonly onDialogueUnavailable: PlayPDialogueSequenceOptions['onDialogueUnavailable']
+  readonly repository: PDialogueRepository
+}
+
+/** Owns one audio element and serializes event and feed dialogue requests. */
+// oxlint-disable-next-line eslint/max-lines-per-function, eslint/max-statements -- One controller owns the audio element, queue, retry, and disposal lifecycle.
+export const createEntryPlaybackController = (): EntryPlaybackController => {
+  const [activeSegmentCount, setActiveSegmentCount] = createSignal(0)
+  const [activeSegmentMood, setActiveSegmentMood] = createSignal<DialogueSegmentMood | null>(null)
+  const [activeSegmentPosition, setActiveSegmentPosition] = createSignal<number | null>(null)
+  const [activeText, setActiveText] = createSignal<string | null>(null)
+  const [activeViseme, setActiveViseme] = createSignal<PViseme>('rest')
+  const [isBlocked, setIsBlocked] = createSignal(false)
+  const [isPlaying, setIsPlaying] = createSignal(false)
+  const visemeDriver = createPVisemeDriver()
+  const silentMouthReturn = createPSilentMouthReturn(() => setActiveViseme('closed'))
+  let animationFrame: number | null = null
+  let audio: HTMLAudioElement | null = null
+  let audioContext: AudioContext | null = null
+  let audioContextSuspension: Promise<void> | null = null
+  let resumingAudio: HTMLAudioElement | null = null
+  let audioEnvelope: PAudioEnvelope | null = null
+  let audioSource: MediaElementAudioSourceNode | null = null
+  let audioUrl: string | null = null
+  let audioVisemeAnalyzer: PBrowserAudioVisemeAnalyzer | null = null
+  let dialogue: PDialogue | null = null
+  let isAwaitingSceneInteraction = false
+  let isDisposed = false
+  let onPlaybackStarted: (() => Promise<void> | void) | null = null
+  let playbackGeneration = 0
+  let resolveCompletion: ((completion: PlaybackItemCompletion) => void) | null = null
+  const reportPlaybackFailure = console.error.bind(
+    console,
+    'Unexpected focus room dialogue playback failure.',
+  )
+  const cancelFrame = () => {
+    if (animationFrame !== null) {
+      globalThis.cancelAnimationFrame(animationFrame)
+      animationFrame = null
+    }
+  }
+
+  const resetViseme = (timing: VisemeResetTiming) => {
+    silentMouthReturn.cancel()
+
+    if (timing === 'immediate') {
+      setActiveViseme('closed')
+      return
+    }
+
+    silentMouthReturn.schedule()
+  }
+
+  const updateSubtitle = () => {
+    if (audio === null || dialogue === null || audio.ended) {
+      cancelFrame()
+      return
+    }
+
+    const currentTimeMs = audio.currentTime * MILLISECONDS_PER_SECOND
+    const activePosition = getDialoguePositionAtTime(dialogue.segments, currentTimeMs)
+    const activeSegment =
+      activePosition === null ? undefined : dialogue.segments[activePosition.position]
+    setActiveSegmentMood(activeSegment?.mood ?? null)
+    setActiveSegmentPosition(activePosition?.position ?? null)
+    setActiveText(activePosition?.text ?? null)
+    const targetViseme = getDialogueVisemeAtTime(dialogue.segments, currentTimeMs)
+    const audioFrame = audioVisemeAnalyzer?.getFrame(targetViseme) ?? null
+    const nextViseme = visemeDriver.update({
+      currentTimeMs,
+      intensity:
+        audioFrame?.intensity ??
+        (audioEnvelope === null ? 1 : getPAudioEnvelopeLevel(audioEnvelope, currentTimeMs)),
+      viseme: audioFrame?.viseme ?? targetViseme,
+    })
+
+    if (nextViseme === 'rest') {
+      silentMouthReturn.schedule()
+    } else {
+      silentMouthReturn.cancel()
+      setActiveViseme(nextViseme)
+    }
+    animationFrame = globalThis.requestAnimationFrame(updateSubtitle)
+  }
+
+  const settleCompletion = (completion: PlaybackItemCompletion) => {
+    const resolve = resolveCompletion
+    resolveCompletion = null
+    resolve?.(completion)
+  }
+
+  const suspendAudioContext = () => {
+    const context = audioContext
+
+    if (context === null || context.state === 'closed') {
+      return
+    }
+
+    audioContextSuspension = context.suspend().catch(() => undefined)
+  }
+
+  const clearPlayback = (visemeResetTiming: VisemeResetTiming = 'immediate') => {
+    cancelFrame()
+    audio?.pause()
+    if (audioSource !== null) {
+      audioVisemeAnalyzer?.disconnect(audioSource)
+      audioSource.disconnect()
+    }
+
+    audioSource = null
+    resumingAudio = null
+    onPlaybackStarted = null
+    suspendAudioContext()
+    audio = null
+    audioEnvelope = null
+    visemeDriver.reset()
+    dialogue = null
+    isAwaitingSceneInteraction = false
+    setIsBlocked(false)
+    setIsPlaying(false)
+    setActiveSegmentCount(0)
+    setActiveSegmentMood(null)
+    setActiveSegmentPosition(null)
+    setActiveText(null)
+    resetViseme(visemeResetTiming)
+
+    if (audioUrl !== null) {
+      replaceBlobObjectUrl(audioUrl, () => null)
+      audioUrl = null
+    }
+  }
+
+  const finishPlayback = (completion: PlaybackItemCompletion) => {
+    settleCompletion(completion)
+    clearPlayback(completion === 'ended' || completion === 'skipped' ? 'delayed' : 'immediate')
+  }
+
+  const notifyPlaybackStarted = async () => {
+    const callback = onPlaybackStarted
+    onPlaybackStarted = null
+    await callback?.()
+  }
+
+  const start = async (currentAudio: HTMLAudioElement) => {
+    try {
+      const suspension = audioContextSuspension
+
+      if (suspension !== null) {
+        await suspension
+      }
+
+      if (audio !== currentAudio || isDisposed) {
+        return
+      }
+
+      resumingAudio = currentAudio
+      if (audioContext?.state === 'suspended') {
+        isAwaitingSceneInteraction = true
+        setIsBlocked(true)
+      }
+      try {
+        await audioContext?.resume()
+      } finally {
+        if (resumingAudio === currentAudio) {
+          resumingAudio = null
+        }
+      }
+      if (audio !== currentAudio || isDisposed) {
+        return
+      }
+      await currentAudio.play()
+    } catch (error: unknown) {
+      if (audio !== currentAudio || isDisposed) {
+        return
+      }
+
+      if (error instanceof DOMException && error.name === 'NotAllowedError') {
+        isAwaitingSceneInteraction = true
+        setIsBlocked(true)
+        return
+      }
+
+      console.error('Failed to play focus room entry dialogue.', error)
+      finishPlayback('failed')
+      return
+    }
+
+    if (audio !== currentAudio || isDisposed) {
+      return
+    }
+
+    isAwaitingSceneInteraction = false
+    setIsBlocked(false)
+    setIsPlaying(true)
+    try {
+      await notifyPlaybackStarted()
+    } catch (error: unknown) {
+      finishPlayback('failed')
+      throw error
+    }
+
+    if (audio !== currentAudio || isDisposed) {
+      return
+    }
+
+    silentMouthReturn.cancel()
+    cancelFrame()
+    updateSubtitle()
+  }
+
+  const loadDialogue = async (
+    repository: PDialogueRepository,
+    dialogueId: string,
+    generation: number,
+  ) => {
+    const storedDialogue = await repository.getDialogue(dialogueId)
+
+    if (storedDialogue === null || isDisposed || generation !== playbackGeneration) {
+      return null
+    }
+
+    const storedAudio = await repository.getAudio(storedDialogue.audioKey)
+
+    if (storedAudio === null || isDisposed || generation !== playbackGeneration) {
+      return null
+    }
+
+    const storedAudioEnvelope = await readAudioEnvelope(storedAudio)
+
+    if (isDisposed || generation !== playbackGeneration) {
+      return null
+    }
+
+    dialogue = {
+      ...storedDialogue,
+      segments: storedDialogue.segments.map((segment) =>
+        segment.visemes === undefined
+          ? {
+              ...segment,
+              visemes: createPVisemeTrack({durationMs: segment.durationMs, text: segment.text}),
+            }
+          : segment,
+      ),
+    }
+    audioEnvelope = storedAudioEnvelope
+    setActiveSegmentCount(storedDialogue.segments.length)
+    audioUrl = replaceBlobObjectUrl(null, () => storedAudio)
+    audio = new Audio(audioUrl)
+
+    if (typeof AudioContext !== 'undefined') {
+      audioContext ??= new AudioContext()
+      audioVisemeAnalyzer ??= createPBrowserAudioVisemeAnalyzer(audioContext)
+      audioSource = audioContext.createMediaElementSource(audio)
+      audioSource.connect(audioContext.destination)
+      await audioVisemeAnalyzer.connect(audioSource)
+    }
+
+    return audio
+  }
+
+  const playSequenceItem = async (
+    options: PlaySequenceItemOptions,
+  ): Promise<PlaybackItemCompletion> => {
+    const currentAudio = await loadDialogue(
+      options.repository,
+      options.dialogueId,
+      options.generation,
+    )
+
+    if (currentAudio === null) {
+      if (isDisposed || options.generation !== playbackGeneration) {
+        return 'cancelled'
+      }
+
+      await options.onDialogueUnavailable?.(options.dialogueId)
+      return 'missing'
+    }
+
+    const completion = new Promise<PlaybackItemCompletion>((resolve) => {
+      resolveCompletion = resolve
+    })
+    currentAudio.addEventListener(
+      'ended',
+      () => {
+        if (audio !== currentAudio) {
+          return
+        }
+
+        settleCompletion('ended')
+        clearPlayback('delayed')
+      },
+      {once: true},
+    )
+    currentAudio.addEventListener(
+      'error',
+      () => {
+        if (audio !== currentAudio) {
+          return
+        }
+
+        settleCompletion('failed')
+        clearPlayback()
+      },
+      {once: true},
+    )
+    onPlaybackStarted = () => options.onDialogueStart(options.dialogueId)
+    try {
+      await start(currentAudio)
+    } catch (error: unknown) {
+      clearPlayback()
+      throw error
+    }
+    return completion
+  }
+
+  const playRequest = async (
+    request: DialoguePlaybackRequest,
+    generation: number,
+    onProgress: () => void,
+  ): Promise<PlaybackCompletion> => {
+    while (true) {
+      if (request.applyPendingReplacement()) {
+        onProgress()
+      }
+
+      const dialogueId = request.getCurrentDialogueId()
+      if (dialogueId === undefined) {
+        return 'ended'
+      }
+
+      if (isDisposed || generation !== playbackGeneration) {
+        return 'cancelled'
+      }
+
+      onProgress()
+      const completion = await playSequenceItem({
+        dialogueId,
+        generation,
+        onDialogueStart: request.onDialogueStart,
+        onDialogueUnavailable: request.onDialogueUnavailable,
+        repository: request.repository,
+      })
+
+      switch (completion) {
+        case 'ended':
+        case 'missing':
+          request.advanceDialogue()
+          onProgress()
+          break
+        case 'skipped':
+          await request.onDialogueSkipped?.(dialogueId)
+          request.advanceDialogue()
+          onProgress()
+          break
+        case 'cancelled':
+        case 'failed':
+        case 'stopped':
+          return completion
+      }
+    }
+  }
+
+  const queue = createDialoguePlaybackQueue({
+    finishPlayback,
+    getGeneration: () => playbackGeneration,
+    incrementGeneration: () => {
+      playbackGeneration += 1
+    },
+    isDisposed: () => isDisposed,
+    onQueueIdle: () => {
+      if (!isDisposed && activeViseme() !== 'closed') {
+        resetViseme('delayed')
+      }
+    },
+    onRequestFailure: clearPlayback,
+    playRequest,
+  })
+  const cancel = () => queue.finish(false)
+  const skip = () => {
+    if (audio === null || isDisposed) {
+      return
+    }
+
+    finishPlayback('skipped')
+  }
+  const stop = () => queue.finish(true)
+  const retry = () => {
+    if (!isAwaitingSceneInteraction || isDisposed) {
+      return
+    }
+
+    if (resumingAudio !== null) {
+      // Resume within the click stack without starting the waiting audio a second time.
+      audioContext?.resume().catch(reportPlaybackFailure)
+      return
+    }
+
+    start(audio!).catch(reportPlaybackFailure)
+  }
+
+  return {
+    activeDialogueId: () => dialogue?.id ?? null,
+    activeSegmentCount,
+    activeSegmentMood,
+    activeSegmentPosition,
+    activeText,
+    activeViseme,
+    cancel,
+    dispose() {
+      isDisposed = true
+      cancel()
+      audioVisemeAnalyzer?.dispose()
+      audioVisemeAnalyzer = null
+
+      if (audioContext?.state !== 'closed') {
+        audioContext?.close().catch(() => undefined)
+      }
+
+      audioContext = null
+      audioContextSuspension = null
+    },
+    isBlocked,
+    isDialogueScheduled: (dialogueId) =>
+      dialogue?.id === dialogueId || queue.isScheduled(dialogueId),
+    isPlaying,
+    async playSequence(repository, options) {
+      return queue.enqueue(repository, options)
+    },
+    async prepare(repository, dialogueId) {
+      if (isDisposed) {
+        return false
+      }
+
+      retry()
+      let isUnavailable = false
+      let wasSkipped = false
+      const completion = await queue.enqueue(repository, {
+        dialogueIds: [dialogueId],
+        onDialogueSkipped: () => {
+          wasSkipped = true
+        },
+        onDialogueStart: () => undefined,
+        onDialogueUnavailable: () => {
+          isUnavailable = true
+        },
+        onSequenceStop: () => undefined,
+      })
+      return completion === 'ended' && !isUnavailable && !wasSkipped
+    },
+    retry,
+    scheduledDialogueCount: queue.scheduledDialogueCount,
+    skip,
+    stop,
+  }
+}

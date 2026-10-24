@@ -1,0 +1,42 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Wallpaper",
+  "version": "0.1.0",
+  "identifier": "io.winterlove.wallpaper",
+  "build": {
+    "beforeBuildCommand": "pnpm build",
+    "beforeDevCommand": "pnpm dev",
+    "devUrl": "http://127.0.0.1:1430/",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "macOSPrivateApi": true,
+    "windows": [
+      {
+        "label": "manager",
+        "title": "Wallpaper \uc124\uc815",
+        "backgroundThrottling": "disabled",
+        "visible": false,
+        "width": 560,
+        "height": 720,
+        "minWidth": 400,
+        "minHeight": 540
+      }
+    ],
+    "security": {
+      "capabilities": ["manager", "background", "widget", "codex-bubble"],
+      "csp": {
+        "default-src": "'self'",
+        "connect-src": "'self' ipc: http://ipc.localhost blob: https://storage.pomofi.io https://cdn.jsdelivr.net",
+        "img-src": "'self' blob: data:",
+        "media-src": "'self' blob: data:",
+        "script-src": "'self' 'wasm-unsafe-eval' https://cdn.jsdelivr.net",
+        "style-src": "'self' 'unsafe-inline'",
+        "worker-src": "'self' blob:"
+      }
+    }
+  },
+  "bundle": {
+    "active": false
+  }
+}

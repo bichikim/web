@@ -1,0 +1,178 @@
+import {cx} from 'class-variance-authority'
+import {createSignal, Show} from 'solid-js'
+import {useToolbarWrap} from './use-toolbar-wrap'
+import {getPomoIconClass} from '../icon-style'
+import {type PSceneMotionMode, type PSceneStyle} from '../../features/focus-room-animation/index'
+import {type PActivity, type PGaze} from '../../features/focus-room-scene-preferences/index'
+import type {SceneTimeMode} from '../../features/focus-room-time/index'
+import {type ScreenSaverDelay} from '../../features/screen-saver/index'
+import {
+  type WeatherLocation,
+  type WeatherSceneMode,
+  type WeatherState,
+} from '../../features/weather/index'
+import * as m from '@paraglide/message'
+import {PLoadingStatus} from '../p-loading-status/PLoadingStatus'
+import {PModelDownloadStatus} from '../p-model-download-status/PModelDownloadStatus'
+import {PScribbleCircleControl} from '../scribble/CircleControl'
+import {SceneSettingsPanel} from './SettingsPanel'
+import {CLASSES} from './shared'
+import {PWeatherStatus} from '../p-weather-status/PWeatherStatus'
+import type {PSettingsProps} from '../settings/types'
+import {MemoryAssistPanel} from './MemoryAssistPanel'
+import {VersionNoticePanel} from './VersionNoticePanel'
+import {GLASS_ICON_BUTTON} from '../button-presets'
+import {PButton} from '../p-button/PButton'
+import {PTools} from '../p-tools/PTools'
+import {PToastRegion} from '../p-toast'
+import {PStudioTourHint} from './TourHint'
+
+interface SceneToolbarProps extends Omit<PSettingsProps, 'desktopSurface'> {
+  readonly activity: PActivity
+  readonly gaze: PGaze
+  readonly isSceneTransitioning: boolean
+  readonly onActivityChange: (activity: PActivity) => void
+  readonly onGazeChange: (gaze: PGaze) => void
+  readonly onMotionModeChange: (motionMode: PSceneMotionMode) => void
+  readonly onScreenSaverDelayChange: (delay: ScreenSaverDelay) => void
+  readonly onSceneStyleChange: (sceneStyle: PSceneStyle) => void
+  readonly onTimeModeChange: (mode: SceneTimeMode) => void
+  readonly onTourOpen?: () => void
+  readonly tourHintVisible?: boolean
+  readonly onDismissTourHint?: () => void
+  readonly onWeatherEnabledChange: (enabled: boolean) => void
+  readonly onWeatherLocationChange: (location: WeatherLocation) => void
+  readonly onWeatherSceneModeChange: (mode: WeatherSceneMode) => void
+  readonly screenSaverDelay: ScreenSaverDelay
+  readonly sceneStyle: PSceneStyle
+  readonly motionMode: PSceneMotionMode
+  readonly timeMode: SceneTimeMode
+  readonly weatherEnabled: boolean
+  readonly weatherLocation: WeatherLocation
+  readonly weatherSceneMode: WeatherSceneMode
+  readonly weatherState: WeatherState
+  readonly layout?: 'studio' | 'surface'
+}
+
+export const SceneToolbar = (props: SceneToolbarProps) => {
+  const [actions, setActions] = createSignal<HTMLDivElement | null>(null)
+  const wrap = useToolbarWrap(actions, () => props.layout !== 'surface')
+  return (
+    <div
+      class={cx(
+        props.layout === 'surface' ? 'flex w-max flex-col items-end gap-2' : CLASSES.sceneToolbar,
+      )}
+    >
+      <div
+        ref={setActions}
+        data-wrap={wrap() ? '' : undefined}
+        class={cx(
+          'pomo-toolbar-actions flex justify-end gap-2',
+          props.layout === 'surface' ? 'w-max flex-nowrap' : 'flex-wrap',
+          '[&:not([data-wrap])>.pomo-toolbar-secondary]:order-first [&_button[data-icon-only]]:rounded-full',
+        )}
+        role="group"
+        aria-label={m.scene_group_label()}
+      >
+        <Show when={props.toolsButtonVisible ?? true}>
+          <div class="inline-flex" data-tour-step="tools">
+            <PTools desktopSurface={props.layout === 'surface'} sceneStyle={props.sceneStyle} />
+          </div>
+        </Show>
+        <Show when={props.memoryAssistVisible ?? true}>
+          <div class="inline-flex" data-tour-step="memory-assist">
+            <MemoryAssistPanel
+              desktopSurface={props.layout === 'surface'}
+              sceneStyle={props.sceneStyle}
+              weatherState={props.weatherState}
+            />
+          </div>
+        </Show>
+        <div class="inline-flex" data-tour-step="settings">
+          <SceneSettingsPanel
+            desktopSurface={props.layout === 'surface'}
+            uiAutoHide={props.uiAutoHide}
+            playerVisible={props.playerVisible}
+            onPlayerVisibleChange={props.onPlayerVisibleChange}
+            pomodoroVisible={props.pomodoroVisible}
+            onPomodoroVisibleChange={props.onPomodoroVisibleChange}
+            background={props.background}
+            activity={props.activity}
+            canUseGyroscope={props.canUseGyroscope}
+            featureRequestVisible={props.featureRequestVisible}
+            toolsButtonVisible={props.toolsButtonVisible}
+            onToolsButtonVisibleChange={props.onToolsButtonVisibleChange}
+            memoryAssistVisible={props.memoryAssistVisible}
+            onMemoryAssistVisibleChange={props.onMemoryAssistVisibleChange}
+            onFeatureRequestVisibleChange={props.onFeatureRequestVisibleChange}
+            tourButtonVisible={props.tourButtonVisible}
+            onTourButtonVisibleChange={props.onTourButtonVisibleChange}
+            dialogueComposerVisible={props.dialogueComposerVisible}
+            gaze={props.gaze}
+            onActivityChange={props.onActivityChange}
+            onDialogueComposerVisibleChange={props.onDialogueComposerVisibleChange}
+            onGazeChange={props.onGazeChange}
+            onMotionInputChange={props.onMotionInputChange}
+            onMotionModeChange={props.onMotionModeChange}
+            onScreenSaverDelayChange={props.onScreenSaverDelayChange}
+            onSceneStyleChange={props.onSceneStyleChange}
+            onTimeModeChange={props.onTimeModeChange}
+            onWeatherEnabledChange={props.onWeatherEnabledChange}
+            onWeatherLocationChange={props.onWeatherLocationChange}
+            onWeatherSceneModeChange={props.onWeatherSceneModeChange}
+            screenSaverDelay={props.screenSaverDelay}
+            sceneStyle={props.sceneStyle}
+            motionInput={props.motionInput}
+            motionMode={props.motionMode}
+            timeMode={props.timeMode}
+            weatherEnabled={props.weatherEnabled}
+            weatherLocation={props.weatherLocation}
+            weatherSceneMode={props.weatherSceneMode}
+            desktopMode={props.desktopMode}
+            desktopModeError={props.desktopModeError}
+            isDesktopModeChanging={props.isDesktopModeChanging}
+            onDesktopModeChange={props.onDesktopModeChange}
+          />
+        </div>
+        <div class="pomo-toolbar-secondary flex flex-none gap-2">
+          <VersionNoticePanel
+            desktopSurface={props.layout === 'surface'}
+            featureRequestVisible={props.featureRequestVisible}
+            sceneStyle={props.sceneStyle}
+          />
+          <Show when={props.onTourOpen !== undefined && (props.tourButtonVisible ?? true)}>
+            <PScribbleCircleControl enabled={props.sceneStyle === 'scribble'}>
+              <div class="inline-flex" data-tour-step="tour">
+                <PButton
+                  {...GLASS_ICON_BUTTON}
+                  accessibleLabel={m.tour_open()}
+                  tooltip={m.tour_open()}
+                  class={GLASS_ICON_BUTTON.class}
+                  icon={getPomoIconClass('i-tabler-route', props.sceneStyle)}
+                  onPress={() => props.onTourOpen?.()}
+                />
+              </div>
+            </PScribbleCircleControl>
+          </Show>
+        </div>
+      </div>
+      <div class="clear-both min-w-0 flex flex-col items-end self-stretch gap-2">
+        <PWeatherStatus sceneStyle={props.sceneStyle} state={props.weatherState} />
+        <PModelDownloadStatus />
+        <PToastRegion sceneStyle={props.sceneStyle} />
+        <Show when={props.tourHintVisible}>
+          <PStudioTourHint onDismiss={props.onDismissTourHint} />
+        </Show>
+        <Show when={props.isSceneTransitioning}>
+          <span
+            aria-live="polite"
+            class="border border-solid border-border rounded-control backdrop-blur-surface"
+            role="status"
+          >
+            <PLoadingStatus message={m.scene_transitioning()} />
+          </span>
+        </Show>
+      </div>
+    </div>
+  )
+}

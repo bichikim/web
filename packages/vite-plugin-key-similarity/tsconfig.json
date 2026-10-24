@@ -1,0 +1,10 @@
+{
+  "compileOnSave": false,
+  "compilerOptions": {
+    "paths": {
+      "src/*": ["./src/*"]
+    }
+  },
+  "extends": ["../../tsconfig.json"],
+  "include": ["src/**/*.ts"]
+}

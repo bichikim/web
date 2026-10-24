@@ -1,0 +1,28 @@
+diff --git a/dist/chunk/H6DSIDEC.js b/dist/chunk/H6DSIDEC.js
+index 938fb65e7b65282f490603f0edc790954e30d757..9a2779622baea56b5219d91df2e18414bef2f099 100644
+--- a/dist/chunk/H6DSIDEC.js
++++ b/dist/chunk/H6DSIDEC.js
+@@ -419,6 +419,9 @@ function createSelectableCollection(props, ref, scrollRef) {
+       return;
+     }
+     const manager = access(mergedProps.selectionManager);
++    if (manager.isFocused() && manager.focusedKey() !== void 0) {
++      return;
++    }
+     const delegate = access(mergedProps.keyboardDelegate);
+     let focusedKey;
+     if (autoFocus === "first") {
+diff --git a/dist/chunk/QZDH5R5B.jsx b/dist/chunk/QZDH5R5B.jsx
+index c0c1a1e261d5c74d2664c8ea8f4d56a4e5001356..ffeb0aea3a8bd51a1a85125040c7d840369625e4 100644
+--- a/dist/chunk/QZDH5R5B.jsx
++++ b/dist/chunk/QZDH5R5B.jsx
+@@ -451,6 +451,9 @@ function createSelectableCollection(props, ref, scrollRef) {
+       return;
+     }
+     const manager = access3(mergedProps.selectionManager);
++    if (manager.isFocused() && manager.focusedKey() !== void 0) {
++      return;
++    }
+     const delegate = access3(mergedProps.keyboardDelegate);
+     let focusedKey;
+     if (autoFocus === "first") {

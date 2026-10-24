@@ -1,0 +1,98 @@
+import {expect, fn, userEvent, waitFor, within} from 'storybook/test'
+import type {Meta, StoryObj} from 'storybook-solidjs-vite'
+
+import dayReadingImage from '../../features/focus-room-animation/assets/concept-art/day-reading.webp'
+import * as m from '@paraglide/message'
+import {PMusicPlayerContent} from './PMusicPlayerContent'
+
+const meta = {
+  args: {
+    onDurationChange: fn(),
+    onEnded: fn(),
+    onError: fn(),
+    onExpandedChange: fn(),
+    onPlayingChange: fn(),
+    onTimeUpdate: fn(),
+    onTrackChange: fn(),
+    onVolumeChange: fn(),
+    tracks: [],
+  },
+  argTypes: {
+    expanded: {control: 'boolean'},
+    isDialogueActive: {control: 'boolean'},
+    onDurationChange: {table: {category: 'Events'}},
+    onEnded: {table: {category: 'Events'}},
+    onError: {table: {category: 'Events'}},
+    onExpandedChange: {table: {category: 'Events'}},
+    onPlayingChange: {table: {category: 'Events'}},
+    onTimeUpdate: {table: {category: 'Events'}},
+    onTrackChange: {table: {category: 'Events'}},
+    onVolumeChange: {table: {category: 'Events'}},
+    sceneStyle: {control: false},
+    stopOnUnmount: {control: 'boolean'},
+    tracks: {control: 'object'},
+  },
+  component: PMusicPlayerContent,
+  decorators: [
+    (Story) => (
+      <main class="relative h-screen min-h-150 overflow-hidden">
+        <img
+          alt=""
+          aria-hidden="true"
+          class="pointer-events-none absolute inset-0 size-full object-cover object-[60%_center]"
+          src={dayReadingImage}
+        />
+        <Story />
+      </main>
+    ),
+  ],
+  parameters: {
+    layout: 'fullscreen',
+  },
+  title: 'Pomo/Components/FocusRoom/PMusicPlayerContent',
+} satisfies Meta<typeof PMusicPlayerContent>
+
+export default meta
+type Story = StoryObj<typeof meta>
+
+export const Empty: Story = {}
+
+export const Expanded: Story = {
+  args: {
+    tracks: [
+      {
+        artist: 'Pomo Sounds',
+        artworkUrl: '/audio/artwork/breeze-between-pages.jpg',
+        durationSeconds: 180,
+        id: 'warm-window',
+        source: '',
+        title: 'Warm Window',
+      },
+      {
+        artist: 'Pomo Sounds',
+        artworkUrl: '/audio/artwork/sunlit-desk-notes.jpg',
+        durationSeconds: 180,
+        id: 'quiet-pages',
+        source: '',
+        title: 'Quiet Pages',
+      },
+      {
+        artist: 'Pomo Sounds',
+        artworkUrl: '/audio/artwork/sunday-bookstore-glow.jpg',
+        durationSeconds: 180,
+        id: 'night-lamp',
+        source: '',
+        title: 'Night Lamp',
+      },
+    ],
+  },
+  play: async ({canvasElement}: {canvasElement: HTMLElement}) => {
+    const canvas = within(canvasElement)
+    const expandButton = canvas.getByRole('button', {name: m.player_expand()})
+    await userEvent.click(expandButton)
+    await waitFor(() =>
+      expect(canvas.getByRole('button', {name: m.player_collapse()})).toBeVisible(),
+    )
+    await waitFor(() => expect(canvas.getByRole('button', {name: /Quiet Pages/u})).toBeEnabled())
+  },
+}

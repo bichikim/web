@@ -1,0 +1,48 @@
+{
+  "canvas": {
+    "width": 1024,
+    "height": 576,
+    "fps": 24,
+    "durationSeconds": 3.042
+  },
+  "crop": {
+    "x": 420,
+    "y": 0,
+    "width": 420,
+    "height": 420
+  },
+  "generatedFull": {
+    "width": 1672,
+    "height": 941,
+    "directory": "generated-full",
+    "method": "ChatGPT image edit using the original full-resolution scene as the authoritative target and each H3-extracted frame as a mouth/lower-jaw pose reference",
+    "cropped": false,
+    "runtimeApplied": true
+  },
+  "stages": [
+    {
+      "name": "closed",
+      "source": "exact-input-endpoint"
+    },
+    {
+      "name": "release",
+      "source": "generated-frame-45"
+    },
+    {
+      "name": "small-open",
+      "source": "generated-frame-49"
+    },
+    {
+      "name": "half-open",
+      "source": "generated-frame-53"
+    },
+    {
+      "name": "open",
+      "source": "exact-input-endpoint"
+    }
+  ],
+  "runtimeDirectory": "src/features/focus-room-animation/assets/layers/day-reading-user",
+  "runtimeScenes": ["day-reading-user", "day-typing-user", "day-writing-user"],
+  "usage": "generated-full/ retains the approved editable full-scene sources. Runtime mouth layers are stored in runtimeDirectory.",
+  "note": "closed/open are exact source composites, while release/small-open/half-open are ChatGPT-generated edits. Extracted H3 frames, review copies, and intermediate lower-face crops were removed after approval."
+}

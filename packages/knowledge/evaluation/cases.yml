@@ -1,0 +1,21 @@
+# 사용 전 실제 저장소의 명시적 문서·unit ID와 정답을 검토한다. 승인된 golden 데이터가 아니다.
+version: 1
+cases:
+  - id: auth-ko
+    query: 인증 토큰 갱신에 실패하면 어떻게 처리하나?
+    expected:
+      - docId: auth/session
+        unitId: refresh
+  - id: auth-en
+    query: How should concurrent refresh token requests and refresh failures be handled?
+    expected:
+      - docId: auth/session
+        unitId: refresh
+  - id: refund-ko
+    query: 결제 환불은 언제 처리하나?
+    expected:
+      - docId: payment/refund
+  - id: refund-en
+    query: When is a payment refund processed?
+    expected:
+      - docId: payment/refund

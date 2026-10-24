@@ -1,0 +1,251 @@
+import {Slider} from '@kobalte/core/slider'
+import {clamp} from 'es-toolkit/math'
+import {createMemo, createSignal, For, type JSX, Show} from 'solid-js'
+import {KeyedFor} from './KeyedFor'
+import {TimelineTrack} from './TimelineTrack'
+
+import {DEFAULT_PUPPET_FRAMES_PER_SECOND, type PuppetMotion} from '../../player/document'
+import {
+  getFrame,
+  type KeyframeSelection,
+  type ParameterTimelineKeyframe,
+  type ParameterTimelineTrack,
+  snapToFrame,
+} from './timeline-keyframe-selection'
+import {TimelineParameterRowLabel} from './TimelineParameterRowLabel'
+import {useTimelineKeyframeMovePreview} from './use-timeline-keyframe-move-preview'
+import {useElementSize} from './use-element-size'
+
+const PERCENT = 100
+const RULER_LABEL_FRAME_INTERVAL = 6
+const MINIMUM_LABEL_SPACING = 60
+
+const getTimelineTime = (
+  clientX: number,
+  bounds: DOMRect,
+  duration: number,
+  framesPerSecond: number,
+) => {
+  const position = bounds.width === 0 ? 0 : (clientX - bounds.left) / bounds.width
+
+  return snapToFrame(clamp(position, 0, 1) * duration, duration, framesPerSecond)
+}
+
+const getSliderMaximum = (duration: number, framesPerSecond: number) =>
+  Math.max(1 / framesPerSecond, Math.ceil(duration * framesPerSecond) / framesPerSecond)
+
+interface GetRulerTimesOptions {
+  readonly duration: number
+  readonly framesPerSecond: number
+  readonly width: number
+}
+
+const getRulerTimes = (options: GetRulerTimesOptions): ReadonlyArray<number> => {
+  if (options.duration === 0) {
+    return [0]
+  }
+  const frameCount = Math.max(1, getFrame(options.duration, options.framesPerSecond))
+  const frameWidth = options.width / frameCount
+  const interval =
+    frameWidth > 0
+      ? RULER_LABEL_FRAME_INTERVAL *
+        Math.max(1, Math.ceil(MINIMUM_LABEL_SPACING / (frameWidth * RULER_LABEL_FRAME_INTERVAL)))
+      : RULER_LABEL_FRAME_INTERVAL
+  const frames = Array.from(
+    {length: Math.ceil(frameCount / interval)},
+    (_, index) => index * interval,
+  ).filter(
+    (frame) =>
+      frame === 0 ||
+      frameWidth === 0 ||
+      ((options.duration - frame / options.framesPerSecond) / options.duration) * options.width >=
+        MINIMUM_LABEL_SPACING,
+  )
+  return [...frames.map((frame) => frame / options.framesPerSecond), options.duration]
+}
+
+export interface TimelineDopesheetProps {
+  readonly zoom?: number | 'fit'
+  readonly currentTime: number
+  readonly duration: number
+  readonly framesPerSecond?: number
+  readonly motion?: PuppetMotion
+  readonly onEditEnd?: () => void
+  readonly onEditStart?: () => void
+  readonly onKeyframeAdd?: (track: ParameterTimelineTrack, time: number) => boolean
+  readonly onKeyframesDelete?: (
+    track: ParameterTimelineTrack,
+    times: ReadonlyArray<number>,
+  ) => boolean
+  readonly onKeyframeSelect?: (
+    track: ParameterTimelineTrack,
+    keyframe: ParameterTimelineKeyframe,
+    extend: boolean,
+  ) => void
+  readonly onKeyframeMove?: (
+    track: ParameterTimelineTrack,
+    keyframe: ParameterTimelineKeyframe,
+    time: number,
+  ) => void
+  readonly onParameterValueChange?: (track: ParameterTimelineTrack, value: number) => void
+  readonly onParameterSelect?: (parameterId: string) => void
+  readonly onParameterRemove?: (parameterId: string) => void
+  readonly onSeek?: (time: number, preferredParameterId?: string) => void
+  readonly rulerLabel?: JSX.Element
+  readonly rulerStatus?: JSX.Element
+  readonly selectedParameterId?: string | null
+  readonly seekLabel?: string
+  readonly selection: KeyframeSelection | null
+  readonly tracks: ReadonlyArray<ParameterTimelineTrack>
+  readonly values: Readonly<Record<string, number>>
+}
+
+interface TimelineRulerProps {
+  readonly currentTime: number
+  readonly duration: number
+  readonly framesPerSecond: number
+  readonly motion?: PuppetMotion
+  readonly onSeek?: (time: number) => void
+  readonly progress: number
+  readonly rulerStatus?: JSX.Element
+  readonly rulerTimes: ReadonlyArray<number>
+  readonly seekLabel?: string
+}
+
+const TimelineRuler = (props: TimelineRulerProps) => (
+  <div class="timeline-ruler">
+    <For each={props.rulerTimes}>
+      {(time) => (
+        <span
+          data-end={time === props.duration}
+          style={{left: `${props.duration === 0 ? 0 : (time / props.duration) * PERCENT}%`}}
+        >
+          {getFrame(time, props.framesPerSecond)}f
+        </span>
+      )}
+    </For>
+    <span aria-hidden="true" class="timeline-ruler-playhead" style={{left: `${props.progress}%`}} />
+    <Slider
+      class="timeline-seek"
+      minValue={0}
+      maxValue={getSliderMaximum(props.duration, props.framesPerSecond)}
+      step={1 / props.framesPerSecond}
+      value={[props.currentTime]}
+      disabled={props.motion === undefined || props.onSeek === undefined}
+      onChange={(values) => props.onSeek?.(Math.min(values[0]!, props.duration))}
+    >
+      <Slider.Track class="timeline-seek-track">
+        <Slider.Thumb
+          class="timeline-seek-thumb"
+          aria-label={props.seekLabel ?? '재생 위치'}
+          aria-disabled={props.motion === undefined || props.onSeek === undefined}
+        >
+          <Slider.Input />
+        </Slider.Thumb>
+      </Slider.Track>
+    </Slider>
+    <Show when={props.rulerStatus}>
+      <output class="timeline-ruler-status">{props.rulerStatus}</output>
+    </Show>
+  </div>
+)
+
+export const TimelineDopesheet = (props: TimelineDopesheetProps) => {
+  const [tracksElement, setTracksElement] = createSignal<HTMLDivElement | null>(null)
+  const size = useElementSize(tracksElement)
+  const movePreview = useTimelineKeyframeMovePreview({
+    duration: () => props.duration,
+    selection: () => props.selection,
+  })
+  const framesPerSecond = () => props.framesPerSecond ?? DEFAULT_PUPPET_FRAMES_PER_SECOND
+  const progress = () => (props.duration === 0 ? 0 : (props.currentTime / props.duration) * PERCENT)
+  const rulerTimes = createMemo(() =>
+    getRulerTimes({
+      duration: props.duration,
+      framesPerSecond: framesPerSecond(),
+      width: size().width,
+    }),
+  )
+
+  return (
+    <div
+      aria-label="키프레임 타임라인"
+      class="timeline-dopesheet"
+      data-fit={props.zoom === 'fit'}
+      role="group"
+      style={{
+        '--timeline-frame-count': Math.max(1, getFrame(props.duration, framesPerSecond())),
+        '--timeline-zoom': props.zoom === 'fit' ? 1 : (props.zoom ?? PERCENT) / PERCENT,
+      }}
+    >
+      <Show
+        when={props.tracks.length > 0}
+        fallback={<p class="timeline-empty">타임라인에 파라미터가 없습니다.</p>}
+      >
+        <div class="timeline-labels">
+          <div class="timeline-ruler-label">{props.rulerLabel ?? 'Parameter'}</div>
+          <KeyedFor
+            each={props.tracks}
+            key={(track) => `${props.motion?.id ?? ''}:${track.parameter.id}`}
+          >
+            {(track) => (
+              <TimelineParameterRowLabel
+                disabled={props.motion === undefined || props.onParameterValueChange === undefined}
+                onEditEnd={props.onEditEnd}
+                onEditStart={props.onEditStart}
+                onParameterRemove={props.onParameterRemove}
+                onParameterSelect={props.onParameterSelect}
+                onParameterValueChange={props.onParameterValueChange}
+                selected={props.selectedParameterId === track().parameter.id}
+                track={track()}
+                value={props.values[track().parameter.id]}
+              />
+            )}
+          </KeyedFor>
+        </div>
+        <div class="timeline-tracks-scroll">
+          <div class="timeline-tracks" ref={setTracksElement}>
+            <TimelineRuler
+              currentTime={props.currentTime}
+              duration={props.duration}
+              framesPerSecond={framesPerSecond()}
+              motion={props.motion}
+              progress={progress()}
+              rulerStatus={props.rulerStatus}
+              rulerTimes={rulerTimes()}
+              seekLabel={props.seekLabel}
+              onSeek={props.onSeek}
+            />
+            <KeyedFor
+              each={props.tracks}
+              key={(track) => `${props.motion?.id ?? ''}:${track.parameter.id}`}
+            >
+              {(track) => (
+                <TimelineTrack
+                  currentTime={props.currentTime}
+                  duration={props.duration}
+                  framesPerSecond={framesPerSecond()}
+                  getTime={(clientX, bounds) =>
+                    getTimelineTime(clientX, bounds, props.duration, framesPerSecond())
+                  }
+                  movePreview={movePreview}
+                  onEditEnd={props.onEditEnd}
+                  onEditStart={props.onEditStart}
+                  onKeyframeAdd={props.onKeyframeAdd}
+                  onKeyframesDelete={props.onKeyframesDelete}
+                  onKeyframeMove={props.onKeyframeMove}
+                  onKeyframeSelect={props.onKeyframeSelect}
+                  onSeek={props.onSeek}
+                  progress={progress()}
+                  selected={props.selectedParameterId === track().parameter.id}
+                  selection={props.selection}
+                  track={track()}
+                />
+              )}
+            </KeyedFor>
+          </div>
+        </div>
+      </Show>
+    </div>
+  )
+}
