@@ -39,7 +39,7 @@ it.each(['spread', 'structured-clone', 'solid-proxy'] as const)(
   },
 )
 
-import {createRoot, createSignal} from 'solid-js'
+import {createComponent, createRoot, createSignal} from 'solid-js'
 import {usePlayback} from '../use-playback'
 import {acquireTrackPlaybackSource} from '../../../features/focus-room-audio/track-playback-source'
 import {useTrackPlaybackSource as createPlaybackSourceOwner} from '../use-track-playback-source'
@@ -221,5 +221,118 @@ it.each([2, STRESS_SELECTIONS])(
     expect(maximum).toBe(2)
     view.dispose()
     expect(alive.size).toBe(0)
+  },
+)
+
+import {render} from 'solid-js/web'
+import {PreferenceProvider} from 'src/hooks/use-preference'
+import {MediaPlayer} from '../MediaPlayer'
+
+const observeNativeAudio = (
+  allocationAllowed: () => boolean,
+  snapshots: readonly SnapshotTrack[],
+) => {
+  const nativeCreate = URL.createObjectURL.bind(URL)
+  const acquiredSources: string[] = []
+  vi.spyOn(URL, 'createObjectURL').mockImplementation((blob) => {
+    if (!allocationAllowed()) {
+      throw new Error('Injected URL allocation failure')
+    }
+    const source = nativeCreate(blob)
+    if (snapshots.some((track) => blob === track.sourceBlob)) {
+      acquiredSources.push(source)
+    }
+    return source
+  })
+  const nativePlay = HTMLMediaElement.prototype.play
+  const playedSources: string[] = []
+  vi.spyOn(HTMLMediaElement.prototype, 'play').mockImplementation(
+    function observePlay(this: HTMLMediaElement) {
+      playedSources.push(this.getAttribute('src') ?? '')
+      return nativePlay.call(this)
+    },
+  )
+  return {acquiredSources, playedSources}
+}
+
+it.each(['normal', 'initial-failure', 'replacement-failure'] as const)(
+  'gates the actual media-chrome button request at the native play boundary: %s',
+  async (mode) => {
+    const first = await fixture()
+    const second = await fixture('en')
+    let allocationAllowed = mode !== 'initial-failure'
+    const {acquiredSources, playedSources} = observeNativeAudio(
+      () => allocationAllowed,
+      [first, second],
+    )
+    const [selected, setSelected] = createSignal<readonly SnapshotTrack[]>([first])
+    const errors = vi.fn()
+    const onPlayRequest = vi.fn()
+    const button = document.createElement('media-play-button')
+    const container = document.createElement('div')
+    document.body.append(container)
+    const dispose = render(
+      () =>
+        createComponent(PreferenceProvider, {
+          get children() {
+            return createComponent(MediaPlayer, {
+              children: button,
+              onError: errors,
+              onPlayRequest,
+              get tracks() {
+                return selected()
+              },
+            })
+          },
+        }),
+      container,
+    )
+    try {
+      await new Promise<void>((resolve) => {
+        if (button.hasAttribute('mediapaused')) {
+          resolve()
+          return
+        }
+        const observer = new MutationObserver(() => {
+          if (button.hasAttribute('mediapaused')) {
+            observer.disconnect()
+            resolve()
+          }
+        })
+        observer.observe(button, {attributes: true})
+      })
+      const audio = container.querySelector('audio')!
+      const controller = container.querySelector('media-controller')!
+      expect(controller.isConnected).toBe(true)
+      expect((controller as HTMLElement & {media: HTMLMediaElement}).media).toBe(audio)
+      if (mode === 'replacement-failure') {
+        allocationAllowed = false
+        setSelected([second])
+      }
+      if (mode !== 'normal') {
+        expect(audio.hasAttribute('src')).toBe(false)
+        button.click()
+        console.log('media-button-failed-request', JSON.stringify({mode, playedSources}))
+        expect(playedSources).toEqual([])
+        expect(errors).toHaveBeenCalled()
+        expect(onPlayRequest).not.toHaveBeenCalled()
+        allocationAllowed = true
+      }
+      const before = playedSources.length
+      button.click()
+      console.log(
+        'media-button-retry',
+        JSON.stringify({mode, playedSources, source: audio.getAttribute('src')}),
+      )
+      expect(playedSources).toHaveLength(before + 1)
+      expect(playedSources.at(-1)).toBe(audio.getAttribute('src'))
+      expect(playedSources.at(-1)).toMatch(/^blob:/u)
+      expect(onPlayRequest).toHaveBeenCalledOnce()
+    } finally {
+      dispose()
+      container.remove()
+    }
+    expect(acquiredSources).toHaveLength(mode === 'replacement-failure' ? 2 : 1)
+    await Promise.all(acquiredSources.map((source) => expect(fetch(source)).rejects.toThrow()))
   },
 )

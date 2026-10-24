@@ -71,6 +71,7 @@ export const MediaPlayer = (props: MediaPlayerProps) => {
   const handlePlayRequest = (event: Event) => {
     if (!player.ensureSource()) {
       event.preventDefault()
+      event.stopImmediatePropagation()
       return
     }
     props.onPlayRequest?.()
@@ -79,7 +80,7 @@ export const MediaPlayer = (props: MediaPlayerProps) => {
     player.previewPlayback.preventResume()
     player.pause()
   }
-  useEvent(controller, 'mediaplayrequest', handlePlayRequest)
+  useEvent(controller, 'mediaplayrequest', handlePlayRequest, {capture: true})
   useEvent(controller, 'mediapauserequest', handlePauseRequest)
   usePlayerMediaSession({
     currentTrack: player.currentTrack,
