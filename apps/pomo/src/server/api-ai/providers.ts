@@ -3,6 +3,7 @@ import {env} from 'src/env'
 import {CLOUD_TEXT_MODEL} from 'src/features/cloud-text/contracts'
 import {hasUniqueIds} from 'src/features/catalog-policy'
 import type {ApiAiProvider} from './types'
+import {resolveDefaultProviders} from './resolve-default-providers'
 
 const MAXIMUM_POOL_ID_LENGTH = 128
 
@@ -95,23 +96,5 @@ export const getConfiguredApiAiProviders = (): ReadonlyArray<ApiAiProvider> => {
 export const getApiAiProviders = (): ReadonlyArray<ApiAiProvider> => {
   const providers = getConfiguredApiAiProviders()
   const selected = env.POMO_API_AI_CLOUD_TEXT_PROVIDER
-  if (
-    selected !== undefined &&
-    !providers.some(
-      (provider) => provider.id === selected && provider.models['cloud-text'] !== undefined,
-    )
-  ) {
-    throw new TypeError(`AI cloud-text provider is not configured: ${selected}`)
-  }
-  return providers.map((provider) => {
-    const enabled =
-      selected === undefined
-        ? provider.protocol !== 'openrouter-responses-queue'
-        : provider.id === selected
-    if (enabled) {
-      return provider
-    }
-    const {history} = provider.models
-    return {...provider, models: history === undefined ? {} : {history}}
-  })
+  return resolveDefaultProviders(providers, selected)
 }
