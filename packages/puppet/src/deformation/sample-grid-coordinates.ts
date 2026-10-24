@@ -1,13 +1,29 @@
+import type {PuppetParameterBindingBase} from '../player/document'
 import type {SampleParameterCoordinatesOptions} from './parameter'
+
+interface GridBinding extends Pick<PuppetParameterBindingBase, 'sampling'> {
+  readonly parameterIds: ReadonlyArray<string>
+  readonly keyforms: ReadonlyArray<{readonly values: ReadonlyArray<number>}>
+}
+
+export interface SampleGridCoordinatesOptions extends Omit<
+  SampleParameterCoordinatesOptions,
+  'binding' | 'values'
+> {
+  /** 축 개수 제한 없이 표본화하는 격자와 샘플링 정책. */
+  readonly binding: GridBinding
+  /** 각 격자 축의 입력값. */
+  readonly values: ReadonlyArray<number>
+}
 import {locateOneDimensionalKeyform} from './locate-keyform-segment'
 
 const KEY_PROGRESS_EPSILON = 0.0001
 
-const getCoordinates = (options: SampleParameterCoordinatesOptions, index: number) =>
+const getCoordinates = (options: SampleGridCoordinatesOptions, index: number) =>
   options.keyformCoordinates[index] ?? options.restCoordinates
 
 /** 직교 키폼 격자를 보간하며, 이산 채널은 각 축의 낮은 키를 유지한다. */
-export const sampleGridCoordinates = (options: SampleParameterCoordinatesOptions) => {
+export const sampleGridCoordinates = (options: SampleGridCoordinatesOptions) => {
   const policy = options.binding.sampling
   const precision =
     options.sampling === 'step'

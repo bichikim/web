@@ -5,12 +5,15 @@ import {failure} from '../shared/contracts'
 import type {createSessions} from './create-sessions'
 import type {createThreadWorkspaces} from './create-thread-workspaces'
 import {toolResult} from './tool-result'
+import type {createThreadTreeState} from './create-thread-tree-state'
+import {restoreTreeState} from './restore-tree-state'
 
 /** 검증한 작업 폴더를 현재 채팅에 저장하고 연결합니다. */
 export const registerWorkspaceSettings = (
   server: McpServer,
   sessions: Pick<ReturnType<typeof createSessions>, 'connect' | 'close'>,
   workspaces: ReturnType<typeof createThreadWorkspaces>,
+  trees?: ReturnType<typeof createThreadTreeState>,
 ): void => {
   server.registerTool(
     'code.workspace',
@@ -33,7 +36,7 @@ export const registerWorkspaceSettings = (
         sessions.close(connection.value.session)
         return toolResult(saved)
       }
-      return toolResult(connection)
+      return toolResult(restoreTreeState(connection, trees, context._meta))
     },
   )
 }

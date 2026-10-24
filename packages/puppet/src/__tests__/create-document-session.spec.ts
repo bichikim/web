@@ -1,5 +1,5 @@
 /** @vitest-environment jsdom */
-import {IDBFactory} from 'fake-indexeddb'
+import {IDBFactory, IDBObjectStore} from 'fake-indexeddb'
 import {afterEach, beforeEach, expect, test, vi} from 'vitest'
 import {createDocumentSession} from '../create-document-session'
 import {createDemoDocument, createEmptyDocument, PUPPET_DOCUMENT_FORMAT} from '../player'
@@ -50,6 +50,24 @@ test('should isolate documents between tab storage areas', async () => {
   sessionStorage.clear()
   const second = createDocumentSession({database, storage: sessionStorage})
   expect(await second.read()).toBeNull()
+})
+
+test('should store shared embedded textures once and restore the original parts', async () => {
+  const put = vi.spyOn(IDBObjectStore.prototype, 'put')
+  const demo = createDemoDocument()
+  const document = {
+    ...demo,
+    parts: demo.parts.map((part) => ({...part, texture: demo.parts[0]!.texture})),
+  }
+  const session = createDocumentSession({database: new IDBFactory(), storage: sessionStorage})
+  await session.write(document)
+  expect(put.mock.calls[0]?.[0]).toMatchObject({
+    document: {
+      parts: document.parts.map((part) => ({id: part.id, texture: {assetId: 'texture-0'}})),
+      textureAssets: {'texture-0': demo.parts[0]!.texture.src},
+    },
+  })
+  expect((await session.read())?.parts).toEqual(document.parts)
 })
 
 test('should report unavailable storage instead of claiming that recovery was saved', () => {

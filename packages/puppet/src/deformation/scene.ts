@@ -396,7 +396,7 @@ export const composeParameterDeformer = (
           rotationReflection,
           (sampled.rotationReflection ?? [false, false]).map(Number),
           restReflection,
-          weight,
+          getBindingInfluence({binding, document, parameterValues, sampling: 'step'}),
         )
         rotationScale = addDeformerDelta(
           rotationScale,

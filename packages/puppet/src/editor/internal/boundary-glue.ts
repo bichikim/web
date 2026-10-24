@@ -97,7 +97,7 @@ export const addBoundaryGlue = (
         strength: 1,
         weight: 1,
       }
-      if (hasValidGlue([...glue, connection], document.parts)) {
+      if (hasValidGlue([...glue, connection], document.parts, document.glueComposition)) {
         glue.push(connection)
         ids.add(connection.id)
       }

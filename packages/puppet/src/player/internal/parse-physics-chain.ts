@@ -20,8 +20,7 @@ const isRange = (value: unknown) =>
   isFiniteNumber(value.minimum) &&
   isFiniteNumber(value.center) &&
   isFiniteNumber(value.maximum) &&
-  value.minimum <= value.center &&
-  value.center <= value.maximum
+  value.minimum <= value.maximum
 
 const isPendulum = (value: unknown) =>
   isRecord(value) &&

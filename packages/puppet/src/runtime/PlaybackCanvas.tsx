@@ -11,6 +11,7 @@ interface PlaybackCanvasProps {
   readonly parameterValues?: PuppetParameterValueMap
   readonly document: PreparedPuppetDocument
   readonly motionId?: string
+  readonly expressionId?: string
   readonly playing: boolean
   readonly onFrame: (frame: PlayerFrame) => void
   readonly onReady: (ready: boolean) => void
@@ -72,6 +73,9 @@ export const PlaybackCanvas = (props: PlaybackCanvasProps) => {
   })
   createEffect(() => {
     player()?.setParameterValues(props.parameterValues ?? {})
+  })
+  createEffect(() => {
+    player()?.setExpression(props.expressionId)
   })
   createEffect(() => {
     const current = player()

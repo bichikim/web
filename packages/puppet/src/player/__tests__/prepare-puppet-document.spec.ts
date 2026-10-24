@@ -9,6 +9,7 @@ import {
   preparePuppetDocument,
   serializeDocument,
 } from '..'
+import {compactDocumentTextures} from '../texture-assets'
 
 class MockWorker extends EventTarget {
   public static instances: MockWorker[] = []
@@ -97,6 +98,19 @@ describe('preparePuppetDocument', () => {
 
     await expect(preparePuppetDocument({document: result.document})).resolves.toEqual(result)
     expect(MockWorker.instances).toHaveLength(0)
+  })
+
+  it('should expand shared texture assets returned by the validation Worker', async () => {
+    const demo = createDemoDocument()
+    const document = {
+      ...demo,
+      parts: demo.parts.map((part) => ({...part, texture: demo.parts[0]!.texture})),
+    }
+    const promise = preparePuppetDocument({source: serializeDocument(document)})
+    getWorker().dispatchEvent(
+      new MessageEvent('message', {data: {document: compactDocumentTextures(document), ok: true}}),
+    )
+    expect(await promise).toEqual({document, ok: true})
   })
 
   it('should prepare synchronously when Worker is unavailable', () => {

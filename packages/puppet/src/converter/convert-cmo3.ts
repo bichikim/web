@@ -1,4 +1,5 @@
 /* eslint-disable no-bitwise, no-magic-numbers -- Base64 encodes fixed-width bytes. */
+import {validateMesh} from '../mesh/validate'
 import {encodeBase64} from './encode-base64'
 import {DOMParser, type Element} from '@xmldom/xmldom'
 
@@ -7,12 +8,13 @@ import {
   PUPPET_DOCUMENT_VERSION,
   type PuppetDocument,
   type PuppetPart,
+  type PuppetPartBlendMode,
 } from '../player/document'
 import {parseDocumentValue} from '../player/parse-document'
 import {convertCmo3Rig} from './convert-cmo3-rig'
 import {readCmo3PaintOrder} from './read-cmo3-paint-order'
 import {readCmo3Archive} from './read-cmo3-archive'
-import {child, elementChildren, field, guid, numbers, resolve, scalar} from './cmo3-xml'
+import {child, elementChildren, field, getSources, guid, numbers, resolve, scalar} from './cmo3-xml'
 
 export interface ConvertCmo3Result {
   readonly document: PuppetDocument
@@ -135,6 +137,10 @@ const getPart = (
     clippingList === undefined
       ? []
       : elementChildren(clippingList).map((candidate) => {
+          const reference = candidate.getAttribute('xs.ref')
+          if (reference !== null && !references.has(reference)) {
+            throw new Error(`CMO3 mask source is missing for ${id}`)
+          }
           const value = guid(candidate, references)
           if (value === undefined) {
             throw new Error(`CMO3 mask source is missing for ${id}`)
@@ -145,10 +151,17 @@ const getPart = (
     drawable === undefined
       ? false
       : field(drawable, 'b', 'invertClippingMask')?.textContent === 'true'
+  const composition = resolve(child(mesh, 'ColorComposition', 'colorComposition'), references)
+  const culling = resolve(child(mesh, 'b', 'culling'), references)
+  const geometry = {indices, uvs, vertices}
   const part: PuppetPart = {
     id,
-    mesh: {indices, uvs, vertices},
-    properties: {culling: child(mesh, 'b', 'culling')?.textContent === 'true', opacity},
+    mesh: validateMesh(geometry).valid ? geometry : {...geometry, validationSpace: 'indices'},
+    properties: {
+      blendMode: blendMode(composition?.getAttribute('v')),
+      culling: culling?.textContent === 'true',
+      opacity,
+    },
     texture,
   }
   return {
@@ -160,6 +173,21 @@ const getPart = (
     invertedMask,
     part,
     source: mesh,
+  }
+}
+
+const blendMode = (value: string | null | undefined): PuppetPartBlendMode => {
+  switch (value) {
+    case undefined:
+    case null:
+    case 'NORMAL':
+      return 'normal'
+    case 'MULTIPLY':
+      return 'multiply-compatible'
+    case 'ADD':
+      return 'add-compatible'
+    default:
+      throw new Error(`Unsupported CMO3 blend mode: ${value}`)
   }
 }
 
@@ -220,7 +248,7 @@ export const convertCmo3 = (source: ArrayBuffer | Uint8Array): ConvertCmo3Result
           }
         : part,
   )
-  const rig = convertCmo3Rig(
+  const {warnings: rigWarnings, ...rig} = convertCmo3Rig(
     model,
     references,
     converted.map((entry, index) => ({part: parts[index]!, source: entry.source})),
@@ -231,13 +259,19 @@ export const convertCmo3 = (source: ArrayBuffer | Uint8Array): ConvertCmo3Result
     converted.map(({part, source}) => ({id: part.id, source})),
   )
   const partById = new Map(rig.parts.map((part) => [part.id, part]))
+  const parameterIds = new Set(rig.parameters.map((parameter) => parameter.id))
   const document: PuppetDocument = {
     ...rig,
     colorComposition: 'cubism',
     drawOrderRounding: 'cubism',
     drawOrderTieBreak: 'parts',
     format: PUPPET_DOCUMENT_FORMAT,
+    glueComposition: 'sequential',
     motions: [],
+    parameterRoles: {
+      eyeBlink: ['ParamEyeLOpen', 'ParamEyeROpen'].filter((id) => parameterIds.has(id)),
+      lipSync: ['ParamMouthOpenY'].filter((id) => parameterIds.has(id)),
+    },
     parts: paintOrder.map((id) => partById.get(id)!),
     version: PUPPET_DOCUMENT_VERSION,
     viewport,
@@ -248,7 +282,8 @@ export const convertCmo3 = (source: ArrayBuffer | Uint8Array): ConvertCmo3Result
   }
   const skipped = meshes.length - converted.length
   const warnings = [
-    'CMO3에 별도 모션 파일은 포함되지 않습니다. SDK 모델 묶음의 모션·물리 데이터는 별도로 가져와야 합니다.',
+    ...rigWarnings,
+    'CMO3에 별도 모션 파일은 포함되지 않습니다. SDK 모델 묶음의 모션·표정 프리셋은 별도로 가져올 수 있습니다.',
     ...(skipped === 0
       ? []
       : [`텍스처 또는 식별자를 읽을 수 없는 메시 ${skipped}개를 제외했습니다.`]),

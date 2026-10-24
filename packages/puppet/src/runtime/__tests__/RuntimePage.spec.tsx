@@ -86,6 +86,45 @@ test('should disable motion controls for a document without motions', async () =
   expect(screen.getByRole('button', {name: '일시정지'})).toBeDisabled()
 })
 
+test('should forward manual expression values without a motion preset', async () => {
+  const player = createPlayerFixture()
+  mocks.createPlayer.mockResolvedValue(player)
+  render(() => (
+    <RuntimePage
+      loadInitialDocument={async () => ({
+        ...createEmptyDocument(),
+        parameters: [{defaultValue: 0, id: 'mouth', maximum: 1, minimum: 0, name: 'Mouth'}],
+      })}
+    />
+  ))
+  const field = await screen.findByRole('spinbutton', {name: 'Mouth 값'})
+  await waitFor(() => expect(player.setParameterValues).toHaveBeenCalled())
+  fireEvent.input(field, {target: {value: '1'}})
+  fireEvent.keyDown(field, {key: 'Enter'})
+  expect(player.setParameterValues).toHaveBeenLastCalledWith({mouth: 1})
+})
+
+test('should apply and release an imported expression without requiring a motion', async () => {
+  const player = createPlayerFixture()
+  mocks.createPlayer.mockResolvedValue(player)
+  render(() => (
+    <RuntimePage
+      loadInitialDocument={async () => ({
+        ...createEmptyDocument(),
+        expressions: [{id: 'Signatures off', parameters: []}],
+      })}
+    />
+  ))
+  const selector = await screen.findByRole('button', {name: /표정 선택/})
+  await waitFor(() => expect(selector).toBeEnabled())
+  fireEvent.keyDown(selector, {key: 'ArrowDown'})
+  fireEvent.click(await screen.findByRole('option', {name: 'Signatures off'}))
+  expect(player.setExpression).toHaveBeenLastCalledWith('Signatures off')
+  fireEvent.keyDown(selector, {key: 'ArrowDown'})
+  fireEvent.click(await screen.findByRole('option', {name: '표정 해제'}))
+  expect(player.setExpression).toHaveBeenLastCalledWith(undefined)
+})
+
 test('should show document loading failures while keeping file import available', async () => {
   render(() => (
     <RuntimePage

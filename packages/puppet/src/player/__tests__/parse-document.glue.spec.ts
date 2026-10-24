@@ -85,3 +85,21 @@ test('should reject duplicate Glue keyform samples', () => {
   expect(parseDocument(JSON.stringify(value)).ok).toBe(false)
   expect(parseDocument(serializeDocument(document)).ok).toBe(true)
 })
+
+test('should opt imported documents into sequential shared-vertex glue without changing legacy validation', () => {
+  const document = createDemoDocument()
+  const first = document.parts[0]!.id
+  const second = document.parts[1]!.id
+  const glue = [0, 1].map((vertexIndex) => ({
+    first: {partId: first, vertexIndex: 0},
+    id: `shared-${vertexIndex}`,
+    second: {partId: second, vertexIndex},
+    strength: 1,
+    weight: 1,
+  }))
+  const input = {...document, glue}
+  expect(parseDocument(JSON.stringify(input)).ok).toBe(false)
+  const sequential = {...input, glueComposition: 'sequential' as const}
+  expect(parseDocument(serializeDocument(sequential))).toEqual({document: sequential, ok: true})
+  expect(parseDocument(JSON.stringify({...input, glueComposition: 'unknown'})).ok).toBe(false)
+})

@@ -1,0 +1,2 @@
+ALTER TABLE "cloud_text_requests" DROP CONSTRAINT "cloud_text_requests_status_check";--> statement-breakpoint
+ALTER TABLE "cloud_text_requests" ADD CONSTRAINT "cloud_text_requests_status_check" CHECK ("cloud_text_requests"."status" in ('pending', 'complete', 'failed', 'cancelled'));

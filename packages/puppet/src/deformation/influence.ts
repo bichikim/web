@@ -4,14 +4,21 @@ import type {
   PuppetParameterBinding,
   PuppetParameterInfluence,
 } from '../player/document'
+import {getRepeatRanges, resolveParameterValue} from '../player/parameter-value'
 import type {PuppetParameterValueMap} from './composition'
+import {sampleGridCoordinates} from './sample-grid-coordinates'
 
 const DEFAULT_KEY_TOLERANCE = 0.0001
 
 export interface GetBindingInfluenceOptions {
+  /** 영향 곡선과 합성·샘플링 정책을 가진 바인딩. */
   readonly binding: PuppetParameterBinding
+  /** 영향 곡선이 참조하는 파라미터의 범위와 기본값. */
   readonly document: PuppetDocument
+  /** 현재 입력값. 생략한 파라미터는 문서의 기본값을 쓴다. */
   readonly parameterValues?: PuppetParameterValueMap
+  /** 곱셈 격자의 이산 채널은 낮은 키를 유지한다. 생략하면 선형 보간한다. */
+  readonly sampling?: 'step'
 }
 
 export const sampleInfluence = (
@@ -40,7 +47,7 @@ export const sampleInfluence = (
   return previous.weight + (next.weight - previous.weight) * progress
 }
 
-/** Returns the minimum curve weight evaluated from raw, clamped parameter inputs. */
+/** 입력 범위와 샘플링 정책에 맞춘 영향 곡선을 합성한다. 기본값은 최솟값이다. */
 export const getBindingInfluence = (options: GetBindingInfluenceOptions): number => {
   let weight = 1
   for (const relation of options.binding.influences ?? []) {
@@ -49,11 +56,27 @@ export const getBindingInfluence = (options: GetBindingInfluenceOptions): number
     )
     if (parameter !== undefined) {
       const input = options.parameterValues?.[parameter.id]
-      const value =
-        input === undefined || !Number.isFinite(input)
-          ? parameter.defaultValue
-          : Math.max(parameter.minimum, Math.min(parameter.maximum, input))
-      weight = Math.min(weight, sampleInfluence(relation, value, options.binding.sampling))
+      if (options.binding.influenceMode === 'multiply') {
+        const [sampled = 1] = sampleGridCoordinates({
+          binding: {
+            keyforms: relation.points.map((point) => ({values: [point.value]})),
+            parameterIds: [parameter.id],
+            sampling: options.binding.sampling,
+          },
+          keyformCoordinates: relation.points.map((point) => [point.weight]),
+          repeatRanges: getRepeatRanges([parameter.id], options.document.parameters),
+          restCoordinates: [1],
+          sampling: options.sampling,
+          values: [resolveParameterValue(parameter, input)],
+        })
+        weight *= sampled
+      } else {
+        const value =
+          input === undefined || !Number.isFinite(input)
+            ? parameter.defaultValue
+            : Math.max(parameter.minimum, Math.min(parameter.maximum, input))
+        weight = Math.min(weight, sampleInfluence(relation, value, options.binding.sampling))
+      }
     }
   }
   return weight

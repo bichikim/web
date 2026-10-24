@@ -14,10 +14,14 @@ import {
   fromColorEffectCoordinates,
   toColorEffectCoordinates,
 } from '../deformation/keyed-color-effect'
-import {type PuppetParameterValues, sampleParameterCoordinates} from '../deformation/parameter'
+import {sampleGridCoordinates} from '../deformation/sample-grid-coordinates'
 import {child, field, getSources, guid, numbers, resolve, scalar} from './cmo3-xml'
 import {type Cmo3Keyforms, readCmo3Keyforms} from './read-cmo3-keyforms'
-import {createCmo3Binding} from './create-cmo3-binding'
+import {createCubismBindings} from './create-cubism-bindings'
+import {readCmo3Physics} from './read-cmo3-physics'
+import {validateMesh} from '../mesh/validate'
+import type {PuppetPhysics} from '../player/document-physics'
+import {readCmo3Morphs} from './read-cmo3-morphs'
 import {readCmo3Glue} from './read-cmo3-glue'
 
 const HALF_TURN_DEGREES = 180
@@ -37,6 +41,8 @@ interface RigObject {
 }
 
 export interface Cmo3Rig {
+  readonly physics?: PuppetPhysics
+  readonly warnings: ReadonlyArray<string>
   readonly glue: NonNullable<PuppetDocument['glue']>
   readonly parameterBindings: ReadonlyArray<PuppetParameterBinding>
   readonly parameters: ReadonlyArray<PuppetParameter>
@@ -44,8 +50,8 @@ export interface Cmo3Rig {
   readonly scene: NonNullable<PuppetDocument['scene']>
 }
 
-const sourceId = (source: Element, tag: string) => {
-  const value = field(source, tag, 'id')?.getAttribute('idstr')
+const sourceId = (source: Element, tag: string, references: ReadonlyMap<string, Element>) => {
+  const value = resolve(field(source, tag, 'id'), references)?.getAttribute('idstr')
   if (value === undefined || value === null || value.length === 0) {
     throw new Error(`CMO3 ${source.tagName} has no ID`)
   }
@@ -168,10 +174,10 @@ const objectKeyform = (object: RigObject, form: Element): PuppetParameterKeyform
   }
 }
 
-const createBinding = (
+const createBindings = (
   object: RigObject,
   parameterIds: ReadonlyArray<string>,
-): PuppetParameterBinding => {
+): ReadonlyArray<PuppetParameterBinding> => {
   const keyforms = object.keyforms.forms
     .map(({form, values}) => ({...objectKeyform(object, form), values}))
     .sort((first, second) => first.values[0]! - second.values[0]!)
@@ -182,7 +188,7 @@ const createBinding = (
     ...(object.node.kind === 'group' ? {targetGroupIds: [object.node.id]} : {}),
     ...(object.node.kind === 'part' ? {targetPartIds: [object.node.id]} : {}),
   }
-  return createCmo3Binding({...binding, keyforms, parameterIds})
+  return createCubismBindings({...binding, keyforms, parameterIds})
 }
 
 const defaultCoordinates = (
@@ -206,20 +212,12 @@ const defaultCoordinates = (
     return read(first.form)
   }
   const defaults = object.keyforms.parameterGuids.map((key) => parameters.get(key)!.defaultValue)
-  const values: PuppetParameterValues =
-    defaults.length === 1
-      ? [defaults[0]!]
-      : defaults.length === 2
-        ? [defaults[0]!, defaults[1]!]
-        : [defaults[0]!, defaults[1]!, defaults[2]!]
-  return sampleParameterCoordinates({
-    binding: createBinding(object, parameterIds),
-    keyformCoordinates: [...object.keyforms.forms]
-      .sort((first, second) => first.values[0]! - second.values[0]!)
-      .map(({form}) => read(form)),
+  return sampleGridCoordinates({
+    binding: {keyforms: object.keyforms.forms, parameterIds},
+    keyformCoordinates: object.keyforms.forms.map(({form}) => read(form)),
     restCoordinates: read(first.form),
     sampling,
-    values,
+    values: defaults,
   })
 }
 
@@ -242,7 +240,9 @@ const objectBase = (source: Element, id: string) => ({
   id,
   locked: field(source, 'b', 'isLocked')?.textContent === 'true',
   name: field(source, 's', 'localName')?.textContent || id,
-  visible: field(source, 'b', 'isVisible')?.textContent !== 'false',
+  visible:
+    field(source, 'b', 'isVisible')?.textContent !== 'false' &&
+    child(source, 'b', 'isSketch')?.textContent !== 'true',
 })
 
 const objectParent = (source: Element, references: ReadonlyMap<string, Element>) =>
@@ -280,7 +280,7 @@ const readObject = (
 }
 
 const readDeformer = (source: Element, references: ReadonlyMap<string, Element>): RigObject => {
-  const id = sourceId(source, 'CDeformerId')
+  const id = sourceId(source, 'CDeformerId', references)
   const rotation = source.tagName === 'CRotationDeformerSource'
   const keyforms = readCmo3Keyforms(source, references)
   const form = keyforms.forms[0]?.form
@@ -386,10 +386,10 @@ export const convertCmo3Rig = (
   const parameters = sources.map(
     (source): PuppetParameter => ({
       defaultValue: scalar(child(source, 'f', 'defaultValue')) ?? 0,
-      id: sourceId(source, 'CParameterId'),
+      id: sourceId(source, 'CParameterId', references),
       maximum: scalar(child(source, 'f', 'maxValue')) ?? 1,
       minimum: scalar(child(source, 'f', 'minValue')) ?? 0,
-      name: child(source, 's', 'name')?.textContent || sourceId(source, 'CParameterId'),
+      name: child(source, 's', 'name')?.textContent || sourceId(source, 'CParameterId', references),
       repeat: child(source, 'b', 'isRepeat')?.textContent === 'true',
     }),
   )
@@ -401,7 +401,7 @@ export const convertCmo3Rig = (
   )
   const objects = reconcileHierarchy([
     ...getSources(model, 'CPartSourceSet', references).map((source) => {
-      const id = sourceId(source, 'CPartId')
+      const id = sourceId(source, 'CPartId', references)
       return readObject(
         source,
         {...objectBase(source, id), children: [], kind: 'group'},
@@ -418,18 +418,16 @@ export const convertCmo3Rig = (
   const parameterBindings = objects.flatMap((object) =>
     object.keyforms.parameterGuids.length === 0
       ? []
-      : [
-          createBinding(
-            object,
-            object.keyforms.parameterGuids.map((key) => {
-              const parameter = byGuid.get(key)
-              if (parameter === undefined) {
-                throw new Error(`CMO3 ${object.node.id} refers to a missing parameter`)
-              }
-              return parameter.id
-            }),
-          ),
-        ],
+      : createBindings(
+          object,
+          object.keyforms.parameterGuids.map((key) => {
+            const parameter = byGuid.get(key)
+            if (parameter === undefined) {
+              throw new Error(`CMO3 ${object.node.id} refers to a missing parameter`)
+            }
+            return parameter.id
+          }),
+        ),
   )
   const parts = meshes.map(({part}) => {
     const object = objects.find(
@@ -447,7 +445,9 @@ export const convertCmo3Rig = (
     ])
     return {
       ...part,
-      mesh: {...part.mesh, vertices},
+      mesh: validateMesh({...part.mesh, vertices}).valid
+        ? {...part.mesh, vertices}
+        : {...part.mesh, validationSpace: 'indices' as const, vertices},
       properties: {
         ...part.properties,
         ...defaultColorProperties(object, byGuid),
@@ -500,12 +500,30 @@ export const convertCmo3Rig = (
           }
         : object,
   )
+  const partById = new Map(parts.map((part) => [part.id, part]))
+  const morphBindings = posed.flatMap((object) =>
+    readCmo3Morphs({
+      node: object.node,
+      parameters: byGuid,
+      part: partById.get(object.node.id),
+      readForm: (form) => objectKeyform(object, form),
+      references,
+      source: object.source,
+    }),
+  )
+  const physics = readCmo3Physics(
+    model,
+    new Map(Array.from(byGuid, ([key, parameter]) => [key, parameter.id])),
+    references,
+  )
   const glue = readCmo3Glue(model, references, meshes, byGuid)
   return {
+    ...(physics === undefined ? {} : {physics}),
     glue: glue.glue,
-    parameterBindings: [...parameterBindings, ...glue.parameterBindings],
+    parameterBindings: [...parameterBindings, ...morphBindings, ...glue.parameterBindings],
     parameters,
     parts,
     scene: buildScene(posed),
+    warnings: glue.warnings,
   }
 }

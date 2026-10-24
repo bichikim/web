@@ -3,7 +3,11 @@ import {isPsdSource} from './internal/parse-psd-source'
 import {hasValidSkinning} from './internal/parse-skinning'
 import {hasValidGlueKeyforms, isGlueKeyforms} from './internal/parse-glue'
 import {isOptionalPrecision, isOptionalSampling} from './internal/parse-sampling'
-import {hasValidInfluences, isParameterInfluences} from './internal/parse-influence'
+import {
+  hasValidInfluences,
+  isInfluenceMode,
+  isParameterInfluences,
+} from './internal/parse-influence'
 import {
   LEGACY_PUPPET_DOCUMENT_FORMATS,
   MAX_PARAMETER_DIMENSIONS,
@@ -288,6 +292,7 @@ const isParameterKeyform = (value: unknown, unbounded: boolean): value is Puppet
   new Set(value.parts.map((part) => part.partId)).size === value.parts.length
 
 const hasBindingOptions = (value: Record<string, unknown>) =>
+  isInfluenceMode(value.influenceMode) &&
   (value.interpolation === undefined || value.interpolation === 'grid') &&
   (value.keyformRange === undefined || value.keyformRange === 'unbounded') &&
   isOptionalSampling(value.sampling) &&
@@ -496,7 +501,7 @@ const isDocument = (value: unknown): value is PuppetDocument => {
 
   return (
     hasValidLayerOrderRules(value.layerOrderRules, value.parts, parameters) &&
-    hasValidGlueKeyforms(value.glue, parameterBindings, value.parts) &&
+    hasValidGlueKeyforms(value.glue, parameterBindings, value.parts, value.glueComposition) &&
     hasValidPhysics(value.physics, parameters) &&
     hasValidExpressions(value.expressions, parameters) &&
     hasValidPoseGroups(value.poseGroups, value.parts, parameters) &&

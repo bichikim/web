@@ -13,7 +13,11 @@ import {convertCubismMotion} from './convert-cubism-motion'
 import {convertCubismPhysics} from './convert-cubism-physics'
 import {convertCubismPose} from './convert-cubism-pose'
 import {jsonArray, jsonNumber, jsonObject, jsonString} from './json-fields'
-import {readCubismArchive, resolveCubismAsset} from './read-cubism-archive'
+import {type CubismArchive, readCubismArchive, resolveCubismAsset} from './read-cubism-archive'
+import {findCubismModel} from './find-cubism-model'
+import {findMissingCubismAssets} from './find-missing-cubism-assets'
+import {filterCubismReferences} from './filter-cubism-references'
+import {readCubismExpressions} from './read-cubism-expressions'
 import {reverseCmo3Parameters} from './reverse-cmo3-parameters'
 import {convertCubismLayout} from './convert-cubism-layout'
 import {encodeBase64} from './encode-base64'
@@ -61,7 +65,15 @@ const expressionBlend = (value: unknown) => {
   }
 }
 
+const expressionValue = (value: unknown) =>
+  jsonNumber(
+    typeof value === 'string' && /^-?(?:0|[1-9]\d*)(?:\.\d+)?(?:[eE][+-]?\d+)?$/u.test(value)
+      ? Number(value)
+      : value,
+  )
+
 const convertExpression = (source: Record<string, unknown>, id: string): PuppetExpression => ({
+  composition: 'cubism',
   fadeInTime: jsonNumber(source.FadeInTime, 1),
   fadeOutTime: jsonNumber(source.FadeOutTime, 1),
   id,
@@ -70,10 +82,27 @@ const convertExpression = (source: Record<string, unknown>, id: string): PuppetE
     return {
       blend: expressionBlend(parameter.Blend),
       parameterId: jsonString(parameter.Id),
-      value: jsonNumber(parameter.Value),
+      value: expressionValue(parameter.Value),
     }
   }),
 })
+
+const readExpressions = (
+  references: Record<string, unknown>,
+  readAsset: (reference: unknown) => Record<string, unknown>,
+) => {
+  const sources = jsonArray(references.Expressions ?? []).map((value) => {
+    const entry = jsonObject(value)
+    return {id: jsonString(entry.Name), source: readAsset(entry.File)}
+  })
+  const normalized = sources.some(({source}) =>
+    jsonArray(source.Parameters).some((value) => typeof jsonObject(value).Value === 'string'),
+  )
+  return {
+    expressions: sources.map(({id, source}) => convertExpression(source, id)),
+    warnings: normalized ? ['표정의 숫자 문자열을 숫자로 정규화했습니다.'] : [],
+  }
+}
 
 const renameScene = (
   nodes: ReadonlyArray<PuppetSceneNode>,
@@ -238,19 +267,34 @@ const convertArchiveModel = (
 
 /** CMO3 원본과 SDK ZIP의 모션·물리·표시 정보를 하나의 Poffo 문서로 변환한다. */
 export const convertCubismArchive = (
-  source: ArrayBuffer | Uint8Array,
+  source: ArrayBuffer | Uint8Array | CubismArchive,
   options: ConvertCubismArchiveOptions = {},
 ): ConvertCmo3Result => {
-  const archive = readCubismArchive(source)
-  const paths = [...archive.entries.keys()]
-  const modelPath = choosePath(
-    paths.filter((path) => path.endsWith('.model3.json')),
-    options.modelPath,
-    'model3.json',
-  )
-  const model = archive.readJson(modelPath)
+  const archive =
+    source instanceof ArrayBuffer || source instanceof Uint8Array
+      ? readCubismArchive(source)
+      : source
+  const {path: modelPath, model} = findCubismModel(archive.entries, options.modelPath)
   validateModel(model)
-  const references = jsonObject(model.FileReferences)
+  const declaredReferences = jsonObject(model.FileReferences)
+  const sourceReferences = {
+    ...declaredReferences,
+    Expressions: readCubismExpressions(archive, modelPath, declaredReferences.Expressions),
+  }
+  const editorSource =
+    options.modelSource !== undefined ||
+    [...archive.entries.keys()].some((path) => path.endsWith('.cmo3'))
+  const missing = findMissingCubismAssets(archive.entries, modelPath, sourceReferences, {
+    editorSource,
+  })
+  const required = findMissingCubismAssets(archive.entries, modelPath, sourceReferences, {
+    editorSource,
+    requiredOnly: true,
+  })
+  if (required.length > 0) {
+    throw new Error(`필요한 파일이 누락되었습니다.\n${missing.join('\n')}`)
+  }
+  const references = filterCubismReferences(archive.entries, modelPath, sourceReferences)
   const readAsset = (reference: unknown) =>
     archive.readJson(resolveCubismAsset(modelPath, jsonString(reference)))
   const readBytes = (reference: unknown) => {
@@ -292,15 +336,13 @@ export const convertCubismArchive = (
     }
   }
   const dataByPart = readUserData(references, readAsset)
+  const expressionPresets = readExpressions(references, readAsset)
   const document: PuppetDocument = {
     ...base,
     ...(model.Layout === undefined
       ? {}
       : {layout: convertCubismLayout(model.Layout, base.viewport)}),
-    expressions: jsonArray(references.Expressions ?? []).map((value) => {
-      const entry = jsonObject(value)
-      return convertExpression(readAsset(entry.File), jsonString(entry.Name))
-    }),
+    expressions: expressionPresets.expressions,
     hitAreas: jsonArray(model.HitAreas ?? []).map((value) => {
       const entry = jsonObject(value)
       return {id: jsonString(entry.Name), partIds: [jsonString(entry.Id)]}
@@ -326,6 +368,10 @@ export const convertCubismArchive = (
   }
   return {
     document: parsed.document,
-    warnings: converted.warnings.filter((warning) => !warning.startsWith('CMO3에 별도 모션')),
+    warnings: [
+      ...converted.warnings.filter((warning) => !warning.startsWith('CMO3에 별도 모션')),
+      ...missing.map((asset) => `선택 파일 누락: ${asset}`),
+      ...expressionPresets.warnings,
+    ],
   }
 }
