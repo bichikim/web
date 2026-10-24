@@ -25,6 +25,33 @@ it('should split semicolons with mixed delimiters while preserving phrase text',
   ])
 })
 
+it.each([
+  ['carriage returns', 'home\rwork', ['home', 'work']],
+  ['CRLF line endings', 'home\r\nwork', ['home', 'work']],
+  [
+    'mixed line endings',
+    'home\rwork\r\nfirst phrase\nsecond phrase',
+    ['home', 'work', 'first phrase', 'second phrase'],
+  ],
+] as const)('should split %s while preserving phrases', (_name, input, expected) => {
+  expect(parseLanguageLearningTags(input)).toEqual(expected)
+})
+
+it('should deduplicate CR-separated tags before applying the tag limit', () => {
+  expect(parseLanguageLearningTags('A\ra\r\nb，c;d\ne\rf\rg\rh\ri\rj\rk')).toEqual([
+    'A',
+    'b',
+    'c',
+    'd',
+    'e',
+    'f',
+    'g',
+    'h',
+    'i',
+    'j',
+  ])
+})
+
 it('should deduplicate semicolon tags before applying the tag limit', () => {
   expect(parseLanguageLearningTags('A;a;b;c;d;e;f;g;h;i;j;k')).toEqual([
     'A',
