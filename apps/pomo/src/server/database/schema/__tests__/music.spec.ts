@@ -1,10 +1,12 @@
 /** @vitest-environment node */
 import {getTableConfig} from 'drizzle-orm/pg-core'
 import {expect, it} from 'vitest'
+import {ALBUM_LOCALES} from 'src/features/admin-music/album-draft'
 import {ALBUM_STATUSES, TRACK_ASSET_STATUSES} from 'src/features/admin-music/catalog-values'
 
 import {
   musicAlbumCoverReservations,
+  musicAlbumLocaleEnum,
   musicAlbums,
   musicAlbumStatusEnum,
   musicAlbumTracks,
@@ -17,8 +19,17 @@ import {
 } from '../music'
 
 it('should keep constructor-owned database enum arrays separate from the shared declarations', () => {
+  expect(musicAlbumLocaleEnum.enumValues).not.toBe(ALBUM_LOCALES)
   expect(musicAlbumStatusEnum.enumValues).not.toBe(ALBUM_STATUSES)
   expect(musicTrackAssetStatusEnum.enumValues).not.toBe(TRACK_ASSET_STATUSES)
+})
+
+it('should retain the ordered album locale enum and its required translation column', () => {
+  expect(musicAlbumLocaleEnum.enumName).toBe('music_album_locale')
+  expect(musicAlbumLocaleEnum.enumValues).toEqual(['ko', 'en', 'ja', 'zh-Hans'])
+  expect(musicAlbumTranslations.locale.enumValues).toBe(musicAlbumLocaleEnum.enumValues)
+  expect(musicAlbumTranslations.locale.notNull).toBe(true)
+  expect(musicAlbumTranslations.locale.hasDefault).toBe(false)
 })
 
 it('should retain the ordered album enum and its required draft default', () => {
