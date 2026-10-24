@@ -66,7 +66,7 @@ export const useTarotSpeech = (props: UseTarotSpeechProps): TarotSpeechControlle
     if (downloads.hasPending()) {
       await downloads.start(
         () => audio.isCurrent(result.revision),
-        () => audio.prepare(preparation),
+        () => audio.prepare(latestPreparation),
       )
     } else {
       downloads.requestConsent()
@@ -82,12 +82,15 @@ export const useTarotSpeech = (props: UseTarotSpeechProps): TarotSpeechControlle
     if (downloads.status() !== 'consent') {
       return
     }
-    const preparation = latestPreparation
     const revision = latestRevision
     await downloads.start(
       () => audio.isCurrent(revision),
-      () => audio.prepare(preparation),
+      () => audio.prepare(latestPreparation),
     )
+  }
+  const onPlaybackEnd = () => {
+    latestPreparation = {...latestPreparation, play: false}
+    audio.onPlaybackEnd()
   }
   const cancelDownload = () => {
     if (downloads.status() !== 'downloading') {
@@ -120,7 +123,7 @@ export const useTarotSpeech = (props: UseTarotSpeechProps): TarotSpeechControlle
     cancelDownloadConsent,
     downloadSize: downloads.size,
     error: () => downloads.error() ?? audio.error(),
-    onPlaybackEnd: audio.onPlaybackEnd,
+    onPlaybackEnd,
     onPlaybackError: audio.onPlaybackError,
     onPlaybackRequest: audio.onPlaybackRequest,
     onPlaybackStart: audio.onPlaybackStart,
