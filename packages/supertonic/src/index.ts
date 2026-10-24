@@ -1,6 +1,5 @@
 export * from './engine'
 export * from './errors'
-export * from './noise'
 export * from './language'
 export {
   getSupertonicModel,
@@ -9,6 +8,7 @@ export {
   SUPERTONIC_VOICES,
 } from './model'
 export type {SupertonicModelId, SupertonicVoiceId, SupertonicModel} from './model'
+export * from './noise'
 export * from './number-speech'
 export * from './result'
 export * from './runtime'
