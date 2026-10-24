@@ -2,6 +2,7 @@
 import {File} from 'node:buffer'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 import {createTransferSession} from '../create-session'
+import * as m from '@paraglide/message'
 import type {FileTransfer} from '../types'
 
 let fileTransfer: FileTransfer
@@ -79,6 +80,31 @@ afterEach(() => {
 })
 
 describe('createTransferSession', () => {
+  it.each([
+    {id: '', label: 'empty session', origin: 'http://localhost:3300', secret: 'secret'},
+    {id: 'invitation', label: 'empty secret', origin: 'http://localhost:3300', secret: ''},
+    {id: 'invitation', label: 'unconfigured origin', origin: undefined, secret: 'secret'},
+  ])('should reject $label without allocating transport resources', ({id, origin, secret}) => {
+    fileTransfer = createTransferSession({...options, getOrigin: () => origin})
+    fileTransfer.join(id, secret)
+    expect(fileTransfer.state.phase).toBe('error')
+    expect(fileTransfer.state.error).toBe(m.transfer_error_invalid_link())
+    expect(createSocket).not.toHaveBeenCalled()
+    expect(createConnection).not.toHaveBeenCalled()
+  })
+
+  it('should allow a valid invitation after rejecting an empty session', () => {
+    fileTransfer.join('', 'secret')
+    fileTransfer.join('invitation', 'secret')
+    expect(fileTransfer.state.phase).toBe('connecting')
+    expect(fileTransfer.state.error).toBeNull()
+    expect(Socket.instances).toHaveLength(1)
+    Socket.instances[0].dispatchEvent(new Event('open'))
+    expect(Socket.instances[0].send).toHaveBeenCalledExactlyOnceWith(
+      JSON.stringify({id: 'invitation', secret: 'secret', type: 'join'}),
+    )
+  })
+
   it('should enter connecting immediately after approval and ignore repeated approval', async () => {
     await fileTransfer.create()
     const socket = Socket.instances[0]
