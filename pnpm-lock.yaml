@@ -229,6 +229,7 @@ overrides:
 pnpmfileChecksum: sha256-g2BMt8/Oai/WjMrtIA305RlIOkSpDcdZ9J+xuvU7Oqs=
 
 patchedDependencies:
+  '@babylonjs/core@9.18.0': bddd9960e9f86b4f063de7d5f53a8ef8d12a9e93f9709b7fb6b3c9a87ac69e0f
   '@dschz/solid-flow@0.2.6': d7b5ac8f5d14be953fc3ab56e5ab1f89d2f462c6d4cccc59c7b85cf10ea7ed9d
   '@kobalte/core@0.13.11': cf6d454621fe20fb0073f772486cdac9aca2a7556530d6de3e3b028f02234c29
 
@@ -833,10 +834,10 @@ importers:
         version: 7.29.7
       '@babylonjs/core':
         specifier: 9.18.0
-        version: 9.18.0
+        version: 9.18.0(patch_hash=bddd9960e9f86b4f063de7d5f53a8ef8d12a9e93f9709b7fb6b3c9a87ac69e0f)
       '@babylonjs/loaders':
         specifier: 9.18.0
-        version: 9.18.0(@babylonjs/core@9.18.0)(babylonjs-gltf2interface@9.20.0)
+        version: 9.18.0(@babylonjs/core@9.18.0(patch_hash=bddd9960e9f86b4f063de7d5f53a8ef8d12a9e93f9709b7fb6b3c9a87ac69e0f))(babylonjs-gltf2interface@9.20.0)
       '@electric-sql/pglite':
         specifier: 0.5.8
         version: 0.5.8
@@ -15616,11 +15617,11 @@ snapshots:
       '@babel/helper-string-parser': 7.29.7
       '@babel/helper-validator-identifier': 7.29.7
 
-  '@babylonjs/core@9.18.0': {}
+  '@babylonjs/core@9.18.0(patch_hash=bddd9960e9f86b4f063de7d5f53a8ef8d12a9e93f9709b7fb6b3c9a87ac69e0f)': {}
 
-  '@babylonjs/loaders@9.18.0(@babylonjs/core@9.18.0)(babylonjs-gltf2interface@9.20.0)':
+  '@babylonjs/loaders@9.18.0(@babylonjs/core@9.18.0(patch_hash=bddd9960e9f86b4f063de7d5f53a8ef8d12a9e93f9709b7fb6b3c9a87ac69e0f))(babylonjs-gltf2interface@9.20.0)':
     dependencies:
-      '@babylonjs/core': 9.18.0
+      '@babylonjs/core': 9.18.0(patch_hash=bddd9960e9f86b4f063de7d5f53a8ef8d12a9e93f9709b7fb6b3c9a87ac69e0f)
       babylonjs-gltf2interface: 9.20.0
 
   '@bcoe/v8-coverage@1.0.2': {}

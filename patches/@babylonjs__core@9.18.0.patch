@@ -1,0 +1,189 @@
+diff --git a/Engines/Extensions/engine.rawTexture.pure.js b/Engines/Extensions/engine.rawTexture.pure.js
+index b63540add4950f1ebd17d13cecc0077b78475480..ba524d7e8a48d637de8e452f03f63f7e6d79bae6 100644
+--- a/Engines/Extensions/engine.rawTexture.pure.js
++++ b/Engines/Extensions/engine.rawTexture.pure.js
+@@ -344,6 +344,11 @@ export function RegisterEnginesExtensionsEngineRawTexture() {
+                 return;
+             }
+             const faceDataArrays = faceDataArraysResult instanceof Promise ? await faceDataArraysResult : faceDataArraysResult;
++            // The texture, scene or engine may have been disposed while decoding.
++            if (!texture._hardwareTexture || this.isDisposed || scene?.isDisposed) {
++                onerror(undefined, new DOMException("Texture was disposed while decoding", "AbortError"));
++                return;
++            }
+             const width = texture.width;
+             if (mipmapGenerator) {
+                 const textureType = this._getWebGLTextureType(type);
+diff --git a/Materials/Textures/Filtering/hdrFiltering.js b/Materials/Textures/Filtering/hdrFiltering.js
+index 03a5a313b0aa9d151cddf7adae4fe8dfaad48326..a8abb7e7de5eba297ed2576f728441b7ca858790 100644
+--- a/Materials/Textures/Filtering/hdrFiltering.js
++++ b/Materials/Textures/Filtering/hdrFiltering.js
+@@ -163,12 +163,20 @@ export class HDRFiltering {
+         if (!this._engine._features.allowTexturePrefiltering) {
+             throw new Error("HDR prefiltering is not available in WebGL 1., you can use real time filtering instead.");
+         }
+-        this._effectRenderer = new EffectRenderer(this._engine);
+-        this._effectWrapper = this._createEffect(texture);
+-        await this._effectWrapper.effect.whenCompiledAsync();
+-        this._prefilterInternal(texture);
+-        this._effectRenderer.dispose();
+-        this._effectWrapper.dispose();
++        let effectRenderer;
++        let effectWrapper;
++        try {
++            this._effectRenderer = effectRenderer = new EffectRenderer(this._engine);
++            this._effectWrapper = effectWrapper = this._createEffect(texture);
++            await this._effectWrapper.effect.whenCompiledAsync();
++            if (this._engine.isDisposed || texture.getScene()?.isDisposed || !texture.getInternalTexture()) {
++                throw new DOMException("Texture owner was disposed during radiance filtering", "AbortError");
++            }
++            this._prefilterInternal(texture);
++        } finally {
++            effectRenderer?.dispose();
++            effectWrapper?.dispose();
++        }
+     }
+ }
+ //# sourceMappingURL=hdrFiltering.js.map
+\ No newline at end of file
+diff --git a/Materials/Textures/Filtering/hdrIrradianceFiltering.js b/Materials/Textures/Filtering/hdrIrradianceFiltering.js
+index 14e4afd1be79974f758c861f1a78bae1bc629f8b..b959d9ac8e9048fa8f6f9a3d245095b0088e5db8 100644
+--- a/Materials/Textures/Filtering/hdrIrradianceFiltering.js
++++ b/Materials/Textures/Filtering/hdrIrradianceFiltering.js
+@@ -159,20 +159,28 @@ export class HDRIrradianceFiltering {
+             this._cdfGenerator.iblSource = texture;
+             await this._cdfGenerator.renderWhenReady();
+         }
+-        this._effectRenderer = new EffectRenderer(this._engine);
+-        this._effectWrapper = this._createEffect(texture);
+-        await this._effectWrapper.effect.whenCompiledAsync();
+-        const irradianceTexture = this._prefilterInternal(texture);
+-        if (this.useCdf) {
+-            // eslint-disable-next-line github/no-then
+-            await this._cdfGenerator.findDominantDirection().then((dir) => {
+-                irradianceTexture._dominantDirection = dir;
+-            });
++        let effectRenderer;
++        let effectWrapper;
++        try {
++            this._effectRenderer = effectRenderer = new EffectRenderer(this._engine);
++            this._effectWrapper = effectWrapper = this._createEffect(texture);
++            await this._effectWrapper.effect.whenCompiledAsync();
++            if (this._engine.isDisposed || texture.getScene()?.isDisposed || !texture.getInternalTexture()) {
++                throw new DOMException("Texture owner was disposed during irradiance filtering", "AbortError");
++            }
++            const irradianceTexture = this._prefilterInternal(texture);
++            if (this.useCdf) {
++                // eslint-disable-next-line github/no-then
++                await this._cdfGenerator.findDominantDirection().then((dir) => {
++                    irradianceTexture._dominantDirection = dir;
++                });
++            }
++            return irradianceTexture;
++        } finally {
++            effectRenderer?.dispose();
++            effectWrapper?.dispose();
++            this._cdfGenerator?.dispose();
+         }
+-        this._effectRenderer.dispose();
+-        this._effectWrapper.dispose();
+-        this._cdfGenerator?.dispose();
+-        return irradianceTexture;
+     }
+ }
+ //# sourceMappingURL=hdrIrradianceFiltering.js.map
+\ No newline at end of file
+diff --git a/Materials/Textures/envCubeTexture.pure.js b/Materials/Textures/envCubeTexture.pure.js
+index 7edc29e85f01e624a05db0c7163d183778591eb3..11b31d8a996d92e79aaaba5bfe577031cf3bb502 100644
+--- a/Materials/Textures/envCubeTexture.pure.js
++++ b/Materials/Textures/envCubeTexture.pure.js
+@@ -235,23 +235,30 @@ export class EnvCubeTexture extends BaseTexture {
+             const prefilterPendingToken = {};
+             const scene = this.getScene();
+             scene?.addPendingData(prefilterPendingToken);
+-            this._onError = () => {
++            this._onError = (...args) => {
+                 // If the texture load itself fails, _onLoad never runs so the try/finally below
+                 // never fires. Make sure the pending-data token is still cleared so the scene
+                 // doesn't stay stuck in isLoading / executeWhenReady.
+                 scene?.removePendingData(prefilterPendingToken);
+                 if (previousOnError) {
+-                    previousOnError();
++                    previousOnError(...args);
+                 }
+             };
+             this._onLoad = () => {
+                 void (async () => {
+                     try {
++                        if (engine.isDisposed || scene?.isDisposed || !this.getInternalTexture()) {
++                            return;
++                        }
+                         let irradianceTexture = null;
+                         if (this._prefilterIrradianceOnLoad) {
+                             const hdrIrradianceFiltering = new HDRIrradianceFiltering(engine, { useCdf: this._prefilterUsingCdf });
+                             irradianceTexture = await hdrIrradianceFiltering.prefilter(this);
+                         }
++                        if (engine.isDisposed || scene?.isDisposed || !this.getInternalTexture()) {
++                            irradianceTexture?.dispose();
++                            return;
++                        }
+                         // Run irradiance prefiltering first because it samples the current source texture.
+                         // Radiance prefiltering mutates/swaps the source internal texture, so running both
+                         // concurrently can lead to stale/destroyed texture references on WebGPU.
+@@ -266,10 +273,20 @@ export class EnvCubeTexture extends BaseTexture {
+                             await hdrFiltering.prefilter(this);
+                         }
+                     }
++                    catch (error) {
++                        if (engine.isDisposed || scene?.isDisposed || !this.getInternalTexture()) {
++                            return;
++                        }
++                        if (previousOnError) {
++                            previousOnError("Failed to prefilter environment texture", error);
++                            return;
++                        }
++                        throw error;
++                    }
+                     finally {
+                         scene?.removePendingData(prefilterPendingToken);
+                     }
+-                    if (previousOnLoad) {
++                    if (!engine.isDisposed && !scene?.isDisposed && this.getInternalTexture() && previousOnLoad) {
+                         previousOnLoad();
+                     }
+                 })();
+diff --git a/Misc/rgbdTextureTools.js b/Misc/rgbdTextureTools.js
+index a2e38f1de51f3ade39958e7be2e0c099507c800a..bc893c81ed29e307a6a3030a779af612d3a8a105 100644
+--- a/Misc/rgbdTextureTools.js
++++ b/Misc/rgbdTextureTools.js
+@@ -45,6 +45,10 @@ export class RGBDTextureTools {
+             else {
+                 await import("../Shaders/rgbdDecode.fragment.js");
+             }
++            const scene = texture.getScene();
++            if (engine.isDisposed || !scene || scene.isDisposed || !texture.getInternalTexture()) {
++                return;
++            }
+             // Expand the texture if possible
+             // Simply run through the decode PP.
+             const rgbdPostProcess = new PostProcess("rgbdDecode", "rgbdDecode", null, null, 1, null, 3, engine, false, undefined, internalTexture.type, undefined, null, false, undefined, shaderLanguage);
+@@ -60,12 +64,18 @@ export class RGBDTextureTools {
+             });
+             rgbdPostProcess.onEffectCreatedObservable.addOnce((e) => {
+                 e.executeWhenCompiled(() => {
++                    const currentScene = texture.getScene();
++                    if (engine.isDisposed || !currentScene || currentScene.isDisposed || !texture.getInternalTexture()) {
++                        rgbdPostProcess.dispose();
++                        expandedTexture.dispose();
++                        return;
++                    }
+                     // PP Render Pass
+                     rgbdPostProcess.onApply = (effect) => {
+                         effect._bindTexture("textureSampler", internalTexture);
+                         effect.setFloat2("scale", 1, 1);
+                     };
+-                    texture.getScene().postProcessManager.directRender([rgbdPostProcess], expandedTexture, true);
++                    currentScene.postProcessManager.directRender([rgbdPostProcess], expandedTexture, true);
+                     // Cleanup
+                     engine.restoreDefaultFramebuffer();
+                     engine._releaseTexture(internalTexture);
