@@ -23,10 +23,27 @@ function fixture(on) {
   const contexts = ['unsaved snapshot']
   const panes: UiPane[] = []
   const tabs: {tabId: string; origin: string; isActive: boolean}[] = []
-  const outcomes = {cwd: '/project', fail: false, nativeFail: false, panes, tabs, url}
+  const outcomes = {
+    cwd: '/project',
+    desktopConfig: JSON.stringify({locale: 'ko-KR'}) as string | undefined,
+    fail: false,
+    nativeFail: false,
+    panes,
+    tabs,
+    url,
+  }
   const notices = []
+  const logs = []
   const reveals = []
   on('session.id', () => ({value: 'dbba577c-cad5-4c96-8f31-76d6fef6a09d'}))
+  on('env.get', (_, input) => ({value: input.name === 'HOME' ? '/Users/example' : undefined}))
+  on('fs.read', (_, input) => {
+    expect(input.path).toBe('/Users/example/Library/Application Support/Claude/config.json')
+    if (outcomes.desktopConfig === undefined) {
+      throw new Error('Configuration unavailable')
+    }
+    return {value: outcomes.desktopConfig}
+  })
   on('process.run', (_, input) => {
     reveals.push(input.argv)
     const failed = outcomes.nativeFail
@@ -106,7 +123,10 @@ function fixture(on) {
     calls.push(input)
     return {value: undefined}
   })
-  on('ui.log', () => ({value: undefined}))
+  on('ui.log', (_, input) => {
+    logs.push(input.text)
+    return {value: undefined}
+  })
   on('ui.toast', (_, input) => {
     notices.push(input.text)
     return {value: undefined}
@@ -115,7 +135,7 @@ function fixture(on) {
     $.ui.resolve(event).Text({children: [event.props.text ?? 'original']}),
   )
   on('prompt.submit', (_, event) => ({context: event.context ?? [], text: event.text}))
-  return {calls, contexts, notices, outcomes, reveals}
+  return {calls, contexts, logs, notices, outcomes, reveals}
 }
 
 test('should reveal the Browser for repeated explicit clicks without reloading its active tab', async (engine, on) => {
@@ -335,6 +355,84 @@ test('should expose an open button in the Desktop session footer without opening
   })
   expect((await footer.find({key: 'code-viewer:open'})).text).toBe('코드 뷰어 열기')
   expect(calls).toEqual([])
+})
+
+for (const {config, name, text} of [
+  {config: '{"locale":"en-US"}', name: 'English app locale', text: 'Open Code Viewer'},
+  {config: '{"locale":"ko_KR"}', name: 'Korean locale variant', text: '코드 뷰어 열기'},
+  {config: '{"locale":"ja-JP"}', name: 'Japanese app locale', text: 'コードビューアーを開く'},
+  {config: '{"locale":"zh-CN"}', name: 'Simplified Chinese app locale', text: '打开代码查看器'},
+  {
+    config: '{"locale":"zh-CN-x-tw"}',
+    name: 'Simplified Chinese private-use locale',
+    text: '打开代码查看器',
+  },
+  {config: '{"locale":"es-MX"}', name: 'Spanish app locale', text: 'Abrir visor de código'},
+  {config: '{"locale":"zh-TW"}', name: 'Traditional Chinese app locale', text: 'Open Code Viewer'},
+  {config: '{"locale":"fr-FR"}', name: 'unsupported app locale', text: 'Open Code Viewer'},
+  {
+    config: '{}',
+    name: 'no app language selection',
+    text: 'Open Code Viewer',
+  },
+  {
+    config: undefined,
+    name: 'missing app configuration',
+    text: 'Open Code Viewer',
+  },
+  {config: '{invalid', name: 'malformed app configuration', text: 'Open Code Viewer'},
+  {config: '{"locale":42}', name: 'invalid locale value', text: 'Open Code Viewer'},
+  {config: '{"locale":""}', name: 'empty locale value', text: 'Open Code Viewer'},
+  {config: 'null', name: 'unavailable language', text: 'Open Code Viewer'},
+]) {
+  test(`should translate the open button for ${name}`, async (engine, on) => {
+    const {outcomes} = fixture(on)
+    outcomes.desktopConfig = config
+    await engine.session.start({cwd: '/project', isInteractive: false, surface: 'desktop'})
+    const footer = await engine.ui.mount(launcher)
+    expect((await footer.find({key: 'code-viewer:open'})).text).toBe(text)
+  })
+}
+
+test('should update the button after the app language changes and the footer redraws', async (engine, on) => {
+  const {outcomes} = fixture(on)
+  const footer = await engine.ui.mount(launcher)
+  expect((await footer.find({key: 'code-viewer:open'})).text).toBe('코드 뷰어 열기')
+  outcomes.desktopConfig = '{"locale":"en-US"}'
+  await footer.redraw()
+  expect((await footer.find({key: 'code-viewer:open'})).text).toBe('Open Code Viewer')
+})
+
+test('should omit configuration contents from language diagnostic logs', async (engine, on) => {
+  const {logs, outcomes} = fixture(on)
+  outcomes.desktopConfig = '{"locale":"en-US","oauth:tokenCache":SYNTHETIC_PRIVATE_TOKEN}'
+  const footer = await engine.ui.mount(launcher)
+  expect((await footer.find({key: 'code-viewer:open'})).text).toBe('Open Code Viewer')
+  expect(logs).toHaveLength(1)
+  expect(logs[0]).not.toContain('SYNTHETIC')
+  expect(logs[0]).not.toContain('tokenCache')
+})
+
+test('should translate opening errors in English', async (engine, on) => {
+  const {notices, outcomes} = fixture(on)
+  outcomes.desktopConfig = '{"locale":"en-US"}'
+  await engine.session.start({cwd: '/project', isInteractive: false, surface: 'desktop'})
+  const footer = await engine.ui.mount(launcher)
+  outcomes.url = 'https://example.com/'
+  await footer.press({key: 'code-viewer:open'})
+  expect(notices).toEqual(['Code Viewer: The viewer URL is not an authenticated local address.'])
+})
+
+test('should translate attachment errors in English', async (engine, on) => {
+  const {notices, outcomes} = fixture(on)
+  outcomes.desktopConfig = '{"locale":"en-US"}'
+  await engine.session.start({cwd: '/project', isInteractive: false, surface: 'desktop'})
+  const footer = await engine.ui.mount(launcher)
+  await footer.press({key: 'code-viewer:open'})
+  outcomes.fail = true
+  const result = await engine.prompt.submit({origin: {kind: 'composer'}, text: 'Explain this'})
+  expect(result.drop).toBe('Could not retrieve Code Viewer attachments. Please send again.')
+  expect(notices).toEqual(['Code Viewer: Could not retrieve attachments.'])
 })
 
 test('should close the previous native Pane without opening another screen', async (engine, on) => {

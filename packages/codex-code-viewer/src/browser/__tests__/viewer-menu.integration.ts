@@ -68,8 +68,14 @@ const withViewerMenu = async (
     const {session, url} = await viewer.open()
     await viewer.navigate({column: 1, line: 1, path: 'main.ts'})
     const page = await browser.newPage({locale: 'ko-KR'})
+    await page.addInitScript(() => {
+      localStorage.setItem('codex-code-viewer.language', 'ko')
+    })
     await page.goto(url)
     const frame = page.frameLocator('iframe[title="Code Viewer"]')
+    await browserExpect(frame.getByRole('button', {name: '1줄 선택'})).toBeVisible({
+      timeout: 1500,
+    })
     await exercise({client, composer, frame, session, url, writeAttachment})
   } catch (error) {
     errors.push(error)

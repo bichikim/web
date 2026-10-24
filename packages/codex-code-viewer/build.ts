@@ -67,7 +67,7 @@ if (browserCode === undefined) {
 await writeFile(
   `${output}/browser.html`,
   [
-    '<!doctype html><html lang="ko"><head><meta charset="UTF-8" />',
+    '<!doctype html><html lang="en"><head><meta charset="UTF-8" />',
     '<meta name="viewport" content="width=device-width, initial-scale=1.0" /><title>Code Viewer</title>',
     `<style>${stylesheet}</style></head><body class="m-0 p-0">`,
     '<iframe class="h-screen w-full border-0 block" title="Code Viewer"></iframe>',
@@ -107,7 +107,7 @@ if (previewCode === undefined) {
 await writeFile(
   `${output}/preview.html`,
   [
-    '<!doctype html><html lang="ko"><head><meta charset="UTF-8" />',
+    '<!doctype html><html lang="en"><head><meta charset="UTF-8" />',
     '<meta name="viewport" content="width=device-width, initial-scale=1.0" /><title>Code Viewer Preview</title>',
     `<style>${stylesheet}</style></head>`,
     '<body class="m-0 p-0 h-screen flex flex-col bg-surface font-sans text-foreground">',
@@ -118,7 +118,8 @@ await writeFile(
     '<label class="flex items-center gap-2 px-4 pb-2 text-sm">Host language',
     '<select id="host-locale" aria-label="Host language" class="ui-input py-1">',
     '<option value="auto">Browser</option><option value="ko-KR">한국어</option>',
-    '<option value="en-US">English</option><option value="ja-JP">日本語 (fallback)</option>',
+    '<option value="en-US">English</option><option value="ja-JP">日本語</option>',
+    '<option value="zh-CN">简体中文</option><option value="es-ES">Español</option>',
     '</select></label><details class="px-4 text-sm">',
     '<summary>채팅 컨텍스트 미리보기 (<output>0</output>)</summary>',
     '<ul></ul><button type="button">컨텍스트 비우기</button></details>',

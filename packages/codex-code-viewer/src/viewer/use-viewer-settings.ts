@@ -2,6 +2,9 @@ import {createMemo, createSignal, onCleanup, onMount} from 'solid-js'
 import {MAX_NAVIGATION_PREVIEW_LINES} from '../shared/contracts'
 import type {ViewerPort, ViewerSettingsEnvironment} from './types'
 import type {LanguagePreference, ViewerLanguage} from './locale/types'
+import {resolveViewerLanguage} from './locale/resolve-viewer-language'
+import {isViewerLanguage} from './locale/is-viewer-language'
+import {DEFAULT_VIEWER_LANGUAGE} from './locale/languages'
 
 const STORAGE_KEY = 'codex-code-viewer.preview-lines'
 const LANGUAGE_KEY = 'codex-code-viewer.language'
@@ -12,9 +15,9 @@ interface UseViewerSettingsProps {
 const readLanguage = (environment: ViewerSettingsEnvironment): LanguagePreference => {
   try {
     const value = environment.localStorage?.getItem(LANGUAGE_KEY)
-    return value === 'ko' || value === 'en' ? value : 'auto'
+    return value === 'auto' || isViewerLanguage(value) ? value : DEFAULT_VIEWER_LANGUAGE
   } catch {
-    return 'auto'
+    return DEFAULT_VIEWER_LANGUAGE
   }
 }
 const validLines = (value: number): boolean =>
@@ -38,8 +41,8 @@ export const useViewerSettings = (props: UseViewerSettingsProps) => {
     if (selected !== 'auto') {
       return selected
     }
-    const locale = hostLocale() || props.environment.navigator?.language || 'en'
-    return locale.toLowerCase().split(/[-_]/u)[0] === 'ko' ? 'ko' : 'en'
+    const locale = hostLocale() || props.environment.navigator?.language || DEFAULT_VIEWER_LANGUAGE
+    return resolveViewerLanguage(locale)
   })
   onMount(() => {
     const stop = props.port?.subscribeLocale?.((locale) => setHostLocale(locale ?? null))

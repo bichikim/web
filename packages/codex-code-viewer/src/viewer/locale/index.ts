@@ -1,4 +1,6 @@
 export * from './context'
+export * from './is-viewer-language'
+export * from './languages'
 export * from './messages'
 export * from './translate'
 export * from './types'
