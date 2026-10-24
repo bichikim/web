@@ -4,6 +4,7 @@ import {readToolLocation} from './read-tool-location.ts'
 import {readFileLinks} from './read-file-links.ts'
 import {readBrowserTab} from './read-browser-tab.ts'
 import {isProjectFile} from './is-project-file.ts'
+import {readBrowserMessages} from './read-browser-messages.ts'
 
 const MAX_MARKDOWN_CHARS = 10000
 const MAX_FILE_LINKS = 256
@@ -11,6 +12,7 @@ let desktop = false
 let workspace = ''
 let browser
 let operations = Promise.resolve()
+let text = readBrowserMessages(undefined)
 const messages = new Map()
 /** @type {import('./can-approve-open.ts').OpenPhase} */
 let phase = {kind: 'idle'}
@@ -29,6 +31,25 @@ const guidance = [
   'It takes no session argument. Do not call another extension’s code.panel to read Browser attachments.',
   'Read the attached snapshots, including unsaved changes; disk content is not a substitute.',
 ].join(' ')
+
+async function refreshMessages($) {
+  let locale
+  try {
+    const home = await $.env.get('HOME')
+    if (home !== undefined) {
+      const config = JSON.parse(
+        await $.fs.read(`${home}/Library/Application Support/Claude/config.json`),
+      )
+      const {locale: configured} = config ?? {}
+      if (typeof configured === 'string' && configured.trim() !== '') {
+        locale = configured
+      }
+    }
+  } catch {
+    $.ui.log('Code Viewer language settings are unavailable; using English.', {to: 'debug'})
+  }
+  text = readBrowserMessages(locale)
+}
 
 function enqueue($, action) {
   const next = operations.then(action)
@@ -57,12 +78,12 @@ async function viewerLocation($, location) {
       workspace: directory,
     })
     if (response.isError || response.deny !== undefined) {
-      throw new Error(response.deny ?? response.text ?? '파일을 열지 못했습니다.')
+      throw new Error(response.deny ?? response.text ?? text.fileError)
     }
     const value =
       typeof response.result === 'string' ? JSON.parse(response.result) : response.result
     if (typeof value?.url !== 'string') {
-      throw new Error('뷰어 주소를 받지 못했습니다.')
+      throw new Error(text.urlError)
     }
     const address = new URL(value.url)
     const token = new URLSearchParams(address.hash.slice(1)).get('token')
@@ -71,7 +92,7 @@ async function viewerLocation($, location) {
       address.hostname !== '127.0.0.1' ||
       !/^[a-f0-9]{64}$/u.test(token ?? '')
     ) {
-      throw new Error('인증된 로컬 뷰어 주소가 아닙니다.')
+      throw new Error(text.urlInvalid)
     }
     return value
   } finally {
@@ -82,7 +103,7 @@ async function viewerLocation($, location) {
 async function presentViewer($, value, isUserClick) {
   const context = await $.tool.call({tool: 'mcp__Claude_Browser__tabs_context'})
   if (context.isError || context.deny !== undefined) {
-    throw new Error(context.deny ?? 'Browser 탭을 확인하지 못했습니다.')
+    throw new Error(context.deny ?? text.browserTabsError)
   }
   const tab = readBrowserTab(context.result, value.url)
   if (tab === undefined) {
@@ -90,7 +111,7 @@ async function presentViewer($, value, isUserClick) {
     try {
       const result = await $.tool.call({tool: 'mcp__Claude_Browser__preview_start', url: value.url})
       if (result.isError || result.deny !== undefined) {
-        throw new Error(result.deny ?? 'Browser를 열지 못했습니다.')
+        throw new Error(result.deny ?? text.browserError)
       }
     } finally {
       phase = {kind: 'idle'}
@@ -98,7 +119,7 @@ async function presentViewer($, value, isUserClick) {
   } else if (!tab.isActive) {
     const result = await $.tool.call({tabId: tab.tabId, tool: 'mcp__Claude_Browser__tabs_select'})
     if (result.isError || result.deny !== undefined) {
-      throw new Error(result.deny ?? 'Code Viewer 탭을 선택하지 못했습니다.')
+      throw new Error(result.deny ?? text.selectError)
     }
   }
   if (isUserClick) {
@@ -113,10 +134,10 @@ async function presentViewer($, value, isUserClick) {
         value.url,
       ])
       if (result.exitCode !== 0) {
-        throw new Error(result.stderr.trim() || 'Browser를 펼치지 못했습니다.')
+        throw new Error(result.stderr.trim() || text.revealError)
       }
     } else {
-      $.ui.toast('Browser가 접혀 있으면 상단 Browser를 누르세요.')
+      $.ui.toast(text.revealHint)
     }
   }
   browser = value
@@ -157,7 +178,7 @@ async function readAttachments($) {
   try {
     const result = await $.mcp.call(connection.server, 'code.attachments', {})
     if (result.isError) {
-      throw new Error('첨부를 가져오지 못했습니다.')
+      throw new Error(text.attachmentError)
     }
     return result.content.flatMap((entry) => (entry.type === 'text' ? [entry.text] : []))
   } finally {
@@ -177,23 +198,27 @@ export function register(on) {
     } catch (error) {
       $.ui.log(`Code Viewer attachments: ${String(error)}`, {to: 'debug'})
       $.ui.toast(`Code Viewer: ${error instanceof Error ? error.message : String(error)}`)
-      return {drop: 'Code Viewer 첨부를 가져오지 못했습니다. 다시 보내 주세요.'}
+      return {drop: text.sendError}
     }
     return next({...event, context: [...(event.context ?? []), ...attachments]})
   })
   on('session.start', async ($, event, next) => {
     const result = await next(event)
     desktop = event.surface === 'desktop' || (await $.session.surfaces()).includes('desktop')
+    if (desktop) {
+      await refreshMessages($)
+    }
     workspace = result.cwd ?? (await $.session.cwd())
     if ((await $.ui.panes()).some((pane) => pane.id === 'code-viewer-pane')) {
       await $.ui.close({id: 'code-viewer-pane'})
     }
     return result
   })
-  on('session.attach', async (_engine, event, next) => {
+  on('session.attach', async ($, event, next) => {
     const result = await next(event)
     if (event.surface === 'desktop') {
       desktop = true
+      await refreshMessages($)
     }
     return result
   })
@@ -225,10 +250,11 @@ export function register(on) {
       return original
     }
     const {Box, Button} = $.ui.resolve(event)
+    await refreshMessages($)
     return Box({
       children: [
         original,
-        Button({key: 'code-viewer:open', label: '코드 뷰어 열기', onPress: () => undefined}),
+        Button({key: 'code-viewer:open', label: text.openViewer, onPress: () => undefined}),
       ],
       flexDirection: 'row',
     })

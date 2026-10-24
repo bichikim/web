@@ -13,6 +13,7 @@ import {SIcon} from './SIcon'
 import {MAX_NAVIGATION_PREVIEW_LINES} from '../shared/contracts'
 import {useTranslations} from './locale/use-translations'
 import type {LanguagePreference} from './locale/types'
+import {DEFAULT_VIEWER_LANGUAGE, VIEWER_LANGUAGES} from './locale/languages'
 import {SWorkspaceSettings} from './SWorkspaceSettings'
 import {SPluginUpdates} from './SPluginUpdates'
 import type {ViewerPort} from './types'
@@ -39,11 +40,10 @@ export const SViewerSettings = (props: SViewerSettingsProps) => {
   )
   const languageOptions = createMemo(
     () =>
-      [
-        {label: t('자동'), value: 'auto'},
-        {label: '한국어', value: 'ko'},
-        {label: 'English', value: 'en'},
-      ] satisfies {value: LanguagePreference; label: string}[],
+      [{label: t('자동'), value: 'auto'}, ...VIEWER_LANGUAGES] satisfies {
+        value: LanguagePreference
+        label: string
+      }[],
   )
   const changeLines = (value: string): void => {
     const index = lineOptions().indexOf(value)
@@ -122,7 +122,9 @@ export const SViewerSettings = (props: SViewerSettingsProps) => {
             label={t('언어')}
             options={languageOptions().map((option) => option.label)}
             value={
-              languageOptions().find((option) => option.value === (props.language ?? 'auto'))?.label
+              languageOptions().find(
+                (option) => option.value === (props.language ?? DEFAULT_VIEWER_LANGUAGE),
+              )?.label
             }
             variant="field"
             onChange={changeLanguage}

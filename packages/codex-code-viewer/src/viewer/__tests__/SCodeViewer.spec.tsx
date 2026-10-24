@@ -41,6 +41,7 @@ describe('SCodeViewer', () => {
   const originalPopover = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'showPopover')
   const originalScroll = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'scrollIntoView')
   beforeEach(() => {
+    localStorage.setItem('codex-code-viewer.language', 'ko')
     vi.spyOn(navigator, 'language', 'get').mockReturnValue('ko-KR')
     Object.defineProperty(HTMLElement.prototype, 'showPopover', {
       configurable: true,
