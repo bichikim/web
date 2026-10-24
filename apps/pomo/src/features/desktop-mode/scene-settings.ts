@@ -2,6 +2,7 @@ import {isPlainObject} from 'es-toolkit/predicate'
 import {type Accessor, onCleanup, onMount} from 'solid-js'
 
 import type {PSceneMotionInput, PSceneMotionMode, PSceneStyle} from '../focus-room-animation'
+import {parseSceneStyle} from '../focus-room-animation/parse-scene-style'
 import type {PActivity, PGaze} from '../focus-room-scene-preferences'
 import type {SceneTimeMode} from '../focus-room-time'
 import type {ScreenSaverDelay} from '../screen-saver'
@@ -85,7 +86,7 @@ const isDesktopSceneSetting = (value: unknown): value is DesktopSceneSettingMess
     case 'motionMode':
       return isOneOf(setting.value, ['depth', 'pan'])
     case 'sceneStyle':
-      return isOneOf(setting.value, ['original', 'scribble'])
+      return parseSceneStyle(setting.value) !== null
     case 'screenSaverDelay':
       return import.meta.env.DEV
         ? isOneOf(setting.value, ['off', '5s', '1m', '10m', '20m', '1h'])

@@ -307,3 +307,158 @@ it('should preserve a received update ahead of an older snapshot', () => {
   expect(onMotionInputChange).toHaveBeenCalledExactlyOnceWith('gyroscope')
   surface.cleanup()
 })
+
+it.each(['listener', 'publisher'] as const)(
+  'should accept only exact scene styles without coercing remote values through the %s',
+  (mode) => {
+    const onSceneStyleChange = vi.fn()
+    const view = renderHook(() =>
+      mode === 'listener'
+        ? useDesktopSceneSettingsListener({onSceneStyleChange})
+        : useDesktopSceneSettingsPublisher({handlers: {onSceneStyleChange}}),
+    )
+    const channel = TestBroadcastChannel.instances[0]
+    const access = vi.fn(() => {
+      throw new Error('remote style must not be coerced')
+    })
+
+    for (const value of [
+      'Original',
+      'scribble ',
+      '',
+      null,
+      Symbol('original'),
+      Object('original'),
+      new Proxy({}, {get: access}),
+    ]) {
+      channel?.dispatch({name: 'sceneStyle', value})
+    }
+    expect(onSceneStyleChange).not.toHaveBeenCalled()
+    expect(access).not.toHaveBeenCalled()
+
+    channel?.dispatch({name: 'sceneStyle', value: 'original'})
+    channel?.dispatch({name: 'sceneStyle', value: 'scribble'})
+    expect(onSceneStyleChange.mock.calls).toEqual([['original'], ['scribble']])
+    view.cleanup()
+  },
+)
+
+it.each(['listener', 'publisher'] as const)(
+  'should retain separate scene style validation and application reads through the %s',
+  (mode) => {
+    const onSceneStyleChange = vi.fn()
+    const view = renderHook(() =>
+      mode === 'listener'
+        ? useDesktopSceneSettingsListener({onSceneStyleChange})
+        : useDesktopSceneSettingsPublisher({handlers: {onSceneStyleChange}}),
+    )
+    const channel = TestBroadcastChannel.instances[0]
+    const readValue = vi.fn().mockReturnValueOnce('original').mockReturnValue('scribble')
+
+    channel?.dispatch({
+      name: 'sceneStyle',
+      get value() {
+        return readValue()
+      },
+    })
+
+    expect(readValue).toHaveBeenCalledTimes(2)
+    expect(onSceneStyleChange).toHaveBeenCalledExactlyOnceWith('scribble')
+    view.cleanup()
+  },
+)
+
+it.each(['listener', 'publisher'] as const)(
+  'should preserve a scene style getter failure through the %s',
+  (mode) => {
+    const onSceneStyleChange = vi.fn()
+    const view = renderHook(() =>
+      mode === 'listener'
+        ? useDesktopSceneSettingsListener({onSceneStyleChange})
+        : useDesktopSceneSettingsPublisher({handlers: {onSceneStyleChange}}),
+    )
+    const channel = TestBroadcastChannel.instances[0]
+    const error = new Error('style unavailable')
+    const readValue = vi.fn(() => {
+      throw error
+    })
+
+    let received: unknown
+    try {
+      channel?.dispatch({
+        name: 'sceneStyle',
+        get value() {
+          return readValue()
+        },
+      })
+    } catch (caught: unknown) {
+      received = caught
+    }
+
+    expect(received).toBe(error)
+    expect(readValue).toHaveBeenCalledOnce()
+    expect(onSceneStyleChange).not.toHaveBeenCalled()
+    view.cleanup()
+  },
+)
+
+it('should reject an entire invalid style snapshot and accept the following valid snapshot', () => {
+  const onSceneStyleChange = vi.fn()
+  const onMotionModeChange = vi.fn()
+  const view = renderHook(() =>
+    useDesktopSceneSettingsPublisher({
+      handlers: {onMotionModeChange, onSceneStyleChange},
+      requestSnapshot: true,
+    }),
+  )
+  const channel = TestBroadcastChannel.instances[0]
+
+  channel?.dispatch({
+    settings: [
+      {name: 'motionMode', value: 'pan'},
+      {name: 'sceneStyle', value: 'scribble '},
+    ],
+    type: 'snapshot',
+  })
+  expect(onMotionModeChange).not.toHaveBeenCalled()
+  expect(onSceneStyleChange).not.toHaveBeenCalled()
+
+  channel?.dispatch({
+    settings: [
+      {name: 'motionMode', value: 'depth'},
+      {name: 'sceneStyle', value: 'original'},
+    ],
+    type: 'snapshot',
+  })
+  expect(onMotionModeChange).toHaveBeenCalledExactlyOnceWith('depth')
+  expect(onSceneStyleChange).toHaveBeenCalledExactlyOnceWith('original')
+  view.cleanup()
+})
+
+it('should synchronize scene style snapshots and subsequent changes over the native channel', async () => {
+  vi.stubGlobal('BroadcastChannel', NativeBroadcastChannel)
+  const ownerChange = vi.fn()
+  const remoteChange = vi.fn()
+  const owner = renderHook(() =>
+    useDesktopSceneSettingsPublisher({
+      handlers: {onSceneStyleChange: ownerChange},
+      snapshot: () => [{name: 'sceneStyle', value: 'original'}],
+    }),
+  )
+  const remote = renderHook(() =>
+    useDesktopSceneSettingsPublisher({
+      handlers: {onSceneStyleChange: remoteChange},
+      requestSnapshot: true,
+    }),
+  )
+  try {
+    await vi.waitFor(() => expect(remoteChange).toHaveBeenCalledExactlyOnceWith('original'))
+    owner.result.publish({name: 'sceneStyle', value: 'scribble'})
+    await vi.waitFor(() => expect(remoteChange).toHaveBeenLastCalledWith('scribble'))
+    expect(remoteChange).toHaveBeenCalledTimes(2)
+    expect(ownerChange).not.toHaveBeenCalled()
+  } finally {
+    remote.cleanup()
+    owner.cleanup()
+  }
+})
