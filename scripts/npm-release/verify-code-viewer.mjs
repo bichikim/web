@@ -114,11 +114,17 @@ try {
     assert.equal(code, expectedCode, run)
     if (expectedCode !== 0) {
       assert.ok(run.includes('[3/4]'), 'Failure did not reach package installation')
-      assert.ok(run.includes('설치 설정 복원 중…'))
-      assert.ok(run.includes('Code Viewer 설치 실패:'))
+      assert.ok(run.includes('Restoring installation settings…'))
+      assert.ok(run.includes('Code Viewer installation failed:'))
       return
     }
-    for (const step of ['[1/4]', '[2/4]', '[3/4]', '[4/4]', '설치 완료']) {
+    for (const step of [
+      '[1/4]',
+      '[2/4]',
+      '[3/4]',
+      '[4/4]',
+      `Code Viewer ${manifest.version} installed.`,
+    ]) {
       assert.ok(run.includes(step), step)
     }
     assert.ok(!run.includes('"pluginId"'), 'CLI JSON leaked into progress output')
