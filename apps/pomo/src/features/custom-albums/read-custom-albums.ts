@@ -11,7 +11,11 @@ import {
   waitForTransaction,
 } from './database'
 import {CUSTOM_ALBUM_ICON_CLASSES} from './model'
-import {toCustomPTrack} from './to-custom-p-track'
+import {
+  getCustomTrackStorageGeneration,
+  retryCustomTrackObjectUrls,
+  toCustomPTrack,
+} from './to-custom-p-track'
 
 export type ResolvedCustomAlbum = PResolvedAlbum & {readonly customCoverImage: Blob | null}
 
@@ -44,7 +48,7 @@ const toResolvedAlbum = (
   }
 }
 
-export const readCustomAlbums = async (): Promise<readonly ResolvedCustomAlbum[]> => {
+const readCustomAlbumSnapshot = async (): Promise<readonly ResolvedCustomAlbum[] | null> => {
   const database = await openCustomAlbumDatabase()
   const transaction = database.transaction([ALBUM_STORE_NAME, TRACK_STORE_NAME], 'readonly')
   const finished = waitForTransaction(transaction)
@@ -56,6 +60,10 @@ export const readCustomAlbums = async (): Promise<readonly ResolvedCustomAlbum[]
   ])
   const albums = parseStoredAlbums(rawAlbums)
   const tracks = parseStoredTracks(rawTracks)
+  const snapshotGeneration = await retryCustomTrackObjectUrls(tracks)
+  if (snapshotGeneration !== getCustomTrackStorageGeneration()) {
+    return null
+  }
   const tracksById = new Map(tracks.map((track) => [track.id, track]))
 
   return albums
@@ -65,4 +73,13 @@ export const readCustomAlbums = async (): Promise<readonly ResolvedCustomAlbum[]
 
       return resolvedAlbum === null ? [] : [resolvedAlbum]
     })
+}
+
+export const readCustomAlbums = async (): Promise<readonly ResolvedCustomAlbum[]> => {
+  const first = await readCustomAlbumSnapshot()
+  const result = first ?? (await readCustomAlbumSnapshot())
+  if (result === null) {
+    throw new Error('Custom album storage changed while retrying cached audio.')
+  }
+  return result
 }
