@@ -331,46 +331,46 @@ describe('dialogue writer worker', () => {
 
   it.each([
     {
+      expected: '행복은 가까이에 있어요; 행복은 가까이에 있어요; 행복은 가까이에 있어요.',
       language: 'ko',
       name: 'spaces after repetition trimming',
-      expected: '행복은 가까이에 있어요; 행복은 가까이에 있어요; 행복은 가까이에 있어요.',
       output: `  ${Array(5).fill('행복은 가까이에 있습니다').join('; ')};`,
     },
     {
+      expected: '행복은 가까이에 있어요; 행복은 가까이에 있어요; 행복은 가까이에 있어요.',
       language: 'ko',
       name: 'blank lines after repetition trimming',
-      expected: '행복은 가까이에 있어요; 행복은 가까이에 있어요; 행복은 가까이에 있어요.',
       output: `\n\n${Array(5).fill('행복은 가까이에 있습니다').join('; ')};`,
     },
     {
+      expected: '행복은 가까이에 있어요; 행복은 가까이에 있어요; 행복은 가까이에 있어요.',
       language: 'ko',
       name: 'BOM after repetition trimming',
-      expected: '행복은 가까이에 있어요; 행복은 가까이에 있어요; 행복은 가까이에 있어요.',
       output: `\ufeff${Array(5).fill('행복은 가까이에 있습니다').join('; ')};`,
     },
     {
-      language: 'ko',
-      name: 'internal line breaks after repetition trimming',
       expected:
         '첫 문장이에요.\n행복은 가까이에 있어요; 행복은 가까이에 있어요; 행복은 가까이에 있어요.',
+      language: 'ko',
+      name: 'internal line breaks after repetition trimming',
       output: `  첫 문장입니다.\n${Array(5).fill('행복은 가까이에 있습니다').join('; ')};`,
     },
     {
+      expected: '행복은 가까이에 있어요; 행복은 가까이에 있어요; 행복은 가까이에 있어요;',
       language: 'ko',
       name: 'ordinary three-fold emphasis',
-      expected: '행복은 가까이에 있어요; 행복은 가까이에 있어요; 행복은 가까이에 있어요;',
       output: `  ${Array(3).fill('행복은 가까이에 있습니다').join('; ')};  `,
     },
     {
+      expected: '첫 문장이에요.\n행복은 가까이에 있어요.',
       language: 'ko',
       name: 'non-repetitive output',
-      expected: '첫 문장이에요.\n행복은 가까이에 있어요.',
       output: '  첫 문장입니다.\n행복은 가까이에 있습니다.  ',
     },
     {
+      expected: 'same phrase here; same phrase here; same phrase here.',
       language: 'en',
       name: 'non-Korean repetition trimming',
-      expected: 'same phrase here; same phrase here; same phrase here.',
       output: `  ${Array(5).fill('same phrase here').join('; ')};`,
     },
   ] as const)('should trim completed $name while streaming raw tokens', async (example) => {
