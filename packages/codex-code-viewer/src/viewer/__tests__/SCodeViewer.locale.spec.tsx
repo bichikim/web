@@ -18,6 +18,7 @@ describe('SCodeViewer language', () => {
       getItem: (key: string) => values.get(key) ?? null,
       setItem: (key: string, value: string) => values.set(key, value),
     })
+    localStorage.setItem('codex-code-viewer.language', 'auto')
     vi.spyOn(navigator, 'language', 'get').mockReturnValue('en-US')
     Object.defineProperty(HTMLDialogElement.prototype, 'showModal', {
       configurable: true,
@@ -88,6 +89,32 @@ describe('SCodeViewer language', () => {
     })
     return {locale, port}
   }
+  it('should start in English without a saved language despite a Korean host locale', () => {
+    localStorage.clear()
+    mount()
+    expect(document.documentElement.lang).toBe('en')
+    expect(screen.getByRole('button', {name: 'Settings'})).toBeInTheDocument()
+  })
+  it.each([
+    ['日本語', 'ja', '設定', '言語'],
+    ['简体中文', 'zh-CN', '设置', '语言'],
+    ['Español', 'es', 'Configuración', 'Idioma'],
+  ])(
+    'should select and persist %s without changing file contents',
+    (option, language, settings, label) => {
+      const {locale} = mount()
+      fireEvent.click(screen.getByRole('button', {name: '설정'}))
+      fireEvent.click(screen.getByRole('combobox', {name: '언어'}))
+      fireEvent.click(screen.getByRole('option', {name: option}))
+      expect(screen.getByRole('dialog', {name: settings})).toBeInTheDocument()
+      expect(screen.getByRole('combobox', {name: label})).toHaveTextContent(option)
+      expect(document.documentElement.lang).toBe(language)
+      expect(localStorage.getItem('codex-code-viewer.language')).toBe(language)
+      locale('en-US')
+      expect(screen.getByRole('dialog', {name: settings})).toBeInTheDocument()
+      expect(screen.getByText('const 이름 = 1')).toBeInTheDocument()
+    },
+  )
   it('should switch UI and editor labels with the host while retaining the editor draft', () => {
     const {locale} = mount()
     fireEvent.click(screen.getByRole('button', {name: '편집'}))

@@ -3,6 +3,7 @@ import {cleanup, renderHook} from '@solidjs/testing-library'
 import {afterEach, describe, expect, it, vi} from 'vitest'
 import type {ViewerSettingsEnvironment} from '../types'
 import {useViewerSettings} from '../use-viewer-settings'
+import {VIEWER_LANGUAGES} from '../locale/languages'
 
 const createEnvironment = (language = 'en-US'): ViewerSettingsEnvironment => {
   const values = new Map<string, string>()
@@ -18,12 +19,39 @@ const createEnvironment = (language = 'en-US'): ViewerSettingsEnvironment => {
 }
 afterEach(cleanup)
 describe('useViewerSettings', () => {
+  it('should default to English even when the browser uses Korean', () => {
+    const hook = renderHook(() => useViewerSettings({environment: createEnvironment('ko-KR')}))
+    expect(hook.result.preference()).toBe('en')
+    expect(hook.result.language()).toBe('en')
+  })
+  it.each(VIEWER_LANGUAGES.map(({value}) => value))('should persist and restore %s', (language) => {
+    const environment = createEnvironment('ko-KR')
+    const hook = renderHook(() => useViewerSettings({environment}))
+    hook.result.changeLanguage(language)
+    expect(environment.localStorage?.getItem('codex-code-viewer.language')).toBe(language)
+    const restored = renderHook(() => useViewerSettings({environment}))
+    expect(restored.result.preference()).toBe(language)
+    expect(restored.result.language()).toBe(language)
+  })
+  it.each([
+    ['ja-JP', 'ja'],
+    ['zh-Hans', 'zh-CN'],
+    ['es-AR', 'es'],
+    ['zh-TW', 'en'],
+  ] as const)('should follow %s in Automatic mode', (locale, language) => {
+    const environment = createEnvironment(locale)
+    environment.localStorage?.setItem('codex-code-viewer.language', 'auto')
+    const hook = renderHook(() => useViewerSettings({environment}))
+    expect(hook.result.language()).toBe(language)
+  })
   it('should follow host locale and resume following it after a manual override', () => {
     let receive: (locale: string | undefined) => void = () => {}
     const stop = vi.fn()
+    const environment = createEnvironment('ko-KR')
+    environment.localStorage?.setItem('codex-code-viewer.language', 'auto')
     const hook = renderHook(() =>
       useViewerSettings({
-        environment: createEnvironment('ko-KR'),
+        environment,
         port: {
           subscribeLocale: (listener) => {
             receive = listener
@@ -49,6 +77,7 @@ describe('useViewerSettings', () => {
   })
   it('should restore the language override and use the supplied browser locale without a host value', () => {
     const environment = createEnvironment('ko-KR')
+    environment.localStorage?.setItem('codex-code-viewer.language', 'auto')
     const hook = renderHook(() => useViewerSettings({environment}))
     expect(hook.result.language()).toBe('ko')
     hook.result.changeLanguage('en')
@@ -57,10 +86,10 @@ describe('useViewerSettings', () => {
     expect(restored.result.language()).toBe('en')
   })
   it('should use English for unsupported locales and ignore an invalid saved language', () => {
-    const environment = createEnvironment('ja-JP')
+    const environment = createEnvironment('fr-FR')
     environment.localStorage?.setItem('codex-code-viewer.language', 'unexpected')
     const hook = renderHook(() => useViewerSettings({environment}))
-    expect(hook.result.preference()).toBe('auto')
+    expect(hook.result.preference()).toBe('en')
     expect(hook.result.language()).toBe('en')
   })
   it('should default to two lines and restore a changed preference on the next mount', () => {
@@ -81,7 +110,7 @@ describe('useViewerSettings', () => {
     })
     const hook = renderHook(() => useViewerSettings({environment}))
     expect(hook.result.previewLines()).toBe(2)
-    expect(hook.result.preference()).toBe('auto')
+    expect(hook.result.preference()).toBe('en')
     hook.result.changePreviewLines(3)
     hook.result.changeLanguage('ko')
     expect(hook.result.previewLines()).toBe(3)
