@@ -23,6 +23,8 @@ import {
   type SaveCustomAlbumOptions,
 } from './model'
 
+import {refreshCustomTrackObjectUrls} from './to-custom-p-track'
+
 interface AlbumWritePlan {
   readonly album: StoredCustomAlbum
   readonly trackIdsToDelete: readonly string[]
@@ -314,5 +316,6 @@ export const saveCustomAlbum = async (options: SaveCustomAlbumOptions): Promise<
   const availableBytes = await getEstimatedAvailableBytes()
 
   await scheduleAlbumWrite(options, albumId, availableBytes)
+  await refreshCustomTrackObjectUrls(options.tracks)
   return albumId
 }

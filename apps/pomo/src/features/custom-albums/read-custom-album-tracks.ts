@@ -7,7 +7,11 @@ import {
   waitForTransaction,
 } from './database'
 import {CUSTOM_TRACK_ID_PREFIX, CustomAlbumError} from './model'
-import {toCustomPTrack} from './to-custom-p-track'
+import {
+  getCustomTrackStorageGeneration,
+  retryCustomTrackObjectUrls,
+  toCustomPTrack,
+} from './to-custom-p-track'
 
 export interface ReadCustomAlbumTracksOptions {
   /** 누락 레코드는 제외하고, 손상된 요청 레코드마다 원래 검증 원인과 요청 ID를 한 번 전달한다. */
@@ -17,9 +21,9 @@ export interface ReadCustomAlbumTracksOptions {
 }
 
 /** 손상 레코드만 건너뛰어 정상 트랙을 읽는다. 저장소는 변경하지 않으며 DB 요청·트랜잭션 실패는 거부한다. */
-export const readCustomAlbumTracks = async (
+const readCustomAlbumTrackSnapshot = async (
   options: ReadCustomAlbumTracksOptions,
-): Promise<readonly PTrack[]> => {
+): Promise<readonly PTrack[] | null> => {
   const trackIds = Array.from(
     new Set(options.trackIds.filter((trackId) => trackId.startsWith(CUSTOM_TRACK_ID_PREFIX))),
   )
@@ -38,20 +42,34 @@ export const readCustomAlbumTracks = async (
     })),
   )
   const [, requestedTracks] = await Promise.all([finished, Promise.all(trackRequests)])
-  const tracks = requestedTracks.flatMap(({track, trackId}) => {
+  const parsedTracks = requestedTracks.flatMap(({track, trackId}) => {
     if (track === undefined) {
       return []
     }
 
-    const result = storedTrackSchema.safeParse(track)
+    return [{result: storedTrackSchema.safeParse(track), trackId}]
+  })
+  const tracks = parsedTracks.flatMap(({result}) => (result.success ? [result.data] : []))
 
+  const snapshotGeneration = await retryCustomTrackObjectUrls(tracks)
+  if (snapshotGeneration !== getCustomTrackStorageGeneration()) {
+    return null
+  }
+  for (const {result, trackId} of parsedTracks) {
     if (!result.success) {
       options.onError(new CustomAlbumError('corrupt-data', {cause: result.error}), trackId)
-      return []
     }
-
-    return [result.data]
-  })
-
+  }
   return tracks.map(toCustomPTrack)
+}
+
+export const readCustomAlbumTracks = async (
+  options: ReadCustomAlbumTracksOptions,
+): Promise<readonly PTrack[]> => {
+  const first = await readCustomAlbumTrackSnapshot(options)
+  const result = first ?? (await readCustomAlbumTrackSnapshot(options))
+  if (result === null) {
+    throw new Error('Custom album storage changed while retrying cached audio.')
+  }
+  return result
 }
