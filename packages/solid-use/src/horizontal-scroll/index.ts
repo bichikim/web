@@ -1,12 +1,19 @@
-import {type Accessor, createEffect, createSignal, onCleanup} from 'solid-js'
+import {type Accessor, createEffect, createSignal, onCleanup, untrack} from 'solid-js'
 
 const DEFAULT_PAGE_RATIO = 0.8
 const EDGE_TOLERANCE = 1
 
 export interface UseHorizontalScrollProps {
+  /** 방향 상태가 바뀌기 전에 호출하며, callback 안의 signal 읽기는 추적하지 않습니다. */
+  readonly onBeforeAvailabilityChange?: (next: HorizontalScrollAvailability) => void
   /** 이동할 화면 너비의 비율입니다. 생략하면 0.8이며, 유한한 양수여야 합니다. */
   readonly pageRatio?: Accessor<number | undefined>
   readonly viewport: Accessor<HTMLElement | null>
+}
+
+export interface HorizontalScrollAvailability {
+  readonly canScrollLeft: boolean
+  readonly canScrollRight: boolean
 }
 
 export interface HorizontalScrollController {
@@ -24,19 +31,29 @@ export const useHorizontalScroll = (
 ): HorizontalScrollController => {
   const [canScrollLeft, setCanScrollLeft] = createSignal(false)
   const [canScrollRight, setCanScrollRight] = createSignal(false)
+  const publishAvailability = (next: HorizontalScrollAvailability) => {
+    untrack(() => {
+      if (canScrollLeft() !== next.canScrollLeft || canScrollRight() !== next.canScrollRight) {
+        props.onBeforeAvailabilityChange?.(next)
+      }
+      setCanScrollLeft(next.canScrollLeft)
+      setCanScrollRight(next.canScrollRight)
+    })
+  }
   const measure = () => {
     const element = props.viewport()
     if (element === null) {
-      setCanScrollLeft(false)
-      setCanScrollRight(false)
+      publishAvailability({canScrollLeft: false, canScrollRight: false})
       return
     }
     const maximum = Math.max(0, element.scrollWidth - element.clientWidth)
     const direction = element.ownerDocument.defaultView?.getComputedStyle(element).direction
     const rawOffset = direction === 'rtl' ? maximum + element.scrollLeft : element.scrollLeft
     const offset = Math.min(maximum, Math.max(0, rawOffset))
-    setCanScrollLeft(offset > EDGE_TOLERANCE)
-    setCanScrollRight(offset < maximum - EDGE_TOLERANCE)
+    publishAvailability({
+      canScrollLeft: offset > EDGE_TOLERANCE,
+      canScrollRight: offset < maximum - EDGE_TOLERANCE,
+    })
   }
   const scrollPage = (direction: -1 | 1) => {
     const element = props.viewport()

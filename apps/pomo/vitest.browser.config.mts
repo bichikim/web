@@ -26,6 +26,10 @@ const getUtilityStyles: BrowserCommand<[content: string]> = async (_context, con
   return css
 }
 
+const nativeHorizontalWheel: BrowserCommand<[delta: number]> = async ({page}, delta) => {
+  await page.mouse.wheel(delta, 0)
+}
+
 export default defineConfig({
   optimizeDeps: {include: ['media-chrome']},
   plugins: [solidPlugin({hot: false})],
@@ -33,7 +37,7 @@ export default defineConfig({
   root: fileURLToPath(new URL('.', import.meta.url)),
   test: {
     browser: {
-      commands: {getUtilityStyles, setColorScheme, setReducedMotion},
+      commands: {getUtilityStyles, nativeHorizontalWheel, setColorScheme, setReducedMotion},
       enabled: true,
       headless: true,
       instances: [{browser: 'chromium'}, {browser: 'firefox'}, {browser: 'webkit'}],
