@@ -1,3 +1,4 @@
+import {getTargetBindings} from './target-bindings'
 import {getBindingInfluence} from './influence'
 import {getBoneChannels, poseBoneChannels} from './bone'
 import {sampleDeformerProperties} from './deformer-properties'
@@ -364,7 +365,11 @@ export const composeParameterDeformer = (
   const restReflection = (deformer.rotationReflection ?? [false, false]).map(Number)
   let rotationReflection: ReadonlyArray<number> = restReflection
 
-  for (const binding of document.parameterBindings ?? []) {
+  for (const binding of getTargetBindings(
+    document.parameterBindings ?? [],
+    'targetDeformerIds',
+    deformer.id,
+  )) {
     if (binding.targetDeformerIds?.includes(deformer.id) === true) {
       const sampled = sampleParameterDeformer({
         binding,

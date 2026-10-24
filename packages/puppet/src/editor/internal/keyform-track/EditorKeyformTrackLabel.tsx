@@ -1,4 +1,4 @@
-import {type JSX, Show} from 'solid-js'
+import {createMemo, type JSX, Show} from 'solid-js'
 import {
   isThreeDimensionalParameterBinding,
   isTwoDimensionalParameterBinding,
@@ -14,6 +14,10 @@ export interface EditorKeyformTrackLabelProps extends Pick<
   EditorKeyformTrackProps,
   'active' | 'binding' | 'parameters' | 'values' | 'onBindingSelect' | 'onValueChange'
 > {
+  /** Immediate selection feedback; omitted to follow the active editing state. */
+  readonly selected?: boolean
+  /** Activates a binding before a value edit; omitted to use onBindingSelect. */
+  readonly onBindingActivate?: (bindingId: string) => void
   readonly footer?: JSX.Element
   readonly influence?: number
   readonly previewOnly?: boolean
@@ -34,7 +38,8 @@ export const EditorKeyformTrackLabel = (props: EditorKeyformTrackLabelProps) => 
       index === axis ? value : current,
     ) as unknown as PuppetParameterValues
     if (!props.active) {
-      props.onBindingSelect?.(props.binding.id)
+      const activate = props.onBindingActivate ?? props.onBindingSelect
+      activate?.(props.binding.id)
     }
     props.onValueChange?.(values)
   }
@@ -44,8 +49,15 @@ export const EditorKeyformTrackLabel = (props: EditorKeyformTrackLabelProps) => 
       ? undefined
       : name
   }
-  const influenceLabel = () =>
-    `적용량 ${Number(((props.influence ?? 1) * WHOLE_PERCENT).toFixed(1))}%`
+  const influenceStatus = createMemo(() => {
+    const percent = Number(((props.influence ?? 1) * WHOLE_PERCENT).toFixed(1))
+    const label = props.previewOnly
+      ? '물리 입력 미리보기'
+      : percent === WHOLE_PERCENT
+        ? undefined
+        : `적용량 ${percent}%`
+    return label === undefined ? undefined : <span class="parameter-influence-status">{label}</span>
+  })
 
   return (
     <div
@@ -64,11 +76,7 @@ export const EditorKeyformTrackLabel = (props: EditorKeyformTrackLabelProps) => 
             footer={props.footer}
             groupName={groupName()}
             name={parameter().name}
-            status={
-              <span class="parameter-influence-status">
-                {props.previewOnly ? '물리 입력 미리보기' : influenceLabel()}
-              </span>
-            }
+            status={influenceStatus()}
             primaryControl={
               <ParameterValueField
                 parameter={parameter()}
@@ -91,7 +99,7 @@ export const EditorKeyformTrackLabel = (props: EditorKeyformTrackLabelProps) => 
                 )}
               </Show>
             }
-            pressed={props.active}
+            pressed={props.selected ?? props.active}
             secondaryName={secondParameter()?.name}
             tertiaryControl={
               <Show when={thirdParameter()}>

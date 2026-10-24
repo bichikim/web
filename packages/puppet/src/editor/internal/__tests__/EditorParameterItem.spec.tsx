@@ -261,3 +261,56 @@ test('should exclude a discrete parameter value selector from swipe deletion', (
   expect(onDelete).not.toHaveBeenCalled()
   expect(view.queryByText('놓아 삭제')).not.toBeInTheDocument()
 })
+
+test('should select the whole multi-parameter header without starting a name edit', () => {
+  const onSelect = vi.fn()
+  const view = render(() => (
+    <EditorParameterItem
+      name="Body Y"
+      secondaryName="Body X"
+      onSelect={onSelect}
+      onNameChange={vi.fn()}
+    />
+  ))
+  const header = view.getByRole('button', {name: 'Body Y / Body X 파라미터 선택'})
+  fireEvent.click(header)
+  fireEvent.click(header)
+  expect(onSelect).toHaveBeenCalledTimes(2)
+  expect(view.queryByRole('textbox', {name: 'Parameter 이름'})).not.toBeInTheDocument()
+})
+
+test('should keep numeric header controls independent of card selection', () => {
+  const onSelect = vi.fn()
+  const onValueChange = vi.fn()
+  const view = render(() => (
+    <EditorParameterItem
+      name="Angle X"
+      onSelect={onSelect}
+      primaryControl={
+        <EditorNumberField label="Angle X 값" value={0} onValueChange={onValueChange} />
+      }
+    />
+  ))
+  fireEvent.click(view.getByRole('spinbutton', {name: 'Angle X 값'}))
+  fireEvent.click(view.getByRole('button', {name: 'Angle X 값 증가'}))
+  expect(onValueChange).toHaveBeenLastCalledWith(1)
+  expect(onSelect).not.toHaveBeenCalled()
+  fireEvent.click(view.getByRole('button', {name: 'Angle X 파라미터 선택'}))
+  expect(onSelect).toHaveBeenCalledOnce()
+})
+
+test('should suppress header selection after a swipe and retain keyboard deletion', () => {
+  const {view, onSelect, onDelete} = renderItem()
+  const header = view.getByRole('button', {name: 'Angle X 파라미터 선택'})
+  header.dispatchEvent(new MouseEvent('pointerdown', {bubbles: true, button: 0, clientX: 200}))
+  globalThis.dispatchEvent(new MouseEvent('pointermove', {clientX: 220}))
+  globalThis.dispatchEvent(new MouseEvent('pointerup'))
+  fireEvent.click(header)
+  expect(onSelect).not.toHaveBeenCalled()
+  fireEvent.click(header)
+  expect(onSelect).toHaveBeenCalledOnce()
+  fireEvent.keyDown(header, {key: 'Delete'})
+  expect(onDelete).not.toHaveBeenCalled()
+  fireEvent.keyDown(header, {key: 'Delete'})
+  expect(onDelete).toHaveBeenCalledOnce()
+})

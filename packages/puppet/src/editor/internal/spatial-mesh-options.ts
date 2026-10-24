@@ -10,14 +10,14 @@ export const SPATIAL_SHAPES = [
 export const SPATIAL_OPERATIONS = [
   {
     description: '선택한 객체를 더합니다',
-    icon: 'puppet-icon-circle-plus',
+    icon: 'puppet-icon-boolean-union',
     label: '더하기',
     shortLabel: '더하기',
     value: 'add',
   },
   {
     description: '첫 객체에서 나머지를 뺍니다',
-    icon: 'puppet-icon-circle-minus',
+    icon: 'puppet-icon-boolean-subtract',
     label: '빼기',
     shortLabel: '빼기',
     value: 'subtract',

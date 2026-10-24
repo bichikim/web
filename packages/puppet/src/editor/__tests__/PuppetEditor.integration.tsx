@@ -1,3 +1,5 @@
+import {createDeformer, getSceneNode} from '../internal/scene-graph'
+import {isTwoDimensionalParameterBinding} from '../../deformation'
 /** @vitest-environment jsdom */
 
 import {cleanup, fireEvent, render, screen, waitFor, within} from '@solidjs/testing-library'
@@ -5,6 +7,8 @@ import {createSignal} from 'solid-js'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 import {createDemoDocument, type PuppetDocument} from '../../player'
 import {PuppetEditor} from '../PuppetEditor'
+import {waitForSelectionReady} from './fixtures/selection'
+
 import {createPlayerFixture} from './fixtures/player'
 
 const mocks = vi.hoisted(() => ({createPlayer: vi.fn()}))
@@ -67,7 +71,9 @@ describe('PuppetEditor', () => {
     fireEvent.click(view.getByRole('button', {name: '기준 배치'}))
     expect(view.getByRole('button', {name: '기준 배치'})).toHaveAttribute('aria-pressed', 'true')
     fireEvent.click(view.container.querySelector('.layer-scroll')!)
+    await waitForSelectionReady()
     fireEvent.click(view.getByRole('button', {name: 'mesh-preview 레이어 선택'}))
+    await waitForSelectionReady()
     expect(view.getByRole('button', {name: '키폼 변형'})).toHaveAttribute('aria-pressed', 'true')
   })
 
@@ -157,6 +163,7 @@ describe('PuppetEditor', () => {
     await waitFor(() => expect(mocks.createPlayer).toHaveBeenCalledOnce())
 
     fireEvent.click(view.getByRole('button', {name: '애니메이션'}))
+    await waitForSelectionReady()
     expect(view.queryByRole('button', {name: 'idle-deform 이벤트 실행'})).not.toBeInTheDocument()
     expect(view.getByRole('region', {name: '저장 데이터 플레이어 미리보기'})).toBeVisible()
     const playerOptions = mocks.createPlayer.mock.calls[0]?.[0]
@@ -303,4 +310,60 @@ describe('PuppetEditor', () => {
     expect(overlays).toHaveProperty('inert', false)
     expect(overlays?.querySelector('circle')).toBe(vertex)
   })
+})
+
+test('should keep the rendered document when selecting layers at unchanged parameter values', async () => {
+  const source = createDemoDocument()
+  const binding = source.parameterBindings![0]!
+  if (!isTwoDimensionalParameterBinding(binding)) {
+    throw new Error('Expected a two-dimensional demo binding')
+  }
+  const part = source.parts[1]!
+  const document: PuppetDocument = {
+    ...source,
+    motions: [],
+    parameterBindings: [
+      {
+        ...binding,
+        keyforms: binding.keyforms.map((form) => ({
+          ...form,
+          parts: [...form.parts, {partId: part.id, vertices: part.mesh.vertices}],
+        })),
+        targetPartIds: [source.parts[0]!.id, part.id],
+      },
+    ],
+  }
+  const view = render(() => <PuppetEditor initialDocument={document} />)
+  await waitFor(() => expect(mocks.createPlayer).toHaveBeenCalled())
+  const updates = vi.mocked(player.updateDocument).mock.calls.length
+  const mounts = mocks.createPlayer.mock.calls.length
+  fireEvent.click(view.getByRole('button', {name: `${part.id} 레이어 선택`}))
+  await waitForSelectionReady()
+  expect(view.getByRole('button', {name: `${part.id} 레이어 선택`})).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  )
+  expect(player.updateDocument).toHaveBeenCalledTimes(updates)
+  expect(mocks.createPlayer).toHaveBeenCalledTimes(mounts)
+})
+
+test('should switch from a bound part to a deformer without rendering an intermediate selection', async () => {
+  const source = createDemoDocument()
+  const document = createDeformer(source, [source.parts[0]!.id])!
+  const deformer =
+    document.scene!.roots.find((node) => node.kind === 'deformer') ??
+    document
+      .scene!.roots.flatMap((node) => (node.kind === 'part' ? [] : node.children))
+      .find((node) => node.kind === 'deformer')!
+  expect(getSceneNode(document, deformer.id)?.kind).toBe('deformer')
+  const view = render(() => <PuppetEditor initialDocument={{...document, motions: []}} />)
+  await waitFor(() => expect(mocks.createPlayer).toHaveBeenCalled())
+  const updates = vi.mocked(player.updateDocument).mock.calls.length
+  fireEvent.click(view.getByRole('button', {name: `${deformer.name} 레이어 선택`}))
+  await waitForSelectionReady()
+  expect(view.getByRole('button', {name: `${deformer.name} 레이어 선택`})).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  )
+  expect(player.updateDocument).toHaveBeenCalledTimes(updates)
 })

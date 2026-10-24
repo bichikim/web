@@ -24,7 +24,7 @@ export const viewerShortcuts = {
   'puppet-viewer-surface': 'absolute inset-0',
   'puppet-viewer-time': 'editor-type-metadata font-editor-mono ml-auto whitespace-nowrap',
   'puppet-viewer-toolbar': [
-    'flex flex-wrap items-center gap-editor-group p-editor-group bg-[#101513]',
+    'workspace-header bg-[#101513]',
     '[border:0] [border-bottom:0.0625rem_solid_#27302d]',
   ],
 }
@@ -126,11 +126,6 @@ export const runtimeShortcuts = {
   'puppet-runtime-actions': [
     'flex flex-wrap items-center gap-editor-related [&_input]:min-w-0 [&_input]:max-w-36',
   ],
-  'puppet-runtime-body': [
-    'grid min-h-0 min-w-0 [grid-template-columns:minmax(0,1fr)_22rem]',
-    '[@media(max-width:48rem)]:[grid-template-columns:minmax(0,1fr)]',
-    '[@media(max-width:48rem)]:[grid-template-rows:minmax(12rem,1fr)_minmax(0,40vh)]',
-  ],
   'puppet-runtime-bounds': [
     'grid [grid-template-columns:repeat(2,minmax(0,1fr))] gap-editor-related [&_label]:min-w-0',
   ],
@@ -146,6 +141,10 @@ export const runtimeShortcuts = {
     'grid [grid-template-columns:minmax(0,1fr)_5rem_auto] items-center gap-editor-related',
     '[&_label]:[grid-column:1/-1] [&_label]:text-editor-caption',
   ],
+  'puppet-runtime-resizer': [
+    '[grid-column:2] [grid-row:1] cursor-col-resize touch-none bg-[#27302d]',
+    'hover:bg-[#64e5c4] focus-visible:bg-[#64e5c4] focus-visible:outline-2 focus-visible:outline-[#64e5c4]',
+  ],
   'puppet-runtime-section': [
     'grid shrink-0 gap-editor-field [border:0] [border-bottom:0.0625rem_solid_#27302d] pb-editor-group',
     '[&:is(details):not([open])]:block',
@@ -156,19 +155,10 @@ export const runtimeShortcuts = {
     'flex flex-col gap-editor-group min-h-0 min-w-0 overflow-y-auto p-editor-group bg-[#101513]',
     '[border:0] [border-left:0.0625rem_solid_#27302d]',
   ],
-  'puppet-studio-resizer': [
-    '[grid-column:2] [grid-row:1] cursor-col-resize touch-none bg-[#27302d]',
-    'hover:bg-[#64e5c4] focus-visible:bg-[#64e5c4] focus-visible:outline-2 focus-visible:outline-[#64e5c4]',
-    '[@media(max-width:48rem)]:hidden',
-  ],
-  'puppet-studio-split': [
-    'grid min-h-0 min-w-0 [grid-template-columns:var(--studio-stage-width)_0.5rem_minmax(0,1fr)]',
+  'puppet-runtime-split': [
+    'grid min-h-0 min-w-0 [grid-template-columns:minmax(0,var(--runtime-stage-width))_0.5rem_minmax(0,1fr)]',
     '[&>.puppet-viewer-stage]:[grid-column:1] [&>.puppet-viewer-stage]:[grid-row:1]',
-    '[&>.puppet-studio-tools]:[grid-column:3] [&>.puppet-studio-tools]:[grid-row:1]',
-    '[@media(max-width:48rem)]:[grid-template-columns:minmax(0,1fr)]',
-    '[@media(max-width:48rem)]:[grid-template-rows:minmax(12rem,35vh)_minmax(0,1fr)]',
-    '[@media(max-width:48rem)]:[&>.puppet-studio-tools]:[grid-column:1]',
-    '[@media(max-width:48rem)]:[&>.puppet-studio-tools]:[grid-row:2]',
+    '[&>aside]:[grid-column:3] [&>aside]:[grid-row:1]',
   ],
   'puppet-studio-tools': [
     'flex flex-col min-h-0 min-w-0 overflow-hidden bg-[#101513]',

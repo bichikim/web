@@ -1,9 +1,15 @@
+import type {
+  ParameterEditorResult,
+  UseParameterEditorProps,
+} from './internal/parameter-editor/types'
+export type {ParameterEditorResult} from './internal/parameter-editor/types'
 import {useInfluencePreview} from './internal/use-influence-preview'
 import {setParameterInfluences} from './internal/parameter-influences'
-import {type Accessor, createEffect, createMemo, createSignal, type Setter} from 'solid-js'
+import {type Accessor, batch, createEffect, createMemo, createSignal, type Setter} from 'solid-js'
 
 import {
   getDefaultParameterValueMap,
+  getParameterBindingValueMap,
   getParameterBindingValues,
   MAX_PARAMETER_DIMENSIONS,
   type ParameterDimensions,
@@ -41,46 +47,6 @@ import {
   type CornerKeyformSettings,
   generateCornerKeyforms,
 } from './internal/generate-corner-keyforms'
-
-interface UseParameterEditorProps {
-  readonly document: Accessor<PuppetDocument>
-  readonly onDocumentChange: (document: PuppetDocument) => void
-  readonly onNotice: Setter<string | null>
-  readonly selectedNodeIds: Accessor<ReadonlyArray<string>>
-}
-
-export interface ParameterEditorResult {
-  readonly mirrorKeyform: (settings: MirrorKeyformSettings) => string | null
-  readonly generateCorners: (settings: CornerKeyformSettings) => string | null
-  readonly previewDocument: Accessor<PuppetDocument>
-  readonly previewInfluences: (influences: ReadonlyArray<PuppetParameterInfluence> | null) => void
-  readonly influence: Accessor<number>
-  readonly setInfluences: (influences: ReadonlyArray<PuppetParameterInfluence>) => boolean
-  readonly activeBinding: Accessor<PuppetParameterBinding | undefined>
-  readonly activeBindingId: Accessor<string | null>
-  readonly activeKeyformValues: Accessor<PuppetParameterValues | null>
-  readonly activeTargetNodeIds: Accessor<ReadonlyArray<string>>
-  readonly allParametersVisible: Accessor<boolean>
-  readonly addKeyform: () => void
-  readonly addParameter: () => void
-  readonly addThreeDimensionalParameter: () => void
-  readonly addTwoDimensionalParameter: () => void
-  readonly connectSelection: () => void
-  readonly deleteKeyform: () => void
-  /** Deletes the active 3D binding's plane at third value `value`. */
-  readonly deleteKeyformPlane: (value: number) => void
-  readonly deleteParameter: (bindingId: string) => void
-  readonly disconnectSelection: () => void
-  readonly moveKeyform: (values: PuppetParameterValues, nextValues: PuppetParameterValues) => void
-  readonly parameterValues: Accessor<PuppetParameterValues>
-  readonly parameterValueMap: Accessor<PuppetParameterValueMap>
-  readonly renameParameter: (parameterId: string, name: string) => void
-  readonly reset: (document: PuppetDocument) => void
-  readonly selectBinding: (bindingId: string) => void
-  readonly selectKeyform: (values: PuppetParameterValues) => void
-  readonly setAllParametersVisible: Setter<boolean>
-  readonly setParameterValues: (values: PuppetParameterValues) => void
-}
 
 const getDefaultKeyformValues = (
   document: PuppetDocument,
@@ -140,8 +106,10 @@ const selectBindingState = (
   parameterValues: PuppetParameterValueMap,
   setters: ParameterSelectionSetters,
 ) => {
-  setters.activeBindingId(binding?.id ?? null)
-  setters.activeKeyformValues(getDefaultKeyformValues(document, binding, parameterValues))
+  batch(() => {
+    setters.activeBindingId(binding?.id ?? null)
+    setters.activeKeyformValues(getDefaultKeyformValues(document, binding, parameterValues))
+  })
 }
 
 /** Connects or disconnects the selection with the active binding, if any. */
@@ -279,17 +247,18 @@ const createParameterValueHandler = (options: CreateParameterValueHandlerOptions
       const parameter = parameters[index]
       return parameter === undefined ? 0 : resolveParameterValue(parameter, value)
     }) as unknown as PuppetParameterValues
-    options.setParameterValueMap((currentValues) => ({
-      ...currentValues,
-      ...Object.fromEntries(
-        binding.parameterIds.map((parameterId, index) => [parameterId, nextValues[index]]),
-      ),
-    }))
-    options.setActiveKeyformValues(
-      binding.keyforms.some((keyform) => parameterValuesEqual(keyform.values, nextValues))
-        ? nextValues
-        : null,
-    )
+    batch(() => {
+      options.props.onBindingActivate?.(binding.id)
+      options.setParameterValueMap((currentValues) => ({
+        ...currentValues,
+        ...getParameterBindingValueMap(binding, nextValues),
+      }))
+      options.setActiveKeyformValues(
+        binding.keyforms.some((keyform) => parameterValuesEqual(keyform.values, nextValues))
+          ? nextValues
+          : null,
+      )
+    })
   }
 
 interface CreateKeyformMoveHandlerOptions extends CreateParameterValueHandlerOptions {
@@ -320,9 +289,7 @@ const createKeyformMoveHandler =
       options.onDocumentChange(document)
       options.setParameterValueMap((currentValues) => ({
         ...currentValues,
-        ...Object.fromEntries(
-          binding.parameterIds.map((parameterId, index) => [parameterId, nextValues[index]]),
-        ),
+        ...getParameterBindingValueMap(binding, nextValues),
       }))
       options.setActiveKeyformValues(nextValues)
       options.onNotice(null)
@@ -450,6 +417,38 @@ const createKeyformGenerationHandlers = (options: KeyformGenerationHandlersOptio
   }
 }
 
+const createVisibilityHandler =
+  (
+    props: UseParameterEditorProps,
+    activeBindingId: Accessor<string | null>,
+    setVisible: Setter<boolean>,
+  ): Setter<boolean> =>
+  (next) => {
+    const visible = setVisible(next)
+    const bindingId = activeBindingId()
+    if (bindingId !== null) {
+      props.onBindingActivate?.(bindingId)
+    }
+    return visible
+  }
+
+const createBindingSelectionHandler =
+  (
+    props: UseParameterEditorProps,
+    parameterValueMap: Accessor<PuppetParameterValueMap>,
+    setters: ParameterSelectionSetters,
+  ) =>
+  (bindingId: string) => {
+    const document = props.document()
+    const binding = getDocumentParameterBindings(document).find(
+      (candidate) => candidate.id === bindingId,
+    )
+    if (binding !== undefined) {
+      selectBindingState(document, binding, parameterValueMap(), setters)
+      props.onBindingActivate?.(bindingId)
+    }
+  }
+
 export const useParameterEditor = (props: UseParameterEditorProps): ParameterEditorResult => {
   const [initialBinding] = getSelectableBindings(
     props.document(),
@@ -494,15 +493,7 @@ export const useParameterEditor = (props: UseParameterEditorProps): ParameterEdi
     {activeBindingId, parameterValueMap, props, setters},
     allParametersVisible,
   )
-  const selectBinding = (bindingId: string) => {
-    const document = props.document()
-    const binding = getDocumentParameterBindings(document).find(
-      (candidate) => candidate.id === bindingId,
-    )
-    if (binding !== undefined) {
-      selectBindingState(document, binding, parameterValueMap(), setters)
-    }
-  }
+  const selectBinding = createBindingSelectionHandler(props, parameterValueMap, setters)
   const updateValues = createParameterValueHandler({
     activeBinding,
     props,
@@ -577,6 +568,10 @@ export const useParameterEditor = (props: UseParameterEditorProps): ParameterEdi
     previewInfluences,
     renameParameter: (parameterId, name) =>
       applyParameterName(props, activeBindingId(), parameterId, name),
+    requestBinding: (bindingId) =>
+      props.onSelectionRequest === undefined
+        ? selectBinding(bindingId)
+        : props.onSelectionRequest(bindingId),
     reset(document) {
       const nextParameterValues = getDefaultParameterValueMap(document)
       setParameterValueMap(nextParameterValues)
@@ -588,10 +583,13 @@ export const useParameterEditor = (props: UseParameterEditorProps): ParameterEdi
       )
     },
     selectBinding,
-    selectKeyform(values) {
-      updateValues(values)
-    },
-    setAllParametersVisible,
+    selectedBindingId: () => props.selectedBindingId?.() ?? activeBindingId(),
+    selectKeyform: updateValues,
+    setAllParametersVisible: createVisibilityHandler(
+      props,
+      activeBindingId,
+      setAllParametersVisible,
+    ),
     setInfluences: (influences) => applyInfluences(props, activeBinding(), influences),
     setParameterValues: updateValues,
   }

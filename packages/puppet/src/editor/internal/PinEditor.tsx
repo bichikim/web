@@ -10,6 +10,7 @@ export const PinEditor = (props: PinEditorProps) => {
     <div class="bone-tools" role="group" aria-label="핀 편집 도구">
       <div class="mask-actions">
         <DeformerMode
+          mount={props.brushControlsMount}
           mode={props.deformerMode ?? 'pose'}
           restEditable={editor.restEditable()}
           onChange={(mode) => {

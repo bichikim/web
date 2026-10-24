@@ -1,3 +1,5 @@
+import {createMemo} from 'solid-js'
+import {getParameterIndex} from '../../player/parameter-index'
 import type {PuppetParameterValues} from '../../deformation'
 import type {PuppetParameterBinding} from '../../player/document'
 import type {EditorKeyformPanelProps} from './editor-keyform-panel-props'
@@ -5,8 +7,7 @@ import type {EditorKeyformPanelProps} from './editor-keyform-panel-props'
 export const createKeyformPanelModel = (props: EditorKeyformPanelProps) => {
   const activeBinding = () => props.bindings.find((binding) => binding.id === props.activeBindingId)
   const activePreview = () => props.previewBindingIds?.has(props.activeBindingId ?? '') === true
-  const parameterById = () =>
-    new Map(props.parameters.map((parameter) => [parameter.id, parameter]))
+  const parameterById = createMemo(() => getParameterIndex(props.parameters))
   const bindingParameters = (binding: PuppetParameterBinding) =>
     binding.parameterIds.flatMap((parameterId) => {
       const parameter = parameterById().get(parameterId)

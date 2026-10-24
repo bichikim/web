@@ -1,5 +1,10 @@
 import {type Accessor, createMemo, createSignal} from 'solid-js'
-import type {PuppetParameterValueMap, PuppetParameterValues} from '../../deformation'
+import {isEqual} from 'es-toolkit/predicate'
+import {
+  getParameterBindingValueMap,
+  type PuppetParameterValueMap,
+  type PuppetParameterValues,
+} from '../../deformation'
 import type {PuppetDocument, PuppetParameterKeyformBase} from '../../player/document'
 import {getParameterBinding, getParameterTargetNodeIds} from './parameter-keyforms'
 import {applyTemporaryForm, createTemporaryTarget, readTemporaryForm} from './temporary-form'
@@ -74,20 +79,22 @@ export const useTemporaryForm = (options: TemporaryFormOptions) => {
     const binding = id === undefined ? undefined : getParameterBinding(document(), id)
     return binding === undefined ? [] : getParameterTargetNodeIds(binding)
   }
-  const valueMap = () => {
-    const current = target()
-    const binding =
-      current === undefined ? undefined : getParameterBinding(current.document, current.bindingId)
-    const map = options.parameterValueMap?.() ?? {}
-    return binding === undefined || current === undefined
-      ? map
-      : {
-          ...map,
-          ...Object.fromEntries(
-            binding.parameterIds.map((id, index) => [id, current.values[index]]),
-          ),
-        }
-  }
+  const valueMap = createMemo<PuppetParameterValueMap>(
+    () => {
+      const current = target()
+      const binding =
+        current === undefined ? undefined : getParameterBinding(current.document, current.bindingId)
+      const map = options.parameterValueMap?.() ?? {}
+      return binding === undefined || current === undefined
+        ? map
+        : {
+            ...map,
+            ...getParameterBindingValueMap(binding, current.values),
+          }
+    },
+    {},
+    {equals: isEqual},
+  )
   return {
     bindingId,
     document,

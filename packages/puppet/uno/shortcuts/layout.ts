@@ -7,6 +7,7 @@ export const layoutShortcuts = {
     'h-full [&>div]:h-full [&>[role=status]]:sr-only',
     '[&_.panel-note]:invisible [&_.timeline-empty]:invisible [&_.renderer-status]:invisible',
   ],
+  'editor-track-columns': '[grid-template-columns:13.75rem_minmax(0,_1fr)]',
   'grid-curve-button': [
     '[.puppet-editor_&]:[min-height:1.625rem] [.puppet-editor_&]:p-editor-related',
     '[.puppet-editor_&]:[border:0.0625rem_solid_#53655f] [.puppet-editor_&]:[border-radius:0.3125rem]',
@@ -82,6 +83,7 @@ export const layoutShortcuts = {
   'puppet-editor': [
     'editor-type-root',
     '[container-type:inline-size]',
+    '[container-name:puppet-workspace]',
     '[--editor-control-height:1.40625rem]',
     '[--bottom-grid-size:var(--bottom-panel-size,_16.25rem)] [--bottom-resizer-size:0.375rem]',
     '[--left-grid-size:var(--left-panel-size,_18.75rem)] [--left-resizer-size:0.375rem]',
@@ -132,12 +134,9 @@ export const layoutShortcuts = {
     '[.puppet-editor_&]:[box-shadow:0_0_0_0.25rem_rgb(229_181_90_/_10%)]',
   ],
   toolbar: [
-    '[.puppet-editor_&]:min-w-0 [.puppet-editor_&]:[max-width:100cqw]',
-    '[.puppet-editor_&]:[grid-area:toolbar] [.puppet-editor_&]:flex [.puppet-editor_&]:items-center',
-    '[.puppet-editor_&]:justify-between [.puppet-editor_&]:py-editor-control [.puppet-editor_&]:px-editor-group',
-    '[.puppet-editor_&]:flex-wrap [.puppet-editor_&]:content-center',
-    '[.puppet-editor_&]:gap-x-editor-group [.puppet-editor_&]:gap-y-editor-related',
-    '[.puppet-editor_&]:[border-bottom:0.0625rem_solid_#27302d] [.puppet-editor_&]:[background:#111614]',
+    'workspace-header [.puppet-editor_&]:[max-width:100cqw]',
+    '[.puppet-editor_&]:[grid-area:toolbar] [.puppet-editor_&]:justify-between',
+    '[.puppet-editor_&]:[background:#111614]',
   ],
   'toolbar-actions': [
     '[.puppet-editor_&]:flex [.puppet-editor_&]:items-center',
@@ -205,7 +204,15 @@ export const layoutShortcuts = {
     '[.puppet-editor_&]:[block-size:0.0625rem] [.puppet-editor_&]:overflow-hidden',
     '[.puppet-editor_&]:[clip-path:inset(50%)] [.puppet-editor_&]:whitespace-nowrap',
   ],
-  'workspace-navigation': 'flex items-center gap-editor-related shrink-0',
+  'workspace-header': [
+    '[.puppet-editor_&]:box-border [.puppet-editor_&]:min-h-12 [.puppet-editor_&]:min-w-0',
+    '[.puppet-editor_&]:flex [.puppet-editor_&]:flex-wrap [.puppet-editor_&]:items-center',
+    '[.puppet-editor_&]:content-center [.puppet-editor_&]:py-editor-control [.puppet-editor_&]:px-editor-group',
+    '[.puppet-editor_&]:gap-x-editor-group [.puppet-editor_&]:gap-y-editor-related',
+    '[.puppet-editor_&]:[border-bottom:0.0625rem_solid_#27302d]',
+  ],
+  'workspace-navigation': 'shrink-0',
+  'workspace-navigation-label': ['[@container_puppet-workspace_(max-width:_42rem)]:hidden'],
   'workspace-switcher': [
     '[.puppet-editor_&]:flex [.puppet-editor_&]:items-center',
     '[.puppet-editor_&]:gap-editor-related [.puppet-editor_&]:p-editor-related',

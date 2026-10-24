@@ -161,15 +161,39 @@ export const createLayerFragment = (
   }
 }
 
-/** Returns whether every selected subtree can be removed. */
+const removalIndexes = new WeakMap<ReadonlyArray<PuppetSceneNode>, ReadonlyMap<string, boolean>>()
+
+const getRemovalIndex = (roots: ReadonlyArray<PuppetSceneNode>) => {
+  let indexed = removalIndexes.get(roots)
+  if (indexed === undefined) {
+    const removable = new Map<string, boolean>()
+    const visit = (node: PuppetSceneNode, inheritedLocked: boolean): boolean => {
+      const locked = inheritedLocked || node.locked
+      const children = isSceneContainerNode(node)
+        ? node.children.map((child) => visit(child, locked))
+        : []
+      const allowed = !locked && children.every(Boolean)
+      removable.set(node.id, allowed)
+      return allowed
+    }
+    roots.forEach((node) => visit(node, false))
+    indexed = removable
+    removalIndexes.set(roots, indexed)
+  }
+  return indexed
+}
+
+/** Returns whether every selected subtree can be removed, including inherited locks. */
 export const canRemoveLayerNodes = (
   document: PuppetDocument,
   nodeIds: ReadonlyArray<string>,
 ): boolean => {
-  const selection = getSelectionIds(document, nodeIds)
-  return (
-    selection.roots.length > 0 && [...selection.ids].every((id) => !isSceneNodeLocked(document, id))
-  )
+  const indexed = getRemovalIndex(getDocumentScene(document).roots)
+  const selected = nodeIds.flatMap((id) => {
+    const removable = indexed.get(id)
+    return removable === undefined ? [] : [removable]
+  })
+  return selected.length > 0 && selected.every(Boolean)
 }
 
 /** Removes selected subtrees and references to their nodes and parts. */

@@ -47,6 +47,8 @@ test('should keep the grid selector in the shared toolbar and settings above the
     </>
   ))
   const brush = within(controls).getByRole('button', {name: '디포머 변형 브러시'})
+  expect(within(controls).getByRole('group', {name: '디포머 편집 방식'})).toBeVisible()
+  expect(within(inspector).queryByRole('group', {name: '디포머 편집 방식'})).toBeNull()
   expect(view.getAllByRole('button', {name: '디포머 변형 브러시'})).toHaveLength(1)
   expect(within(inspector).queryByRole('button', {name: '디포머 변형 브러시'})).toBeNull()
   fireEvent.click(brush)

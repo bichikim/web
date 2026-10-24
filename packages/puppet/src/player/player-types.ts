@@ -101,7 +101,11 @@ export interface Player {
   startMotion(motionId: string, options?: MotionPlaybackOptions): MotionPlayback | undefined
   /** Removes all motion contributions and resets the selected motion's time. */
   stop(): void
-  updateDocument(document: PreparedPuppetDocument): boolean
+  /** Replaces the document and optional parameter overrides in one frame. */
+  updateDocument(
+    document: PreparedPuppetDocument,
+    parameterValues?: PuppetParameterValueMap,
+  ): boolean
 }
 
 export interface PlayerPlaybackOptions {

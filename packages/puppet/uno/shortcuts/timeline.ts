@@ -25,7 +25,7 @@ export const timelineShortcuts = {
   'timeline-document-controls': ['[.puppet-editor_&]:gap-editor-field'],
   'timeline-dopesheet': [
     '[.puppet-editor_&]:grid [.puppet-editor_&]:min-w-0 [.puppet-editor_&]:min-h-0',
-    '[.puppet-editor_&]:[grid-template-columns:13.75rem_minmax(0,_1fr)]',
+    '[.puppet-editor_&]:editor-track-columns',
     '[.puppet-editor_&]:[align-content:start] [.puppet-editor_&]:overflow-y-auto',
     '[.puppet-editor_&]:overflow-x-hidden',
   ],

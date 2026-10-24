@@ -3,7 +3,8 @@ import type {PuppetDocument} from '../player'
 import {createRuntimeProfile} from '../tracking/create-runtime-profile'
 import {restoreRuntimeProfile} from '../tracking/restore-runtime-profile'
 import {parseRuntimeProfile} from '../tracking/parse-runtime-profile'
-import type {RuntimeProfile} from '../tracking/types'
+import type {RuntimeProfile, RuntimeView} from '../tracking/types'
+import {isRuntimeViewEqual} from './is-runtime-view-equal'
 
 const sessionKey = (signature: string) => `puppet:runtime-session:v1:${signature}`
 const storageKey = (signature: string) => `puppet:runtime-profile:v1:${signature}`
@@ -60,6 +61,18 @@ export const useRuntimeProfile = (document: Accessor<PuppetDocument | undefined>
       return current === undefined ? undefined : restoreRuntimeProfile(value, current)
     },
     profile,
+    retainCamera: () => {
+      const current = profile()
+      if (current?.view?.fitted) {
+        updateProfile({...current, view: {...current.view, fitted: false}})
+      }
+    },
     updateProfile,
+    updateView: (view: RuntimeView) => {
+      const current = profile()
+      if (current !== undefined && !isRuntimeViewEqual(current.view, view)) {
+        updateProfile({...current, view})
+      }
+    },
   }
 }

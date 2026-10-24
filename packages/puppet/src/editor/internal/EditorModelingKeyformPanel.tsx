@@ -76,6 +76,9 @@ export const EditorModelingKeyformPanel = (props: EditorModelingKeyformPanelProp
       onCornersGenerate={props.editor.generateCorners}
       setBrushControlsMount={props.setBrushControlsMount}
       bindingInfluences={bindingInfluences()}
+      selectedBindingId={
+        props.editor.selectedBindingId?.() ?? props.editor.activeBindingId() ?? undefined
+      }
       activeBindingId={props.editor.activeBindingId() ?? undefined}
       activeKeyformValues={props.editor.activeKeyformValues()}
       allParametersVisible={props.editor.allParametersVisible()}
@@ -104,7 +107,8 @@ export const EditorModelingKeyformPanel = (props: EditorModelingKeyformPanelProp
         props.editor.selectKeyform(values)
       }}
       onBindingDelete={props.editor.deleteParameter}
-      onBindingSelect={props.editor.selectBinding}
+      onBindingActivate={props.editor.selectBinding}
+      onBindingSelect={props.editor.requestBinding ?? props.editor.selectBinding}
       onParameterAdd={props.editor.addParameter}
       onParameterNameChange={(bindingId, parameterId, name) => {
         props.editor.selectBinding(bindingId)

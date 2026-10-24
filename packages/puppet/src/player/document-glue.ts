@@ -5,6 +5,8 @@ export interface PuppetEdgeReference extends PuppetVertexReference {
 }
 
 export interface PuppetGlue {
+  /** 연결 순서대로 공유 정점을 계산한다. 생략하면 기존 정점 독점 규칙을 사용한다. */
+  readonly composition?: 'sequential'
   readonly id: string
   readonly first: PuppetVertexReference
   readonly second: PuppetVertexReference | PuppetEdgeReference

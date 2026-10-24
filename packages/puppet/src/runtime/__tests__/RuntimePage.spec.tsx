@@ -57,17 +57,16 @@ test('should select motions, pause and resume the player, and release it on unmo
   view.unmount()
   expect(player.destroy).toHaveBeenCalledOnce()
 })
-test('should reset and fit the model through the player camera', async () => {
-  const {player} = await renderPage()
-  fireEvent.click(screen.getByRole('button', {name: '원점 · 100%'}))
-  expect(player.setViewCamera).toHaveBeenLastCalledWith({x: 0, y: 0, zoom: 1})
-  vi.mocked(player.setViewCamera).mockClear()
-  fireEvent.click(screen.getByRole('button', {name: '화면 맞춤'}))
-  expect(player.setViewCamera).toHaveBeenLastCalledWith({
-    x: expect.closeTo(-32),
-    y: expect.closeTo(-24),
-    zoom: expect.closeTo(1 / 1.1),
-  })
+test('should reset and fit the model through the shared viewport camera', async () => {
+  const {view} = await renderPage()
+  const viewport = view.getByRole('region', {name: '모델 보기'})
+  fireEvent.click(view.getByRole('button', {name: '원점 · 100%'}))
+  expect(viewport.style.getPropertyValue('--camera-zoom')).toBe('1')
+  expect(viewport.style.getPropertyValue('--camera-x')).toBe('0px')
+  fireEvent.click(view.getByRole('button', {name: '화면 맞춤'}))
+  expect(Number(viewport.style.getPropertyValue('--camera-zoom'))).toBeCloseTo(1)
+  expect(view.getByLabelText('가로 좌표 자')).toBeInTheDocument()
+  expect(view.getByLabelText('세로 좌표 자')).toBeInTheDocument()
 })
 test('should update the stage background after committing a color', async () => {
   const {view} = await renderPage()
@@ -152,4 +151,12 @@ test('should release a player that finishes initialization after the page unmoun
   view.unmount()
   finish(player)
   await waitFor(() => expect(player.destroy).toHaveBeenCalledOnce())
+})
+
+test('should keep studio file commands out of the viewer menu', async () => {
+  const {view} = await renderPage()
+  fireEvent.click(view.getByRole('button', {name: '메인 메뉴'}))
+  expect(view.getByRole('button', {name: '모델 불러오기'})).toBeVisible()
+  expect(view.queryByRole('button', {name: '스튜디오 저장'})).not.toBeInTheDocument()
+  expect(view.queryByRole('button', {name: '스튜디오 불러오기'})).not.toBeInTheDocument()
 })

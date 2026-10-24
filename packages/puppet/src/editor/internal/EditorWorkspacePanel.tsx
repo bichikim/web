@@ -5,6 +5,8 @@ import {EditorModelingKeyformPanel} from './EditorModelingKeyformPanel'
 import {EditorTimeline} from './EditorTimeline'
 
 interface EditorWorkspacePanelProps {
+  /** Blocks old target edits while a layer or workspace change is prepared; omitted for normal editing. */
+  readonly selectionPending?: boolean
   readonly currentTime: number
   readonly document: PuppetDocument
   readonly editor: ParameterEditorResult
@@ -26,6 +28,7 @@ export const EditorWorkspacePanel = (props: EditorWorkspacePanelProps) => (
     when={props.workspace === 'modeling'}
     fallback={
       <EditorTimeline
+        selectionPending={props.selectionPending}
         currentTime={props.currentTime}
         document={props.document}
         isPlaying={props.isPlaying}
@@ -41,7 +44,12 @@ export const EditorWorkspacePanel = (props: EditorWorkspacePanelProps) => (
       />
     }
   >
-    <section class="modeling-panel" aria-label="Parameter와 키폼 편집">
+    <section
+      class="modeling-panel"
+      aria-label="Parameter와 키폼 편집"
+      inert={props.selectionPending}
+      aria-busy={props.selectionPending || undefined}
+    >
       <EditorModelingKeyformPanel
         document={props.document}
         editor={props.editor}

@@ -1,8 +1,10 @@
 /** @vitest-environment jsdom */
 
+import {waitForSelectionReady} from './fixtures/selection'
+
 import {createPlayerFixture} from './fixtures/player'
 
-import {cleanup, fireEvent, render, screen} from '@solidjs/testing-library'
+import {cleanup, fireEvent, render, screen, within} from '@solidjs/testing-library'
 
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 
@@ -49,21 +51,49 @@ beforeEach(() => {
 })
 
 describe('PuppetEditor', () => {
-  test('should show mesh vertices for a part but hide them when its deformer is selected', () => {
+  test.each(['자유 변형 디포머', '회전 디포머', '본 디포머', '핀 디포머'])(
+    'should keep %s mode switches in the bottom toolbar and restore part controls on selection',
+    async (kind) => {
+      const view = render(() => <PuppetEditor initialDocument={createDemoDocument()} />)
+      fireEvent.click(view.getByRole('button', {name: '그룹'}))
+      await waitForSelectionReady()
+      fireEvent.keyDown(view.getByRole('button', {name: '새 그룹 종류 변경'}), {key: 'Enter'})
+      fireEvent.keyDown(await screen.findByRole('menuitemradio', {name: kind}), {key: 'Enter'})
+
+      const bottom = within(view.getByRole('region', {name: 'Parameters'}))
+      const inspector = within(view.getByRole('complementary', {name: '선택 작업'}))
+      const mode = within(bottom.getByRole('group', {name: '디포머 편집 방식'}))
+      expect(inspector.queryByRole('group', {name: '디포머 편집 방식'})).toBeNull()
+      fireEvent.click(mode.getByRole('button', {name: '기준 배치'}))
+      expect(mode.getByRole('button', {name: '기준 배치'})).toHaveAttribute('aria-pressed', 'true')
+      fireEvent.click(mode.getByRole('button', {name: '변형 편집'}))
+      expect(mode.getByRole('button', {name: '변형 편집'})).toHaveAttribute('aria-pressed', 'true')
+
+      fireEvent.click(view.getByRole('button', {name: 'mesh-preview 레이어 선택'}))
+      await waitForSelectionReady()
+      expect(bottom.queryByRole('group', {name: '디포머 편집 방식'})).toBeNull()
+      expect(bottom.getByRole('group', {name: '정점 편집 방식'})).toBeVisible()
+    },
+  )
+
+  test('should show mesh vertices for a part but hide them when its deformer is selected', async () => {
     const document = createDeformer(createDemoDocument(), ['mesh-preview'])!
     const view = render(() => <PuppetEditor initialDocument={document} />)
     const mesh = () => view.queryByLabelText('메시 정점 편집 영역')
 
     fireEvent.click(view.getByRole('button', {name: 'mesh-preview 레이어 선택'}))
+    await waitForSelectionReady()
     expect(mesh()).toBeInTheDocument()
 
     fireEvent.click(view.getByRole('button', {name: '새 자유 변형 디포머 레이어 선택'}))
+    await waitForSelectionReady()
     expect(mesh()).not.toBeInTheDocument()
     fireEvent.click(view.getByRole('button', {name: '영향도 편집'}))
     expect(view.getByLabelText('디포머 영향도 정점 선택')).toBeInTheDocument()
     expect(mesh()).not.toBeInTheDocument()
 
     fireEvent.click(view.getByRole('button', {name: 'mesh-preview 레이어 선택'}))
+    await waitForSelectionReady()
     expect(mesh()).toBeInTheDocument()
   })
 
@@ -74,6 +104,7 @@ describe('PuppetEditor', () => {
       <PuppetEditor initialDocument={createDemoDocument()} onDocumentChange={onDocumentChange} />
     ))
     fireEvent.click(view.getByRole('button', {name: '그룹'}))
+    await waitForSelectionReady()
     fireEvent.keyDown(view.getByRole('button', {name: '새 그룹 종류 변경'}), {key: 'Enter'})
     fireEvent.keyDown(await screen.findByRole('menuitemradio', {name: '자유 변형 디포머'}), {
       key: 'Enter',

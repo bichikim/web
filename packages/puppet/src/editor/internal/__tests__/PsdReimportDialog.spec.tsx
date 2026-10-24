@@ -52,7 +52,7 @@ test('should allow dismissal while loading and display a read failure without en
     return <PsdReimportDialog controller={controller} />
   })
   const loading = controller.load(new File([], 'model.psd'))
-  expect(screen.getByRole('status')).toHaveTextContent('레이어를 비교하는 중')
+  expect(screen.getByRole('status')).toHaveTextContent('불러오는 중')
   expect(screen.getByRole('button', {name: '적용 0개'})).toBeDisabled()
   fireEvent.click(screen.getByRole('button', {name: '취소'}))
   resolveRead({document, ok: true, warnings: []})

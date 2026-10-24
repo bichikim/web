@@ -57,9 +57,9 @@ describe('PuppetEditor', () => {
     expect(onDocumentChange.mock.calls.at(-1)?.[0]).toBe(recovered)
     const panel = within(view.getByRole('region', {name: '작업 기록'}))
     expect(panel.getByRole('button', {current: 'step', name: '자동 저장 작업 복구'})).toBeVisible()
-    fireEvent.click(panel.getByRole('button', {name: '실행 취소'}))
+    fireEvent.click(panel.getByRole('button', {name: '문서 열기'}))
     expect(onDocumentChange.mock.calls.at(-1)?.[0]).toBe(initialDocument)
-    fireEvent.click(panel.getByRole('button', {name: '다시 실행'}))
+    fireEvent.click(panel.getByRole('button', {name: '자동 저장 작업 복구'}))
     expect(onDocumentChange.mock.calls.at(-1)?.[0]).toBe(recovered)
   })
 
@@ -74,10 +74,10 @@ describe('PuppetEditor', () => {
       }),
     ).toBeVisible()
     expect(view.getByRole('spinbutton', {name: '파트 불투명도'})).toHaveValue(0.99)
-    fireEvent.click(panel.getByRole('button', {name: '실행 취소'}))
+    fireEvent.click(panel.getByRole('button', {name: '문서 열기'}))
     expect(view.getByRole('spinbutton', {name: '파트 불투명도'})).toHaveValue(1)
     expect(panel.getByText('다시 실행 가능')).toBeVisible()
-    fireEvent.click(panel.getByRole('button', {name: '다시 실행'}))
+    fireEvent.click(panel.getByRole('button', {name: 'mesh-preview · 불투명도 변경 (키폼)'}))
     expect(view.getByRole('spinbutton', {name: '파트 불투명도'})).toHaveValue(0.99)
   })
   test('should restore document states from named sidebar entries and retain redo entries', async () => {
@@ -93,7 +93,7 @@ describe('PuppetEditor', () => {
     await waitFor(() => expect(onDocumentChange.mock.calls.at(-1)?.[0]?.parameters).toHaveLength(3))
     expect(panel.getByText('다시 실행 가능')).toBeVisible()
     expect(panel.getByRole('button', {current: 'step', name: '파라미터 추가'})).toBeVisible()
-    fireEvent.click(panel.getByRole('button', {name: '다시 실행'}))
+    fireEvent.click(panel.getByRole('button', {current: false, name: '파라미터 추가'}))
     await waitFor(() => expect(onDocumentChange.mock.calls.at(-1)?.[0]?.parameters).toHaveLength(4))
     expect(panel.queryByText('다시 실행 가능')).toBeNull()
   })

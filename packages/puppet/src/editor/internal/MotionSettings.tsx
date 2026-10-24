@@ -161,7 +161,7 @@ export const MotionSettings = (props: MotionSettingsProps) => {
   return (
     <Popover placement="top-start">
       <Popover.Trigger as={EditorButton} disabled={props.motion === undefined}>
-        <span aria-hidden="true" class="puppet-icon puppet-icon-adjustments-horizontal" />
+        <span aria-hidden="true" class="puppet-icon puppet-icon-motion-settings" />
         <span>모션 설정</span>
       </Popover.Trigger>
       <Popover.Portal mount={mount}>

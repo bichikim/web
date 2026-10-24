@@ -11,6 +11,7 @@ const MULTIPLY_COLOR_START = 1
 const SCREEN_COLOR_START = 4
 
 export interface ComposeKeyedColorEffectOptions<Effect extends PuppetColorEffect> {
+  readonly bindings?: ReadonlyArray<PuppetParameterBinding>
   readonly document: PuppetDocument
   /**
    * Keyed properties per keyform of a binding that targets the subject, or `undefined` for a
@@ -60,42 +61,45 @@ export const composeKeyedColorEffect = <Subject extends PuppetColorEffect>(
 ): Subject => {
   const {rest} = options
   const restCoordinates = toColorEffectCoordinates(rest)
-  const coordinates = (options.document.parameterBindings ?? []).reduce((current, binding) => {
-    const keyed = options.keyedProperties(binding)
-    // A binding whose keyforms all keep the rest values adds no offset, so it is not sampled.
-    if (keyed === undefined || !keyed.some(keysColorEffect)) {
-      return current
-    }
-    const sampled = sampleParameterCoordinates({
-      binding,
-      keyformCoordinates: keyed.map((properties) =>
-        properties === undefined
-          ? undefined
-          : toColorEffectCoordinates({
-              multiplyColor: properties.multiplyColor ?? rest.multiplyColor,
-              opacity: properties.opacity ?? rest.opacity,
-              screenColor: properties.screenColor ?? rest.screenColor,
-            }),
-      ),
-      repeatRanges: getRepeatRanges(binding.parameterIds, options.document.parameters),
-      restCoordinates,
-      values: getParameterBindingValues({
+  const coordinates = (options.bindings ?? options.document.parameterBindings ?? []).reduce(
+    (current, binding) => {
+      const keyed = options.keyedProperties(binding)
+      // A binding whose keyforms all keep the rest values adds no offset, so it is not sampled.
+      if (keyed === undefined || !keyed.some(keysColorEffect)) {
+        return current
+      }
+      const sampled = sampleParameterCoordinates({
+        binding,
+        keyformCoordinates: keyed.map((properties) =>
+          properties === undefined
+            ? undefined
+            : toColorEffectCoordinates({
+                multiplyColor: properties.multiplyColor ?? rest.multiplyColor,
+                opacity: properties.opacity ?? rest.opacity,
+                screenColor: properties.screenColor ?? rest.screenColor,
+              }),
+        ),
+        repeatRanges: getRepeatRanges(binding.parameterIds, options.document.parameters),
+        restCoordinates,
+        values: getParameterBindingValues({
+          binding,
+          document: options.document,
+          parameterValues: options.parameterValues,
+        }),
+      })
+      const weight = getBindingInfluence({
         binding,
         document: options.document,
         parameterValues: options.parameterValues,
-      }),
-    })
-    const weight = getBindingInfluence({
-      binding,
-      document: options.document,
-      parameterValues: options.parameterValues,
-    })
-    return current.map(
-      (coordinate, index) =>
-        coordinate +
-        ((sampled[index] ?? restCoordinates[index]!) - restCoordinates[index]!) * weight,
-    )
-  }, restCoordinates)
+      })
+      return current.map(
+        (coordinate, index) =>
+          coordinate +
+          ((sampled[index] ?? restCoordinates[index]!) - restCoordinates[index]!) * weight,
+      )
+    },
+    restCoordinates,
+  )
 
   return {...rest, ...fromColorEffectCoordinates(coordinates)}
 }

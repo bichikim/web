@@ -11,7 +11,12 @@ import {connectParameterGroup, setKeyformGroupProperties} from '../group-keyform
 import {setGroupRenderProperties} from '../group-properties'
 import {findNode, getContainerIds} from '../scene-tree'
 import {createDeformer} from '../scene-graph'
-import {createLayerFragment, pasteLayerFragment, removeLayerNodes} from '../layer-clipboard'
+import {
+  canRemoveLayerNodes,
+  createLayerFragment,
+  pasteLayerFragment,
+  removeLayerNodes,
+} from '../layer-clipboard'
 
 test('should copy a deformer subtree with new identifiers and valid parameter references', () => {
   const source = createDeformer(createDemoDocument(), ['shape-circle'])!
@@ -254,4 +259,35 @@ test('should retain group masks outside the copied selection', () => {
   const pastedCopy = findNode(getDocumentScene(pasted.document).roots, pasted.nodeIds[0]!)!
   expect(pastedCopy.kind === 'group' && pastedCopy.properties?.clippingMaskIds).toEqual([])
   expect(parseDocumentValue(pasted.document).ok).toBe(true)
+})
+
+test('should preserve subtree and inherited locks across cached menu checks and scene replacements', () => {
+  const source = createDemoDocument()
+  const first = source.parts[0]!
+  const second = source.parts[1]!
+  const root = {
+    children: [
+      {id: first.id, kind: 'part' as const, locked: false, name: 'First', visible: true},
+      {id: second.id, kind: 'part' as const, locked: true, name: 'Second', visible: true},
+    ],
+    id: 'root',
+    kind: 'group' as const,
+    locked: false,
+    name: 'Root',
+    visible: true,
+  }
+  const document = {...source, scene: {roots: [root]}}
+  expect(canRemoveLayerNodes(document, ['root', first.id])).toBe(false)
+  expect(canRemoveLayerNodes(document, [first.id])).toBe(true)
+  expect(canRemoveLayerNodes(document, [first.id, second.id])).toBe(false)
+  expect(canRemoveLayerNodes(document, ['missing'])).toBe(false)
+  expect(canRemoveLayerNodes(document, ['missing', first.id])).toBe(true)
+  const unlocked = {...root, children: root.children.map((child) => ({...child, locked: false}))}
+  expect(canRemoveLayerNodes({...document, scene: {roots: [unlocked]}}, ['root', first.id])).toBe(
+    true,
+  )
+  expect(
+    canRemoveLayerNodes({...document, scene: {roots: [{...unlocked, locked: true}]}}, [first.id]),
+  ).toBe(false)
+  expect(canRemoveLayerNodes(document, [first.id])).toBe(true)
 })

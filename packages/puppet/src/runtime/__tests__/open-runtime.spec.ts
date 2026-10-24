@@ -6,29 +6,42 @@ import {createRuntimeDocumentSession} from '../create-runtime-document-session'
 import {openRuntime} from '../open-runtime'
 
 afterEach(() => {
+  history.replaceState(null, '', '/')
   vi.restoreAllMocks()
   vi.unstubAllGlobals()
 })
 
-test('should persist the current document before navigating the popup with its motion', async () => {
+test('should persist the current document before switching the same tab with its motion', async () => {
   vi.stubGlobal('indexedDB', new IDBFactory())
-  const replace = vi.fn()
-  const close = vi.fn()
-  const popup = {close, location: {replace}, opener: globalThis}
-  vi.spyOn(globalThis, 'open').mockReturnValue(popup as unknown as Window)
+  const open = vi.spyOn(globalThis, 'open')
   const document = createDemoDocument()
-  await openRuntime({document, motionId: 'idle'})
-  const url = new URL(replace.mock.calls[0]![0])
-  expect(url.pathname).toBe('/viewer')
+  await openRuntime({document, motionId: 'idle', page: 'studio'})
+  const url = new URL(location.href)
+  expect(url.pathname).toBe('/studio')
   expect(url.searchParams.get('motion')).toBe('idle')
   expect(await createRuntimeDocumentSession(url.searchParams.get('session')!).read()).toEqual(
     document,
   )
-  expect(popup.opener).toBeNull()
-  expect(close).not.toHaveBeenCalled()
+  expect(open).not.toHaveBeenCalled()
 })
 
-test('should report popup blocking without saving or navigating', async () => {
-  vi.spyOn(globalThis, 'open').mockReturnValue(null)
-  await expect(openRuntime({document: createDemoDocument()})).rejects.toThrow('팝업을 허용')
+test('should keep the current screen when persisting the document fails', async () => {
+  const previous = location.href
+  vi.stubGlobal('indexedDB', {
+    open: () => {
+      throw new Error('storage unavailable')
+    },
+  })
+  await expect(openRuntime({document: createDemoDocument()})).rejects.toThrow('storage unavailable')
+  expect(location.href).toBe(previous)
+})
+
+test('should retain the screen when the handoff was cancelled', async () => {
+  vi.stubGlobal('indexedDB', new IDBFactory())
+  const previous = location.href
+  const request = new AbortController()
+  const opening = openRuntime({document: createDemoDocument(), signal: request.signal})
+  request.abort()
+  await opening
+  expect(location.href).toBe(previous)
 })

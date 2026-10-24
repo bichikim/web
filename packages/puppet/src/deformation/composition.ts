@@ -1,3 +1,4 @@
+import {getParameterIndex} from '../player/parameter-index'
 import {getBindingInfluence} from './influence'
 
 import type {PuppetDocument, PuppetParameter, PuppetParameterBinding} from '../player/document'
@@ -33,6 +34,12 @@ const getParameterValue = (
     : resolveParameterValue(parameter, parameterValues?.[parameter.id])
 }
 
+export const getParameterBindingValueMap = (
+  binding: PuppetParameterBinding,
+  values: PuppetParameterValues,
+): PuppetParameterValueMap =>
+  Object.fromEntries(binding.parameterIds.map((id, index) => [id, values[index]]))
+
 export const getDefaultParameterValueMap = (document: PuppetDocument): PuppetParameterValueMap =>
   Object.fromEntries(
     (document.parameters ?? []).map((parameter) => [parameter.id, parameter.defaultValue]),
@@ -41,9 +48,7 @@ export const getDefaultParameterValueMap = (document: PuppetDocument): PuppetPar
 export const getParameterBindingValues = (
   options: GetParameterBindingValuesOptions,
 ): PuppetParameterValues => {
-  const parameterById = new Map(
-    (options.document.parameters ?? []).map((parameter) => [parameter.id, parameter]),
-  )
+  const parameterById = getParameterIndex(options.document.parameters ?? [])
   const firstValue = getParameterValue(
     parameterById.get(options.binding.parameterIds[0]),
     options.parameterValues,

@@ -35,14 +35,14 @@ const modes: ReadonlyArray<{
     value: 'move',
   },
   {
-    icon: 'puppet-icon puppet-icon-maximize',
+    icon: 'puppet-icon puppet-icon-brush-expand',
     label: '팽창·수축',
     name: '디포머 팽창·수축 브러시',
     title: '오른쪽 드래그는 팽창, 왼쪽이나 Shift 드래그는 수축합니다.',
     value: 'expand',
   },
   {
-    icon: 'puppet-icon puppet-icon-mesh',
+    icon: 'puppet-icon puppet-icon-brush-smooth',
     label: '격자 정리',
     name: '격자 정리 브러시',
     title: '내부 제어점을 정리합니다. 바깥 경계는 유지합니다.',

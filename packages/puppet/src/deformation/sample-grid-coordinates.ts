@@ -22,6 +22,36 @@ const KEY_PROGRESS_EPSILON = 0.0001
 const getCoordinates = (options: SampleGridCoordinatesOptions, index: number) =>
   options.keyformCoordinates[index] ?? options.restCoordinates
 
+const grids = new WeakMap<
+  SampleGridCoordinatesOptions['binding'],
+  {
+    readonly axes: ReadonlyArray<{readonly keys: number[]; readonly rounded: number[]}>
+    readonly corners: ReadonlyMap<string, number>
+  }
+>()
+
+const getGrid = (binding: SampleGridCoordinatesOptions['binding']) => {
+  let grid = grids.get(binding)
+  if (grid === undefined) {
+    const axes = binding.parameterIds.map((_, axis) => {
+      const keys = [...new Set(binding.keyforms.map((form) => form.values[axis]!))].sort(
+        (first, second) => first - second,
+      )
+      return {keys, rounded: keys.map(Math.fround)}
+    })
+    const corners = new Map<string, number>()
+    binding.keyforms.forEach((form, index) => {
+      const key = JSON.stringify(form.values)
+      if (!corners.has(key)) {
+        corners.set(key, index)
+      }
+    })
+    grid = {axes, corners}
+    grids.set(binding, grid)
+  }
+  return grid
+}
+
 /** 직교 키폼 격자를 보간하며, 이산 채널은 각 축의 낮은 키를 유지한다. */
 export const sampleGridCoordinates = (options: SampleGridCoordinatesOptions) => {
   const policy = options.binding.sampling
@@ -30,11 +60,9 @@ export const sampleGridCoordinates = (options: SampleGridCoordinatesOptions) => 
       ? (policy?.discretePrecision ?? 'float32')
       : (policy?.continuousPrecision ?? 'float64')
   const tolerance = policy?.keyTolerance ?? KEY_PROGRESS_EPSILON
-  const axes = options.binding.parameterIds.map((_, axis) => {
-    const keys = [
-      ...new Set(options.binding.keyforms.map((keyform) => keyform.values[axis]!)),
-    ].sort((first, second) => first - second)
-    const roundedKeys = precision === 'float32' ? keys.map(Math.fround) : keys
+  const grid = getGrid(options.binding)
+  const axes = grid.axes.map(({keys, rounded}, axis) => {
+    const roundedKeys = precision === 'float32' ? rounded : keys
     const input =
       precision === 'float32' ? Math.fround(options.values[axis]!) : options.values[axis]!
     const value =
@@ -75,12 +103,7 @@ export const sampleGridCoordinates = (options: SampleGridCoordinatesOptions) => 
     return options.restCoordinates
   }
   const samples = corners.map((corner) => ({
-    coordinates: getCoordinates(
-      options,
-      options.binding.keyforms.findIndex((form) =>
-        form.values.every((value, axis) => value === corner.values[axis]),
-      ),
-    ),
+    coordinates: getCoordinates(options, grid.corners.get(JSON.stringify(corner.values)) ?? -1),
     weight: corner.weight,
   }))
   return options.restCoordinates.map((rest, index) => {

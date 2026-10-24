@@ -1,10 +1,13 @@
+import {useWorkspace} from '../../workspace/context'
+import {BaseHeader} from '../../workspace/BaseHeader'
+import type {WorkspaceNavigationAction} from '../../workspace/types'
 import {WorkspaceNavigation} from '../../WorkspaceNavigation'
 import {EditorSegmentedField, EditorToggleButton, useEditorPortalMount} from '../../design-system'
 import {FileAction} from './FileAction'
 import {Popover} from '@kobalte/core/popover'
 import {Button} from '@kobalte/core/button'
 import {EditorHelp} from './EditorHelp'
-import {createSignal, createUniqueId, For, onCleanup, Show} from 'solid-js'
+import {createEffect, createSignal, createUniqueId, For, onCleanup, Show} from 'solid-js'
 
 import type {PlayerCanvasStatus} from '../PlayerCanvas'
 import type {PuppetExampleDocument} from '../example-document'
@@ -30,8 +33,8 @@ export interface EditorToolbarProps {
   readonly onWorkspaceChange?: (workspace: 'animation' | 'modeling') => void
   readonly panelVisibility?: EditorPanelVisibility
   readonly playerStatus: PlayerCanvasStatus
-  readonly onStudioOpen?: () => void
-  readonly onViewerOpen?: () => void
+  readonly onStudioOpen?: WorkspaceNavigationAction
+  readonly onViewerOpen?: WorkspaceNavigationAction
   readonly onExport: () => void
   /** Exports with part images packed into shared texture atlas pages. */
   readonly onAtlasExport?: () => void
@@ -92,8 +95,6 @@ interface ToolbarMenuProps {
   readonly historyRedoCount?: number
   readonly onUndo?: () => void
   readonly onRedo?: () => void
-  readonly onStudioOpen?: () => void
-  readonly onViewerOpen?: () => void
   readonly onExport: () => void
   /** Exports with part images packed into shared texture atlas pages. */
   readonly onAtlasExport?: () => void
@@ -128,10 +129,17 @@ const ToolbarMenu = (props: ToolbarMenuProps) => {
   const macPlatform = /Mac|iPhone|iPad|iPod/u.test(globalThis.navigator?.platform ?? '')
   const undoShortcut = macPlatform ? '⌘Z' : 'Ctrl+Z'
   const redoShortcut = macPlatform ? '⇧⌘Z' : 'Ctrl+Y'
+  const workspace = useWorkspace()
   const [menuOpen, setMenuOpen] = createSignal(false)
+  createEffect(() => {
+    if (workspace !== undefined && workspace.mode() !== 'editor') {
+      setMenuOpen(false)
+    }
+  })
   const [trigger, setTrigger] = createSignal<HTMLButtonElement>()
   const portalMount = useEditorPortalMount()
   const close = () => setMenuOpen(false)
+  const handleReturnFocus = () => trigger()?.focus()
   const handleExampleOpen = (example: PuppetExampleDocument) => {
     setMenuOpen(false)
     props.onExampleOpen?.(example)
@@ -158,12 +166,14 @@ const ToolbarMenu = (props: ToolbarMenuProps) => {
             label="가져오기"
             description="기존 문서에 추가 · PNG, PSD, JSON"
             onClose={() => setMenuOpen(false)}
+            onReturnFocus={handleReturnFocus}
             onImport={props.onFileImport}
           />
           <FileAction
             label="불러오기"
             description="현재 문서 교체 · 실행 취소 가능"
             onClose={() => setMenuOpen(false)}
+            onReturnFocus={handleReturnFocus}
             onImport={props.onFileOpen}
           />
           <FileAction
@@ -171,6 +181,7 @@ const ToolbarMenu = (props: ToolbarMenuProps) => {
             description="기존 리깅 유지 · 변경 내용 확인"
             accept=".psd,image/vnd.adobe.photoshop"
             onClose={() => setMenuOpen(false)}
+            onReturnFocus={handleReturnFocus}
             onImport={props.onPsdReimport}
           />
           <Show when={props.examples?.length}>
@@ -206,8 +217,6 @@ const ToolbarMenu = (props: ToolbarMenuProps) => {
               </a>
             )}
           </Show>
-          <MenuAction label="Studio로 열기" onClose={close} onSelect={props.onStudioOpen} />
-          <MenuAction label="뷰어로 열기" onClose={close} onSelect={props.onViewerOpen} />
           <hr />
           <Button
             aria-description={`${props.historyUndoCount ?? 0}단계 되돌릴 수 있음 · ${undoShortcut}`}
@@ -250,8 +259,18 @@ const ToolbarMenu = (props: ToolbarMenuProps) => {
 }
 
 export const EditorToolbar = (props: EditorToolbarProps) => (
-  <header class="toolbar">
-    <div class="toolbar-identity">
+  <BaseHeader
+    owner="editor"
+    navigation={
+      <Show when={props.onStudioOpen !== undefined || props.onViewerOpen !== undefined}>
+        <WorkspaceNavigation
+          current="editor"
+          onStudioOpen={props.onStudioOpen}
+          onViewerOpen={props.onViewerOpen}
+        />
+      </Show>
+    }
+    menu={
       <ToolbarMenu
         examples={props.examples}
         exportUrl={props.exportUrl}
@@ -261,8 +280,6 @@ export const EditorToolbar = (props: EditorToolbarProps) => (
         historyRedoCount={props.historyRedoCount}
         onUndo={props.onUndo}
         onRedo={props.onRedo}
-        onStudioOpen={props.onStudioOpen}
-        onViewerOpen={props.onViewerOpen}
         onExport={props.onExport}
         onAtlasExport={props.onAtlasExport}
         onRecoveryOpen={props.onRecoveryOpen}
@@ -271,42 +288,35 @@ export const EditorToolbar = (props: EditorToolbarProps) => (
         onPsdReimport={props.onPsdReimport}
         onFileOpen={props.onFileOpen}
       />
-      <strong>Editor</strong>
-    </div>
-    <Show when={props.setBrushSettingsMount}>
-      {(setMount) => <BrushSettingsMount setMount={setMount()} />}
+    }
+    extension={
+      <Show when={props.setBrushSettingsMount}>
+        {(setMount) => <BrushSettingsMount setMount={setMount()} />}
+      </Show>
+    }
+  >
+    <Show when={props.playerStatus !== 'ready'}>
+      <span
+        class="renderer-status"
+        data-status={props.playerStatus}
+        role="status"
+        aria-label={STATUS_LABEL[props.playerStatus]}
+        title={STATUS_LABEL[props.playerStatus]}
+      >
+        <span class="status-dot" aria-hidden="true" />
+      </span>
     </Show>
-    <div class="toolbar-actions">
-      <Show when={props.playerStatus !== 'ready'}>
-        <span
-          class="renderer-status"
-          data-status={props.playerStatus}
-          role="status"
-          aria-label={STATUS_LABEL[props.playerStatus]}
-          title={STATUS_LABEL[props.playerStatus]}
-        >
-          <span class="status-dot" aria-hidden="true" />
-        </span>
-      </Show>
 
-      <EditorSegmentedField<'modeling' | 'animation'>
-        label="편집 작업 공간"
-        size="md"
-        value={props.activeWorkspace ?? 'modeling'}
-        options={[
-          {label: '모델링', value: 'modeling'},
-          {label: '애니메이션', value: 'animation'},
-        ]}
-        onChange={props.onWorkspaceChange}
-      />
-      <PanelVisibilityControls visibility={props.panelVisibility} />
-      <Show when={props.onStudioOpen !== undefined || props.onViewerOpen !== undefined}>
-        <WorkspaceNavigation
-          current="editor"
-          onStudioOpen={props.onStudioOpen}
-          onViewerOpen={props.onViewerOpen}
-        />
-      </Show>
-    </div>
-  </header>
+    <EditorSegmentedField<'modeling' | 'animation'>
+      label="편집 작업 공간"
+      size="md"
+      value={props.activeWorkspace ?? 'modeling'}
+      options={[
+        {label: '모델링', value: 'modeling'},
+        {label: '애니메이션', value: 'animation'},
+      ]}
+      onChange={props.onWorkspaceChange}
+    />
+    <PanelVisibilityControls visibility={props.panelVisibility} />
+  </BaseHeader>
 )

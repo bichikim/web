@@ -318,7 +318,7 @@ export const SpatialMeshDialog = (props: SpatialMeshDialogProps) => {
                                   row().object.kind === 'group'
                                     ? 'puppet-icon-squares'
                                     : row().object.kind === 'mesh'
-                                      ? 'puppet-icon-file-import'
+                                      ? 'puppet-icon-spatial-mesh'
                                       : 'puppet-icon-cube'
                                 }`}
                               />{' '}
@@ -394,7 +394,7 @@ export const SpatialMeshDialog = (props: SpatialMeshDialogProps) => {
                       disabled={!canCombineSpatialEditorObjects(objects(), rootIds())}
                       onClick={combine}
                     >
-                      <span aria-hidden="true" class="puppet-icon puppet-icon-layers-intersect" />
+                      <span aria-hidden="true" class={`puppet-icon ${selectedOperation().icon}`} />
                       {selectedOperation().label}로 합성
                     </EditorButton>
                     <Show
@@ -528,7 +528,10 @@ export const SpatialMeshDialog = (props: SpatialMeshDialogProps) => {
                             </p>
                             <Show when={object().kind === 'primitive'}>
                               <EditorButton type="button" onClick={fitPrimitive}>
-                                <span aria-hidden="true" class="puppet-icon puppet-icon-focus-2" />
+                                <span
+                                  aria-hidden="true"
+                                  class="puppet-icon puppet-icon-spatial-fit"
+                                />
                                 대상 크기에 맞추기
                               </EditorButton>
                             </Show>

@@ -5,6 +5,7 @@ import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 import {createDemoDocument, type Player} from '../../player'
 import {PuppetEditor} from '../PuppetEditor'
 import {createPlayerFixture} from './fixtures/player'
+import {waitForSelectionReady} from './fixtures/selection'
 
 const mocks = vi.hoisted(() => ({
   autoMeshPart: vi.fn(),
@@ -44,6 +45,32 @@ beforeEach(() => {
 })
 
 describe('PuppetEditor', () => {
+  test.each(['가져오기', '불러오기'])(
+    'should announce a failed %s in a dismissible toast without changing the document',
+    async (action) => {
+      const onDocumentChange = vi.fn()
+      const view = render(() => (
+        <PuppetEditor initialDocument={createDemoDocument()} onDocumentChange={onDocumentChange} />
+      ))
+      onDocumentChange.mockClear()
+      const file = Object.assign(new File(['{}'], 'invalid.json', {type: 'application/json'}), {
+        text: async () => '{}',
+      })
+
+      fireEvent.change(screen.getByLabelText(action), {target: {files: [file]}})
+
+      const alert = await screen.findByRole('alert')
+      expect(alert).toHaveTextContent('Puppet 문서가 아니거나 JSON 형식이 올바르지 않습니다.')
+      expect(screen.getByRole('dialog', {name: '불러오는 중…'})).toHaveAttribute('data-closed')
+      expect(
+        screen.getAllByText('Puppet 문서가 아니거나 JSON 형식이 올바르지 않습니다.'),
+      ).toHaveLength(1)
+      expect(onDocumentChange).not.toHaveBeenCalled()
+      fireEvent.click(view.getByRole('button', {name: '알림 닫기'}))
+      expect(screen.queryByRole('alert')).toBeNull()
+    },
+  )
+
   test('should configure automatic mesh generation before replacing the active part', async () => {
     const document = createDemoDocument()
     const generatedDocument = {...document, motions: []}
@@ -113,6 +140,7 @@ describe('PuppetEditor', () => {
 
     fireEvent.click(view.getByRole('button', {name: 'shape-circle 레이어 선택'}))
     fireEvent.click(view.getByRole('button', {name: 'shape-diamond 레이어 선택'}), {ctrlKey: true})
+    await waitForSelectionReady()
     fireEvent.click(view.getByRole('button', {name: '자동 메시'}))
     fireEvent.click(screen.getByRole('button', {name: '자동 메시 생성'}))
 

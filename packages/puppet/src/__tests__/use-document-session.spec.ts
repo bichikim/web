@@ -156,3 +156,13 @@ test('should suppress repeated failed writes after dismissal until saving recove
   await result.save(document)
   expect(result.failure()).toBe('save')
 })
+
+test('should restore and save the document session supplied by another workspace', async () => {
+  const document = createDemoDocument()
+  const session = {...recoveryMethods(), read: vi.fn().mockResolvedValue(document), write: vi.fn()}
+  const {result} = renderHook(() => useDocumentSession({loadInitialDocument: vi.fn(), session}))
+  await waitFor(() => expect(result.document()).toBe(document), {interval: 1})
+  await result.save(document)
+  expect(session.write).toHaveBeenCalledExactlyOnceWith(document)
+  expect(createDocumentSession).not.toHaveBeenCalled()
+})

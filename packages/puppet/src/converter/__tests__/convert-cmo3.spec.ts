@@ -132,6 +132,21 @@ test('rejects an invalid archive signature', () => {
   expect(() => readCmo3Archive(Uint8Array.of(1, 2, 3, 4))).toThrow('not a CMO3 CAFF archive')
 })
 
+test('should preserve collapsed Cubism triangles without changing their indices', () => {
+  const xml = modelXml().replaceAll('0 0 10 0 0 10', '0 0 0 0 0 10')
+  const {document} = convertCmo3(archive(xml))
+  expect(document.parts[0]!.mesh).toMatchObject({
+    indices: [0, 1, 2],
+    validationSpace: 'indices',
+    vertices: [0, 0, 0, 0, 0, 10],
+  })
+})
+
+test('should still reject a Cubism triangle referring to a nonexistent vertex', () => {
+  const xml = modelXml().replaceAll('0 1 2</int-array>', '0 1 999</int-array>')
+  expect(() => convertCmo3(archive(xml))).toThrow('not a valid Puppet document')
+})
+
 test('does not produce a document with a corrupt image', () => {
   const source = makeArchive([
     {bytes: ENCODER.encode(modelXml()), path: 'main.xml', tag: 'main_xml'},

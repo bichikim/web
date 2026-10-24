@@ -45,6 +45,8 @@ import {TimelineToolbar} from './TimelineToolbar'
 import {applyDocumentChange, createKeyframeEditActions} from './timeline-keyframe-actions'
 
 export interface EditorTimelineProps {
+  /** Blocks interactions while the workspace changes; omitted for normal editing. */
+  readonly selectionPending?: boolean
   readonly currentTime?: number
   readonly document: PuppetDocument
   readonly isPlaying?: boolean
@@ -413,7 +415,12 @@ export const EditorTimeline = (props: EditorTimelineProps) => {
   })
 
   return (
-    <section class="timeline" aria-labelledby={titleId}>
+    <section
+      class="timeline"
+      aria-labelledby={titleId}
+      inert={props.selectionPending}
+      aria-busy={props.selectionPending || undefined}
+    >
       <Show
         when={allMotionsVisible()}
         fallback={

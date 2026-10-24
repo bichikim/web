@@ -108,7 +108,7 @@ describe('EditorLayerPanel', () => {
     const spatialIcon = spatialSelect.parentElement!.querySelector('[data-layer-icon="deformer"]')
     const freeIcon = freeSelect.parentElement!.querySelector('[data-layer-icon="deformer"]')
 
-    expect(spatialIcon).toHaveClass('puppet-icon-cube')
+    expect(spatialIcon).toHaveClass('puppet-icon-spatial-deformer')
     expect(spatialIcon).not.toHaveClass('puppet-icon-mesh')
     expect(freeIcon).toHaveClass('puppet-icon-mesh')
     expect(spatialSelect.querySelector('.layer-kind-badge')).toHaveTextContent('3D')
@@ -505,4 +505,19 @@ test('should cut and paste into an empty layer list', async () => {
   const paste = await screen.findByRole('menuitem', {name: '붙여넣기'})
   paste.dispatchEvent(new MouseEvent('pointerup', {bubbles: true, button: 0}))
   expect(document().parts).toHaveLength(source.parts.length)
+})
+
+test('should retain closed group rows without exposing their controls to keyboard or accessibility', () => {
+  const view = render(() => <EditorLayerPanel document={createDemoDocument()} />)
+  const child = view.getByRole('button', {name: 'shape-circle 레이어 선택'})
+  fireEvent.click(view.getByRole('button', {name: 'Shapes 접기'}))
+  expect(child).toBeInTheDocument()
+  expect(child).not.toBeVisible()
+  const content = child.closest('[hidden]')
+  expect(content).toHaveProperty('inert', true)
+  expect(view.queryByRole('button', {name: 'shape-circle 레이어 선택'})).not.toBeInTheDocument()
+  fireEvent.click(view.getByRole('button', {name: 'Shapes 펼치기'}))
+  expect(view.getByRole('button', {name: 'shape-circle 레이어 선택'})).toBe(child)
+  expect(content).toHaveProperty('inert', false)
+  expect(child).toBeVisible()
 })

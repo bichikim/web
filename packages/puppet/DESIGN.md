@@ -101,10 +101,16 @@ Layout chrome and canvas manipulation handles are separate from form controls. D
 - Drag an unfocused number to scrub; focused pointer gestures select text. For bounded fields, the input and unit area spans the full range: its left edge is the minimum, its right edge is the maximum, and intermediate positions map linearly. Arrow buttons are outside that range. Unbounded fields use relative horizontal movement; Shift reduces subsequent movement only for those fields. Escape, pointer cancellation, or losing window focus cancels the drag. Wheel scrolling must not change numeric values. Keep this behavior in [EditorNumberField](src/design-system/EditorNumberField.tsx).
 - Bounded scrubbing follows an explicit numeric step while preserving both endpoints. Enter ends text editing with focus inside the control so modal focus containment does not restart text selection. Disabled fieldsets also block scrubbing. Numeric edits must remain mounted across document updates; match mutable list entries by their persistent identifiers. Ignore negligible numeric round-trip differences when tracking an active edit.
 - Use the existing Tabler icon vocabulary. Icon-only actions need accessible names and concise tooltips. [EditorTooltip](src/design-system/EditorTooltip.tsx) provides the shared top-layer surface, following Pomo: hover after 400ms, immediate keyboard-focus display, Escape/click dismissal, and a 150ms pointer grace period. Supply `title` on EditorButton or `data-tooltip` on other controls for explanatory copy; labeled icon buttons use their accessible name by default. CSS anchors own placement; unsupported browsers fall back to native titles.
+- Assign feature icons through semantic shortcuts in [the icon registry](uno/shortcuts/icons.ts). Different features must use visually distinct glyphs: workspace navigation, brush operations, geometry modes, deformer kinds, view controls, and mask relationships each retain their own meaning. Reuse a glyph for the same operation across mesh and deformer tools or across workspace screens. Add, delete, close, disclosure, and directional controls retain their shared operation icons. Prefer an unused glyph from the installed Iconify collection before adding a custom collection entry; keep its sizing, stroke style, and currentColor treatment consistent. Boolean composition buttons show the selected operation's glyph.
 - Center color swatches horizontally and vertically inside their triggers.
 - Preserve hover, pressed, disabled, and visible keyboard-focus states. Do not use color alone to communicate a pending change or an error.
 
 ## Workspace and density
+
+Workspace switches update their selected segment immediately. Defer document handoff and screen
+construction until that selection has had a paint opportunity. A later choice cancels an earlier
+pending switch; choosing the active workspace keeps it open. Failed handoffs restore its selection
+and use the existing transient error feedback.
 
 Keep the toolbar above a central canvas, the layer tree on the left, the inspector on the right, and parameter/timeline editing below. Panels resize and close independently. Do not let inspector content establish the canvas width or force the entire workspace to scroll.
 
@@ -132,8 +138,32 @@ graph toolbar contains graph editing actions. File menus remain above the canvas
 keyboard focus when dismissed with Escape.
 
 Use [WorkspaceNavigation](src/WorkspaceNavigation.tsx) across Editor, Studio, and Viewer, with the
-current page visibly selected. Editor launch actions open the current work in a new tab. Wrap header controls within
+current page visibly selected. Switch workspaces reactively in the same tab, carrying the current
+document session and selected motion. Browser back/forward navigation follows these workspace changes. Wrap header controls within
 the editor's actual width when space is limited, and let the header row grow to fit.
+Place workspace navigation beside the file menu in the title position, without a separate page
+title. Reuse the Modeling/Animation segmented field styles for one shared frame and a filled
+current-page segment. Workspace navigation always shows its icons. Show the names alongside them when the workspace
+is wider than 42rem; use icon-only controls at smaller widths, retaining accessible names,
+tooltips, and the current-page indication.
+Studio and Viewer share a horizontal split with a draggable, keyboard-accessible divider.
+Keep the tools on the right at every workspace width. Retain each screen's split ratio while
+switching modes; constrain resizing so both sides remain available.
+Before changing the split, retain the current camera and leave automatic fitting. Resizing a
+side panel must not change model scale or position; the explicit Fit action can fit it again.
+
+Compose the [base header](src/workspace/BaseHeader.tsx) with editor or runtime actions. The
+[workspace provider](src/workspace/WorkspaceProvider.tsx) owns the header and
+[shared viewport](src/workspace/ViewportSurface.tsx) outside the screen outlets. Moving between
+Editor, Studio, and Viewer moves the existing surfaces rather than recreating their canvas,
+camera, or player. Keep document loading scoped to the document session. An external session
+change releases the old workspace; compatible edits update the existing renderer.
+
+Only Editor supplies vertex, mesh, and deformer editing overlays. Runtime screens retain their
+motion, playback position, manual inputs, and background independently of editor editing state;
+the camera is shared. Inactive screens must not handle global shortcuts or keep file menus open.
+Retain tool controllers where useful, but release camera capture when its screen is inactive.
+Standalone editor and runtime consumers use the same surfaces without a workspace provider.
 
 ## Spacing
 
@@ -184,6 +214,10 @@ Glue controls reuse the existing number fields and keyform/temporary-form workfl
 
 ## Brush and keyform tools
 
+Modeling parameter selection uses the same left mint accent, header fill, and name color as
+animation timeline selection. Tint the corresponding keyform area too, following the immediate
+selection state so the highlight moves as soon as another parameter is selected.
+
 Mesh editing offers move, expansion/contraction, and smoothing brushes with shared radius, strength, and hardness fields. Smoothing blends each interior vertex toward its unique triangle-connected neighbors, preserving inferred outlines, hole boundaries, and explicit boundary loops; it uses radius and strength and is disabled without interior vertices. Cache mesh connectivity between pointer events. Expansion uses horizontal drag distance: right expands, left contracts, and Shift forces contraction. A stroke previews while dragging and commits once on release; existing cancellation and undo behavior applies.
 
 A 2D warp grid offers point selection, move, expansion/contraction, and smoothing in the shared bottom brush selector. Selecting a mesh or warp deformer changes the tools in that single location; brush settings use the existing toolbar above the canvas. Move and expansion/contraction include boundary points and support one-cell grids; smoothing requires interior points and preserves the outer boundary. Share radius and strength across the modes, and expose hardness for move and expansion/contraction. Measure radius and displacement in displayed model coordinates, including ancestor deformations, then convert edited points back to the deformer coordinates. Carry curvature handles with their owning points. Escape, lost pointer capture, window blur, and changing brush modes discard an unfinished stroke.
@@ -194,7 +228,7 @@ Keep 1D parameter tracks and their name/value controls compact at a 3rem minimum
 
 2D parameter grids show five evenly spaced values and ticks along X at the bottom and Y at the left, using each axis’s own range. Reserve label space inside the existing row height and keep scale overlays non-interactive.
 
-Parameter rows show each axis name once, beside its value control. Keep the names and value controls together at the bottom of the row, with influence and binding metadata at the top. Hide a binding name that repeats the primary axis name, ignoring whitespace and middle-dot separators. Show each track's current influence in its row header, including inactive tracks and unsaved influence previews; mixed physics input tracks show their preview status there. Keep the footer for selection and connection actions.
+Modeling parameter headers share the animation timeline header width and value-field width. Reserve the lower grid row for names and value controls even when the metadata above them is absent. Parameter rows show each axis name once, beside its value control. Keep the names and value controls together at the bottom of the row, with influence and binding metadata at the top. Hide a binding name that repeats the primary axis name, ignoring whitespace and middle-dot separators. Show each track's current influence in its row header only when the displayed value differs from 100%, including inactive tracks and unsaved influence previews. Omit the default 100% label; mixed physics input tracks always retain their preview status there. Keep the footer for selection and connection actions.
 
 Parameter deletion swipes start anywhere on the parameter row except value controls and editable inputs. Keep numeric scrubbing, stepping, discrete value selection, and name editing independent of deletion gestures.
 
@@ -251,7 +285,7 @@ The documentation approach follows [Vercel's design.md article](https://vercel.c
 
 ## Rest mesh editing
 
-The right inspector offers a compact Rest placement / Deformation editing segmented control when a part is selected in Modeling, matching the deformer mode control. Keep this switch out of the canvas overlay. Mesh mode shows the undeformed document and moves existing vertices together with their UV coordinates; it does not create a keyform. Preserve parameter shapes and skin weights by sampling their existing fields at the new vertex position. Keep vertex addition and deletion disabled in this mode.
+Place the Rest placement / Deformation editing switch in the bottom parameter toolbar for both parts and deformers in Modeling. Follow the selected layer and use the same control size. Keep mode switches out of the inspector and canvas overlay; put brief mode guidance and disabled reasons in tooltips. Deformer-specific settings remain in the inspector. Mesh mode shows the undeformed document and moves existing vertices together with their UV coordinates; it does not create a keyform. Preserve parameter shapes and skin weights by sampling their existing fields at the new vertex position. Keep vertex addition and deletion disabled in this mode.
 
 Pending temporary forms must be saved or removed before entering Mesh mode. Explain this restriction in the control tooltip. Report unsupported vertex animation tracks, non-affine UV mappings, out-of-mesh moves, and invalid triangles without changing the document. Returning to Form mode restores the parameter preview.
 

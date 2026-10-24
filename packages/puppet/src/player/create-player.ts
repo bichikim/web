@@ -250,7 +250,10 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
   applyFrame()
   redraw()
 
-  const updateDocument = (nextDocument: PreparedPuppetDocument) => {
+  const updateDocument = (
+    nextDocument: PreparedPuppetDocument,
+    nextParameterValues?: PuppetParameterValueMap,
+  ) => {
     if (destroyed) {
       return false
     }
@@ -266,6 +269,9 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
     }
     motionHistory.reset()
     document = nextDocument
+    if (nextParameterValues !== undefined) {
+      parameterValues = resolveOverrides(document, nextParameterValues)
+    }
     sounds.load(document)
     playbacks.update(document.motions)
     playback.update(document.motions)

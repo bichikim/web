@@ -1,9 +1,12 @@
-import {createSignal, type JSX, Show} from 'solid-js'
+import {createSignal, type JSX} from 'solid-js'
 interface RuntimeSplitProps {
   readonly studio?: boolean
   readonly children: JSX.Element
+  /** Called before a user resize changes the split. Omitted, no resize notification is sent. */
+  readonly onResize?: () => void
 }
-const INITIAL_WIDTH = 40
+const INITIAL_STUDIO_WIDTH = 40
+const INITIAL_VIEWER_WIDTH = 60
 const MINIMUM_WIDTH = 25
 const MAXIMUM_WIDTH = 75
 const PERCENT = 100
@@ -15,7 +18,21 @@ const handleResizeStart = (event: PointerEvent & {currentTarget: HTMLDivElement}
   }
 }
 export const RuntimeSplit = (props: RuntimeSplitProps) => {
-  const [width, setWidth] = createSignal(INITIAL_WIDTH)
+  const [studioWidth, setStudioWidth] = createSignal(INITIAL_STUDIO_WIDTH)
+  const [viewerWidth, setViewerWidth] = createSignal(INITIAL_VIEWER_WIDTH)
+  const width = () => (props.studio ? studioWidth() : viewerWidth())
+  const setWidth = (value: number) => {
+    const clamped = Math.min(MAXIMUM_WIDTH, Math.max(MINIMUM_WIDTH, value))
+    if (clamped === width()) {
+      return
+    }
+    props.onResize?.()
+    if (props.studio) {
+      setStudioWidth(clamped)
+    } else {
+      setViewerWidth(clamped)
+    }
+  }
   let container: HTMLDivElement | undefined
   const resize = (event: PointerEvent) => {
     if (
@@ -24,23 +41,15 @@ export const RuntimeSplit = (props: RuntimeSplitProps) => {
       container !== undefined
     ) {
       const bounds = container.getBoundingClientRect()
-      setWidth(
-        Math.min(
-          MAXIMUM_WIDTH,
-          Math.max(MINIMUM_WIDTH, ((event.clientX - bounds.left) / bounds.width) * PERCENT),
-        ),
-      )
+      if (bounds.width > 0) {
+        setWidth(((event.clientX - bounds.left) / bounds.width) * PERCENT)
+      }
     }
   }
   const keydown = (event: KeyboardEvent) => {
     if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
       event.preventDefault()
-      setWidth((value) =>
-        Math.min(
-          MAXIMUM_WIDTH,
-          Math.max(MINIMUM_WIDTH, value + (event.key === 'ArrowLeft' ? -KEY_STEP : KEY_STEP)),
-        ),
-      )
+      setWidth(width() + (event.key === 'ArrowLeft' ? -KEY_STEP : KEY_STEP))
     }
   }
   return (
@@ -48,25 +57,23 @@ export const RuntimeSplit = (props: RuntimeSplitProps) => {
       ref={(element) => {
         container = element
       }}
-      class={props.studio ? 'puppet-studio-split' : 'puppet-runtime-body'}
-      style={{'--studio-stage-width': `${width()}%`}}
+      class="puppet-runtime-split"
+      style={{'--runtime-stage-width': `${width()}%`}}
     >
       {props.children}
-      <Show when={props.studio}>
-        <div
-          role="separator"
-          tabIndex={0}
-          aria-label="모델·그래프 너비 조절"
-          aria-orientation="vertical"
-          aria-valuemin={MINIMUM_WIDTH}
-          aria-valuemax={MAXIMUM_WIDTH}
-          aria-valuenow={Math.round(width())}
-          class="puppet-studio-resizer"
-          onPointerDown={handleResizeStart}
-          onPointerMove={resize}
-          onKeyDown={keydown}
-        />
-      </Show>
+      <div
+        role="separator"
+        tabIndex={0}
+        aria-label={props.studio ? '모델·그래프 너비 조절' : '모델·도구 너비 조절'}
+        aria-orientation="vertical"
+        aria-valuemin={MINIMUM_WIDTH}
+        aria-valuemax={MAXIMUM_WIDTH}
+        aria-valuenow={Math.round(width())}
+        class="puppet-runtime-resizer"
+        onPointerDown={handleResizeStart}
+        onPointerMove={resize}
+        onKeyDown={keydown}
+      />
     </div>
   )
 }

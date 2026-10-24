@@ -25,7 +25,7 @@ export const LocalInputNode = (props: LocalInputNodeProps) => {
       id={manual() ? 'manual' : 'button'}
       name={name()}
       label={`${name()} 그룹`}
-      icon={manual() ? 'puppet-icon-adjustments-horizontal' : 'puppet-icon-click'}
+      icon={manual() ? 'puppet-icon-manual-input' : 'puppet-icon-click'}
       inputs={inputs()}
       onAdd={add}
     >

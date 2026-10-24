@@ -79,3 +79,38 @@ test('should evaluate the default coordinates of a five-axis import grid before 
     }),
   ).toEqual([1])
 })
+
+test('should keep the first duplicate corner and refresh a replaced keyform grid', () => {
+  const duplicate = {...binding, keyforms: [...binding.keyforms, binding.keyforms[0]!]}
+  expect(
+    sampleGridCoordinates({
+      ...options,
+      binding: duplicate,
+      keyformCoordinates: [[3], [8], [99]],
+      values: [0],
+    }),
+  ).toEqual([3])
+  const changed = {
+    ...duplicate,
+    keyforms: duplicate.keyforms.map((form) => ({
+      ...form,
+      values: [form.values[0]! + 10] as const,
+    })),
+  }
+  expect(
+    sampleGridCoordinates({
+      ...options,
+      binding: changed,
+      keyformCoordinates: [[4], [8], [99]],
+      values: [10],
+    }),
+  ).toEqual([4])
+  expect(
+    sampleGridCoordinates({
+      ...options,
+      binding: duplicate,
+      keyformCoordinates: [[5], [8], [99]],
+      values: [0],
+    }),
+  ).toEqual([5])
+})

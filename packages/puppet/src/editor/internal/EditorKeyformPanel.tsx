@@ -1,4 +1,5 @@
-import {createUniqueId, For, Show} from 'solid-js'
+import {createMemo, createUniqueId, For, Show} from 'solid-js'
+import {isEqual} from 'es-toolkit/predicate'
 import {EditorParameterFooter} from './EditorParameterFooter'
 import {EditorKeyformPanelToolbar} from './EditorKeyformPanelToolbar'
 import {EditorKeyformTrack} from './EditorKeyformTrack'
@@ -18,6 +19,9 @@ const handleTrackScroll = (event: Event & {readonly currentTarget: HTMLDivElemen
 
 export const EditorKeyformPanel = (props: EditorKeyformPanelProps) => {
   const titleId = createUniqueId()
+  const bindingById = createMemo(
+    () => new Map(props.bindings.map((binding) => [binding.id, binding])),
+  )
   const {activeBinding, activePreview, bindingParameters, bindingValues} =
     createKeyformPanelModel(props)
   return (
@@ -35,8 +39,11 @@ export const EditorKeyformPanel = (props: EditorKeyformPanelProps) => {
         <div class="keyform-track-wrap">
           <For each={props.bindings.map((binding) => binding.id)}>
             {(bindingId) => {
-              const binding = () => props.bindings.find((item) => item.id === bindingId)!
-              const parameters = () => bindingParameters(binding())
+              const binding = createMemo(() => bindingById().get(bindingId)!)
+              const parameters = createMemo(() => bindingParameters(binding()))
+              const values = createMemo(() => bindingValues(binding()), undefined, {
+                equals: isEqual,
+              })
               return (
                 <div class="keyform-binding-row" data-binding-id={bindingId}>
                   <div class="keyform-track-scroll" onScroll={handleTrackScroll}>
@@ -46,8 +53,8 @@ export const EditorKeyformPanel = (props: EditorKeyformPanelProps) => {
                         activeKeyformValues={props.activeKeyformValues}
                         binding={binding()}
                         parameters={parameters()}
-                        values={bindingValues(binding())}
-                        onBindingSelect={props.onBindingSelect}
+                        values={values()}
+                        onBindingSelect={props.onBindingActivate ?? props.onBindingSelect}
                         onKeyformAdd={
                           props.previewBindingIds?.has(bindingId) ? undefined : props.onKeyformAdd
                         }
@@ -69,12 +76,14 @@ export const EditorKeyformPanel = (props: EditorKeyformPanelProps) => {
                   </div>
                   <div class="keyform-track-labels">
                     <EditorKeyformTrackLabel
+                      selected={bindingId === (props.selectedBindingId ?? props.activeBindingId)}
+                      onBindingActivate={props.onBindingActivate}
                       active={bindingId === props.activeBindingId}
                       binding={binding()}
                       influence={props.bindingInfluences?.get(bindingId)}
                       previewOnly={props.previewBindingIds?.has(bindingId)}
                       parameters={parameters()}
-                      values={bindingValues(binding())}
+                      values={values()}
                       onBindingDelete={
                         props.previewBindingIds?.has(bindingId) ? undefined : props.onBindingDelete
                       }

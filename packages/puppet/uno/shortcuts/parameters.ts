@@ -12,8 +12,11 @@ export const parametersShortcuts = {
     '[.puppet-editor_&_button.danger]:[background:#241817]',
     '[.puppet-editor_&_button:disabled]:[opacity:0.42] [.puppet-editor_&_button:disabled]:cursor-not-allowed',
   ],
-  'keyform-binding-row':
-    'grid min-w-0 [grid-template-columns:17.5rem_minmax(0,_1fr)] [border-top:0.0625rem_solid_#35413d]',
+  'keyform-binding-row': [
+    'grid min-w-0 editor-track-columns [border-top:0.0625rem_solid_#35413d]',
+    '[&:has(.parameter-item[data-selected])]:bg-[#17211e]',
+    '[&:has(.parameter-item[data-selected])]:border-t-[#3d5f56]',
+  ],
   'keyform-footer': [
     '[.puppet-editor_&]:flex-wrap [.puppet-editor_&]:gap-editor-field',
     '[.puppet-editor_&]:flex [.puppet-editor_&]:items-center [.puppet-editor_&]:justify-between',
@@ -104,7 +107,12 @@ export const parametersShortcuts = {
     '[.puppet-editor_&_.parameter-item]:pb-editor-field',
     '[.puppet-editor_&_.parameter-item]:pr-editor-field',
     '[.puppet-editor_&_.parameter-item]:[grid-template-rows:auto_1fr]',
+    '[.puppet-editor_&_.parameter-name-values]:row-start-2',
+    '[.puppet-editor_&_.parameter-value-control]:w-22',
     '[.puppet-editor_&_.parameter-item]:[border-width:0]',
+    '[.puppet-editor_&_.parameter-item[data-selected]]:bg-[#1a2925]',
+    '[.puppet-editor_&_.parameter-item[data-selected]]:[box-shadow:inset_0.1875rem_0_0_#64e5c4]',
+    '[.puppet-editor_&_.parameter-item[data-selected]_strong]:text-[#e8f0ed]',
     '[.puppet-editor_&.parameter-grid-label_.parameter-swipe-row]:[min-height:7.75rem]',
     '[.puppet-editor_&.parameter-grid-label_.parameter-item]:[min-height:7.75rem]',
     '[.puppet-editor_&.parameter-volume-label]:[min-height:15.5rem] [.puppet-editor_&.parameter-volume-label]:grid',
@@ -223,6 +231,13 @@ export const parametersShortcuts = {
     '[.puppet-editor_&]:[outline:0.0625rem_solid_#3a4642]',
     '[.puppet-editor_&_.parameter-grid-current-x]:[bottom:-1.5rem]',
   ],
+  'parameter-header-select': [
+    '[.puppet-editor_&]:absolute [.puppet-editor_&]:inset-0 [.puppet-editor_&]:m-0 [.puppet-editor_&]:p-0',
+    '[.puppet-editor_&]:border-0 [.puppet-editor_&]:rounded-inherit [.puppet-editor_&]:bg-transparent',
+    '[.puppet-editor_&]:cursor-pointer',
+    '[.puppet-editor_&:focus-visible]:[outline:0.125rem_solid_#64e5c4]',
+    '[.puppet-editor_&:focus-visible]:[outline-offset:-0.125rem]',
+  ],
   'parameter-influence-status': ['editor-type-metadata text-[#b9c5c0] whitespace-nowrap'],
   'parameter-inspector': [
     '[.puppet-editor_&]:grid [.puppet-editor_&]:min-w-0 [.puppet-editor_&]:gap-editor-field',
@@ -273,6 +288,7 @@ export const parametersShortcuts = {
   ],
   'parameter-list': ['[.puppet-editor_&]:grid [.puppet-editor_&]:gap-editor-control'],
   'parameter-name-control': [
+    'relative',
     '[.puppet-editor_&]:min-w-0 [.puppet-editor_&]:border-0 [.puppet-editor_&]:p-0',
     '[.puppet-editor_&]:[color:inherit] [.puppet-editor_&]:bg-transparent',
     '[.puppet-editor_&]:cursor-pointer [.puppet-editor_&]:text-left',
@@ -282,6 +298,7 @@ export const parametersShortcuts = {
     '[.puppet-editor_&:focus-visible]:[outline-offset:0.125rem]',
   ],
   'parameter-name-editor': [
+    'relative',
     '[.puppet-editor_&]:[min-height:3rem] [.puppet-editor_&]:[align-content:center]',
     '[.puppet-editor_&_input]:w-full [.puppet-editor_&_input]:min-w-0',
     '[.puppet-editor_&_input]:py-editor-related [.puppet-editor_&_input]:px-editor-field',
@@ -324,6 +341,7 @@ export const parametersShortcuts = {
     '[.puppet-editor_&_.puppet-icon]:[width:1rem] [.puppet-editor_&_.puppet-icon]:[height:1rem]',
   ],
   'parameter-swipe-hint': [
+    'pointer-events-none',
     '[.puppet-editor_&]:absolute [.puppet-editor_&]:[top:0.625rem] [.puppet-editor_&]:left-editor-field',
     '[.puppet-editor_&]:[color:#596762] [.puppet-editor_&]:text-editor-reading',
   ],
@@ -382,7 +400,7 @@ export const parametersShortcuts = {
     '[&_span]:top-[calc(50%_+_0.75rem)] [&_span]:[transform:translateX(-50%)]',
     '[&_span]:bg-[#111614] [&_span]:px-px',
   ],
-  'parameter-value-control': 'w-[7rem] min-w-0 [&_.editor-number-field]:w-full',
+  'parameter-value-control': 'relative w-[7rem] min-w-0 [&_.editor-number-field]:w-full',
   'parameter-volume-scale': [
     '[&.parameter-volume-scale_text]:[font-size:7.5px]',
     '[&.parameter-volume-scale_text]:[text-anchor:middle]',

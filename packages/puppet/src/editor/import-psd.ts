@@ -17,63 +17,58 @@ export interface ImportPsdFailure {
   readonly error: {readonly code: ImportPsdErrorCode}
 }
 export type ImportPsdResult = ImportPsdSuccess | ImportPsdFailure
-const RGB_MODE = 3
-const CHANNEL_BITS = 8
 const MAXIMUM_FILE_BYTES = 268_435_456
 
-const readFile = (file: File): Promise<ArrayBuffer | undefined> =>
-  new Promise((resolve) => {
-    const reader = new FileReader()
-    reader.onerror = () => resolve(undefined)
-    reader.onload = () => resolve(reader.result instanceof ArrayBuffer ? reader.result : undefined)
-    reader.readAsArrayBuffer(file)
-  })
-
-export const importPsd = async (file: File): Promise<ImportPsdResult> => {
+/** Reads a PSD, terminating background processing when the optional signal aborts. */
+export const importPsd = async (file: File, signal?: AbortSignal): Promise<ImportPsdResult> => {
+  signal?.throwIfAborted()
   if (!/\.psd$/iu.test(file.name)) {
     return {error: {code: 'invalid-file'}, ok: false}
   }
   if (file.size > MAXIMUM_FILE_BYTES) {
     return {error: {code: 'too-large'}, ok: false}
   }
-  const bytes = await readFile(file)
-  if (bytes === undefined) {
-    return {error: {code: 'read-failed'}, ok: false}
+  if (typeof Worker === 'undefined' || typeof OffscreenCanvas === 'undefined') {
+    const {readPsdDocument} = await import('./internal/read-psd-document')
+    signal?.throwIfAborted()
+    const result = await readPsdDocument(file)
+    signal?.throwIfAborted()
+    return result
   }
-  try {
-    const [{readPsd}, {createPsdDocument}] = await Promise.all([
-      import('ag-psd'),
-      import('./internal/psd-document'),
-    ])
-    // Read dimensions before decompressing layer pixels.
-    const psd = readPsd(bytes, {
-      skipCompositeImageData: true,
-      skipThumbnail: true,
-      useRawData: true,
+  return new Promise((resolve, reject) => {
+    const worker = new Worker(new URL('./internal/import-psd-worker.ts', import.meta.url), {
+      type: 'module',
     })
-    if (psd.bitsPerChannel !== CHANNEL_BITS || psd.colorMode !== RGB_MODE) {
-      return {error: {code: 'unsupported-mode'}, ok: false}
+    const dispose = () => {
+      signal?.removeEventListener('abort', handleAbort)
+      worker.terminate()
     }
-    const result = createPsdDocument(psd)
-    if (!result.ok) {
-      return result
+    const handleAbort = () => {
+      dispose()
+      reject(signal?.reason)
     }
-    return {
-      ...result,
-      document: {
-        ...result.document,
-        parts: result.document.parts.map((part) => ({
-          ...part,
-          psdSource:
-            part.psdSource === undefined
-              ? undefined
-              : {...part.psdSource, documentId: file.name, fileName: file.name},
-        })),
+    worker.addEventListener(
+      'message',
+      (event: MessageEvent<ImportPsdResult>) => {
+        dispose()
+        resolve(event.data)
       },
+      {once: true},
+    )
+    const handleError = () => {
+      dispose()
+      resolve({error: {code: 'decode-failed'}, ok: false})
     }
-  } catch {
-    return {error: {code: 'decode-failed'}, ok: false}
-  }
+    worker.addEventListener('error', handleError, {once: true})
+    worker.addEventListener('messageerror', handleError, {once: true})
+    signal?.addEventListener('abort', handleAbort, {once: true})
+    try {
+      worker.postMessage(file)
+    } catch (cause) {
+      dispose()
+      reject(cause)
+    }
+  })
 }
 
 export const getPsdErrorMessage = (code: ImportPsdErrorCode): string => {

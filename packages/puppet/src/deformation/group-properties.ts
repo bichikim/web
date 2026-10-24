@@ -1,3 +1,4 @@
+import {getTargetBindings} from './target-bindings'
 import type {
   PuppetAlphaBlendMode,
   PuppetColor,
@@ -76,6 +77,11 @@ export const composeParameterDeformerProperties = (options: {
   readonly parameterValues?: PuppetParameterValueMap
 }): ResolvedGroupRenderProperties =>
   composeKeyedColorEffect({
+    bindings: getTargetBindings(
+      options.document.parameterBindings ?? [],
+      'targetDeformerIds',
+      options.deformer.id,
+    ),
     document: options.document,
     keyedProperties: (binding) =>
       binding.targetDeformerIds?.includes(options.deformer.id) === true
@@ -96,6 +102,11 @@ export const composeParameterGroupProperties = (options: {
   readonly parameterValues?: PuppetParameterValueMap
 }): ResolvedGroupRenderProperties =>
   composeKeyedColorEffect({
+    bindings: getTargetBindings(
+      options.document.parameterBindings ?? [],
+      'targetGroupIds',
+      options.group.id,
+    ),
     document: options.document,
     keyedProperties: (binding) =>
       binding.targetGroupIds?.includes(options.group.id) === true

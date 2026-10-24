@@ -17,6 +17,7 @@ export const BoneEditor = (props: UseBoneEditorProps) => {
     >
       <div class="mask-actions">
         <DeformerMode
+          mount={props.brushControlsMount}
           mode={editor.mode()}
           restEditable={editor.restEditable()}
           onChange={editor.setMode}

@@ -1,3 +1,4 @@
+import {useWorkspace} from '../workspace/context'
 import {onCleanup, onMount} from 'solid-js'
 
 type HistoryShortcut = 'redo' | 'undo'
@@ -31,11 +32,12 @@ const getHistoryShortcut = (event: KeyboardEvent): HistoryShortcut | undefined =
 
 export const useDocumentHistoryShortcuts = (props: UseDocumentHistoryShortcutsProps) => {
   const owner = Symbol('document-history-shortcuts')
+  const workspace = useWorkspace()
 
   onMount(() => {
     activeOwner ??= owner
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (activeOwner !== owner) {
+      if (activeOwner !== owner || (workspace !== undefined && workspace.mode() !== 'editor')) {
         return
       }
 

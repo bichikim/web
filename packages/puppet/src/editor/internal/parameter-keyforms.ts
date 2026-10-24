@@ -1,7 +1,18 @@
+import {
+  getParameterTargetDeformerIds,
+  getParameterTargetNodeIds,
+  getParameterTargetPartIds,
+} from './binding-targets'
+export {
+  getParameterTargetPartIds,
+  getParameterTargetDeformerIds,
+  getParameterTargetNodeIds,
+} from './binding-targets'
+import {getParameterIndex} from '../../player/parameter-index'
 import {removeInfluenceSources} from './parameter-influences'
 import {sampleParameterGlue} from '../../deformation/parameter-glue'
 import {removeParameterReferences} from './document-references/remove-parameter-references'
-import {difference, union, uniq} from 'es-toolkit/array'
+import {difference, union} from 'es-toolkit/array'
 
 import {
   getDirectGlueIds,
@@ -75,46 +86,11 @@ export const getParameterBinding = (document: PuppetDocument, bindingId: string)
   getDocumentParameterBindings(document).find((binding) => binding.id === bindingId)
 
 export const getBindingParameters = (document: PuppetDocument, binding: PuppetParameterBinding) => {
-  const parameterById = new Map(
-    getDocumentParameters(document).map((parameter) => [parameter.id, parameter]),
-  )
+  const parameterById = getParameterIndex(getDocumentParameters(document))
   return binding.parameterIds.flatMap((parameterId) => {
     const parameter = parameterById.get(parameterId)
     return parameter === undefined ? [] : [parameter]
   })
-}
-
-export const getParameterTargetPartIds = (binding: PuppetParameterBinding) => {
-  if (binding.targetPartIds !== undefined) {
-    return binding.targetPartIds
-  }
-
-  return uniq(binding.keyforms.flatMap((keyform) => keyform.parts.map((part) => part.partId)))
-}
-
-export const getParameterTargetDeformerIds = (binding: PuppetParameterBinding) =>
-  binding.targetDeformerIds ??
-  uniq(
-    binding.keyforms.flatMap((keyform) =>
-      (keyform.deformers ?? []).map((deformer) => deformer.nodeId),
-    ),
-  )
-
-/** 직접 편집 대상을 반환한다. document를 주면 직접 연결한 Glue의 양 끝 파트도 포함한다. */
-export const getParameterTargetNodeIds = (
-  binding: PuppetParameterBinding,
-  document?: PuppetDocument,
-) => {
-  const glueIds = new Set(getDirectGlueIds(binding))
-  const endpoints =
-    document?.glue
-      ?.filter((glue) => glueIds.has(glue.id))
-      .flatMap((glue) => [glue.first.partId, glue.second.partId]) ?? []
-  return uniq([
-    ...getParameterTargetPartIds(binding),
-    ...getParameterTargetDeformerIds(binding),
-    ...endpoints,
-  ])
 }
 
 export const getParameterBindingsForNodeIds = (

@@ -1,3 +1,5 @@
+import {useWorkspace} from './workspace/context'
+import type {DocumentSession} from './create-document-session'
 import {ErrorBoundary, Show, Suspense} from 'solid-js'
 import {PuppetEditor} from './editor'
 import {EditorButton, EditorToast} from './design-system'
@@ -11,7 +13,9 @@ const FAILURE_MESSAGE: Readonly<Record<DocumentSessionFailure, string>> = {
   save: '자동 저장 실패 · JSON으로 내보내세요',
 }
 
-interface EditorAppProps {
+export interface EditorAppProps {
+  /** Recovery session shared with another workspace. Omitted, restore the editor session. */
+  readonly session?: DocumentSession
   readonly examples?: ReadonlyArray<PuppetExampleDocument>
   readonly initialMotionId?: string
   readonly initialWorkspace?: 'animation' | 'modeling'
@@ -19,7 +23,13 @@ interface EditorAppProps {
 }
 
 const DocumentEditor = (props: EditorAppProps) => {
-  const session = useDocumentSession({loadInitialDocument: () => props.loadInitialDocument()})
+  const workspace = useWorkspace()
+  const session = useDocumentSession({
+    loadInitialDocument: () => props.loadInitialDocument(),
+    get session() {
+      return props.session
+    },
+  })
   return (
     <>
       <Suspense
@@ -37,6 +47,8 @@ const DocumentEditor = (props: EditorAppProps) => {
             <PuppetEditor
               examples={props.examples}
               initialDocument={document()}
+              replacementDocument={workspace?.replacement()}
+              onDocumentChange={workspace?.publishDocument}
               initialMotionId={props.initialMotionId}
               initialWorkspace={props.initialWorkspace}
               onDocumentCommit={session.save}

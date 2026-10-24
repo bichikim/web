@@ -72,7 +72,7 @@ const DeformBrushControls = (props: DeformBrushControlsProps) => {
           pressed={props.editor.brushEnabled() && props.editor.brushMode() === 'expand'}
           onClick={() => props.editor.setBrushMode('expand')}
         >
-          <span class="puppet-icon puppet-icon-maximize" aria-hidden="true" />
+          <span class="puppet-icon puppet-icon-brush-expand" aria-hidden="true" />
           <span class="editor-segmented-label" aria-hidden="true">
             팽창·수축
           </span>
@@ -85,7 +85,7 @@ const DeformBrushControls = (props: DeformBrushControlsProps) => {
           disabled={!props.editor.canSmooth()}
           onClick={() => props.editor.setBrushMode('smooth')}
         >
-          <span class="puppet-icon puppet-icon-mesh" aria-hidden="true" />
+          <span class="puppet-icon puppet-icon-brush-smooth" aria-hidden="true" />
           <span class="editor-segmented-label" aria-hidden="true">
             부드럽게
           </span>
@@ -166,7 +166,7 @@ export const MeshEditor = (props: MeshEditorProps) => {
           pressed={maskBoundaryVisible()}
           onClick={() => setMaskBoundaryVisible(!maskBoundaryVisible())}
         >
-          <span class="puppet-icon puppet-icon-layers-intersect" aria-hidden="true" />
+          <span class="puppet-icon puppet-icon-mask-boundary" aria-hidden="true" />
         </EditorToggleButton>
       </Show>
     </div>

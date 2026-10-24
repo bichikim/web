@@ -81,7 +81,7 @@ export const EditorParameterItem = (props: EditorParameterItemProps) => {
             swipe.reset()
           }}
           onSecondaryNameChange={props.onSecondaryNameChange}
-          onSelect={handleSelect}
+          onSelect={props.onSelect === undefined ? undefined : handleSelect}
           onTertiaryNameChange={props.onTertiaryNameChange}
           pressed={props.pressed}
           secondaryName={props.secondaryName}

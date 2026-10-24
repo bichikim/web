@@ -26,7 +26,10 @@ test('should ignore a cancelled import and prevent applying a stale document', a
         }),
     )
     const loading = controller.load(new File([], 'model.psd'))
+    const signal = readPsd.mock.calls[0]![1]
+    expect(signal?.aborted).toBe(false)
     controller.cancel()
+    expect(signal?.aborted).toBe(true)
     resolve({document: initial, ok: true, warnings: []})
     await loading
     expect(controller.state().kind).toBe('idle')

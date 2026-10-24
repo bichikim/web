@@ -47,6 +47,10 @@ test('should show each track influence in its own label and update unsaved influ
   editor!.previewInfluences([{parameterId: 'angle-y', points: [{value: 0, weight: 0.75}]}])
   expect(paired.getByText('적용량 75%')).toBeVisible()
   expect(single.getByText('적용량 25%')).toBeVisible()
+  editor!.previewInfluences([{parameterId: 'angle-y', points: [{value: 0, weight: 1}]}])
+  expect(paired.queryByText(/적용량/)).not.toBeInTheDocument()
+  editor!.previewInfluences([{parameterId: 'angle-y', points: [{value: 0, weight: 0}]}])
+  expect(paired.getByText('적용량 0%')).toBeVisible()
 })
 
 test.each([false, true])(

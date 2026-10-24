@@ -54,7 +54,7 @@ export const readCmo3Glue = (
     }
     return vertexIndex < 0 ? undefined : {partId: mesh.part.id, vertexIndex}
   }
-  let skipped = 0
+  const warnings: string[] = []
   const parameterBindings: PuppetParameterBinding[] = []
   const glue = getSources(model, 'CAffecterSourceSet', references).flatMap((source) => {
     if (source.tagName !== 'CGlueSource') {
@@ -72,13 +72,13 @@ export const readCmo3Glue = (
         const first = endpoint(source, 'targetArtMeshA_guid', vertices[index * 2]!)
         const second = endpoint(source, 'targetArtMeshB_guid', vertices[index * 2 + 1]!)
         if (first === undefined || second === undefined) {
-          skipped += 1
           return []
         }
         const firstWeight = weights[index * 2]!
         const secondWeight = weights[index * 2 + 1]!
         return [
           {
+            composition: 'sequential',
             first,
             id: `${id}:${index}`,
             second,
@@ -89,6 +89,12 @@ export const readCmo3Glue = (
         ]
       },
     )
+    const omitted = vertices.length / 2 - connections.length
+    if (omitted > 0) {
+      warnings.push(
+        `${id}: 원본 메시에 없는 정점을 참조하는 Glue 연결 ${omitted}개를 제외했습니다.`,
+      )
+    }
     if (forms.parameterGuids.length === 0 || connections.length === 0) {
       return connections
     }
@@ -136,7 +142,6 @@ export const readCmo3Glue = (
   return {
     glue,
     parameterBindings,
-    warnings:
-      skipped === 0 ? [] : [`존재하지 않는 정점을 가리키는 Glue 연결 ${skipped}개를 제외했습니다.`],
+    warnings,
   }
 }

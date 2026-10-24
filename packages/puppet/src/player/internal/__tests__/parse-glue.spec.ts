@@ -33,6 +33,17 @@ test('should reject malformed, overlapping and dangling glue references', () => 
   }
 })
 
+test('should allow explicitly sequential native joins while retaining disjoint editor joins', () => {
+  const parts = createDemoDocument().parts
+  const native = {...glue, composition: 'sequential'}
+  const next = {...native, id: 'next', second: {...glue.second, vertexIndex: 1}}
+  expect(hasValidGlue([native, next], parts)).toBe(true)
+  expect(hasValidGlue([glue, next], parts)).toBe(false)
+  expect(hasValidGlue([native, {...next, composition: undefined}], parts)).toBe(false)
+  expect(hasValidGlue([{...native, composition: 'unknown'}], parts)).toBe(false)
+  expect(hasValidGlue([native, {...next, id: native.id}], parts)).toBe(false)
+})
+
 test('should validate shared target edges and reject conflicts and invalid edge coordinates', () => {
   const parts = createDemoDocument().parts
   const connection = {

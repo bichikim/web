@@ -1,4 +1,5 @@
-import type {RuntimeView} from '../tracking/types'
+import {usePlaybackFrame} from './use-playback-frame'
+import {useWorkspace} from '../workspace/context'
 import {RuntimeHeader} from './RuntimeHeader'
 import {RuntimeWorkspace} from './RuntimeWorkspace'
 import {RuntimeSplit} from './RuntimeSplit'
@@ -7,7 +8,7 @@ import {RuntimeTools} from './RuntimeTools'
 import {createSignal, Show, Suspense} from 'solid-js'
 import {EditorButton, EditorColorField, EditorSelect, EditorToast} from '../design-system'
 import {EditorStyles} from '../editor/internal/EditorStyles'
-import {type PlayerFrame, type PuppetDocument} from '../player'
+import {type PuppetDocument} from '../player'
 import {useRuntimeDocument} from './use-runtime-document'
 import {PlaybackCanvas} from './PlaybackCanvas'
 import {ExpressionSelect} from './ExpressionSelect'
@@ -18,39 +19,27 @@ interface RuntimePageProps {
 }
 
 export const RuntimePage = (props: RuntimePageProps) => {
+  const sharedWorkspace = useWorkspace()
   const query = new URLSearchParams(location.search)
   const [error, setError] = createSignal<string | null>(null)
   const loading = useRuntimeDocument({
     loadInitialDocument: () => props.loadInitialDocument(),
     sessionId: query.get('session'),
   })
-  const {document} = loading
   const [motionId, setMotionId] = createSignal(query.get('motion') ?? undefined)
   const [playing, setPlaying] = createSignal(true)
   const [ready, setReady] = createSignal(false)
   const [background, setBackground] = createSignal('#111715')
-  const [frame, setFrame] = createSignal<PlayerFrame | null>(null)
+  const {frame, resetFrame, resumeTime, updateFrame} = usePlaybackFrame(loading.document, () =>
+    selectedMotion(),
+  )
   const handleMotion = (id: string) => {
     setMotionId(id)
     setPlaying(true)
   }
-  const controls = useRuntimeControls({document, onMotion: handleMotion})
-  const handleViewChange = (view: RuntimeView) => {
-    const profile = controls.profile()
-    const previous = profile?.view
-    if (
-      profile !== undefined &&
-      (previous === undefined ||
-        previous.fitted !== view.fitted ||
-        previous.camera.x !== view.camera.x ||
-        previous.camera.y !== view.camera.y ||
-        previous.camera.zoom !== view.camera.zoom)
-    ) {
-      controls.updateProfile({...profile, view})
-    }
-  }
+  const controls = useRuntimeControls({document: loading.document, onMotion: handleMotion})
   const selectedMotion = () => {
-    const motions = document()?.motions ?? []
+    const motions = loading.document()?.motions ?? []
     const selected = motionId()
     return motions.some((motion) => motion.id === selected) ? selected : motions[0]?.id
   }
@@ -58,7 +47,7 @@ export const RuntimePage = (props: RuntimePageProps) => {
     if (file !== undefined) {
       loading.loadFile(file)
       setMotionId(undefined)
-      setFrame(null)
+      resetFrame()
       setPlaying(true)
     }
   }
@@ -71,6 +60,8 @@ export const RuntimePage = (props: RuntimePageProps) => {
   const renderEmpty = () => (
     <RuntimeHeader
       studio={props.mode === 'studio'}
+      sessionId={loading.sessionId()}
+      motionId={selectedMotion()}
       onLoadModel={handleLoadModel}
       loading={!loading.error()}
     />
@@ -82,10 +73,10 @@ export const RuntimePage = (props: RuntimePageProps) => {
     >
       <EditorStyles />
       <Suspense fallback={renderEmpty()}>
-        <Show when={document()} keyed fallback={renderEmpty()}>
+        <Show when={loading.document()} fallback={renderEmpty()}>
           {(current) => (
             <RuntimeWorkspace
-              document={current}
+              document={current()}
               controls={controls}
               studio={props.mode === 'studio'}
             >
@@ -93,13 +84,15 @@ export const RuntimePage = (props: RuntimePageProps) => {
                 <>
                   <RuntimeHeader
                     studio={props.mode === 'studio'}
+                    sessionId={loading.sessionId()}
+                    motionId={selectedMotion()}
                     onLoadModel={handleLoadModel}
                     workspace={workspace}
                   >
                     <EditorSelect
                       size="md"
                       label="모션 선택"
-                      options={document()?.motions.map((motion) => motion.id) ?? []}
+                      options={loading.document()?.motions.map((motion) => motion.id) ?? []}
                       value={selectedMotion()}
                       disabled={!ready() || selectedMotion() === undefined}
                       onChange={setMotionId}
@@ -113,7 +106,7 @@ export const RuntimePage = (props: RuntimePageProps) => {
                       {playing() ? '일시정지' : '재생'}
                     </EditorButton>
                     <ExpressionSelect
-                      expressions={current.expressions}
+                      expressions={current().expressions}
                       value={controls.modelExpression()}
                       disabled={!ready()}
                       onChange={controls.selectModelExpression}
@@ -134,26 +127,30 @@ export const RuntimePage = (props: RuntimePageProps) => {
                       )}
                     </Show>
                   </RuntimeHeader>
-                  <RuntimeSplit studio={props.mode === 'studio'}>
+                  <RuntimeSplit studio={props.mode === 'studio'} onResize={controls.retainCamera}>
                     <PlaybackCanvas
+                      background={background()}
+                      resumeTime={resumeTime()}
                       parameterValues={controls.values()}
                       view={controls.profile()?.view}
-                      onViewChange={handleViewChange}
-                      document={current}
+                      onViewChange={controls.updateView}
+                      document={current()}
                       motionId={selectedMotion()}
                       expressionId={controls.modelExpression()}
                       playing={playing()}
-                      onFrame={setFrame}
+                      onFrame={updateFrame}
                       onReady={setReady}
                       onError={setError}
                     />
-                    <RuntimeTools
-                      document={current}
-                      controls={controls}
-                      workspace={workspace}
-                      studio={props.mode === 'studio'}
-                      onError={setError}
-                    />
+                    <Show when={sharedWorkspace?.mode() !== 'editor'}>
+                      <RuntimeTools
+                        document={current()}
+                        controls={controls}
+                        workspace={workspace}
+                        studio={props.mode === 'studio'}
+                        onError={setError}
+                      />
+                    </Show>
                   </RuntimeSplit>
                 </>
               )}

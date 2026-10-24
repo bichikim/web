@@ -5,11 +5,7 @@ import type {DocumentHistoryEntry} from '../use-document-history'
 
 interface DocumentHistoryPanelProps {
   readonly entries: ReadonlyArray<DocumentHistoryEntry>
-  readonly canUndo: boolean
-  readonly canRedo: boolean
   readonly onSelect: (id: number) => void
-  readonly onUndo: () => void
-  readonly onRedo: () => void
 }
 
 export const DocumentHistoryPanel = (props: DocumentHistoryPanelProps) => {
@@ -30,24 +26,6 @@ export const DocumentHistoryPanel = (props: DocumentHistoryPanelProps) => {
   return (
     <section class="document-history-panel" aria-label="작업 기록">
       <EditorPropertyGroup title="작업 기록">
-        <div class="document-history-header" role="group" aria-label="기록 이동">
-          <EditorButton
-            disabled={!props.canUndo}
-            aria-label="실행 취소"
-            title="실행 취소"
-            onClick={props.onUndo}
-          >
-            <span aria-hidden="true" class="puppet-icon puppet-icon-arrow-back-up" />
-          </EditorButton>
-          <EditorButton
-            disabled={!props.canRedo}
-            aria-label="다시 실행"
-            title="다시 실행"
-            onClick={props.onRedo}
-          >
-            <span aria-hidden="true" class="puppet-icon puppet-icon-arrow-forward-up" />
-          </EditorButton>
-        </div>
         <ol
           class="document-history-list"
           aria-label="작업 시점"

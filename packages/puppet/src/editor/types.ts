@@ -1,3 +1,5 @@
+import type {PuppetExampleDocument} from './example-document'
+import type {DocumentRecovery} from './document-recovery'
 import type {MeshPoint} from '../mesh'
 import type {PuppetDocument} from '../player/document'
 
@@ -53,4 +55,16 @@ export interface EditPartEdgeOptions {
   readonly firstVertexIndex: number
   readonly partId: string
   readonly secondVertexIndex: number
+}
+
+export interface PuppetEditorProps {
+  /** Externally loaded document; omitted, retain the local editor document and history. */
+  readonly replacementDocument?: PuppetDocument
+  readonly onDocumentCommit?: (document: PuppetDocument) => void
+  readonly examples?: ReadonlyArray<PuppetExampleDocument>
+  readonly initialDocument?: PuppetDocument
+  readonly initialMotionId?: string
+  readonly initialWorkspace?: 'animation' | 'modeling'
+  readonly onDocumentChange?: (document: PuppetDocument) => void
+  readonly recovery?: DocumentRecovery
 }

@@ -4,7 +4,12 @@ import {
   type PuppetDocument,
   type PuppetSceneNode,
 } from '../../player'
-import {getSceneNode, isSceneNodeLocked, type SceneSelection} from './scene-graph'
+import {
+  getSceneNode,
+  getSceneSelectionPartIds,
+  isSceneNodeLocked,
+  type SceneSelection,
+} from './scene-graph'
 import type {SceneContainerConversion} from './container-conversion'
 
 export interface SceneSelectionActions {
@@ -24,6 +29,15 @@ export const getSelectedPartId = (document: PuppetDocument, selection: SceneSele
     selection.activeNodeId === null ? undefined : getSceneNode(document, selection.activeNodeId)
   return node?.kind === 'part' ? node.id : null
 }
+
+/** Parts eligible for mesh editing, excluding descendants selected through deformers. */
+export const getSelectedMeshPartIds = (document: PuppetDocument, selection: SceneSelection) =>
+  getSceneSelectionPartIds(document, {
+    ...selection,
+    nodeIds: selection.nodeIds.filter(
+      (nodeId) => getSceneNode(document, nodeId)?.kind !== 'deformer',
+    ),
+  })
 
 const getContainerConversion = (
   document: PuppetDocument,

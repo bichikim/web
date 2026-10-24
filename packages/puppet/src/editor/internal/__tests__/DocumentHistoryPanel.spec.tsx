@@ -12,17 +12,10 @@ test('should expose named history entries and navigate while keeping the selecte
     {id: 2, state: 'future', title: '키폼 편집'},
   ])
   const onSelect = vi.fn()
-  const view = render(() => (
-    <DocumentHistoryPanel
-      entries={entries()}
-      canUndo
-      canRedo
-      onSelect={onSelect}
-      onUndo={vi.fn()}
-      onRedo={vi.fn()}
-    />
-  ))
+  const view = render(() => <DocumentHistoryPanel entries={entries()} onSelect={onSelect} />)
   const panel = within(view.getByRole('region', {name: '작업 기록'}))
+  expect(panel.queryByRole('button', {name: '실행 취소'})).toBeNull()
+  expect(panel.queryByRole('button', {name: '다시 실행'})).toBeNull()
   const timeline = within(panel.getByRole('list', {name: '작업 시점'}))
   expect(timeline.getAllByRole('button').map((button) => button.textContent)).toEqual([
     '키폼 편집다시 실행 가능',
@@ -46,29 +39,4 @@ test('should expose named history entries and navigate while keeping the selecte
   ])
   expect(timeline.getAllByRole('button')[0]).toHaveAccessibleName('레이어 이름 변경')
   expect(timeline.getAllByRole('button').at(-1)).toHaveAccessibleName('문서 열기')
-})
-
-test('should disable unavailable actions and invoke available undo and redo', () => {
-  const [available, setAvailable] = createSignal(false)
-  const onUndo = vi.fn()
-  const onRedo = vi.fn()
-  const view = render(() => (
-    <DocumentHistoryPanel
-      entries={[]}
-      canUndo={available()}
-      canRedo={available()}
-      onSelect={vi.fn()}
-      onUndo={onUndo}
-      onRedo={onRedo}
-    />
-  ))
-  const undo = view.getByRole('button', {name: '실행 취소'})
-  const redo = view.getByRole('button', {name: '다시 실행'})
-  expect(undo).toBeDisabled()
-  expect(redo).toBeDisabled()
-  setAvailable(true)
-  fireEvent.click(undo)
-  fireEvent.click(redo)
-  expect(onUndo).toHaveBeenCalledOnce()
-  expect(onRedo).toHaveBeenCalledOnce()
 })

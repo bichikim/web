@@ -1,5 +1,7 @@
 /** @vitest-environment jsdom */
 
+import {waitForSelectionReady} from './fixtures/selection'
+
 import {createPlayerFixture} from './fixtures/player'
 
 import {cleanup, fireEvent, render, screen, waitFor, within} from '@solidjs/testing-library'
@@ -66,6 +68,7 @@ describe('PuppetEditor', () => {
     ))
     await waitFor(() => expect(mocks.createPlayer).toHaveBeenCalled())
     fireEvent.click(view.getByRole('button', {name: '새 자유 변형 디포머 레이어 선택'}))
+    await waitForSelectionReady()
     expect(view.getByRole('group', {name: '디포머 편집 도구'})).toBeInTheDocument()
 
     fireEvent.click(view.getByRole('button', {name: '재생'}))
@@ -75,11 +78,13 @@ describe('PuppetEditor', () => {
     expect(view.getByRole('group', {name: '디포머 편집 도구'})).toBeInTheDocument()
   })
 
-  test('should hide selection actions for mixed node kinds', () => {
+  test('should hide selection actions for mixed node kinds', async () => {
     const view = render(() => <PuppetEditor initialDocument={createDemoDocument()} />)
 
     fireEvent.click(view.getByRole('button', {name: 'Shapes 레이어 선택'}))
+    await waitForSelectionReady()
     fireEvent.click(view.getByRole('button', {name: 'mesh-preview 레이어 선택'}), {ctrlKey: true})
+    await waitForSelectionReady()
 
     expect(view.queryByRole('button', {name: '자동 메시'})).toBeNull()
     expect(view.queryByRole('button', {name: '컨테이너 해제'})).toBeNull()
@@ -92,6 +97,7 @@ describe('PuppetEditor', () => {
     ))
 
     fireEvent.click(view.getByRole('button', {name: 'Shapes 레이어 선택'}))
+    await waitForSelectionReady()
 
     expect(view.queryByRole('button', {name: '자동 메시'})).toBeNull()
     expect(
@@ -123,6 +129,7 @@ describe('PuppetEditor', () => {
     ))
 
     fireEvent.click(view.getByRole('button', {name: '새 자유 변형 디포머 레이어 선택'}))
+    await waitForSelectionReady()
     fireEvent.click(view.getByRole('button', {name: '컨테이너 해제'}))
 
     await waitFor(() => {
@@ -142,6 +149,7 @@ describe('PuppetEditor', () => {
     ))
 
     fireEvent.click(view.getByRole('button', {name: 'Shapes 레이어 선택'}))
+    await waitForSelectionReady()
     fireEvent.keyDown(view.getByRole('button', {name: 'Shapes 종류 변경'}), {key: 'Enter'})
     fireEvent.keyDown(await screen.findByRole('menuitemradio', {name: '자유 변형 디포머'}), {
       key: 'Enter',
@@ -179,10 +187,12 @@ describe('PuppetEditor', () => {
     ))
 
     fireEvent.click(view.getByRole('button', {name: 'shape-circle 레이어 선택'}))
+    await waitForSelectionReady()
     fireEvent.click(view.getByRole('button', {name: '레이어에서 선택'}))
     expect(view.getByRole('button', {name: '대상 선택 취소'})).toBeVisible()
 
     fireEvent.click(view.getByRole('button', {name: 'shape-diamond 레이어 선택'}))
+    await waitForSelectionReady()
 
     await waitFor(() => {
       const document = onDocumentChange.mock.calls.at(-1)?.[0] as PuppetDocument | undefined
@@ -207,6 +217,7 @@ describe('PuppetEditor', () => {
     ))
 
     fireEvent.click(view.getByRole('button', {name: '그룹'}))
+    await waitForSelectionReady()
     fireEvent.keyDown(view.getByRole('button', {name: '새 그룹 종류 변경'}), {key: 'Enter'})
     fireEvent.keyDown(await screen.findByRole('menuitemradio', {name: '자유 변형 디포머'}), {
       key: 'Enter',
@@ -251,6 +262,7 @@ describe('PuppetEditor', () => {
     const view = render(() => <PuppetEditor initialDocument={createDemoDocument()} />)
 
     fireEvent.click(view.getByRole('button', {name: '그룹'}))
+    await waitForSelectionReady()
     fireEvent.keyDown(view.getByRole('button', {name: '새 그룹 종류 변경'}), {key: 'Enter'})
     fireEvent.keyDown(await screen.findByRole('menuitemradio', {name: '자유 변형 디포머'}), {
       key: 'Enter',
@@ -264,8 +276,10 @@ describe('PuppetEditor', () => {
     expect(angle).toHaveValue(15)
 
     fireEvent.click(view.getByRole('button', {name: 'mesh-preview 레이어 선택'}), {ctrlKey: true})
+    await waitForSelectionReady()
     fireEvent.click(view.getByRole('button', {name: '선택 레이어 연결'}))
     fireEvent.click(view.getByRole('button', {name: '새 그룹 레이어 선택'}))
+    await waitForSelectionReady()
 
     await waitFor(() => {
       expect(view.queryByRole('status')).not.toBeInTheDocument()
@@ -287,6 +301,7 @@ describe('PuppetEditor', () => {
   test('should undo and redo curve knot insertion and deletion without changing topology from an input', async () => {
     const view = render(() => <PuppetEditor initialDocument={createDemoDocument()} />)
     fireEvent.click(view.getByRole('button', {name: '그룹'}))
+    await waitForSelectionReady()
     fireEvent.keyDown(view.getByRole('button', {name: '새 그룹 종류 변경'}), {key: 'Enter'})
     fireEvent.keyDown(await screen.findByRole('menuitemradio', {name: '곡선 디포머'}), {
       key: 'Enter',
@@ -313,27 +328,15 @@ describe('PuppetEditor', () => {
     expect(view.getAllByRole('button', {name: /^곡선 (제어점|핸들) \d+$/})).toHaveLength(7)
     fireEvent.keyDown(svg, {key: 'Delete'})
     expect(view.getAllByRole('button', {name: /^곡선 (제어점|핸들) \d+$/})).toHaveLength(4)
-    fireEvent.click(
-      within(screen.getByRole('region', {name: '작업 기록'})).getByRole('button', {
-        name: '실행 취소',
-      }),
-    )
+    fireEvent.keyDown(globalThis.window, {ctrlKey: true, key: 'z'})
     await waitFor(() =>
       expect(view.getAllByRole('button', {name: /^곡선 (제어점|핸들) \d+$/})).toHaveLength(7),
     )
-    fireEvent.click(
-      within(screen.getByRole('region', {name: '작업 기록'})).getByRole('button', {
-        name: '실행 취소',
-      }),
-    )
+    fireEvent.keyDown(globalThis.window, {ctrlKey: true, key: 'z'})
     await waitFor(() =>
       expect(view.getAllByRole('button', {name: /^곡선 (제어점|핸들) \d+$/})).toHaveLength(4),
     )
-    fireEvent.click(
-      within(screen.getByRole('region', {name: '작업 기록'})).getByRole('button', {
-        name: '다시 실행',
-      }),
-    )
+    fireEvent.keyDown(globalThis.window, {ctrlKey: true, key: 'z', shiftKey: true})
     await waitFor(() =>
       expect(view.getAllByRole('button', {name: /^곡선 (제어점|핸들) \d+$/})).toHaveLength(7),
     )
@@ -342,6 +345,7 @@ describe('PuppetEditor', () => {
   test('should create a bone deformer with its own controls and include joint edits in history', async () => {
     const view = render(() => <PuppetEditor initialDocument={createDemoDocument()} />)
     fireEvent.click(view.getByRole('button', {name: '그룹'}))
+    await waitForSelectionReady()
     fireEvent.keyDown(view.getByRole('button', {name: '새 그룹 종류 변경'}), {key: 'Enter'})
     fireEvent.keyDown(await screen.findByRole('menuitemradio', {name: '본 디포머'}), {key: 'Enter'})
     expect(view.queryByLabelText('자유 변형 각도')).toBeNull()
@@ -362,17 +366,9 @@ describe('PuppetEditor', () => {
     })
     fireEvent.dblClick(svg, {clientX: 840, clientY: 430})
     expect(view.getAllByRole('button', {name: /본 관절/})).toHaveLength(3)
-    fireEvent.click(
-      within(screen.getByRole('region', {name: '작업 기록'})).getByRole('button', {
-        name: '실행 취소',
-      }),
-    )
+    fireEvent.keyDown(globalThis.window, {ctrlKey: true, key: 'z'})
     await waitFor(() => expect(view.getAllByRole('button', {name: /본 관절/})).toHaveLength(2))
-    fireEvent.click(
-      within(screen.getByRole('region', {name: '작업 기록'})).getByRole('button', {
-        name: '다시 실행',
-      }),
-    )
+    fireEvent.keyDown(globalThis.window, {ctrlKey: true, key: 'z', shiftKey: true})
     await waitFor(() => expect(view.getAllByRole('button', {name: /본 관절/})).toHaveLength(3))
   })
 
@@ -382,6 +378,7 @@ describe('PuppetEditor', () => {
       <PuppetEditor initialDocument={createDemoDocument()} onDocumentChange={onDocumentChange} />
     ))
     fireEvent.click(view.getByRole('button', {name: '그룹'}))
+    await waitForSelectionReady()
     fireEvent.keyDown(view.getByRole('button', {name: '새 그룹 종류 변경'}), {key: 'Enter'})
     fireEvent.keyDown(await screen.findByRole('menuitemradio', {name: '자유 변형 디포머'}), {
       key: 'Enter',
@@ -399,17 +396,9 @@ describe('PuppetEditor', () => {
     expect(node().controlPoints).not.toEqual(before.controlPoints)
     expect(transformDeformerPoint(node(), point)).toEqual(expected)
     const placed = node()
-    fireEvent.click(
-      within(screen.getByRole('region', {name: '작업 기록'})).getByRole('button', {
-        name: '실행 취소',
-      }),
-    )
+    fireEvent.keyDown(globalThis.window, {ctrlKey: true, key: 'z'})
     expect(node()).toEqual(before)
-    fireEvent.click(
-      within(screen.getByRole('region', {name: '작업 기록'})).getByRole('button', {
-        name: '다시 실행',
-      }),
-    )
+    fireEvent.keyDown(globalThis.window, {ctrlKey: true, key: 'z', shiftKey: true})
     expect(node()).toEqual(placed)
     expect(parseDocument(serializeDocument(latest())).ok).toBe(true)
     fireEvent.click(view.getByRole('button', {name: '변형 편집'}))
@@ -417,7 +406,7 @@ describe('PuppetEditor', () => {
     expect(transformDeformerPoint(node(), point)).not.toEqual(expected)
   })
 
-  test('should retain the first glue endpoint when selecting another part in the layer panel', () => {
+  test('should retain the first glue endpoint when selecting another part in the layer panel', async () => {
     mocks.createPlayer.mockResolvedValue(player)
     const view = render(() => (
       <PuppetEditor
@@ -433,6 +422,7 @@ describe('PuppetEditor', () => {
     fireEvent(vertex, new MouseEvent('pointerdown', {bubbles: true, button: 0}))
     fireEvent.click(view.getByRole('button', {name: '선택 정점에서 연결 시작'}))
     fireEvent.click(view.getByRole('button', {name: 'shape-diamond 레이어 선택'}))
+    await waitForSelectionReady()
     expect(view.getByText(/A: mesh-preview · 정점 1/)).toBeVisible()
     const target = view.container.querySelector('[data-part-id="shape-diamond"] circle')!
     fireEvent(target, new MouseEvent('pointerdown', {bubbles: true, button: 0}))

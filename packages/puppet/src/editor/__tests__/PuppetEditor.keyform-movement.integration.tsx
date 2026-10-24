@@ -77,9 +77,11 @@ test('should move a sparse Z plane without changing XY and retain undoable keyfo
     ]),
   )
   const moved = latestDocument().parameterBindings
-  fireEvent.click(view.getByRole('button', {name: '실행 취소'}))
+  fireEvent.click(view.getByRole('button', {name: '메인 메뉴'}))
+  fireEvent.click(screen.getByRole('button', {name: '실행 취소'}))
   expect(latestDocument().parameterBindings).toEqual(document.parameterBindings)
-  fireEvent.click(view.getByRole('button', {name: '다시 실행'}))
+  fireEvent.click(view.getByRole('button', {name: '메인 메뉴'}))
+  fireEvent.click(screen.getByRole('button', {name: '다시 실행'}))
   expect(latestDocument().parameterBindings).toEqual(moved)
 })
 
@@ -110,7 +112,8 @@ test('should move an XY key within its slice and retain keyboard focus and histo
       [4, 8, 20],
     ]),
   )
-  fireEvent.click(view.getByRole('button', {name: '실행 취소'}))
+  fireEvent.click(view.getByRole('button', {name: '메인 메뉴'}))
+  fireEvent.click(screen.getByRole('button', {name: '실행 취소'}))
   expect(latestDocument().parameterBindings).toEqual(document.parameterBindings)
 })
 
@@ -141,7 +144,8 @@ test('should commit one XY drag within the current Z and keep other keyforms int
       [4, 8, 20],
     ]),
   )
-  fireEvent.click(view.getByRole('button', {name: '실행 취소'}))
+  fireEvent.click(view.getByRole('button', {name: '메인 메뉴'}))
+  fireEvent.click(screen.getByRole('button', {name: '실행 취소'}))
   expect(latestDocument().parameterBindings).toEqual(document.parameterBindings)
 })
 

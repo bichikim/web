@@ -4,6 +4,8 @@ import type {PuppetDocument} from './player'
 import type {DocumentRecovery} from './editor/document-recovery'
 
 interface UseDocumentSessionProps {
+  /** Session to restore and commit to. Omitted, use the default editor recovery session. */
+  readonly session?: DocumentSession
   readonly loadInitialDocument: () => Promise<PuppetDocument>
 }
 
@@ -35,10 +37,12 @@ export const useDocumentSession = (props: UseDocumentSessionProps): UseDocumentS
   }
   const [document] = createResource(async () => {
     try {
-      session = createDocumentSession({
-        database: globalThis.indexedDB,
-        storage: globalThis.sessionStorage,
-      })
+      session =
+        props.session ??
+        createDocumentSession({
+          database: globalThis.indexedDB,
+          storage: globalThis.sessionStorage,
+        })
       const restored = await session.read()
       if (restored !== null) {
         return restored

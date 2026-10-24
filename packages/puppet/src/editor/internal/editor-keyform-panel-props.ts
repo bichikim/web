@@ -9,6 +9,10 @@ export interface EditorKeyformPanelProps {
   readonly keyformCenters?: ReadonlyArray<MirrorAxisReference>
   readonly onKeyformMirror?: (settings: MirrorKeyformSettings) => string | null
   readonly onCornersGenerate?: (settings: CornerKeyformSettings) => string | null
+  /** Immediate card highlight; omitted to follow activeBindingId. */
+  readonly selectedBindingId?: string
+  /** Synchronous activation for value edits; omitted to use onBindingSelect. */
+  readonly onBindingActivate?: (bindingId: string) => void
   readonly activeBindingId?: string
   readonly activeKeyformValues?: PuppetParameterValues | null
   readonly allParametersVisible?: boolean

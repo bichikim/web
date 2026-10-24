@@ -17,6 +17,7 @@ import {
 } from '../parameter-keyforms'
 import {
   createParameterPreview,
+  getParameterEditingDocument,
   sampleParameterVertices,
   samplePartKeyform,
 } from '../parameter-sampling'
@@ -367,4 +368,24 @@ describe('group keyform previews', () => {
       )
     },
   )
+})
+
+test('should retain preview dependencies for selections without influence edits', () => {
+  const document = createDemoDocument()
+  expect(getParameterEditingDocument(document)).toBe(document)
+  expect(getParameterEditingDocument(document, 'missing')).toBe(document)
+  expect(getParameterEditingDocument(document, document.parameterBindings![0]!.id)).toBe(document)
+  const binding = document.parameterBindings![0]!
+  const influenced = {
+    ...document,
+    parameterBindings: [
+      {
+        ...binding,
+        influences: [{parameterId: 'angle-x', points: [{value: 0, weight: 0.5}]}],
+      },
+    ],
+  }
+  const editable = getParameterEditingDocument(influenced, binding.id)
+  expect(editable.parameterBindings![0]!.influences).toBeUndefined()
+  expect(influenced.parameterBindings[0]!.influences).toHaveLength(1)
 })

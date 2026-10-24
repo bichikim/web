@@ -1,26 +1,34 @@
+import {usePlayerMotion} from '../workspace/use-player-motion'
 import {debounce} from 'es-toolkit/function'
-import {createEffect, createSignal, onCleanup, Show, untrack} from 'solid-js'
+import {
+  type Accessor,
+  createEffect,
+  createMemo,
+  createSignal,
+  onCleanup,
+  Show,
+  untrack,
+} from 'solid-js'
 
 import type {PuppetParameterValueMap} from '../deformation'
-import {createPlayer, type Player, type PlayerFrame, type PuppetDocument} from '../player'
+import {type Player, type PlayerFrame, type PuppetDocument} from '../player'
 import {markPreparedPuppetDocument} from '../player/internal/prepared-document'
-import {
-  createSpatialThreeOverlay,
-  type SpatialThreeOverlay,
-  type SpatialThreeSurface,
-} from './internal/spatial-three-overlay'
-import {getEditorAudioDestination} from './internal/editor-audio'
-import {EDITOR_VIEWPORT_PADDING} from './internal/viewport'
+import type {SpatialThreeSurface} from './internal/spatial-three-overlay'
+import {useSpatialOverlay} from './internal/use-spatial-overlay'
+import {createCanvasPlayer} from './create-canvas-player'
+import {applyPlayerDocument} from './apply-player-document'
 
 export type PlayerCanvasStatus = 'error' | 'loading' | 'ready'
 
 const RESIZE_DEBOUNCE_MILLISECONDS = 100
-const MAXIMUM_RENDER_DIMENSION = 4096
-
 export interface PlayerCanvasProps {
   /** Editor-owned document. Untrusted input must be parsed before reaching this component. */
   readonly document: PuppetDocument
+  /** Position reapplied after a compatible document update; omitted, retain normal document-change behavior. */
+  readonly resumeTime?: number
   readonly motionId?: string
+  /** 가져온 표정 ID. 생략하면 모션과 수동 파라미터만 사용한다. */
+  readonly expressionId?: string
   readonly onFrame?: (frame: PlayerFrame) => void
   readonly onPlayerChange?: (player: Player | null) => void
   readonly onStatusChange?: (status: PlayerCanvasStatus) => void
@@ -29,28 +37,10 @@ export interface PlayerCanvasProps {
   readonly spatialSurface?: SpatialThreeSurface
 }
 
-/** Bounds the backing buffer while retaining the document's editing coordinates. */
-const getEditorResolution = (document: PuppetDocument) =>
-  Math.min(
-    window.devicePixelRatio,
-    2,
-    MAXIMUM_RENDER_DIMENSION /
-      (Math.max(document.viewport.width, document.viewport.height) *
-        (1 + 2 * EDITOR_VIEWPORT_PADDING)),
-  )
-
-export const PlayerCanvas = (props: PlayerCanvasProps) => {
-  const [host, setHost] = createSignal<HTMLDivElement>()
-  const [errorMessage, setErrorMessage] = createSignal<string | null>(null)
-  const [player, setPlayer] = createSignal<Player | null>(null)
-  let generation = 0
-  let overlay: SpatialThreeOverlay | undefined
-  let playerCanvas: HTMLCanvasElement | undefined
-  const notifyFrame = (frame: PlayerFrame) => untrack(() => props.onFrame?.(frame))
-  const notifyPlayerChange = (nextPlayer: Player | null) =>
-    untrack(() => props.onPlayerChange?.(nextPlayer))
-  const notifyStatus = (status: PlayerCanvasStatus) => untrack(() => props.onStatusChange?.(status))
-
+const usePlayerResize = (
+  host: Accessor<HTMLDivElement | undefined>,
+  player: Accessor<Player | null>,
+) => {
   createEffect(() => {
     const hostElement = host()
 
@@ -67,10 +57,46 @@ export const PlayerCanvas = (props: PlayerCanvasProps) => {
       resizePlayer.cancel()
     })
   })
+}
+
+export const PlayerCanvas = (props: PlayerCanvasProps) => {
+  const sourceDocument = createMemo(() => props.document)
+  const [host, setHost] = createSignal<HTMLDivElement>()
+  const [errorMessage, setErrorMessage] = createSignal<string | null>(null)
+  const [player, setPlayer] = createSignal<Player | null>(null)
+  let generation = 0
+  let pending = false
+  let initializingPlayer: Player | undefined
+  const [retry, setRetry] = createSignal(0)
+  let appliedDocument: PuppetDocument | undefined
+  let playerCanvas: HTMLCanvasElement | undefined
+  const overlay = useSpatialOverlay({
+    canvas: () => playerCanvas,
+    onError: setErrorMessage,
+    player,
+    surface: () => props.spatialSurface,
+  })
+  const notifyFrame = (frame: PlayerFrame) => untrack(() => props.onFrame?.(frame))
+  const notifyPlayerChange = (nextPlayer: Player | null) =>
+    untrack(() => props.onPlayerChange?.(nextPlayer))
+  const notifyStatus = (status: PlayerCanvasStatus) => untrack(() => props.onStatusChange?.(status))
+  const disposePlayer = () => {
+    overlay.dispose()
+    untrack(player)?.destroy()
+    notifyPlayerChange(null)
+    setPlayer(null)
+    untrack(host)?.replaceChildren()
+  }
+
+  usePlayerResize(host, player)
 
   createEffect(() => {
     const currentParameterValues = props.parameterValues
-    player()?.setParameterValues(currentParameterValues ?? {})
+    const document = sourceDocument()
+    const currentPlayer = player()
+    if (appliedDocument === document) {
+      currentPlayer?.setParameterValues(currentParameterValues ?? {})
+    }
   })
 
   createEffect(() => {
@@ -78,29 +104,12 @@ export const PlayerCanvas = (props: PlayerCanvasProps) => {
     player()?.setPhysicsPreview(physicsPreview)
   })
 
+  usePlayerMotion({motionId: () => props.motionId, player})
   createEffect(() => {
-    if (props.motionId !== undefined) {
-      player()?.setMotion(props.motionId)
-    }
-  })
-
-  createEffect(() => {
-    const currentPlayer = player()
-    const surface = props.spatialSurface
-    if (currentPlayer === null || playerCanvas === undefined) {
-      return
-    }
-    if (overlay === undefined && surface !== undefined) {
-      try {
-        overlay = createSpatialThreeOverlay(playerCanvas)
-      } catch (error) {
-        setErrorMessage(error instanceof Error ? error.message : '3D 메시를 표시하지 못했습니다.')
-        return
-      }
-    }
-    if (overlay !== undefined) {
-      overlay.update(surface)
-      currentPlayer.redraw()
+    const current = player()
+    const expression = props.expressionId
+    if (current !== null) {
+      current.setExpression(expression)
     }
   })
 
@@ -111,78 +120,85 @@ export const PlayerCanvas = (props: PlayerCanvasProps) => {
       return
     }
 
+    const nextDocument = sourceDocument()
+    retry()
+    if (pending) {
+      return
+    }
     generation += 1
     const activeGeneration = generation
     notifyStatus('loading')
-    const preparedDocument = markPreparedPuppetDocument(props.document)
+    const preparedDocument = markPreparedPuppetDocument(nextDocument)
     const currentPlayer = untrack(player)
-
     try {
-      if (currentPlayer?.updateDocument(preparedDocument) === true) {
+      if (
+        currentPlayer !== null &&
+        untrack(() => applyPlayerDocument(currentPlayer, nextDocument, props, appliedDocument))
+      ) {
+        appliedDocument = nextDocument
         setErrorMessage(null)
         notifyStatus('ready')
         return
       }
     } catch (error) {
-      overlay?.destroy()
-      overlay = undefined
-      currentPlayer?.destroy()
-      notifyPlayerChange(null)
-      setPlayer(null)
-      hostElement.replaceChildren()
+      disposePlayer()
       setErrorMessage(error instanceof Error ? error.message : '편집 데이터를 적용하지 못했습니다.')
       notifyStatus('error')
       return
     }
 
-    const canvasElement = globalThis.document.createElement('canvas')
+    const canvasElement = (<canvas aria-label="모델 뷰어" />) as HTMLCanvasElement
 
-    overlay?.destroy()
-    overlay = undefined
-    currentPlayer?.destroy()
-    notifyPlayerChange(null)
-    setPlayer(null)
+    disposePlayer()
     setErrorMessage(null)
     hostElement.replaceChildren(canvasElement)
     playerCanvas = canvasElement
 
-    createPlayer({
+    pending = true
+    createCanvasPlayer({
       canvas: canvasElement,
       document: preparedDocument,
-      // Editing overlays need the whole canvas, not the document's layout.
-      framing: 'viewport',
+      host: hostElement,
       motionId: untrack(() => props.motionId),
-      onAfterRender: () => overlay?.render(),
-      onBeforeRender: () => overlay?.prepare(),
+      onAfterRender: overlay.render,
+      onBeforeRender: overlay.prepare,
       onFrame: notifyFrame,
       parameterValues: untrack(() => props.parameterValues),
       physicsPreview: untrack(() => props.physicsPreview),
-      resizeTo: hostElement,
-      resolution: getEditorResolution(preparedDocument),
-      soundDestination: getEditorAudioDestination(),
-      viewportPadding: EDITOR_VIEWPORT_PADDING,
     })
       .then((createdPlayer) => {
+        pending = false
         if (activeGeneration !== generation) {
           createdPlayer.destroy()
           return
         }
 
+        initializingPlayer = createdPlayer
+        const latest = untrack(sourceDocument)
+        if (
+          latest !== nextDocument &&
+          !untrack(() => applyPlayerDocument(createdPlayer, latest, props, nextDocument))
+        ) {
+          createdPlayer.destroy()
+          initializingPlayer = undefined
+          setRetry((value) => value + 1)
+          return
+        }
+        appliedDocument = latest
+        initializingPlayer = undefined
         setPlayer(createdPlayer)
         notifyPlayerChange(createdPlayer)
         notifyStatus('ready')
       })
       .catch((error: unknown) => {
+        pending = false
         if (activeGeneration !== generation) {
           return
         }
 
-        untrack(player)?.destroy()
-        overlay?.destroy()
-        overlay = undefined
-        notifyPlayerChange(null)
-        setPlayer(null)
-        hostElement.replaceChildren()
+        initializingPlayer?.destroy()
+        initializingPlayer = undefined
+        disposePlayer()
         setErrorMessage(error instanceof Error ? error.message : '플레이어를 시작하지 못했습니다.')
         notifyStatus('error')
       })
@@ -190,10 +206,7 @@ export const PlayerCanvas = (props: PlayerCanvasProps) => {
 
   onCleanup(() => {
     generation += 1
-    overlay?.destroy()
-    overlay = undefined
-    untrack(player)?.destroy()
-    notifyPlayerChange(null)
+    disposePlayer()
   })
 
   return (

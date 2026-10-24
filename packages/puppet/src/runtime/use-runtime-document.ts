@@ -1,6 +1,8 @@
-import {createResource, createSignal, onCleanup} from 'solid-js'
+import {useWorkspace} from '../workspace/context'
+import {createMemo, createResource, createSignal, onCleanup} from 'solid-js'
 import {preparePuppetDocument, type PuppetDocument} from '../player'
 import {createRuntimeDocumentSession} from './create-runtime-document-session'
+import {unpackTextureAtlas} from '../editor/internal/texture-atlas-canvas'
 
 interface UseRuntimeDocumentProps {
   readonly loadInitialDocument: () => Promise<PuppetDocument>
@@ -8,12 +10,15 @@ interface UseRuntimeDocumentProps {
 }
 
 export const useRuntimeDocument = (props: UseRuntimeDocumentProps) => {
+  const workspace = useWorkspace()
   const documentKey = `puppet:runtime-document:v1:${props.sessionId ?? 'default'}`
+  const [sessionId, setSessionId] = createSignal(props.sessionId)
   const loadInitial = async () => {
-    const sessionId = sessionStorage.getItem(documentKey) ?? props.sessionId
-    return sessionId === null
+    const current = sessionStorage.getItem(documentKey) ?? props.sessionId
+    setSessionId(current)
+    return current === null
       ? props.loadInitialDocument()
-      : createRuntimeDocumentSession(sessionId).read()
+      : createRuntimeDocumentSession(current).read()
   }
   const [source, setSource] = createSignal<File | 'initial'>('initial')
   const [error, setError] = createSignal<string | null>(null)
@@ -24,6 +29,9 @@ export const useRuntimeDocument = (props: UseRuntimeDocumentProps) => {
     const request = new AbortController()
     controller = request
     setError(null)
+    if (source === 'initial' && workspace !== undefined) {
+      return undefined
+    }
     try {
       const options =
         source === 'initial'
@@ -42,12 +50,20 @@ export const useRuntimeDocument = (props: UseRuntimeDocumentProps) => {
       if (!result.ok) {
         throw new Error('올바른 Puppet JSON 문서를 선택하세요.')
       }
-      if (source !== 'initial') {
+      if (source !== 'initial' && workspace !== undefined) {
+        const editable = await unpackTextureAtlas(result.document)
+        if (request.signal.aborted) {
+          return undefined
+        }
+        workspace.replaceDocument(editable)
+        return editable
+      } else if (source !== 'initial') {
         try {
           const sessionId = crypto.randomUUID()
           await createRuntimeDocumentSession(sessionId).write(result.document)
           if (!request.signal.aborted) {
             sessionStorage.setItem(documentKey, sessionId)
+            setSessionId(sessionId)
           }
         } catch {
           if (!request.signal.aborted) {
@@ -65,8 +81,9 @@ export const useRuntimeDocument = (props: UseRuntimeDocumentProps) => {
   })
   return {
     dismissError: () => setError(null),
-    document,
+    document: createMemo(() => workspace?.document() ?? document()),
     error,
     loadFile: (file: File) => setSource(file),
+    sessionId,
   }
 }

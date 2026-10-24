@@ -1,5 +1,5 @@
 /** @vitest-environment jsdom */
-import {fireEvent, render, screen, within} from '@solidjs/testing-library'
+import {fireEvent, render, screen, waitFor, within} from '@solidjs/testing-library'
 import {expect, test, vi} from 'vitest'
 
 import {EditorToolbar} from '../EditorToolbar'
@@ -129,7 +129,7 @@ test('should open recovery from the file menu when available', () => {
   expect(screen.getByRole('button', {name: '메인 메뉴'})).toHaveFocus()
 })
 
-test('should launch the current model from the top workspace navigation', () => {
+test('should select the last workspace immediately and launch it after painting', async () => {
   const onStudioOpen = vi.fn()
   const onViewerOpen = vi.fn()
   render(() => (
@@ -145,6 +145,28 @@ test('should launch the current model from the top workspace navigation', () => 
   const navigation = within(screen.getByRole('navigation', {name: '작업 공간 이동'}))
   fireEvent.click(navigation.getByRole('button', {name: 'Studio'}))
   fireEvent.click(navigation.getByRole('button', {name: 'Viewer'}))
-  expect(onStudioOpen).toHaveBeenCalledOnce()
-  expect(onViewerOpen).toHaveBeenCalledOnce()
+  expect(navigation.getByRole('button', {name: 'Viewer'})).toHaveAttribute('data-selected')
+  expect(onStudioOpen).not.toHaveBeenCalled()
+  expect(onViewerOpen).not.toHaveBeenCalled()
+  await waitFor(() => expect(onViewerOpen).toHaveBeenCalledOnce(), {interval: 1})
+  expect(onStudioOpen).not.toHaveBeenCalled()
+})
+
+test('should keep workspace launch actions in the header and omit duplicate file menu entries', () => {
+  render(() => (
+    <EditorToolbar
+      playerStatus="ready"
+      onExport={vi.fn()}
+      onFileImport={vi.fn()}
+      onFileOpen={vi.fn()}
+      onStudioOpen={vi.fn()}
+      onViewerOpen={vi.fn()}
+    />
+  ))
+  fireEvent.click(screen.getByRole('button', {name: '메인 메뉴'}))
+  expect(screen.queryByRole('button', {name: 'Studio로 열기'})).not.toBeInTheDocument()
+  expect(screen.queryByRole('button', {name: '뷰어로 열기'})).not.toBeInTheDocument()
+  const navigation = within(screen.getByRole('navigation', {name: '작업 공간 이동'}))
+  expect(navigation.getByRole('button', {name: 'Studio'})).toBeEnabled()
+  expect(navigation.getByRole('button', {name: 'Viewer'})).toBeEnabled()
 })

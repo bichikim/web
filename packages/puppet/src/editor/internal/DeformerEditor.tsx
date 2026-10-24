@@ -404,8 +404,9 @@ const SurfaceEditor = (props: DeformerEditorProps) => {
       editor.brush.setMode('select')
     }
   })
-  const controls = (
+  const controls = () => (
     <DeformerTools
+      mount={props.brushControlsMount}
       mode={props.deformerMode ?? 'pose'}
       restEditable={editor.restEditable()}
       onChange={editor.changeMode}
@@ -415,6 +416,7 @@ const SurfaceEditor = (props: DeformerEditorProps) => {
     <Show when={editor.deformer()}>
       {(activeDeformer) => (
         <div class="deformer-editor">
+          {props.renderControls === undefined ? controls() : props.renderControls(controls())}
           <GridBrushControls
             brush={editor.brush}
             brushControlsExternal={props.brushControlsExternal}
@@ -422,7 +424,6 @@ const SurfaceEditor = (props: DeformerEditorProps) => {
             brushSettingsMount={props.brushSettingsMount}
             disabled={!editor.editable()}
           />
-          {props.renderControls === undefined ? controls : props.renderControls(controls)}
           <svg
             ref={editor.bind}
             aria-label="디포머 편집 영역"

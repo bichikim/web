@@ -344,7 +344,7 @@ export const canvasShortcuts = {
     '[.puppet-editor_&]:[background-position-y:calc(var(--camera-y)_-_var(--camera-grid)/2)]',
     "[.puppet-editor_&[data-panning='true']]:cursor-grabbing",
   ],
-  'viewport-display': 'contents',
+  'viewport-display': 'contents [&>div]:contents',
   'viewport-message': [
     '[.puppet-editor_&]:absolute [.puppet-editor_&]:[inset:50%_auto_auto_50%] [.puppet-editor_&]:m-0',
     '[.puppet-editor_&]:[color:#7f8d88] [.puppet-editor_&]:text-editor-reading',
@@ -372,4 +372,13 @@ export const canvasShortcuts = {
   'weight-paint-active':
     '[.puppet-editor_&_.bone-weight-vertex]:pointer-events-none [.puppet-editor_&]:cursor-crosshair',
   'weight-tool-options': 'flex flex-wrap gap-editor-related mt-editor-field',
+  'workspace-camera': '[.puppet-editor_&]:[background-color:var(--viewport-background,_#111715)]',
+  'workspace-header-mount': [
+    'min-w-0 [&>div]:contents',
+    '[.puppet-editor:not(.puppet-viewer-page)_>_&]:[grid-area:toolbar]',
+  ],
+  'workspace-page': 'w-full h-full min-w-0 min-h-0 [&[hidden]]:hidden',
+  'workspace-runtime-actions': 'contents',
+  'workspace-viewport': 'grid min-w-0 min-h-0 w-full h-full',
+  'workspace-viewport-mount': 'grid min-w-0 min-h-0 w-full h-full [&>div]:contents',
 }

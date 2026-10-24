@@ -30,7 +30,7 @@ export type ReimportState =
   | ReimportError
   | {readonly kind: 'idle'}
 export interface UsePsdReimportProps {
-  readonly readPsd?: (file: File) => Promise<ImportPsdResult>
+  readonly readPsd?: (file: File, signal?: AbortSignal) => Promise<ImportPsdResult>
   readonly document: Accessor<PuppetDocument>
   readonly onDocumentChange: (document: PuppetDocument) => void
   readonly onNotice: (message: string | null) => void
@@ -65,11 +65,15 @@ export const usePsdReimport = (props: UsePsdReimportProps): PsdReimportControlle
     })
   })
   let generation = 0
+  let controller: AbortController | undefined
   onCleanup(() => {
     generation += 1
+    controller?.abort()
   })
   const cancel = () => {
     generation += 1
+    controller?.abort()
+    controller = undefined
     setState({kind: 'idle'})
   }
   const load = async (file: File | undefined) => {
@@ -78,12 +82,15 @@ export const usePsdReimport = (props: UsePsdReimportProps): PsdReimportControlle
     }
     generation += 1
     const revision = generation
+    controller?.abort()
+    const request = new AbortController()
+    controller = request
     const document = props.document()
     setIncludeNew(false)
     setRemoveMissing(false)
     setState({fileName: file.name, kind: 'loading'})
     try {
-      const result = await (props.readPsd ?? importPsd)(file)
+      const result = await (props.readPsd ?? importPsd)(file, request.signal)
       if (revision !== generation) {
         return
       }
@@ -107,6 +114,10 @@ export const usePsdReimport = (props: UsePsdReimportProps): PsdReimportControlle
     } catch {
       if (revision === generation) {
         setState({kind: 'error', message: 'PSD를 읽지 못했습니다. 파일을 다시 선택하세요.'})
+      }
+    } finally {
+      if (revision === generation) {
+        controller = undefined
       }
     }
   }

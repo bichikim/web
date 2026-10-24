@@ -6,6 +6,8 @@ interface FileActionProps {
   readonly label: string
   readonly description?: string
   readonly onImport?: (file: File | undefined) => void
+  /** Restores focus to the owning menu before opening a loading dialog. Omitted, retain native focus. */
+  readonly onReturnFocus?: () => void
   readonly onClose: () => void
 }
 export const FileAction = (props: FileActionProps) => {
@@ -17,6 +19,7 @@ export const FileAction = (props: FileActionProps) => {
   const handleChange = (event: Event & {currentTarget: HTMLInputElement}) => {
     const file = event.currentTarget.files?.[0]
     event.currentTarget.value = ''
+    props.onReturnFocus?.()
     props.onImport?.(file)
   }
   return (

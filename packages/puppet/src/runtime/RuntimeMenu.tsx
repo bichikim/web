@@ -1,6 +1,7 @@
+import {useWorkspace} from '../workspace/context'
 import {useStudioShortcuts} from './use-studio-shortcuts'
 import {Popover} from '@kobalte/core/popover'
-import {createSignal, Show} from 'solid-js'
+import {createEffect, createSignal, Show} from 'solid-js'
 import {EditorToast} from '../design-system'
 import {usePopoverSurface} from '../design-system/use-popover-surface'
 import {FileAction} from '../editor/internal/FileAction'
@@ -10,7 +11,14 @@ interface RuntimeMenuProps {
   readonly workspace?: ReturnType<typeof useWorkspaceLayout>
 }
 export const RuntimeMenu = (props: RuntimeMenuProps) => {
+  const workspace = useWorkspace()
+  const active = () => workspace === undefined || workspace.mode() !== 'editor'
   const [open, setOpen] = createSignal(false)
+  createEffect(() => {
+    if (!active()) {
+      setOpen(false)
+    }
+  })
   const [trigger, setTrigger] = createSignal<HTMLButtonElement>()
   const [surface, setSurface] = createSignal<HTMLDivElement>()
   const [studioInput, setStudioInput] = createSignal<HTMLInputElement>()
@@ -47,7 +55,7 @@ export const RuntimeMenu = (props: RuntimeMenuProps) => {
     props.workspace?.exportStudio()
   }
   const shortcut = useStudioShortcuts({
-    enabled: () => props.workspace !== undefined,
+    enabled: () => active() && props.workspace !== undefined,
     onOpen: handleOpen,
     onSave: handleSave,
   })

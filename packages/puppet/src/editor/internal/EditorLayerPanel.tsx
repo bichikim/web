@@ -142,6 +142,7 @@ const SceneNodeItem = (props: SceneNodeItemProps) => {
   const [renaming, setRenaming] = createSignal(false)
   const isExpanded = () =>
     isSceneContainerNode(props.node) && props.expandedGroupIds.has(props.node.id)
+  const retainChildren = createMemo((retained: boolean) => retained || isExpanded(), false)
   const locked = () => props.inheritedLocked || props.node.locked
   const visible = () => props.inheritedVisible && props.node.visible
   const parameterLinks = createMemo(() => getNodeParameterLinks(props.document, props.node.id))
@@ -169,6 +170,7 @@ const SceneNodeItem = (props: SceneNodeItemProps) => {
         onDragStart={(event) => handleLayerDragStart(event, props.node.id, props.onDragStart)}
       >
         <Collapsible
+          forceMount={retainChildren()}
           class="layer-tree-node"
           open={isExpanded()}
           onOpenChange={() => {
@@ -253,7 +255,7 @@ const SceneNodeItem = (props: SceneNodeItemProps) => {
           </EditorLayerRowMenu>
 
           <Show when={isSceneContainerNode(props.node)}>
-            <Collapsible.Content>
+            <Collapsible.Content hidden={!isExpanded()} inert={!isExpanded()}>
               <ul role="group">
                 <KeyedFor
                   each={isSceneContainerNode(props.node) ? props.node.children.toReversed() : []}
@@ -448,7 +450,7 @@ export const EditorLayerPanel = (props: EditorLayerPanelProps) => {
             title="필터 지우기"
             onClick={handleFilterClear}
           >
-            <span aria-hidden="true" class="puppet-icon puppet-icon-x" />
+            <span aria-hidden="true" class="puppet-icon puppet-icon-filter-clear" />
           </EditorButton>
         </Show>
       </div>

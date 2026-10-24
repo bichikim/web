@@ -45,7 +45,7 @@ export const PsdReimportDialog = (props: PsdReimportDialogProps) => {
             </header>
             <Switch>
               <Match when={props.controller.state().kind === 'loading'}>
-                <p role="status">레이어를 비교하는 중…</p>
+                <p role="status">불러오는 중…</p>
               </Match>
               <Match when={error()}>
                 <p role="alert" class="auto-mesh-error">

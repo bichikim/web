@@ -1,3 +1,4 @@
+import type {RuntimeView} from '../../tracking/types'
 import {attachViewPan} from './attach-view-pan'
 import {attachViewNavigation} from './view-navigation'
 import {ViewRuler} from './ViewRuler'
@@ -8,7 +9,11 @@ import {EDITOR_VIEWPORT_PADDING} from './viewport'
 import {useElementSize} from './use-element-size'
 
 interface CameraViewportProps {
-  readonly fitRevision?: number
+  /** Saved camera state; omitted, retain the current view. */
+  readonly view?: RuntimeView
+  /** Reports navigation and fitting changes. Omitted, camera remains local. */
+  readonly onViewChange?: (view: RuntimeView) => void
+  readonly fitRevision?: unknown
   readonly width: number
   readonly height: number
   readonly children: JSX.Element
@@ -26,6 +31,7 @@ export const CameraViewport = (props: CameraViewportProps) => {
   const navigate = (nextCamera: ViewCamera) => {
     setFitted(false)
     setCamera(nextCamera)
+    untrack(() => props.onViewChange?.({camera: nextCamera, fitted: false}))
   }
   const fit = () => {
     const element = viewport()
@@ -33,7 +39,7 @@ export const CameraViewport = (props: CameraViewportProps) => {
       return
     }
     setFitted(true)
-    setCamera({
+    const nextCamera = {
       x: 0,
       y: 0,
       zoom: Math.max(
@@ -44,8 +50,23 @@ export const CameraViewport = (props: CameraViewportProps) => {
           element.clientHeight / props.height,
         ),
       ),
-    })
+    }
+    setCamera(nextCamera)
+    untrack(() => props.onViewChange?.({camera: nextCamera, fitted: true}))
   }
+  let appliedView: RuntimeView | undefined
+  createEffect(
+    on(
+      () => props.view,
+      (view) => {
+        if (view !== undefined && view !== appliedView) {
+          appliedView = view
+          setCamera(view.camera)
+          setFitted(view.fitted)
+        }
+      },
+    ),
+  )
   createEffect(() => {
     const measured = size()
     if (fitted() && measured.width > 0 && measured.height > 0) {
@@ -59,11 +80,13 @@ export const CameraViewport = (props: CameraViewportProps) => {
       onCleanup(attachViewPan({camera, element, onChange: navigate, onPanningChange: setDragging}))
     }
   })
+  let fittedRevision: unknown
   createEffect(
     on(
       () => props.fitRevision,
       () => {
-        if (props.fitRevision !== undefined && props.fitRevision > 0) {
+        if (props.fitRevision !== undefined && props.fitRevision !== fittedRevision) {
+          fittedRevision = props.fitRevision
           untrack(fit)
         }
       },
@@ -78,7 +101,7 @@ export const CameraViewport = (props: CameraViewportProps) => {
         <ViewRuler offset={camera().x} zoom={camera().zoom} />
         <ViewRuler vertical offset={camera().y} zoom={camera().zoom} />
         <div
-          class="viewport"
+          class="viewport workspace-camera"
           role="region"
           aria-label="모델 보기"
           ref={setViewport}

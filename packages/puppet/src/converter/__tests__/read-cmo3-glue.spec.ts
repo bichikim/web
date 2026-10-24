@@ -118,3 +118,45 @@ test('should report stale vertex UIDs while retaining the other glue connections
   expect(result.warnings).toHaveLength(1)
   expect(result.warnings[0]).toContain('1')
 })
+
+test('should report stale glue vertex references while preserving valid connections', () => {
+  const xml = new DOMParser().parseFromString(
+    `<CModelSource><CAffecterSourceSet><carray_list xs.n="_sources"><CGlueSource>
+      <CAffecterId xs.n="id" idstr="seam"/>
+      <CDrawableGuid xs.n="targetArtMeshA_guid" uuid="a"/>
+      <CDrawableGuid xs.n="targetArtMeshB_guid" uuid="b"/>
+      <float-array xs.n="weights">0.25 0.75 0 1</float-array>
+      <long-array xs.n="bindVertexUids">10 20 10 999</long-array>
+    </CGlueSource></carray_list></CAffecterSourceSet></CModelSource>`,
+    'application/xml',
+  )
+  const source = (id: string, uid: number) =>
+    new DOMParser().parseFromString(
+      `<CArtMeshSource><CDrawableGuid xs.n="guid" uuid="${id}"/>
+        <int-array xs.n="pointUid">${uid}</int-array></CArtMeshSource>`,
+      'application/xml',
+    ).documentElement!
+  const demo = createDemoDocument()
+  const result = readCmo3Glue(
+    xml.documentElement!,
+    new Map(),
+    [
+      {part: demo.parts[0]!, source: source('a', 10)},
+      {part: demo.parts[1]!, source: source('b', 20)},
+    ],
+    new Map(),
+  )
+  expect(result.glue).toEqual([
+    {
+      composition: 'sequential',
+      first: {partId: demo.parts[0]!.id, vertexIndex: 0},
+      id: 'seam:0',
+      second: {partId: demo.parts[1]!.id, vertexIndex: 0},
+      strength: 1,
+      weight: 0.25,
+    },
+  ])
+  expect(result.warnings).toEqual([
+    'seam: 원본 메시에 없는 정점을 참조하는 Glue 연결 1개를 제외했습니다.',
+  ])
+})

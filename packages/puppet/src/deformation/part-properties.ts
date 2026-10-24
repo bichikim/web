@@ -1,3 +1,4 @@
+import {getTargetBindings} from './target-bindings'
 import type {
   PuppetAlphaBlendMode,
   PuppetColor,
@@ -60,6 +61,11 @@ export const composeParameterPartProperties = (
   }
 
   return composeKeyedColorEffect({
+    bindings: getTargetBindings(
+      options.document.parameterBindings ?? [],
+      'targetPartIds',
+      options.partId,
+    ),
     document: options.document,
     keyedProperties: (binding) =>
       binding.targetPartIds?.includes(options.partId) === true

@@ -26,7 +26,7 @@ describe('EditorKeyformPanel', () => {
     fireEvent.input(view.getByRole('spinbutton', {name: 'Angle Y 값'}), {target: {value: '-10'}})
     expect(onValueChange).toHaveBeenLastCalledWith([5, -10])
   })
-  test('should show one parameter name with its numeric input and default influence', () => {
+  test('should show one parameter name with its numeric input and omit default influence', () => {
     const document = createDemoDocument()
     const added = createKeyedParameter({document, nodeIds: ['mesh-preview']})!
     const parameters = added.document.parameters!.map((parameter) =>
@@ -41,7 +41,7 @@ describe('EditorKeyformPanel', () => {
     expect(view.getAllByText('꼬리 흔들림')).toHaveLength(1)
     expect(view.queryByText('꼬리 · 흔들림')).not.toBeInTheDocument()
     expect(view.getByRole('spinbutton', {name: '꼬리 흔들림 값'})).toBeVisible()
-    expect(view.getAllByText('적용량 100%')).toHaveLength(2)
+    expect(view.queryByText('적용량 100%')).not.toBeInTheDocument()
   })
   test('should render and select a complete two-dimensional keyform grid', () => {
     const document = createDemoDocument()

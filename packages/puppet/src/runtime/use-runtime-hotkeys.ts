@@ -1,3 +1,4 @@
+import {useWorkspace} from '../workspace/context'
 import {type Accessor, onCleanup} from 'solid-js'
 import type {RuntimeProfile} from '../tracking/types'
 interface UseRuntimeHotkeysProps {
@@ -6,8 +7,10 @@ interface UseRuntimeHotkeysProps {
   readonly onMotion: (id: string) => void
 }
 export const useRuntimeHotkeys = (props: UseRuntimeHotkeysProps) => {
+  const workspace = useWorkspace()
   const handleKeyDown = (event: KeyboardEvent) => {
     if (
+      (workspace !== undefined && workspace.mode() === 'editor') ||
       event.repeat ||
       event.ctrlKey ||
       event.metaKey ||

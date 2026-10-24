@@ -15,8 +15,12 @@ export const togglePlayerPlayback = (player: Player, isPlaying: boolean) => {
   return nextIsPlaying
 }
 export const syncPlayerPlayback = (player: Player | null, isPlaying: boolean) => {
-  if (player !== null && !isPlaying) {
-    player.pause()
+  if (player !== null) {
+    if (isPlaying) {
+      player.resume()
+    } else {
+      player.pause()
+    }
   }
   return player
 }

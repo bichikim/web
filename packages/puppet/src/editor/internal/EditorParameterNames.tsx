@@ -144,6 +144,19 @@ export const EditorParameterNames = (props: EditorParameterNamesProps) => {
   return (
     <div class="parameter-item-main">
       <div class="parameter-item" data-selected={props.pressed ? '' : undefined}>
+        <Show when={props.onSelect !== undefined}>
+          <ToggleButton
+            aria-describedby={props.descriptionId}
+            aria-label={`${rows()
+              .map((row) => row.name)
+              .join(' / ')} 파라미터 선택`}
+            aria-keyshortcuts="Delete"
+            class="parameter-header-select"
+            pressed={props.pressed}
+            onClick={() => props.onSelect?.()}
+            onKeyDown={props.onKeyDown}
+          />
+        </Show>
         <Show when={props.groupName !== undefined || props.status !== undefined}>
           <div class="parameter-item-heading">
             <small>{props.groupName}</small>

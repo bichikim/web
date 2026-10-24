@@ -110,7 +110,11 @@ export const getParameterEditingDocument = (
   document: PuppetDocument,
   bindingId?: string,
 ): PuppetDocument => {
-  if (bindingId === undefined) {
+  if (
+    !document.parameterBindings?.some(
+      (binding) => binding.id === bindingId && (binding.influences?.length ?? 0) > 0,
+    )
+  ) {
     return document
   }
   return {

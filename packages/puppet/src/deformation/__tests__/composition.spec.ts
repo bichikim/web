@@ -251,3 +251,15 @@ test('should combine five independent inputs with authored suppression through a
   expect(sample({a: 0})).toBe(320)
   expect(sample({a: 0.5, i: 0.5})).toBe(332.5)
 })
+
+test('should read replaced parameter definitions while retaining binding identities', () => {
+  const document = createComposedDocument()
+  const binding = document.parameterBindings[0]!
+  expect(getParameterBindingValues({binding, document})).toEqual([0, 0])
+  const updated = {
+    ...document,
+    parameters: document.parameters.map((parameter) => ({...parameter, defaultValue: 15})),
+  }
+  expect(getParameterBindingValues({binding, document: updated})).toEqual([15, 15])
+  expect(getParameterBindingValues({binding, document})).toEqual([0, 0])
+})

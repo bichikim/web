@@ -37,6 +37,8 @@ import {EditorInspectorActions} from './EditorInspectorActions'
 import {EditorPropertyGroup} from './EditorPropertyGroup'
 
 export interface EditorInspectorProps {
+  /** Prevents editing the previous target during selection preparation; omitted to keep editing enabled. */
+  readonly selectionPending?: boolean
   readonly editingDisabled?: boolean
   readonly children?: JSX.Element
   readonly parameterProperties?: JSX.Element
@@ -450,7 +452,12 @@ export const EditorInspector = (props: EditorInspectorProps) => {
   const {handleGridPointChange, handleTransformChange} = createNodeEditHandlers(props, activeNode)
   const {handleCurveToggle, handleGridDivisionChange} = createDeformerHandlers(props, deformerNode)
   return (
-    <aside class="panel inspector-panel" aria-label="선택 작업">
+    <aside
+      class="panel inspector-panel"
+      aria-label="선택 작업"
+      inert={props.selectionPending}
+      aria-busy={props.selectionPending || undefined}
+    >
       <div class="inspector-content">
         {props.history}
         <EditorInspectorActions

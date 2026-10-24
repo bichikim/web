@@ -1,3 +1,4 @@
+import {useDocumentReplacement} from '../workspace/use-document-replacement'
 import {type Accessor, createSignal, onCleanup} from 'solid-js'
 import {preparePuppetDocument, type PuppetDocument} from '../player'
 import type {PuppetExampleDocument} from './example-document'
@@ -32,6 +33,8 @@ const getPngErrorMessage = (code: ImportPngErrorCode) => {
   }
 }
 export interface UseEditorImportsProps {
+  /** External workspace model import; omitted, only local file operations replace the document. */
+  readonly replacement?: Accessor<PuppetDocument | undefined>
   readonly readPsd?: typeof importPsd
   readonly document: Accessor<PuppetDocument>
   readonly onReimportDocumentChange: (document: PuppetDocument) => void
@@ -77,7 +80,7 @@ const readFile = async (
         : {notice: getPngErrorMessage(result.error.code), ok: false}
     }
     case 'psd': {
-      const result = await readPsd(file)
+      const result = await readPsd(file, signal)
       return result.ok
         ? {...result, notice: result.warnings.join(' ')}
         : {notice: getPsdErrorMessage(result.error.code), ok: false}
@@ -87,6 +90,11 @@ const readFile = async (
   }
 }
 export const useEditorImports = (props: UseEditorImportsProps) => {
+  useDocumentReplacement({
+    current: props.document,
+    incoming: () => props.replacement?.(),
+    onReplace: props.onDocumentChange,
+  })
   const reimport = usePsdReimport({
     document: props.document,
     onDocumentChange: props.onReimportDocumentChange,
@@ -94,12 +102,16 @@ export const useEditorImports = (props: UseEditorImportsProps) => {
     readPsd: props.readPsd,
   })
   const [revision, setRevision] = createSignal(0)
+  const [pendingFile, setPendingFile] = createSignal<string | null>(null)
   let generation = 0
   let controller: AbortController | undefined
-  onCleanup(() => {
+  const cancel = () => {
     generation += 1
     controller?.abort()
-  })
+    controller = undefined
+    setPendingFile(null)
+  }
+  onCleanup(cancel)
   const load = async (
     source: File | PuppetExampleDocument['load'] | undefined,
     mode: 'append' | 'replace',
@@ -115,7 +127,8 @@ export const useEditorImports = (props: UseEditorImportsProps) => {
     const original = props.document()
     reimport.cancel()
     const isExample = typeof source === 'function'
-    props.onNotice(isExample ? '예제를 불러오는 중입니다.' : `${source.name}을 읽는 중입니다.`)
+    setPendingFile(isExample ? '예제' : source.name)
+    props.onNotice(null)
     try {
       const file = isExample ? await source(nextController.signal) : source
       if (current !== generation) {
@@ -149,20 +162,26 @@ export const useEditorImports = (props: UseEditorImportsProps) => {
       if (current === generation) {
         props.onNotice(isExample ? '예제를 불러오지 못했습니다.' : '파일을 읽지 못했습니다.')
       }
+    } finally {
+      if (current === generation) {
+        controller = undefined
+        setPendingFile(null)
+      }
     }
   }
   return {
+    cancel,
     handleImport: (file: File | undefined) => load(file, 'append'),
     handleOpen: (file: File | undefined) => load(file, 'replace'),
     handleOpenExample: (example: PuppetExampleDocument) => load(example.load, 'replace'),
+    pendingFile,
     reimport: {
       ...reimport,
       load: (file: File | undefined) => {
         if (file === undefined) {
           return Promise.resolve()
         }
-        generation += 1
-        controller?.abort()
+        cancel()
         return reimport.load(file)
       },
     },

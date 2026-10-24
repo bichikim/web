@@ -3,7 +3,7 @@
 import {createPlayerFixture} from './fixtures/player'
 
 import {render, waitFor} from '@solidjs/testing-library'
-import {createSignal} from 'solid-js'
+import {batch, createSignal} from 'solid-js'
 import {afterEach, describe, expect, test, vi} from 'vitest'
 
 import {createDemoDocument, type Player, type PuppetDocument} from '../../player'
@@ -229,35 +229,36 @@ describe('PlayerCanvas', () => {
     expect(resizePlayer.resize).toHaveBeenCalledOnce()
   })
 
-  test('should discard a pending player when a newer editor document is applied', async () => {
+  test('should apply the latest document to a pending player without creating another renderer', async () => {
     const initialDocument = createDemoDocument()
     const [document, setDocument] = createSignal<PuppetDocument>(initialDocument)
     const onStatusChange = vi.fn()
     const pendingCreatedPlayer: Player = {...player, destroy: vi.fn()}
-    const currentPlayer: Player = {...player, destroy: vi.fn()}
     let resolvePlayer: ((player: Player) => void) | undefined
     const pendingPlayer = new Promise<Player>((resolve) => {
       resolvePlayer = resolve
     })
 
-    mocks.createPlayer.mockReturnValueOnce(pendingPlayer).mockResolvedValueOnce(currentPlayer)
+    mocks.createPlayer.mockReturnValueOnce(pendingPlayer)
 
     render(() => <PlayerCanvas document={document()} onStatusChange={onStatusChange} />)
     await waitFor(() => expect(mocks.createPlayer).toHaveBeenCalledOnce())
 
-    setDocument({
+    const latest = {
       ...initialDocument,
       viewport: {...initialDocument.viewport},
-    })
-    await waitFor(() => expect(mocks.createPlayer).toHaveBeenCalledTimes(2))
-    await waitFor(() => expect(onStatusChange).toHaveBeenLastCalledWith('ready'))
+    }
+    setDocument({...initialDocument, motions: []})
+    setDocument(latest)
+    expect(mocks.createPlayer).toHaveBeenCalledOnce()
 
     resolvePlayer?.(pendingCreatedPlayer)
     await pendingPlayer
     await Promise.resolve()
 
-    expect(pendingCreatedPlayer.destroy).toHaveBeenCalledOnce()
-    expect(currentPlayer.destroy).not.toHaveBeenCalled()
+    expect(mocks.updateDocument).toHaveBeenCalledExactlyOnceWith(latest, {})
+    expect(pendingCreatedPlayer.destroy).not.toHaveBeenCalled()
+    expect(mocks.createPlayer).toHaveBeenCalledOnce()
     expect(onStatusChange).toHaveBeenLastCalledWith('ready')
   })
 })
@@ -270,4 +271,78 @@ test('should bound a large document backing buffer on a Retina display', async (
   const options = mocks.createPlayer.mock.calls[0]?.[0]
   expect(options.resolution * 7100 * 1.5).toBeCloseTo(4096)
   expect(options.document.viewport).toEqual({height: 7100, width: 4000})
+})
+
+test('should apply a document and parameter change together without rendering the old document first', async () => {
+  const source = createDemoDocument()
+  const [document, setDocument] = createSignal(source)
+  const [values, setValues] = createSignal({'angle-x': 0})
+  render(() => <PlayerCanvas document={document()} parameterValues={values()} />)
+  await waitFor(() => expect(mocks.createPlayer).toHaveBeenCalled())
+  await waitFor(() => expect(player.setParameterValues).toHaveBeenCalled())
+  vi.mocked(player.setParameterValues).mockClear()
+  mocks.updateDocument.mockClear()
+  const next = {...source, parts: source.parts.slice()}
+  batch(() => {
+    setValues({'angle-x': 15})
+    setDocument(next)
+  })
+  expect(mocks.updateDocument).toHaveBeenCalledExactlyOnceWith(next, {'angle-x': 15})
+  expect(player.setParameterValues).not.toHaveBeenCalled()
+  setValues({'angle-x': 20})
+  expect(player.setParameterValues).toHaveBeenCalledExactlyOnceWith({'angle-x': 20})
+})
+
+test('should replace a pending renderer only when it cannot accept the latest document', async () => {
+  let resolvePending: ((player: Player) => void) | undefined
+  const pending = new Promise<Player>((resolve) => {
+    resolvePending = resolve
+  })
+  const previous = {...player, destroy: vi.fn(), updateDocument: vi.fn(() => false)}
+  mocks.createPlayer.mockReturnValueOnce(pending).mockResolvedValueOnce(player)
+  const source = createDemoDocument()
+  const [document, replace] = createSignal(source)
+  render(() => <PlayerCanvas document={document()} />)
+  const latest = {...source, viewport: {height: 100, width: 100}}
+  replace(latest)
+  resolvePending?.(previous)
+  await waitFor(() => expect(mocks.createPlayer).toHaveBeenCalledTimes(2))
+  expect(previous.destroy).toHaveBeenCalledOnce()
+  expect(mocks.createPlayer.mock.calls[1]?.[0].document).toBe(latest)
+})
+
+test('should destroy an initialized player that resolves after its viewport unmounts', async () => {
+  let resolvePending: ((player: Player) => void) | undefined
+  const pending = new Promise<Player>((resolve) => {
+    resolvePending = resolve
+  })
+  const created = {...player, destroy: vi.fn()}
+  mocks.createPlayer.mockReturnValueOnce(pending)
+  const view = render(() => <PlayerCanvas document={createDemoDocument()} />)
+  view.unmount()
+  resolvePending?.(created)
+  await pending
+  expect(created.destroy).toHaveBeenCalledOnce()
+})
+
+test('should release a pending player and report a failed document update', async () => {
+  let resolvePending: ((player: Player) => void) | undefined
+  const pending = new Promise<Player>((resolve) => {
+    resolvePending = resolve
+  })
+  const created = {
+    ...player,
+    destroy: vi.fn(),
+    updateDocument: vi.fn(() => {
+      throw new Error('invalid geometry')
+    }),
+  }
+  mocks.createPlayer.mockReturnValueOnce(pending)
+  const [document, replace] = createSignal(createDemoDocument())
+  const view = render(() => <PlayerCanvas document={document()} />)
+  replace(createDemoDocument())
+  resolvePending?.(created)
+  await waitFor(() => expect(view.getByText('invalid geometry')).toBeInTheDocument())
+  expect(created.destroy).toHaveBeenCalledOnce()
+  expect(view.container.querySelector('canvas')).toBeNull()
 })

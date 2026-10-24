@@ -68,6 +68,19 @@ const validTarget = (
   parts: ReadonlyArray<PuppetPart>,
 ) => !('edge' in reference) || (isEdgeReference(reference, parts) && weight === 1)
 
+const isGlueConnection = (value: unknown, parts: ReadonlyArray<PuppetPart>): value is PuppetGlue =>
+  isRecord(value) &&
+  typeof value.id === 'string' &&
+  value.id.length > 0 &&
+  (value.composition === undefined || value.composition === 'sequential') &&
+  isReference(value.first) &&
+  isReference(value.second) &&
+  !('edge' in value.first) &&
+  validTarget(value.second, value.weight, parts) &&
+  value.first.partId !== value.second.partId &&
+  isRatio(value.weight) &&
+  isRatio(value.strength)
+
 export const hasValidGlue = (
   value: unknown,
   parts: ReadonlyArray<PuppetPart>,
@@ -81,23 +94,15 @@ export const hasValidGlue = (
   }
   const ids = new Set<string>()
   const references = new Set<string>()
+  const sequential = new Set<string>()
   const targets = new Set<string>()
   const overlaps = (keys: ReadonlyArray<string>, occupied: ReadonlySet<string>) =>
     composition === undefined && keys.some((key) => occupied.has(key))
+  const hasVertexConflict = (key: string, mode: unknown) =>
+    composition === undefined &&
+    (targets.has(key) || (references.has(key) && (mode !== 'sequential' || !sequential.has(key))))
   return value.every((connection: unknown) => {
-    if (
-      !isRecord(connection) ||
-      typeof connection.id !== 'string' ||
-      connection.id.length === 0 ||
-      ids.has(connection.id) ||
-      !isReference(connection.first) ||
-      !isReference(connection.second) ||
-      'edge' in connection.first ||
-      !validTarget(connection.second, connection.weight, parts) ||
-      connection.first.partId === connection.second.partId ||
-      !isRatio(connection.weight) ||
-      !isRatio(connection.strength)
-    ) {
+    if (!isGlueConnection(connection, parts) || ids.has(connection.id)) {
       return false
     }
     const edge = 'edge' in connection.second ? connection.second.edge : undefined
@@ -106,8 +111,7 @@ export const hasValidGlue = (
       JSON.stringify([reference.partId, reference.vertexIndex]),
     )
     if (
-      overlaps(keys, references) ||
-      overlaps(keys, targets) ||
+      keys.some((key) => hasVertexConflict(key, connection.composition)) ||
       !hasMeshVertex(connection.first, parts) ||
       !hasMeshVertex(connection.second, parts)
     ) {
@@ -125,6 +129,9 @@ export const hasValidGlue = (
     }
     ids.add(connection.id)
     keys.forEach((key) => references.add(key))
+    if (connection.composition === 'sequential') {
+      keys.forEach((key) => sequential.add(key))
+    }
     return true
   })
 }

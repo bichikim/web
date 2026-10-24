@@ -1,3 +1,4 @@
+import {encodePsdTexture} from './encode-psd-texture'
 import {readPsdPixels} from './psd-pixels'
 import {type Layer, type Psd} from 'ag-psd'
 import {generateMesh} from '../../mesh'
@@ -86,7 +87,7 @@ interface PartOptions {
   readonly opacity: number
   readonly clippingBase?: ReadonlyArray<string>
 }
-const convertPart = (options: PartOptions): PuppetPart | undefined => {
+const convertPart = async (options: PartOptions): Promise<PuppetPart | undefined> => {
   const {layer, masks, context, id, opacity, clippingBase} = options
   const pixels = readPsdPixels(layer, masks)
   if (pixels === undefined) {
@@ -98,16 +99,6 @@ const convertPart = (options: PartOptions): PuppetPart | undefined => {
     context.warnings.add('비어 있거나 완전히 투명한 레이어는 제외했습니다.')
     return undefined
   }
-  const canvas = document.createElement('canvas')
-  canvas.width = pixels.width
-  canvas.height = pixels.height
-  const drawing = canvas.getContext('2d')
-  if (drawing === null) {
-    throw new Error('Canvas unavailable')
-  }
-  const image = drawing.createImageData(pixels.width, pixels.height)
-  image.data.set(pixels.data)
-  drawing.putImageData(image, 0, 0)
   const mode = layer.blendMode ?? 'normal'
   const blendMode = PSD_BLEND_MODES[mode]
   if (blendMode === undefined) {
@@ -140,7 +131,7 @@ const convertPart = (options: PartOptions): PuppetPart | undefined => {
     },
     texture: {
       height: pixels.height,
-      src: canvas.toDataURL('image/png'),
+      src: await encodePsdTexture(pixels),
       width: pixels.width,
     },
   }
@@ -169,11 +160,11 @@ const collectMaskParts = (nodes: ReadonlyArray<PuppetSceneNode>): Array<string> 
           : [],
   )
 
-const convertLayers = (
+const convertLayers = async (
   layers: ReadonlyArray<Layer>,
   context: ConversionContext,
   parent: LayerContext,
-): Array<PuppetSceneNode> => {
+): Promise<Array<PuppetSceneNode>> => {
   const nodes: Array<PuppetSceneNode> = []
   let clippingBase: ReadonlyArray<string> = []
   // Preserve the back-to-front channel order returned by the PSD reader.
@@ -187,7 +178,8 @@ const convertLayers = (
     const appliedMask = layer.clipping ? clippingBase : parent.clippingBase
     warnLayer(layer, context.warnings)
     if (layer.children === undefined) {
-      const part = convertPart({
+      // oxlint-disable-next-line no-await-in-loop -- Preserve clipping order and bound decoded layer memory.
+      const part = await convertPart({
         clippingBase: appliedMask,
         context,
         id,
@@ -210,7 +202,8 @@ const convertLayers = (
       ) {
         context.warnings.add('그룹 합성은 파츠별 불투명도로 근사합니다.')
       }
-      const children = convertLayers(layer.children, context, {
+      // oxlint-disable-next-line no-await-in-loop -- Following clipped layers depend on this group.
+      const children = await convertLayers(layer.children, context, {
         clippingBase: appliedMask,
         masks,
         opacity,
@@ -229,12 +222,12 @@ const convertLayers = (
   return nodes
 }
 
-export const createPsdDocument = (psd: Psd): ImportPsdResult => {
+export const createPsdDocument = async (psd: Psd): Promise<ImportPsdResult> => {
   if (!withinBudget(psd.children ?? [])) {
     return {error: {code: 'too-large'}, ok: false}
   }
   const context: ConversionContext = {count: 0, parts: [], warnings: new Set()}
-  const roots = convertLayers(psd.children ?? [], context, {masks: [], opacity: 1})
+  const roots = await convertLayers(psd.children ?? [], context, {masks: [], opacity: 1})
   if (context.parts.length === 0) {
     return {error: {code: 'empty-document'}, ok: false}
   }

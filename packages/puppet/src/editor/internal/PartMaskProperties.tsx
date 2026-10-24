@@ -128,7 +128,7 @@ export const PartMaskProperties = (props: PartMaskPropertiesProps) => {
                     type="button"
                     onClick={() => handleTargetChange(option.part.id, false)}
                   >
-                    <span aria-hidden="true" class="puppet-icon puppet-icon-x" />
+                    <span aria-hidden="true" class="puppet-icon puppet-icon-mask-unlink" />
                   </EditorButton>
                 </span>
               )}

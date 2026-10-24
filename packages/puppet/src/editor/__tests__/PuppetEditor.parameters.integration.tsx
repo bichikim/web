@@ -1,11 +1,14 @@
 /** @vitest-environment jsdom */
 
+import {waitForSelectionReady} from './fixtures/selection'
+
 import {createPlayerFixture} from './fixtures/player'
 
 import {cleanup, fireEvent, render, screen, waitFor, within} from '@solidjs/testing-library'
 
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 
+import type {PuppetParameterValueMap} from '../../deformation'
 import {composeParameterVertices} from '../../deformation/composition'
 import {composeParameterPartProperties} from '../../deformation/part-properties'
 import {createDemoDocument, type Player, type PuppetDocument, serializeDocument} from '../../player'
@@ -50,6 +53,17 @@ afterEach(() => {
 beforeEach(() => {
   localStorage.clear()
   mocks.createPlayer.mockResolvedValue(player)
+  let values: PuppetParameterValueMap = {}
+  vi.mocked(player.setParameterValues).mockImplementation((next) => {
+    values = next
+  })
+  vi.mocked(player.updateDocument).mockImplementation((_document, next) => {
+    if (next !== undefined) {
+      values = next
+    }
+    return true
+  })
+  vi.mocked(player.getParameterValues).mockImplementation(() => values)
 })
 
 describe('PuppetEditor', () => {
@@ -70,10 +84,12 @@ describe('PuppetEditor', () => {
     await waitFor(() => expect(mocks.createPlayer).toHaveBeenCalledOnce())
 
     fireEvent.click(view.getByRole('button', {name: 'mesh-preview 레이어 선택'}))
+    await waitForSelectionReady()
     const inspector = view.getByRole('complementary', {name: '선택 작업'})
     expect(within(inspector).getByRole('group', {name: '파트 렌더링'})).toBeInTheDocument()
 
     fireEvent.click(view.getByRole('button', {name: 'Angle X'}))
+    await waitForSelectionReady()
     expect(within(inspector).getByRole('group', {name: '파트 렌더링'})).toBeInTheDocument()
     const parameterProperties = within(inspector).getByRole('region', {name: '파라미터 속성'})
     const parameterGroup = within(parameterProperties).getByRole('group', {name: '파라미터'})
@@ -117,19 +133,18 @@ describe('PuppetEditor', () => {
       await waitFor(() => expect(mocks.createPlayer).toHaveBeenCalledOnce())
       onDocumentChange.mockClear()
       fireEvent.click(view.getByRole('button', {name: `${selectedPartId} 레이어 선택`}))
+      await waitForSelectionReady()
       fireEvent.click(view.getByRole('button', {name: '모든 파라미터 보기'}))
       fireEvent.input(view.getByRole('spinbutton', {name: 'Angle X 값'}), {
         target: {value: '15'},
       })
 
       const manual = {'angle-x': 15, 'angle-y': 0}
-      await waitFor(() =>
-        expect(player.setParameterValues).toHaveBeenLastCalledWith(expect.objectContaining(manual)),
-      )
+      await waitFor(() => expect(player.getParameterValues()).toMatchObject(manual))
       const preview = vi.mocked(player.updateDocument).mock.lastCall![0]
       const values = sampleMotionParameterValues({
         motion: preview.motions[0],
-        parameterValues: vi.mocked(player.setParameterValues).mock.lastCall![0],
+        parameterValues: player.getParameterValues(),
         time: 0,
       })
       const part = document.parts[0]!
@@ -158,12 +173,14 @@ describe('PuppetEditor', () => {
       ).toBe(0.5)
 
       fireEvent.click(view.getByRole('button', {name: '애니메이션'}))
+      await waitForSelectionReady()
       await waitFor(() =>
         expect(vi.mocked(player.updateDocument).mock.lastCall![0].motions).toEqual(
           document.motions,
         ),
       )
       fireEvent.click(view.getByRole('button', {name: '모델링'}))
+      await waitForSelectionReady()
       await waitFor(() =>
         expect(vi.mocked(player.updateDocument).mock.lastCall![0].motions).toEqual([]),
       )
@@ -181,6 +198,7 @@ describe('PuppetEditor', () => {
 
     await waitFor(() => expect(mocks.createPlayer).toHaveBeenCalledOnce())
     fireEvent.click(view.getByRole('button', {name: '애니메이션'}))
+    await waitForSelectionReady()
     fireEvent.keyDown(view.getByRole('button', {name: '타임라인 파라미터 추가'}), {
       key: 'Enter',
     })
@@ -197,7 +215,7 @@ describe('PuppetEditor', () => {
           {keyframes: [{time: 0, value: 15}], kind: 'parameter', parameterId: 'angle-x'},
         ]),
       )
-      expect(vi.mocked(player.setParameterValues).mock.lastCall?.[0]).not.toHaveProperty('angle-x')
+      expect(player.getParameterValues()).not.toHaveProperty('angle-x')
     })
   })
 
@@ -294,10 +312,11 @@ describe('PuppetEditor', () => {
       target: {value: '10'},
     })
     fireEvent.click(view.getByRole('button', {name: 'Angle X'}))
+    await waitForSelectionReady()
 
     expect(view.getByRole('spinbutton', {name: 'Angle X 값'})).toHaveValue(15)
     await waitFor(() =>
-      expect(player.setParameterValues).toHaveBeenLastCalledWith({
+      expect(player.getParameterValues()).toEqual({
         'angle-x': 15,
         'angle-y': 0,
         'parameter-3': 10,
@@ -313,6 +332,7 @@ describe('PuppetEditor', () => {
     expect(view.queryByRole('button', {name: 'Parameter 3'})).toBeNull()
 
     fireEvent.click(view.getByRole('button', {name: 'shape-circle 레이어 선택'}))
+    await waitForSelectionReady()
 
     await waitFor(() => {
       expect(view.queryByRole('button', {name: 'Angle X'})).toBeNull()
@@ -323,11 +343,13 @@ describe('PuppetEditor', () => {
     })
 
     fireEvent.click(view.getByRole('button', {name: 'mesh-preview 레이어 선택'}), {ctrlKey: true})
+    await waitForSelectionReady()
 
     expect(view.getByRole('button', {name: 'Angle X'})).toBeVisible()
     expect(view.getByRole('button', {name: 'Parameter 3'})).toBeVisible()
 
     fireEvent.click(view.getByRole('button', {name: 'shape-diamond 레이어 선택'}))
+    await waitForSelectionReady()
 
     await waitFor(() => {
       expect(view.queryByRole('button', {name: 'Angle X'})).toBeNull()
@@ -341,6 +363,7 @@ describe('PuppetEditor', () => {
     const view = render(() => <PuppetEditor initialDocument={nested} />)
 
     fireEvent.click(view.getByRole('button', {name: 'Shapes 레이어 선택'}))
+    await waitForSelectionReady()
 
     await waitFor(() => {
       expect(view.queryByRole('button', {name: 'Parameter 3'})).toBeNull()
@@ -348,6 +371,7 @@ describe('PuppetEditor', () => {
     })
 
     fireEvent.click(view.getByRole('button', {name: '새 그룹 레이어 선택'}))
+    await waitForSelectionReady()
 
     expect(view.queryByRole('button', {name: 'Parameter 3'})).toBeNull()
     expect(view.getByRole('button', {name: '1차원 Parameter 추가'})).toBeDisabled()
@@ -435,7 +459,9 @@ describe('PuppetEditor', () => {
     ))
 
     fireEvent.click(view.getByRole('button', {name: 'shape-circle 레이어 선택'}), {ctrlKey: true})
+    await waitForSelectionReady()
     fireEvent.click(view.getByRole('button', {name: 'shape-diamond 레이어 선택'}), {ctrlKey: true})
+    await waitForSelectionReady()
     expect(view.getByText('대상 1 · 선택 3개 노드')).toBeVisible()
     expect(
       view.container.querySelector('.mesh-editor [data-part-id="mesh-preview"]'),
@@ -463,7 +489,9 @@ describe('PuppetEditor', () => {
     expect(view.getByRole('button', {name: '선택 레이어 연결'})).toBeDisabled()
 
     fireEvent.click(view.getByRole('button', {name: 'shape-circle 레이어 선택'}))
+    await waitForSelectionReady()
     fireEvent.click(view.getByRole('button', {name: 'shape-diamond 레이어 선택'}), {ctrlKey: true})
+    await waitForSelectionReady()
     fireEvent.click(view.getByRole('button', {name: '선택 레이어 연결 해제'}))
     await waitFor(() => {
       const document = onDocumentChange.mock.calls.at(-1)?.[0]
@@ -554,6 +582,7 @@ describe('PuppetEditor', () => {
       <PuppetEditor initialDocument={createDemoDocument()} onDocumentChange={onDocumentChange} />
     ))
     fireEvent.click(view.getByRole('button', {name: 'Angle X'}))
+    await waitForSelectionReady()
     const inspector = view.getByRole('complementary', {name: '선택 작업'})
     expect(within(inspector).getByRole('region', {name: '파라미터 속성'})).toBeInTheDocument()
     expect(within(inspector).getByRole('group', {name: '영향도'})).toBeInTheDocument()

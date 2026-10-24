@@ -4,7 +4,7 @@ import {getRestPreview} from './internal/rest-preview'
 import {getMotionParameterOverrides} from './internal/get-motion-parameter-overrides'
 import {getSceneNode} from './internal/scene-graph'
 import {EditorToggleButton} from '../design-system'
-import {CameraViewport} from './internal/CameraViewport'
+import {Viewport} from '../workspace/Viewport'
 import {SkinningTools} from './internal/SkinningTools'
 import type {DeformerEditMode} from './internal/DeformerMode'
 import {createEffect, createMemo, createSignal, type JSX, Show} from 'solid-js'
@@ -15,9 +15,11 @@ import type {Player, PlayerFrame, PuppetDocument} from '../player'
 import {DeformerEditor} from './internal/DeformerEditor'
 import type {DeformerControlSelection} from './internal/deformer-control-selection'
 import {MeshEditor} from './MeshEditor'
-import {PlayerCanvas, type PlayerCanvasStatus} from './PlayerCanvas'
+import {type PlayerCanvasStatus} from './PlayerCanvas'
 
 export interface EditorViewportProps {
+  /** Hides previous editing overlays while a new selection is prepared; omitted to show them normally. */
+  readonly selectionPending?: boolean
   readonly brushControlsMount?: HTMLDivElement
   readonly brushSettingsMount?: HTMLDivElement
   readonly physicsPreview?: boolean
@@ -204,7 +206,8 @@ export const EditorViewport = (props: EditorViewportProps) => {
       : props.parameterValueMap
   })
   const [editingVisible, setEditingVisible] = createSignal(true)
-  const editingControlsVisible = () => editingVisible() && !props.playbackActive
+  const editingControlsVisible = () =>
+    editingVisible() && !props.playbackActive && !props.selectionPending
   const spatialSurface = createMemo(() => {
     if (!editingControlsVisible() || editingMesh() || props.activeNodeId === undefined) {
       return undefined
@@ -241,6 +244,7 @@ export const EditorViewport = (props: EditorViewportProps) => {
     >
       <Show
         when={
+          !props.selectionPending &&
           props.brushControlsMount === undefined &&
           props.editMode === 'parameter' &&
           props.activePartId !== undefined
@@ -248,10 +252,17 @@ export const EditorViewport = (props: EditorViewportProps) => {
       >
         {props.renderEditingControls?.(meshControls) ?? meshControls}
       </Show>
-      <CameraViewport
+      <Viewport
+        owner="editor"
+        document={displayDocument()}
+        physicsPreview={!editingMesh() && (props.physicsPreview ?? true)}
+        motionId={props.editMode === 'parameter' ? undefined : props.motionId}
+        onFrame={(frame: PlayerFrame) => props.onTimeChange?.(frame.time)}
+        onPlayerChange={props.onPlayerChange}
+        onStatusChange={props.onStatusChange}
+        parameterValues={playbackParameters()}
+        spatialSurface={spatialSurface()}
         fitRevision={props.fitRevision}
-        width={props.document.viewport.width}
-        height={props.document.viewport.height}
         viewControls={
           <>
             <EditorToggleButton
@@ -265,8 +276,8 @@ export const EditorViewport = (props: EditorViewportProps) => {
               <span
                 class={
                   editingVisible()
-                    ? 'puppet-icon puppet-icon-eye'
-                    : 'puppet-icon puppet-icon-eye-off'
+                    ? 'puppet-icon puppet-icon-editing-overlay'
+                    : 'puppet-icon puppet-icon-editing-overlay-off'
                 }
                 aria-hidden="true"
               />
@@ -276,20 +287,10 @@ export const EditorViewport = (props: EditorViewportProps) => {
         }
         controls={
           <div class="viewport-tools">
-            <Show when={!editingMesh()}>{props.overlay}</Show>
+            <Show when={!editingMesh() && !props.selectionPending}>{props.overlay}</Show>
           </div>
         }
       >
-        <PlayerCanvas
-          physicsPreview={!editingMesh() && (props.physicsPreview ?? true)}
-          document={displayDocument()}
-          motionId={props.editMode === 'parameter' ? undefined : props.motionId}
-          onFrame={(frame: PlayerFrame) => props.onTimeChange?.(frame.time)}
-          onPlayerChange={props.onPlayerChange}
-          onStatusChange={props.onStatusChange}
-          parameterValues={playbackParameters()}
-          spatialSurface={spatialSurface()}
-        />
         <EditingOverlays
           displayMount={displayMount()}
           document={editDocument()}
@@ -299,7 +300,7 @@ export const EditorViewport = (props: EditorViewportProps) => {
           viewport={props}
           visible={editingControlsVisible()}
         />
-      </CameraViewport>
+      </Viewport>
     </section>
   )
 }

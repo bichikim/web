@@ -1,3 +1,4 @@
+import {getTargetBindings} from './target-bindings'
 import {clamp} from 'es-toolkit/math'
 
 import {
@@ -15,6 +16,7 @@ import {sampleParameterCoordinates} from './parameter'
 const CUBISM_ORDER_TOLERANCE = 0.001
 
 interface ComposeKeyedDrawOrderOptions {
+  readonly bindings: ReadonlyArray<PuppetParameterBinding>
   readonly document: PuppetDocument
   /** Keyed draw orders per keyform of a targeting binding; `undefined` keeps the rest value. */
   readonly keyed: (binding: PuppetParameterBinding) => ReadonlyArray<number | undefined> | undefined
@@ -27,7 +29,7 @@ interface ComposeKeyedDrawOrderOptions {
  * its influence (as opacity is), within 0..1000.
  */
 const composeKeyedDrawOrder = (options: ComposeKeyedDrawOrderOptions) => {
-  const drawOrder = (options.document.parameterBindings ?? []).reduce((current, binding) => {
+  const drawOrder = options.bindings.reduce((current, binding) => {
     const keyed = options.keyed(binding)
     if (keyed === undefined) {
       return current
@@ -66,6 +68,7 @@ export const composeParameterPartDrawOrder = (
   const part = document.parts.find((candidate) => candidate.id === partId)
   const rest = part?.properties?.drawOrder ?? PUPPET_DEFAULT_DRAW_ORDER
   return composeKeyedDrawOrder({
+    bindings: getTargetBindings(document.parameterBindings ?? [], 'targetPartIds', partId),
     document,
     keyed: (binding) =>
       binding.targetPartIds?.includes(partId) === true
@@ -87,6 +90,7 @@ export const composeParameterGroupDrawOrder = (
 ) => {
   const rest = group.properties?.drawOrder ?? PUPPET_DEFAULT_DRAW_ORDER
   return composeKeyedDrawOrder({
+    bindings: getTargetBindings(document.parameterBindings ?? [], 'targetGroupIds', group.id),
     document,
     keyed: (binding) =>
       binding.targetGroupIds?.includes(group.id) === true

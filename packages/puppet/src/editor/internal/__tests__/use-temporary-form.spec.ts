@@ -131,3 +131,28 @@ test('should retain Glue as a temporary form until explicitly saved to a selecte
     expect(saved.glue[0].strength).toBe(1)
     dispose()
   }))
+
+test('should retain parameter map identity on selection and propagate changed values', () =>
+  createRoot((dispose) => {
+    const document = createDemoDocument()
+    const [node, setNode] = createSignal(document.parts[0]!.id)
+    const [map, setMap] = createSignal({'angle-x': 0, 'angle-y': 0})
+    const session = useTemporaryForm({
+      bindingId: () => document.parameterBindings![0]!.id,
+      document: () => document,
+      enabled: () => false,
+      keyformValues: () => null,
+      nodeId: node,
+      onDocumentChange: vi.fn(),
+      parameterValueMap: map,
+      parameterValues: () => [0, 0],
+    })
+    const initial = session.valueMap()
+    setNode(document.parts[1]!.id)
+    setMap({...map()})
+    expect(session.valueMap()).toBe(initial)
+    setMap({'angle-x': 15, 'angle-y': 0})
+    expect(session.valueMap()).not.toBe(initial)
+    expect(session.valueMap()['angle-x']).toBe(15)
+    dispose()
+  }))
