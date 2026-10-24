@@ -31,7 +31,7 @@ Apply these rules within the refactoring and naming/structure perspectives:
 - Report verified skill-structure violations without behavior impact as P3, citing the rule, code, and maintenance or testability cost.
 - Require deterministic tests of production behavior and failure paths through explicit inputs and replaceable boundaries. Report invasive mocking or hidden global, time, random, network, or process dependencies as P3 even without a behavior defect.
 - Prefer deleting unnecessary branches, helpers, modes, or layers over rearranging them.
-- Flag changed code files over 600 lines; exclude non-code assets.
+- Flag changed code files over 600 lines; exclude test files and non-code assets.
 - Keep directory-wide context in `README.md`; explain an item in its own file when possible, otherwise in `[filename].md`.
 - Config `.ts` files directly under `apps/pomo`, `apps/coong`, or `packages/*` must not import their `src/**`. Report reverse imports; ask before implementing an unavoidable exception.
 
