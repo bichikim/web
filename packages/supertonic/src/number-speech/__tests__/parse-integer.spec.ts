@@ -16,6 +16,26 @@ describe('parseInteger', () => {
     expect(parseInteger(`${FULLWIDTH_HYPHEN_MINUS}5,000`)).toBe(-5_000n)
   })
 
+  it.each([
+    ['en dash (U+2013)', '–'],
+    ['figure dash (U+2012)', '‒'],
+    ['small hyphen-minus (U+FE63)', '﹣'],
+  ] as const)('should parse negative integers with a leading %s', (_label, dash) => {
+    expect(parseInteger(`${dash}12`)).toBe(-12n)
+    expect(parseInteger(` \t${dash}12\r\n`)).toBe(-12n)
+  })
+
+  it.each(['–', '‒', '﹣'])('should reject leading-zero identifiers with %s', (dash) => {
+    expect(parseInteger(`${dash}007`)).toBeNull()
+  })
+
+  it.each(['–', '‒', '﹣', '-', '−', '－', '＋', '+'])(
+    'should reject whitespace surrounded leading-zero identifiers with %s',
+    (sign) => {
+      expect(parseInteger(` \t${sign}007\r\n`)).toBeNull()
+    },
+  )
+
   it('should reject leading-zero identifiers with a fullwidth hyphen-minus', () => {
     expect(parseInteger(`${FULLWIDTH_HYPHEN_MINUS}007`)).toBeNull()
   })
@@ -33,5 +53,13 @@ describe('parseInteger', () => {
   it('should return null for invalid integer tokens', () => {
     expect(parseInteger('--5')).toBeNull()
     expect(parseInteger('five')).toBeNull()
+  })
+
+  it.each([
+    ['en dash (U+2013)', '–'],
+    ['figure dash (U+2012)', '‒'],
+    ['small hyphen-minus (U+FE63)', '﹣'],
+  ] as const)('should reject internal %s range punctuation', (_label, dash) => {
+    expect(parseInteger(`5${dash}2`)).toBeNull()
   })
 })
