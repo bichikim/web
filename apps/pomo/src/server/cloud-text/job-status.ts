@@ -27,7 +27,7 @@ export const readCloudTextJob = async (userId: string, requestId: string) => {
   if (job === null || job.ownerId !== userId) {
     return {kind: 'failed' as const, requestId, usage}
   }
-  if (request.status === 'failed') {
+  if (request.status === 'failed' || request.status === 'cancelled') {
     return {
       kind: job.status === 'cancelled' ? ('cancelled' as const) : ('failed' as const),
       requestId,
@@ -38,7 +38,7 @@ export const readCloudTextJob = async (userId: string, requestId: string) => {
     case 'succeeded':
     case 'cancelled':
     case 'failed':
-      // Keep the subscription until result delivery commits its completion or allowance refund.
+      // 결과와 사용 횟수의 정산이 반영될 때까지 구독을 유지한다.
       return {kind: 'pending' as const, requestId, status: 'running' as const, usage}
     case 'queued':
     case 'running':
