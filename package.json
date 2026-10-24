@@ -78,7 +78,7 @@
     "react-dom": "19.2.5",
     "reflect-metadata": "^0.2.2",
     "solid-js": "^1.9.14",
-    "storybook": "10.5.10",
+    "storybook": "10.6.2",
     "storybook-solidjs-vite": "10.7.1",
     "tsconfig-paths": "4.2.0",
     "tsd": "0.31.2",
