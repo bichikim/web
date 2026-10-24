@@ -5,6 +5,7 @@ import type {
   PuppetSceneNode,
   PuppetScenePartNode,
 } from './document'
+import {isParameterVisible} from './parameter-visibility'
 
 export interface PuppetScenePartState {
   readonly locked: boolean
@@ -13,6 +14,8 @@ export interface PuppetScenePartState {
 }
 
 interface FlattenSceneOptions {
+  readonly document: PuppetDocument
+  readonly parameterValues?: Readonly<Record<string, number>>
   readonly locked: boolean
   readonly nodes: ReadonlyArray<PuppetSceneNode>
   readonly parts: Array<PuppetScenePartState>
@@ -39,20 +42,31 @@ export const isSceneContainerNode = (node: PuppetSceneNode): node is PuppetScene
 
 const flattenNodes = (options: FlattenSceneOptions) => {
   for (const node of options.nodes) {
-    const visible = options.visible && node.visible
+    const visible =
+      options.visible && isParameterVisible(node, options.document, options.parameterValues)
     const locked = options.locked || node.locked
 
     if (isSceneContainerNode(node)) {
-      flattenNodes({locked, nodes: node.children, parts: options.parts, visible})
+      flattenNodes({...options, locked, nodes: node.children, visible})
     } else {
       options.parts.push({locked, partId: node.id, visible})
     }
   }
 }
 
-export const getScenePartStates = (document: PuppetDocument) => {
+export const getScenePartStates = (
+  document: PuppetDocument,
+  parameterValues?: Readonly<Record<string, number>>,
+) => {
   const parts: Array<PuppetScenePartState> = []
-  flattenNodes({locked: false, nodes: getDocumentScene(document).roots, parts, visible: true})
+  flattenNodes({
+    document,
+    locked: false,
+    nodes: getDocumentScene(document).roots,
+    parameterValues,
+    parts,
+    visible: true,
+  })
   return parts
 }
 

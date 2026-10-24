@@ -56,6 +56,27 @@ const order = (document: PuppetDocument, values?: Readonly<Record<string, number
   getDrawOrderedPartStates(document, values).map((state) => state.partId)
 
 describe('scene draw order', () => {
+  test('should preserve Cubism source order for ties across plain scene groups', () => {
+    const parts = [part('a', 500), part('b', 500), part('c', 500)]
+    const document = createDocument(parts, [group('g', [node('c'), node('a')]), node('b')], {
+      drawOrderTieBreak: 'parts',
+    })
+    expect(order(document)).toEqual(['a', 'b', 'c'])
+    expect(parseDocumentValue(document).ok).toBe(true)
+    expect(order({...document, drawOrderTieBreak: undefined})).toEqual(['c', 'a', 'b'])
+  })
+  test('should quantize compiled orders before resolving stored ties and preserve legacy fractional orders', () => {
+    const parts = [part('a', 500.9), part('b', 500)]
+    const document = createDocument(
+      parts,
+      parts.map((part) => node(part.id)),
+      {drawOrderRounding: 'cubism', drawOrderTieBreak: 'parts'},
+    )
+    expect(order(document)).toEqual(['a', 'b'])
+    expect(order({...document, drawOrderRounding: undefined})).toEqual(['b', 'a'])
+    expect(parseDocumentValue(document).ok).toBe(true)
+  })
+
   test('should sort by draw order, keeping scene order for ties and without draw orders', () => {
     const parts = [part('a', 700), part('b'), part('c', 300), part('d')]
     const roots = parts.map((candidate) => node(candidate.id))

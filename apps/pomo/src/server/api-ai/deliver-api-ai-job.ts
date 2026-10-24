@@ -1,5 +1,9 @@
 import type {ApiAiJob} from './types'
-import {completeCloudText, releaseCloudText} from 'src/server/cloud-text/quota'
+import {
+  completeCloudText,
+  releaseCloudText,
+  settleCloudTextCancellation,
+} from 'src/server/cloud-text/quota'
 import {createApiAiResponseReference} from './response-reference'
 
 /** Applies a terminal job to its originating feature through idempotent completion contracts. */
@@ -17,8 +21,10 @@ export const deliverApiAiJob = async (job: ApiAiJob): Promise<void> => {
           tokenCount: job.result?.tokenCount ?? 0,
           userId: job.ownerId,
         })
-      } else {
+      } else if (job.cancelRequestedAt === null) {
         await releaseCloudText(job.ownerId, job.id)
+      } else {
+        await settleCloudTextCancellation(job.ownerId, job.id)
       }
       return
     }

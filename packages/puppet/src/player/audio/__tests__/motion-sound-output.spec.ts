@@ -66,6 +66,33 @@ const frame = (time: number, rate = 1, weight = 1): MotionFrame => ({
 const getSound = () => sound
 
 describe('createMotionSoundOutput', () => {
+  test.each([
+    {analysis: 'rms', expected: 0.2, volume: 'motion'},
+    {analysis: 'voice', expected: 1, volume: 'source'},
+    {analysis: 'rms', expected: 1, volume: 'source'},
+    {analysis: 'voice', expected: 0.2, volume: 'motion'},
+  ] as const)(
+    'should apply $volume volume independently of $analysis analysis',
+    ({analysis, volume, expected}) => {
+      const {context, gains} = createContext()
+      const output = createMotionSoundOutput({context} as unknown as AudioNode)
+      output.sync(
+        [{...frame(0.2, 1, 0.2), motion: {...motion, sound: {analysis, src: 'talk.wav', volume}}}],
+        getSound,
+      )
+      expect(gains[0]!.gain.value).toBe(expected)
+    },
+  )
+  test('should keep imported RMS audio at its source volume while the motion fades', () => {
+    const {context, gains} = createContext()
+    const output = createMotionSoundOutput({context} as unknown as AudioNode)
+    output.sync(
+      [{...frame(0.2, 1, 0.1), motion: {...motion, sound: {analysis: 'rms', src: 'talk.wav'}}}],
+      getSound,
+    )
+    expect(gains[0]!.gain.value).toBe(1)
+  })
+
   test('should play in step with the motion and restart after seeks and speed changes', () => {
     const {context, gains, sources} = createContext()
     const output = createMotionSoundOutput({context} as unknown as AudioNode)

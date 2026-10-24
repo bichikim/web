@@ -1,4 +1,6 @@
 /* eslint-disable no-bitwise, no-magic-numbers -- Base64 encodes fixed-width bytes. */
+import {validateMesh} from '../mesh/validate'
+import {encodeBase64} from './encode-base64'
 import {DOMParser, type Element} from '@xmldom/xmldom'
 
 import {
@@ -6,10 +8,13 @@ import {
   PUPPET_DOCUMENT_VERSION,
   type PuppetDocument,
   type PuppetPart,
-  type PuppetScenePartNode,
+  type PuppetPartBlendMode,
 } from '../player/document'
 import {parseDocumentValue} from '../player/parse-document'
+import {convertCmo3Rig} from './convert-cmo3-rig'
+import {readCmo3PaintOrder} from './read-cmo3-paint-order'
 import {readCmo3Archive} from './read-cmo3-archive'
+import {child, elementChildren, field, getSources, guid, numbers, resolve, scalar} from './cmo3-xml'
 
 export interface ConvertCmo3Result {
   readonly document: PuppetDocument
@@ -17,13 +22,11 @@ export interface ConvertCmo3Result {
 }
 
 interface ConvertedPart {
+  readonly source: Element
   readonly clippingGuids: ReadonlyArray<string>
-  readonly drawOrder: number
   readonly guid: string | undefined
   readonly invertedMask: boolean
   readonly part: PuppetPart
-  readonly sourceOrder: number
-  readonly visible: boolean
 }
 
 interface TextureSource {
@@ -31,7 +34,6 @@ interface TextureSource {
   readonly cache: Map<string, PuppetPart['texture']>
 }
 
-const BASE64_ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
 const PNG_SIGNATURE = Uint8Array.of(137, 80, 78, 71, 13, 10, 26, 10)
 
 const isPng = (bytes: Uint8Array, width: number, height: number): boolean => {
@@ -41,61 +43,6 @@ const isPng = (bytes: Uint8Array, width: number, height: number): boolean => {
   const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength)
   return view.getUint32(16, false) === width && view.getUint32(20, false) === height
 }
-
-const encodeBase64 = (bytes: Uint8Array): string => {
-  const output: string[] = []
-  for (let index = 0; index < bytes.length; index += 3) {
-    const first = bytes[index]!
-    const second = bytes[index + 1]
-    const third = bytes[index + 2]
-    output.push(
-      BASE64_ALPHABET[first >> 2]!,
-      BASE64_ALPHABET[((first & 3) << 4) | ((second ?? 0) >> 4)]!,
-      second === undefined ? '=' : BASE64_ALPHABET[((second & 15) << 2) | ((third ?? 0) >> 6)]!,
-      third === undefined ? '=' : BASE64_ALPHABET[third & 63]!,
-    )
-  }
-  return output.join('')
-}
-
-const elementChildren = (element: Element): ReadonlyArray<Element> =>
-  Array.from(element.childNodes).filter((node): node is Element => node.nodeType === 1)
-
-const child = (element: Element, tag: string, field?: string): Element | undefined =>
-  elementChildren(element).find(
-    (candidate) =>
-      candidate.tagName === tag &&
-      (field === undefined || candidate.getAttribute('xs.n') === field),
-  )
-
-const field = (element: Element, tag: string, name: string): Element | undefined =>
-  Array.from(element.getElementsByTagName(tag)).find(
-    (candidate) => candidate.getAttribute('xs.n') === name,
-  )
-
-const numbers = (element: Element | undefined): ReadonlyArray<number> =>
-  element?.textContent?.trim().split(/\s+/u).map(Number) ?? []
-
-const scalar = (element: Element | undefined): number | undefined => {
-  const value = Number(element?.textContent)
-  return element === undefined || !Number.isFinite(value) ? undefined : value
-}
-
-const resolve = (
-  element: Element | undefined,
-  references: ReadonlyMap<string, Element>,
-): Element | undefined => {
-  if (element === undefined) {
-    return undefined
-  }
-  const reference = element.getAttribute('xs.ref')
-  return reference === null ? element : references.get(reference)
-}
-
-const guid = (
-  element: Element | undefined,
-  references: ReadonlyMap<string, Element>,
-): string | undefined => resolve(element, references)?.getAttribute('uuid') ?? undefined
 
 const getModel = (root: Element): Element => {
   const main = child(root, 'main')
@@ -169,12 +116,11 @@ const getPart = (
   mesh: Element,
   references: ReadonlyMap<string, Element>,
   textureSource: TextureSource,
-  sourceOrder: number,
 ): ConvertedPart | undefined => {
   const texture = getTexture(mesh, references, textureSource)
-  const vertices = numbers(child(mesh, 'float-array', 'positions'))
-  const uvs = numbers(child(mesh, 'float-array', 'uvs'))
-  const indices = numbers(child(mesh, 'int-array', 'indices'))
+  const vertices = numbers(resolve(child(mesh, 'float-array', 'positions'), references))
+  const uvs = numbers(resolve(child(mesh, 'float-array', 'uvs'), references))
+  const indices = numbers(resolve(child(mesh, 'int-array', 'indices'), references))
   const drawable = child(mesh, 'ACDrawableSource', 'super')
   const id =
     drawable === undefined ? undefined : field(drawable, 'CDrawableId', 'id')?.getAttribute('idstr')
@@ -184,17 +130,17 @@ const getPart = (
 
   const keyforms = child(mesh, 'carray_list', 'keyforms')
   const initialForm = keyforms === undefined ? undefined : child(keyforms, 'CArtMeshForm')
-  const drawOrder =
-    initialForm === undefined ? 500 : (scalar(field(initialForm, 'i', 'drawOrder')) ?? 500)
   const opacity = initialForm === undefined ? 1 : (scalar(field(initialForm, 'f', 'opacity')) ?? 1)
-  const visible =
-    drawable === undefined ? true : field(drawable, 'b', 'isVisible')?.textContent !== 'false'
   const clippingList =
     drawable === undefined ? undefined : child(drawable, 'carray_list', 'clipGuidList')
   const clippingGuids =
     clippingList === undefined
       ? []
       : elementChildren(clippingList).map((candidate) => {
+          const reference = candidate.getAttribute('xs.ref')
+          if (reference !== null && !references.has(reference)) {
+            throw new Error(`CMO3 mask source is missing for ${id}`)
+          }
           const value = guid(candidate, references)
           if (value === undefined) {
             throw new Error(`CMO3 mask source is missing for ${id}`)
@@ -205,35 +151,47 @@ const getPart = (
     drawable === undefined
       ? false
       : field(drawable, 'b', 'invertClippingMask')?.textContent === 'true'
+  const composition = resolve(child(mesh, 'ColorComposition', 'colorComposition'), references)
+  const culling = resolve(child(mesh, 'b', 'culling'), references)
+  const geometry = {indices, uvs, vertices}
   const part: PuppetPart = {
     id,
-    mesh: {indices, uvs, vertices},
-    properties: {opacity},
+    mesh: validateMesh(geometry).valid ? geometry : {...geometry, validationSpace: 'indices'},
+    properties: {
+      blendMode: blendMode(composition?.getAttribute('v')),
+      culling: culling?.textContent === 'true',
+      opacity,
+    },
     texture,
   }
   return {
     clippingGuids,
-    drawOrder,
     guid: guid(
       drawable === undefined ? undefined : child(drawable, 'CDrawableGuid', 'guid'),
       references,
     ),
     invertedMask,
     part,
-    sourceOrder,
-    visible,
+    source: mesh,
   }
 }
 
-const getSceneNode = (entry: ConvertedPart): PuppetScenePartNode => ({
-  id: entry.part.id,
-  kind: 'part',
-  locked: false,
-  name: entry.part.id,
-  visible: entry.visible,
-})
+const blendMode = (value: string | null | undefined): PuppetPartBlendMode => {
+  switch (value) {
+    case undefined:
+    case null:
+    case 'NORMAL':
+      return 'normal'
+    case 'MULTIPLY':
+      return 'multiply-compatible'
+    case 'ADD':
+      return 'add-compatible'
+    default:
+      throw new Error(`Unsupported CMO3 blend mode: ${value}`)
+  }
+}
 
-/** Converts the static mesh and texture pose of a Cubism Editor CAFF model into a Puppet document. */
+/** Converts Cubism Editor geometry, parameter keyforms and deformer hierarchy into a Poffo document. */
 export const convertCmo3 = (source: ArrayBuffer | Uint8Array): ConvertCmo3Result => {
   const archive = readCmo3Archive(source)
   const xml = new DOMParser().parseFromString(archive.xml, 'application/xml')
@@ -252,66 +210,69 @@ export const convertCmo3 = (source: ArrayBuffer | Uint8Array): ConvertCmo3Result
   const viewport = getCanvas(model)
   const meshes = getMeshes(model, references)
   const textureSource: TextureSource = {cache: new Map(), entries: archive.entries}
-  const converted = meshes.flatMap((mesh, sourceOrder) => {
-    const entry = getPart(mesh, references, textureSource, sourceOrder)
+  const converted = meshes.flatMap((mesh) => {
+    const entry = getPart(mesh, references, textureSource)
     return entry === undefined ? [] : [entry]
   })
   if (converted.length === 0) {
     throw new Error('CMO3 model has no convertible textured meshes')
   }
-  converted.sort(
-    (first, second) => first.drawOrder - second.drawOrder || first.sourceOrder - second.sourceOrder,
-  )
   const partIdByGuid = new Map(
     converted.flatMap((entry) =>
       entry.guid === undefined ? [] : [[entry.guid, entry.part.id] as const],
     ),
   )
-  const maskInversionByPartId = new Map<string, boolean>()
+  const maskPartIds = new Set<string>()
   const clippedParts = converted.map((entry) => {
     const clippingMaskIds = entry.clippingGuids.map((value) => {
       const partId = partIdByGuid.get(value)
       if (partId === undefined) {
         throw new Error(`CMO3 mask source is missing for ${entry.part.id}`)
       }
-      const previousInversion = maskInversionByPartId.get(partId)
-      if (previousInversion !== undefined && previousInversion !== entry.invertedMask) {
-        throw new Error(`CMO3 mask ${partId} is used with conflicting inversion settings`)
-      }
-      maskInversionByPartId.set(partId, entry.invertedMask)
+      maskPartIds.add(partId)
       return partId
     })
     return clippingMaskIds.length === 0
       ? entry.part
       : {
           ...entry.part,
-          properties: {
-            ...entry.part.properties,
-            clippingMaskIds,
-          },
+          properties: {...entry.part.properties, clippingMaskIds, invertedMask: entry.invertedMask},
         }
   })
-  const parts = clippedParts.map((part): PuppetPart => {
-    const invertedMask = maskInversionByPartId.get(part.id)
-    if (invertedMask === undefined) {
-      return part
-    }
-    return {
-      ...part,
-      properties: {
-        ...part.properties,
-        invertedMask,
-        renderWhenUsedAsMask: true,
-      },
-    }
-  })
+  const parts = clippedParts.map(
+    (part): PuppetPart =>
+      maskPartIds.has(part.id)
+        ? {
+            ...part,
+            properties: {...part.properties, renderWhenUsedAsMask: true},
+          }
+        : part,
+  )
+  const {warnings: rigWarnings, ...rig} = convertCmo3Rig(
+    model,
+    references,
+    converted.map((entry, index) => ({part: parts[index]!, source: entry.source})),
+  )
+  const paintOrder = readCmo3PaintOrder(
+    model,
+    references,
+    converted.map(({part, source}) => ({id: part.id, source})),
+  )
+  const partById = new Map(rig.parts.map((part) => [part.id, part]))
+  const parameterIds = new Set(rig.parameters.map((parameter) => parameter.id))
   const document: PuppetDocument = {
+    ...rig,
+    colorComposition: 'cubism',
+    drawOrderRounding: 'cubism',
+    drawOrderTieBreak: 'parts',
     format: PUPPET_DOCUMENT_FORMAT,
+    glueComposition: 'sequential',
     motions: [],
-    parameterBindings: [],
-    parameters: [],
-    parts,
-    scene: {roots: converted.map(getSceneNode)},
+    parameterRoles: {
+      eyeBlink: ['ParamEyeLOpen', 'ParamEyeROpen'].filter((id) => parameterIds.has(id)),
+      lipSync: ['ParamMouthOpenY'].filter((id) => parameterIds.has(id)),
+    },
+    parts: paintOrder.map((id) => partById.get(id)!),
     version: PUPPET_DOCUMENT_VERSION,
     viewport,
   }
@@ -321,7 +282,8 @@ export const convertCmo3 = (source: ArrayBuffer | Uint8Array): ConvertCmo3Result
   }
   const skipped = meshes.length - converted.length
   const warnings = [
-    '메시의 기본 형태와 텍스처만 변환했습니다. Cubism 디포머, 파라미터 키폼, 물리와 모션은 이 문서에 포함되지 않습니다.',
+    ...rigWarnings,
+    'CMO3에 별도 모션 파일은 포함되지 않습니다. SDK 모델 묶음의 모션·표정 프리셋은 별도로 가져올 수 있습니다.',
     ...(skipped === 0
       ? []
       : [`텍스처 또는 식별자를 읽을 수 없는 메시 ${skipped}개를 제외했습니다.`]),

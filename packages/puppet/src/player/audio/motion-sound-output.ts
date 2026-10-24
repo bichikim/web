@@ -89,7 +89,9 @@ export const createMotionSoundOutput = (
         return false
       }
     }
-    voices.get(key)!.gain.gain.value = frame.weight
+    const soundOptions = frame.motion.sound
+    const volume = soundOptions?.volume ?? (soundOptions?.analysis === 'rms' ? 'source' : 'motion')
+    voices.get(key)!.gain.gain.value = volume === 'source' ? 1 : frame.weight
     return true
   }
   return {

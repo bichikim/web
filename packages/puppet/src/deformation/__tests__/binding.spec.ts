@@ -98,3 +98,21 @@ test('should preserve a collapsed layout and apply translation without an invers
     expect(actual.y).toBeCloseTo(expected.y + 1)
   }
 })
+
+test('should retain native rotation metadata in relocated binding layouts', () => {
+  const source: PuppetSceneDeformerNode = {
+    ...bone,
+    deformerType: 'rotation',
+    rotationAngle: Math.PI * 4,
+    rotationReferenceDistance: -0.1,
+  }
+  const rebound = rebindDeformer(source, {...source, controlPoints: [10, 20, 110, 20]})
+  expect(rebound.binding?.rest).toMatchObject({
+    rotationAngle: Math.PI * 4,
+    rotationReferenceDistance: -0.1,
+  })
+  expect(rebound.binding?.steps[0]?.shape).toMatchObject({
+    rotationAngle: Math.PI * 4,
+    rotationReferenceDistance: -0.1,
+  })
+})

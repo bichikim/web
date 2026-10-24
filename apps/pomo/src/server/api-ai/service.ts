@@ -23,7 +23,8 @@ const service = createApiAiService({
     adapter: createOpenRouterAdapter(),
     enqueue: createApiAiQueue(async (jobId): Promise<void> => service.executeQueuedJob(jobId)),
     monitorBackground:
-      process.env.NODE_ENV === 'development' && process.env.VERCEL_DEPLOYMENT_ID === undefined,
+      process.env.VERCEL_ENV === 'preview' ||
+      (process.env.NODE_ENV === 'development' && process.env.VERCEL_DEPLOYMENT_ID === undefined),
   },
   repository,
 })

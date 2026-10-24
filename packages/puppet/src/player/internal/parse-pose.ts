@@ -23,6 +23,10 @@ const isPoseGroup = (
   value.id.length > 0 &&
   typeof value.parameterId === 'string' &&
   parameterIds.has(value.parameterId) &&
+  (value.sourceParameterIds === undefined ||
+    (hasKnownIds(value.sourceParameterIds, parameterIds) &&
+      Array.isArray(value.entries) &&
+      value.sourceParameterIds.length === value.entries.length)) &&
   (value.fadeTime === undefined || (isFiniteNumber(value.fadeTime) && value.fadeTime >= 0)) &&
   Array.isArray(value.entries) &&
   value.entries.length > 0 &&

@@ -26,6 +26,7 @@ import {resolveParameterValue} from './parameter-value'
 import type {ChainsState} from './physics-chain'
 import {
   createExpressionPlayback,
+  createMotionParameterHistory,
   createMotionPlaybacks,
   createSelectedPlayback,
   mixMotionFrames,
@@ -55,7 +56,7 @@ const resolveOverrides = (document: PreparedPuppetDocument, values: PuppetParame
       .map((parameter) => [parameter.id, resolveParameterValue(parameter, values[parameter.id])]),
   )
 
-// eslint-disable-next-line max-lines-per-function -- Public operations share one lifecycle boundary.
+// eslint-disable-next-line max-lines-per-function, max-statements -- Public operations share one lifecycle boundary.
 export const createPlayer = async (options: CreatePlayerOptions): Promise<Player> => {
   assertPreparedPuppetDocument(options.document)
 
@@ -63,6 +64,7 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
   let {document} = options
   let parameterValues: PuppetParameterValueMap = {...options.parameterValues}
   let frameValues: PuppetParameterValueMap = {}
+  const motionHistory = createMotionParameterHistory()
   let physicsState = createPhysicsState(document)
   let chainState: ChainsState | undefined
   let physicsPreview = options.physicsPreview ?? true
@@ -98,6 +100,7 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
     }
   }
   const playback = createSelectedPlayback({
+    fadeIn: document.motionParameterBase === 'previous-frame',
     motionId: options.motionId,
     motions: document.motions,
     onEvent,
@@ -115,7 +118,7 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
    * before this frame's values exist.
    */
   const advanceEffects = (deltaTime: number, frames: ReadonlyArray<MotionFrame>) => {
-    const soundMouth = sounds.mouth(frames)
+    const soundMouth = sounds.mouth(frames, deltaTime)
     // The automatic blink rests while a selected motion plays.
     const blinked =
       eyeBlink === undefined || playback.isPlaying()
@@ -143,6 +146,8 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
     settlePhysics: boolean,
   ) => {
     const mix = mixMotionFrames({
+      baseParameterValues:
+        document.motionParameterBase === 'previous-frame' ? motionHistory.base(frames) : undefined,
       document,
       expressions: expressions.layers(),
       eyeOpenness: effects.eyeOpenness,
@@ -150,6 +155,7 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
       modelOpacity,
       parameterValues,
     })
+    motionHistory.record(mix.motionParameterValues)
     const result = evaluatePhysics({
       chainState,
       deltaTime,
@@ -258,6 +264,7 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
     if (document.poseGroups !== nextDocument.poseGroups) {
       poseState = new Map()
     }
+    motionHistory.reset()
     document = nextDocument
     sounds.load(document)
     playbacks.update(document.motions)

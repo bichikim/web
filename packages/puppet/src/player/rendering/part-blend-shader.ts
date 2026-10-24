@@ -36,7 +36,7 @@ float softLight(float cb, float cs) {
 }
 
 float separable(float cb, float cs, int mode) {
-  if (mode == 2) return cb * cs;
+  if (mode == 2 || mode == 23) return cb * cs;
   if (mode == 3) return cb + cs - cb * cs;
   if (mode == 4) return min(cb, cs);
   if (mode == 5) return max(cb, cs);
@@ -90,6 +90,9 @@ vec3 blendColor(vec3 cb, vec3 cs, int mode) {
 }
 
 vec4 compositePart(vec4 front, vec4 back) {
+  int mode = int(uBlendMode + 0.5);
+  if (mode == 21) return vec4(front.rgb + back.rgb, back.a);
+  if (mode == 22) return vec4(front.rgb * back.rgb + back.rgb * (1.0 - front.a), back.a);
   float as = front.a;
   float ab = back.a;
   vec3 cs = as > 0.0 ? front.rgb / as : vec3(0.0);
@@ -151,7 +154,7 @@ fn softLight(cb: f32, cs: f32) -> f32 {
 
 fn separable(cb: f32, cs: f32, mode: i32) -> f32 {
   switch mode {
-    case 2: { return cb * cs; }
+    case 2, 23: { return cb * cs; }
     case 3: { return cb + cs - cb * cs; }
     case 4: { return min(cb, cs); }
     case 5: { return max(cb, cs); }
@@ -212,6 +215,8 @@ fn blendColor(cb: vec3<f32>, cs: vec3<f32>, mode: i32) -> vec3<f32> {
 }
 
 fn compositePart(front: vec4<f32>, back: vec4<f32>, blendMode: i32, alphaMode: i32) -> vec4<f32> {
+  if (blendMode == 21) { return vec4<f32>(front.rgb + back.rgb, back.a); }
+  if (blendMode == 22) { return vec4<f32>(front.rgb * back.rgb + back.rgb * (1.0 - front.a), back.a); }
   let as_ = front.a;
   let ab = back.a;
   let cs = select(vec3<f32>(0.0), front.rgb / as_, as_ > 0.0);

@@ -1,5 +1,6 @@
 import {parseDocument, type ParseDocumentResult, parseDocumentValue} from '../parse-document'
 import type {PreparePuppetDocumentRequest} from './prepare-puppet-document-request'
+import {compactDocumentTextures} from '../texture-assets'
 
 const prepareDocument = (request: PreparePuppetDocumentRequest): ParseDocumentResult => {
   switch (request.type) {
@@ -15,5 +16,8 @@ const prepareDocument = (request: PreparePuppetDocumentRequest): ParseDocumentRe
 }
 
 self.addEventListener('message', (event: MessageEvent<PreparePuppetDocumentRequest>) => {
-  self.postMessage(prepareDocument(event.data))
+  const result = prepareDocument(event.data)
+  self.postMessage(
+    result.ok ? {document: compactDocumentTextures(result.document), ok: true} : result,
+  )
 })

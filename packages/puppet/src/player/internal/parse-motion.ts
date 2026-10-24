@@ -147,7 +147,13 @@ const isOptionalSound = (value: unknown) => {
   if (value === undefined) {
     return true
   }
-  if (!isRecord(value) || typeof value.src !== 'string' || value.src.length === 0) {
+  if (
+    !isRecord(value) ||
+    typeof value.src !== 'string' ||
+    value.src.length === 0 ||
+    (value.analysis !== undefined && value.analysis !== 'rms' && value.analysis !== 'voice') ||
+    (value.volume !== undefined && value.volume !== 'source' && value.volume !== 'motion')
+  ) {
     return false
   }
   const match = DATA_URL.exec(value.src)

@@ -8,7 +8,7 @@ import {readFile} from 'node:fs/promises'
 import {afterAll, afterEach, beforeAll, beforeEach, expect, it, vi} from 'vitest'
 import {apiAiAttempts, apiAiJobs, getDatabase, withTransactionalDatabase} from 'src/server/database'
 import * as repository from 'src/server/repositories/api-ai'
-import {readCloudTextUsage, reserveCloudText} from 'src/server/cloud-text/quota'
+import {readCloudTextUsage, releaseCloudText, reserveCloudText} from 'src/server/cloud-text/quota'
 import {readCloudTextJob} from 'src/server/cloud-text/job-status'
 import {prepareApiAiQueue} from 'src/server/cloud-text/__tests__/fixtures/api-ai-queue'
 import {prepareProductLimits} from 'src/server/cloud-text/__tests__/fixtures/product-limits'
@@ -86,7 +86,12 @@ const reserve = async () => {
 }
 beforeAll(async () => {
   await database.exec('create table pomo_users (id uuid primary key, deleted_at timestamptz)')
-  for (const name of ['0023_cloud_text', '0024_cloud_text_limits', '0025_cloud_text_usage_reset']) {
+  for (const name of [
+    '0023_cloud_text',
+    '0024_cloud_text_limits',
+    '0025_cloud_text_usage_reset',
+    '0029_cloud_text_cancellation',
+  ]) {
     await database.exec(
       await readFile(new URL(`../../../../drizzle/${name}.sql`, import.meta.url), 'utf8'),
     )
@@ -156,6 +161,54 @@ it('should skip a cancelled queue message and return its allowance', async () =>
   expect(await readCloudTextJob(userId, id)).toMatchObject({kind: 'cancelled', usage: {used: 0}})
 })
 
+it.each(['rejected', 'accepted'] as const)(
+  'should settle cancellation between fallback attempts after a %s submission',
+  async (acceptance) => {
+    const id = await reserve()
+    const claim = await repository.claimApiAiJob(id, [provider], now, crypto.randomUUID())
+    if (claim === null) {
+      throw new Error('Expected dispatch claim')
+    }
+    if (acceptance === 'rejected') {
+      await repository.recordApiAiSubmissionError(
+        claim.attempt.id,
+        {
+          acceptance: 'rejected',
+          disabled: false,
+          fallback: true,
+          message: 'limited',
+          retryAt: now.getTime(),
+        },
+        now,
+      )
+    } else {
+      await repository.recordApiAiResponse(
+        claim.attempt.id,
+        {
+          failureCode: 'server_error',
+          fallback: true,
+          metadata: {},
+          model: response.model,
+          outputText: '',
+          responseId: response.id,
+          searchSourceUrls: [],
+          status: 'failed',
+          tokenCount: 10,
+        },
+        now,
+      )
+    }
+    await repository.cancelQueuedApiAiJob(id, userId, now)
+    await createService().executeQueuedJob(id)
+
+    expect(fetch).not.toHaveBeenCalled()
+    expect(await readCloudTextJob(userId, id)).toMatchObject({
+      kind: 'cancelled',
+      usage: {used: acceptance === 'accepted' ? 1 : 0},
+    })
+  },
+)
+
 it('should send each new job to the API and refund confirmed authentication failures', async () => {
   fetch.mockResolvedValue(Response.json({error: {message: 'Invalid API key'}}, {status: 401}))
 
@@ -198,15 +251,73 @@ it('should not replay an ambiguous submission and refund it after its deadline',
   expect(await client.select().from(apiAiAttempts)).toMatchObject([{state: 'unknown'}])
 })
 
-it('should preserve cancellation when the provider finishes later', async () => {
+it.each(['completed', 'failed', 'cancelled', 'incomplete'] as const)(
+  'should retain one use when user cancellation races with provider %s and repeated delivery',
+  async (status) => {
+    const id = await reserve()
+    fetch.mockImplementation(async () => {
+      await client.update(apiAiJobs).set({cancelRequestedAt: now}).where(eq(apiAiJobs.id, id))
+      return Response.json({...response, status})
+    })
+
+    await createService().executeQueuedJob(id)
+    await createService().executeQueuedJob(id)
+    const job = await repository.findApiAiJob(id)
+    if (job === null) {
+      throw new Error('Expected cancelled job')
+    }
+    await deliverApiAiJob(job)
+    await releaseCloudText(userId, id)
+    expect(await readCloudTextJob(userId, id)).toMatchObject({kind: 'cancelled', usage: {used: 1}})
+    expect(fetch).toHaveBeenCalledOnce()
+  },
+)
+
+it('should refund user cancellation when the provider confirms rejection', async () => {
   const id = await reserve()
   fetch.mockImplementation(async () => {
     await client.update(apiAiJobs).set({cancelRequestedAt: now}).where(eq(apiAiJobs.id, id))
-    return Response.json(response)
+    return Response.json({error: {message: 'Invalid API key'}}, {status: 401})
   })
 
   await createService().executeQueuedJob(id)
   expect(await readCloudTextJob(userId, id)).toMatchObject({kind: 'cancelled', usage: {used: 0}})
+})
+
+it('should retain one use after user cancellation of an unacknowledged submission', async () => {
+  const id = await reserve()
+  fetch.mockRejectedValue(new Error('connection lost'))
+  await createService().executeQueuedJob(id)
+  await client.update(apiAiJobs).set({cancelRequestedAt: now}).where(eq(apiAiJobs.id, id))
+
+  await createService(() => new Date(now.getTime() + 120001)).recover()
+  expect(await readCloudTextJob(userId, id)).toMatchObject({kind: 'failed', usage: {used: 1}})
+  expect(fetch).toHaveBeenCalledOnce()
+})
+
+it('should exhaust the allowance after repeated submitted user cancellations', async () => {
+  for (const attempt of [1, 2, 3]) {
+    const id = await reserve()
+    fetch.mockImplementationOnce(async () => {
+      await client.update(apiAiJobs).set({cancelRequestedAt: now}).where(eq(apiAiJobs.id, id))
+      return Response.json({...response, id: `resp_router_${attempt}`})
+    })
+    await createService().executeQueuedJob(id)
+    expect(await readCloudTextJob(userId, id)).toMatchObject({
+      kind: 'cancelled',
+      usage: {used: attempt},
+    })
+  }
+  expect(await readCloudTextUsage(userId, now)).toMatchObject({remaining: 0, used: 3})
+  expect(
+    await reserveCloudText({
+      now,
+      requestHash: 'a'.repeat(64),
+      requestId: crypto.randomUUID(),
+      userId,
+    }),
+  ).toMatchObject({kind: 'exhausted'})
+  expect(fetch).toHaveBeenCalledTimes(3)
 })
 
 const openai: ApiAiProvider = {
@@ -276,7 +387,7 @@ it('should refund an ambiguous local submission after its deadline without anoth
   expect(await readCloudTextJob(userId, id)).toMatchObject({kind: 'failed', usage: {used: 0}})
 })
 
-it('should cancel a local background response and refund its allowance', async () => {
+it('should cancel an accepted local background response and retain its allowance charge', async () => {
   const service = createService(() => now, [openai], true)
   background.submit.mockResolvedValue({
     ...response,
@@ -308,7 +419,7 @@ it('should cancel a local background response and refund its allowance', async (
   await service.executeQueuedJob(id)
   expect(background.submit).toHaveBeenCalledOnce()
   expect(background.cancel).toHaveBeenCalledExactlyOnceWith(openai, 'resp_local')
-  expect(await readCloudTextJob(userId, id)).toMatchObject({kind: 'cancelled', usage: {used: 0}})
+  expect(await readCloudTextJob(userId, id)).toMatchObject({kind: 'cancelled', usage: {used: 1}})
 })
 
 it('should fail and refund after both models in the saved administrator order reject authentication', async () => {

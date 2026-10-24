@@ -1,6 +1,6 @@
 import {Link, Meta, Title} from '@solidjs/meta'
 import {useLocation} from '@solidjs/router'
-import {onMount} from 'solid-js'
+import {type ComponentProps, onMount} from 'solid-js'
 import {getCanonicalPathname, isSearchIndexablePath, normalizePathname} from '../pomo-route'
 import {SEARCH_CONFIG} from 'src/features/search-discovery'
 import {SERVICE_POLICY_PATHS} from '../../features/service-terms/policy-paths'
@@ -61,9 +61,29 @@ const getDescription = (pathname: string) => {
   }
 }
 
+// Hydration adopts the static head without applying its initial client attributes.
+// Reconcile only this component's element after the client locale is available.
+const HLocalizedMeta = (props: ComponentProps<typeof Meta>) => {
+  let element: HTMLMetaElement | undefined
+
+  onMount(() => {
+    if (element) {
+      element.content = props.content ?? ''
+    }
+  })
+
+  return (
+    <Meta
+      {...props}
+      ref={(node) => {
+        element = node
+      }}
+    />
+  )
+}
+
 export const PDocumentMetadata = () => {
   const location = useLocation()
-  const locale = getLocale() === 'ko' ? 'ko_KR' : 'en_US'
   const canonicalUrl = () =>
     new URL(getCanonicalPathname(location.pathname), SEARCH_CONFIG.origin).href
   const description = () => getDescription(location.pathname)
@@ -79,22 +99,22 @@ export const PDocumentMetadata = () => {
   return (
     <>
       <Title>{title()}</Title>
-      <Meta content={description()} name="description" />
+      <HLocalizedMeta content={description()} name="description" />
       <Meta
         content={isSearchIndexablePath(location.pathname) ? INDEXABLE_ROBOTS : PRIVATE_ROBOTS}
         name="robots"
       />
       <Meta content="Pomofi" property="og:site_name" />
       <Meta content="website" property="og:type" />
-      <Meta content={title()} property="og:title" />
-      <Meta content={description()} property="og:description" />
+      <HLocalizedMeta content={title()} property="og:title" />
+      <HLocalizedMeta content={description()} property="og:description" />
       <Meta content={canonicalUrl()} property="og:url" />
       <Meta content={SOCIAL_IMAGE_URL} property="og:image" />
       <Meta content="Pomofi app icon" property="og:image:alt" />
-      <Meta content={locale} property="og:locale" />
+      <HLocalizedMeta content={getLocale() === 'ko' ? 'ko_KR' : 'en_US'} property="og:locale" />
       <Meta content="summary" name="twitter:card" />
-      <Meta content={title()} name="twitter:title" />
-      <Meta content={description()} name="twitter:description" />
+      <HLocalizedMeta content={title()} name="twitter:title" />
+      <HLocalizedMeta content={description()} name="twitter:description" />
       <Meta content={SOCIAL_IMAGE_URL} name="twitter:image" />
       <Meta content="Pomofi app icon" name="twitter:image:alt" />
       <Link href={canonicalUrl()} rel="canonical" />

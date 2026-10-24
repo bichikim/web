@@ -5,6 +5,27 @@ import {parseDocument} from '../parse-document'
 import {serializeDocument} from '../serialize-document'
 
 describe('parseDocument parameter influence relations', () => {
+  test('should round-trip influence composition modes and reject unknown modes', () => {
+    const document = createDemoDocument()
+    const withMode = (influenceMode: unknown) => ({
+      ...document,
+      parameterBindings: document.parameterBindings!.map((binding) => ({
+        ...binding,
+        influenceMode,
+      })),
+    })
+    for (const mode of ['minimum', 'multiply']) {
+      const parsed = parseDocument(JSON.stringify(withMode(mode)))
+      expect(parsed.ok).toBe(true)
+      if (!parsed.ok) {
+        throw new Error('Expected influence mode to parse')
+      }
+      expect(parseDocument(serializeDocument(parsed.document))).toEqual(parsed)
+      expect(parsed.document.parameterBindings![0]).toHaveProperty('influenceMode', mode)
+    }
+    expect(parseDocument(JSON.stringify(withMode('unknown'))).ok).toBe(false)
+  })
+
   const createInfluenced = (influences: unknown) => {
     const document = createDemoDocument()
     return {

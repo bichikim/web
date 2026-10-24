@@ -40,7 +40,7 @@
     "delaunator": "^5.1.0",
     "es-toolkit": "catalog:",
     "fflate": "^0.8.3",
-    "pixi.js": "^8.21.0",
+    "pixi.js": "^8.22.0",
     "three": "^0.186.1"
   },
   "devDependencies": {

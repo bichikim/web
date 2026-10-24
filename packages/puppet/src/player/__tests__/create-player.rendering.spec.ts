@@ -58,6 +58,18 @@ afterEach(() => {
   vi.unstubAllGlobals()
 })
 
+const createTransformPoint = (value: number) => {
+  const point = {
+    set: vi.fn((x: number, y = x) => {
+      point.x = x
+      point.y = y
+    }),
+    x: value,
+    y: value,
+  }
+  return point
+}
+
 describe('createPlayer', () => {
   test('should apply scene order and inherited visibility to runtime meshes', async () => {
     const application = {
@@ -224,8 +236,8 @@ describe('createPlayer', () => {
           const container = {
             addChild: vi.fn(),
             destroy: vi.fn(),
-            position: {set: vi.fn()},
-            scale: {set: vi.fn(), x: 1},
+            position: createTransformPoint(0),
+            scale: createTransformPoint(1),
           }
           containers.push(container)
           Object.assign(this, container)
@@ -296,6 +308,7 @@ describe('createPlayer', () => {
           texture.source.resolution = resolution
         }),
         source: {resolution: 1},
+        update: vi.fn(),
         width: 1,
       }
       return texture

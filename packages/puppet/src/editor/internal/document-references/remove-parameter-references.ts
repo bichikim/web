@@ -1,3 +1,4 @@
+import {mapSceneReferences} from './map-scene-references'
 import {getTimelineRowIds, withTimelineRowIds} from '../../../player/motion-timeline-rows'
 import {removeMouthShapeParameters} from '../mouth-shapes'
 import type {PuppetDocument, PuppetPhysics} from '../../../player/document'
@@ -72,9 +73,23 @@ export const removeParameterReferences = (
         (track) => track.kind !== 'parameter' || kept(track.parameterId),
       ),
     })),
+    physics: physics === undefined || isEmptyPhysics(physics) ? undefined : physics,
     // World settings (fps, gravity, wind) apply only to chains; they outlive the last chain so
     // chains added later still use them.
-    physics: physics === undefined || isEmptyPhysics(physics) ? undefined : physics,
-    poseGroups: document.poseGroups?.filter((group) => kept(group.parameterId)),
+    poseGroups: document.poseGroups?.filter(
+      (group) => kept(group.parameterId) && (group.sourceParameterIds ?? []).every(kept),
+    ),
+    scene:
+      document.scene === undefined
+        ? undefined
+        : {
+            ...document.scene,
+            roots: mapSceneReferences(document.scene.roots, {
+              keepGlue: () => true,
+              keepParameter: kept,
+              keepPart: () => true,
+              rename: (id) => id,
+            }),
+          },
   }
 }

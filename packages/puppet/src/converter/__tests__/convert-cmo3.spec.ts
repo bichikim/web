@@ -3,6 +3,11 @@ import {expect, test} from 'vitest'
 
 import {convertCmo3} from '../convert-cmo3'
 import {readCmo3Archive} from '../read-cmo3-archive'
+import {parseDocument} from '../../player/parse-document'
+import {serializeDocument} from '../../player/serialize-document'
+import {composeParameterVertices} from '../../deformation/composition'
+import {getPartRenderFrame, getPartRenderPlans} from '../../player/internal/render-plan'
+import {composeParameterPartDrawOrder} from '../../deformation/draw-order'
 
 interface ArchiveEntry {
   readonly path: string
@@ -106,11 +111,17 @@ test('converts drawable mask references to Puppet part IDs', () => {
   expect(document.parts).toHaveLength(2)
   expect(document.parts.find((part) => part.id === 'eye')?.properties).toMatchObject({
     clippingMaskIds: ['mask'],
+    invertedMask: true,
   })
   expect(document.parts.find((part) => part.id === 'mask')?.properties).toMatchObject({
-    invertedMask: true,
     renderWhenUsedAsMask: true,
   })
+})
+
+test('should retain Cubism painting order for equal draw orders independently of the deformer hierarchy', () => {
+  const {document} = convertCmo3(archive(modelXml()))
+  expect(document.drawOrderTieBreak).toBe('parts')
+  expect(document.parts.map((part) => part.id)).toEqual(['eye', 'mask'])
 })
 
 test('rejects a mask whose source cannot be converted', () => {
@@ -162,4 +173,176 @@ test('rejects a ZIP entry that declares an excessive output size', () => {
     },
   ])
   expect(() => readCmo3Archive(source)).toThrow('outside the supported range')
+})
+
+test('should preserve parameter ranges, defaults and keyed mesh opacity and positions', () => {
+  const parameter = `<CParameterSourceSet><carray_list xs.n="_sources">
+    <CParameterSource><CParameterGuid xs.n="guid" uuid="parameter"/>
+      <CParameterId xs.n="id" idstr="ParamEye"/><s xs.n="name">Eye</s>
+      <f xs.n="minValue">0</f><f xs.n="maxValue">1</f><f xs.n="defaultValue">1</f>
+    </CParameterSource></carray_list></CParameterSourceSet>`
+  const grid = `<KeyformGridSource xs.n="keyformGridSource">
+    <array_list xs.n="keyformBindings"><KeyformBindingSource xs.id="#binding">
+      <CParameterGuid xs.n="parameterGuid" uuid="parameter"/>
+      <array_list xs.n="keys"><f>0</f><f>1</f></array_list>
+      <InterpolationType xs.n="interpolationType" v="LINEAR"/>
+    </KeyformBindingSource></array_list>
+    <array_list xs.n="keyformsOnGrid">${[0, 1]
+      .map(
+        (index) => `
+      <KeyformOnGrid><KeyformGridAccessKey xs.n="accessKey">
+        <array_list xs.n="_keyOnParameterList"><KeyOnParameter>
+          <KeyformBindingSource xs.n="binding" xs.ref="#binding"/><i xs.n="keyIndex">${index}</i>
+        </KeyOnParameter></array_list></KeyformGridAccessKey>
+        <CFormGuid xs.n="keyformGuid" uuid="form-${index}"/>
+      </KeyformOnGrid>`,
+      )
+      .join('')}</array_list></KeyformGridSource>`
+  const forms = `<carray_list xs.n="keyforms">${[0, 1]
+    .map(
+      (index) => `
+    <CArtMeshForm><ACDrawableForm xs.n="super"><ACForm xs.n="super">
+      <CFormGuid xs.n="guid" uuid="form-${index}"/></ACForm>
+      <f xs.n="opacity">${index}</f><i xs.n="drawOrder">${400 + index * 100}</i>
+    </ACDrawableForm><float-array xs.n="positions">${index * 10} 0 ${index * 10 + 10} 0 ${index * 10} 10</float-array>
+    </CArtMeshForm>`,
+    )
+    .join('')}</carray_list>`
+  const mesh = artMesh('eye', '#eye-guid')
+    .replace(
+      '<CDrawableId',
+      `<ACParameterControllableSource xs.n="super">${grid}</ACParameterControllableSource><CDrawableId`,
+    )
+    .replace('<int-array', `${forms}<int-array`)
+  const xml = modelXml().replace(
+    /<CDrawableSourceSet[\s\S]*?<\/CDrawableSourceSet>/u,
+    `${parameter}<CDrawableSourceSet xs.n="drawableSourceSet">
+      <carray_list xs.n="_sources">${mesh}</carray_list></CDrawableSourceSet>`,
+  )
+  const {document, warnings} = convertCmo3(archive(xml))
+  expect(document.parameters).toEqual([
+    {defaultValue: 1, id: 'ParamEye', maximum: 1, minimum: 0, name: 'Eye', repeat: false},
+  ])
+  expect(document.parameterBindings).toHaveLength(1)
+  const part = document.parts[0]!
+  expect(part.mesh.vertices).toEqual([10, 0, 20, 0, 10, 10])
+  expect(part.properties).toMatchObject({drawOrder: 500, opacity: 1})
+  expect(
+    composeParameterVertices({
+      document,
+      parameterValues: {ParamEye: 0.5},
+      partId: 'eye',
+      restVertices: part.mesh.vertices,
+    }),
+  ).toEqual([5, 0, 15, 0, 5, 10])
+  expect(composeParameterPartDrawOrder(document, 'eye', {ParamEye: 0.505})).toBe(450)
+  expect(document.parameterBindings?.[0]?.keyforms[0]?.parts[0]?.properties).toMatchObject({
+    drawOrder: 400,
+    opacity: 0,
+  })
+  expect(warnings.some((warning) => warning.includes('파라미터 키폼'))).toBe(false)
+})
+
+test('should use the source part child list to break drawing-order ties', () => {
+  const parts = `<CPartSourceSet><carray_list xs.n="_sources"><CPartSource>
+    <ACParameterControllableSource xs.n="super"><s xs.n="localName">Root</s></ACParameterControllableSource>
+    <CPartId xs.n="id" idstr="root"/><CPartGuid xs.n="guid" uuid="root-guid"/>
+    <carray_list xs.n="_childGuids">
+      <CDrawableGuid xs.ref="#eye-guid"/><CDrawableGuid xs.ref="#mask-guid"/></carray_list>
+    </CPartSource></carray_list></CPartSourceSet>`
+  const xml = modelXml().replace('<CDrawableSourceSet', `${parts}<CDrawableSourceSet`)
+  const {document} = convertCmo3(archive(xml))
+  expect(document.parts.map((part) => part.id)).toEqual(['mask', 'eye'])
+})
+
+test('should permit a shared mask with normal and inverted consumers', () => {
+  const normal = artMesh('normal', '#normal-guid', '#mask-guid').replace(
+    '<b xs.n="invertClippingMask">true</b>',
+    '<b xs.n="invertClippingMask">false</b>',
+  )
+  const xml = modelXml()
+    .replace('<main>', '<CDrawableGuid xs.id="#normal-guid" uuid="normal-uuid"/><main>')
+    .replace('</carray_list></CDrawableSourceSet>', `${normal}</carray_list></CDrawableSourceSet>`)
+  const {document} = convertCmo3(archive(xml))
+  expect(document.parts.find((part) => part.id === 'normal')?.properties?.invertedMask).toBe(false)
+  expect(document.parts.find((part) => part.id === 'eye')?.properties?.invertedMask).toBe(true)
+  expect(
+    document.parts.find((part) => part.id === 'mask')?.properties?.invertedMask,
+  ).toBeUndefined()
+})
+
+test('should retain independent Cubism multiply and screen colors through the converted hierarchy', () => {
+  const color = (name: string, value: number) =>
+    `<CFloatColor xs.n="${name}" red="${value}" green="${value}" blue="${value}"/>`
+  const group = `<CPartSourceSet><carray_list xs.n="_sources"><CPartSource>
+    <CPartId xs.n="id" idstr="root"/><CPartGuid xs.n="guid" uuid="root-guid"/>
+    <carray_list xs.n="keyforms"><CPartForm><CFormGuid xs.n="guid" uuid="group-form"/>
+      ${color('multiplyColor', 0.5)}${color('screenColor', 0.5)}
+    </CPartForm></carray_list>
+  </CPartSource></carray_list></CPartSourceSet>`
+  const mesh = artMesh('eye', '#eye-guid').replace(
+    '<int-array',
+    `
+    <CPartGuid xs.n="parentGuid" uuid="root-guid"/>
+    <carray_list xs.n="keyforms"><CArtMeshForm><CFormGuid xs.n="guid" uuid="mesh-form"/>
+      <float-array xs.n="positions">0 0 10 0 0 10</float-array>
+      ${color('multiplyColor', 0.5)}${color('screenColor', 0.25)}
+    </CArtMeshForm></carray_list><int-array`,
+  )
+  const xml = modelXml().replace(
+    /<CDrawableSourceSet[\s\S]*?<\/CDrawableSourceSet>/u,
+    `${group}<CDrawableSourceSet xs.n="drawableSourceSet">
+      <carray_list xs.n="_sources">${mesh}</carray_list></CDrawableSourceSet>`,
+  )
+  const {document} = convertCmo3(archive(xml))
+  const plan = getPartRenderPlans(document)[0]!
+  expect(plan.properties.multiplyColor).toEqual([0.25, 0.25, 0.25])
+  expect(plan.properties.screenColor).toEqual([0.625, 0.625, 0.625])
+})
+
+test('should retain an empty drawable used as a clipping source across export and reload', () => {
+  const source = modelXml().replace(
+    '<int-array xs.n="indices">0 1 2</int-array>',
+    '<int-array xs.n="indices"></int-array>',
+  )
+  const {document} = convertCmo3(archive(source))
+  const reloaded = parseDocument(serializeDocument(document))
+  expect(reloaded.ok).toBe(true)
+  if (!reloaded.ok) {
+    throw new Error('Expected converted mask to reload')
+  }
+  const eye = getPartRenderFrame(reloaded.document).plans.find((plan) => plan.partId === 'eye')
+  expect(eye?.mask?.sources.map((entry) => entry.partId)).toEqual(['mask'])
+  expect(reloaded.document.parts.find((part) => part.id === 'mask')?.mesh.indices).toEqual([])
+})
+
+test.each([
+  ['MULTIPLY', 'multiply-compatible'],
+  ['ADD', 'add-compatible'],
+])('should retain %s blending and backface culling', (sourceMode, blendMode) => {
+  const source = modelXml().replaceAll(
+    '</CArtMeshSource>',
+    `<ColorComposition xs.n="colorComposition" v="${sourceMode}"/>
+      <b xs.n="culling">true</b></CArtMeshSource>`,
+  )
+  const {document} = convertCmo3(archive(source))
+  expect(getPartRenderFrame(document).plans[0]?.properties).toMatchObject({
+    blendMode,
+    culling: true,
+  })
+})
+
+test('should preserve topology when a default keyform collapses its triangles', () => {
+  const forms = `<carray_list xs.n="keyforms"><CArtMeshForm>
+    <float-array xs.n="positions">0 0 0 0 0 0</float-array>
+  </CArtMeshForm></carray_list>`
+  const source = modelXml().replaceAll('</CArtMeshSource>', `${forms}</CArtMeshSource>`)
+  const {document} = convertCmo3(archive(source))
+  expect(document.parts).toHaveLength(2)
+  expect(document.parts[0]?.mesh).toMatchObject({
+    indices: [0, 1, 2],
+    validationSpace: 'indices',
+    vertices: [0, 0, 0, 0, 0, 0],
+  })
+  expect(parseDocument(serializeDocument(document)).ok).toBe(true)
 })

@@ -1,7 +1,7 @@
 import {describe, expect, test} from 'vitest'
 
 import {mapBindingKeyforms, parameterValuesEqual} from '../../../deformation'
-import {createDemoDocument, parseDocument} from '../../../player'
+import {createDemoDocument, parseDocument, type PuppetParameterBinding2D} from '../../../player'
 import {
   addParameter,
   addThreeDimensionalParameter,
@@ -451,4 +451,31 @@ test('should remove influence references when their source parameter is deleted'
   }
   const result = deleteParameter({bindingId: source.id, document})!
   expect(result.parameterBindings![0]!.influences).toEqual([])
+})
+
+test('should keep an imported grid editable after inserting or deleting a single keyform', () => {
+  const source = {...createDemoDocument(), motions: [], parameterBindings: [], parameters: []}
+  const added = addTwoDimensionalParameter({document: source, nodeIds: ['mesh-preview']})!
+  const part = source.parts[0]!
+  const binding: PuppetParameterBinding2D = {
+    ...added.binding,
+    interpolation: 'grid',
+    keyforms: [
+      [-30, -30],
+      [-30, 30],
+      [30, -30],
+      [30, 30],
+    ].map(([x, y]) => ({
+      parts: [{partId: part.id, vertices: part.mesh.vertices}],
+      values: [x!, y!] as const,
+    })),
+    parameterIds: [added.binding.parameterIds[0]!, added.binding.parameterIds[1]!],
+  }
+  const document = {...added.document, parameterBindings: [binding]}
+  expect(parseDocument(JSON.stringify(document)).ok).toBe(true)
+  const inserted = insertParameterKeyform({bindingId: binding.id, document, values: [0, 0]})!
+  const deleted = deleteParameterKeyform({bindingId: binding.id, document, values: [-30, -30]})!
+  expect(parseDocument(JSON.stringify(inserted)).ok).toBe(true)
+  expect(parseDocument(JSON.stringify(deleted)).ok).toBe(true)
+  expect(deleted.parameterBindings![0]!.keyforms).toHaveLength(3)
 })

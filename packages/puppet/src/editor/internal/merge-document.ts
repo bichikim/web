@@ -56,6 +56,7 @@ export const mergeDocument = (document: PuppetDocument, incoming: PuppetDocument
     ...mergePresets(document, added),
     breath: listed([...(document.breath ?? []), ...(added.breath ?? [])]),
     glue: [...(document.glue ?? []), ...(added.glue ?? [])],
+    glueComposition: document.glueComposition ?? added.glueComposition,
     layerOrderRules: [...(document.layerOrderRules ?? []), ...(added.layerOrderRules ?? [])],
     look: listed([...(document.look ?? []), ...(added.look ?? [])]),
     motions: [...document.motions, ...added.motions],

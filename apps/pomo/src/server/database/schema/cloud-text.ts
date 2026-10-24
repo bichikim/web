@@ -23,7 +23,7 @@ export const cloudTextRequests = pgTable(
     queueJobId: uuid().references(() => apiAiJobs.id),
     requestHash: varchar({length: 64}).notNull(),
     result: text(),
-    status: varchar({enum: ['pending', 'complete', 'failed'], length: 16}).notNull(),
+    status: varchar({enum: ['pending', 'complete', 'failed', 'cancelled'], length: 16}).notNull(),
     tokenCount: integer().notNull().default(0),
     usageResetAt: timestamp({withTimezone: true}),
     userId: uuid()
@@ -35,7 +35,7 @@ export const cloudTextRequests = pgTable(
     check('cloud_text_requests_token_count_check', sql`${table.tokenCount} >= 0`),
     check(
       'cloud_text_requests_status_check',
-      sql`${table.status} in ('pending', 'complete', 'failed')`,
+      sql`${table.status} in ('pending', 'complete', 'failed', 'cancelled')`,
     ),
     check(
       'cloud_text_requests_result_check',

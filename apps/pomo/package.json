@@ -87,7 +87,7 @@
     "onnxruntime-node": "1.24.3",
     "onnxruntime-web": "1.23.2",
     "openai": "^7.4.0",
-    "pixi.js": "^8.21.0",
+    "pixi.js": "^8.22.0",
     "qrcode-generator": "2.0.4",
     "solid-js": "catalog:",
     "tone": "^15.1.22",

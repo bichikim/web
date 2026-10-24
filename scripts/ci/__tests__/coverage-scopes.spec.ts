@@ -27,7 +27,7 @@ describe('selectCoverageScopes', () => {
   test('should select the workspace for other application, package, and script changes', () => {
     expect(
       selectCoverageScopes([
-        'apps/sidebuy/src/index.ts',
+        'apps/example/src/index.ts',
         'packages/utils/src/index.ts',
         'scripts/npm-release/run.mjs',
         '.agents/skills/unit-test/scripts/validate.mjs',

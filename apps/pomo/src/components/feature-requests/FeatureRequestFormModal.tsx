@@ -21,9 +21,11 @@ interface FeatureRequestFormModalProps {
   readonly isCheckingAuthentication: boolean
   readonly isOpen: boolean
   readonly isSubmitting: boolean
+  readonly loadFailed: boolean
   readonly onCloseAutoFocus: () => void
   readonly onDescriptionChange: (description: string) => void
   readonly onOpenChange: (isOpen: boolean) => void
+  readonly onRetryList: () => void
   readonly onSubmit: JSX.EventHandler<HTMLFormElement, SubmitEvent>
   readonly onTitleChange: (title: string) => void
   readonly title: string
@@ -103,6 +105,25 @@ export const FeatureRequestFormModal = (props: FeatureRequestFormModalProps) => 
                 when={message() === 'created'}
               >
                 <PFormMessage tone="success">{m.feature_request_created()}</PFormMessage>
+                <Show when={props.loadFailed}>
+                  <PFormMessage tone="error">
+                    <span class="flex flex-wrap items-center justify-between gap-3">
+                      <span>{m.feature_request_list_failed()}</span>
+                      <PButton
+                        bordered
+                        onPress={(source) => {
+                          source.closest<HTMLElement>('[role="dialog"]')?.focus()
+                          props.onRetryList()
+                        }}
+                        size="small"
+                        tone="danger"
+                        transparent
+                      >
+                        {m.feature_request_retry()}
+                      </PButton>
+                    </span>
+                  </PFormMessage>
+                </Show>
               </Show>
             )}
           </Show>

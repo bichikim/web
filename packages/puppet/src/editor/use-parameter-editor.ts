@@ -478,7 +478,7 @@ export const useParameterEditor = (props: UseParameterEditorProps): ParameterEdi
   })
   const activeTargetNodeIds = createMemo(() => {
     const binding = activeBinding()
-    return binding === undefined ? [] : getParameterTargetNodeIds(binding)
+    return binding === undefined ? [] : getParameterTargetNodeIds(binding, props.document())
   })
   const parameterValues = createMemo<PuppetParameterValues>(() => {
     const binding = activeBinding()

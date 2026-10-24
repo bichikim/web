@@ -3,6 +3,7 @@ import type {PuppetDocument, PuppetGlue, PuppetParameterBinding} from '../player
 import {getParameterBindingValues, type PuppetParameterValueMap} from './composition'
 import {getBindingInfluence} from './influence'
 import {getRepeatRanges} from '../player/parameter-value'
+import {isParameterGlueTarget} from './is-parameter-glue-target'
 import {
   type PuppetParameterValues,
   type PuppetRepeatRanges,
@@ -21,9 +22,11 @@ export const sampleParameterGlue = (options: SampleGlueOptions) => {
   const coordinates = sampleParameterCoordinates({
     binding: options.binding,
     keyformCoordinates: options.binding.keyforms.map((keyform) => {
-      const value = keyform.parts
-        .find((part) => part.partId === options.glue.first.partId)
-        ?.glue?.find((glue) => glue.id === options.glue.id)
+      const value =
+        keyform.glue?.find((glue) => glue.id === options.glue.id) ??
+        keyform.parts
+          .find((part) => part.partId === options.glue.first.partId)
+          ?.glue?.find((glue) => glue.id === options.glue.id)
       return value === undefined ? undefined : [value.weight, value.strength]
     }),
     repeatRanges: options.repeatRanges,
@@ -43,12 +46,7 @@ export const composeParameterGlue = (options: ComposeGlueOptions): ReadonlyArray
     let {weight} = glue
     let {strength} = glue
     for (const binding of options.document.parameterBindings ?? []) {
-      if (
-        binding.targetPartIds?.includes(glue.first.partId) ??
-        binding.keyforms.some((keyform) =>
-          keyform.parts.some((part) => part.partId === glue.first.partId),
-        )
-      ) {
+      if (isParameterGlueTarget(binding, glue)) {
         const sampled = sampleParameterGlue({
           binding,
           glue,
