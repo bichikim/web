@@ -1,7 +1,7 @@
 import {Show} from 'solid-js'
 import {type AdminAlbum, type AdminOffer} from '../../../features/admin-music'
 import {BUTTON_CLASSES, SECONDARY_BUTTON_CLASSES} from '../button-classes'
-import {type AlbumTaskFormProps} from './form-props'
+import {type AlbumTaskFormProps} from './types'
 import {OfferForm} from './OfferForm'
 
 interface SalesPanelProps extends AlbumTaskFormProps {

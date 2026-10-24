@@ -1,11 +1,7 @@
 import {createSignal} from 'solid-js'
-import type {
-  AdminAlbum,
-  AdminCatalog,
-  AdminMusicModel,
-  TrackImportTask,
-} from 'src/features/admin-music'
+import type {AdminAlbum, AdminCatalog, TrackImportTask} from 'src/features/admin-music'
 import {vi} from 'vitest'
+import type {AlbumWorkspaceModel} from '../../workspace/types'
 export const createAlbum = (
   status: AdminAlbum['status'] = 'draft',
   translations: AdminAlbum['translations'] = [
@@ -75,7 +71,7 @@ export const BASE_CATALOG: AdminCatalog = {
 }
 
 interface ModelHarness {
-  readonly model: AdminMusicModel
+  readonly model: AlbumWorkspaceModel
   readonly setCatalog: (catalog: AdminCatalog) => void
   readonly setConfirmingAssetId: (id: string | null) => void
   readonly setRemovingTrackId: (id: string | null) => void
@@ -90,13 +86,19 @@ export const createModelHarness = (initialCatalog: AdminCatalog = BASE_CATALOG):
   const [savingOffer, setSavingOffer] = createSignal(false)
   const [importingTracks, setImportingTracks] = createSignal(false)
   const [updatingAlbumId, setUpdatingAlbumId] = createSignal<string | null>(null)
-  const model = {
+  const model: AlbumWorkspaceModel = {
     catalog,
     confirmingAssetId,
-    handleAlbumStatusChange: vi.fn().mockResolvedValue(undefined),
-    handleOfferSubmit: vi.fn(),
-    handleTrackConfirmation: vi.fn().mockResolvedValue(undefined),
-    handleTrackRemove: vi.fn().mockResolvedValue(undefined),
+    handleAlbumStatusChange: vi
+      .fn<AlbumWorkspaceModel['handleAlbumStatusChange']>()
+      .mockResolvedValue(undefined),
+    handleOfferSubmit: vi.fn<AlbumWorkspaceModel['handleOfferSubmit']>(),
+    handleTrackConfirmation: vi
+      .fn<AlbumWorkspaceModel['handleTrackConfirmation']>()
+      .mockResolvedValue(undefined),
+    handleTrackRemove: vi
+      .fn<AlbumWorkspaceModel['handleTrackRemove']>()
+      .mockResolvedValue(undefined),
     isConfirmingAsset: (assetId: string) => confirmingAssetId() === assetId,
     isImportingTracks: importingTracks,
     isRemovingTrack: (trackId: string) => removingTrackId() === trackId,
@@ -111,9 +113,8 @@ export const createModelHarness = (initialCatalog: AdminCatalog = BASE_CATALOG):
         setImportingTracks(false)
       }
     },
-    submitTrack: vi.fn().mockResolvedValue({status: 'created'}),
-    updatingAlbumId,
-  } as unknown as AdminMusicModel
+    submitTrack: vi.fn<AlbumWorkspaceModel['submitTrack']>().mockResolvedValue({status: 'created'}),
+  }
 
   return {
     model,
