@@ -128,6 +128,33 @@ describe('createTransferSession', () => {
     expect(peer.channel.send).toHaveBeenCalledWith(JSON.stringify({id: 'second', type: 'reject'}))
   })
 
+  it.each([
+    ['boundary emoji', `${'a'.repeat(199)}😀.txt`, `${'a'.repeat(196)}.txt`],
+    ['emoji prefix', `${'a'.repeat(195)}😀${'b'.repeat(10)}.txt`, `${'a'.repeat(195)}.txt`],
+    ['long text name', `${'a'.repeat(220)}.PDF`, `${'a'.repeat(196)}.PDF`],
+    ['no extension', `${'a'.repeat(199)}😀`, 'a'.repeat(199)],
+    ['exact limit', `${'a'.repeat(194)}😀.txt`, `${'a'.repeat(194)}😀.txt`],
+    ['hidden name', `.${'a'.repeat(220)}`, `.${'a'.repeat(199)}`],
+    ['oversized extension', `a.${'b'.repeat(220)}`, `a.${'b'.repeat(198)}`],
+    ['trailing dot', `${'a'.repeat(220)}.`, `${'a'.repeat(199)}.`],
+    ['extension emoji', `${'a'.repeat(220)}.😀`, `${'a'.repeat(197)}.😀`],
+    ['ordinary emoji', '메모😀.txt', '메모😀.txt'],
+    ['path separators', 'folder/메모\\😀.txt', 'folder_메모_😀.txt'],
+  ])('should retain a valid bounded received name for %s', async (_label, name, expected) => {
+    const peer = await connect()
+    peer.channel.message({id: 'first', name, size: 1, type: 'file'})
+    expect(fileTransfer.state.incoming?.name).toBe(expected)
+    expect(fileTransfer.state.incoming?.name.isWellFormed()).toBe(true)
+    expect(fileTransfer.state.incoming?.name.length).toBeLessThanOrEqual(200)
+    fileTransfer.accept()
+    peer.channel.dispatchEvent(new MessageEvent('message', {data: new Uint8Array([97]).buffer}))
+    peer.channel.message({checksum: 0xe8b7be43, id: 'first', type: 'end'})
+    expect(receivedFiles.add).toHaveBeenCalledExactlyOnceWith(
+      expect.objectContaining({size: 1}),
+      expected,
+    )
+  })
+
   it('should stream an outgoing file only once when acceptance is repeated', async () => {
     const peer = await connect()
     const file = new File(['content'], 'notes.txt')
