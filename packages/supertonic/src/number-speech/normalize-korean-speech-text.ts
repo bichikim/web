@@ -507,7 +507,8 @@ export const normalizeKoreanSpeechText = (text: string, contextPrefix = ''): str
         return match
       }
 
-      const hasLeadingZero = value.length > 1 && value.startsWith('0')
+      const normalizedValue = value.replace(/[０-９]/gu, (digit) => digit.normalize('NFKC'))
+      const hasLeadingZero = normalizedValue.length > 1 && normalizedValue.startsWith('0')
       const hasRemainingDurationSuffix = REMAINING_DURATION_SUFFIX_PATTERN.test(
         input.slice(start + match.length),
       )
@@ -516,7 +517,7 @@ export const normalizeKoreanSpeechText = (text: string, contextPrefix = ''): str
         return match
       }
 
-      const durationMinutes = parseDurationMinuteValue(value)
+      const durationMinutes = parseDurationMinuteValue(normalizedValue)
 
       return durationMinutes !== null &&
         hasCanonicalNumberKind({

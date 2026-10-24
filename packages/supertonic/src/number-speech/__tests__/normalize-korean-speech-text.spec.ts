@@ -24,7 +24,7 @@ describe('normalizeKoreanSpeechText clock and duration expressions', () => {
     expect(normalizeKoreanSpeechText('5분 남았어요.')).toBe('오 분 남았어요.')
     expect(normalizeKoreanSpeechText('05분 남으면 시작합니다.')).toBe('오 분 남으면 시작합니다.')
     expect(normalizeKoreanSpeechText('5분 남으면 시작합니다.')).toBe('오 분 남으면 시작합니다.')
-    expect(normalizeKoreanSpeechText('０５분 남았어요.')).toBe('０５분 남았어요.')
+    expect(normalizeKoreanSpeechText('０５분 남았어요.')).toBe('오 분 남았어요.')
     expect(normalizeKoreanSpeechText('05분 후에 시작합니다.')).toBe('05분 후에 시작합니다.')
     expect(normalizeKoreanSpeechText('05분 남편에게 연락했어요.')).toBe('05분 남편에게 연락했어요.')
     expect(normalizeKoreanSpeechText('5분 남편에게 연락했어요.')).toBe('5분 남편에게 연락했어요.')

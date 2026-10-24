@@ -168,6 +168,26 @@ describe('generation', () => {
     )
   })
 
+  it.each([
+    ['０５분 남았어요.', '오 분 남았어요.'],
+    ['１０분 후 시작해요.', '십 분 후 시작해요.'],
+    ['０５분 후 시작해요.', '０５분 후 시작해요.'],
+    ['００５분 남았어요.', '００５분 남았어요.'],
+  ])(
+    'should pass duration digit widths to the engine with the existing padding contract: %s',
+    async (text, engineText) => {
+      const worker = await loadWorker()
+      await initialize(worker)
+
+      await worker.dispatch(generateMessage({text}))
+
+      expect(textMocks.split).toHaveBeenCalledWith(text, fullModel.speechPolicy)
+      expect(currentEngine.generate).toHaveBeenCalledExactlyOnceWith(
+        expect.objectContaining({language: 'ko', text: engineText}),
+      )
+    },
+  )
+
   it('should pronounce leading-zero English verification codes as individual digits', async () => {
     const worker = await loadWorker()
     await initialize(worker)
