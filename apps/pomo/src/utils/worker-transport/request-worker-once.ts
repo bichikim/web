@@ -1,3 +1,8 @@
+type RequestWorker = Pick<
+  Worker,
+  'onerror' | 'onmessage' | 'onmessageerror' | 'postMessage' | 'terminate'
+>
+
 export interface RequestWorkerOnceReply<Value> {
   /** 결과값으로 Promise를 이행하고 Worker를 종료한다. 최초 완료 요청만 반영한다. */
   readonly resolve: (value: Value) => void
@@ -6,12 +11,12 @@ export interface RequestWorkerOnceReply<Value> {
 }
 export interface RequestWorkerOnceOptions<Request, Response, Value> {
   /**
-   * 요청 전용 Worker 또는 요청 시작 시 호출해 Worker를 반환하는 생성 함수.
+   * 메시지·오류 핸들러와 전송·종료 기능을 제공하는 요청 전용 Worker 또는 그 생성 함수.
    * 요청이 시작되면 이 함수가 Worker의 메시지·오류 핸들러와 종료를 맡는다.
    * 요청이 완료·실패·취소되면 Worker를 종료하므로 다른 요청과 공유하지 않는다.
    * 이미 취소된 요청에서는 생성 함수를 호출하지 않는다.
    */
-  readonly worker: Worker | (() => Worker)
+  readonly worker: RequestWorker | (() => RequestWorker)
   /** Worker에 한 번 전송할 요청 데이터. */
   readonly request: Request
   /**
