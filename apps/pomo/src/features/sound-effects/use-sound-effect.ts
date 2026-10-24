@@ -24,7 +24,7 @@ const toError = (cause: unknown): Error =>
   cause instanceof Error ? cause : new Error('효과음을 재생하지 못했어요.', {cause})
 
 const normalizeVolume = (volume: number): number =>
-  clampUnit(Math.round(volume * PERCENT_SCALE) / PERCENT_SCALE)
+  clampUnit(Math.round(volume * PERCENT_SCALE) / PERCENT_SCALE, {fallback: 0})
 
 const parseStoredVolume = (value: unknown): number | null => {
   if (typeof value !== 'number' || !Number.isFinite(value) || value < 0 || value > 1) {
@@ -68,9 +68,9 @@ export const useSoundEffectPlayback = (getEffect: Accessor<SoundEffect>): SoundE
     startingRevision = currentRevision
     pendingPlay = false
     try {
-      await current.play()
+      const started = await current.play()
       if (current === player && currentRevision === playbackRevision && volume() > 0) {
-        setPlaying(true)
+        setPlaying(started)
       }
     } catch (cause: unknown) {
       if (current === player && currentRevision === playbackRevision && volume() > 0) {

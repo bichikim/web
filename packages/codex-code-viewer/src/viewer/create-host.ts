@@ -5,56 +5,138 @@ import {z} from 'zod'
 import manifest from '../../package.json'
 import {OpenAIExtensions, OpenAIFileEntrypointInputSchema} from '@openai/mcp-extensions/app'
 import {subscribeWorkspace} from './subscribe-workspace'
-import {connectionSchema} from '../shared/contracts'
+import {connectionSchema, type ViewerConnection, workspaceSessionSchema} from '../shared/contracts'
 import type {ViewerPort} from './types'
 import {connectHostAppearance} from './connect-host-appearance'
-import {formatContext} from './format-context'
+import {createHostContext} from './create-host-context'
 import {createPendingTasks} from './create-pending-tasks'
+import {subscribeWorkspaceChanges} from './subscribe-workspace-changes'
+import {errorMessage} from './error-message'
+import {callViewerTool} from './call-viewer-tool'
+import {createHostAttachments} from './create-host-attachments'
+import {createTreeStateWriter} from './create-tree-state-writer'
 
-export const createHost = (): ViewerPort => {
-  const app = new App({name: 'Code Viewer', version: manifest.version}, {}, {autoResize: false})
-  const extensions = new OpenAIExtensions(app)
+const httpStreams = (app: App): boolean =>
+  z
+    .object({version: z.literal(1)})
+    .safeParse(app.getHostCapabilities()?.experimental?.['winter-love/code-viewer/http']).success
+
+const createToolCall =
+  (app: App, requests: ReturnType<typeof createPendingTasks>): ViewerPort['call'] =>
+  (name, arguments_, options) =>
+    requests.run(() => {
+      const input = {
+        arguments:
+          arguments_.stream === true
+            ? {...arguments_, transport: httpStreams(app) ? 'http' : 'mcp'}
+            : arguments_,
+        name,
+      }
+      return options === undefined ? app.callServerTool(input) : app.callServerTool(input, options)
+    })
+
+interface HostOptions {
+  readonly draftStorage?: ViewerPort['draftStorage']
+  readonly composerAttachment?: boolean
+  readonly fileClipboard?: boolean
+  readonly integration?: 'codex' | 'standard'
+}
+const stageContext = async (
+  call: ViewerPort['call'],
+  session: string | undefined,
+  content: readonly string[],
+): Promise<void> => {
+  if (session === undefined) {
+    throw new Error('파일을 먼저 열어 주세요.')
+  }
+  const result = await call('code.stage-context', {content, session})
+  if (result.isError) {
+    throw new Error(errorMessage(result.structuredContent))
+  }
+}
+const receiveConnection = (
+  receive: Parameters<ViewerPort['start']>[0],
+  connection: ViewerConnection,
+  metadata?: Record<string, unknown>,
+): void => {
+  const navigation = z
+    .object({restoreView: z.boolean()})
+    .safeParse(metadata?.['winter-love/code-viewer/navigation'])
+  if (navigation.success) {
+    receive(connection, navigation.data)
+  } else {
+    receive(connection)
+  }
+}
+const changeWorkspace = (call: ViewerPort['call'], path: string) =>
+  callViewerTool({
+    input: {path},
+    name: 'code.workspace',
+    port: {call},
+    schema: workspaceSessionSchema,
+  })
+
+const finishTeardown = async (
+  cleanup: (() => Promise<void>) | undefined,
+  settle: () => Promise<void>,
+): Promise<Record<string, never>> => {
+  await cleanup?.()
+  await settle()
+  return {}
+}
+
+export const createHost = (options: HostOptions = {}): ViewerPort => {
+  const standard = options.integration === 'standard'
+  const app = new App({name: 'Code Viewer', version: manifest.version}, {}, {autoResize: standard})
+  const extensions = standard ? undefined : new OpenAIExtensions(app)
   // The base protocol carries custom methods, as in the OpenAI extensions adapter.
   const protocol = app as unknown as Protocol<Request, Notification, Result>
   const requests = createPendingTasks()
-  const call: ViewerPort['call'] = (name, arguments_) =>
-    requests.run(() => app.callServerTool({arguments: arguments_, name}))
-  let contexts: string[] = []
-  let observedContextId: string | null | undefined
-  let contextQueue: Promise<void> = Promise.resolve()
-  const synchronizeContext = (): void => {
-    const current = extensions.modelContext?.getCurrent()
-    if (
-      current !== undefined &&
-      (current === null ? null : current.updateId) !== observedContextId
-    ) {
-      observedContextId = current?.updateId ?? null
-      contexts =
-        current === null
-          ? []
-          : (current.content ?? []).flatMap((entry) => (entry.type === 'text' ? [entry.text] : []))
+  let session: string | undefined
+  const rememberSession = (result: {structuredContent?: Record<string, unknown>}): void => {
+    const parsed = connectionSchema.safeParse(result.structuredContent)
+    if (parsed.success) {
+      const {session: nextSession} = parsed.data
+      session = nextSession
     }
   }
-  return {
+  const callTool = createToolCall(app, requests)
+  const call: ViewerPort['call'] = async (name, input, options) => {
+    if (name === 'code.close') {
+      await treeWriter.settle()
+    }
+    const result = await callTool(name, input, options)
+    rememberSession(result)
+    return result
+  }
+  const treeWriter = createTreeStateWriter({call, requests})
+  const localeListeners = new Set<(locale: string | undefined) => void>()
+  const publishLocale = (): void => {
+    const locale = app.getHostContext()?.locale
+    localeListeners.forEach((receive) => receive(locale))
+  }
+  const {synchronize: synchronizeContext, ...context} = createHostContext({
+    app,
     call,
-    context: (selection) => {
-      const text = formatContext(selection)
-      const previous = contextQueue
-      const task = requests.run(async () => {
-        await previous
-        const next = [...contexts, text]
-        await app.updateModelContext({
-          content: next.map((entry) => ({text: entry, type: 'text'})),
-        })
-        contexts = next
-      })
-      // Each caller receives its failure; subsequent additions must still run.
-      contextQueue = task.then(
-        () => undefined,
-        () => undefined,
-      )
-      return task
-    },
+    current: () => extensions?.modelContext?.getCurrent(),
+    requests,
+    stage: standard ? (content) => stageContext(call, session, content) : undefined,
+    standard,
+  })
+  return {
+    changeWorkspace: standard ? undefined : (path) => changeWorkspace(call, path),
+    draftStorage: options.draftStorage,
+    saveTreeState: standard ? undefined : treeWriter.save,
+    ...context,
+    ...createHostAttachments({
+      call,
+      clear: context.removeContext,
+      clipboard: options.fileClipboard,
+      composer: options.composerAttachment,
+      session: () => session,
+      standard,
+    }),
+    call,
     location: async (location) => {
       const capability =
         app.getHostCapabilities()?.experimental?.['winter-love/file-viewer/location']
@@ -68,10 +150,10 @@ export const createHost = (): ViewerPort => {
         ),
       )
     },
-    start: async (receive, report, refresh, onTeardown) => {
-      let resource: string | null = null
+    start: async (receive, report, _refresh, onTeardown) => {
       let stopped = false
       const handleResult = (result: {
+        _meta?: Record<string, unknown>
         isError?: boolean
         structuredContent?: Record<string, unknown>
       }): void => {
@@ -81,7 +163,8 @@ export const createHost = (): ViewerPort => {
         }
         const parsed = connectionSchema.safeParse(result.structuredContent)
         if (parsed.success) {
-          receive(parsed.data)
+          rememberSession(result)
+          receiveConnection(receive, parsed.data, result._meta)
         }
       }
       const handleFile = async (input: {arguments?: Record<string, unknown>}): Promise<void> => {
@@ -99,33 +182,23 @@ export const createHost = (): ViewerPort => {
           return
         }
         handleResult(result)
-        if (stopped) {
-          return
-        }
-        if (resource !== null) {
-          await extensions.resources?.unsubscribe({uri: resource})
-        }
-        if (stopped) {
-          return
-        }
-        resource = parsed.data.file.resourceUri
-        await extensions.resources?.subscribe({uri: resource})
       }
       const handleInput = (input: {arguments?: Record<string, unknown>}): void => {
-        requests.run(() => handleFile(input)).catch(report)
+        if (!standard) {
+          requests.run(() => handleFile(input)).catch(report)
+        }
       }
       const removeListeners = (): void => {
         app.removeEventListener('toolresult', handleResult)
         app.removeEventListener('toolinput', handleInput)
         app.removeEventListener('hostcontextchanged', synchronizeContext)
+        app.removeEventListener('hostcontextchanged', publishLocale)
       }
       app.addEventListener('toolresult', handleResult)
       app.addEventListener('toolinput', handleInput)
       app.addEventListener('hostcontextchanged', synchronizeContext)
-      app.onteardown = async () => {
-        await onTeardown?.()
-        return {}
-      }
+      app.addEventListener('hostcontextchanged', publishLocale)
+      app.onteardown = () => finishTeardown(onTeardown, treeWriter.settle)
       const connected = app.connect()
       try {
         await connected
@@ -137,24 +210,26 @@ export const createHost = (): ViewerPort => {
         throw error
       }
       synchronizeContext()
+      publishLocale()
       const disposeAppearance = connectHostAppearance(app)
-      const disposeUpdates = extensions.resources?.addUpdateHandler(({params}) => {
-        if (params.uri === resource) {
-          refresh()
-        }
-      })
       return async () => {
         stopped = true
         disposeAppearance()
-        disposeUpdates?.()
         removeListeners()
         await requests.settle()
-        if (resource !== null) {
-          await extensions.resources?.unsubscribe({uri: resource}).catch(report)
-        }
         await app.close().catch(report)
       }
     },
-    watch: (session, receive) => subscribeWorkspace({call, receive, session}),
+    subscribeLocale: (receive) => {
+      localeListeners.add(receive)
+      receive(app.getHostContext()?.locale)
+      return () => {
+        localeListeners.delete(receive)
+      }
+    },
+    watch: (session, receive, report) =>
+      httpStreams(app)
+        ? subscribeWorkspace({call, receive, session})
+        : subscribeWorkspaceChanges({call, receive, report, session}),
   }
 }

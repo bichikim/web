@@ -6,6 +6,7 @@ import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 
 import {
   createDemoDocument,
+  parseDocumentValue,
   PUPPET_DOCUMENT_FORMAT,
   PUPPET_DOCUMENT_VERSION,
   type PuppetDocument,
@@ -81,8 +82,9 @@ describe('EditorTimeline', () => {
     expect(document().motions.some((motion) => motion.id === 'wave')).toBe(false)
   })
 
-  test('should edit the active motion duration and document frame rate', async () => {
-    const [document, setDocument] = createSignal<PuppetDocument>(createTimelineTestDocument())
+  test('should edit the active motion duration and frame rate without changing other motions', async () => {
+    const source = createTimelineTestDocument()
+    const [document, setDocument] = createSignal<PuppetDocument>(source)
     const view = render(() => (
       <EditorTimeline
         currentTime={0.52}
@@ -108,7 +110,9 @@ describe('EditorTimeline', () => {
     fireEvent.input(framesPerSecond, {target: {value: '30'}})
 
     await waitFor(() => expect(document().motions[0]?.duration).toBe(3))
-    expect(document().framesPerSecond).toBe(30)
+    expect(document().motions[0]?.framesPerSecond).toBe(30)
+    expect(document().framesPerSecond).toBe(source.framesPerSecond)
+    expect(document().motions.slice(1)).toEqual(source.motions.slice(1))
     expect(view.getByText('16f / 90f · 0.52s')).toBeVisible()
 
     duration.dispatchEvent(new MouseEvent('pointerdown', {bubbles: true, button: 0, clientX: 200}))
@@ -207,4 +211,16 @@ describe('EditorTimeline', () => {
     expect(onMotionSeek).toHaveBeenNthCalledWith(1, 'blink', 0.4)
     expect(onMotionSeek).toHaveBeenNthCalledWith(2, 'nod', 0.8)
   })
+})
+
+test('should keep motion events valid when reducing a motion duration', () => {
+  const source = createTimelineTestDocument()
+  const [document, setDocument] = createSignal<PuppetDocument>({
+    ...source,
+    motions: [{...source.motions[0]!, duration: 4, events: [{time: 3, value: 'end'}]}],
+  })
+  const view = render(() => <EditorTimeline document={document()} onDocumentChange={setDocument} />)
+  fireEvent.input(view.getByRole('spinbutton', {name: '모션 길이'}), {target: {value: '2'}})
+  expect(parseDocumentValue(document()).ok).toBe(true)
+  expect(document().motions[0]?.events).toHaveLength(1)
 })

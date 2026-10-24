@@ -1,6 +1,6 @@
 import {getTossRuntimeStorage} from './get-toss-runtime-storage'
 
-/** Loads Apps in Toss storage only when a Toss storage write is actually required. */
+/** 토스 저장소에 실제로 써야 할 때만 Apps in Toss 저장소를 불러온다. */
 export const writeTossStorageJson = async (key: string, value: unknown): Promise<void> => {
   const serializedValue = JSON.stringify(value)
   if (serializedValue === undefined) {

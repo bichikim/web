@@ -2,14 +2,22 @@ import {blendSkinMatrix, getSkinFrames, type SkinFrame, transformSkinPoint} from
 import type {
   PuppetPoint,
   PuppetSceneContainerNode,
+  PuppetSceneDeformerNode,
   PuppetSceneNode,
   PuppetVertexReference,
 } from '../player/document'
 import {transformDeformerPoint} from './grid'
+import {createParentSpaceTransform} from './parent-space'
 
-type PointTransform = (point: PuppetPoint, vertex: PuppetVertexReference) => PuppetPoint
+type PointTransform = (point: PuppetPoint, vertex?: PuppetVertexReference) => PuppetPoint
 
 const COORDINATES_PER_POINT = 2
+
+interface DeformationContext {
+  readonly parentDeformer?: PuppetSceneDeformerNode
+  readonly frames: ReadonlyMap<string, SkinFrame>
+  readonly vertexDependent: boolean
+}
 
 const createNodeTransform = (node: PuppetSceneContainerNode): PointTransform => {
   switch (node.kind) {
@@ -32,7 +40,7 @@ const composeTransform =
 const applyTransform = (
   partId: string,
   vertices: Float32Array | number[],
-  transform: PointTransform,
+  transform: (point: PuppetPoint, vertex: PuppetVertexReference) => PuppetPoint,
 ) => {
   for (let index = 0; index < vertices.length; index += COORDINATES_PER_POINT) {
     const point = transform(
@@ -48,8 +56,9 @@ const applyNodes = (
   nodes: ReadonlyArray<PuppetSceneNode>,
   parentTransform: PointTransform,
   verticesByPartId: ReadonlyMap<string, Float32Array | number[]>,
-  frames: ReadonlyMap<string, SkinFrame>,
+  context: DeformationContext,
 ) => {
+  const {frames, vertexDependent} = context
   for (const node of nodes) {
     if (node.kind === 'part') {
       const vertices = verticesByPartId.get(node.id)
@@ -70,12 +79,25 @@ const applyNodes = (
         )
       }
     } else {
-      applyNodes(
-        node.children,
-        composeTransform(parentTransform, createNodeTransform(node)),
-        verticesByPartId,
+      const transform =
+        node.kind === 'deformer' && node.coordinateSpace === 'parent'
+          ? vertexDependent
+            ? (point: PuppetPoint, vertex?: PuppetVertexReference) =>
+                createParentSpaceTransform(
+                  node,
+                  (position) => parentTransform(position, vertex),
+                  context.parentDeformer,
+                )(point)
+            : createParentSpaceTransform(node, parentTransform, context.parentDeformer)
+          : composeTransform(parentTransform, createNodeTransform(node))
+      applyNodes(node.children, transform, verticesByPartId, {
         frames,
-      )
+        parentDeformer: node.kind === 'deformer' ? node : context.parentDeformer,
+        vertexDependent:
+          vertexDependent ||
+          (node.kind === 'deformer' &&
+            (node.boneWeights !== undefined || node.vertexInfluences !== undefined)),
+      })
     }
   }
 }
@@ -84,5 +106,8 @@ export const applySceneNodeDeformers = (
   nodes: ReadonlyArray<PuppetSceneNode>,
   verticesByPartId: ReadonlyMap<string, Float32Array | number[]>,
 ) => {
-  applyNodes(nodes, (point) => point, verticesByPartId, getSkinFrames(nodes))
+  applyNodes(nodes, (point) => point, verticesByPartId, {
+    frames: getSkinFrames(nodes),
+    vertexDependent: false,
+  })
 }

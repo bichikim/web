@@ -5,7 +5,7 @@ export interface ResolvePointerGestureAxisOptions {
   readonly verticalDistance: number
   readonly intentDistance: number
 }
-/** Resolves a pending pointer axis, retaining its established direction and vertical ties. */
+/** 미정인 포인터 축을 결정한다. 이미 정한 방향은 유지하고 거리가 같으면 수직을 선택한다. */
 export const resolvePointerGestureAxis = (
   options: ResolvePointerGestureAxisOptions,
 ): PointerGestureAxis => {

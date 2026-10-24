@@ -1,6 +1,7 @@
 import * as m from '@paraglide/message'
 import {cx} from 'class-variance-authority'
 import {createMemo, Show} from 'solid-js'
+import {clampFiniteNumber} from 'src/utils/clamp-finite-number'
 import {PProgress} from '../p-progress/PProgress'
 
 const STATUS_CLASSES = cx(
@@ -20,14 +21,6 @@ const STATUS_ICONS = {
   draft: 'i-tabler-pencil',
   voice: 'i-tabler-wave-sine',
 } as const
-
-const getPresentedProgress = (progress: number | null | undefined) => {
-  if (progress === null || progress === undefined || !Number.isFinite(progress)) {
-    return 0
-  }
-
-  return Math.min(MAXIMUM_PRESENTED_PROGRESS, Math.max(0, progress))
-}
 
 export interface PGenerationStatusProps {
   readonly kind: keyof typeof STATUS_ICONS
@@ -51,7 +44,9 @@ export const PGenerationStatus = (props: PGenerationStatusProps) => {
       <span class="min-w-0 flex-1">{props.message}</span>
       <Show when={progressState()}>
         {(progress) => {
-          const presentedProgress = createMemo(() => getPresentedProgress(progress().value))
+          const presentedProgress = createMemo(() =>
+            clampFiniteNumber(progress().value, 0, MAXIMUM_PRESENTED_PROGRESS, {fallback: 0}),
+          )
 
           return (
             <>

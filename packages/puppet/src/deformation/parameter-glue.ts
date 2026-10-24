@@ -2,11 +2,18 @@ import {clamp} from 'es-toolkit/math'
 import type {PuppetDocument, PuppetGlue, PuppetParameterBinding} from '../player/document'
 import {getParameterBindingValues, type PuppetParameterValueMap} from './composition'
 import {getBindingInfluence} from './influence'
-import {type PuppetParameterValues, sampleParameterCoordinates} from './parameter'
+import {getRepeatRanges} from '../player/parameter-value'
+import {isParameterGlueTarget} from './is-parameter-glue-target'
+import {
+  type PuppetParameterValues,
+  type PuppetRepeatRanges,
+  sampleParameterCoordinates,
+} from './parameter'
 
 interface SampleGlueOptions {
   readonly binding: PuppetParameterBinding
   readonly glue: PuppetGlue
+  readonly repeatRanges?: PuppetRepeatRanges
   readonly values: PuppetParameterValues
 }
 
@@ -15,11 +22,14 @@ export const sampleParameterGlue = (options: SampleGlueOptions) => {
   const coordinates = sampleParameterCoordinates({
     binding: options.binding,
     keyformCoordinates: options.binding.keyforms.map((keyform) => {
-      const value = keyform.parts
-        .find((part) => part.partId === options.glue.first.partId)
-        ?.glue?.find((glue) => glue.id === options.glue.id)
+      const value =
+        keyform.glue?.find((glue) => glue.id === options.glue.id) ??
+        keyform.parts
+          .find((part) => part.partId === options.glue.first.partId)
+          ?.glue?.find((glue) => glue.id === options.glue.id)
       return value === undefined ? undefined : [value.weight, value.strength]
     }),
+    repeatRanges: options.repeatRanges,
     restCoordinates,
     values: options.values,
   })
@@ -36,15 +46,11 @@ export const composeParameterGlue = (options: ComposeGlueOptions): ReadonlyArray
     let {weight} = glue
     let {strength} = glue
     for (const binding of options.document.parameterBindings ?? []) {
-      if (
-        binding.targetPartIds?.includes(glue.first.partId) ??
-        binding.keyforms.some((keyform) =>
-          keyform.parts.some((part) => part.partId === glue.first.partId),
-        )
-      ) {
+      if (isParameterGlueTarget(binding, glue)) {
         const sampled = sampleParameterGlue({
           binding,
           glue,
+          repeatRanges: getRepeatRanges(binding.parameterIds, options.document.parameters),
           values: getParameterBindingValues({...options, binding}),
         })
         const influence = getBindingInfluence({...options, binding})

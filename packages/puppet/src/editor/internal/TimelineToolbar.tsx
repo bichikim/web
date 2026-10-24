@@ -5,8 +5,11 @@ import {TimelineMotionControls} from './TimelineMotionControls'
 import {TimelineParameterPicker} from './TimelineParameterPicker'
 import type {PuppetParameter} from '../../player'
 import {TimelineZoomControls} from './TimelineZoomControls'
+import {MotionSettings, type MotionSettingsProps} from './MotionSettings'
 
 export interface TimelineToolbarProps {
+  /** Shows the motion settings popover for the motion being edited. */
+  readonly motionSettings?: Omit<MotionSettingsProps, 'onEditEnd' | 'onEditStart'>
   readonly zoom?: number | 'fit'
   readonly onZoomChange?: (zoom: number | 'fit') => void
   readonly easing: PuppetEasing
@@ -56,6 +59,13 @@ export const TimelineToolbar = (props: TimelineToolbarProps) => (
           parameters={props.availableParameters}
           onAdd={props.onParameterAdd}
         />
+        {props.motionSettings === undefined ? null : (
+          <MotionSettings
+            {...props.motionSettings}
+            onEditEnd={props.onEditEnd}
+            onEditStart={props.onEditStart}
+          />
+        )}
       </div>
       <div class="timeline-control-group" role="group" aria-label="재생 설정">
         <EditorButton

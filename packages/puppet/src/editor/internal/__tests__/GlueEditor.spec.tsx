@@ -1,5 +1,6 @@
-import {addGlue} from '../glue'
 /** @vitest-environment jsdom */
+
+import {addGlue} from '../glue'
 import {fireEvent, render} from '@solidjs/testing-library'
 import {createSignal} from 'solid-js'
 import {expect, test} from 'vitest'

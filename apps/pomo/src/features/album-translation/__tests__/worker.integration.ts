@@ -119,7 +119,24 @@ describe('album translation worker', () => {
     expect(textExecutor.prepare).toHaveBeenCalledOnce()
     await generationStarted.promise
 
-    worker.dispatch({description: '두 번째', title: '두 번째', type: 'translate'})
+    const rejectedRequest = {description: '두 번째', title: '두 번째', type: 'translate'} as const
+    const skipped = Promise.withResolvers<void>()
+    worker.postMessage.mockImplementation((response) => {
+      if (response.type === 'skipped') {
+        skipped.resolve()
+      }
+      if (response.type === 'complete' || response.type === 'error') {
+        translationFinished.resolve(response)
+      }
+    })
+    worker.dispatch(rejectedRequest)
+    await skipped.promise
+    expect(worker.postMessage).toHaveBeenCalledWith({
+      reason: 'busy',
+      request: rejectedRequest,
+      type: 'skipped',
+    })
+    expect(textExecutor.generate).toHaveBeenCalledOnce()
     firstGeneration.resolve()
 
     expect(await translationFinished.promise).toMatchObject({type: 'complete'})

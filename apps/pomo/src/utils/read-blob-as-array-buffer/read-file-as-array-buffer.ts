@@ -1,6 +1,6 @@
 import type {BlobReadMessages} from './types'
 
-/** Reads bytes with a caller-owned idle reader and removes this read's listeners on completion. */
+/** 호출자가 소유한 유휴 리더로 바이트를 읽고 완료 시 이 읽기에 사용한 리스너를 제거한다. */
 export const readFileAsArrayBuffer = (
   reader: FileReader,
   blob: Blob,

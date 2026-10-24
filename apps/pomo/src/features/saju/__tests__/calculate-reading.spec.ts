@@ -56,10 +56,22 @@ const boundaryReadingScenarios = boundaryBirthScenarios.flatMap(
 )
 
 describe('calculateSajuReading', () => {
-  it('should require a birth date and question', () => {
+  it.each(['solar', 'lunar'] as const)('should request an unset %s birth date', (calendar) => {
     expect(() =>
-      calculateSajuReading({birth: {...birth, date: ''}, gender: 'N', question: '성향은?'}),
-    ).toThrow('생년월일')
+      calculateSajuReading({birth: {calendar, date: ''}, gender: 'N', question: '성향은?'}),
+    ).toThrow('생년월일을 선택해 주세요.')
+  })
+
+  it.each(['1899-12-31', '2051-01-01'])(
+    'should retain the birth-year range guidance for %s',
+    (date) => {
+      expect(() =>
+        calculateSajuReading({birth: {...birth, date}, gender: 'N', question: '성향은?'}),
+      ).toThrow('생년월일은 1900년부터 2050년까지 선택해 주세요.')
+    },
+  )
+
+  it('should require a question after a valid birth date', () => {
     expect(() => calculateSajuReading({birth, gender: 'N', question: ''})).toThrow('질문')
   })
 

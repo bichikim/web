@@ -12,12 +12,7 @@ import {
   type SupertonicSessions,
   type SupertonicVoice,
 } from './engine'
-import {
-  type CancelledError,
-  getErrorDetail,
-  type SupertonicError,
-  type WorkerFailedError,
-} from './errors'
+import {type CancelledError, type SupertonicError} from './errors'
 import type {SupertonicVoiceSource, SupertonicWorkerInput, SupertonicWorkerOutput} from './messages'
 import {
   getVoiceStyleUrl,
@@ -37,6 +32,7 @@ import {failureResult, type Result, successResult} from 'src/features/result'
 import {splitSpeechText} from './text-chunking'
 import {normalizeSpeechText} from './number-speech'
 import {createSupertonicWorkerDispatch} from './worker/dispatch'
+import {createWorkerError} from './worker/create-worker-error'
 import {createSupertonicResourceLoader} from './worker/resource-loader'
 
 const workerScope = globalThis.self as DedicatedWorkerGlobalScope
@@ -68,16 +64,6 @@ const createCancelledError = (phase: CancelledError['phase']): CancelledError =>
   code: 'cancelled',
   phase,
   retryable: false,
-})
-
-const createWorkerError = (
-  phase: WorkerFailedError['phase'],
-  error: unknown,
-): WorkerFailedError => ({
-  code: 'worker-failed',
-  detail: getErrorDetail(error),
-  phase,
-  retryable: true,
 })
 
 const {
@@ -288,11 +274,11 @@ const generate = async (
     for (const [chunkIndex, text] of textChunks.entries()) {
       const chunkNumber = chunkIndex + 1
       const chunkStartedAt = getMonotonicTime()
-      const normalizedText = normalizeSpeechText({language: message.language, text})
-      const engineText =
-        Array.from(normalizedText).length <= currentModel.speechPolicy.maximumLength
-          ? normalizedText
-          : text
+      const engineText = normalizeSpeechText({
+        language: message.language,
+        maximumLength: currentModel.speechPolicy.maximumLength,
+        text,
+      })
       const samples = await currentEngine.generate({
         language: message.language,
         onProgress: (step, total) => {

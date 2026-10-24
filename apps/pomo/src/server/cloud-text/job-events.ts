@@ -1,6 +1,7 @@
 import {Pool, type PoolClient} from '@neondatabase/serverless'
 import {on} from 'node:events'
 import {env} from 'src/env'
+import {appendSetCookies} from 'src/server/http/append-set-cookies'
 import {withNoStore} from 'src/server/http/response'
 import {readCloudTextJob} from './job-status'
 
@@ -40,9 +41,8 @@ async function* readJobEvents(userId: string, requestId: string, signal: AbortSi
   try {
     const client = await pool.connect()
     try {
-      for await (const event of readSubscribedJobEvents(client, userId, requestId, signal)) {
-        yield event
-      }
+      // oxlint-disable-next-line eslint-js/yield-star-spacing -- Preserve oxfmt's generator delegation format.
+      yield* readSubscribedJobEvents(client, userId, requestId, signal)
     } finally {
       client.release(true)
     }
@@ -81,8 +81,6 @@ export const streamCloudTextJob = (
     },
   })
   const headers = new Headers({'Content-Type': 'application/x-ndjson; charset=utf-8'})
-  for (const cookie of cookies) {
-    headers.append('Set-Cookie', cookie)
-  }
+  appendSetCookies(headers, cookies)
   return withNoStore(new Response(body, {headers}))
 }

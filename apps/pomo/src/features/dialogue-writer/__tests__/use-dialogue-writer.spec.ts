@@ -197,6 +197,14 @@ describe('useDialogueWriter', () => {
     runtime.emit({text: '행복은 ', type: 'token'})
     runtime.emit({text: '가까이에 있어요.', type: 'token'})
     expect(root.controller.output()).toBe('행복은 가까이에 있어요.')
+    runtime.emit({
+      reason: 'busy',
+      request: {modelId: 'qwen-4b', request: '중복 요청', type: 'generate'},
+      type: 'skipped',
+    })
+    expect(root.controller.state().status).toBe('generating')
+    expect(root.controller.isBusy()).toBe(true)
+    expect(root.controller.output()).toBe('행복은 가까이에 있어요.')
     expect(root.controller.canCopy()).toBe(false)
     expect(root.controller.statusMessage()).toContain('답변을 만들고')
 

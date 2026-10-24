@@ -103,6 +103,28 @@ it('should fetch the day-after-tomorrow range for an implicit schedule question'
   expect(requestUrl.searchParams.get('timeZone')).toBe('Asia/Seoul')
 })
 
+it('should send the one-day range for the issue relative-day selection-particle form', async () => {
+  vi.mocked(apiJson).mockResolvedValue({
+    connectedConnections: 1,
+    events: [],
+    timeZone: 'Asia/Seoul',
+    truncated: false,
+    unavailableConnections: 0,
+  })
+
+  await loadCalendarPromptContext({
+    now: new Date('2026-09-04T10:30:00.000Z'),
+    text: '내일나 일정이 있나요?',
+    timeZone: 'Asia/Seoul',
+  })
+
+  expect(apiJson).toHaveBeenCalledOnce()
+  const requestUrl = new URL(String(vi.mocked(apiJson).mock.calls[0]?.[0]), 'https://pomofi.io')
+  expect(requestUrl.searchParams.get('start')).toBe('2026-09-04T15:00:00.000Z')
+  expect(requestUrl.searchParams.get('end')).toBe('2026-09-05T15:00:00.000Z')
+  expect(requestUrl.searchParams.get('timeZone')).toBe('Asia/Seoul')
+})
+
 it('should keep an event-type exclusion inside a standalone weekday range', async () => {
   vi.mocked(apiJson).mockResolvedValue({
     connectedConnections: 1,

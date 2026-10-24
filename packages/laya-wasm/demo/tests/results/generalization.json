@@ -1,0 +1,405 @@
+{
+  "method": "in-app-browser UI, onnxruntime-web/wasm, new tab and original weights",
+  "modelId": "d822bd79e30b2abf910f82f65e4cc539bbc254dd2a4695489cd934dfd94d2c79",
+  "initialSteps": 0,
+  "steps": 9000,
+  "learningRate": 0.1,
+  "epochs": 100,
+  "trainingCount": 90,
+  "evaluationCount": 30,
+  "trainingSha256": "7263770959b3e48ba1cee5c3e96dab625bb180b5d4f05983194b272f95af9def",
+  "evaluationSha256": "4b3e7702efe7ad7358f2f09736598357bee8461116ad7fdb6bf944c64de30487",
+  "normalizedOverlap": 0,
+  "evaluationUsedForTraining": false,
+  "settingsAdjustedAfterEvaluation": false,
+  "before": {
+    "correct": 21,
+    "total": 30,
+    "meanLossDisplayed": 1.1423
+  },
+  "after": {
+    "correct": 22,
+    "total": 30,
+    "meanLossDisplayed": 1.5144
+  },
+  "classes": {
+    "카드 분실·도난": {
+      "total": 10,
+      "before": 9,
+      "after": 9
+    },
+    "송금 실패": {
+      "total": 10,
+      "before": 3,
+      "after": 4
+    },
+    "개인정보 변경": {
+      "total": 10,
+      "before": 9,
+      "after": 9
+    }
+  },
+  "rows": [
+    {
+      "state": "택시에서 내린 뒤 지갑이 안 보여요. 안에 있던 결제 수단을 지금 바로 막아 주세요.",
+      "expected": "카드 분실·도난",
+      "before": {
+        "predicted": "개인정보 변경",
+        "correct": false
+      },
+      "after": {
+        "predicted": "개인정보 변경",
+        "correct": false
+      }
+    },
+    {
+      "state": "받는 사람 번호까지 확인했는데 보내기를 누를 때마다 거절돼요.",
+      "expected": "송금 실패",
+      "before": {
+        "predicted": "카드 분실·도난",
+        "correct": false
+      },
+      "after": {
+        "predicted": "카드 분실·도난",
+        "correct": false
+      }
+    },
+    {
+      "state": "혼인신고 후 성이 달라졌는데 예전 이름으로 남아 있어요. 수정하고 싶습니다.",
+      "expected": "개인정보 변경",
+      "before": {
+        "predicted": "개인정보 변경",
+        "correct": true
+      },
+      "after": {
+        "predicted": "개인정보 변경",
+        "correct": true
+      }
+    },
+    {
+      "state": "누가 제 체크카드를 가져갔어요. 사용을 정지하고 다시 발급받고 싶습니다.",
+      "expected": "카드 분실·도난",
+      "before": {
+        "predicted": "카드 분실·도난",
+        "correct": true
+      },
+      "after": {
+        "predicted": "카드 분실·도난",
+        "correct": true
+      }
+    },
+    {
+      "state": "잔액은 넉넉한데 상대 계좌로 돈이 넘어가지 않아요.",
+      "expected": "송금 실패",
+      "before": {
+        "predicted": "송금 실패",
+        "correct": true
+      },
+      "after": {
+        "predicted": "송금 실패",
+        "correct": true
+      }
+    },
+    {
+      "state": "새집으로 이사했어요. 우편물이 이전 집으로 가지 않도록 등록 정보를 고쳐 주세요.",
+      "expected": "개인정보 변경",
+      "before": {
+        "predicted": "개인정보 변경",
+        "correct": true
+      },
+      "after": {
+        "predicted": "개인정보 변경",
+        "correct": true
+      }
+    },
+    {
+      "state": "분명 가방에 넣어 뒀는데 아무리 찾아도 안 나와요. 다른 사람이 결제하지 못하게 해 주세요.",
+      "expected": "카드 분실·도난",
+      "before": {
+        "predicted": "카드 분실·도난",
+        "correct": true
+      },
+      "after": {
+        "predicted": "카드 분실·도난",
+        "correct": true
+      }
+    },
+    {
+      "state": "집주인에게 보낸 월세가 취소됐다고 떠요. 왜 전달이 안 됐나요?",
+      "expected": "송금 실패",
+      "before": {
+        "predicted": "송금 실패",
+        "correct": true
+      },
+      "after": {
+        "predicted": "송금 실패",
+        "correct": true
+      }
+    },
+    {
+      "state": "연락받을 휴대폰 번호가 달라졌습니다. 앱에 저장된 번호는 어디서 바꾸나요?",
+      "expected": "개인정보 변경",
+      "before": {
+        "predicted": "개인정보 변경",
+        "correct": true
+      },
+      "after": {
+        "predicted": "개인정보 변경",
+        "correct": true
+      }
+    },
+    {
+      "state": "휴대폰은 그대로 있는데 실물로 긁던 게 없어졌어요. 우선 사용을 중단하고 싶어요.",
+      "expected": "카드 분실·도난",
+      "before": {
+        "predicted": "카드 분실·도난",
+        "correct": true
+      },
+      "after": {
+        "predicted": "카드 분실·도난",
+        "correct": true
+      }
+    },
+    {
+      "state": "해외에 있는 가족에게 보낸 금액이 계속 되돌아옵니다. 정상적으로 전달하고 싶어요.",
+      "expected": "송금 실패",
+      "before": {
+        "predicted": "카드 분실·도난",
+        "correct": false
+      },
+      "after": {
+        "predicted": "송금 실패",
+        "correct": true
+      }
+    },
+    {
+      "state": "이메일을 더 이상 쓰지 않아서 새 주소를 계정에 등록하고 싶어요.",
+      "expected": "개인정보 변경",
+      "before": {
+        "predicted": "개인정보 변경",
+        "correct": true
+      },
+      "after": {
+        "predicted": "개인정보 변경",
+        "correct": true
+      }
+    },
+    {
+      "state": "어젯밤 소매치기를 당했어요. 지갑 속에 있던 걸 누가 쓰기 전에 차단해 주세요.",
+      "expected": "카드 분실·도난",
+      "before": {
+        "predicted": "카드 분실·도난",
+        "correct": true
+      },
+      "after": {
+        "predicted": "카드 분실·도난",
+        "correct": true
+      }
+    },
+    {
+      "state": "수취인에게 입금되지 않았고 제 쪽에도 실패라고 표시됩니다.",
+      "expected": "송금 실패",
+      "before": {
+        "predicted": "카드 분실·도난",
+        "correct": false
+      },
+      "after": {
+        "predicted": "카드 분실·도난",
+        "correct": false
+      }
+    },
+    {
+      "state": "가입할 때 제 이름의 철자를 한 글자 잘못 적었어요. 바로잡을 수 있나요?",
+      "expected": "개인정보 변경",
+      "before": {
+        "predicted": "카드 분실·도난",
+        "correct": false
+      },
+      "after": {
+        "predicted": "카드 분실·도난",
+        "correct": false
+      }
+    },
+    {
+      "state": "식당에 두고 나온 신용카드가 없어졌다고 합니다. 분실 처리를 부탁드려요.",
+      "expected": "카드 분실·도난",
+      "before": {
+        "predicted": "카드 분실·도난",
+        "correct": true
+      },
+      "after": {
+        "predicted": "카드 분실·도난",
+        "correct": true
+      }
+    },
+    {
+      "state": "다른 은행으로 이체를 누르면 완료 화면 대신 오류 안내가 나옵니다.",
+      "expected": "송금 실패",
+      "before": {
+        "predicted": "카드 분실·도난",
+        "correct": false
+      },
+      "after": {
+        "predicted": "카드 분실·도난",
+        "correct": false
+      }
+    },
+    {
+      "state": "프로필에 있는 거주지를 현재 살고 있는 곳으로 수정하려고 합니다.",
+      "expected": "개인정보 변경",
+      "before": {
+        "predicted": "개인정보 변경",
+        "correct": true
+      },
+      "after": {
+        "predicted": "개인정보 변경",
+        "correct": true
+      }
+    },
+    {
+      "state": "현금인출기에서 꺼낸 뒤 주머니에 넣었는데 지금은 없어요. 제 계좌에 연결된 그 물건을 잠가 주세요.",
+      "expected": "카드 분실·도난",
+      "before": {
+        "predicted": "카드 분실·도난",
+        "correct": true
+      },
+      "after": {
+        "predicted": "카드 분실·도난",
+        "correct": true
+      }
+    },
+    {
+      "state": "거래처에 대금을 보내려는데 받는 쪽 정보가 맞아도 승인되지 않아요.",
+      "expected": "송금 실패",
+      "before": {
+        "predicted": "카드 분실·도난",
+        "correct": false
+      },
+      "after": {
+        "predicted": "카드 분실·도난",
+        "correct": false
+      }
+    },
+    {
+      "state": "개명 절차가 끝났는데 은행에는 옛 이름이 표시돼요. 어떤 서류를 내야 바꿀 수 있죠?",
+      "expected": "개인정보 변경",
+      "before": {
+        "predicted": "개인정보 변경",
+        "correct": true
+      },
+      "after": {
+        "predicted": "개인정보 변경",
+        "correct": true
+      }
+    },
+    {
+      "state": "가족에게도 물어보고 집을 다 뒤졌지만 결제할 때 쓰는 실물을 찾지 못했어요. 재발급이 필요합니다.",
+      "expected": "카드 분실·도난",
+      "before": {
+        "predicted": "카드 분실·도난",
+        "correct": true
+      },
+      "after": {
+        "predicted": "카드 분실·도난",
+        "correct": true
+      }
+    },
+    {
+      "state": "친구가 돈을 못 받았다고 해서 확인해 보니 전송이 거절된 상태예요.",
+      "expected": "송금 실패",
+      "before": {
+        "predicted": "송금 실패",
+        "correct": true
+      },
+      "after": {
+        "predicted": "송금 실패",
+        "correct": true
+      }
+    },
+    {
+      "state": "이제 회사 메일 대신 개인 메일로 안내를 받고 싶습니다. 계정의 연락 정보를 수정하려면 어떻게 하나요?",
+      "expected": "개인정보 변경",
+      "before": {
+        "predicted": "개인정보 변경",
+        "correct": true
+      },
+      "after": {
+        "predicted": "개인정보 변경",
+        "correct": true
+      }
+    },
+    {
+      "state": "해외 여행 중 가방을 도난당했습니다. 함께 들어 있던 은행 카드를 더는 사용할 수 없게 해 주세요.",
+      "expected": "카드 분실·도난",
+      "before": {
+        "predicted": "카드 분실·도난",
+        "correct": true
+      },
+      "after": {
+        "predicted": "카드 분실·도난",
+        "correct": true
+      }
+    },
+    {
+      "state": "송금 버튼을 누르면 처리할 수 없다는 안내만 나와요. 제한에 걸린 건가요?",
+      "expected": "송금 실패",
+      "before": {
+        "predicted": "카드 분실·도난",
+        "correct": false
+      },
+      "after": {
+        "predicted": "카드 분실·도난",
+        "correct": false
+      }
+    },
+    {
+      "state": "등록된 주소의 동과 호수가 틀려서 바로잡고 싶어요.",
+      "expected": "개인정보 변경",
+      "before": {
+        "predicted": "개인정보 변경",
+        "correct": true
+      },
+      "after": {
+        "predicted": "개인정보 변경",
+        "correct": true
+      }
+    },
+    {
+      "state": "방금 지갑을 잃어버렸어요. 안에 든 체크카드를 누가 쓸까 봐 걱정돼서 신고합니다.",
+      "expected": "카드 분실·도난",
+      "before": {
+        "predicted": "카드 분실·도난",
+        "correct": true
+      },
+      "after": {
+        "predicted": "카드 분실·도난",
+        "correct": true
+      }
+    },
+    {
+      "state": "내 계좌끼리 금액을 옮기려고 했지만 매번 실행이 취소돼요.",
+      "expected": "송금 실패",
+      "before": {
+        "predicted": "카드 분실·도난",
+        "correct": false
+      },
+      "after": {
+        "predicted": "카드 분실·도난",
+        "correct": false
+      }
+    },
+    {
+      "state": "새 번호로 바꾼 뒤에도 제 프로필에는 이전 연락처가 남아 있어요. 업데이트해 주세요.",
+      "expected": "개인정보 변경",
+      "before": {
+        "predicted": "개인정보 변경",
+        "correct": true
+      },
+      "after": {
+        "predicted": "개인정보 변경",
+        "correct": true
+      }
+    }
+  ],
+  "screenshot": "generalization.jpg"
+}

@@ -1,14 +1,97 @@
 import {createSkinDocument} from './fixtures/skin'
 import {composeParameterScene, sampleParameterDeformer} from '../scene'
 import {applySceneNodeDeformers} from '../vertices'
-import type {
-  PuppetDocument,
-  PuppetParameterBinding1D,
-  PuppetSceneDeformerNode,
+import {
+  PUPPET_DOCUMENT_FORMAT,
+  type PuppetDocument,
+  type PuppetParameterBinding1D,
+  type PuppetSceneDeformerNode,
 } from '../../player/document'
 import {expect, test} from 'vitest'
 
 import {transformDeformerPoint} from '../grid'
+
+test('should preserve explicit multi-turn rotation angles while composing parameter keyforms', () => {
+  const node: PuppetSceneDeformerNode = {
+    boneRestPoints: [0, 0, 1, 0],
+    bounds: {height: 1, width: 1, x: 0, y: 0},
+    children: [],
+    columns: 1,
+    controlPoints: [0, 0, 1, 0],
+    deformerType: 'rotation',
+    id: 'spin',
+    kind: 'deformer',
+    locked: false,
+    name: 'spin',
+    rotationAngle: 0,
+    rows: 1,
+    visible: true,
+  }
+  const document: PuppetDocument = {
+    format: PUPPET_DOCUMENT_FORMAT,
+    motions: [],
+    parameterBindings: [
+      {
+        id: 'turn',
+        interpolation: 'grid',
+        keyforms: [0, 1].map((value) => ({
+          deformers: [
+            {
+              controlPoints: [0, 0, 1, 0],
+              kind: 'deformer',
+              nodeId: 'spin',
+              rotationAngle: value * 4 * Math.PI,
+            },
+          ],
+          parts: [],
+          values: [value],
+        })),
+        parameterIds: ['p'],
+        targetDeformerIds: ['spin'],
+      },
+    ],
+    parameters: [{defaultValue: 0, id: 'p', maximum: 1, minimum: 0, name: 'p'}],
+    parts: [],
+    scene: {roots: [node]},
+    version: 1,
+    viewport: {height: 10, width: 10},
+  }
+  const posed = composeParameterScene(document, {p: 0.375}).roots[0]
+  expect(posed?.kind).toBe('deformer')
+  if (posed?.kind === 'deformer') {
+    expect(posed.rotationAngle).toBeCloseTo(Math.PI * 1.5)
+    expect(posed.controlPoints[2]).toBeCloseTo(0)
+    expect(posed.controlPoints[3]).toBeCloseTo(-1)
+  }
+})
+
+test('should apply edited rotation handles while retaining their unwrapped turn reference', () => {
+  const node: PuppetSceneDeformerNode = {
+    boneRestPoints: [0, 0, 1, 0],
+    bounds: {height: 1, width: 1, x: 0, y: 0},
+    children: [],
+    columns: 1,
+    controlPoints: [0, 0, 0, 1],
+    deformerType: 'rotation',
+    id: 'spin',
+    kind: 'deformer',
+    locked: false,
+    name: 'Spin',
+    rotationAngle: Math.PI * 4,
+    rows: 1,
+    visible: true,
+  }
+  const doc: PuppetDocument = {
+    format: PUPPET_DOCUMENT_FORMAT,
+    motions: [],
+    parts: [],
+    scene: {roots: [node]},
+    version: 1,
+    viewport: {height: 10, width: 10},
+  }
+  const posed = composeParameterScene(doc, {}).roots[0]
+  expect(posed).toMatchObject({rotationAngle: Math.PI * 4.5})
+})
 
 test('should interpolate spatial deformer transforms and mesh position through parameter keyforms', () => {
   const node: PuppetSceneDeformerNode = {
@@ -30,7 +113,7 @@ test('should interpolate spatial deformer transforms and mesh position through p
     visible: true,
   }
   const document: PuppetDocument = {
-    format: 'winter-love-puppet',
+    format: PUPPET_DOCUMENT_FORMAT,
     motions: [],
     parameterBindings: [
       {
@@ -299,4 +382,40 @@ test('should drive skinning from sampled rotation keyforms', () => {
   const angle = 2 * Math.atan2(weight * Math.SQRT1_2, 1 - weight + weight * Math.SQRT1_2)
   expect(vertices.get(partId)![2]).toBeCloseTo(x * Math.cos(angle) - y * Math.sin(angle))
   expect(vertices.get(partId)![3]).toBeCloseTo(y * Math.cos(angle) + x * Math.sin(angle))
+})
+
+test('should interpolate rotation keyforms across the signed-angle boundary around the rest pose', () => {
+  const direction = (degrees: number) => [
+    0,
+    0,
+    Math.cos((degrees * Math.PI) / 180),
+    Math.sin((degrees * Math.PI) / 180),
+  ]
+  const node: PuppetSceneDeformerNode = {
+    boneRestPoints: [0, 0, 1, 0],
+    bounds: {height: 1, width: 1, x: 0, y: 0},
+    children: [],
+    columns: 1,
+    controlPoints: direction(175),
+    deformerType: 'rotation',
+    id: 'turn',
+    kind: 'deformer',
+    locked: false,
+    name: 'Turn',
+    rows: 1,
+    visible: true,
+  }
+  const binding: PuppetParameterBinding1D = {
+    id: 'turn',
+    keyforms: [170, 190].map((angle, index) => ({
+      deformers: [{controlPoints: direction(angle), kind: 'deformer', nodeId: 'turn'}],
+      parts: [],
+      values: [index],
+    })),
+    parameterIds: ['p'],
+    targetDeformerIds: ['turn'],
+  }
+  const sampled = sampleParameterDeformer({binding, deformer: node, values: [0.5]})
+  expect(sampled.controlPoints[2]).toBeCloseTo(-1)
+  expect(sampled.controlPoints[3]).toBeCloseTo(0)
 })

@@ -266,7 +266,7 @@ describe('SCodeDocument', () => {
     document.getSelection()!.getRangeAt(0).getClientRects = () =>
       [{bottom: 30, left: 10, right: 40, top: 10}] as unknown as DOMRectList
     fireEvent.contextMenu(
-      screen.getByRole('button', {name: '2줄 선택'}).parentElement!.querySelector('code')!,
+      screen.getByRole('button', {name: '2줄 선택'}).closest('[data-line]')!.querySelector('code')!,
       {clientX: 80, clientY: 20},
     )
     expect(onSelect).toHaveBeenLastCalledWith(2, 2)

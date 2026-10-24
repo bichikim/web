@@ -11,6 +11,29 @@ import {
 import type {ImportPsdResult} from '../import-psd'
 import {MAXIMUM_TEXTURE_PIXELS} from './texture-limits'
 
+/** Photoshop layer blend modes (ag-psd names) that Puppet draws the same way. */
+const PSD_BLEND_MODES: Readonly<Record<string, PuppetPartBlendMode>> = {
+  color: 'color',
+  'color burn': 'color-burn',
+  'color dodge': 'color-dodge',
+  darken: 'darken',
+  difference: 'difference',
+  exclusion: 'exclusion',
+  'hard light': 'hard-light',
+  hue: 'hue',
+  lighten: 'lighten',
+  'linear burn': 'linear-burn',
+  'linear dodge': 'add',
+  'linear light': 'linear-light',
+  luminosity: 'luminosity',
+  multiply: 'multiply',
+  normal: 'normal',
+  overlay: 'overlay',
+  saturation: 'saturation',
+  screen: 'screen',
+  'soft light': 'soft-light',
+}
+
 const MAXIMUM_TOTAL_PIXELS = 134_217_728
 const MAXIMUM_LAYERS = 1024
 const MAXIMUM_DEPTH = 64
@@ -86,12 +109,8 @@ const convertPart = (options: PartOptions): PuppetPart | undefined => {
   image.data.set(pixels.data)
   drawing.putImageData(image, 0, 0)
   const mode = layer.blendMode ?? 'normal'
-  let blendMode: PuppetPartBlendMode = 'normal'
-  if (mode === 'multiply' || mode === 'screen' || mode === 'normal') {
-    blendMode = mode
-  } else if (mode === 'linear dodge') {
-    blendMode = 'add'
-  } else {
+  const blendMode = PSD_BLEND_MODES[mode]
+  if (blendMode === undefined) {
     context.warnings.add('지원하지 않는 블렌드 모드는 normal로 가져옵니다.')
   }
   if (clippingBase?.length === 0) {
@@ -106,7 +125,7 @@ const convertPart = (options: PartOptions): PuppetPart | undefined => {
       ),
     },
     properties: {
-      blendMode,
+      blendMode: blendMode ?? 'normal',
       clippingMaskIds: clippingBase,
       opacity: clippingBase?.length === 0 ? 0 : opacity * (layer.fillOpacity ?? 1),
       renderWhenUsedAsMask: true,

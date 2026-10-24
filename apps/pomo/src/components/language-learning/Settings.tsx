@@ -1,7 +1,11 @@
 import {PSelect} from '../p-select/PSelect'
+import {getLanguageLabel} from './get-language-label'
 
 import * as m from '@paraglide/message'
-import type {LanguageLearningLanguage} from '../../features/language-learning'
+import {
+  LANGUAGE_LEARNING_LANGUAGES,
+  type LanguageLearningLanguage,
+} from '../../features/language-learning/schema'
 import {
   SUPERTONIC_MODELS,
   SUPERTONIC_VOICES,
@@ -11,7 +15,6 @@ import {
 
 // oxlint-disable-next-line eslint/no-magic-numbers -- Product count options are the persisted user choices.
 const COUNTS = [1, 2, 3, 4, 5] as const
-const LANGUAGES = ['ko', 'en', 'ja'] as const
 export type LanguageLearningCount = (typeof COUNTS)[number]
 
 export interface LanguageLearningSettingsProps {
@@ -27,23 +30,15 @@ export interface LanguageLearningSettingsProps {
   readonly voiceId: SupertonicVoiceId
 }
 
-const getLanguageLabel = (language: LanguageLearningLanguage) => {
-  switch (language) {
-    case 'en':
-      return m.learning_language_en()
-    case 'ja':
-      return m.learning_language_ja()
-    case 'ko':
-      return m.learning_language_ko()
-  }
-}
-
 export const LanguageLearningSettings = (props: LanguageLearningSettingsProps) => (
   <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
     <PSelect
       label={m.learning_filter_language()}
       disabled={props.disabled || props.sentenceDisabled}
-      options={LANGUAGES.map((value) => ({label: getLanguageLabel(value), value}))}
+      options={LANGUAGE_LEARNING_LANGUAGES.map((value) => ({
+        label: getLanguageLabel(value),
+        value,
+      }))}
       value={props.language}
       onChange={props.onLanguageChange}
     />

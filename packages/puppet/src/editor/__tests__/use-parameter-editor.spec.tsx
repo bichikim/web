@@ -4,6 +4,52 @@ import {createSignal} from 'solid-js'
 import {expect, test, vi} from 'vitest'
 import {createDemoDocument, type PuppetDocument, type PuppetParameterBinding} from '../../player'
 import {type ParameterEditorResult, useParameterEditor} from '../use-parameter-editor'
+import {addGlue} from '../internal/glue'
+
+test('should select and insert a Glue-only keyform from either endpoint part', () => {
+  let editor!: ParameterEditorResult
+  const initial: PuppetDocument = {
+    ...addGlue(
+      createDemoDocument(),
+      {partId: 'mesh-preview', vertexIndex: 0},
+      {partId: 'shape-diamond', vertexIndex: 0},
+    )!,
+    parameterBindings: [
+      {
+        id: 'join',
+        keyforms: [-30, 30].map((value) => ({
+          glue: [{id: 'glue-1', strength: (value + 30) / 60, weight: 0.5}],
+          parts: [],
+          values: [value],
+        })),
+        parameterIds: ['angle-x'],
+        targetGlueIds: ['glue-1'],
+      },
+    ],
+  }
+  const [document, setDocument] = createSignal(initial)
+  const [selection, setSelection] = createSignal(['mesh-preview'])
+  render(() => {
+    editor = useParameterEditor({
+      document,
+      onDocumentChange: setDocument,
+      onNotice: vi.fn(),
+      selectedNodeIds: selection,
+    })
+    return <div />
+  })
+  editor.setAllParametersVisible(false)
+  expect(editor.activeBindingId()).toBe('join')
+  setSelection(['shape-diamond'])
+  expect(editor.activeBindingId()).toBe('join')
+  expect(editor.activeTargetNodeIds()).toEqual(['mesh-preview', 'shape-diamond'])
+  editor.setParameterValues([0])
+  editor.addKeyform()
+  expect(document().parameterBindings![0]!.keyforms[1]!.glue).toEqual([
+    {id: 'glue-1', strength: 0.5, weight: 0.5},
+  ])
+  expect(editor.activeKeyformValues()).toEqual([0])
+})
 
 test('should persist relations and allow keyform editing while their influence is reduced', () => {
   let editor!: ParameterEditorResult

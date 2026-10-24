@@ -1,4 +1,4 @@
-import {isTwoDimensionalParameterBinding, type PuppetParameterValues} from '../../deformation'
+import {mapBindingKeyforms, type PuppetParameterValues} from '../../deformation'
 import type {
   PuppetDocument,
   PuppetParameterBinding,
@@ -84,9 +84,7 @@ export const setParameterKeyformVertex = (options: SetParameterKeyformVertexOpti
             }),
           }
         : value
-    return isTwoDimensionalParameterBinding(candidate)
-      ? {...candidate, keyforms: candidate.keyforms.map(replaceKeyform)}
-      : {...candidate, keyforms: candidate.keyforms.map(replaceKeyform)}
+    return mapBindingKeyforms(candidate, replaceKeyform)
   }
   return {
     ...options.document,

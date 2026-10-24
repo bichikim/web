@@ -15,7 +15,12 @@ export const getDeformerShape = (node: PuppetDeformerShape): PuppetDeformerShape
   curveBreaks: node.curveBreaks,
   curveHandles: node.curveHandles,
   deformerType: node.deformerType,
+  interpolation: node.interpolation,
   pins: node.pins,
+  rotationAngle: node.rotationAngle,
+  rotationReferenceDistance: node.rotationReferenceDistance,
+  rotationReflection: node.rotationReflection,
+  rotationScale: node.rotationScale,
   rows: node.rows,
   vertexInfluences: node.vertexInfluences,
 })

@@ -3,6 +3,7 @@ import type {
   TextGenerationErrorResponse,
   TextGenerationLoadingResponse,
   TextGenerationReadyResponse,
+  TextGenerationSkippedResponse,
   TextGenerationTokenResponse,
 } from '../text-generation/messages'
 import type {TextModelId} from '../text-generation/model'
@@ -62,6 +63,7 @@ export interface ChatCompleteResponse {
 }
 
 export type ChatWorkerResponse =
+  | TextGenerationSkippedResponse<ChatWorkerRequest>
   | ChatCompactingResponse
   | ChatCompleteResponse
   | ChatDraftResponse

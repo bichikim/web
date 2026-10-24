@@ -75,7 +75,7 @@ export const updateGlue = (
     changes === null
       ? document.glue?.filter((glue) => glue.id !== id)
       : document.glue?.map((glue) => (glue.id === id ? {...glue, ...changes} : glue))
-  if (!hasValidGlue(glue, document.parts)) {
+  if (!hasValidGlue(glue, document.parts, document.glueComposition)) {
     return undefined
   }
   return changes === null ? reconcileGlueKeyforms({...document, glue}) : {...document, glue}
@@ -99,26 +99,43 @@ export const setGlueKeyform = (options: SetGlueKeyformOptions): PuppetDocument |
     glue === undefined ||
     binding === undefined ||
     form === undefined ||
-    !form.parts.some((part) => part.partId === glue.first.partId) ||
+    !(
+      binding.targetGlueIds?.includes(glue.id) === true ||
+      form.glue?.some((sample) => sample.id === glue.id) === true ||
+      form.parts.some((part) => part.partId === glue.first.partId)
+    ) ||
     updateGlue(options.document, glue.id, options.changes) === undefined
   ) {
     return undefined
   }
+  const direct =
+    binding.targetGlueIds?.includes(glue.id) === true ||
+    form.glue?.some((sample) => sample.id === glue.id) === true
   const replace = <Form extends PuppetParameterKeyform>(candidate: Form): Form =>
     candidate === form
       ? {
           ...candidate,
-          parts: candidate.parts.map((part) =>
-            part.partId === glue.first.partId
-              ? {
-                  ...part,
-                  glue: [
-                    ...(part.glue ?? []).filter((value) => value.id !== glue.id),
-                    {id: glue.id, ...options.changes},
-                  ],
-                }
-              : part,
-          ),
+          ...(direct
+            ? {
+                glue: [
+                  ...(candidate.glue ?? []).filter((sample) => sample.id !== glue.id),
+                  {id: glue.id, ...options.changes},
+                ],
+              }
+            : {}),
+          parts: direct
+            ? candidate.parts
+            : candidate.parts.map((part) =>
+                part.partId === glue.first.partId
+                  ? {
+                      ...part,
+                      glue: [
+                        ...(part.glue ?? []).filter((value) => value.id !== glue.id),
+                        {id: glue.id, ...options.changes},
+                      ],
+                    }
+                  : part,
+              ),
         }
       : candidate
   const next = updateParameterBindingKeyforms({binding, replace})
@@ -134,6 +151,7 @@ export const setGlueKeyform = (options: SetGlueKeyformOptions): PuppetDocument |
 export const reconcileGlueKeyforms = (document: PuppetDocument): PuppetDocument => {
   const replace = <Form extends PuppetParameterKeyform>(form: Form): Form => ({
     ...form,
+    glue: form.glue?.filter((sample) => document.glue?.some((glue) => glue.id === sample.id)),
     parts: form.parts.map((part) =>
       part.glue === undefined
         ? part
@@ -150,7 +168,15 @@ export const reconcileGlueKeyforms = (document: PuppetDocument): PuppetDocument 
   return {
     ...document,
     parameterBindings: document.parameterBindings?.map((binding) =>
-      updateParameterBindingKeyforms({binding, replace}),
+      updateParameterBindingKeyforms({
+        binding: {
+          ...binding,
+          targetGlueIds: binding.targetGlueIds?.filter((id) =>
+            document.glue?.some((glue) => glue.id === id),
+          ),
+        },
+        replace,
+      }),
     ),
   }
 }

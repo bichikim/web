@@ -9,7 +9,7 @@ export interface VisibilityIntervalOptions {
   readonly runOverdueOnVisible?: boolean
 }
 
-/** Pauses the interval while hidden and restarts it when the document is visible. */
+/** 문서가 숨겨져 있는 동안 주기 실행을 멈추고, 다시 보이면 재개한다. */
 export function visibilityInterval(options: VisibilityIntervalOptions): () => void
 export function visibilityInterval(
   callback: () => void,

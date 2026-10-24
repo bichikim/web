@@ -1,5 +1,8 @@
 /** @vitest-environment jsdom */
-import {createRoot, createSignal} from 'solid-js'
+import {createComponent, createRoot, createSignal} from 'solid-js'
+import {renderHook} from '@solidjs/testing-library'
+import {LocaleContext} from '../locale/context'
+import type {ViewerLanguage} from '../locale/types'
 import {afterEach, describe, expect, it, vi} from 'vitest'
 import type {ViewerConnection} from '../../shared/contracts'
 import type {ViewerPort, WorkspaceSelection} from '../types'
@@ -17,6 +20,7 @@ const mount = () =>
       workspace: '/project',
     })
     const [drafts, setDrafts] = createSignal<readonly string[]>([])
+    const [saving, setSaving] = createSignal(false)
     const port: ViewerPort = {
       call: vi.fn(async (name) => ({
         content: [],
@@ -33,12 +37,42 @@ const mount = () =>
       onChanged: changed,
       pendingPaths: drafts,
       port,
-      saving: () => false,
+      saving,
       session,
     })
-    return {changed, operations, port, setDrafts, setSession}
+    return {changed, operations, port, setDrafts, setSaving, setSession}
   })
 describe('useFileOperations', () => {
+  it('should disable paste without a copied entry and while its source cannot be transferred', async () => {
+    const {operations, setDrafts, setSaving} = mount()
+    expect(operations.canPaste()).toBe(false)
+    await operations.copy(file)
+    expect(operations.canPaste()).toBe(true)
+    setDrafts(['src/main.ts'])
+    expect(operations.canPaste()).toBe(false)
+    setDrafts([])
+    setSaving(true)
+    expect(operations.canPaste()).toBe(false)
+    setSaving(false)
+    expect(operations.canPaste()).toBe(true)
+  })
+  it('should translate existing path feedback without changing the file name', async () => {
+    const [language, setLanguage] = createSignal<ViewerLanguage>('en')
+    const hook = renderHook(() => mount(), {
+      wrapper: (props) =>
+        createComponent(LocaleContext.Provider, {
+          get children() {
+            return props.children
+          },
+          value: language,
+        }),
+    })
+    await hook.result.operations.copy(file)
+    expect(hook.result.operations.feedback()).toContain('src/main.ts · Copied.')
+    setLanguage('ko')
+    expect(hook.result.operations.feedback()).toContain('src/main.ts · 복사했습니다.')
+    hook.cleanup()
+  })
   it('should copy and repeatedly paste a revision-checked file into the selected folder', async () => {
     const {changed, operations, port} = mount()
     await operations.copy(file)
@@ -52,6 +86,26 @@ describe('useFileOperations', () => {
       session: 'first',
     })
     expect(changed).toHaveBeenCalledTimes(2)
+    expect(operations.canPaste()).toBe(true)
+  })
+  it('should retain copies across document updates and sessions in one workspace', async () => {
+    const {operations, port, setSession} = mount()
+    await operations.copy(file)
+    await operations.paste(destination)
+    setSession({session: 'first', workspace: '/project'})
+    await Promise.resolve()
+    expect(operations.canPaste()).toBe(true)
+    setSession({session: 'second', workspace: '/project'})
+    await Promise.resolve()
+    expect(operations.canPaste()).toBe(true)
+    await operations.paste(destination)
+    expect(port.call).toHaveBeenLastCalledWith('code.transfer', {
+      action: 'copy',
+      parent: 'dest',
+      path: 'src/main.ts',
+      revision: 'revision',
+      session: 'second',
+    })
     expect(operations.canPaste()).toBe(true)
   })
   it('should keep cut contents on failure and consume them only after successful paste', async () => {

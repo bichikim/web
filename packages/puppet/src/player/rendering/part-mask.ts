@@ -1,12 +1,4 @@
-import {
-  Container,
-  MaskFilter,
-  Matrix,
-  MeshSimple,
-  type Renderer,
-  RenderTexture,
-  Sprite,
-} from 'pixi.js'
+import {Container, MaskFilter, MeshSimple, type Renderer, RenderTexture, Sprite} from 'pixi.js'
 import type {PuppetDocument} from '../document'
 import type {PartMaskRenderPlan, PartRenderPlan} from '../internal/render-plan'
 import type {RuntimePart, RuntimePartMask} from './types'
@@ -56,49 +48,128 @@ export const createRuntimePartMask = (options: CreateRuntimePartMaskOptions): Ru
   const texture = RenderTexture.create({antialias: true, dynamic: true, height: 1, width: 1})
   const sprite = new Sprite(texture)
   sprite.renderable = false
-  const filter = new MaskFilter({channel: 'alpha', sprite})
+  const filter = new MaskFilter({
+    antialias: 'inherit',
+    channel: 'alpha',
+    resolution: 'inherit',
+    sprite,
+  })
+  // Masks only change alpha; offscreen pixels cannot affect the visible result. Clipping also
+  // keeps subsequent backdrop filters from copying outside their parent render target.
+  filter.clipToViewport = true
   return {container, filter, meshes, sprite, texture}
 }
 
-export const renderRuntimeMask = (
-  mask: RuntimePartMask,
-  renderer: Renderer,
-  resolution: number,
-  vertices: MeshSimple['vertices'],
-) => {
-  for (const source of mask.meshes) {
-    if (source.mask !== undefined) {
-      renderRuntimeMask(source.mask, renderer, resolution, source.mesh.vertices)
+interface VertexBounds {
+  /** `undefined` without coordinates on that axis. */
+  readonly left: number | undefined
+  readonly right: number
+  readonly top: number | undefined
+  readonly bottom: number
+}
+
+/**
+ * Bounds of interleaved x, y vertex arrays. Loops instead of spreading into `Math.min`, which
+ * exceeds the call stack for large meshes and allocates per frame.
+ */
+export const getVertexBounds = (vertexSets: ReadonlyArray<ArrayLike<number>>): VertexBounds => {
+  let left = Number.POSITIVE_INFINITY
+  let right = Number.NEGATIVE_INFINITY
+  let top = Number.POSITIVE_INFINITY
+  let bottom = Number.NEGATIVE_INFINITY
+  let horizontalCount = 0
+  let verticalCount = 0
+  for (const vertices of vertexSets) {
+    for (let index = 0; index < vertices.length; index += 1) {
+      const coordinate = vertices[index]!
+      if (index % 2 === 0) {
+        left = Math.min(left, coordinate)
+        right = Math.max(right, coordinate)
+        horizontalCount += 1
+      } else {
+        top = Math.min(top, coordinate)
+        bottom = Math.max(bottom, coordinate)
+        verticalCount += 1
+      }
     }
   }
-  // Only the receiving mesh can display this mask; retain capacity while its bounds animate.
-  const horizontal = vertices.filter((_, index) => index % 2 === 0)
-  const vertical = vertices.filter((_, index) => index % 2 === 1)
-  const left = Math.floor(horizontal.length > 0 ? Math.min(...horizontal) : 0)
-  const top = Math.floor(vertical.length > 0 ? Math.min(...vertical) : 0)
-  const width = Math.max(
-    mask.texture.width,
-    Math.ceil((Math.max(left + 1, ...horizontal) - left) / MASK_TEXTURE_BLOCK_SIZE) *
-      MASK_TEXTURE_BLOCK_SIZE,
+  return {
+    bottom,
+    left: horizontalCount > 0 ? left : undefined,
+    right,
+    top: verticalCount > 0 ? top : undefined,
+  }
+}
+
+/** The visible rectangle in document coordinates, used to limit mask rasterization. */
+export interface MaskViewport {
+  /** Left edge in document coordinates. */
+  readonly x: number
+  /** Top edge in document coordinates. */
+  readonly y: number
+  /** Visible width in document units. */
+  readonly width: number
+  /** Visible height in document units. */
+  readonly height: number
+}
+
+interface RenderRuntimeMaskOptions {
+  /** Borrowed mask resources to update; the caller retains ownership. */
+  readonly mask: RuntimePartMask
+  /** Borrowed renderer that draws the mask into its texture. */
+  readonly renderer: Renderer
+  /** Physical texture pixels per document unit. */
+  readonly resolution: number
+  /** Receiving meshes or layer members in document coordinates. */
+  readonly vertexSets: ReadonlyArray<ArrayLike<number>>
+  /** Visible document rectangle. Omitted, the entire receiving bounds are rasterized. */
+  readonly viewport?: MaskViewport
+}
+
+/** Renders a mask over its receivers, clipped to `viewport` when supplied. */
+export const renderRuntimeMask = (options: RenderRuntimeMaskOptions) => {
+  const {mask, renderer, resolution, vertexSets, viewport} = options
+  for (const source of mask.meshes) {
+    if (source.mask !== undefined) {
+      renderRuntimeMask({...options, mask: source.mask, vertexSets: [source.mesh.vertices]})
+    }
+  }
+  // Align in physical pixels so the margin stays small even when zoomed far into the model.
+  const bounds = getVertexBounds(vertexSets)
+  const left =
+    Math.floor(Math.max(bounds.left ?? 0, viewport?.x ?? -Infinity) * resolution) / resolution
+  const top =
+    Math.floor(Math.max(bounds.top ?? 0, viewport?.y ?? -Infinity) * resolution) / resolution
+  const right = Math.min(
+    bounds.right,
+    viewport === undefined ? Infinity : viewport.x + viewport.width,
   )
-  const height = Math.max(
-    mask.texture.height,
-    Math.ceil((Math.max(top + 1, ...vertical) - top) / MASK_TEXTURE_BLOCK_SIZE) *
-      MASK_TEXTURE_BLOCK_SIZE,
+  const bottom = Math.min(
+    bounds.bottom,
+    viewport === undefined ? Infinity : viewport.y + viewport.height,
   )
+  const capacity = (size: number) =>
+    (Math.ceil(Math.max(1, size * resolution) / MASK_TEXTURE_BLOCK_SIZE) *
+      MASK_TEXTURE_BLOCK_SIZE) /
+    resolution
+  const width = capacity(right - left)
+  const height = capacity(bottom - top)
   if (
     mask.texture.width !== width ||
     mask.texture.height !== height ||
     mask.texture.source.resolution !== resolution
   ) {
     mask.texture.resize(width, height, resolution)
+    // PixiJS emits no resize when only resolution changes and physical capacity stays equal.
+    // Refresh the logical frame and UVs as well, or the mask uses its previous zoom's extent.
+    mask.texture.update()
   }
   mask.sprite.position.set(left, top)
+  mask.container.position.set(-left, -top)
   renderer.render({
     clear: true,
     container: mask.container,
     target: mask.texture,
-    transform: new Matrix().translate(-left, -top),
   })
 }
 

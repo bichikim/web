@@ -1,7 +1,7 @@
 import {EditorState} from '@codemirror/state'
-import {language, syntaxTree} from '@codemirror/language'
+import {ensureSyntaxTree, language} from '@codemirror/language'
 import {classHighlighter, highlightTree} from '@lezer/highlight'
-import {describe, expect, it} from 'vitest'
+import {assert, describe, expect, it} from 'vitest'
 import {createEditorLanguage} from '../create-editor-language'
 
 describe('createEditorLanguage', () => {
@@ -16,6 +16,7 @@ describe('createEditorLanguage', () => {
     ['config.jsonc', '// comment\n{"name":"viewer",}'],
     ['config.json5', '{name: "viewer", enabled: true,}'],
     ['main.tsx', 'const component = <div />'],
+    ['icon.svg', '<svg><path/></svg>'],
     ['config.yaml', 'name: viewer\nenabled: true\nitems:\n  - one\n  - two\n'],
     ['config.yml', 'name: viewer\ncount: 2\n'],
     ['config.toml', '[viewer]\nname = "viewer"\nenabled = true\nitems = [1, 2]\n'],
@@ -24,10 +25,12 @@ describe('createEditorLanguage', () => {
     ['index.htm', '<div class="viewer"><p>Hello</p></div>'],
   ])('should parse %s with its supported syntax', (path, doc) => {
     const state = EditorState.create({doc, extensions: createEditorLanguage(path)})
+    const tree = ensureSyntaxTree(state, doc.length)
     expect(state.facet(language)).not.toBeNull()
-    expect(syntaxTree(state).length).toBe(doc.length)
+    assert(tree !== null)
+    expect(tree.length).toBe(doc.length)
     const errors: string[] = []
-    syntaxTree(state).iterate({
+    tree.iterate({
       enter: (node) => {
         if (node.type.isError) {
           errors.push(node.name)
@@ -63,6 +66,7 @@ describe('createEditorLanguage', () => {
     {doc: 'enabled: true', path: 'config.yaml', token: 'enabled'},
     {doc: 'enabled = true', path: 'config.toml', token: 'true'},
     {doc: '<p>Hello</p>', path: 'index.html', token: 'p'},
+    {doc: '<svg><path/></svg>', path: 'icon.svg', token: 'svg'},
     {doc: '/* viewer */ .card { color: red; }', path: 'styles.css', token: 'color'},
     {doc: '$accent: red; .card { color: $accent; }', path: 'styles.scss', token: 'color'},
     {doc: '$accent: red\n.card\n  color: $accent\n', path: 'styles.sass', token: 'color'},
@@ -106,8 +110,10 @@ describe('createEditorLanguage', () => {
     {doc: '! comment\nname=viewer\n', path: 'settings.properties', token: ['name', 'viewer']},
   ])('should highlight syntax tokens while editing $path', ({doc, path, token}) => {
     const state = EditorState.create({doc, extensions: createEditorLanguage(path)})
+    const tree = ensureSyntaxTree(state, doc.length)
+    assert(tree !== null)
     const highlighted: string[] = []
-    highlightTree(syntaxTree(state), classHighlighter, (from, to) => {
+    highlightTree(tree, classHighlighter, (from, to) => {
       highlighted.push(doc.slice(from, to))
     })
     expect(highlighted).toEqual(expect.arrayContaining([token].flat()))

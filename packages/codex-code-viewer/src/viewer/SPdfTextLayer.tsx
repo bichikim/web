@@ -1,3 +1,4 @@
+import {useTranslations} from './locale/use-translations'
 import {createEffect, createSignal, For, Show} from 'solid-js'
 import type {TextMatch} from './find-text'
 import type {PdfPageText} from './pdf/types'
@@ -13,6 +14,7 @@ interface SPdfTextLayerProps {
 }
 
 export const SPdfTextLayer = (props: SPdfTextLayerProps) => {
+  const t = useTranslations()
   const [container, setContainer] = createSignal<HTMLDivElement | null>(null)
   useTextMetrics({container, text: () => props.text})
   createEffect(() => {
@@ -29,7 +31,7 @@ export const SPdfTextLayer = (props: SPdfTextLayerProps) => {
   return (
     <div
       role="region"
-      aria-label="PDF 텍스트"
+      aria-label={t('PDF 텍스트')}
       ref={setContainer}
       class="pdf-text-layer absolute left-0 top-0 origin-top-left select-text leading-none
         [height:calc(100%/var(--pdf-scale))] [width:calc(100%/var(--pdf-scale))]

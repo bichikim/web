@@ -1,4 +1,6 @@
+import {getExceptionMessage} from 'src/features/error-detail'
 import {chunk} from 'es-toolkit/array'
+import {sum} from 'es-toolkit/math'
 import type * as AiJobRepository from 'src/server/repositories/ai-jobs'
 import type {AiArtifactRecord} from 'src/server/repositories/ai-jobs'
 
@@ -177,7 +179,7 @@ const createAiArtifactPersistenceService = (
       return (
         (await repository.recordAiJobArtifactDeleteFailure(
           pending.id,
-          error instanceof Error ? error.message : 'AI artifact deletion failed',
+          getExceptionMessage(error, 'AI artifact deletion failed'),
           {
             expectedLifecycle: pending.lifecycle,
             expectedObjectKey: pending.objectKey,
@@ -276,7 +278,7 @@ const createAiArtifactCleanupService = (
       } catch (error: unknown) {
         await repository.recordAiJobArtifactDeleteFailure(
           cleanupArtifact.id,
-          error instanceof Error ? error.message : 'AI artifact deletion failed',
+          getExceptionMessage(error, 'AI artifact deletion failed'),
           {
             expectedLifecycle: cleanupArtifact.lifecycle,
             expectedObjectKey: cleanupArtifact.objectKey,
@@ -322,7 +324,7 @@ const createAiArtifactCleanupService = (
     })
 
     return {
-      deleted: results.reduce((total, deleted) => total + deleted, 0),
+      deleted: sum(results),
       failures: jobs.length - results.length,
     }
   }

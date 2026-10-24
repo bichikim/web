@@ -1,21 +1,12 @@
-export interface Float32Source {
-  readonly chunks: ReadonlyArray<Float32Array>
-}
-
-/** Copies a nonempty collection of views into an owned buffer with nonnegative integer gaps; reads chunks for sample sizing, gap sizing, then copying. */
-export const concatFloat32 = (
-  source: Float32Source,
-  gapLength: number,
-): Float32Array<ArrayBuffer> => {
-  const totalLength =
-    source.chunks.reduce((total, chunk) => total + chunk.length, 0) +
-    (source.chunks.length - 1) * gapLength
+/** 여러 Float32Array를 원본 변경 없이 하나의 새 배열로 이어 붙인다. 빈 목록에는 빈 배열을 반환한다. */
+export const concatFloat32 = (chunks: ReadonlyArray<Float32Array>): Float32Array<ArrayBuffer> => {
+  const totalLength = chunks.reduce((total, chunk) => total + chunk.length, 0)
   const samples = new Float32Array(totalLength)
   let offset = 0
 
-  for (const chunk of source.chunks) {
+  for (const chunk of chunks) {
     samples.set(chunk, offset)
-    offset += chunk.length + gapLength
+    offset += chunk.length
   }
 
   return samples

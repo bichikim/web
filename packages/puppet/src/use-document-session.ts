@@ -1,6 +1,7 @@
 import {type Accessor, createResource, createSignal, onCleanup, type Resource} from 'solid-js'
 import {createDocumentSession, type DocumentSession} from './create-document-session'
 import type {PuppetDocument} from './player'
+import type {DocumentRecovery} from './editor/document-recovery'
 
 interface UseDocumentSessionProps {
   readonly loadInitialDocument: () => Promise<PuppetDocument>
@@ -8,7 +9,7 @@ interface UseDocumentSessionProps {
 
 export type DocumentSessionFailure = 'restore' | 'save'
 
-interface UseDocumentSessionResult {
+interface UseDocumentSessionResult extends DocumentRecovery {
   readonly document: Resource<PuppetDocument>
   readonly failure: Accessor<DocumentSessionFailure | null>
   readonly dismissFailure: () => void
@@ -70,5 +71,18 @@ export const useDocumentSession = (props: UseDocumentSessionProps): UseDocumentS
       reportFailure(error, 'save')
     }
   }
-  return {dismissFailure: () => setFailure(null), document, failure, save}
+  const recoverySession = () => {
+    if (session === null || disposed) {
+      throw new Error('Recovery storage is unavailable')
+    }
+    return session
+  }
+  return {
+    dismissFailure: () => setFailure(null),
+    document,
+    failure,
+    listRecoveries: async () => recoverySession().listRecoveries(),
+    loadRecovery: async (id) => recoverySession().loadRecovery(id),
+    save,
+  }
 }

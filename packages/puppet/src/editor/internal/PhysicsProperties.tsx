@@ -2,6 +2,7 @@ import {EditorButton, EditorToggleButton} from '../../design-system'
 import type {PuppetDocument, PuppetPendulum} from '../../player'
 import {For, Show} from 'solid-js'
 
+import {PhysicsChainsSection} from './PhysicsChainsSection'
 import {PhysicsInputGroup} from './PhysicsInputGroup'
 import {EditorPropertyGroup} from './EditorPropertyGroup'
 import {
@@ -173,6 +174,14 @@ export const PhysicsProperties = (props: PhysicsPropertiesProps) => {
           </For>
         </div>
       </Show>
+      <PhysicsChainsSection
+        disabled={disabled()}
+        document={props.document}
+        inputParameterIds={props.inputParameterIds}
+        onDocumentChange={props.onDocumentChange}
+        onEditEnd={props.onEditEnd}
+        onEditStart={props.onEditStart}
+      />
     </EditorPropertyGroup>
   )
 }

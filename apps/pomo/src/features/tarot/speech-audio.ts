@@ -205,6 +205,7 @@ export const createTarotSpeechAudioController = (
   }
   const onPlaybackStart = () => setStatus('playing')
   const onPlaybackEnd = () => {
+    currentPreparation = currentPreparation === null ? null : {...currentPreparation, play: false}
     options.setPaused(true)
     if (audioUrl() !== null) {
       setStatus('ready')

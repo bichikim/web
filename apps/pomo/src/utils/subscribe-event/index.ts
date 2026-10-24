@@ -1,9 +1,9 @@
 export interface EventSubscriptionOptions extends AddEventListenerOptions {
-  /** Called once after the returned unsubscribe function removes the listener. */
+  /** 반환된 구독 해제 함수가 리스너를 제거한 뒤 한 번 호출한다. */
   readonly onUnsubscribe?: () => void
 }
 
-/** Registers a listener and returns an idempotent unsubscribe function with an optional notification. */
+/** 리스너를 등록하고, 여러 번 호출해도 한 번만 해제하며 알림 콜백을 지정할 수 있는 구독 해제 함수를 반환한다. */
 export const subscribeEvent = (
   target: EventTarget,
   eventType: string,

@@ -1,3 +1,4 @@
+import {useTranslations} from './locale/use-translations'
 import {Show} from 'solid-js'
 import type {EditorState} from '@codemirror/state'
 import {createBoundedCache} from '../shared/create-bounded-cache'
@@ -7,16 +8,17 @@ import type {useViewer} from './use-viewer'
 import type {useDocumentSearch} from './use-document-search'
 import {SWorkspacePrompt} from './SWorkspacePrompt'
 import {SReferenceChoices} from './SReferenceChoices'
-import {SDefinitionChoices} from './SDefinitionChoices'
 import {SFileDocument} from './SFileDocument'
 import {SCodeEditor} from './editor/SCodeEditor'
 interface SViewerDocumentProps {
   readonly port: ViewerPort
   readonly viewer: ReturnType<typeof useViewer>
   readonly search: ReturnType<typeof useDocumentSearch>
+  readonly previewLines?: number
   readonly onFind: (text?: string) => void
 }
 export const SViewerDocument = (props: SViewerDocumentProps) => {
+  const t = useTranslations()
   const editorStates = createBoundedCache<EditorState>({
     maxEntries: MAX_DRAFT_FILES,
     maxWeight: MAX_CODE_BYTES * MAX_DRAFT_FILES,
@@ -27,7 +29,7 @@ export const SViewerDocument = (props: SViewerDocumentProps) => {
     props.viewer.refresh()
   }
   return (
-    <section aria-label="파일 내용" class="flex min-h-0 min-w-0 flex-1 flex-col">
+    <section aria-label={t('파일 내용')} class="flex min-h-0 min-w-0 flex-1 flex-col">
       <Show
         when={props.viewer.session()}
         fallback={<SWorkspacePrompt workspace={props.viewer.workspaceSession()?.workspace} />}
@@ -37,25 +39,26 @@ export const SViewerDocument = (props: SViewerDocumentProps) => {
             <Show when={props.viewer.deleted()}>
               <div
                 role="status"
-                aria-label="파일 삭제 상태"
+                aria-label={t('파일 삭제 상태')}
                 class="shrink-0 border-b border-divider bg-selection px-4 py-3 text-sm text-foreground"
               >
                 <p>
                   {props.viewer.editing.editable()
-                    ? '파일이 삭제되었습니다. 다시 편집 후 저장하면 파일이 만들어집니다.'
-                    : '파일이 삭제되었습니다.'}
+                    ? t('파일이 삭제되었습니다. 다시 편집 후 저장하면 파일이 만들어집니다.')
+                    : t('파일이 삭제되었습니다.')}
                 </p>
               </div>
             </Show>
-            <Show when={props.viewer.references()} keyed>
+            <Show when={props.viewer.references()}>
               {(references) => (
-                <SReferenceChoices references={references} onOpen={props.viewer.openLocation} />
+                <SReferenceChoices
+                  references={references()}
+                  previewLines={props.previewLines}
+                  onOpen={props.viewer.openLocation}
+                  onClose={props.viewer.dismissReferences}
+                />
               )}
             </Show>
-            <SDefinitionChoices
-              locations={props.viewer.choices()}
-              onOpen={props.viewer.openLocation}
-            />
             <Show when={props.viewer.viewState.fileKey()} keyed>
               {(_key) => (
                 <SFileDocument
@@ -88,7 +91,9 @@ export const SViewerDocument = (props: SViewerDocumentProps) => {
                       request={
                         props.viewer.viewState.bind()?.request() ?? {restore: true, version: 0}
                       }
-                      readOnly={!props.viewer.editing.enabled()}
+                      readOnly={
+                        session().document.readOnly === true || !props.viewer.editing.enabled()
+                      }
                       matches={props.search.matches()}
                       activeMatch={props.search.active()}
                       searchScrollRequest={props.search.scrollRequest()}

@@ -17,6 +17,7 @@ import {applyFaceDeformation, type FaceSettings} from './face-deformation'
 import {type CabinStatus, mountTrainCabin} from './train-cabin'
 import {useSeatedCharacters} from './use-seated-characters'
 import {createCameraMovement} from './camera-movement'
+import {measureModelBounds} from './measure-model-bounds'
 
 interface TrainCanvasProps {
   readonly autoRotate?: boolean
@@ -52,7 +53,6 @@ const CAMERA_DEFAULTS = {
   radius: 5,
   wheelDeltaPercentage: 0.01,
 } as const
-const CENTER_SCALE = 0.5
 const LOAD_PROGRESS_SCALE = 100
 const AMBIENT_LIGHT_COLOR = '#e8f7ff'
 const AMBIENT_GROUND_COLOR = '#241f33'
@@ -63,19 +63,11 @@ const KEY_LIGHT_DIRECTION = Vector3.Left().add(Vector3.Down()).add(Vector3.Backw
 const KEY_LIGHT_INTENSITY = 2.2
 
 const fitCamera = (camera: ArcRotateCamera, scene: Scene, container: AssetContainer) => {
-  const modelMeshes = new Set(container.meshes.filter((mesh) => mesh.getTotalVertices() > 0))
-
-  if (modelMeshes.size === 0) {
+  const bounds = measureModelBounds(scene, container)
+  if (bounds === null) {
     return
   }
-
-  const {max, min} = scene.getWorldExtends((mesh) => modelMeshes.has(mesh))
-  const center = min.add(max).scale(CENTER_SCALE)
-  const diameter = Vector3.Distance(min, max)
-
-  if (!Number.isFinite(diameter) || diameter <= 0) {
-    return
-  }
+  const {center, diameter} = bounds
 
   const radius = diameter * CAMERA_PADDING
   camera.setTarget(center)
@@ -228,14 +220,12 @@ export const TrainCanvas = (props: TrainCanvasProps) => {
       if (props.seatedCharacters !== undefined) {
         return
       }
-      /* eslint-disable prefer-destructuring -- Solid props stay tracked through direct access. */
       const modelUrl = props.modelUrl
       const cacheModels = props.cacheModels
       const onLoadError = props.onLoadError
       const onLoadProgress = props.onLoadProgress
       const onLoadStart = props.onLoadStart
       const onLoadSuccess = props.onLoadSuccess
-      /* eslint-enable prefer-destructuring */
       loadRevision += 1
       const revision = loadRevision
       unloadModel()

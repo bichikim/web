@@ -1,3 +1,5 @@
+import {useLocalizedMessage} from './locale/use-localized-message'
+import {useTranslations} from './locale/use-translations'
 import {createEffect, createSignal, onCleanup, Show} from 'solid-js'
 import type {useFileRenaming} from './use-file-renaming'
 
@@ -6,6 +8,8 @@ interface SRenameEntryDialogProps {
   readonly operations: ReturnType<typeof useFileRenaming>
 }
 export const SRenameEntryDialog = (props: SRenameEntryDialogProps) => {
+  const t = useTranslations()
+  const localize = useLocalizedMessage()
   const [element, setElement] = createSignal<HTMLDialogElement | null>(null)
   const [input, setInput] = createSignal<HTMLInputElement | null>(null)
   createEffect(() => {
@@ -60,15 +64,18 @@ export const SRenameEntryDialog = (props: SRenameEntryDialogProps) => {
     >
       <form onSubmit={submit}>
         <h2 id="rename-entry-title" class="m-0 text-base font-semibold">
-          이름 변경
+          {t('이름 변경')}
         </h2>
-        <p class="mt-2 break-all text-sm text-muted">위치: {props.operations.renaming()?.path}</p>
+        <p class="mt-2 break-all text-sm text-muted">
+          {t('위치:')}
+          {props.operations.renaming()?.path}
+        </p>
         <label class="block text-sm">
-          이름
+          {t('이름')}
           <input
             ref={setInput}
             autofocus
-            aria-label="이름"
+            aria-label={t('이름')}
             class="ui-field mt-2 block h-9 w-full px-3 text-sm outline-none"
             disabled={props.operations.renamePending()}
             value={props.operations.renameName()}
@@ -79,7 +86,7 @@ export const SRenameEntryDialog = (props: SRenameEntryDialogProps) => {
         </label>
         <Show when={props.operations.renaming() !== null && props.operations.renameFeedback()}>
           <p role="alert" class="mt-2 text-sm text-foreground">
-            {props.operations.renameFeedback()}
+            {localize(props.operations.renameFeedback() ?? '')}
           </p>
         </Show>
         <div class="mt-5 flex justify-end gap-2">
@@ -89,7 +96,7 @@ export const SRenameEntryDialog = (props: SRenameEntryDialogProps) => {
             disabled={props.operations.renamePending()}
             onClick={() => props.operations.cancelRename()}
           >
-            취소
+            {t('취소')}
           </button>
           <button
             type="submit"
@@ -98,7 +105,7 @@ export const SRenameEntryDialog = (props: SRenameEntryDialogProps) => {
               props.operations.renamePending() || props.operations.renameName().trim() === ''
             }
           >
-            {props.operations.renamePending() ? '변경 중…' : '변경'}
+            {props.operations.renamePending() ? t('변경 중…') : t('변경')}
           </button>
         </div>
       </form>

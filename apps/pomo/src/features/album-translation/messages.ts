@@ -1,6 +1,7 @@
 import type {
   TextGenerationErrorResponse,
   TextGenerationLoadingResponse,
+  TextGenerationSkippedResponse,
 } from '../text-generation/messages'
 
 export interface AlbumTranslationText {
@@ -30,6 +31,7 @@ export interface AlbumTranslationCompleteResponse {
 export type AlbumTranslationWorkerRequest = TranslateAlbumRequest
 
 export type AlbumTranslationWorkerResponse =
+  | TextGenerationSkippedResponse<AlbumTranslationWorkerRequest>
   | AlbumTranslationCompleteResponse
   | AlbumTranslationStartedResponse
   | TextGenerationErrorResponse

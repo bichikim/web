@@ -3,9 +3,9 @@ import {z} from 'zod'
 
 import {type AlbumCreationResult, type AlbumCreationServices} from './album-creation'
 import {ALBUM_LOCALES, type AlbumDraftData} from './album-draft'
+import {getAlbumDraftStorage} from './album-draft-persistence'
 import {uploadAlbumCover} from './cover-upload'
 
-const getAlbumDraftStorage = () => import('./album-draft-storage')
 const HTTP_CONFLICT = 409
 const payloadMismatchSchema = z.object({error: z.literal('album_creation_payload_mismatch')})
 

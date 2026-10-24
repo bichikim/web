@@ -1,12 +1,14 @@
 import {randomUUID} from 'node:crypto'
-import {statSync} from 'node:fs'
+import {realpathSync, statSync} from 'node:fs'
 import {resolve} from 'node:path'
 import {failure, type Result, success} from '../shared/contracts'
 import {createWorkspace} from './create-workspace'
 import {toolResult} from './tool-result'
+import {isWithin} from './file-access'
 const MAX_SESSIONS = 16
 
 interface SessionEvents {
+  workspaceRoot?: string
   onChange?: (session: string) => void
   onClose?: (session: string) => void
 }
@@ -32,6 +34,12 @@ export const createSessions = (events: SessionEvents = {}) => {
   }
   const connect = (path: string) => {
     try {
+      if (
+        events.workspaceRoot !== undefined &&
+        !isWithin(events.workspaceRoot, realpathSync(path))
+      ) {
+        return failure('outside-workspace')
+      }
       if (!statSync(path).isDirectory()) {
         return failure('not-found')
       }
@@ -40,14 +48,15 @@ export const createSessions = (events: SessionEvents = {}) => {
       return failure('read-failed')
     }
   }
-  const open = (path: string, line = 1, column = 1) => {
+  const open = (path: string, line = 1, column = 1, root?: string) => {
     try {
-      const workspace = createWorkspace(resolve(path))
+      const workspace = createWorkspace(events.workspaceRoot ?? root ?? resolve(path))
       const document = workspace.read(path, line, column)
       if (!document.ok) {
         workspace.dispose()
         return document
       }
+      workspace.warmNavigation(document.value.location.path)
       return success({...register(workspace), document: document.value})
     } catch (error) {
       return failure(

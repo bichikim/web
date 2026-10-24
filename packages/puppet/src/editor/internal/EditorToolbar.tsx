@@ -1,9 +1,9 @@
-import {EditorSegmentedField, useEditorPortalMount} from '../../design-system'
+import {WorkspaceNavigation} from '../../WorkspaceNavigation'
+import {EditorSegmentedField, EditorToggleButton, useEditorPortalMount} from '../../design-system'
 import {FileAction} from './FileAction'
 import {Popover} from '@kobalte/core/popover'
 import {Button} from '@kobalte/core/button'
 import {EditorHelp} from './EditorHelp'
-import {ToggleButton} from '@kobalte/core/toggle-button'
 import {createSignal, createUniqueId, For, onCleanup, Show} from 'solid-js'
 
 import type {PlayerCanvasStatus} from '../PlayerCanvas'
@@ -30,7 +30,12 @@ export interface EditorToolbarProps {
   readonly onWorkspaceChange?: (workspace: 'animation' | 'modeling') => void
   readonly panelVisibility?: EditorPanelVisibility
   readonly playerStatus: PlayerCanvasStatus
+  readonly onStudioOpen?: () => void
+  readonly onViewerOpen?: () => void
   readonly onExport: () => void
+  /** Exports with part images packed into shared texture atlas pages. */
+  readonly onAtlasExport?: () => void
+  readonly onRecoveryOpen?: (returnFocus: () => void) => void
   readonly onExampleOpen?: (example: PuppetExampleDocument) => void
   readonly onFileImport: (file: File | undefined) => void
   readonly onPsdReimport?: (file: File | undefined) => void
@@ -50,31 +55,35 @@ interface PanelVisibilityControlsProps {
 
 const PanelVisibilityControls = (props: PanelVisibilityControlsProps) => (
   <div class="panel-visibility-controls" aria-label="편집 패널 표시">
-    <ToggleButton
+    <EditorToggleButton
+      size="md"
       aria-label={props.visibility?.leftOpen === false ? '왼쪽 패널 열기' : '왼쪽 패널 닫기'}
       pressed={props.visibility?.leftOpen !== false}
       onClick={() => props.visibility?.onLeftToggle()}
     >
       <span aria-hidden="true" class="puppet-icon puppet-icon-layout-sidebar" />
-    </ToggleButton>
-    <ToggleButton
+    </EditorToggleButton>
+    <EditorToggleButton
+      size="md"
       aria-label={props.visibility?.rightOpen === false ? '오른쪽 패널 열기' : '오른쪽 패널 닫기'}
       pressed={props.visibility?.rightOpen !== false}
       onClick={() => props.visibility?.onRightToggle()}
     >
       <span aria-hidden="true" class="puppet-icon puppet-icon-layout-sidebar-right" />
-    </ToggleButton>
-    <ToggleButton
+    </EditorToggleButton>
+    <EditorToggleButton
+      size="md"
       aria-label={props.visibility?.bottomOpen === false ? '아래 프레임 열기' : '아래 프레임 닫기'}
       pressed={props.visibility?.bottomOpen !== false}
       onClick={() => props.visibility?.onBottomToggle()}
     >
       <span aria-hidden="true" class="puppet-icon puppet-icon-layout-bottombar" />
-    </ToggleButton>
+    </EditorToggleButton>
   </div>
 )
 
 interface ToolbarMenuProps {
+  readonly onRecoveryOpen?: (returnFocus: () => void) => void
   readonly examples?: ReadonlyArray<PuppetExampleDocument>
   readonly exportUrl?: string | null
   readonly canUndo?: boolean
@@ -83,24 +92,64 @@ interface ToolbarMenuProps {
   readonly historyRedoCount?: number
   readonly onUndo?: () => void
   readonly onRedo?: () => void
+  readonly onStudioOpen?: () => void
+  readonly onViewerOpen?: () => void
   readonly onExport: () => void
+  /** Exports with part images packed into shared texture atlas pages. */
+  readonly onAtlasExport?: () => void
   readonly onExampleOpen?: (example: PuppetExampleDocument) => void
   readonly onFileImport: (file: File | undefined) => void
   readonly onPsdReimport?: (file: File | undefined) => void
   readonly onFileOpen: (file: File | undefined) => void
 }
 
+/** A menu button that closes the menu and runs `onSelect`; hidden without it. */
+const MenuAction = (props: {
+  readonly label: string
+  readonly onClose: () => void
+  readonly onSelect?: () => void
+}) => (
+  <Show when={props.onSelect}>
+    {(select) => (
+      <Button
+        type="button"
+        onClick={() => {
+          props.onClose()
+          select()()
+        }}
+      >
+        {props.label}
+      </Button>
+    )}
+  </Show>
+)
+
 const ToolbarMenu = (props: ToolbarMenuProps) => {
+  const macPlatform = /Mac|iPhone|iPad|iPod/u.test(globalThis.navigator?.platform ?? '')
+  const undoShortcut = macPlatform ? '⌘Z' : 'Ctrl+Z'
+  const redoShortcut = macPlatform ? '⇧⌘Z' : 'Ctrl+Y'
   const [menuOpen, setMenuOpen] = createSignal(false)
+  const [trigger, setTrigger] = createSignal<HTMLButtonElement>()
   const portalMount = useEditorPortalMount()
+  const close = () => setMenuOpen(false)
   const handleExampleOpen = (example: PuppetExampleDocument) => {
     setMenuOpen(false)
     props.onExampleOpen?.(example)
   }
+  const handleRecoveryOpen = () => {
+    const element = trigger()
+    setMenuOpen(false)
+    props.onRecoveryOpen?.(() => element?.focus())
+  }
 
   return (
     <Popover forceMount open={menuOpen()} onOpenChange={setMenuOpen}>
-      <Popover.Trigger aria-label="메인 메뉴" class="toolbar-menu-trigger" type="button">
+      <Popover.Trigger
+        ref={setTrigger}
+        aria-label="메인 메뉴"
+        class="toolbar-menu-trigger"
+        type="button"
+      >
         <span aria-hidden="true" class="puppet-icon puppet-icon-menu-2" />
       </Popover.Trigger>
       <Popover.Portal mount={portalMount}>
@@ -138,16 +187,18 @@ const ToolbarMenu = (props: ToolbarMenuProps) => {
               </div>
             </details>
           </Show>
+          <Show when={props.onRecoveryOpen}>
+            <Button type="button" onClick={handleRecoveryOpen}>
+              복구 찾기
+            </Button>
+          </Show>
           <hr />
-          <Button
-            type="button"
-            onClick={() => {
-              setMenuOpen(false)
-              props.onExport()
-            }}
-          >
-            JSON 내보내기
-          </Button>
+          <MenuAction label="JSON 내보내기" onClose={close} onSelect={props.onExport} />
+          <MenuAction
+            label="텍스처 아틀라스로 JSON 내보내기"
+            onClose={close}
+            onSelect={props.onAtlasExport}
+          />
           <Show when={props.exportUrl}>
             {(url) => (
               <a href={url()} download="puppet-model.json">
@@ -155,10 +206,13 @@ const ToolbarMenu = (props: ToolbarMenuProps) => {
               </a>
             )}
           </Show>
+          <MenuAction label="Studio로 열기" onClose={close} onSelect={props.onStudioOpen} />
+          <MenuAction label="뷰어로 열기" onClose={close} onSelect={props.onViewerOpen} />
           <hr />
           <Button
-            aria-description={`${props.historyUndoCount ?? 0}단계 되돌릴 수 있음 · ⌘Z / Ctrl+Z`}
+            aria-description={`${props.historyUndoCount ?? 0}단계 되돌릴 수 있음 · ${undoShortcut}`}
             aria-label="실행 취소"
+            class="toolbar-menu-history-action"
             disabled={props.canUndo !== true || props.onUndo === undefined}
             type="button"
             onClick={() => {
@@ -166,11 +220,15 @@ const ToolbarMenu = (props: ToolbarMenuProps) => {
               props.onUndo?.()
             }}
           >
-            Undo
+            <span>Undo</span>
+            <span class="editor-context-menu-shortcut" aria-hidden="true">
+              {undoShortcut}
+            </span>
           </Button>
           <Button
-            aria-description={`${props.historyRedoCount ?? 0}단계 다시 실행할 수 있음 · ⇧⌘Z / Ctrl+Y`}
+            aria-description={`${props.historyRedoCount ?? 0}단계 다시 실행할 수 있음 · ${redoShortcut}`}
             aria-label="다시 실행"
+            class="toolbar-menu-history-action"
             disabled={props.canRedo !== true || props.onRedo === undefined}
             type="button"
             onClick={() => {
@@ -178,7 +236,10 @@ const ToolbarMenu = (props: ToolbarMenuProps) => {
               props.onRedo?.()
             }}
           >
-            Redo
+            <span>Redo</span>
+            <span class="editor-context-menu-shortcut" aria-hidden="true">
+              {redoShortcut}
+            </span>
           </Button>
           <hr />
           <EditorHelp onOpen={() => setMenuOpen(false)} />
@@ -190,21 +251,28 @@ const ToolbarMenu = (props: ToolbarMenuProps) => {
 
 export const EditorToolbar = (props: EditorToolbarProps) => (
   <header class="toolbar">
-    <ToolbarMenu
-      examples={props.examples}
-      exportUrl={props.exportUrl}
-      canUndo={props.canUndo}
-      canRedo={props.canRedo}
-      historyUndoCount={props.historyUndoCount}
-      historyRedoCount={props.historyRedoCount}
-      onUndo={props.onUndo}
-      onRedo={props.onRedo}
-      onExport={props.onExport}
-      onExampleOpen={props.onExampleOpen}
-      onFileImport={props.onFileImport}
-      onPsdReimport={props.onPsdReimport}
-      onFileOpen={props.onFileOpen}
-    />
+    <div class="toolbar-identity">
+      <ToolbarMenu
+        examples={props.examples}
+        exportUrl={props.exportUrl}
+        canUndo={props.canUndo}
+        canRedo={props.canRedo}
+        historyUndoCount={props.historyUndoCount}
+        historyRedoCount={props.historyRedoCount}
+        onUndo={props.onUndo}
+        onRedo={props.onRedo}
+        onStudioOpen={props.onStudioOpen}
+        onViewerOpen={props.onViewerOpen}
+        onExport={props.onExport}
+        onAtlasExport={props.onAtlasExport}
+        onRecoveryOpen={props.onRecoveryOpen}
+        onExampleOpen={props.onExampleOpen}
+        onFileImport={props.onFileImport}
+        onPsdReimport={props.onPsdReimport}
+        onFileOpen={props.onFileOpen}
+      />
+      <strong>Editor</strong>
+    </div>
     <Show when={props.setBrushSettingsMount}>
       {(setMount) => <BrushSettingsMount setMount={setMount()} />}
     </Show>
@@ -232,6 +300,13 @@ export const EditorToolbar = (props: EditorToolbarProps) => (
         onChange={props.onWorkspaceChange}
       />
       <PanelVisibilityControls visibility={props.panelVisibility} />
+      <Show when={props.onStudioOpen !== undefined || props.onViewerOpen !== undefined}>
+        <WorkspaceNavigation
+          current="editor"
+          onStudioOpen={props.onStudioOpen}
+          onViewerOpen={props.onViewerOpen}
+        />
+      </Show>
     </div>
   </header>
 )

@@ -73,6 +73,14 @@ describe('createWorkspace Ruby navigation', () => {
       value: [{line: 2, path: 'lib/helpers.rb'}],
     })
   }, 30000)
+  it('should retain a namespace usage within a class declaration', async () => {
+    const helper = readFileSync(join(root, 'lib/helpers.rb'), 'utf8')
+    writeFileSync(join(root, 'main.rb'), 'class Helpers::Preview\nend\n')
+    expect(await workspace.references('lib/helpers.rb', helper.indexOf('Helpers'))).toMatchObject({
+      ok: true,
+      value: expect.arrayContaining([expect.objectContaining({line: 1, path: 'main.rb'})]),
+    })
+  }, 30000)
   it('should synchronize changed source with UTF-16 positions without running the Ruby file', async () => {
     expect(await workspace.definitions('main.rb', source.lastIndexOf('greet'))).toMatchObject({
       ok: true,

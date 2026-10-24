@@ -7,6 +7,7 @@ import {restoreWeatherLocationNames} from '../location-names'
 import {
   createWeatherPreferenceRepository,
   DEFAULT_WEATHER_PREFERENCE,
+  type WeatherPreference,
   type WeatherPreferenceRepository,
   type WeatherPreferenceStorage,
 } from '../preference'
@@ -98,6 +99,23 @@ it('should persist and restore a browser preference', async () => {
   await expect(repository.read()).resolves.toEqual(disabledPreference)
   expect(webValues.get(STORAGE_KEY)).toEqual(disabledPreference)
   expect(storage.writeToss).not.toHaveBeenCalled()
+})
+
+it('should persist a selected location with its full coordinate identifier', async () => {
+  const preference = {
+    ...DEFAULT_WEATHER_PREFERENCE,
+    location: {
+      country: 'GB',
+      id: 'openweather:51.52001,-0.11001',
+      name: 'Location A',
+      region: 'England',
+    },
+  } satisfies WeatherPreference
+
+  await repository.write(preference)
+
+  expect(webValues.get(STORAGE_KEY)).toEqual(preference)
+  await expect(repository.read()).resolves.toEqual(preference)
 })
 
 it('should restore a toss preference and rebuild the browser copy', async () => {

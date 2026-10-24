@@ -6,7 +6,11 @@ import {createRustNavigation} from '../create-rust-navigation'
 const {createRustService, lookupSymbols, dispose} = vi.hoisted(() => {
   const lookupSymbols = vi.fn()
   const dispose = vi.fn()
-  return {createRustService: vi.fn(() => ({dispose, lookupSymbols})), dispose, lookupSymbols}
+  return {
+    createRustService: vi.fn(() => ({dispose, lookupSymbols, update: vi.fn()})),
+    dispose,
+    lookupSymbols,
+  }
 })
 vi.mock('../create-rust-service', () => ({createRustService}))
 
@@ -32,19 +36,13 @@ describe('createRustNavigation', () => {
   })
   it('should reuse an analyzer for a Cargo project and return workspace-relative targets', async () => {
     expect(
-      await navigation.lookupSymbols(
-        join(root, 'crate/src/main.rs'),
-        'fn main() {}',
-        3,
-        'definition',
-      ),
+      await navigation.lookupSymbols(join(root, 'crate/src/main.rs'), 'fn main() {}', 3, {
+        kind: 'definition',
+      }),
     ).toEqual({ok: true, value: [{column: 8, line: 1, path: 'crate/src/module.rs'}]})
-    await navigation.lookupSymbols(
-      join(root, 'crate/src/module.rs'),
-      'pub fn answer() {}',
-      7,
-      'definition',
-    )
+    await navigation.lookupSymbols(join(root, 'crate/src/module.rs'), 'pub fn answer() {}', 7, {
+      kind: 'definition',
+    })
     expect(createRustService).toHaveBeenCalledOnce()
     expect(createRustService).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -64,7 +62,9 @@ describe('createRustNavigation', () => {
       ],
     })
     expect(
-      await navigation.lookupSymbols(join(root, 'crate/src/main.rs'), 'main()', 0, 'definition'),
+      await navigation.lookupSymbols(join(root, 'crate/src/main.rs'), 'main()', 0, {
+        kind: 'definition',
+      }),
     ).toEqual({
       ok: true,
       value: [],
@@ -72,7 +72,9 @@ describe('createRustNavigation', () => {
   })
   it('should support standalone Rust files without a Cargo manifest', async () => {
     writeFileSync(join(root, 'example.rs'), 'fn main() {}')
-    await navigation.lookupSymbols(join(root, 'example.rs'), 'fn main() {}', 3, 'definition')
+    await navigation.lookupSymbols(join(root, 'example.rs'), 'fn main() {}', 3, {
+      kind: 'definition',
+    })
     expect(createRustService).toHaveBeenCalledWith(
       expect.objectContaining({
         crates: [expect.objectContaining({root_module: join(root, 'example.rs')})],
@@ -83,16 +85,22 @@ describe('createRustNavigation', () => {
   it('should propagate analyzer failures', async () => {
     lookupSymbols.mockResolvedValue({error: {code: 'rust-analyzer-unavailable'}, ok: false})
     expect(
-      await navigation.lookupSymbols(join(root, 'crate/src/main.rs'), 'main()', 0, 'definition'),
+      await navigation.lookupSymbols(join(root, 'crate/src/main.rs'), 'main()', 0, {
+        kind: 'definition',
+      }),
     ).toEqual({
       error: {code: 'rust-analyzer-unavailable'},
       ok: false,
     })
   })
   it('should replace the analyzer when the local crate graph changes', async () => {
-    await navigation.lookupSymbols(join(root, 'crate/src/main.rs'), 'fn main() {}', 3, 'definition')
+    await navigation.lookupSymbols(join(root, 'crate/src/main.rs'), 'fn main() {}', 3, {
+      kind: 'definition',
+    })
     writeFileSync(join(root, 'crate/src/lib.rs'), 'pub fn answer() {}')
-    await navigation.lookupSymbols(join(root, 'crate/src/main.rs'), 'fn main() {}', 3, 'definition')
+    await navigation.lookupSymbols(join(root, 'crate/src/main.rs'), 'fn main() {}', 3, {
+      kind: 'definition',
+    })
     expect(dispose).toHaveBeenCalledOnce()
     expect(createRustService).toHaveBeenCalledTimes(2)
   })
@@ -101,25 +109,21 @@ describe('createRustNavigation', () => {
     mkdirSync(join(root, 'helper/src'), {recursive: true})
     writeFileSync(join(root, 'helper/Cargo.toml'), '[package]\nname = "helper"\nedition = "2021"\n')
     writeFileSync(join(root, 'helper/src/lib.rs'), 'pub fn answer() {}')
-    await navigation.lookupSymbols(join(root, 'crate/src/main.rs'), 'fn main() {}', 3, 'definition')
-    await navigation.lookupSymbols(
-      join(root, 'helper/src/lib.rs'),
-      'pub fn answer() {}',
-      7,
-      'definition',
-    )
+    await navigation.lookupSymbols(join(root, 'crate/src/main.rs'), 'fn main() {}', 3, {
+      kind: 'definition',
+    })
+    await navigation.lookupSymbols(join(root, 'helper/src/lib.rs'), 'pub fn answer() {}', 7, {
+      kind: 'definition',
+    })
     expect(createRustService).toHaveBeenCalledOnce()
     expect(dispose).not.toHaveBeenCalled()
   })
   it('should reject navigation after disposal without starting another analyzer', async () => {
     navigation.dispose()
     expect(
-      await navigation.lookupSymbols(
-        join(root, 'crate/src/main.rs'),
-        'fn main() {}',
-        3,
-        'definition',
-      ),
+      await navigation.lookupSymbols(join(root, 'crate/src/main.rs'), 'fn main() {}', 3, {
+        kind: 'definition',
+      }),
     ).toEqual({
       error: {code: 'rust-analysis-failed'},
       ok: false,

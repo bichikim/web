@@ -1,3 +1,4 @@
+import {withAbort} from './with-abort'
 import {spawn} from 'node:child_process'
 import {pathToFileURL} from 'node:url'
 import {
@@ -10,33 +11,46 @@ import {
   type CodeLocation,
   type Failure,
   failure,
-  type NavigationKind,
   type Result,
   success,
   type ViewerError,
 } from '../shared/contracts'
-import {readDefinitionLocations} from './lsp/read-definition-locations'
+import {requestSymbols} from './lsp/request-symbols'
 import {readConfiguration} from './lsp/read-configuration'
-import {createDocumentSync} from './lsp/create-document-sync'
-import {offsetPosition} from './lsp/offset-position'
+import {createWorkspaceSync} from './lsp/create-workspace-sync'
+import type {SourceChange, SymbolLookup} from './types'
 
+interface LspLookup extends SymbolLookup {
+  readonly indexed?: boolean
+  readonly retainDrafts?: boolean
+}
 interface LspReadiness {
   readonly method: string
   readonly complete: (value: unknown) => boolean
 }
 interface LspService {
+  /** Queries an analyzer-discovered document without opening it or replacing the active draft. */
+  lookupIndexedSymbols(
+    path: string,
+    source: string,
+    offset: number,
+    lookup: LspLookup,
+  ): Promise<Result<CodeLocation[]>>
   lookupSymbols(
     path: string,
     source: string,
     offset: number,
-    kind: NavigationKind,
+    lookup: LspLookup,
   ): Promise<Result<CodeLocation[]>>
   dispose(): void
+  update(root: string, changes: readonly SourceChange[]): void
 }
 interface CreateLspServiceOptions {
   readonly command: string
   readonly arguments: readonly string[]
   readonly directory: string
+  readonly environment?: NodeJS.ProcessEnv
+  readonly onStop?: () => void
   readonly language: string
   readonly processGroup?: boolean
   readonly positionEncoding?: 'utf-16' | 'utf-32'
@@ -59,6 +73,7 @@ export const createLspService = (options: CreateLspServiceOptions): LspService =
   const grouped = options.processGroup === true && process.platform !== 'win32'
   const child = spawn(options.command, [...options.arguments], {
     cwd: options.directory,
+    ...(options.environment === undefined ? {} : {env: options.environment}),
     ...(grouped ? {detached: true} : {}),
     stdio: 'pipe',
   })
@@ -67,12 +82,12 @@ export const createLspService = (options: CreateLspServiceOptions): LspService =
     new StreamMessageWriter(child.stdin),
   )
   const ready = Promise.withResolvers<Result<void>>()
-  const documents = createDocumentSync(
+  const documents = createWorkspaceSync({
     connection,
-    options.language,
-    options.positionEncoding,
-    options.waitForReferenceDiagnostics,
-  )
+    diagnostics: options.waitForReferenceDiagnostics,
+    encoding: options.positionEncoding,
+    language: options.language,
+  })
   let terminal: Failure | undefined
   let initialized = false
   let incremental = false
@@ -93,6 +108,7 @@ export const createLspService = (options: CreateLspServiceOptions): LspService =
     } else {
       child.kill()
     }
+    options.onStop?.()
   }
   child.stderr.resume()
   child.once('error', () => stop(failure(options.unavailable)))
@@ -143,9 +159,11 @@ export const createLspService = (options: CreateLspServiceOptions): LspService =
     path: string,
     source: string,
     offset: number,
-    kind: NavigationKind,
+    lookup: LspLookup,
   ): Promise<Result<CodeLocation[]>> => {
-    const prepared = await initialization
+    const {kind, draft = false} = lookup
+    const synchronize = lookup.indexed !== true
+    const prepared = await withAbort(initialization, lookup.signal)
     if (!prepared.ok) {
       return prepared
     }
@@ -153,20 +171,29 @@ export const createLspService = (options: CreateLspServiceOptions): LspService =
       return terminal
     }
     try {
-      const uri = await documents.synchronize(path, source, incremental)
-      if (kind === 'references') {
-        await documents.waitForAnalysis(uri)
+      const uri = synchronize
+        ? await documents.synchronize(path, source, incremental, {
+            draft,
+            retainDrafts: lookup.retainDrafts,
+          })
+        : pathToFileURL(path).href
+      if (synchronize && kind === 'references') {
+        await withAbort(documents.waitForAnalysis(uri), lookup.signal)
       }
       if (terminal !== undefined) {
         return terminal
       }
-      const targets = await connection.sendRequest<unknown>(`textDocument/${kind}`, {
-        ...(kind === 'references' ? {context: {includeDeclaration: false}} : {}),
-        position: offsetPosition(source, offset, options.positionEncoding),
-        textDocument: {uri},
+      return await requestSymbols({
+        connection,
+        encoding: options.positionEncoding,
+        failed: options.failed,
+        offset,
+        request: lookup,
+        source,
+        uri,
       })
-      return readDefinitionLocations(targets, options.failed)
     } catch {
+      lookup.signal?.throwIfAborted()
       return terminal ?? failure(options.failed)
     }
   }
@@ -175,11 +202,20 @@ export const createLspService = (options: CreateLspServiceOptions): LspService =
     path: string,
     source: string,
     offset: number,
-    kind: NavigationKind,
+    request: LspLookup,
   ): Promise<Result<CodeLocation[]>> => {
-    const result = pending.then(() => lookup(path, source, offset, kind))
-    pending = result.then(() => undefined)
-    return result
+    const result = pending.then(() => lookup(path, source, offset, request))
+    pending = result.then(
+      () => undefined,
+      () => undefined,
+    )
+    return withAbort(result, request.signal)
   }
-  return {dispose: () => stop(failure(options.failed)), lookupSymbols}
+  return {
+    dispose: () => stop(failure(options.failed)),
+    lookupIndexedSymbols: (path, source, offset, request) =>
+      lookupSymbols(path, source, offset, {...request, indexed: true}),
+    lookupSymbols,
+    update: documents.update,
+  }
 }

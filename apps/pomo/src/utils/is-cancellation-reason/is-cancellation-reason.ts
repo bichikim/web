@@ -1,7 +1,7 @@
-/** Identifies an AbortError by its standard name across runtime error classes. */
+/** 런타임의 오류 클래스와 관계없이 표준 이름으로 AbortError를 판별한다. */
 export const isAbortError = (value: unknown): boolean =>
   typeof value === 'object' && value !== null && 'name' in value && value.name === 'AbortError'
 
-/** Identifies an AbortError or the exact reason of an aborted signal. */
+/** AbortError이거나 취소된 신호의 사유와 정확히 같은지 판별한다. */
 export const isCancellationReason = (value: unknown, signal?: AbortSignal | null): boolean =>
   isAbortError(value) || (signal?.aborted === true && value === signal.reason)

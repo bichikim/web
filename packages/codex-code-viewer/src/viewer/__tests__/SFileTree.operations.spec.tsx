@@ -191,7 +191,7 @@ describe('SFileTree file operations', () => {
     render(() => <SFileTree port={port} session={session} visible />)
     const source = await screen.findByRole('treeitem', {name: 'main.ts'})
     fireEvent.keyDown(source, {ctrlKey: true, key: 'x'})
-    await screen.findByText(/잘라내기했습니다/u)
+    await screen.findByText(/잘라냈습니다/u)
     expect(source).toHaveClass('opacity-50')
     fireEvent.keyDown(screen.getByRole('treeitem', {name: 'dest'}), {ctrlKey: true, key: 'v'})
     await screen.findByText(/dest\/main.ts · 붙여넣었습니다/u)

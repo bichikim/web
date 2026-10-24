@@ -1,15 +1,11 @@
 import {existsSync} from 'node:fs'
 import {dirname, join, relative, resolve} from 'node:path'
-import {
-  type CodeLocation,
-  failure,
-  type NavigationKind,
-  type Result,
-  success,
-} from '../shared/contracts'
+import {type CodeLocation, failure, type Result, success} from '../shared/contracts'
 import {createRubyService} from './create-ruby-service'
 import {isWithin, readSource, resolveFile} from './file-access'
 import {readRubyRequire} from './read-ruby-require'
+import {isRubyDeclaration} from './is-ruby-declaration'
+import type {SourceChange, SymbolLookup} from './types'
 
 export const createRubyNavigation = (root: string) => {
   const services = new Map<string, ReturnType<typeof createRubyService>>()
@@ -32,8 +28,9 @@ export const createRubyNavigation = (root: string) => {
     path: string,
     source: string,
     offset: number,
-    kind: NavigationKind,
+    lookup: SymbolLookup,
   ): Promise<Result<CodeLocation[]>> => {
+    const {kind} = lookup
     if (disposed) {
       return failure('ruby-analysis-failed')
     }
@@ -43,7 +40,7 @@ export const createRubyNavigation = (root: string) => {
       const file = resolveFile(root, resolve(dirname(path), `${required.path}${extension}`))
       return success(file.ok ? [{column: 1, line: 1, path: relative(root, file.value)}] : [])
     }
-    const directory = projectRoot(path)
+    const directory = kind === 'references' ? root : projectRoot(path)
     let service = services.get(directory)
     if (service === undefined) {
       try {
@@ -53,25 +50,32 @@ export const createRubyNavigation = (root: string) => {
         return failure('ruby-analyzer-unavailable')
       }
     }
-    const result = await service.lookupSymbols(path, source, offset, kind)
-    if (!result.ok) {
-      return result
-    }
-    return success(
-      result.value.flatMap((target) => {
+    const normalize = (targets: readonly CodeLocation[]): CodeLocation[] =>
+      targets.flatMap((target) => {
         const file = resolveFile(root, target.path)
         if (!file.ok) {
           return []
         }
-        const document = readSource(root, file.value)
+        const document = file.value === path ? success(source) : readSource(root, file.value)
         if (!document.ok) {
           return []
         }
         const line = document.value.split(/\r\n|\n|\r/u)[target.line - 1] ?? ''
         const column = [...line].slice(0, target.column - 1).join('').length + 1
+        if (kind === 'references' && isRubyDeclaration(line, column)) {
+          return []
+        }
         return [{...target, column, path: relative(root, file.value)}]
-      }),
-    )
+      })
+    const progress =
+      lookup.receive === undefined
+        ? lookup
+        : {
+            ...lookup,
+            receive: (targets: readonly CodeLocation[]) => lookup.receive?.(normalize(targets)),
+          }
+    const result = await service.lookupSymbols(path, source, offset, progress)
+    return result.ok ? success(normalize(result.value)) : result
   }
   const dispose = (): void => {
     if (disposed) {
@@ -83,5 +87,16 @@ export const createRubyNavigation = (root: string) => {
     }
     services.clear()
   }
-  return {dispose, lookupSymbols}
+  return {
+    dispose,
+    lookupSymbols,
+    update: (changes: readonly SourceChange[]) => {
+      for (const [directory, service] of services) {
+        service.update(
+          root,
+          changes.filter((change) => isWithin(directory, change.path)),
+        )
+      }
+    },
+  }
 }

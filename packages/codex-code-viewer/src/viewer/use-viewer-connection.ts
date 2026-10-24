@@ -1,4 +1,4 @@
-import {type Accessor, onCleanup} from 'solid-js'
+import {type Accessor, createSignal, onCleanup} from 'solid-js'
 import type {ViewerConnection} from '../shared/contracts'
 import type {ViewerPort} from './types'
 import {useWorkspaceUpdates} from './use-workspace-updates'
@@ -6,7 +6,7 @@ import {createPendingTasks} from './create-pending-tasks'
 
 interface ConnectionOptions {
   port: ViewerPort
-  receive: (session: ViewerConnection) => void
+  receive: Parameters<ViewerPort['start']>[0]
   refresh: () => Promise<void>
   report: (error: unknown) => void
   session: Accessor<ViewerConnection | null>
@@ -15,6 +15,7 @@ interface ConnectionOptions {
 }
 
 export const useViewerConnection = (connection: ConnectionOptions): Accessor<number> => {
+  const [ready, setReady] = createSignal(false)
   let disposed = false
   let disposePort: (() => void) | null = null
   let released = false
@@ -31,11 +32,11 @@ export const useViewerConnection = (connection: ConnectionOptions): Accessor<num
       disposePort()
     }
   }
-  const receive = (value: ViewerConnection): void => {
+  const receive: ConnectionOptions['receive'] = (value, navigation): void => {
     if (disposed) {
       closeSession(value)
     } else {
-      connection.receive(value)
+      connection.receive(value, navigation)
     }
   }
   const refresh = (): void => {
@@ -46,6 +47,7 @@ export const useViewerConnection = (connection: ConnectionOptions): Accessor<num
   const teardown = async (): Promise<void> => {
     if (!disposed) {
       disposed = true
+      setReady(false)
       const current = connection.session()
       if (current !== null) {
         closeSession(current)
@@ -65,6 +67,7 @@ export const useViewerConnection = (connection: ConnectionOptions): Accessor<num
       if (disposed) {
         return finish()
       }
+      setReady(true)
     })
     .catch(connection.report)
   const revision = useWorkspaceUpdates({
@@ -72,7 +75,7 @@ export const useViewerConnection = (connection: ConnectionOptions): Accessor<num
     port: connection.port,
     refresh: connection.refresh,
     report: connection.report,
-    session: connection.session,
+    session: () => (ready() ? connection.session() : null),
   })
   onCleanup(() => {
     teardown().then(finish).catch(connection.report)

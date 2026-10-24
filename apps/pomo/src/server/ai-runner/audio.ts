@@ -1,5 +1,6 @@
 import {decodePcm16Wav} from '../../utils/decode-pcm16-wav/index.ts'
 import {encodeMonoPcm16Wav} from '../../utils/encode-mono-pcm16-wav/index.ts'
+import {mixToMono} from '../../utils/mix-to-mono/index.ts'
 // oxlint-disable no-magic-numbers -- WAV offsets and PCM ranges are fixed by the audio format.
 
 import {RunnerExecutionError} from './errors.ts'
@@ -23,7 +24,7 @@ export const decodePcmWav = (bytes: Uint8Array): DecodedAudio => {
   if (decoded.sampleRate < MINIMUM_SAMPLE_RATE) {
     throw new RunnerExecutionError('invalid-audio', 'The WAV sample rate must be at least 8000 Hz')
   }
-  return {sampleRate: decoded.sampleRate, samples: decoded.samples}
+  return {sampleRate: decoded.sampleRate, samples: mixToMono(decoded)}
 }
 
 export const resampleAudio = (audio: DecodedAudio, targetSampleRate: number): Float32Array => {

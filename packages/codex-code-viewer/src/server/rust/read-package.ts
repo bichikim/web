@@ -1,5 +1,5 @@
 import {globSync} from 'node:fs'
-import {dirname, resolve} from 'node:path'
+import {basename, dirname, resolve} from 'node:path'
 import {resolveFile} from '../file-access'
 import {describePackage, type DescribePackageOptions} from './describe-package'
 import {selectTargets} from './select-targets'
@@ -22,8 +22,27 @@ export const readPackage = (options: ReadPackageOptions): RustPackage | undefine
       : globSync(['src/bin/*.rs', 'src/bin/*/main.rs'], {cwd: directory}).map((path) =>
           resolve(directory, path),
         )
+  const development = (
+    [
+      {enabled: options.manifest.package?.autotests, folder: 'tests', kind: 'test'},
+      {enabled: options.manifest.package?.autoexamples, folder: 'examples', kind: 'example'},
+      {enabled: options.manifest.package?.autobenches, folder: 'benches', kind: 'bench'},
+    ] as const
+  ).flatMap(({enabled, folder, kind}) =>
+    (enabled ?? description.discovery)
+      ? globSync([`${folder}/*.rs`, `${folder}/*/main.rs`], {cwd: directory}).flatMap((path) => {
+          const name = (
+            basename(path) === 'main.rs' ? basename(dirname(path)) : basename(path, '.rs')
+          ).replaceAll('-', '_')
+          return description.targets.some((target) => target.kind === kind && target.name === name)
+            ? []
+            : [{kind, name, paths: [resolve(directory, path)]}]
+        })
+      : [],
+  )
+  const configured = [...description.targets, ...development]
   const paths = [
-    ...description.targets.flatMap((target) => target.paths),
+    ...configured.flatMap((target) => target.paths),
     ...(description.automatic?.paths ?? []),
     ...binaries,
   ]
@@ -36,13 +55,20 @@ export const readPackage = (options: ReadPackageOptions): RustPackage | undefine
   const targets = selectTargets({
     automatic: description.automatic,
     binaries,
-    configured: description.targets,
+    configured,
     files,
   })
   const dependencies = description.dependencies.flatMap((dependency) => {
     const resolved = resolveFile(root, dependency.manifest)
     return resolved.ok
-      ? [{directory: dirname(resolved.value), name: dependency.name, renamed: dependency.renamed}]
+      ? [
+          {
+            ...(dependency.development === true ? {development: true} : {}),
+            directory: dirname(resolved.value),
+            name: dependency.name,
+            renamed: dependency.renamed,
+          },
+        ]
       : []
   })
   return {cfg: description.cfg, dependencies, directory, edition: description.edition, targets}

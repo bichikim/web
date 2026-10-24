@@ -25,10 +25,10 @@ describe('createEntry', () => {
     rmSync(root, {force: true, recursive: true})
     rmSync(outside, {force: true, recursive: true})
   })
-  it('should create an empty sibling file and retain empty directories in fresh tree listings', () => {
+  it('should create an empty sibling file and retain empty directories in fresh tree listings', async () => {
     const index = createFileIndex(root)
     try {
-      index.tree()
+      await index.tree()
       expect(createEntry({kind: 'file', name: 'new.ts', parent: 'src', root})).toEqual({
         ok: true,
         value: {kind: 'file', path: 'src/new.ts'},
@@ -38,7 +38,7 @@ describe('createEntry', () => {
         ok: true,
         value: {kind: 'directory', path: 'src/empty'},
       })
-      expect(index.tree()).toMatchObject({
+      expect(await index.tree()).toMatchObject({
         directories: ['src', 'src/empty'],
         files: [{openable: true, path: 'src/new.ts'}],
       })
@@ -46,7 +46,7 @@ describe('createEntry', () => {
       index.dispose()
     }
   })
-  it('should reject existing files, directories and symlinks without changing their contents', () => {
+  it('should reject existing files, directories and symlinks without changing their contents', async () => {
     writeFileSync(join(root, 'keep.ts'), 'keep')
     symlinkSync(join(outside, 'missing'), join(root, 'link.ts'))
     for (const name of ['keep.ts', 'src', 'link.ts']) {
@@ -72,13 +72,13 @@ describe('createEntry', () => {
     'dist',
     '.env',
     'a\0b',
-  ])('should reject invalid or undiscoverable names: %j', (name) => {
+  ])('should reject invalid or undiscoverable names: %j', async (name) => {
     expect(createEntry({kind: 'file', name, parent: '', root})).toMatchObject({
       error: {code: 'invalid-name'},
       ok: false,
     })
   })
-  it('should reject outside and private parents including symlink aliases', () => {
+  it('should reject outside and private parents including symlink aliases', async () => {
     mkdirSync(join(root, '.git'))
     symlinkSync(outside, join(root, 'outside'))
     symlinkSync(join(root, '.git'), join(root, 'private'))
@@ -91,7 +91,7 @@ describe('createEntry', () => {
     expect(existsSync(join(outside, 'new.ts'))).toBe(false)
     expect(existsSync(join(root, '.git/new.ts'))).toBe(false)
   })
-  it('should permit named dotfiles but reject hidden directories that would not appear in the tree', () => {
+  it('should permit named dotfiles but reject hidden directories that would not appear in the tree', async () => {
     expect(createEntry({kind: 'file', name: '.gitignore', parent: '', root})).toMatchObject({
       ok: true,
     })
@@ -103,7 +103,7 @@ describe('createEntry', () => {
       createEntry({kind: 'file', name: 'new.ts', parent: '.dockerignore', root}),
     ).toMatchObject({error: {code: 'outside-workspace'}, ok: false})
   })
-  it('should report a missing parent without creating intermediate folders', () => {
+  it('should report a missing parent without creating intermediate folders', async () => {
     expect(createEntry({kind: 'file', name: 'new.ts', parent: 'missing', root})).toMatchObject({
       error: {code: 'create-failed'},
       ok: false,

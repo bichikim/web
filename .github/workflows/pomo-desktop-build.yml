@@ -1,0 +1,185 @@
+name: Build Pomo Desktop
+
+on:
+  workflow_dispatch:
+
+run-name: Build Pomo Desktop from ${{ github.ref_name }}
+
+concurrency:
+  group: pomo-desktop-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  NODE_VERSION: '24.x'
+  PNPM_VERSION: 11.8.0
+
+jobs:
+  build:
+    name: Build ${{ matrix.target }}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: macos-latest
+            target: aarch64-apple-darwin
+            bundles: dmg
+            extension: dmg
+            config: '{"bundle":{"icon":["icons/icon.icns"],"macOS":{"signingIdentity":"-"}}}'
+          - runner: macos-latest
+            target: x86_64-apple-darwin
+            bundles: dmg
+            extension: dmg
+            config: '{"bundle":{"icon":["icons/icon.icns"],"macOS":{"signingIdentity":"-"}}}'
+          - runner: windows-latest
+            target: x86_64-pc-windows-msvc
+            bundles: nsis
+            extension: exe
+            config: '{"bundle":{"icon":["icons/icon.ico"]}}'
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Cache Rust build
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: apps/pomo/src-tauri -> target
+          key: ${{ matrix.target }}
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build desktop installer
+        env:
+          POMO_ENVIRONMENT: production
+          POMO_RELEASE: ${{ github.sha }}
+          POMO_PUBLIC_ORIGIN: https://www.pomofi.io
+          BUILD_TARGET: ${{ matrix.target }}
+          BUILD_BUNDLES: ${{ matrix.bundles }}
+          BUNDLE_CONFIG: ${{ matrix.config }}
+        run: |
+          pnpm --filter @apps/pomo exec tauri build --ci \
+            --target "$BUILD_TARGET" --bundles "$BUILD_BUNDLES" \
+            --config "$BUNDLE_CONFIG" -- --locked
+
+      - name: Upload installer
+        id: installer
+        uses: actions/upload-artifact@v7
+        with:
+          name: pomo-desktop-${{ matrix.target }}-${{ github.run_id }}
+          overwrite: true
+          path: apps/pomo/src-tauri/target/${{ matrix.target }}/release/bundle/${{ matrix.bundles }}/*.${{ matrix.extension }}
+          if-no-files-found: error
+          retention-days: 30
+          compression-level: 0
+
+      - name: Summarize download
+        env:
+          ARTIFACT_URL: ${{ steps.installer.outputs.artifact-url }}
+          BUILD_TARGET: ${{ matrix.target }}
+        run: |
+          echo "[Download ${BUILD_TARGET} installer](${ARTIFACT_URL}) (retained for 30 days)." >> "$GITHUB_STEP_SUMMARY"
+
+  release:
+    name: Collect installers in draft release
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout build source
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Prepare release metadata
+        id: metadata
+        run: |
+          node --input-type=module <<'NODE'
+          import {appendFileSync, readFileSync} from 'node:fs'
+          const {version} = JSON.parse(readFileSync('apps/pomo/src-tauri/tauri.conf.json', 'utf8'))
+          const tag = `pomo-desktop-v${version}-build.${process.env.GITHUB_RUN_ID}`
+          appendFileSync(process.env.GITHUB_OUTPUT, `tag=${tag}\nversion=${version}\n`)
+          NODE
+
+      - name: Download installers
+        uses: actions/download-artifact@v8
+        with:
+          pattern: pomo-desktop-*-${{ github.run_id }}
+          path: installers
+          merge-multiple: true
+
+      - name: Create tag for build commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ steps.metadata.outputs.tag }}
+        run: |
+          if tag_sha=$(gh api "repos/${GH_REPO}/git/ref/tags/${RELEASE_TAG}" --jq '.object.sha'); then
+            test "$tag_sha" = "$GITHUB_SHA" || {
+              echo "::error::The release tag already points to a different commit."
+              exit 1
+            }
+          else
+            gh api --method POST "repos/${GH_REPO}/git/refs" \
+              -f "ref=refs/tags/${RELEASE_TAG}" -f "sha=${GITHUB_SHA}" > /dev/null
+          fi
+
+      - name: Create or update draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ steps.metadata.outputs.tag }}
+          RELEASE_VERSION: ${{ steps.metadata.outputs.version }}
+        run: |
+          if gh release view "$RELEASE_TAG" --json isDraft > release.json; then
+            jq -e '.isDraft == true' release.json > /dev/null || {
+              echo "::error::Refusing to replace installers in an already published release."
+              exit 1
+            }
+          else
+            cat > release-notes.md <<'NOTES'
+          Pomo Desktop installers for macOS (Apple Silicon / Intel) and Windows x64.
+
+          macOS builds use ad-hoc signing and are not notarized. Installation may require approval in Privacy & Security settings. Windows builds are unsigned and may show a SmartScreen warning.
+
+          Windows desktop integration has partial platform support. Linux is not included.
+          NOTES
+            gh release create "$RELEASE_TAG" --verify-tag --draft \
+              --title "Pomo Desktop ${RELEASE_VERSION} (build ${GITHUB_RUN_NUMBER})" \
+              --notes-file release-notes.md
+          fi
+          gh release upload "$RELEASE_TAG" installers/* --clobber
+          gh release view "$RELEASE_TAG" --json url --jq '"[Review draft release](" + .url + ")"' >> "$GITHUB_STEP_SUMMARY"

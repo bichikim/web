@@ -2,7 +2,10 @@
 import {listenTextGenerationRequests} from '../text-generation/listen-text-generation-requests'
 import {unwrapGenerationResult} from '../text-generation/unwrap-generation-result'
 
-import {createExclusiveAsyncTask} from 'src/utils/create-exclusive-async-task'
+import {
+  createExclusiveAsyncTask,
+  type ExclusiveAsyncTaskResult,
+} from 'src/utils/create-exclusive-async-task'
 import {
   createDeviceTarget,
   createRequestSequence,
@@ -246,7 +249,9 @@ const generateAnswer = async (options: GenerateAnswerOptions) => {
   })
 }
 
-const handleRequest = async (request: ChatWorkerRequest): Promise<void> => {
+const handleRequest = async (
+  request: ChatWorkerRequest,
+): Promise<ExclusiveAsyncTaskResult | void> => {
   switch (request.type) {
     case 'generate':
       return generation.run(() => generateAnswer(request))
@@ -262,5 +267,6 @@ listenTextGenerationRequests<ChatWorkerRequest>({
   fallback: FAILURE_MESSAGE,
   handle: handleRequest,
   onError: sendResponse,
+  onSkipped: (request) => sendResponse({reason: 'busy', request, type: 'skipped'}),
   scope: workerScope,
 })

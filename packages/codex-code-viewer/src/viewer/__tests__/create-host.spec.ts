@@ -5,33 +5,378 @@ import {afterEach, describe, expect, it, vi} from 'vitest'
 import {createRoot} from 'solid-js'
 import {createHost} from '../create-host'
 import {useViewer} from '../use-viewer'
+import {initial} from './fixtures/viewer'
 
 describe('createHost', () => {
   afterEach(() => vi.restoreAllMocks())
 
-  it('should subscribe to workspace signals through its server tool and close the local event stream', async () => {
-    const events = Object.assign(new EventTarget(), {close: vi.fn()})
+  it('should serialize tree writes and finish them before closing the host', async () => {
+    vi.spyOn(App.prototype, 'connect').mockResolvedValue()
+    const close = vi.spyOn(App.prototype, 'close').mockResolvedValue()
+    const setter = vi.spyOn(App.prototype, 'onteardown', 'set')
+    const blocked = Promise.withResolvers<{content: []; structuredContent: {visible: boolean}}>()
+    const started = Promise.withResolvers<void>()
+    const call = vi
+      .spyOn(App.prototype, 'callServerTool')
+      .mockImplementationOnce(() => {
+        started.resolve()
+        return blocked.promise
+      })
+      .mockResolvedValue({content: [], structuredContent: {expanded: []}})
+    const host = createHost()
+    expect(createHost({integration: 'standard'}).saveTreeState).toBeUndefined()
+    const stop = await host.start(vi.fn(), vi.fn(), vi.fn())
+    const first = host.saveTreeState?.('one', {visible: false})
+    const second = host.saveTreeState?.('one', {expanded: []})
+    const closingSession = host.call('code.close', {session: 'one'})
+    const teardown = setter.mock.calls[0][0]?.(
+      {},
+      {
+        requestId: 'teardown',
+        sendNotification: vi.fn(),
+        sendRequest: vi.fn(),
+        signal: new AbortController().signal,
+      },
+    )
+    const closing = stop()
+    await started.promise
+    expect(call).toHaveBeenCalledTimes(1)
+    expect(close).not.toHaveBeenCalled()
+    blocked.resolve({content: [], structuredContent: {visible: false}})
+    await Promise.all([first, second, closingSession, closing, teardown])
+    expect(call.mock.calls.map(([input]) => input)).toEqual([
+      {arguments: {patch: {visible: false}, session: 'one'}, name: 'code.tree-state'},
+      {arguments: {patch: {expanded: []}, session: 'one'}, name: 'code.tree-state'},
+      {arguments: {session: 'one'}, name: 'code.close'},
+    ])
+    expect(close).toHaveBeenCalledOnce()
+  })
+
+  it('should attach through the current Browser session only when native composer integration is enabled', async () => {
+    vi.spyOn(App.prototype, 'connect').mockResolvedValue()
+    vi.spyOn(App.prototype, 'close').mockResolvedValue()
+    const listeners = vi.spyOn(App.prototype, 'addEventListener')
+    const call = vi.spyOn(App.prototype, 'callServerTool').mockResolvedValue({content: []})
+    expect(createHost({composerAttachment: true}).attachContextFiles).toBeUndefined()
+    const host = createHost({composerAttachment: true, integration: 'standard'})
+    await expect(host.attachContextFiles?.()).rejects.toThrow('파일을 먼저')
+    const stop = await host.start(vi.fn(), vi.fn(), vi.fn())
+    listeners.mock.calls
+      .filter(([event]) => event === 'toolresult')
+      .forEach(([, listener]) => listener({structuredContent: {...initial}}))
+    await host.attachContextFiles?.()
+    expect(call).toHaveBeenCalledWith({
+      arguments: {session: initial.session},
+      name: 'code.attach-to-composer',
+    })
+    call.mockResolvedValueOnce({
+      content: [],
+      isError: true,
+      structuredContent: {code: 'composer-target-missing'},
+    })
+    await expect(host.attachContextFiles?.()).rejects.toThrow('이 뷰어가 열린 Claude Code 세션')
+    await stop()
+  })
+
+  it('should expose native file copy only for an enabled standard host and its current session', async () => {
+    vi.spyOn(App.prototype, 'connect').mockResolvedValue()
+    vi.spyOn(App.prototype, 'close').mockResolvedValue()
+    const listeners = vi.spyOn(App.prototype, 'addEventListener')
+    const call = vi.spyOn(App.prototype, 'callServerTool').mockResolvedValue({content: []})
+    expect(createHost().copyContextFiles).toBeUndefined()
+    expect(createHost({integration: 'standard'}).copyContextFiles).toBeUndefined()
+    const host = createHost({fileClipboard: true, integration: 'standard'})
+    await expect(host.copyContextFiles?.()).rejects.toThrow('파일을 먼저')
+    const stop = await host.start(vi.fn(), vi.fn(), vi.fn())
+    listeners.mock.calls
+      .filter(([event]) => event === 'toolresult')
+      .forEach(([, listener]) => listener({structuredContent: {...initial}}))
+    await host.copyContextFiles?.()
+    expect(call).toHaveBeenCalledWith({
+      arguments: {session: initial.session},
+      name: 'code.copy-attachments',
+    })
+    call.mockResolvedValueOnce({
+      content: [],
+      isError: true,
+      structuredContent: {code: 'clipboard-unavailable'},
+    })
+    await expect(host.copyContextFiles?.()).rejects.toThrow('클립보드')
+    await stop()
+  })
+
+  it('should attach a selected file directly without staging it or changing model context', async () => {
+    vi.spyOn(App.prototype, 'connect').mockResolvedValue()
+    vi.spyOn(App.prototype, 'close').mockResolvedValue()
+    const listeners = vi.spyOn(App.prototype, 'addEventListener')
+    const call = vi.spyOn(App.prototype, 'callServerTool').mockResolvedValue({content: []})
+    const update = vi.spyOn(App.prototype, 'updateModelContext')
+    const host = createHost({composerAttachment: true, integration: 'standard'})
+    const receive = vi.fn()
+    host.subscribeContext?.(receive)
+    const stop = await host.start(vi.fn(), vi.fn(), vi.fn())
+    listeners.mock.calls
+      .filter(([event]) => event === 'toolresult')
+      .forEach(([, listener]) => listener({structuredContent: {...initial}}))
+    await host.attachSelection?.({kind: 'file', path: '/project/original.ts'})
+    expect(call).toHaveBeenCalledExactlyOnceWith({
+      arguments: {
+        attachment: {kind: 'file', path: '/project/original.ts'},
+        session: initial.session,
+      },
+      name: 'code.attach-to-composer',
+    })
+    expect(update).not.toHaveBeenCalled()
+    expect(receive).toHaveBeenLastCalledWith([])
+    await stop()
+  })
+
+  it('should clear pending snapshots only after a native card is confirmed', async () => {
+    vi.spyOn(App.prototype, 'connect').mockResolvedValue()
+    vi.spyOn(App.prototype, 'close').mockResolvedValue()
+    const listeners = vi.spyOn(App.prototype, 'addEventListener')
+    const call = vi.spyOn(App.prototype, 'callServerTool').mockResolvedValue({content: []})
+    vi.spyOn(App.prototype, 'updateModelContext').mockResolvedValue({})
+    const host = createHost({composerAttachment: true, integration: 'standard'})
+    const receive = vi.fn()
+    host.subscribeContext?.(receive)
+    const stop = await host.start(vi.fn(), vi.fn(), vi.fn())
+    listeners.mock.calls
+      .filter(([event]) => event === 'toolresult')
+      .forEach(([, listener]) => listener({structuredContent: {...initial}}))
+    await host.context({
+      column: 1,
+      endLine: 1,
+      kind: 'code',
+      line: 1,
+      path: '/project/main.ts',
+      text: 'pending draft',
+    })
+    call.mockResolvedValueOnce({
+      content: [],
+      isError: true,
+      structuredContent: {code: 'composer-target-missing'},
+    })
+    await expect(host.attachContextFiles?.()).rejects.toThrow()
+    expect(receive).toHaveBeenLastCalledWith([expect.stringContaining('pending draft')])
+    await host.attachContextFiles?.()
+    expect(receive).toHaveBeenLastCalledWith([])
+    await stop()
+  })
+
+  it.each([false, true])('should honor Browser restoreView=%s metadata', async (restoreView) => {
+    vi.spyOn(App.prototype, 'connect').mockResolvedValue()
+    vi.spyOn(App.prototype, 'close').mockResolvedValue()
+    const listeners = vi.spyOn(App.prototype, 'addEventListener')
+    const receive = vi.fn()
+    const host = createHost({integration: 'standard'})
+    const stop = await host.start(receive, vi.fn(), vi.fn())
+    const result = {
+      _meta: {'winter-love/code-viewer/navigation': {restoreView}},
+      structuredContent: {...initial},
+    }
+    listeners.mock.calls
+      .filter(([event]) => event === 'toolresult')
+      .forEach(([, listener]) => listener(result))
+    expect(receive).toHaveBeenCalledWith(result.structuredContent, {restoreView})
+    await stop()
+  })
+
+  it('should attach standard file context and clear it without sending a message', async () => {
+    vi.spyOn(App.prototype, 'connect').mockResolvedValue()
+    vi.spyOn(App.prototype, 'close').mockResolvedValue()
+    vi.spyOn(App.prototype, 'getHostCapabilities').mockReturnValue({})
+    const call = vi.spyOn(App.prototype, 'callServerTool').mockResolvedValue({
+      content: [{text: '/project/main.ts\nexport const answer = 42', type: 'text'}],
+    })
+    const update = vi.spyOn(App.prototype, 'updateModelContext').mockResolvedValue({})
+    const send = vi.spyOn(App.prototype, 'sendMessage')
+    const listeners = vi.spyOn(App.prototype, 'addEventListener')
+    const host = createHost({integration: 'standard'})
+    const receive = vi.fn()
+    host.subscribeContext?.(receive)
+    const stop = await host.start(vi.fn(), vi.fn(), vi.fn())
+    listeners.mock.calls
+      .filter(([event]) => event === 'toolresult')
+      .forEach(([, listener]) => listener({structuredContent: {...initial}}))
+    await host.context({kind: 'file', path: '/project/main.ts'})
+    expect(call).toHaveBeenCalledWith({arguments: {path: '/project/main.ts'}, name: 'code.context'})
+    expect(update).toHaveBeenLastCalledWith({
+      content: [{text: expect.stringContaining('export const answer = 42'), type: 'text'}],
+    })
+    expect(receive).toHaveBeenLastCalledWith([expect.stringContaining('main.ts')])
+    await host.removeContext?.()
+    expect(update).toHaveBeenLastCalledWith({content: []})
+    expect(receive).toHaveBeenLastCalledWith([])
+    expect(call).toHaveBeenLastCalledWith({
+      arguments: {content: [], session: initial.session},
+      name: 'code.stage-context',
+    })
+    expect(send).not.toHaveBeenCalled()
+    await stop()
+  })
+
+  it('should publish the initial locale after connecting and subsequent host language changes', async () => {
+    const context = vi.spyOn(App.prototype, 'getHostContext').mockReturnValue(undefined)
+    vi.spyOn(App.prototype, 'connect').mockImplementation(async () => {
+      context.mockReturnValue({locale: 'ko-KR'})
+    })
+    vi.spyOn(App.prototype, 'close').mockResolvedValue()
+    const listeners = vi.spyOn(App.prototype, 'addEventListener')
+    const remove = vi.spyOn(App.prototype, 'removeEventListener')
+    const host = createHost()
+    const receive = vi.fn()
+    const unsubscribe = host.subscribeLocale?.(receive)
+    expect(receive).toHaveBeenLastCalledWith(undefined)
+    const stop = await host.start(vi.fn(), vi.fn(), vi.fn())
+    expect(receive).toHaveBeenLastCalledWith('ko-KR')
+    context.mockReturnValue({locale: 'en-US'})
+    listeners.mock.calls
+      .filter(([name]) => name === 'hostcontextchanged')
+      .forEach(([, listener]) => listener({locale: 'en-US'}))
+    expect(receive).toHaveBeenLastCalledWith('en-US')
+    unsubscribe?.()
+    receive.mockClear()
+    context.mockReturnValue({locale: 'ja-JP'})
+    listeners.mock.calls
+      .filter(([name]) => name === 'hostcontextchanged')
+      .forEach(([, listener]) => listener({locale: 'ja-JP'}))
+    expect(receive).not.toHaveBeenCalled()
+    await stop()
+    expect(remove).toHaveBeenCalledWith('hostcontextchanged', expect.any(Function))
+  })
+
+  it('should attach native files and receive workspace changes without resource subscriptions', async () => {
+    vi.spyOn(App.prototype, 'connect').mockResolvedValue()
+    const closed = Promise.withResolvers<void>()
+    vi.spyOn(App.prototype, 'close').mockImplementation(async () => closed.resolve())
+    vi.spyOn(App.prototype, 'getHostCapabilities').mockReturnValue({
+      experimental: {'openai/resource': {}},
+    })
+    const listeners = vi.spyOn(App.prototype, 'addEventListener')
+    const uri = 'codex-resource://opened/main.tsx'
+    const request = vi
+      .spyOn(App.prototype, 'request')
+      .mockRejectedValue(new Error('MCP resource is not subscribable'))
+    const waiting = Promise.withResolvers<void>()
+    vi.spyOn(App.prototype, 'callServerTool').mockImplementation(async ({name}, options) => {
+      if (name === 'code.attach') {
+        return {content: [], structuredContent: {...initial}}
+      }
+      if (name === 'code.watch') {
+        return {content: [], structuredContent: {revision: 0}}
+      }
+      if (name === 'code.watch.next') {
+        waiting.resolve()
+        return new Promise((_resolve, reject) => {
+          options?.signal?.addEventListener('abort', () => reject(options.signal?.reason), {
+            once: true,
+          })
+        })
+      }
+      return {content: [], structuredContent: {document: initial.document}}
+    })
+    const root = createRoot((dispose) => ({dispose, viewer: useViewer(createHost())}))
+    const input = listeners.mock.calls.find(([event]) => event === 'toolinput')?.[1]
+    input?.({arguments: {file: {name: 'main.tsx', resourceUri: uri}}})
+    await waiting.promise
+    expect(root.viewer.session()?.document.location.path).toBe('main.tsx')
+    expect(root.viewer.notice()).toBeNull()
+    expect(request).not.toHaveBeenCalled()
+    root.dispose()
+    await closed.promise
+    expect(request).not.toHaveBeenCalled()
+  })
+
+  it.each([{}, {experimental: {'openai/resource': {}}}])(
+    'should receive workspace events without subscribing plugin resources in host %j',
+    async (capabilities) => {
+      vi.spyOn(App.prototype, 'getHostCapabilities').mockReturnValue(capabilities)
+      const request = vi
+        .spyOn(App.prototype, 'request')
+        .mockRejectedValue(new Error('MCP resource is not subscribable'))
+      const waiting = Promise.withResolvers<void>()
+      const call = vi
+        .spyOn(App.prototype, 'callServerTool')
+        .mockImplementation(async ({name}, options) => {
+          if (name === 'code.watch') {
+            return {
+              content: [],
+              structuredContent: {resourceUri: 'file:///tmp/workspace/revision.json', revision: 0},
+            }
+          }
+          waiting.resolve()
+          return new Promise((_resolve, reject) => {
+            options?.signal?.addEventListener('abort', () => reject(options.signal?.reason), {
+              once: true,
+            })
+          })
+        })
+      const receive = vi.fn()
+      const report = vi.fn()
+      const stop = await createHost().watch?.('first', receive, report)
+      await waiting.promise
+      expect(receive).toHaveBeenCalledOnce()
+      expect(request).not.toHaveBeenCalled()
+      expect(call).toHaveBeenCalledWith({
+        arguments: {session: 'first', transport: 'mcp'},
+        name: 'code.watch',
+      })
+      expect(call).toHaveBeenCalledWith(
+        {
+          arguments: {revision: 0, session: 'first'},
+          name: 'code.watch.next',
+        },
+        expect.objectContaining({signal: expect.any(AbortSignal)}),
+      )
+      await stop?.()
+      expect(report).not.toHaveBeenCalled()
+    },
+  )
+  it('should request scan cursors through MCP in the installed host', async () => {
+    const call = vi.spyOn(App.prototype, 'callServerTool').mockResolvedValue({content: []})
+    await createHost().call('code.tree', {session: 'first', stream: true})
+    expect(call).toHaveBeenCalledWith({
+      arguments: {session: 'first', stream: true, transport: 'mcp'},
+      name: 'code.tree',
+    })
+  })
+  it('should use HTTP streams when the preview explicitly advertises them', async () => {
+    vi.spyOn(App.prototype, 'getHostCapabilities').mockReturnValue({
+      experimental: {'winter-love/code-viewer/http': {version: 1}},
+    })
+    const call = vi.spyOn(App.prototype, 'callServerTool').mockResolvedValue({content: []})
+    await createHost().call('code.navigate', {session: 'first', stream: true})
+    expect(call).toHaveBeenCalledWith({
+      arguments: {session: 'first', stream: true, transport: 'http'},
+      name: 'code.navigate',
+    })
+  })
+  it('should open and close workspace events in the HTTP preview', async () => {
+    vi.spyOn(App.prototype, 'getHostCapabilities').mockReturnValue({
+      experimental: {'winter-love/code-viewer/http': {version: 1}},
+    })
+    const close = vi.fn()
+    const removeEventListener = vi.fn()
+    const addEventListener = vi.fn()
     const source = vi.fn(function source() {
-      return events
+      return {addEventListener, close, removeEventListener}
     })
     vi.stubGlobal('EventSource', source)
-    const call = vi.spyOn(App.prototype, 'callServerTool').mockResolvedValue({
+    vi.spyOn(App.prototype, 'callServerTool').mockResolvedValue({
       content: [],
-      structuredContent: {url: 'http://127.0.0.1:1234/token'},
+      structuredContent: {url: 'http://127.0.0.1:1234/events/first'},
     })
     try {
-      const notify = vi.fn()
-      const stop = await createHost().watch?.('first', notify)
-      events.dispatchEvent(new MessageEvent('message', {data: '0'}))
-      events.dispatchEvent(new MessageEvent('message', {data: '0'}))
-      events.dispatchEvent(new MessageEvent('message', {data: '1'}))
-      expect(notify).toHaveBeenCalledTimes(2)
-      expect(source).toHaveBeenCalledWith('http://127.0.0.1:1234/token')
-      expect(call).toHaveBeenCalledWith({arguments: {session: 'first'}, name: 'code.watch'})
+      const receive = vi.fn()
+      const stop = await createHost().watch?.('first', receive, vi.fn())
+      expect(source).toHaveBeenCalledWith('http://127.0.0.1:1234/events/first')
+      const handler = addEventListener.mock.calls[0][1]
+      handler(new MessageEvent('message', {data: '1'}))
+      expect(receive).toHaveBeenCalledOnce()
       await stop?.()
-      expect(events.close).toHaveBeenCalledOnce()
-      events.dispatchEvent(new MessageEvent('message', {data: '2'}))
-      expect(notify).toHaveBeenCalledTimes(2)
+      expect(removeEventListener).toHaveBeenCalledWith('message', handler)
+      expect(close).toHaveBeenCalledOnce()
     } finally {
       vi.unstubAllGlobals()
     }
@@ -285,4 +630,18 @@ describe('createHost', () => {
     expect(root.viewer.session()).toBeNull()
     expect(close).toHaveBeenCalledOnce()
   })
+})
+
+it('should change the current chat workspace through the Codex host only', async () => {
+  const connection = {session: 'changed', workspace: '/new'}
+  const call = vi
+    .spyOn(App.prototype, 'callServerTool')
+    .mockResolvedValue({content: [], structuredContent: connection})
+  try {
+    expect(createHost({integration: 'standard'}).changeWorkspace).toBeUndefined()
+    expect(await createHost().changeWorkspace?.('/new')).toEqual(connection)
+    expect(call).toHaveBeenCalledWith({arguments: {path: '/new'}, name: 'code.workspace'})
+  } finally {
+    call.mockRestore()
+  }
 })

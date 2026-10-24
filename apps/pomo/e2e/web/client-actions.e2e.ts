@@ -37,6 +37,7 @@ const openHydratedFixture = async (page: Page, path = ''): Promise<void> => {
 
 test.describe('client action workflows', () => {
   test('should execute every successful administrator command in the browser', async ({page}) => {
+    const pendingAlbum = Promise.withResolvers<Route>()
     const actionUrls = observeActionUrls(page)
     const requests: Array<{body: string | null; method: string; pathname: string}> = []
     await page.route(`${FIXTURE_ORIGIN}/**`, async (route) => {
@@ -45,8 +46,7 @@ test.describe('client action workflows', () => {
       requests.push({body: request.postData(), method: request.method(), pathname: url.pathname})
 
       if (url.pathname === '/api/admin/music/albums') {
-        await wait(75)
-        await route.fulfill(jsonResponse({id: 'album-one'}))
+        pendingAlbum.resolve(route)
         return
       }
       if (url.pathname === '/api/admin/music/tracks' && request.method() === 'POST') {
@@ -93,7 +93,9 @@ test.describe('client action workflows', () => {
     const albumForm = page.getByRole('button', {name: 'Create album'}).locator('..')
     await expect(albumForm).toHaveAttribute('action', '/api/admin/music/albums')
     await page.getByRole('button', {name: 'Create album'}).click()
+    const albumRoute = await pendingAlbum.promise
     await expect(page.getByTestId('album-pending')).toHaveText('true')
+    await albumRoute.fulfill(jsonResponse({id: 'album-one'}))
     await expect(page.getByTestId('admin-result')).toHaveText(
       JSON.stringify({albumId: 'album-one', status: 'created'}),
     )
@@ -228,6 +230,7 @@ test.describe('client action workflows', () => {
   test('should execute Toss session and account-link commands with form fallback', async ({
     page,
   }) => {
+    const pendingExchange = Promise.withResolvers<Route>()
     const actionUrls = observeActionUrls(page)
     const requests: Array<Request> = []
     await page.route(`${FIXTURE_ORIGIN}/**`, async (route) => {
@@ -236,8 +239,7 @@ test.describe('client action workflows', () => {
       requests.push(request)
 
       if (url.pathname === '/api/app-auth/exchange') {
-        await wait(75)
-        await route.fulfill(jsonResponse({token: 'app-token'}))
+        pendingExchange.resolve(route)
         return
       }
       if (
@@ -254,7 +256,9 @@ test.describe('client action workflows', () => {
     await openHydratedFixture(page)
 
     await page.getByRole('button', {name: 'Login with Toss'}).click()
+    const exchangeRoute = await pendingExchange.promise
     await expect(page.getByTestId('login-pending')).toHaveText('true')
+    await exchangeRoute.fulfill(jsonResponse({token: 'app-token'}))
     await expect(page.getByTestId('auth-result')).toHaveText(
       JSON.stringify({status: 'authenticated'}),
     )
@@ -301,6 +305,7 @@ test.describe('client action workflows', () => {
   })
 
   test('should request paid track access as a direct client command', async ({page}) => {
+    const pendingAccess = Promise.withResolvers<Route>()
     const actionUrls = observeActionUrls(page)
     let accessRequest: Request | undefined
     await page.route(`${FIXTURE_ORIGIN}/**`, async (route) => {
@@ -309,14 +314,7 @@ test.describe('client action workflows', () => {
 
       if (url.pathname === '/api/music/tracks/track-one/access') {
         accessRequest = request
-        await wait(75)
-        await route.fulfill(
-          jsonResponse({
-            expiresAt: '2026-09-03T12:00:00.000Z',
-            mode: 'full',
-            url: 'https://audio.example/full.mp3',
-          }),
-        )
+        pendingAccess.resolve(route)
         return
       }
 
@@ -325,7 +323,15 @@ test.describe('client action workflows', () => {
     await openHydratedFixture(page)
 
     await page.getByRole('button', {name: 'Request track access'}).click()
+    const accessRoute = await pendingAccess.promise
     await expect(page.getByTestId('access-pending')).toHaveText('true')
+    await accessRoute.fulfill(
+      jsonResponse({
+        expiresAt: '2026-09-03T12:00:00.000Z',
+        mode: 'full',
+        url: 'https://audio.example/full.mp3',
+      }),
+    )
     await expect(page.getByTestId('access-result')).toHaveText(
       JSON.stringify({
         access: {

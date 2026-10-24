@@ -198,3 +198,52 @@ describe('SupertonicEngine', () => {
     ).rejects.toThrow('Supertonic 모델이 예상하지 못한 결과를 반환했어요')
   })
 })
+
+it('should cancel between steps and reuse sessions for the next generation', async () => {
+  const sessions: SupertonicSessions = {
+    durationPredictor: createSession(
+      vi.fn().mockResolvedValue({duration: new runtime.Tensor('float32', Float32Array.of(1), [1])}),
+    ),
+    textEncoder: createSession(
+      vi.fn().mockResolvedValue({text_emb: new runtime.Tensor('float32', Float32Array.of(1), [1])}),
+    ),
+    vectorEstimator: createSession(
+      vi.fn().mockResolvedValue({
+        denoised_latent: new runtime.Tensor('float32', Float32Array.of(0, 0), [1, 1, 2]),
+      }),
+    ),
+    vocoder: createSession(
+      vi.fn().mockResolvedValue({
+        wav_tts: new runtime.Tensor('float32', Float32Array.of(0.1, 0.2, 0.3, 0.4), [1, 1, 4]),
+      }),
+    ),
+  }
+  const engine = new SupertonicEngine(
+    getResultValue(parseSupertonicConfig(createConfig())),
+    getResultValue(parseSupertonicIndexer(Array.from({length: 128}, (_, index) => index))),
+    sessions,
+    runtime,
+  )
+  const voice = getResultValue(
+    parseSupertonicVoice(runtime, {
+      style_dp: {data: [0], dims: [1]},
+      style_ttl: {data: [0], dims: [1]},
+    }),
+  )
+  const controller = new AbortController()
+  const options = {language: 'en' as const, speed: 1, text: 'Hello', voice}
+  await expect(
+    engine.generate({
+      ...options,
+      onProgress: async () => {
+        controller.abort()
+      },
+      signal: controller.signal,
+    }),
+  ).rejects.toMatchObject({name: 'AbortError'})
+  expect(sessions.vectorEstimator.run).not.toHaveBeenCalled()
+  expect(sessions.durationPredictor.release).not.toHaveBeenCalled()
+  await expect(engine.generate({...options, onProgress: () => undefined})).resolves.toHaveLength(4)
+  expect(sessions.vectorEstimator.run).toHaveBeenCalledTimes(8)
+  await engine.release()
+})

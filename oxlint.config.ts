@@ -2,12 +2,41 @@ import {defineConfig} from 'oxlint'
 
 const MAX_LINES_PER_FILE = 600
 
+const RUNTIME_EXCLUDES = [
+  '**/__tests__/**',
+  'packages/solid-test/src/**',
+  '**/*.story.{ts,tsx,js,jsx,mts,mjs}',
+]
+const TEST_IMPORT_PATTERNS = [
+  {
+    group: [
+      '**/__tests__/**',
+      'vitest',
+      'vitest/**',
+      '@vitest/**',
+      '@testing-library/**',
+      '@solidjs/testing-library',
+      '@solidjs/testing-library/**',
+      '@winter-love/solid-test',
+      '@winter-love/solid-test/**',
+    ],
+    message: 'Runtime source files cannot import test code or test dependencies.',
+  },
+]
+const ARCHIVED_ASSET_PATTERNS = [
+  {
+    group: ['**/asset-library', '**/asset-library/**'],
+    message: 'Archived assets cannot be bundled. Import compressed assets from src instead.',
+  },
+]
+
 export default defineConfig({
   env: {
     builtin: true,
     node: true,
   },
-  ignorePatterns: ['apps/*/dist/**', 'packages/*/dist/**'],
+  // 수동 뷰어 검증 입력은 긴 줄과 빈 파일 자체가 검증 대상입니다.
+  ignorePatterns: ['apps/*/dist/**', 'packages/*/dist/**', 'pane-validation-files/**'],
   jsPlugins: [
     {
       name: 'eslint-js',
@@ -27,22 +56,37 @@ export default defineConfig({
     },
   ],
   overrides: [
+    // Runtime source files cannot import test code or test dependencies.
+    {
+      excludeFiles: RUNTIME_EXCLUDES,
+      files: ['apps/*/src/**', 'packages/*/src/**'],
+      rules: {
+        'no-restricted-imports': ['error', {patterns: TEST_IMPORT_PATTERNS}],
+      },
+    },
     // Pomo asset-library is an authoring archive; runtime code must import compressed assets from src.
     {
       files: ['apps/pomo/**/*.{ts,tsx,js,mjs,jsx}'],
       rules: {
+        'no-restricted-imports': ['error', {patterns: ARCHIVED_ASSET_PATTERNS}],
+      },
+    },
+    // Overrides replace rule options, so Pomo runtime source needs both restrictions together.
+    {
+      excludeFiles: RUNTIME_EXCLUDES,
+      files: ['apps/pomo/src/**'],
+      rules: {
         'no-restricted-imports': [
           'error',
-          {
-            patterns: [
-              {
-                group: ['**/asset-library', '**/asset-library/**'],
-                message:
-                  'Archived assets cannot be bundled. Import compressed assets from src instead.',
-              },
-            ],
-          },
+          {patterns: [...TEST_IMPORT_PATTERNS, ...ARCHIVED_ASSET_PATTERNS]},
         ],
+      },
+    },
+    // Solid props를 구조 분해하도록 권하지 않는다.
+    {
+      files: ['**/*.tsx'],
+      rules: {
+        'prefer-destructuring': 'off',
       },
     },
     // eslint-plugin-solid configs/typescript (JSX/TSX only)

@@ -4,118 +4,10 @@ const httpMocks = vi.hoisted(() => ({fetch: vi.fn()}))
 
 vi.mock('../../http-client', () => ({httpFetch: httpMocks.fetch}))
 
-import {
-  createOpfsPartialDownloadStorage,
-  createResumableModelFetch,
-  type PartialDownloadStorage,
-} from '../resumable-fetch'
+import {createResumableModelFetch, type PartialDownloadStorage} from '../resumable-fetch'
+import {createPartialStorage, createTestBlob} from './support/partial-storage'
 
 type PartialMetadata = Parameters<PartialDownloadStorage['reset']>[0]
-
-interface StoredPartial {
-  body: Uint8Array
-  metadata: PartialMetadata
-}
-
-const notFoundError = () => new DOMException('missing', 'NotFoundError')
-
-const createVirtualOpfs = () => {
-  const files = new Map<string, Uint8Array>()
-  const writables: Array<{
-    readonly abort: ReturnType<typeof vi.fn>
-    readonly close: ReturnType<typeof vi.fn>
-    readonly fileName: string
-    readonly seek: ReturnType<typeof vi.fn>
-    readonly write: ReturnType<typeof vi.fn>
-  }> = []
-  let failingWriteSuffix: string | null = null
-
-  const getFileHandle = vi.fn(async (fileName: string, options?: {create?: boolean}) => {
-    if (!files.has(fileName)) {
-      if (options?.create !== true) {
-        throw notFoundError()
-      }
-      files.set(fileName, new Uint8Array())
-    }
-
-    return {
-      createWritable: vi.fn(async (writableOptions?: {keepExistingData?: boolean}) => {
-        let data =
-          writableOptions?.keepExistingData === true
-            ? new Uint8Array(files.get(fileName) ?? [])
-            : new Uint8Array()
-        let position = 0
-        const abort = vi.fn(async () => undefined)
-        const close = vi.fn(async () => {
-          files.set(fileName, data)
-        })
-        const seek = vi.fn(async (nextPosition: number) => {
-          position = nextPosition
-        })
-        const write = vi.fn(async (value: string | Uint8Array) => {
-          if (failingWriteSuffix !== null && fileName.endsWith(failingWriteSuffix)) {
-            throw new Error(`write failed: ${failingWriteSuffix}`)
-          }
-
-          const chunk = typeof value === 'string' ? new TextEncoder().encode(value) : value
-          const next = new Uint8Array(Math.max(data.byteLength, position + chunk.byteLength))
-          next.set(data)
-          next.set(chunk, position)
-          data = next
-          position += chunk.byteLength
-        })
-        const writable = {abort, close, fileName, seek, write}
-        writables.push(writable)
-        return writable
-      }),
-      getFile: vi.fn(async () => {
-        const data = new Uint8Array(files.get(fileName) ?? [])
-        return {
-          arrayBuffer: async () => data.buffer,
-          size: data.byteLength,
-          stream: () =>
-            new ReadableStream({
-              start(controller) {
-                controller.enqueue(data)
-                controller.close()
-              },
-            }),
-          text: async () => new TextDecoder().decode(data),
-        } as Blob
-      }),
-    }
-  })
-  const removeEntry = vi.fn(async (fileName: string) => {
-    if (!files.delete(fileName)) {
-      throw notFoundError()
-    }
-  })
-  const directory = {getFileHandle, removeEntry}
-  const getDirectoryHandle = vi.fn(async () => directory)
-  const getDirectory = vi.fn(async () => ({getDirectoryHandle}))
-
-  vi.stubGlobal('navigator', {storage: {getDirectory}})
-  vi.stubGlobal('crypto', {
-    subtle: {
-      digest: vi.fn(async () => new Uint8Array(32).buffer),
-    },
-  })
-
-  return {
-    directory,
-    files,
-    setFailingWriteSuffix: (suffix: string | null) => {
-      failingWriteSuffix = suffix
-    },
-    setJson: (value: unknown) => {
-      files.set(`${'00'.repeat(32)}.json`, new TextEncoder().encode(JSON.stringify(value)))
-    },
-    setPart: (value: string) => {
-      files.set(`${'00'.repeat(32)}.part`, new TextEncoder().encode(value))
-    },
-    writables,
-  }
-}
 
 const createMetadata = (
   url = 'https://models.test/model.onnx',
@@ -133,50 +25,6 @@ afterEach(() => {
   vi.unstubAllGlobals()
   vi.restoreAllMocks()
 })
-
-const createPartialStorage = (initial?: StoredPartial) => {
-  let partial = initial
-  const storage: PartialDownloadStorage = {
-    append: vi.fn(async (_url, chunk) => {
-      if (partial === undefined) {
-        throw new Error('Partial metadata is missing.')
-      }
-
-      const body = new Uint8Array(partial.body.byteLength + chunk.byteLength)
-      body.set(partial.body)
-      body.set(chunk, partial.body.byteLength)
-      partial = {...partial, body}
-    }),
-    delete: vi.fn(async () => {
-      partial = undefined
-    }),
-    get: vi.fn(async () =>
-      partial === undefined
-        ? null
-        : {body: createTestBlob(partial.body), metadata: partial.metadata},
-    ),
-    reset: vi.fn(async (metadata) => {
-      partial = {body: new Uint8Array(), metadata}
-    }),
-  }
-
-  return {getPartial: () => partial, storage}
-}
-
-const createTestBlob = (body: Uint8Array, withStream = true): Blob =>
-  ({
-    arrayBuffer: async () => body.buffer,
-    size: body.byteLength,
-    stream: withStream
-      ? () =>
-          new ReadableStream({
-            start(controller) {
-              controller.enqueue(new Uint8Array(body))
-              controller.close()
-            },
-          })
-      : undefined,
-  }) as unknown as Blob
 
 const createHeaders = (length: number) => ({
   'accept-ranges': 'bytes',

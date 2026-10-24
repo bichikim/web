@@ -51,6 +51,44 @@ afterEach(() => {
 })
 
 describe('SFileTree', () => {
+  it('should preserve local expansion while replacing sessions with stale saved snapshots', async () => {
+    const saving = Promise.withResolvers<void>()
+    const port = {...createPort(), saveTreeState: vi.fn(() => saving.promise)}
+    const [current, setCurrent] = createSignal({...session, treeState: {expanded: ['src']}})
+    render(() => <SFileTree port={port} session={current()} visible />)
+    await screen.findByRole('treeitem', {name: 'main.ts'})
+    fireEvent.click(screen.getByRole('treeitem', {name: 'src'}))
+    setCurrent({...current(), session: 'replacement'})
+    const folder = await screen.findByRole('treeitem', {name: 'src'})
+    expect(folder.getAttribute('aria-expanded')).toBe('false')
+    expect(screen.queryByRole('treeitem', {name: 'main.ts'})).toBeNull()
+    saving.resolve()
+  })
+
+  it('should restore saved expansion including a collapsed current-file ancestor and persist changes', async () => {
+    const port = {...createPort(), saveTreeState: vi.fn().mockResolvedValue(undefined)}
+    const [current, setCurrent] = createSignal({...session, treeState: {expanded: ['test']}})
+    const mounted = render(() => <SFileTree port={port} session={current()} visible />)
+    await screen.findByRole('treeitem', {name: 'other.js'})
+    expect(screen.getByRole('treeitem', {name: 'src'}).getAttribute('aria-expanded')).toBe('false')
+    expect(screen.queryByRole('treeitem', {name: 'main.ts'})).toBeNull()
+    setCurrent({...current(), document: {...current().document, revision: 'refreshed'}})
+    expect(screen.queryByRole('treeitem', {name: 'main.ts'})).toBeNull()
+    fireEvent.click(screen.getByRole('treeitem', {name: 'test'}))
+    expect(port.saveTreeState).toHaveBeenLastCalledWith('first', {expanded: []})
+    mounted.unmount()
+    render(() => (
+      <SFileTree
+        port={port}
+        session={{...current(), session: 'reopened', treeState: {expanded: []}}}
+        visible
+      />
+    ))
+    await screen.findByRole('treeitem', {name: 'src'})
+    expect(screen.queryByRole('treeitem', {name: 'main.ts'})).toBeNull()
+    expect(screen.queryByRole('treeitem', {name: 'other.js'})).toBeNull()
+  })
+
   const recordScroll = (): void => {
     scrollIntoView.mockClear()
     Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', {
@@ -113,10 +151,10 @@ describe('SFileTree', () => {
     expect(screen.getByRole('treeitem', {name: 'deep'}).getAttribute('aria-expanded')).toBe('true')
     expect(file.getAttribute('aria-selected')).toBe('true')
     expect(file.tabIndex).toBe(0)
-    expect(scrollIntoView).toHaveBeenCalledTimes(1)
+    await waitFor(() => expect(scrollIntoView).toHaveBeenCalledTimes(1))
     expect(scrollIntoView.mock.contexts.at(-1)).toBe(file)
     fireEvent.click(reveal)
-    await Promise.resolve()
+    await waitFor(() => expect(scrollIntoView).toHaveBeenCalledTimes(2))
     expect(scrollIntoView).toHaveBeenCalledTimes(2)
     expect(scrollIntoView.mock.contexts.at(-1)).toBe(file)
     expect(open).not.toHaveBeenCalled()
@@ -130,6 +168,7 @@ describe('SFileTree', () => {
     await Promise.resolve()
     const calls = scrollIntoView.mock.calls.length
     fireEvent.click(screen.getByRole('treeitem', {name: 'src'}))
+    await waitFor(() => expect(screen.getByRole('tree')).toHaveAttribute('aria-busy', 'false'))
     const pending = Promise.withResolvers<Awaited<ReturnType<ViewerPort['call']>>>()
     vi.mocked(port.call).mockReturnValueOnce(pending.promise)
     const refresh = screen.getByRole('button', {name: '파일 트리 새로고침'})
@@ -140,11 +179,15 @@ describe('SFileTree', () => {
       structuredContent: {directories: ['src', 'empty'], files, truncated: false},
     })
     await screen.findByRole('treeitem', {name: 'empty'})
-    expect(refresh).not.toBeDisabled()
+    await waitFor(() => expect(refresh).not.toBeDisabled())
     expect(screen.getByRole('treeitem', {name: 'src'})).toHaveAttribute('aria-expanded', 'false')
     expect(scrollIntoView).toHaveBeenCalledTimes(calls)
-    expect(port.call).toHaveBeenCalledTimes(2)
-    expect(port.call).toHaveBeenLastCalledWith('code.tree', {session: 'first'})
+    expect(port.call).toHaveBeenCalledTimes(3)
+    expect(port.call).toHaveBeenLastCalledWith('code.tree', {
+      directories: [''],
+      session: 'first',
+      stream: true,
+    })
   })
   it('should retain the tree filter and display newly discovered matching files after refresh', async () => {
     const port = createPort()
@@ -152,6 +195,7 @@ describe('SFileTree', () => {
     await screen.findByRole('treeitem', {name: 'main.ts'})
     const filter = screen.getByRole('textbox', {name: '파일 필터링'})
     fireEvent.input(filter, {target: {value: 'editor'}})
+    await waitFor(() => expect(screen.getByRole('tree')).toHaveAttribute('aria-busy', 'false'))
     vi.mocked(port.call).mockResolvedValueOnce({
       content: [],
       structuredContent: {
@@ -179,7 +223,7 @@ describe('SFileTree', () => {
     await Promise.resolve()
     expect(filter).toHaveProperty('value', '')
     const file = screen.getByRole('treeitem', {name: 'main.ts'})
-    expect(scrollIntoView).toHaveBeenCalledTimes(1)
+    await waitFor(() => expect(scrollIntoView).toHaveBeenCalledTimes(1))
     expect(scrollIntoView.mock.contexts.at(-1)).toBe(file)
   })
 
@@ -199,18 +243,18 @@ describe('SFileTree', () => {
     render(() => <SFileTree port={createPort()} session={session} visible />)
     await screen.findByRole('treeitem', {name: 'main.ts'})
     await Promise.resolve()
-    expect(scrollIntoView).toHaveBeenCalledTimes(1)
+    await waitFor(() => expect(scrollIntoView).toHaveBeenCalledTimes(1))
     const folder = screen.getByRole('treeitem', {name: 'test'})
     fireEvent.click(folder)
     await Promise.resolve()
     expect(screen.getByRole('treeitem', {name: 'other.js'})).toBeDefined()
-    expect(scrollIntoView).toHaveBeenCalledTimes(1)
+    await waitFor(() => expect(scrollIntoView).toHaveBeenCalledTimes(1))
     fireEvent.click(folder)
     await Promise.resolve()
     expect(screen.queryByRole('treeitem', {name: 'other.js'})).toBeNull()
     fireEvent.input(screen.getByRole('textbox', {name: '파일 필터링'}), {target: {value: 'src/'}})
     await Promise.resolve()
-    expect(scrollIntoView).toHaveBeenCalledTimes(1)
+    await waitFor(() => expect(scrollIntoView).toHaveBeenCalledTimes(1))
   })
 
   it('should reveal a different opened file and reveal it again when the tree reopens', async () => {
@@ -220,7 +264,7 @@ describe('SFileTree', () => {
     render(() => <SFileTree port={createPort()} session={current()} visible={visible()} />)
     await screen.findByRole('treeitem', {name: 'main.ts'})
     await Promise.resolve()
-    expect(scrollIntoView).toHaveBeenCalledTimes(1)
+    await waitFor(() => expect(scrollIntoView).toHaveBeenCalledTimes(1))
     setCurrent({
       ...session,
       document: {...session.document, location: {column: 1, line: 1, path: 'test/other.js'}},
@@ -387,8 +431,12 @@ describe('SFileTree', () => {
     setVisible(false)
     expect(screen.queryByRole('tree')).toBeNull()
     setVisible(true)
-    await waitFor(() => expect(port.call).toHaveBeenCalledTimes(3))
-    expect(port.call).toHaveBeenLastCalledWith('code.tree', {session: 'second'})
+    await waitFor(() => expect(port.call).toHaveBeenCalledTimes(4))
+    expect(port.call).toHaveBeenLastCalledWith('code.tree', {
+      directories: ['', 'src'],
+      session: 'second',
+      stream: true,
+    })
   })
 
   it('should retain files and the filter when navigating inside the same session', async () => {
@@ -406,6 +454,6 @@ describe('SFileTree', () => {
       'true',
     )
     expect((input as HTMLInputElement).value).toBe('src/')
-    expect(port.call).toHaveBeenCalledTimes(1)
+    expect(port.call).toHaveBeenCalledTimes(2)
   })
 })

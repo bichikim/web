@@ -1,0 +1,22 @@
+{
+  "browser": "actual in-app browser, production build, temporary local workspace",
+  "verified": [
+    "Visited a.ts, b.ts, c.ts; deleted b.ts externally; Back opened a.ts and disabled Back; Forward opened c.ts.",
+    "Restored b.ts externally; workspace watcher invalidated missing marker; Back opened b.ts with B restored source.",
+    "Edited b.ts with unsaved draft; deleted on disk; opened c.ts; Back reopened retained b.ts draft with deleted status and enabled Save.",
+    "Saved reopened draft; deletion status disappeared and disk b.ts was recreated with exact unsaved draft source."
+  ],
+  "internal_delete_evidence": "Executed hook tests cover current-file and folder deletion, remaining history recovery, first-entry deletion and discard recovery. Permanent Delete confirmation was not exercised through UI.",
+  "tests": {
+    "passed": 154,
+    "failed": 0
+  },
+  "checks": {
+    "focused_typecheck": "passed",
+    "oxlint": "passed",
+    "pnpm_format": "passed",
+    "production_build": "passed"
+  },
+  "preview": "http://127.0.0.1:64516/e54476e5-2ead-44fa-97ed-abc8a217640c/",
+  "draft_lifetime": "existing in-memory viewer draft retention; no disk draft persistence added"
+}

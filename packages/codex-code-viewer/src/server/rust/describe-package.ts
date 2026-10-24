@@ -1,4 +1,4 @@
-import {resolve} from 'node:path'
+import {basename, resolve} from 'node:path'
 import type {RustManifest} from './parse-manifest'
 import type {RustCrate, RustPackageDescription, RustTargetCandidate} from './types'
 
@@ -19,12 +19,11 @@ const defaultFeatures = (manifest: RustManifest): string[] => {
   return [...selected]
 }
 
-const discoverBinaries = (manifest: RustManifest, edition: RustCrate['edition']): boolean =>
-  manifest.package?.autobins ??
-  (edition !== '2015' ||
-    [manifest.lib, manifest.bin, manifest.example, manifest.test, manifest.bench].every(
-      (target) => target === undefined,
-    ))
+const discoverTargets = (manifest: RustManifest, edition: RustCrate['edition']): boolean =>
+  edition !== '2015' ||
+  [manifest.lib, manifest.bin, manifest.example, manifest.test, manifest.bench].every(
+    (target) => target === undefined,
+  )
 
 export interface DescribePackageOptions {
   readonly directory: string
@@ -53,6 +52,7 @@ export const describePackage = (
       : metadata.edition?.workspace === true
         ? (workspace.manifest?.package?.edition ?? '2015')
         : '2015'
+  const discovery = discoverTargets(manifest, edition)
   const target = (
     paths: readonly string[],
     kind: RustTargetCandidate['kind'],
@@ -79,7 +79,32 @@ export const describePackage = (
           : [entry.path]
       return target(paths, 'binary', binaryName)
     }) ?? []
-  const dependencies = Object.entries(manifest.dependencies ?? {}).flatMap(([name, value]) => {
+  const configured = (['test', 'example', 'bench'] as const).flatMap((kind) =>
+    (manifest[kind] ?? []).map((entry) => {
+      const name = entry.name ?? basename(entry.path ?? metadata.name, '.rs')
+      const folder = kind === 'test' ? 'tests' : kind === 'example' ? 'examples' : 'benches'
+      return target(
+        entry.path === undefined
+          ? [`${folder}/${name}.rs`, `${folder}/${name}/main.rs`]
+          : [entry.path],
+        kind,
+        name,
+      )
+    }),
+  )
+  const descriptions = [
+    ...Object.entries(manifest.dependencies ?? {}).map(([name, value]) => ({
+      development: false,
+      name,
+      value,
+    })),
+    ...Object.entries(manifest['dev-dependencies'] ?? {}).map(([name, value]) => ({
+      development: true,
+      name,
+      value,
+    })),
+  ]
+  const dependencies = descriptions.flatMap(({name, value, development}) => {
     if (typeof value === 'string') {
       return []
     }
@@ -97,6 +122,7 @@ export const describePackage = (
     const base = value.workspace === true ? workspace.directory : directory
     return [
       {
+        ...(development ? {development: true} : {}),
         manifest: resolve(base, dependency.path, 'Cargo.toml'),
         name: name.replaceAll('-', '_'),
         renamed: dependency.package !== undefined,
@@ -104,9 +130,8 @@ export const describePackage = (
     ]
   })
   return {
-    automatic: discoverBinaries(manifest, edition)
-      ? target(['src/main.rs'], 'binary', name)
-      : undefined,
+    automatic:
+      (metadata.autobins ?? discovery) ? target(['src/main.rs'], 'binary', name) : undefined,
     cfg: [
       ...cfg,
       ...features
@@ -114,7 +139,8 @@ export const describePackage = (
         .map((feature) => `feature="${feature}"`),
     ],
     dependencies,
+    discovery,
     edition,
-    targets: [...library, ...binaries],
+    targets: [...library, ...binaries, ...configured],
   }
 }

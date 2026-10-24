@@ -2,7 +2,11 @@ import type {env} from 'src/env'
 
 import type * as Repository from 'src/server/repositories/ai-jobs'
 
-import {type CreateAiJobRequest, parseAiJobInput} from './contracts'
+import {
+  type CreateAiJobRequest,
+  parseAiJobInput,
+  runnerCapabilityFor as toDatabaseCapability,
+} from './contracts'
 import type * as Storage from './artifacts'
 import {getAiModel, isAiModelProductionEnabled} from './model-catalog'
 import {type AiCreditProfile, getAiCreditEstimate} from './policy'
@@ -17,7 +21,6 @@ import {
   createTimeout,
   parseCreditProfile,
   SERVER_TEXT_MODEL_ID,
-  toDatabaseCapability,
 } from './service-shared'
 import {createAiArtifactService} from './service-artifacts'
 import type {createAiJobSynchronizer} from './service-sync'

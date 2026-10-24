@@ -40,7 +40,7 @@ export const createStrategyHandlers = (options: StrategyOptions): StrategyHandle
     )
   }
 
-  const createNetworkFirst = async (
+  const fetchNetworkFirst = async (
     event: ServiceWorkerFetchEvent,
     destination: CacheDestination,
   ): Promise<Response> => {
@@ -88,7 +88,7 @@ export const createStrategyHandlers = (options: StrategyOptions): StrategyHandle
     }
   }
 
-  const createCacheFirst = async (
+  const fetchCacheFirst = async (
     event: ServiceWorkerFetchEvent,
     destination: CacheDestination,
   ): Promise<Response> => {
@@ -105,7 +105,7 @@ export const createStrategyHandlers = (options: StrategyOptions): StrategyHandle
     return response
   }
 
-  const createStaleWhileRevalidate = async (
+  const fetchWithRevalidation = async (
     event: ServiceWorkerFetchEvent,
     destination: CacheDestination,
   ): Promise<Response> => {
@@ -135,9 +135,9 @@ export const createStrategyHandlers = (options: StrategyOptions): StrategyHandle
   }
 
   return {
-    'cache-first': createCacheFirst,
-    'network-first': createNetworkFirst,
+    'cache-first': fetchCacheFirst,
+    'network-first': fetchNetworkFirst,
     'network-only': (event) => fetch(event.request),
-    'stale-while-revalidate': createStaleWhileRevalidate,
+    'stale-while-revalidate': fetchWithRevalidation,
   }
 }

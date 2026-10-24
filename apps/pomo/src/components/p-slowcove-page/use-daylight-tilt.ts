@@ -20,8 +20,8 @@ export const useDaylightTilt = (
     const movement = motionOffset()
     return {
       ...base,
-      x: clampUnit(base.x + movement.x * MAX_HORIZONTAL_OFFSET),
-      y: clampUnit(base.y + movement.y * MAX_VERTICAL_OFFSET),
+      x: clampUnit(base.x + movement.x * MAX_HORIZONTAL_OFFSET, {fallback: 0.5}),
+      y: clampUnit(base.y + movement.y * MAX_VERTICAL_OFFSET, {fallback: 0.5}),
     }
   })
 

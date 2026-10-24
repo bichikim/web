@@ -1,0 +1,17 @@
+{
+  "root": "/Users/bichi/.codex/worktrees/379e/web",
+  "date": "2026-10-16",
+  "node": "v24.15.0",
+  "platform": "macOS-26.5.2-arm64-arm-64bit-Mach-O",
+  "binarySha256": "a82f731365ad69d5c4c15f5e18fba4584bf3b7b839960172a76c3462b5114bf2",
+  "baseline": "previous batch-preparation product",
+  "samples": "10 alternating pairs per target, cold and immediate repeat = 80 records",
+  "ownWorkOverlap": false,
+  "measurement": "server stream batch receipt, not browser paint",
+  "middleCounts": {
+    "getWindow": 22,
+    "javascript": 6
+  },
+  "separatePilot": "source changed and own format/test work overlapped; excluded from the final comparison, all pilot data retained",
+  "profile": "whole native lookup; separate from final comparison"
+}

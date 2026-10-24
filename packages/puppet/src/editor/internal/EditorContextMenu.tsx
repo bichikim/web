@@ -21,6 +21,7 @@ export interface EditorContextMenuSeparator {
 export type EditorContextMenuEntry = EditorContextMenuAction | EditorContextMenuSeparator
 
 export interface EditorContextMenuProps {
+  readonly triggerClass?: string
   readonly children: JSX.Element
   readonly disabled?: boolean
   readonly entries: ReadonlyArray<EditorContextMenuEntry>
@@ -70,7 +71,7 @@ export const EditorContextMenu = (props: EditorContextMenuProps) => {
   return (
     <ContextMenu modal={false} onOpenChange={(open) => props.onOpenChange?.(open)}>
       <ContextMenu.Trigger
-        class="editor-context-menu-trigger"
+        class={`editor-context-menu-trigger ${props.triggerClass ?? ''}`}
         disabled={props.disabled}
         onContextMenu={props.onContextMenu}
         onPointerDown={props.onPointerDown}

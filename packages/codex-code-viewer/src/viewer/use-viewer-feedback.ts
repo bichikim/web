@@ -8,11 +8,6 @@ interface ViewerFeedbackOptions {
   readonly clearDefinition: () => void
   readonly clearEditing: () => void
 }
-const definitionMessage = (feedback: DefinitionFeedback): string =>
-  feedback.kind === 'missing'
-    ? '이동 대상이 없습니다. 작업 폴더 밖의 정의는 표시하지 않습니다.'
-    : '이동할 정의를 선택하세요.'
-
 /** Exposes the current editing, navigation or general feedback independently of the selected address. */
 export const useViewerFeedback = (options: ViewerFeedbackOptions) => {
   const notification = useNotice()
@@ -45,11 +40,15 @@ export const useViewerFeedback = (options: ViewerFeedbackOptions) => {
     notice: () => {
       const editing = options.editing()
       const definition = options.definition()
-      return editing === null
-        ? definition === null
-          ? notification.notice()
-          : {message: definitionMessage(definition)}
-        : {message: editing}
+      if (editing !== null) {
+        return {message: editing}
+      }
+      if (definition === null) {
+        return notification.notice()
+      }
+      return definition.kind === 'missing'
+        ? {message: '이동 대상이 없습니다. 작업 폴더 밖의 정의는 표시하지 않습니다.'}
+        : null
     },
     notify: (message: string) =>
       batch(() => {

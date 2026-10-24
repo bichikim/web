@@ -1,5 +1,6 @@
 import {z} from 'zod'
 import {sumBy} from 'es-toolkit/math'
+import {TEXT_MESSAGE_ROLES} from '../ai-job/text-message-roles'
 
 export const CLOUD_TEXT_DAILY_LIMIT = 3
 export const CLOUD_TEXT_MODEL = 'gpt-6-luna'
@@ -28,7 +29,7 @@ export const cloudTextRequestSchema = z.object({
     .array(
       z.object({
         content: z.string().min(1).max(MAXIMUM_MESSAGE_LENGTH),
-        role: z.enum(['assistant', 'system', 'user']),
+        role: z.enum(TEXT_MESSAGE_ROLES),
       }),
     )
     .min(1)

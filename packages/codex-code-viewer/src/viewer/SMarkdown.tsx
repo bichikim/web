@@ -1,3 +1,4 @@
+import {useTranslations} from './locale/use-translations'
 import {createMemo, createSignal, For, type JSX, Show} from 'solid-js'
 import {Dynamic} from 'solid-js/web'
 import type {
@@ -332,12 +333,13 @@ const SMarkdownNode = (props: MarkdownNodeProps): JSX.Element => {
   return <>{content()}</>
 }
 export const SMarkdown = (props: SMarkdownProps) => {
+  const t = useTranslations()
   const [element, setElement] = createSignal<HTMLElement | null>(null)
   const scroll = useScrollRestoration({content: () => props.source, element, kind: 'previewScroll'})
   const root = createMemo(() => parseMarkdown(props.source, props.path))
   return (
     <article
-      aria-label="Markdown 미리보기"
+      aria-label={t('Markdown 미리보기')}
       ref={setElement}
       onScroll={scroll.record}
       class="min-h-0 flex-1 overflow-auto px-6 py-3 text-sm leading-7"

@@ -19,7 +19,12 @@ describe('createRubyNavigation', () => {
       ok: true,
       value: [{column: 5, line: 1, path: join(root, 'helper.rb')}],
     })
-    vi.mocked(createRubyService).mockReturnValue({dispose, lookupSymbols})
+    vi.mocked(createRubyService).mockReturnValue({
+      dispose,
+      lookupIndexedSymbols: lookupSymbols,
+      lookupSymbols,
+      update: vi.fn(),
+    })
     navigation = createRubyNavigation(root)
   })
   afterEach(() => {
@@ -30,16 +35,16 @@ describe('createRubyNavigation', () => {
   it('should start lazily, reuse the analyzer and release it without restarting a closed session', async () => {
     expect(createRubyService).not.toHaveBeenCalled()
     expect(
-      await navigation.lookupSymbols(join(root, 'main.rb'), 'greet()', 0, 'definition'),
+      await navigation.lookupSymbols(join(root, 'main.rb'), 'greet()', 0, {kind: 'definition'}),
     ).toEqual({
       ok: true,
       value: [{column: 5, line: 1, path: 'helper.rb'}],
     })
-    await navigation.lookupSymbols(join(root, 'helper.rb'), 'greet()', 0, 'definition')
+    await navigation.lookupSymbols(join(root, 'helper.rb'), 'greet()', 0, {kind: 'definition'})
     expect(createRubyService).toHaveBeenCalledOnce()
     navigation.dispose()
     expect(
-      await navigation.lookupSymbols(join(root, 'main.rb'), 'greet()', 0, 'definition'),
+      await navigation.lookupSymbols(join(root, 'main.rb'), 'greet()', 0, {kind: 'definition'}),
     ).toMatchObject({
       error: {code: 'ruby-analysis-failed'},
       ok: false,
@@ -57,7 +62,7 @@ describe('createRubyNavigation', () => {
       ],
     })
     expect(
-      await navigation.lookupSymbols(join(root, 'main.rb'), 'greet()', 0, 'definition'),
+      await navigation.lookupSymbols(join(root, 'main.rb'), 'greet()', 0, {kind: 'definition'}),
     ).toEqual({
       ok: true,
       value: [],
@@ -68,7 +73,7 @@ describe('createRubyNavigation', () => {
       throw new Error('missing runtime')
     })
     expect(
-      await navigation.lookupSymbols(join(root, 'main.rb'), 'greet()', 0, 'definition'),
+      await navigation.lookupSymbols(join(root, 'main.rb'), 'greet()', 0, {kind: 'definition'}),
     ).toMatchObject({
       error: {code: 'ruby-analyzer-unavailable'},
       ok: false,
@@ -81,21 +86,66 @@ describe('createRubyNavigation', () => {
       value: [{column: 10, line: 1, path: join(root, 'helper.rb')}],
     })
     expect(
-      await navigation.lookupSymbols(join(root, 'main.rb'), 'greet()', 0, 'definition'),
+      await navigation.lookupSymbols(join(root, 'main.rb'), 'greet()', 0, {kind: 'definition'}),
     ).toEqual({
       ok: true,
       value: [{column: 11, line: 1, path: 'helper.rb'}],
     })
   })
+  it('should exclude declarations while retaining calls on the same line', async () => {
+    writeFileSync(join(root, 'helper.rb'), 'def self.greet; greet; end')
+    lookupSymbols.mockResolvedValue({
+      ok: true,
+      value: [
+        {column: 10, line: 1, path: join(root, 'helper.rb')},
+        {column: 17, line: 1, path: join(root, 'helper.rb')},
+      ],
+    })
+    expect(
+      await navigation.lookupSymbols(join(root, 'main.rb'), 'greet()', 0, {kind: 'references'}),
+    ).toEqual({
+      ok: true,
+      value: [{column: 17, line: 1, path: 'helper.rb'}],
+    })
+  })
+  it('should convert a draft definition column against its edited Unicode source', async () => {
+    lookupSymbols.mockResolvedValue({
+      ok: true,
+      value: [{column: 10, line: 1, path: join(root, 'helper.rb')}],
+    })
+    expect(
+      await navigation.lookupSymbols(join(root, 'helper.rb'), '"🦊"; def greet; end', 11, {
+        draft: true,
+        kind: 'definition',
+      }),
+    ).toEqual({
+      ok: true,
+      value: [{column: 11, line: 1, path: 'helper.rb'}],
+    })
+  })
+  it.each(['class Helper::Report; end', 'def Helper.greet; end'])(
+    'should retain namespace and receiver usages in %s',
+    async (source) => {
+      writeFileSync(join(root, 'helper.rb'), source)
+      const column = source.indexOf('Helper') + 1
+      lookupSymbols.mockResolvedValue({
+        ok: true,
+        value: [{column, line: 1, path: join(root, 'helper.rb')}],
+      })
+      expect(
+        await navigation.lookupSymbols(join(root, 'main.rb'), 'Helper', 0, {kind: 'references'}),
+      ).toEqual({
+        ok: true,
+        value: [{column, line: 1, path: 'helper.rb'}],
+      })
+    },
+  )
   it('should follow static relative requires without starting an analyzer', async () => {
     const source = "require_relative 'helper'"
     expect(
-      await navigation.lookupSymbols(
-        join(root, 'main.rb'),
-        source,
-        source.indexOf('helper'),
-        'definition',
-      ),
+      await navigation.lookupSymbols(join(root, 'main.rb'), source, source.indexOf('helper'), {
+        kind: 'definition',
+      }),
     ).toEqual({
       ok: true,
       value: [{column: 1, line: 1, path: 'helper.rb'}],
@@ -103,12 +153,9 @@ describe('createRubyNavigation', () => {
     expect(createRubyService).not.toHaveBeenCalled()
     const outside = "require_relative '../outside'"
     expect(
-      await navigation.lookupSymbols(
-        join(root, 'main.rb'),
-        outside,
-        outside.indexOf('../'),
-        'definition',
-      ),
+      await navigation.lookupSymbols(join(root, 'main.rb'), outside, outside.indexOf('../'), {
+        kind: 'definition',
+      }),
     ).toEqual({ok: true, value: []})
   })
   it('should reuse a service per nested Gemfile project while keeping workspace-relative paths', async () => {
@@ -116,9 +163,15 @@ describe('createRubyNavigation', () => {
     mkdirSync(join(root, 'second/lib'), {recursive: true})
     writeFileSync(join(root, 'first/Gemfile'), '')
     writeFileSync(join(root, 'second/Gemfile'), '')
-    await navigation.lookupSymbols(join(root, 'first/lib/main.rb'), 'greet()', 0, 'definition')
-    await navigation.lookupSymbols(join(root, 'first/lib/other.rb'), 'greet()', 0, 'definition')
-    await navigation.lookupSymbols(join(root, 'second/lib/main.rb'), 'greet()', 0, 'definition')
+    await navigation.lookupSymbols(join(root, 'first/lib/main.rb'), 'greet()', 0, {
+      kind: 'definition',
+    })
+    await navigation.lookupSymbols(join(root, 'first/lib/other.rb'), 'greet()', 0, {
+      kind: 'definition',
+    })
+    await navigation.lookupSymbols(join(root, 'second/lib/main.rb'), 'greet()', 0, {
+      kind: 'definition',
+    })
     expect(createRubyService).toHaveBeenCalledTimes(2)
     expect(createRubyService).toHaveBeenNthCalledWith(1, join(root, 'first'))
     expect(createRubyService).toHaveBeenNthCalledWith(2, join(root, 'second'))

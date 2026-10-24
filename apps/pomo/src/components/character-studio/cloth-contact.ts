@@ -12,6 +12,7 @@ import {type ClothCapsule, createClothMotion} from './cloth-motion'
 import {getProfile} from './profiles'
 import type {ClothTriangle} from './cloth-constraints'
 import {createClothBinding} from './cloth-binding'
+import {createClothTopology} from './create-cloth-topology'
 
 const SETTINGS = {
   clearance: 0.004,
@@ -59,68 +60,6 @@ const selectVertices = (
   return selected
 }
 
-const createTopology = (
-  mesh: Mesh,
-  positions: FloatArray,
-  indices: FloatArray,
-  weights: FloatArray,
-) => {
-  const triangles = mesh.getIndices() ?? []
-  const selected = selectVertices(mesh, positions, indices, weights)
-  if (selected.size === 0) {
-    return undefined
-  }
-  const included = new Set(selected)
-  const connections: [number, number][] = []
-  for (let index = 0; index < triangles.length; index += SETTINGS.components) {
-    const triangle = [triangles[index], triangles[index + 1], triangles[index + 2]]
-    if (triangle.some((vertex) => selected.has(vertex))) {
-      triangle.forEach((vertex) => included.add(vertex))
-      connections.push(
-        [triangle[0], triangle[1]],
-        [triangle[1], triangle[2]],
-        [triangle[2], triangle[0]],
-      )
-    }
-  }
-  // Weld UV seams so duplicate render vertices cannot tear apart.
-  const welded = new Map<string, number>()
-  const mapping = new Map<number, number>()
-  const representatives: number[] = []
-  const pinned: boolean[] = []
-  for (const vertex of included) {
-    const key = Array.from(
-      positions.slice(
-        vertex * SETTINGS.components,
-        vertex * SETTINGS.components + SETTINGS.components,
-      ),
-      (value) => value.toFixed(SETTINGS.seamPrecision),
-    ).join(',')
-    let particle = welded.get(key)
-    if (particle === undefined) {
-      particle = representatives.length
-      welded.set(key, particle)
-      representatives.push(vertex)
-      pinned.push(false)
-    }
-    mapping.set(vertex, particle)
-    pinned[particle] ||= !selected.has(vertex)
-  }
-  const edgeKeys = new Set<string>()
-  const edges: [number, number][] = []
-  for (const [first, second] of connections) {
-    const left = mapping.get(first)!
-    const right = mapping.get(second)!
-    const key = left < right ? `${left}:${right}` : `${right}:${left}`
-    if (left !== right && !edgeKeys.has(key)) {
-      edgeKeys.add(key)
-      edges.push([left, right])
-    }
-  }
-
-  return {edges, mapping, pinned, representatives, triangles}
-}
-
 const prepareMesh = (mesh: AbstractMesh) => {
   if (!(mesh instanceof Mesh) || mesh.skeleton === null) {
     return []
@@ -131,11 +70,18 @@ const prepareMesh = (mesh: AbstractMesh) => {
   if (positions === null || indices === null || weights === null) {
     return []
   }
-  const topology = createTopology(mesh, positions, indices, weights)
+  const triangles = mesh.getIndices() ?? []
+  const selected = selectVertices(mesh, positions, indices, weights)
+  const topology = createClothTopology({
+    positions,
+    seamPrecision: SETTINGS.seamPrecision,
+    selected,
+    triangles,
+  })
   if (topology === undefined) {
     return []
   }
-  const {mapping, pinned, edges, representatives, triangles} = topology
+  const {mapping, pinned, edges, representatives} = topology
   mesh.makeGeometryUnique()
   const original = Float32Array.from(positions)
   const renderer = createClothRenderer(mesh, mapping, triangles)
@@ -169,6 +115,7 @@ const projectInitial = (targets: readonly Vector3[], capsules: readonly ClothCap
         const amount = clampUnit(
           Vector3.Dot(point.subtract(capsule.start), direction) /
             Math.max(direction.lengthSquared(), SETTINGS.epsilon),
+          {fallback: 0},
         )
         const nearest = capsule.start.add(direction.scale(amount))
         const offset = point.subtract(nearest)

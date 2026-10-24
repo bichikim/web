@@ -1,3 +1,5 @@
+import {useLocalizedMessage} from './locale/use-localized-message'
+import type {LocalizedMessage} from './locale/types'
 import {type Accessor, batch, createEffect, createSignal, on} from 'solid-js'
 import {
   entrySchema,
@@ -25,9 +27,10 @@ interface RenameContext extends EntrySnapshot {
   readonly session: string
 }
 export const useFileRenaming = (props: UseFileRenamingProps) => {
+  const localize = useLocalizedMessage()
   const [renaming, setRenaming] = createSignal<RenameContext | null>(null)
   const [renameName, setRenameName] = createSignal('')
-  const [renameFeedback, setRenameFeedback] = createSignal('')
+  const [renameFeedback, setRenameFeedback] = createSignal<string | LocalizedMessage>('')
   const request = useLatestRequest((error) => {
     setRenameFeedback(errorMessage(error))
     props.onRefresh?.()
@@ -108,7 +111,7 @@ export const useFileRenaming = (props: UseFileRenamingProps) => {
     if (result !== null && renaming() === current) {
       batch(() => {
         setRenaming(null)
-        setRenameFeedback(`${result.path} · 이름을 변경했습니다.`)
+        setRenameFeedback({key: '{path} · 이름을 변경했습니다.', values: {path: result.path}})
       })
     }
   }
@@ -125,7 +128,7 @@ export const useFileRenaming = (props: UseFileRenamingProps) => {
     },
     confirmRename,
     dismissRenameFeedback: () => setRenameFeedback(''),
-    renameFeedback,
+    renameFeedback: () => localize(renameFeedback()),
     renameName,
     renamePending: request.pending,
     renaming,

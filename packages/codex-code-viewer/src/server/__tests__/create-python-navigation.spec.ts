@@ -19,7 +19,12 @@ describe('createPythonNavigation', () => {
       ok: true,
       value: [{column: 5, line: 1, path: join(root, 'helper.py')}],
     })
-    vi.mocked(createPythonService).mockReturnValue({dispose, lookupSymbols})
+    vi.mocked(createPythonService).mockReturnValue({
+      dispose,
+      lookupIndexedSymbols: lookupSymbols,
+      lookupSymbols,
+      update: vi.fn(),
+    })
     navigation = createPythonNavigation(root)
   })
   afterEach(() => {
@@ -30,16 +35,16 @@ describe('createPythonNavigation', () => {
   it('should start lazily, reuse the analyzer and release it without restarting a closed session', async () => {
     expect(createPythonService).not.toHaveBeenCalled()
     expect(
-      await navigation.lookupSymbols(join(root, 'main.py'), 'greet()', 0, 'definition'),
+      await navigation.lookupSymbols(join(root, 'main.py'), 'greet()', 0, {kind: 'definition'}),
     ).toEqual({
       ok: true,
       value: [{column: 5, line: 1, path: 'helper.py'}],
     })
-    await navigation.lookupSymbols(join(root, 'helper.py'), 'greet()', 0, 'definition')
+    await navigation.lookupSymbols(join(root, 'helper.py'), 'greet()', 0, {kind: 'definition'})
     expect(createPythonService).toHaveBeenCalledOnce()
     navigation.dispose()
     expect(
-      await navigation.lookupSymbols(join(root, 'main.py'), 'greet()', 0, 'definition'),
+      await navigation.lookupSymbols(join(root, 'main.py'), 'greet()', 0, {kind: 'definition'}),
     ).toMatchObject({
       error: {code: 'python-analysis-failed'},
       ok: false,
@@ -57,18 +62,30 @@ describe('createPythonNavigation', () => {
       ],
     })
     expect(
-      await navigation.lookupSymbols(join(root, 'main.py'), 'greet()', 0, 'definition'),
+      await navigation.lookupSymbols(join(root, 'main.py'), 'greet()', 0, {kind: 'definition'}),
     ).toEqual({
       ok: true,
       value: [],
     })
+  })
+  it('should not recreate an analyzer when a reference lookup resumes after disposal', async () => {
+    const pending = Promise.withResolvers<{ok: true; value: []}>()
+    lookupSymbols.mockReturnValueOnce(pending.promise)
+    const result = navigation.lookupSymbols(join(root, 'helper.py'), 'def greet(): pass', 4, {
+      kind: 'references',
+    })
+    navigation.dispose()
+    pending.resolve({ok: true, value: []})
+    expect(await result).toMatchObject({error: {code: 'python-analysis-failed'}, ok: false})
+    expect(createPythonService).toHaveBeenCalledOnce()
+    expect(dispose).toHaveBeenCalledOnce()
   })
   it('should report analyzer startup failures without affecting document reads', async () => {
     vi.mocked(createPythonService).mockImplementation(() => {
       throw new Error('missing runtime')
     })
     expect(
-      await navigation.lookupSymbols(join(root, 'main.py'), 'greet()', 0, 'definition'),
+      await navigation.lookupSymbols(join(root, 'main.py'), 'greet()', 0, {kind: 'definition'}),
     ).toMatchObject({
       error: {code: 'python-analyzer-unavailable'},
       ok: false,

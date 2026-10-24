@@ -1,11 +1,13 @@
+import {createKeyedParameter2D} from './parameter-keyforms/fixtures'
 import {expect, test} from 'vitest'
 import {createDemoDocument} from '../../../player'
-import {isTwoDimensionalParameterBinding} from '../../../deformation'
-import {addTwoDimensionalParameter} from '../parameter-keyforms'
+import {isTwoDimensionalParameterBinding, type PuppetParameterValues} from '../../../deformation'
+import {connectParameterGroup, setKeyformGroupProperties} from '../group-keyforms'
+
 import {generateCornerKeyforms} from '../generate-corner-keyforms'
 
 const createSource = () => {
-  const added = addTwoDimensionalParameter({
+  const added = createKeyedParameter2D({
     document: {
       ...createDemoDocument(),
       parameterBindings: [],
@@ -93,4 +95,36 @@ test('should reject missing axial forms without changing the document', () => {
     })),
   }
   expect(generateCornerKeyforms({...source, document, overwrite: true}).ok).toBe(false)
+})
+
+test('should compose group opacity deltas into corners, clamped to 0..1', () => {
+  const source = createSource()
+  const keys: ReadonlyArray<{opacity: number; values: PuppetParameterValues}> = [
+    {opacity: 0.8, values: [30, 0]},
+    {opacity: 0.7, values: [0, -30]},
+    {opacity: 0.1, values: [0, 30]},
+  ]
+  const keyed = keys.reduce(
+    (document, {opacity, values}) =>
+      setKeyformGroupProperties({
+        bindingId: source.bindingId,
+        document,
+        groupId: 'shapes',
+        properties: {opacity},
+        values,
+      })!,
+    connectParameterGroup(source.document, source.bindingId, 'shapes')!,
+  )
+  const result = generateCornerKeyforms({...source, document: keyed, overwrite: false})
+  if (!result.ok) {
+    throw new Error(result.message)
+  }
+  const opacityAt = (values: readonly number[]) =>
+    result.document
+      .parameterBindings![0]!.keyforms.find(
+        (keyform) => keyform.values[0] === values[0] && keyform.values[1] === values[1],
+      )
+      ?.groups?.find((entry) => entry.groupId === 'shapes')?.properties.opacity
+  expect(opacityAt([30, -30])).toBeCloseTo(0.5)
+  expect(opacityAt([30, 30])).toBe(0)
 })

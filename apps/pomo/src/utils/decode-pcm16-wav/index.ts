@@ -1,10 +1,14 @@
-// oxlint-disable no-magic-numbers -- RIFF chunk offsets and PCM16 scaling are format constants.
-interface DecodedPcm16Wave {
+// oxlint-disable no-magic-numbers -- RIFF 청크 오프셋과 PCM16 배율은 형식에 정의된 상수다.
+export interface DecodedPcm16Wave {
+  /** 원본 WAV의 채널 수이다. */
   readonly channels: number
+  /** 초당 프레임 수를 나타내는 원본 샘플 레이트이다. */
   readonly sampleRate: number
+  /** 프레임마다 원본 채널 순서로 교차 배치한 부동소수점 샘플이다. */
   readonly samples: Float32Array
 }
-interface WaveDecodeOptions {
+export interface WaveDecodeOptions {
+  /** data 청크가 잘렸을 때의 정책이다. 생략하면 거부하며, read-available은 남아 있는 완전한 프레임만 읽는다. */
   readonly truncatedData?: 'reject' | 'read-available'
 }
 interface WaveChunk {
@@ -41,7 +45,7 @@ const readPcmChunks = (view: DataView, options: WaveDecodeOptions) => {
     : {data, format}
 }
 
-/** Decodes PCM16 WAV to mono samples, averaging channels and honoring the truncation policy. */
+/** PCM16 WAV를 채널 수와 프레임 내 채널 순서를 유지한 부동소수점 샘플로 디코딩한다. 지원하지 않는 형식이나 잘못된 데이터에는 null을 반환한다. */
 export const decodePcm16Wav = (
   bytes: ArrayBuffer | Uint8Array,
   options: WaveDecodeOptions = {},
@@ -68,13 +72,10 @@ export const decodePcm16Wav = (
   ) {
     return null
   }
-  const samples = new Float32Array(Math.floor(data.size / (channels * 2)))
-  for (let frame = 0; frame < samples.length; frame += 1) {
-    let sum = 0
-    for (let channel = 0; channel < channels; channel += 1) {
-      sum += view.getInt16(data.offset + (frame * channels + channel) * 2, true) / 32_768
-    }
-    samples[frame] = sum / channels
+  const frameCount = Math.floor(data.size / (channels * 2))
+  const samples = new Float32Array(frameCount * channels)
+  for (let index = 0; index < samples.length; index += 1) {
+    samples[index] = view.getInt16(data.offset + index * 2, true) / 32_768
   }
   return {channels, sampleRate, samples}
 }

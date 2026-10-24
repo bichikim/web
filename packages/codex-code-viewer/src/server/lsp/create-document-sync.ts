@@ -81,5 +81,13 @@ export const createDocumentSync = (
       notify()
     }
   }
-  return {dispose, synchronize, waitForAnalysis}
+  const close = async (path: string): Promise<void> => {
+    const uri = pathToFileURL(path).href
+    if (documents.has(uri)) {
+      await connection.sendNotification('textDocument/didClose', {textDocument: {uri}})
+      documents.delete(uri)
+      analyzed.delete(uri)
+    }
+  }
+  return {close, dispose, synchronize, waitForAnalysis}
 }

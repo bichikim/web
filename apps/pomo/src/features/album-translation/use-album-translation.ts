@@ -74,6 +74,8 @@ export const useAlbumTranslation = (
 
   const handleResponse = (response: AlbumTranslationWorkerResponse) => {
     switch (response.type) {
+      case 'skipped':
+        return
       case 'complete':
         {
           const didApply = props.onComplete(response.translations)

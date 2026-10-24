@@ -1,19 +1,13 @@
 import {z} from 'zod'
+import {AI_JOB_STATUSES} from './job-statuses'
+import {TEXT_MESSAGE_ROLES} from './text-message-roles'
 
 const MAXIMUM_JOB_PROGRESS = 100
 const MAXIMUM_MESSAGE_LENGTH = 12_000
 const MAXIMUM_MESSAGE_COUNT = 64
 const MAXIMUM_TOKENS = 4_096
 
-export const aiJobStatusSchema = z.enum([
-  'queued',
-  'running',
-  'recovery_pending',
-  'succeeded',
-  'failed',
-  'cancelled',
-  'timed_out',
-])
+export const aiJobStatusSchema = z.enum(AI_JOB_STATUSES)
 
 export type AiJobStatus = z.infer<typeof aiJobStatusSchema>
 
@@ -63,7 +57,7 @@ export type AiTextAccess = z.infer<typeof aiTextAccessSchema>
 
 export const aiTextMessageSchema = z.object({
   content: z.string().trim().min(1).max(MAXIMUM_MESSAGE_LENGTH),
-  role: z.enum(['assistant', 'system', 'user']),
+  role: z.enum(TEXT_MESSAGE_ROLES),
 })
 
 export const aiTextJobInputSchema = z.object({

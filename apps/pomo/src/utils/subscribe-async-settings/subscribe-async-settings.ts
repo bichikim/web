@@ -9,7 +9,7 @@ interface AsyncSettingsSubscriptionOptions<Value> {
   readonly onError: (error: unknown) => void
 }
 
-/** Subscribes before reading settings, ignoring stale reads and completions after disposal. */
+/** 설정을 읽기 전에 구독하고, 오래된 읽기 결과와 구독 해제 후 완료된 결과는 무시한다. */
 export const subscribeAsyncSettings = <Value>(
   options: AsyncSettingsSubscriptionOptions<Value>,
 ): (() => void) => {

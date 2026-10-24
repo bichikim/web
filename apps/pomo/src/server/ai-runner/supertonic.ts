@@ -1,5 +1,6 @@
 import {isObject} from 'src/utils/is-object'
 import {concatFloat32} from 'src/utils/concat-float32'
+import {intersperse} from 'src/utils/intersperse'
 import {createGaussianNoise} from '../../features/supertonic/noise.ts'
 import {clampUnit} from '../../utils/clamp-unit/index.ts'
 // oxlint-disable eslint-js/camelcase -- Supertonic ONNX tensor names are an external model contract.
@@ -430,7 +431,7 @@ export const createSupertonicExecutor = () => {
     for (const [index, chunk] of chunks.entries()) {
       const chunkContext: RunnerExecutionContext = {
         onProgress: (progress) => {
-          const chunkProgress = clampUnit((progress - 50) / 40)
+          const chunkProgress = clampUnit((progress - 50) / 40, {fallback: 0})
           context.onProgress(48 + Math.floor(((index + chunkProgress) / chunks.length) * 48))
         },
         signal: context.signal,
@@ -439,10 +440,10 @@ export const createSupertonicExecutor = () => {
         await generateSamples(state, voice, chunk, input.speed ?? 1, chunkContext),
       )
     }
-    const samples = concatFloat32(
-      {chunks: generatedChunks},
+    const silence = new Float32Array(
       Math.floor(state.config.ae.sample_rate * SUPERTONIC_SILENCE_SECONDS),
     )
+    const samples = concatFloat32(intersperse(generatedChunks, silence))
     const bytes = createWaveBuffer(samples, state.config.ae.sample_rate)
     context.onProgress(100)
     return {

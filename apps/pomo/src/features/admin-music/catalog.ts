@@ -1,6 +1,8 @@
 import {z} from 'zod'
 
 import {ALBUM_LOCALES} from './album-draft'
+import {ALBUM_STATUSES, TRACK_ASSET_STATUSES} from './catalog-values'
+import {OFFER_BILLING_TYPES, OFFER_STATUSES, PRODUCT_STATUSES} from '../commerce'
 
 const coverFallbackSchema = z.enum(['lp', 'cd', 'music'])
 const albumTranslationSchema = z.object({
@@ -15,7 +17,7 @@ const albumSchema = z.object({
   coverImageUrl: z.string().nullable(),
   id: z.string(),
   release: z.object({blockers: z.array(releaseBlockerSchema), ready: z.boolean()}),
-  status: z.enum(['draft', 'published', 'archived']),
+  status: z.enum(ALBUM_STATUSES),
   translations: z.array(albumTranslationSchema),
 })
 const trackSchema = z.object({
@@ -34,17 +36,17 @@ const pendingTrackSchema = z.object({
 const assetSchema = z.object({
   artworkUrl: z.string().url().nullable().optional(),
   id: z.string(),
-  status: z.enum(['pending', 'uploaded', 'ready', 'active', 'failed', 'retired', 'deleted']),
+  status: z.enum(TRACK_ASSET_STATUSES),
   trackId: z.string(),
 })
 const offerSchema = z.object({
   albumId: z.string(),
-  billingType: z.enum(['one_time', 'subscription']),
+  billingType: z.enum(OFFER_BILLING_TYPES),
   externalProductId: z.string(),
   productCode: z.string(),
-  productStatus: z.enum(['active', 'archived']),
+  productStatus: z.enum(PRODUCT_STATUSES),
   provider: z.string(),
-  status: z.enum(['active', 'inactive']),
+  status: z.enum(OFFER_STATUSES),
 })
 
 export const catalogSchema = z.object({

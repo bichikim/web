@@ -1,4 +1,5 @@
 import {createMemo, createSignal} from 'solid-js'
+import {getArrowKeyDelta} from '@winter-love/utils/browser/events/get-arrow-key-delta'
 import {
   addDays,
   type CivilDate,
@@ -11,7 +12,6 @@ import {
 
 const LAST_WEEKDAY = 6
 const WEEK_DAYS = 7
-const PREVIOUS_WEEK = -7
 
 export interface UsePickerProps {
   readonly value?: string
@@ -76,23 +76,14 @@ export const usePicker = (props: UsePickerProps) => {
   }
   const onKeyDown = (event: KeyboardEvent, date: CivilDate) => {
     const weekday = new Date(dateEpoch(date)).getUTCDay()
-    switch (event.key) {
-      case 'ArrowLeft':
-        event.preventDefault()
-        focus(addDays(date, -1))
-        return
-      case 'ArrowRight':
-        event.preventDefault()
-        focus(addDays(date, 1))
-        return
-      case 'ArrowUp':
-        event.preventDefault()
-        focus(addDays(date, PREVIOUS_WEEK))
-        return
-      case 'ArrowDown':
-        event.preventDefault()
-        focus(addDays(date, WEEK_DAYS))
-        return
+    const {key} = event
+    const delta = getArrowKeyDelta(key)
+    if (delta !== null) {
+      event.preventDefault()
+      focus(addDays(date, delta.x + delta.y * WEEK_DAYS))
+      return
+    }
+    switch (key) {
       case 'Home':
         event.preventDefault()
         focus(addDays(date, -weekday))

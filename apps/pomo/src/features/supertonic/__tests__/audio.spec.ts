@@ -42,39 +42,28 @@ describe('joinAudioChunks', () => {
     expect(samples).toHaveLength(0)
   })
 
-  it('should retain the original order of reading chunk and silence getters', () => {
-    const reads: string[] = []
+  it('should use one chunk collection even when another getter changes the source', () => {
+    let chunks = [Float32Array.of(0.5), Float32Array.of(-0.5)]
     const samples = joinAudioChunks({
       get chunks() {
-        reads.push('chunks')
-        return [Float32Array.of(0.5), Float32Array.of(-0.5)]
+        return chunks
       },
       get sampleRate() {
-        reads.push('sampleRate')
+        chunks = []
         return 10
       },
-      get silenceDuration() {
-        reads.push('silenceDuration')
-        return 0.2
-      },
+      silenceDuration: 0.2,
     })
-
     expect(samples).toEqual(Float32Array.of(0.5, 0, 0, -0.5))
-    expect(reads).toEqual(['chunks', 'sampleRate', 'silenceDuration', 'chunks', 'chunks', 'chunks'])
   })
 
-  it('should retain allocation failures when a later chunk getter changes the gap count', () => {
-    let reads = 0
-    const options = {
-      get chunks() {
-        reads += 1
-        return reads === 3 ? [] : [Float32Array.of(0.5)]
-      },
-      sampleRate: 10,
-      silenceDuration: 0.2,
-    }
-
-    expect(() => joinAudioChunks(options)).toThrow(RangeError)
-    expect(reads).toBe(3)
+  it('should preserve silence gaps around empty chunks', () => {
+    expect(
+      joinAudioChunks({
+        chunks: [Float32Array.of(0.5), new Float32Array(), Float32Array.of(-0.5)],
+        sampleRate: 10,
+        silenceDuration: 0.2,
+      }),
+    ).toEqual(Float32Array.of(0.5, 0, 0, 0, 0, -0.5))
   })
 })

@@ -52,7 +52,7 @@ export const LanguageLearningWordList = (props: LanguageLearningWordListProps) =
       >
         <KeyedList each={props.words} by={(word) => `${word.language}:${word.value}`}>
           {(word) => {
-            const audioUrl = () => props.getAudioUrl(word())
+            const audioUrl = createMemo(() => props.getAudioUrl(word()))
             const pronunciationLoading = createMemo(() => props.isPronunciationLoading(word()))
             const selected = () =>
               props.selectedWords().some((selectedWord) => selectedWord.value === word().value)

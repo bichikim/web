@@ -19,6 +19,8 @@ test('should retain the recovery failure without overwriting stored work with th
   vi.spyOn(console, 'warn').mockImplementation(() => undefined)
   const write = vi.fn().mockResolvedValue(undefined)
   vi.mocked(createDocumentSession).mockReturnValue({
+    listRecoveries: vi.fn().mockResolvedValue([]),
+    loadRecovery: vi.fn(),
     read: vi.fn().mockRejectedValue(new Error('temporary read failure')),
     write,
   })
@@ -45,7 +47,12 @@ test('should render the editor frame while recovery is pending without saving it
     resolveSaving = resolve
   })
   const write = vi.fn(async () => resolveSaving())
-  vi.mocked(createDocumentSession).mockReturnValue({read: vi.fn(() => recovered), write})
+  vi.mocked(createDocumentSession).mockReturnValue({
+    listRecoveries: vi.fn().mockResolvedValue([]),
+    loadRecovery: vi.fn(),
+    read: vi.fn(() => recovered),
+    write,
+  })
   const loadInitialDocument = vi.fn()
   const view = render(() => (
     <EditorApp initialWorkspace="animation" loadInitialDocument={loadInitialDocument} />
@@ -68,9 +75,10 @@ test('should render the editor frame while recovery is pending without saving it
   fireEvent.click(view.getByRole('button', {name: '타임라인 FPS 증가'}))
   await saved
   expect(write).toHaveBeenCalledTimes(1)
-  expect(write).toHaveBeenCalledWith(
-    expect.objectContaining({framesPerSecond: 25} satisfies Partial<PuppetDocument>),
-  )
+  expect(write).toHaveBeenCalledWith({
+    ...document,
+    motions: [{...document.motions[0], framesPerSecond: 25}, ...document.motions.slice(1)],
+  })
   expect(loadInitialDocument).not.toHaveBeenCalled()
   expect(view.container).not.toHaveTextContent('새로고침 복구 저장됨')
   expect(view.container).not.toHaveTextContent('작업 복원됨')
@@ -79,6 +87,8 @@ test('should render the editor frame while recovery is pending without saving it
 
 test('should offer a retry when loading a document fails', async () => {
   vi.mocked(createDocumentSession).mockReturnValue({
+    listRecoveries: vi.fn().mockResolvedValue([]),
+    loadRecovery: vi.fn(),
     read: vi.fn().mockResolvedValue(null),
     write: vi.fn(),
   })

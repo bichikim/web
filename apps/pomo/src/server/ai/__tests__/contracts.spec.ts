@@ -7,7 +7,38 @@ import {
   runnerCapabilityFor,
   textJobInputSchema,
 } from '../contracts'
-import {createAiRunnerJobRequest} from '../runner-contract'
+
+describe('textJobInputSchema message roles', () => {
+  const createInput = (role: unknown) => ({messages: [{content: '  질문  ', role}]})
+
+  it.each(['assistant', 'system', 'user'])(
+    'should accept the %s role while retaining content trimming and parameter defaults',
+    (role) => {
+      expect(textJobInputSchema.parse(createInput(role))).toEqual({
+        messages: [{content: '질문', role}],
+        parameters: {maximumTokens: 4096},
+      })
+    },
+  )
+
+  it.each(['developer', 'tool', ' user ', null, undefined, 0])(
+    'should reject unsupported message role %s with the ordered role diagnostic',
+    (role) => {
+      const result = textJobInputSchema.safeParse(createInput(role))
+
+      expect(result.success).toBe(false)
+      if (!result.success) {
+        expect(result.error.issues).toEqual([
+          expect.objectContaining({
+            code: 'invalid_value',
+            path: ['messages', 0, 'role'],
+            values: ['assistant', 'system', 'user'],
+          }),
+        ])
+      }
+    },
+  )
+})
 
 describe('AI job contracts', () => {
   it('validates text input and maps capability names for the runner', () => {
@@ -17,22 +48,6 @@ describe('AI job contracts', () => {
 
     expect(input).toMatchObject({messages: [{content: '안녕하세요', role: 'user'}]})
     expect(runnerCapabilityFor('speech-to-text')).toBe('speech_to_text')
-  })
-
-  it('separates runner intermediates from the final temporary result namespace', () => {
-    expect(
-      createAiRunnerJobRequest({
-        capability: 'image',
-        input: {idea: 'rain'},
-        jobId: '019d0000-0000-7000-8000-000000000001',
-        modelId: 'image-model',
-      }),
-    ).toMatchObject({
-      artifact: {
-        intermediateObjectKeyPrefix: 'ai/intermediate/019d0000-0000-7000-8000-000000000001',
-        objectKeyPrefix: 'ai/jobs/019d0000-0000-7000-8000-000000000001/temporary',
-      },
-    })
   })
 
   it('rejects an audio job without an input reference', () => {

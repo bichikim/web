@@ -1,4 +1,4 @@
-import {cosineEaseInOut} from 'src/utils/cosine-ease-in-out'
+import {cosineEaseInOut} from 'src/utils/ease'
 import type {Container} from 'pixi.js'
 
 import {applyLoopingTranslation} from './looping-translation'

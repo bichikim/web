@@ -43,6 +43,9 @@ jobs:
         id: install
         run: pnpm install --frozen-lockfile
 
+      - name: Build Puppet distribution
+        run: pnpm --filter @winter-love/puppet build
+
       - name: Typecheck
         run: pnpm typecheck
 
@@ -85,6 +88,9 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+
+      - name: Build Puppet distribution
+        run: pnpm --filter @winter-love/puppet build
 
       - name: Run unit tests
         env:
@@ -131,6 +137,9 @@ jobs:
 
       - name: Build Code Viewer distribution
         run: pnpm --filter @winter-love/codex-code-viewer build
+
+      - name: Install integration test browsers
+        run: pnpm exec playwright install --with-deps chromium webkit
 
       - name: Run integration tests
         run: pnpm test:integration --project=integration

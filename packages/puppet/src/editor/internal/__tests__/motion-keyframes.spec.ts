@@ -1,6 +1,11 @@
 import {describe, expect, test} from 'vitest'
 
-import {createDemoDocument} from '../../../player'
+import {
+  createDemoDocument,
+  createEmptyDocument,
+  getModelTrackRowId,
+  parseDocumentValue,
+} from '../../../player'
 import {
   deleteParameterKeyframe,
   deleteParameterKeyframes,
@@ -257,6 +262,28 @@ describe('parameter keyframes', () => {
     expect(deleted?.motions[0]?.tracks).toEqual([])
   })
 
+  test('should store a repeat parameter keyframe limited to its range without wrapping', () => {
+    const document = createEmptyMotionDocument()
+    const repeatDocument = {
+      ...document,
+      parameters: document.parameters?.map((parameter) =>
+        parameter.id === 'angle-x' ? {...parameter, repeat: true} : parameter,
+      ),
+    }
+    const keyframeAt = (time: number, value: number) =>
+      setParameterKeyframe({
+        document: repeatDocument,
+        motionId: 'idle-deform',
+        parameterId: 'angle-x',
+        time,
+        value,
+      })?.motions[0]?.tracks[0]?.keyframes
+
+    expect(keyframeAt(1, 30)).toEqual([{time: 1, value: 30}])
+    expect(keyframeAt(1, 100)).toEqual([{time: 1, value: 30}])
+    expect(keyframeAt(1, -100)).toEqual([{time: 1, value: -30}])
+  })
+
   test('should return absence for an invalid parameter value or target', () => {
     const document = createEmptyMotionDocument()
 
@@ -279,4 +306,41 @@ describe('parameter keyframes', () => {
       }),
     ).toBeUndefined()
   })
+})
+
+test('should preserve both colliding tracks when keying and deleting only a parameter keyframe', () => {
+  const document = {
+    ...createEmptyDocument(),
+    motions: [{duration: 1, id: 'motion', tracks: []}],
+    parameters: [
+      {defaultValue: 0, id: 'model:opacity', maximum: 10, minimum: 0, name: 'Parameter'},
+    ],
+  }
+  const parameter = setParameterKeyframe({
+    document,
+    motionId: 'motion',
+    parameterId: 'model:opacity',
+    time: 0,
+    value: 8,
+  })!
+  const modelRow = getModelTrackRowId('opacity', parameter)
+  const keyed = setParameterKeyframe({
+    document: parameter,
+    motionId: 'motion',
+    parameterId: modelRow,
+    time: 0,
+    value: 0.5,
+  })!
+  expect(keyed.motions[0]?.tracks).toEqual([
+    {keyframes: [{time: 0, value: 8}], kind: 'parameter', parameterId: 'model:opacity'},
+    {keyframes: [{time: 0, value: 0.5}], kind: 'model', target: 'opacity'},
+  ])
+  const deleted = deleteParameterKeyframe({
+    document: keyed,
+    motionId: 'motion',
+    parameterId: 'model:opacity',
+    time: 0,
+  })!
+  expect(deleted.motions[0]?.tracks).toEqual([keyed.motions[0]!.tracks[1]])
+  expect(parseDocumentValue(deleted).ok).toBe(true)
 })

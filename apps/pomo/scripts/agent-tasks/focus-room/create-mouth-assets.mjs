@@ -2,6 +2,7 @@
 import {createRequire} from 'node:module'
 import {mkdir} from 'node:fs/promises'
 import path from 'node:path'
+import {calculateSkinToneOffset as calculateRawSkinToneOffset} from './mouth/calculate-skin-tone-offset.mjs'
 
 const require = createRequire(import.meta.url)
 const sharp = require('sharp')
@@ -9,8 +10,6 @@ const sharp = require('sharp')
 const SOURCE_WIDTH = 1672
 const SOURCE_HEIGHT = 941
 const RGBA_CHANNEL_COUNT = 4
-const RGB_CHANNEL_COUNT = 3
-const ALPHA_CHANNEL_INDEX = 3
 const OPAQUE_ALPHA_THRESHOLD = 250
 const MASK_FEATHER_PIXELS = 4
 const MOUTH_EDIT_FEATHER_PIXELS = 1.5
@@ -228,37 +227,14 @@ const calculateSkinToneOffset = async (originalPatch, generatedPatch) => {
     sharp(originalPatch).ensureAlpha().raw().toBuffer({resolveWithObject: true}),
     sharp(generatedPatch).ensureAlpha().raw().toBuffer({resolveWithObject: true}),
   ])
-  const channelOffsets = [0, 0, 0]
-  let sampleCount = 0
-
-  for (let y = SKIN_SAMPLE_BOUNDS.top; y < SKIN_SAMPLE_BOUNDS.bottom; y += 1) {
-    for (let x = SKIN_SAMPLE_BOUNDS.left; x < SKIN_SAMPLE_BOUNDS.right; x += 1) {
-      const isMouth =
-        x >= SKIN_SAMPLE_MOUTH_EXCLUSION.left &&
-        x < SKIN_SAMPLE_MOUTH_EXCLUSION.right &&
-        y >= SKIN_SAMPLE_MOUTH_EXCLUSION.top &&
-        y < SKIN_SAMPLE_MOUTH_EXCLUSION.bottom
-      const pixelOffset = (y * patch.width + x) * RGBA_CHANNEL_COUNT
-      const isOpaqueSkin =
-        !isMouth &&
-        original[pixelOffset + ALPHA_CHANNEL_INDEX] >= OPAQUE_ALPHA_THRESHOLD &&
-        generated[pixelOffset + ALPHA_CHANNEL_INDEX] >= OPAQUE_ALPHA_THRESHOLD
-
-      if (isOpaqueSkin) {
-        for (let channel = 0; channel < RGB_CHANNEL_COUNT; channel += 1) {
-          channelOffsets[channel] +=
-            original[pixelOffset + channel] - generated[pixelOffset + channel]
-        }
-        sampleCount += 1
-      }
-    }
-  }
-
-  if (sampleCount === 0) {
-    throw new Error('Could not find opaque skin pixels for mouth color matching.')
-  }
-
-  return channelOffsets.map((offset) => offset / sampleCount)
+  return calculateRawSkinToneOffset({
+    generated,
+    mouthExclusion: SKIN_SAMPLE_MOUTH_EXCLUSION,
+    opaqueAlphaThreshold: OPAQUE_ALPHA_THRESHOLD,
+    original,
+    patch,
+    sampleBounds: SKIN_SAMPLE_BOUNDS,
+  })
 }
 
 const createColorMatchedPatch = async (sourcePath, originalPatch) => {

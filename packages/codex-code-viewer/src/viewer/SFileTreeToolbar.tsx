@@ -1,3 +1,5 @@
+import {STooltip} from './STooltip'
+import {useTranslations} from './locale/use-translations'
 import {untrack} from 'solid-js'
 import type {ViewerConnection, WorkspaceEntry} from '../shared/contracts'
 import type {ViewerPort} from './types'
@@ -17,6 +19,7 @@ interface SFileTreeToolbarProps {
   readonly visible: boolean
 }
 export const SFileTreeToolbar = (props: SFileTreeToolbarProps) => {
+  const t = useTranslations()
   const creation = useFileCreation({
     onCreated: (entry) => props.onCreated(entry),
     parent: () => props.parent,
@@ -27,46 +30,62 @@ export const SFileTreeToolbar = (props: SFileTreeToolbarProps) => {
   return (
     <>
       <div class="mx-2 mb-1 flex items-center gap-1">
-        <button
-          aria-label="새 파일"
-          class="ui-icon-button"
-          disabled={!props.session}
-          onClick={() => creation.open('file')}
-          title="새 파일"
-          type="button"
-        >
-          <SIcon name="newFile" />
-        </button>
-        <button
-          aria-label="새 폴더"
-          class="ui-icon-button"
-          disabled={!props.session}
-          onClick={() => creation.open('directory')}
-          title="새 폴더"
-          type="button"
-        >
-          <SIcon name="newFolder" />
-        </button>
-        <button
-          aria-label="파일 트리 새로고침"
-          class="ui-icon-button"
-          disabled={!props.session || props.refreshing || props.onRefresh === undefined}
-          onClick={() => props.onRefresh?.()}
-          title="파일 트리 새로고침"
-          type="button"
-        >
-          <SIcon name="refresh" />
-        </button>
-        <button
-          aria-label="현재 파일 위치로 이동"
-          class="ui-icon-button ml-auto"
-          disabled={!props.canReveal}
-          onClick={() => props.onReveal()}
-          title="현재 파일 위치로 이동"
-          type="button"
-        >
-          <SIcon name="target" />
-        </button>
+        <STooltip content={t('새 파일')}>
+          {(description) => (
+            <button
+              aria-describedby={description}
+              aria-label={t('새 파일')}
+              class="ui-icon-button"
+              disabled={!props.session}
+              onClick={() => creation.open('file')}
+              type="button"
+            >
+              <SIcon name="newFile" />
+            </button>
+          )}
+        </STooltip>
+        <STooltip content={t('새 폴더')}>
+          {(description) => (
+            <button
+              aria-describedby={description}
+              aria-label={t('새 폴더')}
+              class="ui-icon-button"
+              disabled={!props.session}
+              onClick={() => creation.open('directory')}
+              type="button"
+            >
+              <SIcon name="newFolder" />
+            </button>
+          )}
+        </STooltip>
+        <STooltip content={t('파일 트리 새로고침')}>
+          {(description) => (
+            <button
+              aria-describedby={description}
+              aria-label={t('파일 트리 새로고침')}
+              class="ui-icon-button"
+              disabled={!props.session || props.refreshing || props.onRefresh === undefined}
+              onClick={() => props.onRefresh?.()}
+              type="button"
+            >
+              <SIcon name="refresh" />
+            </button>
+          )}
+        </STooltip>
+        <STooltip content={t('현재 파일 위치로 이동')} class="ml-auto">
+          {(description) => (
+            <button
+              aria-describedby={description}
+              aria-label={t('현재 파일 위치로 이동')}
+              class="ui-icon-button"
+              disabled={!props.canReveal}
+              onClick={() => props.onReveal()}
+              type="button"
+            >
+              <SIcon name="target" />
+            </button>
+          )}
+        </STooltip>
       </div>
       <SFileCreationDialog creation={creation} />
     </>

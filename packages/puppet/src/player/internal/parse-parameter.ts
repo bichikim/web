@@ -1,8 +1,4 @@
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null
-
-const isFiniteNumber = (value: unknown): value is number =>
-  typeof value === 'number' && Number.isFinite(value)
+import {isFiniteNumber, isRecord} from './parse-primitives'
 
 export const hasValidParameterOptions = (value: Record<string, unknown>) => {
   if (value.options === undefined) {

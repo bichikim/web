@@ -1,4 +1,4 @@
-import {createTestBroadcastChannel} from 'src/test-utils/create-test-broadcast-channel'
+import {createTestBroadcastChannel} from 'src/__tests__/create-test-broadcast-channel'
 /** @vitest-environment jsdom */
 
 import {BroadcastChannel as NativeBroadcastChannel} from 'node:worker_threads'

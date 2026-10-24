@@ -126,6 +126,15 @@ Preserve `min-width: 0` and shrinkable grid tracks where names and fields share 
 
 Panel close gestures use half the minimum size as the release threshold. Reaching the minimum size alone must not close a panel. Keep the sizing and gesture policy in [use-panel-layout.ts](src/editor/use-panel-layout.ts).
 
+Studio and Viewer place file actions in the leading hamburger menu, reusing the editor menu
+trigger and row styles. Keep model loading separate from Studio save/load inside the menu; the
+graph toolbar contains graph editing actions. File menus remain above the canvas and restore
+keyboard focus when dismissed with Escape.
+
+Use [WorkspaceNavigation](src/WorkspaceNavigation.tsx) across Editor, Studio, and Viewer, with the
+current page visibly selected. Editor launch actions open the current work in a new tab. Wrap header controls within
+the editor's actual width when space is limited, and let the header row grow to fit.
+
 ## Spacing
 
 The [spacing theme](uno/spacing.ts) owns a compact, rem-based scale. Pixel equivalents assume a 16px root font size. Compose its named tokens through UnoCSS padding, margin, and gap utilities in the owning shortcuts; do not introduce independent spacing values for ordinary interface layout.
@@ -181,6 +190,10 @@ A 2D warp grid offers point selection, move, expansion/contraction, and smoothin
 
 The parameter toolbar's Keyform Tools dialog provides motion mirroring and four-corner generation. Mirroring targets the parameter value reflected around its default, with a selected horizontal or vertical geometry axis and a configurable mesh center. Preserve vertex order and UVs. Meshes, warp grids, and rotation deformers are supported; show an actionable message for unsupported targets. Warp and rotation deformers use their own reference centers.
 
+Keep 1D parameter tracks and their name/value controls compact at a 3rem minimum, matching the Z plane track. Preserve marker labels, influence metadata, and input heights; retain the separate 2D and 3D editing heights.
+
+2D parameter grids show five evenly spaced values and ticks along X at the bottom and Y at the left, using each axis’s own range. Reserve label space inside the existing row height and keep scale overlays non-interactive.
+
 Parameter rows show each axis name once, beside its value control. Keep the names and value controls together at the bottom of the row, with influence and binding metadata at the top. Hide a binding name that repeats the primary axis name, ignoring whitespace and middle-dot separators. Show each track's current influence in its row header, including inactive tracks and unsaved influence previews; mixed physics input tracks show their preview status there. Keep the footer for selection and connection actions.
 
 Parameter deletion swipes start anywhere on the parameter row except value controls and editable inputs. Keep numeric scrubbing, stepping, discrete value selection, and name editing independent of deletion gestures.
@@ -194,6 +207,8 @@ track width without changing keyframe times, selection, or focus. Share zoom wit
 view and adjust ruler label density to the measured track width.
 
 Create animation keyframes by double-clicking an empty track position, sampling the parameter value at the clicked frame. Backspace or Delete removes selected keyframes while their track or marker has focus. Right-click an empty position to add a keyframe, or an existing marker to delete it; right-clicking a selected marker preserves multi-selection and offers deletion of the selected group. Open the same menu with the Context Menu key or Shift+F10, using the focused marker or the playhead on a focused track. Retain the parameter row when its last keyframe is deleted, including imported motions without explicit timeline row IDs. Hide unavailable menu actions and remove persistent add/delete buttons from the toolbar. Ignore typing, composition, modifier chords, and key repeat, and restore track focus after deletion or closing the menu. Apply the same interactions independently to each motion in the all-motions view, through the existing document history.
+
+Create 1D, 2D, and 3D parameters with empty keyform lists, preserving the selected target connections. Add only the keyforms the user explicitly creates. Existing saved keyforms remain unchanged.
 
 Create and delete keyforms through the track/grid context menu rather than persistent toolbar buttons. Right-click selects the requested binding and value; addition is available only at an empty value, and deletion only on an existing keyform. Hide unavailable keyform actions instead of displaying disabled menu items. Double-click an empty track/grid position to create a keyform at that value. Backspace or Delete removes the selected keyform while the track or a marker has focus; typing, composition, modifier chords, and key repeat must not delete keyforms. Preserve preview-only bindings and restore track focus after a menu closes or a marker is deleted. These actions use the existing document history.
 
@@ -211,6 +226,12 @@ Reference: [TemporaryFormButton](src/editor/internal/TemporaryFormButton.tsx), [
 - The adjacent close action changes the button to a deletion question. A second click deletes; clicking elsewhere cancels that confirmation.
 
 Keep document edits and temporary previews distinct. Do not describe an unsaved preview as a saved keyform.
+
+## Document history
+
+Keep named document history first in the right inspector's scrollable content, moving with the other properties. Display the newest entry first without changing the underlying undo/redo order. Name property edits by the affected part or deformer and changed property, including keyform edits; summarize multiple targets with the first name and remaining count. Reuse `EditorPropertyGroup` for its legend, border, and inset so it matches the neighboring properties. Let short histories fit their contents and bound longer lists. Keep automatic current-row scrolling within the history list so edits do not move the inspector. Selecting a row restores that document state; distinguish the current row and redoable rows with text as well as color. Continuous edits remain one history entry. Temporary previews belong to the temporary-edit workflow until committed. History lasts for the current editor session; automatic document recovery is a separate action.
+
+Reference: [DocumentHistoryPanel](src/editor/internal/DocumentHistoryPanel.tsx), [document history](src/editor/use-document-history.ts).
 
 ## Preventing drift
 
@@ -235,3 +256,7 @@ The right inspector offers a compact Rest placement / Deformation editing segmen
 Pending temporary forms must be saved or removed before entering Mesh mode. Explain this restriction in the control tooltip. Report unsupported vertex animation tracks, non-affine UV mappings, out-of-mesh moves, and invalid triangles without changing the document. Returning to Form mode restores the parameter preview.
 
 Clipping uses texture alpha for both ordinary and nested masks. A separate contour mesh must not be required to compensate for transparent pixels being ignored.
+
+## Three-parameter keyforms
+
+Keep the existing parameter names, numeric fields, mint diamonds, and lower Z track. The upper XY area shows a wireframe cube with only the current Z slice interactive. Other slices are muted, non-interactive context. Show diamonds only for stored keyforms in the current slice; do not show empty candidate markers. Remove the full-area background grid in 3D rows, use a centered cube that fills the existing row height with a wider Z projection, and separate the lower Z track with a subtle rule. Preserve the upper cube area height when enlarging the projection. Keep the lower Z track compact at 3rem, with readable values and diamond markers; do not reserve a full 1D editing row for plane selection. Extend the left control surface to the full row height. Show only minimum, midpoint, and maximum numeric ticks along the front bottom X edge, front left Y edge, and lower right Z depth edge, using each parameter range. Keep labels outside the cube, non-interactive, and within the existing row height. Selecting or previewing XY preserves Z; choosing Z preserves XY. Add, delete, and move XY keys only within the current slice, including an empty slice. Reuse the existing context menu, double-click creation, keyboard deletion, and document history. The lower Z track keeps its diamond markers and the same vertical grid as a 1D track. Show five evenly spaced values on both 1D and Z tracks even with no keyforms: minimum, quarter, midpoint, three-quarter, and maximum (for example -30, -15, 0, 15, 30). Use the caption typography and secondary text color for readable range numbers. Extend the current-value line through the full track height. Mask lines directly behind numeric labels so they remain readable. These five references always remain visible; add keyform value labels only when sufficiently separated from the references. Preserve exact values in marker accessible names and the current value field. Each diamond represents a Z plane containing at least one XYZ keyform, rather than an independent Z keyform. Selecting a diamond chooses its exact Z and preserves XY. Disable creation from this track; retain moving and deleting whole occupied planes.

@@ -1,3 +1,5 @@
+import {useLocalizedMessage} from './locale/use-localized-message'
+import {useTranslations} from './locale/use-translations'
 import {createSignal, Match, onCleanup, Show, Switch} from 'solid-js'
 import type {CodeDocument} from '../shared/contracts'
 import type {ViewerPort} from './types'
@@ -13,6 +15,8 @@ interface SMediaDocumentProps {
   onError?: (error: unknown) => void
 }
 export const SMediaDocument = (props: SMediaDocumentProps) => {
+  const t = useTranslations()
+  const localize = useLocalizedMessage()
   const media = useMediaUrl({
     document: () => props.document,
     onError: (error) => props.onError?.(error),
@@ -37,7 +41,8 @@ export const SMediaDocument = (props: SMediaDocumentProps) => {
             when={media.url()}
             fallback={
               <p role="status" class="m-0 p-4 text-sm text-muted">
-                미디어 불러오는 중… {media.progress()}%
+                {t('미디어 불러오는 중…')}
+                {media.progress()}%
               </p>
             }
           >
@@ -109,7 +114,7 @@ export const SMediaDocument = (props: SMediaDocumentProps) => {
       >
         {(error) => (
           <p role="status" class="m-0 p-4 text-sm text-muted">
-            {error()}
+            {localize(error())}
           </p>
         )}
       </Show>

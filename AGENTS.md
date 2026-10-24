@@ -108,10 +108,6 @@ Explanations and notices tend to accumulate as AI adds features, crowding the wo
 1. Fix oxlint errors
 2. Run oxfmt (`pnpm format`)
 
-## Comments
-
-Function JSDoc: contract (what) only; call sites: intent (why) only.
-
 ## GitHub CLI authentication
 
 - `gh` credentials are stored in the macOS Keychain and may appear invalid in the default sandbox.

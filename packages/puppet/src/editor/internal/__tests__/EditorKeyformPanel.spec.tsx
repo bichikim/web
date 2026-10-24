@@ -1,11 +1,12 @@
 /** @vitest-environment jsdom */
 
+import {createKeyedParameter} from './parameter-keyforms/fixtures'
+
 import {fireEvent, render, screen} from '@solidjs/testing-library'
 import {describe, expect, test, vi} from 'vitest'
 
 import {createDemoDocument} from '../../../player'
 import {EditorKeyformPanel} from '../EditorKeyformPanel'
-import {addParameter} from '../parameter-keyforms'
 
 describe('EditorKeyformPanel', () => {
   test('should change one displayed axis while preserving the other current coordinate', () => {
@@ -27,7 +28,7 @@ describe('EditorKeyformPanel', () => {
   })
   test('should show one parameter name with its numeric input and default influence', () => {
     const document = createDemoDocument()
-    const added = addParameter({document, nodeIds: ['mesh-preview']})!
+    const added = createKeyedParameter({document, nodeIds: ['mesh-preview']})!
     const parameters = added.document.parameters!.map((parameter) =>
       parameter.id === added.binding.parameterIds[0]
         ? {...parameter, name: '꼬리 흔들림'}
@@ -136,7 +137,7 @@ describe('EditorKeyformPanel', () => {
 
   test('should keep each binding current values visible when another binding is active', () => {
     const document = createDemoDocument()
-    const added = addParameter({document, nodeIds: ['mesh-preview']})
+    const added = createKeyedParameter({document, nodeIds: ['mesh-preview']})
     const onBindingSelect = vi.fn()
     const onValueChange = vi.fn()
 

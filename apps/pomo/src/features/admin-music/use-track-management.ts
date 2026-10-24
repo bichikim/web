@@ -1,5 +1,6 @@
 import {useAction, useSubmission, useSubmissions} from '@solidjs/router'
 import {createSignal} from 'solid-js'
+import {withPromiseFallback} from 'src/utils/with-promise-fallback'
 import type {TrackImportSummary} from './types'
 
 import {
@@ -106,7 +107,7 @@ export const useTrackManagement = (props: UseTrackManagementProps) => {
       return
     }
 
-    await props.refreshCatalog().catch(() => undefined)
+    await withPromiseFallback(props.refreshCatalog(), undefined)
     props.setMessage(result.detail)
   }
 
