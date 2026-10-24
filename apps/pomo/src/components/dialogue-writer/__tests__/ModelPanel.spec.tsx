@@ -2,7 +2,7 @@
 
 import {fireEvent, render, screen} from '@solidjs/testing-library'
 import {describe, expect, it, vi} from 'vitest'
-import type {DialogueWriterController, DialogueWriterState} from '../../../features/dialogue-writer'
+import type {DialogueWriterState} from '../../../features/dialogue-writer'
 import type {TextModelDefinition} from '../../../features/text-generation'
 import {ModelPanel} from '../ModelPanel'
 
@@ -22,23 +22,14 @@ const model: TextModelDefinition = {
   label: 'Qwen',
 }
 
-const createWriter = (options: WriterOptions): DialogueWriterController => ({
+const createWriter = (options: WriterOptions): Parameters<typeof ModelPanel>[0]['writer'] => ({
   canCopy: () => options.canCopy ?? false,
   canGenerate: () => options.canGenerate ?? false,
   canPrepare: () => options.canPrepare ?? false,
   copyOutput: vi.fn().mockResolvedValue(undefined),
-  generate: vi.fn(),
-  generateWithPreparation: vi.fn(),
-  isBusy: () => false,
   isModelReady: () => options.isModelReady ?? false,
-  modelId: () => 'gemma-4-e2b',
   output: () => options.output ?? '',
-  prepare: vi.fn(),
   progress: () => 42,
-  release: vi.fn(),
-  request: () => '질문',
-  selectModel: vi.fn(),
-  setRequest: vi.fn(),
   state: () => options.state,
   statusMessage: () => '현재 상태 설명',
 })
