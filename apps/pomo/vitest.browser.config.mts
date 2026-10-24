@@ -27,6 +27,7 @@ const getUtilityStyles: BrowserCommand<[content: string]> = async (_context, con
 }
 
 export default defineConfig({
+  optimizeDeps: {include: ['media-chrome']},
   plugins: [solidPlugin({hot: false})],
   resolve: {conditions: ['development', 'browser'], tsconfigPaths: true},
   root: fileURLToPath(new URL('.', import.meta.url)),

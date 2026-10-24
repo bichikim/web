@@ -1,4 +1,5 @@
 import {createSignal, onCleanup} from 'solid-js'
+import {acquireTrackPlaybackSource} from './track-playback-source'
 
 import type {TrackPreviewSourceResult} from './track-preview-access'
 import * as m from '@paraglide/message'
@@ -6,6 +7,7 @@ import * as m from '@paraglide/message'
 interface PStaticTrackPreviewRequest {
   readonly id: string
   readonly source: string
+  readonly sourceBlob?: Blob
 }
 
 interface PResolvedTrackPreviewRequest {
@@ -78,7 +80,7 @@ export const useTrackPreview = (options: UseTrackPreviewOptions) => {
     try {
       const sourceResult =
         'source' in request
-          ? ({ok: true, source: request.source} as const)
+          ? ({ok: true, ...acquireTrackPlaybackSource(request)} as const)
           : await request.loadSource()
 
       if (revision !== requestRevision) {

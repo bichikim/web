@@ -1,5 +1,5 @@
 import {type Preference, usePreference} from 'src/hooks/use-preference'
-import {type Accessor, createEffect, createMemo, createSignal, onCleanup, untrack} from 'solid-js'
+import {type Accessor, createEffect, createMemo, createSignal, untrack} from 'solid-js'
 import {useEvent} from '@winter-love/solid-use/event'
 import {clamp} from 'es-toolkit/math'
 
@@ -24,6 +24,7 @@ import {createPlayerQueueController} from './create-player-queue-controller'
 import {type Playback, usePlayback} from './use-playback'
 import {usePlaylistRestoration} from './use-playlist-restoration'
 import {usePlaybackOrder} from './use-playback-order'
+import {useTrackPlaybackSource} from './use-track-playback-source'
 import {createPreviewPlayback} from './preview-playback'
 import {
   getCurrentPlaybackTransition,
@@ -37,6 +38,7 @@ export interface UsePlayerControllerProps extends MediaPlayerOptions {
 }
 
 export interface PlayerController extends PlayerState {
+  readonly ensureSource: () => boolean
   readonly invalidate: Playback['invalidate']
   readonly markPauseIntent: Playback['markPauseIntent']
   readonly onEnded: () => void
@@ -125,6 +127,7 @@ export const usePlayerController = (props: UsePlayerControllerProps): PlayerCont
       }
     },
     onPlay: () => handlePlay(),
+    prepareSource: () => playbackSource.ensureSource(),
     shouldIgnoreNativePause,
   })
   const {isPlaying} = playback
@@ -209,6 +212,9 @@ export const usePlayerController = (props: UsePlayerControllerProps): PlayerCont
       return
     }
 
+    if (!playbackSource.ensureSource()) {
+      return
+    }
     const audioElement = props.element()
     const transition = getPlaybackTransition()
     if (transition?.phase === 'loading') {
@@ -485,19 +491,24 @@ export const usePlayerController = (props: UsePlayerControllerProps): PlayerCont
     useEvent(globalThis, 'pagehide', persistCurrentPlayback)
   }
 
-  onCleanup(() => {
-    if (props.stopOnUnmount) {
-      clearPlaybackTransition()
-      playback.stop()
-      if (playbackRevision === 0) {
-        stopPPlayback().catch(globalThis.reportError)
+  const playbackSource = useTrackPlaybackSource({
+    element: props.element,
+    onBeforeDispose: () => {
+      if (props.stopOnUnmount) {
+        clearPlaybackTransition()
+        playback.stop()
+        if (playbackRevision === 0) {
+          stopPPlayback().catch(globalThis.reportError)
+        } else {
+          playbackPersistence.persistStoppedPlayback()
+        }
       } else {
-        playbackPersistence.persistStoppedPlayback()
+        persistCurrentPlayback()
       }
-    } else {
-      persistCurrentPlayback()
-    }
-    destroyed = true
+      destroyed = true
+    },
+    onError: playback.onError,
+    track: currentTrack,
   })
 
   return {
@@ -508,6 +519,7 @@ export const usePlayerController = (props: UsePlayerControllerProps): PlayerCont
     clearTrackQueue: queueController.clearTrackQueue,
     currentIndex,
     currentTrack,
+    ensureSource: playbackSource.ensureSource,
     invalidate: playback.invalidate,
     isPlaying,
     isPlaylistLoading,

@@ -3,6 +3,7 @@ import {isAbortError as hasAbortErrorName} from 'src/utils/is-cancellation-reaso
 
 export interface UsePlaybackProps {
   readonly element: Accessor<HTMLAudioElement | undefined>
+  readonly prepareSource?: () => boolean
   readonly shouldIgnoreNativePause?: () => boolean
   readonly onPlay?: () => void
   readonly onPauseRequest?: (isUserIntent: boolean) => void
@@ -79,6 +80,9 @@ export const usePlayback = (props: UsePlaybackProps): Playback => {
     }
   }
   const play = () => {
+    if (props.prepareSource?.() === false) {
+      return
+    }
     const request = (revision += 1)
     pendingPlay = true
     pauseIntent = null

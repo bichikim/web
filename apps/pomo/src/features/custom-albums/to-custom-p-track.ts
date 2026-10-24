@@ -184,6 +184,7 @@ export const toCustomPTrack = (track: StoredCustomTrack): PTrack => {
     durationSeconds: track.durationSeconds,
     id: track.id,
     source: entry.source,
+    sourceBlob: entry.audio,
     title: track.title,
   }
 }

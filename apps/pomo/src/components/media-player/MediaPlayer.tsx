@@ -68,7 +68,11 @@ export const MediaPlayer = (props: MediaPlayerProps) => {
     player.previewPlayback.preventResume()
     player.markPauseIntent()
   }
-  const handlePlayRequest = () => {
+  const handlePlayRequest = (event: Event) => {
+    if (!player.ensureSource()) {
+      event.preventDefault()
+      return
+    }
     props.onPlayRequest?.()
   }
   const handlePause = () => {
@@ -121,7 +125,6 @@ export const MediaPlayer = (props: MediaPlayerProps) => {
           crossorigin="anonymous"
           preload="metadata"
           slot="media"
-          src={player.currentTrack()?.source}
           onPlay={onPlay}
           onPause={onPause}
           onEnded={handleEnded}
