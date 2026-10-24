@@ -11,9 +11,13 @@ describe('encodeMonoPcm16Wav', () => {
       [0, 8, 12, 36].map((offset) => new TextDecoder().decode(new Uint8Array(buffer, offset, 4))),
     ).toEqual(['RIFF', 'WAVE', 'fmt ', 'data'])
     expect(view.getUint32(4, true)).toBe(buffer.byteLength - 8)
+    expect(view.getUint32(16, true)).toBe(16)
+    expect(view.getUint16(20, true)).toBe(1)
     expect(view.getUint16(22, true)).toBe(1)
     expect(view.getUint32(24, true)).toBe(24000)
     expect(view.getUint32(28, true)).toBe(48000)
+    expect(view.getUint16(32, true)).toBe(2)
+    expect(view.getUint16(34, true)).toBe(16)
     expect(view.getUint32(40, true)).toBe(14)
     expect(
       Array.from({length: samples.length}, (_, index) => view.getInt16(44 + index * 2, true)),
