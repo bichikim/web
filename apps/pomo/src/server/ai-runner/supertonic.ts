@@ -1,6 +1,6 @@
 import {isObject} from 'src/utils/is-object'
 import {concatFloat32} from 'src/utils/concat-float32'
-import {createGaussianNoise} from '../../utils/create-gaussian-noise/index.ts'
+import {createGaussianNoise} from '../../features/supertonic/noise.ts'
 import {clampUnit} from '../../utils/clamp-unit/index.ts'
 // oxlint-disable eslint-js/camelcase -- Supertonic ONNX tensor names are an external model contract.
 // oxlint-disable no-await-in-loop -- Each denoising step consumes the previous step.

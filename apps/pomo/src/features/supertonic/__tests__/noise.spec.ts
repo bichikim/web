@@ -1,7 +1,7 @@
 /** @vitest-environment node */
 import {describe, expect, it, vi} from 'vitest'
 
-import {createGaussianNoise} from '..'
+import {createGaussianNoise} from '../noise'
 
 describe('createGaussianNoise', () => {
   it('should return ordered Float32 samples using two random draws per sample', () => {

@@ -2,7 +2,7 @@
 // oxlint-disable no-await-in-loop -- Every denoising step consumes the result of the previous step.
 import type {InferenceSession, Tensor} from 'onnxruntime-web/wasm'
 import {z} from 'zod'
-import {createGaussianNoise} from 'src/utils/create-gaussian-noise'
+import {createGaussianNoise} from './noise'
 
 import type {InvalidModelDataError} from './errors'
 import type {SupertonicLanguage} from './language'
