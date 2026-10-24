@@ -54,11 +54,21 @@ const hasSameAudio = async (left: Blob, right: Blob): Promise<boolean> => {
 interface TrackAudioUpdate {
   readonly entry: TrackObjectUrl
   readonly generation: number
+  readonly failure?: NonNullable<TrackObjectUrl['readFailure']>
   readonly track: Pick<StoredCustomTrack, 'id' | 'audio'>
 }
 
-const reconcileTrackAudio = async ({entry, generation, track}: TrackAudioUpdate): Promise<void> => {
-  while (trackObjectUrls.get(track.id) === entry && entry.generation === generation) {
+const reconcileTrackAudio = async ({
+  entry,
+  failure,
+  generation,
+  track,
+}: TrackAudioUpdate): Promise<void> => {
+  const ownsComparison = () =>
+    trackObjectUrls.get(track.id) === entry &&
+    entry.generation === generation &&
+    (failure === undefined || entry.readFailure === failure)
+  while (ownsComparison()) {
     const previousAudio = entry.audio
     let result: {isSame: boolean} | {error: unknown}
     try {
@@ -67,14 +77,19 @@ const reconcileTrackAudio = async ({entry, generation, track}: TrackAudioUpdate)
     } catch (error: unknown) {
       result = {error}
     }
-    if (trackObjectUrls.get(track.id) !== entry || entry.generation !== generation) {
+    if (!ownsComparison()) {
       break
     }
     if (entry.audio === previousAudio) {
       if ('error' in result) {
         // The durable save already succeeded. Surface a failed comparison at
         // the next playback read instead of reporting a failed database write.
-        entry.readFailure = {audio: track.audio, error: result.error, generation}
+        if (failure === undefined) {
+          entry.readFailure = {audio: track.audio, error: result.error, generation}
+        } else {
+          // A failed peer must not invalidate successful peers retrying this failure.
+          failure.error = result.error
+        }
         break
       }
       entry.readFailure = null
@@ -117,6 +132,7 @@ export const retryCustomTrackObjectUrls = async (
       : [
           {
             entry,
+            failure,
             generation: failure.generation,
             track: {audio: failure.audio, id: track.id},
           },

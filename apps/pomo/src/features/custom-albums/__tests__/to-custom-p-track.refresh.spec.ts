@@ -249,3 +249,98 @@ it('should settle both chunk reads before comparing another track after one side
   expect(overlapped).toBe(false)
   expect(await text(toCustomPTrack(track(blob('other-b'), otherId)).source)).toBe('other-b')
 })
+
+it('should not let an older failed retry override a successful identical-byte revalidation', async () => {
+  const original = blob('audio-a')
+  const first = toCustomPTrack(track(original))
+  vi.spyOn(original, 'slice').mockImplementationOnce(() => {
+    throw new Error('Initial comparison failed')
+  })
+  await refreshCustomTrackObjectUrls([track(structuredClone(original))])
+  vi.restoreAllMocks()
+  const entered = Promise.withResolvers<void>()
+  const release = Promise.withResolvers<void>()
+  vi.spyOn(original, 'slice').mockImplementationOnce(() => {
+    const part = blob('audio-a')
+    vi.spyOn(part, 'arrayBuffer').mockImplementation(async () => {
+      entered.resolve()
+      await release.promise
+      throw new Error('Late older retry failure')
+    })
+    return part
+  })
+  const older = retryCustomTrackObjectUrls([track(original)])
+  await entered.promise
+  await retryCustomTrackObjectUrls([track(original)])
+  expect(toCustomPTrack(track(original)).source).toBe(first.source)
+  release.resolve()
+  await older
+  expect(toCustomPTrack(track(original)).source).toBe(first.source)
+  expect(await text(first.source)).toBe('audio-a')
+})
+
+it('should allow a later successful peer to recover after another identical-byte retry fails', async () => {
+  const original = blob('audio-a')
+  const first = toCustomPTrack(track(original))
+  vi.spyOn(original, 'slice').mockImplementationOnce(() => {
+    throw new Error('Initial failure')
+  })
+  await refreshCustomTrackObjectUrls([track(structuredClone(original))])
+  vi.restoreAllMocks()
+  const entered = Promise.withResolvers<void>()
+  const release = Promise.withResolvers<void>()
+  const nativeSlice = original.slice.bind(original)
+  const spy = vi.spyOn(original, 'slice').mockImplementationOnce((...args) => {
+    const part = nativeSlice(...args)
+    const read = part.arrayBuffer.bind(part)
+    vi.spyOn(part, 'arrayBuffer').mockImplementation(async () => {
+      entered.resolve()
+      await release.promise
+      return read()
+    })
+    return part
+  })
+  const successfulPeer = retryCustomTrackObjectUrls([track(original)])
+  await entered.promise
+  spy.mockImplementationOnce(() => {
+    throw new Error('Peer retry failed')
+  })
+  await retryCustomTrackObjectUrls([track(original)])
+  expect(() => toCustomPTrack(track(original))).toThrow('Peer retry failed')
+  release.resolve()
+  await successfulPeer
+  expect(toCustomPTrack(track(original)).source).toBe(first.source)
+})
+
+it('should report failed peers and permit a fresh retry to recover their shared failure', async () => {
+  const original = blob('audio-a')
+  const first = toCustomPTrack(track(original))
+  vi.spyOn(original, 'slice').mockImplementationOnce(() => {
+    throw new Error('Initial failure')
+  })
+  await refreshCustomTrackObjectUrls([track(structuredClone(original))])
+  vi.restoreAllMocks()
+  const entered = Promise.withResolvers<void>()
+  const release = Promise.withResolvers<void>()
+  const spy = vi.spyOn(original, 'slice').mockImplementationOnce(() => {
+    const part = blob('audio-a')
+    vi.spyOn(part, 'arrayBuffer').mockImplementation(async () => {
+      entered.resolve()
+      await release.promise
+      throw new Error('Late peer failure')
+    })
+    return part
+  })
+  const older = retryCustomTrackObjectUrls([track(original)])
+  await entered.promise
+  spy.mockImplementationOnce(() => {
+    throw new Error('First peer failure')
+  })
+  await retryCustomTrackObjectUrls([track(original)])
+  expect(() => toCustomPTrack(track(original))).toThrow('First peer failure')
+  release.resolve()
+  await older
+  expect(() => toCustomPTrack(track(original))).toThrow('Late peer failure')
+  await retryCustomTrackObjectUrls([track(original)])
+  expect(toCustomPTrack(track(original)).source).toBe(first.source)
+})
