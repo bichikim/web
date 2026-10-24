@@ -68,6 +68,7 @@ it('should use full sources for playable tracks and access resolution for catalo
     durationSeconds: 180,
     id: 'playable-track',
     source: '/audio/playable.mp3',
+    sourceBlob: new Blob(['snapshot']),
     title: 'Playable Track',
   }
 
@@ -90,6 +91,7 @@ it('should use full sources for playable tracks and access resolution for catalo
   expect(onPreview).toHaveBeenNthCalledWith(1, {
     id: 'playable-track',
     source: '/audio/playable.mp3',
+    sourceBlob: playableTrack.sourceBlob,
   })
   expect(onPreview).toHaveBeenNthCalledWith(2, {
     id: 'unowned-track',

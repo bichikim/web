@@ -194,3 +194,20 @@ it('should report null media diagnostics when the audio element exposes none', a
   )
   dispose()
 })
+
+it('should acquire an independent Blob snapshot and release after detaching preview audio', async () => {
+  const blob = new Blob(['snapshot'])
+  vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:preview-owned')
+  const audio = createAudio()
+  const release = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {
+    expect(audio.removeAttribute).toHaveBeenLastCalledWith('src')
+    expect(audio.load).toHaveBeenCalled()
+  })
+  const {dispose, preview} = createPreview()
+  preview.setAudioElement(audio)
+  await preview.togglePreview({id: 'local', source: 'blob:expired', sourceBlob: blob})
+  expect(audio.src).toBe('blob:preview-owned')
+  preview.handleEnded()
+  dispose()
+  expect(release).toHaveBeenCalledExactlyOnceWith('blob:preview-owned')
+})

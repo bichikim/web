@@ -176,7 +176,13 @@ export const PAlbumTrackList = (props: PAlbumTrackListProps) => {
                               }
                             },
                           }
-                        : {id: track.id, source: playable.source},
+                        : {
+                            id: track.id,
+                            source: playable.source,
+                            ...(playable.sourceBlob === undefined
+                              ? {}
+                              : {sourceBlob: playable.sourceBlob}),
+                          },
                     )
                   }}
                   title={track.title}

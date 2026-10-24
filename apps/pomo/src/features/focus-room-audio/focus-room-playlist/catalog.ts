@@ -23,6 +23,7 @@ const isPTrack = (value: unknown): value is PTrack => {
     track.durationSeconds > 0 &&
     isString(track.id) &&
     isString(track.source) &&
+    track.sourceBlob === undefined &&
     isString(track.title)
   )
 }

@@ -148,3 +148,44 @@ it('should select the next track internally on end and device requests and relea
   expect(session.metadata).toBeNull()
   expect([...handlers.values()]).toEqual([null, null, null, null])
 })
+
+it('should retain a queued Blob snapshot after the catalog URL is revoked', () => {
+  const create = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:owned-snapshot')
+  const revoke = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => undefined)
+  const sourceBlob = new Blob(['original audio'])
+  const result = render(
+    () => <MediaPlayer tracks={[{...TRACKS[0], source: 'blob:expired-cache', sourceBlob}]} />,
+    {wrapper: PreferenceProvider},
+  )
+  const audio = result.container.querySelector('audio')!
+  expect(audio.getAttribute('src')).toBe('blob:owned-snapshot')
+  expect(create).toHaveBeenCalledExactlyOnceWith(sourceBlob)
+  result.unmount()
+  expect(audio.hasAttribute('src')).toBe(false)
+  expect(revoke).toHaveBeenCalledExactlyOnceWith('blob:owned-snapshot')
+})
+
+it('should prevent native play requests after acquisition failure and allow manual recovery', () => {
+  const create = vi.spyOn(URL, 'createObjectURL').mockImplementation(() => {
+    throw new Error('Allocation failed')
+  })
+  vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => undefined)
+  const onError = vi.fn()
+  const result = render(
+    () => (
+      <MediaPlayer onError={onError} tracks={[{...TRACKS[0], sourceBlob: new Blob(['audio'])}]} />
+    ),
+    {wrapper: PreferenceProvider},
+  )
+  const audio = result.container.querySelector('audio')!
+  const failedRequest = new Event('mediaplayrequest', {bubbles: true, cancelable: true})
+  audio.parentElement!.dispatchEvent(failedRequest)
+  expect(failedRequest.defaultPrevented).toBe(true)
+  expect(audio.hasAttribute('src')).toBe(false)
+  expect(onError).toHaveBeenCalled()
+  create.mockReturnValue('blob:recovered')
+  const request = new Event('mediaplayrequest', {bubbles: true, cancelable: true})
+  audio.parentElement!.dispatchEvent(request)
+  expect(request.defaultPrevented).toBe(false)
+  expect(audio.getAttribute('src')).toBe('blob:recovered')
+})

@@ -474,3 +474,90 @@ it('should clamp the current index when controlled tracks shrink', async () => {
   expect(onTrackChange).toHaveBeenLastCalledWith(NEXT_TRACK)
   expect(onTrackChange).not.toHaveBeenCalledWith(null)
 })
+
+it('should gate internal preview resume on a recoverable snapshot acquisition', () => {
+  const create = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:first')
+  vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => undefined)
+  const first = {...TRACK, sourceBlob: new Blob(['first'])}
+  const {audio, controller, setTracks} = renderControlledController([first])
+  controller.play()
+  controller.onPlay()
+  controller.previewPlayback.start(vi.fn())
+  vi.mocked(audio.play).mockClear()
+  create.mockImplementation(() => {
+    throw new Error('Allocation failed')
+  })
+  setTracks([{...first, source: 'blob:replacement', sourceBlob: new Blob(['second'])}])
+  controller.previewPlayback.finish()
+  expect(audio.play).not.toHaveBeenCalled()
+  expect(audio.hasAttribute('src')).toBe(false)
+  create.mockReturnValue('blob:recovered')
+  controller.play()
+  expect(audio.getAttribute('src')).toBe('blob:recovered')
+  expect(audio.play).toHaveBeenCalledOnce()
+})
+
+it('should persist position before disposing the owned source without stopOnUnmount', () => {
+  vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:snapshot')
+  vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => undefined)
+  const {audio, controller} = renderControlledController([
+    {...TRACK, sourceBlob: new Blob(['audio'])},
+  ])
+  Object.defineProperty(audio, 'readyState', {
+    configurable: true,
+    value: HTMLMediaElement.HAVE_METADATA,
+  })
+  audio.currentTime = 27
+  controller.onPlay()
+  vi.mocked(audio.load).mockImplementation(() => {
+    audio.currentTime = 0
+  })
+  cleanup()
+  expect(readStoredPlayback()).toMatchObject({
+    isPlaying: true,
+    positionSeconds: 27,
+    trackId: TRACK.id,
+  })
+  expect(audio.hasAttribute('src')).toBe(false)
+})
+
+it('should keep a selected snapshot source and position across metadata and pause/stop', () => {
+  const create = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:stable')
+  const revoke = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => undefined)
+  const first = {...TRACK, sourceBlob: new Blob(['first'])}
+  const {audio, controller, setTracks} = renderControlledController([first])
+  audio.currentTime = 19
+  setTracks([{...first, title: 'Renamed'}])
+  controller.pause()
+  controller.stop()
+  expect(audio.currentTime).toBe(19)
+  expect(audio.getAttribute('src')).toBe('blob:stable')
+  expect(create).toHaveBeenCalledOnce()
+  expect(revoke).not.toHaveBeenCalled()
+})
+
+it('should acquire the selected snapshot before restoring automatic playback', async () => {
+  vi.spyOn(Math, 'random').mockReturnValue(0.99)
+  const create = vi
+    .spyOn(URL, 'createObjectURL')
+    .mockReturnValueOnce('blob:first')
+    .mockReturnValue('blob:second')
+  vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => undefined)
+  const {audio, controller} = renderControlledController([
+    {...TRACK, sourceBlob: new Blob(['first'])},
+    {...NEXT_TRACK, sourceBlob: new Blob(['second'])},
+  ])
+  Object.defineProperty(audio, 'readyState', {
+    configurable: true,
+    value: HTMLMediaElement.HAVE_METADATA,
+  })
+  controller.play()
+  controller.onPlay()
+  vi.mocked(audio.play).mockClear()
+  controller.selectChosenTrack(1)
+  await Promise.resolve()
+  controller.onLoadedMetadata()
+  expect(create).toHaveBeenCalledTimes(2)
+  expect(audio.getAttribute('src')).toBe('blob:second')
+  expect(audio.play).toHaveBeenCalledOnce()
+})

@@ -65,3 +65,19 @@ describe('loadPTrackCatalog', () => {
     return expect(loadPTrackCatalog()).rejects.toThrow('Focus-room tracks request failed: 503')
   })
 })
+
+it.each([{}, null, new Blob(['runtime audio'])])(
+  'should reject runtime snapshot data from HTTP catalog',
+  async (sourceBlob) => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        createJsonResponse({
+          tracks: [{...TRACKS[0], sourceBlob}],
+          version: 1,
+        }),
+      ),
+    )
+    await expect(loadPTrackCatalog()).rejects.toThrow('Focus-room tracks have an invalid format')
+  },
+)

@@ -6,6 +6,8 @@ export interface PTrack {
   readonly durationSeconds: number
   readonly id: string
   readonly source: string
+  /** Immutable local playback snapshot; catalog wire data and persistence omit it. */
+  readonly sourceBlob?: Blob
   readonly title: string
 }
 

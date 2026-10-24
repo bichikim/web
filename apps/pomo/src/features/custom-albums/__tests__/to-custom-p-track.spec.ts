@@ -63,7 +63,11 @@ it('should reuse the audio URL while returning current metadata in a new track',
     durationSeconds: 2,
     id: track.id,
     source: first.source,
+    sourceBlob: track.audio,
     title: 'Next title',
   })
+  expect(first.sourceBlob).toBe(track.audio)
+  expect(second.sourceBlob).toBe(first.sourceBlob)
+  expect(first).toMatchObject({artist: 'First artist', durationSeconds: 1, title: 'First title'})
   expect(createObjectURL).toHaveBeenCalledExactlyOnceWith(track.audio)
 })
