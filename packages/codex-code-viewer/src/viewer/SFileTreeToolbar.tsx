@@ -8,6 +8,10 @@ import {SFileCreationDialog} from './SFileCreationDialog'
 import {useFileCreation} from './use-file-creation'
 
 interface SFileTreeToolbarProps {
+  readonly changedOnly?: boolean
+  readonly changesAvailable?: boolean
+  readonly changeBase?: string
+  readonly onToggleChanges?: () => void
   readonly canReveal: boolean
   readonly onCreated: (entry: WorkspaceEntry) => Promise<void>
   readonly onRefresh?: () => void
@@ -30,6 +34,27 @@ export const SFileTreeToolbar = (props: SFileTreeToolbarProps) => {
   return (
     <>
       <div class="mx-2 mb-1 flex items-center gap-1">
+        <STooltip
+          content={
+            props.changeBase === undefined
+              ? t('모든 변경 사항')
+              : `${t('모든 변경 사항')} · ${props.changeBase}`
+          }
+        >
+          {(description) => (
+            <button
+              type="button"
+              aria-label={t('모든 변경 사항')}
+              aria-describedby={description}
+              aria-pressed={props.changedOnly === true}
+              disabled={!props.changesAvailable}
+              class="ui-icon-button aria-pressed:bg-selection aria-pressed:text-tree-icon"
+              onClick={() => props.onToggleChanges?.()}
+            >
+              <span aria-hidden="true" class="i-tabler-filter" />
+            </button>
+          )}
+        </STooltip>
         <STooltip content={t('새 파일')}>
           {(description) => (
             <button

@@ -36,6 +36,35 @@ const createLegacyDocument = () => {
 }
 
 describe('parseDocument', () => {
+  test.each([{vertices: []}, {vertices: [0, 0]}, {vertices: [0, 0, 1, 1]}])(
+    'should round-trip a compiled mesh without triangles and coordinates $vertices',
+    ({vertices}) => {
+      const source = createDemoDocument()
+      const mesh = {indices: [], uvs: vertices.map(() => 0), validationSpace: 'indices', vertices}
+      const document = {
+        format: source.format,
+        motions: [],
+        parts: [{...source.parts[0], mesh}],
+        version: source.version,
+        viewport: source.viewport,
+      }
+      const parsed = parseDocumentValue(document)
+      expect(parsed).toMatchObject({document: {parts: [{mesh}]}, ok: true})
+      if (parsed.ok) {
+        expect(parseDocument(serializeDocument(parsed.document))).toMatchObject({
+          document: {parts: parsed.document.parts},
+          ok: true,
+        })
+      }
+      expect(
+        parseDocumentValue({
+          ...document,
+          parts: [{...document.parts[0], mesh: {...mesh, validationSpace: undefined}}],
+        }),
+      ).toMatchObject({ok: false})
+    },
+  )
+
   test('should preserve a compiled collapsed pose while validating index connectivity', () => {
     const source = createDemoDocument()
     const parts = source.parts.map((part) => ({

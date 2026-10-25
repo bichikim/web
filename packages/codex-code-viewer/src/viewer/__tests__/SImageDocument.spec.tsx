@@ -85,6 +85,10 @@ describe('SImageDocument', () => {
 
   it('should commit a typed percentage and restore fit mode without zooming while typing', () => {
     const {input} = setup()
+    const controls = screen.getByRole('group', {name: '이미지 배율 조절'})
+    expect(controls.contains(input)).toBe(true)
+    expect(controls.contains(screen.getByRole('button', {name: '이미지 축소'}))).toBe(true)
+    expect(controls.contains(screen.getByRole('button', {name: '이미지 확대'}))).toBe(true)
     expect(input.value).toBe('40')
     fireEvent.input(input, {target: {value: '200'}})
     expect(screen.getByRole('button', {name: '화면에 맞춤'}).getAttribute('aria-pressed')).toBe(

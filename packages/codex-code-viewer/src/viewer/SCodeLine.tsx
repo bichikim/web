@@ -3,8 +3,13 @@ import {For, Show} from 'solid-js'
 import type {CodeToken} from '../shared/contracts'
 import type {TextMatch} from './find-text'
 import {STokenText} from './STokenText'
+import type {ChangeHunk} from '../shared/change-contracts'
 
 interface SCodeLineProps {
+  change?: ChangeHunk
+  expandedChange?: ChangeHunk
+  lineCount?: number
+  onOpenChange?: (hunk: ChangeHunk) => void
   line: number
   tokens: CodeToken[]
   selected?: boolean
@@ -44,6 +49,36 @@ export const SCodeLine = (props: SCodeLineProps) => {
     event.stopPropagation()
     props.onToggleFold?.()
   }
+  const handleChange = (event: MouseEvent): void => {
+    event.stopPropagation()
+    const change = props.change
+    if (change !== undefined) {
+      props.onOpenChange?.(change)
+    }
+  }
+  const changeLabel = (): string => {
+    switch (props.change?.kind) {
+      case 'added':
+        return t('추가 변경 보기')
+      case 'deleted':
+        return t('삭제 변경 보기')
+      case 'modified':
+        return t('수정 변경 보기')
+      case undefined:
+        return ''
+    }
+  }
+  const boundary = (): string | undefined => {
+    const change = props.change
+    return change?.kind === 'deleted'
+      ? change.newStart > (props.lineCount ?? Infinity) ||
+        (change === props.expandedChange && change.newStart > 1)
+        ? 'after'
+        : change.newStart === 1
+          ? 'first'
+          : 'before'
+      : undefined
+  }
   return (
     <div
       class="flex min-h-6 data-[selected=true]:bg-selection"
@@ -65,25 +100,37 @@ export const SCodeLine = (props: SCodeLineProps) => {
         >
           {props.line}
         </button>
-        <Show when={props.folding} fallback={<span class="w-4" />}>
-          <span class="flex w-6 shrink-0 items-start">
-            <Show when={props.foldEnd !== undefined}>
-              <button
-                type="button"
-                class="ui-code-fold"
-                aria-expanded={!props.collapsed}
-                aria-label={
-                  props.collapsed
-                    ? t('{line}줄 펼치기', {line: props.line})
-                    : t('{line}줄 접기', {line: props.line})
-                }
-                onClick={handleFold}
-              >
-                {props.collapsed ? '›' : '⌄'}
-              </button>
-            </Show>
-          </span>
+        <Show when={props.onOpenChange !== undefined}>
+          <Show when={props.change} fallback={<span class="w-2.5 shrink-0" />}>
+            <button
+              class="ui-change-marker"
+              data-change={props.change?.kind}
+              data-boundary={boundary()}
+              aria-label={`${props.line} · ${changeLabel()}`}
+              type="button"
+              onClick={handleChange}
+            >
+              <span aria-hidden="true" class="ui-change-mark" data-change={props.change?.kind} />
+            </button>
+          </Show>
         </Show>
+        <span class="flex w-5 shrink-0 items-start">
+          <Show when={props.folding && props.foldEnd !== undefined}>
+            <button
+              type="button"
+              class="ui-code-fold"
+              aria-expanded={!props.collapsed}
+              aria-label={
+                props.collapsed
+                  ? t('{line}줄 펼치기', {line: props.line})
+                  : t('{line}줄 접기', {line: props.line})
+              }
+              onClick={handleFold}
+            >
+              {props.collapsed ? '›' : '⌄'}
+            </button>
+          </Show>
+        </span>
       </span>
       <code class="block flex-1 pr-6">
         <For each={props.tokens}>

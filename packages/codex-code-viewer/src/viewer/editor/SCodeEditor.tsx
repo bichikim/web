@@ -9,7 +9,7 @@ import {createEditorExtensions} from './create-editor-extensions'
 import type {CodeLocation, CodeToken} from '../../shared/contracts'
 import type {TextMatch} from '../find-text'
 import type {ViewRequest} from '../view-state/types'
-import type {CodeSnippet, CodeTextRange, NavigationPoint} from '../types'
+import type {CodeSnippet, CodeTextRange, InlineChange, NavigationPoint} from '../types'
 import {useEditorContextMenu} from './use-editor-context-menu'
 import {SEditorContextMenu} from './SEditorContextMenu'
 import {fileFormat} from '../../shared/file-formats'
@@ -17,8 +17,16 @@ import {useFileViewState} from '../view-state/context'
 import {createEditorSelection} from './create-editor-selection'
 import {connectEditorScroll} from './connect-editor-scroll'
 import {useEditorAccessibility} from './use-editor-accessibility'
+import {useEditorChanges} from './use-editor-changes'
+import {useEditorSource} from './use-editor-source'
+import type {ChangeHunk} from '../../shared/change-contracts'
 
 interface SCodeEditorProps {
+  readonly inspection?: InlineChange | null
+  readonly onCloseChange?: () => void
+  readonly onNavigateChange?: (index: number) => void
+  readonly changes?: readonly ChangeHunk[]
+  readonly onOpenChange?: (hunk: ChangeHunk) => void
   readonly source: string
   readonly location: CodeLocation
   readonly request?: ViewRequest
@@ -62,6 +70,11 @@ const locateEditor = (editor: EditorView, location: CodeLocation): void => {
   })
 }
 
+const writableExtensions = (readOnly: boolean): Extension[] => [
+  EditorState.readOnly.of(readOnly),
+  EditorView.editable.of(!readOnly),
+]
+
 export const SCodeEditor = (props: SCodeEditorProps) => {
   const t = useTranslations()
   const [container, setContainer] = createSignal<HTMLDivElement>()
@@ -84,6 +97,9 @@ export const SCodeEditor = (props: SCodeEditorProps) => {
     view,
   })
   const sourceValue = createMemo(() => props.source)
+  const lineDigits = createMemo(() =>
+    Math.max(2, String(sourceValue().split(/\r\n|\r|\n/u).length).length),
+  )
   const offsets = createMemo(() => createEditorOffsets(sourceValue()))
   const matchesValue = createMemo(() =>
     (props.matches ?? EMPTY_MATCHES).map((match) => ({
@@ -95,15 +111,22 @@ export const SCodeEditor = (props: SCodeEditorProps) => {
   const locationValue = createMemo(() => props.location)
   const syntaxLanguage = createMemo(() => syntaxLanguageOf(props.location.path))
   const marks = new Compartment()
+  const changes = useEditorChanges({
+    hunks: () => props.changes ?? [],
+    inspection: () => props.inspection ?? null,
+    onClose: () => props.onCloseChange?.(),
+    onNavigate: (index) => props.onNavigateChange?.(index),
+    get onOpen() {
+      return props.onOpenChange
+    },
+    view,
+  })
   const editability = new Compartment()
   const separator = untrack(() => props.source.match(/\r\n|\r|\n/u)?.[0] ?? '\n')
-  const writable = (): Extension[] => [
-    EditorState.readOnly.of(readOnly()),
-    EditorView.editable.of(!readOnly()),
-  ]
   const extensions = (): Extension[] => [
     accessibility(),
     ...createEditorExtensions({
+      changes: changes(),
       editability,
       fileKey: fileKey(),
       foldLabel: (open) => t(open ? '접기' : '펼치기'),
@@ -119,7 +142,7 @@ export const SCodeEditor = (props: SCodeEditorProps) => {
       readOffset: (position) => offsets().toSource(position),
       separator,
       states: states(),
-      writable: writable(),
+      writable: writableExtensions(readOnly()),
     }),
   ]
   onMount(() => {
@@ -158,21 +181,10 @@ export const SCodeEditor = (props: SCodeEditorProps) => {
       locateEditor(editor, location)
     }
   })
+  useEditorSource({extensions, source: sourceValue, view})
   createEffect(() => {
     const editor = view()
-    const source = sourceValue()
-    if (editor === undefined) {
-      return
-    }
-    if (editor.state.sliceDoc() !== source) {
-      editor.setState(
-        EditorState.create({doc: documentText(source), extensions: untrack(extensions)}),
-      )
-    }
-  })
-  createEffect(() => {
-    const editor = view()
-    const extensions = writable()
+    const extensions = writableExtensions(readOnly())
     editor?.dispatch({effects: editability.reconfigure(extensions)})
   })
   createEffect(() => {
@@ -198,6 +210,7 @@ export const SCodeEditor = (props: SCodeEditorProps) => {
       <div
         ref={setContainer}
         class="ui-code-editor"
+        style={{'--code-number-width': `${lineDigits()}ch`}}
         data-language={syntaxLanguage()}
         onContextMenu={menu.handleContextMenu}
         onKeyDown={menu.handleKeyboard}

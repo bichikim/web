@@ -4,7 +4,7 @@ import type {TextMatch} from './find-text'
 import {splitSearchToken} from './split-search-token'
 
 interface STokenTextProps {
-  token: CodeToken
+  token: Pick<CodeToken, 'offset' | 'text'>
   matches?: readonly TextMatch[]
   activeMatch?: number
 }

@@ -1,16 +1,22 @@
+import {SCodeRows} from './SCodeRows'
 import {useCodeFolding} from './use-code-folding'
 import {useTranslations} from './locale/use-translations'
-import {createEffect, createSignal, For, onCleanup, Show, untrack} from 'solid-js'
+import {createEffect, createSignal, onCleanup, Show, untrack} from 'solid-js'
 import type {CodeDocument, CodeToken} from '../shared/contracts'
-import type {CodeSelection, CodeTextRange, NavigationPoint} from './types'
-import {SCodeLine} from './SCodeLine'
+import type {CodeSelection, CodeTextRange, InlineChange, NavigationPoint} from './types'
 import {useScrollRestoration} from './use-scroll-restoration'
 import {useCodeInteraction} from './use-code-interaction'
 import type {TextMatch} from './find-text'
 import {useCodeContextMenu} from './use-code-context-menu'
 import {SCodeContextMenu} from './SCodeContextMenu'
+import type {ChangeHunk} from '../shared/change-contracts'
 
 export interface SCodeDocumentProps {
+  inspection?: InlineChange | null
+  onCloseChange?: () => void
+  onNavigateChange?: (index: number) => void
+  changes?: readonly ChangeHunk[]
+  onOpenChange?: (hunk: ChangeHunk) => void
   document: CodeDocument
   onFollow: (token: CodeToken, point?: NavigationPoint) => void
   onSelect?: (anchor: number, focus: number) => void
@@ -86,7 +92,7 @@ export const SCodeDocument = (props: SCodeDocumentProps) => {
       <div
         data-code-source
         aria-label={t('소스 코드')}
-        class="min-h-0 flex-1 overflow-auto bg-canvas"
+        class="min-h-0 flex-1 overflow-auto bg-canvas [container-type:inline-size]"
         onScroll={scroll.record}
         onClick={interaction.handleClick}
         onContextMenu={menu.handleContextMenu}
@@ -98,25 +104,7 @@ export const SCodeDocument = (props: SCodeDocumentProps) => {
         onPointerUp={interaction.handlePointerEnd}
         ref={setElement}
       >
-        <pre class="ui-code-text m-0 w-max min-w-full pb-4 selection:bg-code-selection">
-          <For each={folds.visible()}>
-            {(row) => (
-              <SCodeLine
-                focusable={row.line === (props.selection?.line ?? props.document.location.line)}
-                line={row.line}
-                selectable={props.onSelect !== undefined}
-                selected={interaction.selected(row.line)}
-                tokens={row.tokens}
-                folding={folds.ranges().size > 0}
-                foldEnd={folds.ranges().get(row.line)}
-                collapsed={folds.closed().has(row.line)}
-                onToggleFold={() => folds.toggle(row.line)}
-                matches={props.matches}
-                activeMatch={props.activeMatch}
-              />
-            )}
-          </For>
-        </pre>
+        <SCodeRows {...props} folds={folds} selected={interaction.selected} />
       </div>
       <Show when={menu.context()} keyed>
         {(context) => (

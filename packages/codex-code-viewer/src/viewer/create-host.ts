@@ -10,6 +10,7 @@ import type {ViewerPort} from './types'
 import {connectHostAppearance} from './connect-host-appearance'
 import {createHostContext} from './create-host-context'
 import {createPendingTasks} from './create-pending-tasks'
+import {createHostChanges} from './create-host-changes'
 import {subscribeWorkspaceChanges} from './subscribe-workspace-changes'
 import {errorMessage} from './error-message'
 import {callViewerTool} from './call-viewer-tool'
@@ -76,6 +77,20 @@ const changeWorkspace = (call: ViewerPort['call'], path: string) =>
     schema: workspaceSessionSchema,
   })
 
+const createFileOpening =
+  (
+    extensions: OpenAIExtensions | undefined,
+    requests: ReturnType<typeof createPendingTasks>,
+  ): NonNullable<ViewerPort['openFile']> =>
+  (path) =>
+    requests.run(async () => {
+      const files = extensions?.files
+      if (files === undefined) {
+        throw new Error('이 호스트에서는 파일을 새 탭에서 열 수 없습니다.')
+      }
+      await files.open(path)
+    })
+
 const finishTeardown = async (
   cleanup: (() => Promise<void>) | undefined,
   settle: () => Promise<void>,
@@ -126,8 +141,10 @@ export const createHost = (options: HostOptions = {}): ViewerPort => {
   return {
     changeWorkspace: standard ? undefined : (path) => changeWorkspace(call, path),
     draftStorage: options.draftStorage,
+    openFile: standard ? undefined : createFileOpening(extensions, requests),
     saveTreeState: standard ? undefined : treeWriter.save,
     ...context,
+    ...createHostChanges(call),
     ...createHostAttachments({
       call,
       clear: context.removeContext,

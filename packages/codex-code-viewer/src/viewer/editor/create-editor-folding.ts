@@ -10,7 +10,7 @@ const accessibleGutter = ViewPlugin.define((view) => {
     const parent = gutter?.parentElement
     parent?.removeAttribute('aria-hidden')
     for (const sibling of parent?.children ?? []) {
-      if (sibling !== gutter) {
+      if (sibling !== gutter && !sibling.classList.contains('cm-changeGutter')) {
         sibling.setAttribute('aria-hidden', 'true')
       }
     }

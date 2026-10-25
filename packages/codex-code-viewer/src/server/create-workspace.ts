@@ -29,6 +29,9 @@ import type {DefinitionLookup, ReferenceLookup} from './types'
 import {createNativeSymbols} from './native/create-native-symbols'
 import {isSupportedSource} from './native/is-supported-source'
 import {createWorkerSymbols} from './create-worker-symbols'
+import {readChanges} from './git/read-changes'
+import {readBaseline} from './git/read-baseline'
+import {observeGit} from './git/observe-git'
 
 const navigationStorageDirectory = (): string =>
   join(
@@ -116,6 +119,17 @@ const createWorkspaceScan = ({background, cache, reset}: WorkspaceScanOptions) =
     }
   }
 
+const subscribeWorkspace =
+  (index: FileIndex, git: ReturnType<typeof observeGit>) =>
+  (listener: () => void): (() => void) => {
+    const files = index.subscribeChanges(listener)
+    const metadata = git.subscribe(listener)
+    return () => {
+      files()
+      metadata()
+    }
+  }
+
 export const createWorkspace = (anchor: string, options: {readonly worker?: boolean} = {}) => {
   const canonical = realpathSync(anchor)
   const root = statSync(canonical).isDirectory() ? canonical : findWorkspace(canonical)
@@ -123,6 +137,7 @@ export const createWorkspace = (anchor: string, options: {readonly worker?: bool
   const navigation = createSyntaxNavigation(root)
   const index = createFileIndex(root)
   const reader = createDocumentReader(root)
+  const git = observeGit(root)
   const native = options.worker === true ? createNativeSymbols(root) : undefined
   const background = createNavigationWorker(root, languages.project)
   const configuration = observeNavigationConfiguration(index, {
@@ -198,6 +213,8 @@ export const createWorkspace = (anchor: string, options: {readonly worker?: bool
           signal: lifetime.signal,
         })
   return {
+    baseline: (path: string) => readBaseline(root, path, lifetime.signal),
+    changes: () => readChanges(root, lifetime.signal),
     create: (parent: string, name: string, kind: WorkspaceEntry['kind']) =>
       createEntry({kind, name, parent, root}),
     definitions: (
@@ -213,6 +230,7 @@ export const createWorkspace = (anchor: string, options: {readonly worker?: bool
     directFunctionReferences: true,
     dispose: () => {
       lifetime.abort()
+      git.dispose()
       configuration.dispose()
       synchronization.dispose()
       cachedNavigation.dispose()
@@ -254,7 +272,7 @@ export const createWorkspace = (anchor: string, options: {readonly worker?: bool
       reset: configuration.reset,
     }),
     seedNavigation: native?.seed,
-    subscribe: index.subscribe,
+    subscribe: subscribeWorkspace(index, git),
     tree: index.tree,
     warmNavigation,
     write: (path: string, source: string, revision: string | null) =>

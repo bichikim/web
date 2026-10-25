@@ -99,6 +99,28 @@ test('should normalize the compiled reversed Y coordinate convention', () => {
   })
 })
 
+test.each([0, 1, 2])('should preserve a compiled placeholder with %i vertices', (vertices) => {
+  const model = fixture()
+  vi.mocked(readMoc3).mockReturnValue({
+    ...model,
+    tables: {
+      ...model.tables,
+      artMeshes: table(
+        {...model.tables.artMeshes!.columns, indexCount: [0], vertices: [vertices]},
+        ['mesh'],
+      ),
+    },
+  })
+  const {document} = convertMoc3(new Uint8Array(), {textures: [texture]})
+  expect(document.parts).toHaveLength(1)
+  expect(document.parts[0]?.mesh).toMatchObject({
+    indices: [],
+    validationSpace: 'indices',
+    vertices: Array.from({length: vertices}, (_, index) => [index + 0.5, 0]).flat(),
+  })
+  expect(parseDocumentValue(document)).toMatchObject({ok: true})
+})
+
 test('should require every referenced external texture instead of discarding meshes', () => {
   vi.mocked(readMoc3).mockReturnValue(fixture())
   expect(() => convertMoc3(new Uint8Array(), {textures: []})).toThrow('인덱스 0')

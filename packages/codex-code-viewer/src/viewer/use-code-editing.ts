@@ -162,6 +162,13 @@ export const useCodeEditing = (options: EditingOptions) => {
     }
     retained.markDeleted(value)
   }
+  const saveDeleted = (value: ViewerSession): Promise<boolean> => {
+    if (!editableDocument(value.document)) {
+      return Promise.resolve(false)
+    }
+    markDeleted(value)
+    return saveKey(keyOf(value))
+  }
   const protection = useUnsavedChanges({
     discardAll: retained.clear,
     pending: () => pendingDrafts().length > 0,
@@ -176,6 +183,11 @@ export const useCodeEditing = (options: EditingOptions) => {
   return {
     accept,
     change,
+    changeDeleted: (value: ViewerSession, source: string): void => {
+      if (editableDocument(value.document)) {
+        retained.changeDeleted(value, source)
+      }
+    },
     ...protection,
     deleted: () => current()?.deleted ?? false,
     dirty,
@@ -188,12 +200,15 @@ export const useCodeEditing = (options: EditingOptions) => {
     feedback,
     markDeleted,
     pendingFiles: () => pendingDrafts().map(([, value]) => value.base.location.path),
+    restoreDrafts: retained.restore,
     revision: () => current()?.base.revision ?? options.session()?.document.revision ?? '',
     save,
+    saveDeleted,
     saving,
     shareChanges: () =>
       shareDraftChanges({draft: current(), feedback: setFeedback, port: options.port}),
     source: (): string => current()?.source ?? options.session()?.document.source ?? '',
+    sourceFor: retained.sourceFor,
     sources: () => analysisSources(pendingDrafts(), options.session()?.workspace),
     toggle: () => setEnabled((previous) => !previous),
   }

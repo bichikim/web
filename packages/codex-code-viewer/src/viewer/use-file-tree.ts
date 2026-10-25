@@ -4,9 +4,14 @@ import {useTreeListing} from './use-tree-listing'
 import {getTreePositions} from './file-tree/get-tree-positions'
 import {getTreeDestination, getVisibleNodes} from './file-tree'
 import type {ViewerPort} from './types'
-import {createBoundedCache} from '../shared/create-bounded-cache'
+import {type BoundedCache, createBoundedCache} from '../shared/create-bounded-cache'
+import type {ChangedFile} from '../shared/change-contracts'
+import {mergeChangedTree} from './file-tree/merge-changed-tree'
 
 interface UseFileTreeProps {
+  documentPath?: Accessor<string | undefined>
+  changes?: Accessor<readonly ChangedFile[]>
+  changedOnly?: Accessor<boolean>
   onError: (error: unknown) => void
   onOpen: (location: CodeLocation) => void
   port: ViewerPort
@@ -56,6 +61,22 @@ const visibleSelection = (props: {
       ? props.current
       : (props.paths[0] ?? null)
 
+interface ExpansionWriterOptions {
+  readonly cache: Pick<BoundedCache<ReadonlySet<string>>, 'set'>
+  readonly session: Accessor<ViewerConnection | null>
+  readonly port: ViewerPort
+  readonly report: (error: unknown) => void
+}
+const createExpansionWriter =
+  (options: ExpansionWriterOptions) =>
+  (paths: ReadonlySet<string>): void => {
+    const current = options.session()
+    if (current !== null) {
+      options.cache.set(current.workspace, paths)
+      options.port.saveTreeState?.(current.session, {expanded: [...paths]}).catch(options.report)
+    }
+  }
+
 export const useFileTree = (props: UseFileTreeProps) => {
   const local = createBoundedCache<ReadonlySet<string>>({
     maxEntries: 16,
@@ -67,7 +88,7 @@ export const useFileTree = (props: UseFileTreeProps) => {
   const [collapsed, setCollapsed] = createSignal(new Set<string>())
   const [focused, setFocused] = createSignal<string | null>(null)
   const sessionId = createMemo(() => props.session()?.session)
-  const currentPath = () => documentPath(props.session())
+  const currentPath = () => props.documentPath?.() ?? documentPath(props.session())
   createEffect(
     on(sessionId, () => {
       const current = props.session()
@@ -91,11 +112,21 @@ export const useFileTree = (props: UseFileTreeProps) => {
     query,
     revision: () => (query().trim() === '' ? (props.revision?.() ?? 0) : 0),
     session: sessionId,
-    visible: props.visible,
+    visible: () => props.visible() && props.changedOnly?.() !== true,
   })
+  const roots = createMemo(() =>
+    mergeChangedTree(
+      listing.tree(),
+      props.changes?.() ?? [],
+      props.changedOnly?.() === true,
+      query(),
+    ),
+  )
   const isExpanded = (path: string): boolean =>
-    query().trim() === '' ? expanded().has(path) : !collapsed().has(path)
-  const nodes = createMemo(() => getVisibleNodes(listing.tree(), isExpanded))
+    query().trim() === '' && props.changedOnly?.() !== true
+      ? expanded().has(path)
+      : !collapsed().has(path)
+  const nodes = createMemo(() => getVisibleNodes(roots(), isExpanded))
   const paths = createMemo(() => nodes().map((node) => node.path))
   const lookup = createMemo(() => new Map(nodes().map((node) => [node.path, node])))
   const positions = createMemo(() => getTreePositions(paths()))
@@ -111,13 +142,7 @@ export const useFileTree = (props: UseFileTreeProps) => {
     setExpanded(next)
     persist(next)
   }
-  const persist = (paths: ReadonlySet<string>): void => {
-    const current = props.session()
-    if (current !== null) {
-      local.set(current.workspace, paths)
-      props.port.saveTreeState?.(current.session, {expanded: [...paths]}).catch(props.onError)
-    }
-  }
+  const persist = createExpansionWriter({...props, cache: local, report: props.onError})
   createEffect(
     on([sessionId, currentPath], ([session, path], previous) => {
       if (previous !== undefined && previous[0] === session && previous[1] !== path) {
@@ -127,7 +152,7 @@ export const useFileTree = (props: UseFileTreeProps) => {
   )
   const toggle = (path: string): void => {
     const change = (previous: Set<string>): Set<string> => toggleExpansion(previous, path)
-    if (query().trim() === '') {
+    if (query().trim() === '' && props.changedOnly?.() !== true) {
       persist(setExpanded(change))
     } else {
       setCollapsed(change)

@@ -27,6 +27,18 @@ describe('createEditorNavigation', () => {
     document.body.replaceChildren()
     vi.restoreAllMocks()
   })
+  it.each(['', 'previous historical content', 'export const'])(
+    'should keep navigation working while editing an incomplete document: %s',
+    (doc) => {
+      const error = vi.spyOn(console, 'error').mockImplementation(() => {})
+      mount('main.ts', doc)
+      view.dispatch({
+        changes: {from: 0, insert: 'export const restored = true', to: view.state.doc.length},
+      })
+      expect(error).not.toHaveBeenCalled()
+      expect(view.contentDOM.querySelector('[data-navigation]')).toHaveTextContent('restored')
+    },
+  )
   it('should expose import and symbol links without marking ordinary strings', () => {
     mount()
     const links = [...view.contentDOM.querySelectorAll('[data-navigation]')]
