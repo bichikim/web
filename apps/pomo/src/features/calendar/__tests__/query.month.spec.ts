@@ -169,3 +169,72 @@ describe('calendar month queries', () => {
     expect(createCalendarQuery({now, text, timeZone})).toEqual({end, start})
   })
 })
+
+describe('calendar queries for two months ago', () => {
+  const now = new Date('2026-09-04T10:30:00.000Z')
+  const timeZone = 'Asia/Seoul'
+  const expected = {end: '2026-07-31T15:00:00.000Z', start: '2026-06-30T15:00:00.000Z'}
+
+  it.each([
+    '지지난달 일정 알려줘',
+    '지지난 달 일정 알려줘',
+    '지지난달에는 뭐 있어?',
+    '지난달 말고 지지난달 일정 알려줘',
+    '지지난달 지난달 말고 일정 알려줘',
+    '이번 달 말고 지지난달 일정 알려줘',
+    '다음 주 수요일 말고 지지난달 일정 알려줘',
+  ])('should request two local months ago for %s', (text) => {
+    expect(createCalendarQuery({now, text, timeZone})).toEqual(expected)
+  })
+
+  it('should use the previous month when two months ago is excluded', () => {
+    expect(createCalendarQuery({now, text: '지지난달 말고 지난달 일정 알려줘', timeZone})).toEqual({
+      end: '2026-08-31T15:00:00.000Z',
+      start: '2026-07-31T15:00:00.000Z',
+    })
+  })
+
+  it('should retain the bounded fallback for multiple requested months', () => {
+    expect(createCalendarQuery({now, text: '지지난달 지난달 일정 알려줘', timeZone})).toEqual({
+      end: '2026-10-04T10:30:00.000Z',
+      start: now.toISOString(),
+    })
+  })
+
+  it('should cross a year boundary for two months ago', () => {
+    expect(
+      createCalendarQuery({
+        now: new Date('2027-01-15T12:00:00.000Z'),
+        text: '지지난달 일정 알려줘',
+        timeZone,
+      }),
+    ).toEqual({
+      end: '2026-11-30T15:00:00.000Z',
+      start: '2026-10-31T15:00:00.000Z',
+    })
+  })
+
+  it.each(['초지지난달 뭐 있어?', '지지지난달 뭐 있어?', '지지난달력 뭐 있어?'])(
+    'should not recognize a month inside %s',
+    (text) => {
+      expect(createCalendarQuery({now, text, timeZone})).toBeNull()
+    },
+  )
+})
+
+it.each([
+  {
+    expected: {end: '2024-02-29T15:00:00.000Z', start: '2024-01-31T15:00:00.000Z'},
+    now: '2024-04-15T10:30:00.000Z',
+    timeZone: 'Asia/Seoul',
+  },
+  {
+    expected: {end: '2026-04-01T04:00:00.000Z', start: '2026-03-01T05:00:00.000Z'},
+    now: '2026-05-15T10:30:00.000Z',
+    timeZone: 'America/New_York',
+  },
+])('should preserve local month boundaries for $timeZone at $now', ({now, timeZone, expected}) => {
+  expect(createCalendarQuery({now: new Date(now), text: '지지난달 일정 알려줘', timeZone})).toEqual(
+    expected,
+  )
+})
