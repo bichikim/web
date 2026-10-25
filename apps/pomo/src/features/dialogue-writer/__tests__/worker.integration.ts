@@ -422,6 +422,54 @@ describe('dialogue writer worker', () => {
   })
 
   it.each([
+    ['empty output', 'ko', ''],
+    ['whitespace-only output', 'ko', ' \n\t '],
+    ['BOM-only output', 'ko', '\ufeff'],
+    ['blank Korean finalization', 'ko', ' \ufeff\t\r\n '],
+    ['blank English finalization', 'en', ' \n '],
+    ['blank Japanese finalization', 'ja', '\ufeff \t'],
+  ] as const)('should reject %s and allow a later generation', async (_name, language, output) => {
+    const forbidden = vi.fn(() => {
+      throw new Error('Network and database access are forbidden in this regression')
+    })
+    vi.stubGlobal('fetch', forbidden)
+    vi.stubGlobal('indexedDB', {deleteDatabase: forbidden, open: forbidden})
+    transformers.generate.mockImplementationOnce(async (options: MockGenerateOptions) => {
+      options.streamer.emit(output)
+    })
+    const worker = await loadWorker()
+    const request = {
+      modelId: 'qwen-0.8b',
+      outputLanguage: language,
+      request: '답변을 생성해 줘',
+      type: 'generate',
+    } as const
+
+    // Observe the terminal response before asserting the error contract.
+    await worker.dispatchAndWaitForResponse(request, 'complete').catch(() => undefined)
+
+    expect(worker.postMessage).toHaveBeenCalledWith({text: output, type: 'token'})
+    expect(worker.postMessage).toHaveBeenLastCalledWith({
+      message: '대화문 모델을 실행하지 못했어요.',
+      restartRequired: false,
+      type: 'error',
+    })
+    expect(worker.postMessage.mock.calls.some(([response]) => response.type === 'complete')).toBe(
+      false,
+    )
+    expect(transformers.generate).toHaveBeenCalledOnce()
+
+    transformers.generate.mockImplementationOnce(async (options: MockGenerateOptions) => {
+      options.streamer.emit(' Valid answer. ')
+    })
+    await worker.dispatchAndWaitForResponse(request, 'complete')
+
+    expect(worker.postMessage).toHaveBeenLastCalledWith({text: 'Valid answer.', type: 'complete'})
+    expect(transformers.generate).toHaveBeenCalledTimes(2)
+    expect(forbidden).not.toHaveBeenCalled()
+  })
+
+  it.each([
     [new Error('generation failed'), 'generation failed'],
     [new Error(''), '대화문 모델을 실행하지 못했어요.'],
     ['unknown failure', '대화문 모델을 실행하지 못했어요.'],
