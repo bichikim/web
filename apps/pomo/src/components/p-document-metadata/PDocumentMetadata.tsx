@@ -17,6 +17,8 @@ const getTitle = (pathname: string) => {
   switch (normalizePathname(pathname)) {
     case '/':
       return m.app_home_title()
+    case '/account':
+      return m.account_title()
     case SERVICE_POLICY_PATHS.appsInToss.privacy:
       return m.metadata_privacy_apps_in_toss_title()
     case SERVICE_POLICY_PATHS.refund:
