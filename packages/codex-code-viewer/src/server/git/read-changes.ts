@@ -73,7 +73,11 @@ export const readChanges = async (
   for (const value of untracked.output.split('\0').filter(Boolean)) {
     const path = normalizePath(root, value)
     if (path !== null) {
-      files.set(path, {kind: 'added', openable: fileFormat(path) !== undefined, path})
+      files.set(path, {
+        kind: files.get(path)?.kind === 'deleted' ? 'modified' : 'added',
+        openable: fileFormat(path) !== undefined,
+        path,
+      })
     }
   }
   const entries = await Promise.all(

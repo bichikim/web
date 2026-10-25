@@ -65,6 +65,32 @@ describe('readChanges', () => {
     expect(result.base).toBe('origin/main')
     expect(result.files.map(({path}) => path)).toEqual(['file.ts'])
   })
+  it.each(['staged', 'committed'] as const)(
+    'should classify a file recreated after a %s deletion as modified against the baseline',
+    async (deletion) => {
+      const root = setup()
+      mkdirSync(join(root, 'nested'))
+      writeFileSync(join(root, 'nested', 'file.ts'), 'original\n')
+      git(root, 'add', '.')
+      git(root, 'commit', '-qm', 'baseline')
+      git(root, 'update-ref', 'refs/remotes/origin/main', 'HEAD')
+      git(root, 'symbolic-ref', 'refs/remotes/origin/HEAD', 'refs/remotes/origin/main')
+      git(root, 'rm', '-q', 'nested/file.ts')
+      if (deletion === 'committed') {
+        git(root, 'commit', '-qm', 'remove file')
+      }
+      mkdirSync(join(root, 'nested'), {recursive: true})
+      writeFileSync(join(root, 'nested', 'file.ts'), 'replacement\n')
+      writeFileSync(join(root, 'nested', 'new.ts'), 'new file\n')
+      const result = await readChanges(join(root, 'nested'))
+      expect(
+        result.files.toSorted((first, second) => first.path.localeCompare(second.path)),
+      ).toEqual([
+        {kind: 'modified', openable: true, path: 'file.ts'},
+        {kind: 'added', openable: true, path: 'new.ts'},
+      ])
+    },
+  )
   it('should support an unborn repository and report absence outside Git', async () => {
     const root = setup()
     writeFileSync(join(root, 'new.ts'), 'new')
