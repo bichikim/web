@@ -5,7 +5,7 @@ import type {AiJobSession} from './create-ai-job-session'
 import {getClientErrorCode} from './status'
 
 export interface AiJobOutputOptions {
-  readonly client: AiJobClient
+  readonly client: Pick<AiJobClient, 'getJobResult'>
   readonly result: Accessor<AiJobResult | null>
   readonly session: AiJobSession
   readonly onComplete: (text: string) => Promise<void>
