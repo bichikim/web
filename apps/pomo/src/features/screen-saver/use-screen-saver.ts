@@ -4,6 +4,7 @@ import {useEvent} from '@winter-love/solid-use/event'
 import {usePreference} from 'src/hooks/use-preference'
 import {createParsedPreferenceStorage} from '../parsed-preference-storage'
 import {getMonotonicTime} from 'src/utils/get-monotonic-time'
+import {subscribeWebStorageChange} from 'src/utils/subscribe-web-storage-change'
 
 import {
   getScreenSaverDelayMilliseconds,
@@ -24,6 +25,7 @@ const screenSaverStorage = createParsedPreferenceStorage({
   invalidMessage: 'Invalid screen saver delay.',
   parse: parseScreenSaverDelay,
   read: () => readScreenSaverDelay(),
+  subscribe: (onChange) => subscribeWebStorageChange({key: SCREEN_SAVER_STORAGE_KEY, onChange}),
   write: (value) => writeScreenSaverDelay(value),
 })
 
