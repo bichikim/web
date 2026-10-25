@@ -221,6 +221,139 @@ it('should clear the deletion failure after a successful retry without discardin
   expect(repository.save).not.toHaveBeenCalled()
 })
 
+it('should ignore another confirmed deletion while the same entry is pending', async () => {
+  vi.spyOn(console, 'error').mockImplementation(() => undefined)
+  const entry = {
+    createdAt: '2026-09-04T03:00:00.000Z',
+    date: '2026-09-04',
+    id: 'overlapping-delete',
+    strokes: [],
+    text: '삭제가 끝나야 할 일기',
+    updatedAt: '2026-09-04T03:00:00.000Z',
+    version: 1,
+  } satisfies PictureDiaryEntry
+  const first = Promise.withResolvers<void>()
+  const duplicate = Promise.withResolvers<void>()
+  // The unused duplicate promise must also be handled when admission rejects the extra request.
+  void duplicate.promise.catch(() => undefined)
+  const repository = createRepository([entry])
+  repository.delete.mockReturnValueOnce(first.promise).mockReturnValueOnce(duplicate.promise)
+  render(() => (
+    <PictureDiary
+      environment={environment}
+      turnEnvironment={turns.environment}
+      repository={repository}
+    />
+  ))
+  await waitFor(() =>
+    expect(screen.getByLabelText('그림일기 내용').closest('section')).toHaveAttribute(
+      'data-picture-diary-page',
+      'previous',
+    ),
+  )
+  fireEvent.input(screen.getByLabelText('그림일기 내용'), {target: {value: '보존할 삭제 초안'}})
+  fireEvent.click(screen.getAllByRole('button', {name: '이전 일기 보기'})[0]!)
+  await finishPageTurn()
+  const remove = screen.getByRole('button', {name: '2026. 09. 04. 일기 삭제'})
+  for (let press = 0; press < 4; press += 1) {
+    fireEvent.click(remove)
+  }
+  expect.soft(repository.delete).toHaveBeenCalledExactlyOnceWith(entry.id)
+  first.resolve()
+  await waitFor(() =>
+    expect(screen.getByLabelText('그림일기 내용')).toHaveValue('보존할 삭제 초안'),
+  )
+  duplicate.reject(new DOMException('Late storage transaction abort', 'AbortError'))
+  await duplicate.promise.catch(() => undefined)
+  await Promise.resolve()
+  expect(within(getSpread()).queryByText(entry.text)).not.toBeInTheDocument()
+  expect(screen.queryByRole('status')).not.toBeInTheDocument()
+  expect(repository.save).not.toHaveBeenCalled()
+})
+
+it('should release pending deletion after failure and allow a confirmed retry', async () => {
+  vi.spyOn(console, 'error').mockImplementation(() => undefined)
+  const entry = {
+    createdAt: '2026-09-04T03:00:00.000Z',
+    date: '2026-09-04',
+    id: 'retry-delete',
+    strokes: [],
+    text: '실패 후 삭제할 일기',
+    updatedAt: '2026-09-04T03:00:00.000Z',
+    version: 1,
+  } satisfies PictureDiaryEntry
+  const pending = Promise.withResolvers<void>()
+  const repository = createRepository([entry])
+  repository.delete.mockReturnValueOnce(pending.promise)
+  render(() => (
+    <PictureDiary
+      environment={environment}
+      turnEnvironment={turns.environment}
+      repository={repository}
+    />
+  ))
+  await waitFor(() =>
+    expect(screen.getByLabelText('그림일기 내용').closest('section')).toHaveAttribute(
+      'data-picture-diary-page',
+      'previous',
+    ),
+  )
+  fireEvent.click(screen.getAllByRole('button', {name: '이전 일기 보기'})[0]!)
+  await finishPageTurn()
+  const remove = screen.getByRole('button', {name: '2026. 09. 04. 일기 삭제'})
+  fireEvent.click(remove)
+  fireEvent.click(remove)
+  pending.reject(new DOMException('Storage transaction abort', 'AbortError'))
+  expect(await screen.findByRole('status')).toHaveTextContent('일기를 삭제하지 못했어요.')
+  expect(within(getSpread()).getByText(entry.text)).toBeInTheDocument()
+  fireEvent.click(remove)
+  expect(repository.delete).toHaveBeenCalledTimes(1)
+  fireEvent.click(remove)
+  await waitFor(() => expect(screen.queryByRole('status')).not.toBeInTheDocument())
+  expect(repository.delete).toHaveBeenNthCalledWith(2, entry.id)
+  expect(within(getSpread()).queryByText(entry.text)).not.toBeInTheDocument()
+})
+
+it('should admit deletion of another entry while the first entry is pending', async () => {
+  const older = {
+    createdAt: '2026-09-04T03:00:00.000Z',
+    date: '2026-09-04',
+    id: 'older-delete',
+    strokes: [],
+    text: '앞서 쓴 일기',
+    updatedAt: '2026-09-04T03:00:00.000Z',
+    version: 1,
+  } satisfies PictureDiaryEntry
+  const newer = {...older, date: '2026-09-05', id: 'newer-delete', text: '나중에 쓴 일기'}
+  const first = Promise.withResolvers<void>()
+  const second = Promise.withResolvers<void>()
+  const repository = createRepository([newer, older])
+  repository.delete.mockImplementation((id) => (id === newer.id ? first.promise : second.promise))
+  render(() => (
+    <PictureDiary
+      environment={environment}
+      turnEnvironment={turns.environment}
+      repository={repository}
+    />
+  ))
+  const removeNewer = await screen.findByRole('button', {name: '2026. 09. 05. 일기 삭제'})
+  fireEvent.click(removeNewer)
+  fireEvent.click(removeNewer)
+  expect(repository.delete).toHaveBeenCalledExactlyOnceWith(newer.id)
+  fireEvent.click(screen.getAllByRole('button', {name: '이전 일기 보기'})[0]!)
+  await finishPageTurn()
+  const removeOlder = screen.getByRole('button', {name: '2026. 09. 04. 일기 삭제'})
+  fireEvent.click(removeOlder)
+  fireEvent.click(removeOlder)
+  expect(repository.delete.mock.calls).toEqual([[newer.id], [older.id]])
+  first.resolve()
+  second.resolve()
+  await waitFor(() =>
+    expect(screen.queryByRole('button', {name: /일기 삭제$/u})).not.toBeInTheDocument(),
+  )
+  expect(screen.queryByRole('status')).not.toBeInTheDocument()
+})
+
 it('should prevent duplicate saves and preserve changes made during a pending save', async () => {
   const pending = Promise.withResolvers<void>()
   const repository = createRepository()
