@@ -1,24 +1,15 @@
 import {createMemo, Show} from 'solid-js'
-import type {DeletedDocument} from './types'
+import type {DeletedDocumentView} from './types'
 import type {TextMatch} from './find-text'
 import {SCodeEditor} from './editor/SCodeEditor'
 import {SDeletedOriginal} from './SDeletedOriginal'
 import {ViewStateContext} from './view-state/context'
 import {useTranslations} from './locale/use-translations'
 
-interface SDeletedDocumentProps {
-  readonly draftSource?: string
-  readonly saving?: boolean
-  readonly editing?: boolean
-  readonly onToggleEditing?: () => void
-  readonly onChange?: (source: string) => void
-  readonly onSave?: () => void
-  readonly document: DeletedDocument
-  readonly pending?: boolean
+interface SDeletedDocumentProps extends DeletedDocumentView {
   readonly matches?: readonly TextMatch[]
   readonly activeMatch?: number
   readonly searchScrollRequest?: number
-  readonly onClose?: () => void
   readonly onFind?: (text?: string) => void
   readonly onError?: (error: unknown) => void
 }

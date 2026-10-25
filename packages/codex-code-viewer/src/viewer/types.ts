@@ -22,6 +22,18 @@ export interface DeletedDocument {
   readonly source: string | null
 }
 
+export interface DeletedDocumentView {
+  readonly document: DeletedDocument
+  readonly draftSource?: string
+  readonly editing?: boolean
+  readonly pending?: boolean
+  readonly saving?: boolean
+  readonly onChange?: (source: string) => void
+  readonly onClose?: () => void
+  readonly onSave?: () => void
+  readonly onToggleEditing?: () => void
+}
+
 export interface ChangeRow {
   readonly kind: 'context' | 'added' | 'deleted'
   readonly previous: number | null

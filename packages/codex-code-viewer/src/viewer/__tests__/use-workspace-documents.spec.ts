@@ -27,22 +27,22 @@ it('should search deleted source and save its new body without saving the retain
   expect(fixture.viewer.editing.dirty()).toBe(true)
   fixture.documents.openDeleted('removed.ts')
   await waitFor(
-    () => expect(fixture.documents.deletedDocument()?.source).toBe('previous deleted source'),
+    () => expect(fixture.documents.deletedView()?.document.source).toBe('previous deleted source'),
     {interval: 1},
   )
   fixture.documents.findText('previous')
   expect(fixture.documents.matches()).toHaveLength(1)
-  expect(fixture.documents.deletedSource()).toBe('')
-  expect(fixture.documents.deletedEditing()).toBe(false)
-  fixture.documents.changeDeletedSource('ignored in view mode')
+  expect(fixture.documents.deletedView()?.draftSource).toBe('')
+  expect(fixture.documents.deletedView()?.editing).toBe(false)
+  fixture.documents.deletedView()?.onChange?.('ignored in view mode')
   globalThis.dispatchEvent(
     new KeyboardEvent('keydown', {cancelable: true, ctrlKey: true, key: 's'}),
   )
-  expect(fixture.documents.deletedSource()).toBe('')
+  expect(fixture.documents.deletedView()?.draftSource).toBe('')
   expect(port.call).not.toHaveBeenCalledWith('code.write', expect.anything())
-  fixture.documents.toggleDeletedEditing()
-  fixture.documents.changeDeletedSource('recreated deleted file')
-  expect(fixture.documents.deletedSource()).toBe('recreated deleted file')
+  fixture.documents.deletedView()?.onToggleEditing?.()
+  fixture.documents.deletedView()?.onChange?.('recreated deleted file')
+  expect(fixture.documents.deletedView()?.draftSource).toBe('recreated deleted file')
   expect(port.call).not.toHaveBeenCalledWith('code.write', expect.anything())
   globalThis.dispatchEvent(
     new KeyboardEvent('keydown', {cancelable: true, ctrlKey: true, key: 's'}),
@@ -57,7 +57,7 @@ it('should search deleted source and save its new body without saving the retain
       }),
     {interval: 1},
   )
-  await waitFor(() => expect(fixture.documents.deletedDocument()).toBeNull(), {interval: 1})
+  await waitFor(() => expect(fixture.documents.deletedView()).toBeNull(), {interval: 1})
   await fixture.documents.moveFile(-1)
   expect(fixture.viewer.editing.source()).toBe('unsaved live draft')
   expect(fixture.viewer.editing.dirty()).toBe(true)

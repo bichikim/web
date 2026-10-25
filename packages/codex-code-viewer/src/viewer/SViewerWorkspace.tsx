@@ -81,7 +81,7 @@ export const SViewerWorkspace = (props: SViewerWorkspaceProps) => {
             controls="workspace-files"
             sidebar={
               <SFileTree
-                documentPath={documents.deletedDocument()?.path}
+                documentPath={documents.deletedView()?.document.path}
                 sources={viewer.editing.sources()}
                 port={port}
                 session={viewer.workspaceSession() ?? undefined}
@@ -101,17 +101,7 @@ export const SViewerWorkspace = (props: SViewerWorkspaceProps) => {
             <SViewerDocument
               port={port}
               viewer={viewer}
-              deletedDocument={documents.deletedDocument()}
-              deletedPending={documents.deletedPending()}
-              deletedSource={documents.deletedSource()}
-              deletedSaving={documents.deletedSaving()}
-              deletedEditing={documents.deletedEditing()}
-              onToggleDeletedEditing={documents.toggleDeletedEditing}
-              onChangeDeleted={
-                documents.deletedEditable() ? documents.changeDeletedSource : undefined
-              }
-              onSaveDeleted={documents.deletedEditable() ? documents.saveDeleted : undefined}
-              onCloseDeleted={documents.closeDeleted}
+              deletedView={documents.deletedView()}
               search={documents}
               onFind={documents.findText}
               previewLines={props.settings.previewLines()}

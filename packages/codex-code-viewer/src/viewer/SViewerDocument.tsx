@@ -3,7 +3,7 @@ import {Show, untrack} from 'solid-js'
 import type {EditorState} from '@codemirror/state'
 import {createBoundedCache} from '../shared/create-bounded-cache'
 import {MAX_CODE_BYTES, MAX_DRAFT_FILES} from '../shared/editing-limits'
-import type {DeletedDocument, ViewerPort} from './types'
+import type {DeletedDocumentView, ViewerPort} from './types'
 import type {useViewer} from './use-viewer'
 import type {useDocumentSearch} from './use-document-search'
 import {SWorkspacePrompt} from './SWorkspacePrompt'
@@ -14,15 +14,7 @@ import {useDocumentChanges} from './use-document-changes'
 import {useChangeInspection} from './use-change-inspection'
 import {SDeletedDocument} from './SDeletedDocument'
 interface SViewerDocumentProps {
-  readonly deletedDocument?: DeletedDocument | null
-  readonly deletedPending?: boolean
-  readonly deletedSource?: string
-  readonly deletedSaving?: boolean
-  readonly deletedEditing?: boolean
-  readonly onToggleDeletedEditing?: () => void
-  readonly onChangeDeleted?: (source: string) => void
-  readonly onSaveDeleted?: () => void
-  readonly onCloseDeleted?: () => void
+  readonly deletedView?: DeletedDocumentView | null
   readonly port: ViewerPort
   readonly viewer: ReturnType<typeof useViewer>
   readonly search: ReturnType<typeof useDocumentSearch>
@@ -56,7 +48,7 @@ export const SViewerDocument = (props: SViewerDocumentProps) => {
   return (
     <section aria-label={t('파일 내용')} class="flex min-h-0 min-w-0 flex-1 flex-col">
       <Show
-        when={props.deletedDocument}
+        when={props.deletedView}
         fallback={
           <Show
             when={props.viewer.session()}
@@ -152,20 +144,12 @@ export const SViewerDocument = (props: SViewerDocumentProps) => {
           </Show>
         }
       >
-        {(document) => (
+        {(view) => (
           <SDeletedDocument
-            document={document()}
-            draftSource={props.deletedSource}
-            saving={props.deletedSaving}
-            editing={props.deletedEditing}
-            onToggleEditing={props.onToggleDeletedEditing}
-            onChange={props.onChangeDeleted}
-            onSave={props.onSaveDeleted}
-            pending={props.deletedPending}
+            {...view()}
             matches={props.search.matches()}
             activeMatch={props.search.active()}
             searchScrollRequest={props.search.scrollRequest()}
-            onClose={props.onCloseDeleted}
             onFind={props.onFind}
             onError={props.viewer.reportError}
           />

@@ -1,5 +1,5 @@
-import {type Accessor, onCleanup} from 'solid-js'
-import type {ViewerPort} from './types'
+import {type Accessor, createMemo, onCleanup, untrack} from 'solid-js'
+import type {DeletedDocumentView, ViewerPort} from './types'
 import type {useViewer} from './use-viewer'
 import {useDeletedDocument} from './use-deleted-document'
 import {useDocumentSearch} from './use-document-search'
@@ -7,7 +7,7 @@ import {useViewerShortcuts} from './use-viewer-shortcuts'
 import {hasDocumentSource} from '../shared/has-document-source'
 import {readCodeText} from './read-code-text'
 
-interface WorkspaceDocumentsOptions {
+interface UseWorkspaceDocumentsProps {
   readonly port: ViewerPort
   readonly viewer: ReturnType<typeof useViewer>
   readonly element: Accessor<HTMLElement | null>
@@ -15,8 +15,8 @@ interface WorkspaceDocumentsOptions {
 }
 
 /** Routes document commands to the historical view while retaining the live document and drafts. */
-export const useWorkspaceDocuments = (options: WorkspaceDocumentsOptions) => {
-  const {viewer} = options
+export const useWorkspaceDocuments = (props: UseWorkspaceDocumentsProps) => {
+  const viewer = untrack(() => props.viewer)
   const deleted = useDeletedDocument({
     documentPath: () => viewer.session()?.document.location.path,
     editing: viewer.editing,
@@ -24,7 +24,7 @@ export const useWorkspaceDocuments = (options: WorkspaceDocumentsOptions) => {
     onMove: viewer.move,
     onOpen: viewer.openLocation,
     onRefresh: viewer.refresh,
-    port: options.port,
+    port: props.port,
     revision: viewer.workspaceRevision,
     session: viewer.workspaceSession,
   })
@@ -48,7 +48,7 @@ export const useWorkspaceDocuments = (options: WorkspaceDocumentsOptions) => {
   }
   const findText = (text?: string): void => {
     if (sourceAvailable()) {
-      const container = options.element()?.querySelector<HTMLElement>('[data-code-source]')
+      const container = props.element()?.querySelector<HTMLElement>('[data-code-source]')
       search.open(
         text ??
           (container === null || container === undefined
@@ -59,7 +59,7 @@ export const useWorkspaceDocuments = (options: WorkspaceDocumentsOptions) => {
   }
   const closeSearch = (): void => {
     search.close()
-    options
+    props
       .element()
       ?.querySelector<HTMLElement>(
         '[role="textbox"][aria-multiline="true"], [data-line-number][tabindex="0"], [data-document-focus]',
@@ -83,26 +83,37 @@ export const useWorkspaceDocuments = (options: WorkspaceDocumentsOptions) => {
         deleted.save()
       }
     },
-    onSearch: options.onSearch,
+    onSearch: props.onSearch,
   })
   if (typeof globalThis.addEventListener === 'function') {
     globalThis.addEventListener('focus', deleted.refresh)
     onCleanup(() => globalThis.removeEventListener('focus', deleted.refresh))
   }
+  const deletedView = createMemo<DeletedDocumentView | null>(() => {
+    const document = deleted.document()
+    if (document === null) {
+      return null
+    }
+    const editable = deleted.editable()
+    return {
+      document,
+      draftSource: deleted.source(),
+      editing: deleted.enabled(),
+      onChange: editable ? deleted.change : undefined,
+      onClose: deleted.close,
+      onSave: editable ? deleted.save : undefined,
+      onToggleEditing: deleted.toggleEditing,
+      pending: deleted.pending(),
+      saving: deleted.saving(),
+    }
+  })
   return {
     ...search,
     address: () => deleted.document()?.path ?? viewer.address(),
     canBack: () => deleted.document() !== null || viewer.canBack(),
     canForward: () => deleted.document() === null && viewer.canForward(),
-    changeDeletedSource: deleted.change,
-    closeDeleted: deleted.close,
     closeSearch,
-    deletedDocument: deleted.document,
-    deletedEditable: deleted.editable,
-    deletedEditing: deleted.enabled,
-    deletedPending: deleted.pending,
-    deletedSaving: deleted.saving,
-    deletedSource: deleted.source,
+    deletedView,
     findText,
     moveFile: deleted.move,
     openDeleted: (path: string): void => {
@@ -111,8 +122,6 @@ export const useWorkspaceDocuments = (options: WorkspaceDocumentsOptions) => {
     },
     openLocation: deleted.openLocation,
     refreshFile: deleted.refresh,
-    saveDeleted: deleted.save,
     sourceAvailable,
-    toggleDeletedEditing: deleted.toggleEditing,
   }
 }
