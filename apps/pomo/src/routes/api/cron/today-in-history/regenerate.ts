@@ -7,7 +7,7 @@ import {isAuthorizedCronRequest} from 'src/server/cron/environment'
 import {startHistoryRegeneration} from 'src/server/history-generation/start-regeneration'
 import {readJsonBody} from 'src/server/http/body'
 import {noStoreJson, noStoreText} from 'src/server/http/response'
-import {requiredHistoryTitlesSchema} from 'src/features/history-generation/contract'
+import {requiredTitlesSchema} from 'src/features/history-generation/contract'
 
 const ACCEPTED_STATUS = 202
 const HTTP_BAD_REQUEST = 400
@@ -18,7 +18,7 @@ const MAXIMUM_BODY_SIZE = 16_384
 const requestSchema = z
   .strictObject({
     targetDate: z.iso.date(),
-    titles: requiredHistoryTitlesSchema,
+    titles: requiredTitlesSchema,
   })
   .superRefine((request, context) => {
     if (!hasUniqueIds(request.titles)) {

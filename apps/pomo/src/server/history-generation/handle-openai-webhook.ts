@@ -10,7 +10,7 @@ import {
   rejectHistoryResponse,
 } from '../repositories/history-generation'
 import {retrieveHistoryResponse} from './response-result'
-import {requiredHistoryTitlesSchema} from 'src/features/history-generation/contract'
+import {requiredTitlesSchema} from 'src/features/history-generation/contract'
 
 const MAX_ERROR_LENGTH = 2000
 
@@ -44,7 +44,7 @@ const getRequiredTitles = (
 
   return serializedTitles === undefined
     ? undefined
-    : requiredHistoryTitlesSchema.parse(JSON.parse(serializedTitles))
+    : requiredTitlesSchema.parse(JSON.parse(serializedTitles))
 }
 
 /** Processes one verified OpenAI response event. */

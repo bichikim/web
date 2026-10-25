@@ -11,7 +11,7 @@ const MAX_BODY_LENGTH = 500
 const MIN_MOMENT_COUNT = 3
 const MAX_MOMENT_COUNT = 5
 
-export const requiredHistoryTitlesSchema = z
+export const requiredTitlesSchema = z
   .array(z.string().trim().min(1).max(MAX_TITLE_LENGTH))
   .min(MIN_MOMENT_COUNT)
   .max(MAX_MOMENT_COUNT)
