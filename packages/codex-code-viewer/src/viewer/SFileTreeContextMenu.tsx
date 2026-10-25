@@ -6,6 +6,7 @@ interface SFileTreeContextMenuProps {
   x: number
   y: number
   selection: WorkspaceSelection
+  onOpenInTab?: (selection: WorkspaceSelection) => void
   canModify?: boolean
   canPaste?: boolean
   onCopyEntry?: (selection: WorkspaceSelection) => void
@@ -20,12 +21,16 @@ interface SFileTreeContextMenuProps {
 
 export const SFileTreeContextMenu = (props: SFileTreeContextMenuProps) => {
   const t = useTranslations()
+  const handleOpenInTab = (): void => props.onOpenInTab?.(props.selection)
   return (
     <SContextMenu
       x={props.x}
       y={props.y}
       label={t('파일 트리 작업')}
       items={[
+        ...(props.selection.kind === 'file' && props.onOpenInTab !== undefined
+          ? [{label: t('새 탭에서 열기'), onSelect: handleOpenInTab}]
+          : []),
         {
           key: 'c',
           label: t('복사'),

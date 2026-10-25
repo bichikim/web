@@ -27,6 +27,9 @@ export default defineConfig({
           --viewer-foreground: #202020;
           --viewer-muted: #666666;
           --viewer-border: #e5e5e5;
+          --viewer-change-added: #16803d;
+          --viewer-change-modified: #0169cc;
+          --viewer-change-deleted: #cf222e;
           --viewer-hover-alpha: 8%;
           --viewer-pressed-alpha: 12%;
           --viewer-outline-alpha: 2%;
@@ -66,6 +69,9 @@ export default defineConfig({
           --viewer-foreground: #ececec;
           --viewer-muted: #aaaaaa;
           --viewer-border: #383838;
+          --viewer-change-added: #3fb950;
+          --viewer-change-modified: #58a6ff;
+          --viewer-change-deleted: #f85149;
           --viewer-hover-alpha: 12%;
           --viewer-pressed-alpha: 16%;
           --viewer-outline-alpha: 4%;
@@ -105,13 +111,26 @@ export default defineConfig({
       'border border-divider bg-canvas px-3 py-2 text-sm font-medium shadow-control',
       'enabled:hover:bg-control-hover enabled:hover:border-hover-border enabled:active:bg-control-pressed',
     ].join(' '),
+    'ui-change-inset': 'sticky left-16 ml-16 w-[calc(100cqw-4rem)]',
+    'ui-change-mark': [
+      'pointer-events-none block h-full w-1',
+      'data-[change=added]:bg-change-added data-[change=modified]:bg-change-modified',
+      'data-[change=deleted]:h-2.5 data-[change=deleted]:w-2 data-[change=deleted]:bg-change-deleted',
+      'data-[change=deleted]:[clip-path:polygon(0_0,100%_50%,0_100%)]',
+    ].join(' '),
+    'ui-change-marker': [
+      'ui-focus inline-flex h-6 w-2.5 shrink-0 items-center justify-center bg-transparent p-0',
+      'data-[boundary=before]:-translate-y-3 data-[boundary=after]:translate-y-3',
+      'data-[boundary=first]:-translate-y-1.5',
+    ].join(' '),
     'ui-code-editor': [
+      '[container-type:inline-size]',
       'min-h-0 min-w-0',
       'flex-1 overflow-hidden [&_.cm-editor]:h-full',
       '[&_.cm-editor_.cm-scroller]:ui-code-text [&_.cm-scroller]:overflow-auto',
       '[&_.cm-editor_.cm-content]:pt-0 [&_.cm-editor_.cm-content]:pb-4',
       '[&_.cm-line]:pl-0 [&_.cm-line]:pr-6 [&_.cm-gutters]:bg-surface',
-      '[&_.cm-editor_.cm-gutters]:border-r-0 [&_.cm-lineNumbers]:w-12',
+      '[&_.cm-editor_.cm-gutters]:border-r-0 [&_.cm-foldGutter_.cm-gutterElement]:p-0',
       '[&_.cm-lineNumbers_.cm-gutterElement]:ui-code-gutter',
       '[&_.cm-gutters]:text-muted [&_.cm-gutters]:border-divider [&_.cm-activeLine]:bg-selection',
       '[&_.cm-activeLineGutter]:bg-selection [&_.cm-activeLineGutter]:text-foreground',
@@ -120,6 +139,21 @@ export default defineConfig({
       '[&_[data-navigation-modifier=true]_.ui-editor-link]:cursor-pointer',
       '[&_.cm-editor_.cm-selectionBackground]:bg-code-selection',
       '[&_.cm-editor.cm-focused>.cm-scroller>.cm-selectionLayer_.cm-selectionBackground]:bg-code-selection',
+      'ui-code-syntax [&_.cm-search-match]:bg-search',
+      '[&_.cm-foldPlaceholder]:border-0 [&_.cm-foldPlaceholder]:bg-selection [&_.cm-foldPlaceholder]:text-muted',
+      '[&_.cm-search-active]:outline [&_.cm-search-active]:outline-accent',
+    ].join(' '),
+    'ui-code-fold': [
+      'inline-flex h-6 w-5 shrink-0 items-center justify-center rounded bg-transparent text-muted',
+      'hover:text-foreground',
+      'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent',
+    ].join(' '),
+    'ui-code-fold-placeholder': [
+      'mx-1 inline-flex min-w-6 items-center justify-center rounded bg-selection px-1 text-muted',
+      'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent',
+    ].join(' '),
+    'ui-code-gutter': 'w-[calc(var(--code-number-width,2ch)+12px)] pl-0 pr-1.5',
+    'ui-code-syntax': [
       '[&_.tok-keyword]:text-keyword [&_.tok-string]:text-string',
       '[&_.tok-bool]:text-keyword [&_.tok-atom]:text-keyword',
       '[&[data-language=html]_.tok-typeName]:text-keyword [&[data-language=html]_.tok-propertyName]:text-keyword',
@@ -134,20 +168,8 @@ export default defineConfig({
         `[&[data-language=${language}]_.tok-propertyName]:text-keyword`,
         `[&[data-language=${language}]_.tok-meta]:text-comment`,
       ]),
-      '[&_.tok-comment]:text-comment [&_.tok-number]:text-number [&_.cm-search-match]:bg-search',
-      '[&_.cm-foldPlaceholder]:border-0 [&_.cm-foldPlaceholder]:bg-selection [&_.cm-foldPlaceholder]:text-muted',
-      '[&_.cm-search-active]:outline [&_.cm-search-active]:outline-accent',
+      '[&_.tok-comment]:text-comment [&_.tok-number]:text-number',
     ].join(' '),
-    'ui-code-fold': [
-      'inline-flex h-6 w-6 shrink-0 items-center justify-center rounded text-muted',
-      'hover:bg-selection hover:text-foreground',
-      'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent',
-    ].join(' '),
-    'ui-code-fold-placeholder': [
-      'mx-1 inline-flex min-w-6 items-center justify-center rounded bg-selection px-1 text-muted',
-      'focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent',
-    ].join(' '),
-    'ui-code-gutter': 'w-12 pl-0 pr-3',
     'ui-code-text': 'font-mono text-[13px] leading-6 [tab-size:2]',
     'ui-document-button': 'ui-button ui-document-control py-1',
     'ui-document-control': 'h-[calc(var(--font-text-sm-line-height,20px)_+_10px)]',
@@ -176,6 +198,23 @@ export default defineConfig({
       'enabled:hover:bg-control-hover enabled:hover:border-hover-border',
     ].join(' '),
     'ui-navigation-button': 'ui-icon-button [--icon-button-size:26px] text-foreground',
+    'ui-number-button': [
+      'ui-focus ui-transition inline-flex h-full w-6 shrink-0 items-center justify-center rounded-pill p-0',
+      'bg-hover enabled:hover:bg-pressed enabled:active:bg-pressed',
+    ].join(' '),
+    'ui-number-control': [
+      'ui-document-control inline-flex shrink-0 items-center rounded-pill border border-divider',
+      'bg-canvas p-0.5 text-sm text-foreground shadow-control',
+    ].join(' '),
+    'ui-number-field': [
+      'flex h-full items-center gap-0 px-2 focus-within:outline focus-within:outline-2',
+      'focus-within:outline-accent focus-within:-outline-offset-2',
+    ].join(' '),
+    'ui-number-input': [
+      'w-[var(--number-width)] min-w-[2ch] max-w-[7ch] bg-transparent p-0 text-right tabular-nums outline-none',
+      '[appearance:textfield]',
+      '[&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none',
+    ].join(' '),
     'ui-primary': [
       'ui-focus ui-transition inline-flex shrink-0 items-center justify-center gap-2 rounded-pill bg-action',
       'px-4 py-2 text-sm font-medium text-action-text shadow-control',
@@ -234,6 +273,15 @@ export default defineConfig({
       'action-pressed': 'var(--viewer-action-pressed)',
       'action-text': 'var(--color-text-inverse, var(--viewer-background))',
       canvas: 'var(--color-background-primary, var(--viewer-background))',
+      'change-added': 'var(--viewer-change-added)',
+      'change-added-background':
+        'color-mix(in srgb, var(--viewer-change-added) 12%, var(--viewer-canvas))',
+      'change-deleted': 'var(--viewer-change-deleted)',
+      'change-deleted-background':
+        'color-mix(in srgb, var(--viewer-change-deleted) 12%, var(--viewer-canvas))',
+      'change-deleted-muted':
+        'color-mix(in srgb, var(--viewer-change-deleted) 8%, var(--viewer-canvas))',
+      'change-modified': 'var(--viewer-change-modified)',
       'code-selection': 'var(--viewer-code-selection)',
       comment: 'var(--viewer-comment)',
       'control-hover': 'var(--viewer-field-hover)',

@@ -1,3 +1,6 @@
+import {createTreeEntryHandler} from './create-tree-entry-handler'
+import {useTreeChanges} from './use-tree-changes'
+import {createTreeMutationHandler} from './create-tree-mutation-handler'
 import {useTranslations} from './locale/use-translations'
 import {createSignal, For, Show, untrack} from 'solid-js'
 import type {CodeLocation, ViewerConnection, WorkspaceEntry} from '../shared/contracts'
@@ -10,8 +13,15 @@ import {SFileTreeActions} from './SFileTreeActions'
 import {useTreeSelectionScroll} from './use-tree-selection-scroll'
 import {useVirtualTree} from './use-virtual-tree'
 import {SFileTreeToolbar} from './SFileTreeToolbar'
+import type {ChangedFile} from '../shared/change-contracts'
 
 interface SFileTreeProps {
+  documentPath?: string
+  sources?: readonly import('../shared/contracts').CodeSource[]
+  changes?: readonly ChangedFile[]
+  changesAvailable?: boolean
+  changeBase?: string
+  onDeleted?: (path: string) => void
   port: ViewerPort
   session?: ViewerConnection
   visible?: boolean
@@ -43,40 +53,50 @@ const focusTreeDestination = (options: TreeFocusOptions): void => {
   queueMicrotask(() => focusTreeItem(options.element, options.path))
 }
 
+const creationParentOf = (tree: ReturnType<typeof useFileTree>): string => {
+  const path = tree.activePath() ?? ''
+  return tree.node(path)?.kind === 'directory' ? path : path.split('/').slice(0, -1).join('/')
+}
+
 export const SFileTree = (props: SFileTreeProps) => {
   const t = useTranslations()
   const [element, setElement] = createSignal<HTMLElement | null>(null)
   const [viewportElement, setViewportElement] = createSignal<HTMLElement | null>(null)
-  const tree = useFileTree({
-    onError: (error) => props.onError?.(error),
-    onOpen: (location) => props.onOpen?.(location),
+  const options = {
+    documentPath: () => props.documentPath,
+    onError: (error: unknown) => props.onError?.(error),
     port: untrack(() => props.port),
     revision: () => props.revision ?? 0,
     session: () => props.session ?? null,
     visible: () => props.visible === true,
-  })
-  const handleMutation = async (change: FileMutation): Promise<void> => {
-    const session = props.session?.session
-    await props.onMutation?.(change)
-    if (props.session?.session !== session) {
-      return
-    }
-    await tree.reload()
-    if (props.session?.session !== session) {
-      return
-    }
-    if (change.action !== 'delete') {
-      tree.reveal(change.entry.path)
-    }
   }
+  const changes = useTreeChanges({
+    ...options,
+    available: () => props.changesAvailable,
+    base: () => props.changeBase,
+    files: () => props.changes,
+    get onDeleted() {
+      return props.onDeleted
+    },
+    onOpen: (location) => props.onOpen?.(location),
+    sources: () => props.sources ?? [],
+  })
+  const tree = useFileTree({
+    ...options,
+    changedOnly: changes.changedOnly,
+    changes: changes.files,
+    onOpen: changes.open,
+  })
   const actions = useTreeFileActions({
-    onChanged: handleMutation,
+    ...options,
+    onChanged: createTreeMutationHandler({
+      onMutation: (change) => props.onMutation?.(change) ?? Promise.resolve(),
+      session: () => props.session?.session,
+      tree,
+    }),
     pendingPaths: () => props.pendingPaths ?? [],
-    port: untrack(() => props.port),
     saving: () => props.saving === true,
-    session: () => props.session ?? null,
     tree,
-    visible: () => props.visible === true,
   })
   const viewport = useVirtualTree({
     active: tree.activePath,
@@ -96,23 +116,13 @@ export const SFileTree = (props: SFileTreeProps) => {
     viewport.reveal(tree.currentPath())
     revealSelection()
   }
-  const creationParent = (): string => {
-    const path = tree.activePath() ?? ''
-    return tree.node(path)?.kind === 'directory' ? path : path.split('/').slice(0, -1).join('/')
-  }
-  const handleCreated = async (entry: WorkspaceEntry): Promise<void> => {
-    const session = props.session?.session
-    await tree.reload()
-    if (props.session?.session !== session || !props.visible) {
-      return
-    }
-    tree.reveal(entry.path)
-    handleFocus(entry.path)
-    const node = tree.node(entry.path)
-    if (node?.kind === 'file' && node.openable) {
-      props.onOpen?.({column: 1, line: 1, path: entry.path})
-    }
-  }
+  const handleCreated = createTreeEntryHandler({
+    onFocus: handleFocus,
+    onOpen: (location) => props.onOpen?.(location),
+    session: () => props.session?.session,
+    tree,
+    visible: () => props.visible === true,
+  })
   const handleKeyboard = (event: KeyboardEvent, path: string): void => {
     if (actions.keyboard(event, path)) {
       return
@@ -131,12 +141,16 @@ export const SFileTree = (props: SFileTreeProps) => {
         ref={setElement}
       >
         <SFileTreeToolbar
+          changedOnly={changes.changedOnly()}
+          changesAvailable={changes.available()}
+          changeBase={changes.base() ?? undefined}
+          onToggleChanges={changes.toggle}
           canReveal={tree.canReveal()}
           onCreated={handleCreated}
           onReveal={handleReveal}
           onRefresh={tree.reload}
           refreshing={tree.pending()}
-          parent={creationParent()}
+          parent={creationParentOf(tree)}
           port={props.port}
           session={props.session}
           visible={props.visible === true}
@@ -157,6 +171,7 @@ export const SFileTree = (props: SFileTreeProps) => {
                 path={path}
                 spacingBefore={viewport.gap(path)}
                 tree={tree}
+                onActivate={(event) => actions.activate(event, path)}
                 onContextMenu={(event) => actions.handleContextMenu(event, path)}
                 cutPath={actions.cutPath()}
                 onKeyboard={(event) => handleKeyboard(event, path)}
@@ -180,6 +195,7 @@ export const SFileTree = (props: SFileTreeProps) => {
           </p>
         </Show>
         <SFileTreeActions
+          deletedPaths={changes.deletedPaths()}
           actions={actions}
           workspace={props.session?.workspace}
           onCopy={props.onCopy}

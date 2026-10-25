@@ -1,20 +1,17 @@
+import {useWorkspaceDocuments} from './use-workspace-documents'
 import {useTranslations} from './locale/use-translations'
 import {SViewerDocument} from './SViewerDocument'
-import {createSignal, onCleanup, onMount, Show, untrack} from 'solid-js'
+import {createSignal, Show, untrack} from 'solid-js'
 import type {ViewerPort} from './types'
 import {useViewer} from './use-viewer'
 import {SNotice} from './SNotice'
-import {useViewerShortcuts} from './use-viewer-shortcuts'
-import {useDocumentSearch} from './use-document-search'
 import {SFindBar} from './SFindBar'
-import {readCodeText} from './read-code-text'
 import {SFileTree} from './SFileTree'
 import {SViewerToolbar} from './SViewerToolbar'
 import {SResizablePanels} from './SResizablePanels'
 import {useMediaCache} from './use-media-cache'
 import {MediaCacheContext} from './media-cache-context'
 import {ViewStateContext} from './view-state/context'
-import {hasDocumentSource} from '../shared/has-document-source'
 import {useFileTreeVisibility} from './use-file-tree-visibility'
 import {SViewerSettings} from './SViewerSettings'
 import {useViewerSettings} from './use-viewer-settings'
@@ -39,48 +36,19 @@ export const SViewerWorkspace = (props: SViewerWorkspaceProps) => {
     viewer.reportError,
   )
   const [element, setElement] = createSignal<HTMLElement | null>(null)
-  const search = useDocumentSearch({source: viewer.editing.source})
-  const sourceAvailable = (): boolean => {
-    const document = viewer.session()?.document
-    return document === undefined || hasDocumentSource(document)
-  }
-  const handleFind = (text?: string): void => {
-    if (!sourceAvailable()) {
-      return
-    }
-    const container = element()?.querySelector<HTMLElement>('[data-code-source]')
-    search.open(
-      text ??
-        (container === null || container === undefined
-          ? undefined
-          : (readCodeText(container) ?? undefined)),
-    )
-  }
-  const handleCloseSearch = (): void => {
-    search.close()
-    element()
-      ?.querySelector<HTMLElement>(
-        '[role="textbox"][aria-multiline="true"], [data-line-number][tabindex="0"]',
-      )
-      ?.focus({preventScroll: true})
-  }
-  useViewerShortcuts({
-    onDismiss: () => {
-      if (search.visible()) {
-        handleCloseSearch()
-      } else {
-        viewer.dismissNotice()
-      }
-    },
-    onFind: handleFind,
-    onMove: viewer.move,
-    onSave: () => viewer.editing.save(),
+  const documents = useWorkspaceDocuments({
+    element,
     onSearch: () => setFocusRequest((previous) => previous + 1),
+    port,
+    viewer,
   })
-  onMount(() => {
-    window.addEventListener('focus', viewer.refresh)
-    onCleanup(() => window.removeEventListener('focus', viewer.refresh))
-  })
+  const navigation = {
+    ...viewer,
+    canBack: documents.canBack,
+    canForward: documents.canForward,
+    move: documents.moveFile,
+    refresh: documents.refreshFile,
+  }
   return (
     <MediaCacheContext.Provider value={mediaCache}>
       <ViewStateContext.Provider value={viewer.viewState}>
@@ -90,22 +58,22 @@ export const SViewerWorkspace = (props: SViewerWorkspaceProps) => {
           ref={setElement}
         >
           <SViewerToolbar
-            viewer={viewer}
-            onOpen={viewer.openLocation}
+            viewer={navigation}
+            onOpen={documents.openLocation}
             focusRequest={focusRequest()}
             treeVisible={tree.visible()}
             onToggleTree={tree.toggle}
             onSettings={() => setSettingsOpen(true)}
           />
-          <Show when={search.visible() && sourceAvailable()}>
+          <Show when={documents.visible() && documents.sourceAvailable()}>
             <SFindBar
-              query={search.query()}
-              count={search.matches().length}
-              active={search.active()}
-              focusRequest={search.focusRequest()}
-              onChange={search.change}
-              onMove={search.move}
-              onClose={handleCloseSearch}
+              query={documents.query()}
+              count={documents.matches().length}
+              active={documents.active()}
+              focusRequest={documents.focusRequest()}
+              onChange={documents.change}
+              onMove={documents.move}
+              onClose={documents.closeSearch}
             />
           </Show>
           <SResizablePanels
@@ -113,10 +81,13 @@ export const SViewerWorkspace = (props: SViewerWorkspaceProps) => {
             controls="workspace-files"
             sidebar={
               <SFileTree
+                documentPath={documents.deletedDocument()?.path}
+                sources={viewer.editing.sources()}
                 port={port}
                 session={viewer.workspaceSession() ?? undefined}
                 visible={tree.visible()}
-                onOpen={(location) => viewer.openLocation(location, {restoreView: true})}
+                onOpen={(location) => documents.openLocation(location, {restoreView: true})}
+                onDeleted={documents.openDeleted}
                 onError={viewer.reportError}
                 onShare={viewer.sharePath}
                 onCopy={viewer.copyPath}
@@ -130,15 +101,26 @@ export const SViewerWorkspace = (props: SViewerWorkspaceProps) => {
             <SViewerDocument
               port={port}
               viewer={viewer}
-              search={search}
-              onFind={handleFind}
+              deletedDocument={documents.deletedDocument()}
+              deletedPending={documents.deletedPending()}
+              deletedSource={documents.deletedSource()}
+              deletedSaving={documents.deletedSaving()}
+              deletedEditing={documents.deletedEditing()}
+              onToggleDeletedEditing={documents.toggleDeletedEditing}
+              onChangeDeleted={
+                documents.deletedEditable() ? documents.changeDeletedSource : undefined
+              }
+              onSaveDeleted={documents.deletedEditable() ? documents.saveDeleted : undefined}
+              onCloseDeleted={documents.closeDeleted}
+              search={documents}
+              onFind={documents.findText}
               previewLines={props.settings.previewLines()}
             />
           </SResizablePanels>
           <SContextAttachments port={port} onError={viewer.reportError} onNotice={viewer.notify} />
           <footer class="mt-auto flex shrink-0 items-center gap-3 border-t border-divider px-4 py-1">
-            <span class="min-w-0 flex-1 truncate text-sm text-muted" title={viewer.address()}>
-              {viewer.address()}
+            <span class="min-w-0 flex-1 truncate text-sm text-muted" title={documents.address()}>
+              {documents.address()}
             </span>
             <Show when={viewer.workspaceSession()}>
               {(session) => (

@@ -5,6 +5,7 @@ import {SIcon} from './SIcon'
 import type {useFileTree} from './use-file-tree'
 
 interface SFileTreeItemProps {
+  readonly onActivate: (event: MouseEvent) => void
   readonly onContextMenu: (event: MouseEvent) => void
   readonly onKeyboard: (event: KeyboardEvent) => void
   readonly spacingBefore?: number
@@ -20,6 +21,22 @@ export const SFileTreeItem = (props: SFileTreeItemProps) => {
     const node = props.tree.node(props.path)
     return node?.kind === 'directory' || node?.openable === true
   }
+  const change = () => {
+    const node = props.tree.node(props.path)
+    return node?.kind === 'file' ? node.change : undefined
+  }
+  const description = (): string | undefined => {
+    switch (change()) {
+      case 'added':
+        return t('추가된 파일')
+      case 'modified':
+        return t('수정된 파일')
+      case 'deleted':
+        return t('삭제된 파일 · 변경 사항 보기')
+      case undefined:
+        return undefined
+    }
+  }
   return (
     <>
       <div
@@ -29,6 +46,7 @@ export const SFileTreeItem = (props: SFileTreeItemProps) => {
       />
       <button
         aria-label={props.tree.node(props.path)?.name}
+        aria-description={description()}
         aria-disabled={!openable()}
         aria-expanded={
           props.tree.node(props.path)?.kind === 'directory'
@@ -53,10 +71,7 @@ export const SFileTreeItem = (props: SFileTreeItemProps) => {
             props.cutPath !== undefined &&
             (props.path === props.cutPath || props.path.startsWith(`${props.cutPath}/`)),
         }}
-        onClick={() => {
-          props.tree.focus(props.path)
-          props.tree.activate(props.path)
-        }}
+        onClick={(event) => props.onActivate(event)}
         onFocus={() => props.tree.focus(props.path)}
         onContextMenu={(event) => props.onContextMenu(event)}
         onKeyDown={(event) => props.onKeyboard(event)}
@@ -84,7 +99,17 @@ export const SFileTreeItem = (props: SFileTreeItemProps) => {
             <SIcon name="forward" />
           </span>
         </Show>
-        <span class="min-w-0 flex-1 truncate">{props.tree.node(props.path)?.name}</span>
+        <span
+          class="min-w-0 flex-1 truncate"
+          classList={{
+            'decoration-change-added': change() === 'added',
+            'decoration-change-deleted text-muted': change() === 'deleted',
+            'decoration-change-modified': change() === 'modified',
+            'underline decoration-2 underline-offset-4': change() !== undefined,
+          }}
+        >
+          {props.tree.node(props.path)?.name}
+        </span>
       </button>
     </>
   )

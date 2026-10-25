@@ -1,13 +1,23 @@
-import {mkdirSync, mkdtempSync, readdirSync, realpathSync, rmSync, writeFileSync} from 'node:fs'
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  realpathSync,
+  rmSync,
+  writeFileSync,
+} from 'node:fs'
 import {tmpdir} from 'node:os'
 import {join} from 'node:path'
+import {DatabaseSync} from 'node:sqlite'
 import {Client} from '@modelcontextprotocol/sdk/client/index.js'
 import {InMemoryTransport} from '@modelcontextprotocol/sdk/inMemory.js'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
-import {success, workspaceSessionSchema} from '../../shared/contracts'
+import {type Result, success, workspaceSessionSchema} from '../../shared/contracts'
 import {createServer} from '../create-server'
 import {createThreadWorkspaces} from '../create-thread-workspaces'
 import {createThreadTreeState} from '../create-thread-tree-state'
+import {readCodexWorkspace} from '../read-codex-workspace'
 
 const threadId = '01a119e7-be97-7020-930b-7049fb95be38'
 const other = '01a11020-8962-72f1-8735-2a87c41aba83'
@@ -15,11 +25,13 @@ let home: string
 let original: string
 let selected: string
 const connections: {client: Client; instance: ReturnType<typeof createServer>}[] = []
-const connect = async () => {
+const connect = async (
+  workspace: (metadata: unknown) => Result<string | undefined> = () => success(original),
+) => {
   const instance = createServer('<html>viewer</html>', {
     threadTreeState: createThreadTreeState(home),
     threadWorkspaces: createThreadWorkspaces(home),
-    workspace: () => success(original),
+    workspace,
   })
   const client = new Client({name: 'workspace-test', version: '1.0.0'})
   const [server, transport] = InMemoryTransport.createLinkedPair()
@@ -46,6 +58,53 @@ afterEach(async () => {
     }),
   )
   rmSync(home, {force: true, recursive: true})
+})
+it('should open the selected project then the started chat worktree', async () => {
+  writeFileSync(
+    join(home, '.codex-global-state.json'),
+    JSON.stringify({
+      'local-projects': {project: {rootPaths: [original]}},
+      'selected-project': {projectId: 'project', type: 'local'},
+    }),
+  )
+  const client = await connect((metadata) => readCodexWorkspace({home, metadata}))
+  const panel = workspaceSessionSchema.parse(
+    (await client.callTool({arguments: {}, name: 'code.panel'})).structuredContent,
+  )
+  expect(panel.workspace).toBe(original)
+  expect(
+    await client.callTool({
+      arguments: {path: 'notes.txt', session: panel.session},
+      name: 'code.read',
+    }),
+  ).toMatchObject({
+    structuredContent: {document: {source: 'original folder'}},
+  })
+  const database = new DatabaseSync(join(home, 'state_5.sqlite'))
+  database.exec('CREATE TABLE threads (id TEXT PRIMARY KEY, cwd TEXT)')
+  database.prepare('INSERT INTO threads VALUES (?, ?)').run(threadId, selected)
+  database.close()
+  const started = workspaceSessionSchema.parse(
+    (await client.callTool({_meta: {threadId}, arguments: {}, name: 'code.panel'}))
+      .structuredContent,
+  )
+  expect(started.workspace).toBe(selected)
+  expect(
+    await client.callTool({
+      arguments: {path: 'notes.txt', session: started.session},
+      name: 'code.read',
+    }),
+  ).toMatchObject({
+    structuredContent: {document: {source: 'selected folder'}},
+  })
+  expect(
+    await client.callTool({
+      _meta: {threadId},
+      arguments: {path: join(original, 'notes.txt'), session: started.session},
+      name: 'code.read',
+    }),
+  ).toMatchObject({isError: true, structuredContent: {code: 'outside-workspace'}})
+  expect(existsSync(join(home, 'code-viewer', 'workspaces'))).toBe(false)
 })
 it('should open files and repair a corrupted tree preference without changing the workspace', async () => {
   vi.spyOn(console, 'error').mockImplementation(vi.fn())

@@ -1,3 +1,4 @@
+import type {ChangePreview, FileBaseline, WorkspaceChanges} from '../shared/change-contracts'
 import type {CallToolResult} from '@modelcontextprotocol/sdk/types.js'
 import type {
   CodeLocation,
@@ -9,6 +10,30 @@ import type {
 } from '../shared/contracts'
 import type {DraftStorage} from './drafts/types'
 import type {TreeState} from '../shared/tree-state'
+
+export interface InlineChange extends ChangePreview {
+  readonly active: number
+  readonly source: string
+}
+
+export interface DeletedDocument {
+  readonly base: string | null
+  readonly path: string
+  readonly source: string | null
+}
+
+export interface ChangeRow {
+  readonly kind: 'context' | 'added' | 'deleted'
+  readonly previous: number | null
+  readonly current: number | null
+  readonly text: string
+}
+
+export interface SyntaxSpan {
+  readonly offset: number
+  readonly text: string
+  readonly classes: string
+}
 
 export interface CodeSelection extends CodeLocation {
   endLine: number
@@ -78,10 +103,14 @@ export interface ViewerSettingsEnvironment {
 }
 
 export interface ViewerPort {
+  readonly readChanges?: (session: string) => Promise<WorkspaceChanges>
+  readonly readBaseline?: (session: string, path: string) => Promise<FileBaseline>
   /** 현재 채팅의 파일트리 상태를 저장합니다. 미지원 호스트에서는 생략합니다. */
   readonly saveTreeState?: (session: string, patch: TreeState) => Promise<void>
   /** 현재 채팅의 작업 폴더를 저장하고 연결합니다. 미지원 호스트에서는 생략합니다. */
   readonly changeWorkspace?: (path: string) => Promise<WorkspaceSession>
+  /** 절대 경로를 호스트의 기본 뷰어로 엽니다. 미지원 통합에서는 생략합니다. */
+  readonly openFile?: (path: string) => Promise<void>
   readonly draftStorage?: DraftStorage
   copyContextFiles?(): Promise<void>
   attachContextFiles?(): Promise<void>

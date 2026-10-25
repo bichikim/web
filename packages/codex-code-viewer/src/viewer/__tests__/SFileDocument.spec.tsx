@@ -130,9 +130,11 @@ describe('SFileDocument', () => {
     expect(screen.getByRole('heading', {name: '수정한 문서'})).toBeTruthy()
     expect(editing!.dirty()).toBe(true)
     expect(screen.queryByRole('button', {name: '저장'})).toBeNull()
-    fireEvent.click(screen.getByRole('button', {name: '원문'}))
+    fireEvent.click(screen.getByRole('button', {name: '미리보기', pressed: true}))
     expect(screen.getByRole('textbox', {name: '예제 편집기'})).toHaveAttribute('readonly')
     expect(screen.getByRole('textbox', {name: '예제 편집기'})).toHaveValue('# 수정한 문서')
+    fireEvent.click(screen.getByRole('button', {name: '미리보기', pressed: false}))
+    expect(screen.getByRole('heading', {name: '수정한 문서'})).toBeTruthy()
   })
   it('should switch Markdown to original during search and keep it after search closes', () => {
     const [visible, setVisible] = createSignal(false)
@@ -146,8 +148,12 @@ describe('SFileDocument', () => {
       />
     ))
     expect(screen.getByRole('heading', {name: '문서'})).toBeTruthy()
+    expect(screen.getAllByRole('button', {name: '미리보기'})).toHaveLength(1)
+    expect(screen.getByRole('button', {name: '미리보기', pressed: true})).toBeTruthy()
+    expect(screen.queryByRole('button', {name: '원문'})).toBeNull()
     setVisible(true)
     expect(screen.getByLabelText('소스 코드').textContent).toContain('# 문서')
+    expect(screen.getByRole('button', {name: '미리보기', pressed: false})).toBeTruthy()
     setVisible(false)
     expect(screen.getByLabelText('소스 코드')).toBeTruthy()
     fireEvent.click(screen.getByRole('button', {name: '미리보기'}))
@@ -254,6 +260,7 @@ describe('SFileDocument', () => {
   it('should display SVG source literally and return to image preview', async () => {
     vi.stubGlobal('URL', {createObjectURL: vi.fn(() => 'blob:svg'), revokeObjectURL: vi.fn()})
     const source = '<svg><script>alert(1)</script></svg>'
+    const onPreview = vi.fn()
     const mediaPort: ViewerPort = {
       ...port,
       call: vi.fn().mockResolvedValue({
@@ -273,15 +280,44 @@ describe('SFileDocument', () => {
         port={mediaPort}
         session="session"
         onFollow={vi.fn()}
+        onPreview={onPreview}
       />
     ))
     expect(await screen.findByRole('img', {name: 'icon.svg'})).toBeTruthy()
-    fireEvent.click(screen.getByRole('button', {name: '원문'}))
+    fireEvent.click(screen.getByRole('button', {name: '미리보기', pressed: true}))
     const code = screen.getByLabelText('소스 코드')
     expect(code.textContent).toContain(source)
     expect(code.querySelector('svg, script')).toBeNull()
-    fireEvent.click(screen.getByRole('button', {name: '미리보기'}))
+    expect(onPreview).not.toHaveBeenCalled()
+    fireEvent.click(screen.getByRole('button', {name: '미리보기', pressed: false}))
     expect(await screen.findByRole('img', {name: 'icon.svg'})).toBeTruthy()
+    expect(onPreview).toHaveBeenCalledOnce()
+  })
+  it('should keep preview enabled when the SVG has no source representation', () => {
+    const mediaPort: ViewerPort = {
+      ...port,
+      call: vi.fn().mockRejectedValue(new Error('media unavailable')),
+    }
+    render(() => (
+      <SFileDocument
+        document={{
+          ...document,
+          location: {...document.location, path: 'large.svg'},
+          media: {kind: 'image', mimeType: 'image/svg+xml', size: 33 * 1024 * 1024},
+          readOnly: true,
+          source: '',
+        }}
+        port={mediaPort}
+        session="session"
+        onFollow={vi.fn()}
+      />
+    ))
+    const preview = screen.getByRole('button', {name: '미리보기', pressed: true})
+    expect(preview).toBeDisabled()
+    expect(preview).toHaveAttribute('title', '32 MiB 이하 SVG에서 원문을 볼 수 있습니다.')
+    fireEvent.click(preview)
+    expect(preview).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.queryByLabelText('소스 코드')).toBeNull()
   })
   it('should stop audio and release its URL when switching to a text document', async () => {
     vi.stubGlobal('URL', {createObjectURL: vi.fn(() => 'blob:audio'), revokeObjectURL: vi.fn()})

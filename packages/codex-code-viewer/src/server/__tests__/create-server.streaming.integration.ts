@@ -1,12 +1,17 @@
-import {mkdirSync, mkdtempSync, rmSync, writeFileSync} from 'node:fs'
+import {mkdirSync, mkdtempSync, rmSync, watch, writeFileSync} from 'node:fs'
 import {tmpdir} from 'node:os'
 import {join} from 'node:path'
 import {z} from 'zod'
 import {Client} from '@modelcontextprotocol/sdk/client/index.js'
 import {InMemoryTransport} from '@modelcontextprotocol/sdk/inMemory.js'
-import {afterEach, beforeEach, describe, expect, it} from 'vitest'
+import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 import {scanBatchSchema, sessionSchema} from '../../shared/contracts'
 import {createServer} from '../create-server'
+
+vi.mock('node:fs', async () => {
+  const actual = await vi.importActual<typeof import('node:fs')>('node:fs')
+  return {...actual, watch: vi.fn(actual.watch)}
+})
 
 describe('createServer streaming', () => {
   let client: Client
@@ -22,6 +27,9 @@ describe('createServer streaming', () => {
   afterEach(async () => {
     await client.close()
     await instance.dispose()
+    vi.mocked(watch).mockReset()
+    const actual = await vi.importActual<typeof import('node:fs')>('node:fs')
+    vi.mocked(watch).mockImplementation(actual.watch)
   })
   it('should deliver real workspace changes through the local event stream and reject closed sessions', async () => {
     const root = mkdtempSync(join(tmpdir(), 'viewer-live-tool-'))
@@ -95,6 +103,10 @@ describe('createServer streaming', () => {
     })
   })
   it('should accept completed directory versions through MCP and omit unchanged batches', async () => {
+    // Cache-version forwarding has no filesystem events; live watching is covered separately below.
+    vi.mocked(watch).mockImplementationOnce(() => {
+      throw new Error('Watching unavailable for this cache-version fixture')
+    })
     const root = mkdtempSync(join(tmpdir(), 'viewer-tree-versions-'))
     try {
       mkdirSync(join(root, '.git'))
@@ -104,7 +116,7 @@ describe('createServer streaming', () => {
           .structuredContent,
       )
       const endpoint = z.object({url: z.string()})
-      const first = endpoint.parse(
+      const stable = endpoint.parse(
         (
           await client.callTool({
             arguments: {directories: [''], session: opened.session, stream: true, transport: 'mcp'},
@@ -115,7 +127,7 @@ describe('createServer streaming', () => {
       const response = z
         .object({batch: scanBatchSchema, done: z.literal(false)})
         .parse(
-          (await client.callTool({arguments: {url: first.url}, name: 'code.stream.read'}))
+          (await client.callTool({arguments: {url: stable.url}, name: 'code.stream.read'}))
             .structuredContent,
         )
       expect(response.batch.version).toBeTypeOf('string')
@@ -138,6 +150,29 @@ describe('createServer streaming', () => {
         (await client.callTool({arguments: {url: next.url}, name: 'code.stream.read'}))
           .structuredContent,
       ).toEqual({done: true})
+      writeFileSync(join(root, 'created.ts'), 'export const created = true')
+      const changed = endpoint.parse(
+        (
+          await client.callTool({
+            arguments: {
+              directories: [''],
+              session: opened.session,
+              stream: true,
+              transport: 'mcp',
+              versions: {'': response.batch.version},
+            },
+            name: 'code.tree',
+          })
+        ).structuredContent,
+      )
+      const updated = z
+        .object({batch: scanBatchSchema, done: z.literal(false)})
+        .parse(
+          (await client.callTool({arguments: {url: changed.url}, name: 'code.stream.read'}))
+            .structuredContent,
+        )
+      expect(updated.batch.files).toContainEqual({openable: true, path: 'created.ts'})
+      expect(updated.batch.version).not.toBe(response.batch.version)
     } finally {
       rmSync(root, {force: true, recursive: true})
     }

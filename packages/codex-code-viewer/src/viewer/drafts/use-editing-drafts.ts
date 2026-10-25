@@ -86,7 +86,7 @@ export const useEditingDrafts = (options: EditingDraftsOptions) => {
       options.onError(`미저장 초안 보관에 실패했습니다. ${errorMessage(error)}`)
     }
   }
-  const accept = (value: ViewerSession): boolean => {
+  const restore = (value: ViewerSession): boolean => {
     const scope = JSON.stringify([value.session, value.workspace])
     let restoredCurrent = false
     if (!recovered.has(scope)) {
@@ -102,6 +102,10 @@ export const useEditingDrafts = (options: EditingDraftsOptions) => {
         options.onError(`미저장 초안 복구에 실패했습니다. ${errorMessage(error)}`)
       }
     }
+    return restoredCurrent
+  }
+  const accept = (value: ViewerSession): boolean => {
+    const restoredCurrent = restore(value)
     setDrafts((previous) => acceptDraft(previous, value))
     return restoredCurrent
   }
@@ -118,12 +122,15 @@ export const useEditingDrafts = (options: EditingDraftsOptions) => {
     accept,
     change: (value: ViewerSession, source: string) =>
       update(value, (previous) => editDraft(previous, value, source)),
+    changeDeleted: (value: ViewerSession, source: string) =>
+      update(value, (previous) => editDraft(deletedDraft(previous, value), value, source)),
     clear,
     discard: (value: ViewerSession) =>
       update(value, (previous) => omitDraft(previous, keyOf(value))),
     drafts,
     markDeleted: (value: ViewerSession) =>
       update(value, (previous) => deletedDraft(previous, value)),
+    restore,
     saved: (value: ViewerSession) =>
       update(value, (previous) => ({
         ...previous,
@@ -134,5 +141,7 @@ export const useEditingDrafts = (options: EditingDraftsOptions) => {
           source: previous[keyOf(value)]?.source ?? value.document.source,
         },
       })),
+    sourceFor: (value: ViewerSession): string =>
+      drafts()[keyOf(value)]?.source ?? value.document.source,
   }
 }
