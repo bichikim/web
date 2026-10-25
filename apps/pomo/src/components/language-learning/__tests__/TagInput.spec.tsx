@@ -169,6 +169,40 @@ it('should split pasted tags on a fullwidth semicolon', () => {
   expect(input).toHaveValue('')
 })
 
+it.each([
+  ['carriage return', 'home\rwork', ['home', 'work']],
+  ['CRLF', 'home\r\nwork', ['home', 'work']],
+  ['mixed carriage return and comma', 'home\rwork,third', ['home', 'work', 'third']],
+] as const)(
+  'should intercept %s paste before native input sanitization',
+  (_name, text, expected) => {
+    const {tags} = renderTagInput()
+    const input = screen.getByRole('textbox', {name: '프롬프트 단어'})
+    const paste = new Event('paste', {bubbles: true, cancelable: true})
+    Object.defineProperty(paste, 'clipboardData', {value: {getData: () => text}})
+
+    fireEvent(input, paste)
+
+    expect(paste.defaultPrevented).toBe(true)
+    expect(tags()).toEqual(expected)
+    expect(input).toHaveValue('')
+  },
+)
+
+it('should combine CR paste with pending phrases and deduplicate before the configured limit', () => {
+  const {tags} = renderTagInput(false, 3)
+  const input = screen.getByRole('textbox', {name: '프롬프트 단어'})
+  fireEvent.input(input, {target: {value: 'pending phrase'}})
+
+  fireEvent.paste(input, {
+    clipboardData: {getData: () => 'first\rFIRST\r\nsecond phrase，third;fourth\nfifth'},
+  })
+
+  expect(tags()).toEqual(['pending phrase', 'first', 'second phrase'])
+  expect(input).toHaveValue('')
+  expect(input).toBeDisabled()
+})
+
 it('should disable tag editing while generation is busy', () => {
   renderTagInput(true)
 
