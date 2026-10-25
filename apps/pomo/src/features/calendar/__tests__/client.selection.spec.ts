@@ -19,6 +19,26 @@ beforeEach(() => {
 
 it.each([
   {
+    end: '2026-09-03T15:00:00.000Z',
+    start: '2026-09-02T15:00:00.000Z',
+    text: '어제 뭐 했어요?',
+  },
+  {
+    end: '2026-09-04T15:00:00.000Z',
+    start: '2026-09-04T10:30:00.000Z',
+    text: '오늘 뭐 했어?',
+  },
+  {
+    end: '2026-11-30T15:00:00.000Z',
+    start: '2026-10-31T15:00:00.000Z',
+    text: '다다음달 일정 알려줘',
+  },
+  {
+    end: '2026-09-20T15:00:00.000Z',
+    start: '2026-09-18T15:00:00.000Z',
+    text: '다다음주말 일정 알려줘',
+  },
+  {
     end: '2026-09-05T15:00:00.000Z',
     start: '2026-09-05T03:00:00.000Z',
     text: '오전 말고 오후 내일 일정 알려줘',
@@ -44,3 +64,17 @@ it.each([
   const search = new URL(String(url), 'https://fixture.invalid').searchParams
   expect(Object.fromEntries(search)).toEqual({end, start, timeZone: 'Asia/Seoul'})
 })
+
+it.each(['오늘 뉴스 뭐 했어?', '어제 날씨 뭐 했어요?'])(
+  'should not request events for a non-calendar question in %s',
+  async (text) => {
+    await expect(
+      loadCalendarPromptContext({
+        now: new Date('2026-09-04T10:30:00.000Z'),
+        text,
+        timeZone: 'Asia/Seoul',
+      }),
+    ).resolves.toBeNull()
+    expect(apiJson).not.toHaveBeenCalled()
+  },
+)

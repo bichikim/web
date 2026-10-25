@@ -7,7 +7,7 @@ const DAYS_FROM_NEXT_MONDAY_TO_TWO_WEEKS_AGO =
   DAYS_FROM_NEXT_MONDAY_TO_PREVIOUS_WEEK + DAYS_PER_WEEK
 const DAYS_FROM_NEXT_MONDAY_TO_SATURDAY = 5
 
-export type CalendarWeekendIntent = 'next' | 'previous' | 'upcoming'
+export type CalendarWeekendIntent = 'after-next' | 'next' | 'previous' | 'upcoming'
 
 export const getFirstRequestedDateOffset = (relativeDayOffsets: ReadonlyArray<number>) =>
   relativeDayOffsets[0] ?? DAY_AFTER_TOMORROW_START_DAYS
@@ -54,6 +54,8 @@ const getWeekendStartOffset = ({
   weekday,
 }: GetWeekendStartOffsetOptions): number => {
   switch (intent) {
+    case 'after-next':
+      return daysUntilNextMonday + DAYS_FROM_NEXT_MONDAY_TO_SATURDAY + DAYS_PER_WEEK
     case 'next':
       return daysUntilNextMonday + DAYS_FROM_NEXT_MONDAY_TO_SATURDAY
     case 'previous': {

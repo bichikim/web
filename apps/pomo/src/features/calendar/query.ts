@@ -38,11 +38,14 @@ const createRelativeDayPattern = (phrase: string): RegExp =>
   )
 // 기존 지난 달 판별은 유지하되 지지난 달의 내부 구문은 구분한다.
 const PREVIOUS_MONTH_TERM = `(?:(?<!지)지난|${CALENDAR_WORD_START_PATTERN}저번) ?달`
+const NEXT_MONTH_TERM = '(?<!다)다음 ?달'
+const MONTH_AFTER_NEXT_TERM = `${CALENDAR_WORD_START_PATTERN}다다음 ?달`
 const TWO_MONTHS_AGO_TERM = `${CALENDAR_WORD_START_PATTERN}지지난 ?달`
 const createPeriodPattern = (termPattern: string): RegExp =>
   new RegExp(`${termPattern}${CALENDAR_PERIOD_BOUNDARY_PATTERN.source}`, 'u')
 const THIS_MONTH_PATTERN = createPeriodPattern('이번 ?달')
-const NEXT_MONTH_PATTERN = createPeriodPattern('다음 ?달')
+const NEXT_MONTH_PATTERN = createPeriodPattern(NEXT_MONTH_TERM)
+const MONTH_AFTER_NEXT_PATTERN = createPeriodPattern(MONTH_AFTER_NEXT_TERM)
 const PREVIOUS_MONTH_PATTERN = createPeriodPattern(PREVIOUS_MONTH_TERM)
 const TWO_MONTHS_AGO_PATTERN = createPeriodPattern(TWO_MONTHS_AGO_TERM)
 const NEXT_WEEK_TERM_PATTERN = '(?<!다)다음 ?주'
@@ -85,22 +88,30 @@ const TWO_WEEKS_AGO_EXCLUSION_PATTERN = createCalendarExclusionPattern(
 )
 const THIS_MONTH_EXCLUSION = createCalendarExclusionPattern(
   '이번 ?달',
-  `다음 ?달|${PREVIOUS_MONTH_TERM}|${TWO_MONTHS_AGO_TERM}`,
+  `${NEXT_MONTH_TERM}|${MONTH_AFTER_NEXT_TERM}|${PREVIOUS_MONTH_TERM}|${TWO_MONTHS_AGO_TERM}`,
 )
 const NEXT_MONTH_EXCLUSION = createCalendarExclusionPattern(
-  '다음 ?달',
-  `이번 ?달|${PREVIOUS_MONTH_TERM}|${TWO_MONTHS_AGO_TERM}`,
+  NEXT_MONTH_TERM,
+  `이번 ?달|${MONTH_AFTER_NEXT_TERM}|${PREVIOUS_MONTH_TERM}|${TWO_MONTHS_AGO_TERM}`,
 )
 const PREVIOUS_MONTH_EXCLUSION = createCalendarExclusionPattern(
   PREVIOUS_MONTH_TERM,
-  `이번 ?달|다음 ?달|${TWO_MONTHS_AGO_TERM}`,
+  `이번 ?달|${NEXT_MONTH_TERM}|${MONTH_AFTER_NEXT_TERM}|${TWO_MONTHS_AGO_TERM}`,
 )
 const TWO_MONTHS_AGO_EXCLUSION = createCalendarExclusionPattern(
   TWO_MONTHS_AGO_TERM,
-  `이번 ?달|다음 ?달|${PREVIOUS_MONTH_TERM}`,
+  `이번 ?달|${NEXT_MONTH_TERM}|${MONTH_AFTER_NEXT_TERM}|${PREVIOUS_MONTH_TERM}`,
+)
+const MONTH_AFTER_NEXT_EXCLUSION = createCalendarExclusionPattern(
+  MONTH_AFTER_NEXT_TERM,
+  `이번 ?달|${NEXT_MONTH_TERM}|${PREVIOUS_MONTH_TERM}|${TWO_MONTHS_AGO_TERM}`,
 )
 const NEXT_WEEKEND_PATTERN = /다음 ?주말/u
 const PREVIOUS_WEEKEND_PATTERN = /(?:지난|저번) ?주말/u
+const WEEKEND_AFTER_NEXT_PATTERN = createPeriodPattern(`${CALENDAR_WORD_START_PATTERN}다다음 ?주말`)
+const WEEKEND_AFTER_NEXT_EXCLUSION = createCalendarExclusionPattern(
+  `${WEEKEND_AFTER_NEXT_PATTERN.source}(?:은|에)?\\s*`,
+)
 const WEEKEND_EXCLUSION_PATTERN = createCalendarExclusionPattern('주말(?:은|에)?\\s*')
 const WEEKEND_PATTERN = /주말/u
 const DAY_BEFORE_YESTERDAY_PHRASE = '(?:엊그제|그저께|그제)'
@@ -120,7 +131,8 @@ const RELATIVE_DAY_PATTERN = new RegExp(
 const CALENDAR_OTHER_PERIOD_TERM_PATTERN = new RegExp(
   `(?:(?:${WEEK_AFTER_NEXT_TERM_PATTERN}|${PREVIOUS_WEEK_TERM_PATTERN}|` +
     `${TWO_WEEKS_AGO_TERM_PATTERN}|${CALENDAR_WORD_START_PATTERN}` +
-    `(?:이번 ?주|이번 ?달|다음 ?달|${PREVIOUS_MONTH_TERM}|${TWO_MONTHS_AGO_TERM}))${CALENDAR_PERIOD_BOUNDARY_PATTERN.source}|` +
+    `(?:이번 ?주|이번 ?달|${NEXT_MONTH_TERM}|${MONTH_AFTER_NEXT_TERM}|` +
+    `${PREVIOUS_MONTH_TERM}|${TWO_MONTHS_AGO_TERM}))${CALENDAR_PERIOD_BOUNDARY_PATTERN.source}|` +
     `${RELATIVE_DAY_PATTERN.source}|${CALENDAR_WORD_START_PATTERN}주말${CALENDAR_PERIOD_BOUNDARY_PATTERN.source})`,
   'u',
 )
@@ -154,12 +166,12 @@ const TWO_WEEKS_AGO_PATTERN = createPeriodPattern(TWO_WEEKS_AGO_TERM_PATTERN)
 const IMPLICIT_SCHEDULE_PATTERN = new RegExp(
   `(?:${RELATIVE_DAY_PATTERN.source}|${THIS_WEEK_PATTERN.source}|${NEXT_WEEK_PATTERN.source}|` +
     `${WEEK_AFTER_NEXT_PATTERN.source}|${PREVIOUS_WEEK_PATTERN.source}|${TWO_WEEKS_AGO_PATTERN.source}|` +
-    `${THIS_MONTH_PATTERN.source}|${NEXT_MONTH_PATTERN.source}|` +
+    `${THIS_MONTH_PATTERN.source}|${NEXT_MONTH_PATTERN.source}|${MONTH_AFTER_NEXT_PATTERN.source}|` +
     `${PREVIOUS_MONTH_PATTERN.source}|${TWO_MONTHS_AGO_PATTERN.source}|주말)` +
     `(?:\\s*(?:에는|에|엔|은|는|도))?` +
     `(?:\\s*(?:새벽|아침|오전|점심|오후|저녁|밤|낮|정오))?` +
     `(?:\\s*(?:에는|에|엔|은|는|도))?\\s*` +
-    `(?:뭐|무엇|무슨\\s+일)(?:가|이|은|는)?\\s*(?:있|하)`,
+    `(?:뭐|무엇|무슨\\s+일)(?:가|이|은|는)?\\s*(?:있|하|했)`,
   'u',
 )
 const MILLISECONDS_PER_DAY = 86_400_000
@@ -167,6 +179,7 @@ const DAY_BEFORE_YESTERDAY_START_DAYS = -2
 const THREE_DAYS_AHEAD_START_DAYS = 3
 const NEXT_EVENT_WINDOW_DAYS = 30
 const TWO_MONTHS_AGO_OFFSET = -2
+const MONTH_AFTER_NEXT_OFFSET = 2
 
 // 승인된 사용자 현지 시각 범위: 새벽 00–06, 아침 06–10, 점심 11–14, 낮 09–18, 저녁 18–21, 밤 21–24.
 // 아침·낮·점심의 자연스러운 겹침은 의도했습니다.
@@ -210,6 +223,10 @@ const includesRequestedNextWeek = (
 const isStandaloneDateRequest = (includesDate: boolean, includesThisWeek: boolean): boolean =>
   includesDate && !includesThisWeek
 const getCalendarWeekendIntent = (text: string): CalendarWeekendIntent | null => {
+  if (includesUnexcludedPhrase(text, WEEKEND_AFTER_NEXT_PATTERN, WEEKEND_AFTER_NEXT_EXCLUSION)) {
+    return 'after-next'
+  }
+
   if (!WEEKEND_PATTERN.test(text) || WEEKEND_EXCLUSION_PATTERN.test(text)) {
     return null
   }
@@ -263,6 +280,9 @@ const getCalendarQueryIntent = (text: string): CalendarQueryIntent => {
       ...(PREVIOUS_MONTH_PATTERN.test(text) && !PREVIOUS_MONTH_EXCLUSION.test(text) ? [-1] : []),
       ...(THIS_MONTH_PATTERN.test(text) && !THIS_MONTH_EXCLUSION.test(text) ? [0] : []),
       ...(NEXT_MONTH_PATTERN.test(text) && !NEXT_MONTH_EXCLUSION.test(text) ? [1] : []),
+      ...(includesUnexcludedPhrase(text, MONTH_AFTER_NEXT_PATTERN, MONTH_AFTER_NEXT_EXCLUSION)
+        ? [MONTH_AFTER_NEXT_OFFSET]
+        : []),
     ],
     relativeDayOffsets: [
       ...(includesUnexcludedPhrase(
