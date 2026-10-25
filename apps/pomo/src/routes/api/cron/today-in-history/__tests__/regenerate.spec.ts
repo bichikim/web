@@ -44,6 +44,31 @@ it.each([
     JSON.stringify({targetDate: '2026-08-26', titles: [' Same ', 'Same', 'Other']}),
     400,
   ],
+  [
+    'fewer than three titles',
+    JSON.stringify({targetDate: '2026-08-26', titles: ['First', 'Second']}),
+    400,
+  ],
+  [
+    'more than five titles',
+    JSON.stringify({targetDate: '2026-08-26', titles: ['A', 'B', 'C', 'D', 'E', 'F']}),
+    400,
+  ],
+  [
+    'a blank title after trimming',
+    JSON.stringify({targetDate: '2026-08-26', titles: ['First', ' \t ', 'Third']}),
+    400,
+  ],
+  [
+    'a title longer than fifty characters',
+    JSON.stringify({targetDate: '2026-08-26', titles: ['a'.repeat(51), 'Second', 'Third']}),
+    400,
+  ],
+  [
+    'a non-string title',
+    JSON.stringify({targetDate: '2026-08-26', titles: ['First', 2, 'Third']}),
+    400,
+  ],
   ['an oversized body', 'x'.repeat(16_385), 413],
 ])('should reject %s', async (_label, body, status) => {
   const response = await invokeApiRoute(POST, createRequest(body))
@@ -72,6 +97,27 @@ it('should submit a normalized regeneration request', async () => {
   expect(response.status).toBe(202)
   expect(generationMocks.startHistoryRegeneration).toHaveBeenCalledWith({
     requiredTitles: ['First', 'Second', 'Third'],
+    targetDate: {day: 26, isoDate: '2026-08-26', month: 8},
+  })
+})
+
+it('should accept the maximum trimmed title length at the regeneration boundary', async () => {
+  const title = 'a'.repeat(50)
+  generationMocks.startHistoryRegeneration.mockResolvedValue({
+    responseId: 'response-1',
+    status: 'submitted',
+  })
+
+  const response = await invokeApiRoute(
+    POST,
+    createRequest(
+      JSON.stringify({targetDate: '2026-08-26', titles: [` ${title} `, 'Second', 'Third']}),
+    ),
+  )
+
+  expect(response.status).toBe(202)
+  expect(generationMocks.startHistoryRegeneration).toHaveBeenCalledExactlyOnceWith({
+    requiredTitles: [title, 'Second', 'Third'],
     targetDate: {day: 26, isoDate: '2026-08-26', month: 8},
   })
 })

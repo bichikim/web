@@ -286,6 +286,39 @@ it('should publish selected required titles without replacing the date', async (
   expect(publishHistoryResponse).toHaveBeenCalledWith(expect.objectContaining({replaceDate: false}))
 })
 
+it.each([
+  [
+    [` ${'a'.repeat(50)} `, 'Same', 'Same'],
+    ['a'.repeat(50), 'Same', 'Same'],
+  ],
+  [
+    [' A ', 'B', 'C', 'D', ' E '],
+    ['A', 'B', 'C', 'D', 'E'],
+  ],
+])(
+  'should pass normalized metadata titles to output validation without request-only uniqueness',
+  async (titles, requiredTitles) => {
+    mockCompletedResponse({
+      ...COMPLETED_RESPONSE,
+      metadata: {...COMPLETED_RESPONSE.metadata, required_titles: JSON.stringify(titles)},
+    })
+
+    await handleOpenAiResponseEvent({
+      data: {id: 'resp-1'},
+      id: 'event-1',
+      type: 'response.completed',
+    })
+
+    expect(validateHistoryOutput).toHaveBeenCalledExactlyOnceWith(
+      expect.objectContaining({requiredTitles}),
+    )
+    expect(rejectHistoryResponse).not.toHaveBeenCalled()
+    expect(publishHistoryResponse).toHaveBeenCalledWith(
+      expect.objectContaining({replaceDate: false}),
+    )
+  },
+)
+
 it('should reject a response whose retrieved status is not completed', async () => {
   mockCompletedResponse({...COMPLETED_RESPONSE, status: 'incomplete'})
 
@@ -324,6 +357,11 @@ it.each([
 it.each([
   ['invalid JSON', 'not-json'],
   ['an invalid title list', JSON.stringify([])],
+  ['fewer than three titles', JSON.stringify(['First', 'Second'])],
+  ['more than five titles', JSON.stringify(['A', 'B', 'C', 'D', 'E', 'F'])],
+  ['a blank title after trimming', JSON.stringify(['First', ' \t ', 'Third'])],
+  ['a title longer than fifty characters', JSON.stringify(['a'.repeat(51), 'Second', 'Third'])],
+  ['a non-string title', JSON.stringify(['First', 2, 'Third'])],
 ] as const)('should reject required titles containing %s', async (_name, requiredTitles) => {
   mockCompletedResponse({
     ...COMPLETED_RESPONSE,
@@ -337,6 +375,7 @@ it.each([
   })
 
   expect(rejectHistoryResponse).toHaveBeenCalledOnce()
+  expect(validateHistoryOutput).not.toHaveBeenCalled()
   expect(publishHistoryResponse).not.toHaveBeenCalled()
 })
 
