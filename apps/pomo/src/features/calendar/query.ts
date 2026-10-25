@@ -5,7 +5,6 @@ import {
   includesRequestedMorning,
 } from './half-day-selection'
 import {
-  type CalendarWeekendIntent,
   createCalendarMonthRange,
   createCalendarPeriodRange,
   createCalendarWeekdayRange,
@@ -21,6 +20,7 @@ import {
   type RequestedWeekdayIntent,
   type WeekdayQueryPeriodContext,
 } from './weekday-expression'
+import {createWeekendSelection} from './weekend-selection'
 import {dayjs} from 'src/utils/zoned-dayjs'
 import type {CalendarEventQuery, CalendarEventRange} from './types'
 
@@ -110,14 +110,10 @@ const MONTH_AFTER_NEXT_EXCLUSION = createCalendarExclusionPattern(
   MONTH_AFTER_NEXT_TERM,
   `이번 ?달|${NEXT_MONTH_TERM}|${PREVIOUS_MONTH_TERM}|${TWO_MONTHS_AGO_TERM}`,
 )
-const NEXT_WEEKEND_PATTERN = /다음 ?주말/u
-const PREVIOUS_WEEKEND_PATTERN = /(?:지난|저번) ?주말/u
-const WEEKEND_AFTER_NEXT_PATTERN = createPeriodPattern(`${CALENDAR_WORD_START_PATTERN}다다음 ?주말`)
-const WEEKEND_AFTER_NEXT_EXCLUSION = createCalendarExclusionPattern(
-  `${WEEKEND_AFTER_NEXT_PATTERN.source}(?:은|에)?\\s*`,
+const getCalendarWeekendIntent = createWeekendSelection(
+  CALENDAR_WORD_START_PATTERN,
+  CALENDAR_PERIOD_BOUNDARY_PATTERN,
 )
-const WEEKEND_EXCLUSION_PATTERN = createCalendarExclusionPattern('주말(?:은|에)?\\s*')
-const WEEKEND_PATTERN = /주말/u
 const DAY_BEFORE_YESTERDAY_PHRASE = '(?:엊그제|그저께|그제)'
 const DAY_BEFORE_YESTERDAY_PATTERN = createRelativeDayPattern(DAY_BEFORE_YESTERDAY_PHRASE)
 const YESTERDAY_PATTERN = createRelativeDayPattern('어제')
@@ -227,21 +223,6 @@ const includesRequestedNextWeek = (
 
 const isStandaloneDateRequest = (includesDate: boolean, includesThisWeek: boolean): boolean =>
   includesDate && !includesThisWeek
-const getCalendarWeekendIntent = (text: string): CalendarWeekendIntent | null => {
-  if (includesUnexcludedPhrase(text, WEEKEND_AFTER_NEXT_PATTERN, WEEKEND_AFTER_NEXT_EXCLUSION)) {
-    return 'after-next'
-  }
-
-  if (!WEEKEND_PATTERN.test(text) || WEEKEND_EXCLUSION_PATTERN.test(text)) {
-    return null
-  }
-
-  if (PREVIOUS_WEEKEND_PATTERN.test(text)) {
-    return 'previous'
-  }
-
-  return NEXT_WEEKEND_PATTERN.test(text) ? 'next' : 'upcoming'
-}
 
 interface CreateCalendarQueryOptions {
   readonly now?: Date
