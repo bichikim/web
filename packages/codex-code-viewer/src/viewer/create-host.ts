@@ -90,7 +90,7 @@ export const createHost = (options: HostOptions = {}): ViewerPort => {
   const app = new App({name: 'Code Viewer', version: manifest.version}, {}, {autoResize: standard})
   const extensions = standard ? undefined : new OpenAIExtensions(app)
   // The base protocol carries custom methods, as in the OpenAI extensions adapter.
-  const protocol = app as unknown as Protocol<Request, Notification, Result>
+  const protocol = app as Protocol<Request, Notification, Result>
   const requests = createPendingTasks()
   let session: string | undefined
   const rememberSession = (result: {structuredContent?: Record<string, unknown>}): void => {

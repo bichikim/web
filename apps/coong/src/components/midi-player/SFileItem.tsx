@@ -171,7 +171,10 @@ export const SFileItem = (props: SFileItemProps) => {
         <DragButton.Aside
           position="left"
           component="span"
-          class=":uno: absolute flex left-0 top-0 w-[var(--solid-drag-x)] h-full overflow-hidden box-border"
+          componentProps={{
+            class:
+              ':uno: absolute flex left-0 top-0 w-[var(--solid-drag-x)] h-full overflow-hidden box-border',
+          }}
         >
           <span class="mr-1 bg-red rd-1 w-full h-full flex items-center p-1">
             <span class="block w-full h-full i-tabler:trash bg-white" />

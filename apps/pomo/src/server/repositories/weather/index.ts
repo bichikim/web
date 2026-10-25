@@ -208,7 +208,7 @@ export const saveWeather = async (
     })
 }
 
-export const getLatestWeather = async (location: string, database: Database) => {
+export const getLatestWeather = async (location: string, database: Pick<Database, 'select'>) => {
   const [record] = await database
     .select()
     .from(weather)

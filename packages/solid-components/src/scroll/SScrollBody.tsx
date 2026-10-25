@@ -16,7 +16,7 @@ export const SScrollBody = <T extends ValidComponent>(props: SScrollBodyProps<T>
   const {onScroll, setScrollBodyElement, value: ScrollValue} = useScrollContext()
   const scrollId = createMemo(() => ScrollValue().id)
 
-  const [innerProps, restProps] = splitProps(props, ['style', 'onScroll']) as unknown as [
+  const [innerProps, restProps] = splitProps(props, ['style', 'onScroll']) as [
     InnerProps,
     DynamicProps<T>,
   ]

@@ -1,6 +1,6 @@
 import {createMemo} from 'solid-js'
 import {getParameterIndex} from '../../player/parameter-index'
-import type {PuppetParameterValues} from '../../deformation'
+import {isParameterTuple, mapParameterTuple, type PuppetParameterValues} from '../../deformation'
 import type {PuppetParameterBinding} from '../../player/document'
 import type {EditorKeyformPanelProps} from './editor-keyform-panel-props'
 
@@ -13,12 +13,20 @@ export const createKeyformPanelModel = (props: EditorKeyformPanelProps) => {
       const parameter = parameterById().get(parameterId)
       return parameter === undefined ? [] : [parameter]
     })
-  const bindingValues = (binding: PuppetParameterBinding): PuppetParameterValues =>
-    binding.id === props.activeBindingId && props.values !== undefined
-      ? props.values
-      : (bindingParameters(binding).map(
-          (parameter) => props.parameterValueMap?.[parameter.id] ?? parameter.defaultValue,
-        ) as unknown as PuppetParameterValues)
+  const bindingValues = (binding: PuppetParameterBinding): PuppetParameterValues | undefined => {
+    const parameters = bindingParameters(binding)
+    if (!isParameterTuple(parameters) || parameters.length !== binding.parameterIds.length) {
+      return undefined
+    }
+    const values = binding.id === props.activeBindingId ? props.values : undefined
+    if (values !== undefined) {
+      return values.length === parameters.length ? values : undefined
+    }
+    return mapParameterTuple(
+      parameters,
+      (parameter) => props.parameterValueMap?.[parameter.id] ?? parameter.defaultValue,
+    )
+  }
 
   return {activeBinding, activePreview, bindingParameters, bindingValues}
 }

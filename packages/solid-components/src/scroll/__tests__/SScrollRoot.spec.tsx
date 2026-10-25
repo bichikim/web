@@ -19,7 +19,7 @@ describe('scroll components', () => {
         <SScrollBody component="div" data-testid="body" onScroll={[onScroll, 'caller']}>
           Content
         </SScrollBody>
-        <SScrollBar component="div" data-testid="bar">
+        <SScrollBar component="div" componentProps={{'aria-label': 'Scroll track', role: 'group'}}>
           <SScrollHandle component="button" onPointerDown={onPointerDown}>
             Handle
           </SScrollHandle>
@@ -53,7 +53,7 @@ describe('scroll components', () => {
     expect(onPointerDown).toHaveBeenCalledOnce()
     fireEvent.mouseUp(globalThis.window)
 
-    expect(view.getByTestId('bar').getAttribute('data-show')).toBe('true')
+    expect(view.getByRole('group', {name: 'Scroll track'}).getAttribute('data-show')).toBe('true')
     expect(view.getByRole('scrollbar').getAttribute('aria-valuenow')).toBe('150')
     expect(view.getByRole('scrollbar').getAttribute('style')).toContain('--var-size: 25px')
   })

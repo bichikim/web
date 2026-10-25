@@ -27,7 +27,10 @@ export const YOnlyScroll: Story = {
       <SScroll.Bar
         component="div"
         barType="vertical"
-        class="bg-green left-var top-0 right-0 w-0.5rem h-full absolute data-[show=false]:hidden"
+        componentProps={{
+          class:
+            'bg-green left-var top-0 right-0 w-0.5rem h-full absolute data-[show=false]:hidden',
+        }}
       >
         <SScroll.Handle
           component="div"
@@ -37,7 +40,9 @@ export const YOnlyScroll: Story = {
       <SScroll.Bar
         component="div"
         barType="horizontal"
-        class="bg-green left-0 bottom-0 w-full h-0.5rem absolute data-[show=false]:hidden"
+        componentProps={{
+          class: 'bg-green left-0 bottom-0 w-full h-0.5rem absolute data-[show=false]:hidden',
+        }}
       >
         <SScroll.Handle
           component="div"
@@ -63,10 +68,12 @@ export const XYScroll: Story = {
       </SScroll.Body>
       <SScroll.Bar
         component="div"
-        tabindex="0"
         barType="vertical"
-        class="bg-green top-0 right-0 w-1rem h-full absolute data-[show=false]:hidden"
-        style={{'background-color': 'rgb(calc(var(--var-percent) * 255), 100, 255)'}}
+        componentProps={{
+          class: 'bg-green top-0 right-0 w-1rem h-full absolute data-[show=false]:hidden',
+          style: {'background-color': 'rgb(calc(var(--var-percent) * 255), 100, 255)'},
+          tabindex: '0',
+        }}
       >
         <SScroll.Handle
           component="div"
@@ -85,8 +92,10 @@ export const XYScroll: Story = {
       <SScroll.Bar
         component="div"
         barType="horizontal"
-        class="bg-green left-0 bottom-0 w-full h-1rem absolute data-[show=false]:hidden"
-        style={{'background-color': 'rgb(calc(var(--var-percent) * 255), 255, 100)'}}
+        componentProps={{
+          class: 'bg-green left-0 bottom-0 w-full h-1rem absolute data-[show=false]:hidden',
+          style: {'background-color': 'rgb(calc(var(--var-percent) * 255), 255, 100)'},
+        }}
         thickness="0.5rem"
       >
         <SScroll.Handle

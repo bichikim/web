@@ -42,7 +42,7 @@ const hasCurrentWorldWeather = async (
   now: Date,
   database: WeatherTransaction,
 ): Promise<boolean> => {
-  const record = await getLatestWeather(locationId, database as unknown as Database)
+  const record = await getLatestWeather(locationId, database)
   return record !== undefined && record.collectedAt.getTime() >= getCurrentCutoff(now).getTime()
 }
 

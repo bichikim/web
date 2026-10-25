@@ -25,11 +25,11 @@ export const responsesAdapter: ApiAiAdapter = {
       }),
     ),
   submit: async (provider, body, attemptId) => {
-    const request = {
+    const request: ResponseCreateParamsNonStreaming = {
       ...body,
       background: true,
       store: true,
-    } as unknown as ResponseCreateParamsNonStreaming
+    }
     return normalizeResponse(
       await createClient(provider).responses.create(request, {
         headers: {'Idempotency-Key': attemptId},

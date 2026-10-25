@@ -28,11 +28,19 @@ describe('useStyles', () => {
       ])
       const style = useStyles(styles)
 
-      expect(style()).toBe('color: red;;display: block')
+      expect(style()).toBe('color: red;display: block')
 
       setStyles(['color: blue'])
 
       expect(style()).toBe('color: blue')
+      dispose()
+    })
+  })
+
+  it('should keep style entries separated without adding duplicate delimiters', () => {
+    createRoot((dispose) => {
+      const style = useStyles(() => ['color: red', undefined, {opacity: 0.5}, 'display: block'])
+      expect(style()).toBe('color: red;opacity: 0.5;display: block')
       dispose()
     })
   })

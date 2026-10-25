@@ -19,7 +19,7 @@ import type {SynthesisCommand, SynthesisReply, SynthesisRequest} from './protoco
 import {createModelCache} from './model-cache'
 import {createModelSessions} from './create-model-sessions'
 
-const scope = globalThis as unknown as DedicatedWorkerGlobalScope
+const scope = globalThis.self as DedicatedWorkerGlobalScope
 const cache = createModelCache()
 const modelSessions = createModelSessions()
 let loaded: {
