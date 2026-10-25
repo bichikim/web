@@ -1,10 +1,14 @@
 import {z} from 'zod'
 
-import {type SupertonicModelId, type SupertonicVoiceId} from '../supertonic/model'
+import {
+  SUPERTONIC_MODEL_IDS,
+  type SupertonicModelId,
+  type SupertonicVoiceId,
+} from '../supertonic/model'
 import {isSupertonicVoiceId} from '../supertonic/is-supertonic-voice-id'
 
 const supertonicVoiceIdSchema = z.custom<SupertonicVoiceId>(isSupertonicVoiceId)
-const modelIdSchema: z.ZodType<SupertonicModelId> = z.enum(['full', 'int8'])
+const modelIdSchema: z.ZodType<SupertonicModelId> = z.enum(SUPERTONIC_MODEL_IDS)
 
 const EXPIRATION_HOURS = 48
 const MINUTES_PER_HOUR = 60

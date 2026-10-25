@@ -2,7 +2,7 @@
 import {describe, expect, it} from 'vitest'
 
 import {dialogueEventBindingSchema, focusRoomDialogueSchema} from '../schema'
-import {SUPERTONIC_VOICES} from '../../supertonic/model'
+import {SUPERTONIC_MODELS, SUPERTONIC_VOICES} from '../../supertonic/model'
 
 const baseDialogue = {
   audioKey: 'audio-key',
@@ -17,6 +17,36 @@ const baseDialogue = {
 } as const
 
 describe('focusRoomDialogueSchema', () => {
+  it.each(SUPERTONIC_MODELS)('should preserve the registered $id model', ({id}) => {
+    const dialogue = focusRoomDialogueSchema.parse({
+      ...baseDialogue,
+      modelId: id,
+      segments: [{durationMs: 1000, index: 0, startMs: 0, text: '반가워!'}],
+    })
+
+    expect(dialogue.modelId).toBe(id)
+  })
+
+  it.each(['unknown', ' full ', null, undefined, 0])(
+    'should reject an unsupported model %s at its field',
+    (modelId) => {
+      const result = focusRoomDialogueSchema.safeParse({
+        ...baseDialogue,
+        modelId,
+        segments: [{durationMs: 1000, index: 0, startMs: 0, text: '반가워!'}],
+      })
+
+      expect(result.success).toBe(false)
+      expect(result.error?.issues).toEqual([
+        expect.objectContaining({
+          code: 'invalid_value',
+          path: ['modelId'],
+          values: ['full', 'int8'],
+        }),
+      ])
+    },
+  )
+
   it.each(SUPERTONIC_VOICES)('should preserve the registered $id voice', ({id}) => {
     expect(
       focusRoomDialogueSchema.parse({
