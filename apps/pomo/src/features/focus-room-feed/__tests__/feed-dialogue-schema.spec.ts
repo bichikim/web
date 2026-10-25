@@ -1,6 +1,6 @@
 /** @vitest-environment node */
 import {expect, it} from 'vitest'
-import {SUPERTONIC_VOICES} from '../../supertonic/model'
+import {SUPERTONIC_MODELS, SUPERTONIC_VOICES} from '../../supertonic/model'
 import {feedDialogueJobSchema} from '../feed-dialogue-schema'
 
 const job = {
@@ -19,6 +19,30 @@ const job = {
   updatedAt: '2026-10-11T00:00:00.000Z',
   version: 1,
 } as const
+
+it.each(SUPERTONIC_MODELS)('should preserve the registered $id job model', ({id}) => {
+  expect(feedDialogueJobSchema.parse({...job, modelId: id, voiceId: 'Yuna'})).toEqual({
+    ...job,
+    modelId: id,
+    voiceId: 'Yuna',
+  })
+})
+
+it.each(['unknown', ' full ', null, undefined, 0])(
+  'should reject an unsupported job model %s at its field',
+  (modelId) => {
+    const result = feedDialogueJobSchema.safeParse({...job, modelId, voiceId: 'Yuna'})
+
+    expect(result.success).toBe(false)
+    expect(result.error?.issues).toEqual([
+      expect.objectContaining({
+        code: 'invalid_value',
+        path: ['modelId'],
+        values: ['full', 'int8'],
+      }),
+    ])
+  },
+)
 
 it.each(SUPERTONIC_VOICES)('should preserve the registered $id job voice', ({id}) => {
   expect(feedDialogueJobSchema.parse({...job, voiceId: id})).toEqual({...job, voiceId: id})

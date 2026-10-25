@@ -1,5 +1,8 @@
 import {sumBy} from 'es-toolkit/math'
 
+/** Model identifiers accepted by selection and persisted speech records. */
+export const SUPERTONIC_MODEL_IDS = ['full', 'int8'] as const
+
 export interface SupertonicModelFile {
   readonly key: 'durationPredictor' | 'textEncoder' | 'vectorEstimator' | 'vocoder'
   readonly name: string
@@ -11,7 +14,7 @@ export interface SupertonicModel {
   readonly baseUrl: string
   readonly description: string
   readonly files: ReadonlyArray<SupertonicModelFile>
-  readonly id: 'full' | 'int8'
+  readonly id: (typeof SUPERTONIC_MODEL_IDS)[number]
   readonly label: string
   readonly preferredBackend: 'wasm' | 'webgpu'
   readonly size: number
