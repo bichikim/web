@@ -1,4 +1,5 @@
 import {createCalendarExclusionPattern} from './create-calendar-exclusion-pattern'
+import {createCalendarDateRange, includesRequestedMorning} from './half-day-selection'
 import {
   type CalendarWeekendIntent,
   createCalendarMonthRange,
@@ -35,13 +36,15 @@ const createRelativeDayPattern = (phrase: string): RegExp =>
       `${RELATIVE_DAY_SELECTION_PARTICLE_PATTERN}(?=$|[\\s,.!?…]))`,
     'u',
   )
-// 새 별칭만 단어 시작에서 받아 기존 '지난 달' 판별 계약은 유지한다.
-const PREVIOUS_MONTH_TERM = `(?:지난|${CALENDAR_WORD_START_PATTERN}저번) ?달`
+// 기존 지난 달 판별은 유지하되 지지난 달의 내부 구문은 구분한다.
+const PREVIOUS_MONTH_TERM = `(?:(?<!지)지난|${CALENDAR_WORD_START_PATTERN}저번) ?달`
+const TWO_MONTHS_AGO_TERM = `${CALENDAR_WORD_START_PATTERN}지지난 ?달`
 const createPeriodPattern = (termPattern: string): RegExp =>
   new RegExp(`${termPattern}${CALENDAR_PERIOD_BOUNDARY_PATTERN.source}`, 'u')
 const THIS_MONTH_PATTERN = createPeriodPattern('이번 ?달')
 const NEXT_MONTH_PATTERN = createPeriodPattern('다음 ?달')
 const PREVIOUS_MONTH_PATTERN = createPeriodPattern(PREVIOUS_MONTH_TERM)
+const TWO_MONTHS_AGO_PATTERN = createPeriodPattern(TWO_MONTHS_AGO_TERM)
 const NEXT_WEEK_TERM_PATTERN = '(?<!다)다음 ?주'
 const NEXT_WEEK_TERM_REGEXP = new RegExp(NEXT_WEEK_TERM_PATTERN, 'u')
 const {
@@ -82,15 +85,19 @@ const TWO_WEEKS_AGO_EXCLUSION_PATTERN = createCalendarExclusionPattern(
 )
 const THIS_MONTH_EXCLUSION = createCalendarExclusionPattern(
   '이번 ?달',
-  `다음 ?달|${PREVIOUS_MONTH_TERM}`,
+  `다음 ?달|${PREVIOUS_MONTH_TERM}|${TWO_MONTHS_AGO_TERM}`,
 )
 const NEXT_MONTH_EXCLUSION = createCalendarExclusionPattern(
   '다음 ?달',
-  `이번 ?달|${PREVIOUS_MONTH_TERM}`,
+  `이번 ?달|${PREVIOUS_MONTH_TERM}|${TWO_MONTHS_AGO_TERM}`,
 )
 const PREVIOUS_MONTH_EXCLUSION = createCalendarExclusionPattern(
   PREVIOUS_MONTH_TERM,
-  '이번 ?달|다음 ?달',
+  `이번 ?달|다음 ?달|${TWO_MONTHS_AGO_TERM}`,
+)
+const TWO_MONTHS_AGO_EXCLUSION = createCalendarExclusionPattern(
+  TWO_MONTHS_AGO_TERM,
+  `이번 ?달|다음 ?달|${PREVIOUS_MONTH_TERM}`,
 )
 const NEXT_WEEKEND_PATTERN = /다음 ?주말/u
 const PREVIOUS_WEEKEND_PATTERN = /(?:지난|저번) ?주말/u
@@ -113,7 +120,7 @@ const RELATIVE_DAY_PATTERN = new RegExp(
 const CALENDAR_OTHER_PERIOD_TERM_PATTERN = new RegExp(
   `(?:(?:${WEEK_AFTER_NEXT_TERM_PATTERN}|${PREVIOUS_WEEK_TERM_PATTERN}|` +
     `${TWO_WEEKS_AGO_TERM_PATTERN}|${CALENDAR_WORD_START_PATTERN}` +
-    `(?:이번 ?주|이번 ?달|다음 ?달|${PREVIOUS_MONTH_TERM}))${CALENDAR_PERIOD_BOUNDARY_PATTERN.source}|` +
+    `(?:이번 ?주|이번 ?달|다음 ?달|${PREVIOUS_MONTH_TERM}|${TWO_MONTHS_AGO_TERM}))${CALENDAR_PERIOD_BOUNDARY_PATTERN.source}|` +
     `${RELATIVE_DAY_PATTERN.source}|${CALENDAR_WORD_START_PATTERN}주말${CALENDAR_PERIOD_BOUNDARY_PATTERN.source})`,
   'u',
 )
@@ -148,7 +155,7 @@ const IMPLICIT_SCHEDULE_PATTERN = new RegExp(
   `(?:${RELATIVE_DAY_PATTERN.source}|${THIS_WEEK_PATTERN.source}|${NEXT_WEEK_PATTERN.source}|` +
     `${WEEK_AFTER_NEXT_PATTERN.source}|${PREVIOUS_WEEK_PATTERN.source}|${TWO_WEEKS_AGO_PATTERN.source}|` +
     `${THIS_MONTH_PATTERN.source}|${NEXT_MONTH_PATTERN.source}|` +
-    `${PREVIOUS_MONTH_PATTERN.source}|주말)` +
+    `${PREVIOUS_MONTH_PATTERN.source}|${TWO_MONTHS_AGO_PATTERN.source}|주말)` +
     `(?:\\s*(?:에는|에|엔|은|는|도))?` +
     `(?:\\s*(?:새벽|아침|오전|점심|오후|저녁|밤|낮|정오))?` +
     `(?:\\s*(?:에는|에|엔|은|는|도))?\\s*` +
@@ -159,6 +166,7 @@ const MILLISECONDS_PER_DAY = 86_400_000
 const DAY_BEFORE_YESTERDAY_START_DAYS = -2
 const THREE_DAYS_AHEAD_START_DAYS = 3
 const NEXT_EVENT_WINDOW_DAYS = 30
+const TWO_MONTHS_AGO_OFFSET = -2
 
 // 승인된 사용자 현지 시각 범위: 새벽 00–06, 아침 06–10, 점심 11–14, 낮 09–18, 저녁 18–21, 밤 21–24.
 // 아침·낮·점심의 자연스러운 겹침은 의도했습니다.
@@ -221,16 +229,6 @@ interface CreateCalendarQueryOptions {
 
 type CalendarQueryIntent = WeekdayQueryPeriodContext
 
-interface CreateCalendarDateRangeOptions {
-  readonly afternoonStart: Date
-  readonly daypartQuery: CalendarEventQuery | null
-  readonly end: Date
-  readonly morningEnd: Date
-  readonly now: Date
-  readonly start: Date
-  readonly text: string
-}
-
 interface CreateStandaloneCalendarDateRangeOptions {
   readonly boundary: (days: number, time?: string) => Date
   readonly includesNextWeek: boolean
@@ -259,6 +257,9 @@ const getCalendarQueryIntent = (text: string): CalendarQueryIntent => {
     includesWeekAfterNext:
       WEEK_AFTER_NEXT_PATTERN.test(text) && !WEEK_AFTER_NEXT_EXCLUSION_PATTERN.test(text),
     monthOffsets: [
+      ...(TWO_MONTHS_AGO_PATTERN.test(text) && !TWO_MONTHS_AGO_EXCLUSION.test(text)
+        ? [TWO_MONTHS_AGO_OFFSET]
+        : []),
       ...(PREVIOUS_MONTH_PATTERN.test(text) && !PREVIOUS_MONTH_EXCLUSION.test(text) ? [-1] : []),
       ...(THIS_MONTH_PATTERN.test(text) && !THIS_MONTH_EXCLUSION.test(text) ? [0] : []),
       ...(NEXT_MONTH_PATTERN.test(text) && !NEXT_MONTH_EXCLUSION.test(text) ? [1] : []),
@@ -326,34 +327,6 @@ const createCalendarDaypartQuery = ({
 
   const remainingStart = now.getTime() > start.getTime() ? now : start
   return remainingStart.getTime() >= end.getTime() ? {empty: true} : toRange(remainingStart, end)
-}
-
-const createCalendarDateRange = ({
-  afternoonStart,
-  daypartQuery,
-  end,
-  morningEnd,
-  now,
-  start,
-  text,
-}: CreateCalendarDateRangeOptions): CalendarEventQuery => {
-  if (text.includes('오전')) {
-    return toRange(start, morningEnd)
-  }
-
-  if (text.includes('오후')) {
-    const afternoonRangeStart =
-      now.getTime() < afternoonStart.getTime() || now.getTime() >= end.getTime()
-        ? afternoonStart
-        : now
-    return toRange(afternoonRangeStart, end)
-  }
-
-  if (daypartQuery !== null) {
-    return daypartQuery
-  }
-
-  return toRange(start, end)
 }
 
 const createStandaloneCalendarDateRange = ({
@@ -424,7 +397,7 @@ const createStandaloneCalendarDateRange = ({
     const hasPassedNoon = now.getTime() >= noon.getTime()
     const start = relativeDayOffsets.includes(-1)
       ? boundary(-1)
-      : text.includes('오전') && hasPassedNoon
+      : includesRequestedMorning(text) && hasPassedNoon
         ? boundary(0)
         : now
     const daypartQuery =
@@ -482,7 +455,7 @@ const createStandaloneCalendarWeekdayRange = ({
   const morningEnd = boundary(lastDayOffset, '12:00:00')
   const isPastSameDayMorning =
     firstDayOffset === 0 &&
-    text.includes('오전') &&
+    includesRequestedMorning(text) &&
     now.getTime() >= boundary(0, '12:00:00').getTime()
   const start = firstDayOffset === 0 && !isPastSameDayMorning ? now : boundary(firstDayOffset)
   const daypartQuery =
