@@ -166,6 +166,7 @@ export const PictureDiary = (props: PictureDiaryProps) => {
   const pagination = createMemo(() =>
     getViewPagination({compact: compact(), entries: entries(), view: view()}),
   )
+  const pendingDeletions = new Set<string>()
   let isDisposed = false
 
   onCleanup(() => {
@@ -251,6 +252,10 @@ export const PictureDiary = (props: PictureDiaryProps) => {
   }
 
   const handleDelete = async (entryId: string) => {
+    if (pendingDeletions.has(entryId)) {
+      return
+    }
+    pendingDeletions.add(entryId)
     try {
       await repository.delete(entryId)
       if (isDisposed) {
@@ -267,6 +272,8 @@ export const PictureDiary = (props: PictureDiaryProps) => {
         console.error('Failed to delete a picture diary entry.', error)
         setMessage(m.picture_diary_delete_failed())
       }
+    } finally {
+      pendingDeletions.delete(entryId)
     }
   }
 
