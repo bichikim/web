@@ -238,3 +238,59 @@ it.each([
     expected,
   )
 })
+
+describe('calendar queries for the month after next', () => {
+  const now = new Date('2026-09-04T10:30:00.000Z')
+  const timeZone = 'Asia/Seoul'
+  const expected = {end: '2026-11-30T15:00:00.000Z', start: '2026-10-31T15:00:00.000Z'}
+
+  it.each([
+    '다다음 달 일정 알려줘',
+    '다다음달 일정 알려줘',
+    '다다음달에는 뭐 있어?',
+    '다음달 말고 다다음달 일정 알려줘',
+    '다다음달 다음달 말고 일정 알려줘',
+    '이번 달 말고 다다음달 일정 알려줘',
+    '다음 주 수요일 말고 다다음달 일정 알려줘',
+  ])('should query two local months ahead in %s', (text) => {
+    expect(createCalendarQuery({now, text, timeZone})).toEqual(expected)
+  })
+
+  it('should select next month when the month after next is excluded', () => {
+    expect(createCalendarQuery({now, text: '다다음달 말고 다음달 일정 알려줘', timeZone})).toEqual({
+      end: '2026-10-31T15:00:00.000Z',
+      start: '2026-09-30T15:00:00.000Z',
+    })
+  })
+
+  it('should retain the bounded fallback for multiple future months', () => {
+    expect(createCalendarQuery({now, text: '다음달 다다음달 일정 알려줘', timeZone})).toEqual({
+      end: '2026-10-04T10:30:00.000Z',
+      start: now.toISOString(),
+    })
+  })
+
+  it.each(['초다다음달 뭐 있어?', '다다다음달 뭐 있어?', '다다음달력 뭐 있어?'])(
+    'should reject unsupported month substrings in %s',
+    (text) => {
+      expect(createCalendarQuery({now, text, timeZone})).toBeNull()
+    },
+  )
+
+  it.each([
+    {
+      expected: {end: '2027-01-31T15:00:00.000Z', start: '2026-12-31T15:00:00.000Z'},
+      now: '2026-11-15T12:00:00.000Z',
+      timeZone: 'Asia/Seoul',
+    },
+    {
+      expected: {end: '2026-04-01T04:00:00.000Z', start: '2026-03-01T05:00:00.000Z'},
+      now: '2026-01-15T12:00:00.000Z',
+      timeZone: 'America/New_York',
+    },
+  ])('should preserve calendar boundaries at $now in $timeZone', ({expected, now, timeZone}) => {
+    expect(
+      createCalendarQuery({now: new Date(now), text: '다다음달 일정 알려줘', timeZone}),
+    ).toEqual(expected)
+  })
+})
