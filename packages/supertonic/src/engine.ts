@@ -23,6 +23,11 @@ export interface SupertonicSessions {
   readonly vocoder: InferenceSession
 }
 
+/** Sessions used by the engine; its release() closes every supplied session. */
+export type SupertonicEngineSessions = {
+  readonly [Key in keyof SupertonicSessions]: Pick<SupertonicSessions[Key], 'release' | 'run'>
+}
+
 export interface SupertonicVoice {
   readonly durationStyle: Tensor
   readonly speechStyle: Tensor
@@ -145,12 +150,12 @@ export class SupertonicEngine {
   readonly #config: SupertonicConfig
   readonly #indexer: SupertonicIndexer
   readonly #runtime: SupertonicRuntime
-  readonly #sessions: SupertonicSessions
+  readonly #sessions: SupertonicEngineSessions
 
   constructor(
     config: SupertonicConfig,
     indexer: SupertonicIndexer,
-    sessions: SupertonicSessions,
+    sessions: SupertonicEngineSessions,
     runtime: SupertonicRuntime,
   ) {
     this.#config = config
