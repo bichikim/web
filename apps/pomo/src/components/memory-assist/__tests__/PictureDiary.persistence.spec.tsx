@@ -170,6 +170,57 @@ it('should restore and delete a saved picture diary entry', async () => {
   )
 })
 
+it('should clear the deletion failure after a successful retry without discarding the draft', async () => {
+  vi.spyOn(console, 'error').mockImplementation(() => undefined)
+  const entry = {
+    createdAt: '2026-09-04T03:00:00.000Z',
+    date: '2026-09-04',
+    id: 'entry-1',
+    strokes: [],
+    text: '삭제 재시도 대상',
+    updatedAt: '2026-09-04T03:00:00.000Z',
+    version: 1,
+  } satisfies PictureDiaryEntry
+  const repository = createRepository([entry])
+  const failed = Promise.withResolvers<void>()
+  const retried = Promise.withResolvers<void>()
+  repository.delete.mockReturnValueOnce(failed.promise).mockReturnValueOnce(retried.promise)
+  render(() => (
+    <PictureDiary
+      environment={environment}
+      turnEnvironment={turns.environment}
+      repository={repository}
+    />
+  ))
+
+  await waitFor(() =>
+    expect(screen.getByLabelText('그림일기 내용').closest('section')).toHaveAttribute(
+      'data-picture-diary-page',
+      'previous',
+    ),
+  )
+  fireEvent.input(screen.getByLabelText('그림일기 내용'), {target: {value: '보존할 초안'}})
+  fireEvent.click(screen.getAllByRole('button', {name: '이전 일기 보기'})[0]!)
+  await finishPageTurn()
+  const deleteButton = screen.getByRole('button', {name: '2026. 09. 04. 일기 삭제'})
+  fireEvent.click(deleteButton)
+  expect(repository.delete).not.toHaveBeenCalled()
+  fireEvent.click(deleteButton)
+  failed.reject(new Error('delete failed'))
+  expect(await screen.findByRole('status')).toHaveTextContent('일기를 삭제하지 못했어요.')
+  expect(within(getSpread()).getByText(entry.text)).toBeInTheDocument()
+
+  fireEvent.click(deleteButton)
+  expect(repository.delete).toHaveBeenCalledTimes(1)
+  fireEvent.click(deleteButton)
+  expect(repository.delete).toHaveBeenNthCalledWith(2, entry.id)
+  retried.resolve()
+  await waitFor(() => expect(screen.getByLabelText('그림일기 내용')).toHaveValue('보존할 초안'))
+  expect(within(getSpread()).queryByText(entry.text)).not.toBeInTheDocument()
+  expect(screen.queryByRole('status')).not.toBeInTheDocument()
+  expect(repository.save).not.toHaveBeenCalled()
+})
+
 it('should prevent duplicate saves and preserve changes made during a pending save', async () => {
   const pending = Promise.withResolvers<void>()
   const repository = createRepository()

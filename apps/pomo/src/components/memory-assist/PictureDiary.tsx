@@ -261,6 +261,7 @@ export const PictureDiary = (props: PictureDiaryProps) => {
       if (currentView.kind === 'entry' && currentView.id === entryId) {
         setView({kind: 'writing'})
       }
+      setMessage((current) => (current === m.picture_diary_delete_failed() ? null : current))
     } catch (error: unknown) {
       if (!isDisposed) {
         console.error('Failed to delete a picture diary entry.', error)
