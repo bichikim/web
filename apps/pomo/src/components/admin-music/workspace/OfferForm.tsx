@@ -1,7 +1,7 @@
 import {PInput} from 'src/components/p-input/PInput'
 import {cx} from 'class-variance-authority'
 import {BUTTON_CLASSES} from '../button-classes'
-import {type AlbumTaskFormProps} from './form-props'
+import {type AlbumTaskFormProps} from './types'
 
 const FIELD_CLASSES = cx(
   'h-11 w-full rounded-3 border border-white/15 bg-white/5 px-3 text-sm text-white outline-none',
