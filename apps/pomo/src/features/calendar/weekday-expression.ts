@@ -183,13 +183,15 @@ interface WeekdayResolverOptions {
   /** 다른 단어 내부의 기간 접두어를 제외한다. */
   readonly calendarWordStartPattern: string
   /** 기간 뒤의 요일 구문과 경쟁 기간을 해석한다. */
-  readonly getRequestedWeekdays: (options: RequestedWeekdayOptions) => RequestedWeekdayIntent
+  readonly getRequestedWeekdays: (options: RequestedWeekdayOptions) => RequestedWeekdaySelection
   /** 기간 접두어가 없는 요일 구문을 해석한다. */
-  readonly getWeekdayIntent: (text: string) => WeekdayIntent
+  readonly getWeekdayIntent: (text: string) => WeekdaySelection
   /** 이번 주 접두어와 기존 허용 조사를 판별한다. */
   readonly thisWeekPattern: RegExp
   /** 요일 직후의 제외 문맥을 판별한다. */
   readonly weekdayExclusionPattern: RegExp
+  /** 시간 표현 뒤의 제외 문맥을 이번 주 선택에 반영한다. */
+  readonly weekdayTimeExclusionPattern: RegExp
 }
 
 const createStandaloneWeekdayIntentResolver = ({
@@ -202,8 +204,13 @@ const createStandaloneWeekdayIntentResolver = ({
   getWeekdayIntent,
   thisWeekPattern,
   weekdayExclusionPattern,
+  weekdayTimeExclusionPattern,
 }: WeekdayResolverOptions) => {
-  const hasMultipleWeekdays = (text: string, thisWeek = false) =>
+  const hasMultipleWeekdays = (
+    text: string,
+    thisWeek = false,
+    exclusionPattern = weekdayExclusionPattern,
+  ) =>
     hasMultipleWeekdayExpressions({
       calendarIntentPattern,
       calendarPeriodBoundaryPattern,
@@ -212,7 +219,7 @@ const createStandaloneWeekdayIntentResolver = ({
       calendarWordStartPattern,
       periodPattern: thisWeek ? thisWeekPattern : undefined,
       text,
-      weekdayExclusionPattern: thisWeek ? weekdayExclusionPattern : undefined,
+      weekdayExclusionPattern: thisWeek ? exclusionPattern : undefined,
     })
   return (
     text: string,
@@ -221,10 +228,16 @@ const createStandaloneWeekdayIntentResolver = ({
     const requested = getRequestedWeekdays({periodPattern: thisWeekPattern, text})
     if (
       requested.offsets.length === 1 &&
-      !hasMultipleWeekdays(text, true) &&
+      !hasMultipleWeekdays(
+        text,
+        true,
+        requested.hasExcludedWeekday && requested.hasPositiveReplacement
+          ? weekdayTimeExclusionPattern
+          : weekdayExclusionPattern,
+      ) &&
       !hasOtherCalendarPeriod({...periodContext, includesThisWeek: false})
     ) {
-      return {...requested, thisWeek: true}
+      return {...toWeekdayIntent(requested), thisWeek: true}
     }
     const weekdayIntent = getWeekdayIntent(text)
     if (
@@ -238,17 +251,22 @@ const createStandaloneWeekdayIntentResolver = ({
       return null
     }
 
-    return {...weekdayIntent, thisWeek: false}
+    return {...toWeekdayIntent(weekdayIntent), thisWeek: false}
   }
 }
 
 const parseWeekdayRequest = (
   {otherPeriodPattern, periodPattern, text}: RequestedWeekdayOptions,
-  getWeekdayIntent: (text: string) => WeekdayIntent,
-): RequestedWeekdayIntent => {
+  getWeekdayIntent: (text: string) => WeekdaySelection,
+): RequestedWeekdaySelection => {
   const periodMatch = periodPattern.exec(text)
   if (periodMatch === null) {
-    return {hasExcludedWeekday: false, hasOtherPeriod: false, offsets: []}
+    return {
+      hasExcludedWeekday: false,
+      hasOtherPeriod: false,
+      hasPositiveReplacement: false,
+      offsets: [],
+    }
   }
 
   const followingText = text.slice(periodMatch.index + periodMatch[0].length)
@@ -262,7 +280,7 @@ const parseWeekdayRequest = (
 
 interface WeekMatcherOptions {
   /** 접두어를 제외한 요일 선택을 해석한다. */
-  readonly getWeekdayIntent: (text: string) => WeekdayIntent
+  readonly getWeekdayIntent: (text: string) => WeekdaySelection
   /** 이번 주 접두어와 기존 허용 조사를 판별한다. */
   readonly periodPattern: RegExp
 }
@@ -285,24 +303,81 @@ const createWeekMatcher = ({getWeekdayIntent, periodPattern}: WeekMatcherOptions
   }
 }
 
+const WEEKDAY_CLOCK_EXCLUSION_CONTEXT_PATTERN = new RegExp(
+  `^\\s*(?:${WEEKDAY_PARTICLE_PATTERN.source}\\s*)?(?:[01]?\\d|2[0-3])(?:시|:[0-5]\\d)` +
+    `\\s*(?:${WEEKDAY_PARTICLE_PATTERN.source}\\s*)?` +
+    `(?:일정(?:은|는)?\\s*)?${WEEKDAY_EXCLUSION_PATTERN.source}`,
+  'u',
+)
+
 interface WeekdaySelectionContext {
   readonly excluded: boolean
+  readonly excludedAsReplacement: boolean
+  readonly excludedAfterClock: boolean
   readonly excludedAfterDaypart: boolean
   readonly offset: number | undefined
 }
 
+interface WeekdaySelection extends WeekdayIntent {
+  readonly hasPositiveReplacement: boolean
+}
+
+interface RequestedWeekdaySelection extends RequestedWeekdayIntent {
+  readonly hasPositiveReplacement: boolean
+}
+
+const toWeekdayIntent = ({hasExcludedWeekday, offsets}: WeekdayIntent): WeekdayIntent => ({
+  hasExcludedWeekday,
+  offsets,
+})
+
+const toRequestedWeekdayIntent = (
+  selection: RequestedWeekdaySelection,
+): RequestedWeekdayIntent => ({
+  ...toWeekdayIntent(selection),
+  hasOtherPeriod: selection.hasOtherPeriod,
+})
+
+const createWeekdayTimeExclusionPattern = (direct: RegExp, daypart: RegExp): RegExp =>
+  new RegExp(
+    `${direct.source}|${daypart.source}|${WEEKDAY_CLOCK_EXCLUSION_CONTEXT_PATTERN.source}`,
+    'u',
+  )
+
 const resolveWeekdaySelection = (
   contexts: ReadonlyArray<WeekdaySelectionContext>,
-): WeekdayIntent => {
+): WeekdaySelection => {
+  const positiveClockReplacements = new Set(
+    contexts.flatMap(
+      ({excluded, excludedAfterClock, excludedAfterDaypart, excludedAsReplacement, offset}) =>
+        !excluded &&
+        !excludedAfterClock &&
+        !excludedAfterDaypart &&
+        !excludedAsReplacement &&
+        offset !== undefined
+          ? [offset]
+          : [],
+    ),
+  )
+  const selectedContexts = contexts.map((context) => ({
+    ...context,
+    excluded:
+      context.excluded ||
+      (context.excludedAfterClock &&
+        context.offset !== undefined &&
+        (positiveClockReplacements.size > 1 ||
+          (positiveClockReplacements.size === 1 &&
+            !positiveClockReplacements.has(context.offset)))),
+  }))
   const weekdayOffsets = new Set<number>()
   let hasExcludedWeekday = false
   const positiveOffsets = new Set(
-    contexts.flatMap(({excluded, excludedAfterDaypart, offset}) =>
+    selectedContexts.flatMap(({excluded, excludedAfterDaypart, offset}) =>
       !excluded && !excludedAfterDaypart && offset !== undefined ? [offset] : [],
     ),
   )
 
-  for (const {excluded, excludedAfterDaypart, offset} of contexts) {
+  for (const {excluded, excludedAfterDaypart, offset} of selectedContexts) {
     const hasDistinctReplacement =
       offset !== undefined &&
       (positiveOffsets.size > 1 || (positiveOffsets.size === 1 && !positiveOffsets.has(offset)))
@@ -312,7 +387,11 @@ const resolveWeekdaySelection = (
       weekdayOffsets.add(offset)
     }
   }
-  return {hasExcludedWeekday, offsets: Array.from(weekdayOffsets)}
+  return {
+    hasExcludedWeekday,
+    hasPositiveReplacement: positiveClockReplacements.size > 0,
+    offsets: Array.from(weekdayOffsets),
+  }
 }
 
 export const createCalendarWeekdayParser = ({
@@ -421,7 +500,7 @@ export const createCalendarWeekdayParser = ({
     }
   }
 
-  const getWeekdayIntent = (text: string): WeekdayIntent => {
+  const getWeekdayIntent = (text: string): WeekdaySelection => {
     const weekdayDateExpression = getWeekdayDateExpression(text)
     const contexts = weekdayDateExpression.matches.map((match, index) => {
       const nextWeekdayMatch = weekdayDateExpression.matches[index + 1]
@@ -429,9 +508,12 @@ export const createCalendarWeekdayParser = ({
         match.end,
         nextWeekdayMatch?.start ?? weekdayDateExpression.contextEnd,
       )
+      const replacementContext = text.slice(match.end, nextWeekdayMatch?.start)
       return {
         excluded: weekdayExclusionContextPattern.test(context),
+        excludedAfterClock: WEEKDAY_CLOCK_EXCLUSION_CONTEXT_PATTERN.test(context),
         excludedAfterDaypart: weekdayDaypartExclusionContextPattern.test(context),
+        excludedAsReplacement: WEEKDAY_EXCLUSION_PATTERN.test(replacementContext),
         offset: weekdayOffsetFromMonday.get(match.weekday ?? ''),
       }
     })
@@ -457,12 +539,17 @@ export const createCalendarWeekdayParser = ({
     getWeekdayIntent,
     thisWeekPattern,
     weekdayExclusionPattern: weekdayExclusionContextPattern,
+    weekdayTimeExclusionPattern: createWeekdayTimeExclusionPattern(
+      weekdayExclusionContextPattern,
+      weekdayDaypartExclusionContextPattern,
+    ),
   })
 
   return {
-    getRequestedWeekdays,
+    getRequestedWeekdays: (options: RequestedWeekdayOptions) =>
+      toRequestedWeekdayIntent(getRequestedWeekdays(options)),
     getStandaloneWeekdayIntent,
-    getWeekdayIntent,
+    getWeekdayIntent: (text: string) => toWeekdayIntent(getWeekdayIntent(text)),
     isWeekSchedule,
     weekdayExclusionPattern: WEEKDAY_EXCLUSION_PATTERN,
     weekdayPatternSource: WEEKDAY_PATTERN_SOURCE,
