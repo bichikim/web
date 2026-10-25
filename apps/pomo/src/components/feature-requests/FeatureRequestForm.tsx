@@ -1,4 +1,4 @@
-import {createSignal, type JSX, onMount} from 'solid-js'
+import {createSignal, type JSX, onCleanup, onMount} from 'solid-js'
 import * as m from '@paraglide/message'
 import {withPromiseFallback} from 'src/utils/with-promise-fallback'
 
@@ -60,6 +60,11 @@ export const FeatureRequestForm = (props: FeatureRequestFormProps) => {
   const [description, setDescription] = createSignal('')
   const [formMessage, setFormMessage] = createSignal<FeatureRequestFormMessage | null>(null)
   const isCheckingAuthentication = () => props.authentication.state().kind === 'checking'
+  let isDisposed = false
+
+  onCleanup(() => {
+    isDisposed = true
+  })
 
   const handleTitleChange = (nextTitle: string) => {
     setTitle(nextTitle)
@@ -88,7 +93,8 @@ export const FeatureRequestForm = (props: FeatureRequestFormProps) => {
     }
 
     setFormMessage(null)
-    const validation = validateFeatureRequestInput(title(), description())
+    const submittedDraft = {description: description(), title: title()}
+    const validation = validateFeatureRequestInput(submittedDraft.title, submittedDraft.description)
 
     if (validation.status === 'invalid') {
       setFormMessage('invalid')
@@ -102,9 +108,21 @@ export const FeatureRequestForm = (props: FeatureRequestFormProps) => {
 
     const result = await props.model.createRequest(validation.input)
 
+    if (result.status === 'created') {
+      const currentDraft = readFeatureRequestDraft()
+      if (
+        currentDraft?.title === submittedDraft.title &&
+        currentDraft.description === submittedDraft.description
+      ) {
+        deleteFeatureRequestDraft()
+      }
+    }
+    if (isDisposed) {
+      return
+    }
+
     switch (result.status) {
       case 'created':
-        deleteFeatureRequestDraft()
         setTitle('')
         setDescription('')
         setFormMessage('created')
