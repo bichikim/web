@@ -12,6 +12,32 @@ export const includesRequestedMorning = (text: string): boolean =>
     MORNING_EXCLUSION_PATTERN.test(text)
   )
 
+/** Prepares omission of excluded time phrases followed by an explicit unexcluded replacement. */
+export const createDaypartOmission = (daypartNames: readonly string[], boundary: RegExp) => {
+  const names = ['오전', '오후', ...daypartNames]
+  const patterns = names.map((name) => {
+    const otherNames = names.filter((other) => other !== name).join('|')
+    const excluded = createCalendarExclusionPattern(`(?:${otherNames})\\s*`)
+    return {
+      excludedReplacement: createCalendarExclusionPattern(`${name}\\s*`, otherNames),
+      name,
+      omitted: new RegExp(
+        `(?<![\\p{L}\\p{N}_])(?:${excluded.source}\\s*)+(?=${name}${boundary.source})`,
+        'gu',
+      ),
+    }
+  })
+
+  return (text: string): string =>
+    patterns.reduce(
+      (current, {excludedReplacement, name, omitted}) =>
+        !current.includes(name) || excludedReplacement.test(current)
+          ? current
+          : current.replace(omitted, ''),
+      text,
+    )
+}
+
 interface CreateCalendarDateRangeOptions {
   readonly afternoonStart: Date
   readonly daypartQuery: CalendarEventQuery | null

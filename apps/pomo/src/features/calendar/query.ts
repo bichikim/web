@@ -1,5 +1,9 @@
 import {createCalendarExclusionPattern} from './create-calendar-exclusion-pattern'
-import {createCalendarDateRange, includesRequestedMorning} from './half-day-selection'
+import {
+  createCalendarDateRange,
+  createDaypartOmission,
+  includesRequestedMorning,
+} from './half-day-selection'
 import {
   type CalendarWeekendIntent,
   createCalendarMonthRange,
@@ -195,6 +199,7 @@ const CALENDAR_DAYPART_WINDOWS = [
   {end: '00:00:00', endDayOffset: 1, name: '밤', start: '21:00:00'},
 ] as const
 const CALENDAR_DAYPART_NAMES = ['정오', ...CALENDAR_DAYPART_WINDOWS.map(({name}) => name)]
+const omitDaypart = createDaypartOmission(CALENDAR_DAYPART_NAMES, CALENDAR_PERIOD_BOUNDARY_PATTERN)
 
 const includesUnexcludedCalendarDaypart = (text: string, name: string) =>
   text.includes(name) &&
@@ -505,6 +510,7 @@ export const createCalendarQuery = (
     return null
   }
 
+  const text = omitDaypart(options.text)
   const now = options.now ?? new Date()
   const timeZone = options.timeZone ?? Intl.DateTimeFormat().resolvedOptions().timeZone
   const local = dayjs(now).tz(timeZone)
@@ -523,11 +529,11 @@ export const createCalendarQuery = (
       weekdays,
     })
 
-  if (isImplicitWeekdaySchedule(options.text)) {
-    return createWeekdayRange(options.text, getWeekdayIntent(options.text).offsets)
+  if (isImplicitWeekdaySchedule(text)) {
+    return createWeekdayRange(text, getWeekdayIntent(text).offsets)
   }
 
-  const queryIntent = getCalendarQueryIntent(options.text)
+  const queryIntent = getCalendarQueryIntent(text)
   const {
     includesNextWeek,
     includesPreviousWeek,
@@ -539,9 +545,9 @@ export const createCalendarQuery = (
     requestedWeekdayOffsets,
     weekendIntent,
   } = queryIntent
-  const weekdayIntent = getStandaloneWeekdayIntent(options.text, queryIntent)
+  const weekdayIntent = getStandaloneWeekdayIntent(text, queryIntent)
   if (weekdayIntent !== null) {
-    return createWeekdayRange(options.text, weekdayIntent.offsets, weekdayIntent.thisWeek)
+    return createWeekdayRange(text, weekdayIntent.offsets, weekdayIntent.thisWeek)
   }
   const standaloneDateRange = createStandaloneCalendarDateRange({
     boundary,
@@ -552,7 +558,7 @@ export const createCalendarQuery = (
     includesWeekAfterNext,
     now,
     relativeDayOffsets,
-    text: options.text,
+    text: text,
   })
   const weekday = local.day()
   const daysUntilNextMonday = weekday === 0 ? 1 : DAYS_PER_WEEK + 1 - weekday

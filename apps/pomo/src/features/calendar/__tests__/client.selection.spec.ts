@@ -19,6 +19,26 @@ beforeEach(() => {
 
 it.each([
   {
+    end: '2026-09-05T15:00:00.000Z',
+    start: '2026-09-05T03:00:00.000Z',
+    text: '내일 오전 말고 오후 일정 알려줘',
+  },
+  {
+    end: '2026-09-05T12:00:00.000Z',
+    start: '2026-09-05T09:00:00.000Z',
+    text: '내일 오전 말고 저녁 일정 알려줘',
+  },
+  {
+    end: '2026-09-05T03:00:00.000Z',
+    start: '2026-09-04T15:00:00.000Z',
+    text: '내일 오후 말고 오전 일정 알려줘',
+  },
+  {
+    end: '2026-09-05T12:00:00.000Z',
+    start: '2026-09-05T09:00:00.000Z',
+    text: '내일 점심 말고 저녁 일정 알려줘',
+  },
+  {
     end: '2026-09-03T15:00:00.000Z',
     start: '2026-09-02T15:00:00.000Z',
     text: '어제 뭐 했어요?',
@@ -65,7 +85,7 @@ it.each([
   expect(Object.fromEntries(search)).toEqual({end, start, timeZone: 'Asia/Seoul'})
 })
 
-it.each(['오늘 뉴스 뭐 했어?', '어제 날씨 뭐 했어요?'])(
+it.each(['오늘 뉴스 뭐 했어?', '어제 날씨 뭐 했어요?', '내일 오전 말고 저녁 뭐 있어?'])(
   'should not request events for a non-calendar question in %s',
   async (text) => {
     await expect(
