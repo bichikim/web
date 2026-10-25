@@ -1,4 +1,6 @@
 import {createWorkerTransport} from 'src/utils/worker-transport'
+import type {DefaultTextModelId} from '../text-generation/settings'
+import {createCloudSajuClient} from './create-cloud-saju-client'
 import type {SajuGenerateRequest, SajuGenerationResponse} from './generation-messages'
 
 export interface SajuClient {
@@ -6,10 +8,14 @@ export interface SajuClient {
   readonly generate: (request: SajuGenerateRequest) => void
 }
 
-/** Owns one Worker and the request sent to it. */
+/** Creates a reading client for the selected model, defaulting to a local Worker. */
 export function createSajuClient(
   onResponse: (response: SajuGenerationResponse) => void,
+  modelId?: DefaultTextModelId,
 ): SajuClient {
+  if (modelId === 'cloud') {
+    return createCloudSajuClient(onResponse)
+  }
   let activeId = ''
   const transport = createWorkerTransport<SajuGenerateRequest, SajuGenerationResponse>({
     onFailure: (failure) =>

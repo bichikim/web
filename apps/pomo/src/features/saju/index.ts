@@ -1,5 +1,6 @@
 export * from './calculate-reading'
 export * from './client'
+export * from './create-cloud-saju-client'
 export * from './create-messages'
 export * from './form-draft-storage'
 export * from './generate-answer'

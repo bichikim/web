@@ -10,6 +10,7 @@ import {
 
 const mocks = {
   cancelDownload: vi.fn(),
+  createClient: vi.fn(),
   dispose: vi.fn(),
   downloaded: vi.fn(async (_modelId: DefaultTextModelId) => true),
   generate: vi.fn(),
@@ -37,11 +38,12 @@ describe('useSajuReading', () => {
     receive = null
     mocks.downloaded.mockResolvedValue(true)
     mocks.startTextModel.mockResolvedValue({status: 'complete'})
+    mocks.createClient.mockImplementation((onResponse) => {
+      receive = onResponse
+      return {dispose: mocks.dispose, generate: mocks.generate}
+    })
     const services: SajuReadingServices = {
-      createClient: (onResponse) => {
-        receive = onResponse
-        return {dispose: mocks.dispose, generate: mocks.generate}
-      },
+      createClient: mocks.createClient,
       defaultModelId: () => modelId,
       downloads: {
         cancel: mocks.cancelDownload,
@@ -65,6 +67,20 @@ describe('useSajuReading', () => {
     expect(reading.status()).toBe('complete')
     expect(reading.answer()).toContain('재물, 일, 관계')
     expect(mocks.downloaded).not.toHaveBeenCalled()
+  })
+
+  it('should select a cloud client and complete without downloading a device model', async () => {
+    modelId = 'cloud'
+    reading.submit({birth, gender: 'N', question: '제 일은 어떨까요?'})
+    await flush()
+    expect(mocks.createClient).toHaveBeenCalledExactlyOnceWith(expect.any(Function), 'cloud')
+    expect(mocks.startTextModel).not.toHaveBeenCalled()
+    const request = mocks.generate.mock.lastCall?.[0]
+    receive?.({requestId: request.requestId, type: 'started'})
+    expect(reading.status()).toBe('generating')
+    receive?.({requestId: request.requestId, text: '클라우드 풀이', type: 'complete'})
+    expect(reading.status()).toBe('complete')
+    expect(reading.answer()).toBe('클라우드 풀이')
   })
 
   it('should keep the AI setting selected when download consent was requested', async () => {
