@@ -33,7 +33,10 @@ export interface SajuReadingDownloads {
 }
 
 export interface SajuReadingServices {
-  readonly createClient: (onResponse: (response: SajuGenerationResponse) => void) => SajuClient
+  readonly createClient: (
+    onResponse: (response: SajuGenerationResponse) => void,
+    modelId?: DefaultTextModelId,
+  ) => SajuClient
   readonly defaultModelId: Accessor<DefaultTextModelId>
   readonly downloads: SajuReadingDownloads
   readonly downloadSize: (modelId: DefaultTextModelId) => string
@@ -73,7 +76,7 @@ function createSajuReadingServices(): SajuReadingServices {
   }
 }
 
-/** Coordinates a calculated answer and one local model interpretation. */
+/** Coordinates a calculated answer and one model interpretation. */
 // oxlint-disable-next-line eslint/max-lines-per-function -- One owner coordinates calculation, downloads, and the Worker lifecycle.
 export function useSajuReading(props: UseSajuReadingProps = {}): SajuReadingController {
   const services = props.services ?? createSajuReadingServices()
@@ -168,7 +171,7 @@ export function useSajuReading(props: UseSajuReadingProps = {}): SajuReadingCont
     setStatus('preparing')
     setModelProgress(null)
     try {
-      client ??= services.createClient(handleResponse)
+      client ??= services.createClient(handleResponse, modelId())
       revision += 1
       activeRequestId = `saju-${revision}`
       client.generate({...currentRequest, modelId: modelId(), requestId: activeRequestId})
