@@ -136,7 +136,8 @@ const isMesh = (value: unknown): value is PuppetMesh => {
   const vertexCount = value.vertices.length / COORDINATES_PER_VERTEX
   const hasValidCoordinates =
     Number.isInteger(vertexCount) &&
-    vertexCount >= MINIMUM_VERTEX_COUNT &&
+    (vertexCount >= MINIMUM_VERTEX_COUNT ||
+      (value.validationSpace === 'indices' && value.indices.length === 0)) &&
     value.uvs.length === value.vertices.length
   const hasValidTriangles =
     value.indices.length % INDICES_PER_TRIANGLE === 0 &&
