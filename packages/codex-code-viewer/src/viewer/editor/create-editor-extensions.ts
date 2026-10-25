@@ -19,6 +19,7 @@ import {createEditorNavigation} from './create-editor-navigation'
 import {createEditorFolding} from './create-editor-folding'
 import {createEditorLanguage} from './create-editor-language'
 interface EditorExtensionsOptions {
+  readonly changes?: Extension
   readonly foldLabel?: (open: boolean) => string
   readonly readOffset?: (position: number) => number
   readonly separator: string
@@ -38,6 +39,7 @@ export const createEditorExtensions = (options: EditorExtensionsOptions): Extens
   EditorState.lineSeparator.of(options.separator),
   EditorState.tabSize.of(2),
   lineNumbers(),
+  options.changes ?? [],
   createEditorFolding(options.location.path, options.foldLabel),
   highlightActiveLineGutter(),
   highlightActiveLine(),

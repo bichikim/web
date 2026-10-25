@@ -630,6 +630,43 @@ describe('createHost', () => {
     expect(root.viewer.session()).toBeNull()
     expect(close).toHaveBeenCalledOnce()
   })
+
+  it('should switch to the started worktree and release the project session on a host result', async () => {
+    vi.spyOn(App.prototype, 'connect').mockResolvedValue()
+    const closed = Promise.withResolvers<void>()
+    vi.spyOn(App.prototype, 'close').mockImplementation(async () => closed.resolve())
+    const listeners = vi.spyOn(App.prototype, 'addEventListener')
+    const released = Promise.withResolvers<void>()
+    const call = vi
+      .spyOn(App.prototype, 'callServerTool')
+      .mockImplementation(async ({name, arguments: input}) => {
+        if (name === 'code.close' && input?.session === initial.session) {
+          released.resolve()
+        }
+        return {content: []}
+      })
+    const port = {...createHost(), watch: undefined}
+    const root = createRoot((dispose) => ({dispose, viewer: useViewer(port)}))
+    const notify = (structuredContent: Record<string, unknown>): void => {
+      listeners.mock.calls
+        .filter(([event]) => event === 'toolresult')
+        .forEach(([, listener]) => listener({structuredContent}))
+    }
+    try {
+      notify({...initial})
+      expect(root.viewer.address()).toBe('main.tsx:1:1')
+      const worktree = {session: 'worktree', workspace: '/worktrees/new/project'}
+      notify(worktree)
+      expect(root.viewer.workspaceSession()).toEqual(worktree)
+      expect(root.viewer.session()).toBeNull()
+      expect(root.viewer.address()).toBe(worktree.workspace)
+      await released.promise
+      expect(call).toHaveBeenCalledWith({arguments: {session: initial.session}, name: 'code.close'})
+    } finally {
+      root.dispose()
+      await closed.promise
+    }
+  })
 })
 
 it('should change the current chat workspace through the Codex host only', async () => {

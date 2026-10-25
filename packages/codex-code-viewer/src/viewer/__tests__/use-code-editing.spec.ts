@@ -32,6 +32,64 @@ describe('useCodeEditing', () => {
     })
   beforeEach(() => localStorage.clear())
   afterEach(() => dispose())
+  it('should retain deleted-file drafts alongside the current draft and create only the saved path', async () => {
+    const {editing, port} = mount(() => localStorage)
+    editing.accept(session())
+    editing.change('live draft')
+    const deleted = session('removed.ts', '', '')
+    expect(editing.sourceFor(deleted)).toBe('')
+    editing.changeDeleted(deleted, 'recreated source')
+    expect(editing.sourceFor(deleted)).toBe('recreated source')
+    expect(editing.source()).toBe('live draft')
+    expect(editing.pendingFiles()).toEqual(['main.ts', 'removed.ts'])
+    expect(port.call).not.toHaveBeenCalled()
+    expect(await editing.saveDeleted(deleted)).toBe(true)
+    expect(port.call).toHaveBeenCalledExactlyOnceWith('code.write', {
+      path: 'removed.ts',
+      revision: null,
+      session: 'session',
+      source: 'recreated source',
+    })
+    expect(editing.source()).toBe('live draft')
+    expect(editing.pendingFiles()).toEqual(['main.ts'])
+  })
+  it('should explicitly create an empty deleted file without copying its historical contents', async () => {
+    const {editing, port} = mount()
+    expect(await editing.saveDeleted(session('empty.ts', '', ''))).toBe(true)
+    expect(port.call).toHaveBeenCalledWith('code.write', {
+      path: 'empty.ts',
+      revision: null,
+      session: 'session',
+      source: '',
+    })
+  })
+  it('should preserve a deleted draft and the live draft after a creation conflict', async () => {
+    const {editing, port} = mount()
+    editing.change('live draft')
+    const deleted = session('removed.ts', '', '')
+    editing.changeDeleted(deleted, 'new contents')
+    vi.mocked(port.call).mockResolvedValue({
+      content: [],
+      structuredContent: {error: {code: 'write-conflict'}},
+    })
+    expect(await editing.saveDeleted(deleted)).toBe(false)
+    expect(editing.sourceFor(deleted)).toBe('new contents')
+    expect(editing.source()).toBe('live draft')
+    expect(editing.pendingFiles()).toEqual(['main.ts', 'removed.ts'])
+  })
+  it('should recover deleted-file drafts without removing a separately retained live draft', () => {
+    const first = mount(() => localStorage)
+    first.editing.accept(session())
+    first.editing.change('live draft')
+    const deleted = session('removed.ts', '', '')
+    first.editing.changeDeleted(deleted, 'recovered contents')
+    dispose()
+    const reopened = mount(() => localStorage)
+    reopened.editing.accept(session())
+    expect(reopened.editing.sourceFor(deleted)).toBe('recovered contents')
+    expect(reopened.editing.source()).toBe('live draft')
+    expect(reopened.editing.pendingFiles()).toEqual(['main.ts', 'removed.ts'])
+  })
   it('should keep a viewport document read-only even when editing was enabled for another file', () => {
     const {editing, port, setCurrent} = mount()
     editing.toggle()

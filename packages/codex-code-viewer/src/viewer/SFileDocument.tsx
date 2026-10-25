@@ -62,37 +62,27 @@ export const SFileDocument = (props: SFileDocumentProps) => {
             </span>
           </Show>
           <Show when={previewAvailable() && !editingEnabled()}>
-            <div
-              aria-label={t('문서 표시 방식')}
-              role="group"
-              class="flex min-w-0 items-center gap-2"
+            <button
+              class="ui-document-button aria-pressed:bg-selection aria-pressed:text-tree-icon"
+              type="button"
+              aria-pressed={!mode.original()}
+              disabled={!mode.original() && !sourceAvailable()}
+              title={
+                !mode.original() && !sourceAvailable()
+                  ? t('32 MiB 이하 SVG에서 원문을 볼 수 있습니다.')
+                  : undefined
+              }
+              onClick={mode.togglePreview}
             >
-              <button
-                class="ui-document-button"
-                type="button"
-                aria-pressed={!mode.original()}
-                onClick={mode.showPreview}
-              >
-                {t('미리보기')}
-              </button>
-              <button
-                class="ui-document-button"
-                type="button"
-                aria-pressed={mode.original()}
-                disabled={!sourceAvailable()}
-                title={
-                  sourceAvailable() ? undefined : t('32 MiB 이하 SVG에서 원문을 볼 수 있습니다.')
-                }
-                onClick={mode.showOriginal}
-              >
-                {t('원문')}
-              </button>
-              <Show when={props.document.location.path.toLowerCase().endsWith('.mdx')}>
-                <span class="self-center text-xs text-muted">
-                  {t('MDX 코드는 실행하지 않습니다.')}
-                </span>
-              </Show>
-            </div>
+              <span
+                aria-hidden="true"
+                class={mode.original() ? 'i-tabler-eye' : 'i-tabler-check'}
+              />
+              {t('미리보기')}
+            </button>
+            <Show when={props.document.location.path.toLowerCase().endsWith('.mdx')}>
+              <span class="min-w-0 text-xs text-muted">{t('MDX 코드는 실행하지 않습니다.')}</span>
+            </Show>
           </Show>
           <Show when={editable() ? props.editing : undefined}>
             {(editing) => (
@@ -109,6 +99,11 @@ export const SFileDocument = (props: SFileDocumentProps) => {
         <Match when={editorVisible()}>
           {props.editor ?? (
             <SCodeEditor
+              changes={props.changes}
+              onOpenChange={props.onOpenChange}
+              inspection={props.inspection}
+              onCloseChange={props.onCloseChange}
+              onNavigateChange={props.onNavigateChange}
               source={props.document.source}
               location={props.document.location}
               onFollow={props.onFollow}

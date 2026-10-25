@@ -1,5 +1,6 @@
 import {SOURCE_CHUNK_LENGTH} from '../shared/reading-limits'
 import {registerClipboardTools} from './register-clipboard-tools'
+import {registerChangeTools} from './register-change-tools'
 import type {ClipboardPort} from './create-clipboard'
 import {registerPreviewTools} from './register-preview-tools'
 import {resolveNavigation} from './resolve-navigation'
@@ -454,6 +455,7 @@ export const createServer = (html: string, options: ServerOptions = {}) => {
     registerCodexEntrypoints(server, {open}, resourceUri)
   }
   registerRead(server, withSession)
+  registerChangeTools(server, withSession)
   registerNavigation(server, withSession, updates, streams)
   registerList(server, withSession, updates, streams)
   server.registerTool(

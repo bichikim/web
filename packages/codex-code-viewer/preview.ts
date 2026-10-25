@@ -41,6 +41,12 @@ const token = randomUUID()
 const base = `/${token}/`
 const streams = createPreviewStreams(base)
 const allowed = new Set([
+  'code.changes',
+  'code.workspace',
+  'code.tree-state',
+  'code.watch.next',
+  'code.stream.read',
+  'code.stream.close',
   'code.update-check',
   'code.update-install',
   'code.open',

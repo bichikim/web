@@ -26,7 +26,7 @@ In the terminal, choose **Codex**. For automation, use `install --target codex`;
 
 Fully quit and reopen Codex. In a project conversation, open the right panel's new-tab menu and select **Code Viewer**. The default file viewer's **Open** menu launches external applications.
 
-The viewer connects to the conversation's workspace when its path is available. Otherwise, enter a file's absolute path, such as `/Users/yourname/projects/my-project/src/main.tsx`, and press Enter.
+The viewer connects to the conversation's workspace when its path is available. Before a conversation starts, it uses the selected local project's folder from Codex's saved settings; an available invoking conversation path takes priority. Automatic worktree switching in an already-open viewer has not been verified. If it does not switch, connect through the workspace setting or a file's absolute path. Saved project selection is shared across windows and may differ from the current window. If neither path is available, enter a file's absolute path, such as `/Users/yourname/projects/my-project/src/main.tsx`, and press Enter.
 
 In Codex, enter an absolute folder path under **Settings → Workspace** and select **Apply** to remember it only for Code Viewer in the current chat. It is restored when reopening the viewer or restarting the app, without changing the Codex chat’s own working directory. Unsaved changes require choosing whether to save, discard, or keep editing.
 
@@ -56,6 +56,12 @@ The default language is English. In **Settings → Language**, choose **English*
 History skips deleted files unless a retained draft can be reopened and saved to recreate them. Deleting the current file preserves other visits. Change notifications or refresh make externally restored files available again. Other read errors are reported instead of skipped.
 
 Drag the divider to resize the tree. With the divider focused, Left/Right changes its width and Home/End selects minimum/maximum width. With tree focus, Up/Down and Home/End select entries; Left/Right collapses/expands folders. Right-click or `Shift+F10` opens an entry's menu.
+
+In Codex, a regular file click opens in the current viewer. `Cmd/Ctrl+click` or **Open in new tab** in the file menu delegates opening to Codex, following its default viewer setting. The current viewer keeps its file and unsaved changes; tab creation and reuse are managed by Codex. Hosts without file-opening integration keep regular in-viewer navigation.
+
+Git changes underline file names in green for additions, blue for modifications and red for deletions. Deleted files remain muted; click one to open an empty body in the current viewer. The red gutter triangle expands the previous content read-only. Turn on **Edit**, write in the empty body and save to create a file at the same path. A **Deleted file** label identifies it. Close it or go back to return to the live file and its unsaved draft. Toggle **All changes** above the tree to show changed files and their ancestor folders. Comparison starts at the common ancestor with the default remote branch, falling back to HEAD when that branch is unavailable. It includes staged, unstaged, untracked and unsaved viewer changes.
+
+Reading and editing views use the same colors beside line numbers. Deletion triangles mark the line boundary where content disappeared. Click a marker to expand a comparison in place, including previous/current line numbers and surrounding code. Use the arrows to move between changes; close it with the close button or Escape. Line comparisons cover editable text up to 512 KiB; large changes may be grouped as a single block. Ordinary comparisons show the first 500 lines. Deleted-file history remains fully searchable and browsable; large originals render only the rows around the viewport.
 
 Reopening a file in the same tab restores its selection, scrolling and applicable preview, zoom or page settings. An explicit line/column destination takes priority. The viewer remembers the 64 most recent files per workspace.
 
@@ -101,7 +107,7 @@ Press `Cmd/Ctrl+F` to find literal text without case sensitivity. Enter/Shift+En
 
 See [Supported formats](#supported-formats) for editable file types. Markdown and CSV/TSV are edited as source.
 
-You can move between files without losing drafts. Toggle **Edit** off to read unsaved content without editing it. For Markdown and CSV/TSV, turn **Edit** off to access **Preview / Source**; previews include unsaved content. To discard a draft, turn **Edit** on and choose **⋯ → Discard changes**.
+You can move between files without losing drafts. Toggle **Edit** off to read unsaved content without editing it. For Markdown and CSV/TSV, turn **Edit** off, then toggle **Preview** on to preview or off to read the source; previews include unsaved content. To discard a draft, turn **Edit** on and choose **⋯ → Discard changes**.
 
 TS/JS and JSON navigation includes unsaved changes from multiple files. Python, Ruby and Rust include changes from the current file only; save changes to other files before navigating to them.
 
@@ -182,7 +188,7 @@ Library definitions outside the workspace cannot be opened. Viewing, highlightin
 
 ### Documents and media
 
-- **Markdown / MDX:** Switch between **Preview / Source**. Relative document links and images stay within the workspace; external images display as links. MDX expressions and components are not executed. Use source for line/range attachments.
+- **Markdown / MDX:** Toggle **Preview** on to preview or off to read the source. Relative document links and images stay within the workspace; external images display as links. MDX expressions and components are not executed. Use source for line/range attachments.
 - **CSV / TSV:** Toggle **Use first row as headers**, click a column to sort, or use **Filter rows**. Preview covers the first 10,000 rows and 100 columns, 50 rows per page; sorting/filtering applies to that range. Use source for full content and line/range attachments. Invalid CSV quoting falls back to source.
 - **Word:** DOCX previews headings, paragraphs, lists, tables and embedded images. Original pagination, fonts and detailed formatting are not reproduced. External images are not read.
 - **Excel:** Choose a sheet, then use the table controls. Numbers/dates use stored formats and formulas use stored results without recalculation. Each sheet has the same preview limits as CSV. Cell styles, merged layouts, charts and images are not reproduced. Legacy `.doc`/`.xls` and password entry are unsupported.

@@ -29,7 +29,7 @@ const navigationMarks = (
   for (const visible of view.visibleRanges) {
     syntaxTree(view.state).iterate({
       enter: (node) => {
-        if (node.node.firstChild !== null) {
+        if (node.from === node.to || node.node.firstChild !== null) {
           return
         }
         const token = navigationToken(view.state, node.from, path, readOffset)

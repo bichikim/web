@@ -8,6 +8,7 @@ import {useTreeContextMenu} from './use-tree-context-menu'
 
 interface UseTreeFileActionsProps {
   readonly onChanged: (change: FileMutation) => Promise<void>
+  readonly onError: (error: unknown) => void
   readonly pendingPaths: Accessor<readonly string[]>
   readonly port: ViewerPort
   readonly saving: Accessor<boolean>
@@ -35,6 +36,35 @@ export const useTreeFileActions = (props: UseTreeFileActionsProps) => {
     busy: operations.pending,
     onRefresh: props.tree.reload,
   })
+  const {openFile} = props.port
+  const openInTab =
+    openFile === undefined
+      ? undefined
+      : (selection: WorkspaceSelection): void => {
+          if (selection.kind === 'file') {
+            openFile(selection.path).catch(props.onError)
+          }
+        }
+  const activate = (event: MouseEvent, path: string): void => {
+    props.tree.focus(path)
+    const node = props.tree.node(path)
+    if (node?.kind === 'file' && node.change === 'deleted') {
+      props.tree.activate(path)
+      return
+    }
+    const session = props.session()
+    if (
+      (event.metaKey || event.ctrlKey) &&
+      openInTab !== undefined &&
+      session !== null &&
+      props.tree.node(path)?.kind === 'file'
+    ) {
+      event.preventDefault()
+      openInTab({kind: 'file', path: `${session.workspace.replace(/\/$/u, '')}/${path}`})
+      return
+    }
+    props.tree.activate(path)
+  }
   const keyboard = (event: KeyboardEvent, path: string): boolean => {
     if (menu.handleKeyboard(event, path)) {
       return true
@@ -68,5 +98,5 @@ export const useTreeFileActions = (props: UseTreeFileActionsProps) => {
     action(selection)
     return true
   }
-  return {...operations, ...renaming, ...menu, keyboard}
+  return {...operations, ...renaming, ...menu, activate, keyboard, openInTab}
 }

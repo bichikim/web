@@ -4,7 +4,7 @@ import {join} from 'node:path'
 import {StdioServerTransport} from '@modelcontextprotocol/sdk/server/stdio.js'
 import {createServer} from './create-server'
 import {createThreadWorkspaces} from './create-thread-workspaces'
-import {readThreadWorkspace} from './read-thread-workspace'
+import {readCodexWorkspace} from './read-codex-workspace'
 import {createThreadTreeState} from './create-thread-tree-state'
 
 const html = await readFile(new URL('./app.html', import.meta.url), 'utf8')
@@ -12,7 +12,7 @@ const home = process.env.CODEX_HOME ?? join(homedir(), '.codex')
 const {dispose, server} = createServer(html, {
   threadTreeState: createThreadTreeState(home),
   threadWorkspaces: createThreadWorkspaces(home),
-  workspace: (metadata) => readThreadWorkspace({home, metadata}),
+  workspace: (metadata) => readCodexWorkspace({home, metadata}),
 })
 process.once('SIGINT', dispose)
 process.once('SIGTERM', dispose)

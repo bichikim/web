@@ -184,6 +184,11 @@ describe('SPdfDocument', () => {
     const magnification = screen.getByRole('group', {name: 'PDF 배율 조절'})
     expect(magnification.contains(zoom)).toBe(true)
     expect(magnification.contains(screen.getByRole('button', {name: 'PDF 확대'}))).toBe(true)
+    expect(Array.from(magnification.querySelectorAll('button, input'))).toEqual([
+      screen.getByRole('button', {name: 'PDF 축소'}),
+      zoom,
+      screen.getByRole('button', {name: 'PDF 확대'}),
+    ])
     expect(draw).toHaveBeenCalled()
     view.unmount()
     expect(destroy).toHaveBeenCalledOnce()

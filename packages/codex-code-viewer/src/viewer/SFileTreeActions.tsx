@@ -8,6 +8,7 @@ import {SNotice} from './SNotice'
 import {SRenameEntryDialog} from './SRenameEntryDialog'
 
 interface SFileTreeActionsProps {
+  readonly deletedPaths?: readonly string[]
   readonly actions: ReturnType<typeof useTreeFileActions>
   readonly workspace?: string
   readonly onCopy?: (path: string) => void
@@ -31,9 +32,15 @@ export const SFileTreeActions = (props: SFileTreeActionsProps) => (
           x={context.x}
           y={context.y}
           selection={context.selection}
+          onOpenInTab={
+            props.deletedPaths?.includes(context.selection.path)
+              ? undefined
+              : props.actions.openInTab
+          }
           canModify={
             !props.actions.pending() &&
             !props.actions.renamePending() &&
+            !props.deletedPaths?.includes(context.selection.path) &&
             context.selection.path !== props.workspace
           }
           canPaste={props.actions.canPaste() && !props.actions.renamePending()}
@@ -42,7 +49,7 @@ export const SFileTreeActions = (props: SFileTreeActionsProps) => (
           onPasteEntry={props.actions.paste}
           onRenameEntry={props.actions.askRename}
           onDeleteEntry={props.actions.askDelete}
-          onShare={props.onShare}
+          onShare={props.deletedPaths?.includes(context.selection.path) ? undefined : props.onShare}
           onCopy={props.onCopy}
           onClose={props.actions.close}
         />

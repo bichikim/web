@@ -37,9 +37,22 @@ export const useDocumentMode = (props: UseDocumentModeProps) => {
     mode().setOriginal(false)
     state?.update({original: false})
   }
+  const togglePreview = (): void => {
+    if (mode().original()) {
+      showPreview()
+    } else if (props.sourceAvailable()) {
+      showOriginal()
+    }
+  }
   const reportTableError = (error: unknown): void => {
     showOriginal()
     props.onError?.(error)
   }
-  return {original: () => mode().original(), reportTableError, showOriginal, showPreview}
+  return {
+    original: () => mode().original(),
+    reportTableError,
+    showOriginal,
+    showPreview,
+    togglePreview,
+  }
 }
