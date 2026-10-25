@@ -1,7 +1,8 @@
 import {getReadingTopics} from './get-reading-topics'
 
 const RELATIVE_YEAR_PATTERN = /올해|내년|작년|금년|이번\s*해|다음\s*해|지난\s*해/u
-const EXPLICIT_YEAR_PATTERN = /(?:19|20|21)\d{2}\s*년(?!생)/u
+const EXPLICIT_YEAR_PATTERN =
+  /(?:19|20|21)\d{2}\s*년(?!생|\s+생(?:의|은|는|을|과|도)?(?=$|[\s?!.:,]))/u
 const PAST_CAREER_CONTEXT_PATTERN = new RegExp(
   [
     String.raw`(?:작년|지난\s*해|(?:19|20|21)\d{2}\s*년)`,
