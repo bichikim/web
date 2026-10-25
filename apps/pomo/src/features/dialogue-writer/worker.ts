@@ -86,6 +86,9 @@ const generateDirectAnswer = async (
     outputLanguage === 'ko'
       ? normalizeKoreanSpeechStyle(trimmedOutput).trim()
       : trimmedOutput.trim()
+  if (answer.length === 0) {
+    throw new Error(FAILURE_MESSAGE)
+  }
   sendResponse({text: answer, type: 'complete'})
 }
 
