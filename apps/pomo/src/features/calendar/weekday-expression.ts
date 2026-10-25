@@ -285,6 +285,36 @@ const createWeekMatcher = ({getWeekdayIntent, periodPattern}: WeekMatcherOptions
   }
 }
 
+interface WeekdaySelectionContext {
+  readonly excluded: boolean
+  readonly excludedAfterDaypart: boolean
+  readonly offset: number | undefined
+}
+
+const resolveWeekdaySelection = (
+  contexts: ReadonlyArray<WeekdaySelectionContext>,
+): WeekdayIntent => {
+  const weekdayOffsets = new Set<number>()
+  let hasExcludedWeekday = false
+  const positiveOffsets = new Set(
+    contexts.flatMap(({excluded, excludedAfterDaypart, offset}) =>
+      !excluded && !excludedAfterDaypart && offset !== undefined ? [offset] : [],
+    ),
+  )
+
+  for (const {excluded, excludedAfterDaypart, offset} of contexts) {
+    const hasDistinctReplacement =
+      offset !== undefined &&
+      (positiveOffsets.size > 1 || (positiveOffsets.size === 1 && !positiveOffsets.has(offset)))
+    const isExcludedWeekday = excluded || (excludedAfterDaypart && hasDistinctReplacement)
+    hasExcludedWeekday ||= isExcludedWeekday
+    if (offset !== undefined && !isExcludedWeekday) {
+      weekdayOffsets.add(offset)
+    }
+  }
+  return {hasExcludedWeekday, offsets: Array.from(weekdayOffsets)}
+}
+
 export const createCalendarWeekdayParser = ({
   calendarIntentPattern,
   calendarPeriodBoundaryPattern,
@@ -299,6 +329,12 @@ export const createCalendarWeekdayParser = ({
   )
   const weekdayExclusionContextPattern = new RegExp(
     `^\\s*(?:${WEEKDAY_PARTICLE_PATTERN.source}\\s*)?(?:일정(?:은|는)?\\s*)?${WEEKDAY_EXCLUSION_PATTERN.source}`,
+    'u',
+  )
+  const weekdayDaypartExclusionContextPattern = new RegExp(
+    `^\\s*(?:${WEEKDAY_PARTICLE_PATTERN.source}\\s*)?${CALENDAR_DAYPART_PATTERN_SOURCE}` +
+      `\\s*(?:${WEEKDAY_PARTICLE_PATTERN.source}\\s*)?` +
+      `(?:일정(?:은|는)?\\s*)?${WEEKDAY_EXCLUSION_PATTERN.source}`,
     'u',
   )
   const weekdayDateExpressionBoundaryPattern = new RegExp(
@@ -387,23 +423,19 @@ export const createCalendarWeekdayParser = ({
 
   const getWeekdayIntent = (text: string): WeekdayIntent => {
     const weekdayDateExpression = getWeekdayDateExpression(text)
-    const weekdayOffsets = new Set<number>()
-    let hasExcludedWeekday = false
-
-    for (const [index, match] of weekdayDateExpression.matches.entries()) {
-      const offset = weekdayOffsetFromMonday.get(match.weekday ?? '')
+    const contexts = weekdayDateExpression.matches.map((match, index) => {
       const nextWeekdayMatch = weekdayDateExpression.matches[index + 1]
-      const weekdayContext = text.slice(
+      const context = text.slice(
         match.end,
         nextWeekdayMatch?.start ?? weekdayDateExpression.contextEnd,
       )
-      const isExcludedWeekday = weekdayExclusionContextPattern.test(weekdayContext)
-      hasExcludedWeekday ||= isExcludedWeekday
-      if (offset !== undefined && !isExcludedWeekday) {
-        weekdayOffsets.add(offset)
+      return {
+        excluded: weekdayExclusionContextPattern.test(context),
+        excludedAfterDaypart: weekdayDaypartExclusionContextPattern.test(context),
+        offset: weekdayOffsetFromMonday.get(match.weekday ?? ''),
       }
-    }
-    return {hasExcludedWeekday, offsets: Array.from(weekdayOffsets)}
+    })
+    return resolveWeekdaySelection(contexts)
   }
 
   const getRequestedWeekdays = (options: RequestedWeekdayOptions) =>
