@@ -12,6 +12,7 @@ import {
 } from './period-range'
 import {
   createCalendarWeekdayParser,
+  DAYPART_PATTERN_SOURCE,
   isImplicitWeekdaySchedule,
   type RequestedWeekdayIntent,
   type WeekdayQueryPeriodContext,
@@ -150,7 +151,7 @@ const IMPLICIT_SCHEDULE_PATTERN = new RegExp(
     `${THIS_MONTH_PATTERN.source}|${NEXT_MONTH_PATTERN.source}|` +
     `${PREVIOUS_MONTH_PATTERN.source}|주말)` +
     `(?:\\s*(?:에는|에|엔|은|는|도))?` +
-    `(?:\\s*(?:새벽|아침|오전|점심|오후|저녁|밤|낮|정오))?` +
+    `(?:\\s*${DAYPART_PATTERN_SOURCE})?` +
     `(?:\\s*(?:에는|에|엔|은|는|도))?\\s*` +
     `(?:뭐|무엇|무슨\\s+일)(?:가|이|은|는)?\\s*(?:있|하)`,
   'u',
