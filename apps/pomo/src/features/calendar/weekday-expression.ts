@@ -305,7 +305,7 @@ const createWeekMatcher = ({getWeekdayIntent, periodPattern}: WeekMatcherOptions
 }
 
 const WEEKDAY_CLOCK_EXCLUSION_CONTEXT_PATTERN = new RegExp(
-  `^\\s*(?:${WEEKDAY_PARTICLE_PATTERN.source}\\s*)?(?:[01]?\\d|2[0-3])(?:시|:[0-5]\\d)` +
+  `^\\s*(?:${WEEKDAY_PARTICLE_PATTERN.source}\\s*)?(?:[01]?\\d|2[0-3])(?:시(?:\\s*반)?|:[0-5]\\d)` +
     `\\s*(?:${WEEKDAY_PARTICLE_PATTERN.source}\\s*)?` +
     `(?:일정(?:은|는)?\\s*)?${WEEKDAY_EXCLUSION_PATTERN.source}`,
   'u',
