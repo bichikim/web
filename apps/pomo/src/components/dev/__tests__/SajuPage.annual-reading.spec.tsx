@@ -38,10 +38,11 @@ afterEach(cleanup)
 afterEach(vi.clearAllMocks)
 
 it.each([
+  '1995년 생의 성향은 어떤가요?',
   '지난 해에 시작한 일이 나한테 맞을까?',
   '2024년에 시작한 일이 나한테 맞을까?',
   '지난 해에 시작한 일이 나한테 맞을까? 어려운 일이라 고민돼요.',
-])('should submit a career question with year context to mocked generation: %s', (question) => {
+])('should submit a natal question with year context to mocked generation: %s', (question) => {
   render(() => <SajuPage />)
 
   fireEvent.input(screen.getByLabelText('질문'), {target: {value: question}})

@@ -99,6 +99,18 @@ describe('calculateSajuReading', () => {
     }
   })
 
+  it.each(['1995년 생의 성향은 어떤가요?', '1995년 생은 어떤 성향인가요?'])(
+    'should generate a natal interpretation for a spaced birth-year question: %s',
+    (question) => {
+      const result = calculateSajuReading({birth, gender: 'N', question})
+      expect(result.type).toBe('generate')
+      if (result.type === 'generate') {
+        expect(result.request.messages.at(-1)?.content).toContain(question)
+        expect(result.request.messages.at(-1)?.content).toContain('"daeun":null')
+      }
+    },
+  )
+
   it('should reject annual fortune questions without calculated annual data', () => {
     expect(calculateSajuReading({birth, gender: 'N', question: '올해 운세는?'}).type).toBe('notice')
   })
