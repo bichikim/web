@@ -1,5 +1,5 @@
 import {invalidateByTag} from '@vercel/functions'
-import {z, ZodError} from 'zod'
+import {ZodError} from 'zod'
 
 import {HISTORY_SOURCE_POLICY, validateHistoryOutput} from 'src/features/history-generation'
 import {
@@ -10,16 +10,9 @@ import {
   rejectHistoryResponse,
 } from '../repositories/history-generation'
 import {retrieveHistoryResponse} from './response-result'
+import {requiredHistoryTitlesSchema} from 'src/features/history-generation/contract'
 
 const MAX_ERROR_LENGTH = 2000
-const MIN_MOMENT_COUNT = 3
-const MAX_MOMENT_COUNT = 5
-const MAX_TITLE_LENGTH = 50
-
-const requiredTitlesSchema = z
-  .array(z.string().trim().min(1).max(MAX_TITLE_LENGTH))
-  .min(MIN_MOMENT_COUNT)
-  .max(MAX_MOMENT_COUNT)
 
 interface ResponseWebhookEvent {
   readonly data: {readonly id: string}
@@ -51,7 +44,7 @@ const getRequiredTitles = (
 
   return serializedTitles === undefined
     ? undefined
-    : requiredTitlesSchema.parse(JSON.parse(serializedTitles))
+    : requiredHistoryTitlesSchema.parse(JSON.parse(serializedTitles))
 }
 
 /** Processes one verified OpenAI response event. */
