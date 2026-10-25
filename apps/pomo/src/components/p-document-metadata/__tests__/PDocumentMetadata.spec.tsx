@@ -28,6 +28,7 @@ vi.mock('@solidjs/meta', () => ({
 
 vi.mock('@solidjs/router', () => ({useLocation: () => metadata.location}))
 vi.mock('@paraglide/message', () => ({
+  account_title: () => 'Account title',
   app_default_description: () => 'Default description',
   app_home_description: () => 'Home description',
   app_home_title: () => 'Home title',
@@ -104,6 +105,8 @@ it('should synchronize the document language with the hydrated locale', () => {
 
 it.each([
   ['/', 'Home title', 'Home description', 'index, follow'],
+  ['/account', 'Account title', 'Default description', 'noindex'],
+  ['/account/', 'Account title', 'Default description', 'noindex'],
   ['/app-in-toss/privacy', 'Apps in Toss privacy title', 'Privacy description', 'noindex'],
   ['/refund-policy', 'Refund title', 'Refund description', 'index, follow'],
   ['/app-in-toss/terms', 'Apps in Toss terms title', 'Terms description', 'noindex'],
