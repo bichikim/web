@@ -205,7 +205,7 @@ const createSpeechRuntime = async (
       revision: 'main',
     },
   )
-  return transformersPipeline as unknown as SpeechPipeline
+  return transformersPipeline
 }
 
 const createErrorSafeParse = <T>(parse: () => T, message: string): T => {

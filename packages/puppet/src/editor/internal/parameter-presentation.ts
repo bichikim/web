@@ -1,4 +1,8 @@
-import type {PuppetParameterValueMap, PuppetParameterValues} from '../../deformation'
+import {
+  mapParameterTuple,
+  type PuppetParameterValueMap,
+  type PuppetParameterValues,
+} from '../../deformation'
 import type {PuppetDocument, PuppetParameter, PuppetParameterBinding} from '../../player/document'
 
 export interface ParameterPresentation {
@@ -50,12 +54,12 @@ export const getParameterPresentation = (
       if (source === undefined || display === undefined) {
         return undefined
       }
-      return source.parameterIds.map((id) => {
+      return mapParameterTuple(source.parameterIds, (id) => {
         const index = display.parameterIds.indexOf(id)
         return index < 0
           ? (current[id] ?? parameterById.get(id)?.defaultValue ?? 0)
           : (values[index] ?? parameterById.get(id)?.defaultValue ?? 0)
-      }) as unknown as PuppetParameterValues
+      })
     },
     parameters,
     previewBindingIds,
@@ -65,9 +69,10 @@ export const getParameterPresentation = (
       if (source === undefined || display === undefined) {
         return undefined
       }
-      return display.parameterIds.map(
+      return mapParameterTuple(
+        display.parameterIds,
         (id) => values[source.parameterIds.indexOf(id)] ?? parameterById.get(id)?.defaultValue ?? 0,
-      ) as unknown as PuppetParameterValues
+      )
     },
   }
 }

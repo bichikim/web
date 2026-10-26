@@ -11,6 +11,7 @@ import {
   getDefaultParameterValueMap,
   getParameterBindingValueMap,
   getParameterBindingValues,
+  mapParameterTuple,
   MAX_PARAMETER_DIMENSIONS,
   type ParameterDimensions,
   parameterValuesEqual,
@@ -243,10 +244,10 @@ const createParameterValueHandler = (options: CreateParameterValueHandlerOptions
     }
 
     const parameters = getBindingParameters(options.props.document(), binding)
-    const nextValues = values.map((value, index) => {
+    const nextValues = mapParameterTuple(values, (value, index) => {
       const parameter = parameters[index]
       return parameter === undefined ? 0 : resolveParameterValue(parameter, value)
-    }) as unknown as PuppetParameterValues
+    })
     batch(() => {
       options.props.onBindingActivate?.(binding.id)
       options.setParameterValueMap((currentValues) => ({

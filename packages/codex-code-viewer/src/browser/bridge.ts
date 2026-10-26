@@ -1,12 +1,6 @@
 import {AppBridge, PostMessageTransport} from '@modelcontextprotocol/ext-apps/app-bridge'
-import {
-  CallToolResultSchema,
-  type Notification,
-  type Request,
-  type Result,
-} from '@modelcontextprotocol/sdk/types.js'
+import {CallToolResultSchema} from '@modelcontextprotocol/sdk/types.js'
 import {z} from 'zod'
-import type {Protocol} from '@modelcontextprotocol/sdk/shared/protocol.js'
 import manifest from '../../package.json'
 import {readJsonStream} from '../viewer/read-json-stream'
 
@@ -39,8 +33,7 @@ const bridge = new AppBridge(
     updateModelContext: {},
   },
 )
-const protocol = bridge as unknown as Protocol<Request, Notification, Result>
-protocol.setRequestHandler(
+bridge.setRequestHandler(
   z.object({
     method: z.literal('winter-love/file-viewer/location'),
     params: z.object({path: z.string(), workspace: z.string()}),

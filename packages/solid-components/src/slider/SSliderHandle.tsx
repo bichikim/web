@@ -29,7 +29,7 @@ const toRangeValue = (value: number, min: number, max: number) => {
 export const sSliderHandleClassName = 's-slider-handle'
 
 export const SSliderHandle = <T extends ValidComponent>(props: SSliderHandleProps<T>) => {
-  const [innerProps, restProps] = splitProps(props, ['style', 'onPointerDown']) as unknown as [
+  const [innerProps, restProps] = splitProps(props, ['style', 'onPointerDown']) as [
     Required<InnerProps>,
     DynamicProps<T>,
   ]

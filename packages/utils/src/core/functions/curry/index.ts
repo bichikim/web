@@ -337,20 +337,25 @@ export function curry(
 }
 
 // oxlint-disable-next-line eslint-js/space-before-function-paren
-export function curryReverse<T extends readonly any[], R>(
+export function curryReverse<T extends readonly unknown[], R>(
   target: (...args: T) => R,
+  length?: number,
+  args?: unknown[],
+): ReverseCurry<T, R>
+export function curryReverse(
+  target: (...args: unknown[]) => unknown,
   length: number = target.length,
   args: unknown[] = [],
-): ReverseCurry<T, R> {
+): (...args: unknown[]) => unknown {
   const _args: unknown[] = args
 
-  return ((...args: unknown[]) => {
+  return (...args: unknown[]) => {
     const nextArgs = [...args.reverse(), ..._args]
 
     if (nextArgs.length >= length) {
-      return target(...(nextArgs as unknown as T))
+      return target(...nextArgs)
     }
 
     return curryReverse(target, length, nextArgs)
-  }) as any
+  }
 }

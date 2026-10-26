@@ -162,12 +162,8 @@ export const createSplendidGrandPiano = (
   const handleStateChange = (event: Event) => {
     const {target} = event
 
-    if (target) {
-      const {state} = target as unknown as AudioContext
-
-      if (state === 'suspended') {
-        setState((prevState) => ({...prevState, playingId: '', suspended: false}))
-      }
+    if (target && 'state' in target && target.state === 'suspended') {
+      setState((prevState) => ({...prevState, playingId: '', suspended: false}))
     }
   }
 

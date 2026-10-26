@@ -183,7 +183,7 @@ const loadState = async (
   modelId: keyof typeof PROFILES,
   context: RunnerExecutionContext,
 ): Promise<SupertonicState> => {
-  const runtime = (await import('onnxruntime-node')) as unknown as OrtModule
+  const runtime: OrtModule = await import('onnxruntime-node')
   const profile = PROFILES[modelId]
   context.onProgress(5)
   const [configValue, indexerValue] = await Promise.all([

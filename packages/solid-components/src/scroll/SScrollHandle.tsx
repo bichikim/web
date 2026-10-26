@@ -19,7 +19,7 @@ export const SScrollHandle = <T extends ValidComponent>(props: SScrollHandleProp
   const scrollContext = useScrollContext()
   const [barState, setBarState] = createSignal<DragType>('end')
 
-  const [innerProps, restProps] = splitProps(props, ['style', 'onPointerDown']) as unknown as [
+  const [innerProps, restProps] = splitProps(props, ['style', 'onPointerDown']) as [
     InnerProps,
     DynamicProps<T>,
   ]

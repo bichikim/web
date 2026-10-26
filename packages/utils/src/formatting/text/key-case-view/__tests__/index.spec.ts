@@ -116,6 +116,13 @@ describe('createKeyCaseView', () => {
 
     expect(Object.keys(view)).toEqual(['FIRST_NAME'])
   })
+
+  it('should infer source value types without accepting an unrelated result type', () => {
+    const view = createKeyCaseView({NAME: 'John'}, (key) => key.toUpperCase())
+    expectTypeOf(view.NAME).toEqualTypeOf<string>()
+    // @ts-expect-error Arbitrary result shapes are not part of the public contract.
+    expectTypeOf<typeof createKeyCaseView<{NAME: string}, {NAME: number}>>().toBeFunction()
+  })
 })
 
 describe('createCamelCaseView', () => {
