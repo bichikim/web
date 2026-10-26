@@ -1,4 +1,5 @@
 import {isObject} from 'src/utils/is-object'
+import {prepareText} from '@winter-love/supertonic/prepare-text'
 import {concatFloat32} from 'src/utils/concat-float32'
 import {intersperse} from 'src/utils/intersperse'
 import {createGaussianNoise} from '../../features/supertonic/noise.ts'
@@ -222,23 +223,6 @@ const getFloatData = (value: unknown): Float32Array => {
   return value.data
 }
 
-const preprocessText = (input: string): string => {
-  let text = input
-    .normalize('NFKD')
-    .replace(/[\u{1F300}-\u{1FAFF}\u2600-\u27BF\u{1F1E6}-\u{1F1FF}]+/gu, '')
-    .replace(/[–‑—]/gu, '-')
-    .replace(/[[\]_|/#→←]/gu, ' ')
-    .replace(/[“”]/gu, '"')
-    .replace(/[‘’´`]/gu, "'")
-    .replace(/[♥☆♡©\\]/gu, '')
-    .replace(/\s+/gu, ' ')
-    .trim()
-  if (!/[.!?;:,'")\]}…。」』】〉》›»]$/u.test(text)) {
-    text += '.'
-  }
-  return `<ko>${text}</ko>`
-}
-
 const findTextBreak = (characters: ReadonlyArray<string>): number => {
   const breakCharacters = /[\s,;:!?…。！？、，；：]/u
   for (
@@ -294,7 +278,7 @@ const createVoiceInput = (
   text: string,
   voice: SupertonicVoice,
 ): {readonly textIds: OrtTensor; readonly textMask: OrtTensor} => {
-  const ids = Array.from(preprocessText(text)).map((character) => {
+  const ids = Array.from(prepareText(text, 'ko')).map((character) => {
     const codePoint = character.codePointAt(0) ?? 0
     return codePoint < state.indexer.length ? (state.indexer[codePoint] ?? -1) : -1
   })

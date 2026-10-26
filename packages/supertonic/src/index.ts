@@ -10,6 +10,7 @@ export {
 export type {SupertonicModelId, SupertonicVoiceId, SupertonicModel} from './model'
 export * from './noise'
 export * from './number-speech'
+export * from './prepare-text'
 export * from './result'
 export * from './runtime'
 export * from './sessions'

@@ -24,8 +24,13 @@ describe('Supertonic runner audio', () => {
       return draws % 2 === 1 ? Math.exp(-0.5) : 0.5
     })
     const sampleRate = 8_009
+    const preparedInputs: Array<BigInt64Array> = []
     function createTensor(...parameters: ReadonlyArray<unknown>) {
-      return {data: parameters[1]}
+      const data = parameters[1]
+      if (parameters[0] === 'int64' && data instanceof BigInt64Array) {
+        preparedInputs.push(data)
+      }
+      return {data}
     }
     vi.mocked(Tensor).mockImplementation(createTensor as unknown as typeof Tensor)
     const duration = {run: vi.fn().mockResolvedValue({duration: {data: Float32Array.of(0.01)}})}
@@ -59,7 +64,7 @@ describe('Supertonic runner audio', () => {
           })
         }
         if (url.endsWith('unicode_indexer.json')) {
-          return Response.json([])
+          return Response.json(Array.from({length: 0x2800}, (_, index) => index))
         }
         if (url.endsWith('sarah.json')) {
           return Response.json({
@@ -79,6 +84,9 @@ describe('Supertonic runner audio', () => {
     )
     const audio = decodePcmWav(result.bytes)
 
+    expect(
+      preparedInputs.map((values) => String.fromCodePoint(...Array.from(values, Number))),
+    ).toEqual([`<ko>${'\u1100\u1161'.repeat(80)}.</ko>`, `<ko>${'\u1102\u1161'.repeat(80)}.</ko>`])
     expect(vocoder.run).toHaveBeenCalledTimes(2)
     expect(random).toHaveBeenCalledTimes(324)
     expect(audio.sampleRate).toBe(sampleRate)

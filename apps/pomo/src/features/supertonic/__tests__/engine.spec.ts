@@ -87,6 +87,60 @@ describe('Supertonic parsers', () => {
 })
 
 describe('SupertonicEngine', () => {
+  it('should pass normalized Unicode with its language tag to both text models', async () => {
+    const durationRun = vi.fn(async (_feeds: Record<string, Tensor>) => ({
+      duration: new runtime.Tensor('float32', Float32Array.of(1), [1]),
+    }))
+    const textRun = vi.fn(async (_feeds: Record<string, Tensor>) => ({
+      text_emb: new runtime.Tensor('float32', Float32Array.of(1), [1]),
+    }))
+    const sessions: ConstructorParameters<typeof SupertonicEngine>[2] = {
+      durationPredictor: createSession(durationRun),
+      textEncoder: createSession(textRun),
+      vectorEstimator: createSession(
+        vi.fn(async () => ({
+          denoised_latent: new runtime.Tensor('float32', Float32Array.of(0, 0), [1, 1, 2]),
+        })),
+      ),
+      vocoder: createSession(
+        vi.fn(async () => ({
+          wav_tts: new runtime.Tensor('float32', Float32Array.of(0), [1, 1, 1]),
+        })),
+      ),
+    }
+    const engine = new SupertonicEngine(
+      getResultValue(parseSupertonicConfig(createConfig())),
+      Array.from({length: 0x2800}, (_, index) => index),
+      sessions,
+      runtime,
+    )
+    const voice = getResultValue(
+      parseSupertonicVoice(runtime, {
+        style_dp: {data: [0], dims: [1]},
+        style_ttl: {data: [0], dims: [1]},
+      }),
+    )
+
+    try {
+      await engine.generate({
+        language: 'ko',
+        onProgress: vi.fn(),
+        speed: 1,
+        text: '  “é–한글😀”\n',
+        voice,
+      })
+      const expected = '<ko>"e\u0301-\u1112\u1161\u11ab\u1100\u1173\u11af"</ko>'
+      const expectedIds = BigInt64Array.from(
+        Array.from(expected, (value) => BigInt(value.codePointAt(0) ?? 0)),
+      )
+
+      expect(durationRun.mock.calls[0]?.[0].text_ids.data).toEqual(expectedIds)
+      expect(textRun.mock.calls[0]?.[0].text_ids.data).toEqual(expectedIds)
+    } finally {
+      await engine.release()
+    }
+  })
+
   it('should execute duration, text, eight denoising steps, and vocoder in order', async () => {
     let draws = 0
     const random = vi.spyOn(Math, 'random').mockImplementation(() => {
