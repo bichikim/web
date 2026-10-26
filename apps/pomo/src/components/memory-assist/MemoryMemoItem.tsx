@@ -100,14 +100,21 @@ export const MemoryMemoItem = (props: MemoryMemoItemProps) => {
     const savedRevision = draftRevision
     const currentReminderDraft = reminderDraft()
     const now = new Date()
+    const savedReminder = resolveReminderDraft(currentReminderDraft, now)
     const errorMessage = await props.onSave(props.memo, {
-      ...resolveReminderDraft(currentReminderDraft, now),
+      ...savedReminder,
       exactEnabled: currentReminderDraft.exactEnabled,
       text: draft(),
     })
 
     if (errorMessage === null) {
-      setOriginalReminderDraft(currentReminderDraft)
+      const completedAt = new Date()
+      const currentReminder = resolveReminderDraft(currentReminderDraft, completedAt)
+      setOriginalReminderDraft(
+        currentReminder.exactReminderAt === savedReminder.exactReminderAt
+          ? currentReminderDraft
+          : createStoredReminderDraft(props.memo, completedAt),
+      )
     }
 
     if (savedRevision !== draftRevision) {

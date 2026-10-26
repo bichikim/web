@@ -23,6 +23,7 @@ let completeWrite: (() => void) | null = null
 
 beforeEach(() => {
   vi.clearAllMocks()
+  setItem.mockReset()
   const getStyles = globalThis.getComputedStyle
   vi.spyOn(globalThis, 'getComputedStyle').mockImplementation((...args) => {
     const styles = getStyles(...args)
@@ -57,6 +58,7 @@ afterEach(async () => {
   completeWrite = null
   vi.unstubAllGlobals()
   vi.restoreAllMocks()
+  vi.useRealTimers()
   localStorage.clear()
   sessionStorage.clear()
 })
@@ -185,6 +187,51 @@ it('should keep a reminder-only edit savable when its native write fails', async
   fireEvent.click(screen.getByRole('button', {name: '변경 저장'}))
   await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
   expect(JSON.parse(nativeValue)[0].exactReminderAt).not.toBeNull()
+})
+
+it('should keep a today reminder savable when the previous native save completes after midnight', async () => {
+  vi.useFakeTimers({toFake: ['Date']})
+  vi.setSystemTime(new Date(2026, 0, 31, 23, 48))
+  const pending = await startPendingEdit(() => {
+    fireEvent.click(screen.getByRole('switch', {name: '날짜와 시간에 알려주기'}))
+    fireEvent.input(screen.getByLabelText('시간'), {target: {value: '23:59'}})
+  })
+  vi.setSystemTime(new Date(2026, 1, 1, 0, 1))
+  fireEvent.click(screen.getByRole('switch', {name: '날짜와 시간에 알려주기'}))
+  fireEvent.click(screen.getByRole('switch', {name: '날짜와 시간에 알려주기'}))
+  pending.resolve()
+
+  await waitFor(() => expect(screen.getByRole('button', {name: '변경 저장'})).toBeEnabled())
+  expect(JSON.parse(nativeValue)).toMatchObject([
+    {exactReminderAt: new Date(2026, 0, 31, 23, 59).toISOString()},
+  ])
+  fireEvent.click(screen.getByRole('button', {name: '변경 저장'}))
+  await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
+  expect(JSON.parse(nativeValue)).toMatchObject([
+    {exactReminderAt: new Date(2026, 1, 1, 23, 59).toISOString()},
+  ])
+})
+
+it('should not mark a saved tomorrow reminder dirty because of its hidden custom date', async () => {
+  vi.useFakeTimers({toFake: ['Date']})
+  vi.setSystemTime(new Date(2026, 0, 31, 12))
+  const pending = await startPendingEdit(() => {
+    fireEvent.click(screen.getByRole('switch', {name: '날짜와 시간에 알려주기'}))
+    fireEvent.keyDown(screen.getByRole('button', {name: /알림 날짜/}), {key: 'ArrowDown'})
+    fireEvent.keyDown(screen.getByRole('option', {name: '오늘'}), {key: 'ArrowDown'})
+    fireEvent.keyDown(screen.getByRole('option', {name: '내일'}), {key: 'Enter'})
+  })
+  const editor = screen.getByRole('textbox', {name: '기억할 메모'})
+  fireEvent.input(editor, {target: {value: nextText}})
+  fireEvent.input(editor, {target: {value: savedText}})
+  pending.resolve()
+  await flushPromises()
+
+  expect(JSON.parse(nativeValue)).toMatchObject([
+    {exactReminderAt: new Date(2026, 1, 1, 12, 10).toISOString()},
+  ])
+  expect(screen.getByRole('dialog')).toHaveAttribute('data-expanded')
+  expect(screen.getByRole('button', {name: '변경 저장'})).toBeDisabled()
 })
 
 it('should close an unchanged editing session only after its native write completes', async () => {
