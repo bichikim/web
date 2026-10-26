@@ -1,19 +1,12 @@
-import {clamp} from 'es-toolkit/math'
 import {readPDisplayPreferences} from 'src/features/focus-room-display-preferences'
 import {getBackgroundRepository} from 'src/features/background'
 
 import {type DesktopMode, isDesktopBackgroundMode, readDesktopMode} from './model'
+import {getControlSurfaceOptions} from './get-control-surface-options'
+import type {DesktopWorkArea} from './types'
 
 const BACKGROUND_LABEL = 'background'
 const DESKTOP_WIDGET_CORNER_RADIUS = 20
-const SURFACE_MARGIN = 24
-
-interface DesktopWorkArea {
-  readonly height: number
-  readonly left: number
-  readonly top: number
-  readonly width: number
-}
 
 const getDesktopWorkArea = (): DesktopWorkArea => {
   const positionedScreen = window.screen as Screen & {
@@ -27,65 +20,6 @@ const getDesktopWorkArea = (): DesktopWorkArea => {
     top: positionedScreen.availTop ?? 0,
     width: positionedScreen.availWidth,
   }
-}
-
-const fitCoordinate = (start: number, length: number, size: number, preferred: number): number =>
-  clamp(preferred, start, start + Math.max(0, length - size))
-
-const getControlSurfaceOptions = () => {
-  const workArea = getDesktopWorkArea()
-  const player = {height: 340, width: 520}
-  const pomodoro = {height: 520, width: 360}
-  const settings = {height: 620, width: 480}
-
-  return [
-    {
-      ...player,
-      label: 'desktop-player',
-      path: '/desktop/player/',
-      x: fitCoordinate(workArea.left, workArea.width, player.width, workArea.left + SURFACE_MARGIN),
-      y: fitCoordinate(
-        workArea.top,
-        workArea.height,
-        player.height,
-        workArea.top + workArea.height - player.height - SURFACE_MARGIN,
-      ),
-    },
-    {
-      ...pomodoro,
-      label: 'desktop-pomodoro',
-      path: '/desktop/pomodoro/',
-      x: fitCoordinate(
-        workArea.left,
-        workArea.width,
-        pomodoro.width,
-        workArea.left + (workArea.width - pomodoro.width) / 2,
-      ),
-      y: fitCoordinate(
-        workArea.top,
-        workArea.height,
-        pomodoro.height,
-        workArea.top + SURFACE_MARGIN,
-      ),
-    },
-    {
-      ...settings,
-      label: 'desktop-settings',
-      path: '/desktop/settings/',
-      x: fitCoordinate(
-        workArea.left,
-        workArea.width,
-        settings.width,
-        workArea.left + workArea.width - settings.width - SURFACE_MARGIN,
-      ),
-      y: fitCoordinate(
-        workArea.top,
-        workArea.height,
-        settings.height,
-        workArea.top + SURFACE_MARGIN,
-      ),
-    },
-  ] as const
 }
 
 const CONTENT_SURFACE_LABELS = ['desktop-player', 'desktop-pomodoro'] as const
@@ -240,7 +174,9 @@ const enterDesktopMode = async (): Promise<boolean> => {
     'desktop-pomodoro': preferences.pomodoroVisible,
     'desktop-settings': true,
   }
-  const surfaces = getControlSurfaceOptions().filter(({label}) => visibility[label])
+  const surfaces = getControlSurfaceOptions(getDesktopWorkArea()).filter(
+    ({label}) => visibility[label],
+  )
 
   try {
     await restoreBackgroundContent({label: BACKGROUND_LABEL})

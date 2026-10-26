@@ -612,6 +612,53 @@ describe('applyDesktopMode', () => {
     )
   })
 
+  it('should read one work-area snapshot before native changes', async () => {
+    const read = vi.fn()
+    vi.stubGlobal('screen', {
+      get availHeight() {
+        read('height')
+        return 900
+      },
+      get availLeft() {
+        read('left')
+        return 0
+      },
+      get availTop() {
+        read('top')
+        return 0
+      },
+      get availWidth() {
+        read('width')
+        return 1440
+      },
+    })
+    const expected = [['height'], ['left'], ['top'], ['width']]
+    vi.mocked(restoreBackgroundContent).mockImplementation(async () => {
+      expect(read.mock.calls).toEqual(expected)
+    })
+
+    await applyDesktopMode('desktop')
+
+    expect(read.mock.calls).toEqual(expected)
+  })
+
+  it('should propagate a screen read failure before entering native rollback', async () => {
+    const failure = new Error('screen is unavailable')
+    vi.stubGlobal('screen', {
+      get availHeight() {
+        throw failure
+      },
+    })
+
+    await expect(applyDesktopMode('desktop')).rejects.toBe(failure)
+
+    expect(restoreBackgroundContent).not.toHaveBeenCalled()
+    expect(setBackgroundSurface).not.toHaveBeenCalled()
+    expect(openControlSurface).not.toHaveBeenCalled()
+    expect(closeControlSurface).not.toHaveBeenCalled()
+    expect(restoreSurface).not.toHaveBeenCalled()
+  })
+
   it('should preserve entry and rollback failures together', async () => {
     vi.mocked(setBackgroundSurface).mockRejectedValueOnce(new Error('native transition failed'))
     vi.mocked(closeControlSurface).mockRejectedValueOnce(new Error('native close failed'))
