@@ -1,37 +1,44 @@
 /** @vitest-environment node */
 import {afterEach, expect, it, vi} from 'vitest'
+import {SEARCH_CONFIG} from 'src/features/search-discovery'
+import {createSitemapResponse} from '../create-sitemap-response'
+import {renderSitemap} from '../render-sitemap'
+
+vi.mock('../render-sitemap', () => ({
+  renderSitemap: vi.fn<typeof renderSitemap>(),
+}))
 
 afterEach(() => {
-  vi.doUnmock('src/features/search-discovery')
-  vi.resetModules()
+  vi.mocked(renderSitemap).mockReset()
 })
 
-it('should escape query separators in canonical sitemap URLs', async () => {
-  vi.doMock('src/features/search-discovery', () => ({
-    SEARCH_CONFIG: {
-      indexablePaths: ['/search?first=1&second=2'],
-      origin: 'https://www.pomofi.io',
-    },
-  }))
-  vi.resetModules()
-  const {createSitemapResponse} = await import('../create-sitemap-response')
+const SITEMAP_URL = 'https://www.pomofi.io/sitemap.xml'
 
-  const response = createSitemapResponse(new Request('https://www.pomofi.io/sitemap.xml'))
+it('should skip XML rendering for HEAD even when rendering would fail', async () => {
+  vi.mocked(renderSitemap).mockImplementation(() => {
+    throw new Error('render failed')
+  })
 
-  await expect(response.text()).resolves.toContain('first=1&amp;second=2')
+  const response = createSitemapResponse(new Request(SITEMAP_URL, {method: 'HEAD'}))
+
+  expect(renderSitemap).not.toHaveBeenCalled()
+  await expect(response.text()).resolves.toBe('')
 })
 
-it('should reject a canonical path that leaves the configured origin', async () => {
-  vi.doMock('src/features/search-discovery', () => ({
-    SEARCH_CONFIG: {
-      indexablePaths: ['https://untrusted.example/path'],
-      origin: 'https://www.pomofi.io',
-    },
-  }))
-  vi.resetModules()
-  const {createSitemapResponse} = await import('../create-sitemap-response')
+it('should propagate the original rendering error with the configured input', () => {
+  const failure = new Error('render failed')
+  vi.mocked(renderSitemap).mockImplementation(() => {
+    throw failure
+  })
+  let caught: unknown
 
-  expect(() => createSitemapResponse(new Request('https://www.pomofi.io/sitemap.xml'))).toThrow(
-    'Search path must stay on the configured origin',
-  )
+  try {
+    createSitemapResponse(new Request(SITEMAP_URL))
+  } catch (error: unknown) {
+    caught = error
+  }
+
+  expect(caught).toBe(failure)
+  expect(renderSitemap).toHaveBeenCalledOnce()
+  expect(vi.mocked(renderSitemap).mock.calls[0]?.[0]).toBe(SEARCH_CONFIG)
 })
