@@ -321,3 +321,20 @@ it('should preserve the feed voice control and focus after a voice update', () =
   expect(voice.isConnected).toBe(true)
   expect(document.activeElement).toBe(nextVoice)
 })
+
+it('should remove a submitted FTP validation error when the actual URL input changes', () => {
+  renderSettings()
+  const addressInput = screen.getByRole('textbox', {name: '피드 주소'}) as HTMLInputElement
+  fireEvent.input(addressInput, {target: {value: 'ftp://example.test/feed.xml'}})
+  expect(addressInput.checkValidity()).toBe(true)
+  fireEvent.click(screen.getByRole('button', {name: '추가'}))
+  expect(screen.getByRole('status').textContent).toBe('HTTP 또는 HTTPS 피드 주소를 입력해 주세요.')
+
+  addressInput.focus()
+  fireEvent.input(addressInput, {target: {value: 'https://other.example.test/feed.xml'}})
+
+  expect(screen.queryByRole('status')).toBeNull()
+  expect(screen.getByRole('textbox', {name: '피드 주소'})).toBe(addressInput)
+  expect(document.activeElement).toBe(addressInput)
+  expect(localStorage.getItem('pomo:focus-room-feed-connections:v1')).toBeNull()
+})

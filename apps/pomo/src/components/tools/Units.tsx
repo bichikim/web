@@ -38,14 +38,18 @@ export const Units = () => {
   })
   const category = createMemo(() => selection.value().category)
   const [input, setInput] = createSignal('1')
-  const from = () => selection.value().from
-  const to = () => selection.value().to
-  const options = createMemo(() =>
-    getUnits(category(), getLocale()).map((unit) => ({
-      label: SYMBOLS[unit.id] ?? unit.id,
-      value: unit.id,
-    })),
-  )
+  const from = createMemo(() => selection.value().from)
+  const to = createMemo(() => selection.value().to)
+  const options = createMemo(() => {
+    const visible = new Set([
+      ...getUnits(category(), getLocale()).map((unit) => unit.id),
+      from(),
+      to(),
+    ])
+    return getUnits(category(), 'ko')
+      .filter((unit) => visible.has(unit.id))
+      .map((unit) => ({label: SYMBOLS[unit.id] ?? unit.id, value: unit.id}))
+  })
   const source = () =>
     options().some((option) => option.value === from()) ? from() : options()[0].value
   const target = () =>

@@ -210,3 +210,131 @@ it('should reject writes before mount and tolerate unavailable or rejected persi
   )
   rejected.unmount()
 })
+
+it.each(['ftp://example.test/feed.xml', ''])(
+  'should clear only draft validation on changing the submitted input %j',
+  (url) => {
+    mocks.createRepository.mockReturnValue({list: () => [], save: vi.fn()})
+    const {controller, unmount} = mountController()
+    controller.onDraftUrlChange(url)
+    controller.onAdd()
+    const invalidMessage = controller.message()
+    expect(invalidMessage).toContain('HTTP')
+    controller.onDraftUrlChange(url)
+    expect(controller.message()).toBe(invalidMessage)
+    controller.onDraftUrlChange('https://valid.example.test/feed')
+    expect(controller.message()).toBeNull()
+    controller.onDraftUrlChange(url)
+    expect(controller.message()).toBeNull()
+    controller.onAdd()
+    expect(controller.message()).toBe(invalidMessage)
+    unmount()
+  },
+)
+
+it('should clear a draft duplicate error after a raw edit without changing stored canonical URLs', () => {
+  const save = vi.fn()
+  mocks.createRepository.mockReturnValue({list: () => [STORED_CONNECTION], save})
+  const {controller, unmount} = mountController()
+  controller.onDraftUrlChange(`${STORED_CONNECTION.url}/#fragment`)
+  controller.onAdd()
+  expect(controller.message()).toContain('이미')
+  controller.onDraftUrlChange(STORED_CONNECTION.url)
+  expect(controller.message()).toBeNull()
+  expect(controller.connections()).toEqual([STORED_CONNECTION])
+  expect(save).not.toHaveBeenCalled()
+  controller.onAdd()
+  expect(controller.message()).toContain('이미')
+  unmount()
+})
+
+it.each(['ftp://recommendation.example.test/feed', STORED_CONNECTION.url])(
+  'should preserve recommendation validation feedback when an unrelated draft changes: %s',
+  (url) => {
+    mocks.createRepository.mockReturnValue({list: () => [STORED_CONNECTION], save: vi.fn()})
+    const {controller, unmount} = mountController()
+    controller.onDraftUrlChange('ftp://draft.example.test/feed')
+    controller.onAdd()
+    expect(controller.onAddRecommendation(url)).toBe(false)
+    const recommendationMessage = controller.message()
+    expect(recommendationMessage).not.toBeNull()
+    controller.onDraftUrlChange('https://valid.example.test/feed')
+    expect(controller.message()).toBe(recommendationMessage)
+    unmount()
+  },
+)
+
+it.each(['load', 'save', 'not-ready'] as const)(
+  'should preserve %s storage feedback when the draft changes',
+  (failure) => {
+    vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    const save = vi.fn(() => {
+      throw new Error('save failed')
+    })
+    if (failure === 'load') {
+      mocks.createRepository.mockImplementationOnce(() => {
+        throw new Error('load failed')
+      })
+    } else {
+      mocks.createRepository.mockReturnValue({list: () => [], save})
+    }
+    const {controller, unmount} = mountController(
+      failure === 'not-ready'
+        ? (controller) => controller.onAddRecommendation('https://early.example.test/feed')
+        : undefined,
+    )
+    if (failure === 'save') {
+      controller.onDraftUrlChange('ftp://draft.example.test/feed')
+      controller.onAdd()
+      controller.onDraftUrlChange('https://valid.example.test/feed')
+      controller.onAdd()
+    }
+    const storageMessage = controller.message()
+    expect(storageMessage).toContain(
+      failure === 'load' ? '불러오지' : failure === 'save' ? '저장하지' : '준비되지',
+    )
+    controller.onDraftUrlChange('https://other.example.test/feed')
+    expect(controller.message()).toBe(storageMessage)
+    unmount()
+  },
+)
+
+it.each(['add', 'recommendation', 'delete', 'voice'] as const)(
+  'should preserve the latest %s success feedback when editing the draft',
+  (action) => {
+    mocks.createRepository.mockReturnValue({list: () => [STORED_CONNECTION], save: vi.fn()})
+    const {controller, unmount} = mountController()
+    controller.onDraftUrlChange('ftp://draft.example.test/feed')
+    controller.onAdd()
+    if (action === 'add') {
+      controller.onDraftUrlChange('https://valid.example.test/feed')
+      controller.onAdd()
+    } else if (action === 'recommendation') {
+      expect(controller.onAddRecommendation('https://recommended.example.test/feed')).toBe(true)
+    } else if (action === 'delete') {
+      controller.onDelete(STORED_CONNECTION.id)
+    } else {
+      controller.onVoiceChange(STORED_CONNECTION.id, 'Yuna')
+    }
+    const successMessage = controller.message()
+    expect(successMessage).toContain(
+      action === 'delete' ? '삭제' : action === 'voice' ? '음성' : '저장했어요',
+    )
+    controller.onDraftUrlChange('https://other.example.test/feed')
+    expect(controller.message()).toBe(successMessage)
+    unmount()
+  },
+)
+
+it('should replace recommendation feedback with a later draft validation owned by that draft', () => {
+  mocks.createRepository.mockReturnValue({list: () => [STORED_CONNECTION], save: vi.fn()})
+  const {controller, unmount} = mountController()
+  expect(controller.onAddRecommendation(STORED_CONNECTION.url)).toBe(false)
+  expect(controller.message()).toContain('이미')
+  controller.onDraftUrlChange('ftp://draft.example.test/feed')
+  controller.onAdd()
+  expect(controller.message()).toContain('HTTP')
+  controller.onDraftUrlChange('https://valid.example.test/feed')
+  expect(controller.message()).toBeNull()
+  unmount()
+})
