@@ -6,6 +6,9 @@ import type {Midi} from '@winter-love/tonejs-midi'
 import {MusicInfo} from 'src/components/midi-player/SFileItem'
 import {SampleStart} from './types'
 
+const IMPORT_ID_WORD_COUNT = 4
+const HEXADECIMAL_RADIX = 16
+
 export interface MidiFileInputOptions {
   maxFileSize?: number
   onAdd?: (value: MusicInfo[]) => void
@@ -43,7 +46,7 @@ export const useMidiFileInput = (
     }
 
     const samples: MusicInfo[] = midis
-      .map((midiFile, index): MusicInfo | null => {
+      .map((midiFile): MusicInfo | null => {
         if (!midiFile) {
           return null
         }
@@ -51,37 +54,21 @@ export const useMidiFileInput = (
         const {name, midi} = midiFile
         const {header} = midi
 
-        const midiData: SampleStart[][] = midi.tracks
-          .map((track) => {
-            const {notes, instrument: {family} = {}} = track
-
-            if (!notes || family !== 'piano') {
-              return null
-            }
-
-            return notes.map((note): SampleStart => {
-              return {
-                duration: note.duration,
-                note: note.name,
-                time: note.time,
-                velocity: note.velocity,
-              }
-            })
-          })
-          .filter(Boolean) as SampleStart[][]
-        let totalDuration = 0
-
-        for (const track of midiData) {
-          const lastNote = track.at(-1)
-
-          if (lastNote) {
-            const trackTotal = (lastNote.time ?? 0) + (lastNote.duration ?? 0)
-
-            if (trackTotal > totalDuration) {
-              totalDuration = trackTotal
-            }
-          }
-        }
+        const pianoTracks = midi.tracks.filter((track) => track.instrument.family === 'piano')
+        const midiData = pianoTracks.map((track) =>
+          track.notes.map(
+            (note): SampleStart => ({
+              duration: note.duration,
+              note: note.name,
+              time: note.time,
+              velocity: note.velocity,
+            }),
+          ),
+        )
+        const totalDuration = pianoTracks.reduce(
+          (duration, track) => Math.max(duration, track.duration),
+          0,
+        )
 
         const [singleTrack] = midi.tracks
 
@@ -92,8 +79,11 @@ export const useMidiFileInput = (
         return {
           ext: 'midi',
           header,
-          id: `${name}-${index}`,
-          midi: midiData.filter(Boolean) as SampleStart[][],
+          id: Array.from(
+            globalThis.crypto.getRandomValues(new Uint32Array(IMPORT_ID_WORD_COUNT)),
+            (value) => value.toString(HEXADECIMAL_RADIX),
+          ).join('-'),
+          midi: midiData,
           name: name.replace(/\.mid$/u, ''),
           totalDuration,
         }
