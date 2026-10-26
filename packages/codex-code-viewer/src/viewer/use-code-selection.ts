@@ -9,6 +9,7 @@ import type {
 } from './types'
 import {formatSelection} from './format-selection'
 import {addChatContext} from './add-chat-context'
+import {relativeWorkspacePath} from './relative-workspace-path'
 
 interface CodeSelectionOptions {
   onError: (error: unknown) => void
@@ -121,7 +122,7 @@ export const useCodeSelection = (options: CodeSelectionOptions) => {
     if (current?.document.media !== undefined && snapshot === undefined) {
       await sharePath({
         kind: 'file',
-        path: `${current.workspace}/${current.document.location.path}`,
+        path: `${current.workspace.replace(/\/$/u, '')}/${current.document.location.path}`,
       })
       return
     }
@@ -135,7 +136,7 @@ export const useCodeSelection = (options: CodeSelectionOptions) => {
               : '선택한 파일과 줄 정보를 다음 채팅 메시지에 추가했습니다.',
           onNotice: options.onNotice,
           port: options.port,
-          selection: {...selected, path: `${current.workspace}/${selected.path}`},
+          selection: selected,
         })
       } catch (error) {
         options.onError(error)
@@ -144,7 +145,8 @@ export const useCodeSelection = (options: CodeSelectionOptions) => {
   }
   const sharePath = async (selected: WorkspaceSelection): Promise<void> => {
     const workspace = options.workspace?.() ?? options.session()?.workspace
-    if (workspace === undefined || !selected.path.startsWith(`${workspace.replace(/\/$/u, '')}/`)) {
+    const path = workspace === undefined ? null : relativeWorkspacePath(workspace, selected.path)
+    if (path === null) {
       return
     }
     try {
@@ -155,7 +157,7 @@ export const useCodeSelection = (options: CodeSelectionOptions) => {
             : '폴더를 다음 채팅 메시지에 추가했습니다.',
         onNotice: options.onNotice,
         port: options.port,
-        selection: selected,
+        selection: {...selected, path: path === '' ? '.' : path},
       })
     } catch (error) {
       options.onError(error)
