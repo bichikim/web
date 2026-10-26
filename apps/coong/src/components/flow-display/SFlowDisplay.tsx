@@ -1,7 +1,7 @@
 import {ComponentProps, createEffect, createMemo, createSignal, Show, splitProps} from 'solid-js'
 import {cva} from 'class-variance-authority'
 import {getWindow, HUNDRED} from '@winter-love/utils'
-import {sx, useEvent, useStyles} from '@winter-love/solid-use'
+import {useEvent, useStyles} from '@winter-love/solid-use'
 
 export interface SFlowDisplayProps extends ComponentProps<'span'> {
   move?: boolean
@@ -19,22 +19,20 @@ const rootStyle = cva('relative block', {
 export const SFlowDisplay = (props: SFlowDisplayProps) => {
   const [element, setElement] = createSignal<HTMLSpanElement | null>(null)
   const [textElement, setTextElement] = createSignal<HTMLSpanElement | null>(null)
-  const [width, setWidth] = createSignal(0)
+  const [dimensions, setDimensions] = createSignal({parentWidth: 0, textWidth: 0})
   const [innerProps, restProps] = splitProps(props, ['move', 'class', 'speed', 'style'])
 
   const isMove = createMemo(() => {
-    const _move = innerProps.move
-    const _width = width()
-    const parentWidth = element()?.parentElement?.clientWidth ?? 0
+    const {parentWidth, textWidth} = dimensions()
 
-    return Boolean(_move && parentWidth < _width)
+    return Boolean(innerProps.move && parentWidth < textWidth)
   })
 
   const duration = createMemo(() => {
     const _move = isMove()
 
     if (_move) {
-      const _width = width()
+      const _width = dimensions().textWidth
 
       return (_width / HUNDRED) * (innerProps.speed ?? 1)
     }
@@ -42,14 +40,17 @@ export const SFlowDisplay = (props: SFlowDisplayProps) => {
     return 0
   })
 
-  /**
-   * set width after render
-   */
+  const measureDimensions = () => {
+    setDimensions({
+      parentWidth: element()?.parentElement?.clientWidth ?? 0,
+      textWidth: textElement()?.getBoundingClientRect().width ?? 0,
+    })
+  }
   createEffect(() => {
     const _move = innerProps.move
 
     if (_move) {
-      setWidth(textElement()?.getBoundingClientRect().width ?? 0)
+      measureDimensions()
     }
   })
 
@@ -61,13 +62,7 @@ export const SFlowDisplay = (props: SFlowDisplayProps) => {
     return null
   })
 
-  useEvent(
-    () => globalTarget(),
-    'resize',
-    () => {
-      setWidth(textElement()?.getBoundingClientRect().width ?? 0)
-    },
-  )
+  useEvent(() => globalTarget(), 'resize', measureDimensions)
 
   const style = useStyles(() => [
     {
