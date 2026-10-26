@@ -9,6 +9,30 @@ import {
   replaceUnrefinedSentences,
 } from '../index'
 
+const TITLES = [
+  'Dr',
+  'Mr',
+  'Mrs',
+  'Ms',
+  'Prof',
+  'Rev',
+  'Hon',
+  'Gov',
+  'Pres',
+  'Sen',
+  'Rep',
+  'Gen',
+  'Lt',
+  'Col',
+  'Capt',
+  'Sgt',
+  'St',
+  'Mt',
+  'Jr',
+  'Sr',
+  'vs',
+]
+
 describe('containsForeignCjk', () => {
   it('should detect Han and Japanese kana without flagging Korean or Latin names', () => {
     expect(containsForeignCjk('작은 성공一次次 쌓아 올려요.')).toBe(true)
@@ -32,6 +56,49 @@ describe('containsForeignCjk', () => {
 })
 
 describe('createKoreanTextSegments', () => {
+  it.each(TITLES)('should preserve the complete sentence after %s.', (title) => {
+    const text = `${title}. Kim은 회의에 참석했습니다.`
+    expect(createKoreanTextSegments(text)).toEqual([{kind: 'text', text}])
+  })
+
+  it.each(TITLES)(
+    'should pass %s. and its contaminated sentence together for refinement',
+    (title) => {
+      const text = `${title}. Smith은 人生입니다.`
+      expect(createKoreanTextSegments(text)).toEqual([{kind: 'refining', text}])
+    },
+  )
+
+  it.each(['prof', 'PROF', 'mRs', 'VS'])('should recognize title casing %s', (title) => {
+    const text = `${title}. Kim은 회의에 참석했습니다.`
+    expect(createKoreanTextSegments(text)).toEqual([{kind: 'text', text}])
+  })
+
+  it('should preserve surrounding sentence boundaries and exact input text', () => {
+    const text = '안녕하세요! Prof. Smith은 人生입니다. 다음 문장입니다?'
+    expect(createKoreanTextSegments(text)).toEqual([
+      {kind: 'text', text: '안녕하세요!'},
+      {kind: 'refining', text: ' Prof. Smith은 人生입니다.'},
+      {kind: 'text', text: ' 다음 문장입니다?'},
+    ])
+  })
+
+  it.each(['xProf', 'Professor', 'etc'])(
+    'should retain sentence boundaries after non-title %s',
+    (word) => {
+      expect(createKoreanTextSegments(`${word}. Kim입니다.`)).toEqual([
+        {kind: 'text', text: `${word}.`},
+        {kind: 'text', text: ' Kim입니다.'},
+      ])
+    },
+  )
+
+  it('should retain the boundary when a title is followed by a number', () => {
+    expect(createKoreanTextSegments('Prof. 123명입니다.')).toEqual([
+      {kind: 'text', text: 'Prof.'},
+      {kind: 'text', text: ' 123명입니다.'},
+    ])
+  })
   it('should conceal only the contaminated sentence', () => {
     expect(
       createKoreanTextSegments(
