@@ -1,9 +1,8 @@
 /** @vitest-environment node */
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 import {prepareImageModels} from '../prepare'
-import {createModelDownloadController} from '../../model-download/controller'
 vi.mock('../prepare', () => ({prepareImageModels: vi.fn()}))
-import {runImageGeneration} from '../client'
+import {type RunImageGenerationOptions, runImageGeneration} from '../client'
 
 const workers: Array<{
   onerror: ((event: {message: string}) => void) | null
@@ -31,7 +30,11 @@ beforeEach(() => {
 afterEach(() => vi.unstubAllGlobals())
 
 const options = () => ({
-  downloads: createModelDownloadController(),
+  downloads: {
+    cancel: vi.fn<RunImageGenerationOptions['downloads']['cancel']>(),
+    startImageModel: vi.fn<RunImageGenerationOptions['downloads']['startImageModel']>(),
+    startTextModel: vi.fn<RunImageGenerationOptions['downloads']['startTextModel']>(),
+  } satisfies RunImageGenerationOptions['downloads'],
   idea: '춤추는 햄버거',
   modelId: 'gemma-4-e2b' as const,
   onUpdate: vi.fn(),

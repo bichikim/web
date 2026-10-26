@@ -7,7 +7,7 @@ import {isTextModelDownloaded, type TextModelId} from '../text-generation'
 import type {ImageVariant} from './settings'
 
 export interface PrepareImageModelsOptions {
-  readonly downloads: ModelDownloadController
+  readonly downloads: Pick<ModelDownloadController, 'cancel' | 'startImageModel' | 'startTextModel'>
   readonly modelId: TextModelId
   readonly variant: ImageVariant
   readonly signal: AbortSignal
