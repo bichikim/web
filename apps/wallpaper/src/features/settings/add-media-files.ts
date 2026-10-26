@@ -1,10 +1,11 @@
-import type {BackgroundRepository} from '@winter-love/wallpaper/model'
+import type {MediaImportRepository} from '@winter-love/wallpaper/model'
 
-/** Imports nonempty photos and videos in selection order. */
+/** Imports nonempty photos and videos in selection order, returning new or reused media IDs. */
 export const addMediaFiles = async (
-  repository: BackgroundRepository,
+  repository: MediaImportRepository,
   files: readonly File[],
-): Promise<void> => {
+): Promise<readonly string[]> => {
+  const ids: string[] = []
   for (const file of files) {
     const kind = file.type.startsWith('image/')
       ? 'photo'
@@ -16,6 +17,7 @@ export const addMediaFiles = async (
     }
     // Each file is committed before inspecting the next to limit concurrent byte reads.
     // eslint-disable-next-line no-await-in-loop
-    await repository.add(file, kind)
+    ids.push(await repository.importMedia(file, kind))
   }
+  return ids
 }

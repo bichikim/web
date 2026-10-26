@@ -139,7 +139,7 @@ it('should distinguish preparing speech from playback and hide the indicator whe
     />
   ))
   expect(screen.getByRole('img', {name: '음성 모델 준비 중'})).toHaveAttribute('aria-busy', 'true')
-  expect(screen.getByRole('img').querySelectorAll('svg')).toHaveLength(2)
+  expect(screen.getByRole('img').querySelectorAll('svg')).toHaveLength(1)
   setStatus('generating')
   expect(screen.getByRole('img', {name: '음성 생성 중'})).toHaveAttribute('aria-busy', 'true')
   setStatus('buffering')
@@ -152,4 +152,62 @@ it('should distinguish preparing speech from playback and hide the indicator whe
   expect(screen.getByRole('img').querySelectorAll('svg')).toHaveLength(1)
   setStatus('idle')
   expect(screen.queryByRole('img')).not.toBeInTheDocument()
+})
+
+it('should open its chat by header double click or the open button while keeping other actions separate', async () => {
+  const open = vi.fn()
+  const select = vi.fn()
+  const dismiss = vi.fn()
+  render(() => (
+    <SCodexSpeech
+      activity={{
+        notificationId: 1,
+        phase: 'response',
+        receivedAt: 1,
+        sessionId: 'chat',
+        text: '본문',
+        tool: null,
+      }}
+      chatLabel="대화"
+      onOpen={open}
+      onSelect={select}
+      onDismiss={dismiss}
+    />
+  ))
+  const header = screen.getByRole('button', {name: '채팅 대화 선택'})
+  fireEvent.click(header)
+  expect(select).toHaveBeenCalledOnce()
+  expect(open).not.toHaveBeenCalled()
+  fireEvent.doubleClick(screen.getByText('본문'))
+  expect(open).not.toHaveBeenCalled()
+  fireEvent.doubleClick(header)
+  await Promise.resolve()
+  expect(open).toHaveBeenCalledExactlyOnceWith('chat')
+  fireEvent.click(screen.getByRole('button', {name: '대화 Codex에서 열기'}))
+  await Promise.resolve()
+  expect(open).toHaveBeenCalledTimes(2)
+  fireEvent.click(screen.getByRole('button', {name: '대화 알림 닫기'}))
+  expect(open).toHaveBeenCalledTimes(2)
+  expect(dismiss).toHaveBeenCalledOnce()
+})
+
+it('should report a failed chat opening once without retrying automatically', async () => {
+  const open = vi.fn().mockRejectedValue(new Error('unavailable'))
+  render(() => (
+    <SCodexSpeech
+      activity={{
+        notificationId: 1,
+        phase: 'working',
+        receivedAt: 1,
+        sessionId: 'chat',
+        text: '본문',
+        tool: null,
+      }}
+      onOpen={open}
+    />
+  ))
+  fireEvent.click(screen.getByRole('button', {name: 'Codex Codex에서 열기'}))
+  await Promise.resolve()
+  expect(screen.getByRole('alert')).toHaveTextContent('Codex에서 대화를 열지 못했어요.')
+  expect(open).toHaveBeenCalledOnce()
 })
