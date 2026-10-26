@@ -1,6 +1,6 @@
 import {describe, expect, it} from 'vitest'
 
-import {getWindowedRms} from '..'
+import {getWindowedRms} from '../get-windowed-rms'
 
 describe('getWindowedRms', () => {
   it('should reduce overlapping windows and divide clipped tails by their available count', () => {

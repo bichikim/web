@@ -1,5 +1,7 @@
 import {sumBy} from 'es-toolkit/math'
 
+export {getWindowedRms, type GetWindowedRmsOptions} from './get-windowed-rms'
+
 export const P_VISEMES = ['rest', 'closed', 'open', 'wide', 'round', 'narrow'] as const
 export const P_VISEME_COARTICULATION_MS = 50
 

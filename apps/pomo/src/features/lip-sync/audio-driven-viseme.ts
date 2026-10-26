@@ -2,7 +2,7 @@ import {clamp} from 'es-toolkit/math'
 import {exponentialApproachFactor} from 'src/utils/exponential-approach-factor'
 import {decodePcm16Wav} from 'src/utils/decode-pcm16-wav'
 import {clampUnit} from 'src/utils/clamp-unit'
-import {getWindowedRms} from 'src/utils/get-windowed-rms'
+import {getWindowedRms} from './get-windowed-rms'
 
 import type {PViseme} from './index'
 
