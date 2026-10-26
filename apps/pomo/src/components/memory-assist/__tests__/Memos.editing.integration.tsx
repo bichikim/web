@@ -61,7 +61,7 @@ afterEach(async () => {
   sessionStorage.clear()
 })
 
-const startPendingEdit = async () => {
+const startPendingEdit = async (beforeSave?: () => void) => {
   const pending = Promise.withResolvers<void>()
   completeWrite = pending.resolve
   setItem.mockImplementationOnce(async (_key: string, value: string) => {
@@ -73,6 +73,7 @@ const startPendingEdit = async () => {
   fireEvent.input(screen.getByRole('textbox', {name: '기억할 메모'}), {
     target: {value: savedText},
   })
+  beforeSave?.()
   fireEvent.click(screen.getByRole('button', {name: '변경 저장'}))
   await waitFor(() => expect(setItem).toHaveBeenCalledOnce())
   expect(setItem.mock.calls[0]?.[0]).toBe(MEMORY_MEMOS_STORAGE_KEY)
@@ -149,6 +150,41 @@ it('should retain reminder changes made during a pending native save', async () 
   expect(screen.getByRole('switch', {name: '날짜와 시간에 알려주기'})).toBeChecked()
   expect(screen.getByRole('textbox', {name: '기억할 메모'})).toHaveValue(savedText)
   expect(JSON.parse(nativeValue)).toMatchObject([{exactReminderAt: null, text: savedText}])
+})
+
+it('should allow saving a reminder reverted to its original settings during the previous save', async () => {
+  const pending = await startPendingEdit(() => {
+    fireEvent.click(screen.getByRole('switch', {name: '날짜와 시간에 알려주기'}))
+  })
+  fireEvent.click(screen.getByRole('switch', {name: '날짜와 시간에 알려주기'}))
+  pending.resolve()
+
+  await waitFor(() => expect(screen.getByRole('button', {name: '변경 저장'})).toBeEnabled())
+  expect(screen.getByRole('switch', {name: '날짜와 시간에 알려주기'})).not.toBeChecked()
+  expect(JSON.parse(nativeValue)[0].exactReminderAt).not.toBeNull()
+  fireEvent.click(screen.getByRole('button', {name: '변경 저장'}))
+  await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
+  expect(JSON.parse(nativeValue)).toMatchObject([{exactReminderAt: null, text: savedText}])
+})
+
+it('should keep a reminder-only edit savable when its native write fails', async () => {
+  vi.spyOn(console, 'error').mockImplementation(() => undefined)
+  const pending = await startPendingEdit(() => {
+    fireEvent.input(screen.getByRole('textbox', {name: '기억할 메모'}), {
+      target: {value: initialText},
+    })
+    fireEvent.click(screen.getByRole('switch', {name: '날짜와 시간에 알려주기'}))
+  })
+  pending.reject(new Error('native write failed'))
+
+  await waitFor(() =>
+    expect(screen.getByRole('status')).toHaveTextContent('메모를 수정하지 못했어요.'),
+  )
+  expect(screen.getByRole('button', {name: '변경 저장'})).toBeEnabled()
+  expect(JSON.parse(nativeValue)).toMatchObject([{exactReminderAt: null, text: initialText}])
+  fireEvent.click(screen.getByRole('button', {name: '변경 저장'}))
+  await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
+  expect(JSON.parse(nativeValue)[0].exactReminderAt).not.toBeNull()
 })
 
 it('should close an unchanged editing session only after its native write completes', async () => {

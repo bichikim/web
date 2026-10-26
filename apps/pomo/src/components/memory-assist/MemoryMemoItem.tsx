@@ -106,6 +106,10 @@ export const MemoryMemoItem = (props: MemoryMemoItemProps) => {
       text: draft(),
     })
 
+    if (errorMessage === null) {
+      setOriginalReminderDraft(currentReminderDraft)
+    }
+
     if (savedRevision !== draftRevision) {
       return
     }
