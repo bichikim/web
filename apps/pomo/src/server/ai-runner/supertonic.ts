@@ -9,6 +9,7 @@ import {clampUnit} from '../../utils/clamp-unit/index.ts'
 // oxlint-disable max-params -- The tensor generation function maps the model's explicit inputs.
 // oxlint-disable no-void -- Cache options are intentionally accepted by the shared executor factory.
 import {z} from 'zod'
+import {FULL_MODEL_BASE_URL, INT8_MODEL_BASE_URL} from '@winter-love/supertonic/model'
 
 import {RunnerExecutionError} from './errors.ts'
 import {createWaveBuffer} from './audio.ts'
@@ -66,20 +67,15 @@ interface SupertonicProfile {
   >
 }
 
-const MODEL_STORAGE_URL = 'https://storage.pomofi.io/models'
-const FULL_REVISION = '3cadd1e'
-const INT8_REVISION = 'cca5a0e6c96e1d2c720986bf7e75fcc81dee3ae4'
-const FULL_BASE_URL = `${MODEL_STORAGE_URL}/supertonic-3/${FULL_REVISION}`
-const INT8_BASE_URL = `${MODEL_STORAGE_URL}/supertonic-3-int8/${INT8_REVISION}`
-const SUPERTONIC_CONFIG_URL = `${FULL_BASE_URL}/onnx/tts.json`
-const SUPERTONIC_INDEXER_URL = `${FULL_BASE_URL}/onnx/unicode_indexer.json`
+const SUPERTONIC_CONFIG_URL = `${FULL_MODEL_BASE_URL}/onnx/tts.json`
+const SUPERTONIC_INDEXER_URL = `${FULL_MODEL_BASE_URL}/onnx/unicode_indexer.json`
 const SUPERTONIC_RECOMMENDED_TEXT_LENGTH = 150
 const SUPERTONIC_MAXIMUM_TEXT_LENGTH = 200
 const SUPERTONIC_SILENCE_SECONDS = 0.3
 
 const PROFILES: Readonly<Record<'supertonic-full' | 'supertonic-int8', SupertonicProfile>> = {
   'supertonic-full': {
-    baseUrl: FULL_BASE_URL,
+    baseUrl: FULL_MODEL_BASE_URL,
     files: {
       durationPredictor: 'onnx/duration_predictor.onnx',
       textEncoder: 'onnx/text_encoder.onnx',
@@ -88,7 +84,7 @@ const PROFILES: Readonly<Record<'supertonic-full' | 'supertonic-int8', Supertoni
     },
   },
   'supertonic-int8': {
-    baseUrl: INT8_BASE_URL,
+    baseUrl: INT8_MODEL_BASE_URL,
     files: {
       durationPredictor: 'duration_predictor.int8.onnx',
       textEncoder: 'text_encoder.int8.onnx',
@@ -422,7 +418,7 @@ export const createSupertonicExecutor = () => {
     }
     const state = await getState(modelId, context)
     const voiceValue = await fetchJson(
-      `${FULL_BASE_URL}/voice-styles/${voiceName}.json`,
+      `${FULL_MODEL_BASE_URL}/voice-styles/${voiceName}.json`,
       context.signal,
     )
     const voice = createVoice(state.runtime, voiceValue)
