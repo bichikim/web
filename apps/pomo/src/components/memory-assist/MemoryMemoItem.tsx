@@ -1,6 +1,6 @@
 import {formatMediumDateTime} from 'src/utils/format-medium-date-time'
 import {cx} from 'class-variance-authority'
-import {createMemo, createSignal, Show, untrack} from 'solid-js'
+import {createMemo, createSignal, onCleanup, Show, untrack} from 'solid-js'
 
 import * as m from '@paraglide/message'
 import {getLocale} from '@paraglide/runtime'
@@ -46,6 +46,10 @@ export const MemoryMemoItem = (props: MemoryMemoItemProps) => {
   const [reminderDraft, setReminderDraft] = createSignal(initialReminderDraft)
   const [originalReminderDraft, setOriginalReminderDraft] = createSignal(initialReminderDraft)
   const [triggerElement, setTriggerElement] = createSignal<HTMLButtonElement | null>(null)
+  let draftRevision = 0
+  onCleanup(() => {
+    draftRevision += 1
+  })
   const canSave = createMemo(() => {
     const nextText = draft().trim()
     return (
@@ -56,6 +60,7 @@ export const MemoryMemoItem = (props: MemoryMemoItemProps) => {
   })
 
   const handleStartEdit = (source: HTMLButtonElement) => {
+    draftRevision += 1
     const now = new Date()
     const nextReminderDraft = createStoredReminderDraft(props.memo, now)
     props.onEditStart()
@@ -68,10 +73,17 @@ export const MemoryMemoItem = (props: MemoryMemoItemProps) => {
   }
 
   const handleReminderChange = (nextReminderDraft: ReminderDraft) => {
+    draftRevision += 1
     setReminderDraft(nextReminderDraft)
   }
 
+  const handleTextInput = (text: string) => {
+    draftRevision += 1
+    setDraft(text)
+  }
+
   const handleOpenChange = (isOpen: boolean) => {
+    draftRevision += 1
     if (!isOpen) {
       setDraft(props.memo.text)
       setReminderDraft(originalReminderDraft())
@@ -85,6 +97,7 @@ export const MemoryMemoItem = (props: MemoryMemoItemProps) => {
       return
     }
 
+    const savedRevision = draftRevision
     const currentReminderDraft = reminderDraft()
     const now = new Date()
     const errorMessage = await props.onSave(props.memo, {
@@ -92,6 +105,10 @@ export const MemoryMemoItem = (props: MemoryMemoItemProps) => {
       exactEnabled: currentReminderDraft.exactEnabled,
       text: draft(),
     })
+
+    if (savedRevision !== draftRevision) {
+      return
+    }
 
     if (errorMessage !== null) {
       setMessage(errorMessage)
@@ -134,7 +151,7 @@ export const MemoryMemoItem = (props: MemoryMemoItemProps) => {
         onOpenChange={handleOpenChange}
         onReminderChange={handleReminderChange}
         onSave={handleSave}
-        onTextInput={setDraft}
+        onTextInput={handleTextInput}
         reminderDraft={reminderDraft}
         saveLabel={m.memory_memo_edit_save()}
         text={draft}
