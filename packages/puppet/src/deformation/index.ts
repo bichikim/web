@@ -1,5 +1,7 @@
 export * from './binding'
+export * from './compose-render-scene'
 export * from './composition'
+export * from './create-deformer-sampler'
 export * from './draw-order'
 export * from './get-direct-glue-ids'
 export * from './glue'

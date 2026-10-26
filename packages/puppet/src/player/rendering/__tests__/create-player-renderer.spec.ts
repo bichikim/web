@@ -3,18 +3,21 @@ import {Application, Container, MeshSimple, Texture} from 'pixi.js'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 import {createEmptyDocument} from '../../create-empty-document'
 import {createPlayerRenderer} from '../create-player-renderer'
+import type {PlayerRendererPreference} from '../../rendering-options'
 
 vi.mock('pixi.js', () => ({
   Application: vi.fn(),
   Container: vi.fn(),
   MeshSimple: vi.fn(),
   Texture: {from: vi.fn()},
+  UPDATE_PRIORITY: {LOW: 0},
 }))
 
 const application = {
   destroy: vi.fn(),
   init: vi.fn().mockResolvedValue(undefined),
   render: vi.fn(),
+  renderer: {resetState: vi.fn(), resolution: 1},
   resize: vi.fn(),
   screen: {height: 100, width: 100},
   stage: {addChild: vi.fn()},
@@ -43,6 +46,51 @@ afterEach(() => {
 })
 
 describe('createPlayerRenderer', () => {
+  test('should only share graphics state while the optional external renderer is active', async () => {
+    let active = false
+    const onBeforeRender = vi.fn()
+    const onAfterRender = vi.fn()
+    const instance = await createPlayerRenderer({
+      canvas: document.createElement('canvas'),
+      document: createEmptyDocument(),
+      externalRendering: () => active,
+      onAfterRender,
+      onBeforeRender,
+    })
+    instance.redraw()
+    expect(onBeforeRender).not.toHaveBeenCalled()
+    expect(onAfterRender).not.toHaveBeenCalled()
+    expect(application.renderer.resetState).not.toHaveBeenCalled()
+    active = true
+    instance.redraw()
+    expect(onBeforeRender).toHaveBeenCalledOnce()
+    expect(onAfterRender).toHaveBeenCalledOnce()
+    expect(application.renderer.resetState).toHaveBeenCalledTimes(2)
+    active = false
+    instance.redraw()
+    expect(application.renderer.resetState).toHaveBeenCalledTimes(2)
+    instance.destroy()
+  })
+  test.each<{renderer: PlayerRendererPreference; preference: string[]}>([
+    {preference: ['webgl', 'webgpu'], renderer: 'auto'},
+    {preference: ['webgl'], renderer: 'webgl'},
+    {preference: ['webgpu'], renderer: 'webgpu'},
+  ])(
+    'should honor the requested backend without falling back from explicit $renderer',
+    async ({renderer, preference}) => {
+      const instance = await createPlayerRenderer({
+        antialiasing: 'ssaa',
+        canvas: document.createElement('canvas'),
+        document: createEmptyDocument(),
+        onAfterRender: vi.fn(),
+        renderer,
+      })
+      expect(application.init).toHaveBeenCalledExactlyOnceWith(
+        expect.objectContaining({antialias: false, preference}),
+      )
+      instance.destroy()
+    },
+  )
   test('should release decoded textures and application resources when one texture fails', async () => {
     const failure = new Error('Texture decode failed')
     const texture = {destroy: vi.fn()}

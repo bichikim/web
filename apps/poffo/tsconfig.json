@@ -1,0 +1,10 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "types": ["vite/client", "@testing-library/jest-dom"],
+    "isolatedModules": true,
+    "moduleDetection": "force",
+    "noImplicitAny": true
+  },
+  "include": ["src", "vite.config.ts", "uno.config.ts"]
+}

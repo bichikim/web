@@ -1,13 +1,16 @@
 import {Dialog} from '@kobalte/core/dialog'
-import {For, Show} from 'solid-js'
+import {type Accessor, For, Show} from 'solid-js'
 import {EditorButton, useEditorPortalMount} from '../../design-system'
+import type {ModelCommandResult} from '../model'
 import type {PuppetDocument} from '../../player'
 import type {DocumentRecovery} from '../document-recovery'
 import {useDocumentRecovery} from '../use-document-recovery'
 
 interface DocumentRecoveryDialogProps {
   readonly recovery: DocumentRecovery
-  readonly onRestore: (document: PuppetDocument) => void
+  /** Current shared-model revision; omitted when the host performs its own conflict check. */
+  readonly revision?: Accessor<number>
+  readonly onRestore: (document: PuppetDocument) => ModelCommandResult
   readonly onClose: () => void
   readonly onReturnFocus: () => void
 }

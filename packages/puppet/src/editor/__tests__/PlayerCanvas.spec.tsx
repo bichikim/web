@@ -6,7 +6,12 @@ import {render, waitFor} from '@solidjs/testing-library'
 import {batch, createSignal} from 'solid-js'
 import {afterEach, describe, expect, test, vi} from 'vitest'
 
-import {createDemoDocument, type Player, type PuppetDocument} from '../../player'
+import {
+  createDemoDocument,
+  type Player,
+  type PlayerRendererPreference,
+  type PuppetDocument,
+} from '../../player'
 import {PlayerCanvas} from '../PlayerCanvas'
 import type {SpatialThreeSurface} from '../internal/spatial-three-overlay'
 
@@ -41,6 +46,230 @@ afterEach(() => {
 })
 
 describe('PlayerCanvas', () => {
+  test('should recover a failed first initialization when the rendering preference changes', async () => {
+    const model = createDemoDocument()
+    const [renderer, setRenderer] = createSignal<PlayerRendererPreference>('webgpu')
+    const onStatusChange = vi.fn()
+    mocks.createPlayer.mockRejectedValueOnce(new Error('WebGPU unavailable'))
+    const view = render(() => (
+      <PlayerCanvas document={model} renderer={renderer()} onStatusChange={onStatusChange} />
+    ))
+    await waitFor(() => expect(view.getByText('WebGPU unavailable')).toBeVisible())
+    expect(mocks.createPlayer).toHaveBeenCalledOnce()
+    setRenderer('webgl')
+    await waitFor(() => expect(onStatusChange).toHaveBeenLastCalledWith('ready'))
+    expect(mocks.createPlayer).toHaveBeenCalledTimes(2)
+    expect(mocks.createPlayer).toHaveBeenLastCalledWith(
+      expect.objectContaining({document: model, renderer: 'webgl'}),
+    )
+    expect(view.queryByText('WebGPU unavailable')).not.toBeInTheDocument()
+  })
+
+  test('should retry the latest preference when a pending first initialization fails', async () => {
+    const model = createDemoDocument()
+    const [renderer, setRenderer] = createSignal<PlayerRendererPreference>('webgpu')
+    const onStatusChange = vi.fn()
+    let fail: (reason: Error) => void = () => undefined
+    mocks.createPlayer.mockReturnValueOnce(
+      new Promise<Player>((_, reject) => {
+        fail = reject
+      }),
+    )
+    const view = render(() => (
+      <PlayerCanvas document={model} renderer={renderer()} onStatusChange={onStatusChange} />
+    ))
+    await waitFor(() => expect(mocks.createPlayer).toHaveBeenCalledOnce())
+    setRenderer('webgl')
+    fail(new Error('Obsolete GPU failure'))
+    await waitFor(() => expect(onStatusChange).toHaveBeenLastCalledWith('ready'))
+    expect(mocks.createPlayer).toHaveBeenCalledTimes(2)
+    expect(mocks.createPlayer).toHaveBeenLastCalledWith(
+      expect.objectContaining({renderer: 'webgl'}),
+    )
+    expect(onStatusChange).not.toHaveBeenCalledWith('error')
+    expect(view.queryByText('Obsolete GPU failure')).not.toBeInTheDocument()
+  })
+
+  test('should retry the latest document when its previous initialization fails', async () => {
+    const initial = createDemoDocument()
+    const latest = {...initial, viewport: {height: 400, width: 400}}
+    const [model, setModel] = createSignal(initial)
+    const onStatusChange = vi.fn()
+    let fail: (reason: Error) => void = () => undefined
+    mocks.createPlayer.mockReturnValueOnce(
+      new Promise<Player>((_, reject) => {
+        fail = reject
+      }),
+    )
+    render(() => <PlayerCanvas document={model()} onStatusChange={onStatusChange} />)
+    await waitFor(() => expect(mocks.createPlayer).toHaveBeenCalledOnce())
+    setModel(latest)
+    fail(new Error('Obsolete document failure'))
+    await waitFor(() => expect(onStatusChange).toHaveBeenLastCalledWith('ready'))
+    expect(mocks.createPlayer).toHaveBeenCalledTimes(2)
+    expect(mocks.createPlayer).toHaveBeenLastCalledWith(expect.objectContaining({document: latest}))
+    expect(onStatusChange).not.toHaveBeenCalledWith('error')
+  })
+
+  test('should show an applied canvas when the next requested configuration fails', async () => {
+    const [renderer, setRenderer] = createSignal<PlayerRendererPreference>('webgl')
+    let complete: (result: 'applied') => void = () => undefined
+    const first = new Promise<'applied'>((resolve) => {
+      complete = resolve
+    })
+    const configureRenderer = vi
+      .fn()
+      .mockReturnValueOnce(first)
+      .mockRejectedValueOnce(new Error('Unavailable'))
+    const info = {antialiasing: 'msaa' as const, renderer: 'webgl' as 'webgl' | 'webgpu'}
+    const onRenderingError = vi.fn()
+    mocks.createPlayer.mockResolvedValueOnce({
+      ...player,
+      configureRenderer,
+      getRenderingInfo: () => info,
+    })
+    const view = render(() => (
+      <PlayerCanvas
+        document={createDemoDocument()}
+        renderer={renderer()}
+        onRenderingError={onRenderingError}
+      />
+    ))
+    await waitFor(() => expect(mocks.createPlayer).toHaveBeenCalledOnce())
+    await Promise.resolve()
+    setRenderer('webgpu')
+    await waitFor(() => expect(configureRenderer).toHaveBeenCalledOnce())
+    const applied = configureRenderer.mock.calls[0]![0].canvas
+    info.renderer = 'webgpu'
+    complete('applied')
+    setRenderer('webgl')
+    await waitFor(() => expect(onRenderingError).toHaveBeenCalledWith('Unavailable'))
+    expect(view.getByLabelText('모델 뷰어')).toBe(applied)
+  })
+  test('should not configure a new compatible player because an old player still has pending work', async () => {
+    const [renderer, setRenderer] = createSignal<PlayerRendererPreference>('webgl')
+    const [model, setModel] = createSignal(createDemoDocument())
+    let complete: (result: 'destroyed') => void = () => undefined
+    const pending = new Promise<'destroyed'>((resolve) => {
+      complete = resolve
+    })
+    const configurePrevious = vi.fn(() => pending)
+    const configureNext = vi.fn(async () => 'applied' as const)
+    mocks.createPlayer
+      .mockResolvedValueOnce({
+        ...player,
+        configureRenderer: configurePrevious,
+        updateDocument: vi.fn(() => false),
+      })
+      .mockResolvedValueOnce({
+        ...player,
+        configureRenderer: configureNext,
+        getRenderingInfo: () => ({antialiasing: 'msaa', renderer: 'webgpu'}),
+      })
+    render(() => <PlayerCanvas document={model()} renderer={renderer()} />)
+    await waitFor(() => expect(player.getRenderingInfo).toHaveBeenCalled())
+    setRenderer('webgpu')
+    await waitFor(() => expect(configurePrevious).toHaveBeenCalledOnce())
+    setModel(createDemoDocument())
+    await waitFor(() => expect(mocks.createPlayer).toHaveBeenCalledTimes(2))
+    await Promise.resolve()
+    expect(configureNext).not.toHaveBeenCalled()
+    complete('destroyed')
+    await pending
+  })
+  test('should supersede a pending backend request when returning to the current backend', async () => {
+    const [renderer, setRenderer] = createSignal<PlayerRendererPreference>('webgl')
+    let complete: (result: 'superseded') => void = () => undefined
+    const pending = new Promise<'superseded'>((resolve) => {
+      complete = resolve
+    })
+    const configureRenderer = vi.fn().mockReturnValueOnce(pending).mockResolvedValueOnce('applied')
+    mocks.createPlayer.mockResolvedValueOnce({...player, configureRenderer})
+    const view = render(() => (
+      <PlayerCanvas document={createDemoDocument()} renderer={renderer()} />
+    ))
+    await waitFor(() => expect(player.getRenderingInfo).toHaveBeenCalled())
+    setRenderer('webgpu')
+    await waitFor(() => expect(configureRenderer).toHaveBeenCalledOnce())
+    const obsolete = configureRenderer.mock.calls[0]![0].canvas
+    setRenderer('webgl')
+    await waitFor(() => expect(configureRenderer).toHaveBeenCalledTimes(2))
+    const latest = configureRenderer.mock.calls[1]![0].canvas
+    complete('superseded')
+    await pending
+    await waitFor(() => expect(view.getByLabelText('모델 뷰어')).toBe(latest))
+    expect(obsolete.isConnected).toBe(false)
+    expect(mocks.createPlayer).toHaveBeenCalledOnce()
+  })
+  test('should change rendering resources without replacing the player or document', async () => {
+    const [renderer, setRenderer] = createSignal<PlayerRendererPreference>('webgl')
+    const configureRenderer = vi.fn(async () => 'applied' as const)
+    const retained = {...player, configureRenderer, destroy: vi.fn()}
+    mocks.createPlayer.mockResolvedValueOnce(retained)
+    const model = createDemoDocument()
+    const view = render(() => <PlayerCanvas document={model} renderer={renderer()} />)
+    await waitFor(() => expect(view.getByLabelText('모델 뷰어')).toBeInTheDocument())
+    await waitFor(() => expect(retained.getRenderingInfo).toHaveBeenCalled())
+    const canvas = view.getByLabelText('모델 뷰어')
+    setRenderer('webgpu')
+    await waitFor(() => expect(configureRenderer).toHaveBeenCalledOnce())
+    await waitFor(() => expect(view.getByLabelText('모델 뷰어')).not.toBe(canvas))
+    expect(mocks.createPlayer).toHaveBeenCalledOnce()
+    expect(mocks.updateDocument).not.toHaveBeenCalled()
+    expect(retained.destroy).not.toHaveBeenCalled()
+    expect(retained.seek).not.toHaveBeenCalled()
+  })
+
+  test('should use WebGL for spatial editing and restore the requested WebGPU renderer afterwards', async () => {
+    const model = createDemoDocument()
+    const [surface, setSurface] = createSignal<SpatialThreeSurface>()
+    const info = {antialiasing: 'msaa' as const, renderer: 'webgpu' as 'webgpu' | 'webgl'}
+    const configureRenderer = vi.fn(async (options) => {
+      info.renderer = options.renderer
+      return 'applied' as const
+    })
+    mocks.createPlayer.mockResolvedValueOnce({
+      ...player,
+      configureRenderer,
+      getRenderingInfo: () => info,
+    })
+    render(() => <PlayerCanvas document={model} renderer="webgpu" spatialSurface={surface()} />)
+    await waitFor(() => expect(mocks.createPlayer).toHaveBeenCalledOnce())
+    await Promise.resolve()
+    setSurface({document: model, node: {} as SpatialThreeSurface['node']})
+    await waitFor(() =>
+      expect(configureRenderer).toHaveBeenCalledWith(expect.objectContaining({renderer: 'webgl'})),
+    )
+    await waitFor(() => expect(mocks.createSpatialThreeOverlay).toHaveBeenCalledOnce())
+    setSurface(undefined)
+    await waitFor(() =>
+      expect(configureRenderer).toHaveBeenLastCalledWith(
+        expect.objectContaining({renderer: 'webgpu'}),
+      ),
+    )
+    expect(mocks.createPlayer).toHaveBeenCalledOnce()
+  })
+
+  test('should keep the existing canvas and report a renderer initialization failure', async () => {
+    const [renderer, setRenderer] = createSignal<PlayerRendererPreference>('webgl')
+    const failure = new Error('WebGPU unavailable')
+    const configureRenderer = vi.fn(() => Promise.reject(failure))
+    const onRenderingError = vi.fn()
+    mocks.createPlayer.mockResolvedValueOnce({...player, configureRenderer})
+    const view = render(() => (
+      <PlayerCanvas
+        document={createDemoDocument()}
+        renderer={renderer()}
+        onRenderingError={onRenderingError}
+      />
+    ))
+    await waitFor(() => expect(player.getRenderingInfo).toHaveBeenCalled())
+    const canvas = view.getByLabelText('모델 뷰어')
+    setRenderer('webgpu')
+    await waitFor(() => expect(onRenderingError).toHaveBeenCalledExactlyOnceWith(failure.message))
+    expect(view.getByLabelText('모델 뷰어')).toBe(canvas)
+  })
+
   test('should keep consumer signal reads outside player effects', async () => {
     const document = createDemoDocument()
     const [external, setExternal] = createSignal(0)
@@ -210,7 +439,8 @@ describe('PlayerCanvas', () => {
     )
     mocks.createPlayer.mockResolvedValueOnce(resizePlayer)
     const view = render(() => <PlayerCanvas document={createDemoDocument()} />)
-    await waitFor(() => expect(mocks.createPlayer).toHaveBeenCalledOnce())
+    await waitFor(() => expect(resizePlayer.resize).toHaveBeenCalledOnce())
+    vi.mocked(resizePlayer.resize).mockClear()
     vi.useFakeTimers()
 
     resizeCallback?.([], {} as ResizeObserver)
@@ -271,6 +501,31 @@ test('should bound a large document backing buffer on a Retina display', async (
   const options = mocks.createPlayer.mock.calls[0]?.[0]
   expect(options.resolution * 7100 * 1.5).toBeCloseTo(4096)
   expect(options.document.viewport).toEqual({height: 7100, width: 4000})
+})
+
+test('should match display density when fitting and zooming without replacing the player', async () => {
+  vi.stubGlobal('devicePixelRatio', 2)
+  const document = {...createDemoDocument(), viewport: {height: 6000, width: 4800}}
+  const [scale, setScale] = createSignal(0.1)
+  render(() => <PlayerCanvas document={document} renderScale={scale()} />)
+  await waitFor(() => expect(mocks.createPlayer).toHaveBeenCalledOnce())
+  expect(mocks.createPlayer.mock.calls[0]?.[0].resolution).toBeCloseTo(0.2)
+  await waitFor(() => expect(player.resize).toHaveBeenCalledWith(0.2))
+  setScale(0.2)
+  expect(player.resize).toHaveBeenLastCalledWith(0.4)
+  setScale(1)
+  expect(player.resize).toHaveBeenLastCalledWith(4096 / 9000)
+  setScale(0.1)
+  expect(player.resize).toHaveBeenLastCalledWith(0.2)
+  expect(mocks.createPlayer).toHaveBeenCalledOnce()
+})
+
+test('should retain filter detail on a standard-density display', async () => {
+  vi.stubGlobal('devicePixelRatio', 1)
+  const document = {...createDemoDocument(), viewport: {height: 6000, width: 4800}}
+  render(() => <PlayerCanvas document={document} renderScale={0.1} />)
+  await waitFor(() => expect(mocks.createPlayer).toHaveBeenCalledOnce())
+  expect(mocks.createPlayer.mock.calls[0]?.[0].resolution).toBeCloseTo(0.2)
 })
 
 test('should apply a document and parameter change together without rendering the old document first', async () => {

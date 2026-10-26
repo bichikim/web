@@ -84,6 +84,7 @@ describe('createPlayer', () => {
     }
     const root = {
       addChild: vi.fn(),
+      children: [],
       position: {set: vi.fn()},
       scale: {set: vi.fn()},
     }
@@ -235,6 +236,7 @@ describe('createPlayer', () => {
         constructor() {
           const container = {
             addChild: vi.fn(),
+            children: [],
             destroy: vi.fn(),
             position: createTransformPoint(0),
             scale: createTransformPoint(1),
@@ -291,7 +293,7 @@ describe('createPlayer', () => {
     mocks.Sprite.mockImplementation(
       class {
         destroy = vi.fn()
-        position = {set: vi.fn()}
+        position = {copyFrom: vi.fn(), set: vi.fn()}
         texture: unknown
         constructor(texture: unknown) {
           this.texture = texture
@@ -414,7 +416,10 @@ describe('createPlayer', () => {
     const passes = application.renderer.render.mock.calls.length
     player.seek(0)
     expect(textures.map((texture) => texture.resize.mock.calls.length)).toEqual(allocations)
-    expect(application.renderer.render.mock.calls.length - passes).toBe(3)
+    expect(application.renderer.render.mock.calls.length - passes).toBe(2)
+    expect(mocks.Sprite.mock.results[1]?.value.texture).toBe(
+      mocks.Sprite.mock.results[0]?.value.texture,
+    )
 
     player.setParameterValues({'angle-x': -15, 'angle-y': 0})
     expect(styledMesh.alpha).toBe(0.25)

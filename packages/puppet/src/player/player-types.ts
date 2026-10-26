@@ -11,8 +11,17 @@ import type {PuppetParameterBlend} from './parameter-blends'
 import type {PuppetPhysicsOptions} from './physics-options'
 import type {MotionEvent, MotionPlayback, MotionPlaybackOptions} from './playback'
 import type {PlayerViewCamera} from './view-camera'
+import type {
+  PlayerRendererChange,
+  PlayerRendererConfiguration,
+  PlayerRenderingInfo,
+  PlayerRenderingOptions,
+} from './rendering-options'
 
 export interface Player {
+  /** Replaces only GPU resources; playback, physics, overrides and the document are retained. */
+  configureRenderer(options: PlayerRendererConfiguration): Promise<PlayerRendererChange>
+  getRenderingInfo(): PlayerRenderingInfo
   /** Releases external overrides; omitted IDs release all overrides. */
   clearParameterValues(parameterIds?: ReadonlyArray<string>): void
   destroy(): void
@@ -31,7 +40,8 @@ export interface Player {
   /** Plays a random motion of `group` (Cubism's random motion); returns its ID. */
   playGroup(group: string, options?: PlayerPlaybackOptions): string | undefined
   redraw(): void
-  resize(): void
+  /** Resizes to the host; a positive finite resolution also updates backing pixels per CSS pixel. */
+  resize(resolution?: number): void
   /** Pins the specified parameters to their defaults; omitted IDs reset all parameters. */
   resetParameters(parameterIds?: ReadonlyArray<string>): void
   /** Removes inertia at the current input pose without changing timeline time. */
@@ -120,7 +130,9 @@ export interface PlayerFrame {
   readonly time: number
 }
 
-export interface CreatePlayerOptions {
+export interface CreatePlayerOptions extends PlayerRenderingOptions {
+  /** Whether the shared external renderer is active. Omitted, render callbacks are always active. */
+  readonly externalRendering?: () => boolean
   readonly canvas: HTMLCanvasElement
   readonly document: PreparedPuppetDocument
   readonly motionId?: string

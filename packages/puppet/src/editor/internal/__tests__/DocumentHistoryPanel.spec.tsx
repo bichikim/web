@@ -3,7 +3,7 @@ import {fireEvent, render, within} from '@solidjs/testing-library'
 import {createSignal} from 'solid-js'
 import {expect, test, vi} from 'vitest'
 import {DocumentHistoryPanel} from '../DocumentHistoryPanel'
-import type {DocumentHistoryEntry} from '../../use-document-history'
+import type {ModelHistoryEntry as DocumentHistoryEntry} from '../../model'
 
 test('should expose named history entries and navigate while keeping the selected button focused', () => {
   const [entries, setEntries] = createSignal<ReadonlyArray<DocumentHistoryEntry>>([

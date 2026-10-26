@@ -13,6 +13,38 @@ const binding: PuppetParameterBinding1D = {
 }
 const options = {binding, keyformCoordinates: [[0], [1]], restCoordinates: [0]}
 
+test('should retain per-coordinate rest fallbacks and corner accumulation order', () => {
+  const query = {
+    ...options,
+    keyformCoordinates: [[1e16, 20], [1e16 + 4]],
+    restCoordinates: [0, 12, 7],
+    values: [0.5],
+  }
+  expect(sampleGridCoordinates(query)).toEqual([1e16 + 2, 16, 7])
+  expect(sampleGridCoordinates({...query, keyformCoordinates: [undefined, [8, 16, 9]]})).toEqual([
+    4, 14, 8,
+  ])
+})
+
+test('should reuse interpolation independently of channel coordinates and observe new point values', () => {
+  const values = [0.25]
+  expect(sampleGridCoordinates({...options, values})).toEqual([0.25])
+  const channel = {...options, keyformCoordinates: [[10], [30]], restCoordinates: [99], values}
+  expect(sampleGridCoordinates(channel)).toEqual([15])
+  values[0] = 0.75
+  expect(sampleGridCoordinates(channel)).toEqual([25])
+  expect(sampleGridCoordinates({...channel, sampling: 'step'})).toEqual([10])
+  expect(sampleGridCoordinates(channel)).toEqual([25])
+})
+
+test('should resample a repeated point when the wrap range changes', () => {
+  const repeatRanges: [number, number][] = [[0, 2]]
+  const query = {...options, keyformCoordinates: [[0], [10]], repeatRanges, values: [1.5]}
+  expect(sampleGridCoordinates(query)).toEqual([5])
+  repeatRanges[0] = [0, 3]
+  expect(sampleGridCoordinates(query)).toEqual([7.5])
+})
+
 test('should preserve legacy continuous snapping and discrete Float32 defaults', () => {
   expect(sampleGridCoordinates({...options, values: [0.99999]})).toEqual([1])
   expect(sampleGridCoordinates({...options, sampling: 'step', values: [1 - 1e-8]})).toEqual([1])

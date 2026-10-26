@@ -1,3 +1,5 @@
+import type {PuppetDocument} from '../../../player/document'
+import type {ModelCommandResult} from '../../model'
 /** @vitest-environment jsdom */
 
 import {addGlue, setGlueKeyform} from '../glue'
@@ -15,7 +17,11 @@ test('should accumulate a layer draft, hide on navigation, preview and explicitl
     const [node, setNode] = createSignal(nodeId)
     const [values, setValues] = createSignal<readonly [number, number]>([15, 0])
     const [key, setKey] = createSignal<readonly [number, number] | null>(null)
-    const onChange = vi.fn()
+    const onChange = vi.fn<(document: PuppetDocument) => ModelCommandResult>(() => ({
+      changed: true,
+      ok: true,
+      revision: 1,
+    }))
     const session = useTemporaryForm({
       bindingId: () => binding.id,
       document: () => document,
@@ -73,7 +79,11 @@ test('should preserve ordinary part properties without committing the temporary 
     const document = createDemoDocument()
     const binding = document.parameterBindings![0]!
     const nodeId = binding.keyforms[0]!.parts[0]!.partId
-    const onChange = vi.fn()
+    const onChange = vi.fn<(document: PuppetDocument) => ModelCommandResult>(() => ({
+      changed: true,
+      ok: true,
+      revision: 1,
+    }))
     const session = useTemporaryForm({
       bindingId: () => binding.id,
       document: () => document,
@@ -92,7 +102,7 @@ test('should preserve ordinary part properties without committing the temporary 
     session.update({...working, parts})
     expect(session.form()).toBeUndefined()
     expect(onChange.mock.calls[0]![0].parameterBindings).toBe(document.parameterBindings)
-    expect(onChange.mock.calls[0]![0].parts[0].properties.blendMode).toBe('screen')
+    expect(onChange.mock.calls[0]![0].parts[0]?.properties?.blendMode).toBe('screen')
     dispose()
   }))
 
@@ -104,7 +114,11 @@ test('should retain Glue as a temporary form until explicitly saved to a selecte
       {partId: 'shape-diamond', vertexIndex: 0},
     )!
     const [key, setKey] = createSignal<readonly [number, number] | null>(null)
-    const onChange = vi.fn()
+    const onChange = vi.fn<(document: PuppetDocument) => ModelCommandResult>(() => ({
+      changed: true,
+      ok: true,
+      revision: 1,
+    }))
     const session = useTemporaryForm({
       bindingId: () => source.parameterBindings![0]!.id,
       document: () => source,
@@ -124,11 +138,11 @@ test('should retain Glue as a temporary form until explicitly saved to a selecte
     expect(session.save()).toBe(true)
     const saved = onChange.mock.calls[0]![0]
     expect(
-      saved.parameterBindings[0].keyforms.find(
-        (form: {values: number[]}) => form.values[0] === 30 && form.values[1] === 0,
-      ).parts[0].glue,
+      saved.parameterBindings![0]!.keyforms.find(
+        (form) => form.values[0] === 30 && form.values[1] === 0,
+      )!.parts[0]!.glue,
     ).toEqual([{id: 'glue-1', strength: 0.4, weight: 0.5}])
-    expect(saved.glue[0].strength).toBe(1)
+    expect(saved.glue![0]!.strength).toBe(1)
     dispose()
   }))
 
@@ -143,7 +157,11 @@ test('should retain parameter map identity on selection and propagate changed va
       enabled: () => false,
       keyformValues: () => null,
       nodeId: node,
-      onDocumentChange: vi.fn(),
+      onDocumentChange: vi.fn<(document: PuppetDocument) => ModelCommandResult>(() => ({
+        changed: true,
+        ok: true,
+        revision: 1,
+      })),
       parameterValueMap: map,
       parameterValues: () => [0, 0],
     })
@@ -154,5 +172,73 @@ test('should retain parameter map identity on selection and propagate changed va
     setMap({'angle-x': 15, 'angle-y': 0})
     expect(session.valueMap()).not.toBe(initial)
     expect(session.valueMap()['angle-x']).toBe(15)
+    dispose()
+  }))
+
+const createDraft = (onChange: (document: PuppetDocument) => ModelCommandResult) => {
+  const document = createDemoDocument()
+  const binding = document.parameterBindings![0]!
+  const nodeId = binding.keyforms[0]!.parts[0]!.partId
+  const [key, setKey] = createSignal<readonly [number, number] | null>(null)
+  const session = useTemporaryForm({
+    bindingId: () => binding.id,
+    document: () => document,
+    enabled: () => true,
+    keyformValues: key,
+    nodeId: () => nodeId,
+    onDocumentChange: onChange,
+    parameterValues: () => [15, 0],
+  })
+  const edit = () => {
+    const target = session.target()!
+    const form = readTemporaryForm({...target, nodeId})!
+    session.update(
+      applyTemporaryForm({
+        ...target,
+        form: {
+          ...form,
+          parts: form.parts.map((part) => ({
+            ...part,
+            vertices: part.vertices.map((value) => value + 1),
+          })),
+        },
+        nodeId,
+      })!,
+    )
+  }
+  edit()
+  setKey([30, 0])
+  return {edit, session}
+}
+
+test('should retain a rejected draft and clear it only after a successful retry', () =>
+  createRoot((dispose) => {
+    const commit = vi
+      .fn<(document: PuppetDocument) => ModelCommandResult>()
+      .mockReturnValueOnce({error: {code: 'busy'}, ok: false})
+      .mockReturnValueOnce({changed: true, ok: true, revision: 1})
+    const {session} = createDraft(commit)
+    const draft = session.form()
+    expect(session.save()).toBe(false)
+    expect(session.form()).toBe(draft)
+    expect(session.save()).toBe(true)
+    expect(session.hasChanges()).toBe(false)
+    dispose()
+  }))
+
+test('should retain a newer draft created by a synchronous host notification', () =>
+  createRoot((dispose) => {
+    const commit = vi.fn<(document: PuppetDocument) => ModelCommandResult>()
+    const {edit, session} = createDraft(commit)
+    const original = session.form()
+    commit.mockImplementation(() => {
+      session.setPreview(true)
+      edit()
+      return {changed: true, ok: true, revision: 1}
+    })
+    expect(session.save()).toBe(true)
+    expect(session.form()).toBeDefined()
+    expect(session.form()).not.toBe(original)
+    expect(session.hasChanges()).toBe(true)
     dispose()
   }))

@@ -82,6 +82,7 @@ const setUpRenderer = () => {
   }
   const root = {
     addChild: vi.fn(),
+    children: [],
     position: {set: vi.fn()},
     scale: {set: vi.fn()},
     // The stage is offset by ten pixels from document coordinates.
@@ -109,6 +110,7 @@ const setUpRenderer = () => {
   }
   mocks.MeshSimple.mockImplementation(
     class {
+      geometry = {indices: new Uint32Array([0, 1, 2])}
       alpha = 1
       vertices: Float32Array
       visible = true

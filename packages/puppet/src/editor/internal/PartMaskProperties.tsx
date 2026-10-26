@@ -1,3 +1,4 @@
+import {preventInternalDismiss} from '../../design-system/prevent-internal-dismiss'
 import {EditorButton, EditorCheckbox, EditorTextInput} from '../../design-system'
 import {TextField} from '@kobalte/core/text-field'
 import {Popover} from '@kobalte/core/popover'
@@ -33,6 +34,7 @@ interface MaskTargetPickerProps {
 }
 
 const MaskTargetPicker = (props: MaskTargetPickerProps) => {
+  let surface: HTMLDivElement | undefined
   const [query, setQuery] = createSignal('')
   const filteredOptions = createMemo(() => {
     const normalizedQuery = query().trim().toLocaleLowerCase()
@@ -51,7 +53,13 @@ const MaskTargetPicker = (props: MaskTargetPickerProps) => {
         <span aria-hidden="true" class="puppet-icon puppet-icon-plus" />
         대상 추가
       </Popover.Trigger>
-      <Popover.Content class="mask-picker">
+      <Popover.Content
+        ref={(element) => {
+          surface = element
+        }}
+        onInteractOutside={(event) => preventInternalDismiss(event, surface)}
+        class="mask-picker"
+      >
         <div class="mask-picker-heading">
           <Popover.Title>대상 추가</Popover.Title>
           <Popover.CloseButton aria-label="대상 선택기 닫기">

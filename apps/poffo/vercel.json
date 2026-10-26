@@ -1,0 +1,15 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "vite",
+  "buildCommand": "cd ../.. && pnpm exec turbo run build --filter=@winter-love/poffo...",
+  "outputDirectory": "dist",
+  "installCommand": "pnpm install --frozen-lockfile",
+  "git": {"deploymentEnabled": false},
+  "redirects": [{"source": "/", "destination": "/editor", "permanent": false}],
+  "rewrites": [
+    {"source": "/editor", "destination": "/index.html"},
+    {"source": "/studio", "destination": "/index.html"},
+    {"source": "/viewer", "destination": "/index.html"},
+    {"source": "/converter", "destination": "/index.html"}
+  ]
+}

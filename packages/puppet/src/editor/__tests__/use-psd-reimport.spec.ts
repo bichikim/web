@@ -3,7 +3,7 @@ import {createRoot, createSignal} from 'solid-js'
 import {expect, test, vi} from 'vitest'
 import {createDemoDocument} from '../../player'
 import type {importPsd} from '../import-psd'
-import {useDocumentHistory} from '../use-document-history'
+import {createHistory as useDocumentHistory} from './fixtures/history'
 import {usePsdReimport} from '../use-psd-reimport'
 
 test('should ignore a cancelled import and prevent applying a stale document', async () => {
@@ -143,6 +143,24 @@ test('should show reader failures without changing the document', async () => {
     })
     expect(onDocumentChange).not.toHaveBeenCalled()
     expect(controller.selection().view.count).toBe(0)
+    dispose()
+  })
+})
+
+test('should keep reviewed operations when the host rejects the commit', async () => {
+  await createRoot(async (dispose) => {
+    const document = createDemoDocument()
+    const controller = usePsdReimport({
+      document: () => document,
+      onDocumentChange: () => ({error: {code: 'busy'}, ok: false}),
+      onNotice: vi.fn(),
+      readPsd: vi.fn<typeof importPsd>().mockResolvedValue({document, ok: true, warnings: []}),
+    })
+    await controller.load(new File([], 'model.psd'))
+    controller.setIncludeNew(true)
+    controller.apply()
+    expect(controller.state().kind).toBe('review')
+    expect(controller.selection().view.count).toBeGreaterThan(0)
     dispose()
   })
 })

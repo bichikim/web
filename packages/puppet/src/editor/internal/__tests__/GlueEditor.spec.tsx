@@ -5,7 +5,7 @@ import {fireEvent, render} from '@solidjs/testing-library'
 import {createSignal} from 'solid-js'
 import {expect, test} from 'vitest'
 import {createDemoDocument} from '../../../player'
-import {useDocumentHistory} from '../../use-document-history'
+import {createHistory as useDocumentHistory} from '../../__tests__/fixtures/history'
 import {GlueEditor} from '../GlueEditor'
 
 test('should hide glue tools when no part is selected', () => {
