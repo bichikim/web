@@ -19,7 +19,7 @@ const createDialogue = (id: string, text: string): PDialogue => ({
   voiceId: 'Yuna',
 })
 
-it('should exclude feed dialogues from a saved dialogue collection', () => {
+it('should exclude feed dialogues by ID while retaining order, duplicates, and references', () => {
   const manualDialogue = createDialogue('manual-dialogue', '직접 만든 대화')
   const feedDialogue = createDialogue('feed-dialogue', '피드로 만든 대화')
   const feedItem: FeedDialogueListItem = {
@@ -39,5 +39,17 @@ it('should exclude feed dialogues from a saved dialogue collection', () => {
     },
   }
 
-  expect(excludeFeedDialogues([manualDialogue, feedDialogue], [feedItem])).toEqual([manualDialogue])
+  const otherDialogue = createDialogue('other-dialogue', '다른 대화')
+  const dialogues = Object.freeze([
+    manualDialogue,
+    structuredClone(feedDialogue),
+    otherDialogue,
+    manualDialogue,
+  ])
+  const result = excludeFeedDialogues(dialogues, Object.freeze([feedItem, feedItem]))
+
+  expect(result).toEqual([manualDialogue, otherDialogue, manualDialogue])
+  expect(result[0]).toBe(manualDialogue)
+  expect(result[1]).toBe(otherDialogue)
+  expect(result[2]).toBe(manualDialogue)
 })

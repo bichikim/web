@@ -1,4 +1,4 @@
-import {excludeByIds} from 'src/utils/exclude-by-ids'
+import {differenceBy} from 'es-toolkit/array'
 import type {ParsedFeedItem} from './feed-parser'
 
 const MAXIMUM_FEED_ITEM_AGE_DAYS = 3
@@ -88,20 +88,12 @@ export const planFeedSync = (options: PlanFeedSyncOptions): FeedSyncPlan => {
   const historicalItems = eligibleItems.filter((item) =>
     isHistoricalItem(options.subscriptionCreatedAt, item, isFirstSync),
   )
-  const currentItems = excludeByIds(
-    eligibleItems,
-    historicalItems.map((item) => item.id),
-    (item) => item.id,
-  )
+  const currentItems = differenceBy(eligibleItems, historicalItems, (item) => item.id)
   const itemsToProcess =
     isFirstSync && currentItems.length === 0 && firstUndatedFeedItem !== undefined
       ? [firstUndatedFeedItem]
       : currentItems
-  const ignoredItems = excludeByIds(
-    unseenItems,
-    itemsToProcess.map((item) => item.id),
-    (item) => item.id,
-  ).map((item) => ({
+  const ignoredItems = differenceBy(unseenItems, itemsToProcess, (item) => item.id).map((item) => ({
     item,
     reason: staleIds.has(item.id) ? ('stale' as const) : ('historical' as const),
   }))

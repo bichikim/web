@@ -19,7 +19,7 @@ const createDialogue = (id: string, text: string): PDialogue => ({
   voiceId: 'Yuna',
 })
 
-it('should exclude language learning dialogues from a saved dialogue collection', () => {
+it('should exclude learning dialogues by ID while retaining order, duplicates, and references', () => {
   const manualDialogue = createDialogue('manual-dialogue', 'A regular dialogue.')
   const learningDialogue = createDialogue('learning-dialogue', 'A learning dialogue.')
   const sentence: LanguageLearningSentence = {
@@ -31,7 +31,17 @@ it('should exclude language learning dialogues from a saved dialogue collection'
     version: 1,
   }
 
-  expect(excludeLanguageLearningDialogues([manualDialogue, learningDialogue], [sentence])).toEqual([
+  const otherDialogue = createDialogue('other-dialogue', 'Another dialogue.')
+  const dialogues = Object.freeze([
+    manualDialogue,
+    structuredClone(learningDialogue),
+    otherDialogue,
     manualDialogue,
   ])
+  const result = excludeLanguageLearningDialogues(dialogues, Object.freeze([sentence, sentence]))
+
+  expect(result).toEqual([manualDialogue, otherDialogue, manualDialogue])
+  expect(result[0]).toBe(manualDialogue)
+  expect(result[1]).toBe(otherDialogue)
+  expect(result[2]).toBe(manualDialogue)
 })
