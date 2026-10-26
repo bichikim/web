@@ -20,7 +20,7 @@
     "solid-js": "catalog:",
     "unocss": "catalog:",
     "vinxi": "catalog:",
-    "vite": "^7.3.6"
+    "vite": "^7.3.7"
   },
   "devDependencies": {
     "@types/node": "catalog:",
