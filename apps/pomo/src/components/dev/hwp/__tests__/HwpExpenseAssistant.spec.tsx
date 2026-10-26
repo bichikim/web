@@ -79,6 +79,39 @@ it('should hide the apply action until a confirmed expense form exists', () => {
   expect(screen.queryByRole('button', {name: '양식 필드에 적용'})).toBeNull()
 })
 
+it.each(['고구마 1000원 2개', '고구마 1000원2개'])(
+  'should recover and apply clear original expense text %s when Gemma replies in natural language',
+  async (text) => {
+    const [messages, setMessages] = createSignal<ReadonlyArray<ChatMessage>>([])
+    chatMocks.controller = createController(messages)
+    chatMocks.useChat.mockReturnValue(chatMocks.controller)
+    const onApply = vi.fn()
+    render(() => <HwpExpenseAssistant onApply={onApply} />)
+
+    fireEvent.input(screen.getByRole('textbox', {name: '가계부 입력'}), {
+      target: {value: text},
+    })
+    fireEvent.click(screen.getByRole('button', {name: 'AI로 가계부 읽기'}))
+    expect(chatMocks.setDraft).toHaveBeenCalledWith(text)
+
+    setMessages([
+      {content: text, id: 'user-1', role: 'user'},
+      {content: '당근과 고구마를 가계부에 기록했어요.', id: 'assistant-1', role: 'assistant'},
+    ])
+
+    await waitFor(() => expect(screen.getByText('고구마')).toBeDefined())
+    expect(screen.queryByRole('alert')).toBeNull()
+    expect(screen.getByRole('button', {name: '양식 필드에 적용'})).toBeDefined()
+    fireEvent.click(screen.getByRole('button', {name: '양식 필드에 적용'}))
+    expect(onApply).toHaveBeenCalledExactlyOnceWith({
+      date: null,
+      items: [{amount: 2000, name: '고구마', quantity: 2, unitPrice: 1000}],
+      questions: [],
+      total: 2000,
+    })
+  },
+)
+
 it('should recover clear original expense text when Gemma replies in natural language', async () => {
   const [messages, setMessages] = createSignal<ReadonlyArray<ChatMessage>>([])
   chatMocks.controller = createController(messages)

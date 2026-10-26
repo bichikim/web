@@ -34,7 +34,7 @@ export type ExpenseParseResult =
 
 const MAXIMUM_ITEMS = 20
 const EXPENSE_LINE_PATTERN =
-  /^\s*(?<name>.+?)\s+(?<unitPrice>[\d０-９,]+)\s*원(?:\s+(?<quantity>[\d,]+)\s*개)?\s*$/u
+  /^\s*(?<name>.+?)\s+(?<unitPrice>[\d０-９,]+)\s*원(?:\s*(?<quantity>[\d,]+)\s*개)?\s*$/u
 const DATE_LINE_PATTERN =
   /^\s*(?<year>[0-9０-９]{4})-(?<month>[0-9０-９]{1,2})-(?<day>[0-9０-９]{1,2})(?:\s+[월화수목금토일]요일)?\s*$/u
 
