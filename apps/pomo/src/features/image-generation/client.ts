@@ -1,14 +1,13 @@
 import {requestWorkerOnce} from 'src/utils/worker-transport'
 import * as m from '@paraglide/message'
-import type {ModelDownloadController} from '../model-download'
-import {prepareImageModels} from './prepare'
+import {prepareImageModels, type PrepareImageModelsOptions} from './prepare'
 import {ART_STYLES, type ArtStyle} from './styles'
 import type {TextModelId} from '../text-generation'
 import type {GenerationRequest, GenerationResponse, GenerationUpdate} from './messages'
 import {type ImageSettings, MAXIMUM_IDEA_LENGTH, parseSettings} from './settings'
 
 export interface RunImageGenerationOptions {
-  readonly downloads: ModelDownloadController
+  readonly downloads: PrepareImageModelsOptions['downloads']
   readonly style?: ArtStyle
   readonly idea: string
   readonly modelId: TextModelId

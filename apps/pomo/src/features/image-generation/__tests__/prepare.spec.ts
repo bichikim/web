@@ -1,8 +1,8 @@
 /** @vitest-environment node */
 import {beforeEach, expect, it, vi} from 'vitest'
 import {isTextModelDownloaded} from '../../text-generation'
-import {createModelDownloadController, type ModelDownloadResult} from '../../model-download'
-import {prepareImageModels} from '../prepare'
+import type {ModelDownloadResult} from '../../model-download'
+import {prepareImageModels, type PrepareImageModelsOptions} from '../prepare'
 
 vi.mock('../../text-generation', () => ({isTextModelDownloaded: vi.fn()}))
 beforeEach(() => {
@@ -10,10 +10,15 @@ beforeEach(() => {
 })
 
 const setup = () => {
-  const downloads = createModelDownloadController()
-  vi.spyOn(downloads, 'startTextModel').mockResolvedValue({status: 'complete'})
-  vi.spyOn(downloads, 'startImageModel').mockResolvedValue({status: 'complete'})
-  vi.spyOn(downloads, 'cancel')
+  const downloads = {
+    cancel: vi.fn<PrepareImageModelsOptions['downloads']['cancel']>(),
+    startImageModel: vi
+      .fn<PrepareImageModelsOptions['downloads']['startImageModel']>()
+      .mockResolvedValue({status: 'complete'}),
+    startTextModel: vi
+      .fn<PrepareImageModelsOptions['downloads']['startTextModel']>()
+      .mockResolvedValue({status: 'complete'}),
+  } satisfies PrepareImageModelsOptions['downloads']
   return {
     downloads,
     modelId: 'gemma-4-e2b' as const,
