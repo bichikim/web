@@ -110,7 +110,7 @@ export const readMeshes = (
   return {
     objects,
     parts: parts.map((part) =>
-      validateMesh(part.mesh).valid
+      part.mesh.indices.length > 0 && validateMesh(part.mesh).valid
         ? part
         : {...part, mesh: {...part.mesh, validationSpace: 'indices' as const}},
     ),

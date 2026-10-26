@@ -16,10 +16,10 @@ it.each([
   expect(createCalendarQuery({now, text, timeZone})).toEqual(afterNext)
 })
 
-it('should preserve exclusion of a weekend when the weekend after next is excluded', () => {
+it('should select next weekend when the weekend after next is excluded', () => {
   expect(
     createCalendarQuery({now, text: '다다음 주말 말고 다음 주말 일정 알려줘', timeZone}),
-  ).toEqual({end: '2026-10-04T10:30:00.000Z', start: now.toISOString()})
+  ).toEqual({end: '2026-09-13T15:00:00.000Z', start: '2026-09-11T15:00:00.000Z'})
 })
 
 it.each(['2026-09-05T10:30:00.000Z', '2026-09-06T10:30:00.000Z'])(
