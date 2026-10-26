@@ -14,7 +14,18 @@ interface ModelPanelProps {
   readonly disabled: boolean
   readonly model: TextModelDefinition
   readonly onActivate: () => void
-  readonly writer: DialogueWriterController
+  readonly writer: Pick<
+    DialogueWriterController,
+    | 'canCopy'
+    | 'canGenerate'
+    | 'canPrepare'
+    | 'copyOutput'
+    | 'isModelReady'
+    | 'output'
+    | 'progress'
+    | 'state'
+    | 'statusMessage'
+  >
 }
 
 export const ModelPanel = (props: ModelPanelProps) => {
