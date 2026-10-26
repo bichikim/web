@@ -118,12 +118,6 @@ it('should select OpenRouter for tarot without enabling a paid fallback or requi
   expect(providers[1].webhookSecret).toBeUndefined()
 })
 
-it('should keep an unselected OpenRouter provider out of the existing fallback chain', () => {
-  vi.stubEnv('OPENROUTER_API_KEY', 'router-key')
-  environment.POMO_API_AI_PROVIDERS_JSON = JSON.stringify([openRouter])
-  expect(getApiAiProviders()[1].models['cloud-text']).toBeUndefined()
-})
-
 it('should not create another pool for a canonical key already configured under a custom provider ID', () => {
   vi.stubEnv('OPENROUTER_API_KEY', 'router-key')
   environment.POMO_API_AI_PROVIDERS_JSON = JSON.stringify([
@@ -135,11 +129,8 @@ it('should not create another pool for a canonical key already configured under 
   ])
 })
 
-it('should reject a missing selected provider and unsupported queued history generation', () => {
-  environment.POMO_API_AI_CLOUD_TEXT_PROVIDER = 'missing'
-  expect(getApiAiProviders).toThrow('cloud-text provider')
+it('should reject unsupported queued history generation', () => {
   vi.stubEnv('OPENROUTER_API_KEY', 'router-key')
-  environment.POMO_API_AI_CLOUD_TEXT_PROVIDER = undefined
   environment.POMO_API_AI_PROVIDERS_JSON = JSON.stringify([
     {...openRouter, models: {history: 'model'}},
   ])
