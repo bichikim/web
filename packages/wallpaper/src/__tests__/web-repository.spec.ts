@@ -45,3 +45,20 @@ it('should notify host video caches only for new content and after removal', asy
   await repository.remove(items[0]!.id)
   expect(onMediaRemoved).toHaveBeenCalledExactlyOnceWith(items[0]!.id)
 })
+
+it('should return the same persistent media ID for identical content without changing the add contract', async () => {
+  const repository = openRepository('wallpaper-test-album')
+  const first = await repository.importMedia(
+    new File(['photo'], 'first.png', {type: 'image/png'}),
+    'photo',
+  )
+  const duplicate = await repository.importMedia(
+    new File(['photo'], 'renamed.png', {type: 'image/png'}),
+    'photo',
+  )
+  expect(duplicate).toBe(first)
+  expect((await repository.read()).items.map((item) => item.id)).toEqual([first])
+  await expect(
+    repository.add(new File(['other'], 'other.png', {type: 'image/png'}), 'photo'),
+  ).resolves.toBeUndefined()
+})

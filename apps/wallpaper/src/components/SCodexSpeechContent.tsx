@@ -52,7 +52,10 @@ export const SCodexSpeechContent = (props: SCodexSpeechContentProps) => (
     <SCodexApprovals requests={props.approvals} />
     <SCodexQuestions requests={props.questions} />
     <Show when={props.activity.phase === 'response' || props.activity.phase === 'interrupted'}>
-      <SCodexPrompt sessionId={props.activity.sessionId} />
+      <SCodexPrompt
+        sessionId={props.activity.sessionId}
+        notificationId={props.activity.notificationId}
+      />
     </Show>
   </div>
 )

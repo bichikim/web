@@ -4,6 +4,7 @@ import {
   chatTone,
   type CodexActivity,
   type CodexApproval,
+  type CodexPort,
   type CodexQuestionRequest,
 } from '../features/codex'
 import {
@@ -35,6 +36,7 @@ interface SCodexSpeechStackProps {
   readonly target?: SpeechPoint
   readonly layout?: number
   readonly onDismiss?: (activity: CodexActivity) => void
+  readonly onOpen?: CodexPort['openChat']
   readonly onSelected?: (id: string | null) => void
   readonly voiceNotice?: string
   readonly voiceState?: VoiceStatus
@@ -173,6 +175,7 @@ export const SCodexSpeechStack = (props: SCodexSpeechStackProps) => {
                     tone={chatTone(id)}
                     selected={stack.order()[0] === id}
                     onSelect={() => stack.select(id)}
+                    onOpen={props.onOpen}
                     onDismiss={
                       props.onDismiss === undefined
                         ? undefined

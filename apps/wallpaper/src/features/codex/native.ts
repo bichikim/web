@@ -11,6 +11,7 @@ export const codexPort: CodexPort = {
   disconnect: () => invoke('disconnect_codex_notifications'),
   dismiss: (sessionId, notificationId) =>
     invoke('dismiss_poffo_speech', {notificationId, sessionId}),
+  openChat: (sessionId) => invoke('open_codex_chat', {sessionId}),
   read: () => invoke('codex_bridge_status'),
   readTitle: (sessionId) => invoke('codex_thread_title', {sessionId}),
   sendPrompt: (sessionId, message) => invoke('send_codex_prompt', {message, sessionId}),

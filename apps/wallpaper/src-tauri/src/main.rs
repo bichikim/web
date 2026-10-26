@@ -40,6 +40,7 @@ fn main() {
             codex::questions::runtime::configure_codex_questions,
             codex::questions::runtime::answer_codex_question,
             codex::prompt::send_codex_prompt,
+            codex::chat::open_codex_chat,
             codex::configure_poffo_speech,
             codex::poffo_speech_target,
             codex::resize_poffo_speech,

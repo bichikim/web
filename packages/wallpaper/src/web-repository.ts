@@ -1,11 +1,11 @@
-import {containsMedia, hashMedia} from './media/content'
+import {findMedia, hashMedia} from './media/content'
 import Dexie, {liveQuery, type Table} from 'dexie'
 import {
   type BackgroundMedia,
   type BackgroundPreferences,
   backgroundPreferencesSchema,
-  type BackgroundRepository,
   DEFAULT_BACKGROUND,
+  type MediaImportRepository,
 } from './model'
 
 interface StoredMedia extends BackgroundMedia {
@@ -23,7 +23,7 @@ export interface CreateWebRepositoryOptions {
   readonly onVideoAdded?: (id: string, file: File) => void
   readonly onMediaRemoved?: (id: string) => Promise<void>
 }
-export interface WebBackgroundRepository extends BackgroundRepository {
+export interface WebBackgroundRepository extends MediaImportRepository {
   readonly close: () => void
 }
 
@@ -47,36 +47,40 @@ export const createWebRepository = (
           DEFAULT_BACKGROUND,
       ),
     }))
+  const importMedia: MediaImportRepository['importMedia'] = async (file, kind) => {
+    const contentHash = await hashMedia(file)
+    const id = crypto.randomUUID()
+    const stored = await database.transaction('rw', database.media, async () => {
+      const items = await database.media.toArray()
+      const duplicate = await Dexie.waitFor(
+        findMedia({
+          hash: contentHash,
+          items,
+          load: async (existingId) => items.find((item) => item.id === existingId)!.blob,
+          size: file.size,
+        }),
+      )
+      if (duplicate !== undefined) {
+        return {added: false, id: duplicate.id}
+      }
+      await database.media.add({
+        blob: file,
+        contentHash,
+        id,
+        kind,
+        name: file.name,
+        size: file.size,
+      })
+      return {added: true, id}
+    })
+    if (stored.added && kind === 'video') {
+      options.onVideoAdded?.(id, file)
+    }
+    return stored.id
+  }
   return {
     async add(file, kind) {
-      const contentHash = await hashMedia(file)
-      const id = crypto.randomUUID()
-      const added = await database.transaction('rw', database.media, async () => {
-        const items = await database.media.toArray()
-        const duplicate = await Dexie.waitFor(
-          containsMedia({
-            hash: contentHash,
-            items,
-            load: async (existingId) => items.find((item) => item.id === existingId)!.blob,
-            size: file.size,
-          }),
-        )
-        if (duplicate) {
-          return false
-        }
-        await database.media.add({
-          blob: file,
-          contentHash,
-          id,
-          kind,
-          name: file.name,
-          size: file.size,
-        })
-        return true
-      })
-      if (added && kind === 'video') {
-        options.onVideoAdded?.(id, file)
-      }
+      await importMedia(file, kind)
     },
     close: () => database.close(),
     async configure(patch) {
@@ -91,6 +95,7 @@ export const createWebRepository = (
         )
       })
     },
+    importMedia,
     async load(id) {
       const item = await database.media.where('id').equals(id).first()
       if (item === undefined) {

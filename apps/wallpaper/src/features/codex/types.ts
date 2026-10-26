@@ -38,6 +38,7 @@ export interface CodexSnapshot {
   readonly sessions: readonly CodexActivity[]
 }
 export interface CodexPort {
+  readonly openChat?: (sessionId: string) => void | Promise<void>
   readonly sendPrompt?: (sessionId: string, message: string) => Promise<void>
   readonly configureQuestions?: (enabled: boolean) => Promise<CodexSnapshot>
   readonly answerQuestion?: (

@@ -4,6 +4,8 @@ interface SFileInputProps {
   readonly label?: string
   readonly accept?: string
   readonly multiple?: boolean
+  /** Selects a folder and its descendants when true; otherwise selects individual files. */
+  readonly directory?: boolean
   readonly disabled?: boolean
   readonly onFiles?: (files: readonly File[]) => void | Promise<void>
 }
@@ -52,6 +54,7 @@ export const SFileInput = (props: SFileInputProps) => {
         aria-hidden="true"
         accept={props.accept}
         multiple={props.multiple}
+        bool:webkitdirectory={props.directory}
         disabled={props.disabled}
         onChange={handleFiles}
       />

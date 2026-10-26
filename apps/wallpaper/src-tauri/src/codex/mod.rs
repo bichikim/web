@@ -2,6 +2,7 @@ pub mod activity;
 mod app_server;
 mod approvals;
 pub mod bubble;
+pub mod chat;
 pub mod decision;
 mod files;
 mod hooks;

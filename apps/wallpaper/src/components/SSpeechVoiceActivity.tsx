@@ -24,20 +24,24 @@ export const SSpeechVoiceActivity = (props: SSpeechVoiceActivityProps) => {
           aria-label={state()}
           aria-busy={preparing()}
           title={state()}
-          class="pointer-events-none flex h-3.5 w-7 shrink-0 items-center justify-end gap-1 text-blue-700"
+          class="pointer-events-none grid h-3.5 w-3.5 shrink-0 place-items-center text-blue-700"
         >
-          <svg
-            aria-hidden="true"
-            viewBox="0 0 24 24"
-            class="h-3.5 w-3.5 fill-none stroke-current stroke-2"
+          <Show
+            when={preparing()}
+            fallback={
+              <svg
+                aria-hidden="true"
+                viewBox="0 0 24 24"
+                class="h-3.5 w-3.5 fill-none stroke-current stroke-2"
+              >
+                <path d="M11 5 6 9H3v6h3l5 4V5Zm4 3a6 6 0 0 1 0 8m3-11a10 10 0 0 1 0 14" />
+              </svg>
+            }
           >
-            <path d="M11 5 6 9H3v6h3l5 4V5Zm4 3a6 6 0 0 1 0 8m3-11a10 10 0 0 1 0 14" />
-          </svg>
-          <Show when={preparing()}>
             <svg
               aria-hidden="true"
               viewBox="0 0 24 24"
-              class="h-2.5 w-2.5 animate-spin fill-none stroke-current stroke-[3] motion-reduce:animate-none"
+              class="h-3.5 w-3.5 animate-spin fill-none stroke-current stroke-[3] motion-reduce:animate-none"
             >
               <circle cx="12" cy="12" r="9" class="opacity-25" />
               <path d="M12 3a9 9 0 0 1 9 9" class="[stroke-linecap:round]" />
