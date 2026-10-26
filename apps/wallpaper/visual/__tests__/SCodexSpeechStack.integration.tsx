@@ -4,6 +4,7 @@ import {afterEach, expect, test, vi} from 'vitest'
 import {createSignal} from 'solid-js'
 import {SCodexSpeechStack} from '../../src/components/SCodexSpeechStack'
 import {type CodexActivity, codexPort} from '../../src/features/codex'
+import {userEvent} from 'vitest/browser'
 import 'virtual:uno.css'
 
 const activities: CodexActivity[] = ['A', 'B', 'C', 'D'].map((sessionId) => ({
@@ -53,6 +54,21 @@ const mount = async () => {
 afterEach(() => {
   cleanup()
   vi.restoreAllMocks()
+})
+
+test('should open a rear chat when a real double click also selects its moving header', async () => {
+  const open = vi.fn()
+  render(() => (
+    <div class="w-68 p-12">
+      <SCodexSpeechStack activities={activities} onOpen={open} />
+    </div>
+  ))
+  await expect.poll(() => cards().length).toBe(4)
+  await settle()
+  const rear = screen.getByRole('button', {name: '채팅 C 선택'})
+  await userEvent.dblClick(rear, {delay: 100})
+  await expect.poll(() => open.mock.calls.length).toBe(1)
+  expect(open).toHaveBeenCalledWith('C')
 })
 
 test.each(['bottom', 'top'] as const)(

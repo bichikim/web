@@ -40,15 +40,14 @@ export const SSpeechFrame = (props: SSpeechFrameProps) => {
       data-[anchor=top]:rounded-b-xl
       data-[anchor=top]:[border-top-left-radius:calc(.75rem*var(--speech-reveal,1))]
       data-[anchor=top]:[border-top-right-radius:calc(.75rem*var(--speech-reveal,1))]
-      box-border rounded-xl border border-solid border-stone-300 bg-white/95
-      data-[tone=blue]:bg-blue-50/95 data-[tone=blue]:border-blue-300
-      data-[tone=teal]:bg-teal-50/95 data-[tone=teal]:border-teal-300
-      data-[tone=violet]:bg-violet-50/95 data-[tone=violet]:border-violet-300
-      data-[tone=rose]:bg-rose-50/95 data-[tone=rose]:border-rose-300
-      data-[tone=amber]:bg-amber-50/95 data-[tone=amber]:border-amber-300
-      data-[tone=sky]:bg-sky-50/95 data-[tone=sky]:border-sky-300
-      [&>[data-edge=bottom]]:top-full [&>[data-edge=right]]:left-full
-      [&>span]:[opacity:var(--speech-reveal,1)]"
+      box-border rounded-xl border border-solid border-stone-300 bg-white
+      data-[tone=blue]:bg-blue-50 data-[tone=blue]:border-blue-300
+      data-[tone=teal]:bg-teal-50 data-[tone=teal]:border-teal-300
+      data-[tone=violet]:bg-violet-50 data-[tone=violet]:border-violet-300
+      data-[tone=rose]:bg-rose-50 data-[tone=rose]:border-rose-300
+      data-[tone=amber]:bg-amber-50 data-[tone=amber]:border-amber-300
+      data-[tone=sky]:bg-sky-50 data-[tone=sky]:border-sky-300
+      [&>[data-edge=bottom]]:top-full [&>[data-edge=right]]:left-full"
     >
       <SSpeechTail value={tail()} />
     </div>

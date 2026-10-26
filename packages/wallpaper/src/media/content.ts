@@ -13,17 +13,23 @@ export interface DuplicateOptions {
   readonly load: (id: string) => Promise<Blob>
 }
 
-/** Checks stored hashes and reads matching-size legacy files when their hash is absent. */
-export const containsMedia = async (options: DuplicateOptions): Promise<boolean> => {
+/** Finds identical content, reading matching-size legacy files only when their hash is absent. */
+export const findMedia = async (
+  options: DuplicateOptions,
+): Promise<BackgroundMedia | undefined> => {
   for (const item of options.items) {
     if (item.size === options.size) {
       // Compare legacy candidates sequentially to avoid decoding many large files at once.
       // eslint-disable-next-line no-await-in-loop
       const hash = item.contentHash ?? (await hashMedia(await options.load(item.id)))
       if (hash === options.hash) {
-        return true
+        return item
       }
     }
   }
-  return false
+  return undefined
 }
+
+/** Checks stored hashes and reads matching-size legacy files when their hash is absent. */
+export const containsMedia = async (options: DuplicateOptions): Promise<boolean> =>
+  (await findMedia(options)) !== undefined

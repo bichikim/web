@@ -102,3 +102,8 @@ export interface BackgroundRepository {
   readonly load: (id: string) => Promise<Blob>
   readonly subscribe: (refresh: () => void, onError: (error: unknown) => void) => () => void
 }
+
+export interface MediaImportRepository extends BackgroundRepository {
+  /** Stores media or reuses identical content and returns its persistent media ID. */
+  readonly importMedia: (file: File, kind: MediaKind) => Promise<string>
+}

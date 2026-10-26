@@ -41,6 +41,7 @@ beforeEach(() => {
     add: vi.fn(),
     close: vi.fn(),
     configure: vi.fn(),
+    importMedia: vi.fn(),
     load: vi.fn(),
     read: vi.fn(async () => ({items: [], preferences: DEFAULT_BACKGROUND})),
     remove: vi.fn(),

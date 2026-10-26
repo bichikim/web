@@ -1,6 +1,6 @@
 import {expect, it, vi} from 'vitest'
 import {createMonitorWallpaper} from '@winter-love/wallpaper/settings/model'
-import {type BackgroundRepository, DEFAULT_BACKGROUND} from '@winter-love/wallpaper/model'
+import {DEFAULT_BACKGROUND, type MediaImportRepository} from '@winter-love/wallpaper/model'
 import type {SettingsRepository} from '@winter-love/wallpaper/settings/repository'
 import {addAlbumFiles} from '../add-album-files'
 
@@ -18,9 +18,10 @@ it('should add imported media to the selected monitor album without losing its e
   }
   const old = {id: 'old', kind: 'photo' as const, name: 'old.png', size: 1}
   const added = {id: 'new', kind: 'photo' as const, name: 'new.png', size: 1}
-  const media: BackgroundRepository = {
+  const media: MediaImportRepository = {
     add: vi.fn(),
     configure: vi.fn(),
+    importMedia: vi.fn(async () => 'new'),
     load: vi.fn(),
     read: vi
       .fn()
