@@ -47,7 +47,12 @@ export const useFeedConnections = (
   const [connections, setConnections] = createSignal<ReadonlyArray<FeedConnection>>([])
   const [draftUrl, setDraftUrl] = createSignal('')
   const [isLoading, setIsLoading] = createSignal(true)
-  const [message, setMessage] = createSignal<string | null>(null)
+  const [feedback, setFeedback] = createSignal<{
+    readonly message: string
+    readonly scope: 'draft' | 'global'
+  } | null>(null)
+  const setMessage = (message: string, scope: 'draft' | 'global' = 'global') =>
+    setFeedback({message, scope})
   let repository: FeedConnectionRepository | null = null
 
   const saveConnections = (nextConnections: ReadonlyArray<FeedConnection>) => {
@@ -83,11 +88,11 @@ export const useFeedConnections = (
     }
   })
 
-  const addConnection = (url: string) => {
+  const addConnection = (url: string, scope: 'draft' | 'global' = 'global') => {
     const normalizedUrl = normalizeFeedUrl(url)
 
     if (!normalizedUrl.ok) {
-      setMessage(m.settings_feed_invalid_url())
+      setMessage(m.settings_feed_invalid_url(), scope)
       return false
     }
 
@@ -105,7 +110,7 @@ export const useFeedConnections = (
         )
       })
     ) {
-      setMessage(m.settings_feed_duplicate_url())
+      setMessage(m.settings_feed_duplicate_url(), scope)
       return false
     }
 
@@ -132,9 +137,16 @@ export const useFeedConnections = (
   }
 
   const onAdd = () => {
-    if (addConnection(draftUrl())) {
+    if (addConnection(draftUrl(), 'draft')) {
       setDraftUrl('')
     }
+  }
+
+  const onDraftUrlChange = (url: string) => {
+    if (url !== draftUrl() && feedback()?.scope === 'draft') {
+      setFeedback(null)
+    }
+    setDraftUrl(url)
   }
 
   const onDelete = (connectionId: string) => {
@@ -160,11 +172,11 @@ export const useFeedConnections = (
     connections,
     draftUrl,
     isLoading,
-    message,
+    message: () => feedback()?.message ?? null,
     onAdd,
     onAddRecommendation: addConnection,
     onDelete,
-    onDraftUrlChange: setDraftUrl,
+    onDraftUrlChange,
     onVoiceChange,
   }
 }
