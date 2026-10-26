@@ -1,11 +1,6 @@
-import {and, eq, inArray} from 'drizzle-orm'
+import {and, eq, inArray, sql} from 'drizzle-orm'
 import {apiAiJobs, getDatabase} from 'src/server/database'
-import {
-  cancelQueuedApiAiJob,
-  findApiAiAttempt,
-  findApiAiJob,
-  recordApiAiResponse,
-} from 'src/server/repositories/api-ai'
+import {findApiAiAttempt, findApiAiJob, recordApiAiResponse} from 'src/server/repositories/api-ai'
 import {getApiAiProviders} from 'src/server/api-ai/providers'
 import {responsesAdapter} from 'src/server/api-ai/responses-adapter'
 
@@ -16,22 +11,29 @@ export const cancelCloudTextJob = async (userId: string, requestId: string): Pro
     return false
   }
   const now = new Date()
-  const queued = await cancelQueuedApiAiJob(requestId, userId, now)
-  if (queued !== null) {
-    return true
-  }
   const [requested] = await getDatabase()
     .update(apiAiJobs)
-    .set({cancelRequestedAt: now})
+    .set({
+      cancelRequestedAt: now,
+      completedAt: sql`case when ${apiAiJobs.status} = 'queued'
+        then ${now.toISOString()}::timestamptz else ${apiAiJobs.completedAt} end`,
+      nextAttemptAt: sql`case when ${apiAiJobs.status} = 'queued'
+        then ${now.toISOString()}::timestamptz else ${apiAiJobs.nextAttemptAt} end`,
+      status: sql`case when ${apiAiJobs.status} = 'queued' then 'cancelled' else ${apiAiJobs.status} end`,
+    })
     .where(
       and(
         eq(apiAiJobs.id, requestId),
         eq(apiAiJobs.ownerId, userId),
-        inArray(apiAiJobs.status, ['submitting', 'running', 'recovery_pending']),
+        inArray(apiAiJobs.status, ['queued', 'submitting', 'running', 'recovery_pending']),
       ),
     )
     .returning()
-  if (requested?.activeAttemptId !== null && requested?.activeAttemptId !== undefined) {
+  if (
+    requested?.status !== 'cancelled' &&
+    requested?.activeAttemptId !== null &&
+    requested?.activeAttemptId !== undefined
+  ) {
     const attempt = await findApiAiAttempt(requested.activeAttemptId)
     const provider = getApiAiProviders().find((candidate) => candidate.id === attempt?.providerId)
     if (
