@@ -1,8 +1,8 @@
 import {describe, expect, it, vi} from 'vitest'
 
-import {type AiJobClient, AiJobClientError} from '../client'
+import {AiJobClientError} from '../client'
 import type {AiJob, AiJobResult} from '../contracts'
-import {createAiJobOutput} from '../create-ai-job-output'
+import {type AiJobOutputOptions, createAiJobOutput} from '../create-ai-job-output'
 import {createAiJobSession} from '../create-ai-job-session'
 
 const completedJob: AiJob = {
@@ -21,15 +21,9 @@ const completedJob: AiJob = {
   updatedAt: '2026-09-21T01:00:00.000Z',
 }
 
-const createClient = (getJobResult: AiJobClient['getJobResult']): AiJobClient => ({
-  cancelJob: vi.fn(async () => completedJob),
-  deleteJobArtifact: vi.fn(async () => ({deleted: true})),
-  getJob: vi.fn(async () => completedJob),
-  getJobResult,
-  readTextAccess: vi.fn(async () => ({available: true, modelId: 'gpt-5.6-luna'})),
-  saveJobArtifact: vi.fn(async () => ({text: '결과'})),
-  submitTextJob: vi.fn(async () => ({created: true, job: completedJob})),
-})
+const createClient = (
+  getJobResult: AiJobOutputOptions['client']['getJobResult'],
+): AiJobOutputOptions['client'] => ({getJobResult})
 
 describe('createAiJobOutput', () => {
   it('should not speak snapshot text when fetching a completed result fails', async () => {
