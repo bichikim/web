@@ -1,4 +1,4 @@
-import {type Accessor, createMemo, createSignal} from 'solid-js'
+import {type Accessor, createEffect, createMemo, createSignal, on} from 'solid-js'
 
 interface UseSelectProps {
   readonly options: Accessor<readonly string[]>
@@ -23,6 +23,15 @@ export const useSelect = (props: UseSelectProps) => {
   const dismiss = (): void => {
     setExpanded(false)
   }
+  createEffect(
+    on(props.options, (options) => {
+      if (options.length === 0) {
+        dismiss()
+        return
+      }
+      setActiveIndex((index) => (index >= 0 && index < options.length ? index : selectedIndex()))
+    }),
+  )
   const show = (): void => {
     if (props.options().length > 0 && !expanded()) {
       setActiveIndex(selectedIndex())
