@@ -41,7 +41,7 @@ export function HomePage() {
             목소리를 입혀 보세요
           </h1>
           <p class="mb-0 mt-5 max-w-xl text-base leading-7 text-#bdb2c4 sm:text-lg">
-            각 기능은 독립된 주소에서 실험할 수 있어요. 먼저 3D 캐릭터를 확인하거나 기기 안에서
+            각 기능은 독립된 주소에서 실험할 수 있어요. 집중방 캐릭터를 살펴보거나 기기 안에서
             음성을 생성해 보세요.
           </p>
         </header>

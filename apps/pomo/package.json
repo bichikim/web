@@ -101,8 +101,6 @@
   "devDependencies": {
     "@apps-in-toss/devtools": "3.1.1",
     "@babel/core": "7.29.7",
-    "@babylonjs/core": "9.18.0",
-    "@babylonjs/loaders": "9.18.0",
     "@electric-sql/pglite": "0.5.8",
     "@iconify-json/tabler": "^1.2.33",
     "@inlang/plugin-m-function-matcher": "2.2.6",
