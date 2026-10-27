@@ -1,4 +1,13 @@
-import {ComponentProps, createEffect, createMemo, createSignal, Show, splitProps} from 'solid-js'
+import {
+  children,
+  ComponentProps,
+  createEffect,
+  createMemo,
+  createSignal,
+  on,
+  Show,
+  splitProps,
+} from 'solid-js'
 import {cva} from 'class-variance-authority'
 import {getWindow, HUNDRED} from '@winter-love/utils'
 import {useEvent, useStyles} from '@winter-love/solid-use'
@@ -21,6 +30,7 @@ export const SFlowDisplay = (props: SFlowDisplayProps) => {
   const [textElement, setTextElement] = createSignal<HTMLSpanElement | null>(null)
   const [dimensions, setDimensions] = createSignal({parentWidth: 0, textWidth: 0})
   const [innerProps, restProps] = splitProps(props, ['move', 'class', 'speed', 'style'])
+  const content = children(() => props.children)
 
   const isMove = createMemo(() => {
     const {parentWidth, textWidth} = dimensions()
@@ -46,13 +56,13 @@ export const SFlowDisplay = (props: SFlowDisplayProps) => {
       textWidth: textElement()?.getBoundingClientRect().width ?? 0,
     })
   }
-  createEffect(() => {
-    const _move = innerProps.move
-
-    if (_move) {
-      measureDimensions()
-    }
-  })
+  createEffect(
+    on([() => innerProps.move, content], ([move]) => {
+      if (move) {
+        measureDimensions()
+      }
+    }),
+  )
 
   const globalTarget = createMemo(() => {
     if (innerProps.move) {
@@ -78,7 +88,7 @@ export const SFlowDisplay = (props: SFlowDisplayProps) => {
       class={rootStyle({class: innerProps.class, move: isMove()})}
       style={style()}
     >
-      <span ref={setTextElement}>{props.children}</span>
+      <span ref={setTextElement}>{content()}</span>
       <Show when={isMove()}>
         <span>{props.children}</span>
       </Show>
