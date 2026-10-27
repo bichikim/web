@@ -1,6 +1,7 @@
 /** @vitest-environment jsdom */
 import {cleanup, fireEvent, render, screen} from '@solidjs/testing-library'
 import {createSignal} from 'solid-js'
+import {createStore, produce} from 'solid-js/store'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 import {SSelect} from '../SSelect'
 
@@ -149,5 +150,34 @@ describe('SSelect', () => {
     expect(trigger.disabled).toBe(false)
     expect(trigger.getAttribute('aria-expanded')).toBe('false')
     expect(onChange).not.toHaveBeenCalled()
+  })
+  it('should recover and dismiss when a reactive store shortens the existing options array', () => {
+    const [store, setStore] = createStore({options: ['alpha', 'bravo', 'charlie']})
+    const onChange = vi.fn()
+    render(() => <SSelect label="동적 선택" options={store.options} onChange={onChange} />)
+    const trigger = screen.getByRole<HTMLButtonElement>('combobox', {name: '동적 선택'})
+    fireEvent.keyDown(trigger, {key: 'End'})
+    setStore(
+      'options',
+      produce((options) => {
+        options.splice(1)
+      }),
+    )
+    expect(trigger.getAttribute('aria-activedescendant')).toBe(
+      screen.getByRole('option', {name: 'alpha'}).id,
+    )
+    fireEvent.keyDown(trigger, {key: 'Enter'})
+    expect(onChange.mock.calls).toEqual([['alpha']])
+    fireEvent.keyDown(trigger, {key: 'ArrowDown'})
+    setStore(
+      'options',
+      produce((options) => {
+        options.splice(0)
+      }),
+    )
+    expect(trigger.disabled).toBe(true)
+    expect(trigger.hasAttribute('aria-activedescendant')).toBe(false)
+    expect(screen.queryByRole('listbox')).toBeNull()
+    expect(onChange.mock.calls).toEqual([['alpha']])
   })
 })

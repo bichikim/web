@@ -1,6 +1,7 @@
 /** @vitest-environment jsdom */
 import {cleanup, renderHook} from '@solidjs/testing-library'
 import {createSignal} from 'solid-js'
+import {createStore, produce} from 'solid-js/store'
 import {afterEach, describe, expect, it, vi} from 'vitest'
 import {useSelect} from '../use-select'
 
@@ -144,5 +145,27 @@ describe('useSelect', () => {
     result.toggle()
     expect(result.activeIndex()).toBe(1)
     expect(onChange.mock.calls).toEqual([['bravo']])
+  })
+
+  it('should recover when a reactive store changes length without replacing its options array', () => {
+    const [store, setStore] = createStore({options: ['alpha', 'bravo', 'charlie']})
+    const options = store.options
+    const onChange = vi.fn()
+    const {result} = renderHook(() =>
+      useSelect({onChange, options: () => store.options, value: () => 'alpha'}),
+    )
+    result.keyboard(new KeyboardEvent('keydown', {key: 'End'}))
+    setStore(
+      'options',
+      produce((options) => {
+        options.splice(1)
+      }),
+    )
+    expect(store.options).toBe(options)
+    expect(result.activeIndex()).toBe(0)
+    expect(onChange).not.toHaveBeenCalled()
+    result.keyboard(new KeyboardEvent('keydown', {key: 'Enter'}))
+    expect(result.expanded()).toBe(false)
+    expect(onChange.mock.calls).toEqual([['alpha']])
   })
 })

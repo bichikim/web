@@ -24,13 +24,16 @@ export const useSelect = (props: UseSelectProps) => {
     setExpanded(false)
   }
   createEffect(
-    on(props.options, (options) => {
-      if (options.length === 0) {
-        dismiss()
-        return
-      }
-      setActiveIndex((index) => (index >= 0 && index < options.length ? index : selectedIndex()))
-    }),
+    on(
+      () => props.options().length,
+      (count) => {
+        if (count === 0) {
+          dismiss()
+          return
+        }
+        setActiveIndex((index) => (index >= 0 && index < count ? index : selectedIndex()))
+      },
+    ),
   )
   const show = (): void => {
     if (props.options().length > 0 && !expanded()) {
