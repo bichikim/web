@@ -1,4 +1,4 @@
-import type {RuntimeView} from '../../tracking/types'
+import type {ViewportView as RuntimeView} from '../viewport/types'
 import {attachViewPan} from './attach-view-pan'
 import {attachViewNavigation} from './view-navigation'
 import {ViewRuler} from './ViewRuler'
@@ -13,6 +13,8 @@ interface CameraViewportProps {
   readonly view?: RuntimeView
   /** Reports navigation and fitting changes. Omitted, camera remains local. */
   readonly onViewChange?: (view: RuntimeView) => void
+  /** Reports the CSS scale so the canvas can match its displayed pixel density. */
+  readonly onZoomChange?: (zoom: number) => void
   readonly fitRevision?: unknown
   readonly width: number
   readonly height: number
@@ -28,6 +30,10 @@ export const CameraViewport = (props: CameraViewportProps) => {
   const size = useElementSize(viewport)
   const [fitted, setFitted] = createSignal(true)
   const [dragging, setDragging] = createSignal(false)
+  createEffect(() => {
+    const zoom = camera().zoom
+    untrack(() => props.onZoomChange?.(zoom))
+  })
   const navigate = (nextCamera: ViewCamera) => {
     setFitted(false)
     setCamera(nextCamera)

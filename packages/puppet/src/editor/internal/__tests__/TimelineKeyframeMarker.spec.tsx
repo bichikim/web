@@ -4,7 +4,7 @@ import {fireEvent, render} from '@solidjs/testing-library'
 import {createRoot, createSignal} from 'solid-js'
 import {expect, test, vi} from 'vitest'
 import {createDemoDocument} from '../../../player'
-import {useDocumentHistory} from '../../use-document-history'
+import {createHistory as useDocumentHistory} from '../../__tests__/fixtures/history'
 import {TimelineKeyframeMarker} from '../TimelineKeyframeMarker'
 import {getParameterTracks} from '../timeline-keyframe-selection'
 

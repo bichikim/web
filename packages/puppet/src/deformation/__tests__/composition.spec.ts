@@ -263,3 +263,32 @@ test('should read replaced parameter definitions while retaining binding identit
   expect(getParameterBindingValues({binding, document: updated})).toEqual([15, 15])
   expect(getParameterBindingValues({binding, document})).toEqual([0, 0])
 })
+
+test('should leave vertices untouched for bindings that key only display properties', () => {
+  const source = createComposedDocument()
+  const rest = [0, 0, 10, 0, 0, 10]
+  const document = {
+    ...source,
+    parameterBindings: [
+      {
+        id: 'opacity',
+        interpolation: 'grid' as const,
+        keyforms: [
+          {parts: [{partId: 'part', properties: {opacity: 0}, vertices: []}], values: [0] as const},
+          {parts: [{partId: 'part', properties: {opacity: 1}, vertices: []}], values: [1] as const},
+        ],
+        parameterIds: ['x'] as const,
+        targetPartIds: ['part'],
+      },
+    ],
+  }
+  expect(
+    composeParameterVertices({
+      document,
+      parameterValues: {x: 0.5},
+      partId: 'part',
+      restVertices: rest,
+    }),
+  ).toBe(rest)
+  expect(rest).toEqual([0, 0, 10, 0, 0, 10])
+})

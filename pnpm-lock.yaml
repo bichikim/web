@@ -652,6 +652,40 @@ importers:
         specifier: 'catalog:'
         version: 10.1.0
 
+  apps/poffo:
+    dependencies:
+      '@dschz/solid-flow':
+        specifier: 0.2.6
+        version: 0.2.6(patch_hash=d7b5ac8f5d14be953fc3ab56e5ab1f89d2f462c6d4cccc59c7b85cf10ea7ed9d)(solid-js@1.9.14)
+      '@kobalte/core':
+        specifier: ^0.13.13
+        version: 0.13.13(solid-js@1.9.14)
+      '@mediapipe/tasks-vision':
+        specifier: ^1.1.0
+        version: 1.1.1
+      '@winter-love/puppet':
+        specifier: workspace:*
+        version: link:../../packages/puppet
+      es-toolkit:
+        specifier: 'catalog:'
+        version: 1.52.0
+      solid-js:
+        specifier: 'catalog:'
+        version: 1.9.14
+    devDependencies:
+      typescript:
+        specifier: 'catalog:'
+        version: 7.0.2
+      unocss:
+        specifier: 'catalog:'
+        version: 66.7.5(vite@8.1.5(@types/node@25.6.0)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.46.2)(tsx@4.21.0))
+      vite:
+        specifier: 'catalog:'
+        version: 8.1.5(@types/node@25.6.0)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.46.2)(tsx@4.21.0)
+      vite-plugin-solid:
+        specifier: 'catalog:'
+        version: 2.11.12(@testing-library/jest-dom@6.9.1)(solid-js@1.9.14)(vite@8.1.5(@types/node@25.6.0)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.46.2)(tsx@4.21.0))
+
   apps/pomo:
     dependencies:
       '@apps-in-toss/web-framework':
@@ -1288,12 +1322,6 @@ importers:
         specifier: ^0.186.1
         version: 0.186.1
     devDependencies:
-      '@dschz/solid-flow':
-        specifier: 0.2.6
-        version: 0.2.6(patch_hash=d7b5ac8f5d14be953fc3ab56e5ab1f89d2f462c6d4cccc59c7b85cf10ea7ed9d)(solid-js@1.9.14)
-      '@mediapipe/tasks-vision':
-        specifier: ^1.1.0
-        version: 1.1.0
       '@types/three':
         specifier: ^0.186.0
         version: 0.186.0

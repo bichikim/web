@@ -1,3 +1,4 @@
+import {preventInternalDismiss} from '../../design-system/prevent-internal-dismiss'
 import {ContextMenu} from '@kobalte/core/context-menu'
 import {For, type JSX, Show} from 'solid-js'
 
@@ -66,6 +67,8 @@ const EditorContextMenuEntryView = (props: EditorContextMenuEntryProps) => {
 }
 
 export const EditorContextMenu = (props: EditorContextMenuProps) => {
+  let surface: HTMLDivElement | undefined
+
   const portalMount = useEditorPortalMount()
 
   return (
@@ -80,10 +83,16 @@ export const EditorContextMenu = (props: EditorContextMenuProps) => {
       </ContextMenu.Trigger>
       <ContextMenu.Portal mount={portalMount}>
         <ContextMenu.Content
+          ref={(element) => {
+            surface = element
+          }}
           aria-label={props.label ?? '작업 메뉴'}
           class="editor-context-menu-content"
           onCloseAutoFocus={props.onCloseAutoFocus}
-          onInteractOutside={props.onInteractOutside}
+          onInteractOutside={(event) => {
+            props.onInteractOutside?.(event)
+            preventInternalDismiss(event, surface)
+          }}
         >
           <For each={props.entries}>{(entry) => <EditorContextMenuEntryView entry={entry} />}</For>
         </ContextMenu.Content>

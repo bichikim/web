@@ -6,6 +6,8 @@ import type {RuntimePart, RuntimePartMask} from './types'
 const MASK_TEXTURE_BLOCK_SIZE = 64
 
 interface CreateRuntimePartMaskOptions {
+  /** Matches the owning renderer. Omitted, preserve multisampling. */
+  readonly antialias?: boolean
   readonly document: PuppetDocument
   readonly plan: PartMaskRenderPlan
   readonly partById: ReadonlyMap<string, RuntimePart>
@@ -27,10 +29,12 @@ export const createRuntimePartMask = (options: CreateRuntimePartMaskOptions): Ru
       uvs: new Float32Array(sourcePart.mesh.uvs),
       vertices: new Float32Array(sourceRuntimePart.vertices),
     })
+    mesh.renderable = sourcePart.mesh.indices.length > 0
     const mask =
       sourcePlan.mask === undefined
         ? undefined
         : createRuntimePartMask({
+            antialias: options.antialias,
             document: options.document,
             partById: options.partById,
             plan: sourcePlan.mask,
@@ -45,7 +49,12 @@ export const createRuntimePartMask = (options: CreateRuntimePartMaskOptions): Ru
     return [{mask, mesh, sourcePartId: sourcePlan.partId}]
   })
 
-  const texture = RenderTexture.create({antialias: true, dynamic: true, height: 1, width: 1})
+  const texture = RenderTexture.create({
+    antialias: options.antialias ?? true,
+    dynamic: true,
+    height: 1,
+    width: 1,
+  })
   const sprite = new Sprite(texture)
   sprite.renderable = false
   const filter = new MaskFilter({
@@ -126,14 +135,49 @@ interface RenderRuntimeMaskOptions {
   readonly viewport?: MaskViewport
 }
 
-/** Renders a mask over its receivers, clipped to `viewport` when supplied. */
-export const renderRuntimeMask = (options: RenderRuntimeMaskOptions) => {
-  const {mask, renderer, resolution, vertexSets, viewport} = options
-  for (const source of mask.meshes) {
-    if (source.mask !== undefined) {
-      renderRuntimeMask({...options, mask: source.mask, vertexSets: [source.mesh.vertices]})
+const transparentMasks = new WeakMap<Renderer, WeakSet<RuntimePartMask>>()
+
+/** Whether its source geometry guarantees a transparent mask, independent of receiver inversion. */
+export const isRuntimeMaskEmpty = (mask: RuntimePartMask): boolean =>
+  mask.meshes.every(
+    (source) =>
+      source.mesh.geometry.indices.length === 0 ||
+      (source.mask !== undefined && !source.mask.filter.inverse && isRuntimeMaskEmpty(source.mask)),
+  )
+
+const renderEmptyMask = (mask: RuntimePartMask, renderer: Renderer) => {
+  let initialized = transparentMasks.get(renderer)
+  if (initialized === undefined) {
+    initialized = new WeakSet()
+    transparentMasks.set(renderer, initialized)
+  }
+  const changed =
+    mask.texture.width !== 1 || mask.texture.height !== 1 || mask.texture.source.resolution !== 1
+  if (changed) {
+    mask.texture.resize(1, 1, 1)
+    mask.texture.update()
+  }
+  mask.sprite.position.set(0, 0)
+  if (changed || !initialized.has(mask)) {
+    const empty = new Container()
+    try {
+      renderer.render({clear: true, container: empty, target: mask.texture})
+      initialized.add(mask)
+    } finally {
+      empty.destroy()
     }
   }
+}
+
+/** Rasterizes one mask after its nested masks have already been prepared. */
+export const renderMaskTexture = (options: RenderRuntimeMaskOptions) => {
+  const {mask, renderer, resolution, vertexSets, viewport} = options
+  mask.sprite.texture = mask.texture
+  if (isRuntimeMaskEmpty(mask)) {
+    renderEmptyMask(mask, renderer)
+    return
+  }
+  transparentMasks.get(renderer)?.delete(mask)
   // Align in physical pixels so the margin stays small even when zoomed far into the model.
   const bounds = getVertexBounds(vertexSets)
   const left =
@@ -152,8 +196,10 @@ export const renderRuntimeMask = (options: RenderRuntimeMaskOptions) => {
     (Math.ceil(Math.max(1, size * resolution) / MASK_TEXTURE_BLOCK_SIZE) *
       MASK_TEXTURE_BLOCK_SIZE) /
     resolution
-  const width = capacity(right - left)
-  const height = capacity(bottom - top)
+  const sameResolution = mask.texture.source.resolution === resolution
+  // Moving bounds retain their active capacity; zoom changes and inactive groups release it.
+  const width = Math.max(sameResolution ? mask.texture.width : 0, capacity(right - left))
+  const height = Math.max(sameResolution ? mask.texture.height : 0, capacity(bottom - top))
   if (
     mask.texture.width !== width ||
     mask.texture.height !== height ||
@@ -171,6 +217,16 @@ export const renderRuntimeMask = (options: RenderRuntimeMaskOptions) => {
     container: mask.container,
     target: mask.texture,
   })
+}
+
+/** Renders a mask and its dependencies, clipped to `viewport` when supplied. */
+export const renderRuntimeMask = (options: RenderRuntimeMaskOptions) => {
+  for (const source of options.mask.meshes) {
+    if (source.mask !== undefined) {
+      renderRuntimeMask({...options, mask: source.mask, vertexSets: [source.mesh.vertices]})
+    }
+  }
+  renderMaskTexture(options)
 }
 
 export const destroyRuntimeMask = (mask: RuntimePartMask) => {

@@ -1,0 +1,41 @@
+name: Verify Poffo source
+description: Set up the toolchain, build libraries and check Poffo source and document contracts.
+runs:
+  using: composite
+  steps:
+    - uses: pnpm/action-setup@v6
+      with:
+        version: 11.8.0
+    - uses: actions/setup-node@v6
+      with:
+        node-version: 24.x
+        cache: pnpm
+    - name: Install dependencies
+      run: pnpm install --frozen-lockfile
+      shell: bash
+    - name: Build Poffo and its libraries
+      run: pnpm exec turbo run build --filter=@winter-love/poffo...
+      shell: bash
+    - name: Check source
+      run: |
+        pnpm exec oxfmt --check
+        pnpm --dir apps/poffo lint
+        pnpm --dir apps/poffo typecheck
+        pnpm --dir packages/puppet lint
+        pnpm --dir packages/puppet typecheck
+      shell: bash
+    - name: Check document and UI contracts
+      env:
+        NODE_OPTIONS: '--no-experimental-webstorage'
+      run: |
+        pnpm exec vitest run --project=unit apps/poffo \
+          packages/puppet/src/editor/model \
+          packages/puppet/src/editor-element \
+          packages/puppet/src/design-system \
+          packages/puppet/src/editor/__tests__/create-editor-control.spec.ts \
+          packages/puppet/src/editor/__tests__/use-model-history.spec.ts \
+          packages/puppet/src/editor/internal/__tests__/use-temporary-form.spec.ts \
+          packages/puppet/src/editor/internal/__tests__/use-editor-state.spec.ts
+        pnpm test:integration --project=integration apps/poffo/src \
+          packages/puppet/src/editor/__tests__/PuppetEditor.lifecycle.integration.tsx
+      shell: bash

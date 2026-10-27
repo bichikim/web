@@ -1,8 +1,8 @@
 import type {Container} from 'pixi.js'
 import {
   composeParameterGlue,
-  composeParameterScene,
   composeParameterVertices,
+  composeRenderScene,
   type PuppetParameterValueMap,
 } from '../../deformation'
 import type {PuppetDocument} from '../document'
@@ -11,6 +11,7 @@ import {getPartRenderFrame} from '../internal/render-plan'
 import type {RenderOverrides} from '../internal/render-overrides'
 import {applySceneDeformers} from '../internal/scene-deformation'
 import type {SpatialPartPose} from '../internal/spatial-part'
+import type {NativeDeformation} from '../internal/create-native-deformation'
 import {applyDocumentScene} from './apply-document-scene'
 import {applyLayerRenderProperties, applyPartRenderProperties} from './apply-effect-filters'
 import {cullFlippedTriangles} from './cull-flipped-triangles'
@@ -52,6 +53,8 @@ const applyFrameVertices = (options: ApplyFrameVerticesOptions) => {
 }
 
 interface ApplyRenderFrameOptions {
+  /** Owned native coordinate evaluator; omitted, compose the general scene. */
+  readonly native?: NativeDeformation
   readonly mix: MotionMix
   readonly parameterValues: PuppetParameterValueMap
   readonly overrides?: RenderOverrides
@@ -66,7 +69,10 @@ interface ApplyRenderFrameOptions {
 /** Applies one frame and returns the part IDs in paint order, back to front. */
 export const applyRenderFrame = (options: ApplyRenderFrameOptions): ReadonlyArray<string> => {
   const frameParameterValues = options.parameterValues
-  const posedScene = composeParameterScene(options.document, frameParameterValues)
+  const posedScene =
+    options.native === undefined
+      ? composeRenderScene(options.document, frameParameterValues)
+      : undefined
   const frame = getPartRenderFrame(options.document, frameParameterValues, posedScene, {
     mix: options.mix,
     overrides: options.overrides,
@@ -87,14 +93,17 @@ export const applyRenderFrame = (options: ApplyRenderFrameOptions): ReadonlyArra
   }
 
   applySceneDeformers({
+    deferCoordinates: true,
     document: {
       ...options.document,
       glue: composeParameterGlue({
         document: options.document,
         parameterValues: frameParameterValues,
       }),
-      scene: posedScene,
+      ...(posedScene === undefined ? {} : {scene: posedScene}),
     },
+    native: options.native,
+    parameterValues: frameParameterValues,
     verticesByPartId: new Map(
       [...options.partById].map(([partId, runtimePart]) => [partId, runtimePart.vertices]),
     ),

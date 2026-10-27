@@ -339,7 +339,7 @@ const getExplicitAngle = (
   sampled: {readonly rotationAngle?: number},
 ) => (deformer.rotationAngle === undefined ? {} : {rotationAngle: sampled.rotationAngle})
 
-export const composeParameterDeformer = (
+const composeDeformer = (
   document: PuppetDocument,
   deformer: PuppetSceneDeformerNode,
   parameterValues: PuppetParameterValueMap | undefined,
@@ -476,20 +476,100 @@ export const composeParameterDeformer = (
   }
 }
 
+interface DeformerSample {
+  readonly parameterIds: ReadonlyArray<string>
+  readonly values: ReadonlyArray<number | undefined>
+  readonly posed: ReturnType<typeof composeDeformer>
+}
+
+// Keep only the latest input/pose for each rest node; released documents release their samples.
+const deformerSamples = new WeakMap<
+  PuppetDocument,
+  WeakMap<PuppetSceneDeformerNode, DeformerSample>
+>()
+
+export const composeParameterDeformer = (
+  document: PuppetDocument,
+  deformer: PuppetSceneDeformerNode,
+  parameterValues: PuppetParameterValueMap | undefined,
+) => {
+  let samples = deformerSamples.get(document)
+  if (samples === undefined) {
+    samples = new WeakMap()
+    deformerSamples.set(document, samples)
+  }
+  const previous = samples.get(deformer)
+  if (
+    previous !== undefined &&
+    previous.parameterIds.every((id, index) =>
+      Object.is(parameterValues?.[id], previous.values[index]),
+    )
+  ) {
+    return previous.posed
+  }
+  const parameterIds = previous?.parameterIds ?? [
+    ...new Set(
+      getTargetBindings(document.parameterBindings ?? [], 'targetDeformerIds', deformer.id).flatMap(
+        (binding) => [
+          ...binding.parameterIds,
+          ...(binding.influences ?? []).map((influence) => influence.parameterId),
+        ],
+      ),
+    ),
+  ]
+  const posed = composeDeformer(document, deformer, parameterValues)
+  samples.set(deformer, {
+    parameterIds,
+    posed,
+    values: parameterIds.map((id) => parameterValues?.[id]),
+  })
+  return posed
+}
+
+interface SceneSample {
+  readonly poses: ReadonlyArray<PuppetSceneNode>
+  readonly output: ReadonlyArray<PuppetSceneNode>
+}
+
+const sceneSamples = new WeakMap<
+  PuppetDocument,
+  WeakMap<ReadonlyArray<PuppetSceneNode>, SceneSample>
+>()
+
 const composeSceneNodes = (
   document: PuppetDocument,
   nodes: ReadonlyArray<PuppetSceneNode>,
   parameterValues: PuppetParameterValueMap | undefined,
-): ReadonlyArray<PuppetSceneNode> =>
-  nodes.map((node) => {
-    if (node.kind === 'part') {
-      return node
+): ReadonlyArray<PuppetSceneNode> => {
+  let samples = sceneSamples.get(document)
+  if (samples === undefined) {
+    samples = new WeakMap()
+    sceneSamples.set(document, samples)
+  }
+  const previous = samples.get(nodes)
+  const poses = nodes.map((node) =>
+    node.kind === 'deformer' ? composeParameterDeformer(document, node, parameterValues) : node,
+  )
+  const output = poses.map((pose, index) => {
+    if (pose.kind === 'part') {
+      return pose
     }
-    const children = composeSceneNodes(document, node.children, parameterValues)
-    return node.kind === 'group'
-      ? {...node, children}
-      : {...composeParameterDeformer(document, node, parameterValues), children}
+    const children = composeSceneNodes(document, pose.children, parameterValues)
+    const prior = previous?.output[index]
+    return prior !== undefined &&
+      prior.kind !== 'part' &&
+      previous?.poses[index] === pose &&
+      prior.children === children
+      ? prior
+      : {...pose, children}
   })
+  const stable =
+    previous !== undefined && output.every((node, index) => node === previous.output[index])
+      ? previous.output
+      : output
+  samples.set(nodes, {output: stable, poses})
+  return stable
+}
 
 export const composeParameterScene = (
   document: PuppetDocument,

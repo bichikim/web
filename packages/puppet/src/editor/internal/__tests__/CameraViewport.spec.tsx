@@ -9,6 +9,27 @@ afterEach(() => {
   vi.unstubAllGlobals()
 })
 
+test('should report fitting and zoom changes without tracking the consumer', () => {
+  const [external, setExternal] = createSignal(0)
+  const onZoomChange = vi.fn((zoom: number) => external() + zoom)
+  const view = render(() => (
+    <CameraViewport width={400} height={300} onZoomChange={onZoomChange}>
+      model
+    </CameraViewport>
+  ))
+  expect(onZoomChange).toHaveBeenLastCalledWith(1)
+  fireEvent.wheel(view.getByRole('region', {name: '모델 보기'}), {
+    clientX: 100,
+    clientY: 60,
+    ctrlKey: true,
+    deltaY: -100,
+  })
+  const calls = onZoomChange.mock.calls.length
+  expect(onZoomChange.mock.calls.at(-1)?.[0]).toBeGreaterThan(1)
+  setExternal(1)
+  expect(onZoomChange).toHaveBeenCalledTimes(calls)
+})
+
 test('should refit after layout settles while retaining manual navigation on later resizes', () => {
   let resize = () => undefined as void
   vi.stubGlobal(

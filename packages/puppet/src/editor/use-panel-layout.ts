@@ -220,6 +220,7 @@ export const usePanelLayout = () => {
     rightSize,
     setBottomOpen,
     setLeftOpen,
+    setOpen,
     setRightOpen,
     startResize,
   }

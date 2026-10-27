@@ -34,7 +34,7 @@ import {
   type MotionFrame,
 } from './playback'
 import type {CreatePlayerOptions, Player, PlayerPlaybackOptions} from './player-types'
-import {createPlayerRenderer} from './rendering'
+import {createRendererController} from './rendering'
 import {
   applyMouthShapes,
   followMouthShapes,
@@ -60,7 +60,7 @@ const resolveOverrides = (document: PreparedPuppetDocument, values: PuppetParame
 export const createPlayer = async (options: CreatePlayerOptions): Promise<Player> => {
   assertPreparedPuppetDocument(options.document)
 
-  const renderer = await createPlayerRenderer(options)
+  const renderer = await createRendererController(options)
   let {document} = options
   let parameterValues: PuppetParameterValueMap = {...options.parameterValues}
   let frameValues: PuppetParameterValueMap = {}
@@ -340,6 +340,7 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
       )
       refresh()
     },
+    configureRenderer: renderer.configure,
     destroy() {
       if (destroyed) {
         return
@@ -355,6 +356,7 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
       return Object.hasOwn(frameValues, parameterId) ? frameValues[parameterId] : undefined
     },
     getParameterValues: () => ({...frameValues}),
+    getRenderingInfo: renderer.getRenderingInfo,
     hitTest(point) {
       if (destroyed) {
         return undefined
@@ -422,11 +424,14 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
       applyFrame(0, true)
       redraw()
     },
-    resize() {
-      if (destroyed) {
+    resize(resolution) {
+      if (
+        destroyed ||
+        (resolution !== undefined && (!Number.isFinite(resolution) || resolution <= 0))
+      ) {
         return
       }
-      renderer.resize()
+      renderer.resize(resolution)
     },
     resume,
     seek(time: number) {
