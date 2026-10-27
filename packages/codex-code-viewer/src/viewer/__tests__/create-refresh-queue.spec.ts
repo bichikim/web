@@ -26,31 +26,34 @@ describe('createRefreshQueue', () => {
     expect(task).toHaveBeenCalledTimes(2)
   })
 
-  it('should drain a queued request before rejecting the shared promise with the original error', async () => {
+  it('should reject failed callers without waiting for the queued refresh to finish', async () => {
     const first = Promise.withResolvers<void>()
     const followUp = Promise.withResolvers<void>()
     const error = new Error('failed')
     const task = vi.fn().mockReturnValueOnce(first.promise).mockReturnValueOnce(followUp.promise)
     const refresh = createRefreshQueue(task)
     const pending = refresh()
-    const rejected = expect(pending).rejects.toBe(error)
     let settled = false
-    void pending.then(
+    const result = pending.then(
       () => {
         settled = true
       },
-      () => {
+      (failure) => {
         settled = true
+        return failure
       },
     )
     expect(refresh()).toBe(pending)
     expect(refresh()).toBe(pending)
     first.reject(error)
     await first.promise.catch(() => undefined)
+    await Promise.resolve()
+    await Promise.resolve()
     expect(task).toHaveBeenCalledTimes(2)
-    expect(settled).toBe(false)
+    expect(settled).toBe(true)
+    expect(await result).toBe(error)
     followUp.resolve()
-    await rejected
+    await followUp.promise
     expect(task).toHaveBeenCalledTimes(2)
   })
 
@@ -70,9 +73,12 @@ describe('createRefreshQueue', () => {
     first.reject(error)
     await first.promise.catch(() => undefined)
     expect(task).toHaveBeenCalledTimes(2)
-    expect(refresh()).toBe(pending)
+    const late = refresh()
+    expect(late).not.toBe(pending)
+    expect(refresh()).toBe(late)
     followUp.resolve()
     await rejected
+    await late
     expect(task).toHaveBeenCalledTimes(3)
     await refresh()
     expect(task).toHaveBeenCalledTimes(4)
@@ -129,7 +135,7 @@ describe('createRefreshQueue', () => {
     expect(task).toHaveBeenCalledTimes(2)
   })
 
-  it('should propagate an undefined rejection after draining queued work', async () => {
+  it('should propagate an undefined rejection while retaining queued work', async () => {
     const first = Promise.withResolvers<void>()
     const task = vi.fn().mockReturnValueOnce(first.promise).mockResolvedValue(undefined)
     const refresh = createRefreshQueue(task)
@@ -139,5 +145,30 @@ describe('createRefreshQueue', () => {
     first.reject(undefined)
     await rejected
     expect(task).toHaveBeenCalledTimes(2)
+  })
+
+  it('should retain synchronous reentrant requests when the follow-up throws', async () => {
+    const first = Promise.withResolvers<void>()
+    const firstError = new Error('first failure')
+    const nextError = new Error('follow-up failure')
+    let reentrant: Promise<void> | undefined
+    const task = vi
+      .fn<() => Promise<void>>()
+      .mockReturnValueOnce(first.promise)
+      .mockImplementationOnce(() => {
+        reentrant = refresh()
+        throw nextError
+      })
+      .mockResolvedValue(undefined)
+    const refresh = createRefreshQueue(task)
+    const pending = refresh()
+    const rejected = expect(pending).rejects.toBe(firstError)
+    expect(refresh()).toBe(pending)
+    first.reject(firstError)
+    await rejected
+    expect(reentrant).not.toBe(pending)
+    await expect(reentrant).rejects.toBe(nextError)
+    await Promise.resolve()
+    expect(task).toHaveBeenCalledTimes(3)
   })
 })
