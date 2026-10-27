@@ -1,24 +1,38 @@
-/** Coalesces concurrent refresh requests and retains changes received during an active refresh. */
+interface RefreshFailure {
+  error: unknown
+}
+
+/**
+ * Coalesces concurrent refresh requests and retains changes received during an active refresh.
+ * The shared promise settles after queued work drains, rejecting with the first failure, if any.
+ */
 export const createRefreshQueue = (refresh: () => Promise<void>): (() => Promise<void>) => {
   let queued = false
   let running: Promise<void> | null = null
   const drain = async (): Promise<void> => {
-    queued = false
-    try {
-      await refresh()
-    } catch (error) {
-      running = null
-      throw error
+    let failure: RefreshFailure | undefined
+    while (queued) {
+      queued = false
+      try {
+        // oxlint-disable-next-line no-await-in-loop -- Refreshes must finish before queued work starts.
+        await refresh()
+      } catch (error) {
+        failure ??= {error}
+      }
     }
-    if (queued) {
-      await drain()
-    } else {
-      running = null
+    running = null
+    if (failure !== undefined) {
+      throw failure.error
     }
   }
   return () => {
     queued = true
-    running ??= drain()
-    return running
+    if (running !== null) {
+      return running
+    }
+    const pending = Promise.withResolvers<void>()
+    running = pending.promise
+    drain().then(pending.resolve, pending.reject)
+    return pending.promise
   }
 }
