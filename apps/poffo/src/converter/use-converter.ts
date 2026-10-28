@@ -6,7 +6,7 @@ import {
   getModelFormat,
 } from '@winter-love/puppet/converter'
 
-import {serializeDocument} from '@winter-love/puppet/player'
+import {serializeDocumentChunks} from '@winter-love/puppet/player'
 
 interface ConversionReady {
   readonly kind: 'ready'
@@ -79,7 +79,9 @@ export const useConverter = () => {
       if (current !== conversionId) {
         return
       }
-      const blob = new Blob([serializeDocument(result.document)], {type: 'application/json'})
+      const blob = new Blob([...serializeDocumentChunks(result.document)], {
+        type: 'application/json',
+      })
       const url = URL.createObjectURL(blob)
       downloadUrl = url
       const name =

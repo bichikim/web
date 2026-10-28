@@ -20,7 +20,7 @@ export const useRuntimeDocument = () => {
     try {
       const result = await preparePuppetDocument({
         signal: request.signal,
-        source: await file.text(),
+        source: file,
       })
       if (request.signal.aborted) {
         return

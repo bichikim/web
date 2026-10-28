@@ -1,6 +1,6 @@
 import {type Accessor, createSignal, onCleanup} from 'solid-js'
 
-import {type PuppetDocument, serializeDocument} from '@winter-love/puppet/player'
+import {type PuppetDocument, serializeDocumentChunks} from '@winter-love/puppet/player'
 import {packTextureAtlas} from '@winter-love/puppet/editor'
 
 export const useDocumentExport = (
@@ -26,7 +26,7 @@ export const useDocumentExport = (
       return
     }
     const next = URL.createObjectURL(
-      new Blob([serializeDocument(exported)], {type: 'application/json'}),
+      new Blob([...serializeDocumentChunks(exported)], {type: 'application/json'}),
     )
     release()
     setUrl(next)

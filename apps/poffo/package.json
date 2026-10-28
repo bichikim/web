@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@discoveryjs/json-ext": "1.1.0",
     "@dschz/solid-flow": "0.2.6",
     "@kobalte/core": "^0.13.13",
     "@mediapipe/tasks-vision": "^1.1.0",
