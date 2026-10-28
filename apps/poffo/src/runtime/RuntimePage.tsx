@@ -12,6 +12,7 @@ import {
   EditorSelect,
   EditorStyles,
   EditorToast,
+  FileLoadingDialog,
 } from '@winter-love/puppet/editor'
 
 import {useRuntimeDocument} from './use-runtime-document'
@@ -157,6 +158,7 @@ export const RuntimePage = (props: RuntimePageProps) => {
           )}
         </Show>
       </Suspense>
+      <FileLoadingDialog fileName={loading.pendingFile()} onCancel={loading.cancel} />
       <Show when={message()}>
         {(message) => <EditorToast message={message()} onDismiss={handleDismiss} />}
       </Show>

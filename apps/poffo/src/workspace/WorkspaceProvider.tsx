@@ -3,6 +3,7 @@ import {createMemo, createSignal, type JSX, Show} from 'solid-js'
 import {Portal} from 'solid-js/web'
 import {WorkspaceContext} from './context'
 import {HeaderSurface} from './HeaderSurface'
+import {RenderingSettings} from './RenderingSettings'
 import {
   type EditorController,
   EditorToast,
@@ -89,6 +90,11 @@ export const WorkspaceProvider = (props: WorkspaceProviderProps) => {
       <ViewportSurface
         {...active()!}
         fitRevision={fitRevision()}
+        viewSettings={
+          <WorkspaceContext.Provider value={context}>
+            <RenderingSettings />
+          </WorkspaceContext.Provider>
+        }
         renderer={rendering.preferences().renderer}
         antialiasing={
           rendering.preferences().antialiasing === 'auto'

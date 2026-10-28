@@ -10,13 +10,20 @@ export const useRuntimeDocument = () => {
     throw new Error('Runtime requires a Poffo model session')
   }
   const [error, setError] = createSignal<string | null>(null)
+  const [pendingFile, setPendingFile] = createSignal<string | null>(null)
   let controller: AbortController | undefined
+  const cancel = () => {
+    controller?.abort()
+    controller = undefined
+    setPendingFile(null)
+  }
   const loadFile = async (file: File) => {
     controller?.abort()
     const request = new AbortController()
     controller = request
     const initial = workspace.model.read()
     setError(null)
+    setPendingFile(file.name)
     try {
       const result = await preparePuppetDocument({
         signal: request.signal,
@@ -44,14 +51,21 @@ export const useRuntimeDocument = () => {
       if (!request.signal.aborted) {
         setError(cause instanceof Error ? cause.message : '문서를 불러오지 못했습니다.')
       }
+    } finally {
+      if (controller === request) {
+        controller = undefined
+        setPendingFile(null)
+      }
     }
   }
-  onCleanup(() => controller?.abort())
+  onCleanup(cancel)
   return {
+    cancel,
     dismissError: () => setError(null),
     document: workspace.document,
     error,
     loadFile,
+    pendingFile,
     sessionId: () => workspace.model.read().sessionId,
   }
 }

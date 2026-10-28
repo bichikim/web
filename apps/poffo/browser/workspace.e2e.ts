@@ -32,7 +32,7 @@ test('should apply rendering preferences and restore them after a production ref
   page,
 }) => {
   await page.goto('/viewer')
-  await page.getByRole('button', {exact: true, name: '렌더링 설정'}).click()
+  await page.getByRole('button', {exact: true, name: '보기 설정'}).click()
   await expect(page.getByText('사용 중: WebGL · SSAA · 2× 해상도')).toBeVisible()
   const previous = await page
     .getByRole('region', {name: '모델 보기'})
@@ -45,9 +45,9 @@ test('should apply rendering preferences and restore them after a production ref
   await page.getByRole('option', {exact: true, name: 'MSAA + 2× 해상도'}).click()
   await expect(page.getByText('사용 중: WebGL · MSAA + 2× 해상도')).toBeVisible()
   expect(await previous.evaluate((canvas) => canvas.isConnected)).toBe(false)
-  await page.getByRole('button', {exact: true, name: '렌더링 설정'}).click()
-  await expect(page.getByRole('dialog', {name: '렌더링 설정'})).not.toBeVisible()
-  await page.getByRole('button', {exact: true, name: '렌더링 설정'}).click()
+  await page.getByRole('button', {exact: true, name: '보기 설정'}).click()
+  await expect(page.getByRole('dialog', {name: '보기 설정'})).not.toBeVisible()
+  await page.getByRole('button', {exact: true, name: '보기 설정'}).click()
   await page.getByRole('button', {name: /^안티앨리어싱/u}).click()
   await page.getByRole('option', {exact: true, name: 'SSAA · 2× 해상도'}).click()
   await expect(page.getByText('사용 중: WebGL · SSAA · 2× 해상도')).toBeVisible()
@@ -57,7 +57,7 @@ test('should apply rendering preferences and restore them after a production ref
   await page.getByRole('button', {name: /^렌더러/u}).click()
   await page.getByRole('option', {exact: true, name: 'WebGL'}).click()
   await page.reload()
-  await page.getByRole('button', {exact: true, name: '렌더링 설정'}).click()
+  await page.getByRole('button', {exact: true, name: '보기 설정'}).click()
   await expect(page.getByRole('button', {name: /^렌더러/u})).toContainText('WebGL')
   await expect(page.getByRole('button', {name: /^안티앨리어싱/u})).toContainText('MSAA')
   await expect(page.getByText('사용 중: WebGL · MSAA + 2× 해상도')).toBeVisible()
@@ -66,7 +66,7 @@ test('should apply rendering preferences and restore them after a production ref
     dispatchEvent(new PopStateEvent('popstate'))
   })
   await expect(page.getByRole('heading', {name: 'Poffo 변환기'})).toBeVisible()
-  await expect(page.getByRole('dialog', {name: '렌더링 설정'})).not.toBeVisible()
+  await expect(page.getByRole('dialog', {name: '보기 설정'})).not.toBeVisible()
 })
 
 test('should recover an unsupported saved renderer when a supported one is selected', async ({
@@ -82,7 +82,7 @@ test('should recover an unsupported saved renderer when a supported one is selec
   await page.goto('/viewer')
   const unavailable = page.getByText('No available renderer for the current environment')
   await expect(unavailable).toBeVisible()
-  await page.getByRole('button', {exact: true, name: '렌더링 설정'}).click()
+  await page.getByRole('button', {exact: true, name: '보기 설정'}).click()
   await page.getByRole('button', {name: /^렌더러/u}).click()
   await page.getByRole('option', {exact: true, name: 'WebGL'}).click()
   await expect(page.getByText('사용 중: WebGL · SSAA · 2× 해상도')).toBeVisible()
@@ -154,3 +154,50 @@ test('should initialize local tracking with a simulated camera and stop it when 
   await page.getByRole('button', {exact: true, name: 'Studio'}).click()
   await expect(page.getByRole('status').filter({hasText: '카메라 꺼짐'})).toBeVisible()
 })
+
+test('should close view settings after history navigation detaches its native popup', async ({
+  page,
+}) => {
+  await page.goto('/editor')
+  await page.getByRole('button', {exact: true, name: 'Studio'}).click()
+  await expect(page).toHaveURL(/\/studio(?:\?|$)/u)
+  const trigger = page.getByRole('button', {exact: true, name: '보기 설정'})
+  await trigger.click()
+  await expect(trigger).toHaveAttribute('aria-haspopup', 'dialog')
+  await expect(page.getByRole('dialog', {name: '보기 설정'})).toBeVisible()
+  await page.goBack()
+  await expect(page).toHaveURL(/\/editor(?:\?|$)/u)
+  await expect(trigger).toHaveAttribute('aria-expanded', 'false')
+  await expect(page.getByRole('dialog', {name: '보기 설정'})).toHaveCount(0)
+  await trigger.click()
+  await expect(page.getByRole('dialog', {name: '보기 설정'})).toBeVisible()
+})
+
+for (const height of [480, 240]) {
+  test(`should keep view settings compact and nested options clickable at 640 by ${height}`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({height, width: 640})
+    await page.goto('/viewer')
+    await page.getByRole('button', {exact: true, name: '보기 설정'}).click()
+    const settings = page.getByRole('dialog', {name: '보기 설정'})
+    const bounds = await settings.boundingBox()
+    expect(bounds).not.toBeNull()
+    if (bounds === null) {
+      throw new Error('View settings did not open')
+    }
+    expect(bounds.y).toBeGreaterThanOrEqual(0)
+    expect(bounds.y + bounds.height).toBeLessThanOrEqual(height)
+    expect(bounds.height).toBeLessThanOrEqual(Math.min(360, height))
+    const renderer = settings.getByRole('button', {name: /^렌더러/u})
+    await renderer.click()
+    await page.getByRole('option', {exact: true, name: 'WebGPU'}).hover()
+    await page.keyboard.press('Escape')
+    await expect(renderer).toBeFocused()
+    await expect(settings).toBeVisible()
+    await renderer.click()
+    await page.getByRole('option', {exact: true, name: 'WebGL'}).click()
+    await expect(renderer).toContainText('WebGL')
+    await expect(settings).toBeVisible()
+  })
+}
