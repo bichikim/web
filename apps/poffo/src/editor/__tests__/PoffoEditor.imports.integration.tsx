@@ -64,11 +64,9 @@ describe('PuppetEditor', () => {
       fireEvent.change(screen.getByLabelText(action), {target: {files: [file]}})
 
       const alert = await screen.findByRole('alert')
-      expect(alert).toHaveTextContent('Puppet 문서가 아니거나 JSON 형식이 올바르지 않습니다.')
+      expect(alert).toHaveTextContent('올바른 Poffo 문서를 선택하세요.')
       expect(screen.getByRole('dialog', {name: '불러오는 중…'})).toHaveAttribute('data-closed')
-      expect(
-        screen.getAllByText('Puppet 문서가 아니거나 JSON 형식이 올바르지 않습니다.'),
-      ).toHaveLength(1)
+      expect(screen.getAllByText('올바른 Poffo 문서를 선택하세요.')).toHaveLength(1)
       expect(onDocumentChange).not.toHaveBeenCalled()
       fireEvent.click(view.getByRole('button', {name: '알림 닫기'}))
       expect(screen.queryByRole('alert')).toBeNull()
