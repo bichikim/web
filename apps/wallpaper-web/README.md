@@ -14,6 +14,7 @@
 
 - `model.poffo`: 현재 애시 캐릭터의 네이티브 Poffo 모델
 - `poster.webp`: 같은 모델의 로딩용 스냅샷
+- `atlas-0.webp`, `atlas-1.webp`: 모델 내부의 텍스처 경로가 참조하는 이미지
 
 이 파일들이 없으면 캐릭터 로딩이 실패한다. 모델은
 [표정 목록](./src/data/character-expressions.json)과
