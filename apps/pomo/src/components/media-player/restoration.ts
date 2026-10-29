@@ -1,3 +1,4 @@
+import {remapOccurrences} from 'src/utils/remap-occurrences'
 import {
   type PlaylistPreference,
   type PPlaybackState,
@@ -93,20 +94,11 @@ const resolveEntryIdsForTracks = (options: {
     return undefined
   }
 
-  const entriesByTrackId = new Map<string, string[]>()
-  options.storedTrackIds.forEach((trackId, index) => {
-    const entryId = options.entryIds[index]
-    if (entryId === undefined) {
-      return
-    }
-    const entries = entriesByTrackId.get(trackId) ?? []
-    entries.push(entryId)
-    entriesByTrackId.set(trackId, entries)
+  const restoredEntryIds = remapOccurrences({
+    sourceKeys: options.storedTrackIds,
+    targetKeys: options.restoredTracks.map((track) => track.id),
+    values: options.entryIds,
   })
-
-  const restoredEntryIds = options.restoredTracks.map((track) =>
-    entriesByTrackId.get(track.id)?.shift(),
-  )
   return restoredEntryIds.every((entryId) => entryId !== undefined)
     ? (restoredEntryIds as string[])
     : undefined

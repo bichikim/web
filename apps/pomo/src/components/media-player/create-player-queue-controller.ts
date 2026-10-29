@@ -1,3 +1,4 @@
+import {remapOccurrences} from 'src/utils/remap-occurrences'
 import {type Accessor, batch} from 'solid-js'
 
 import {
@@ -390,24 +391,14 @@ const loadTrackQueue = (
   const currentIndex = options.readCurrentIndex()
   const mergedTracks = appendUniqueTracks(availableTracks, currentTracks)
   const currentEntryIds = getPlaylistEntryIds(options, currentTracks)
-  const currentEntryIdsByTrackId = new Map<string, string[]>()
-  currentTracks.forEach((track, index) => {
-    const entryId = currentEntryIds[index]
-    if (entryId === undefined) {
-      return
-    }
-
-    const entryIds = currentEntryIdsByTrackId.get(track.id) ?? []
-    entryIds.push(entryId)
-    currentEntryIdsByTrackId.set(track.id, entryIds)
+  const mergedTrackIds = mergedTracks.map((track) => track.id)
+  const matchedEntryIds = remapOccurrences({
+    sourceKeys: currentTracks.map((track) => track.id),
+    targetKeys: mergedTrackIds,
+    values: currentEntryIds,
   })
-  const mergedEntryIds = createLegacyPlaylistEntryIds(mergedTracks.map((track) => track.id)).map(
-    (legacyEntryId, index) => {
-      const track = mergedTracks[index]
-      return track === undefined
-        ? legacyEntryId
-        : (currentEntryIdsByTrackId.get(track.id)?.shift() ?? legacyEntryId)
-    },
+  const mergedEntryIds = createLegacyPlaylistEntryIds(mergedTrackIds).map(
+    (legacyEntryId, index) => matchedEntryIds[index] ?? legacyEntryId,
   )
   const activeEntryId = currentEntryIds[currentIndex]
   const identityMatchedIndex =

@@ -183,6 +183,22 @@ describe('onLoad', () => {
     expect(currentIndex()).toBe(0)
   })
 
+  it('should remap interleaved occurrences and retain the selected entry during a late load', () => {
+    const first = createTrack('one')
+    const second = createTrack('two')
+    const currentTracks = [second, first, second]
+    const {controller, currentIndex, entryIds, persistTrackQueue} = createHarness(
+      currentTracks,
+      2,
+      ['first-two', 'first-one', 'second-two'],
+    )
+    const defaultTracks = [first, second, second, createTrack('three')]
+    controller.onLoad({defaultTracks, queueChanged: true})
+    expect(entryIds()).toEqual(['first-one', 'first-two', 'second-two', 'legacy:["three",0]'])
+    expect(currentIndex()).toBe(2)
+    expect(persistTrackQueue).toHaveBeenCalledExactlyOnceWith(defaultTracks, entryIds())
+  })
+
   it('should preserve the queue slot when a catalog reload removes the active duplicate occurrence', () => {
     const defaultTracks = [createTrack('track-1'), createTrack('track-2'), createTrack('track-3')]
     const currentTracks = [...defaultTracks, createTrack('track-1'), createTrack('track-4')]
