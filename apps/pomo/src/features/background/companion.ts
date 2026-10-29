@@ -1,4 +1,5 @@
 import {replaceBlobObjectUrl} from 'src/features/blob-object-url'
+import {runEventTask} from 'src/utils/run-event-task'
 import type {BackgroundMedia} from './model'
 import {getPairDirection, type PhotoSize} from './pairing'
 
@@ -29,31 +30,24 @@ export const loadPhoto = (blob: Blob, signal: AbortSignal): Promise<LoadedPhoto 
     image.removeAttribute('src')
     replaceBlobObjectUrl(url, () => null)
   }
-  return new Promise((resolve, reject) => {
-    const cleanup = () => {
-      clearTimeout(timer)
-      signal.removeEventListener('abort', abort)
-      image.onload = null
-      image.onerror = null
-    }
-    const abort = () => {
-      cleanup()
+  return runEventTask({
+    failureEvent: 'error',
+    onAbort: () => {
       release()
-      resolve(null)
-    }
-    const fail = () => {
-      cleanup()
+      return null
+    },
+    onFailure: () => {
       release()
-      reject(new Error('Unable to load companion photo.'))
-    }
-    const timer = setTimeout(fail, LOAD_TIMEOUT)
-    image.onload = () => {
-      cleanup()
-      resolve({image, release})
-    }
-    image.onerror = fail
-    signal.addEventListener('abort', abort, {once: true})
-    image.src = url
+      throw new Error('Unable to load companion photo.')
+    },
+    onReady: () => ({image, release}),
+    readyEvent: 'load',
+    signal,
+    start: () => {
+      image.src = url
+    },
+    target: image,
+    timeoutMs: LOAD_TIMEOUT,
   })
 }
 

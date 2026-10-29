@@ -4,8 +4,78 @@ import {findCompanion, loadPhoto} from '../companion'
 import type {BackgroundMedia} from '../model'
 
 afterEach(() => {
+  vi.useRealTimers()
   vi.restoreAllMocks()
   vi.unstubAllGlobals()
+})
+
+const createPhoto = () => {
+  const image = document.createElement('img')
+  vi.stubGlobal(
+    'Image',
+    vi.fn(function createImage() {
+      return image
+    }),
+  )
+  vi.stubGlobal('URL', {createObjectURL: vi.fn(() => 'blob:photo'), revokeObjectURL: vi.fn()})
+  return image
+}
+
+it('should transfer successful photo ownership synchronously and ignore later cancellation', async () => {
+  vi.useFakeTimers()
+  const image = createPhoto()
+  const controller = new AbortController()
+  const pending = loadPhoto(new Blob(['photo']), controller.signal)
+  image.dispatchEvent(new Event('load'))
+  expect(vi.getTimerCount()).toBe(0)
+  controller.abort()
+  expect(URL.revokeObjectURL).not.toHaveBeenCalled()
+  const loaded = await pending
+  expect(loaded?.image).toBe(image)
+  expect(image.hasAttribute('src')).toBe(true)
+  loaded?.release()
+  expect(image.hasAttribute('src')).toBe(false)
+  expect(URL.revokeObjectURL).toHaveBeenCalledExactlyOnceWith('blob:photo')
+})
+
+it.each(['error', 'abort', 'timeout'] as const)(
+  'should release the photo synchronously after %s',
+  async (outcome) => {
+    vi.useFakeTimers()
+    const image = createPhoto()
+    const controller = new AbortController()
+    const pending = loadPhoto(new Blob(['photo']), controller.signal)
+    const assertion =
+      outcome === 'abort'
+        ? expect(pending).resolves.toBeNull()
+        : expect(pending).rejects.toThrow('Unable to load companion photo.')
+    if (outcome === 'abort') {
+      controller.abort()
+    } else if (outcome === 'error') {
+      image.dispatchEvent(new Event('error'))
+    } else {
+      vi.advanceTimersByTime(9999)
+      expect(URL.revokeObjectURL).not.toHaveBeenCalled()
+      vi.advanceTimersByTime(1)
+    }
+    expect(image.hasAttribute('src')).toBe(false)
+    expect(URL.revokeObjectURL).toHaveBeenCalledExactlyOnceWith('blob:photo')
+    expect(vi.getTimerCount()).toBe(0)
+    image.dispatchEvent(new Event('load'))
+    image.dispatchEvent(new Event('error'))
+    controller.abort()
+    expect(URL.revokeObjectURL).toHaveBeenCalledOnce()
+    await assertion
+  },
+)
+
+it('should allocate no photo or URL when already cancelled', async () => {
+  createPhoto()
+  const controller = new AbortController()
+  controller.abort()
+  await expect(loadPhoto(new Blob(), controller.signal)).resolves.toBeNull()
+  expect(Image).not.toHaveBeenCalled()
+  expect(URL.createObjectURL).not.toHaveBeenCalled()
 })
 
 it('should skip videos and known incompatible photos, inspect unknown ones and stop at the first fit', async () => {
@@ -18,7 +88,7 @@ it('should skip videos and known incompatible photos, inspect unknown ones and s
         return 'blob:test'
       },
       set() {
-        queueMicrotask(() => image.onload?.(new Event('load')))
+        queueMicrotask(() => image.dispatchEvent(new Event('load')))
       },
     },
   })
