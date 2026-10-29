@@ -1,5 +1,5 @@
 import {getExceptionMessage} from 'src/features/error-detail'
-import {chunk} from 'es-toolkit/array'
+import {mapInBatches} from 'src/utils/map-in-batches'
 import {sum} from 'es-toolkit/math'
 import type * as AiJobRepository from 'src/server/repositories/ai-jobs'
 import type {AiArtifactRecord} from 'src/server/repositories/ai-jobs'
@@ -49,24 +49,19 @@ const runArtifactCleanupTasks = async <Job, Result>(
   jobs: ReadonlyArray<Job>,
   operation: (job: Job) => Promise<Result>,
 ): Promise<Array<Awaited<Result>>> => {
-  const results: Array<Awaited<Result>> = []
+  const results = await mapInBatches(jobs, {
+    batchSize: MAXIMUM_RECOVERY_CONCURRENCY,
+    map: async (job) => {
+      try {
+        return await operation(job)
+      } catch (error: unknown) {
+        console.error('Failed to process an AI artifact cleanup item', error)
+        return null
+      }
+    },
+  })
 
-  for (const batch of chunk(jobs, MAXIMUM_RECOVERY_CONCURRENCY)) {
-    // oxlint-disable-next-line no-await-in-loop -- Bound storage calls without an unbounded burst.
-    const batchResults = await Promise.all(
-      batch.map(async (job) => {
-        try {
-          return await operation(job)
-        } catch (error: unknown) {
-          console.error('Failed to process an AI artifact cleanup item', error)
-          return null
-        }
-      }),
-    )
-    results.push(...batchResults.filter((result): result is Awaited<Result> => result !== null))
-  }
-
-  return results
+  return results.filter((result): result is Awaited<Result> => result !== null)
 }
 
 const createAiArtifactPersistenceService = (

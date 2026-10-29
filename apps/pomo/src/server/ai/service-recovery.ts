@@ -1,4 +1,4 @@
-import {chunk} from 'es-toolkit/array'
+import {mapInBatches} from 'src/utils/map-in-batches'
 import type {
   AiJobRecord,
   listDispatchableAiJobs,
@@ -34,28 +34,23 @@ const runRecoveryTasks = async <Job, Result>(
   jobs: ReadonlyArray<Job>,
   operation: (job: Job) => Promise<Result>,
 ): Promise<Array<Awaited<Result>>> => {
-  const results: Array<Awaited<Result>> = []
+  const results = await mapInBatches(jobs, {
+    batchSize: MAXIMUM_RECOVERY_CONCURRENCY,
+    map: async (job) => {
+      try {
+        return await operation(job)
+      } catch (error: unknown) {
+        const jobId =
+          typeof job === 'object' && job !== null && 'id' in job
+            ? {jobId: String(job.id)}
+            : undefined
+        console.error('Failed to process an AI recovery item', jobId, error)
+        return null
+      }
+    },
+  })
 
-  for (const batch of chunk(jobs, MAXIMUM_RECOVERY_CONCURRENCY)) {
-    // oxlint-disable-next-line no-await-in-loop -- Bound provider calls without a burst of requests.
-    const batchResults = await Promise.all(
-      batch.map(async (job) => {
-        try {
-          return await operation(job)
-        } catch (error: unknown) {
-          const jobId =
-            typeof job === 'object' && job !== null && 'id' in job
-              ? {jobId: String(job.id)}
-              : undefined
-          console.error('Failed to process an AI recovery item', jobId, error)
-          return null
-        }
-      }),
-    )
-    results.push(...batchResults.filter((result): result is Awaited<Result> => result !== null))
-  }
-
-  return results
+  return results.filter((result): result is Awaited<Result> => result !== null)
 }
 
 export const createAiRecoveryService = (dependencies: AiRecoveryServiceDependencies) => {
