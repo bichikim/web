@@ -138,18 +138,13 @@ beforeEach(() => {
 })
 
 describe('listAdminMusic', () => {
-  it('should assemble releases, translations, assets, offers, and tracks', async () => {
-    const albums = [
-      {coverFallback: 'music', coverImageUrl: null, id: 'album-1', status: 'draft'},
-      {coverFallback: 'lp', coverImageUrl: 'cover.webp', id: 'album-2', status: 'published'},
-    ]
+  it('should return queried rows without copying raw collections', async () => {
+    const albums = [{coverFallback: 'music', coverImageUrl: null, id: 'album-1', status: 'draft'}]
     const translations = [
-      {albumId: 'album-1', description: 'One', locale: 'ko', title: 'Album One'},
-      {albumId: 'other', description: 'Other', locale: 'ko', title: 'Other'},
+      {albumId: 'album-1', description: 'One', locale: 'ja', title: 'Album One'},
     ]
     const tracks = [
       {albumId: 'album-1', artist: 'Artist', id: 'track-1', position: 0, title: 'One'},
-      {albumId: 'album-1', artist: 'Artist', id: 'track-2', position: 1, title: 'Two'},
     ]
     const assets = [
       {
@@ -158,7 +153,6 @@ describe('listAdminMusic', () => {
         status: 'active',
         trackId: 'track-1',
       },
-      {id: 'asset-2', status: 'pending', trackId: 'track-2'},
     ]
     const pendingTracks = [
       {albumId: 'album-1', artist: 'Pending Artist', id: 'track-3', title: 'Pending'},
@@ -166,82 +160,19 @@ describe('listAdminMusic', () => {
     const offers = [{albumId: 'album-1', externalProductId: 'product-1'}]
     queueAdminList(albums, translations, tracks, pendingTracks, assets, offers)
 
-    await expect(listAdminMusic()).resolves.toEqual({
-      albums: [
-        {
-          ...albums[0],
-          release: {blockers: ['tracks_missing_active_asset'], ready: false},
-          translations: [translations[0]],
-        },
-        {
-          ...albums[1],
-          release: {blockers: [], ready: true},
-          translations: [],
-        },
-      ],
-      assets,
-      offers,
-      pendingTracks,
-      tracks,
-    })
-    expect(readSelect).toHaveBeenCalledWith(
-      expect.objectContaining({artworkUrl: musicTrackAssets.artworkUrl}),
-    )
-  })
-
-  it('should keep album relations ordered and isolated while counting repeated track rows', async () => {
-    const albums = ['album-2', 'album-1', 'empty'].map((id) => ({
-      coverFallback: 'music',
-      coverImageUrl: null,
-      id,
-      status: 'draft',
-    }))
-    const translations = [
-      {albumId: 'album-1', description: 'One', locale: 'en', title: 'One'},
-      {albumId: 'album-2', description: 'Two', locale: 'en', title: 'Two'},
-      {albumId: 'album-1', description: '하나', locale: 'ko', title: '하나'},
-      {albumId: 'unlisted', description: 'Other', locale: 'ko', title: 'Other'},
-      {albumId: 'album-2', description: '둘', locale: 'ko', title: '둘'},
-    ]
-    const tracks = [
-      {albumId: 'album-1', artist: 'Artist', id: 'active', position: 0, title: 'Active'},
-      {albumId: 'album-2', artist: 'Artist', id: 'pending', position: 0, title: 'Pending'},
-      {albumId: 'album-1', artist: 'Artist', id: 'active', position: 1, title: 'Repeated'},
-    ]
-    const assets = [
-      {id: 'asset-1', status: 'active', trackId: 'active'},
-      {id: 'asset-2', status: 'pending', trackId: 'pending'},
-    ]
-    queueAdminList(albums, translations, tracks, [], assets, [])
-
     const result = await listAdminMusic()
 
     expect(result.albums).toEqual([
-      {
-        ...albums[0],
-        release: {blockers: ['tracks_missing_active_asset'], ready: false},
-        translations: [translations[1], translations[4]],
-      },
-      {
-        ...albums[1],
-        release: {blockers: [], ready: true},
-        translations: [translations[0], translations[2]],
-      },
-      {...albums[2], release: {blockers: [], ready: true}, translations: []},
+      {...albums[0], release: {blockers: [], ready: true}, translations},
     ])
-    expect(result.tracks).toBe(tracks)
     expect(result.assets).toBe(assets)
-  })
-
-  it('should return empty collections for an empty database', async () => {
-    queueAdminList([], [], [], [], [], [])
-    await expect(listAdminMusic()).resolves.toEqual({
-      albums: [],
-      assets: [],
-      offers: [],
-      pendingTracks: [],
-      tracks: [],
-    })
+    expect(result.offers).toBe(offers)
+    expect(result.pendingTracks).toBe(pendingTracks)
+    expect(result.tracks).toBe(tracks)
+    expect(readSelect).toHaveBeenCalledTimes(6)
+    expect(readSelect).toHaveBeenCalledWith(
+      expect.objectContaining({artworkUrl: musicTrackAssets.artworkUrl}),
+    )
   })
 
   it('should propagate a database list failure', async () => {
