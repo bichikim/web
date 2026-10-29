@@ -46,15 +46,6 @@ const renderPage = async (mode: 'studio' | 'viewer' = 'viewer') => {
   await waitFor(() => expect(pause).toBeEnabled())
   return {pause, player, view}
 }
-
-test.each(['studio', 'viewer'] as const)(
-  'should allow the native Poffo extension in the %s model picker',
-  async (mode) => {
-    const {view} = await renderPage(mode)
-    const input = view.getByLabelText<HTMLInputElement>('모델 불러오기')
-    expect(input.accept.split(',')).toContain('.poffo')
-  },
-)
 test('should select motions, pause and resume the player, and release it on unmount', async () => {
   const {pause, player, view} = await renderPage()
   expect(player.setMotion).toHaveBeenCalledWith('first')
@@ -144,7 +135,7 @@ test('should keep file import available after a document import fails', async ()
   fireEvent.click(view.getByRole('button', {name: '모델 불러오기'}))
   fireEvent.change(input, {target: {files: [file]}})
   const dialog = screen.getByRole('dialog', {name: '불러오는 중…'})
-  expect(await view.findByText('올바른 Poffo 문서를 선택하세요.')).toBeVisible()
+  expect(await view.findByText('올바른 Puppet JSON 문서를 선택하세요.')).toBeVisible()
   expect(dialog).toHaveAttribute('data-closed')
   fireEvent.click(view.getByRole('button', {name: '메인 메뉴'}))
   expect(view.getByRole('button', {name: '모델 불러오기'})).toBeVisible()
@@ -229,6 +220,6 @@ test.each(['studio', 'viewer'] as const)(
     finish(serializeDocument({...createEmptyDocument(), framesPerSecond: 48}))
     await waitFor(() => expect(view.getByRole('button', {name: '일시정지'})).toBeEnabled())
     expect(mocks.createPlayer).toHaveBeenCalledTimes(created)
-    expect(view.queryByText('올바른 Poffo 문서를 선택하세요.')).not.toBeInTheDocument()
+    expect(view.queryByText('올바른 Puppet JSON 문서를 선택하세요.')).not.toBeInTheDocument()
   },
 )

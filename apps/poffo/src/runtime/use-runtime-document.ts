@@ -33,7 +33,7 @@ export const useRuntimeDocument = () => {
         return
       }
       if (!result.ok) {
-        setError('올바른 Poffo 문서를 선택하세요.')
+        setError('올바른 Puppet JSON 문서를 선택하세요.')
         return
       }
       const document = await unpackTextureAtlas(result.document)

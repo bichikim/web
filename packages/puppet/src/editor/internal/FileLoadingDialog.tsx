@@ -2,8 +2,6 @@ import {Dialog} from '@kobalte/core/dialog'
 import {useEditorPortalMount} from '../../design-system'
 
 interface FileLoadingDialogProps {
-  /** Operation label; omitted for file loading. */
-  readonly title?: string
   /** File being read. Omitted or null, keep the dialog closed. */
   readonly fileName?: string | null
   /** Cancels the pending read without changing the document. */
@@ -57,7 +55,7 @@ export const FileLoadingDialog = (props: FileLoadingDialogProps) => {
           <form onSubmit={(event) => event.preventDefault()}>
             <header>
               <div>
-                <Dialog.Title role="status">{props.title ?? '불러오는 중…'}</Dialog.Title>
+                <Dialog.Title role="status">불러오는 중…</Dialog.Title>
                 <Dialog.Description>{props.fileName}</Dialog.Description>
               </div>
             </header>

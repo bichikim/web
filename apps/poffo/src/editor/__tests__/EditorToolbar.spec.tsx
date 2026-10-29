@@ -62,6 +62,21 @@ test('should invoke available undo and redo actions from the menu', () => {
   expect(onRedo).toHaveBeenCalledOnce()
 })
 
+test('should expose the retained JSON file for retrying a download', () => {
+  render(() => (
+    <EditorToolbar
+      exportUrl="blob:retained-model"
+      playerStatus="ready"
+      onExport={vi.fn()}
+      onFileImport={vi.fn()}
+      onFileOpen={vi.fn()}
+    />
+  ))
+  const link = screen.getByRole('link', {name: 'JSON 파일 다시 다운로드'})
+  expect(link).toHaveAttribute('href', 'blob:retained-model')
+  expect(link).toHaveAttribute('download', 'puppet-model.json')
+})
+
 test('should show development examples in the main menu and open the selected example', () => {
   const onExampleOpen = vi.fn()
   const character = {label: '캐릭터', load: vi.fn()}
@@ -154,24 +169,4 @@ test('should keep workspace launch actions in the header and omit duplicate file
   const navigation = within(screen.getByRole('navigation', {name: '작업 공간 이동'}))
   expect(navigation.getByRole('button', {name: 'Studio'})).toBeEnabled()
   expect(navigation.getByRole('button', {name: 'Viewer'})).toBeEnabled()
-})
-
-test('should offer Poffo document saving without a separate download retry entry', () => {
-  const compressed = vi.fn()
-  render(() => (
-    <EditorToolbar
-      playerStatus="ready"
-      onExport={vi.fn()}
-      onFileImport={vi.fn()}
-      onFileOpen={vi.fn()}
-      onPoffoExport={compressed}
-    />
-  ))
-  fireEvent.click(screen.getByRole('button', {name: '문서 저장'}))
-  expect(compressed).toHaveBeenCalledOnce()
-  expect(screen.queryByRole('link', {name: /다시 다운로드/u})).not.toBeInTheDocument()
-  expect(screen.getByLabelText('불러오기', {selector: 'input'})).toHaveAttribute(
-    'accept',
-    expect.stringContaining('.poffo'),
-  )
 })

@@ -4,6 +4,7 @@ import {
   DocumentRecoveryDialog,
   type EditorController,
   type EditorHeaderMounts,
+  EditorToast,
   FileLoadingDialog,
   type ModelBinding,
   PsdReimportDialog,
@@ -13,7 +14,6 @@ import {
 } from '@winter-love/puppet/editor'
 import type {PuppetDocument} from '@winter-love/puppet/player'
 import {EditorToolbar} from './EditorToolbar'
-import {DocumentNotice} from './DocumentNotice'
 import {useEditorImports} from './use-editor-imports'
 import {useDocumentExport} from './use-document-export'
 import {useWorkspace} from '../workspace/context'
@@ -43,14 +43,6 @@ export const PoffoEditor = (props: PoffoEditorProps) => {
   let returnFocus: (() => void) | undefined
   let sequence = 0
   const source = () => props.model.document()
-  const exporting = useDocumentExport(
-    source,
-    () => control()?.getState().hasTemporaryChanges ?? false,
-  )
-  const handleNotice = (message: string | null) => {
-    exporting.dismissNotice()
-    setNotice(message)
-  }
   const replace = (document: PuppetDocument, title = '문서 불러오기') => {
     sequence += 1
     const result = props.model.request({
@@ -62,14 +54,14 @@ export const PoffoEditor = (props: PoffoEditorProps) => {
       type: 'replace',
     })
     if (!result.ok) {
-      handleNotice('진행 중인 편집을 마친 후 다시 시도하세요.')
+      setNotice('진행 중인 편집을 마친 후 다시 시도하세요.')
     }
     return result
   }
   const imports = useEditorImports({
     document: source,
     onDocumentChange: replace,
-    onNotice: handleNotice,
+    onNotice: setNotice,
     onReimportDocumentChange: (document) => {
       sequence += 1
       return props.model.request({
@@ -87,9 +79,11 @@ export const PoffoEditor = (props: PoffoEditorProps) => {
     document: source,
     initialDocument: untrack(source),
     onDocumentChange: (document) => replace(document, '텍스처 아틀라스 해제'),
-    onNotice: handleNotice,
+    onNotice: setNotice,
     revision: () => props.model.revision(),
   })
+  const hasTemporaryChanges = () => control()?.getState().hasTemporaryChanges ?? false
+  const exporting = useDocumentExport(source, hasTemporaryChanges, setNotice)
   const handleControl = (next: EditorController) => {
     setControl(next)
     workspace?.setEditorControl(next)
@@ -99,13 +93,19 @@ export const PoffoEditor = (props: PoffoEditorProps) => {
     returnFocus = restoreFocus
     setRecoveryOpen(true)
   }
-  const exportWhenIdle = (execute: () => void) => {
+  const exportDocument = () => {
     if (props.model.read().transaction !== null) {
-      handleNotice('진행 중인 편집을 마친 후 내보내세요.')
+      setNotice('진행 중인 편집을 마친 후 내보내세요.')
       return
     }
-    handleNotice(null)
-    execute()
+    exporting.exportDocument()
+  }
+  const exportAtlas = () => {
+    if (props.model.read().transaction !== null) {
+      setNotice('진행 중인 편집을 마친 후 내보내세요.')
+      return
+    }
+    exporting.exportAtlasDocument()
   }
   const renderHeader = (editor: EditorController, mounts: EditorHeaderMounts) => (
     <EditorToolbar
@@ -134,9 +134,9 @@ export const PoffoEditor = (props: PoffoEditorProps) => {
       onRedo={editor.commands.redo}
       onUndo={editor.commands.undo}
       onWorkspaceChange={editor.commands.selectMode}
-      onPoffoExport={() => exportWhenIdle(exporting.exportPoffoDocument)}
-      onExport={() => exportWhenIdle(exporting.exportDocument)}
-      onAtlasExport={() => exportWhenIdle(exporting.exportAtlasDocument)}
+      exportUrl={exporting.url()}
+      onExport={exportDocument}
+      onAtlasExport={exportAtlas}
       onStudioOpen={workspace === undefined ? undefined : () => workspace.openRuntime('studio')}
       onViewerOpen={workspace === undefined ? undefined : () => workspace.openRuntime('viewer')}
       onRecoveryOpen={props.recovery === undefined ? undefined : openRecovery}
@@ -159,11 +159,6 @@ export const PoffoEditor = (props: PoffoEditorProps) => {
           header={renderHeader}
         />
       </Suspense>
-      <FileLoadingDialog
-        title="저장하는 중…"
-        fileName={exporting.pending()}
-        onCancel={exporting.cancelExport}
-      />
       <FileLoadingDialog fileName={imports.pendingFile()} onCancel={imports.cancel} />
       <PsdReimportDialog controller={imports.reimport} />
       <Show when={recoveryOpen() && props.recovery}>
@@ -177,7 +172,16 @@ export const PoffoEditor = (props: PoffoEditorProps) => {
           />
         )}
       </Show>
-      <DocumentNotice exporting={exporting} message={notice()} onDismiss={() => setNotice(null)} />
+      <EditorToast
+        message={
+          notice() ??
+          (exporting.omitsTemporary() ? '임시 변경은 JSON에 포함되지 않았습니다.' : undefined)
+        }
+        onDismiss={() => {
+          setNotice(null)
+          exporting.dismissNotice()
+        }}
+      />
     </>
   )
 }

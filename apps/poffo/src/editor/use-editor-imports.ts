@@ -76,13 +76,13 @@ const readFile = async (
   readPsd: typeof importPsd = importPsd,
 ): Promise<ReadFileSuccess | ReadFileFailure> => {
   const extension = file.name.split('.').at(-1)?.toLowerCase()
-  if (extension === 'json' || extension === 'poffo' || file.type === 'application/json') {
+  if (extension === 'json' || file.type === 'application/json') {
     const result = await preparePuppetDocument({
       signal,
       source: file,
     })
     if (!result.ok) {
-      return {notice: '올바른 Poffo 문서를 선택하세요.', ok: false}
+      return {notice: 'Puppet 문서가 아니거나 JSON 형식이 올바르지 않습니다.', ok: false}
     }
     // Editing tools work on each part's own image, so atlas pages are cut back into them.
     try {
@@ -106,7 +106,7 @@ const readFile = async (
         : {notice: getPsdErrorMessage(result.error.code), ok: false}
     }
     default:
-      return {notice: 'PNG, PSD, JSON, Poffo 파일을 선택하세요.', ok: false}
+      return {notice: 'PNG, PSD, JSON 파일을 선택하세요.', ok: false}
   }
 }
 export const useEditorImports = (props: UseEditorImportsProps) => {
