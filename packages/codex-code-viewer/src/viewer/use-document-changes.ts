@@ -6,14 +6,14 @@ import {createLineChanges} from './create-line-changes'
 import {useLatestRequest} from './use-latest-request'
 import type {ViewerPort} from './types'
 
-interface DocumentChangesProps {
+interface UseDocumentChangesProps {
   readonly port: ViewerPort
   readonly session: Accessor<ViewerSession | null>
   readonly source: Accessor<string>
   readonly revision: Accessor<number>
   readonly onError: (error: unknown) => void
 }
-export const useDocumentChanges = (props: DocumentChangesProps) => {
+export const useDocumentChanges = (props: UseDocumentChangesProps) => {
   const [baseline, setBaseline] = createSignal<FileBaseline | null>(null)
   const request = useLatestRequest((error) => {
     setBaseline(null)

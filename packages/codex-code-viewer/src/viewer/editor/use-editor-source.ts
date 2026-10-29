@@ -2,13 +2,13 @@ import {type Accessor, createEffect, untrack} from 'solid-js'
 import {EditorState, type Extension, Text} from '@codemirror/state'
 import type {EditorView} from '@codemirror/view'
 
-interface EditorSourceProps {
+interface UseEditorSourceProps {
   readonly view: Accessor<EditorView | undefined>
   readonly source: Accessor<string>
   readonly extensions: () => Extension
 }
 /** Replaces state only for externally supplied text, preserving ordinary edit transactions. */
-export const useEditorSource = (props: EditorSourceProps): void => {
+export const useEditorSource = (props: UseEditorSourceProps): void => {
   createEffect(() => {
     const editor = props.view()
     const source = props.source()

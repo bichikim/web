@@ -6,6 +6,7 @@ import {SFileNavigation} from './SFileNavigation'
 import {SFilePicker} from './SFilePicker'
 import {SIcon} from './SIcon'
 import type {useViewer} from './use-viewer'
+import {Show} from 'solid-js'
 
 interface SViewerToolbarProps {
   viewer: Pick<
@@ -27,6 +28,9 @@ interface SViewerToolbarProps {
   onSettings?: () => void
   focusRequest?: number
   treeVisible?: boolean
+  memosAvailable?: boolean
+  memosVisible?: boolean
+  onToggleMemos?: () => void
 }
 
 export const SViewerToolbar = (props: SViewerToolbarProps) => {
@@ -35,6 +39,23 @@ export const SViewerToolbar = (props: SViewerToolbarProps) => {
     <SFilePicker
       actions={
         <>
+          <Show when={props.memosAvailable}>
+            <STooltip content={t('메모 표시/숨기기')}>
+              {(description) => (
+                <button
+                  type="button"
+                  class="ui-tree-toggle"
+                  aria-label={t('메모')}
+                  aria-describedby={description}
+                  aria-controls="viewer-memos"
+                  aria-expanded={props.memosVisible ?? false}
+                  onClick={() => props.onToggleMemos?.()}
+                >
+                  <SIcon name="memo" />
+                </button>
+              )}
+            </STooltip>
+          </Show>
           <STooltip content={t('파일 트리 열기/닫기')}>
             {(description) => (
               <button

@@ -12,6 +12,14 @@ export const offsetPosition = (
 
 /** Resolves a one-based text position to its UTF-16 source offset. */
 export const sourceOffset = (source: string, line: number, column: number): number => {
-  const lines = source.split('\n')
-  return lines.slice(0, line - 1).reduce((offset, text) => offset + text.length + 1, 0) + column - 1
+  let current = 1
+  let start = 0
+  for (const separator of source.matchAll(/\r\n|\n|\r/gu)) {
+    if (current >= line) {
+      return start + column - 1
+    }
+    start = separator.index + separator[0].length
+    current += 1
+  }
+  return start + column - 1
 }

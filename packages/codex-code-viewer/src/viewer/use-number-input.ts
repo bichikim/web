@@ -1,21 +1,21 @@
 import {type Accessor, createMemo, createSignal, type JSX, untrack} from 'solid-js'
 
-interface NumberInputOptions {
+interface UseNumberInputProps {
   readonly value: Accessor<number>
   readonly onCommit: (value: number) => void
 }
 
 /** Keeps a numeric draft until Enter or blur; Escape restores the committed value. */
-export const useNumberInput = (options: NumberInputOptions) => {
+export const useNumberInput = (props: UseNumberInputProps) => {
   const [draft, setDraft] = createSignal<string | null>(null)
-  const value = createMemo(() => draft() ?? String(options.value()))
+  const value = createMemo(() => draft() ?? String(props.value()))
   const handleInput: JSX.EventHandler<HTMLInputElement, InputEvent> = (event) =>
     setDraft(event.currentTarget.value)
   const commit = (): void => {
     const text = draft()
     const number = Number(text)
     if (text !== null && text.trim() !== '' && Number.isFinite(number)) {
-      untrack(() => options.onCommit(number))
+      untrack(() => props.onCommit(number))
     }
     setDraft(null)
   }

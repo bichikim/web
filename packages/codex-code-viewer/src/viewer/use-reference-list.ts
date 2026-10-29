@@ -12,7 +12,7 @@ interface ReferenceDestination {
   readonly location: NavigationLocation
 }
 type ReferenceRow = ReferenceHeader | ReferenceDestination
-interface ReferenceListOptions {
+interface UseReferenceListProps {
   readonly element: Accessor<HTMLDivElement | null>
   readonly filter?: Accessor<string>
   readonly groups?: Accessor<readonly NavigationGroup[]>
@@ -30,10 +30,10 @@ const rowKey = (row: ReferenceRow): string =>
     : JSON.stringify(['destination', row.location.path, row.location.line, row.location.column])
 
 /** Windows expanded reference groups and keeps keyboard destinations mounted before focusing. */
-export const useReferenceList = (options: ReferenceListOptions) => {
+export const useReferenceList = (props: UseReferenceListProps) => {
   const entries = createMemo(() => {
-    const locations = Map.groupBy(options.locations(), (location) => location.path)
-    const groups = new Map((options.groups?.() ?? []).map((group) => [group.path, group.count]))
+    const locations = Map.groupBy(props.locations(), (location) => location.path)
+    const groups = new Map((props.groups?.() ?? []).map((group) => [group.path, group.count]))
     const paths = new Set([...groups.keys(), ...locations.keys()])
     return [...paths]
       .flatMap((path): ReferenceRow[] => [
@@ -76,13 +76,13 @@ export const useReferenceList = (options: ReferenceListOptions) => {
   const window = useVirtualTree({
     active: () => lookup().get(active() ?? '')?.key ?? null,
     current: () => '',
-    element: options.element,
+    element: props.element,
     paths: rowKeys,
-    rowHeight: options.rowHeight ?? (() => REFERENCE_ROW_HEIGHT),
+    rowHeight: props.rowHeight ?? (() => REFERENCE_ROW_HEIGHT),
   })
   createEffect(
     on(
-      options.filter ?? (() => ''),
+      props.filter ?? (() => ''),
       () => {
         setActive(null)
         window.reveal(rowKeys()[0] ?? null)
@@ -94,7 +94,7 @@ export const useReferenceList = (options: ReferenceListOptions) => {
     setActive(key)
     window.reveal(lookup().get(key)?.key ?? key)
     const focus = (): void =>
-      Array.from(options.element()?.querySelectorAll<HTMLButtonElement>('button[value]') ?? [])
+      Array.from(props.element()?.querySelectorAll<HTMLButtonElement>('button[value]') ?? [])
         .find((button) => button.value === key)
         ?.focus({preventScroll: true})
     focus()

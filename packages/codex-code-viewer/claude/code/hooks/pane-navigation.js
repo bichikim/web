@@ -44,7 +44,7 @@ export async function navigatePane(engine, navigation, context) {
 
 /** Validates a document location without changing the editor or draft. */
 export function movePaneLine(document, line, column) {
-  const lines = document.source.split('\n')
+  const lines = document.source.split(/\r\n|\n|\r/u)
   if (
     !Number.isInteger(line) ||
     line < 1 ||
