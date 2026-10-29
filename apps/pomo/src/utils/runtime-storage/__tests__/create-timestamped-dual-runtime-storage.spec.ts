@@ -1,4 +1,4 @@
-import {describe, expect, it, vi} from 'vitest'
+import {describe, expect, expectTypeOf, it, vi} from 'vitest'
 import {createTimestampedDualRuntimeStorage} from '../create-timestamped-dual-runtime-storage'
 
 interface StoredValue {
@@ -7,6 +7,22 @@ interface StoredValue {
 }
 
 describe('createTimestampedDualRuntimeStorage', () => {
+  it('should preserve the direct write promise and wait only for the current snapshot', async () => {
+    const storage = createTimestampedDualRuntimeStorage<StoredValue>({now: () => 10})
+    const first = Promise.withResolvers<void>()
+    const later = Promise.withResolvers<void>()
+    expectTypeOf(storage.trackWrite).toEqualTypeOf<(pending: Promise<void>) => Promise<void>>()
+    expect(storage.trackWrite(first.promise)).toBe(first.promise)
+    const settling = storage.settleWrites()
+    storage.trackWrite(later.promise)
+    first.resolve()
+    await settling
+    expect(storage.hasPendingWrites()).toBe(true)
+    later.resolve()
+    await storage.settleWrites()
+    expect(storage.hasPendingWrites()).toBe(false)
+  })
+
   it('should retain first-source precedence on ties and accept missing sources', () => {
     const storage = createTimestampedDualRuntimeStorage<StoredValue>({now: () => 10})
     const web = {savedAt: 1, value: 'web'}

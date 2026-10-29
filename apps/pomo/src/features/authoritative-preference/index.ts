@@ -1,3 +1,4 @@
+import {createPendingTasks} from 'src/utils/create-pending-tasks'
 import {createSoftNativePreferenceRepository} from './create-soft-native-preference-repository'
 import {createAuthoritativeWriter} from '../preference-persistence'
 export interface AuthoritativePreferenceStorage<Value> {
@@ -35,12 +36,8 @@ export const createAuthoritativePreferenceRepository = <Value>(
   }
   const {storage} = options
   let writeRevision = 0
-  const pendingWrites = new Set<Promise<void>>()
-  const waitForPendingWrites = async () => {
-    await Promise.all(
-      Array.from(pendingWrites, (pendingWrite) => pendingWrite.catch(() => undefined)),
-    )
-  }
+  const pendingWrites = createPendingTasks()
+  const waitForPendingWrites = pendingWrites.settle
   const writeValue = createAuthoritativeWriter<Value>({
     failureMessage: options.writeFailureMessage,
     isNative: () => storage.isNative(),
@@ -51,7 +48,7 @@ export const createAuthoritativePreferenceRepository = <Value>(
   const read = async () => {
     const initialWriteRevision = writeRevision
 
-    if (pendingWrites.size > 0) {
+    if (pendingWrites.hasPending()) {
       await waitForPendingWrites()
       if (writeRevision !== initialWriteRevision) {
         return read()
@@ -83,9 +80,7 @@ export const createAuthoritativePreferenceRepository = <Value>(
   const writePreference = (value: Value) => {
     writeRevision += 1
     const pendingWrite = writeValue(value)
-    pendingWrites.add(pendingWrite)
-    pendingWrite.finally(() => pendingWrites.delete(pendingWrite)).catch(() => undefined)
-    return pendingWrite
+    return pendingWrites.track(pendingWrite)
   }
 
   return {read, write: writePreference}

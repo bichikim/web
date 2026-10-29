@@ -1,3 +1,4 @@
+import {createPendingTasks} from '../create-pending-tasks'
 import {selectMaximumBy} from '../select-maximum-by'
 
 interface TimestampedValue {
@@ -14,16 +15,12 @@ export const createTimestampedDualRuntimeStorage = <Value extends TimestampedVal
 ) => {
   let revision = 0
   let latestSavedAt = 0
-  const pendingWrites = new Set<Promise<void>>()
+  const pendingWrites = createPendingTasks()
   const invalidate = () => (revision += 1)
   const observeSavedAt = (...timestamps: ReadonlyArray<number>) => {
     latestSavedAt = Math.max(latestSavedAt, ...timestamps)
   }
-  const trackWrite = (pending: Promise<void>): Promise<void> => {
-    pendingWrites.add(pending)
-    pending.finally(() => pendingWrites.delete(pending)).catch(() => undefined)
-    return pending
-  }
+  const trackWrite: (pending: Promise<void>) => Promise<void> = pendingWrites.track
   const writeStored = async (
     createValue: (savedAt: number) => Value,
     persist: (value: Value) => Promise<void>,
@@ -35,15 +32,13 @@ export const createTimestampedDualRuntimeStorage = <Value extends TimestampedVal
     return trackWrite(persist(createValue(savedAt)))
   }
   return {
-    hasPendingWrites: () => pendingWrites.size > 0,
+    hasPendingWrites: pendingWrites.hasPending,
     invalidate,
     observeSavedAt,
     revision: () => revision,
     selectLatest: (first: Value | null, second: Value | null): Value | null =>
       selectMaximumBy(first, second, (value) => value.savedAt),
-    settleWrites: async (): Promise<void> => {
-      await Promise.all(Array.from(pendingWrites, (pending) => pending.catch(() => undefined)))
-    },
+    settleWrites: pendingWrites.settle,
     trackWrite,
     writeStored,
   }
