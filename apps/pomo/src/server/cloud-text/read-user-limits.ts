@@ -1,10 +1,7 @@
 import {and, eq, gt, inArray, isNull, lte, or} from 'drizzle-orm'
-import {
-  cloudTextLimits,
-  cloudTextProductLimits,
-  commerceEntitlementGrants,
-  type Database,
-} from 'src/server/database'
+import type {Database} from 'src/server/database'
+import {cloudTextLimits, cloudTextProductLimits} from '../database/schema/cloud-text'
+import {commerceEntitlementGrants} from '../database/schema/commerce'
 import {resolveCloudTextLimit} from './resolve-limit'
 
 export interface UserCloudTextLimit {
