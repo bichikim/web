@@ -1,5 +1,5 @@
 /** @vitest-environment jsdom */
-import {cleanup, fireEvent, render, screen, waitFor} from '@solidjs/testing-library'
+import {cleanup, fireEvent, render, screen, waitFor, within} from '@solidjs/testing-library'
 import {afterEach, beforeEach, expect, test, vi} from 'vitest'
 import {createDemoDocument, createEmptyDocument} from '@winter-love/puppet/player'
 import {WorkspaceApp} from '../WorkspaceApp'
@@ -197,4 +197,36 @@ test('should return from Converter without reloading the shared model or losing 
   fireEvent.click(view.getByRole('button', {name: '메인 메뉴'}))
   expect(screen.getByRole('button', {name: /^실행 취소$/u})).toBeEnabled()
   expect(mocks.read).toHaveBeenCalledOnce()
+})
+
+test('should place rendering choices in view settings and persist changes without recreating the player', async () => {
+  const view = render(() => (
+    <WorkspaceApp
+      loadInitialDocument={async () => createDemoDocument()}
+      session={{
+        listRecoveries: async () => [],
+        loadRecovery: async () => null,
+        read: mocks.read,
+        write: mocks.write,
+      }}
+    />
+  ))
+  await waitFor(() => expect(mocks.createPlayer).toHaveBeenCalledOnce())
+  expect(view.queryByRole('button', {name: '렌더링 설정'})).not.toBeInTheDocument()
+  fireEvent.click(view.getByRole('button', {name: '보기 설정'}))
+  const settings = view.getByRole('dialog', {name: '보기 설정'})
+  expect(within(settings).getByRole('group', {name: '화면'})).toBeInTheDocument()
+  expect(within(settings).getByRole('group', {name: '렌더링'})).toBeInTheDocument()
+  fireEvent.keyDown(within(settings).getByRole('button', {name: /^렌더러/}), {key: 'ArrowDown'})
+  const option = screen.getByRole('option', {name: /^WebGL$/})
+  fireEvent.pointerDown(option)
+  fireEvent.click(option)
+  expect(JSON.parse(localStorage.getItem('poffo:rendering:v1') ?? '{}').renderer).toBe('webgl')
+  expect(view.getByRole('dialog', {name: '보기 설정'})).toBeInTheDocument()
+  fireEvent.keyDown(within(settings).getByRole('button', {name: /^안티앨리어싱/}), {
+    key: 'ArrowDown',
+  })
+  fireEvent.click(screen.getByRole('option', {name: 'MSAA + 2× 해상도'}))
+  expect(JSON.parse(localStorage.getItem('poffo:rendering:v1') ?? '{}').antialiasing).toBe('msaa')
+  expect(mocks.createPlayer).toHaveBeenCalledOnce()
 })

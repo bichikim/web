@@ -20,8 +20,8 @@ const setup = () => {
   })
   return {model, runtime: result}
 }
-const file = (source: string | Promise<string>) => {
-  const next = new File([], 'model.json', {type: 'application/json'})
+const file = (source: string | Promise<string>, name = 'model.json') => {
+  const next = new File([], name, {type: 'application/json'})
   Object.defineProperty(next, 'text', {value: () => Promise.resolve(source)})
   return next
 }
@@ -95,4 +95,59 @@ test('should discard an older file result after a newer import completes', async
   await first
   expect(runtime.document().framesPerSecond).toBe(48)
   expect(model.read().undoCount).toBe(1)
+})
+
+test('should cancel pending file reading without replacing the shared document', async () => {
+  const {model, runtime} = setup()
+  const before = model.read().document
+  let finish: (text: string) => void = () => undefined
+  const source = new Promise<string>((resolve) => {
+    finish = resolve
+  })
+  expect(runtime.pendingFile()).toBeNull()
+  const importing = runtime.loadFile(file(source))
+  expect(runtime.pendingFile()).toBe('model.json')
+  runtime.cancel()
+  expect(runtime.pendingFile()).toBeNull()
+  finish(serializeDocument({...before, framesPerSecond: 48}))
+  await importing
+  expect(model.read().document).toBe(before)
+  expect(model.read().undoCount).toBe(0)
+  expect(runtime.error()).toBeNull()
+})
+
+test('should retain the newer pending filename when a superseded import settles', async () => {
+  const {runtime} = setup()
+  let finishFirst: (text: string) => void = () => undefined
+  let finishSecond: (text: string) => void = () => undefined
+  const firstSource = new Promise<string>((resolve) => {
+    finishFirst = resolve
+  })
+  const secondSource = new Promise<string>((resolve) => {
+    finishSecond = resolve
+  })
+  const first = runtime.loadFile(file(firstSource, 'first.json'))
+  const second = runtime.loadFile(file(secondSource, 'second.json'))
+  finishFirst('{}')
+  await first
+  expect(runtime.pendingFile()).toBe('second.json')
+  finishSecond(serializeDocument(createDemoDocument()))
+  await second
+  expect(runtime.pendingFile()).toBeNull()
+  expect(runtime.error()).toBeNull()
+})
+
+test('should cancel a pending import when its runtime owner is released', async () => {
+  const {model, runtime} = setup()
+  const before = model.read().document
+  let finish: (text: string) => void = () => undefined
+  const source = new Promise<string>((resolve) => {
+    finish = resolve
+  })
+  const importing = runtime.loadFile(file(source))
+  cleanup()
+  finish(serializeDocument({...before, framesPerSecond: 48}))
+  await importing
+  expect(runtime.pendingFile()).toBeNull()
+  expect(model.read().document).toBe(before)
 })

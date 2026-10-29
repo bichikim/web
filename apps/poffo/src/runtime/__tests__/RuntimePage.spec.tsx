@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
-import {fireEvent, render, screen, waitFor} from '@solidjs/testing-library'
+import {fireEvent, render, screen, waitFor, within} from '@solidjs/testing-library'
 import {afterEach, beforeEach, expect, test, vi} from 'vitest'
-import {createEmptyDocument} from '@winter-love/puppet/player'
+import {createEmptyDocument, serializeDocument} from '@winter-love/puppet/player'
 import {createPlayerFixture} from '../../__tests__/fixtures/player'
 import {RuntimeFixture as RuntimePage} from './fixtures/Runtime'
 
@@ -10,6 +10,8 @@ vi.mock('@winter-love/puppet/player', async (original) => ({
   ...(await original<typeof import('@winter-love/puppet/player')>()),
   createPlayer: mocks.createPlayer,
 }))
+vi.mock('../graph/MappingGraph', () => ({MappingGraph: () => null}))
+
 beforeEach(() => {
   vi.spyOn(HTMLElement.prototype, 'clientWidth', 'get').mockReturnValue(640)
   vi.spyOn(HTMLElement.prototype, 'clientHeight', 'get').mockReturnValue(480)
@@ -29,7 +31,7 @@ afterEach(() => {
   localStorage.clear()
 })
 
-const renderPage = async () => {
+const renderPage = async (mode: 'studio' | 'viewer' = 'viewer') => {
   const player = createPlayerFixture()
   mocks.createPlayer.mockResolvedValue(player)
   const document = {
@@ -39,7 +41,7 @@ const renderPage = async () => {
       {duration: 1, id: 'second', tracks: []},
     ],
   }
-  const view = render(() => <RuntimePage loadInitialDocument={async () => document} />)
+  const view = render(() => <RuntimePage mode={mode} loadInitialDocument={async () => document} />)
   const pause = await screen.findByRole('button', {name: '일시정지'})
   await waitFor(() => expect(pause).toBeEnabled())
   return {pause, player, view}
@@ -129,8 +131,12 @@ test('should keep file import available after a document import fails', async ()
   fireEvent.click(view.getByRole('button', {name: '메인 메뉴'}))
   const file = new File([], 'broken.json', {type: 'application/json'})
   Object.defineProperty(file, 'text', {value: async () => '{}'})
-  fireEvent.change(view.getByLabelText('모델 불러오기'), {target: {files: [file]}})
+  const input = view.getByLabelText('모델 불러오기')
+  fireEvent.click(view.getByRole('button', {name: '모델 불러오기'}))
+  fireEvent.change(input, {target: {files: [file]}})
+  const dialog = screen.getByRole('dialog', {name: '불러오는 중…'})
   expect(await view.findByText('올바른 Puppet JSON 문서를 선택하세요.')).toBeVisible()
+  expect(dialog).toHaveAttribute('data-closed')
   fireEvent.click(view.getByRole('button', {name: '메인 메뉴'}))
   expect(view.getByRole('button', {name: '모델 불러오기'})).toBeVisible()
 })
@@ -157,3 +163,63 @@ test('should keep studio file commands out of the viewer menu', async () => {
   expect(view.queryByRole('button', {name: '스튜디오 저장'})).not.toBeInTheDocument()
   expect(view.queryByRole('button', {name: '스튜디오 불러오기'})).not.toBeInTheDocument()
 })
+
+test.each(['studio', 'viewer'] as const)(
+  'should show the shared loading dialog until a %s model import completes',
+  async (mode) => {
+    const {view, player} = await renderPage(mode)
+    let finish: (text: string) => void = () => undefined
+    const source = new Promise<string>((resolve) => {
+      finish = resolve
+    })
+    const file = new File([], 'loading-cat.json', {type: 'application/json'})
+    Object.defineProperty(file, 'text', {value: () => source})
+    fireEvent.click(view.getByRole('button', {name: '메인 메뉴'}))
+    const input = view.getByLabelText('모델 불러오기')
+    fireEvent.click(view.getByRole('button', {name: '모델 불러오기'}))
+    fireEvent.change(input, {target: {files: [file]}})
+    const dialog = screen.getByRole('dialog', {name: '불러오는 중…'})
+    expect(dialog).toBeVisible()
+    expect(within(dialog).getByText('loading-cat.json')).toBeVisible()
+    finish(serializeDocument({...createEmptyDocument(), framesPerSecond: 48}))
+    await waitFor(() => expect(dialog).toHaveAttribute('data-closed'))
+    await waitFor(() =>
+      expect(player.updateDocument).toHaveBeenCalledWith(
+        expect.objectContaining({framesPerSecond: 48}),
+        expect.any(Object),
+      ),
+    )
+  },
+)
+
+test.each(['studio', 'viewer'] as const)(
+  'should cancel a %s model import from the loading dialog without replacing the player',
+  async (mode) => {
+    const {view} = await renderPage(mode)
+    let finish: (text: string) => void = () => undefined
+    const source = new Promise<string>((resolve) => {
+      finish = resolve
+    })
+    const file = new File([], 'cancelled-cat.json', {type: 'application/json'})
+    Object.defineProperty(file, 'text', {value: () => source})
+    const created = mocks.createPlayer.mock.calls.length
+    fireEvent.click(view.getByRole('button', {name: '메인 메뉴'}))
+    const input = view.getByLabelText('모델 불러오기')
+    fireEvent.click(view.getByRole('button', {name: '모델 불러오기'}))
+    fireEvent.change(input, {target: {files: [file]}})
+    const dialog = screen.getByRole('dialog', {name: '불러오는 중…'})
+    const overlay = dialog.previousElementSibling
+    const cancel = within(dialog).getByRole('button', {name: '취소'})
+    fireEvent.click(cancel)
+    expect(dialog).toHaveAttribute('data-closed')
+    // JSDOM has no editor CSS; complete the primitive's exit animation.
+    const animationEnd = new Event('animationend', {bubbles: true})
+    Object.defineProperty(animationEnd, 'animationName', {value: ''})
+    dialog.dispatchEvent(animationEnd)
+    overlay?.dispatchEvent(animationEnd)
+    finish(serializeDocument({...createEmptyDocument(), framesPerSecond: 48}))
+    await waitFor(() => expect(view.getByRole('button', {name: '일시정지'})).toBeEnabled())
+    expect(mocks.createPlayer).toHaveBeenCalledTimes(created)
+    expect(view.queryByText('올바른 Puppet JSON 문서를 선택하세요.')).not.toBeInTheDocument()
+  },
+)
