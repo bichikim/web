@@ -45,7 +45,12 @@ afterEach(() => {
   }
 })
 
-it('should display a cloud reading from the submitted birth and question without model downloads', async () => {
+it.each([
+  '제 일은 어떨까요?',
+  '미래의 재물운은 어떨까요?',
+  '미래 재물운 좀 알려줘',
+  '운세 중 연애운 좀 봐줘',
+])('should display a cloud reading without model downloads for %s', async (question) => {
   vi.mocked(requestCloudText).mockResolvedValue(CLOUD_TEXT_RESPONSE)
   const startTextModel = vi.fn()
   render(() =>
@@ -63,14 +68,13 @@ it('should display a cloud reading from the submitted birth and question without
     }),
   )
   await expect.element(page.getByRole('textbox', {name: '질문'})).toHaveValue('제 일은 어떨까요?')
+  await page.getByRole('textbox', {name: '질문'}).fill(question)
   await page.getByRole('button', {exact: true, name: '사주 풀이 생성'}).click()
   await expect
     .element(page.getByRole('region', {name: '사주 풀이 결과'}))
     .toHaveTextContent(CLOUD_TEXT_RESPONSE.text)
   expect(requestCloudText).toHaveBeenCalledOnce()
-  expect(vi.mocked(requestCloudText).mock.calls[0]![0].messages.at(-1)?.content).toContain(
-    '제 일은 어떨까요?',
-  )
+  expect(vi.mocked(requestCloudText).mock.calls[0]![0].messages.at(-1)?.content).toContain(question)
   expect(startTextModel).not.toHaveBeenCalled()
   expect(page.getByRole('alert').query()).toBeNull()
 })
