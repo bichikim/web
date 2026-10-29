@@ -1,5 +1,7 @@
 .output/
 .solid/
 .vinxi/
-public/models/white-cat/
+public/models/white-cat/*
+!public/models/white-cat/model.poffo
+!public/models/white-cat/poster.webp
 design/
