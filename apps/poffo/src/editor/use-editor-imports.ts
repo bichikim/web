@@ -79,7 +79,7 @@ const readFile = async (
   if (extension === 'json' || file.type === 'application/json') {
     const result = await preparePuppetDocument({
       signal,
-      source: (await file.text()).replace(/^\uFEFF/u, ''),
+      source: file,
     })
     if (!result.ok) {
       return {notice: 'Puppet 문서가 아니거나 JSON 형식이 올바르지 않습니다.', ok: false}

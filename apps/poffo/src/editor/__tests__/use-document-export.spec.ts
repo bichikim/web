@@ -83,3 +83,29 @@ test('should not download or notify after pending atlas export is disposed', asy
   expect(create).not.toHaveBeenCalled()
   expect(notice).toHaveBeenCalledTimes(1)
 })
+
+test('should download JSON even when whole-document stringification is unavailable', async () => {
+  const create = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:chunked')
+  vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => undefined)
+  vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => undefined)
+  const stringify = JSON.stringify
+  vi.spyOn(JSON, 'stringify').mockImplementation((value, replacer, space) => {
+    if (typeof value === 'object' && value !== null) {
+      throw new RangeError('Invalid string length')
+    }
+    return stringify(value, replacer, space)
+  })
+  const document = createEmptyDocument()
+  createRoot((dispose) => {
+    useDocumentExport(() => document).exportDocument()
+    dispose()
+  })
+  const blob = create.mock.calls[0]![0] as Blob
+  const json = await new Promise<string>((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(String(reader.result))
+    reader.onerror = () => reject(reader.error)
+    reader.readAsText(blob)
+  })
+  expect(JSON.parse(json)).toEqual(document)
+})

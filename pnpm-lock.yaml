@@ -653,6 +653,9 @@ importers:
 
   apps/poffo:
     dependencies:
+      '@discoveryjs/json-ext':
+        specifier: 1.1.0
+        version: 1.1.0
       '@dschz/solid-flow':
         specifier: 0.2.6
         version: 0.2.6(patch_hash=d7b5ac8f5d14be953fc3ab56e5ab1f89d2f462c6d4cccc59c7b85cf10ea7ed9d)(solid-js@1.9.14)
@@ -1290,6 +1293,12 @@ importers:
 
   packages/puppet:
     dependencies:
+      '@streamparser/json':
+        specifier: 0.0.26
+        version: 0.0.26
+      '@discoveryjs/json-ext':
+        specifier: 1.1.0
+        version: 1.1.0
       '@kobalte/core':
         specifier: ^0.13.13
         version: 0.13.13(solid-js@1.9.14)
@@ -3115,6 +3124,10 @@ packages:
 
   '@dimforge/rapier3d-compat@0.12.0':
     resolution: {integrity: sha512-uekIGetywIgopfD97oDL5PfeezkFpNhwlzlaEYNOA0N6ghdsOvh/HYjSMek5Q2O1PYvRSDFcqFVJl4r4ZBwOow==}
+
+  '@discoveryjs/json-ext@1.1.0':
+    resolution: {integrity: sha512-Xc3VhU02wqZ1HvHRJUwL09HkZSTvidqY5Ya0NXBSYOxAp+Ln9dcJr9fySI+CkONzP3PekQo9WdzCv0PGER/mOA==}
+    engines: {node: '>=14.17.0'}
 
   '@drizzle-team/brocli@0.10.2':
     resolution: {integrity: sha512-z33Il7l5dKjUgGULTqBsQBQwckHh5AbIuxhdsIxDDiZAzBOrZO6q9ogcWC65kU382AfynTfgNumVcNIjuIua6w==}
@@ -7483,6 +7496,9 @@ packages:
         optional: true
       '@types/react-dom':
         optional: true
+
+  '@streamparser/json@0.0.26':
+    resolution: {integrity: sha512-46597LNFI+MFdUnzX2QJWwmdTRdq0XVD+vVNJTtGVzIrnCuhG9pFo1OAzbNBqci8UJgk/X5KJZ6LcV+y7PTuDQ==}
 
   '@supabase/auth-js@2.105.1':
     resolution: {integrity: sha512-zc4s8Xg4truwE1Q4Q8M8oUVDARMd05pKh73NyQsMbYU1HDdDN2iiKzena/yu+yJze3WrD4c092FdckPiK1rLQw==}
@@ -16088,6 +16104,8 @@ snapshots:
 
   '@dimforge/rapier3d-compat@0.12.0': {}
 
+  '@discoveryjs/json-ext@1.1.0': {}
+
   '@drizzle-team/brocli@0.10.2': {}
 
   '@dschz/solid-flow@0.2.6(patch_hash=d7b5ac8f5d14be953fc3ab56e5ab1f89d2f462c6d4cccc59c7b85cf10ea7ed9d)(solid-js@1.9.14)':
@@ -19881,6 +19899,8 @@ snapshots:
       storybook: 10.6.2(@types/react@19.2.7)(prettier@3.8.3)(react@19.2.5)
     optionalDependencies:
       '@types/react': 19.2.7
+
+  '@streamparser/json@0.0.26': {}
 
   '@supabase/auth-js@2.105.1':
     dependencies:

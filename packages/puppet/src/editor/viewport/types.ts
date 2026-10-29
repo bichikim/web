@@ -14,6 +14,8 @@ export interface ViewportProps extends Omit<PlayerCanvasProps, 'renderScale'> {
   readonly children?: JSX.Element
   /** Extra camera buttons; omitted for standard controls. */
   readonly viewControls?: JSX.Element
+  /** Host-owned settings in the camera panel; omitted for camera settings only. */
+  readonly viewSettings?: JSX.Element
   /** Floating tools; omitted when no tools are needed. */
   readonly controls?: JSX.Element
   /** Explicit framing invalidation; omitted to retain the camera. */

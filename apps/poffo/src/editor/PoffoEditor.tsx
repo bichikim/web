@@ -1,4 +1,4 @@
-import {createSignal, Show, untrack} from 'solid-js'
+import {createSignal, Show, Suspense, untrack} from 'solid-js'
 import {
   type DocumentRecovery,
   DocumentRecoveryDialog,
@@ -148,14 +148,17 @@ export const PoffoEditor = (props: PoffoEditorProps) => {
   )
   return (
     <>
-      <PuppetEditor
-        model={props.model}
-        active={props.active}
-        initialMotionId={props.initialMotionId}
-        initialWorkspace={props.initialWorkspace}
-        onControl={handleControl}
-        header={renderHeader}
-      />
+      {/* Keep restored editor effects independent of document and runtime-page loading. */}
+      <Suspense>
+        <PuppetEditor
+          model={props.model}
+          active={props.active}
+          initialMotionId={props.initialMotionId}
+          initialWorkspace={props.initialWorkspace}
+          onControl={handleControl}
+          header={renderHeader}
+        />
+      </Suspense>
       <FileLoadingDialog fileName={imports.pendingFile()} onCancel={imports.cancel} />
       <PsdReimportDialog controller={imports.reimport} />
       <Show when={recoveryOpen() && props.recovery}>
