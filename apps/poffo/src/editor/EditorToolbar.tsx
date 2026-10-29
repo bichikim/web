@@ -25,7 +25,6 @@ const STATUS_LABEL: Readonly<Record<PlayerCanvasStatus, string>> = {
 export interface EditorToolbarProps {
   readonly examples?: ReadonlyArray<PuppetExampleDocument>
   readonly setBrushSettingsMount?: (element: HTMLDivElement | undefined) => void
-  readonly exportUrl?: string | null
   readonly activeWorkspace?: 'animation' | 'modeling'
   readonly canRedo?: boolean
   readonly canUndo?: boolean
@@ -39,6 +38,7 @@ export interface EditorToolbarProps {
   readonly onStudioOpen?: WorkspaceNavigationAction
   readonly onViewerOpen?: WorkspaceNavigationAction
   readonly onExport: () => void
+  readonly onPoffoExport?: () => void
   /** Exports with part images packed into shared texture atlas pages. */
   readonly onAtlasExport?: () => void
   readonly onRecoveryOpen?: (returnFocus: () => void) => void
@@ -91,7 +91,6 @@ const PanelVisibilityControls = (props: PanelVisibilityControlsProps) => (
 interface ToolbarMenuProps {
   readonly onRecoveryOpen?: (returnFocus: () => void) => void
   readonly examples?: ReadonlyArray<PuppetExampleDocument>
-  readonly exportUrl?: string | null
   readonly canUndo?: boolean
   readonly canRedo?: boolean
   readonly historyUndoCount?: number
@@ -99,6 +98,7 @@ interface ToolbarMenuProps {
   readonly onUndo?: () => void
   readonly onRedo?: () => void
   readonly onExport: () => void
+  readonly onPoffoExport?: () => void
   /** Exports with part images packed into shared texture atlas pages. */
   readonly onAtlasExport?: () => void
   readonly onExampleOpen?: (example: PuppetExampleDocument) => void
@@ -167,7 +167,7 @@ const ToolbarMenu = (props: ToolbarMenuProps) => {
         <Popover.Content aria-label="파일 및 편집 작업" class="toolbar-menu-content">
           <FileAction
             label="가져오기"
-            description="기존 문서에 추가 · PNG, PSD, JSON"
+            description="기존 문서에 추가 · PNG, PSD, JSON, Poffo"
             onClose={() => setMenuOpen(false)}
             onReturnFocus={handleReturnFocus}
             onImport={props.onFileImport}
@@ -207,19 +207,13 @@ const ToolbarMenu = (props: ToolbarMenuProps) => {
             </Button>
           </Show>
           <hr />
+          <MenuAction label="문서 저장" onClose={close} onSelect={props.onPoffoExport} />
           <MenuAction label="JSON 내보내기" onClose={close} onSelect={props.onExport} />
           <MenuAction
             label="텍스처 아틀라스로 JSON 내보내기"
             onClose={close}
             onSelect={props.onAtlasExport}
           />
-          <Show when={props.exportUrl}>
-            {(url) => (
-              <a href={url()} download="puppet-model.json">
-                JSON 파일 다시 다운로드
-              </a>
-            )}
-          </Show>
           <hr />
           <Button
             aria-description={`${props.historyUndoCount ?? 0}단계 되돌릴 수 있음 · ${undoShortcut}`}
@@ -276,7 +270,6 @@ export const EditorToolbar = (props: EditorToolbarProps) => (
     menu={
       <ToolbarMenu
         examples={props.examples}
-        exportUrl={props.exportUrl}
         canUndo={props.canUndo}
         canRedo={props.canRedo}
         historyUndoCount={props.historyUndoCount}
@@ -284,6 +277,7 @@ export const EditorToolbar = (props: EditorToolbarProps) => (
         onUndo={props.onUndo}
         onRedo={props.onRedo}
         onExport={props.onExport}
+        onPoffoExport={props.onPoffoExport}
         onAtlasExport={props.onAtlasExport}
         onRecoveryOpen={props.onRecoveryOpen}
         onExampleOpen={props.onExampleOpen}

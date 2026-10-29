@@ -70,4 +70,15 @@ const developmentExamples = (): Plugin => ({
 
 export default defineConfig({
   plugins: [UnoCSS(), solid(), trackingAssets(), developmentExamples()],
+  resolve: {
+    // Build one shared Puppet graph instead of initializing Pixi from separate library bundles.
+    alias: [
+      {
+        find: /^@winter-love\/puppet\/(?<entry>player|editor)$/u,
+        replacement: fileURLToPath(
+          new URL('../../packages/puppet/src/$1/index.ts', import.meta.url),
+        ),
+      },
+    ],
+  },
 })
