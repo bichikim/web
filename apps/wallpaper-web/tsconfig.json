@@ -1,5 +1,14 @@
 {
   "extends": "../../tsconfig.json",
-  "compilerOptions": {"types": ["vite/client", "@solidjs/start/env"]},
-  "include": ["src", "vite.config.ts", "vite.preview.config.ts", "uno.config.ts"]
+  "compilerOptions": {
+    "types": ["vite/client", "@solidjs/start/env"]
+  },
+  "include": [
+    "src",
+    "vite.config.ts",
+    "vite.preview.config.ts",
+    "uno.config.ts",
+    "browser",
+    "playwright.config.ts"
+  ]
 }
