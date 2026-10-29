@@ -36,7 +36,8 @@ export const FileAction = (props: FileActionProps) => {
       </Button>
       <FileField
         accept={
-          props.accept ?? '.png,.psd,.json,image/png,application/json,image/vnd.adobe.photoshop'
+          props.accept ??
+          '.png,.psd,.json,.poffo,image/png,application/json,image/vnd.adobe.photoshop'
         }
       >
         <FileField.HiddenInput
