@@ -93,6 +93,26 @@ it('should keep a valid selected birth date available for a calculated answer', 
   expect(services.isDownloaded).not.toHaveBeenCalled()
 })
 
+it.each([
+  '미래는 어떨까요?',
+  '앞날은 어떨까요?',
+  '내 앞날은 어떨까요?',
+  '미래 좀 알려줘',
+  '운세 좀 봐줘',
+])('should display topic guidance without accessing a model for %s', async (question) => {
+  const services = openReading()
+  await selectBirthDate()
+  await page.getByRole('textbox', {name: '질문'}).fill(question)
+  await page.getByRole('button', {exact: true, name: '사주 풀이 생성'}).click()
+  expect(services.isDownloaded).not.toHaveBeenCalled()
+  expect(services.createClient).not.toHaveBeenCalled()
+  expect(services.startTextModel).not.toHaveBeenCalled()
+  await expect
+    .element(page.getByRole('region', {name: '사주 풀이 결과'}))
+    .toHaveTextContent('재물, 일, 관계')
+  expect(page.getByRole('alert').query()).toBeNull()
+})
+
 it('should display a diary day-stem fact without accessing a model', async () => {
   const services = openReading()
   await selectBirthDate()

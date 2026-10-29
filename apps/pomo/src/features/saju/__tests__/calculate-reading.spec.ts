@@ -80,6 +80,49 @@ describe('calculateSajuReading', () => {
     expect(result.type).toBe('answer')
   })
 
+  it.each([
+    '미래는 어떨까요?',
+    '앞날은 어떨까요?',
+    '내 앞날은 어떨까요?',
+    '미래 좀 알려줘',
+    '운세 좀 봐줘',
+  ])('should ask for a topic without requesting generation: %s', (question) => {
+    expect(calculateSajuReading({birth, gender: 'N', question})).toEqual({
+      text: expect.stringContaining('재물, 일, 관계'),
+      type: 'answer',
+    })
+  })
+
+  it.each([
+    '제 일은 어떨까요?',
+    '미래의 재물운은 어떨까요?',
+    '내 사업의 미래는 어떨까요?',
+    '미래 재물운 좀 알려줘',
+    '운세 중 연애운 좀 봐줘',
+    '미래 좀 알려줘, 특히 직업이 궁금해',
+    '과거는 어떨까요?',
+    '운세는 어땠나요?',
+  ])(
+    'should preserve generation and the original question for an unmatched expression: %s',
+    (question) => {
+      const result = calculateSajuReading({birth, gender: 'N', question})
+      expect(result.type).toBe('generate')
+      if (result.type === 'generate') {
+        expect(JSON.parse(result.request.messages.at(-1)!.content)).toMatchObject({question})
+      }
+    },
+  )
+
+  it.each(['올해 운세는 어떨까요?', '내년 운세 좀 봐줘', '2026년 미래 좀 알려줘'])(
+    'should preserve the annual reading notice for an equivalent ending: %s',
+    (question) => {
+      expect(calculateSajuReading({birth, gender: 'N', question})).toEqual({
+        text: '특정 연도 운세는 계산하지 않아요. 연도를 빼고 다시 질문해 주세요.',
+        type: 'notice',
+      })
+    },
+  )
+
   it('should answer a diary day-stem fact without requesting generation', () => {
     expect(
       calculateSajuReading({birth, gender: 'N', question: '제 일기에 적을 내 일간은 무엇인가요?'}),
