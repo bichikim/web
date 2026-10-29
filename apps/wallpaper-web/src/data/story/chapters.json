@@ -1,0 +1,56 @@
+[
+  {
+    "id": "overview",
+    "speechId": "overview",
+    "description": "지금 보고 있는 배경과 캐릭터를 데스크톱에서도 사용할 수 있어요.",
+    "label": "POFFO WALLPAPER / DESKTOP APP",
+    "lines": ["YOUR", "DESKTOP."],
+    "title": "배경화면과 위젯을 위한 데스크톱 앱입니다.",
+    "word": "DESKTOP"
+  },
+  {
+    "id": "wallpaper",
+    "speechId": "wallpaper",
+    "description": "사진·동영상, 웹사이트와 라이브 배경을 지원합니다.",
+    "label": "01 / WALLPAPER",
+    "lines": ["CHANGE", "THE VIEW."],
+    "title": "움직이는 배경화면도 추가하세요.",
+    "word": "WALLPAPER"
+  },
+  {
+    "id": "widgets",
+    "speechId": "widgets",
+    "description": "배경화면 위에 캐릭터를 표시하고, 크기와 위치 등 다양한 설정을 조절하세요.",
+    "label": "02 / WIDGETS",
+    "lines": ["OFF THE", "WALL."],
+    "title": "캐릭터를 데스크톱 위젯으로.",
+    "word": "WIDGETS"
+  },
+  {
+    "id": "details",
+    "speechId": "details",
+    "description": "모델의 표정과 동작을 불러옵니다. 위젯마다 크기와 시선 추적을 설정하세요.",
+    "label": "03 / MAKE IT YOURS",
+    "lines": ["LITTLE", "DETAILS."],
+    "title": "표정과 동작을 골라 쓰세요.",
+    "word": "DETAILS"
+  },
+  {
+    "id": "codex",
+    "speechId": "connection",
+    "description": "Codex의 답변과 질문을 말풍선으로 보고, 캐릭터의 목소리로 들으세요.",
+    "label": "04 / CODEX",
+    "lines": ["HELLO,", "CODEX."],
+    "title": "Codex와 연결하면, 캐릭터가 말해요.",
+    "word": "CODEX"
+  },
+  {
+    "id": "download",
+    "speechId": "download",
+    "description": "지금 다운로드하세요.",
+    "label": "POFFO WALLPAPER",
+    "lines": ["ON YOUR", "DESKTOP."],
+    "title": "Poffo Wallpaper 다운로드",
+    "word": "POFFO"
+  }
+]
