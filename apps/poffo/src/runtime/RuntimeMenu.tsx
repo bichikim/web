@@ -88,7 +88,7 @@ export const RuntimeMenu = (props: RuntimeMenuProps) => {
         >
           <FileAction
             label="모델 불러오기"
-            accept=".json,application/json"
+            accept=".json,.poffo,application/json"
             onClose={handleClose}
             onReturnFocus={handleReturnFocus}
             onImport={props.onLoadModel}

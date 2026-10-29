@@ -113,7 +113,10 @@ export const EditorHelp = (props: EditorHelpProps) => {
               Ctrl+Y입니다.
             </p>
             <h2>파일</h2>
-            <p>햄버거 메뉴에서 PNG를 불러오거나 Puppet JSON을 가져오고 내보낼 수 있습니다.</p>
+            <p>
+              메뉴에서 PNG·PSD·JSON·Poffo 문서를 불러오고, Poffo로 저장하거나 JSON으로 내보낼 수
+              있습니다.
+            </p>
           </article>
         </Dialog.Content>
       </Dialog.Portal>

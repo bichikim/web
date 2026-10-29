@@ -46,6 +46,7 @@
     "@streamparser/json": "0.0.26",
     "@xmldom/xmldom": "^0.9.12",
     "ag-psd": "^31.0.2",
+    "brotli-wasm": "3.0.1",
     "delaunator": "^5.1.0",
     "es-toolkit": "catalog:",
     "fflate": "^0.8.3",
