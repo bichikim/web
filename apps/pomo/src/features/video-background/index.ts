@@ -1,6 +1,7 @@
 import Dexie, {type Table} from 'dexie'
 import {createSerialTaskQueue} from 'src/utils/create-serial-task-queue'
-import {sampleVideo, type VideoSample} from './sample'
+import {sampleVideo} from './sample'
+import type {VideoSample} from '@winter-love/wallpaper/frame-renderer/capture-video-sample'
 export * from './runtime'
 export * from './sample'
 export * from './timeline'

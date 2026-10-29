@@ -5,9 +5,9 @@ import {
   parseSupertonicIndexer,
   type SupertonicConfig,
   type SupertonicIndexer,
-} from './engine'
-import type {InvalidModelDataError} from './errors'
-import type {SupertonicVoiceId} from './model'
+} from '@winter-love/supertonic/engine'
+import type {InvalidModelDataError} from '@winter-love/supertonic/errors'
+import type {SupertonicVoiceId} from '@winter-love/supertonic/model'
 import {failureResult, type Result, successResult} from 'src/features/result'
 
 interface ModelAsset {

@@ -1,10 +1,10 @@
 import {createSignal, onCleanup, onMount} from 'solid-js'
 import {useMediaPlayer} from '../media-player/context'
 import {MusicPlayerView} from '../music-player-view/MusicPlayerView'
-import type {PMusicPlayerContentProps} from './types'
+import type {PMusicPlayerProps} from './types'
 
 export interface PMusicPlayerPresentationProps extends Pick<
-  PMusicPlayerContentProps,
+  PMusicPlayerProps,
   | 'backdropBlur'
   | 'expanded'
   | 'onExpandedChange'

@@ -3,7 +3,7 @@
 import {fireEvent, render, screen} from '@solidjs/testing-library'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 
-import {SUPERTONIC_VOICES} from '../../../features/supertonic'
+import {SUPERTONIC_VOICES} from '@winter-love/supertonic/model'
 import {VOICE_TEST_SCRIPTS} from '../../voice-test-scripts'
 import {VoiceDropZone} from '../DropZone'
 import {VoiceFields} from '../Fields'

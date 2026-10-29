@@ -1,6 +1,6 @@
 /** @vitest-environment node */
 import {expect, it, vi} from 'vitest'
-import {SUPERTONIC_VOICES} from '../../supertonic/model'
+import {SUPERTONIC_VOICES} from '@winter-love/supertonic/model'
 
 import {
   AUTOMATIC_DIALOGUE_SETTINGS_STORAGE_KEY,

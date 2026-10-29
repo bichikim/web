@@ -1,10 +1,11 @@
 import {replaceBlobObjectUrl} from 'src/features/blob-object-url'
-import type {BackgroundMedia} from './model'
-import {getPairDirection, type PhotoSize} from './pairing'
+import type {BackgroundMedia} from '@winter-love/wallpaper/model'
+import {getPairDirection, type PhotoSize} from '@winter-love/wallpaper/album/pairing'
+
+import type {LoadedPhoto} from '@winter-love/wallpaper/frame-renderer/types'
 
 const LOAD_TIMEOUT = 10_000
-import type {LoadedPhoto} from '@winter-love/wallpaper/frame-renderer/types'
-export type {LoadedPhoto} from '@winter-love/wallpaper/frame-renderer/types'
+
 export interface FindCompanionOptions {
   readonly first: PhotoSize
   readonly viewport: PhotoSize

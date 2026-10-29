@@ -1,7 +1,8 @@
 import {readPDisplayPreferences} from 'src/features/focus-room-display-preferences'
 import {getBackgroundRepository} from 'src/features/background'
 
-import {type DesktopMode, isDesktopBackgroundMode, readDesktopMode} from './model'
+import {type DesktopMode} from 'src/features/desktop-mode/is-desktop-mode'
+import {isDesktopBackgroundMode, readDesktopMode} from './model'
 import {getControlSurfaceOptions} from './get-control-surface-options'
 import type {DesktopWorkArea} from './types'
 

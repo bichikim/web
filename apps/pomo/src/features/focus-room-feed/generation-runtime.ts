@@ -1,6 +1,6 @@
 import {type AutomaticDialogueSettingsStorage} from '../focus-room-dialogue/automatic-dialogue-settings-contract'
 import type {GenerateDialogueAudioOptions} from '../focus-room-dialogue/generate-dialogue-audio'
-import type {SupertonicModelId} from '../supertonic/model'
+import type {SupertonicModelId} from '@winter-love/supertonic/model'
 
 const createVoiceClient = async () => {
   const {createSupertonicClient} = await import('../supertonic/client')

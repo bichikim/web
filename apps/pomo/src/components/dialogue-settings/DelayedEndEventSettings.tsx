@@ -1,5 +1,5 @@
 import {createPendingSave} from 'src/features/pending-save'
-import {normalizePasteNumericInput} from 'src/utils/normalize-paste-numeric-input'
+import {normalizePasteNumericInput} from '@winter-love/supertonic/normalize-paste-numeric-input'
 import {PButton} from 'src/components/p-button/PButton'
 import {PNumberInput} from 'src/components/p-number-input/PNumberInput'
 import {createEffect, createSignal, onCleanup, Show} from 'solid-js'

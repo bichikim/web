@@ -1,5 +1,5 @@
 import {usePreference} from 'src/hooks/use-preference'
-import type {PreferenceStorage} from 'src/utils/preference-storage'
+import type {PreferenceStorage} from 'src/hooks/use-preference/types'
 import {getDefaultPSceneStyle, type PSceneStyle, type PSceneStyleController} from './scene-style'
 import {readPSceneStyle, writePSceneStyle} from './style-storage'
 import {parseSceneStyle} from './parse-scene-style'

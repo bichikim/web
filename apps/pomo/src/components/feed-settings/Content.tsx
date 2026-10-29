@@ -19,7 +19,7 @@ import {
   useFeedConnections,
   useOptionalPFeeds,
 } from '../../features/focus-room-feed'
-import {SUPERTONIC_VOICES} from '../../features/supertonic'
+import {SUPERTONIC_VOICES} from '@winter-love/supertonic/model'
 import * as m from '@paraglide/message'
 import {PFeedDialogueList} from './DialogueList'
 import {RecommendedFeedItem} from './RecommendedItem'

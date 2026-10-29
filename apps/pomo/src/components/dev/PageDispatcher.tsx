@@ -1,4 +1,4 @@
-import {normalizePathname} from 'src/utils/normalize-pathname'
+import {removeTrailingSlashes} from 'src/utils/remove-trailing-slashes'
 import {Meta, Title} from '@solidjs/meta'
 import {type Component, type JSX, lazy, Show} from 'solid-js'
 
@@ -102,7 +102,7 @@ export interface PageDispatcherProps {
 }
 
 export function PageDispatcher(props: PageDispatcherProps) {
-  const pathname = () => normalizePathname(props.pathname)
+  const pathname = () => removeTrailingSlashes(props.pathname)
   const Page = () => DEV_PAGE_COMPONENTS[pathname()]
 
   return (

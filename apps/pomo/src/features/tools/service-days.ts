@@ -1,4 +1,4 @@
-import {normalizePasteNumericInput} from 'src/utils/normalize-paste-numeric-input'
+import {normalizePasteNumericInput} from '@winter-love/supertonic/normalize-paste-numeric-input'
 
 const SERVICE_DAYS_PATTERN = /^\d+$/u
 

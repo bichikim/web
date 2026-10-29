@@ -3,13 +3,9 @@ import {createEffect, createMemo, createSignal, on, onCleanup, untrack} from 'so
 import {isNonBlankString} from 'src/utils/is-non-blank-string'
 import {replaceBlobObjectUrl} from '../blob-object-url'
 
-import {
-  createOpusBlob,
-  type SupertonicClient,
-  type SupertonicLanguage,
-  type SupertonicModelId,
-  type SupertonicVoiceId,
-} from '../supertonic'
+import {createOpusBlob, type SupertonicClient} from '../supertonic'
+import {type SupertonicLanguage} from '@winter-love/supertonic/language'
+import {type SupertonicModelId, type SupertonicVoiceId} from '@winter-love/supertonic/model'
 import {createTextMoodAnalyzer} from '../text-mood'
 import {
   deleteDialogueDraft,

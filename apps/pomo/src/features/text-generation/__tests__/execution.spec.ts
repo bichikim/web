@@ -335,3 +335,14 @@ describe('text generation executor', () => {
     expect(provider.dispose).toHaveBeenCalledOnce()
   })
 })
+
+it('should forward the structured output schema through the device execution boundary', async () => {
+  const executor = createTextGenerationExecutor()
+  const request = createRequest()
+  const outputSchema = {properties: {value: {type: 'number'}}, type: 'object'}
+  await executor.generate(
+    {...request, parameters: {...request.parameters, outputSchema}},
+    {onResponse: vi.fn()},
+  )
+  expect(runtimeMocks.generate).toHaveBeenCalledWith(expect.objectContaining({outputSchema}))
+})

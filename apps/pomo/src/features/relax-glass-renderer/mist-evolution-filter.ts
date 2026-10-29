@@ -1,7 +1,7 @@
 import {RAIN_MAP_ERASER} from './rain-map-eraser'
 import {Filter, GlProgram, type Texture, UniformGroup} from 'pixi.js'
 
-import {FULLSCREEN_VERTEX} from 'src/utils/shader'
+import {FULLSCREEN_VERTEX} from '@winter-love/wallpaper/frame-renderer/fullscreen-vertex'
 
 const FRAGMENT = `
 in vec2 vUv;

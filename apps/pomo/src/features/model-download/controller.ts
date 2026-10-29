@@ -8,10 +8,9 @@ import type {ImageVariant} from '../image-generation/settings'
 import {
   createSupertonicClient,
   getSupertonicErrorMessage,
-  getSupertonicModel,
   type SupertonicClient,
-  type SupertonicModelId,
 } from '../supertonic'
+import {getSupertonicModel, type SupertonicModelId} from '@winter-love/supertonic/model'
 import type {SupertonicProgress} from '../supertonic/messages'
 import {getTextModel, type TextModelId} from '../text-generation/model'
 import {

@@ -1,3 +1,4 @@
+import type {TextOutputSchema} from '../text-generation/types'
 import type {
   PrepareTextModelRequest,
   TextGenerationErrorResponse,
@@ -25,6 +26,7 @@ export interface ChatAnswerDraft {
 }
 
 export interface GenerateChatRequest {
+  readonly outputSchema?: TextOutputSchema
   readonly context: ChatContext
   readonly modelId: TextModelId
   readonly refineAnswer: boolean

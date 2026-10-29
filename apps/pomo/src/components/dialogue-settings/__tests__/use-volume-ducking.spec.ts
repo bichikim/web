@@ -13,7 +13,7 @@ import {
   resolveDialoguePlayerGain,
   usePlayerVolumeDucking,
 } from 'src/features/focus-room-dialogue/use-player-volume-ducking'
-import {webLocalStorage} from 'src/utils/preference-storage'
+import {webLocalStorage} from 'src/hooks/use-preference/web-local-storage'
 import {useVolumeDucking} from '../use-volume-ducking'
 
 const settingsMocks = vi.hoisted(() => ({
