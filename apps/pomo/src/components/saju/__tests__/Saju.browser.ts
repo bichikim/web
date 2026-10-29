@@ -92,3 +92,16 @@ it('should keep a valid selected birth date available for a calculated answer', 
   expect(services.createClient).not.toHaveBeenCalled()
   expect(services.isDownloaded).not.toHaveBeenCalled()
 })
+
+it('should display a diary day-stem fact without accessing a model', async () => {
+  const services = openReading()
+  await selectBirthDate()
+  await page.getByRole('textbox', {name: '질문'}).fill('제 일기에 적을 내 일간은 무엇인가요?')
+  await page.getByRole('button', {exact: true, name: '사주 풀이 생성'}).click()
+  await expect
+    .element(page.getByRole('region', {name: '사주 풀이 결과'}))
+    .toHaveTextContent('입력한 생년월일의 일간은 병(丙)입니다.')
+  expect(services.createClient).not.toHaveBeenCalled()
+  expect(services.isDownloaded).not.toHaveBeenCalled()
+  expect(services.startTextModel).not.toHaveBeenCalled()
+})
