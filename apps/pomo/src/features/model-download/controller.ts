@@ -108,7 +108,7 @@ export interface ModelDownloadRuntime {
   readonly createTextClient: (
     options: CreateTextModelDownloadClientOptions,
   ) => TextModelDownloadClient
-  readonly createVoiceClient: () => SupertonicClient
+  readonly createVoiceClient: () => Pick<SupertonicClient, 'dispose' | 'initialize'>
 }
 
 const DEFAULT_RUNTIME: ModelDownloadRuntime = {
