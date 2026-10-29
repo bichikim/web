@@ -24,14 +24,17 @@ export const RuntimeMenu = (props: RuntimeMenuProps) => {
   const [surface, setSurface] = createSignal<HTMLDivElement>()
   const [studioInput, setStudioInput] = createSignal<HTMLInputElement>()
   const popup = usePopoverSurface({open, surface, trigger})
+  const handleReturnFocus = () => trigger()?.focus()
   const handleClose = () => {
     setOpen(false)
     const target = trigger()
     queueMicrotask(() => target?.focus())
   }
   const handleEscape = (event: KeyboardEvent) => {
-    event.preventDefault()
-    handleClose()
+    if (open() && !event.defaultPrevented) {
+      event.preventDefault()
+      handleClose()
+    }
   }
   const handleImport = (file: File | undefined) => {
     if (file !== undefined) {
@@ -87,6 +90,7 @@ export const RuntimeMenu = (props: RuntimeMenuProps) => {
             label="모델 불러오기"
             accept=".json,application/json"
             onClose={handleClose}
+            onReturnFocus={handleReturnFocus}
             onImport={props.onLoadModel}
           />
           <Show when={props.workspace}>

@@ -2,15 +2,11 @@
 import {PGlite} from '@electric-sql/pglite'
 import {drizzle} from 'drizzle-orm/pglite'
 import {readFile} from 'node:fs/promises'
-import {afterAll, afterEach, beforeAll, expect, it, vi} from 'vitest'
+import {afterAll, afterEach, beforeAll, expect, it} from 'vitest'
 import {readUserCloudTextLimits} from '../read-user-limits'
 import type {Database} from 'src/server/database'
 import {prepareProductLimits} from './fixtures/product-limits'
 
-vi.mock('src/server/database', async () => ({
-  ...(await vi.importActual('src/server/database/schema/cloud-text')),
-  ...(await vi.importActual('src/server/database/schema/commerce')),
-}))
 const database = new PGlite()
 const client = drizzle(database, {casing: 'snake_case'}) as unknown as Pick<Database, 'select'>
 const userId = '00000000-0000-4000-8000-000000000001'

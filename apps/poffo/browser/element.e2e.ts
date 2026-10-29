@@ -18,6 +18,18 @@ test('should bind a DOM host and preserve shadow popover focus across reset and 
   await page.waitForFunction(
     () => document.querySelector('puppet-editor')?.state.editor?.renderer === 'ready',
   )
+  const viewSettings = page.getByRole('button', {exact: true, name: '보기 설정'})
+  await viewSettings.click()
+  const viewDialog = page.getByRole('dialog', {name: '보기 설정'})
+  await expect(viewDialog).toBeVisible()
+  expect(await viewDialog.evaluate((element) => element.getRootNode() instanceof ShadowRoot)).toBe(
+    true,
+  )
+  await page.getByRole('spinbutton', {exact: true, name: '보기 X'}).focus()
+  await expect(viewDialog).toBeVisible()
+  await page.keyboard.press('Escape')
+  await expect(viewDialog).not.toBeVisible()
+  await expect(viewSettings).toBeFocused()
   const settings = page.getByRole('button', {exact: true, name: '모션 설정'})
   await settings.click()
   const dialog = page.getByRole('dialog', {name: '모션 설정'})

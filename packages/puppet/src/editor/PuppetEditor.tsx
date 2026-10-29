@@ -16,7 +16,10 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
   })
   // Release the host gesture before field cleanup can finish it as a committed edit.
   const content = createRoot((dispose) => {
-    disposeBody = dispose
+    disposeBody = () => {
+      disposeBody = undefined
+      dispose()
+    }
     return (
       <EditorBody
         {...props}
@@ -25,7 +28,7 @@ export const PuppetEditor = (props: PuppetEditorProps) => {
         }}
         onDispose={() => {
           setDisposed(true)
-          dispose()
+          disposeBody?.()
         }}
       />
     )

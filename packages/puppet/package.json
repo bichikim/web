@@ -41,7 +41,9 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@discoveryjs/json-ext": "1.1.0",
     "@kobalte/core": "^0.13.13",
+    "@streamparser/json": "0.0.26",
     "@xmldom/xmldom": "^0.9.12",
     "ag-psd": "^31.0.2",
     "delaunator": "^5.1.0",

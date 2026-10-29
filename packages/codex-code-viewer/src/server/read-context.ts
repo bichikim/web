@@ -28,12 +28,13 @@ export const readContext = async (input: ReadContextInput): Promise<Result<{text
     if (!isWithin(input.root, canonical) || canonical !== candidate) {
       return failure('outside-workspace')
     }
+    const path = relative(input.root, canonical).split(sep).join('/') || '.'
     if (statSync(canonical).isDirectory()) {
       const scan = scanShallowDirectory(input.root, canonical)
       try {
         const next = await scan.next()
         if (next.done) {
-          return success({text: canonical})
+          return success({text: path})
         }
         const batch = next.value
         const entries = [
@@ -42,7 +43,7 @@ export const readContext = async (input: ReadContextInput): Promise<Result<{text
         ]
         const truncated = !batch.complete || entries.length > MAX_CONTEXT_LINES
         const suffix = truncated ? '\n[Listing truncated]' : ''
-        const text = `${canonical}\n${entries.slice(0, MAX_CONTEXT_LINES).join('\n')}${suffix}`
+        const text = `${path}\n${entries.slice(0, MAX_CONTEXT_LINES).join('\n')}${suffix}`
         return Buffer.byteLength(text) > MAX_CONTEXT_BYTES
           ? failure('context-too-large')
           : success({text})
@@ -65,7 +66,7 @@ export const readContext = async (input: ReadContextInput): Promise<Result<{text
       return failure('invalid-position')
     }
     const suffix = end < rows.length ? '\n[More lines available]' : ''
-    const text = `${canonical}:${line}-${end}\n${rows.slice(line - 1, end).join('\n')}${suffix}`
+    const text = `${path}:${line}-${end}\n${rows.slice(line - 1, end).join('\n')}${suffix}`
     return Buffer.byteLength(text) > MAX_CONTEXT_BYTES
       ? failure('context-too-large')
       : success({text})

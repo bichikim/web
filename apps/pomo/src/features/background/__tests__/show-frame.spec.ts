@@ -1,20 +1,18 @@
 /** @vitest-environment node */
 import {beforeEach, expect, it, vi} from 'vitest'
-import type {FrameRenderer} from '../../frame-renderer'
 import {findCompanion} from '../companion'
 import {showFrame, type ShowFrameOptions} from '../show-frame'
-import type {BackgroundController} from '../use-background'
 
 vi.mock('../companion', () => ({findCompanion: vi.fn()}))
 const first = {id: 'a', kind: 'photo' as const, name: 'A', size: 10}
 const second = {...first, id: 'b'}
 const renderer = {
-  addPhoto: vi.fn(),
+  addPhoto: vi.fn<ShowFrameOptions['renderer']['addPhoto']>(),
   photoSize: () => ({height: 1000, width: 600}),
-  present: vi.fn(),
-  show: vi.fn(),
+  present: vi.fn<ShowFrameOptions['renderer']['present']>(),
+  show: vi.fn<ShowFrameOptions['renderer']['show']>(),
   viewportSize: () => ({height: 1000, width: 1500}),
-}
+} satisfies ShowFrameOptions['renderer']
 let controller: AbortController
 let options: ShowFrameOptions
 beforeEach(() => {
@@ -23,13 +21,13 @@ beforeEach(() => {
   options = {
     background: {
       items: () => [first, second],
-      load: vi.fn(async () => new Blob(['a'])),
-      markFailed: vi.fn(),
-    } as unknown as BackgroundController,
+      load: vi.fn<ShowFrameOptions['background']['load']>(async () => new Blob(['a'])),
+      markFailed: vi.fn<ShowFrameOptions['background']['markFailed']>(),
+    },
     candidates: () => ['b'],
     item: first,
     pairPhotos: true,
-    renderer: renderer as unknown as FrameRenderer,
+    renderer,
     signal: controller.signal,
     sizes: new Map(),
     transition: 'fade',

@@ -1,6 +1,7 @@
 import {takeWhile} from 'es-toolkit/array'
 
 import type {CalendarWeekendIntent} from './period-range'
+import {EXCLUSION_SUFFIX} from './create-calendar-exclusion-pattern'
 
 interface CreateCalendarWeekdayParserOptions {
   readonly calendarIntentPattern: RegExp
@@ -24,18 +25,18 @@ interface WeekdayDateExpression {
 const WEEKDAY_NAME_PATTERN_SOURCE = '[월화수목금토일]'
 const WEEKDAY_PATTERN_SOURCE = `${WEEKDAY_NAME_PATTERN_SOURCE}(?:요일)?`
 const IMPLICIT_WEEKDAY_NAME_PATTERN_SOURCE = `${WEEKDAY_NAME_PATTERN_SOURCE}요일`
-const CALENDAR_DAYPART_PATTERN_SOURCE = '(?:새벽|아침|오전|점심|오후|저녁|밤|낮|정오)'
+export const DAYPART_PATTERN_SOURCE = '(?:새벽|아침|오전|점심|오후|저녁|밤|낮|정오)'
 const STANDALONE_WEEKDAY_QUALIFIER_PATTERN =
   /(?:다가오는|다다음|다음|이번|지난|저번|지지난|오는|매주)\s*[월화수목금토일](?:요일)?/u
 const WEEKDAY_PARTICLE_PATTERN = /(?:에는|에|엔|은|는|이|가|을|를|도)/u
-const WEEKDAY_EXCLUSION_PATTERN = /(?:말고|빼고|제외(?:하고)?|아니|아닌|안\s*(?:되|돼))/u
+const WEEKDAY_EXCLUSION_PATTERN = new RegExp(EXCLUSION_SUFFIX, 'u')
 const WEEKDAY_EXCLUSION_TERM_PATTERN = new RegExp(`${WEEKDAY_EXCLUSION_PATTERN.source}(?:고)?`, 'u')
 const WEEKDAY_LIST_CONNECTOR_PATTERN = /(?:과|와|하고|및|[,，、])/u
 const IMPLICIT_WEEKDAY_SCHEDULE_PATTERN = new RegExp(
   `^\\s*(?:${IMPLICIT_WEEKDAY_NAME_PATTERN_SOURCE}` +
     `(?:\\s*(?:${WEEKDAY_PARTICLE_PATTERN.source}))?` +
     `(?:\\s*(?:${WEEKDAY_EXCLUSION_TERM_PATTERN.source}|${WEEKDAY_LIST_CONNECTOR_PATTERN.source}))?\\s*)+` +
-    `(?:\\s*${CALENDAR_DAYPART_PATTERN_SOURCE})?` +
+    `(?:\\s*${DAYPART_PATTERN_SOURCE})?` +
     `(?:\\s*(?:${WEEKDAY_PARTICLE_PATTERN.source}))?\\s*` +
     `(?:뭐|무엇|무슨\\s+일)(?:가|이|은|는)?\\s*(?:있|하)(?:어요|어)?[?.!…]*\\s*$`,
   'u',
@@ -125,9 +126,9 @@ const hasMultipleWeekdayExpressions = ({
     calendarPeriodParticlePattern.source,
   ].join('')
   const calendarDaypartExpressionPattern = new RegExp(
-    `(?:${CALENDAR_DAYPART_PATTERN_SOURCE}` +
+    `(?:${DAYPART_PATTERN_SOURCE}` +
       `(?:\\s*${calendarPeriodParticleAfterWeekdayPatternSource})?` +
-      `(?:\\s*${WEEKDAY_EXCLUSION_TERM_PATTERN.source}\\s*${CALENDAR_DAYPART_PATTERN_SOURCE}` +
+      `(?:\\s*${WEEKDAY_EXCLUSION_TERM_PATTERN.source}\\s*${DAYPART_PATTERN_SOURCE}` +
       `(?:\\s*${calendarPeriodParticleAfterWeekdayPatternSource})?)?` +
       `)`,
     'u',
@@ -411,7 +412,7 @@ export const createCalendarWeekdayParser = ({
     'u',
   )
   const weekdayDaypartExclusionContextPattern = new RegExp(
-    `^\\s*(?:${WEEKDAY_PARTICLE_PATTERN.source}\\s*)?${CALENDAR_DAYPART_PATTERN_SOURCE}` +
+    `^\\s*(?:${WEEKDAY_PARTICLE_PATTERN.source}\\s*)?${DAYPART_PATTERN_SOURCE}` +
       `\\s*(?:${WEEKDAY_PARTICLE_PATTERN.source}\\s*)?` +
       `(?:일정(?:은|는)?\\s*)?${WEEKDAY_EXCLUSION_PATTERN.source}`,
     'u',

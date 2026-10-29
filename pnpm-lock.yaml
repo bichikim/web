@@ -229,7 +229,6 @@ overrides:
 pnpmfileChecksum: sha256-g2BMt8/Oai/WjMrtIA305RlIOkSpDcdZ9J+xuvU7Oqs=
 
 patchedDependencies:
-  '@babylonjs/core@9.18.0': bddd9960e9f86b4f063de7d5f53a8ef8d12a9e93f9709b7fb6b3c9a87ac69e0f
   '@dschz/solid-flow@0.2.6': d7b5ac8f5d14be953fc3ab56e5ab1f89d2f462c6d4cccc59c7b85cf10ea7ed9d
   '@kobalte/core@0.13.11': cf6d454621fe20fb0073f772486cdac9aca2a7556530d6de3e3b028f02234c29
 
@@ -654,6 +653,9 @@ importers:
 
   apps/poffo:
     dependencies:
+      '@discoveryjs/json-ext':
+        specifier: 1.1.0
+        version: 1.1.0
       '@dschz/solid-flow':
         specifier: 0.2.6
         version: 0.2.6(patch_hash=d7b5ac8f5d14be953fc3ab56e5ab1f89d2f462c6d4cccc59c7b85cf10ea7ed9d)(solid-js@1.9.14)
@@ -866,12 +868,6 @@ importers:
       '@babel/core':
         specifier: 7.29.7
         version: 7.29.7
-      '@babylonjs/core':
-        specifier: 9.18.0
-        version: 9.18.0(patch_hash=bddd9960e9f86b4f063de7d5f53a8ef8d12a9e93f9709b7fb6b3c9a87ac69e0f)
-      '@babylonjs/loaders':
-        specifier: 9.18.0
-        version: 9.18.0(@babylonjs/core@9.18.0(patch_hash=bddd9960e9f86b4f063de7d5f53a8ef8d12a9e93f9709b7fb6b3c9a87ac69e0f))(babylonjs-gltf2interface@9.20.0)
       '@electric-sql/pglite':
         specifier: 0.5.8
         version: 0.5.8
@@ -1297,6 +1293,12 @@ importers:
 
   packages/puppet:
     dependencies:
+      '@streamparser/json':
+        specifier: 0.0.26
+        version: 0.0.26
+      '@discoveryjs/json-ext':
+        specifier: 1.1.0
+        version: 1.1.0
       '@kobalte/core':
         specifier: ^0.13.13
         version: 0.13.13(solid-js@1.9.14)
@@ -2792,15 +2794,6 @@ packages:
     resolution: {integrity: sha512-Vj1jF3cPfxg7OAfoI7QnVKLoILlm2JF9pnVHrX8qx7AHMiYWT+NDAA7jChlNgRS4WTLc/fD1lXLmPixluj+3Gg==}
     engines: {node: '>=6.9.0'}
 
-  '@babylonjs/core@9.18.0':
-    resolution: {integrity: sha512-Ypj9i29mOT8QGqdGaOCX2uQ9y7EhZ6RCBZLSDr84b6BzCltfp3yud75KQfCsOG8SjaZ77CsA40mX1J96kSUaaw==}
-
-  '@babylonjs/loaders@9.18.0':
-    resolution: {integrity: sha512-PKtVu9nHwdd79BeWWYigsEl+b6j9hCdJVuiE9I37UY/C58x+qJ+SZ27i2pycMPesjRbNvIRSxjNHXmm3KSPRwA==}
-    peerDependencies:
-      '@babylonjs/core': ^9.0.0
-      babylonjs-gltf2interface: ^9.0.0
-
   '@bcoe/v8-coverage@1.0.2':
     resolution: {integrity: sha512-6zABk/ECA/QYSCQ1NGiVwwbQerUCZ+TQbp64Q3AgmfNvurHH0j8TtXa1qbShXA6qqkpAj4V5W8pP6mLe1mcMqA==}
     engines: {node: '>=18'}
@@ -3131,6 +3124,10 @@ packages:
 
   '@dimforge/rapier3d-compat@0.12.0':
     resolution: {integrity: sha512-uekIGetywIgopfD97oDL5PfeezkFpNhwlzlaEYNOA0N6ghdsOvh/HYjSMek5Q2O1PYvRSDFcqFVJl4r4ZBwOow==}
+
+  '@discoveryjs/json-ext@1.1.0':
+    resolution: {integrity: sha512-Xc3VhU02wqZ1HvHRJUwL09HkZSTvidqY5Ya0NXBSYOxAp+Ln9dcJr9fySI+CkONzP3PekQo9WdzCv0PGER/mOA==}
+    engines: {node: '>=14.17.0'}
 
   '@drizzle-team/brocli@0.10.2':
     resolution: {integrity: sha512-z33Il7l5dKjUgGULTqBsQBQwckHh5AbIuxhdsIxDDiZAzBOrZO6q9ogcWC65kU382AfynTfgNumVcNIjuIua6w==}
@@ -7500,6 +7497,9 @@ packages:
       '@types/react-dom':
         optional: true
 
+  '@streamparser/json@0.0.26':
+    resolution: {integrity: sha512-46597LNFI+MFdUnzX2QJWwmdTRdq0XVD+vVNJTtGVzIrnCuhG9pFo1OAzbNBqci8UJgk/X5KJZ6LcV+y7PTuDQ==}
+
   '@supabase/auth-js@2.105.1':
     resolution: {integrity: sha512-zc4s8Xg4truwE1Q4Q8M8oUVDARMd05pKh73NyQsMbYU1HDdDN2iiKzena/yu+yJze3WrD4c092FdckPiK1rLQw==}
     engines: {node: '>=20.0.0'}
@@ -8693,9 +8693,6 @@ packages:
     peerDependenciesMeta:
       solid-js:
         optional: true
-
-  babylonjs-gltf2interface@9.20.0:
-    resolution: {integrity: sha512-BxqokOP3obVy32CZ9ZV8VQqrVvodiBvk6e3T0Eg9PHM2i6rFXtpXeSEX3isNyPVotonLdBkpeTk2RvRqYIQMEg==}
 
   balanced-match@1.0.2:
     resolution: {integrity: sha512-3oSeUO0TMV67hN1AmbXsK4yaqU7tjiHlbxRDZOpH0KW9+CeX4bRAaX0Anxt0tx2MrpRpWwQaPwIlISEJhYU5Pw==}
@@ -11095,9 +11092,6 @@ packages:
 
   magicast@0.5.4:
     resolution: {integrity: sha512-llBEhWm1SacoRwgHUoQJYtwp4PBLF4faQi5TCpIGyGs9n4y5+juI0tDgyKIfpqxckRHaHzouUEph3THklWh03w==}
-
-  magicast@0.5.5:
-    resolution: {integrity: sha512-UicdXN8zQ3JHlxVq+28afMXPr1z7WNY6+7EJnzTdQWkTAlMLF5fNCCKxJHBQwGaNGR11581EiQmQzx73+MvszA==}
 
   make-dir@2.1.0:
     resolution: {integrity: sha512-LS9X+dc8KLxXCb8dni79fLIIUA5VyZoyjSMCwTluaXA0o27cCK0bhXkpgw+sTXVpPy/lSO57ilRixqk0vDmtRA==}
@@ -15751,13 +15745,6 @@ snapshots:
       '@babel/helper-string-parser': 7.29.7
       '@babel/helper-validator-identifier': 7.29.7
 
-  '@babylonjs/core@9.18.0(patch_hash=bddd9960e9f86b4f063de7d5f53a8ef8d12a9e93f9709b7fb6b3c9a87ac69e0f)': {}
-
-  '@babylonjs/loaders@9.18.0(@babylonjs/core@9.18.0(patch_hash=bddd9960e9f86b4f063de7d5f53a8ef8d12a9e93f9709b7fb6b3c9a87ac69e0f))(babylonjs-gltf2interface@9.20.0)':
-    dependencies:
-      '@babylonjs/core': 9.18.0(patch_hash=bddd9960e9f86b4f063de7d5f53a8ef8d12a9e93f9709b7fb6b3c9a87ac69e0f)
-      babylonjs-gltf2interface: 9.20.0
-
   '@bcoe/v8-coverage@1.0.2': {}
 
   '@better-auth/api-key@1.7.1(@better-auth/core@1.6.23(@better-auth/utils@0.4.2)(@better-fetch/fetch@1.3.1)(@cloudflare/workers-types@5.20260822.1)(better-call@1.3.7(zod@4.6.5))(jose@6.2.5)(kysely@0.29.5)(nanostores@1.5.5))(@better-auth/utils@0.4.2)(better-auth@1.6.23(@cloudflare/workers-types@5.20260822.1)(drizzle-kit@0.31.10)(drizzle-orm@0.45.2(@cloudflare/workers-types@5.20260822.1)(@electric-sql/pglite@0.5.8)(@neondatabase/serverless@1.1.0)(gel@2.2.0)(kysely@0.28.17)(postgres@3.4.9))(react-dom@19.2.5(react@19.2.5))(react@19.2.5)(solid-js@1.9.14)(vitest@4.1.11)(vue@3.5.25(typescript@7.0.2)))(better-call@2.0.2(zod@4.6.5))':
@@ -16116,6 +16103,8 @@ snapshots:
       which: 4.0.0
 
   '@dimforge/rapier3d-compat@0.12.0': {}
+
+  '@discoveryjs/json-ext@1.1.0': {}
 
   '@drizzle-team/brocli@0.10.2': {}
 
@@ -19911,6 +19900,8 @@ snapshots:
     optionalDependencies:
       '@types/react': 19.2.7
 
+  '@streamparser/json@0.0.26': {}
+
   '@supabase/auth-js@2.105.1':
     dependencies:
       tslib: 2.8.1
@@ -21424,8 +21415,6 @@ snapshots:
       babel-plugin-jsx-dom-expressions: 0.40.11(@babel/core@7.29.7)
     optionalDependencies:
       solid-js: 1.9.14
-
-  babylonjs-gltf2interface@9.20.0: {}
 
   balanced-match@1.0.2: {}
 

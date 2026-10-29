@@ -42,6 +42,7 @@ export const ViewportSurface = (props: ViewportProps) => {
         onZoomChange={setRenderScale}
         controls={props.controls}
         viewControls={props.viewControls}
+        viewSettings={props.viewSettings}
       >
         <PlayerCanvas
           antialiasing={props.antialiasing}

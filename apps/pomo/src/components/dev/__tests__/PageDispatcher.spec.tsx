@@ -16,9 +16,7 @@ vi.mock('@solidjs/meta', () => ({
 }))
 
 vi.mock('../HomePage', () => ({HomePage: createPage('home')}))
-vi.mock('../AiConversationPage', () => ({AiConversationPage: createPage('ai-conversation')}))
 vi.mock('../ImageGenerationPage', () => ({ImageGenerationPage: createPage('image-generation')}))
-vi.mock('../CharacterPage', () => ({CharacterPage: createPage('character')}))
 vi.mock('../ChatPage', () => ({ChatPage: createPage('chat')}))
 vi.mock('../DialoguePage', () => ({DialoguePage: createPage('dialogue')}))
 vi.mock('../HwpPage', () => ({HwpPage: createPage('hwp')}))
@@ -35,7 +33,6 @@ vi.mock('../SoundPlayerPage', () => ({SoundPlayerPage: createPage('sound-player'
 vi.mock('../TermsPage', () => ({TermsPage: createPage('terms')}))
 vi.mock('../TextMoodPage', () => ({TextMoodPage: createPage('text-mood')}))
 vi.mock('../VoicePage', () => ({VoicePage: createPage('voice')}))
-vi.mock('../WorldPage', () => ({WorldPage: createPage('world')}))
 
 afterEach(() => {
   cleanup()
@@ -43,9 +40,7 @@ afterEach(() => {
 
 it.each([
   ['/dev', 'home'],
-  ['/dev/ai-conversation', 'ai-conversation'],
   ['/dev/image-generation', 'image-generation'],
-  ['/dev/character', 'character'],
   ['/dev/chat', 'chat'],
   ['/dev/dialogue', 'dialogue'],
   ['/dev/hwp', 'hwp'],
@@ -62,7 +57,6 @@ it.each([
   ['/dev/terms', 'terms'],
   ['/dev/text-mood', 'text-mood'],
   ['/dev/voice', 'voice'],
-  ['/dev/3d-world', 'world'],
 ])('should dispatch %s to the %s development page', async (pathname, expectedPage) => {
   render(() => <PageDispatcher fallback={<output>404</output>} pathname={pathname} />)
 
@@ -75,22 +69,22 @@ it('should preserve a development page URL with a trailing slash', async () => {
   expect((await screen.findByTestId('dev-page')).textContent).toBe('chat')
 })
 
-it('should render the 404 fallback for an unknown development path', () => {
-  const result = render(() => (
-    <PageDispatcher
-      fallback={<output data-testid="not-found">404</output>}
-      pathname="/dev/unknown"
-    />
-  ))
+it.each(['/dev/unknown', '/dev/character', '/dev/3d-world', '/dev/ai-conversation'])(
+  'should render the 404 fallback for %s',
+  (pathname) => {
+    const result = render(() => (
+      <PageDispatcher fallback={<output data-testid="not-found">404</output>} pathname={pathname} />
+    ))
 
-  expect(screen.getByTestId('not-found').textContent).toBe('404')
+    expect(screen.getByTestId('not-found').textContent).toBe('404')
 
-  result.unmount()
-  render(() => (
-    <PageDispatcher fallback={<output data-testid="root-fallback">root</output>} pathname="///" />
-  ))
-  expect(screen.getByTestId('root-fallback').textContent).toBe('root')
-})
+    result.unmount()
+    render(() => (
+      <PageDispatcher fallback={<output data-testid="root-fallback">root</output>} pathname="///" />
+    ))
+    expect(screen.getByTestId('root-fallback').textContent).toBe('root')
+  },
+)
 
 it('should own the development terms metadata', async () => {
   render(() => <PageDispatcher fallback={<output>404</output>} pathname="/dev/terms" />)

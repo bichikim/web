@@ -9,7 +9,7 @@ import {
   parseSupertonicIndexer,
   parseSupertonicVoice,
   SupertonicEngine,
-  type SupertonicSessions,
+  type SupertonicEngineSessions,
 } from '../engine'
 import type {Result} from 'src/features/result'
 
@@ -20,8 +20,9 @@ const createConfig = () => ({
 
 afterEach(() => vi.restoreAllMocks())
 
-const createSession = (run: ReturnType<typeof vi.fn>) =>
-  ({release: vi.fn(async () => undefined), run}) as unknown as InferenceSession
+const createSession = (
+  run: InferenceSession['run'],
+): SupertonicEngineSessions['durationPredictor'] => ({release: vi.fn(async () => undefined), run})
 
 const getResultValue = <Value>(result: Result<Value, unknown>): Value => {
   if (!result.ok) {
@@ -165,7 +166,7 @@ describe('SupertonicEngine', () => {
     const vocoderRun = vi.fn(async () => ({
       wav_tts: new runtime.Tensor('float32', Float32Array.of(0.1, 0.2, 0.3, 0.4), [1, 1, 4]),
     }))
-    const sessions: SupertonicSessions = {
+    const sessions: SupertonicEngineSessions = {
       durationPredictor: createSession(durationRun),
       textEncoder: createSession(textRun),
       vectorEstimator: createSession(vectorRun),
@@ -224,7 +225,7 @@ describe('SupertonicEngine', () => {
   it('should reject non-float model outputs', async () => {
     const sparseIndexer: number[] = []
     sparseIndexer.length = 128
-    const sessions: SupertonicSessions = {
+    const sessions: SupertonicEngineSessions = {
       durationPredictor: createSession(
         vi.fn(async () => ({
           duration: new runtime.Tensor('int64', BigInt64Array.of(1n), [1]),
@@ -254,7 +255,7 @@ describe('SupertonicEngine', () => {
 })
 
 it('should cancel between steps and reuse sessions for the next generation', async () => {
-  const sessions: SupertonicSessions = {
+  const sessions: SupertonicEngineSessions = {
     durationPredictor: createSession(
       vi.fn().mockResolvedValue({duration: new runtime.Tensor('float32', Float32Array.of(1), [1])}),
     ),

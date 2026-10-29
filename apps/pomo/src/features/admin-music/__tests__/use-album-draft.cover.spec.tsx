@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 
-import {waitFor} from '@solidjs/testing-library'
+import {fireEvent, render, waitFor} from '@solidjs/testing-library'
 import {describe, expect, it, vi} from 'vitest'
 
 import {
@@ -363,4 +363,37 @@ describe('useAlbumDraft cover preparation', () => {
     expect(result.isProcessingCover()).toBe(false)
     cleanup()
   })
+})
+
+describe('useAlbumDraft fallback selection', () => {
+  it.each(['lp', 'music'] as const)(
+    'should persist the cover fallback %s from a select event',
+    async (coverFallback) => {
+      const {cleanup, result} = renderAlbumDraft()
+      const selector = render(() => (
+        <select aria-label="커버 기본 이미지" onChange={result.handleCoverFallbackChange}>
+          <option value="lp">LP</option>
+          <option value="cd">CD</option>
+          <option value="music">Music</option>
+        </select>
+      ))
+
+      try {
+        await waitForRestoration(result)
+
+        fireEvent.change(selector.getByRole('combobox', {name: '커버 기본 이미지'}), {
+          target: {value: coverFallback},
+        })
+
+        expect(result.coverFallback()).toBe(coverFallback)
+        await waitFor(() => expect(storageMocks.writeAlbumDraftData).toHaveBeenCalledOnce())
+        expect(storageMocks.writeAlbumDraftData).toHaveBeenCalledWith(
+          expect.objectContaining({coverFallback}),
+        )
+      } finally {
+        selector.unmount()
+        cleanup()
+      }
+    },
+  )
 })

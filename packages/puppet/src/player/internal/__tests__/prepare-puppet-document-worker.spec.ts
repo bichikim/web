@@ -10,6 +10,9 @@ afterEach(() => vi.unstubAllGlobals())
 test('should send repeated textures only once from the validation Worker', async () => {
   const target = new EventTarget()
   const postMessage = vi.fn()
+  const response = new Promise<void>((resolve) => {
+    postMessage.mockImplementation(() => resolve())
+  })
   vi.stubGlobal('self', Object.assign(target, {postMessage}))
   await import('../prepare-puppet-document-worker')
   const demo = createDemoDocument()
@@ -20,6 +23,8 @@ test('should send repeated textures only once from the validation Worker', async
   target.dispatchEvent(
     new MessageEvent('message', {data: {source: serializeDocument(document), type: 'source'}}),
   )
+  await response
+  expect(postMessage).toHaveBeenCalledOnce()
   const result = postMessage.mock.calls[0]?.[0]
   expect(result.ok).toBe(true)
   expect(result.document.textureAssets).toBeDefined()

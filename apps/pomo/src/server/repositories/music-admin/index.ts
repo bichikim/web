@@ -1,4 +1,5 @@
 import {and, asc, desc, eq} from 'drizzle-orm'
+import {createAdminAlbums} from 'src/server/music/create-admin-albums'
 
 import {
   commerceOffers,
@@ -103,26 +104,10 @@ export const listAdminMusic = async () => {
       .innerJoin(commerceOffers, eq(commerceOffers.productId, commerceProducts.id))
       .orderBy(asc(commerceProductAlbums.albumId), asc(commerceOffers.provider)),
   ])
-  const activeAssetTrackIds = new Set(
-    assets.filter((asset) => asset.status === 'active').map((asset) => asset.trackId),
-  )
-  const tracksByAlbum = Map.groupBy(tracks, (track) => track.albumId)
-  const translationsByAlbum = Map.groupBy(translations, (translation) => translation.albumId)
+  const preparedAlbums = createAdminAlbums({albums, assets, tracks, translations})
 
   return {
-    albums: albums.map((album) => {
-      const albumTracks = tracksByAlbum.get(album.id) ?? []
-
-      return {
-        ...album,
-        release: getAlbumReleaseReadiness({
-          activeAssetTrackCount: albumTracks.filter((track) => activeAssetTrackIds.has(track.id))
-            .length,
-          trackCount: albumTracks.length,
-        }),
-        translations: translationsByAlbum.get(album.id) ?? [],
-      }
-    }),
+    albums: preparedAlbums,
     assets,
     offers,
     pendingTracks,
