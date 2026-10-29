@@ -1,3 +1,4 @@
+import {authorizeUserIdentity} from 'src/server/auth/authorize-user-identity'
 import type {APIEvent} from '@solidjs/start/server'
 import {cloudTextRequestSchema} from 'src/features/cloud-text/contracts'
 import {resolveUserRequestOrUnavailable} from 'src/server/auth/resolve-user-request-or-unavailable'
@@ -15,7 +16,6 @@ const HTTP_OK = 200
 const HTTP_NOT_FOUND = 404
 const HTTP_BAD_REQUEST = 400
 const HTTP_ACCEPTED = 202
-const HTTP_UNAUTHORIZED = 401
 const HTTP_CONFLICT = 409
 const HTTP_TOO_MANY_REQUESTS = 429
 const HTTP_SERVICE_UNAVAILABLE = 503
@@ -29,20 +29,11 @@ const authenticate = async (request: Request) => {
   if (resolved.kind === 'unavailable') {
     return resolved.response
   }
-  const {identity} = resolved
-  if (identity.access === 'invalid') {
-    return noStoreJson(
-      {error: 'authentication_unavailable'},
-      {cookies: identity.cookies, status: HTTP_SERVICE_UNAVAILABLE},
-    )
+  const identity = authorizeUserIdentity(resolved.identity)
+  if (!identity.authorized) {
+    return identity.response
   }
-  if (identity.userId === null) {
-    return noStoreJson(
-      {error: 'unauthorized'},
-      {cookies: identity.cookies, status: HTTP_UNAUTHORIZED},
-    )
-  }
-  return {...identity, userId: identity.userId}
+  return identity
 }
 
 export const GET = async (event: APIEvent): Promise<Response> => {

@@ -82,3 +82,22 @@ it('should preserve refreshed cookies when user resolution fails', async () => {
   expect(response.headers.getSetCookie()).toEqual(['session=refreshed'])
   expect(consoleError).toHaveBeenCalledWith('Failed to resolve calendar user', error)
 })
+
+it('should reject a missing user before accessing the calendar service', async () => {
+  dependencyMocks.resolveUserRequest.mockResolvedValue({
+    access: 'anonymous',
+    cookies: ['session=refreshed'],
+    userId: null,
+  })
+  const response = await DELETE({
+    params: {connectionId: 'connection-1'},
+    request: new Request('https://www.pomofi.io/api/calendar/connections/connection-1', {
+      method: 'DELETE',
+    }),
+  } as unknown as APIEvent)
+  expect(response.status).toBe(401)
+  expect(response.headers.getSetCookie()).toEqual(['session=refreshed'])
+  expect(response.headers.get('cache-control')).toBe('no-store')
+  await expect(response.json()).resolves.toEqual({error: 'unauthorized'})
+  expect(dependencyMocks.deleteConnection).not.toHaveBeenCalled()
+})

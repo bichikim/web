@@ -1,5 +1,5 @@
 /** @vitest-environment node */
-import {beforeEach, expect, it, vi} from 'vitest'
+import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 import {resolveUserRequest} from 'src/server/auth/resolve-user-request'
 import {readCloudTextUsage} from 'src/server/cloud-text/quota'
 import {completeApiAiJobs} from 'src/server/api-ai/service'
@@ -7,7 +7,9 @@ import {waitUntil} from '@vercel/functions'
 import {generateCloudText} from 'src/server/cloud-text/service'
 import {readCloudTextJob} from 'src/server/cloud-text/job-status'
 import {invokeApiRoute} from './invoke'
-import {GET, POST} from '../cloud-text'
+import {DELETE, GET, POST} from '../cloud-text'
+import {cancelCloudTextJob} from 'src/server/cloud-text/cancel-job'
+import {UserRequestResolutionError} from 'src/server/auth/user-request-resolution-error'
 
 vi.mock('src/server/auth/resolve-user-request', () => ({resolveUserRequest: vi.fn()}))
 vi.mock('src/server/cloud-text/quota', () => ({readCloudTextUsage: vi.fn()}))
@@ -120,4 +122,56 @@ it('should acknowledge durable admission with 202 before generation completes', 
   await expect(response.json()).resolves.toEqual({requestId: body.requestId, usage})
   expect(waitUntil).toHaveBeenCalledWith(background.promise)
   background.resolve()
+})
+
+afterEach(() => vi.restoreAllMocks())
+
+it.each([
+  {handler: GET, method: 'GET'},
+  {handler: POST, method: 'POST'},
+  {handler: DELETE, method: 'DELETE'},
+])('should reject invalid authentication before $method work', async ({handler, method}) => {
+  vi.mocked(resolveUserRequest).mockResolvedValue({
+    access: 'invalid',
+    cookies: ['session=refreshed'],
+    userId: null,
+  })
+  const response = await invokeApiRoute(
+    handler,
+    new Request('https://pomo.example/api/cloud-text', {method}),
+  )
+  expect(response.status).toBe(503)
+  expect(response.headers.getSetCookie()).toEqual(['session=refreshed'])
+  expect(response.headers.get('cache-control')).toBe('no-store')
+  await expect(response.json()).resolves.toEqual({error: 'authentication_unavailable'})
+  expect(readCloudTextUsage).not.toHaveBeenCalled()
+  expect(readCloudTextJob).not.toHaveBeenCalled()
+  expect(generateCloudText).not.toHaveBeenCalled()
+  expect(cancelCloudTextJob).not.toHaveBeenCalled()
+  expect(completeApiAiJobs).not.toHaveBeenCalled()
+  expect(waitUntil).not.toHaveBeenCalled()
+})
+
+it.each([
+  {handler: GET, method: 'GET'},
+  {handler: POST, method: 'POST'},
+  {handler: DELETE, method: 'DELETE'},
+])('should preserve resolution failure cookies before $method work', async ({handler, method}) => {
+  const cause = new Error('user mapping unavailable')
+  const log = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+  vi.mocked(resolveUserRequest).mockRejectedValue(
+    new UserRequestResolutionError(['session=refreshed'], cause),
+  )
+  const response = await invokeApiRoute(
+    handler,
+    new Request('https://pomo.example/api/cloud-text', {method}),
+  )
+  expect(response.status).toBe(503)
+  expect(response.headers.getSetCookie()).toEqual(['session=refreshed'])
+  await expect(response.json()).resolves.toEqual({error: 'cloud_text_unavailable'})
+  expect(log).toHaveBeenCalledWith('Failed to resolve cloud text user', cause)
+  expect(readCloudTextUsage).not.toHaveBeenCalled()
+  expect(readCloudTextJob).not.toHaveBeenCalled()
+  expect(generateCloudText).not.toHaveBeenCalled()
+  expect(cancelCloudTextJob).not.toHaveBeenCalled()
 })
