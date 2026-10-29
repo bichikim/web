@@ -80,6 +80,27 @@ describe('calculateSajuReading', () => {
     expect(result.type).toBe('answer')
   })
 
+  it('should answer a diary day-stem fact without requesting generation', () => {
+    expect(
+      calculateSajuReading({birth, gender: 'N', question: '제 일기에 적을 내 일간은 무엇인가요?'}),
+    ).toEqual({
+      text: '입력한 생년월일의 일간은 병(丙)입니다. 일간은 일주의 천간으로, 십성 관계를 계산할 때 기준이 됩니다.',
+      type: 'answer',
+    })
+  })
+
+  it.each([
+    '제 일주로 내 일과 돈복은 어떤지 알려줘',
+    '제 일주로 내 일이 맞을지 알려줘',
+    '제 일주로 하는 일은 어떤지 알려줘',
+    '제 일주로 내 일인지 알려줘',
+    '제 일주로 하는 일이라면 무엇을 할까?',
+    '제 일주로 내 일에는 어떤 의미가 있는지 알려줘',
+    '제 일기에 적을 제 일주로 하는 일은 어떤지 알려줘',
+  ])('should keep a day-pillar work interpretation on the generation path: %s', (question) => {
+    expect(calculateSajuReading({birth, gender: 'N', question}).type).toBe('generate')
+  })
+
   it('should send calculated facts and the user question for interpretation', () => {
     const result = calculateSajuReading({birth, gender: 'N', question: '제 일은 어떨까요?'})
     expect(result.type).toBe('generate')
