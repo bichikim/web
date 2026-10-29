@@ -1,4 +1,5 @@
 import {uniq} from 'es-toolkit/array'
+import {createSingleFlight} from 'src/utils/create-single-flight'
 import {
   createModelStorage,
   type ModelStorage,
@@ -122,21 +123,10 @@ const migrateLegacyAudio = async (options: MigrateLegacyAudioOptions): Promise<B
 }
 
 const createLegacyAudioMigrator = (audioStorage: ModelStorage) => {
-  const audioMigrations = new Map<string, Promise<Blob>>()
+  const audioMigrations = createSingleFlight<Blob>()
 
-  return (audioKey: string, waveAudio: Blob) => {
-    const pendingMigration = audioMigrations.get(audioKey)
-
-    if (pendingMigration !== undefined) {
-      return pendingMigration
-    }
-
-    const migration = migrateLegacyAudio({audioKey, audioStorage, waveAudio}).finally(() =>
-      audioMigrations.delete(audioKey),
-    )
-    audioMigrations.set(audioKey, migration)
-    return migration
-  }
+  return (audioKey: string, waveAudio: Blob) =>
+    audioMigrations.run(audioKey, () => migrateLegacyAudio({audioKey, audioStorage, waveAudio}))
 }
 
 /** Creates a browser repository for dialogue metadata and locally cached compressed audio. */

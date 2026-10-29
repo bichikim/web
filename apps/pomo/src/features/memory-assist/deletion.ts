@@ -1,3 +1,4 @@
+import {createSingleFlight} from 'src/utils/create-single-flight'
 import {isMemoryMemoOwnedDialogue} from './dialogue-id'
 import {isMemoryMemoDeletionPending} from './is-memory-memo-deletion-pending'
 import type {MemoryMemo} from './schema'
@@ -28,9 +29,8 @@ export interface MemoryMemoDeletion {
 export const createMemoryMemoDeletion = (
   dependencies: MemoryMemoDeletionOptions,
 ): MemoryMemoDeletion => {
-  const pendingDeletions = new Map<string, Promise<MemoryMemoDeletionResult>>()
-
-  const pendingCleanups = new Map<string, Promise<void>>()
+  const deletions = createSingleFlight<MemoryMemoDeletionResult>()
+  const cleanups = createSingleFlight<void>()
 
   const cleanRetiredDialogues = async (options: DeleteMemoryMemoOptions): Promise<void> => {
     const memos = await dependencies.read()
@@ -60,17 +60,8 @@ export const createMemoryMemoDeletion = (
       }, Promise.resolve())
   }
 
-  const cleanup = (options: DeleteMemoryMemoOptions): Promise<void> => {
-    const existing = pendingCleanups.get(options.memoId)
-    if (existing !== undefined) {
-      return existing
-    }
-    const pending = cleanRetiredDialogues(options).finally(() =>
-      pendingCleanups.delete(options.memoId),
-    )
-    pendingCleanups.set(options.memoId, pending)
-    return pending
-  }
+  const cleanup = (options: DeleteMemoryMemoOptions): Promise<void> =>
+    cleanups.run(options.memoId, () => cleanRetiredDialogues(options))
 
   const persistDeletion = async (
     options: DeleteMemoryMemoOptions,
@@ -116,19 +107,8 @@ export const createMemoryMemoDeletion = (
   }
 
   /** Commits logical deletion before releasing memo-owned resources; rejects only before that commit. */
-  const deleteMemoryMemo = (
-    options: DeleteMemoryMemoOptions,
-  ): Promise<MemoryMemoDeletionResult> => {
-    const existing = pendingDeletions.get(options.memoId)
-
-    if (existing !== undefined) {
-      return existing
-    }
-
-    const pending = persistDeletion(options).finally(() => pendingDeletions.delete(options.memoId))
-    pendingDeletions.set(options.memoId, pending)
-    return pending
-  }
+  const deleteMemoryMemo = (options: DeleteMemoryMemoOptions): Promise<MemoryMemoDeletionResult> =>
+    deletions.run(options.memoId, () => persistDeletion(options))
 
   /** Retries persisted deletions without deleting resources belonging to active memos. */
   const retryMemoryMemoDeletions = async (

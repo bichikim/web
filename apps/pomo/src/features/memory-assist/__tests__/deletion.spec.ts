@@ -133,6 +133,7 @@ it('should share duplicate in-flight deletion requests', async () => {
   mocks.deleteDialogue.mockReturnValue(pending.promise)
   const first = remove()
   const second = remove()
+  expect(second).toBe(first)
   pending.resolve()
   await expect(Promise.all([first, second])).resolves.toEqual(['deleted', 'deleted'])
   expect(mocks.deleteDialogue).toHaveBeenCalledOnce()

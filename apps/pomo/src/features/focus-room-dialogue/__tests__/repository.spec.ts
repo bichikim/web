@@ -391,6 +391,49 @@ it('should keep legacy WAV playback when compression fails', async () => {
   expect(storageMocks.delete).not.toHaveBeenCalled()
 })
 
+it('should retry migration after returning the legacy fallback from a failed attempt', async () => {
+  const compressed = new Blob(['compressed'], {type: 'audio/ogg; codecs=opus'})
+  legacyAudioMocks.compress.mockRejectedValueOnce(new Error('encoder unavailable'))
+  legacyAudioMocks.compress.mockResolvedValueOnce(compressed)
+  storageMocks.get.mockImplementation(async (path: string) => ({
+    ok: true,
+    value: path.endsWith('.wav')
+      ? new Response('wav', {headers: {'Content-Type': 'audio/wav'}})
+      : null,
+  }))
+  vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+  const repository = createPDialogueRepository()
+
+  expect((await repository.getAudio('retry'))?.type).toBe('audio/wav')
+  expect(await repository.getAudio('retry')).toBe(compressed)
+  expect(legacyAudioMocks.compress).toHaveBeenCalledTimes(2)
+})
+
+it('should isolate simultaneous migrations for the same audio key between repository instances', async () => {
+  const firstCompression = Promise.withResolvers<Blob>()
+  const secondCompression = Promise.withResolvers<Blob>()
+  legacyAudioMocks.compress
+    .mockReturnValueOnce(firstCompression.promise)
+    .mockReturnValueOnce(secondCompression.promise)
+  storageMocks.get.mockImplementation(async (path: string) => ({
+    ok: true,
+    value: path.endsWith('.wav')
+      ? new Response('wav', {headers: {'Content-Type': 'audio/wav'}})
+      : null,
+  }))
+  const first = createPDialogueRepository().getAudio('same')
+  const second = createPDialogueRepository().getAudio('same')
+  await vi.waitFor(() => expect(legacyAudioMocks.compress).toHaveBeenCalledTimes(2))
+  const firstAudio = new Blob(['first'], {type: 'audio/ogg; codecs=opus'})
+  const secondAudio = new Blob(['second'], {type: 'audio/ogg; codecs=opus'})
+  firstCompression.resolve(firstAudio)
+  secondCompression.resolve(secondAudio)
+
+  const results = await Promise.all([first, second])
+  expect(results).toContain(firstAudio)
+  expect(results).toContain(secondAudio)
+})
+
 it('should persist and remove bindings for every supported dialogue event', async () => {
   databaseMocks.dialogues.get.mockResolvedValue({id: 'dialogue-id'})
   databaseMocks.eventBindings.get.mockImplementation(async (event: string) =>
