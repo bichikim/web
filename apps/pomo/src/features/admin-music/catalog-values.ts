@@ -11,3 +11,5 @@ export const TRACK_ASSET_STATUSES = [
   'retired',
   'deleted',
 ] as const
+
+export const COVER_FALLBACKS = ['lp', 'cd', 'music'] as const
