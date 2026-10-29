@@ -1,4 +1,4 @@
-import {formatContext, sourceOffset} from '../../../src/headless/index.ts'
+import {formatContext, sourceLines, sourceOffset} from '../../../src/headless/index.ts'
 const MAX_ATTACHMENTS = 20
 const MAX_UNDO_STEPS = 32
 const MAX_UNDO_BYTES = 524288
@@ -68,7 +68,10 @@ export const followDocument = (
     ...(disk.media === undefined ? {} : {media: disk.media}),
     column: disk.location.column,
     conflict: dirty && previous.revision !== disk.revision,
-    line: Math.min(disk.location.line, (dirty ? previous.source : disk.source).split('\n').length),
+    line: Math.min(
+      disk.location.line,
+      (dirty ? previous.source : disk.source).split(/\r\n|\n|\r/u).length,
+    ),
     path: disk.location.path,
     revision: dirty ? previous.revision : disk.revision,
     source: dirty ? previous.source : disk.source,
@@ -91,20 +94,26 @@ export const changeLine = (
   operation: 'replace' | 'insert' | 'remove',
   text = '',
 ): PaneDocument => {
-  const lines = document.source.split('\n')
-  const offset = document.line - 1
-  const ending = lines[offset]?.endsWith('\r') ? '\r' : ''
+  const lines = sourceLines(document.source)
+  const index = document.line - 1
+  const current = lines[index]!
+  const ending = current.ending || lines.find((line) => line.ending !== '')?.ending || '\n'
   const source =
     operation === 'replace'
-      ? [...lines.slice(0, offset), text + ending, ...lines.slice(offset + 1)].join('\n')
+      ? document.source.slice(0, current.from) + text + document.source.slice(current.to)
       : operation === 'insert'
-        ? [...lines.slice(0, offset + 1), ending, ...lines.slice(offset + 1)].join('\n')
-        : lines.filter((_, index) => index !== offset).join('\n')
+        ? document.source.slice(0, current.to + current.ending.length) +
+          ending +
+          document.source.slice(current.to + current.ending.length)
+        : document.source.slice(
+            0,
+            current.ending === '' && index > 0 ? lines[index - 1]!.to : current.from,
+          ) + document.source.slice(current.to + current.ending.length)
   return {
     ...document,
     line: Math.min(
       operation === 'insert' ? document.line + 1 : document.line,
-      source.split('\n').length,
+      source.split(/\r\n|\n|\r/u).length,
     ),
     redo: [],
     source,
@@ -120,7 +129,7 @@ export const replacePaneLine = (
   text: string,
 ): PaneState => {
   const current = state.documents.find((entry) => entry.path === path)
-  const previous = current?.source.split('\n')[line - 1]
+  const previous = current === undefined ? undefined : sourceLines(current.source)[line - 1]?.text
   if (current === undefined || previous === undefined || previous.replace(/\r$/u, '') === text) {
     return state
   }
@@ -139,7 +148,7 @@ export const replacePaneSource = (state: PaneState, source: string): PaneState =
       ? document
       : {
           ...document,
-          line: Math.min(document.line, source.split('\n').length),
+          line: Math.min(document.line, source.split(/\r\n|\n|\r/u).length),
           redo: [],
           source,
           undo: boundedHistory([...(document.undo ?? []), document.source]),
@@ -154,7 +163,7 @@ export const attachRange = (
   end: number,
   columns?: {readonly start: number; readonly end: number},
 ): PaneState | undefined => {
-  const lines = document.source.split('\n')
+  const lines = sourceLines(document.source)
   if (
     !Number.isInteger(end) ||
     end < document.line ||
@@ -168,9 +177,9 @@ export const attachRange = (
     (!Number.isInteger(columns.start) ||
       !Number.isInteger(columns.end) ||
       columns.start < 1 ||
-      columns.start > lines[document.line - 1].length + 1 ||
+      columns.start > lines[document.line - 1]!.text.length + 1 ||
       columns.end < 1 ||
-      columns.end > lines[end - 1].length + 1 ||
+      columns.end > lines[end - 1]!.text.length + 1 ||
       (end === document.line && columns.end <= columns.start))
   ) {
     return undefined
@@ -184,7 +193,7 @@ export const attachRange = (
     path: document.path,
     text:
       columns === undefined
-        ? lines.slice(document.line - 1, end).join('\n')
+        ? document.source.slice(lines[document.line - 1]!.from, lines[end - 1]!.to)
         : document.source.slice(
             sourceOffset(document.source, document.line, columns.start),
             sourceOffset(document.source, end, columns.end),
@@ -216,7 +225,7 @@ export const attachPaneSelection = (
     startColumn === '' && endColumn === ''
       ? undefined
       : {
-          end: Number(endColumn || (document.source.split('\n')[end - 1]?.length ?? -1) + 1),
+          end: Number(endColumn || (sourceLines(document.source)[end - 1]?.text.length ?? -1) + 1),
           start: Number(startColumn || 1),
         }
   return attachRange(state, document, end, columns)
@@ -246,7 +255,7 @@ export const restorePane = (value: unknown): PaneState | undefined => {
         typeof entry.source === 'string' &&
         Number.isInteger(entry.line) &&
         entry.line > 0 &&
-        entry.line <= entry.source.split('\n').length &&
+        entry.line <= entry.source.split(/\r\n|\n|\r/u).length &&
         Number.isInteger(entry.column) &&
         entry.column > 0 &&
         typeof entry.conflict === 'boolean' &&
@@ -294,7 +303,7 @@ export const undoEdit = (document: PaneDocument): PaneDocument => {
     ? document
     : {
         ...document,
-        line: Math.min(document.line, source.split('\n').length),
+        line: Math.min(document.line, source.split(/\r\n|\n|\r/u).length),
         redo: boundedHistory([...(document.redo ?? []), document.source]),
         source,
         undo: document.undo?.slice(0, -1),
@@ -308,7 +317,7 @@ export const redoEdit = (document: PaneDocument): PaneDocument => {
     ? document
     : {
         ...document,
-        line: Math.min(document.line, source.split('\n').length),
+        line: Math.min(document.line, source.split(/\r\n|\n|\r/u).length),
         redo: document.redo?.slice(0, -1),
         source,
         undo: boundedHistory([...(document.undo ?? []), document.source]),

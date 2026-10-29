@@ -1,7 +1,7 @@
 import {type Accessor, createEffect, onCleanup} from 'solid-js'
 import type {PdfPageText} from './types'
 
-interface TextMetricsOptions {
+interface UseTextMetricsProps {
   readonly container: Accessor<HTMLElement | null>
   readonly text: Accessor<PdfPageText>
 }
@@ -13,10 +13,10 @@ const measure = (span: HTMLElement, width: number): void => {
 }
 
 /** Aligns selectable browser glyph widths with PDF glyph widths through custom properties. */
-export const useTextMetrics = (options: TextMetricsOptions): void => {
+export const useTextMetrics = (props: UseTextMetricsProps): void => {
   createEffect(() => {
-    options.text()
-    const container = options.container()
+    props.text()
+    const container = props.container()
     if (container === null) {
       return
     }

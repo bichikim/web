@@ -1,6 +1,8 @@
+import {readText} from './read-text'
+import {activateTree, editLine, paneTarget, projectFixture, required, treeRows} from './fixture'
+import {readField} from './read-field'
 /* eslint-disable eslint-js/camelcase -- Claude tool inputs use snake case. */
 import {expect, test} from 'claude-code/testing'
-import {activateTree, editLine, paneTarget, projectFixture, treeRows} from './fixture'
 
 test('should align every painted file row with the same native cell used by pointer input', async (engine, on) => {
   const fixture = projectFixture(on)
@@ -14,9 +16,9 @@ test('should align every painted file row with the same native cell used by poin
   await engine.session.start({cwd: '/project', isInteractive: false, surface: 'desktop'})
   const pane = await engine.ui.mount(paneTarget)
   const painted = await pane.find({key: 'tree-row:row-20.ts'})
-  expect(painted.props.height).toBe(1)
+  expect(required(painted).props.height).toBe(1)
   const inputs = (await pane.findAll({type: 'Client'})).filter((entry) =>
-    entry.props.key.startsWith('file-tree:'),
+    readText(entry.props.key).startsWith('file-tree:'),
   )
   expect(inputs).toHaveLength(1)
   const messageBudget = 150_000
@@ -37,7 +39,9 @@ test('should draw icon actions as circles without stretching their SVG viewport'
   await engine.session.start({cwd: '/project', isInteractive: false, surface: 'desktop'})
   const pane = await engine.ui.mount(paneTarget)
   const icons = (await pane.findAll({type: 'Svg'})).filter((entry) =>
-    ['파일', '설정', '새 파일', '새 폴더', '새로고침', '현재 파일 표시'].includes(entry.props.alt),
+    ['파일', '설정', '새 파일', '새 폴더', '새로고침', '현재 파일 표시'].includes(
+      readText(entry.props.alt),
+    ),
   )
   const iconCount = 6
   expect(icons).toHaveLength(iconCount)
@@ -81,7 +85,12 @@ test('should expose editing and selection tools only when requested and attach e
   await pane.input({key: 'selection-column', kind: 'change', text: '7'})
   await pane.input({key: 'selection-end-column', kind: 'change', text: '15'})
   await pane.press({key: 'attach'})
-  const attachment = fixture.stored.get('pane:/project:session-one').attachments[0].text
+  const attachment = readField(
+    fixture.stored.get('pane:/project:session-one'),
+    'attachments',
+    0,
+    'text',
+  )
   expect(attachment).toContain('a.ts:1:7-1:15')
   expect(attachment).toContain('\nselected')
   expect(attachment).not.toContain('hello selected world')
@@ -101,9 +110,9 @@ test('should pause automatic following while preserving explicit navigation and 
   expect(JSON.stringify(await pane.drawn())).toContain('a.ts:1:1')
   await pane.input({key: 'path', text: 'b.ts'})
   expect(JSON.stringify(await pane.drawn())).toContain('b.ts:1:1')
-  expect(fixture.stored.get('pane:/project:session-one').documents[0].source).toContain(
-    'draft text',
-  )
+  expect(
+    readField(fixture.stored.get('pane:/project:session-one'), 'documents', 0, 'source'),
+  ).toContain('draft text')
 })
 
 test('should retain unsaved content on refresh and confirm before discarding it', async (engine, on) => {
@@ -119,7 +128,9 @@ test('should retain unsaved content on refresh and confirm before discarding it'
   await pane.press({key: 'edit-more'})
   await pane.press({key: 'discard'})
   await pane.press({key: 'discard-cancel'})
-  expect(fixture.stored.get('pane:/project:session-one').documents[0].source).toBe('draft text\n')
+  expect(readField(fixture.stored.get('pane:/project:session-one'), 'documents', 0, 'source')).toBe(
+    'draft text\n',
+  )
 })
 
 test('should persist settings and manage file attachments', async (engine, on) => {
@@ -131,15 +142,15 @@ test('should persist settings and manage file attachments', async (engine, on) =
   await pane.select({key: 'setting-rows', value: '12'})
   await pane.press({key: 'settings-close'})
   await pane.input({key: 'path', text: 'a.ts'})
-  expect((await pane.find({key: 'code-editor', type: 'Client'}))?.props.props.wrap).toBe(
-    'truncate-end',
-  )
+  expect(
+    readField(await pane.find({key: 'code-editor', type: 'Client'}), 'props', 'props', 'wrap'),
+  ).toBe('truncate-end')
   await activateTree(pane, 'a.ts', 'menu')
   await pane.press({key: 'attach-entry'})
-  expect(fixture.stored.get('pane:/project:session-one').attachments[0].text).toContain(
-    'selected the file',
-  )
+  expect(
+    readField(fixture.stored.get('pane:/project:session-one'), 'attachments', 0, 'text'),
+  ).toContain('selected the file')
   await pane.press({key: 'attachments'})
   await pane.press({key: 'attachments-clear'})
-  expect(fixture.stored.get('pane:/project:session-one').attachments).toEqual([])
+  expect(readField(fixture.stored.get('pane:/project:session-one'), 'attachments')).toEqual([])
 })

@@ -5,6 +5,19 @@ import {SMarkdown} from '../SMarkdown'
 
 describe('SMarkdown', () => {
   afterEach(cleanup)
+  it('should open a sibling in a directory with URL delimiter characters', () => {
+    const open = vi.fn()
+    render(() => (
+      <SMarkdown source={'[다음](next.md#part)'} path="docs/issue#1/readme.md" onOpen={open} />
+    ))
+    fireEvent.click(screen.getByRole('link', {name: '다음'}))
+    expect(open).toHaveBeenCalledWith({column: 1, line: 1, path: 'docs/issue#1/next.md'})
+  })
+  it('should leave browser-normalized executable links inert', () => {
+    render(() => <SMarkdown source={'[실행](java&#x09;script:alert%281%29)'} path="README.md" />)
+    expect(screen.queryByRole('link', {name: '실행'})).toBeNull()
+    expect(screen.getByText('실행').getAttribute('href')).toBeNull()
+  })
   it('should render headings, GFM tables and checked tasks', () => {
     render(() => (
       <SMarkdown

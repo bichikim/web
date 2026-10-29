@@ -4,6 +4,7 @@ interface SIconProps {
 
 const icons = {
   add: 'i-tabler-plus',
+  addContext: 'i-tabler-message-plus',
   arrowLeft: 'i-tabler-arrow-left',
   arrowRight: 'i-tabler-arrow-right',
   back: 'i-tabler-chevron-left',
@@ -14,7 +15,9 @@ const icons = {
   folder: 'i-tabler-folder',
   forward: 'i-tabler-chevron-right',
   info: 'i-tabler-info-circle',
+  memo: 'i-tabler-notes',
   minus: 'i-tabler-minus',
+  more: 'i-tabler-dots',
   newFile: 'i-tabler-file-plus',
   newFolder: 'i-tabler-folder-plus',
   refresh: 'i-tabler-reload',

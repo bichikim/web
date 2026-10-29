@@ -1,3 +1,4 @@
+import {readField} from './read-field'
 import {expect, it, vi} from 'vitest'
 import SidebarResizeClient from '../sidebar-resize-client.js'
 
@@ -58,11 +59,11 @@ it('should begin from the visible constrained width after the outer pane becomes
 
 it('should use fine pointer coordinates and keep the latest drag across prop updates', () => {
   let pointer: (event: unknown) => void = vi.fn()
-  let state
+  let state: unknown
   const post = vi.fn()
   const surface = {
     get columns() {
-      return ((state?.width ?? 288) + 8) / 8
+      return (Number(readField(state, 'width') ?? 288) + 8) / 8
     },
     elements: {Box: vi.fn(), Text: vi.fn()},
     onKey: vi.fn(),
@@ -70,7 +71,7 @@ it('should use fine pointer coordinates and keep the latest drag across prop upd
       pointer = listener
     },
     post,
-    setState: (next) => {
+    setState: (next: unknown) => {
       state = next
     },
     get state() {
@@ -80,7 +81,7 @@ it('should use fine pointer coordinates and keep the latest drag across prop upd
   SidebarResizeClient({columns: 100, rows: 10, value: '288px'}, surface)
   pointer({button: 'left', fine: {x: 0.25, y: 0}, type: 'down', x: 0, y: 0})
   pointer({button: 'left', fine: {x: -1, y: 0}, type: 'move', x: -1, y: 0})
-  expect(state.width).toBe(298)
+  expect(readField(state, 'width')).toBe(298)
   expect(post).not.toHaveBeenCalled()
   SidebarResizeClient({columns: 100, rows: 10, value: '298px'}, surface)
   pointer({button: 'left', fine: {x: -1.25, y: 0}, type: 'move', x: -2, y: 0})
@@ -90,19 +91,19 @@ it('should use fine pointer coordinates and keep the latest drag across prop upd
 
 it('should keep dense drag input local and send only one final width per gesture', () => {
   let pointer: (event: unknown) => void = vi.fn()
-  let state
+  let state: unknown
   const post = vi.fn()
   const surface = {
     get columns() {
-      return ((state?.width ?? 288) + 8) / 8
+      return (Number(readField(state, 'width') ?? 288) + 8) / 8
     },
-    elements: {Box: (props) => props, Text: vi.fn()},
+    elements: {Box: (props: unknown) => props, Text: vi.fn()},
     onKey: vi.fn(),
     onPointer: (listener: typeof pointer) => {
       pointer = listener
     },
     post,
-    setState: (next) => {
+    setState: (next: unknown) => {
       state = next
     },
     get state() {

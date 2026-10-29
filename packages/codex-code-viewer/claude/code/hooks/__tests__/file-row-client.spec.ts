@@ -1,9 +1,10 @@
+import {readField} from './read-field'
 import {expect, it, vi} from 'vitest'
 import FileRowClient from '../file-row-client.js'
 
 it('should recover hover when the host redraw loses pointer release after activating a row', () => {
   let pointer: (event: unknown) => void = vi.fn()
-  let state
+  let state: unknown
   const post = vi.fn()
   const surface = {
     elements: {Box: vi.fn(), Text: vi.fn()},
@@ -12,7 +13,7 @@ it('should recover hover when the host redraw loses pointer release after activa
       pointer = listener
     },
     post,
-    setState: (next) => {
+    setState: (next: unknown) => {
       state = next
     },
     get state() {

@@ -31,7 +31,7 @@ export const draftAttachment = (
   }
   return {
     attachment: {
-      end: document.source.split('\n').length,
+      end: document.source.split(/\r\n|\n|\r/u).length,
       path: document.path,
       start: 1,
       text: formatContext({

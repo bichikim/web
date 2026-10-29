@@ -70,4 +70,22 @@ describe('parseSpreadsheet', () => {
     })
     expect(parseSpreadsheet(new Uint8Array([80, 75, 3, 4]).buffer)).toMatchObject({ok: false})
   })
+  it('should preserve sparse cells, blank rows and distant preview boundaries across sheets', () => {
+    const result = parseSpreadsheet(
+      workbookBytes({
+        first: {'!ref': 'A1:CV20', A1: {t: 's', v: 'first'}, CV20: {t: 's', v: 'last'}},
+        second: {'!ref': 'A1:CV20', B2: {t: 's', v: 'other'}},
+      }),
+    )
+    expect(result.ok).toBe(true)
+    if (!result.ok) {
+      throw new Error(result.message)
+    }
+    expect(result.sheets.map((sheet) => sheet.rows.length)).toEqual([20, 20])
+    expect(result.sheets[0].rows[0][0]).toBe('first')
+    expect(result.sheets[0].rows[19][99]).toBe('last')
+    expect(result.sheets[0].rows[10]).toEqual(Array.from({length: 100}, () => ''))
+    expect(result.sheets[1].rows[0][0]).toBe('')
+    expect(result.sheets[1].rows[1][1]).toBe('other')
+  })
 })

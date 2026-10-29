@@ -2,31 +2,31 @@ import {type Accessor, batch, createEffect, on} from 'solid-js'
 import type {DefinitionFeedback} from './use-definition-navigation'
 import {useNotice} from './use-notice'
 
-interface ViewerFeedbackOptions {
+interface UseViewerFeedbackProps {
   readonly definition: Accessor<DefinitionFeedback | null>
   readonly editing: Accessor<string | null>
   readonly clearDefinition: () => void
   readonly clearEditing: () => void
 }
 /** Exposes the current editing, navigation or general feedback independently of the selected address. */
-export const useViewerFeedback = (options: ViewerFeedbackOptions) => {
+export const useViewerFeedback = (props: UseViewerFeedbackProps) => {
   const notification = useNotice()
   const clear = (): void => {
-    options.clearDefinition()
-    options.clearEditing()
+    props.clearDefinition()
+    props.clearEditing()
   }
   createEffect(
-    on(options.definition, (value) => {
+    on(props.definition, (value) => {
       if (value !== null) {
-        options.clearEditing()
+        props.clearEditing()
         notification.dismiss()
       }
     }),
   )
   createEffect(
-    on(options.editing, (value) => {
+    on(props.editing, (value) => {
       if (value !== null) {
-        options.clearDefinition()
+        props.clearDefinition()
         notification.dismiss()
       }
     }),
@@ -38,8 +38,8 @@ export const useViewerFeedback = (options: ViewerFeedbackOptions) => {
         notification.dismiss()
       }),
     notice: () => {
-      const editing = options.editing()
-      const definition = options.definition()
+      const editing = props.editing()
+      const definition = props.definition()
       if (editing !== null) {
         return {message: editing}
       }

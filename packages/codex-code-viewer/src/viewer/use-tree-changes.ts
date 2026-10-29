@@ -4,7 +4,7 @@ import type {ChangedFile} from '../shared/change-contracts'
 import type {ViewerPort} from './types'
 import {useWorkspaceChanges} from './use-workspace-changes'
 
-interface TreeChangesProps {
+interface UseTreeChangesProps {
   readonly port: ViewerPort
   readonly session: Accessor<ViewerConnection | null>
   readonly revision: Accessor<number>
@@ -18,7 +18,7 @@ interface TreeChangesProps {
 }
 
 /** Owns changed-only filtering and deleted-file previews separately from the cached disk tree. */
-export const useTreeChanges = (props: TreeChangesProps) => {
+export const useTreeChanges = (props: UseTreeChangesProps) => {
   const git = useWorkspaceChanges(props)
   const [changedOnly, setChangedOnly] = createSignal(false)
   const files = createMemo(() => props.files() ?? git.files())

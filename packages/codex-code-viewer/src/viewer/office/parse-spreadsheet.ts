@@ -12,6 +12,25 @@ const cellText = (sheet: WorkSheet, row: number, column: number): string => {
     : (cell.w ??
         (cell.f !== undefined && cell.v === undefined ? `=${cell.f}` : utils.format_cell(cell)))
 }
+const readRows = (
+  sheet: WorkSheet,
+  rowCount: number,
+  columns: number,
+): readonly (readonly string[])[] => {
+  const populated = new Map<number, string[]>()
+  for (const address of Object.keys(sheet)) {
+    if (/^[A-Z]+[1-9]\d*$/u.test(address)) {
+      const position = utils.decode_cell(address)
+      if (position.r < rowCount && position.c < columns) {
+        const row = populated.get(position.r) ?? Array<string>(columns).fill('')
+        row[position.c] = cellText(sheet, position.r, position.c)
+        populated.set(position.r, row)
+      }
+    }
+  }
+  const blank = Object.freeze(Array<string>(columns).fill(''))
+  return Array.from({length: rowCount}, (_, index) => populated.get(index) ?? blank)
+}
 const readSheet = (name: string, sheet: WorkSheet): SpreadsheetSheet => {
   const reference = sheet['!fullref'] ?? sheet['!ref']
   if (reference === undefined) {
@@ -25,9 +44,7 @@ const readSheet = (name: string, sheet: WorkSheet): SpreadsheetSheet => {
     columns,
     name,
     ok: true,
-    rows: Array.from({length: rowCount}, (_, row) =>
-      Array.from({length: columns}, (_, column) => cellText(sheet, row, column)),
-    ),
+    rows: readRows(sheet, rowCount, columns),
     truncated: range.e.r >= MAX_ROWS || range.e.c >= MAX_COLUMNS,
   }
 }

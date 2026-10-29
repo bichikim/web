@@ -13,6 +13,27 @@ const snippet = {
   text: 'unsaved snapshot',
 } as const
 
+it('should append a memo as text context without reading a file or sending a message', async () => {
+  const update = vi.fn().mockResolvedValue({})
+  const call = vi.fn()
+  const host = createHostContext({
+    app: {updateModelContext: update},
+    call,
+    current: () => undefined,
+    requests: createPendingTasks(),
+    standard: false,
+  })
+  await host.context(snippet)
+  await host.addTextContext('오류 문구 정리')
+  expect(update).toHaveBeenLastCalledWith({
+    content: [
+      {text: formatContext(snippet), type: 'text'},
+      {text: '오류 문구 정리', type: 'text'},
+    ],
+  })
+  expect(call).not.toHaveBeenCalled()
+})
+
 it('should retain accepted attachments on failure and serialize removal with later additions', async () => {
   const update = vi.fn().mockResolvedValue({})
   const call = vi.fn()

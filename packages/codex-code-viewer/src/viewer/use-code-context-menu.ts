@@ -11,7 +11,7 @@ interface CodeContext {
   returnFocus: HTMLElement | null
 }
 
-interface CodeContextMenuOptions {
+interface UseCodeContextMenuProps {
   container: Accessor<HTMLElement | null>
   document: Accessor<CodeDocument>
   selection: Accessor<CodeSelection | undefined>
@@ -19,7 +19,7 @@ interface CodeContextMenuOptions {
   onSelectText?: (range: CodeTextRange) => void
 }
 
-export const useCodeContextMenu = (options: CodeContextMenuOptions) => {
+export const useCodeContextMenu = (props: UseCodeContextMenuProps) => {
   const [context, setContext] = createSignal<CodeContext | null>(null)
   const close = (settings?: ContextMenuCloseOptions): void => {
     const previous = context()
@@ -29,7 +29,7 @@ export const useCodeContextMenu = (options: CodeContextMenuOptions) => {
     }
   }
   createEffect(() => {
-    options.document()
+    props.document()
     untrack(() => close({restoreFocus: false}))
   })
   const open = (
@@ -38,12 +38,12 @@ export const useCodeContextMenu = (options: CodeContextMenuOptions) => {
     y: number,
     point?: {x: number; y: number},
   ): void => {
-    const container = options.container()
+    const container = props.container()
     if (container === null) {
       return
     }
-    const document = options.document()
-    const previous = options.selection() ?? {...document.location, endLine: document.location.line}
+    const document = props.document()
+    const previous = props.selection() ?? {...document.location, endLine: document.location.line}
     const row = target.closest<HTMLElement>('[data-line]')
     const resolved = readContextSelection({container, document, point, selection: previous, target})
     if (!resolved.preserveNativeSelection) {
@@ -51,9 +51,9 @@ export const useCodeContextMenu = (options: CodeContextMenuOptions) => {
     }
     const selected = resolved.selection
     if (selected.endColumn !== undefined) {
-      options.onSelectText?.({...selected, endColumn: selected.endColumn})
+      props.onSelectText?.({...selected, endColumn: selected.endColumn})
     } else if (row !== null) {
-      options.onSelect?.(selected.line, selected.endLine)
+      props.onSelect?.(selected.line, selected.endLine)
     }
     setContext({
       returnFocus: row?.querySelector<HTMLButtonElement>('button') ?? null,

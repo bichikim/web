@@ -7,7 +7,7 @@ import {useTranslations} from '../locale/use-translations'
 import {createChangeInspection} from './create-change-inspection'
 import type {InlineChange} from '../types'
 
-interface EditorChangesProps {
+interface UseEditorChangesProps {
   readonly view: Accessor<EditorView | undefined>
   readonly hunks: Accessor<readonly ChangeHunk[]>
   readonly onOpen?: (hunk: ChangeHunk) => void
@@ -16,7 +16,7 @@ interface EditorChangesProps {
   readonly onNavigate: (index: number) => void
 }
 /** Reconfigures only the change gutter when its baseline, draft or language changes. */
-export const useEditorChanges = (props: EditorChangesProps): (() => Extension) => {
+export const useEditorChanges = (props: UseEditorChangesProps): (() => Extension) => {
   const t = useTranslations()
   const compartment = new Compartment()
   const owner = getOwner()
