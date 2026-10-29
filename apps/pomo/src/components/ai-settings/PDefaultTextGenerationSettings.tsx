@@ -1,10 +1,8 @@
-import {createEffect, createSignal, Show} from 'solid-js'
+import {Show} from 'solid-js'
 import {cx} from 'class-variance-authority'
-import {usePreference} from 'src/hooks/use-preference'
-import {createPreferenceSaveQueue} from 'src/features/preference-save-queue'
+import {usePreferenceEditor} from 'src/hooks/use-preference-editor'
 import {
   createTextGenerationPreferenceOptions,
-  DEFAULT_TEXT_GENERATION_SETTINGS,
   DEFAULT_TEXT_MODEL_IDS,
   type DefaultTextModelId,
   type TextGenerationSettings,
@@ -56,74 +54,29 @@ export const PDefaultTextGenerationSettings = () => {
   }
   const modelOptions = (): ReadonlyArray<PSelectOption<DefaultTextModelId>> =>
     MODEL_OPTIONS.map((option) => (option.value === 'cloud' ? cloudOption() : option))
-  const [failedSettings, setFailedSettings] = createSignal<TextGenerationSettings | null>(null)
-  const [message, setMessage] = createSignal<string | null>(null)
-  const saveQueue = createPreferenceSaveQueue({
+  const {isLoading, message, save, settings} = usePreferenceEditor({
     equal: (left, right) => left.modelId === right.modelId && left.version === right.version,
-    initial: DEFAULT_TEXT_GENERATION_SETTINGS,
+    messages: {
+      loadFailed: () => m.settings_ai_text_load_failed(),
+      notReady: () => m.settings_ai_text_not_ready(),
+      saved: () => null,
+      saveFailed: () => m.settings_ai_text_save_failed(),
+    },
+    preference: createTextGenerationPreferenceOptions(),
+    reportError: (error, phase) => {
+      console.error(
+        phase === 'save'
+          ? 'Failed to save text generation settings.'
+          : 'Failed to load text generation settings.',
+        error,
+      )
+    },
   })
-
-  const handlePreferenceError = (error: unknown) => {
-    const isSaveError = saveQueue.hasPending()
-    console.error(
-      isSaveError
-        ? 'Failed to save text generation settings.'
-        : 'Failed to load text generation settings.',
-      error,
-    )
-
-    if (isSaveError) {
-      const settled = saveQueue.settle(false)
-      if (settled.value !== null && !settled.hasPending) {
-        setFailedSettings(settled.committed)
-      }
-    }
-    setMessage(isSaveError ? m.settings_ai_text_save_failed() : m.settings_ai_text_load_failed())
-  }
-  const handlePreferenceSaved = () => {
-    const settled = saveQueue.settle(true)
-    if (settled.value !== null) {
-      if (!settled.hasPending) {
-        setFailedSettings(null)
-      }
-      setMessage(null)
-    }
-  }
-  const [storedSettings, setStoredSettings] = usePreference(
-    createTextGenerationPreferenceOptions({
-      onError: handlePreferenceError,
-      onSaved: handlePreferenceSaved,
-    }),
-  )
-
-  const settings = () => failedSettings() ?? storedSettings() ?? DEFAULT_TEXT_GENERATION_SETTINGS
-  const isLoading = () => storedSettings() === null
-
-  createEffect(() => {
-    const currentSettings = storedSettings()
-
-    if (currentSettings === null || saveQueue.hasPending()) {
-      return
-    }
-
-    if (saveQueue.synchronize(currentSettings)) {
-      setFailedSettings(null)
-    }
-  })
-
   const saveSettings = (nextSettings: TextGenerationSettings) => {
     if (nextSettings.modelId === 'cloud' && authentication.session() === null) {
       return
     }
-    if (storedSettings() === null) {
-      setMessage(m.settings_ai_text_not_ready())
-      return
-    }
-
-    saveQueue.clearFailure()
-    setFailedSettings(null)
-    saveQueue.enqueue(nextSettings)
-    setStoredSettings(nextSettings, {rollbackOnError: true})
+    save(nextSettings)
   }
 
   return (

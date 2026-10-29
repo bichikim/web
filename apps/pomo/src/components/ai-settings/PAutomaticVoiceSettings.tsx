@@ -1,13 +1,11 @@
-import {createPreferenceSaveQueue} from 'src/features/preference-save-queue'
+import {usePreferenceEditor} from 'src/hooks/use-preference-editor'
 import {cx} from 'class-variance-authority'
-import {usePreference} from 'src/hooks/use-preference'
-import {createEffect, createSignal, Show} from 'solid-js'
+import {Show} from 'solid-js'
 
 import {PSelect, type PSelectOption} from '../p-select/PSelect'
 import {
   type AutomaticDialogueSettings as AutomaticDialogueSettingsValue,
   createAutomaticDialoguePreferenceOptions,
-  DEFAULT_AUTOMATIC_DIALOGUE_SETTINGS,
 } from '../../features/focus-room-dialogue'
 import {
   SUPERTONIC_MODELS,
@@ -55,78 +53,29 @@ const areAutomaticDialogueSettingsEqual = (
   left.modelId === right.modelId && left.version === right.version && left.voiceId === right.voiceId
 
 export const PAutomaticVoiceSettings = () => {
-  const [failedSettings, setFailedSettings] = createSignal<AutomaticDialogueSettingsValue | null>(
-    null,
-  )
-  const [message, setMessage] = createSignal<string | null>(null)
-  const saveQueue = createPreferenceSaveQueue({
+  const {
+    isLoading,
+    message,
+    save: saveSettings,
+    settings,
+  } = usePreferenceEditor({
     equal: areAutomaticDialogueSettingsEqual,
-    initial: DEFAULT_AUTOMATIC_DIALOGUE_SETTINGS,
+    messages: {
+      loadFailed: () => m.settings_dialogue_automatic_load_failed(),
+      notReady: () => m.settings_dialogue_automatic_not_ready(),
+      saved: () => m.settings_dialogue_automatic_saved(),
+      saveFailed: () => m.settings_dialogue_automatic_save_failed(),
+    },
+    preference: createAutomaticDialoguePreferenceOptions(),
+    reportError: (error, phase) => {
+      console.error(
+        phase === 'save'
+          ? 'Failed to save automatic dialogue settings.'
+          : 'Failed to load automatic dialogue settings.',
+        error,
+      )
+    },
   })
-
-  const handlePreferenceError = (error: unknown) => {
-    const isSaveError = saveQueue.hasPending()
-    console.error(
-      isSaveError
-        ? 'Failed to save automatic dialogue settings.'
-        : 'Failed to load automatic dialogue settings.',
-      error,
-    )
-
-    if (isSaveError) {
-      const settled = saveQueue.settle(false)
-      if (settled.value !== null && !settled.hasPending) {
-        setFailedSettings(settled.committed)
-      }
-    }
-    setMessage(
-      isSaveError
-        ? m.settings_dialogue_automatic_save_failed()
-        : m.settings_dialogue_automatic_load_failed(),
-    )
-  }
-  const handlePreferenceSaved = () => {
-    const settled = saveQueue.settle(true)
-    if (settled.value !== null) {
-      if (!settled.hasPending) {
-        setFailedSettings(null)
-      }
-      setMessage(m.settings_dialogue_automatic_saved())
-    }
-  }
-  const [storedSettings, setStoredSettings] = usePreference(
-    createAutomaticDialoguePreferenceOptions({
-      onError: handlePreferenceError,
-      onSaved: handlePreferenceSaved,
-    }),
-  )
-
-  const settings = () => failedSettings() ?? storedSettings() ?? DEFAULT_AUTOMATIC_DIALOGUE_SETTINGS
-  const isLoading = () => storedSettings() === null
-
-  createEffect(() => {
-    const currentSettings = storedSettings()
-
-    if (currentSettings === null || saveQueue.hasPending()) {
-      return
-    }
-
-    if (saveQueue.synchronize(currentSettings)) {
-      setFailedSettings(null)
-    }
-  })
-
-  const saveSettings = (nextSettings: AutomaticDialogueSettingsValue) => {
-    if (storedSettings() === null) {
-      setMessage(m.settings_dialogue_automatic_not_ready())
-      return
-    }
-
-    saveQueue.clearFailure()
-    setFailedSettings(null)
-    saveQueue.enqueue(nextSettings)
-    setStoredSettings(nextSettings, {rollbackOnError: true})
-  }
 
   return (
     <section
