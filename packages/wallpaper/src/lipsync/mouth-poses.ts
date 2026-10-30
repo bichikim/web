@@ -18,8 +18,8 @@ export const VISEME_MOUTH_POSES: Readonly<Record<Viseme, MouthPose>> = {
 export const LIP_SYNC_MOUTH_POSES: ReadonlyMap<LipSyncShape, MouthPose> = new Map([
   ['a', VISEME_MOUTH_POSES.open],
   ['i', VISEME_MOUTH_POSES.wide],
-  ['u', VISEME_MOUTH_POSES.narrow],
-  ['e', VISEME_MOUTH_POSES.wide],
+  ['u', {form: -1, open: 0.25}],
+  ['e', {form: 0.5, open: 0.65}],
   ['o', VISEME_MOUTH_POSES.round],
   ['closed', VISEME_MOUTH_POSES.closed],
 ])

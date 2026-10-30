@@ -80,3 +80,26 @@ it('should publish distinct vowel shapes against the scheduled playback clock an
   stop()
   expect(onShape).toHaveBeenLastCalledWith(null, 0)
 })
+
+it('should show the vowel after a short lip closure using the sped-up audio clock', () => {
+  let step: FrameRequestCallback = () => undefined
+  vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => {
+    step = callback
+    return 1
+  })
+  vi.stubGlobal('cancelAnimationFrame', vi.fn())
+  let clock = 1
+  const onShape = vi.fn()
+  const meter = createPlaybackMeter({clock: () => clock, onLevel: vi.fn(), onShape})
+  meter.track({sampleRate: 100, samples: new Float32Array(225).fill(0.2), text: '마오'}, 1, 2)
+  clock = 1.05
+  step(0)
+  expect(onShape).toHaveBeenLastCalledWith('closed', expect.any(Number))
+  clock = 1.2
+  step(0)
+  expect(onShape).toHaveBeenLastCalledWith('a', expect.any(Number))
+  clock = 1.8
+  step(0)
+  expect(onShape).toHaveBeenLastCalledWith('o', expect.any(Number))
+  meter.dispose()
+})

@@ -28,3 +28,23 @@ it('should bound gain and values to the authored model ranges and reject nonfini
   })
   expect(mouthPairValues(pair, 'o', NaN, {})).toEqual({ParamMouthForm: 0, ParamMouthOpenY: 0})
 })
+
+it('should round u at a smaller opening than o and distinguish e from i', () => {
+  const pair = {form, opening}
+  const u = mouthPairValues(pair, 'u', 1, {})
+  const o = mouthPairValues(pair, 'o', 1, {})
+  const e = mouthPairValues(pair, 'e', 1, {})
+  const i = mouthPairValues(pair, 'i', 1, {})
+  expect(u.ParamMouthForm).toBe(-1)
+  expect(u.ParamMouthOpenY).toBeLessThan(o.ParamMouthOpenY!)
+  expect(e.ParamMouthForm).toBeGreaterThan(0)
+  expect(e.ParamMouthForm).toBeLessThan(i.ParamMouthForm!)
+  expect(e.ParamMouthOpenY).toBeGreaterThan(i.ParamMouthOpenY!)
+})
+
+it('should retain the vowel form at quiet nonzero levels until the mouth closes', () => {
+  expect(mouthPairValues({form, opening}, 'o', 0.1, {})).toEqual({
+    ParamMouthForm: -1,
+    ParamMouthOpenY: 0.065,
+  })
+})

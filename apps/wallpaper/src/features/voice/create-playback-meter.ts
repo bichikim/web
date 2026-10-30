@@ -1,12 +1,12 @@
 import type {LipSyncShape} from '@winter-love/wallpaper/settings/lipsync'
-import {speechShapes} from '../lipsync/speech-shapes'
+import {createSpeechCues, type SpeechCue} from '../lipsync/create-speech-cues'
 import type {VoiceAudio} from './synthesis'
 
 interface PlaybackClip {
   readonly audio: VoiceAudio
   readonly start: number
   readonly speed: number
-  readonly shapes: readonly (LipSyncShape | null)[]
+  readonly cues: readonly SpeechCue[]
 }
 interface PlaybackMeterOptions {
   readonly clock: () => number
@@ -60,12 +60,8 @@ export const createPlaybackMeter = (options: PlaybackMeterOptions) => {
       const elapsed = (clock - clip.start) * clip.speed
       return elapsed >= 0 && elapsed < clip.audio.samples.length / clip.audio.sampleRate
     })
-    const progress =
-      active === undefined
-        ? 0
-        : ((clock - active.start) * active.speed * active.audio.sampleRate) /
-          active.audio.samples.length
-    const shape = active?.shapes[Math.floor(progress * active.shapes.length)] ?? null
+    const elapsed = active === undefined ? 0 : (clock - active.start) * active.speed
+    const shape = active?.cues.find((cue) => elapsed < cue.end)?.shape ?? null
     options.onShape?.(shape, shape === null || level < SILENT_LEVEL ? 0 : level)
     if (clips.size > 0) {
       frame = requestAnimationFrame(step)
@@ -77,7 +73,8 @@ export const createPlaybackMeter = (options: PlaybackMeterOptions) => {
       reset()
     },
     track: (audio: VoiceAudio, start: number, speed: number) => {
-      const clip = {audio, shapes: speechShapes(audio.text ?? ''), speed, start}
+      const cues = createSpeechCues(audio.text ?? '', audio.samples.length / audio.sampleRate)
+      const clip = {audio, cues, speed, start}
       clips.add(clip)
       if (frame === 0) {
         previous = options.clock()

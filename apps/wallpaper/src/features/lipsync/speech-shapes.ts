@@ -5,9 +5,9 @@ const VOWELS: readonly LipSyncShape[] = [
   'e',
   'a',
   'e',
-  'o',
+  'a',
   'e',
-  'o',
+  'a',
   'e',
   'o',
   'a',
@@ -15,11 +15,11 @@ const VOWELS: readonly LipSyncShape[] = [
   'e',
   'o',
   'u',
-  'o',
+  'a',
   'e',
   'i',
   'u',
-  'u',
+  'i',
   'i',
   'i',
 ]
@@ -46,7 +46,7 @@ const letters = new Map<string, LipSyncShape>([
 ])
 /** Estimates Korean vowel/closure poses from text; these are not forced-alignment timestamps. */
 export const speechShapes = (text: string): readonly (LipSyncShape | null)[] =>
-  Array.from(text).flatMap((character): (LipSyncShape | null)[] => {
+  Array.from(text.normalize('NFC')).flatMap((character): (LipSyncShape | null)[] => {
     if (/^[가-힣]$/u.test(character)) {
       const [onset, vowel, final] = Array.from(character.normalize('NFD'))
       return [

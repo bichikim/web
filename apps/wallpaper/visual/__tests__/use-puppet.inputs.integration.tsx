@@ -112,8 +112,8 @@ test('should animate the bundled Ash model using the landing open/form combinati
   for (const pose of [
     {form: 0.2, open: 0.9, shape: 'a'},
     {form: 1, open: 0.55, shape: 'i'},
-    {form: 0, open: 0.25, shape: 'u'},
-    {form: 1, open: 0.55, shape: 'e'},
+    {form: -1, open: 0.25, shape: 'u'},
+    {form: 0.5, open: 0.65, shape: 'e'},
     {form: -1, open: 0.65, shape: 'o'},
     {form: 0, open: 0, shape: 'closed'},
   ] as const) {

@@ -1,7 +1,4 @@
-import {
-  LIP_SYNC_MOUTH_POSES,
-  MOUTH_REST_THRESHOLD,
-} from '@winter-love/wallpaper/lipsync/mouth-poses'
+import {LIP_SYNC_MOUTH_POSES} from '@winter-love/wallpaper/lipsync/mouth-poses'
 import type {LipSyncShape, PoffoLipSync} from '@winter-love/wallpaper/settings/lipsync'
 import type {TrackingParameter} from '../tracking/types'
 
@@ -19,7 +16,7 @@ export const resolveMouthPair = (
     ? {form: form[0]!, opening: opening[0]!}
     : undefined
 }
-/** Applies the landing page's opening/form combination within the model's authored limits. */
+/** Keeps the vowel form independent of loudness while scaling opening within authored limits. */
 export const mouthPairValues = (
   pair: MouthPair,
   shape: LipSyncShape | null,
@@ -29,7 +26,7 @@ export const mouthPairValues = (
   const amount = Number.isFinite(level) ? Math.max(0, Math.min(1, level * (options.gain ?? 1))) : 0
   const pose = LIP_SYNC_MOUTH_POSES.get(shape ?? 'closed')!
   const open = pose.open * amount
-  const form = amount > MOUTH_REST_THRESHOLD ? pose.form * (options.inverted ? -1 : 1) : 0
+  const form = amount > 0 ? pose.form * (options.inverted ? -1 : 1) : 0
   return {
     [pair.opening.id]: Math.max(pair.opening.minimum, Math.min(pair.opening.maximum, open)),
     [pair.form.id]: Math.max(pair.form.minimum, Math.min(pair.form.maximum, form)),
