@@ -25,6 +25,7 @@ const renderPosition = () => {
   const handle = screen.getByRole('button', {name: '말풍선 위치 조정'})
   const area = screen.getByRole('group', {name: '말풍선 위치'})
   vi.spyOn(area, 'getBoundingClientRect').mockReturnValue({height: 100, width: 200} as DOMRect)
+  Object.defineProperty(handle, 'hasPointerCapture', {value: vi.fn(() => true)})
   Object.defineProperty(handle, 'setPointerCapture', {value: vi.fn()})
   Object.defineProperty(handle, 'releasePointerCapture', {value: vi.fn()})
   return {handle, save, setTarget}

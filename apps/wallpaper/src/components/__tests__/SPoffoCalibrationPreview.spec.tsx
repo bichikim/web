@@ -84,6 +84,7 @@ test('should follow the camera with live draft options while saving only on poin
     height: 100,
     width: 200,
   } as DOMRect)
+  Object.defineProperty(handle, 'hasPointerCapture', {value: vi.fn(() => true)})
   Object.defineProperty(handle, 'setPointerCapture', {value: vi.fn()})
   Object.defineProperty(handle, 'releasePointerCapture', {value: vi.fn()})
   const pointer = (type: string, x: number) => {
@@ -120,6 +121,8 @@ test('should preview the face anchor while dragging and revert it on cancellatio
     height: 100,
     width: 200,
   } as DOMRect)
+  Object.defineProperty(handle, 'hasPointerCapture', {value: vi.fn(() => true)})
+  Object.defineProperty(handle, 'releasePointerCapture', {value: vi.fn()})
   Object.defineProperty(handle, 'setPointerCapture', {value: vi.fn()})
   const pointer = (type: string, x: number) => {
     const event = new MouseEvent(type, {bubbles: true, button: 0, clientX: x, clientY: 0})
@@ -176,6 +179,8 @@ test('should preview two-dimensional calibration immediately and restore saved o
     top: 0,
     width: 200,
   } as DOMRect)
+  Object.defineProperty(area, 'hasPointerCapture', {value: vi.fn(() => true)})
+  Object.defineProperty(area, 'releasePointerCapture', {value: vi.fn()})
   Object.defineProperty(area, 'setPointerCapture', {value: vi.fn()})
   const event = new MouseEvent('pointerdown', {bubbles: true, button: 0, clientX: 150, clientY: 50})
   Object.defineProperty(event, 'pointerId', {value: 1})
