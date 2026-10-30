@@ -93,6 +93,20 @@ test('should animate the bundled Ash model using the landing open/form combinati
   })
   await rendered.promise
   expect(playerModule.createPlayer).toHaveBeenCalledOnce()
+  const model = vi.mocked(playerModule.createPlayer).mock.calls[0]![0].document
+  const parameters = model.parameters ?? []
+  expect(parameters).toHaveLength(265)
+  expect(new Set(parameters.map((parameter) => parameter.name)).size).toBe(parameters.length)
+  for (const parameter of parameters) {
+    expect(parameter.name).toMatch(/^[A-Za-z][\x20-\x7e]*$/u)
+  }
+  for (const group of model.parameterGroups ?? []) {
+    expect(group.name).toMatch(/^[A-Za-z][\x20-\x7e]*$/u)
+  }
+  expect(parameters.find((parameter) => parameter.id === 'ParamMouthOpenY')?.name).toBe(
+    'Mouth Open',
+  )
+  expect(parameters.find((parameter) => parameter.id === 'ParamMouthForm')?.name).toBe('Mouth Form')
   const player = await vi.mocked(playerModule.createPlayer).mock.results[0]!.value
   const publish = createLipSyncPublisher('ash-widget')
   for (const pose of [
