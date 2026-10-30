@@ -1,8 +1,8 @@
 import {For, type JSX, Show} from 'solid-js'
 import type {StoryPanelProps} from './story-panel-props'
 import {SStoryPrint} from './SStoryPrint'
+import chapters from '../data/story/chapters.json'
 
-const WORDS = ['DESKTOP', 'WALLPAPER', 'WIDGETS', 'DETAILS', 'CODEX', 'POFFO'] as const
 const FRONT_LAYER = 2
 
 /** Three color planes settle, then leave along the same diagonal. */
@@ -63,8 +63,8 @@ export const SStoryWipe = (props: StoryPanelProps) => (
                       }}
                       style={{'--row-direction': row % 2 ? -1 : 1}}
                     >
-                      {WORDS[props.transition.to] ?? 'PLAY'} /{' '}
-                      {WORDS[props.transition.to] ?? 'PLAY'}
+                      {chapters[props.transition.to]?.word ?? 'PLAY'} /{' '}
+                      {chapters[props.transition.to]?.word ?? 'PLAY'}
                     </p>
                   )}
                 </For>

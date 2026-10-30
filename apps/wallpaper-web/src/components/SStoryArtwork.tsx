@@ -1,8 +1,7 @@
 import {For} from 'solid-js'
 import {SStoryPrint} from './SStoryPrint'
 import type {StoryTransition} from '../features/desktop-story/types'
-
-const WORDS = ['DESKTOP', 'WALLPAPER', 'WIDGETS', 'DETAILS', 'CODEX', 'POFFO'] as const
+import chapters from '../data/story/chapters.json'
 
 interface SStoryArtworkProps {
   /** Chapter word and its prepared typography movement. */
@@ -37,7 +36,8 @@ export const SStoryArtwork = (props: SStoryArtworkProps) => (
               '[-webkit-text-stroke:2px_#bda5e7]!': row === 1 && props.light === true,
             }}
           >
-            {WORDS[props.transition.to] ?? 'PLAY'} / {WORDS[props.transition.to] ?? 'PLAY'}
+            {chapters[props.transition.to]?.word ?? 'PLAY'} /{' '}
+            {chapters[props.transition.to]?.word ?? 'PLAY'}
           </p>
         )}
       </For>
