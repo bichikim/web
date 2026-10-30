@@ -1,10 +1,10 @@
 import {For, Show} from 'solid-js'
 import * as m from '@paraglide/message'
+import {type BackgroundController} from 'src/features/background'
 import {
-  type BackgroundController,
   getTransitionSelection,
   transitionSelectionPatch,
-} from 'src/features/background'
+} from '@winter-love/wallpaper/album/select-transition'
 import {PRadioSwitch} from '../../p-radio-switch/PRadioSwitch'
 import {PSwitch} from '../../p-switch/PSwitch'
 import {PSelect} from '../../p-select/PSelect'

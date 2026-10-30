@@ -6,7 +6,7 @@ import {createLocalView} from './view-state/create-local-view'
 import type {DraftStorage} from './drafts/types'
 import type {FileViewBinding, FileViewState, ViewRequest} from './view-state/types'
 
-interface SessionViewOptions {
+interface UseSessionViewStateProps {
   readonly storage?: DraftStorage
   readonly onError?: (error: unknown) => void
   readonly session: Accessor<ViewerSession | null>
@@ -16,9 +16,9 @@ const fileKey = (session: ViewerSession): string =>
   JSON.stringify([session.workspace, session.document.location.path])
 
 /** Retains recent views and optionally restores session-scoped browser snapshots. */
-export const useSessionViewState = (options: SessionViewOptions) => {
+export const useSessionViewState = (props: UseSessionViewStateProps) => {
   const cache = createBoundedCache<FileViewState>({maxEntries: 64, maxWeight: 64, weight: () => 1})
-  const persistence = options.storage === undefined ? undefined : createLocalView(options.storage)
+  const persistence = props.storage === undefined ? undefined : createLocalView(props.storage)
   const read = (session: ViewerSession): FileViewState | undefined => {
     const key = fileKey(session)
     const cached = cache.get(key)
@@ -32,7 +32,7 @@ export const useSessionViewState = (options: SessionViewOptions) => {
       }
       return restored
     } catch (error) {
-      options.onError?.(error)
+      props.onError?.(error)
       return undefined
     }
   }
@@ -42,12 +42,12 @@ export const useSessionViewState = (options: SessionViewOptions) => {
     try {
       persistence?.write(session, next)
     } catch (error) {
-      options.onError?.(error)
+      props.onError?.(error)
     }
   }
   const [request, setRequest] = createSignal<ViewRequest>({restore: true, version: 0})
   const bind = (): FileViewBinding | undefined => {
-    const session = options.session()
+    const session = props.session()
     if (session === null) {
       return undefined
     }
@@ -58,8 +58,8 @@ export const useSessionViewState = (options: SessionViewOptions) => {
     }
   }
   createEffect(() => {
-    const session = options.session()
-    const selection = options.selection()
+    const session = props.session()
+    const selection = props.selection()
     if (session !== null && selection?.path === session.document.location.path) {
       update(session, {selection})
     }
@@ -76,7 +76,7 @@ export const useSessionViewState = (options: SessionViewOptions) => {
   return {
     bind,
     fileKey: () => {
-      const session = options.session()
+      const session = props.session()
       return session === null ? undefined : fileKey(session)
     },
     restore,

@@ -25,7 +25,13 @@ export const useStyles = (styles: Accessor<StyleType[] | StyleType>): Accessor<S
     const _styles = styles()
 
     if (Array.isArray(_styles)) {
-      return _styles.map(sx).join(';')
+      return _styles.map(sx).reduce<string>((result, entry) => {
+        if (entry === undefined || entry.length === 0) {
+          return result
+        }
+        const separator = result.length > 0 && !result.endsWith(';') ? ';' : ''
+        return `${result}${separator}${entry}`
+      }, '')
     }
 
     return _styles

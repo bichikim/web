@@ -11,6 +11,56 @@ import {expect, test} from 'vitest'
 
 import {transformDeformerPoint} from '../grid'
 
+test('should observe changing keyform and influence inputs across repeated scene sampling', () => {
+  const source = createSkinDocument()
+  const document: PuppetDocument = {
+    ...source,
+    parameterBindings: [
+      {
+        id: 'shoulder',
+        influences: [
+          {
+            parameterId: 'weight',
+            points: [
+              {value: 0, weight: 0},
+              {value: 1, weight: 1},
+            ],
+          },
+        ],
+        keyforms: [0, 1].map((value) => ({
+          deformers: [
+            {
+              controlPoints: [value * 10, 0, 50 + value * 10, 0],
+              kind: 'deformer',
+              nodeId: 'Shoulder',
+            },
+          ],
+          parts: [],
+          values: [value],
+        })),
+        parameterIds: ['position'],
+        targetDeformerIds: ['Shoulder'],
+      },
+    ],
+    parameters: [
+      {defaultValue: 0, id: 'position', maximum: 1, minimum: 0, name: 'Position'},
+      {defaultValue: 1, id: 'weight', maximum: 1, minimum: 0, name: 'Weight'},
+    ],
+  }
+  const shoulder = (values: Readonly<Record<string, number>>) =>
+    composeParameterScene(document, values).roots.find((node) => node.id === 'Shoulder')
+  expect(shoulder({position: 0.5})).toMatchObject({controlPoints: [5, 0, 55, 0]})
+  expect(shoulder({position: 0.5})).toMatchObject({controlPoints: [5, 0, 55, 0]})
+  expect(shoulder({position: 0.5, weight: 0})).toMatchObject({controlPoints: [0, 0, 50, 0]})
+  expect(shoulder({position: 1, weight: 1})).toMatchObject({controlPoints: [10, 0, 60, 0]})
+  const replacement = {...document, parameterBindings: []}
+  expect(
+    composeParameterScene(replacement, {position: 1, weight: 1}).roots.find(
+      (node) => node.id === 'Shoulder',
+    ),
+  ).toMatchObject({controlPoints: [0, 0, 50, 0]})
+})
+
 test('should preserve explicit multi-turn rotation angles while composing parameter keyforms', () => {
   const node: PuppetSceneDeformerNode = {
     boneRestPoints: [0, 0, 1, 0],

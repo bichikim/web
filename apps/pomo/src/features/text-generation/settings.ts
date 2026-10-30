@@ -1,7 +1,7 @@
 import {z} from 'zod'
 import {createPreferenceOptions} from 'src/features/preference-options'
 import {createParsedPreferenceStorage} from 'src/features/parsed-preference-storage'
-import {webLocalStorage} from 'src/utils/preference-storage'
+import {webLocalStorage} from 'src/hooks/use-preference/web-local-storage'
 import {
   createBoundTossWebStorageAdapter,
   createVersionedPreferenceRepository,

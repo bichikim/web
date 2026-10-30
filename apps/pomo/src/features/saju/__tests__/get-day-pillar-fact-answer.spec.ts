@@ -10,6 +10,10 @@ it('should answer direct day-pillar questions with the calculated pillars', () =
   expect(getDayPillarFactAnswer('제 일간을 알려줘', CHART)).toContain('병(丙)')
 })
 
+it('should answer a day-stem fact requested for a diary', () => {
+  expect(getDayPillarFactAnswer('제 일기에 적을 내 일간은 무엇인가요?', CHART)).toContain('병(丙)')
+})
+
 it('should leave interpretive questions to the reading flow', () => {
   expect(getDayPillarFactAnswer('제 일주 성향을 해석해줘', CHART)).toBeNull()
   expect(getDayPillarFactAnswer('제 재물운은 어떤가요?', CHART)).toBeNull()

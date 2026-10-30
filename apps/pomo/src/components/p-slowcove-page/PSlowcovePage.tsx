@@ -5,7 +5,7 @@ import * as m from '@paraglide/message'
 import {GLASS_ICON_BUTTON} from '../button-presets'
 import {PButton} from '../p-button/PButton'
 
-import {PMusicPlayer} from '../p-music-player/PMusicPlayer'
+import {PMusicPlayer} from '../music-player/PMusicPlayer'
 import {SoundEffects} from '../music-player-view/SoundEffects'
 import type {VirtualLightPosition} from 'src/features/relax-glass-renderer'
 import {DEFAULT_RELAX_BACKGROUND_SOURCE, RELAX_BACKGROUND_OPTIONS} from './background-options'

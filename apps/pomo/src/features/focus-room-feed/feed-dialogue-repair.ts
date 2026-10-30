@@ -24,8 +24,11 @@ export interface IsMalformedDevFeedDialogueOptions {
 
 export interface RepairStoredDevFeedDialoguesOptions {
   readonly connections: ReadonlyArray<FeedConnection>
-  readonly dialogueRepository: PDialogueRepository
-  readonly feedRepository: FeedDialogueRepository
+  readonly dialogueRepository: Pick<PDialogueRepository, 'deleteDialogue' | 'getDialogue'>
+  readonly feedRepository: Pick<
+    FeedDialogueRepository,
+    'listItems' | 'listMetadata' | 'removeItem' | 'removeMetadata'
+  >
 }
 
 /** Detects dialogue text created when a legacy dev-feed link was parsed as article HTML. */

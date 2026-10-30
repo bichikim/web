@@ -123,6 +123,47 @@ const setup = (
 }
 
 describe('createNavigationCache', () => {
+  it.each(['definition', 'references'] as const)(
+    'should cache only final %s destinations after the streamed result kind changes',
+    async (kind) => {
+      const subject = setup()
+      const provisional: NavigationResult = {
+        kind: kind === 'definition' ? 'references' : 'definition',
+        locations: [location('provisional.ts')],
+      }
+      const final: NavigationResult = {kind, locations: [location('final.ts')]}
+      subject.setResults([provisional, final])
+      expect(await subject.query()).toEqual([provisional, final])
+      expect(await subject.query()).toEqual([final])
+      expect(subject.scan).toHaveBeenCalledOnce()
+    },
+  )
+
+  it('should restore retained references after an incremental scan temporarily publishes definitions', async () => {
+    const subject = setup()
+    await subject.query()
+    subject.update('second.ts')
+    const definition: NavigationResult = {
+      kind: 'definition',
+      locations: [location('helper.ts')],
+    }
+    const references: NavigationResult = {
+      kind: 'references',
+      locations: [location('second.ts', 3)],
+    }
+    subject.setResults([definition, references])
+    const updates = await subject.query()
+    const lastDefinition = updates.findLastIndex((batch) => batch.kind === 'definition')
+    expect(updates.slice(lastDefinition + 1).flatMap((batch) => batch.locations)).toEqual([
+      location('first.ts'),
+      location('second.ts', 3),
+    ])
+    expect((await subject.query()).flatMap((batch) => batch.locations)).toEqual([
+      location('first.ts'),
+      location('second.ts', 3),
+    ])
+  })
+
   it('should validate complete semantic queries without rebuilding the candidate graph', async () => {
     const subject = setup({semanticInputs: () => new Map()})
     const first = await subject.query()

@@ -20,10 +20,12 @@ vi.mock('@winter-love/puppet/player', () => ({
 
 const player: Player = {
   clearParameterValues: vi.fn(),
+  configureRenderer: vi.fn(),
   destroy: vi.fn(),
   getExpression: vi.fn(),
   getParameterValue: vi.fn(),
   getParameterValues: vi.fn(),
+  getRenderingInfo: vi.fn(),
   hitTest: vi.fn(),
   patchParameterValues: vi.fn(),
   pause: vi.fn(),

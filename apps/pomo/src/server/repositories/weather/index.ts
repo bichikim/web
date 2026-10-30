@@ -1,11 +1,7 @@
 import {and, desc, eq, gte, sql} from 'drizzle-orm'
 
-import {
-  type Database,
-  type TransactionalDatabase,
-  weather,
-  weatherCollectionState,
-} from '../../database'
+import type {Database, TransactionalDatabase} from '../../database'
+import {weather, weatherCollectionState} from '../../database/schema/weather'
 
 type WeatherCollectionRecord = typeof weatherCollectionState.$inferSelect
 type WeatherRow = typeof weather.$inferInsert
@@ -208,7 +204,7 @@ export const saveWeather = async (
     })
 }
 
-export const getLatestWeather = async (location: string, database: Database) => {
+export const getLatestWeather = async (location: string, database: Pick<Database, 'select'>) => {
   const [record] = await database
     .select()
     .from(weather)

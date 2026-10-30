@@ -2,16 +2,12 @@ import {type AsyncTaskController, useAsyncTask} from '../async-task'
 import {createSerialTaskQueue} from 'src/utils/create-serial-task-queue'
 import {type Accessor, createSignal, onCleanup, onMount, type Setter} from 'solid-js'
 
+import {type DesktopMode, isDesktopMode} from 'src/features/desktop-mode/is-desktop-mode'
+import {readCleanExit, readDesktopMode, writeCleanExit, writeDesktopMode} from './model'
 import {
-  type DesktopMode,
-  isDesktopMode,
-  readCleanExit,
-  readDesktopMode,
   readDesktopModeOwnerStorage,
-  writeCleanExit,
-  writeDesktopMode,
   writeDesktopModeOwnerStorage,
-} from './model'
+} from 'src/features/desktop-mode/storage'
 import {
   applyDesktopMode,
   finishDesktopModeTransition,

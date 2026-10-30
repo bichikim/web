@@ -1,9 +1,21 @@
 import {isPlainObject} from 'es-toolkit/predicate'
 
-import {hasListItem} from 'src/utils/has-list-item'
+import {parseCommaSeparated} from 'src/utils/parse-comma-separated'
 import type {AuthAccess} from './types'
 
 const ADMIN_ROLE = 'admin'
+
+const hasAdminRole = (role: unknown): boolean => {
+  if (typeof role === 'string') {
+    return parseCommaSeparated(role).includes(ADMIN_ROLE)
+  }
+
+  return (
+    Array.isArray(role) &&
+    role.every((value) => typeof value === 'string') &&
+    role.includes(ADMIN_ROLE)
+  )
+}
 
 export const classifyAuthAccess = (sessionData: unknown): AuthAccess => {
   if (sessionData === null) {
@@ -24,5 +36,5 @@ export const classifyAuthAccess = (sessionData: unknown): AuthAccess => {
     return 'invalid'
   }
 
-  return hasListItem(user.role, ADMIN_ROLE) ? 'admin' : 'user'
+  return hasAdminRole(user.role) ? 'admin' : 'user'
 }

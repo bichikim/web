@@ -1,4 +1,4 @@
-import {normalizePathname} from 'src/utils/normalize-pathname'
+import {removeTrailingSlashes} from 'src/utils/remove-trailing-slashes'
 import {useLocation} from '@solidjs/router'
 import {lazy, Show} from 'solid-js'
 import {NotFoundContent} from '../components/not-found/Content'
@@ -12,7 +12,7 @@ const PageDispatcher = import.meta.env.DEV
 
 export default function NotFoundPage() {
   const location = useLocation()
-  const pathname = () => normalizePathname(location.pathname)
+  const pathname = () => removeTrailingSlashes(location.pathname)
   const Dispatcher = () =>
     import.meta.env.DEV &&
     (pathname() === '/dev' || pathname().startsWith('/dev/')) &&

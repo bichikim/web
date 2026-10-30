@@ -90,6 +90,7 @@ export const english = {
     'The file changed elsewhere and was not saved. Copy your draft or discard changes, then check the original.',
   '다른 창에서 업데이트를 설치 중입니다. 완료 후 다시 확인해 주세요.':
     'Another window is installing an update. Check again when it finishes.',
+  '다시 시도': 'Retry',
   '다음 PDF 페이지': 'Next PDF page',
   '다음 검색 결과': 'Next search result',
   '다음 결과 (Enter)': 'Next result (Enter)',
@@ -102,6 +103,17 @@ export const english = {
   만들기: 'Create',
   '만들지 못했습니다. 대상 폴더와 파일 권한을 확인해 주세요.':
     'Could not create the entry. Check the destination folder and permissions.',
+  메모: 'Memos',
+  '메모 목록': 'Memo list',
+  '메모 수정': 'Edit memo',
+  '메모 작업': 'Memo actions',
+  '메모 접기': 'Collapse memos',
+  '메모 추가': 'Add memo',
+  '메모 추가…': 'Add a memo…',
+  '메모 펼치기': 'Expand memos',
+  '메모 표시/숨기기': 'Show/hide memos',
+  '메모를 저장하지 못했습니다. 저장 권한과 남은 공간을 확인해 주세요.':
+    'Could not save memos. Check write permissions and available space.',
   '모두 저장': 'Save all',
   '모든 변경 사항': 'All changes',
   '문서 도구': 'Document tools',
@@ -146,6 +158,7 @@ export const english = {
   '삭제된 원문': 'Deleted original',
   '삭제된 파일': 'Deleted file',
   '삭제된 파일 · 변경 사항 보기': 'Deleted file · View changes',
+  '새 메모': 'New memo',
   '새 버전 {version}': 'New version {version}',
   '새 탭에서 열기': 'Open in new tab',
   '새 파일': 'New file',
@@ -168,6 +181,7 @@ export const english = {
   '셀 내용을 표시합니다. 수식은 다시 계산하지 않습니다.':
     'Showing cell values. Formulas are not recalculated.',
   '소스 코드': 'Source code',
+  수정: 'Edit',
   '수정 변경 보기': 'View modified lines',
   '수정된 파일': 'Modified file',
   '스트림에 연결할 수 없습니다.': 'Cannot connect to the stream.',
@@ -261,6 +275,7 @@ export const english = {
   '채팅 첨부 {count}개': 'Chat attachments: {count}',
   '채팅 첨부는 20개, 전체 64 KiB까지 추가할 수 있습니다.':
     'Chat attachments are limited to 20 items and 64 KiB in total.',
+  '채팅에 추가': 'Add to chat',
   '채팅을 확인할 수 없어 작업 폴더를 기억할 수 없습니다. 채팅에서 뷰어를 다시 열어 주세요.':
     'Cannot identify this chat. Reopen the viewer from the chat to remember its workspace.',
   '채팅창에 추가': 'Add to chat',

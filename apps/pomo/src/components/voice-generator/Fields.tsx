@@ -1,7 +1,7 @@
 import {PTextarea} from 'src/components/p-textarea/PTextarea'
 import {cx} from 'class-variance-authority'
 import {For, type JSX, Show} from 'solid-js'
-import {SUPERTONIC_VOICES, type SupertonicVoiceId} from '../../features/supertonic/index'
+import {SUPERTONIC_VOICES, type SupertonicVoiceId} from '@winter-love/supertonic/model'
 import {VOICE_TEST_SCRIPTS} from '../voice-test-scripts'
 import {type ImportedVoice, VoiceDropZone} from './DropZone'
 

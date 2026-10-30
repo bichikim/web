@@ -32,6 +32,29 @@ export const createWeekendSelection = (
   )
   const qualifiedExpression = new RegExp(`${qualifiedExclusion.source}|${qualifiedTerm}`, 'gu')
 
+  const thisWeekendExclusion = createCalendarExclusionPattern(
+    `${wordStartPattern}이번 ?주말(?:은|에)?\\s*`,
+  )
+  const replacementExclusion = createCalendarExclusionPattern('')
+
+  const hasNextWeekendAfterThisExclusion = (text: string): boolean => {
+    if (!thisWeekendExclusion.test(text)) {
+      return false
+    }
+
+    const remaining = text.replace(thisWeekendExclusion, '')
+    if (replacementExclusion.test(remaining)) {
+      return false
+    }
+
+    const expressions = [...remaining.matchAll(qualifiedExpression)]
+    return (
+      expressions.length === 1 &&
+      /^다음 ?주말$/u.test(expressions[0]?.[0] ?? '') &&
+      !weekendPattern.test(remaining.replace(qualifiedExpression, ''))
+    )
+  }
+
   const hasRemainingNextWeekend = (text: string): boolean => {
     if (!excludedAfterNext.test(text) || nextReplacementExclusion.test(text)) {
       return false
@@ -75,7 +98,7 @@ export const createWeekendSelection = (
     if (weekendExclusion.test(text)) {
       return hasUnexcludedBareWeekend(text)
         ? 'upcoming'
-        : hasRemainingNextWeekend(text)
+        : hasRemainingNextWeekend(text) || hasNextWeekendAfterThisExclusion(text)
           ? 'next'
           : null
     }

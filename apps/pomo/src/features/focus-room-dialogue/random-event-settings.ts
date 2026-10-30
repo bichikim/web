@@ -6,7 +6,7 @@ import {
 import {createParsedPreferenceStorage} from '../parsed-preference-storage'
 import {z} from 'zod'
 
-import {webLocalStorage} from 'src/utils/preference-storage'
+import {webLocalStorage} from 'src/hooks/use-preference/web-local-storage'
 
 export interface RandomEventSettings {
   readonly maximumMinutes: number

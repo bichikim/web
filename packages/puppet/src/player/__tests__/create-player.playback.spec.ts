@@ -97,6 +97,7 @@ beforeEach(() => {
   vi.mocked(Container).mockImplementation(function mockContainer() {
     return {
       addChild: vi.fn(),
+      children: [],
       position: {set: vi.fn()},
       scale: {set: vi.fn()},
     } as unknown as Container

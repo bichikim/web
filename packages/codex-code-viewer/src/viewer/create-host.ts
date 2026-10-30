@@ -16,6 +16,7 @@ import {errorMessage} from './error-message'
 import {callViewerTool} from './call-viewer-tool'
 import {createHostAttachments} from './create-host-attachments'
 import {createTreeStateWriter} from './create-tree-state-writer'
+import {createHostMemos} from './create-host-memos'
 
 const httpStreams = (app: App): boolean =>
   z
@@ -100,13 +101,31 @@ const finishTeardown = async (
   return {}
 }
 
+const createHostLocale = (app: App) => {
+  const listeners = new Set<(locale: string | undefined) => void>()
+  return {
+    publish: (): void => {
+      const locale = app.getHostContext()?.locale
+      listeners.forEach((receive) => receive(locale))
+    },
+    subscribeLocale: (receive: (locale: string | undefined) => void): (() => void) => {
+      listeners.add(receive)
+      receive(app.getHostContext()?.locale)
+      return () => {
+        listeners.delete(receive)
+      }
+    },
+  }
+}
+
 export const createHost = (options: HostOptions = {}): ViewerPort => {
   const standard = options.integration === 'standard'
   const app = new App({name: 'Code Viewer', version: manifest.version}, {}, {autoResize: standard})
   const extensions = standard ? undefined : new OpenAIExtensions(app)
   // The base protocol carries custom methods, as in the OpenAI extensions adapter.
-  const protocol = app as unknown as Protocol<Request, Notification, Result>
+  const protocol = app as Protocol<Request, Notification, Result>
   const requests = createPendingTasks()
+  let connection: Promise<void> | null = null
   let session: string | undefined
   const rememberSession = (result: {structuredContent?: Record<string, unknown>}): void => {
     const parsed = connectionSchema.safeParse(result.structuredContent)
@@ -125,11 +144,14 @@ export const createHost = (options: HostOptions = {}): ViewerPort => {
     return result
   }
   const treeWriter = createTreeStateWriter({call, requests})
-  const localeListeners = new Set<(locale: string | undefined) => void>()
-  const publishLocale = (): void => {
-    const locale = app.getHostContext()?.locale
-    localeListeners.forEach((receive) => receive(locale))
-  }
+  const memos = standard
+    ? {}
+    : createHostMemos({
+        call,
+        ready: () => connection,
+        requests,
+      })
+  const {publish: publishLocale, subscribeLocale} = createHostLocale(app)
   const {synchronize: synchronizeContext, ...context} = createHostContext({
     app,
     call,
@@ -139,6 +161,7 @@ export const createHost = (options: HostOptions = {}): ViewerPort => {
     standard,
   })
   return {
+    ...memos,
     changeWorkspace: standard ? undefined : (path) => changeWorkspace(call, path),
     draftStorage: options.draftStorage,
     openFile: standard ? undefined : createFileOpening(extensions, requests),
@@ -215,8 +238,9 @@ export const createHost = (options: HostOptions = {}): ViewerPort => {
       app.addEventListener('toolinput', handleInput)
       app.addEventListener('hostcontextchanged', synchronizeContext)
       app.addEventListener('hostcontextchanged', publishLocale)
-      app.onteardown = () => finishTeardown(onTeardown, treeWriter.settle)
+      app.onteardown = () => finishTeardown(onTeardown, requests.settle)
       const connected = app.connect()
+      connection = connected
       try {
         await connected
       } catch (error) {
@@ -237,13 +261,7 @@ export const createHost = (options: HostOptions = {}): ViewerPort => {
         await app.close().catch(report)
       }
     },
-    subscribeLocale: (receive) => {
-      localeListeners.add(receive)
-      receive(app.getHostContext()?.locale)
-      return () => {
-        localeListeners.delete(receive)
-      }
-    },
+    subscribeLocale,
     watch: (session, receive, report) =>
       httpStreams(app)
         ? subscribeWorkspace({call, receive, session})

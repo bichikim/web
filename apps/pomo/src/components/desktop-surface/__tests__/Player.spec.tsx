@@ -15,7 +15,7 @@ import {usePScenePreferences} from '../../../features/focus-room-scene-preferenc
 import {useScreenSaver} from '../../../features/screen-saver'
 import {useWeather, type WeatherLocation} from '../../../features/weather'
 import {usePDisplayPreferences} from '../../../features/focus-room-display-preferences'
-import {PMusicPlayer} from '../../p-music-player/PMusicPlayer'
+import {PMusicPlayer} from '../../music-player/PMusicPlayer'
 import {
   createDesktopMusicActionChannel,
   createDesktopMusicActionInbox,
@@ -45,7 +45,7 @@ vi.mock('../../../features/desktop-mode', () => ({
   useDesktopSurfaceSize: vi.fn(),
 }))
 vi.mock('../../../features/weather', () => ({useWeather: vi.fn()}))
-vi.mock('../../p-music-player/PMusicPlayer', () => ({
+vi.mock('../../music-player/PMusicPlayer', () => ({
   PMusicPlayer: vi.fn((props) => {
     if (playerActionsReady.value) {
       props.onPlaybackActionsReady?.(playerActions)

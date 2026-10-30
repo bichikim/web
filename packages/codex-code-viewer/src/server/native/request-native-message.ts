@@ -1,4 +1,5 @@
 import {CancellationTokenSource, type MessageConnection} from 'vscode-jsonrpc/node.js'
+import {withAbort} from '../with-abort'
 
 /** Sends one LSP request and cancels it when its owning lookup is aborted. */
 export const requestNativeMessage = async (
@@ -12,7 +13,10 @@ export const requestNativeMessage = async (
   const cancel = (): void => cancellation.cancel()
   signal?.addEventListener('abort', cancel, {once: true})
   try {
-    const result = await connection.sendRequest<unknown>(method, params, cancellation.token)
+    const result = await withAbort(
+      connection.sendRequest<unknown>(method, params, cancellation.token),
+      signal,
+    )
     signal?.throwIfAborted()
     return result
   } finally {

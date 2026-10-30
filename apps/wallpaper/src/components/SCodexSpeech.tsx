@@ -6,7 +6,9 @@ import {
   type CodexActivity,
   type CodexApproval,
   codexPhaseLabel,
+  type CodexPort,
   type CodexQuestionRequest,
+  useChatOpen,
 } from '../features/codex'
 import {type SpeechAnchor, type SpeechPoint} from '../features/speech'
 import {SCodexSpeechContent} from './SCodexSpeechContent'
@@ -29,9 +31,11 @@ interface SCodexSpeechProps {
   readonly tone?: ChatTone
   readonly selected?: boolean
   readonly onSelect?: () => void
+  readonly onOpen?: CodexPort['openChat']
   readonly onDismiss?: () => void
 }
 export const SCodexSpeech = (props: SCodexSpeechProps) => {
+  const chat = useChatOpen({open: () => props.onOpen, sessionId: () => props.activity.sessionId})
   const caption = () => props.chatLabel ?? props.activity.title ?? 'Codex'
   return (
     <aside
@@ -66,10 +70,15 @@ export const SCodexSpeech = (props: SCodexSpeechProps) => {
                 type="button"
                 aria-label={`채팅 ${caption()} 선택`}
                 aria-pressed={props.selected ?? false}
-                title={caption()}
+                title={
+                  props.onOpen === undefined
+                    ? caption()
+                    : `${caption()} · 더블클릭하여 Codex에서 열기`
+                }
                 class="absolute inset-0 cursor-pointer appearance-none rounded-t-xl border-0 bg-transparent p-0
               focus-visible:outline-2 focus-visible:outline-blue-700 [outline-offset:-2px]"
                 onClick={select()}
+                onDblClick={chat.open}
               />
             )}
           </Show>
@@ -86,6 +95,26 @@ export const SCodexSpeech = (props: SCodexSpeechProps) => {
             {codexPhaseLabel(props.activity.phase)}
           </span>
           <SSpeechVoiceActivity state={props.voiceState} />
+          <Show when={props.onOpen}>
+            <button
+              type="button"
+              aria-label={`${caption()} Codex에서 열기`}
+              title="Codex에서 열기"
+              disabled={chat.busy()}
+              onClick={chat.open}
+              class="relative grid h-5 w-5 shrink-0 cursor-pointer place-items-center appearance-none rounded
+              border-0 bg-transparent p-0 text-stone-500 hover:bg-black/5 disabled:opacity-50
+              focus-visible:outline-2 focus-visible:outline-blue-700"
+            >
+              <svg
+                aria-hidden="true"
+                viewBox="0 0 24 24"
+                class="h-4 w-4 fill-none stroke-current stroke-2 [stroke-linecap:round] [stroke-linejoin:round]"
+              >
+                <path d="M14 3h7v7m0-7L10 14m0-10H4v16h16v-6" />
+              </svg>
+            </button>
+          </Show>
           <Show when={props.onDismiss}>
             {(dismiss) => (
               <button
@@ -107,6 +136,13 @@ export const SCodexSpeech = (props: SCodexSpeechProps) => {
             )}
           </Show>
         </div>
+        <Show when={chat.error()}>
+          {(message) => (
+            <p role="alert" class="m-0 text-xs text-red-700">
+              {message()}
+            </p>
+          )}
+        </Show>
         <SCodexSpeechContent
           activity={props.activity}
           wrap={props.wrap}

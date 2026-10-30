@@ -42,3 +42,17 @@ it('should ignore cancellation and prevent opening or importing while busy', () 
   expect(onFiles).not.toHaveBeenCalled()
   expect(screen.queryByText('model.json')).toBeNull()
 })
+
+it('should enable folder selection only when requested and preserve relative file paths', () => {
+  const onFiles = vi.fn()
+  const [directory, setDirectory] = createSignal(true)
+  const {container} = render(() => <SFileInput directory={directory()} onFiles={onFiles} />)
+  const input = container.querySelector<HTMLInputElement>('input[type="file"]')!
+  expect(input).toHaveAttribute('webkitdirectory')
+  const file = new File(['photo'], 'photo.png', {type: 'image/png'})
+  Object.defineProperty(file, 'webkitRelativePath', {value: 'album/trip/photo.png'})
+  fireEvent.change(input, {target: {files: [file]}})
+  expect(onFiles).toHaveBeenCalledExactlyOnceWith([file])
+  setDirectory(false)
+  expect(input).not.toHaveAttribute('webkitdirectory')
+})

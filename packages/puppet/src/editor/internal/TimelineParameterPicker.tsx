@@ -1,3 +1,4 @@
+import {preventInternalDismiss} from '../../design-system/prevent-internal-dismiss'
 import {DropdownMenu} from '@kobalte/core/dropdown-menu'
 import {createMemo, For} from 'solid-js'
 
@@ -10,6 +11,8 @@ export interface TimelineParameterPickerProps {
 }
 
 export const TimelineParameterPicker = (props: TimelineParameterPickerProps) => {
+  let surface: HTMLDivElement | undefined
+
   const mount = useEditorPortalMount()
   const disabled = createMemo(() => props.onAdd === undefined || props.parameters.length === 0)
 
@@ -25,6 +28,10 @@ export const TimelineParameterPicker = (props: TimelineParameterPickerProps) => 
       </DropdownMenu.Trigger>
       <DropdownMenu.Portal mount={mount}>
         <DropdownMenu.Content
+          ref={(element) => {
+            surface = element
+          }}
+          onInteractOutside={(event) => preventInternalDismiss(event, surface)}
           aria-label="추가할 파라미터"
           class="editor-context-menu-content timeline-parameter-picker-list"
         >

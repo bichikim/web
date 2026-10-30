@@ -2,6 +2,16 @@ import {describe, expect, it} from 'vitest'
 import {parseFileInput} from '../parse-file-input'
 
 describe('parseFileInput', () => {
+  it.each(['C:\\My Project\\main.ts', 'C:/My Project/main.ts', '\\\\server\\share\\main.ts'])(
+    'should recognize the Windows address %s and its coordinates',
+    (path) => {
+      expect(parseFileInput(`${path}:8:14`)).toEqual({
+        kind: 'path',
+        location: {column: 14, line: 8, path},
+        restoreView: false,
+      })
+    },
+  )
   it.each([
     'md',
     'mdx',

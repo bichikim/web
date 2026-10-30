@@ -77,7 +77,7 @@ beforeEach(() => {
       onClick={props.onActivate}
       type="button"
     >
-      {props.writer.request()}
+      {props.model.label}
     </button>
   ))
 })
@@ -103,6 +103,7 @@ describe('DialogueWriter', () => {
 
     for (const writer of writers) {
       expect(writer.controller.setRequest).toHaveBeenCalledWith('모두에게 전달할 질문')
+      expect(writer.controller.request()).toBe('모두에게 전달할 질문')
     }
     expect(
       screen.getByText((_, element) => element?.textContent === '11 / 800'),

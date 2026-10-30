@@ -1,0 +1,76 @@
+name: Deploy Wallpaper Dev
+
+on:
+  pull_request:
+    paths:
+      - apps/wallpaper-web/**
+      - packages/**
+      - package.json
+      - pnpm-lock.yaml
+      - pnpm-workspace.yaml
+      - turbo.json
+      - vitest*.mts
+      - vitest.setup.ts
+      - .github/workflows/wallpaper-web-*.yml
+      - .github/actions/wallpaper-web/**
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: wallpaper-web-${{ github.event_name == 'workflow_dispatch' && 'dev' || github.ref }}
+  cancel-in-progress: false
+
+env:
+  VERCEL_ORG_ID: team_Ic8YKQ9jWkFLhVzeljhB4ZLV
+  VERCEL_PROJECT_ID: ${{ vars.WALLPAPER_VERCEL_PROJECT_ID }}
+  VERCEL_CLI_VERSION: 59.5.0
+
+jobs:
+  verify:
+    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/dev'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - name: Validate Wallpaper project configuration
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          test -n "${VERCEL_PROJECT_ID}" || {
+            echo '::error::Set the WALLPAPER_VERCEL_PROJECT_ID Actions variable.'; exit 1;
+          }
+      - uses: ./.github/actions/wallpaper-web/verify
+      - uses: ./.github/actions/wallpaper-web/browser
+      - name: Prepare static deployment artifact
+        if: github.event_name == 'workflow_dispatch'
+        run: node apps/wallpaper-web/scripts/prepare-deployment.mjs
+      - uses: actions/upload-artifact@v4
+        if: github.event_name == 'workflow_dispatch'
+        with:
+          name: wallpaper-static
+          path: .vercel/output
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 1
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: wallpaper-browser-diagnostics
+          path: apps/wallpaper-web/test-results
+          if-no-files-found: ignore
+  deploy-preview:
+    needs: verify
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/dev'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/wallpaper-web/deploy
+        with:
+          target: preview
+          token: ${{ secrets.VERCEL_TOKEN }}

@@ -101,7 +101,7 @@ export const tokenizeSource = (path: string, text: string): CodeToken[][] => {
   }
   const lines: CodeToken[][] = [[]]
   for (const token of tokens) {
-    const parts = token.text.split(/\r?\n/u)
+    const parts = token.text.split(/\r\n|\n|\r/u)
     let {offset} = token
     for (const [index, part] of parts.entries()) {
       if (index > 0) {

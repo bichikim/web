@@ -1,4 +1,4 @@
-import {numericallyStableSoftmax} from 'src/utils/numerically-stable-softmax'
+import {numericallyStableSoftmax} from '@winter-love/supertonic/numerically-stable-softmax'
 import {clamp} from 'es-toolkit/math'
 import classifierArtifact from './classifier-artifact.json'
 import type {

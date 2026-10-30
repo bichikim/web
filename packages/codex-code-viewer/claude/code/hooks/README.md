@@ -8,6 +8,11 @@ The archived [register-pane.js](register-pane.js) retains the native Pane implem
 
 Stage the bundled `register.js` with `register.browser.test.ts` for the Browser SDK tests. To run the retained Pane tests, stage bundled `register-pane.js` as `register.js` with the previous `register*.test.ts` files, excluding `register.browser.test.ts`.
 
+## Type checks
+
+From the repository root, run `node packages/codex-code-viewer/claude/code/prepare-types.ts`, then `pnpm exec tsc --noEmit -p packages/codex-code-viewer/claude/code/tsconfig.json`.
+The preparation command reads the SDK declarations bundled with the pinned local Claude CLI and requires `zstd` on PATH (`CLAUDE_BINARY` and `ZSTD_BINARY` override the tools). It makes no model requests. Declarations stay in the ignored local cache; the version and checksum in [sdk-types.json](../sdk-types.json) make the check reproducible. Update that snapshot when intentionally adopting another SDK version.
+
 ## Retained Mods Pane
 
 The native Pane consumes a captured view model and emits declarative commands. Its views have no filesystem, network, DOM, Solid or Mods API dependencies. The controller owns I/O and session persistence; the server owns workspace boundaries, revisions and file operations.

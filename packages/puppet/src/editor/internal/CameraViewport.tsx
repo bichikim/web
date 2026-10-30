@@ -1,4 +1,4 @@
-import type {RuntimeView} from '../../tracking/types'
+import type {ViewportView as RuntimeView} from '../viewport/types'
 import {attachViewPan} from './attach-view-pan'
 import {attachViewNavigation} from './view-navigation'
 import {ViewRuler} from './ViewRuler'
@@ -13,12 +13,22 @@ interface CameraViewportProps {
   readonly view?: RuntimeView
   /** Reports navigation and fitting changes. Omitted, camera remains local. */
   readonly onViewChange?: (view: RuntimeView) => void
+  /** Reports the CSS scale so the canvas can match its displayed pixel density. */
+  readonly onZoomChange?: (zoom: number) => void
+  /** A changed defined value requests a fresh fit; omitted, fit only on resize. */
   readonly fitRevision?: unknown
+  /** Model width in document coordinates. */
   readonly width: number
+  /** Model height in document coordinates. */
   readonly height: number
+  /** Canvas and editor overlays positioned by the camera. */
   readonly children: JSX.Element
+  /** Viewport-level controls; omitted, no extra controls. */
   readonly controls?: JSX.Element
+  /** Extra camera buttons; omitted, only the standard buttons. */
   readonly viewControls?: JSX.Element
+  /** Host-owned view settings; omitted for camera controls only. */
+  readonly viewSettings?: JSX.Element
 }
 
 export const CameraViewport = (props: CameraViewportProps) => {
@@ -28,6 +38,10 @@ export const CameraViewport = (props: CameraViewportProps) => {
   const size = useElementSize(viewport)
   const [fitted, setFitted] = createSignal(true)
   const [dragging, setDragging] = createSignal(false)
+  createEffect(() => {
+    const zoom = camera().zoom
+    untrack(() => props.onZoomChange?.(zoom))
+  })
   const navigate = (nextCamera: ViewCamera) => {
     setFitted(false)
     setCamera(nextCamera)
@@ -125,6 +139,7 @@ export const CameraViewport = (props: CameraViewportProps) => {
         </div>
         <ViewCameraControls
           children={props.viewControls}
+          settings={props.viewSettings}
           camera={camera()}
           onChange={navigate}
           onFit={fit}

@@ -1,11 +1,11 @@
-import {containsMedia, hashMedia} from './content'
+import {containsMedia, hashMedia} from '@winter-love/wallpaper/media/content'
 import {prepareVideoBackground, removeVideoBackground} from '../video-background'
 import {
   type BackgroundRepository,
   type BackgroundSnapshot,
   backgroundSnapshotSchema,
   DEFAULT_BACKGROUND,
-} from './model'
+} from '@winter-love/wallpaper/model'
 import {createSerialTaskQueue, type SerialTaskQueue} from 'src/utils/create-serial-task-queue'
 
 const STORAGE_KEY = 'pomo:background:v1'

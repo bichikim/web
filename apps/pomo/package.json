@@ -41,7 +41,8 @@
   },
   "dependencies": {
     "@apps-in-toss/web-framework": "3.0.4",
-    "@huggingface/transformers": "4.2.0",
+    "@huggingface/transformers": "4.3.1",
+    "@huggingface/transformers-structured-output": "4.3.0",
     "@inlang/paraglide-js": "^2.24.1",
     "@kobalte/core": "^0.13.11",
     "@neondatabase/auth": "0.5.0-beta",
@@ -101,8 +102,6 @@
   "devDependencies": {
     "@apps-in-toss/devtools": "3.1.1",
     "@babel/core": "7.29.7",
-    "@babylonjs/core": "9.18.0",
-    "@babylonjs/loaders": "9.18.0",
     "@electric-sql/pglite": "0.5.8",
     "@iconify-json/tabler": "^1.2.33",
     "@inlang/plugin-m-function-matcher": "2.2.6",

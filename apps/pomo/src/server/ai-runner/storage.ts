@@ -123,7 +123,7 @@ const createR2ArtifactStore = (environment: RunnerStorageEnvironment): RunnerArt
       signal?.throwIfAborted()
       const objectKey = createObjectKey(jobId, objectKeyPrefix, contentType)
       const request = new Request(createAiArtifactObjectUrl(objectKey, environment), {
-        body: bytes as unknown as BodyInit,
+        body: bytes as BodyInit,
         headers: {
           'Content-Length': String(bytes.byteLength),
           'Content-Type': contentType,

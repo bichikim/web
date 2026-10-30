@@ -9,8 +9,8 @@ import type {WeatherLocation} from '../../../features/weather'
 import {getPomoIconClass} from '../../icon-style'
 import {PWeatherStatus} from '../../p-weather-status/PWeatherStatus'
 import {PScribbleCircleControl} from '../../scribble/CircleControl'
-import {MemoryAssistPanel} from '../MemoryAssistPanel'
-import {SceneSettingsPanel} from '../SettingsPanel'
+import {PMemoryAssist} from '../../p-memory-assist/PMemoryAssist'
+import {PSettings} from '../../p-settings/PSettings'
 import {SceneToolbar} from '../Toolbar'
 import {VersionNoticePanel} from '../VersionNoticePanel'
 
@@ -23,8 +23,8 @@ vi.mock('../../scribble/CircleControl', () => ({PScribbleCircleControl: vi.fn()}
 vi.mock('../../p-model-download-status/PModelDownloadStatus', () => ({
   PModelDownloadStatus: () => null,
 }))
-vi.mock('../SettingsPanel', () => ({SceneSettingsPanel: vi.fn()}))
-vi.mock('../MemoryAssistPanel', () => ({MemoryAssistPanel: vi.fn()}))
+vi.mock('../../p-settings/PSettings', () => ({PSettings: vi.fn()}))
+vi.mock('../../p-memory-assist/PMemoryAssist', () => ({PMemoryAssist: vi.fn()}))
 vi.mock('../VersionNoticePanel', () => ({VersionNoticePanel: vi.fn()}))
 vi.mock('../../p-button/PButton', () => ({
   PButton: (props: {
@@ -106,11 +106,11 @@ beforeEach(() => {
     Object.values(props)
     return <div>{props.children}</div>
   })
-  vi.mocked(SceneSettingsPanel).mockImplementation((props) => {
+  vi.mocked(PSettings).mockImplementation((props) => {
     Object.values(props)
     return <div>settings control</div>
   })
-  vi.mocked(MemoryAssistPanel).mockImplementation((props) => {
+  vi.mocked(PMemoryAssist).mockImplementation((props) => {
     Object.values(props)
     return <div>memory assist control</div>
   })
@@ -140,7 +140,7 @@ describe('SceneToolbar', () => {
         .mock.calls.some(([props]) => props.class?.includes('max-lg:hidden')),
     ).toBe(false)
     expect(getPomoIconClass).toHaveBeenCalledWith('i-tabler-route', 'original')
-    expect(SceneSettingsPanel).toHaveBeenCalledWith(
+    expect(PSettings).toHaveBeenCalledWith(
       expect.objectContaining({
         activity: 'reading',
         dialogueComposerVisible: false,
@@ -160,7 +160,7 @@ describe('SceneToolbar', () => {
     expect(
       screen.getByText('memory assist control').closest('[data-tour-step="memory-assist"]'),
     ).toHaveClass('inline-flex')
-    expect(MemoryAssistPanel).toHaveBeenCalledWith(
+    expect(PMemoryAssist).toHaveBeenCalledWith(
       expect.objectContaining({sceneStyle: 'original', weatherState: {status: 'disabled'}}),
     )
     const settings = screen.getByText('settings control')
@@ -190,12 +190,10 @@ describe('SceneToolbar', () => {
     ))
 
     expect(screen.getByRole('status')).toBeInTheDocument()
-    expect(MemoryAssistPanel).toHaveBeenCalledWith(
-      expect.objectContaining({sceneStyle: 'scribble'}),
-    )
+    expect(PMemoryAssist).toHaveBeenCalledWith(expect.objectContaining({sceneStyle: 'scribble'}))
     expect(getPomoIconClass).toHaveBeenCalledWith(expect.any(String), 'scribble')
     expect(onDesktopModeChange).not.toHaveBeenCalled()
-    expect(SceneSettingsPanel).toHaveBeenCalledWith(
+    expect(PSettings).toHaveBeenCalledWith(
       expect.objectContaining({
         desktopMode: 'widget',
         desktopModeError: 'native failed',

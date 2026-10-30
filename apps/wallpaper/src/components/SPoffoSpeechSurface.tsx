@@ -2,7 +2,7 @@ import {useVoice} from '../features/voice/use-voice'
 import {useSpeechLipSync} from '../features/lipsync'
 import {voiceMessage} from '../features/voice/text'
 import {createMemo, createSignal, type JSX, Show} from 'solid-js'
-import {useCodexNotifications, useCodexTitles, useSpeechTarget} from '../features/codex'
+import {codexPort, useCodexNotifications, useCodexTitles, useSpeechTarget} from '../features/codex'
 import {useSpeechSize} from '../features/codex/use-speech-size'
 import {useSpeechHitTest, useWidgetSpeech} from '../features/speech'
 import {SCodexSpeechStack} from './SCodexSpeechStack'
@@ -94,6 +94,7 @@ export const SPoffoSpeechSurface = (props: {readonly widgetId?: string} = {}) =>
             maxHeight={target()?.maxHeight}
             layout={scroll()}
             onDismiss={connection.dismiss}
+            onOpen={codexPort.openChat}
             onSelected={setSelected}
             voiceNotice={voiceNotice()}
             voiceState={voice.status()}

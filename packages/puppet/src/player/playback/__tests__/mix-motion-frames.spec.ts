@@ -205,3 +205,34 @@ test('should blend imported fades from previous motion values without retaining 
   })
   expect(second.motionParameterValues.angle).toBeCloseTo(25)
 })
+
+test('should copy unkeyed coordinates and mix only in-range sparse vertex channels', () => {
+  const input = new Float32Array([10, 20, 30, 40])
+  const sample = {blend: 'replace' as const, priority: 0, value: 90, weight: 1}
+  const mixed = mixMotionVertices({
+    partId: 'part',
+    restVertices: [0, 0, 0, 0],
+    samples: new Map([
+      [
+        'part',
+        new Map([
+          [1, [sample]],
+          [-1, [sample]],
+          [1.5, [sample]],
+          [4, [sample]],
+        ]),
+      ],
+    ]),
+    vertices: input,
+  })
+  expect(mixed).toEqual([10, 90, 30, 40])
+  expect([...input]).toEqual([10, 20, 30, 40])
+  const copy = mixMotionVertices({
+    partId: 'other',
+    restVertices: [],
+    samples: new Map(),
+    vertices: input,
+  })
+  input[0] = 50
+  expect(copy).toEqual([10, 20, 30, 40])
+})

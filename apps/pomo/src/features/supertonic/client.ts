@@ -1,6 +1,10 @@
 // oxlint-disable no-await-in-loop, no-loop-func, no-unmodified-loop-condition -- Stream consumers intentionally wait for each Worker chunk notification.
-import type {CancelledError, SupertonicError, WorkerFailedError} from './errors'
-import {resolveSupertonicLanguage, type SupertonicLanguage} from './language'
+import type {
+  CancelledError,
+  SupertonicError,
+  WorkerFailedError,
+} from '@winter-love/supertonic/errors'
+import {resolveSupertonicLanguage, type SupertonicLanguage} from '@winter-love/supertonic/language'
 import type {
   SupertonicAudio,
   SupertonicAudioChunk,
@@ -10,7 +14,7 @@ import type {
   SupertonicWorkerInput,
   SupertonicWorkerOutput,
 } from './messages'
-import type {SupertonicModelId} from './model'
+import type {SupertonicModelId} from '@winter-love/supertonic/model'
 import {reportClientError} from '../client-error-reporter'
 import {failureResult, type Result, successResult} from 'src/features/result'
 

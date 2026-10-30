@@ -25,7 +25,17 @@ export default defineConfig({
       headless: true,
       instances: [
         {browser: 'chromium', viewport: {height: 700, width: 900}},
-        {browser: 'webkit', viewport: {height: 700, width: 900}},
+        {
+          browser: 'webkit',
+          // WebKit's nonpersistent context rejects IndexedDB Blob/File writes.
+          fileParallelism: false,
+          provider: playwright({
+            persistentContext: fileURLToPath(
+              new URL('./node_modules/.cache/webkit', import.meta.url),
+            ),
+          }),
+          viewport: {height: 700, width: 900},
+        },
       ],
       provider: playwright(),
     },

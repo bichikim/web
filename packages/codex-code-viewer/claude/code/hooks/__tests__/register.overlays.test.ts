@@ -1,5 +1,7 @@
+import {readNumber} from './read-number'
+import {activateTree, paneTarget, projectFixture, required} from './fixture'
+import {readField} from './read-field'
 import {expect, test} from 'claude-code/testing'
-import {activateTree, paneTarget, projectFixture} from './fixture'
 
 test('should preserve source selection and placement when code actions open', async (engine, on) => {
   const fixture = projectFixture(on, true)
@@ -9,21 +11,21 @@ test('should preserve source selection and placement when code actions open', as
   await pane.pointer({button: 'left', in: 'code-editor', type: 'down', x: 5, y: 0})
   await pane.pointer({button: 'left', in: 'code-editor', type: 'move', x: 10, y: 0})
   await pane.pointer({button: 'left', in: 'code-editor', type: 'up', x: 10, y: 0})
-  const before = (await pane.find({key: 'code-editor'})).props.props
+  const before = readField(await pane.find({key: 'code-editor'}), 'props', 'props')
   await pane.pointer({button: 'right', in: 'code-editor', type: 'down', x: 7, y: 0})
   expect(await pane.find({key: 'pane-popover'})).toBeDefined()
-  const after = (await pane.find({key: 'code-editor'})).props.props
-  expect([after.anchor, after.head, after.start]).toEqual([
-    before.anchor,
-    before.head,
-    before.start,
-  ])
+  const after = readField(await pane.find({key: 'code-editor'}), 'props', 'props')
+  expect([readField(after, 'anchor'), readField(after, 'head'), readField(after, 'start')]).toEqual(
+    [readField(before, 'anchor'), readField(before, 'head'), readField(before, 'start')],
+  )
   await pane.press({key: 'context-copy'})
   expect(fixture.clipboard.text).toBe('expor')
   expect(await pane.find({key: 'pane-popover'})).toBeUndefined()
   await pane.pointer({button: 'right', in: 'code-editor', type: 'down', x: 7, y: 0})
   await pane.press({key: 'context-attach'})
-  expect(fixture.stored.get('pane:/project:session-one').attachments[0].text).toContain('expor')
+  expect(
+    readField(fixture.stored.get('pane:/project:session-one'), 'attachments', 0, 'text'),
+  ).toContain('expor')
 })
 
 test('should keep tree context actions in a floating menu and open rename only when chosen', async (engine, on) => {
@@ -60,7 +62,7 @@ test('should copy a tree entry by shortcut and rename the focused row with F2', 
   const pane = await engine.ui.mount(paneTarget)
   await activateTree(pane, 'a.ts', 'focus')
   await pane.key({ctrl: true, in: 'file-tree:viewport', key: 'c'})
-  expect(fixture.requests.at(-1).name).toBe('code.entry')
+  expect(required(fixture.requests.at(-1)).name).toBe('code.entry')
   expect(await pane.find({key: 'pane-popover'})).toBeUndefined()
   await pane.key({in: 'file-tree:viewport', key: 'f2'})
   expect(await pane.find({key: 'entry-name'})).toBeDefined()
@@ -76,8 +78,8 @@ test('should open code context actions by keyboard without changing the draft', 
   await pane.input({key: 'path', text: 'a.ts'})
   await pane.key({in: 'code-editor', key: 'f10', shift: true})
   expect(await pane.find({key: 'context-attach'})).toBeDefined()
-  expect(fixture.stored.get('pane:/project:session-one').documents[0].source).toBe(
-    fixture.files.get('a.ts').source,
+  expect(readField(fixture.stored.get('pane:/project:session-one'), 'documents', 0, 'source')).toBe(
+    required(fixture.files.get('a.ts')).source,
   )
 })
 
@@ -93,11 +95,11 @@ test('should show grouped reference destinations as an overlay and close it from
   await engine.session.start({cwd: '/project', isInteractive: false, surface: 'desktop'})
   const pane = await engine.ui.mount(paneTarget)
   await pane.input({key: 'path', text: 'a.ts'})
-  const before = (await pane.find({key: 'code-editor'})).props.props.rows
+  const before = readField(await pane.find({key: 'code-editor'}), 'props', 'props', 'rows')
   await pane.key({in: 'code-editor', key: 'f12'})
   expect(await pane.find({key: 'reference-group:b.ts'})).toBeDefined()
   expect(await pane.find({key: 'location:1'})).toBeDefined()
-  expect((await pane.find({key: 'code-editor'})).props.props.rows).toBe(before)
+  expect(readField(await pane.find({key: 'code-editor'}), 'props', 'props', 'rows')).toBe(before)
   await pane.press({key: 'reference-group:b.ts'})
   expect(await pane.find({key: 'location:1'})).toBeUndefined()
   await pane.press({key: 'reference-group:b.ts'})
@@ -122,9 +124,13 @@ test('should persist preview lines and size reference destinations accordingly',
   await pane.select({key: 'setting-preview-lines', value: String(previewCount)})
   await pane.press({key: 'settings-close'})
   await pane.key({in: 'code-editor', key: 'f12'})
-  expect(fixture.stored.get('pane:/project:session-one:view').previewLines).toBe(previewCount)
-  expect((await pane.find({key: 'control:location:0'})).props.props.rows).toBe(previewCount)
-  expect((await pane.find({key: 'control:location:1'})).props.props.rows).toBe(1)
+  expect(readField(fixture.stored.get('pane:/project:session-one:view'), 'previewLines')).toBe(
+    previewCount,
+  )
+  expect(readField(await pane.find({key: 'control:location:0'}), 'props', 'props', 'rows')).toBe(
+    previewCount,
+  )
+  expect(readField(await pane.find({key: 'control:location:1'}), 'props', 'props', 'rows')).toBe(1)
 })
 
 test('should translate UI actions while preserving project filenames and source text', async (engine, on) => {
@@ -134,28 +140,39 @@ test('should translate UI actions while preserving project filenames and source 
   const pane = await engine.ui.mount(paneTarget)
   await pane.press({key: 'settings'})
   await pane.select({key: 'setting-language', value: 'en'})
-  expect((await pane.find({key: 'settings-close'})).props.label).toBe('Close')
+  expect(readField(await pane.find({key: 'settings-close'}), 'props', 'label')).toBe('Close')
   await pane.press({key: 'settings-close'})
-  expect((await pane.find({key: 'search'})).props.label).toBe('Search')
+  expect(readField(await pane.find({key: 'search'}), 'props', 'label')).toBe('Search')
   await pane.input({key: 'path', kind: 'change', text: '저장'})
   await pane.press({key: 'search'})
-  expect((await pane.find({key: 'file:저장'})).props.label).toBe('저장')
+  expect(readField(await pane.find({key: 'file:저장'}), 'props', 'label')).toBe('저장')
   await pane.press({key: 'file:저장'})
-  expect((await pane.find({key: 'code-editor'})).props.props.source).toContain('"저장"')
-  expect(fixture.stored.get('pane:/project:session-one:view').language).toBe('en')
+  expect(readField(await pane.find({key: 'code-editor'}), 'props', 'props', 'source')).toContain(
+    '"저장"',
+  )
+  expect(readField(fixture.stored.get('pane:/project:session-one:view'), 'language')).toBe('en')
 })
 
 test('should activate painted icon controls once and reject an outdated control press', async (engine, on) => {
   projectFixture(on)
-  on('ui.focus', () => ({value: {}}))
+  on('ui.focus', () => ({}))
   await engine.session.start({cwd: '/project', isInteractive: false, surface: 'desktop'})
   const pane = await engine.ui.mount(paneTarget)
   await pane.input({key: 'path', text: 'a.ts'})
-  const previous = (await pane.find({key: 'control:files'})).props.props.generation
+  const previous = readNumber(
+    readField(await pane.find({key: 'control:files'}), 'props', 'props', 'generation'),
+  )
   await pane.post({kind: 'press'}, {in: 'control:files'})
   expect(await pane.find({key: 'file-tree:viewport'})).toBeDefined()
-  await engine.ui.focus({key: 'files', requestId: 'code-viewer-pane'})
-  expect((await pane.find({key: 'control:files'})).props.props.generation).toBe(previous)
+  await engine.ui.focus({
+    component: 'Pane',
+    element: 'files',
+    origin: {kind: 'person'},
+    requestId: 'code-viewer-pane',
+  })
+  expect(readField(await pane.find({key: 'control:files'}), 'props', 'props', 'generation')).toBe(
+    previous,
+  )
   await pane.pointer({button: 'left', in: 'control:files', type: 'down', x: 1, y: 0})
   await pane.pointer({button: 'left', in: 'control:files', type: 'up', x: 1, y: 0})
   expect(await pane.find({key: 'file-tree:viewport'})).toBeUndefined()
@@ -225,21 +242,23 @@ test('should zoom a PNG with shared camera geometry and restore fit without chan
   await engine.session.start({cwd: '/project', isInteractive: false, surface: 'desktop'})
   const pane = await engine.ui.mount(paneTarget)
   await pane.input({key: 'path', text: 'image.png'})
-  expect((await pane.find({key: 'image-percent'})).props.value).toBe('100')
+  expect(readField(await pane.find({key: 'image-percent'}), 'props', 'value')).toBe('100')
   await pane.input({key: 'image-percent', text: '1600'})
   expect(JSON.stringify(await pane.drawn())).toContain('width=\\\"512\\\"')
-  expect((await pane.find({key: 'image-percent'})).props.value).toBe('1600')
+  expect(readField(await pane.find({key: 'image-percent'}), 'props', 'value')).toBe('1600')
   await pane.press({key: 'image-zoom-out'})
-  expect((await pane.find({key: 'image-percent'})).props.value).toBe('1280')
+  expect(readField(await pane.find({key: 'image-percent'}), 'props', 'value')).toBe('1280')
   await pane.press({key: 'image-fit'})
-  expect((await pane.find({key: 'image-percent'})).props.value).toBe('100')
+  expect(readField(await pane.find({key: 'image-percent'}), 'props', 'value')).toBe('100')
   await pane.key({in: 'image-preview', key: '+'})
-  expect((await pane.find({key: 'image-percent'})).props.value).toBe('125')
+  expect(readField(await pane.find({key: 'image-percent'}), 'props', 'value')).toBe('125')
   await pane.key({in: 'image-preview', key: 'home'})
-  expect((await pane.find({key: 'image-percent'})).props.value).toBe('100')
+  expect(readField(await pane.find({key: 'image-percent'}), 'props', 'value')).toBe('100')
   await pane.post({kind: 'save'}, {in: 'image-preview'})
   expect(fixture.requests.some((request) => request.name === 'code.save')).toBe(false)
-  expect(fixture.stored.get('pane:/project:session-one').documents[0].source).toBe('')
+  expect(readField(fixture.stored.get('pane:/project:session-one'), 'documents', 0, 'source')).toBe(
+    '',
+  )
 })
 
 test('should reuse table filtering and sheet selection for an Excel preview', async (engine, on) => {
@@ -288,7 +307,7 @@ test('should reuse table filtering and sheet selection for an Excel preview', as
   expect(JSON.stringify(await pane.drawn())).not.toContain('alpha │ 2')
   await pane.select({key: 'table-sheet', value: '1'})
   expect(JSON.stringify(await pane.drawn())).toContain('gamma │ 3')
-  expect((await pane.find({key: 'table-filter'})).props.value).toBe('')
+  expect(readField(await pane.find({key: 'table-filter'}), 'props', 'value')).toBe('')
 })
 
 test('should render Word headings and page through document blocks', async (engine, on) => {
@@ -331,9 +350,11 @@ test('should filter names through a native input without changing the document',
   expect(fixture.notices).toEqual([])
   expect(await pane.find({key: 'control:tree-filter'})).toBeUndefined()
   await pane.input({key: 'tree-filter', kind: 'change', text: 'b.ts'})
-  expect((await pane.find({key: 'file-tree:viewport'})).props.props.rows[0].name).toBe('b.ts')
-  expect(fixture.stored.get('pane:/project:session-one').documents[0].source).toBe(
-    fixture.files.get('a.ts').source,
+  expect(
+    readField(await pane.find({key: 'file-tree:viewport'}), 'props', 'props', 'rows', 0, 'name'),
+  ).toBe('b.ts')
+  expect(readField(fixture.stored.get('pane:/project:session-one'), 'documents', 0, 'source')).toBe(
+    required(fixture.files.get('a.ts')).source,
   )
 })
 
@@ -355,22 +376,24 @@ test('should page and zoom a PDF while retaining its revision and source', async
   await engine.session.start({cwd: '/project', isInteractive: false, surface: 'desktop'})
   const pane = await engine.ui.mount(paneTarget)
   await pane.input({key: 'path', text: 'pages.pdf'})
-  expect((await pane.find({key: 'pdf-page'})).props.value).toBe('1')
+  expect(readField(await pane.find({key: 'pdf-page'}), 'props', 'value')).toBe('1')
   await pane.press({key: 'pdf-next'})
-  expect((await pane.find({key: 'pdf-page'})).props.value).toBe('2')
+  expect(readField(await pane.find({key: 'pdf-page'}), 'props', 'value')).toBe('2')
   expect(fixture.requests.at(-1)).toMatchObject({
     arguments: {page: 2, revision: 'pdf1'},
     name: 'code.pdfPreview',
   })
   await pane.input({key: 'image-percent', text: '200'})
-  expect((await pane.find({key: 'image-percent'})).props.value).toBe('200')
+  expect(readField(await pane.find({key: 'image-percent'}), 'props', 'value')).toBe('200')
   await pane.input({key: 'pdf-page', text: '3'})
-  expect((await pane.find({key: 'pdf-page'})).props.value).toBe('3')
-  expect((await pane.find({key: 'image-percent'})).props.value).toBe('200')
+  expect(readField(await pane.find({key: 'pdf-page'}), 'props', 'value')).toBe('3')
+  expect(readField(await pane.find({key: 'image-percent'}), 'props', 'value')).toBe('200')
   expect(await pane.find({key: 'pdf-next'})).toBeUndefined()
   await pane.input({key: 'path', text: 'a.ts'})
   await pane.input({key: 'path', text: 'pages.pdf'})
-  expect((await pane.find({key: 'pdf-page'})).props.value).toBe('3')
-  expect((await pane.find({key: 'image-percent'})).props.value).toBe('200')
-  expect(fixture.stored.get('pane:/project:session-one').documents[0].source).toBe('')
+  expect(readField(await pane.find({key: 'pdf-page'}), 'props', 'value')).toBe('3')
+  expect(readField(await pane.find({key: 'image-percent'}), 'props', 'value')).toBe('200')
+  expect(readField(fixture.stored.get('pane:/project:session-one'), 'documents', 0, 'source')).toBe(
+    '',
+  )
 })

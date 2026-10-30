@@ -1,6 +1,6 @@
 /** @vitest-environment node */
 import {expect, it} from 'vitest'
-import {SUPERTONIC_MODELS, SUPERTONIC_VOICES} from '../../supertonic/model'
+import {SUPERTONIC_MODELS, SUPERTONIC_VOICES} from '@winter-love/supertonic/model'
 import {feedDialogueJobSchema} from '../feed-dialogue-schema'
 
 const job = {

@@ -12,11 +12,8 @@ import {
 } from '../../features/focus-room-feed'
 import {formatModelDownloadSize} from '../../features/model-storage'
 import {type ModelDownloadResult, useModelDownload} from '../../features/model-download'
-import {
-  getSupertonicModel,
-  isSupertonicModelDownloaded,
-  type SupertonicModelId,
-} from '../../features/supertonic'
+import {getSupertonicModel, type SupertonicModelId} from '@winter-love/supertonic/model'
+import {isSupertonicModelDownloaded} from '../../features/supertonic'
 import * as m from '@paraglide/message'
 import {FeedStatusSurface} from '../feed-status/Surface'
 import {CLASSES} from '../feed-status/shared'

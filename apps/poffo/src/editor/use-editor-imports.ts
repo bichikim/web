@@ -1,0 +1,207 @@
+import {type Accessor, createSignal, onCleanup} from 'solid-js'
+import {preparePuppetDocument, type PuppetDocument} from '@winter-love/puppet/player'
+import {
+  getPsdErrorMessage,
+  importPng,
+  type ImportPngErrorCode,
+  importPsd,
+  mergeDocument,
+  type ModelCommandResult,
+  type PuppetExampleDocument,
+  unpackTextureAtlas,
+  usePsdReimport,
+} from '@winter-love/puppet/editor'
+
+const getPngErrorMessage = (code: ImportPngErrorCode) => {
+  switch (code) {
+    case 'decode-failed':
+      return 'PNG 이미지를 해석하지 못했습니다.'
+    case 'invalid-file':
+      return 'PNG 파일만 불러올 수 있습니다.'
+    case 'no-opaque-pixels':
+      return '불투명한 픽셀이 없어 메시를 만들 수 없습니다.'
+    case 'read-failed':
+      return 'PNG 파일을 읽지 못했습니다.'
+    case 'render-failed':
+      return 'PNG 픽셀을 분석할 캔버스를 만들지 못했습니다.'
+    case 'too-large':
+      return '이미지가 너무 큽니다. 1,677만 픽셀 이하 PNG를 사용하세요.'
+    case 'invalid-alpha-threshold':
+    case 'invalid-cell-size':
+    case 'invalid-pixel-data':
+      return 'PNG 메시 생성 설정이 올바르지 않습니다.'
+    default: {
+      const exhaustiveCode: never = code
+      return exhaustiveCode
+    }
+  }
+}
+const getReadFailure = (example: boolean): string =>
+  example ? '예제를 불러오지 못했습니다.' : '파일을 읽지 못했습니다.'
+
+const commitImported = (
+  props: UseEditorImportsProps,
+  document: PuppetDocument,
+  mode: 'append' | 'replace',
+): boolean => {
+  const result =
+    mode === 'append' ? props.onReimportDocumentChange(document) : props.onDocumentChange(document)
+  if (!result.ok) {
+    props.onNotice('진행 중인 편집을 마친 후 파일을 다시 선택하세요.')
+  }
+  return result.ok
+}
+
+export interface UseEditorImportsProps {
+  /** Current host revision; omitted for callers without a versioned model. */
+  readonly revision?: Accessor<number>
+  readonly readPsd?: typeof importPsd
+  readonly document: Accessor<PuppetDocument>
+  readonly onReimportDocumentChange: (document: PuppetDocument) => ModelCommandResult
+  readonly onDocumentChange: (document: PuppetDocument) => ModelCommandResult
+  readonly onNotice: (message: string | null) => void
+}
+interface ReadFileSuccess {
+  readonly ok: true
+  readonly document: PuppetDocument
+  readonly notice: string
+}
+interface ReadFileFailure {
+  readonly ok: false
+  readonly notice: string
+}
+const readFile = async (
+  file: File,
+  signal: AbortSignal,
+  readPsd: typeof importPsd = importPsd,
+): Promise<ReadFileSuccess | ReadFileFailure> => {
+  const extension = file.name.split('.').at(-1)?.toLowerCase()
+  if (extension === 'json' || extension === 'poffo' || file.type === 'application/json') {
+    const result = await preparePuppetDocument({
+      signal,
+      source: file,
+    })
+    if (!result.ok) {
+      return {notice: '올바른 Poffo 문서를 선택하세요.', ok: false}
+    }
+    // Editing tools work on each part's own image, so atlas pages are cut back into them.
+    try {
+      return {document: await unpackTextureAtlas(result.document), notice: '', ok: true}
+    } catch {
+      return {notice: '텍스처 아틀라스 이미지를 읽지 못했습니다.', ok: false}
+    }
+  }
+
+  switch (extension) {
+    case 'png': {
+      const result = await importPng(file)
+      return result.ok
+        ? {...result, notice: ''}
+        : {notice: getPngErrorMessage(result.error.code), ok: false}
+    }
+    case 'psd': {
+      const result = await readPsd(file, signal)
+      return result.ok
+        ? {...result, notice: result.warnings.join(' ')}
+        : {notice: getPsdErrorMessage(result.error.code), ok: false}
+    }
+    default:
+      return {notice: 'PNG, PSD, JSON, Poffo 파일을 선택하세요.', ok: false}
+  }
+}
+export const useEditorImports = (props: UseEditorImportsProps) => {
+  const reimport = usePsdReimport({
+    document: props.document,
+    onDocumentChange: props.onReimportDocumentChange,
+    onNotice: props.onNotice,
+    readPsd: props.readPsd,
+    revision: props.revision,
+  })
+  const [revision, setRevision] = createSignal(0)
+  const [pendingFile, setPendingFile] = createSignal<string | null>(null)
+  let generation = 0
+  let controller: AbortController | undefined
+  const cancel = () => {
+    generation += 1
+    controller?.abort()
+    controller = undefined
+    setPendingFile(null)
+  }
+  onCleanup(cancel)
+  const load = async (
+    source: File | PuppetExampleDocument['load'] | undefined,
+    mode: 'append' | 'replace',
+  ) => {
+    if (source === undefined) {
+      return
+    }
+    generation += 1
+    const current = generation
+    controller?.abort()
+    const nextController = new AbortController()
+    controller = nextController
+    const baseline = {document: props.document(), revision: props.revision?.()}
+    reimport.cancel()
+    const isExample = typeof source === 'function'
+    setPendingFile(isExample ? '예제' : source.name)
+    props.onNotice(null)
+    try {
+      const file = isExample ? await source(nextController.signal) : source
+      if (current !== generation) {
+        return
+      }
+      const result = await readFile(file, nextController.signal, props.readPsd)
+      if (current !== generation) {
+        return
+      }
+      if (!result.ok) {
+        props.onNotice(result.notice)
+        return
+      }
+      if (baseline.document !== props.document() || baseline.revision !== props.revision?.()) {
+        props.onNotice('읽는 동안 문서가 변경되었습니다. 파일을 다시 선택하세요.')
+        return
+      }
+      const next = mode === 'append' ? mergeDocument(baseline.document, result.document) : result
+      if (!next.ok) {
+        props.onNotice('모델의 연결 관계를 유지할 수 없어 추가하지 않았습니다.')
+        return
+      }
+      if (!commitImported(props, next.document, mode)) {
+        return
+      }
+      if (mode === 'replace') {
+        setRevision((value) => value + 1)
+      }
+      props.onNotice(result.notice || null)
+    } catch (cause) {
+      console.warn('Poffo file import failed.', cause)
+      if (current === generation) {
+        props.onNotice(getReadFailure(isExample))
+      }
+    } finally {
+      if (current === generation) {
+        controller = undefined
+        setPendingFile(null)
+      }
+    }
+  }
+  return {
+    cancel,
+    handleImport: (file: File | undefined) => load(file, 'append'),
+    handleOpen: (file: File | undefined) => load(file, 'replace'),
+    handleOpenExample: (example: PuppetExampleDocument) => load(example.load, 'replace'),
+    pendingFile,
+    reimport: {
+      ...reimport,
+      load: (file: File | undefined) => {
+        if (file === undefined) {
+          return Promise.resolve()
+        }
+        cancel()
+        return reimport.load(file)
+      },
+    },
+    revision,
+  }
+}

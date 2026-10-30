@@ -1,0 +1,30 @@
+{
+  "name": "@winter-love/poffo",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "lint": "oxlint src vite.config.ts uno.config.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@discoveryjs/json-ext": "1.1.0",
+    "@dschz/solid-flow": "0.2.6",
+    "@kobalte/core": "^0.13.13",
+    "@mediapipe/tasks-vision": "^1.1.0",
+    "@winter-love/puppet": "workspace:*",
+    "es-toolkit": "catalog:",
+    "solid-js": "catalog:"
+  },
+  "devDependencies": {
+    "typescript": "catalog:",
+    "unocss": "catalog:",
+    "vite": "catalog:",
+    "vite-plugin-solid": "catalog:"
+  },
+  "engines": {
+    "node": ">=24"
+  }
+}

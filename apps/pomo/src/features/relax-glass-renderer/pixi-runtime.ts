@@ -1,5 +1,6 @@
 import {observeReducedMotionPreference} from 'src/utils/observe-media-query'
 import {Application, Texture, type WebGLRenderer} from 'pixi.js'
+import {installRainBlendMode} from './install-rain-blend-mode'
 
 const MAX_RENDER_RESOLUTION = 1.5
 
@@ -42,7 +43,7 @@ export class GlassPixiRuntime {
       return false
     }
     try {
-      this.#installRainBlendMode(this.application.renderer as WebGLRenderer)
+      installRainBlendMode(this.application.renderer as WebGLRenderer)
     } catch (error: unknown) {
       this.destroy()
       throw error
@@ -86,20 +87,5 @@ export class GlassPixiRuntime {
     if (this.#initialized) {
       this.application.destroy(false, {children: true})
     }
-  }
-
-  #installRainBlendMode(renderer: WebGLRenderer) {
-    const {gl} = renderer
-    const state = renderer.state as unknown as {blendModesMap?: Record<string, number[]>}
-    if (state.blendModesMap === undefined) {
-      throw new Error('PixiJS WebGL blend-mode map is unavailable')
-    }
-    // The rain normal stamps need the reference effect's fixed-function exclusion factors.
-    state.blendModesMap.exclusion = [
-      gl.ONE_MINUS_DST_COLOR,
-      gl.ONE_MINUS_SRC_COLOR,
-      gl.ONE,
-      gl.ONE_MINUS_SRC_ALPHA,
-    ]
   }
 }

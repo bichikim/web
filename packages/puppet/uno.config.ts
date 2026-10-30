@@ -1,6 +1,4 @@
-import {runtimeShortcuts, viewerShortcuts} from './uno/shortcuts/viewer'
 import {controlShortcuts} from './uno/shortcuts/controls'
-import {converterShortcuts} from './uno/shortcuts/converter'
 import {brushShortcuts} from './uno/shortcuts/brush'
 import {icons as tablerIcons} from '@iconify-json/tabler'
 import {defineConfig, presetIcons, presetWind3} from 'unocss'
@@ -21,8 +19,6 @@ import {spacingTheme} from './uno/spacing'
 import {scrollbarShortcuts} from './uno/shortcuts/scrollbars'
 
 const shortcuts = {
-  ...viewerShortcuts,
-  ...runtimeShortcuts,
   ...typographyShortcuts,
   ...scrollbarShortcuts,
   'puppet-demo': [
@@ -31,7 +27,6 @@ const shortcuts = {
   ],
   ...iconShortcuts,
   ...controlShortcuts,
-  ...converterShortcuts,
   ...layoutShortcuts,
   ...layersShortcuts,
   ...layerOrderShortcuts,
@@ -48,10 +43,7 @@ const shortcuts = {
 export default defineConfig({
   preflights: [
     {
-      getCSS: () =>
-        '[data-tooltip-active] { anchor-name: var(--editor-tooltip-anchor); }' +
-        '.puppet-editor .toolbar-menu-trigger[data-tooltip-active] {' +
-        'anchor-name: --toolbar-menu, var(--editor-tooltip-anchor); }',
+      getCSS: () => '[data-tooltip-active] { anchor-name: var(--editor-tooltip-anchor); }',
     },
   ],
   presets: [
@@ -86,3 +78,5 @@ export default defineConfig({
     },
   },
 })
+
+export {numberFieldDescendants} from './uno/shortcuts/controls'

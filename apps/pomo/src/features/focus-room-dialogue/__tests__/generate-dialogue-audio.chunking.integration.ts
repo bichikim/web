@@ -2,8 +2,8 @@
 import {expect, it, vi} from 'vitest'
 import {successResult} from 'src/features/result'
 import type {SupertonicAudioChunk, SupertonicClient} from '../../supertonic'
-import {getSupertonicModel} from '../../supertonic/model'
-import {splitReferenceSpeechText} from '../../supertonic/__tests__/fixtures/text-chunking'
+import {getSupertonicModel} from '@winter-love/supertonic/model'
+import {splitReferenceSpeechText} from '../../../../../../packages/supertonic/src/__tests__/fixtures/text-chunking'
 import {generateDialogueAudio} from '../generate-dialogue-audio'
 
 it('should align original Unicode text chunks with streamed dialogue audio and subtitle offsets', async () => {

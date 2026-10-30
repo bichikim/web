@@ -3,6 +3,7 @@
 import type {InferenceSession, Tensor} from 'onnxruntime-web/wasm'
 import {z} from 'zod'
 import {createGaussianNoise} from './noise'
+import {prepareText} from './prepare-text'
 
 import type {InvalidModelDataError} from './errors'
 import type {SupertonicLanguage} from './language'
@@ -21,6 +22,11 @@ export interface SupertonicSessions {
   readonly textEncoder: InferenceSession
   readonly vectorEstimator: InferenceSession
   readonly vocoder: InferenceSession
+}
+
+/** Sessions used by the engine; its release() closes every supplied session. */
+export type SupertonicEngineSessions = {
+  readonly [Key in keyof SupertonicSessions]: Pick<SupertonicSessions[Key], 'release' | 'run'>
 }
 
 export interface SupertonicVoice {
@@ -88,32 +94,13 @@ export const parseSupertonicVoice = (
 export type SupertonicConfig = z.infer<typeof configSchema>
 export type SupertonicIndexer = z.infer<typeof indexerSchema>
 
-const preprocessText = (input: string, language: SupertonicLanguage) => {
-  let text = input
-    .normalize('NFKD')
-    .replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{1F1E6}-\u{1F1FF}]+/gu, '')
-    .replace(/[–‑—]/gu, '-')
-    .replace(/[[\]_|/#→←]/gu, ' ')
-    .replace(/[“”]/gu, '"')
-    .replace(/[‘’´`]/gu, "'")
-    .replace(/[♥☆♡©\\]/gu, '')
-    .replace(/\s+/gu, ' ')
-    .trim()
-
-  if (!/[.!?;:,'")\]}…。」』】〉》›»]$/u.test(text)) {
-    text += '.'
-  }
-
-  return `<${language}>${text}</${language}>`
-}
-
 const createTextInput = (
   runtime: SupertonicRuntime,
   text: string,
   language: SupertonicLanguage,
   indexer: SupertonicIndexer,
 ) => {
-  const characters = Array.from(preprocessText(text, language))
+  const characters = Array.from(prepareText(text, language))
   const ids = characters.map((character) => {
     const codePoint = character.codePointAt(0)
 
@@ -145,12 +132,12 @@ export class SupertonicEngine {
   readonly #config: SupertonicConfig
   readonly #indexer: SupertonicIndexer
   readonly #runtime: SupertonicRuntime
-  readonly #sessions: SupertonicSessions
+  readonly #sessions: SupertonicEngineSessions
 
   constructor(
     config: SupertonicConfig,
     indexer: SupertonicIndexer,
-    sessions: SupertonicSessions,
+    sessions: SupertonicEngineSessions,
     runtime: SupertonicRuntime,
   ) {
     this.#config = config

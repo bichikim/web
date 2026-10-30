@@ -1,3 +1,4 @@
+import {preventInternalDismiss} from '../../design-system/prevent-internal-dismiss'
 import {DropdownMenu} from '@kobalte/core/dropdown-menu'
 import {createUniqueId, For, Show} from 'solid-js'
 
@@ -27,6 +28,8 @@ export interface FlipSelectionMenuProps {
  * across the selection's center or the canvas center.
  */
 export const FlipSelectionMenu = (props: FlipSelectionMenuProps) => {
+  let surface: HTMLDivElement | undefined
+
   const mount = useEditorPortalMount()
   const blockerId = createUniqueId()
   const blocker = () => getFlipBlocker(props.document, props.nodeIds)
@@ -54,7 +57,14 @@ export const FlipSelectionMenu = (props: FlipSelectionMenuProps) => {
         )}
       </Show>
       <DropdownMenu.Portal mount={mount}>
-        <DropdownMenu.Content class="kind-menu" aria-label="반전">
+        <DropdownMenu.Content
+          ref={(element) => {
+            surface = element
+          }}
+          onInteractOutside={(event) => preventInternalDismiss(event, surface)}
+          class="kind-menu"
+          aria-label="반전"
+        >
           <For each={FLIPS}>
             {(flip) => (
               <DropdownMenu.Item

@@ -4,7 +4,7 @@ import {errorMessage} from '../error-message'
 import {createLocalDrafts} from './create-local-drafts'
 import type {EditingDraft as Draft, DraftStorage} from './types'
 
-interface EditingDraftsOptions {
+interface UseEditingDraftsProps {
   readonly storage?: DraftStorage
   readonly onError: (message: string) => void
 }
@@ -63,9 +63,9 @@ const acceptDraft = (drafts: Readonly<Record<string, Draft>>, value: ViewerSessi
 }
 
 /** Retains drafts and their original baselines, optionally recovering browser-local snapshots. */
-export const useEditingDrafts = (options: EditingDraftsOptions) => {
+export const useEditingDrafts = (props: UseEditingDraftsProps) => {
   const [drafts, setDrafts] = createSignal<Readonly<Record<string, Draft>>>({})
-  const persistence = options.storage === undefined ? undefined : createLocalDrafts(options.storage)
+  const persistence = props.storage === undefined ? undefined : createLocalDrafts(props.storage)
   const recovered = new Set<string>()
   const update = (
     value: ViewerSession,
@@ -83,7 +83,7 @@ export const useEditingDrafts = (options: EditingDraftsOptions) => {
       )
       scopes.forEach((session) => persistence?.write(session, Object.values(next)))
     } catch (error) {
-      options.onError(`미저장 초안 보관에 실패했습니다. ${errorMessage(error)}`)
+      props.onError(`미저장 초안 보관에 실패했습니다. ${errorMessage(error)}`)
     }
   }
   const restore = (value: ViewerSession): boolean => {
@@ -99,7 +99,7 @@ export const useEditingDrafts = (options: EditingDraftsOptions) => {
         }))
         restoredCurrent = restored.some((draft) => keyOf(draft.session) === keyOf(value))
       } catch (error) {
-        options.onError(`미저장 초안 복구에 실패했습니다. ${errorMessage(error)}`)
+        props.onError(`미저장 초안 복구에 실패했습니다. ${errorMessage(error)}`)
       }
     }
     return restoredCurrent

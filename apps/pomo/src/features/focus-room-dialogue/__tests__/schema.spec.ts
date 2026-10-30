@@ -2,7 +2,7 @@
 import {describe, expect, it} from 'vitest'
 
 import {dialogueEventBindingSchema, focusRoomDialogueSchema} from '../schema'
-import {SUPERTONIC_MODELS, SUPERTONIC_VOICES} from '../../supertonic/model'
+import {SUPERTONIC_MODELS, SUPERTONIC_VOICES} from '@winter-love/supertonic/model'
 
 const baseDialogue = {
   audioKey: 'audio-key',

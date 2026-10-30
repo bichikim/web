@@ -1,8 +1,9 @@
 import {createMemo, type JSX, Show} from 'solid-js'
 import {
+  isParameterTuple,
   isThreeDimensionalParameterBinding,
   isTwoDimensionalParameterBinding,
-  type PuppetParameterValues,
+  mapParameterTuple,
 } from '../../../deformation'
 import {ParameterValueField} from '../ParameterValueField'
 import {EditorParameterItem} from '../EditorParameterItem'
@@ -32,11 +33,18 @@ export const EditorKeyformTrackLabel = (props: EditorKeyformTrackLabelProps) => 
   const secondParameter = () => props.parameters[1]
   const thirdParameter = () => props.parameters[2]
   const handleValueChange = (axis: number, value: number) => {
-    const values = (
-      props.values ?? props.parameters.map((parameter) => parameter.defaultValue)
-    ).map((current, index) =>
+    const parameters = props.parameters
+    if (!isParameterTuple(parameters) || parameters.length !== props.binding.parameterIds.length) {
+      return
+    }
+    const currentValues =
+      props.values ?? mapParameterTuple(parameters, (parameter) => parameter.defaultValue)
+    if (currentValues.length !== parameters.length) {
+      return
+    }
+    const values = mapParameterTuple(currentValues, (current, index) =>
       index === axis ? value : current,
-    ) as unknown as PuppetParameterValues
+    )
     if (!props.active) {
       const activate = props.onBindingActivate ?? props.onBindingSelect
       activate?.(props.binding.id)

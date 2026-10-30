@@ -1,3 +1,4 @@
+import {preventInternalDismiss} from '../../design-system/prevent-internal-dismiss'
 import {Popover} from '@kobalte/core/popover'
 import {TextField} from '@kobalte/core/text-field'
 import {createSignal, createUniqueId, For, Index, Show} from 'solid-js'
@@ -142,6 +143,8 @@ const MotionEventFields = (props: {
  * handles.
  */
 export const MotionSettings = (props: MotionSettingsProps) => {
+  let surface: HTMLDivElement | undefined
+
   const mount = useEditorPortalMount()
   const loopId = createUniqueId()
   const disabled = () => props.motion === undefined || props.onDocumentChange === undefined
@@ -165,7 +168,13 @@ export const MotionSettings = (props: MotionSettingsProps) => {
         <span>모션 설정</span>
       </Popover.Trigger>
       <Popover.Portal mount={mount}>
-        <Popover.Content class="motion-settings-popover">
+        <Popover.Content
+          ref={(element) => {
+            surface = element
+          }}
+          onInteractOutside={(event) => preventInternalDismiss(event, surface)}
+          class="motion-settings-popover"
+        >
           <header>
             <Popover.Title>모션 설정</Popover.Title>
             <Popover.CloseButton as={EditorButton} aria-label="모션 설정 닫기">

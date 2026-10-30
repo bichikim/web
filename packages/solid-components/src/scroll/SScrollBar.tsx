@@ -1,27 +1,21 @@
-import {StyleType, useStyles} from '@winter-love/solid-use'
-import {createMemo, mergeProps, splitProps, ValidComponent} from 'solid-js'
-import {Dynamic, DynamicProps} from 'solid-js/web'
+import {useStyles} from '@winter-love/solid-use'
+import {createMemo, type JSX, mergeProps, type ValidComponent} from 'solid-js'
+import {createDynamic} from 'solid-js/web'
 import {PERCENT_VAR} from '../css-var'
 import {ScrollBarContext} from './scroll-bar-context'
 import {useScrollContext} from './scroll-context'
 import {ScrollBarType} from './types'
+import {callEventHandler, type ComponentTargetProps} from '../utils'
 
-type InnerProps = {
+interface InnerProps {
   barType?: ScrollBarType
-  style?: StyleType
   thickness?: string
 }
 
-export type SScrollBarProps<T extends ValidComponent> = InnerProps & DynamicProps<T>
+export type SScrollBarProps<T extends ValidComponent> = InnerProps & ComponentTargetProps<T>
 
 export const SScrollBar = <T extends ValidComponent>(props: SScrollBarProps<T>) => {
-  const defaultProps = mergeProps({barType: 'vertical' as const, component: 'div'}, props)
-
-  const [innerProps, restProps] = splitProps(defaultProps, [
-    'thickness',
-    'barType',
-    'style',
-  ]) as unknown as [Required<InnerProps>, DynamicProps<T>]
+  const barType = () => props.barType ?? 'vertical'
   const scrollContext = useScrollContext()
 
   const scrollBarState = createMemo(() => {
@@ -41,7 +35,7 @@ export const SScrollBar = <T extends ValidComponent>(props: SScrollBarProps<T>) 
       showYBar,
     } = scrollContext.value()
 
-    if (innerProps.barType === 'horizontal') {
+    if (barType() === 'horizontal') {
       return {
         containerPosition: containerLeft,
         containerSize: containerWidth,
@@ -77,24 +71,39 @@ export const SScrollBar = <T extends ValidComponent>(props: SScrollBarProps<T>) 
 
     return {
       ...state,
-      type: innerProps.barType,
+      type: barType(),
     }
   })
 
-  const onClick = (event: MouseEvent) => {
-    const type = innerProps.barType ?? 'horizontal'
+  const handleClick: JSX.EventHandler<HTMLElement, MouseEvent> = (event) => {
+    const type = barType()
     const {containerSize, scrollSize} = scrollBarContext()
     const clickPosition = type === 'horizontal' ? event.offsetX : event.offsetY
     const clickedPercent = clickPosition / containerSize
 
-    scrollContext.setScroll(innerProps.barType, (scrollSize - containerSize) * clickedPercent)
+    scrollContext.setScroll(type, (scrollSize - containerSize) * clickedPercent)
+    callEventHandler(props.componentProps?.onClick, event)
   }
 
-  const style = useStyles(() => [scrollBarStyle(), innerProps.style])
+  const style = useStyles(() => [scrollBarStyle(), props.componentProps?.style])
+  // oxlint-disable-next-line solid/reactivity -- Solid tracks mergeProps function sources; replacement is covered by tests.
+  const targetProps = mergeProps(() => props.componentProps, {
+    // Empty JSX children must not fall through mergeProps to target children.
+    get children() {
+      return 'children' in props ? (props.children ?? null) : props.componentProps?.children
+    },
+    get 'data-show'() {
+      return scrollBarState().show
+    },
+    onClick: handleClick,
+    get style() {
+      return style()
+    },
+  })
 
   return (
     <ScrollBarContext.Provider value={scrollBarContext}>
-      <Dynamic {...restProps} data-show={scrollBarState().show} style={style()} onClick={onClick} />
+      {createDynamic<T | 'div'>(() => props.component ?? 'div', targetProps)}
     </ScrollBarContext.Provider>
   )
 }

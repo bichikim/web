@@ -174,7 +174,7 @@ function navigation(view) {
       onSubmit: (value) => view.send({kind: 'field', name, value}),
       value,
     })
-  const lines = document.source.split('\n')
+  const lines = document.source.split(/\r\n|\n|\r/u)
   const find =
     view.tools === 'find'
       ? [

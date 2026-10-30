@@ -50,12 +50,10 @@ vi.mock('@paraglide/runtime', () => ({
   getTextDirection: () => 'ltr',
 }))
 vi.mock('../../pomo-route', () => ({
-  getCanonicalPathname: (pathname: string) => pathname.replace(/\/+$/u, '') || '/',
   isSearchIndexablePath: (pathname: string) =>
     ['/', '/refund-policy', '/third-party-notices', '/whats-new'].includes(
       pathname.replace(/\/+$/u, '') || '/',
     ),
-  normalizePathname: (pathname: string) => pathname.replace(/\/+$/u, '') || '/',
 }))
 
 beforeEach(() => {

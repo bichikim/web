@@ -7,3 +7,4 @@ export {convertCubismMotion, type CubismMotionOptions} from './convert-cubism-mo
 export {convertCubismLayout} from './convert-cubism-layout'
 export {convertCubismPhysics} from './convert-cubism-physics'
 export {convertCubismPose, type CubismPose} from './convert-cubism-pose'
+export * from './convert-model-files'

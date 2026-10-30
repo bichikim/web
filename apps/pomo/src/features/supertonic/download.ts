@@ -1,5 +1,9 @@
 import {createModelStorage, type ModelStorage} from '../model-storage'
-import {getSupertonicModel, getSupertonicModelFileUrl, type SupertonicModelId} from './model'
+import {
+  getSupertonicModel,
+  getSupertonicModelFileUrl,
+  type SupertonicModelId,
+} from '@winter-love/supertonic/model'
 
 export interface IsSupertonicModelDownloadedOptions {
   readonly modelId: SupertonicModelId
