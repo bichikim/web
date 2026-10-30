@@ -44,7 +44,12 @@ const setup = () => {
   const hook = renderHook(() =>
     useWidgetInteraction({button: () => button, hitTest, locked, preview: () => preview}),
   )
-  return {...hook, button, preview, renderFrame, setDragging, setHitTest, setLocked}
+  const movePointer = (clientX: number, clientY: number, pointerType = 'mouse') => {
+    const event = Object.assign(new MouseEvent('pointermove', {clientX, clientY}), {pointerType})
+    Object.defineProperty(event, 'currentTarget', {value: button})
+    hook.result.handleMove(event as PointerEvent & {currentTarget: HTMLButtonElement})
+  }
+  return {...hook, button, movePointer, preview, renderFrame, setDragging, setHitTest, setLocked}
 }
 
 test('should refresh an opaque pixel under the resting pointer when hit testing becomes ready', () => {
@@ -168,5 +173,78 @@ test('should stop readiness work when the widget is unmounted', () => {
   hook.setHitTest(() => hitTest)
   hook.cleanup()
   hook.renderFrame()
+  expect(hitTest).not.toHaveBeenCalled()
+})
+
+test('should clear hover and the hint when a constrained drag ends over transparent pixels', () => {
+  const hook = setup()
+  hook.setHitTest(() => (point) => point.clientX < 100)
+  hook.result.handleHover(hover())
+  expect(hook.result.hovered()).toBe(true)
+  hook.setDragging(true)
+  hook.movePointer(200, 50)
+  expect(hook.result.hovered()).toBe(true)
+  expect(hook.result.tooltip()).toBeNull()
+  hook.setDragging(false)
+  expect(hook.result.hovered()).toBe(false)
+  expect(hook.result.tooltip()).toBeNull()
+})
+
+test('should restore the hint at the final pointer position when a drag ends over the character', () => {
+  const hook = setup()
+  hook.setHitTest(() => () => true)
+  hook.result.handleHover(hover())
+  hook.setDragging(true)
+  hook.movePointer(80, 60)
+  hook.setDragging(false)
+  expect(hook.result.hovered()).toBe(true)
+  expect(hook.result.tooltip()).toEqual({x: 92, y: 80})
+})
+
+test('should keep the touch hint hidden after dragging ends', () => {
+  const hook = setup()
+  hook.setHitTest(() => () => true)
+  hook.result.handleHover(hover('touch'))
+  hook.setDragging(true)
+  hook.movePointer(80, 60, 'touch')
+  hook.setDragging(false)
+  expect(hook.result.tooltip()).toBeNull()
+})
+
+test('should not revive an Escape-dismissed pointer when dragging ends', () => {
+  const hook = setup()
+  hook.setHitTest(() => () => true)
+  hook.result.handleHover(hover())
+  hook.setDragging(true)
+  hook.movePointer(80, 60)
+  hook.result.handleKeyDown({currentTarget: hook.button, key: 'Escape'} as KeyboardEvent & {
+    currentTarget: HTMLButtonElement
+  })
+  hook.setDragging(false)
+  expect(hook.result.tooltip()).toBeNull()
+})
+
+test('should leave the pointer forgotten when locking releases an active drag', () => {
+  const hook = setup()
+  hook.preview.release.mockImplementation(() => hook.setDragging(false))
+  hook.setHitTest(() => () => true)
+  hook.result.handleHover(hover())
+  hook.setDragging(true)
+  hook.movePointer(80, 60)
+  hook.setLocked(true)
+  hook.setLocked(false)
+  expect(hook.result.tooltip()).toBeNull()
+})
+
+test('should not sample the last drag pointer after unmount', () => {
+  const hook = setup()
+  const hitTest = vi.fn(() => true)
+  hook.setHitTest(() => hitTest)
+  hook.result.handleHover(hover())
+  hook.setDragging(true)
+  hook.movePointer(80, 60)
+  hitTest.mockClear()
+  hook.cleanup()
+  hook.setDragging(false)
   expect(hitTest).not.toHaveBeenCalled()
 })

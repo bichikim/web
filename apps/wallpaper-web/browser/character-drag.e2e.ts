@@ -65,6 +65,38 @@ test('starts dragging only on the visible character and keeps the capture outsid
   expect(moved?.y).toBeCloseTo(initial.y - 80, 1)
 })
 
+test('clears hover when the bottom boundary leaves the released pointer over transparent pixels', async ({
+  page,
+}) => {
+  await page.goto('/')
+  const pause = page.getByRole('button', {exact: true, name: '일시 정지'})
+  await expect(pause).toBeVisible()
+  await pause.click()
+  const character = page.getByRole('button', {name: '흰 고양이 위젯. 드래그해서 이동'})
+  const initial = await character.boundingBox()
+  if (initial === null) {
+    throw new Error('Character bounds are missing')
+  }
+  const start = {x: initial.x + initial.width * 0.65, y: initial.y + initial.height * 0.35}
+  await page.mouse.move(start.x, start.y)
+  await expect(character).toHaveCSS('cursor', 'grab')
+  await page.mouse.down()
+  await page.mouse.move(1100, 892, {steps: 3})
+  await expect(character).toHaveCSS('cursor', 'grabbing')
+  const constrained = await character.boundingBox()
+  if (constrained === null) {
+    throw new Error('Character bounds are missing')
+  }
+  expect(constrained.y - initial.y).toBeLessThan(892 - start.y)
+  expect(1100).toBeGreaterThan(constrained.x)
+  expect(1100).toBeLessThan(constrained.x + constrained.width)
+  expect(892).toBeGreaterThan(constrained.y)
+  expect(892).toBeLessThan(constrained.y + constrained.height)
+  await page.mouse.up()
+  await expect(character).toHaveCSS('cursor', 'default')
+  await expect(page.getByRole('tooltip')).toHaveCount(0)
+})
+
 test.describe('mobile character drag', () => {
   test.use({hasTouch: true, isMobile: true, viewport: {height: 844, width: 390}})
 

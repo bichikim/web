@@ -48,6 +48,7 @@ export const useWidgetInteraction = (props: UseWidgetInteractionProps) => {
     if (props.locked()) {
       return
     }
+    restingPointer = event
     props.preview().move(event)
     if (!props.preview().dragging()) {
       handleHover(event)
@@ -58,6 +59,16 @@ export const useWidgetInteraction = (props: UseWidgetInteractionProps) => {
     setHovered(false)
     setPointer(null)
   }
+  createEffect(
+    on(
+      () => props.preview().dragging(),
+      (dragging, previous) => {
+        if (previous === true && !dragging && restingPointer !== null) {
+          handleHover(restingPointer)
+        }
+      },
+    ),
+  )
   createEffect(
     on(props.hitTest, () => {
       if (restingPointer === null) {
