@@ -4,7 +4,7 @@ import type {ViewerPort} from './types'
 import {useWorkspaceUpdates} from './use-workspace-updates'
 import {createPendingTasks} from './create-pending-tasks'
 
-interface ConnectionOptions {
+interface UseViewerConnectionProps {
   port: ViewerPort
   receive: Parameters<ViewerPort['start']>[0]
   refresh: () => Promise<void>
@@ -14,16 +14,14 @@ interface ConnectionOptions {
   beforeClose?: () => Promise<boolean>
 }
 
-export const useViewerConnection = (connection: ConnectionOptions): Accessor<number> => {
+export const useViewerConnection = (props: UseViewerConnectionProps): Accessor<number> => {
   const [ready, setReady] = createSignal(false)
   let disposed = false
   let disposePort: (() => void) | null = null
   let released = false
   const closing = createPendingTasks()
   const closeSession = (value: ViewerConnection): void => {
-    closing
-      .run(() => connection.port.call('code.close', {session: value.session}))
-      .catch(connection.report)
+    closing.run(() => props.port.call('code.close', {session: value.session})).catch(props.report)
   }
   const finish = async (): Promise<void> => {
     await closing.settle()
@@ -32,32 +30,32 @@ export const useViewerConnection = (connection: ConnectionOptions): Accessor<num
       disposePort()
     }
   }
-  const receive: ConnectionOptions['receive'] = (value, navigation): void => {
+  const receive: UseViewerConnectionProps['receive'] = (value, navigation): void => {
     if (disposed) {
       closeSession(value)
     } else {
-      connection.receive(value, navigation)
+      props.receive(value, navigation)
     }
   }
   const refresh = (): void => {
     if (!disposed) {
-      connection.refresh()
+      props.refresh()
     }
   }
   const teardown = async (): Promise<void> => {
     if (!disposed) {
       disposed = true
       setReady(false)
-      const current = connection.session()
+      const current = props.session()
       if (current !== null) {
         closeSession(current)
       }
     }
     await closing.settle()
   }
-  connection.port
-    .start(receive, connection.report, refresh, async () => {
-      if (connection.beforeClose !== undefined && !(await connection.beforeClose())) {
+  props.port
+    .start(receive, props.report, refresh, async () => {
+      if (props.beforeClose !== undefined && !(await props.beforeClose())) {
         throw new Error('미저장 변경으로 종료를 취소했습니다.')
       }
       await teardown()
@@ -69,16 +67,16 @@ export const useViewerConnection = (connection: ConnectionOptions): Accessor<num
       }
       setReady(true)
     })
-    .catch(connection.report)
+    .catch(props.report)
   const revision = useWorkspaceUpdates({
-    blocked: () => disposed || (connection.blocked?.() ?? false),
-    port: connection.port,
-    refresh: connection.refresh,
-    report: connection.report,
-    session: () => (ready() ? connection.session() : null),
+    blocked: () => disposed || (props.blocked?.() ?? false),
+    port: props.port,
+    refresh: props.refresh,
+    report: props.report,
+    session: () => (ready() ? props.session() : null),
   })
   onCleanup(() => {
-    teardown().then(finish).catch(connection.report)
+    teardown().then(finish).catch(props.report)
   })
   return revision
 }

@@ -5,7 +5,7 @@ import {expect, test, vi} from 'vitest'
 
 import type {PuppetDocument, PuppetParameter} from '../../../player/document'
 import {createEmptyDocument} from '../../../player/create-empty-document'
-import {useDocumentHistory} from '../../use-document-history'
+import {createHistory as useDocumentHistory} from '../../__tests__/fixtures/history'
 import {PhysicsProperties} from '../PhysicsProperties'
 
 const PHYSICS_PARAMETERS: ReadonlyArray<PuppetParameter> = [

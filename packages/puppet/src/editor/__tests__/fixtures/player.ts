@@ -3,10 +3,12 @@ import type {Player, PlayerPlaybackOptions} from '../../../player'
 
 export const createPlayerFixture = (): Player => ({
   clearParameterValues: vi.fn(),
+  configureRenderer: vi.fn(async () => 'applied' as const),
   destroy: vi.fn(),
   getExpression: vi.fn(),
   getParameterValue: vi.fn(),
   getParameterValues: vi.fn(() => ({})),
+  getRenderingInfo: vi.fn(() => ({antialiasing: 'msaa' as const, renderer: 'webgl' as const})),
   hitTest: vi.fn(),
   patchParameterValues: vi.fn(),
   pause: vi.fn(),

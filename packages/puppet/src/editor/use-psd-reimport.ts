@@ -1,4 +1,5 @@
 import {type Accessor, createMemo, createSignal, onCleanup} from 'solid-js'
+import type {ModelCommandResult} from './model'
 import type {PuppetDocument} from '../player/document'
 import {removeParts} from './internal/remove-parts'
 import {getPsdErrorMessage, importPsd, type ImportPsdResult} from './import-psd'
@@ -30,9 +31,11 @@ export type ReimportState =
   | ReimportError
   | {readonly kind: 'idle'}
 export interface UsePsdReimportProps {
+  /** Host revision; omitted for unversioned callers. Captured at load and checked again at apply. */
+  readonly revision?: Accessor<number>
   readonly readPsd?: (file: File, signal?: AbortSignal) => Promise<ImportPsdResult>
   readonly document: Accessor<PuppetDocument>
-  readonly onDocumentChange: (document: PuppetDocument) => void
+  readonly onDocumentChange: (document: PuppetDocument) => ModelCommandResult
   readonly onNotice: (message: string | null) => void
 }
 
@@ -64,6 +67,7 @@ export const usePsdReimport = (props: UsePsdReimportProps): PsdReimportControlle
       rows: current.kind === 'review' ? current.plan.rows : [],
     })
   })
+  let loadedRevision: number | undefined
   let generation = 0
   let controller: AbortController | undefined
   onCleanup(() => {
@@ -86,6 +90,7 @@ export const usePsdReimport = (props: UsePsdReimportProps): PsdReimportControlle
     const request = new AbortController()
     controller = request
     const document = props.document()
+    loadedRevision = props.revision?.()
     setIncludeNew(false)
     setRemoveMissing(false)
     setState({fileName: file.name, kind: 'loading'})
@@ -94,7 +99,7 @@ export const usePsdReimport = (props: UsePsdReimportProps): PsdReimportControlle
       if (revision !== generation) {
         return
       }
-      if (document !== props.document()) {
+      if (document !== props.document() || loadedRevision !== props.revision?.()) {
         setState({
           kind: 'error',
           message: '불러오는 동안 문서가 변경되었습니다. PSD를 다시 선택하세요.',
@@ -138,7 +143,7 @@ export const usePsdReimport = (props: UsePsdReimportProps): PsdReimportControlle
     if (review.kind !== 'review') {
       return
     }
-    if (review.plan.document !== props.document()) {
+    if (review.plan.document !== props.document() || loadedRevision !== props.revision?.()) {
       setState({kind: 'error', message: '문서가 변경되었습니다. PSD를 다시 선택하세요.'})
       return
     }
@@ -156,7 +161,11 @@ export const usePsdReimport = (props: UsePsdReimportProps): PsdReimportControlle
       })
       return
     }
-    props.onDocumentChange(result.document)
+    const committed = props.onDocumentChange(result.document)
+    if (!committed.ok) {
+      props.onNotice('진행 중인 편집을 마친 후 다시 적용하세요.')
+      return
+    }
     props.onNotice(null)
     cancel()
   }

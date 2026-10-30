@@ -61,7 +61,7 @@ const SMarkdownLink = (props: MarkdownLinkProps) => {
     const path = local()
     if (path !== undefined && props.onOpen !== undefined && !props.url.startsWith('#')) {
       event.preventDefault()
-      props.onOpen({column: 1, line: 1, path: path.split('#')[0] ?? path})
+      props.onOpen({column: 1, line: 1, path})
     }
   }
   return (
@@ -216,7 +216,7 @@ const SMarkdownPicture = (props: MarkdownPictureProps) => {
     >
       {(path) => (
         <SMarkdownImage
-          path={path().split('#')[0] ?? path()}
+          path={path()}
           alt={props.image.alt ?? ''}
           port={props.port}
           session={props.session}

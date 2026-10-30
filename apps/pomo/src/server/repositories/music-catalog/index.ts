@@ -1,5 +1,9 @@
 import {and, asc, desc, eq, gt, inArray, isNull, lte, or} from 'drizzle-orm'
-import {mapValues} from 'es-toolkit/map'
+import {
+  createPublishedAlbums,
+  type PublishedAlbum,
+  type PublishedAlbumLocale,
+} from '../../music/create-published-albums'
 
 import {
   commerceEntitlementGrants,
@@ -14,36 +18,14 @@ import {
   musicTracks,
 } from '../../database'
 
-export interface PublishedAlbumSaleConfigured {
-  readonly externalProductId: string
-  readonly state: 'configured'
-}
-
-export interface PublishedAlbumSalePreparing {
-  readonly state: 'preparing'
-}
-
-export type PublishedAlbumSale = PublishedAlbumSaleConfigured | PublishedAlbumSalePreparing
-
-export interface PublishedAlbumTrack {
-  readonly artworkUrl?: string
-  readonly artist: string
-  readonly id: string
-  readonly title: string
-}
-
-export interface PublishedAlbum {
-  readonly coverFallback: 'cd' | 'lp' | 'music'
-  readonly coverImageUrl: string | null
-  readonly description: string
-  readonly id: string
-  readonly sale: PublishedAlbumSale
-  readonly title: string
-  readonly trackCount: number
-  readonly tracks: ReadonlyArray<PublishedAlbumTrack>
-}
-
-export type PublishedAlbumLocale = 'en' | 'ko'
+export type {
+  PublishedAlbum,
+  PublishedAlbumLocale,
+  PublishedAlbumSale,
+  PublishedAlbumSaleConfigured,
+  PublishedAlbumSalePreparing,
+  PublishedAlbumTrack,
+} from '../../music/create-published-albums'
 
 export interface TrackAccessAsset {
   readonly assetId: string
@@ -173,41 +155,5 @@ export const listPublishedAlbums = async (
         ),
       ),
   ])
-  const tracksByAlbum = mapValues(
-    Map.groupBy(albumTracks, (track) => track.albumId),
-    (tracks): PublishedAlbumTrack[] =>
-      tracks.map((track) => ({
-        artist: track.artist,
-        artworkUrl: track.artworkUrl ?? undefined,
-        id: track.id,
-        title: track.title,
-      })),
-  )
-  const offersByAlbum = new Map(offers.map((offer) => [offer.albumId, offer.externalProductId]))
-  const albumsById = mapValues(
-    Map.groupBy(albumTranslations, (translation) => translation.id),
-    // Keep publication order while choosing the last requested-locale row or first fallback.
-    (translations) =>
-      translations.findLast((translation) => translation.locale === locale) ?? translations[0],
-  )
-
-  return [...albumsById.values()].map((album) => {
-    const externalProductId = offersByAlbum.get(album.id)
-    const sale: PublishedAlbumSale =
-      externalProductId === undefined
-        ? {state: 'preparing'}
-        : {externalProductId, state: 'configured'}
-
-    const tracks = tracksByAlbum.get(album.id) ?? []
-    return {
-      coverFallback: album.coverFallback,
-      coverImageUrl: album.coverImageUrl,
-      description: album.description,
-      id: album.id,
-      sale,
-      title: album.title,
-      trackCount: tracks.length,
-      tracks,
-    }
-  })
+  return createPublishedAlbums({albumTracks, albumTranslations, locale, offers})
 }

@@ -2,6 +2,8 @@ import {Dialog} from '@kobalte/core/dialog'
 import {useEditorPortalMount} from '../../design-system'
 
 interface FileLoadingDialogProps {
+  /** Operation label; omitted for file loading. */
+  readonly title?: string
   /** File being read. Omitted or null, keep the dialog closed. */
   readonly fileName?: string | null
   /** Cancels the pending read without changing the document. */
@@ -10,6 +12,30 @@ interface FileLoadingDialogProps {
 
 export const FileLoadingDialog = (props: FileLoadingDialogProps) => {
   const mount = useEditorPortalMount()
+  // File actions open this dialog without a Dialog.Trigger.
+  let returnFocus: Element | null = null
+  const handleOpenAutoFocus = (event: Event) => {
+    const content = event.target
+    if (content instanceof HTMLElement) {
+      const root = content.getRootNode()
+      returnFocus =
+        root instanceof ShadowRoot ? root.activeElement : content.ownerDocument.activeElement
+    }
+  }
+  const handleCloseAutoFocus = (event: Event) => {
+    if (returnFocus instanceof HTMLElement && returnFocus.isConnected) {
+      event.preventDefault()
+      returnFocus.focus()
+    }
+    returnFocus = null
+  }
+  // Retained popovers can consume document-level Escape before the loading dialog.
+  const handleKeyDown = (event: KeyboardEvent) => {
+    if (event.key === 'Escape') {
+      event.preventDefault()
+      props.onCancel()
+    }
+  }
   const handleOpenChange = (open: boolean) => {
     if (!open) {
       props.onCancel()
@@ -22,11 +48,16 @@ export const FileLoadingDialog = (props: FileLoadingDialogProps) => {
     >
       <Dialog.Portal mount={mount}>
         <Dialog.Overlay class="auto-mesh-dialog-overlay" />
-        <Dialog.Content class="auto-mesh-dialog-content">
+        <Dialog.Content
+          class="auto-mesh-dialog-content"
+          onKeyDown={handleKeyDown}
+          onOpenAutoFocus={handleOpenAutoFocus}
+          onCloseAutoFocus={handleCloseAutoFocus}
+        >
           <form onSubmit={(event) => event.preventDefault()}>
             <header>
               <div>
-                <Dialog.Title role="status">불러오는 중…</Dialog.Title>
+                <Dialog.Title role="status">{props.title ?? '불러오는 중…'}</Dialog.Title>
                 <Dialog.Description>{props.fileName}</Dialog.Description>
               </div>
             </header>

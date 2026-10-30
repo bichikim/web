@@ -7,12 +7,21 @@ import {afterEach, expect, it, vi} from 'vitest'
 
 import * as m from '@paraglide/message'
 import type {PFeedState} from 'src/features/focus-room-feed'
-import {
-  createFeeds,
-  createModelDownload,
-  RECOVERY_JOB,
-} from 'src/components/__tests__/feed-status/fixtures'
 import {useFeedProgress} from '../use-feed-progress'
+
+type FeedProgressController = ReturnType<Parameters<typeof useFeedProgress>[0]>
+
+const createFeeds = (overrides: Partial<FeedProgressController> = {}): FeedProgressController => ({
+  cancelProcessing: async () => undefined,
+  recoveryJobs: () => [],
+  state: () => ({message: '대기 중', status: 'idle'}),
+  ...overrides,
+})
+
+const createModelDownload = (): Parameters<typeof useFeedProgress>[1] => ({
+  cancel: vi.fn(),
+  state: () => ({status: 'idle'}),
+})
 
 const originalGetLocale = getLocale
 
@@ -29,7 +38,7 @@ it('should localize initial and chunk messages through the same English mount', 
     progress: null,
     status: 'generating',
   })
-  const feeds = createFeeds([], false, [], {state})
+  const feeds = createFeeds({state})
   const {result} = renderHook(() => useFeedProgress(() => feeds, createModelDownload()))
 
   expect(result.generation()?.message).toBe('Generating audio for 새 피드.')
@@ -51,7 +60,7 @@ it('should preserve initial and chunk messages for the Korean locale', () => {
     progress: null,
     status: 'generating',
   })
-  const feeds = createFeeds([], false, [], {state})
+  const feeds = createFeeds({state})
   const {result} = renderHook(() => useFeedProgress(() => feeds, createModelDownload()))
 
   expect(result.progress()?.message).toBe('새 피드 음성을 만들고 있어요.')
@@ -62,7 +71,7 @@ it('should preserve initial and chunk messages for the Korean locale', () => {
 
 it('should preserve preparation text while localizing only generation messages', () => {
   overwriteGetLocale(() => 'en')
-  const feeds = createFeeds([], false, [], {
+  const feeds = createFeeds({
     state: () => ({message: '음성 모델을 준비하고 있어요.', progress: null, status: 'preparing'}),
   })
   const {result} = renderHook(() => useFeedProgress(() => feeds, createModelDownload()))
@@ -81,7 +90,7 @@ it('should keep the existing localized voice download message', () => {
       target: {kind: 'voice' as const, modelId: 'full' as const},
     }),
   }
-  const feeds = createFeeds([], false, [RECOVERY_JOB])
+  const feeds = createFeeds({recoveryJobs: () => [{modelId: 'full'}]})
   const {result} = renderHook(() => useFeedProgress(() => feeds, download))
 
   expect(result.progress()?.message).toBe('Downloading the Supertonic Full voice model · 42%')
@@ -91,7 +100,7 @@ it('should show a localized error after a same-mount stop request fails', async 
   overwriteGetLocale(() => 'en')
   const completion = Promise.withResolvers<void>()
   const cancelProcessing = vi.fn(() => completion.promise)
-  const feeds = createFeeds([], false, [], {
+  const feeds = createFeeds({
     cancelProcessing,
     state: () => ({message: '새 피드 음성을 만들고 있어요.', progress: null, status: 'generating'}),
   })

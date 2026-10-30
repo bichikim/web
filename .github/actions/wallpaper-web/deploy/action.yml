@@ -1,0 +1,91 @@
+name: Deploy verified Wallpaper artifact
+description: Deploy the current run's static artifact; promote production only after smoke checks.
+inputs:
+  target:
+    description: preview for dev or production for main.
+    required: true
+  token:
+    description: Vercel token used only by a manually dispatched deployment.
+    required: true
+outputs:
+  url:
+    description: Verified deployment URL.
+    value: ${{ steps.deploy.outputs.url }}
+runs:
+  using: composite
+  steps:
+    - name: Validate deployment source and configuration
+      shell: bash
+      env:
+        TARGET: ${{ inputs.target }}
+        VERCEL_TOKEN: ${{ inputs.token }}
+      run: |
+        test "${GITHUB_EVENT_NAME}" = workflow_dispatch
+        case "${TARGET}:${GITHUB_REF}" in
+          preview:refs/heads/dev|production:refs/heads/main) ;;
+          *) echo '::error::Preview requires dev; production requires main.'; exit 1 ;;
+        esac
+        test -n "${VERCEL_PROJECT_ID}" || {
+          echo '::error::Set the WALLPAPER_VERCEL_PROJECT_ID Actions variable.'; exit 1;
+        }
+        test -n "${VERCEL_ORG_ID}"
+        test -n "${VERCEL_TOKEN}" || {
+          echo '::error::Set the VERCEL_TOKEN Actions secret.'; exit 1;
+        }
+    - uses: pnpm/action-setup@v6
+      with:
+        version: 11.8.0
+    - uses: actions/setup-node@v6
+      with:
+        node-version: 24.x
+    - name: Pull Vercel settings
+      shell: bash
+      env:
+        TARGET: ${{ inputs.target }}
+        VERCEL_TOKEN: ${{ inputs.token }}
+      run: >-
+        pnpm dlx vercel@${VERCEL_CLI_VERSION} pull --yes
+        --environment="${TARGET}" --git-branch="${GITHUB_REF_NAME}"
+        --local-config=apps/wallpaper-web/vercel.json --token="${VERCEL_TOKEN}"
+    - uses: actions/download-artifact@v4
+      with:
+        name: wallpaper-static
+        path: .vercel/output
+    - name: Deploy verified static files
+      id: deploy
+      shell: bash
+      env:
+        TARGET: ${{ inputs.target }}
+        VERCEL_TOKEN: ${{ inputs.token }}
+      run: |
+        args=(--prebuilt --yes --local-config=apps/wallpaper-web/vercel.json)
+        if test "${TARGET}" = production; then
+          args+=(--prod --skip-domain)
+        else
+          args+=(--target=preview)
+        fi
+        deployment_url="$(pnpm dlx vercel@${VERCEL_CLI_VERSION} deploy "${args[@]}" \
+          --token="${VERCEL_TOKEN}" --meta githubCommitSha="${GITHUB_SHA}" \
+          --meta githubCommitRef="${GITHUB_REF_NAME}")"
+        echo "url=${deployment_url}" >> "${GITHUB_OUTPUT}"
+        echo "Deployment: ${deployment_url}" >> "${GITHUB_STEP_SUMMARY}"
+        echo "Source commit: ${GITHUB_SHA}" >> "${GITHUB_STEP_SUMMARY}"
+    - name: Check deployed site and assets
+      shell: bash
+      env:
+        DEPLOYMENT_URL: ${{ steps.deploy.outputs.url }}
+        VERCEL_TOKEN: ${{ inputs.token }}
+      run: |
+        for path in / /models/white-cat/model.poffo /models/white-cat/poster.webp \
+          /models/profile/model.poffo /models/street/model.poffo /music/library.json; do
+          pnpm dlx vercel@${VERCEL_CLI_VERSION} curl "${path}" \
+            --deployment="${DEPLOYMENT_URL}" --token="${VERCEL_TOKEN}" -- \
+            --head --fail --silent --show-error --max-time 30 --output /dev/null
+        done
+    - name: Promote verified production deployment
+      if: inputs.target == 'production'
+      shell: bash
+      env:
+        DEPLOYMENT_URL: ${{ steps.deploy.outputs.url }}
+        VERCEL_TOKEN: ${{ inputs.token }}
+      run: pnpm dlx vercel@${VERCEL_CLI_VERSION} promote "${DEPLOYMENT_URL}" --yes --token="${VERCEL_TOKEN}"

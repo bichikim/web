@@ -53,6 +53,7 @@ describe('createPlayer frames', () => {
     }
     const root = {
       addChild: vi.fn(),
+      children: [],
       position: {set: vi.fn()},
       scale: {set: vi.fn()},
     }

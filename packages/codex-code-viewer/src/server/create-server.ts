@@ -33,12 +33,15 @@ import {registerUpdateTools} from './register-update-tools'
 import type {createThreadTreeState} from './create-thread-tree-state'
 import {restoreTreeState} from './restore-tree-state'
 import {registerTreeState} from './register-tree-state'
+import type {createThreadMemos} from './create-thread-memos'
+import {registerMemos} from './register-memos'
 
 const appOnly = {ui: {visibility: ['app']}}
 const MAX_ENTRY_NAME_LENGTH = 255
 const annotations = {destructiveHint: false, openWorldHint: false, readOnlyHint: true}
 
 interface ServerOptions {
+  readonly threadMemos?: ReturnType<typeof createThreadMemos>
   /** 채팅별 파일트리 저장소입니다. 생략하면 상태를 저장하지 않습니다. */
   readonly threadTreeState?: ReturnType<typeof createThreadTreeState>
   /** 채팅별 작업 폴더 저장소입니다. 생략하면 폴더 변경 도구를 등록하지 않습니다. */
@@ -62,6 +65,9 @@ const registerChatSettings = (
   }
   if (options.threadTreeState !== undefined) {
     registerTreeState(server, sessions.withSession, options.threadTreeState)
+  }
+  if (options.threadMemos !== undefined) {
+    registerMemos(server, options.threadMemos)
   }
 }
 

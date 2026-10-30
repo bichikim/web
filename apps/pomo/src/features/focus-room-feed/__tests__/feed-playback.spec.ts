@@ -4,8 +4,10 @@ import {expect, it, vi} from 'vitest'
 
 import type {PEventContextValue} from '../../focus-room-dialogue'
 import type {PDialogue} from '../../focus-room-dialogue/schema'
-import {createFeedPlaybackController} from '../feed-playback'
-import type {FeedDialogueRepository} from '../feed-dialogue-repository'
+import {
+  createFeedPlaybackController,
+  type CreateFeedPlaybackControllerOptions,
+} from '../feed-playback'
 import type {FeedDialogueMetadata} from '../feed-dialogue-schema'
 import type {FeedDialogueListItem} from '../feed-controller'
 
@@ -47,25 +49,10 @@ const createListItem = (dialogueId: string, listenedAt: string | null): FeedDial
 
 const createRepository = () =>
   ({
-    complete: vi.fn(),
-    deleteJobs: vi.fn(),
-    dismissItem: vi.fn(),
-    dispose: vi.fn(),
-    failJob: vi.fn(),
-    interruptUnfinishedJobs: vi.fn(),
-    listExpiredMetadata: vi.fn(),
     listItems: vi.fn(),
-    listJobs: vi.fn(),
-    listMetadata: vi.fn(),
     markListened: vi.fn(async () => undefined),
-    queue: vi.fn(),
     recoverMissingDialogue: vi.fn(),
-    removeItem: vi.fn(),
-    removeMetadata: vi.fn(),
-    retryJobs: vi.fn(),
-    saveItems: vi.fn(),
-    startJob: vi.fn(),
-  }) satisfies FeedDialogueRepository
+  }) satisfies ReturnType<CreateFeedPlaybackControllerOptions['repository']>
 
 const createPlayback = (items: ReadonlyArray<FeedDialogueListItem>) => {
   const repository = createRepository()

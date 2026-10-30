@@ -4,7 +4,10 @@ import {createSignal} from 'solid-js'
 import {expect, test, vi} from 'vitest'
 import type {PuppetParameterInfluence} from '../../../player/document'
 import {createDemoDocument} from '../../../player'
-import {type DocumentHistoryResult, useDocumentHistory} from '../../use-document-history'
+import {
+  type DocumentHistoryResult,
+  createHistory as useDocumentHistory,
+} from '../../__tests__/fixtures/history'
 import {setParameterInfluences} from '../parameter-influences'
 import {InfluenceEditor} from '../InfluenceEditor'
 

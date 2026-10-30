@@ -19,6 +19,7 @@ vi.mock('pixi.js', () => ({
     destroy = vi.fn()
   },
   Container: class {
+    children = []
     position = {set: vi.fn()}
     scale = {set: vi.fn()}
     addChild = vi.fn()

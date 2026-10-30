@@ -1,10 +1,16 @@
-import {batch, createSignal, onCleanup, onMount} from 'solid-js'
+import {type Accessor, batch, createSignal, onCleanup, onMount} from 'solid-js'
+import type {ModelCommandResult} from './model'
 import type {PuppetDocument} from '../player'
 import type {DocumentRecovery, DocumentRecoveryEntry} from './document-recovery'
 
 interface UseDocumentRecoveryProps {
+  /** Storage owned by the host; the hook does not dispose it. */
   readonly recovery: DocumentRecovery
-  readonly onRestore: (document: PuppetDocument) => void
+  /** Current host revision. Omitted, the host is responsible for detecting source changes. */
+  readonly revision?: Accessor<number>
+  /** Submits the recovered model; only a completed host commit closes the dialog. */
+  readonly onRestore: (document: PuppetDocument) => ModelCommandResult
+  /** Closes the UI after successful host application, never after rejection. */
   readonly onClose: () => void
 }
 
@@ -42,6 +48,7 @@ export const useDocumentRecovery = (props: UseDocumentRecoveryProps) => {
     if (restoring() || disposed) {
       return
     }
+    const revision = props.revision?.()
     batch(() => {
       setRestoring(true)
       setError(null)
@@ -55,7 +62,15 @@ export const useDocumentRecovery = (props: UseDocumentRecoveryProps) => {
         setError('저장된 작업을 찾을 수 없습니다.')
         return
       }
-      props.onRestore(document)
+      if (revision !== props.revision?.()) {
+        setError('문서가 변경되었습니다. 복구할 작업을 다시 선택하세요.')
+        return
+      }
+      const result = props.onRestore(document)
+      if (!result.ok) {
+        setError('진행 중인 편집을 마친 후 다시 복구하세요.')
+        return
+      }
       props.onClose()
     } catch {
       if (!disposed) {

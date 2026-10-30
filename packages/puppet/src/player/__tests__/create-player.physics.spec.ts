@@ -54,6 +54,7 @@ describe('createPlayer physics', () => {
     }
     const root = {
       addChild: vi.fn(),
+      children: [],
       position: {set: vi.fn()},
       scale: {set: vi.fn()},
     }
@@ -185,6 +186,7 @@ describe('createPlayer physics', () => {
     }
     const root = {
       addChild: vi.fn(),
+      children: [],
       position: {set: vi.fn()},
       scale: {set: vi.fn()},
     }

@@ -1,18 +1,11 @@
+import {readFileSync} from 'node:fs'
 import {setImmediate} from 'node:timers/promises'
-import {EventEmitter} from 'node:events'
-import {spawn} from 'node:child_process'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
+import {createNativeTransport} from '../create-native-transport'
+import {createNativePreparation} from '../create-native-preparation'
 import {createNativeClient} from '../create-native-client'
 
 const native = vi.hoisted(() => ({
-  child: {
-    exitCode: 0,
-    kill: vi.fn(),
-    signalCode: null,
-    stderr: {on: vi.fn()},
-    stdin: {},
-    stdout: {},
-  },
   connection: {
     dispose: vi.fn(),
     listen: vi.fn(),
@@ -24,24 +17,13 @@ const native = vi.hoisted(() => ({
     ),
   },
   preparation: {diagnostics: vi.fn(), dispose: vi.fn(), prepare: vi.fn(async () => false)},
-  readFile: vi.fn(),
 }))
-vi.mock('../create-native-preparation', () => ({createNativePreparation: () => native.preparation}))
-vi.mock('node:child_process', () => {
-  const module = {spawn: vi.fn(() => native.child)}
-  return {...module, default: module}
-})
+vi.mock('../create-native-preparation', () => ({createNativePreparation: vi.fn()}))
+vi.mock('../create-native-transport', () => ({createNativeTransport: vi.fn()}))
 vi.mock('node:fs', () => {
-  const module = {readFileSync: native.readFile}
-  return {...module, default: module}
+  const readFileSync = vi.fn()
+  return {default: {readFileSync}, readFileSync}
 })
-vi.mock('vscode-jsonrpc/node.js', async () => ({
-  ...(await vi.importActual<typeof import('vscode-jsonrpc/node.js')>('vscode-jsonrpc/node.js')),
-  createMessageConnection: () => native.connection,
-  StreamMessageReader: class {},
-  StreamMessageWriter: class {},
-}))
-
 const source = 'const value = 1'
 const query = {file: 'src/use.ts', kind: 'definition', offset: 6, source} as const
 let client: ReturnType<typeof createNativeClient>
@@ -49,20 +31,108 @@ beforeEach(() => {
   vi.clearAllMocks()
   native.preparation.prepare.mockResolvedValue(false)
   native.connection.sendRequest.mockResolvedValue([])
-  native.readFile.mockReturnValue(source)
-  const child = Object.assign(new EventEmitter(), native.child)
-  vi.mocked(spawn).mockReturnValue(child as unknown as ReturnType<typeof spawn>)
+  vi.mocked(readFileSync).mockReturnValue(source)
+  vi.mocked(createNativePreparation).mockReturnValue(native.preparation)
+  vi.mocked(createNativeTransport).mockReturnValue({
+    connection: native.connection as unknown as ReturnType<
+      typeof createNativeTransport
+    >['connection'],
+    dispose: vi.fn(async () => {}),
+    started: Promise.resolve(),
+  })
   client = createNativeClient({
     binary: '/native/tsc',
     documents: [],
     receive: vi.fn(),
     root: '/workspace',
   })
-  child.emit('spawn')
 })
 afterEach(async () => client?.dispose())
 
 describe('createNativeClient', () => {
+  it('should send CR-delimited source locations in LSP line and character coordinates', async () => {
+    const source = 'const value = 1\rvalue()'
+    await client.query({...query, offset: source.indexOf('value()'), source})
+    expect(native.connection.sendRequest).toHaveBeenCalledWith(
+      'textDocument/definition',
+      expect.objectContaining({position: {character: 0, line: 1}}),
+      expect.anything(),
+    )
+  })
+
+  it('should cancel a lookup while analyzer initialization is still pending', async () => {
+    const initialization = Promise.withResolvers<unknown>()
+    const initializing = Promise.withResolvers<void>()
+    native.connection.sendRequest.mockImplementation(async (method) => {
+      if (method === 'initialize') {
+        initializing.resolve()
+        return initialization.promise
+      }
+      return []
+    })
+    await client.dispose()
+    client = createNativeClient({
+      binary: '/native/tsc',
+      documents: [],
+      receive: vi.fn(),
+      root: '/workspace',
+    })
+    await initializing.promise
+    const controller = new AbortController()
+    const reason = new Error('Lookup superseded')
+    const request = client.query({...query, signal: controller.signal})
+    const rejected = expect(request).rejects.toBe(reason)
+    controller.abort(reason)
+    try {
+      await rejected
+    } finally {
+      initialization.resolve([])
+    }
+  }, 100)
+
+  it('should cancel preparation while analyzer initialization is still pending', async () => {
+    const initialization = Promise.withResolvers<unknown>()
+    const initializing = Promise.withResolvers<void>()
+    native.connection.sendRequest.mockImplementation(async (method) => {
+      if (method === 'initialize') {
+        initializing.resolve()
+        return initialization.promise
+      }
+      return []
+    })
+    await client.dispose()
+    client = createNativeClient({
+      binary: '/native/tsc',
+      documents: [],
+      receive: vi.fn(),
+      root: '/workspace',
+    })
+    await initializing.promise
+    const controller = new AbortController()
+    const reason = new Error('Preparation superseded')
+    const request = client.prepare(['src/one.ts'], undefined, {signal: controller.signal})
+    const rejected = expect(request).rejects.toBe(reason)
+    controller.abort(reason)
+    try {
+      await rejected
+    } finally {
+      initialization.resolve([])
+    }
+  }, 100)
+
+  it('should bound retained diagnostic messages without interrupting queries', async () => {
+    const handler: unknown = native.connection.onNotification.mock.calls.find(
+      ([method]) => method === 'window/logMessage',
+    )?.[1]
+    if (typeof handler !== 'function') {
+      throw new Error('Missing diagnostic receiver')
+    }
+    for (let index = 0; index < 1000; index += 1) {
+      handler({message: `${index}:${'x'.repeat(4096)}`, type: 3})
+    }
+    await expect(client.query(query)).resolves.toEqual([])
+    expect(JSON.stringify(client.diagnostics().notifications).length).toBeLessThanOrEqual(65536)
+  })
   it('should configure navigation without background diagnostics or auto-import warming', async () => {
     await client.query(query)
     expect(native.connection.sendRequest).toHaveBeenCalledWith(
@@ -155,7 +225,7 @@ describe('createNativeClient', () => {
       kind: 'references',
       receive,
     })
-    expect(native.readFile).toHaveBeenCalledWith('/workspace/src/use.ts', 'utf8')
+    expect(vi.mocked(readFileSync)).toHaveBeenCalledWith('/workspace/src/use.ts', 'utf8')
     expect(native.connection.sendNotification.mock.calls.map(([method]) => method)).not.toContain(
       'textDocument/didOpen',
     )
@@ -169,7 +239,7 @@ describe('createNativeClient', () => {
   })
 
   it('should reject changed disk text before requesting symbol locations', async () => {
-    native.readFile.mockReturnValue('const other = 2')
+    vi.mocked(readFileSync).mockReturnValue('const other = 2')
     await expect(client.query({...query, document: 'disk'})).rejects.toThrow('stale-source')
     expect(native.connection.sendRequest.mock.calls.map(([method]) => method)).toEqual([
       'initialize',
@@ -186,7 +256,7 @@ describe('createNativeClient', () => {
   })
 
   it('should retain an overlay when compiler decoding removes a UTF-8 BOM', async () => {
-    native.readFile.mockReturnValue(`\uFEFF${source}`)
+    vi.mocked(readFileSync).mockReturnValue(`\uFEFF${source}`)
     await client.query({...query, document: 'disk'})
     expect(native.connection.sendNotification).toHaveBeenCalledWith('textDocument/didOpen', {
       textDocument: {

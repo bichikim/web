@@ -20,6 +20,7 @@ const loadTexture = limitAsync(async (source: string) => {
 }, MAXIMUM_CONCURRENT_DECODES)
 
 interface InitializeRuntimePartsOptions {
+  readonly antialias?: boolean
   readonly document: PuppetDocument
   readonly layerById: Map<string, RuntimeLayer>
   readonly partById: Map<string, RuntimePart>
@@ -74,6 +75,7 @@ export const initializeRuntimeParts = async (options: InitializeRuntimePartsOpti
     const plan = planById.get(runtimePart.partId)
     if (plan?.mask !== undefined) {
       const mask = createRuntimePartMask({
+        antialias: options.antialias,
         document: options.document,
         partById: options.partById,
         plan: plan.mask,
@@ -91,6 +93,7 @@ export const initializeRuntimeParts = async (options: InitializeRuntimePartsOpti
         layer.mask === undefined
           ? undefined
           : createRuntimePartMask({
+              antialias: options.antialias,
               document: options.document,
               partById: options.partById,
               plan: layer.mask,

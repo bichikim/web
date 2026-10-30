@@ -19,6 +19,7 @@ const messages: Record<ViewerError['code'], string> = {
   'invalid-position': '이 위치에서는 이동할 대상을 찾을 수 없습니다.',
   'invalid-workspace': '존재하는 작업 폴더의 절대 경로를 입력해 주세요.',
   'media-too-large': '128 MiB보다 큰 문서·이미지·영상·음악은 이 뷰어에서 열 수 없습니다.',
+  'memo-write-failed': '메모를 저장하지 못했습니다. 저장 권한과 남은 공간을 확인해 주세요.',
   'not-found': '파일을 찾을 수 없습니다.',
   'operation-too-large': '파일과 폴더가 10,000개를 넘는 항목은 한 번에 처리할 수 없습니다.',
   'outside-workspace': '작업 폴더 밖의 파일은 열 수 없습니다.',

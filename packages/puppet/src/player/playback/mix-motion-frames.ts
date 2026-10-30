@@ -273,11 +273,13 @@ export const mixGroupOpacity = (mix: MotionMix | undefined, groupId: string, opa
     Math.max(0, mixSamples(mix?.groupOpacitySamples.get(groupId) ?? [], opacity, opacity)),
   )
 
-export const mixMotionVertices = (options: MixMotionVerticesOptions): ReadonlyArray<number> =>
-  Array.from(options.vertices, (value, index) =>
-    mixSamples(
-      options.samples.get(options.partId)?.get(index) ?? [],
-      value,
-      options.restVertices[index] ?? value,
-    ),
-  )
+export const mixMotionVertices = (options: MixMotionVerticesOptions): ReadonlyArray<number> => {
+  const vertices = Array.from(options.vertices)
+  for (const [index, samples] of options.samples.get(options.partId) ?? []) {
+    if (Number.isInteger(index) && index >= 0 && index < vertices.length) {
+      const value = vertices[index]!
+      vertices[index] = mixSamples(samples, value, options.restVertices[index] ?? value)
+    }
+  }
+  return vertices
+}

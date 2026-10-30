@@ -99,9 +99,15 @@ const getPartBindings = (
           binding.keyforms.flatMap((keyform) => keyform.parts.map((part) => part.partId)),
       )
       for (const targetId of partIds) {
-        const partBindings = indexed.get(targetId) ?? []
-        partBindings.push(binding)
-        indexed.set(targetId, partBindings)
+        if (
+          binding.keyforms.some((form) =>
+            form.parts.some((part) => part.partId === targetId && part.vertices.length > 0),
+          )
+        ) {
+          const partBindings = indexed.get(targetId) ?? []
+          partBindings.push(binding)
+          indexed.set(targetId, partBindings)
+        }
       }
     }
     bindingsByPart.set(bindings, indexed)

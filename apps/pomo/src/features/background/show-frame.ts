@@ -5,8 +5,11 @@ import {findCompanion} from './companion'
 import type {PhotoSize} from '@winter-love/wallpaper/album/pairing'
 
 export interface ShowFrameOptions {
-  readonly renderer: FrameRenderer
-  readonly background: BackgroundController
+  readonly renderer: Pick<
+    FrameRenderer,
+    'addPhoto' | 'photoSize' | 'present' | 'show' | 'viewportSize'
+  >
+  readonly background: Pick<BackgroundController, 'items' | 'load' | 'markFailed'>
   readonly item: BackgroundMedia
   readonly pairPhotos: boolean
   readonly transition: TransitionEffect

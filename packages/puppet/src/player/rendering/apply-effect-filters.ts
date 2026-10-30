@@ -85,10 +85,15 @@ const composeEffectFilters = (options: ComposeEffectFiltersOptions) => {
   return {blendMode: 'normal' as const, filters}
 }
 
+const appliedPartProperties = new WeakMap<RuntimePart, ResolvedPartRenderProperties>()
+
 export const applyPartRenderProperties = (
   properties: ResolvedPartRenderProperties,
   runtimePart: RuntimePart,
 ) => {
+  if (appliedPartProperties.get(runtimePart) === properties) {
+    return
+  }
   const hasColorEffect =
     !colorsEqual(properties.multiplyColor, [1, 1, 1]) ||
     !colorsEqual(properties.screenColor, [0, 0, 0])
@@ -103,6 +108,7 @@ export const applyPartRenderProperties = (
   runtimePart.mesh.alpha = properties.opacity
   runtimePart.mesh.blendMode = blendMode
   runtimePart.mesh.filters = filters.length > 0 ? filters : null
+  appliedPartProperties.set(runtimePart, properties)
 }
 
 /**

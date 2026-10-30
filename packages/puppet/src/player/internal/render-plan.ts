@@ -18,7 +18,12 @@ import type {
   PuppetSceneGroupNode,
 } from '../document'
 import {resolveParameterValue} from '../parameter-value'
-import {gatherLayers, getSceneLayerStructure, inheritGroupEffects} from './scene-layers'
+import {
+  gatherLayers,
+  getSceneLayerStructure,
+  type InheritedGroupEffect,
+  inheritGroupEffects,
+} from './scene-layers'
 import {getSpatialPartPose, type SpatialPartPose} from './spatial-part'
 import {getDrawOrderedPartStates} from './scene-draw-order'
 import {mixGroupOpacity, type MotionMix} from '../playback/mix-motion-frames'
@@ -193,6 +198,61 @@ export interface FrameAdjustments {
   readonly poseOpacityByPartId?: ReadonlyMap<string, number>
 }
 
+interface InheritedSample {
+  readonly composition: PuppetDocument['colorComposition']
+  readonly properties: ReadonlyArray<ResolvedGroupRenderProperties>
+  readonly result: InheritedGroupEffect
+}
+
+const inheritedSamples = new WeakMap<ReadonlyArray<PuppetSceneContainerNode>, InheritedSample>()
+
+const inheritFrameEffects = (
+  groups: ReadonlyArray<PuppetSceneContainerNode>,
+  resolve: (group: PuppetSceneContainerNode) => ResolvedGroupRenderProperties,
+  composition: PuppetDocument['colorComposition'],
+): InheritedGroupEffect => {
+  const previous = inheritedSamples.get(groups)
+  if (
+    previous !== undefined &&
+    previous.composition === composition &&
+    groups.every((group, index) => resolve(group) === previous.properties[index])
+  ) {
+    return previous.result
+  }
+  const properties = groups.map(resolve)
+  const result = inheritGroupEffects(groups, resolve, composition)
+  inheritedSamples.set(groups, {composition, properties, result})
+  return result
+}
+
+interface PropertySample {
+  readonly composition: PuppetDocument['colorComposition']
+  readonly inherited: InheritedGroupEffect['effect']
+  readonly opacity: number
+  readonly result: ResolvedPartRenderProperties
+}
+
+const propertySamples = new WeakMap<ResolvedPartRenderProperties, PropertySample>()
+
+const composeFrameProperties = (
+  composed: ResolvedPartRenderProperties,
+  inherited: InheritedGroupEffect['effect'],
+  opacity: number,
+  composition: PuppetDocument['colorComposition'],
+): ResolvedPartRenderProperties => {
+  const previous = propertySamples.get(composed)
+  if (
+    previous?.inherited === inherited &&
+    previous.composition === composition &&
+    Object.is(previous.opacity, opacity)
+  ) {
+    return previous.result
+  }
+  const result = composeColorEffects({...composed, opacity}, inherited, composition)
+  propertySamples.set(composed, {composition, inherited, opacity, result})
+  return result
+}
+
 /** Parts in draw order, then moved by the layer order rules whose conditions hold. */
 const getRuleOrderedPartStates = (
   document: PuppetDocument,
@@ -228,13 +288,23 @@ const getRuleOrderedPartStates = (
     getDrawOrderedPartStates(document, parameterValues),
   )
 
+/** Combines a part override, pose selection and the motion's whole-model opacity. */
+const resolveFrameOpacity = (
+  partId: string,
+  properties: ResolvedPartRenderProperties,
+  adjustments: FrameAdjustments,
+): number =>
+  (adjustments.overrides?.parts.get(partId)?.opacity ??
+    properties.opacity * (adjustments.poseOpacityByPartId?.get(partId) ?? 1)) *
+  (adjustments.mix?.modelOpacity ?? 1)
+
 export const getPartRenderFrame = (
   document: PuppetDocument,
   parameterValues?: PuppetParameterValueMap,
   posedScene?: PuppetScene,
   adjustments: FrameAdjustments = {},
 ): PartRenderFrame => {
-  const {mix, poseOpacityByPartId} = adjustments
+  const {mix} = adjustments
   const overrides = adjustments.overrides ?? NO_RENDER_OVERRIDES
   const maskStructure = getStaticMaskStructure(document)
 
@@ -264,7 +334,7 @@ export const getPartRenderFrame = (
     const composed = composeParameterGroupProperties({document, group, parameterValues})
     const opacity =
       overrides.groups.get(group.id)?.opacity ?? mixGroupOpacity(mix, group.id, composed.opacity)
-    return {...composed, opacity}
+    return Object.is(composed.opacity, opacity) ? composed : {...composed, opacity}
   }
   const resolvedGroups = new Map<PuppetSceneContainerNode, ResolvedGroupRenderProperties>()
   const resolveGroup = (group: PuppetSceneContainerNode) => {
@@ -282,7 +352,7 @@ export const getPartRenderFrame = (
   const inheritedByPartId = new Map(
     [...sceneLayers.groupsByPartId].map(([partId, groups]) => [
       partId,
-      inheritGroupEffects(groups, resolveGroup, document.colorComposition),
+      inheritFrameEffects(groups, resolveGroup, document.colorComposition),
     ]),
   )
   const layerIdsOf = (partId: string) => inheritedByPartId.get(partId)?.layerIds ?? []
@@ -290,12 +360,16 @@ export const getPartRenderFrame = (
     ancestors: ReadonlyArray<PuppetSceneContainerNode>,
     own: PuppetRenderOverride | undefined,
   ) =>
-    getOverrideColorProperties({
-      ancestors,
-      isOffscreen: (group) => resolveGroup(group).offscreen,
-      overrides,
-      own,
-    })
+    overrides.groups.size === 0 &&
+    own?.multiplyColor === undefined &&
+    own?.screenColor === undefined
+      ? {}
+      : getOverrideColorProperties({
+          ancestors,
+          isOffscreen: (group) => resolveGroup(group).offscreen,
+          overrides,
+          own,
+        })
   const orderedStates = gatherLayers(
     states.map((state) => {
       const groupId = maskStructure.partById.get(state.partId)?.spatial?.groupId
@@ -317,19 +391,22 @@ export const getPartRenderFrame = (
     })
     const override = overrides.parts.get(state.partId)
     // Model opacity scales every part, as Cubism scales every drawable.
-    const opacity =
-      (override?.opacity ?? composed.opacity * (poseOpacityByPartId?.get(state.partId) ?? 1)) *
-      (mix?.modelOpacity ?? 1)
+    const opacity = resolveFrameOpacity(state.partId, composed, adjustments)
     const inherited = inheritedByPartId.get(state.partId)
-    const properties = {
-      ...composeColorEffects(
-        {...composed, opacity},
-        inherited?.effect ?? IDENTITY_COLOR_EFFECT,
-        document.colorComposition,
-      ),
-      ...overrideColors(sceneLayers.groupsByPartId.get(state.partId) ?? [], override),
-      ...(override?.culling === undefined ? {} : {culling: override.culling}),
-    }
+    const composedProperties = composeFrameProperties(
+      composed,
+      inherited?.effect ?? IDENTITY_COLOR_EFFECT,
+      opacity,
+      document.colorComposition,
+    )
+    const properties =
+      overrides.parts.size === 0 && overrides.groups.size === 0
+        ? composedProperties
+        : {
+            ...composedProperties,
+            ...overrideColors(sceneLayers.groupsByPartId.get(state.partId) ?? [], override),
+            ...(override?.culling === undefined ? {} : {culling: override.culling}),
+          }
     const render = !maskStructure.maskPartIds.has(state.partId) || properties.renderWhenUsedAsMask
     return [
       {
@@ -347,7 +424,7 @@ export const getPartRenderFrame = (
   })
   const layers = new Map(
     sceneLayers.layers.map(({ancestors, group, visible}): [string, LayerRenderPlan] => {
-      const inherited = inheritGroupEffects(ancestors, resolveGroup, document.colorComposition)
+      const inherited = inheritFrameEffects(ancestors, resolveGroup, document.colorComposition)
       const {offscreen: _offscreen, ...composed} = composeColorEffects(
         resolveGroup(group),
         inherited.effect,
