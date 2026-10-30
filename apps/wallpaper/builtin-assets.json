@@ -1,0 +1,108 @@
+{
+  "puppets": [
+    {
+      "id": "builtin:ash",
+      "name": "애시",
+      "file": "models/white-cat/model.poffo",
+      "size": 5927180
+    },
+    {
+      "id": "builtin:profile",
+      "name": "프로필 배경",
+      "file": "models/profile/model.poffo",
+      "size": 387867
+    },
+    {
+      "id": "builtin:street",
+      "name": "거리 배경",
+      "file": "models/street/model.poffo",
+      "size": 1210874
+    }
+  ],
+  "media": [
+    {
+      "id": "builtin:cover:window",
+      "name": "창문",
+      "file": "wallpapers/ash-afternoon/window.webp",
+      "size": 397160,
+      "kind": "photo"
+    },
+    {
+      "id": "builtin:cover:boot-laces",
+      "name": "부츠 끈",
+      "file": "wallpapers/ash-afternoon/boot-laces.webp",
+      "size": 470672,
+      "kind": "photo"
+    },
+    {
+      "id": "builtin:cover:corner",
+      "name": "모퉁이",
+      "file": "wallpapers/ash-afternoon/corner.webp",
+      "size": 511474,
+      "kind": "photo"
+    },
+    {
+      "id": "builtin:cover:shop-window",
+      "name": "쇼윈도",
+      "file": "wallpapers/ash-afternoon/shop-window.webp",
+      "size": 420866,
+      "kind": "photo"
+    },
+    {
+      "id": "builtin:cover:lemon-soda",
+      "name": "레몬소다",
+      "file": "wallpapers/ash-afternoon/lemon-soda.webp",
+      "size": 430826,
+      "kind": "photo"
+    },
+    {
+      "id": "builtin:cover:blue-ribbon",
+      "name": "파란 리본",
+      "file": "wallpapers/ash-afternoon/blue-ribbon.webp",
+      "size": 483354,
+      "kind": "photo"
+    },
+    {
+      "id": "builtin:cover:one-earbud",
+      "name": "한쪽 이어폰",
+      "file": "wallpapers/ash-afternoon/one-earbud.webp",
+      "size": 397114,
+      "kind": "photo"
+    },
+    {
+      "id": "builtin:cover:long-shadow",
+      "name": "긴 그림자",
+      "file": "wallpapers/ash-afternoon/long-shadow.webp",
+      "size": 568134,
+      "kind": "photo"
+    },
+    {
+      "id": "builtin:cover:streetlamp",
+      "name": "가로등",
+      "file": "wallpapers/ash-afternoon/streetlamp.webp",
+      "size": 517344,
+      "kind": "photo"
+    },
+    {
+      "id": "builtin:cover:doorstep",
+      "name": "현관 앞",
+      "file": "wallpapers/ash-afternoon/doorstep.webp",
+      "size": 439052,
+      "kind": "photo"
+    },
+    {
+      "id": "builtin:background:profile",
+      "name": "프로필",
+      "file": "images/backgrounds/profile.webp",
+      "size": 136592,
+      "kind": "photo"
+    },
+    {
+      "id": "builtin:background:street",
+      "name": "거리",
+      "file": "images/backgrounds/street-front.webp",
+      "size": 396028,
+      "kind": "photo"
+    }
+  ]
+}

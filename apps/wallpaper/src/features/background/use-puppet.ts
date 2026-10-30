@@ -16,7 +16,7 @@ import type {
 interface UsePuppetProps extends PoffoMotionControls, PoffoLipSyncControls, PoffoAgentControls {
   readonly canvas: Accessor<HTMLCanvasElement | null>
   readonly assetId: Accessor<string | null>
-  readonly load: (id: string) => Promise<string>
+  readonly load: (id: string) => Promise<string | Blob>
   readonly onError: (error: unknown) => void
   readonly onAfterRender?: () => void
   readonly cameraSurface?: Accessor<CameraSurface | undefined>

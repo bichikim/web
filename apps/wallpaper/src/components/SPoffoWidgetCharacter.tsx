@@ -16,7 +16,7 @@ interface SPoffoWidgetCharacterProps
   extends PoffoMotionControls, PoffoLipSyncControls, PoffoAgentControls {
   readonly assetId: Accessor<string | null>
   readonly interactive: Accessor<boolean>
-  readonly load: (id: string) => Promise<string>
+  readonly load: (id: string) => Promise<string | Blob>
   readonly onError: (cause: unknown) => void
   readonly tracking?: Accessor<PoffoTracking | undefined>
   readonly trackingBindings?: Accessor<PoffoTrackingBindings | undefined>

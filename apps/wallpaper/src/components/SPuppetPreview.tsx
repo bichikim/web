@@ -17,7 +17,7 @@ import type {
 interface SPuppetPreviewProps
   extends PoffoMotionControls, PoffoLipSyncControls, PoffoAgentControls {
   readonly assetId: Accessor<string | null>
-  readonly load: (id: string) => Promise<string>
+  readonly load: (id: string) => Promise<string | Blob>
   readonly placement?: Accessor<PoffoPlacement | undefined>
   readonly cameraSurface?: Accessor<CameraSurface | undefined>
   readonly tracking?: Accessor<PoffoTracking | undefined>

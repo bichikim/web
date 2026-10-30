@@ -2,12 +2,12 @@ import {isTauri} from '@tauri-apps/api/core'
 import {getCurrentWindow} from '@tauri-apps/api/window'
 import {type Accessor, createEffect, createSignal, onCleanup, onMount} from 'solid-js'
 import {createLibraryRepository} from '@winter-love/wallpaper/settings/library-repository'
-import {createSettingsRepository} from '@winter-love/wallpaper/settings/repository'
+import {createBuiltinSettings} from '../builtin-assets'
 import type {PoffoWidget, WidgetSize} from '@winter-love/wallpaper/settings/library-model'
 
 export const useWidget = (id: Accessor<string>) => {
   const library = createLibraryRepository('wallpaper-library')
-  const assets = createSettingsRepository('wallpaper-settings')
+  const assets = createBuiltinSettings('wallpaper-settings')
   const [widget, setWidget] = createSignal<PoffoWidget | null>(null)
   const [error, setError] = createSignal<string | null>(null)
   let disposed = false
