@@ -4,6 +4,32 @@ import {describe, expect, it} from 'vitest'
 import {parseExpenseAssistantResponse, parseExpenseText} from '../expense'
 
 describe('parseExpenseText', () => {
+  it.each(['고구마 1000원2개', '고구마 1000원2 개', '고구마 1000 원2개'])(
+    'should preserve explicit quantity when the currency and quantity touch in %s',
+    (text) => {
+      expect(parseExpenseText(text)).toEqual({
+        ok: true,
+        value: {
+          date: null,
+          items: [{amount: 2000, name: '고구마', quantity: 2, unitPrice: 1000}],
+          questions: [],
+          total: 2000,
+        },
+      })
+    },
+  )
+
+  it.each([
+    '고구마 1000원0개',
+    '고구마 1000원-2개',
+    '고구마 1000원2.5개',
+    '고구마 1000원２개',
+    '고구마1000원2개',
+    '고구마 1000원2개 추가',
+  ])('should reject invalid or ambiguous compact expense input %s', (text) => {
+    expect(parseExpenseText(text)).toEqual({error: {code: 'invalid-input'}, ok: false})
+  })
+
   it('should parse clear Korean expense lines with quantities', () => {
     expect(parseExpenseText('당근 2000원\n고구마 1000원 2개')).toEqual({
       ok: true,
