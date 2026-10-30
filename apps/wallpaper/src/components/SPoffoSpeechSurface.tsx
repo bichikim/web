@@ -38,7 +38,7 @@ export const SPoffoSpeechSurface = (props: {readonly widgetId?: string} = {}) =>
     speech: settings.speech,
     widgetId: () => props.widgetId,
   })
-  const voice = useVoice({message, onLevel: lipsync.audioLevel, speech: settings.speech})
+  const voice = useVoice({message, onShape: lipsync.audioShape, speech: settings.speech})
   const voiceNotice = () => voice.error() ?? settings.error() ?? undefined
   const frame = useSpeechSize(content, {
     viewport: surface,

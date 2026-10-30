@@ -1,3 +1,5 @@
+import type {LipSyncShape} from '@winter-love/wallpaper/settings/lipsync'
+import {speechShapes} from './speech-shapes'
 import {type Accessor, createEffect, createMemo, onCleanup} from 'solid-js'
 import type {PoffoSpeech} from '@winter-love/wallpaper/settings/library-model'
 import type {VoiceMessage} from '../voice/text'
@@ -59,7 +61,7 @@ export const useSpeechLipSync = (props: UseSpeechLipSyncProps) => {
         : {offset: 0, text: selected.text}
     progress.text = selected.text
     history.set(key, progress)
-    const characters = Array.from(progress.text)
+    const characters = speechShapes(progress.text)
     let timestamp = previousKey === key ? previousTime : null
     previousKey = key
     const step = (time: number) => {
@@ -77,9 +79,9 @@ export const useSpeechLipSync = (props: UseSpeechLipSyncProps) => {
         publish('speech', 0)
         return
       }
-      const speaking = /[\p{L}\p{N}]/u.test(characters[index]!)
+      const shape = characters[index] ?? null
       const phase = progress.offset - index
-      publish('speech', speaking ? Math.sin(Math.PI * phase) * TEXT_OPENING : 0)
+      publish('speech', shape === null ? 0 : Math.sin(Math.PI * phase) * TEXT_OPENING, shape)
       frame = requestAnimationFrame(step)
     }
     if (progress.offset < characters.length) {
@@ -87,9 +89,9 @@ export const useSpeechLipSync = (props: UseSpeechLipSyncProps) => {
     }
   })
   return {
-    audioLevel: (level: number) => {
+    audioShape: (shape: LipSyncShape | null, level: number) => {
       if (mode() === 'voice') {
-        publisher()?.('voice', message() === null ? 0 : level)
+        publisher()?.('voice', message() === null ? 0 : level, message() === null ? null : shape)
       }
     },
   }

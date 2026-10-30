@@ -1,8 +1,8 @@
 import {type Accessor, createEffect, createMemo, onCleanup} from 'solid-js'
 import type {Player} from '@winter-love/puppet/player'
-import type {PoffoLipSync} from '@winter-love/wallpaper/settings/lipsync'
+import {LIP_SYNC_SHAPES, type PoffoLipSync} from '@winter-love/wallpaper/settings/lipsync'
 import type {TrackingParameter} from '../tracking/types'
-import {subscribeLipSync} from './channel'
+import {type LipSyncFrame, subscribeLipSync} from './channel'
 import {lipSyncValue, resolveLipSyncParameter} from './parameters'
 
 interface UseLipSyncProps {
@@ -11,49 +11,62 @@ interface UseLipSyncProps {
   readonly player: Accessor<Player | null>
   readonly parameters: Accessor<readonly TrackingParameter[]>
 }
-/** Applies a widget's lip-sync input independently of gaze tracking and default motions. */
+/** Applies independent mouth poses, releasing only its own overrides on rebind or cancellation. */
 export const useLipSync = (props: UseLipSyncProps) => {
   const settings = createMemo(() => props.options(), undefined, {
-    equals: (first, second) =>
-      first?.source === second?.source &&
-      first?.parameterId === second?.parameterId &&
-      first?.inverted === second?.inverted &&
-      first?.gain === second?.gain,
+    equals: (first, second) => JSON.stringify(first) === JSON.stringify(second),
   })
   createEffect(() => {
     const id = props.widgetId()
     const options = settings()
     const player = props.player()
-    const parameter = resolveLipSyncParameter(props.parameters(), options?.parameterId)
-    if (
-      id === undefined ||
-      options === undefined ||
-      options.source === 'off' ||
-      player === null ||
-      parameter === undefined
-    ) {
+    const parameters = props.parameters()
+    if (id === undefined || options === undefined || options.source === 'off' || player === null) {
       return
     }
+    const connections = LIP_SYNC_SHAPES.flatMap((shape) => {
+      const binding = options.shapes?.[shape] ?? {}
+      const parameter = resolveLipSyncParameter(parameters, binding.parameterId, shape)
+      return parameter === undefined ? [] : [{binding, parameter, shape}]
+    })
+    if (connections.length === 0) {
+      return
+    }
+    const resting = Object.fromEntries(
+      connections.map(({binding, parameter}) => [
+        parameter.id,
+        lipSyncValue(parameter, 0, binding),
+      ]),
+    )
     let disposed = false
     let stop: (() => void) | undefined
     let request = 0
-    let pending = 0
-    let applied = lipSyncValue(parameter, 0, options)
+    let pending: LipSyncFrame | null = null
+    let applied = resting
     const draw = () => {
       request = 0
       if (disposed) {
         return
       }
-      const value = lipSyncValue(parameter, pending, options)
-      if (value !== applied) {
-        applied = value
-        player.patchParameterValues({[parameter.id]: value})
+      const input = pending
+      const values = {...resting}
+      for (const {binding, parameter, shape} of connections) {
+        if (input?.shape === shape) {
+          values[parameter.id] = lipSyncValue(parameter, input.level, {
+            ...binding,
+            gain: options.gain,
+          })
+        }
+      }
+      if (Object.entries(values).some(([key, value]) => applied[key] !== value)) {
+        applied = values
+        player.patchParameterValues(values)
       }
     }
-    player.patchParameterValues({[parameter.id]: applied})
+    player.patchParameterValues(resting)
     subscribeLipSync(id, (input) => {
       if (!disposed && input.widgetId === id && input.source === options.source) {
-        pending = input.level
+        pending = input
         if (request === 0) {
           request = requestAnimationFrame(draw)
         }
@@ -71,7 +84,7 @@ export const useLipSync = (props: UseLipSyncProps) => {
       disposed = true
       cancelAnimationFrame(request)
       stop?.()
-      player.clearParameterValues([parameter.id])
+      player.clearParameterValues(Object.keys(resting))
     })
   })
 }

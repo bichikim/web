@@ -1,13 +1,17 @@
+import type {LipSyncShape} from '@winter-love/wallpaper/settings/lipsync'
+import {speechShapes} from '../lipsync/speech-shapes'
 import type {VoiceAudio} from './synthesis'
 
 interface PlaybackClip {
   readonly audio: VoiceAudio
   readonly start: number
   readonly speed: number
+  readonly shapes: readonly (LipSyncShape | null)[]
 }
 interface PlaybackMeterOptions {
   readonly clock: () => number
   readonly onLevel: (level: number) => void
+  readonly onShape?: (shape: LipSyncShape | null, level: number) => void
 }
 const WINDOW_SECONDS = 0.04
 const AMPLITUDE_GAIN = 6
@@ -41,6 +45,7 @@ export const createPlaybackMeter = (options: PlaybackMeterOptions) => {
     frame = 0
     level = 0
     options.onLevel(0)
+    options.onShape?.(null, 0)
   }
   const step = () => {
     frame = 0
@@ -51,6 +56,17 @@ export const createPlaybackMeter = (options: PlaybackMeterOptions) => {
     level = target + (level - target) * Math.exp(-seconds / smoothing)
     previous = clock
     options.onLevel(level < SILENT_LEVEL ? 0 : level)
+    const active = Array.from(clips).find((clip) => {
+      const elapsed = (clock - clip.start) * clip.speed
+      return elapsed >= 0 && elapsed < clip.audio.samples.length / clip.audio.sampleRate
+    })
+    const progress =
+      active === undefined
+        ? 0
+        : ((clock - active.start) * active.speed * active.audio.sampleRate) /
+          active.audio.samples.length
+    const shape = active?.shapes[Math.floor(progress * active.shapes.length)] ?? null
+    options.onShape?.(shape, shape === null || level < SILENT_LEVEL ? 0 : level)
     if (clips.size > 0) {
       frame = requestAnimationFrame(step)
     }
@@ -61,7 +77,7 @@ export const createPlaybackMeter = (options: PlaybackMeterOptions) => {
       reset()
     },
     track: (audio: VoiceAudio, start: number, speed: number) => {
-      const clip = {audio, speed, start}
+      const clip = {audio, shapes: speechShapes(audio.text ?? ''), speed, start}
       clips.add(clip)
       if (frame === 0) {
         previous = options.clock()

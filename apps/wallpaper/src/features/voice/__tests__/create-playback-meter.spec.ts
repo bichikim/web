@@ -54,3 +54,29 @@ it('should read the sped-up sample position and leave another queued clip active
   meter.dispose()
   expect(onLevel).toHaveBeenLastCalledWith(0)
 })
+
+it('should publish distinct vowel shapes against the scheduled playback clock and clear them on stop', () => {
+  let step: FrameRequestCallback = () => undefined
+  vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => {
+    step = callback
+    return 1
+  })
+  vi.stubGlobal('cancelAnimationFrame', vi.fn())
+  let clock = 0
+  const onShape = vi.fn()
+  const meter = createPlaybackMeter({clock: () => clock, onLevel: vi.fn(), onShape})
+  const stop = meter.track(
+    {sampleRate: 100, samples: new Float32Array(500).fill(0.2), text: '아이우에오'},
+    1,
+    1,
+  )
+  step(0)
+  expect(onShape).toHaveBeenLastCalledWith(null, 0)
+  for (const [index, shape] of ['a', 'i', 'u', 'e', 'o'].entries()) {
+    clock = 1.2 + index
+    step(0)
+    expect(onShape).toHaveBeenLastCalledWith(shape, expect.any(Number))
+  }
+  stop()
+  expect(onShape).toHaveBeenLastCalledWith(null, 0)
+})

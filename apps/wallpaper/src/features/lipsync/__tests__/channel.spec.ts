@@ -28,11 +28,13 @@ it('should coalesce native levels and deliver the closing zero only to its widge
   expect(emitTo).toHaveBeenCalledTimes(4)
   expect(emitTo).toHaveBeenNthCalledWith(3, 'poffo-widget-one', 'poffo-lipsync', {
     level: 0,
+    shape: null,
     source: 'voice',
     widgetId: 'one',
   })
   expect(emitTo).toHaveBeenNthCalledWith(4, 'manager', 'poffo-lipsync', {
     level: 0,
+    shape: null,
     source: 'voice',
     widgetId: 'one',
   })
@@ -51,6 +53,7 @@ it('should deliver a queued closing level after a native delivery fails', async 
   expect(emitTo).toHaveBeenCalledTimes(4)
   expect(emitTo).toHaveBeenNthCalledWith(3, 'poffo-widget-one', 'poffo-lipsync', {
     level: 0,
+    shape: null,
     source: 'voice',
     widgetId: 'one',
   })
@@ -75,6 +78,7 @@ it('should finish both recipients before delivering newer levels when one recipi
   expect(emitTo).toHaveBeenCalledTimes(4)
   expect(emitTo).toHaveBeenNthCalledWith(4, 'manager', 'poffo-lipsync', {
     level: 0,
+    shape: null,
     source: 'voice',
     widgetId: 'one',
   })

@@ -13,7 +13,14 @@ import {createLipSyncPublisher, useSpeechLipSync} from '../../src/features/lipsy
 import type {VoiceMessage} from '../../src/features/voice/text'
 import 'virtual:uno.css'
 
-vi.mock('@winter-love/puppet/player', {spy: true})
+vi.mock('@winter-love/puppet/player', async (importOriginal) => {
+  const player = await importOriginal<typeof playerModule>()
+  return {
+    ...player,
+    createPlayer: vi.fn(player.createPlayer),
+    preparePuppetDocument: vi.fn(player.preparePuppetDocument),
+  }
+})
 afterEach(() => {
   cleanup()
   vi.clearAllMocks()
@@ -136,20 +143,20 @@ it.each([320, 496])(
     await userEvent.keyboard('{Space}')
     await userEvent.click(screen.getByRole('combobox', {name: '립싱크 입력'}))
     await userEvent.click(screen.getByRole('option', {exact: true, name: '음성'}))
-    const parameter = screen.getByRole('combobox', {name: '립싱크 파라미터'})
+    const parameter = screen.getByRole('combobox', {name: '아 입모양 파라미터'})
     await expect.poll(() => parameter.getAttribute('aria-disabled')).not.toBe('true')
     await userEvent.click(parameter)
     await userEvent.click(screen.getByRole('option', {exact: true, name: 'Angle X'}))
     const publish = createLipSyncPublisher('lipsync-widget')
-    publish('voice', 0.6)
+    publish('voice', 0.6, 'a')
     await expect.poll(() => player.getParameterValue('angle-x')).toBeCloseTo(18)
-    createLipSyncPublisher('different-widget')('voice', 1)
+    createLipSyncPublisher('different-widget')('voice', 1, 'a')
     expect(player.getParameterValue('angle-x')).toBeCloseTo(18)
     publish('voice', 0)
     await expect.poll(() => player.getParameterValue('angle-x')).toBe(0)
     await userEvent.click(screen.getByRole('combobox', {name: '립싱크 입력'}))
     await userEvent.click(screen.getByRole('option', {exact: true, name: '말풍선'}))
-    setMessage({chat: 'chat', id: 'message', text: '말풍선의 새 내용을 읽습니다.'})
+    setMessage({chat: 'chat', id: 'message', text: '아아아아아아아아아아아아아아아아아아아아'})
     await expect.poll(() => player.getParameterValue('angle-x')).toBeGreaterThan(1)
     setWidget((previous) => ({...previous, speech: {...previous.speech!, enabled: false}}))
     await expect.poll(() => player.getParameterValue('angle-x')).toBe(0)

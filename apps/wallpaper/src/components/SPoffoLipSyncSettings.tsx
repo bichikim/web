@@ -1,11 +1,13 @@
-import {createMemo, Show} from 'solid-js'
+import {createMemo, For, Show} from 'solid-js'
 import {
+  type LipSyncShape,
   type LipSyncSource,
   MAXIMUM_LIPSYNC_GAIN,
   type PoffoLipSync,
 } from '@winter-love/wallpaper/settings/lipsync'
 import {type ParameterSource, useParameters} from '../features/tracking/use-parameters'
-import {resolveLipSyncParameter} from '../features/lipsync/parameters'
+import type {PoffoTrackingBinding} from '@winter-love/wallpaper/settings/tracking'
+import {SPoffoLipSyncBinding} from './SPoffoLipSyncBinding'
 import {SSelect} from './SSelect'
 import {SNumberInput} from './SNumberInput'
 
@@ -16,7 +18,14 @@ interface SPoffoLipSyncSettingsProps {
   readonly value?: PoffoLipSync
   readonly onChange?: (value: PoffoLipSync) => void | Promise<void>
 }
-const PARAMETER_PREFIX = 'id:'
+const SHAPES: readonly {readonly value: LipSyncShape; readonly label: string}[] = [
+  {label: '아', value: 'a'},
+  {label: '이', value: 'i'},
+  {label: '우', value: 'u'},
+  {label: '에', value: 'e'},
+  {label: '오', value: 'o'},
+  {label: '닫힘', value: 'closed'},
+]
 export const SPoffoLipSyncSettings = (props: SPoffoLipSyncSettingsProps) => {
   const value = () => props.value ?? {source: 'off' as const}
   const own = useParameters({
@@ -26,34 +35,9 @@ export const SPoffoLipSyncSettings = (props: SPoffoLipSyncSettingsProps) => {
   })
   const parameters = createMemo(() => props.source ?? own)
   const update = (patch: Partial<PoffoLipSync>) => props.onChange?.({...value(), ...patch})
-  const automatic = () => resolveLipSyncParameter(parameters().parameters())
-  const selected = () => value().parameterId
-  const selection = () =>
-    selected() === undefined ? 'auto' : selected() === null ? 'none' : `id:${selected()}`
-  const options = () => [
-    {label: `자동 · ${automatic()?.name || automatic()?.id || '연결 없음'}`, value: 'auto'},
-    {label: '사용 안 함', value: 'none'},
-    ...parameters()
-      .parameters()
-      .map((parameter) => ({label: parameter.name || parameter.id, value: `id:${parameter.id}`})),
-    ...(typeof selected() === 'string' &&
-    !parameters()
-      .parameters()
-      .some((parameter) => parameter.id === selected())
-      ? [{label: `${selected()} (없음)`, value: `id:${selected()}`}]
-      : []),
-  ]
   const handleSource = (source: LipSyncSource) => update({source})
-  const handleParameter = (selected: string) =>
-    update({
-      parameterId:
-        selected === 'auto'
-          ? undefined
-          : selected === 'none'
-            ? null
-            : selected.slice(PARAMETER_PREFIX.length),
-    })
-  const handleInvert = () => update({inverted: !value().inverted})
+  const handleBinding = (shape: LipSyncShape, binding: PoffoTrackingBinding) =>
+    update({shapes: {...value().shapes, [shape]: binding}})
   const handleGain = (gain: number) => update({gain})
   return (
     <section
@@ -76,26 +60,18 @@ export const SPoffoLipSyncSettings = (props: SPoffoLipSyncSettingsProps) => {
         />
       </div>
       <Show when={value().source !== 'off'}>
-        <div class="grid grid-cols-[6rem_minmax(0,1fr)_auto] items-center gap-2">
-          <span>입 열림</span>
-          <SSelect
-            label="립싱크 파라미터"
-            value={selection()}
-            options={options()}
-            disabled={parameters().loading() || props.onChange === undefined}
-            onChange={handleParameter}
-          />
-          <button
-            type="button"
-            class="wallpaper-file-button aria-pressed:bg-blue-50 aria-pressed:text-blue-800"
-            aria-label="립싱크 방향 반전"
-            aria-pressed={value().inverted ?? false}
-            disabled={props.onChange === undefined}
-            onClick={handleInvert}
-          >
-            {value().inverted ? '반전됨' : '반전'}
-          </button>
-        </div>
+        <For each={SHAPES}>
+          {(shape) => (
+            <SPoffoLipSyncBinding
+              label={shape.label}
+              shape={shape.value}
+              parameters={parameters().parameters()}
+              value={value().shapes?.[shape.value]}
+              disabled={parameters().loading() || props.onChange === undefined}
+              onChange={(binding) => handleBinding(shape.value, binding)}
+            />
+          )}
+        </For>
         <div class="flex items-center justify-between gap-3">
           <span>움직임 배율</span>
           <div class="flex items-center gap-2">

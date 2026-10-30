@@ -1,11 +1,16 @@
 import {isTauri} from '@tauri-apps/api/core'
 import {emitTo, listen} from '@tauri-apps/api/event'
-import type {LipSyncSource} from '@winter-love/wallpaper/settings/lipsync'
+import {
+  LIP_SYNC_SHAPES,
+  type LipSyncShape,
+  type LipSyncSource,
+} from '@winter-love/wallpaper/settings/lipsync'
 
 export interface LipSyncFrame {
   readonly widgetId: string
   readonly source: Exclude<LipSyncSource, 'off'>
   readonly level: number
+  readonly shape?: LipSyncShape | null
 }
 const EVENT = 'poffo-lipsync'
 const isFrame = (value: unknown): value is LipSyncFrame =>
@@ -19,7 +24,10 @@ const isFrame = (value: unknown): value is LipSyncFrame =>
   typeof value.level === 'number' &&
   Number.isFinite(value.level) &&
   value.level >= 0 &&
-  value.level <= 1
+  value.level <= 1 &&
+  (!('shape' in value) ||
+    value.shape === null ||
+    LIP_SYNC_SHAPES.some((shape) => shape === value.shape))
 
 const send = async (frame: LipSyncFrame) => {
   if (!isTauri()) {
@@ -59,9 +67,10 @@ export const createLipSyncPublisher = (widgetId: string) => {
       sending = false
     }
   }
-  return (source: LipSyncFrame['source'], level: number) => {
+  return (source: LipSyncFrame['source'], level: number, shape?: LipSyncShape | null) => {
     pending = {
       level: Number.isFinite(level) ? Math.max(0, Math.min(1, level)) : 0,
+      shape: shape ?? null,
       source,
       widgetId,
     }

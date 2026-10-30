@@ -39,29 +39,29 @@ it('should apply only the configured input and release only its own override whe
   const hook = renderHook(() =>
     useLipSync({
       options: settings,
-      parameters: () => [{defaultValue: 0, id: 'mouth-open', maximum: 1, minimum: 0}],
+      parameters: () => [{defaultValue: 0, id: 'mouth-a', maximum: 1, minimum: 0}],
       player: () => player as unknown as Player,
       widgetId: () => 'widget',
     }),
   )
   await Promise.resolve()
-  receive({level: 0.8, source: 'speech', widgetId: 'widget'})
-  expect(player.patchParameterValues).toHaveBeenLastCalledWith({'mouth-open': 0})
-  receive({level: 0.8, source: 'voice', widgetId: 'widget'})
+  receive({level: 0.8, shape: 'a', source: 'speech', widgetId: 'widget'})
+  expect(player.patchParameterValues).toHaveBeenLastCalledWith({'mouth-a': 0})
+  receive({level: 0.8, shape: 'a', source: 'voice', widgetId: 'widget'})
   draw()
-  expect(player.patchParameterValues).toHaveBeenLastCalledWith({'mouth-open': 0.8})
+  expect(player.patchParameterValues).toHaveBeenLastCalledWith({'mouth-a': 0.8})
   setSettings({...settings()})
   expect(stop).not.toHaveBeenCalled()
   expect(player.patchParameterValues).toHaveBeenCalledTimes(2)
   setSettings({source: 'off'})
-  expect(player.clearParameterValues).toHaveBeenLastCalledWith(['mouth-open'])
+  expect(player.clearParameterValues).toHaveBeenLastCalledWith(['mouth-a'])
   expect(stop).toHaveBeenCalledOnce()
-  receive({level: 1, source: 'voice', widgetId: 'widget'})
+  receive({level: 1, shape: 'a', source: 'voice', widgetId: 'widget'})
   expect(player.patchParameterValues).toHaveBeenCalledTimes(2)
   hook.cleanup()
 })
 
-it('should apply only the latest received opening per painted frame and ignore repeated levels', async () => {
+it('should apply only the latest received pose per painted frame and ignore repeated levels', async () => {
   let receive: (frame: LipSyncFrame) => void = () => undefined
   vi.mocked(subscribeLipSync).mockImplementation(async (_, callback) => {
     receive = callback
@@ -71,19 +71,61 @@ it('should apply only the latest received opening per painted frame and ignore r
   renderHook(() =>
     useLipSync({
       options: () => ({source: 'voice'}),
-      parameters: () => [{defaultValue: 0, id: 'mouth-open', maximum: 1, minimum: 0}],
+      parameters: () => [{defaultValue: 0, id: 'mouth-a', maximum: 1, minimum: 0}],
       player: () => player as unknown as Player,
       widgetId: () => 'widget',
     }),
   )
   await Promise.resolve()
   for (const level of [0.2, 0.6, 0.8]) {
-    receive({level, source: 'voice', widgetId: 'widget'})
+    receive({level, shape: 'a', source: 'voice', widgetId: 'widget'})
   }
   expect(player.patchParameterValues).toHaveBeenCalledOnce()
   draw()
-  expect(player.patchParameterValues).toHaveBeenLastCalledWith({'mouth-open': 0.8})
-  receive({level: 0.8, source: 'voice', widgetId: 'widget'})
+  expect(player.patchParameterValues).toHaveBeenLastCalledWith({'mouth-a': 0.8})
+  receive({level: 0.8, shape: 'a', source: 'voice', widgetId: 'widget'})
   draw()
   expect(player.patchParameterValues).toHaveBeenCalledTimes(2)
+})
+
+it('should switch independent vowels, reset the preceding pose and ignore legacy opening-only frames', async () => {
+  let receive: (frame: LipSyncFrame) => void = () => undefined
+  vi.mocked(subscribeLipSync).mockImplementation(async (_, callback) => {
+    receive = callback
+    return vi.fn(() => undefined)
+  })
+  const player = {clearParameterValues: vi.fn(), patchParameterValues: vi.fn()}
+  renderHook(() =>
+    useLipSync({
+      options: () => ({source: 'voice'}),
+      parameters: () =>
+        ['a', 'i', 'u', 'e', 'o'].map((shape) => ({
+          defaultValue: 0,
+          id: `mouth-${shape}`,
+          maximum: 1,
+          minimum: 0,
+        })),
+      player: () => player as unknown as Player,
+      widgetId: () => 'widget',
+    }),
+  )
+  await Promise.resolve()
+  for (const shape of ['a', 'i', 'u', 'e', 'o'] as const) {
+    receive({level: 1, shape, source: 'voice', widgetId: 'widget'})
+    draw()
+    expect(player.patchParameterValues).toHaveBeenLastCalledWith(
+      Object.fromEntries(
+        ['a', 'i', 'u', 'e', 'o'].map((value) => [`mouth-${value}`, value === shape ? 1 : 0]),
+      ),
+    )
+  }
+  receive({level: 1, source: 'voice', widgetId: 'widget'})
+  draw()
+  expect(player.patchParameterValues).toHaveBeenLastCalledWith({
+    'mouth-a': 0,
+    'mouth-e': 0,
+    'mouth-i': 0,
+    'mouth-o': 0,
+    'mouth-u': 0,
+  })
 })

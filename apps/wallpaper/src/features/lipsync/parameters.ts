@@ -1,11 +1,19 @@
-import type {PoffoLipSync} from '@winter-love/wallpaper/settings/lipsync'
+import type {LipSyncShape, PoffoLipSync} from '@winter-love/wallpaper/settings/lipsync'
 import type {TrackingParameter} from '../tracking/types'
 
-const MOUTH_ALIASES = new Set(['mouthopen', 'mouthopeny', 'parammouthopeny', '입열림'])
-/** Resolves an explicit connection or a single recognized mouth-opening parameter. */
+const LABELS = new Map<LipSyncShape, string>([
+  ['a', '아'],
+  ['i', '이'],
+  ['u', '우'],
+  ['e', '에'],
+  ['o', '오'],
+  ['closed', '닫힘'],
+])
+/** Resolves an explicit connection or a single recognized vowel parameter. */
 export const resolveLipSyncParameter = (
   parameters: readonly TrackingParameter[],
   selected?: string | null,
+  shape: LipSyncShape = 'a',
 ): TrackingParameter | undefined => {
   if (selected === null) {
     return undefined
@@ -13,9 +21,18 @@ export const resolveLipSyncParameter = (
   if (selected !== undefined) {
     return parameters.find((parameter) => parameter.id === selected)
   }
+  const label = LABELS.get(shape)!
+  const aliases = new Set([
+    `mouth${shape}`,
+    `parammouth${shape}`,
+    `viseme${shape}`,
+    `입모양${label}`,
+    `발음${label}`,
+    label,
+  ])
   const matches = parameters.filter((parameter) =>
     [parameter.id, parameter.name ?? ''].some((value) =>
-      MOUTH_ALIASES.has(value.replace(/[-_\s]/gu, '').toLowerCase()),
+      aliases.has(value.replace(/[-_\s]/gu, '').toLowerCase()),
     ),
   )
   return matches.length === 1 ? matches[0] : undefined
