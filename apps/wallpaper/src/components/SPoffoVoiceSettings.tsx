@@ -59,10 +59,9 @@ export const SPoffoVoiceSettings = (props: SPoffoVoiceSettingsProps) => {
       <Show when={value().provider === 'local'}>
         <fieldset
           aria-label="로컬 음성 모델"
-          class="m-0 grid min-w-0 gap-3 rounded-lg border-0 bg-stone-100/75 p-3"
+          class="m-0 grid min-w-0 gap-3 border-0 border-y border-solid border-stone-200 px-0 py-4"
         >
           <legend class="sr-only">로컬 음성 모델</legend>
-          <h4 class="m-0 text-xs font-medium text-stone-600">로컬 모델</h4>
           <div class="grid grid-cols-[4rem_minmax(0,1fr)] items-center gap-x-3 gap-y-3">
             <span class="text-stone-600">모델</span>
             <SSelect
@@ -84,7 +83,7 @@ export const SPoffoVoiceSettings = (props: SPoffoVoiceSettingsProps) => {
               onChange={(voice) => change({voice})}
             />
           </div>
-          <div class="flex items-center justify-between gap-3 border-0 border-t border-solid border-stone-200 pt-3">
+          <div class="flex items-center justify-between gap-3">
             <span class="text-stone-600">GPU 가속</span>
             <SSwitch
               label="GPU 가속"
@@ -95,40 +94,42 @@ export const SPoffoVoiceSettings = (props: SPoffoVoiceSettingsProps) => {
           </div>
         </fieldset>
       </Show>
-      <fieldset aria-label="읽기 재생 설정" class="m-0 grid min-w-0 grid-cols-2 gap-3 border-0 p-0">
+      <fieldset
+        aria-label="읽기 재생 설정"
+        class="m-0 grid min-w-0 grid-cols-[4rem_minmax(0,1fr)] items-center gap-3 border-0 p-0"
+      >
         <legend class="sr-only">읽기 재생 설정</legend>
-        <div class="grid min-w-0 gap-2">
-          <span class="text-xs text-stone-600">속도</span>
-          <div class="flex min-w-0 items-center gap-2">
-            <SNumberInput
-              label="읽기 속도"
-              value={value().speed}
-              min={0.5}
-              max={2}
-              step={0.05}
-              disabled={disabled()}
-              onChange={(speed) => change({speed})}
-            />
-            <span class="text-xs text-stone-500">×</span>
-          </div>
+        <span class="text-stone-600">속도</span>
+        <div class="flex min-w-0 items-center gap-2">
+          <SNumberInput
+            label="읽기 속도"
+            value={value().speed}
+            min={0.5}
+            max={2}
+            step={0.05}
+            disabled={disabled()}
+            onChange={(speed) => change({speed})}
+          />
+          <span class="text-xs text-stone-500">×</span>
         </div>
-        <div class="grid min-w-0 gap-2">
-          <span class="text-xs text-stone-600">음량</span>
-          <div class="flex min-w-0 items-center gap-2">
-            <SNumberInput
-              label="읽기 음량"
-              value={value().volume}
-              min={0}
-              max={100}
-              step={5}
-              disabled={disabled()}
-              onChange={(volume) => change({volume})}
-            />
-            <span class="text-xs text-stone-500">%</span>
-          </div>
+        <span class="text-stone-600">음량</span>
+        <div class="flex min-w-0 items-center gap-2">
+          <SNumberInput
+            label="읽기 음량"
+            value={value().volume}
+            min={0}
+            max={100}
+            step={5}
+            disabled={disabled()}
+            onChange={(volume) => change({volume})}
+          />
+          <span class="text-xs text-stone-500">%</span>
         </div>
       </fieldset>
-      <div class="flex flex-wrap items-center gap-2">
+      <div class="flex flex-wrap items-center justify-end gap-2">
+        <span role="status" class="text-xs text-stone-500">
+          {STATUS[preview.status()]}
+        </span>
         <button
           type="button"
           class="wallpaper-file-button"
@@ -141,9 +142,6 @@ export const SPoffoVoiceSettings = (props: SPoffoVoiceSettingsProps) => {
               : '다시 듣기'
             : '중지'}
         </button>
-        <span role="status" class="text-xs text-stone-500">
-          {STATUS[preview.status()]}
-        </span>
       </div>
       <Show when={preview.error()}>
         {(error) => (
