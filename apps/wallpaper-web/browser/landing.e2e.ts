@@ -35,11 +35,15 @@ const sampleBands = async (
       const sampled = new Promise<number[]>((resolve) => {
         const handleStart = (event: AnimationEvent) => {
           const target = event.target
-          if (!(target instanceof Element)) {return}
+          if (!(target instanceof Element)) {
+            return
+          }
           const overlay = target.closest(
             `[data-story-style="bands"][data-story-transition="${phase}"]`,
           )
-          if (overlay === null) {return}
+          if (overlay === null) {
+            return
+          }
           document.removeEventListener('animationstart', handleStart, true)
           for (const animation of overlay.getAnimations({subtree: true})) {
             animation.pause()
