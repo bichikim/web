@@ -60,7 +60,7 @@ export class PixiLayerScene {
   readonly #onRender: () => void
   readonly #random: () => number
   readonly #ticker = new Ticker()
-  #animationEnabled = false
+  #state: PixiLayerSceneState = {animationEnabled: false}
   #destroyed = false
   #initialized = false
   #layers: readonly LayerInstance[] = []
@@ -83,6 +83,7 @@ export class PixiLayerScene {
     }
 
     this.#initialized = true
+    this.#state = state
 
     try {
       validateLayerSceneDefinition(this.#definition)
@@ -105,14 +106,10 @@ export class PixiLayerScene {
       return
     }
 
-    this.#initializeScene(textures, layerSources.length, state)
+    this.#initializeScene(textures, layerSources.length)
   }
 
-  #initializeScene(
-    textures: readonly TextureLease[],
-    layerSourceCount: number,
-    state: PixiLayerSceneState,
-  ) {
+  #initializeScene(textures: readonly TextureLease[], layerSourceCount: number) {
     this.#textures = textures
     const layers: LayerInstance[] = []
     const pendingFilters: Filter[] = []
@@ -204,7 +201,7 @@ export class PixiLayerScene {
 
       this.#attachChildLayers(layers)
 
-      this.#initializeLayers(layers, state)
+      this.#initializeLayers(layers, this.#state)
     } catch (error: unknown) {
       try {
         destroyFilters(pendingFilters)
@@ -217,9 +214,9 @@ export class PixiLayerScene {
   }
 
   update(state: PixiLayerSceneState) {
-    this.#animationEnabled = state.animationEnabled
+    this.#state = state
 
-    this.#effects?.setAnimationEnabled(this.#animationEnabled)
+    this.#effects?.setAnimationEnabled(state.animationEnabled)
 
     for (const layer of this.#layers) {
       const {channel} = layer.definition
@@ -247,11 +244,11 @@ export class PixiLayerScene {
   }
 
   setAnimationEnabled(animationEnabled: boolean) {
-    if (animationEnabled === this.#animationEnabled) {
+    if (animationEnabled === this.#state.animationEnabled) {
       return
     }
 
-    this.#animationEnabled = animationEnabled
+    this.#state = {...this.#state, animationEnabled}
     this.#effects?.setAnimationEnabled(animationEnabled)
     this.#syncTicker()
     this.#onRender()
@@ -265,7 +262,7 @@ export class PixiLayerScene {
   }
 
   #syncTicker() {
-    if (this.#animationEnabled && this.#hasMotion()) {
+    if (this.#state.animationEnabled && this.#hasMotion()) {
       this.#ticker.start()
     } else {
       this.#ticker.stop()
