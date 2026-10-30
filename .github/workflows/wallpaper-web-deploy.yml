@@ -1,4 +1,4 @@
-name: Verify and deploy Wallpaper Dev
+name: Deploy Wallpaper Dev
 
 on:
   pull_request:

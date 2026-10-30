@@ -1,4 +1,4 @@
-name: Verify and deploy Poffo Dev
+name: Deploy Poffo Dev
 
 on:
   pull_request:

@@ -1,4 +1,4 @@
-name: Release Pomo
+name: Release Pomo Production
 
 on:
   workflow_dispatch:

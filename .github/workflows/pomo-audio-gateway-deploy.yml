@@ -1,4 +1,4 @@
-name: Deploy Pomo and Audio Gateway
+name: Deploy Pomo Dev / Preview / Staging
 
 on:
   pull_request:
