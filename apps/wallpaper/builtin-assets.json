@@ -89,20 +89,6 @@
       "file": "wallpapers/ash-afternoon/doorstep.webp",
       "size": 439052,
       "kind": "photo"
-    },
-    {
-      "id": "builtin:background:profile",
-      "name": "프로필",
-      "file": "images/backgrounds/profile.webp",
-      "size": 136592,
-      "kind": "photo"
-    },
-    {
-      "id": "builtin:background:street",
-      "name": "거리",
-      "file": "images/backgrounds/street-front.webp",
-      "size": 396028,
-      "kind": "photo"
     }
   ]
 }

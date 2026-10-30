@@ -34,7 +34,7 @@ const renderAlbum = async () => {
       </div>
     )
   })
-  await waitFor(() => expect(controller?.items()).toHaveLength(12))
+  await waitFor(() => expect(controller?.items()).toHaveLength(10))
   await waitFor(() => expect(controller?.selectedId()).toBe('browser-preview'))
   return controller!
 }
@@ -81,7 +81,7 @@ it('should persist hiding and restore bundled photos without adding a character 
   const item = controller.items()[0]!
   await controller.toggleMedia(item.id)
   await userEvent.click(screen.getByRole('button', {name: `${item.name} 숨기기`}))
-  await waitFor(() => expect(controller.items()).toHaveLength(11))
+  await waitFor(() => expect(controller.items()).toHaveLength(9))
   expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   expect(controller.current()?.content).toMatchObject({mediaIds: []})
   cleanup()
@@ -95,11 +95,11 @@ it('should persist hiding and restore bundled photos without adding a character 
       </Show>
     )
   })
-  await waitFor(() => expect(reopened?.items()).toHaveLength(11))
+  await waitFor(() => expect(reopened?.items()).toHaveLength(9))
   controller = reopened!
   expect(controller.items().some((entry) => entry.id === item.id)).toBe(false)
   await userEvent.click(screen.getByRole('button', {name: '기본 배경 복원'}))
-  await waitFor(() => expect(controller.items()).toHaveLength(12))
+  await waitFor(() => expect(controller.items()).toHaveLength(10))
   expect(controller.items().every((entry) => entry.kind === 'photo')).toBe(true)
   expect(screen.queryByRole('button', {name: '기본 배경 복원'})).not.toBeInTheDocument()
 })

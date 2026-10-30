@@ -9,7 +9,8 @@ it('should make all bundled covers and wallpapers available without importing th
   const repository = createBuiltinMedia(crypto.randomUUID())
   try {
     const album = await repository.read()
-    expect(album.items).toHaveLength(12)
+    expect(album.items).toHaveLength(10)
+    expect(album.items.every((item) => item.id.startsWith('builtin:cover:'))).toBe(true)
     expect(album.items.filter((item) => item.id.startsWith('builtin:cover:'))).toHaveLength(10)
     expect(album.items.some((item) => item.kind === 'video')).toBe(false)
     const fetch = vi
@@ -50,7 +51,7 @@ it('should reject a missing bundle file and retain the selectable catalog for re
   vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(null, {status: 404})))
   try {
     await expect(repository.load('builtin:cover:window')).rejects.toThrow('404')
-    expect((await repository.read()).items).toHaveLength(12)
+    expect((await repository.read()).items).toHaveLength(10)
   } finally {
     repository.close()
   }
