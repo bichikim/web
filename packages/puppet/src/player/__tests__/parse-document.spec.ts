@@ -714,3 +714,36 @@ describe('parseDocument', () => {
     ).toMatchObject({ok: true})
   })
 })
+
+it('should accept out-of-range keys only when a motion explicitly clamps samples', () => {
+  const document = createDemoDocument()
+  const motion = {
+    duration: 1,
+    id: 'imported',
+    parameterBounds: 'sample',
+    tracks: [
+      {
+        keyframes: [
+          {time: 0, value: -60},
+          {time: 1, value: 60},
+        ],
+        kind: 'parameter',
+        parameterId: 'angle-y',
+      },
+    ],
+  }
+  expect(parseDocumentValue({...document, motions: [motion]}).ok).toBe(true)
+  expect(
+    parseDocumentValue({
+      ...document,
+      motions: [motion],
+      parameters: document.parameters?.map((parameter) => ({...parameter, repeat: true})),
+    }).ok,
+  ).toBe(true)
+  expect(
+    parseDocumentValue({...document, motions: [{...motion, parameterBounds: undefined}]}).ok,
+  ).toBe(false)
+  expect(
+    parseDocumentValue({...document, motions: [{...motion, parameterBounds: 'unknown'}]}).ok,
+  ).toBe(false)
+})

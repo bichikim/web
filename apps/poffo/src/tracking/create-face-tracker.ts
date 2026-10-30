@@ -36,10 +36,10 @@ export const createFaceTracker = (options: CreateFaceTrackerOptions) => {
       }
     }
   }
+  const handleError = (event: ErrorEvent) =>
+    options.onError(event.message || '추적 Worker를 시작하지 못했습니다.')
   worker.addEventListener('message', handleMessage)
-  worker.addEventListener('error', (event) =>
-    options.onError(event.message || '추적 Worker를 시작하지 못했습니다.'),
-  )
+  worker.addEventListener('error', handleError)
   const initialize = async () => {
     const {FilesetResolver} = await import('@mediapipe/tasks-vision')
     const simd = await FilesetResolver.isSimdSupported()
@@ -58,6 +58,8 @@ export const createFaceTracker = (options: CreateFaceTrackerOptions) => {
   return {
     dispose: () => {
       disposed = true
+      worker.removeEventListener('message', handleMessage)
+      worker.removeEventListener('error', handleError)
       worker.terminate()
     },
     submit: async (video: HTMLVideoElement, timestamp: number) => {
@@ -65,14 +67,17 @@ export const createFaceTracker = (options: CreateFaceTrackerOptions) => {
         return
       }
       busy = true
+      let image: ImageBitmap | undefined
       try {
-        const image = await createImageBitmap(video)
+        image = await createImageBitmap(video)
         if (disposed) {
           image.close()
           return
         }
         worker.postMessage({image, timestamp, type: 'frame'}, [image])
+        image = undefined
       } catch (error) {
+        image?.close()
         busy = false
         if (!disposed) {
           options.onError(error instanceof Error ? error.message : '영상 프레임을 읽지 못했습니다.')

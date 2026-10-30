@@ -51,15 +51,14 @@ export const setParameterKeyformVertex = (options: SetParameterKeyformVertexOpti
     return undefined
   }
 
-  const vertices = [...getPartVertices(keyform, part.id, part.mesh.vertices)]
-  const coordinateIndex = options.vertexIndex * 2
-  vertices[coordinateIndex] = options.x
-  vertices[coordinateIndex + 1] = options.y
+  const previousVertices = getPartVertices(keyform, part.id, part.mesh.vertices)
   const validation = movePartVertex({
     document: {
       ...options.document,
       parts: options.document.parts.map((candidate) =>
-        candidate.id === part.id ? {...candidate, mesh: {...candidate.mesh, vertices}} : candidate,
+        candidate.id === part.id
+          ? {...candidate, mesh: {...candidate.mesh, vertices: previousVertices}}
+          : candidate,
       ),
     },
     partId: part.id,
@@ -70,6 +69,7 @@ export const setParameterKeyformVertex = (options: SetParameterKeyformVertexOpti
   if (!validation.ok) {
     return undefined
   }
+  const {vertices} = validation.document.parts.find((candidate) => candidate.id === part.id)!.mesh
 
   const update = (candidate: PuppetParameterBinding): PuppetParameterBinding => {
     const replaceKeyform = <Keyform extends PuppetParameterKeyform>(value: Keyform): Keyform =>

@@ -1,14 +1,13 @@
-import {createEffect, For, type JSX, Show} from 'solid-js'
-
+import {createEffect, Show} from 'solid-js'
 import type {PuppetPoint, PuppetSceneDeformerNode} from '../../player'
-import {createGridPaths, createTranslationPath} from './deformer-paths'
-import {getDeformerPoint} from './deformer-transform'
 import {DeformerCurveControls} from './DeformerCurveControls'
-import {
-  type DeformerControlSelection,
-  type DeformerDragTarget,
-  type DeformerSelectionModifiers,
+import type {
+  DeformerControlSelection,
+  DeformerDragTarget,
+  DeformerSelectionModifiers,
 } from './deformer-control-selection'
+import {DeformerGridControls} from './deformer-controls/DeformerGridControls'
+import {DeformerRotationControls} from './deformer-controls/DeformerRotationControls'
 
 export interface DeformerControlsProps {
   readonly controlSelection: DeformerControlSelection
@@ -29,200 +28,6 @@ export interface DeformerControlsProps {
   readonly transform: (point: PuppetPoint) => PuppetPoint
 }
 
-interface GridControlsProps {
-  readonly children?: JSX.Element
-  readonly onCurveSplit?: (event: MouseEvent) => void
-  readonly editable: boolean
-  readonly deformer: PuppetSceneDeformerNode
-  readonly isSelected: (target: DeformerDragTarget) => boolean
-  readonly movePoint: (pointIndex: number, point: PuppetPoint) => void
-  readonly radius: number
-  readonly selectTarget: (event: KeyboardEvent, target: DeformerDragTarget) => void
-  readonly startDrag: (event: PointerEvent, target: DeformerDragTarget) => void
-  readonly startTranslationDrag: (event: PointerEvent) => void
-  readonly transform: (point: PuppetPoint) => PuppetPoint
-}
-
-interface RotationControlsProps {
-  readonly editable: boolean
-  readonly handle: PuppetPoint
-  readonly isSelected: (target: DeformerDragTarget) => boolean
-  readonly origin: PuppetPoint
-  readonly radius: number
-  readonly selectTarget: (event: KeyboardEvent, target: DeformerDragTarget) => void
-  readonly startDrag: (event: PointerEvent, target: DeformerDragTarget) => void
-}
-
-const CUBIC_DEGREE = 3
-const GRID_COORDINATES_PER_POINT = 2
-const KEYBOARD_LARGE_MOVE_DISTANCE = 10
-const ROTATION_ORIGIN_HIT_RADIUS_MULTIPLIER = 2.5
-const ROTATION_ORIGIN_RADIUS_MULTIPLIER = 2
-
-const GridControls = (props: GridControlsProps) => {
-  const pointIndices = () =>
-    Array.from(
-      {length: props.deformer.controlPoints.length / GRID_COORDINATES_PER_POINT},
-      (_, pointIndex) => pointIndex,
-    )
-  const handleKeyDown = (
-    event: KeyboardEvent,
-    point: PuppetPoint & {readonly pointIndex: number},
-  ) => {
-    if (!props.editable) {
-      return
-    }
-
-    const target = {kind: 'controlPoint', pointIndex: point.pointIndex} satisfies DeformerDragTarget
-    if (event.key === 'Enter' || event.key === ' ') {
-      event.preventDefault()
-      props.selectTarget(event, target)
-      return
-    }
-
-    const distance = event.shiftKey ? KEYBOARD_LARGE_MOVE_DISTANCE : 1
-    let nextPoint: PuppetPoint | undefined
-
-    switch (event.key) {
-      case 'ArrowDown':
-        nextPoint = {...point, y: point.y + distance}
-        break
-      case 'ArrowLeft':
-        nextPoint = {...point, x: point.x - distance}
-        break
-      case 'ArrowRight':
-        nextPoint = {...point, x: point.x + distance}
-        break
-      case 'ArrowUp':
-        nextPoint = {...point, y: point.y - distance}
-        break
-      default:
-        return
-    }
-
-    event.preventDefault()
-    props.selectTarget(event, target)
-    props.movePoint(point.pointIndex, nextPoint)
-  }
-
-  return (
-    <g class="grid-deformer-controls" classList={{blocked: !props.editable}}>
-      <path
-        aria-label="자유 변형 이동 영역"
-        class="translation-handle"
-        d={createTranslationPath(props.deformer, props.transform)}
-        onPointerDown={(event) => props.startTranslationDrag(event)}
-      />
-      <For each={createGridPaths(props.deformer, props.transform)}>
-        {(path) => (
-          <>
-            <path d={path.data} data-tangent={path.tangent} />
-            <Show when={props.deformer.curveAxis !== undefined && !path.tangent}>
-              <path
-                class="curve-hit"
-                aria-label="곡선 연결점 추가 영역"
-                d={path.data}
-                onDblClick={(event) => props.onCurveSplit?.(event)}
-              />
-            </Show>
-          </>
-        )}
-      </For>
-      {props.children}
-      <For each={pointIndices()}>
-        {(pointIndex) => {
-          const target = {kind: 'controlPoint', pointIndex} satisfies DeformerDragTarget
-          const selected = () => props.isSelected(target)
-          const point = () => ({
-            ...props.transform(getDeformerPoint(props.deformer, pointIndex)),
-            pointIndex,
-          })
-
-          return (
-            <circle
-              aria-disabled={!props.editable}
-              aria-keyshortcuts="Enter Space ArrowUp ArrowDown ArrowLeft ArrowRight"
-              aria-label={
-                props.deformer.curveAxis === undefined
-                  ? `격자 제어점 ${pointIndex + 1}`
-                  : `곡선 ${pointIndex % CUBIC_DEGREE === 0 ? '제어점' : '핸들'} ${pointIndex + 1}`
-              }
-              aria-pressed={selected()}
-              classList={{selected: selected()}}
-              data-tangent={
-                props.deformer.curveAxis !== undefined && pointIndex % CUBIC_DEGREE !== 0
-              }
-              cx={point().x}
-              cy={point().y}
-              r={props.radius}
-              role="button"
-              tabindex={props.editable ? 0 : -1}
-              onKeyDown={(event) => handleKeyDown(event, point())}
-              onPointerDown={(event) => props.startDrag(event, target)}
-            />
-          )
-        }}
-      </For>
-    </g>
-  )
-}
-
-const RotationControls = (props: RotationControlsProps) => {
-  const handleKeyDown = (event: KeyboardEvent, target: DeformerDragTarget) => {
-    if (!props.editable || (event.key !== 'Enter' && event.key !== ' ')) {
-      return
-    }
-
-    event.preventDefault()
-    props.selectTarget(event, target)
-  }
-
-  return (
-    <g class="rotation-deformer-controls" classList={{blocked: !props.editable}}>
-      <line x1={props.origin.x} x2={props.handle.x} y1={props.origin.y} y2={props.handle.y} />
-      <circle
-        aria-disabled={!props.editable}
-        aria-keyshortcuts="Enter Space"
-        aria-label="자유 변형 회전 중심"
-        aria-pressed={props.isSelected({kind: 'rotationOrigin'})}
-        class="rotation-origin-hit"
-        cx={props.origin.x}
-        cy={props.origin.y}
-        pointer-events="all"
-        r={props.radius * ROTATION_ORIGIN_HIT_RADIUS_MULTIPLIER}
-        role="button"
-        tabindex={props.editable ? 0 : -1}
-        onPointerDown={(event) => props.startDrag(event, {kind: 'rotationOrigin'})}
-        onKeyDown={(event) => handleKeyDown(event, {kind: 'rotationOrigin'})}
-      />
-      <circle
-        aria-hidden="true"
-        class="rotation-origin"
-        classList={{selected: props.isSelected({kind: 'rotationOrigin'})}}
-        cx={props.origin.x}
-        cy={props.origin.y}
-        pointer-events="none"
-        r={props.radius * ROTATION_ORIGIN_RADIUS_MULTIPLIER}
-      />
-      <circle
-        aria-disabled={!props.editable}
-        aria-keyshortcuts="Enter Space"
-        aria-label="자유 변형 회전 핸들"
-        aria-pressed={props.isSelected({kind: 'rotation'})}
-        class="angle-handle"
-        classList={{selected: props.isSelected({kind: 'rotation'})}}
-        cx={props.handle.x}
-        cy={props.handle.y}
-        r={props.radius}
-        role="button"
-        tabindex={props.editable ? 0 : -1}
-        onPointerDown={(event) => props.startDrag(event, {kind: 'rotation'})}
-        onKeyDown={(event) => handleKeyDown(event, {kind: 'rotation'})}
-      />
-    </g>
-  )
-}
-
 export const DeformerControls = (props: DeformerControlsProps) => {
   createEffect(() => {
     props.controlSelection.syncTopology({
@@ -235,22 +40,10 @@ export const DeformerControls = (props: DeformerControlsProps) => {
     props.controlSelection.isSelected(props.deformer.id, target)
   const selectTarget = (event: DeformerSelectionModifiers, target: DeformerDragTarget) =>
     props.controlSelection.select(event, props.deformer.id, target)
-  const startDrag = (event: PointerEvent, target: DeformerDragTarget) => {
-    if (event.button === 0 && props.editable) {
-      selectTarget(event, target)
-    }
-    props.startDrag(event, target)
-  }
-  const startTranslationDrag = (event: PointerEvent) => {
-    if (event.button === 0 && props.editable) {
-      props.controlSelection.clear()
-    }
-    props.startTranslationDrag(event)
-  }
 
   return (
     <>
-      <GridControls
+      <DeformerGridControls
         deformer={props.deformer}
         editable={props.editable}
         isSelected={isSelected}
@@ -258,27 +51,27 @@ export const DeformerControls = (props: DeformerControlsProps) => {
         movePoint={props.movePoint}
         radius={props.radius}
         selectTarget={selectTarget}
-        startDrag={startDrag}
-        startTranslationDrag={startTranslationDrag}
+        startDrag={props.startDrag}
+        startTranslationDrag={props.startTranslationDrag}
         transform={props.transform}
       >
         <Show when={props.deformer.curveAxis === undefined}>
-          <RotationControls
+          <DeformerRotationControls
             editable={props.editable}
             handle={props.handle}
             isSelected={isSelected}
             origin={props.origin}
             radius={props.radius}
             selectTarget={selectTarget}
-            startDrag={startDrag}
+            startDrag={props.startDrag}
           />
         </Show>
-      </GridControls>
+      </DeformerGridControls>
       <DeformerCurveControls
         deformer={props.deformer}
         editable={props.editable}
         onDragStart={(event, pointIndex, axis) =>
-          startDrag(event, {axis, kind: 'curveHandle', pointIndex})
+          props.startDrag(event, {axis, kind: 'curveHandle', pointIndex})
         }
         onMove={props.moveCurveHandle}
         radius={props.radius}

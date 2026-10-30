@@ -107,9 +107,9 @@ export const RuntimePage = (props: RuntimePageProps) => {
                     </EditorButton>
                     <ExpressionSelect
                       expressions={current().expressions}
-                      value={controls.modelExpression()}
+                      values={controls.modelExpressions()}
                       disabled={!ready()}
-                      onChange={controls.selectModelExpression}
+                      onChange={controls.selectModelExpressions}
                     />
                     <div class="puppet-viewer-background">
                       <EditorColorField
@@ -136,7 +136,7 @@ export const RuntimePage = (props: RuntimePageProps) => {
                       onViewChange={controls.updateView}
                       document={current()}
                       motionId={selectedMotion()}
-                      expressionId={controls.modelExpression()}
+                      expressionIds={controls.modelExpressions()}
                       playing={playing()}
                       onFrame={updateFrame}
                       onReady={setReady}

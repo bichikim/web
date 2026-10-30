@@ -1,7 +1,7 @@
-import {createUniqueId, type JSX, onCleanup} from 'solid-js'
-
+import {createUniqueId, type JSX} from 'solid-js'
 import {EditorParameterNames} from './EditorParameterNames'
 import {useSwipeDelete} from './use-swipe-delete'
+import {EditorParameterItemFooter} from './EditorParameterItemFooter'
 
 export interface EditorParameterItemProps {
   readonly footer?: JSX.Element
@@ -22,28 +22,6 @@ export interface EditorParameterItemProps {
   readonly tertiaryControl?: JSX.Element
   readonly tertiaryName?: string
 }
-
-interface ParameterFooterProps {
-  readonly children?: JSX.Element
-  readonly clickState: {ignore: boolean}
-}
-const ParameterFooter = (props: ParameterFooterProps) => (
-  <div
-    ref={(element) => {
-      const capture = (event: MouseEvent) => {
-        if (props.clickState.ignore) {
-          props.clickState.ignore = false
-          event.preventDefault()
-          event.stopPropagation()
-        }
-      }
-      element.addEventListener('click', capture, true)
-      onCleanup(() => element.removeEventListener('click', capture, true))
-    }}
-  >
-    {props.children}
-  </div>
-)
 
 export const EditorParameterItem = (props: EditorParameterItemProps) => {
   const descriptionId = createUniqueId()
@@ -90,7 +68,9 @@ export const EditorParameterItem = (props: EditorParameterItemProps) => {
         >
           {props.children}
         </EditorParameterNames>
-        <ParameterFooter clickState={swipe.clickState}>{props.footer}</ParameterFooter>
+        <EditorParameterItemFooter clickState={swipe.clickState}>
+          {props.footer}
+        </EditorParameterItemFooter>
       </div>
       <span id={descriptionId} class="visually-hidden">
         오른쪽으로 밀어 놓으면 삭제합니다. 키보드에서는 Delete 키를 두 번 누릅니다.

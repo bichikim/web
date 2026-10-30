@@ -309,3 +309,31 @@ test('should keep an editable child selected while dragging its merged surface',
   expect(onTransform).toHaveBeenCalledWith('body', {rotation: [0, 20, 0]})
   expect(onSelect).not.toHaveBeenCalled()
 })
+
+test('should stop orbiting after window blur', () => {
+  const view = render(() => <SpatialMeshPreview isOpen operations={[operation]} />)
+  const preview = view.getByRole('group', {name: '3D 메시 회전 미리보기'})
+  fireEvent(preview, pointer('pointerdown', 10, 10))
+  globalThis.dispatchEvent(new Event('blur'))
+  const count = renderer.render.mock.calls.length
+  fireEvent(preview, pointer('pointermove', 90, 40))
+  expect(renderer.render).toHaveBeenCalledTimes(count)
+})
+
+test('should render imported meshes larger than the function argument limit', () => {
+  const vertices = Array.from({length: 150_000}, (_, index) => index % 3)
+  const object = {
+    center: [0, 0, 0],
+    id: 'large',
+    indices: [0, 1, 2],
+    kind: 'mesh',
+    mode: 'add',
+    name: 'large',
+    rotation: [0, 0, 0],
+    size: [1, 1, 1],
+    vertices,
+    visible: true,
+  } as const
+  render(() => <SpatialMeshPreview isOpen objects={[object]} />)
+  expect(renderer.render.mock.lastCall?.[0].mesh?.vertices).toHaveLength(vertices.length)
+})

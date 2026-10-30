@@ -19,6 +19,22 @@ export const boundParameterValue = (parameter: PuppetParameter, value: number) =
   return parameter.minimum + (offset < 0 ? offset + span : offset)
 }
 
+/** Cubism 모션 표본을 페이드 전에 제한한다. 반복 범위의 양 끝은 그대로 유지한다. */
+export const boundParameterSample = (parameter: PuppetParameter, value: number) => {
+  if (parameter.repeat !== true) {
+    return boundParameterValue(parameter, value)
+  }
+  const {minimum, maximum} = parameter
+  const span = maximum - minimum
+  if (span === 0) {
+    return minimum
+  }
+  if (value < minimum) {
+    return maximum - ((minimum - value) % span)
+  }
+  return value > maximum ? minimum + ((value - maximum) % span) : value
+}
+
 type RepeatRanges = ReadonlyArray<readonly [number, number] | undefined>
 
 const repeatRanges = new WeakMap<

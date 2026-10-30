@@ -159,6 +159,30 @@ test('should provide a two-step Delete key alternative', () => {
   expect(onDelete).toHaveBeenCalledOnce()
 })
 
+test('should require a second Delete press instead of deleting on key repeat', () => {
+  const {item, onDelete} = renderItem()
+  fireEvent.keyDown(item, {key: 'Delete'})
+  fireEvent.keyDown(item, {key: 'Delete', repeat: true})
+  expect(onDelete).not.toHaveBeenCalled()
+  fireEvent.keyDown(item, {key: 'Delete'})
+  expect(onDelete).toHaveBeenCalledOnce()
+})
+
+test.each([
+  {ctrlKey: true},
+  {metaKey: true},
+  {altKey: true},
+  {shiftKey: true},
+  {isComposing: true},
+])('should not arm parameter deletion for a modified or composing key: %j', (options) => {
+  const {item, onDelete} = renderItem()
+  fireEvent.keyDown(item, {key: 'Delete', ...options})
+  fireEvent.keyDown(item, {key: 'Delete'})
+  expect(onDelete).not.toHaveBeenCalled()
+  fireEvent.keyDown(item, {key: 'Delete'})
+  expect(onDelete).toHaveBeenCalledOnce()
+})
+
 test('should suppress only the first footer click after a cancelled swipe', () => {
   const toggle = vi.fn()
   const view = render(() => (

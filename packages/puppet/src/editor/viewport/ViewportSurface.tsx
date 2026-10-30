@@ -53,6 +53,7 @@ export const ViewportSurface = (props: ViewportProps) => {
           renderScale={renderScale()}
           motionId={props.motionId}
           expressionId={props.expressionId}
+          expressionIds={props.expressionIds}
           resumeTime={props.resumeTime}
           parameterValues={props.parameterValues}
           physicsPreview={props.physicsPreview}

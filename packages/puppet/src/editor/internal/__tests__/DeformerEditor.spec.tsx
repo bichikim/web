@@ -557,3 +557,83 @@ test.each(['pin', 'curve', 'deformer'] as const)(
     view.unmount()
   },
 )
+
+test('should ignore another pointer cancellation during a control point drag', () => {
+  const initial = createDocument(createDeformer())
+  const save = vi.fn()
+  const end = vi.fn()
+  const view = render(() => (
+    <DeformerEditor
+      document={initial}
+      activeNodeId="deformer"
+      onDocumentChange={save}
+      onEditEnd={end}
+    />
+  ))
+  const svg = getEditorSvg(view.container)
+  mockViewportBounds(svg)
+  const pointer = (type: string, pointerId: number) =>
+    Object.assign(new MouseEvent(type, {bubbles: true, button: 0, clientX: 300, clientY: 250}), {
+      pointerId,
+    })
+  fireEvent(view.getByRole('button', {name: '격자 제어점 1'}), pointer('pointerdown', 1))
+  fireEvent(svg, pointer('pointercancel', 2))
+  expect(end).not.toHaveBeenCalled()
+  fireEvent(svg, pointer('pointermove', 1))
+  expect(save).toHaveBeenCalledOnce()
+  fireEvent(svg, pointer('pointerup', 1))
+  expect(end).toHaveBeenCalledOnce()
+})
+
+test('should end a control point gesture when the window loses focus', () => {
+  const initial = createDocument(createDeformer())
+  const save = vi.fn()
+  const end = vi.fn()
+  const view = render(() => (
+    <DeformerEditor
+      document={initial}
+      activeNodeId="deformer"
+      onDocumentChange={save}
+      onEditEnd={end}
+    />
+  ))
+  const svg = getEditorSvg(view.container)
+  mockViewportBounds(svg)
+  fireEvent(
+    view.getByRole('button', {name: '격자 제어점 1'}),
+    new MouseEvent('pointerdown', {bubbles: true, button: 0}),
+  )
+  globalThis.dispatchEvent(new Event('blur'))
+  expect(end).toHaveBeenCalledOnce()
+  fireEvent(svg, new MouseEvent('pointermove', {bubbles: true, clientX: 300, clientY: 250}))
+  expect(save).not.toHaveBeenCalled()
+})
+
+test.each(['격자 제어점 2', '자유 변형 이동 영역'])(
+  'should retain the dragged control selection when another pointer presses %s',
+  (name) => {
+    const view = render(() => (
+      <DeformerEditor document={createDocument(createDeformer())} activeNodeId="deformer" />
+    ))
+    const svg = getEditorSvg(view.container)
+    mockViewportBounds(svg)
+    const first = view.getByRole('button', {name: '격자 제어점 1'})
+    const pointer = (type: string, pointerId: number) =>
+      Object.assign(new MouseEvent(type, {bubbles: true, button: 0, clientX: 300, clientY: 250}), {
+        pointerId,
+      })
+    fireEvent(first, pointer('pointerdown', 1))
+    expect(first).toHaveAttribute('aria-pressed', 'true')
+    const other =
+      name === '자유 변형 이동 영역' ? view.getByLabelText(name) : view.getByRole('button', {name})
+    fireEvent(other, pointer('pointerdown', 2))
+    expect(first).toHaveAttribute('aria-pressed', 'true')
+    fireEvent(svg, pointer('pointerup', 1))
+    fireEvent(view.getByRole('button', {name: '격자 제어점 2'}), pointer('pointerdown', 2))
+    expect(first).toHaveAttribute('aria-pressed', 'false')
+    expect(view.getByRole('button', {name: '격자 제어점 2'})).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    )
+  },
+)

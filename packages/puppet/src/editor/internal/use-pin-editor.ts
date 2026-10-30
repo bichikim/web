@@ -1,3 +1,4 @@
+import {usePointerGesture} from './use-pointer-gesture'
 import {createEffect, createMemo, createSignal, on, onCleanup} from 'solid-js'
 import type {PuppetPoint, PuppetSceneDeformerNode} from '../../player'
 import type {DeformerEditorProps} from './DeformerEditor'
@@ -18,7 +19,11 @@ export const usePinEditor = (props: PinEditorProps) => {
   const [selection, setSelected] = createSignal(0)
   const selected = () => Math.min(selection(), props.node.pins!.length - 1)
   let svg: SVGSVGElement | undefined
-  let dragging = false
+  const gesture = usePointerGesture({
+    element: () => svg,
+    onEnd: () => props.onEditEnd?.(),
+    onStart: () => props.onEditStart?.(),
+  })
   const rest = () => props.deformerMode === 'rest'
   const restEditable = () => isDeformerRestEditable(props.document, props.node.id)
   const target = () => getParameterEditTarget({...props, nodeId: props.node.id})
@@ -84,12 +89,7 @@ export const usePinEditor = (props: PinEditorProps) => {
     savePinPose(props, selected(), point)
   }
 
-  const stop = () => {
-    if (dragging) {
-      props.onEditEnd?.()
-    }
-    dragging = false
-  }
+  const {stop} = gesture
   const nodeId = createMemo(() => props.node.id)
   createEffect(
     on(nodeId, () => {
@@ -114,7 +114,7 @@ export const usePinEditor = (props: PinEditorProps) => {
     },
     drag: (event: PointerEvent) => {
       const point = eventPoint(event)
-      if (dragging && point !== undefined) {
+      if (gesture.owns(event) && point !== undefined) {
         move(point)
       }
     },
@@ -148,16 +148,13 @@ export const usePinEditor = (props: PinEditorProps) => {
     settings: (radius?: number, strength?: number) =>
       layout('settings', undefined, radius, strength),
     start: (event: PointerEvent, index: number) => {
-      if (event.button !== 0 || !editable()) {
+      if (event.button !== 0 || event.isPrimary === false || gesture.active() || !editable()) {
         return
       }
       event.preventDefault()
       event.stopPropagation()
       setSelected(index)
-      svg?.focus()
-      svg?.setPointerCapture?.(event.pointerId)
-      dragging = true
-      props.onEditStart?.()
+      gesture.start(event)
     },
     stop,
     viewBox: () => `${view().x} ${view().y} ${view().width} ${view().height}`,
