@@ -108,7 +108,9 @@ test.each(['bottom', 'top'] as const)(
         expect(getComputedStyle(card).clipPath).toBe('none')
         const bounds = frame(card).getBoundingClientRect()
         expect(bounds.height).toBeGreaterThanOrEqual(48)
-        expect(getComputedStyle(frame(card)).boxShadow).not.toBe('none')
+        expect(
+          getComputedStyle(frame(card).querySelector('[data-speech-shadow]')!).transform,
+        ).not.toBe('none')
       }
     }
     await settle()
@@ -560,17 +562,17 @@ test('should fill both rounded overlap corners without exposing covered bodies a
       const rect = frame(front).getBoundingClientRect()
       const behind = ordered[index + 1]
       for (const x of [rect.left + 2, rect.right - 2]) {
-        expect(document.elementFromPoint(x, rect.top + 2)?.closest('[data-speech-id]')).toBe(behind)
-        expect(document.elementFromPoint(x, rect.top + 14)?.closest('[data-speech-id]')).toBe(front)
+        expect(document.elementFromPoint(x, rect.top + 3)?.closest('[data-speech-id]')).toBe(behind)
+        expect(document.elementFromPoint(x, rect.top + 34)?.closest('[data-speech-id]')).toBe(front)
       }
       expect(
         document
-          .elementFromPoint(rect.left + rect.width / 2, rect.top + 2)
+          .elementFromPoint(rect.left + rect.width / 2, rect.top + 3)
           ?.closest('[data-speech-id]'),
       ).toBe(front)
       expect(
         document
-          .elementsFromPoint(rect.left + rect.width / 2, rect.top + 2)
+          .elementsFromPoint(rect.left + rect.width / 2, rect.top + 3)
           .some((element) => element.closest('[data-speech-id]') === behind),
       ).toBe(false)
     }
@@ -600,7 +602,7 @@ test('should select through the entire exposed header and keep close independent
     screen.getByRole('button', {name: '채팅 A 선택'}).click()
     await settle()
   }
-  await chooseAt(16, 4)
+  await chooseAt(36, 4)
   await chooseAt(4, 22)
   await chooseAt(110, 22)
   const card = cards().find((element) => element.dataset.speechId === 'D')!
@@ -627,7 +629,8 @@ test('should overlap titles, lift, descend at distance based speed, and restore 
   const sizes = originals.map((element) => element.getBoundingClientRect().height)
   const start = frame(third).getBoundingClientRect()
   const aside = frame(third)
-  const rest = getComputedStyle(aside).boxShadow
+  const shadow = aside.querySelector('[data-speech-shadow]')!
+  const rest = getComputedStyle(shadow).transform
   const background = getComputedStyle(aside).backgroundColor
   expect(getComputedStyle(third).clipPath).not.toBe('none')
   for (const card of originals) {
@@ -653,7 +656,7 @@ test('should overlap titles, lift, descend at distance based speed, and restore 
   expect(raised.width).toBe(start.width)
   expect(raised.height).toBe(start.height)
   expect(raised.x).toBe(start.x)
-  expect(getComputedStyle(aside).boxShadow).not.toBe(rest)
+  expect(getComputedStyle(shadow).transform).not.toBe(rest)
   lift.finish()
   await expect.poll(order).toEqual(['C', 'A', 'B', 'D'])
   expect(screen.getAllByRole('listitem')).toEqual([fourth, second, first, third])
@@ -671,7 +674,7 @@ test('should overlap titles, lift, descend at distance based speed, and restore 
   await draw()
   expect(Number(getComputedStyle(third).getPropertyValue('--speech-depth'))).toBe(1)
   await settle()
-  expect(getComputedStyle(aside).boxShadow).toBe(rest)
+  expect(getComputedStyle(shadow).transform).toBe(rest)
   expect(getComputedStyle(aside).backgroundColor).toBe(background)
   expect(frame(third).getBoundingClientRect().y - frame(fourth).getBoundingClientRect().y).toBe(108)
   expect(third.getBoundingClientRect().width).toBe(start.width)
@@ -735,7 +738,9 @@ test('should show distinct stable chat colors and scroll a long response without
     </div>
   ))
   await expect.poll(() => getComputedStyle(cards()[0]).transform).not.toBe('none')
-  const colors = cards().map((card) => getComputedStyle(frame(card)).backgroundColor)
+  const colors = cards().map(
+    (card) => getComputedStyle(frame(card).querySelector('[data-speech-outline]')!).stroke,
+  )
   expect(new Set(colors).size).toBe(4)
   const region = screen.getByRole('region', {name: 'A 응답'})
   expect(region.scrollHeight).toBeGreaterThan(region.clientHeight)
@@ -748,12 +753,11 @@ test('should show distinct stable chat colors and scroll a long response without
   expect(order()).toEqual(['A', 'B', 'C', 'D'])
   screen.getByRole('button', {name: '채팅 C 선택'}).click()
   await settle()
-  expect(cards().map((card) => getComputedStyle(frame(card)).backgroundColor)).toEqual([
-    colors[2],
-    colors[0],
-    colors[1],
-    colors[3],
-  ])
+  expect(
+    cards().map(
+      (card) => getComputedStyle(frame(card).querySelector('[data-speech-outline]')!).stroke,
+    ),
+  ).toEqual([colors[2], colors[0], colors[1], colors[3]])
 })
 
 test('should scope approval actions to their chat and prevent focus in covered bodies', async () => {
@@ -890,7 +894,7 @@ test('should resize the painted background and border while retaining the full c
   fireEvent.input(composer, {target: {value: '보존할 초안'}})
   region.scrollTop = 100
   const original = frame(long).getBoundingClientRect().height
-  const background = getComputedStyle(frame(long)).backgroundColor
+  const background = getComputedStyle(frame(long).querySelector('[data-speech-outline]')!).fill
   await expect.poll(() => screen.getByRole('list').getAnimations().length).toBe(0)
   screen.getByRole('button', {name: '채팅 B 선택'}).click()
   const incoming = short.getAnimations()[0]
@@ -910,18 +914,11 @@ test('should resize the painted background and border while retaining the full c
   const middle = frame(long).getBoundingClientRect().height
   expect(middle).toBeLessThan(original)
   expect(middle).toBeGreaterThan(48)
-  const tail = frame(long).querySelector('span')!
-  expect(tail).toHaveAttribute('data-edge', 'bottom')
-  const tailBounds = tail.getBoundingClientRect()
-  expect(tailBounds.top + tailBounds.height / 2).toBeCloseTo(
-    frame(long).getBoundingClientRect().bottom - 1,
-    1,
-  )
-  expect(getComputedStyle(frame(long))).toMatchObject({
-    backgroundColor: background,
-    borderBottomWidth: '1px',
-  })
-  expect(Number.parseFloat(getComputedStyle(frame(long)).borderBottomLeftRadius)).toBeGreaterThan(0)
+  const svg = frame(long).querySelector('svg')!
+  expect(svg).toHaveAttribute('data-edge', 'bottom')
+  await expect.poll(() => Number(svg.getAttribute('viewBox')!.split(' ')[3])).toBeCloseTo(middle, 1)
+  expect(getComputedStyle(svg.querySelector('[data-speech-outline]')!).fill).toBe(background)
+  expect(getComputedStyle(svg.querySelector('[data-speech-outline]')!).strokeWidth).toBe('3px')
   expect(long.getBoundingClientRect().height).toBe(original)
   await settle()
   expect(frame(long).getBoundingClientRect().height).toBe(48)

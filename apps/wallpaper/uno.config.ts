@@ -1,4 +1,4 @@
-import {defineConfig, presetWind3} from 'unocss'
+import {defineConfig, presetWind3, type Rule} from 'unocss'
 
 export default defineConfig({
   presets: [presetWind3()],
@@ -12,9 +12,6 @@ export default defineConfig({
     [
       'wallpaper-speech-frame',
       {
-        // Fill the next header's rounded corners while retaining the content's intrinsic layout.
-        'border-bottom-left-radius': 'calc(.75rem * var(--speech-reveal,1))',
-        'border-bottom-right-radius': 'calc(.75rem * var(--speech-reveal,1))',
         height: 'var(--speech-painted-height)',
       },
     ],
@@ -50,35 +47,43 @@ export default defineConfig({
     [
       'wallpaper-speech-contents',
       {
-        'clip-path': [
-          'inset(0 0 calc(100% - var(--speech-painted-height) + 12px * (1 - var(--speech-reveal,1))) 0 round',
-          '.75rem .75rem',
-          'calc(.75rem * var(--speech-reveal,1)) calc(.75rem * var(--speech-reveal,1)))',
-        ].join(' '),
+        '--speech-clip-bottom': 'calc(var(--speech-clip-corner) * var(--speech-reveal,1))',
+        '--speech-clip-corner': 'min(20px,calc(var(--speech-painted-height) / 4))',
+        '--speech-clip-top': 'var(--speech-clip-corner)',
+        'clip-path': `polygon(calc(2px + var(--speech-clip-top) * 1.5) 2px,
+          calc(100% - 2px - var(--speech-clip-top)) 2px,
+          calc(100% - 2px) calc(2px + var(--speech-clip-top)),
+          calc(100% - 2px) calc(var(--speech-painted-height) - 2px - var(--speech-clip-bottom) * 1.5),
+          calc(100% - 2px - var(--speech-clip-bottom) * 1.5) calc(var(--speech-painted-height) - 2px),
+          calc(2px + var(--speech-clip-bottom)) calc(var(--speech-painted-height) - 2px),
+          2px calc(var(--speech-painted-height) - 2px - var(--speech-clip-bottom)),
+          2px calc(2px + var(--speech-clip-top) * 1.5))`,
         transform: 'translateY(calc(100% - var(--speech-painted-height)))',
       },
     ],
     [
       'wallpaper-speech-contents-top',
       {
-        'clip-path': [
-          'inset(0 0 calc(100% - var(--speech-painted-height) + 12px * (1 - var(--speech-reveal,1))) 0 round',
-          'calc(.75rem * var(--speech-reveal,1)) calc(.75rem * var(--speech-reveal,1)) .75rem .75rem)',
-        ].join(' '),
+        '--speech-clip-bottom': 'var(--speech-clip-corner)',
+        '--speech-clip-top': 'calc(var(--speech-clip-corner) * var(--speech-reveal,1))',
         transform: 'translateY(calc(12px * (1 - var(--speech-reveal,1))))',
       },
     ],
-    [
-      'wallpaper-speech-shadow',
-      {
-        'box-shadow': [
-          '0 calc(4px - 9px * var(--speech-depth,0)) calc(6px + 9px * var(--speech-depth,0))',
-          'calc(-1px + 1px * var(--speech-depth,0)) rgb(0 0 0 / calc(.1 + .05 * var(--speech-depth,0))),',
-          '0 calc(2px + 22px * var(--speech-depth,0)) calc(4px + 38px * var(--speech-depth,0))',
-          'calc(-2px - 6px * var(--speech-depth,0)) rgb(0 0 0 / calc(.1 + .3 * var(--speech-depth,0)))',
-        ].join(' '),
-      },
-    ],
+    ['wallpaper-speech-shadow', {transform: 'translateY(calc(6px + 8px * var(--speech-depth,0)))'}],
+    ...Object.entries({
+      amber: ['#78350f', '#f59e0b', '#fde68a'],
+      blue: ['#1e3a8a', '#60a5fa', '#bfdbfe'],
+      rose: ['#881337', '#fb7185', '#fecdd3'],
+      sky: ['#0c4a6e', '#38bdf8', '#bae6fd'],
+      teal: ['#134e4a', '#2dd4bf', '#99f6e4'],
+      violet: ['#2e225a', '#8b79d9', '#c7bbed'],
+    }).map(
+      ([tone, [ink, accent, shadow]]) =>
+        [
+          `wallpaper-speech-${tone}`,
+          {'--speech-accent': accent, '--speech-ink': ink, '--speech-shadow': shadow},
+        ] satisfies Rule,
+    ),
   ],
   shortcuts: {
     'wallpaper-button': [

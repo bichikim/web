@@ -52,10 +52,9 @@ it('should reorient its tail when the actual character target crosses to the oth
     />
   ))
   const bubble = screen.getByRole('status')
-  expect(bubble.querySelector('span[aria-hidden="true"]')).toHaveAttribute('data-edge', 'bottom')
-  expect(bubble.querySelector('span[aria-hidden="true"]')).toHaveStyle('--tail-x: 218px')
+  expect(bubble.querySelector('svg[data-edge]')).toHaveAttribute('data-edge', 'bottom')
   setTarget({x: -92, y: 48})
-  expect(bubble.querySelector('span[aria-hidden="true"]')).toHaveAttribute('data-edge', 'left')
+  expect(bubble.querySelector('svg[data-edge]')).toHaveAttribute('data-edge', 'left')
 })
 it('should show approval waiting without offering to approve outside Codex', () => {
   render(() => (

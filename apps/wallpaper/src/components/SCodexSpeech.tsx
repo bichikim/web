@@ -55,14 +55,14 @@ export const SCodexSpeech = (props: SCodexSpeechProps) => {
         layout={props.layout}
       />
       <div
-        class="wallpaper-speech-contents pointer-events-auto relative box-border flex min-h-0
+        class="wallpaper-speech-contents pointer-events-none [&>*]:pointer-events-auto relative box-border flex min-h-0
         flex-col gap-1 rounded-xl [max-height:var(--speech-limit,568px)]
         border border-solid border-transparent p-3"
         classList={{'wallpaper-speech-contents-top': props.anchor === 'top'}}
       >
         <div
           class="relative -mx-3 -mt-3 -mb-1 flex shrink-0 items-center gap-2 overflow-clip
-        rounded-t-[11px] px-3 pt-3 pb-1 text-xs font-medium"
+        rounded-t-[11px] px-5 pt-3 pb-1 text-xs font-medium"
         >
           <Show when={props.onSelect}>
             {(select) => (

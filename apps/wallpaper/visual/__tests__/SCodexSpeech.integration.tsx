@@ -35,16 +35,12 @@ it.each(['bottom', 'top'] as const)(
     expect(compact.height).toBeLessThan(original.height)
     expect(compact[anchor]).toBeCloseTo(original[anchor], 1)
     setTarget({x: compact.left - 100, y: compact.top + compact.height / 2})
-    const tail = () => frame.querySelector<HTMLElement>('span')!
+    const tail = () => frame.querySelector<SVGSVGElement>('svg')!
     await expect.poll(() => tail()?.dataset.edge).toBe('left')
-    expect(
-      tail().getBoundingClientRect().top + tail().getBoundingClientRect().height / 2,
-    ).toBeCloseTo(compact.top + compact.height / 2, 1)
+    expect(tail().getAttribute('viewBox')).toBe(`0 0 ${compact.width} ${compact.height}`)
     setTarget({x: compact.right + 100, y: compact.top + compact.height / 2})
     await expect.poll(() => tail()?.dataset.edge).toBe('right')
-    expect(
-      tail().getBoundingClientRect().left + tail().getBoundingClientRect().width / 2,
-    ).toBeCloseTo(compact.right - 1, 1)
+    expect(tail().querySelector('[data-speech-outline]')!.getAttribute('d')).toContain('L')
   },
 )
 it('should replace the loading icon with the speaker in one slot without shifting the header', () => {

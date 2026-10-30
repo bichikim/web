@@ -1,3 +1,4 @@
+import {bubblePath} from './bubble-path'
 import {createHitMask, type HitMask, resolveClipPolygon} from '../hit-test'
 
 interface ReadSpeechMaskProps {
@@ -12,7 +13,13 @@ const paint = (context: CanvasRenderingContext2D, card: HTMLElement) => {
     return
   }
   const rect = bubble.getBoundingClientRect()
-  const style = getComputedStyle(bubble)
+  const reveal = Number.parseFloat(getComputedStyle(bubble).getPropertyValue('--speech-reveal'))
+  const path = bubblePath({
+    anchor: bubble.getAttribute('data-anchor') === 'top' ? 'top' : 'bottom',
+    height: rect.height,
+    reveal: Number.isFinite(reveal) ? reveal : 1,
+    width: rect.width,
+  })
   const bounds = card.getBoundingClientRect()
   const clip = resolveClipPolygon({
     height: bounds.height,
@@ -32,14 +39,8 @@ const paint = (context: CanvasRenderingContext2D, card: HTMLElement) => {
     context.closePath()
     context.clip()
   }
-  context.beginPath()
-  context.roundRect(rect.x, rect.y, rect.width, rect.height, [
-    Number.parseFloat(style.borderTopLeftRadius),
-    Number.parseFloat(style.borderTopRightRadius),
-    Number.parseFloat(style.borderBottomRightRadius),
-    Number.parseFloat(style.borderBottomLeftRadius),
-  ])
-  context.fill()
+  context.translate(rect.x, rect.y)
+  context.fill(new Path2D(path))
   context.restore()
 }
 
