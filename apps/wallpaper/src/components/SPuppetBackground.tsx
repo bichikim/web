@@ -15,7 +15,7 @@ import type {
 interface SPuppetBackgroundProps
   extends PoffoMotionControls, PoffoLipSyncControls, PoffoAgentControls {
   readonly assetId: Accessor<string | null>
-  readonly load: (id: string) => Promise<string>
+  readonly load: (id: string) => Promise<string | Blob>
   readonly onError: (error: unknown) => void
   readonly cameraSurface?: Accessor<CameraSurface | undefined>
   readonly tracking?: Accessor<PoffoTracking | undefined>

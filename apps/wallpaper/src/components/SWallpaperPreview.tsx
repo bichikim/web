@@ -6,9 +6,8 @@ import type {
 } from '@winter-love/wallpaper/settings/tracking'
 import type {PoffoPlacement} from '@winter-love/wallpaper/settings/model'
 import type {WallpaperController} from '../features/settings'
-import {useMediaUrl} from '../features/settings/use-media-url'
 import {SPoffoCalibrationPreview} from './SPoffoCalibrationPreview'
-import {SVideoPreview} from './SVideoPreview'
+import {SMediaPreview} from './SMediaPreview'
 
 const DEFAULT_MONITOR_SIZE = {height: 9, width: 16}
 
@@ -29,10 +28,10 @@ export const SWallpaperPreview = (props: SWallpaperPreviewProps) => {
       null
     )
   })
-  const media = useMediaUrl({
-    id: () => selected()?.id ?? null,
-    load: (id) => props.controller.loadMedia(id),
-  })
+  const fit = () => {
+    const current = content()
+    return current.mode === 'album' ? current.fit : undefined
+  }
   const assetId = createMemo(() => {
     const current = content()
     return current.mode === 'puppet' ? current.assetId : null
@@ -96,31 +95,7 @@ export const SWallpaperPreview = (props: SWallpaperPreviewProps) => {
         >
           <Switch>
             <Match when={content().mode === 'album'}>
-              <Show
-                when={media.url()}
-                fallback={
-                  <p class="m-0 px-5 text-center text-sm text-stone-600">
-                    {media.failed()
-                      ? '미리보기를 불러올 수 없어요.'
-                      : '사진·동영상을 추가해 주세요.'}
-                  </p>
-                }
-              >
-                {(url) => (
-                  <Switch>
-                    <Match when={selected()?.kind === 'photo'}>
-                      <img
-                        src={url()}
-                        alt={selected()?.name ?? ''}
-                        class="absolute inset-0 h-full w-full object-contain"
-                      />
-                    </Match>
-                    <Match when={selected()?.kind === 'video'}>
-                      <SVideoPreview src={url()} label={selected()?.name} autoplay contain />
-                    </Match>
-                  </Switch>
-                )}
-              </Show>
+              <SMediaPreview item={selected()} load={props.controller.loadMedia} fit={fit()} />
             </Match>
             <Match when={content().mode === 'website'}>
               <div class="grid max-w-full justify-items-center gap-2 px-6 text-center text-stone-700">

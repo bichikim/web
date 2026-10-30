@@ -1,6 +1,5 @@
 import {type Accessor, createEffect, createSignal, onCleanup} from 'solid-js'
-import {createSettingsRepository} from '@winter-love/wallpaper/settings/repository'
-import {createWebRepository} from '@winter-love/wallpaper/web-repository'
+import {createBuiltinMedia, createBuiltinSettings} from '../builtin-assets'
 import type {MonitorWallpaper, PoffoPlacement} from '@winter-love/wallpaper/settings/model'
 import type {BackgroundMedia} from '@winter-love/wallpaper/model'
 
@@ -8,8 +7,8 @@ export const useBackgroundSettings = (
   monitorId: Accessor<string>,
   onError: (error: unknown) => void,
 ) => {
-  const repository = createSettingsRepository('wallpaper-settings')
-  const media = createWebRepository({databaseName: 'wallpaper-media'})
+  const repository = createBuiltinSettings('wallpaper-settings')
+  const media = createBuiltinMedia('wallpaper-media')
   const [settings, setSettings] = createSignal<MonitorWallpaper | null>(null)
   const [items, setItems] = createSignal<readonly BackgroundMedia[]>([])
   let revision = 0

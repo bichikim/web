@@ -183,12 +183,12 @@ it('should preserve media identities across settings refreshes while applying me
     preferences: DEFAULT_BACKGROUND,
   }))
   const {result, cleanup} = renderHook(useWallpaper)
-  await waitFor(() => expect(result.items()).toHaveLength(1))
-  const original = result.items()[0]
+  await waitFor(() => expect(result.items().find((item) => item.id === 'photo')).toBeDefined())
+  const original = result.items().find((item) => item.id === 'photo')
   name = 'Renamed photo'
   await result.setInteraction({activation: 'always'})
-  expect(result.items()[0]).toBe(original)
-  expect(result.items()[0]?.name).toBe(name)
+  expect(result.items().find((item) => item.id === 'photo')).toBe(original)
+  expect(result.items().find((item) => item.id === 'photo')?.name).toBe(name)
   cleanup()
 })
 
@@ -201,12 +201,17 @@ it('should apply additions removals and reordering without replacing retained me
     preferences: DEFAULT_BACKGROUND,
   }))
   const {result, cleanup} = renderHook(useWallpaper)
-  await waitFor(() => expect(result.items()).toHaveLength(2))
-  const retained = result.items()[1]
+  await waitFor(() => expect(result.items().find((item) => item.id === 'second')).toBeDefined())
+  const retained = result.items().find((item) => item.id === 'second')
   files = [{...second}, {id: 'third', kind: 'photo', name: 'Third', size: 1}]
   await result.setInteraction({activation: 'always'})
-  expect(result.items().map((item) => item.id)).toEqual(['second', 'third'])
-  expect(result.items()[0]).toBe(retained)
+  expect(
+    result
+      .items()
+      .filter((item) => !item.id.startsWith('builtin:'))
+      .map((item) => item.id),
+  ).toEqual(['second', 'third'])
+  expect(result.items().find((item) => item.id === 'second')).toBe(retained)
   cleanup()
 })
 
@@ -261,4 +266,38 @@ it('should stop subscriptions immediately and close owned repositories after pen
   await saving
   expect(repository.close).toHaveBeenCalledOnce()
   expect(media.close).toHaveBeenCalledOnce()
+})
+
+it('should expose bundled content without importing or replacing saved monitor settings', async () => {
+  const original = {
+    ...createMonitorWallpaper('first'),
+    content: {mode: 'website' as const, url: 'https://example.com'},
+  }
+  stored.set('first', original)
+  const {result, cleanup} = renderHook(useWallpaper)
+  await waitFor(() => expect(result.puppets()).toContainEqual({id: 'builtin:ash', name: '애시'}))
+  expect(result.items().filter((item) => item.id.startsWith('builtin:cover:'))).toHaveLength(10)
+  expect(result.current()?.content).toEqual(original.content)
+  expect(repository.save).not.toHaveBeenCalled()
+  expect(repository.addPuppet).not.toHaveBeenCalled()
+  expect(media.importMedia).not.toHaveBeenCalled()
+  cleanup()
+})
+
+it('should persist album fit and keep it when a subsequent independent album field changes', async () => {
+  const {result, cleanup} = renderHook(useWallpaper)
+  await waitFor(() => expect(result.selectedId()).toBe('first'))
+  const original = result.current()!.content
+  if (original.mode !== 'album') {
+    throw new Error('Expected album')
+  }
+  const fitting = result.setContent({...original, fit: 'cover'})
+  const optimistic = result.current()!.content
+  if (optimistic.mode !== 'album') {
+    throw new Error('Expected album')
+  }
+  const timing = result.setContent({...optimistic, photoSeconds: 20})
+  await Promise.all([fitting, timing])
+  expect(stored.get('first')?.content).toMatchObject({fit: 'cover', photoSeconds: 20})
+  cleanup()
 })

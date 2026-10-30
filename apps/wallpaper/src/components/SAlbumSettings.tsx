@@ -34,6 +34,7 @@ export const SAlbumSettings = (props: SAlbumSettingsProps) => {
       return props.controller.setContent({...current, ...patch})
     }
   }
+  const handleFit = (fit: NonNullable<AlbumWallpaper['fit']>) => saveContent({fit})
   const handleOrder = (order: AlbumWallpaper['order']) => saveContent({order})
   const handleSeconds = (photoSeconds: number) => saveContent({photoSeconds})
   const handleTransition = (transition: AlbumWallpaper['transition']) => saveContent({transition})
@@ -60,6 +61,18 @@ export const SAlbumSettings = (props: SAlbumSettingsProps) => {
             <SAlbumImport controller={props.controller} />
           </div>
           <div>
+            <div class="wallpaper-row">
+              <span>표시 방식</span>
+              <SSelect
+                label="사진·동영상 표시 방식"
+                options={[
+                  {label: '전체 보기', value: 'contain'},
+                  {label: '화면 채우기', value: 'cover'},
+                ]}
+                value={current().fit ?? 'contain'}
+                onChange={handleFit}
+              />
+            </div>
             <div class="wallpaper-row">
               <span>재생 순서</span>
               <SSelect

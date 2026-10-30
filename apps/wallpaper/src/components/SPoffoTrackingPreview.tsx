@@ -19,7 +19,7 @@ export interface PoffoCalibrationOptions
   extends PoffoMotionControls, PoffoLipSyncControls, PoffoAgentControls {
   readonly targetId?: string
   readonly assetId: Accessor<string | null>
-  readonly load: (id: string) => Promise<string>
+  readonly load: (id: string) => Promise<string | Blob>
   readonly mode?: PoffoTracking
   readonly screenAspect?: number
   readonly characterAspect?: number

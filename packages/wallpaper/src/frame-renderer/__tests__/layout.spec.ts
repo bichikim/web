@@ -58,3 +58,25 @@ it('should hide the companion when resizing leaves insufficient room or orientat
     expect(layout.first).toEqual({scale: 1, x: 100, y: 300})
   }
 })
+
+it.each([
+  {first: {height: 200, width: 400}, scale: 3, viewport: {height: 600, width: 300}},
+  {first: {height: 400, width: 200}, scale: 3, viewport: {height: 300, width: 600}},
+])('should cover the viewport without stretching the media: $first', ({first, viewport, scale}) => {
+  const layout = calculateLayout({first, fit: 'cover', second: null, viewport})
+  expect(layout.first).toEqual({scale, x: viewport.width / 2, y: viewport.height / 2})
+  expect(layout.width).toBeGreaterThanOrEqual(viewport.width)
+  expect(layout.height).toBeGreaterThanOrEqual(viewport.height)
+})
+
+it('should hide a paired photo when the primary media covers the viewport', () => {
+  const layout = calculateLayout({
+    first: {height: 400, width: 200},
+    fit: 'cover',
+    second: {height: 400, width: 100},
+    viewport: {height: 600, width: 800},
+  })
+  expect(layout.second).toBeNull()
+  expect(layout.direction).toBeNull()
+  expect(layout.first.scale).toBe(4)
+})

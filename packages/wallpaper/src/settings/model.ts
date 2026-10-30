@@ -1,5 +1,10 @@
 import {z} from 'zod'
-import {backgroundWebsiteUrlSchema, RANDOM_TRANSITIONS, type TransitionEffect} from '../model'
+import {
+  backgroundWebsiteUrlSchema,
+  type MediaFit,
+  RANDOM_TRANSITIONS,
+  type TransitionEffect,
+} from '../model'
 import {DEFAULT_INTERACTION, type InteractionSettings} from '../interaction/types'
 import {createWallpaperContent} from './create-wallpaper-content'
 import {
@@ -42,6 +47,8 @@ export interface WebsiteWallpaper {
 }
 
 export interface AlbumWallpaper {
+  /** Media sizing within the monitor; omitted to show the whole image. */
+  readonly fit?: MediaFit
   readonly mode: 'album'
   readonly mediaIds: readonly string[]
   readonly order: 'sequential' | 'random'
@@ -75,6 +82,7 @@ export const wallpaperContentSchema: z.ZodType<WallpaperContent> = z.discriminat
   }),
   z.object({mode: z.literal('website'), url: backgroundWebsiteUrlSchema.nullable()}),
   z.object({
+    fit: z.enum(['contain', 'cover']).optional(),
     mediaIds: z.array(z.string().min(1)),
     mode: z.literal('album'),
     order: z.enum(['sequential', 'random']),

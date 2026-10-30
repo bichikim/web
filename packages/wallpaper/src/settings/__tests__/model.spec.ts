@@ -180,3 +180,21 @@ it.each(['headCenterX', 'headCenterY', 'eyeCenterX', 'eyeCenterY'] as const)(
     }
   },
 )
+
+it.each(['contain', 'cover'] as const)(
+  'should preserve album fit %s while reading saved settings',
+  (fit) => {
+    const base = createMonitorWallpaper('first')
+    expect(
+      monitorWallpaperSchema.parse({...base, content: {...base.content, fit}}).content,
+    ).toMatchObject({fit})
+  },
+)
+
+it('should read legacy albums without fit and reject unsupported sizing modes', () => {
+  const base = createMonitorWallpaper('first')
+  expect(monitorWallpaperSchema.parse(base)).toEqual(base)
+  expect(
+    monitorWallpaperSchema.safeParse({...base, content: {...base.content, fit: 'stretch'}}).success,
+  ).toBe(false)
+})

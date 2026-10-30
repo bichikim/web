@@ -15,7 +15,7 @@ interface SPoffoTrackingBindingsProps {
   readonly source?: ParameterSource
   readonly disclosure?: boolean
   readonly assetId: string | null
-  readonly load: (id: string) => Promise<string>
+  readonly load: (id: string) => Promise<string | Blob>
   readonly value?: PoffoTrackingBindings
   readonly onChange?: (bindings: PoffoTrackingBindings) => void | Promise<void>
 }

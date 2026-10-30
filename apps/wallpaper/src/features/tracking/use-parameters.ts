@@ -12,7 +12,7 @@ export interface ParameterSource {
 interface UseParametersProps {
   readonly assetId: Accessor<string | null>
   readonly enabled: Accessor<boolean>
-  readonly load: (id: string) => Promise<string>
+  readonly load: (id: string) => Promise<string | Blob>
 }
 export const useParameters = (props: UseParametersProps): ParameterSource => {
   const [error, setError] = createSignal<string | null>(null)

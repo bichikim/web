@@ -80,6 +80,9 @@ export const useAlbum = (props: UseAlbumProps) => {
     })
   })
   createEffect(() => {
+    renderer()?.setFit(props.content().fit ?? 'contain')
+  })
+  createEffect(() => {
     const instance = renderer()
     const loop = props.content().videoMode === 'loop'
     instance?.setVideoLoop(loop)

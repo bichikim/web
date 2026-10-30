@@ -12,7 +12,7 @@ import {SNumberInput} from './SNumberInput'
 interface SPoffoLipSyncSettingsProps {
   readonly source?: ParameterSource
   readonly assetId: string | null
-  readonly load: (id: string) => Promise<string>
+  readonly load: (id: string) => Promise<string | Blob>
   readonly value?: PoffoLipSync
   readonly onChange?: (value: PoffoLipSync) => void | Promise<void>
 }
