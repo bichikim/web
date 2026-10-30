@@ -157,7 +157,7 @@ test.each(['bottom', 'top'] as const)(
     lift.pause()
     lift.currentTime = 100
     await draw()
-    expect(frame(selected).getBoundingClientRect().height).toBeCloseTo(48, 1)
+    expect(frame(selected).getBoundingClientRect().height).toBeGreaterThan(48)
     lift.finish()
     await expect.poll(order).toEqual(['B', 'A', 'C'])
     const travel = selected.getAnimations()[0]
@@ -372,7 +372,7 @@ test('should move a taller card along one screen-space path without rebounding w
   screen.getByRole('button', {name: '채팅 B 선택'}).click()
   const lift = tall.getAnimations()[0]
   lift.pause()
-  lift.currentTime = 200
+  lift.currentTime = Number(lift.effect!.getTiming().duration)
   await draw()
   const raised = frame(tall).getBoundingClientRect().top
   lift.finish()
@@ -643,7 +643,7 @@ test('should overlap titles, lift, descend at distance based speed, and restore 
   third.querySelector('button')!.click()
   expect(getComputedStyle(third).clipPath).toBe('none')
   const lift = third.getAnimations()[0]
-  expect(lift.effect!.getTiming().duration).toBe(200)
+  expect(lift.effect!.getTiming().duration).toBe(300)
   lift.pause()
   lift.currentTime = 100
   await draw()
@@ -651,7 +651,8 @@ test('should overlap titles, lift, descend at distance based speed, and restore 
   expect(raised.y).toBeLessThan(start.y)
   expect(raised.y).toBeGreaterThanOrEqual(start.y - 8)
   expect(raised.width).toBe(start.width)
-  expect(raised.height).toBe(start.height)
+  expect(raised.height).toBeGreaterThan(start.height)
+  expect(raised.height).toBeLessThanOrEqual(third.getBoundingClientRect().height)
   expect(raised.x).toBe(start.x)
   expect(getComputedStyle(aside).boxShadow).not.toBe(rest)
   lift.finish()
@@ -698,7 +699,7 @@ test('should continue from rendered positions and shadows when reselected during
   next.finish()
   await expect.poll(order).toEqual(['D', 'A', 'B', 'C'])
   const descent = fourth.getAnimations()[0]
-  expect(Number(descent.effect!.getTiming().duration)).toBeGreaterThan(725)
+  expect(Number(descent.effect!.getTiming().duration)).toBeGreaterThanOrEqual(725)
   descent.pause()
   descent.currentTime = 320
   await draw()
@@ -856,7 +857,9 @@ test('should reverse an outgoing bubble from its rendered size when selected aga
   resumed.pause()
   resumed.currentTime = 100
   await draw()
-  expect(Number(getComputedStyle(long).getPropertyValue('--speech-reveal'))).toBe(Number(before))
+  expect(Number(getComputedStyle(long).getPropertyValue('--speech-reveal'))).toBeGreaterThan(
+    Number(before),
+  )
   resumed.finish()
   await expect.poll(order).toEqual(['A', 'B'])
   const expansion = long.getAnimations()[0]
@@ -900,7 +903,10 @@ test('should resize the painted background and border while retaining the full c
   const covered = frame(short).getBoundingClientRect().height
   incoming.currentTime = 100
   await draw()
-  expect(frame(short).getBoundingClientRect().height).toBe(covered)
+  expect(frame(short).getBoundingClientRect().height).toBeGreaterThan(covered)
+  expect(frame(short).getBoundingClientRect().height).toBeLessThanOrEqual(
+    short.getBoundingClientRect().height,
+  )
   incoming.finish()
   await expect.poll(order).toEqual(['B', 'A'])
   const outgoing = long.getAnimations()[0]
@@ -929,3 +935,55 @@ test('should resize the painted background and border while retaining the full c
   expect(region.scrollTop).toBe(100)
   expect(composer).toHaveValue('보존할 초안')
 })
+
+test.each(['bottom', 'top'] as const)(
+  'should unfold a rear bubble during its initial lift from the %s anchor before changing order',
+  async (anchor) => {
+    render(() => (
+      <main class="box-border flex h-[640px] w-[344px] flex-col justify-center p-9">
+        <SCodexSpeechStack
+          anchor={anchor}
+          activities={[
+            {...activities[0], text: '앞쪽 메시지'},
+            {...activities[1], phase: 'response', response: '펼쳐질 응답입니다.\n'.repeat(30)},
+          ]}
+        />
+      </main>
+    ))
+    await expect.poll(() => screen.getByRole('list').getAnimations().length).toBe(0)
+    const rear = cards()[1]
+    const full = rear.getBoundingClientRect().height
+    const header = rear.querySelector('button')!
+    const headerTop = header.getBoundingClientRect().top
+    const initial = frame(rear).getBoundingClientRect().height
+    expect(initial).toBe(48)
+    screen.getByRole('button', {name: '채팅 B 선택'}).click()
+    const lift = rear.getAnimations()[0]
+    lift.pause()
+    lift.currentTime = 80
+    await draw()
+    const opened = frame(rear).getBoundingClientRect()
+    expect(order()).toEqual(['A', 'B'])
+    expect(Math.abs(header.getBoundingClientRect().top - headerTop)).toBeLessThanOrEqual(12)
+    expect(opened.height).toBeGreaterThan(initial + 24)
+    expect(opened.height).toBeLessThanOrEqual(full)
+    expect(Number(getComputedStyle(rear).getPropertyValue('--speech-reveal'))).toBeGreaterThan(0)
+    expect(opened.top).toBeGreaterThanOrEqual(0)
+    expect(opened.bottom).toBeLessThanOrEqual(innerHeight)
+    lift.currentTime = Number(lift.effect!.getTiming().duration)
+    await draw()
+    const expanded = frame(rear).getBoundingClientRect().height
+    lift.finish()
+    await expect.poll(order).toEqual(['B', 'A'])
+    const travel = rear.getAnimations()[0]
+    travel.pause()
+    travel.currentTime = 0
+    await draw()
+    expect(frame(rear).getBoundingClientRect().height).toBeCloseTo(expanded, 1)
+    await settle()
+    expect(frame(rear).getBoundingClientRect().height).toBeCloseTo(
+      rear.getBoundingClientRect().height,
+      1,
+    )
+  },
+)
