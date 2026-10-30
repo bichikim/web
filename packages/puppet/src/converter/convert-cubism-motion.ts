@@ -121,6 +121,7 @@ export const convertCubismMotion = (value: unknown, options: CubismMotionOptions
     group: options.group,
     id: options.id,
     loop: jsonBoolean(metadata.Loop, true),
+    parameterBounds: 'sample',
     tracks: jsonArray(source.Curves)
       .map(readTrack)
       .map((track) => ({

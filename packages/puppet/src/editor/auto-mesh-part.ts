@@ -76,7 +76,7 @@ export const validateAutoMeshPart = (
 
   const minimumCellSize = getMinimumAutoMeshCellSize(part.texture.width, part.texture.height)
 
-  if (!Number.isFinite(options.settings.cellSize) || options.settings.cellSize < minimumCellSize) {
+  if (!Number.isInteger(options.settings.cellSize) || options.settings.cellSize < minimumCellSize) {
     return {error: {code: 'invalid-cell-size'}, ok: false}
   }
 

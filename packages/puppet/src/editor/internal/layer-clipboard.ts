@@ -70,6 +70,12 @@ const restoreSourceReferences = (
 const isLayerTrack = (track: PuppetTrack) =>
   track.kind === 'vertex' || track.kind === 'group-opacity'
 
+const getVisibilityParameterIds = (nodes: ReadonlyArray<PuppetSceneNode>): string[] =>
+  nodes.flatMap((node) => [
+    ...(node.parameterVisibility ?? []).map((range) => range.parameterId),
+    ...(isSceneContainerNode(node) ? getVisibilityParameterIds(node.children) : []),
+  ])
+
 /**
  * `keyframes` cut at `duration`: later keyframes are dropped and, unless one already sits at
  * the cut, a keyframe sampled there ends the curve with the value it had at that time. Linear
@@ -115,15 +121,24 @@ export const createLayerFragment = (
       ),
     getDocumentScene(mapped).roots,
   )
-  const parameterBindings = mapped.parameterBindings?.filter((binding) =>
-    binding.keyforms.some(
-      (form) =>
-        form.parts.length > 0 ||
-        (form.deformers?.length ?? 0) > 0 ||
-        (form.groups?.length ?? 0) > 0,
-    ),
+  const parameterBindings = mapped.parameterBindings?.filter(
+    (binding) =>
+      [
+        binding.targetPartIds,
+        binding.targetDeformerIds,
+        binding.targetGroupIds,
+        binding.targetGlueIds,
+      ].some((ids) => (ids?.length ?? 0) > 0) ||
+      binding.keyforms.some(
+        (form) =>
+          form.parts.length > 0 ||
+          (form.deformers?.length ?? 0) > 0 ||
+          (form.groups?.length ?? 0) > 0 ||
+          (form.glue?.length ?? 0) > 0,
+      ),
   )
   const parameterIds = new Set([
+    ...getVisibilityParameterIds(roots),
     ...(parameterBindings ?? []).flatMap((binding) => [
       ...binding.parameterIds,
       ...(binding.influences ?? []).map((influence) => influence.parameterId),

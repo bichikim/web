@@ -1,6 +1,6 @@
 import {describe, expect, test} from 'vitest'
 import type {PuppetParameter} from '../document'
-import {getRepeatRanges} from '../parameter-value'
+import {boundParameterSample, getRepeatRanges} from '../parameter-value'
 
 const angle: PuppetParameter = {
   defaultValue: 0,
@@ -41,4 +41,35 @@ describe('getRepeatRanges', () => {
     expect(getRepeatRanges(['angle', 'missing'], undefined)).toEqual([undefined, undefined])
     expect(getRepeatRanges([], [angle])).toEqual([])
   })
+})
+
+describe('boundParameterSample', () => {
+  test.each([
+    {expected: 1, value: -2},
+    {expected: 0.75, value: -0.25},
+    {expected: 0, value: 0},
+    {expected: 1, value: 1},
+    {expected: 0.25, value: 1.25},
+    {expected: 0, value: 2},
+  ])('should preserve inclusive repeat endpoints for sample $value', ({value, expected}) => {
+    const parameter = {
+      defaultValue: 0,
+      id: 'repeat',
+      maximum: 1,
+      minimum: 0,
+      name: 'Repeat',
+      repeat: true,
+    }
+    expect(boundParameterSample(parameter, value)).toBe(expected)
+  })
+})
+
+test.each([
+  {expected: 0, value: -2},
+  {expected: 0.25, value: 0.25},
+  {expected: 1, value: 2},
+])('should clamp a nonrepeating motion sample $value', ({value, expected}) => {
+  expect(
+    boundParameterSample({defaultValue: 0, id: 'p', maximum: 1, minimum: 0, name: 'P'}, value),
+  ).toBe(expected)
 })

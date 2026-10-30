@@ -85,6 +85,20 @@ interface TriangulationData {
   readonly triangulation: Triangulation
 }
 
+interface SampleTriangulatedCoordinatesOptions {
+  /** 삼각 분할에 사용할 2차원 키폼. 분할 캐시는 키폼 배열의 참조를 기준으로 재사용한다. */
+  readonly binding: PuppetParameterBinding2D
+  /**
+   * 보간에 필요한 키폼 인덱스로 호출한다. 좌표 누락 시 대체 정책은 콜백이 담당한다.
+   * 정확히 일치하는 키는 반환 배열의 참조를 그대로 사용한다.
+   */
+  readonly coordinates: (index: number) => ReadonlyArray<number>
+  /** 입력 값·키폼이 없거나 보간 경계를 찾지 못했을 때 수정 없이 반환하는 기본 좌표. */
+  readonly restCoordinates: ReadonlyArray<number>
+  /** 표본 파라미터 값. 앞의 두 값을 X/Y로 사용하며 둘 중 하나라도 없으면 기본 좌표를 반환한다. */
+  readonly values: PuppetParameterValues
+}
+
 const triangulationByKeyforms = new WeakMap<object, TriangulationData>()
 
 const getTriangulation = (binding: PuppetParameterBinding2D) => {
@@ -175,24 +189,18 @@ const getClosestSegment = (point: Point, points: ReadonlyArray<Point>, hull: Uin
   return closest
 }
 
-const sampleTwoDimensionalVertices = (
-  options: SampleParameterVerticesOptions,
-  binding: PuppetParameterBinding2D,
-) => {
+const sampleTriangulatedCoordinates = (options: SampleTriangulatedCoordinatesOptions) => {
+  const {binding} = options
   const [x, y] = options.values
   if (x === undefined || y === undefined || binding.keyforms.length === 0) {
-    return options.restVertices
+    return options.restCoordinates
   }
 
-  const exactKeyform = binding.keyforms.find(
+  const exactIndex = binding.keyforms.findIndex(
     (keyform) => keyform.values[0] === x && keyform.values[1] === y,
   )
-  if (exactKeyform !== undefined) {
-    return getPartVertices(exactKeyform, options.partId, options.restVertices)
-  }
-
-  if (binding.keyforms.length === 1) {
-    return getPartVertices(binding.keyforms[0]!, options.partId, options.restVertices)
+  if (exactIndex >= 0 || binding.keyforms.length === 1) {
+    return options.coordinates(Math.max(0, exactIndex))
   }
 
   const point = [x, y] as const
@@ -209,9 +217,9 @@ const sampleTwoDimensionalVertices = (
       const weights = getBarycentricWeights(point, firstPoint, secondPoint, thirdPoint)
       if (weights !== undefined && containsPoint(weights)) {
         return interpolateThreeVertices(
-          getPartVertices(binding.keyforms[firstIndex]!, options.partId, options.restVertices),
-          getPartVertices(binding.keyforms[secondIndex]!, options.partId, options.restVertices),
-          getPartVertices(binding.keyforms[thirdIndex]!, options.partId, options.restVertices),
+          options.coordinates(firstIndex!),
+          options.coordinates(secondIndex!),
+          options.coordinates(thirdIndex!),
           weights,
         )
       }
@@ -219,16 +227,26 @@ const sampleTwoDimensionalVertices = (
   }
 
   const closest = getClosestSegment(point, points, triangulation.hull)
-  if (closest === undefined) {
-    return options.restVertices
-  }
-
-  return interpolateVertices(
-    getPartVertices(binding.keyforms[closest.firstIndex]!, options.partId, options.restVertices),
-    getPartVertices(binding.keyforms[closest.secondIndex]!, options.partId, options.restVertices),
-    closest.progress,
-  )
+  return closest === undefined
+    ? options.restCoordinates
+    : interpolateVertices(
+        options.coordinates(closest.firstIndex),
+        options.coordinates(closest.secondIndex),
+        closest.progress,
+      )
 }
+
+const sampleTwoDimensionalVertices = (
+  options: SampleParameterVerticesOptions,
+  binding: PuppetParameterBinding2D,
+) =>
+  sampleTriangulatedCoordinates({
+    binding,
+    coordinates: (index) =>
+      getPartVertices(binding.keyforms[index]!, options.partId, options.restVertices),
+    restCoordinates: options.restVertices,
+    values: options.values,
+  })
 
 export const isTwoDimensionalParameterBinding = (
   binding: PuppetParameterBinding,
@@ -471,50 +489,13 @@ const sampleOneDimensionalCoordinates = (options: SampleParameterCoordinatesOpti
 const sampleTwoDimensionalCoordinates = (
   options: SampleParameterCoordinatesOptions,
   binding: PuppetParameterBinding2D,
-) => {
-  const [x, y] = options.values
-  if (x === undefined || y === undefined || binding.keyforms.length === 0) {
-    return options.restCoordinates
-  }
-
-  const exactIndex = binding.keyforms.findIndex(
-    (keyform) => keyform.values[0] === x && keyform.values[1] === y,
-  )
-  if (exactIndex >= 0 || binding.keyforms.length === 1) {
-    return getKeyformCoordinates(options, Math.max(0, exactIndex))
-  }
-
-  const point = [x, y] as const
-  const {points, triangulation} = getTriangulation(binding)
-  for (let index = 0; index < triangulation.triangles.length; index += TRIANGLE_VERTEX_COUNT) {
-    const firstIndex = triangulation.triangles[index]
-    const secondIndex = triangulation.triangles[index + 1]
-    const thirdIndex = triangulation.triangles[index + 2]
-    const firstPoint = firstIndex === undefined ? undefined : points[firstIndex]
-    const secondPoint = secondIndex === undefined ? undefined : points[secondIndex]
-    const thirdPoint = thirdIndex === undefined ? undefined : points[thirdIndex]
-    if (firstPoint !== undefined && secondPoint !== undefined && thirdPoint !== undefined) {
-      const weights = getBarycentricWeights(point, firstPoint, secondPoint, thirdPoint)
-      if (weights !== undefined && containsPoint(weights)) {
-        return interpolateThreeVertices(
-          getKeyformCoordinates(options, firstIndex!),
-          getKeyformCoordinates(options, secondIndex!),
-          getKeyformCoordinates(options, thirdIndex!),
-          weights,
-        )
-      }
-    }
-  }
-
-  const closest = getClosestSegment(point, points, triangulation.hull)
-  return closest === undefined
-    ? options.restCoordinates
-    : interpolateVertices(
-        getKeyformCoordinates(options, closest.firstIndex),
-        getKeyformCoordinates(options, closest.secondIndex),
-        closest.progress,
-      )
-}
+) =>
+  sampleTriangulatedCoordinates({
+    binding,
+    coordinates: (index) => getKeyformCoordinates(options, index),
+    restCoordinates: options.restCoordinates,
+    values: options.values,
+  })
 
 const sampleThreeDimensionalCoordinates = (
   options: SampleParameterCoordinatesOptions,

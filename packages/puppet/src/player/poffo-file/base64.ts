@@ -1,53 +1,27 @@
-const toBase64 = (bytes: Uint8Array): string => {
-  const native: unknown = Reflect.get(bytes, 'toBase64')
-  if (typeof native === 'function') {
-    const result: unknown = Reflect.apply(native, bytes, [])
-    if (typeof result !== 'string') {
-      throw new TypeError('Invalid native Base64 output')
-    }
-    return result
-  }
-  // Multiples of three keep each independently encoded chunk's padding at the end only.
-  const CHUNK_BYTES = 24_576
-  const parts: string[] = []
-  for (let offset = 0; offset < bytes.length; offset += CHUNK_BYTES) {
-    parts.push(btoa(String.fromCharCode(...bytes.subarray(offset, offset + CHUNK_BYTES))))
-  }
-  return parts.join('')
+import {encodeBase64} from '../../encoding/encode-base64'
+import {decodeDataUrl} from '../internal/decode-data-url'
+
+interface DecodeAssetOptions {
+  /** 파일 저장은 기본적으로 원문을 재현할 수 있는 정규 표기만 허용한다. false이면 생략된 패딩 등도 디코딩한다. */
+  readonly canonical?: boolean
 }
 
-const fromBase64 = (source: string): Uint8Array<ArrayBuffer> => {
-  const native: unknown = Reflect.get(Uint8Array, 'fromBase64')
-  if (typeof native === 'function') {
-    const result: unknown = Reflect.apply(native, Uint8Array, [source])
-    if (!(result instanceof Uint8Array) || !(result.buffer instanceof ArrayBuffer)) {
-      throw new TypeError('Invalid native Base64 output')
-    }
-    return new Uint8Array(result.buffer, result.byteOffset, result.byteLength)
-  }
-  const binary = atob(source)
-  const bytes = new Uint8Array(binary.length)
-  for (let index = 0; index < binary.length; index += 1) {
-    bytes[index] = binary.charCodeAt(index)
-  }
-  return bytes
-}
-
-/** Preserves canonical data URLs byte-for-byte; other strings remain ordinary strings. */
-export const decodeAsset = (source: string) => {
-  const comma = source.indexOf(',')
-  const prefix = source.slice(0, comma + 1)
-  if (!/^data:[^,]*;base64,$/iu.test(prefix)) {
+/** Decodes base64 data URLs; defaults to canonical encodings that round-trip byte-for-byte. */
+export const decodeAsset = (source: string, options: DecodeAssetOptions = {}) => {
+  const asset = decodeDataUrl(source)
+  if (asset === undefined) {
     return undefined
   }
   try {
-    const payload = source.slice(comma + 1)
-    const bytes = fromBase64(payload)
-    return toBase64(bytes) === payload ? {bytes, prefix} : undefined
+    const payload = source.slice(asset.prefix.length)
+    return options.canonical === false || encodeBase64(asset.bytes) === payload
+      ? {bytes: asset.bytes, prefix: asset.prefix}
+      : undefined
   } catch {
     return undefined
   }
 }
 
 /** Recreates an embedded asset without a giant temporary binary string. */
-export const encodeAsset = (prefix: string, bytes: Uint8Array): string => prefix + toBase64(bytes)
+export const encodeAsset = (prefix: string, bytes: Uint8Array): string =>
+  prefix + encodeBase64(bytes)

@@ -30,6 +30,26 @@ const getRootIds = (document: ReturnType<typeof createDemoDocument>) =>
   getDocumentScene(document).roots.map((node) => node.id)
 
 describe('scene graph', () => {
+  test.each([createSceneGroup, createDeformer, createCurveDeformer])(
+    'should retain sibling paint order regardless of selection order with %s',
+    (create) => {
+      const document = createDemoDocument()
+      const updated = create(document, ['shape-diamond', 'shape-circle'])!
+      const parent = getSceneNode(updated, 'shapes')!
+      expect(parent.kind).toBe('group')
+      if (parent.kind !== 'part') {
+        const container = parent.children[0]!
+        expect(container.kind).not.toBe('part')
+        if (container.kind !== 'part') {
+          expect(container.children.map((node) => node.id)).toEqual([
+            'shape-circle',
+            'shape-diamond',
+          ])
+        }
+      }
+    },
+  )
+
   test('should group selected siblings and preserve their order', () => {
     const document = {...createDemoDocument(), scene: undefined}
     const grouped = createSceneGroup(document, ['mesh-preview', 'shape-diamond'])

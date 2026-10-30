@@ -1,5 +1,7 @@
 import {jsonArray, jsonObject, jsonString} from './json-fields'
 import {type CubismArchive, resolveCubismAsset} from './read-cubism-archive'
+import {readVtubeSettings} from './read-vtube-settings'
+import {resolveVtubeAsset} from './resolve-vtube-asset'
 
 interface CubismExpressionReference {
   readonly File: string
@@ -34,13 +36,8 @@ export const readCubismExpressions = (
     const entry = jsonObject(value)
     return {File: jsonString(entry.File), Name: jsonString(entry.Name)}
   })
-  const settingsPath = modelPath.replace(/\.model3\.json$/iu, '.vtube.json')
-  if (!archive.entries.has(settingsPath)) {
-    return uniqueNames(explicit)
-  }
-  const settings = archive.readJson(settingsPath)
-  const model = jsonObject(settings.FileReferences)
-  if (resolveCubismAsset(settingsPath, jsonString(model.Model)) !== modelPath) {
+  const settings = readVtubeSettings(archive, modelPath)
+  if (settings === undefined) {
     return uniqueNames(explicit)
   }
   const known = new Set(explicit.map((entry) => resolveCubismAsset(modelPath, entry.File)))
@@ -49,8 +46,8 @@ export const readCubismExpressions = (
     if (entry.Action !== 'ToggleExpression' || entry.File === '') {
       return []
     }
-    const file = jsonString(entry.File)
-    const path = resolveCubismAsset(settingsPath, file)
+    const file = resolveVtubeAsset(archive.entries, modelPath, jsonString(entry.File))
+    const path = resolveCubismAsset(modelPath, file)
     if (known.has(path)) {
       return []
     }

@@ -240,3 +240,71 @@ test('should keep the model opacity on non-finite input', async () => {
   expect(renderer.alphas()).toEqual([1, 0, 1])
   player.destroy()
 })
+
+test('should combine and release independent expressions while playback is paused', async () => {
+  const renderer = setUpRenderer()
+  const player = await createPlayer({
+    canvas: globalThis.document.createElement('canvas'),
+    document: prepare({
+      ...presetDocument,
+      expressions: [
+        {
+          composition: 'cubism',
+          fadeInTime: 0,
+          fadeOutTime: 0,
+          id: 'held',
+          parameters: [{blend: 'add', parameterId: 'pose', value: 1}],
+        },
+        {
+          composition: 'cubism',
+          fadeInTime: 0,
+          fadeOutTime: 0,
+          id: 'press',
+          parameters: [{blend: 'add', parameterId: 'mouth', value: 1}],
+        },
+      ],
+    }),
+  })
+  player.pause()
+  expect(player.setExpressions(['held', 'press'])).toBe(true)
+  expect(player.getParameterValues()).toMatchObject({mouth: 1, pose: 1})
+  expect(player.setExpressions(['held'])).toBe(true)
+  expect(player.getParameterValues()).toMatchObject({mouth: 0, pose: 1})
+  expect(player.setExpressions(['missing'])).toBe(false)
+  player.setExpressions([])
+  renderer.tick(1)
+  expect(player.getParameterValues()).toMatchObject({mouth: 0, pose: 0})
+  player.destroy()
+  expect(player.setExpressions(['held'])).toBe(false)
+})
+
+test('should preserve expression fade-outs when the host changes expression APIs', async () => {
+  const renderer = setUpRenderer()
+  const player = await createPlayer({
+    canvas: globalThis.document.createElement('canvas'),
+    document: prepare({
+      ...presetDocument,
+      expressions: [
+        {
+          composition: 'cubism',
+          fadeInTime: 0,
+          fadeOutTime: 1,
+          id: 'open',
+          parameters: [{blend: 'overwrite', parameterId: 'mouth', value: 1}],
+        },
+      ],
+    }),
+  })
+  player.pause()
+  player.setExpressions(['open'])
+  player.setExpression(undefined)
+  expect(player.getParameterValue('mouth')).toBe(1)
+  renderer.tick(0.5)
+  expect(player.getParameterValue('mouth')).toBeCloseTo(0.5)
+  player.setExpression('open')
+  player.setExpressions([])
+  expect(player.getParameterValue('mouth')).toBe(1)
+  renderer.tick(0.5)
+  expect(player.getParameterValue('mouth')).toBeCloseTo(0.5)
+  player.destroy()
+})

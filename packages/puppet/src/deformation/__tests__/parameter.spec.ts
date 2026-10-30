@@ -5,7 +5,12 @@ import {
   type PuppetParameterBinding2D,
   type PuppetParameterBinding3D,
 } from '../../player'
-import {getKeyformPlanes, sampleParameterCoordinates, sampleParameterVertices} from '../parameter'
+import {
+  getKeyformPlanes,
+  type PuppetParameterValues,
+  sampleParameterCoordinates,
+  sampleParameterVertices,
+} from '../parameter'
 
 const PLANE_COUNT = 60_000
 // 경과 시간을 단언하지 않고 결과만 확인한다. 평면마다 전체 키폼을 다시 거르던 제곱 시간 구현은 이
@@ -120,6 +125,99 @@ describe('sampleParameterVertices', () => {
       }).slice(-2),
     ).toEqual([256, 304])
   })
+})
+
+describe.each(['vertices', 'coordinates'] as const)('%s triangular sampling', (channel) => {
+  const rest = [-10, -20]
+  const createBinding = (): PuppetParameterBinding2D => ({
+    id: 'triangle',
+    keyforms: [
+      {parts: [{partId: 'mesh', vertices: [0, 10]}], values: [0, 0]},
+      {parts: [{partId: 'mesh', vertices: [20, 10]}], values: [2, 0]},
+      {parts: [{partId: 'mesh', vertices: [0, 30]}], values: [0, 2]},
+    ],
+    parameterIds: ['x', 'y'],
+  })
+  const sample = (binding: PuppetParameterBinding2D, values: PuppetParameterValues) =>
+    channel === 'vertices'
+      ? sampleParameterVertices({binding, partId: 'mesh', restVertices: rest, values})
+      : sampleParameterCoordinates({
+          binding,
+          keyformCoordinates: binding.keyforms.map((form) => form.parts[0]?.vertices),
+          restCoordinates: rest,
+          values,
+        })
+
+  test.each([
+    {expected: [5, 15], location: 'inside the triangle', values: [0.5, 0.5]},
+    {expected: [10, 10], location: 'on an edge', values: [1, 0]},
+    {expected: [10, 20], location: 'outside the hull', values: [2, 2]},
+  ] as const)('should interpolate $location', ({expected, values}) => {
+    expect(sample(createBinding(), values)).toEqual(expected)
+  })
+
+  test('should return exact keyform coordinates without copying them', () => {
+    const binding = createBinding()
+    expect(sample(binding, [2, 0])).toBe(binding.keyforms[1]!.parts[0]!.vertices)
+  })
+
+  test('should retain the only keyform away from its exact position', () => {
+    const source = createBinding()
+    const binding = {...source, keyforms: source.keyforms.slice(0, 1)}
+    expect(sample(binding, [1, 1])).toBe(binding.keyforms[0]!.parts[0]!.vertices)
+  })
+
+  test('should retain rest coordinates without keyforms', () => {
+    expect(sample({...createBinding(), keyforms: []}, [1, 1])).toBe(rest)
+  })
+
+  test('should use rest coordinates for a missing sample inside the triangle', () => {
+    const source = createBinding()
+    const binding = {
+      ...source,
+      keyforms: source.keyforms.map((form, index) => (index === 0 ? {...form, parts: []} : form)),
+    }
+    expect(sample(binding, [0.5, 0.5])).toEqual([0, 0])
+  })
+
+  test('should project onto the segment between two keyforms', () => {
+    const source = createBinding()
+    expect(sample({...source, keyforms: source.keyforms.slice(0, 2)}, [1, 1])).toEqual([10, 10])
+  })
+
+  test('should preserve intermediate samples on a collinear hull', () => {
+    const source = createBinding()
+    const binding: PuppetParameterBinding2D = {
+      ...source,
+      keyforms: [
+        source.keyforms[0]!,
+        {parts: [{partId: 'mesh', vertices: [4, 14]}], values: [1, 0]},
+        source.keyforms[1]!,
+      ],
+    }
+    expect(sample(binding, [0.5, 1])).toEqual([2, 12])
+  })
+})
+
+test('should distinguish an empty mesh form from an explicitly empty coordinate sample', () => {
+  const binding: PuppetParameterBinding2D = {
+    id: 'empty',
+    keyforms: [{parts: [{partId: 'mesh', vertices: []}], values: [0, 0]}],
+    parameterIds: ['x', 'y'],
+  }
+  const rest = [10, 20]
+  const coordinates: number[] = []
+  expect(
+    sampleParameterVertices({binding, partId: 'mesh', restVertices: rest, values: [0, 0]}),
+  ).toBe(rest)
+  expect(
+    sampleParameterCoordinates({
+      binding,
+      keyformCoordinates: [coordinates],
+      restCoordinates: rest,
+      values: [0, 0],
+    }),
+  ).toBe(coordinates)
 })
 
 describe('getKeyformPlanes', () => {

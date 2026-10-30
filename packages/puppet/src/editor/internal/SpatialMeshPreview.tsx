@@ -109,8 +109,12 @@ const createPreviewMesh = (
   for (const part of parts) {
     const offset = vertices.length / COORDINATES
     const start = indices.length / COORDINATES
-    vertices.push(...part.mesh.vertices)
-    indices.push(...part.mesh.indices.map((index) => index + offset))
+    for (const value of part.mesh.vertices) {
+      vertices.push(value)
+    }
+    for (const index of part.mesh.indices) {
+      indices.push(index + offset)
+    }
     ranges.push({
       end: indices.length / COORDINATES,
       id: part.id,
@@ -326,6 +330,21 @@ const useMeshPreviewRenderer = (
   return {gizmo, previewRenderer, renderError}
 }
 
+const pickEditableObject = (props: SpatialMeshPreviewProps, targetId: string | undefined) => {
+  const selectedId = props.selectedIds?.at(-1)
+  const keepChild = faceContainsSelection(
+    props.objects,
+    targetId,
+    selectedId === undefined ? [] : [selectedId],
+  )
+  const id = keepChild ? selectedId : (targetId ?? selectedId)
+  if (targetId !== undefined && !keepChild) {
+    props.onSelect?.(targetId)
+  }
+  const selected = id === undefined ? undefined : findSpatialEditorObject(props.objects ?? [], id)
+  return props.tool !== 'orbit' && selected?.kind !== 'group' ? selected : undefined
+}
+
 interface PreviewDragOptions {
   readonly gizmo: Accessor<SpatialPreviewGizmo | undefined>
   readonly orbit: Accessor<SpatialPreviewOrbit>
@@ -355,23 +374,11 @@ const usePreviewDrag = ({
       }
     | undefined
   const startDrag = (event: PointerEvent) => {
-    if (event.button !== 0) {
+    if (event.button !== 0 || event.isPrimary === false || drag !== undefined) {
       return
     }
     event.preventDefault()
-    const targetId = previewRenderer()?.pick(event.clientX, event.clientY)
-    const selectedId = props.selectedIds?.at(-1)
-    const keepChild = faceContainsSelection(
-      props.objects,
-      targetId,
-      selectedId === undefined ? [] : [selectedId],
-    )
-    const id = keepChild ? selectedId : (targetId ?? selectedId)
-    if (targetId !== undefined && !keepChild) {
-      props.onSelect?.(targetId)
-    }
-    const selected = id === undefined ? undefined : findSpatialEditorObject(props.objects ?? [], id)
-    const object = props.tool !== 'orbit' && selected?.kind !== 'group' ? selected : undefined
+    const object = pickEditableObject(props, previewRenderer()?.pick(event.clientX, event.clientY))
     if (object !== undefined) {
       props.onTransformStart?.()
     }
@@ -383,6 +390,8 @@ const usePreviewDrag = ({
     const projected = gizmo()
     if (
       event.button !== 0 ||
+      event.isPrimary === false ||
+      drag !== undefined ||
       selected === undefined ||
       projected === undefined ||
       (props.tool !== 'move' && props.tool !== 'rotate')
@@ -465,12 +474,23 @@ const usePreviewDrag = ({
       yaw: drag.orbit.yaw + (event.clientX - drag.x) * DRAG_DEGREES_PER_PIXEL,
     })
   }
-  const stopDrag = (event: PointerEvent) => {
-    if (drag?.pointerId === event.pointerId) {
+  const stopDrag = (event?: PointerEvent) => {
+    if (event === undefined || drag?.pointerId === event.pointerId) {
       drag = undefined
     }
   }
+  const cancel = () => stopDrag()
+  globalThis.addEventListener('blur', cancel)
+  onCleanup(() => globalThis.removeEventListener('blur', cancel))
+  createEffect(() => {
+    props.isOpen
+    props.tool
+    stopDrag()
+  })
   const handleKeyDown = (event: KeyboardEvent) => {
+    if (event.key === 'Escape') {
+      stopDrag()
+    }
     const next = keyboardOrbit(orbit(), event.key)
     if (next === undefined) {
       return

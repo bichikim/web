@@ -453,6 +453,13 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
       refresh()
       return true
     },
+    setExpressions(expressionIds) {
+      if (destroyed || !expressions.setMany(expressionIds)) {
+        return false
+      }
+      refresh()
+      return true
+    },
     setEyeBlink(enabled) {
       if (destroyed || enabled === (eyeBlink !== undefined)) {
         return

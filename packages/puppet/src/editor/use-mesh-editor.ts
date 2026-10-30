@@ -1,7 +1,15 @@
 import {moveMeshVertex} from './move-mesh-vertex'
 import {canEditSelectedKeyform, commitVertexMove} from './commit-vertex-move'
 import {type DeformBrushMode, useDeformBrush} from './use-deform-brush'
-import {type Accessor, createEffect, createMemo, createSignal, type Setter, untrack} from 'solid-js'
+import {
+  type Accessor,
+  createEffect,
+  createMemo,
+  createSignal,
+  onCleanup,
+  type Setter,
+  untrack,
+} from 'solid-js'
 
 import type {PuppetParameterValues} from '../deformation'
 import type {PuppetDocument, PuppetPart} from '../player/document'
@@ -415,9 +423,39 @@ export const useMeshEditor = (props: MeshEditorProps): UseMeshEditorResult => {
     props,
     vertices: state.vertices,
   })
+  let capture: {readonly element: SVGCircleElement; readonly pointerId: number} | undefined
+  const release = () => {
+    const previous = capture
+    capture = undefined
+    if (previous?.element.hasPointerCapture?.(previous.pointerId)) {
+      previous.element.releasePointerCapture(previous.pointerId)
+    }
+  }
+  const cancel = () => {
+    release()
+    resetPointerState(state)
+  }
+  const handleEscape = (event: KeyboardEvent) => {
+    if (event.key === 'Escape' && capture !== undefined) {
+      event.preventDefault()
+      cancel()
+    }
+  }
+  createEffect(() => {
+    if (state.draggingVertex() === null) {
+      release()
+    }
+  })
+  globalThis.addEventListener('blur', cancel)
+  globalThis.addEventListener('keydown', handleEscape)
+  onCleanup(() => {
+    cancel()
+    globalThis.removeEventListener('blur', cancel)
+    globalThis.removeEventListener('keydown', handleEscape)
+  })
 
   const handlePointerDown = (event: PointerEvent, partId: string, vertex: IndexedVertex) => {
-    if (event.button > 0) {
+    if (event.button > 0 || capture !== undefined) {
       return
     }
 
@@ -425,7 +463,6 @@ export const useMeshEditor = (props: MeshEditorProps): UseMeshEditorResult => {
 
     event.stopPropagation()
     target.ownerSVGElement?.focus()
-    target.setPointerCapture?.(event.pointerId)
     state.setFocusedPartId(partId)
     state.setSelectedVertex(vertex.index)
     props.onVertexSelect?.(vertex.index)
@@ -438,6 +475,8 @@ export const useMeshEditor = (props: MeshEditorProps): UseMeshEditorResult => {
         props.editMode === 'parameter' ? (props.activeKeyformValues ?? null) : null,
       )
       state.setDraggingVertex(vertex.index)
+      capture = {element: target, pointerId: event.pointerId}
+      target.setPointerCapture?.(event.pointerId)
       props.onVertexEditStart?.()
     }
   }
@@ -447,7 +486,9 @@ export const useMeshEditor = (props: MeshEditorProps): UseMeshEditorResult => {
       brush.handlePointerMove(event)
       return
     }
-    updatePointerDraft(state, props.document, event)
+    if (capture !== undefined && capture.pointerId === event.pointerId) {
+      updatePointerDraft(state, props.document, event)
+    }
   }
 
   const handlePointerEnd = createPointerEndHandler(props, state)
@@ -496,14 +537,17 @@ export const useMeshEditor = (props: MeshEditorProps): UseMeshEditorResult => {
       handleDeleteVertex()
     },
     handlePointerCancel: (event) => {
-      resetPointerState(state)
+      if (capture !== undefined && capture.pointerId === event.pointerId) {
+        cancel()
+      }
       brush.cancel(event)
     },
     handlePointerDown,
     handlePointerEnd: (event) => {
       if (brush.enabled()) {
         brush.handlePointerEnd(event)
-      } else {
+      } else if (capture !== undefined && capture.pointerId === event.pointerId) {
+        release()
         handlePointerEnd()
       }
     },

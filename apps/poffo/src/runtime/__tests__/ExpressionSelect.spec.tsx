@@ -6,29 +6,34 @@ import {ExpressionSelect} from '../ExpressionSelect'
 
 afterEach(cleanup)
 
-test('should display release state and distinguish it from an expression named none', async () => {
+test('should retain multiple expressions and release each independently', async () => {
   const changed = vi.fn()
   render(() => {
-    const [value, setValue] = createSignal<string>()
-    const handleChange = (id: string | undefined) => {
-      setValue(id)
-      changed(id)
+    const [values, setValues] = createSignal<ReadonlyArray<string>>([])
+    const handleChange = (ids: ReadonlyArray<string>) => {
+      setValues(ids)
+      changed(ids)
     }
     return (
       <ExpressionSelect
-        expressions={[{id: 'none', parameters: []}]}
-        value={value()}
+        expressions={[
+          {id: 'Controller', parameters: []},
+          {id: 'Left', parameters: []},
+        ]}
+        values={values()}
         onChange={handleChange}
       />
     )
   })
   const selector = screen.getByRole('button', {name: /표정 선택/})
-  expect(selector).toHaveTextContent('표정 해제')
   fireEvent.keyDown(selector, {key: 'ArrowDown'})
-  fireEvent.click(await screen.findByRole('option', {name: 'none'}))
-  expect(changed).toHaveBeenLastCalledWith('none')
-  fireEvent.keyDown(selector, {key: 'ArrowDown'})
-  fireEvent.click(await screen.findByRole('option', {name: '표정 해제'}))
-  expect(changed).toHaveBeenLastCalledWith(undefined)
-  expect(selector).toHaveTextContent('표정 해제')
+  fireEvent.click(await screen.findByRole('option', {name: 'Controller'}))
+  fireEvent.click(screen.getByRole('option', {name: 'Left'}))
+  expect(changed).toHaveBeenLastCalledWith(['Controller', 'Left'])
+  expect(screen.getByRole('option', {name: 'Controller'})).toHaveAttribute('aria-selected', 'true')
+  fireEvent.click(screen.getByRole('option', {name: 'Left'}))
+  expect(changed).toHaveBeenLastCalledWith(['Controller'])
+  fireEvent.keyDown(selector, {key: 'Escape'})
+  fireEvent.click(screen.getByRole('button', {name: '표정 모두 해제'}))
+  expect(changed).toHaveBeenLastCalledWith([])
 })

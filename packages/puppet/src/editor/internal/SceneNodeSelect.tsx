@@ -135,6 +135,9 @@ export const SceneNodeSelect = (props: SceneNodeSelectProps) => {
           aria-label={`${props.node.name} ${props.node.kind === 'part' ? '파츠' : '그룹'} 이름`}
           onBlur={nameEditor.finishRenaming}
           onKeyDown={(event: KeyboardEvent) => {
+            if (event.isComposing) {
+              return
+            }
             if (event.key === 'Enter') {
               event.preventDefault()
               nameEditor.finishRenaming()

@@ -96,3 +96,73 @@ test('should retain explicit names while distinguishing a conflicting hotkey nam
     {File: 'other.exp3.json', Name: 'Face (2)'},
   ])
 })
+
+test('should resolve basename-only VTube expressions within model subfolders and deduplicate declared paths', () => {
+  const archive = createCubismArchive(
+    new Map([
+      [
+        'model/avatar.vtube.json',
+        strToU8(
+          JSON.stringify({
+            FileReferences: {Model: 'avatar.model3.json'},
+            Hotkeys: [
+              {Action: 'ToggleExpression', File: 'smile.exp3.json', Name: 'Smile'},
+              {Action: 'ToggleExpression', File: 'angry.exp3.json', Name: 'Angry'},
+            ],
+          }),
+        ),
+      ],
+      ['model/exp/smile.exp3.json', strToU8('{}')],
+      ['model/exp/angry.exp3.json', strToU8('{}')],
+      ['other/angry.exp3.json', strToU8('{}')],
+    ]),
+  )
+  expect(
+    readCubismExpressions(archive, 'model/avatar.model3.json', [
+      {File: 'exp/smile.exp3.json', Name: 'Explicit smile'},
+    ]),
+  ).toEqual([
+    {File: 'exp/smile.exp3.json', Name: 'Explicit smile'},
+    {File: 'exp/angry.exp3.json', Name: 'Angry'},
+  ])
+})
+
+test('should prefer an exact VTube expression path over a matching subfolder filename', () => {
+  const archive = createCubismArchive(
+    new Map([
+      [
+        'model/avatar.vtube.json',
+        strToU8(
+          JSON.stringify({
+            FileReferences: {Model: 'avatar.model3.json'},
+            Hotkeys: [{Action: 'ToggleExpression', File: 'face.exp3.json', Name: 'Face'}],
+          }),
+        ),
+      ],
+      ['model/face.exp3.json', strToU8('{}')],
+      ['model/exp/face.exp3.json', strToU8('{}')],
+    ]),
+  )
+  expect(readCubismExpressions(archive, 'model/avatar.model3.json', [])).toEqual([
+    {File: 'face.exp3.json', Name: 'Face'},
+  ])
+})
+
+test('should reject ambiguous VTube expression basenames instead of choosing an unrelated file', () => {
+  const archive = createCubismArchive(
+    new Map([
+      [
+        'model/avatar.vtube.json',
+        strToU8(
+          JSON.stringify({
+            FileReferences: {Model: 'avatar.model3.json'},
+            Hotkeys: [{Action: 'ToggleExpression', File: 'face.exp3.json', Name: 'Face'}],
+          }),
+        ),
+      ],
+      ['model/a/face.exp3.json', strToU8('{}')],
+      ['model/b/face.exp3.json', strToU8('{}')],
+    ]),
+  )
+  expect(() => readCubismExpressions(archive, 'model/avatar.model3.json', [])).toThrow('ambiguous')
+})

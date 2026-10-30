@@ -1,8 +1,6 @@
-import {TextField} from '@kobalte/core/text-field'
 import {ToggleButton} from '@kobalte/core/toggle-button'
-import {createSignal, Index, type JSX, onMount, Show} from 'solid-js'
-
-import {EditorTextInput} from '../../design-system'
+import {createSignal, Index, type JSX, Show} from 'solid-js'
+import {EditorParameterNameField} from './EditorParameterNameField'
 
 const DOUBLE_CLICK_INTERVAL = 400
 
@@ -12,55 +10,6 @@ interface ParameterNameRow {
   readonly control?: JSX.Element
   readonly name: string
   readonly target: ParameterNameTarget
-}
-
-interface ParameterNameEditorProps {
-  readonly name: string
-  readonly onCancel: () => void
-  readonly onCommit: (name: string) => void
-}
-
-const ParameterNameEditor = (props: ParameterNameEditorProps) => {
-  const [input, setInput] = createSignal<HTMLInputElement | undefined>()
-  const [name, setName] = createSignal<string>()
-  let finished = false
-  const commit = () => {
-    if (finished) {
-      return
-    }
-
-    finished = true
-    const nextName = (name() ?? props.name).trim()
-    props.onCommit(nextName.length > 0 ? nextName : props.name)
-  }
-  const cancel = () => {
-    finished = true
-    props.onCancel()
-  }
-
-  onMount(() => {
-    input()?.focus()
-    input()?.select()
-  })
-
-  return (
-    <TextField class="parameter-name-editor" value={name() ?? props.name} onChange={setName}>
-      <EditorTextInput
-        ref={setInput}
-        aria-label="Parameter 이름"
-        onBlur={commit}
-        onKeyDown={(event) => {
-          if (event.key === 'Enter') {
-            event.preventDefault()
-            commit()
-          } else if (event.key === 'Escape') {
-            event.preventDefault()
-            cancel()
-          }
-        }}
-      />
-    </TextField>
-  )
 }
 
 export interface EditorParameterNamesProps {
@@ -188,7 +137,7 @@ export const EditorParameterNames = (props: EditorParameterNamesProps) => {
                     </ToggleButton>
                   }
                 >
-                  <ParameterNameEditor
+                  <EditorParameterNameField
                     name={row().name}
                     onCancel={() => setEditing(null)}
                     onCommit={(name) => handleNameCommit(row().target, name)}

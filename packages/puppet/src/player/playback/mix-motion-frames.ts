@@ -1,7 +1,7 @@
 import type {PuppetDocument, PuppetParameter, PuppetTrack} from '../document'
 import type {PuppetParameterValueMap} from '../../deformation'
 import {getCoordinateIndex, sampleDiscreteKeyframes, sampleKeyframes} from '../internal/motion'
-import {resolveParameterValue} from '../parameter-value'
+import {boundParameterSample, resolveParameterValue} from '../parameter-value'
 import {applyExpressionLayers, type ExpressionLayer} from './expression-playback'
 import {getTrackFadeWeight} from './motion-fade'
 import type {MotionBlend, MotionFrame} from './types'
@@ -157,6 +157,9 @@ const mixFrame = (
       }
       if (model.lipSync !== undefined && context.roles.lipSync.has(track.parameterId)) {
         value += model.lipSync.value
+      }
+      if (frame.motion.parameterBounds === 'sample' && parameter !== undefined) {
+        value = boundParameterSample(parameter, value)
       }
       keyed.add(track.parameterId)
       addSample(mix.parameters, track.parameterId, sampleOf(value, track))
