@@ -22,8 +22,8 @@ export const SPoffoPositionSettings = (props: SPoffoPositionSettingsProps) => {
     }
   }
   return (
-    <details>
-      <summary class="wallpaper-disclosure">위치·크기</summary>
+    <section aria-label="위치·크기">
+      <h3 class="m-0 text-[13px] font-medium text-stone-700">위치·크기</h3>
       <div class="wallpaper-row">
         <span>가로 위치</span>
         <span class="flex items-center justify-end gap-2">
@@ -71,6 +71,6 @@ export const SPoffoPositionSettings = (props: SPoffoPositionSettingsProps) => {
       >
         위치 초기화
       </button>
-    </details>
+    </section>
   )
 }
