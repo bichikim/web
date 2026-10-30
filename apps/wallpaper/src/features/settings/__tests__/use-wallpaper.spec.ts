@@ -1,4 +1,5 @@
 /** @vitest-environment jsdom */
+import 'fake-indexeddb/auto'
 import {renderHook, waitFor} from '@solidjs/testing-library'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 import {
@@ -31,6 +32,7 @@ beforeEach(() => {
     listPuppets: vi.fn(async () => []),
     loadPuppet: vi.fn(),
     read: vi.fn(async () => Array.from(stored.values())),
+    removeMediaReferences: vi.fn(),
     removePuppet: vi.fn(),
     save: vi.fn(async (settings) => {
       stored.set(settings.monitorId, settings)
@@ -299,5 +301,33 @@ it('should persist album fit and keep it when a subsequent independent album fie
   const timing = result.setContent({...optimistic, photoSeconds: 20})
   await Promise.all([fitting, timing])
   expect(stored.get('first')?.content).toMatchObject({fit: 'cover', photoSeconds: 20})
+  cleanup()
+})
+
+it('should remove album references before deleting stored media', async () => {
+  const {result, cleanup} = renderHook(useWallpaper)
+  await waitFor(() => expect(result.selectedId()).toBe('first'))
+  const references = Promise.withResolvers<void>()
+  vi.mocked(repository.removeMediaReferences).mockReturnValueOnce(references.promise)
+  const removing = result.removeMedia('photo')
+  await waitFor(() => expect(repository.removeMediaReferences).toHaveBeenCalledWith('photo'))
+  expect(media.remove).not.toHaveBeenCalled()
+  references.resolve()
+  await removing
+  expect(media.remove).toHaveBeenCalledWith('photo')
+  expect(result.error()).toBeNull()
+  cleanup()
+})
+
+it('should retain stored media when reference cleanup fails and permit retry', async () => {
+  const {result, cleanup} = renderHook(useWallpaper)
+  await waitFor(() => expect(result.selectedId()).toBe('first'))
+  vi.mocked(repository.removeMediaReferences).mockRejectedValueOnce(new Error('storage'))
+  await result.removeMedia('photo')
+  expect(media.remove).not.toHaveBeenCalled()
+  expect(result.error()).toBe('사진·동영상을 삭제하지 못했어요.')
+  await result.removeMedia('photo')
+  expect(media.remove).toHaveBeenCalledWith('photo')
+  expect(result.error()).toBeNull()
   cleanup()
 })

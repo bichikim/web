@@ -103,13 +103,6 @@
       "file": "images/backgrounds/street-front.webp",
       "size": 396028,
       "kind": "photo"
-    },
-    {
-      "id": "builtin:wallpaper:window",
-      "name": "창가",
-      "file": "wallpapers/window/loop.mp4",
-      "size": 229362,
-      "kind": "video"
     }
   ]
 }

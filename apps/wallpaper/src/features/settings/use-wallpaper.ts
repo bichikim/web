@@ -34,6 +34,7 @@ export const useWallpaper = () => {
   })
   const [collection, setCollection] = createStore<MediaCollection>({items: []})
   const [puppets, setPuppets] = createSignal<readonly PuppetAsset[]>([])
+  const [hiddenCount, setHiddenCount] = createSignal(0)
   const [error, setError] = createSignal<string | null>(null)
   const [imports, setImports] = createSignal(0)
   const busy = createMemo(() => imports() > 0)
@@ -56,6 +57,7 @@ export const useWallpaper = () => {
     ])
     if (!disposed && request === revision) {
       setCollection('items', reconcile(album.items, {key: 'id'}))
+      setHiddenCount(album.hiddenCount)
       setPuppets(assets)
     }
   }
@@ -142,11 +144,18 @@ export const useWallpaper = () => {
     current,
     dismissError: () => setError(null),
     error,
+    hasHiddenMedia: () => hiddenCount() > 0,
     items: () => collection.items,
     loadMedia: media.load,
     loadPuppet: settings.loadPuppet,
     monitors,
     puppets,
+    removeMedia: (id: string) =>
+      enqueue(async () => {
+        await settings.removeMediaReferences(id)
+        await media.remove(id)
+      }, '사진·동영상을 삭제하지 못했어요.'),
+    restoreBuiltinMedia: () => enqueue(media.restoreBuiltins, '기본 배경을 복원하지 못했어요.'),
     selectedId,
     selectMonitor: setSelectedId,
     setContent: (content: WallpaperContent) => {
