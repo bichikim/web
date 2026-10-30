@@ -98,3 +98,20 @@ it('should isolate widget events, reject malformed levels and stop browser deliv
   dispatch({level: 0.4, source: 'voice', widgetId: 'one'})
   expect(receive).toHaveBeenCalledOnce()
 })
+
+it('should deliver acoustic weights and reject malformed, unknown or excessive contributions', async () => {
+  vi.mocked(isTauri).mockReturnValue(false)
+  const receive = vi.fn()
+  const stop = await subscribeLipSync('one', receive)
+  const frame = {level: 0.8, shape: 'a', source: 'voice', widgetId: 'one'}
+  const dispatch = (weights: unknown) =>
+    globalThis.dispatchEvent(new CustomEvent('poffo-lipsync', {detail: {...frame, weights}}))
+  for (const weights of [{a: NaN}, {a: -0.1}, {a: 0.8, i: 0.8}, {surprise: 1}, [1], null]) {
+    dispatch(weights)
+  }
+  expect(receive).not.toHaveBeenCalled()
+  const weights = {a: 0.6, i: 0.4}
+  createLipSyncPublisher('one')('voice', 0.8, 'a', weights)
+  expect(receive).toHaveBeenCalledExactlyOnceWith({...frame, weights})
+  stop()
+})

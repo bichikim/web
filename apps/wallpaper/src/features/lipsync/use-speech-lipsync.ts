@@ -1,3 +1,4 @@
+import type {LipSyncWeights} from './types'
 import type {LipSyncShape} from '@winter-love/wallpaper/settings/lipsync'
 import {speechShapes} from './speech-shapes'
 import {type Accessor, createEffect, createMemo, onCleanup} from 'solid-js'
@@ -89,9 +90,15 @@ export const useSpeechLipSync = (props: UseSpeechLipSyncProps) => {
     }
   })
   return {
-    audioShape: (shape: LipSyncShape | null, level: number) => {
+    audioShape: (shape: LipSyncShape | null, level: number, weights?: LipSyncWeights) => {
       if (mode() === 'voice') {
-        publisher()?.('voice', message() === null ? 0 : level, message() === null ? null : shape)
+        const selected = message()
+        publisher()?.(
+          'voice',
+          selected === null ? 0 : level,
+          selected === null ? null : shape,
+          selected === null ? undefined : weights,
+        )
       }
     },
   }

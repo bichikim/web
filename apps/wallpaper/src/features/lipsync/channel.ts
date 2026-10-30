@@ -1,3 +1,4 @@
+import type {LipSyncWeights} from './types'
 import {isTauri} from '@tauri-apps/api/core'
 import {emitTo, listen} from '@tauri-apps/api/event'
 import {
@@ -10,9 +11,25 @@ export interface LipSyncFrame {
   readonly widgetId: string
   readonly source: Exclude<LipSyncSource, 'off'>
   readonly level: number
+  readonly weights?: LipSyncWeights
   readonly shape?: LipSyncShape | null
 }
 const EVENT = 'poffo-lipsync'
+const WEIGHT_TOLERANCE = 0.000001
+const isWeights = (value: unknown): value is LipSyncWeights =>
+  value !== null &&
+  typeof value === 'object' &&
+  !Array.isArray(value) &&
+  Object.entries(value).every(
+    ([key, weight]) =>
+      LIP_SYNC_SHAPES.some((shape) => shape === key) &&
+      typeof weight === 'number' &&
+      Number.isFinite(weight) &&
+      weight >= 0 &&
+      weight <= 1,
+  ) &&
+  Object.values(value).reduce((sum: number, weight: number) => sum + weight, 0) <=
+    1 + WEIGHT_TOLERANCE
 const isFrame = (value: unknown): value is LipSyncFrame =>
   value !== null &&
   typeof value === 'object' &&
@@ -25,6 +42,7 @@ const isFrame = (value: unknown): value is LipSyncFrame =>
   Number.isFinite(value.level) &&
   value.level >= 0 &&
   value.level <= 1 &&
+  (!('weights' in value) || isWeights(value.weights)) &&
   (!('shape' in value) ||
     value.shape === null ||
     LIP_SYNC_SHAPES.some((shape) => shape === value.shape))
@@ -67,8 +85,14 @@ export const createLipSyncPublisher = (widgetId: string) => {
       sending = false
     }
   }
-  return (source: LipSyncFrame['source'], level: number, shape?: LipSyncShape | null) => {
+  return (
+    source: LipSyncFrame['source'],
+    level: number,
+    shape?: LipSyncShape | null,
+    weights?: LipSyncWeights,
+  ) => {
     pending = {
+      ...(weights === undefined ? {} : {weights}),
       level: Number.isFinite(level) ? Math.max(0, Math.min(1, level)) : 0,
       shape: shape ?? null,
       source,

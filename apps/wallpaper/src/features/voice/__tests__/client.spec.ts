@@ -73,20 +73,25 @@ it('should retain local models only for narration and keep previews on their own
   narration.dispose()
 })
 
-it('should buffer the complete utterance and retain its text only when vowel alignment is requested', async () => {
-  const audio = {sampleRate: 100, samples: new Float32Array(100)}
-  chatgpt.generate.mockResolvedValueOnce(audio)
-  const client = createVoiceClient({alignSpeech: () => true})
+it('should preserve audio streaming while acoustic lip sync is enabled', async () => {
+  const audio = {sampleRate: 16000, samples: new Float32Array(640)}
+  const pending = Promise.withResolvers<typeof audio>()
+  chatgpt.generate.mockImplementationOnce((_text, _voice, _signal, observer) => {
+    observer.audio?.(audio)
+    return pending.promise
+  })
+  const client = createVoiceClient({analyzeSpeech: () => true})
   const status = vi.fn()
   const stream = vi.fn()
-  const result = await client.prepare(
+  const preparing = client.prepare(
     '아이우에오',
     {...DEFAULT_POFFO_VOICE, provider: 'chatgpt'},
     new AbortController().signal,
     {audio: stream, status},
   )
-  expect(chatgpt.generate.mock.lastCall?.[3]).toEqual({status})
-  expect(result).toEqual({...audio, text: '아이우에오'})
-  expect(stream).not.toHaveBeenCalled()
+  expect(stream).toHaveBeenCalledExactlyOnceWith(audio)
+  expect(chatgpt.generate.mock.lastCall?.[3]).toEqual({audio: stream, status})
+  pending.resolve(audio)
+  expect(await preparing).toBe(audio)
   client.dispose()
 })

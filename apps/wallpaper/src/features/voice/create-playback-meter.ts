@@ -1,22 +1,25 @@
-import type {LipSyncShape} from '@winter-love/wallpaper/settings/lipsync'
-import {createSpeechCues, type SpeechCue} from '../lipsync/create-speech-cues'
+import {LIP_SYNC_SHAPES, type LipSyncShape} from '@winter-love/wallpaper/settings/lipsync'
+import type {LipSyncOutput, LipSyncWeights} from '../lipsync/types'
+import {analyzeSpeechFrame} from './analyze-speech-frame'
 import type {VoiceAudio} from './synthesis'
 
 interface PlaybackClip {
   readonly audio: VoiceAudio
   readonly start: number
   readonly speed: number
-  readonly cues: readonly SpeechCue[]
 }
 interface PlaybackMeterOptions {
+  readonly enabled?: () => boolean
   readonly clock: () => number
   readonly onLevel: (level: number) => void
-  readonly onShape?: (shape: LipSyncShape | null, level: number) => void
+  readonly onShape?: LipSyncOutput
 }
 const WINDOW_SECONDS = 0.04
 const AMPLITUDE_GAIN = 6
 const OPEN_SECONDS = 0.035
 const CLOSE_SECONDS = 0.09
+const ANALYSIS_SECONDS = 0.03
+const SHAPING_SECONDS = 0.06
 const SILENT_LEVEL = 0.005
 const clipLevel = (clip: PlaybackClip, clock: number): number => {
   const offset = Math.floor((clock - clip.start) * clip.speed * clip.audio.sampleRate)
@@ -40,10 +43,14 @@ export const createPlaybackMeter = (options: PlaybackMeterOptions) => {
   let frame = 0
   let previous = options.clock()
   let level = 0
+  let shown: LipSyncWeights = {}
+  let analysis: {clip: PlaybackClip; index: number; weights: LipSyncWeights} | null = null
   const reset = () => {
     cancelAnimationFrame(frame)
     frame = 0
     level = 0
+    shown = {}
+    analysis = null
     options.onLevel(0)
     options.onShape?.(null, 0)
   }
@@ -61,8 +68,33 @@ export const createPlaybackMeter = (options: PlaybackMeterOptions) => {
       return elapsed >= 0 && elapsed < clip.audio.samples.length / clip.audio.sampleRate
     })
     const elapsed = active === undefined ? 0 : (clock - active.start) * active.speed
-    const shape = active?.cues.find((cue) => elapsed < cue.end)?.shape ?? null
-    options.onShape?.(shape, shape === null || level < SILENT_LEVEL ? 0 : level)
+    if (options.onShape !== undefined && active !== undefined && (options.enabled?.() ?? true)) {
+      const index = Math.floor(elapsed / ANALYSIS_SECONDS)
+      if (analysis?.clip !== active || analysis.index !== index) {
+        analysis = {clip: active, index, weights: analyzeSpeechFrame(active.audio, elapsed)}
+      }
+      const smoothing = 1 - Math.exp(-seconds / SHAPING_SECONDS)
+      const {weights} = analysis
+      shown = Object.fromEntries(
+        LIP_SYNC_SHAPES.map((shape) => [
+          shape,
+          (shown[shape] ?? 0) + ((weights[shape] ?? 0) - (shown[shape] ?? 0)) * smoothing,
+        ]),
+      )
+      const strongest = LIP_SYNC_SHAPES.reduce<LipSyncShape>(
+        (best, candidate) => ((shown[candidate] ?? 0) > (shown[best] ?? 0) ? candidate : best),
+        'a',
+      )
+      options.onShape(
+        (shown[strongest] ?? 0) > 0 ? strongest : null,
+        level < SILENT_LEVEL ? 0 : level,
+        shown,
+      )
+    } else {
+      shown = {}
+      analysis = null
+      options.onShape?.(null, 0)
+    }
     if (clips.size > 0) {
       frame = requestAnimationFrame(step)
     }
@@ -73,8 +105,7 @@ export const createPlaybackMeter = (options: PlaybackMeterOptions) => {
       reset()
     },
     track: (audio: VoiceAudio, start: number, speed: number) => {
-      const cues = createSpeechCues(audio.text ?? '', audio.samples.length / audio.sampleRate)
-      const clip = {audio, cues, speed, start}
+      const clip = {audio, speed, start}
       clips.add(clip)
       if (frame === 0) {
         previous = options.clock()

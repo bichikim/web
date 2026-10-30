@@ -6,7 +6,7 @@ export interface MouthPose {
   readonly open: number
 }
 
-/** Ash's authored Cubism mouth coordinates, used by the landing page and desktop player. */
+/** Preset coordinates for Ash's mouth opening and deformation parameters. */
 export const VISEME_MOUTH_POSES: Readonly<Record<Viseme, MouthPose>> = {
   closed: {form: 0, open: 0},
   narrow: {form: 0, open: 0.25},

@@ -1,3 +1,4 @@
+import {frameValues} from './frame-values'
 import {type Accessor, createEffect, createMemo, onCleanup} from 'solid-js'
 import type {Player} from '@winter-love/puppet/player'
 import {LIP_SYNC_SHAPES, type PoffoLipSync} from '@winter-love/wallpaper/settings/lipsync'
@@ -59,25 +60,13 @@ export const useLipSync = (props: UseLipSyncProps) => {
       if (disposed) {
         return
       }
-      const input = pending
-      const shape = input?.shape ?? null
-      const values = {
-        ...resting,
-        ...(paired !== undefined && shape !== null && automatic.includes(shape)
-          ? mouthPairValues(paired, shape, input?.level ?? 0, {
-              ...options.shapes?.[shape],
-              gain: options.gain,
-            })
-          : {}),
-      }
-      for (const {binding, parameter, shape} of connections) {
-        if (input?.shape === shape) {
-          values[parameter.id] = lipSyncValue(parameter, input.level, {
-            ...binding,
-            gain: options.gain,
-          })
-        }
-      }
+      const values = frameValues(pending, {
+        automatic,
+        connections,
+        pair: paired,
+        resting,
+        settings: options,
+      })
       if (Object.entries(values).some(([key, value]) => applied[key] !== value)) {
         applied = values
         player.patchParameterValues(values)

@@ -174,3 +174,61 @@ it('should connect Ash open and form parameters automatically with the landing v
   hook.cleanup()
   expect(player.clearParameterValues).toHaveBeenCalledWith(['ParamMouthOpenY', 'ParamMouthForm'])
 })
+
+it('should blend acoustic poses while preserving manual connections and explicit disabled shapes', async () => {
+  let receive: (frame: LipSyncFrame) => void = () => undefined
+  vi.mocked(subscribeLipSync).mockImplementation(async (_, callback) => {
+    receive = callback
+    return vi.fn(() => undefined)
+  })
+  const player = {clearParameterValues: vi.fn(), patchParameterValues: vi.fn()}
+  const [options, setOptions] = createSignal<PoffoLipSync>({source: 'voice'})
+  const hook = renderHook(() =>
+    useLipSync({
+      options,
+      parameters: () => [
+        {defaultValue: 0, id: 'ParamMouthOpenY', maximum: 1, minimum: 0},
+        {defaultValue: 0, id: 'ParamMouthForm', maximum: 1, minimum: -1},
+        {defaultValue: 0, id: 'manual-a', maximum: 1, minimum: 0},
+      ],
+      player: () => player as unknown as Player,
+      widgetId: () => 'blend',
+    }),
+  )
+  await Promise.resolve()
+  const frame: LipSyncFrame = {
+    level: 1,
+    shape: 'a',
+    source: 'voice',
+    weights: {a: 0.5, o: 0.5},
+    widgetId: 'blend',
+  }
+  receive(frame)
+  draw()
+  expect(player.patchParameterValues).toHaveBeenLastCalledWith({
+    ParamMouthForm: -0.4,
+    ParamMouthOpenY: 0.775,
+  })
+  setOptions({shapes: {a: {parameterId: 'manual-a'}, o: {parameterId: null}}, source: 'voice'})
+  await Promise.resolve()
+  receive(frame)
+  draw()
+  expect(player.patchParameterValues).toHaveBeenLastCalledWith({
+    'manual-a': 0.5,
+    ParamMouthForm: 0,
+    ParamMouthOpenY: 0,
+  })
+  setOptions({
+    shapes: {e: {parameterId: 'manual-a'}, i: {parameterId: 'manual-a'}},
+    source: 'voice',
+  })
+  await Promise.resolve()
+  receive({...frame, shape: 'i', weights: {e: 0.5, i: 0.5}})
+  draw()
+  expect(player.patchParameterValues).toHaveBeenLastCalledWith({
+    ParamMouthForm: 0,
+    'manual-a': 1,
+    ParamMouthOpenY: 0,
+  })
+  hook.cleanup()
+})

@@ -1,4 +1,4 @@
-import type {LipSyncShape} from '@winter-love/wallpaper/settings/lipsync'
+import type {LipSyncOutput} from '../lipsync/types'
 import type {VoiceAudio} from './synthesis'
 import {createPlaybackMeter} from './create-playback-meter'
 
@@ -6,7 +6,8 @@ import {createPlaybackMeter} from './create-playback-meter'
 const PERCENT = 100
 export const createAudioPlayer = (
   onLevel?: (level: number) => void,
-  onShape?: (shape: LipSyncShape | null, level: number) => void,
+  onShape?: LipSyncOutput,
+  enabled?: () => boolean,
 ) => {
   let context: AudioContext | null = null
   let nextStart = 0
@@ -17,6 +18,7 @@ export const createAudioPlayer = (
       ? null
       : createPlaybackMeter({
           clock: () => context?.currentTime ?? 0,
+          enabled,
           onLevel: (level) => onLevel?.(level),
           onShape,
         })

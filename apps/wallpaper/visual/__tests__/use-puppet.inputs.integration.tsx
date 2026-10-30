@@ -1,3 +1,5 @@
+import {createPlaybackMeter} from '../../src/features/voice/create-playback-meter'
+import {synthesizeVowel} from '../../../../packages/puppet/src/player/voice/__tests__/support/synthesize-vowel'
 import {cleanup, render} from '@solidjs/testing-library'
 import {createSignal} from 'solid-js'
 import {afterEach, expect, test, vi} from 'vitest'
@@ -126,6 +128,32 @@ test('should animate the bundled Ash model using the landing open/form combinati
         player.getParameterValue('ParamMouthForm'),
       ])
       .toEqual([pose.open, pose.form])
+  }
+  publish('voice', 0.1, 'i')
+  await expect.poll(() => player.getParameterValue('ParamMouthOpenY')).toBeCloseTo(0.055)
+  expect(player.getParameterValue('ParamMouthForm')).toBeLessThan(0.3)
+  let clock = 0
+  const meter = createPlaybackMeter({
+    clock: () => clock,
+    onLevel: () => undefined,
+    onShape: (shape, level, weights) => publish('voice', level, shape, weights),
+  })
+  const vowel = synthesizeVowel([480, 820], {length: 640, rate: 16000})
+  const samples = Float32Array.from({length: 16000}, (_, index) => vowel[index % vowel.length]!)
+  const stop = meter.track(
+    {sampleRate: 16000, samples, text: '이 글은 입모양 판정에 쓰지 않음'},
+    0,
+    1,
+  )
+  try {
+    clock = 0.1
+    await expect.poll(() => player.getParameterValue('ParamMouthForm')).toBeLessThan(-0.3)
+    expect(player.getParameterValue('ParamMouthOpenY')).toBeGreaterThan(0.2)
+    clock = 1.1
+    await expect.poll(() => player.getParameterValue('ParamMouthOpenY')).toBe(0)
+  } finally {
+    stop()
+    meter.dispose()
   }
   publish('voice', 0)
   await expect.poll(() => player.getParameterValue('ParamMouthOpenY')).toBe(0)

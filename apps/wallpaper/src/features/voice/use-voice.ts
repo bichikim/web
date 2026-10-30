@@ -1,4 +1,4 @@
-import type {LipSyncShape} from '@winter-love/wallpaper/settings/lipsync'
+import type {LipSyncOutput} from '../lipsync/types'
 import {type Accessor, createEffect, createMemo, createSignal, onCleanup, untrack} from 'solid-js'
 import type {PoffoSpeech} from '@winter-love/wallpaper/settings/library-model'
 import {DEFAULT_POFFO_VOICE, poffoVoiceSchema} from '@winter-love/wallpaper/settings/voice'
@@ -9,7 +9,7 @@ import type {VoiceMessage} from './text'
 interface UseVoiceProps {
   readonly speech: Accessor<PoffoSpeech>
   readonly message: Accessor<VoiceMessage | null>
-  readonly onShape?: (shape: LipSyncShape | null, level: number) => void
+  readonly onShape?: LipSyncOutput
   readonly onLevel?: (level: number) => void
 }
 
@@ -34,9 +34,9 @@ export const useVoice = (props: UseVoiceProps) => {
       }
     },
     port: createVoiceClient({
-      alignSpeech: () => props.speech().lipsync?.source === 'voice',
+      analyzeSpeech: () => props.speech().lipsync?.source === 'voice',
       onLevel: (level) => props.onLevel?.(level),
-      onShape: (shape, level) => props.onShape?.(shape, level),
+      onShape: (shape, level, weights) => props.onShape?.(shape, level, weights),
       retainLocalModel: true,
     }),
   })

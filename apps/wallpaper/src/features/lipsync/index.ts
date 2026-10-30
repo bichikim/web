@@ -1,5 +1,6 @@
 export * from './channel'
-export * from './create-speech-cues'
+export * from './frame-values'
 export * from './parameters'
+export * from './types'
 export * from './use-lipsync'
 export * from './use-speech-lipsync'
