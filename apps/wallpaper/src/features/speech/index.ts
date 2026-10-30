@@ -1,4 +1,3 @@
-export * from './bubble-path'
 export * from './constants'
 export * from './read-speech-mask'
 export * from './stack-motion'

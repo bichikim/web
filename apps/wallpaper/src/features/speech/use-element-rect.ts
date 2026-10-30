@@ -4,7 +4,6 @@ import type {SpeechRect} from './types'
 interface UseElementRectProps {
   readonly element: Accessor<HTMLElement | null>
   readonly layout?: Accessor<unknown>
-  readonly resizeImmediately?: Accessor<boolean>
   readonly moving?: Accessor<boolean>
 }
 /** Observes the viewport bounds of an element as its size or layout changes. */
@@ -44,13 +43,7 @@ export const useElementRect = (props: UseElementRectProps): Accessor<SpeechRect 
     const observer =
       typeof globalThis.ResizeObserver === 'undefined'
         ? null
-        : new globalThis.ResizeObserver(() => {
-            if (props.resizeImmediately?.()) {
-              measure()
-            } else {
-              schedule()
-            }
-          })
+        : new globalThis.ResizeObserver(schedule)
     observer?.observe(current)
     if (moving) {
       schedule()

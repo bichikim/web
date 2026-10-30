@@ -42,16 +42,6 @@ test('should retain headers and controls while transparent margins and rounded c
   await expect
     .poll(() => screen.getByRole('list').getBoundingClientRect().height)
     .toBeGreaterThan(400)
-  await expect
-    .poll(() =>
-      Array.from(root.querySelectorAll('svg[data-edge], aside > div > svg')).every(
-        (svg) =>
-          Math.abs(
-            Number(svg.getAttribute('viewBox')?.split(' ')[3]) - svg.getBoundingClientRect().height,
-          ) < 1,
-      ),
-    )
-    .toBe(true)
   const mask = readSpeechMask({canvas, element: root})
   expect(hit(mask, 12, 100)).toBe(false)
   for (const card of screen.getAllByRole('listitem')) {
@@ -113,16 +103,6 @@ test('should match browser hit testing for clipped bodies and update from actual
   await expect
     .poll(() => screen.getByRole('list').getBoundingClientRect().height)
     .toBeGreaterThan(400)
-  await expect
-    .poll(() =>
-      Array.from(root.querySelectorAll('aside > div > svg')).every(
-        (svg) =>
-          Math.abs(
-            Number(svg.getAttribute('viewBox')?.split(' ')[3]) - svg.getBoundingClientRect().height,
-          ) < 1,
-      ),
-    )
-    .toBe(true)
   check()
   const outgoing = screen
     .getAllByRole('listitem')
