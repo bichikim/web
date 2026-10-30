@@ -10,6 +10,7 @@ export default defineConfig({
   use: {
     baseURL: 'http://127.0.0.1:4185',
     browserName: 'chromium',
+    channel: 'chromium',
     headless: true,
     screenshot: 'only-on-failure',
     trace: 'retain-on-failure',

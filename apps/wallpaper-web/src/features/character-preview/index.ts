@@ -4,9 +4,13 @@ import type {MouthPose} from '../character-speech/types'
 import {connectCharacterBlink} from './blink'
 import {getCharacterLook} from './get-character-look'
 import geometry from '../../data/character-look.json'
+import {createCanvasHitTest} from './create-canvas-hit-test'
+import type {CharacterHitTest, CharacterPoint} from './types'
 
 export * from './blink'
+export * from './create-canvas-hit-test'
 export * from './get-character-look'
+export * from './types'
 
 interface CharacterPreviewOptions {
   readonly canvas: Accessor<HTMLCanvasElement | null>
@@ -24,6 +28,7 @@ export const useCharacterPreview = (options: CharacterPreviewOptions) => {
   const HEAD_X_RANGE = 20
   const HEAD_Y_RANGE = 15
   const [player, setPlayer] = createSignal<Player | null>(null)
+  let hitTest: CharacterHitTest | null = null
   createEffect(() => {
     const canvas = options.canvas()
     if (canvas === null) {
@@ -65,6 +70,7 @@ export const useCharacterPreview = (options: CharacterPreviewOptions) => {
         return
       }
       active = created
+      hitTest = createCanvasHitTest({canvas, redraw: () => created.redraw()})
       created.setEyeBlink(false)
       created.setBreath(true)
       created.setPhysicsPreview(true)
@@ -78,6 +84,7 @@ export const useCharacterPreview = (options: CharacterPreviewOptions) => {
     })
     onCleanup(() => {
       cancellation.abort()
+      hitTest = null
       setPlayer(null)
       active?.destroy()
     })
@@ -144,6 +151,7 @@ export const useCharacterPreview = (options: CharacterPreviewOptions) => {
     })
   }
   return {
+    hitTest: (point: CharacterPoint) => hitTest?.(point) ?? false,
     lookAt,
     resize: () => player()?.resize(),
   }

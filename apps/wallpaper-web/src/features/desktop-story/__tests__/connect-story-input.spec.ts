@@ -99,3 +99,44 @@ test('should retain nested control scrolling while accepting wheel input over th
   wheel(120, canvas)
   expect(input.request).toHaveBeenLastCalledWith(1)
 })
+
+const touch = (target: Element, index: number, y: number) => {
+  const event = new MouseEvent(Observer.eventTypes[index]!, {
+    bubbles: true,
+    cancelable: true,
+    clientX: 40,
+    clientY: y,
+  })
+  Object.defineProperties(event, {
+    changedTouches: {value: [{clientX: 40, clientY: y}]},
+    pointerType: {value: 'touch'},
+  })
+  target.dispatchEvent(event)
+  return event
+}
+
+test.each([
+  '<button popovertarget="settings"><svg></svg></button>',
+  '<a href="/download"><span>Download</span></a>',
+  '<div role="button" tabindex="0"><span>Play</span></div>',
+])('should leave touch gestures on nested controls to the browser: %s', async (markup) => {
+  const input = await setup()
+  input.stage.innerHTML = markup
+  const target = input.stage.firstElementChild!.firstElementChild!
+  touch(target, 0, 100)
+  expect(Observer.getAll()[0]!.isPressed).toBe(false)
+  const move = touch(target, 1, 50)
+  touch(target, 3, 50)
+  expect(move.defaultPrevented).toBe(false)
+  expect(input.request).not.toHaveBeenCalled()
+})
+
+test('should still accept a touch swipe on the stage background', async () => {
+  const input = await setup()
+  touch(input.stage, 0, 100)
+  expect(Observer.getAll()[0]!.isPressed).toBe(true)
+  const move = touch(input.stage, 1, 50)
+  touch(input.stage, 3, 50)
+  expect(move.defaultPrevented).toBe(true)
+  expect(input.request).toHaveBeenCalledExactlyOnceWith(0)
+})

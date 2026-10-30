@@ -1,17 +1,10 @@
 import {clientOnly} from '@solidjs/start'
-import {
-  createEffect,
-  createMemo,
-  createSignal,
-  createUniqueId,
-  onCleanup,
-  onMount,
-  Show,
-} from 'solid-js'
+import {createMemo, createSignal, createUniqueId, onCleanup, onMount, Show} from 'solid-js'
 import {Portal} from 'solid-js/web'
-import type {useWidgetPreview} from '../features/widget-preview'
+import {useWidgetInteraction, type useWidgetPreview} from '../features/widget-preview'
 import type {MouthPose} from '../features/character-speech/types'
 import type {StoryCharacter} from '../features/desktop-story/frame'
+import type {CharacterHitTest} from '../features/character-preview/types'
 
 const SPuppetCharacter = clientOnly(() => import('./SPuppetCharacter'), {lazy: true})
 interface SCharacterWidgetProps {
@@ -23,12 +16,9 @@ interface SCharacterWidgetProps {
 }
 
 export const SCharacterWidget = (props: SCharacterWidgetProps) => {
-  const OFFSET_X = 12
-  const OFFSET_Y = 20
   const tooltipId = createUniqueId()
   const [button, setButton] = createSignal<HTMLButtonElement | null>(null)
-  const [pointer, setPointer] = createSignal<{readonly x: number; readonly y: number} | null>(null)
-  let capturedPointer: number | null = null
+  const [hitTest, setHitTest] = createSignal<CharacterHitTest | null>(null)
   const locked = createMemo(() => props.presentation !== undefined)
   const expressionId = createMemo(() =>
     props.presentation ? props.presentation.expressionId : props.preview.expressionId(),
@@ -40,50 +30,14 @@ export const SCharacterWidget = (props: SCharacterWidgetProps) => {
       : props.preview.playing() || props.speaking === true,
   )
   const tracking = createMemo(() => locked() || props.preview.tracking())
-  const tooltip = () => (locked() || props.preview.dragging() ? null : pointer())
-  const handlePress = (event: PointerEvent & {currentTarget: HTMLButtonElement}) => {
-    if (!locked() && event.button === 0) {
-      event.preventDefault()
-      event.currentTarget.focus({preventScroll: true})
-      capturedPointer = event.pointerId
-      props.preview.press(event)
-    }
+  const interaction = useWidgetInteraction({button, hitTest, locked, preview: () => props.preview})
+  const handleReady = (test: CharacterHitTest) => {
+    setHitTest(() => test)
+    props.preview.finish()
   }
-  const handleHover = (event: PointerEvent) => {
-    if (event.pointerType !== 'touch') {
-      setPointer({x: event.clientX + OFFSET_X, y: event.clientY + OFFSET_Y})
-    }
-  }
-  const handleMove = (event: PointerEvent & {currentTarget: HTMLButtonElement}) => {
-    if (locked()) {
-      return
-    }
-    props.preview.move(event)
-    handleHover(event)
-  }
-  createEffect(() => {
-    if (!locked()) {
-      return
-    }
-    const element = button()
-    if (capturedPointer !== null && element?.hasPointerCapture(capturedPointer)) {
-      element.releasePointerCapture(capturedPointer)
-    }
-    capturedPointer = null
-    props.preview.release()
-    setPointer(null)
-  })
-  const handleFocus = (event: FocusEvent & {currentTarget: HTMLButtonElement}) => {
-    if (event.currentTarget.matches(':focus-visible')) {
-      const bounds = event.currentTarget.getBoundingClientRect()
-      setPointer({x: bounds.left + bounds.width / 2, y: bounds.top + OFFSET_Y})
-    }
-  }
-  const handleKeyDown = (event: KeyboardEvent & {currentTarget: HTMLButtonElement}) => {
-    props.preview.keyboard(event)
-    if (event.key === 'Escape') {
-      setPointer(null)
-    }
+  const handleError = () => {
+    setHitTest(null)
+    props.preview.fail()
   }
   onMount(() => {
     const element = button()
@@ -107,25 +61,27 @@ export const SCharacterWidget = (props: SCharacterWidgetProps) => {
       aria-label="흰 고양이 위젯. 드래그해서 이동"
       disabled={locked()}
       aria-hidden={locked()}
-      aria-describedby={tooltip() === null ? undefined : tooltipId}
-      onPointerEnter={handleHover}
-      onPointerLeave={() => setPointer(null)}
-      onPointerDown={handlePress}
-      onPointerMove={handleMove}
+      aria-describedby={interaction.tooltip() === null ? undefined : tooltipId}
+      onPointerEnter={interaction.handleHover}
+      onPointerLeave={interaction.handleLeave}
+      onPointerDown={interaction.handlePress}
+      onPointerMove={interaction.handleMove}
       onPointerUp={() => props.preview.release()}
       onPointerCancel={() => props.preview.release()}
       onLostPointerCapture={() => props.preview.release()}
-      onKeyDown={handleKeyDown}
-      onFocus={handleFocus}
-      onBlur={() => setPointer(null)}
+      onKeyDown={interaction.handleKeyDown}
+      onFocus={interaction.handleFocus}
+      onBlur={interaction.handleLeave}
       class="absolute left-1/2 top-1/2 aspect-[4/5]
         w-[calc(min(72vw,32rem,57.6dvh)*var(--widget-scale))] select-none
       border-0 bg-transparent p-0 outline-offset-[-10px]
       [transform:translate(calc(-50%_+_var(--widget-x)),calc(-50%_+_var(--widget-y)))]"
       classList={{
-        'cursor-grab touch-none': !locked() && !props.preview.dragging(),
-        'cursor-grabbing touch-none': !locked() && props.preview.dragging(),
+        'cursor-default!': !interaction.hovered() && !props.preview.dragging(),
+        'cursor-grab!': !locked() && interaction.hovered() && !props.preview.dragging(),
+        'cursor-grabbing!': !locked() && props.preview.dragging(),
         'pointer-events-none touch-pan-y': locked(),
+        'touch-none': !locked(),
       }}
       style={{
         '--widget-scale': props.presentation?.scale ?? props.preview.scale(),
@@ -153,12 +109,12 @@ export const SCharacterWidget = (props: SCharacterWidgetProps) => {
             playing={playing()}
             mouth={props.mouth}
             tracking={tracking()}
-            onReady={props.preview.finish}
-            onError={props.preview.fail}
+            onReady={handleReady}
+            onError={handleError}
           />
         </div>
       </Show>
-      <SDragHint point={tooltip()} id={tooltipId} />
+      <SDragHint point={interaction.tooltip()} id={tooltipId} />
     </button>
   )
 }

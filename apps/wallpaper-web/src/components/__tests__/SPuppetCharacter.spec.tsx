@@ -15,7 +15,7 @@ const move = (x: number, y: number) =>
   fireEvent(document, new MouseEvent('pointermove', {bubbles: true, clientX: x, clientY: y}))
 
 beforeEach(() => {
-  vi.mocked(useCharacterPreview).mockReturnValue({lookAt, resize})
+  vi.mocked(useCharacterPreview).mockReturnValue({hitTest: vi.fn(), lookAt, resize})
   vi.stubGlobal(
     'ResizeObserver',
     vi.fn().mockImplementation(function observer() {
