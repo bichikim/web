@@ -76,10 +76,11 @@ runs:
         DEPLOYMENT_URL: ${{ steps.deploy.outputs.url }}
         VERCEL_TOKEN: ${{ inputs.token }}
       run: |
+        # Authenticate through VERCEL_TOKEN; curl forwards --token to native curl.
         for path in / /models/white-cat/model.poffo /models/white-cat/poster.webp \
           /models/profile/model.poffo /models/street/model.poffo /music/library.json; do
           pnpm dlx vercel@${VERCEL_CLI_VERSION} curl "${path}" \
-            --deployment="${DEPLOYMENT_URL}" --token="${VERCEL_TOKEN}" -- \
+            --deployment="${DEPLOYMENT_URL}" -- \
             --head --fail --silent --show-error --max-time 30 --output /dev/null
         done
     - name: Promote verified production deployment
