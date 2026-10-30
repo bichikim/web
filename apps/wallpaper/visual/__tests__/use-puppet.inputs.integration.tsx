@@ -6,14 +6,18 @@ import type {PoffoLipSync} from '@winter-love/wallpaper/settings/lipsync'
 import {usePuppet} from '../../src/features/background/use-puppet'
 import {createLipSyncPublisher} from '../../src/features/lipsync'
 import 'virtual:uno.css'
+import ashUrl from '../../../wallpaper-web/public/models/white-cat/model.poffo?url'
 
-vi.mock('@winter-love/puppet/player', {spy: true})
+vi.mock('@winter-love/puppet/player', async (importOriginal) => {
+  const player = await importOriginal<typeof playerModule>()
+  return {...player, createPlayer: vi.fn(player.createPlayer)}
+})
 afterEach(() => {
   cleanup()
   vi.clearAllMocks()
 })
 
-test('should retain lip opening, gaze and state inputs together without replacing the animated player', async () => {
+test('should retain a vowel pose, gaze and state inputs together without replacing the animated player', async () => {
   const document = playerModule.createDemoDocument()
   const source = JSON.stringify({
     ...document,
@@ -47,9 +51,9 @@ test('should retain lip opening, gaze and state inputs together without replacin
   const player = await vi.mocked(playerModule.createPlayer).mock.results[0]!.value
   globalThis.dispatchEvent(new CustomEvent('poffo-agent-state', {detail: {working: true}}))
   await expect.poll(() => player.getParameterValue('waiting')).toBe(1)
-  setLipsync({parameterId: 'angle-y', source: 'voice'})
+  setLipsync({shapes: {a: {parameterId: 'angle-y'}}, source: 'voice'})
   const publish = createLipSyncPublisher('combined-widget')
-  publish('voice', 0.8)
+  publish('voice', 0.8, 'a')
   await expect.poll(() => player.getParameterValue('angle-y')).toBeCloseTo(24)
   expect(player.getParameterValue('waiting')).toBe(1)
   globalThis.dispatchEvent(new PointerEvent('pointermove', {clientX: 800, clientY: 100}))
@@ -64,3 +68,53 @@ test('should retain lip opening, gaze and state inputs together without replacin
   expect(playerModule.createPlayer).toHaveBeenCalledOnce()
   expect(errors).not.toHaveBeenCalled()
 })
+
+test('should animate the bundled Ash model using the landing open/form combinations', async () => {
+  const blob = await fetch(ashUrl).then((response) => response.blob())
+  const rendered = Promise.withResolvers<void>()
+  const errors = vi.fn((cause: unknown) => rendered.reject(cause))
+  render(() => {
+    const [canvas, setCanvas] = createSignal<HTMLCanvasElement | null>(null)
+    usePuppet({
+      assetId: () => 'builtin:ash',
+      canvas,
+      lipsync: () => ({source: 'voice'}),
+      lipsyncId: () => 'ash-widget',
+      load: async () => blob,
+      onAfterRender: () => rendered.resolve(),
+      onError: errors,
+      tracking: () => 'off',
+    })
+    return (
+      <div class="h-80 w-60">
+        <canvas ref={setCanvas} class="h-full w-full" />
+      </div>
+    )
+  })
+  await rendered.promise
+  expect(playerModule.createPlayer).toHaveBeenCalledOnce()
+  const player = await vi.mocked(playerModule.createPlayer).mock.results[0]!.value
+  const publish = createLipSyncPublisher('ash-widget')
+  for (const pose of [
+    {form: 0.2, open: 0.9, shape: 'a'},
+    {form: 1, open: 0.55, shape: 'i'},
+    {form: 0, open: 0.25, shape: 'u'},
+    {form: 1, open: 0.55, shape: 'e'},
+    {form: -1, open: 0.65, shape: 'o'},
+    {form: 0, open: 0, shape: 'closed'},
+  ] as const) {
+    publish('voice', 1, pose.shape)
+    // Each pose must be rendered before the next input replaces it.
+    // oxlint-disable-next-line no-await-in-loop
+    await expect
+      .poll(() => [
+        player.getParameterValue('ParamMouthOpenY'),
+        player.getParameterValue('ParamMouthForm'),
+      ])
+      .toEqual([pose.open, pose.form])
+  }
+  publish('voice', 0)
+  await expect.poll(() => player.getParameterValue('ParamMouthOpenY')).toBe(0)
+  await expect.poll(() => player.getParameterValue('ParamMouthForm')).toBe(0)
+  expect(errors).not.toHaveBeenCalled()
+}, 30_000)

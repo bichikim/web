@@ -4,6 +4,7 @@ import {LIP_SYNC_SHAPES, type PoffoLipSync} from '@winter-love/wallpaper/setting
 import type {TrackingParameter} from '../tracking/types'
 import {type LipSyncFrame, subscribeLipSync} from './channel'
 import {lipSyncValue, resolveLipSyncParameter} from './parameters'
+import {mouthPairValues, resolveMouthPair} from './mouth-pair'
 
 interface UseLipSyncProps {
   readonly widgetId: Accessor<string | undefined>
@@ -29,15 +30,25 @@ export const useLipSync = (props: UseLipSyncProps) => {
       const parameter = resolveLipSyncParameter(parameters, binding.parameterId, shape)
       return parameter === undefined ? [] : [{binding, parameter, shape}]
     })
-    if (connections.length === 0) {
+    const pair = resolveMouthPair(parameters)
+    const automatic = LIP_SYNC_SHAPES.filter(
+      (shape) =>
+        options.shapes?.[shape]?.parameterId === undefined &&
+        !connections.some((connection) => connection.shape === shape),
+    )
+    const paired = pair !== undefined && automatic.length > 0 ? pair : undefined
+    if (connections.length === 0 && paired === undefined) {
       return
     }
-    const resting = Object.fromEntries(
-      connections.map(({binding, parameter}) => [
-        parameter.id,
-        lipSyncValue(parameter, 0, binding),
-      ]),
-    )
+    const resting = {
+      ...(paired === undefined ? {} : mouthPairValues(paired, null, 0, {})),
+      ...Object.fromEntries(
+        connections.map(({binding, parameter}) => [
+          parameter.id,
+          lipSyncValue(parameter, 0, binding),
+        ]),
+      ),
+    }
     let disposed = false
     let stop: (() => void) | undefined
     let request = 0
@@ -49,7 +60,16 @@ export const useLipSync = (props: UseLipSyncProps) => {
         return
       }
       const input = pending
-      const values = {...resting}
+      const shape = input?.shape ?? null
+      const values = {
+        ...resting,
+        ...(paired !== undefined && shape !== null && automatic.includes(shape)
+          ? mouthPairValues(paired, shape, input?.level ?? 0, {
+              ...options.shapes?.[shape],
+              gain: options.gain,
+            })
+          : {}),
+      }
       for (const {binding, parameter, shape} of connections) {
         if (input?.shape === shape) {
           values[parameter.id] = lipSyncValue(parameter, input.level, {

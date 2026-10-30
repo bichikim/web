@@ -1,0 +1,26 @@
+import type {Viseme} from '@winter-love/supertonic/visemes'
+import type {LipSyncShape} from '../settings/lipsync'
+
+export interface MouthPose {
+  readonly form: number
+  readonly open: number
+}
+
+/** Ash's authored Cubism mouth coordinates, used by the landing page and desktop player. */
+export const VISEME_MOUTH_POSES: Readonly<Record<Viseme, MouthPose>> = {
+  closed: {form: 0, open: 0},
+  narrow: {form: 0, open: 0.25},
+  open: {form: 0.2, open: 0.9},
+  rest: {form: 0, open: 0},
+  round: {form: -1, open: 0.65},
+  wide: {form: 1, open: 0.55},
+}
+export const LIP_SYNC_MOUTH_POSES: ReadonlyMap<LipSyncShape, MouthPose> = new Map([
+  ['a', VISEME_MOUTH_POSES.open],
+  ['i', VISEME_MOUTH_POSES.wide],
+  ['u', VISEME_MOUTH_POSES.narrow],
+  ['e', VISEME_MOUTH_POSES.wide],
+  ['o', VISEME_MOUTH_POSES.round],
+  ['closed', VISEME_MOUTH_POSES.closed],
+])
+export const MOUTH_REST_THRESHOLD = 0.14

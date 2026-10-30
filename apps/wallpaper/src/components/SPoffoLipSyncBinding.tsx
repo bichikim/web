@@ -2,6 +2,7 @@ import type {LipSyncShape} from '@winter-love/wallpaper/settings/lipsync'
 import type {PoffoTrackingBinding} from '@winter-love/wallpaper/settings/tracking'
 import type {TrackingParameter} from '../features/tracking/types'
 import {resolveLipSyncParameter} from '../features/lipsync/parameters'
+import {resolveMouthPair} from '../features/lipsync/mouth-pair'
 import {SSelect} from './SSelect'
 
 interface SPoffoLipSyncBindingProps {
@@ -15,11 +16,19 @@ interface SPoffoLipSyncBindingProps {
 const PARAMETER_PREFIX = 'id:'
 export const SPoffoLipSyncBinding = (props: SPoffoLipSyncBindingProps) => {
   const automatic = () => resolveLipSyncParameter(props.parameters, undefined, props.shape)
+  const automaticLabel = () => {
+    const parameter = automatic()
+    return (
+      parameter?.name ||
+      parameter?.id ||
+      (resolveMouthPair(props.parameters) === undefined ? '연결 없음' : '벌림 + 형태')
+    )
+  }
   const selected = () => props.value?.parameterId
   const selection = () =>
     selected() === undefined ? 'auto' : selected() === null ? 'none' : `id:${selected()}`
   const options = () => [
-    {label: `자동 · ${automatic()?.name || automatic()?.id || '연결 없음'}`, value: 'auto'},
+    {label: `자동 · ${automaticLabel()}`, value: 'auto'},
     {label: '사용 안 함', value: 'none'},
     ...props.parameters.map((parameter) => ({
       label: parameter.name || parameter.id,

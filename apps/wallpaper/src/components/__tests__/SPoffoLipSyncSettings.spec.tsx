@@ -54,3 +54,27 @@ it('should expose lip-sync input and a independent vowel connections with per-sh
     source: 'speech',
   })
 })
+
+it('should show automatic open-and-form connections for every Ash mouth pose', () => {
+  vi.mocked(useParameters).mockReturnValue({
+    error: () => null,
+    loading: () => false,
+    parameters: () => [
+      {defaultValue: 0, id: 'ParamMouthOpenY', maximum: 1, minimum: 0},
+      {defaultValue: 0, id: 'ParamMouthForm', maximum: 1, minimum: -1},
+    ],
+  })
+  render(() => (
+    <SPoffoLipSyncSettings
+      assetId="ash"
+      load={vi.fn()}
+      value={{source: 'voice'}}
+      onChange={vi.fn()}
+    />
+  ))
+  for (const shape of ['아', '이', '우', '에', '오', '닫힘']) {
+    expect(screen.getByRole('combobox', {name: `${shape} 입모양 파라미터`})).toHaveTextContent(
+      '자동 · 벌림 + 형태',
+    )
+  }
+})
