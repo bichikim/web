@@ -11,8 +11,8 @@ import {
   SupertonicEngine,
   type SupertonicSessions,
   type SupertonicVoice,
-} from './engine'
-import {type CancelledError, type SupertonicError} from './errors'
+} from '@winter-love/supertonic/engine'
+import {type CancelledError, type SupertonicError} from '@winter-love/supertonic/errors'
 import type {SupertonicVoiceSource, SupertonicWorkerInput, SupertonicWorkerOutput} from './messages'
 import {
   getVoiceStyleUrl,
@@ -25,12 +25,16 @@ import {
   SUPERTONIC_MODEL_ASSETS_URL,
   type SupertonicModel,
   type SupertonicVoiceId,
-} from './model'
-import {loadSupertonicRuntime, type SupertonicBackend, type SupertonicRuntime} from './runtime'
-import {loadSessions, releaseSessions} from './sessions'
+} from '@winter-love/supertonic/model'
+import {
+  loadSupertonicRuntime,
+  type SupertonicBackend,
+  type SupertonicRuntime,
+} from '@winter-love/supertonic/runtime'
+import {loadSessions, releaseSessions} from '@winter-love/supertonic/sessions'
 import {failureResult, type Result, successResult} from 'src/features/result'
-import {splitSpeechText} from './text-chunking'
-import {normalizeSpeechText} from './number-speech'
+import {splitSpeechText} from '@winter-love/supertonic/text-chunking'
+import {normalizeSpeechText} from '@winter-love/supertonic/number-speech/index'
 import {createSupertonicWorkerDispatch} from './worker/dispatch'
 import {createWorkerError} from './worker/create-worker-error'
 import {createSupertonicResourceLoader} from './worker/resource-loader'

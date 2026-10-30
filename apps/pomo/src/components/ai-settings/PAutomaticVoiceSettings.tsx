@@ -14,7 +14,7 @@ import {
   SUPERTONIC_VOICES,
   type SupertonicModelId,
   type SupertonicVoiceId,
-} from '../../features/supertonic/model'
+} from '@winter-love/supertonic/model'
 import * as m from '@paraglide/message'
 
 const CLASSES = {

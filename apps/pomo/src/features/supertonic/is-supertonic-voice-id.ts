@@ -1,4 +1,4 @@
-import {SUPERTONIC_VOICES, type SupertonicVoiceId} from './model'
+import {SUPERTONIC_VOICES, type SupertonicVoiceId} from '@winter-love/supertonic/model'
 
 /** Checks exact membership in the current voice catalog. */
 export const isSupertonicVoiceId = (value: unknown): value is SupertonicVoiceId =>

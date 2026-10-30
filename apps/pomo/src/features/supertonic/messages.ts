@@ -1,7 +1,7 @@
-import type {SupertonicError} from './errors'
-import type {SupertonicLanguage} from './language'
-import type {SupertonicModelId, SupertonicVoiceId} from './model'
-import type {SupertonicVoiceStyle} from './voice-style'
+import type {SupertonicError} from '@winter-love/supertonic/errors'
+import type {SupertonicLanguage} from '@winter-love/supertonic/language'
+import type {SupertonicModelId, SupertonicVoiceId} from '@winter-love/supertonic/model'
+import type {SupertonicVoiceStyle} from '@winter-love/supertonic/voice-style'
 
 export interface SupertonicProgress {
   readonly fileName: string

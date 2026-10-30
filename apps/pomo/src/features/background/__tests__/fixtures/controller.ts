@@ -1,5 +1,6 @@
 import {vi} from 'vitest'
-import {type BackgroundController, DEFAULT_BACKGROUND} from '../..'
+import {type BackgroundController} from '../..'
+import {DEFAULT_BACKGROUND} from '@winter-love/wallpaper/model'
 
 export const createBackground = (): BackgroundController => ({
   add: vi.fn(async () => undefined),

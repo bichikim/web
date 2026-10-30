@@ -264,3 +264,28 @@ it('should preserve cancellation after a visible answer without retrying it', as
   expect(createChatCompletion).toHaveBeenCalledOnce()
   expect(console.warn).not.toHaveBeenCalled()
 })
+
+it('should constrain GGUF JSON generation without reasoning or repetition penalties', async () => {
+  const outputSchema = {properties: {value: {type: 'number'}}, type: 'object'}
+  const createChatCompletion = vi.fn(async ({onData}) =>
+    onData({choices: [{delta: {content: '{"value":2000}'}}]}),
+  )
+  const model = {createChatCompletion} as unknown as Wllama
+  await expect(generateGgufText({model, options: {...options, outputSchema}})).resolves.toBe(
+    '{"value":2000}',
+  )
+  expect(createChatCompletion).toHaveBeenCalledWith(
+    expect.objectContaining({
+      chat_template_kwargs: {enable_thinking: false},
+      penalty_repeat: 1,
+      response_format: {
+        json_schema: {name: 'response', schema: outputSchema, strict: true},
+        type: 'json_schema',
+      },
+    }),
+  )
+  createChatCompletion.mockImplementationOnce(async ({onData}) =>
+    onData({choices: [{delta: {content: '{"value":'}}]}),
+  )
+  await expect(generateGgufText({model, options: {...options, outputSchema}})).rejects.toThrow()
+})

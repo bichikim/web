@@ -1,4 +1,4 @@
-import type {SupertonicModelId, SupertonicVoiceId} from '../supertonic/model'
+import type {SupertonicModelId, SupertonicVoiceId} from '@winter-love/supertonic/model'
 
 export interface AutomaticDialogueSettings {
   readonly modelId: SupertonicModelId

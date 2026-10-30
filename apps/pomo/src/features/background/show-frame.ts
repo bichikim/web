@@ -1,8 +1,8 @@
 import type {FrameRenderer} from '../frame-renderer'
 import type {BackgroundController} from './use-background'
-import type {BackgroundMedia, TransitionEffect} from './model'
+import type {BackgroundMedia, TransitionEffect} from '@winter-love/wallpaper/model'
 import {findCompanion} from './companion'
-import type {PhotoSize} from './pairing'
+import type {PhotoSize} from '@winter-love/wallpaper/album/pairing'
 
 export interface ShowFrameOptions {
   readonly renderer: Pick<

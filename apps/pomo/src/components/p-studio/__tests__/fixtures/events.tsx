@@ -167,7 +167,7 @@ vi.mock('../../../p-dialogue-player/PDialoguePlayer', () => ({
 vi.mock('../../../p-feed-status/PFeedStatus', () => ({
   PFeedStatus: (props: {readonly sceneStyle: string}) => <div data-feed-scene={props.sceneStyle} />,
 }))
-vi.mock('../../../p-music-player/PMusicPlayer', () => ({
+vi.mock('../../../music-player/PMusicPlayer', () => ({
   PMusicPlayer: (props: {
     readonly expanded: boolean
     readonly isDialogueActive: boolean

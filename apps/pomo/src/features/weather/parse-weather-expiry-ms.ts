@@ -1,8 +1,8 @@
-import {hasValidIsoCalendarDate} from 'src/utils/iso-calendar-date'
+import {hasIsoDatePrefix} from 'src/utils/has-iso-date-prefix'
 
 /** Returns a finite weather expiry timestamp, or null for malformed persisted data. */
 export const parseWeatherExpiryMs = (expiresAt: string): number | null => {
-  if (!hasValidIsoCalendarDate(expiresAt)) {
+  if (!hasIsoDatePrefix(expiresAt)) {
     return null
   }
 

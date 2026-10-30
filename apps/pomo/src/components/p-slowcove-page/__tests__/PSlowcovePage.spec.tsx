@@ -30,7 +30,7 @@ vi.mock('../../p-modal/PModal', () => ({
   ),
 }))
 
-vi.mock('../../p-music-player/PMusicPlayer', () => ({PMusicPlayer: () => <p>Music player</p>}))
+vi.mock('../../music-player/PMusicPlayer', () => ({PMusicPlayer: () => <p>Music player</p>}))
 vi.mock('../../music-player-view/SoundEffects', () => ({
   SoundEffects: () => <button type="button">효과음</button>,
 }))

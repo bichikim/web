@@ -148,7 +148,7 @@
     {
       "issue": 2428,
       "status": "implemented",
-      "file": "apps/pomo/src/utils/iso-calendar-date/index.ts",
+      "file": "apps/pomo/src/utils/has-iso-date-prefix/index.ts",
       "line": 2
     },
     {

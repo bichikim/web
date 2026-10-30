@@ -1,4 +1,4 @@
-import {normalizePasteNumericInput} from 'src/utils/normalize-paste-numeric-input'
+import {normalizePasteNumericInput} from '@winter-love/supertonic/normalize-paste-numeric-input'
 const FAHRENHEIT_SCALE = 9
 const CELSIUS_SCALE = 5
 const FAHRENHEIT_OFFSET = -32

@@ -67,3 +67,5 @@ export type {
   CreateTransformersLoadOptionsOptions,
   TransformersLoadOptions,
 } from './create-transformers-load-options'
+
+export type {TextOutputSchema} from './types'

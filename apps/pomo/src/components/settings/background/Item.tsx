@@ -1,6 +1,7 @@
 import {useIntersection} from '@winter-love/solid-use/intersection'
 import {createSignal, Show} from 'solid-js'
-import type {BackgroundController, BackgroundMedia} from 'src/features/background'
+import type {BackgroundController} from 'src/features/background'
+import type {BackgroundMedia} from '@winter-love/wallpaper/model'
 import {Content} from './Content'
 
 const PLACEHOLDER_HEIGHT = 80

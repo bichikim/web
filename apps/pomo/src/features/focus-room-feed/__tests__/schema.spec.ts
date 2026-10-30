@@ -1,6 +1,6 @@
 /** @vitest-environment node */
 import {expect, it} from 'vitest'
-import {SUPERTONIC_VOICES} from '../../supertonic/model'
+import {SUPERTONIC_VOICES} from '@winter-love/supertonic/model'
 
 import {feedConnectionSchema, normalizeFeedUrl} from '../schema'
 

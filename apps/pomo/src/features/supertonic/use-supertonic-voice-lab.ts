@@ -6,7 +6,7 @@ import {isNonBlankString} from 'src/utils/is-non-blank-string'
 import {createSupertonicAudioPlayer, type SupertonicAudioPlayer} from './audio-player'
 import {createSupertonicClient} from './client'
 import {getSupertonicErrorMessage} from './error-message'
-import type {SupertonicError} from './errors'
+import type {SupertonicError} from '@winter-love/supertonic/errors'
 import type {
   SupertonicAudio,
   SupertonicAudioChunk,
@@ -19,10 +19,10 @@ import {
   type SupertonicModel,
   type SupertonicModelId,
   type SupertonicVoiceId,
-} from './model'
+} from '@winter-love/supertonic/model'
 import type {Result} from 'src/features/result'
 import {createWaveBlob} from './wav'
-import type {SupertonicVoiceStyle} from './voice-style'
+import type {SupertonicVoiceStyle} from '@winter-love/supertonic/voice-style'
 
 const MAXIMUM_PROGRESS = 100
 const DEFAULT_MODEL_ID: SupertonicModelId = 'full'

@@ -1,12 +1,9 @@
 import {createEffect, createMemo, createSignal, onCleanup, onMount, Show, untrack} from 'solid-js'
 import * as m from '@paraglide/message'
-import {
-  type BackgroundController,
-  type PhotoSize,
-  selectTransition,
-  showFrame,
-  usePlayback,
-} from 'src/features/background'
+import {type BackgroundController, showFrame} from 'src/features/background'
+import {type PhotoSize} from '@winter-love/wallpaper/album/pairing'
+import {selectTransition} from '@winter-love/wallpaper/album/select-transition'
+import {usePlayback} from '@winter-love/wallpaper/album/use-playback'
 import {FrameRenderer} from 'src/features/frame-renderer'
 import {reportClientError} from 'src/features/client-error-reporter'
 

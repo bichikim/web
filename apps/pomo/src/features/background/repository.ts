@@ -1,5 +1,5 @@
 import {once} from 'es-toolkit/function'
-import type {BackgroundRepository} from './model'
+import type {BackgroundRepository} from '@winter-love/wallpaper/model'
 
 /** Opens the background repository for the current build target. */
 export const getBackgroundRepository = once(

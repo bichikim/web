@@ -10,7 +10,7 @@ import {
   setLanguageLearningWordsMemorized,
   useLanguageLearningWords,
 } from '../../features/language-learning'
-import {getSupertonicModel} from '../../features/supertonic'
+import {getSupertonicModel} from '@winter-love/supertonic/model'
 import {PModelDownloadConsent} from '../p-model-download-consent/PModelDownloadConsent'
 import {LanguageLearningLanguageSelect} from './LanguageSelect'
 import {useLanguageLearningWordPronunciation} from './use-word-pronunciation'

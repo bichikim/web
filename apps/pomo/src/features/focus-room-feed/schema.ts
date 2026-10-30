@@ -1,7 +1,8 @@
-import {normalizePathname} from 'src/utils/normalize-pathname'
+import {removeTrailingSlashes} from 'src/utils/remove-trailing-slashes'
 import {z} from 'zod'
 
-import {isSupertonicVoiceId, type SupertonicVoiceId} from '../supertonic'
+import {isSupertonicVoiceId} from '../supertonic'
+import {type SupertonicVoiceId} from '@winter-love/supertonic/model'
 
 const MAXIMUM_FEED_URL_LENGTH = 2048
 export const DEFAULT_FEED_VOICE_ID = 'default'
@@ -51,7 +52,7 @@ export type NormalizeFeedUrlResult = InvalidFeedUrl | ValidFeedUrl
 
 /** Normalizes a feed document URL in place by removing trailing path slashes and its fragment. */
 export const normalizeFeedDocumentUrl = (url: URL) => {
-  url.pathname = normalizePathname(url.pathname)
+  url.pathname = removeTrailingSlashes(url.pathname)
   url.hash = ''
   return url
 }

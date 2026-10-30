@@ -1,7 +1,8 @@
 import {Link, Meta, Title} from '@solidjs/meta'
 import {useLocation} from '@solidjs/router'
 import {type ComponentProps, onMount} from 'solid-js'
-import {getCanonicalPathname, isSearchIndexablePath, normalizePathname} from '../pomo-route'
+import {isSearchIndexablePath} from '../pomo-route'
+import {removeTrailingSlashes} from 'src/utils/remove-trailing-slashes'
 import {SEARCH_CONFIG} from 'src/features/search-discovery'
 import {SERVICE_POLICY_PATHS} from '../../features/service-terms/policy-paths'
 import * as m from '@paraglide/message'
@@ -14,7 +15,7 @@ const PRIVATE_ROBOTS = 'noindex, nofollow'
 const SOCIAL_IMAGE_URL = new URL('/icons/512.png', SEARCH_CONFIG.origin).href
 
 const getTitle = (pathname: string) => {
-  switch (normalizePathname(pathname)) {
+  switch (removeTrailingSlashes(pathname)) {
     case '/':
       return m.app_home_title()
     case '/account':
@@ -41,7 +42,7 @@ const getTitle = (pathname: string) => {
 }
 
 const getDescription = (pathname: string) => {
-  switch (normalizePathname(pathname)) {
+  switch (removeTrailingSlashes(pathname)) {
     case '/':
       return m.app_home_description()
     case SERVICE_POLICY_PATHS.refund:
@@ -87,7 +88,7 @@ const HLocalizedMeta = (props: ComponentProps<typeof Meta>) => {
 export const PDocumentMetadata = () => {
   const location = useLocation()
   const canonicalUrl = () =>
-    new URL(getCanonicalPathname(location.pathname), SEARCH_CONFIG.origin).href
+    new URL(removeTrailingSlashes(location.pathname), SEARCH_CONFIG.origin).href
   const description = () => getDescription(location.pathname)
   const title = () => getTitle(location.pathname)
 

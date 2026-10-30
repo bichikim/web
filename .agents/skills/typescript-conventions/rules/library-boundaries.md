@@ -14,8 +14,8 @@ Apply these rules to public exports and to internal boundaries with independent 
 
 - Treat each exported symbol and supported module path as an API, even when only this repository consumes it.
 - Re-export every sibling from `index.ts`. Do not omit barrel exports to hide helpers, and do not review `index.ts` export lists.
-- Prefer broad subpath exports for distributable modules. Do not add allowlists, proxy entrypoints, or compatibility barrels merely to hide the file layout.
-- Choose a supported module path scoped to the needed API. A cohesive feature entrypoint is preferred when practical, but direct subpath imports remain allowed. Do not funnel unrelated modules through a giant `index.ts` barrel; it obscures ownership and can create cycles.
+- Prefer broad subpath exports for distributable modules. Do not add allowlists, proxy entrypoints, or compatibility barrels merely to hide the file layout. Import external functions directly instead of adding files that only re-export them; hypothetical future relocation does not justify such a file.
+- Choose a supported module path scoped to the needed API. A cohesive feature entrypoint is preferred when practical, but direct subpath imports remain allowed. Do not funnel unrelated modules through a giant `index.ts` barrel; it obscures ownership and can create cycles. Import internal utilities from their owning module or declared feature entrypoint, not through another consumer. Using a utility inside a module does not justify re-exporting it for other consumers.
 - Keep a port with the policy or consumer that requires it; let adapters implement it.
 - Name boundary types and exported return types explicitly.
 - Avoid exposing third-party types unless adopting that dependency as part of the contract is intentional. Translate external data and errors at the adapter boundary otherwise.

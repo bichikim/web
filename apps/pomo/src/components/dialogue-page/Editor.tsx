@@ -18,10 +18,10 @@ import {getLocalizedPrimaryMoodLabel} from '../../features/localization/localize
 import {formatModelDownloadSize} from '../../features/model-storage'
 import {
   getSupertonicModel,
-  SUPERTONIC_LANGUAGE_OPTIONS,
   SUPERTONIC_MODELS,
   SUPERTONIC_VOICES,
-} from '../../features/supertonic'
+} from '@winter-love/supertonic/model'
+import {SUPERTONIC_LANGUAGE_OPTIONS} from '@winter-love/supertonic/language'
 import {getPrimaryMood} from '../../features/text-mood'
 import {PDialogueDraftGenerator} from './DraftGenerator'
 import {PSelect} from '../p-select/PSelect'

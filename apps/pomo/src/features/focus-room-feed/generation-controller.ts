@@ -2,7 +2,7 @@
 import type {GenerateCompressedDialogueAudioResult} from '../focus-room-dialogue/generate-dialogue-audio'
 import type {PDialogueRepository} from '../focus-room-dialogue/repository'
 import type {SupertonicClient} from '../supertonic/client'
-import type {SupertonicModelId} from '../supertonic/model'
+import type {SupertonicModelId} from '@winter-love/supertonic/model'
 import type {PFeedState} from './feed-controller'
 import type {FeedDialogueRepository} from './feed-dialogue-repository'
 import type {FeedDialogueJob, FeedItemRecord} from './feed-dialogue-schema'
