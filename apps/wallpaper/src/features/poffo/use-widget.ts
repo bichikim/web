@@ -16,7 +16,7 @@ export const useWidget = (id: Accessor<string>) => {
   const report = (cause: unknown) => {
     if (!disposed) {
       console.error('Poffo widget failed', cause)
-      setError('캐릭터를 불러올 수 없어요.')
+      setError('Poffo를 불러올 수 없어요.')
     }
   }
   const refresh = async () => {

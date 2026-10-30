@@ -17,7 +17,7 @@ interface SPoffoAssetPickerProps {
 export const SPoffoAssetPicker = (props: SPoffoAssetPickerProps) => {
   const [open, setOpen] = createSignal(false)
   const selection = createMemo(
-    () => props.options?.find((item) => item.value === props.value)?.label ?? '선택한 캐릭터 없음',
+    () => props.options?.find((item) => item.value === props.value)?.label ?? '선택한 Poffo 없음',
   )
   const handleOpen = (event: MouseEvent & {currentTarget: HTMLButtonElement}) => {
     event.currentTarget.focus()
@@ -36,8 +36,8 @@ export const SPoffoAssetPicker = (props: SPoffoAssetPickerProps) => {
               viewBox="0 0 24 24"
               class="h-5 w-5 fill-none stroke-current [stroke-width:1.6] [stroke-linecap:round] [stroke-linejoin:round]"
             >
-              <circle cx="12" cy="8" r="4" />
-              <path d="M4 21v-2a8 8 0 0 1 16 0v2" />
+              <rect x="4" y="3" width="16" height="18" rx="2" />
+              <path d="M8 8h8M8 12h8M8 16h4" />
             </svg>
           </span>
           <span title={selection()} class="min-w-0 flex-1 truncate text-[13px] text-stone-800">
@@ -58,7 +58,7 @@ export const SPoffoAssetPicker = (props: SPoffoAssetPickerProps) => {
         <SDialog title="Poffo 불러오기" onClose={() => setOpen(false)}>
           <div class="grid min-h-0 gap-3 overflow-y-auto overscroll-contain p-4">
             <SSelect
-              label={props.selectLabel ?? '캐릭터'}
+              label={props.selectLabel ?? 'Poffo'}
               options={props.options ?? []}
               value={props.value}
               disabled={props.disabled || props.onChange === undefined}

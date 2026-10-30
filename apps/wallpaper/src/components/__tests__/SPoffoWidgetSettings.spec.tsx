@@ -205,7 +205,7 @@ test('should apply calibration changes to the selected widget and preserve optim
   const rows = within(screen.getByRole('group', {name: '편집할 위젯'}))
   fireEvent.click(rows.getByRole('button', {name: '위젯 2 설정'}))
   fireEvent.click(within(preview).getByRole('button', {name: '위치 핸들 표시'}))
-  fireEvent.keyDown(within(preview).getByRole('button', {name: '캐릭터 얼굴 기준 조정'}), {
+  fireEvent.keyDown(within(preview).getByRole('button', {name: '얼굴 기준 조정'}), {
     key: 'ArrowDown',
   })
   expect(configureTracking.mock.lastCall?.[0]).toBe('second')
@@ -269,7 +269,7 @@ test('should select a remaining widget after closing the selected widget and sho
   expect(screen.queryByRole('region', {name: '위젯 말풍선 설정'})).toBeNull()
   expect(within(preview).queryByRole('button', {name: '위치 핸들 표시'})).toBeNull()
   expect(screen.queryByRole('region', {name: '시선 보정 설정'})).toBeNull()
-  expect(within(preview).queryByRole('button', {name: '캐릭터 얼굴 기준 조정'})).toBeNull()
+  expect(within(preview).queryByRole('button', {name: '얼굴 기준 조정'})).toBeNull()
   expect(within(preview).queryByRole('button', {name: '카메라 위치 조정'})).toBeNull()
   expect(document.querySelectorAll('canvas')).toHaveLength(1)
 })

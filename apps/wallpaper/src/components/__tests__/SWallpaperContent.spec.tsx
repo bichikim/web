@@ -121,7 +121,7 @@ it('should adjust camera and face in the main background preview without adding 
   expect(within(preview).queryByRole('button', {name: '카메라 위치 조정'})).toBeNull()
   fireEvent.click(within(preview).getByRole('button', {name: '위치 핸들 표시'}))
   const camera = within(preview).getByRole('button', {name: '카메라 위치 조정'})
-  const face = within(preview).getByRole('button', {name: '캐릭터 얼굴 기준 조정'})
+  const face = within(preview).getByRole('button', {name: '얼굴 기준 조정'})
   expect(document.querySelectorAll('canvas')).toHaveLength(1)
   fireEvent.keyDown(camera, {key: 'ArrowRight'})
   expect(setContent.mock.lastCall?.[0]).toMatchObject({

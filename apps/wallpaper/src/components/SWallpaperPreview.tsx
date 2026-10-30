@@ -111,7 +111,7 @@ export const SWallpaperPreview = (props: SWallpaperPreviewProps) => {
               </div>
             </Match>
             <Match when={content().mode === 'puppet'}>
-              <p class="m-0 text-sm text-stone-600">캐릭터를 선택해 주세요.</p>
+              <p class="m-0 text-sm text-stone-600">Poffo를 선택해 주세요.</p>
             </Match>
           </Switch>
         </figure>
