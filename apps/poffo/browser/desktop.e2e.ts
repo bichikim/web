@@ -39,6 +39,29 @@ test('should report native read failures without replacing the current model', a
 })
 
 for (const platform of ['MacIntel', 'Win32'] as const) {
+  test(`should preview, cancel and persist a color theme from the ${platform} native menu`, async ({
+    page,
+  }) => {
+    await installDesktop(page, {platform})
+    await page.goto('/editor')
+    await activateMenu(page, 'color-theme-open')
+    const dialog = page.getByRole('dialog', {exact: true, name: '색 테마'})
+    const accent = dialog.getByRole('textbox', {exact: true, name: '강조색'})
+    await expect(accent).toHaveValue('#64E5C4')
+    await accent.fill('#C080F0')
+    await accent.press('Tab')
+    await dialog.getByRole('button', {exact: true, name: '취소'}).click()
+    await activateMenu(page, 'color-theme-open')
+    await expect(accent).toHaveValue('#64E5C4')
+    await accent.fill('#C080F0')
+    await accent.press('Tab')
+    await dialog.getByRole('button', {exact: true, name: '적용'}).click()
+    await page.reload()
+    await activateMenu(page, 'color-theme-open')
+    await expect(accent).toHaveValue('#C080F0')
+    await dialog.getByRole('button', {exact: true, name: '취소'}).click()
+  })
+
   test(`should move file, history and help actions to the ${platform} native menu`, async ({
     page,
   }) => {

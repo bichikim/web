@@ -24,11 +24,21 @@ CSS and UnoCSS own visual values. TypeScript communicates semantic state through
 
 ## Visual language
 
-Use the existing palette by role. These are reference values from the current styles, not a new parallel token system.
+Resolve interface colors from inherited `--puppet-color-*` custom properties, set on the document
+root for an application or the editor host for an embedded instance. UnoCSS owns the visual
+values; runtime code may update only these custom properties. The existing palette remains the
+fallback when an override is absent, preserving its surface and interaction variations.
+The canonical role defaults live in [colors.ts](uno/colors.ts); its `--puppet-default-color-*`
+properties let host settings read the defaults without importing build configuration into runtime.
+Warning and error colors use separate `--puppet-color-warning` and `--puppet-color-error` tokens.
+Their tinted surfaces derive from those colors and the panel color. Application backgrounds share
+the panel role; the canvas background remains independent for checking artwork contrast.
+Rulers inherit the panel surface, secondary text and muted text roles. Editing overlays,
+axis indicators, weight ramps, lighting, shadows and modal backdrops use dedicated theme roles.
+Model artwork and color-picker spectra represent document or input data rather than UI theme colors.
 
 | Role                                | Reference                         |
 | ----------------------------------- | --------------------------------- |
-| Workspace background                | `#0b0f0e`                         |
 | Panel surface                       | `#101513`                         |
 | Canvas surface                      | `#111715`                         |
 | Standard button surface             | `#171e1b`                         |

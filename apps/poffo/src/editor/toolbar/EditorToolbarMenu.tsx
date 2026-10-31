@@ -10,10 +10,12 @@ import {Button} from '@kobalte/core/button'
 import {EditorHelp} from '../EditorHelp'
 import {createEffect, createSignal, For, Show} from 'solid-js'
 import {EditorMenuAction} from './EditorMenuAction'
+import {ColorThemeDialog} from '../../color-theme/ColorThemeDialog'
 import {hasDesktopMenu} from '../../desktop/menu'
 import {useEditorToolbarDesktopMenu} from './use-editor-toolbar-desktop-menu'
 import type {EditorToolbarMenuProps} from './types'
 
+// eslint-disable-next-line max-lines-per-function -- Web and native menus share dialog state and focus restoration.
 export const EditorToolbarMenu = (props: EditorToolbarMenuProps) => {
   const desktopMenu = hasDesktopMenu()
   const macPlatform = /Mac|iPhone|iPad|iPod/u.test(globalThis.navigator?.platform ?? '')
@@ -22,9 +24,11 @@ export const EditorToolbarMenu = (props: EditorToolbarMenuProps) => {
   const workspace = useWorkspace()
   const [menuOpen, setMenuOpen] = createSignal(false)
   const [helpOpen, setHelpOpen] = createSignal(false)
+  const [themeOpen, setThemeOpen] = createSignal(false)
   createEffect(() => {
     if (workspace !== undefined && workspace.mode() !== 'editor') {
       setMenuOpen(false)
+      setThemeOpen(false)
     }
   })
   const [trigger, setTrigger] = createSignal<HTMLButtonElement>()
@@ -40,12 +44,17 @@ export const EditorToolbarMenu = (props: EditorToolbarMenuProps) => {
     setMenuOpen(false)
     props.onRecoveryOpen?.(() => element?.focus())
   }
+  const handleThemeOpen = () => {
+    setMenuOpen(false)
+    setThemeOpen(true)
+  }
   const handleHelpOpen = () => setHelpOpen(true)
   const nativeMenu = useEditorToolbarDesktopMenu({
     desktopMenu,
     onExampleOpen: handleExampleOpen,
     onHelpOpen: handleHelpOpen,
     onRecoveryOpen: handleRecoveryOpen,
+    onThemeOpen: handleThemeOpen,
     toolbar: props,
     workspace,
   })
@@ -148,6 +157,9 @@ export const EditorToolbarMenu = (props: EditorToolbarMenuProps) => {
               </span>
             </Button>
             <hr />
+            <Button type="button" onClick={handleThemeOpen}>
+              색 테마
+            </Button>
             <EditorHelp
               open={helpOpen()}
               onOpenChange={setHelpOpen}
@@ -156,7 +168,14 @@ export const EditorToolbarMenu = (props: EditorToolbarMenuProps) => {
           </Popover.Content>
         </Popover.Portal>
       </Popover>
-      <EditorToast message={nativeMenu.error() ?? undefined} onDismiss={nativeMenu.dismissError} />
+      <Show when={themeOpen()}>
+        <ColorThemeDialog onClose={() => setThemeOpen(false)} onReturnFocus={handleReturnFocus} />
+      </Show>
+      <EditorToast
+        tone="error"
+        message={nativeMenu.error() ?? undefined}
+        onDismiss={nativeMenu.dismissError}
+      />
     </>
   )
 }

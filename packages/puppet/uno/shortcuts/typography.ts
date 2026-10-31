@@ -26,6 +26,7 @@ export const typographyShortcuts = {
   'editor-type-reading': 'text-editor-reading leading-relaxed font-normal',
   'editor-type-root': [
     'editor-scrollbars',
+    '[accent-color:var(--puppet-color-accent,#64e5c4)]',
     'font-editor editor-type-body [font-synthesis:none] [text-rendering:optimizeLegibility]',
     '[:where(&)_:where(button,input,select,textarea,h1,h2,h3,h4,h5,h6,legend)]:[font:inherit]',
   ],

@@ -4,6 +4,7 @@ import {Menu, MenuItem, PredefinedMenuItem, Submenu} from '@tauri-apps/api/menu'
 
 export const DESKTOP_MENU_ACTION = {
   atlasExport: 'atlas-export',
+  colorThemeOpen: 'color-theme-open',
   documentImport: 'document-import',
   documentOpen: 'document-open',
   documentSave: 'document-save',
@@ -192,7 +193,14 @@ const createViewMenu = async (isMacOS: boolean) => {
         id: 'fullscreen',
         text: '전체 화면',
       })
-  return Submenu.new({items: [fullscreen], text: '보기'})
+  return Submenu.new({
+    items: [
+      await createActionItem({action: DESKTOP_MENU_ACTION.colorThemeOpen, label: '색 테마'}),
+      await createSeparator(),
+      fullscreen,
+    ],
+    text: '보기',
+  })
 }
 
 const createHelpMenu = async (isMacOS: boolean) => {

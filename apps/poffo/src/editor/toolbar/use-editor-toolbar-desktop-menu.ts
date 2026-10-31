@@ -15,6 +15,7 @@ interface UseEditorToolbarDesktopMenuProps {
   readonly toolbar: EditorToolbarMenuProps
   readonly workspace?: WorkspaceContextValue
   readonly onHelpOpen: () => void
+  readonly onThemeOpen: () => void
   readonly onExampleOpen: (example: PuppetExampleDocument) => void
   readonly onRecoveryOpen: () => void
 }
@@ -47,6 +48,7 @@ export const useEditorToolbarDesktopMenu = (props: UseEditorToolbarDesktopMenuPr
     [DESKTOP_MENU_ACTION.undo]: () => props.toolbar.onUndo?.(),
     [DESKTOP_MENU_ACTION.redo]: () => props.toolbar.onRedo?.(),
     [DESKTOP_MENU_ACTION.helpOpen]: () => props.onHelpOpen(),
+    [DESKTOP_MENU_ACTION.colorThemeOpen]: () => props.onThemeOpen(),
   }
   const handleAction = (action: DesktopMenuAction) => {
     if (!active()) {
@@ -89,6 +91,7 @@ export const useEditorToolbarDesktopMenu = (props: UseEditorToolbarDesktopMenuPr
     setDesktopMenuItemEnabled(DESKTOP_MENU_ACTION.undo, enabled && props.toolbar.canUndo === true)
     setDesktopMenuItemEnabled(DESKTOP_MENU_ACTION.redo, enabled && props.toolbar.canRedo === true)
     setDesktopMenuItemEnabled(DESKTOP_MENU_ACTION.helpOpen, enabled)
+    setDesktopMenuItemEnabled(DESKTOP_MENU_ACTION.colorThemeOpen, enabled)
     props.toolbar.examples?.forEach((_example, index) => {
       setDesktopMenuItemEnabled(`example:${index}`, enabled)
     })
@@ -112,6 +115,7 @@ export const useEditorToolbarDesktopMenu = (props: UseEditorToolbarDesktopMenuPr
         DESKTOP_MENU_ACTION.undo,
         DESKTOP_MENU_ACTION.redo,
         DESKTOP_MENU_ACTION.helpOpen,
+        DESKTOP_MENU_ACTION.colorThemeOpen,
       ]
       actionItems.forEach((action) => setDesktopMenuItemEnabled(action, false))
       props.toolbar.examples?.forEach((_example, index) => {

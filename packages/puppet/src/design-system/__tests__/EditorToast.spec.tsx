@@ -4,6 +4,16 @@ import {createSignal} from 'solid-js'
 import {expect, test} from 'vitest'
 import {EditorToast} from '../EditorToast'
 
+test('should update status tone without remounting a visible notice', () => {
+  const [tone, setTone] = createSignal<'error' | 'warning'>('error')
+  const view = render(() => <EditorToast message="알림" tone={tone()} />)
+  const alert = view.getByRole('alert')
+  expect(alert).toHaveAttribute('data-tone', 'error')
+  setTone('warning')
+  expect(view.getByRole('alert')).toBe(alert)
+  expect(alert).toHaveAttribute('data-tone', 'warning')
+})
+
 test('should show only a supplied message and dismiss it with the close button', () => {
   const [message, setMessage] = createSignal<string>()
   const view = render(() => (

@@ -151,6 +151,7 @@ export const RuntimeMenu = (props: RuntimeMenuProps) => {
         </Popover.Content>
       </Popover>
       <EditorToast
+        tone="error"
         message={nativeMenu.error() ?? props.workspace?.error() ?? undefined}
         onDismiss={handleDismiss}
       />

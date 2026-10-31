@@ -17,16 +17,18 @@ export const ConverterTextures = (props: ConverterTexturesProps) => {
   return (
     <>
       <label class="block space-y-2">
-        <span class="block text-sm text-slate-300">PNG 텍스처 (필수)</span>
+        <span class="block text-sm text-[var(--puppet-color-text-secondary,#cbd5e1)]">
+          PNG 텍스처 (필수)
+        </span>
         <input
           accept=".png"
           aria-label="PNG 텍스처"
-          class="block w-full rounded-md border border-slate-600 bg-slate-950 p-3 text-sm text-slate-100"
+          class="converter-file-input"
           multiple
           onChange={handleTexturesChange}
           type="file"
         />
-        <span class="block text-sm text-slate-300">
+        <span class="block text-sm text-[var(--puppet-color-text-secondary,#cbd5e1)]">
           model3.json의 Textures 순서대로 배치하세요. SDK ZIP은 순서를 자동으로 읽습니다.
         </span>
       </label>
