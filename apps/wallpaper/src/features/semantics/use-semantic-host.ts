@@ -22,6 +22,7 @@ export const useSemanticHost = (props: UseSemanticHostProps): SemanticRuntime =>
   const model = createSemanticModel()
   const [inputs, setInputs] = createSignal<ReadonlyMap<string, string>>(new Map())
   const [busy, setBusy] = createSignal(false)
+  const [connected, setConnected] = createSignal(false)
   const [error, setError] = createSignal<string | null>(null)
   const [frames, setFrames] = createSignal<ReadonlyMap<string, SemanticFrame>>(new Map())
   const pending = new Map<string, {signature: string; input: SemanticInput}>()
@@ -69,14 +70,19 @@ export const useSemanticHost = (props: UseSemanticHostProps): SemanticRuntime =>
       setBusy(false)
     }
   }
-  const test = (widgetId: string, text: string) => {
-    if (props.widgets().some((widget) => widget.id === widgetId)) {
-      signatures.delete(widgetId)
-      setInputs((values) => new Map(values).set(widgetId, text.slice(-SEMANTIC_TEXT_LIMIT)))
+  const accept = (input: SemanticInput) => {
+    if (props.widgets().some((widget) => widget.id === input.widgetId)) {
+      setInputs((values) =>
+        new Map(values).set(input.widgetId, input.text.slice(-SEMANTIC_TEXT_LIMIT)),
+      )
     }
   }
+  const test = (widgetId: string, text: string) => {
+    signatures.delete(widgetId)
+    accept({text, widgetId})
+  }
   const subscriptions = [
-    subscribeSemanticInput((input) => test(input.widgetId, input.text)),
+    subscribeSemanticInput(accept),
     subscribeSemanticRequests((id) => {
       const frame = frames().get(id)
       if (frame !== undefined) {
@@ -87,12 +93,21 @@ export const useSemanticHost = (props: UseSemanticHostProps): SemanticRuntime =>
   Promise.all(subscriptions)
     .then(() => {
       if (!disposed) {
-        announceSemantics().catch(console.error)
+        setConnected(true)
       }
     })
     .catch(console.error)
   createEffect(() => {
-    const widgets = props.widgets()
+    const ids = props.widgets().map((widget) => widget.id)
+    if (connected() && ids.length > 0) {
+      untrack(() => announceSemantics().catch(console.error))
+    }
+  })
+  createEffect(() => {
+    const widgets = props.widgets().map((widget) => ({
+      bindings: widget.speech?.semanticBindings?.map((binding) => ({...binding})) ?? [],
+      id: widget.id,
+    }))
     const texts = inputs()
     untrack(() => {
       const ids = new Set(widgets.map((widget) => widget.id))
@@ -113,7 +128,7 @@ export const useSemanticHost = (props: UseSemanticHostProps): SemanticRuntime =>
       }
       for (const widget of widgets) {
         const text = texts.get(widget.id) ?? ''
-        const bindings = widget.speech?.semanticBindings ?? []
+        const {bindings} = widget
         const signature = JSON.stringify([text, bindings])
         if (signatures.get(widget.id) !== signature) {
           signatures.set(widget.id, signature)

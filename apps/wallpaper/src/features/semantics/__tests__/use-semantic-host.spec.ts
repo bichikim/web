@@ -1,8 +1,12 @@
 /** @vitest-environment jsdom */
 import {createRoot} from 'solid-js'
+import {createStore, reconcile} from 'solid-js/store'
+import {waitFor} from '@solidjs/testing-library'
+import type {PoffoWidget} from '@winter-love/wallpaper/settings/library-model'
+import {useSemanticInput} from '../use-semantic-input'
 import {afterEach, expect, it, vi} from 'vitest'
 import {createSemanticModel} from '../model'
-import {subscribeSemanticFrame} from '../channel'
+import {subscribeSemanticFrame, subscribeSemanticInput} from '../channel'
 import {useSemanticHost} from '../use-semantic-host'
 
 vi.mock('../model', () => ({createSemanticModel: vi.fn()}))
@@ -118,6 +122,79 @@ it('should clear active matches and show a model failure without fabricating a s
     await cleared.promise
     expect(scope.host.error()).toBe('로컬 텍스트 분석을 실행하지 못했어요.')
     expect(scope.host.score('widget', 'happy')).toBeUndefined()
+  } finally {
+    scope.cleanup()
+    stop()
+  }
+})
+
+it('should recover bubble input after store hydration and react to in-place connection edits', async () => {
+  const embed = vi.fn(async (texts: readonly string[]) =>
+    texts.map((text) => (text.includes('슬픔') ? [0, 1] : [1, 0])),
+  )
+  vi.mocked(createSemanticModel).mockReturnValue({dispose: vi.fn(), embed})
+  const inputs: string[] = []
+  const stop = await subscribeSemanticInput((input) => {
+    if (input.widgetId === 'hydrated-widget') {
+      inputs.push(input.text)
+    }
+  })
+  const [widgets, setWidgets] = createStore<PoffoWidget[]>([])
+  const scope = createRoot((cleanup) => {
+    const host = useSemanticHost({widgets: () => widgets})
+    useSemanticInput({text: () => '기쁘고 행복해!', widgetId: () => 'hydrated-widget'})
+    return {cleanup, host}
+  })
+  try {
+    await waitFor(() => expect(inputs.length).toBeGreaterThanOrEqual(2), {
+      interval: 1,
+      timeout: 100,
+    })
+    setWidgets(
+      reconcile([
+        {
+          assetId: 'character',
+          id: 'hydrated-widget',
+          speech: {
+            enabled: true,
+            semanticBindings: [
+              {
+                enabled: true,
+                id: 'happy',
+                mode: 'toggle',
+                parameterId: 'smile',
+                text: '기쁨',
+                threshold: 0.75,
+              },
+            ],
+            x: 0.9,
+            y: 0.05,
+          },
+          x: null,
+          y: null,
+        },
+      ]),
+    )
+    await waitFor(() => expect(scope.host.score('hydrated-widget', 'happy')).toBe(1), {
+      interval: 1,
+      timeout: 100,
+    })
+    setWidgets(
+      reconcile([
+        {
+          ...widgets[0],
+          speech: {
+            ...widgets[0].speech!,
+            semanticBindings: [{...widgets[0].speech!.semanticBindings![0], text: '슬픔'}],
+          },
+        },
+      ]),
+    )
+    await waitFor(() => expect(scope.host.score('hydrated-widget', 'happy')).toBe(0), {
+      interval: 1,
+      timeout: 100,
+    })
+    expect(embed).toHaveBeenCalledTimes(2)
   } finally {
     scope.cleanup()
     stop()
