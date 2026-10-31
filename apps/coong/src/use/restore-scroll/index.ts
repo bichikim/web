@@ -28,7 +28,13 @@ export const useRestoreScroll = (element: Accessor<HTMLElement | null>) => {
   const handleScroll: JSX.EventHandler<HTMLElement, Event> = (event) => {
     const element = event.currentTarget
     const {scrollLeft} = element
-    const scrollLeftPercent = scrollLeft / (element.scrollWidth - element.clientWidth)
+    const scrollRange = element.scrollWidth - element.clientWidth
+
+    if (scrollRange <= 0) {
+      return
+    }
+
+    const scrollLeftPercent = scrollLeft / scrollRange
 
     setSavedScrollLeft(scrollLeftPercent)
   }
