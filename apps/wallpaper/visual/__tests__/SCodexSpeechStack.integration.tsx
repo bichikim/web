@@ -107,7 +107,7 @@ test.each(['bottom', 'top'] as const)(
       for (const card of cards()) {
         expect(getComputedStyle(card).clipPath).toBe('none')
         const bounds = frame(card).getBoundingClientRect()
-        expect(bounds.height).toBeGreaterThanOrEqual(48)
+        expect(bounds.height).toBeGreaterThanOrEqual(36)
         expect(getComputedStyle(frame(card)).boxShadow).not.toBe('none')
       }
     }
@@ -552,7 +552,7 @@ test('should answer only the selected chats question while covered question fiel
     ])
 })
 
-test('should fill both rounded overlap corners without exposing covered bodies after selection', async () => {
+test('should retain rounded gaps without exposing covered bodies after selection', async () => {
   await mount()
   const expectCorners = () => {
     const ordered = cards()
@@ -560,7 +560,7 @@ test('should fill both rounded overlap corners without exposing covered bodies a
       const rect = frame(front).getBoundingClientRect()
       const behind = ordered[index + 1]
       for (const x of [rect.left + 2, rect.right - 2]) {
-        expect(document.elementFromPoint(x, rect.top + 2)?.closest('[data-speech-id]')).toBe(behind)
+        expect(document.elementFromPoint(x, rect.top + 2)?.closest('[data-speech-id]')).toBeNull()
         expect(document.elementFromPoint(x, rect.top + 14)?.closest('[data-speech-id]')).toBe(front)
       }
       expect(
@@ -930,7 +930,7 @@ test('should resize the painted background and border while retaining the full c
   expect(Number.parseFloat(getComputedStyle(frame(long)).borderBottomLeftRadius)).toBeGreaterThan(0)
   expect(long.getBoundingClientRect().height).toBe(original)
   await settle()
-  expect(frame(long).getBoundingClientRect().height).toBe(48)
+  expect(frame(long).getBoundingClientRect().height).toBe(36)
   expect(frame(short).getBoundingClientRect().height).toBe(short.getBoundingClientRect().height)
   expect(region.scrollTop).toBe(100)
   expect(composer).toHaveValue('보존할 초안')
@@ -956,7 +956,7 @@ test.each(['bottom', 'top'] as const)(
     const header = rear.querySelector('button')!
     const headerTop = header.getBoundingClientRect().top
     const initial = frame(rear).getBoundingClientRect().height
-    expect(initial).toBe(48)
+    expect(initial).toBe(36)
     screen.getByRole('button', {name: '채팅 B 선택'}).click()
     const lift = rear.getAnimations()[0]
     lift.pause()
@@ -985,5 +985,34 @@ test.each(['bottom', 'top'] as const)(
       rear.getBoundingClientRect().height,
       1,
     )
+  },
+)
+
+test.each(['bottom', 'top'] as const)(
+  'should round every corner of a header-only bubble at the %s anchor',
+  async (anchor) => {
+    render(() => (
+      <main class="box-border flex h-[640px] w-[344px] flex-col justify-center p-9">
+        <SCodexSpeechStack anchor={anchor} activities={activities.slice(0, 2)} />
+      </main>
+    ))
+    await settle()
+    const [front, rear] = cards()
+    const painted = frame(rear)
+    expect(painted.getBoundingClientRect().height).toBe(36)
+    const style = getComputedStyle(painted)
+    expect(style.borderTopLeftRadius).toBe('12px')
+    expect(style.borderTopRightRadius).toBe('12px')
+    expect(style.borderBottomLeftRadius).toBe('12px')
+    expect(style.borderBottomRightRadius).toBe('12px')
+    if (anchor === 'bottom') {
+      const rect = painted.getBoundingClientRect()
+      expect(rect.bottom - frame(front).getBoundingClientRect().top).toBeCloseTo(0, 1)
+      for (const x of [rect.left + 1, rect.right - 1]) {
+        expect(
+          document.elementFromPoint(x, rect.bottom - 2)?.closest('[data-speech-id]'),
+        ).toBeNull()
+      }
+    }
   },
 )

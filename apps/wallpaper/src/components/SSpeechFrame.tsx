@@ -36,10 +36,7 @@ export const SSpeechFrame = (props: SSpeechFrameProps) => {
       data-tone={props.tone}
       data-anchor={props.anchor ?? 'bottom'}
       class="wallpaper-speech-frame wallpaper-speech-shadow pointer-events-auto absolute inset-x-0 bottom-0
-      data-[anchor=top]:bottom-auto data-[anchor=top]:top-0
-      data-[anchor=top]:rounded-b-xl
-      data-[anchor=top]:[border-top-left-radius:calc(.75rem*var(--speech-reveal,1))]
-      data-[anchor=top]:[border-top-right-radius:calc(.75rem*var(--speech-reveal,1))]
+      data-[anchor=top]:bottom-auto data-[anchor=top]:[top:var(--speech-frame-inset)]
       box-border rounded-xl border border-solid border-stone-300 bg-white
       data-[tone=blue]:bg-blue-50 data-[tone=blue]:border-blue-300
       data-[tone=teal]:bg-teal-50 data-[tone=teal]:border-teal-300

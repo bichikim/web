@@ -12,10 +12,9 @@ export default defineConfig({
     [
       'wallpaper-speech-frame',
       {
-        // Fill the next header's rounded corners while retaining the content's intrinsic layout.
-        'border-bottom-left-radius': 'calc(.75rem * var(--speech-reveal,1))',
-        'border-bottom-right-radius': 'calc(.75rem * var(--speech-reveal,1))',
-        height: 'var(--speech-painted-height)',
+        '--speech-frame-inset': 'calc(12px * (1 - var(--speech-reveal,1)))',
+        bottom: 'var(--speech-frame-inset)',
+        height: 'calc(var(--speech-painted-height) - var(--speech-frame-inset))',
       },
     ],
     [
@@ -52,8 +51,7 @@ export default defineConfig({
       {
         'clip-path': [
           'inset(0 0 calc(100% - var(--speech-painted-height) + 12px * (1 - var(--speech-reveal,1))) 0 round',
-          '.75rem .75rem',
-          'calc(.75rem * var(--speech-reveal,1)) calc(.75rem * var(--speech-reveal,1)))',
+          '.75rem)',
         ].join(' '),
         transform: 'translateY(calc(100% - var(--speech-painted-height)))',
       },
@@ -63,7 +61,7 @@ export default defineConfig({
       {
         'clip-path': [
           'inset(0 0 calc(100% - var(--speech-painted-height) + 12px * (1 - var(--speech-reveal,1))) 0 round',
-          'calc(.75rem * var(--speech-reveal,1)) calc(.75rem * var(--speech-reveal,1)) .75rem .75rem)',
+          '.75rem)',
         ].join(' '),
         transform: 'translateY(calc(12px * (1 - var(--speech-reveal,1))))',
       },
