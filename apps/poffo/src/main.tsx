@@ -1,5 +1,6 @@
 import 'virtual:uno.css'
 import {render} from 'solid-js/web'
+import {initializeDesktopMenu} from './desktop/menu'
 
 import {WorkspaceApp} from './WorkspaceApp'
 import type {PuppetExampleDocument} from '@winter-love/puppet/editor'
@@ -60,14 +61,23 @@ if (!(rootElement instanceof HTMLElement)) {
   throw new Error('Puppet root element was not found')
 }
 
-render(
-  () => (
-    <WorkspaceApp
-      examples={import.meta.env.DEV ? DEVELOPMENT_EXAMPLES : undefined}
-      loadInitialDocument={loadInitialDocument}
-      initialMotionId={import.meta.env.DEV ? DEVELOPMENT_INITIAL_MOTION_ID : undefined}
-      initialWorkspace={import.meta.env.DEV ? 'animation' : 'modeling'}
-    />
-  ),
-  rootElement,
+const startApplication = () =>
+  render(
+    () => (
+      <WorkspaceApp
+        examples={import.meta.env.DEV ? DEVELOPMENT_EXAMPLES : undefined}
+        loadInitialDocument={loadInitialDocument}
+        initialMotionId={import.meta.env.DEV ? DEVELOPMENT_INITIAL_MOTION_ID : undefined}
+        initialWorkspace={import.meta.env.DEV ? 'animation' : 'modeling'}
+      />
+    ),
+    rootElement,
+  )
+
+initializeDesktopMenu(import.meta.env.DEV ? DEVELOPMENT_EXAMPLES : []).then(
+  startApplication,
+  (cause: unknown) => {
+    console.error('Poffo desktop menus could not be created.', cause)
+    startApplication()
+  },
 )

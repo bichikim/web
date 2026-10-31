@@ -6,6 +6,8 @@ Puppet의 Solid 컴포넌트를 직접 사용하는 서비스 앱이다. Poffo �
 
 저장소 루트에서 `pnpm --filter @winter-love/poffo dev`로 실행한다. 개발 서버는 기존 캐릭터 예제를 제공하고, 프로덕션은 빈 문서 또는 Editor 복구 문서로 시작한다. `/`는 `/editor`로 이동한다. `/editor`, `/studio`, `/viewer`, `/converter`를 직접 열 수 있다.
 
+macOS 데스크톱 앱은 `pnpm --filter @winter-love/poffo dev:desktop`으로 실행하고, 설치 파일은 `pnpm --filter @winter-love/poffo build:desktop:mac`으로 만든다. Windows NSIS 설치 파일은 Windows에서 `pnpm --filter @winter-love/poffo build:desktop:windows`로 만든다. 두 macOS 아키텍처와 Windows x64 빌드는 수동 실행 가능한 [데스크톱 빌드 워크플로](../../.github/workflows/poffo-desktop-build.yml)에서 각각 내려받을 수 있다.
+
 `pnpm exec turbo run build --filter=@winter-love/poffo...`는 공개 패키지 산출물을 먼저 만들고 앱을 빌드한다. 출력은 `dist`다. 타입·lint 검사는 [앱 스크립트](package.json), 프로덕션 브라우저 검사는 [Playwright 구성](playwright.config.ts)을 따른다.
 
 ## 문서와 복구

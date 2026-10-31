@@ -1,5 +1,7 @@
 import {EditorPanelLayout} from '@winter-love/puppet/editor'
 import {HeaderSurface} from '../workspace/HeaderSurface'
+import {hasDesktopMenu} from '../desktop/menu'
+import {Show} from 'solid-js'
 
 interface EditorLoadingProps {
   /** Initial local mode shown by the disabled frame; omitted for modeling. */
@@ -16,9 +18,11 @@ export const EditorLoading = (props: EditorLoadingProps) => (
           <HeaderSurface
             owner="editor"
             menu={
-              <button type="button" class="toolbar-menu-trigger" aria-label="메인 메뉴" disabled>
-                <span aria-hidden="true" class="puppet-icon puppet-icon-menu" />
-              </button>
+              <Show when={!hasDesktopMenu()}>
+                <button type="button" class="toolbar-menu-trigger" aria-label="메인 메뉴" disabled>
+                  <span aria-hidden="true" class="puppet-icon puppet-icon-menu" />
+                </button>
+              </Show>
             }
           >
             <span>{props.mode === 'animation' ? '애니메이션' : '모델링'}</span>
