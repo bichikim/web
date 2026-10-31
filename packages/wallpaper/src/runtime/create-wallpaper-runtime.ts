@@ -1,5 +1,5 @@
 import {completeSurfaceChanges} from './complete-surface-changes'
-import type {MonitorWallpaper, WallpaperContent} from '../settings/model'
+import type {MonitorWallpaper, WallpaperContent, WebsiteCustomization} from '../settings/model'
 
 export type SurfaceInteraction = 'interactive' | 'passThrough'
 export interface WallpaperSurfacePort {
@@ -7,7 +7,11 @@ export interface WallpaperSurfacePort {
   readonly close: (monitorId: string, label: string) => Promise<void>
   readonly setSurface: (label: string, interaction: SurfaceInteraction) => Promise<void>
   readonly setInteraction: (label: string, interaction: SurfaceInteraction) => Promise<void>
-  readonly navigate: (label: string, url: string) => Promise<void>
+  readonly navigate: (
+    label: string,
+    url: string,
+    customization?: WebsiteCustomization,
+  ) => Promise<void>
   readonly restore: (label: string) => Promise<void>
 }
 export interface WallpaperRuntimeSnapshot {
@@ -63,10 +67,20 @@ export const createWallpaperRuntime = (surfaces: WallpaperSurfacePort): Wallpape
       await surfaces.setInteraction(surface.label, interaction)
       surface.interaction = interaction
     }
-    const source = settings.content.mode === 'website' ? settings.content.url : 'local'
+    const source =
+      settings.content.mode === 'website'
+        ? JSON.stringify([
+            settings.content.url,
+            settings.content.css ?? '',
+            settings.content.script ?? '',
+          ])
+        : 'local'
     if (surface.source !== source) {
       if (settings.content.mode === 'website' && settings.content.url !== null) {
-        await surfaces.navigate(surface.label, settings.content.url)
+        await surfaces.navigate(surface.label, settings.content.url, {
+          css: settings.content.css,
+          script: settings.content.script,
+        })
       } else if (surface.source !== null) {
         await surfaces.restore(surface.label)
       }

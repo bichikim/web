@@ -92,3 +92,35 @@ it('should reopen an individual history address', async () => {
   await waitFor(() => expect(library.visit).toHaveBeenCalledWith('monitor', 'https://example.org/'))
   expect(controller.setContent).toHaveBeenCalledWith({mode: 'website', url: 'https://example.org/'})
 })
+
+it('should save website CSS and script together only when applied and preserve them on URL changes', async () => {
+  const {controller} = setup()
+  fireEvent.click(screen.getByText('사용자 코드'))
+  fireEvent.input(screen.getByRole('textbox', {name: '사용자 CSS'}), {
+    target: {value: 'body { background: red; }'},
+  })
+  fireEvent.input(screen.getByRole('textbox', {name: '사용자 스크립트'}), {
+    target: {value: 'document.title = "custom"'},
+  })
+  expect(controller.setContent).not.toHaveBeenCalled()
+  fireEvent.click(screen.getByRole('button', {name: '저장 후 새로고침'}))
+  await waitFor(() =>
+    expect(controller.setContent).toHaveBeenCalledWith({
+      css: 'body { background: red; }',
+      mode: 'website',
+      script: 'document.title = "custom"',
+      url: null,
+    }),
+  )
+  const address = screen.getByRole('textbox', {name: '웹사이트 주소'})
+  fireEvent.input(address, {target: {value: 'https://example.net/'}})
+  fireEvent.keyDown(address, {key: 'Enter'})
+  await waitFor(() =>
+    expect(controller.setContent).toHaveBeenLastCalledWith({
+      css: 'body { background: red; }',
+      mode: 'website',
+      script: 'document.title = "custom"',
+      url: 'https://example.net/',
+    }),
+  )
+})

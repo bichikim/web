@@ -41,7 +41,12 @@ export const poffoPlacementSchema: z.ZodType<PoffoPlacement> = z.object({
   y: z.number().min(0).max(1),
 })
 
-export interface WebsiteWallpaper {
+export interface WebsiteCustomization {
+  readonly css?: string
+  readonly script?: string
+}
+
+export interface WebsiteWallpaper extends WebsiteCustomization {
   readonly mode: 'website'
   readonly url: string | null
 }
@@ -80,7 +85,12 @@ export const wallpaperContentSchema: z.ZodType<WallpaperContent> = z.discriminat
     trackingBindings: poffoBindingsSchema.optional(),
     trackingOptions: poffoTrackingOptionsSchema.optional(),
   }),
-  z.object({mode: z.literal('website'), url: backgroundWebsiteUrlSchema.nullable()}),
+  z.object({
+    css: z.string().optional(),
+    mode: z.literal('website'),
+    script: z.string().optional(),
+    url: backgroundWebsiteUrlSchema.nullable(),
+  }),
   z.object({
     fit: z.enum(['contain', 'cover']).optional(),
     mediaIds: z.array(z.string().min(1)),

@@ -2,6 +2,7 @@ import {For, Show} from 'solid-js'
 import type {WallpaperController} from '../features/settings'
 import type {WallpaperLibraryController} from '../features/library'
 import {SInput} from './SInput'
+import {SWebsiteCustomization} from './SWebsiteCustomization'
 
 interface SWebsiteSettingsProps {
   readonly controller: WallpaperController
@@ -9,14 +10,20 @@ interface SWebsiteSettingsProps {
 }
 
 export const SWebsiteSettings = (props: SWebsiteSettingsProps) => {
-  const url = () => {
-    const current = props.controller.current()?.content
-    return current?.mode === 'website' ? (current.url ?? '') : ''
+  const website = () => {
+    const content = props.controller.current()?.content
+    return content?.mode === 'website' ? content : undefined
   }
+  const url = () => website()?.url ?? ''
   const visit = async (value: string) => {
     const monitorId = props.controller.selectedId()
     const address = value.trim()
-    await props.controller.setContent({mode: 'website', url: address === '' ? null : address})
+    const content = props.controller.current()?.content
+    await props.controller.setContent({
+      ...(content?.mode === 'website' ? content : {}),
+      mode: 'website',
+      url: address === '' ? null : address,
+    })
     if (address !== '' && monitorId !== null && props.controller.error() === null) {
       await props.library?.visit(monitorId, address)
     }
@@ -33,6 +40,15 @@ export const SWebsiteSettings = (props: SWebsiteSettingsProps) => {
           onChange={visit}
         />
       </label>
+      <Show when={website()}>
+        {(content) => (
+          <SWebsiteCustomization
+            content={content()}
+            busy={props.controller.busy()}
+            onApply={props.controller.setContent}
+          />
+        )}
+      </Show>
       <Show when={(props.library?.history().length ?? 0) > 0}>
         <details>
           <summary class="wallpaper-disclosure">방문 내역</summary>

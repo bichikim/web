@@ -25,7 +25,10 @@ it('should create a real surface before navigating to the configured website', a
   const runtime = createWallpaperRuntime(surfaces)
   await runtime.synchronize({connectedIds: ['first'], settings: [website('https://example.com')]})
   expect(surfaces.setSurface).toHaveBeenCalledWith('surface-first', 'passThrough')
-  expect(surfaces.navigate).toHaveBeenCalledWith('surface-first', 'https://example.com')
+  expect(surfaces.navigate).toHaveBeenCalledWith('surface-first', 'https://example.com', {
+    css: undefined,
+    script: undefined,
+  })
   expect(vi.mocked(surfaces.setSurface).mock.invocationCallOrder[0]).toBeLessThan(
     vi.mocked(surfaces.navigate).mock.invocationCallOrder[0]!,
   )
@@ -117,4 +120,29 @@ it('should finish every pending monitor before applying a snapshot after a parti
   await rejected
   await removed
   expect(surfaces.close).toHaveBeenCalledWith('second', 'surface-second')
+})
+
+it('should reload changed website code once while retaining monitor interaction', async () => {
+  const runtime = createWallpaperRuntime(surfaces)
+  const initial = website('https://example.com')
+  await runtime.synchronize({connectedIds: ['first'], settings: [initial]})
+  const customized: MonitorWallpaper = {
+    ...initial,
+    content: {
+      css: 'body { opacity: .5; }',
+      mode: 'website',
+      script: 'document.title = "custom"',
+      url: 'https://example.com',
+    },
+  }
+  await runtime.synchronize({connectedIds: ['first'], settings: [customized]})
+  await runtime.synchronize({connectedIds: ['first'], settings: [customized]})
+  expect(surfaces.navigate).toHaveBeenCalledTimes(2)
+  expect(surfaces.navigate).toHaveBeenLastCalledWith('surface-first', 'https://example.com', {
+    css: 'body { opacity: .5; }',
+    script: 'document.title = "custom"',
+  })
+  expect(surfaces.setSurface).toHaveBeenCalledTimes(1)
+  await runtime.synchronize({connectedIds: ['first'], settings: [initial]})
+  expect(surfaces.navigate).toHaveBeenCalledTimes(3)
 })

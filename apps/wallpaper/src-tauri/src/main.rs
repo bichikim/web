@@ -10,6 +10,7 @@ mod poffo_resize;
 mod settings;
 mod tracking;
 mod tray;
+mod website;
 
 fn main() {
     if codex::relay::command_mode() || codex::questions::protocol::command_mode() {
@@ -17,12 +18,14 @@ fn main() {
     }
     let app = tauri::Builder::default()
         .plugin(tauri_plugin_desktop_surface::init())
+        .manage(website::WebsiteCode::default())
         .manage(hit_test::HitRegions::default())
         .manage(tracking::CursorSubscribers::default())
         .manage(codex::Bridge::default())
         .manage(codex::prompt::Delivery::default())
         .manage(codex::voice::VoiceRequests::default())
         .invoke_handler(tauri::generate_handler![
+            website::configure_website,
             background::list_wallpaper_monitors,
             background::open_background,
             background::find_background,
@@ -73,6 +76,7 @@ fn main() {
         .on_window_event(|window, event| {
             settings::handle_window_event(window, event);
             if matches!(event, tauri::WindowEvent::Destroyed) {
+                website::remove(window.app_handle(), window.label());
                 hit_test::remove(window.app_handle(), window.label());
                 tracking::remove(window.app_handle(), window.label());
                 codex::removed(window.app_handle(), window.label());
