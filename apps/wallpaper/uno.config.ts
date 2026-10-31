@@ -6,12 +6,17 @@ export default defineConfig({
     ['wallpaper-speech-motion', {'transition-property': '--speech-height, --speech-y'}],
     [
       'wallpaper-speech',
-      {'--speech-painted-height': 'min(100%,calc(48px + (100% - 48px) * var(--speech-reveal,1)))'},
+      {
+        '--speech-corners': 'var(--speech-reveal,1)',
+        '--speech-painted-height': 'min(100%,calc(48px + (100% - 48px) * var(--speech-reveal,1)))',
+      },
     ],
     ['wallpaper-speech-stacked', {'--speech-painted-height': 'var(--speech-height)'}],
     [
       'wallpaper-speech-frame',
       {
+        'border-bottom-left-radius': 'calc(.75rem * var(--speech-corners,1))',
+        'border-bottom-right-radius': 'calc(.75rem * var(--speech-corners,1))',
         height: 'var(--speech-painted-height)',
       },
     ],
@@ -50,7 +55,7 @@ export default defineConfig({
         'clip-path': [
           'inset(0 0 calc(100% - var(--speech-painted-height) + 12px * (1 - var(--speech-reveal,1))) 0 round',
           '.75rem .75rem',
-          'calc(.75rem * var(--speech-reveal,1)) calc(.75rem * var(--speech-reveal,1)))',
+          'calc(.75rem * var(--speech-corners,1)) calc(.75rem * var(--speech-corners,1)))',
         ].join(' '),
         transform: 'translateY(calc(100% - var(--speech-painted-height)))',
       },
@@ -60,7 +65,7 @@ export default defineConfig({
       {
         'clip-path': [
           'inset(0 0 calc(100% - var(--speech-painted-height) + 12px * (1 - var(--speech-reveal,1))) 0 round',
-          'calc(.75rem * var(--speech-reveal,1)) calc(.75rem * var(--speech-reveal,1)) .75rem .75rem)',
+          'calc(.75rem * var(--speech-corners,1)) calc(.75rem * var(--speech-corners,1)) .75rem .75rem)',
         ].join(' '),
         transform: 'translateY(calc(12px * (1 - var(--speech-reveal,1))))',
       },

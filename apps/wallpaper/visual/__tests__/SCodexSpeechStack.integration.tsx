@@ -989,7 +989,7 @@ test.each(['bottom', 'top'] as const)(
 )
 
 test.each(['bottom', 'top'] as const)(
-  'should retain rounded covered corners beneath the overlapping bubble at the %s anchor',
+  'should round exposed corners only while reordering from the %s anchor',
   async (anchor) => {
     render(() => (
       <main class="box-border flex h-[640px] w-[344px] flex-col justify-center p-9">
@@ -998,23 +998,42 @@ test.each(['bottom', 'top'] as const)(
     ))
     await settle()
     const [front, rear] = cards()
-    const painted = frame(rear)
-    expect(painted.getBoundingClientRect().height).toBe(48)
-    const style = getComputedStyle(painted)
-    expect(style.borderTopLeftRadius).toBe('12px')
-    expect(style.borderTopRightRadius).toBe('12px')
-    expect(style.borderBottomLeftRadius).toBe('12px')
-    expect(style.borderBottomRightRadius).toBe('12px')
-    if (anchor === 'bottom') {
-      const rect = painted.getBoundingClientRect()
-      expect(rect.bottom - frame(front).getBoundingClientRect().top).toBeCloseTo(12, 1)
-      for (const x of [rect.left + 1, rect.right - 1]) {
-        expect(
-          document
-            .elementFromPoint(x, frame(front).getBoundingClientRect().top + 2)
-            ?.closest('[data-speech-id]'),
-        ).toBe(rear)
+    const coveredRadius = () => {
+      const style = getComputedStyle(frame(rear))
+      return anchor === 'bottom' ? style.borderBottomLeftRadius : style.borderTopLeftRadius
+    }
+    expect(coveredRadius()).toBe('0px')
+    screen.getByRole('button', {name: '채팅 B 선택'}).click()
+    const lift = rear.getAnimations()[0]
+    lift.pause()
+    for (const time of [0, 80, 150, 299]) {
+      lift.currentTime = time
+      await draw()
+      for (const card of [front, rear]) {
+        const style = getComputedStyle(frame(card))
+        expect(style.borderTopLeftRadius).toBe('12px')
+        expect(style.borderTopRightRadius).toBe('12px')
+        expect(style.borderBottomLeftRadius).toBe('12px')
+        expect(style.borderBottomRightRadius).toBe('12px')
+        const contents = card.querySelector('.wallpaper-speech-contents')!
+        expect(getComputedStyle(contents).clipPath).toMatch(/round 12px\)$/)
       }
     }
+    lift.finish()
+    await expect.poll(order).toEqual(['B', 'A'])
+    document.getAnimations().forEach((animation) => animation.pause())
+    const departure = front.getAnimations()[0]
+    for (const fraction of [0.1, 0.5, 0.9, 1]) {
+      departure.currentTime = Number(departure.effect!.getTiming().duration) * fraction
+      await draw()
+      const style = getComputedStyle(frame(front))
+      expect(style.borderBottomLeftRadius).toBe('12px')
+      expect(style.borderBottomRightRadius).toBe('12px')
+    }
+    await settle()
+    const style = getComputedStyle(frame(front))
+    expect(anchor === 'bottom' ? style.borderBottomLeftRadius : style.borderTopLeftRadius).toBe(
+      '0px',
+    )
   },
 )
