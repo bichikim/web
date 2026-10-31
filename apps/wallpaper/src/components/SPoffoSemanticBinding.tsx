@@ -38,6 +38,7 @@ export const SPoffoSemanticBinding = (props: SPoffoSemanticBindingProps) => {
   })
   const parameter = () => props.parameters?.find((item) => item.id === binding().parameterId)
   const caption = () => props.label ?? '연결'
+  const scoreLabel = () => (props.score === -1 ? '제외' : `매칭 ${props.score?.toFixed(2)}`)
   const remove = () => props.onRemove?.()
   const handleEnabled = (enabled: boolean) => update({enabled})
   const handleParameter = (value: string) => {
@@ -77,7 +78,7 @@ export const SPoffoSemanticBinding = (props: SPoffoSemanticBindingProps) => {
         />
         <Show when={props.score !== undefined}>
           <output aria-label={`${caption()} 매칭 점수`} class="text-xs text-stone-600">
-            매칭 {props.score?.toFixed(2)}
+            {scoreLabel()}
           </output>
         </Show>
         <button

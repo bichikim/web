@@ -3,7 +3,7 @@ import {SEMANTIC_TEXT_LIMIT, type SemanticBinding} from '@winter-love/wallpaper/
 interface ClassifySemanticsOptions {
   /** Latest conversational prose; the last eight nonempty paragraphs are compared separately. */
   readonly text: string
-  /** Enabled descriptions may contain up to eight newline-separated conversational examples. */
+  /** Descriptions and optional exclusions each compare up to eight newline-separated examples. */
   readonly bindings: readonly SemanticBinding[]
   /** Returns normalized vectors in input order; model failures propagate to the host. */
   readonly embed: (texts: readonly string[]) => Promise<readonly (readonly number[])[]>
@@ -33,8 +33,14 @@ export const classifySemantics = async (
   if (bindings.length === 0 || inputs.length === 0) {
     return {}
   }
-  const descriptions = bindings.map((binding) => ({binding, texts: examples(binding.text)}))
-  const texts = [...new Set([...inputs, ...descriptions.flatMap((item) => item.texts)])]
+  const descriptions = bindings.map((binding) => ({
+    binding,
+    exclusions: examples(binding.excludeText ?? ''),
+    texts: examples(binding.text),
+  }))
+  const texts = [
+    ...new Set([...inputs, ...descriptions.flatMap((item) => [...item.texts, ...item.exclusions])]),
+  ]
   const vectors = await options.embed(texts.map((text) => `task: classification | query: ${text}`))
   const dimensions = vectors[0]?.length ?? 0
   if (
@@ -46,12 +52,20 @@ export const classifySemantics = async (
   }
   const indexed = new Map(texts.map((text, index) => [text, vectors[index]]))
   return Object.fromEntries(
-    descriptions.map(({binding, texts: samples}) => [
+    descriptions.map(({binding, exclusions, texts: samples}) => [
       binding.id,
       Math.max(
-        ...inputs.flatMap((text) =>
-          samples.map((sample) => similarity(indexed.get(text)!, indexed.get(sample)!)),
-        ),
+        ...inputs.map((text) => {
+          const input = indexed.get(text)!
+          const positive = Math.max(
+            ...samples.map((sample) => similarity(input, indexed.get(sample)!)),
+          )
+          const negative = Math.max(
+            -1,
+            ...exclusions.map((sample) => similarity(input, indexed.get(sample)!)),
+          )
+          return exclusions.length > 0 && negative >= positive ? -1 : positive
+        }),
       ),
     ]),
   )

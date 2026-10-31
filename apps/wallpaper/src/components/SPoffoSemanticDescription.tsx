@@ -8,6 +8,8 @@ interface SPoffoSemanticDescriptionProps {
 export const SPoffoSemanticDescription = (props: SPoffoSemanticDescriptionProps) => {
   const handleText = (event: InputEvent & {currentTarget: HTMLTextAreaElement}) =>
     props.onChange?.({...props.value, text: event.currentTarget.value})
+  const handleExclusions = (event: InputEvent & {currentTarget: HTMLTextAreaElement}) =>
+    props.onChange?.({...props.value, excludeText: event.currentTarget.value || undefined})
   const handleGroup = (event: InputEvent & {currentTarget: HTMLInputElement}) =>
     props.onChange?.({
       ...props.value,
@@ -26,6 +28,22 @@ export const SPoffoSemanticDescription = (props: SPoffoSemanticDescriptionProps)
         class="box-border w-full resize-y rounded-md border border-solid border-stone-300 bg-white
         px-2 py-1.5 font-inherit text-inherit"
       />
+      <details class="text-xs text-stone-600">
+        <summary class="cursor-pointer" title="이 예문이 더 가까우면 연결하지 않아요.">
+          제외 예문
+        </summary>
+        <textarea
+          aria-label={`${props.label} 제외 예문`}
+          placeholder="예: 슬프지만 울지는 않았어요."
+          value={props.value.excludeText ?? ''}
+          maxLength={1000}
+          rows={2}
+          onInput={handleExclusions}
+          disabled={props.onChange === undefined}
+          class="mt-2 box-border w-full resize-y rounded-md border border-solid border-stone-300 bg-white
+          px-2 py-1.5 font-inherit text-inherit"
+        />
+      </details>
       <input
         aria-label={`${props.label} 선택 그룹`}
         placeholder="선택 그룹 (선택)"

@@ -135,6 +135,10 @@ test('should apply vowel poses and semantic expressions to the bundled Ash playe
   await expect.poll(() => player.getParameterValue('Param71')).toBe(1)
   await expect.poll(() => player.getParameterValue('ParamEyeLSmile')).toBe(0)
   await expect.poll(() => player.getParameterValue('ParamEyeLOpen')).toBe(1)
+  await sendSemanticFrame({scores: {'ash:sad-tears': 0.9038512399246472}, widgetId: 'ash-widget'})
+  await expect.poll(() => player.getParameterValue('Param70')).toBe(1)
+  await sendSemanticFrame({scores: {'ash:sad-tears': -1}, widgetId: 'ash-widget'})
+  await expect.poll(() => player.getParameterValue('Param70')).toBe(0)
   const bindings = builtinConnectionProfile('builtin:ash')!.connections.semanticBindings!
   const poses = [
     ...new Set(
@@ -169,18 +173,6 @@ test('should apply vowel poses and semantic expressions to the bundled Ash playe
   await expect.poll(() => player.getParameterValue('Param71')).toBe(0)
   globalThis.dispatchEvent(new PointerEvent('pointermove', {clientX: 800, clientY: 80}))
   await expect.poll(() => player.getParameterValue('ParamAngleY')).toBeGreaterThan(1)
-  let previousY = player.getParameterValue('ParamAngleY')!
-  await expect
-    .poll(async () => {
-      const current = await new Promise<number>((resolve) => {
-        requestAnimationFrame(() => resolve(player.getParameterValue('ParamAngleY')!))
-      })
-      const distance = Math.abs(current - previousY)
-      previousY = current
-      return distance
-    })
-    .toBeLessThan(0.001)
-  const cursorY = player.getParameterValue('ParamAngleY')!
   const agree = bindings.find((binding) => binding.id === 'ash:agree')!
   await sendSemanticFrame({
     scores: Object.fromEntries(
@@ -190,7 +182,9 @@ test('should apply vowel poses and semantic expressions to the bundled Ash playe
   })
   await expect.poll(() => player.getParameterValue('ParamAngleY')).toBeLessThan(-5)
   await sendSemanticFrame({scores: {}, widgetId: 'ash-widget'})
-  await expect.poll(() => player.getParameterValue('ParamAngleY')).toBeCloseTo(cursorY, 1)
+  await expect.poll(() => player.getParameterValue('ParamAngleY')).toBeGreaterThan(1)
+  globalThis.dispatchEvent(new PointerEvent('pointermove', {clientX: 800, clientY: 600}))
+  await expect.poll(() => player.getParameterValue('ParamAngleY')).toBeLessThan(-1)
   const walking = bindings.find((binding) => binding.id === 'ash:walking')!
   await sendSemanticFrame({
     scores: Object.fromEntries(

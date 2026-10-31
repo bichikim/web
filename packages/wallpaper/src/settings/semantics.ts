@@ -20,6 +20,8 @@ export interface SemanticBinding {
   readonly animation?: SemanticAnimation
   readonly id: string
   readonly text: string
+  /** Newline-separated examples that reject a paragraph when they match at least as closely. */
+  readonly excludeText?: string
   readonly enabled: boolean
   readonly parameterId: string | null
   readonly mode: 'toggle' | 'range'
@@ -41,6 +43,7 @@ export const semanticBindingsSchema = z
         })
         .optional(),
       enabled: z.boolean(),
+      excludeText: z.string().max(SEMANTIC_DESCRIPTION_LIMIT).optional(),
       exclusiveGroup: z.string().trim().min(1).max(SEMANTIC_ID_LIMIT).optional(),
       from: z.number().finite().optional(),
       id: z.string().min(1).max(SEMANTIC_ID_LIMIT),
@@ -66,6 +69,7 @@ export const semanticInputSchema = z.object({
 })
 export interface SemanticFrame {
   readonly widgetId: string
+  /** Best eligible similarity; -1 means an exclusion won every paragraph comparison. */
   readonly scores: Readonly<Record<string, number>>
 }
 export interface SemanticInput {

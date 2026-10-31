@@ -65,3 +65,32 @@ it('should reject invalid model output instead of publishing a fabricated match'
     'invalid embeddings',
   )
 })
+it.each([
+  {expected: -1, text: '슬프지만 울지 않았어요.'},
+  {expected: 1, text: '결국 울음이 터졌어요.'},
+  {expected: 1, text: '슬프지만 울지 않았어요.\n결국 울음이 터졌어요.'},
+])('should compare exclusions per paragraph for "$text"', async ({expected, text}) => {
+  const positive = [0.9, Math.sqrt(0.19)]
+  const vectors: Readonly<Record<string, readonly number[]>> = {
+    'task: classification | query: 결국 울음이 터졌어요.': positive,
+    'task: classification | query: 슬프지만 울지 않았어요.': [1, 0],
+    'task: classification | query: 울음을 쏟았어요.': positive,
+    'task: classification | query: 울지 않았어요.': [1, 0],
+  }
+  const embed = vi.fn(async (texts: readonly string[]) => texts.map((value) => vectors[value]))
+  expect(
+    await classifySemantics({
+      bindings: [{...binding, excludeText: '울지 않았어요.', text: '울음을 쏟았어요.'}],
+      embed,
+      text,
+    }),
+  ).toEqual({happy: expected})
+})
+it('should reject an exclusion tie even when the matching threshold is zero', async () => {
+  const scores = await classifySemantics({
+    bindings: [{...binding, excludeText: binding.text, threshold: 0}],
+    embed: async (texts) => texts.map(() => [1, 0]),
+    text: '기쁜 문장',
+  })
+  expect(scores.happy).toBeLessThan(0)
+})

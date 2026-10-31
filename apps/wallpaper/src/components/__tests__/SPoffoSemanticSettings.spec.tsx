@@ -24,6 +24,11 @@ it('should register a description and preserve its input node while editing', ()
   fireEvent.input(input, {target: {value: '기쁘고 신나는 내용'}})
   expect(bindings()[0].text).toBe('기쁘고 신나는 내용')
   expect(screen.getByRole('textbox', {name: '연결 1 감정·행동·내용'})).toBe(input)
+  const exclusions = screen.getByRole('textbox', {hidden: true, name: '연결 1 제외 예문'})
+  fireEvent.input(exclusions, {target: {value: '울지 않았어요.'}})
+  expect(bindings()[0].excludeText).toBe('울지 않았어요.')
+  fireEvent.input(exclusions, {target: {value: ''}})
+  expect(bindings()[0].excludeText).toBeUndefined()
   fireEvent.input(screen.getByRole('textbox', {name: '연결 1 선택 그룹'}), {
     target: {value: '손 포즈'},
   })
