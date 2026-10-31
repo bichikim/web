@@ -1,3 +1,4 @@
+import {useSemanticParameters} from '../semantics/use-semantic-parameters'
 import {type Accessor, createEffect, createMemo, createSignal, onCleanup, untrack} from 'solid-js'
 import type {Player} from '@winter-love/puppet/player'
 import {usePuppetDocument} from './use-puppet-document'
@@ -59,6 +60,12 @@ export const usePuppet = (props: UsePuppetProps): void => {
   })
   useLipSync({
     options: () => props.lipsync?.(),
+    parameters,
+    player: active,
+    widgetId: () => props.lipsyncId?.(),
+  })
+  useSemanticParameters({
+    bindings: () => props.semanticBindings?.(),
     parameters,
     player: active,
     widgetId: () => props.lipsyncId?.(),

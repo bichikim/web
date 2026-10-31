@@ -1,0 +1,41 @@
+{
+  "model": "onnx-community/embeddinggemma-2-ONNX",
+  "revision": "daa72c51243991dfcaf9f9137d2c573d8f7790c0",
+  "files": [
+    {
+      "path": "config.json",
+      "sha256": "8d011bfe08b5e345bbe0b81e5c6fd02c381920b345b986047bc2a33ce7b90d1d",
+      "size": 5031
+    },
+    {
+      "path": "tokenizer.json",
+      "sha256": "4d777ef5bdc1aa36227abdfb77c3e49e7b9c892d16e1b6bda41c393504828be4",
+      "size": 32170510
+    },
+    {
+      "path": "tokenizer_config.json",
+      "sha256": "17bd5d6e9364ca49a534e1502076593317c298d4a663623091ed45388f004874",
+      "size": 1599
+    },
+    {
+      "path": "onnx/model.onnx",
+      "sha256": "bc47de15f81208a5c99e5ab10f746d5e33b51ea228b7dc0bef9c133a94f1c1c3",
+      "size": 421421
+    },
+    {
+      "path": "onnx/model.onnx_data",
+      "sha256": "9fd452bfc6916e5a92f080f8dada35598ca4512b21c65897d4c5974d5f9630a2",
+      "size": 1084170240
+    },
+    {
+      "path": "onnx/model_q4.onnx",
+      "sha256": "f9eeba97acddf139b8ee2ddf04bc30dceafa88de93fadf74d7644e0d61a477a9",
+      "size": 490742
+    },
+    {
+      "path": "onnx/model_q4.onnx_data",
+      "sha256": "c3975f2d1ab7a1878ae31a7d7a9b7804a827aff3800b60dfceafce21cac3df49",
+      "size": 174028800
+    }
+  ]
+}

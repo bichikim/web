@@ -1,0 +1,38 @@
+import {SEMANTIC_TEXT_LIMIT} from '@winter-love/wallpaper/settings/semantics'
+import {type Accessor, createEffect, onCleanup} from 'solid-js'
+import {sendSemanticInput, subscribeSemanticReady} from './channel'
+
+interface UseSemanticInputProps {
+  readonly widgetId: Accessor<string | undefined>
+  readonly text: Accessor<string>
+}
+export const useSemanticInput = (props: UseSemanticInputProps) => {
+  createEffect(() => {
+    const id = props.widgetId()
+    if (id === undefined) {
+      return
+    }
+    const publish = () =>
+      sendSemanticInput({text: props.text().slice(-SEMANTIC_TEXT_LIMIT), widgetId: id}).catch(
+        (cause: unknown) => console.error('Semantic input delivery failed', cause),
+      )
+    let disposed = false
+    let stop: (() => void) | null = null
+    subscribeSemanticReady(publish)
+      .then((unsubscribe) => {
+        if (disposed) {
+          unsubscribe()
+        } else {
+          stop = unsubscribe
+          publish()
+        }
+      })
+      .catch((cause: unknown) => console.error('Semantic input subscription failed', cause))
+    createEffect(publish)
+    onCleanup(() => {
+      disposed = true
+      stop?.()
+      sendSemanticInput({text: '', widgetId: id}).catch(console.error)
+    })
+  })
+}

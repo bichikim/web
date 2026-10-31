@@ -15,7 +15,12 @@ tempfile = "3"
 toml_edit = "0.25.13"
 reqwest = { version = "0.13.4", default-features = false, features = ["json", "native-tls"] }
 tokio = { version = "1", features = ["sync", "macros"] }
-tauri = { version = "~2.11", features = ["macos-private-api", "tray-icon", "unstable"] }
+tauri = { version = "~2.11", features = [
+  "macos-private-api",
+  "tray-icon",
+  "unstable",
+  "protocol-asset",
+] }
 tauri-plugin-desktop-surface = { path = "../../../packages/desktop-surface" }
 
 [target.'cfg(target_os = "macos")'.dependencies]

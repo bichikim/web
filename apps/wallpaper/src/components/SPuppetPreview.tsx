@@ -49,6 +49,7 @@ export const SPuppetPreview = (props: SPuppetPreviewProps) => {
             assetId={props.assetId}
             load={(id) => props.load(id)}
             agentBindings={props.agentBindings}
+            semanticBindings={props.semanticBindings}
             lipsync={props.lipsync}
             lipsyncId={props.lipsyncId}
             motionId={props.motionId}

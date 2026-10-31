@@ -36,6 +36,7 @@ export const SPuppetBackground = (props: SPuppetBackgroundProps) => {
     motionId: () => props.motionId?.(),
     onError: (cause) => props.onError(cause),
     onMotions: (ids) => props.onMotions?.(ids),
+    semanticBindings: () => props.semanticBindings?.(),
     tracking: () => props.tracking?.(),
     trackingBindings: () => props.trackingBindings?.(),
     trackingOptions: () => props.trackingOptions?.(),

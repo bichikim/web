@@ -87,6 +87,7 @@ export const useWidget = (id: Accessor<string>) => {
     motionId: () => widget()?.motionId,
     report,
     saveSize: (size: WidgetSize) => library.resizeWidget(id(), size),
+    semanticBindings: () => widget()?.speech?.semanticBindings,
     tracking: () => widget()?.tracking,
     trackingBindings: () => widget()?.trackingBindings,
     trackingOptions: () => widget()?.trackingOptions,

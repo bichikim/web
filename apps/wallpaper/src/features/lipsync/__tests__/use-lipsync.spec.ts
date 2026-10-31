@@ -226,8 +226,8 @@ it('should blend acoustic poses while preserving manual connections and explicit
   receive({...frame, shape: 'i', weights: {e: 0.5, i: 0.5}})
   draw()
   expect(player.patchParameterValues).toHaveBeenLastCalledWith({
-    ParamMouthForm: 0,
     'manual-a': 1,
+    ParamMouthForm: 0,
     ParamMouthOpenY: 0,
   })
   hook.cleanup()

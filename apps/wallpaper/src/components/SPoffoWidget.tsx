@@ -72,6 +72,7 @@ export const SPoffoWidget = (props: SPoffoWidgetProps) => {
           interactive={() => adjustment.editing() || adjustment.busy() || menu() !== null}
           load={widget.load}
           agentBindings={widget.agentBindings}
+          semanticBindings={widget.semanticBindings}
           lipsync={widget.lipsync}
           lipsyncId={() => props.id}
           motionId={widget.motionId}

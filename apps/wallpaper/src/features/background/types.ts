@@ -1,8 +1,10 @@
+import type {SemanticBinding} from '@winter-love/wallpaper/settings/semantics'
 import type {Accessor} from 'solid-js'
 import type {PoffoLipSync} from '@winter-love/wallpaper/settings/lipsync'
 import type {AgentStateBindings} from '@winter-love/wallpaper/settings/agent-state'
 
 export interface PoffoAgentControls {
+  readonly semanticBindings?: Accessor<readonly SemanticBinding[] | undefined>
   readonly agentBindings?: Accessor<AgentStateBindings | undefined>
 }
 

@@ -42,6 +42,9 @@ beforeEach(() => {
     'matchMedia',
     vi.fn(() => ({matches: false})),
   )
+  vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue(
+    new DOMRect(100, 200, 320, 48),
+  )
   const read = globalThis.getComputedStyle
   vi.spyOn(globalThis, 'getComputedStyle').mockImplementation((element) => {
     const style = read(element)
@@ -92,7 +95,7 @@ it('should move C to the actual front without remounting or changing the other r
   const nodes = screen.getAllByRole('status')
   fireEvent.click(screen.getByRole('button', {name: '채팅 C 선택'}))
   expect(selected).toHaveBeenLastCalledWith('C')
-  const lift = motions.find((item) => item.options.duration === 200)!
+  const lift = motions.find((item) => item.options.duration === 300)!
   expect(lift.frames).toEqual([
     {
       '--speech-depth': '0',
@@ -103,7 +106,7 @@ it('should move C to the actual front without remounting or changing the other r
     {
       '--speech-depth': '1',
       '--speech-height': '48px',
-      '--speech-reveal': '0',
+      '--speech-reveal': '1',
       '--speech-y': '28px',
     },
   ])
@@ -140,11 +143,11 @@ it('should move C to the actual front without remounting or changing the other r
 it('should retarget the drawn lift position and shadow while ignoring stale completions', async () => {
   render(() => <SCodexSpeechStack activities={activities} />)
   fireEvent.click(screen.getByRole('button', {name: '채팅 C 선택'}))
-  const old = motions.find((item) => item.options.duration === 200)!
+  const old = motions.find((item) => item.options.duration === 300)!
   drawn.set(old.element, {reveal: 0.4, shadow: 0.45, y: 32})
   fireEvent.click(screen.getByRole('button', {name: '채팅 B 선택'}))
   expect(old.cancel).toHaveBeenCalled()
-  const latest = motions.filter((item) => item.options.duration === 200).at(-1)!
+  const latest = motions.filter((item) => item.options.duration === 300).at(-1)!
   expect(motions.find((item) => item.element === old.element && item !== old)?.frames[0]).toEqual({
     '--speech-depth': '0.45',
     '--speech-height': '48px',
@@ -160,11 +163,11 @@ it('should retarget the drawn lift position and shadow while ignoring stale comp
 it('should preserve the committed order when interrupted in descent and use distance based timing', async () => {
   render(() => <SCodexSpeechStack activities={activities} />)
   fireEvent.click(screen.getByRole('button', {name: '채팅 C 선택'}))
-  await finish(motions.find((item) => item.options.duration === 200)!)
+  await finish(motions.find((item) => item.options.duration === 300)!)
   const descent = motions.find((item) => item.options.duration === 500)!
   drawn.set(descent.element, {shadow: 1, y: 65})
   fireEvent.click(screen.getByRole('button', {name: '채팅 D 선택'}))
-  const lift = motions.filter((item) => item.options.duration === 200).at(-1)!
+  const lift = motions.filter((item) => item.options.duration === 300).at(-1)!
   expect(descent.cancel).toHaveBeenCalled()
   await finish(descent)
   await finish(lift)
@@ -190,7 +193,7 @@ it('should retain selection and node identity across activity updates and suppor
 it('should cancel owned animations when unmounted and ignore their later completion', async () => {
   const view = render(() => <SCodexSpeechStack activities={activities} />)
   fireEvent.click(screen.getByRole('button', {name: '채팅 C 선택'}))
-  const lift = motions.find((item) => item.options.duration === 200)!
+  const lift = motions.find((item) => item.options.duration === 300)!
   view.unmount()
   expect(lift.cancel).toHaveBeenCalled()
   await finish(lift)
@@ -218,14 +221,14 @@ it('should preserve the drawn position when chats change during selection and di
   const [items, setItems] = createSignal(activities)
   render(() => <SCodexSpeechStack activities={items()} />)
   fireEvent.click(screen.getByRole('button', {name: '채팅 C 선택'}))
-  const lift = motions.find((item) => item.options.duration === 200)!
+  const lift = motions.find((item) => item.options.duration === 300)!
   drawn.set(lift.element, {shadow: 0.4, y: 32})
   setItems([...activities, {...activities[0], sessionId: 'E', title: 'E'}])
-  const latest = motions.filter((item) => item.options.duration === 200).at(-1)!
+  const latest = motions.filter((item) => item.options.duration === 300).at(-1)!
   expect(latest.frames[0]).toEqual({
     '--speech-depth': '0.4',
     '--speech-height': '48px',
-    '--speech-reveal': '0',
+    '--speech-reveal': '1',
     '--speech-y': '32px',
   })
   setItems(activities.filter((item) => item.sessionId !== 'C'))

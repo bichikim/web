@@ -1,3 +1,5 @@
+import {SPoffoSemanticSettings} from './SPoffoSemanticSettings'
+import type {SemanticBinding} from '@winter-love/wallpaper/settings/semantics'
 import {type Accessor, createMemo, createSignal, Show} from 'solid-js'
 import {
   DEFAULT_POFFO_SPEECH,
@@ -67,6 +69,8 @@ export const SPoffoWidgetEditor = (props: SPoffoWidgetEditorProps) => {
   }
   const configureLipSync = (lipsync: PoffoLipSync) =>
     configureSpeech({...DEFAULT_POFFO_SPEECH, ...props.widget?.speech, lipsync})
+  const configureSemantics = (semanticBindings: readonly SemanticBinding[]) =>
+    configureSpeech({...DEFAULT_POFFO_SPEECH, ...props.widget?.speech, semanticBindings})
   const configureAgent = (agentBindings: AgentStateBindings) =>
     configureSpeech({...DEFAULT_POFFO_SPEECH, ...props.widget?.speech, agentBindings})
   const handleInput = (mode: PoffoTracking) => {
@@ -97,6 +101,13 @@ export const SPoffoWidgetEditor = (props: SPoffoWidgetEditorProps) => {
               load={props.controller.loadPuppet}
               value={props.widget?.speech?.lipsync}
               onChange={configureLipSync}
+            />
+            <SPoffoSemanticSettings
+              widgetId={props.widget?.id}
+              parameters={source.parameters()}
+              loading={source.loading()}
+              value={props.widget?.speech?.semanticBindings}
+              onChange={configureSemantics}
             />
             <SPoffoAgentStateSettings
               parameters={source.parameters()}
@@ -138,6 +149,7 @@ export const SPoffoWidgetEditor = (props: SPoffoWidgetEditorProps) => {
         }
         lipsyncId={() => props.widget?.id}
         agentBindings={() => props.widget?.speech?.agentBindings}
+        semanticBindings={() => props.widget?.speech?.semanticBindings}
         motionId={() => props.widget?.motionId}
         onMotions={setMotions}
         bindings={() => props.widget?.trackingBindings}

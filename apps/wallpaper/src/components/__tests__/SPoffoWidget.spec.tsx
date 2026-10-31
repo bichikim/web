@@ -54,6 +54,7 @@ const setup = () => {
     motionId: () => undefined,
     report: vi.fn(),
     saveSize: vi.fn().mockResolvedValue(undefined),
+    semanticBindings: () => undefined,
     tracking: () => undefined,
     trackingBindings: () => undefined,
     trackingOptions: () => undefined,

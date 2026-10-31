@@ -95,6 +95,7 @@ export const SPoffoTrackingPreview = (props: SPoffoTrackingPreviewProps) => {
               assetId={props.assetId}
               load={props.load}
               agentBindings={props.agentBindings}
+              semanticBindings={props.semanticBindings}
               lipsync={props.lipsync}
               lipsyncId={props.lipsyncId}
               motionId={props.motionId}

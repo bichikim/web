@@ -1,3 +1,4 @@
+import {useSemanticInput} from '../features/semantics/use-semantic-input'
 import {useVoice} from '../features/voice/use-voice'
 import {useSpeechLipSync} from '../features/lipsync'
 import {voiceMessage} from '../features/voice/text'
@@ -33,6 +34,7 @@ export const SPoffoSpeechSurface = (props: {readonly widgetId?: string} = {}) =>
         )
       : null,
   )
+  useSemanticInput({text: () => message()?.text ?? '', widgetId: () => props.widgetId})
   const lipsync = useSpeechLipSync({
     message,
     speech: settings.speech,

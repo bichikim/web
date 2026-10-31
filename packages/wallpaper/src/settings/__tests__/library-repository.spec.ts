@@ -315,3 +315,33 @@ it('should move a bubble without replacing its latest voice and lip sync prefere
     y: -0.2,
   })
 })
+
+it('should retain user semantic rules and parameter output modes after reopening the library', async () => {
+  const repository = open()
+  const widget = await repository.addWidget('character')
+  const semanticBindings = [
+    {
+      enabled: true,
+      from: -30,
+      id: 'happy',
+      mode: 'range' as const,
+      parameterId: 'angle',
+      text: '기쁘고 신나는 내용',
+      threshold: 0.75,
+      to: 30,
+    },
+  ]
+  await repository.configureSpeech(widget.id, {
+    enabled: true,
+    semanticBindings,
+    voice: DEFAULT_POFFO_VOICE,
+    x: 0.9,
+    y: 0.05,
+  })
+  await repository.moveSpeech(widget.id, {x: 1, y: 0.2})
+  repository.close()
+  expect((await open().read()).widgets[0].speech).toMatchObject({
+    semanticBindings,
+    voice: DEFAULT_POFFO_VOICE,
+  })
+})
