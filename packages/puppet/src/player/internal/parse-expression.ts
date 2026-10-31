@@ -17,6 +17,7 @@ const isExpression = (
   isRecord(value) &&
   typeof value.id === 'string' &&
   value.id.length > 0 &&
+  (value.name === undefined || typeof value.name === 'string') &&
   (value.composition === undefined || value.composition === 'cubism') &&
   isFadeTime(value.fadeInTime) &&
   isFadeTime(value.fadeOutTime) &&

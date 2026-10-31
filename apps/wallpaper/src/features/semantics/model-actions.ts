@@ -4,7 +4,7 @@ import type {CharacterAction} from './types'
 export const modelActions = (document: PuppetDocument): readonly CharacterAction[] => [
   ...(document.expressions ?? []).map((expression) => ({
     action: {id: expression.id, kind: 'expression' as const},
-    label: expression.id,
+    label: expression.name ?? expression.id,
   })),
   ...document.motions.map((motion) => ({
     action: {id: motion.id, kind: 'motion' as const},

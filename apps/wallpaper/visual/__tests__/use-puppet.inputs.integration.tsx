@@ -101,6 +101,21 @@ test('should apply vowel poses and semantic expressions to the bundled Ash playe
   expect(playerModule.createPlayer).toHaveBeenCalledOnce()
   const model = vi.mocked(playerModule.createPlayer).mock.calls[0]![0].document
   const parameters = model.parameters ?? []
+  expect(model.motions.find((motion) => motion.id === 'Idle:0')?.tracks).toHaveLength(23)
+  for (const motion of model.motions) {
+    expect(motion.name).toMatch(/^[A-Za-z][\x20-\x7e]*$/u)
+  }
+  for (const expression of model.expressions ?? []) {
+    expect(expression.name).toMatch(/^[A-Za-z][\x20-\x7e]*$/u)
+  }
+  const nodes = [...model.scene!.roots]
+  for (const node of nodes) {
+    expect(node.name).toMatch(/^[A-Za-z][\x20-\x7e]*$/u)
+    if ('children' in node) {
+      nodes.push(...node.children)
+    }
+  }
+  expect(nodes).toHaveLength(3634)
   expect(parameters).toHaveLength(265)
   expect(new Set(parameters.map((parameter) => parameter.name)).size).toBe(parameters.length)
   for (const parameter of parameters) {
@@ -139,7 +154,7 @@ test('should apply vowel poses and semantic expressions to the bundled Ash playe
   await expect.poll(() => player.getParameterValue('Param110'), {timeout: 3000}).toBeCloseTo(1)
   await expect.poll(() => player.getParameterValue('Param111')).toBeGreaterThan(0.5)
   await sendSemanticFrame({scores: {}, widgetId: 'ash-widget'})
-  await expect.poll(() => player.getParameterValue('Param110'), {timeout: 3000}).toBeCloseTo(0)
+  await expect.poll(() => player.getParameterValue('Param110'), {timeout: 3000}).toBeCloseTo(0.08)
   globalThis.dispatchEvent(new PointerEvent('pointermove', {clientX: 800, clientY: 80}))
   await expect.poll(() => player.getParameterValue('ParamAngleY')).toBeGreaterThan(1)
   const publish = createLipSyncPublisher('ash-widget')

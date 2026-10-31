@@ -78,6 +78,8 @@ interface ExpressionCardProps {
 }
 
 const ExpressionCard = (props: ExpressionCardProps) => {
+  const caption = () => props.expression.name ?? props.expression.id
+  const nameField = () => (props.expression.name === undefined ? '이름' : 'ID')
   const bounds = () => valueBounds(props.parameter, props.entry.blend)
   const setEntry = (changes: Partial<PuppetExpressionParameter>) =>
     props.apply(
@@ -97,9 +99,9 @@ const ExpressionCard = (props: ExpressionCardProps) => {
   return (
     <article class="entry-card">
       <header class="entry-card-header">
-        <h3>{props.expression.id}</h3>
+        <h3>{caption()}</h3>
         <EditorButton
-          aria-label={`${props.expression.id}에서 ${props.parameter.name} 제외`}
+          aria-label={`${caption()}에서 ${props.parameter.name} 제외`}
           class="entry-remove-button"
           disabled={props.disabled}
           title="이 표정에서 파라미터를 제외합니다."
@@ -117,7 +119,7 @@ const ExpressionCard = (props: ExpressionCardProps) => {
           적용
           <EditorSelect
             disabled={props.disabled}
-            label={`${props.expression.id} 적용 방식`}
+            label={`${caption()} 적용 방식`}
             optionLabel={(value) => (isBlend(value) ? BLEND_LABELS[value] : value)}
             options={PUPPET_EXPRESSION_BLENDS}
             value={props.entry.blend}
@@ -128,7 +130,7 @@ const ExpressionCard = (props: ExpressionCardProps) => {
           값
           <EditorNumberField
             disabled={props.disabled}
-            label={`${props.expression.id} 값`}
+            label={`${caption()} 값`}
             maximum={bounds().maximum}
             minimum={bounds().minimum}
             name={`${props.expression.id}-${props.parameter.id}-value`}
@@ -144,10 +146,10 @@ const ExpressionCard = (props: ExpressionCardProps) => {
         <summary>표정 설정</summary>
         <div class="entry-fields">
           <label>
-            이름
+            {nameField()}
             <PresetNameField
               disabled={props.disabled}
-              label={`${props.expression.id} 이름`}
+              label={`${caption()} ${nameField()}`}
               value={props.expression.id}
               onRename={(name) => {
                 const renamed = renameExpression(props.document, props.expression.id, name)
