@@ -25,6 +25,28 @@
         "to": 1
       },
       {
+        "id": "ash:joy-open-left",
+        "text": "기쁘고 행복해서 환하게 웃어요. 잘됐어, 성공했어, 고마워, 축하해!",
+        "parameterId": "ParamEyeLOpen",
+        "enabled": true,
+        "mode": "toggle",
+        "releaseWhenUnmatched": true,
+        "threshold": 0.84,
+        "to": 0.25,
+        "from": 1
+      },
+      {
+        "id": "ash:joy-open-right",
+        "text": "기쁘고 행복해서 환하게 웃어요. 잘됐어, 성공했어, 고마워, 축하해!",
+        "parameterId": "ParamEyeROpen",
+        "enabled": true,
+        "mode": "toggle",
+        "releaseWhenUnmatched": true,
+        "threshold": 0.84,
+        "to": 0.25,
+        "from": 1
+      },
+      {
         "id": "ash:excited",
         "text": "기대되고 신나요. 멋져, 대단해, 정말 흥미롭고 놀라워!",
         "parameterId": "Param71",

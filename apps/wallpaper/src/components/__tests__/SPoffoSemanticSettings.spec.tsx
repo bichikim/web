@@ -46,6 +46,15 @@ it('should connect a model parameter and configure its full continuous range ind
     fireEvent.blur(value)
     expect(bindings()[0].from).toBe(-20)
     expect(bindings()[0].threshold).toBe(0.75)
+    fireEvent.click(screen.getByRole('combobox', {name: '연결 1 연결 방식'}))
+    fireEvent.click(screen.getByRole('option', {name: '매칭 중 적용'}))
+    expect(bindings()[0]).toMatchObject({mode: 'toggle', releaseWhenUnmatched: true})
+    expect(screen.queryByRole('spinbutton', {name: '연결 1 시작값'})).toBeNull()
+    expect(screen.getByText('기본 동작')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('combobox', {name: '연결 1 연결 방식'}))
+    fireEvent.click(screen.getByRole('option', {name: '토글'}))
+    expect(bindings()[0].releaseWhenUnmatched).toBe(false)
+    expect(screen.getByRole('spinbutton', {name: '연결 1 시작값'})).toBeInTheDocument()
   } finally {
     if (original === undefined) {
       Reflect.deleteProperty(HTMLElement.prototype, 'showPopover')

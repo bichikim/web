@@ -83,9 +83,9 @@ test('should apply vowel poses and semantic expressions to the bundled Ash playe
       assetId: () => 'builtin:ash',
       canvas,
       lipsync: () => ({source: 'voice'}),
-      semanticBindings: () => builtinConnectionProfile('builtin:ash')?.connections.semanticBindings,
       lipsyncId: () => 'ash-widget',
       load: async () => blob,
+      semanticBindings: () => builtinConnectionProfile('builtin:ash')?.connections.semanticBindings,
       onAfterRender: () => rendered.resolve(),
       onError: errors,
       tracking: () => 'off',
@@ -114,18 +114,26 @@ test('should apply vowel poses and semantic expressions to the bundled Ash playe
   expect(parameters.find((parameter) => parameter.id === 'ParamMouthForm')?.name).toBe('Mouth Form')
   const player = await vi.mocked(playerModule.createPlayer).mock.results[0]!.value
   await sendSemanticFrame({
-    scores: {'ash:joy-left': 0.85, 'ash:joy-right': 0.85},
+    scores: {
+      'ash:joy-left': 0.85,
+      'ash:joy-open-left': 0.85,
+      'ash:joy-open-right': 0.85,
+      'ash:joy-right': 0.85,
+    },
     widgetId: 'ash-widget',
   })
   await expect
     .poll(() => [
       player.getParameterValue('ParamEyeLSmile'),
       player.getParameterValue('ParamEyeRSmile'),
+      player.getParameterValue('ParamEyeLOpen'),
+      player.getParameterValue('ParamEyeROpen'),
     ])
-    .toEqual([1, 1])
+    .toEqual([1, 1, 0.25, 0.25])
   await sendSemanticFrame({scores: {'ash:excited': 1}, widgetId: 'ash-widget'})
   await expect.poll(() => player.getParameterValue('Param71')).toBe(1)
   await expect.poll(() => player.getParameterValue('ParamEyeLSmile')).toBe(0)
+  await expect.poll(() => player.getParameterValue('ParamEyeLOpen')).toBe(1)
   await sendSemanticFrame({scores: {}, widgetId: 'ash-widget'})
   await expect.poll(() => player.getParameterValue('Param71')).toBe(0)
   const publish = createLipSyncPublisher('ash-widget')

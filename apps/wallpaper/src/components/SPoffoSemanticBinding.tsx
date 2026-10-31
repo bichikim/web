@@ -1,4 +1,4 @@
-import {Show} from 'solid-js'
+import {createMemo, Show} from 'solid-js'
 import type {SemanticBinding} from '@winter-love/wallpaper/settings/semantics'
 import type {TrackingParameter} from '../features/tracking/types'
 import {SSelect} from './SSelect'
@@ -13,9 +13,27 @@ interface SPoffoSemanticBindingProps {
   readonly onChange?: (value: SemanticBinding) => void | Promise<void>
   readonly onRemove?: () => void | Promise<void>
 }
+const MODES = [
+  {label: '토글', mode: 'toggle', releaseWhenUnmatched: false, value: 'toggle'},
+  {label: '연속값', mode: 'range', releaseWhenUnmatched: false, value: 'range'},
+  {label: '매칭 중 적용', mode: 'toggle', releaseWhenUnmatched: true, value: 'trigger'},
+  {label: '연속값 · 매칭 중', mode: 'range', releaseWhenUnmatched: true, value: 'trigger-range'},
+] as const
 export const SPoffoSemanticBinding = (props: SPoffoSemanticBindingProps) => {
   const update = (patch: Partial<SemanticBinding>) => props.onChange?.({...props.value, ...patch})
   const binding = () => props.value
+  const modeValue = createMemo(() => {
+    const value = binding()
+    return MODES.find(
+      (option) =>
+        option.mode === value.mode &&
+        option.releaseWhenUnmatched === Boolean(value.releaseWhenUnmatched),
+    )?.value
+  })
+  const hasStartValue = createMemo(() => {
+    const value = binding()
+    return value.mode === 'range' || !value.releaseWhenUnmatched
+  })
   const parameter = () => props.parameters?.find((item) => item.id === binding().parameterId)
   const caption = () => props.label ?? '연결'
   const remove = () => props.onRemove?.()
@@ -30,12 +48,18 @@ export const SPoffoSemanticBinding = (props: SPoffoSemanticBindingProps) => {
       to: selected?.maximum,
     })
   }
-  const handleMode = (value: string) =>
-    update({
-      from: value === 'range' ? parameter()?.minimum : parameter()?.defaultValue,
-      mode: value === 'range' ? 'range' : 'toggle',
+  const handleMode = (value: string) => {
+    const selected = MODES.find((option) => option.value === value)
+    if (selected === undefined) {
+      return
+    }
+    return update({
+      from: selected.mode === 'range' ? parameter()?.minimum : parameter()?.defaultValue,
+      mode: selected.mode,
+      releaseWhenUnmatched: selected.releaseWhenUnmatched,
       to: parameter()?.maximum,
     })
+  }
   const handleThreshold = (threshold: number) => update({threshold})
   const handleFrom = (from: number) => update({from})
   const handleTo = (to: number) => update({to})
@@ -93,11 +117,8 @@ export const SPoffoSemanticBinding = (props: SPoffoSemanticBindingProps) => {
       <div class="grid grid-cols-2 gap-2">
         <SSelect
           label={`${caption()} 연결 방식`}
-          value={binding().mode}
-          options={[
-            {label: '토글', value: 'toggle'},
-            {label: '연속값', value: 'range'},
-          ]}
+          value={modeValue()}
+          options={MODES}
           disabled={props.onChange === undefined}
           onChange={handleMode}
         />
@@ -115,15 +136,20 @@ export const SPoffoSemanticBinding = (props: SPoffoSemanticBindingProps) => {
         </label>
         <label class="grid gap-1 text-xs text-stone-600">
           {binding().mode === 'toggle' ? 'OFF' : '시작값'}
-          <SNumberInput
-            label={`${caption()} 시작값`}
-            value={binding().from ?? parameter()?.defaultValue ?? 0}
-            min={parameter()?.minimum}
-            max={parameter()?.maximum}
-            step={0.1}
-            disabled={parameter() === undefined || props.onChange === undefined}
-            onChange={handleFrom}
-          />
+          <Show
+            when={hasStartValue()}
+            fallback={<span class="flex min-h-8 items-center text-stone-700">기본 동작</span>}
+          >
+            <SNumberInput
+              label={`${caption()} 시작값`}
+              value={binding().from ?? parameter()?.defaultValue ?? 0}
+              min={parameter()?.minimum}
+              max={parameter()?.maximum}
+              step={0.1}
+              disabled={parameter() === undefined || props.onChange === undefined}
+              onChange={handleFrom}
+            />
+          </Show>
         </label>
         <label class="grid gap-1 text-xs text-stone-600">
           {binding().mode === 'toggle' ? 'ON' : '끝값'}

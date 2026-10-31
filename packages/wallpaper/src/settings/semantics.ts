@@ -11,6 +11,7 @@ export interface SemanticBinding {
   readonly enabled: boolean
   readonly parameterId: string | null
   readonly mode: 'toggle' | 'range'
+  readonly releaseWhenUnmatched?: boolean
   readonly threshold: number
   readonly from?: number
   readonly to?: number
@@ -23,6 +24,7 @@ export const semanticBindingsSchema = z
       id: z.string().min(1).max(SEMANTIC_ID_LIMIT),
       mode: z.enum(['toggle', 'range']),
       parameterId: z.string().min(1).nullable(),
+      releaseWhenUnmatched: z.boolean().optional(),
       text: z.string().max(SEMANTIC_DESCRIPTION_LIMIT),
       threshold: z.number().finite().min(0).max(SEMANTIC_THRESHOLD_MAX),
       to: z.number().finite().optional(),

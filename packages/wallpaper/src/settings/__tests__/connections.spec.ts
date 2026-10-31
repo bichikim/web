@@ -9,6 +9,7 @@ const profile = {
         id: 'happy',
         mode: 'toggle',
         parameterId: 'Param71',
+        releaseWhenUnmatched: true,
         text: '기쁨',
         threshold: 0.7,
       },

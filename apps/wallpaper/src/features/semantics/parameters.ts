@@ -16,7 +16,8 @@ export const semanticParameters = (
       return !binding.enabled ||
         parameter === undefined ||
         score === undefined ||
-        !Number.isFinite(score)
+        !Number.isFinite(score) ||
+        (binding.releaseWhenUnmatched === true && score < binding.threshold)
         ? []
         : [{binding, parameter, score}]
     })

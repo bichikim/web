@@ -76,3 +76,16 @@ it('should prefer a matching connection over a higher-scoring connection below i
     }),
   ).toEqual({angle: 30})
 })
+
+it.each(['toggle', 'range'] as const)(
+  'should release an unmatched %s connection instead of pinning its off value over animation',
+  (mode) => {
+    const transient = {...binding, mode, releaseWhenUnmatched: true}
+    expect(
+      semanticParameters({bindings: [transient], parameters: [parameter], scores: {happy: 0.49}}),
+    ).toEqual({})
+    expect(
+      semanticParameters({bindings: [transient], parameters: [parameter], scores: {happy: 0.75}}),
+    ).toEqual({angle: mode === 'toggle' ? 30 : 0})
+  },
+)
