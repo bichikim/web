@@ -22,7 +22,12 @@ export const SPoffoSpeechPosition = (props: SPoffoSpeechPositionProps) => {
     bounds: () => POFFO_SPEECH_BOUNDS,
     disabled: () => props.onChange === undefined,
     onChange: (point) =>
-      props.onChange?.({...value(), x: Number(point.x.toFixed(2)), y: Number(point.y.toFixed(2))}),
+      props.onChange?.({
+        ...value(),
+        anchor: undefined,
+        x: Number(point.x.toFixed(2)),
+        y: Number(point.y.toFixed(2)),
+      }),
     rect: () => area()?.getBoundingClientRect(),
     step: () => STEP,
     value: () => ({x: value().x, y: value().y}),

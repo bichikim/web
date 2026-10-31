@@ -5,6 +5,7 @@ import {readSpeechMask} from './read-speech-mask'
 
 interface UseSpeechHitTestProps {
   readonly element: Accessor<HTMLElement | null>
+  readonly dragging?: Accessor<boolean>
   readonly layout?: Accessor<unknown>
   readonly onError: (cause: unknown) => void
 }
@@ -23,7 +24,10 @@ export const useSpeechHitTest = (props: UseSpeechHitTestProps) => {
     const sample = () => {
       frame = undefined
       try {
-        region.publish({interactive: false, mask: readSpeechMask({canvas, element})})
+        region.publish({
+          interactive: props.dragging?.() ?? false,
+          mask: readSpeechMask({canvas, element}),
+        })
         if (
           element
             .getAnimations({subtree: true})
@@ -53,6 +57,7 @@ export const useSpeechHitTest = (props: UseSpeechHitTestProps) => {
     window.addEventListener('resize', schedule)
     createEffect(() => {
       props.layout?.()
+      props.dragging?.()
       schedule()
     })
     schedule()

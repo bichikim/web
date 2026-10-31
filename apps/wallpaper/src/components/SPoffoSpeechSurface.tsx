@@ -4,7 +4,7 @@ import {voiceMessage} from '../features/voice/text'
 import {createMemo, createSignal, type JSX, Show} from 'solid-js'
 import {codexPort, useCodexNotifications, useCodexTitles, useSpeechTarget} from '../features/codex'
 import {useSpeechSize} from '../features/codex/use-speech-size'
-import {useSpeechHitTest, useWidgetSpeech} from '../features/speech'
+import {useSpeechDrag, useSpeechHitTest, useWidgetSpeech} from '../features/speech'
 import {SCodexSpeechStack} from './SCodexSpeechStack'
 
 export const SPoffoSpeechSurface = (props: {readonly widgetId?: string} = {}) => {
@@ -39,7 +39,8 @@ export const SPoffoSpeechSurface = (props: {readonly widgetId?: string} = {}) =>
     widgetId: () => props.widgetId,
   })
   const voice = useVoice({message, onShape: lipsync.audioShape, speech: settings.speech})
-  const voiceNotice = () => voice.error() ?? settings.error() ?? undefined
+  const movement = useSpeechDrag({speech: settings.speech, target, widgetId: () => props.widgetId})
+  const voiceNotice = () => movement.error() ?? voice.error() ?? settings.error() ?? undefined
   const frame = useSpeechSize(content, {
     viewport: surface,
   })
@@ -47,6 +48,7 @@ export const SPoffoSpeechSurface = (props: {readonly widgetId?: string} = {}) =>
     frame.overflow() ? target()?.anchor !== 'top' : target()?.anchor === 'top',
   )
   useSpeechHitTest({
+    dragging: movement.dragging,
     element: surface,
     layout: scroll,
     onError: (cause) => console.error('Poffo speech input failed', cause),
@@ -57,6 +59,16 @@ export const SPoffoSpeechSurface = (props: {readonly widgetId?: string} = {}) =>
     <main
       ref={setSurface}
       aria-label="Poffo Codex 말풍선"
+      data-draggable={props.widgetId !== undefined}
+      data-dragging={movement.dragging()}
+      onPointerDown={movement.start}
+      onPointerMove={movement.move}
+      onPointerUp={movement.finish}
+      onPointerCancel={movement.cancel}
+      onLostPointerCapture={movement.cancel}
+      onKeyDown={movement.keyboard}
+      on:click={{capture: true, handleEvent: movement.click}}
+      on:dblclick={{capture: true, handleEvent: movement.click}}
       data-anchor={target()?.anchor ?? 'bottom'}
       class="box-border flex h-screen w-full bg-transparent px-9
       [padding-top:clamp(2.25rem,calc(2.25rem+var(--speech-inset-top)),calc(100vh-.75rem))]

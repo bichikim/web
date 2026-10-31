@@ -9,8 +9,10 @@ import {
   poffoTrackingSchema,
 } from './tracking'
 import {
+  DEFAULT_POFFO_SPEECH,
   poffoMotionSchema,
   type PoffoSpeech,
+  type PoffoSpeechPosition,
   poffoSpeechSchema,
   type PoffoWidget,
   type RememberedWebsite,
@@ -40,6 +42,7 @@ export interface LibraryRepository {
   readonly trackWidget: (id: string, tracking: PoffoTracking) => Promise<void>
   readonly configureTracking: (id: string, options: PoffoTrackingOptions) => Promise<void>
   readonly bindWidget: (id: string, bindings: PoffoTrackingBindings) => Promise<void>
+  readonly moveSpeech: (id: string, position: PoffoSpeechPosition) => Promise<void>
   readonly configureSpeech: (id: string, speech: PoffoSpeech) => Promise<void>
   readonly setWidgetMotion: (id: string, motionId: string | null | undefined) => Promise<void>
   readonly subscribe: (refresh: () => void, onError: (error: unknown) => void) => () => void
@@ -86,6 +89,18 @@ export const createLibraryRepository = (name: string): LibraryRepository => {
     async configureTracking(id, options) {
       await database.widgets.update(id, {
         trackingOptions: poffoTrackingOptionsSchema.parse(options),
+      })
+    },
+    async moveSpeech(id, position) {
+      const point = poffoSpeechSchema.pick({anchor: true, x: true, y: true}).parse(position)
+      await database.transaction('rw', database.widgets, async () => {
+        const widget = await database.widgets.get(id)
+        if (widget === undefined) {
+          throw new Error('Poffo widget is unavailable')
+        }
+        await database.widgets.update(id, {
+          speech: poffoSpeechSchema.parse({...DEFAULT_POFFO_SPEECH, ...widget.speech, ...point}),
+        })
       })
     },
     async moveWidget(id, position) {

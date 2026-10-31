@@ -289,3 +289,29 @@ it('should preserve an explicit per-widget CPU preference across reopening the l
   repository.close()
   expect((await open().read()).widgets[0].speech?.voice).toMatchObject({gpu: false, model: 'full'})
 })
+
+it('should move a bubble without replacing its latest voice and lip sync preferences', async () => {
+  const repository = open()
+  const widget = await repository.addWidget('character')
+  await repository.moveSpeech(widget.id, {x: -0.25, y: 1.2})
+  expect((await repository.read()).widgets[0].speech).toEqual({enabled: true, x: -0.25, y: 1.2})
+  await repository.configureSpeech(widget.id, {
+    enabled: true,
+    lipsync: {source: 'voice'},
+    voice: DEFAULT_POFFO_VOICE,
+    wrap: false,
+    x: -0.25,
+    y: 1.2,
+  })
+  await repository.moveSpeech(widget.id, {anchor: 'bottom', x: 1.25, y: -0.2})
+  repository.close()
+  expect((await open().read()).widgets[0].speech).toEqual({
+    anchor: 'bottom',
+    enabled: true,
+    lipsync: {source: 'voice'},
+    voice: DEFAULT_POFFO_VOICE,
+    wrap: false,
+    x: 1.25,
+    y: -0.2,
+  })
+})

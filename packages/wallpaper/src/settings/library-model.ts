@@ -26,19 +26,23 @@ export interface PoffoWidget {
   readonly motionId?: string | null
 }
 export const poffoMotionSchema = z.string().min(1).nullish()
-export interface PoffoSpeech {
+export interface PoffoSpeechPosition {
+  readonly anchor?: 'top' | 'bottom'
+  readonly x: number
+  readonly y: number
+}
+export interface PoffoSpeech extends PoffoSpeechPosition {
   readonly agentBindings?: AgentStateBindings
   readonly lipsync?: PoffoLipSync
   readonly wrap?: boolean
   readonly voice?: PoffoVoice
   readonly enabled: boolean
-  readonly x: number
-  readonly y: number
 }
 export const DEFAULT_POFFO_SPEECH: PoffoSpeech = {enabled: true, x: 0.9, y: 0.05}
 export const POFFO_SPEECH_BOUNDS = {maxX: 2, maxY: 1.5, minX: -1, minY: -0.5}
 export const poffoSpeechSchema = z.object({
   agentBindings: agentStateBindingsSchema.optional(),
+  anchor: z.enum(['top', 'bottom']).optional(),
   enabled: z.boolean(),
   lipsync: poffoLipSyncSchema.optional(),
   voice: poffoVoiceSchema.optional(),
