@@ -11,6 +11,34 @@ import {useScrollBar} from '../scroll-bar-context'
 import {useScrollContext} from '../scroll-context'
 
 describe('scroll components', () => {
+  it.each([
+    {percentX: '0', scrollLeft: 0, scrollWidth: 200},
+    {percentX: '0', scrollLeft: 0.8, scrollWidth: 200},
+    {percentX: '0.3', scrollLeft: 150, scrollWidth: 700},
+  ])(
+    'should expose horizontal percent $percentX for $scrollLeft / ($scrollWidth - 200)',
+    async ({scrollLeft, scrollWidth, percentX}) => {
+      const view = render(() => (
+        <SScrollRoot component="section">
+          <SScrollBody component="div" role="region" aria-label="Scroll area">
+            Content
+          </SScrollBody>
+        </SScrollRoot>
+      ))
+      const body = view.getByRole('region', {name: 'Scroll area'})
+
+      Object.defineProperties(body, {
+        clientWidth: {configurable: true, value: 200},
+        scrollLeft: {configurable: true, value: scrollLeft},
+        scrollWidth: {configurable: true, value: scrollWidth},
+      })
+
+      await fireEvent.scroll(body)
+
+      expect(body.style.getPropertyValue('--var-x-percent')).toBe(percentX)
+    },
+  )
+
   it('should expose scroll geometry through the bar and handle', async () => {
     const onScroll = vi.fn()
     const onPointerDown = vi.fn()

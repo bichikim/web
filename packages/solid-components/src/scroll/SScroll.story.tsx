@@ -18,6 +18,21 @@ const fooBarPrinter = (size: number) => {
 
 type Story = StoryObj<typeof meta>
 
+export const FractionalHorizontalOverflow: Story = {
+  render: () => (
+    <SScroll.Root component="div" class="w-200px h-200px [zoom:1.25]">
+      <SScroll.Body
+        component="div"
+        class="overflow-auto w-full h-full scrollbar-none"
+        role="region"
+        aria-label="Fractional scroll area"
+      >
+        <div class="w-200.4px">Content</div>
+      </SScroll.Body>
+    </SScroll.Root>
+  ),
+}
+
 export const YOnlyScroll: Story = {
   render: () => (
     <SScroll.Root component="div" class="w-200px h-200px bg-yello relative">
