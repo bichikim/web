@@ -1,7 +1,7 @@
 import {z} from 'zod'
 import {type AgentStateBindings, agentStateBindingsSchema} from './agent-state'
 import {type PoffoLipSync, poffoLipSyncSchema} from './lipsync'
-import {type SemanticBinding, semanticBindingsSchema} from './semantics'
+import {type SemanticAction, type SemanticBinding, semanticBindingsSchema} from './semantics'
 import {
   poffoBindingsSchema,
   type PoffoTrackingBindings,
@@ -40,10 +40,12 @@ export const connectionProfileSchema: z.ZodType<ConnectionProfile> = z.object({
 interface ParseConnectionProfileOptions {
   readonly assetId: string
   readonly parameters: readonly {readonly id: string}[]
+  /** Available character actions; omitted skips action availability checks. */
+  readonly actions?: readonly SemanticAction[]
 }
 export type ConnectionProfileResult =
   | {readonly ok: true; readonly profile: ConnectionProfile}
-  | {readonly ok: false; readonly reason: 'invalid' | 'character' | 'parameter'}
+  | {readonly ok: false; readonly reason: 'invalid' | 'character' | 'parameter' | 'action'}
 
 export const parseConnectionProfile = (
   source: string,
@@ -70,6 +72,19 @@ export const parseConnectionProfile = (
     return {ok: false, reason: 'character'}
   }
   const {connections} = profile
+  const {actions} = options
+  if (
+    actions !== undefined &&
+    connections.semanticBindings?.some((binding) => {
+      const {action} = binding
+      return (
+        action !== undefined &&
+        !actions.some((item) => item.kind === action.kind && item.id === action.id)
+      )
+    })
+  ) {
+    return {ok: false, reason: 'action'}
+  }
   const bindings = [
     ...Object.values(connections.trackingBindings ?? {}),
     connections.lipsync,

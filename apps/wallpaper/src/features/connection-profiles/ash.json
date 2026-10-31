@@ -5,1485 +5,341 @@
   "connections": {
     "semanticBindings": [
       {
-        "id": "ash:joy-left",
-        "text": "기쁘고 행복해서 환하게 웃어요. 잘됐어, 성공했어, 고마워, 축하해!\n잘됐어요! 성공했어요, 축하해요!\n고마워요, 덕분에 잘 해결했어요.",
-        "parameterId": "ParamEyeLSmile",
-        "enabled": true,
-        "mode": "toggle",
-        "threshold": 0.84,
-        "from": 0,
-        "to": 1
-      },
-      {
-        "id": "ash:joy-right",
-        "text": "기쁘고 행복해서 환하게 웃어요. 잘됐어, 성공했어, 고마워, 축하해!\n잘됐어요! 성공했어요, 축하해요!\n고마워요, 덕분에 잘 해결했어요.",
-        "parameterId": "ParamEyeRSmile",
-        "enabled": true,
-        "mode": "toggle",
-        "threshold": 0.84,
-        "from": 0,
-        "to": 1
-      },
-      {
-        "id": "ash:joy-open-left",
-        "text": "기쁘고 행복해서 환하게 웃어요. 잘됐어, 성공했어, 고마워, 축하해!\n잘됐어요! 성공했어요, 축하해요!\n고마워요, 덕분에 잘 해결했어요.",
-        "parameterId": "ParamEyeLOpen",
-        "enabled": true,
-        "mode": "toggle",
-        "releaseWhenUnmatched": true,
-        "threshold": 0.84,
-        "to": 0.25,
-        "from": 1
-      },
-      {
-        "id": "ash:joy-open-right",
-        "text": "기쁘고 행복해서 환하게 웃어요. 잘됐어, 성공했어, 고마워, 축하해!\n잘됐어요! 성공했어요, 축하해요!\n고마워요, 덕분에 잘 해결했어요.",
-        "parameterId": "ParamEyeROpen",
-        "enabled": true,
-        "mode": "toggle",
-        "releaseWhenUnmatched": true,
-        "threshold": 0.84,
-        "to": 0.25,
-        "from": 1
-      },
-      {
         "id": "ash:excited",
-        "text": "좋은 아이디어네요! 정말 기대돼요.\n흥미로운 결과예요. 정말 대단해요!\n멋진 발견이에요, 신나요!",
-        "parameterId": "Param71",
-        "enabled": true,
-        "mode": "toggle",
+        "text": "기쁘고 행복해서 환하게 웃어요. 잘됐어, 성공했어, 고마워, 축하해!\n잘됐어요! 성공했어요, 축하해요!\n고마워요, 덕분에 잘 해결했어요.\n좋은 아이디어네요! 정말 기대돼요.\n흥미로운 결과예요. 정말 대단해요!\n멋진 발견이에요, 신나요!",
         "threshold": 0.86,
-        "from": 0,
-        "to": 1
+        "enabled": true,
+        "action": {
+          "kind": "expression",
+          "id": "반짝이는 눈"
+        },
+        "parameterId": null,
+        "mode": "toggle"
       },
       {
         "id": "ash:affection",
         "text": "정말 귀엽고 사랑스러워요.\n좋아해요. 늘 응원하고 있어요.\n애정을 담아 전할게요.",
-        "parameterId": "Param72",
-        "enabled": true,
-        "mode": "toggle",
         "threshold": 0.86,
-        "from": 0,
-        "to": 1
+        "enabled": true,
+        "action": {
+          "kind": "expression",
+          "id": "하트 눈"
+        },
+        "parameterId": null,
+        "mode": "toggle"
       },
       {
         "id": "ash:embarrassed",
         "text": "칭찬해 주시니 쑥스럽네요.\n과찬이에요, 조금 부끄러워요.\n앗, 민망하네요.",
-        "parameterId": "Param67",
-        "enabled": true,
-        "mode": "range",
         "threshold": 0.82,
-        "from": 0,
-        "to": 0.8
+        "enabled": true,
+        "action": {
+          "kind": "expression",
+          "id": "홍조"
+        },
+        "parameterId": null,
+        "mode": "toggle"
       },
       {
         "id": "ash:angry",
         "text": "이건 정말 부당하네요.\n화가 나고 짜증이 나요.\n정말 불쾌한 일이에요.",
-        "parameterId": "Param68",
-        "enabled": true,
-        "mode": "toggle",
         "threshold": 0.82,
-        "from": 0,
-        "to": 1
+        "enabled": true,
+        "action": {
+          "kind": "expression",
+          "id": "화남"
+        },
+        "parameterId": null,
+        "mode": "toggle"
       },
       {
         "id": "ash:sad-eyes",
         "text": "안타깝고 마음이 아프네요.\n속상하셨겠어요. 많이 아쉽네요.\n슬프고 서운해요.",
-        "parameterId": "Param73",
-        "enabled": true,
-        "mode": "range",
         "threshold": 0.84,
-        "from": 0,
-        "to": 0.85
+        "enabled": true,
+        "action": {
+          "kind": "expression",
+          "id": "울먹이는 눈"
+        },
+        "parameterId": null,
+        "mode": "toggle"
       },
       {
         "id": "ash:sad-tears",
         "text": "너무 슬퍼서 눈물이 나요.\n참을 수 없이 슬퍼요. 울고 싶어요.\n눈물이 멈추지 않아요.\n목이 메어 울음을 터뜨렸어요.\n그리움에 눈시울이 붉어지고 흐느껴요.\n괜찮은 척하다가 울음을 쏟았어요.\n가슴이 벅차오르고 눈가가 젖었어요.",
-        "parameterId": "Param70",
-        "enabled": true,
-        "mode": "toggle",
         "threshold": 0.88,
-        "from": 0,
-        "to": 1,
-        "excludeText": "슬프지만 울지는 않았어요.\n이제 괜찮아져서 울음을 그쳤어요.\n눈물 흘린 적 없어요."
+        "enabled": true,
+        "excludeText": "슬프지만 울지는 않았어요.\n이제 괜찮아져서 울음을 그쳤어요.\n눈물 흘린 적 없어요.",
+        "action": {
+          "kind": "expression",
+          "id": "눈물"
+        },
+        "parameterId": null,
+        "mode": "toggle"
       },
       {
         "id": "ash:nervous",
         "text": "조금 걱정되네요. 조심스럽게 확인해 볼게요.\n긴장되고 불안해요.\n확신하기 어려워서 망설여져요.",
-        "parameterId": "Param107",
-        "enabled": true,
-        "mode": "range",
         "threshold": 0.84,
-        "from": 0,
-        "to": 0.75
+        "enabled": true,
+        "action": {
+          "kind": "expression",
+          "id": "긴장"
+        },
+        "parameterId": null,
+        "mode": "toggle"
       },
       {
         "id": "ash:sweat",
         "text": "앗, 예상하지 못한 문제가 생겼네요.\n당황스럽고 난감하네요.\n곤란한 상황이네요. 어떡하죠?",
-        "parameterId": "Param69",
-        "enabled": true,
-        "mode": "toggle",
         "threshold": 0.86,
-        "from": 0,
-        "to": 1
+        "enabled": true,
+        "action": {
+          "kind": "expression",
+          "id": "땀방울"
+        },
+        "parameterId": null,
+        "mode": "toggle"
       },
       {
         "id": "ash:notes",
         "text": "요청하신 내용을 문서에 정리했어요.\n작성한 내용을 저장해 두었어요.\n기록해 둘게요. 요약을 적어 두었어요.",
-        "parameterId": "Param89",
-        "enabled": true,
-        "mode": "toggle",
-        "releaseWhenUnmatched": true,
-        "exclusiveGroup": "ash:hands",
         "threshold": 0.84,
-        "from": 0,
-        "to": 1
-      },
-      {
-        "id": "ash:notes-Param75",
-        "text": "요청하신 내용을 문서에 정리했어요.\n작성한 내용을 저장해 두었어요.\n기록해 둘게요. 요약을 적어 두었어요.",
-        "parameterId": "Param75",
         "enabled": true,
-        "mode": "toggle",
-        "releaseWhenUnmatched": true,
-        "exclusiveGroup": "ash:hands",
-        "threshold": 0.84,
-        "from": 0,
-        "to": 1
-      },
-      {
-        "id": "ash:notes-Param81",
-        "text": "요청하신 내용을 문서에 정리했어요.\n작성한 내용을 저장해 두었어요.\n기록해 둘게요. 요약을 적어 두었어요.",
-        "parameterId": "Param81",
-        "enabled": true,
-        "mode": "toggle",
-        "releaseWhenUnmatched": true,
-        "exclusiveGroup": "ash:hands",
-        "threshold": 0.84,
-        "from": 0,
-        "to": 1
-      },
-      {
-        "id": "ash:notes-hands",
-        "text": "요청하신 내용을 문서에 정리했어요.\n작성한 내용을 저장해 두었어요.\n기록해 둘게요. 요약을 적어 두었어요.",
-        "parameterId": "Param92",
-        "enabled": true,
-        "mode": "toggle",
-        "releaseWhenUnmatched": true,
-        "exclusiveGroup": "ash:hands",
-        "threshold": 0.84,
-        "from": 0,
-        "to": 1
+        "action": {
+          "kind": "expression",
+          "id": "노트 들기"
+        },
+        "parameterId": null,
+        "mode": "toggle"
       },
       {
         "id": "ash:thumbs-up",
         "text": "이 방법을 추천해요. 이렇게 진행하면 좋아요.\n아주 잘하셨어요! 그대로 진행해도 좋아요.\n확인했어요. 문제없이 통과했어요.",
-        "parameterId": "Param86",
-        "enabled": true,
-        "mode": "toggle",
-        "releaseWhenUnmatched": true,
-        "exclusiveGroup": "ash:hands",
         "threshold": 0.84,
-        "from": 0,
-        "to": 1
-      },
-      {
-        "id": "ash:thumbs-up-Param81",
-        "text": "이 방법을 추천해요. 이렇게 진행하면 좋아요.\n아주 잘하셨어요! 그대로 진행해도 좋아요.\n확인했어요. 문제없이 통과했어요.",
-        "parameterId": "Param81",
         "enabled": true,
-        "mode": "toggle",
-        "releaseWhenUnmatched": true,
-        "exclusiveGroup": "ash:hands",
-        "threshold": 0.84,
-        "from": 0,
-        "to": 1
+        "action": {
+          "kind": "expression",
+          "id": "엄지 척"
+        },
+        "parameterId": null,
+        "mode": "toggle"
       },
       {
         "id": "ash:coffee",
         "text": "잠시 쉬었다가 이어서 해 볼까요?\n커피 한 잔 마시면서 천천히 생각해 봐요.\n편하게 쉬면서 기다려 주세요.",
-        "parameterId": "Param88",
-        "enabled": true,
-        "mode": "toggle",
-        "releaseWhenUnmatched": true,
-        "exclusiveGroup": "ash:hands",
         "threshold": 0.84,
-        "from": 0,
-        "to": 1
-      },
-      {
-        "id": "ash:coffee-Param81",
-        "text": "잠시 쉬었다가 이어서 해 볼까요?\n커피 한 잔 마시면서 천천히 생각해 봐요.\n편하게 쉬면서 기다려 주세요.",
-        "parameterId": "Param81",
         "enabled": true,
-        "mode": "toggle",
-        "releaseWhenUnmatched": true,
-        "exclusiveGroup": "ash:hands",
-        "threshold": 0.84,
-        "from": 0,
-        "to": 1
+        "action": {
+          "kind": "expression",
+          "id": "커피 들기"
+        },
+        "parameterId": null,
+        "mode": "toggle"
       },
       {
         "id": "ash:controller",
         "text": "직접 실행해서 동작을 시험해 볼게요.\n게임을 시작해 볼까요?\n이제 직접 조작해 보세요.",
-        "parameterId": "Param84",
-        "enabled": true,
-        "mode": "toggle",
-        "releaseWhenUnmatched": true,
-        "exclusiveGroup": "ash:hands",
         "threshold": 0.84,
-        "from": 0,
-        "to": 1
-      },
-      {
-        "id": "ash:controller-Param75",
-        "text": "직접 실행해서 동작을 시험해 볼게요.\n게임을 시작해 볼까요?\n이제 직접 조작해 보세요.",
-        "parameterId": "Param75",
         "enabled": true,
-        "mode": "toggle",
-        "releaseWhenUnmatched": true,
-        "exclusiveGroup": "ash:hands",
-        "threshold": 0.84,
-        "from": 0,
-        "to": 1
-      },
-      {
-        "id": "ash:controller-Param81",
-        "text": "직접 실행해서 동작을 시험해 볼게요.\n게임을 시작해 볼까요?\n이제 직접 조작해 보세요.",
-        "parameterId": "Param81",
-        "enabled": true,
-        "mode": "toggle",
-        "releaseWhenUnmatched": true,
-        "exclusiveGroup": "ash:hands",
-        "threshold": 0.84,
-        "from": 0,
-        "to": 1
-      },
-      {
-        "id": "ash:controller-hands",
-        "text": "직접 실행해서 동작을 시험해 볼게요.\n게임을 시작해 볼까요?\n이제 직접 조작해 보세요.",
-        "parameterId": "Param92",
-        "enabled": true,
-        "mode": "toggle",
-        "releaseWhenUnmatched": true,
-        "exclusiveGroup": "ash:hands",
-        "threshold": 0.84,
-        "from": 0,
-        "to": 1
+        "action": {
+          "kind": "expression",
+          "id": "게임패드 들기"
+        },
+        "parameterId": null,
+        "mode": "toggle"
       },
       {
         "id": "ash:noodles",
         "text": "우선 식사부터 챙기세요.\n배고프시겠어요. 맛있게 드세요.\n늦었으니 간단히 먹고 계속해요.",
-        "parameterId": "Param85",
-        "enabled": true,
-        "mode": "toggle",
-        "releaseWhenUnmatched": true,
-        "exclusiveGroup": "ash:hands",
         "threshold": 0.84,
-        "from": 0,
-        "to": 1
-      },
-      {
-        "id": "ash:noodles-Param75",
-        "text": "우선 식사부터 챙기세요.\n배고프시겠어요. 맛있게 드세요.\n늦었으니 간단히 먹고 계속해요.",
-        "parameterId": "Param75",
         "enabled": true,
-        "mode": "toggle",
-        "releaseWhenUnmatched": true,
-        "exclusiveGroup": "ash:hands",
-        "threshold": 0.84,
-        "from": 0,
-        "to": 1
-      },
-      {
-        "id": "ash:noodles-Param81",
-        "text": "우선 식사부터 챙기세요.\n배고프시겠어요. 맛있게 드세요.\n늦었으니 간단히 먹고 계속해요.",
-        "parameterId": "Param81",
-        "enabled": true,
-        "mode": "toggle",
-        "releaseWhenUnmatched": true,
-        "exclusiveGroup": "ash:hands",
-        "threshold": 0.84,
-        "from": 0,
-        "to": 1
-      },
-      {
-        "id": "ash:noodles-hands",
-        "text": "우선 식사부터 챙기세요.\n배고프시겠어요. 맛있게 드세요.\n늦었으니 간단히 먹고 계속해요.",
-        "parameterId": "Param92",
-        "enabled": true,
-        "mode": "toggle",
-        "releaseWhenUnmatched": true,
-        "exclusiveGroup": "ash:hands",
-        "threshold": 0.84,
-        "from": 0,
-        "to": 1
+        "action": {
+          "kind": "expression",
+          "id": "컵라면 들기"
+        },
+        "parameterId": null,
+        "mode": "toggle"
       },
       {
         "id": "ash:handcuffs",
         "text": "권한이 없어 여기서 더 진행할 수 없어요.\n현재 제한 때문에 실행할 수 없어요.\n이 작업은 차단되어 있어요.",
-        "parameterId": "Param87",
-        "enabled": true,
-        "mode": "toggle",
-        "releaseWhenUnmatched": true,
-        "exclusiveGroup": "ash:hands",
         "threshold": 0.84,
-        "from": 0,
-        "to": 1
-      },
-      {
-        "id": "ash:handcuffs-Param75",
-        "text": "권한이 없어 여기서 더 진행할 수 없어요.\n현재 제한 때문에 실행할 수 없어요.\n이 작업은 차단되어 있어요.",
-        "parameterId": "Param75",
         "enabled": true,
-        "mode": "toggle",
-        "releaseWhenUnmatched": true,
-        "exclusiveGroup": "ash:hands",
-        "threshold": 0.84,
-        "from": 0,
-        "to": 1
-      },
-      {
-        "id": "ash:handcuffs-Param81",
-        "text": "권한이 없어 여기서 더 진행할 수 없어요.\n현재 제한 때문에 실행할 수 없어요.\n이 작업은 차단되어 있어요.",
-        "parameterId": "Param81",
-        "enabled": true,
-        "mode": "toggle",
-        "releaseWhenUnmatched": true,
-        "exclusiveGroup": "ash:hands",
-        "threshold": 0.84,
-        "from": 0,
-        "to": 1
-      },
-      {
-        "id": "ash:handcuffs-hands",
-        "text": "권한이 없어 여기서 더 진행할 수 없어요.\n현재 제한 때문에 실행할 수 없어요.\n이 작업은 차단되어 있어요.",
-        "parameterId": "Param92",
-        "enabled": true,
-        "mode": "toggle",
-        "releaseWhenUnmatched": true,
-        "exclusiveGroup": "ash:hands",
-        "threshold": 0.84,
-        "from": 0,
-        "to": 1
+        "action": {
+          "kind": "expression",
+          "id": "수갑 찬 손"
+        },
+        "parameterId": null,
+        "mode": "toggle"
       },
       {
         "id": "ash:microphone",
         "text": "핵심부터 설명해 드릴게요.\n결과를 발표할게요.\n차근차근 말씀드릴게요.",
-        "parameterId": "Param90",
-        "enabled": true,
-        "mode": "toggle",
-        "releaseWhenUnmatched": true,
-        "exclusiveGroup": "ash:hands",
         "threshold": 0.84,
-        "from": 0,
-        "to": 1
-      },
-      {
-        "id": "ash:microphone-Param81",
-        "text": "핵심부터 설명해 드릴게요.\n결과를 발표할게요.\n차근차근 말씀드릴게요.",
-        "parameterId": "Param81",
         "enabled": true,
-        "mode": "toggle",
-        "releaseWhenUnmatched": true,
-        "exclusiveGroup": "ash:hands",
-        "threshold": 0.84,
-        "from": 0,
-        "to": 1
+        "action": {
+          "kind": "expression",
+          "id": "마이크 들기"
+        },
+        "parameterId": null,
+        "mode": "toggle"
       },
       {
         "id": "ash:finger-heart",
         "text": "정말 고마워요. 마음을 담아 응원해요.\n항상 함께해 주셔서 감사해요.\n사랑과 응원을 보낼게요.",
-        "parameterId": "Param91",
-        "enabled": true,
-        "mode": "toggle",
-        "releaseWhenUnmatched": true,
-        "exclusiveGroup": "ash:hands",
         "threshold": 0.84,
-        "from": 0,
-        "to": 1
-      },
-      {
-        "id": "ash:finger-heart-Param75",
-        "text": "정말 고마워요. 마음을 담아 응원해요.\n항상 함께해 주셔서 감사해요.\n사랑과 응원을 보낼게요.",
-        "parameterId": "Param75",
         "enabled": true,
-        "mode": "toggle",
-        "releaseWhenUnmatched": true,
-        "exclusiveGroup": "ash:hands",
-        "threshold": 0.84,
-        "from": 0,
-        "to": 1
+        "action": {
+          "kind": "expression",
+          "id": "손하트"
+        },
+        "parameterId": null,
+        "mode": "toggle"
       },
       {
         "id": "ash:fists",
         "text": "조금만 더 힘내 봐요!\n끝까지 해낼 수 있어요. 화이팅!\n포기하지 말고 함께 해결해 봐요.",
-        "parameterId": "Param108",
-        "enabled": true,
-        "mode": "toggle",
-        "releaseWhenUnmatched": true,
-        "exclusiveGroup": "ash:hands",
         "threshold": 0.84,
-        "from": 0,
-        "to": 1
-      },
-      {
-        "id": "ash:fists-Param75",
-        "text": "조금만 더 힘내 봐요!\n끝까지 해낼 수 있어요. 화이팅!\n포기하지 말고 함께 해결해 봐요.",
-        "parameterId": "Param75",
         "enabled": true,
-        "mode": "toggle",
-        "releaseWhenUnmatched": true,
-        "exclusiveGroup": "ash:hands",
-        "threshold": 0.84,
-        "from": 0,
-        "to": 1
-      },
-      {
-        "id": "ash:fists-Param81",
-        "text": "조금만 더 힘내 봐요!\n끝까지 해낼 수 있어요. 화이팅!\n포기하지 말고 함께 해결해 봐요.",
-        "parameterId": "Param81",
-        "enabled": true,
-        "mode": "toggle",
-        "releaseWhenUnmatched": true,
-        "exclusiveGroup": "ash:hands",
-        "threshold": 0.84,
-        "from": 0,
-        "to": 1
+        "action": {
+          "kind": "expression",
+          "id": "주먹 쥐기"
+        },
+        "parameterId": null,
+        "mode": "toggle"
       },
       {
         "id": "ash:knife",
         "text": "필요 없는 부분을 잘라 내고 다듬을게요.\n복잡한 내용을 덜어 내고 간결하게 만들게요.\n불필요한 코드를 제거할게요.",
-        "parameterId": "Param109",
-        "enabled": true,
-        "mode": "toggle",
-        "releaseWhenUnmatched": true,
-        "exclusiveGroup": "ash:hands",
         "threshold": 0.84,
-        "from": 0,
-        "to": 1
-      },
-      {
-        "id": "ash:knife-Param81",
-        "text": "필요 없는 부분을 잘라 내고 다듬을게요.\n복잡한 내용을 덜어 내고 간결하게 만들게요.\n불필요한 코드를 제거할게요.",
-        "parameterId": "Param81",
         "enabled": true,
-        "mode": "toggle",
-        "releaseWhenUnmatched": true,
-        "exclusiveGroup": "ash:hands",
-        "threshold": 0.84,
-        "from": 0,
-        "to": 1
+        "action": {
+          "kind": "expression",
+          "id": "칼 들기"
+        },
+        "parameterId": null,
+        "mode": "toggle"
       },
       {
         "id": "ash:leash",
         "text": "제가 순서대로 안내해 드릴게요.\n이쪽으로 따라오세요.\n하나씩 따라 해 보세요.",
-        "parameterId": "Param80",
-        "enabled": true,
-        "mode": "toggle",
-        "releaseWhenUnmatched": true,
-        "exclusiveGroup": "ash:hands",
         "threshold": 0.84,
-        "from": 0,
-        "to": 1
-      },
-      {
-        "id": "ash:leash-Param75",
-        "text": "제가 순서대로 안내해 드릴게요.\n이쪽으로 따라오세요.\n하나씩 따라 해 보세요.",
-        "parameterId": "Param75",
         "enabled": true,
-        "mode": "toggle",
-        "releaseWhenUnmatched": true,
-        "exclusiveGroup": "ash:hands",
-        "threshold": 0.84,
-        "from": 0,
-        "to": 1
-      },
-      {
-        "id": "ash:leash-Param81",
-        "text": "제가 순서대로 안내해 드릴게요.\n이쪽으로 따라오세요.\n하나씩 따라 해 보세요.",
-        "parameterId": "Param81",
-        "enabled": true,
-        "mode": "toggle",
-        "releaseWhenUnmatched": true,
-        "exclusiveGroup": "ash:hands",
-        "threshold": 0.84,
-        "from": 0,
-        "to": 1
-      },
-      {
-        "id": "ash:leash-hands",
-        "text": "제가 순서대로 안내해 드릴게요.\n이쪽으로 따라오세요.\n하나씩 따라 해 보세요.",
-        "parameterId": "Param92",
-        "enabled": true,
-        "mode": "toggle",
-        "releaseWhenUnmatched": true,
-        "exclusiveGroup": "ash:hands",
-        "threshold": 0.84,
-        "from": 0,
-        "to": 1
+        "action": {
+          "kind": "expression",
+          "id": "목줄 동작"
+        },
+        "parameterId": null,
+        "mode": "toggle"
       },
       {
         "id": "ash:cat-paws",
         "text": "안녕하세요! 만나서 반가워요.\n다시 만나서 반가워요.\n귀엽게 인사할게요, 야옹!",
-        "parameterId": "Param83",
-        "enabled": true,
-        "mode": "toggle",
-        "releaseWhenUnmatched": true,
-        "exclusiveGroup": "ash:hands",
         "threshold": 0.84,
-        "from": 0,
-        "to": 1
-      },
-      {
-        "id": "ash:cat-paws-Param75",
-        "text": "안녕하세요! 만나서 반가워요.\n다시 만나서 반가워요.\n귀엽게 인사할게요, 야옹!",
-        "parameterId": "Param75",
         "enabled": true,
-        "mode": "toggle",
-        "releaseWhenUnmatched": true,
-        "exclusiveGroup": "ash:hands",
-        "threshold": 0.84,
-        "from": 0,
-        "to": 1
-      },
-      {
-        "id": "ash:cat-paws-Param81",
-        "text": "안녕하세요! 만나서 반가워요.\n다시 만나서 반가워요.\n귀엽게 인사할게요, 야옹!",
-        "parameterId": "Param81",
-        "enabled": true,
-        "mode": "toggle",
-        "releaseWhenUnmatched": true,
-        "exclusiveGroup": "ash:hands",
-        "threshold": 0.84,
-        "from": 0,
-        "to": 1
+        "action": {
+          "kind": "expression",
+          "id": "고양이 손"
+        },
+        "parameterId": null,
+        "mode": "toggle"
       },
       {
         "id": "ash:shrink",
         "text": "제가 착각했네요. 실수해서 죄송해요.\n앗, 잘못했어요. 바로잡을게요.\n제 설명이 틀렸네요. 정정할게요.",
-        "parameterId": "Param95",
-        "enabled": true,
-        "mode": "toggle",
-        "releaseWhenUnmatched": true,
         "threshold": 0.88,
-        "from": 0,
-        "to": 1
+        "enabled": true,
+        "action": {
+          "kind": "expression",
+          "id": "작아지기"
+        },
+        "parameterId": null,
+        "mode": "toggle"
       },
       {
         "id": "ash:glasses",
         "text": "원인을 자세히 분석해 볼게요.\n근거를 비교해서 꼼꼼히 검토할게요.\n자료를 조사해서 확인해 볼게요.",
-        "parameterId": "Param65",
-        "enabled": true,
-        "mode": "toggle",
-        "releaseWhenUnmatched": true,
         "threshold": 0.88,
-        "from": 0,
-        "to": 1
+        "enabled": true,
+        "action": {
+          "kind": "expression",
+          "id": "안경"
+        },
+        "parameterId": null,
+        "mode": "toggle"
       },
       {
         "id": "ash:shadow",
         "text": "기대와 다른 결과네요. 실망스러워요.\n어두운 기분이에요.\n충격적이고 암담하네요.",
-        "parameterId": "Param66",
-        "enabled": true,
-        "mode": "toggle",
-        "releaseWhenUnmatched": true,
         "threshold": 0.88,
-        "from": 0,
-        "to": 1
+        "enabled": true,
+        "action": {
+          "kind": "expression",
+          "id": "얼굴 그림자"
+        },
+        "parameterId": null,
+        "mode": "toggle"
       },
       {
         "id": "ash:highlights-off",
         "text": "예상과 전혀 다르네요. 믿기지 않아요.\n너무 놀라서 멍해졌어요.\n정말 충격적이네요.",
-        "parameterId": "Param74",
-        "enabled": true,
-        "mode": "toggle",
-        "releaseWhenUnmatched": true,
         "threshold": 0.88,
-        "from": 0,
-        "to": 1
-      },
-      {
-        "id": "ash:puffed-cheeks",
-        "text": "계속 같은 문제가 반복돼서 답답하네요.\n흥, 조금 삐쳤어요.\n정말 못마땅하네요.",
-        "parameterId": "Param102",
         "enabled": true,
-        "mode": "toggle",
-        "releaseWhenUnmatched": true,
-        "threshold": 0.88,
-        "from": 0,
-        "to": 1
-      },
-      {
-        "id": "ash:mouth-shrug",
-        "text": "어쩔 수 없네요.\n저도 잘 모르겠네요.\n확답을 드리기 어렵네요.",
-        "parameterId": "Param103",
-        "enabled": true,
-        "mode": "toggle",
-        "releaseWhenUnmatched": true,
-        "threshold": 0.88,
-        "from": 0,
-        "to": 1
-      },
-      {
-        "id": "ash:walking",
-        "text": "다음 단계로 넘어가 볼게요.\n이어서 진행할게요.\n출발해 볼까요?",
-        "parameterId": "Param110",
-        "enabled": true,
-        "mode": "toggle",
-        "releaseWhenUnmatched": true,
-        "threshold": 0.88,
-        "from": 0,
-        "to": 1
-      },
-      {
-        "id": "ash:agree",
-        "text": "네, 맞아요. 말씀하신 방향에 동의해요.\n좋아요. 그렇게 진행하겠습니다.\n알겠습니다. 확인했어요.",
-        "parameterId": "ParamAngleY",
-        "enabled": true,
-        "mode": "toggle",
-        "releaseWhenUnmatched": true,
-        "threshold": 0.86,
-        "from": 0,
-        "to": -12,
-        "exclusiveGroup": "ash:head",
-        "animation": {
-          "period": 0.8,
-          "phase": 0,
-          "cycles": 2
-        }
-      },
-      {
-        "id": "ash:agree-ParamBodyAngleY",
-        "text": "네, 맞아요. 말씀하신 방향에 동의해요.\n좋아요. 그렇게 진행하겠습니다.\n알겠습니다. 확인했어요.",
-        "parameterId": "ParamBodyAngleY",
-        "enabled": true,
-        "mode": "toggle",
-        "releaseWhenUnmatched": true,
-        "threshold": 0.86,
-        "from": 0,
-        "to": -2,
-        "exclusiveGroup": "ash:head",
-        "animation": {
-          "period": 0.8,
-          "phase": 0,
-          "cycles": 2
-        }
-      },
-      {
-        "id": "ash:disagree",
-        "text": "아니요. 그건 사실과 달라요.\n그렇게 하면 안 돼요. 다른 방법이 필요해요.\n그 부분에는 동의하기 어려워요.",
-        "parameterId": "ParamAngleX",
-        "enabled": true,
-        "mode": "toggle",
-        "releaseWhenUnmatched": true,
-        "threshold": 0.86,
-        "from": -14,
-        "to": 14,
-        "exclusiveGroup": "ash:head",
-        "animation": {
-          "period": 0.7,
-          "phase": 0.25,
-          "cycles": 2
-        }
-      },
-      {
-        "id": "ash:disagree-ParamBodyAngleX",
-        "text": "아니요. 그건 사실과 달라요.\n그렇게 하면 안 돼요. 다른 방법이 필요해요.\n그 부분에는 동의하기 어려워요.",
-        "parameterId": "ParamBodyAngleX",
-        "enabled": true,
-        "mode": "toggle",
-        "releaseWhenUnmatched": true,
-        "threshold": 0.86,
-        "from": -2,
-        "to": 2,
-        "exclusiveGroup": "ash:head",
-        "animation": {
-          "period": 0.7,
-          "phase": 0.25,
-          "cycles": 2
-        }
-      },
-      {
-        "id": "ash:thinking",
-        "text": "잠깐 생각해 볼게요.\n음, 어느 쪽이 더 나을까요?\n조금 고민이 되네요.",
-        "parameterId": "ParamAngleZ",
-        "enabled": true,
-        "mode": "toggle",
-        "releaseWhenUnmatched": true,
-        "threshold": 0.86,
-        "from": 0,
-        "to": -12,
-        "exclusiveGroup": "ash:head"
-      },
-      {
-        "id": "ash:thinking-ParamEyeBallY",
-        "text": "잠깐 생각해 볼게요.\n음, 어느 쪽이 더 나을까요?\n조금 고민이 되네요.",
-        "parameterId": "ParamEyeBallY",
-        "enabled": true,
-        "mode": "toggle",
-        "releaseWhenUnmatched": true,
-        "threshold": 0.86,
-        "from": 0,
-        "to": 0.25,
-        "exclusiveGroup": "ash:head"
-      },
-      {
-        "id": "ash:bow",
-        "text": "도와주셔서 진심으로 감사합니다.\n정중하게 감사의 인사를 드립니다.\n시간 내 주셔서 고맙습니다.",
-        "parameterId": "ParamAngleY",
-        "enabled": true,
-        "mode": "toggle",
-        "releaseWhenUnmatched": true,
-        "threshold": 0.86,
-        "from": 0,
-        "to": -22,
-        "exclusiveGroup": "ash:head",
-        "animation": {
-          "period": 1.4,
-          "phase": 0,
-          "cycles": 1
-        }
-      },
-      {
-        "id": "ash:bow-ParamBodyAngleY",
-        "text": "도와주셔서 진심으로 감사합니다.\n정중하게 감사의 인사를 드립니다.\n시간 내 주셔서 고맙습니다.",
-        "parameterId": "ParamBodyAngleY",
-        "enabled": true,
-        "mode": "toggle",
-        "releaseWhenUnmatched": true,
-        "threshold": 0.86,
-        "from": 0,
-        "to": -6,
-        "exclusiveGroup": "ash:head",
-        "animation": {
-          "period": 1.4,
-          "phase": 0,
-          "cycles": 1
-        }
-      },
-      {
-        "id": "ash:look-left",
-        "text": "왼쪽 항목을 확인해 주세요.\n왼쪽 메뉴를 봐 주세요.\n왼쪽에 있는 내용을 살펴볼게요.",
-        "parameterId": "ParamEyeBallX",
-        "enabled": true,
-        "mode": "toggle",
-        "releaseWhenUnmatched": true,
-        "threshold": 0.86,
-        "from": 0,
-        "to": -0.65,
-        "exclusiveGroup": "ash:head"
-      },
-      {
-        "id": "ash:look-left-ParamAngleX",
-        "text": "왼쪽 항목을 확인해 주세요.\n왼쪽 메뉴를 봐 주세요.\n왼쪽에 있는 내용을 살펴볼게요.",
-        "parameterId": "ParamAngleX",
-        "enabled": true,
-        "mode": "toggle",
-        "releaseWhenUnmatched": true,
-        "threshold": 0.86,
-        "from": 0,
-        "to": -9.75,
-        "exclusiveGroup": "ash:head"
-      },
-      {
-        "id": "ash:look-right",
-        "text": "오른쪽 결과를 확인해 주세요.\n오른쪽 패널을 봐 주세요.\n오른쪽에 있는 내용을 살펴볼게요.",
-        "parameterId": "ParamEyeBallX",
-        "enabled": true,
-        "mode": "toggle",
-        "releaseWhenUnmatched": true,
-        "threshold": 0.86,
-        "from": 0,
-        "to": 0.65,
-        "exclusiveGroup": "ash:head"
-      },
-      {
-        "id": "ash:look-right-ParamAngleX",
-        "text": "오른쪽 결과를 확인해 주세요.\n오른쪽 패널을 봐 주세요.\n오른쪽에 있는 내용을 살펴볼게요.",
-        "parameterId": "ParamAngleX",
-        "enabled": true,
-        "mode": "toggle",
-        "releaseWhenUnmatched": true,
-        "threshold": 0.86,
-        "from": 0,
-        "to": 9.75,
-        "exclusiveGroup": "ash:head"
-      },
-      {
-        "id": "ash:look-up",
-        "text": "위 내용을 다시 확인해 볼게요.\n위쪽에 있는 항목을 봐 주세요.\n앞에서 설명한 부분을 보세요.",
-        "parameterId": "ParamEyeBallY",
-        "enabled": true,
-        "mode": "toggle",
-        "releaseWhenUnmatched": true,
-        "threshold": 0.86,
-        "from": 0,
-        "to": 0.6,
-        "exclusiveGroup": "ash:head"
-      },
-      {
-        "id": "ash:look-up-ParamAngleY",
-        "text": "위 내용을 다시 확인해 볼게요.\n위쪽에 있는 항목을 봐 주세요.\n앞에서 설명한 부분을 보세요.",
-        "parameterId": "ParamAngleY",
-        "enabled": true,
-        "mode": "toggle",
-        "releaseWhenUnmatched": true,
-        "threshold": 0.86,
-        "from": 0,
-        "to": 9.0,
-        "exclusiveGroup": "ash:head"
-      },
-      {
-        "id": "ash:look-down",
-        "text": "아래 예시를 확인해 주세요.\n아래쪽 내용을 보시면 됩니다.\n다음에 적은 항목을 살펴보세요.",
-        "parameterId": "ParamEyeBallY",
-        "enabled": true,
-        "mode": "toggle",
-        "releaseWhenUnmatched": true,
-        "threshold": 0.86,
-        "from": 0,
-        "to": -0.6,
-        "exclusiveGroup": "ash:head"
-      },
-      {
-        "id": "ash:look-down-ParamAngleY",
-        "text": "아래 예시를 확인해 주세요.\n아래쪽 내용을 보시면 됩니다.\n다음에 적은 항목을 살펴보세요.",
-        "parameterId": "ParamAngleY",
-        "enabled": true,
-        "mode": "toggle",
-        "releaseWhenUnmatched": true,
-        "threshold": 0.86,
-        "from": 0,
-        "to": -9.0,
-        "exclusiveGroup": "ash:head"
-      },
-      {
-        "id": "ash:surprised-lean-ParamBodyAngleZ",
-        "text": "앗, 깜짝 놀랐어요!\n정말 예상하지 못한 결과네요!\n와, 이럴 수가 있나요?",
-        "parameterId": "ParamBodyAngleZ",
-        "enabled": true,
-        "mode": "toggle",
-        "releaseWhenUnmatched": true,
-        "threshold": 0.86,
-        "from": 0,
-        "to": 3,
-        "exclusiveGroup": "ash:body"
-      },
-      {
-        "id": "ash:wink-left",
-        "text": "이건 우리끼리 비밀로 해요.\n작은 비밀 하나 알려 드릴게요.\n살짝 힌트를 드릴게요.",
-        "parameterId": "ParamEyeLOpen",
-        "enabled": true,
-        "mode": "toggle",
-        "releaseWhenUnmatched": true,
-        "threshold": 0.86,
-        "from": 1,
-        "to": 0,
-        "exclusiveGroup": "ash:wink",
-        "animation": {
-          "period": 0.9,
-          "phase": 0,
-          "cycles": 1
-        }
-      },
-      {
-        "id": "ash:wink-left-ParamEyeLSmile",
-        "text": "이건 우리끼리 비밀로 해요.\n작은 비밀 하나 알려 드릴게요.\n살짝 힌트를 드릴게요.",
-        "parameterId": "ParamEyeLSmile",
-        "enabled": true,
-        "mode": "toggle",
-        "releaseWhenUnmatched": true,
-        "threshold": 0.86,
-        "from": 0,
-        "to": 1,
-        "exclusiveGroup": "ash:wink",
-        "animation": {
-          "period": 0.9,
-          "phase": 0,
-          "cycles": 1
-        }
-      },
-      {
-        "id": "ash:wink-right",
-        "text": "믿고 맡겨 주세요. 센스 있게 처리할게요.\n기대하셔도 좋아요. 제가 잘 챙길게요.\n걱정 마세요. 제가 알아서 할게요.",
-        "parameterId": "ParamEyeROpen",
-        "enabled": true,
-        "mode": "toggle",
-        "releaseWhenUnmatched": true,
-        "threshold": 0.86,
-        "from": 1,
-        "to": 0,
-        "exclusiveGroup": "ash:wink",
-        "animation": {
-          "period": 0.9,
-          "phase": 0,
-          "cycles": 1
-        }
-      },
-      {
-        "id": "ash:wink-right-ParamEyeRSmile",
-        "text": "믿고 맡겨 주세요. 센스 있게 처리할게요.\n기대하셔도 좋아요. 제가 잘 챙길게요.\n걱정 마세요. 제가 알아서 할게요.",
-        "parameterId": "ParamEyeRSmile",
-        "enabled": true,
-        "mode": "toggle",
-        "releaseWhenUnmatched": true,
-        "threshold": 0.86,
-        "from": 0,
-        "to": 1,
-        "exclusiveGroup": "ash:wink",
-        "animation": {
-          "period": 0.9,
-          "phase": 0,
-          "cycles": 1
-        }
+        "action": {
+          "kind": "expression",
+          "id": "눈의 하이라이트 끄기"
+        },
+        "parameterId": null,
+        "mode": "toggle"
       },
       {
         "id": "ash:press-left",
         "text": "이 항목을 선택해 주세요.\n이쪽 버튼을 눌러 볼게요.\n선택지를 하나 골라 주세요.",
-        "parameterId": "Param75",
-        "enabled": true,
-        "mode": "toggle",
-        "releaseWhenUnmatched": true,
         "threshold": 0.86,
-        "from": 0,
-        "to": 1,
-        "exclusiveGroup": "ash:hands"
-      },
-      {
-        "id": "ash:press-left-Param96",
-        "text": "이 항목을 선택해 주세요.\n이쪽 버튼을 눌러 볼게요.\n선택지를 하나 골라 주세요.",
-        "parameterId": "Param96",
         "enabled": true,
-        "mode": "toggle",
-        "releaseWhenUnmatched": true,
-        "threshold": 0.86,
-        "from": 0,
-        "to": 1,
-        "exclusiveGroup": "ash:hands",
-        "animation": {
-          "period": 0.65,
-          "phase": 0,
-          "cycles": 2
-        }
-      },
-      {
-        "id": "ash:press-left-Param45",
-        "text": "이 항목을 선택해 주세요.\n이쪽 버튼을 눌러 볼게요.\n선택지를 하나 골라 주세요.",
-        "parameterId": "Param45",
-        "enabled": true,
-        "mode": "toggle",
-        "releaseWhenUnmatched": true,
-        "threshold": 0.86,
-        "from": 0,
-        "to": -0.3,
-        "exclusiveGroup": "ash:hands"
+        "action": {
+          "kind": "expression",
+          "id": "왼손 버튼 누르기"
+        },
+        "parameterId": null,
+        "mode": "toggle"
       },
       {
         "id": "ash:press-right",
         "text": "확인 버튼을 눌러 주세요.\n오른쪽 버튼을 클릭해 주세요.\n실행 버튼을 누르면 됩니다.",
-        "parameterId": "Param81",
-        "enabled": true,
-        "mode": "toggle",
-        "releaseWhenUnmatched": true,
         "threshold": 0.86,
-        "from": 0,
-        "to": 1,
-        "exclusiveGroup": "ash:hands"
-      },
-      {
-        "id": "ash:press-right-Param94",
-        "text": "확인 버튼을 눌러 주세요.\n오른쪽 버튼을 클릭해 주세요.\n실행 버튼을 누르면 됩니다.",
-        "parameterId": "Param94",
         "enabled": true,
-        "mode": "toggle",
-        "releaseWhenUnmatched": true,
-        "threshold": 0.86,
-        "from": 0,
-        "to": 1,
-        "exclusiveGroup": "ash:hands",
-        "animation": {
-          "period": 0.65,
-          "phase": 0,
-          "cycles": 2
-        }
-      },
-      {
-        "id": "ash:press-right-Param47",
-        "text": "확인 버튼을 눌러 주세요.\n오른쪽 버튼을 클릭해 주세요.\n실행 버튼을 누르면 됩니다.",
-        "parameterId": "Param47",
-        "enabled": true,
-        "mode": "toggle",
-        "releaseWhenUnmatched": true,
-        "threshold": 0.86,
-        "from": 0,
-        "to": 0.3,
-        "exclusiveGroup": "ash:hands"
-      },
-      {
-        "id": "ash:shrug",
-        "text": "지금으로서는 어쩔 수 없겠네요.\n저도 정확한 답을 모르겠어요.\n이 부분은 아직 알 수 없네요.",
-        "parameterId": "ParamBodyAngleZ",
-        "enabled": true,
-        "mode": "toggle",
-        "releaseWhenUnmatched": true,
-        "threshold": 0.86,
-        "from": 0,
-        "to": -4,
-        "exclusiveGroup": "ash:body"
-      },
-      {
-        "id": "ash:shrug-ParamBrowLY",
-        "text": "지금으로서는 어쩔 수 없겠네요.\n저도 정확한 답을 모르겠어요.\n이 부분은 아직 알 수 없네요.",
-        "parameterId": "ParamBrowLY",
-        "enabled": true,
-        "mode": "toggle",
-        "releaseWhenUnmatched": true,
-        "threshold": 0.86,
-        "from": 0,
-        "to": 0.3,
-        "exclusiveGroup": "ash:body"
-      },
-      {
-        "id": "ash:shrug-ParamBrowRY",
-        "text": "지금으로서는 어쩔 수 없겠네요.\n저도 정확한 답을 모르겠어요.\n이 부분은 아직 알 수 없네요.",
-        "parameterId": "ParamBrowRY",
-        "enabled": true,
-        "mode": "toggle",
-        "releaseWhenUnmatched": true,
-        "threshold": 0.86,
-        "from": 0,
-        "to": 0.3,
-        "exclusiveGroup": "ash:body"
-      },
-      {
-        "id": "ash:breathe",
-        "text": "천천히 심호흡해 볼까요?\n숨을 깊게 들이마시고 편하게 내쉬세요.\n잠시 호흡을 가다듬어 봐요.",
-        "parameterId": "ParamBreath",
-        "enabled": true,
-        "mode": "toggle",
-        "releaseWhenUnmatched": true,
-        "threshold": 0.86,
-        "from": 0,
-        "to": 1,
-        "animation": {
-          "period": 3,
-          "phase": 0,
-          "cycles": 2
-        }
+        "action": {
+          "kind": "expression",
+          "id": "오른손 버튼 누르기"
+        },
+        "parameterId": null,
+        "mode": "toggle"
       },
       {
         "id": "ash:notes-detail",
-        "text": "요청하신 내용을 문서에 정리했어요.\n작성한 내용을 저장해 두었어요.\n기록해 둘게요. 요약을 적어 두었어요.",
-        "parameterId": "Param93",
-        "enabled": true,
-        "mode": "toggle",
-        "releaseWhenUnmatched": true,
+        "text": "중요한 내용은 메모하면서 설명할게요.\n빠뜨리지 않도록 지금 하나씩 적고 있어요.\n핵심을 적어 두면서 확인하고 있어요.",
         "threshold": 0.84,
-        "from": 0,
-        "to": 1,
-        "exclusiveGroup": "ash:hands",
-        "animation": {
-          "period": 1.3,
-          "phase": 0
-        }
-      },
-      {
-        "id": "ash:controller-detail",
-        "text": "직접 실행해서 동작을 시험해 볼게요.\n게임을 시작해 볼까요?\n이제 직접 조작해 보세요.",
-        "parameterId": "Param97",
         "enabled": true,
-        "mode": "toggle",
-        "releaseWhenUnmatched": true,
-        "threshold": 0.84,
-        "from": 0,
-        "to": 1,
-        "exclusiveGroup": "ash:hands",
-        "animation": {
-          "period": 0.55,
-          "phase": 0
-        }
+        "action": {
+          "kind": "expression",
+          "id": "필기 동작"
+        },
+        "parameterId": null,
+        "mode": "toggle"
       },
       {
-        "id": "ash:controller-detail-Param98",
-        "text": "직접 실행해서 동작을 시험해 볼게요.\n게임을 시작해 볼까요?\n이제 직접 조작해 보세요.",
-        "parameterId": "Param98",
-        "enabled": true,
-        "mode": "toggle",
-        "releaseWhenUnmatched": true,
-        "threshold": 0.84,
-        "from": 0,
-        "to": 1,
-        "exclusiveGroup": "ash:hands",
-        "animation": {
-          "period": 0.55,
-          "phase": 0.5
-        }
-      },
-      {
-        "id": "ash:cat-paws-detail",
-        "text": "안녕하세요! 만나서 반가워요.\n다시 만나서 반가워요.\n귀엽게 인사할게요, 야옹!",
-        "parameterId": "Param82",
-        "enabled": true,
-        "mode": "toggle",
-        "releaseWhenUnmatched": true,
-        "threshold": 0.84,
-        "from": -0.2,
-        "to": 0.6,
-        "exclusiveGroup": "ash:hands",
-        "animation": {
-          "period": 1.1,
-          "phase": 0.25
-        }
-      },
-      {
-        "id": "ash:cat-paws-detail-Param45",
-        "text": "안녕하세요! 만나서 반가워요.\n다시 만나서 반가워요.\n귀엽게 인사할게요, 야옹!",
-        "parameterId": "Param45",
-        "enabled": true,
-        "mode": "toggle",
-        "releaseWhenUnmatched": true,
-        "threshold": 0.84,
-        "from": -0.25,
-        "to": 0.25,
-        "exclusiveGroup": "ash:hands",
-        "animation": {
-          "period": 0.8,
-          "phase": 0.25
-        }
-      },
-      {
-        "id": "ash:cat-paws-detail-Param47",
-        "text": "안녕하세요! 만나서 반가워요.\n다시 만나서 반가워요.\n귀엽게 인사할게요, 야옹!",
-        "parameterId": "Param47",
-        "enabled": true,
-        "mode": "toggle",
-        "releaseWhenUnmatched": true,
-        "threshold": 0.84,
-        "from": -0.25,
-        "to": 0.25,
-        "exclusiveGroup": "ash:hands",
-        "animation": {
-          "period": 0.8,
-          "phase": 0.75
-        }
-      },
-      {
-        "id": "ash:cat-paws-detail-Param46",
-        "text": "안녕하세요! 만나서 반가워요.\n다시 만나서 반가워요.\n귀엽게 인사할게요, 야옹!",
-        "parameterId": "Param46",
-        "enabled": true,
-        "mode": "toggle",
-        "releaseWhenUnmatched": true,
-        "threshold": 0.84,
-        "from": 0,
-        "to": 0.25,
-        "exclusiveGroup": "ash:hands",
-        "animation": {
-          "period": 0.8,
-          "phase": 0
-        }
-      },
-      {
-        "id": "ash:cat-paws-detail-Param48",
-        "text": "안녕하세요! 만나서 반가워요.\n다시 만나서 반가워요.\n귀엽게 인사할게요, 야옹!",
-        "parameterId": "Param48",
-        "enabled": true,
-        "mode": "toggle",
-        "releaseWhenUnmatched": true,
-        "threshold": 0.84,
-        "from": 0,
-        "to": 0.25,
-        "exclusiveGroup": "ash:hands",
-        "animation": {
-          "period": 0.8,
-          "phase": 0.5
-        }
-      },
-      {
-        "id": "ash:leash-detail",
-        "text": "제가 순서대로 안내해 드릴게요.\n이쪽으로 따라오세요.\n하나씩 따라 해 보세요.",
-        "parameterId": "Param76",
-        "enabled": true,
-        "mode": "toggle",
-        "releaseWhenUnmatched": true,
-        "threshold": 0.84,
-        "from": -0.3,
-        "to": 0.3,
-        "exclusiveGroup": "ash:hands",
-        "animation": {
-          "period": 1.8,
-          "phase": 0.25
-        }
-      },
-      {
-        "id": "ash:leash-detail-Param77",
-        "text": "제가 순서대로 안내해 드릴게요.\n이쪽으로 따라오세요.\n하나씩 따라 해 보세요.",
-        "parameterId": "Param77",
-        "enabled": true,
-        "mode": "toggle",
-        "releaseWhenUnmatched": true,
-        "threshold": 0.84,
-        "from": -0.15,
-        "to": 0.15,
-        "exclusiveGroup": "ash:hands",
-        "animation": {
-          "period": 1.8,
-          "phase": 0.75
-        }
-      },
-      {
-        "id": "ash:joy-left-detail",
-        "text": "기쁘고 행복해서 환하게 웃어요. 잘됐어, 성공했어, 고마워, 축하해!\n잘됐어요! 성공했어요, 축하해요!\n고마워요, 덕분에 잘 해결했어요.",
-        "parameterId": "ParamCheek",
-        "enabled": true,
-        "mode": "toggle",
-        "releaseWhenUnmatched": true,
-        "threshold": 0.84,
-        "from": 0,
-        "to": 0.35
-      },
-      {
-        "id": "ash:joy-left-detail-ParamBrowLY",
-        "text": "기쁘고 행복해서 환하게 웃어요. 잘됐어, 성공했어, 고마워, 축하해!\n잘됐어요! 성공했어요, 축하해요!\n고마워요, 덕분에 잘 해결했어요.",
-        "parameterId": "ParamBrowLY",
-        "enabled": true,
-        "mode": "toggle",
-        "releaseWhenUnmatched": true,
-        "threshold": 0.84,
-        "from": 0,
-        "to": 0.15
-      },
-      {
-        "id": "ash:joy-left-detail-ParamBrowRY",
-        "text": "기쁘고 행복해서 환하게 웃어요. 잘됐어, 성공했어, 고마워, 축하해!\n잘됐어요! 성공했어요, 축하해요!\n고마워요, 덕분에 잘 해결했어요.",
-        "parameterId": "ParamBrowRY",
-        "enabled": true,
-        "mode": "toggle",
-        "releaseWhenUnmatched": true,
-        "threshold": 0.84,
-        "from": 0,
-        "to": 0.15
-      },
-      {
-        "id": "ash:joy-left-detail-ParamBrowLForm",
-        "text": "기쁘고 행복해서 환하게 웃어요. 잘됐어, 성공했어, 고마워, 축하해!\n잘됐어요! 성공했어요, 축하해요!\n고마워요, 덕분에 잘 해결했어요.",
-        "parameterId": "ParamBrowLForm",
-        "enabled": true,
-        "mode": "toggle",
-        "releaseWhenUnmatched": true,
-        "threshold": 0.84,
-        "from": 0,
-        "to": 0.3
-      },
-      {
-        "id": "ash:joy-left-detail-ParamBrowRForm",
-        "text": "기쁘고 행복해서 환하게 웃어요. 잘됐어, 성공했어, 고마워, 축하해!\n잘됐어요! 성공했어요, 축하해요!\n고마워요, 덕분에 잘 해결했어요.",
-        "parameterId": "ParamBrowRForm",
-        "enabled": true,
-        "mode": "toggle",
-        "releaseWhenUnmatched": true,
-        "threshold": 0.84,
-        "from": 0,
-        "to": 0.3
-      },
-      {
-        "id": "ash:angry-detail",
-        "text": "이건 정말 부당하네요.\n화가 나고 짜증이 나요.\n정말 불쾌한 일이에요.",
-        "parameterId": "ParamBrowLY",
-        "enabled": true,
-        "mode": "toggle",
-        "releaseWhenUnmatched": true,
-        "threshold": 0.82,
-        "from": 0,
-        "to": -0.35
-      },
-      {
-        "id": "ash:angry-detail-ParamBrowRY",
-        "text": "이건 정말 부당하네요.\n화가 나고 짜증이 나요.\n정말 불쾌한 일이에요.",
-        "parameterId": "ParamBrowRY",
-        "enabled": true,
-        "mode": "toggle",
-        "releaseWhenUnmatched": true,
-        "threshold": 0.82,
-        "from": 0,
-        "to": -0.35
-      },
-      {
-        "id": "ash:angry-detail-ParamBrowLX",
-        "text": "이건 정말 부당하네요.\n화가 나고 짜증이 나요.\n정말 불쾌한 일이에요.",
-        "parameterId": "ParamBrowLX",
-        "enabled": true,
-        "mode": "toggle",
-        "releaseWhenUnmatched": true,
-        "threshold": 0.82,
-        "from": 0,
-        "to": -0.15
-      },
-      {
-        "id": "ash:angry-detail-ParamBrowRX",
-        "text": "이건 정말 부당하네요.\n화가 나고 짜증이 나요.\n정말 불쾌한 일이에요.",
-        "parameterId": "ParamBrowRX",
-        "enabled": true,
-        "mode": "toggle",
-        "releaseWhenUnmatched": true,
-        "threshold": 0.82,
-        "from": 0,
-        "to": -0.15
-      },
-      {
-        "id": "ash:angry-detail-ParamBrowLAngle",
-        "text": "이건 정말 부당하네요.\n화가 나고 짜증이 나요.\n정말 불쾌한 일이에요.",
-        "parameterId": "ParamBrowLAngle",
-        "enabled": true,
-        "mode": "toggle",
-        "releaseWhenUnmatched": true,
-        "threshold": 0.82,
-        "from": 0,
-        "to": 0.5
-      },
-      {
-        "id": "ash:angry-detail-ParamBrowRAngle",
-        "text": "이건 정말 부당하네요.\n화가 나고 짜증이 나요.\n정말 불쾌한 일이에요.",
-        "parameterId": "ParamBrowRAngle",
-        "enabled": true,
-        "mode": "toggle",
-        "releaseWhenUnmatched": true,
-        "threshold": 0.82,
-        "from": 0,
-        "to": 0.5
-      },
-      {
-        "id": "ash:excited-detail",
-        "text": "좋은 아이디어네요! 정말 기대돼요.\n흥미로운 결과예요. 정말 대단해요!\n멋진 발견이에요, 신나요!",
-        "parameterId": "Param41",
-        "enabled": true,
-        "mode": "toggle",
-        "releaseWhenUnmatched": true,
-        "threshold": 0.86,
-        "from": 0,
-        "to": 0.2
-      },
-      {
-        "id": "ash:excited-detail-Param42",
-        "text": "좋은 아이디어네요! 정말 기대돼요.\n흥미로운 결과예요. 정말 대단해요!\n멋진 발견이에요, 신나요!",
-        "parameterId": "Param42",
-        "enabled": true,
-        "mode": "toggle",
-        "releaseWhenUnmatched": true,
-        "threshold": 0.86,
-        "from": 0,
-        "to": 0.5
-      },
-      {
-        "id": "ash:excited-detail-Param43",
-        "text": "좋은 아이디어네요! 정말 기대돼요.\n흥미로운 결과예요. 정말 대단해요!\n멋진 발견이에요, 신나요!",
-        "parameterId": "Param43",
-        "enabled": true,
-        "mode": "toggle",
-        "releaseWhenUnmatched": true,
-        "threshold": 0.86,
-        "from": 0,
-        "to": -0.2
-      },
-      {
-        "id": "ash:excited-detail-Param44",
-        "text": "좋은 아이디어네요! 정말 기대돼요.\n흥미로운 결과예요. 정말 대단해요!\n멋진 발견이에요, 신나요!",
-        "parameterId": "Param44",
-        "enabled": true,
-        "mode": "toggle",
-        "releaseWhenUnmatched": true,
-        "threshold": 0.86,
-        "from": 0,
-        "to": 0.5
-      },
-      {
-        "id": "ash:walking-detail",
+        "id": "ash:walking",
         "text": "다음 단계로 넘어가 볼게요.\n이어서 진행할게요.\n출발해 볼까요?",
-        "parameterId": "Param111",
-        "enabled": true,
-        "mode": "toggle",
-        "releaseWhenUnmatched": true,
         "threshold": 0.88,
-        "from": -1,
-        "to": 1,
-        "animation": {
-          "period": 1.666,
-          "phase": 0
-        }
-      },
-      {
-        "id": "ash:walking-detail-Param112",
-        "text": "다음 단계로 넘어가 볼게요.\n이어서 진행할게요.\n출발해 볼까요?",
-        "parameterId": "Param112",
         "enabled": true,
-        "mode": "toggle",
-        "releaseWhenUnmatched": true,
-        "threshold": 0.88,
-        "from": 0,
-        "to": 1,
-        "animation": {
-          "period": 1.666,
-          "phase": 0
-        }
-      },
-      {
-        "id": "ash:walking-detail-Param113",
-        "text": "다음 단계로 넘어가 볼게요.\n이어서 진행할게요.\n출발해 볼까요?",
-        "parameterId": "Param113",
-        "enabled": true,
-        "mode": "toggle",
-        "releaseWhenUnmatched": true,
-        "threshold": 0.88,
-        "from": -1,
-        "to": 1,
-        "animation": {
-          "period": 1.666,
-          "phase": 0.5
-        }
-      },
-      {
-        "id": "ash:walking-detail-Param114",
-        "text": "다음 단계로 넘어가 볼게요.\n이어서 진행할게요.\n출발해 볼까요?",
-        "parameterId": "Param114",
-        "enabled": true,
-        "mode": "toggle",
-        "releaseWhenUnmatched": true,
-        "threshold": 0.88,
-        "from": 0,
-        "to": 1,
-        "animation": {
-          "period": 1.666,
-          "phase": 0.5
-        }
-      },
-      {
-        "id": "ash:walking-detail-Param115",
-        "text": "다음 단계로 넘어가 볼게요.\n이어서 진행할게요.\n출발해 볼까요?",
-        "parameterId": "Param115",
-        "enabled": true,
-        "mode": "toggle",
-        "releaseWhenUnmatched": true,
-        "threshold": 0.88,
-        "from": -0.2,
-        "to": 0.2,
-        "animation": {
-          "period": 0.834
-        }
-      },
-      {
-        "id": "ash:walking-detail-Param116",
-        "text": "다음 단계로 넘어가 볼게요.\n이어서 진행할게요.\n출발해 볼까요?",
-        "parameterId": "Param116",
-        "enabled": true,
-        "mode": "toggle",
-        "releaseWhenUnmatched": true,
-        "threshold": 0.88,
-        "from": -0.5,
-        "to": 0.5,
-        "animation": {
-          "period": 1.666
-        }
+        "action": {
+          "kind": "motion",
+          "id": "Walk:0"
+        },
+        "parameterId": null,
+        "mode": "toggle"
       }
     ]
   }

@@ -8,12 +8,15 @@ import {
 import type {PoffoWidget} from '@winter-love/wallpaper/settings/library-model'
 import type {TrackingParameter} from '../tracking/types'
 import {builtinConnectionProfile} from './builtin-profile'
+import type {CharacterAction} from '../semantics/types'
 
 interface UseConnectionProfilesOptions {
   readonly widget: Accessor<PoffoWidget | undefined>
   readonly parameters: Accessor<readonly TrackingParameter[]>
+  readonly actions?: Accessor<readonly CharacterAction[]>
 }
 const IMPORT_ERRORS = {
+  action: '이 캐릭터에 없는 행동이 포함돼 있어요.',
   character: '다른 기본 캐릭터의 연결 설정이에요.',
   invalid: '연결 JSON의 형식이나 값을 확인해 주세요.',
   parameter: '이 캐릭터에 없는 파라미터가 포함돼 있어요.',
@@ -72,6 +75,7 @@ export const useConnectionProfiles = (options: UseConnectionProfilesOptions) => 
         return
       }
       const parsed = parseConnectionProfile(source, {
+        actions: options.actions?.().map((item) => item.action),
         assetId: widget.assetId,
         parameters: options.parameters(),
       })

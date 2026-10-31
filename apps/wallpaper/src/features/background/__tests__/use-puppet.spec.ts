@@ -34,6 +34,7 @@ const player: Player = {
   playGroup: vi.fn(),
   playMotion: vi.fn(),
   redraw: vi.fn(),
+  resetMotionHistory: vi.fn(),
   resetParameters: vi.fn(),
   resetPhysics: vi.fn(),
   resize: vi.fn(),

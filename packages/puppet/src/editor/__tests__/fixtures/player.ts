@@ -17,6 +17,7 @@ export const createPlayerFixture = (): Player => ({
   playGroup: vi.fn(),
   playMotion: vi.fn<(motionId: string, options?: PlayerPlaybackOptions) => boolean>(() => true),
   redraw: vi.fn(),
+  resetMotionHistory: vi.fn(),
   resetParameters: vi.fn(),
   resetPhysics: vi.fn(),
   resize: vi.fn(),

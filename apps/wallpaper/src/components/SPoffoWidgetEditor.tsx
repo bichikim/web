@@ -97,6 +97,7 @@ export const SPoffoWidgetEditor = (props: SPoffoWidgetEditorProps) => {
         connections={(source) => (
           <Show when={editable()}>
             <SPoffoConnectionProfiles
+              actions={source.actions?.()}
               widget={props.widget ?? undefined}
               parameters={source.parameters()}
               loading={source.loading()}
@@ -109,8 +110,8 @@ export const SPoffoWidgetEditor = (props: SPoffoWidgetEditorProps) => {
               onChange={configureLipSync}
             />
             <SPoffoSemanticSettings
+              actions={source.actions?.()}
               widgetId={props.widget?.id}
-              parameters={source.parameters()}
               loading={source.loading()}
               value={props.widget?.speech?.semanticBindings}
               onChange={configureSemantics}

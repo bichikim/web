@@ -1,4 +1,5 @@
-import {useSemanticParameters} from '../semantics/use-semantic-parameters'
+import {useSemanticActions} from '../semantics/use-semantic-actions'
+import {modelActions} from '../semantics/model-actions'
 import {type Accessor, createEffect, createMemo, createSignal, onCleanup, untrack} from 'solid-js'
 import type {Player} from '@winter-love/puppet/player'
 import {usePuppetDocument} from './use-puppet-document'
@@ -64,9 +65,9 @@ export const usePuppet = (props: UsePuppetProps): void => {
     player: active,
     widgetId: () => props.lipsyncId?.(),
   })
-  useSemanticParameters({
+  useSemanticActions({
+    actions: () => (document() === null ? [] : modelActions(document()!)),
     bindings: () => props.semanticBindings?.(),
-    parameters,
     player: active,
     widgetId: () => props.lipsyncId?.(),
   })

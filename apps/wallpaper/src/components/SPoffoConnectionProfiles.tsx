@@ -3,15 +3,18 @@ import type {PoffoWidget} from '@winter-love/wallpaper/settings/library-model'
 import type {TrackingParameter} from '../features/tracking/types'
 import {useConnectionProfiles} from '../features/connection-profiles'
 import {SFileInput} from './SFileInput'
+import type {CharacterAction} from '../features/semantics/types'
 
 interface SPoffoConnectionProfilesProps {
   readonly widget?: PoffoWidget
   readonly parameters?: readonly TrackingParameter[]
+  readonly actions?: readonly CharacterAction[]
   readonly loading?: boolean
 }
 
 export const SPoffoConnectionProfiles = (props: SPoffoConnectionProfilesProps) => {
   const profiles = useConnectionProfiles({
+    actions: () => props.actions ?? [],
     parameters: () => props.parameters ?? [],
     widget: () => props.widget,
   })

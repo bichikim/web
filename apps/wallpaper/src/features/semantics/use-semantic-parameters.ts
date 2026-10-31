@@ -1,9 +1,9 @@
-import {type Accessor, createEffect, createMemo, createSignal, onCleanup} from 'solid-js'
+import {type Accessor, createEffect, createMemo, onCleanup} from 'solid-js'
 import type {Player} from '@winter-love/puppet/player'
 import type {SemanticBinding} from '@winter-love/wallpaper/settings/semantics'
 import type {TrackingParameter} from '../tracking/types'
 import {semanticMatches, semanticParameters} from './parameters'
-import {requestSemanticFrame, subscribeSemanticFrame, subscribeSemanticReady} from './channel'
+import {useSemanticFrame} from './use-semantic-frame'
 
 interface SemanticPlayer {
   readonly patchParameterBlends: Player['patchParameterBlends']
@@ -16,43 +16,22 @@ interface UseSemanticParametersProps {
 }
 const MILLISECONDS_PER_SECOND = 1000
 export const useSemanticParameters = (props: UseSemanticParametersProps) => {
-  const [scores, setScores] = createSignal<Readonly<Record<string, number>>>({})
-  createEffect(() => {
-    const id = props.widgetId()
-    setScores({})
-    if (id === undefined || !props.bindings()?.some((binding) => binding.enabled)) {
-      return
-    }
-    let disposed = false
-    const request = () => requestSemanticFrame(id).catch(console.error)
-    const subscriptions = [
-      subscribeSemanticFrame((frame) => {
-        if (!disposed && frame.widgetId === id) {
-          setScores(frame.scores)
-        }
-      }),
-      subscribeSemanticReady(request),
-    ]
-    Promise.all(subscriptions)
-      .then(() => {
-        if (!disposed) {
-          request()
-        }
-      })
-      .catch(console.error)
-    onCleanup(() => {
-      disposed = true
-      for (const subscription of subscriptions) {
-        subscription.then((stop) => stop()).catch(console.error)
-      }
-    })
+  const current = useSemanticFrame({
+    enabled: () => props.bindings()?.some((binding) => binding.enabled) ?? false,
+    widgetId: props.widgetId,
   })
   const matches = createMemo(
-    () =>
-      semanticMatches({
-        bindings: props.bindings() ?? [],
+    () => {
+      const frame = current()
+      const previewId = frame?.previewId
+      const bindings = props.bindings() ?? []
+      return semanticMatches({
+        bindings:
+          previewId === undefined
+            ? bindings
+            : bindings.filter((binding) => binding.id === previewId),
         parameters: props.parameters(),
-        scores: scores(),
+        scores: previewId === undefined ? (frame?.scores ?? {}) : {[previewId]: 1},
       }).map((match) => ({
         ...match,
         binding: {
@@ -61,7 +40,8 @@ export const useSemanticParameters = (props: UseSemanticParametersProps) => {
             match.binding.animation === undefined ? undefined : {...match.binding.animation},
         },
         parameter: {...match.parameter},
-      })),
+      }))
+    },
     [],
     {equals: (first, second) => JSON.stringify(first) === JSON.stringify(second)},
   )

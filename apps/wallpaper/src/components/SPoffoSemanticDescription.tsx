@@ -10,11 +10,6 @@ export const SPoffoSemanticDescription = (props: SPoffoSemanticDescriptionProps)
     props.onChange?.({...props.value, text: event.currentTarget.value})
   const handleExclusions = (event: InputEvent & {currentTarget: HTMLTextAreaElement}) =>
     props.onChange?.({...props.value, excludeText: event.currentTarget.value || undefined})
-  const handleGroup = (event: InputEvent & {currentTarget: HTMLInputElement}) =>
-    props.onChange?.({
-      ...props.value,
-      exclusiveGroup: event.currentTarget.value.trim() || undefined,
-    })
   return (
     <>
       <textarea
@@ -44,17 +39,6 @@ export const SPoffoSemanticDescription = (props: SPoffoSemanticDescriptionProps)
           px-2 py-1.5 font-inherit text-inherit"
         />
       </details>
-      <input
-        aria-label={`${props.label} 선택 그룹`}
-        placeholder="선택 그룹 (선택)"
-        title="같은 그룹에서는 가장 잘 맞는 문장 하나만 적용해요. 같은 문장에 연결한 파라미터는 함께 적용해요."
-        value={props.value.exclusiveGroup ?? ''}
-        maxLength={128}
-        onInput={handleGroup}
-        disabled={props.onChange === undefined}
-        class="box-border w-full rounded-md border border-solid border-stone-300 bg-white
-        px-2 py-1.5 font-inherit text-inherit"
-      />
     </>
   )
 }

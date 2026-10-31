@@ -51,6 +51,8 @@ export interface Player {
   resetParameters(parameterIds?: ReadonlyArray<string>): void
   /** Removes inertia at the current input pose without changing timeline time. */
   resetPhysics(): void
+  /** Clears retained motion values for the specified parameters; omitted clears all motion history. */
+  resetMotionHistory(parameterIds?: ReadonlyArray<string>): void
   resume(): void
   seek(time: number): void
   /** Cross-fades to an expression; omitted IDs fade the current one out. Unknown IDs return false. */

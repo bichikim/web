@@ -22,6 +22,21 @@ const profile = {
   version: 1,
 }
 const options = {assetId: 'builtin:ash', parameters: [{id: 'Param71'}]}
+it('should persist character action targets and reject actions missing from the selected character', () => {
+  const action = {id: '노트 들기', kind: 'expression' as const}
+  const input = {
+    ...profile,
+    connections: {
+      semanticBindings: [{...profile.connections.semanticBindings[0], action, parameterId: null}],
+    },
+  }
+  const parsed = parseConnectionProfile(JSON.stringify(input), {...options, actions: [action]})
+  expect(parsed).toMatchObject({ok: true, profile: input})
+  expect(parseConnectionProfile(JSON.stringify(input), {...options, actions: []})).toEqual({
+    ok: false,
+    reason: 'action',
+  })
+})
 it('should read a versioned JSON profile and preserve connection values', () => {
   expect(parseConnectionProfile(JSON.stringify(profile), options)).toEqual({ok: true, profile})
 })

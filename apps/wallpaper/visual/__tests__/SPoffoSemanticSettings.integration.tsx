@@ -1,4 +1,3 @@
-import type {PuppetParameterBlend} from '@winter-love/puppet/player'
 import {cleanup, fireEvent, render, screen} from '@solidjs/testing-library'
 import {createSignal} from 'solid-js'
 import {afterEach, expect, test, vi} from 'vitest'
@@ -7,7 +6,7 @@ import {createLibraryRepository} from '@winter-love/wallpaper/settings/library-r
 import {SPoffoSemanticSettings} from '../../src/components/SPoffoSemanticSettings'
 import {SemanticContext} from '../../src/features/semantics/context'
 import {useSemanticHost} from '../../src/features/semantics/use-semantic-host'
-import {useSemanticParameters} from '../../src/features/semantics/use-semantic-parameters'
+import {useSemanticActions} from '../../src/features/semantics/use-semantic-actions'
 import {useSemanticInput} from '../../src/features/semantics/use-semantic-input'
 import {createSemanticModel} from '../../src/features/semantics/model'
 import 'virtual:uno.css'
@@ -17,7 +16,7 @@ afterEach(() => {
   cleanup()
   vi.resetAllMocks()
 })
-test('should register and persist a continuous connection, then react to test and incoming text', async () => {
+test('should register and persist a character action connection, then react to test and incoming text', async () => {
   vi.mocked(createSemanticModel).mockReturnValue({
     dispose: vi.fn(),
     embed: vi.fn(async (texts: readonly string[]) =>
@@ -28,13 +27,17 @@ test('should register and persist a continuous connection, then react to test an
   const widget = await repository.addWidget('character')
   const [bindings, setBindings] = createSignal<readonly SemanticBinding[]>([])
   const [incoming, setIncoming] = createSignal('')
-  const [angle, setAngle] = createSignal<number | null>(null)
+  const [expression, setExpression] = createSignal<string | undefined>(undefined)
   const player = {
-    patchParameterBlends: (values: Readonly<Record<string, PuppetParameterBlend | undefined>>) => {
-      setAngle(values.angle?.value ?? null)
+    getExpression: expression,
+    resetMotionHistory: vi.fn(),
+    setExpression: (id?: string) => {
+      setExpression(id)
+      return true
     },
+    startMotion: vi.fn(),
   }
-  const parameters = [{defaultValue: 0, id: 'angle', maximum: 30, minimum: -30, name: '고개'}]
+  const actions = [{action: {id: 'ノート', kind: 'expression' as const}, label: '노트 들기'}]
   const change = async (value: readonly SemanticBinding[]) => {
     setBindings(value)
     await repository.configureSpeech(widget.id, {
@@ -50,9 +53,9 @@ test('should register and persist a continuous connection, then react to test an
         {...widget, speech: {enabled: true, semanticBindings: bindings(), x: 0.9, y: 0.05}},
       ],
     })
-    useSemanticParameters({
+    useSemanticActions({
+      actions: () => actions,
       bindings,
-      parameters: () => parameters,
       player: () => player,
       widgetId: () => widget.id,
     })
@@ -62,11 +65,11 @@ test('should register and persist a continuous connection, then react to test an
         <main class="mx-auto max-w-96 p-3">
           <SPoffoSemanticSettings
             widgetId={widget.id}
-            parameters={parameters}
+            actions={actions}
             value={bindings()}
             onChange={change}
           />
-          <output aria-label="적용된 고개 값">{angle() ?? '없음'}</output>
+          <output aria-label="적용된 행동">{expression() ?? '없음'}</output>
         </main>
       </SemanticContext.Provider>
     )
@@ -75,12 +78,8 @@ test('should register and persist a continuous connection, then react to test an
     fireEvent.click(screen.getByRole('button', {name: '연결 추가'}))
     const description = screen.getByRole('textbox', {name: '연결 1 감정·행동·내용'})
     fireEvent.input(description, {target: {value: '기쁨과 성공을 축하하는 내용'}})
-    fireEvent.click(screen.getByRole('combobox', {name: '연결 1 파라미터'}))
-    fireEvent.click(screen.getByRole('option', {name: '고개'}))
-    fireEvent.click(screen.getByRole('combobox', {name: '연결 1 연결 방식'}))
-    fireEvent.click(screen.getByRole('option', {name: '연속값'}))
-    expect(screen.getByRole('spinbutton', {name: '연결 1 시작값'})).toHaveValue('-30')
-    expect(screen.getByRole('spinbutton', {name: '연결 1 끝값'})).toHaveValue('30')
+    fireEvent.click(screen.getByRole('combobox', {name: '연결 1 행동'}))
+    fireEvent.click(screen.getByRole('option', {name: '노트 들기'}))
     await expect
       .poll(async () => (await repository.read()).widgets[0]?.speech?.semanticBindings)
       .toEqual(bindings())
@@ -92,16 +91,29 @@ test('should register and persist a continuous connection, then react to test an
       .toBe(false)
     fireEvent.click(screen.getByRole('button', {name: '문장 테스트'}))
     await expect
-      .poll(() => screen.getByRole('status', {name: '적용된 고개 값'}).textContent)
-      .toBe('30')
+      .poll(() => screen.getByRole('status', {name: '적용된 행동'}).textContent)
+      .toBe('ノート')
     expect(screen.getByLabelText('연결 1 매칭 점수')).toHaveTextContent('1.00')
     setIncoming('슬픔을 느껴요')
     await expect
-      .poll(() => screen.getByRole('status', {name: '적용된 고개 값'}).textContent)
-      .toBe('-30')
+      .poll(() => screen.getByRole('status', {name: '적용된 행동'}).textContent)
+      .toBe('없음')
+    const manual = screen.getByRole('button', {name: '연결 1 수동 실행'})
+    const embed = vi.mocked(createSemanticModel).mock.results[0].value.embed
+    const analyses = embed.mock.calls.length
+    fireEvent.click(manual)
+    await expect
+      .poll(() => screen.getByRole('status', {name: '적용된 행동'}).textContent)
+      .toBe('ノート')
+    expect(manual).toHaveAttribute('aria-pressed', 'true')
+    expect(embed).toHaveBeenCalledTimes(analyses)
+    fireEvent.click(screen.getByRole('button', {name: '연결 1 수동 실행 중지'}))
+    await expect
+      .poll(() => screen.getByRole('status', {name: '적용된 행동'}).textContent)
+      .toBe('없음')
     fireEvent.click(screen.getByRole('switch', {name: '연결 1 사용'}))
     await expect
-      .poll(() => screen.getByRole('status', {name: '적용된 고개 값'}).textContent)
+      .poll(() => screen.getByRole('status', {name: '적용된 행동'}).textContent)
       .toBe('없음')
   } finally {
     view.unmount()

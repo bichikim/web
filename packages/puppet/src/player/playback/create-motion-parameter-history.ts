@@ -28,10 +28,14 @@ export const createMotionParameterHistory = () => {
     record(next: PuppetParameterValueMap) {
       values = next
     },
-    reset() {
+    reset(parameterIds?: ReadonlyArray<string>) {
       frames = []
-      base = {}
-      values = {}
+      const retained = (current: PuppetParameterValueMap) =>
+        parameterIds === undefined
+          ? {}
+          : Object.fromEntries(Object.entries(current).filter(([id]) => !parameterIds.includes(id)))
+      base = retained(base)
+      values = retained(values)
     },
   }
 }

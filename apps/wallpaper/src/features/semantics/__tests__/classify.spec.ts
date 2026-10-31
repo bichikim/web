@@ -2,10 +2,11 @@ import {expect, it, vi} from 'vitest'
 import {classifySemantics} from '../classify'
 import type {SemanticBinding} from '@winter-love/wallpaper/settings/semantics'
 const binding: SemanticBinding = {
+  action: {id: 'smile', kind: 'expression'},
   enabled: true,
   id: 'happy',
   mode: 'toggle',
-  parameterId: 'smile',
+  parameterId: null,
   text: '기쁨',
   threshold: 0.75,
 }
@@ -30,7 +31,11 @@ it('should avoid loading the model for empty text or incomplete connections', as
   const embed = vi.fn()
   expect(await classifySemantics({bindings: [binding], embed, text: ''})).toEqual({})
   expect(
-    await classifySemantics({bindings: [{...binding, parameterId: null}], embed, text: '안녕'}),
+    await classifySemantics({
+      bindings: [{...binding, action: undefined, parameterId: null}],
+      embed,
+      text: '안녕',
+    }),
   ).toEqual({})
   expect(embed).not.toHaveBeenCalled()
 })

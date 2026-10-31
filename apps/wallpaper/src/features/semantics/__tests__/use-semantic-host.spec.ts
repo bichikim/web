@@ -6,11 +6,85 @@ import type {PoffoWidget} from '@winter-love/wallpaper/settings/library-model'
 import {useSemanticInput} from '../use-semantic-input'
 import {afterEach, expect, it, vi} from 'vitest'
 import {createSemanticModel} from '../model'
-import {subscribeSemanticFrame, subscribeSemanticInput} from '../channel'
+import {requestSemanticFrame, subscribeSemanticFrame, subscribeSemanticInput} from '../channel'
+import type {SemanticFrame} from '@winter-love/wallpaper/settings/semantics'
 import {useSemanticHost} from '../use-semantic-host'
 
 vi.mock('../model', () => ({createSemanticModel: vi.fn()}))
 afterEach(() => vi.resetAllMocks())
+it('should retain manual previews during analysis, replay them and clear invalid selections', async () => {
+  const embed = vi.fn(async (texts: readonly string[]) => texts.map(() => [1, 0]))
+  vi.mocked(createSemanticModel).mockReturnValue({dispose: vi.fn(), embed})
+  const [widgets, setWidgets] = createStore<PoffoWidget[]>([
+    {
+      assetId: 'character',
+      id: 'preview-widget',
+      speech: {
+        enabled: true,
+        semanticBindings: [
+          {
+            action: {id: 'smile', kind: 'expression'},
+            enabled: true,
+            id: 'happy',
+            mode: 'toggle',
+            parameterId: null,
+            text: '기쁨',
+            threshold: 0.75,
+          },
+        ],
+        x: 0.9,
+        y: 0.05,
+      },
+      x: null,
+      y: null,
+    },
+  ])
+  const frames: SemanticFrame[] = []
+  const stop = await subscribeSemanticFrame((frame) => frames.push(frame))
+  const scope = createRoot((cleanup) => ({
+    cleanup,
+    host: useSemanticHost({widgets: () => widgets}),
+  }))
+  try {
+    scope.host.preview('preview-widget', 'happy')
+    expect(scope.host.previewing('preview-widget', 'happy')).toBe(true)
+    expect(frames.at(-1)?.previewId).toBe('happy')
+    expect(embed).not.toHaveBeenCalled()
+    scope.host.test('preview-widget', '기뻐요')
+    await waitFor(() => expect(scope.host.score('preview-widget', 'happy')).toBe(1), {
+      interval: 1,
+      timeout: 100,
+    })
+    expect(frames.at(-1)?.previewId).toBe('happy')
+    await requestSemanticFrame('preview-widget')
+    expect(frames.at(-1)?.previewId).toBe('happy')
+    scope.host.preview('preview-widget', null)
+    expect(frames.at(-1)).toEqual({scores: {happy: 1}, widgetId: 'preview-widget'})
+    scope.host.preview('preview-widget', 'happy')
+    setWidgets(
+      reconcile(
+        widgets.map((widget) => ({
+          ...widget,
+          speech: {
+            ...widget.speech!,
+            semanticBindings: widget.speech!.semanticBindings!.map((binding) => ({
+              ...binding,
+              enabled: false,
+            })),
+          },
+        })),
+      ),
+    )
+    expect(scope.host.previewing('preview-widget', 'happy')).toBe(false)
+    expect(frames.at(-1)?.previewId).toBeUndefined()
+    scope.host.preview('missing-widget', 'happy')
+    scope.host.preview('preview-widget', 'missing-binding')
+    expect(scope.host.previewing('preview-widget', 'missing-binding')).toBe(false)
+  } finally {
+    scope.cleanup()
+    stop()
+  }
+})
 it('should discard obsolete model results and apply only the latest pending text', async () => {
   const started = Promise.withResolvers<void>()
   const first = Promise.withResolvers<number[][]>()
@@ -45,10 +119,11 @@ it('should discard obsolete model results and apply only the latest pending text
             enabled: true,
             semanticBindings: [
               {
+                action: {id: 'smile', kind: 'expression'},
                 enabled: true,
                 id: 'happy',
                 mode: 'toggle',
-                parameterId: 'smile',
+                parameterId: null,
                 text: '기쁨',
                 threshold: 0.75,
               },
@@ -95,10 +170,11 @@ it('should clear active matches and show a model failure without fabricating a s
             enabled: true,
             semanticBindings: [
               {
+                action: {id: 'smile', kind: 'expression'},
                 enabled: true,
                 id: 'happy',
                 mode: 'toggle',
-                parameterId: 'smile',
+                parameterId: null,
                 text: '기쁨',
                 threshold: 0.75,
               },
@@ -159,10 +235,11 @@ it('should recover bubble input after store hydration and react to in-place conn
             enabled: true,
             semanticBindings: [
               {
+                action: {id: 'smile', kind: 'expression'},
                 enabled: true,
                 id: 'happy',
                 mode: 'toggle',
-                parameterId: 'smile',
+                parameterId: null,
                 text: '기쁨',
                 threshold: 0.75,
               },
@@ -222,10 +299,11 @@ it('should clear expressions immediately at speech end and discard analysis stil
             enabled: true,
             semanticBindings: [
               {
+                action: {id: 'smile', kind: 'expression'},
                 enabled: true,
                 id: 'happy',
                 mode: 'toggle',
-                parameterId: 'smile',
+                parameterId: null,
                 text: '기쁨',
                 threshold: 0.75,
               },

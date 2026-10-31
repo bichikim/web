@@ -2,8 +2,11 @@ import {type Accessor, createResource, createSignal} from 'solid-js'
 import {modelParameters} from './model-parameters'
 import {SAMPLE_PUPPET_ID} from '../background/constants'
 import type {TrackingParameter} from './types'
+import {modelActions} from '../semantics/model-actions'
+import type {CharacterAction} from '../semantics/types'
 
 export interface ParameterSource {
+  readonly actions?: Accessor<readonly CharacterAction[]>
   readonly error: Accessor<string | null>
   readonly loading: Accessor<boolean>
   readonly parameters: Accessor<readonly TrackingParameter[]>
@@ -31,14 +34,22 @@ export const useParameters = (props: UseParametersProps): ParameterSource => {
         if (!prepared.ok) {
           throw new Error('Invalid Poffo document')
         }
-        return modelParameters(prepared.document)
+        return {
+          actions: modelActions(prepared.document),
+          parameters: modelParameters(prepared.document),
+        }
       } catch (cause) {
         console.error('Poffo parameters could not be loaded', cause)
         setError('파라미터를 불러올 수 없어요.')
-        return []
+        return {actions: [], parameters: []}
       }
     },
-    {initialValue: []},
+    {initialValue: {actions: [], parameters: []}},
   )
-  return {error, loading: () => parameters.loading, parameters: () => parameters()}
+  return {
+    actions: () => parameters().actions,
+    error,
+    loading: () => parameters.loading,
+    parameters: () => parameters().parameters,
+  }
 }

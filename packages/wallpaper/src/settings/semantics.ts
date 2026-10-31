@@ -8,6 +8,19 @@ export const SEMANTIC_THRESHOLD_MAX = 0.99
 const MAX_GESTURE_CYCLES = 16
 const MIN_GESTURE_PERIOD = 0.1
 const MAX_GESTURE_PERIOD = 30
+export interface SemanticExpressionAction {
+  readonly kind: 'expression'
+  readonly id: string
+}
+export interface SemanticMotionAction {
+  readonly kind: 'motion'
+  readonly id: string
+}
+export type SemanticAction = SemanticExpressionAction | SemanticMotionAction
+export const semanticActionSchema: z.ZodType<SemanticAction> = z.discriminatedUnion('kind', [
+  z.object({id: z.string().min(1).max(SEMANTIC_ID_LIMIT), kind: z.literal('expression')}),
+  z.object({id: z.string().min(1).max(SEMANTIC_ID_LIMIT), kind: z.literal('motion')}),
+])
 export interface SemanticAnimation {
   /** Seconds for one from-to-from cycle. */
   readonly period: number
@@ -17,6 +30,8 @@ export interface SemanticAnimation {
   readonly cycles?: number
 }
 export interface SemanticBinding {
+  /** Character-defined expression or motion to execute when matched. */
+  readonly action?: SemanticAction
   readonly animation?: SemanticAnimation
   readonly id: string
   readonly text: string
@@ -35,6 +50,7 @@ export interface SemanticBinding {
 export const semanticBindingsSchema = z
   .array(
     z.object({
+      action: semanticActionSchema.optional(),
       animation: z
         .object({
           cycles: z.number().int().min(1).max(MAX_GESTURE_CYCLES).optional(),
@@ -58,6 +74,7 @@ export const semanticBindingsSchema = z
   .max(SEMANTIC_LIMIT)
   .refine((items) => new Set(items.map((item) => item.id)).size === items.length)
 export const semanticFrameSchema = z.object({
+  previewId: z.string().min(1).max(SEMANTIC_ID_LIMIT).optional(),
   scores: z
     .record(z.string().max(SEMANTIC_ID_LIMIT), z.number().finite().min(-1).max(1))
     .refine((scores) => Object.keys(scores).length <= SEMANTIC_LIMIT),
@@ -69,6 +86,8 @@ export const semanticInputSchema = z.object({
 })
 export interface SemanticFrame {
   readonly widgetId: string
+  /** Manually execute only this binding at full strength; omitted uses automatic scores. */
+  readonly previewId?: string
   /** Best eligible similarity; -1 means an exclusion won every paragraph comparison. */
   readonly scores: Readonly<Record<string, number>>
 }

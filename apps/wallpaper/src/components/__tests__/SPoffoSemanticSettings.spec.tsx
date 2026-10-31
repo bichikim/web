@@ -4,6 +4,7 @@ import {createSignal} from 'solid-js'
 import {afterEach, expect, it, vi} from 'vitest'
 import type {SemanticBinding} from '@winter-love/wallpaper/settings/semantics'
 import {SPoffoSemanticSettings} from '../SPoffoSemanticSettings'
+import {SemanticContext} from '../../features/semantics/context'
 
 afterEach(cleanup)
 const mount = () => {
@@ -12,7 +13,7 @@ const mount = () => {
     <SPoffoSemanticSettings
       value={bindings()}
       onChange={setBindings}
-      parameters={[{defaultValue: 0, id: 'head', maximum: 30, minimum: -30, name: '고개'}]}
+      actions={[{action: {id: '노트 들기', kind: 'expression'}, label: '노트 들기'}]}
     />
   ))
   return bindings
@@ -20,6 +21,7 @@ const mount = () => {
 it('should register a description and preserve its input node while editing', () => {
   const bindings = mount()
   fireEvent.click(screen.getByRole('button', {name: '연결 추가'}))
+  expect(screen.getByRole('button', {name: '연결 1 수동 실행'})).toBeDisabled()
   const input = screen.getByRole('textbox', {name: '연결 1 감정·행동·내용'})
   fireEvent.input(input, {target: {value: '기쁘고 신나는 내용'}})
   expect(bindings()[0].text).toBe('기쁘고 신나는 내용')
@@ -29,67 +31,78 @@ it('should register a description and preserve its input node while editing', ()
   expect(bindings()[0].excludeText).toBe('울지 않았어요.')
   fireEvent.input(exclusions, {target: {value: ''}})
   expect(bindings()[0].excludeText).toBeUndefined()
-  fireEvent.input(screen.getByRole('textbox', {name: '연결 1 선택 그룹'}), {
-    target: {value: '손 포즈'},
-  })
-  expect(bindings()[0].exclusiveGroup).toBe('손 포즈')
-  fireEvent.input(screen.getByRole('textbox', {name: '연결 1 선택 그룹'}), {target: {value: ''}})
-  expect(bindings()[0].exclusiveGroup).toBeUndefined()
   fireEvent.click(screen.getByRole('switch', {name: '연결 1 사용'}))
   expect(bindings()[0].enabled).toBe(false)
   fireEvent.click(screen.getByRole('button', {name: '연결 1 삭제'}))
   expect(bindings()).toEqual([])
 })
-it('should configure repeated and finite gestures without changing their matching threshold', () => {
-  const bindings = mount()
-  const original = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'showPopover')
-  Object.defineProperty(HTMLElement.prototype, 'showPopover', {configurable: true, value: vi.fn()})
-  try {
-    fireEvent.click(screen.getByRole('button', {name: '연결 추가'}))
-    fireEvent.click(screen.getByRole('combobox', {name: '연결 1 움직임'}))
-    fireEvent.click(screen.getByRole('option', {name: '반복'}))
-    expect(bindings()[0].animation).toEqual({period: 1})
-    fireEvent.click(screen.getByRole('combobox', {name: '연결 1 움직임'}))
-    fireEvent.click(screen.getByRole('option', {name: '횟수 지정'}))
-    expect(bindings()[0].animation).toEqual({cycles: 1, period: 1})
-    expect(bindings()[0].threshold).toBe(0.75)
-    fireEvent.click(screen.getByRole('combobox', {name: '연결 1 움직임'}))
-    fireEvent.click(screen.getByRole('option', {name: '고정'}))
-    expect(bindings()[0].animation).toBeUndefined()
-  } finally {
-    if (original === undefined) {
-      Reflect.deleteProperty(HTMLElement.prototype, 'showPopover')
-    } else {
-      Object.defineProperty(HTMLElement.prototype, 'showPopover', original)
-    }
-  }
+it('should trigger each connection independently and stop previews when settings close', () => {
+  const [active, setActive] = createSignal<string | null>(null)
+  const preview = vi.fn((_widgetId: string, id: string | null) => {
+    setActive(id)
+  })
+  const view = render(() => (
+    <SemanticContext.Provider
+      value={{
+        busy: () => false,
+        error: () => null,
+        preview,
+        previewing: (_widgetId, id) => active() === id,
+        score: () => undefined,
+        test: vi.fn(),
+      }}
+    >
+      <SPoffoSemanticSettings
+        widgetId="manual-widget"
+        actions={[{action: {id: '노트 들기', kind: 'expression'}, label: '노트 들기'}]}
+        value={['first', 'second', 'missing'].map((id) => ({
+          action: id === 'missing' ? undefined : {id: '노트 들기', kind: 'expression'},
+          enabled: true,
+          id,
+          mode: 'toggle',
+          parameterId: null,
+          text: '',
+          threshold: 0.75,
+        }))}
+      />
+    </SemanticContext.Provider>
+  ))
+  expect(screen.getByRole('button', {name: '연결 3 수동 실행'})).toBeDisabled()
+  fireEvent.click(screen.getByRole('button', {name: '연결 1 수동 실행'}))
+  expect(preview).toHaveBeenLastCalledWith('manual-widget', 'first')
+  expect(screen.getByRole('button', {name: '연결 1 수동 실행 중지'})).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  )
+  fireEvent.click(screen.getByRole('button', {name: '연결 2 수동 실행'}))
+  expect(preview).toHaveBeenLastCalledWith('manual-widget', 'second')
+  expect(screen.getByRole('button', {name: '연결 1 수동 실행'})).toHaveAttribute(
+    'aria-pressed',
+    'false',
+  )
+  fireEvent.click(screen.getByRole('button', {name: '연결 2 수동 실행 중지'}))
+  expect(preview).toHaveBeenLastCalledWith('manual-widget', null)
+  fireEvent.click(screen.getByRole('button', {name: '연결 1 수동 실행'}))
+  view.unmount()
+  expect(preview).toHaveBeenLastCalledWith('manual-widget', null)
 })
-it('should connect a model parameter and configure its full continuous range independently of matching', () => {
+it('should connect a character action and adjust matching without exposing individual parameters', () => {
   const bindings = mount()
   const original = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'showPopover')
   Object.defineProperty(HTMLElement.prototype, 'showPopover', {configurable: true, value: vi.fn()})
   try {
     fireEvent.click(screen.getByRole('button', {name: '연결 추가'}))
-    fireEvent.click(screen.getByRole('combobox', {name: '연결 1 파라미터'}))
-    fireEvent.click(screen.getByRole('option', {name: '고개'}))
-    expect(bindings()[0]).toMatchObject({from: 0, parameterId: 'head', to: 30})
-    fireEvent.click(screen.getByRole('combobox', {name: '연결 1 연결 방식'}))
-    fireEvent.click(screen.getByRole('option', {name: '연속값'}))
-    expect(bindings()[0]).toMatchObject({from: -30, mode: 'range', threshold: 0.75, to: 30})
-    const value = screen.getByRole('spinbutton', {name: '연결 1 시작값'})
-    fireEvent.input(value, {target: {value: '-20'}})
-    fireEvent.blur(value)
-    expect(bindings()[0].from).toBe(-20)
-    expect(bindings()[0].threshold).toBe(0.75)
-    fireEvent.click(screen.getByRole('combobox', {name: '연결 1 연결 방식'}))
-    fireEvent.click(screen.getByRole('option', {name: '매칭 중 적용'}))
-    expect(bindings()[0]).toMatchObject({mode: 'toggle', releaseWhenUnmatched: true})
-    expect(screen.queryByRole('spinbutton', {name: '연결 1 시작값'})).toBeNull()
-    expect(screen.getByText('기본 동작')).toBeInTheDocument()
-    fireEvent.click(screen.getByRole('combobox', {name: '연결 1 연결 방식'}))
-    fireEvent.click(screen.getByRole('option', {name: '토글'}))
-    expect(bindings()[0].releaseWhenUnmatched).toBe(false)
-    expect(screen.getByRole('spinbutton', {name: '연결 1 시작값'})).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('combobox', {name: '연결 1 행동'}))
+    fireEvent.click(screen.getByRole('option', {name: '노트 들기'}))
+    expect(bindings()[0]).toMatchObject({
+      action: {id: '노트 들기', kind: 'expression'},
+      parameterId: null,
+    })
+    expect(screen.queryByRole('combobox', {name: '연결 1 파라미터'})).toBeNull()
+    const threshold = screen.getByRole('spinbutton', {name: '연결 1 매칭 기준'})
+    fireEvent.input(threshold, {target: {value: '0.85'}})
+    fireEvent.blur(threshold)
+    expect(bindings()[0].threshold).toBe(0.85)
   } finally {
     if (original === undefined) {
       Reflect.deleteProperty(HTMLElement.prototype, 'showPopover')

@@ -1,12 +1,12 @@
-import {createSignal, For, Show} from 'solid-js'
+import {createEffect, createSignal, For, onCleanup, Show} from 'solid-js'
 import {SEMANTIC_LIMIT, type SemanticBinding} from '@winter-love/wallpaper/settings/semantics'
-import type {TrackingParameter} from '../features/tracking/types'
+import type {CharacterAction} from '../features/semantics/types'
 import {useSemanticRuntime} from '../features/semantics/context'
 import {SPoffoSemanticBinding} from './SPoffoSemanticBinding'
 
 interface SPoffoSemanticSettingsProps {
   readonly widgetId?: string
-  readonly parameters?: readonly TrackingParameter[]
+  readonly actions?: readonly CharacterAction[]
   readonly loading?: boolean
   readonly value?: readonly SemanticBinding[]
   readonly onChange?: (value: readonly SemanticBinding[]) => void | Promise<void>
@@ -14,6 +14,14 @@ interface SPoffoSemanticSettingsProps {
 export const SPoffoSemanticSettings = (props: SPoffoSemanticSettingsProps) => {
   const runtime = useSemanticRuntime()
   const [text, setText] = createSignal('')
+  createEffect(() => {
+    const id = props.widgetId
+    onCleanup(() => {
+      if (id !== undefined) {
+        runtime?.preview(id, null)
+      }
+    })
+  })
   const update = (id: string, patch: Partial<SemanticBinding>) =>
     props.onChange?.(
       (props.value ?? []).map((item) => (item.id === id ? {...item, ...patch} : item)),
@@ -64,8 +72,9 @@ export const SPoffoSemanticSettings = (props: SPoffoSemanticSettingsProps) => {
               score={runtime?.score(props.widgetId ?? '', id)}
               value={binding()}
               label={`연결 ${index() + 1}`}
-              parameters={props.parameters}
+              actions={props.actions}
               loading={props.loading}
+              widgetId={props.widgetId}
               onChange={props.onChange === undefined ? undefined : handleChange}
               onRemove={props.onChange === undefined ? undefined : handleRemove}
             />

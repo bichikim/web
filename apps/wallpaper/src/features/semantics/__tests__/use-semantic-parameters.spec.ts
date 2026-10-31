@@ -116,3 +116,48 @@ it('should animate, retain phase on repeated scores, apply edits and release on 
     vi.unstubAllGlobals()
   }
 })
+it('should preview only the requested parameter and restore the latest automatic scores', async () => {
+  const player = {patchParameterBlends: vi.fn()}
+  const bindings: readonly SemanticBinding[] = ['first', 'second'].map((id) => ({
+    enabled: true,
+    id,
+    mode: 'range',
+    parameterId: id,
+    text: '같은 행동',
+    threshold: 0.5,
+    to: 30,
+  }))
+  const dispose = createRoot((cleanup) => {
+    useSemanticParameters({
+      bindings: () => bindings,
+      parameters: () =>
+        bindings.map((item) => ({defaultValue: 0, id: item.id, maximum: 30, minimum: -30})),
+      player: () => player,
+      widgetId: () => 'manual-widget',
+    })
+    return cleanup
+  })
+  try {
+    await sendSemanticFrame({
+      previewId: 'first',
+      scores: {first: 0, second: 1},
+      widgetId: 'manual-widget',
+    })
+    expect(player.patchParameterBlends).toHaveBeenLastCalledWith(
+      {first: {mode: 'overwrite', value: 30}},
+      'after-physics',
+    )
+    await sendSemanticFrame({previewId: 'second', scores: {}, widgetId: 'manual-widget'})
+    expect(player.patchParameterBlends).toHaveBeenLastCalledWith(
+      {second: {mode: 'overwrite', value: 30}},
+      'after-physics',
+    )
+    await sendSemanticFrame({scores: {second: 0.75}, widgetId: 'manual-widget'})
+    expect(player.patchParameterBlends).toHaveBeenLastCalledWith(
+      {second: {mode: 'overwrite', value: 15}},
+      'after-physics',
+    )
+  } finally {
+    dispose()
+  }
+})

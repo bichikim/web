@@ -114,90 +114,34 @@ test('should apply vowel poses and semantic expressions to the bundled Ash playe
   )
   expect(parameters.find((parameter) => parameter.id === 'ParamMouthForm')?.name).toBe('Mouth Form')
   const player = await vi.mocked(playerModule.createPlayer).mock.results[0]!.value
-  await sendSemanticFrame({
-    scores: {
-      'ash:joy-left': 0.85,
-      'ash:joy-open-left': 0.85,
-      'ash:joy-open-right': 0.85,
-      'ash:joy-right': 0.85,
-    },
-    widgetId: 'ash-widget',
-  })
-  await expect
-    .poll(() => [
-      player.getParameterValue('ParamEyeLSmile'),
-      player.getParameterValue('ParamEyeRSmile'),
-      player.getParameterValue('ParamEyeLOpen'),
-      player.getParameterValue('ParamEyeROpen'),
-    ])
-    .toEqual([1, 1, 0.25, 0.25])
   await sendSemanticFrame({scores: {'ash:excited': 1}, widgetId: 'ash-widget'})
-  await expect.poll(() => player.getParameterValue('Param71')).toBe(1)
-  await expect.poll(() => player.getParameterValue('ParamEyeLSmile')).toBe(0)
-  await expect.poll(() => player.getParameterValue('ParamEyeLOpen')).toBe(1)
+  await expect.poll(() => player.getExpression()).toBe('반짝이는 눈')
+  await expect.poll(() => player.getParameterValue('Param71'), {timeout: 3000}).toBeCloseTo(1)
   await sendSemanticFrame({scores: {'ash:sad-tears': 0.9038512399246472}, widgetId: 'ash-widget'})
-  await expect.poll(() => player.getParameterValue('Param70')).toBe(1)
+  await expect.poll(() => player.getExpression()).toBe('눈물')
+  await expect.poll(() => player.getParameterValue('Param70'), {timeout: 3000}).toBeCloseTo(1)
   await sendSemanticFrame({scores: {'ash:sad-tears': -1}, widgetId: 'ash-widget'})
-  await expect.poll(() => player.getParameterValue('Param70')).toBe(0)
-  const bindings = builtinConnectionProfile('builtin:ash')!.connections.semanticBindings!
-  const poses = [
-    ...new Set(
-      bindings
-        .filter((binding) => binding.exclusiveGroup === 'ash:hands')
-        .map((binding) => binding.text),
-    ),
-  ]
-  for (const text of poses) {
-    const pose = bindings.filter(
-      (binding) => binding.exclusiveGroup === 'ash:hands' && binding.text === text,
+  await expect.poll(() => player.getParameterValue('Param70'), {timeout: 3000}).toBeCloseTo(0)
+  await sendSemanticFrame({previewId: 'ash:notes', scores: {}, widgetId: 'ash-widget'})
+  await expect.poll(() => player.getExpression()).toBe('노트 들기')
+  await expect
+    .poll(
+      () => [
+        player.getParameterValue('Param75'),
+        player.getParameterValue('Param81'),
+        player.getParameterValue('Param89'),
+      ],
+      {timeout: 3000},
     )
-    await sendSemanticFrame({
-      scores: Object.fromEntries(pose.map((binding) => [binding.id, 1])),
-      widgetId: 'ash-widget',
-    })
-    const fixed = pose.filter((binding) => binding.animation === undefined)
-    await expect
-      .poll(() => fixed.map((binding) => player.getParameterValue(binding.parameterId!)))
-      .toEqual(fixed.map((binding) => binding.to))
-    await sendSemanticFrame({scores: {}, widgetId: 'ash-widget'})
-    await expect
-      .poll(() => pose.map((binding) => player.getParameterValue(binding.parameterId!) || 0))
-      .toEqual(
-        pose.map(
-          (binding) =>
-            parameters.find((parameter) => parameter.id === binding.parameterId)!.defaultValue,
-        ),
-      )
-  }
+    .toEqual([1, 1, 1])
+  await sendSemanticFrame({previewId: 'ash:walking', scores: {}, widgetId: 'ash-widget'})
+  await expect.poll(() => player.getExpression()).toBeUndefined()
+  await expect.poll(() => player.getParameterValue('Param110'), {timeout: 3000}).toBeCloseTo(1)
+  await expect.poll(() => player.getParameterValue('Param111')).toBeGreaterThan(0.5)
   await sendSemanticFrame({scores: {}, widgetId: 'ash-widget'})
-  await expect.poll(() => player.getParameterValue('Param71')).toBe(0)
+  await expect.poll(() => player.getParameterValue('Param110'), {timeout: 3000}).toBeCloseTo(0)
   globalThis.dispatchEvent(new PointerEvent('pointermove', {clientX: 800, clientY: 80}))
   await expect.poll(() => player.getParameterValue('ParamAngleY')).toBeGreaterThan(1)
-  const agree = bindings.find((binding) => binding.id === 'ash:agree')!
-  await sendSemanticFrame({
-    scores: Object.fromEntries(
-      bindings.filter((binding) => binding.text === agree.text).map((binding) => [binding.id, 1]),
-    ),
-    widgetId: 'ash-widget',
-  })
-  await expect.poll(() => player.getParameterValue('ParamAngleY')).toBeLessThan(-5)
-  await sendSemanticFrame({scores: {}, widgetId: 'ash-widget'})
-  await expect.poll(() => player.getParameterValue('ParamAngleY')).toBeGreaterThan(1)
-  globalThis.dispatchEvent(new PointerEvent('pointermove', {clientX: 800, clientY: 600}))
-  await expect.poll(() => player.getParameterValue('ParamAngleY')).toBeLessThan(-1)
-  const walking = bindings.find((binding) => binding.id === 'ash:walking')!
-  await sendSemanticFrame({
-    scores: Object.fromEntries(
-      bindings.filter((binding) => binding.text === walking.text).map((binding) => [binding.id, 1]),
-    ),
-    widgetId: 'ash-widget',
-  })
-  await expect.poll(() => player.getParameterValue('Param110')).toBe(1)
-  await expect.poll(() => player.getParameterValue('Param111')).toBeGreaterThan(0.5)
-  await expect.poll(() => player.getParameterValue('Param115')).toBeGreaterThan(0.1)
-  await sendSemanticFrame({scores: {}, widgetId: 'ash-widget'})
-  await expect.poll(() => player.getParameterValue('Param110')).toBe(0)
-  await expect.poll(() => player.getParameterValue('Param115')).toBe(0)
   const publish = createLipSyncPublisher('ash-widget')
   for (const pose of [
     {form: 0.2, open: 0.9, shape: 'a'},

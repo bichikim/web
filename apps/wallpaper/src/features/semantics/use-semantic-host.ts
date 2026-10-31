@@ -14,6 +14,7 @@ import {
   subscribeSemanticRequests,
 } from './channel'
 import type {SemanticRuntime} from './context'
+import {useSemanticPreview} from './use-semantic-preview'
 
 interface UseSemanticHostProps {
   readonly widgets: Accessor<readonly PoffoWidget[]>
@@ -25,13 +26,22 @@ export const useSemanticHost = (props: UseSemanticHostProps): SemanticRuntime =>
   const [connected, setConnected] = createSignal(false)
   const [error, setError] = createSignal<string | null>(null)
   const [frames, setFrames] = createSignal<ReadonlyMap<string, SemanticFrame>>(new Map())
+  const manual = useSemanticPreview({
+    onChange: (widgetId) => {
+      if (props.widgets().some((widget) => widget.id === widgetId)) {
+        publish(frames().get(widgetId) ?? {scores: {}, widgetId}).catch(console.error)
+      }
+    },
+    widgets: props.widgets,
+  })
   const pending = new Map<string, {signature: string; input: SemanticInput}>()
   const signatures = new Map<string, string>()
   let disposed = false
   const publish = async (frame: SemanticFrame) => {
     if (!disposed) {
-      setFrames((values) => new Map(values).set(frame.widgetId, frame))
-      await sendSemanticFrame(frame)
+      const value = {...frame, previewId: manual.selection(frame.widgetId)}
+      setFrames((values) => new Map(values).set(frame.widgetId, value))
+      await sendSemanticFrame(value)
     }
   }
   const drain = async (): Promise<void> => {
@@ -151,5 +161,12 @@ export const useSemanticHost = (props: UseSemanticHostProps): SemanticRuntime =>
     }
     model.dispose()
   })
-  return {busy, error, score: (widgetId, id) => frames().get(widgetId)?.scores[id], test}
+  return {
+    busy,
+    error,
+    preview: manual.preview,
+    previewing: manual.previewing,
+    score: (widgetId, id) => frames().get(widgetId)?.scores[id],
+    test,
+  }
 }

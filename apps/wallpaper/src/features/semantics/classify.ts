@@ -27,7 +27,7 @@ export const classifySemantics = async (
   options: ClassifySemanticsOptions,
 ): Promise<Readonly<Record<string, number>>> => {
   const bindings = options.bindings.filter(
-    (item) => item.enabled && item.parameterId !== null && item.text.trim() !== '',
+    (item) => item.enabled && item.action !== undefined && item.text.trim() !== '',
   )
   const inputs = examples(options.text.slice(-SEMANTIC_TEXT_LIMIT))
   if (bindings.length === 0 || inputs.length === 0) {

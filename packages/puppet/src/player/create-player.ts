@@ -367,6 +367,14 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
         vertices: (partId) => renderer.getPartVertices(partId),
       })
     },
+    patchParameterBlends(values, stage = 'before-physics') {
+      if (!destroyed && (stage === 'before-physics' || stage === 'after-physics')) {
+        for (const [id, blend] of Object.entries(values)) {
+          adjustments.setParameterBlend(document, id, blend, stage)
+        }
+        refresh()
+      }
+    },
     patchParameterValues(values) {
       if (destroyed) {
         return
@@ -401,6 +409,12 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
     },
     playMotion,
     redraw,
+    resetMotionHistory(parameterIds) {
+      if (!destroyed) {
+        motionHistory.reset(parameterIds)
+        refresh()
+      }
+    },
     resetParameters(parameterIds) {
       if (destroyed) {
         return
@@ -474,14 +488,6 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
       setRenderOverride(renderOverrides.groups, groupId, override)
       refresh()
       return true
-    },
-    patchParameterBlends(values, stage = 'before-physics') {
-      if (!destroyed && (stage === 'before-physics' || stage === 'after-physics')) {
-        for (const [id, blend] of Object.entries(values)) {
-          adjustments.setParameterBlend(document, id, blend, stage)
-        }
-        refresh()
-      }
     },
     setLipSync(level) {
       lipSyncLevel = level !== undefined && Number.isFinite(level) ? level : undefined
