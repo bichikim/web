@@ -133,6 +133,7 @@ export const RuntimeMenu = (props: RuntimeMenuProps) => {
       <Show when={props.workspace}>
         {(workspace) => (
           <EditorToast
+            tone="error"
             message={workspace().error() ?? undefined}
             onDismiss={workspace().dismissError}
           />

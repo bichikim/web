@@ -8,6 +8,13 @@ Puppet의 Solid 컴포넌트를 직접 사용하는 서비스 앱이다. Poffo �
 
 `pnpm exec turbo run build --filter=@winter-love/poffo...`는 공개 패키지 산출물을 먼저 만들고 앱을 빌드한다. 출력은 `dist`다. 타입·lint 검사는 [앱 스크립트](package.json), 프로덕션 브라우저 검사는 [Playwright 구성](playwright.config.ts)을 따른다.
 
+## 색 테마
+
+에디터의 메인 메뉴 → **색 테마**에서 UI 색상을 변경한다. 변경 중에는 즉시 미리보기하고,
+오류색·경고색과 알림 배경도 함께 미리보기한다. 적용한 설정은 이 브라우저에 저장한다. 취소·닫기·Esc는 변경을 되돌린다.
+테마는 모델 문서나 문서의 실행 취소 기록에 포함되지 않는다.
+색상 변수 계약은 [Puppet 디자인 문서](../../packages/puppet/DESIGN.md#visual-language)를 따른다.
+
 ## 문서와 복구
 
 공유 문서는 [모델 세션](src/model/create-model-session.ts)이 소유한다. 화면 이동은 복사·재로드·저장 완료를 요구하지 않는다. 임시 키폼 변경은 Editor 내부에 보관하며 선택 키폼에 저장할 때만 공유 문서에 반영한다.

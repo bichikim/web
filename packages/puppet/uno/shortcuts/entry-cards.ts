@@ -17,9 +17,12 @@ export const entryCardShortcuts = {
   'motion-settings-popover': [
     'influence-popover',
     '[&_.editor-text-input]:min-w-0 [&_.editor-text-input]:w-full',
-    '[&_.editor-text-input]:border [&_.editor-text-input]:border-solid [&_.editor-text-input]:border-[#35413d]',
-    '[&_.editor-text-input]:rounded-md [&_.editor-text-input]:bg-[#121816] [&_.editor-text-input]:text-[#edf4f0]',
-    '[&_.editor-text-input::placeholder]:text-[#84918c]',
-    '[&_fieldset]:grid [&_fieldset]:gap-editor-field [&_fieldset]:border-[#35413d] [&_fieldset]:rounded-md',
+    '[&_.editor-text-input]:border [&_.editor-text-input]:border-solid ' +
+      '[&_.editor-text-input]:border-[var(--puppet-color-border,#35413d)]',
+    '[&_.editor-text-input]:rounded-md [&_.editor-text-input]:bg-[var(--puppet-color-input,#121816)] ' +
+      '[&_.editor-text-input]:text-[var(--puppet-color-text,#edf4f0)]',
+    '[&_.editor-text-input::placeholder]:text-[var(--puppet-color-text-muted,#84918c)]',
+    '[&_fieldset]:grid [&_fieldset]:gap-editor-field ' +
+      '[&_fieldset]:border-[var(--puppet-color-border,#35413d)] [&_fieldset]:rounded-md',
   ],
 }

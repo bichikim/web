@@ -2,6 +2,7 @@ import 'virtual:uno.css'
 import {render} from 'solid-js/web'
 
 import {WorkspaceApp} from './WorkspaceApp'
+import {restoreColorTheme} from './color-theme/color-theme'
 import type {PuppetExampleDocument} from '@winter-love/puppet/editor'
 import {
   createDemoDocument,
@@ -59,6 +60,8 @@ const rootElement = document.querySelector('#root')
 if (!(rootElement instanceof HTMLElement)) {
   throw new Error('Puppet root element was not found')
 }
+
+restoreColorTheme(document.documentElement)
 
 render(
   () => (

@@ -87,7 +87,7 @@ export const MotionSoundField = (props: MotionSoundFieldProps) => {
           }}
         />
       </FileField>
-      <EditorToast message={message()} onDismiss={() => setMessage(undefined)} />
+      <EditorToast tone="error" message={message()} onDismiss={() => setMessage(undefined)} />
     </fieldset>
   )
 }
