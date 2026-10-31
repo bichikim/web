@@ -90,6 +90,8 @@ export const createEmitter = <EventName extends string, EVentMap extends Record<
         window.removeEventListener(eventNameRecipe(event), listener as any)
       }
     }
+
+    listenerMatchMap.clear()
   }
 
   return {addEventListener, clear, emit, removeEventListener}
