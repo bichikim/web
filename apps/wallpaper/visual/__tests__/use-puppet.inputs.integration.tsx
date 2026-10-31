@@ -7,6 +7,8 @@ import * as playerModule from '@winter-love/puppet/player'
 import type {PoffoLipSync} from '@winter-love/wallpaper/settings/lipsync'
 import {usePuppet} from '../../src/features/background/use-puppet'
 import {createLipSyncPublisher} from '../../src/features/lipsync'
+import {builtinConnectionProfile} from '../../src/features/connection-profiles/builtin-profile'
+import {sendSemanticFrame} from '../../src/features/semantics/channel'
 import 'virtual:uno.css'
 import ashUrl from '../../../wallpaper-web/public/models/white-cat/model.poffo?url'
 
@@ -71,7 +73,7 @@ test('should retain a vowel pose, gaze and state inputs together without replaci
   expect(errors).not.toHaveBeenCalled()
 })
 
-test('should animate the bundled Ash model using the landing open/form combinations', async () => {
+test('should apply vowel poses and semantic expressions to the bundled Ash player', async () => {
   const blob = await fetch(ashUrl).then((response) => response.blob())
   const rendered = Promise.withResolvers<void>()
   const errors = vi.fn((cause: unknown) => rendered.reject(cause))
@@ -81,6 +83,7 @@ test('should animate the bundled Ash model using the landing open/form combinati
       assetId: () => 'builtin:ash',
       canvas,
       lipsync: () => ({source: 'voice'}),
+      semanticBindings: () => builtinConnectionProfile('builtin:ash')?.connections.semanticBindings,
       lipsyncId: () => 'ash-widget',
       load: async () => blob,
       onAfterRender: () => rendered.resolve(),
@@ -110,6 +113,21 @@ test('should animate the bundled Ash model using the landing open/form combinati
   )
   expect(parameters.find((parameter) => parameter.id === 'ParamMouthForm')?.name).toBe('Mouth Form')
   const player = await vi.mocked(playerModule.createPlayer).mock.results[0]!.value
+  await sendSemanticFrame({
+    scores: {'ash:joy-left': 0.85, 'ash:joy-right': 0.85},
+    widgetId: 'ash-widget',
+  })
+  await expect
+    .poll(() => [
+      player.getParameterValue('ParamEyeLSmile'),
+      player.getParameterValue('ParamEyeRSmile'),
+    ])
+    .toEqual([1, 1])
+  await sendSemanticFrame({scores: {'ash:excited': 1}, widgetId: 'ash-widget'})
+  await expect.poll(() => player.getParameterValue('Param71')).toBe(1)
+  await expect.poll(() => player.getParameterValue('ParamEyeLSmile')).toBe(0)
+  await sendSemanticFrame({scores: {}, widgetId: 'ash-widget'})
+  await expect.poll(() => player.getParameterValue('Param71')).toBe(0)
   const publish = createLipSyncPublisher('ash-widget')
   for (const pose of [
     {form: 0.2, open: 0.9, shape: 'a'},
