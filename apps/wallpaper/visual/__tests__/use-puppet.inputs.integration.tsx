@@ -1,3 +1,4 @@
+// oxlint-disable no-await-in-loop -- One player renders and releases each pose in sequence.
 import {createPlaybackMeter} from '../../src/features/voice/create-playback-meter'
 import {synthesizeVowel} from '../../../../packages/puppet/src/player/voice/__tests__/support/synthesize-vowel'
 import {cleanup, render} from '@solidjs/testing-library'
@@ -47,7 +48,7 @@ test('should retain a vowel pose, gaze and state inputs together without replaci
     })
     return (
       <div class="h-60 w-80">
-        <canvas ref={setCanvas} class="h-full w-full" />
+        <canvas ref={setCanvas} role="img" aria-label="Ash 캐릭터" class="h-full w-full" />
       </div>
     )
   })
@@ -85,14 +86,14 @@ test('should apply vowel poses and semantic expressions to the bundled Ash playe
       lipsync: () => ({source: 'voice'}),
       lipsyncId: () => 'ash-widget',
       load: async () => blob,
-      semanticBindings: () => builtinConnectionProfile('builtin:ash')?.connections.semanticBindings,
       onAfterRender: () => rendered.resolve(),
       onError: errors,
+      semanticBindings: () => builtinConnectionProfile('builtin:ash')?.connections.semanticBindings,
       tracking: () => 'off',
     })
     return (
-      <div class="h-80 w-60">
-        <canvas ref={setCanvas} class="h-full w-full" />
+      <div class="h-160 w-120">
+        <canvas ref={setCanvas} role="img" aria-label="Ash 캐릭터" class="h-full w-full" />
       </div>
     )
   })
@@ -134,6 +135,35 @@ test('should apply vowel poses and semantic expressions to the bundled Ash playe
   await expect.poll(() => player.getParameterValue('Param71')).toBe(1)
   await expect.poll(() => player.getParameterValue('ParamEyeLSmile')).toBe(0)
   await expect.poll(() => player.getParameterValue('ParamEyeLOpen')).toBe(1)
+  const bindings = builtinConnectionProfile('builtin:ash')!.connections.semanticBindings!
+  const poses = [
+    ...new Set(
+      bindings
+        .filter((binding) => binding.exclusiveGroup === 'ash:hands')
+        .map((binding) => binding.text),
+    ),
+  ]
+  for (const text of poses) {
+    const pose = bindings.filter(
+      (binding) => binding.exclusiveGroup === 'ash:hands' && binding.text === text,
+    )
+    await sendSemanticFrame({
+      scores: Object.fromEntries(pose.map((binding) => [binding.id, 1])),
+      widgetId: 'ash-widget',
+    })
+    await expect
+      .poll(() => pose.map((binding) => player.getParameterValue(binding.parameterId!)))
+      .toEqual(pose.map((binding) => binding.to))
+    await sendSemanticFrame({scores: {}, widgetId: 'ash-widget'})
+    await expect
+      .poll(() => pose.map((binding) => player.getParameterValue(binding.parameterId!)))
+      .toEqual(
+        pose.map(
+          (binding) =>
+            parameters.find((parameter) => parameter.id === binding.parameterId)!.defaultValue,
+        ),
+      )
+  }
   await sendSemanticFrame({scores: {}, widgetId: 'ash-widget'})
   await expect.poll(() => player.getParameterValue('Param71')).toBe(0)
   const publish = createLipSyncPublisher('ash-widget')

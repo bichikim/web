@@ -34,13 +34,21 @@ export const SPoffoSpeechSurface = (props: {readonly widgetId?: string} = {}) =>
         )
       : null,
   )
-  useSemanticInput({text: () => message()?.text ?? '', widgetId: () => props.widgetId})
   const lipsync = useSpeechLipSync({
     message,
     speech: settings.speech,
     widgetId: () => props.widgetId,
   })
   const voice = useVoice({message, onShape: lipsync.audioShape, speech: settings.speech})
+  useSemanticInput({
+    text: () => {
+      const speech = settings.speech()
+      return !speech.enabled || (speech.voice?.enabled && voice.status() === 'idle')
+        ? ''
+        : (message()?.text ?? '')
+    },
+    widgetId: () => props.widgetId,
+  })
   const movement = useSpeechDrag({speech: settings.speech, target, widgetId: () => props.widgetId})
   const voiceNotice = () => movement.error() ?? voice.error() ?? settings.error() ?? undefined
   const frame = useSpeechSize(content, {

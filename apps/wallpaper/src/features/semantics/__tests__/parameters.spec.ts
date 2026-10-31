@@ -13,6 +13,42 @@ const binding: SemanticBinding = {
   threshold: 0.5,
   to: 30,
 }
+it('should choose one pose per group while retaining its companion parameters and independent expressions', () => {
+  const poses = [
+    {
+      ...binding,
+      exclusiveGroup: 'hands',
+      id: 'note',
+      parameterId: 'note',
+      text: '작성했어요',
+      to: 1,
+    },
+    {
+      ...binding,
+      exclusiveGroup: 'hands',
+      id: 'note-hands',
+      parameterId: 'hands',
+      text: '작성했어요',
+      to: 1,
+    },
+    {
+      ...binding,
+      exclusiveGroup: 'hands',
+      id: 'coffee',
+      parameterId: 'coffee',
+      text: '쉬어 갈까요',
+      to: 1,
+    },
+    {...binding, id: 'smile', parameterId: 'smile', to: 1},
+  ]
+  expect(
+    semanticParameters({
+      bindings: poses,
+      parameters: ['note', 'hands', 'coffee', 'smile'].map((id) => ({...parameter, id})),
+      scores: {coffee: 0.8, note: 0.9, 'note-hands': 0.9, smile: 0.7},
+    }),
+  ).toEqual({hands: 1, note: 1, smile: 1})
+})
 it('should toggle between configured values at the matching threshold', () => {
   expect(
     semanticParameters({bindings: [binding], parameters: [parameter], scores: {happy: 0.49}}),

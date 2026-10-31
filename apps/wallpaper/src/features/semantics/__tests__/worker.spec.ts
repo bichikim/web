@@ -61,4 +61,11 @@ it('should embed uncached texts individually and retain duplicate order and cach
   expect(result.vectors.map((vector) => vector[0])).toEqual([9, 11, 11])
   await send(['short label', 'long chat'])
   expect(model).toHaveBeenCalledTimes(2)
+  const descriptions = Array.from({length: 130}, (_, index) => `example-${index}`)
+  const large = await send(descriptions)
+  expect(large.type).toBe('vectors')
+  if (large.type !== 'vectors') {
+    throw new Error(large.message)
+  }
+  expect(large.vectors.map((vector) => vector[0])).toEqual(descriptions.map((text) => text.length))
 })

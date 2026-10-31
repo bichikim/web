@@ -51,9 +51,11 @@ const embed = async (request: SemanticRequest) => {
     throw cause
   })
   const runtime = await loaded
+  const resolved = new Map<string, readonly number[]>()
   for (const text of request.texts) {
     const vector = cache.get(text)
     if (vector !== undefined) {
+      resolved.set(text, vector)
       cache.delete(text)
       cache.set(text, vector)
     }
@@ -81,8 +83,9 @@ const embed = async (request: SemanticRequest) => {
       cache.delete(cache.keys().next().value!)
     }
     cache.set(text, vector)
+    resolved.set(text, vector)
   }
-  return request.texts.map((text) => cache.get(text)!)
+  return request.texts.map((text) => resolved.get(text)!)
 }
 let pending = Promise.resolve()
 globalThis.onmessage = (event: MessageEvent<SemanticRequest>) => {

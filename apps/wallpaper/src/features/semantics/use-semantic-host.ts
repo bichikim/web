@@ -132,7 +132,12 @@ export const useSemanticHost = (props: UseSemanticHostProps): SemanticRuntime =>
         const signature = JSON.stringify([text, bindings])
         if (signatures.get(widget.id) !== signature) {
           signatures.set(widget.id, signature)
-          pending.set(widget.id, {input: {text, widgetId: widget.id}, signature})
+          if (text.trim() === '') {
+            pending.delete(widget.id)
+            publish({scores: {}, widgetId: widget.id}).catch(console.error)
+          } else {
+            pending.set(widget.id, {input: {text, widgetId: widget.id}, signature})
+          }
         }
       }
       drain().catch(console.error)

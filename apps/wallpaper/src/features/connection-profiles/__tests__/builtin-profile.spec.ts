@@ -35,3 +35,24 @@ it('should activate full smile parameters when a happy sentence just exceeds the
     }),
   ).toEqual({ParamEyeLSmile: 0, ParamEyeRSmile: 0})
 })
+it('should activate both-hand transitions for notes while excluding competing props', () => {
+  const bindings = builtinConnectionProfile('builtin:ash')!.connections.semanticBindings!
+  const notes = bindings.filter(
+    (binding) => binding.text === bindings.find((binding) => binding.id === 'ash:notes')!.text,
+  )
+  expect(
+    semanticParameters({
+      bindings,
+      parameters: ['Param75', 'Param81', 'Param89', 'Param92', 'Param84'].map((id) => ({
+        defaultValue: 0,
+        id,
+        maximum: 1,
+        minimum: 0,
+      })),
+      scores: {
+        ...Object.fromEntries(notes.map((binding) => [binding.id, 0.9])),
+        'ash:controller': 0.85,
+      },
+    }),
+  ).toEqual({Param75: 1, Param81: 1, Param89: 1, Param92: 1})
+})

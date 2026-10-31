@@ -1,6 +1,6 @@
 import {z} from 'zod'
 
-export const SEMANTIC_LIMIT = 32
+export const SEMANTIC_LIMIT = 64
 export const SEMANTIC_TEXT_LIMIT = 4096
 export const SEMANTIC_DESCRIPTION_LIMIT = 1000
 export const SEMANTIC_ID_LIMIT = 128
@@ -12,6 +12,8 @@ export interface SemanticBinding {
   readonly parameterId: string | null
   readonly mode: 'toggle' | 'range'
   readonly releaseWhenUnmatched?: boolean
+  /** Only the strongest description in this group applies; omitted bindings can combine freely. */
+  readonly exclusiveGroup?: string
   readonly threshold: number
   readonly from?: number
   readonly to?: number
@@ -20,6 +22,7 @@ export const semanticBindingsSchema = z
   .array(
     z.object({
       enabled: z.boolean(),
+      exclusiveGroup: z.string().trim().min(1).max(SEMANTIC_ID_LIMIT).optional(),
       from: z.number().finite().optional(),
       id: z.string().min(1).max(SEMANTIC_ID_LIMIT),
       mode: z.enum(['toggle', 'range']),

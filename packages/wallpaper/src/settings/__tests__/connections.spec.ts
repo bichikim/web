@@ -6,6 +6,7 @@ const profile = {
     semanticBindings: [
       {
         enabled: true,
+        exclusiveGroup: 'hands',
         id: 'happy',
         mode: 'toggle',
         parameterId: 'Param71',

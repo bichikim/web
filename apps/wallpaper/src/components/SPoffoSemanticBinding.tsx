@@ -1,3 +1,4 @@
+import {SPoffoSemanticDescription} from './SPoffoSemanticDescription'
 import {createMemo, Show} from 'solid-js'
 import type {SemanticBinding} from '@winter-love/wallpaper/settings/semantics'
 import type {TrackingParameter} from '../features/tracking/types'
@@ -37,8 +38,6 @@ export const SPoffoSemanticBinding = (props: SPoffoSemanticBindingProps) => {
   const parameter = () => props.parameters?.find((item) => item.id === binding().parameterId)
   const caption = () => props.label ?? '연결'
   const remove = () => props.onRemove?.()
-  const handleText = (event: InputEvent & {currentTarget: HTMLTextAreaElement}) =>
-    update({text: event.currentTarget.value})
   const handleEnabled = (enabled: boolean) => update({enabled})
   const handleParameter = (value: string) => {
     const selected = props.parameters?.find((item) => item.id === value)
@@ -90,17 +89,7 @@ export const SPoffoSemanticBinding = (props: SPoffoSemanticBindingProps) => {
           삭제
         </button>
       </div>
-      <textarea
-        aria-label={`${caption()} 감정·행동·내용`}
-        placeholder="예: 문제를 해결해서 기쁘고 뿌듯한 내용"
-        value={binding().text}
-        maxLength={1000}
-        rows={2}
-        onInput={handleText}
-        disabled={props.onChange === undefined}
-        class="box-border w-full resize-y rounded-md border border-solid border-stone-300 bg-white
-          px-2 py-1.5 font-inherit text-inherit"
-      />
+      <SPoffoSemanticDescription value={binding()} label={caption()} onChange={props.onChange} />
       <SSelect
         label={`${caption()} 파라미터`}
         value={binding().parameterId ?? ''}

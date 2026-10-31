@@ -200,3 +200,62 @@ it('should recover bubble input after store hydration and react to in-place conn
     stop()
   }
 })
+
+it('should clear expressions immediately at speech end and discard analysis still in flight', async () => {
+  const analysis = Promise.withResolvers<ReadonlyArray<readonly number[]>>()
+  const embed = vi
+    .fn()
+    .mockResolvedValueOnce([
+      [1, 0],
+      [1, 0],
+    ])
+    .mockReturnValueOnce(analysis.promise)
+  vi.mocked(createSemanticModel).mockReturnValue({dispose: vi.fn(), embed})
+  const scope = createRoot((cleanup) => ({
+    cleanup,
+    host: useSemanticHost({
+      widgets: () => [
+        {
+          assetId: 'character',
+          id: 'widget',
+          speech: {
+            enabled: true,
+            semanticBindings: [
+              {
+                enabled: true,
+                id: 'happy',
+                mode: 'toggle',
+                parameterId: 'smile',
+                text: '기쁨',
+                threshold: 0.75,
+              },
+            ],
+            x: 0.9,
+            y: 0.05,
+          },
+          x: null,
+          y: null,
+        },
+      ],
+    }),
+  }))
+  try {
+    scope.host.test('widget', '기뻐요')
+    await waitFor(() => expect(scope.host.score('widget', 'happy')).toBe(1), {
+      interval: 1,
+      timeout: 100,
+    })
+    scope.host.test('widget', '정말 행복해요')
+    await waitFor(() => expect(embed).toHaveBeenCalledTimes(2), {interval: 1, timeout: 100})
+    scope.host.test('widget', '')
+    expect(scope.host.score('widget', 'happy')).toBeUndefined()
+    analysis.resolve([
+      [1, 0],
+      [1, 0],
+    ])
+    await analysis.promise
+    expect(scope.host.score('widget', 'happy')).toBeUndefined()
+  } finally {
+    scope.cleanup()
+  }
+})
