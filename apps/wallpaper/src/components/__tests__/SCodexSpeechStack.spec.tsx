@@ -43,7 +43,7 @@ beforeEach(() => {
     vi.fn(() => ({matches: false})),
   )
   vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue(
-    new DOMRect(100, 200, 320, 48),
+    new DOMRect(100, 200, 320, 72),
   )
   const read = globalThis.getComputedStyle
   vi.spyOn(globalThis, 'getComputedStyle').mockImplementation((element) => {
@@ -99,13 +99,13 @@ it('should move C to the actual front without remounting or changing the other r
   expect(lift.frames).toEqual([
     {
       '--speech-depth': '0',
-      '--speech-height': '48px',
+      '--speech-height': '54px',
       '--speech-reveal': '0',
-      '--speech-y': '36px',
+      '--speech-y': '18px',
     },
     {
       '--speech-depth': '1',
-      '--speech-height': '48px',
+      '--speech-height': '72px',
       '--speech-reveal': '1',
       '--speech-y': '28px',
     },
@@ -118,7 +118,7 @@ it('should move C to the actual front without remounting or changing the other r
   expect(descent.options.easing).toBe('cubic-bezier(.22, .8, .25, 1)')
   expect(descent.frames[1]).toEqual({
     '--speech-depth': '1',
-    '--speech-height': '48px',
+    '--speech-height': '72px',
     '--speech-reveal': '1',
     '--speech-y': '108px',
   })
@@ -127,13 +127,13 @@ it('should move C to the actual front without remounting or changing the other r
   expect(settle.frames).toEqual([
     {
       '--speech-depth': '1',
-      '--speech-height': '48px',
+      '--speech-height': '72px',
       '--speech-reveal': '1',
       '--speech-y': '108px',
     },
     {
       '--speech-depth': '0',
-      '--speech-height': '48px',
+      '--speech-height': '72px',
       '--speech-reveal': '1',
       '--speech-y': '108px',
     },
@@ -150,7 +150,7 @@ it('should retarget the drawn lift position and shadow while ignoring stale comp
   const latest = motions.filter((item) => item.options.duration === 300).at(-1)!
   expect(motions.find((item) => item.element === old.element && item !== old)?.frames[0]).toEqual({
     '--speech-depth': '0.45',
-    '--speech-height': '48px',
+    '--speech-height': '72px',
     '--speech-reveal': '0.4',
     '--speech-y': '32px',
   })
@@ -227,7 +227,7 @@ it('should preserve the drawn position when chats change during selection and di
   const latest = motions.filter((item) => item.options.duration === 300).at(-1)!
   expect(latest.frames[0]).toEqual({
     '--speech-depth': '0.4',
-    '--speech-height': '48px',
+    '--speech-height': '72px',
     '--speech-reveal': '1',
     '--speech-y': '32px',
   })

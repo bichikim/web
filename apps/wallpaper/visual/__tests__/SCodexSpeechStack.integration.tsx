@@ -107,7 +107,7 @@ test.each(['bottom', 'top'] as const)(
       for (const card of cards()) {
         expect(getComputedStyle(card).clipPath).toBe('none')
         const bounds = frame(card).getBoundingClientRect()
-        expect(bounds.height).toBeGreaterThanOrEqual(48)
+        expect(bounds.height).toBeGreaterThanOrEqual(54)
         expect(getComputedStyle(frame(card)).boxShadow).not.toBe('none')
       }
     }
@@ -157,7 +157,7 @@ test.each(['bottom', 'top'] as const)(
     lift.pause()
     lift.currentTime = 100
     await draw()
-    expect(frame(selected).getBoundingClientRect().height).toBeGreaterThan(48)
+    expect(frame(selected).getBoundingClientRect().height).toBeGreaterThan(54)
     lift.finish()
     await expect.poll(order).toEqual(['B', 'A', 'C'])
     const travel = selected.getAnimations()[0]
@@ -915,7 +915,7 @@ test('should resize the painted background and border while retaining the full c
   await draw()
   const middle = frame(long).getBoundingClientRect().height
   expect(middle).toBeLessThan(original)
-  expect(middle).toBeGreaterThan(48)
+  expect(middle).toBeGreaterThan(54)
   const tail = frame(long).querySelector('span')!
   expect(tail).toHaveAttribute('data-edge', 'bottom')
   const tailBounds = tail.getBoundingClientRect()
@@ -930,7 +930,7 @@ test('should resize the painted background and border while retaining the full c
   expect(Number.parseFloat(getComputedStyle(frame(long)).borderBottomLeftRadius)).toBeGreaterThan(0)
   expect(long.getBoundingClientRect().height).toBe(original)
   await settle()
-  expect(frame(long).getBoundingClientRect().height).toBe(48)
+  expect(frame(long).getBoundingClientRect().height).toBe(54)
   expect(frame(short).getBoundingClientRect().height).toBe(short.getBoundingClientRect().height)
   expect(region.scrollTop).toBe(100)
   expect(composer).toHaveValue('보존할 초안')
@@ -956,7 +956,7 @@ test.each(['bottom', 'top'] as const)(
     const header = rear.querySelector('button')!
     const headerTop = header.getBoundingClientRect().top
     const initial = frame(rear).getBoundingClientRect().height
-    expect(initial).toBe(48)
+    expect(initial).toBe(54)
     screen.getByRole('button', {name: '채팅 B 선택'}).click()
     const lift = rear.getAnimations()[0]
     lift.pause()
@@ -989,11 +989,14 @@ test.each(['bottom', 'top'] as const)(
 )
 
 test.each(['bottom', 'top'] as const)(
-  'should round exposed corners only while reordering from the %s anchor',
+  'should retain a taller rounded folded bubble throughout reordering from the %s anchor',
   async (anchor) => {
     render(() => (
       <main class="box-border flex h-[640px] w-[344px] flex-col justify-center p-9">
-        <SCodexSpeechStack anchor={anchor} activities={activities.slice(0, 2)} />
+        <SCodexSpeechStack
+          anchor={anchor}
+          activities={[{...activities[0], text: '줄어드는 메시지\n'.repeat(12)}, activities[1]]}
+        />
       </main>
     ))
     await settle()
@@ -1002,7 +1005,13 @@ test.each(['bottom', 'top'] as const)(
       const style = getComputedStyle(frame(rear))
       return anchor === 'bottom' ? style.borderBottomLeftRadius : style.borderTopLeftRadius
     }
-    expect(coveredRadius()).toBe('0px')
+    expect(coveredRadius()).toBe('12px')
+    const folded = frame(rear).getBoundingClientRect()
+    const expanded = frame(front).getBoundingClientRect()
+    expect(folded.height).toBe(54)
+    expect(anchor === 'bottom' ? folded.bottom - expanded.top : expanded.bottom - folded.top).toBe(
+      18,
+    )
     screen.getByRole('button', {name: '채팅 B 선택'}).click()
     const lift = rear.getAnimations()[0]
     lift.pause()
@@ -1023,9 +1032,14 @@ test.each(['bottom', 'top'] as const)(
     await expect.poll(order).toEqual(['B', 'A'])
     document.getAnimations().forEach((animation) => animation.pause())
     const departure = front.getAnimations()[0]
+    let previousHeight = front.getBoundingClientRect().height
     for (const fraction of [0.1, 0.5, 0.9, 1]) {
       departure.currentTime = Number(departure.effect!.getTiming().duration) * fraction
       await draw()
+      const height = frame(front).getBoundingClientRect().height
+      expect(height).toBeLessThanOrEqual(previousHeight)
+      expect(height).toBeGreaterThanOrEqual(54)
+      previousHeight = height
       const style = getComputedStyle(frame(front))
       expect(style.borderBottomLeftRadius).toBe('12px')
       expect(style.borderBottomRightRadius).toBe('12px')
@@ -1033,7 +1047,13 @@ test.each(['bottom', 'top'] as const)(
     await settle()
     const style = getComputedStyle(frame(front))
     expect(anchor === 'bottom' ? style.borderBottomLeftRadius : style.borderTopLeftRadius).toBe(
-      '0px',
+      '12px',
+    )
+    const behind = frame(front).getBoundingClientRect()
+    const selected = frame(rear).getBoundingClientRect()
+    expect(behind.height).toBe(54)
+    expect(anchor === 'bottom' ? behind.bottom - selected.top : selected.bottom - behind.top).toBe(
+      18,
     )
   },
 )

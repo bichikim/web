@@ -44,9 +44,7 @@ export const SCodexSpeech = (props: SCodexSpeechProps) => {
       aria-live="polite"
       aria-atomic="true"
       data-tone={props.tone}
-      data-moving={props.moving ?? false}
-      class="wallpaper-speech pointer-events-none relative rounded-xl text-stone-800
-      data-[moving=true]:[--speech-corners:1]"
+      class="wallpaper-speech pointer-events-none relative rounded-xl text-stone-800"
       classList={{'wallpaper-speech-stacked': props.stacked}}
     >
       <SSpeechFrame
