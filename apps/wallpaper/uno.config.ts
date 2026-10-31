@@ -12,9 +12,7 @@ export default defineConfig({
     [
       'wallpaper-speech-frame',
       {
-        '--speech-frame-inset': 'calc(12px * (1 - var(--speech-reveal,1)))',
-        bottom: 'var(--speech-frame-inset)',
-        height: 'calc(var(--speech-painted-height) - var(--speech-frame-inset))',
+        height: 'var(--speech-painted-height)',
       },
     ],
     [
@@ -51,7 +49,8 @@ export default defineConfig({
       {
         'clip-path': [
           'inset(0 0 calc(100% - var(--speech-painted-height) + 12px * (1 - var(--speech-reveal,1))) 0 round',
-          '.75rem)',
+          '.75rem .75rem',
+          'calc(.75rem * var(--speech-reveal,1)) calc(.75rem * var(--speech-reveal,1)))',
         ].join(' '),
         transform: 'translateY(calc(100% - var(--speech-painted-height)))',
       },
@@ -61,7 +60,7 @@ export default defineConfig({
       {
         'clip-path': [
           'inset(0 0 calc(100% - var(--speech-painted-height) + 12px * (1 - var(--speech-reveal,1))) 0 round',
-          '.75rem)',
+          'calc(.75rem * var(--speech-reveal,1)) calc(.75rem * var(--speech-reveal,1)) .75rem .75rem)',
         ].join(' '),
         transform: 'translateY(calc(12px * (1 - var(--speech-reveal,1))))',
       },
