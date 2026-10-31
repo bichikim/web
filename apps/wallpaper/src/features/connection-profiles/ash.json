@@ -9,20 +9,20 @@
         "text": "기쁘고 행복해서 환하게 웃어요. 잘됐어, 성공했어, 고마워, 축하해!",
         "parameterId": "ParamEyeLSmile",
         "enabled": true,
-        "mode": "range",
+        "mode": "toggle",
         "threshold": 0.84,
         "from": 0,
-        "to": 0.85
+        "to": 1
       },
       {
         "id": "ash:joy-right",
         "text": "기쁘고 행복해서 환하게 웃어요. 잘됐어, 성공했어, 고마워, 축하해!",
         "parameterId": "ParamEyeRSmile",
         "enabled": true,
-        "mode": "range",
+        "mode": "toggle",
         "threshold": 0.84,
         "from": 0,
-        "to": 0.85
+        "to": 1
       },
       {
         "id": "ash:excited",
