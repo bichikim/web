@@ -1,3 +1,4 @@
+import {SPoffoSemanticAnimation} from './SPoffoSemanticAnimation'
 import {SPoffoSemanticDescription} from './SPoffoSemanticDescription'
 import {createMemo, Show} from 'solid-js'
 import type {SemanticBinding} from '@winter-love/wallpaper/settings/semantics'
@@ -103,6 +104,7 @@ export const SPoffoSemanticBinding = (props: SPoffoSemanticBindingProps) => {
         disabled={props.loading || props.onChange === undefined}
         onChange={handleParameter}
       />
+      <SPoffoSemanticAnimation value={binding()} label={caption()} onChange={props.onChange} />
       <div class="grid grid-cols-2 gap-2">
         <SSelect
           label={`${caption()} 연결 방식`}

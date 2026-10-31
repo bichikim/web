@@ -35,6 +35,30 @@ it('should register a description and preserve its input node while editing', ()
   fireEvent.click(screen.getByRole('button', {name: '연결 1 삭제'}))
   expect(bindings()).toEqual([])
 })
+it('should configure repeated and finite gestures without changing their matching threshold', () => {
+  const bindings = mount()
+  const original = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'showPopover')
+  Object.defineProperty(HTMLElement.prototype, 'showPopover', {configurable: true, value: vi.fn()})
+  try {
+    fireEvent.click(screen.getByRole('button', {name: '연결 추가'}))
+    fireEvent.click(screen.getByRole('combobox', {name: '연결 1 움직임'}))
+    fireEvent.click(screen.getByRole('option', {name: '반복'}))
+    expect(bindings()[0].animation).toEqual({period: 1})
+    fireEvent.click(screen.getByRole('combobox', {name: '연결 1 움직임'}))
+    fireEvent.click(screen.getByRole('option', {name: '횟수 지정'}))
+    expect(bindings()[0].animation).toEqual({cycles: 1, period: 1})
+    expect(bindings()[0].threshold).toBe(0.75)
+    fireEvent.click(screen.getByRole('combobox', {name: '연결 1 움직임'}))
+    fireEvent.click(screen.getByRole('option', {name: '고정'}))
+    expect(bindings()[0].animation).toBeUndefined()
+  } finally {
+    if (original === undefined) {
+      Reflect.deleteProperty(HTMLElement.prototype, 'showPopover')
+    } else {
+      Object.defineProperty(HTMLElement.prototype, 'showPopover', original)
+    }
+  }
+})
 it('should connect a model parameter and configure its full continuous range independently of matching', () => {
   const bindings = mount()
   const original = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'showPopover')

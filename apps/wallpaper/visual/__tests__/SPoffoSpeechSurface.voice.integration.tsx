@@ -106,8 +106,7 @@ test('should release the semantic expression when actual queued audio reaches it
       bindings: () => speech.semanticBindings,
       parameters: () => [{defaultValue: 0, id: 'smile', maximum: 1, minimum: 0}],
       player: () => ({
-        clearParameterValues: () => setSmile(null),
-        patchParameterValues: (values) => setSmile(values.smile),
+        patchParameterBlends: (values) => setSmile(values.smile?.value ?? null),
       }),
       widgetId: () => 'voice-widget',
     })

@@ -7,7 +7,7 @@ import type {PuppetRenderOverride} from './internal/render-overrides'
 import type {LookTarget} from './look'
 import type {EyeBlinkTiming} from './eye-blink'
 import type {RandomSource} from './random'
-import type {PuppetParameterBlend} from './parameter-blends'
+import type {ParameterBlendStage, PuppetParameterBlend} from './parameter-blends'
 import type {PuppetPhysicsOptions} from './physics-options'
 import type {MotionEvent, MotionPlayback, MotionPlaybackOptions} from './playback'
 import type {PlayerViewCamera} from './view-camera'
@@ -34,6 +34,11 @@ export interface Player {
   hitTest(point: {readonly x: number; readonly y: number}): string | undefined
   /** 지정한 외부 값만 병합하며 다른 입력과 모션 재생은 유지한다. */
   patchParameterValues(values: PuppetParameterValueMap): void
+  /** Merges blends in one frame. Stage defaults to before physics; undefined releases only that stage's blends. */
+  patchParameterBlends(
+    values: Readonly<Record<string, PuppetParameterBlend | undefined>>,
+    stage?: ParameterBlendStage,
+  ): void
   pause(): void
   play(options?: PlayerPlaybackOptions): void
   playMotion(motionId: string, options?: PlayerPlaybackOptions): boolean

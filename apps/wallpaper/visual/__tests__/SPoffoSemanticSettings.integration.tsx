@@ -1,3 +1,4 @@
+import type {PuppetParameterBlend} from '@winter-love/puppet/player'
 import {cleanup, fireEvent, render, screen} from '@solidjs/testing-library'
 import {createSignal} from 'solid-js'
 import {afterEach, expect, test, vi} from 'vitest'
@@ -29,9 +30,8 @@ test('should register and persist a continuous connection, then react to test an
   const [incoming, setIncoming] = createSignal('')
   const [angle, setAngle] = createSignal<number | null>(null)
   const player = {
-    clearParameterValues: () => setAngle(null),
-    patchParameterValues: (values: Readonly<Record<string, number>>) => {
-      setAngle(values.angle)
+    patchParameterBlends: (values: Readonly<Record<string, PuppetParameterBlend | undefined>>) => {
+      setAngle(values.angle?.value ?? null)
     },
   }
   const parameters = [{defaultValue: 0, id: 'angle', maximum: 30, minimum: -30, name: '고개'}]

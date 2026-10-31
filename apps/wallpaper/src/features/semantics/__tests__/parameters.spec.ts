@@ -102,6 +102,60 @@ it('should support inverted continuous output ranges', () => {
     }),
   ).toEqual({angle: 0})
 })
+it('should animate a matched gesture and release it after its configured repetitions', () => {
+  const animated = {...binding, animation: {cycles: 2, period: 1}, from: 0, to: 20}
+  expect(
+    semanticParameters({
+      bindings: [animated],
+      elapsed: 0,
+      parameters: [parameter],
+      scores: {happy: 1},
+    }),
+  ).toEqual({angle: 0})
+  expect(
+    semanticParameters({
+      bindings: [animated],
+      elapsed: 0.5,
+      parameters: [parameter],
+      scores: {happy: 1},
+    }),
+  ).toEqual({angle: 20})
+  expect(
+    semanticParameters({
+      bindings: [animated],
+      elapsed: 1,
+      parameters: [parameter],
+      scores: {happy: 1},
+    }),
+  ).toEqual({angle: 0})
+  expect(
+    semanticParameters({
+      bindings: [animated],
+      elapsed: 2,
+      parameters: [parameter],
+      scores: {happy: 1},
+    }),
+  ).toEqual({})
+})
+it('should phase coordinated joints and avoid animating below-threshold off values', () => {
+  const animated = {...binding, animation: {period: 1, phase: 0.5}, from: -10, to: 10}
+  expect(
+    semanticParameters({
+      bindings: [animated],
+      elapsed: 0,
+      parameters: [parameter],
+      scores: {happy: 1},
+    }),
+  ).toEqual({angle: 10})
+  expect(
+    semanticParameters({
+      bindings: [animated],
+      elapsed: 0,
+      parameters: [parameter],
+      scores: {happy: 0.4},
+    }),
+  ).toEqual({angle: -10})
+})
 
 it('should prefer a matching connection over a higher-scoring connection below its own threshold', () => {
   expect(

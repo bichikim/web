@@ -5,6 +5,7 @@ const profile = {
   connections: {
     semanticBindings: [
       {
+        animation: {cycles: 2, period: 1, phase: 0.5},
         enabled: true,
         exclusiveGroup: 'hands',
         id: 'happy',
@@ -49,3 +50,15 @@ it('should reject unknown parameters including nested lip-sync shapes', () => {
   })
   expect(parseConnectionProfile(source, options)).toEqual({ok: false, reason: 'parameter'})
 })
+it.each([0, -1, Number.POSITIVE_INFINITY])(
+  'should reject invalid gesture periods (%s)',
+  (period) => {
+    const source = JSON.stringify({
+      ...profile,
+      connections: {
+        semanticBindings: [{...profile.connections.semanticBindings[0], animation: {period}}],
+      },
+    })
+    expect(parseConnectionProfile(source, options)).toEqual({ok: false, reason: 'invalid'})
+  },
+)

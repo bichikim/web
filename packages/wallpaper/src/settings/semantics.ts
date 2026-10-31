@@ -1,11 +1,23 @@
 import {z} from 'zod'
 
-export const SEMANTIC_LIMIT = 64
+export const SEMANTIC_LIMIT = 128
 export const SEMANTIC_TEXT_LIMIT = 4096
 export const SEMANTIC_DESCRIPTION_LIMIT = 1000
 export const SEMANTIC_ID_LIMIT = 128
 export const SEMANTIC_THRESHOLD_MAX = 0.99
+const MAX_GESTURE_CYCLES = 16
+const MIN_GESTURE_PERIOD = 0.1
+const MAX_GESTURE_PERIOD = 30
+export interface SemanticAnimation {
+  /** Seconds for one from-to-from cycle. */
+  readonly period: number
+  /** Cycle offset, from 0 to 1; omitted starts at the configured from value. */
+  readonly phase?: number
+  /** Repetitions before releasing the parameter; omitted repeats until the match ends. */
+  readonly cycles?: number
+}
 export interface SemanticBinding {
+  readonly animation?: SemanticAnimation
   readonly id: string
   readonly text: string
   readonly enabled: boolean
@@ -21,6 +33,13 @@ export interface SemanticBinding {
 export const semanticBindingsSchema = z
   .array(
     z.object({
+      animation: z
+        .object({
+          cycles: z.number().int().min(1).max(MAX_GESTURE_CYCLES).optional(),
+          period: z.number().finite().min(MIN_GESTURE_PERIOD).max(MAX_GESTURE_PERIOD),
+          phase: z.number().finite().min(0).max(1).optional(),
+        })
+        .optional(),
       enabled: z.boolean(),
       exclusiveGroup: z.string().trim().min(1).max(SEMANTIC_ID_LIMIT).optional(),
       from: z.number().finite().optional(),

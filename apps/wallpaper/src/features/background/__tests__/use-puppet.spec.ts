@@ -27,6 +27,7 @@ const player: Player = {
   getParameterValues: vi.fn(),
   getRenderingInfo: vi.fn(),
   hitTest: vi.fn(),
+  patchParameterBlends: vi.fn(),
   patchParameterValues: vi.fn(),
   pause: vi.fn(),
   play: vi.fn(),

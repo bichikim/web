@@ -1,7 +1,9 @@
 import type {SemanticBinding} from '@winter-love/wallpaper/settings/semantics'
 import type {TrackingParameter} from '../tracking/types'
 
-interface SemanticParametersOptions {
+export interface SemanticParametersOptions {
+  /** Seconds since the matched gesture began; omitted samples the starting pose. */
+  readonly elapsed?: number
   /** Configured mappings; a shared exclusive group selects one description and all its outputs. */
   readonly bindings: readonly SemanticBinding[]
   /** Similarities by binding ID; absent and nonfinite scores do not override the player. */
@@ -9,9 +11,12 @@ interface SemanticParametersOptions {
   /** Available model parameters and their output bounds. */
   readonly parameters: readonly TrackingParameter[]
 }
-export const semanticParameters = (
-  options: SemanticParametersOptions,
-): Readonly<Record<string, number>> => {
+export interface SemanticMatch {
+  readonly binding: SemanticBinding
+  readonly parameter: TrackingParameter
+  readonly score: number
+}
+export const semanticMatches = (options: SemanticParametersOptions): readonly SemanticMatch[] => {
   const winners = new Map<string, SemanticBinding>()
   for (const binding of options.bindings) {
     const group = binding.exclusiveGroup
@@ -49,16 +54,29 @@ export const semanticParameters = (
         Number(first.score >= first.binding.threshold) -
           Number(second.score >= second.binding.threshold) || first.score - second.score,
     )
-  return Object.fromEntries(
-    candidates.map(({binding, parameter, score}) => {
+  return candidates
+}
+export const semanticParameters = (
+  options: SemanticParametersOptions,
+): Readonly<Record<string, number>> =>
+  Object.fromEntries(
+    semanticMatches(options).flatMap(({binding, parameter, score}) => {
+      const animation = score >= binding.threshold ? binding.animation : undefined
+      const elapsed = Math.max(0, options.elapsed ?? 0)
+      if (animation?.cycles !== undefined && elapsed >= animation.period * animation.cycles) {
+        return []
+      }
       const from = binding.from ?? parameter.defaultValue
       const to = binding.to ?? parameter.maximum
       const strength =
         binding.mode === 'toggle'
           ? Number(score >= binding.threshold)
           : Math.max(0, Math.min(1, (score - binding.threshold) / (1 - binding.threshold)))
-      const value = from + (to - from) * strength
-      return [parameter.id, Math.max(parameter.minimum, Math.min(parameter.maximum, value))]
+      const progress =
+        animation === undefined
+          ? 1
+          : (1 - Math.cos(Math.PI * 2 * (elapsed / animation.period + (animation.phase ?? 0)))) / 2
+      const value = from + (to - from) * strength * progress
+      return [[parameter.id, Math.max(parameter.minimum, Math.min(parameter.maximum, value))]]
     }),
   )
-}

@@ -10,6 +10,7 @@ export const createPlayerFixture = (): Player => ({
   getParameterValues: vi.fn(() => ({})),
   getRenderingInfo: vi.fn(() => ({antialiasing: 'msaa' as const, renderer: 'webgl' as const})),
   hitTest: vi.fn(),
+  patchParameterBlends: vi.fn(),
   patchParameterValues: vi.fn(),
   pause: vi.fn(),
   play: vi.fn(),

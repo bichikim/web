@@ -3,7 +3,7 @@ import {AutoConfig, AutoModel, AutoTokenizer, env} from '@huggingface/transforme
 import type {SemanticReply, SemanticRequest} from './protocol'
 
 const MODEL = 'embeddinggemma-2'
-const CACHE_LIMIT = 128
+const CACHE_LIMIT = 1024
 const TOKEN_LIMIT = 512
 const DIMENSIONS = 768
 const cache = new Map<string, readonly number[]>()

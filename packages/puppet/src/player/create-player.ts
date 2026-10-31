@@ -169,10 +169,9 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
       settle: settlePhysics,
     })
     ;({chainState, physicsState} = result)
+    const adjusted = adjustments.applyBlends(document, result.parameterValues, 'after-physics')
     const shaped =
-      mouth === undefined
-        ? result.parameterValues
-        : applyMouthShapes(document, result.parameterValues, mouth.shown)
+      mouth === undefined ? adjusted : applyMouthShapes(document, adjusted, mouth.shown)
     // Without mouth shapes, a motion sound's loudness opens the mouth (Cubism's volume lip sync).
     const level =
       effects.soundLevel !== undefined && document.mouthShapes === undefined
@@ -476,6 +475,14 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
       refresh()
       return true
     },
+    patchParameterBlends(values, stage = 'before-physics') {
+      if (!destroyed && (stage === 'before-physics' || stage === 'after-physics')) {
+        for (const [id, blend] of Object.entries(values)) {
+          adjustments.setParameterBlend(document, id, blend, stage)
+        }
+        refresh()
+      }
+    },
     setLipSync(level) {
       lipSyncLevel = level !== undefined && Number.isFinite(level) ? level : undefined
       refresh()
@@ -493,8 +500,8 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
         refresh()
       }
     },
-    setMotion,
 
+    setMotion,
     setParameterBlend(parameterId, blend) {
       if (destroyed || !adjustments.setParameterBlend(document, parameterId, blend)) {
         return false
