@@ -1,3 +1,4 @@
+import {SPoffoConnectionProfiles} from './SPoffoConnectionProfiles'
 import {SPoffoSemanticSettings} from './SPoffoSemanticSettings'
 import type {SemanticBinding} from '@winter-love/wallpaper/settings/semantics'
 import {type Accessor, createMemo, createSignal, Show} from 'solid-js'
@@ -95,6 +96,11 @@ export const SPoffoWidgetEditor = (props: SPoffoWidgetEditorProps) => {
         adjustments={!speech()}
         connections={(source) => (
           <Show when={editable()}>
+            <SPoffoConnectionProfiles
+              widget={props.widget ?? undefined}
+              parameters={source.parameters()}
+              loading={source.loading()}
+            />
             <SPoffoLipSyncSettings
               source={source}
               assetId={props.assetId()}

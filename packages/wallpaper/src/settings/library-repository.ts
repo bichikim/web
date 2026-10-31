@@ -1,3 +1,5 @@
+import {type PoffoConnections, poffoConnectionsSchema} from './connections'
+import {mergeConnections} from './merge-connections'
 import Dexie, {liveQuery, type Table} from 'dexie'
 import {poffoVoiceSchema} from './voice'
 import {
@@ -32,6 +34,11 @@ interface LibraryDatabase extends Dexie {
   readonly widgets: Table<PoffoWidget, string>
 }
 export interface LibraryRepository {
+  readonly configureConnections: (
+    id: string,
+    connections: PoffoConnections,
+    mode?: 'replace' | 'missing',
+  ) => Promise<void>
   readonly read: () => Promise<WallpaperLibrary>
   readonly visit: (options: VisitWebsiteOptions) => Promise<void>
   readonly removeVisit: (url: string) => Promise<void>
@@ -83,6 +90,16 @@ export const createLibraryRepository = (name: string): LibraryRepository => {
       await database.widgets.update(id, {trackingBindings: poffoBindingsSchema.parse(bindings)})
     },
     close: () => database.close(),
+    async configureConnections(id, connections, mode = 'replace') {
+      const parsed = poffoConnectionsSchema.parse(connections)
+      await database.transaction('rw', database.widgets, async () => {
+        const widget = await database.widgets.get(id)
+        if (widget === undefined) {
+          throw new Error('Poffo widget is unavailable')
+        }
+        await database.widgets.put(mergeConnections({connections: parsed, mode, widget}))
+      })
+    },
     async configureSpeech(id, speech) {
       await database.widgets.update(id, {speech: poffoSpeechSchema.parse(speech)})
     },

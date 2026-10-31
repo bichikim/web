@@ -1,0 +1,109 @@
+{
+  "format": "poffo-connections",
+  "version": 1,
+  "assetId": "builtin:ash",
+  "connections": {
+    "semanticBindings": [
+      {
+        "id": "ash:joy-left",
+        "text": "기쁘고 행복해서 환하게 웃어요. 잘됐어, 성공했어, 고마워, 축하해!",
+        "parameterId": "ParamEyeLSmile",
+        "enabled": true,
+        "mode": "range",
+        "threshold": 0.84,
+        "from": 0,
+        "to": 0.85
+      },
+      {
+        "id": "ash:joy-right",
+        "text": "기쁘고 행복해서 환하게 웃어요. 잘됐어, 성공했어, 고마워, 축하해!",
+        "parameterId": "ParamEyeRSmile",
+        "enabled": true,
+        "mode": "range",
+        "threshold": 0.84,
+        "from": 0,
+        "to": 0.85
+      },
+      {
+        "id": "ash:excited",
+        "text": "기대되고 신나요. 멋져, 대단해, 정말 흥미롭고 놀라워!",
+        "parameterId": "Param71",
+        "enabled": true,
+        "mode": "toggle",
+        "threshold": 0.86,
+        "from": 0,
+        "to": 1
+      },
+      {
+        "id": "ash:affection",
+        "text": "좋아해요, 사랑해요. 사랑스럽고 귀여워서 애정이 느껴져요.",
+        "parameterId": "Param72",
+        "enabled": true,
+        "mode": "toggle",
+        "threshold": 0.86,
+        "from": 0,
+        "to": 1
+      },
+      {
+        "id": "ash:embarrassed",
+        "text": "칭찬을 받아 부끄럽고 쑥스러워요. 얼굴이 빨개지고 수줍어요.",
+        "parameterId": "Param67",
+        "enabled": true,
+        "mode": "range",
+        "threshold": 0.82,
+        "from": 0,
+        "to": 0.8
+      },
+      {
+        "id": "ash:angry",
+        "text": "화가 나고 짜증나요. 불쾌하고 억울해서 따지고 싶어요.",
+        "parameterId": "Param68",
+        "enabled": true,
+        "mode": "toggle",
+        "threshold": 0.82,
+        "from": 0,
+        "to": 1
+      },
+      {
+        "id": "ash:sad-eyes",
+        "text": "슬프고 속상해요. 아쉽고 서운해서 울고 싶고 눈물이 나요.",
+        "parameterId": "Param73",
+        "enabled": true,
+        "mode": "range",
+        "threshold": 0.84,
+        "from": 0,
+        "to": 0.85
+      },
+      {
+        "id": "ash:sad-tears",
+        "text": "너무 슬퍼서 울어요. 눈물이 나고 엉엉 울고 싶어요.",
+        "parameterId": "Param70",
+        "enabled": true,
+        "mode": "toggle",
+        "threshold": 0.88,
+        "from": 0,
+        "to": 1
+      },
+      {
+        "id": "ash:nervous",
+        "text": "긴장되고 불안해요. 걱정되고 당황스러워서 어쩔 줄 모르겠어요.",
+        "parameterId": "Param107",
+        "enabled": true,
+        "mode": "range",
+        "threshold": 0.84,
+        "from": 0,
+        "to": 0.75
+      },
+      {
+        "id": "ash:sweat",
+        "text": "당황했어요. 난감하고 곤란해서 진땀이 나요. 큰일 났어, 어떡하지?",
+        "parameterId": "Param69",
+        "enabled": true,
+        "mode": "toggle",
+        "threshold": 0.86,
+        "from": 0,
+        "to": 1
+      }
+    ]
+  }
+}

@@ -59,27 +59,28 @@ const embed = async (request: SemanticRequest) => {
     }
   }
   const missing = [...new Set(request.texts.filter((text) => !cache.has(text)))]
-  if (missing.length > 0) {
-    const tokens = runtime.tokenizer(missing, {
+  for (const text of missing) {
+    const tokens = runtime.tokenizer([text], {
       max_length: TOKEN_LIMIT,
       padding: true,
       truncation: true,
     })
+    // oxlint-disable-next-line no-await-in-loop -- Avoid padding every short binding to the length of a full chat message.
     const result = await runtime.model(tokens)
-    const tensor = result.sentence_embedding
-    const vectors: number[][] = tensor.tolist()
+    const vectors: number[][] = result.sentence_embedding.tolist()
+    const [vector] = vectors
     if (
-      vectors.length !== missing.length ||
-      vectors.some((vector) => vector.length !== DIMENSIONS || !vector.every(Number.isFinite))
+      vectors.length !== 1 ||
+      vector === undefined ||
+      vector.length !== DIMENSIONS ||
+      !vector.every(Number.isFinite)
     ) {
       throw new Error('Local embedding model returned invalid vectors')
     }
-    missing.forEach((text, index) => {
-      if (cache.size >= CACHE_LIMIT) {
-        cache.delete(cache.keys().next().value!)
-      }
-      cache.set(text, vectors[index])
-    })
+    if (cache.size >= CACHE_LIMIT) {
+      cache.delete(cache.keys().next().value!)
+    }
+    cache.set(text, vector)
   }
   return request.texts.map((text) => cache.get(text)!)
 }

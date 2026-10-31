@@ -345,3 +345,81 @@ it('should retain user semantic rules and parameter output modes after reopening
     voice: DEFAULT_POFFO_VOICE,
   })
 })
+
+it('should persist a complete connection profile atomically without changing speech layout or voice', async () => {
+  const repository = open()
+  const widget = await repository.addWidget('builtin:ash')
+  await repository.configureSpeech(widget.id, {
+    enabled: false,
+    voice: DEFAULT_POFFO_VOICE,
+    wrap: false,
+    x: 0.3,
+    y: 0.4,
+  })
+  await repository.configureConnections(widget.id, {
+    lipsync: {parameterId: 'ParamMouthOpenY', source: 'speech'},
+    semanticBindings: [
+      {
+        enabled: true,
+        id: 'happy',
+        mode: 'toggle',
+        parameterId: 'Param71',
+        text: '기쁨',
+        threshold: 0.7,
+      },
+    ],
+    trackingBindings: {headX: {inverted: true, parameterId: 'ParamAngleX'}},
+    trackingOptions: {headMaximumX: 18, headMinimumX: -12},
+  })
+  repository.close()
+  const reopened = open()
+  const stored = (await reopened.read()).widgets[0]!
+  expect(stored.speech).toMatchObject({
+    enabled: false,
+    lipsync: {parameterId: 'ParamMouthOpenY', source: 'speech'},
+    semanticBindings: [expect.objectContaining({id: 'happy'})],
+    voice: DEFAULT_POFFO_VOICE,
+    wrap: false,
+    x: 0.3,
+    y: 0.4,
+  })
+  expect(stored.trackingOptions).toEqual({headMaximumX: 18, headMinimumX: -12})
+  expect(stored.trackingBindings?.headX).toEqual({inverted: true, parameterId: 'ParamAngleX'})
+})
+
+it('should retain explicit empty bindings when initializing defaults', async () => {
+  const reopened = open()
+  const widget = await reopened.addWidget('builtin:ash')
+  await reopened.configureConnections(widget.id, {semanticBindings: []})
+  await reopened.configureConnections(
+    widget.id,
+    {
+      semanticBindings: [
+        {
+          enabled: true,
+          id: 'default',
+          mode: 'toggle',
+          parameterId: 'Param71',
+          text: '기본',
+          threshold: 0.7,
+        },
+      ],
+    },
+    'missing',
+  )
+  expect((await reopened.read()).widgets[0]?.speech?.semanticBindings).toEqual([])
+})
+
+it('should reject invalid connections before replacing stored values', async () => {
+  const reopened = open()
+  const widget = await reopened.addWidget('character')
+  await reopened.configureConnections(widget.id, {semanticBindings: []})
+  await expect(
+    reopened.configureConnections(widget.id, {
+      semanticBindings: [
+        {enabled: true, id: 'bad', mode: 'toggle', parameterId: null, text: '', threshold: 2},
+      ],
+    }),
+  ).rejects.toThrow()
+  expect((await reopened.read()).widgets[0]?.speech?.semanticBindings).toEqual([])
+})
