@@ -99,7 +99,7 @@ it('should save website CSS and script together only when applied and preserve t
   fireEvent.input(screen.getByRole('textbox', {name: '사용자 CSS'}), {
     target: {value: 'body { background: red; }'},
   })
-  fireEvent.input(screen.getByRole('textbox', {name: '사용자 스크립트'}), {
+  fireEvent.input(screen.getByRole('textbox', {name: '로드 완료 후 스크립트'}), {
     target: {value: 'document.title = "custom"'},
   })
   expect(controller.setContent).not.toHaveBeenCalled()
@@ -121,6 +121,34 @@ it('should save website CSS and script together only when applied and preserve t
       mode: 'website',
       script: 'document.title = "custom"',
       url: 'https://example.net/',
+    }),
+  )
+})
+
+it('should save independent start and DOM-ready scripts without replacing the existing load script', async () => {
+  const {controller} = setup()
+  fireEvent.click(screen.getByText('사용자 코드'))
+  fireEvent.change(screen.getByRole('combobox', {name: '스크립트 실행 시점'}), {
+    target: {value: 'start'},
+  })
+  fireEvent.input(screen.getByRole('textbox', {name: '페이지 시작 전 스크립트'}), {
+    target: {value: 'window.ready = true'},
+  })
+  fireEvent.change(screen.getByRole('combobox', {name: '스크립트 실행 시점'}), {
+    target: {value: 'dom'},
+  })
+  fireEvent.input(screen.getByRole('textbox', {name: 'DOM 준비 후 스크립트'}), {
+    target: {value: 'document.body.dataset.ready = "yes"'},
+  })
+  fireEvent.click(screen.getByRole('button', {name: '저장 후 새로고침'}))
+  await waitFor(() =>
+    expect(controller.setContent).toHaveBeenCalledWith({
+      css: '',
+      mode: 'website',
+      script: '',
+      scriptDom: 'document.body.dataset.ready = "yes"',
+      scriptStart: 'window.ready = true',
+      url: null,
     }),
   )
 })

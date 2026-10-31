@@ -13,32 +13,23 @@ vi.mock('@winter-love/desktop-surface', () => ({
 }))
 beforeEach(() => vi.resetAllMocks())
 
-it('should install website code before starting native page navigation', async () => {
-  const configured = Promise.withResolvers<void>()
-  vi.mocked(invoke).mockReturnValueOnce(configured.promise)
-  const customization = {css: 'body { color: red; }', script: 'document.title = "custom"'}
-  const navigating = desktopSurfaces.navigate(
-    'wallpaper-first',
-    'https://example.com/',
-    customization,
-  )
-  expect(invoke).toHaveBeenCalledExactlyOnceWith('configure_website', {
-    customization,
-    label: 'wallpaper-first',
-  })
+it('should install website code when creating the native background window', async () => {
+  vi.mocked(invoke).mockResolvedValueOnce(null).mockResolvedValueOnce('wallpaper-first')
+  const customization = {css: 'body { color: red; }', scriptStart: 'window.ready = true'}
+  expect(await desktopSurfaces.open('first', customization)).toBe('wallpaper-first')
+  expect(invoke).toHaveBeenLastCalledWith('open_background', {customization, monitorId: 'first'})
   expect(navigateBackgroundSurface).not.toHaveBeenCalled()
-  configured.resolve()
-  await navigating
+  await desktopSurfaces.navigate('wallpaper-first', 'https://example.com/')
   expect(navigateBackgroundSurface).toHaveBeenCalledExactlyOnceWith({
     label: 'wallpaper-first',
     url: 'https://example.com/',
   })
 })
 
-it('should leave the current page when configuring website code fails', async () => {
-  vi.mocked(invoke).mockRejectedValueOnce(new Error('window unavailable'))
-  await expect(desktopSurfaces.navigate('wallpaper-first', 'https://example.com/')).rejects.toThrow(
-    'window unavailable',
-  )
+it('should propagate window creation failures before navigation', async () => {
+  vi.mocked(invoke)
+    .mockResolvedValueOnce(null)
+    .mockRejectedValueOnce(new Error('window unavailable'))
+  await expect(desktopSurfaces.open('first')).rejects.toThrow('window unavailable')
   expect(navigateBackgroundSurface).not.toHaveBeenCalled()
 })

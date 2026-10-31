@@ -42,9 +42,15 @@ it('should save multiline website code, reopen it, and clear it through settings
   await controller.setContent({mode: 'website', url: 'https://example.com/'})
   await userEvent.click(screen.getByText('사용자 코드'))
   const css = 'body {\n  background: rgb(20, 30, 40);\n}'
+  const scriptStart = 'window.initialized = true;'
+  const scriptDom = 'document.body.dataset.dom = "ready";'
   const script = 'document.title = "custom";\ndocument.body.dataset.custom = "yes";'
   await userEvent.fill(screen.getByRole('textbox', {name: '사용자 CSS'}), css)
-  await userEvent.fill(screen.getByRole('textbox', {name: '사용자 스크립트'}), script)
+  await userEvent.fill(screen.getByRole('textbox', {name: '로드 완료 후 스크립트'}), script)
+  await userEvent.selectOptions(screen.getByRole('combobox', {name: '스크립트 실행 시점'}), 'start')
+  await userEvent.fill(screen.getByRole('textbox', {name: '페이지 시작 전 스크립트'}), scriptStart)
+  await userEvent.selectOptions(screen.getByRole('combobox', {name: '스크립트 실행 시점'}), 'dom')
+  await userEvent.fill(screen.getByRole('textbox', {name: 'DOM 준비 후 스크립트'}), scriptDom)
   expect(controller.current()?.content).toEqual({mode: 'website', url: 'https://example.com/'})
   await userEvent.click(screen.getByRole('button', {name: '저장 후 새로고침'}))
   const repository = createSettingsRepository('wallpaper-settings')
@@ -54,6 +60,8 @@ it('should save multiline website code, reopen it, and clear it through settings
         css,
         mode: 'website',
         script,
+        scriptDom,
+        scriptStart,
         url: 'https://example.com/',
       }),
     )
@@ -62,15 +70,30 @@ it('should save multiline website code, reopen it, and clear it through settings
     await waitFor(() => expect(reopened.current()?.content.mode).toBe('website'))
     await userEvent.click(screen.getByText('사용자 코드'))
     expect(screen.getByRole('textbox', {name: '사용자 CSS'})).toHaveValue(css)
-    expect(screen.getByRole('textbox', {name: '사용자 스크립트'})).toHaveValue(script)
+    expect(screen.getByRole('textbox', {name: '로드 완료 후 스크립트'})).toHaveValue(script)
+    await userEvent.selectOptions(
+      screen.getByRole('combobox', {name: '스크립트 실행 시점'}),
+      'start',
+    )
+    expect(screen.getByRole('textbox', {name: '페이지 시작 전 스크립트'})).toHaveValue(scriptStart)
+    await userEvent.fill(screen.getByRole('textbox', {name: '페이지 시작 전 스크립트'}), '')
+    await userEvent.selectOptions(screen.getByRole('combobox', {name: '스크립트 실행 시점'}), 'dom')
+    expect(screen.getByRole('textbox', {name: 'DOM 준비 후 스크립트'})).toHaveValue(scriptDom)
+    await userEvent.fill(screen.getByRole('textbox', {name: 'DOM 준비 후 스크립트'}), '')
+    await userEvent.selectOptions(
+      screen.getByRole('combobox', {name: '스크립트 실행 시점'}),
+      'load',
+    )
     await userEvent.fill(screen.getByRole('textbox', {name: '사용자 CSS'}), '')
-    await userEvent.fill(screen.getByRole('textbox', {name: '사용자 스크립트'}), '')
+    await userEvent.fill(screen.getByRole('textbox', {name: '로드 완료 후 스크립트'}), '')
     await userEvent.click(screen.getByRole('button', {name: '저장 후 새로고침'}))
     await waitFor(async () =>
       expect((await repository.read())[0]?.content).toEqual({
         css: '',
         mode: 'website',
         script: '',
+        scriptDom: '',
+        scriptStart: '',
         url: 'https://example.com/',
       }),
     )

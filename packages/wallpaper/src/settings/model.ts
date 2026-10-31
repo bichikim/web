@@ -42,6 +42,8 @@ export const poffoPlacementSchema: z.ZodType<PoffoPlacement> = z.object({
 })
 
 export interface WebsiteCustomization {
+  readonly scriptStart?: string
+  readonly scriptDom?: string
   readonly css?: string
   readonly script?: string
 }
@@ -89,6 +91,8 @@ export const wallpaperContentSchema: z.ZodType<WallpaperContent> = z.discriminat
     css: z.string().optional(),
     mode: z.literal('website'),
     script: z.string().optional(),
+    scriptDom: z.string().optional(),
+    scriptStart: z.string().optional(),
     url: backgroundWebsiteUrlSchema.nullable(),
   }),
   z.object({

@@ -25,10 +25,7 @@ it('should create a real surface before navigating to the configured website', a
   const runtime = createWallpaperRuntime(surfaces)
   await runtime.synchronize({connectedIds: ['first'], settings: [website('https://example.com')]})
   expect(surfaces.setSurface).toHaveBeenCalledWith('surface-first', 'passThrough')
-  expect(surfaces.navigate).toHaveBeenCalledWith('surface-first', 'https://example.com', {
-    css: undefined,
-    script: undefined,
-  })
+  expect(surfaces.navigate).toHaveBeenCalledWith('surface-first', 'https://example.com')
   expect(vi.mocked(surfaces.setSurface).mock.invocationCallOrder[0]).toBeLessThan(
     vi.mocked(surfaces.navigate).mock.invocationCallOrder[0]!,
   )
@@ -138,11 +135,42 @@ it('should reload changed website code once while retaining monitor interaction'
   await runtime.synchronize({connectedIds: ['first'], settings: [customized]})
   await runtime.synchronize({connectedIds: ['first'], settings: [customized]})
   expect(surfaces.navigate).toHaveBeenCalledTimes(2)
-  expect(surfaces.navigate).toHaveBeenLastCalledWith('surface-first', 'https://example.com', {
+  expect(surfaces.navigate).toHaveBeenLastCalledWith('surface-first', 'https://example.com')
+  expect(surfaces.open).toHaveBeenLastCalledWith('first', {
     css: 'body { opacity: .5; }',
     script: 'document.title = "custom"',
+    scriptDom: undefined,
+    scriptStart: undefined,
   })
-  expect(surfaces.setSurface).toHaveBeenCalledTimes(1)
+  expect(surfaces.close).toHaveBeenCalledExactlyOnceWith('first', 'surface-first')
+  expect(surfaces.setSurface).toHaveBeenCalledTimes(2)
   await runtime.synchronize({connectedIds: ['first'], settings: [initial]})
   expect(surfaces.navigate).toHaveBeenCalledTimes(3)
 })
+
+it.each(['scriptStart', 'scriptDom'] as const)(
+  'should recreate the window when only %s changes and retain interactive input',
+  async (field) => {
+    const runtime = createWallpaperRuntime(surfaces)
+    const initial = {
+      ...website('https://example.com'),
+      interaction: {activation: 'always' as const},
+    }
+    await runtime.synchronize({connectedIds: ['first'], settings: [initial]})
+    await runtime.synchronize({
+      connectedIds: ['first'],
+      settings: [
+        {
+          ...initial,
+          content: {[field]: 'window.changed = true', mode: 'website', url: 'https://example.com'},
+        },
+      ],
+    })
+    expect(surfaces.open).toHaveBeenCalledTimes(2)
+    expect(surfaces.open).toHaveBeenLastCalledWith(
+      'first',
+      expect.objectContaining({[field]: 'window.changed = true'}),
+    )
+    expect(surfaces.setSurface).toHaveBeenLastCalledWith('surface-first', 'interactive')
+  },
+)

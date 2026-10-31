@@ -35,9 +35,6 @@ pub(crate) fn page_loaded(webview: &Webview, payload: &PageLoadPayload<'_>) {
     if let Some(monitor_id) =
         crate::background::monitor_for_window(webview.app_handle(), webview.window().label())
     {
-        if let Err(error) = crate::website::apply(webview) {
-            eprintln!("Failed to apply website code: {error}");
-        }
         let visit = WebsiteVisit {
             monitor_id,
             url: url.as_str().to_owned(),

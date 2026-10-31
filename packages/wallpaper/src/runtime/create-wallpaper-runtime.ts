@@ -3,15 +3,11 @@ import type {MonitorWallpaper, WallpaperContent, WebsiteCustomization} from '../
 
 export type SurfaceInteraction = 'interactive' | 'passThrough'
 export interface WallpaperSurfacePort {
-  readonly open: (monitorId: string) => Promise<string>
+  readonly open: (monitorId: string, customization?: WebsiteCustomization) => Promise<string>
   readonly close: (monitorId: string, label: string) => Promise<void>
   readonly setSurface: (label: string, interaction: SurfaceInteraction) => Promise<void>
   readonly setInteraction: (label: string, interaction: SurfaceInteraction) => Promise<void>
-  readonly navigate: (
-    label: string,
-    url: string,
-    customization?: WebsiteCustomization,
-  ) => Promise<void>
+  readonly navigate: (label: string, url: string) => Promise<void>
   readonly restore: (label: string) => Promise<void>
 }
 export interface WallpaperRuntimeSnapshot {
@@ -24,9 +20,18 @@ export interface WallpaperRuntime {
 }
 interface AppliedSurface {
   readonly label: string
+  readonly customization: string
   source: string | null
   interaction: SurfaceInteraction | null
 }
+
+const customizationKey = (code?: WebsiteCustomization): string =>
+  JSON.stringify([
+    code?.css ?? '',
+    code?.script ?? '',
+    code?.scriptStart ?? '',
+    code?.scriptDom ?? '',
+  ])
 
 /** Reports whether the selected content can be displayed without additional user input. */
 export const hasWallpaperContent = (content: WallpaperContent): boolean => {
@@ -54,9 +59,28 @@ export const createWallpaperRuntime = (surfaces: WallpaperSurfacePort): Wallpape
     applied.delete(monitorId)
   }
   const apply = async (settings: MonitorWallpaper) => {
+    const code =
+      settings.content.mode === 'website'
+        ? {
+            css: settings.content.css,
+            script: settings.content.script,
+            scriptDom: settings.content.scriptDom,
+            scriptStart: settings.content.scriptStart,
+          }
+        : undefined
+    const customization = customizationKey(code)
     let surface = applied.get(settings.monitorId)
+    if (surface !== undefined && surface.customization !== customization) {
+      await close(settings.monitorId, surface)
+      surface = undefined
+    }
     if (surface === undefined) {
-      surface = {interaction: null, label: await surfaces.open(settings.monitorId), source: null}
+      surface = {
+        customization,
+        interaction: null,
+        label: await surfaces.open(settings.monitorId, code),
+        source: null,
+      }
       applied.set(settings.monitorId, surface)
     }
     const interaction = settings.interaction.activation === 'always' ? 'interactive' : 'passThrough'
@@ -67,20 +91,10 @@ export const createWallpaperRuntime = (surfaces: WallpaperSurfacePort): Wallpape
       await surfaces.setInteraction(surface.label, interaction)
       surface.interaction = interaction
     }
-    const source =
-      settings.content.mode === 'website'
-        ? JSON.stringify([
-            settings.content.url,
-            settings.content.css ?? '',
-            settings.content.script ?? '',
-          ])
-        : 'local'
+    const source = settings.content.mode === 'website' ? settings.content.url : 'local'
     if (surface.source !== source) {
       if (settings.content.mode === 'website' && settings.content.url !== null) {
-        await surfaces.navigate(surface.label, settings.content.url, {
-          css: settings.content.css,
-          script: settings.content.script,
-        })
+        await surfaces.navigate(surface.label, settings.content.url)
       } else if (surface.source !== null) {
         await surfaces.restore(surface.label)
       }
