@@ -1,0 +1,95 @@
+name: Build Poffo Desktop
+
+on:
+  workflow_dispatch:
+
+run-name: Build Poffo Desktop from ${{ github.ref_name }}
+
+concurrency:
+  group: poffo-desktop-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  NODE_VERSION: '24.x'
+  PNPM_VERSION: 11.8.0
+
+jobs:
+  build:
+    name: Build ${{ matrix.target }}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: macos-latest
+            target: aarch64-apple-darwin
+            bundles: dmg
+            extension: dmg
+          - runner: macos-latest
+            target: x86_64-apple-darwin
+            bundles: dmg
+            extension: dmg
+          - runner: windows-latest
+            target: x86_64-pc-windows-msvc
+            bundles: nsis
+            extension: exe
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Cache Rust build
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: apps/poffo/src-tauri -> target
+          key: ${{ matrix.target }}
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build desktop installer
+        run: |
+          pnpm --filter @winter-love/poffo exec tauri build --ci \
+            --target "${{ matrix.target }}" --bundles "${{ matrix.bundles }}" -- --locked
+
+      - name: Upload installer
+        id: installer
+        uses: actions/upload-artifact@v7
+        with:
+          name: poffo-desktop-${{ matrix.target }}-${{ github.run_id }}
+          overwrite: true
+          path: apps/poffo/src-tauri/target/${{ matrix.target }}/release/bundle/${{ matrix.bundles }}/*.${{ matrix.extension }}
+          if-no-files-found: error
+          retention-days: 30
+          compression-level: 0
+
+      - name: Summarize download
+        env:
+          ARTIFACT_URL: ${{ steps.installer.outputs.artifact-url }}
+          BUILD_TARGET: ${{ matrix.target }}
+        run: |
+          echo "[Download ${BUILD_TARGET} installer](${ARTIFACT_URL}) (retained for 30 days)." >> "$GITHUB_STEP_SUMMARY"

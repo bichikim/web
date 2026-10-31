@@ -6,11 +6,14 @@ import {EditorToast, usePopoverSurface} from '@winter-love/puppet/editor'
 
 import {FileAction} from '../editor/FileAction'
 import type {useWorkspaceLayout} from './graph/use-workspace-layout'
+import {hasDesktopMenu} from '../desktop/menu'
+import {useRuntimeDesktopMenu} from './use-runtime-desktop-menu'
 interface RuntimeMenuProps {
   readonly onLoadModel: (file: File | undefined) => void
   readonly workspace?: ReturnType<typeof useWorkspaceLayout>
 }
 export const RuntimeMenu = (props: RuntimeMenuProps) => {
+  const desktopMenu = hasDesktopMenu()
   const workspace = useWorkspace()
   const active = () =>
     workspace === undefined || (workspace.active() && workspace.mode() !== 'editor')
@@ -45,7 +48,11 @@ export const RuntimeMenu = (props: RuntimeMenuProps) => {
     if (open()) {
       handleClose()
     }
-    studioInput()?.click()
+    if (desktopMenu) {
+      nativeMenu.openStudio()
+    } else {
+      studioInput()?.click()
+    }
   }
   const handleFileChange = (event: Event & {currentTarget: HTMLInputElement}) => {
     const file = event.currentTarget.files?.[0]
@@ -58,6 +65,17 @@ export const RuntimeMenu = (props: RuntimeMenuProps) => {
     }
     props.workspace?.exportStudio()
   }
+  const nativeMenu = useRuntimeDesktopMenu({
+    active,
+    desktopMenu,
+    onLoadModel: (file) => props.onLoadModel(file),
+    onSave: handleSave,
+    workspace: () => props.workspace,
+  })
+  const handleDismiss = () => {
+    nativeMenu.dismissError()
+    props.workspace?.dismissError()
+  }
   const shortcut = useStudioShortcuts({
     enabled: () => active() && props.workspace !== undefined,
     onOpen: handleOpen,
@@ -66,14 +84,16 @@ export const RuntimeMenu = (props: RuntimeMenuProps) => {
   return (
     <>
       <Popover forceMount open={open()} onOpenChange={setOpen}>
-        <Popover.Trigger
-          ref={setTrigger}
-          class="toolbar-menu-trigger"
-          aria-label="메인 메뉴"
-          type="button"
-        >
-          <span class="puppet-icon puppet-icon-menu-2" aria-hidden="true" />
-        </Popover.Trigger>
+        <Show when={!desktopMenu}>
+          <Popover.Trigger
+            ref={setTrigger}
+            class="toolbar-menu-trigger"
+            aria-label="메인 메뉴"
+            type="button"
+          >
+            <span class="puppet-icon puppet-icon-menu-2" aria-hidden="true" />
+          </Popover.Trigger>
+        </Show>
         <Popover.Content
           ref={setSurface}
           aria-label="파일 작업"
@@ -130,15 +150,11 @@ export const RuntimeMenu = (props: RuntimeMenuProps) => {
           </Show>
         </Popover.Content>
       </Popover>
-      <Show when={props.workspace}>
-        {(workspace) => (
-          <EditorToast
-            tone="error"
-            message={workspace().error() ?? undefined}
-            onDismiss={workspace().dismissError}
-          />
-        )}
-      </Show>
+      <EditorToast
+        tone="error"
+        message={nativeMenu.error() ?? props.workspace?.error() ?? undefined}
+        onDismiss={handleDismiss}
+      />
     </>
   )
 }

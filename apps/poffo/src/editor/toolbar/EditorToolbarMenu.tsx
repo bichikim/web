@@ -1,5 +1,9 @@
 import {useWorkspace} from '../../workspace/context'
-import {type PuppetExampleDocument, useEditorPortalMount} from '@winter-love/puppet/editor'
+import {
+  EditorToast,
+  type PuppetExampleDocument,
+  useEditorPortalMount,
+} from '@winter-love/puppet/editor'
 import {FileAction} from '../FileAction'
 import {Popover} from '@kobalte/core/popover'
 import {Button} from '@kobalte/core/button'
@@ -7,32 +11,19 @@ import {EditorHelp} from '../EditorHelp'
 import {createEffect, createSignal, For, Show} from 'solid-js'
 import {EditorMenuAction} from './EditorMenuAction'
 import {ColorThemeDialog} from '../../color-theme/ColorThemeDialog'
+import {hasDesktopMenu} from '../../desktop/menu'
+import {useEditorToolbarDesktopMenu} from './use-editor-toolbar-desktop-menu'
+import type {EditorToolbarMenuProps} from './types'
 
-interface EditorToolbarMenuProps {
-  readonly onRecoveryOpen?: (returnFocus: () => void) => void
-  readonly examples?: ReadonlyArray<PuppetExampleDocument>
-  readonly canUndo?: boolean
-  readonly canRedo?: boolean
-  readonly historyUndoCount?: number
-  readonly historyRedoCount?: number
-  readonly onUndo?: () => void
-  readonly onRedo?: () => void
-  readonly onExport: () => void
-  readonly onPoffoExport?: () => void
-  /** Exports with part images packed into shared texture atlas pages. */
-  readonly onAtlasExport?: () => void
-  readonly onExampleOpen?: (example: PuppetExampleDocument) => void
-  readonly onFileImport: (file: File | undefined) => void
-  readonly onPsdReimport?: (file: File | undefined) => void
-  readonly onFileOpen: (file: File | undefined) => void
-}
-
+// eslint-disable-next-line max-lines-per-function -- Web and native menus share dialog state and focus restoration.
 export const EditorToolbarMenu = (props: EditorToolbarMenuProps) => {
+  const desktopMenu = hasDesktopMenu()
   const macPlatform = /Mac|iPhone|iPad|iPod/u.test(globalThis.navigator?.platform ?? '')
   const undoShortcut = macPlatform ? '⌘Z' : 'Ctrl+Z'
   const redoShortcut = macPlatform ? '⇧⌘Z' : 'Ctrl+Y'
   const workspace = useWorkspace()
   const [menuOpen, setMenuOpen] = createSignal(false)
+  const [helpOpen, setHelpOpen] = createSignal(false)
   const [themeOpen, setThemeOpen] = createSignal(false)
   createEffect(() => {
     if (workspace !== undefined && workspace.mode() !== 'editor') {
@@ -44,10 +35,6 @@ export const EditorToolbarMenu = (props: EditorToolbarMenuProps) => {
   const portalMount = useEditorPortalMount()
   const close = () => setMenuOpen(false)
   const handleReturnFocus = () => trigger()?.focus()
-  const handleThemeOpen = () => {
-    setMenuOpen(false)
-    setThemeOpen(true)
-  }
   const handleExampleOpen = (example: PuppetExampleDocument) => {
     setMenuOpen(false)
     props.onExampleOpen?.(example)
@@ -57,18 +44,34 @@ export const EditorToolbarMenu = (props: EditorToolbarMenuProps) => {
     setMenuOpen(false)
     props.onRecoveryOpen?.(() => element?.focus())
   }
+  const handleThemeOpen = () => {
+    setMenuOpen(false)
+    setThemeOpen(true)
+  }
+  const handleHelpOpen = () => setHelpOpen(true)
+  const nativeMenu = useEditorToolbarDesktopMenu({
+    desktopMenu,
+    onExampleOpen: handleExampleOpen,
+    onHelpOpen: handleHelpOpen,
+    onRecoveryOpen: handleRecoveryOpen,
+    onThemeOpen: handleThemeOpen,
+    toolbar: props,
+    workspace,
+  })
 
   return (
     <>
       <Popover forceMount open={menuOpen()} onOpenChange={setMenuOpen}>
-        <Popover.Trigger
-          ref={setTrigger}
-          aria-label="메인 메뉴"
-          class="toolbar-menu-trigger"
-          type="button"
-        >
-          <span aria-hidden="true" class="puppet-icon puppet-icon-menu-2" />
-        </Popover.Trigger>
+        <Show when={!desktopMenu}>
+          <Popover.Trigger
+            ref={setTrigger}
+            aria-label="메인 메뉴"
+            class="toolbar-menu-trigger"
+            type="button"
+          >
+            <span aria-hidden="true" class="puppet-icon puppet-icon-menu-2" />
+          </Popover.Trigger>
+        </Show>
         <Popover.Portal mount={portalMount}>
           <Popover.Content aria-label="파일 및 편집 작업" class="toolbar-menu-content">
             <FileAction
@@ -157,13 +160,22 @@ export const EditorToolbarMenu = (props: EditorToolbarMenuProps) => {
             <Button type="button" onClick={handleThemeOpen}>
               색 테마
             </Button>
-            <EditorHelp onOpen={() => setMenuOpen(false)} />
+            <EditorHelp
+              open={helpOpen()}
+              onOpenChange={setHelpOpen}
+              onOpen={() => setMenuOpen(false)}
+            />
           </Popover.Content>
         </Popover.Portal>
       </Popover>
       <Show when={themeOpen()}>
         <ColorThemeDialog onClose={() => setThemeOpen(false)} onReturnFocus={handleReturnFocus} />
       </Show>
+      <EditorToast
+        tone="error"
+        message={nativeMenu.error() ?? undefined}
+        onDismiss={nativeMenu.dismissError}
+      />
     </>
   )
 }

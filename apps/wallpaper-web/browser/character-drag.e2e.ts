@@ -1,5 +1,37 @@
 import {expect, test} from 'playwright/test'
 
+test('updates hover when the character finishes loading under a stationary pointer', async ({
+  page,
+}) => {
+  let finishDownload: (() => void) | undefined
+  const download = new Promise<void>((resolve) => {
+    finishDownload = resolve
+  })
+  await page.route('**/models/white-cat/model.poffo', async (route) => {
+    await download
+    await route.continue()
+  })
+  const requested = page.waitForRequest('**/models/white-cat/model.poffo')
+  try {
+    await page.goto('/')
+    await requested
+    const character = page.getByRole('button', {name: '흰 고양이 위젯. 드래그해서 이동'})
+    const bounds = await character.boundingBox()
+    if (bounds === null) {
+      throw new Error('Character bounds are missing')
+    }
+    await page.mouse.move(bounds.x + bounds.width * 0.58, bounds.y + bounds.height * 0.55)
+    await expect(character).toHaveCSS('cursor', 'default')
+    await expect(page.getByRole('tooltip')).toHaveCount(0)
+    finishDownload?.()
+    await expect(page.getByRole('button', {exact: true, name: '일시 정지'})).toBeVisible()
+    await expect(character).toHaveCSS('cursor', 'grab')
+    await expect(page.getByRole('tooltip')).toBeVisible()
+  } finally {
+    finishDownload?.()
+  }
+})
+
 test('starts dragging only on the visible character and keeps the capture outside its silhouette', async ({
   page,
 }) => {

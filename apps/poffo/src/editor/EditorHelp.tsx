@@ -3,6 +3,8 @@ import {Dialog} from '@kobalte/core/dialog'
 
 interface EditorHelpProps {
   readonly onOpen?: () => void
+  readonly open?: boolean
+  readonly onOpenChange?: (open: boolean) => void
 }
 
 export const EditorHelp = (props: EditorHelpProps) => {
@@ -10,7 +12,9 @@ export const EditorHelp = (props: EditorHelpProps) => {
 
   return (
     <Dialog
+      open={props.open}
       onOpenChange={(open) => {
+        props.onOpenChange?.(open)
         if (open) {
           props.onOpen?.()
         }
@@ -109,8 +113,8 @@ export const EditorHelp = (props: EditorHelpProps) => {
             </p>
             <h2>실행 취소와 다시 실행</h2>
             <p>
-              햄버거 메뉴의 Undo·Redo를 사용하세요. 실행 취소는 ⌘Z / Ctrl+Z, 다시 실행은 ⇧⌘Z /
-              Ctrl+Y입니다.
+              햄버거 메뉴나 데스크톱 편집 메뉴의 Undo·Redo를 사용하세요. 실행 취소는 ⌘Z / Ctrl+Z,
+              다시 실행은 ⇧⌘Z / Ctrl+Y입니다.
             </p>
             <h2>파일</h2>
             <p>
