@@ -26,9 +26,23 @@ for (const partCount of [1, 40]) {
         }
       })
       const demo = createDemoDocument()
+      const source = demo.parts[0]!
+      const columns = Math.ceil(Math.sqrt(partCount))
+      // Tile parts to vary draw count without stacking full-canvas textures.
       const parts = Array.from({length: partCount}, (_, index) => ({
-        ...demo.parts[0]!,
+        ...source,
         id: `part-${index}`,
+        mesh: {
+          ...source.mesh,
+          vertices: source.mesh.vertices.map(
+            (coordinate, axis) =>
+              (coordinate +
+                (axis % 2 === 0
+                  ? (index % columns) * demo.viewport.width
+                  : Math.floor(index / columns) * demo.viewport.height)) /
+              columns,
+          ),
+        },
       }))
       const document = {
         ...demo,
