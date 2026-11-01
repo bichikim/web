@@ -21,7 +21,8 @@ export const selectSemanticActions = (
     (binding) => binding.enabled && binding.action !== undefined,
   )
   const matched = bindings.filter(
-    (binding) => (frame?.scores[binding.id] ?? -1) >= binding.threshold,
+    (binding) =>
+      binding.category !== 'behavior' && (frame?.scores[binding.id] ?? -1) >= binding.threshold,
   )
   const candidates =
     frame?.previewId === undefined
@@ -50,7 +51,7 @@ export const selectSemanticActions = (
 interface ChooseRandomActionOptions {
   /** Current connections; only enabled behavior actions are eligible. */
   readonly bindings: readonly SemanticBinding[]
-  /** Confirmed model scores; any semantic match blocks a fallback. */
+  /** Confirmed model scores; an emotion match blocks a fallback. */
   readonly scores: Readonly<Record<string, number>>
   /** Fallback settings; omitted disables the draw. */
   readonly settings?: RandomActionSettings
@@ -65,17 +66,14 @@ export const chooseRandomAction = (options: ChooseRandomActionOptions): string |
       (binding) =>
         binding.enabled &&
         binding.action !== undefined &&
+        binding.category !== 'behavior' &&
         (options.scores[binding.id] ?? -1) >= binding.threshold,
     )
   ) {
     return undefined
   }
   const candidates = options.bindings.filter(
-    (binding) =>
-      binding.enabled &&
-      binding.category === 'behavior' &&
-      binding.action !== undefined &&
-      settings.bindingIds.includes(binding.id),
+    (binding) => binding.enabled && binding.category === 'behavior' && binding.action !== undefined,
   )
   if (
     candidates.length === 0 ||

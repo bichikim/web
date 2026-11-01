@@ -85,7 +85,7 @@ it('should migrate saved Ash parameter connections without replacing speech or t
   expect((await open().read()).widgets[0]?.speech).toEqual(saved.speech)
 })
 
-it('should persist removal of obsolete builtin outputs and random references across reopen', async () => {
+it('should persist removal of obsolete builtin outputs while retaining random preferences across reopen', async () => {
   const legacy = createLibraryRepository(name)
   const widget = await legacy.addWidget('builtin:ash')
   const valid = builtinConnectionProfile('builtin:ash')!.connections.semanticBindings!.find(
@@ -95,7 +95,7 @@ it('should persist removal of obsolete builtin outputs and random references acr
   const draft = {...obsolete, id: 'user-draft', parameterId: null}
   await legacy.configureSpeech(widget.id, {
     enabled: true,
-    randomActions: {bindingIds: [valid.id, obsolete.id], enabled: true, probability: 0.4},
+    randomActions: {enabled: true, probability: 0.4},
     semanticBindings: [valid, obsolete, draft],
     x: 0.2,
     y: 0.3,
@@ -105,7 +105,6 @@ it('should persist removal of obsolete builtin outputs and random references acr
   const saved = (await repository.read()).widgets[0]!
   expect(saved.speech?.semanticBindings).toEqual([valid, draft])
   expect(saved.speech?.randomActions).toEqual({
-    bindingIds: [valid.id],
     enabled: true,
     probability: 0.4,
   })

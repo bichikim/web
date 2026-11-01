@@ -1,4 +1,4 @@
-import {cleanup, render, screen} from '@solidjs/testing-library'
+import {cleanup, render, screen, within} from '@solidjs/testing-library'
 import {createSignal} from 'solid-js'
 import {afterEach, expect, it, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
@@ -8,6 +8,7 @@ import {DEFAULT_POFFO_VOICE} from '@winter-love/wallpaper/settings/voice'
 import type {WallpaperController} from '../../src/features/settings'
 import type {WallpaperLibraryController} from '../../src/features/library'
 import {SAMPLE_PUPPET_ID} from '../../src/features/background/constants'
+import {builtinConnectionProfile} from '../../src/features/connection-profiles/builtin-profile'
 import {SPoffoWidgetEditor} from '../../src/components/SPoffoWidgetEditor'
 import {createLipSyncPublisher, useSpeechLipSync} from '../../src/features/lipsync'
 import type {VoiceMessage} from '../../src/features/voice/text'
@@ -179,6 +180,8 @@ it.each([320, 496])(
       id: 'widget',
       speech: {
         enabled: true,
+        randomActions: {enabled: true, probability: 0.5},
+        semanticBindings: builtinConnectionProfile('builtin:ash')!.connections.semanticBindings,
         voice: {...DEFAULT_POFFO_VOICE, model: 'full', voice: 'Hana'},
         x: 0.9,
         y: 0.05,
@@ -242,6 +245,11 @@ it.each([320, 496])(
     await userEvent.keyboard('{Space}')
     expect(screen.queryByRole('region', {name: '감정·내용 연결'})).toBeNull()
     expect(mounted.container.firstElementChild!.scrollWidth).toBeLessThanOrEqual(width)
+    expect(
+      within(screen.getByRole('region', {name: '감정 미매칭 랜덤 행동'})).queryAllByRole(
+        'checkbox',
+      ),
+    ).toHaveLength(0)
     screen.getByRole('radio', {name: '캐릭터'}).focus()
     await userEvent.keyboard('{Space}')
     expect(preview.querySelector('canvas')).toBe(canvas)

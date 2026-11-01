@@ -3,41 +3,15 @@ import {cleanup, fireEvent, render, screen} from '@solidjs/testing-library'
 import {createSignal} from 'solid-js'
 import {afterEach, expect, test} from 'vitest'
 import type {RandomActionSettings} from '@winter-love/wallpaper/settings/random-actions'
-import type {SemanticBinding} from '@winter-love/wallpaper/settings/semantics'
 import {SPoffoRandomActions} from '../SPoffoRandomActions'
 afterEach(cleanup)
-test('should edit chance and behavior candidates without offering emotion expressions', () => {
+test('should edit the random chance without a second list of behavior switches', () => {
   const [value, setValue] = createSignal<RandomActionSettings>({
-    bindingIds: [],
     enabled: true,
     probability: 0.3,
   })
-  const bindings: readonly SemanticBinding[] = [
-    {
-      action: {id: '노트', kind: 'expression'},
-      category: 'behavior',
-      enabled: true,
-      id: 'notes',
-      mode: 'toggle',
-      parameterId: null,
-      text: '기록',
-      threshold: 0.8,
-    },
-    {
-      action: {id: '기쁨', kind: 'expression'},
-      category: 'emotion',
-      enabled: true,
-      id: 'happy',
-      mode: 'toggle',
-      parameterId: null,
-      text: '기뻐요',
-      threshold: 0.8,
-    },
-  ]
-  render(() => <SPoffoRandomActions bindings={bindings} value={value()} onChange={setValue} />)
-  expect(screen.queryByRole('checkbox', {name: '기쁨'})).toBeNull()
-  fireEvent.click(screen.getByRole('checkbox', {name: '노트'}))
-  expect(value().bindingIds).toEqual(['notes'])
+  render(() => <SPoffoRandomActions value={value()} onChange={setValue} />)
+  expect(screen.queryAllByRole('checkbox')).toHaveLength(0)
   const input = screen.getByRole('spinbutton', {name: '랜덤 행동 확률'})
   fireEvent.input(input, {target: {value: '65'}})
   fireEvent.blur(input)
@@ -45,4 +19,26 @@ test('should edit chance and behavior candidates without offering emotion expres
   fireEvent.click(screen.getByRole('switch', {name: '랜덤 행동 사용'}))
   expect(value().enabled).toBe(false)
   expect(screen.queryByRole('spinbutton', {name: '랜덤 행동 확률'})).toBeNull()
+})
+
+test('should start with a 50 percent chance when random actions are first enabled', () => {
+  const [value, setValue] = createSignal<RandomActionSettings>()
+  render(() => <SPoffoRandomActions value={value()} onChange={setValue} />)
+  fireEvent.click(screen.getByRole('switch', {name: '랜덤 행동 사용'}))
+  expect(value()).toEqual({enabled: true, probability: 0.5})
+  expect(screen.getByRole('spinbutton', {name: '랜덤 행동 확률'})).toHaveValue('50')
+})
+
+test.each([0, 37, 100])('should persist a user-selected %s percent chance', (percent) => {
+  const [value, setValue] = createSignal<RandomActionSettings>({
+    enabled: true,
+    probability: 0.5,
+  })
+  render(() => <SPoffoRandomActions value={value()} onChange={setValue} />)
+  const input = screen.getByRole('spinbutton', {name: '랜덤 행동 확률'})
+  expect(input).toHaveAttribute('aria-valuemin', '0')
+  expect(input).toHaveAttribute('aria-valuemax', '100')
+  fireEvent.input(input, {target: {value: String(percent)}})
+  fireEvent.blur(input)
+  expect(value().probability).toBe(percent / 100)
 })

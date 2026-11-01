@@ -427,15 +427,7 @@
     ],
     "randomActions": {
       "enabled": true,
-      "probability": 0.3,
-      "bindingIds": [
-        "ash:notes",
-        "ash:notes-detail",
-        "ash:glasses",
-        "ash:microphone",
-        "ash:cat-paws",
-        "ash:walking"
-      ]
+      "probability": 0.5
     }
   }
 }

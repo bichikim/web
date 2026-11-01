@@ -45,8 +45,6 @@ export const SPoffoBehaviorSettings = (props: SPoffoBehaviorSettingsProps) => {
         </Match>
         <Match when={section() === 'random'}>
           <SPoffoRandomActions
-            actions={props.source.actions?.()}
-            bindings={props.value?.semanticBindings}
             value={props.value?.randomActions}
             onChange={
               props.onChange === undefined ? undefined : (randomActions) => change({randomActions})

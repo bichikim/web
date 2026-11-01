@@ -3,7 +3,7 @@ import {parseConnectionProfile} from '../connections'
 const profile = {
   assetId: 'builtin:ash',
   connections: {
-    randomActions: {bindingIds: ['happy'], enabled: true, probability: 0.3},
+    randomActions: {enabled: true, probability: 0.3},
     semanticBindings: [
       {
         animation: {cycles: 2, period: 1, phase: 0.5},
@@ -116,4 +116,13 @@ it('should reject an unknown action release point', () => {
     },
   })
   expect(parseConnectionProfile(source, options)).toEqual({ok: false, reason: 'invalid'})
+})
+
+it('should load previous candidate lists while using connection switches for eligibility', () => {
+  const connections = {randomActions: {bindingIds: [], enabled: true, probability: 0.37}}
+  const parsed = parseConnectionProfile(JSON.stringify({...profile, connections}), options)
+  expect(parsed).toEqual({
+    ok: true,
+    profile: {...profile, connections: {randomActions: {enabled: true, probability: 0.37}}},
+  })
 })

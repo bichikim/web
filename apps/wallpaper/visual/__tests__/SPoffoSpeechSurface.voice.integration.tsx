@@ -1,6 +1,6 @@
 import {cleanup, render, screen} from '@solidjs/testing-library'
 import {createSignal} from 'solid-js'
-import {afterEach, expect, test, vi} from 'vitest'
+import {afterEach, expect, onTestFinished, test, vi} from 'vitest'
 import {page} from 'vitest/browser'
 import {DEFAULT_POFFO_VOICE} from '@winter-love/wallpaper/settings/voice'
 import {
@@ -12,6 +12,7 @@ import {
 import {useWidgetSpeech} from '../../src/features/speech/use-widget-speech'
 import {createResidentSynthesis} from '../../src/features/voice/resident-synthesis'
 import {createSemanticModel} from '../../src/features/semantics/model'
+import {subscribeSemanticFrame} from '../../src/features/semantics/channel'
 import {useSemanticHost} from '../../src/features/semantics/use-semantic-host'
 import {useSemanticActions} from '../../src/features/semantics/use-semantic-actions'
 import {SPoffoSpeechSurface} from '../../src/components/SPoffoSpeechSurface'
@@ -35,9 +36,20 @@ test.each([
   {mode: 'matched', release: 'next-speech'},
   {mode: 'fallback', release: 'speech-end'},
   {mode: 'fallback', release: 'next-speech'},
+  {mode: 'behavior-match', release: 'speech-end'},
+  {mode: 'behavior-match', release: 'next-speech'},
+  {mode: 'chance-miss', release: 'speech-end'},
 ] as const)(
   'should apply $mode action release $release at audio end and next playback',
   async ({mode, release}) => {
+    vi.spyOn(Math, 'random').mockReturnValue(mode === 'chance-miss' ? 0.5 : 0.49)
+    const analyzed = Promise.withResolvers<void>()
+    const stop = await subscribeSemanticFrame((frame) => {
+      if (frame.widgetId === 'voice-widget' && frame.scores.happy !== undefined) {
+        analyzed.resolve()
+      }
+    })
+    onTestFinished(stop)
     const ended = Promise.withResolvers<void>()
     const start = AudioBufferSourceNode.prototype.start
     const audio = vi
@@ -63,7 +75,7 @@ test.each([
     })
     const speech = {
       enabled: true,
-      randomActions: {bindingIds: ['happy'], enabled: true, probability: 1},
+      randomActions: {enabled: true, probability: 0.5},
       semanticBindings: [
         {
           action: {id: 'example-action', kind: 'expression' as const},
@@ -89,7 +101,7 @@ test.each([
       phase: 'response',
       receivedAt: 1,
       sessionId: 'voice-chat',
-      text: mode === 'matched' ? '잘됐어요. 축하해요!' : '문장의 길이는 열네 글자입니다.',
+      text: mode === 'fallback' ? '문장의 길이는 열네 글자입니다.' : '잘됐어요. 축하해요!',
       title: '기쁨',
       tool: null,
     }
@@ -151,9 +163,11 @@ test.each([
     })
     await page.getByRole('button', {name: '읽기 시작'}).click()
     await expect.poll(() => audio.mock.calls.length).toBe(1)
-    await expect.poll(() => screen.getByLabelText('표정').textContent).toBe('example-action')
+    await analyzed.promise
+    const selected = mode === 'chance-miss' ? '기본' : 'example-action'
+    await expect.poll(() => screen.getByLabelText('표정').textContent).toBe(selected)
     await ended.promise
-    const completed = release === 'next-speech' ? 'example-action' : '기본'
+    const completed = release === 'next-speech' ? selected : '기본'
     await expect.poll(() => screen.getByLabelText('표정').textContent).toBe(completed)
     await page.getByRole('button', {name: '다음 읽기'}).click()
     await expect.poll(() => generate.mock.calls.length).toBe(2)

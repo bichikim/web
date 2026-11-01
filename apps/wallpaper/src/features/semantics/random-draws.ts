@@ -29,7 +29,14 @@ export const createRandomDraws = (random: () => number) => {
         draws.set(input.widgetId, {fallbackId, readoutId})
       }
       const selected = draws.get(input.widgetId)?.fallbackId
-      return options.settings?.enabled && options.settings.bindingIds.includes(selected ?? '')
+      return options.settings?.enabled &&
+        options.bindings.some(
+          (binding) =>
+            binding.id === selected &&
+            binding.enabled &&
+            binding.category === 'behavior' &&
+            binding.action !== undefined,
+        )
         ? selected
         : undefined
     },

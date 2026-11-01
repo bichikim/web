@@ -25,7 +25,7 @@ const bindings: readonly SemanticBinding[] = [
 ]
 test('should draw only a behavior for unmatched narration and honor disabled and zero probability settings', () => {
   const random = vi.fn(() => 0)
-  const settings = {bindingIds: ['happy', 'notes'], enabled: true, probability: 1}
+  const settings = {enabled: true, probability: 1}
   expect(chooseRandomAction({bindings, random, scores: {}, settings})).toBe('notes')
   expect(chooseRandomAction({bindings, random, scores: {happy: 0.9}, settings})).toBeUndefined()
   expect(
@@ -36,10 +36,10 @@ test('should draw only a behavior for unmatched narration and honor disabled and
   ).toBeUndefined()
   expect(
     chooseRandomAction({
-      bindings,
+      bindings: [bindings[0]],
       random,
       scores: {},
-      settings: {...settings, bindingIds: ['happy']},
+      settings,
     }),
   ).toBeUndefined()
   expect(
@@ -84,7 +84,12 @@ test('should prioritize manual and semantic actions over fallback and reject emo
 })
 
 test('should retain only winning next-narration actions at voice end, including random actions', () => {
-  const held = {...bindings[1], exclusiveGroup: 'hands', release: 'next-speech' as const}
+  const held = {
+    ...bindings[1],
+    category: 'emotion' as const,
+    exclusiveGroup: 'hands',
+    release: 'next-speech' as const,
+  }
   const transient = {...bindings[0], exclusiveGroup: 'face'}
   const actions = [held, transient].map((binding) => ({action: binding.action!, label: binding.id}))
   const ended = {narration: {phase: 'ended' as const}, scores: {happy: 1, notes: 1}, widgetId: 'w'}
@@ -96,7 +101,7 @@ test('should retain only winning next-narration actions at voice end, including 
   expect(
     selectSemanticActions({
       actions,
-      bindings: [held, transient],
+      bindings: [{...held, category: 'behavior'}, transient],
       frame: {...ended, fallbackId: 'notes', scores: {}},
     }).map((item) => item.group),
   ).toEqual(['hands'])
@@ -114,4 +119,38 @@ test('should retain only winning next-narration actions at voice end, including 
       frame: {...ended, previewId: 'happy'},
     })[0]?.action.action.id,
   ).toBe('smile')
+})
+
+test('should gate behavior on one 50 percent draw when no emotion matches, regardless of behavior scores', () => {
+  const walk = {...bindings[1], action: {id: 'walk', kind: 'motion' as const}, id: 'walk'}
+  const all = [...bindings, walk]
+  const actions = all.map((binding) => ({action: binding.action!, label: binding.id}))
+  const settings = {enabled: true, probability: 0.5}
+  const random = vi.fn().mockReturnValueOnce(0.5)
+  const scores = {notes: 1}
+  expect(chooseRandomAction({bindings: all, random, scores, settings})).toBeUndefined()
+  expect(random).toHaveBeenCalledOnce()
+  expect(selectSemanticActions({actions, bindings: all, frame: {scores, widgetId: 'w'}})).toEqual(
+    [],
+  )
+  random.mockReset().mockReturnValueOnce(0.49).mockReturnValueOnce(0.99)
+  const fallbackId = chooseRandomAction({bindings: all, random, scores, settings})
+  expect(fallbackId).toBe('walk')
+  expect(
+    selectSemanticActions({actions, bindings: all, frame: {fallbackId, scores, widgetId: 'w'}}).map(
+      (item) => item.action.action.id,
+    ),
+  ).toEqual(['walk'])
+  random.mockClear()
+  expect(
+    chooseRandomAction({bindings: all, random, scores: {...scores, happy: 1}, settings}),
+  ).toBeUndefined()
+  expect(random).not.toHaveBeenCalled()
+  expect(
+    selectSemanticActions({
+      actions,
+      bindings: all,
+      frame: {fallbackId: 'walk', scores: {...scores, happy: 1}, widgetId: 'w'},
+    }).map((item) => item.action.action.id),
+  ).toEqual(['smile'])
 })

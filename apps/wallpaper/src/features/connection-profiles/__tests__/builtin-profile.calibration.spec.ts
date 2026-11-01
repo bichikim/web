@@ -15,13 +15,13 @@ const select = (sample: (typeof measured.cases)[number], backend: 'fp32' | 'q4')
   )
 }
 test.each(['fp32', 'q4'] as const)(
-  'should activate every builtin action on at least four natural paraphrases and reject neutral input (%s)',
+  'should match builtin emotions on natural paraphrases and reject neutral input (%s)',
   (backend) => {
     expect(bindings).toHaveLength(28)
     expect(
       bindings.map(({id, text, excludeText, threshold}) => ({excludeText, id, text, threshold})),
     ).toEqual(measured.descriptions)
-    for (const binding of bindings) {
+    for (const binding of bindings.filter((binding) => binding.category !== 'behavior')) {
       const positive = measured.cases.filter(
         (sample) =>
           sample.expected === binding.id &&
@@ -41,10 +41,7 @@ test.each(['fp32', 'q4'] as const)(
     }
   },
 )
-test('should default to behavior-only random candidates and persist mutually exclusive groups', () => {
-  expect(profile.connections.randomActions).toMatchObject({enabled: true, probability: 0.3})
-  for (const id of profile.connections.randomActions!.bindingIds) {
-    expect(bindings.find((binding) => binding.id === id)?.category).toBe('behavior')
-  }
+test('should default to a 50 percent random chance and persist mutually exclusive groups', () => {
+  expect(profile.connections.randomActions).toMatchObject({enabled: true, probability: 0.5})
   expect(bindings.every((binding) => binding.exclusiveGroup !== undefined)).toBe(true)
 })

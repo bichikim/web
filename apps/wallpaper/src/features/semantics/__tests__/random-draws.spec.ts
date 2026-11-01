@@ -18,7 +18,7 @@ test('should retain one draw through narration updates and draw anew only for a 
     bindings: [binding],
     input: {readoutId: 'first', text: '일반 문장', widgetId: 'widget'},
     scores: {},
-    settings: {bindingIds: ['notes'], enabled: true, probability: 0.3},
+    settings: {enabled: true, probability: 0.3},
   }
   expect(
     draws.select({...options, input: {...options.input, readoutId: undefined}}),
@@ -34,8 +34,8 @@ test('should retain one draw through narration updates and draw anew only for a 
   expect(random).toHaveBeenCalledTimes(4)
   expect(
     draws.select({...options, input: {...options.input, readoutId: 'second'}, scores: {notes: 1}}),
-  ).toBeUndefined()
-  expect(random).toHaveBeenCalledTimes(4)
+  ).toBe('notes')
+  expect(random).toHaveBeenCalledTimes(6)
 })
 test('should retain a failed chance instead of retrying for each streamed paragraph', () => {
   const random = vi.fn(() => 0.9)
@@ -44,9 +44,24 @@ test('should retain a failed chance instead of retrying for each streamed paragr
     bindings: [binding],
     input: {readoutId: 'first', text: '일반 문장', widgetId: 'widget'},
     scores: {},
-    settings: {bindingIds: ['notes'], enabled: true, probability: 0.3},
+    settings: {enabled: true, probability: 0.3},
   }
   expect(draws.select(options)).toBeUndefined()
   expect(draws.select(options)).toBeUndefined()
   expect(random).toHaveBeenCalledOnce()
+})
+
+test('should immediately exclude disabled or reclassified connections without another candidate switch', () => {
+  const random = vi.fn(() => 0)
+  const draws = createRandomDraws(random)
+  const options = {
+    bindings: [binding],
+    input: {readoutId: 'first', text: '내용', widgetId: 'widget'},
+    scores: {},
+    settings: {enabled: true, probability: 1},
+  }
+  expect(draws.select(options)).toBe('notes')
+  expect(draws.select({...options, bindings: [{...binding, enabled: false}]})).toBeUndefined()
+  expect(draws.select({...options, bindings: [{...binding, category: 'emotion'}]})).toBeUndefined()
+  expect(random).toHaveBeenCalledTimes(2)
 })

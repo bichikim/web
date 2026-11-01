@@ -359,7 +359,7 @@ it('should publish fallback only for an unmatched playing narration and clear it
           id: 'random-widget',
           speech: {
             enabled: true,
-            randomActions: {bindingIds: ['note'], enabled: true, probability: 1},
+            randomActions: {enabled: true, probability: 1},
             semanticBindings: [
               {
                 action: {id: 'notes', kind: 'expression'},
