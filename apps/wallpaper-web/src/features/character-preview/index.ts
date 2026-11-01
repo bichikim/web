@@ -3,10 +3,12 @@ import {createPlayer, type Player, preparePuppetDocument} from '@winter-love/pup
 import type {MouthPose} from '../character-speech/types'
 import {connectCharacterBlink} from './blink'
 import {getCharacterLook} from './get-character-look'
+import {connectCharacterLook} from './look'
 import geometry from '../../data/character-look.json'
 
 export * from './blink'
 export * from './get-character-look'
+export * from './look'
 
 interface CharacterPreviewOptions {
   readonly canvas: Accessor<HTMLCanvasElement | null>
@@ -21,8 +23,7 @@ interface CharacterPreviewOptions {
 export const useCharacterPreview = (options: CharacterPreviewOptions) => {
   const RESOLUTION_LIMIT = 1.5
   const RENDER_SCALE = 1.5
-  const HEAD_X_RANGE = 20
-  const HEAD_Y_RANGE = 15
+  const [look, setLook] = createSignal<ReturnType<typeof connectCharacterLook> | null>(null)
   const [player, setPlayer] = createSignal<Player | null>(null)
   createEffect(() => {
     const canvas = options.canvas()
@@ -31,6 +32,7 @@ export const useCharacterPreview = (options: CharacterPreviewOptions) => {
     }
     const cancellation = new AbortController()
     let active: Player | null = null
+    let gaze: ReturnType<typeof connectCharacterLook> | null = null
     const load = async () => {
       const response = await fetch('/models/white-cat/model.poffo', {
         signal: cancellation.signal,
@@ -65,6 +67,15 @@ export const useCharacterPreview = (options: CharacterPreviewOptions) => {
         return
       }
       active = created
+      gaze = connectCharacterLook({
+        frames: {
+          cancel: (handle) => cancelAnimationFrame(handle),
+          request: (callback) => requestAnimationFrame(callback),
+        },
+        parameters: prepared.document.parameters ?? [],
+        player: created,
+      })
+      setLook(gaze)
       created.setEyeBlink(false)
       created.setBreath(true)
       created.setPhysicsPreview(true)
@@ -78,6 +89,8 @@ export const useCharacterPreview = (options: CharacterPreviewOptions) => {
     })
     onCleanup(() => {
       cancellation.abort()
+      setLook(null)
+      gaze?.release()
       setPlayer(null)
       active?.destroy()
     })
@@ -126,22 +139,18 @@ export const useCharacterPreview = (options: CharacterPreviewOptions) => {
   })
   const lookAt = (pointer?: {readonly x: number; readonly y: number}) => {
     const canvas = options.canvas()
-    const view = canvas?.ownerDocument.defaultView
-    const point =
-      pointer !== undefined && canvas !== null && view
-        ? getCharacterLook({
-            bounds: canvas.getBoundingClientRect(),
-            miniature: player()?.getParameterValue(geometry.miniatureParameter),
-            pointer,
-            viewport: {height: view.innerHeight, width: view.innerWidth},
-          })
-        : {x: 0, y: 0}
-    player()?.patchParameterValues({
-      ParamAngleX: point.x * HEAD_X_RANGE,
-      ParamAngleY: point.y * HEAD_Y_RANGE,
-      ParamEyeBallX: point.x,
-      ParamEyeBallY: point.y,
-    })
+    const gaze = look()
+    if (pointer === undefined || canvas === null) {
+      gaze?.release()
+      return
+    }
+    gaze?.follow(
+      getCharacterLook({
+        bounds: canvas.getBoundingClientRect(),
+        miniature: player()?.getParameterValue(geometry.miniatureParameter),
+        pointer,
+      }),
+    )
   }
   return {
     lookAt,

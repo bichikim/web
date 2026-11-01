@@ -8,11 +8,19 @@ test('loads the embedded character and advances product scenes', async ({page}) 
     externalAtlases.push(route.request().url())
     return route.abort()
   })
-  const download = page.waitForResponse((response) =>
-    response.url().endsWith('/models/white-cat/model.poffo'),
+  const download = page.waitForResponse(
+    (response) =>
+      response.url().endsWith('/models/white-cat/model.poffo') &&
+      response.request().method() === 'GET',
   )
   await page.goto('/')
-  expect((await download).ok()).toBe(true)
+  const asset = await download
+  expect(asset.ok()).toBe(true)
+  const binary = await page.request.get('/models/white-cat/model.poffo')
+  expect(binary.ok()).toBe(true)
+  const content = await binary.body()
+  expect(content.subarray(0, 5).toString()).toBe('POFFO')
+  expect(content.byteLength).toBeLessThan(7_000_000)
   // This control appears only after the character Player renders its first frame.
   await expect(page.getByRole('button', {exact: true, name: '일시 정지'})).toBeVisible()
   await page.getByRole('button', {name: '스크롤로 앱 살펴보기'}).click()

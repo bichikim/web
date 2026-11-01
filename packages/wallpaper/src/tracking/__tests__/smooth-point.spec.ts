@@ -1,5 +1,5 @@
 import {expect, test} from 'vitest'
-import {smoothTrackingPoint} from '../smooth-point'
+import {smoothTrackingPoint} from '@winter-love/wallpaper/tracking/smooth-point'
 
 test('should finish on the exact target rather than stopping just short of the maximum', () => {
   const target = {x: 1, y: -1}

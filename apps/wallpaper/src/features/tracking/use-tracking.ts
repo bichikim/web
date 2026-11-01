@@ -8,7 +8,7 @@ import {
   type PoffoTrackingOptions,
 } from '@winter-love/wallpaper/settings/tracking'
 import {createTrackingCenters, createTrackingParameters} from './parameters'
-import {smoothTrackingPoint} from './smooth-point'
+import {smoothTrackingPoint} from '@winter-love/wallpaper/tracking/smooth-point'
 import type {
   CameraSurface,
   CursorPosition,

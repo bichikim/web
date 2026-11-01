@@ -1,5 +1,5 @@
 import {expect, test} from 'vitest'
-import {cursorResponse} from '../cursor-response'
+import {cursorResponse} from '@winter-love/wallpaper/tracking/cursor-response'
 
 test('should preserve the nearby atan response while reaching the exact maximum at one character height', () => {
   for (const distance of [0.05, 0.125, 0.25]) {

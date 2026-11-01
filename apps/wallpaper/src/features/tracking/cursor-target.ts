@@ -3,7 +3,7 @@ import {
   type PoffoTrackingOptions,
 } from '@winter-love/wallpaper/settings/tracking'
 import type {CursorPosition, TrackingPoint, TrackingViewport} from './types'
-import {cursorResponse} from './cursor-response'
+import {cursorResponse} from '@winter-love/wallpaper/tracking/cursor-response'
 
 interface CursorTargetOptions {
   /** Canvas bounds in CSS pixels within its webview. */
