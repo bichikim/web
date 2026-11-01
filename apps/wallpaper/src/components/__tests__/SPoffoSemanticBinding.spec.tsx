@@ -58,3 +58,26 @@ test('should save each action release point while preserving its other settings'
   fireEvent.keyDown(select, {key: 'Enter'})
   expect(value().release).toBe('speech-end')
 })
+
+test('should show text matching only for emotion and context connections, retaining hidden values', () => {
+  const [value, setValue] = createSignal<SemanticBinding>({
+    category: 'behavior',
+    enabled: true,
+    id: 'pose',
+    mode: 'toggle',
+    parameterId: null,
+    text: '기존 예문',
+    threshold: 0.86,
+  })
+  render(() => <SPoffoSemanticBinding value={value()} onChange={setValue} score={0.9} />)
+  expect(screen.queryByRole('textbox', {name: '연결 감정·행동·내용'})).toBeNull()
+  expect(screen.queryByRole('spinbutton', {name: '연결 매칭 기준'})).toBeNull()
+  expect(screen.queryByLabelText('연결 매칭 점수')).toBeNull()
+  expect(screen.getByRole('combobox', {name: '연결 해제 시점'})).toBeInTheDocument()
+  const category = screen.getByRole('combobox', {name: '연결 종류'})
+  fireEvent.keyDown(category, {key: 'Home'})
+  fireEvent.keyDown(category, {key: 'Enter'})
+  expect(category).toHaveTextContent('감정·내용')
+  expect(screen.getByRole('textbox', {name: '연결 감정·행동·내용'})).toHaveValue('기존 예문')
+  expect(screen.getByRole('spinbutton', {name: '연결 매칭 기준'})).toHaveValue('0.86')
+})

@@ -17,3 +17,12 @@ it('should connect all 27 character presets and walking without individual param
     '울지는 않았어요',
   )
 })
+
+it('should reserve contextual props for literal text matching instead of ordinary random gestures', () => {
+  const bindings = builtinConnectionProfile('builtin:ash')!.connections.semanticBindings!
+  for (const id of ['ash:leash', 'ash:handcuffs', 'ash:knife']) {
+    const binding = bindings.find((binding) => binding.id === id)!
+    expect(binding.category).toBe('emotion')
+    expect(binding.threshold).toBeGreaterThanOrEqual(0.86)
+  }
+})

@@ -52,7 +52,7 @@ export const SPoffoSemanticBinding = (props: SPoffoSemanticBindingProps) => {
           checked={props.value.enabled}
           onChange={props.onChange === undefined ? undefined : handleEnabled}
         />
-        <Show when={props.score !== undefined}>
+        <Show when={props.value.category !== 'behavior' && props.score !== undefined}>
           <output aria-label={`${caption()} 매칭 점수`} class="text-xs text-stone-600">
             {scoreLabel()}
           </output>
@@ -74,7 +74,13 @@ export const SPoffoSemanticBinding = (props: SPoffoSemanticBindingProps) => {
           삭제
         </button>
       </div>
-      <SPoffoSemanticDescription value={props.value} label={caption()} onChange={props.onChange} />
+      <Show when={props.value.category !== 'behavior'}>
+        <SPoffoSemanticDescription
+          value={props.value}
+          label={caption()}
+          onChange={props.onChange}
+        />
+      </Show>
       <SSelect
         label={`${caption()} 행동`}
         value={actionKey()}
@@ -105,24 +111,26 @@ export const SPoffoSemanticBinding = (props: SPoffoSemanticBindingProps) => {
         label={`${caption()} 종류`}
         value={props.value.category ?? 'emotion'}
         options={[
-          {label: '감정', value: 'emotion'},
+          {label: '감정·내용', value: 'emotion'},
           {label: '일반 행동', value: 'behavior'},
         ]}
         onChange={handleCategory}
         disabled={props.onChange === undefined}
       />
-      <label class="grid gap-1 text-xs text-stone-600">
-        매칭 기준
-        <SNumberInput
-          label={`${caption()} 매칭 기준`}
-          value={props.value.threshold}
-          min={0}
-          max={0.99}
-          step={0.01}
-          disabled={props.onChange === undefined}
-          onChange={handleThreshold}
-        />
-      </label>
+      <Show when={props.value.category !== 'behavior'}>
+        <label class="grid gap-1 text-xs text-stone-600">
+          매칭 기준
+          <SNumberInput
+            label={`${caption()} 매칭 기준`}
+            value={props.value.threshold}
+            min={0}
+            max={0.99}
+            step={0.01}
+            disabled={props.onChange === undefined}
+            onChange={handleThreshold}
+          />
+        </label>
+      </Show>
       <label class="grid gap-1 text-xs text-stone-600">
         해제 시점
         <SSelect

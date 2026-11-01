@@ -1,0 +1,62 @@
+[
+  {
+    "id": "ash:handcuffs",
+    "text": "권한이 없어 여기서 더 진행할 수 없어요.\n현재 제한 때문에 실행할 수 없어요.\n이 작업은 차단되어 있어요.\n이 계정에는 수정 권한이 없어서 더 진행할 수 없습니다.\n접근이 거부되어 요청하신 작업을 실행하지 못했어요.\n현재 허용된 범위를 벗어나 있어 작업이 제한됩니다.\n권한을 받지 못해서 수정이 불가능해요.\n승인 전에는 접근할 수 없으니 여기서 멈춰야 해요.",
+    "threshold": 0.793,
+    "enabled": true,
+    "action": {
+      "kind": "expression",
+      "id": "수갑 찬 손"
+    },
+    "parameterId": null,
+    "mode": "toggle",
+    "excludeText": "이미 승인을 받아 모든 제한이 해제됐고 정상 접속했어요.\n필요한 접근은 허용됐으니 그대로 작업하겠습니다.",
+    "category": "behavior",
+    "exclusiveGroup": "손동작"
+  },
+  {
+    "id": "ash:knife",
+    "text": "필요 없는 부분을 잘라 내고 다듬을게요.\n복잡한 내용을 덜어 내고 간결하게 만들게요.\n불필요한 코드를 제거할게요.\n중복된 부분을 덜어 내고 필요한 내용만 남기겠습니다.\n사용하지 않는 코드는 정리해서 제거할게요.\n너무 길어진 설명을 잘라 내고 간결하게 다듬었어요.",
+    "threshold": 0.814,
+    "enabled": true,
+    "action": {
+      "kind": "expression",
+      "id": "칼 들기"
+    },
+    "parameterId": null,
+    "mode": "toggle",
+    "excludeText": "파일을 지우거나 줄이지 않고 보존합니다.\n내용을 없애지 않고 기능을 더 추가하고 있어요.",
+    "category": "behavior",
+    "exclusiveGroup": "손동작"
+  },
+  {
+    "id": "ash:leash",
+    "text": "제가 순서대로 안내해 드릴게요.\n이쪽으로 따라오세요.\n하나씩 따라 해 보세요.\n제가 안내하는 순서대로 하나씩 진행해 보세요.\n먼저 설정을 열고 다음 단계도 같이 따라 해 봐요.\n옆에서 차례대로 안내할 테니 그대로 따라오시면 돼요.\n첫 화면부터 차례차례 따라 해 보도록 제가 안내하겠습니다.\n첫 단계 여는 것부터 제 안내에 맞춰 같이 진행해 봐요.",
+    "threshold": 0.819,
+    "enabled": true,
+    "action": {
+      "kind": "expression",
+      "id": "목줄 동작"
+    },
+    "parameterId": null,
+    "mode": "toggle",
+    "excludeText": "제가 이끌지 않을 테니 편한 대로 하셔도 돼요.\n파일 위치와 숫자 같은 단순 정보를 전달해요.\n화면에 무엇이 보이는지만 설명하고 있습니다.\n제 안내를 따를 필요 없이 원하는 것을 자유롭게 하세요.\n가이드 문서에 있는 글자 오류만 수정했어요.",
+    "category": "behavior",
+    "exclusiveGroup": "손동작"
+  },
+  {
+    "id": "ash:controller",
+    "text": "직접 실행해서 동작을 시험해 볼게요.\n게임을 시작해 볼까요?\n이제 직접 조작해 보세요.\n이제 직접 눌러 보면서 조작이 잘 되는지 시험해 보세요.\n시제품을 실행하고 입력을 바꿔 가며 동작을 확인할게요.\n게임 안에서 직접 움직여 보면서 감각을 맞춰 보죠.\n게임을 켜고 방향키를 눌러 캐릭터를 움직여 보세요.\n플레이 화면에서 직접 입력해 반응을 살펴볼게요.",
+    "threshold": 0.829,
+    "enabled": true,
+    "action": {
+      "kind": "expression",
+      "id": "게임패드 들기"
+    },
+    "parameterId": null,
+    "mode": "toggle",
+    "excludeText": "실행이나 조작 없이 문서만 읽어 봤어요.\n게임에 관한 배경 지식을 설명하고 있어요.",
+    "category": "behavior",
+    "exclusiveGroup": "손동작"
+  }
+]

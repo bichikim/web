@@ -1,4 +1,5 @@
 import legacy from '../legacy-bindings.json'
+import previous from '../previous-bindings.json'
 import {builtinConnectionProfile} from '../builtin-profile'
 import {
   type SemanticBinding,
@@ -67,4 +68,36 @@ it('should remove obsolete builtin parameter outputs while retaining valid actio
   ])
   expect(migrated).toEqual([current[0], draft])
   expect(migrateSemanticActions(migrated)).toBe(migrated)
+})
+
+it('should replace misleading stock descriptions once while preserving user settings and edited text', () => {
+  const current = builtinConnectionProfile('builtin:ash')!.connections.semanticBindings!
+  const old = semanticBindingsSchema.parse(previous)
+  const saved = old.map((binding) => ({
+    ...binding,
+    category: 'emotion' as const,
+    exclusiveGroup: 'ash:hands',
+    release: 'next-speech' as const,
+  }))
+  const migrated = migrateSemanticActions(saved)
+  for (const binding of migrated) {
+    const preset = current.find((item) => item.id === binding.id)!
+    expect(binding.text).toBe(preset.text)
+    expect(binding.text).not.toBe(old.find((item) => item.id === binding.id)!.text)
+    expect(binding.category).toBe(preset.category)
+    expect(binding.exclusiveGroup).toBe('ash:hands')
+    expect(binding.release).toBe('next-speech')
+  }
+  expect(migrateSemanticActions(migrated)).toBe(migrated)
+  const leash = saved.find((binding) => binding.id === 'ash:leash')!
+  const variant = migrateSemanticActions([
+    {...leash, action: undefined, id: 'ash:leash-Param80', parameterId: 'Param80'},
+  ])[0]
+  expect(variant.text).toBe(current.find((binding) => binding.id === 'ash:leash')!.text)
+  expect(variant.category).toBe('emotion')
+  const customThreshold = migrateSemanticActions([{...saved[0], threshold: 0.93}])[0]
+  expect(customThreshold.threshold).toBe(0.93)
+  expect(customThreshold.text).toBe(current.find((item) => item.id === saved[0].id)!.text)
+  const custom = [{...old[0], category: 'behavior' as const, text: '사용자가 직접 연결한 내용'}]
+  expect(migrateSemanticActions(custom)).toBe(custom)
 })

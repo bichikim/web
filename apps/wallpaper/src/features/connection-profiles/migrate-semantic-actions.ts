@@ -6,6 +6,7 @@ import {
 import ashActions from './ash-actions.json'
 import ash from './ash.json'
 import previous from './legacy-bindings.json'
+import revisions from './previous-bindings.json'
 
 const actions = new Map(
   Object.entries(ashActions).map(([id, action]) => [id, semanticActionSchema.parse(action)]),
@@ -15,38 +16,42 @@ const defaults = new Map(
     .parse(ash.connections.semanticBindings)
     .map((binding) => [binding.id, binding]),
 )
-const legacy = new Map(
-  semanticBindingsSchema.parse(previous).map((binding) => [binding.id, binding]),
-)
+const legacy = [
+  ...semanticBindingsSchema.parse(previous),
+  ...semanticBindingsSchema.parse(revisions),
+]
 const ids = [...actions.keys()].toSorted((first, second) => second.length - first.length)
 
-const refreshDefault = (binding: SemanticBinding): SemanticBinding => {
-  const replacement = defaults.get(binding.id)
-  const original = legacy.get(binding.id)
+const refreshDefault = (binding: SemanticBinding, key = binding.id): SemanticBinding => {
+  const replacement = defaults.get(key)
   if (
     binding.action !== undefined &&
     replacement !== undefined &&
     binding.action.id === replacement.action?.id &&
     binding.action.kind === replacement.action?.kind
   ) {
-    const unchanged =
-      original !== undefined &&
-      binding.text === original.text &&
-      binding.excludeText === original.excludeText &&
-      binding.threshold === original.threshold
+    const original = legacy.find(
+      (item) =>
+        item.id === key &&
+        item.text === binding.text &&
+        item.excludeText === binding.excludeText &&
+        (item.text !== replacement.text || item.excludeText !== replacement.excludeText),
+    )
     const patch = {
       ...binding,
-      category: binding.category ?? replacement.category,
+      category:
+        original === undefined ? (binding.category ?? replacement.category) : replacement.category,
       exclusiveGroup:
         binding.exclusiveGroup ??
         (binding.category === undefined ? replacement.exclusiveGroup : undefined),
-      ...(unchanged
-        ? {
+      ...(original === undefined
+        ? {}
+        : {
             excludeText: replacement.excludeText,
             text: replacement.text,
-            threshold: replacement.threshold,
-          }
-        : {}),
+            threshold:
+              binding.threshold === original.threshold ? replacement.threshold : binding.threshold,
+          }),
     }
     const fields = ['category', 'exclusiveGroup', 'text', 'excludeText', 'threshold'] as const
     return fields.some((field) => patch[field] !== binding[field]) ? patch : binding
@@ -65,7 +70,7 @@ export const migrateSemanticActions = (
     const action = key === undefined ? undefined : actions.get(key)
     const replacement = key === undefined ? undefined : defaults.get(key)
     if (binding.action !== undefined) {
-      const updated = refreshDefault(binding)
+      const updated = refreshDefault(binding, key)
       changed ||= updated !== binding
       return [updated]
     }
@@ -89,13 +94,16 @@ export const migrateSemanticActions = (
     }
     seen.add(identity)
     return [
-      {
-        ...binding,
-        action,
-        category: binding.category ?? replacement?.category,
-        exclusiveGroup: binding.exclusiveGroup ?? replacement?.exclusiveGroup,
-        parameterId: null,
-      },
+      refreshDefault(
+        {
+          ...binding,
+          action,
+          category: binding.category ?? replacement?.category,
+          exclusiveGroup: binding.exclusiveGroup ?? replacement?.exclusiveGroup,
+          parameterId: null,
+        },
+        key,
+      ),
     ]
   })
   return changed ? result : bindings

@@ -45,7 +45,7 @@ export interface SemanticAnimation {
 export interface SemanticBinding {
   /** Character-defined expression or motion to execute when matched. */
   readonly action?: SemanticAction
-  /** Behaviors are random-only; emotions match text. Omitted is treated as an emotion. */
+  /** Behaviors are random-only; emotions and contextual poses match text. Omitted matches text. */
   readonly category?: 'emotion' | 'behavior'
   readonly animation?: SemanticAnimation
   readonly id: string

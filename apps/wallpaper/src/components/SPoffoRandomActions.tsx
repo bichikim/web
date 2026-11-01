@@ -16,11 +16,11 @@ export const SPoffoRandomActions = (props: SPoffoRandomActionsProps) => {
   const probability = (percent: number) => update({probability: percent / PERCENT})
   return (
     <section
-      aria-label="감정 미매칭 랜덤 행동"
+      aria-label="감정·내용 미매칭 랜덤 행동"
       class="grid gap-3 border-0 border-t border-solid border-stone-200 pt-3 text-[13px]"
     >
       <div class="flex items-center justify-between gap-2">
-        <h3 class="m-0 font-medium text-stone-700">감정이 없을 때 랜덤 행동</h3>
+        <h3 class="m-0 font-medium text-stone-700">감정·내용 매칭이 없을 때</h3>
         <SSwitch
           label="랜덤 행동 사용"
           checked={value().enabled}

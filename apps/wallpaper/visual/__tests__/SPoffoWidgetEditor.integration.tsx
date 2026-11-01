@@ -246,7 +246,7 @@ it.each([320, 496])(
     expect(screen.queryByRole('region', {name: '감정·내용 연결'})).toBeNull()
     expect(mounted.container.firstElementChild!.scrollWidth).toBeLessThanOrEqual(width)
     expect(
-      within(screen.getByRole('region', {name: '감정 미매칭 랜덤 행동'})).queryAllByRole(
+      within(screen.getByRole('region', {name: '감정·내용 미매칭 랜덤 행동'})).queryAllByRole(
         'checkbox',
       ),
     ).toHaveLength(0)

@@ -51,7 +51,7 @@ export const selectSemanticActions = (
 interface ChooseRandomActionOptions {
   /** Current connections; only enabled behavior actions are eligible. */
   readonly bindings: readonly SemanticBinding[]
-  /** Confirmed model scores; an emotion match blocks a fallback. */
+  /** Confirmed model scores; an emotion or context match blocks a fallback. */
   readonly scores: Readonly<Record<string, number>>
   /** Fallback settings; omitted disables the draw. */
   readonly settings?: RandomActionSettings
