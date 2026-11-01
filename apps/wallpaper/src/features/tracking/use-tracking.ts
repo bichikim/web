@@ -19,6 +19,7 @@ import type {
 import {cameraTrackingPoints} from './camera-points'
 import {canvasCameraSurface} from './canvas-camera-surface'
 import {useViewport} from './use-viewport'
+import {createTrackingBlends} from './blends'
 
 interface UseTrackingProps {
   readonly mode: Accessor<PoffoTracking>
@@ -54,14 +55,19 @@ export const useTracking = (props: UseTrackingProps) => {
     if (player === null) {
       return
     }
+    const blend = createTrackingBlends(parameters, bindings)
+    const apply = (values: Readonly<Record<string, number>>) =>
+      player.patchParameterBlends(blend(values))
+    const release = (ids: readonly string[]) =>
+      player.patchParameterBlends(Object.fromEntries(ids.map((id) => [id, undefined])))
     const centers = createTrackingCenters(parameters, bindings, options)
     const centerIds = Object.keys(centers)
     if (centerIds.length > 0) {
-      player.patchParameterValues(centers)
+      apply(centers)
     }
     if (mode === 'off' || canvas === null) {
       if (centerIds.length > 0) {
-        onCleanup(() => player.clearParameterValues(centerIds))
+        onCleanup(() => release(centerIds))
       }
       return
     }
@@ -85,7 +91,7 @@ export const useTracking = (props: UseTrackingProps) => {
         previous === null ? FRAME_SECONDS : (timestamp - previous) / MILLISECONDS_PER_SECOND
       previous = timestamp
       current = smoothTrackingPoint(current, target, seconds)
-      player.patchParameterValues(map(current, origin))
+      apply(map(current, origin))
       if (Math.abs(target.x - current.x) + Math.abs(target.y - current.y) > SETTLE_DISTANCE) {
         frame = requestAnimationFrame(step)
       } else {
@@ -174,7 +180,7 @@ export const useTracking = (props: UseTrackingProps) => {
       disposed = true
       stop?.()
       cancelAnimationFrame(frame)
-      player.clearParameterValues(parameterIds)
+      release(parameterIds)
       if (isTauri() && mode === 'cursor') {
         invoke('subscribe_poffo_cursor', {enabled: false, subscription}).catch(props.onError)
       }

@@ -289,11 +289,17 @@ export interface PoffoTrackingBindings {
   readonly eyeY?: PoffoTrackingBinding
 }
 export interface PoffoTrackingBinding {
+  /** How tracking meets animation values; omitted preserves overwrite behavior. */
+  readonly blend?: 'add' | 'overwrite'
   readonly parameterId?: string | null
   readonly inverted?: boolean
 }
 const parameter = z
-  .object({inverted: z.boolean().optional(), parameterId: z.string().min(1).nullable().optional()})
+  .object({
+    blend: z.enum(['add', 'overwrite']).optional(),
+    inverted: z.boolean().optional(),
+    parameterId: z.string().min(1).nullable().optional(),
+  })
   .optional()
 export const poffoBindingsSchema: z.ZodType<PoffoTrackingBindings> = z.object({
   eyeX: parameter,

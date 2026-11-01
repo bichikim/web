@@ -117,7 +117,7 @@ it('should persist per-widget tracking choices across reopen without reviving re
   })
   await repository.bindWidget(first.id, {
     eyeX: {parameterId: null},
-    headX: {inverted: true, parameterId: 'custom-turn'},
+    headX: {blend: 'add', inverted: true, parameterId: 'custom-turn'},
   })
   repository.close()
   const reopened = open()
@@ -128,7 +128,7 @@ it('should persist per-widget tracking choices across reopen without reviving re
         tracking: 'camera',
         trackingBindings: {
           eyeX: {parameterId: null},
-          headX: {inverted: true, parameterId: 'custom-turn'},
+          headX: {blend: 'add', inverted: true, parameterId: 'custom-turn'},
         },
         trackingOptions: {
           cameraX: -0.2,

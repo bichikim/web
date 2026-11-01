@@ -40,6 +40,26 @@ it('should persist character action targets and reject actions missing from the 
 it('should read a versioned JSON profile and preserve connection values', () => {
   expect(parseConnectionProfile(JSON.stringify(profile), options)).toEqual({ok: true, profile})
 })
+it('should preserve additive tracking connections in JSON profiles', () => {
+  const input = {
+    ...profile,
+    connections: {
+      trackingBindings: {
+        eyeY: {blend: 'overwrite', parameterId: null},
+        headX: {blend: 'add', inverted: true, parameterId: 'Param71'},
+      },
+    },
+  }
+  expect(parseConnectionProfile(JSON.stringify(input), options)).toEqual({ok: true, profile: input})
+  const invalid = {
+    ...input,
+    connections: {trackingBindings: {headX: {blend: 'multiply'}}},
+  }
+  expect(parseConnectionProfile(JSON.stringify(invalid), options)).toEqual({
+    ok: false,
+    reason: 'invalid',
+  })
+})
 it.each([
   '{broken',
   JSON.stringify({...profile, version: 2}),
