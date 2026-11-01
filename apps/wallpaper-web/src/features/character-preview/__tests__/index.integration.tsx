@@ -7,10 +7,7 @@ import SPuppetCharacter from '../../../components/SPuppetCharacter'
 import geometry from '../../../data/character-look.json'
 import 'virtual:uno.css'
 
-vi.mock('@winter-love/puppet/player', async (importOriginal) => {
-  const actual = await importOriginal<typeof playerModule>()
-  return {...actual, createPlayer: vi.fn(actual.createPlayer)}
-})
+vi.mock('../../../../../../packages/puppet/src/player/create-player', {spy: true})
 afterEach(() => {
   cleanup()
   vi.clearAllMocks()

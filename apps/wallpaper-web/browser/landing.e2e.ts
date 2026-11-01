@@ -40,19 +40,16 @@ const sampleBands = async (
 ) =>
   page.evaluate(
     async ({phase, key}) => {
-      const sampled = new Promise<number[]>((resolve) => {
-        const handleStart = (event: AnimationEvent) => {
-          const target = event.target
-          if (!(target instanceof Element)) {
-            return
-          }
-          const overlay = target.closest(
+      return new Promise<number[]>((resolve) => {
+        // Pause on insertion, before a slow frame can dispatch both start and end events.
+        const sample = () => {
+          const overlay = document.querySelector(
             `[data-story-style="bands"][data-story-transition="${phase}"]`,
           )
           if (overlay === null) {
-            return
+            return false
           }
-          document.removeEventListener('animationstart', handleStart, true)
+          observer.disconnect()
           for (const animation of overlay.getAnimations({subtree: true})) {
             animation.pause()
             const timing = animation.effect!.getTiming()
@@ -64,18 +61,26 @@ const sampleBands = async (
               (row) => row.getBoundingClientRect().right,
             ),
           )
+          return true
         }
-        document.addEventListener('animationstart', handleStart, true)
+        const observer = new MutationObserver(sample)
+        observer.observe(document, {
+          attributeFilter: ['data-story-transition'],
+          childList: true,
+          subtree: true,
+        })
+        if (sample()) {
+          return
+        }
+        if (key === null) {
+          document
+            .querySelector('[data-story-transition]')
+            ?.getAnimations({subtree: true})
+            .forEach((animation) => animation.play())
+        } else {
+          globalThis.dispatchEvent(new KeyboardEvent('keydown', {bubbles: true, key}))
+        }
       })
-      if (key === null) {
-        document
-          .querySelector('[data-story-transition]')
-          ?.getAnimations({subtree: true})
-          .forEach((animation) => animation.play())
-      } else {
-        globalThis.dispatchEvent(new KeyboardEvent('keydown', {bubbles: true, key}))
-      }
-      return sampled
     },
     {key, phase},
   )
