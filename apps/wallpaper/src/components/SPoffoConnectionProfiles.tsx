@@ -19,7 +19,7 @@ export const SPoffoConnectionProfiles = (props: SPoffoConnectionProfilesProps) =
     widget: () => props.widget,
   })
   return (
-    <section aria-label="연결 설정 파일" class="grid gap-2 text-[13px]">
+    <section aria-label="Poffo 설정 파일" class="grid gap-2 text-[13px]">
       <div class="flex flex-wrap items-center gap-2">
         <button
           type="button"
@@ -27,10 +27,10 @@ export const SPoffoConnectionProfiles = (props: SPoffoConnectionProfilesProps) =
           disabled={props.widget === undefined || profiles.busy()}
           onClick={profiles.exportFile}
         >
-          연결 JSON 저장
+          설정 JSON 저장
         </button>
         <SFileInput
-          label="연결 JSON 가져오기"
+          label="설정 JSON 불러오기"
           accept=".json,application/json"
           disabled={props.widget === undefined || props.loading || profiles.busy()}
           onFiles={profiles.importFile}

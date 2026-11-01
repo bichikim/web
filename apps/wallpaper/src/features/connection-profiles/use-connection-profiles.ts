@@ -17,8 +17,8 @@ interface UseConnectionProfilesOptions {
 }
 const IMPORT_ERRORS = {
   action: '이 캐릭터에 없는 행동이 포함돼 있어요.',
-  character: '다른 기본 캐릭터의 연결 설정이에요.',
-  invalid: '연결 JSON의 형식이나 값을 확인해 주세요.',
+  character: '다른 기본 캐릭터의 설정이에요.',
+  invalid: '설정 JSON의 형식이나 값을 확인해 주세요.',
   parameter: '이 캐릭터에 없는 파라미터가 포함돼 있어요.',
 } as const
 
@@ -49,7 +49,7 @@ export const useConnectionProfiles = (options: UseConnectionProfilesOptions) => 
       .catch((cause: unknown) => {
         console.error('Poffo connections could not be processed', cause)
         if (!disposed) {
-          setError('연결 설정을 처리하지 못했어요.')
+          setError('Poffo 설정을 처리하지 못했어요.')
         }
       })
       .finally(() => {
@@ -67,7 +67,7 @@ export const useConnectionProfiles = (options: UseConnectionProfilesOptions) => 
     }
     return run(async () => {
       if (file.size > MAX_CONNECTION_BYTES) {
-        setError('연결 JSON은 256 KB 이하로 선택해 주세요.')
+        setError('설정 JSON은 256 KB 이하로 선택해 주세요.')
         return
       }
       const source = await file.text()
@@ -98,6 +98,7 @@ export const useConnectionProfiles = (options: UseConnectionProfilesOptions) => 
         agentBindings: widget.speech?.agentBindings ?? {},
         lipsync: widget.speech?.lipsync ?? {source: 'off'},
         semanticBindings: widget.speech?.semanticBindings ?? [],
+        tracking: widget.tracking ?? 'off',
         trackingBindings: widget.trackingBindings ?? {},
         trackingOptions: widget.trackingOptions ?? {},
       },
@@ -111,7 +112,7 @@ export const useConnectionProfiles = (options: UseConnectionProfilesOptions) => 
     downloadUrl = url
     const anchor = document.createElement('a')
     anchor.href = url
-    anchor.download = 'poffo-connections.json'
+    anchor.download = 'poffo-settings.json'
     document.body.append(anchor)
     anchor.click()
     anchor.remove()

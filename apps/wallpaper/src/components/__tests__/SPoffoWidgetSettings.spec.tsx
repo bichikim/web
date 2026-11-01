@@ -116,6 +116,18 @@ test('should save animation selection only for the chosen widget and preserve it
   expect(preview.querySelector('canvas')).toBe(canvas)
 })
 
+test('should expose one settings file toolbar across all Poffo calibration tabs', () => {
+  renderWidgets()
+  const save = screen.getByRole('button', {name: '설정 JSON 저장'})
+  fireEvent.click(screen.getByRole('radio', {name: '얼굴'}))
+  expect(screen.getByRole('button', {name: '설정 JSON 저장'})).toBe(save)
+  fireEvent.click(screen.getByRole('radio', {name: '눈동자'}))
+  expect(screen.getByRole('button', {name: '설정 JSON 저장'})).toBe(save)
+  fireEvent.click(screen.getByRole('radio', {name: '연결'}))
+  expect(screen.getByRole('button', {name: '설정 JSON 저장'})).toBe(save)
+  expect(screen.getByRole('button', {name: '설정 JSON 불러오기'})).toBeDefined()
+})
+
 test('should apply speech settings only to the currently selected widget', () => {
   const {configureSpeech} = renderWidgets()
   fireEvent.click(screen.getByRole('radio', {name: '말풍선'}))

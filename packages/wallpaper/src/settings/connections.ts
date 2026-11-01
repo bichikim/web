@@ -4,14 +4,18 @@ import {type PoffoLipSync, poffoLipSyncSchema} from './lipsync'
 import {type SemanticAction, type SemanticBinding, semanticBindingsSchema} from './semantics'
 import {
   poffoBindingsSchema,
+  type PoffoTracking,
   type PoffoTrackingBindings,
   type PoffoTrackingOptions,
   poffoTrackingOptionsSchema,
+  poffoTrackingSchema,
 } from './tracking'
 
 export const MAX_CONNECTION_BYTES = 262_144
 
 export interface PoffoConnections {
+  /** Tracking input mode; omitted in older profiles leaves the current mode unchanged. */
+  readonly tracking?: PoffoTracking
   readonly trackingBindings?: PoffoTrackingBindings
   readonly trackingOptions?: PoffoTrackingOptions
   readonly lipsync?: PoffoLipSync
@@ -22,6 +26,7 @@ export const poffoConnectionsSchema: z.ZodType<PoffoConnections> = z.object({
   agentBindings: agentStateBindingsSchema.optional(),
   lipsync: poffoLipSyncSchema.optional(),
   semanticBindings: semanticBindingsSchema.optional(),
+  tracking: poffoTrackingSchema.optional(),
   trackingBindings: poffoBindingsSchema.optional(),
   trackingOptions: poffoTrackingOptionsSchema.optional(),
 })

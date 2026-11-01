@@ -11,6 +11,25 @@ afterEach(() => {
   vi.clearAllMocks()
 })
 
+test('should keep settings-file controls outside the individual face, eye and connection tabs', () => {
+  render(() => (
+    <SPoffoCalibrationPreview
+      mode="cursor"
+      assetId={() => null}
+      load={vi.fn()}
+      onChange={vi.fn()}
+      profiles={() => <button type="button">설정 JSON 저장</button>}
+    />
+  ))
+  const save = screen.getByRole('button', {name: '설정 JSON 저장'})
+  fireEvent.click(screen.getByRole('radio', {name: '눈동자'}))
+  expect(screen.getByRole('button', {name: '설정 JSON 저장'})).toBe(save)
+  fireEvent.click(screen.getByRole('radio', {name: '연결'}))
+  expect(screen.getByRole('button', {name: '설정 JSON 저장'})).toBe(save)
+  fireEvent.click(screen.getByRole('radio', {name: '얼굴'}))
+  expect(screen.getByRole('button', {name: '설정 JSON 저장'})).toBe(save)
+})
+
 test('should reveal both handles only while calibrating and preserve the canvas and saved options', () => {
   const save = vi.fn()
   render(() => (

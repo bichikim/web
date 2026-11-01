@@ -38,8 +38,53 @@ const profile = JSON.stringify({
   version: 1,
 })
 
+it('should restore face, eye and connection settings together with the tracking input mode', async () => {
+  const widget = await repository.addWidget('builtin:ash')
+  await repository.trackWidget(widget.id, 'camera')
+  const {profiles} = mount(widget)
+  const connections = {
+    agentBindings: {working: {off: 0, on: 1, parameterId: 'Param71'}},
+    lipsync: {source: 'voice'},
+    semanticBindings: [],
+    tracking: 'cursor',
+    trackingBindings: {headX: {blend: 'add', inverted: true, parameterId: 'Param71'}},
+    trackingOptions: {
+      cursorReach: 0.5,
+      eyeCenterY: 0.2,
+      eyeMaximumY: 0.7,
+      eyeMinimumY: -0.4,
+      eyeResponseY: 1.5,
+      headCenterX: 4,
+      headMaximumX: 20,
+      headMinimumX: -10,
+      headResponseX: 0.5,
+    },
+  }
+  const text = JSON.stringify({
+    assetId: widget.assetId,
+    connections,
+    format: 'poffo-connections',
+    version: 1,
+  })
+  const file = new File([text], 'poffo-settings.json')
+  Object.defineProperty(file, 'text', {value: async () => text})
+  await profiles.importFile([file])
+  expect(profiles.error()).toBeNull()
+  expect((await repository.read()).widgets[0]).toMatchObject({
+    speech: {
+      agentBindings: connections.agentBindings,
+      lipsync: connections.lipsync,
+      semanticBindings: [],
+    },
+    tracking: 'cursor',
+    trackingBindings: connections.trackingBindings,
+    trackingOptions: connections.trackingOptions,
+  })
+})
+
 it('should keep file reads busy and skip overlapping restore requests', async () => {
   const widget = await repository.addWidget('builtin:ash')
+  await repository.trackWidget(widget.id, 'camera')
   const {profiles} = mount(widget)
   const text = Promise.withResolvers<string>()
   const file = new File(['{}'], 'profile.json')
@@ -51,6 +96,7 @@ it('should keep file reads busy and skip overlapping restore requests', async ()
   await importing
   expect(profiles.busy()).toBe(false)
   expect((await repository.read()).widgets[0]?.speech?.semanticBindings).toEqual([])
+  expect((await repository.read()).widgets[0]?.tracking).toBe('camera')
 })
 it('should discard a delayed import after selecting a different widget', async () => {
   const widget = await repository.addWidget('builtin:ash')

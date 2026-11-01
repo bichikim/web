@@ -20,6 +20,7 @@ export const mergeConnections = (options: MergeConnectionsOptions): PoffoWidget 
       lipsync: assign(speech.lipsync, connections.lipsync),
       semanticBindings: assign(speech.semanticBindings, connections.semanticBindings),
     },
+    tracking: assign(widget.tracking, connections.tracking),
     trackingBindings: assign(widget.trackingBindings, connections.trackingBindings),
     trackingOptions: assign(widget.trackingOptions, connections.trackingOptions),
   }

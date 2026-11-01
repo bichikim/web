@@ -48,6 +48,7 @@ it('should preserve additive tracking connections in JSON profiles', () => {
   const input = {
     ...profile,
     connections: {
+      tracking: 'cursor',
       trackingBindings: {
         eyeY: {blend: 'overwrite', parameterId: null},
         headX: {blend: 'add', inverted: true, parameterId: 'Param71'},

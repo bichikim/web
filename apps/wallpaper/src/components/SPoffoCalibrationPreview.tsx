@@ -12,6 +12,8 @@ import {type ParameterSource, useParameters} from '../features/tracking/use-para
 interface SPoffoCalibrationPreviewProps extends PoffoCalibrationOptions {
   readonly adjustments?: boolean
   readonly controls?: JSX.Element
+  /** Shared settings-file controls, supplied with the selected model's validation metadata. */
+  readonly profiles?: (source: ParameterSource) => JSX.Element
   readonly connections?: (source: ParameterSource) => JSX.Element
   readonly label?: string
   readonly onBindingsChange?: (bindings: PoffoTrackingBindings) => void | Promise<void>
@@ -29,7 +31,9 @@ export const SPoffoCalibrationPreview = (props: SPoffoCalibrationPreviewProps) =
   const mode = () => props.mode ?? 'camera'
   const parameters = useParameters({
     assetId: () => props.assetId(),
-    enabled: () => props.adjustments !== false && section() === 'bindings',
+    enabled: () =>
+      props.adjustments !== false &&
+      (section() === 'bindings' || (props.profiles !== undefined && props.onChange !== undefined)),
     load: (id) => props.load(id),
   })
   const positioning = () =>
@@ -106,7 +110,8 @@ export const SPoffoCalibrationPreview = (props: SPoffoCalibrationPreviewProps) =
       </figure>
       {props.controls}
       <Show when={props.adjustments !== false && props.onChange !== undefined}>
-        <section aria-label="시선 보정 설정">
+        <section aria-label="시선 보정 설정" class="grid gap-3">
+          {props.profiles?.(parameters)}
           <SPoffoTrackingAdjustment
             mode={mode()}
             section={section()}

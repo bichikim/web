@@ -94,7 +94,7 @@ export const SPoffoWidgetEditor = (props: SPoffoWidgetEditorProps) => {
       <SPoffoCalibrationPreview
         label="Poffo 위젯 미리보기"
         adjustments={!speech()}
-        connections={(source) => (
+        profiles={(source) => (
           <Show when={editable()}>
             <SPoffoConnectionProfiles
               actions={source.actions?.()}
@@ -102,6 +102,10 @@ export const SPoffoWidgetEditor = (props: SPoffoWidgetEditorProps) => {
               parameters={source.parameters()}
               loading={source.loading()}
             />
+          </Show>
+        )}
+        connections={(source) => (
+          <Show when={editable()}>
             <SPoffoLipSyncSettings
               source={source}
               assetId={props.assetId()}

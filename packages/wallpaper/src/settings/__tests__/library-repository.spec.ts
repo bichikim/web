@@ -370,6 +370,7 @@ it('should persist a complete connection profile atomically without changing spe
         threshold: 0.7,
       },
     ],
+    tracking: 'cursor',
     trackingBindings: {headX: {inverted: true, parameterId: 'ParamAngleX'}},
     trackingOptions: {headMaximumX: 18, headMinimumX: -12},
   })
@@ -386,7 +387,10 @@ it('should persist a complete connection profile atomically without changing spe
     y: 0.4,
   })
   expect(stored.trackingOptions).toEqual({headMaximumX: 18, headMinimumX: -12})
+  expect(stored.tracking).toBe('cursor')
   expect(stored.trackingBindings?.headX).toEqual({inverted: true, parameterId: 'ParamAngleX'})
+  await reopened.configureConnections(widget.id, {trackingOptions: {eyeCenterX: 0.2}})
+  expect((await reopened.read()).widgets[0]?.tracking).toBe('cursor')
 })
 
 it('should retain explicit empty bindings when initializing defaults', async () => {
