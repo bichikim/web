@@ -54,7 +54,7 @@ const refreshDefault = (binding: SemanticBinding): SemanticBinding => {
   return binding
 }
 
-/** Converts known Ash connections to character presets, preserving custom text and unknown mappings. */
+/** Migrates Ash presets and removes obsolete builtin outputs, preserving custom drafts and text. */
 export const migrateSemanticActions = (
   bindings: readonly SemanticBinding[],
 ): readonly SemanticBinding[] => {
@@ -70,6 +70,10 @@ export const migrateSemanticActions = (
       return [updated]
     }
     if (action === undefined) {
+      if (binding.id.startsWith('ash:')) {
+        changed = true
+        return []
+      }
       return [binding]
     }
     changed = true

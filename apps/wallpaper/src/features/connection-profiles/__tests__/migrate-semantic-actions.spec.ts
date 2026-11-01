@@ -45,3 +45,26 @@ it('should update untouched builtins once while preserving edited thresholds and
   const custom = [{...current[0]!, exclusiveGroup: undefined, text: '사용자 문구', threshold: 0.95}]
   expect(migrateSemanticActions(custom)).toBe(custom)
 })
+
+it('should remove obsolete builtin parameter outputs while retaining valid actions and custom drafts', () => {
+  const current = builtinConnectionProfile('builtin:ash')!.connections.semanticBindings!
+  const obsolete: SemanticBinding = {
+    enabled: true,
+    exclusiveGroup: 'ash:wink',
+    id: 'ash:wink-left',
+    mode: 'toggle',
+    parameterId: 'ParamEyeLOpen',
+    text: '작은 비밀 하나 알려 드릴게요.',
+    threshold: 0.86,
+  }
+  const draft = {...obsolete, id: 'user-draft', parameterId: null}
+  const migrated = migrateSemanticActions([
+    current[0]!,
+    obsolete,
+    {...obsolete, id: 'ash:wink-left-ParamEyeLSmile'},
+    {...obsolete, exclusiveGroup: 'ash:head', id: 'ash:agree'},
+    draft,
+  ])
+  expect(migrated).toEqual([current[0], draft])
+  expect(migrateSemanticActions(migrated)).toBe(migrated)
+})

@@ -18,8 +18,16 @@ export const createBuiltinLibrary = (name: string): LibraryRepository => {
         semanticBindings !== widget.speech.semanticBindings ||
         widget.speech.randomActions === undefined
       ) {
+        const ids = new Set(semanticBindings.map((binding) => binding.id))
+        const randomActions = widget.speech.randomActions ?? profile?.connections.randomActions
         await repository.configureConnections(widget.id, {
-          randomActions: widget.speech.randomActions ?? profile?.connections.randomActions,
+          randomActions:
+            randomActions === undefined
+              ? undefined
+              : {
+                  ...randomActions,
+                  bindingIds: randomActions.bindingIds.filter((id) => ids.has(id)),
+                },
           semanticBindings,
         })
       }

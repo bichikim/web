@@ -2,6 +2,7 @@
 import 'fake-indexeddb/auto'
 import Dexie from 'dexie'
 import {afterEach, expect, it} from 'vitest'
+import {builtinConnectionProfile} from '../../connection-profiles/builtin-profile'
 import {createBuiltinLibrary} from '../create-builtin-library'
 import {createLibraryRepository} from '@winter-love/wallpaper/settings/library-repository'
 
@@ -81,5 +82,34 @@ it('should migrate saved Ash parameter connections without replacing speech or t
     x: 0.2,
     y: 0.3,
   })
+  expect((await open().read()).widgets[0]?.speech).toEqual(saved.speech)
+})
+
+it('should persist removal of obsolete builtin outputs and random references across reopen', async () => {
+  const legacy = createLibraryRepository(name)
+  const widget = await legacy.addWidget('builtin:ash')
+  const valid = builtinConnectionProfile('builtin:ash')!.connections.semanticBindings!.find(
+    (binding) => binding.id === 'ash:notes',
+  )!
+  const obsolete = {...valid, action: undefined, id: 'ash:wink-left', parameterId: 'ParamEyeLOpen'}
+  const draft = {...obsolete, id: 'user-draft', parameterId: null}
+  await legacy.configureSpeech(widget.id, {
+    enabled: true,
+    randomActions: {bindingIds: [valid.id, obsolete.id], enabled: true, probability: 0.4},
+    semanticBindings: [valid, obsolete, draft],
+    x: 0.2,
+    y: 0.3,
+  })
+  legacy.close()
+  const repository = open()
+  const saved = (await repository.read()).widgets[0]!
+  expect(saved.speech?.semanticBindings).toEqual([valid, draft])
+  expect(saved.speech?.randomActions).toEqual({
+    bindingIds: [valid.id],
+    enabled: true,
+    probability: 0.4,
+  })
+  expect(saved.speech).toMatchObject({enabled: true, x: 0.2, y: 0.3})
+  repository.close()
   expect((await open().read()).widgets[0]?.speech).toEqual(saved.speech)
 })
