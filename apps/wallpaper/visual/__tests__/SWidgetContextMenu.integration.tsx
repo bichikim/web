@@ -26,6 +26,8 @@ test.each([1, SEMANTIC_LIMIT])(
       />
     ))
     const menu = screen.getByRole('menu', {name: 'Poffo 위젯 메뉴'})
+    const separator = screen.getByRole('separator')
+    expect(getComputedStyle(separator).height).toBe('1px')
     const entries = screen.getAllByRole('menuitemcheckbox')
     const elapsed = Date.now() - started
     expect(entries).toHaveLength(count)

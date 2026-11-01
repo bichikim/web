@@ -1,4 +1,4 @@
-import {createEffect, createSignal, For, onCleanup} from 'solid-js'
+import {createEffect, createSignal, For, onCleanup, Show} from 'solid-js'
 import type {ContextAction} from '../features/semantics/types'
 
 interface SWidgetContextMenuProps {
@@ -102,6 +102,9 @@ export const SWidgetContextMenu = (props: SWidgetContextMenuProps) => {
       >
         {props.editing ? '조정 완료' : '크기 조정'}
       </button>
+      <Show when={(props.actions?.length ?? 0) > 0}>
+        <div role="separator" aria-orientation="horizontal" class="my-1 h-px bg-stone-200" />
+      </Show>
       <For each={props.actions}>
         {(action) => {
           const handleToggle = () => {
