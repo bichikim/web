@@ -82,3 +82,36 @@ test('should prioritize manual and semantic actions over fallback and reject emo
     })[0]?.action.action.id,
   ).toBe('notes')
 })
+
+test('should retain only winning next-narration actions at voice end, including random actions', () => {
+  const held = {...bindings[1], exclusiveGroup: 'hands', release: 'next-speech' as const}
+  const transient = {...bindings[0], exclusiveGroup: 'face'}
+  const actions = [held, transient].map((binding) => ({action: binding.action!, label: binding.id}))
+  const ended = {narration: {phase: 'ended' as const}, scores: {happy: 1, notes: 1}, widgetId: 'w'}
+  expect(
+    selectSemanticActions({actions, bindings: [held, transient], frame: ended}).map(
+      (item) => item.group,
+    ),
+  ).toEqual(['hands'])
+  expect(
+    selectSemanticActions({
+      actions,
+      bindings: [held, transient],
+      frame: {...ended, fallbackId: 'notes', scores: {}},
+    }).map((item) => item.group),
+  ).toEqual(['hands'])
+  expect(
+    selectSemanticActions({
+      actions,
+      bindings: [{...held, exclusiveGroup: 'face'}, transient],
+      frame: {...ended, scores: {happy: 1, notes: 0.9}},
+    }),
+  ).toEqual([])
+  expect(
+    selectSemanticActions({
+      actions,
+      bindings: [held, transient],
+      frame: {...ended, previewId: 'happy'},
+    })[0]?.action.action.id,
+  ).toBe('smile')
+})

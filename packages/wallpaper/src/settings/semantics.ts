@@ -21,6 +21,19 @@ export const semanticActionSchema: z.ZodType<SemanticAction> = z.discriminatedUn
   z.object({id: z.string().min(1).max(SEMANTIC_ID_LIMIT), kind: z.literal('expression')}),
   z.object({id: z.string().min(1).max(SEMANTIC_ID_LIMIT), kind: z.literal('motion')}),
 ])
+export type SemanticActionRelease = 'speech-end' | 'next-speech'
+export interface SemanticNarrationPlaying {
+  readonly phase: 'playing'
+  readonly readoutId: string
+}
+export interface SemanticNarrationInactive {
+  readonly phase: 'waiting' | 'ended'
+}
+export type SemanticNarration = SemanticNarrationPlaying | SemanticNarrationInactive
+const narrationSchema: z.ZodType<SemanticNarration> = z.discriminatedUnion('phase', [
+  z.object({phase: z.literal('playing'), readoutId: z.string().min(1).max(SEMANTIC_ID_LIMIT)}),
+  z.object({phase: z.enum(['waiting', 'ended'])}),
+])
 export interface SemanticAnimation {
   /** Seconds for one from-to-from cycle. */
   readonly period: number
@@ -42,6 +55,8 @@ export interface SemanticBinding {
   readonly enabled: boolean
   readonly parameterId: string | null
   readonly mode: 'toggle' | 'range'
+  /** Action release point; omitted releases at narration end. Manual previews stop explicitly. */
+  readonly release?: SemanticActionRelease
   readonly releaseWhenUnmatched?: boolean
   /** Action bindings select one winner per group; omitted uses the default group. */
   readonly exclusiveGroup?: string
@@ -68,6 +83,7 @@ export const semanticBindingsSchema = z
       id: z.string().min(1).max(SEMANTIC_ID_LIMIT),
       mode: z.enum(['toggle', 'range']),
       parameterId: z.string().min(1).nullable(),
+      release: z.enum(['speech-end', 'next-speech']).optional(),
       releaseWhenUnmatched: z.boolean().optional(),
       text: z.string().max(SEMANTIC_DESCRIPTION_LIMIT),
       threshold: z.number().finite().min(0).max(SEMANTIC_THRESHOLD_MAX),
@@ -78,6 +94,7 @@ export const semanticBindingsSchema = z
   .refine((items) => new Set(items.map((item) => item.id)).size === items.length)
 export const semanticFrameSchema = z.object({
   fallbackId: z.string().min(1).max(SEMANTIC_ID_LIMIT).optional(),
+  narration: narrationSchema.optional(),
   previewId: z.string().min(1).max(SEMANTIC_ID_LIMIT).optional(),
   scores: z
     .record(z.string().max(SEMANTIC_ID_LIMIT), z.number().finite().min(-1).max(1))
@@ -85,12 +102,15 @@ export const semanticFrameSchema = z.object({
   widgetId: z.string().min(1).max(SEMANTIC_ID_LIMIT),
 })
 export const semanticInputSchema = z.object({
+  narration: narrationSchema.optional(),
   readoutId: z.string().min(1).max(SEMANTIC_ID_LIMIT).optional(),
   text: z.string().max(SEMANTIC_TEXT_LIMIT),
   widgetId: z.string().min(1).max(SEMANTIC_ID_LIMIT),
 })
 export interface SemanticFrame {
   readonly widgetId: string
+  /** Audio lifecycle; omitted preserves text-only matching and explicit clearing. */
+  readonly narration?: SemanticNarration
   /** Manually execute only this binding at full strength; omitted uses automatic scores. */
   readonly previewId?: string
   /** Behavior chosen once for an unmatched narration; never an emotion. */
@@ -99,7 +119,9 @@ export interface SemanticFrame {
   readonly scores: Readonly<Record<string, number>>
 }
 export interface SemanticInput {
-  /** Current narration identity; omitted means no narration is playing. */
+  /** Audio lifecycle; omitted preserves text-only matching and explicit clearing. */
+  readonly narration?: SemanticNarration
+  /** Narration identity when the explicit audio lifecycle is omitted. */
   readonly readoutId?: string
   readonly widgetId: string
   readonly text: string

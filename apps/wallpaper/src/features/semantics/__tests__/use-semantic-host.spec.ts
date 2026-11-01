@@ -404,3 +404,84 @@ it('should publish fallback only for an unmatched playing narration and clear it
     random.mockRestore()
   }
 })
+
+it('should retain actions through preparation, clear at next playback and reject late results', async () => {
+  const next = Promise.withResolvers<number[][]>()
+  const embed = vi
+    .fn(async (texts: readonly string[]) => texts.map(() => [1, 0]))
+    .mockImplementationOnce(async (texts) => texts.map(() => [1, 0]))
+    .mockImplementationOnce(() => next.promise)
+  vi.mocked(createSemanticModel).mockReturnValue({dispose: vi.fn(), embed})
+  const frames: SemanticFrame[] = []
+  const stop = await subscribeSemanticFrame((frame) => frames.push(frame))
+  const scope = createRoot((cleanup) => {
+    const host = useSemanticHost({
+      widgets: () => [
+        {
+          assetId: 'character',
+          id: 'held-widget',
+          speech: {
+            enabled: true,
+            semanticBindings: [
+              {
+                action: {id: 'notes', kind: 'expression'},
+                enabled: true,
+                id: 'notes',
+                mode: 'toggle',
+                parameterId: null,
+                release: 'next-speech',
+                text: '기록',
+                threshold: 0.8,
+              },
+            ],
+            x: 0.9,
+            y: 0.05,
+          },
+          x: null,
+          y: null,
+        },
+      ],
+    })
+    return {dispose: cleanup, host}
+  })
+  try {
+    await sendSemanticInput({
+      narration: {phase: 'playing', readoutId: 'first'},
+      text: '작성했어요',
+      widgetId: 'held-widget',
+    })
+    await waitFor(() => expect(frames.at(-1)?.scores.notes).toBe(1), {interval: 1, timeout: 100})
+    await sendSemanticInput({narration: {phase: 'ended'}, text: '', widgetId: 'held-widget'})
+    expect(frames.at(-1)).toMatchObject({narration: {phase: 'ended'}, scores: {notes: 1}})
+    await sendSemanticInput({
+      narration: {phase: 'waiting'},
+      text: '다음 음성을 준비해요',
+      widgetId: 'held-widget',
+    })
+    expect(frames.at(-1)?.scores.notes).toBe(1)
+    expect(embed).toHaveBeenCalledOnce()
+    await sendSemanticInput({
+      narration: {phase: 'playing', readoutId: 'second'},
+      text: '다음 음성이에요',
+      widgetId: 'held-widget',
+    })
+    expect(frames.at(-1)).toMatchObject({
+      narration: {phase: 'playing', readoutId: 'second'},
+      scores: {},
+    })
+    await waitFor(() => expect(embed).toHaveBeenCalledTimes(2), {interval: 1, timeout: 100})
+    await sendSemanticInput({narration: {phase: 'ended'}, text: '', widgetId: 'held-widget'})
+    next.resolve([
+      [1, 0],
+      [1, 0],
+    ])
+    await next.promise
+    await waitFor(() => expect(scope.host.busy()).toBe(false), {interval: 1, timeout: 100})
+    expect(frames.at(-1)).toMatchObject({narration: {phase: 'ended'}, scores: {}})
+    await sendSemanticInput({text: '', widgetId: 'held-widget'})
+    expect(frames.at(-1)).toEqual({scores: {}, widgetId: 'held-widget'})
+  } finally {
+    scope.dispose()
+    stop()
+  }
+})

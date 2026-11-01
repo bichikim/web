@@ -14,6 +14,7 @@ const profile = {
         id: 'happy',
         mode: 'toggle',
         parameterId: 'Param71',
+        release: 'next-speech',
         releaseWhenUnmatched: true,
         text: '기쁨',
         threshold: 0.7,
@@ -106,3 +107,13 @@ it.each([0, -1, Number.POSITIVE_INFINITY])(
     expect(parseConnectionProfile(source, options)).toEqual({ok: false, reason: 'invalid'})
   },
 )
+
+it('should reject an unknown action release point', () => {
+  const source = JSON.stringify({
+    ...profile,
+    connections: {
+      semanticBindings: [{...profile.connections.semanticBindings[0], release: 'never'}],
+    },
+  })
+  expect(parseConnectionProfile(source, options)).toEqual({ok: false, reason: 'invalid'})
+})

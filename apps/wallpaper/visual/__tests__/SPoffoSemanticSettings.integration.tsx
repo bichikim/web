@@ -82,6 +82,9 @@ test('should register and persist a character action connection, then react to t
     fireEvent.input(description, {target: {value: '기쁨과 성공을 축하하는 내용'}})
     fireEvent.click(screen.getByRole('combobox', {name: '연결 1 행동'}))
     fireEvent.click(screen.getByRole('option', {name: '노트 들기'}))
+    fireEvent.click(screen.getByRole('combobox', {name: '연결 1 해제 시점'}))
+    fireEvent.click(screen.getByRole('option', {name: '다음 음성까지 유지'}))
+    expect(bindings()[0].release).toBe('next-speech')
     await expect
       .poll(async () => (await repository.read()).widgets[0]?.speech?.semanticBindings)
       .toEqual(bindings())

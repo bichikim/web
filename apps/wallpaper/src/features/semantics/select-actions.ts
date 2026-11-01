@@ -13,8 +13,10 @@ interface SelectSemanticActionsOptions {
 export const selectSemanticActions = (
   options: SelectSemanticActionsOptions,
 ): readonly SemanticSelection[] => {
-  const winners = new Map<string, SemanticSelection>()
+  const winners: SemanticSelection[] = []
+  const groups = new Set<string>()
   const {frame} = options
+  const ended = frame?.narration?.phase === 'ended' && frame.previewId === undefined
   const bindings = options.bindings.filter(
     (binding) => binding.enabled && binding.action !== undefined,
   )
@@ -36,11 +38,14 @@ export const selectSemanticActions = (
       (item) => item.action.kind === binding.action!.kind && item.action.id === binding.action!.id,
     )
     const group = binding.exclusiveGroup?.trim() || '기본 그룹'
-    if (action !== undefined && !winners.has(group)) {
-      winners.set(group, {action, group})
+    if (action !== undefined && !groups.has(group)) {
+      groups.add(group)
+      if (!ended || binding.release === 'next-speech') {
+        winners.push({action, group})
+      }
     }
   }
-  return [...winners.values()]
+  return winners
 }
 interface ChooseRandomActionOptions {
   /** Current connections; only enabled behavior actions are eligible. */

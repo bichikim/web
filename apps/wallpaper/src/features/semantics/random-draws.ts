@@ -19,12 +19,14 @@ export const createRandomDraws = (random: () => number) => {
     clear: (widgetId: string) => draws.delete(widgetId),
     select: (options: RandomDrawOptions) => {
       const {input} = options
-      if (input.readoutId === undefined) {
+      const readoutId =
+        input.narration?.phase === 'playing' ? input.narration.readoutId : input.readoutId
+      if (readoutId === undefined) {
         return undefined
       }
-      if (draws.get(input.widgetId)?.readoutId !== input.readoutId) {
+      if (draws.get(input.widgetId)?.readoutId !== readoutId) {
         const fallbackId = chooseRandomAction({...options, random})
-        draws.set(input.widgetId, {fallbackId, readoutId: input.readoutId})
+        draws.set(input.widgetId, {fallbackId, readoutId})
       }
       const selected = draws.get(input.widgetId)?.fallbackId
       return options.settings?.enabled && options.settings.bindingIds.includes(selected ?? '')

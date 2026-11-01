@@ -30,9 +30,14 @@ afterEach(() => {
   vi.resetAllMocks()
 })
 
-test.each(['matched', 'fallback'] as const)(
-  'should start the %s action for a new narration and release it at the actual audio ended event',
-  async (mode) => {
+test.each([
+  {mode: 'matched', release: 'speech-end'},
+  {mode: 'matched', release: 'next-speech'},
+  {mode: 'fallback', release: 'speech-end'},
+  {mode: 'fallback', release: 'next-speech'},
+] as const)(
+  'should apply $mode action release $release at audio end and next playback',
+  async ({mode, release}) => {
     const ended = Promise.withResolvers<void>()
     const start = AudioBufferSourceNode.prototype.start
     const audio = vi
@@ -44,14 +49,16 @@ test.each(['matched', 'fallback'] as const)(
         this.addEventListener('ended', () => ended.resolve(), {once: true})
         return start.apply(this, args)
       })
-    vi.mocked(createResidentSynthesis).mockReturnValue({
-      dispose: vi.fn(),
-      generate: vi.fn().mockResolvedValue({sampleRate: 24_000, samples: new Float32Array(48_000)}),
-    })
+    const nextAudio = Promise.withResolvers<{sampleRate: number; samples: Float32Array}>()
+    const generate = vi
+      .fn()
+      .mockResolvedValueOnce({sampleRate: 24_000, samples: new Float32Array(48_000)})
+      .mockImplementationOnce(() => nextAudio.promise)
+    vi.mocked(createResidentSynthesis).mockReturnValue({dispose: vi.fn(), generate})
     vi.mocked(createSemanticModel).mockReturnValue({
       dispose: vi.fn(),
       embed: vi.fn(async (texts: readonly string[]) =>
-        texts.map((text) => (mode === 'matched' || text.endsWith('축하해요!') ? [1, 0] : [0, 1])),
+        texts.map((text) => (text.endsWith('축하해요!') ? [1, 0] : [0, 1])),
       ),
     })
     const speech = {
@@ -65,6 +72,7 @@ test.each(['matched', 'fallback'] as const)(
           id: 'happy',
           mode: 'toggle' as const,
           parameterId: null,
+          release,
           text: '축하해요!',
           threshold: 0.84,
           to: 1,
@@ -123,9 +131,19 @@ test.each(['matched', 'fallback'] as const)(
         widgetId: () => 'voice-widget',
       })
       const begin = () => setSnapshot((value) => ({...value, activity, sessions: [activity]}))
+      const next = () => {
+        speech.randomActions.probability = 0
+        const activityNext = {
+          ...activity,
+          notificationId: 2,
+          text: '다음 문장의 길이를 확인합니다.',
+        }
+        setSnapshot((value) => ({...value, activity: activityNext, sessions: [activityNext]}))
+      }
       return (
         <>
           <button onClick={begin}>읽기 시작</button>
+          <button onClick={next}>다음 읽기</button>
           <output aria-label="표정">{action() ?? '기본'}</output>
           <SPoffoSpeechSurface widgetId="voice-widget" />
         </>
@@ -135,6 +153,14 @@ test.each(['matched', 'fallback'] as const)(
     await expect.poll(() => audio.mock.calls.length).toBe(1)
     await expect.poll(() => screen.getByLabelText('표정').textContent).toBe('example-action')
     await ended.promise
+    const completed = release === 'next-speech' ? 'example-action' : '기본'
+    await expect.poll(() => screen.getByLabelText('표정').textContent).toBe(completed)
+    await page.getByRole('button', {name: '다음 읽기'}).click()
+    await expect.poll(() => generate.mock.calls.length).toBe(2)
+    expect(audio).toHaveBeenCalledOnce()
+    expect(screen.getByLabelText('표정').textContent).toBe(completed)
+    nextAudio.resolve({sampleRate: 24_000, samples: new Float32Array(24_000)})
+    await expect.poll(() => audio.mock.calls.length).toBe(2)
     await expect.poll(() => screen.getByLabelText('표정').textContent).toBe('기본')
     expect(screen.queryByRole('alert')).toBeNull()
   },

@@ -1,5 +1,8 @@
 import {Show} from 'solid-js'
-import type {SemanticBinding} from '@winter-love/wallpaper/settings/semantics'
+import type {
+  SemanticActionRelease,
+  SemanticBinding,
+} from '@winter-love/wallpaper/settings/semantics'
 import type {CharacterAction} from '../features/semantics/types'
 import {SPoffoSemanticDescription} from './SPoffoSemanticDescription'
 import {SPoffoSemanticPreview} from './SPoffoSemanticPreview'
@@ -36,6 +39,7 @@ export const SPoffoSemanticBinding = (props: SPoffoSemanticBindingProps) => {
     update({exclusiveGroup: event.currentTarget.value.trim() || undefined})
   const handleCategory = (category: 'emotion' | 'behavior') => update({category})
   const handleThreshold = (threshold: number) => update({threshold})
+  const handleRelease = (release: SemanticActionRelease) => update({release})
   return (
     <div
       role="group"
@@ -117,6 +121,19 @@ export const SPoffoSemanticBinding = (props: SPoffoSemanticBindingProps) => {
           step={0.01}
           disabled={props.onChange === undefined}
           onChange={handleThreshold}
+        />
+      </label>
+      <label class="grid gap-1 text-xs text-stone-600">
+        해제 시점
+        <SSelect
+          label={`${caption()} 해제 시점`}
+          value={props.value.release ?? 'speech-end'}
+          options={[
+            {label: '음성이 끝나면 해제', value: 'speech-end'},
+            {label: '다음 음성까지 유지', value: 'next-speech'},
+          ]}
+          onChange={handleRelease}
+          disabled={props.onChange === undefined}
         />
       </label>
     </div>

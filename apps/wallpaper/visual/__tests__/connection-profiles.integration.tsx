@@ -36,6 +36,7 @@ test('should save and restore all Poffo settings across tabs without exporting c
           id: 'profile-happy',
           mode: 'toggle',
           parameterId: null,
+          release: 'next-speech',
           text: '정말 기뻐요',
           threshold: 0.8,
         },

@@ -1,5 +1,6 @@
 import {useSemanticInput} from '../features/semantics/use-semantic-input'
 import {useVoice} from '../features/voice/use-voice'
+import type {SemanticNarration} from '@winter-love/wallpaper/settings/semantics'
 import {useSpeechLipSync} from '../features/lipsync'
 import {voiceMessage} from '../features/voice/text'
 import {createMemo, createSignal, type JSX, Show} from 'solid-js'
@@ -40,8 +41,19 @@ export const SPoffoSpeechSurface = (props: {readonly widgetId?: string} = {}) =>
     widgetId: () => props.widgetId,
   })
   const voice = useVoice({message, onShape: lipsync.audioShape, speech: settings.speech})
+  const narration = (): SemanticNarration | undefined => {
+    const speech = settings.speech()
+    if (!speech.enabled || !speech.voice?.enabled) {
+      return undefined
+    }
+    if (voice.status() === 'idle') {
+      return {phase: 'ended'}
+    }
+    const readoutId = voice.readoutId()
+    return readoutId === undefined ? {phase: 'waiting'} : {phase: 'playing', readoutId}
+  }
   useSemanticInput({
-    readoutId: voice.readoutId,
+    narration,
     text: () => {
       const speech = settings.speech()
       return !speech.enabled || (speech.voice?.enabled && voice.status() === 'idle')

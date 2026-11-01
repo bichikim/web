@@ -1,3 +1,4 @@
+import {transitionSemanticFrame} from './transition-semantic-frame'
 import {semanticJobs} from './semantic-jobs'
 import {type Accessor, createEffect, createSignal, onCleanup, untrack} from 'solid-js'
 import type {PoffoWidget} from '@winter-love/wallpaper/settings/library-model'
@@ -21,6 +22,20 @@ import {createRandomDraws} from './random-draws'
 interface UseSemanticHostProps {
   readonly widgets: Accessor<readonly PoffoWidget[]>
 }
+const analysisFrame = (
+  input: SemanticInput,
+  scores: SemanticFrame['scores'],
+  fallbackId?: string,
+): SemanticFrame => ({
+  scores,
+  widgetId: input.widgetId,
+  ...(input.narration === undefined ? {} : {narration: input.narration}),
+  ...(fallbackId === undefined ? {} : {fallbackId}),
+})
+
+const stopSubscription = (subscription: Promise<() => void>) =>
+  subscription.then((stop) => stop()).catch(console.error)
+
 export const useSemanticHost = (props: UseSemanticHostProps): SemanticRuntime => {
   const model = createSemanticModel()
   const [inputs, setInputs] = createSignal<ReadonlyMap<string, SemanticInput>>(new Map())
@@ -70,7 +85,7 @@ export const useSemanticHost = (props: UseSemanticHostProps): SemanticRuntime =>
               ?.speech?.randomActions
             const fallbackId = draws.select({bindings, input: job.input, scores, settings})
             // oxlint-disable-next-line no-await-in-loop -- Publish this completed widget before processing the next.
-            await publish({scores, widgetId: id, ...(fallbackId === undefined ? {} : {fallbackId})})
+            await publish(analysisFrame(job.input, scores, fallbackId))
             setError(null)
           }
         } catch (cause) {
@@ -88,7 +103,7 @@ export const useSemanticHost = (props: UseSemanticHostProps): SemanticRuntime =>
   }
   const accept = (input: SemanticInput) => {
     if (props.widgets().some((widget) => widget.id === input.widgetId)) {
-      if (input.readoutId === undefined) {
+      if (input.narration?.phase !== 'playing' && input.readoutId === undefined) {
         draws.clear(input.widgetId)
       }
       setInputs((values) =>
@@ -143,14 +158,16 @@ export const useSemanticHost = (props: UseSemanticHostProps): SemanticRuntime =>
       }
       for (const widget of widgets) {
         const {input, signature} = widget
-        const {text} = input
         if (signatures.get(widget.id) !== signature) {
           signatures.set(widget.id, signature)
-          if (text.trim() === '') {
-            pending.delete(widget.id)
-            publish({scores: {}, widgetId: widget.id}).catch(console.error)
-          } else {
+          const transition = transitionSemanticFrame({input, previous: frames().get(widget.id)})
+          if (transition.frame !== undefined) {
+            publish(transition.frame).catch(console.error)
+          }
+          if (transition.kind === 'analyze') {
             pending.set(widget.id, {input, signature})
+          } else {
+            pending.delete(widget.id)
           }
         }
       }
@@ -160,9 +177,7 @@ export const useSemanticHost = (props: UseSemanticHostProps): SemanticRuntime =>
   onCleanup(() => {
     disposed = true
     pending.clear()
-    for (const subscription of subscriptions) {
-      subscription.then((stop) => stop()).catch(console.error)
-    }
+    subscriptions.forEach(stopSubscription)
     model.dispose()
   })
   return {
