@@ -41,6 +41,7 @@ export const SPoffoSpeechSurface = (props: {readonly widgetId?: string} = {}) =>
   })
   const voice = useVoice({message, onShape: lipsync.audioShape, speech: settings.speech})
   useSemanticInput({
+    readoutId: voice.readoutId,
     text: () => {
       const speech = settings.speech()
       return !speech.enabled || (speech.voice?.enabled && voice.status() === 'idle')

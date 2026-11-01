@@ -1,3 +1,5 @@
+import {SPoffoRandomActions} from './SPoffoRandomActions'
+import type {RandomActionSettings} from '@winter-love/wallpaper/settings/random-actions'
 import {SPoffoConnectionProfiles} from './SPoffoConnectionProfiles'
 import {SPoffoSemanticSettings} from './SPoffoSemanticSettings'
 import type {SemanticBinding} from '@winter-love/wallpaper/settings/semantics'
@@ -65,6 +67,8 @@ export const SPoffoWidgetEditor = (props: SPoffoWidgetEditorProps) => {
     configureSpeech({...DEFAULT_POFFO_SPEECH, ...props.widget?.speech, lipsync})
   const configureSemantics = (semanticBindings: readonly SemanticBinding[]) =>
     configureSpeech({...DEFAULT_POFFO_SPEECH, ...props.widget?.speech, semanticBindings})
+  const configureRandom = (randomActions: RandomActionSettings) =>
+    configureSpeech({...DEFAULT_POFFO_SPEECH, ...props.widget?.speech, randomActions})
   const configureAgent = (agentBindings: AgentStateBindings) =>
     configureSpeech({...DEFAULT_POFFO_SPEECH, ...props.widget?.speech, agentBindings})
   const handleInput = (mode: PoffoTracking) => {
@@ -100,6 +104,12 @@ export const SPoffoWidgetEditor = (props: SPoffoWidgetEditorProps) => {
               loading={source.loading()}
               value={props.widget?.speech?.semanticBindings}
               onChange={configureSemantics}
+            />
+            <SPoffoRandomActions
+              actions={source.actions?.()}
+              bindings={props.widget?.speech?.semanticBindings}
+              value={props.widget?.speech?.randomActions}
+              onChange={configureRandom}
             />
             <SPoffoAgentStateSettings
               parameters={source.parameters()}

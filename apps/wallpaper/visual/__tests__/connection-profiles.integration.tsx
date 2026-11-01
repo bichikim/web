@@ -26,10 +26,13 @@ test('should save and restore all Poffo settings across tabs without exporting c
         shapes: {a: {inverted: true, parameterId: 'ParamMouthOpenY'}},
         source: 'voice',
       },
+      randomActions: {bindingIds: ['profile-happy'], enabled: true, probability: 0.3},
       semanticBindings: [
         {
           action: {id: '반짝이는 눈', kind: 'expression'},
+          category: 'emotion',
           enabled: true,
+          exclusiveGroup: '표정',
           id: 'profile-happy',
           mode: 'toggle',
           parameterId: null,
@@ -163,6 +166,7 @@ test('should save and restore all Poffo settings across tabs without exporting c
       speech: {
         agentBindings: connections.agentBindings,
         lipsync: connections.lipsync,
+        randomActions: connections.randomActions,
         semanticBindings: connections.semanticBindings,
       },
       tracking: 'cursor',

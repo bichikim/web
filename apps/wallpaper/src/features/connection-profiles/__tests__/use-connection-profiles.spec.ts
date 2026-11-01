@@ -45,6 +45,7 @@ it('should restore face, eye and connection settings together with the tracking 
   const connections = {
     agentBindings: {working: {off: 0, on: 1, parameterId: 'Param71'}},
     lipsync: {source: 'voice'},
+    randomActions: {bindingIds: [], enabled: true, probability: 0.4},
     semanticBindings: [],
     tracking: 'cursor',
     trackingBindings: {headX: {blend: 'add', inverted: true, parameterId: 'Param71'}},
@@ -74,6 +75,7 @@ it('should restore face, eye and connection settings together with the tracking 
     speech: {
       agentBindings: connections.agentBindings,
       lipsync: connections.lipsync,
+      randomActions: connections.randomActions,
       semanticBindings: [],
     },
     tracking: 'cursor',

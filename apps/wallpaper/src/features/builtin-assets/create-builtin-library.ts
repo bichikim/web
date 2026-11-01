@@ -14,8 +14,14 @@ export const createBuiltinLibrary = (name: string): LibraryRepository => {
       await repository.configureConnections(widget.id, profile.connections, 'missing')
     } else if (widget.assetId === 'builtin:ash' && widget.speech?.semanticBindings !== undefined) {
       const semanticBindings = migrateSemanticActions(widget.speech.semanticBindings)
-      if (semanticBindings !== widget.speech.semanticBindings) {
-        await repository.configureConnections(widget.id, {semanticBindings})
+      if (
+        semanticBindings !== widget.speech.semanticBindings ||
+        widget.speech.randomActions === undefined
+      ) {
+        await repository.configureConnections(widget.id, {
+          randomActions: widget.speech.randomActions ?? profile?.connections.randomActions,
+          semanticBindings,
+        })
       }
     }
   }
@@ -32,6 +38,7 @@ export const createBuiltinLibrary = (name: string): LibraryRepository => {
         (widget) =>
           widget.assetId === 'builtin:ash' &&
           (widget.speech?.semanticBindings === undefined ||
+            widget.speech.randomActions === undefined ||
             migrateSemanticActions(widget.speech.semanticBindings) !==
               widget.speech.semanticBindings),
       )

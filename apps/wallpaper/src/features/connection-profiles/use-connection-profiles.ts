@@ -97,6 +97,7 @@ export const useConnectionProfiles = (options: UseConnectionProfilesOptions) => 
       connections: {
         agentBindings: widget.speech?.agentBindings ?? {},
         lipsync: widget.speech?.lipsync ?? {source: 'off'},
+        randomActions: widget.speech?.randomActions,
         semanticBindings: widget.speech?.semanticBindings ?? [],
         tracking: widget.tracking ?? 'off',
         trackingBindings: widget.trackingBindings ?? {},

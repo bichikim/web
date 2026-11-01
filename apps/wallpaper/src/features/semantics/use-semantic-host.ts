@@ -1,3 +1,4 @@
+import {semanticJobs} from './semantic-jobs'
 import {type Accessor, createEffect, createSignal, onCleanup, untrack} from 'solid-js'
 import type {PoffoWidget} from '@winter-love/wallpaper/settings/library-model'
 import {
@@ -15,13 +16,15 @@ import {
 } from './channel'
 import type {SemanticRuntime} from './context'
 import {useSemanticPreview} from './use-semantic-preview'
+import {createRandomDraws} from './random-draws'
 
 interface UseSemanticHostProps {
   readonly widgets: Accessor<readonly PoffoWidget[]>
 }
 export const useSemanticHost = (props: UseSemanticHostProps): SemanticRuntime => {
   const model = createSemanticModel()
-  const [inputs, setInputs] = createSignal<ReadonlyMap<string, string>>(new Map())
+  const [inputs, setInputs] = createSignal<ReadonlyMap<string, SemanticInput>>(new Map())
+  const draws = createRandomDraws(() => Math.random())
   const [busy, setBusy] = createSignal(false)
   const [connected, setConnected] = createSignal(false)
   const [error, setError] = createSignal<string | null>(null)
@@ -63,8 +66,11 @@ export const useSemanticHost = (props: UseSemanticHostProps): SemanticRuntime =>
             text: job.input.text,
           })
           if (signatures.get(id) === job.signature) {
-            // oxlint-disable-next-line no-await-in-loop -- Publish before processing the next widget.
-            await publish({scores, widgetId: id})
+            const settings = props.widgets().find((widget) => widget.id === id)
+              ?.speech?.randomActions
+            const fallbackId = draws.select({bindings, input: job.input, scores, settings})
+            // oxlint-disable-next-line no-await-in-loop -- Publish this completed widget before processing the next.
+            await publish({scores, widgetId: id, ...(fallbackId === undefined ? {} : {fallbackId})})
             setError(null)
           }
         } catch (cause) {
@@ -82,8 +88,14 @@ export const useSemanticHost = (props: UseSemanticHostProps): SemanticRuntime =>
   }
   const accept = (input: SemanticInput) => {
     if (props.widgets().some((widget) => widget.id === input.widgetId)) {
+      if (input.readoutId === undefined) {
+        draws.clear(input.widgetId)
+      }
       setInputs((values) =>
-        new Map(values).set(input.widgetId, input.text.slice(-SEMANTIC_TEXT_LIMIT)),
+        new Map(values).set(input.widgetId, {
+          ...input,
+          text: input.text.slice(-SEMANTIC_TEXT_LIMIT),
+        }),
       )
     }
   }
@@ -114,39 +126,31 @@ export const useSemanticHost = (props: UseSemanticHostProps): SemanticRuntime =>
     }
   })
   createEffect(() => {
-    const widgets = props.widgets().map((widget) => ({
-      bindings: widget.speech?.semanticBindings?.map((binding) => ({...binding})) ?? [],
-      id: widget.id,
-    }))
     const texts = inputs()
+    const widgets = semanticJobs(props.widgets(), texts)
     untrack(() => {
       const ids = new Set(widgets.map((widget) => widget.id))
-      const liveInputs = new Map([...texts].filter(([id]) => ids.has(id)))
-      if (liveInputs.size !== texts.size) {
-        setInputs(liveInputs)
+      if ([...texts.keys()].some((id) => !ids.has(id))) {
+        setInputs(new Map([...texts].filter(([id]) => ids.has(id))))
       }
       for (const id of signatures.keys()) {
         if (!ids.has(id)) {
           signatures.delete(id)
           pending.delete(id)
-          setFrames((values) => {
-            const next = new Map(values)
-            next.delete(id)
-            return next
-          })
+          draws.clear(id)
+          setFrames(new Map([...frames()].filter(([key]) => key !== id)))
         }
       }
       for (const widget of widgets) {
-        const text = texts.get(widget.id) ?? ''
-        const {bindings} = widget
-        const signature = JSON.stringify([text, bindings])
+        const {input, signature} = widget
+        const {text} = input
         if (signatures.get(widget.id) !== signature) {
           signatures.set(widget.id, signature)
           if (text.trim() === '') {
             pending.delete(widget.id)
             publish({scores: {}, widgetId: widget.id}).catch(console.error)
           } else {
-            pending.set(widget.id, {input: {text, widgetId: widget.id}, signature})
+            pending.set(widget.id, {input, signature})
           }
         }
       }

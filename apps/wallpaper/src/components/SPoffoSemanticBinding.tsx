@@ -32,6 +32,9 @@ export const SPoffoSemanticBinding = (props: SPoffoSemanticBindingProps) => {
         ?.action,
       parameterId: null,
     })
+  const handleGroup = (event: Event & {currentTarget: HTMLInputElement}) =>
+    update({exclusiveGroup: event.currentTarget.value.trim() || undefined})
+  const handleCategory = (category: 'emotion' | 'behavior') => update({category})
   const handleThreshold = (threshold: number) => update({threshold})
   return (
     <div
@@ -80,6 +83,29 @@ export const SPoffoSemanticBinding = (props: SPoffoSemanticBindingProps) => {
         ]}
         disabled={props.loading || props.onChange === undefined}
         onChange={handleAction}
+      />
+      <label class="grid gap-1 text-xs text-stone-600">
+        그룹
+        <input
+          aria-label={`${caption()} 그룹`}
+          placeholder="기본 그룹"
+          maxLength={128}
+          value={props.value.exclusiveGroup ?? ''}
+          disabled={props.onChange === undefined}
+          onChange={handleGroup}
+          class="box-border w-full rounded-md border border-solid border-stone-300 bg-white
+          px-2 py-1.5 font-inherit text-inherit"
+        />
+      </label>
+      <SSelect
+        label={`${caption()} 종류`}
+        value={props.value.category ?? 'emotion'}
+        options={[
+          {label: '감정', value: 'emotion'},
+          {label: '일반 행동', value: 'behavior'},
+        ]}
+        onChange={handleCategory}
+        disabled={props.onChange === undefined}
       />
       <label class="grid gap-1 text-xs text-stone-600">
         매칭 기준

@@ -1,3 +1,4 @@
+import {type RandomActionSettings, randomActionSettingsSchema} from './random-actions'
 import {type SemanticBinding, semanticBindingsSchema} from './semantics'
 import {z} from 'zod'
 import {type PoffoVoice, poffoVoiceSchema} from './voice'
@@ -33,6 +34,7 @@ export interface PoffoSpeechPosition {
   readonly y: number
 }
 export interface PoffoSpeech extends PoffoSpeechPosition {
+  readonly randomActions?: RandomActionSettings
   readonly semanticBindings?: readonly SemanticBinding[]
   readonly agentBindings?: AgentStateBindings
   readonly lipsync?: PoffoLipSync
@@ -47,6 +49,7 @@ export const poffoSpeechSchema = z.object({
   anchor: z.enum(['top', 'bottom']).optional(),
   enabled: z.boolean(),
   lipsync: poffoLipSyncSchema.optional(),
+  randomActions: randomActionSettingsSchema.optional(),
   semanticBindings: semanticBindingsSchema.optional(),
   voice: poffoVoiceSchema.optional(),
   wrap: z.boolean().optional(),

@@ -6,341 +6,436 @@
     "semanticBindings": [
       {
         "id": "ash:excited",
-        "text": "기쁘고 행복해서 환하게 웃어요. 잘됐어, 성공했어, 고마워, 축하해!\n잘됐어요! 성공했어요, 축하해요!\n고마워요, 덕분에 잘 해결했어요.\n좋은 아이디어네요! 정말 기대돼요.\n흥미로운 결과예요. 정말 대단해요!\n멋진 발견이에요, 신나요!",
-        "threshold": 0.86,
+        "text": "기쁘고 행복해서 환하게 웃어요. 잘됐어, 성공했어, 고마워, 축하해!\n잘됐어요! 성공했어요, 축하해요!\n고마워요, 덕분에 잘 해결했어요.\n원하던 결과가 나왔네요. 정말 반가운 소식이에요!\n이번에는 한 번에 해결됐어요. 기분 좋은 진전이네요.\n새로운 가능성이 보여서 저도 기대가 됩니다.",
+        "threshold": 0.788,
         "enabled": true,
         "action": {
           "kind": "expression",
           "id": "반짝이는 눈"
         },
         "parameterId": null,
-        "mode": "toggle"
+        "mode": "toggle",
+        "excludeText": "좋은 결과인지 아직 알 수 없어서 판단을 미뤄요.\n기쁜 감정에 관한 단어의 의미만 설명합니다.",
+        "category": "emotion",
+        "exclusiveGroup": "감정"
       },
       {
         "id": "ash:affection",
-        "text": "정말 귀엽고 사랑스러워요.\n좋아해요. 늘 응원하고 있어요.\n애정을 담아 전할게요.",
-        "threshold": 0.86,
+        "text": "정말 귀엽고 사랑스러워요.\n좋아해요. 늘 응원하고 있어요.\n애정을 담아 전할게요.\n작은 발로 다가오는 모습이 정말 사랑스럽네요.\n당신의 다정한 마음이 느껴져서 저도 따뜻해져요.\n함께 이야기하는 이 시간이 참 소중하게 느껴져요.",
+        "threshold": 0.78,
         "enabled": true,
         "action": {
           "kind": "expression",
           "id": "하트 눈"
         },
         "parameterId": null,
-        "mode": "toggle"
+        "mode": "toggle",
+        "excludeText": "하트 모양의 이미지를 편집하고 있어요.\n애정을 표현하는 상황이 아니라 일반적인 정보를 전달해요.",
+        "category": "emotion",
+        "exclusiveGroup": "감정"
       },
       {
         "id": "ash:embarrassed",
-        "text": "칭찬해 주시니 쑥스럽네요.\n과찬이에요, 조금 부끄러워요.\n앗, 민망하네요.",
-        "threshold": 0.82,
+        "text": "칭찬해 주시니 쑥스럽네요.\n과찬이에요, 조금 부끄러워요.\n앗, 민망하네요.\n그렇게 좋게 봐 주시니 몸 둘 바를 모르겠네요.\n이렇게 칭찬을 받으니 얼굴이 뜨거워지는 것 같아요.\n칭찬이 과해서 어쩔 줄 모르겠어요.",
+        "threshold": 0.781,
         "enabled": true,
         "action": {
           "kind": "expression",
           "id": "홍조"
         },
         "parameterId": null,
-        "mode": "toggle"
+        "mode": "toggle",
+        "excludeText": "볼이 붉어지는 증상을 의학 용어로 설명합니다.\n제가 한 답변의 오류를 바로잡겠습니다.",
+        "category": "emotion",
+        "exclusiveGroup": "감정"
       },
       {
         "id": "ash:angry",
-        "text": "이건 정말 부당하네요.\n화가 나고 짜증이 나요.\n정말 불쾌한 일이에요.",
-        "threshold": 0.82,
+        "text": "이건 정말 부당하네요.\n화가 나고 짜증이 나요.\n정말 불쾌한 일이에요.\n동의 없이 남의 작업을 가져갔다니 정말 화날 만한 일이에요.\n약속을 반복해서 어기는 태도는 너무 무책임하네요.\n상대방을 무시하는 이런 대우는 받아들일 수 없어요.",
+        "threshold": 0.78,
         "enabled": true,
         "action": {
           "kind": "expression",
           "id": "화남"
         },
         "parameterId": null,
-        "mode": "toggle"
+        "mode": "toggle",
+        "excludeText": "불만은 있지만 감정을 가라앉히고 담담하게 대응해요.\n캐릭터의 화난 표정 기능을 설명하고 있어요.",
+        "category": "emotion",
+        "exclusiveGroup": "감정"
       },
       {
         "id": "ash:sad-eyes",
-        "text": "안타깝고 마음이 아프네요.\n속상하셨겠어요. 많이 아쉽네요.\n슬프고 서운해요.",
-        "threshold": 0.84,
+        "text": "안타깝고 마음이 아프네요.\n속상하셨겠어요. 많이 아쉽네요.\n슬프고 서운해요.\n기대했던 기회를 놓치셨다니 마음이 쓰이네요.\n그 말을 듣고 많이 서운하셨겠어요.\n오랫동안 준비하신 만큼 아쉬움이 크실 것 같아요.\n연락이 없어서 많이 서운하고 속상하시겠어요.\n함께한 시간이 끝나 간다니 쓸쓸하고 마음이 먹먹하네요.",
+        "threshold": 0.811,
         "enabled": true,
         "action": {
           "kind": "expression",
           "id": "울먹이는 눈"
         },
         "parameterId": null,
-        "mode": "toggle"
+        "mode": "toggle",
+        "excludeText": "이미 마음을 추스르고 기분이 나아졌어요.\n이 문장은 슬픔을 표현하는 게 아니라 프로그램 설명이에요.",
+        "category": "emotion",
+        "exclusiveGroup": "감정"
       },
       {
         "id": "ash:sad-tears",
-        "text": "너무 슬퍼서 눈물이 나요.\n참을 수 없이 슬퍼요. 울고 싶어요.\n눈물이 멈추지 않아요.\n목이 메어 울음을 터뜨렸어요.\n그리움에 눈시울이 붉어지고 흐느껴요.\n괜찮은 척하다가 울음을 쏟았어요.\n가슴이 벅차오르고 눈가가 젖었어요.",
-        "threshold": 0.88,
+        "text": "너무 슬퍼서 눈물이 나요.\n참을 수 없이 슬퍼요. 울고 싶어요.\n눈물이 멈추지 않아요.\n마지막 인사도 못했다는 이야기에 눈시울이 뜨거워지네요.\n끝까지 참아 보려 했는데 결국 울음이 터져 나왔어요.\n다시는 만날 수 없다는 말에 목이 메어 한동안 말을 잇지 못했어요.\n참았던 감정이 북받쳐서 결국 울고 말았어요.\n괜찮다고 참으려 했지만 슬픔이 북받쳐 흐느꼈어요.",
+        "threshold": 0.78,
         "enabled": true,
-        "excludeText": "슬프지만 울지는 않았어요.\n이제 괜찮아져서 울음을 그쳤어요.\n눈물 흘린 적 없어요.",
+        "excludeText": "슬프지만 울지는 않았어요.\n이제 괜찮아져서 울음을 그쳤어요.\n눈물 흘린 적 없어요.\n울거나 눈물이 나는 상태는 아니에요.\n마음이 가라앉아서 더 이상 울지 않아요.\n눈물 효과의 구현 방법을 설명합니다.",
         "action": {
           "kind": "expression",
           "id": "눈물"
         },
         "parameterId": null,
-        "mode": "toggle"
+        "mode": "toggle",
+        "category": "emotion",
+        "exclusiveGroup": "감정"
       },
       {
         "id": "ash:nervous",
-        "text": "조금 걱정되네요. 조심스럽게 확인해 볼게요.\n긴장되고 불안해요.\n확신하기 어려워서 망설여져요.",
-        "threshold": 0.84,
+        "text": "긴장되고 불안해요.\n확신하기 어려워서 망설여져요.\n결과를 아직 몰라서 마음을 놓기가 어렵네요.\n혹시 다른 문제가 숨어 있을까 봐 신중하게 살펴보고 있어요.\n처음 시도하는 방식이라 조금 떨리네요.\n중요한 것을 빼먹은 게 있을까 봐 조마조마해요.\n어떤 반응이 돌아올지 두려워서 말을 꺼내기가 망설여져요.\n상대의 반응이 걱정되어 말을 시작하기가 두렵고 망설여져요.",
+        "threshold": 0.799,
         "enabled": true,
         "action": {
           "kind": "expression",
           "id": "긴장"
         },
         "parameterId": null,
-        "mode": "toggle"
+        "mode": "toggle",
+        "excludeText": "결과를 확인하고 마음이 편안해졌어요.\n긴장을 나타내는 기술적인 설정 이름입니다.",
+        "category": "emotion",
+        "exclusiveGroup": "감정"
       },
       {
         "id": "ash:sweat",
-        "text": "앗, 예상하지 못한 문제가 생겼네요.\n당황스럽고 난감하네요.\n곤란한 상황이네요. 어떡하죠?",
-        "threshold": 0.86,
+        "text": "앗, 예상하지 못한 문제가 생겼네요.\n당황스럽고 난감하네요.\n곤란한 상황이네요. 어떡하죠?\n어, 방금까지 되던 게 갑자기 멈췄네요. 난감해졌어요.\n앗, 제가 예상한 것과 달라서 조금 당황했어요.\n여기서 막힐 줄은 몰랐네요. 잠깐 상황을 살펴볼게요.\n예상한 결과가 거꾸로 나와서 순간 당황했어요.",
+        "threshold": 0.807,
         "enabled": true,
         "action": {
           "kind": "expression",
           "id": "땀방울"
         },
         "parameterId": null,
-        "mode": "toggle"
+        "mode": "toggle",
+        "excludeText": "문제를 미리 알고 차질 없이 대응했어요.\n땀의 원리를 설명하는 내용이에요.",
+        "category": "emotion",
+        "exclusiveGroup": "감정"
       },
       {
         "id": "ash:notes",
-        "text": "요청하신 내용을 문서에 정리했어요.\n작성한 내용을 저장해 두었어요.\n기록해 둘게요. 요약을 적어 두었어요.",
-        "threshold": 0.84,
+        "text": "요청하신 내용을 문서에 정리했어요.\n작성한 내용을 저장해 두었어요.\n기록해 둘게요. 요약을 적어 두었어요.\n결정한 내용을 문서로 남겨 두었습니다.\n요청하신 항목들을 정리해 파일에 저장했습니다.\n나중에 다시 볼 수 있도록 요약본을 작성해 두었어요.",
+        "threshold": 0.852,
         "enabled": true,
         "action": {
           "kind": "expression",
           "id": "노트 들기"
         },
         "parameterId": null,
-        "mode": "toggle"
+        "mode": "toggle",
+        "excludeText": "아직 기록을 남기거나 저장한 내용은 없어요.\n말씀을 들으면서 현재 메모하고 있는 중입니다.",
+        "category": "behavior",
+        "exclusiveGroup": "손동작"
       },
       {
         "id": "ash:thumbs-up",
-        "text": "이 방법을 추천해요. 이렇게 진행하면 좋아요.\n아주 잘하셨어요! 그대로 진행해도 좋아요.\n확인했어요. 문제없이 통과했어요.",
-        "threshold": 0.84,
+        "text": "이 방법을 추천해요. 이렇게 진행하면 좋아요.\n아주 잘하셨어요! 그대로 진행해도 좋아요.\n확인했어요. 문제없이 통과했어요.\n검사 결과 이상이 없어서 이대로 진행하셔도 됩니다.\n방향을 잘 잡으셨어요. 이 선택을 추천합니다.\n네, 이 방식이면 충분해요. 그대로 해 보세요.",
+        "threshold": 0.816,
         "enabled": true,
         "action": {
           "kind": "expression",
           "id": "엄지 척"
         },
         "parameterId": null,
-        "mode": "toggle"
+        "mode": "toggle",
+        "excludeText": "검증 전이라 아직 승인하거나 추천할 수 없어요.\n진행하면 안 되니 확인할 때까지 기다려 주세요.",
+        "category": "behavior",
+        "exclusiveGroup": "손동작"
       },
       {
         "id": "ash:coffee",
-        "text": "잠시 쉬었다가 이어서 해 볼까요?\n커피 한 잔 마시면서 천천히 생각해 봐요.\n편하게 쉬면서 기다려 주세요.",
-        "threshold": 0.84,
+        "text": "잠시 쉬었다가 이어서 해 볼까요?\n커피 한 잔 마시면서 천천히 생각해 봐요.\n편하게 쉬면서 기다려 주세요.\n한참 집중하셨으니 잠깐 숨을 돌리고 오셔도 좋아요.\n서두르지 말고 잠시 쉬면서 머리를 식혀 봐요.\n따뜻한 음료 한 잔 드시고 편하게 이어 가셔도 됩니다.\n잠시 자리에서 벗어나 쉬다가 돌아오셔도 좋아요.",
+        "threshold": 0.78,
         "enabled": true,
         "action": {
           "kind": "expression",
           "id": "커피 들기"
         },
         "parameterId": null,
-        "mode": "toggle"
+        "mode": "toggle",
+        "excludeText": "지금은 멈추지 않고 바로 작업하겠습니다.\n카페와 커피에 관한 정보만 전달합니다.",
+        "category": "behavior",
+        "exclusiveGroup": "손동작"
       },
       {
         "id": "ash:controller",
-        "text": "직접 실행해서 동작을 시험해 볼게요.\n게임을 시작해 볼까요?\n이제 직접 조작해 보세요.",
-        "threshold": 0.84,
+        "text": "직접 실행해서 동작을 시험해 볼게요.\n게임을 시작해 볼까요?\n이제 직접 조작해 보세요.\n이제 직접 눌러 보면서 조작이 잘 되는지 시험해 보세요.\n시제품을 실행하고 입력을 바꿔 가며 동작을 확인할게요.\n게임 안에서 직접 움직여 보면서 감각을 맞춰 보죠.\n게임을 켜고 방향키를 눌러 캐릭터를 움직여 보세요.\n플레이 화면에서 직접 입력해 반응을 살펴볼게요.",
+        "threshold": 0.829,
         "enabled": true,
         "action": {
           "kind": "expression",
           "id": "게임패드 들기"
         },
         "parameterId": null,
-        "mode": "toggle"
+        "mode": "toggle",
+        "excludeText": "실행이나 조작 없이 문서만 읽어 봤어요.\n게임에 관한 배경 지식을 설명하고 있어요.",
+        "category": "behavior",
+        "exclusiveGroup": "손동작"
       },
       {
         "id": "ash:noodles",
-        "text": "우선 식사부터 챙기세요.\n배고프시겠어요. 맛있게 드세요.\n늦었으니 간단히 먹고 계속해요.",
-        "threshold": 0.84,
+        "text": "우선 식사부터 챙기세요.\n배고프시겠어요. 맛있게 드세요.\n늦었으니 간단히 먹고 계속해요.\n끼니를 거르셨다면 간단히라도 챙겨 드세요.\n먼저 배를 채우고 나서 나머지 일을 해도 늦지 않아요.\n배고픈 채로 계속하지 말고 식사부터 하세요.",
+        "threshold": 0.78,
         "enabled": true,
         "action": {
           "kind": "expression",
           "id": "컵라면 들기"
         },
         "parameterId": null,
-        "mode": "toggle"
+        "mode": "toggle",
+        "excludeText": "끼니는 이미 챙겼고 배가 고프지 않아요.\n음식 이미지 파일을 편집하는 기술 작업이에요.",
+        "category": "behavior",
+        "exclusiveGroup": "손동작"
       },
       {
         "id": "ash:handcuffs",
-        "text": "권한이 없어 여기서 더 진행할 수 없어요.\n현재 제한 때문에 실행할 수 없어요.\n이 작업은 차단되어 있어요.",
-        "threshold": 0.84,
+        "text": "권한이 없어 여기서 더 진행할 수 없어요.\n현재 제한 때문에 실행할 수 없어요.\n이 작업은 차단되어 있어요.\n이 계정에는 수정 권한이 없어서 더 진행할 수 없습니다.\n접근이 거부되어 요청하신 작업을 실행하지 못했어요.\n현재 허용된 범위를 벗어나 있어 작업이 제한됩니다.\n권한을 받지 못해서 수정이 불가능해요.\n승인 전에는 접근할 수 없으니 여기서 멈춰야 해요.",
+        "threshold": 0.793,
         "enabled": true,
         "action": {
           "kind": "expression",
           "id": "수갑 찬 손"
         },
         "parameterId": null,
-        "mode": "toggle"
+        "mode": "toggle",
+        "excludeText": "이미 승인을 받아 모든 제한이 해제됐고 정상 접속했어요.\n필요한 접근은 허용됐으니 그대로 작업하겠습니다.",
+        "category": "behavior",
+        "exclusiveGroup": "손동작"
       },
       {
         "id": "ash:microphone",
-        "text": "핵심부터 설명해 드릴게요.\n결과를 발표할게요.\n차근차근 말씀드릴게요.",
-        "threshold": 0.84,
+        "text": "핵심부터 설명해 드릴게요.\n결과를 발표할게요.\n차근차근 말씀드릴게요.\n먼저 핵심 내용을 짚고 나서 이유를 말씀드릴게요.\n검토한 결과를 차례대로 설명하겠습니다.\n지금부터 중요한 점 세 가지를 소개해 드릴게요.\n조사해 얻은 결과를 지금 공유하겠습니다.",
+        "threshold": 0.845,
         "enabled": true,
         "action": {
           "kind": "expression",
           "id": "마이크 들기"
         },
         "parameterId": null,
-        "mode": "toggle"
+        "mode": "toggle",
+        "excludeText": "설명이나 발표 없이 결과 파일만 드릴게요.\n마이크 기기의 설정 방법에 관한 내용입니다.",
+        "category": "behavior",
+        "exclusiveGroup": "손동작"
       },
       {
         "id": "ash:finger-heart",
-        "text": "정말 고마워요. 마음을 담아 응원해요.\n항상 함께해 주셔서 감사해요.\n사랑과 응원을 보낼게요.",
-        "threshold": 0.84,
+        "text": "정말 고마워요. 마음을 담아 응원해요.\n항상 함께해 주셔서 감사해요.\n사랑과 응원을 보낼게요.\n함께해 주신 마음에 감사드려요. 진심으로 응원합니다.\n믿고 맡겨 주셔서 고맙습니다. 마음을 담아 힘을 보낼게요.\n늘 따뜻하게 대해 주셔서 감사해요. 응원하는 마음을 전해요.",
+        "threshold": 0.867,
         "enabled": true,
         "action": {
           "kind": "expression",
           "id": "손하트"
         },
         "parameterId": null,
-        "mode": "toggle"
+        "mode": "toggle",
+        "excludeText": "감사 인사 텍스트의 표시 형식을 바꿨어요.\n고마움을 표현하는 게 아니라 객관적인 수치만 전달해요.",
+        "category": "behavior",
+        "exclusiveGroup": "손동작"
       },
       {
         "id": "ash:fists",
-        "text": "조금만 더 힘내 봐요!\n끝까지 해낼 수 있어요. 화이팅!\n포기하지 말고 함께 해결해 봐요.",
-        "threshold": 0.84,
+        "text": "조금만 더 힘내 봐요!\n끝까지 해낼 수 있어요. 화이팅!\n포기하지 말고 함께 해결해 봐요.\n쉽지는 않지만 한 단계씩 하면 해낼 수 있어요. 힘내세요!\n여기까지 오셨으니 조금만 더 버텨 봐요. 함께 해결해 봅시다.\n포기하기엔 아직 일러요. 끝까지 한번 해 보죠!",
+        "threshold": 0.78,
         "enabled": true,
         "action": {
           "kind": "expression",
           "id": "주먹 쥐기"
         },
         "parameterId": null,
-        "mode": "toggle"
+        "mode": "toggle",
+        "excludeText": "이번 시도는 그만두고 멈추는 것이 좋겠어요.\n주먹 모양의 이미지를 수정하고 있습니다.",
+        "category": "behavior",
+        "exclusiveGroup": "손동작"
       },
       {
         "id": "ash:knife",
-        "text": "필요 없는 부분을 잘라 내고 다듬을게요.\n복잡한 내용을 덜어 내고 간결하게 만들게요.\n불필요한 코드를 제거할게요.",
-        "threshold": 0.84,
+        "text": "필요 없는 부분을 잘라 내고 다듬을게요.\n복잡한 내용을 덜어 내고 간결하게 만들게요.\n불필요한 코드를 제거할게요.\n중복된 부분을 덜어 내고 필요한 내용만 남기겠습니다.\n사용하지 않는 코드는 정리해서 제거할게요.\n너무 길어진 설명을 잘라 내고 간결하게 다듬었어요.",
+        "threshold": 0.814,
         "enabled": true,
         "action": {
           "kind": "expression",
           "id": "칼 들기"
         },
         "parameterId": null,
-        "mode": "toggle"
+        "mode": "toggle",
+        "excludeText": "파일을 지우거나 줄이지 않고 보존합니다.\n내용을 없애지 않고 기능을 더 추가하고 있어요.",
+        "category": "behavior",
+        "exclusiveGroup": "손동작"
       },
       {
         "id": "ash:leash",
-        "text": "제가 순서대로 안내해 드릴게요.\n이쪽으로 따라오세요.\n하나씩 따라 해 보세요.",
-        "threshold": 0.84,
+        "text": "제가 순서대로 안내해 드릴게요.\n이쪽으로 따라오세요.\n하나씩 따라 해 보세요.\n제가 안내하는 순서대로 하나씩 진행해 보세요.\n먼저 설정을 열고 다음 단계도 같이 따라 해 봐요.\n옆에서 차례대로 안내할 테니 그대로 따라오시면 돼요.\n첫 화면부터 차례차례 따라 해 보도록 제가 안내하겠습니다.\n첫 단계 여는 것부터 제 안내에 맞춰 같이 진행해 봐요.",
+        "threshold": 0.819,
         "enabled": true,
         "action": {
           "kind": "expression",
           "id": "목줄 동작"
         },
         "parameterId": null,
-        "mode": "toggle"
+        "mode": "toggle",
+        "excludeText": "제가 이끌지 않을 테니 편한 대로 하셔도 돼요.\n파일 위치와 숫자 같은 단순 정보를 전달해요.\n화면에 무엇이 보이는지만 설명하고 있습니다.\n제 안내를 따를 필요 없이 원하는 것을 자유롭게 하세요.\n가이드 문서에 있는 글자 오류만 수정했어요.",
+        "category": "behavior",
+        "exclusiveGroup": "손동작"
       },
       {
         "id": "ash:cat-paws",
-        "text": "안녕하세요! 만나서 반가워요.\n다시 만나서 반가워요.\n귀엽게 인사할게요, 야옹!",
-        "threshold": 0.84,
+        "text": "안녕하세요! 만나서 반가워요.\n다시 만나서 반가워요.\n귀엽게 인사할게요, 야옹!\n어서 오세요. 다시 뵈어서 반갑습니다!\n안녕! 오늘도 함께 이야기해 봐요.\n반가워요. 오늘은 어떤 걸 도와드릴까요?",
+        "threshold": 0.78,
         "enabled": true,
         "action": {
           "kind": "expression",
           "id": "고양이 손"
         },
         "parameterId": null,
-        "mode": "toggle"
+        "mode": "toggle",
+        "excludeText": "인사 없이 곧바로 설명을 시작합니다.\n화면의 인사 문구를 구현하는 작업이에요.",
+        "category": "behavior",
+        "exclusiveGroup": "손동작"
       },
       {
         "id": "ash:shrink",
-        "text": "제가 착각했네요. 실수해서 죄송해요.\n앗, 잘못했어요. 바로잡을게요.\n제 설명이 틀렸네요. 정정할게요.",
-        "threshold": 0.88,
+        "text": "제가 착각했네요. 실수해서 죄송해요.\n앗, 잘못했어요. 바로잡을게요.\n제 설명이 틀렸네요. 정정할게요.\n제가 잘못 이해하고 답했네요. 바로 정정하겠습니다.\n앞서 드린 설명에 제 실수가 있었습니다. 죄송해요.\n제가 놓친 부분이 있었네요. 다시 확인해서 고칠게요.",
+        "threshold": 0.846,
         "enabled": true,
         "action": {
           "kind": "expression",
           "id": "작아지기"
         },
         "parameterId": null,
-        "mode": "toggle"
+        "mode": "toggle",
+        "excludeText": "제 답변의 오류가 아니라 사용자 입력의 오타예요.\n제가 앞서 설명한 내용은 맞아서 고칠 필요가 없어요.",
+        "category": "behavior",
+        "exclusiveGroup": "몸동작"
       },
       {
         "id": "ash:glasses",
-        "text": "원인을 자세히 분석해 볼게요.\n근거를 비교해서 꼼꼼히 검토할게요.\n자료를 조사해서 확인해 볼게요.",
-        "threshold": 0.88,
+        "text": "원인을 자세히 분석해 볼게요.\n근거를 비교해서 꼼꼼히 검토할게요.\n자료를 조사해서 확인해 볼게요.\n로그와 설정을 대조해서 원인을 자세히 살펴보겠습니다.\n공식 자료를 확인하고 근거를 비교해 보겠습니다.\n추측하지 않고 실제 수치를 조사해서 판단할게요.",
+        "threshold": 0.819,
         "enabled": true,
         "action": {
           "kind": "expression",
           "id": "안경"
         },
         "parameterId": null,
-        "mode": "toggle"
+        "mode": "toggle",
+        "excludeText": "원인을 분석하거나 조사하지는 않았어요.\n자료를 대조하지 않고 바로 실행했어요.",
+        "category": "behavior",
+        "exclusiveGroup": "장식"
       },
       {
         "id": "ash:shadow",
-        "text": "기대와 다른 결과네요. 실망스러워요.\n어두운 기분이에요.\n충격적이고 암담하네요.",
-        "threshold": 0.88,
+        "text": "기대와 다른 결과네요. 실망스러워요.\n어두운 기분이에요.\n충격적이고 암담하네요.\n믿었던 결과가 모두 틀어져서 허탈하네요.\n그렇게 노력했는데 소용없었다니 씁쓸하네요.\n기대가 무너져서 한동안 기운이 빠질 것 같아요.",
+        "threshold": 0.78,
         "enabled": true,
         "action": {
           "kind": "expression",
           "id": "얼굴 그림자"
         },
         "parameterId": null,
-        "mode": "toggle"
+        "mode": "toggle",
+        "excludeText": "실망한 마음은 지나가고 이제 다시 괜찮아졌어요.\n화면의 그림자 스타일을 편집했습니다.",
+        "category": "emotion",
+        "exclusiveGroup": "감정"
       },
       {
         "id": "ash:highlights-off",
-        "text": "예상과 전혀 다르네요. 믿기지 않아요.\n너무 놀라서 멍해졌어요.\n정말 충격적이네요.",
-        "threshold": 0.88,
+        "text": "예상과 전혀 다르네요. 믿기지 않아요.\n너무 놀라서 멍해졌어요.\n정말 충격적이네요.\n이런 결과는 상상도 못해서 잠시 말문이 막히네요.\n도저히 믿기지 않아서 멍해졌어요.\n너무 뜻밖이라 머릿속이 하얘지는 느낌이에요.",
+        "threshold": 0.808,
         "enabled": true,
         "action": {
           "kind": "expression",
           "id": "눈의 하이라이트 끄기"
         },
         "parameterId": null,
-        "mode": "toggle"
+        "mode": "toggle",
+        "excludeText": "예측했던 그대로여서 놀랍지 않아요.\n눈의 하이라이트 효과를 수정하는 기술 작업입니다.",
+        "category": "emotion",
+        "exclusiveGroup": "감정"
       },
       {
         "id": "ash:press-left",
-        "text": "이 항목을 선택해 주세요.\n이쪽 버튼을 눌러 볼게요.\n선택지를 하나 골라 주세요.",
-        "threshold": 0.86,
+        "text": "이 항목을 선택해 주세요.\n이쪽 버튼을 눌러 볼게요.\n선택지를 하나 골라 주세요.\n왼쪽 목록에서 사용할 항목을 골라 주세요.\n왼편에 있는 선택지를 눌러 주세요.\n화면 왼쪽의 메뉴부터 선택하면 됩니다.",
+        "threshold": 0.874,
         "enabled": true,
         "action": {
           "kind": "expression",
           "id": "왼손 버튼 누르기"
         },
         "parameterId": null,
-        "mode": "toggle"
+        "mode": "toggle",
+        "excludeText": "오른편 확인 버튼을 클릭해 주세요.\n어느 쪽도 누르지 말고 기다리세요.\n선택된 항목의 숫자만 알려 드립니다.\n선택된 것은 두 개라는 상태를 알려 드려요.\n총 세 개 중에서 선택된 항목의 개수는 둘입니다.",
+        "category": "behavior",
+        "exclusiveGroup": "손동작"
       },
       {
         "id": "ash:press-right",
-        "text": "확인 버튼을 눌러 주세요.\n오른쪽 버튼을 클릭해 주세요.\n실행 버튼을 누르면 됩니다.",
-        "threshold": 0.86,
+        "text": "확인 버튼을 눌러 주세요.\n오른쪽 버튼을 클릭해 주세요.\n실행 버튼을 누르면 됩니다.\n오른쪽 아래 확인을 누르면 적용됩니다.\n설정이 끝났으면 우측의 실행 버튼을 눌러 주세요.\n마지막으로 오른쪽 버튼을 클릭해서 마무리하세요.",
+        "threshold": 0.813,
         "enabled": true,
         "action": {
           "kind": "expression",
           "id": "오른손 버튼 누르기"
         },
         "parameterId": null,
-        "mode": "toggle"
+        "mode": "toggle",
+        "excludeText": "좌측 목록에서 항목을 골라 주세요.\n확인이나 실행은 아직 누르지 말아 주세요.",
+        "category": "behavior",
+        "exclusiveGroup": "손동작"
       },
       {
         "id": "ash:notes-detail",
-        "text": "중요한 내용은 메모하면서 설명할게요.\n빠뜨리지 않도록 지금 하나씩 적고 있어요.\n핵심을 적어 두면서 확인하고 있어요.",
-        "threshold": 0.84,
+        "text": "중요한 내용은 메모하면서 설명할게요.\n빠뜨리지 않도록 지금 하나씩 적고 있어요.\n핵심을 적어 두면서 확인하고 있어요.\n말씀하신 조건을 지금 하나씩 받아 적고 있어요.\n놓치지 않도록 중요한 항목을 메모하면서 듣고 있습니다.\n정리하는 동안 빠진 게 없게 차례대로 적어 볼게요.",
+        "threshold": 0.866,
         "enabled": true,
         "action": {
           "kind": "expression",
           "id": "필기 동작"
         },
         "parameterId": null,
-        "mode": "toggle"
+        "mode": "toggle",
+        "excludeText": "문서를 다 작성해서 보관해 두었어요.\n메모는 하지 않고 듣기만 하겠습니다.\n정리가 완료되어 기록을 저장했습니다.\n기록을 작성하는 작업은 다 끝났고 저장도 마쳤어요.\n따로 기록하거나 받아 적는 일은 하지 않겠어요.",
+        "category": "behavior",
+        "exclusiveGroup": "손동작"
       },
       {
         "id": "ash:walking",
-        "text": "다음 단계로 넘어가 볼게요.\n이어서 진행할게요.\n출발해 볼까요?",
-        "threshold": 0.88,
+        "text": "다음 단계로 넘어가 볼게요.\n이어서 진행할게요.\n출발해 볼까요?\n그럼 다음 단계로 이동해서 이어 가겠습니다.\n여기까지 마무리하고 다음 작업을 시작할게요.\n이제 준비가 됐으니 본격적으로 출발해 보죠.",
+        "threshold": 0.845,
         "enabled": true,
         "action": {
           "kind": "motion",
           "id": "Walk:0"
         },
         "parameterId": null,
-        "mode": "toggle"
+        "mode": "toggle",
+        "excludeText": "여기서 그만두고 다음 단계로 이동하지 않겠습니다.\n진행을 멈추고 잠시 쉬는 중이에요.",
+        "category": "behavior",
+        "exclusiveGroup": "몸동작"
       }
-    ]
+    ],
+    "randomActions": {
+      "enabled": true,
+      "probability": 0.3,
+      "bindingIds": [
+        "ash:notes",
+        "ash:notes-detail",
+        "ash:glasses",
+        "ash:microphone",
+        "ash:cat-paws",
+        "ash:walking"
+      ]
+    }
   }
 }

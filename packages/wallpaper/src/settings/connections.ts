@@ -1,3 +1,4 @@
+import {type RandomActionSettings, randomActionSettingsSchema} from './random-actions'
 import {z} from 'zod'
 import {type AgentStateBindings, agentStateBindingsSchema} from './agent-state'
 import {type PoffoLipSync, poffoLipSyncSchema} from './lipsync'
@@ -14,6 +15,7 @@ import {
 export const MAX_CONNECTION_BYTES = 262_144
 
 export interface PoffoConnections {
+  readonly randomActions?: RandomActionSettings
   /** Tracking input mode; omitted in older profiles leaves the current mode unchanged. */
   readonly tracking?: PoffoTracking
   readonly trackingBindings?: PoffoTrackingBindings
@@ -25,6 +27,7 @@ export interface PoffoConnections {
 export const poffoConnectionsSchema: z.ZodType<PoffoConnections> = z.object({
   agentBindings: agentStateBindingsSchema.optional(),
   lipsync: poffoLipSyncSchema.optional(),
+  randomActions: randomActionSettingsSchema.optional(),
   semanticBindings: semanticBindingsSchema.optional(),
   tracking: poffoTrackingSchema.optional(),
   trackingBindings: poffoBindingsSchema.optional(),

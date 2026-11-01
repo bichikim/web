@@ -19,6 +19,8 @@ interface MixMotionFramesOptions {
   readonly document: PuppetDocument
   /** Applied after motions and before external overrides. */
   readonly expressions?: ReadonlyArray<ExpressionLayer>
+  /** Independent expression channels composed in order after the selected expression; omitted adds none. */
+  readonly expressionGroups?: ReadonlyArray<ReadonlyArray<ExpressionLayer>>
   /** Automatic eye blink's eye openness (0..1), set on the eye-blink parameters after motions. */
   readonly eyeOpenness?: number
   readonly frames: ReadonlyArray<MotionFrame>
@@ -235,10 +237,9 @@ export const mixMotionFrames = (options: MixMotionFramesOptions): MotionMix => {
       return [parameter.id, precision === 'float32' ? Math.fround(posed) : posed]
     }),
   )
-  const sampledValues = applyExpressionLayers(
-    [...parameters.values()],
+  const sampledValues = [options.expressions ?? [], ...(options.expressionGroups ?? [])].reduce(
+    (current, layers) => applyExpressionLayers([...parameters.values()], current, layers),
     motionValues,
-    options.expressions ?? [],
   )
   const parameterValues = Object.fromEntries(
     [...parameters.values()].map((parameter) => {

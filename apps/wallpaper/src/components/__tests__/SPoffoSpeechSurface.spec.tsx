@@ -26,7 +26,12 @@ afterEach(() => {
 })
 
 it('should retain one identifiable bubble per chat while other chats emit new events', () => {
-  vi.mocked(useVoice).mockReturnValue({error: () => null, retry: vi.fn(), status: () => 'idle'})
+  vi.mocked(useVoice).mockReturnValue({
+    error: () => null,
+    readoutId: () => undefined,
+    retry: vi.fn(),
+    status: () => 'idle',
+  })
   vi.mocked(useWidgetSpeech).mockReturnValue({
     error: () => null,
     speech: () => ({enabled: true, x: 0.9, y: 0.05}),
@@ -89,7 +94,12 @@ it('should retain one identifiable bubble per chat while other chats emit new ev
 it('should release expressions after narration, resume on replay and retain text-only use', async () => {
   const [status, setStatus] = createSignal<VoiceStatus>('playing')
   const [enabled, setEnabled] = createSignal(true)
-  vi.mocked(useVoice).mockReturnValue({error: () => null, retry: vi.fn(), status})
+  vi.mocked(useVoice).mockReturnValue({
+    error: () => null,
+    readoutId: () => undefined,
+    retry: vi.fn(),
+    status,
+  })
   vi.mocked(useWidgetSpeech).mockReturnValue({
     error: () => null,
     speech: () => ({

@@ -42,6 +42,7 @@ const player: Player = {
   seek: vi.fn(),
   setBreath: vi.fn(),
   setExpression: vi.fn(),
+  setExpressionLayer: vi.fn(),
   setEyeBlink: vi.fn(),
   setEyeBlinkTiming: vi.fn(),
   setGroupOverride: vi.fn(),

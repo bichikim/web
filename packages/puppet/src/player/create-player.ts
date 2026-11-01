@@ -1,3 +1,4 @@
+import {createExpressionLayers} from './internal/create-expression-layers'
 import type {PuppetParameterValueMap} from '../deformation'
 import {createMotionSounds} from './audio/motion-sounds'
 import type {PuppetVowelWeights} from './document'
@@ -94,6 +95,7 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
   sounds.load(document)
   let modelOpacity = 1
   const expressions = createExpressionPlayback(document.expressions ?? [])
+  const expressionLayers = createExpressionLayers(document.expressions ?? [], () => refresh())
   const onEvent = (event: MotionEvent) => {
     if (!destroyed) {
       options.onMotionEvent?.(event)
@@ -149,6 +151,7 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
       baseParameterValues:
         document.motionParameterBase === 'previous-frame' ? motionHistory.base(frames) : undefined,
       document,
+      expressionGroups: expressionLayers.layers(),
       expressions: expressions.layers(),
       eyeOpenness: effects.eyeOpenness,
       frames,
@@ -211,6 +214,7 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
       playback.isPlaying() ||
         playbacks.isPlaying() ||
         expressions.isAnimating() ||
+        expressionLayers.isAnimating() ||
         isEffectActive(document, {
           eyeBlinking: eyeBlink !== undefined,
           shapingMouth: mouth !== undefined || voiceTarget !== undefined,
@@ -234,6 +238,7 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
     const callbacks = playbacks.advance(deltaTime)
     const complete = playback.advance(deltaTime)
     expressions.advance(deltaTime)
+    expressionLayers.advance(deltaTime)
     applyFrame(deltaTime)
     if (!destroyed) {
       complete?.()
@@ -275,6 +280,7 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
     playbacks.update(document.motions)
     playback.update(document.motions)
     expressions.update(document.expressions ?? [])
+    expressionLayers.update(document.expressions ?? [])
     if (physicsChanged) {
       physicsState = createPhysicsState(document)
       chainState = undefined
@@ -466,6 +472,7 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
       refresh()
       return true
     },
+    setExpressionLayer: (layerId, id) => !destroyed && expressionLayers.set(layerId, id),
     setEyeBlink(enabled) {
       if (destroyed || enabled === (eyeBlink !== undefined)) {
         return

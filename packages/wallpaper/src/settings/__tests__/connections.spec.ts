@@ -3,9 +3,11 @@ import {parseConnectionProfile} from '../connections'
 const profile = {
   assetId: 'builtin:ash',
   connections: {
+    randomActions: {bindingIds: ['happy'], enabled: true, probability: 0.3},
     semanticBindings: [
       {
         animation: {cycles: 2, period: 1, phase: 0.5},
+        category: 'behavior',
         enabled: true,
         excludeText: '아직 시작하지 않았어요.',
         exclusiveGroup: 'hands',

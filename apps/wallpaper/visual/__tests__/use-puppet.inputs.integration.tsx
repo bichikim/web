@@ -130,15 +130,12 @@ test('should apply vowel poses and semantic expressions to the bundled Ash playe
   expect(parameters.find((parameter) => parameter.id === 'ParamMouthForm')?.name).toBe('Mouth Form')
   const player = await vi.mocked(playerModule.createPlayer).mock.results[0]!.value
   await sendSemanticFrame({scores: {'ash:excited': 1}, widgetId: 'ash-widget'})
-  await expect.poll(() => player.getExpression()).toBe('반짝이는 눈')
   await expect.poll(() => player.getParameterValue('Param71'), {timeout: 3000}).toBeCloseTo(1)
   await sendSemanticFrame({scores: {'ash:sad-tears': 0.9038512399246472}, widgetId: 'ash-widget'})
-  await expect.poll(() => player.getExpression()).toBe('눈물')
   await expect.poll(() => player.getParameterValue('Param70'), {timeout: 3000}).toBeCloseTo(1)
   await sendSemanticFrame({scores: {'ash:sad-tears': -1}, widgetId: 'ash-widget'})
   await expect.poll(() => player.getParameterValue('Param70'), {timeout: 3000}).toBeCloseTo(0)
   await sendSemanticFrame({previewId: 'ash:notes', scores: {}, widgetId: 'ash-widget'})
-  await expect.poll(() => player.getExpression()).toBe('노트 들기')
   await expect
     .poll(
       () => [
@@ -150,11 +147,32 @@ test('should apply vowel poses and semantic expressions to the bundled Ash playe
     )
     .toEqual([1, 1, 1])
   await sendSemanticFrame({previewId: 'ash:walking', scores: {}, widgetId: 'ash-widget'})
-  await expect.poll(() => player.getExpression()).toBeUndefined()
   await expect.poll(() => player.getParameterValue('Param110'), {timeout: 3000}).toBeCloseTo(1)
   await expect.poll(() => player.getParameterValue('Param111')).toBeGreaterThan(0.5)
   await sendSemanticFrame({scores: {}, widgetId: 'ash-widget'})
   await expect.poll(() => player.getParameterValue('Param110'), {timeout: 3000}).toBeCloseTo(0.08)
+  await sendSemanticFrame({scores: {'ash:excited': 1, 'ash:notes': 1}, widgetId: 'ash-widget'})
+  await expect
+    .poll(() => [player.getParameterValue('Param71'), player.getParameterValue('Param89')], {
+      timeout: 3000,
+    })
+    .toEqual([1, 1])
+  await sendSemanticFrame({scores: {'ash:notes': 1, 'ash:sad-tears': 1}, widgetId: 'ash-widget'})
+  await expect
+    .poll(() => [player.getParameterValue('Param70'), player.getParameterValue('Param89')], {
+      timeout: 3000,
+    })
+    .toEqual([1, 1])
+  await expect.poll(() => player.getParameterValue('Param71'), {timeout: 3000}).toBeCloseTo(0)
+  await sendSemanticFrame({fallbackId: 'ash:excited', scores: {}, widgetId: 'ash-widget'})
+  await expect
+    .poll(() => [player.getParameterValue('Param70'), player.getParameterValue('Param89')], {
+      timeout: 3000,
+    })
+    .toEqual([0, 0])
+  await sendSemanticFrame({fallbackId: 'ash:notes', scores: {}, widgetId: 'ash-widget'})
+  await expect.poll(() => player.getParameterValue('Param89'), {timeout: 3000}).toBeCloseTo(1)
+  await sendSemanticFrame({scores: {}, widgetId: 'ash-widget'})
   globalThis.dispatchEvent(new PointerEvent('pointermove', {clientX: 800, clientY: 80}))
   await expect.poll(() => player.getParameterValue('ParamAngleY')).toBeGreaterThan(1)
   const publish = createLipSyncPublisher('ash-widget')

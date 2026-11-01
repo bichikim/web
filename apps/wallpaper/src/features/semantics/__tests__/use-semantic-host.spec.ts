@@ -6,7 +6,12 @@ import type {PoffoWidget} from '@winter-love/wallpaper/settings/library-model'
 import {useSemanticInput} from '../use-semantic-input'
 import {afterEach, expect, it, vi} from 'vitest'
 import {createSemanticModel} from '../model'
-import {requestSemanticFrame, subscribeSemanticFrame, subscribeSemanticInput} from '../channel'
+import {
+  requestSemanticFrame,
+  sendSemanticInput,
+  subscribeSemanticFrame,
+  subscribeSemanticInput,
+} from '../channel'
 import type {SemanticFrame} from '@winter-love/wallpaper/settings/semantics'
 import {useSemanticHost} from '../use-semantic-host'
 
@@ -335,5 +340,67 @@ it('should clear expressions immediately at speech end and discard analysis stil
     expect(scope.host.score('widget', 'happy')).toBeUndefined()
   } finally {
     scope.cleanup()
+  }
+})
+
+it('should publish fallback only for an unmatched playing narration and clear it at voice end', async () => {
+  const embed = vi.fn(async (texts: readonly string[]) =>
+    texts.map((text) => (text.endsWith('행복') ? [1, 0] : [0, 1])),
+  )
+  vi.mocked(createSemanticModel).mockReturnValue({dispose: vi.fn(), embed})
+  const frames: SemanticFrame[] = []
+  const stop = await subscribeSemanticFrame((frame) => frames.push(frame))
+  const random = vi.spyOn(Math, 'random').mockReturnValue(0)
+  const dispose = createRoot((cleanup) => {
+    useSemanticHost({
+      widgets: () => [
+        {
+          assetId: 'builtin:ash',
+          id: 'random-widget',
+          speech: {
+            enabled: true,
+            randomActions: {bindingIds: ['note'], enabled: true, probability: 1},
+            semanticBindings: [
+              {
+                action: {id: 'notes', kind: 'expression'},
+                category: 'behavior',
+                enabled: true,
+                id: 'note',
+                mode: 'toggle',
+                parameterId: null,
+                text: '행복',
+                threshold: 0.8,
+              },
+            ],
+            x: 0.9,
+            y: 0.05,
+          },
+          x: null,
+          y: null,
+        },
+      ],
+    })
+    return cleanup
+  })
+  try {
+    await sendSemanticInput({text: '일반 문장', widgetId: 'random-widget'})
+    await waitFor(() => expect(frames.at(-1)?.scores.note).toBe(0), {interval: 1})
+    expect(frames.at(-1)?.fallbackId).toBeUndefined()
+    await sendSemanticInput({readoutId: 'voice-1', text: '일반 문장', widgetId: 'random-widget'})
+    await waitFor(() => expect(frames.at(-1)?.fallbackId).toBe('note'), {interval: 1})
+    const draws = random.mock.calls.length
+    await sendSemanticInput({
+      readoutId: 'voice-1',
+      text: '다른 일반 문장',
+      widgetId: 'random-widget',
+    })
+    await waitFor(() => expect(embed).toHaveBeenCalledTimes(3), {interval: 1})
+    expect(random).toHaveBeenCalledTimes(draws)
+    await sendSemanticInput({text: '', widgetId: 'random-widget'})
+    expect(frames.at(-1)?.fallbackId).toBeUndefined()
+  } finally {
+    dispose()
+    stop()
+    random.mockRestore()
   }
 })

@@ -5,6 +5,8 @@ import {sendSemanticInput, subscribeSemanticReady} from './channel'
 interface UseSemanticInputProps {
   readonly widgetId: Accessor<string | undefined>
   readonly text: Accessor<string>
+  /** Current narration identity; omitted disables random fallback. */
+  readonly readoutId?: Accessor<string | undefined>
 }
 export const useSemanticInput = (props: UseSemanticInputProps) => {
   const text = createMemo(() => props.text().slice(-SEMANTIC_TEXT_LIMIT))
@@ -14,9 +16,11 @@ export const useSemanticInput = (props: UseSemanticInputProps) => {
       return
     }
     const publish = () =>
-      sendSemanticInput({text: text(), widgetId: id}).catch((cause: unknown) =>
-        console.error('Semantic input delivery failed', cause),
-      )
+      sendSemanticInput({
+        text: text(),
+        widgetId: id,
+        ...(props.readoutId?.() === undefined ? {} : {readoutId: props.readoutId?.()}),
+      }).catch((cause: unknown) => console.error('Semantic input delivery failed', cause))
     let disposed = false
     let stop: (() => void) | null = null
     subscribeSemanticReady(publish)

@@ -32,6 +32,8 @@ export interface SemanticAnimation {
 export interface SemanticBinding {
   /** Character-defined expression or motion to execute when matched. */
   readonly action?: SemanticAction
+  /** Only behavior bindings can be randomly selected; omitted is treated as an emotion. */
+  readonly category?: 'emotion' | 'behavior'
   readonly animation?: SemanticAnimation
   readonly id: string
   readonly text: string
@@ -41,7 +43,7 @@ export interface SemanticBinding {
   readonly parameterId: string | null
   readonly mode: 'toggle' | 'range'
   readonly releaseWhenUnmatched?: boolean
-  /** Only the strongest description in this group applies; omitted bindings can combine freely. */
+  /** Action bindings select one winner per group; omitted uses the default group. */
   readonly exclusiveGroup?: string
   readonly threshold: number
   readonly from?: number
@@ -58,6 +60,7 @@ export const semanticBindingsSchema = z
           phase: z.number().finite().min(0).max(1).optional(),
         })
         .optional(),
+      category: z.enum(['emotion', 'behavior']).optional(),
       enabled: z.boolean(),
       excludeText: z.string().max(SEMANTIC_DESCRIPTION_LIMIT).optional(),
       exclusiveGroup: z.string().trim().min(1).max(SEMANTIC_ID_LIMIT).optional(),
@@ -74,6 +77,7 @@ export const semanticBindingsSchema = z
   .max(SEMANTIC_LIMIT)
   .refine((items) => new Set(items.map((item) => item.id)).size === items.length)
 export const semanticFrameSchema = z.object({
+  fallbackId: z.string().min(1).max(SEMANTIC_ID_LIMIT).optional(),
   previewId: z.string().min(1).max(SEMANTIC_ID_LIMIT).optional(),
   scores: z
     .record(z.string().max(SEMANTIC_ID_LIMIT), z.number().finite().min(-1).max(1))
@@ -81,6 +85,7 @@ export const semanticFrameSchema = z.object({
   widgetId: z.string().min(1).max(SEMANTIC_ID_LIMIT),
 })
 export const semanticInputSchema = z.object({
+  readoutId: z.string().min(1).max(SEMANTIC_ID_LIMIT).optional(),
   text: z.string().max(SEMANTIC_TEXT_LIMIT),
   widgetId: z.string().min(1).max(SEMANTIC_ID_LIMIT),
 })
@@ -88,10 +93,14 @@ export interface SemanticFrame {
   readonly widgetId: string
   /** Manually execute only this binding at full strength; omitted uses automatic scores. */
   readonly previewId?: string
+  /** Behavior chosen once for an unmatched narration; never an emotion. */
+  readonly fallbackId?: string
   /** Best eligible similarity; -1 means an exclusion won every paragraph comparison. */
   readonly scores: Readonly<Record<string, number>>
 }
 export interface SemanticInput {
+  /** Current narration identity; omitted means no narration is playing. */
+  readonly readoutId?: string
   readonly widgetId: string
   readonly text: string
 }

@@ -18,6 +18,7 @@ export const mergeConnections = (options: MergeConnectionsOptions): PoffoWidget 
       ...speech,
       agentBindings: assign(speech.agentBindings, connections.agentBindings),
       lipsync: assign(speech.lipsync, connections.lipsync),
+      randomActions: assign(speech.randomActions, connections.randomActions),
       semanticBindings: assign(speech.semanticBindings, connections.semanticBindings),
     },
     tracking: assign(widget.tracking, connections.tracking),

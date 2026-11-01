@@ -31,7 +31,7 @@ test('should register and persist a character action connection, then react to t
   const player = {
     getExpression: expression,
     resetMotionHistory: vi.fn(),
-    setExpression: (id?: string) => {
+    setExpressionLayer: (_group: string, id?: string) => {
       setExpression(id)
       return true
     },

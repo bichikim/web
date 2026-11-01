@@ -57,6 +57,8 @@ export interface Player {
   seek(time: number): void
   /** Cross-fades to an expression; omitted IDs fade the current one out. Unknown IDs return false. */
   setExpression(expressionId?: string): boolean
+  /** Sets an independently fading expression layer; omitted expression releases only this layer. Unknown expressions return false. */
+  setExpressionLayer(layerId: string, expressionId?: string): boolean
   /** Breathes with the document's `breath` parameters, added after motions and before physics. */
   setBreath(enabled: boolean): void
   /**
