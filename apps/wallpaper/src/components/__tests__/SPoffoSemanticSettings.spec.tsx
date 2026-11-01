@@ -111,3 +111,38 @@ it('should connect a character action and adjust matching without exposing indiv
     }
   }
 })
+
+it('should group connections and preserve the edited field within its group', () => {
+  const [bindings, setBindings] = createSignal<readonly SemanticBinding[]>([
+    {
+      enabled: true,
+      exclusiveGroup: '감정',
+      id: 'happy',
+      mode: 'toggle',
+      parameterId: null,
+      text: '축하해요',
+      threshold: 0.8,
+    },
+    {
+      enabled: true,
+      exclusiveGroup: '손동작',
+      id: 'notes',
+      mode: 'toggle',
+      parameterId: null,
+      text: '작성했어요',
+      threshold: 0.8,
+    },
+  ])
+  const view = render(() => <SPoffoSemanticSettings value={bindings()} onChange={setBindings} />)
+  const groups = view.container.querySelectorAll('details')
+  const hands = Array.from(groups).find((group) =>
+    group.querySelector('summary')?.textContent?.includes('손동작'),
+  )!
+  expect(hands.open).toBe(false)
+  fireEvent.click(hands.querySelector('summary')!)
+  const input = screen.getByRole('textbox', {name: '연결 2 감정·행동·내용'})
+  fireEvent.input(input, {target: {value: '파일에 작성했어요'}})
+  expect(bindings()[1].text).toBe('파일에 작성했어요')
+  expect(screen.getByRole('textbox', {name: '연결 2 감정·행동·내용'})).toBe(input)
+  expect(hands.open).toBe(true)
+})

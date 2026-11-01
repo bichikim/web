@@ -8,6 +8,8 @@ import {SemanticContext} from '../../src/features/semantics/context'
 import {useSemanticHost} from '../../src/features/semantics/use-semantic-host'
 import {useSemanticActions} from '../../src/features/semantics/use-semantic-actions'
 import {useSemanticInput} from '../../src/features/semantics/use-semantic-input'
+import {builtinConnectionProfile} from '../../src/features/connection-profiles/builtin-profile'
+import {userEvent} from 'vitest/browser'
 import {createSemanticModel} from '../../src/features/semantics/model'
 import 'virtual:uno.css'
 
@@ -121,3 +123,41 @@ test('should register and persist a character action connection, then react to t
     repository.close()
   }
 })
+
+test.each([320, 496])(
+  'should organize all built-in connections into expandable groups at %spx',
+  async (width) => {
+    const profile = builtinConnectionProfile('builtin:ash')!
+    const [bindings, setBindings] = createSignal<readonly SemanticBinding[]>(
+      profile.connections.semanticBindings ?? [],
+    )
+    const actions = bindings().flatMap((binding) =>
+      binding.action === undefined ? [] : [{action: binding.action, label: binding.action.id}],
+    )
+    const view = render(() => (
+      <div class="box-border w-[var(--editor-width)] p-3" style={{'--editor-width': `${width}px`}}>
+        <SPoffoSemanticSettings value={bindings()} onChange={setBindings} actions={actions} />
+      </div>
+    ))
+    const section = screen.getByRole('region', {name: '감정·내용 연결'})
+    const groups = Array.from(section.querySelectorAll('details')).filter(
+      (group) => group.parentElement === section,
+    )
+    expect(groups).toHaveLength(4)
+    expect(groups.every((group) => !group.open)).toBe(true)
+    for (const group of groups) {
+      // eslint-disable-next-line no-await-in-loop -- Each group must open and close before testing the next.
+      await userEvent.click(group.querySelector('summary')!)
+      expect(group.open).toBe(true)
+      expect(section.scrollWidth).toBeLessThanOrEqual(section.clientWidth)
+      // eslint-disable-next-line no-await-in-loop -- Each group must open and close before testing the next.
+      await userEvent.click(group.querySelector('summary')!)
+    }
+    await userEvent.click(groups[0].querySelector('summary')!)
+    const first = screen.getByRole('textbox', {name: '연결 1 감정·행동·내용'})
+    await userEvent.fill(first, '축하해요! 함께 해결해서 기뻐요.')
+    expect(bindings()[0].text).toBe('축하해요! 함께 해결해서 기뻐요.')
+    expect(screen.getByRole('textbox', {name: '연결 1 감정·행동·내용'})).toBe(first)
+    expect(view.container.firstElementChild!.scrollWidth).toBeLessThanOrEqual(width)
+  },
+)

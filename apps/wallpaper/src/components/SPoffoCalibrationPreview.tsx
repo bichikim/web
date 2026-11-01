@@ -11,6 +11,8 @@ import {type ParameterSource, useParameters} from '../features/tracking/use-para
 
 interface SPoffoCalibrationPreviewProps extends PoffoCalibrationOptions {
   readonly adjustments?: boolean
+  /** Reuse the editor metadata across tracking, voice and behavior settings. */
+  readonly source?: ParameterSource
   readonly controls?: JSX.Element
   /** Shared settings-file controls, supplied with the selected model's validation metadata. */
   readonly profiles?: (source: ParameterSource) => JSX.Element
@@ -32,10 +34,12 @@ export const SPoffoCalibrationPreview = (props: SPoffoCalibrationPreviewProps) =
   const parameters = useParameters({
     assetId: () => props.assetId(),
     enabled: () =>
+      props.source === undefined &&
       props.adjustments !== false &&
       (section() === 'bindings' || (props.profiles !== undefined && props.onChange !== undefined)),
     load: (id) => props.load(id),
   })
+  const source = createMemo(() => props.source ?? parameters)
   const positioning = () =>
     props.adjustments !== false && handles() && section() === 'position' && mode() === 'camera'
   createEffect(
@@ -111,7 +115,7 @@ export const SPoffoCalibrationPreview = (props: SPoffoCalibrationPreviewProps) =
       {props.controls}
       <Show when={props.adjustments !== false && props.onChange !== undefined}>
         <section aria-label="시선 보정 설정" class="grid gap-3">
-          {props.profiles?.(parameters)}
+          {props.profiles?.(source())}
           <SPoffoTrackingAdjustment
             mode={mode()}
             section={section()}
@@ -121,14 +125,14 @@ export const SPoffoCalibrationPreview = (props: SPoffoCalibrationPreviewProps) =
             onChange={props.onChange}
           >
             <SPoffoTrackingBindings
-              source={parameters}
+              source={source()}
               disclosure={false}
               assetId={props.assetId()}
               load={props.load}
               value={props.bindings?.()}
               onChange={props.onBindingsChange}
             />
-            {props.connections?.(parameters)}
+            {props.connections?.(source())}
           </SPoffoTrackingAdjustment>
         </section>
       </Show>

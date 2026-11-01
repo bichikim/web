@@ -1,8 +1,4 @@
-import {SPoffoRandomActions} from './SPoffoRandomActions'
-import type {RandomActionSettings} from '@winter-love/wallpaper/settings/random-actions'
 import {SPoffoConnectionProfiles} from './SPoffoConnectionProfiles'
-import {SPoffoSemanticSettings} from './SPoffoSemanticSettings'
-import type {SemanticBinding} from '@winter-love/wallpaper/settings/semantics'
 import {type Accessor, createMemo, createSignal, Show} from 'solid-js'
 import {
   DEFAULT_POFFO_SPEECH,
@@ -20,11 +16,13 @@ import {widgetCameraSurface} from '../features/poffo/widget-camera-surface'
 import {widgetMonitorAspect} from '../features/poffo/widget-monitor-aspect'
 import {SPoffoMotionSettings} from './SPoffoMotionSettings'
 import {SPoffoLipSyncSettings} from './SPoffoLipSyncSettings'
-import {SPoffoAgentStateSettings} from './SPoffoAgentStateSettings'
-import type {AgentStateBindings} from '@winter-love/wallpaper/settings/agent-state'
 import type {PoffoLipSync} from '@winter-love/wallpaper/settings/lipsync'
 import {SPoffoCalibrationPreview} from './SPoffoCalibrationPreview'
 import {SPoffoTrackingSettings} from './SPoffoTrackingSettings'
+import {SPoffoSpeechSettings} from './SPoffoSpeechSettings'
+import {SPoffoBehaviorSettings} from './SPoffoBehaviorSettings'
+import {SSegmentedControl} from './SSegmentedControl'
+import {useParameters} from '../features/tracking/use-parameters'
 
 const DEFAULT_SIZE = {height: 420, width: 320}
 interface SPoffoWidgetEditorProps {
@@ -36,7 +34,14 @@ interface SPoffoWidgetEditorProps {
 
 export const SPoffoWidgetEditor = (props: SPoffoWidgetEditorProps) => {
   const [motions, setMotions] = createSignal<readonly string[]>([])
+  const [section, setSection] = createSignal('character')
   const editable = () => Boolean(props.widget)
+  const speech = createMemo(() => props.widget?.speech)
+  const source = useParameters({
+    assetId: () => props.assetId(),
+    enabled: editable,
+    load: (id) => props.controller.loadPuppet(id),
+  })
   const geometry = createMemo(() => {
     const widget = props.widget ?? null
     const monitors = props.controller.monitors()
@@ -64,98 +69,92 @@ export const SPoffoWidgetEditor = (props: SPoffoWidgetEditorProps) => {
     return widget === null ? undefined : props.library.setWidgetMotion(widget.id, motionId)
   }
   const configureLipSync = (lipsync: PoffoLipSync) =>
-    configureSpeech({...DEFAULT_POFFO_SPEECH, ...props.widget?.speech, lipsync})
-  const configureSemantics = (semanticBindings: readonly SemanticBinding[]) =>
-    configureSpeech({...DEFAULT_POFFO_SPEECH, ...props.widget?.speech, semanticBindings})
-  const configureRandom = (randomActions: RandomActionSettings) =>
-    configureSpeech({...DEFAULT_POFFO_SPEECH, ...props.widget?.speech, randomActions})
-  const configureAgent = (agentBindings: AgentStateBindings) =>
-    configureSpeech({...DEFAULT_POFFO_SPEECH, ...props.widget?.speech, agentBindings})
+    configureSpeech({...DEFAULT_POFFO_SPEECH, ...speech(), lipsync})
   const handleInput = (mode: PoffoTracking) => {
     const widget = props.widget ?? null
     return widget === null ? undefined : props.library.trackWidget(widget.id, mode)
   }
   return (
     <div class="grid gap-3">
-      <SPoffoCalibrationPreview
-        label="Poffo 위젯 미리보기"
-        profiles={(source) => (
-          <Show when={editable()}>
-            <SPoffoConnectionProfiles
-              actions={source.actions?.()}
-              widget={props.widget ?? undefined}
-              parameters={source.parameters()}
-              loading={source.loading()}
-            />
-          </Show>
-        )}
-        connections={(source) => (
-          <Show when={editable()}>
-            <SPoffoLipSyncSettings
-              source={source}
-              assetId={props.assetId()}
-              load={props.controller.loadPuppet}
-              value={props.widget?.speech?.lipsync}
-              onChange={configureLipSync}
-            />
-            <SPoffoSemanticSettings
-              actions={source.actions?.()}
-              widgetId={props.widget?.id}
-              loading={source.loading()}
-              value={props.widget?.speech?.semanticBindings}
-              onChange={configureSemantics}
-            />
-            <SPoffoRandomActions
-              actions={source.actions?.()}
-              bindings={props.widget?.speech?.semanticBindings}
-              value={props.widget?.speech?.randomActions}
-              onChange={configureRandom}
-            />
-            <SPoffoAgentStateSettings
-              parameters={source.parameters()}
-              loading={source.loading()}
-              value={props.widget?.speech?.agentBindings}
-              onChange={configureAgent}
-            />
-          </Show>
-        )}
-        controls={
-          <section aria-label="Poffo 설정" class="grid gap-3">
-            <div class="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-3 text-[13px]">
-              <span>트래킹 입력</span>
-              <SPoffoTrackingSettings
-                label="트래킹 입력"
-                value={props.widget?.tracking}
-                onChange={editable() ? handleInput : undefined}
-              />
-            </div>
-            <SPoffoMotionSettings
-              motions={motions()}
-              value={props.widget?.motionId}
-              onChange={editable() ? configureMotion : undefined}
-            />
-          </section>
-        }
-        targetId={props.widget?.id}
-        mode={props.widget?.tracking ?? 'off'}
-        cameraSurface={geometry().surface}
-        screenAspect={geometry().aspect}
-        characterAspect={geometry().characterAspect}
-        assetId={props.assetId}
-        load={props.controller.loadPuppet}
-        lipsync={() =>
-          props.widget?.speech?.enabled === false ? undefined : props.widget?.speech?.lipsync
-        }
-        lipsyncId={() => props.widget?.id}
-        agentBindings={() => props.widget?.speech?.agentBindings}
-        semanticBindings={() => props.widget?.speech?.semanticBindings}
-        motionId={() => props.widget?.motionId}
-        onMotions={setMotions}
-        bindings={() => props.widget?.trackingBindings}
-        value={props.widget?.trackingOptions}
-        onChange={editable() ? configureTracking : undefined}
-        onBindingsChange={editable() ? configureBindings : undefined}
-      />
+      <Show when={editable()}>
+        <SPoffoConnectionProfiles
+          actions={source.actions?.()}
+          widget={props.widget ?? undefined}
+          parameters={source.parameters()}
+          loading={source.loading()}
+        />
+        <SSegmentedControl
+          label="위젯 편집 항목"
+          options={[
+            {label: '캐릭터', value: 'character'},
+            {label: '말풍선·음성', value: 'speech'},
+            {label: '행동', value: 'behavior'},
+          ]}
+          value={section()}
+          onChange={setSection}
+        />
+      </Show>
+      <div hidden={editable() && section() === 'speech'}>
+        <SPoffoCalibrationPreview
+          label="Poffo 위젯 미리보기"
+          source={source}
+          adjustments={section() === 'character'}
+          controls={
+            <Show when={section() === 'character'}>
+              <section aria-label="Poffo 설정" class="grid gap-3">
+                <div class="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-3 text-[13px]">
+                  <span>트래킹 입력</span>
+                  <SPoffoTrackingSettings
+                    label="트래킹 입력"
+                    value={props.widget?.tracking}
+                    onChange={editable() ? handleInput : undefined}
+                  />
+                </div>
+                <SPoffoMotionSettings
+                  motions={motions()}
+                  value={props.widget?.motionId}
+                  onChange={editable() ? configureMotion : undefined}
+                />
+              </section>
+            </Show>
+          }
+          targetId={props.widget?.id}
+          mode={props.widget?.tracking ?? 'off'}
+          cameraSurface={geometry().surface}
+          screenAspect={geometry().aspect}
+          characterAspect={geometry().characterAspect}
+          assetId={props.assetId}
+          load={props.controller.loadPuppet}
+          lipsync={() => (speech()?.enabled === false ? undefined : speech()?.lipsync)}
+          lipsyncId={() => props.widget?.id}
+          agentBindings={() => speech()?.agentBindings}
+          semanticBindings={() => speech()?.semanticBindings}
+          motionId={() => props.widget?.motionId}
+          onMotions={setMotions}
+          bindings={() => props.widget?.trackingBindings}
+          value={props.widget?.trackingOptions}
+          onChange={editable() ? configureTracking : undefined}
+          onBindingsChange={editable() ? configureBindings : undefined}
+        />
+      </div>
+      <Show when={editable() && section() === 'speech'}>
+        <SPoffoSpeechSettings value={speech()} onChange={configureSpeech} />
+        <SPoffoLipSyncSettings
+          source={source}
+          assetId={props.assetId()}
+          load={props.controller.loadPuppet}
+          value={speech()?.lipsync}
+          onChange={configureLipSync}
+        />
+      </Show>
+      <Show when={editable() && section() === 'behavior'}>
+        <SPoffoBehaviorSettings
+          source={source}
+          widgetId={props.widget?.id}
+          value={speech()}
+          onChange={configureSpeech}
+        />
+      </Show>
     </div>
   )
 }
