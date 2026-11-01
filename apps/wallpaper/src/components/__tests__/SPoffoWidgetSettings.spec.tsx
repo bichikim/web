@@ -128,30 +128,6 @@ test('should expose one settings file toolbar across all Poffo calibration tabs'
   expect(screen.getByRole('button', {name: '설정 JSON 불러오기'})).toBeDefined()
 })
 
-test('should apply speech settings only to the currently selected widget', () => {
-  const {configureSpeech} = renderWidgets()
-  fireEvent.click(screen.getByRole('radio', {name: '말풍선'}))
-  const preview = screen.getByRole('figure', {name: 'Poffo 위젯 미리보기'})
-  const canvas = preview.querySelector('canvas')
-  const handle = within(preview).getByRole('button', {name: '말풍선 위치 조정'})
-  expect(screen.getAllByRole('group', {name: '말풍선 위치'})).toHaveLength(1)
-  fireEvent.click(screen.getByRole('button', {name: '위젯 2 설정'}))
-  fireEvent.keyDown(handle, {key: 'ArrowLeft'})
-  expect(configureSpeech).toHaveBeenLastCalledWith('second', {
-    enabled: true,
-    x: 0.85,
-    y: 0.05,
-  })
-  expect(preview.querySelector('canvas')).toBe(canvas)
-  configureSpeech.mockClear()
-  fireEvent.click(screen.getByRole('switch', {name: '이 위젯에 말풍선 표시'}))
-  expect(configureSpeech).toHaveBeenCalledExactlyOnceWith('second', {
-    enabled: false,
-    x: 0.9,
-    y: 0.05,
-  })
-})
-
 test('should collapse every editor and reopen the same preview without resetting calibration', () => {
   const {configureSpeech} = renderWidgets()
   const header = screen.getByRole('button', {name: '위젯 1 설정'})
@@ -275,7 +251,6 @@ test('should select a remaining widget after closing the selected widget and sho
   setWidgets((widgets) => widgets.filter((widget) => widget.id !== 'second'))
   expect(rows.getByRole('button', {name: '위젯 1 설정'})).toHaveAttribute('aria-expanded', 'true')
   expect(vi.mocked(usePuppet).mock.lastCall?.[0].assetId()).toBe('character')
-  fireEvent.click(screen.getByRole('radio', {name: '말풍선'}))
   setWidgets([])
   expect(screen.queryByRole('group', {name: '위젯 편집 항목'})).toBeNull()
   expect(screen.queryByRole('region', {name: '위젯 말풍선 설정'})).toBeNull()
@@ -286,24 +261,14 @@ test('should select a remaining widget after closing the selected widget and sho
   expect(document.querySelectorAll('canvas')).toHaveLength(1)
 })
 
-test('should separate Poffo and speech controls without recreating the preview player', () => {
+test('should show character settings directly without speech tabs or a speech position preview', () => {
   renderWidgets()
-  const preview = screen.getByRole('figure', {name: 'Poffo 위젯 미리보기'})
-  const canvas = preview.querySelector('canvas')
-  const players = vi.mocked(usePuppet).mock.calls.length
-  expect(screen.getByRole('radio', {name: 'Poffo'})).toBeChecked()
+  expect(screen.queryByRole('group', {name: '위젯 편집 항목'})).not.toBeInTheDocument()
   expect(screen.getByRole('combobox', {name: '트래킹 입력'})).toBeInTheDocument()
+  expect(screen.getByRole('region', {name: '시선 보정 설정'})).toBeInTheDocument()
   expect(screen.queryByRole('region', {name: '위젯 말풍선 설정'})).not.toBeInTheDocument()
   expect(screen.queryByRole('button', {name: '말풍선 위치 조정'})).not.toBeInTheDocument()
-  fireEvent.click(screen.getByRole('radio', {name: '말풍선'}))
-  expect(screen.queryByRole('combobox', {name: '트래킹 입력'})).not.toBeInTheDocument()
-  expect(screen.queryByRole('region', {name: '시선 보정 설정'})).not.toBeInTheDocument()
-  expect(screen.getByRole('region', {name: '위젯 말풍선 설정'})).toBeInTheDocument()
-  expect(screen.getByRole('button', {name: '말풍선 위치 조정'})).toBeInTheDocument()
   fireEvent.click(screen.getByRole('button', {name: '위젯 2 설정'}))
-  expect(screen.getByRole('radio', {name: '말풍선'})).toBeChecked()
-  fireEvent.click(screen.getByRole('radio', {name: 'Poffo'}))
-  expect(screen.getByRole('region', {name: '시선 보정 설정'})).toBeInTheDocument()
-  expect(preview.querySelector('canvas')).toBe(canvas)
-  expect(usePuppet).toHaveBeenCalledTimes(players)
+  expect(screen.queryByRole('group', {name: '위젯 편집 항목'})).not.toBeInTheDocument()
+  expect(screen.getByRole('combobox', {name: '트래킹 입력'})).toBeInTheDocument()
 })

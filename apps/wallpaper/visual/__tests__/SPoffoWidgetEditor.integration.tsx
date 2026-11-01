@@ -1,4 +1,4 @@
-import {cleanup, fireEvent, render, screen, within} from '@solidjs/testing-library'
+import {cleanup, render, screen} from '@solidjs/testing-library'
 import {createSignal} from 'solid-js'
 import {afterEach, expect, it, vi} from 'vitest'
 import {userEvent} from 'vitest/browser'
@@ -74,7 +74,7 @@ it.each([320, 496])(
     const target = screen.getByRole('combobox', {name: '작업 중 상태 파라미터'})
     await expect.poll(() => target.hasAttribute('disabled')).toBe(false)
     await userEvent.click(target)
-    await userEvent.click(screen.getByRole('option', {exact: true, name: 'Angle X'}))
+    await userEvent.click(screen.getByRole('option', {name: 'Angle X'}))
     expect(playerModule.preparePuppetDocument).toHaveBeenCalledTimes(2)
     expect(widget().speech?.voice).toEqual(DEFAULT_POFFO_VOICE)
     expect(widget().speech?.lipsync?.source).toBe('off')
@@ -88,7 +88,7 @@ it.each([320, 496])(
     const region = screen.getByRole('region', {name: '에이전트 상태 연결'})
     expect(region.scrollWidth).toBeLessThanOrEqual(region.clientWidth)
     const canvas = view.container.querySelector('canvas')
-    screen.getByRole('radio', {exact: true, name: '말풍선'}).focus()
+    screen.getByRole('radio', {name: '눈동자'}).focus()
     await userEvent.keyboard('{Space}')
     send({working: true})
     await expect.poll(() => player.getParameterValue('angle-x')).toBe(30)
@@ -142,11 +142,11 @@ it.each([320, 496])(
     screen.getByRole('radio', {name: '연결'}).focus()
     await userEvent.keyboard('{Space}')
     await userEvent.click(screen.getByRole('combobox', {name: '립싱크 입력'}))
-    await userEvent.click(screen.getByRole('option', {exact: true, name: '음성'}))
+    await userEvent.click(screen.getByRole('option', {name: '음성'}))
     const parameter = screen.getByRole('combobox', {name: '아 입모양 파라미터'})
     await expect.poll(() => parameter.getAttribute('aria-disabled')).not.toBe('true')
     await userEvent.click(parameter)
-    await userEvent.click(screen.getByRole('option', {exact: true, name: 'Angle X'}))
+    await userEvent.click(screen.getByRole('option', {name: 'Angle X'}))
     const publish = createLipSyncPublisher('lipsync-widget')
     publish('voice', 0.6, 'a')
     await expect.poll(() => player.getParameterValue('angle-x')).toBeCloseTo(18)
@@ -155,7 +155,7 @@ it.each([320, 496])(
     publish('voice', 0)
     await expect.poll(() => player.getParameterValue('angle-x')).toBe(0)
     await userEvent.click(screen.getByRole('combobox', {name: '립싱크 입력'}))
-    await userEvent.click(screen.getByRole('option', {exact: true, name: '말풍선'}))
+    await userEvent.click(screen.getByRole('option', {name: '말풍선'}))
     setMessage({chat: 'chat', id: 'message', text: '아아아아아아아아아아아아아아아아아아아아'})
     await expect.poll(() => player.getParameterValue('angle-x')).toBeGreaterThan(1)
     setWidget((previous) => ({...previous, speech: {...previous.speech!, enabled: false}}))
@@ -168,9 +168,9 @@ it.each([320, 496])(
 )
 
 it.each([320, 496])(
-  'should separate editor modes at %spx while retaining the real player and speech preferences',
+  'should show character controls directly at %spx and preserve the player and speech preferences',
   async (width) => {
-    const [widget, setWidget] = createSignal<PoffoWidget>({
+    const widget: PoffoWidget = {
       assetId: SAMPLE_PUPPET_ID,
       id: 'widget',
       speech: {
@@ -182,13 +182,11 @@ it.each([320, 496])(
       tracking: 'off',
       x: null,
       y: null,
-    })
+    }
     const controller = {loadPuppet: vi.fn(), monitors: () => []} as unknown as WallpaperController
     const library = {
       bindWidget: vi.fn(),
-      configureSpeech: vi.fn(async (_id, speech) => {
-        setWidget((previous) => ({...previous, speech}))
-      }),
+      configureSpeech: vi.fn(),
       configureTracking: vi.fn(),
       setWidgetMotion: vi.fn(),
       trackWidget: vi.fn(),
@@ -202,66 +200,33 @@ it.each([320, 496])(
           controller={controller}
           library={library}
           assetId={() => SAMPLE_PUPPET_ID}
-          widget={widget()}
+          widget={widget}
         />
       </div>
     ))
     const preview = screen.getByRole('figure', {name: 'Poffo 위젯 미리보기'})
     await expect.poll(() => vi.mocked(playerModule.createPlayer).mock.calls.length).toBe(1)
     const canvas = preview.querySelector('canvas')
-    const choice = within(screen.getByRole('group', {name: '위젯 편집 항목'}))
-    const poffo = choice.getByRole('radio', {name: 'Poffo'})
-    poffo.focus()
-    await userEvent.keyboard('{ArrowRight}')
-    expect(choice.getByRole('radio', {name: '말풍선'})).toBeChecked()
-    expect(screen.queryByRole('region', {name: '시선 보정 설정'})).not.toBeInTheDocument()
-    expect(screen.getByRole('button', {name: '말풍선 위치 조정'})).toBeInTheDocument()
-    const position = screen.getByRole('button', {name: '말풍선 위치 조정'})
-    const frame = preview.getBoundingClientRect()
-    const marker = position.getBoundingClientRect()
-    expect(marker.top).toBeGreaterThanOrEqual(frame.top)
-    expect(marker.left).toBeGreaterThanOrEqual(frame.left)
-    expect(marker.right).toBeLessThanOrEqual(frame.right)
-    expect(marker.bottom).toBeLessThanOrEqual(frame.bottom)
-
-    const settings = screen.getByRole('region', {name: '위젯 말풍선 설정'})
-    expect(screen.getByRole('group', {name: '로컬 음성 모델'})).toBeInTheDocument()
-    expect(screen.getByRole('group', {name: '읽기 재생 설정'})).toBeInTheDocument()
-    fireEvent.click(screen.getByRole('radio', {name: '가로 스크롤'}))
-    expect(widget().speech?.wrap).toBe(false)
-    fireEvent.click(screen.getByRole('switch', {name: '이 위젯에 말풍선 표시'}))
-    expect(screen.getByRole('combobox', {name: '음성 서비스'})).not.toHaveAttribute(
-      'aria-disabled',
-      'true',
-    )
-    fireEvent.click(screen.getByRole('button', {name: '읽기 음량 늘리기'}))
-    expect(widget().speech?.voice?.volume).toBe(85)
-    const provider = screen.getByRole('combobox', {name: '음성 서비스'})
-    fireEvent.click(provider)
-    fireEvent.click(screen.getByRole('option', {name: 'ChatGPT 설정 음성'}))
-    expect(screen.queryByRole('group', {name: '로컬 음성 모델'})).not.toBeInTheDocument()
-    fireEvent.click(provider)
-    fireEvent.click(screen.getByRole('option', {name: '로컬 음성'}))
-    expect(screen.getByRole('combobox', {name: '목소리'})).toHaveTextContent('Hana')
-    const bounds = mounted.container.firstElementChild!.getBoundingClientRect()
-    for (const control of settings.querySelectorAll('button,input')) {
-      if (control.getAttribute('type') !== 'radio') {
-        const box = control.getBoundingClientRect()
-        expect(box.left).toBeGreaterThanOrEqual(bounds.left)
-        expect(box.right).toBeLessThanOrEqual(bounds.right)
-      }
+    const save = screen.getByRole('button', {name: '설정 JSON 저장'})
+    expect(screen.queryByRole('group', {name: '위젯 편집 항목'})).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', {name: '말풍선 위치 조정'})).not.toBeInTheDocument()
+    expect(screen.queryByRole('region', {name: '위젯 말풍선 설정'})).not.toBeInTheDocument()
+    const selectSection = async (name: string) => {
+      screen.getByRole('radio', {name}).focus()
+      await userEvent.keyboard('{Space}')
+      expect(screen.getByRole('combobox', {name: '트래킹 입력'})).toBeInTheDocument()
+      expect(screen.getByRole('button', {name: '설정 JSON 저장'})).toBe(save)
+      expect(mounted.container.firstElementChild!.scrollWidth).toBeLessThanOrEqual(width)
+      expect(preview.querySelector('canvas')).toBe(canvas)
     }
-    expect(mounted.container.firstElementChild!.scrollWidth).toBeLessThanOrEqual(width)
-    choice.getByRole('radio', {name: '말풍선'}).focus()
-    await userEvent.keyboard('{ArrowLeft}')
-    expect(poffo).toBeChecked()
-    expect(screen.getByRole('combobox', {name: '트래킹 입력'})).toBeInTheDocument()
-    expect(preview.querySelector('canvas')).toBe(canvas)
+    await selectSection('얼굴')
+    await selectSection('눈동자')
+    await selectSection('연결')
     expect(playerModule.createPlayer).toHaveBeenCalledOnce()
-    expect(widget().speech).toMatchObject({
-      enabled: false,
-      voice: {gpu: true, model: 'full', voice: 'Hana', volume: 85},
-      wrap: false,
+    expect(library.configureSpeech).not.toHaveBeenCalled()
+    expect(widget.speech).toMatchObject({
+      enabled: true,
+      voice: {model: 'full', voice: 'Hana'},
       x: 0.9,
       y: 0.05,
     })
