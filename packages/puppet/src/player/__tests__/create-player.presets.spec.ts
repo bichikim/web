@@ -241,6 +241,43 @@ test('should keep the model opacity on non-finite input', async () => {
   player.destroy()
 })
 
+test('should keep independent expression layers together and release only their own layer', async () => {
+  setUpRenderer()
+  const document: PuppetDocument = {
+    ...presetDocument,
+    expressions: [
+      {
+        composition: 'cubism',
+        fadeInTime: 0,
+        fadeOutTime: 0,
+        id: 'smile',
+        parameters: [{blend: 'add', parameterId: 'mouth', value: 0.5}],
+      },
+      {
+        composition: 'cubism',
+        fadeInTime: 0,
+        fadeOutTime: 0,
+        id: 'pose',
+        parameters: [{blend: 'add', parameterId: 'pose', value: 1}],
+      },
+    ],
+  }
+  const player = await createPlayer({
+    canvas: globalThis.document.createElement('canvas'),
+    document: prepare(document),
+  })
+  player.setExpression('smile')
+  expect(player.setExpressionLayer('hands', 'pose')).toBe(true)
+  expect(player.getParameterValue('mouth')).toBe(0.5)
+  expect(player.getParameterValue('pose')).toBe(1)
+  expect(player.setExpressionLayer('hands', 'missing')).toBe(false)
+  expect(player.getParameterValue('pose')).toBe(1)
+  player.setExpressionLayer('hands')
+  expect(player.getParameterValue('mouth')).toBe(0.5)
+  expect(player.getParameterValue('pose')).toBe(0)
+  player.destroy()
+})
+
 test('should combine and release independent expressions while playback is paused', async () => {
   const renderer = setUpRenderer()
   const player = await createPlayer({

@@ -19,7 +19,7 @@ export interface PoffoCalibrationOptions
   extends PoffoMotionControls, PoffoLipSyncControls, PoffoAgentControls {
   readonly targetId?: string
   readonly assetId: Accessor<string | null>
-  readonly load: (id: string) => Promise<string>
+  readonly load: (id: string) => Promise<string | Blob>
   readonly mode?: PoffoTracking
   readonly screenAspect?: number
   readonly characterAspect?: number
@@ -95,6 +95,7 @@ export const SPoffoTrackingPreview = (props: SPoffoTrackingPreviewProps) => {
               assetId={props.assetId}
               load={props.load}
               agentBindings={props.agentBindings}
+              semanticBindings={props.semanticBindings}
               lipsync={props.lipsync}
               lipsyncId={props.lipsyncId}
               motionId={props.motionId}

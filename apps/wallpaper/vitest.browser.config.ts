@@ -39,6 +39,7 @@ export default defineConfig({
       ],
       provider: playwright(),
     },
+    exclude: ['**/*.memory.integration.tsx'],
     include: ['visual/__tests__/**/*.integration.tsx'],
     name: 'wallpaper-visual',
   },

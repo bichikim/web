@@ -530,6 +530,36 @@ pub fn poffo_speech_target(
 }
 
 #[tauri::command]
+pub fn move_poffo_speech(
+    app: AppHandle,
+    caller: Webview,
+    x: f64,
+    y: f64,
+    anchor: Option<bubble::Anchor>,
+) -> Result<(), String> {
+    let id = caller
+        .label()
+        .strip_prefix("poffo-bubble-")
+        .ok_or("Only speech windows can move their own bubble")?;
+    if !x.is_finite() || !y.is_finite() || !(-1.0..=2.0).contains(&x) || !(-0.5..=1.5).contains(&y)
+    {
+        return Err("Invalid Poffo speech placement".into());
+    }
+    let bridge = app.state::<Bridge>();
+    let mut runtime = bridge.0.lock().map_err(|error| error.to_string())?;
+    let speech = runtime
+        .widgets
+        .get_mut(id)
+        .ok_or("Poffo widget is unavailable")?;
+    speech.x = x;
+    speech.y = y;
+    speech.anchor = anchor;
+    let speech = speech.clone();
+    drop(runtime);
+    bubble::position(&app, id, &speech)
+}
+
+#[tauri::command]
 pub fn configure_poffo_speech(
     app: AppHandle,
     caller: Webview,

@@ -22,13 +22,13 @@ export const SPoffoPositionSettings = (props: SPoffoPositionSettingsProps) => {
     }
   }
   return (
-    <details>
-      <summary class="wallpaper-disclosure">캐릭터 위치·크기</summary>
+    <section aria-label="위치·크기">
+      <h3 class="m-0 text-[13px] font-medium text-stone-700">위치·크기</h3>
       <div class="wallpaper-row">
         <span>가로 위치</span>
         <span class="flex items-center justify-end gap-2">
           <SNumberInput
-            label="캐릭터 가로 위치 (%)"
+            label="Poffo 가로 위치 (%)"
             value={Math.round(placement().x * PERCENT)}
             min={0}
             max={100}
@@ -41,7 +41,7 @@ export const SPoffoPositionSettings = (props: SPoffoPositionSettingsProps) => {
         <span>세로 위치</span>
         <span class="flex items-center justify-end gap-2">
           <SNumberInput
-            label="캐릭터 세로 위치 (%)"
+            label="Poffo 세로 위치 (%)"
             value={Math.round(placement().y * PERCENT)}
             min={0}
             max={100}
@@ -54,7 +54,7 @@ export const SPoffoPositionSettings = (props: SPoffoPositionSettingsProps) => {
         <span>크기</span>
         <span class="flex items-center justify-end gap-2">
           <SNumberInput
-            label="캐릭터 크기 (%)"
+            label="Poffo 크기 (%)"
             value={Math.round(placement().scale * PERCENT)}
             min={10}
             max={200}
@@ -71,6 +71,6 @@ export const SPoffoPositionSettings = (props: SPoffoPositionSettingsProps) => {
       >
         위치 초기화
       </button>
-    </details>
+    </section>
   )
 }

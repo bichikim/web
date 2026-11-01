@@ -50,3 +50,43 @@ it('should show an empty composer again only when a new response arrives', async
   expect(screen.getByRole('textbox')).toHaveValue('')
   expect(screen.queryByRole('alert')).toBeNull()
 })
+
+it.each([{ctrlKey: true}, {metaKey: true}])(
+  'should send the draft with the platform modifier and Enter (%j)',
+  async (modifier) => {
+    const send = vi.fn().mockResolvedValue(undefined)
+    render(() => <SCodexPrompt sessionId="shortcut-chat" onSend={send} />)
+    const input = screen.getByRole('textbox')
+    fireEvent.input(input, {target: {value: '단축키로 보낼 요청'}})
+    expect(fireEvent.keyDown(input, {...modifier, key: 'Enter'})).toBe(false)
+    expect(send).toHaveBeenCalledExactlyOnceWith('shortcut-chat', '단축키로 보낼 요청')
+    await Promise.resolve()
+    expect(screen.queryByRole('textbox')).toBeNull()
+  },
+)
+
+it.each([
+  {key: 'Enter'},
+  {ctrlKey: true, isComposing: true, key: 'Enter'},
+  {key: 'Enter', keyCode: 229, metaKey: true},
+  {ctrlKey: true, key: 'Enter', repeat: true},
+  {altKey: true, ctrlKey: true, key: 'Enter'},
+  {key: 'Enter', metaKey: true, shiftKey: true},
+])('should preserve editing without sending for %j', (keyboard) => {
+  const send = vi.fn()
+  render(() => <SCodexPrompt sessionId="chat" onSend={send} />)
+  const input = screen.getByRole('textbox')
+  fireEvent.input(input, {target: {value: '입력 중인 글'}})
+  fireEvent.keyDown(input, keyboard)
+  expect(send).not.toHaveBeenCalled()
+  expect(input).toHaveValue('입력 중인 글')
+})
+
+it('should not send an empty draft with the shortcut', () => {
+  const send = vi.fn()
+  render(() => <SCodexPrompt sessionId="chat" onSend={send} />)
+  const input = screen.getByRole('textbox')
+  fireEvent.input(input, {target: {value: '  '}})
+  fireEvent.keyDown(input, {ctrlKey: true, key: 'Enter'})
+  expect(send).not.toHaveBeenCalled()
+})

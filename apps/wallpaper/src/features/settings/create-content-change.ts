@@ -27,6 +27,7 @@ export const createContentChange = (options: CreateContentChangeOptions) => {
     return () => after
   }
   const patch = {
+    ...(before.fit === after.fit ? {} : {fit: after.fit}),
     ...(before.order === after.order ? {} : {order: after.order}),
     ...(before.photoSeconds === after.photoSeconds ? {} : {photoSeconds: after.photoSeconds}),
     ...(before.transition === after.transition ? {} : {transition: after.transition}),

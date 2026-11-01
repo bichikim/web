@@ -1,3 +1,5 @@
+import {useSemanticActions} from '../semantics/use-semantic-actions'
+import {modelActions} from '../semantics/model-actions'
 import {type Accessor, createEffect, createMemo, createSignal, onCleanup, untrack} from 'solid-js'
 import type {Player} from '@winter-love/puppet/player'
 import {usePuppetDocument} from './use-puppet-document'
@@ -16,7 +18,7 @@ import type {
 interface UsePuppetProps extends PoffoMotionControls, PoffoLipSyncControls, PoffoAgentControls {
   readonly canvas: Accessor<HTMLCanvasElement | null>
   readonly assetId: Accessor<string | null>
-  readonly load: (id: string) => Promise<string>
+  readonly load: (id: string) => Promise<string | Blob>
   readonly onError: (error: unknown) => void
   readonly onAfterRender?: () => void
   readonly cameraSurface?: Accessor<CameraSurface | undefined>
@@ -60,6 +62,12 @@ export const usePuppet = (props: UsePuppetProps): void => {
   useLipSync({
     options: () => props.lipsync?.(),
     parameters,
+    player: active,
+    widgetId: () => props.lipsyncId?.(),
+  })
+  useSemanticActions({
+    actions: () => (document() === null ? [] : modelActions(document()!)),
+    bindings: () => props.semanticBindings?.(),
     player: active,
     widgetId: () => props.lipsyncId?.(),
   })

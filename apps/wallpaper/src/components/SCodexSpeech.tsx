@@ -69,6 +69,7 @@ export const SCodexSpeech = (props: SCodexSpeechProps) => {
               <button
                 type="button"
                 aria-label={`채팅 ${caption()} 선택`}
+                data-speech-drag-handle
                 aria-pressed={props.selected ?? false}
                 title={
                   props.onOpen === undefined
@@ -76,6 +77,7 @@ export const SCodexSpeech = (props: SCodexSpeechProps) => {
                     : `${caption()} · 더블클릭하여 Codex에서 열기`
                 }
                 class="absolute inset-0 cursor-pointer appearance-none rounded-t-xl border-0 bg-transparent p-0
+              [[data-draggable=true]_&]:cursor-grab [[data-dragging=true]_&]:cursor-grabbing touch-none
               focus-visible:outline-2 focus-visible:outline-blue-700 [outline-offset:-2px]"
                 onClick={select()}
                 onDblClick={chat.open}

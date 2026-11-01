@@ -5,11 +5,8 @@ import {
   type MonitorWallpaper,
   type WallpaperContent,
 } from '@winter-love/wallpaper/settings/model'
-import {
-  createSettingsRepository,
-  type PuppetAsset,
-} from '@winter-love/wallpaper/settings/repository'
-import {createWebRepository} from '@winter-love/wallpaper/web-repository'
+import type {PuppetAsset} from '@winter-love/wallpaper/settings/repository'
+import {createBuiltinMedia, createBuiltinSettings} from '../builtin-assets'
 import type {BackgroundMedia} from '@winter-love/wallpaper/model'
 import type {InteractionSettings} from '@winter-love/wallpaper/interaction/types'
 import {listWallpaperMonitors, type WallpaperMonitor} from './monitors'
@@ -26,8 +23,8 @@ interface MediaCollection {
 
 /** Owns local wallpaper settings and serializes operations across the management UI. */
 export const useWallpaper = () => {
-  const settings = createSettingsRepository('wallpaper-settings')
-  const media = createWebRepository({databaseName: 'wallpaper-media'})
+  const settings = createBuiltinSettings('wallpaper-settings')
+  const media = createBuiltinMedia('wallpaper-media')
   const [monitors, setMonitors] = createSignal<readonly WallpaperMonitor[]>([])
   const [selectedId, setSelectedId] = createSignal<string | null>(null)
   const state = useOptimisticWallpapers({
@@ -37,6 +34,7 @@ export const useWallpaper = () => {
   })
   const [collection, setCollection] = createStore<MediaCollection>({items: []})
   const [puppets, setPuppets] = createSignal<readonly PuppetAsset[]>([])
+  const [hiddenCount, setHiddenCount] = createSignal(0)
   const [error, setError] = createSignal<string | null>(null)
   const [imports, setImports] = createSignal(0)
   const busy = createMemo(() => imports() > 0)
@@ -59,6 +57,7 @@ export const useWallpaper = () => {
     ])
     if (!disposed && request === revision) {
       setCollection('items', reconcile(album.items, {key: 'id'}))
+      setHiddenCount(album.hiddenCount)
       setPuppets(assets)
     }
   }
@@ -145,11 +144,18 @@ export const useWallpaper = () => {
     current,
     dismissError: () => setError(null),
     error,
+    hasHiddenMedia: () => hiddenCount() > 0,
     items: () => collection.items,
     loadMedia: media.load,
     loadPuppet: settings.loadPuppet,
     monitors,
     puppets,
+    removeMedia: (id: string) =>
+      enqueue(async () => {
+        await settings.removeMediaReferences(id)
+        await media.remove(id)
+      }, '사진·동영상을 삭제하지 못했어요.'),
+    restoreBuiltinMedia: () => enqueue(media.restoreBuiltins, '기본 배경을 복원하지 못했어요.'),
     selectedId,
     selectMonitor: setSelectedId,
     setContent: (content: WallpaperContent) => {

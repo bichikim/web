@@ -1,5 +1,10 @@
 import {z} from 'zod'
-import {backgroundWebsiteUrlSchema, RANDOM_TRANSITIONS, type TransitionEffect} from '../model'
+import {
+  backgroundWebsiteUrlSchema,
+  type MediaFit,
+  RANDOM_TRANSITIONS,
+  type TransitionEffect,
+} from '../model'
 import {DEFAULT_INTERACTION, type InteractionSettings} from '../interaction/types'
 import {createWallpaperContent} from './create-wallpaper-content'
 import {
@@ -36,12 +41,21 @@ export const poffoPlacementSchema: z.ZodType<PoffoPlacement> = z.object({
   y: z.number().min(0).max(1),
 })
 
-export interface WebsiteWallpaper {
+export interface WebsiteCustomization {
+  readonly scriptStart?: string
+  readonly scriptDom?: string
+  readonly css?: string
+  readonly script?: string
+}
+
+export interface WebsiteWallpaper extends WebsiteCustomization {
   readonly mode: 'website'
   readonly url: string | null
 }
 
 export interface AlbumWallpaper {
+  /** Media sizing within the monitor; omitted to show the whole image. */
+  readonly fit?: MediaFit
   readonly mode: 'album'
   readonly mediaIds: readonly string[]
   readonly order: 'sequential' | 'random'
@@ -73,8 +87,16 @@ export const wallpaperContentSchema: z.ZodType<WallpaperContent> = z.discriminat
     trackingBindings: poffoBindingsSchema.optional(),
     trackingOptions: poffoTrackingOptionsSchema.optional(),
   }),
-  z.object({mode: z.literal('website'), url: backgroundWebsiteUrlSchema.nullable()}),
   z.object({
+    css: z.string().optional(),
+    mode: z.literal('website'),
+    script: z.string().optional(),
+    scriptDom: z.string().optional(),
+    scriptStart: z.string().optional(),
+    url: backgroundWebsiteUrlSchema.nullable(),
+  }),
+  z.object({
+    fit: z.enum(['contain', 'cover']).optional(),
     mediaIds: z.array(z.string().min(1)),
     mode: z.literal('album'),
     order: z.enum(['sequential', 'random']),

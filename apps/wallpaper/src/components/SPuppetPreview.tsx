@@ -17,7 +17,7 @@ import type {
 interface SPuppetPreviewProps
   extends PoffoMotionControls, PoffoLipSyncControls, PoffoAgentControls {
   readonly assetId: Accessor<string | null>
-  readonly load: (id: string) => Promise<string>
+  readonly load: (id: string) => Promise<string | Blob>
   readonly placement?: Accessor<PoffoPlacement | undefined>
   readonly cameraSurface?: Accessor<CameraSurface | undefined>
   readonly tracking?: Accessor<PoffoTracking | undefined>
@@ -49,6 +49,7 @@ export const SPuppetPreview = (props: SPuppetPreviewProps) => {
             assetId={props.assetId}
             load={(id) => props.load(id)}
             agentBindings={props.agentBindings}
+            semanticBindings={props.semanticBindings}
             lipsync={props.lipsync}
             lipsyncId={props.lipsyncId}
             motionId={props.motionId}

@@ -1,18 +1,9 @@
 import {
-  createVisemeTrack,
-  getCoarticulatedVisemeAtTime,
-  type Viseme,
-} from '@winter-love/supertonic/visemes'
+  MOUTH_REST_THRESHOLD,
+  VISEME_MOUTH_POSES as POSES,
+} from '@winter-love/wallpaper/lipsync/mouth-poses'
+import {createVisemeTrack, getCoarticulatedVisemeAtTime} from '@winter-love/supertonic/visemes'
 import type {MouthPose, SpeechAudio} from './types'
-
-const POSES: Readonly<Record<Viseme, MouthPose>> = {
-  closed: {form: 0, open: 0},
-  narrow: {form: 0, open: 0.25},
-  open: {form: 0.2, open: 0.9},
-  rest: {form: 0, open: 0},
-  round: {form: -1, open: 0.65},
-  wide: {form: 1, open: 0.55},
-}
 
 const FRAME_SECONDS = 0.02
 const REFERENCE_FLOOR = 0.0001
@@ -22,7 +13,6 @@ const MILLISECONDS_PER_SECOND = 1000
 const OPEN_SECONDS = 0.035
 const CLOSE_SECONDS = 0.09
 const FORM_SECONDS = 0.06
-const REST_THRESHOLD = 0.14
 
 const createEnvelope = (audio: SpeechAudio) => {
   const hop = Math.max(1, Math.round(audio.sampleRate * FRAME_SECONDS))
@@ -65,7 +55,7 @@ export const createSpeechMouth = (audio: SpeechAudio, text: string) => {
     const opening = 1 - Math.exp(-elapsed / (target > shown.open ? OPEN_SECONDS : CLOSE_SECONDS))
     const shaping = 1 - Math.exp(-elapsed / FORM_SECONDS)
     shown = {
-      form: shown.form + ((level > REST_THRESHOLD ? pose.form : 0) - shown.form) * shaping,
+      form: shown.form + ((level > MOUTH_REST_THRESHOLD ? pose.form : 0) - shown.form) * shaping,
       open: shown.open + (target - shown.open) * opening,
     }
     return shown

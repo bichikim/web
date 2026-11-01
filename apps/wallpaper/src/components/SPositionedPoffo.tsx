@@ -25,7 +25,7 @@ interface SPositionedPoffoProps
   readonly tracking?: Accessor<PoffoTracking | undefined>
   readonly trackingBindings?: Accessor<PoffoTrackingBindings | undefined>
   readonly trackingOptions?: Accessor<PoffoTrackingOptions | undefined>
-  readonly load: (id: string) => Promise<string>
+  readonly load: (id: string) => Promise<string | Blob>
   readonly onError: (error: unknown) => void
   readonly onChange?: (placement: PoffoPlacement) => void | Promise<void>
 }
@@ -67,6 +67,7 @@ export const SPositionedPoffo = (props: SPositionedPoffoProps) => {
           assetId={props.assetId}
           load={props.load}
           agentBindings={props.agentBindings}
+          semanticBindings={props.semanticBindings}
           lipsync={props.lipsync}
           lipsyncId={props.lipsyncId}
           motionId={props.motionId}

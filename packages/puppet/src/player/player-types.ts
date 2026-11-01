@@ -7,7 +7,7 @@ import type {PuppetRenderOverride} from './internal/render-overrides'
 import type {LookTarget} from './look'
 import type {EyeBlinkTiming} from './eye-blink'
 import type {RandomSource} from './random'
-import type {PuppetParameterBlend} from './parameter-blends'
+import type {ParameterBlendStage, PuppetParameterBlend} from './parameter-blends'
 import type {PuppetPhysicsOptions} from './physics-options'
 import type {MotionEvent, MotionPlayback, MotionPlaybackOptions} from './playback'
 import type {PlayerViewCamera} from './view-camera'
@@ -34,6 +34,11 @@ export interface Player {
   hitTest(point: {readonly x: number; readonly y: number}): string | undefined
   /** 지정한 외부 값만 병합하며 다른 입력과 모션 재생은 유지한다. */
   patchParameterValues(values: PuppetParameterValueMap): void
+  /** Merges blends in one frame. Stage defaults to before physics; undefined releases only that stage's blends. */
+  patchParameterBlends(
+    values: Readonly<Record<string, PuppetParameterBlend | undefined>>,
+    stage?: ParameterBlendStage,
+  ): void
   pause(): void
   play(options?: PlayerPlaybackOptions): void
   playMotion(motionId: string, options?: PlayerPlaybackOptions): boolean
@@ -46,10 +51,14 @@ export interface Player {
   resetParameters(parameterIds?: ReadonlyArray<string>): void
   /** Removes inertia at the current input pose without changing timeline time. */
   resetPhysics(): void
+  /** Clears retained motion values for the specified parameters; omitted clears all motion history. */
+  resetMotionHistory(parameterIds?: ReadonlyArray<string>): void
   resume(): void
   seek(time: number): void
   /** Cross-fades to an expression; omitted IDs fade the current one out. Unknown IDs return false. */
   setExpression(expressionId?: string): boolean
+  /** Sets an independently fading expression layer; omitted expression releases only this layer. Unknown expressions return false. */
+  setExpressionLayer(layerId: string, expressionId?: string): boolean
   /** 여러 표정을 독립적으로 페이드한다. 빈 목록은 모두 해제하며 모르는 ID는 변경 없이 거부한다. */
   setExpressions(expressionIds: ReadonlyArray<string>): boolean
   /** Breathes with the document's `breath` parameters, added after motions and before physics. */

@@ -1,3 +1,5 @@
+import {resolveParameterOverrides} from './internal/resolve-parameter-overrides'
+import {createExpressionLayers} from './internal/create-expression-layers'
 import type {PuppetParameterValueMap} from '../deformation'
 import {createMotionSounds} from './audio/motion-sounds'
 import type {PuppetVowelWeights} from './document'
@@ -48,14 +50,6 @@ export type {PuppetParameterBlend, PuppetParameterBlendMode} from './parameter-b
 export type {PuppetPhysicsOptions} from './physics-options'
 export type {CreatePlayerOptions, Player, PlayerFrame, PlayerPlaybackOptions} from './player-types'
 
-/** 문서에 존재하는 파라미터의 외부 값을 각 파라미터 범위에 맞춰 반환한다. */
-const resolveOverrides = (document: PreparedPuppetDocument, values: PuppetParameterValueMap) =>
-  Object.fromEntries(
-    (document.parameters ?? [])
-      .filter((parameter) => Object.hasOwn(values, parameter.id))
-      .map((parameter) => [parameter.id, resolveParameterValue(parameter, values[parameter.id])]),
-  )
-
 // eslint-disable-next-line max-lines-per-function, max-statements -- Public operations share one lifecycle boundary.
 export const createPlayer = async (options: CreatePlayerOptions): Promise<Player> => {
   assertPreparedPuppetDocument(options.document)
@@ -94,6 +88,7 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
   sounds.load(document)
   let modelOpacity = 1
   const expressions = createExpressionPlayback(document.expressions ?? [])
+  const expressionLayers = createExpressionLayers(document.expressions ?? [], () => refresh())
   const onEvent = (event: MotionEvent) => {
     if (!destroyed) {
       options.onMotionEvent?.(event)
@@ -149,6 +144,7 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
       baseParameterValues:
         document.motionParameterBase === 'previous-frame' ? motionHistory.base(frames) : undefined,
       document,
+      expressionGroups: expressionLayers.layers(),
       expressions: expressions.layers(),
       eyeOpenness: effects.eyeOpenness,
       frames,
@@ -169,10 +165,9 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
       settle: settlePhysics,
     })
     ;({chainState, physicsState} = result)
+    const adjusted = adjustments.applyBlends(document, result.parameterValues, 'after-physics')
     const shaped =
-      mouth === undefined
-        ? result.parameterValues
-        : applyMouthShapes(document, result.parameterValues, mouth.shown)
+      mouth === undefined ? adjusted : applyMouthShapes(document, adjusted, mouth.shown)
     // Without mouth shapes, a motion sound's loudness opens the mouth (Cubism's volume lip sync).
     const level =
       effects.soundLevel !== undefined && document.mouthShapes === undefined
@@ -212,6 +207,7 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
       playback.isPlaying() ||
         playbacks.isPlaying() ||
         expressions.isAnimating() ||
+        expressionLayers.isAnimating() ||
         isEffectActive(document, {
           eyeBlinking: eyeBlink !== undefined,
           shapingMouth: mouth !== undefined || voiceTarget !== undefined,
@@ -235,6 +231,7 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
     const callbacks = playbacks.advance(deltaTime)
     const complete = playback.advance(deltaTime)
     expressions.advance(deltaTime)
+    expressionLayers.advance(deltaTime)
     applyFrame(deltaTime)
     if (!destroyed) {
       complete?.()
@@ -270,12 +267,13 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
     motionHistory.reset()
     document = nextDocument
     if (nextParameterValues !== undefined) {
-      parameterValues = resolveOverrides(document, nextParameterValues)
+      parameterValues = resolveParameterOverrides(document, nextParameterValues)
     }
     sounds.load(document)
     playbacks.update(document.motions)
     playback.update(document.motions)
     expressions.update(document.expressions ?? [])
+    expressionLayers.update(document.expressions ?? [])
     if (physicsChanged) {
       physicsState = createPhysicsState(document)
       chainState = undefined
@@ -368,11 +366,19 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
         vertices: (partId) => renderer.getPartVertices(partId),
       })
     },
+    patchParameterBlends(values, stage = 'before-physics') {
+      if (!destroyed && (stage === 'before-physics' || stage === 'after-physics')) {
+        for (const [id, blend] of Object.entries(values)) {
+          adjustments.setParameterBlend(document, id, blend, stage)
+        }
+        refresh()
+      }
+    },
     patchParameterValues(values) {
       if (destroyed) {
         return
       }
-      const resolved = resolveOverrides(document, values)
+      const resolved = resolveParameterOverrides(document, values)
       if (Object.entries(resolved).some(([id, value]) => parameterValues[id] !== value)) {
         parameterValues = {...parameterValues, ...resolved}
         refresh()
@@ -402,6 +408,12 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
     },
     playMotion,
     redraw,
+    resetMotionHistory(parameterIds) {
+      if (!destroyed) {
+        motionHistory.reset(parameterIds)
+        refresh()
+      }
+    },
     resetParameters(parameterIds) {
       if (destroyed) {
         return
@@ -453,6 +465,7 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
       refresh()
       return true
     },
+    setExpressionLayer: (layerId, id) => !destroyed && expressionLayers.set(layerId, id),
     setExpressions(expressionIds) {
       if (destroyed || !expressions.setMany(expressionIds)) {
         return false
@@ -500,8 +513,8 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
         refresh()
       }
     },
-    setMotion,
 
+    setMotion,
     setParameterBlend(parameterId, blend) {
       if (destroyed || !adjustments.setParameterBlend(document, parameterId, blend)) {
         return false
@@ -522,7 +535,7 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
       if (destroyed) {
         return
       }
-      parameterValues = resolveOverrides(document, values)
+      parameterValues = resolveParameterOverrides(document, values)
       refresh()
     },
     setPartOverride(partId, override) {
