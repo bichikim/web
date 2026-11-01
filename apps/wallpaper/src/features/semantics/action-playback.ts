@@ -28,7 +28,7 @@ const startAction = (player: SemanticPlayer, selection: SemanticSelection): (() 
 }
 /** Owns this widget's action channels, keeping unchanged actions running until explicitly disposed. */
 export const createActionPlayback = (player: SemanticPlayer) => {
-  const active = new Map<string,() => void>()
+  const active = new Map<string, ReturnType<typeof startAction>>()
   return {
     dispose: () => {
       for (const release of active.values()) {

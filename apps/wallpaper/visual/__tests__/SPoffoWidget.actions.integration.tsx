@@ -41,17 +41,17 @@ test('should toggle a widget pose and retain it through speech and remount', asy
       ...model,
       expressions: [
         {
-          id: '작아지기',
           composition: 'cubism',
-          name: 'Shrink',
           fadeInTime: 0,
           fadeOutTime: 0,
+          id: '작아지기',
+          name: 'Shrink',
           parameters: [{blend: 'add', parameterId: 'Param95', value: 1}],
         },
       ],
       parameters: [
         ...model.parameters!,
-        {id: 'Param95', defaultValue: 0, name: 'Miniature', maximum: 1, minimum: 0},
+        {defaultValue: 0, id: 'Param95', maximum: 1, minimum: 0, name: 'Miniature'},
       ],
     }),
   )
