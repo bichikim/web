@@ -147,6 +147,19 @@ test('should register and persist a character action connection, then react to t
     await expect
       .poll(async () => (await repository.read()).widgets[0]?.speech?.semanticBindings)
       .toEqual(bindings())
+    const beforeMenu = embed.mock.calls.length
+    await userEvent.click(screen.getByRole('combobox', {name: '연결 1 종류'}))
+    await userEvent.click(screen.getByRole('option', {name: '우클릭 메뉴'}))
+    const menuLabel = screen.getByRole('textbox', {name: '연결 1 메뉴 이름'})
+    expect(menuLabel).toHaveValue('반짝눈')
+    await userEvent.fill(menuLabel, '응원 표정')
+    await userEvent.keyboard('{Tab}')
+    await expect
+      .poll(async () => (await repository.read()).widgets[0]?.speech?.semanticBindings?.[0])
+      .toMatchObject({category: 'menu', menuLabel: '응원 표정'})
+    expect(screen.queryByRole('textbox', {name: '연결 1 감정·행동·내용'})).toBeNull()
+    expect(screen.queryByRole('combobox', {name: '연결 1 해제 시점'})).toBeNull()
+    expect(embed).toHaveBeenCalledTimes(beforeMenu)
     fireEvent.click(screen.getByRole('switch', {name: '연결 1 사용'}))
     await expect
       .poll(() => screen.getByRole('status', {name: '적용된 행동'}).textContent)
@@ -175,7 +188,7 @@ test.each([320, 496])(
         <SPoffoSemanticSettings value={bindings()} onChange={setBindings} actions={actions} />
       </div>
     ))
-    const section = screen.getByRole('region', {name: '감정·내용 연결'})
+    const section = screen.getByRole('region', {name: '행동 연결'})
     const groups = Array.from(section.querySelectorAll('details')).filter(
       (group) => group.parentElement === section,
     )

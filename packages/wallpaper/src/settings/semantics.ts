@@ -22,6 +22,7 @@ export const semanticActionSchema: z.ZodType<SemanticAction> = z.discriminatedUn
   z.object({id: z.string().min(1).max(SEMANTIC_ID_LIMIT), kind: z.literal('expression')}),
   z.object({id: z.string().min(1).max(SEMANTIC_ID_LIMIT), kind: z.literal('motion')}),
 ])
+export type SemanticActionCategory = 'emotion' | 'behavior' | 'menu'
 export type SemanticActionRelease = 'speech-end' | 'next-speech'
 export interface SemanticNarrationPlaying {
   readonly phase: 'playing'
@@ -48,8 +49,12 @@ export interface SemanticBinding {
   readonly action?: SemanticAction
   /** Targets executed together with this binding's shared group and release point; empty clears all. */
   readonly actions?: readonly SemanticAction[]
-  /** Behaviors are random-only; emotions and contextual poses match text. Omitted matches text. */
-  readonly category?: 'emotion' | 'behavior'
+  /** Behaviors are random-only; menu actions are checked directly. Omitted matches text. */
+  readonly category?: SemanticActionCategory
+  /** Context-menu label; omitted uses the connected action names. */
+  readonly menuLabel?: string
+  /** Checked menu actions stay active until explicitly toggled off. */
+  readonly menuActive?: boolean
   readonly animation?: SemanticAnimation
   readonly id: string
   readonly text: string
@@ -58,7 +63,7 @@ export interface SemanticBinding {
   readonly enabled: boolean
   readonly parameterId: string | null
   readonly mode: 'toggle' | 'range'
-  /** Action release point; omitted releases at narration end. Manual previews stop explicitly. */
+  /** Automatic release point; omitted releases at narration end. Menu actions stay on until toggled off. */
   readonly release?: SemanticActionRelease
   readonly releaseWhenUnmatched?: boolean
   /** Action bindings select one winner per group; omitted uses the default group. */
@@ -87,12 +92,14 @@ export const semanticBindingsSchema = z
           phase: z.number().finite().min(0).max(1).optional(),
         })
         .optional(),
-      category: z.enum(['emotion', 'behavior']).optional(),
+      category: z.enum(['emotion', 'behavior', 'menu']).optional(),
       enabled: z.boolean(),
       excludeText: z.string().max(SEMANTIC_DESCRIPTION_LIMIT).optional(),
       exclusiveGroup: z.string().trim().min(1).max(SEMANTIC_ID_LIMIT).optional(),
       from: z.number().finite().optional(),
       id: z.string().min(1).max(SEMANTIC_ID_LIMIT),
+      menuActive: z.boolean().optional(),
+      menuLabel: z.string().max(SEMANTIC_ID_LIMIT).optional(),
       mode: z.enum(['toggle', 'range']),
       parameterId: z.string().min(1).nullable(),
       release: z.enum(['speech-end', 'next-speech']).optional(),
@@ -123,7 +130,7 @@ export interface SemanticFrame {
   readonly widgetId: string
   /** Audio lifecycle; omitted preserves text-only matching and explicit clearing. */
   readonly narration?: SemanticNarration
-  /** Manually execute only this binding at full strength; omitted uses automatic scores. */
+  /** Preview this binding ahead of menu toggles; omitted uses automatic scores. */
   readonly previewId?: string
   /** Behavior chosen once for an unmatched narration; never an emotion. */
   readonly fallbackId?: string

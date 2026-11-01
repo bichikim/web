@@ -52,6 +52,9 @@ const refreshDefault = (binding: SemanticBinding, key = binding.id): SemanticBin
         ? {}
         : {
             excludeText: replacement.excludeText,
+            ...(replacement.menuLabel === undefined
+              ? {}
+              : {menuLabel: binding.menuLabel ?? replacement.menuLabel}),
             text: replacement.text,
             threshold:
               binding.threshold === original.threshold ? replacement.threshold : binding.threshold,
@@ -65,6 +68,7 @@ const refreshDefault = (binding: SemanticBinding, key = binding.id): SemanticBin
       'text',
       'excludeText',
       'threshold',
+      'menuLabel',
     ] as const
     return fields.some((field) => patch[field] !== binding[field]) ? patch : binding
   }

@@ -31,6 +31,7 @@ const mount = (target: CodexSpeechTarget = {widgetHeight: 400, widgetWidth: 200,
     resizeWidget: vi.fn(),
     setWidgetMotion: vi.fn(),
     subscribe: vi.fn(),
+    toggleWidgetAction: vi.fn(),
     trackWidget: vi.fn(),
     visit: vi.fn(),
   })

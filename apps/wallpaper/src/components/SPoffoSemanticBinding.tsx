@@ -1,16 +1,11 @@
 import {createMemo, Show} from 'solid-js'
-import type {
-  SemanticAction,
-  SemanticActionRelease,
-  SemanticBinding,
-} from '@winter-love/wallpaper/settings/semantics'
+import type {SemanticAction, SemanticBinding} from '@winter-love/wallpaper/settings/semantics'
 import {semanticTargets} from '@winter-love/wallpaper/settings/semantic-targets'
 import {SPoffoActionSelection} from './SPoffoActionSelection'
 import type {CharacterAction} from '../features/semantics/types'
 import {SPoffoSemanticDescription} from './SPoffoSemanticDescription'
 import {SPoffoSemanticPreview} from './SPoffoSemanticPreview'
-import {SSelect} from './SSelect'
-import {SNumberInput} from './SNumberInput'
+import {SPoffoActionTrigger} from './SPoffoActionTrigger'
 import {SSwitch} from './SSwitch'
 
 interface SPoffoSemanticBindingProps {
@@ -26,6 +21,7 @@ interface SPoffoSemanticBindingProps {
 export const SPoffoSemanticBinding = (props: SPoffoSemanticBindingProps) => {
   const update = (patch: Partial<SemanticBinding>) => props.onChange?.({...props.value, ...patch})
   const caption = () => props.label ?? '연결'
+  const matching = () => (props.value.category ?? 'emotion') === 'emotion'
   const scoreLabel = () => (props.score === -1 ? '제외' : `매칭 ${props.score?.toFixed(2)}`)
   const targets = createMemo(() => semanticTargets(props.value))
   const available = () =>
@@ -39,9 +35,6 @@ export const SPoffoSemanticBinding = (props: SPoffoSemanticBindingProps) => {
     update({action: undefined, actions, parameterId: null})
   const handleGroup = (event: Event & {currentTarget: HTMLInputElement}) =>
     update({exclusiveGroup: event.currentTarget.value.trim() || undefined})
-  const handleCategory = (category: 'emotion' | 'behavior') => update({category})
-  const handleThreshold = (threshold: number) => update({threshold})
-  const handleRelease = (release: SemanticActionRelease) => update({release})
   return (
     <div
       role="group"
@@ -54,7 +47,7 @@ export const SPoffoSemanticBinding = (props: SPoffoSemanticBindingProps) => {
           checked={props.value.enabled}
           onChange={props.onChange === undefined ? undefined : handleEnabled}
         />
-        <Show when={props.value.category !== 'behavior' && props.score !== undefined}>
+        <Show when={matching() && props.score !== undefined}>
           <output aria-label={`${caption()} 매칭 점수`} class="text-xs text-stone-600">
             {scoreLabel()}
           </output>
@@ -76,7 +69,7 @@ export const SPoffoSemanticBinding = (props: SPoffoSemanticBindingProps) => {
           삭제
         </button>
       </div>
-      <Show when={props.value.category !== 'behavior'}>
+      <Show when={matching()}>
         <SPoffoSemanticDescription
           value={props.value}
           label={caption()}
@@ -103,43 +96,12 @@ export const SPoffoSemanticBinding = (props: SPoffoSemanticBindingProps) => {
           px-2 py-1.5 font-inherit text-inherit"
         />
       </label>
-      <SSelect
-        label={`${caption()} 종류`}
-        value={props.value.category ?? 'emotion'}
-        options={[
-          {label: '감정·내용', value: 'emotion'},
-          {label: '일반 행동', value: 'behavior'},
-        ]}
-        onChange={handleCategory}
-        disabled={props.onChange === undefined}
+      <SPoffoActionTrigger
+        value={props.value}
+        label={caption()}
+        actions={props.actions}
+        onChange={props.onChange}
       />
-      <Show when={props.value.category !== 'behavior'}>
-        <label class="grid gap-1 text-xs text-stone-600">
-          매칭 기준
-          <SNumberInput
-            label={`${caption()} 매칭 기준`}
-            value={props.value.threshold}
-            min={0}
-            max={0.99}
-            step={0.01}
-            disabled={props.onChange === undefined}
-            onChange={handleThreshold}
-          />
-        </label>
-      </Show>
-      <label class="grid gap-1 text-xs text-stone-600">
-        해제 시점
-        <SSelect
-          label={`${caption()} 해제 시점`}
-          value={props.value.release ?? 'speech-end'}
-          options={[
-            {label: '음성이 끝나면 해제', value: 'speech-end'},
-            {label: '다음 음성까지 유지', value: 'next-speech'},
-          ]}
-          onChange={handleRelease}
-          disabled={props.onChange === undefined}
-        />
-      </label>
     </div>
   )
 }

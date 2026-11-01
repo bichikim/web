@@ -1,8 +1,9 @@
 import {isTauri} from '@tauri-apps/api/core'
 import {getCurrentWindow} from '@tauri-apps/api/window'
-import {type Accessor, createEffect, createSignal, onCleanup, onMount} from 'solid-js'
+import {type Accessor, createEffect, createMemo, createSignal, onCleanup, onMount} from 'solid-js'
 import {createStore, reconcile} from 'solid-js/store'
 import {createLibraryRepository} from '@winter-love/wallpaper/settings/library-repository'
+import {menuActions} from '../semantics/menu-actions'
 import {createBuiltinSettings} from '../builtin-assets'
 import type {PoffoWidget, WidgetSize} from '@winter-love/wallpaper/settings/library-model'
 
@@ -14,6 +15,7 @@ export const useWidget = (id: Accessor<string>) => {
   const assets = createBuiltinSettings('wallpaper-settings')
   const [state, setState] = createStore<WidgetState>({widget: null})
   const [error, setError] = createSignal<string | null>(null)
+  const [actionError, setActionError] = createSignal<string | null>(null)
   let disposed = false
   let stopMove: (() => void) | null = null
   let pending = Promise.resolve()
@@ -84,18 +86,40 @@ export const useWidget = (id: Accessor<string>) => {
     }
     getCurrentWindow().startDragging().catch(report)
   }
+  const registered = createMemo(() => menuActions(state.widget?.speech?.semanticBindings ?? []))
+  const toggleAction = (bindingId: string) => {
+    const widgetId = id()
+    pending = pending
+      .then(async () => {
+        if (!disposed) {
+          await library.toggleWidgetAction(widgetId, bindingId)
+          if (!disposed) {
+            setActionError(null)
+          }
+        }
+      })
+      .catch((cause: unknown) => {
+        if (!disposed) {
+          console.error('Poffo action update failed', cause)
+          setActionError('행동을 변경하지 못했어요.')
+        }
+      })
+    return pending
+  }
   return {
     agentBindings: () => state.widget?.speech?.agentBindings,
     assetId: () => state.widget?.assetId ?? null,
     drag,
-    error,
+    error: () => actionError() ?? error(),
     lipsync: () =>
       state.widget?.speech?.enabled === false ? undefined : state.widget?.speech?.lipsync,
     load: assets.loadPuppet,
+    menuActions: registered,
     motionId: () => state.widget?.motionId,
     report,
     saveSize: (size: WidgetSize) => library.resizeWidget(id(), size),
     semanticBindings: () => state.widget?.speech?.semanticBindings,
+    toggleAction,
     tracking: () => state.widget?.tracking,
     trackingBindings: () => state.widget?.trackingBindings,
     trackingOptions: () => state.widget?.trackingOptions,

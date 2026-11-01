@@ -155,3 +155,20 @@ it.each([
     expect(migrateSemanticActions(bundle)).toBe(bundle)
   },
 )
+
+it('should replace only stock apology text with the menu-only miniature pose', () => {
+  const old = semanticBindingsSchema.parse(previous).find((binding) => binding.id === 'ash:shrink')!
+  const saved = {...old, exclusiveGroup: '몸동작', release: 'next-speech' as const, threshold: 0.91}
+  const migrated = migrateSemanticActions([saved])
+  expect(migrated[0]).toMatchObject({
+    category: 'menu',
+    exclusiveGroup: '몸동작',
+    menuLabel: '귀엽게 작아지기',
+    release: 'next-speech',
+    threshold: 0.91,
+  })
+  expect(migrated[0].text).not.toContain('죄송')
+  expect(migrateSemanticActions(migrated)).toBe(migrated)
+  const edited = [{...saved, text: '사용자가 직접 등록한 내용'}]
+  expect(migrateSemanticActions(edited)).toBe(edited)
+})

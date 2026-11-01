@@ -49,11 +49,11 @@ export const SPoffoSemanticSettings = (props: SPoffoSemanticSettingsProps) => {
   }
   return (
     <section
-      aria-label="감정·내용 연결"
+      aria-label="행동 연결"
       class="grid gap-3 border-0 border-t border-solid border-stone-200 pt-3 text-[13px]"
     >
       <div class="flex items-center justify-between gap-2">
-        <h3 class="m-0 font-medium text-stone-700">감정·내용</h3>
+        <h3 class="m-0 font-medium text-stone-700">행동 연결</h3>
         <button
           type="button"
           onClick={add}

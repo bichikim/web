@@ -239,11 +239,11 @@ it.each([320, 496])(
     expect(mounted.container.firstElementChild!.scrollWidth).toBeLessThanOrEqual(width)
     screen.getByRole('radio', {name: '행동'}).focus()
     await userEvent.keyboard('{Space}')
-    expect(screen.getByRole('region', {name: '감정·내용 연결'})).toBeInTheDocument()
+    expect(screen.getByRole('region', {name: '행동 연결'})).toBeInTheDocument()
     expect(screen.queryByRole('region', {name: '위젯 말풍선 설정'})).toBeNull()
     screen.getByRole('radio', {name: '랜덤 행동'}).focus()
     await userEvent.keyboard('{Space}')
-    expect(screen.queryByRole('region', {name: '감정·내용 연결'})).toBeNull()
+    expect(screen.queryByRole('region', {name: '행동 연결'})).toBeNull()
     expect(mounted.container.firstElementChild!.scrollWidth).toBeLessThanOrEqual(width)
     expect(
       within(screen.getByRole('region', {name: '감정·내용 미매칭 랜덤 행동'})).queryAllByRole(

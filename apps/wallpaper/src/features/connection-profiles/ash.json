@@ -306,7 +306,7 @@
       },
       {
         "id": "ash:shrink",
-        "text": "제가 착각했네요. 실수해서 죄송해요.\n앗, 잘못했어요. 바로잡을게요.\n제 설명이 틀렸네요. 정정할게요.\n제가 잘못 이해하고 답했네요. 바로 정정하겠습니다.\n앞서 드린 설명에 제 실수가 있었습니다. 죄송해요.\n제가 놓친 부분이 있었네요. 다시 확인해서 고칠게요.",
+        "text": "캐릭터가 귀엽게 작아진 모습으로 바뀌어요.",
         "threshold": 0.846,
         "enabled": true,
         "action": {
@@ -315,9 +315,10 @@
         },
         "parameterId": null,
         "mode": "toggle",
-        "excludeText": "제 답변의 오류가 아니라 사용자 입력의 오타예요.\n제가 앞서 설명한 내용은 맞아서 고칠 필요가 없어요.",
-        "category": "behavior",
-        "exclusiveGroup": "몸동작"
+        "excludeText": "",
+        "category": "menu",
+        "exclusiveGroup": "몸동작",
+        "menuLabel": "귀엽게 작아지기"
       },
       {
         "id": "ash:glasses",

@@ -81,3 +81,26 @@ it('should retain tracking inputs on unrelated snapshots and react to actual nes
     [2, 'ParamEyeBallX'],
   ])
 })
+
+it('should report a failed menu update without leaving a rejected event handler', async () => {
+  vi.mocked(isTauri).mockReturnValue(false)
+  const actual = await vi.importActual<
+    typeof import('@winter-love/wallpaper/settings/library-repository')
+  >('@winter-love/wallpaper/settings/library-repository')
+  const repository = actual.createLibraryRepository(`widget-menu-failure-${crypto.randomUUID()}`)
+  const failure = new Error('Storage unavailable')
+  const toggle = vi.fn().mockRejectedValueOnce(failure).mockResolvedValue(undefined)
+  const logged = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+  vi.mocked(createLibraryRepository).mockReturnValue({...repository, toggleWidgetAction: toggle})
+  try {
+    const {result} = renderHook(() => useWidget(() => 'menu-widget'))
+    await expect(result.toggleAction('tiny')).resolves.toBeUndefined()
+    expect(result.error()).toBe('행동을 변경하지 못했어요.')
+    expect(toggle).toHaveBeenCalledExactlyOnceWith('menu-widget', 'tiny')
+    expect(logged).toHaveBeenCalledWith('Poffo action update failed', failure)
+    await result.toggleAction('tiny')
+    expect(result.error()).toBeNull()
+  } finally {
+    logged.mockRestore()
+  }
+})

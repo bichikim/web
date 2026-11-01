@@ -123,3 +123,15 @@ it('should analyze a bundle once and ignore an explicitly cleared legacy connect
     'task: classification | query: 기쁨',
   ])
 })
+
+it('should avoid embedding menu-only descriptions', async () => {
+  const embed = vi.fn()
+  expect(
+    await classifySemantics({
+      bindings: [{...binding, category: 'menu', menuActive: true}],
+      embed,
+      text: '기뻐요',
+    }),
+  ).toEqual({})
+  expect(embed).not.toHaveBeenCalled()
+})

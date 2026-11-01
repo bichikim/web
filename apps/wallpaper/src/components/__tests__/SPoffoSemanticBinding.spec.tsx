@@ -120,3 +120,33 @@ test('should add and remove actions while sharing one group and release point', 
   fireEvent.click(screen.getByRole('button', {name: '연결 행동 1 삭제'}))
   await vi.waitFor(() => expect(value().actions?.map((action) => action.id)).toEqual(['smile']))
 })
+
+test('should register a menu action without speech matching or release controls', () => {
+  const [value, setValue] = createSignal<SemanticBinding>({
+    action: {id: 'tiny', kind: 'expression'},
+    enabled: true,
+    id: 'tiny',
+    mode: 'toggle',
+    parameterId: null,
+    text: '이전 문구',
+    threshold: 0.8,
+  })
+  render(() => (
+    <SPoffoSemanticBinding
+      value={value()}
+      onChange={setValue}
+      actions={[{action: {id: 'tiny', kind: 'expression'}, label: '작아지기'}]}
+      score={1}
+    />
+  ))
+  fireEvent.click(screen.getByRole('combobox', {name: '연결 종류'}))
+  fireEvent.click(screen.getByRole('option', {name: '우클릭 메뉴'}))
+  expect(value()).toMatchObject({category: 'menu', menuLabel: '작아지기'})
+  expect(screen.queryByRole('textbox', {name: '연결 감정·행동·내용'})).toBeNull()
+  expect(screen.queryByRole('combobox', {name: '연결 해제 시점'})).toBeNull()
+  expect(screen.queryByLabelText('연결 매칭 점수')).toBeNull()
+  fireEvent.change(screen.getByRole('textbox', {name: '연결 메뉴 이름'}), {
+    target: {value: '귀엽게 작아지기'},
+  })
+  expect(value().menuLabel).toBe('귀엽게 작아지기')
+})

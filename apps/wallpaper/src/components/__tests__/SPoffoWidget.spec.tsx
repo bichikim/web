@@ -15,13 +15,21 @@ vi.mock('@tauri-apps/api/window', async () => {
   return {...actual, getCurrentWindow: vi.fn()}
 })
 const original = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'showPopover')
-beforeAll(() =>
+beforeAll(() => {
+  vi.stubGlobal(
+    'ResizeObserver',
+    class {
+      observe() {}
+      disconnect() {}
+    },
+  )
   Object.defineProperty(HTMLElement.prototype, 'showPopover', {
     configurable: true,
     value: vi.fn(),
-  }),
-)
+  })
+})
 afterAll(() => {
+  vi.unstubAllGlobals()
   if (original === undefined) {
     Reflect.deleteProperty(HTMLElement.prototype, 'showPopover')
   } else {
@@ -51,10 +59,12 @@ const setup = () => {
     error: () => null,
     lipsync: () => undefined,
     load: vi.fn(),
+    menuActions: () => [],
     motionId: () => undefined,
     report: vi.fn(),
     saveSize: vi.fn().mockResolvedValue(undefined),
     semanticBindings: () => undefined,
+    toggleAction: vi.fn(),
     tracking: () => undefined,
     trackingBindings: () => undefined,
     trackingOptions: () => undefined,

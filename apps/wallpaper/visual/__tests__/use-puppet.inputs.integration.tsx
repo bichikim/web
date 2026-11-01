@@ -210,6 +210,10 @@ test('should apply vowel poses and semantic expressions to the bundled Ash playe
       timeout: 3000,
     })
     .toEqual([0, 0])
+  await sendSemanticFrame({previewId: 'ash:shrink', scores: {}, widgetId: 'ash-widget'})
+  await expect.poll(() => player.getParameterValue('Param95'), {timeout: 3000}).toBeCloseTo(1)
+  await sendSemanticFrame({scores: {}, widgetId: 'ash-widget'})
+  await expect.poll(() => player.getParameterValue('Param95'), {timeout: 3000}).toBeCloseTo(0)
   globalThis.dispatchEvent(new PointerEvent('pointermove', {clientX: 800, clientY: 80}))
   await expect.poll(() => player.getParameterValue('ParamAngleY')).toBeGreaterThan(1)
   const publish = createLipSyncPublisher('ash-widget')

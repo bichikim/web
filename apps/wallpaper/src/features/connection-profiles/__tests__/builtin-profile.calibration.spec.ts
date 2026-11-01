@@ -22,9 +22,17 @@ test.each(['fp32', 'q4'] as const)(
   (backend) => {
     expect(bindings).toHaveLength(28)
     expect(
-      bindings.map(({id, text, excludeText, threshold}) => ({excludeText, id, text, threshold})),
-    ).toEqual(measured.descriptions)
-    for (const binding of bindings.filter((binding) => binding.category !== 'behavior')) {
+      bindings
+        .filter((binding) => binding.category !== 'menu')
+        .map(({id, text, excludeText, threshold}) => ({excludeText, id, text, threshold})),
+    ).toEqual(
+      measured.descriptions.filter(
+        (item) => bindings.find((binding) => binding.id === item.id)?.category !== 'menu',
+      ),
+    )
+    for (const binding of bindings.filter(
+      (binding) => (binding.category ?? 'emotion') === 'emotion',
+    )) {
       const positive = measured.cases.filter(
         (sample) =>
           sample.expected === binding.id &&

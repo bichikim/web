@@ -214,3 +214,64 @@ test('should suppress a cleared legacy target and choose a whole random bundle',
     }).map((selection) => selection.action.action.id),
   ).toEqual(['smile', 'notes'])
 })
+
+test('should retain checked menu actions across narration and prioritize them within their group', () => {
+  const menu = {
+    ...bindings[0],
+    category: 'menu' as const,
+    exclusiveGroup: 'body',
+    id: 'tiny',
+    menuActive: true,
+  }
+  const automatic = {
+    ...bindings[0],
+    action: {id: 'walk', kind: 'motion' as const},
+    exclusiveGroup: 'body',
+    id: 'walk',
+  }
+  const face = {
+    ...bindings[0],
+    action: {id: 'face', kind: 'expression' as const},
+    exclusiveGroup: 'face',
+  }
+  const all = [menu, automatic, face]
+  const actions = all.map((binding) => ({action: binding.action!, label: binding.id}))
+  const selected = (frame: Parameters<typeof selectSemanticActions>[0]['frame']) =>
+    selectSemanticActions({actions, bindings: all, frame}).map(
+      (selection) => selection.action.action.id,
+    )
+  expect(selected(null)).toEqual(['smile'])
+  expect(selected({scores: {happy: 1, walk: 1}, widgetId: 'menu'})).toEqual(['smile', 'face'])
+  expect(
+    selected({narration: {phase: 'ended'}, scores: {happy: 1, walk: 1}, widgetId: 'menu'}),
+  ).toEqual(['smile'])
+  expect(selected({previewId: 'walk', scores: {}, widgetId: 'menu'})).toEqual(['walk'])
+  expect(selected({scores: {}, widgetId: 'menu'})).toEqual(['smile'])
+  expect(
+    selectSemanticActions({
+      actions,
+      bindings: [{...menu, menuActive: false}],
+      frame: {scores: {tiny: 1}, widgetId: 'menu'},
+    }),
+  ).toEqual([])
+})
+
+test('should exclude menu actions from random draws and avoid groups already held by a menu toggle', () => {
+  const menu = {
+    ...bindings[0],
+    category: 'menu' as const,
+    exclusiveGroup: 'hands',
+    menuActive: true,
+  }
+  const behavior = {...bindings[1], exclusiveGroup: 'hands'}
+  const options = {
+    bindings: [menu, behavior],
+    random: vi.fn(() => 0),
+    scores: {happy: 1},
+    settings: {enabled: true, probability: 1},
+  }
+  expect(chooseRandomAction(options)).toBeUndefined()
+  expect(chooseRandomAction({...options, bindings: [{...menu, menuActive: false}, behavior]})).toBe(
+    'notes',
+  )
+})

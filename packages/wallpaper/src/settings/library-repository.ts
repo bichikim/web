@@ -1,4 +1,5 @@
 import {type PoffoConnections, poffoConnectionsSchema} from './connections'
+import {toggleMenuAction} from './toggle-menu-action'
 import {mergeConnections} from './merge-connections'
 import Dexie, {liveQuery, type Table} from 'dexie'
 import {poffoVoiceSchema} from './voice'
@@ -51,6 +52,7 @@ export interface LibraryRepository {
   readonly bindWidget: (id: string, bindings: PoffoTrackingBindings) => Promise<void>
   readonly moveSpeech: (id: string, position: PoffoSpeechPosition) => Promise<void>
   readonly configureSpeech: (id: string, speech: PoffoSpeech) => Promise<void>
+  readonly toggleWidgetAction: (id: string, bindingId: string) => Promise<void>
   readonly setWidgetMotion: (id: string, motionId: string | null | undefined) => Promise<void>
   readonly subscribe: (refresh: () => void, onError: (error: unknown) => void) => () => void
   readonly close: () => void
@@ -139,6 +141,19 @@ export const createLibraryRepository = (name: string): LibraryRepository => {
     subscribe(refresh, onError) {
       const subscription = liveQuery(read).subscribe({error: onError, next: refresh})
       return () => subscription.unsubscribe()
+    },
+    async toggleWidgetAction(id, bindingId) {
+      await database.transaction('rw', database.widgets, async () => {
+        const widget = await database.widgets.get(id)
+        const bindings = widget?.speech?.semanticBindings
+        if (widget === undefined || bindings === undefined) {
+          return
+        }
+        const next = toggleMenuAction(bindings, bindingId)
+        if (next !== bindings) {
+          await database.widgets.update(id, {speech: {...widget.speech!, semanticBindings: next}})
+        }
+      })
     },
     async trackWidget(id, tracking) {
       await database.widgets.update(id, {tracking: poffoTrackingSchema.parse(tracking)})

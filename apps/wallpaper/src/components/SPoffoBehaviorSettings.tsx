@@ -22,7 +22,7 @@ export const SPoffoBehaviorSettings = (props: SPoffoBehaviorSettingsProps) => {
       <SSegmentedControl
         label="행동 연결 항목"
         options={[
-          {label: '문장 연결', value: 'semantic'},
+          {label: '행동 연결', value: 'semantic'},
           {label: '랜덤 행동', value: 'random'},
           {label: '작업 상태', value: 'agent'},
         ]}

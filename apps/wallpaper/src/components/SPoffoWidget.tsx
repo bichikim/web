@@ -104,6 +104,8 @@ export const SPoffoWidget = (props: SPoffoWidgetProps) => {
           <SWidgetContextMenu
             x={position().x}
             y={position().y}
+            actions={widget.menuActions()}
+            onToggle={widget.toggleAction}
             editing={adjustment.editing()}
             disabled={adjustment.busy()}
             onSelect={handleAction}

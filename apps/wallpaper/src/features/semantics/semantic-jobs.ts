@@ -8,7 +8,10 @@ export const semanticJobs = (
 ) =>
   widgets.map((widget) => {
     const input = inputs.get(widget.id) ?? {text: '', widgetId: widget.id}
-    const bindings = widget.speech?.semanticBindings?.map((binding) => ({...binding})) ?? []
+    const bindings =
+      widget.speech?.semanticBindings
+        ?.filter((binding) => binding.category !== 'menu')
+        .map((binding) => ({...binding})) ?? []
     const randomActions = widget.speech?.randomActions
     return {id: widget.id, input, signature: JSON.stringify([input, bindings, randomActions])}
   })

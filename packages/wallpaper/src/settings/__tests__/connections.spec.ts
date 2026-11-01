@@ -179,3 +179,20 @@ it('should accept sixteen distinct actions and reject bundles beyond the limit',
     reason: 'invalid',
   })
 })
+
+it('should preserve registered menu labels and checked state in settings JSON', () => {
+  const input = {
+    ...profile,
+    connections: {
+      semanticBindings: [
+        {
+          ...profile.connections.semanticBindings[0],
+          category: 'menu',
+          menuActive: true,
+          menuLabel: '귀엽게 작아지기',
+        },
+      ],
+    },
+  }
+  expect(parseConnectionProfile(JSON.stringify(input), options)).toEqual({ok: true, profile: input})
+})

@@ -20,3 +20,9 @@ export interface SemanticPlayer {
     options: {readonly loop: boolean},
   ) => Pick<MotionPlayback, 'stop'> | undefined
 }
+
+export interface ContextAction {
+  readonly id: string
+  readonly label: string
+  readonly checked: boolean
+}

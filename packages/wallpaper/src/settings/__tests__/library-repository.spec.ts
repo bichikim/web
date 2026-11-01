@@ -429,3 +429,55 @@ it('should reject invalid connections before replacing stored values', async () 
   ).rejects.toThrow()
   expect((await reopened.read()).widgets[0]?.speech?.semanticBindings).toEqual([])
 })
+
+it('should toggle registered menu bundles transactionally and preserve unrelated speech settings', async () => {
+  const repository = open()
+  const widget = await repository.addWidget('character')
+  const entry = {
+    action: {id: 'tiny', kind: 'expression' as const},
+    category: 'menu' as const,
+    enabled: true,
+    exclusiveGroup: 'body',
+    id: 'tiny',
+    mode: 'toggle' as const,
+    parameterId: null,
+    text: '',
+    threshold: 0.8,
+  }
+  await repository.configureSpeech(widget.id, {
+    enabled: true,
+    semanticBindings: [
+      entry,
+      {...entry, id: 'large'},
+      {...entry, exclusiveGroup: 'accessory', id: 'glasses'},
+    ],
+    voice: DEFAULT_POFFO_VOICE,
+    x: 0.2,
+    y: 0.4,
+  })
+  await Promise.all([
+    repository.toggleWidgetAction(widget.id, 'tiny'),
+    repository.toggleWidgetAction(widget.id, 'glasses'),
+  ])
+  const speech = (await repository.read()).widgets[0]!.speech!
+  expect(
+    speech.semanticBindings?.filter((binding) => binding.menuActive).map((binding) => binding.id),
+  ).toEqual(['tiny', 'glasses'])
+  await repository.toggleWidgetAction(widget.id, 'large')
+  expect(
+    (await repository.read()).widgets[0]!.speech?.semanticBindings?.filter(
+      (binding) => binding.menuActive,
+    ).map((binding) => binding.id),
+  ).toEqual(['large', 'glasses'])
+  await repository.toggleWidgetAction(widget.id, 'large')
+  expect((await repository.read()).widgets[0]!.speech).toMatchObject({
+    voice: DEFAULT_POFFO_VOICE,
+    x: 0.2,
+    y: 0.4,
+  })
+  expect(
+    (await repository.read()).widgets[0]!.speech?.semanticBindings?.filter(
+      (binding) => binding.menuActive,
+    ).map((binding) => binding.id),
+  ).toEqual(['glasses'])
+})

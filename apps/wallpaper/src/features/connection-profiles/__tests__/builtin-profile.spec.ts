@@ -47,3 +47,11 @@ it.each([
   ])
   expect(binding.action).toBeUndefined()
 })
+
+it('should reserve the cute miniature pose for the context menu rather than apology matching', () => {
+  const binding = builtinConnectionProfile('builtin:ash')!.connections.semanticBindings!.find(
+    (item) => item.id === 'ash:shrink',
+  )!
+  expect(binding).toMatchObject({category: 'menu', menuLabel: '귀엽게 작아지기'})
+  expect(binding.text).not.toContain('죄송')
+})

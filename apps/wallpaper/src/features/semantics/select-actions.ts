@@ -1,5 +1,7 @@
 import type {SemanticBinding, SemanticFrame} from '@winter-love/wallpaper/settings/semantics'
 import type {RandomActionSettings} from '@winter-love/wallpaper/settings/random-actions'
+import {activeMenuBindings} from '@winter-love/wallpaper/settings/active-menu-bindings'
+import {semanticGroup} from '@winter-love/wallpaper/settings/semantic-group'
 import {semanticTargets} from '@winter-love/wallpaper/settings/semantic-targets'
 import type {CharacterAction, SemanticSelection} from './types'
 
@@ -23,8 +25,10 @@ export const selectSemanticActions = (
   )
   const matched = bindings.filter(
     (binding) =>
-      binding.category !== 'behavior' && (frame?.scores[binding.id] ?? -1) >= binding.threshold,
+      (binding.category ?? 'emotion') === 'emotion' &&
+      (frame?.scores[binding.id] ?? -1) >= binding.threshold,
   )
+  const checked = activeMenuBindings(bindings)
   const candidates =
     frame?.previewId === undefined
       ? matched.length > 0
@@ -33,18 +37,21 @@ export const selectSemanticActions = (
             (binding) => binding.category === 'behavior' && binding.id === frame?.fallbackId,
           )
       : bindings.filter((binding) => binding.id === frame.previewId)
-  for (const binding of candidates.toSorted(
+  const ranked = candidates.toSorted(
     (first, second) => (frame?.scores[second.id] ?? -1) - (frame?.scores[first.id] ?? -1),
-  )) {
+  )
+  const prioritized =
+    frame?.previewId === undefined ? [...checked, ...ranked] : [...ranked, ...checked]
+  for (const binding of prioritized) {
     const actions = semanticTargets(binding).flatMap((target) =>
       options.actions.filter(
         (item) => item.action.kind === target.kind && item.action.id === target.id,
       ),
     )
-    const group = binding.exclusiveGroup?.trim() || '기본 그룹'
+    const group = semanticGroup(binding)
     if (actions.length > 0 && !groups.has(group)) {
       groups.add(group)
-      if (!ended || binding.release === 'next-speech') {
+      if (binding.category === 'menu' || !ended || binding.release === 'next-speech') {
         winners.push(...actions.map((action) => ({action, group})))
       }
     }
@@ -69,15 +76,19 @@ export const chooseRandomAction = (options: ChooseRandomActionOptions): string |
       (binding) =>
         binding.enabled &&
         semanticTargets(binding).length > 0 &&
-        binding.category !== 'behavior' &&
+        (binding.category ?? 'emotion') === 'emotion' &&
         (options.scores[binding.id] ?? -1) >= binding.threshold,
     )
   ) {
     return undefined
   }
+  const held = new Set(activeMenuBindings(options.bindings).map(semanticGroup))
   const candidates = options.bindings.filter(
     (binding) =>
-      binding.enabled && binding.category === 'behavior' && semanticTargets(binding).length > 0,
+      binding.enabled &&
+      binding.category === 'behavior' &&
+      semanticTargets(binding).length > 0 &&
+      !held.has(semanticGroup(binding)),
   )
   if (
     candidates.length === 0 ||
