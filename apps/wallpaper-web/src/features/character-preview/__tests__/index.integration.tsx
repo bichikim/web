@@ -16,9 +16,9 @@ afterEach(() => {
   vi.clearAllMocks()
 })
 
-test('should render the compact Poffo idle model and follow the desktop curve to every model limit', async () => {
+test('should add default mouse tracking to the compact Poffo idle animation without accumulating values', async () => {
   const rendered = Promise.withResolvers<void>()
-  const [tracking, setTracking] = createSignal(false)
+  const [tracking, setTracking] = createSignal(true)
   const view = render(() => (
     <div class="h-150 w-120">
       <SPuppetCharacter
@@ -34,9 +34,18 @@ test('should render the compact Poffo idle model and follow the desktop curve to
   const idle = options.document.motions?.find((motion) => motion.id === 'Idle:0')
   expect(idle).toMatchObject({duration: 4.983, loop: true})
   expect(idle?.tracks).toHaveLength(23)
-  const player = await vi.mocked(playerModule.createPlayer).mock.results[0]!.value
+  const player: playerModule.Player = await vi.mocked(playerModule.createPlayer).mock.results[0]!
+    .value
   player.pause()
+  player.seek(4)
+  const later = player.getParameterValues()
   player.seek(2)
+  const earlier = player.getParameterValues()
+  const blends = vi.spyOn(player, 'patchParameterBlends')
+  const expected = (id: string, base: Readonly<Record<string, number>>, contribution: number) => {
+    const parameter = options.document.parameters!.find((parameter) => parameter.id === id)!
+    return Math.max(parameter.minimum, Math.min(parameter.maximum, base[id]! + contribution))
+  }
   expect(player.getParameterValue('ParamEyeBallX')).toBeCloseTo(0.133333, 5)
   expect(player.getParameterValue('ParamEyeBallY')).toBeCloseTo(0.04, 5)
   const canvas = screen.getByLabelText('흰 고양이 캐릭터 실시간 렌더링')
@@ -52,25 +61,42 @@ test('should render the compact Poffo idle model and follow the desktop curve to
   }
   const move = (x: number, y: number) =>
     globalThis.dispatchEvent(new PointerEvent('pointermove', {clientX: x, clientY: y}))
-  setTracking(true)
   move(face.x + height / 4, face.y)
   await expect
     .poll(() => player.getParameterValue('ParamAngleX'), {timeout: 10_000})
-    .toBeCloseTo(cursorResponse(0.25) * 30, 2)
-  move(face.x + height, face.y)
-  await expect.poll(() => player.getParameterValue('ParamAngleX'), {timeout: 10_000}).toBe(30)
-  expect(player.getParameterValue('ParamEyeBallX')).toBe(1)
+    .toBeCloseTo(earlier.ParamAngleX! + cursorResponse(0.25) * 30, 2)
+  await expect
+    .poll(() => player.getParameterValue('ParamEyeBallX'), {timeout: 10_000})
+    .toBeCloseTo(earlier.ParamEyeBallX! + cursorResponse(0.25), 3)
   player.seek(4)
-  expect(player.getParameterValue('ParamAngleX')).toBe(30)
+  expect(player.getParameterValue('ParamAngleX')).toBeCloseTo(
+    later.ParamAngleX! + cursorResponse(0.25) * 30,
+    2,
+  )
+  player.seek(2)
+  player.seek(2)
+  expect(player.getParameterValue('ParamAngleX')).toBeCloseTo(
+    earlier.ParamAngleX! + cursorResponse(0.25) * 30,
+    2,
+  )
+  move(face.x + height, face.y)
+  await expect.poll(() => blends.mock.lastCall?.[0].ParamAngleX?.value, {timeout: 10_000}).toBe(30)
+  expect(player.getParameterValue('ParamAngleX')).toBe(expected('ParamAngleX', earlier, 30))
+  expect(player.getParameterValue('ParamEyeBallX')).toBe(expected('ParamEyeBallX', earlier, 1))
+  player.seek(4)
+  expect(player.getParameterValue('ParamAngleX')).toBe(expected('ParamAngleX', later, 30))
   move(face.x - height, face.y)
-  await expect.poll(() => player.getParameterValue('ParamAngleX'), {timeout: 10_000}).toBe(-30)
-  expect(player.getParameterValue('ParamEyeBallX')).toBe(-1)
+  await expect.poll(() => blends.mock.lastCall?.[0].ParamAngleX?.value, {timeout: 10_000}).toBe(-30)
+  expect(player.getParameterValue('ParamAngleX')).toBe(expected('ParamAngleX', later, -30))
+  expect(player.getParameterValue('ParamEyeBallX')).toBe(expected('ParamEyeBallX', later, -1))
   move(face.x, face.y - height)
-  await expect.poll(() => player.getParameterValue('ParamAngleY'), {timeout: 10_000}).toBe(30)
-  expect(player.getParameterValue('ParamEyeBallY')).toBe(1)
+  await expect.poll(() => blends.mock.lastCall?.[0].ParamAngleY?.value, {timeout: 10_000}).toBe(30)
+  expect(player.getParameterValue('ParamAngleY')).toBe(expected('ParamAngleY', later, 30))
+  expect(player.getParameterValue('ParamEyeBallY')).toBe(expected('ParamEyeBallY', later, 1))
   move(face.x, face.y + height)
-  await expect.poll(() => player.getParameterValue('ParamAngleY'), {timeout: 10_000}).toBe(-30)
-  expect(player.getParameterValue('ParamEyeBallY')).toBe(-1)
+  await expect.poll(() => blends.mock.lastCall?.[0].ParamAngleY?.value, {timeout: 10_000}).toBe(-30)
+  expect(player.getParameterValue('ParamAngleY')).toBe(expected('ParamAngleY', later, -30))
+  expect(player.getParameterValue('ParamEyeBallY')).toBe(expected('ParamEyeBallY', later, -1))
   setTracking(false)
   player.seek(2)
   expect(player.getParameterValue('ParamEyeBallX')).toBeCloseTo(0.133333, 5)

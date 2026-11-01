@@ -32,7 +32,7 @@ const FRAMES_PER_SECOND = 60
 const FRAME_SECONDS = 1 / FRAMES_PER_SECOND
 const MILLISECONDS_PER_SECOND = 1000
 
-/** Smooths full-range gaze after animation and releases it so idle motion resumes on exit. */
+/** Adds smoothed full-range gaze to animation; exit releases only the tracking contribution. */
 export const connectCharacterLook = (options: ConnectCharacterLookOptions) => {
   const axes = AXES.flatMap((axis) => {
     const parameter = options.parameters.find((parameter) => parameter.id === axis.id)
@@ -56,9 +56,8 @@ export const connectCharacterLook = (options: ConnectCharacterLookOptions) => {
         axes.map(({id, axis, parameter}) => {
           const direction = current[axis]
           const endpoint = direction < 0 ? parameter.minimum : parameter.maximum
-          const value =
-            parameter.defaultValue + (endpoint - parameter.defaultValue) * Math.abs(direction)
-          return [id, {mode: 'overwrite' as const, value}]
+          const value = (endpoint - parameter.defaultValue) * Math.abs(direction)
+          return [id, {mode: 'add' as const, value}]
         }),
       ),
     )

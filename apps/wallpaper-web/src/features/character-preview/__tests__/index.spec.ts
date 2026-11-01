@@ -166,10 +166,10 @@ test('should smoothly reach model limits and leave idle animation free when trac
   expect(frames.size).toBe(1)
   settle()
   expect(player.patchParameterBlends).toHaveBeenLastCalledWith({
-    ParamAngleX: {mode: 'overwrite', value: 30},
-    ParamAngleY: {mode: 'overwrite', value: 0},
-    ParamEyeBallX: {mode: 'overwrite', value: 1},
-    ParamEyeBallY: {mode: 'overwrite', value: 0},
+    ParamAngleX: {mode: 'add', value: 30},
+    ParamAngleY: {mode: 'add', value: 0},
+    ParamEyeBallX: {mode: 'add', value: 1},
+    ParamEyeBallY: {mode: 'add', value: 0},
   })
   expect(frames.size).toBe(0)
   hook.result.lookAt({x: -259.9939507, y: 143.884641})

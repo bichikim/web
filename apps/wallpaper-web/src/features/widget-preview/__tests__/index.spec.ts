@@ -80,3 +80,15 @@ test('should refit after a phone resize and still reset to the center', () => {
   expect(hook.result.position()).toEqual({x: 0, y: 0})
   hook.cleanup()
 })
+
+test('should start with idle playback and mouse tracking enabled and allow tracking to be toggled', () => {
+  const hook = renderHook(useWidgetPreview)
+  expect(hook.result.motionId()).toBe('Idle:0')
+  expect(hook.result.playing()).toBe(true)
+  expect(hook.result.tracking()).toBe(true)
+  hook.result.toggleTracking()
+  expect(hook.result.tracking()).toBe(false)
+  hook.result.toggleTracking()
+  expect(hook.result.tracking()).toBe(true)
+  hook.cleanup()
+})
