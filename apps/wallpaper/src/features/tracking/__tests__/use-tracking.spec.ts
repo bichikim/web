@@ -27,6 +27,8 @@ afterEach(() => {
 })
 
 test('should add native cursor or camera input and release it on disable', async () => {
+  vi.stubGlobal('innerWidth', 100)
+  vi.stubGlobal('innerHeight', 100)
   vi.mocked(useViewport).mockReturnValue(() => null)
   const handlers = new Map<string, TrackingListener>()
   const listen = vi.fn(async (name: string, handler: (event: {payload: unknown}) => void) => {
@@ -78,9 +80,12 @@ test('should add native cursor or camera input and release it on disable', async
   )
   await Promise.resolve()
   await Promise.resolve()
-  handlers.get('poffo-cursor')?.({payload: {height: 100, width: 100, x: 300, y: 30}})
+  handlers.get('poffo-cursor')?.({payload: {height: 100, width: 100, x: 50, y: 30}})
   flush()
-  expect(player.patchParameterBlends.mock.lastCall?.[0]['face-x'].value).toBeCloseTo(12, 1)
+  expect(player.patchParameterBlends.mock.lastCall?.[0]['face-x'].value).toBe(0)
+  handlers.get('poffo-cursor')?.({payload: {height: 100, width: 100, x: 80, y: 30}})
+  flush()
+  expect(player.patchParameterBlends.mock.lastCall?.[0]['face-x'].value).toBeCloseTo(15, 1)
   expect(player.patchParameterBlends.mock.lastCall?.[0]['face-x'].mode).toBe('add')
   expect(invoke).toHaveBeenCalledWith(
     'subscribe_poffo_cursor',

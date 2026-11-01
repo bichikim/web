@@ -20,6 +20,7 @@ import {cameraTrackingPoints} from './camera-points'
 import {canvasCameraSurface} from './canvas-camera-surface'
 import {useViewport} from './use-viewport'
 import {createTrackingBlends} from './blends'
+import {createCursorTarget} from './cursor-target'
 
 interface UseTrackingProps {
   readonly mode: Accessor<PoffoTracking>
@@ -36,7 +37,6 @@ const FRAMES_PER_SECOND = 60
 const FRAME_SECONDS = 1 / FRAMES_PER_SECOND
 const MILLISECONDS_PER_SECOND = 1000
 const SETTLE_DISTANCE = 0.001
-const FACE_HEIGHT = 0.3
 
 export const useTracking = (props: UseTrackingProps) => {
   const viewport = useViewport(
@@ -51,7 +51,8 @@ export const useTracking = (props: UseTrackingProps) => {
     const reference = props.cameraSurface?.()
     const parameters = props.parameters()
     const bindings = props.bindings()
-    const map = createTrackingParameters(parameters, bindings, options)
+    const source = mode === 'cursor' ? 'cursor' : 'camera'
+    const map = createTrackingParameters(parameters, bindings, options, source)
     if (player === null) {
       return
     }
@@ -77,14 +78,14 @@ export const useTracking = (props: UseTrackingProps) => {
     }
     let disposed = false
     let origin: TrackingPoint = {x: 0, y: 0}
-    let target: TrackingPoint = {x: 0, y: 0}
+    let target: TrackingPoint | null = null
     let current: TrackingPoint = {x: 0, y: 0}
     let frame = 0
     let previous: number | null = null
     let stop: (() => void) | null = null
     const step = (timestamp: number) => {
       frame = 0
-      if (disposed) {
+      if (disposed || target === null) {
         return
       }
       const seconds =
@@ -103,7 +104,7 @@ export const useTracking = (props: UseTrackingProps) => {
         return
       }
       const next = {x: bounded(point.x), y: bounded(point.y)}
-      if (next.x === target.x && next.y === target.y) {
+      if (next.x === target?.x && next.y === target?.y) {
         return
       }
       target = next
@@ -112,15 +113,14 @@ export const useTracking = (props: UseTrackingProps) => {
       }
     }
     const cursor = (position: CursorPosition) => {
-      const bounds = canvas.getBoundingClientRect()
-      follow({
-        x:
-          (position.x - bounds.left - bounds.width / 2) /
-          Math.max(bounds.width, position.width / 2, 1),
-        y:
-          -(position.y - bounds.top - bounds.height * FACE_HEIGHT) /
-          Math.max(bounds.height, position.height / 2, 1),
-      })
+      follow(
+        createCursorTarget({
+          bounds: canvas.getBoundingClientRect(),
+          options,
+          point: position,
+          viewport: {height: innerHeight, width: innerWidth},
+        }),
+      )
     }
     const camera = (point: FacePosition) => {
       const surface =

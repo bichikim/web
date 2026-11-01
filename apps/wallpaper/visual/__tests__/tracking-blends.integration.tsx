@@ -64,7 +64,7 @@ test('should combine selected inputs with animation without accumulation and rel
       canvas,
       mode: () => 'cursor',
       onError: (cause) => errors.push(cause),
-      options: () => ({eyeResponseX: 0.5, headResponseX: 5 / 6}),
+      options: () => ({eyeResponseX: 0.9, headResponseX: 1}),
       parameters: () => model.parameters!,
       player: active,
     })
@@ -93,8 +93,15 @@ test('should combine selected inputs with animation without accumulation and rel
   player.pause()
   player.seek(0)
   setActive(player)
-  const follow = () =>
-    globalThis.dispatchEvent(new PointerEvent('pointermove', {clientX: 10000, clientY: 0}))
+  const follow = () => {
+    const bounds = canvas()!.getBoundingClientRect()
+    globalThis.dispatchEvent(
+      new PointerEvent('pointermove', {
+        clientX: bounds.left + bounds.width / 2 + (bounds.height * 0.3) / Math.sqrt(3),
+        clientY: bounds.top + bounds.height * 0.3,
+      }),
+    )
+  }
   try {
     follow()
     await expect.poll(() => player.getParameterValue('face-x')).toBeCloseTo(10, 1)

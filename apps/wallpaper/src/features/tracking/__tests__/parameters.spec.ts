@@ -1,6 +1,29 @@
 import {expect, test} from 'vitest'
 import {createTrackingParameters, resolveTrackingParameter} from '../parameters'
 
+test('should use the full cursor range at default gains without changing camera calibration', () => {
+  const parameters = [
+    {defaultValue: 0, id: 'face-x', maximum: 30, minimum: -30},
+    {defaultValue: 0, id: 'face-y', maximum: 30, minimum: -30},
+    {defaultValue: 0, id: 'gaze-x', maximum: 1, minimum: -1},
+    {defaultValue: 0, id: 'gaze-y', maximum: 1, minimum: -1},
+  ]
+  const cursor = createTrackingParameters(parameters, {}, {}, 'cursor')
+  const result = cursor({x: 1 / 3, y: 1 / 3})
+  expect(result['face-x']).toBeCloseTo(10)
+  expect(result['face-y']).toBeCloseTo(10)
+  expect(result['gaze-x']).toBeCloseTo(1 / 3)
+  expect(result['gaze-y']).toBeCloseTo(1 / 3)
+  const limited = createTrackingParameters(
+    parameters,
+    {headX: {inverted: true}},
+    {eyeResponseX: 0, headLimitX: 7},
+    'cursor',
+  )
+  expect(limited({x: 1, y: 0})).toMatchObject({'face-x': -7, 'gaze-x': 0})
+  expect(createTrackingParameters(parameters)({x: 1, y: 0})['face-x']).toBe(12)
+})
+
 test('should tune horizontal and vertical response independently while retaining the camera viewing direction', () => {
   const parameters = [
     {defaultValue: 0, id: 'face-x', maximum: 30, minimum: -30},

@@ -89,11 +89,12 @@ export const resolveTrackingInversion = (
   selected?: boolean,
 ): boolean => selected ?? (key === 'eyeY' && parameter?.positiveY === 'down')
 
-/** Maps bounded target directions to the selected head and gaze parameters. */
+/** Maps bounded directions to parameters, retaining camera calibration and using full cursor ranges at default gains. */
 export const createTrackingParameters = (
   parameters: readonly TrackingParameter[],
   bindings: PoffoTrackingBindings = {},
   options: PoffoTrackingOptions = {},
+  source: 'cursor' | 'camera' = 'camera',
 ) => {
   const mapped = TRACKING_AXES.flatMap((rule) => {
     const binding = bindings[rule.key]
@@ -133,7 +134,11 @@ export const createTrackingParameters = (
           Math.min(parameter.maximum, parameter.defaultValue + offset),
         )
         const range = scaled < 0 ? neutral - parameter.minimum : parameter.maximum - neutral
-        const amplitude = Math.abs(scaled) * Math.min(rule.limit, range * rule.ratio)
+        const amplitude =
+          Math.abs(scaled) *
+          (source === 'cursor'
+            ? range / DEFAULT_TRACKING_OPTIONS[TRACKING_RESPONSE_FIELDS[rule.target][rule.axis]]
+            : Math.min(rule.limit, range * rule.ratio))
         const limits = resolveTrackingRange(options, rule.target)
         const lower = rule.axis === 'x' ? limits.minX : limits.minY
         const upper = rule.axis === 'x' ? limits.maxX : limits.maxY

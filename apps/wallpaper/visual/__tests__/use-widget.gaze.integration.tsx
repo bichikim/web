@@ -17,7 +17,7 @@ afterEach(() => {
   vi.clearAllMocks()
 })
 
-test('should hold cursor gaze through speech saves and repeated idle loops without another pointer event', async () => {
+test('should follow cursor distance and retain gaze across speech saves and idle loops', async () => {
   const actual = await vi.importActual<typeof playerModule>('@winter-love/puppet/player')
   const repository = createLibraryRepository('wallpaper-library')
   const widget = await repository.addWidget('builtin:ash')
@@ -50,7 +50,7 @@ test('should hold cursor gaze through speech saves and repeated idle loops witho
           loops += Number(frame.time < previous)
           previous = frame.time
           minimum = Math.min(minimum, player.getParameterValue('ParamAngleX')!)
-          if (loops >= 2 || minimum < 11.9) {
+          if (loops >= 2 || minimum < 28) {
             completed.resolve()
           }
         }
@@ -72,7 +72,7 @@ test('should hold cursor gaze through speech saves and repeated idle loops witho
     })
     return (
       <div class="h-120 w-100">
-        <canvas ref={setCanvas} class="h-full w-full" />
+        <canvas ref={setCanvas} role="img" aria-label="시선 캐릭터" class="h-full w-full" />
         <output aria-label="음성 입력">{selected.lipsync()?.source}</output>
       </div>
     )
@@ -81,10 +81,47 @@ test('should hold cursor gaze through speech saves and repeated idle loops witho
     await ready.promise
     expect(playerModule.createPlayer).toHaveBeenCalledOnce()
     player = await vi.mocked(playerModule.createPlayer).mock.results[0]!.value
-    globalThis.dispatchEvent(new PointerEvent('pointermove', {clientX: 900, clientY: 100}))
+    if (player === null) {
+      throw new Error('Expected the character player to be ready')
+    }
+    const canvas = screen.getByRole('img', {name: '시선 캐릭터'})
+    const bounds = canvas.getBoundingClientRect()
+    const depth = bounds.height * 0.3
+    const follow = (horizontal: number, vertical = 0) =>
+      globalThis.dispatchEvent(
+        new PointerEvent('pointermove', {
+          clientX: bounds.left + bounds.width / 2 + horizontal,
+          clientY: bounds.top + bounds.height * 0.3 - vertical,
+        }),
+      )
+    follow(depth / Math.sqrt(3))
     await expect
       .poll(() => player!.getParameterValue('ParamAngleX'), {timeout: 3000})
-      .toBeGreaterThan(11.9)
+      .toBeCloseTo(10, 1)
+    expect(player.getParameterValue('ParamEyeBallX')).toBeCloseTo(1 / 3, 2)
+    follow(depth * Math.sqrt(3))
+    await expect
+      .poll(() => player!.getParameterValue('ParamAngleX'), {timeout: 3000})
+      .toBeCloseTo(20, 1)
+    expect(player.getParameterValue('ParamEyeBallX')).toBeCloseTo(2 / 3, 2)
+    follow(-depth * Math.sqrt(3))
+    await expect
+      .poll(() => player!.getParameterValue('ParamAngleX'), {timeout: 3000})
+      .toBeCloseTo(-20, 1)
+    expect(player.getParameterValue('ParamEyeBallX')).toBeCloseTo(-2 / 3, 2)
+    follow(0)
+    await expect
+      .poll(() => player!.getParameterValue('ParamAngleX'), {timeout: 3000})
+      .toBeCloseTo(0, 1)
+    follow(depth / Math.sqrt(6), depth / Math.sqrt(6))
+    await expect
+      .poll(() => player!.getParameterValue('ParamAngleX'), {timeout: 3000})
+      .toBeCloseTo(Math.sqrt(50), 1)
+    expect(player.getParameterValue('ParamAngleY')).toBeCloseTo(Math.sqrt(50), 1)
+    follow(depth * 10)
+    await expect
+      .poll(() => player!.getParameterValue('ParamAngleX'), {timeout: 3000})
+      .toBeGreaterThan(28)
     collecting = true
     await repository.configureSpeech(widget.id, {
       enabled: true,
@@ -94,7 +131,7 @@ test('should hold cursor gaze through speech saves and repeated idle loops witho
     })
     await expect.poll(() => screen.getByRole('status', {name: '음성 입력'}).textContent).toBe('off')
     await completed.promise
-    expect(minimum).toBeGreaterThan(11.9)
+    expect(minimum).toBeGreaterThan(28)
     expect(loops).toBeGreaterThanOrEqual(2)
     expect(playerModule.createPlayer).toHaveBeenCalledOnce()
     expect(errors).not.toHaveBeenCalled()
