@@ -1,14 +1,18 @@
 import {isTauri} from '@tauri-apps/api/core'
 import {getCurrentWindow} from '@tauri-apps/api/window'
 import {type Accessor, createEffect, createSignal, onCleanup, onMount} from 'solid-js'
+import {createStore, reconcile} from 'solid-js/store'
 import {createLibraryRepository} from '@winter-love/wallpaper/settings/library-repository'
 import {createBuiltinSettings} from '../builtin-assets'
 import type {PoffoWidget, WidgetSize} from '@winter-love/wallpaper/settings/library-model'
 
+interface WidgetState {
+  widget: PoffoWidget | null
+}
 export const useWidget = (id: Accessor<string>) => {
   const library = createLibraryRepository('wallpaper-library')
   const assets = createBuiltinSettings('wallpaper-settings')
-  const [widget, setWidget] = createSignal<PoffoWidget | null>(null)
+  const [state, setState] = createStore<WidgetState>({widget: null})
   const [error, setError] = createSignal<string | null>(null)
   let disposed = false
   let stopMove: (() => void) | null = null
@@ -23,7 +27,10 @@ export const useWidget = (id: Accessor<string>) => {
     const currentId = id()
     const snapshot = await library.read()
     if (!disposed) {
-      setWidget(snapshot.widgets.find((widget) => widget.id === currentId) ?? null)
+      setState(
+        'widget',
+        reconcile(snapshot.widgets.find((widget) => widget.id === currentId) ?? null),
+      )
     }
   }
   const stopLibrary = library.subscribe(() => {
@@ -78,18 +85,19 @@ export const useWidget = (id: Accessor<string>) => {
     getCurrentWindow().startDragging().catch(report)
   }
   return {
-    agentBindings: () => widget()?.speech?.agentBindings,
-    assetId: () => widget()?.assetId ?? null,
+    agentBindings: () => state.widget?.speech?.agentBindings,
+    assetId: () => state.widget?.assetId ?? null,
     drag,
     error,
-    lipsync: () => (widget()?.speech?.enabled === false ? undefined : widget()?.speech?.lipsync),
+    lipsync: () =>
+      state.widget?.speech?.enabled === false ? undefined : state.widget?.speech?.lipsync,
     load: assets.loadPuppet,
-    motionId: () => widget()?.motionId,
+    motionId: () => state.widget?.motionId,
     report,
     saveSize: (size: WidgetSize) => library.resizeWidget(id(), size),
-    semanticBindings: () => widget()?.speech?.semanticBindings,
-    tracking: () => widget()?.tracking,
-    trackingBindings: () => widget()?.trackingBindings,
-    trackingOptions: () => widget()?.trackingOptions,
+    semanticBindings: () => state.widget?.speech?.semanticBindings,
+    tracking: () => state.widget?.tracking,
+    trackingBindings: () => state.widget?.trackingBindings,
+    trackingOptions: () => state.widget?.trackingOptions,
   }
 }
