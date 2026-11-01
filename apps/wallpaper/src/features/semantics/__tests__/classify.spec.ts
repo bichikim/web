@@ -99,3 +99,27 @@ it('should reject an exclusion tie even when the matching threshold is zero', as
   })
   expect(scores.happy).toBeLessThan(0)
 })
+
+it('should analyze a bundle once and ignore an explicitly cleared legacy connection', async () => {
+  const embed = vi.fn(async (texts: readonly string[]) => texts.map(() => [1, 0]))
+  const result = await classifySemantics({
+    bindings: [
+      {
+        ...binding,
+        action: undefined,
+        actions: [
+          {id: 'notes', kind: 'expression'},
+          {id: 'Walk:0', kind: 'motion'},
+        ],
+      },
+      {...binding, actions: [], id: 'cleared'},
+    ],
+    embed,
+    text: '기뻐요',
+  })
+  expect(result).toEqual({happy: 1})
+  expect(embed).toHaveBeenCalledExactlyOnceWith([
+    'task: classification | query: 기뻐요',
+    'task: classification | query: 기쁨',
+  ])
+})

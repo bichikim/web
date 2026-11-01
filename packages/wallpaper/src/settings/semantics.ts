@@ -5,6 +5,7 @@ export const SEMANTIC_TEXT_LIMIT = 4096
 export const SEMANTIC_DESCRIPTION_LIMIT = 1000
 export const SEMANTIC_ID_LIMIT = 128
 export const SEMANTIC_THRESHOLD_MAX = 0.99
+export const SEMANTIC_ACTION_LIMIT = 16
 const MAX_GESTURE_CYCLES = 16
 const MIN_GESTURE_PERIOD = 0.1
 const MAX_GESTURE_PERIOD = 30
@@ -43,8 +44,10 @@ export interface SemanticAnimation {
   readonly cycles?: number
 }
 export interface SemanticBinding {
-  /** Character-defined expression or motion to execute when matched. */
+  /** Legacy single target, used only when actions is omitted. */
   readonly action?: SemanticAction
+  /** Targets executed together with this binding's shared group and release point; empty clears all. */
+  readonly actions?: readonly SemanticAction[]
   /** Behaviors are random-only; emotions and contextual poses match text. Omitted matches text. */
   readonly category?: 'emotion' | 'behavior'
   readonly animation?: SemanticAnimation
@@ -68,6 +71,15 @@ export const semanticBindingsSchema = z
   .array(
     z.object({
       action: semanticActionSchema.optional(),
+      actions: z
+        .array(semanticActionSchema)
+        .max(SEMANTIC_ACTION_LIMIT)
+        .refine(
+          (items) =>
+            new Set(items.map((item) => JSON.stringify([item.kind, item.id]))).size ===
+            items.length,
+        )
+        .optional(),
       animation: z
         .object({
           cycles: z.number().int().min(1).max(MAX_GESTURE_CYCLES).optional(),

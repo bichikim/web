@@ -66,6 +66,9 @@ export const migrateSemanticActions = (
   const seen = new Set<string>()
   let changed = false
   const result = bindings.flatMap((binding) => {
+    if (binding.actions !== undefined) {
+      return [binding]
+    }
     const key = ids.find((id) => binding.id === id || binding.id.startsWith(`${id}-`))
     const action = key === undefined ? undefined : actions.get(key)
     const replacement = key === undefined ? undefined : defaults.get(key)

@@ -1,4 +1,5 @@
 import {SEMANTIC_TEXT_LIMIT, type SemanticBinding} from '@winter-love/wallpaper/settings/semantics'
+import {semanticTargets} from '@winter-love/wallpaper/settings/semantic-targets'
 
 interface ClassifySemanticsOptions {
   /** Latest conversational prose; the last eight nonempty paragraphs are compared separately. */
@@ -27,7 +28,7 @@ export const classifySemantics = async (
   options: ClassifySemanticsOptions,
 ): Promise<Readonly<Record<string, number>>> => {
   const bindings = options.bindings.filter(
-    (item) => item.enabled && item.action !== undefined && item.text.trim() !== '',
+    (item) => item.enabled && semanticTargets(item).length > 0 && item.text.trim() !== '',
   )
   const inputs = examples(options.text.slice(-SEMANTIC_TEXT_LIMIT))
   if (bindings.length === 0 || inputs.length === 0) {

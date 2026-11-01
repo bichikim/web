@@ -88,7 +88,22 @@ test('should apply vowel poses and semantic expressions to the bundled Ash playe
       load: async () => blob,
       onAfterRender: () => rendered.resolve(),
       onError: errors,
-      semanticBindings: () => builtinConnectionProfile('builtin:ash')?.connections.semanticBindings,
+      semanticBindings: () => [
+        ...(builtinConnectionProfile('builtin:ash')?.connections.semanticBindings ?? []),
+        {
+          actions: [
+            {id: '반짝이는 눈', kind: 'expression'},
+            {id: '노트 들기', kind: 'expression'},
+          ],
+          enabled: true,
+          exclusiveGroup: '묶음',
+          id: 'combined',
+          mode: 'toggle',
+          parameterId: null,
+          text: '기쁜 마음으로 기록했어요',
+          threshold: 0.8,
+        },
+      ],
       tracking: () => 'cursor',
     })
     return (
@@ -151,18 +166,18 @@ test('should apply vowel poses and semantic expressions to the bundled Ash playe
   await expect.poll(() => player.getParameterValue('Param111')).toBeGreaterThan(0.5)
   await sendSemanticFrame({scores: {}, widgetId: 'ash-widget'})
   await expect.poll(() => player.getParameterValue('Param110'), {timeout: 3000}).toBeCloseTo(0.08)
-  await sendSemanticFrame({scores: {'ash:excited': 1, 'ash:notes': 1}, widgetId: 'ash-widget'})
+  await sendSemanticFrame({scores: {combined: 1}, widgetId: 'ash-widget'})
   await expect
     .poll(() => [player.getParameterValue('Param71'), player.getParameterValue('Param89')], {
       timeout: 3000,
     })
     .toEqual([1, 1])
-  await sendSemanticFrame({scores: {'ash:notes': 1, 'ash:sad-tears': 1}, widgetId: 'ash-widget'})
+  await sendSemanticFrame({scores: {'ash:sad-tears': 1}, widgetId: 'ash-widget'})
   await expect
     .poll(() => [player.getParameterValue('Param70'), player.getParameterValue('Param89')], {
       timeout: 3000,
     })
-    .toEqual([1, 1])
+    .toEqual([1, 0])
   await expect.poll(() => player.getParameterValue('Param71'), {timeout: 3000}).toBeCloseTo(0)
   await sendSemanticFrame({fallbackId: 'ash:excited', scores: {}, widgetId: 'ash-widget'})
   await expect
@@ -173,6 +188,28 @@ test('should apply vowel poses and semantic expressions to the bundled Ash playe
   await sendSemanticFrame({fallbackId: 'ash:notes', scores: {}, widgetId: 'ash-widget'})
   await expect.poll(() => player.getParameterValue('Param89'), {timeout: 3000}).toBeCloseTo(1)
   await sendSemanticFrame({scores: {}, widgetId: 'ash-widget'})
+  await sendSemanticFrame({previewId: 'combined', scores: {}, widgetId: 'ash-widget'})
+  await expect
+    .poll(() => [player.getParameterValue('Param71'), player.getParameterValue('Param89')], {
+      timeout: 3000,
+    })
+    .toEqual([1, 1])
+  await sendSemanticFrame({scores: {combined: 1}, widgetId: 'ash-widget'})
+  await expect
+    .poll(() => [player.getParameterValue('Param71'), player.getParameterValue('Param89')], {
+      timeout: 3000,
+    })
+    .toEqual([1, 1])
+  await sendSemanticFrame({
+    narration: {phase: 'ended'},
+    scores: {combined: 1},
+    widgetId: 'ash-widget',
+  })
+  await expect
+    .poll(() => [player.getParameterValue('Param71'), player.getParameterValue('Param89')], {
+      timeout: 3000,
+    })
+    .toEqual([0, 0])
   globalThis.dispatchEvent(new PointerEvent('pointermove', {clientX: 800, clientY: 80}))
   await expect.poll(() => player.getParameterValue('ParamAngleY')).toBeGreaterThan(1)
   const publish = createLipSyncPublisher('ash-widget')

@@ -2,6 +2,7 @@ import {cleanup, fireEvent, render, screen} from '@solidjs/testing-library'
 import {createSignal} from 'solid-js'
 import {afterEach, expect, test, vi} from 'vitest'
 import type {SemanticBinding} from '@winter-love/wallpaper/settings/semantics'
+import {semanticTargets} from '@winter-love/wallpaper/settings/semantic-targets'
 import {createLibraryRepository} from '@winter-love/wallpaper/settings/library-repository'
 import {SPoffoSemanticSettings} from '../../src/components/SPoffoSemanticSettings'
 import {SemanticContext} from '../../src/features/semantics/context'
@@ -29,17 +30,27 @@ test('should register and persist a character action connection, then react to t
   const widget = await repository.addWidget('character')
   const [bindings, setBindings] = createSignal<readonly SemanticBinding[]>([])
   const [incoming, setIncoming] = createSignal('')
-  const [expression, setExpression] = createSignal<string | undefined>(undefined)
+  const [layers, setLayers] = createSignal<ReadonlyMap<string, string>>(new Map())
+  const expression = () => [...layers().values()].sort().join(',') || '없음'
   const player = {
     getExpression: expression,
     resetMotionHistory: vi.fn(),
-    setExpressionLayer: (_group: string, id?: string) => {
-      setExpression(id)
+    setExpressionLayer: (group: string, id?: string) => {
+      const next = new Map(layers())
+      if (id === undefined) {
+        next.delete(group)
+      } else {
+        next.set(group, id)
+      }
+      setLayers(next)
       return true
     },
     startMotion: vi.fn(),
   }
-  const actions = [{action: {id: 'ノート', kind: 'expression' as const}, label: '노트 들기'}]
+  const actions = [
+    {action: {id: 'ノート', kind: 'expression' as const}, label: '노트 들기'},
+    {action: {id: 'smile', kind: 'expression' as const}, label: '반짝눈'},
+  ]
   const change = async (value: readonly SemanticBinding[]) => {
     setBindings(value)
     await repository.configureSpeech(widget.id, {
@@ -82,6 +93,18 @@ test('should register and persist a character action connection, then react to t
     fireEvent.input(description, {target: {value: '기쁨과 성공을 축하하는 내용'}})
     fireEvent.click(screen.getByRole('combobox', {name: '연결 1 행동'}))
     fireEvent.click(screen.getByRole('option', {name: '노트 들기'}))
+    await expect
+      .poll(() => screen.getByRole('button', {name: '연결 1 행동 추가'}).hasAttribute('disabled'))
+      .toBe(false)
+    await userEvent.click(screen.getByRole('button', {name: '연결 1 행동 추가'}))
+    const second = screen.getByRole('combobox', {name: '연결 1 행동 2'})
+    await expect.poll(() => document.activeElement).toBe(second)
+    await userEvent.click(second)
+    expect(screen.queryByRole('option', {name: '노트 들기'})).toBeNull()
+    await userEvent.click(screen.getByRole('option', {name: '반짝눈'}))
+    await expect.poll(() => bindings()[0].actions?.length).toBe(2)
+    expect(screen.getAllByRole('textbox', {name: '연결 1 그룹'})).toHaveLength(1)
+    expect(screen.getAllByRole('combobox', {name: '연결 1 해제 시점'})).toHaveLength(1)
     fireEvent.click(screen.getByRole('combobox', {name: '연결 1 해제 시점'}))
     fireEvent.click(screen.getByRole('option', {name: '다음 음성까지 유지'}))
     expect(bindings()[0].release).toBe('next-speech')
@@ -97,7 +120,7 @@ test('should register and persist a character action connection, then react to t
     fireEvent.click(screen.getByRole('button', {name: '문장 테스트'}))
     await expect
       .poll(() => screen.getByRole('status', {name: '적용된 행동'}).textContent)
-      .toBe('ノート')
+      .toBe('smile,ノート')
     expect(screen.getByLabelText('연결 1 매칭 점수')).toHaveTextContent('1.00')
     setIncoming('슬픔을 느껴요')
     await expect
@@ -109,13 +132,21 @@ test('should register and persist a character action connection, then react to t
     fireEvent.click(manual)
     await expect
       .poll(() => screen.getByRole('status', {name: '적용된 행동'}).textContent)
-      .toBe('ノート')
+      .toBe('smile,ノート')
     expect(manual).toHaveAttribute('aria-pressed', 'true')
     expect(embed).toHaveBeenCalledTimes(analyses)
     fireEvent.click(screen.getByRole('button', {name: '연결 1 수동 실행 중지'}))
     await expect
       .poll(() => screen.getByRole('status', {name: '적용된 행동'}).textContent)
       .toBe('없음')
+    await userEvent.click(screen.getByRole('button', {name: '연결 1 행동 1 삭제'}))
+    await expect.poll(() => bindings()[0].actions?.map((action) => action.id)).toEqual(['smile'])
+    await expect
+      .poll(() => document.activeElement)
+      .toBe(screen.getByRole('combobox', {name: '연결 1 행동'}))
+    await expect
+      .poll(async () => (await repository.read()).widgets[0]?.speech?.semanticBindings)
+      .toEqual(bindings())
     fireEvent.click(screen.getByRole('switch', {name: '연결 1 사용'}))
     await expect
       .poll(() => screen.getByRole('status', {name: '적용된 행동'}).textContent)
@@ -131,11 +162,13 @@ test.each([320, 496])(
   'should organize all built-in connections into expandable groups at %spx',
   async (width) => {
     const profile = builtinConnectionProfile('builtin:ash')!
-    const [bindings, setBindings] = createSignal<readonly SemanticBinding[]>(
-      profile.connections.semanticBindings ?? [],
-    )
-    const actions = bindings().flatMap((binding) =>
-      binding.action === undefined ? [] : [{action: binding.action, label: binding.action.id}],
+    const defaults = profile.connections.semanticBindings!
+    const [bindings, setBindings] = createSignal<readonly SemanticBinding[]>([
+      {...defaults[0], actions: [defaults[0].action!, defaults[1].action!]},
+      ...defaults.slice(1),
+    ])
+    const actions = defaults.flatMap((binding) =>
+      semanticTargets(binding).map((action) => ({action, label: action.id})),
     )
     const view = render(() => (
       <div class="box-border w-[var(--editor-width)] p-3" style={{'--editor-width': `${width}px`}}>

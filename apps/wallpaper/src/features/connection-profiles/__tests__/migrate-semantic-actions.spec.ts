@@ -101,3 +101,18 @@ it('should replace misleading stock descriptions once while preserving user sett
   const custom = [{...old[0], category: 'behavior' as const, text: '사용자가 직접 연결한 내용'}]
   expect(migrateSemanticActions(custom)).toBe(custom)
 })
+
+it('should preserve user action bundles and explicitly cleared builtin targets', () => {
+  const old = semanticBindingsSchema.parse(previous)[0]!
+  const bundled = [
+    {
+      ...old,
+      actions: [
+        {id: 'smile', kind: 'expression' as const},
+        {id: 'Walk:0', kind: 'motion' as const},
+      ],
+    },
+    {...old, actions: [], id: 'ash:notes'},
+  ]
+  expect(migrateSemanticActions(bundled)).toBe(bundled)
+})

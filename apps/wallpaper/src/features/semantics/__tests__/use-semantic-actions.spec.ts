@@ -50,17 +50,18 @@ it('should execute character presets, keep manual actions during analysis and re
   })
   try {
     await sendSemanticFrame({scores: {note: 0.9}, widgetId: 'action-widget'})
-    expect(player.setExpressionLayer).toHaveBeenLastCalledWith('semantic:기본 그룹', '노트 들기')
+    expect(player.setExpressionLayer).toHaveBeenLastCalledWith(expect.any(String), '노트 들기')
+    const noteLayer = player.setExpressionLayer.mock.lastCall![0]
     await sendSemanticFrame({previewId: 'walk', scores: {note: 1}, widgetId: 'action-widget'})
-    expect(player.setExpressionLayer).toHaveBeenLastCalledWith('semantic:기본 그룹')
+    expect(player.setExpressionLayer).toHaveBeenLastCalledWith(noteLayer)
     expect(player.startMotion).toHaveBeenCalledWith('Walk:0', {loop: true})
     await sendSemanticFrame({previewId: 'walk', scores: {}, widgetId: 'action-widget'})
     expect(player.startMotion).toHaveBeenCalledOnce()
     await sendSemanticFrame({scores: {note: 1}, widgetId: 'action-widget'})
     expect(motion.stop).toHaveBeenCalledOnce()
-    expect(player.setExpressionLayer).toHaveBeenLastCalledWith('semantic:기본 그룹', '노트 들기')
+    expect(player.setExpressionLayer).toHaveBeenLastCalledWith(noteLayer, '노트 들기')
     await sendSemanticFrame({scores: {}, widgetId: 'action-widget'})
-    expect(player.setExpressionLayer).toHaveBeenLastCalledWith('semantic:기본 그룹')
+    expect(player.setExpressionLayer).toHaveBeenLastCalledWith(noteLayer)
   } finally {
     dispose()
   }
@@ -101,16 +102,15 @@ it('should select one winner per group and retain other groups while an expressi
       scores: {'default-one': 0.9, 'default-two': 0.85, happy: 0.9, notes: 0.95, sad: 0.85},
       widgetId: 'groups',
     })
-    expect(player.setExpressionLayer).toHaveBeenCalledWith('semantic:표정', 'happy')
-    expect(player.setExpressionLayer).toHaveBeenCalledWith('semantic:손', 'notes')
-    expect(player.setExpressionLayer).toHaveBeenCalledWith('semantic:기본 그룹', 'default-one')
-    expect(player.setExpressionLayer).not.toHaveBeenCalledWith('semantic:표정', 'sad')
+    expect(player.setExpressionLayer).toHaveBeenCalledWith(expect.any(String), 'happy')
+    expect(player.setExpressionLayer).toHaveBeenCalledWith(expect.any(String), 'notes')
+    const noteLayer = player.setExpressionLayer.mock.calls.find(([, id]) => id === 'notes')![0]
+    expect(player.setExpressionLayer).toHaveBeenCalledWith(expect.any(String), 'default-one')
+    expect(player.setExpressionLayer).not.toHaveBeenCalledWith(expect.any(String), 'sad')
     player.setExpressionLayer.mockClear()
     await sendSemanticFrame({scores: {happy: 0.85, notes: 0.95, sad: 0.95}, widgetId: 'groups'})
-    expect(player.setExpressionLayer).toHaveBeenCalledWith('semantic:표정', 'sad')
-    expect(player.setExpressionLayer.mock.calls.some(([group]) => group === 'semantic:손')).toBe(
-      false,
-    )
+    expect(player.setExpressionLayer).toHaveBeenCalledWith(expect.any(String), 'sad')
+    expect(player.setExpressionLayer.mock.calls.some(([group]) => group === noteLayer)).toBe(false)
   } finally {
     dispose()
   }

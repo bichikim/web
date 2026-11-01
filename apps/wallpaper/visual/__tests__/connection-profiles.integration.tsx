@@ -29,7 +29,10 @@ test('should save and restore all Poffo settings across tabs without exporting c
       randomActions: {enabled: true, probability: 0.3},
       semanticBindings: [
         {
-          action: {id: '반짝이는 눈', kind: 'expression'},
+          actions: [
+            {id: '반짝이는 눈', kind: 'expression'},
+            {id: 'Walk:0', kind: 'motion'},
+          ],
           category: 'emotion',
           enabled: true,
           exclusiveGroup: '표정',

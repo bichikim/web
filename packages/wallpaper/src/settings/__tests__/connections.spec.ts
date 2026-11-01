@@ -126,3 +126,56 @@ it('should load previous candidate lists while using connection switches for eli
     profile: {...profile, connections: {randomActions: {enabled: true, probability: 0.37}}},
   })
 })
+
+it('should preserve action bundles and validate every target during JSON import', () => {
+  const actions = [
+    {id: 'smile', kind: 'expression' as const},
+    {id: 'wave', kind: 'motion' as const},
+  ]
+  const input = {
+    ...profile,
+    connections: {
+      semanticBindings: [{...profile.connections.semanticBindings[0], actions, parameterId: null}],
+    },
+  }
+  expect(parseConnectionProfile(JSON.stringify(input), {...options, actions})).toEqual({
+    ok: true,
+    profile: input,
+  })
+  expect(
+    parseConnectionProfile(JSON.stringify(input), {...options, actions: [actions[0]]}),
+  ).toEqual({ok: false, reason: 'action'})
+  const duplicated = {
+    ...input,
+    connections: {
+      semanticBindings: [
+        {...input.connections.semanticBindings[0], actions: [actions[0], actions[0]]},
+      ],
+    },
+  }
+  expect(parseConnectionProfile(JSON.stringify(duplicated), {...options, actions})).toEqual({
+    ok: false,
+    reason: 'invalid',
+  })
+})
+
+it('should accept sixteen distinct actions and reject bundles beyond the limit', () => {
+  const actions = Array.from({length: 17}, (_, index) => ({
+    id: `pose-${index}`,
+    kind: 'expression' as const,
+  }))
+  const source = (targets: typeof actions) =>
+    JSON.stringify({
+      ...profile,
+      connections: {
+        semanticBindings: [
+          {...profile.connections.semanticBindings[0], actions: targets, parameterId: null},
+        ],
+      },
+    })
+  expect(parseConnectionProfile(source(actions.slice(0, 16)), {...options, actions}).ok).toBe(true)
+  expect(parseConnectionProfile(source(actions), {...options, actions})).toEqual({
+    ok: false,
+    reason: 'invalid',
+  })
+})

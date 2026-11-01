@@ -81,3 +81,42 @@ test('should show text matching only for emotion and context connections, retain
   expect(screen.getByRole('textbox', {name: '연결 감정·행동·내용'})).toHaveValue('기존 예문')
   expect(screen.getByRole('spinbutton', {name: '연결 매칭 기준'})).toHaveValue('0.86')
 })
+
+test('should add and remove actions while sharing one group and release point', async () => {
+  const [value, setValue] = createSignal<SemanticBinding>({
+    action: {id: 'notes', kind: 'expression'},
+    enabled: true,
+    exclusiveGroup: '함께',
+    id: 'bundle',
+    mode: 'toggle',
+    parameterId: null,
+    release: 'next-speech',
+    text: '기쁘고 신나요',
+    threshold: 0.8,
+  })
+  render(() => (
+    <SPoffoSemanticBinding
+      value={value()}
+      onChange={setValue}
+      actions={[
+        {action: {id: 'notes', kind: 'expression'}, label: '노트'},
+        {action: {id: 'smile', kind: 'expression'}, label: '반짝눈'},
+      ]}
+    />
+  ))
+  fireEvent.click(screen.getByRole('button', {name: '연결 행동 추가'}))
+  fireEvent.click(screen.getByRole('combobox', {name: '연결 행동 2'}))
+  fireEvent.click(screen.getByRole('option', {name: '반짝눈'}))
+  await vi.waitFor(() =>
+    expect(value().actions?.map((action) => action.id)).toEqual(['notes', 'smile']),
+  )
+  expect(value()).toMatchObject({
+    exclusiveGroup: '함께',
+    release: 'next-speech',
+    text: '기쁘고 신나요',
+  })
+  expect(screen.getAllByRole('textbox', {name: '연결 그룹'})).toHaveLength(1)
+  expect(screen.getAllByRole('combobox', {name: '연결 해제 시점'})).toHaveLength(1)
+  fireEvent.click(screen.getByRole('button', {name: '연결 행동 1 삭제'}))
+  await vi.waitFor(() => expect(value().actions?.map((action) => action.id)).toEqual(['smile']))
+})

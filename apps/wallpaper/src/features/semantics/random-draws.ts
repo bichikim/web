@@ -1,6 +1,7 @@
 import type {SemanticBinding, SemanticInput} from '@winter-love/wallpaper/settings/semantics'
 import type {RandomActionSettings} from '@winter-love/wallpaper/settings/random-actions'
 import {chooseRandomAction} from './select-actions'
+import {semanticTargets} from '@winter-love/wallpaper/settings/semantic-targets'
 
 interface RandomDrawOptions {
   /** Current narration and owning widget. */
@@ -35,7 +36,7 @@ export const createRandomDraws = (random: () => number) => {
             binding.id === selected &&
             binding.enabled &&
             binding.category === 'behavior' &&
-            binding.action !== undefined,
+            semanticTargets(binding).length > 0,
         )
         ? selected
         : undefined

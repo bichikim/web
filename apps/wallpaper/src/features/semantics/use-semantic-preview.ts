@@ -1,5 +1,6 @@
 import {type Accessor, createEffect, createMemo, createSignal, untrack} from 'solid-js'
 import type {PoffoWidget} from '@winter-love/wallpaper/settings/library-model'
+import {semanticTargets} from '@winter-love/wallpaper/settings/semantic-targets'
 
 interface UseSemanticPreviewProps {
   /** Available widgets and connections; disabling or removing a connection stops its preview. */
@@ -18,7 +19,7 @@ export const useSemanticPreview = (props: UseSemanticPreviewProps) => {
             widget.id,
             new Set(
               widget.speech?.semanticBindings
-                ?.filter((binding) => binding.enabled && binding.action !== undefined)
+                ?.filter((binding) => binding.enabled && semanticTargets(binding).length > 0)
                 .map((binding) => binding.id),
             ),
           ]),

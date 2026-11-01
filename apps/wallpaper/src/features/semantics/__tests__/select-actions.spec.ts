@@ -154,3 +154,63 @@ test('should gate behavior on one 50 percent draw when no emotion matches, regar
     }).map((item) => item.action.action.id),
   ).toEqual(['smile'])
 })
+
+test('should execute one winning action bundle per group with a shared release policy', () => {
+  const bundle = {
+    ...bindings[0],
+    action: undefined,
+    actions: [bindings[0].action!, bindings[1].action!],
+    release: 'next-speech' as const,
+  }
+  const competing = {
+    ...bindings[0],
+    action: {id: 'sad', kind: 'expression' as const},
+    id: 'competing',
+  }
+  const actions = [...bundle.actions, competing.action].map((action) => ({
+    action,
+    label: action.id,
+  }))
+  const frame = {scores: {competing: 0.9, happy: 0.95}, widgetId: 'bundle'}
+  expect(
+    selectSemanticActions({actions, bindings: [bundle, competing], frame}).map(
+      (item) => item.action.action.id,
+    ),
+  ).toEqual(['smile', 'notes'])
+  expect(
+    selectSemanticActions({
+      actions,
+      bindings: [bundle, competing],
+      frame: {...frame, narration: {phase: 'ended'}},
+    }).map((item) => item.action.action.id),
+  ).toEqual(['smile', 'notes'])
+  expect(
+    selectSemanticActions({
+      actions,
+      bindings: [{...bundle, release: 'speech-end'}, competing],
+      frame: {...frame, narration: {phase: 'ended'}},
+    }),
+  ).toEqual([])
+})
+
+test('should suppress a cleared legacy target and choose a whole random bundle', () => {
+  const bundle = {...bindings[1], actions: [bindings[0].action!, bindings[1].action!]}
+  const actions = bundle.actions.map((action) => ({action, label: action.id}))
+  const random = vi.fn().mockReturnValue(0)
+  const settings = {enabled: true, probability: 1}
+  const cleared = {...bindings[0], actions: []}
+  const fallbackId = chooseRandomAction({
+    bindings: [cleared, bundle],
+    random,
+    scores: {happy: 1},
+    settings,
+  })
+  expect(fallbackId).toBe(bundle.id)
+  expect(
+    selectSemanticActions({
+      actions,
+      bindings: [cleared, bundle],
+      frame: {fallbackId, scores: {happy: 1}, widgetId: 'w'},
+    }).map((selection) => selection.action.action.id),
+  ).toEqual(['smile', 'notes'])
+})

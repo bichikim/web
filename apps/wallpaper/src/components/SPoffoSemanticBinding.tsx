@@ -1,8 +1,11 @@
-import {Show} from 'solid-js'
+import {createMemo, Show} from 'solid-js'
 import type {
+  SemanticAction,
   SemanticActionRelease,
   SemanticBinding,
 } from '@winter-love/wallpaper/settings/semantics'
+import {semanticTargets} from '@winter-love/wallpaper/settings/semantic-targets'
+import {SPoffoActionSelection} from './SPoffoActionSelection'
 import type {CharacterAction} from '../features/semantics/types'
 import {SPoffoSemanticDescription} from './SPoffoSemanticDescription'
 import {SPoffoSemanticPreview} from './SPoffoSemanticPreview'
@@ -24,17 +27,16 @@ export const SPoffoSemanticBinding = (props: SPoffoSemanticBindingProps) => {
   const update = (patch: Partial<SemanticBinding>) => props.onChange?.({...props.value, ...patch})
   const caption = () => props.label ?? '연결'
   const scoreLabel = () => (props.score === -1 ? '제외' : `매칭 ${props.score?.toFixed(2)}`)
-  const actionKey = () =>
-    props.value.action === undefined ? '' : `${props.value.action.kind}:${props.value.action.id}`
+  const targets = createMemo(() => semanticTargets(props.value))
   const available = () =>
-    props.actions?.some((item) => `${item.action.kind}:${item.action.id}` === actionKey()) ?? false
+    targets().some((target) =>
+      props.actions?.some(
+        (item) => item.action.kind === target.kind && item.action.id === target.id,
+      ),
+    )
   const handleEnabled = (enabled: boolean) => update({enabled})
-  const handleAction = (value: string) =>
-    update({
-      action: props.actions?.find((item) => `${item.action.kind}:${item.action.id}` === value)
-        ?.action,
-      parameterId: null,
-    })
+  const handleActions = (actions: readonly SemanticAction[]) =>
+    update({action: undefined, actions, parameterId: null})
   const handleGroup = (event: Event & {currentTarget: HTMLInputElement}) =>
     update({exclusiveGroup: event.currentTarget.value.trim() || undefined})
   const handleCategory = (category: 'emotion' | 'behavior') => update({category})
@@ -81,18 +83,12 @@ export const SPoffoSemanticBinding = (props: SPoffoSemanticBindingProps) => {
           onChange={props.onChange}
         />
       </Show>
-      <SSelect
-        label={`${caption()} 행동`}
-        value={actionKey()}
-        options={[
-          {label: '행동 선택', value: ''},
-          ...(props.actions ?? []).map((item) => ({
-            label: item.label,
-            value: `${item.action.kind}:${item.action.id}`,
-          })),
-        ]}
+      <SPoffoActionSelection
+        label={caption()}
+        value={targets()}
+        actions={props.actions}
         disabled={props.loading || props.onChange === undefined}
-        onChange={handleAction}
+        onChange={props.onChange === undefined ? undefined : handleActions}
       />
       <label class="grid gap-1 text-xs text-stone-600">
         그룹

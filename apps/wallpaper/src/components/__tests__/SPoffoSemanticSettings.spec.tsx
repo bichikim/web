@@ -95,7 +95,7 @@ it('should connect a character action and adjust matching without exposing indiv
     fireEvent.click(screen.getByRole('combobox', {name: '연결 1 행동'}))
     fireEvent.click(screen.getByRole('option', {name: '노트 들기'}))
     expect(bindings()[0]).toMatchObject({
-      action: {id: '노트 들기', kind: 'expression'},
+      actions: [{id: '노트 들기', kind: 'expression'}],
       parameterId: null,
     })
     expect(screen.queryByRole('combobox', {name: '연결 1 파라미터'})).toBeNull()

@@ -3,6 +3,7 @@ import {z} from 'zod'
 import {type AgentStateBindings, agentStateBindingsSchema} from './agent-state'
 import {type PoffoLipSync, poffoLipSyncSchema} from './lipsync'
 import {type SemanticAction, type SemanticBinding, semanticBindingsSchema} from './semantics'
+import {semanticTargets} from './semantic-targets'
 import {
   poffoBindingsSchema,
   type PoffoTracking,
@@ -83,13 +84,11 @@ export const parseConnectionProfile = (
   const {actions} = options
   if (
     actions !== undefined &&
-    connections.semanticBindings?.some((binding) => {
-      const {action} = binding
-      return (
-        action !== undefined &&
-        !actions.some((item) => item.kind === action.kind && item.id === action.id)
-      )
-    })
+    connections.semanticBindings?.some((binding) =>
+      semanticTargets(binding).some(
+        (action) => !actions.some((item) => item.kind === action.kind && item.id === action.id),
+      ),
+    )
   ) {
     return {ok: false, reason: 'action'}
   }
