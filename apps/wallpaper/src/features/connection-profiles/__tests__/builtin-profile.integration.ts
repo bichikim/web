@@ -2,6 +2,7 @@ import {execFile} from 'node:child_process'
 import {promisify} from 'node:util'
 import {expect, it} from 'vitest'
 import {builtinConnectionProfile} from '../builtin-profile'
+import {semanticTargets} from '@winter-love/wallpaper/settings/semantic-targets'
 
 it('should bind the bundled preset to actual character actions', async () => {
   // A separate Node process uses the codec's Node exports instead of Vitest's browser conditions.
@@ -27,9 +28,10 @@ it('should bind the bundled preset to actual character actions', async () => {
     JSON.parse(stdout)
   const profile = builtinConnectionProfile('builtin:ash')!
   for (const binding of profile.connections.semanticBindings ?? []) {
-    const action = binding.action!
-    const ids = action.kind === 'expression' ? document.expressions : document.motions
-    expect(ids, binding.id).toContain(action.id)
+    for (const action of semanticTargets(binding)) {
+      const ids = action.kind === 'expression' ? document.expressions : document.motions
+      expect(ids, binding.id).toContain(action.id)
+    }
     expect(binding.parameterId).toBeNull()
   }
   expect(builtinConnectionProfile('builtin:profile')).toBeUndefined()

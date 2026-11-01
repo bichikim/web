@@ -131,3 +131,35 @@ it('should persist corrected contextual pose descriptions for existing widgets a
   repository.close()
   expect((await open().read()).widgets[0]?.speech).toEqual(saved.speech)
 })
+
+it('should persist prerequisite bundles on reopen and preserve saved settings', async () => {
+  const legacy = createLibraryRepository(name)
+  const widget = await legacy.addWidget('builtin:ash')
+  const defaults = builtinConnectionProfile('builtin:ash')!.connections.semanticBindings!
+  const bundled = defaults.filter((binding) =>
+    ['ash:press-left', 'ash:press-right', 'ash:notes-detail'].includes(binding.id),
+  )
+  const saved = bundled.map((binding) => ({
+    ...binding,
+    action: binding.actions!.at(-1),
+    actions: undefined,
+    exclusiveGroup: '저장한 그룹',
+    release: 'next-speech' as const,
+    text: '직접 저장한 예문',
+    threshold: 0.91,
+  }))
+  await legacy.configureSpeech(widget.id, {enabled: true, semanticBindings: saved, x: 0.2, y: 0.3})
+  legacy.close()
+  const migrated = (await open().read()).widgets[0]!.speech!
+  expect(migrated).toMatchObject({enabled: true, x: 0.2, y: 0.3})
+  expect(migrated.semanticBindings).toEqual(
+    saved.map((binding, index) => ({
+      ...binding,
+      action: undefined,
+      actions: bundled[index].actions,
+    })),
+  )
+  expect((await open().read()).widgets[0]?.speech?.semanticBindings).toEqual(
+    migrated.semanticBindings,
+  )
+})

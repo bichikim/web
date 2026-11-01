@@ -116,3 +116,42 @@ it('should preserve user action bundles and explicitly cleared builtin targets',
   ]
   expect(migrateSemanticActions(bundled)).toBe(bundled)
 })
+
+it.each([
+  ['ash:press-left', '게임패드 들기'],
+  ['ash:press-right', '게임패드 들기'],
+  ['ash:notes-detail', '노트 들기'],
+])(
+  'should add the prerequisite to a saved single %s while preserving user settings',
+  (id, prerequisite) => {
+    const action =
+      id === 'ash:notes-detail'
+        ? '필기 동작'
+        : id === 'ash:press-left'
+          ? '왼손 버튼 누르기'
+          : '오른손 버튼 누르기'
+    const saved: SemanticBinding = {
+      action: {id: action, kind: 'expression'},
+      category: 'emotion',
+      enabled: false,
+      exclusiveGroup: '사용자 그룹',
+      id,
+      mode: 'toggle',
+      parameterId: null,
+      release: 'next-speech',
+      text: '사용자가 작성한 예문',
+      threshold: 0.93,
+    }
+    const migrated = migrateSemanticActions([saved])
+    expect(migrated[0]).toEqual({
+      ...saved,
+      action: undefined,
+      actions: [{id: prerequisite, kind: 'expression'}, saved.action!],
+    })
+    expect(migrateSemanticActions(migrated)).toBe(migrated)
+    const custom = [{...saved, action: {id: '다른 행동', kind: 'expression' as const}}]
+    expect(migrateSemanticActions(custom)).toBe(custom)
+    const bundle = [{...saved, actions: [saved.action!]}]
+    expect(migrateSemanticActions(bundle)).toBe(bundle)
+  },
+)

@@ -262,3 +262,55 @@ test('should apply vowel poses and semantic expressions to the bundled Ash playe
   await expect.poll(() => player.getParameterValue('ParamMouthForm')).toBe(0)
   expect(errors).not.toHaveBeenCalled()
 }, 30_000)
+
+test('should activate each builtin detail together with its prop and release the whole bundle', async () => {
+  const blob = await fetch(ashUrl).then((response) => response.blob())
+  const rendered = Promise.withResolvers<void>()
+  render(() => {
+    const [canvas, setCanvas] = createSignal<HTMLCanvasElement | null>(null)
+    usePuppet({
+      assetId: () => 'builtin:ash',
+      canvas,
+      lipsyncId: () => 'prop-widget',
+      load: async () => blob,
+      onAfterRender: () => rendered.resolve(),
+      onError: (cause) => rendered.reject(cause),
+      semanticBindings: () => builtinConnectionProfile('builtin:ash')?.connections.semanticBindings,
+      tracking: () => 'off',
+    })
+    return (
+      <div class="h-160 w-120">
+        <canvas ref={setCanvas} role="img" aria-label="소품 행동 캐릭터" class="h-full w-full" />
+      </div>
+    )
+  })
+  await rendered.promise
+  const player = await vi.mocked(playerModule.createPlayer).mock.results[0]!.value
+  for (const pose of [
+    {id: 'ash:press-left', parameters: ['Param84', 'Param96']},
+    {id: 'ash:press-right', parameters: ['Param84', 'Param94']},
+    {id: 'ash:notes-detail', parameters: ['Param89', 'Param93']},
+  ]) {
+    await sendSemanticFrame({fallbackId: pose.id, scores: {}, widgetId: 'prop-widget'})
+    await expect
+      .poll(() => pose.parameters.map((id) => player.getParameterValue(id)), {timeout: 3000})
+      .toEqual([1, 1])
+    await sendSemanticFrame({
+      fallbackId: pose.id,
+      narration: {phase: 'ended'},
+      scores: {},
+      widgetId: 'prop-widget',
+    })
+    await expect
+      .poll(() => pose.parameters.map((id) => player.getParameterValue(id)), {timeout: 3000})
+      .toEqual([0, 0])
+    await sendSemanticFrame({previewId: pose.id, scores: {}, widgetId: 'prop-widget'})
+    await expect
+      .poll(() => pose.parameters.map((id) => player.getParameterValue(id)), {timeout: 3000})
+      .toEqual([1, 1])
+    await sendSemanticFrame({scores: {}, widgetId: 'prop-widget'})
+    await expect
+      .poll(() => pose.parameters.map((id) => player.getParameterValue(id)), {timeout: 3000})
+      .toEqual([0, 0])
+  }
+}, 30_000)

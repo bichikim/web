@@ -24,11 +24,12 @@ const ids = [...actions.keys()].toSorted((first, second) => second.length - firs
 
 const refreshDefault = (binding: SemanticBinding, key = binding.id): SemanticBinding => {
   const replacement = defaults.get(key)
+  const originalAction = actions.get(key)
   if (
     binding.action !== undefined &&
     replacement !== undefined &&
-    binding.action.id === replacement.action?.id &&
-    binding.action.kind === replacement.action?.kind
+    binding.action.id === originalAction?.id &&
+    binding.action.kind === originalAction?.kind
   ) {
     const original = legacy.find(
       (item) =>
@@ -39,6 +40,9 @@ const refreshDefault = (binding: SemanticBinding, key = binding.id): SemanticBin
     )
     const patch = {
       ...binding,
+      ...(replacement.actions === undefined
+        ? {}
+        : {action: undefined, actions: replacement.actions}),
       category:
         original === undefined ? (binding.category ?? replacement.category) : replacement.category,
       exclusiveGroup:
@@ -53,7 +57,15 @@ const refreshDefault = (binding: SemanticBinding, key = binding.id): SemanticBin
               binding.threshold === original.threshold ? replacement.threshold : binding.threshold,
           }),
     }
-    const fields = ['category', 'exclusiveGroup', 'text', 'excludeText', 'threshold'] as const
+    const fields = [
+      'action',
+      'actions',
+      'category',
+      'exclusiveGroup',
+      'text',
+      'excludeText',
+      'threshold',
+    ] as const
     return fields.some((field) => patch[field] !== binding[field]) ? patch : binding
   }
   return binding

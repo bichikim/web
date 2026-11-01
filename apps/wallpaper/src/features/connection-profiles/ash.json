@@ -369,45 +369,63 @@
         "text": "이 항목을 선택해 주세요.\n이쪽 버튼을 눌러 볼게요.\n선택지를 하나 골라 주세요.\n왼쪽 목록에서 사용할 항목을 골라 주세요.\n왼편에 있는 선택지를 눌러 주세요.\n화면 왼쪽의 메뉴부터 선택하면 됩니다.",
         "threshold": 0.874,
         "enabled": true,
-        "action": {
-          "kind": "expression",
-          "id": "왼손 버튼 누르기"
-        },
         "parameterId": null,
         "mode": "toggle",
         "excludeText": "오른편 확인 버튼을 클릭해 주세요.\n어느 쪽도 누르지 말고 기다리세요.\n선택된 항목의 숫자만 알려 드립니다.\n선택된 것은 두 개라는 상태를 알려 드려요.\n총 세 개 중에서 선택된 항목의 개수는 둘입니다.",
         "category": "behavior",
-        "exclusiveGroup": "손동작"
+        "exclusiveGroup": "손동작",
+        "actions": [
+          {
+            "kind": "expression",
+            "id": "게임패드 들기"
+          },
+          {
+            "kind": "expression",
+            "id": "왼손 버튼 누르기"
+          }
+        ]
       },
       {
         "id": "ash:press-right",
         "text": "확인 버튼을 눌러 주세요.\n오른쪽 버튼을 클릭해 주세요.\n실행 버튼을 누르면 됩니다.\n오른쪽 아래 확인을 누르면 적용됩니다.\n설정이 끝났으면 우측의 실행 버튼을 눌러 주세요.\n마지막으로 오른쪽 버튼을 클릭해서 마무리하세요.",
         "threshold": 0.813,
         "enabled": true,
-        "action": {
-          "kind": "expression",
-          "id": "오른손 버튼 누르기"
-        },
         "parameterId": null,
         "mode": "toggle",
         "excludeText": "좌측 목록에서 항목을 골라 주세요.\n확인이나 실행은 아직 누르지 말아 주세요.",
         "category": "behavior",
-        "exclusiveGroup": "손동작"
+        "exclusiveGroup": "손동작",
+        "actions": [
+          {
+            "kind": "expression",
+            "id": "게임패드 들기"
+          },
+          {
+            "kind": "expression",
+            "id": "오른손 버튼 누르기"
+          }
+        ]
       },
       {
         "id": "ash:notes-detail",
         "text": "중요한 내용은 메모하면서 설명할게요.\n빠뜨리지 않도록 지금 하나씩 적고 있어요.\n핵심을 적어 두면서 확인하고 있어요.\n말씀하신 조건을 지금 하나씩 받아 적고 있어요.\n놓치지 않도록 중요한 항목을 메모하면서 듣고 있습니다.\n정리하는 동안 빠진 게 없게 차례대로 적어 볼게요.",
         "threshold": 0.866,
         "enabled": true,
-        "action": {
-          "kind": "expression",
-          "id": "필기 동작"
-        },
         "parameterId": null,
         "mode": "toggle",
         "excludeText": "문서를 다 작성해서 보관해 두었어요.\n메모는 하지 않고 듣기만 하겠습니다.\n정리가 완료되어 기록을 저장했습니다.\n기록을 작성하는 작업은 다 끝났고 저장도 마쳤어요.\n따로 기록하거나 받아 적는 일은 하지 않겠어요.",
         "category": "behavior",
-        "exclusiveGroup": "손동작"
+        "exclusiveGroup": "손동작",
+        "actions": [
+          {
+            "kind": "expression",
+            "id": "노트 들기"
+          },
+          {
+            "kind": "expression",
+            "id": "필기 동작"
+          }
+        ]
       },
       {
         "id": "ash:walking",
