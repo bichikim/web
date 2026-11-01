@@ -197,3 +197,22 @@ test('should store grid and curvature handle movement in the selected keyform on
   expect(forms[1]!.deformers![0]!.controlPoints[8]).toBeGreaterThan(70)
   expect(forms[1]!.deformers![0]!.curveHandles![0]!.horizontal.x).toBeGreaterThan(80)
 })
+
+test.each(['pointercancel', 'lostpointercapture'])(
+  'should ignore another pointer %s during a grid stroke',
+  (type) => {
+    const initial = createDocument(createGrid())
+    const save = vi.fn()
+    const view = render(() => (
+      <DeformerEditor document={initial} activeNodeId="deformer" onDocumentChange={save} />
+    ))
+    const svg = getEditorSvg(view.container)
+    mockViewportBounds(svg)
+    fireEvent.click(view.getByRole('button', {name: '격자 정리 브러시'}))
+    fireEvent(svg, Object.assign(pointer('pointerdown'), {pointerId: 1}))
+    fireEvent(svg, Object.assign(pointer('pointermove'), {pointerId: 1}))
+    fireEvent(svg, Object.assign(pointer(type), {pointerId: 2}))
+    fireEvent(svg, Object.assign(pointer('pointerup'), {pointerId: 1}))
+    expect(save).toHaveBeenCalledOnce()
+  },
+)

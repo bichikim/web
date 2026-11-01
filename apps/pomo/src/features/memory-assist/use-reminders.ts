@@ -15,8 +15,8 @@ import {
   createSupertonicClient,
   getSupertonicErrorMessage,
   type SupertonicClient,
-  type SupertonicModelId,
 } from '../supertonic'
+import {type SupertonicModelId} from '@winter-love/supertonic/model'
 import {useDeletionRecovery} from './use-deletion-recovery'
 import {memoryMemoDeletion} from './deletion-runtime'
 import {createMemoryMemoDialogue} from './dialogue'

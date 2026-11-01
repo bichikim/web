@@ -41,6 +41,8 @@ export interface PlayerCanvasProps extends PlayerRenderingOptions {
   readonly motionId?: string
   /** 가져온 표정 ID. 생략하면 모션과 수동 파라미터만 사용한다. */
   readonly expressionId?: string
+  /** 독립 활성 표정 목록. 지정하면 expressionId보다 우선하며 빈 목록은 모두 해제한다. */
+  readonly expressionIds?: ReadonlyArray<string>
   readonly onFrame?: (frame: PlayerFrame) => void
   readonly onPlayerChange?: (player: Player | null) => void
   readonly onStatusChange?: (status: PlayerCanvasStatus) => void
@@ -98,8 +100,13 @@ const usePlayerPlayback = (props: PlayerCanvasProps, player: Accessor<Player | n
   createEffect(() => {
     const current = player()
     const expression = props.expressionId
+    const expressions = props.expressionIds
     if (current !== null) {
-      current.setExpression(expression)
+      if (expressions === undefined) {
+        current.setExpression(expression)
+      } else {
+        current.setExpressions(expressions)
+      }
     }
   })
 }

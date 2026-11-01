@@ -1,26 +1,23 @@
 import {preventInternalDismiss} from '../../design-system/prevent-internal-dismiss'
 import {Popover} from '@kobalte/core/popover'
-import {TextField} from '@kobalte/core/text-field'
-import {createSignal, createUniqueId, For, Index, Show} from 'solid-js'
-
+import {createUniqueId, For, Show} from 'solid-js'
 import {
   EditorButton,
   EditorCheckbox,
   EditorNumberField,
-  EditorTextInput,
   useEditorPortalMount,
 } from '../../design-system'
-import type {PuppetDocument, PuppetMotion, PuppetMotionEvent} from '../../player/document'
+import type {PuppetDocument, PuppetMotion} from '../../player/document'
 import {
   getSelectedBezier,
   type MotionSettings as MotionSettingsValue,
-  setMotionEvent,
   setMotionSettings,
   setSelectedBezier,
 } from './motion-settings'
 import type {KeyframeSelection} from './timeline-keyframe-selection'
-import {CommitTextField} from './CommitTextField'
 import {MotionSoundField} from './MotionSoundField'
+import {MotionNameFields} from './MotionNameFields'
+import {MotionEventFields} from './MotionEventFields'
 
 export interface MotionSettingsProps {
   readonly currentTime: number
@@ -33,110 +30,8 @@ export interface MotionSettingsProps {
 }
 
 const FADE_STEP = 0.05
+
 const HANDLE_LABELS = ['핸들 1 시간', '핸들 1 값', '핸들 2 시간', '핸들 2 값'] as const
-
-/** Display name and motion group (Cubism's motion groups). */
-const MotionNameFields = (props: {
-  readonly disabled: boolean
-  readonly motion: PuppetMotion | undefined
-  readonly onApply: (changes: MotionSettingsValue) => void
-}) => (
-  <>
-    <label>
-      표시 이름
-      <CommitTextField
-        disabled={props.disabled}
-        label="모션 표시 이름"
-        placeholder={props.motion?.id}
-        value={props.motion?.name ?? ''}
-        onCommit={(name) => props.onApply({name})}
-      />
-    </label>
-    <label>
-      모션 그룹
-      <CommitTextField
-        disabled={props.disabled}
-        label="모션 그룹"
-        placeholder="없음"
-        value={props.motion?.group ?? ''}
-        onCommit={(group) => props.onApply({group})}
-      />
-    </label>
-  </>
-)
-
-/** The motion's events in document order (playback sorts them by time). */
-const MotionEventFields = (props: {
-  readonly commit: (document: PuppetDocument | undefined) => void
-  readonly currentTime: number
-  readonly disabled: boolean
-  readonly document: PuppetDocument
-  readonly motion: PuppetMotion | undefined
-  readonly onEditEnd?: () => void
-  readonly onEditStart?: () => void
-}) => {
-  const events = () => props.motion?.events ?? []
-  const apply = (next: ReadonlyArray<PuppetMotionEvent>) => {
-    const motionId = props.motion?.id
-    if (motionId !== undefined) {
-      props.commit(setMotionSettings(props.document, motionId, {events: next}))
-    }
-  }
-  const setEvent = (index: number, change: Partial<PuppetMotionEvent>) => {
-    const motionId = props.motion?.id
-    if (motionId !== undefined) {
-      props.commit(setMotionEvent(props.document, motionId, index, change))
-    }
-  }
-  return (
-    <fieldset class="entry-fields">
-      <legend>이벤트</legend>
-      {/*
-        Events have no ID; rows are addressed by position so edits keep them mounted. A time edit
-        does not reorder them (playback sorts events itself), so every row keeps its event.
-      */}
-      <Index each={events()}>
-        {(event, index) => (
-          <div class="editor-color-row">
-            <EditorNumberField
-              disabled={props.disabled}
-              label={`이벤트 ${index + 1} 시간`}
-              maximum={props.motion?.duration}
-              minimum={0}
-              name={`motion-event-${index}`}
-              step="any"
-              unit="s"
-              value={event().time}
-              onEditEnd={props.onEditEnd}
-              onEditStart={props.onEditStart}
-              onValueChange={(time) => setEvent(index, {time})}
-            />
-            <CommitTextField
-              disabled={props.disabled}
-              label={`이벤트 ${index + 1} 값`}
-              value={event().value}
-              onCommit={(value) => setEvent(index, {value})}
-            />
-            <EditorButton
-              aria-label={`이벤트 ${index + 1} 삭제`}
-              disabled={props.disabled}
-              onClick={() => apply(events().filter((_, at) => at !== index))}
-            >
-              <span aria-hidden="true" class="puppet-icon puppet-icon-trash" />
-            </EditorButton>
-          </div>
-        )}
-      </Index>
-      <EditorButton
-        disabled={props.disabled}
-        onClick={() => apply([...events(), {time: props.currentTime, value: 'event'}])}
-      >
-        <span aria-hidden="true" class="puppet-icon puppet-icon-plus" />
-        현재 시간에 이벤트 추가
-      </EditorButton>
-    </fieldset>
-  )
-}
 
 /**
  * Name, looping, fades, sound and events of the motion, and the selected keyframe's Bezier

@@ -12,7 +12,6 @@ interface MediaWaitOptions {
   readonly video: HTMLVideoElement
 }
 
-export {type VideoSample} from '@winter-love/wallpaper/frame-renderer/capture-video-sample'
 import {
   captureVideoSample,
   type VideoSample,

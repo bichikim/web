@@ -17,8 +17,11 @@ export const useFaceTracking = (props: UseFaceTrackingProps) => {
   let revision = 0
   let callback: number | undefined
   let video: HTMLVideoElement | undefined
+  let removeTrackListeners: (() => void) | undefined
   const stop = () => {
     revision += 1
+    removeTrackListeners?.()
+    removeTrackListeners = undefined
     if (video !== undefined && callback !== undefined) {
       video.cancelVideoFrameCallback(callback)
     }
@@ -72,7 +75,11 @@ export const useFaceTracking = (props: UseFaceTrackingProps) => {
         }
         tracker
           ?.submit(video, metadata.mediaTime * MILLISECONDS_PER_SECOND)
-          .catch((error: unknown) => fail(String(error)))
+          .catch((error: unknown) => {
+            if (generation === revision) {
+              fail(String(error))
+            }
+          })
         callback = video.requestVideoFrameCallback(nextFrame)
       }
       tracker = createFaceTracker({
@@ -95,7 +102,15 @@ export const useFaceTracking = (props: UseFaceTrackingProps) => {
           }
         },
       })
-      media.getTracks().forEach((track) => track.addEventListener('ended', stop, {once: true}))
+      const tracks = media.getTracks()
+      const handleEnded = () => {
+        if (generation === revision) {
+          stop()
+        }
+      }
+      tracks.forEach((track) => track.addEventListener('ended', handleEnded, {once: true}))
+      removeTrackListeners = () =>
+        tracks.forEach((track) => track.removeEventListener('ended', handleEnded))
     } catch (cause) {
       if (generation === revision) {
         fail(cause instanceof Error ? cause.message : '카메라를 시작하지 못했습니다.')

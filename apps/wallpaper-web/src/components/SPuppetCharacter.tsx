@@ -1,6 +1,7 @@
 import {createEffect, createSignal, onCleanup, onMount} from 'solid-js'
 import {useCharacterPreview} from '../features/character-preview'
 import type {MouthPose} from '../features/character-speech/types'
+import type {CharacterHitTest} from '../features/character-preview/types'
 
 interface SPuppetCharacterProps {
   readonly expressionId?: string | null
@@ -8,7 +9,7 @@ interface SPuppetCharacterProps {
   readonly motionId?: string
   readonly playing?: boolean
   readonly tracking?: boolean
-  readonly onReady?: () => void
+  readonly onReady?: (hitTest: CharacterHitTest) => void
   readonly onError?: () => void
 }
 
@@ -20,7 +21,7 @@ export default function SPuppetCharacter(props: SPuppetCharacterProps) {
     motionId: () => props.motionId ?? 'Idle:0',
     mouth: () => props.mouth ?? null,
     onError: () => props.onError?.(),
-    onReady: () => props.onReady?.(),
+    onReady: () => props.onReady?.(preview.hitTest),
     playing: () => props.playing ?? true,
   })
   const handleLook = (event: PointerEvent) => {

@@ -62,3 +62,31 @@ test.each(['dispose', 'cancel', 'commit', 'replace'] as const)(
     root.dispose()
   },
 )
+
+test('should cancel the preview transaction on window blur', () => {
+  const document = createDemoDocument()
+  const track = getParameterTracks(document, document.motions[0]!)[0]!
+  const onEditEnd = vi.fn()
+  const onMove = vi.fn()
+  const view = render(() => (
+    <TimelineKeyframeMarker
+      duration={2}
+      framesPerSecond={30}
+      getTime={() => 0.5}
+      keyframe={track.keyframes[0]!}
+      parameterName={track.parameter.name}
+      selected
+      snapTime={(time) => time}
+      track={track}
+      onEditEnd={onEditEnd}
+      onMove={onMove}
+    />
+  ))
+  const marker = view.getByRole('button')
+  fireEvent(marker, new MouseEvent('pointerdown', {bubbles: true, button: 0}))
+  fireEvent(marker, new MouseEvent('pointermove', {bubbles: true}))
+  globalThis.dispatchEvent(new Event('blur'))
+  expect(onEditEnd).toHaveBeenCalledOnce()
+  fireEvent(marker, new MouseEvent('pointerup', {bubbles: true}))
+  expect(onMove).not.toHaveBeenCalled()
+})

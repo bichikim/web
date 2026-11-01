@@ -1,6 +1,6 @@
 /* eslint-disable no-bitwise, no-magic-numbers -- Base64 encodes fixed-width bytes. */
 import {validateMesh} from '../mesh/validate'
-import {encodeBase64} from './encode-base64'
+import {encodeBase64} from '../encoding/encode-base64'
 import {DOMParser, type Element} from '@xmldom/xmldom'
 
 import {

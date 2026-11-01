@@ -1,12 +1,9 @@
 import {cx} from 'class-variance-authority'
 import {createSignal} from 'solid-js'
 
-import {
-  parseSupertonicVoiceStyle,
-  SUPERTONIC_VOICES,
-  type SupertonicModelId,
-  useSupertonicVoiceLab,
-} from '../../features/supertonic'
+import {parseSupertonicVoiceStyle} from '@winter-love/supertonic/voice-style'
+import {SUPERTONIC_VOICES, type SupertonicModelId} from '@winter-love/supertonic/model'
+import {useSupertonicVoiceLab} from '../../features/supertonic'
 import {AudioChunks} from './AudioChunks'
 import {AudioResults} from './AudioResults'
 import {ModelPicker} from './ModelPicker'

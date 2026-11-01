@@ -1,3 +1,4 @@
+import {resolveParameterOverrides} from './internal/resolve-parameter-overrides'
 import {createExpressionLayers} from './internal/create-expression-layers'
 import type {PuppetParameterValueMap} from '../deformation'
 import {createMotionSounds} from './audio/motion-sounds'
@@ -48,14 +49,6 @@ export type {PuppetRenderOverride} from './internal/render-overrides'
 export type {PuppetParameterBlend, PuppetParameterBlendMode} from './parameter-blends'
 export type {PuppetPhysicsOptions} from './physics-options'
 export type {CreatePlayerOptions, Player, PlayerFrame, PlayerPlaybackOptions} from './player-types'
-
-/** 문서에 존재하는 파라미터의 외부 값을 각 파라미터 범위에 맞춰 반환한다. */
-const resolveOverrides = (document: PreparedPuppetDocument, values: PuppetParameterValueMap) =>
-  Object.fromEntries(
-    (document.parameters ?? [])
-      .filter((parameter) => Object.hasOwn(values, parameter.id))
-      .map((parameter) => [parameter.id, resolveParameterValue(parameter, values[parameter.id])]),
-  )
 
 // eslint-disable-next-line max-lines-per-function, max-statements -- Public operations share one lifecycle boundary.
 export const createPlayer = async (options: CreatePlayerOptions): Promise<Player> => {
@@ -274,7 +267,7 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
     motionHistory.reset()
     document = nextDocument
     if (nextParameterValues !== undefined) {
-      parameterValues = resolveOverrides(document, nextParameterValues)
+      parameterValues = resolveParameterOverrides(document, nextParameterValues)
     }
     sounds.load(document)
     playbacks.update(document.motions)
@@ -385,7 +378,7 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
       if (destroyed) {
         return
       }
-      const resolved = resolveOverrides(document, values)
+      const resolved = resolveParameterOverrides(document, values)
       if (Object.entries(resolved).some(([id, value]) => parameterValues[id] !== value)) {
         parameterValues = {...parameterValues, ...resolved}
         refresh()
@@ -473,6 +466,13 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
       return true
     },
     setExpressionLayer: (layerId, id) => !destroyed && expressionLayers.set(layerId, id),
+    setExpressions(expressionIds) {
+      if (destroyed || !expressions.setMany(expressionIds)) {
+        return false
+      }
+      refresh()
+      return true
+    },
     setEyeBlink(enabled) {
       if (destroyed || enabled === (eyeBlink !== undefined)) {
         return
@@ -535,7 +535,7 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
       if (destroyed) {
         return
       }
-      parameterValues = resolveOverrides(document, values)
+      parameterValues = resolveParameterOverrides(document, values)
       refresh()
     },
     setPartOverride(partId, override) {

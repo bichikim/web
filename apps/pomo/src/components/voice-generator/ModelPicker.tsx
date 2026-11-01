@@ -1,6 +1,6 @@
 import {cx} from 'class-variance-authority'
 import {For} from 'solid-js'
-import {SUPERTONIC_MODELS, type SupertonicModelId} from '../../features/supertonic/index'
+import {SUPERTONIC_MODELS, type SupertonicModelId} from '@winter-love/supertonic/model'
 
 const BYTES_PER_MEGABYTE = 1_000_000
 

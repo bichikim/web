@@ -1,4 +1,5 @@
 import {
+  mapParameterTuple,
   parameterValuesEqual,
   type PuppetParameterValues,
   withKeyformValues,
@@ -57,6 +58,9 @@ const mirrorDeformer = (
     })
     return {
       ...source,
+      ...(source.rotationAngle === undefined || base.rotationAngle === undefined
+        ? {}
+        : {rotationAngle: 2 * base.rotationAngle - source.rotationAngle}),
       controlPoints: rotated.map(
         (value, index) =>
           value +
@@ -140,24 +144,23 @@ export const mirrorKeyform = (options: MirrorKeyformOptions): MirrorKeyformResul
       ok: false,
     }
   }
-  const target = options.values.map((value, index) =>
+  const values = mapParameterTuple(options.values, (value, index) =>
     index === options.parameterIndex ? opposite : value,
   )
-  const values: PuppetParameterValues =
-    target.length === 2 ? [target[0]!, target[1]!] : [target[0]!]
   if (
     !options.overwrite &&
     binding.keyforms.some((keyform) => parameterValuesEqual(keyform.values, values))
   ) {
     return {message: '반대 값에 이미 키폼이 있습니다. 덮어쓰기를 선택하세요.', ok: false}
   }
-  const defaults: PuppetParameterValues =
-    parameters.length === 2
-      ? [parameters[0]!.defaultValue, parameters[1]!.defaultValue]
-      : [parameters[0]!.defaultValue]
+  const defaults = mapParameterTuple(
+    options.values,
+    (_value, index) => parameters[index]!.defaultValue,
+  )
   const base = sampleBindingKeyform(options, binding, defaults, deformers)
   const sampled = sampleBindingKeyform(options, binding, options.values, deformers)
   const geometry = {
+    ...sampled,
     deformers: sampled.deformers?.map((entry) =>
       mirrorDeformer(
         deformers.find((node) => node.id === entry.nodeId)!,

@@ -7,8 +7,8 @@ import {
   createSupertonicClient,
   getSupertonicErrorMessage,
   type SupertonicClient,
-  type SupertonicModelId,
 } from '../../supertonic'
+import {type SupertonicModelId} from '@winter-love/supertonic/model'
 import type {DialogueEditorState} from '../dialogue-editor-state'
 
 export interface CreateDialogueModelSessionOptions {

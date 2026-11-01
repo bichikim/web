@@ -41,7 +41,8 @@
   },
   "dependencies": {
     "@apps-in-toss/web-framework": "3.0.4",
-    "@huggingface/transformers": "4.2.0",
+    "@huggingface/transformers": "4.3.1",
+    "@huggingface/transformers-structured-output": "4.3.0",
     "@inlang/paraglide-js": "^2.24.1",
     "@kobalte/core": "^0.13.11",
     "@neondatabase/auth": "0.5.0-beta",

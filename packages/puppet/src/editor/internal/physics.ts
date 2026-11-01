@@ -82,9 +82,16 @@ const createPhysicsDocument = (
   document: PuppetDocument,
   pendulums: ReadonlyArray<PuppetPendulum>,
 ): PuppetDocument | undefined => {
+  const physics = {...document.physics, pendulums}
+  const hasSettings =
+    pendulums.length > 0 ||
+    (physics.chains?.length ?? 0) > 0 ||
+    physics.fps !== undefined ||
+    physics.gravity !== undefined ||
+    physics.wind !== undefined
   const nextDocument: PuppetDocument = {
     ...document,
-    physics: pendulums.length === 0 ? undefined : {pendulums},
+    physics: hasSettings ? physics : undefined,
   }
 
   return hasValidPhysics(nextDocument.physics, nextDocument.parameters ?? [])

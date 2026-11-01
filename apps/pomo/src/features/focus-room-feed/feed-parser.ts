@@ -1,4 +1,4 @@
-import {hasValidIsoCalendarDate} from 'src/utils/iso-calendar-date'
+import {hasIsoDatePrefix} from 'src/utils/has-iso-date-prefix'
 import DOMPurify from 'dompurify'
 import {groupBy} from 'es-toolkit/array'
 
@@ -135,7 +135,7 @@ const parseFeedTimestamp = (value: string): number | null => {
   const normalizedValue = value.trim()
   const isoDateParts = normalizedValue.match(ISO_DATE_PREFIX_PATTERN)?.groups
 
-  if (isoDateParts !== undefined && !hasValidIsoCalendarDate(normalizedValue)) {
+  if (isoDateParts !== undefined && !hasIsoDatePrefix(normalizedValue)) {
     return null
   }
 

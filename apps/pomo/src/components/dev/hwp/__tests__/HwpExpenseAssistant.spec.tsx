@@ -69,7 +69,14 @@ it('should send the expense text to the local chat model with a structured extra
 
   expect(chatMocks.setDraft).toHaveBeenCalledWith('당근 2000원\n고구마 1000원 2개')
   expect(chatMocks.send).toHaveBeenCalledWith(
-    expect.objectContaining({refineAnswer: false, supplementaryContext: expect.any(String)}),
+    expect.objectContaining({
+      outputSchema: expect.objectContaining({
+        required: expect.arrayContaining(['date', 'questions', 'items']),
+        type: 'object',
+      }),
+      refineAnswer: false,
+      supplementaryContext: expect.any(String),
+    }),
   )
 })
 

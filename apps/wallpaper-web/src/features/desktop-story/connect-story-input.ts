@@ -24,7 +24,9 @@ const ignoreCheck = (event: Event, pointer: boolean) =>
   (event instanceof WheelEvent &&
     (event.ctrlKey || Math.abs(event.deltaX) > Math.abs(event.deltaY))) ||
   Boolean(
-    pointer && event.target instanceof Element && event.target.closest('[data-character-drag]'),
+    pointer &&
+    event.target instanceof Element &&
+    event.target.closest('button,a[href],[role="button"],[data-character-drag]'),
   )
 
 const keyboardChapter = (event: KeyboardEvent, chapter: number) => {

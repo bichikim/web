@@ -1,5 +1,6 @@
 import {For, Show} from 'solid-js'
-import {getSupertonicModel, type SupertonicVoiceResult} from '../../features/supertonic/index'
+import {getSupertonicModel} from '@winter-love/supertonic/model'
+import {type SupertonicVoiceResult} from '../../features/supertonic/index'
 import {PAudioPreview} from '../p-audio-preview/PAudioPreview'
 import {MILLISECONDS_PER_SECOND} from './shared'
 

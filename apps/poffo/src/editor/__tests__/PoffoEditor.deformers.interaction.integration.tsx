@@ -300,6 +300,8 @@ describe('PuppetEditor', () => {
     )
     expect(view.getByRole('spinbutton', {name: '격자 제어점 1 X'})).toBeEnabled()
 
+    fireEvent(view.getByLabelText('디포머 편집 영역'), new MouseEvent('pointerup', {bubbles: true}))
+
     fireEvent(
       view.getByRole('button', {name: '격자 제어점 2'}),
       new MouseEvent('pointerdown', {bubbles: true, ctrlKey: true}),

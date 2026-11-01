@@ -113,15 +113,19 @@ describe('calculateSajuReading', () => {
     },
   )
 
-  it.each(['올해 운세는 어떨까요?', '내년 운세 좀 봐줘', '2026년 미래 좀 알려줘'])(
-    'should preserve the annual reading notice for an equivalent ending: %s',
-    (question) => {
-      expect(calculateSajuReading({birth, gender: 'N', question})).toEqual({
-        text: '특정 연도 운세는 계산하지 않아요. 연도를 빼고 다시 질문해 주세요.',
-        type: 'notice',
-      })
-    },
-  )
+  it.each([
+    '올해 운세는 어떨까요?',
+    '내년 운세 좀 봐줘',
+    '2026년 미래 좀 알려줘',
+    '2026년 생활은 어떤가요?',
+    '2026년생활은 어떤가요?',
+    '2026년생산 계획은?',
+  ])('should preserve the annual reading notice for an equivalent ending: %s', (question) => {
+    expect(calculateSajuReading({birth, gender: 'N', question})).toEqual({
+      text: '특정 연도 운세는 계산하지 않아요. 연도를 빼고 다시 질문해 주세요.',
+      type: 'notice',
+    })
+  })
 
   it('should answer a diary day-stem fact without requesting generation', () => {
     expect(
@@ -163,17 +167,24 @@ describe('calculateSajuReading', () => {
     }
   })
 
-  it.each(['1995년 생의 성향은 어떤가요?', '1995년 생은 어떤 성향인가요?'])(
-    'should generate a natal interpretation for a spaced birth-year question: %s',
-    (question) => {
-      const result = calculateSajuReading({birth, gender: 'N', question})
-      expect(result.type).toBe('generate')
-      if (result.type === 'generate') {
-        expect(result.request.messages.at(-1)?.content).toContain(question)
-        expect(result.request.messages.at(-1)?.content).toContain('"daeun":null')
-      }
-    },
-  )
+  it.each([
+    '1995년생의 성향은 어떤가요?',
+    '1995년 생의 성향은 어떤가요?',
+    '1995년 생은 어떤 성향인가요?',
+    '1995년생만 성향이 다른가요?',
+    '1995년생부터 성향을 알려주세요',
+    '1995년생처럼 행동하나요?',
+    '1995년생에 관한 성향을 알려줘',
+    '1995년생끼리 궁합은?',
+    '1995년생일 경우 제 성향은 어떤가요?',
+  ])('should generate a natal interpretation for a birth-year question: %s', (question) => {
+    const result = calculateSajuReading({birth, gender: 'N', question})
+    expect(result.type).toBe('generate')
+    if (result.type === 'generate') {
+      expect(result.request.messages.at(-1)?.content).toContain(question)
+      expect(result.request.messages.at(-1)?.content).toContain('"daeun":null')
+    }
+  })
 
   it('should reject annual fortune questions without calculated annual data', () => {
     expect(calculateSajuReading({birth, gender: 'N', question: '올해 운세는?'}).type).toBe('notice')

@@ -1,8 +1,7 @@
 import {createMemo, For} from 'solid-js'
 import {SStoryPrint} from './SStoryPrint'
 import type {StoryTransition} from '../features/desktop-story/types'
-
-const WORDS = ['DESKTOP', 'WALLPAPER', 'WIDGETS', 'DETAILS', 'CODEX', 'POFFO'] as const
+import chapters from '../data/story/chapters.json'
 
 interface SStoryArtworkProps {
   /** Chapter word and its prepared typography movement. */
@@ -19,7 +18,7 @@ interface SStoryArtworkProps {
 
 export const SStoryArtwork = (props: SStoryArtworkProps) => {
   const text = createMemo(() => {
-    const word = WORDS[props.transition.to] ?? 'PLAY'
+    const word = chapters[props.transition.to]?.word ?? 'PLAY'
     return Array.from({length: props.repetitions ?? 2}, () => word).join(' / ')
   })
   return (

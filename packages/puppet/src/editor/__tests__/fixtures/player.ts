@@ -26,6 +26,7 @@ export const createPlayerFixture = (): Player => ({
   setBreath: vi.fn(),
   setExpression: vi.fn(() => true),
   setExpressionLayer: vi.fn(() => true),
+  setExpressions: vi.fn(() => true),
   setEyeBlink: vi.fn(),
   setEyeBlinkTiming: vi.fn(),
   setGroupOverride: vi.fn(),

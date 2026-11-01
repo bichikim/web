@@ -3,7 +3,14 @@ import {describe, expect, it} from 'vitest'
 
 import type {GenerateTextOptions} from '../../text-generation'
 import type {ChatWorkerResponse} from '../messages'
-import {generateRequest, loadWorker, runtimeMocks, waitForResponse} from './fixtures/worker'
+import {
+  generateRequest,
+  koreanMocks,
+  loadWorker,
+  runtimeMocks,
+  textMocks,
+  waitForResponse,
+} from './fixtures/worker'
 
 describe('chat worker generation', () => {
   it('should not send ready when prepare arrives during a generation', async () => {
@@ -149,4 +156,25 @@ describe('chat worker generation', () => {
       type: 'error',
     })
   })
+})
+
+it('should constrain only the requested answer and bypass prose cleanup and refinement', async () => {
+  const outputSchema = {properties: {value: {type: 'number'}}, type: 'object'}
+  textMocks.trimRepetitiveTail.mockImplementation(() => 'changed prose')
+  runtimeMocks.generate.mockResolvedValue('{"value":2000}')
+  const worker = await loadWorker()
+  await worker.dispatchAndWaitForResponse(
+    generateRequest({outputSchema, refineAnswer: true}),
+    'complete',
+  )
+  expect(runtimeMocks.generate).toHaveBeenCalledWith(expect.objectContaining({outputSchema}))
+  expect(worker.postMessage).toHaveBeenCalledWith(
+    expect.objectContaining({
+      message: expect.objectContaining({content: '{"value":2000}'}),
+      type: 'complete',
+    }),
+  )
+  expect(runtimeMocks.generate).toHaveBeenCalledOnce()
+  expect(textMocks.trimRepetitiveTail).not.toHaveBeenCalled()
+  expect(koreanMocks.createKoreanTextSegments).not.toHaveBeenCalled()
 })

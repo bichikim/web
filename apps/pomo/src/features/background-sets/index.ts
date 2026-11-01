@@ -1,7 +1,7 @@
 import {sha256Hex} from 'src/utils/sha256-hex'
 import {loadPublicJson} from '../public-assets'
 import {z} from 'zod'
-import {MAX_PHOTO_BYTES, MAX_VIDEO_BYTES} from '../background'
+import {MAX_PHOTO_BYTES, MAX_VIDEO_BYTES} from '@winter-love/wallpaper/model'
 
 const entrySchema = z.object({
   bytes: z.number().int().positive().max(MAX_VIDEO_BYTES),

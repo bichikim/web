@@ -45,6 +45,7 @@ test('should release an active drag, override playback and restore all user choi
   preview.activate()
   const [presentation, setPresentation] = createSignal<StoryCharacter>()
   render(() => <SCharacterWidget preview={preview} presentation={presentation()} />)
+  renderer.props?.onReady?.(() => true)
   const button = screen.getByRole('button', {name: '흰 고양이 위젯. 드래그해서 이동'})
   button.setPointerCapture = vi.fn()
   button.hasPointerCapture = vi.fn(() => true)

@@ -29,10 +29,7 @@ export const ViewportSurface = (props: ViewportProps) => {
     }
   })
   return (
-    <div
-      class="workspace-viewport"
-      style={{'--viewport-background': props.background ?? '#111715'}}
-    >
+    <div class="workspace-viewport" style={{'--viewport-background': props.background}}>
       <CameraViewport
         width={props.document.viewport.width}
         height={props.document.viewport.height}
@@ -53,6 +50,7 @@ export const ViewportSurface = (props: ViewportProps) => {
           renderScale={renderScale()}
           motionId={props.motionId}
           expressionId={props.expressionId}
+          expressionIds={props.expressionIds}
           resumeTime={props.resumeTime}
           parameterValues={props.parameterValues}
           physicsPreview={props.physicsPreview}

@@ -129,10 +129,10 @@ test('should apply and release an imported expression without requiring a motion
   await waitFor(() => expect(selector).toBeEnabled())
   fireEvent.keyDown(selector, {key: 'ArrowDown'})
   fireEvent.click(await screen.findByRole('option', {name: 'Signatures off'}))
-  expect(player.setExpression).toHaveBeenLastCalledWith('Signatures off')
-  fireEvent.keyDown(selector, {key: 'ArrowDown'})
-  fireEvent.click(await screen.findByRole('option', {name: '표정 해제'}))
-  expect(player.setExpression).toHaveBeenLastCalledWith(undefined)
+  expect(player.setExpressions).toHaveBeenLastCalledWith(['Signatures off'])
+  fireEvent.keyDown(selector, {key: 'Escape'})
+  fireEvent.click(screen.getByRole('button', {name: '표정 모두 해제'}))
+  expect(player.setExpressions).toHaveBeenLastCalledWith([])
 })
 
 test('should keep file import available after a document import fails', async () => {

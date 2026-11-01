@@ -236,3 +236,72 @@ test('should copy unkeyed coordinates and mix only in-range sparse vertex channe
   input[0] = 50
   expect(copy).toEqual([10, 20, 30, 40])
 })
+
+test.each([
+  {time: 0.25, value: 0.25},
+  {time: 0.75, value: 0.5},
+])('should clamp sampled Cubism curves before blending at $time', ({time, value}) => {
+  const result = mixMotionFrames({
+    document,
+    frames: [
+      {
+        ...frame(0),
+        motion: {
+          duration: 1,
+          id: 'imported',
+          parameterBounds: 'sample',
+          tracks: [
+            {
+              keyframes: [
+                {time: 0, value: 0},
+                {time: 1, value: 2},
+              ],
+              kind: 'parameter',
+              parameterId: 'mouth',
+            },
+          ],
+        },
+        time,
+        weight: 0.5,
+      },
+    ],
+  })
+  expect(result.parameterValues.mouth).toBe(value)
+})
+
+test.each([
+  {time: 0.5, value: 0.5},
+  {time: 0.75, value: 0.25},
+])('should wrap repeated imported samples before blending at $time', ({time, value}) => {
+  const result = mixMotionFrames({
+    document: {
+      ...document,
+      parameters: document.parameters.map((parameter) =>
+        parameter.id === 'mouth' ? {...parameter, repeat: true} : parameter,
+      ),
+    },
+    frames: [
+      {
+        ...frame(0),
+        motion: {
+          duration: 1,
+          id: 'repeat',
+          parameterBounds: 'sample',
+          tracks: [
+            {
+              keyframes: [
+                {time: 0, value: 0},
+                {time: 1, value: 2},
+              ],
+              kind: 'parameter',
+              parameterId: 'mouth',
+            },
+          ],
+        },
+        time,
+        weight: 0.5,
+      },
+    ],
+  })
+  expect(result.parameterValues.mouth).toBe(value)
+})

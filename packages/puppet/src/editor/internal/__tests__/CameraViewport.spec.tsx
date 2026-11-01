@@ -109,7 +109,11 @@ test('should move and zoom only the viewing surface and reset to the origin', ()
   Object.defineProperty(viewport, 'clientHeight', {value: 150})
   fireEvent.click(view.getByRole('button', {name: '화면 맞춤'}))
   expect(zoom).toHaveValue(50)
-  Object.assign(viewport, {releasePointerCapture: () => {}, setPointerCapture: () => {}})
+  Object.assign(viewport, {
+    hasPointerCapture: () => true,
+    releasePointerCapture: () => {},
+    setPointerCapture: () => {},
+  })
   fireEvent(
     viewport,
     Object.assign(

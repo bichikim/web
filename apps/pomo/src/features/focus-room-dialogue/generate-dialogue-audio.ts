@@ -2,15 +2,15 @@ import * as m from '@paraglide/message'
 import {joinAudioChunks} from '../supertonic/audio'
 import {getSupertonicSpeechSpeed, type SupertonicClient} from '../supertonic/client'
 import {getSupertonicErrorMessage} from '../supertonic/error-message'
-import type {SupertonicLanguage} from '../supertonic/language'
+import type {SupertonicLanguage} from '@winter-love/supertonic/language'
 import type {SupertonicAudioChunk} from '../supertonic/messages'
 import {
   getSupertonicModel,
   type SupertonicModelId,
   type SupertonicVoiceId,
-} from '../supertonic/model'
+} from '@winter-love/supertonic/model'
 import {createOpusBlob} from '../supertonic/opus-client'
-import {splitSpeechText} from '../supertonic/text-chunking'
+import {splitSpeechText} from '@winter-love/supertonic/text-chunking'
 import {createWaveBlob} from '../supertonic/wav'
 import type {DialogueSegment} from './schema'
 import {createDialogueTimeline} from './timeline'

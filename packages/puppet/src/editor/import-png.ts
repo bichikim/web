@@ -4,6 +4,7 @@ import {
   PUPPET_DOCUMENT_VERSION,
   type PuppetDocument,
 } from '../player/document'
+import {loadTextureImage} from '../player/internal/load-texture-image'
 import {MAXIMUM_TEXTURE_PIXELS} from './internal/texture-limits'
 
 export type ImportPngErrorCode =
@@ -41,13 +42,8 @@ const readFileSource = (file: File): Promise<string | undefined> =>
   })
 
 const decodeImage = async (source: string) => {
-  const image = new Image()
-  image.decoding = 'async'
-  image.src = source
-
   try {
-    await image.decode()
-    return image
+    return await loadTextureImage(source)
   } catch {
     return undefined
   }

@@ -5,10 +5,14 @@ import {connectCharacterBlink} from './blink'
 import {getCharacterLook} from './get-character-look'
 import {connectCharacterLook} from './look'
 import geometry from '../../data/character-look.json'
+import {createCanvasHitTest} from './create-canvas-hit-test'
+import type {CharacterHitTest, CharacterPoint} from './types'
 
 export * from './blink'
+export * from './create-canvas-hit-test'
 export * from './get-character-look'
 export * from './look'
+export * from './types'
 
 interface CharacterPreviewOptions {
   readonly canvas: Accessor<HTMLCanvasElement | null>
@@ -25,6 +29,7 @@ export const useCharacterPreview = (options: CharacterPreviewOptions) => {
   const RENDER_SCALE = 1.5
   const [look, setLook] = createSignal<ReturnType<typeof connectCharacterLook> | null>(null)
   const [player, setPlayer] = createSignal<Player | null>(null)
+  let hitTest: CharacterHitTest | null = null
   createEffect(() => {
     const canvas = options.canvas()
     if (canvas === null) {
@@ -76,6 +81,7 @@ export const useCharacterPreview = (options: CharacterPreviewOptions) => {
         player: created,
       })
       setLook(gaze)
+      hitTest = createCanvasHitTest({canvas, redraw: () => created.redraw()})
       created.setEyeBlink(false)
       created.setBreath(true)
       created.setPhysicsPreview(true)
@@ -91,6 +97,7 @@ export const useCharacterPreview = (options: CharacterPreviewOptions) => {
       cancellation.abort()
       setLook(null)
       gaze?.release()
+      hitTest = null
       setPlayer(null)
       active?.destroy()
     })
@@ -153,6 +160,7 @@ export const useCharacterPreview = (options: CharacterPreviewOptions) => {
     )
   }
   return {
+    hitTest: (point: CharacterPoint) => hitTest?.(point) ?? false,
     lookAt,
     resize: () => player()?.resize(),
   }

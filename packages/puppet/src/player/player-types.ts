@@ -59,6 +59,8 @@ export interface Player {
   setExpression(expressionId?: string): boolean
   /** Sets an independently fading expression layer; omitted expression releases only this layer. Unknown expressions return false. */
   setExpressionLayer(layerId: string, expressionId?: string): boolean
+  /** 여러 표정을 독립적으로 페이드한다. 빈 목록은 모두 해제하며 모르는 ID는 변경 없이 거부한다. */
+  setExpressions(expressionIds: ReadonlyArray<string>): boolean
   /** Breathes with the document's `breath` parameters, added after motions and before physics. */
   setBreath(enabled: boolean): void
   /**

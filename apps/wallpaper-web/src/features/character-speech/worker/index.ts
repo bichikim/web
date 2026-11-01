@@ -1,0 +1,5 @@
+export * from './create-speech-handler'
+export * from './encode-mp3'
+export * from './load-asset'
+export * from './load-speech-engine'
+export * from './types'

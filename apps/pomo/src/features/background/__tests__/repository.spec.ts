@@ -1,7 +1,7 @@
 /** @vitest-environment node */
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
-import type {BackgroundRepository} from '../model'
+import type {BackgroundRepository} from '@winter-love/wallpaper/model'
 import {createNativeRepository} from '../native-repository'
 import {createWebRepository} from '../web-repository'
 

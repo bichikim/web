@@ -111,7 +111,11 @@ export const WorkspaceProvider = (props: WorkspaceProviderProps) => {
       <ViewportContext.Provider value={{bind: viewports.bind}}>
         {props.children}
       </ViewportContext.Provider>
-      <EditorToast message={rendering.error() ?? undefined} onDismiss={rendering.dismissError} />
+      <EditorToast
+        tone="error"
+        message={rendering.error() ?? undefined}
+        onDismiss={rendering.dismissError}
+      />
       <Show when={header()?.mount}>
         {(mount) => <Portal mount={mount()}>{headerContent}</Portal>}
       </Show>

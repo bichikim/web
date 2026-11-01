@@ -6,6 +6,7 @@ import {RuntimeSplit} from './RuntimeSplit'
 import {useRuntimeControls} from './use-runtime-controls'
 import {RuntimeTools} from './RuntimeTools'
 import {createSignal, Show, Suspense} from 'solid-js'
+import {useCanvasColor} from '../color-theme/use-canvas-color'
 import {
   EditorButton,
   EditorColorField,
@@ -31,7 +32,8 @@ export const RuntimePage = (props: RuntimePageProps) => {
   const [motionId, setMotionId] = createSignal(query.get('motion') ?? undefined)
   const [playing, setPlaying] = createSignal(true)
   const [ready, setReady] = createSignal(false)
-  const [background, setBackground] = createSignal('#111715')
+  const [background, setBackground] = createSignal<string | null>(null)
+  const themeCanvas = useCanvasColor()
   const {frame, resetFrame, resumeTime, updateFrame} = usePlaybackFrame(loading.document, () =>
     selectedMotion(),
   )
@@ -70,7 +72,7 @@ export const RuntimePage = (props: RuntimePageProps) => {
   return (
     <main
       class="puppet-editor editor-type-root puppet-viewer-page"
-      style={{'--viewer-background': background()}}
+      style={{'--viewer-background': background() ?? undefined}}
     >
       <EditorStyles />
       <Suspense fallback={renderEmpty()}>
@@ -107,15 +109,15 @@ export const RuntimePage = (props: RuntimePageProps) => {
                     </EditorButton>
                     <ExpressionSelect
                       expressions={current().expressions}
-                      value={controls.modelExpression()}
+                      values={controls.modelExpressions()}
                       disabled={!ready()}
-                      onChange={controls.selectModelExpression}
+                      onChange={controls.selectModelExpressions}
                     />
                     <div class="puppet-viewer-background">
                       <EditorColorField
                         size="md"
                         label="배경색"
-                        value={background()}
+                        value={background() ?? themeCanvas()}
                         onValueChange={setBackground}
                       />
                     </div>
@@ -129,14 +131,14 @@ export const RuntimePage = (props: RuntimePageProps) => {
                   </RuntimeHeader>
                   <RuntimeSplit studio={props.mode === 'studio'} onResize={controls.retainCamera}>
                     <PlaybackCanvas
-                      background={background()}
+                      background={background() ?? undefined}
                       resumeTime={resumeTime()}
                       parameterValues={controls.values()}
                       view={controls.profile()?.view}
                       onViewChange={controls.updateView}
                       document={current()}
                       motionId={selectedMotion()}
-                      expressionId={controls.modelExpression()}
+                      expressionIds={controls.modelExpressions()}
                       playing={playing()}
                       onFrame={updateFrame}
                       onReady={setReady}

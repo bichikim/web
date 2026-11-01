@@ -84,56 +84,12 @@ export const usePanelLayout = () => {
   const [rightSize, setRightSize] = createSignal<number>(EDITOR_PANEL_SPECS.right.defaultSize)
   let stopResize: (() => void) | undefined
 
-  const getSize = (position: EditorPanelPosition) => {
-    switch (position) {
-      case 'bottom':
-        return bottomSize()
-      case 'left':
-        return leftSize()
-      case 'right':
-        return rightSize()
-      default: {
-        const exhaustivePosition: never = position
-        return exhaustivePosition
-      }
-    }
-  }
-
-  const setOpen = (position: EditorPanelPosition, open: boolean) => {
-    switch (position) {
-      case 'bottom':
-        setBottomOpen(open)
-        return
-      case 'left':
-        setLeftOpen(open)
-        return
-      case 'right':
-        setRightOpen(open)
-        return
-      default: {
-        const exhaustivePosition: never = position
-        return exhaustivePosition
-      }
-    }
-  }
-
-  const setSize = (position: EditorPanelPosition, size: number) => {
-    switch (position) {
-      case 'bottom':
-        setBottomSize(size)
-        return
-      case 'left':
-        setLeftSize(size)
-        return
-      case 'right':
-        setRightSize(size)
-        return
-      default: {
-        const exhaustivePosition: never = position
-        return exhaustivePosition
-      }
-    }
-  }
+  const sizes = {bottom: bottomSize, left: leftSize, right: rightSize}
+  const openSetters = {bottom: setBottomOpen, left: setLeftOpen, right: setRightOpen}
+  const sizeSetters = {bottom: setBottomSize, left: setLeftSize, right: setRightSize}
+  const getSize = (position: EditorPanelPosition) => sizes[position]()
+  const setOpen = (position: EditorPanelPosition, open: boolean) => openSetters[position](open)
+  const setSize = (position: EditorPanelPosition, size: number) => sizeSetters[position](size)
 
   const resize = (position: EditorPanelPosition, size: number) => {
     const specification = EDITOR_PANEL_SPECS[position]
@@ -179,32 +135,46 @@ export const usePanelLayout = () => {
     const initialSize = getSize(position)
     const direction = getResizeDirection(position)
     const specification = EDITOR_PANEL_SPECS[position]
+    const {pointerId} = event
     let collapseOnRelease = false
     const handlePointerMove = (moveEvent: PointerEvent) => {
+      if (moveEvent.pointerId !== pointerId) {
+        return
+      }
       const pointerDelta = getPointerPosition(moveEvent, position) - initialPointerPosition
       const nextSize = initialSize + pointerDelta * direction
       collapseOnRelease = nextSize <= specification.minimumSize * COLLAPSE_RATIO
       resize(position, nextSize)
     }
-    const handlePointerUp = () => {
+    const handlePointerUp = (upEvent: PointerEvent) => {
+      if (upEvent.pointerId !== pointerId) {
+        return
+      }
       if (collapseOnRelease) {
         setOpen(position, false)
       }
 
       stopResize?.()
     }
-    const handlePointerCancel = () => stopResize?.()
+    const cancel = () => stopResize?.()
+    const handlePointerCancel = (cancelEvent: PointerEvent) => {
+      if (cancelEvent.pointerId === pointerId) {
+        cancel()
+      }
+    }
 
     stopResize = () => {
       globalThis.removeEventListener('pointercancel', handlePointerCancel)
       globalThis.removeEventListener('pointermove', handlePointerMove)
       globalThis.removeEventListener('pointerup', handlePointerUp)
+      globalThis.removeEventListener('blur', cancel)
       setResizingPosition(null)
       stopResize = undefined
     }
     globalThis.addEventListener('pointercancel', handlePointerCancel)
     globalThis.addEventListener('pointermove', handlePointerMove)
     globalThis.addEventListener('pointerup', handlePointerUp)
+    globalThis.addEventListener('blur', cancel)
   }
 
   onCleanup(() => stopResize?.())

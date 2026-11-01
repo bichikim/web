@@ -3,6 +3,7 @@ import characterExpressions from '../../data/character-expressions.json'
 import type {WidgetBackground} from './backgrounds'
 
 export * from './backgrounds'
+export * from './use-widget-interaction'
 
 type PreviewPhase = 'poster' | 'loading' | 'ready' | 'error'
 const DEFAULT_SIZE = 100

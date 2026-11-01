@@ -299,7 +299,6 @@ const createKeyformMoveHandler =
 
 interface CreateKeyformInsertionHandlerOptions {
   readonly activeBinding: Accessor<PuppetParameterBinding | undefined>
-  readonly activeTargetNodeIds: Accessor<ReadonlyArray<string>>
   readonly parameterValues: Accessor<PuppetParameterValues>
   readonly props: UseParameterEditorProps
   readonly setActiveKeyformValues: Setter<PuppetParameterValues | null>
@@ -308,7 +307,7 @@ interface CreateKeyformInsertionHandlerOptions {
 const createKeyformInsertionHandler = (options: CreateKeyformInsertionHandlerOptions) => () => {
   const binding = options.activeBinding()
   const values = options.parameterValues()
-  if (binding === undefined || options.activeTargetNodeIds().length === 0) {
+  if (binding === undefined) {
     return
   }
 
@@ -506,7 +505,6 @@ export const useParameterEditor = (props: UseParameterEditorProps): ParameterEdi
   )
   const createKeyform = createKeyformInsertionHandler({
     activeBinding,
-    activeTargetNodeIds,
     parameterValues,
     props,
     setActiveKeyformValues,

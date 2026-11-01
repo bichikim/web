@@ -7,26 +7,29 @@ export const MappingEdge = (props: EdgeProps) => {
   const graph = useMappingGraph()
   const flow = useSolidFlow()
   const [pointer, setPointer] = createSignal<XYPosition | null>(null)
+  let dragPointer: number | undefined
   const input = () => props.target.startsWith('mapping:')
   const start = (event: PointerEvent & {currentTarget: SVGCircleElement}) => {
-    if (event.button !== 0) {
+    if (event.button !== 0 || dragPointer !== undefined) {
       return
     }
     event.stopPropagation()
     event.preventDefault()
+    dragPointer = event.pointerId
     event.currentTarget.setPointerCapture(event.pointerId)
     setPointer(flow.screenToFlowPosition({x: event.clientX, y: event.clientY}))
   }
   const move = (event: PointerEvent) => {
-    if (pointer() !== null) {
+    if (dragPointer === event.pointerId) {
       setPointer(flow.screenToFlowPosition({x: event.clientX, y: event.clientY}))
     }
   }
   const finish = (event: PointerEvent & {currentTarget: SVGCircleElement}) => {
-    if (pointer() === null) {
+    if (dragPointer !== event.pointerId) {
       return
     }
     event.stopPropagation()
+    dragPointer = undefined
     setPointer(null)
     const handle = document.elementFromPoint(event.clientX, event.clientY)?.closest('[data-nodeid]')
     const node = handle?.getAttribute('data-nodeid')
@@ -51,6 +54,12 @@ export const MappingEdge = (props: EdgeProps) => {
           targetHandle: identifier,
         }
     graph.onConnect(connection)
+  }
+  const cancel = (event: PointerEvent) => {
+    if (dragPointer === event.pointerId) {
+      dragPointer = undefined
+      setPointer(null)
+    }
   }
   const keydown = (event: KeyboardEvent) => {
     if (event.key === 'Enter' || event.key === ' ') {
@@ -81,7 +90,8 @@ export const MappingEdge = (props: EdgeProps) => {
           onPointerDown={start}
           onPointerMove={move}
           onPointerUp={finish}
-          onPointerCancel={() => setPointer(null)}
+          onPointerCancel={cancel}
+          onLostPointerCapture={cancel}
           onKeyDown={keydown}
         />
       </Show>

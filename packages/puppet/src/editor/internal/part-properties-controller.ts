@@ -1,6 +1,6 @@
 import {getPartRenderProperties} from '../../deformation'
 import type {PuppetPart} from '../../player'
-import type {EditorInspectorProps} from './EditorInspector'
+import type {EditorInspectorProps} from './inspector/types'
 import {getParameterEditTarget} from './parameter-edit-target'
 import {setParameterKeyformPartProperties, setPartRenderProperties} from './part-properties'
 import {isSceneNodeLocked} from './scene-graph'

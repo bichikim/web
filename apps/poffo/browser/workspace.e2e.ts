@@ -201,3 +201,69 @@ for (const height of [480, 240]) {
     await expect(settings).toBeVisible()
   })
 }
+
+test('should retain an active expression while another is toggled through the rendered player', async ({
+  page,
+}) => {
+  const demo = createDemoDocument()
+  const document = {
+    ...demo,
+    expressions: [
+      {
+        composition: 'cubism' as const,
+        fadeInTime: 0,
+        fadeOutTime: 0,
+        id: '게임패드 들기',
+        parameters: [{blend: 'add' as const, parameterId: 'angle-x', value: 20}],
+      },
+      {
+        composition: 'cubism' as const,
+        fadeInTime: 0,
+        fadeOutTime: 0,
+        id: '왼손 버튼 누르기',
+        parameters: [{blend: 'add' as const, parameterId: 'angle-y', value: 20}],
+      },
+    ],
+    motions: [],
+  }
+  await page.goto('/viewer')
+  await page.getByLabel('모델 불러오기', {exact: true}).setInputFiles({
+    buffer: Buffer.from(serializeDocument(document)),
+    mimeType: 'application/json',
+    name: 'expressions.json',
+  })
+  const selector = page.getByRole('button', {name: /^표정 선택/u})
+  await expect(selector).toBeEnabled()
+  const surface = page.getByRole('region', {name: '모델 보기'})
+  const canvas = surface.locator('canvas')
+  await expect(canvas).toBeVisible()
+  await page.getByRole('button', {exact: true, name: '메인 메뉴'}).blur()
+  const rest = await surface.screenshot()
+  await selector.click()
+  await page.getByRole('option', {exact: true, name: '게임패드 들기'}).click()
+  await expect(page.getByRole('option', {name: '게임패드 들기'})).toHaveAttribute(
+    'aria-selected',
+    'true',
+  )
+  await page.keyboard.press('Escape')
+  await expect.poll(async () => (await surface.screenshot()).equals(rest)).toBe(false)
+  const held = await surface.screenshot()
+  await selector.click()
+  await page.getByRole('option', {exact: true, name: '왼손 버튼 누르기'}).click()
+  await expect(page.getByRole('option', {name: '게임패드 들기'})).toHaveAttribute(
+    'aria-selected',
+    'true',
+  )
+  await expect(page.getByRole('option', {name: '왼손 버튼 누르기'})).toHaveAttribute(
+    'aria-selected',
+    'true',
+  )
+  await page.keyboard.press('Escape')
+  await expect.poll(async () => (await surface.screenshot()).equals(held)).toBe(false)
+  await selector.click()
+  await page.getByRole('option', {exact: true, name: '왼손 버튼 누르기'}).click()
+  await page.keyboard.press('Escape')
+  await expect.poll(async () => (await surface.screenshot()).equals(held)).toBe(true)
+  await page.getByRole('button', {name: '표정 모두 해제'}).click()
+  await expect.poll(async () => (await surface.screenshot()).equals(rest)).toBe(true)
+})

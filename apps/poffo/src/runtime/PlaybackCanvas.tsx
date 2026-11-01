@@ -13,7 +13,7 @@ interface PlaybackCanvasProps {
   readonly document: PuppetDocument
   readonly resumeTime?: number
   readonly motionId?: string
-  readonly expressionId?: string
+  readonly expressionIds?: ReadonlyArray<string>
   readonly playing: boolean
   readonly background?: string
   readonly onFrame: (frame: PlayerFrame) => void
@@ -26,7 +26,7 @@ export const PlaybackCanvas = (props: PlaybackCanvasProps) => (
       owner="runtime"
       document={props.document}
       motionId={props.motionId}
-      expressionId={props.expressionId}
+      expressionIds={props.expressionIds}
       resumeTime={props.resumeTime}
       parameterValues={props.parameterValues}
       playing={props.playing}
