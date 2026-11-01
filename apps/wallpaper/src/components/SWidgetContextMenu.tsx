@@ -1,4 +1,4 @@
-import {createEffect, createSignal, For, onCleanup, Show} from 'solid-js'
+import {createEffect, createMemo, createSignal, For, onCleanup, Show} from 'solid-js'
 import type {ContextAction} from '../features/semantics/types'
 
 interface SWidgetContextMenuProps {
@@ -15,6 +15,24 @@ interface SWidgetContextMenuProps {
 export const SWidgetContextMenu = (props: SWidgetContextMenuProps) => {
   const [panel, setPanel] = createSignal<HTMLDivElement | null>(null)
   const [height, setHeight] = createSignal(0)
+  const [focused, setFocused] = createSignal<string | null>(null)
+  const actions = createMemo(
+    () => new Map((props.actions ?? []).map((action) => [action.id, action])),
+  )
+  const handleSizingFocus = () => setFocused(null)
+  createEffect(() => {
+    const id = focused()
+    if (id !== null) {
+      const index = [...actions().keys()].indexOf(id)
+      if (index === -1) {
+        setFocused(null)
+      }
+      panel()
+        ?.querySelectorAll<HTMLButtonElement>('button[role^="menuitem"]')
+        .item(index + 1)
+        ?.focus()
+    }
+  })
   createEffect(() => {
     const element = panel()
     if (element === null) {
@@ -99,35 +117,39 @@ export const SWidgetContextMenu = (props: SWidgetContextMenuProps) => {
           text-[13px] [font-family:inherit] hover:bg-stone-100
           focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-blue-700"
         onClick={handleSelect}
+        onFocus={handleSizingFocus}
       >
         {props.editing ? '조정 완료' : '크기 조정'}
       </button>
-      <Show when={(props.actions?.length ?? 0) > 0}>
+      <Show when={actions().size > 0}>
         <div role="separator" aria-orientation="horizontal" class="my-1 h-px bg-stone-200" />
       </Show>
-      <For each={props.actions}>
-        {(action) => {
+      <For each={[...actions().keys()]}>
+        {(id) => {
+          const action = () => actions().get(id)!
+          const handleFocus = () => setFocused(id)
           const handleToggle = () => {
-            props.onToggle?.(action.id)
+            props.onToggle?.(id)
             props.onDismiss()
           }
           return (
             <button
               type="button"
               role="menuitemcheckbox"
-              aria-checked={action.checked}
+              aria-checked={action().checked}
               tabindex={-1}
               disabled={props.disabled || props.onToggle === undefined}
               onClick={handleToggle}
+              onFocus={handleFocus}
               class="flex min-h-8 w-full cursor-pointer items-center gap-2 rounded border-0
                 bg-transparent px-2 py-1 text-left text-[13px] [font-family:inherit]
                 hover:bg-stone-100 focus-visible:outline-solid focus-visible:outline-2
                 focus-visible:outline-blue-700 disabled:opacity-40"
             >
               <span aria-hidden="true" class="w-3 shrink-0">
-                {action.checked ? '✓' : ''}
+                {action().checked ? '✓' : ''}
               </span>
-              <span class="min-w-0 break-words">{action.label}</span>
+              <span class="min-w-0 break-words">{action().label}</span>
             </button>
           )
         }}
