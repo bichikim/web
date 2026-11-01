@@ -64,7 +64,7 @@ test('should combine selected inputs with animation without accumulation and rel
       canvas,
       mode: () => 'cursor',
       onError: (cause) => errors.push(cause),
-      options: () => ({eyeResponseX: 0.9, headResponseX: 1}),
+      options: () => ({eyeResponseX: 6 / 7, headResponseX: 1}),
       parameters: () => model.parameters!,
       player: active,
     })
@@ -97,7 +97,8 @@ test('should combine selected inputs with animation without accumulation and rel
     const bounds = canvas()!.getBoundingClientRect()
     globalThis.dispatchEvent(
       new PointerEvent('pointermove', {
-        clientX: bounds.left + bounds.width / 2 + (bounds.height * 0.3) / Math.sqrt(3),
+        // This face offset produces a one-third response for the additive pose fixture.
+        clientX: bounds.left + bounds.width / 2 + bounds.height * 0.17073574354260507,
         clientY: bounds.top + bounds.height * 0.3,
       }),
     )

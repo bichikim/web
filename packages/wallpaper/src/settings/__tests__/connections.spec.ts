@@ -40,6 +40,10 @@ it('should persist character action targets and reject actions missing from the 
 it('should read a versioned JSON profile and preserve connection values', () => {
   expect(parseConnectionProfile(JSON.stringify(profile), options)).toEqual({ok: true, profile})
 })
+it.each([0, -1, 4])('should reject an out-of-range cursor reach (%s)', (cursorReach) => {
+  const source = JSON.stringify({...profile, connections: {trackingOptions: {cursorReach}}})
+  expect(parseConnectionProfile(source, options)).toEqual({ok: false, reason: 'invalid'})
+})
 it('should preserve additive tracking connections in JSON profiles', () => {
   const input = {
     ...profile,
@@ -48,6 +52,7 @@ it('should preserve additive tracking connections in JSON profiles', () => {
         eyeY: {blend: 'overwrite', parameterId: null},
         headX: {blend: 'add', inverted: true, parameterId: 'Param71'},
       },
+      trackingOptions: {cursorReach: 0.5},
     },
   }
   expect(parseConnectionProfile(JSON.stringify(input), options)).toEqual({ok: true, profile: input})

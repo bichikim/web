@@ -1,6 +1,56 @@
 import {expect, test} from 'vitest'
 import {createTrackingParameters, resolveTrackingParameter} from '../parameters'
 
+test('should scale the cursor curve to each configured endpoint and respect the model range', () => {
+  const parameters = [
+    {defaultValue: 0, id: 'face-x', maximum: 30, minimum: -30},
+    {defaultValue: 0, id: 'face-y', maximum: 30, minimum: -30},
+    {defaultValue: 0, id: 'gaze-x', maximum: 1, minimum: -1},
+    {defaultValue: 0, id: 'gaze-y', maximum: 1, minimum: -1},
+  ]
+  const cursor = createTrackingParameters(
+    parameters,
+    {},
+    {
+      eyeMaximumX: 0.5,
+      eyeMaximumY: 0.4,
+      eyeMinimumX: -0.25,
+      eyeMinimumY: -0.2,
+      headMaximumX: 20,
+      headMaximumY: 12,
+      headMinimumX: -10,
+      headMinimumY: -8,
+    },
+    'cursor',
+  )
+  expect(cursor({x: 0.5, y: 0.5})).toEqual({
+    'face-x': 10,
+    'face-y': 6,
+    'gaze-x': 0.25,
+    'gaze-y': 0.2,
+  })
+  expect(cursor({x: -0.5, y: -0.5})).toEqual({
+    'face-x': -5,
+    'face-y': -4,
+    'gaze-x': -0.125,
+    'gaze-y': -0.1,
+  })
+  expect(cursor({x: 1, y: 1})).toEqual({'face-x': 20, 'face-y': 12, 'gaze-x': 0.5, 'gaze-y': 0.4})
+  expect(cursor({x: -1, y: -1})).toEqual({
+    'face-x': -10,
+    'face-y': -8,
+    'gaze-x': -0.25,
+    'gaze-y': -0.2,
+  })
+  const oversized = createTrackingParameters(
+    parameters,
+    {},
+    {eyeMaximumX: 10, headMaximumX: 180},
+    'cursor',
+  )
+  expect(oversized({x: 1, y: 0})).toMatchObject({'face-x': 30, 'gaze-x': 1})
+})
+
 test('should use the full cursor range at default gains without changing camera calibration', () => {
   const parameters = [
     {defaultValue: 0, id: 'face-x', maximum: 30, minimum: -30},
@@ -22,6 +72,18 @@ test('should use the full cursor range at default gains without changing camera 
   )
   expect(limited({x: 1, y: 0})).toMatchObject({'face-x': -7, 'gaze-x': 0})
   expect(createTrackingParameters(parameters)({x: 1, y: 0})['face-x']).toBe(12)
+})
+
+test('should adjust intermediate cursor response while retaining the configured endpoint at any positive gain', () => {
+  const parameters = [{defaultValue: 0, id: 'face-x', maximum: 30, minimum: -30}]
+  const slower = createTrackingParameters(parameters, {}, {headResponseX: 0.5}, 'cursor')
+  const faster = createTrackingParameters(parameters, {}, {headResponseX: 2}, 'cursor')
+  expect(slower({x: 0.5, y: 0})['face-x']).toBe(10)
+  expect(faster({x: 0.5, y: 0})['face-x']).toBe(20)
+  expect(slower({x: 1, y: 0})['face-x']).toBe(30)
+  expect(slower({x: -1, y: 0})['face-x']).toBe(-30)
+  const disabled = createTrackingParameters(parameters, {}, {headResponseX: 0}, 'cursor')
+  expect(disabled({x: 1, y: 0})['face-x']).toBe(0)
 })
 
 test('should tune horizontal and vertical response independently while retaining the camera viewing direction', () => {

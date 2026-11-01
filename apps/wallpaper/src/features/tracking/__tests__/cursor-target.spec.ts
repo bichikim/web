@@ -7,26 +7,21 @@ const point = {height: 800, width: 1200, x: 200, y: 170}
 const target = (x: number, y = 170) =>
   createCursorTarget({bounds, point: {...point, x, y}, viewport})
 
-test('should follow distance from the face with a continuous curve that softens toward its limit', () => {
+test('should scale cursor distance by character height and reach full gaze at a finite offset', () => {
   expect(target(200)).toEqual({x: 0, y: 0})
-  expect(target(320).x).toBeCloseTo(0.5)
-  const near = target(260).x
-  const middle = target(320).x
-  const far = target(380).x
-  expect(near).toBeGreaterThan(0)
-  expect(middle).toBeGreaterThan(near)
-  expect(far).toBeGreaterThan(middle)
-  expect(far - middle).toBeLessThan(middle - near)
-  expect(target(2000).x).toBeGreaterThan(target(1000).x)
-  expect(target(2000).x).toBeLessThan(1)
-  expect(target(80).x).toBeCloseTo(-0.5)
+  expect(target(320).x).toBeCloseTo(0.5188418881, 6)
+  expect(target(600).x).toBe(1)
+  expect(target(2000).x).toBe(1)
+  expect(target(-200).x).toBe(-1)
+  expect(1 - target(599.6).x).toBeLessThan(0.000002)
+  expect(target(80).x).toBeCloseTo(-0.5188418881, 6)
 })
 
 test('should preserve diagonal direction instead of independently saturating both axes', () => {
   const diagonal = target(800, -1030)
   expect(diagonal.y / diagonal.x).toBeCloseTo(2)
-  expect(Math.hypot(diagonal.x, diagonal.y)).toBeLessThan(1)
-  expect(target(200, 50).y).toBeCloseTo(0.5)
+  expect(Math.hypot(diagonal.x, diagonal.y)).toBeCloseTo(1)
+  expect(target(200, 50).y).toBeCloseTo(0.5188418881, 6)
 })
 
 test('should use the configured face anchor and normalize native physical pixels to CSS coordinates', () => {
@@ -70,4 +65,22 @@ test('should remain neutral for hidden canvases and invalid cursor dimensions', 
     x: 0,
     y: 0,
   })
+})
+
+test('should reach the same maximum at the configured character-relative distance', () => {
+  const closer = createCursorTarget({
+    bounds,
+    options: {cursorReach: 0.5},
+    point: {...point, x: 400},
+    viewport,
+  })
+  expect(closer).toEqual({x: 1, y: 0})
+  expect(target(400).x).toBeCloseTo(0.7248927759, 6)
+  const farther = createCursorTarget({
+    bounds,
+    options: {cursorReach: 2},
+    point: {...point, x: 600},
+    viewport,
+  })
+  expect(farther.x).toBeCloseTo(0.7248927759, 6)
 })

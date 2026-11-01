@@ -36,7 +36,6 @@ const bounded = (value: number) => (Number.isFinite(value) ? Math.max(-1, Math.m
 const FRAMES_PER_SECOND = 60
 const FRAME_SECONDS = 1 / FRAMES_PER_SECOND
 const MILLISECONDS_PER_SECOND = 1000
-const SETTLE_DISTANCE = 0.001
 
 export const useTracking = (props: UseTrackingProps) => {
   const viewport = useViewport(
@@ -93,7 +92,7 @@ export const useTracking = (props: UseTrackingProps) => {
       previous = timestamp
       current = smoothTrackingPoint(current, target, seconds)
       apply(map(current, origin))
-      if (Math.abs(target.x - current.x) + Math.abs(target.y - current.y) > SETTLE_DISTANCE) {
+      if (current.x !== target.x || current.y !== target.y) {
         frame = requestAnimationFrame(step)
       } else {
         previous = null

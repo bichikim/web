@@ -3,6 +3,7 @@ import {
   type PoffoTrackingOptions,
 } from '@winter-love/wallpaper/settings/tracking'
 import type {CursorPosition, TrackingPoint, TrackingViewport} from './types'
+import {cursorResponse} from './cursor-response'
 
 interface CursorTargetOptions {
   /** Canvas bounds in CSS pixels within its webview. */
@@ -14,10 +15,7 @@ interface CursorTargetOptions {
   /** Face anchor within the canvas; omitted uses the default face position. */
   readonly options?: PoffoTrackingOptions
 }
-// App tuning: an offset of 0.3 character heights gives half the available movement.
-const DEPTH_RATIO = 0.3
-
-/** Preserves the target direction while its distance approaches full gaze through an atan curve. */
+/** Preserves direction and eases into full gaze at one character height from the face. */
 export const createCursorTarget = ({
   bounds,
   point,
@@ -39,8 +37,7 @@ export const createCursorTarget = ({
   if (!Number.isFinite(distance) || distance === 0) {
     return {x: 0, y: 0}
   }
-  // A virtual depth relative to character height keeps the response consistent when resized.
-  const depth = bounds.height * DEPTH_RATIO
-  const magnitude = Math.atan2(distance, depth) / (Math.PI / 2)
+  const reach = options?.cursorReach ?? DEFAULT_TRACKING_OPTIONS.cursorReach
+  const magnitude = cursorResponse(distance / (bounds.height * reach))
   return {x: (horizontal / distance) * magnitude, y: (vertical / distance) * magnitude}
 }

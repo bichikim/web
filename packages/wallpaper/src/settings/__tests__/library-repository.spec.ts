@@ -103,6 +103,7 @@ it('should persist per-widget tracking choices across reopen without reviving re
   await repository.configureTracking(first.id, {
     cameraX: -0.2,
     centerX: 0.1,
+    cursorReach: 0.5,
     eyeCenterX: -0.2,
     eyeCenterY: 0.4,
     eyeLimitY: 0,
@@ -133,6 +134,7 @@ it('should persist per-widget tracking choices across reopen without reviving re
         trackingOptions: {
           cameraX: -0.2,
           centerX: 0.1,
+          cursorReach: 0.5,
           eyeCenterX: -0.2,
           eyeCenterY: 0.4,
           eyeLimitY: 0,

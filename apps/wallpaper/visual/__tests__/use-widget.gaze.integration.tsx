@@ -1,10 +1,12 @@
-import {cleanup, render, screen} from '@solidjs/testing-library'
+import {cleanup, fireEvent, render, screen} from '@solidjs/testing-library'
 import {createSignal} from 'solid-js'
 import {afterEach, expect, test, vi} from 'vitest'
 import * as playerModule from '@winter-love/puppet/player'
 import {createLibraryRepository} from '@winter-love/wallpaper/settings/library-repository'
 import {useWidget} from '../../src/features/poffo/use-widget'
 import {usePuppet} from '../../src/features/background/use-puppet'
+import {SPoffoMotionAdjustment} from '../../src/components/SPoffoMotionAdjustment'
+import {SPoffoTrackingAdjustment} from '../../src/components/SPoffoTrackingAdjustment'
 import ashUrl from '../../../wallpaper-web/public/models/white-cat/model.poffo?url'
 import 'virtual:uno.css'
 
@@ -50,7 +52,7 @@ test('should follow cursor distance and retain gaze across speech saves and idle
           loops += Number(frame.time < previous)
           previous = frame.time
           minimum = Math.min(minimum, player.getParameterValue('ParamAngleX')!)
-          if (loops >= 2 || minimum < 28) {
+          if (loops >= 2 || minimum !== 20) {
             completed.resolve()
           }
         }
@@ -71,10 +73,34 @@ test('should follow cursor distance and retain gaze across speech saves and idle
       trackingOptions: selected.trackingOptions,
     })
     return (
-      <div class="h-120 w-100">
-        <canvas ref={setCanvas} role="img" aria-label="시선 캐릭터" class="h-full w-full" />
+      <>
+        <div class="h-120 w-100">
+          <canvas ref={setCanvas} role="img" aria-label="시선 캐릭터" class="h-full w-full" />
+        </div>
+        <SPoffoTrackingAdjustment
+          mode="cursor"
+          section="head"
+          value={selected.trackingOptions()}
+          onChange={(options) => repository.configureTracking(widget.id, options)}
+        />
+        <SPoffoMotionAdjustment
+          target="eye"
+          value={selected.trackingOptions()}
+          onChange={(options) => repository.configureTracking(widget.id, options)}
+        />
         <output aria-label="음성 입력">{selected.lipsync()?.source}</output>
-      </div>
+        <output aria-label="도달 거리">{selected.trackingOptions()?.cursorReach ?? 1}</output>
+        <output aria-label="반응 배율">
+          {selected.trackingOptions()?.headResponseX ?? 1}/
+          {selected.trackingOptions()?.eyeResponseX ?? 1}
+        </output>
+        <output aria-label="추적 범위">
+          {selected.trackingOptions()?.headMaximumX ?? 30}/
+          {selected.trackingOptions()?.eyeMaximumX ?? 1}/
+          {selected.trackingOptions()?.headMinimumX ?? -30}/
+          {selected.trackingOptions()?.eyeMinimumX ?? -1}
+        </output>
+      </>
     )
   })
   try {
@@ -86,7 +112,7 @@ test('should follow cursor distance and retain gaze across speech saves and idle
     }
     const canvas = screen.getByRole('img', {name: '시선 캐릭터'})
     const bounds = canvas.getBoundingClientRect()
-    const depth = bounds.height * 0.3
+    const reach = bounds.height
     const follow = (horizontal: number, vertical = 0) =>
       globalThis.dispatchEvent(
         new PointerEvent('pointermove', {
@@ -94,34 +120,81 @@ test('should follow cursor distance and retain gaze across speech saves and idle
           clientY: bounds.top + bounds.height * 0.3 - vertical,
         }),
       )
-    follow(depth / Math.sqrt(3))
+    follow(reach * 0.25)
     await expect
       .poll(() => player!.getParameterValue('ParamAngleX'), {timeout: 3000})
-      .toBeCloseTo(10, 1)
-    expect(player.getParameterValue('ParamEyeBallX')).toBeCloseTo(1 / 3, 2)
-    follow(depth * Math.sqrt(3))
-    await expect
-      .poll(() => player!.getParameterValue('ParamAngleX'), {timeout: 3000})
-      .toBeCloseTo(20, 1)
-    expect(player.getParameterValue('ParamEyeBallX')).toBeCloseTo(2 / 3, 2)
-    follow(-depth * Math.sqrt(3))
-    await expect
-      .poll(() => player!.getParameterValue('ParamAngleX'), {timeout: 3000})
-      .toBeCloseTo(-20, 1)
-    expect(player.getParameterValue('ParamEyeBallX')).toBeCloseTo(-2 / 3, 2)
+      .toBeCloseTo(13.61279273, 6)
+    expect(player.getParameterValue('ParamEyeBallX')).toBeCloseTo(0.453759758, 6)
+    follow(reach)
+    await expect.poll(() => player!.getParameterValue('ParamAngleX'), {timeout: 3000}).toBe(30)
+    expect(player.getParameterValue('ParamEyeBallX')).toBe(1)
+    follow(-reach)
+    await expect.poll(() => player!.getParameterValue('ParamAngleX'), {timeout: 3000}).toBe(-30)
+    expect(player.getParameterValue('ParamEyeBallX')).toBe(-1)
     follow(0)
     await expect
       .poll(() => player!.getParameterValue('ParamAngleX'), {timeout: 3000})
       .toBeCloseTo(0, 1)
-    follow(depth / Math.sqrt(6), depth / Math.sqrt(6))
+    follow((reach * 0.25) / Math.sqrt(2), (reach * 0.25) / Math.sqrt(2))
     await expect
       .poll(() => player!.getParameterValue('ParamAngleX'), {timeout: 3000})
-      .toBeCloseTo(Math.sqrt(50), 1)
-    expect(player.getParameterValue('ParamAngleY')).toBeCloseTo(Math.sqrt(50), 1)
-    follow(depth * 10)
+      .toBeCloseTo(13.61279273 / Math.sqrt(2), 1)
+    expect(player.getParameterValue('ParamAngleY')).toBeCloseTo(13.61279273 / Math.sqrt(2), 1)
+    const edit = (name: string, value: string) => {
+      const input = screen.getByRole('spinbutton', {name})
+      fireEvent.input(input, {target: {value}})
+      fireEvent.blur(input)
+    }
+    edit('얼굴 좌우 최대', '20')
+    await expect
+      .poll(() => screen.getByRole('status', {name: '추적 범위'}).textContent)
+      .toBe('20/1/-30/-1')
+    edit('눈동자 좌우 최대', '0.5')
+    await expect
+      .poll(() => screen.getByRole('status', {name: '추적 범위'}).textContent)
+      .toBe('20/0.5/-30/-1')
+    edit('얼굴 좌우 최소', '-10')
+    await expect
+      .poll(() => screen.getByRole('status', {name: '추적 범위'}).textContent)
+      .toBe('20/0.5/-10/-1')
+    edit('눈동자 좌우 최소', '-0.25')
+    await expect
+      .poll(() => screen.getByRole('status', {name: '추적 범위'}).textContent)
+      .toBe('20/0.5/-10/-0.25')
+    follow(reach / 2)
     await expect
       .poll(() => player!.getParameterValue('ParamAngleX'), {timeout: 3000})
-      .toBeGreaterThan(28)
+      .toBeCloseTo(14.49785552, 6)
+    expect(player.getParameterValue('ParamEyeBallX')).toBeCloseTo(0.362446388, 6)
+    edit('최대 도달 거리', '0.5')
+    await expect.poll(() => screen.getByRole('status', {name: '도달 거리'}).textContent).toBe('0.5')
+    edit('얼굴 좌우 반응 배율', '0.5')
+    await expect
+      .poll(() => screen.getByRole('status', {name: '반응 배율'}).textContent)
+      .toBe('0.5/1')
+    edit('눈동자 좌우 반응 배율', '0.5')
+    await expect
+      .poll(() => screen.getByRole('status', {name: '반응 배율'}).textContent)
+      .toBe('0.5/0.5')
+    follow(reach / 2)
+    await expect.poll(() => player!.getParameterValue('ParamAngleX'), {timeout: 3000}).toBe(20)
+    expect(player.getParameterValue('ParamEyeBallX')).toBe(0.5)
+    follow(-reach / 2)
+    await expect.poll(() => player!.getParameterValue('ParamAngleX'), {timeout: 3000}).toBe(-10)
+    expect(player.getParameterValue('ParamEyeBallX')).toBe(-0.25)
+    follow(reach / 2)
+    await expect.poll(() => player!.getParameterValue('ParamAngleX'), {timeout: 3000}).toBe(20)
+    expect(player.getParameterValue('ParamEyeBallX')).toBe(0.5)
+    const stored = (await repository.read()).widgets.find((entry) => entry.id === widget.id)
+    expect(stored?.trackingOptions).toMatchObject({
+      cursorReach: 0.5,
+      eyeMaximumX: 0.5,
+      eyeMinimumX: -0.25,
+      eyeResponseX: 0.5,
+      headMaximumX: 20,
+      headMinimumX: -10,
+      headResponseX: 0.5,
+    })
     collecting = true
     await repository.configureSpeech(widget.id, {
       enabled: true,
@@ -131,7 +204,7 @@ test('should follow cursor distance and retain gaze across speech saves and idle
     })
     await expect.poll(() => screen.getByRole('status', {name: '음성 입력'}).textContent).toBe('off')
     await completed.promise
-    expect(minimum).toBeGreaterThan(28)
+    expect(minimum).toBe(20)
     expect(loops).toBeGreaterThanOrEqual(2)
     expect(playerModule.createPlayer).toHaveBeenCalledOnce()
     expect(errors).not.toHaveBeenCalled()
@@ -140,4 +213,4 @@ test('should follow cursor distance and retain gaze across speech saves and idle
     await repository.removeWidget(widget.id)
     repository.close()
   }
-}, 30_000)
+}, 40_000)

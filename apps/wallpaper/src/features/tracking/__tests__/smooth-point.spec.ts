@@ -1,6 +1,17 @@
 import {expect, test} from 'vitest'
 import {smoothTrackingPoint} from '../smooth-point'
 
+test('should finish on the exact target rather than stopping just short of the maximum', () => {
+  const target = {x: 1, y: -1}
+  let current = {x: 0, y: 0}
+  for (let frame = 0; frame < 120; frame += 1) {
+    current = smoothTrackingPoint(current, target, 1 / 60)
+  }
+  expect(current).toEqual(target)
+  const close = {x: 0.9999, y: -0.9999}
+  expect(smoothTrackingPoint(close, target, 0)).toEqual(close)
+})
+
 test('should smooth without overshooting and produce the same result across frame rates', () => {
   const start = {x: 0, y: 0}
   const target = {x: 1, y: -1}

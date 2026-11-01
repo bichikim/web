@@ -134,16 +134,22 @@ export const createTrackingParameters = (
           Math.min(parameter.maximum, parameter.defaultValue + offset),
         )
         const range = scaled < 0 ? neutral - parameter.minimum : parameter.maximum - neutral
-        const amplitude =
-          Math.abs(scaled) *
-          (source === 'cursor'
-            ? range / DEFAULT_TRACKING_OPTIONS[TRACKING_RESPONSE_FIELDS[rule.target][rule.axis]]
-            : Math.min(rule.limit, range * rule.ratio))
         const limits = resolveTrackingRange(options, rule.target)
         const lower = rule.axis === 'x' ? limits.minX : limits.minY
         const upper = rule.axis === 'x' ? limits.maxX : limits.maxY
         const minimum = inverted ? -upper : lower
         const maximum = inverted ? -lower : upper
+        const endpoint = Math.min(range, Math.max(0, scaled < 0 ? -minimum : maximum))
+        const gain =
+          response / DEFAULT_TRACKING_OPTIONS[TRACKING_RESPONSE_FIELDS[rule.target][rule.axis]]
+        const progress = Math.abs(direction)
+        const weighted = gain * progress
+        // Cursor gain shapes the middle of the curve while preserving its 0 and 1 endpoints.
+        const influence = gain === 0 ? 0 : weighted / (1 - progress + weighted)
+        const amplitude =
+          source === 'cursor'
+            ? endpoint * influence
+            : Math.abs(scaled) * Math.min(rule.limit, range * rule.ratio)
         const delta = Math.max(minimum, Math.min(maximum, Math.sign(scaled) * amplitude))
         return [
           parameter.id,
