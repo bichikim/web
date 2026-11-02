@@ -2,6 +2,7 @@ import {expect, test, vi} from 'vitest'
 import {createPlayerRuntime} from '../create-player-runtime'
 import type {RendererController} from '../rendering/create-renderer-controller'
 import {prepareDocument, puppetDocument} from './fixtures/document'
+import {encodeWav} from '../audio/__tests__/support/encode-wav'
 
 const createRenderer = (): RendererController => ({
   applyFrame: vi.fn(),
@@ -33,6 +34,21 @@ const setup = () => {
     runtime: createPlayerRuntime({document, onFrame, randomSeed: 42, renderer}),
   }
 }
+
+test('should release decoded audio resources when the runtime is destroyed', async () => {
+  const wav = encodeWav({channels: [[0, 0.5, -0.5, 0]], sampleRate: 8000})
+  const source = `data:audio/wav;base64,${Buffer.from(wav).toString('base64')}`
+  const runtime = createPlayerRuntime({
+    document: prepareDocument({
+      ...puppetDocument,
+      motions: [{duration: 1, id: 'voice', sound: {src: source}, tracks: []}],
+    }),
+    renderer: createRenderer(),
+  })
+  await vi.waitFor(() => expect(runtime.audio().size).toBe(1))
+  runtime.player.destroy()
+  expect(runtime.audio().size).toBe(0)
+})
 
 test('should defer numeric evaluation while retaining command validation and control state', () => {
   const {runtime, renderer, onFrame} = setup()

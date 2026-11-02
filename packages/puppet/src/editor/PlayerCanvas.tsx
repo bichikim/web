@@ -127,6 +127,7 @@ export const PlayerCanvas = (props: PlayerCanvasProps) => {
   const [errorMessage, setErrorMessage] = createSignal<string | null>(null)
   const [player, setPlayer] = createSignal<Player | null>(null)
   let generation = 0
+  let disposed = false
   let pending = false
   let initializingPlayer: Player | undefined
   const [retry, setRetry] = createSignal(0)
@@ -153,9 +154,16 @@ export const PlayerCanvas = (props: PlayerCanvasProps) => {
   })
   // Player-owned callbacks must not retain the replacement effect's previous Player.
   const externalRendering = () => untrack(() => props.spatialSurface !== undefined)
-  const notifyBuffering = (info: PlayerBufferingInfo) =>
-    untrack(() => props.onBufferingChange?.(info))
-  const notifyFrame = (frame: PlayerFrame) => untrack(() => props.onFrame?.(frame))
+  const notifyBuffering = (info: PlayerBufferingInfo) => {
+    if (!disposed) {
+      untrack(() => props.onBufferingChange?.(info))
+    }
+  }
+  const notifyFrame = (frame: PlayerFrame) => {
+    if (!disposed) {
+      untrack(() => props.onFrame?.(frame))
+    }
+  }
   const notifyPlayerChange = (nextPlayer: Player | null) =>
     untrack(() => props.onPlayerChange?.(nextPlayer))
   const notifyStatus = (status: PlayerCanvasStatus) => untrack(() => props.onStatusChange?.(status))
@@ -336,7 +344,11 @@ export const PlayerCanvas = (props: PlayerCanvasProps) => {
 
   onCleanup(() => {
     generation += 1
-    disposePlayer()
+    try {
+      disposePlayer()
+    } finally {
+      disposed = true
+    }
   })
 
   return (

@@ -1,4 +1,4 @@
-import {afterEach, expect, test} from 'vitest'
+import {afterEach, expect, test, vi} from 'vitest'
 import {
   configurePlayerBuffering,
   createEmptyDocument,
@@ -46,7 +46,60 @@ const setup = async () => {
   players.push(player)
   return player
 }
-afterEach(() => players.splice(0).forEach((player) => player.destroy()))
+afterEach(() => {
+  players.splice(0).forEach((player) => player.destroy())
+  vi.unstubAllGlobals()
+})
+
+test('should retain synchronous paused controls when animation callbacks become unavailable', async () => {
+  const parsed = parseDocument(serializeDocument(source))
+  if (!parsed.ok) {
+    throw new Error('Invalid fallback fixture')
+  }
+  const player = await createPlayer({
+    canvas: document.createElement('canvas'),
+    document: parsed.document,
+    renderer: 'webgl',
+  })
+  players.push(player)
+  player.pause()
+  const nextFrame = requestAnimationFrame
+  vi.stubGlobal('requestAnimationFrame', undefined)
+  await configurePlayerBuffering(player, {enabled: true})
+  expect(getPlayerBufferingInfo(player).status).toBe('unsupported')
+  player.setParameterValue('x', 0.3)
+  const applied = player.getParameterValue('x')
+  vi.stubGlobal('requestAnimationFrame', nextFrame)
+  expect(applied).toBe(0.3)
+})
+
+test('should not repeatedly announce unsupported buffering while native playback advances', async () => {
+  const parsed = parseDocument(
+    serializeDocument({...source, motions: [{duration: 1, id: 'hold', tracks: []}]}),
+  )
+  if (!parsed.ok) {
+    throw new Error('Invalid native playback fixture')
+  }
+  const changed = vi.fn()
+  const player = await createPlayer({
+    canvas: document.createElement('canvas'),
+    document: parsed.document,
+    onBufferingChange: changed,
+    renderer: 'webgl',
+  })
+  players.push(player)
+  vi.stubGlobal('Worker', undefined)
+  await configurePlayerBuffering(player, {enabled: true})
+  expect(changed).toHaveBeenCalledOnce()
+  for (const _frame of [0, 1, 2]) {
+    // eslint-disable-next-line no-await-in-loop
+    await new Promise<void>((resolve) => {
+      requestAnimationFrame(() => resolve())
+    })
+  }
+  expect(getPlayerBufferingInfo(player).status).toBe('unsupported')
+  expect(changed).toHaveBeenCalledOnce()
+})
 
 test('should present an empty initial Worker frame without waiting for a control change', async () => {
   const parsed = parseDocument(serializeDocument(createEmptyDocument()))

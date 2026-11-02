@@ -150,6 +150,7 @@ export const createPlayerRuntime = (options: CreatePlayerRuntimeOptions) => {
     playback.stop()
     playbacks.stop()
     sounds.stop()
+    sounds.load({motions: []})
     effects.clear()
     notices.clear()
     renderer.destroy()

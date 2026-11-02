@@ -230,13 +230,13 @@ export const createBufferingController = (options: CreateBufferingControllerOpti
     return promise
   }
   const schedule = () => {
-    if (queued || disposed || !enabled || status === 'error') {
+    if (queued || disposed || !owned) {
       return
     }
     queued = true
     queueMicrotask(() => {
       queued = false
-      if (disposed || !enabled || hidden || status === 'error') {
+      if (disposed || !owned || hidden) {
         return
       }
       if (session === undefined) {
@@ -248,19 +248,12 @@ export const createBufferingController = (options: CreateBufferingControllerOpti
   }
   const beforeChange = () => {
     beforeInputs = undefined
-    if (
-      options.supported !== false &&
-      enabled &&
-      !disposed &&
-      status !== 'error' &&
-      typeof Worker !== 'undefined'
-    ) {
-      enterWorker()
+    if (owned && !disposed) {
       beforeInputs = captureRuntimeInputs(options.runtime.capture())
     }
   }
   const afterChange = (command: string, accepted: boolean) => {
-    if (options.supported === false || disposed || !enabled || status === 'error') {
+    if (disposed || !owned) {
       return
     }
     if (beforeInputs !== undefined) {
@@ -298,7 +291,7 @@ export const createBufferingController = (options: CreateBufferingControllerOpti
   }
   const visibilityChanged = () => {
     hidden = globalThis.document?.visibilityState === 'hidden'
-    if (!enabled || disposed) {
+    if (!owned || disposed) {
       return
     }
     epoch += 1
@@ -427,7 +420,7 @@ export const createBufferingController = (options: CreateBufferingControllerOpti
         return
       }
       nativeRunning()
-      if (enabled && status !== 'error') {
+      if (owned) {
         schedule()
       }
     },

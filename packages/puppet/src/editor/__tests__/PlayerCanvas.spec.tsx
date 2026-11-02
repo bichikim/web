@@ -45,6 +45,37 @@ afterEach(() => {
   vi.unstubAllGlobals()
 })
 
+test('should ignore late frame and buffering callbacks after a pending canvas is unmounted', async () => {
+  let resolve: (value: Player) => void = () => {}
+  const pending = new Promise<Player>((complete) => {
+    resolve = complete
+  })
+  const obsolete = {...player, destroy: vi.fn()}
+  mocks.createPlayer.mockReturnValueOnce(pending)
+  const onFrame = vi.fn()
+  const onBufferingChange = vi.fn()
+  const view = render(() => (
+    <PlayerCanvas
+      document={createDemoDocument()}
+      onFrame={onFrame}
+      onBufferingChange={onBufferingChange}
+      buffering
+    />
+  ))
+  await waitFor(() => expect(mocks.createPlayer).toHaveBeenCalledOnce())
+  const options = mocks.createPlayer.mock.calls[0]![0]
+  view.unmount()
+  onFrame.mockClear()
+  onBufferingChange.mockClear()
+  options.onFrame({duration: 1, motionId: 'obsolete', time: 0.5})
+  options.onBufferingChange({enabled: true, framesAhead: 0, status: 'preparing'})
+  resolve(obsolete)
+  await pending
+  expect(obsolete.destroy).toHaveBeenCalledOnce()
+  expect(onFrame).not.toHaveBeenCalled()
+  expect(onBufferingChange).not.toHaveBeenCalled()
+})
+
 describe('PlayerCanvas', () => {
   test('should recover a failed first initialization when the rendering preference changes', async () => {
     const model = createDemoDocument()

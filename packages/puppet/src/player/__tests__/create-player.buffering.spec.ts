@@ -109,6 +109,36 @@ test('should retain caller-provided randomness through native fallback when buff
   player.destroy()
 })
 
+test('should keep controls synchronous after buffering is unavailable without animation callbacks', async () => {
+  const {player, renderer} = await setup()
+  vi.stubGlobal('requestAnimationFrame', undefined)
+  await configurePlayerBuffering(player, {enabled: true})
+  expect(getPlayerBufferingInfo(player).status).toBe('unsupported')
+  vi.mocked(renderer.applyFrame).mockClear()
+  player.setParameterValue('angle', 0.5)
+  expect(player.getParameterValue('angle')).toBe(0.5)
+  expect(renderer.applyFrame).toHaveBeenCalledOnce()
+  expect(createBufferWorker).not.toHaveBeenCalled()
+  player.destroy()
+})
+
+test('should retain unsupported status across native frames and visibility changes', async () => {
+  const changed = vi.fn()
+  const {player, renderer} = await setup(42, changed)
+  vi.stubGlobal('Worker', undefined)
+  await configurePlayerBuffering(player, {enabled: true})
+  expect(changed).toHaveBeenCalledOnce()
+  const tick = vi.mocked(renderer.subscribeFrame).mock.calls[0]![0]
+  tick(0.01)
+  await Promise.resolve()
+  await Promise.resolve()
+  expect(changed).toHaveBeenCalledOnce()
+  vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('hidden')
+  document.dispatchEvent(new Event('visibilitychange'))
+  expect(getPlayerBufferingInfo(player).status).toBe('unsupported')
+  player.destroy()
+})
+
 test('should recognize a Player across independently loaded library entries', async () => {
   const {player} = await setup()
   vi.resetModules()
