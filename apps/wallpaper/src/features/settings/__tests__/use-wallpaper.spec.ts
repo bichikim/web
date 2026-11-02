@@ -367,6 +367,23 @@ it('should persist album fit and keep it when a subsequent independent album fie
   cleanup()
 })
 
+it('should persist Poffo fit alongside a subsequent placement change', async () => {
+  const original = {assetId: 'character', mode: 'puppet' as const}
+  stored.set('first', {...createMonitorWallpaper('first'), content: original})
+  const {result, cleanup} = renderHook(useWallpaper)
+  await waitFor(() => expect(result.selectedId()).toBe('first'))
+  const fitting = result.setContent({...original, fit: 'cover'})
+  const optimistic = result.current()!.content
+  if (optimistic.mode !== 'puppet') {
+    throw new Error('Expected Poffo')
+  }
+  const placement = {scale: 1.2, x: 0.4, y: 0.6}
+  const moving = result.setContent({...optimistic, placement})
+  await Promise.all([fitting, moving])
+  expect(stored.get('first')?.content).toEqual({...original, fit: 'cover', placement})
+  cleanup()
+})
+
 it('should remove album references before deleting stored media', async () => {
   const {result, cleanup} = renderHook(useWallpaper)
   await waitFor(() => expect(result.selectedId()).toBe('first'))

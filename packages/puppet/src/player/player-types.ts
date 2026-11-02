@@ -1,7 +1,7 @@
 import type {PuppetParameterValueMap} from '../deformation'
 import type {MotionSoundError} from './audio/motion-sound-loader'
 import type {PuppetVowelWeights} from './document'
-import type {PuppetFraming} from './internal/layout-player-root'
+import type {PuppetFit, PuppetFraming} from './internal/layout-player-root'
 import type {PreparedPuppetDocument} from './internal/prepared-document'
 import type {PuppetRenderOverride} from './internal/render-overrides'
 import type {LookTarget} from './look'
@@ -77,6 +77,8 @@ export interface Player {
    * nothing. The blink already scheduled keeps its time.
    */
   setEyeBlinkTiming(timing?: Partial<EyeBlinkTiming>): boolean
+  /** Fits or fills the screen uniformly without changing playback or the document. */
+  setFit(fit: PuppetFit): void
   /** Adds a mouth level to the lip-sync role parameters after physics; omitted stops. */
   setLipSync(level?: number): void
   /**
@@ -142,6 +144,8 @@ export interface PlayerFrame {
 }
 
 export interface CreatePlayerOptions extends PlayerRenderingOptions {
+  /** Uniform sizing within the screen; omitted to show the whole framed rectangle. */
+  readonly fit?: PuppetFit
   /** Whether the shared external renderer is active. Omitted, render callbacks are always active. */
   readonly externalRendering?: () => boolean
   readonly canvas: HTMLCanvasElement

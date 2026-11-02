@@ -44,7 +44,7 @@ import {
   normalizeVowelWeights,
 } from './voice/mouth-shapes'
 
-export type {PuppetFraming} from './internal/layout-player-root'
+export type {PuppetFit, PuppetFraming} from './internal/layout-player-root'
 export type {PuppetRenderOverride} from './internal/render-overrides'
 export type {PuppetParameterBlend, PuppetParameterBlendMode} from './parameter-blends'
 export type {PuppetPhysicsOptions} from './physics-options'
@@ -53,7 +53,6 @@ export type {CreatePlayerOptions, Player, PlayerFrame, PlayerPlaybackOptions} fr
 // eslint-disable-next-line max-lines-per-function, max-statements -- Public operations share one lifecycle boundary.
 export const createPlayer = async (options: CreatePlayerOptions): Promise<Player> => {
   assertPreparedPuppetDocument(options.document)
-
   const renderer = await createRendererController(options)
   let {document} = options
   let parameterValues: PuppetParameterValueMap = {...options.parameterValues}
@@ -488,6 +487,7 @@ export const createPlayer = async (options: CreatePlayerOptions): Promise<Player
       eyeBlinkTiming = resolved
       return true
     },
+    setFit: renderer.setFit,
     setGroupOverride(groupId, override) {
       if (destroyed || !getSceneGroupIds(document.scene).has(groupId)) {
         return false

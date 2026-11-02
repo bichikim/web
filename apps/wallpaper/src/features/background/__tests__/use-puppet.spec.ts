@@ -46,6 +46,7 @@ const player: Player = {
   setExpressions: vi.fn(),
   setEyeBlink: vi.fn(),
   setEyeBlinkTiming: vi.fn(),
+  setFit: vi.fn(),
   setGroupOverride: vi.fn(),
   setLipSync: vi.fn(),
   setLookTarget: vi.fn(),
@@ -129,6 +130,59 @@ it('should preserve a player when refreshed settings retain the same asset', asy
   await waitFor(() => expect(createPlayer).toHaveBeenCalledOnce())
   setContent({assetId: SAMPLE_PUPPET_ID, revision: 1})
   expect(player.destroy).not.toHaveBeenCalled()
+  expect(createPlayer).toHaveBeenCalledOnce()
+  hook.cleanup()
+  expect(player.destroy).toHaveBeenCalledOnce()
+})
+
+it('should change fitting without replacing the player or restarting its motion', async () => {
+  const [fit, setFit] = createSignal<'contain' | 'cover'>('contain')
+  const canvas = document.createElement('canvas')
+  const hook = renderHook(() =>
+    usePuppet({
+      assetId: () => SAMPLE_PUPPET_ID,
+      canvas: () => canvas,
+      fit,
+      load: vi.fn(),
+      onError: vi.fn(),
+    }),
+  )
+  await waitFor(() => expect(player.setFit).toHaveBeenCalledWith('contain'))
+  const plays = vi.mocked(player.playMotion).mock.calls.length
+  setFit('cover')
+  expect(player.setFit).toHaveBeenLastCalledWith('cover')
+  setFit('contain')
+  expect(player.setFit).toHaveBeenLastCalledWith('contain')
+  expect(createPlayer).toHaveBeenCalledOnce()
+  expect(player.playMotion).toHaveBeenCalledTimes(plays)
+  expect(player.destroy).not.toHaveBeenCalled()
+  hook.cleanup()
+})
+
+it('should apply the latest fit when it changes during player initialization', async () => {
+  const started = Promise.withResolvers<void>()
+  const pending = Promise.withResolvers<Player>()
+  vi.mocked(createPlayer).mockImplementationOnce(() => {
+    started.resolve()
+    return pending.promise
+  })
+  const [fit, setFit] = createSignal<'contain' | 'cover'>('cover')
+  const canvas = document.createElement('canvas')
+  const hook = renderHook(() =>
+    usePuppet({
+      assetId: () => SAMPLE_PUPPET_ID,
+      canvas: () => canvas,
+      fit,
+      load: vi.fn(),
+      onError: vi.fn(),
+    }),
+  )
+  await started.promise
+  expect(createPlayer).toHaveBeenCalledWith(expect.objectContaining({fit: 'cover'}))
+  setFit('contain')
+  pending.resolve(player)
+  await pending.promise
+  expect(player.setFit).toHaveBeenLastCalledWith('contain')
   expect(createPlayer).toHaveBeenCalledOnce()
   hook.cleanup()
   expect(player.destroy).toHaveBeenCalledOnce()

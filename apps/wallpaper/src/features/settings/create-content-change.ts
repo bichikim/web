@@ -11,6 +11,7 @@ export const createContentChange = (options: CreateContentChangeOptions) => {
   if (before.mode === 'puppet' && after.mode === 'puppet') {
     const patch = {
       ...(before.assetId === after.assetId ? {} : {assetId: after.assetId}),
+      ...(before.fit === after.fit ? {} : {fit: after.fit}),
       ...(before.placement === after.placement ? {} : {placement: after.placement}),
       ...(before.tracking === after.tracking ? {} : {tracking: after.tracking}),
       ...(before.trackingOptions === after.trackingOptions

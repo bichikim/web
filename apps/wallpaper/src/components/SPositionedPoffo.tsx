@@ -5,6 +5,7 @@ import {usePlacement} from '../features/poffo'
 import {SPuppetBackground} from './SPuppetBackground'
 import type {
   PoffoAgentControls,
+  PoffoDisplayOptions,
   PoffoLipSyncControls,
   PoffoMotionControls,
 } from '../features/background/types'
@@ -17,7 +18,7 @@ import type {
 const PERCENT = 100
 
 interface SPositionedPoffoProps
-  extends PoffoMotionControls, PoffoLipSyncControls, PoffoAgentControls {
+  extends PoffoDisplayOptions, PoffoMotionControls, PoffoLipSyncControls, PoffoAgentControls {
   readonly children?: JSX.Element
   readonly assetId: Accessor<string | null>
   readonly placement?: Accessor<PoffoPlacement | undefined>
@@ -65,6 +66,7 @@ export const SPositionedPoffo = (props: SPositionedPoffoProps) => {
       >
         <SPuppetBackground
           assetId={props.assetId}
+          fit={props.fit}
           load={props.load}
           agentBindings={props.agentBindings}
           semanticBindings={props.semanticBindings}

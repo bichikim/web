@@ -18,6 +18,7 @@ export const createRendererController = async (
   let current = await createPlayerRenderer(options)
   let {document} = options
   let {resolution} = options
+  let fit = options.fit ?? 'contain'
   let camera: PlayerViewCamera | undefined
   let frame: Parameters<PlayerRenderer['applyFrame']> | undefined
   let onFrame: ((deltaTime: number) => void) | undefined
@@ -68,6 +69,7 @@ export const createRendererController = async (
       }
       prepared.setRunning(false)
       prepared.resize(resolution)
+      prepared.setFit(fit)
       if (camera !== undefined) {
         prepared.setViewCamera(camera)
       }
@@ -113,6 +115,13 @@ export const createRendererController = async (
     resize(nextResolution) {
       resolution = nextResolution ?? resolution
       current.resize(nextResolution)
+    },
+    setFit(nextFit) {
+      if (disposed) {
+        return
+      }
+      fit = nextFit
+      current.setFit(nextFit)
     },
     setRunning(nextRunning) {
       running = nextRunning
