@@ -72,8 +72,7 @@ it.each([320, 496])(
     const player = await vi.mocked(playerModule.createPlayer).mock.results[0]!.value
     screen.getByRole('radio', {name: '행동'}).focus()
     await userEvent.keyboard('{Space}')
-    screen.getByRole('radio', {name: '작업 상태'}).focus()
-    await userEvent.keyboard('{Space}')
+    await userEvent.click(screen.getByText('작업 상태 연결', {selector: 'summary'}))
     const target = screen.getByRole('combobox', {name: '작업 중 상태 파라미터'})
     await expect.poll(() => target.hasAttribute('disabled')).toBe(false)
     await userEvent.click(target)
@@ -241,9 +240,10 @@ it.each([320, 496])(
     await userEvent.keyboard('{Space}')
     expect(screen.getByRole('region', {name: '행동 연결'})).toBeInTheDocument()
     expect(screen.queryByRole('region', {name: '위젯 말풍선 설정'})).toBeNull()
-    screen.getByRole('radio', {name: '랜덤 행동'}).focus()
-    await userEvent.keyboard('{Space}')
-    expect(screen.queryByRole('region', {name: '행동 연결'})).toBeNull()
+    expect(screen.queryByRole('radio', {name: '랜덤 행동'})).toBeNull()
+    expect(screen.getByRole('switch', {name: '랜덤 행동 사용'})).toBeInTheDocument()
+    expect(screen.getByRole('spinbutton', {name: '랜덤 행동 확률'})).toHaveValue('50')
+    expect(screen.getByRole('region', {name: '행동 연결'})).toBeInTheDocument()
     expect(mounted.container.firstElementChild!.scrollWidth).toBeLessThanOrEqual(width)
     expect(
       within(screen.getByRole('region', {name: '감정·내용 미매칭 랜덤 행동'})).queryAllByRole(

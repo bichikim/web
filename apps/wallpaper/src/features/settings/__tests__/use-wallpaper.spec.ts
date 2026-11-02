@@ -12,12 +12,15 @@ import {
   type WebBackgroundRepository,
 } from '@winter-love/wallpaper/web-repository'
 import {type BackgroundMedia, DEFAULT_BACKGROUND} from '@winter-love/wallpaper/model'
-import {listWallpaperMonitors} from '../monitors'
+import {listWallpaperMonitors, subscribeWallpaperMonitors} from '../monitors'
 import {useWallpaper} from '../use-wallpaper'
 
 vi.mock('@winter-love/wallpaper/settings/repository', () => ({createSettingsRepository: vi.fn()}))
 vi.mock('@winter-love/wallpaper/web-repository', () => ({createWebRepository: vi.fn()}))
-vi.mock('../monitors', () => ({listWallpaperMonitors: vi.fn()}))
+vi.mock('../monitors', () => ({
+  listWallpaperMonitors: vi.fn(),
+  subscribeWallpaperMonitors: vi.fn(),
+}))
 
 let stored: Map<string, MonitorWallpaper>
 let repository: SettingsRepository
@@ -55,10 +58,70 @@ beforeEach(() => {
     {id: 'first', name: 'First'},
     {id: 'second', name: 'Second'},
   ])
+  vi.mocked(subscribeWallpaperMonitors).mockResolvedValue(vi.fn())
 })
 afterEach(() => {
   vi.clearAllMocks()
   vi.restoreAllMocks()
+})
+
+it('should refresh connected screens without resetting the selected screen', async () => {
+  const {result, cleanup} = renderHook(useWallpaper)
+  await waitFor(() => expect(result.selectedId()).toBe('first'))
+  result.selectMonitor('second')
+  vi.mocked(listWallpaperMonitors).mockResolvedValue([
+    {id: 'first', name: 'First'},
+    {height: 2160, id: 'second', name: 'Second', scale: 2, width: 3840, x: 1920, y: 0},
+    {id: 'third', name: 'Third'},
+  ])
+  vi.mocked(subscribeWallpaperMonitors).mock.calls[0][0]()
+  await waitFor(() => expect(result.monitors()).toHaveLength(3))
+  expect(result.selectedId()).toBe('second')
+  expect(result.monitors()[1]).toMatchObject({height: 2160, scale: 2, width: 3840, x: 1920})
+  cleanup()
+})
+
+it('should select a connected screen after removal and retain its saved wallpaper for reconnection', async () => {
+  stored.set('second', createMonitorWallpaper('second'))
+  const {result, cleanup} = renderHook(useWallpaper)
+  await waitFor(() => expect(result.selectedId()).toBe('first'))
+  result.selectMonitor('second')
+  vi.mocked(listWallpaperMonitors).mockResolvedValue([{id: 'first', name: 'First'}])
+  vi.mocked(subscribeWallpaperMonitors).mock.calls[0][0]()
+  await waitFor(() => expect(result.selectedId()).toBe('first'))
+  expect(result.monitors()).toEqual([{id: 'first', name: 'First'}])
+  expect(stored.has('second')).toBe(true)
+  vi.mocked(listWallpaperMonitors).mockResolvedValue([])
+  vi.mocked(subscribeWallpaperMonitors).mock.calls[0][0]()
+  await waitFor(() => expect(result.selectedId()).toBeNull())
+  expect(result.current()).toBeNull()
+  cleanup()
+})
+
+it('should ignore a stale initial screen read after a newer display change', async () => {
+  const initial = Promise.withResolvers<Awaited<ReturnType<typeof listWallpaperMonitors>>>()
+  vi.mocked(listWallpaperMonitors).mockReturnValueOnce(initial.promise)
+  const {result, cleanup} = renderHook(useWallpaper)
+  await waitFor(() => expect(listWallpaperMonitors).toHaveBeenCalledOnce())
+  vi.mocked(listWallpaperMonitors).mockResolvedValue([{id: 'new', name: 'New'}])
+  vi.mocked(subscribeWallpaperMonitors).mock.calls[0][0]()
+  await waitFor(() => expect(result.selectedId()).toBe('new'))
+  initial.resolve([{id: 'old', name: 'Old'}])
+  await initial.promise
+  expect(result.monitors()).toEqual([{id: 'new', name: 'New'}])
+  cleanup()
+})
+
+it('should unsubscribe even when screen subscription completes after disposal', async () => {
+  const subscription = Promise.withResolvers<() => void>()
+  const stop = vi.fn()
+  vi.mocked(subscribeWallpaperMonitors).mockReturnValueOnce(subscription.promise)
+  const {cleanup} = renderHook(useWallpaper)
+  cleanup()
+  subscription.resolve(stop)
+  await subscription.promise
+  expect(stop).toHaveBeenCalledOnce()
+  expect(listWallpaperMonitors).not.toHaveBeenCalled()
 })
 
 it('should retain a queued change on the selected monitor when selection changes immediately', async () => {

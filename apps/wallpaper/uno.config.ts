@@ -134,6 +134,13 @@ export default defineConfig({
       'box-border grid min-h-12 grid-cols-[minmax(0,1fr)_minmax(8rem,auto)] items-center gap-4',
       'border-0 border-b border-solid border-stone-200 py-2 text-[13px] text-stone-800',
     ],
+    'wallpaper-section-tab': [
+      'flex min-h-10 min-w-0 items-center justify-center gap-2 border-0 border-b-2 border-solid',
+      'border-transparent px-2 text-[13px] text-stone-600',
+      'peer-checked:border-blue-700 peer-checked:text-blue-700 peer-checked:font-semibold',
+      'peer-focus-visible:outline-solid peer-focus-visible:outline-2',
+      'peer-focus-visible:outline-offset-[-2px] peer-focus-visible:outline-blue-700 peer-disabled:opacity-50',
+    ],
     'wallpaper-segment': [
       'flex min-h-8 min-w-0 items-center justify-center gap-2 rounded-md px-3 text-[13px] text-stone-700',
       'peer-checked:bg-white peer-checked:text-blue-700 peer-checked:shadow-sm',

@@ -6,6 +6,7 @@ import {defineConfig} from 'vitest/config'
 import uno from './uno.config'
 
 export default defineConfig({
+  optimizeDeps: {include: ['@tauri-apps/api/webviewWindow']},
   plugins: [
     UnoCSS({
       ...uno,

@@ -2,7 +2,7 @@ import {cleanup, render, screen, waitFor, within} from '@solidjs/testing-library
 import Dexie from 'dexie'
 import {Show} from 'solid-js'
 import {afterEach, beforeEach, expect, it} from 'vitest'
-import {userEvent} from 'vitest/browser'
+import {page, userEvent} from 'vitest/browser'
 import {SAlbumSettings} from '../../src/components/SAlbumSettings'
 import {useWallpaper, type WallpaperController} from '../../src/features/settings'
 import {createBuiltinMedia} from '../../src/features/builtin-assets'
@@ -38,6 +38,18 @@ const renderAlbum = async () => {
   await waitFor(() => expect(controller?.selectedId()).toBe('browser-preview'))
   return controller!
 }
+
+it('should keep the file picker within the horizontally scrolling album in a narrow window', async () => {
+  await page.viewport(400, 540)
+  await renderAlbum()
+  const album = screen.getByRole('group', {name: '앨범에 표시할 파일'})
+  const before = document.documentElement.scrollWidth
+  expect(album.scrollWidth).toBeGreaterThan(album.clientWidth)
+  expect(before).toBeLessThanOrEqual(document.documentElement.clientWidth)
+  album.querySelector<HTMLInputElement>('input[type="file"]')!.focus()
+  await expect.poll(() => album.scrollLeft).toBeGreaterThan(0)
+  expect(document.documentElement.scrollWidth).toBe(before)
+})
 
 it.each(['photo', 'video'] as const)(
   'should cancel and confirm %s deletion without deleting the original file',

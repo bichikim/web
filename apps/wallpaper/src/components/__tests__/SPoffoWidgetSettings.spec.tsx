@@ -282,8 +282,14 @@ test('should restore speech preferences for the selected widget without a positi
   fireEvent.click(screen.getByRole('radio', {name: '행동'}))
   expect(screen.getByRole('region', {name: '행동 연결'})).toBeInTheDocument()
   expect(screen.queryByRole('region', {name: '립싱크 연결'})).toBeNull()
-  fireEvent.click(screen.getByRole('radio', {name: '랜덤 행동'}))
-  expect(screen.queryByRole('region', {name: '행동 연결'})).toBeNull()
+  expect(screen.queryByRole('radio', {name: '랜덤 행동'})).toBeNull()
+  fireEvent.click(screen.getByRole('switch', {name: '랜덤 행동 사용'}))
+  expect(configureSpeech.mock.lastCall?.[0]).toBe('second')
+  expect(configureSpeech.mock.lastCall?.[1].randomActions).toEqual({
+    enabled: true,
+    probability: 0.5,
+  })
+  expect(screen.getByRole('region', {name: '행동 연결'})).toBeInTheDocument()
   fireEvent.click(screen.getByRole('radio', {name: '캐릭터'}))
   expect(screen.getByRole('figure', {name: 'Poffo 위젯 미리보기'})).toBe(preview)
   expect(preview.querySelector('canvas')).toBe(canvas)

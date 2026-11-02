@@ -77,14 +77,9 @@ export const SPoffoWidgetEditor = (props: SPoffoWidgetEditorProps) => {
   return (
     <div class="grid gap-3">
       <Show when={editable()}>
-        <SPoffoConnectionProfiles
-          actions={source.actions?.()}
-          widget={props.widget ?? undefined}
-          parameters={source.parameters()}
-          loading={source.loading()}
-        />
         <SSegmentedControl
           label="위젯 편집 항목"
+          appearance="underline"
           options={[
             {label: '캐릭터', value: 'character'},
             {label: '말풍선·음성', value: 'speech'},
@@ -154,6 +149,16 @@ export const SPoffoWidgetEditor = (props: SPoffoWidgetEditorProps) => {
           value={speech()}
           onChange={configureSpeech}
         />
+      </Show>
+      <Show when={editable()}>
+        <footer class="mt-2 border-0 border-t border-solid border-stone-200 pt-4">
+          <SPoffoConnectionProfiles
+            actions={source.actions?.()}
+            widget={props.widget ?? undefined}
+            parameters={source.parameters()}
+            loading={source.loading()}
+          />
+        </footer>
       </Show>
     </div>
   )

@@ -15,12 +15,12 @@ export const SPoffoRandomActions = (props: SPoffoRandomActionsProps) => {
   const toggle = (enabled: boolean) => update({enabled})
   const probability = (percent: number) => update({probability: percent / PERCENT})
   return (
-    <section
-      aria-label="감정·내용 미매칭 랜덤 행동"
-      class="grid gap-3 border-0 border-t border-solid border-stone-200 pt-3 text-[13px]"
-    >
+    <section aria-label="감정·내용 미매칭 랜덤 행동" class="grid gap-3 text-[13px]">
       <div class="flex items-center justify-between gap-2">
-        <h3 class="m-0 font-medium text-stone-700">감정·내용 매칭이 없을 때</h3>
+        <div class="grid gap-0.5">
+          <h3 class="m-0 font-medium text-stone-800">랜덤 행동</h3>
+          <p class="m-0 text-xs text-stone-600">감정·내용 매칭이 없을 때</p>
+        </div>
         <SSwitch
           label="랜덤 행동 사용"
           checked={value().enabled}
@@ -28,7 +28,7 @@ export const SPoffoRandomActions = (props: SPoffoRandomActionsProps) => {
         />
       </div>
       <Show when={value().enabled}>
-        <label class="grid grid-cols-[1fr_7rem_auto] items-center gap-2">
+        <label class="grid grid-cols-[minmax(0,1fr)_7rem_auto] items-center gap-2">
           발현 확률
           <SNumberInput
             label="랜덤 행동 확률"

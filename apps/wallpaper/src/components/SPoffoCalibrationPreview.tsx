@@ -115,6 +115,7 @@ export const SPoffoCalibrationPreview = (props: SPoffoCalibrationPreviewProps) =
       {props.controls}
       <Show when={props.adjustments !== false && props.onChange !== undefined}>
         <section aria-label="시선 보정 설정" class="grid gap-3">
+          <h3 class="m-0 text-[13px] font-medium text-stone-700">시선 보정</h3>
           {props.profiles?.(source())}
           <SPoffoTrackingAdjustment
             mode={mode()}
