@@ -6,6 +6,8 @@ import {defineConfig} from 'vitest/config'
 import uno from './uno.config'
 
 export default defineConfig({
+  // Keep es-toolkit's ESM bindings intact when browser tests instrument imports.
+  optimizeDeps: {exclude: ['es-toolkit']},
   plugins: [UnoCSS(uno), solid({hot: false})],
   root: fileURLToPath(new URL('.', import.meta.url)),
   test: {
