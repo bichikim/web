@@ -7,7 +7,7 @@ import type {BufferFrame, BufferScheduler, BufferWorker} from '../types'
 const createScheduler = () => {
   let now = 0
   let sequence = 0
-  const frames = new Map<number, () => void>()
+  const frames = new Map<number, VoidFunction>()
   const cancelFrame = vi.fn((handle: number) => {
     frames.delete(handle)
   })

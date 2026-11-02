@@ -106,7 +106,7 @@ export const composeParameterPartDrawOrder = (
     partSamplers.set(document, samplers)
   }
   const previous = samplers.get(partId)
-  if (previous !== undefined) {
+  if (typeof previous === 'function') {
     return previous(parameterValues)
   }
   const part = document.parts.find((candidate) => candidate.id === partId)
@@ -141,7 +141,7 @@ export const composeParameterGroupDrawOrder = (
     groupSamplers.set(document, samplers)
   }
   const previous = samplers.get(group)
-  if (previous !== undefined) {
+  if (typeof previous === 'function') {
     return previous(parameterValues)
   }
   const rest = group.properties?.drawOrder ?? PUPPET_DEFAULT_DRAW_ORDER

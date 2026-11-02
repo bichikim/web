@@ -1,5 +1,6 @@
 import {expect, test} from 'vitest'
 import {
+  PUPPET_DEFAULT_DRAW_ORDER,
   PUPPET_DOCUMENT_FORMAT,
   type PuppetDocument,
   type PuppetSceneGroupNode,
@@ -45,6 +46,21 @@ const document: PuppetDocument = {
   version: 1,
   viewport: {height: 1, width: 1},
 }
+
+test.each(['__proto__', 'constructor', 'hasOwnProperty', 'toString'])(
+  'should cache draw orders for prototype-like part IDs without dispatching object methods: %s',
+  (id) => {
+    const keyed: PuppetDocument = {
+      ...document,
+      parameterBindings: [],
+      parts: [{...document.parts[0]!, id, properties: {drawOrder: 123}}],
+    }
+    expect(composeParameterPartDrawOrder(keyed, id)).toBe(123)
+    expect(composeParameterPartDrawOrder(keyed, id)).toBe(123)
+    expect(composeParameterPartDrawOrder(document, id)).toBe(PUPPET_DEFAULT_DRAW_ORDER)
+    expect(composeParameterPartDrawOrder(document, id)).toBe(PUPPET_DEFAULT_DRAW_ORDER)
+  },
+)
 
 test('should retain rest fallbacks and react to reused parameter records and influence-only changes', () => {
   const values = {p: 0.5, weight: 0.5}
