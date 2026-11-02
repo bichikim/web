@@ -17,7 +17,7 @@ test('should add default mouse tracking to the compact Poffo idle animation with
   const rendered = Promise.withResolvers<void>()
   const [tracking, setTracking] = createSignal(true)
   const view = render(() => (
-    <div class="h-150 w-120">
+    <div class="h-50 w-40">
       <SPuppetCharacter
         tracking={tracking()}
         playing={true}
