@@ -26,7 +26,7 @@ export const SPoffoAssetPicker = (props: SPoffoAssetPickerProps) => {
   return (
     <>
       <section aria-label="Poffo 불러오기" class="grid gap-2">
-        <h2 class="m-0 text-[13px] font-medium text-stone-700">Poffo 불러오기</h2>
+        <h3 class="m-0 text-[13px] font-medium text-stone-700">Poffo 불러오기</h3>
         <div class="flex items-center gap-3 rounded-lg border border-solid border-stone-200 px-3 py-2">
           <span
             aria-hidden="true"
