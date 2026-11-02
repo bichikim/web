@@ -1,5 +1,14 @@
 import {parseStudioFile, type StudioFile} from './parse-studio-file'
-import {type Accessor, batch, createEffect, createMemo, createSignal, on, untrack} from 'solid-js'
+import {
+  type Accessor,
+  batch,
+  createEffect,
+  createMemo,
+  createSignal,
+  on,
+  onCleanup,
+  untrack,
+} from 'solid-js'
 import {reconcile, type SetStoreFunction} from 'solid-js/store'
 import type {Node} from '@dschz/solid-flow'
 import type {RuntimeControls} from '../use-runtime-controls'
@@ -10,18 +19,34 @@ import {
   type WorkspaceLayout,
 } from './workspace-layout'
 interface UseWorkspaceLayoutProps {
+  /** Current Studio profile and its update/import commands. */
   readonly controls: RuntimeControls
+  /** Current graph nodes, including positions captured in layout snapshots. */
   readonly nodes: Accessor<Node[]>
+  /** Applies restored positions after the profile rebuilds graph membership. */
   readonly setNodes: SetStoreFunction<Node[]>
+  /** Parameter ports explicitly added to the graph. */
   readonly extraPorts: Accessor<readonly string[]>
+  /** Restores the explicitly added ports from a layout snapshot. */
   readonly setExtraPorts: (ids: string[]) => void
+  /** Cards hidden from the current graph. */
   readonly hiddenIds: Accessor<readonly string[]>
+  /** Restores hidden cards from a layout snapshot. */
   readonly restoreHiddenIds: (ids: readonly string[]) => void
+  /** Borrowed layout storage; omitted, use the page's sessionStorage. */
+  readonly sessionStorage?: Pick<Storage, 'getItem' | 'setItem'>
 }
 const storageKey = (signature: string) => `puppet:studio-layout:v1:${signature}`
 export const useWorkspaceLayout = (props: UseWorkspaceLayoutProps) => {
   const [restoring, setRestoring] = createSignal(false)
   const [error, setError] = createSignal<string | null>(null)
+  let disposed = false
+  let importVersion = 0
+  let restoreVersion = 0
+  onCleanup(() => {
+    disposed = true
+    importVersion += 1
+  })
   const snapshot = (): WorkspaceLayout | undefined => {
     const profile = props.controls.profile()
     return profile === undefined
@@ -48,6 +73,8 @@ export const useWorkspaceLayout = (props: UseWorkspaceLayoutProps) => {
     if (profile === undefined || profile.signature !== layout.signature) {
       return
     }
+    restoreVersion += 1
+    const version = restoreVersion
     setRestoring(true)
     batch(() => {
       props.setExtraPorts([...layout.extraPorts])
@@ -56,7 +83,12 @@ export const useWorkspaceLayout = (props: UseWorkspaceLayoutProps) => {
     })
     // Restore positions after the profile change rebuilds graph membership.
     queueMicrotask(() => {
-      props.setNodes(reconcile(applyWorkspacePositions(props.nodes(), layout.positions)))
+      if (disposed || version !== restoreVersion) {
+        return
+      }
+      if (props.controls.profile()?.signature === layout.signature) {
+        props.setNodes(reconcile(applyWorkspacePositions(props.nodes(), layout.positions)))
+      }
       setRestoring(false)
     })
   }
@@ -67,7 +99,8 @@ export const useWorkspaceLayout = (props: UseWorkspaceLayoutProps) => {
         return
       }
       try {
-        const stored = sessionStorage.getItem(storageKey(signature))
+        const storage = props.sessionStorage ?? globalThis.sessionStorage
+        const stored = storage.getItem(storageKey(signature))
         const layout =
           stored === null ? undefined : parseWorkspaceLayout(JSON.parse(stored), signature)
         if (layout !== undefined) {
@@ -85,7 +118,8 @@ export const useWorkspaceLayout = (props: UseWorkspaceLayoutProps) => {
     const layout = snapshot()
     if (layout !== undefined) {
       try {
-        sessionStorage.setItem(storageKey(layout.signature), JSON.stringify(layout))
+        const storage = props.sessionStorage ?? globalThis.sessionStorage
+        storage.setItem(storageKey(layout.signature), JSON.stringify(layout))
       } catch {
         setError('스튜디오 배치를 보관하지 못했습니다.')
       }
@@ -108,12 +142,24 @@ export const useWorkspaceLayout = (props: UseWorkspaceLayoutProps) => {
     URL.revokeObjectURL(url)
   }
   const importStudio = async (file: File) => {
+    if (disposed) {
+      return
+    }
+    importVersion += 1
+    const version = importVersion
     const signature = props.controls.profile()?.signature
+    const current = () =>
+      !disposed &&
+      version === importVersion &&
+      signature !== undefined &&
+      signature === props.controls.profile()?.signature
+    setError(null)
     try {
-      const value: unknown = JSON.parse(await file.text())
-      if (signature !== props.controls.profile()?.signature || signature === undefined) {
+      const text = await file.text()
+      if (!current()) {
         return
       }
+      const value: unknown = JSON.parse(text)
       const currentProfile = props.controls.profile()
       if (currentProfile === undefined) {
         return
@@ -132,7 +178,9 @@ export const useWorkspaceLayout = (props: UseWorkspaceLayoutProps) => {
         restore(result.layout, result.profile)
       }
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : '스튜디오를 불러오지 못했습니다.')
+      if (current()) {
+        setError(cause instanceof Error ? cause.message : '스튜디오를 불러오지 못했습니다.')
+      }
     }
   }
   return {dismissError: () => setError(null), error, exportStudio, importStudio}

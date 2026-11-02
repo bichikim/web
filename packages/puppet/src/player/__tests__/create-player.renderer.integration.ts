@@ -11,6 +11,7 @@ afterEach(() => vi.resetAllMocks())
 
 const resource = (): PlayerRenderer => ({
   applyFrame: vi.fn(),
+  applyPreparedFrame: vi.fn(),
   destroy: vi.fn(),
   getPaintOrder: vi.fn(() => []),
   getPartVertices: vi.fn(),

@@ -236,19 +236,29 @@ const writeOutputs = (
   readings: ReadonlyArray<number>,
   world: ChainWorld,
   values: Values,
-): Values =>
-  chain.outputs.reduce((written, output, index) => {
+): Values => {
+  let written: Record<string, number> | undefined
+  for (const [index, output] of chain.outputs.entries()) {
     const parameter = world.parameters.get(output.parameterId)
     const reading = readings[index] ?? 0
-    if (parameter === undefined || !Number.isFinite(reading)) {
-      return written
+    if (parameter !== undefined && Number.isFinite(reading)) {
+      const target = clamp(reading * output.scale, parameter.minimum, parameter.maximum)
+      const current = readValue(parameter, written ?? values)
+      const value =
+        output.weight >= 1 ? target : current * (1 - output.weight) + target * output.weight
+      // Every later output still reads earlier writes, while the borrowed input remains unchanged.
+      written ??= {...values}
+      // Retain computed-property semantics for IDs such as __proto__.
+      Object.defineProperty(written, parameter.id, {
+        configurable: true,
+        enumerable: true,
+        value,
+        writable: true,
+      })
     }
-    const target = clamp(reading * output.scale, parameter.minimum, parameter.maximum)
-    const current = readValue(parameter, written)
-    const value =
-      output.weight >= 1 ? target : current * (1 - output.weight) + target * output.weight
-    return {...written, [parameter.id]: value}
-  }, values)
+  }
+  return written ?? values
+}
 
 const readAll = (
   chain: PuppetPhysicsChain,

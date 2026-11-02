@@ -1,5 +1,12 @@
 import type {PuppetParameterValueMap} from '../../deformation'
-import type {MotionFrame} from './types'
+import type {MotionFrame, SerializedMotionFrame} from './types'
+import type {PuppetMotion} from '../document'
+
+export interface MotionHistoryState {
+  readonly frames: ReadonlyArray<SerializedMotionFrame>
+  readonly base: PuppetParameterValueMap
+  readonly values: PuppetParameterValueMap
+}
 
 /** 같은 시점의 새로 고침은 같은 기준을 사용하고, 시간이 이동하면 직전 모션 값을 이어받는다. */
 export const createMotionParameterHistory = () => {
@@ -25,6 +32,11 @@ export const createMotionParameterHistory = () => {
       }
       return base
     },
+    capture: (): MotionHistoryState => ({
+      base,
+      frames: frames.map(({motion, ...frame}) => ({...frame, motionId: motion.id})),
+      values,
+    }),
     record(next: PuppetParameterValueMap) {
       values = next
     },
@@ -36,6 +48,17 @@ export const createMotionParameterHistory = () => {
           : Object.fromEntries(Object.entries(current).filter(([id]) => !parameterIds.includes(id)))
       base = retained(base)
       values = retained(values)
+    },
+    restore(state: MotionHistoryState, motions: ReadonlyArray<PuppetMotion>) {
+      base = state.base
+      values = state.values
+      frames = state.frames.map(({motionId, ...frame}) => {
+        const motion = motions.find((candidate) => candidate.id === motionId)
+        if (motion === undefined) {
+          throw new Error('Motion history checkpoint is missing its motion')
+        }
+        return {...frame, motion}
+      })
     },
   }
 }
