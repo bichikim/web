@@ -6,11 +6,18 @@ import {createBufferWorker} from './create-buffer-worker'
 import {
   type BufferedInput,
   type BufferFrame,
+  type BufferScheduler,
+  type BufferWorker,
   PLAYER_BUFFER_FRAMES,
   type StaleBufferFrame,
 } from './types'
 
 interface CreateBufferSessionOptions {
+  /**
+   * Creates a new Worker with the supplied failure callback; omitted, creates a browser Worker.
+   * The session owns and destroys the returned Worker.
+   */
+  readonly createWorker?: (onError: (cause: Error) => void) => BufferWorker
   /** Immutable prepared geometry; textures and GPU resources remain with the host. */
   readonly document: PuppetDocument
   /** Decoded audio for numeric mouth analysis; omitted, no sounds are available. */
@@ -25,13 +32,21 @@ interface CreateBufferSessionOptions {
   readonly input?: () => BufferedInput | undefined
   /** Whether simulation continues without input. Omitted, keep predicting. */
   readonly running?: () => boolean
+  /** Borrowed scheduling callbacks; omitted, uses Date.now and browser frame/microtask APIs. */
+  readonly scheduler?: BufferScheduler
 }
 const BUFFER_CAPACITY = 9
 
 /** Owns one ordered Worker stream, prioritizing current input over speculative frames. */
 // eslint-disable-next-line max-lines-per-function -- Cancellation, scheduling and transferable ownership share one stream.
 export const createBufferSession = (options: CreateBufferSessionOptions) => {
-  const worker = createBufferWorker(options.onError)
+  const worker = (options.createWorker ?? createBufferWorker)(options.onError)
+  const scheduler: BufferScheduler = options.scheduler ?? {
+    cancelFrame: (handle) => cancelAnimationFrame(handle),
+    now: () => Date.now(),
+    queueMicrotask: (callback) => queueMicrotask(callback),
+    requestFrame: (callback) => requestAnimationFrame(callback),
+  }
   let disposed = false
   let generation = 0
   let active = false
@@ -40,7 +55,7 @@ export const createBufferSession = (options: CreateBufferSessionOptions) => {
   let flight: {readonly generation: number} | undefined
   let animation: number | undefined
   let previousRefresh: number | undefined
-  let origin = Date.now()
+  let origin = scheduler.now()
   let lastTime = origin
   let clock = createBufferClock(origin)
   let presentationDelay: number | undefined
@@ -66,14 +81,14 @@ export const createBufferSession = (options: CreateBufferSessionOptions) => {
     generation += 1
     active = false
     if (animation !== undefined) {
-      cancelAnimationFrame(animation)
+      scheduler.cancelFrame(animation)
     }
     animation = undefined
     clearPredictions()
   }
   const schedule = () => {
     if (active && !disposed && animation === undefined && frames.length > 0) {
-      animation = requestAnimationFrame(tick)
+      animation = scheduler.requestFrame(tick)
     }
   }
   const pump = () => {
@@ -96,10 +111,10 @@ export const createBufferSession = (options: CreateBufferSessionOptions) => {
       clock.rebase(lastTime)
     }
     const prediction = isRunning()
-      ? clock.next(Date.now() - (presentationDelay ?? 0))
+      ? clock.next(scheduler.now() - (presentationDelay ?? 0))
       : {deltaTime: 0, time: lastTime}
     const request = {generation}
-    const began = Date.now()
+    const began = scheduler.now()
     first = false
     flight = request
     worker
@@ -125,12 +140,12 @@ export const createBufferSession = (options: CreateBufferSessionOptions) => {
         ) {
           release(frame)
         } else {
-          clock.observeCompute(Date.now() - began)
+          clock.observeCompute(scheduler.now() - began)
           if (immediate || !isRunning() || options.input?.() !== undefined) {
             clearPredictions()
             presenting = true
             // Host callbacks run outside the Worker promise rejection boundary.
-            queueMicrotask(() => present(frame, request.generation))
+            scheduler.queueMicrotask(() => present(frame, request.generation))
           } else {
             frames.push(frame)
           }
@@ -151,7 +166,7 @@ export const createBufferSession = (options: CreateBufferSessionOptions) => {
     try {
       if (!disposed && active && request === generation) {
         lastTime = frame.time
-        presentationDelay ??= Math.max(0, Date.now() - lastTime)
+        presentationDelay ??= Math.max(0, scheduler.now() - lastTime)
         options.onFrame(frame)
       }
     } finally {
@@ -169,7 +184,7 @@ export const createBufferSession = (options: CreateBufferSessionOptions) => {
       return
     }
     const request = generation
-    const now = Date.now()
+    const now = scheduler.now()
     if (previousRefresh !== undefined) {
       clock.observeRefresh(now - previousRefresh)
     }
@@ -213,7 +228,7 @@ export const createBufferSession = (options: CreateBufferSessionOptions) => {
       const request = generation
       await worker.reset(state, request, inputRevision)
       if (!disposed && request === generation) {
-        origin = Date.now() - (presentationDelay ?? 0)
+        origin = scheduler.now() - (presentationDelay ?? 0)
         lastTime = origin
         clock = createBufferClock(origin)
         previousRefresh = undefined

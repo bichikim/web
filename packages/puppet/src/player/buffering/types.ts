@@ -83,6 +83,18 @@ export interface BufferWorker {
   destroy(): void
 }
 
+/** Borrowed host scheduling capabilities; each session cancels only its own frame requests. */
+export interface BufferScheduler {
+  /** Cancels the pending frame request identified by its returned handle. */
+  cancelFrame(handle: number): void
+  /** Finite current time in milliseconds, using one consistent epoch throughout the session. */
+  now(): number
+  /** Runs after the current task, reporting callback exceptions to the host. */
+  queueMicrotask(callback: () => void): void
+  /** Defers one display-refresh callback; returns a handle unique among pending requests. */
+  requestFrame(callback: () => void): number
+}
+
 /** Controls may change on the host; integrated simulation remains owned by the Worker. */
 export type RuntimeInputs = Omit<
   PlayerRuntimeState,

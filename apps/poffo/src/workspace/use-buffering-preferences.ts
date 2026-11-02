@@ -1,12 +1,12 @@
 import {createSignal} from 'solid-js'
 
 const STORAGE_KEY = 'poffo:buffering:v1'
-/** Browser preference, independent from the shared document and undo/redo. */
-export const useBufferingPreferences = () => {
+/** Preference outside document history; borrows the supplied store or defaults to browser localStorage. */
+export const useBufferingPreferences = (storage?: Pick<Storage, 'getItem' | 'setItem'>) => {
   const [enabled, setValue] = createSignal(true)
   const [error, setError] = createSignal<string | null>(null)
   try {
-    const stored = globalThis.localStorage?.getItem(STORAGE_KEY)
+    const stored = (storage ?? globalThis.localStorage)?.getItem(STORAGE_KEY)
     if (stored !== null && stored !== undefined) {
       const value: unknown = JSON.parse(stored)
       if (typeof value === 'boolean') {
@@ -21,7 +21,8 @@ export const useBufferingPreferences = () => {
   const setEnabled = (value: boolean) => {
     setValue(value)
     try {
-      globalThis.localStorage?.setItem(STORAGE_KEY, JSON.stringify(value))
+      const destination = storage ?? globalThis.localStorage
+      destination?.setItem(STORAGE_KEY, JSON.stringify(value))
     } catch {
       setError('재생 버퍼 설정을 저장하지 못했습니다.')
     }

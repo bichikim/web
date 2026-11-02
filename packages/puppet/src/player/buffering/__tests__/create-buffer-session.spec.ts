@@ -1,16 +1,39 @@
-import {afterEach, expect, test, vi} from 'vitest'
+import {expect, test, vi} from 'vitest'
 import {createEmptyDocument} from '../../create-empty-document'
 import {createBufferEngine} from '../create-buffer-engine'
-import {createBufferWorker} from '../create-buffer-worker'
 import {createBufferSession} from '../create-buffer-session'
-import type {BufferFrame, BufferWorker} from '../types'
+import type {BufferFrame, BufferScheduler, BufferWorker} from '../types'
 
-vi.mock('../create-buffer-worker', () => ({createBufferWorker: vi.fn()}))
-afterEach(() => {
-  vi.restoreAllMocks()
-  vi.unstubAllGlobals()
-  vi.resetAllMocks()
-})
+const createScheduler = () => {
+  let now = 0
+  let sequence = 0
+  const frames = new Map<number, () => void>()
+  const cancelFrame = vi.fn((handle: number) => {
+    frames.delete(handle)
+  })
+  const requestFrame = vi.fn((callback: () => void) => {
+    sequence += 1
+    frames.set(sequence, callback)
+    return sequence
+  })
+  const scheduler: BufferScheduler = {
+    cancelFrame,
+    now: () => now,
+    queueMicrotask,
+    requestFrame,
+  }
+  return {
+    advance(milliseconds: number) {
+      now += milliseconds
+      const ready = [...frames.values()]
+      frames.clear()
+      ready.forEach((callback) => callback())
+    },
+    cancelFrame,
+    requestFrame,
+    scheduler,
+  }
+}
 
 test('should present the pending initial frame when playback stops before its response', async () => {
   const document = createEmptyDocument()
@@ -27,15 +50,17 @@ test('should present the pending initial frame when playback stops before its re
     reset: vi.fn().mockResolvedValue(undefined),
     updateAudio: vi.fn().mockResolvedValue(undefined),
   }
-  vi.mocked(createBufferWorker).mockReturnValue(worker)
-  vi.stubGlobal(
-    'requestAnimationFrame',
-    vi.fn(() => 1),
-  )
-  vi.stubGlobal('cancelAnimationFrame', vi.fn())
+  const {scheduler} = createScheduler()
   let running = true
   const onFrame = vi.fn()
-  const session = createBufferSession({document, onError: vi.fn(), onFrame, running: () => running})
+  const session = createBufferSession({
+    createWorker: () => worker,
+    document,
+    onError: vi.fn(),
+    onFrame,
+    running: () => running,
+    scheduler,
+  })
   await session.ready
   await session.start(state)
   running = false
@@ -70,27 +95,21 @@ test('should recycle valid empty geometry buffers across more than nine displaye
     reset: vi.fn().mockResolvedValue(undefined),
     updateAudio: vi.fn().mockResolvedValue(undefined),
   }
-  vi.mocked(createBufferWorker).mockReturnValue(worker)
-  let now = 0
-  let callback: FrameRequestCallback | undefined
-  vi.spyOn(Date, 'now').mockImplementation(() => now)
-  vi.stubGlobal(
-    'requestAnimationFrame',
-    vi.fn((next: FrameRequestCallback) => {
-      callback = next
-      return 1
-    }),
-  )
-  vi.stubGlobal('cancelAnimationFrame', vi.fn())
+  const {advance, scheduler} = createScheduler()
   const onFrame = vi.fn<(frame: BufferFrame) => void>()
-  const session = createBufferSession({document, onError: vi.fn(), onFrame})
+  const session = createBufferSession({
+    createWorker: () => worker,
+    document,
+    onError: vi.fn(),
+    onFrame,
+    scheduler,
+  })
   await session.ready
   await session.start(state)
   for (let index = 0; index < 32; index += 1) {
     // eslint-disable-next-line no-await-in-loop -- Each simulated refresh consumes the previous Worker response.
     await Promise.resolve()
-    now += 25
-    callback?.(now)
+    advance(25)
   }
   expect(onFrame.mock.calls.length).toBeGreaterThan(12)
   session.destroy()
@@ -113,35 +132,27 @@ test('should retain the presentation clock without refilling three frames after 
     reset: vi.fn().mockResolvedValue(undefined),
     updateAudio: vi.fn().mockResolvedValue(undefined),
   }
-  vi.mocked(createBufferWorker).mockReturnValue(worker)
-  let now = 0
-  let callback: FrameRequestCallback | undefined
-  vi.spyOn(Date, 'now').mockImplementation(() => now)
-  vi.stubGlobal(
-    'requestAnimationFrame',
-    vi.fn((next: FrameRequestCallback) => {
-      callback = next
-      return 1
-    }),
-  )
-  vi.stubGlobal('cancelAnimationFrame', vi.fn())
+  const {advance, scheduler} = createScheduler()
   const onFrame = vi.fn()
-  const session = createBufferSession({document, onError: vi.fn(), onFrame})
+  const session = createBufferSession({
+    createWorker: () => worker,
+    document,
+    onError: vi.fn(),
+    onFrame,
+    scheduler,
+  })
   await session.ready
   await session.start(state)
   await Promise.resolve()
   await Promise.resolve()
   await Promise.resolve()
-  now = 75
-  callback?.(now)
-  now = 100
-  callback?.(now)
+  advance(75)
+  advance(25)
   expect(onFrame).toHaveBeenCalledOnce()
   session.invalidate()
   await session.start(state)
   await Promise.resolve()
-  now = 125
-  callback?.(now)
+  advance(25)
   expect(onFrame).toHaveBeenCalledTimes(2)
   session.destroy()
 })
@@ -154,7 +165,7 @@ test('should display an in-flight input result even when newer inputs keep arriv
     request: import('../types').ProduceBufferFrame
     resolve: (frame: BufferFrame) => void
   }> = []
-  vi.mocked(createBufferWorker).mockReturnValue({
+  const worker: BufferWorker = {
     destroy: vi.fn(),
     initialize: vi.fn().mockResolvedValue(0),
     produce: (request) =>
@@ -163,26 +174,20 @@ test('should display an in-flight input result even when newer inputs keep arriv
       }),
     reset: vi.fn().mockResolvedValue(undefined),
     updateAudio: vi.fn().mockResolvedValue(undefined),
-  })
-  let refresh: FrameRequestCallback | undefined
-  vi.stubGlobal(
-    'requestAnimationFrame',
-    vi.fn((callback) => {
-      refresh = callback
-      return 1
-    }),
-  )
-  vi.stubGlobal('cancelAnimationFrame', vi.fn())
+  }
+  const {scheduler} = createScheduler()
   const onFrame = vi.fn((frame) => {
     if (input?.revision === frame.inputRevision) {
       input = undefined
     }
   })
   const session = createBufferSession({
+    createWorker: () => worker,
     document: createEmptyDocument(),
     input: () => input,
     onError: vi.fn(),
     onFrame,
+    scheduler,
   })
   const finish = async (index: number) => {
     const {request, resolve} = requests[index]!
@@ -229,25 +234,18 @@ test('should compute a paused input once without a three-frame refill or ongoing
     reset: vi.fn().mockResolvedValue(undefined),
     updateAudio: vi.fn().mockResolvedValue(undefined),
   }
-  vi.mocked(createBufferWorker).mockReturnValue(worker)
-  let refresh: FrameRequestCallback | undefined
-  vi.stubGlobal(
-    'requestAnimationFrame',
-    vi.fn((callback) => {
-      refresh = callback
-      return 1
-    }),
-  )
-  vi.stubGlobal('cancelAnimationFrame', vi.fn())
+  const {requestFrame, scheduler} = createScheduler()
   const onFrame = vi.fn(() => {
     input = undefined
   })
   const session = createBufferSession({
+    createWorker: () => worker,
     document,
     input: () => input,
     onError: vi.fn(),
     onFrame,
     running: () => false,
+    scheduler,
   })
   await session.ready
   await session.start(state)
@@ -259,7 +257,7 @@ test('should compute a paused input once without a three-frame refill or ongoing
   await Promise.resolve()
   expect(onFrame).toHaveBeenCalledTimes(2)
   expect(worker.produce).toHaveBeenCalledTimes(2)
-  expect(requestAnimationFrame).not.toHaveBeenCalled()
+  expect(requestFrame).not.toHaveBeenCalled()
   expect(vi.mocked(worker.produce).mock.calls[1]![0].deltaTime).toBe(0)
   session.destroy()
 })
@@ -269,14 +267,7 @@ test('should report host callback exceptions outside the Worker failure path and
   const engine = createBufferEngine(document)
   const state = engine.step(0, new ArrayBuffer(0)).state
   const callbacks: Array<() => void> = []
-  vi.stubGlobal('queueMicrotask', (callback: () => void) => {
-    callbacks.push(callback)
-  })
-  vi.stubGlobal(
-    'requestAnimationFrame',
-    vi.fn(() => 1),
-  )
-  vi.stubGlobal('cancelAnimationFrame', vi.fn())
+  const {scheduler} = createScheduler()
   const produce = vi.fn(async (request: import('../types').ProduceBufferFrame) => ({
     ...engine.step(request.deltaTime, request.buffer, request.input, request.acknowledgedNotices),
     deltaTime: request.deltaTime,
@@ -284,16 +275,17 @@ test('should report host callback exceptions outside the Worker failure path and
     kind: 'frame' as const,
     time: request.time,
   }))
-  vi.mocked(createBufferWorker).mockReturnValue({
+  const worker: BufferWorker = {
     destroy: vi.fn(),
     initialize: vi.fn().mockResolvedValue(0),
     produce,
     reset: vi.fn().mockResolvedValue(undefined),
     updateAudio: vi.fn().mockResolvedValue(undefined),
-  })
+  }
   const failure = new Error('Consumer callback failed')
   const onError = vi.fn()
   const session = createBufferSession({
+    createWorker: () => worker,
     document,
     input: () => ({revision: 1, settle: false, state}),
     onError,
@@ -301,6 +293,12 @@ test('should report host callback exceptions outside the Worker failure path and
       throw failure
     },
     running: () => false,
+    scheduler: {
+      ...scheduler,
+      queueMicrotask(callback) {
+        callbacks.push(callback)
+      },
+    },
   })
   await session.ready
   await session.start(state)
@@ -311,4 +309,53 @@ test('should report host callback exceptions outside the Worker failure path and
   expect(onError).not.toHaveBeenCalled()
   expect(produce).toHaveBeenCalledTimes(2)
   session.destroy()
+})
+
+test('should cancel only its own frames when sessions share a scheduler', async () => {
+  const {advance, cancelFrame, scheduler} = createScheduler()
+  const setup = () => {
+    const document = createEmptyDocument()
+    const engine = createBufferEngine(document)
+    const state = engine.step(0, new ArrayBuffer(0)).state
+    const worker: BufferWorker = {
+      destroy: vi.fn(),
+      initialize: vi.fn().mockResolvedValue(0),
+      produce: vi.fn(async (request) => ({
+        ...engine.step(request.deltaTime, request.buffer),
+        deltaTime: request.deltaTime,
+        generation: request.generation,
+        kind: 'frame' as const,
+        time: request.time,
+      })),
+      reset: vi.fn().mockResolvedValue(undefined),
+      updateAudio: vi.fn().mockResolvedValue(undefined),
+    }
+    const onFrame = vi.fn()
+    const session = createBufferSession({
+      createWorker: () => worker,
+      document,
+      onError: vi.fn(),
+      onFrame,
+      scheduler,
+    })
+    return {onFrame, session, state, worker}
+  }
+  const first = setup()
+  const second = setup()
+  await Promise.all([first.session.ready, second.session.ready])
+  await Promise.all([first.session.start(first.state), second.session.start(second.state)])
+  await Promise.resolve()
+  await Promise.resolve()
+  first.session.destroy()
+  expect(cancelFrame).toHaveBeenCalledOnce()
+  expect(first.worker.destroy).toHaveBeenCalledOnce()
+  expect(second.worker.destroy).not.toHaveBeenCalled()
+  advance(100)
+  advance(25)
+  expect(first.onFrame).not.toHaveBeenCalled()
+  expect(second.onFrame).toHaveBeenCalledOnce()
+  second.session.destroy()
+  advance(100)
+  expect(second.onFrame).toHaveBeenCalledOnce()
+  expect(second.worker.destroy).toHaveBeenCalledOnce()
 })
