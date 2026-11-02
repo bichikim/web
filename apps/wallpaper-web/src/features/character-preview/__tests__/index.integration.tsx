@@ -7,12 +7,57 @@ import SPuppetCharacter from '../../../components/SPuppetCharacter'
 import geometry from '../../../data/character-look.json'
 import 'virtual:uno.css'
 
+// Drive the gaze frame port to convergence independently of software WebGL throughput.
+const frames = vi.hoisted(() => {
+  const pending = new Map<number, FrameRequestCallback>()
+  let sequence = 0
+  let now = 0
+  return {
+    advance() {
+      for (let index = 0; index < 32 && pending.size > 0; index += 1) {
+        const callbacks = [...pending.values()]
+        pending.clear()
+        now += 100
+        const timestamp = now
+        callbacks.forEach((callback) => callback(timestamp))
+      }
+      if (pending.size > 0) {
+        throw new Error('Character gaze did not settle within 32 frames')
+      }
+    },
+    cancel(handle: number) {
+      pending.delete(handle)
+    },
+    clear() {
+      pending.clear()
+      now = 0
+    },
+    request(callback: FrameRequestCallback) {
+      sequence += 1
+      pending.set(sequence, callback)
+      return sequence
+    },
+  }
+})
+vi.mock('../look', async (importOriginal) => {
+  const original = await importOriginal<typeof import('../look')>()
+  return {
+    ...original,
+    connectCharacterLook: (options: Parameters<typeof original.connectCharacterLook>[0]) =>
+      original.connectCharacterLook({...options, frames}),
+  }
+})
 vi.mock('@winter-love/puppet/player', async (importOriginal) => {
   const original = await importOriginal<typeof import('@winter-love/puppet/player')>()
-  return {...original, createPlayer: vi.fn(original.createPlayer)}
+  // Parameter assertions retain CSS geometry while bounding software WebGL pixel work.
+  const createPlayer = vi.fn<typeof original.createPlayer>((options) =>
+    original.createPlayer({...options, resolution: 0.5}),
+  )
+  return {...original, createPlayer}
 })
 afterEach(() => {
   cleanup()
+  frames.clear()
   vi.clearAllMocks()
 })
 
@@ -36,6 +81,8 @@ test('should add default mouse tracking to the compact Poffo idle animation with
   expect(idle?.tracks).toHaveLength(23)
   const player: playerModule.Player = await vi.mocked(playerModule.createPlayer).mock.results[0]!
     .value
+  player.setBreath(false)
+  player.setPhysicsPreview(false)
   player.pause()
   player.seek(4)
   const later = player.getParameterValues()
@@ -59,8 +106,10 @@ test('should add default mouse tracking to the compact Poffo idle animation with
     x: bounds.left + (bounds.width - geometry.viewport.width * fit) / 2 + geometry.face.x * fit,
     y: bounds.top + (bounds.height - geometry.viewport.height * fit) / 2 + geometry.face.y * fit,
   }
-  const move = (x: number, y: number) =>
+  const move = (x: number, y: number) => {
     globalThis.dispatchEvent(new PointerEvent('pointermove', {clientX: x, clientY: y}))
+    frames.advance()
+  }
   move(face.x + height / 4, face.y)
   await expect
     .poll(() => player.getParameterValue('ParamAngleX'), {timeout: 10_000})
