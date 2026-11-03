@@ -27,7 +27,7 @@
   "bundle": {
     "active": true,
     "category": "GraphicsAndDesign",
-    "icon": ["icons/icon.icns", "icons/icon.ico", "icons/icon.png"],
+    "icon": ["icons/macos.car", "icons/icon.icns", "icons/icon.ico", "icons/icon.png"],
     "shortDescription": "캐릭터 모델링·애니메이션 편집기",
     "targets": ["dmg", "nsis"]
   }
