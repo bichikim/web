@@ -14,6 +14,7 @@ const createRenderer = (): RendererController => ({
   getRenderingInfo: () => ({antialiasing: 'ssaa', renderer: 'webgl'}),
   redraw: vi.fn(),
   resize: vi.fn(),
+  setFit: vi.fn(),
   setRunning: vi.fn(),
   setViewCamera: vi.fn(),
   subscribeFrame: vi.fn(),
@@ -34,6 +35,24 @@ const setup = () => {
     runtime: createPlayerRuntime({document, onFrame, randomSeed: 42, renderer}),
   }
 }
+
+test.each([false, true])(
+  'should change fitting without changing playback or numerical inputs when deferred is %s',
+  (deferred) => {
+    const {runtime, renderer, onFrame} = setup()
+    runtime.player.seek(0.75)
+    runtime.setDeferred(deferred)
+    const checkpoint = runtime.capture()
+    vi.mocked(renderer.applyFrame).mockClear()
+    onFrame.mockClear()
+    runtime.player.setFit('cover')
+    expect(renderer.setFit).toHaveBeenCalledExactlyOnceWith('cover')
+    expect(runtime.capture()).toEqual(checkpoint)
+    expect(renderer.applyFrame).not.toHaveBeenCalled()
+    expect(onFrame).not.toHaveBeenCalled()
+    runtime.player.destroy()
+  },
+)
 
 test('should release decoded audio resources when the runtime is destroyed', async () => {
   const wav = encodeWav({channels: [[0, 0.5, -0.5, 0]], sampleRate: 8000})

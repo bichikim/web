@@ -30,7 +30,7 @@ export const SWallpaperPreview = (props: SWallpaperPreviewProps) => {
   })
   const fit = () => {
     const current = content()
-    return current.mode === 'album' ? current.fit : undefined
+    return current.mode === 'website' ? undefined : current.fit
   }
   const assetId = createMemo(() => {
     const current = content()
@@ -124,6 +124,7 @@ export const SWallpaperPreview = (props: SWallpaperPreviewProps) => {
           mode={tracking() ?? 'off'}
           screenAspect={screenAspect()}
           assetId={() => id}
+          fit={fit}
           load={props.controller.loadPuppet}
           placement={placement}
           bindings={trackingBindings}

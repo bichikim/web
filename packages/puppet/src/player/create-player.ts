@@ -5,7 +5,7 @@ import {assertPreparedPuppetDocument} from './internal/prepared-document'
 import {createRendererController} from './rendering'
 import {createPlayerRuntime} from './create-player-runtime'
 
-export type {PuppetFraming} from './internal/layout-player-root'
+export type {PuppetFit, PuppetFraming} from './internal/layout-player-root'
 export type {PuppetRenderOverride} from './internal/render-overrides'
 export type {PuppetParameterBlend, PuppetParameterBlendMode} from './parameter-blends'
 export type {PuppetPhysicsOptions} from './physics-options'

@@ -35,6 +35,7 @@ export const createRendererController = async (
   let current = await createPlayerRenderer(options)
   let {document} = options
   let {resolution} = options
+  let fit = options.fit ?? 'contain'
   let pendingDocument: typeof document | undefined
   let camera: PlayerViewCamera | undefined
   let frame: Parameters<PlayerRenderer['applyFrame']> | undefined
@@ -61,12 +62,9 @@ export const createRendererController = async (
     let prepared: PlayerRenderer | undefined
     try {
       let source = document
-      prepared = await createPlayerRenderer({
-        ...options,
-        ...configuration,
-        document: source,
-        resolution,
-      })
+      const prepare = (document: CreatePlayerRendererOptions['document']) =>
+        createPlayerRenderer({...options, ...configuration, document, resolution})
+      prepared = await prepare(source)
       // New document resources cannot be prepared in parallel with an unknown future revision.
       /* eslint-disable no-unmodified-loop-condition -- Lifetime flags change during the awaited initialization. */
       while (
@@ -79,12 +77,7 @@ export const createRendererController = async (
         prepared = undefined
         source = document
         // eslint-disable-next-line no-await-in-loop -- Coalesce edits that arrived during resource creation.
-        prepared = await createPlayerRenderer({
-          ...options,
-          ...configuration,
-          document: source,
-          resolution,
-        })
+        prepared = await prepare(source)
       }
       /* eslint-enable no-unmodified-loop-condition */
       if (disposed || request !== generation) {
@@ -93,6 +86,7 @@ export const createRendererController = async (
       }
       prepared.setRunning(false)
       prepared.resize(resolution)
+      prepared.setFit(fit)
       if (camera !== undefined) {
         prepared.setViewCamera(camera)
       }
@@ -151,6 +145,13 @@ export const createRendererController = async (
     resize(nextResolution) {
       resolution = nextResolution ?? resolution
       current.resize(nextResolution)
+    },
+    setFit(nextFit) {
+      if (disposed) {
+        return
+      }
+      fit = nextFit
+      current.setFit(nextFit)
     },
     setRunning(nextRunning) {
       running = nextRunning

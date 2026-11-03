@@ -42,6 +42,7 @@ export const createBufferEngine = (document: PuppetDocument) => {
     getRenderingInfo: () => ({antialiasing: 'ssaa', renderer: 'webgl'}),
     redraw: noop,
     resize: noop,
+    setFit: noop,
     setRunning: noop,
     setViewCamera: noop,
     subscribeFrame: noop,

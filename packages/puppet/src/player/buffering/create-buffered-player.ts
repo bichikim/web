@@ -20,6 +20,7 @@ const DIRECT_METHODS = new Set<PropertyKey>([
   'configureRenderer',
   'redraw',
   'resize',
+  'setFit',
   'startMotion',
 ])
 

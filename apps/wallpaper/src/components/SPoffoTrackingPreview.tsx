@@ -10,13 +10,14 @@ import {SPoffoCameraPosition} from './SPoffoCameraPosition'
 import {SPuppetPreview} from './SPuppetPreview'
 import type {
   PoffoAgentControls,
+  PoffoDisplayOptions,
   PoffoLipSyncControls,
   PoffoMotionControls,
 } from '../features/background/types'
 import type {PointBounds} from '../features/tracking/use-point-drag'
 
 export interface PoffoCalibrationOptions
-  extends PoffoMotionControls, PoffoLipSyncControls, PoffoAgentControls {
+  extends PoffoDisplayOptions, PoffoMotionControls, PoffoLipSyncControls, PoffoAgentControls {
   readonly targetId?: string
   readonly assetId: Accessor<string | null>
   readonly load: (id: string) => Promise<string | Blob>
@@ -93,6 +94,7 @@ export const SPoffoTrackingPreview = (props: SPoffoTrackingPreviewProps) => {
           >
             <SPuppetPreview
               assetId={props.assetId}
+              fit={props.fit}
               load={props.load}
               agentBindings={props.agentBindings}
               semanticBindings={props.semanticBindings}

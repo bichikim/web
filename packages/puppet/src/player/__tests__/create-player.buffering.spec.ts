@@ -34,6 +34,7 @@ const setup = async (
     getRenderingInfo: () => ({antialiasing: 'ssaa', renderer: 'webgl'}),
     redraw: vi.fn(),
     resize: vi.fn(),
+    setFit: vi.fn(),
     setRunning: vi.fn(),
     setViewCamera: vi.fn(),
     subscribeFrame: vi.fn(),
@@ -89,6 +90,27 @@ test('should keep buffering disabled for existing createPlayer callers', async (
   const {player} = await setup()
   expect(getPlayerBufferingInfo(player).status).toBe('disabled')
   expect(createBufferWorker).not.toHaveBeenCalled()
+  player.destroy()
+})
+
+test('should change fitting on the host while preserving buffered playback and inputs', async () => {
+  const {player, renderer, worker, onFrame} = await setup(42)
+  await configurePlayerBuffering(player, {enabled: true})
+  const before = getPlayerBufferingInfo(player)
+  const values = player.getParameterValues()
+  vi.mocked(renderer.applyFrame).mockClear()
+  vi.mocked(renderer.applyPreparedFrame).mockClear()
+  onFrame.mockClear()
+  worker.reset.mockClear()
+  player.setFit('cover')
+  expect(renderer.setFit).toHaveBeenCalledExactlyOnceWith('cover')
+  expect(getPlayerBufferingInfo(player)).toEqual(before)
+  expect(player.getParameterValues()).toEqual(values)
+  await expect(flushPlayerInputs(player)).resolves.toBe('applied')
+  expect(renderer.applyFrame).not.toHaveBeenCalled()
+  expect(renderer.applyPreparedFrame).not.toHaveBeenCalled()
+  expect(worker.reset).not.toHaveBeenCalled()
+  expect(onFrame).not.toHaveBeenCalled()
   player.destroy()
 })
 
