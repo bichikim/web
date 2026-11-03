@@ -3,7 +3,13 @@ import {Application, Container, MeshSimple, Texture} from 'pixi.js'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 import {createEmptyDocument} from '../../create-empty-document'
 import {createPlayerRenderer} from '../create-player-renderer'
+import {renderMaskGroups} from '../render-mask-groups'
+import * as initialization from '../initialize-runtime-parts'
+import * as frames from '../apply-render-frame'
+import type {RuntimePart} from '../types'
 import type {PlayerRendererPreference} from '../../rendering-options'
+
+vi.mock('../render-mask-groups', () => ({renderMaskGroups: vi.fn()}))
 
 vi.mock('pixi.js', () => ({
   Application: vi.fn(),
@@ -23,7 +29,7 @@ const application = {
   stage: {addChild: vi.fn()},
   start: vi.fn(),
   stop: vi.fn(),
-  ticker: {add: vi.fn()},
+  ticker: {add: vi.fn(), remove: vi.fn()},
 }
 const root = {addChild: vi.fn(), position: {set: vi.fn()}, scale: {set: vi.fn()}}
 const part = (id: string) => ({
@@ -41,6 +47,7 @@ beforeEach(() => {
   })
 })
 afterEach(() => {
+  vi.restoreAllMocks()
   vi.clearAllMocks()
   vi.unstubAllGlobals()
 })
@@ -172,4 +179,76 @@ describe('createPlayerRenderer', () => {
     expect(application.destroy).toHaveBeenCalledOnce()
     expect(application.render).not.toHaveBeenCalled()
   })
+})
+
+test('should render prepared masks once at presentation while keeping explicit redraw immediate', async () => {
+  const destroy = vi.fn()
+  const mask = {
+    container: {destroy},
+    filter: {destroy},
+    meshes: [],
+    sprite: {destroy},
+    texture: {destroy},
+  }
+  vi.spyOn(initialization, 'initializeRuntimeParts').mockImplementation(async ({partById}) => {
+    partById.set('masked', {
+      mask,
+      mesh: {alpha: 1, renderable: true, visible: true},
+      partId: 'masked',
+      restVertices: [],
+      vertices: new Float32Array(0),
+    } as unknown as RuntimePart)
+  })
+  vi.spyOn(frames, 'applyRenderFrame').mockReturnValue([])
+  const renderer = await createPlayerRenderer({
+    canvas: document.createElement('canvas'),
+    document: createEmptyDocument(),
+  })
+  const frame = {
+    frame: {layers: new Map(), plans: [], spatialPoses: new Map()},
+    vertices: new Float32Array(0),
+  }
+  renderer.applyPreparedFrame(frame)
+  renderer.applyPreparedFrame(frame)
+  expect(renderMaskGroups).not.toHaveBeenCalled()
+  renderer.redraw()
+  expect(renderMaskGroups).toHaveBeenCalledOnce()
+  expect(application.render).toHaveBeenCalledOnce()
+  renderer.redraw()
+  expect(renderMaskGroups).toHaveBeenCalledOnce()
+  expect(application.render).toHaveBeenCalledTimes(2)
+  renderer.destroy()
+})
+
+test('should retain submitted meshes until the deferred document has a computed frame', async () => {
+  const original = part('part')
+  const source = {...createEmptyDocument(), parts: [original]}
+  const replacement = {
+    ...source,
+    parts: [{...original, mesh: {...original.mesh, vertices: [5, 5, 10, 5, 5, 10]}}],
+  }
+  const coordinates = new Float32Array(original.mesh.vertices)
+  vi.spyOn(initialization, 'initializeRuntimeParts').mockImplementation(async ({partById}) => {
+    partById.set('part', {
+      mesh: {geometry: {}},
+      restVertices: original.mesh.vertices,
+      vertices: coordinates,
+    } as unknown as RuntimePart)
+  })
+  const apply = vi.spyOn(frames, 'applyRenderFrame').mockReturnValue([])
+  const renderer = await createPlayerRenderer({
+    canvas: document.createElement('canvas'),
+    document: source,
+  })
+  expect(renderer.updateDocument(replacement, true)).toBe(true)
+  renderer.resize()
+  renderer.redraw()
+  expect(apply).not.toHaveBeenCalled()
+  expect(renderer.getPartVertices('part')).toBe(coordinates)
+  renderer.applyPreparedFrame({
+    frame: {layers: new Map(), plans: [], spatialPoses: new Map()},
+    vertices: new Float32Array(0),
+  })
+  expect(apply).toHaveBeenLastCalledWith(expect.objectContaining({document: replacement}))
+  renderer.destroy()
 })

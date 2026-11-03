@@ -31,7 +31,7 @@ const setUpRenderer = () => {
     stage: {addChild: vi.fn()},
     start: vi.fn(),
     stop: vi.fn(),
-    ticker: {add: vi.fn()},
+    ticker: {add: vi.fn(), remove: vi.fn()},
   }
   const root = {addChild: vi.fn(), position: {set: vi.fn()}, scale: {set: vi.fn()}}
   for (const [mock, value] of [
@@ -235,7 +235,7 @@ test('should blink with the timing the app sets', async () => {
         {defaultValue: 1, id: 'eye', maximum: 1, minimum: 0, name: 'Eye'},
       ],
     }),
-    random: () => 0.5,
+    randomSeed: 2023651103,
   })
   // Half of twice the interval: the blink starts after 0.25 s and closes over 1 s.
   expect(player.setEyeBlinkTiming({closed: 1, closing: 1, interval: 0.25, opening: 1})).toBe(true)

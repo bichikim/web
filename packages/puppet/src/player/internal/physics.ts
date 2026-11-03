@@ -1,3 +1,4 @@
+import {getParameterIndex} from '../parameter-index'
 import type {PuppetDocument, PuppetParameter} from '../document'
 import {advancePendulum, createPendulumState, type PendulumState} from '../physics'
 import type {PuppetParameterValueMap} from '../../deformation'
@@ -34,16 +35,13 @@ const getParameterValue = (
   return boundParameterValue(parameter, resolvedValue)
 }
 
-const getParameterById = (document: PuppetDocument) =>
-  new Map((document.parameters ?? []).map((parameter) => [parameter.id, parameter]))
-
 export const createPhysicsState = (document: PuppetDocument): ReadonlyMap<string, PendulumState> =>
   new Map(
     (document.physics?.pendulums ?? []).map((pendulum) => [pendulum.id, createPendulumState()]),
   )
 
 export const evaluatePhysics = (options: EvaluatePhysicsOptions): PhysicsEvaluationResult => {
-  const parameterById = getParameterById(options.document)
+  const parameterById = getParameterIndex(options.document.parameters ?? [])
   const baseParameterValues = {...options.parameterValues}
   let parameterValues: PuppetParameterValueMap = {...baseParameterValues}
   const physicsState = new Map<string, PendulumState>()

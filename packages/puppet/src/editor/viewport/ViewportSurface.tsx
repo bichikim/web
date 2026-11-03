@@ -42,6 +42,8 @@ export const ViewportSurface = (props: ViewportProps) => {
         viewSettings={props.viewSettings}
       >
         <PlayerCanvas
+          buffering={props.buffering}
+          onBufferingChange={props.onBufferingChange}
           antialiasing={props.antialiasing}
           renderer={props.renderer}
           onRenderingChange={props.onRenderingChange}

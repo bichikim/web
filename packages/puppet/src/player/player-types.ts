@@ -1,3 +1,4 @@
+import type {PlayerBufferingInfo} from './buffering/types'
 import type {PuppetParameterValueMap} from '../deformation'
 import type {MotionSoundError} from './audio/motion-sound-loader'
 import type {PuppetVowelWeights} from './document'
@@ -18,6 +19,11 @@ import type {
   PlayerRenderingOptions,
 } from './rendering-options'
 
+/**
+ * Commands validate synchronously. With buffering enabled, controls are coalesced and evaluated in
+ * the Worker; resolved values, expression and hitTest describe the last displayed frame. Await
+ * flushPlayerInputs before reading an applied input. Buffering off retains synchronous evaluation.
+ */
 export interface Player {
   /** Replaces only GPU resources; playback, physics, overrides and the document are retained. */
   configureRenderer(options: PlayerRendererConfiguration): Promise<PlayerRendererChange>
@@ -25,7 +31,7 @@ export interface Player {
   /** Releases external overrides; omitted IDs release all overrides. */
   clearParameterValues(parameterIds?: ReadonlyArray<string>): void
   destroy(): void
-  /** The expression fading in or held, if any. */
+  /** The expression fading in or held in the last displayed frame, if any. */
   getExpression(): string | undefined
   getParameterValue(parameterId: string): number | undefined
   /** Returns a snapshot of resolved parameter values used by the last rendered frame. */
@@ -146,6 +152,10 @@ export interface PlayerFrame {
 export interface CreatePlayerOptions extends PlayerRenderingOptions {
   /** Uniform sizing within the screen; omitted to show the whole framed rectangle. */
   readonly fit?: PuppetFit
+  /** Enables up to three predicted frames; omitted, retain the original synchronous rendering path. */
+  readonly buffering?: boolean
+  /** Reports requested and actual buffering status; omitted, use getPlayerBufferingInfo to query it. */
+  readonly onBufferingChange?: (info: PlayerBufferingInfo) => void
   /** Whether the shared external renderer is active. Omitted, render callbacks are always active. */
   readonly externalRendering?: () => boolean
   readonly canvas: HTMLCanvasElement
@@ -160,8 +170,10 @@ export interface CreatePlayerOptions extends PlayerRenderingOptions {
   readonly onSoundError?: (error: MotionSoundError) => void
   readonly parameterValues?: PuppetParameterValueMap
   readonly physicsPreview?: boolean
-  /** Random numbers for eye blinks and motion groups; `Math.random` when omitted. */
+  /** Custom blink and motion randomness; when supplied, retain synchronous evaluation. */
   readonly random?: RandomSource
+  /** Seed for reproducible blinks and motion choices; omitted, sample a seed once at creation. */
+  readonly randomSeed?: number
   readonly resolution?: number
   readonly resizeTo?: HTMLElement
   /**

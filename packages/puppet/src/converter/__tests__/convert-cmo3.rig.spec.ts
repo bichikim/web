@@ -1,6 +1,6 @@
 import {expect, test} from 'vitest'
 import {zipSync} from 'fflate'
-import {convertCmo3} from '../index'
+import {convertCmo3} from '..'
 import {composeParameterScene} from '../../deformation/scene'
 import {composeParameterVertices} from '../../deformation/composition'
 import {applySceneNodeDeformers} from '../../deformation/vertices'

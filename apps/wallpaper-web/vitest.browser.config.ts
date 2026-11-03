@@ -11,6 +11,8 @@ const preview = normalizePath(
 )
 
 export default defineConfig({
+  // Keep es-toolkit's ESM bindings intact when browser tests instrument imports.
+  optimizeDeps: {exclude: ['es-toolkit']},
   plugins: [
     {
       enforce: 'pre',
