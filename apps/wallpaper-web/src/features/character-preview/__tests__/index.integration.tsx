@@ -5,11 +5,12 @@ import * as playerModule from '@winter-love/puppet/player'
 import {cursorResponse} from '@winter-love/wallpaper/tracking/cursor-response'
 import SPuppetCharacter from '../../../components/SPuppetCharacter'
 import geometry from '../../../data/character-look.json'
+import {frames} from './fixtures/frames'
 import 'virtual:uno.css'
 
-vi.mock('../../../../../../packages/puppet/src/player/create-player', {spy: true})
 afterEach(() => {
   cleanup()
+  frames.clear()
   vi.clearAllMocks()
 })
 
@@ -33,6 +34,8 @@ test('should add default mouse tracking to the compact Poffo idle animation with
   expect(idle?.tracks).toHaveLength(23)
   const player: playerModule.Player = await vi.mocked(playerModule.createPlayer).mock.results[0]!
     .value
+  player.setBreath(false)
+  player.setPhysicsPreview(false)
   player.pause()
   player.seek(4)
   const later = player.getParameterValues()
@@ -56,15 +59,19 @@ test('should add default mouse tracking to the compact Poffo idle animation with
     x: bounds.left + (bounds.width - geometry.viewport.width * fit) / 2 + geometry.face.x * fit,
     y: bounds.top + (bounds.height - geometry.viewport.height * fit) / 2 + geometry.face.y * fit,
   }
-  const move = (x: number, y: number) =>
+  const move = (x: number, y: number) => {
     globalThis.dispatchEvent(new PointerEvent('pointermove', {clientX: x, clientY: y}))
+    frames.advance()
+  }
   move(face.x + height / 4, face.y)
-  await expect
-    .poll(() => player.getParameterValue('ParamAngleX'), {timeout: 10_000})
-    .toBeCloseTo(earlier.ParamAngleX! + cursorResponse(0.25) * 30, 2)
-  await expect
-    .poll(() => player.getParameterValue('ParamEyeBallX'), {timeout: 10_000})
-    .toBeCloseTo(earlier.ParamEyeBallX! + cursorResponse(0.25), 3)
+  expect(player.getParameterValue('ParamAngleX')).toBeCloseTo(
+    earlier.ParamAngleX! + cursorResponse(0.25) * 30,
+    2,
+  )
+  expect(player.getParameterValue('ParamEyeBallX')).toBeCloseTo(
+    earlier.ParamEyeBallX! + cursorResponse(0.25),
+    3,
+  )
   player.seek(4)
   expect(player.getParameterValue('ParamAngleX')).toBeCloseTo(
     later.ParamAngleX! + cursorResponse(0.25) * 30,
@@ -77,21 +84,21 @@ test('should add default mouse tracking to the compact Poffo idle animation with
     2,
   )
   move(face.x + height, face.y)
-  await expect.poll(() => blends.mock.lastCall?.[0].ParamAngleX?.value, {timeout: 10_000}).toBe(30)
+  expect(blends.mock.lastCall?.[0].ParamAngleX?.value).toBe(30)
   expect(player.getParameterValue('ParamAngleX')).toBe(expected('ParamAngleX', earlier, 30))
   expect(player.getParameterValue('ParamEyeBallX')).toBe(expected('ParamEyeBallX', earlier, 1))
   player.seek(4)
   expect(player.getParameterValue('ParamAngleX')).toBe(expected('ParamAngleX', later, 30))
   move(face.x - height, face.y)
-  await expect.poll(() => blends.mock.lastCall?.[0].ParamAngleX?.value, {timeout: 10_000}).toBe(-30)
+  expect(blends.mock.lastCall?.[0].ParamAngleX?.value).toBe(-30)
   expect(player.getParameterValue('ParamAngleX')).toBe(expected('ParamAngleX', later, -30))
   expect(player.getParameterValue('ParamEyeBallX')).toBe(expected('ParamEyeBallX', later, -1))
   move(face.x, face.y - height)
-  await expect.poll(() => blends.mock.lastCall?.[0].ParamAngleY?.value, {timeout: 10_000}).toBe(30)
+  expect(blends.mock.lastCall?.[0].ParamAngleY?.value).toBe(30)
   expect(player.getParameterValue('ParamAngleY')).toBe(expected('ParamAngleY', later, 30))
   expect(player.getParameterValue('ParamEyeBallY')).toBe(expected('ParamEyeBallY', later, 1))
   move(face.x, face.y + height)
-  await expect.poll(() => blends.mock.lastCall?.[0].ParamAngleY?.value, {timeout: 10_000}).toBe(-30)
+  expect(blends.mock.lastCall?.[0].ParamAngleY?.value).toBe(-30)
   expect(player.getParameterValue('ParamAngleY')).toBe(expected('ParamAngleY', later, -30))
   expect(player.getParameterValue('ParamEyeBallY')).toBe(expected('ParamEyeBallY', later, -1))
   setTracking(false)

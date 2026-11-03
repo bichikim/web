@@ -13,3 +13,13 @@ describe('seeded random', () => {
     expect(createSeededRandom(1)()).toBeCloseTo(48_270 / 2_147_483_646, 12)
   })
 })
+
+test('should restore a random sequence checkpoint without replaying earlier samples', () => {
+  const original = createSeededRandom(42)
+  original()
+  const state = original.capture()
+  const expected = [original(), original(), original()]
+  const restored = createSeededRandom(1)
+  restored.restore(state)
+  expect([restored(), restored(), restored()]).toEqual(expected)
+})

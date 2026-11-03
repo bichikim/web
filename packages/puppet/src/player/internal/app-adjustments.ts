@@ -9,7 +9,14 @@ import {
 import {isValidPhysicsOptions, type PuppetPhysicsOptions} from '../physics-options'
 
 /** Parameter blends and physics options an app sets on a player. */
+export interface AppAdjustmentsState {
+  readonly blends: Readonly<Record<ParameterBlendStage, ReadonlyMap<string, PuppetParameterBlend>>>
+  readonly physicsOptions: PuppetPhysicsOptions | undefined
+}
+
 export interface AppAdjustments {
+  capture(): AppAdjustmentsState
+  restore(state: AppAdjustmentsState): void
   applyBlends(
     document: PuppetDocument,
     values: PuppetParameterValueMap,
@@ -36,7 +43,13 @@ export const createAppAdjustments = (): AppAdjustments => {
   return {
     applyBlends: (document, values, stage = 'before-physics') =>
       applyParameterBlends(document, values, blends[stage]),
+    capture: () => ({blends, physicsOptions}),
     physicsOptions: () => physicsOptions,
+    restore(state) {
+      blends['before-physics'] = new Map(state.blends['before-physics'])
+      blends['after-physics'] = new Map(state.blends['after-physics'])
+      physicsOptions = state.physicsOptions
+    },
     setParameterBlend(document, parameterId, blend, stage = 'before-physics') {
       const normalized = blend === undefined ? undefined : normalizeParameterBlend(blend)
       const known = document.parameters?.some((parameter) => parameter.id === parameterId)

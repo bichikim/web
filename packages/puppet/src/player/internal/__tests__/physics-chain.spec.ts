@@ -199,3 +199,49 @@ test('should use each frame duration when chain fps is zero', () => {
   expect(run(frameTime).parameterValues).toEqual(run(createDocument({fps: 30})).parameterValues)
   expect(run(frameTime).parameterValues).not.toEqual(run(createDocument({fps: 60})).parameterValues)
 })
+
+test('should blend repeated output targets in order without changing inputs or previous results', () => {
+  const document = createDocument({
+    chains: [
+      {
+        ...chain,
+        outputs: [
+          {axis: 'angle', parameterId: 'hair-swing', pendulumIndex: 0, scale: 1, weight: 0.5},
+          {axis: 'angle', parameterId: 'missing', pendulumIndex: 0, scale: 1, weight: 1},
+          {axis: 'angle', parameterId: 'hair-swing', pendulumIndex: 0, scale: 1, weight: 0.5},
+        ],
+      },
+    ],
+  })
+  const input = Object.freeze({'hair-swing': 8, 'head-angle': 15})
+  const first = settle(document, input)
+  const sample = settle(createDocument(), input)['hair-swing']!
+  const once = 8 * 0.5 + sample * 0.5
+  expect(first['hair-swing']).toBe(once * 0.5 + sample * 0.5)
+  settle(document, {'head-angle': -15})
+  expect(first['hair-swing']).toBe(once * 0.5 + sample * 0.5)
+  expect(input).toEqual({'hair-swing': 8, 'head-angle': 15})
+})
+
+test('should write an own output property for parameter names inherited from Object.prototype', () => {
+  const base = createDocument({
+    chains: [
+      {
+        ...chain,
+        outputs: [{axis: 'angle', parameterId: '__proto__', pendulumIndex: 0, scale: 1, weight: 1}],
+      },
+    ],
+  })
+  const document = {
+    ...base,
+    parameters: base.parameters!.map((parameter) =>
+      parameter.id === 'hair-swing' ? {...parameter, id: '__proto__'} : parameter,
+    ),
+  }
+  const values = settle(document, {'head-angle': 15})
+  expect(Object.hasOwn(values, '__proto__')).toBe(true)
+  expect(Object.getOwnPropertyDescriptor(values, '__proto__')?.value).toBe(
+    settle(createDocument(), {'head-angle': 15})['hair-swing'],
+  )
+  expect(Object.getPrototypeOf(values)).toBe(Object.prototype)
+})

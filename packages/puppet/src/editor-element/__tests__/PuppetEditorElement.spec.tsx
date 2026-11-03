@@ -4,7 +4,7 @@ import {afterEach, describe, expect, test, vi} from 'vitest'
 import type {PuppetEditorProps} from '../../editor/types'
 import {createEditorControl} from '../../editor/create-editor-control'
 import {createDemoDocument, type PuppetDocument} from '../../player'
-import {PUPPET_EDITOR_TAG_NAME, PuppetEditorElement} from '../index'
+import {PUPPET_EDITOR_TAG_NAME, PuppetEditorElement} from '..'
 
 const mocks = vi.hoisted(() => ({dispose: vi.fn(), editor: vi.fn(), unpack: vi.fn()}))
 vi.mock('../../editor/internal/texture-atlas-canvas', () => ({unpackTextureAtlas: mocks.unpack}))
