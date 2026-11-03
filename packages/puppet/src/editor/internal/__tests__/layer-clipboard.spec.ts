@@ -3,14 +3,16 @@ import skinningExample from '../../../../examples/rotation-skinning.json'
 import {expect, test} from 'vitest'
 import {
   createDemoDocument,
+  createEmptyDocument,
   getDocumentScene,
   parseDocumentValue,
   type PuppetDocument,
 } from '../../../player'
 import {connectParameterGroup, setKeyformGroupProperties} from '../group-keyforms'
 import {setGroupRenderProperties} from '../group-properties'
-import {findNode, getContainerIds} from '../scene-tree'
+import {findNode, getContainerIds, updateNode} from '../scene-tree'
 import {createDeformer} from '../scene-graph'
+import {addGlue} from '../glue'
 import {
   canRemoveLayerNodes,
   createLayerFragment,
@@ -31,6 +33,95 @@ test('should copy a deformer subtree with new identifiers and valid parameter re
   expect(parseDocumentValue(result.document).ok).toBe(true)
   expect(fragment.scene!.roots[0]!.id).toBe(node.id)
 })
+
+test.each([
+  {copiedId: 'shape-circle', nodeId: 'shape-circle'},
+  {copiedId: 'shapes', nodeId: 'shapes'},
+  {copiedId: 'shapes', nodeId: 'shape-circle'},
+])(
+  'should retain visibility-only parameters of $nodeId when copying $copiedId to another document',
+  ({copiedId, nodeId}) => {
+    const document = createDemoDocument()
+    const parameter = {
+      defaultValue: 0,
+      id: 'visibility-only',
+      maximum: 1,
+      minimum: 0,
+      name: 'Visibility',
+    }
+    const source = {
+      ...document,
+      parameters: [...(document.parameters ?? []), parameter],
+      scene: {
+        roots: updateNode(getDocumentScene(document).roots, nodeId, (node) => ({
+          ...node,
+          parameterVisibility: [{maximum: 1, minimum: 0.5, parameterId: parameter.id}],
+        })),
+      },
+    }
+    expect(parseDocumentValue(source).ok).toBe(true)
+    const fragment = createLayerFragment(source, [copiedId])!
+    const result = pasteLayerFragment(createEmptyDocument(), fragment, null)
+    expect(result).toBeDefined()
+    expect(result?.document.parameters).toContainEqual(parameter)
+    expect(
+      findNode(result!.document.scene!.roots, `copy-1:${nodeId}`)?.parameterVisibility,
+    ).toEqual([{maximum: 1, minimum: 0.5, parameterId: parameter.id}])
+  },
+)
+
+test('should copy an empty binding that already targets the selected layer', () => {
+  const document = createDemoDocument()
+  const binding = {
+    id: 'empty-binding',
+    keyforms: [],
+    parameterIds: ['visibility'] as const,
+    targetPartIds: ['shape-circle'],
+  }
+  const source = {
+    ...document,
+    motions: [],
+    parameterBindings: [binding],
+    parameters: [{defaultValue: 0, id: 'visibility', maximum: 1, minimum: 0, name: 'Visibility'}],
+  }
+  expect(parseDocumentValue(source).ok).toBe(true)
+  const fragment = createLayerFragment(source, ['shape-circle'])!
+  expect(fragment.parameterBindings).toContainEqual(binding)
+  const result = pasteLayerFragment(createEmptyDocument(), fragment, null)
+  expect(result?.document.parameterBindings).toContainEqual({
+    ...binding,
+    id: 'copy-1:empty-binding',
+    targetPartIds: ['copy-1:shape-circle'],
+  })
+})
+
+test.each([false, true])(
+  'should copy a Glue-only binding with explicit targets: %s',
+  (explicit) => {
+    const document = addGlue(
+      createDemoDocument(),
+      {partId: 'mesh-preview', vertexIndex: 0},
+      {partId: 'shape-diamond', vertexIndex: 0},
+    )!
+    const binding = {
+      id: 'glue-binding',
+      keyforms: [
+        {glue: [{id: 'glue-1', strength: 0.3, weight: 0.2}], parts: [], values: [0] as const},
+      ],
+      parameterIds: ['angle-x'] as const,
+      ...(explicit ? {targetGlueIds: ['glue-1']} : {}),
+    }
+    const source = {...document, parameterBindings: [binding]}
+    expect(parseDocumentValue(source).ok).toBe(true)
+    const fragment = createLayerFragment(source, ['mesh-preview', 'shape-diamond'])!
+    expect(fragment.parameterBindings).toContainEqual(binding)
+    const result = pasteLayerFragment(createEmptyDocument(), fragment, null)
+    expect(result).toBeDefined()
+    expect(result?.document.parameterBindings?.[0]?.keyforms[0]?.glue).toEqual([
+      {id: 'copy-1:glue-1', strength: 0.3, weight: 0.2},
+    ])
+  },
+)
 
 test('should remove a subtree and all of its references without changing the source', () => {
   const source = createDeformer(createDemoDocument(), ['shape-circle'])!

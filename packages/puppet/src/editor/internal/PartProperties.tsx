@@ -4,8 +4,7 @@ import {
   EditorNumberField,
   EditorSelect,
 } from '../../design-system'
-import {For, Show} from 'solid-js'
-
+import {Show} from 'solid-js'
 import {getPartRenderProperties} from '../../deformation'
 import {
   PUPPET_ALPHA_BLEND_MODES,
@@ -24,10 +23,7 @@ import {PartPresetProperties} from './PartPresetProperties'
 import {EditorPropertyGroup} from './EditorPropertyGroup'
 import {colorToHex, hexToColor} from './color-hex'
 import {EditorInspectorActions} from './EditorInspectorActions'
-import {CommitTextField} from './CommitTextField'
-import {setPartUserData} from './part-user-data'
-
-export type {MaskTargetOption} from './PartMaskProperties'
+import {PartUserDataProperties} from './PartUserDataProperties'
 
 type InterpolatedPartProperties = Pick<
   PuppetPartRenderProperties,
@@ -59,26 +55,6 @@ const isPartBlendMode = (value: string): value is PuppetPartBlendMode =>
 
 const isAlphaBlendMode = (value: string): value is PuppetAlphaBlendMode =>
   PUPPET_ALPHA_BLEND_MODES.some((alphaBlendMode) => alphaBlendMode === value)
-
-/** Free text an app reads for the part (Cubism's userdata3). */
-const PartUserDataProperties = (props: {
-  readonly disabled: boolean
-  readonly document: PuppetDocument
-  readonly part: PuppetPart
-  readonly onDocumentChange?: (document: PuppetDocument) => void
-}) => (
-  <EditorPropertyGroup class="part-properties" title="사용자 데이터">
-    <CommitTextField
-      disabled={props.disabled}
-      label="파트 사용자 데이터"
-      placeholder="앱에 전달할 문자열"
-      value={props.part.userData ?? ''}
-      onCommit={(text) =>
-        props.onDocumentChange?.(setPartUserData(props.document, props.part.id, text))
-      }
-    />
-  </EditorPropertyGroup>
-)
 
 export const PartProperties = (props: PartPropertiesProps) => {
   const properties = () => getPartRenderProperties(props.part)
@@ -227,3 +203,5 @@ export const PartProperties = (props: PartPropertiesProps) => {
     </>
   )
 }
+
+export type {MaskTargetOption} from './PartMaskProperties'

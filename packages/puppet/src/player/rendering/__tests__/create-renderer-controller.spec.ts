@@ -8,12 +8,14 @@ vi.mock('../create-player-renderer', () => ({createPlayerRenderer: vi.fn()}))
 
 const resource = (): PlayerRenderer => ({
   applyFrame: vi.fn(),
+  applyPreparedFrame: vi.fn(),
   destroy: vi.fn(),
   getPaintOrder: vi.fn(() => []),
   getPartVertices: vi.fn(),
   getRenderingInfo: vi.fn(() => ({antialiasing: 'msaa' as const, renderer: 'webgl' as const})),
   redraw: vi.fn(),
   resize: vi.fn(),
+  setFit: vi.fn(),
   setRunning: vi.fn(),
   setViewCamera: vi.fn(),
   subscribeFrame: vi.fn(),
@@ -42,6 +44,7 @@ test('should replace GPU resources while retaining the last frame, camera, densi
   const onFrame = vi.fn()
   controller.applyFrame(frame, {angle: 2})
   controller.setViewCamera(camera)
+  controller.setFit('cover')
   controller.resize(0.4)
   controller.setRunning(false)
   controller.subscribeFrame(onFrame)
@@ -60,6 +63,8 @@ test('should replace GPU resources while retaining the last frame, camera, densi
   )
   expect(next.applyFrame).toHaveBeenCalledExactlyOnceWith(frame, {angle: 2})
   expect(next.setViewCamera).toHaveBeenCalledExactlyOnceWith(camera)
+  expect(previous.setFit).toHaveBeenCalledExactlyOnceWith('cover')
+  expect(next.setFit).toHaveBeenCalledExactlyOnceWith('cover')
   expect(next.setRunning).toHaveBeenLastCalledWith(false)
   expect(next.subscribeFrame).toHaveBeenCalledExactlyOnceWith(onFrame)
   expect(onFrame).not.toHaveBeenCalled()
@@ -82,6 +87,60 @@ test('should retain the current renderer when initialization fails', async () =>
   controller.redraw()
   expect(previous.redraw).toHaveBeenCalledOnce()
   expect(previous.destroy).not.toHaveBeenCalled()
+  controller.destroy()
+})
+
+test('should carry the latest fit into a renderer that finishes preparing later', async () => {
+  const previous = resource()
+  const next = resource()
+  let complete: (renderer: PlayerRenderer) => void = () => undefined
+  const pending = new Promise<PlayerRenderer>((resolve) => {
+    complete = resolve
+  })
+  vi.mocked(createPlayerRenderer).mockResolvedValueOnce(previous).mockReturnValueOnce(pending)
+  const controller = await createRendererController({
+    canvas: document.createElement('canvas'),
+    document: createEmptyDocument(),
+    fit: 'cover',
+  })
+  const changing = controller.configure({canvas: document.createElement('canvas')})
+  controller.setFit('contain')
+  complete(next)
+  await changing
+  expect(next.setFit).toHaveBeenCalledExactlyOnceWith('contain')
+  controller.destroy()
+  controller.setFit('cover')
+  expect(next.setFit).toHaveBeenCalledExactlyOnceWith('contain')
+})
+
+test('should replay owned vertices when the predicted frame buffer was transferred away', async () => {
+  const previous = resource()
+  const next = resource()
+  previous.getPartVertices = vi.fn(() => [2, 3, 5, 7])
+  vi.mocked(createPlayerRenderer).mockResolvedValueOnce(previous).mockResolvedValueOnce(next)
+  const controller = await createRendererController({
+    canvas: document.createElement('canvas'),
+    document: {
+      ...createEmptyDocument(),
+      parts: [
+        {
+          id: 'part',
+          mesh: {indices: [], uvs: [0, 0, 1, 1], vertices: [0, 0, 1, 1]},
+          texture: {height: 1, src: 'part.png', width: 1},
+        },
+      ],
+    },
+  })
+  const frame = {layers: new Map(), plans: [], spatialPoses: new Map()}
+  const vertices = new Float32Array([2, 3, 5, 7])
+  controller.applyPreparedFrame({frame, vertices})
+  structuredClone(vertices.buffer, {transfer: [vertices.buffer]})
+  expect(vertices.byteLength).toBe(0)
+  await controller.configure({canvas: document.createElement('canvas')})
+  expect(next.applyPreparedFrame).toHaveBeenCalledExactlyOnceWith({
+    frame,
+    vertices: new Float32Array([2, 3, 5, 7]),
+  })
   controller.destroy()
 })
 
@@ -162,5 +221,35 @@ test('should initialize again when a document changed incompatibly during prepar
   expect(createPlayerRenderer).toHaveBeenLastCalledWith(
     expect.objectContaining({document: replacement}),
   )
+  controller.destroy()
+})
+
+test('should replace the renderer using the submitted document while a document input is pending', async () => {
+  const first = resource()
+  const second = resource()
+  vi.mocked(createPlayerRenderer).mockResolvedValueOnce(first).mockResolvedValueOnce(second)
+  const document = createEmptyDocument()
+  const pending = {
+    ...document,
+    parameters: [{defaultValue: 0, id: 'q', maximum: 1, minimum: 0, name: 'Q'}],
+  }
+  const controller = await createRendererController({
+    canvas: globalThis.document.createElement('canvas'),
+    document,
+  })
+  const frame = {
+    frame: {layers: new Map(), plans: [], spatialPoses: new Map()},
+    vertices: new Float32Array(0),
+  }
+  controller.applyPreparedFrame(frame)
+  expect(controller.updateDocument(pending, true)).toBe(true)
+  await controller.configure({
+    canvas: globalThis.document.createElement('canvas'),
+    renderer: 'webgl',
+  })
+  expect(createPlayerRenderer).toHaveBeenLastCalledWith(expect.objectContaining({document}))
+  expect(second.applyPreparedFrame).toHaveBeenCalled()
+  expect(second.updateDocument).toHaveBeenLastCalledWith(pending, true)
+  controller.applyPreparedFrame(frame)
   controller.destroy()
 })

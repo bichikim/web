@@ -1,3 +1,8 @@
+import {
+  configurePlayerBuffering,
+  getPlayerBufferingInfo,
+  type PlayerBufferingInfo,
+} from '../player/player-buffering'
 import {usePlayerMotion} from './use-player-motion'
 import {debounce} from 'es-toolkit/function'
 import {
@@ -30,6 +35,10 @@ export type PlayerCanvasStatus = 'error' | 'loading' | 'ready'
 
 const RESIZE_DEBOUNCE_MILLISECONDS = 100
 export interface PlayerCanvasProps extends PlayerRenderingOptions {
+  /** Enables up to three predicted playback frames; omitted, keep synchronous playback. */
+  readonly buffering?: boolean
+  /** Reports actual buffering status; omitted, buffering changes remain silent. */
+  readonly onBufferingChange?: (info: PlayerBufferingInfo) => void
   readonly onRenderingChange?: (info: PlayerRenderingInfo) => void
   readonly onRenderingError?: (message: string) => void
   /** Editor-owned document. Untrusted input must be parsed before reaching this component. */
@@ -41,6 +50,8 @@ export interface PlayerCanvasProps extends PlayerRenderingOptions {
   readonly motionId?: string
   /** 가져온 표정 ID. 생략하면 모션과 수동 파라미터만 사용한다. */
   readonly expressionId?: string
+  /** 독립 활성 표정 목록. 지정하면 expressionId보다 우선하며 빈 목록은 모두 해제한다. */
+  readonly expressionIds?: ReadonlyArray<string>
   readonly onFrame?: (frame: PlayerFrame) => void
   readonly onPlayerChange?: (player: Player | null) => void
   readonly onStatusChange?: (status: PlayerCanvasStatus) => void
@@ -98,8 +109,13 @@ const usePlayerPlayback = (props: PlayerCanvasProps, player: Accessor<Player | n
   createEffect(() => {
     const current = player()
     const expression = props.expressionId
+    const expressions = props.expressionIds
     if (current !== null) {
-      current.setExpression(expression)
+      if (expressions === undefined) {
+        current.setExpression(expression)
+      } else {
+        current.setExpressions(expressions)
+      }
     }
   })
 }
@@ -111,6 +127,7 @@ export const PlayerCanvas = (props: PlayerCanvasProps) => {
   const [errorMessage, setErrorMessage] = createSignal<string | null>(null)
   const [player, setPlayer] = createSignal<Player | null>(null)
   let generation = 0
+  let disposed = false
   let pending = false
   let initializingPlayer: Player | undefined
   const [retry, setRetry] = createSignal(0)
@@ -135,7 +152,18 @@ export const PlayerCanvas = (props: PlayerCanvasProps) => {
     surface: () =>
       player()?.getRenderingInfo().renderer === 'webgl' ? props.spatialSurface : undefined,
   })
-  const notifyFrame = (frame: PlayerFrame) => untrack(() => props.onFrame?.(frame))
+  // Player-owned callbacks must not retain the replacement effect's previous Player.
+  const externalRendering = () => untrack(() => props.spatialSurface !== undefined)
+  const notifyBuffering = (info: PlayerBufferingInfo) => {
+    if (!disposed) {
+      untrack(() => props.onBufferingChange?.(info))
+    }
+  }
+  const notifyFrame = (frame: PlayerFrame) => {
+    if (!disposed) {
+      untrack(() => props.onFrame?.(frame))
+    }
+  }
   const notifyPlayerChange = (nextPlayer: Player | null) =>
     untrack(() => props.onPlayerChange?.(nextPlayer))
   const notifyStatus = (status: PlayerCanvasStatus) => untrack(() => props.onStatusChange?.(status))
@@ -190,6 +218,13 @@ export const PlayerCanvas = (props: PlayerCanvasProps) => {
   })
 
   usePlayerPlayback(props, player)
+  createEffect(() => {
+    const current = player()
+    const enabled = props.buffering ?? false
+    if (current !== null && getPlayerBufferingInfo(current).enabled !== enabled) {
+      configurePlayerBuffering(current, {enabled})
+    }
+  })
 
   createEffect(() => {
     const hostElement = host()
@@ -237,13 +272,15 @@ export const PlayerCanvas = (props: PlayerCanvasProps) => {
     pending = true
     createCanvasPlayer({
       ...configuration,
+      buffering: untrack(() => props.buffering),
       canvas: canvasElement,
       document: preparedDocument,
-      externalRendering: () => untrack(() => props.spatialSurface !== undefined),
+      externalRendering,
       host: hostElement,
       motionId: untrack(() => props.motionId),
       onAfterRender: overlay.render,
       onBeforeRender: overlay.prepare,
+      onBufferingChange: notifyBuffering,
       onFrame: notifyFrame,
       parameterValues: untrack(() => props.parameterValues),
       physicsPreview: untrack(() => props.physicsPreview),
@@ -307,7 +344,11 @@ export const PlayerCanvas = (props: PlayerCanvasProps) => {
 
   onCleanup(() => {
     generation += 1
-    disposePlayer()
+    try {
+      disposePlayer()
+    } finally {
+      disposed = true
+    }
   })
 
   return (

@@ -1,3 +1,4 @@
+import {cursorResponse} from '@winter-love/wallpaper/tracking/cursor-response'
 import geometry from '../../data/character-look.json'
 
 interface LookPoint {
@@ -11,15 +12,17 @@ interface CharacterBounds extends LookPoint {
 }
 
 interface CharacterLookOptions {
+  /** Canvas rectangle in CSS pixels, including any letterboxing. */
   readonly bounds: CharacterBounds
+  /** Pointer position in the same CSS coordinate space as the canvas. */
   readonly pointer: LookPoint
-  readonly viewport: {readonly height: number; readonly width: number}
+  /** Miniature expression progress; omitted uses the full-size face anchor. */
   readonly miniature?: number
 }
 
 export const getCharacterLook = (options: CharacterLookOptions): LookPoint => {
-  const {bounds, pointer, viewport} = options
-  if (bounds.width <= 0 || bounds.height <= 0 || viewport.width <= 0 || viewport.height <= 0) {
+  const {bounds, pointer} = options
+  if (bounds.width <= 0 || bounds.height <= 0) {
     return {x: 0, y: 0}
   }
   const fit = Math.min(
@@ -35,8 +38,12 @@ export const getCharacterLook = (options: CharacterLookOptions): LookPoint => {
     x: bounds.x + (bounds.width - geometry.viewport.width * fit) / 2 + face.x * fit,
     y: bounds.y + (bounds.height - geometry.viewport.height * fit) / 2 + face.y * fit,
   }
-  return {
-    x: Math.max(-1, Math.min(1, (pointer.x - center.x) / (viewport.width / 2))),
-    y: Math.max(-1, Math.min(1, (center.y - pointer.y) / (viewport.height / 2))),
+  const horizontal = pointer.x - center.x
+  const vertical = center.y - pointer.y
+  const distance = Math.hypot(horizontal, vertical)
+  if (!Number.isFinite(distance) || distance === 0) {
+    return {x: 0, y: 0}
   }
+  const magnitude = cursorResponse(distance / (geometry.viewport.height * fit))
+  return {x: (horizontal / distance) * magnitude, y: (vertical / distance) * magnitude}
 }

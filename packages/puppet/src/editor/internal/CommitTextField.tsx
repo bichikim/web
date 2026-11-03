@@ -27,6 +27,9 @@ export const CommitTextField = (props: {
         placeholder={props.placeholder}
         onBlur={commit}
         onKeyDown={(event) => {
+          if (event.isComposing) {
+            return
+          }
           if (event.key === 'Enter') {
             commit()
           }

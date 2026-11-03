@@ -5,59 +5,10 @@ import {getMotionParameterOverrides} from './internal/get-motion-parameter-overr
 import {getSceneNode} from './internal/scene-graph'
 import {EditorToggleButton} from '../design-system'
 import {Viewport} from './viewport/Viewport'
-import {SkinningTools} from './internal/SkinningTools'
-import type {DeformerEditMode} from './internal/DeformerMode'
-import {createEffect, createMemo, createSignal, type JSX, Show} from 'solid-js'
-import {Portal} from 'solid-js/web'
-
-import type {PuppetParameterValueMap, PuppetParameterValues} from '../deformation'
-import type {Player, PlayerFrame, PuppetDocument} from '../player'
-import {DeformerEditor} from './internal/DeformerEditor'
-import type {DeformerControlSelection} from './internal/deformer-control-selection'
-import {MeshEditor} from './MeshEditor'
-import {type PlayerCanvasStatus} from './PlayerCanvas'
-
-export interface EditorViewportProps {
-  /** Hides previous editing overlays while a new selection is prepared; omitted to show them normally. */
-  readonly selectionPending?: boolean
-  readonly brushControlsMount?: HTMLDivElement
-  readonly brushSettingsMount?: HTMLDivElement
-  readonly physicsPreview?: boolean
-  readonly meshEditingDisabled?: boolean
-  readonly motionId?: string
-  readonly onMeshEditingStart?: () => void
-  readonly onRestDocumentChange?: (document: PuppetDocument) => void
-  readonly fitRevision?: number
-  readonly overlay?: JSX.Element
-  readonly sourceDocument?: PuppetDocument
-  readonly deformerMode?: DeformerEditMode
-  readonly onDeformerModeChange?: (mode: DeformerEditMode) => void
-  readonly renderEditingControls?: (controls: JSX.Element) => JSX.Element
-  readonly activeBindingId?: string
-  readonly activeKeyformValues?: PuppetParameterValues | null
-  readonly activePartId?: string
-  readonly activeNodeId?: string
-  readonly activeVertexIndex?: number | null
-  readonly currentTime?: number
-  readonly deformerControlSelection: DeformerControlSelection
-  readonly document: PuppetDocument
-  readonly editMode?: 'motion' | 'parameter'
-  readonly onDeformerEditEnd?: () => void
-  readonly onDeformerEditStart?: () => void
-  readonly onDocumentChange?: (document: PuppetDocument) => void
-  readonly onNotice?: (message: string | null) => void
-  readonly onPlayerChange?: (player: Player | null) => void
-  readonly onStatusChange?: (status: PlayerCanvasStatus) => void
-  readonly onTimeChange?: (time: number) => void
-  readonly onVertexEditStart?: () => void
-  readonly onVertexSelect?: (vertexIndex: number | null) => void
-  readonly playbackActive?: boolean
-  readonly parameterValues?: PuppetParameterValues
-  readonly parameterValueMap?: PuppetParameterValueMap
-  readonly previewDocument?: PuppetDocument
-  readonly selectedPartIds?: ReadonlyArray<string>
-  readonly targetNodeIds?: ReadonlyArray<string>
-}
+import {createEffect, createMemo, createSignal, Show} from 'solid-js'
+import type {PlayerFrame} from '../player'
+import type {EditorViewportProps} from './editor-viewport/types'
+import {EditorViewportOverlays} from './editor-viewport/EditorViewportOverlays'
 
 const useViewportMeshIssue = (props: EditorViewportProps) => {
   const issue = createMemo(() =>
@@ -76,107 +27,6 @@ const getPlaybackDocument = (options: EditorViewportProps) =>
 
 const getEditingVisibilityTitle = (visible: boolean, playbackActive: boolean) =>
   playbackActive ? '재생 중 편집 UI 숨김' : visible ? '편집 UI 숨기기' : '편집 UI 표시'
-
-interface EditingOverlaysProps {
-  readonly displayMount?: HTMLDivElement
-  readonly document: PuppetDocument
-  readonly editingMesh: boolean
-  readonly meshControls: JSX.Element
-  readonly onMeshNotice: (message: string | null) => void
-  readonly viewport: EditorViewportProps
-  readonly visible: boolean
-}
-
-const EditingOverlays = (props: EditingOverlaysProps) => {
-  const editingDeformer = () =>
-    getSceneNode(props.document, props.viewport.activeNodeId ?? '')?.kind === 'deformer'
-  const meshBrushMount = () =>
-    props.visible && !editingDeformer() ? props.viewport.brushControlsMount : undefined
-  const renderControls = (controls: JSX.Element) => (
-    <Show when={props.visible}>{props.viewport.renderEditingControls?.(controls) ?? controls}</Show>
-  )
-
-  return (
-    <div
-      class="editing-overlays"
-      data-hidden={!props.visible}
-      inert={!props.visible}
-      aria-hidden={!props.visible}
-    >
-      <MeshEditor
-        brushControlsMount={meshBrushMount()}
-        brushSettingsMount={props.viewport.brushSettingsMount}
-        brushControlsExternal
-        meshEditing={props.editingMesh}
-        modeControls={
-          props.viewport.editMode === 'parameter' && props.viewport.activePartId !== undefined
-            ? props.meshControls
-            : undefined
-        }
-        renderDisplayControls={(controls) => (
-          <Show when={props.visible}>
-            <Show when={props.displayMount}>
-              {(mount) => <Portal mount={mount()}>{controls}</Portal>}
-            </Show>
-          </Show>
-        )}
-        activeBindingId={props.viewport.activeBindingId}
-        activeKeyformValues={props.viewport.activeKeyformValues}
-        activePartId={props.viewport.activePartId}
-        document={props.document}
-        editMode={props.viewport.editMode}
-        onDocumentChange={
-          props.editingMesh ? props.viewport.onRestDocumentChange : props.viewport.onDocumentChange
-        }
-        onNotice={props.editingMesh ? props.onMeshNotice : props.viewport.onNotice}
-        onVertexEditStart={props.viewport.onVertexEditStart}
-        onVertexSelect={props.viewport.onVertexSelect}
-        motionId={props.viewport.motionId}
-        previewTime={props.viewport.currentTime}
-        parameterValues={props.viewport.parameterValues}
-        parameterValueMap={props.viewport.parameterValueMap}
-        selectedPartIds={props.viewport.selectedPartIds}
-        selectedVertexIndex={props.viewport.activeVertexIndex}
-      />
-      <Show when={!props.editingMesh}>
-        <SkinningTools
-          sourceDocument={props.viewport.sourceDocument ?? props.viewport.document}
-          document={props.viewport.document}
-          activePartId={props.viewport.activePartId}
-          activeBindingId={props.viewport.activeBindingId}
-          parameterValues={props.viewport.parameterValues}
-          parameterValueMap={props.viewport.parameterValueMap}
-          motionId={props.viewport.motionId}
-          previewTime={props.viewport.currentTime}
-          editMode={props.viewport.editMode}
-          onDocumentChange={props.viewport.onDocumentChange}
-          onEditStart={props.viewport.onDeformerEditStart}
-          onEditEnd={props.viewport.onDeformerEditEnd}
-          renderControls={renderControls}
-        />
-        <DeformerEditor
-          brushControlsExternal
-          brushControlsMount={props.visible ? props.viewport.brushControlsMount : undefined}
-          brushSettingsMount={props.viewport.brushSettingsMount}
-          deformerMode={props.viewport.deformerMode}
-          onDeformerModeChange={props.viewport.onDeformerModeChange}
-          renderControls={renderControls}
-          activeBindingId={props.viewport.activeBindingId}
-          activeKeyformValues={props.viewport.activeKeyformValues}
-          activeNodeId={props.viewport.activeNodeId}
-          controlSelection={props.viewport.deformerControlSelection}
-          document={props.viewport.document}
-          editMode={props.viewport.editMode}
-          onDocumentChange={props.viewport.onDocumentChange}
-          onEditEnd={props.viewport.onDeformerEditEnd}
-          onEditStart={props.viewport.onDeformerEditStart}
-          previewDocument={props.viewport.previewDocument}
-          targetNodeIds={props.viewport.targetNodeIds}
-        />
-      </Show>
-    </div>
-  )
-}
 
 export const EditorViewport = (props: EditorViewportProps) => {
   const [meshNotice, setMeshNotice] = createSignal<string | null>(null)
@@ -291,7 +141,7 @@ export const EditorViewport = (props: EditorViewportProps) => {
           </div>
         }
       >
-        <EditingOverlays
+        <EditorViewportOverlays
           displayMount={displayMount()}
           document={editDocument()}
           editingMesh={editingMesh()}
@@ -304,3 +154,5 @@ export const EditorViewport = (props: EditorViewportProps) => {
     </section>
   )
 }
+
+export type {EditorViewportProps} from './editor-viewport/types'

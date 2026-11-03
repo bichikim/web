@@ -1,6 +1,6 @@
+import {encodeBase64} from '../../encoding/encode-base64'
 import {type DecodeWavError, readWavHeader} from '../../player/audio/decode-wav'
 
-const BASE64_CHUNK = 0x8000
 const DATA_URL = /^data:[^,]*;base64,(?<payload>.*)$/su
 
 const MESSAGES: Readonly<Record<DecodeWavError, string>> = {
@@ -15,14 +15,6 @@ export type MotionSoundFileResult =
   | {readonly duration: number; readonly ok: true; readonly src: string}
   | {readonly message: string; readonly ok: false}
 
-const toBase64 = (bytes: Uint8Array) => {
-  let binary = ''
-  for (let offset = 0; offset < bytes.length; offset += BASE64_CHUNK) {
-    binary += String.fromCodePoint(...bytes.subarray(offset, offset + BASE64_CHUNK))
-  }
-  return btoa(binary)
-}
-
 const fromBase64 = (text: string) =>
   Uint8Array.from(atob(text), (character) => character.codePointAt(0)!)
 
@@ -31,7 +23,11 @@ export const readMotionSoundFile = async (file: Blob): Promise<MotionSoundFileRe
   const bytes = new Uint8Array(await file.arrayBuffer())
   const result = readWavHeader(bytes)
   return result.ok
-    ? {duration: result.header.duration, ok: true, src: `data:audio/wav;base64,${toBase64(bytes)}`}
+    ? {
+        duration: result.header.duration,
+        ok: true,
+        src: `data:audio/wav;base64,${encodeBase64(bytes)}`,
+      }
     : {message: MESSAGES[result.error], ok: false}
 }
 

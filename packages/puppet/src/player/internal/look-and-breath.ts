@@ -10,7 +10,15 @@ import {
 } from '../look'
 import {applyBreath} from '../breath'
 
+export interface LookAndBreathState {
+  readonly breathTime: number | undefined
+  readonly lookPoint: typeof LOOK_REST
+  readonly lookTarget: LookTarget
+}
+
 export interface LookAndBreath {
+  capture(): LookAndBreathState
+  restore(state: LookAndBreathState): void
   /** Advances the look point and breathing by `deltaTime` seconds. */
   advance(deltaTime: number): void
   /** Adds look, then breath (Cubism's update order), at the advanced time. */
@@ -37,9 +45,13 @@ export const createLookAndBreath = (): LookAndBreath => {
       const looked = document.look === undefined ? values : applyLook(document, values, lookPoint)
       return breathTime === undefined ? looked : applyBreath(document, looked, breathTime)
     },
+    capture: () => ({breathTime, lookPoint, lookTarget}),
     isAnimating: (document) =>
       (breathTime !== undefined && (document.breath?.length ?? 0) > 0) ||
       ((document.look?.length ?? 0) > 0 && !isLookSettled(lookPoint, lookTarget)),
+    restore(state) {
+      ;({breathTime, lookPoint, lookTarget} = state)
+    },
     setBreath(enabled) {
       if (enabled === (breathTime !== undefined)) {
         return false

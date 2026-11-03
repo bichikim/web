@@ -1,34 +1,34 @@
 import {Show} from 'solid-js'
-import {EditorSelect} from '@winter-love/puppet/editor'
+import {EditorButton, EditorMultiSelect} from '@winter-love/puppet/editor'
 import type {PuppetExpression} from '@winter-love/puppet/player'
 
 interface ExpressionSelectProps {
   readonly expressions?: ReadonlyArray<PuppetExpression>
-  readonly value?: string
+  readonly values?: ReadonlyArray<string>
   readonly disabled?: boolean
-  readonly onChange?: (id: string | undefined) => void
+  readonly onChange?: (ids: ReadonlyArray<string>) => void
 }
 
 export const ExpressionSelect = (props: ExpressionSelectProps) => {
-  const selected = () => {
-    const index = props.expressions?.findIndex((expression) => expression.id === props.value) ?? -1
-    return index < 0 ? 'none' : String(index)
-  }
-  const expressionLabel = (key: string) =>
-    key === 'none' ? '표정 해제' : (props.expressions?.[Number(key)]?.id ?? key)
-  const handleChange = (key: string) =>
-    props.onChange?.(key === 'none' ? undefined : props.expressions?.[Number(key)]?.id)
+  const clearExpressions = () => props.onChange?.([])
   return (
     <Show when={(props.expressions?.length ?? 0) > 0}>
-      <EditorSelect
+      <EditorMultiSelect
         size="md"
         label="표정 선택"
-        options={['none', ...(props.expressions?.map((_, index) => String(index)) ?? [])]}
-        optionLabel={expressionLabel}
-        value={selected()}
+        options={props.expressions?.map((expression) => expression.id) ?? []}
+        values={props.values}
         disabled={props.disabled}
-        onChange={handleChange}
+        onChange={props.onChange}
       />
+      <EditorButton
+        size="md"
+        disabled={props.disabled || (props.values?.length ?? 0) === 0}
+        aria-label="표정 모두 해제"
+        onClick={clearExpressions}
+      >
+        모두 해제
+      </EditorButton>
     </Show>
   )
 }

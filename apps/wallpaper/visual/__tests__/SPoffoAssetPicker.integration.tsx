@@ -36,7 +36,7 @@ it.each([true, false])(
     fireEvent.click(trigger)
     const dialog = screen.getByRole('dialog', {name: 'Poffo 불러오기'})
     expect(dialog.matches(':modal')).toBe(true)
-    const select = screen.getByRole('combobox', {name: '캐릭터'})
+    const select = screen.getByRole('combobox', {name: 'Poffo'})
     fireEvent.click(select)
     const list = screen.getByRole('listbox')
     expect(list.matches(':popover-open')).toBe(true)

@@ -34,12 +34,14 @@ describe('DeformerEditor selection', () => {
     expect(firstPoint).not.toHaveClass('selected')
 
     fireEvent(firstPoint, new MouseEvent('pointerdown', {bubbles: true}))
+    fireEvent(firstPoint, new MouseEvent('pointerup', {bubbles: true}))
 
     expect(firstPoint).toHaveAttribute('aria-pressed', 'true')
     expect(firstPoint).toHaveClass('selected')
     expect(controlSelection.selectedPointIndices()).toEqual([0])
 
     fireEvent(secondPoint, new MouseEvent('pointerdown', {bubbles: true, ctrlKey: true}))
+    fireEvent(secondPoint, new MouseEvent('pointerup', {bubbles: true}))
 
     expect(firstPoint).toHaveAttribute('aria-pressed', 'true')
     expect(firstPoint).toHaveClass('selected')
@@ -48,6 +50,7 @@ describe('DeformerEditor selection', () => {
     expect(controlSelection.selectedPointIndices()).toEqual([0, 1])
 
     fireEvent(firstPoint, new MouseEvent('pointerdown', {bubbles: true, metaKey: true}))
+    fireEvent(firstPoint, new MouseEvent('pointerup', {bubbles: true}))
 
     expect(firstPoint).toHaveAttribute('aria-pressed', 'false')
     expect(firstPoint).not.toHaveClass('selected')
@@ -55,12 +58,14 @@ describe('DeformerEditor selection', () => {
     expect(controlSelection.selectedPointIndices()).toEqual([1])
 
     fireEvent(firstPoint, new MouseEvent('pointerdown', {bubbles: true}))
+    fireEvent(firstPoint, new MouseEvent('pointerup', {bubbles: true}))
 
     expect(firstPoint).toHaveAttribute('aria-pressed', 'true')
     expect(secondPoint).toHaveAttribute('aria-pressed', 'false')
     expect(controlSelection.selectedPointIndices()).toEqual([0])
 
     fireEvent(rotationHandle, new MouseEvent('pointerdown', {bubbles: true}))
+    fireEvent(rotationHandle, new MouseEvent('pointerup', {bubbles: true}))
 
     expect(firstPoint).toHaveAttribute('aria-pressed', 'false')
     expect(firstPoint).not.toHaveClass('selected')
@@ -69,6 +74,7 @@ describe('DeformerEditor selection', () => {
     expect(controlSelection.selectedPointIndices()).toEqual([])
 
     fireEvent(rotationOrigin, new MouseEvent('pointerdown', {bubbles: true}))
+    fireEvent(rotationOrigin, new MouseEvent('pointerup', {bubbles: true}))
 
     expect(rotationHandle).toHaveAttribute('aria-pressed', 'false')
     expect(rotationHandle).not.toHaveClass('selected')
@@ -196,6 +202,7 @@ describe('DeformerEditor selection', () => {
       new MouseEvent('pointerdown', {bubbles: true}),
     )
 
+    fireEvent(svg, new MouseEvent('pointerup', {bubbles: true}))
     expect(view.getByRole('button', {name: '격자 제어점 1 세로 곡률 핸들'})).toBeVisible()
     expect(view.queryByRole('button', {name: '격자 제어점 2 세로 곡률 핸들'})).toBeNull()
 
@@ -204,6 +211,7 @@ describe('DeformerEditor selection', () => {
       new MouseEvent('pointerdown', {bubbles: true, ctrlKey: true}),
     )
 
+    fireEvent(svg, new MouseEvent('pointerup', {bubbles: true}))
     expect(view.getByRole('button', {name: '격자 제어점 1 세로 곡률 핸들'})).toBeVisible()
     expect(view.getByRole('button', {name: '격자 제어점 2 세로 곡률 핸들'})).toBeVisible()
 

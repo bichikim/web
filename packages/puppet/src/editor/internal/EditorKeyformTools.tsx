@@ -1,12 +1,10 @@
 import {Dialog} from '@kobalte/core/dialog'
 import {createUniqueId, Show} from 'solid-js'
-import {CUSTOM_REFERENCE, useKeyformTools} from './use-keyform-tools'
+import {useKeyformTools} from './use-keyform-tools'
 import {
   EditorButton,
   EditorCheckbox,
-  EditorNumberField,
   EditorSegmentedField,
-  EditorSelect,
   useEditorPortalMount,
 } from '../../design-system'
 import type {PuppetParameter, PuppetParameterBinding} from '../../player'
@@ -14,6 +12,8 @@ import type {MirrorAxisReference} from './mirror-axis-references'
 import {MAX_PARAMETER_DIMENSIONS, type PuppetParameterValues} from '../../deformation'
 import type {MirrorKeyformSettings} from './mirror-keyform'
 import type {CornerKeyformSettings} from './generate-corner-keyforms'
+import {KeyformCornerSettings} from './keyform-tools/KeyformCornerSettings'
+import {KeyformMirrorSettings} from './keyform-tools/KeyformMirrorSettings'
 
 export interface EditorKeyformToolsProps {
   readonly binding?: PuppetParameterBinding
@@ -24,109 +24,6 @@ export interface EditorKeyformToolsProps {
   readonly onMirror?: (settings: MirrorKeyformSettings) => string | null
   readonly onGenerate?: (settings: CornerKeyformSettings) => string | null
 }
-
-interface CornerSettingsProps {
-  readonly onPlanesChange: (planes: 'current' | 'all') => void
-  readonly onReferenceChange: (reference: 'default' | 'middle') => void
-  readonly planes: 'current' | 'all'
-  readonly reference: 'default' | 'middle'
-  /** A 3D binding, which chooses its planes. */
-  readonly volume: boolean
-}
-
-const CornerSettings = (props: CornerSettingsProps) => (
-  <>
-    <label>
-      <span>기준 형태</span>
-      <EditorSegmentedField
-        label="모서리 기준 형태"
-        value={props.reference}
-        onChange={props.onReferenceChange}
-        options={[
-          {label: '기본값', value: 'default'},
-          {label: '범위 중앙', value: 'middle'},
-        ]}
-      />
-    </label>
-    <Show when={props.volume}>
-      <label>
-        <span>적용 평면</span>
-        <EditorSegmentedField
-          label="모서리 적용 평면"
-          value={props.planes}
-          onChange={props.onPlanesChange}
-          options={[
-            {label: '현재 평면', value: 'current'},
-            {label: '모든 평면', value: 'all'},
-          ]}
-        />
-      </label>
-    </Show>
-  </>
-)
-
-interface MirrorSettingsProps {
-  readonly axis: 'x' | 'y'
-  readonly center: number
-  readonly centerReference: string
-  readonly centers?: ReadonlyArray<MirrorAxisReference>
-  readonly onAxisChange: (axis: 'x' | 'y') => void
-  readonly onCenterChange: (center: number) => void
-  readonly onCenterReferenceChange: (reference: string) => void
-  readonly onParameterChange: (parameterId: string) => void
-  readonly parameterId: string
-  readonly parameters: readonly PuppetParameter[]
-}
-
-/** Direction, parameter and mesh axis of motion mirroring. */
-const MirrorSettings = (props: MirrorSettingsProps) => (
-  <>
-    <label>
-      <span>반전 방향</span>
-      <EditorSegmentedField
-        label="동작 반전 방향"
-        value={props.axis}
-        onChange={props.onAxisChange}
-        options={[
-          {label: '좌우', value: 'x'},
-          {label: '상하', value: 'y'},
-        ]}
-      />
-    </label>
-    <label>
-      <span>반전할 파라미터</span>
-      <EditorSelect
-        label="반전할 파라미터"
-        value={props.parameterId}
-        options={props.parameters.map((parameter) => parameter.id)}
-        optionLabel={(id) => props.parameters.find((parameter) => parameter.id === id)?.name ?? id}
-        onChange={props.onParameterChange}
-      />
-    </label>
-    <label>
-      <span>기준 위치</span>
-      <EditorSelect
-        label="메시 반전 기준 위치"
-        value={props.centerReference}
-        options={[CUSTOM_REFERENCE, ...(props.centers ?? []).map((_, index) => String(index))]}
-        optionLabel={(value) =>
-          value === CUSTOM_REFERENCE
-            ? '직접 입력'
-            : (props.centers?.[Number(value)]?.label ?? value)
-        }
-        onChange={props.onCenterReferenceChange}
-      />
-    </label>
-    <label>
-      <span>메시 반전 기준 {props.axis.toUpperCase()}</span>
-      <EditorNumberField
-        label="메시 반전 기준"
-        value={props.center}
-        onValueChange={props.onCenterChange}
-      />
-    </label>
-  </>
-)
 
 export const EditorKeyformTools = (props: EditorKeyformToolsProps) => {
   const mount = useEditorPortalMount()
@@ -201,7 +98,7 @@ export const EditorKeyformTools = (props: EditorKeyformToolsProps) => {
               <Show
                 when={operation() === 'mirror'}
                 fallback={
-                  <CornerSettings
+                  <KeyformCornerSettings
                     planes={planes()}
                     reference={reference()}
                     volume={props.binding?.parameterIds.length === MAX_PARAMETER_DIMENSIONS}
@@ -210,7 +107,7 @@ export const EditorKeyformTools = (props: EditorKeyformToolsProps) => {
                   />
                 }
               >
-                <MirrorSettings
+                <KeyformMirrorSettings
                   axis={axis()}
                   center={center()}
                   centerReference={centerReference()}

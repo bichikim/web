@@ -12,7 +12,7 @@ export const SWallpaperInteraction = (props: SWallpaperInteractionProps) => {
     props.controller.setInteraction({activation})
   return (
     <section aria-label="배경 조작" class="grid gap-4 pt-2">
-      <h2 class="m-0 text-base font-semibold">배경 조작</h2>
+      <h3 class="m-0 text-base font-semibold">배경 조작</h3>
       <div class="wallpaper-row">
         <span>배경 입력</span>
         <SSelect

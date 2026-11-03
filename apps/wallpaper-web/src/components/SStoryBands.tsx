@@ -34,7 +34,8 @@ export const SStoryBands = (props: StoryPanelProps) => (
                 transition={props.transition}
                 light={index % COLORS.length === 0}
                 print="halftone"
-                class="left-[20vmax]! text-[clamp(3rem,19.2dvh,10rem)]!"
+                repetitions={6}
+                class="left-[20vmax]! text-[max(3rem,19.2dvh,12vw)]!"
               />
             </div>
           </div>

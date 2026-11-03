@@ -5,11 +5,21 @@ const DELETE_THRESHOLD = 64
 const MAXIMUM_OFFSET = 80
 const SWIPE_ACTIVATION_DISTANCE = 4
 
-export const useSwipeDelete = (onDelete: Accessor<(() => void) | undefined>) => {
+export const useSwipeDelete = (
+  onDelete: Accessor<(() => void) | undefined>,
+  direction: 'left' | 'right' = 'right',
+) => {
   const [dragging, setDragging] = createSignal(false)
   const [offset, setOffset] = createSignal(0)
   const clickState = {ignore: false}
   let removeGestureListeners: (() => void) | undefined
+
+  const reset = () => {
+    removeGestureListeners?.()
+    setDragging(false)
+    clickState.ignore = false
+    setOffset(0)
+  }
 
   const finishGesture = (deleteWhenArmed: boolean, moved: boolean) => {
     const armed = offset() >= DELETE_THRESHOLD
@@ -45,7 +55,7 @@ export const useSwipeDelete = (onDelete: Accessor<(() => void) | undefined>) => 
       if (moveEvent.pointerId !== pointerId) {
         return
       }
-      const pointerDelta = moveEvent.clientX - initialPointerX
+      const pointerDelta = (moveEvent.clientX - initialPointerX) * (direction === 'left' ? -1 : 1)
       moved ||= Math.abs(pointerDelta) >= SWIPE_ACTIVATION_DISTANCE
       if (moved) {
         moveEvent.preventDefault()
@@ -79,9 +89,20 @@ export const useSwipeDelete = (onDelete: Accessor<(() => void) | undefined>) => 
   }
 
   const handleKeyDown = (event: KeyboardEvent) => {
-    if (event.key === 'Escape' && offset() > 0) {
+    if (
+      event.defaultPrevented ||
+      event.repeat ||
+      event.isComposing ||
+      event.ctrlKey ||
+      event.metaKey ||
+      event.altKey ||
+      event.shiftKey
+    ) {
+      return
+    }
+    if (event.key === 'Escape' && (offset() > 0 || dragging())) {
       event.preventDefault()
-      setOffset(0)
+      reset()
       return
     }
     if (event.key !== 'Delete' || onDelete() === undefined) {
@@ -104,9 +125,6 @@ export const useSwipeDelete = (onDelete: Accessor<(() => void) | undefined>) => 
     handleKeyDown,
     handlePointerDown,
     offset,
-    reset: () => {
-      clickState.ignore = false
-      setOffset(0)
-    },
+    reset,
   }
 }

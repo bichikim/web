@@ -1,1 +1,3 @@
-export const COVERED_HEIGHT = 48
+export const COVERED_STEP = 36
+export const COVERED_HEIGHT = 54
+export const COVERED_OVERLAP = COVERED_HEIGHT - COVERED_STEP
