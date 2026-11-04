@@ -31,6 +31,7 @@ export const EditorToastSurface = (props: EditorToastProps) => {
     <div
       ref={setSurface}
       class="editor-toast"
+      data-tone={props.tone}
       popover="manual"
       role="alert"
       aria-atomic="true"

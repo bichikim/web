@@ -180,3 +180,36 @@ it.each(['headCenterX', 'headCenterY', 'eyeCenterX', 'eyeCenterY'] as const)(
     }
   },
 )
+
+it.each(['contain', 'cover'] as const)(
+  'should preserve album fit %s while reading saved settings',
+  (fit) => {
+    const base = createMonitorWallpaper('first')
+    expect(
+      monitorWallpaperSchema.parse({...base, content: {...base.content, fit}}).content,
+    ).toMatchObject({fit})
+  },
+)
+
+it('should read legacy albums without fit and reject unsupported sizing modes', () => {
+  const base = createMonitorWallpaper('first')
+  expect(monitorWallpaperSchema.parse(base)).toEqual(base)
+  expect(
+    monitorWallpaperSchema.safeParse({...base, content: {...base.content, fit: 'stretch'}}).success,
+  ).toBe(false)
+})
+
+it.each(['contain', 'cover'] as const)('should preserve Poffo fit %s in saved settings', (fit) => {
+  const base = createMonitorWallpaper('first')
+  const content = {assetId: 'asset', fit, mode: 'puppet'}
+  expect(monitorWallpaperSchema.parse({...base, content}).content).toEqual(content)
+})
+
+it('should read legacy Poffo settings and reject stretching', () => {
+  const base = createMonitorWallpaper('first')
+  const content = {assetId: 'asset', mode: 'puppet'}
+  expect(monitorWallpaperSchema.parse({...base, content}).content).toEqual(content)
+  expect(
+    monitorWallpaperSchema.safeParse({...base, content: {...content, fit: 'stretch'}}).success,
+  ).toBe(false)
+})

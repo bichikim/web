@@ -56,6 +56,7 @@ export const ModelWorkspace = (props: ModelWorkspaceProps) => {
         </WorkspaceProvider>
       </div>
       <EditorToast
+        tone="error"
         message={navigationError() ?? undefined}
         onDismiss={() => setNavigationError(null)}
       />

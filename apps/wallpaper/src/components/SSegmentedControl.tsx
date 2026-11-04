@@ -13,6 +13,7 @@ interface SSegmentedControlProps<Value extends string> {
   readonly value?: Value
   readonly onChange?: (value: Value) => void
   readonly disabled?: boolean
+  readonly appearance?: 'inset' | 'underline'
 }
 
 export const SSegmentedControl = <Value extends string>(props: SSegmentedControlProps<Value>) => {
@@ -25,7 +26,13 @@ export const SSegmentedControl = <Value extends string>(props: SSegmentedControl
     return props.onChange?.(value)
   }
   return (
-    <fieldset class="m-0 flex min-w-0 gap-1 rounded-lg border-0 bg-stone-200/65 p-1">
+    <fieldset
+      class="m-0 flex min-w-0 gap-1 border-0"
+      classList={{
+        'border-b border-solid border-stone-200 p-0': props.appearance === 'underline',
+        'rounded-lg bg-stone-200/65 p-1': props.appearance !== 'underline',
+      }}
+    >
       <legend class="sr-only">{props.label}</legend>
       <For each={props.options}>
         {(option) => (
@@ -40,7 +47,11 @@ export const SSegmentedControl = <Value extends string>(props: SSegmentedControl
               disabled={props.disabled}
               class="peer sr-only"
             />
-            <span class="wallpaper-segment">
+            <span
+              class={
+                props.appearance === 'underline' ? 'wallpaper-section-tab' : 'wallpaper-segment'
+              }
+            >
               <Show when={option.icon}>{option.icon}</Show>
               <span class="truncate">{option.label}</span>
             </span>

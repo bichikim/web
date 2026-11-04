@@ -1,6 +1,6 @@
 import {describe, expect, it} from 'vitest'
 
-import {getMeshEdgeRecords} from '../index'
+import {getMeshEdgeRecords} from '..'
 
 describe('getMeshEdgeRecords', () => {
   it('should preserve edge order and source triangle metadata', () => {

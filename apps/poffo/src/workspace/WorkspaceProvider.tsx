@@ -1,3 +1,4 @@
+import {useBufferingPreferences} from './use-buffering-preferences'
 import {createSurfaceRegistry} from './create-surface-registry'
 import {createMemo, createSignal, type JSX, Show} from 'solid-js'
 import {Portal} from 'solid-js/web'
@@ -11,7 +12,7 @@ import {
   ViewportContext,
   ViewportSurface,
 } from '@winter-love/puppet/editor'
-import type {PlayerRenderingInfo} from '@winter-love/puppet/player'
+import type {PlayerBufferingInfo, PlayerRenderingInfo} from '@winter-love/puppet/player'
 import {useRenderingPreferences} from './use-rendering-preferences'
 import type {HeaderProps, ViewportProps, WorkspaceContextValue, WorkspaceMode} from './types'
 
@@ -28,6 +29,12 @@ interface WorkspaceProviderProps {
 }
 export const WorkspaceProvider = (props: WorkspaceProviderProps) => {
   const rendering = useRenderingPreferences()
+  const buffering = useBufferingPreferences()
+  const [bufferingInfo, setBufferingInfo] = createSignal<PlayerBufferingInfo | null>(null)
+  const dismissSettingsError = () => {
+    rendering.dismissError()
+    buffering.dismissError()
+  }
   const [renderingInfo, setRenderingInfo] = createSignal<PlayerRenderingInfo | null>(null)
   const [editorControl, setEditorControl] = createSignal<EditorController>()
   const document = () => props.model.document()
@@ -41,6 +48,8 @@ export const WorkspaceProvider = (props: WorkspaceProviderProps) => {
     active: () => props.active !== false,
     bindHeader: headers.bind,
     bindViewport: viewports.bind,
+    bufferingEnabled: buffering.enabled,
+    bufferingInfo,
     document,
     mode: () => props.mode,
     get model() {
@@ -69,6 +78,7 @@ export const WorkspaceProvider = (props: WorkspaceProviderProps) => {
       })
     },
     setAntialiasing: rendering.setAntialiasing,
+    setBufferingEnabled: buffering.setEnabled,
     setEditorControl,
     setRenderer: rendering.setRenderer,
   }
@@ -95,6 +105,8 @@ export const WorkspaceProvider = (props: WorkspaceProviderProps) => {
             <RenderingSettings />
           </WorkspaceContext.Provider>
         }
+        buffering={props.mode === 'viewer' && props.active !== false && buffering.enabled()}
+        onBufferingChange={setBufferingInfo}
         renderer={rendering.preferences().renderer}
         antialiasing={
           rendering.preferences().antialiasing === 'auto'
@@ -111,7 +123,11 @@ export const WorkspaceProvider = (props: WorkspaceProviderProps) => {
       <ViewportContext.Provider value={{bind: viewports.bind}}>
         {props.children}
       </ViewportContext.Provider>
-      <EditorToast message={rendering.error() ?? undefined} onDismiss={rendering.dismissError} />
+      <EditorToast
+        tone="error"
+        message={rendering.error() ?? buffering.error() ?? undefined}
+        onDismiss={dismissSettingsError}
+      />
       <Show when={header()?.mount}>
         {(mount) => <Portal mount={mount()}>{headerContent}</Portal>}
       </Show>

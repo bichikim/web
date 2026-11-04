@@ -17,6 +17,7 @@ import {dialogsShortcuts} from './uno/shortcuts/dialogs'
 import {typographyShortcuts, typographyTheme} from './uno/shortcuts/typography'
 import {spacingTheme} from './uno/spacing'
 import {scrollbarShortcuts} from './uno/shortcuts/scrollbars'
+import {colorPreflight} from './uno/colors'
 
 const shortcuts = {
   ...typographyShortcuts,
@@ -42,6 +43,7 @@ const shortcuts = {
 
 export default defineConfig({
   preflights: [
+    {getCSS: colorPreflight},
     {
       getCSS: () => '[data-tooltip-active] { anchor-name: var(--editor-tooltip-anchor); }',
     },

@@ -151,3 +151,34 @@ describe('scene draw order', () => {
     expect(parseDocumentValue(keyed()).ok).toBe(false)
   })
 })
+
+test('should preserve paint order from legacy triangulated channels with equal rest orders', () => {
+  const document = createDocument(
+    [part('plain', 500), part('keyed', 500)],
+    [node('plain'), node('keyed')],
+    {
+      parameterBindings: [
+        {
+          id: 'opacity',
+          keyforms: (
+            [
+              [0, 0],
+              [1, 0],
+              [0, 1],
+            ] as const
+          ).map((values) => ({
+            parts: [{partId: 'keyed', properties: {opacity: 0.5}, vertices: []}],
+            values,
+          })),
+          parameterIds: ['x', 'y'],
+          targetPartIds: ['keyed'],
+        },
+      ],
+      parameters: ['x', 'y'].map((id) => ({defaultValue: 0, id, maximum: 1, minimum: 0, name: id})),
+    },
+  )
+  expect(parseDocumentValue(document).ok).toBe(true)
+  expect(order(document, {x: 0.02, y: 0.17})).toEqual(['keyed', 'plain'])
+  expect(order(document, {x: 0, y: 0})).toEqual(['plain', 'keyed'])
+  expect(order(document, {x: 0.02, y: 0.17})).toEqual(['keyed', 'plain'])
+})

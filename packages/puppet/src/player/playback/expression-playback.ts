@@ -29,7 +29,18 @@ interface ExpressionEntry {
   readonly release?: number
 }
 
+export interface ExpressionState extends Omit<ExpressionEntry, 'expression'> {
+  readonly expressionId: string
+}
+
+const captureExpressions = (
+  entries: ReadonlyArray<ExpressionEntry>,
+): ReadonlyArray<ExpressionState> =>
+  entries.map(({expression, ...entry}) => ({...entry, expressionId: expression.id}))
+
 export interface ExpressionPlayback {
+  capture(): ReadonlyArray<ExpressionState>
+  restore(state: ReadonlyArray<ExpressionState>): void
   advance(deltaTime: number): void
   /** The expression fading in or held, if any. */
   current(): string | undefined
@@ -95,6 +106,7 @@ export const createExpressionPlayback = (
         )
       })
     },
+    capture: () => captureExpressions(entries),
     current: () => entries.find((entry) => entry.fading === 'in')?.expression.id,
     isAnimating: () =>
       entries.some((entry) =>
@@ -127,6 +139,15 @@ export const createExpressionPlayback = (
         }
         return {expression: entry.expression, weight: easeProgress('ease-in-out', entry.progress)}
       }),
+    restore(state) {
+      entries = state.map(({expressionId, ...entry}) => {
+        const expression = expressions.find((candidate) => candidate.id === expressionId)
+        if (expression === undefined) {
+          throw new Error('Expression checkpoint is missing its expression')
+        }
+        return {...entry, expression}
+      })
+    },
     set(expressionId) {
       const expression = expressions.find((candidate) => candidate.id === expressionId)
       if (expressionId !== undefined && expression === undefined) {

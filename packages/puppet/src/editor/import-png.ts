@@ -51,7 +51,7 @@ const decodeImage = async (source: string) => {
 
 const createPartId = (fileName: string) => {
   const name = fileName.replace(PNG_FILE_PATTERN, '').trim().toLowerCase()
-  const normalizedName = name.replace(/[^a-z0-9가-힣_-]+/gu, '-').replace(/^-+|-+$/gu, '')
+  const normalizedName = name.replace(/[^a-z0-9가-힣_-]+/gu, '-').replace(/^-+|(?<!-)-+$/gu, '')
 
   return normalizedName.length === 0 ? 'image' : normalizedName
 }
