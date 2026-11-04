@@ -39,6 +39,7 @@ interface UseWorkspaceLayoutProps {
 const storageKey = (signature: string) => `puppet:studio-layout:v1:${signature}`
 export const useWorkspaceLayout = (props: UseWorkspaceLayoutProps) => {
   const [restoring, setRestoring] = createSignal(false)
+  const [restoredSignature, setRestoredSignature] = createSignal<string>()
   const [error, setError] = createSignal<string | null>(null)
   let disposed = false
   let importVersion = 0
@@ -96,8 +97,9 @@ export const useWorkspaceLayout = (props: UseWorkspaceLayoutProps) => {
   createEffect(
     on(signature, (signature) => {
       if (signature === undefined) {
-        return
+        return setRestoredSignature(undefined)
       }
+      props.restoreHiddenIds([])
       try {
         const storage = props.sessionStorage ?? globalThis.sessionStorage
         const stored = storage.getItem(storageKey(signature))
@@ -109,10 +111,11 @@ export const useWorkspaceLayout = (props: UseWorkspaceLayoutProps) => {
       } catch {
         setError('스튜디오 배치를 복원하지 못했습니다.')
       }
+      setRestoredSignature(signature)
     }),
   )
   createEffect(() => {
-    if (restoring()) {
+    if (restoring() || signature() !== restoredSignature()) {
       return
     }
     const layout = snapshot()
