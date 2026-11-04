@@ -9,6 +9,7 @@
     "vite.preview.config.ts",
     "uno.config.ts",
     "browser",
-    "playwright.config.ts"
+    "playwright.config.ts",
+    "playwright.compat.config.ts"
   ]
 }

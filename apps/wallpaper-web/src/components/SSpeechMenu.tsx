@@ -1,11 +1,11 @@
-import {createMemo, createSignal, createUniqueId, For, type JSX, Show} from 'solid-js'
+import {createMemo, createUniqueId, For, type JSX, Show} from 'solid-js'
 import {
-  SPEECH_LIMIT,
   speechPresets,
   type SpeechStatus,
   type useCharacterSpeech,
 } from '../features/character-speech'
 import {SIcon} from './SIcon'
+import {SSpeechComposer} from './SSpeechComposer'
 
 interface SSpeechMenuProps {
   readonly speech: ReturnType<typeof useCharacterSpeech>
@@ -14,7 +14,7 @@ interface SSpeechMenuProps {
 
 const handleToggle: JSX.EventHandler<HTMLDivElement, ToggleEvent> = (event) => {
   if (event.newState === 'open') {
-    event.currentTarget.querySelector<HTMLButtonElement>('button')?.focus()
+    event.currentTarget.querySelector<HTMLButtonElement>('button:not(:disabled)')?.focus()
   }
 }
 
@@ -41,14 +41,11 @@ const speechProgress = (state: SpeechStatus) => {
 
 export const SSpeechMenu = (props: SSpeechMenuProps) => {
   const menuId = `speech-${createUniqueId()}`
-  const [text, setText] = createSignal('')
-  const valid = createMemo(() => text().trim().length > 0 && text().length <= SPEECH_LIMIT)
   const progress = createMemo(() => speechProgress(props.speech.status()))
-  const handleSubmit: JSX.EventHandler<HTMLFormElement, SubmitEvent> = (event) => {
-    event.preventDefault()
-    if (valid() && props.ready && !props.speech.busy()) {
-      props.speech.speak(text())
-    }
+  const handleStop: JSX.EventHandler<HTMLButtonElement, MouseEvent> = (event) => {
+    const menu = event.currentTarget.closest('[popover]')
+    props.speech.stop()
+    menu?.querySelector<HTMLButtonElement>('button:not(:disabled)')?.focus()
   }
   return (
     <>
@@ -75,7 +72,7 @@ export const SSpeechMenu = (props: SSpeechMenuProps) => {
         overscroll-contain rounded-5 border border-solid border-white/80 bg-white/95 p-3 text-ink
         shadow-[0_12px_40px_-12px_#35244745] backdrop-blur-xl"
       >
-        <div class="flex flex-col gap-1">
+        <div class="max-h-32 flex flex-col gap-1 overflow-y-auto overscroll-contain">
           <For each={speechPresets}>
             {(preset) => (
               <button
@@ -92,61 +89,25 @@ export const SSpeechMenu = (props: SSpeechMenuProps) => {
             )}
           </For>
         </div>
-        <form
-          onSubmit={handleSubmit}
-          class="mt-3 border-0 border-t border-solid border-ink/10 pt-3"
-        >
-          <label for={`${menuId}-text`} class="mb-2 block px-1 text-[11px] font-600 text-muted">
-            직접 입력
-          </label>
-          <textarea
-            id={`${menuId}-text`}
-            value={text()}
-            onInput={(event) => setText(event.currentTarget.value)}
-            maxLength={SPEECH_LIMIT}
-            rows={3}
-            placeholder="듣고 싶은 대사를 적어 주세요"
-            class="block w-full resize-none rounded-3 border border-solid border-ink/10
-              bg-lilac/35 p-3 text-xs leading-6
-              text-ink font-inherit placeholder:text-muted focus-visible:outline-offset-2"
-          />
-          <div class="mt-2 flex items-center justify-between gap-3">
-            <span class="px-1 text-[10px] text-muted">
-              {text().length}/{SPEECH_LIMIT}
-            </span>
-            <Show
-              when={props.speech.busy()}
-              fallback={
-                <button
-                  type="submit"
-                  disabled={!props.ready || !valid()}
-                  class="flex min-h-9 items-center gap-2 rounded-full border-0 bg-ink px-4 text-xs
-                    text-white hover:bg-violet disabled:opacity-35"
-                >
-                  <SIcon name="play" class="h-4 w-4" />
-                  말하기
-                </button>
-              }
-            >
+        <Show when={progress()}>
+          {(message) => (
+            <div class="mt-3 flex items-center justify-between gap-3 px-1">
+              <p role="status" class="text-[11px] text-muted">
+                {message()}
+              </p>
               <button
                 type="button"
-                onClick={() => props.speech.stop()}
-                class="flex min-h-9 items-center gap-2 rounded-full border-0 bg-ink px-4
-                  text-xs text-white hover:bg-violet"
+                onClick={handleStop}
+                class="flex min-h-9 shrink-0 items-center gap-2 rounded-full border-0 bg-ink px-4 text-xs
+                  text-white hover:bg-violet"
               >
                 <SIcon name="stop" class="h-4 w-4" />
                 정지
               </button>
-            </Show>
-          </div>
-        </form>
-        <Show when={progress()}>
-          {(message) => (
-            <p role="status" class="mt-3 px-1 text-[11px] text-muted">
-              {message()}
-            </p>
+            </div>
           )}
         </Show>
+        <SSpeechComposer ready={props.ready} speech={props.speech} />
         <Show when={!props.ready}>
           <p role="status" class="mt-3 px-1 text-[11px] text-muted">
             캐릭터를 불러오는 중…
