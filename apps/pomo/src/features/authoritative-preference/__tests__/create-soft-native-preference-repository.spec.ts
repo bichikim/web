@@ -10,7 +10,6 @@ const createRepository = (marker: 'write-throws' | 'read-throws' | 'absent') => 
   })
   const repository = createSoftNativePreferenceRepository({
     defaultValue: 0,
-    readFailureMessage: 'read failed',
     nativeWriteFailure:
       marker === 'absent'
         ? undefined
@@ -27,7 +26,7 @@ const createRepository = (marker: 'write-throws' | 'read-throws' | 'absent') => 
               }
             },
           },
-    writeFailureMessage: 'write failed',
+    readFailureMessage: 'read failed',
     storage: {
       isNative: () => true,
       readNative,
@@ -38,8 +37,9 @@ const createRepository = (marker: 'write-throws' | 'read-throws' | 'absent') => 
         return null
       },
     },
+    writeFailureMessage: 'write failed',
   })
-  return {readNative, repository, readWeb: () => webValue, writeNative}
+  return {readNative, readWeb: () => webValue, repository, writeNative}
 }
 
 it.each(['write-throws', 'read-throws', 'absent'] as const)(
