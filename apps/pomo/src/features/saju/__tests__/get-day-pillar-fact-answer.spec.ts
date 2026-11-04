@@ -50,6 +50,8 @@ it.each([
   '제 일주라고 하는 것은 뭐예요?',
   '제 일주부터 알려줘',
   '제일주가 무엇인가요?',
+  '제 일주일까요? 알려줘',
+  '제 일주일 경우 무엇을 뜻하나요?',
 ])('should retain day-pillar facts with existing endings and spacing: %s', (question) => {
   expect(getDayPillarFactAnswer(question, CHART)).toContain('일주는 병오(丙午)')
 })
