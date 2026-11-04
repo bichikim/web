@@ -64,11 +64,7 @@ export const createSoftNativePreferenceRepository = <Value>(
       writeWebPreferences(restoredPreferences)
       return restoredPreferences
     } catch {
-      if (writeRevision !== initialWriteRevision) {
-        return readAvailableWebPreferences() ?? options.defaultValue
-      }
-
-      return readWebPreferences() ?? options.defaultValue
+      return readAvailableWebPreferences() ?? options.defaultValue
     }
   }
 
