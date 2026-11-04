@@ -1,87 +1,18 @@
-import {createRoot, createSignal} from 'solid-js'
 import {describe, expect, it, vi} from 'vitest'
-
-import {type ChatVoiceController, type ChatVoiceRuntime, useChatVoice} from '../index'
-import {
-  type CreateSupertonicAudioPlayerOptions,
-  type InitializeSupertonicOptions,
-  type SupertonicAudioPlayer,
-  type SupertonicClient,
-} from '../../supertonic'
 import {failureResult, successResult} from 'src/features/result'
-import {type PViseme} from '../../lip-sync'
+import {
+  createAudio,
+  createAudioChunk,
+  createClient,
+  createRuntime,
+  createTestRoot,
+} from './fixtures/runtime'
 
 vi.mock('solid-js', async () => {
   const actual = await vi.importActual<typeof import('solid-js')>('solid-js')
 
   return {...actual, createSignal: vi.fn(actual.createSignal)}
 })
-
-const SAMPLE_RATE = 24_000
-
-interface ChatVoiceTestRoot {
-  readonly controller: ChatVoiceController
-  readonly dispose: () => void
-}
-
-interface TestAudioPlayer extends SupertonicAudioPlayer {
-  readonly end: () => void
-  readonly viseme: (viseme: PViseme) => void
-}
-
-const createAudio = () => ({
-  generationTime: 100,
-  sampleRate: SAMPLE_RATE,
-  samples: Float32Array.of(0.1),
-})
-
-const createAudioChunk = () => ({...createAudio(), index: 0, total: 1})
-
-const createClient = (): SupertonicClient => ({
-  cancelGeneration: vi.fn(),
-  dispose: vi.fn(),
-  generate: vi.fn(async () => successResult(createAudio())),
-  generateStream: vi.fn(async function* generateStream() {
-    yield successResult({audio: createAudioChunk(), type: 'chunk' as const})
-    yield successResult({audio: createAudio(), type: 'complete' as const})
-  }),
-  initialize: vi.fn(async (options) => {
-    options.onProgress({fileName: '음성 모델', loadedBytes: 1, totalBytes: 2})
-    return successResult(undefined)
-  }),
-})
-
-const createAudioPlayer = (options: CreateSupertonicAudioPlayerOptions): TestAudioPlayer => ({
-  dispose: vi.fn(),
-  end: () => options.onPlaybackEnd?.(),
-  enqueue: vi.fn(),
-  finish: vi.fn(),
-  viseme: (viseme) => options.onVisemeChange?.(viseme),
-})
-
-const createRuntime = (client: SupertonicClient) => {
-  const players: Array<TestAudioPlayer> = []
-  const runtime: ChatVoiceRuntime = {
-    createAudioPlayer: (options) => {
-      const player = createAudioPlayer(options)
-      players.push(player)
-      return player
-    },
-    createClient: () => client,
-  }
-
-  return {players, runtime}
-}
-
-const createTestRoot = (runtime: ChatVoiceRuntime): ChatVoiceTestRoot => {
-  let disposeRoot: () => void = () => undefined
-  const controller = createRoot((dispose) => {
-    disposeRoot = dispose
-    return useChatVoice({runtime})
-  })
-
-  return {controller, dispose: disposeRoot}
-}
 
 describe('useChatVoice playback', () => {
   it('should play an answer with the requested preset voice', async () => {
