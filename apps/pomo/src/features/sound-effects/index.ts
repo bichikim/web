@@ -11,3 +11,4 @@ export {
 } from './use-sound-effect'
 export type {SoundEffectPlayback} from './use-sound-effect'
 export type {SoundEffect, SoundEffectTitle} from './types'
+export {runSoundEffectsEventAction} from './run-sound-effects-event-action'
