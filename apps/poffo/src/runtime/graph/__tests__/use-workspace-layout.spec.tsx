@@ -228,3 +228,35 @@ test('should ignore a pending import failure after changing the model', async ()
   await pending
   expect(result.workspace.error()).toBeNull()
 })
+
+test.each([false, true])(
+  'should reconcile the selected expression after importing a profile (retain ID: %s)',
+  async (retainId) => {
+    const {result} = mount()
+    const {controls, workspace} = result
+    const parameter = document.parameters![0]!
+    controls.setManual(parameter.id, parameter.maximum)
+    controls.addExpression('Pose')
+    const id = controls.activeExpression()
+    expect(id).not.toBeNull()
+    controls.setManual(parameter.id, parameter.minimum)
+    const profile = controls.profile()!
+    await workspace.importStudio(
+      studioFile(
+        Promise.resolve(
+          JSON.stringify({
+            ...profile,
+            expressions: retainId ? profile.expressions : [],
+          }),
+        ),
+      ),
+    )
+    expect(workspace.error()).toBeNull()
+    expect(controls.profile()!.expressions).toHaveLength(retainId ? 1 : 0)
+    expect(controls.activeExpression()).toBe(retainId ? id : null)
+    expect(controls.manual()).toEqual({[parameter.id]: parameter.minimum})
+    expect(controls.values()[parameter.id]).toBe(parameter.minimum)
+    controls.clearManual()
+    expect(controls.values()[parameter.id]).toBe(retainId ? parameter.maximum : undefined)
+  },
+)
