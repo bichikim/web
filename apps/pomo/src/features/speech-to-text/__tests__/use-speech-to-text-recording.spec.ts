@@ -1,3 +1,9 @@
+import {
+  createRecognizer,
+  createRecording,
+  createRuntime,
+  createSpeechRoot,
+} from './fixtures/runtime'
 import {createDeferred} from 'src/__tests__/create-deferred'
 import {getMonotonicTime} from 'src/utils/get-monotonic-time'
 
@@ -7,7 +13,6 @@ beforeEach(() => {
   vi.mocked(getMonotonicTime).mockImplementation(() => Date.now())
 })
 
-import {createRoot} from 'solid-js'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 const dependencyMocks = vi.hoisted(() => ({
@@ -21,66 +26,8 @@ vi.mock('../browser-recorder', () => ({
 
 vi.mock('../client', () => ({createSpeechRecognizer: dependencyMocks.createSpeechRecognizer}))
 
-import {
-  type CreateSpeechRecognizerOptions,
-  type SpeechBackend,
-  type SpeechRecognizer,
-  type SpeechRecorder,
-  type SpeechRecording,
-  type SpeechToTextController,
-  type SpeechToTextRuntime,
-  useSpeechToText,
-  type UseSpeechToTextProps,
-} from '../index'
+import {type SpeechRecorder} from '..'
 import {failureResult, successResult} from 'src/features/result'
-
-interface SpeechTestRoot {
-  readonly controller: SpeechToTextController
-  readonly dispose: () => void
-}
-
-const createRecording = (): SpeechRecording => ({
-  cancel: vi.fn(),
-  onSpeechEnd: vi.fn(() => () => undefined),
-  stop: vi.fn(async () => successResult(new Float32Array(4_000).fill(0.1))),
-  takeSegment: vi.fn(async () => successResult(new Float32Array(4_000).fill(0.1))),
-})
-
-const createRecognizer = (): SpeechRecognizer => ({
-  dispose: vi.fn(),
-  prepare: vi.fn(async () => successResult({backend: 'wasm' as const})),
-  transcribe: vi.fn(async () => successResult({backend: 'wasm' as const, text: '테스트 문장'})),
-})
-
-const createRuntime = (
-  recorder: SpeechRecorder,
-  recognizer: SpeechRecognizer,
-): SpeechToTextRuntime => ({
-  createRecognizer: vi.fn(() => recognizer),
-  createRecorder: vi.fn(() => recorder),
-  getPreferredBackend: vi.fn((): SpeechBackend => 'wasm'),
-})
-
-const createSpeechRoot = (
-  runtime: SpeechToTextRuntime,
-  props: Omit<UseSpeechToTextProps, 'runtime'> = {},
-): SpeechTestRoot => {
-  let disposeRoot: () => void = () => undefined
-  const controller = createRoot((dispose) => {
-    disposeRoot = dispose
-    return useSpeechToText({...props, runtime})
-  })
-  return {controller, dispose: disposeRoot}
-}
-
-const createDefaultSpeechRoot = (props: UseSpeechToTextProps = {}): SpeechTestRoot => {
-  let disposeRoot: () => void = () => undefined
-  const controller = createRoot((dispose) => {
-    disposeRoot = dispose
-    return useSpeechToText(props)
-  })
-  return {controller, dispose: disposeRoot}
-}
 
 afterEach(() => {
   vi.clearAllMocks()
