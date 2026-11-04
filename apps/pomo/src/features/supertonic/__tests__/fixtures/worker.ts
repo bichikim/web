@@ -1,5 +1,6 @@
 /** @vitest-environment jsdom */
 
+// Importing this fixture registers the per-test Worker mocks and cleanup hooks.
 import {getMonotonicTime} from 'src/utils/get-monotonic-time'
 
 vi.mock('src/utils/get-monotonic-time', () => ({getMonotonicTime: vi.fn()}))
@@ -159,7 +160,12 @@ const createScope = (hasGpu: boolean): WorkerScopeMock => ({
   postMessage: vi.fn(),
 })
 
-export const loadWorker = async (hasGpu = true) => {
+interface WorkerFixture {
+  readonly dispatch: (message: SupertonicWorkerInput) => Promise<void>
+  readonly scope: WorkerScopeMock
+}
+
+export const loadWorker = async (hasGpu = true): Promise<WorkerFixture> => {
   const scope = createScope(hasGpu)
   vi.stubGlobal('self', scope)
   await import('../../worker')
@@ -175,10 +181,7 @@ export const loadWorker = async (hasGpu = true) => {
   return {dispatch, scope}
 }
 
-export const initialize = async (
-  worker: Awaited<ReturnType<typeof loadWorker>>,
-  modelId: 'full' | 'int8' = 'full',
-) => {
+export const initialize = async (worker: WorkerFixture, modelId: 'full' | 'int8' = 'full') => {
   await worker.dispatch({modelId, type: 'initialize'})
 }
 
@@ -236,3 +239,5 @@ export const engineMocks = engineMocksHoisted
 export const assetMocks = assetMocksHoisted
 export const runtimeMocks = runtimeMocksHoisted
 export const textMocks = textMocksHoisted
+
+export {httpMocks, modelMocks, sessionMocks, sessions}
