@@ -1,5 +1,5 @@
 export * from './audio-file'
 export * from './audio-metadata'
-export * from './check-native-blob-storage'
+export * from './check-blob-storage'
 export * from './clear-database'
 export * from './reset-database'

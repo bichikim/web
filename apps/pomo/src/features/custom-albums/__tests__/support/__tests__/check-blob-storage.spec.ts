@@ -1,6 +1,6 @@
 /** @vitest-environment node */
 import {afterEach, expect, it, vi} from 'vitest'
-import {checkNativeBlobStorage} from '../check-native-blob-storage'
+import {checkBlobStorage} from '../check-blob-storage'
 
 interface StorageEventHandlers {
   onabort: (() => void) | null
@@ -46,7 +46,7 @@ afterEach(() => vi.unstubAllGlobals())
 it('should wait for commit before closing the connection and requesting database deletion', async () => {
   const {database, put, request, storage, transaction} = createStorage()
   const completed = vi.fn()
-  const checking = checkNativeBlobStorage().then(completed)
+  const checking = checkBlobStorage().then(completed)
   expect(storage.open).toHaveBeenCalledWith(
     expect.stringMatching(/^native-blob-baseline-[\da-f-]+$/),
     1,
@@ -73,7 +73,7 @@ it('should close an aborted transaction and reject with the original error', asy
   const {database, request, storage, transaction} = createStorage()
   const failure = new DOMException('Blob write failed', 'UnknownError')
   transaction.error = failure
-  const checking = checkNativeBlobStorage()
+  const checking = checkBlobStorage()
   const rejected = expect(checking).rejects.toBe(failure)
   request.onsuccess?.()
   transaction.onabort?.()
@@ -86,7 +86,7 @@ it('should preserve an open failure without starting a transaction or deleting a
   const {database, request, storage} = createStorage()
   const failure = new DOMException('Storage unavailable', 'SecurityError')
   request.error = failure
-  const checking = checkNativeBlobStorage()
+  const checking = checkBlobStorage()
   const rejected = expect(checking).rejects.toBe(failure)
   request.onerror?.()
   await rejected
@@ -101,19 +101,19 @@ it('should preserve a synchronous open exception', async () => {
   storage.open.mockImplementationOnce(() => {
     throw failure
   })
-  await expect(checkNativeBlobStorage()).rejects.toBe(failure)
+  await expect(checkBlobStorage()).rejects.toBe(failure)
   expect(storage.deleteDatabase).not.toHaveBeenCalled()
 })
 
 it('should create a fresh probe for every call without sharing a completed result', async () => {
   const {database, request, storage, transaction} = createStorage()
-  const first = checkNativeBlobStorage()
+  const first = checkBlobStorage()
   request.onsuccess?.()
   transaction.oncomplete?.()
   await first
 
   const completed = vi.fn()
-  const second = checkNativeBlobStorage().then(completed)
+  const second = checkBlobStorage().then(completed)
   expect(storage.open).toHaveBeenCalledTimes(2)
   const [firstName] = storage.open.mock.calls[0]!
   const [secondName] = storage.open.mock.calls[1]!

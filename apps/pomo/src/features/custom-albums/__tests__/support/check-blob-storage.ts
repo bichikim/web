@@ -1,5 +1,5 @@
 /** Checks Blob storage without using album code and requests deletion after the transaction settles. */
-export const checkNativeBlobStorage = (): Promise<void> =>
+export const checkBlobStorage = (): Promise<void> =>
   new Promise<void>((resolve, reject) => {
     const request = indexedDB.open(`native-blob-baseline-${crypto.randomUUID()}`, 1)
     request.onupgradeneeded = () => request.result.createObjectStore('blob')

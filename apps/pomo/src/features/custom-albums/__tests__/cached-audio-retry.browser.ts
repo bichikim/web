@@ -4,7 +4,7 @@ import {readCustomAlbums} from '../read-custom-albums'
 import {saveCustomAlbum} from '../save-custom-album'
 import {revokeCustomTrackObjectUrls} from '../to-custom-p-track'
 import {clearCustomAlbumDatabase} from './support/clear-database'
-import {checkNativeBlobStorage} from './support/check-native-blob-storage'
+import {checkBlobStorage} from './support/check-blob-storage'
 
 const id = 'custom-track:retained-queue'
 const options = {
@@ -24,7 +24,7 @@ const track = (audio: Blob) => ({
 })
 beforeEach(async ({skip}) => {
   try {
-    await checkNativeBlobStorage()
+    await checkBlobStorage()
   } catch (error: unknown) {
     if (
       error instanceof DOMException &&

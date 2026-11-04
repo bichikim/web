@@ -11,7 +11,7 @@ import {useTrackPreview} from '../../focus-room-audio/use-track-preview'
 import {saveCustomAlbum} from '../save-custom-album'
 import {revokeCustomTrackObjectUrls} from '../to-custom-p-track'
 import {clearCustomAlbumDatabase} from './support/clear-database'
-import {checkNativeBlobStorage} from './support/check-native-blob-storage'
+import {checkBlobStorage} from './support/check-blob-storage'
 
 const id = 'custom-track:retained-queue'
 const options = {
@@ -46,7 +46,7 @@ const loadAudio = (source: string): Promise<{event: string; code: number | null}
 
 beforeEach(async ({skip}) => {
   try {
-    await checkNativeBlobStorage()
+    await checkBlobStorage()
   } catch (error: unknown) {
     if (
       error instanceof DOMException &&
