@@ -250,3 +250,104 @@ it('should persist a changed volume for the next app entry', async () => {
   expect(localStorage.getItem(VOLUME_STORAGE_KEY)).toBe('0.7')
   root.dispose()
 })
+
+it.each(['activate', 'volume'] as const)(
+  'should retain a pre-ready load error after %s until playback can start',
+  async (request) => {
+    const playback = createPlayback()
+    let onStatus: ((message: string, active: boolean) => void) | undefined
+    let onReady: ((duration: number) => void) | undefined
+    vi.mocked(createLoopPlayer).mockImplementation((_url, status, ready) => {
+      onStatus = status
+      onReady = ready
+      return playback
+    })
+    const root = createRoot((dispose) => ({
+      controller: useSoundEffectPlayback(() => EFFECT),
+      dispose,
+    }))
+    await Promise.resolve()
+    onStatus?.('Load failed before metadata', false)
+    const failure = root.controller.error()
+
+    if (request === 'activate') {
+      root.controller.activate()
+      root.controller.activate()
+    } else {
+      root.controller.setVolume(0.6)
+    }
+
+    expect(root.controller.ready()).toBe(false)
+    expect(root.controller.error()).toBe(failure)
+    expect(root.controller.playing()).toBe(false)
+    expect(playback.play).not.toHaveBeenCalled()
+
+    onReady?.(EFFECT.durationSeconds)
+    expect(playback.play).toHaveBeenCalledOnce()
+    expect(root.controller.error()).toBeNull()
+    await Promise.resolve()
+    expect(root.controller.playing()).toBe(true)
+    root.dispose()
+  },
+)
+
+it('should retain the load error and cancel late-ready autoplay after stop', async () => {
+  const playback = createPlayback()
+  let onStatus: ((message: string, active: boolean) => void) | undefined
+  let onReady: ((duration: number) => void) | undefined
+  vi.mocked(createLoopPlayer).mockImplementation((_url, status, ready) => {
+    onStatus = status
+    onReady = ready
+    return playback
+  })
+  const root = createRoot((dispose) => ({
+    controller: useSoundEffectPlayback(() => EFFECT),
+    dispose,
+  }))
+  await Promise.resolve()
+  onStatus?.('Load failed', false)
+  const failure = root.controller.error()
+  root.controller.activate()
+  root.controller.stop()
+  root.controller.setVolume(0.5)
+  onReady?.(EFFECT.durationSeconds)
+
+  expect(root.controller.error()).toBe(failure)
+  expect(playback.play).not.toHaveBeenCalled()
+  root.controller.activate()
+  expect(playback.play).toHaveBeenCalledOnce()
+  expect(root.controller.error()).toBeNull()
+  await Promise.resolve()
+  root.dispose()
+})
+
+it('should retain an error during an existing start and clear it for an actual retry', async () => {
+  const pending = Promise.withResolvers<boolean>()
+  const playback = createPlayback()
+  playback.play.mockReturnValueOnce(pending.promise)
+  let onStatus: ((message: string, active: boolean) => void) | undefined
+  let onReady: ((duration: number) => void) | undefined
+  vi.mocked(createLoopPlayer).mockImplementation((_url, status, ready) => {
+    onStatus = status
+    onReady = ready
+    return playback
+  })
+  const root = createRoot((dispose) => ({
+    controller: useSoundEffectPlayback(() => EFFECT),
+    dispose,
+  }))
+  await Promise.resolve()
+  onReady?.(EFFECT.durationSeconds)
+  onStatus?.('Media failed during start', false)
+  const failure = root.controller.error()
+  root.controller.activate()
+  expect(root.controller.error()).toBe(failure)
+  expect(playback.play).toHaveBeenCalledOnce()
+  pending.resolve(false)
+  await pending.promise
+  root.controller.activate()
+  expect(playback.play).toHaveBeenCalledTimes(2)
+  expect(root.controller.error()).toBeNull()
+  await Promise.resolve()
+  root.dispose()
+})
