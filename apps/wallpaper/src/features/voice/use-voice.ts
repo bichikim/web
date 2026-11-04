@@ -1,3 +1,4 @@
+import type {LipSyncOutput} from '../lipsync/types'
 import {type Accessor, createEffect, createMemo, createSignal, onCleanup, untrack} from 'solid-js'
 import type {PoffoSpeech} from '@winter-love/wallpaper/settings/library-model'
 import {DEFAULT_POFFO_VOICE, poffoVoiceSchema} from '@winter-love/wallpaper/settings/voice'
@@ -8,6 +9,7 @@ import type {VoiceMessage} from './text'
 interface UseVoiceProps {
   readonly speech: Accessor<PoffoSpeech>
   readonly message: Accessor<VoiceMessage | null>
+  readonly onShape?: LipSyncOutput
   readonly onLevel?: (level: number) => void
 }
 
@@ -18,6 +20,7 @@ export const useVoice = (props: UseVoiceProps) => {
     const value = poffoVoiceSchema.parse(speech.voice ?? DEFAULT_POFFO_VOICE)
     return {...value, enabled: speech.enabled && value.enabled}
   })
+  const [readoutId, setReadoutId] = createSignal<string | undefined>(undefined)
   const [status, setStatus] = createSignal<VoiceStatus>('idle')
   const [error, setError] = createSignal<string | null>(null)
   const reader = createReadout({
@@ -27,11 +30,22 @@ export const useVoice = (props: UseVoiceProps) => {
     },
     onStatus: (status) => {
       setStatus(status)
+      if (status === 'playing') {
+        setReadoutId(props.message()?.id)
+      }
+      if (status === 'idle') {
+        setReadoutId(undefined)
+      }
       if (status !== 'idle') {
         setError(null)
       }
     },
-    port: createVoiceClient({onLevel: (level) => props.onLevel?.(level), retainLocalModel: true}),
+    port: createVoiceClient({
+      analyzeSpeech: () => props.speech().lipsync?.source === 'voice',
+      onLevel: (level) => props.onLevel?.(level),
+      onShape: (shape, level, weights) => props.onShape?.(shape, level, weights),
+      retainLocalModel: true,
+    }),
   })
   createEffect(() => {
     const message = props.message()
@@ -39,5 +53,10 @@ export const useVoice = (props: UseVoiceProps) => {
     untrack(() => reader.update(message, settings))
   })
   onCleanup(reader.dispose)
-  return {error, retry: reader.retry, status}
+  return {
+    error,
+    readoutId: () => (readoutId() === props.message()?.id ? readoutId() : undefined),
+    retry: reader.retry,
+    status,
+  }
 }

@@ -65,3 +65,19 @@ test('should unmount a deleted expression card instead of showing the next one i
     screen.getAllByText('표정 설정').map((summary) => summary.closest('details')?.open),
   ).toEqual([false, false])
 })
+test('should show an English display name while preserving the expression ID', () => {
+  const document = {
+    ...createDemoDocument(),
+    expressions: [
+      {
+        id: '노트 들기',
+        name: 'Hold Notes',
+        parameters: [{blend: 'overwrite' as const, parameterId: 'angle-x', value: 12}],
+      },
+    ],
+  }
+  render(() => <ParameterExpressionProperties document={document} parameterIds={['angle-x']} />)
+  expect(screen.getByRole('heading', {name: 'Hold Notes'})).toBeInTheDocument()
+  fireEvent.click(screen.getByText('표정 설정'))
+  expect(screen.getByRole('textbox', {name: 'Hold Notes ID'})).toHaveValue('노트 들기')
+})

@@ -80,7 +80,7 @@ function calculateSections(birth: BirthInput, gender: 'M' | 'F' | 'N', question:
   const sipseong = analyzeSipseong(chart)
   const ilju = iljuInfo(chart)
   const daeun = gender === 'N' ? null : analyzeDaeun(calculationBirth, chart, gender)
-  const messages = createMessages({birth, chart, daeun, elements, ilju, question, sipseong})
+  const messages = createMessages({chart, daeun, elements, question, sipseong})
 
   return {
     factAnswer: getDayPillarFactAnswer(question, chart) ?? getBroadFutureAnswer(question),
@@ -176,8 +176,7 @@ export function SajuPage() {
             >
               <h2 class="m-0 text-lg font-750">LLM 전달 값</h2>
               <p class="mb-0 mt-2 text-sm leading-6 text-#cbbfd0">
-                사주 풀이 생성에 사용하는 실제 메시지입니다. 질문에 필요한 계산 결과와 용어 설명을
-                담았습니다.
+                사주 계산을 일상적인 상담 주제로 정리해 AI에 전달하는 내용입니다.
               </p>
               <pre class={JSON_CLASSES}>
                 <code>{JSON.stringify(generation()?.messages, null, 2)}</code>

@@ -11,6 +11,7 @@ const renderer = vi.hoisted(() => ({
   destroy: vi.fn(),
   initialize: vi.fn(async () => undefined),
   present: vi.fn(async () => true),
+  setFit: vi.fn(),
   setVideoLoop: vi.fn(),
   show: vi.fn(async () => true),
 }))
@@ -94,5 +95,21 @@ it('should skip animation when the system requests reduced motion', async () => 
   const hook = setup()
   await vi.advanceTimersByTimeAsync(0)
   expect(renderer.present).toHaveBeenCalledWith('none')
+  hook.cleanup()
+})
+
+it('should apply fit changes without reloading the current media or replaying its transition', async () => {
+  const hook = setup()
+  await vi.advanceTimersByTimeAsync(0)
+  expect(renderer.setFit).toHaveBeenLastCalledWith('contain')
+  renderer.show.mockClear()
+  renderer.present.mockClear()
+  hook.load.mockClear()
+  hook.setAlbum({...content, fit: 'cover'})
+  await vi.advanceTimersByTimeAsync(0)
+  expect(renderer.setFit).toHaveBeenLastCalledWith('cover')
+  expect(hook.load).not.toHaveBeenCalled()
+  expect(renderer.show).not.toHaveBeenCalled()
+  expect(renderer.present).not.toHaveBeenCalled()
   hook.cleanup()
 })

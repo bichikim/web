@@ -53,7 +53,12 @@ it.each(['cloud', 'gemma-4-e2b', 'lfm-2.6b-qad'] as const)(
       if (selectedId === 'cloud') {
         expect(Worker).not.toHaveBeenCalled()
         expect(requestCloudText).toHaveBeenCalledExactlyOnceWith(
-          {maximumTokens: 768, messages: request.messages, requestId: expect.any(String)},
+          {
+            maximumTokens: 2048,
+            messages: request.messages,
+            requestId: expect.any(String),
+            temperature: 0.2,
+          },
           expect.any(AbortSignal),
         )
         pending.resolve(CLOUD_TEXT_RESPONSE)

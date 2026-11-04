@@ -1,3 +1,5 @@
+import {createRenderLoop} from './create-render-loop'
+import type {ComputedRenderFrame} from '../internal/compute-render-frame'
 import type {PlayerViewCamera} from '../view-camera'
 import type {PlayerRenderingInfo, PlayerRenderingOptions} from '../rendering-options'
 import 'pixi.js/unsafe-eval'
@@ -6,7 +8,7 @@ import type {PuppetParameterValueMap} from '../../deformation'
 import type {PuppetDocument} from '../document'
 import type {MotionMix} from '../playback'
 import {canReuseLayerResources, canReusePartResources} from '../internal/render-plan'
-import {layoutPlayerRoot, type PuppetFraming} from '../internal/layout-player-root'
+import {layoutPlayerRoot, type PuppetFit, type PuppetFraming} from '../internal/layout-player-root'
 import type {RenderOverrides} from '../internal/render-overrides'
 import {createNativeDeformation} from '../internal/create-native-deformation'
 import {applyRenderFrame} from './apply-render-frame'
@@ -24,6 +26,8 @@ const MINIMUM_MASK_RESOLUTION = 0.01
 const MILLISECONDS_PER_SECOND = 1000
 
 export interface CreatePlayerRendererOptions extends PlayerRenderingOptions {
+  /** Uniform sizing within the screen; omitted to show the whole framed rectangle. */
+  readonly fit?: PuppetFit
   readonly externalRendering?: () => boolean
   readonly canvas: HTMLCanvasElement
   readonly document: PuppetDocument
@@ -53,6 +57,8 @@ const getRendererPreference = (options: CreatePlayerRendererOptions): Array<'web
 }
 
 export interface PlayerRenderer {
+  /** Borrows a computed frame for this call; copies its vertices into owned GPU geometry. */
+  applyPreparedFrame(frame: ComputedRenderFrame): void
   applyFrame(
     mix: MotionMix,
     parameterValues: PuppetParameterValueMap,
@@ -69,10 +75,12 @@ export interface PlayerRenderer {
   toDocumentPoint(point: {readonly x: number; readonly y: number}): {x: number; y: number}
   redraw(): void
   resize(resolution?: number): void
+  setFit(fit: PuppetFit): void
   setViewCamera(camera: PlayerViewCamera): void
   setRunning(running: boolean): void
   subscribeFrame(onFrame: (deltaTime: number) => void): void
-  updateDocument(document: PuppetDocument): boolean
+  /** Defers compatible geometry changes until the next applied frame when requested. */
+  updateDocument(document: PuppetDocument, deferred?: boolean): boolean
 }
 
 interface RenderPartMasksOptions {
@@ -205,11 +213,14 @@ export const createPlayerRenderer = async (
   const partById = new Map<string, RuntimePart>()
   const layerById = new Map<string, RuntimeLayer>()
   let {document} = options
+  let fit = options.fit ?? 'contain'
+  let pendingDocument: PuppetDocument | undefined
   let native = createNativeDeformation(document)
   let camera: PlayerViewCamera | undefined
   let paintOrder: ReadonlyArray<string> = []
   let destroyed = false
   let running = true
+  let masksDirty = false
   const destroy = () => {
     if (destroyed) {
       return
@@ -235,10 +246,22 @@ export const createPlayerRenderer = async (
     destroy()
     throw new Error('Puppet player resource initialization failed', {cause: error})
   }
+  const commitDocument = (nextDocument: PuppetDocument) => {
+    document = nextDocument
+    pendingDocument = undefined
+    native = createNativeDeformation(document)
+    updatePartGeometry(document, partById)
+  }
+  const commitPending = () => {
+    if (pendingDocument !== undefined) {
+      commitDocument(pendingDocument)
+    }
+  }
   const layoutRoot = () =>
     layoutPlayerRoot({
       camera,
       document,
+      fit,
       framing: options.framing,
       root,
       screen: application.screen,
@@ -246,7 +269,7 @@ export const createPlayerRenderer = async (
     })
   const externalRendering = () =>
     options.externalRendering?.() ?? options.onAfterRender !== undefined
-  const renderMasks = () =>
+  const renderMasks = () => {
     renderPartMasks({
       application,
       externalRendering: externalRendering(),
@@ -254,36 +277,45 @@ export const createPlayerRenderer = async (
       partById,
       root,
     })
-  const finishRender = () => {
-    if (externalRendering()) {
-      options.onAfterRender?.()
-      application.renderer.resetState()
+    masksDirty = false
+  }
+  const flushMasks = () => {
+    if (!destroyed && masksDirty) {
+      renderMasks()
     }
   }
-  const prepareRender = () => {
-    if (externalRendering()) {
-      options.onBeforeRender?.()
-      application.renderer.resetState()
-    }
-  }
-  if (options.onAfterRender !== undefined) {
-    application.ticker.add(prepareRender, undefined, UPDATE_PRIORITY.LOW + 1)
-    application.ticker.add(finishRender, undefined, UPDATE_PRIORITY.LOW - 1)
-  }
-  const redraw = () => {
-    if (destroyed) {
-      return
-    }
-    if (options.onAfterRender !== undefined) {
-      prepareRender()
-    }
-    application.render()
-    if (options.onAfterRender !== undefined) {
-      finishRender()
-    }
+  const renderLoop = createRenderLoop({
+    externalRendering,
+    render(external) {
+      if (destroyed) {
+        return
+      }
+      flushMasks()
+      const shared = external && options.onAfterRender !== undefined
+      if (shared) {
+        options.onBeforeRender?.()
+        application.renderer.resetState()
+      }
+      application.render()
+      if (shared) {
+        options.onAfterRender?.()
+        application.renderer.resetState()
+      }
+    },
+  })
+  application.ticker.remove(application.render, application)
+  application.ticker.add(renderLoop.tick, undefined, UPDATE_PRIORITY.LOW)
+  const {redraw} = renderLoop
+  const emptyMix: MotionMix = {
+    groupOpacitySamples: new Map(),
+    modelOpacity: 1,
+    motionParameterValues: {},
+    parameterValues: {},
+    vertexSamples: new Map(),
   }
   return {
     applyFrame(mix, parameterValues, poseOpacityByPartId, overrides) {
+      commitPending()
       paintOrder = applyRenderFrame({
         document,
         layerById,
@@ -297,6 +329,23 @@ export const createPlayerRenderer = async (
         root,
       })
       renderMasks()
+      renderLoop.invalidate()
+    },
+    applyPreparedFrame(prepared) {
+      commitPending()
+      paintOrder = applyRenderFrame({
+        document,
+        layerById,
+        layoutRoot,
+        mix: emptyMix,
+        native,
+        parameterValues: {},
+        partById,
+        prepared,
+        root,
+      })
+      masksDirty = true
+      renderLoop.invalidate()
     },
     destroy,
     getPaintOrder: () => paintOrder,
@@ -316,8 +365,23 @@ export const createPlayerRenderer = async (
       renderMasks()
       redraw()
     },
+    setFit(nextFit) {
+      if (destroyed || nextFit === fit) {
+        return
+      }
+      fit = nextFit
+      layoutRoot()
+      renderMasks()
+      redraw()
+    },
     setRunning(nextRunning) {
-      if (destroyed || nextRunning === running) {
+      if (destroyed) {
+        return
+      }
+      if (!nextRunning) {
+        renderLoop.flush()
+      }
+      if (nextRunning === running) {
         return
       }
       running = nextRunning
@@ -334,6 +398,7 @@ export const createPlayerRenderer = async (
       camera = nextCamera
       layoutRoot()
       renderMasks()
+      renderLoop.invalidate()
     },
     subscribeFrame(onFrame) {
       application.ticker.add((ticker) => {
@@ -346,7 +411,7 @@ export const createPlayerRenderer = async (
       const local = root.toLocal(point)
       return {x: local.x, y: local.y}
     },
-    updateDocument(nextDocument) {
+    updateDocument(nextDocument, deferred = false) {
       if (
         destroyed ||
         !canReusePartResources(document, nextDocument) ||
@@ -355,9 +420,11 @@ export const createPlayerRenderer = async (
       ) {
         return false
       }
-      document = nextDocument
-      native = createNativeDeformation(document)
-      updatePartGeometry(document, partById)
+      if (deferred) {
+        pendingDocument = nextDocument
+      } else {
+        commitDocument(nextDocument)
+      }
       return true
     },
   }

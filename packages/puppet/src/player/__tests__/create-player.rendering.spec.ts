@@ -80,7 +80,7 @@ describe('createPlayer', () => {
       stage: {addChild: vi.fn()},
       start: vi.fn(),
       stop: vi.fn(),
-      ticker: {add: vi.fn()},
+      ticker: {add: vi.fn(), remove: vi.fn()},
     }
     const root = {
       addChild: vi.fn(),
@@ -194,7 +194,7 @@ describe('createPlayer', () => {
       stage: {addChild: vi.fn()},
       start: vi.fn(),
       stop: vi.fn(),
-      ticker: {add: vi.fn()},
+      ticker: {add: vi.fn(), remove: vi.fn()},
     }
     const containers: Array<{
       addChild: ReturnType<typeof vi.fn>

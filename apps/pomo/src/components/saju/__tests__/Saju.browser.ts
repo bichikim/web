@@ -120,7 +120,7 @@ it('should display a diary day-stem fact without accessing a model', async () =>
   await page.getByRole('button', {exact: true, name: '사주 풀이 생성'}).click()
   await expect
     .element(page.getByRole('region', {name: '사주 풀이 결과'}))
-    .toHaveTextContent('입력한 생년월일의 일간은 병(丙)입니다.')
+    .toHaveTextContent('일간은 병(丙)입니다.')
   expect(services.createClient).not.toHaveBeenCalled()
   expect(services.isDownloaded).not.toHaveBeenCalled()
   expect(services.startTextModel).not.toHaveBeenCalled()

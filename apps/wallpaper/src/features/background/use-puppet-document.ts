@@ -4,12 +4,12 @@ import {SAMPLE_PUPPET_ID} from './constants'
 
 interface UsePuppetDocumentProps {
   readonly assetId: Accessor<string | null>
-  readonly load: (id: string) => Promise<string>
+  readonly load: (id: string) => Promise<string | Blob>
   readonly onError: (cause: unknown) => void
 }
 interface PreparedAsset {
   readonly document: PreparedPuppetDocument
-  readonly source: string | null
+  readonly source: string | Blob | null
 }
 const CACHE_SIZE = 2
 

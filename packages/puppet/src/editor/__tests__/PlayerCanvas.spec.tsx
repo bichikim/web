@@ -45,6 +45,37 @@ afterEach(() => {
   vi.unstubAllGlobals()
 })
 
+test('should ignore late frame and buffering callbacks after a pending canvas is unmounted', async () => {
+  let resolve: (value: Player) => void = () => {}
+  const pending = new Promise<Player>((complete) => {
+    resolve = complete
+  })
+  const obsolete = {...player, destroy: vi.fn()}
+  mocks.createPlayer.mockReturnValueOnce(pending)
+  const onFrame = vi.fn()
+  const onBufferingChange = vi.fn()
+  const view = render(() => (
+    <PlayerCanvas
+      document={createDemoDocument()}
+      onFrame={onFrame}
+      onBufferingChange={onBufferingChange}
+      buffering
+    />
+  ))
+  await waitFor(() => expect(mocks.createPlayer).toHaveBeenCalledOnce())
+  const options = mocks.createPlayer.mock.calls[0]![0]
+  view.unmount()
+  onFrame.mockClear()
+  onBufferingChange.mockClear()
+  options.onFrame({duration: 1, motionId: 'obsolete', time: 0.5})
+  options.onBufferingChange({enabled: true, framesAhead: 0, status: 'preparing'})
+  resolve(obsolete)
+  await pending
+  expect(obsolete.destroy).toHaveBeenCalledOnce()
+  expect(onFrame).not.toHaveBeenCalled()
+  expect(onBufferingChange).not.toHaveBeenCalled()
+})
+
 describe('PlayerCanvas', () => {
   test('should recover a failed first initialization when the rendering preference changes', async () => {
     const model = createDemoDocument()
@@ -300,6 +331,29 @@ describe('PlayerCanvas', () => {
     expect(mocks.updateDocument).not.toHaveBeenCalled()
   })
 
+  test('should report buffering changes to the latest callback after replacing a player', async () => {
+    const initial = createDemoDocument()
+    const [document, replace] = createSignal(initial)
+    const first = vi.fn()
+    const latest = vi.fn()
+    const [notify, changeNotify] = createSignal(first)
+    const previous = {...player, destroy: vi.fn(), updateDocument: vi.fn(() => false)}
+    mocks.createPlayer.mockResolvedValueOnce(previous).mockResolvedValueOnce(player)
+    render(() => <PlayerCanvas document={document()} onBufferingChange={notify()} />)
+    await waitFor(() => expect(mocks.createPlayer).toHaveBeenCalledOnce())
+    const info = {enabled: true, framesAhead: 3, status: 'active' as const}
+    mocks.createPlayer.mock.calls[0]?.[0].onBufferingChange(info)
+    expect(first).toHaveBeenCalledExactlyOnceWith(info)
+    replace({...initial, parts: initial.parts.slice()})
+    await waitFor(() => expect(mocks.createPlayer).toHaveBeenCalledTimes(2))
+    expect(previous.destroy).toHaveBeenCalledOnce()
+    changeNotify(() => latest)
+    mocks.createPlayer.mock.calls[1]?.[0].onBufferingChange(info)
+    expect(latest).toHaveBeenCalledExactlyOnceWith(info)
+    expect(first).toHaveBeenCalledOnce()
+    expect(mocks.createPlayer).toHaveBeenCalledTimes(2)
+  })
+
   test('should render the selected 3D surface in the Pixi canvas and release it', async () => {
     const document = createDemoDocument()
     const surface = {document, node: {} as SpatialThreeSurface['node']}
@@ -315,6 +369,7 @@ describe('PlayerCanvas', () => {
     expect(mocks.createSpatialThreeOverlay).toHaveBeenCalledWith(canvas)
     expect(mocks.overlay.update).toHaveBeenCalledWith(surface)
     const options = mocks.createPlayer.mock.calls[0]?.[0]
+    expect(options.externalRendering()).toBe(true)
     options.onBeforeRender()
     options.onAfterRender()
     expect(mocks.overlay.prepare).toHaveBeenCalledOnce()
@@ -322,6 +377,7 @@ describe('PlayerCanvas', () => {
 
     setSelectedSurface(undefined)
     await waitFor(() => expect(mocks.overlay.update).toHaveBeenLastCalledWith(undefined))
+    expect(options.externalRendering()).toBe(false)
     expect(player.redraw).toHaveBeenCalled()
     view.unmount()
     expect(mocks.overlay.destroy).toHaveBeenCalledOnce()
@@ -600,4 +656,11 @@ test('should release a pending player and report a failed document update', asyn
   await waitFor(() => expect(view.getByText('invalid geometry')).toBeInTheDocument())
   expect(created.destroy).toHaveBeenCalledOnce()
   expect(view.container.querySelector('canvas')).toBeNull()
+})
+
+test('should pass the initial buffering choice to the player instead of computing a native first frame', async () => {
+  const view = render(() => <PlayerCanvas document={createDemoDocument()} buffering />)
+  await waitFor(() => expect(mocks.createPlayer).toHaveBeenCalled())
+  expect(mocks.createPlayer).toHaveBeenLastCalledWith(expect.objectContaining({buffering: true}))
+  view.unmount()
 })
