@@ -6,7 +6,7 @@ export interface ResizeCardContextValue {
   setElement: (element: HTMLElement | undefined) => void
   size: Accessor<Partial<Size> | undefined>
   startResize: (position: Position, type: ResizeType) => void
-  stopResize: (position: Position) => void
+  stopResize: (position?: Position) => void
   updateSize: (position: Position) => void
 }
 
@@ -34,6 +34,7 @@ export type {ResizeType} from './resize-delta'
 export interface ResizeCardProviderProps extends ParentProps {
   maxSize?: Partial<Size>
   minSize?: Partial<Size>
+  /** Reports changed offsetWidth/offsetHeight during a gesture, including its final position. */
   onResize?: (size: Size) => void
   preventHeightResize?: boolean
   preventWidthResize?: boolean
@@ -111,6 +112,26 @@ export const ResizeCardProvider = (props: ResizeCardProviderProps) => {
     updateType = type
   }
 
+  const renderedSize = (): Size | undefined => {
+    const element_ = element()
+    return element_ ? {height: element_.offsetHeight, width: element_.offsetWidth} : undefined
+  }
+
+  const notifyResize = (previousSize: Size | undefined) => {
+    if (!previousSize) {
+      return
+    }
+
+    const nextSize = renderedSize()
+
+    if (
+      nextSize &&
+      (nextSize.height !== previousSize.height || nextSize.width !== previousSize.width)
+    ) {
+      props.onResize?.(nextSize)
+    }
+  }
+
   const updateSize = (position: Position) => {
     const _maxSize = props.maxSize
     const _minSize = props.minSize
@@ -140,14 +161,20 @@ export const ResizeCardProvider = (props: ResizeCardProviderProps) => {
       width = Math.min(width, _maxSize.width)
     }
 
+    const previousSize = props.onResize ? renderedSize() : undefined
+
     setSize({
       height: props.preventHeightResize ? undefined : height,
       width: props.preventWidthResize ? undefined : width,
     })
+
+    notifyResize(previousSize)
   }
 
-  const stopResize = (position: Position) => {
-    updateSize(position)
+  const stopResize = (position?: Position) => {
+    if (position) {
+      updateSize(position)
+    }
     startPosition = undefined
     startSize = undefined
   }

@@ -1,4 +1,5 @@
 import {Meta, StoryObj} from 'storybook-solidjs-vite'
+import {expect, fn} from 'storybook/test'
 import {ResizeCard} from './'
 import {ResizeCardProviderProps} from './ResizeCardProvider'
 import {cva} from 'class-variance-authority'
@@ -110,4 +111,67 @@ export const MaxContentSize: Story = {
       height: 150,
     },
   },
+}
+
+interface ResizePlayContext {
+  args: ResizeCardProviderProps
+  canvasElement: HTMLElement
+}
+
+const verifyResize = ({args, canvasElement}: ResizePlayContext) => {
+  const handles = canvasElement.querySelectorAll('button')
+  const vertical = args.preventWidthResize === true
+  const handle = handles[vertical ? 0 : 1]
+  const body = handle.parentElement!
+  const initial = {height: body.offsetHeight, width: body.offsetWidth}
+  const point = (delta: number) => ({clientX: vertical ? 0 : delta, clientY: vertical ? -delta : 0})
+  const mouse = (type: string, delta: number, target: EventTarget = document.defaultView!) =>
+    target.dispatchEvent(new MouseEvent(type, {bubbles: true, ...point(delta)}))
+  const touch = (type: string, delta: number, target: EventTarget = document.defaultView!) => {
+    const value = new Touch({identifier: 1, target: handle, ...point(delta)})
+    target.dispatchEvent(
+      new TouchEvent(type, {
+        bubbles: true,
+        changedTouches: [value],
+        touches: type === 'touchend' ? [] : [value],
+      }),
+    )
+  }
+  const expected = (delta: number) => ({
+    height: initial.height + (vertical ? delta : 0),
+    width: initial.width + (vertical ? 0 : delta),
+  })
+
+  mouse('mousedown', 0, handle)
+  mouse('mouseup', 0)
+  expect(args.onResize).not.toHaveBeenCalled()
+  mouse('mousedown', 0, handle)
+  mouse('mousemove', 40)
+  expect(args.onResize).toHaveBeenLastCalledWith(expected(40))
+  mouse('mouseup', 60)
+  expect(args.onResize).toHaveBeenLastCalledWith(expected(60))
+  expect(args.onResize).toHaveBeenCalledTimes(2)
+  touch('touchstart', 0, handle)
+  touch('touchmove', 20)
+  touch('touchend', 40)
+  expect(args.onResize).toHaveBeenLastCalledWith(expected(100))
+  expect(args.onResize).toHaveBeenCalledTimes(4)
+  expect({height: body.offsetHeight, width: body.offsetWidth}).toEqual(expected(100))
+  mouse('mousemove', 150)
+  expect(args.onResize).toHaveBeenCalledTimes(4)
+}
+
+export const ResizeCallback: Story = {
+  args: {onResize: fn()},
+  play: verifyResize,
+}
+
+export const FixedWidthCallback: Story = {
+  args: {onResize: fn(), preventWidthResize: true},
+  play: verifyResize,
+}
+
+export const FixedHeightCallback: Story = {
+  args: {onResize: fn(), preventHeightResize: true},
+  play: verifyResize,
 }

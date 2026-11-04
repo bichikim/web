@@ -1,4 +1,4 @@
-import {ComponentProps, createMemo, createSignal, splitProps, useContext} from 'solid-js'
+import {ComponentProps, createMemo, createSignal, onCleanup, splitProps, useContext} from 'solid-js'
 import {ResizeCardContext, ResizeType} from './ResizeCardProvider'
 import {useEvent} from '@winter-love/solid-use'
 import {getWindow} from '@winter-love/utils'
@@ -10,7 +10,7 @@ export interface ResizeCardHandleProps extends ComponentProps<'button'> {
 export const ResizeCardHandle = (props: ResizeCardHandleProps) => {
   const [innerProps, restProps] = splitProps(props, ['resizeType'])
   const [isStart, setIsStart] = createSignal(false)
-  const {startResize, updateSize} = useContext(ResizeCardContext)
+  const {startResize, stopResize, updateSize} = useContext(ResizeCardContext)
 
   const handleMouseDown: ResizeCardHandleProps['onMouseDown'] = (event: MouseEvent) => {
     setIsStart(true)
@@ -56,13 +56,27 @@ export const ResizeCardHandle = (props: ResizeCardHandleProps) => {
     })
   }
 
-  const handleTouchEnd = () => {
+  const handleTouchEnd = (event: TouchEvent) => {
+    const touch = event.changedTouches[0]
+    stopResize(touch ? {x: touch.clientX, y: touch.clientY} : undefined)
     setIsStart(false)
   }
 
-  const handleMouseUp = () => {
+  const handleMouseUp = (event: MouseEvent) => {
+    stopResize({x: event.clientX, y: event.clientY})
     setIsStart(false)
   }
+
+  const cancelResize = () => {
+    stopResize()
+    setIsStart(false)
+  }
+
+  onCleanup(() => {
+    if (isStart()) {
+      stopResize()
+    }
+  })
 
   const globalTarget = createMemo(() => (isStart() ? getWindow() : null))
 
@@ -70,6 +84,7 @@ export const ResizeCardHandle = (props: ResizeCardHandleProps) => {
   useEvent(() => globalTarget(), 'mouseup', handleMouseUp)
   useEvent(() => globalTarget(), 'touchmove', handleTouchMove)
   useEvent(() => globalTarget(), 'touchend', handleTouchEnd)
+  useEvent(() => globalTarget(), 'touchcancel', cancelResize)
 
   return (
     <button {...restProps} onMouseDown={handleMouseDown} onTouchStart={handleTouchStart}>
