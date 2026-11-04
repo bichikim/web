@@ -67,6 +67,41 @@ describe('GET', () => {
     )
   })
 
+  it('should preserve empty-note fallback and whitespace filtering across pages', async () => {
+    fetchMock
+      .mockResolvedValueOnce(
+        pageResponse({
+          current_page: 1,
+          data: [
+            {message: 'unused', support_note: 'preferred'},
+            {message: 'first legacy', support_note: ''},
+          ],
+          last_page: 2,
+        }),
+      )
+      .mockResolvedValueOnce(
+        pageResponse({
+          current_page: 2,
+          data: [
+            {message: 'later legacy', support_note: ''},
+            {message: '  padded  ', support_note: null},
+            {message: 'filtered', support_note: '   '},
+            {message: '', support_note: ''},
+          ],
+          last_page: 2,
+        }),
+      )
+
+    const response = await request()
+
+    expect(await response.json()).toEqual({
+      messages: ['preferred', 'first legacy', 'later legacy', '  padded  '],
+    })
+    expect(response.status).toBe(200)
+    expect(response.headers.get('Cache-Control')).toBe('public, max-age=300')
+    expect(fetchMock).toHaveBeenCalledTimes(2)
+  })
+
   it('should return a cacheable empty list for an empty single page', async () => {
     fetchMock.mockResolvedValue(pageResponse({current_page: 1, last_page: 1}))
     const response = await request()
