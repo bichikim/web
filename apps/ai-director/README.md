@@ -43,7 +43,7 @@ pnpm --filter @apps/ai-director exec tauri build --no-bundle
 
 빌드 시 `/`를 HTML로 프리렌더링하고 Tauri에 정적 파일을 포함합니다.
 런타임 Node 서버는 필요하지 않습니다. 배포 설치 패키지와 서명은 아직 구성하지 않았습니다.
-현재 Nitro 버전의 정적 빌드 후속 단계 오류는 `build/static-entry.ts`에서 대응합니다.
+현재 Nitro 버전의 정적 빌드 후속 단계 오류는 [공통 static entry 플러그인](../../scripts/vite/static-nitro-entry.ts)에서 대응합니다.
 UnoCSS와 Vite 8의 CSS 생성 호환 처리는 `build/uno-css.ts`에 있습니다.
 
 설정 참고: [SolidStart Vite](https://docs.solidjs.com/solid-start/v2/reference/entrypoints/vite-config),

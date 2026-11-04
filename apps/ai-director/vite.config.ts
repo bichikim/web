@@ -2,7 +2,9 @@ import {solidStart} from '@solidjs/start/config'
 import {nitro} from 'nitro/vite'
 import {createUnoCssPlugins} from './build/uno-css'
 import {defineConfig} from 'vite'
-import {staticNitroEntryPlugin} from './build/static-entry'
+import {createStaticNitroEntryPlugin} from '../../scripts/vite/static-nitro-entry'
+
+const staticNitroEntryPlugin = createStaticNitroEntryPlugin('\0ai-director-static-entry')
 
 export default defineConfig({
   clearScreen: false,
