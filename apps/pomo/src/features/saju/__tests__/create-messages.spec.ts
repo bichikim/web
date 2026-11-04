@@ -16,6 +16,19 @@ function createInput(birth: BirthInput) {
   }
 }
 
+it.each([
+  '일주간이 무엇인가요?',
+  '일주일이 뭐예요?',
+  '일주변이 무엇인가요?',
+  '일주일간이 무엇인가요?',
+])('should keep consultation context for a duration or place word: %s', (question) => {
+  const messages = createMessages({...createInput(BIRTH), question})
+  const context = JSON.parse(messages[1].content.split('\n\n')[0])
+  expect(context.question).toBe(question)
+  expect(context.themes).toHaveLength(5)
+  expect(context).not.toHaveProperty('chart')
+})
+
 it('should supply readable subjects instead of raw terminology, scores and stage names', () => {
   const input = createInput(BIRTH)
   const messages = createMessages(input)

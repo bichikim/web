@@ -142,6 +142,32 @@ describe('calculateSajuReading', () => {
   })
 
   it.each([
+    '일주간이 무엇인가요?',
+    '일주일이 뭐예요?',
+    '일주변이 무엇인가요?',
+    '일주일간이 무엇인가요?',
+  ])(
+    'should prepare a consultation instead of personal day facts for a compound word: %s',
+    (question) => {
+      const result = calculateSajuReading({birth, gender: 'N', question})
+      expect(result.type).toBe('generate')
+      if (result.type === 'generate') {
+        const context = JSON.parse(result.request.messages[1].content.split('\n\n')[0])
+        expect(context.question).toBe(question)
+        expect(context.themes).toHaveLength(5)
+        expect(context).not.toHaveProperty('chart')
+      }
+    },
+  )
+
+  it.each(['올해 일주는 무엇인가요?', '2024년에 시작한 회사가 나한테 맞을까?'])(
+    'should preserve annual guidance for a policy question outside this fix: %s',
+    (question) => {
+      expect(calculateSajuReading({birth, gender: 'N', question}).type).toBe('notice')
+    },
+  )
+
+  it.each([
     '제 일주로 내 일과 돈복은 어떤지 알려줘',
     '제 일주로 내 일이 맞을지 알려줘',
     '제 일주로 하는 일은 어떤지 알려줘',
