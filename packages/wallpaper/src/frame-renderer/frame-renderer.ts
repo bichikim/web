@@ -10,7 +10,7 @@ import type {VideoSample} from './capture-video-sample'
 import {PhotoEdges} from './edges'
 import {getPairDirection, type PhotoSize} from '../album/pairing'
 import type {LoadedPhoto} from './types'
-import type {MediaKind, TransitionEffect} from '../model'
+import type {MediaFit, MediaKind, TransitionEffect} from '../model'
 
 const CENTER_ANCHOR = 0.5
 
@@ -31,6 +31,7 @@ export class FrameRenderer {
   readonly #application = new Application()
   readonly #options: FrameRendererOptions
   #video: HTMLVideoElement | null = null
+  #fit: MediaFit = 'contain'
   #loop = false
   #videoLoop: VideoLoop | null = null
   #initialized = false
@@ -110,6 +111,7 @@ export class FrameRenderer {
     const second = {height: photo.image.naturalHeight, width: photo.image.naturalWidth}
     if (
       this.#disposed ||
+      this.#fit === 'cover' ||
       first === null ||
       getPairDirection({first, second, viewport: this.viewportSize()}) === null
     ) {
@@ -134,6 +136,7 @@ export class FrameRenderer {
     const companion = this.#companion
     const layout = calculateLayout({
       first: sprite.texture,
+      fit: this.#fit,
       second: companion?.texture ?? null,
       viewport: {height, width},
     })
@@ -156,6 +159,17 @@ export class FrameRenderer {
       photoWidth: layout.width,
       width,
     })
+  }
+
+  /** Updates photo and video sizing without replacing the loaded media or its playback clock. */
+  setFit(fit: MediaFit): void {
+    if (this.#disposed || this.#fit === fit) {
+      return
+    }
+    this.#fit = fit
+    if (this.#initialized) {
+      this.#resize()
+    }
   }
 
   setVideoLoop(loop: boolean) {

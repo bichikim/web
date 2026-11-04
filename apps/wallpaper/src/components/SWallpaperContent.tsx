@@ -104,7 +104,7 @@ export const SWallpaperContent = (props: SWallpaperContentProps) => {
             class="grid gap-3 border-0 border-t border-solid border-stone-200 pt-4"
           >
             <div class="flex items-center justify-between gap-3">
-              <h2 class="m-0 text-[13px] font-medium text-stone-700">배경 조정</h2>
+              <h3 class="m-0 text-[13px] font-medium text-stone-700">배경 조정</h3>
               <div class="flex items-center gap-2 text-[13px] text-stone-700">
                 <span class="shrink-0">트래킹 입력</span>
                 <SPoffoTrackingSettings value={tracking()} onChange={handleTracking} />

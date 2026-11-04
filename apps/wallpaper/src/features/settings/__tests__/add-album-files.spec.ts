@@ -36,6 +36,7 @@ it('should add imported media to the selected monitor album without losing its e
     listPuppets: vi.fn(),
     loadPuppet: vi.fn(),
     read: vi.fn(async () => [current]),
+    removeMediaReferences: vi.fn(),
     removePuppet: vi.fn(),
     save: vi.fn(),
     subscribe: vi.fn(),

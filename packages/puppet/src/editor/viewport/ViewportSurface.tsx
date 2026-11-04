@@ -29,10 +29,7 @@ export const ViewportSurface = (props: ViewportProps) => {
     }
   })
   return (
-    <div
-      class="workspace-viewport"
-      style={{'--viewport-background': props.background ?? '#111715'}}
-    >
+    <div class="workspace-viewport" style={{'--viewport-background': props.background}}>
       <CameraViewport
         width={props.document.viewport.width}
         height={props.document.viewport.height}
@@ -45,6 +42,8 @@ export const ViewportSurface = (props: ViewportProps) => {
         viewSettings={props.viewSettings}
       >
         <PlayerCanvas
+          buffering={props.buffering}
+          onBufferingChange={props.onBufferingChange}
           antialiasing={props.antialiasing}
           renderer={props.renderer}
           onRenderingChange={props.onRenderingChange}

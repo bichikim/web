@@ -9,6 +9,7 @@ import type {PuppetParameterValueMap} from '../../deformation/composition'
 import {composeParameterDeformer} from '../../deformation/scene'
 import {getDocumentScene} from '../scene'
 import {createWarpGridSampler} from '../../deformation/sample-warp-grid'
+import {getNativeTransformKey} from './get-native-transform-key'
 import type {
   PuppetDocument,
   PuppetPoint,
@@ -32,8 +33,9 @@ interface TransformBuffer {
 }
 
 interface CompiledPart {
+  readonly ancestors: ReadonlyArray<NativeTransform>
   readonly partId: string
-  readonly transform: NativeTransform | undefined
+  apply(vertices: Float32Array | number[]): void
 }
 
 interface CompiledScene {
@@ -227,17 +229,37 @@ const compileNodes = (
 ): CompiledScene => {
   const transforms: NativeTransform[] = []
   const parts: CompiledPart[] = []
-  const visit = (children: ReadonlyArray<PuppetSceneNode>, parent?: NativeTransform) => {
+  const shared = new Map<NativeTransform | undefined, Map<string, NativeTransform>>()
+  const transformOf = (node: PuppetSceneDeformerNode, parent: NativeTransform | undefined) => {
+    let group = shared.get(parent)
+    if (group === undefined) {
+      group = new Map()
+      shared.set(parent, group)
+    }
+    const key = getNativeTransformKey(document, node)
+    let transform = group.get(key)
+    if (transform === undefined) {
+      transform = createNativeTransform(document, node, parent)
+      group.set(key, transform)
+      transforms.push(transform)
+    }
+    return transform
+  }
+  const visit = (
+    children: ReadonlyArray<PuppetSceneNode>,
+    parent?: NativeTransform,
+    ancestors: ReadonlyArray<NativeTransform> = [],
+  ) => {
     for (const node of children) {
       if (node.kind === 'part') {
-        parts.push({partId: node.id, transform: parent})
+        parts.push({ancestors, apply: createVertexTransform(parent), partId: node.id})
       } else {
-        const transform =
-          node.kind === 'deformer' ? createNativeTransform(document, node, parent) : parent
-        if (node.kind === 'deformer') {
-          transforms.push(transform!)
-        }
-        visit(node.children, transform)
+        const transform = node.kind === 'deformer' ? transformOf(node, parent) : parent
+        visit(
+          node.children,
+          transform,
+          node.kind === 'deformer' ? [...ancestors, transform!] : ancestors,
+        )
       }
     }
   }
@@ -245,22 +267,52 @@ const compileNodes = (
   return {parts, transforms}
 }
 
+/** Retains unrounded outputs before downstream Glue mutates the caller's buffers. */
+const createVertexTransform = (transform: NativeTransform | undefined) => {
+  const sample = transform?.sample ?? identity
+  const input = {x: 0, y: 0}
+  let previousVersion = -1
+  let coordinates = new Float64Array(0)
+  let output = new Float64Array(0)
+  let length = -1
+  return (vertices: Float32Array | number[]): void => {
+    const {length: nextLength} = vertices
+    const version = transform?.version ?? 0
+    const changed = previousVersion !== version || length !== nextLength
+    if (length !== nextLength) {
+      length = nextLength
+      coordinates = new Float64Array(length + (length % 2))
+      output = new Float64Array(coordinates.length)
+    }
+    for (let offset = 0; offset < vertices.length; offset += 2) {
+      input.x = vertices[offset] ?? 0
+      input.y = vertices[offset + 1] ?? 0
+      if (
+        changed ||
+        !Object.is(coordinates[offset], input.x) ||
+        !Object.is(coordinates[offset + 1], input.y)
+      ) {
+        coordinates[offset] = input.x
+        coordinates[offset + 1] = input.y
+        const point = sample(input)
+        output[offset] = point.x
+        output[offset + 1] = point.y
+      }
+      vertices[offset] = output[offset]!
+      vertices[offset + 1] = output[offset + 1]!
+    }
+    previousVersion = version
+  }
+}
+
 const applyParts = (
   parts: ReadonlyArray<CompiledPart>,
   verticesById: ReadonlyMap<string, Float32Array | number[]>,
 ) => {
-  const input = {x: 0, y: 0}
   for (const part of parts) {
     const vertices = verticesById.get(part.partId)
     if (vertices !== undefined) {
-      const transform = part.transform?.sample ?? identity
-      for (let offset = 0; offset < vertices.length; offset += 2) {
-        input.x = vertices[offset] ?? 0
-        input.y = vertices[offset + 1] ?? 0
-        const point = transform(input)
-        vertices[offset] = point.x
-        vertices[offset + 1] = point.y
-      }
+      part.apply(vertices)
     }
   }
 }
@@ -276,8 +328,18 @@ export const createNativeDeformation = (
   const compiled = compileNodes(document, nodes)
   return {
     apply: (values, vertices) => {
+      const selected =
+        vertices.size >= compiled.parts.length
+          ? undefined
+          : new Set(
+              compiled.parts
+                .filter((part) => vertices.has(part.partId))
+                .flatMap((part) => part.ancestors),
+            )
       for (const transform of compiled.transforms) {
-        transform.update(values)
+        if (selected === undefined || selected.has(transform)) {
+          transform.update(values)
+        }
       }
       applyParts(compiled.parts, vertices)
     },

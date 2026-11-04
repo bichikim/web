@@ -6,6 +6,10 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "build:desktop": "tauri build",
+    "build:desktop:mac": "tauri build --bundles dmg",
+    "build:desktop:windows": "tauri build --bundles nsis",
+    "dev:desktop": "tauri dev",
     "lint": "oxlint src vite.config.ts uno.config.ts",
     "typecheck": "tsc --noEmit"
   },
@@ -14,11 +18,15 @@
     "@dschz/solid-flow": "0.2.6",
     "@kobalte/core": "^0.13.13",
     "@mediapipe/tasks-vision": "^1.1.0",
+    "@tauri-apps/api": "2.12.4",
+    "@tauri-apps/plugin-dialog": "^2.8.4",
+    "@tauri-apps/plugin-fs": "^2.7.1",
     "@winter-love/puppet": "workspace:*",
     "es-toolkit": "catalog:",
     "solid-js": "catalog:"
   },
   "devDependencies": {
+    "@tauri-apps/cli": "2.12.4",
     "typescript": "catalog:",
     "unocss": "catalog:",
     "vite": "catalog:",

@@ -11,7 +11,7 @@ vi.mock('pixi.js', () => ({
   Application: class {
     stage = {addChild: vi.fn()}
     screen = {height: 640, width: 960}
-    ticker = {add: vi.fn()}
+    ticker = {add: vi.fn(), remove: vi.fn()}
     init = vi.fn()
     render = vi.fn()
     start = vi.fn()
@@ -34,6 +34,7 @@ vi.mock('pixi.js', () => ({
     }
   },
   Texture: {from: () => ({destroy: vi.fn()})},
+  UPDATE_PRIORITY: {LOW: -25},
 }))
 afterEach(() => {
   meshes.length = 0

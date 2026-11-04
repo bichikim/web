@@ -23,6 +23,7 @@ import {
 import type {PuppetPart, PuppetSpatialMesh} from '../../player'
 import {createSpatialReferenceVertices} from './create-spatial-reference-vertices'
 import {projectSpatialPreviewGizmo, type SpatialPreviewGizmo} from './spatial-preview-gizmo'
+import {observeInheritedStyle} from './observe-inherited-style'
 
 export interface SpatialPreviewOrbit {
   readonly pitch: number
@@ -77,6 +78,14 @@ const TARGET_FRAME_COORDINATES = 3
 const DEPTH_AXIS = 2
 const TARGET_FRAME_LIFT = 0.25
 const TARGET_FRAME_PADDING_RATIO = 0.02
+const PREVIEW_COLOR_PROPERTIES = [
+  '--spatial-preview-light',
+  '--spatial-preview-background',
+  '--spatial-preview-face',
+  '--spatial-preview-muted',
+  '--spatial-preview-edge',
+  '--spatial-preview-target-frame',
+]
 const getStyle = (canvas: HTMLCanvasElement, name: string) =>
   getComputedStyle(canvas).getPropertyValue(name).trim()
 
@@ -239,6 +248,7 @@ const createTargetFrameController = (scene: Scene, canvas: HTMLCanvasElement) =>
       replaceTargetFrame({bounds: undefined, canvas, current, mesh: undefined, scene})
     },
     update(bounds: SpatialMeshPreviewFrame['targetBounds'], mesh: SpatialPreviewMesh | undefined) {
+      current?.material.color.setStyle(getStyle(canvas, '--spatial-preview-target-frame'))
       if (bounds === sourceBounds && mesh === sourceMesh) {
         return
       }
@@ -326,15 +336,7 @@ const updateCamera = (options: UpdateCameraOptions) => {
   camera.updateProjectionMatrix()
 }
 
-/** Draws the mesh editor preview and resolves shape selection from its visible 3D surface. */
-export const createSpatialMeshPreviewRenderer = (
-  canvas: HTMLCanvasElement,
-): SpatialMeshPreviewRenderer => {
-  const renderer = new WebGLRenderer({alpha: false, antialias: true, canvas})
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2))
-  const scene = new Scene()
-  scene.background = new Color(getStyle(canvas, '--spatial-preview-background'))
-  const camera = new OrthographicCamera()
+const addPreviewLights = (canvas: HTMLCanvasElement, scene: Scene) => {
   const ambient = new AmbientLight(
     new Color(getStyle(canvas, '--spatial-preview-light')),
     Number(getStyle(canvas, '--spatial-preview-ambient')),
@@ -345,6 +347,20 @@ export const createSpatialMeshPreviewRenderer = (
   )
   directional.position.set(-1, 2, LIGHT_DEPTH)
   scene.add(ambient, directional)
+  return [ambient, directional]
+}
+
+/** Draws the mesh editor preview and resolves shape selection from its visible 3D surface. */
+export const createSpatialMeshPreviewRenderer = (
+  canvas: HTMLCanvasElement,
+): SpatialMeshPreviewRenderer => {
+  const renderer = new WebGLRenderer({alpha: false, antialias: true, canvas})
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2))
+  const scene = new Scene()
+  const backgroundColor = new Color(getStyle(canvas, '--spatial-preview-background'))
+  scene.background = backgroundColor
+  const camera = new OrthographicCamera()
+  const lights = addPreviewLights(canvas, scene)
   const raycaster = new Raycaster()
   const pointer = new Vector2()
   const surfaces: Surface[] = []
@@ -385,6 +401,13 @@ export const createSpatialMeshPreviewRenderer = (
     if (frame === undefined) {
       return
     }
+    const style = getComputedStyle(canvas)
+    for (const light of lights) {
+      light.color.setStyle(style.getPropertyValue('--spatial-preview-light').trim())
+    }
+    backgroundColor.setStyle(style.getPropertyValue('--spatial-preview-background').trim())
+    faceColor.setStyle(style.getPropertyValue('--spatial-preview-face').trim())
+    mutedColor.setStyle(style.getPropertyValue('--spatial-preview-muted').trim())
     const width = Math.max(1, canvas.clientWidth)
     const height = Math.max(1, canvas.clientHeight)
     if (width !== canvasWidth || height !== canvasHeight) {
@@ -425,6 +448,7 @@ export const createSpatialMeshPreviewRenderer = (
     }
     targetGuide.update(frame.targetBounds, frame.mesh)
     for (const surface of surfaces) {
+      surface.edges.material.color.setStyle(style.getPropertyValue('--spatial-preview-edge').trim())
       surface.faces.material.color.copy(
         surface.id !== undefined && frame.mutedIds.has(surface.id) ? mutedColor : faceColor,
       )
@@ -447,9 +471,16 @@ export const createSpatialMeshPreviewRenderer = (
     }
   }
 
+  const stopObserving = observeInheritedStyle({
+    element: canvas,
+    onChange: draw,
+    properties: PREVIEW_COLOR_PROPERTIES,
+  })
+
   return {
     destroy() {
       destroyed = true
+      stopObserving()
       clearSurfaces()
       clearReferences()
       targetGuide.destroy()

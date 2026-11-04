@@ -52,12 +52,11 @@ export const SPoffoWidgetSettings = (props: SPoffoWidgetSettingsProps) => {
     ...props.controller.puppets().map((item) => ({label: item.name, value: item.id})),
   ])
   const name = (id: string) =>
-    options().find((option) => option.value === id)?.label ?? 'Poffo 캐릭터'
+    options().find((option) => option.value === id)?.label ?? 'Poffo 위젯'
   return (
     <section aria-label="Poffo 위젯 설정" class="grid gap-4">
-      <SCodexConnection />
       <SPoffoAssetPicker
-        selectLabel="위젯 캐릭터"
+        selectLabel="위젯 Poffo"
         options={options()}
         value={asset()}
         onChange={(id) => selectWidget(null, id)}
@@ -76,9 +75,9 @@ export const SPoffoWidgetSettings = (props: SPoffoWidgetSettingsProps) => {
         aria-label="위젯 조정"
         class="grid gap-3 border-0 border-t border-solid border-stone-200 pt-4"
       >
-        <h2 class="m-0 text-[13px] font-medium text-stone-700">
-          {widgetPreview() === null ? '캐릭터 확인' : '열린 위젯'}
-        </h2>
+        <h3 class="m-0 text-[13px] font-medium text-stone-700">
+          {widgetPreview() === null ? 'Poffo 미리보기' : '열린 위젯'}
+        </h3>
         <fieldset class="m-0 min-w-0 border-0 p-0">
           <legend class="sr-only">편집할 위젯</legend>
           <ul aria-label="열린 Poffo 위젯" class="m-0 grid list-none gap-2 p-0">
@@ -115,6 +114,9 @@ export const SPoffoWidgetSettings = (props: SPoffoWidgetSettingsProps) => {
           </Portal>
         </Show>
       </section>
+      <div class="border-0 border-t border-solid border-stone-200 pt-4">
+        <SCodexConnection />
+      </div>
     </section>
   )
 }

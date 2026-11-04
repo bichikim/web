@@ -14,10 +14,10 @@ export const desktopSurfaces: WallpaperSurfacePort = {
     await invoke('close_background', {monitorId})
   },
   navigate: (label, url) => navigateBackgroundSurface({label, url}),
-  async open(monitorId) {
+  async open(monitorId, customization) {
     return (
       (await invoke<string | null>('find_background', {monitorId})) ??
-      invoke<string>('open_background', {monitorId})
+      invoke<string>('open_background', {customization, monitorId})
     )
   },
   restore: (label) => restoreBackgroundContent({label}),

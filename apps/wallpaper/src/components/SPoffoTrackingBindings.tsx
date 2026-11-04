@@ -15,7 +15,7 @@ interface SPoffoTrackingBindingsProps {
   readonly source?: ParameterSource
   readonly disclosure?: boolean
   readonly assetId: string | null
-  readonly load: (id: string) => Promise<string>
+  readonly load: (id: string) => Promise<string | Blob>
   readonly value?: PoffoTrackingBindings
   readonly onChange?: (bindings: PoffoTrackingBindings) => void | Promise<void>
 }
@@ -86,6 +86,7 @@ export const SPoffoTrackingBindings = (props: SPoffoTrackingBindingsProps) => {
               binding()?.inverted,
             )
           const handleInvert = () => update(axis.key, {inverted: !inverted()})
+          const handleBlend = (blend: 'add' | 'overwrite') => update(axis.key, {blend})
           return (
             <div class="grid grid-cols-[6rem_minmax(0,1fr)_auto] items-center gap-2 py-1 text-[13px]">
               <span>{axis.label}</span>
@@ -104,6 +105,17 @@ export const SPoffoTrackingBindings = (props: SPoffoTrackingBindingsProps) => {
               >
                 {inverted() ? '반전됨' : '반전'}
               </button>
+              <div class="col-start-2 col-span-2">
+                <SSelect
+                  label={`${axis.label} 적용 방식`}
+                  value={binding()?.blend ?? 'overwrite'}
+                  options={[
+                    {label: '덮어쓰기', value: 'overwrite'},
+                    {label: '더하기', value: 'add'},
+                  ]}
+                  onChange={handleBlend}
+                />
+              </div>
             </div>
           )
         }}

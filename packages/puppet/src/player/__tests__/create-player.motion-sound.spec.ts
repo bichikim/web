@@ -35,7 +35,7 @@ const setUpRenderer = () => {
     stage: {addChild: vi.fn()},
     start: vi.fn(),
     stop: vi.fn(),
-    ticker: {add: vi.fn()},
+    ticker: {add: vi.fn(), remove: vi.fn()},
   }
   const root = {addChild: vi.fn(), position: {set: vi.fn()}, scale: {set: vi.fn()}}
   for (const [mock, value] of [

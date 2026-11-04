@@ -1,5 +1,9 @@
 export type CodexPhase = 'idle' | 'working' | 'approval' | 'question' | 'response' | 'interrupted'
 export interface CodexSpeechTarget {
+  readonly positionX?: number
+  readonly positionY?: number
+  readonly widgetWidth?: number
+  readonly widgetHeight?: number
   readonly anchor?: 'top' | 'bottom'
   readonly x: number
   readonly y: number
