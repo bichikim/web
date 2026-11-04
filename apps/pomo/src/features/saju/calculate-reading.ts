@@ -1,11 +1,4 @@
-import {
-  analyzeDaeun,
-  analyzeElements,
-  analyzeSipseong,
-  type BirthInput,
-  deriveSaju,
-  iljuInfo,
-} from 'k-saju'
+import {analyzeDaeun, analyzeElements, analyzeSipseong, type BirthInput, deriveSaju} from 'k-saju'
 import {createMessages} from './create-messages'
 import {getBroadFutureAnswer} from './get-broad-future-answer'
 import {getDayPillarFactAnswer} from './get-day-pillar-fact-answer'
@@ -52,11 +45,10 @@ export function calculateSajuReading(input: SajuReadingInput): SajuReadingResult
 
   const elements = analyzeElements(chart)
   const sipseong = analyzeSipseong(chart)
-  const ilju = iljuInfo(chart)
   const daeun = input.gender === 'N' ? null : analyzeDaeun(calculationBirth, chart, input.gender)
   return {
     request: {
-      messages: createMessages({birth, chart, daeun, elements, ilju, question, sipseong}),
+      messages: createMessages({chart, daeun, elements, question, sipseong}),
       type: 'generate',
     },
     type: 'generate',

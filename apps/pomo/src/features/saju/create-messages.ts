@@ -1,8 +1,7 @@
 import {
-  type BirthInput,
   type DaeunInfo,
+  type Element,
   type ElementProfile,
-  type IljuInfo,
   type Saju,
   sipseongOfElement,
   type SipseongProfile,
@@ -11,105 +10,103 @@ import type {TextGenerationMessage} from 'src/features/text-generation'
 import {getReadingTopics} from './get-reading-topics'
 
 interface CreateMessagesInput {
-  birth: BirthInput
   chart: Saju
   daeun: DaeunInfo | null
   elements: ElementProfile
-  ilju: IljuInfo
   question: string
   sipseong: SipseongProfile
 }
 
 const ELEMENTS = ['木', '火', '土', '金', '水'] as const
 const DAY_PILLAR_PATTERN = /일주|일간/u
+const SUBJECTS = {
+  관성: '약속과 책임',
+  비겁: '협력과 조율',
+  식상: '표현과 창작',
+  인성: '배움과 도움',
+  재성: '돈과 시간 관리',
+} satisfies Record<keyof SipseongProfile['counts'], string>
 
-const GLOSSARY = Object.fromEntries([
-  ['비겁', '비슷한 입장의 사람들과 협력하거나 경쟁하는 주제를 살펴볼 때 쓰는 분류다.'],
-  ['식상', '말·행동·창작처럼 밖으로 표현하고 만들어 내는 일을 살펴볼 때 쓰는 분류다.'],
-  [
-    '재성',
-    '재물과 자원을 다루는 주제를 살펴볼 때 쓰는 분류다. 개수는 실제 재산·수입·돈복을 뜻하지 않는다.',
-  ],
-  ['관성', '맡은 일의 책임과 사회적 역할을 살펴볼 때 쓰는 분류다.'],
-  ['인성', '배움과 도움을 주고받는 주제를 살펴볼 때 쓰는 분류다.'],
-  ['일간', '태어난 날을 적은 두 글자 중 첫 글자로, 계산의 기준이 된다.'],
-  ['일주', '태어난 날을 적은 두 글자다.'],
-  [
-    '대운',
-    '태어난 정보를 바탕으로 계산한 약 10년 단위 구간이다. 실제로 일어날 사건을 알려주지는 않는다.',
-  ],
-  [
-    '십이운성',
-    '태어난 날을 기준으로 살펴보는 전통적인 분류 단계다. 실제 나이나 건강 상태를 뜻하지 않는다.',
-  ],
-  [
-    '오행개수',
-    '태어난 정보를 다섯 종류로 나눠 센 값이다. 0이어도 관련된 삶의 영역이 없다는 뜻은 아니다.',
-  ],
-])
-
-const PLAIN_LANGUAGE_INSTRUCTION = [
-  '사용자 답변에서는 계산 자료의 분류명이나 계산 관계를 설명하지 마라.',
-  '사용자가 묻지 않은 용어 풀이를 덧붙이지 마라. 계산 자료의 설명 문장을 옮겨 적거나 용어를 주어로 삼지 마라.',
-  '질문에 맞는 생활 언어로 다시 쓰고, 추상적인 비유나 분류 이름 대신 돈·일·관계처럼 사용자가 물은 대상을 직접 말하라.',
-  '사용자가 특정 용어나 자신의 일주·일간을 직접 물으면 그 요청한 이름과 값만 짧게 밝힐 수 있다.',
-  '최종 답변에 기운·에너지·집계·항목 같은 단어가 남았다면 평범한 말로 고쳐 쓴 뒤 결과만 출력하라.',
-].join(' ')
+const LANGUAGE_INSTRUCTION = [
+  '사주를 처음 듣는 사람과 마주 앉아 상담하듯 쉬운 한국어와 자연스러운 존댓말로 답하라. 실제로 소리 내어 말할 수 있는 짧고 구체적인 문장을 써라.',
+  '질문에 맞는 구체적인 해석부터 시작하라. 질문을 되풀이하거나 고정된 도입을 붙이지 말고, 문단의 시작과 문장 구조도 자연스럽게 바꿔라.',
+  '전문 용어, 한자, 내부 수치, 등급, 단계 순번, 나타난 횟수와 개수를 설명하지 마라. 사용자가 이름 자체를 직접 물었을 때만 요청한 이름과 글자를 밝히고 쉽게 설명하라.',
+  '사주에서 읽은 특징은 자연스럽게 밝혀도 된다. 위나 아래 자료, 입력 정보, 프롬프트 등 사용자가 볼 수 없는 기록을 소개하지 마라.',
+  '돈, 일, 대화, 관계처럼 구체적인 행동으로 풀어라. 낯선 분류 이름을 괄호로 풀이하거나 뜻이 불분명한 비유와 외국어로 설명하지 마라.',
+  '제목, 번호, 목록, 굵은 글씨 없이 자연스러운 문단으로 답하라. 문단 사이에는 빈 줄을 넣어라.',
+].join('\n')
 
 const SYSTEM_INSTRUCTION = [
-  '당신은 한국어 사주 해석을 돕는 설명자다. 제공된 계산 결과와 자료의 의미만을 근거로 답하라.',
-  '금·목·수·화·토 중 한 종류를 모든 사람에게 같은 삶의 영역으로 고정하지 마라. chart.day.stem과 tenGodFacts에 따른 분류를 사용하라.',
-  '사용자의 질문을 먼저 파악하고 그 주제와 직접 관련된 계산 근거만 골라 답하라. 질문하지 않은 주제로 풀이를 확장하지 마라.',
-  '질문과 직접 관련된 근거가 부족하면 짧게 그 한계를 말하고 끝내라. 다른 분류를 끌어와 답변 분량을 채우지 마라.',
-  '사주를 모르는 사람과 대화하듯 쉬운 말로 답하라. 질문에 대한 답을 첫 문장에 바로 말하라.',
-  '답변은 질문에 맞는 생활 속 주제로 구성하라. 계산 분류를 하나씩 소개하거나 정의하는 형식으로 쓰지 마라.',
-  '사용자가 수치나 계산법을 직접 묻지 않았다면 개수나 분류 목록을 나열하지 마라. 한자, 영어, JSON 키를 답변에 쓰지 마라.',
-  '계산 표에서 0으로 표시된 주제가 있어도 삶의 그 부분이나 능력이 없거나 부족하다고 말하지 마라.',
-  '계산값과 전통적 해석을 구별하고, 한 항목의 개수만으로 성격·미래 사건을 단정하지 마라.',
-  '답변에서 언급한 항목은 실제 계산값을 근거로 제시하라. 사용하지 않은 항목이 영향을 주었다고 주장하지 마라.',
-  'sipseong.counts와 elements.counts는 서로 다른 기준으로 센 값이다. ilju.twelveStage를 두 값의 근거로 삼지 마라.',
-  'elements.counts와 elements.weighted도 기준이 다르다. 한쪽 값이 0이어도 다른 쪽은 0이 아닐 수 있다.',
-  'counts의 가장 큰 값도 그 표에서 가장 많이 세어진 값일 뿐이다. 개수만으로 강하다, 발달했다, 균형 잡혔다고 평가하지 마라.',
-  '개수를 설명할 때도 당신은 강하다, 능력이 좋다, 성향이 뚜렷하다 같은 결론으로 연결하지 마라.',
-  '어떤 주제든 tenGodFacts와 sipseong.counts의 해당 값을 근거로 쓰고, ilju.twelveStage를 그 값의 근거로 삼지 마라.',
-  '제공되지 않은 세운이나 특정 연도의 운세를 계산한 것처럼 말하지 마라.',
-  '답할 근거가 충분할 때만 제목이나 Markdown 기호 없이 짧은 문단 2~3개, 전체 6~8문장으로 답하라. 근거가 부족하면 2~3문장으로 답하라.',
-  '첫 문단에서 질문에 답하고 관련된 계산 근거를 일상의 말로 풀어라. 다음 문단에는 가상의 일상 장면과 알 수 없는 점을 담아라.',
-  '일상 장면은 “예를 들면”으로 시작하는 예시로만 써라. 사용자가 실제로 겪었거나 그렇게 행동한다는 주장으로 쓰지 마라.',
-  '사용자 답변에 “집계”, “항목의 개수가 없다”, “그러한 부분”처럼 딱딱하거나 모호한 표현을 쓰지 마라.',
-].join('\n')
-const WEALTH_ZERO_GUIDANCE = [
-  '재성이 0개인 명식에서 재물 질문을 받았다. 다른 분류로 돈을 버는 방식이나 성향을 추측하지 마라.',
-  '최종 답변은 다음 두 문장만 사용하라: “이 사주만으로 돈을 얼마나 벌거나 모을지 알 수 없어요. 돈과 관련된 값이 적게 보인다는 이유만으로 돈복이 없다고 볼 수도 없어요.”',
-].join('\n')
-const PERSONALITY_GUIDANCE = [
-  '성향 질문에서는 사주 계산으로 실제 성격을 단정할 수 없음을 먼저 말하라. 숫자에서 활동적, 생각이 많다, 표현력이 풍부하다 같은 성격을 추론하지 마라.',
-  '관련된 주제를 일상 장면으로 설명하되, 그 장면이 사용자의 실제 습관이나 취향이라고 주장하지 마라.',
-].join('\n')
-const DAY_PILLAR_INSTRUCTION = [
-  '당신은 한국어 사주 해석을 돕는 설명자다. 제공된 계산 결과와 용어 설명만을 근거로 답하라.',
-  PLAIN_LANGUAGE_INSTRUCTION,
-  '사용자가 물은 일주와 일간만 설명하라. 제공되지 않은 십성 개수, 오행 분포, 대운을 언급하지 마라.',
-  '태어난 날을 나타내는 두 글자와 첫 글자를 정확히 말하고, 사주를 모르는 사람도 알 수 있게 짧게 풀어라.',
-  '일주 하나로 성격, 능력, 재산, 직업, 건강, 미래 사건을 단정하지 마라.',
-  '제목이나 Markdown 기호 없이 짧고 자연스러운 한국어 문장으로 답하라. 필요한 경우를 제외하고 한자와 전문 용어를 나열하지 마라.',
+  LANGUAGE_INSTRUCTION,
+  '출생 정보를 전통적인 방법으로 분류한 단서로 사주를 풀이하라. prominent가 참인 주제가 두드러진 특징이다. 그 외 주제가 약하다거나 다른 주제가 더 강하다는 등급을 새로 만들지 마라.',
+  '질문과 관련된 특징 두세 가지에 집중하라. 사주에서 읽은 특징, 그 특징이 생활에서 드러나는 모습, 그래서 잘 맞는 선택과 주의할 점을 연결하라. 일반적인 조언만 나열하지 마라.',
+  '특징을 나타난 횟수나 수준으로 설명하지 말고 어떤 성향으로 읽히는지 풀어라. 주제 이름을 그대로 인용하지 말고 질문에 맞게 해석하라.',
+  '강점과 잘 맞는 방식은 자신 있게 말하라. 모든 말을 가능성으로 흐리지 마라. 주의점은 사람의 인격을 평가하는 대신 부담이 생기는 상황과 대처 방법으로 설명하라.',
+  '관찰되지 않은 주제는 실제 능력을 평가할 근거가 아니다. 사주 단서로 사용자의 실제 경험이나 다른 사람의 속마음을 지어내거나 미래 사건의 결과를 보장하지 마라.',
+  '현재 날짜와 현재에 해당하는 장기 구간, 특정 연도의 운세는 제공되지 않는다. 지금의 구간이나 앞으로 사건이 일어날 시기를 추측하지 마라.',
+  '근거가 충분하면 4~6개 문단, 12~18문장으로 충분히 설명하라. 근거가 제한적이면 3~5개 문단, 8~12문장 안에서 확인되는 범위만 설명하라.',
+  '같은 뜻을 바꾸어 쓰며 분량을 채우지 마라. 질문에 답하는 데 필요한 한계만 짧게 밝히고 상담을 시작하거나 끝낼 때마다 면책 문장을 붙이지 마라.',
 ].join('\n')
 
+const READING_REQUEST = [
+  '왜 그런 풀이가 나왔는지 사주에서 읽은 특징을 자연스럽게 밝히고, 그 특징과 이유가 이어지는 상담을 해 주세요. 특징마다 한 문단씩 소개하지 말고 두세 가지를 충분히 풀어 주세요.',
+  '특징을 수준이나 횟수로 평가하지 말고 생활에서 어떤 모습으로 드러나는지 이야기해 주세요. 강점은 분명하게, 주의점은 상황과 대처 방법으로 말해 주세요.',
+  '최종 풀이만 자연스러운 존댓말로 전달해 주세요. 사용자의 걱정을 사실로 받아들이거나 미래의 결말을 확정하지 마세요.',
+].join('\n')
+
+function createConsultationContext(input: CreateMessagesInput) {
+  const weights = Object.values(input.elements.weighted)
+  const minimum = Math.min(...weights)
+  const maximum = Math.max(...weights)
+  const describeElements = (elements: ReadonlyArray<Element>) =>
+    elements.flatMap((element) => {
+      const category = sipseongOfElement(input.chart.day.stem, element)
+      return category === null ? [] : [SUBJECTS[category]]
+    })
+  return {
+    ...(input.question.includes('대운')
+      ? {
+          daeun:
+            input.daeun === null
+              ? null
+              : {
+                  periods: input.daeun.pillars.map((period) => ({
+                    subjects: describeElements([period.stemElement, period.branchElement]),
+                  })),
+                },
+        }
+      : {}),
+    question: input.question,
+    themes: ELEMENTS.flatMap((element) => {
+      const category = sipseongOfElement(input.chart.day.stem, element)
+      return category === null
+        ? []
+        : [
+            {
+              observed: input.sipseong.counts[category] > 0,
+              prominent: minimum !== maximum && input.elements.weighted[element] === maximum,
+              subject: SUBJECTS[category],
+            },
+          ]
+    }),
+  }
+}
+
+/** Builds a consultation from readable calculation facts, keeping requested day names exact. */
 export function createMessages(input: CreateMessagesInput): TextGenerationMessage[] {
   const readingTopics = getReadingTopics(input.question)
   if (DAY_PILLAR_PATTERN.test(input.question) && readingTopics.length === 0) {
     return [
-      {content: DAY_PILLAR_INSTRUCTION, role: 'system'},
+      {
+        content: [
+          LANGUAGE_INSTRUCTION,
+          '사용자가 물은 일주와 일간만 짧게 설명하라. 태어난 날의 두 글자와 그중 첫 글자를 구분하고, 이 이름으로 성격이나 미래를 단정하지 마라.',
+        ].join('\n'),
+        role: 'system',
+      },
       {
         content: JSON.stringify({
-          birth: input.birth,
           chart: {day: input.chart.day},
-          glossary: {
-            십이운성: GLOSSARY.십이운성,
-            일간: GLOSSARY.일간,
-            일주: GLOSSARY.일주,
-          },
-          ilju: input.ilju,
           question: input.question,
         }),
         role: 'user',
@@ -119,46 +116,30 @@ export function createMessages(input: CreateMessagesInput): TextGenerationMessag
 
   const limits = [
     ...(input.chart.hour === null
-      ? ['출생 시각이 없어 시주를 계산하지 않았다. 시주에 근거한 풀이는 하지 마라.']
+      ? ['출생 시각은 알 수 없다. 시각에 근거한 풀이는 하지 마라.']
       : []),
     ...(input.daeun === null
-      ? ['대운을 계산하지 않았다. 대운의 방향이나 시기를 추정하지 마라.']
+      ? ['장기 구간을 계산하지 않았다. 장기 구간의 방향과 시기를 추정하지 마라.']
       : []),
-  ]
-  const topicGuidance = [
     ...(readingTopics.includes('wealth') && input.sipseong.counts.재성 === 0
-      ? [WEALTH_ZERO_GUIDANCE]
+      ? [
+          '돈과 관련된 단서가 관찰되지 않아도 돈복이 없거나 다른 활동으로 돈을 벌어야 한다는 뜻은 아니다. 이 사실만으로 실제 재산과 수입, 돈을 버는 방식과 성향을 추측하지 마라.',
+        ]
       : []),
-    ...(readingTopics.includes('personality') ? [PERSONALITY_GUIDANCE] : []),
+    ...(readingTopics.includes('personality')
+      ? [
+          '성향은 사주에서 읽는 특징으로 설명하라. 강점과 주의할 점을 구체적인 생활 장면에 연결하되 사용자의 실제 습관이나 과거 경험을 지어내지 마라.',
+        ]
+      : []),
   ]
-  const tenGodFacts = ELEMENTS.map((element) => {
-    const category = sipseongOfElement(input.chart.day.stem, element)
-    return {category, count: category === null ? null : input.sipseong.counts[category], element}
-  })
-  const tenGodsByElement = Object.fromEntries(
-    tenGodFacts.map(({category, element}) => [element, category]),
-  )
 
   return [
+    {content: [SYSTEM_INSTRUCTION, ...limits].join('\n'), role: 'system'},
     {
-      content: [SYSTEM_INSTRUCTION, ...limits, ...topicGuidance, PLAIN_LANGUAGE_INSTRUCTION].join(
-        '\n',
-      ),
-      role: 'system',
-    },
-    {
-      content: JSON.stringify({
-        birth: input.birth,
-        chart: input.chart,
-        daeun: input.daeun,
-        elements: {counts: input.elements.counts, weighted: input.elements.weighted},
-        glossary: GLOSSARY,
-        ilju: input.ilju,
-        question: input.question,
-        sipseong: {counts: input.sipseong.counts, dayMaster: input.sipseong.dayMaster},
-        tenGodFacts,
-        tenGodsByElement,
-      }),
+      content: [
+        JSON.stringify(createConsultationContext(input)),
+        [`상담할 질문: ${input.question}`, READING_REQUEST].join('\n'),
+      ].join('\n\n'),
       role: 'user',
     },
   ]

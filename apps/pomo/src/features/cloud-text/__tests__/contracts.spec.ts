@@ -59,6 +59,35 @@ it('should reject partially unlimited or negative allowance fields', () => {
 })
 
 describe('cloudTextRequestSchema', () => {
+  it.each([{temperature: 0}, {temperature: 0.2}, {temperature: 2}])(
+    'should preserve an explicit sampling temperature of $temperature',
+    ({temperature}) => {
+      const request = {
+        maximumTokens: 2048,
+        messages: [{content: '질문', role: 'user'}],
+        requestId: '019d1990-1dc9-7255-a7b5-f9459dfaf781',
+        temperature,
+      }
+      expect(cloudTextRequestSchema.parse(request)).toEqual(request)
+    },
+  )
+
+  it.each([
+    {temperature: -0.1},
+    {temperature: 2.1},
+    {temperature: Number.NaN},
+    {temperature: '0.2'},
+  ])('should reject an invalid sampling temperature of $temperature', ({temperature}) => {
+    expect(
+      cloudTextRequestSchema.safeParse({
+        maximumTokens: 2048,
+        messages: [{content: '질문', role: 'user'}],
+        requestId: '019d1990-1dc9-7255-a7b5-f9459dfaf781',
+        temperature,
+      }).success,
+    ).toBe(false)
+  })
+
   it.each([
     {aboveLimit: false, count: 6, repetitions: 8000, unit: 'a'},
     {aboveLimit: true, count: 6, repetitions: 8000, unit: 'a'},

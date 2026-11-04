@@ -12,6 +12,7 @@ import {Saju} from '../Saju'
 vi.mock('src/features/cloud-text/client', () => ({requestCloudText: vi.fn()}))
 
 const draftKey = 'pomo:saju:form-draft:v1'
+const sajuTemperature = 0.2
 let previousDraft: string | null
 
 beforeEach(() => {
@@ -77,6 +78,7 @@ it.each([
     .element(page.getByRole('region', {name: '사주 풀이 결과'}))
     .toHaveTextContent(CLOUD_TEXT_RESPONSE.text)
   expect(requestCloudText).toHaveBeenCalledOnce()
+  expect(vi.mocked(requestCloudText).mock.calls[0]![0].temperature).toBe(sajuTemperature)
   expect(vi.mocked(requestCloudText).mock.calls[0]![0].messages.at(-1)?.content).toContain(question)
   expect(startTextModel).not.toHaveBeenCalled()
   expect(page.getByRole('alert').query()).toBeNull()
