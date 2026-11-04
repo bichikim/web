@@ -140,6 +140,21 @@ export const SPoffoTrackingAdjustment = (props: SPoffoTrackingAdjustmentProps) =
         </Match>
         <Match when={section() === 'bindings'}>{props.children}</Match>
       </Switch>
+      <Show when={props.mode === 'cursor' && section() !== 'bindings'}>
+        <div title="캐릭터 높이의 배수">
+          <SPoffoTrackingField
+            field={{
+              key: 'cursorReach',
+              label: '최대 도달 거리',
+              ...TRACKING_LIMITS.cursorReach,
+              step: 0.05,
+              unit: '배',
+            }}
+            value={props.value}
+            onChange={props.onChange}
+          />
+        </div>
+      </Show>
     </div>
   )
 }

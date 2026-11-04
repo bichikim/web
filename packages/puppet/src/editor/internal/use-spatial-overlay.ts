@@ -1,5 +1,6 @@
 import {type Accessor, createEffect, onCleanup, untrack} from 'solid-js'
 import type {Player} from '../../player'
+import {observeInheritedStyle} from './observe-inherited-style'
 import {
   createSpatialThreeOverlay,
   type SpatialThreeOverlay,
@@ -22,6 +23,20 @@ export const useSpatialOverlay = (options: SpatialOverlayOptions) => {
     overlay?.destroy()
     overlay = undefined
   }
+  createEffect(() => {
+    const canvas = options.canvas()
+    const player = options.player()
+    const surface = options.surface()
+    if (canvas !== undefined && player !== null && surface !== undefined) {
+      onCleanup(
+        observeInheritedStyle({
+          element: canvas,
+          onChange: () => player.redraw(),
+          properties: ['--spatial-mesh-face', '--spatial-mesh-edge', '--spatial-mesh-light'],
+        }),
+      )
+    }
+  })
   createEffect(() => {
     const current = options.player()
     const canvas = options.canvas()

@@ -11,12 +11,14 @@ afterEach(() => vi.resetAllMocks())
 
 const resource = (): PlayerRenderer => ({
   applyFrame: vi.fn(),
+  applyPreparedFrame: vi.fn(),
   destroy: vi.fn(),
   getPaintOrder: vi.fn(() => []),
   getPartVertices: vi.fn(),
   getRenderingInfo: vi.fn(() => ({antialiasing: 'ssaa' as const, renderer: 'webgl' as const})),
   redraw: vi.fn(),
   resize: vi.fn(),
+  setFit: vi.fn(),
   setRunning: vi.fn(),
   setViewCamera: vi.fn(),
   subscribeFrame: vi.fn(),

@@ -69,3 +69,17 @@ describe('createMotionSoundLoader', () => {
     expect(fetchBytes).toHaveBeenCalledOnce()
   })
 })
+
+test('should publish completed sound resources and return owned resource maps', async () => {
+  const onLoad = vi.fn()
+  const loader = createMotionSoundLoader({fetchBytes: async () => wav.slice().buffer, onLoad})
+  loader.load(document('a.wav'))
+  await Promise.resolve()
+  await Promise.resolve()
+  expect(onLoad).toHaveBeenCalledOnce()
+  const snapshot = loader.snapshot()
+  snapshot.clear()
+  expect(loader.get('a.wav')).toBeDefined()
+  loader.load(document())
+  expect(loader.snapshot().size).toBe(0)
+})

@@ -20,6 +20,7 @@ export const WorkspaceLoader = (props: EditorAppProps) => {
         </Show>
       </Suspense>
       <EditorToast
+        tone="error"
         message={
           session.failure() === null
             ? undefined

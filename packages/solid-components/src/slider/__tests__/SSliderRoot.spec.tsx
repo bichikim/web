@@ -1,13 +1,54 @@
 /** @vitest-environment jsdom */
 
 import {fireEvent, render} from '@solidjs/testing-library'
-import {describe, expect, it, vi} from 'vitest'
+import {afterEach, describe, expect, it, vi} from 'vitest'
 import {SSliderBar} from '../SSliderBar'
 import {SSliderHandle} from '../SSliderHandle'
 import {SSliderRangeKnob} from '../SSliderRangeKnob'
 import {SSliderRoot} from '../SSliderRoot'
 
+afterEach(() => vi.unstubAllGlobals())
+
 describe('slider components', () => {
+  it('should reposition the handle on resize without changing its percentage and disconnect on unmount', () => {
+    const callbacks: Array<() => void> = []
+    const disconnect = vi.fn()
+    vi.stubGlobal(
+      'ResizeObserver',
+      class {
+        constructor(callback: () => void) {
+          callbacks.push(callback)
+        }
+        observe = vi.fn()
+        disconnect = disconnect
+      },
+    )
+    const view = render(() => (
+      <SSliderRoot>
+        <SSliderBar component="div" data-testid="bar">
+          <SSliderHandle component="button">Handle</SSliderHandle>
+        </SSliderBar>
+      </SSliderRoot>
+    ))
+    const bar = view.getByTestId('bar')
+    const handle = view.getByRole('slider')
+    const bounds = vi.spyOn(bar, 'getBoundingClientRect')
+    bounds.mockReturnValue(new DOMRect(0, 0, 200, 20))
+    vi.spyOn(handle, 'getBoundingClientRect').mockReturnValue(new DOMRect(0, 0, 20, 20))
+    fireEvent.click(bar, {clientX: 100})
+    expect(handle).toHaveAttribute('aria-valuenow', '50')
+    expect(handle.style.getPropertyValue('--var-position')).toBe('90px')
+
+    bounds.mockReturnValue(new DOMRect(0, 0, 400, 20))
+    callbacks.forEach((callback) => callback())
+    expect(handle).toHaveAttribute('aria-valuenow', '50')
+    expect(handle.style.getPropertyValue('--var-position')).toBe('190px')
+    fireEvent.click(bar, {clientX: 200})
+    expect(handle.style.getPropertyValue('--var-position')).toBe('190px')
+    view.unmount()
+    expect(disconnect).toHaveBeenCalledOnce()
+  })
+
   it.each(['horizontal', 'vertical'] as const)(
     'should use the current %s bar size after layout changes',
     (type) => {

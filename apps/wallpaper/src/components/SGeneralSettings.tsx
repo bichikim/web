@@ -2,11 +2,11 @@ import {version} from '../../package.json'
 import icon from '../../src-tauri/icons/icon.png?url'
 
 export const SGeneralSettings = () => (
-  <section aria-label="일반" class="grid gap-6 pt-6">
+  <section aria-label="일반" class="grid gap-6">
     <div class="flex items-center gap-4">
       <img src={icon} alt="" class="h-12 w-12 rounded-xl" />
       <div>
-        <h2 class="m-0 text-lg font-semibold">Wallpaper</h2>
+        <h3 class="m-0 text-lg font-semibold">Wallpaper</h3>
         <p class="m-0 text-xs text-stone-600">버전 {version}</p>
       </div>
     </div>

@@ -17,7 +17,7 @@ export const SAlbumImport = (props: SAlbumImportProps) => {
   }
   return (
     <>
-      <label class="shrink-0 cursor-pointer" title="사진·동영상 추가">
+      <label class="relative shrink-0 cursor-pointer" title="사진·동영상 추가">
         <input
           type="file"
           class="peer sr-only"

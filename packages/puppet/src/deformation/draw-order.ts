@@ -15,49 +15,84 @@ import {sampleParameterCoordinates} from './parameter'
 
 const CUBISM_ORDER_TOLERANCE = 0.001
 
-interface ComposeKeyedDrawOrderOptions {
+interface CreateDrawOrderSamplerOptions {
+  /** Immutable targeting bindings, applied in document order. */
   readonly bindings: ReadonlyArray<PuppetParameterBinding>
+  /** Immutable parameter ranges and draw-order rounding policies. */
   readonly document: PuppetDocument
   /** Keyed draw orders per keyform of a targeting binding; `undefined` keeps the rest value. */
   readonly keyed: (binding: PuppetParameterBinding) => ReadonlyArray<number | undefined> | undefined
-  readonly parameterValues?: PuppetParameterValueMap
+  /** Unkeyed draw order and fallback for missing keyform channels. */
   readonly rest: number
 }
 
-/**
- * The rest draw order moved by every targeting binding's sampled keyform offset, weighted by
- * its influence (as opacity is), within 0..1000.
- */
-const composeKeyedDrawOrder = (options: ComposeKeyedDrawOrderOptions) => {
-  const drawOrder = options.bindings.reduce((current, binding) => {
+/** Prepares immutable keyform channels and retains the latest draw-order input/result. */
+const createDrawOrderSampler = (
+  options: CreateDrawOrderSamplerOptions,
+): ((values?: PuppetParameterValueMap) => number) => {
+  const inputs = options.bindings.flatMap((binding) => {
     const keyed = options.keyed(binding)
     if (keyed === undefined) {
-      return current
+      return []
     }
-    const [sampled = options.rest] = sampleParameterCoordinates({
-      binding,
-      keyformCoordinates: keyed.map((value) => (value === undefined ? undefined : [value])),
-      repeatRanges: getRepeatRanges(binding.parameterIds, options.document.parameters),
-      restCoordinates: [options.rest],
-      values: getParameterBindingValues({
+    // Triangulated channels retain their weighted arithmetic even when all keys equal rest.
+    const preservesConstant = binding.interpolation === 'grid' || binding.parameterIds.length === 1
+    if (
+      preservesConstant &&
+      keyed.every((value) => value === undefined || value === options.rest)
+    ) {
+      return []
+    }
+    return [
+      {binding, coordinates: keyed.map((value) => (value === undefined ? undefined : [value]))},
+    ]
+  })
+  const parameterIds = [
+    ...new Set(
+      inputs.flatMap(({binding}) => [
+        ...binding.parameterIds,
+        ...(binding.influences ?? []).map((influence) => influence.parameterId),
+      ]),
+    ),
+  ]
+  let previousValues: ReadonlyArray<number | undefined> | undefined
+  let previous: number | undefined
+  return (parameterValues) => {
+    if (
+      previous !== undefined &&
+      parameterIds.every((id, index) => Object.is(parameterValues?.[id], previousValues?.[index]))
+    ) {
+      return previous
+    }
+    const drawOrder = inputs.reduce((current, {binding, coordinates}) => {
+      const [sampled = options.rest] = sampleParameterCoordinates({
         binding,
-        document: options.document,
-        parameterValues: options.parameterValues,
-      }),
-    })
-    const weight = getBindingInfluence({
-      binding,
-      document: options.document,
-      parameterValues: options.parameterValues,
-    })
-    return current + (sampled - options.rest) * weight
-  }, options.rest)
-  const rounded =
-    options.document.drawOrderRounding === 'cubism'
-      ? Math.trunc(Math.fround(Math.fround(drawOrder) + CUBISM_ORDER_TOLERANCE))
-      : drawOrder
-  return clamp(rounded, 0, PUPPET_MAXIMUM_DRAW_ORDER)
+        keyformCoordinates: coordinates,
+        repeatRanges: getRepeatRanges(binding.parameterIds, options.document.parameters),
+        restCoordinates: [options.rest],
+        values: getParameterBindingValues({binding, document: options.document, parameterValues}),
+      })
+      const weight = getBindingInfluence({binding, document: options.document, parameterValues})
+      return current + (sampled - options.rest) * weight
+    }, options.rest)
+    const rounded =
+      options.document.drawOrderRounding === 'cubism'
+        ? Math.trunc(Math.fround(Math.fround(drawOrder) + CUBISM_ORDER_TOLERANCE))
+        : drawOrder
+    previousValues = parameterIds.map((id) => parameterValues?.[id])
+    previous = clamp(rounded, 0, PUPPET_MAXIMUM_DRAW_ORDER)
+    return previous
+  }
 }
+
+const partSamplers = new WeakMap<
+  PuppetDocument,
+  Map<string, ReturnType<typeof createDrawOrderSampler>>
+>()
+const groupSamplers = new WeakMap<
+  PuppetDocument,
+  WeakMap<PuppetSceneGroupNode, ReturnType<typeof createDrawOrderSampler>>
+>()
 
 /** A part's draw order with its keyforms (`targetPartIds` bindings) applied. */
 export const composeParameterPartDrawOrder = (
@@ -65,9 +100,18 @@ export const composeParameterPartDrawOrder = (
   partId: string,
   parameterValues?: PuppetParameterValueMap,
 ) => {
+  let samplers = partSamplers.get(document)
+  if (samplers === undefined) {
+    samplers = new Map()
+    partSamplers.set(document, samplers)
+  }
+  const previous = samplers.get(partId)
+  if (typeof previous === 'function') {
+    return previous(parameterValues)
+  }
   const part = document.parts.find((candidate) => candidate.id === partId)
   const rest = part?.properties?.drawOrder ?? PUPPET_DEFAULT_DRAW_ORDER
-  return composeKeyedDrawOrder({
+  const sample = createDrawOrderSampler({
     bindings: getTargetBindings(document.parameterBindings ?? [], 'targetPartIds', partId),
     document,
     keyed: (binding) =>
@@ -77,9 +121,12 @@ export const composeParameterPartDrawOrder = (
             return properties === undefined ? undefined : (properties.drawOrder ?? rest)
           })
         : undefined,
-    parameterValues,
     rest,
   })
+  if (part !== undefined) {
+    samplers.set(partId, sample)
+  }
+  return sample(parameterValues)
 }
 
 /** A draw order group's draw order with its keyforms (`targetGroupIds` bindings) applied. */
@@ -88,8 +135,17 @@ export const composeParameterGroupDrawOrder = (
   group: PuppetSceneGroupNode,
   parameterValues?: PuppetParameterValueMap,
 ) => {
+  let samplers = groupSamplers.get(document)
+  if (samplers === undefined) {
+    samplers = new WeakMap()
+    groupSamplers.set(document, samplers)
+  }
+  const previous = samplers.get(group)
+  if (typeof previous === 'function') {
+    return previous(parameterValues)
+  }
   const rest = group.properties?.drawOrder ?? PUPPET_DEFAULT_DRAW_ORDER
-  return composeKeyedDrawOrder({
+  const sample = createDrawOrderSampler({
     bindings: getTargetBindings(document.parameterBindings ?? [], 'targetGroupIds', group.id),
     document,
     keyed: (binding) =>
@@ -101,7 +157,8 @@ export const composeParameterGroupDrawOrder = (
             return properties === undefined ? undefined : (properties.drawOrder ?? rest)
           })
         : undefined,
-    parameterValues,
     rest,
   })
+  samplers.set(group, sample)
+  return sample(parameterValues)
 }

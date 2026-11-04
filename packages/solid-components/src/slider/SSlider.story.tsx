@@ -1,5 +1,6 @@
 import {Meta, StoryObj} from 'storybook-solidjs-vite'
 import {SSlider} from './'
+import {createSignal} from 'solid-js'
 import {expect, fireEvent, userEvent, waitFor, within} from 'storybook/test'
 
 const meta = {
@@ -44,7 +45,7 @@ export const Horizontal: Story = {
       >
         <SSlider.Handle
           component="div"
-          class="h-full w-2rem bg-blue-200 absolute left-var-position"
+          class="h-full w-2rem bg-blue-200 absolute left-[var(--var-position)]"
         />
       </SSlider.Bar>
     </SSlider.Root>
@@ -58,7 +59,7 @@ export const Vertical: Story = {
       <SSlider.Bar component="div" data-testid="bar" class="h-20rem w-2rem bg-blue-500 relative">
         <SSlider.Handle
           component="div"
-          class="h-2rem w-full bg-blue-200 absolute top-var-position"
+          class="h-2rem w-full bg-blue-200 absolute top-[var(--var-position)]"
         />
       </SSlider.Bar>
     </SSlider.Root>
@@ -74,10 +75,57 @@ export const InitiallyHidden: Story = {
         <SSlider.Bar component="div" data-testid="bar" class="h-2rem w-20rem bg-blue-500 relative">
           <SSlider.Handle
             component="div"
-            class="h-full w-2rem bg-blue-200 absolute left-var-position"
+            class="h-full w-2rem bg-blue-200 absolute left-[var(--var-position)]"
           />
         </SSlider.Bar>
       </SSlider.Root>
     </details>
   ),
+}
+
+const ResizableSlider = () => {
+  const [expanded, setExpanded] = createSignal(false)
+  const handleResize = () => setExpanded((value) => !value)
+  return (
+    <>
+      <button onClick={handleResize}>Resize track</button>
+      <SSlider.Root>
+        <SSlider.Bar
+          component="div"
+          data-testid="bar"
+          class="h-2rem bg-blue-500 relative"
+          classList={{'w-20rem': !expanded(), 'w-40rem': expanded()}}
+        >
+          <SSlider.Handle
+            component="div"
+            aria-label="Resizable slider"
+            class="h-full w-2rem bg-blue-200 absolute left-[var(--var-position)]"
+          />
+        </SSlider.Bar>
+      </SSlider.Root>
+    </>
+  )
+}
+
+export const Resizable: Story = {
+  play: async (context) => {
+    await clickBar(context)
+    const canvas = within(context.canvasElement)
+    const bar = canvas.getByTestId('bar')
+    const handle = canvas.getByRole('slider')
+    await userEvent.click(canvas.getByRole('button', {name: 'Resize track'}))
+    await waitFor(() => {
+      const bounds = bar.getBoundingClientRect()
+      const knob = handle.getBoundingClientRect()
+      expect(bounds.width).toBe(640)
+      expect(knob.left - bounds.left).toBeCloseTo((bounds.width - knob.width) * 0.75)
+    })
+    const bounds = bar.getBoundingClientRect()
+    await fireEvent.click(bar, {
+      clientX: bounds.left + bounds.width * 0.75,
+      clientY: bounds.top + bounds.height / 2,
+    })
+    await expect(handle).toHaveAttribute('aria-valuenow', '75')
+  },
+  render: ResizableSlider,
 }

@@ -290,3 +290,66 @@ test('should expose correction output separately from temporary manual overrides
   result.handleFrame({timestamp: 2, values: null})
   expect(result.correctionValues()['face-x']).toBeUndefined()
 })
+
+test.each([
+  {expressions: []},
+  {expressions: [{id: 'other', key: '', name: 'Other', values: {'face-x': 3}}]},
+])(
+  'should release an expression absent from the replacement profile and retain manual values (%j)',
+  ({expressions}) => {
+    const {result} = renderHook(() =>
+      useRuntimeControls({document: () => document, onMotion: () => undefined}),
+    )
+    result.setManual('face-x', 20)
+    result.addExpression('Pose')
+    expect(result.activeExpression()).not.toBeNull()
+    expect(result.manual()).toEqual({})
+    result.setManual('face-x', 12)
+    result.updateProfile({...result.profile()!, expressions})
+    expect(result.activeExpression()).toBeNull()
+    expect(result.manual()).toEqual({'face-x': 12})
+    expect(result.values()).toEqual({'face-x': 12})
+    result.clearManual()
+    expect(result.values()).toEqual({})
+  },
+)
+
+test('should retain a selected expression ID and apply its replacement values', () => {
+  const {result} = renderHook(() =>
+    useRuntimeControls({document: () => document, onMotion: () => undefined}),
+  )
+  result.setManual('face-x', 20)
+  result.addExpression('Pose')
+  const id = result.activeExpression()
+  result.updateProfile({
+    ...result.profile()!,
+    expressions: result.profile()!.expressions.map((preset) => ({
+      ...preset,
+      values: {'face-x': 8},
+    })),
+  })
+  expect(result.activeExpression()).toBe(id)
+  expect(result.values()).toEqual({'face-x': 8})
+  result.updateView({...result.profile()!.view!, fitted: false})
+  expect(result.activeExpression()).toBe(id)
+  result.setManual('face-x', 12)
+  expect(result.values()).toEqual({'face-x': 12})
+})
+
+test('should reset temporary expression and manual state on document replacement', () => {
+  const [source, setSource] = createSignal<typeof document | undefined>(document)
+  const {result} = renderHook(() =>
+    useRuntimeControls({document: source, onMotion: () => undefined}),
+  )
+  result.setManual('face-x', 20)
+  result.addExpression('Pose')
+  result.setManual('face-x', 12)
+  setSource({...document})
+  expect(result.profile()!.expressions).toHaveLength(1)
+  expect(result.activeExpression()).toBeNull()
+  expect(result.manual()).toEqual({})
+  setSource(undefined)
+  expect(result.profile()).toBeUndefined()
+  expect(result.activeExpression()).toBeNull()
+  expect(result.values()).toEqual({})
+})

@@ -122,7 +122,11 @@ export const WorkspaceNavigation = (props: WorkspaceNavigationProps) => {
           </button>
         </Show>
       </nav>
-      <EditorToast message={navigation.error() ?? undefined} onDismiss={navigation.dismissError} />
+      <EditorToast
+        tone="error"
+        message={navigation.error() ?? undefined}
+        onDismiss={navigation.dismissError}
+      />
     </>
   )
 }

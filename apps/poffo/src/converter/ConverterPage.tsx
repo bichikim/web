@@ -32,48 +32,55 @@ export const ConverterPage = () => {
     }
   }
   return (
-    <main class="min-h-screen bg-slate-950 px-6 py-10 text-slate-100 font-sans">
+    <main class="puppet-editor converter-page">
       <style>{`@unocss-placeholder`}</style>
       <div class="mx-auto max-w-3xl space-y-8">
         <header class="space-y-4">
           <a
-            class="text-sm text-cyan-300 underline underline-offset-3"
+            class="text-sm text-[var(--puppet-color-accent,#67e8f9)] underline underline-offset-3"
             href="/editor"
             onClick={handleEditorOpen}
           >
             ← Poffo 편집기
           </a>
           <h1 class="editor-type-document-title">Poffo 변환기</h1>
-          <p class="max-w-2xl text-slate-300 leading-relaxed">
+          <p class="max-w-2xl text-[var(--puppet-color-text-secondary,#cbd5e1)] leading-relaxed">
             .cmo3, .moc3 또는 모델 폴더·ZIP을 Poffo JSON으로 변환합니다.
           </p>
         </header>
 
-        <section aria-labelledby="source-heading" class="space-y-4 rounded-xl bg-slate-900 p-6">
+        <section
+          aria-labelledby="source-heading"
+          class="space-y-4 rounded-xl bg-[var(--puppet-color-panel,#0f172a)] p-6"
+        >
           <h2 id="source-heading" class="text-lg font-medium">
             원본 모델
           </h2>
           <label class="block space-y-2">
-            <span class="block text-sm text-slate-300">.cmo3 · .moc3 · 모델 ZIP</span>
+            <span class="block text-sm text-[var(--puppet-color-text-secondary,#cbd5e1)]">
+              .cmo3 · .moc3 · 모델 ZIP
+            </span>
             <input
               accept=".cmo3,.moc3,.zip"
               aria-label="모델 파일"
-              class="block w-full rounded-md border border-slate-600 bg-slate-950 p-3 text-sm text-slate-100"
+              class="converter-file-input"
               onChange={handleFileChange}
               type="file"
             />
           </label>
           <label class="block space-y-2">
-            <span class="block text-sm text-slate-300">모델 폴더</span>
+            <span class="block text-sm text-[var(--puppet-color-text-secondary,#cbd5e1)]">
+              모델 폴더
+            </span>
             <input
               aria-label="모델 폴더"
-              class="block w-full rounded-md border border-slate-600 bg-slate-950 p-3 text-sm text-slate-100"
+              class="converter-file-input"
               multiple
               onChange={handleFolderChange}
               type="file"
               bool:webkitdirectory={true}
             />
-            <span class="block text-sm text-slate-300">
+            <span class="block text-sm text-[var(--puppet-color-text-secondary,#cbd5e1)]">
               .moc3와 PNG를 자동으로 찾습니다. model3.json이 있으면 텍스처 순서도 읽습니다.
             </span>
           </label>
@@ -86,11 +93,13 @@ export const ConverterPage = () => {
           </Show>
           <Show when={converter.format() === undefined || converter.format() === 'cmo3'}>
             <label class="block space-y-2">
-              <span class="block text-slate-300">SDK 모델 ZIP (선택)</span>
+              <span class="block text-[var(--puppet-color-text-secondary,#cbd5e1)]">
+                SDK 모델 ZIP (선택)
+              </span>
               <input
                 accept=".zip"
                 aria-label="SDK 모델 ZIP"
-                class="block w-full rounded-md border border-slate-600 bg-slate-950 p-3 text-slate-100"
+                class="converter-file-input"
                 onChange={handleSdkChange}
                 type="file"
               />
@@ -104,7 +113,8 @@ export const ConverterPage = () => {
           </Show>
           <Show when={converter.error()}>
             <p
-              class="whitespace-pre-line break-words rounded-lg border border-red-400 p-4 text-red-200"
+              class="whitespace-pre-line break-words rounded-lg border p-4
+                border-[var(--puppet-color-error,#f87171)] text-[var(--puppet-color-error,#fecaca)]"
               role="alert"
             >
               {converter.error()}
@@ -114,7 +124,7 @@ export const ConverterPage = () => {
             {(ready) => (
               <section
                 aria-labelledby="result-heading"
-                class="space-y-5 rounded-xl bg-slate-900 p-6"
+                class="space-y-5 rounded-xl bg-[var(--puppet-color-panel,#0f172a)] p-6"
               >
                 <h2 id="result-heading" class="text-lg font-medium">
                   변환 결과
@@ -126,7 +136,8 @@ export const ConverterPage = () => {
                   {ready().result.document.expressions?.length ?? 0}개 표정
                 </p>
                 <a
-                  class="inline-block rounded-md bg-cyan-300 px-4 py-2 font-medium text-slate-950"
+                  class="inline-block rounded-md bg-[var(--puppet-color-accent,#67e8f9)] px-4 py-2 font-medium
+                    text-[var(--puppet-color-on-accent,#020617)]"
                   download={`${ready().name}.poffo.json`}
                   href={ready().url}
                 >
@@ -135,7 +146,7 @@ export const ConverterPage = () => {
                 <Show when={ready().result.warnings.length > 0}>
                   <div class="space-y-2">
                     <h3 class="font-medium">확인 사항</h3>
-                    <ul class="list-disc space-y-1 pl-5 text-sm text-slate-300">
+                    <ul class="list-disc space-y-1 pl-5 text-sm text-[var(--puppet-color-warning,#cbd5e1)]">
                       <For each={ready().result.warnings}>{(warning) => <li>{warning}</li>}</For>
                     </ul>
                   </div>

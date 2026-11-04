@@ -1,5 +1,5 @@
 import {expect, test} from 'vitest'
-import {createDemoDocument, parseDocument} from '../index'
+import {createDemoDocument, parseDocument} from '..'
 import {createBoneDeformer, editBoneRest} from '../../editor/internal/bone-editing'
 import {setDeformerVertexWeight} from '../../editor/internal/deformer-weights'
 const createDocument = () =>

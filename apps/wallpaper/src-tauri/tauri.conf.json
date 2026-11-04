@@ -14,7 +14,7 @@
     "windows": [
       {
         "label": "manager",
-        "title": "Wallpaper \uc124\uc815",
+        "title": "Wallpaper 설정",
         "backgroundThrottling": "disabled",
         "visible": false,
         "width": 560,
@@ -27,12 +27,16 @@
       "capabilities": ["manager", "background", "widget", "codex-bubble"],
       "csp": {
         "default-src": "'self'",
-        "connect-src": "'self' ipc: http://ipc.localhost blob: https://storage.pomofi.io https://cdn.jsdelivr.net",
+        "connect-src": "'self' ipc: http://ipc.localhost blob: https://storage.pomofi.io https://cdn.jsdelivr.net asset: http://asset.localhost",
         "img-src": "'self' blob: data:",
         "media-src": "'self' blob: data:",
         "script-src": "'self' 'wasm-unsafe-eval' https://cdn.jsdelivr.net",
         "style-src": "'self' 'unsafe-inline'",
         "worker-src": "'self' blob:"
+      },
+      "assetProtocol": {
+        "enable": true,
+        "scope": ["$RESOURCE/semantic-models/**/*"]
       }
     }
   },
@@ -44,6 +48,9 @@
       "icons/128x128@2x.png",
       "icons/icon.icns",
       "icons/icon.ico"
-    ]
+    ],
+    "resources": {
+      "../.cache/semantic-models/": "semantic-models/"
+    }
   }
 }

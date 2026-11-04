@@ -50,6 +50,19 @@ it('should atomically reserve a queued request and acknowledge it without waitin
     }),
   )
 })
+
+it('should persist explicit sampling in the job and include it in the replay identity', async () => {
+  await generateCloudText('user', request)
+  await generateCloudText('user', {...request, temperature: 0.2})
+  const [defaultCall, tunedCall] = vi.mocked(reserveCloudText).mock.calls
+  const first = defaultCall![0]
+  const second = tunedCall![0]
+  expect(first.queue?.input.body).toBeDefined()
+  expect(first.queue?.input.body).not.toHaveProperty('temperature')
+  expect(second.queue?.input.body).toHaveProperty('temperature', 0.2)
+  expect(second.requestHash).not.toBe(first.requestHash)
+  expect(second.queue?.input.requestHash).toBe(second.requestHash)
+})
 it.each(['exhausted', 'queue_full', 'conflict', 'failed'] as const)(
   'should return %s before reading a job',
   async (kind) => {

@@ -68,7 +68,10 @@ export const useRuntimeControls = (props: UseRuntimeControlsProps) => {
     setActiveExpression((current) => (current === id ? null : id))
   useRuntimeHotkeys({onExpression: toggleExpression, onMotion: (id) => props.onMotion(id), profile})
   createEffect(
-    on(profile, () => {
+    on(profile, (current) => {
+      setActiveExpression((id) =>
+        current?.expressions.some((preset) => preset.id === id) ? id : null,
+      )
       setTracked({})
       lastTimestamp = undefined
     }),
