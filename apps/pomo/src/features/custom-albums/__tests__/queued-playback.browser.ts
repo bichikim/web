@@ -11,6 +11,7 @@ import {useTrackPreview} from '../../focus-room-audio/use-track-preview'
 import {saveCustomAlbum} from '../save-custom-album'
 import {revokeCustomTrackObjectUrls} from '../to-custom-p-track'
 import {clearCustomAlbumDatabase} from './support/clear-database'
+import {checkNativeBlobStorage} from './support/check-native-blob-storage'
 
 const id = 'custom-track:retained-queue'
 const options = {
@@ -45,29 +46,7 @@ const loadAudio = (source: string): Promise<{event: string; code: number | null}
 
 beforeEach(async ({skip}) => {
   try {
-    await new Promise<void>((resolve, reject) => {
-      const request = indexedDB.open(`native-blob-baseline-${crypto.randomUUID()}`, 1)
-      request.onupgradeneeded = () => request.result.createObjectStore('blob')
-      request.onerror = () => reject(request.error)
-      request.onsuccess = () => {
-        const database = request.result
-        const transaction = database.transaction('blob', 'readwrite')
-        const finish = () => {
-          database.close()
-          indexedDB.deleteDatabase(database.name)
-        }
-        transaction.onabort = () => {
-          const {error} = transaction
-          finish()
-          reject(error)
-        }
-        transaction.oncomplete = () => {
-          finish()
-          resolve()
-        }
-        transaction.objectStore('blob').put(new Blob(['baseline']), 'one')
-      }
-    })
+    await checkNativeBlobStorage()
   } catch (error: unknown) {
     if (
       error instanceof DOMException &&
