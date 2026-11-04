@@ -5,7 +5,7 @@ import {fireEvent, render, screen, waitFor} from '@solidjs/testing-library'
 import type {JSX} from 'solid-js'
 import {beforeEach, expect, it, vi} from 'vitest'
 
-import {PModal, type PModalProps} from 'src/components/p-modal/PModal'
+import {PModal} from 'src/components/p-modal/PModal'
 import {PRadioSwitch} from 'src/components/p-radio-switch/PRadioSwitch'
 import {PSelect} from 'src/components/p-select/PSelect'
 import {PSwitch, type PSwitchProps} from 'src/components/p-switch/PSwitch'
@@ -17,6 +17,7 @@ import {PDialogueSettings} from '../../p-dialogue-settings/PDialogueSettings'
 import {PHealthCheck} from '../../p-health-check/PHealthCheck'
 import {PSettings} from '../PSettings'
 import {PWeatherSettings} from '../../p-weather-settings/PWeatherSettings'
+import {configureMocks} from './fixtures/configure-mocks'
 
 vi.mock('@kobalte/core/tabs', () => ({Tabs: vi.fn()}))
 vi.mock('src/components/p-modal/PModal', () => ({PModal: vi.fn()}))
@@ -57,95 +58,19 @@ beforeEach(() => {
     tabsRootProps = props
     return <>{props.children}</>
   })
-  vi.mocked(PModal).mockImplementation((props: PModalProps) => (
-    <div aria-label={props.title} hidden={!props.isOpen} role="dialog">
-      {props.navigation}
-      {props.children}
-      <button onClick={() => props.onOpenChange(false)} type="button">
-        설정 닫기
-      </button>
-      <button onClick={props.onCloseAutoFocus} type="button">
-        포커스 복원
-      </button>
-    </div>
-  ))
-  vi.mocked(PRadioSwitch).mockImplementation((props) => (
-    <button
-      data-scene-style={props.sceneStyle}
-      data-value={props.value}
-      onClick={() => props.onChange(props.options.at(-1)?.value ?? props.value)}
-      type="button"
-    >
-      {props.label}
-    </button>
-  ))
-  vi.mocked(PSelect).mockImplementation((props) => (
-    <button
-      data-value={props.value}
-      onClick={() => {
-        if (props.multiple === true) {
-          props.onChange(props.value)
-        } else {
-          props.onChange(props.value)
-        }
-      }}
-      type="button"
-    >
-      {props.label}
-    </button>
-  ))
-  vi.mocked(PSwitch).mockImplementation((props) => {
-    const checked =
-      Object.getOwnPropertyDescriptor(props, 'checked')?.get?.call(props) ?? props.checked
-    const className = props.class
-    const disabled = props.disabled
-    const description = props.description
-    return (
-      <button
-        aria-disabled={disabled}
-        aria-pressed={checked}
-        class={className}
-        data-description={description}
-        onClick={() => props.onChange(!checked)}
-        type="button"
-      >
-        {props.label}
-      </button>
-    )
+  configureMocks({
+    LEGACY_WEATHER_LOCATIONS,
+    PDialogueSettings,
+    PHealthCheck,
+    PModal,
+    PRadioSwitch,
+    PSelect,
+    PSwitch,
+    PWeatherSettings,
+    useDisplayTheme,
+    useFullscreen,
+    useScreenWakeLock,
   })
-  vi.mocked(useScreenWakeLock).mockReturnValue({
-    availability: () => 'supported',
-    errorMessage: () => null,
-    isEnabled: () => false,
-    isRequestPending: () => false,
-    onEnabledChange: vi.fn(),
-  })
-  vi.mocked(useFullscreen).mockReturnValue({
-    availability: () => 'supported',
-    error: () => null,
-    isEnabled: () => false,
-    isRequestPending: () => false,
-    onEnabledChange: vi.fn(),
-  })
-  vi.mocked(useDisplayTheme).mockReturnValue({
-    onPreferenceChange: vi.fn(),
-    preference: () => 'system',
-  })
-  vi.mocked(PDialogueSettings).mockImplementation(() => <div>대화 설정</div>)
-  vi.mocked(PHealthCheck).mockImplementation(() => <div>헬스 체크 진단</div>)
-  vi.mocked(PWeatherSettings).mockImplementation((props) => (
-    <button
-      data-location={props.location?.id}
-      data-scene-mode={props.sceneMode}
-      onClick={() => {
-        props.onLocationChange?.(LEGACY_WEATHER_LOCATIONS.seoul)
-        props.onSceneModeChange?.('rain')
-      }}
-      type="button"
-    >
-      날씨 변경
-    </button>
-  ))
 })
 
 it('should map the scribble style switch to the scene style value', async () => {
