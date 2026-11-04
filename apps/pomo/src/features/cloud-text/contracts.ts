@@ -38,6 +38,7 @@ export const cloudTextRequestSchema = z.object({
       (messages) => sumBy(messages, (message) => message.content.length) <= MAXIMUM_INPUT_LENGTH,
     ),
   requestId: z.uuid(),
+  temperature: z.number().min(0).max(2).optional(),
 })
 export type CloudTextRequest = z.infer<typeof cloudTextRequestSchema>
 

@@ -1,6 +1,26 @@
 import {expect, test} from 'playwright/test'
 import {createDemoDocument, serializeDocument} from '@winter-love/puppet/player'
 
+test('should enable the playback Worker and persist the buffer choice across reloads', async ({
+  page,
+}) => {
+  const workers: string[] = []
+  page.on('worker', (worker) => workers.push(worker.url()))
+  await page.goto('/viewer')
+  await page.getByRole('button', {exact: true, name: '보기 설정'}).click()
+  const toggle = page.getByRole('button', {exact: true, name: '프레임 버퍼'})
+  await expect(toggle).toHaveAttribute('aria-pressed', 'true')
+  const status = page.getByLabel('프레임 버퍼 상태', {exact: true})
+  await expect(status).toHaveText(/3프레임 선계산|대기/u)
+  expect(workers.some((url) => /worker-/u.test(url))).toBe(true)
+  await toggle.click()
+  await expect(toggle).toHaveAttribute('aria-pressed', 'false')
+  await expect(status).toHaveText('꺼짐')
+  await page.reload()
+  await page.getByRole('button', {exact: true, name: '보기 설정'}).click()
+  await expect(toggle).toHaveAttribute('aria-pressed', 'false')
+})
+
 for (const path of ['/editor', '/studio', '/viewer', '/converter']) {
   test(`should render ${path} on direct production entry and refresh`, async ({page}) => {
     const errors: string[] = []

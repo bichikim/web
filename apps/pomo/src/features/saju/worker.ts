@@ -31,7 +31,7 @@ async function generate(request: SajuGenerateRequest) {
         execution: target,
         messages,
         parameters: {
-          maximumTokens: 768,
+          maximumTokens: 2048,
           noRepeatNgramSize: 4,
           repetitionPenalty: 1.15,
           temperature: 0.3,

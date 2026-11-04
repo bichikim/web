@@ -7,6 +7,7 @@ import {
 import type {Accessor, JSX} from 'solid-js'
 import type {
   PlayerAntialiasing,
+  PlayerBufferingInfo,
   PlayerRendererPreference,
   PlayerRenderingInfo,
   PuppetDocument,
@@ -36,6 +37,9 @@ export interface SurfaceEntry<T> {
   readonly props: T
 }
 export interface WorkspaceContextValue {
+  readonly bufferingEnabled: Accessor<boolean>
+  readonly bufferingInfo: Accessor<PlayerBufferingInfo | null>
+  readonly setBufferingEnabled: (enabled: boolean) => void
   readonly renderingPreferences: Accessor<RenderingPreferences>
   readonly renderingInfo: Accessor<PlayerRenderingInfo | null>
   readonly setRenderer: (renderer: PlayerRendererPreference) => void

@@ -1,6 +1,9 @@
+import type {MediaFit} from '../model'
 import {getPairDirection, type PairDirection, type PhotoSize} from '../album/pairing'
 
 export interface LayoutOptions {
+  /** Media sizing; omitted to contain media and retain compatible photo pairing. */
+  readonly fit?: MediaFit
   readonly first: PhotoSize
   readonly second: PhotoSize | null
   readonly viewport: PhotoSize
@@ -18,13 +21,14 @@ export interface FrameLayout {
   readonly height: number
 }
 
-/** Centers contained media, pairing compatible photos without shrinking the primary photo. */
+/** Centers proportionally scaled media; cover fills the viewport and hides companion photos. */
 export const calculateLayout = (options: LayoutOptions): FrameLayout => {
   const {first, second, viewport} = options
   const {width, height} = viewport
-  const direction = second === null ? null : getPairDirection({first, second, viewport})
+  const cover = options.fit === 'cover'
+  const direction = cover || second === null ? null : getPairDirection({first, second, viewport})
   if (second === null || direction === null) {
-    const scale = Math.min(width / first.width, height / first.height)
+    const scale = (cover ? Math.max : Math.min)(width / first.width, height / first.height)
     return {
       direction: null,
       first: {scale, x: width / 2, y: height / 2},

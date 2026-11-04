@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@huggingface/transformers": "4.3.2",
     "@mediapipe/tasks-vision": "1.1.1",
     "@tauri-apps/api": "^2.8.0",
     "@winter-love/desktop-surface": "workspace:*",

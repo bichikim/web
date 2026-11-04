@@ -156,3 +156,70 @@ test('should use the general evaluator for a document containing spatial geometr
   }
   expect(createNativeDeformation(document)).toBeUndefined()
 })
+test('should update only the requested branch and refresh a previously skipped sibling when needed', () => {
+  const sibling = {
+    ...shape,
+    children: [{id: 'other', kind: 'part' as const, locked: false, name: 'Other', visible: true}],
+    id: 'sibling',
+  }
+  const parent = {...shape, children: [shape, sibling], id: 'parent'}
+  const document: PuppetDocument = {
+    ...createDocument(parent),
+    parameterBindings: [
+      {
+        id: 'move-parent',
+        keyforms: [0, 1].map((value) => ({
+          deformers: [
+            {
+              controlPoints: parent.controlPoints.map((coordinate) => coordinate + value),
+              kind: 'deformer',
+              nodeId: 'parent',
+            },
+          ],
+          parts: [],
+          values: [value] as const,
+        })),
+        parameterIds: ['p'],
+        targetDeformerIds: ['parent'],
+      },
+    ],
+  }
+  const native = createNativeDeformation(document)!
+  for (const [id, p] of [
+    ['part', 0.2],
+    ['other', 0.8],
+    ['part', 0.5],
+  ] as const) {
+    const expected = new Map([[id, [0.3, 0.6]]])
+    applySceneNodeDeformers(composeParameterScene(document, {p}).roots, expected)
+    const actual = new Map([[id, [0.3, 0.6]]])
+    native.apply({p}, actual)
+    expect(actual).toEqual(expected)
+  }
+})
+
+test('should retain precision across changing vertex inputs and caller buffers', () => {
+  const document = createDocument({
+    ...shape,
+    controlPoints: [0.123, 0.234, 1.321, 0.12, 0.03, 1.12, 1.11, 1.43],
+  })
+  const native = createNativeDeformation(document)!
+  const source = [0.3333333333333, 0.7142857142857, -0.12, 1.25]
+  const previous: number[] = []
+  for (const coordinates of [new Float32Array(source), [...source], [0.1, 0.3], [], [...source]]) {
+    const expected = new Map([
+      ['part', Array.isArray(coordinates) ? [...coordinates] : new Float32Array(coordinates)],
+    ])
+    applySceneNodeDeformers(composeParameterScene(document, {}).roots, expected)
+    const actual = new Map([['part', coordinates]])
+    native.apply({}, actual)
+    expect(actual).toEqual(expected)
+    // Downstream Glue owns the result and can modify it before the next evaluation.
+    if (coordinates.length > 0) {
+      previous.push(coordinates[0]!)
+      coordinates[0] = 99
+    }
+  }
+  expect(previous[1]).toBe(previous[3])
+  expect(previous[0]).not.toBe(previous[1])
+})

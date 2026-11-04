@@ -1,21 +1,24 @@
 import type {BirthInput} from 'k-saju'
 import {describe, expect, it} from 'vitest'
-import {calculateSajuReading} from '../index'
+import {calculateSajuReading} from '../calculate-reading'
 
 const birth = {calendar: 'solar', date: '1995-03-16'} as const
 
-type SerializedReadingPayload = {readonly birth: BirthInput; readonly [key: string]: unknown}
+interface SerializedReadingPayload {
+  readonly themes: unknown
+  readonly daeun: unknown
+}
 
 const getReadingPayload = (birth: BirthInput, gender: 'M' | 'F' | 'N') => {
-  const result = calculateSajuReading({birth, gender, question: '제 재물운은 어떤가요?'})
+  const result = calculateSajuReading({birth, gender, question: '제 재물운과 대운은 어떤가요?'})
   if (result.type !== 'generate') {
     throw new Error(`expected a generated reading, received ${result.type}`)
   }
-  const content = result.request.messages.at(-1)?.content
+  const content = result.request.messages[1]?.content
   if (content === undefined) {
     throw new Error('expected a serialized user message')
   }
-  return JSON.parse(content) as SerializedReadingPayload
+  return JSON.parse(content.split('\n\n')[0]) as SerializedReadingPayload
 }
 
 const boundaryBirthScenarios = [
@@ -108,7 +111,9 @@ describe('calculateSajuReading', () => {
       const result = calculateSajuReading({birth, gender: 'N', question})
       expect(result.type).toBe('generate')
       if (result.type === 'generate') {
-        expect(JSON.parse(result.request.messages.at(-1)!.content)).toMatchObject({question})
+        expect(JSON.parse(result.request.messages[1].content.split('\n\n')[0])).toMatchObject({
+          question,
+        })
       }
     },
   )
@@ -131,7 +136,7 @@ describe('calculateSajuReading', () => {
     expect(
       calculateSajuReading({birth, gender: 'N', question: '제 일기에 적을 내 일간은 무엇인가요?'}),
     ).toEqual({
-      text: '입력한 생년월일의 일간은 병(丙)입니다. 일간은 일주의 천간으로, 십성 관계를 계산할 때 기준이 됩니다.',
+      text: '일간은 병(丙)입니다. 태어난 날을 나타내는 두 글자 중 첫 글자로, 사주를 읽을 때 기준으로 삼습니다.',
       type: 'answer',
     })
   })
@@ -153,7 +158,7 @@ describe('calculateSajuReading', () => {
     expect(result.type).toBe('generate')
     if (result.type === 'generate') {
       expect(result.request.messages.at(-1)?.content).toContain('제 일은 어떨까요?')
-      expect(result.request.messages.at(-1)?.content).toContain('"daeun":null')
+      expect(result.request.messages[0].content).toContain('장기 구간을 계산하지 않았다')
     }
   })
 
@@ -182,7 +187,7 @@ describe('calculateSajuReading', () => {
     expect(result.type).toBe('generate')
     if (result.type === 'generate') {
       expect(result.request.messages.at(-1)?.content).toContain(question)
-      expect(result.request.messages.at(-1)?.content).toContain('"daeun":null')
+      expect(result.request.messages[0].content).toContain('장기 구간을 계산하지 않았다')
     }
   })
 
@@ -191,7 +196,7 @@ describe('calculateSajuReading', () => {
   })
 
   it.each(boundaryReadingScenarios)(
-    'should calculate a cross-year lunar birth for $gender with $description and preserve the original birth',
+    'should produce equivalent consultation facts for cross-year lunar and solar dates for $gender with $description',
     ({birthDetails, gender, lunarDate, solarDate}) => {
       const lunarBirth: BirthInput = {
         calendar: 'lunar',
@@ -207,17 +212,13 @@ describe('calculateSajuReading', () => {
 
       const lunarPayload = getReadingPayload(lunarBirth, gender)
       const solarPayload = getReadingPayload(solarBirth, gender)
-      const {birth: serializedLunarBirth, ...lunarFacts} = lunarPayload
-      const {birth: serializedSolarBirth, ...solarFacts} = solarPayload
-
-      expect(lunarFacts).toEqual(solarFacts)
-      expect(serializedLunarBirth).toEqual(lunarBirth)
-      expect(serializedSolarBirth).toEqual(solarBirth)
-      expect(lunarFacts).toHaveProperty('chart')
+      expect(lunarPayload).toEqual(solarPayload)
+      expect(lunarPayload).not.toHaveProperty('birth')
+      expect(lunarPayload).toHaveProperty('themes')
       if (gender === 'N') {
-        expect(lunarFacts.daeun).toBeNull()
+        expect(lunarPayload.daeun).toBeNull()
       } else {
-        expect(lunarFacts.daeun).not.toBeNull()
+        expect(lunarPayload.daeun).not.toBeNull()
       }
     },
   )

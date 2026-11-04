@@ -11,6 +11,42 @@ describe('focus-controller', () => {
     const focusController = createFocusController()
 
     expect(focusController).toBeDefined()
+    expect(focusController.deepPosition).toEqual([])
+  })
+
+  it('exposes the committed nested path inside focus callbacks', () => {
+    const observed: {current: DeepPosition; focused: boolean; path: DeepPosition}[] = []
+    const focusController = createFocusController((path, focused) => {
+      observed.push({current: focusController.deepPosition, focused, path})
+    })
+    const target: DeepPosition = [
+      {x: 1, y: 0},
+      {x: 2, y: 3},
+    ]
+
+    focusController.registerFocus(target)
+    focusController.setFocus(target)
+
+    expect(focusController.deepPosition).toEqual(target)
+    expect(focusController.deepPosition).not.toBe(target)
+    expect(observed).toEqual([
+      {current: target, focused: false, path: []},
+      {current: target, focused: true, path: target},
+    ])
+  })
+
+  it('retains the current path when an unregistered target is rejected', () => {
+    const onChangeFocus = vi.fn()
+    const focusController = createFocusController(onChangeFocus)
+    const start: DeepPosition = [{x: 0, y: 0}]
+
+    focusController.registerFocus(start)
+    focusController.setFocus(start)
+    onChangeFocus.mockClear()
+    focusController.setFocus([{x: 9, y: 9}])
+
+    expect(focusController.deepPosition).toEqual(start)
+    expect(onChangeFocus).not.toHaveBeenCalled()
   })
 
   it('should register deep position', () => {
@@ -54,6 +90,7 @@ describe('focus-controller', () => {
     focusController.setFocus(first)
     expect(onChangeFocus).toHaveBeenNthCalledWith(1, [], false)
     expect(onChangeFocus).toHaveBeenNthCalledWith(2, first, true)
+    expect(focusController.deepPosition).toEqual(first)
     expect(
       getDeepPositionInfoWithKey(focusController.positionMap, ROOT_KEY)?.previousChildPosition,
     ).toBeUndefined()
@@ -61,6 +98,7 @@ describe('focus-controller', () => {
     focusController.setFocus(second)
     expect(onChangeFocus).toHaveBeenNthCalledWith(1, first, false)
     expect(onChangeFocus).toHaveBeenNthCalledWith(2, second, true)
+    expect(focusController.deepPosition).toEqual(second)
     expect(
       getDeepPositionInfoWithKey(focusController.positionMap, ROOT_KEY)?.previousChildPosition,
     ).toEqual(first[0])
@@ -80,6 +118,7 @@ describe('focus-controller', () => {
     const result = focusController.moveFocus(getDirection('right'), {})
 
     expect(result).toEqual(next)
+    expect(focusController.deepPosition).toEqual(result)
     expect(onChangeFocus).toHaveBeenNthCalledWith(1, start, false)
     expect(onChangeFocus).toHaveBeenNthCalledWith(2, next, true)
   })
@@ -152,9 +191,11 @@ describe('focus-controller', () => {
     focusController.active(false)
     focusController.setFocus(second)
     expect(onChangeFocus).not.toHaveBeenCalled()
+    expect(focusController.deepPosition).toEqual(first)
     focusController.setFocus(second, {ignoreFocusControllerActive: true})
     expect(onChangeFocus).toHaveBeenNthCalledWith(1, first, false)
     expect(onChangeFocus).toHaveBeenNthCalledWith(2, second, true)
+    expect(focusController.deepPosition).toEqual(second)
   })
 
   it('should set focus when ignoring missing deep position', () => {
@@ -178,6 +219,7 @@ describe('focus-controller', () => {
 
     focusController.registerFocus(deepPosition)
     focusController.setFocus(deepPosition, {preventCallChangeFocus: true})
+    expect(focusController.deepPosition).toEqual(deepPosition)
     expect(onChangeFocus).not.toHaveBeenCalled()
   })
 
@@ -213,6 +255,7 @@ describe('focus-controller', () => {
     const blocked = focusController.moveFocus(getDirection('right'), {})
 
     expect(blocked).toBeNull()
+    expect(focusController.deepPosition).toEqual(start)
     expect(onChangeFocus).toHaveBeenCalledTimes(2)
     onChangeFocus.mockClear()
     const result = focusController.moveFocus(getDirection('right'), {
@@ -220,6 +263,7 @@ describe('focus-controller', () => {
     })
 
     expect(result).toEqual(next)
+    expect(focusController.deepPosition).toEqual(result)
     expect(onChangeFocus).toHaveBeenNthCalledWith(1, start, false)
     expect(onChangeFocus).toHaveBeenNthCalledWith(2, next, true)
   })

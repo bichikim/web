@@ -15,8 +15,11 @@ const messageField = withMessageField('message')
 /**
  * Get displayable message from supporter item (tries support_note first, then message)
  */
-export const getSupporterMessage = (item: unknown): string | undefined =>
-  supportNoteField(item) ?? messageField(item)
+export const getSupporterMessage = (item: unknown): string | undefined => {
+  const supportNote = supportNoteField(item)
+
+  return supportNote === '' ? messageField(item) : (supportNote ?? messageField(item))
+}
 
 /**
  * Filter items that have a non-empty message

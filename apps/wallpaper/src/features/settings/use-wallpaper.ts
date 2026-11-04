@@ -5,14 +5,11 @@ import {
   type MonitorWallpaper,
   type WallpaperContent,
 } from '@winter-love/wallpaper/settings/model'
-import {
-  createSettingsRepository,
-  type PuppetAsset,
-} from '@winter-love/wallpaper/settings/repository'
-import {createWebRepository} from '@winter-love/wallpaper/web-repository'
+import type {PuppetAsset} from '@winter-love/wallpaper/settings/repository'
+import {createBuiltinMedia, createBuiltinSettings} from '../builtin-assets'
 import type {BackgroundMedia} from '@winter-love/wallpaper/model'
 import type {InteractionSettings} from '@winter-love/wallpaper/interaction/types'
-import {listWallpaperMonitors, type WallpaperMonitor} from './monitors'
+import {useWallpaperMonitors} from './use-wallpaper-monitors'
 import {addAlbumFiles} from './add-album-files'
 import {addPuppetFile} from './add-puppet-file'
 import {createWallpaperContent} from '@winter-love/wallpaper/settings/create-wallpaper-content'
@@ -26,10 +23,9 @@ interface MediaCollection {
 
 /** Owns local wallpaper settings and serializes operations across the management UI. */
 export const useWallpaper = () => {
-  const settings = createSettingsRepository('wallpaper-settings')
-  const media = createWebRepository({databaseName: 'wallpaper-media'})
-  const [monitors, setMonitors] = createSignal<readonly WallpaperMonitor[]>([])
-  const [selectedId, setSelectedId] = createSignal<string | null>(null)
+  const settings = createBuiltinSettings('wallpaper-settings')
+  const media = createBuiltinMedia('wallpaper-media')
+  const screens = useWallpaperMonitors()
   const state = useOptimisticWallpapers({
     enqueue: (operation) => enqueue(operation),
     read: settings.read,
@@ -37,6 +33,7 @@ export const useWallpaper = () => {
   })
   const [collection, setCollection] = createStore<MediaCollection>({items: []})
   const [puppets, setPuppets] = createSignal<readonly PuppetAsset[]>([])
+  const [hiddenCount, setHiddenCount] = createSignal(0)
   const [error, setError] = createSignal<string | null>(null)
   const [imports, setImports] = createSignal(0)
   const busy = createMemo(() => imports() > 0)
@@ -44,7 +41,7 @@ export const useWallpaper = () => {
   let revision = 0
   let pending = Promise.resolve()
   const current = createMemo(() => {
-    const id = selectedId()
+    const id = screens.selectedId()
     return id === null
       ? null
       : (state.wallpapers().find((entry) => entry.monitorId === id) ?? createMonitorWallpaper(id))
@@ -59,6 +56,7 @@ export const useWallpaper = () => {
     ])
     if (!disposed && request === revision) {
       setCollection('items', reconcile(album.items, {key: 'id'}))
+      setHiddenCount(album.hiddenCount)
       setPuppets(assets)
     }
   }
@@ -89,14 +87,6 @@ export const useWallpaper = () => {
     })
   }
   onMount(() => {
-    listWallpaperMonitors()
-      .then((available) => {
-        if (!disposed) {
-          setMonitors(available)
-          setSelectedId(available[0]?.id ?? null)
-        }
-      })
-      .catch(report)
     refresh().catch(report)
   })
   const unsubscribeSettings = settings.subscribe(() => {
@@ -117,7 +107,7 @@ export const useWallpaper = () => {
       .catch(report)
   })
   const update = (change: (previous: MonitorWallpaper) => MonitorWallpaper) => {
-    const id = selectedId()
+    const id = screens.selectedId()
     if (id === null || disposed) {
       return Promise.resolve()
     }
@@ -127,14 +117,14 @@ export const useWallpaper = () => {
     update((previous) => ({...previous, content: createWallpaperContent(mode)}))
   return {
     addMedia: (files: readonly File[]) => {
-      const monitorId = selectedId()
+      const monitorId = screens.selectedId()
       return runImport(
         () => addAlbumFiles({files, media, monitorId, settings}),
         '사진·동영상을 추가하지 못했어요.',
       )
     },
     addPuppet: (file: File) => {
-      const monitorId = selectedId()
+      const monitorId = screens.selectedId()
       return runImport(
         () => addPuppetFile({file, monitorId, settings}),
         'Poffo 파일을 가져오지 못했어요.',
@@ -143,15 +133,25 @@ export const useWallpaper = () => {
     busy,
     changeMode,
     current,
-    dismissError: () => setError(null),
-    error,
+    dismissError: () => {
+      setError(null)
+      screens.dismissError()
+    },
+    error: () => error() ?? screens.error(),
+    hasHiddenMedia: () => hiddenCount() > 0,
     items: () => collection.items,
     loadMedia: media.load,
     loadPuppet: settings.loadPuppet,
-    monitors,
+    monitors: screens.monitors,
     puppets,
-    selectedId,
-    selectMonitor: setSelectedId,
+    removeMedia: (id: string) =>
+      enqueue(async () => {
+        await settings.removeMediaReferences(id)
+        await media.remove(id)
+      }, '사진·동영상을 삭제하지 못했어요.'),
+    restoreBuiltinMedia: () => enqueue(media.restoreBuiltins, '기본 배경을 복원하지 못했어요.'),
+    selectedId: screens.selectedId,
+    selectMonitor: screens.selectMonitor,
     setContent: (content: WallpaperContent) => {
       const before = current()?.content
       const change =

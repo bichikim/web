@@ -23,7 +23,7 @@ export interface UseStorageOptions<T> extends StorageOptions {
   initValue?: T
 
   /**
-   * read value after mounted
+   * Read storage after mount. Explicit setup edits take precedence for the same key.
    */
   mounted?: boolean
 }
@@ -67,7 +67,7 @@ export const useStorage: UseStorage = (
   const hasEnforcedValue = Object.hasOwn(options, 'enforceValue')
   let isMounted = false
   let previousActive = false
-  let dirtyWhileInactive = false
+  let pendingEditKey: string | undefined
   let currentKey = initialKey
 
   const restoreValue = (isActive: boolean) => {
@@ -90,7 +90,16 @@ export const useStorage: UseStorage = (
     const keyChanged = nextKey !== currentKey
     currentKey = nextKey
 
-    if (hasEnforcedValue || mounted || keyChanged) {
+    if (pendingEditKey !== currentKey || hasEnforcedValue) {
+      pendingEditKey = undefined
+    }
+
+    if (pendingEditKey !== undefined) {
+      if (isActive) {
+        setAnyStorageItem(kind, currentKey, untrack(value), options)
+        pendingEditKey = undefined
+      }
+    } else if (hasEnforcedValue || mounted || keyChanged) {
       restoreValue(isActive)
     }
 
@@ -108,12 +117,16 @@ export const useStorage: UseStorage = (
 
     if (nextKey !== currentKey) {
       currentKey = nextKey
-      dirtyWhileInactive = false
+      pendingEditKey = undefined
       restoreValue(isActive)
-    } else if (isActive && !previousActive && (dirtyWhileInactive || hasEnforcedValue || mounted)) {
-      if (dirtyWhileInactive && !hasEnforcedValue) {
+    } else if (
+      isActive &&
+      !previousActive &&
+      (pendingEditKey !== undefined || hasEnforcedValue || mounted)
+    ) {
+      if (pendingEditKey !== undefined && !hasEnforcedValue) {
         setAnyStorageItem(kind, currentKey, untrack(value), options)
-        dirtyWhileInactive = false
+        pendingEditKey = undefined
       } else {
         restoreValue(isActive)
       }
@@ -132,8 +145,8 @@ export const useStorage: UseStorage = (
 
       if (isMounted && activeAccessor()) {
         setAnyStorageItem(kind, currentKey, value(), options)
-      } else if (isMounted) {
-        dirtyWhileInactive = true
+      } else {
+        pendingEditKey = keyAccessor()
       }
 
       return result
