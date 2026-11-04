@@ -20,7 +20,8 @@ import {PFeedStatus} from '../p-feed-status/PFeedStatus'
 import {PModelDownloadConsent} from '../p-model-download-consent/PModelDownloadConsent'
 import {PMusicPlayer} from '../music-player/PMusicPlayer'
 import type {MusicPlaybackActions} from '../music-player/types'
-import {type SoundEffectsController, useOptionalSoundEffects} from '../../features/sound-effects'
+import {useOptionalSoundEffects} from '../../features/sound-effects'
+import {runSoundEffectsEventAction} from '../../features/sound-effects/run-sound-effects-event-action'
 import {PPomodoro, type PPomodoroPresentation} from '../p-pomodoro/PPomodoro'
 import {CLASSES} from './shared'
 import {useOneOffChat} from './use-one-off-chat'
@@ -43,11 +44,6 @@ interface PStudioEventsProps {
 }
 
 type MusicEventActionId = Extract<EventActionId, 'music-start' | 'music-stop'>
-type SoundEffectsEventActionId = Extract<
-  EventActionId,
-  'sound-effects-start' | 'sound-effects-stop'
->
-
 const musicActionHandlers = {
   'music-start': (actions: MusicPlaybackActions) => actions.play(),
   'music-stop': (actions: MusicPlaybackActions) => actions.pause(),
@@ -55,22 +51,6 @@ const musicActionHandlers = {
 
 const runMusicAction = (actions: MusicPlaybackActions, actionId: MusicEventActionId) =>
   musicActionHandlers[actionId](actions)
-
-const soundEffectsActionHandlers = {
-  'sound-effects-start': (actions: SoundEffectsController) => {
-    if (!actions.isStopped()) {
-      actions.activate()
-    }
-  },
-  'sound-effects-stop': (actions: SoundEffectsController) => actions.stop(),
-} satisfies Readonly<Record<SoundEffectsEventActionId, (actions: SoundEffectsController) => void>>
-
-const runSoundEffectsAction = (
-  actions: SoundEffectsController,
-  actionId: SoundEffectsEventActionId,
-) => {
-  soundEffectsActionHandlers[actionId](actions)
-}
 
 // oxlint-disable-next-line eslint/max-lines-per-function -- Event and media lifecycles share one owner.
 export const PStudioEvents = (props: PStudioEventsProps) => {
@@ -123,7 +103,7 @@ export const PStudioEvents = (props: PStudioEventsProps) => {
       case 'sound-effects-start':
       case 'sound-effects-stop':
         if (soundEffects !== undefined) {
-          runSoundEffectsAction(soundEffects, actionId)
+          runSoundEffectsEventAction(soundEffects, actionId)
         }
         return
       default: {
