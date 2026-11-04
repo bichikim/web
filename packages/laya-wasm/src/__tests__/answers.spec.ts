@@ -1,5 +1,5 @@
 import {expect, it} from 'vitest'
-import {decodeAnswer} from '../index'
+import {decodeAnswer} from '..'
 
 it('should exclude padded options and decode the requested answer type', () => {
   const question = {criteria: ['low', 'high'], instructions: 'rate', type: 'score'} as const
