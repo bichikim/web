@@ -1,17 +1,27 @@
+import type {LipSyncOutput} from '../lipsync/types'
 import type {VoiceAudio} from './synthesis'
 import {createPlaybackMeter} from './create-playback-meter'
 
 /** Schedules chunks on one audio clock with no inserted silence; abort removes queued audio. */
 const PERCENT = 100
-export const createAudioPlayer = (onLevel?: (level: number) => void) => {
+export const createAudioPlayer = (
+  onLevel?: (level: number) => void,
+  onShape?: LipSyncOutput,
+  enabled?: () => boolean,
+) => {
   let context: AudioContext | null = null
   let nextStart = 0
   let disposed = false
   const stops = new Set<() => void>()
   const meter =
-    onLevel === undefined
+    onLevel === undefined && onShape === undefined
       ? null
-      : createPlaybackMeter({clock: () => context?.currentTime ?? 0, onLevel})
+      : createPlaybackMeter({
+          clock: () => context?.currentTime ?? 0,
+          enabled,
+          onLevel: (level) => onLevel?.(level),
+          onShape,
+        })
   const enqueue = async (
     audio: VoiceAudio,
     volume: number,

@@ -18,7 +18,9 @@ export interface AnalysisResult {
 
 export interface AnalysisFailure {
   readonly error: string
+  readonly filePath: string
   readonly identifier: number
+  readonly revision: number
 }
 
 export interface AnalysisQueueCallbacks {
@@ -77,7 +79,7 @@ export class KeyAnalysisQueue {
     })
     this.worker.on('message', (message: AnalysisFailure | AnalysisResult) => {
       if ('error' in message) {
-        this.finishFailure(message.identifier, new Error(message.error))
+        this.finishFailure(message)
       } else {
         this.finishResult(message)
       }
@@ -164,8 +166,10 @@ export class KeyAnalysisQueue {
     this.finishPending()
   }
 
-  private finishFailure(_identifier: number, error: Error): void {
-    this.fail(error)
+  private finishFailure(failure: AnalysisFailure): void {
+    if (this.revisions.get(failure.filePath) === failure.revision) {
+      this.fail(new Error(failure.error))
+    }
     this.finishPending()
   }
 

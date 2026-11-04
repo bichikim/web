@@ -35,12 +35,13 @@ const waitForAssertion = async (command, attemptsRemaining = ASSERTION_RETRY_LIM
 }
 
 const readWebsiteEventProbe = async (predicate, attemptsRemaining = ASSERTION_RETRY_LIMIT) => {
+  let fragment = ''
   try {
-    const fragment = await invoke('read_website_event_probe')
+    fragment = await invoke('read_website_event_probe')
     const events = fragment.startsWith('probe:')
       ? fragment.slice('probe:'.length).split(',').filter(Boolean)
       : []
-    if (predicate(events)) {
+    if (fragment.startsWith('probe:') && predicate(events)) {
       return events
     }
   } catch (error) {
@@ -50,7 +51,9 @@ const readWebsiteEventProbe = async (predicate, attemptsRemaining = ASSERTION_RE
   }
 
   if (attemptsRemaining <= 1) {
-    throw new Error('Website event probe did not reach the expected state.')
+    throw new Error(
+      `Website event probe did not reach the expected state: ${fragment || '<empty>'}`,
+    )
   }
 
   await waitForRetry()
@@ -175,7 +178,14 @@ document.querySelector('#restore').addEventListener('click', () => {
   })
 })
 
-invoke('harness_mode').then(({smoke}) => {
+invoke('harness_mode').then(({smoke, events}) => {
+  if (events) {
+    import('./events.js')
+      .then(({verifyNativeEvents}) => verifyNativeEvents())
+      .then(() => invoke('finish_smoke', {error: null}))
+      .catch((error) => invoke('finish_smoke', {error: formatError(error)}))
+    return
+  }
   if (smoke) {
     openDesktop().catch((error) => invoke('finish_smoke', {error: formatError(error)}))
   }

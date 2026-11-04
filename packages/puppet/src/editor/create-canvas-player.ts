@@ -1,3 +1,4 @@
+import type {PlayerBufferingInfo} from '../player/player-buffering'
 import {createPlayer, type Player, type PlayerFrame, type PlayerRenderingOptions} from '../player'
 import type {PreparedPuppetDocument} from '../player/internal/prepared-document'
 import type {PuppetParameterValueMap} from '../deformation'
@@ -23,6 +24,10 @@ export const getCanvasPlayerResolution = (options: CanvasResolutionOptions): num
   )
 
 interface CanvasPlayerOptions extends PlayerRenderingOptions {
+  /** Computes the initial frame in the Worker when enabled; omitted, render locally. */
+  readonly buffering?: boolean
+  /** Reports actual buffering transitions; omitted, callers may query the player directly. */
+  readonly onBufferingChange?: (info: PlayerBufferingInfo) => void
   /** Whether a shared overlay currently draws into this canvas. Omitted, callbacks remain active. */
   readonly externalRendering?: () => boolean
   /** Canvas owned and released by the caller. */
@@ -49,6 +54,7 @@ interface CanvasPlayerOptions extends PlayerRenderingOptions {
 export const createCanvasPlayer = (options: CanvasPlayerOptions): Promise<Player> =>
   createPlayer({
     antialiasing: options.antialiasing,
+    buffering: options.buffering,
     canvas: options.canvas,
     document: options.document,
     externalRendering: options.externalRendering,
@@ -56,6 +62,7 @@ export const createCanvasPlayer = (options: CanvasPlayerOptions): Promise<Player
     motionId: options.motionId,
     onAfterRender: options.onAfterRender,
     onBeforeRender: options.onBeforeRender,
+    onBufferingChange: options.onBufferingChange,
     onFrame: options.onFrame,
     parameterValues: options.parameterValues,
     physicsPreview: options.physicsPreview,

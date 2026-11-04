@@ -103,6 +103,7 @@ it('should persist per-widget tracking choices across reopen without reviving re
   await repository.configureTracking(first.id, {
     cameraX: -0.2,
     centerX: 0.1,
+    cursorReach: 0.5,
     eyeCenterX: -0.2,
     eyeCenterY: 0.4,
     eyeLimitY: 0,
@@ -117,7 +118,7 @@ it('should persist per-widget tracking choices across reopen without reviving re
   })
   await repository.bindWidget(first.id, {
     eyeX: {parameterId: null},
-    headX: {inverted: true, parameterId: 'custom-turn'},
+    headX: {blend: 'add', inverted: true, parameterId: 'custom-turn'},
   })
   repository.close()
   const reopened = open()
@@ -128,11 +129,12 @@ it('should persist per-widget tracking choices across reopen without reviving re
         tracking: 'camera',
         trackingBindings: {
           eyeX: {parameterId: null},
-          headX: {inverted: true, parameterId: 'custom-turn'},
+          headX: {blend: 'add', inverted: true, parameterId: 'custom-turn'},
         },
         trackingOptions: {
           cameraX: -0.2,
           centerX: 0.1,
+          cursorReach: 0.5,
           eyeCenterX: -0.2,
           eyeCenterY: 0.4,
           eyeLimitY: 0,
@@ -288,4 +290,194 @@ it('should preserve an explicit per-widget CPU preference across reopening the l
   })
   repository.close()
   expect((await open().read()).widgets[0].speech?.voice).toMatchObject({gpu: false, model: 'full'})
+})
+
+it('should move a bubble without replacing its latest voice and lip sync preferences', async () => {
+  const repository = open()
+  const widget = await repository.addWidget('character')
+  await repository.moveSpeech(widget.id, {x: -0.25, y: 1.2})
+  expect((await repository.read()).widgets[0].speech).toEqual({enabled: true, x: -0.25, y: 1.2})
+  await repository.configureSpeech(widget.id, {
+    enabled: true,
+    lipsync: {source: 'voice'},
+    voice: DEFAULT_POFFO_VOICE,
+    wrap: false,
+    x: -0.25,
+    y: 1.2,
+  })
+  await repository.moveSpeech(widget.id, {anchor: 'bottom', x: 1.25, y: -0.2})
+  repository.close()
+  expect((await open().read()).widgets[0].speech).toEqual({
+    anchor: 'bottom',
+    enabled: true,
+    lipsync: {source: 'voice'},
+    voice: DEFAULT_POFFO_VOICE,
+    wrap: false,
+    x: 1.25,
+    y: -0.2,
+  })
+})
+
+it('should retain user semantic rules and parameter output modes after reopening the library', async () => {
+  const repository = open()
+  const widget = await repository.addWidget('character')
+  const semanticBindings = [
+    {
+      enabled: true,
+      from: -30,
+      id: 'happy',
+      mode: 'range' as const,
+      parameterId: 'angle',
+      text: '기쁘고 신나는 내용',
+      threshold: 0.75,
+      to: 30,
+    },
+  ]
+  await repository.configureSpeech(widget.id, {
+    enabled: true,
+    semanticBindings,
+    voice: DEFAULT_POFFO_VOICE,
+    x: 0.9,
+    y: 0.05,
+  })
+  await repository.moveSpeech(widget.id, {x: 1, y: 0.2})
+  repository.close()
+  expect((await open().read()).widgets[0].speech).toMatchObject({
+    semanticBindings,
+    voice: DEFAULT_POFFO_VOICE,
+  })
+})
+
+it('should persist a complete connection profile atomically without changing speech layout or voice', async () => {
+  const repository = open()
+  const widget = await repository.addWidget('builtin:ash')
+  await repository.configureSpeech(widget.id, {
+    enabled: false,
+    voice: DEFAULT_POFFO_VOICE,
+    wrap: false,
+    x: 0.3,
+    y: 0.4,
+  })
+  await repository.configureConnections(widget.id, {
+    lipsync: {parameterId: 'ParamMouthOpenY', source: 'speech'},
+    semanticBindings: [
+      {
+        enabled: true,
+        id: 'happy',
+        mode: 'toggle',
+        parameterId: 'Param71',
+        text: '기쁨',
+        threshold: 0.7,
+      },
+    ],
+    tracking: 'cursor',
+    trackingBindings: {headX: {inverted: true, parameterId: 'ParamAngleX'}},
+    trackingOptions: {headMaximumX: 18, headMinimumX: -12},
+  })
+  repository.close()
+  const reopened = open()
+  const stored = (await reopened.read()).widgets[0]!
+  expect(stored.speech).toMatchObject({
+    enabled: false,
+    lipsync: {parameterId: 'ParamMouthOpenY', source: 'speech'},
+    semanticBindings: [expect.objectContaining({id: 'happy'})],
+    voice: DEFAULT_POFFO_VOICE,
+    wrap: false,
+    x: 0.3,
+    y: 0.4,
+  })
+  expect(stored.trackingOptions).toEqual({headMaximumX: 18, headMinimumX: -12})
+  expect(stored.tracking).toBe('cursor')
+  expect(stored.trackingBindings?.headX).toEqual({inverted: true, parameterId: 'ParamAngleX'})
+  await reopened.configureConnections(widget.id, {trackingOptions: {eyeCenterX: 0.2}})
+  expect((await reopened.read()).widgets[0]?.tracking).toBe('cursor')
+})
+
+it('should retain explicit empty bindings when initializing defaults', async () => {
+  const reopened = open()
+  const widget = await reopened.addWidget('builtin:ash')
+  await reopened.configureConnections(widget.id, {semanticBindings: []})
+  await reopened.configureConnections(
+    widget.id,
+    {
+      semanticBindings: [
+        {
+          enabled: true,
+          id: 'default',
+          mode: 'toggle',
+          parameterId: 'Param71',
+          text: '기본',
+          threshold: 0.7,
+        },
+      ],
+    },
+    'missing',
+  )
+  expect((await reopened.read()).widgets[0]?.speech?.semanticBindings).toEqual([])
+})
+
+it('should reject invalid connections before replacing stored values', async () => {
+  const reopened = open()
+  const widget = await reopened.addWidget('character')
+  await reopened.configureConnections(widget.id, {semanticBindings: []})
+  await expect(
+    reopened.configureConnections(widget.id, {
+      semanticBindings: [
+        {enabled: true, id: 'bad', mode: 'toggle', parameterId: null, text: '', threshold: 2},
+      ],
+    }),
+  ).rejects.toThrow()
+  expect((await reopened.read()).widgets[0]?.speech?.semanticBindings).toEqual([])
+})
+
+it('should toggle registered menu bundles transactionally and preserve unrelated speech settings', async () => {
+  const repository = open()
+  const widget = await repository.addWidget('character')
+  const entry = {
+    action: {id: 'tiny', kind: 'expression' as const},
+    category: 'menu' as const,
+    enabled: true,
+    exclusiveGroup: 'body',
+    id: 'tiny',
+    mode: 'toggle' as const,
+    parameterId: null,
+    text: '',
+    threshold: 0.8,
+  }
+  await repository.configureSpeech(widget.id, {
+    enabled: true,
+    semanticBindings: [
+      entry,
+      {...entry, id: 'large'},
+      {...entry, exclusiveGroup: 'accessory', id: 'glasses'},
+    ],
+    voice: DEFAULT_POFFO_VOICE,
+    x: 0.2,
+    y: 0.4,
+  })
+  await Promise.all([
+    repository.toggleWidgetAction(widget.id, 'tiny'),
+    repository.toggleWidgetAction(widget.id, 'glasses'),
+  ])
+  const speech = (await repository.read()).widgets[0]!.speech!
+  expect(
+    speech.semanticBindings?.filter((binding) => binding.menuActive).map((binding) => binding.id),
+  ).toEqual(['tiny', 'glasses'])
+  await repository.toggleWidgetAction(widget.id, 'large')
+  expect(
+    (await repository.read()).widgets[0]!.speech?.semanticBindings?.filter(
+      (binding) => binding.menuActive,
+    ).map((binding) => binding.id),
+  ).toEqual(['large', 'glasses'])
+  await repository.toggleWidgetAction(widget.id, 'large')
+  expect((await repository.read()).widgets[0]!.speech).toMatchObject({
+    voice: DEFAULT_POFFO_VOICE,
+    x: 0.2,
+    y: 0.4,
+  })
+  expect(
+    (await repository.read()).widgets[0]!.speech?.semanticBindings?.filter(
+      (binding) => binding.menuActive,
+    ).map((binding) => binding.id),
+  ).toEqual(['glasses'])
 })

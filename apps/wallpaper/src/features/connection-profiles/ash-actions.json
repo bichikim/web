@@ -1,0 +1,130 @@
+{
+  "ash:excited": {
+    "kind": "expression",
+    "id": "반짝이는 눈"
+  },
+  "ash:affection": {
+    "kind": "expression",
+    "id": "하트 눈"
+  },
+  "ash:embarrassed": {
+    "kind": "expression",
+    "id": "홍조"
+  },
+  "ash:angry": {
+    "kind": "expression",
+    "id": "화남"
+  },
+  "ash:sad-eyes": {
+    "kind": "expression",
+    "id": "울먹이는 눈"
+  },
+  "ash:sad-tears": {
+    "kind": "expression",
+    "id": "눈물"
+  },
+  "ash:nervous": {
+    "kind": "expression",
+    "id": "긴장"
+  },
+  "ash:sweat": {
+    "kind": "expression",
+    "id": "땀방울"
+  },
+  "ash:notes": {
+    "kind": "expression",
+    "id": "노트 들기"
+  },
+  "ash:thumbs-up": {
+    "kind": "expression",
+    "id": "엄지 척"
+  },
+  "ash:coffee": {
+    "kind": "expression",
+    "id": "커피 들기"
+  },
+  "ash:controller": {
+    "kind": "expression",
+    "id": "게임패드 들기"
+  },
+  "ash:noodles": {
+    "kind": "expression",
+    "id": "컵라면 들기"
+  },
+  "ash:handcuffs": {
+    "kind": "expression",
+    "id": "수갑 찬 손"
+  },
+  "ash:microphone": {
+    "kind": "expression",
+    "id": "마이크 들기"
+  },
+  "ash:finger-heart": {
+    "kind": "expression",
+    "id": "손하트"
+  },
+  "ash:fists": {
+    "kind": "expression",
+    "id": "주먹 쥐기"
+  },
+  "ash:knife": {
+    "kind": "expression",
+    "id": "칼 들기"
+  },
+  "ash:leash": {
+    "kind": "expression",
+    "id": "목줄 동작"
+  },
+  "ash:cat-paws": {
+    "kind": "expression",
+    "id": "고양이 손"
+  },
+  "ash:shrink": {
+    "kind": "expression",
+    "id": "작아지기"
+  },
+  "ash:glasses": {
+    "kind": "expression",
+    "id": "안경"
+  },
+  "ash:shadow": {
+    "kind": "expression",
+    "id": "얼굴 그림자"
+  },
+  "ash:highlights-off": {
+    "kind": "expression",
+    "id": "눈의 하이라이트 끄기"
+  },
+  "ash:press-left": {
+    "kind": "expression",
+    "id": "왼손 버튼 누르기"
+  },
+  "ash:press-right": {
+    "kind": "expression",
+    "id": "오른손 버튼 누르기"
+  },
+  "ash:notes-detail": {
+    "kind": "expression",
+    "id": "필기 동작"
+  },
+  "ash:walking": {
+    "kind": "motion",
+    "id": "Walk:0"
+  },
+  "ash:joy-left": {
+    "id": "반짝이는 눈",
+    "kind": "expression"
+  },
+  "ash:joy-right": {
+    "id": "반짝이는 눈",
+    "kind": "expression"
+  },
+  "ash:joy-open-left": {
+    "id": "반짝이는 눈",
+    "kind": "expression"
+  },
+  "ash:joy-open-right": {
+    "id": "반짝이는 눈",
+    "kind": "expression"
+  }
+}

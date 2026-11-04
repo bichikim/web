@@ -1,7 +1,8 @@
 export const headerShortcuts = {
   'document-load-error': [
+    '[&_p]:text-[var(--puppet-color-error,var(--puppet-color-text,#edf4f0))]',
     'grid min-h-screen place-content-center justify-items-center gap-editor-group m-0',
-    'bg-[#0b0f0e] text-[#edf4f0] [&_p]:m-0',
+    'bg-[var(--puppet-color-panel,#101513)] text-[var(--puppet-color-text,#edf4f0)] [&_p]:m-0',
   ],
   'document-loading': [
     'h-full [&>div]:h-full [&>[role=status]]:sr-only',
@@ -11,29 +12,32 @@ export const headerShortcuts = {
     'editor-type-root',
     'fixed top-1/2 left-1/2 [transform:translate(-50%,_-50%)] m-0',
     'box-border [width:min(45.125rem,_calc(100vw_-_2rem))] [max-height:calc(100dvh_-_2rem)] p-editor-reading',
-    '[border:1px_solid_#35413d] [border-radius:0.75rem] [background:#111614] [color:#e9f3ef]',
+    '[border:1px_solid_var(--puppet-color-border,#35413d)] [border-radius:0.75rem] ' +
+      '[background:var(--puppet-color-panel,#111614)] [color:var(--puppet-color-text,#e9f3ef)]',
     'text-editor-reading [line-height:1.7] overflow-y-auto',
-    '[&::backdrop]:[background:#0009]',
+    '[&::backdrop]:[background:color-mix(in_srgb,var(--puppet-color-backdrop,#000000)_60%,transparent)]',
     '[&_header]:flex [&_header]:items-center [&_header]:justify-between',
     '[&_h1]:editor-type-document-title [&_h1]:m-0',
     '[&_h2]:editor-type-title [&_h2]:mt-editor-reading',
     '[&_dt]:font-bold [&_dt]:mt-editor-group',
-    '[&_dd]:m-0 [&_dd]:[color:#b9c5c0]',
-    '[&_header_button]:py-editor-field [&_header_button]:px-editor-group [&_header_button]:[border:1px_solid_#35413d]',
-    '[&_header_button]:[border-radius:0.375rem] [&_header_button]:[color:#e9f3ef]',
-    '[&_header_button]:[background:#26332f] [&_header_button]:cursor-pointer',
-    '[&_button:focus-visible]:[outline:2px_solid_#64e5c4] [&_button:focus-visible]:[outline-offset:2px]',
+    '[&_dd]:m-0 [&_dd]:[color:var(--puppet-color-text-secondary,#b9c5c0)]',
+    '[&_header_button]:py-editor-field [&_header_button]:px-editor-group ' +
+      '[&_header_button]:[border:1px_solid_var(--puppet-color-border,#35413d)]',
+    '[&_header_button]:[border-radius:0.375rem] [&_header_button]:[color:var(--puppet-color-text,#e9f3ef)]',
+    '[&_header_button]:[background:var(--puppet-color-selected,#26332f)] [&_header_button]:cursor-pointer',
+    '[&_button:focus-visible]:[outline:2px_solid_var(--puppet-color-accent,#64e5c4)] ' +
+      '[&_button:focus-visible]:[outline-offset:2px]',
   ],
   'panel-visibility-controls': [
     '[.puppet-editor_&]:flex [.puppet-editor_&]:gap-editor-related [.puppet-editor_&]:pl-editor-field',
-    '[.puppet-editor_&]:[border-left:0.0625rem_solid_#313b37]',
+    '[.puppet-editor_&]:[border-left:0.0625rem_solid_var(--puppet-color-border,#313b37)]',
     '[.puppet-editor_&_button]:[width:var(--editor-control-height)] [.puppet-editor_&_button]:p-0',
     '[.puppet-editor_&_.puppet-icon]:[width:1rem] [.puppet-editor_&_.puppet-icon]:[height:1rem]',
   ],
   toolbar: [
     'workspace-header [.puppet-editor_&]:[max-width:100cqw]',
     '[.puppet-editor_&]:[grid-area:toolbar] [.puppet-editor_&]:justify-between',
-    '[.puppet-editor_&]:[background:#111614]',
+    '[.puppet-editor_&]:[background:var(--puppet-color-panel,#111614)]',
   ],
   'toolbar-actions': [
     '[.puppet-editor_&]:flex [.puppet-editor_&]:items-center',
@@ -49,12 +53,15 @@ export const headerShortcuts = {
     '[.puppet-editor_&]:py-editor-field',
   ],
   'toolbar-button': [
-    '[.puppet-editor_&]:p-editor-field [.puppet-editor_&]:[border:0.0625rem_solid_#35413d]',
-    '[.puppet-editor_&]:[border-radius:0.4375rem] [.puppet-editor_&]:[color:#b9c5c0]',
-    '[.puppet-editor_&]:[background:#171e1b] [.puppet-editor_&]:text-editor-body',
+    '[.puppet-editor_&]:p-editor-field ' +
+      '[.puppet-editor_&]:[border:0.0625rem_solid_var(--puppet-color-border,#35413d)]',
+    '[.puppet-editor_&]:[border-radius:0.4375rem] ' +
+      '[.puppet-editor_&]:[color:var(--puppet-color-text-secondary,#b9c5c0)]',
+    '[.puppet-editor_&]:[background:var(--puppet-color-control,#171e1b)] [.puppet-editor_&]:text-editor-body',
     '[.puppet-editor_&]:cursor-pointer',
-    '[.puppet-editor_&.primary]:[border-color:#64e5c4] [.puppet-editor_&.primary]:[color:#07110f]',
-    '[.puppet-editor_&.primary]:[background:#64e5c4] [.puppet-editor_&.primary]:font-bold',
+    '[.puppet-editor_&.primary]:[border-color:var(--puppet-color-accent,#64e5c4)] ' +
+      '[.puppet-editor_&.primary]:[color:var(--puppet-color-on-accent,#07110f)]',
+    '[.puppet-editor_&.primary]:[background:var(--puppet-color-accent,#64e5c4)] [.puppet-editor_&.primary]:font-bold',
     '[.puppet-editor_&:disabled]:[opacity:0.42] [.puppet-editor_&:disabled]:cursor-not-allowed',
     '[.puppet-editor_&_input]:fixed [.puppet-editor_&_input]:[inline-size:0.0625rem]',
     '[.puppet-editor_&_input]:[block-size:0.0625rem] [.puppet-editor_&_input]:[opacity:0]',
@@ -66,34 +73,40 @@ export const headerShortcuts = {
     'editor-type-root',
     '[&_button.file-menu-action]:[display:flex] [&_button.file-menu-action]:[flex-direction:column]',
     '[&_button.file-menu-action]:[align-items:flex-start] [&_button.file-menu-action]:gap-editor-related',
-    '[&_button.file-menu-action_small]:text-editor-body [&_button.file-menu-action_small]:[color:#b9c9c3]',
-    'grid m-0 min-w-44 p-editor-control rounded-lg border border-solid border-[#35413d] bg-[#171e1b] text-[#e9f3ef]',
-    'shadow-[0_8px_24px_#0006] [&[data-closed]]:hidden',
+    '[&_button.file-menu-action_small]:text-editor-body ' +
+      '[&_button.file-menu-action_small]:[color:var(--puppet-color-text-secondary,#b9c9c3)]',
+    'grid m-0 min-w-44 p-editor-control rounded-lg border border-solid ' +
+      'border-[var(--puppet-color-border,#35413d)] bg-[var(--puppet-color-control,#171e1b)] ' +
+      'text-[var(--puppet-color-text,#e9f3ef)]',
+    'shadow-[0_8px_24px_color-mix(in_srgb,var(--puppet-color-shadow,#000000)_40%,transparent)] [&[data-closed]]:hidden',
     '[&_button]:py-editor-field [&_button]:px-editor-group [&_button]:[border:0]',
     '[&_button]:[border-radius:0.3125rem] [&_button]:[background:transparent]',
     '[&_button]:[color:inherit] [&_button]:text-left',
     '[&_button]:text-editor-reading [&_button]:cursor-pointer',
-    '[&_button:hover]:[background:#26332f]',
-    '[&_button:focus-visible]:[outline:0.125rem_solid_#64e5c4]',
+    '[&_button:hover]:[background:var(--puppet-color-hover,#26332f)]',
+    '[&_button:focus-visible]:[outline:0.125rem_solid_var(--puppet-color-accent,#64e5c4)]',
     '[&_button:focus-visible]:[outline-offset:0.125rem]',
     '[&_hr]:w-full [&_hr]:my-editor-related [&_hr]:mx-0 [&_hr]:[border:0]',
-    '[&_hr]:[border-top:0.0625rem_solid_#35413d]',
+    '[&_hr]:[border-top:0.0625rem_solid_var(--puppet-color-border,#35413d)]',
     '[&_button:disabled]:[opacity:0.42] [&_button:disabled]:cursor-not-allowed',
     '[&_button:disabled]:[background:transparent]',
   ],
   'toolbar-menu-examples-trigger': [
     'cursor-pointer rounded px-editor-group py-editor-field text-editor-body',
-    'hover:bg-[#26332f] focus-visible:outline-2 focus-visible:outline-[#64e5c4]',
+    'hover:bg-[var(--puppet-color-hover,#26332f)] focus-visible:outline-2 ' +
+      'focus-visible:outline-[var(--puppet-color-accent,#64e5c4)]',
   ],
   'toolbar-menu-history-action': ['flex items-center gap-editor-group'],
   'toolbar-menu-trigger': [
     '[.puppet-editor_&]:[anchor-name:\\-\\-toolbar-menu] [.puppet-editor_&]:grid',
     '[.puppet-editor_&]:place-items-center [.puppet-editor_&]:[width:2rem] [.puppet-editor_&]:[height:2rem]',
-    '[.puppet-editor_&]:p-editor-control [.puppet-editor_&]:[border:0.0625rem_solid_#35413d]',
-    '[.puppet-editor_&]:[border-radius:0.4375rem] [.puppet-editor_&]:[background:#171e1b]',
-    '[.puppet-editor_&]:[color:#b9c5c0] [.puppet-editor_&]:cursor-pointer',
+    '[.puppet-editor_&]:p-editor-control ' +
+      '[.puppet-editor_&]:[border:0.0625rem_solid_var(--puppet-color-border,#35413d)]',
+    '[.puppet-editor_&]:[border-radius:0.4375rem] ' +
+      '[.puppet-editor_&]:[background:var(--puppet-color-control,#171e1b)]',
+    '[.puppet-editor_&]:[color:var(--puppet-color-text-secondary,#b9c5c0)] [.puppet-editor_&]:cursor-pointer',
     '[.puppet-editor_&_.puppet-icon]:w-full [.puppet-editor_&_.puppet-icon]:h-full ',
-    '[.puppet-editor_&:focus-visible]:[outline:0.125rem_solid_#64e5c4]',
+    '[.puppet-editor_&:focus-visible]:[outline:0.125rem_solid_var(--puppet-color-accent,#64e5c4)]',
     '[.puppet-editor_&:focus-visible]:[outline-offset:0.125rem]',
   ],
   'workspace-header': [
@@ -101,23 +114,25 @@ export const headerShortcuts = {
     '[.puppet-editor_&]:flex [.puppet-editor_&]:flex-wrap [.puppet-editor_&]:items-center',
     '[.puppet-editor_&]:content-center [.puppet-editor_&]:py-editor-control [.puppet-editor_&]:px-editor-group',
     '[.puppet-editor_&]:gap-x-editor-group [.puppet-editor_&]:gap-y-editor-related',
-    '[.puppet-editor_&]:[border-bottom:0.0625rem_solid_#27302d]',
+    '[.puppet-editor_&]:[border-bottom:0.0625rem_solid_var(--puppet-color-divider,#27302d)]',
   ],
   'workspace-navigation': 'shrink-0',
   'workspace-navigation-label': ['[@container_puppet-workspace_(max-width:_42rem)]:hidden'],
   'workspace-switcher': [
     '[.puppet-editor_&]:flex [.puppet-editor_&]:items-center',
     '[.puppet-editor_&]:gap-editor-related [.puppet-editor_&]:p-editor-related',
-    '[.puppet-editor_&]:[border:0.0625rem_solid_#313b37] [.puppet-editor_&]:[border-radius:0.5rem]',
-    '[.puppet-editor_&]:[background:#0d1210]',
+    '[.puppet-editor_&]:[border:0.0625rem_solid_var(--puppet-color-border,#313b37)] ' +
+      '[.puppet-editor_&]:[border-radius:0.5rem]',
+    '[.puppet-editor_&]:[background:var(--puppet-color-control,#0d1210)]',
     '[.puppet-editor_&_button]:py-editor-control [.puppet-editor_&_button]:px-editor-group',
     '[.puppet-editor_&_button]:[border:0]',
-    '[.puppet-editor_&_button]:[border-radius:0.3125rem] [.puppet-editor_&_button]:[color:#7f8d88]',
+    '[.puppet-editor_&_button]:[border-radius:0.3125rem] ' +
+      '[.puppet-editor_&_button]:[color:var(--puppet-color-text-muted,#7f8d88)]',
     '[.puppet-editor_&_button]:[background:transparent] [.puppet-editor_&_button]:text-editor-body',
     '[.puppet-editor_&_button]:cursor-pointer',
-    "[.puppet-editor_&_button[aria-pressed='true']]:[color:#e9f3ef]",
-    "[.puppet-editor_&_button[aria-pressed='true']]:[background:#26332f]",
-    '[.puppet-editor_&_button:focus-visible]:[outline:0.125rem_solid_#64e5c4]',
+    "[.puppet-editor_&_button[aria-pressed='true']]:[color:var(--puppet-color-text,#e9f3ef)]",
+    "[.puppet-editor_&_button[aria-pressed='true']]:[background:var(--puppet-color-selected,#26332f)]",
+    '[.puppet-editor_&_button:focus-visible]:[outline:0.125rem_solid_var(--puppet-color-accent,#64e5c4)]',
     '[.puppet-editor_&_button:focus-visible]:[outline-offset:0.125rem]',
   ],
 }

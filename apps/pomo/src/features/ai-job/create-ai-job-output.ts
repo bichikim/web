@@ -10,6 +10,7 @@ export interface AiJobOutputOptions {
   readonly session: AiJobSession
   readonly onComplete: (text: string) => Promise<void>
   readonly onError: (message: string) => void
+  readonly onLoadError: (message: string) => void
   readonly onResult: (result: AiJobResult | null) => void
 }
 
@@ -48,10 +49,10 @@ export const createAiJobOutput = (props: AiJobOutputOptions) => {
         return false
       }
 
-      props.onError(
+      props.onLoadError(
         getClientErrorCode(error) === 'ai_artifact_not_available'
           ? '결과 보관 기간이 지났거나 결과를 더 이상 열 수 없어요.'
-          : '완료된 결과를 열지 못했어요. 다시 열기를 눌러 주세요.',
+          : '완료된 결과를 열지 못했어요. 다시 시도해 주세요.',
       )
       return false
     }

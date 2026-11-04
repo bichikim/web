@@ -51,9 +51,15 @@ test('should show the automatic connection and persist manual selection and inve
   expect(bindings().headX).toEqual({parameterId: 'custom-turn'})
   fireEvent.click(screen.getByRole('button', {name: '얼굴 좌우 방향 반전'}))
   expect(bindings().headX).toEqual({inverted: true, parameterId: 'custom-turn'})
+  const blend = screen.getByRole('combobox', {name: '얼굴 좌우 적용 방식'})
+  expect(blend.textContent).toContain('덮어쓰기')
+  fireEvent.click(blend)
+  fireEvent.click(screen.getByRole('option', {name: '더하기'}))
+  expect(bindings().headX).toEqual({blend: 'add', inverted: true, parameterId: 'custom-turn'})
   fireEvent.click(head)
   fireEvent.click(screen.getByRole('option', {name: '사용 안 함'}))
   expect(bindings().headX?.parameterId).toBeNull()
+  expect(bindings().headX?.blend).toBe('add')
 })
 
 test('should display the model-derived eye direction and allow overriding it', () => {

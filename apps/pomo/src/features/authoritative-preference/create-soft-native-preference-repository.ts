@@ -6,6 +6,7 @@ export const createSoftNativePreferenceRepository = <Value>(
   const {storage} = options
   let writeRevision = 0
   let pendingNativeWriteCount = 0
+  let nativeWriteFailed = false
   const readWebPreferences = () => storage.readWeb()
   const writeWebPreferences = (preferences: Value) => storage.writeWeb(preferences)
   const readAvailableWebPreferences = () => {
@@ -16,6 +17,9 @@ export const createSoftNativePreferenceRepository = <Value>(
     }
   }
   const readNativeWriteFailure = () => {
+    if (nativeWriteFailed) {
+      return true
+    }
     try {
       return options.nativeWriteFailure?.read() === true
     } catch {
@@ -23,6 +27,7 @@ export const createSoftNativePreferenceRepository = <Value>(
     }
   }
   const setNativeWriteFailure = (failed: boolean) => {
+    nativeWriteFailed = failed
     try {
       options.nativeWriteFailure?.write(failed)
     } catch {}
@@ -64,11 +69,7 @@ export const createSoftNativePreferenceRepository = <Value>(
       writeWebPreferences(restoredPreferences)
       return restoredPreferences
     } catch {
-      if (writeRevision !== initialWriteRevision) {
-        return readAvailableWebPreferences() ?? options.defaultValue
-      }
-
-      return readWebPreferences() ?? options.defaultValue
+      return readAvailableWebPreferences() ?? options.defaultValue
     }
   }
 

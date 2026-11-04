@@ -43,10 +43,12 @@ runs:
       env:
         TARGET: ${{ inputs.target }}
         VERCEL_TOKEN: ${{ inputs.token }}
-      run: >-
-        pnpm dlx vercel@${VERCEL_CLI_VERSION} pull --yes
-        --environment="${TARGET}" --git-branch="${GITHUB_REF_NAME}"
-        --local-config=apps/wallpaper-web/vercel.json --token="${VERCEL_TOKEN}"
+      run: |
+        args=(--yes --environment="${TARGET}" --local-config=apps/wallpaper-web/vercel.json)
+        if test "${TARGET}" = preview; then
+          args+=(--git-branch="${GITHUB_REF_NAME}")
+        fi
+        pnpm dlx vercel@${VERCEL_CLI_VERSION} pull "${args[@]}" --token="${VERCEL_TOKEN}"
     - uses: actions/download-artifact@v4
       with:
         name: wallpaper-static

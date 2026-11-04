@@ -1,6 +1,6 @@
 import {createSignal, onCleanup} from 'solid-js'
 import {createStore, reconcile} from 'solid-js/store'
-import {createLibraryRepository} from '@winter-love/wallpaper/settings/library-repository'
+import {createBuiltinLibrary} from '../builtin-assets/create-builtin-library'
 import type {
   PoffoTracking,
   PoffoTrackingBindings,
@@ -21,7 +21,7 @@ interface LibraryState {
 
 /** Owns persistent website addresses, history, and independently opened widgets. */
 export const useWallpaperLibrary = () => {
-  const repository = createLibraryRepository('wallpaper-library')
+  const repository = createBuiltinLibrary('wallpaper-library')
   const [state, setState] = createStore<LibraryState>({history: [], websites: [], widgets: []})
   const [error, setError] = createSignal<string | null>(null)
   const [ready, setReady] = createSignal(false)

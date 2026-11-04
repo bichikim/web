@@ -2,6 +2,8 @@ import {z} from 'zod'
 export type PoffoTracking = 'off' | 'cursor' | 'camera'
 export const poffoTrackingSchema = z.enum(['off', 'cursor', 'camera'])
 export interface PoffoTrackingOptions {
+  /** Cursor distance in character heights that reaches full movement; omitted uses 1. */
+  readonly cursorReach?: number
   readonly headResponseX?: number
   readonly headResponseY?: number
   readonly eyeResponseX?: number
@@ -43,6 +45,7 @@ export const DEFAULT_TRACKING_OPTIONS: Required<PoffoTrackingOptions> = {
   cameraY: 0,
   centerX: 0,
   centerY: 0,
+  cursorReach: 1,
   distance: 60,
   eyeCenterX: 0,
   eyeCenterY: 0,
@@ -78,6 +81,7 @@ export const TRACKING_LIMITS = {
   cameraY: {max: 4, min: -3},
   centerX: {max: 1, min: -1},
   centerY: {max: 1, min: -1},
+  cursorReach: {max: 3, min: 0.1},
   distance: {max: 300, min: 20},
   eyeCenterX: {max: 100, min: -100},
   eyeCenterY: {max: 100, min: -100},
@@ -133,6 +137,11 @@ export const poffoTrackingOptionsSchema: z.ZodType<PoffoTrackingOptions> = z
       .number()
       .min(TRACKING_LIMITS.centerY.min)
       .max(TRACKING_LIMITS.centerY.max)
+      .optional(),
+    cursorReach: z
+      .number()
+      .min(TRACKING_LIMITS.cursorReach.min)
+      .max(TRACKING_LIMITS.cursorReach.max)
       .optional(),
     distance: z
       .number()
@@ -289,11 +298,17 @@ export interface PoffoTrackingBindings {
   readonly eyeY?: PoffoTrackingBinding
 }
 export interface PoffoTrackingBinding {
+  /** How tracking meets animation values; omitted preserves overwrite behavior. */
+  readonly blend?: 'add' | 'overwrite'
   readonly parameterId?: string | null
   readonly inverted?: boolean
 }
 const parameter = z
-  .object({inverted: z.boolean().optional(), parameterId: z.string().min(1).nullable().optional()})
+  .object({
+    blend: z.enum(['add', 'overwrite']).optional(),
+    inverted: z.boolean().optional(),
+    parameterId: z.string().min(1).nullable().optional(),
+  })
   .optional()
 export const poffoBindingsSchema: z.ZodType<PoffoTrackingBindings> = z.object({
   eyeX: parameter,
