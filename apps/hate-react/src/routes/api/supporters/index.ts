@@ -20,8 +20,36 @@ export async function GET(_event: APIEvent) {
 
   try {
     const response = await fetchSupporters(token, 1)
-    const data = response.data ?? []
-    const messages = filterWithMessage(data as unknown[])
+    const lastPage = response.last_page === undefined ? 1 : response.last_page
+
+    if (
+      !Number.isSafeInteger(lastPage) ||
+      lastPage < 1 ||
+      !Array.isArray(response.data ?? []) ||
+      (response.current_page !== undefined && response.current_page !== 1)
+    ) {
+      throw new Error('Invalid BMC pagination metadata')
+    }
+
+    const pages = [response.data ?? []]
+
+    for (let page = 2; page <= lastPage; page += 1) {
+      // Validate each page before issuing another request; avoid an unbounded request fan-out.
+      // oxlint-disable-next-line no-await-in-loop
+      const next = await fetchSupporters(token, page)
+
+      if (
+        next.current_page !== page ||
+        next.last_page !== lastPage ||
+        !Array.isArray(next.data ?? [])
+      ) {
+        throw new Error('Inconsistent BMC pagination metadata')
+      }
+
+      pages.push(next.data ?? [])
+    }
+
+    const messages = filterWithMessage(pages.flat())
 
     return new Response(JSON.stringify({messages}), {
       headers: {
