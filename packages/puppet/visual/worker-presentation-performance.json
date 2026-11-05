@@ -1,0 +1,2878 @@
+{
+  "schemaVersion": 1,
+  "measuredAt": "2026-11-05T10:08:56.335287+09:00",
+  "scope": "Find why reduced playback Worker time does not reliably increase displayed model FPS, improve verified host-side bottlenecks, and preserve rendering results.",
+  "outcome": {
+    "cpuGeometryApplicationImprovementVerified": true,
+    "actualFPSImprovementVerified": false,
+    "renderingMatchesVerifiedCheckpoints": true,
+    "workerBinaryUnchanged": true,
+    "remainingCriterion": "A stable real-FPS uplift under comparable GPU availability is not verified. Current FPS results are inconclusive and must not be reported as an FPS speedup."
+  },
+  "environment": {
+    "cpu": "Apple M5 Pro",
+    "chrome": "156.0.8078.80",
+    "renderer": "ANGLE Metal/WebGL",
+    "viewport": {
+      "width": 900,
+      "height": 700
+    },
+    "resolution": 1,
+    "antialiasing": "ssaa",
+    "model": "white-cat-idle-english.poffo",
+    "modelSHA256": "47c98e7473e79ffb249aa1acb5bed9b7d458f35c7c0d3502f281549c20c55035",
+    "parts": 852,
+    "vertices": 34452,
+    "parameters": 265,
+    "physicsChains": 25,
+    "motion": "Idle:0",
+    "seed": 42,
+    "gpuAvailability": "User explicitly reported substantial concurrent GPU work during these measurements. No other task was stopped or reconfigured. rAF itself varied materially; GPU pressure is a known confound, not proof that all residual costs are GPU-only."
+  },
+  "artifacts": {
+    "before": {
+      "playerSHA256": "db011758da4be2e1f46d3a683649998c89bdb8316883f1855317719458314fbf",
+      "workerSHA256": "6e7df97f92a59733afefa2b2a8c17f3ff885ac6f2615a5b42f382c71461ee1c1"
+    },
+    "after": {
+      "playerSHA256": "1d43bf34af9697e37f6110d5384402044435c9b057b1a92c3e6587f210de257f",
+      "workerSHA256": "6e7df97f92a59733afefa2b2a8c17f3ff885ac6f2615a5b42f382c71461ee1c1"
+    },
+    "sourceSHA256": {
+      "src/player/buffering/create-buffer-clock.ts": "9c8d8f6179e1a245f9a85f45c809a8192b4778968b1b49db198b2a7904ede39d",
+      "src/player/buffering/create-buffer-session.ts": "aab04fd274084cd6939959ef0648bb36d7e01257b3e7e1c4839b45ef9361b56a",
+      "src/player/buffering/types.ts": "a63432bf8a006033e1e7aac82548a4f5fac6a80a03b7a73d246492e6d9716ea0",
+      "src/player/buffering/render-frame/create-decoder.ts": "bc113af012135e4e3a520063dd4e669afad313ca2ece7b03b287507f38517490",
+      "src/player/buffering/__tests__/create-buffer-clock.spec.ts": "253723aff2906240c2b473a1b2a1528de9442a368f7f15826ca554a0b8ca9f47",
+      "src/player/buffering/__tests__/create-buffer-session.spec.ts": "b9274982ec0533ac248dbb5d70bc67616ee25618f3198eab242d8328e7aad076",
+      "src/player/buffering/render-frame/__tests__/create-decoder.spec.ts": "27cc968de733244d71f99c2c614fad225f8d3572dc10fc90a800c306d13ab747",
+      "src/player/buffering/README.md": "20fe2357dbabf48c36217f66a75f7e47df37ed60b64ad073bab58472e33a6cca",
+      "visual/__tests__/create-buffer-session.integration.tsx": "c22ca99de1c7c934a649702a32ff08f6365f792900445df6e8854aa67096f6d4"
+    }
+  },
+  "fixes": [
+    {
+      "path": "src/player/buffering/create-buffer-clock.ts",
+      "cause": "The previous smoothed end-to-end response duration was also a minimum interval for future simulation timestamps. A transient delayed response stretched later deadlines even after production recovered.",
+      "change": "Predict from observed display cadence and catch up to elapsed wall time; remove the stale compute-duration floor. Use rAF timestamps for cadence so callback scheduling delays are not sampled as refresh intervals.",
+      "reproduction": "After a simulated 100ms delayed response the old next requested timestamp was 200ms; the corrected expectation is 116.6667ms. Both a deterministic unit test and a real browser Worker integration test fail on the original source at this assertion.",
+      "tests": [
+        "src/player/buffering/__tests__/create-buffer-session.spec.ts",
+        "src/player/buffering/__tests__/create-buffer-clock.spec.ts",
+        "visual/__tests__/create-buffer-session.integration.tsx"
+      ],
+      "id": 1,
+      "priority": "P2"
+    },
+    {
+      "path": "src/player/buffering/create-buffer-session.ts",
+      "cause": "When the prediction queue was full, its next replacement request was sent only after synchronous frame application and drawing finished.",
+      "change": "Refill predictions before the synchronous presentation callback. Pending input remains deferred until the newly presented checkpoint is available. Keep one in-flight request and the existing three-frame prediction limit.",
+      "reproduction": "The first submission callback observed only three requests on the original source; the regression requires the fourth replacement request to have already started. A separate pending-input regression checks the submitted checkpoint identity.",
+      "id": 2,
+      "priority": "P2"
+    },
+    {
+      "path": "src/player/buffering/render-frame/create-decoder.ts",
+      "cause": "Every decoded frame created new part color/property objects even when all seven Float64 color/opacity values and the immutable template were unchanged. This defeated the existing identity cache in applyPartRenderProperties and repeated filter configuration.",
+      "change": "Retain the latest exact numeric sample and immutable properties per template. Compare with Object.is, including signed zero. Changed values and replacement templates create new snapshots; queued frames keep their prior properties. No frame colors, geometry or shader arithmetic are approximated.",
+      "reproduction": "The original decoder fails the unchanged-property identity regression. Template replacement, delayed readers, changing opacity, visibility/render flags and signed zero remain covered.",
+      "ownership": "One latest sample per immutable template in the stream-owned WeakMap. No frame history or cross-player cache.",
+      "id": 3,
+      "priority": "P2"
+    }
+  ],
+  "cpuApplicationExperiment": {
+    "comparison": {
+      "before": {
+        "samples": [
+          0.7440013916666667, 0.657428475, 0.629822225, 0.6201204833333333, 0.6357250000000001,
+          0.7659236083333333
+        ],
+        "count": 6,
+        "mean": 0.6755035305555556,
+        "median": 0.6465767375,
+        "minimum": 0.6201204833333333,
+        "maximum": 0.7659236083333333
+      },
+      "after": {
+        "samples": [
+          0.3896753416666667, 0.36762326666666667, 0.3806975666666667, 0.4004083333333333,
+          0.3879548583333333, 0.40602812499999996
+        ],
+        "count": 6,
+        "mean": 0.3887312486111111,
+        "median": 0.38881509999999997,
+        "minimum": 0.36762326666666667,
+        "maximum": 0.40602812499999996
+      },
+      "medianChangePercent": -39.865590973260154,
+      "meanChangePercent": -42.453113710389324
+    },
+    "raw": {
+      "method": "Actual renderer applyPreparedFrame, 16 decoded static frames cycled; rendering, mask drawing and GPU submission omitted. Both source fixture builds resident; 160 warmup applications and six ABBA samples of 120 applications per variant. This is CPU-side geometry/property application, not FPS.",
+      "frames": 120,
+      "results": [
+        {
+          "name": "before",
+          "millisPerFrame": 0.7440013916666667
+        },
+        {
+          "name": "candidate",
+          "millisPerFrame": 0.3896753416666667
+        },
+        {
+          "name": "candidate",
+          "millisPerFrame": 0.36762326666666667
+        },
+        {
+          "name": "before",
+          "millisPerFrame": 0.657428475
+        },
+        {
+          "name": "before",
+          "millisPerFrame": 0.629822225
+        },
+        {
+          "name": "candidate",
+          "millisPerFrame": 0.3806975666666667
+        },
+        {
+          "name": "candidate",
+          "millisPerFrame": 0.4004083333333333
+        },
+        {
+          "name": "before",
+          "millisPerFrame": 0.6201204833333333
+        },
+        {
+          "name": "before",
+          "millisPerFrame": 0.6357250000000001
+        },
+        {
+          "name": "candidate",
+          "millisPerFrame": 0.3879548583333333
+        },
+        {
+          "name": "candidate",
+          "millisPerFrame": 0.40602812499999996
+        },
+        {
+          "name": "before",
+          "millisPerFrame": 0.7659236083333333
+        }
+      ],
+      "errors": []
+    },
+    "limitations": "Fixture-only full-player builds expose the actual renderer applyPreparedFrame method. Six ABBA samples per variant, each 120 applications, after 160 warmup applications. Sixteen real decoded static model frames are cycled. Drawing and GPU submission are omitted. This measures host geometry/property application and is not total Worker time or real FPS."
+  },
+  "fps": {
+    "resident": {
+      "comparison": {
+        "before": {
+          "samples": [
+            73, 75.15199840526263, 69.68432402212333, 69.88399257232989, 67.6, 71.28167242377648
+          ],
+          "count": 6,
+          "mean": 71.10033123724872,
+          "median": 70.5828324980532,
+          "minimum": 67.6,
+          "maximum": 75.15199840526263
+        },
+        "after": {
+          "samples": [
+            71.36449715937407, 71.2, 72.88047601932834, 61.69881394513002, 70.88233532336318, 72.4
+          ],
+          "count": 6,
+          "mean": 70.07102040786593,
+          "median": 71.28224857968704,
+          "minimum": 61.69881394513002,
+          "maximum": 72.88047601932834
+        },
+        "medianChangePercent": 0.9909152932522591,
+        "meanChangePercent": -1.4476878116758352
+      },
+      "raw": {
+        "metadata": {
+          "parts": 852,
+          "vertices": 34452,
+          "viewport": {
+            "width": 900,
+            "height": 700
+          },
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36"
+        },
+        "warmupMillis": 2000,
+        "measureMillis": 5000,
+        "order": [
+          "before",
+          "candidate",
+          "candidate",
+          "before",
+          "before",
+          "candidate",
+          "candidate",
+          "before",
+          "before",
+          "candidate",
+          "candidate",
+          "before"
+        ],
+        "results": [
+          {
+            "artifact": "before",
+            "elapsed": 5000,
+            "observedModelFPS": 73,
+            "updatedFPS": 73.2,
+            "rafFPS": 75.8,
+            "frameP95": 16.80000000000109,
+            "errors": []
+          },
+          {
+            "artifact": "candidate",
+            "elapsed": 5016.5,
+            "observedModelFPS": 71.36449715937407,
+            "updatedFPS": 71.5638393302103,
+            "rafFPS": 77.74344662613376,
+            "frameP95": 16.700000000000728,
+            "errors": []
+          },
+          {
+            "artifact": "candidate",
+            "elapsed": 5000,
+            "observedModelFPS": 71.2,
+            "updatedFPS": 71.4,
+            "rafFPS": 78.2,
+            "frameP95": 16.799999999999272,
+            "errors": []
+          },
+          {
+            "artifact": "before",
+            "elapsed": 5016.5,
+            "observedModelFPS": 75.15199840526263,
+            "updatedFPS": 75.35134057609888,
+            "rafFPS": 79.53752616365992,
+            "frameP95": 16.80000000000291,
+            "errors": []
+          },
+          {
+            "artifact": "before",
+            "elapsed": 5008.299999999996,
+            "observedModelFPS": 69.68432402212333,
+            "updatedFPS": 69.88399257232999,
+            "rafFPS": 81.86410558472942,
+            "frameP95": 16.700000000004366,
+            "errors": []
+          },
+          {
+            "artifact": "candidate",
+            "elapsed": 5008.199999999997,
+            "observedModelFPS": 72.88047601932834,
+            "updatedFPS": 73.0801485563676,
+            "rafFPS": 75.87556407491718,
+            "frameP95": 16.80000000000291,
+            "errors": []
+          },
+          {
+            "artifact": "candidate",
+            "elapsed": 5008.199999999997,
+            "observedModelFPS": 61.69881394513002,
+            "updatedFPS": 61.69881394513002,
+            "rafFPS": 78.87065213050602,
+            "frameP95": 17.39999999999418,
+            "errors": []
+          },
+          {
+            "artifact": "before",
+            "elapsed": 5008.300000000003,
+            "observedModelFPS": 69.88399257232989,
+            "updatedFPS": 70.08366112253655,
+            "rafFPS": 86.45648223948241,
+            "frameP95": 16.80000000000291,
+            "errors": []
+          },
+          {
+            "artifact": "before",
+            "elapsed": 5000,
+            "observedModelFPS": 67.6,
+            "updatedFPS": 67.8,
+            "rafFPS": 107.6,
+            "frameP95": 16.69999999999709,
+            "errors": []
+          },
+          {
+            "artifact": "candidate",
+            "elapsed": 5008.300000000003,
+            "observedModelFPS": 70.88233532336318,
+            "updatedFPS": 70.88233532336318,
+            "rafFPS": 108.220354212008,
+            "frameP95": 16.69999999999709,
+            "errors": []
+          },
+          {
+            "artifact": "candidate",
+            "elapsed": 5000,
+            "observedModelFPS": 72.4,
+            "updatedFPS": 72.6,
+            "rafFPS": 105,
+            "frameP95": 16.69999999999709,
+            "errors": []
+          },
+          {
+            "artifact": "before",
+            "elapsed": 5008.300000000003,
+            "observedModelFPS": 71.28167242377648,
+            "updatedFPS": 71.28167242377648,
+            "rafFPS": 108.02068566180135,
+            "frameP95": 16.69999999999709,
+            "errors": []
+          }
+        ],
+        "errors": []
+      },
+      "method": "Both builds load once in one visible Chrome page. Only one player runs and is visible; the other is paused and its input flush completed. Three ABBA cycles, 2s warmup and 5s observation per segment. Both GPU contexts remain resident. This removes repeated model-loading work but still cannot remove concurrent GPU contention.",
+      "interpretation": "Medians and means do not establish a consistent uplift; do not quote the small median difference as an FPS gain."
+    },
+    "freshPlayerSequences": [
+      {
+        "comparison": {
+          "before": {
+            "samples": [94.76446332625265, 90.43462611356068],
+            "count": 2,
+            "mean": 92.59954471990667,
+            "median": 92.59954471990667,
+            "minimum": 90.43462611356068,
+            "maximum": 94.76446332625265
+          },
+          "after": {
+            "samples": [88.013914295139, 91.46295750221161],
+            "count": 2,
+            "mean": 89.7384358986753,
+            "median": 89.7384358986753,
+            "minimum": 88.013914295139,
+            "maximum": 91.46295750221161
+          },
+          "medianChangePercent": -3.0897655381412426,
+          "meanChangePercent": -3.0897655381412426
+        },
+        "raw": {
+          "configuration": {
+            "antialiasing": "ssaa",
+            "cpuRates": [1],
+            "measureMillis": 20000,
+            "model": "/Users/bichi/Downloads/白猫/white-cat-idle-english.poffo",
+            "modes": ["worker"],
+            "randomSeed": 42,
+            "resolution": 1,
+            "runs": 1,
+            "viewport": {
+              "height": 700,
+              "width": 900
+            },
+            "warmupMillis": 10000
+          },
+          "results": [
+            {
+              "artifact": "before",
+              "computation": "worker",
+              "cpu": 1,
+              "run": 1,
+              "buffering": {
+                "enabled": true,
+                "framesAhead": 3,
+                "status": "active"
+              },
+              "canvasSize": {
+                "height": 700,
+                "width": 900
+              },
+              "chains": 25,
+              "hardwareConcurrency": 15,
+              "motion": "Idle:0",
+              "parameters": 265,
+              "parts": 852,
+              "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+              "vertices": 34452,
+              "duration": 20007.5,
+              "errors": [],
+              "frameP95": 8.700000000000728,
+              "observedModelFPS": 94.76446332625265,
+              "rafFPS": 120.05497938273147,
+              "updatedFPS": 94.81444458328127,
+              "heapBytes": 350133704,
+              "scriptSeconds": 6.9760029999999995,
+              "taskSeconds": 7.590592
+            },
+            {
+              "artifact": "candidate",
+              "computation": "worker",
+              "cpu": 1,
+              "run": 1,
+              "buffering": {
+                "enabled": true,
+                "framesAhead": 3,
+                "status": "active"
+              },
+              "canvasSize": {
+                "height": 700,
+                "width": 900
+              },
+              "chains": 25,
+              "hardwareConcurrency": 15,
+              "motion": "Idle:0",
+              "parameters": 265,
+              "parts": 852,
+              "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+              "vertices": 34452,
+              "duration": 20008.199999999997,
+              "errors": [],
+              "frameP95": 9,
+              "observedModelFPS": 88.013914295139,
+              "rafFPS": 120.00079967213445,
+              "updatedFPS": 88.013914295139,
+              "heapBytes": 179228008,
+              "scriptSeconds": 6.481067,
+              "taskSeconds": 7.165614
+            },
+            {
+              "artifact": "candidate",
+              "computation": "worker",
+              "cpu": 1,
+              "run": 1,
+              "buffering": {
+                "enabled": true,
+                "framesAhead": 3,
+                "status": "active"
+              },
+              "canvasSize": {
+                "height": 700,
+                "width": 900
+              },
+              "chains": 25,
+              "hardwareConcurrency": 15,
+              "motion": "Idle:0",
+              "parameters": 265,
+              "parts": 852,
+              "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+              "vertices": 34452,
+              "duration": 20008.1,
+              "errors": [],
+              "frameP95": 8.600000000002183,
+              "observedModelFPS": 91.46295750221161,
+              "rafFPS": 120.00139943322955,
+              "updatedFPS": 91.46295750221161,
+              "heapBytes": 186022860,
+              "scriptSeconds": 6.4946839999999995,
+              "taskSeconds": 7.170977
+            },
+            {
+              "artifact": "before",
+              "computation": "worker",
+              "cpu": 1,
+              "run": 1,
+              "buffering": {
+                "enabled": true,
+                "framesAhead": 3,
+                "status": "active"
+              },
+              "canvasSize": {
+                "height": 700,
+                "width": 900
+              },
+              "chains": 25,
+              "hardwareConcurrency": 15,
+              "motion": "Idle:0",
+              "parameters": 265,
+              "parts": 852,
+              "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+              "vertices": 34452,
+              "duration": 20003.4,
+              "errors": [],
+              "frameP95": 8.799999999999272,
+              "observedModelFPS": 90.43462611356068,
+              "rafFPS": 120.07958647030004,
+              "updatedFPS": 90.43462611356068,
+              "heapBytes": 362997224,
+              "scriptSeconds": 6.957501000000001,
+              "taskSeconds": 7.619423000000001
+            }
+          ]
+        }
+      },
+      {
+        "comparison": {
+          "before": {
+            "samples": [45.63129117062005, 60.17532811547265],
+            "count": 2,
+            "mean": 52.903309643046356,
+            "median": 52.903309643046356,
+            "minimum": 45.63129117062005,
+            "maximum": 60.17532811547265
+          },
+          "after": {
+            "samples": [84.93301339732055, 60.643026052004025],
+            "count": 2,
+            "mean": 72.78801972466229,
+            "median": 72.78801972466229,
+            "minimum": 60.643026052004025,
+            "maximum": 84.93301339732055
+          },
+          "medianChangePercent": 37.58689241898801,
+          "meanChangePercent": 37.58689241898801
+        },
+        "raw": {
+          "configuration": {
+            "antialiasing": "ssaa",
+            "cpuRates": [1],
+            "measureMillis": 20000,
+            "model": "/Users/bichi/Downloads/白猫/white-cat-idle-english.poffo",
+            "modes": ["worker"],
+            "randomSeed": 42,
+            "resolution": 1,
+            "runs": 1,
+            "viewport": {
+              "height": 700,
+              "width": 900
+            },
+            "warmupMillis": 10000
+          },
+          "results": [
+            {
+              "artifact": "candidate",
+              "computation": "worker",
+              "cpu": 1,
+              "run": 1,
+              "buffering": {
+                "enabled": true,
+                "framesAhead": 3,
+                "status": "active"
+              },
+              "canvasSize": {
+                "height": 700,
+                "width": 900
+              },
+              "chains": 25,
+              "hardwareConcurrency": 15,
+              "motion": "Idle:0",
+              "parameters": 265,
+              "parts": 852,
+              "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+              "vertices": 34452,
+              "duration": 20003.999999999996,
+              "errors": [],
+              "frameP95": 8.900000000001455,
+              "observedModelFPS": 84.93301339732055,
+              "rafFPS": 119.92601479704061,
+              "updatedFPS": 84.98300339932015,
+              "heapBytes": 184119868,
+              "scriptSeconds": 6.3429899999999995,
+              "taskSeconds": 7.039485
+            },
+            {
+              "artifact": "before",
+              "computation": "worker",
+              "cpu": 1,
+              "run": 1,
+              "buffering": {
+                "enabled": true,
+                "framesAhead": 3,
+                "status": "active"
+              },
+              "canvasSize": {
+                "height": 700,
+                "width": 900
+              },
+              "chains": 25,
+              "hardwareConcurrency": 15,
+              "motion": "Idle:0",
+              "parameters": 265,
+              "parts": 852,
+              "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+              "vertices": 34452,
+              "duration": 20008.199999999997,
+              "errors": [],
+              "frameP95": 58.20000000000073,
+              "observedModelFPS": 45.63129117062005,
+              "rafFPS": 49.97950840155537,
+              "updatedFPS": 45.68127067902161,
+              "heapBytes": 206857444,
+              "scriptSeconds": 4.99787,
+              "taskSeconds": 5.481063000000001
+            },
+            {
+              "artifact": "before",
+              "computation": "worker",
+              "cpu": 1,
+              "run": 1,
+              "buffering": {
+                "enabled": true,
+                "framesAhead": 3,
+                "status": "active"
+              },
+              "canvasSize": {
+                "height": 700,
+                "width": 900
+              },
+              "chains": 25,
+              "hardwareConcurrency": 15,
+              "motion": "Idle:0",
+              "parameters": 265,
+              "parts": 852,
+              "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+              "vertices": 34452,
+              "duration": 20008.2,
+              "errors": [],
+              "frameP95": 16.600000000002183,
+              "observedModelFPS": 60.17532811547265,
+              "rafFPS": 99.65913975270139,
+              "updatedFPS": 60.22530762387421,
+              "heapBytes": 297945948,
+              "scriptSeconds": 5.872598,
+              "taskSeconds": 6.544446000000001
+            },
+            {
+              "artifact": "candidate",
+              "computation": "worker",
+              "cpu": 1,
+              "run": 1,
+              "buffering": {
+                "enabled": true,
+                "framesAhead": 3,
+                "status": "active"
+              },
+              "canvasSize": {
+                "height": 700,
+                "width": 900
+              },
+              "chains": 25,
+              "hardwareConcurrency": 15,
+              "motion": "Idle:0",
+              "parameters": 265,
+              "parts": 852,
+              "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+              "vertices": 34452,
+              "duration": 20002.3,
+              "errors": [],
+              "frameP95": 25.5,
+              "observedModelFPS": 60.643026052004025,
+              "rafFPS": 80.99068607110182,
+              "updatedFPS": 60.6930203026652,
+              "heapBytes": 172675672,
+              "scriptSeconds": 6.992895,
+              "taskSeconds": 7.7370209999999995
+            }
+          ]
+        }
+      }
+    ],
+    "cadenceOnlyIntermediate": [
+      {
+        "comparison": {
+          "before": {
+            "samples": [93.48177105464434, 87.28254349130174],
+            "count": 2,
+            "mean": 90.38215727297305,
+            "median": 90.38215727297305,
+            "minimum": 87.28254349130174,
+            "maximum": 93.48177105464434
+          },
+          "after": {
+            "samples": [87.14607842647081, 88.11431370295031],
+            "count": 2,
+            "mean": 87.63019606471056,
+            "median": 87.63019606471056,
+            "minimum": 87.14607842647081,
+            "maximum": 88.11431370295031
+          },
+          "medianChangePercent": -3.0448058458606875,
+          "meanChangePercent": -3.0448058458606875
+        },
+        "raw": {
+          "configuration": {
+            "antialiasing": "ssaa",
+            "cpuRates": [1],
+            "measureMillis": 20000,
+            "model": "/Users/bichi/Downloads/白猫/white-cat-idle-english.poffo",
+            "modes": ["worker"],
+            "randomSeed": 42,
+            "resolution": 1,
+            "runs": 1,
+            "viewport": {
+              "height": 700,
+              "width": 900
+            },
+            "warmupMillis": 10000
+          },
+          "results": [
+            {
+              "artifact": "before",
+              "computation": "worker",
+              "cpu": 1,
+              "run": 1,
+              "buffering": {
+                "enabled": true,
+                "framesAhead": 3,
+                "status": "active"
+              },
+              "canvasSize": {
+                "height": 700,
+                "width": 900
+              },
+              "chains": 25,
+              "hardwareConcurrency": 15,
+              "motion": "Idle:0",
+              "parameters": 265,
+              "parts": 852,
+              "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+              "vertices": 34452,
+              "duration": 20003.9,
+              "errors": [],
+              "frameP95": 8.700000000000728,
+              "observedModelFPS": 93.48177105464434,
+              "rafFPS": 120.02659481401126,
+              "updatedFPS": 93.53176130654522,
+              "heapBytes": 265855372,
+              "scriptSeconds": 6.745045999999999,
+              "taskSeconds": 7.41647
+            },
+            {
+              "artifact": "candidate",
+              "computation": "worker",
+              "cpu": 1,
+              "run": 1,
+              "buffering": {
+                "enabled": true,
+                "framesAhead": 3,
+                "status": "active"
+              },
+              "canvasSize": {
+                "height": 700,
+                "width": 900
+              },
+              "chains": 25,
+              "hardwareConcurrency": 15,
+              "motion": "Idle:0",
+              "parameters": 265,
+              "parts": 852,
+              "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+              "vertices": 34452,
+              "duration": 20000.9,
+              "errors": [],
+              "frameP95": 8.80000000000291,
+              "observedModelFPS": 87.14607842647081,
+              "rafFPS": 119.99460024298905,
+              "updatedFPS": 87.14607842647081,
+              "heapBytes": 220733060,
+              "scriptSeconds": 7.130251,
+              "taskSeconds": 7.8557879999999995
+            },
+            {
+              "artifact": "candidate",
+              "computation": "worker",
+              "cpu": 1,
+              "run": 1,
+              "buffering": {
+                "enabled": true,
+                "framesAhead": 3,
+                "status": "active"
+              },
+              "canvasSize": {
+                "height": 700,
+                "width": 900
+              },
+              "chains": 25,
+              "hardwareConcurrency": 15,
+              "motion": "Idle:0",
+              "parameters": 265,
+              "parts": 852,
+              "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+              "vertices": 34452,
+              "duration": 20008.1,
+              "errors": [],
+              "frameP95": 8.799999999999272,
+              "observedModelFPS": 88.11431370295031,
+              "rafFPS": 120.00139943322955,
+              "updatedFPS": 88.11431370295031,
+              "heapBytes": 187276596,
+              "scriptSeconds": 6.955044000000001,
+              "taskSeconds": 7.692373
+            },
+            {
+              "artifact": "before",
+              "computation": "worker",
+              "cpu": 1,
+              "run": 1,
+              "buffering": {
+                "enabled": true,
+                "framesAhead": 3,
+                "status": "active"
+              },
+              "canvasSize": {
+                "height": 700,
+                "width": 900
+              },
+              "chains": 25,
+              "hardwareConcurrency": 15,
+              "motion": "Idle:0",
+              "parameters": 265,
+              "parts": 852,
+              "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+              "vertices": 34452,
+              "duration": 20004,
+              "errors": [],
+              "frameP95": 8.899999999997817,
+              "observedModelFPS": 87.28254349130174,
+              "rafFPS": 119.9260147970406,
+              "updatedFPS": 87.28254349130174,
+              "heapBytes": 242342912,
+              "scriptSeconds": 6.709068,
+              "taskSeconds": 7.395026
+            }
+          ]
+        }
+      },
+      {
+        "comparison": {
+          "before": {
+            "samples": [94.16139382853032, 91.5624593916494],
+            "count": 2,
+            "mean": 92.86192661008985,
+            "median": 92.86192661008985,
+            "minimum": 91.5624593916494,
+            "maximum": 94.16139382853032
+          },
+          "after": {
+            "samples": [96.03079384123174, 94.81112743775051],
+            "count": 2,
+            "mean": 95.42096063949113,
+            "median": 95.42096063949113,
+            "minimum": 94.81112743775051,
+            "maximum": 96.03079384123174
+          },
+          "medianChangePercent": 2.7557408324578425,
+          "meanChangePercent": 2.7557408324578425
+        },
+        "raw": {
+          "configuration": {
+            "antialiasing": "ssaa",
+            "cpuRates": [1],
+            "measureMillis": 20000,
+            "model": "/Users/bichi/Downloads/白猫/white-cat-idle-english.poffo",
+            "modes": ["worker"],
+            "randomSeed": 42,
+            "resolution": 1,
+            "runs": 1,
+            "viewport": {
+              "height": 700,
+              "width": 900
+            },
+            "warmupMillis": 10000
+          },
+          "results": [
+            {
+              "artifact": "candidate",
+              "computation": "worker",
+              "cpu": 1,
+              "run": 1,
+              "buffering": {
+                "enabled": true,
+                "framesAhead": 3,
+                "status": "active"
+              },
+              "canvasSize": {
+                "height": 700,
+                "width": 900
+              },
+              "chains": 25,
+              "hardwareConcurrency": 15,
+              "motion": "Idle:0",
+              "parameters": 265,
+              "parts": 852,
+              "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+              "vertices": 34452,
+              "duration": 20004.000000000004,
+              "errors": [],
+              "frameP95": 8.899999999997817,
+              "observedModelFPS": 96.03079384123174,
+              "rafFPS": 119.97600479904017,
+              "updatedFPS": 96.03079384123174,
+              "heapBytes": 188943064,
+              "scriptSeconds": 7.184366,
+              "taskSeconds": 7.880254000000001
+            },
+            {
+              "artifact": "before",
+              "computation": "worker",
+              "cpu": 1,
+              "run": 1,
+              "buffering": {
+                "enabled": true,
+                "framesAhead": 3,
+                "status": "active"
+              },
+              "canvasSize": {
+                "height": 700,
+                "width": 900
+              },
+              "chains": 25,
+              "hardwareConcurrency": 15,
+              "motion": "Idle:0",
+              "parameters": 265,
+              "parts": 852,
+              "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+              "vertices": 34452,
+              "duration": 20008.199999999997,
+              "errors": [],
+              "frameP95": 8.69999999999709,
+              "observedModelFPS": 94.16139382853032,
+              "rafFPS": 120.00079967213445,
+              "updatedFPS": 94.21137333693187,
+              "heapBytes": 193073124,
+              "scriptSeconds": 6.595042999999999,
+              "taskSeconds": 7.241238
+            },
+            {
+              "artifact": "before",
+              "computation": "worker",
+              "cpu": 1,
+              "run": 1,
+              "buffering": {
+                "enabled": true,
+                "framesAhead": 3,
+                "status": "active"
+              },
+              "canvasSize": {
+                "height": 700,
+                "width": 900
+              },
+              "chains": 25,
+              "hardwareConcurrency": 15,
+              "motion": "Idle:0",
+              "parameters": 265,
+              "parts": 852,
+              "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+              "vertices": 34452,
+              "duration": 20008.200000000004,
+              "errors": [],
+              "frameP95": 8.599999999998545,
+              "observedModelFPS": 91.5624593916494,
+              "rafFPS": 120.0007996721344,
+              "updatedFPS": 91.61243890005096,
+              "heapBytes": 182703184,
+              "scriptSeconds": 6.636908999999999,
+              "taskSeconds": 7.298529
+            },
+            {
+              "artifact": "candidate",
+              "computation": "worker",
+              "cpu": 1,
+              "run": 1,
+              "buffering": {
+                "enabled": true,
+                "framesAhead": 3,
+                "status": "active"
+              },
+              "canvasSize": {
+                "height": 700,
+                "width": 900
+              },
+              "chains": 25,
+              "hardwareConcurrency": 15,
+              "motion": "Idle:0",
+              "parameters": 265,
+              "parts": 852,
+              "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+              "vertices": 34452,
+              "duration": 20008.2,
+              "errors": [],
+              "frameP95": 8.799999999999272,
+              "observedModelFPS": 94.81112743775051,
+              "rafFPS": 120.00079967213442,
+              "updatedFPS": 94.86110694615208,
+              "heapBytes": 189008052,
+              "scriptSeconds": 6.974235,
+              "taskSeconds": 7.651885999999999
+            }
+          ]
+        }
+      }
+    ],
+    "limitations": "observedModelFPS counts model updates observed on browser animation frames, not physical panel scanout. All runs, including non-improving runs and reduced rAF rates, are retained. Different GPU availability and changing rAF ceilings prevent attributing raw FPS changes solely to these code changes."
+  },
+  "diagnostics": {
+    "before": {
+      "observedModelFPS": 68.2556772721436,
+      "rafHz": 111.61926963461978,
+      "workerElapsedMillis": {
+        "samples": [
+          40, 40, 18, 14, 21, 14, 11, 16, 14, 12, 15, 15, 13, 15, 13, 14, 16, 13, 14, 9, 12, 11, 8,
+          10, 10, 9, 9, 7, 7, 9, 11, 9, 11, 11, 10, 12, 11, 11, 12, 12, 9, 12, 11, 12, 8, 11, 12,
+          11, 12, 9, 11, 9, 13, 11, 9, 11, 11, 7, 12, 13, 8, 12, 9, 11, 13, 9, 9, 13, 13, 10, 12, 8,
+          11, 11, 10, 12, 9, 10, 7, 10, 10, 10, 11, 9, 10, 13, 9, 11, 8, 10, 11, 15, 16, 15, 16, 15,
+          14, 12, 10, 10, 11, 8, 11, 9, 11, 8, 10, 9, 10, 11, 9, 11, 10, 9, 11, 11, 10, 10, 11, 9,
+          11, 11, 9, 12, 12, 11, 10, 10, 9, 10, 11, 11, 10, 9, 11, 10, 8, 11, 11, 7, 12, 11, 10, 11,
+          11, 9, 13, 11, 9, 11, 10, 11, 12, 11, 11, 11, 11, 11, 13, 9, 13, 12, 12, 10, 10, 11, 10,
+          11, 11, 13, 9, 10, 9, 11, 11, 11, 11, 12, 11, 11, 9, 10, 12, 13, 12, 12, 13, 10, 11, 9,
+          11, 10, 11, 11, 12, 8, 12, 9, 11, 11, 9, 10, 12, 10, 9, 11, 9, 12, 11, 9, 13, 14, 12, 13,
+          12, 12, 12, 12, 12, 12, 13, 13, 14, 10, 12, 10, 13, 13, 10, 11, 11, 13, 15, 11, 12, 11,
+          12, 11, 12, 10, 12, 11, 13, 12, 12, 14, 14, 11, 13, 11, 11, 11, 13, 14, 11, 13, 9, 10, 11,
+          11, 11, 10, 12, 10, 11, 13, 14, 9, 10, 12, 12, 14, 9, 11, 10, 13, 12, 13, 11, 15, 11, 11,
+          8, 11, 12, 13, 10, 13, 10, 13, 11, 13, 11, 14, 10, 13, 11, 12, 12, 13, 12, 13, 9, 11, 13,
+          12, 14, 10, 12, 12, 14, 9, 14, 9, 15, 11, 12, 10, 13, 10, 11, 12, 10, 10, 14, 11, 12, 12,
+          12, 11, 10, 13, 10, 11, 13, 12, 13, 10, 13, 11, 12, 14, 9, 13, 12, 9, 10, 10, 13, 10, 12,
+          9, 12, 11, 12, 11, 10, 11, 11, 11, 13, 12, 10, 9, 10, 12, 9, 12, 11, 11, 10, 10, 10, 10,
+          12, 8, 12, 11, 9, 14, 9, 9, 12, 10, 12, 11, 12, 12, 9, 12, 10, 14, 8, 12, 9, 11, 11, 12,
+          9, 9, 12, 10, 9, 12, 10, 11, 10, 10, 12, 13, 12, 8, 13, 8, 11, 10, 12, 11, 11, 10, 10, 14,
+          9, 10, 9, 11, 12, 12, 10, 11, 13, 10, 10, 10, 9, 10, 13, 12, 11, 12, 9, 12, 8, 12, 10, 14,
+          9, 9, 10, 11, 12, 10, 12, 8, 11, 11, 11, 9, 12, 12, 8, 12, 10, 12, 8, 14, 9, 12, 8, 11,
+          12, 12, 9, 12, 10, 13, 8, 11, 12, 13, 11, 13, 7, 12, 8, 12, 9, 13, 8, 12, 12, 12, 7, 11,
+          9, 12, 9, 11, 10, 11, 10, 12, 9, 10, 12, 10, 11, 10, 12, 10, 14, 12, 10, 11, 10, 13, 10,
+          11, 8, 12, 12, 11, 10, 11, 12, 11, 13, 9, 10, 14, 10, 11, 10, 12, 8, 14, 8, 11, 9, 13, 9,
+          12, 8, 11, 10, 12, 9, 13, 10, 12, 11, 13, 12, 14, 12, 10, 11, 15, 12, 13, 12, 13, 13, 12,
+          13, 11, 14, 12, 12, 11, 11, 10, 13, 14, 12, 13, 15, 14, 11, 12, 12, 17, 15, 12, 14, 11,
+          14, 14, 13, 12, 14, 11, 13, 12, 9, 9, 12, 13, 10, 13, 14, 12, 12, 11, 17, 14, 13, 10, 14,
+          10, 12, 12, 12, 11, 11, 12, 12, 11, 10, 14, 12, 12, 13, 17, 17, 18, 13, 12, 15, 11, 11,
+          12, 10, 10, 10, 11, 13, 11, 13, 14, 10, 12, 14, 18, 15, 15, 14, 11, 14, 9, 10, 13, 10, 10,
+          9, 12, 12, 13, 13, 13, 12, 12, 12, 12, 12, 13, 18, 16, 15, 14, 81, 19, 19, 17, 15, 14, 14,
+          20, 35, 12, 151, 15, 22, 19, 17, 17, 21, 20, 13, 13, 14, 14, 12, 40, 18, 99, 22
+        ],
+        "count": 697,
+        "mean": 12.080344332855093,
+        "median": 11,
+        "minimum": 7,
+        "maximum": 151
+      },
+      "roundTripMillis": {
+        "samples": [
+          158, 53, 18, 16, 26, 15, 11, 27, 15, 13, 15, 16, 14, 15, 14, 17, 17, 16, 15, 9, 12, 11, 9,
+          10, 11, 9, 9, 7, 7, 9, 13, 9, 11, 13, 10, 12, 12, 11, 13, 13, 9, 13, 12, 12, 11, 12, 13,
+          12, 12, 10, 11, 9, 14, 11, 9, 11, 13, 8, 13, 14, 11, 12, 12, 11, 14, 10, 10, 14, 13, 11,
+          13, 12, 12, 12, 11, 13, 12, 11, 8, 13, 10, 13, 12, 9, 13, 14, 11, 12, 8, 13, 12, 22, 17,
+          15, 16, 16, 15, 19, 10, 10, 11, 11, 11, 10, 11, 9, 11, 9, 11, 12, 10, 11, 10, 12, 11, 12,
+          11, 12, 11, 10, 11, 11, 10, 12, 12, 11, 14, 11, 10, 11, 11, 11, 11, 10, 11, 11, 10, 12,
+          11, 10, 13, 11, 10, 12, 11, 10, 13, 12, 9, 12, 13, 12, 13, 11, 12, 11, 14, 12, 14, 9, 15,
+          12, 13, 10, 15, 11, 14, 11, 14, 13, 11, 10, 10, 14, 12, 12, 11, 14, 11, 13, 9, 10, 12, 13,
+          14, 17, 13, 13, 12, 12, 12, 13, 11, 14, 12, 13, 13, 12, 11, 14, 9, 10, 14, 10, 10, 12, 10,
+          12, 13, 9, 16, 17, 13, 13, 13, 13, 12, 12, 15, 13, 14, 14, 15, 12, 12, 12, 17, 13, 12, 11,
+          14, 14, 15, 12, 12, 13, 13, 12, 13, 11, 12, 13, 16, 13, 13, 15, 15, 11, 13, 12, 12, 13,
+          17, 14, 12, 14, 10, 10, 14, 11, 15, 10, 14, 11, 14, 17, 15, 10, 12, 13, 13, 14, 9, 13, 10,
+          15, 12, 13, 11, 15, 15, 12, 9, 12, 12, 15, 10, 13, 10, 15, 12, 13, 11, 15, 11, 14, 11, 13,
+          12, 13, 16, 14, 11, 11, 13, 13, 14, 11, 12, 12, 15, 10, 14, 10, 15, 15, 12, 12, 13, 12,
+          12, 13, 10, 11, 14, 15, 12, 12, 17, 12, 13, 13, 13, 11, 13, 17, 14, 11, 13, 12, 16, 14,
+          11, 13, 13, 11, 13, 10, 15, 10, 15, 10, 15, 11, 13, 12, 13, 11, 14, 11, 14, 12, 13, 10,
+          11, 12, 11, 14, 12, 13, 10, 11, 11, 10, 12, 8, 13, 12, 10, 16, 9, 9, 14, 11, 15, 11, 13,
+          13, 13, 12, 13, 14, 10, 12, 9, 12, 12, 13, 9, 10, 14, 10, 11, 14, 10, 14, 10, 11, 13, 16,
+          13, 12, 13, 12, 11, 10, 13, 12, 12, 10, 15, 14, 11, 11, 9, 13, 12, 12, 10, 11, 13, 11, 14,
+          10, 10, 13, 16, 12, 14, 13, 11, 12, 9, 13, 11, 15, 9, 15, 10, 14, 12, 13, 13, 8, 12, 11,
+          13, 10, 15, 13, 12, 12, 14, 13, 11, 14, 12, 12, 12, 12, 13, 13, 11, 13, 13, 13, 11, 11,
+          15, 13, 12, 14, 11, 12, 12, 12, 14, 14, 10, 12, 14, 12, 13, 12, 13, 13, 11, 11, 14, 11,
+          10, 12, 10, 10, 13, 11, 14, 11, 14, 10, 14, 14, 11, 11, 14, 13, 11, 11, 8, 13, 13, 12, 10,
+          11, 12, 11, 15, 9, 14, 14, 12, 11, 13, 13, 13, 14, 11, 12, 12, 14, 12, 13, 12, 11, 15, 12,
+          12, 14, 11, 12, 13, 14, 13, 15, 12, 12, 13, 15, 13, 14, 13, 14, 14, 13, 14, 12, 14, 12,
+          15, 12, 12, 14, 21, 16, 13, 15, 15, 15, 11, 14, 12, 18, 16, 12, 14, 13, 18, 15, 14, 12,
+          16, 15, 14, 13, 10, 13, 17, 17, 10, 15, 17, 12, 13, 16, 18, 16, 13, 11, 16, 10, 14, 17,
+          17, 12, 11, 13, 13, 12, 10, 14, 13, 12, 14, 18, 17, 19, 14, 15, 15, 11, 15, 16, 10, 14,
+          11, 15, 14, 11, 14, 14, 11, 13, 14, 18, 16, 16, 14, 14, 14, 10, 11, 15, 10, 10, 9, 12, 13,
+          13, 14, 13, 14, 13, 14, 13, 13, 15, 18, 17, 15, 26, 81, 19, 20, 18, 17, 16, 15, 25, 38,
+          17, 153, 16, 23, 28, 18, 17, 22, 22, 13, 13, 29, 26, 14, 245, 160, 137, 23
+        ],
+        "count": 697,
+        "mean": 14.111908177905308,
+        "median": 13,
+        "minimum": 7,
+        "maximum": 245
+      },
+      "waitingTicks": 301,
+      "fullQueueIdleWaitingTicks": 16,
+      "refreshEstimateMillis": {
+        "samples": [
+          2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+          2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+          2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+          2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+          2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+          2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+          2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+          2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+          2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+          2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+          2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+          2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+          2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+          2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+          2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+          2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+          2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+          2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+          2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+          2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+          2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+          2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+          2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+          2, 2, 2, 2, 2, 2, 2, 2, 2
+        ],
+        "count": 699,
+        "mean": 2,
+        "median": 2,
+        "minimum": 2,
+        "maximum": 2
+      },
+      "stages": {
+        "decode": {
+          "calls": 0,
+          "meanMillisPerPresentedFrame": 0.0
+        },
+        "plans": {
+          "calls": 0,
+          "meanMillisPerPresentedFrame": 0.0
+        },
+        "layers": {
+          "calls": 0,
+          "meanMillisPerPresentedFrame": 0.0
+        },
+        "restore": {
+          "calls": 0,
+          "meanMillisPerPresentedFrame": 0.0
+        },
+        "geometry": {
+          "calls": 0,
+          "meanMillisPerPresentedFrame": 0.0
+        },
+        "query": {
+          "calls": 0,
+          "meanMillisPerPresentedFrame": 0.0
+        },
+        "audio": {
+          "calls": 0,
+          "meanMillisPerPresentedFrame": 0.0
+        },
+        "draw": {
+          "calls": 0,
+          "meanMillisPerPresentedFrame": 0.0
+        },
+        "present": {
+          "calls": 698,
+          "meanMillisPerPresentedFrame": 4.465616045845272
+        }
+      },
+      "colorReuse": null,
+      "errors": []
+    },
+    "cadenceAfter": {
+      "observedModelFPS": 95.56273053509132,
+      "rafHz": 120.15314027529264,
+      "workerElapsedMillis": {
+        "samples": [
+          11, 10, 11, 10, 9, 11, 10, 11, 10, 10, 8, 11, 11, 7, 11, 10, 11, 11, 11, 11, 8, 10, 10, 9,
+          11, 9, 7, 12, 10, 10, 9, 10, 9, 9, 9, 10, 10, 11, 8, 11, 10, 9, 10, 10, 10, 9, 10, 11, 7,
+          10, 11, 12, 7, 11, 11, 7, 11, 10, 8, 10, 9, 10, 8, 10, 11, 8, 10, 11, 8, 10, 11, 7, 11,
+          11, 9, 11, 11, 8, 10, 10, 11, 8, 9, 9, 11, 10, 10, 11, 7, 10, 12, 8, 10, 10, 10, 9, 11,
+          10, 8, 10, 11, 9, 10, 10, 10, 7, 11, 10, 7, 9, 11, 10, 9, 8, 10, 9, 9, 11, 7, 9, 10, 10,
+          10, 8, 11, 9, 6, 8, 11, 10, 10, 7, 9, 9, 11, 10, 9, 7, 9, 10, 11, 10, 8, 9, 9, 10, 10, 6,
+          10, 10, 10, 8, 11, 9, 9, 8, 11, 10, 10, 8, 9, 8, 10, 8, 10, 9, 10, 7, 10, 11, 9, 9, 10, 9,
+          10, 9, 11, 6, 8, 9, 10, 9, 8, 9, 6, 8, 9, 10, 6, 7, 9, 10, 10, 9, 9, 8, 9, 8, 9, 8, 8, 10,
+          6, 8, 10, 10, 8, 9, 9, 7, 9, 10, 9, 8, 9, 8, 10, 7, 10, 10, 9, 9, 9, 10, 10, 9, 10, 10, 8,
+          10, 8, 10, 11, 10, 7, 9, 11, 11, 9, 8, 11, 11, 8, 10, 8, 10, 9, 9, 10, 10, 11, 7, 9, 9, 8,
+          8, 11, 7, 9, 11, 11, 7, 8, 10, 8, 10, 10, 7, 10, 11, 8, 11, 10, 10, 11, 9, 10, 9, 11, 11,
+          9, 10, 9, 11, 9, 12, 8, 10, 12, 8, 11, 10, 7, 11, 10, 8, 11, 10, 8, 10, 10, 9, 10, 12, 8,
+          10, 12, 8, 9, 10, 12, 7, 9, 10, 11, 8, 9, 9, 9, 8, 11, 9, 8, 10, 10, 10, 10, 11, 11, 9,
+          10, 11, 7, 9, 11, 10, 8, 11, 10, 7, 10, 12, 8, 9, 10, 10, 8, 11, 11, 8, 10, 12, 9, 10, 11,
+          7, 10, 10, 8, 9, 9, 12, 10, 7, 10, 9, 9, 10, 11, 8, 10, 10, 11, 10, 8, 11, 11, 8, 12, 8,
+          11, 10, 11, 10, 10, 10, 8, 10, 13, 10, 10, 11, 11, 10, 12, 10, 10, 11, 11, 10, 11, 9, 10,
+          11, 9, 10, 10, 7, 11, 13, 10, 12, 8, 10, 12, 11, 11, 10, 8, 11, 12, 8, 11, 7, 11, 12, 10,
+          9, 10, 11, 11, 12, 8, 9, 10, 13, 11, 12, 8, 11, 11, 9, 11, 11, 8, 10, 12, 8, 10, 10, 10,
+          11, 10, 11, 8, 9, 11, 12, 9, 9, 9, 10, 9, 10, 10, 10, 7, 11, 12, 8, 10, 11, 10, 8, 11, 9,
+          7, 8, 12, 10, 7, 11, 10, 7, 10, 10, 9, 9, 9, 10, 10, 12, 8, 9, 9, 10, 9, 9, 10, 10, 7, 11,
+          12, 8, 9, 9, 9, 10, 7, 11, 9, 7, 10, 9, 9, 10, 10, 10, 9, 10, 9, 11, 11, 8, 9, 11, 11, 8,
+          10, 10, 10, 7, 13, 11, 9, 10, 11, 8, 9, 9, 11, 11, 10, 10, 8, 10, 10, 11, 9, 11, 9, 9, 8,
+          10, 9, 7, 10, 9, 11, 11, 7, 9, 11, 12, 7, 9, 9, 11, 7, 9, 10, 9, 7, 9, 11, 10, 7, 10, 9,
+          10, 9, 10, 6, 9, 9, 9, 9, 7, 9, 8, 8, 9, 9, 8, 6, 8, 9, 7, 11, 10, 7, 9, 9, 9, 9, 8, 9, 9,
+          8, 11, 9, 7, 7, 9, 9, 7, 10, 10, 9, 9, 7, 9, 10, 10, 9, 7, 7, 9, 9, 8, 9, 9, 9, 7, 9, 9,
+          10, 9, 9, 7, 7, 11, 10, 9, 11, 7, 10, 11, 10, 9, 10, 8, 10, 10, 9, 10, 10, 7, 10, 10, 8,
+          10, 11, 7, 11, 12, 9, 13, 10, 11, 14, 9, 10, 8, 11, 11, 10, 13, 7, 11, 12, 8, 9, 10, 9, 8,
+          8, 9, 9, 7, 7, 9, 9, 9, 8, 10, 9, 9, 9, 6, 9, 9, 10, 8, 9, 8, 7, 8, 8, 8, 9, 9, 9, 9, 9,
+          8, 8, 7, 9, 7, 8, 9, 8, 7, 8, 9, 8, 7, 8, 9, 7, 8, 8, 8, 7, 7, 9, 7, 8, 8, 8, 7, 7, 7, 8,
+          8, 7, 7, 8, 9, 9, 9, 10, 7, 7, 8, 9, 10, 9, 10, 9, 8, 7, 10, 7, 8, 10, 10, 8, 9, 8, 9, 10,
+          10, 8, 8, 8, 9, 9, 9, 10, 8, 9, 10, 8, 8, 8, 9, 8, 7, 7, 10, 8, 7, 9, 9, 6, 7, 9, 8, 7, 7,
+          10, 8, 9, 9, 10, 8, 7, 9, 16, 7, 11, 12, 10, 13, 10, 12, 10, 12, 8, 12, 11, 10, 10, 11,
+          10, 11, 9, 11, 12, 9, 12, 11, 10, 13, 10, 11, 10, 11, 13, 10, 11, 8, 10, 11, 8, 9, 10, 10,
+          8, 11, 11, 11, 12, 10, 12, 10, 11, 11, 11, 12, 11, 10, 13, 9, 11, 12, 9, 10, 11, 9, 10,
+          11, 9, 11, 12, 9, 10, 11, 10, 14, 10, 11, 8, 10, 11, 7, 11, 10, 10, 6, 12, 11, 10, 10, 12,
+          10, 10, 10, 9, 10, 10, 9, 11, 9, 10, 11, 9, 9, 10, 10, 8, 10, 12, 8, 9, 11, 10, 15, 11,
+          13, 11, 10, 9, 11, 11, 11, 10, 10, 12, 11, 10, 10, 11, 11, 12, 10, 10, 11, 7, 10, 11, 8,
+          9, 10, 11, 8, 10, 10, 9, 9, 11, 10, 10, 10, 10
+        ],
+        "count": 957,
+        "mean": 9.48171368861024,
+        "median": 10,
+        "minimum": 6,
+        "maximum": 16
+      },
+      "roundTripMillis": {
+        "samples": [
+          11, 12, 11, 10, 12, 11, 11, 12, 11, 10, 12, 11, 11, 8, 12, 11, 11, 12, 11, 11, 10, 10, 11,
+          12, 11, 10, 7, 14, 11, 10, 11, 11, 10, 9, 11, 11, 10, 12, 9, 11, 11, 10, 10, 11, 10, 11,
+          10, 11, 8, 12, 11, 12, 10, 12, 11, 11, 12, 11, 10, 10, 10, 11, 10, 11, 12, 10, 11, 12, 11,
+          10, 12, 11, 11, 11, 11, 11, 12, 11, 10, 11, 11, 9, 11, 9, 11, 10, 11, 11, 11, 10, 12, 11,
+          11, 10, 11, 10, 12, 11, 11, 10, 12, 11, 10, 10, 11, 11, 11, 10, 7, 12, 11, 11, 10, 10, 10,
+          9, 9, 11, 11, 9, 10, 10, 10, 11, 11, 10, 7, 8, 14, 11, 11, 7, 9, 12, 11, 10, 10, 7, 12,
+          10, 11, 11, 10, 9, 9, 10, 11, 9, 10, 10, 10, 11, 11, 10, 9, 12, 11, 10, 10, 11, 10, 9, 11,
+          11, 10, 10, 11, 7, 11, 11, 9, 10, 10, 10, 11, 9, 11, 7, 9, 12, 11, 9, 8, 10, 11, 9, 10,
+          10, 7, 8, 9, 13, 10, 9, 10, 8, 10, 11, 11, 9, 9, 10, 8, 8, 12, 10, 9, 9, 11, 7, 9, 12, 9,
+          8, 9, 9, 11, 10, 10, 10, 10, 9, 11, 11, 10, 12, 11, 10, 11, 10, 8, 11, 11, 10, 7, 9, 12,
+          12, 11, 10, 11, 11, 11, 10, 10, 10, 11, 9, 10, 10, 12, 9, 10, 10, 8, 9, 12, 10, 9, 11, 11,
+          10, 9, 10, 9, 10, 11, 10, 11, 12, 10, 11, 11, 11, 11, 10, 11, 10, 11, 11, 11, 10, 11, 12,
+          9, 13, 12, 10, 12, 10, 11, 10, 10, 11, 11, 11, 12, 11, 10, 10, 11, 10, 11, 14, 10, 11, 12,
+          10, 10, 10, 12, 9, 9, 12, 11, 9, 10, 9, 10, 11, 12, 9, 8, 12, 10, 10, 10, 12, 12, 10, 11,
+          12, 7, 14, 11, 10, 11, 12, 12, 9, 11, 12, 10, 11, 11, 11, 9, 11, 12, 9, 14, 12, 9, 11, 12,
+          10, 11, 11, 11, 9, 9, 12, 11, 10, 10, 10, 10, 12, 12, 8, 11, 10, 12, 11, 9, 11, 11, 13,
+          13, 10, 11, 11, 11, 10, 11, 11, 9, 10, 13, 10, 10, 11, 12, 11, 12, 11, 10, 11, 12, 10, 11,
+          12, 10, 12, 11, 10, 11, 11, 11, 13, 10, 13, 11, 11, 12, 11, 11, 11, 12, 11, 12, 10, 12, 8,
+          13, 13, 11, 9, 11, 12, 12, 12, 11, 10, 10, 13, 11, 12, 12, 11, 11, 10, 12, 12, 9, 10, 13,
+          9, 11, 10, 11, 11, 11, 12, 9, 9, 11, 12, 9, 11, 10, 11, 10, 10, 10, 12, 9, 11, 12, 9, 10,
+          11, 10, 11, 11, 10, 11, 8, 12, 11, 11, 11, 11, 7, 12, 12, 9, 10, 11, 11, 10, 12, 9, 10,
+          10, 10, 11, 9, 10, 10, 11, 11, 12, 10, 9, 10, 10, 11, 9, 13, 9, 8, 13, 10, 10, 10, 11, 10,
+          11, 10, 11, 12, 11, 10, 10, 11, 12, 8, 10, 10, 10, 10, 14, 13, 10, 10, 12, 10, 10, 10, 11,
+          11, 11, 11, 9, 10, 10, 12, 10, 11, 10, 10, 11, 10, 11, 7, 13, 9, 11, 11, 9, 9, 11, 13, 9,
+          9, 11, 11, 10, 10, 11, 9, 8, 12, 12, 10, 8, 11, 10, 10, 10, 10, 10, 9, 11, 10, 9, 8, 12,
+          8, 10, 10, 9, 9, 6, 8, 12, 9, 13, 11, 9, 10, 10, 9, 10, 11, 9, 9, 9, 11, 9, 8, 8, 12, 9,
+          8, 10, 10, 9, 9, 11, 9, 10, 10, 10, 7, 9, 12, 10, 9, 9, 10, 9, 7, 12, 9, 10, 9, 11, 7, 7,
+          13, 10, 10, 11, 7, 13, 12, 11, 9, 10, 12, 11, 10, 12, 11, 10, 12, 11, 11, 11, 10, 11, 11,
+          11, 12, 11, 13, 12, 12, 14, 9, 10, 12, 11, 11, 11, 13, 8, 12, 13, 8, 12, 10, 9, 8, 9, 9,
+          9, 8, 8, 12, 9, 9, 8, 11, 9, 9, 10, 11, 9, 9, 10, 8, 10, 9, 7, 9, 8, 8, 12, 9, 9, 10, 10,
+          8, 9, 7, 9, 7, 8, 9, 9, 8, 8, 12, 9, 8, 9, 9, 8, 8, 9, 9, 8, 8, 9, 9, 8, 8, 10, 7, 7, 7,
+          8, 9, 8, 8, 9, 9, 9, 9, 11, 7, 8, 9, 11, 10, 9, 10, 9, 8, 9, 11, 9, 8, 10, 12, 8, 10, 11,
+          9, 11, 10, 11, 9, 9, 10, 9, 9, 10, 12, 9, 11, 8, 8, 8, 13, 9, 8, 8, 10, 10, 8, 10, 10, 7,
+          8, 12, 9, 8, 8, 10, 8, 9, 9, 10, 10, 7, 12, 16, 10, 12, 13, 10, 13, 10, 13, 12, 13, 11,
+          13, 12, 10, 12, 12, 11, 12, 10, 11, 13, 9, 13, 13, 11, 13, 10, 12, 12, 11, 13, 11, 12, 10,
+          10, 11, 11, 10, 10, 11, 11, 11, 12, 11, 13, 11, 13, 11, 11, 13, 13, 12, 13, 10, 13, 12,
+          11, 13, 10, 11, 12, 10, 10, 11, 12, 11, 12, 10, 11, 12, 11, 15, 12, 11, 11, 11, 11, 9, 12,
+          10, 10, 7, 13, 12, 10, 12, 12, 11, 11, 11, 10, 12, 10, 10, 12, 9, 11, 11, 11, 9, 11, 11,
+          10, 10, 12, 11, 9, 12, 11, 15, 12, 13, 13, 11, 12, 11, 12, 12, 11, 11, 13, 11, 11, 11, 12,
+          12, 12, 11, 11, 11, 11, 10, 11, 11, 10, 10, 11, 9, 12, 10, 9, 10, 13, 10, 10, 12, 10
+        ],
+        "count": 957,
+        "mean": 10.398119122257054,
+        "median": 10,
+        "minimum": 6,
+        "maximum": 16
+      },
+      "waitingTicks": 0,
+      "fullQueueIdleWaitingTicks": 0,
+      "refreshEstimateMillis": {
+        "samples": [
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455,
+          5.900000000001455, 5.900000000001455, 5.900000000001455, 5.900000000001455
+        ],
+        "count": 960,
+        "mean": 6.253125000001027,
+        "median": 5.900000000001455,
+        "minimum": 5.900000000001455,
+        "maximum": 7.399999999999636
+      },
+      "stages": {
+        "decode": {
+          "calls": 0,
+          "meanMillisPerPresentedFrame": 0.0
+        },
+        "plans": {
+          "calls": 0,
+          "meanMillisPerPresentedFrame": 0.0
+        },
+        "layers": {
+          "calls": 0,
+          "meanMillisPerPresentedFrame": 0.0
+        },
+        "restore": {
+          "calls": 0,
+          "meanMillisPerPresentedFrame": 0.0
+        },
+        "geometry": {
+          "calls": 0,
+          "meanMillisPerPresentedFrame": 0.0
+        },
+        "query": {
+          "calls": 0,
+          "meanMillisPerPresentedFrame": 0.0
+        },
+        "audio": {
+          "calls": 0,
+          "meanMillisPerPresentedFrame": 0.0
+        },
+        "draw": {
+          "calls": 0,
+          "meanMillisPerPresentedFrame": 0.0
+        },
+        "present": {
+          "calls": 960,
+          "meanMillisPerPresentedFrame": 3.332291666666667
+        }
+      },
+      "colorReuse": null,
+      "errors": []
+    },
+    "mainBeforeColorReuse": {
+      "observedModelFPS": 96.02126256469695,
+      "rafHz": 120.00159868907497,
+      "workerElapsedMillis": {
+        "samples": [
+          9, 10, 11, 10, 9, 10, 10, 10, 7, 11, 10, 8, 10, 9, 9, 11, 10, 9, 11, 7, 9, 10, 11, 7, 8,
+          10, 10, 8, 8, 9, 8, 8, 10, 10, 9, 7, 9, 9, 9, 9, 10, 8, 9, 9, 9, 9, 9, 9, 7, 10, 10, 9,
+          10, 10, 9, 8, 9, 9, 8, 7, 9, 9, 9, 8, 10, 9, 7, 10, 9, 9, 10, 9, 9, 9, 9, 9, 10, 7, 9, 10,
+          8, 9, 10, 9, 7, 15, 12, 16, 14, 13, 13, 12, 11, 7, 9, 9, 9, 7, 11, 8, 8, 10, 10, 9, 7, 10,
+          9, 8, 9, 9, 10, 7, 10, 9, 8, 11, 10, 6, 8, 11, 9, 9, 11, 7, 8, 9, 10, 9, 9, 10, 7, 8, 8,
+          10, 9, 9, 8, 8, 8, 8, 11, 9, 6, 9, 8, 9, 8, 9, 9, 9, 6, 9, 9, 10, 9, 8, 7, 9, 9, 9, 8, 8,
+          8, 8, 9, 10, 7, 7, 8, 10, 9, 9, 9, 9, 6, 8, 9, 9, 9, 10, 6, 8, 8, 10, 9, 10, 9, 9, 7, 8,
+          11, 9, 9, 8, 10, 8, 9, 7, 9, 9, 8, 9, 6, 8, 9, 9, 9, 8, 9, 10, 10, 7, 10, 8, 8, 10, 8, 9,
+          8, 9, 9, 9, 10, 8, 9, 10, 9, 9, 10, 8, 9, 9, 9, 10, 9, 9, 7, 8, 8, 8, 10, 9, 7, 10, 7, 8,
+          9, 10, 10, 8, 7, 9, 8, 9, 10, 10, 8, 9, 7, 8, 7, 10, 9, 9, 9, 9, 7, 8, 10, 9, 9, 8, 10, 9,
+          7, 11, 8, 8, 8, 9, 9, 9, 10, 7, 9, 8, 11, 11, 7, 10, 10, 10, 11, 9, 10, 10, 9, 12, 9, 10,
+          12, 9, 12, 11, 9, 11, 11, 8, 10, 10, 10, 11, 10, 7, 9, 9, 9, 9, 11, 8, 9, 10, 9, 10, 8,
+          10, 9, 9, 11, 8, 9, 12, 8, 9, 9, 10, 8, 9, 9, 10, 7, 10, 10, 9, 10, 7, 11, 10, 7, 11, 9,
+          9, 10, 9, 8, 11, 9, 8, 10, 9, 9, 9, 11, 7, 10, 11, 10, 10, 7, 10, 10, 10, 8, 10, 9, 11, 8,
+          10, 10, 10, 8, 11, 10, 8, 10, 10, 9, 11, 9, 9, 9, 10, 10, 8, 11, 10, 10, 7, 11, 10, 8, 10,
+          9, 9, 11, 8, 10, 9, 10, 9, 8, 11, 9, 9, 9, 9, 10, 11, 8, 9, 9, 11, 10, 9, 10, 10, 7, 11,
+          11, 8, 9, 11, 9, 10, 10, 10, 10, 11, 8, 10, 10, 8, 9, 9, 11, 8, 9, 11, 9, 9, 10, 11, 10,
+          9, 9, 9, 9, 10, 8, 9, 10, 8, 8, 8, 10, 10, 9, 10, 7, 10, 10, 10, 7, 9, 10, 10, 8, 10, 9,
+          9, 10, 7, 9, 9, 10, 9, 9, 9, 9, 9, 10, 9, 7, 9, 10, 10, 7, 10, 10, 10, 9, 9, 9, 11, 7, 9,
+          9, 9, 10, 7, 10, 10, 9, 9, 10, 7, 9, 10, 9, 9, 11, 11, 10, 11, 9, 10, 11, 11, 11, 10, 11,
+          8, 10, 11, 8, 9, 11, 10, 10, 10, 11, 8, 10, 12, 9, 10, 9, 7, 11, 11, 9, 7, 9, 11, 10, 8,
+          11, 9, 10, 8, 12, 10, 9, 13, 8, 12, 12, 8, 12, 11, 9, 10, 12, 8, 9, 10, 8, 9, 10, 10, 7,
+          12, 11, 11, 11, 11, 9, 11, 11, 9, 11, 9, 10, 8, 10, 10, 9, 7, 11, 10, 9, 11, 9, 9, 9, 10,
+          9, 8, 10, 9, 9, 10, 7, 10, 9, 9, 9, 8, 10, 9, 9, 9, 10, 8, 10, 11, 9, 8, 9, 10, 10, 10, 8,
+          9, 11, 9, 9, 9, 10, 8, 10, 9, 11, 10, 9, 9, 10, 10, 10, 9, 8, 11, 11, 8, 9, 12, 10, 10,
+          10, 9, 11, 10, 11, 8, 10, 10, 10, 9, 10, 9, 9, 7, 9, 10, 9, 7, 9, 10, 9, 9, 10, 7, 7, 8,
+          9, 10, 9, 11, 7, 8, 9, 9, 9, 10, 9, 9, 8, 9, 10, 8, 8, 10, 9, 9, 8, 10, 10, 8, 11, 10, 10,
+          11, 11, 11, 8, 10, 11, 8, 11, 12, 8, 10, 11, 8, 11, 11, 7, 9, 10, 9, 9, 7, 10, 9, 9, 11,
+          8, 10, 10, 9, 8, 10, 10, 10, 8, 12, 11, 8, 10, 10, 10, 8, 11, 10, 8, 8, 9, 10, 12, 8, 10,
+          11, 9, 12, 11, 9, 13, 8, 11, 12, 8, 11, 11, 8, 11, 11, 9, 10, 10, 10, 10, 12, 8, 10, 11,
+          10, 9, 10, 11, 8, 10, 11, 8, 9, 11, 9, 8, 12, 11, 7, 10, 11, 10, 11, 11, 8, 11, 12, 10,
+          11, 10, 9, 10, 12, 9, 10, 10, 8, 9, 12, 9, 9, 10, 11, 9, 10, 11, 9, 10, 13, 10, 12, 11, 9,
+          11, 11, 12, 11, 8, 12, 10, 11, 12, 8, 10, 12, 10, 12, 10, 10, 11, 11, 12, 11, 12, 11, 12,
+          9, 12, 11, 10, 13, 9, 10, 13, 10, 9, 9, 11, 11, 10, 12, 9, 11, 13, 10, 12, 10, 11, 11, 9,
+          11, 11, 11, 12, 9, 11, 11, 8, 10, 12, 10, 11, 10, 12, 11, 10, 11, 11, 10, 10, 8, 13, 10,
+          9, 12, 14, 11, 11, 11, 11, 11, 10, 10, 9, 10, 11, 9, 10, 10, 11, 9, 9, 9, 11, 10, 11, 11,
+          9, 11, 10, 8, 9, 11, 12, 9, 11, 11, 9, 10, 11, 8, 10, 13, 10, 10, 9, 11, 10, 8, 10, 10, 8,
+          11, 9, 9, 9, 12, 10, 9, 11, 8
+        ],
+        "count": 962,
+        "mean": 9.483367983367984,
+        "median": 9.0,
+        "minimum": 6,
+        "maximum": 16
+      },
+      "roundTripMillis": {
+        "samples": [
+          10, 10, 12, 10, 10, 11, 10, 10, 10, 11, 10, 12, 11, 10, 10, 11, 10, 9, 12, 10, 9, 10, 12,
+          7, 12, 10, 11, 9, 8, 12, 9, 8, 11, 10, 10, 11, 9, 9, 9, 9, 11, 11, 10, 9, 9, 9, 9, 10, 10,
+          10, 10, 9, 10, 12, 10, 9, 9, 10, 8, 7, 13, 9, 9, 9, 11, 9, 11, 10, 10, 10, 11, 10, 10, 9,
+          9, 9, 10, 7, 12, 10, 9, 9, 10, 9, 12, 15, 13, 16, 14, 14, 13, 19, 11, 9, 10, 10, 10, 7,
+          12, 8, 9, 10, 10, 10, 7, 12, 9, 8, 9, 10, 11, 7, 13, 9, 9, 11, 10, 7, 11, 11, 10, 9, 11,
+          10, 8, 9, 10, 10, 9, 10, 10, 9, 8, 10, 9, 10, 8, 11, 9, 9, 12, 9, 6, 13, 9, 10, 9, 9, 9,
+          9, 6, 13, 9, 10, 9, 9, 9, 9, 11, 9, 9, 9, 9, 8, 9, 10, 8, 8, 9, 11, 10, 10, 9, 10, 6, 13,
+          10, 9, 10, 10, 7, 8, 11, 10, 9, 10, 10, 9, 7, 8, 12, 10, 9, 9, 10, 8, 11, 11, 10, 9, 9, 9,
+          6, 9, 9, 12, 9, 9, 9, 10, 10, 11, 11, 9, 8, 10, 9, 10, 11, 9, 9, 10, 10, 11, 9, 10, 9, 9,
+          10, 11, 9, 9, 9, 10, 10, 9, 10, 9, 9, 8, 10, 10, 7, 12, 8, 8, 9, 11, 10, 9, 7, 9, 9, 11,
+          10, 11, 9, 9, 8, 12, 8, 10, 9, 9, 10, 9, 7, 9, 12, 9, 9, 9, 10, 10, 7, 13, 9, 9, 8, 10, 9,
+          9, 10, 8, 11, 8, 11, 11, 7, 12, 10, 10, 11, 11, 11, 14, 10, 13, 10, 11, 12, 10, 12, 12,
+          10, 11, 11, 11, 11, 11, 11, 12, 10, 7, 12, 9, 9, 9, 11, 12, 9, 10, 10, 10, 12, 10, 9, 10,
+          11, 10, 9, 12, 11, 9, 10, 11, 12, 10, 10, 10, 8, 12, 11, 10, 10, 11, 11, 11, 8, 11, 10, 9,
+          11, 10, 10, 11, 10, 9, 11, 10, 10, 9, 11, 7, 12, 11, 10, 10, 11, 10, 10, 11, 11, 10, 11,
+          11, 9, 11, 11, 10, 10, 12, 11, 10, 10, 10, 9, 11, 10, 10, 9, 10, 10, 11, 11, 11, 10, 10,
+          11, 11, 11, 11, 9, 9, 12, 9, 10, 9, 10, 10, 11, 11, 10, 10, 11, 10, 10, 11, 11, 9, 9, 11,
+          11, 10, 11, 11, 10, 11, 11, 11, 10, 11, 9, 11, 10, 10, 10, 11, 10, 10, 12, 11, 9, 10, 11,
+          8, 12, 12, 9, 10, 11, 11, 10, 12, 11, 9, 9, 11, 10, 10, 10, 9, 9, 11, 10, 10, 9, 11, 10,
+          10, 11, 10, 7, 13, 11, 10, 8, 12, 9, 10, 12, 10, 9, 10, 10, 10, 9, 11, 9, 10, 11, 10, 10,
+          10, 10, 10, 12, 11, 10, 10, 10, 9, 10, 12, 11, 9, 10, 9, 11, 7, 12, 10, 9, 9, 12, 10, 9,
+          11, 9, 9, 12, 11, 10, 12, 9, 10, 12, 11, 11, 10, 11, 11, 10, 11, 10, 10, 11, 11, 10, 11,
+          12, 9, 11, 12, 11, 11, 10, 8, 12, 12, 10, 11, 9, 12, 10, 10, 12, 9, 10, 11, 13, 10, 11,
+          13, 11, 12, 13, 9, 12, 11, 11, 11, 13, 8, 10, 11, 11, 11, 10, 10, 12, 12, 11, 11, 12, 11,
+          10, 12, 12, 9, 11, 10, 10, 10, 11, 10, 10, 11, 11, 10, 12, 12, 9, 9, 12, 10, 10, 9, 12, 9,
+          11, 11, 11, 10, 9, 9, 11, 10, 10, 9, 9, 10, 11, 9, 10, 11, 9, 9, 11, 11, 10, 10, 11, 11,
+          12, 11, 10, 9, 10, 11, 11, 10, 11, 11, 9, 11, 11, 12, 10, 11, 10, 12, 11, 10, 10, 12, 10,
+          11, 11, 11, 11, 10, 11, 9, 11, 10, 11, 10, 10, 10, 11, 10, 9, 11, 10, 7, 13, 10, 9, 10,
+          11, 9, 8, 9, 9, 10, 9, 12, 9, 9, 10, 9, 10, 10, 11, 10, 9, 9, 11, 11, 8, 11, 10, 10, 11,
+          12, 10, 11, 11, 10, 10, 11, 11, 11, 11, 10, 12, 11, 11, 12, 9, 11, 11, 11, 11, 11, 7, 12,
+          11, 9, 10, 8, 11, 10, 9, 11, 11, 11, 10, 10, 10, 10, 11, 11, 10, 12, 11, 10, 11, 11, 10,
+          10, 11, 10, 10, 10, 9, 10, 12, 12, 11, 11, 11, 12, 12, 10, 13, 11, 12, 12, 9, 12, 11, 10,
+          11, 11, 11, 10, 11, 11, 10, 13, 11, 10, 12, 10, 10, 11, 11, 11, 10, 13, 11, 10, 11, 10,
+          10, 12, 12, 10, 10, 12, 11, 12, 11, 10, 12, 12, 10, 11, 12, 10, 10, 12, 11, 10, 12, 11, 9,
+          12, 11, 10, 10, 11, 11, 10, 12, 11, 10, 13, 11, 12, 11, 10, 12, 11, 12, 11, 11, 12, 10,
+          11, 12, 12, 10, 12, 11, 12, 12, 12, 12, 12, 12, 11, 13, 12, 13, 12, 12, 11, 11, 13, 11,
+          11, 13, 11, 11, 12, 11, 11, 12, 12, 12, 11, 13, 11, 13, 11, 11, 12, 11, 11, 12, 11, 12,
+          11, 12, 11, 10, 10, 12, 12, 11, 11, 12, 12, 10, 11, 12, 11, 11, 11, 13, 11, 9, 12, 15, 11,
+          12, 11, 12, 11, 11, 11, 10, 10, 12, 11, 10, 11, 11, 10, 10, 9, 11, 11, 11, 11, 12, 11, 11,
+          11, 9, 11, 12, 9, 13, 11, 10, 11, 11, 11, 12, 13, 10, 12, 12, 11, 10, 12, 10, 11, 11, 11,
+          9, 9, 12, 13, 11, 11, 11, 12
+        ],
+        "count": 962,
+        "mean": 10.355509355509355,
+        "median": 10.0,
+        "minimum": 6,
+        "maximum": 19
+      },
+      "waitingTicks": 0,
+      "fullQueueIdleWaitingTicks": 0,
+      "refreshEstimateMillis": {
+        "samples": [
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999999636, 7.399999999999636,
+          7.399999999999636, 7.399999999999636, 7.399999999997817, 7.399999999997817,
+          7.399999999997817, 7.399999999997817, 7.399999999997817, 7.399999999997817,
+          7.399999999997817, 7.399999999997817, 7.399999999997817, 7.399999999997817,
+          7.399999999997817, 7.399999999997817, 7.399999999997817, 7.399999999997817,
+          7.399999999997817, 7.399999999997817, 7.399999999997817, 7.399999999997817,
+          7.399999999997817, 7.399999999997817, 7.399999999997817, 7.399999999997817,
+          7.399999999997817, 7.399999999997817, 7.399999999997817, 7.399999999997817,
+          7.399999999997817, 7.399999999997817, 7.399999999997817, 7.399999999997817,
+          7.399999999997817, 7.399999999997817, 7.399999999997817, 7.399999999997817,
+          7.399999999997817, 7.399999999997817, 7.399999999997817, 7.399999999997817,
+          7.399999999997817, 7.399999999997817, 7.399999999997817, 7.399999999997817,
+          7.399999999997817, 7.399999999997817, 7.399999999997817, 7.399999999997817,
+          7.399999999997817, 7.399999999997817, 7.399999999997817, 7.399999999997817,
+          7.399999999997817, 7.399999999997817, 7.399999999997817, 7.399999999997817,
+          7.399999999997817, 7.399999999997817, 7.399999999997817, 7.399999999997817,
+          7.399999999997817, 7.399999999997817, 7.399999999997817, 7.399999999997817,
+          7.399999999997817, 7.399999999997817, 7.399999999997817, 7.399999999997817,
+          7.399999999997817, 7.399999999997817, 7.399999999997817, 7.399999999997817,
+          7.399999999997817, 7.399999999997817, 7.399999999997817, 7.399999999997817,
+          7.399999999997817, 7.399999999997817, 7.399999999997817, 7.399999999997817,
+          7.399999999997817, 7.399999999997817, 7.399999999997817, 7.399999999997817,
+          7.399999999997817, 7.399999999997817, 7.399999999997817, 7.399999999997817,
+          7.399999999997817, 7.399999999997817, 7.399999999997817, 7.399999999997817,
+          7.399999999997817, 7.399999999997817, 7.399999999997817, 7.399999999997817,
+          7.399999999997817, 7.399999999997817, 7.399999999997817, 7.399999999997817,
+          7.399999999997817, 7.399999999997817, 7.399999999997817, 7.399999999997817,
+          7.399999999997817, 7.399999999997817, 7.399999999997817, 7.399999999997817,
+          7.399999999997817, 7.399999999997817, 7.399999999997817, 7.399999999997817,
+          7.399999999997817, 7.399999999997817, 7.399999999997817, 7.399999999997817,
+          7.399999999997817, 7.399999999997817, 7.399999999997817, 7.399999999997817,
+          7.399999999997817, 7.399999999997817, 7.399999999997817, 7.399999999997817,
+          7.399999999997817, 7.399999999997817, 7.399999999997817, 7.399999999997817,
+          7.399999999997817, 7.399999999997817, 7.399999999997817, 7.399999999997817,
+          7.399999999997817, 7.399999999997817, 7.399999999997817, 7.399999999997817,
+          7.399999999997817, 7.399999999997817, 7.399999999997817, 7.399999999997817,
+          7.399999999997817, 7.399999999997817, 7.399999999997817, 7.399999999997817,
+          7.399999999997817, 7.399999999997817, 7.399999999997817, 7.399999999997817,
+          7.399999999997817, 7.399999999997817, 7.399999999997817, 7.399999999997817,
+          7.399999999997817, 7.399999999997817, 7.399999999997817, 7.399999999997817,
+          7.399999999997817, 7.399999999997817, 7.399999999997817, 7.399999999997817,
+          7.399999999997817, 7.399999999997817, 7.399999999997817, 7.399999999997817,
+          7.399999999997817, 7.399999999997817, 7.399999999997817, 7.399999999997817,
+          7.399999999997817, 7.399999999997817, 7.399999999997817, 7.399999999997817,
+          7.399999999997817, 7.399999999997817, 7.399999999997817, 7.399999999997817,
+          7.399999999997817, 7.399999999997817, 7.399999999997817, 7.399999999997817,
+          7.399999999997817, 7.399999999997817, 7.399999999997817, 7.399999999997817,
+          7.399999999997817, 7.399999999997817, 7.399999999997817, 7.399999999997817,
+          7.399999999997817, 7.399999999997817, 7.399999999997817, 7.399999999997817,
+          7.399999999997817
+        ],
+        "count": 965,
+        "mean": 7.3999999999992765,
+        "median": 7.399999999999636,
+        "minimum": 7.399999999997817,
+        "maximum": 7.399999999999636
+      },
+      "stages": {
+        "decode": {
+          "calls": 965,
+          "meanMillisPerPresentedFrame": 0.039378238341968914
+        },
+        "plans": {
+          "calls": 965,
+          "meanMillisPerPresentedFrame": 0.04145077720207254
+        },
+        "layers": {
+          "calls": 965,
+          "meanMillisPerPresentedFrame": 0.0
+        },
+        "restore": {
+          "calls": 1930,
+          "meanMillisPerPresentedFrame": 0.013471502590673576
+        },
+        "geometry": {
+          "calls": 965,
+          "meanMillisPerPresentedFrame": 1.1761658031088082
+        },
+        "query": {
+          "calls": 965,
+          "meanMillisPerPresentedFrame": 0.06528497409326425
+        },
+        "audio": {
+          "calls": 965,
+          "meanMillisPerPresentedFrame": 0.0010362694300518134
+        },
+        "draw": {
+          "calls": 965,
+          "meanMillisPerPresentedFrame": 2.1025906735751296
+        },
+        "present": {
+          "calls": 965,
+          "meanMillisPerPresentedFrame": 3.366839378238342
+        }
+      },
+      "colorReuse": null,
+      "errors": []
+    },
+    "mainAfterColorReuse": {
+      "observedModelFPS": 57.17049576783555,
+      "rafHz": 87.73881499395405,
+      "workerElapsedMillis": {
+        "samples": [
+          13, 13, 13, 13, 11, 12, 11, 14, 12, 11, 12, 13, 15, 15, 15, 13, 14, 16, 13, 12, 13, 10,
+          11, 11, 12, 11, 10, 10, 11, 11, 11, 12, 12, 12, 13, 11, 10, 13, 14, 11, 14, 13, 17, 13,
+          14, 12, 12, 10, 12, 11, 12, 11, 10, 11, 11, 9, 12, 10, 12, 11, 12, 12, 13, 12, 13, 13, 13,
+          15, 13, 11, 12, 11, 10, 12, 11, 11, 10, 12, 9, 11, 12, 11, 12, 12, 12, 12, 12, 11, 13, 14,
+          13, 11, 12, 10, 12, 105, 24, 25, 28, 15, 18, 12, 15, 33, 45, 19, 15, 15, 13, 12, 14, 12,
+          23, 19, 16, 13, 18, 68, 32, 24, 18, 17, 16, 15, 15, 19, 19, 211, 56, 16, 16, 95, 14, 14,
+          13, 15, 14, 13, 14, 17, 20, 16, 19, 16, 15, 16, 17, 13, 14, 17, 20, 16, 16, 17, 10, 15,
+          14, 13, 13, 15, 15, 11, 12, 10, 12, 11, 11, 11, 9, 11, 11, 10, 11, 10, 10, 11, 11, 10, 15,
+          11, 11, 11, 13, 10, 12, 13, 13, 16, 14, 15, 13, 13, 12, 12, 10, 11, 11, 14, 12, 12, 17,
+          16, 16, 17, 16, 12, 16, 16, 11, 12, 12, 10, 10, 11, 15, 13, 13, 18, 21, 19, 16, 18, 15,
+          15, 14, 13, 16, 12, 14, 14, 17, 14, 12, 14, 12, 11, 12, 13, 11, 12, 11, 12, 13, 12, 11,
+          12, 11, 12, 12, 10, 11, 10, 13, 14, 15, 14, 13, 12, 10, 11, 10, 11, 10, 10, 11, 10, 11,
+          10, 9, 10, 11, 8, 10, 11, 12, 13, 11, 10, 10, 9, 12, 11, 10, 11, 11, 10, 13, 9, 10, 12, 8,
+          11, 10, 11, 12, 9, 10, 11, 9, 10, 10, 9, 10, 14, 11, 9, 11, 10, 9, 11, 11, 12, 9, 11, 10,
+          9, 9, 11, 12, 11, 11, 11, 17, 11, 11, 11, 15, 14, 12, 18, 16, 13, 12, 12, 13, 12, 11, 13,
+          11, 11, 9, 11, 12, 12, 13, 11, 12, 12, 13, 15, 15, 14, 15, 11, 14, 11, 15, 10, 10, 11, 10,
+          11, 10, 13, 11, 10, 11, 11, 11, 12, 12, 13, 12, 11, 12, 16, 13, 15, 11, 14, 14, 15, 10,
+          11, 11, 11, 10, 10, 11, 10, 9, 10, 9, 11, 9, 11, 10, 12, 13, 13, 14, 13, 14, 10, 13, 10,
+          11, 9, 10, 10, 11, 11, 9, 9, 10, 10, 10, 13, 13, 10, 10, 10, 10, 11, 14, 12, 13, 10, 13,
+          12, 13, 10, 12, 11, 10, 12, 10, 11, 10, 9, 11, 12, 13, 14, 12, 10, 11, 10, 10, 11, 11, 12,
+          13, 13, 13, 13, 12, 13, 13, 13, 11, 11, 11, 11, 10, 12, 10, 12, 10, 10, 11, 10, 10, 13,
+          12, 12, 12, 12, 11, 12, 12, 12, 12, 14, 13, 13, 14, 15, 13, 17, 13, 13, 11, 11, 11, 11,
+          13, 12, 12, 9, 10, 11, 10, 10, 12, 11, 11, 10, 18, 15, 12, 11, 11, 11, 11, 11, 12, 9, 9,
+          11, 12, 12, 13, 13, 12, 14, 11, 12, 11, 12, 12, 11, 12, 11, 11, 11, 12, 14, 13, 12, 11,
+          13, 13, 14, 15, 15, 13, 11, 12, 13, 14, 12, 13, 14, 13, 11, 13, 11, 12, 12, 12, 12, 15,
+          14, 13, 14, 14, 13, 11, 13, 12, 13, 15, 14, 15, 15, 12, 15, 15, 13, 13, 13, 13, 14, 14,
+          14, 13, 11, 14, 14, 16, 12, 10, 9, 8
+        ],
+        "count": 595,
+        "mean": 13.299159663865547,
+        "median": 12,
+        "minimum": 8,
+        "maximum": 211
+      },
+      "roundTripMillis": {
+        "samples": [
+          13, 14, 14, 13, 15, 12, 12, 14, 13, 13, 14, 13, 20, 16, 16, 17, 14, 21, 13, 14, 14, 11,
+          15, 12, 13, 12, 10, 10, 13, 15, 12, 12, 15, 12, 14, 15, 12, 13, 18, 11, 14, 14, 23, 14,
+          15, 13, 13, 15, 13, 11, 13, 12, 10, 12, 12, 10, 16, 12, 13, 13, 13, 12, 14, 13, 14, 13,
+          14, 15, 14, 12, 12, 15, 11, 12, 12, 11, 10, 14, 10, 11, 14, 14, 15, 15, 12, 13, 16, 11,
+          14, 16, 13, 12, 13, 12, 13, 146, 25, 28, 31, 51, 33, 13, 27, 34, 53, 20, 19, 16, 13, 14,
+          15, 13, 29, 22, 18, 14, 19, 69, 39, 25, 19, 17, 21, 16, 17, 20, 20, 212, 56, 18, 18, 96,
+          16, 15, 13, 18, 15, 15, 15, 18, 20, 18, 20, 17, 15, 16, 18, 14, 15, 19, 21, 18, 17, 18,
+          11, 16, 14, 15, 13, 15, 15, 12, 14, 11, 13, 11, 13, 12, 10, 11, 11, 12, 12, 10, 11, 11,
+          12, 12, 16, 12, 14, 11, 14, 11, 13, 13, 15, 16, 14, 17, 14, 14, 12, 12, 11, 12, 13, 15,
+          13, 13, 18, 17, 17, 17, 16, 14, 17, 16, 13, 12, 12, 12, 11, 12, 16, 14, 14, 18, 21, 21,
+          16, 20, 15, 15, 16, 16, 17, 13, 15, 15, 21, 14, 13, 14, 13, 12, 13, 14, 11, 13, 12, 12,
+          14, 13, 12, 13, 12, 12, 12, 12, 12, 11, 14, 15, 15, 16, 13, 12, 11, 11, 12, 11, 12, 10,
+          11, 12, 11, 10, 10, 11, 11, 12, 10, 11, 13, 13, 13, 10, 11, 10, 12, 11, 10, 11, 12, 10,
+          13, 11, 10, 12, 12, 11, 11, 11, 13, 10, 12, 11, 9, 11, 12, 10, 230, 14, 11, 12, 12, 11,
+          10, 11, 16, 12, 10, 15, 11, 10, 10, 11, 14, 11, 12, 12, 17, 14, 11, 11, 17, 15, 13, 18,
+          17, 13, 12, 14, 14, 12, 12, 13, 13, 11, 13, 12, 13, 16, 13, 13, 13, 12, 14, 16, 15, 15,
+          15, 13, 14, 13, 15, 11, 13, 11, 12, 12, 10, 14, 13, 11, 12, 14, 13, 12, 12, 13, 12, 13,
+          13, 17, 19, 16, 12, 20, 15, 16, 12, 12, 12, 11, 14, 11, 12, 10, 10, 11, 10, 13, 10, 13,
+          11, 12, 19, 15, 19, 14, 14, 10, 19, 11, 14, 10, 12, 10, 13, 12, 10, 10, 11, 12, 10, 16,
+          13, 12, 10, 13, 11, 11, 15, 14, 19, 10, 14, 12, 18, 12, 13, 12, 15, 13, 11, 12, 10, 10,
+          11, 17, 14, 15, 12, 14, 12, 11, 10, 13, 11, 17, 14, 15, 16, 16, 14, 15, 16, 13, 13, 14,
+          14, 12, 10, 14, 11, 12, 10, 12, 12, 10, 10, 15, 15, 13, 12, 13, 11, 13, 15, 12, 13, 15,
+          14, 16, 14, 19, 14, 17, 14, 15, 11, 12, 11, 12, 13, 13, 12, 10, 10, 15, 11, 10, 13, 11,
+          13, 12, 20, 15, 13, 14, 13, 13, 11, 12, 12, 10, 10, 11, 13, 12, 16, 14, 12, 15, 12, 13,
+          11, 12, 12, 11, 14, 12, 12, 12, 12, 15, 13, 12, 12, 13, 16, 15, 15, 16, 13, 13, 13, 14,
+          14, 12, 14, 15, 13, 12, 13, 12, 13, 13, 13, 13, 15, 15, 13, 14, 14, 14, 12, 14, 13, 13,
+          17, 15, 16, 15, 13, 17, 16, 14, 14, 16, 14, 14, 15, 14, 13, 13, 14, 16, 17, 12, 12, 9, 8
+        ],
+        "count": 595,
+        "mean": 15.01344537815126,
+        "median": 13,
+        "minimum": 8,
+        "maximum": 230
+      },
+      "waitingTicks": 0,
+      "fullQueueIdleWaitingTicks": 0,
+      "refreshEstimateMillis": {
+        "samples": [
+          7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5,
+          7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5,
+          7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5,
+          7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5,
+          7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5,
+          7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5,
+          7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5,
+          7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5,
+          7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5,
+          7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5,
+          7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5,
+          7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5,
+          7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5,
+          7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5,
+          7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5,
+          7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5,
+          7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5,
+          7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5,
+          7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5,
+          7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5,
+          7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5,
+          7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5,
+          7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5,
+          7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5, 7.5,
+          7.5, 7.400000000001455, 7.400000000001455, 7.400000000001455, 7.400000000001455,
+          7.400000000001455, 7.400000000001455, 7.400000000001455, 7.400000000001455,
+          7.400000000001455, 7.400000000001455, 7.400000000001455, 7.400000000001455,
+          7.400000000001455, 7.400000000001455, 7.400000000001455, 7.400000000001455,
+          7.400000000001455, 7.400000000001455, 7.400000000001455, 7.400000000001455,
+          7.400000000001455, 7.400000000001455, 7.400000000001455, 7.400000000001455,
+          7.400000000001455, 7.400000000001455, 7.400000000001455, 7.400000000001455,
+          7.400000000001455, 7.400000000001455, 7.400000000001455, 7.400000000001455,
+          7.400000000001455, 7.400000000001455, 7.400000000001455, 7.400000000001455,
+          7.400000000001455, 7.400000000001455, 7.400000000001455, 7.400000000001455,
+          7.400000000001455, 7.400000000001455, 7.400000000001455, 7.400000000001455,
+          7.400000000001455, 7.400000000001455, 7.400000000001455, 7.400000000001455,
+          7.400000000001455, 7.400000000001455, 7.400000000001455, 7.400000000001455,
+          7.400000000001455, 7.400000000001455, 7.400000000001455, 7.400000000001455,
+          7.400000000001455, 7.400000000001455, 7.400000000001455, 7.400000000001455,
+          7.400000000001455, 7.400000000001455, 7.400000000001455, 7.400000000001455,
+          7.400000000001455, 7.400000000001455, 7.400000000001455, 7.400000000001455,
+          7.400000000001455, 7.400000000001455, 7.400000000001455, 7.400000000001455,
+          7.400000000001455, 7.400000000001455, 7.400000000001455, 7.400000000001455,
+          7.400000000001455, 7.400000000001455, 7.400000000001455, 7.400000000001455,
+          7.400000000001455, 7.400000000001455, 7.400000000001455, 7.400000000001455,
+          7.400000000001455, 7.400000000001455, 7.400000000001455, 7.400000000001455,
+          7.400000000001455, 7.400000000001455, 7.400000000001455, 7.400000000001455,
+          7.400000000001455, 7.400000000001455, 7.400000000001455, 7.400000000001455,
+          7.400000000001455, 7.400000000001455, 7.400000000001455, 7.400000000001455,
+          7.400000000001455, 7.400000000001455, 7.400000000001455, 7.400000000001455,
+          7.400000000001455, 7.400000000001455, 7.400000000001455, 7.400000000001455,
+          7.400000000001455, 7.400000000001455, 7.400000000001455, 7.400000000001455,
+          7.400000000001455, 7.400000000001455, 7.400000000001455, 7.400000000001455,
+          7.400000000001455, 7.400000000001455, 7.400000000001455, 7.400000000001455,
+          7.400000000001455, 7.400000000001455, 7.400000000001455, 7.400000000001455,
+          7.400000000001455, 7.400000000001455, 7.400000000001455, 7.400000000001455,
+          7.400000000001455, 7.400000000001455, 7.400000000001455, 7.400000000001455,
+          7.400000000001455, 7.400000000001455, 7.400000000001455, 7.400000000001455,
+          7.400000000001455, 7.400000000001455, 7.400000000001455, 7.400000000001455,
+          7.400000000001455, 7.400000000001455, 7.400000000001455, 7.400000000001455,
+          7.400000000001455, 7.400000000001455, 7.400000000001455, 7.400000000001455,
+          7.400000000001455, 7.400000000001455, 7.400000000001455, 7.400000000001455,
+          7.400000000001455, 7.400000000001455, 7.400000000001455, 7.400000000001455,
+          7.400000000001455, 7.400000000001455, 7.400000000001455, 7.400000000001455,
+          7.400000000001455, 7.400000000001455, 7.400000000001455, 7.400000000001455,
+          7.400000000001455, 7.400000000001455, 7.400000000001455, 7.400000000001455
+        ],
+        "count": 601,
+        "mean": 7.47204658901871,
+        "median": 7.5,
+        "minimum": 7.400000000001455,
+        "maximum": 7.5
+      },
+      "stages": {
+        "decode": {
+          "calls": 601,
+          "meanMillisPerPresentedFrame": 0.07154742096505824
+        },
+        "plans": {
+          "calls": 601,
+          "meanMillisPerPresentedFrame": 0.11647254575707154
+        },
+        "layers": {
+          "calls": 601,
+          "meanMillisPerPresentedFrame": 0.0033277870216306157
+        },
+        "restore": {
+          "calls": 1202,
+          "meanMillisPerPresentedFrame": 0.02329450915141431
+        },
+        "geometry": {
+          "calls": 601,
+          "meanMillisPerPresentedFrame": 1.5424292845257903
+        },
+        "query": {
+          "calls": 601,
+          "meanMillisPerPresentedFrame": 0.09151414309484193
+        },
+        "audio": {
+          "calls": 601,
+          "meanMillisPerPresentedFrame": 0.0066555740432612314
+        },
+        "draw": {
+          "calls": 601,
+          "meanMillisPerPresentedFrame": 3.2828618968386025
+        },
+        "present": {
+          "calls": 601,
+          "meanMillisPerPresentedFrame": 4.9700499168053245
+        }
+      },
+      "colorReuse": {
+        "hit": 524832,
+        "miss": 0
+      },
+      "errors": []
+    },
+    "method": "Temporary source copies and Worker wrappers only; nested Date.now measurements have 1ms granularity and add overhead. Individual runs had different external GPU load. Main stage values and request/response traces locate work and waits, but their before/after wall times are not a controlled speedup measurement. Raw event streams stay in the evidence directory."
+  },
+  "quality": {
+    "pixelCheckpoints": 32,
+    "differentPixelChannels": 0,
+    "maximumPixelDelta": 0,
+    "comparisons": [
+      {
+        "antialiasing": "ssaa",
+        "artifactHashes": {
+          "after": "1d43bf34af9697e37f6110d5384402044435c9b057b1a92c3e6587f210de257f",
+          "before": "db011758da4be2e1f46d3a683649998c89bdb8316883f1855317719458314fbf"
+        },
+        "backend": "hardware",
+        "errors": [],
+        "metadata": [
+          {
+            "parts": 852,
+            "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M5 Pro, Unspecified Version)",
+            "rendering": {
+              "antialiasing": "ssaa",
+              "renderer": "webgl"
+            }
+          },
+          {
+            "parts": 852,
+            "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M5 Pro, Unspecified Version)",
+            "rendering": {
+              "antialiasing": "ssaa",
+              "renderer": "webgl"
+            }
+          }
+        ],
+        "model": "/Users/bichi/Downloads/白猫/white-cat-idle-english.poffo",
+        "modelSHA256": "47c98e7473e79ffb249aa1acb5bed9b7d458f35c7c0d3502f281549c20c55035",
+        "passed": true,
+        "referenceComputation": "worker",
+        "results": [
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 700,
+            "maximumDelta": 0,
+            "stage": "defaults",
+            "statuses": ["idle", "idle"],
+            "visiblePixels": 82314,
+            "width": 900,
+            "workerEqual": true
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 700,
+            "maximumDelta": 0,
+            "stage": "controls",
+            "statuses": ["idle", "idle"],
+            "visiblePixels": 82701,
+            "width": 900,
+            "workerEqual": true
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 700,
+            "maximumDelta": 0,
+            "stage": "burst",
+            "statuses": ["idle", "idle"],
+            "visiblePixels": 82599,
+            "width": 900,
+            "workerEqual": true
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 700,
+            "maximumDelta": 0,
+            "stage": "document-edit",
+            "statuses": ["idle", "idle"],
+            "visiblePixels": 82083,
+            "width": 900,
+            "workerEqual": true
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 700,
+            "maximumDelta": 0,
+            "stage": "buffer-off",
+            "statuses": ["disabled", "disabled"],
+            "visiblePixels": 82083,
+            "width": 900,
+            "workerEqual": null
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 700,
+            "maximumDelta": 0,
+            "stage": "buffer-on",
+            "statuses": ["idle", "idle"],
+            "visiblePixels": 82083,
+            "width": 900,
+            "workerEqual": true
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 1400,
+            "maximumDelta": 0,
+            "stage": "resize",
+            "statuses": ["idle", "idle"],
+            "visiblePixels": 319593,
+            "width": 1800,
+            "workerEqual": true
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 1400,
+            "maximumDelta": 0,
+            "stage": "renderer",
+            "statuses": ["idle", "idle"],
+            "visiblePixels": 319593,
+            "width": 1800,
+            "workerEqual": true
+          }
+        ],
+        "workersAfterDestroy": 0
+      },
+      {
+        "antialiasing": "msaa",
+        "artifactHashes": {
+          "after": "1d43bf34af9697e37f6110d5384402044435c9b057b1a92c3e6587f210de257f",
+          "before": "db011758da4be2e1f46d3a683649998c89bdb8316883f1855317719458314fbf"
+        },
+        "backend": "hardware",
+        "errors": [],
+        "metadata": [
+          {
+            "parts": 852,
+            "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M5 Pro, Unspecified Version)",
+            "rendering": {
+              "antialiasing": "msaa",
+              "renderer": "webgl"
+            }
+          },
+          {
+            "parts": 852,
+            "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M5 Pro, Unspecified Version)",
+            "rendering": {
+              "antialiasing": "msaa",
+              "renderer": "webgl"
+            }
+          }
+        ],
+        "model": "/Users/bichi/Downloads/白猫/white-cat-idle-english.poffo",
+        "modelSHA256": "47c98e7473e79ffb249aa1acb5bed9b7d458f35c7c0d3502f281549c20c55035",
+        "passed": true,
+        "referenceComputation": "worker",
+        "results": [
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 700,
+            "maximumDelta": 0,
+            "stage": "defaults",
+            "statuses": ["idle", "idle"],
+            "visiblePixels": 82458,
+            "width": 900,
+            "workerEqual": true
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 700,
+            "maximumDelta": 0,
+            "stage": "controls",
+            "statuses": ["idle", "idle"],
+            "visiblePixels": 82820,
+            "width": 900,
+            "workerEqual": true
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 700,
+            "maximumDelta": 0,
+            "stage": "burst",
+            "statuses": ["idle", "idle"],
+            "visiblePixels": 82708,
+            "width": 900,
+            "workerEqual": true
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 700,
+            "maximumDelta": 0,
+            "stage": "document-edit",
+            "statuses": ["idle", "idle"],
+            "visiblePixels": 82197,
+            "width": 900,
+            "workerEqual": true
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 700,
+            "maximumDelta": 0,
+            "stage": "buffer-off",
+            "statuses": ["disabled", "disabled"],
+            "visiblePixels": 82197,
+            "width": 900,
+            "workerEqual": null
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 700,
+            "maximumDelta": 0,
+            "stage": "buffer-on",
+            "statuses": ["idle", "idle"],
+            "visiblePixels": 82197,
+            "width": 900,
+            "workerEqual": true
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 1400,
+            "maximumDelta": 0,
+            "stage": "resize",
+            "statuses": ["idle", "idle"],
+            "visiblePixels": 319630,
+            "width": 1800,
+            "workerEqual": true
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 1400,
+            "maximumDelta": 0,
+            "stage": "renderer",
+            "statuses": ["idle", "idle"],
+            "visiblePixels": 319630,
+            "width": 1800,
+            "workerEqual": true
+          }
+        ],
+        "workersAfterDestroy": 0
+      },
+      {
+        "antialiasing": "ssaa",
+        "artifactHashes": {
+          "after": "1d43bf34af9697e37f6110d5384402044435c9b057b1a92c3e6587f210de257f",
+          "before": "db011758da4be2e1f46d3a683649998c89bdb8316883f1855317719458314fbf"
+        },
+        "backend": "hardware",
+        "errors": [],
+        "metadata": [
+          {
+            "parts": 122,
+            "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M5 Pro, Unspecified Version)",
+            "rendering": {
+              "antialiasing": "ssaa",
+              "renderer": "webgl"
+            }
+          },
+          {
+            "parts": 122,
+            "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M5 Pro, Unspecified Version)",
+            "rendering": {
+              "antialiasing": "ssaa",
+              "renderer": "webgl"
+            }
+          }
+        ],
+        "model": "/Users/bichi/.codex/worktrees/48ee/web/packages/puppet/examples/development-model.json",
+        "modelSHA256": "d2ee88f9f8a50273f7919bdd3b52691418a3d0d60e3501609edb7b175e81bfb5",
+        "passed": true,
+        "referenceComputation": "worker",
+        "results": [
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 700,
+            "maximumDelta": 0,
+            "stage": "defaults",
+            "statuses": ["idle", "idle"],
+            "visiblePixels": 111508,
+            "width": 900,
+            "workerEqual": true
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 700,
+            "maximumDelta": 0,
+            "stage": "controls",
+            "statuses": ["idle", "idle"],
+            "visiblePixels": 112111,
+            "width": 900,
+            "workerEqual": true
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 700,
+            "maximumDelta": 0,
+            "stage": "burst",
+            "statuses": ["idle", "idle"],
+            "visiblePixels": 112480,
+            "width": 900,
+            "workerEqual": true
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 700,
+            "maximumDelta": 0,
+            "stage": "document-edit",
+            "statuses": ["idle", "idle"],
+            "visiblePixels": 111310,
+            "width": 900,
+            "workerEqual": true
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 700,
+            "maximumDelta": 0,
+            "stage": "buffer-off",
+            "statuses": ["disabled", "disabled"],
+            "visiblePixels": 111310,
+            "width": 900,
+            "workerEqual": null
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 700,
+            "maximumDelta": 0,
+            "stage": "buffer-on",
+            "statuses": ["idle", "idle"],
+            "visiblePixels": 111310,
+            "width": 900,
+            "workerEqual": true
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 1400,
+            "maximumDelta": 0,
+            "stage": "resize",
+            "statuses": ["idle", "idle"],
+            "visiblePixels": 436961,
+            "width": 1800,
+            "workerEqual": true
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 1400,
+            "maximumDelta": 0,
+            "stage": "renderer",
+            "statuses": ["idle", "idle"],
+            "visiblePixels": 436961,
+            "width": 1800,
+            "workerEqual": true
+          }
+        ],
+        "workersAfterDestroy": 0
+      },
+      {
+        "antialiasing": "ssaa",
+        "artifactHashes": {
+          "after": "1d43bf34af9697e37f6110d5384402044435c9b057b1a92c3e6587f210de257f",
+          "before": "db011758da4be2e1f46d3a683649998c89bdb8316883f1855317719458314fbf"
+        },
+        "backend": "hardware",
+        "errors": [],
+        "metadata": [
+          {
+            "parts": 852,
+            "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M5 Pro, Unspecified Version)",
+            "rendering": {
+              "antialiasing": "ssaa",
+              "renderer": "webgl"
+            }
+          },
+          {
+            "parts": 852,
+            "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M5 Pro, Unspecified Version)",
+            "rendering": {
+              "antialiasing": "ssaa",
+              "renderer": "webgl"
+            }
+          }
+        ],
+        "model": "/Users/bichi/Downloads/白猫/white-cat-idle-english.poffo",
+        "modelSHA256": "47c98e7473e79ffb249aa1acb5bed9b7d458f35c7c0d3502f281549c20c55035",
+        "passed": true,
+        "referenceComputation": "main",
+        "results": [
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 700,
+            "maximumDelta": 0,
+            "stage": "defaults",
+            "statuses": ["disabled", "idle"],
+            "visiblePixels": 82314,
+            "width": 900,
+            "workerEqual": null
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 700,
+            "maximumDelta": 0,
+            "stage": "controls",
+            "statuses": ["disabled", "idle"],
+            "visiblePixels": 82701,
+            "width": 900,
+            "workerEqual": null
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 700,
+            "maximumDelta": 0,
+            "stage": "burst",
+            "statuses": ["disabled", "idle"],
+            "visiblePixels": 82599,
+            "width": 900,
+            "workerEqual": null
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 700,
+            "maximumDelta": 0,
+            "stage": "document-edit",
+            "statuses": ["disabled", "idle"],
+            "visiblePixels": 82083,
+            "width": 900,
+            "workerEqual": null
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 700,
+            "maximumDelta": 0,
+            "stage": "buffer-off",
+            "statuses": ["disabled", "disabled"],
+            "visiblePixels": 82083,
+            "width": 900,
+            "workerEqual": null
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 700,
+            "maximumDelta": 0,
+            "stage": "buffer-on",
+            "statuses": ["disabled", "idle"],
+            "visiblePixels": 82083,
+            "width": 900,
+            "workerEqual": null
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 1400,
+            "maximumDelta": 0,
+            "stage": "resize",
+            "statuses": ["disabled", "idle"],
+            "visiblePixels": 319593,
+            "width": 1800,
+            "workerEqual": null
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 1400,
+            "maximumDelta": 0,
+            "stage": "renderer",
+            "statuses": ["disabled", "idle"],
+            "visiblePixels": 319593,
+            "width": 1800,
+            "workerEqual": null
+          }
+        ],
+        "workersAfterDestroy": 0
+      }
+    ],
+    "vertexParity": {
+      "differentWords": 0,
+      "frames": 120,
+      "maximumVertexError": 0,
+      "memoryBytes": 19005440,
+      "model": "/Users/bichi/Downloads/白猫/white-cat-idle-english.poffo",
+      "nativeCalls": 102240,
+      "wasm": true
+    },
+    "limits": "Controlled old/new SSAA/MSAA, document/input bursts, buffering changes, resize, renderer recreation and main/Worker reference states are compared. Presentation timestamps intentionally recover differently after delay; numerical deformation and shader results at the tested states remain equal."
+  },
+  "memory": {
+    "passed": true,
+    "configuration": {
+      "cycles": 6,
+      "deltaTime": 0.016666666666666666,
+      "displayFrames": 600,
+      "frames": 2400,
+      "model": "/Users/bichi/Downloads/白猫/white-cat-idle-english.poffo",
+      "warmupFrames": 120
+    },
+    "samples": [
+      {
+        "completed": 0,
+        "main": {
+          "usedSize": 163586784,
+          "totalSize": 164872192,
+          "embedderHeapUsedSize": 360376,
+          "backingStorageSize": 4520321,
+          "wasmBytes": [12451840]
+        },
+        "progress": {
+          "frames": 120,
+          "pendingRequests": 0,
+          "queuedNotices": 0
+        },
+        "worker": {
+          "usedSize": 284124596,
+          "totalSize": 286261248,
+          "embedderHeapUsedSize": 20128,
+          "backingStorageSize": 446882,
+          "wasmBytes": [19005440]
+        }
+      },
+      {
+        "completed": 600,
+        "main": {
+          "usedSize": 163542436,
+          "totalSize": 164610048,
+          "embedderHeapUsedSize": 360376,
+          "backingStorageSize": 4520573,
+          "wasmBytes": [12451840]
+        },
+        "progress": {
+          "frames": 720,
+          "pendingRequests": 0,
+          "queuedNotices": 0
+        },
+        "worker": {
+          "usedSize": 284333824,
+          "totalSize": 287571968,
+          "embedderHeapUsedSize": 20128,
+          "backingStorageSize": 446882,
+          "wasmBytes": [19005440]
+        }
+      },
+      {
+        "completed": 1200,
+        "main": {
+          "usedSize": 163543024,
+          "totalSize": 164610048,
+          "embedderHeapUsedSize": 360376,
+          "backingStorageSize": 4520573,
+          "wasmBytes": [12451840]
+        },
+        "progress": {
+          "frames": 1320,
+          "pendingRequests": 0,
+          "queuedNotices": 0
+        },
+        "worker": {
+          "usedSize": 284282284,
+          "totalSize": 287834112,
+          "embedderHeapUsedSize": 20128,
+          "backingStorageSize": 446882,
+          "wasmBytes": [19005440]
+        }
+      },
+      {
+        "completed": 2400,
+        "main": {
+          "usedSize": 163542808,
+          "totalSize": 164610048,
+          "embedderHeapUsedSize": 360376,
+          "backingStorageSize": 4520573,
+          "wasmBytes": [12451840]
+        },
+        "progress": {
+          "frames": 2520,
+          "pendingRequests": 0,
+          "queuedNotices": 0
+        },
+        "worker": {
+          "usedSize": 284304260,
+          "totalSize": 287834112,
+          "embedderHeapUsedSize": 20128,
+          "backingStorageSize": 446882,
+          "wasmBytes": [19005440]
+        }
+      }
+    ],
+    "display": [
+      {
+        "frames": 302,
+        "main": {
+          "usedSize": 160826436,
+          "totalSize": 162430976,
+          "embedderHeapUsedSize": 656168,
+          "backingStorageSize": 42759761,
+          "wasmBytes": [12451840]
+        }
+      },
+      {
+        "frames": 606,
+        "main": {
+          "usedSize": 160646196,
+          "totalSize": 162955264,
+          "embedderHeapUsedSize": 652504,
+          "backingStorageSize": 42790313,
+          "wasmBytes": [12451840]
+        }
+      },
+      {
+        "frames": 910,
+        "main": {
+          "usedSize": 160669456,
+          "totalSize": 162955264,
+          "embedderHeapUsedSize": 651072,
+          "backingStorageSize": 42790313,
+          "wasmBytes": [12451840]
+        }
+      }
+    ],
+    "lifecycle": [
+      {
+        "contexts": 0,
+        "cycle": 0,
+        "dom": {
+          "documents": 1,
+          "nodes": 8,
+          "jsEventListeners": 0
+        },
+        "main": {
+          "usedSize": 161783264,
+          "totalSize": 164790272,
+          "embedderHeapUsedSize": 398056,
+          "backingStorageSize": 23294774,
+          "wasmBytes": [12451840]
+        }
+      },
+      {
+        "contexts": 0,
+        "cycle": 5,
+        "dom": {
+          "documents": 1,
+          "nodes": 8,
+          "jsEventListeners": 0
+        },
+        "main": {
+          "usedSize": 163099688,
+          "totalSize": 164790272,
+          "embedderHeapUsedSize": 425928,
+          "backingStorageSize": 23295254,
+          "wasmBytes": [12451840]
+        }
+      },
+      {
+        "contexts": 0,
+        "cycle": 6,
+        "dom": {
+          "documents": 1,
+          "nodes": 8,
+          "jsEventListeners": 0
+        },
+        "main": {
+          "usedSize": 163097656,
+          "totalSize": 165052416,
+          "embedderHeapUsedSize": 431712,
+          "backingStorageSize": 23295350,
+          "wasmBytes": [12451840]
+        }
+      }
+    ],
+    "workersAfterDestroy": 0,
+    "retainedDom": {
+      "canvases": [
+        {
+          "width": 0,
+          "height": 0,
+          "connected": false
+        }
+      ],
+      "images": []
+    },
+    "limits": "GC heap/backing-storage growth and logical resources were checked. Driver VRAM/RSS and an hours-long physical soak were not measured."
+  },
+  "validation": {
+    "fullUnitTestsPassed": 2857,
+    "targetedSessionTestsAfterTypeOnlyCleanup": 11,
+    "parityTestsPassed": 2,
+    "metalBrowserTestsPassed": 66,
+    "optionalRustFixtureGeneratorsSkipped": 11,
+    "memoryRegressionTestsPassed": 8,
+    "puppetBuild": "passed and reproduced measured player hash",
+    "puppetTypecheck": "passed",
+    "poffoTypecheck": "passed",
+    "oxlint": "passed",
+    "format": "passed",
+    "wallaby": "MCP unavailable; global CLI failed because its installed bin/cli.js entrypoint is missing. Repository Vitest runners used.",
+    "remoteCI": "not run",
+    "fixtureCorrections": "The browser gate was rewritten without Promise.withResolvers to match the project TypeScript library target. A named refresh callback type resolves the formatter/linter function-type spacing conflict. These changes do not alter runtime behavior."
+  },
+  "review": {
+    "behavior": "Verified scheduling and property-identity causes were fixed; numerical results and resource ownership checks passed. No remaining P0/P1/P2 defect was identified in the changed scope.",
+    "refactoring": "Reuse existing scheduling and renderer contracts. Keep numerical interpolation, shader arithmetic and GPU resolution unchanged.",
+    "namingAndStructure": "Changed production modules remain below 600 lines. No new dependency, package script, timer or production diagnostic hook.",
+    "verificationGaps": [
+      "A stable actual-FPS uplift remains unverified under current concurrent GPU work.",
+      "Other browsers and physical low-end hardware were not benchmarked."
+    ],
+    "p3p4Proposals": [],
+    "prUpdated": false,
+    "p0p1": "None found in the changed scope.",
+    "p2": {
+      "identified": 3,
+      "fixed": 3,
+      "remaining": 0
+    }
+  },
+  "evidenceDirectory": "/private/tmp/puppet-cadence-fnnzh41c"
+}

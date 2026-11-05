@@ -57,14 +57,16 @@ export const computeRenderFrame = (options: ComputeRenderFrameOptions): PartRend
           restVertices: part.mesh.vertices,
         }),
       )
-      vertices.set(
-        mixMotionVertices({
-          partId: part.id,
-          restVertices: part.mesh.vertices,
-          samples: options.mix.vertexSamples,
-          vertices,
-        }),
-      )
+      if ((options.mix.vertexSamples.get(part.id)?.size ?? 0) > 0) {
+        vertices.set(
+          mixMotionVertices({
+            partId: part.id,
+            restVertices: part.mesh.vertices,
+            samples: options.mix.vertexSamples,
+            vertices,
+          }),
+        )
+      }
       const spatial = frame.spatialPoses.get(part.id)
       if (spatial !== undefined) {
         for (let index = 0; index < spatial.vertices.length; index += 1) {
