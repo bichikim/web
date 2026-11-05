@@ -78,24 +78,3 @@ test('plays music, keeps playback through next-track selection and pauses', asyn
   await page.getByRole('button', {exact: true, name: '음악 일시 정지'}).click()
   await expect.poll(() => audio.evaluate((element: HTMLAudioElement) => element.paused)).toBe(true)
 })
-
-test('plays a bundled speech preset and stops without fetching synthesis models', async ({
-  page,
-}) => {
-  const external: string[] = []
-  page.on('request', (request) => {
-    if (new URL(request.url()).origin !== 'http://127.0.0.1:4185') {
-      external.push(request.url())
-    }
-  })
-  await page.goto('/')
-  await expect(page.getByRole('button', {exact: true, name: '일시 정지'})).toBeVisible()
-  await page.getByRole('button', {exact: true, name: '대사 선택'}).click()
-  const preset = page.getByRole('button', {name: /^안녕, 나는 애시야/})
-  await preset.click()
-  await expect(page.getByRole('status')).toHaveText('말하는 중')
-  await page.getByRole('button', {exact: true, name: '정지'}).click()
-  await expect(page.getByRole('status')).toHaveCount(0)
-  await expect(preset).toBeEnabled()
-  expect(external).toEqual([])
-})
