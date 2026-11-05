@@ -1,5 +1,8 @@
+import {uniqBy} from 'es-toolkit/array'
 import type {AdminApiAiPage, ApiAiModel, ApiAiRoute} from 'src/features/admin-api-ai/contracts'
 import type {ApiAiProvider} from './types'
+
+const modelKey = (entry: ApiAiRoute): string => JSON.stringify([entry.providerId, entry.model])
 
 /** Combines registered models with configured and selected models without changing their order. */
 export const getApiAiModelCatalog = (
@@ -13,18 +16,9 @@ export const getApiAiModelCatalog = (
   })
   const protectedModels = [...routes, ...configured]
   const entries = [...catalog, ...protectedModels.map((entry) => ({...entry, label: ''}))]
-  return entries
-    .filter(
-      (entry, index) =>
-        entries.findIndex(
-          (candidate) =>
-            candidate.providerId === entry.providerId && candidate.model === entry.model,
-        ) === index,
-    )
-    .map((entry) => ({
-      ...entry,
-      removable: !protectedModels.some(
-        (candidate) => candidate.providerId === entry.providerId && candidate.model === entry.model,
-      ),
-    }))
+  const protectedKeys = new Set(protectedModels.map(modelKey))
+  return uniqBy(entries, modelKey).map((entry) => ({
+    ...entry,
+    removable: !protectedKeys.has(modelKey(entry)),
+  }))
 }
