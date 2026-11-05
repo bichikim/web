@@ -1,10 +1,11 @@
 import {createRoot} from 'solid-js'
 import {afterEach, describe, expect, it, vi} from 'vitest'
 
-import {type PAudioVisualizer, usePAudioVisualizer} from '../use-focus-room-audio-visualizer'
+import {usePAudioVisualizer} from '../use-focus-room-audio-visualizer'
 
 interface AudioHarnessOptions {
   readonly close?: () => Promise<void>
+  readonly currentTime?: number
   readonly resume?: () => Promise<void>
   readonly spectrumValue?: number
   readonly state?: AudioContextState
@@ -44,7 +45,7 @@ const installAudioHarness = (options: AudioHarnessOptions = {}) => {
     createAnalyser: vi.fn(() => analyser),
     createGain: vi.fn(() => outputGain),
     createMediaElementSource: vi.fn(() => source),
-    currentTime: 2,
+    currentTime: options.currentTime ?? 2,
     destination: {},
     resume,
     get state() {
@@ -92,58 +93,25 @@ describe('usePAudioVisualizer', () => {
   })
 
   it('should update levels while playing and release audio resources on cleanup', async () => {
-    const analyser = {
-      connect: vi.fn(),
-      disconnect: vi.fn(),
-      fftSize: 0,
-      frequencyBinCount: 24,
-      getByteFrequencyData: vi.fn((spectrum: Uint8Array) => spectrum.fill(255)),
-      smoothingTimeConstant: 0,
-    }
-    const source = {connect: vi.fn(), disconnect: vi.fn()}
-    const outputGain = {
-      connect: vi.fn(),
-      disconnect: vi.fn(),
-      gain: {setTargetAtTime: vi.fn(), value: 1},
-    }
-    const context = {
-      close: vi.fn().mockResolvedValue(undefined),
-      createAnalyser: vi.fn(() => analyser),
-      createGain: vi.fn(() => outputGain),
-      createMediaElementSource: vi.fn(() => source),
-      currentTime: 0,
-      destination: {},
-      resume: vi.fn().mockResolvedValue(undefined),
-      state: 'running',
-    }
-    const cancelFrame = vi.fn()
-    let scheduledFrame: FrameRequestCallback | undefined
-    const requestFrame = vi.fn((callback: FrameRequestCallback) => {
-      scheduledFrame = callback
-      return 1
-    })
-    const AudioContextMock = vi.fn(function AudioContextMock() {
-      return context
-    })
-    vi.stubGlobal('AudioContext', AudioContextMock)
-    vi.stubGlobal('cancelAnimationFrame', cancelFrame)
-    vi.stubGlobal('requestAnimationFrame', requestFrame)
+    const {
+      analyser,
+      cancelAnimationFrame: cancelFrame,
+      context,
+      outputGain,
+      requestAnimationFrame: requestFrame,
+      source,
+    } = installAudioHarness({currentTime: 0, spectrumValue: 255})
+    const {dispose, visualizer} = createVisualizer()
 
-    let dispose: () => void = () => undefined
-    let visualizer: PAudioVisualizer | undefined
-    createRoot((rootDispose) => {
-      dispose = rootDispose
-      visualizer = usePAudioVisualizer()
-    })
-
-    visualizer?.start(document.createElement('audio'))
+    visualizer.start(document.createElement('audio'))
     await Promise.resolve()
 
-    expect(visualizer?.levels()).toEqual(Array.from({length: 24}, () => 100))
+    expect(visualizer.levels()).toEqual(Array.from({length: 24}, () => 100))
     expect(requestFrame).toHaveBeenCalledOnce()
 
-    visualizer?.stop()
-    expect(visualizer?.levels()[0]).toBe(18)
+    const scheduledFrame = requestFrame.mock.lastCall?.[0]
+    visualizer.stop()
+    expect(visualizer.levels()[0]).toBe(18)
     expect(cancelFrame).toHaveBeenCalledWith(1)
 
     scheduledFrame?.(0)
