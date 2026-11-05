@@ -4,86 +4,16 @@ import {beforeEach, expect, it, vi} from 'vitest'
 import {apiJson} from '../../api-json'
 import {loadCalendarPromptContext} from '../client'
 import type {CalendarEvent} from '../types'
+import {createRangeApi} from './fixtures/range-api'
+import {createEvents} from './fixtures/weekday-events'
 
 vi.mock('../../api-json', () => ({apiJson: vi.fn()}))
 
-const events: readonly CalendarEvent[] = [
-  {
-    accountLabel: 'fixture@example.com',
-    allDay: false,
-    calendarLabel: 'Fixture',
-    end: '2026-08-31T04:00:00.000Z',
-    id: 'oldmonday',
-    provider: 'google',
-    start: '2026-08-31T03:00:00.000Z',
-    title: '이번 주 제외할 월요일',
-  },
-  {
-    accountLabel: 'fixture@example.com',
-    allDay: false,
-    calendarLabel: 'Fixture',
-    end: '2026-09-01T01:00:00.000Z',
-    id: 'oldTuesdayAM',
-    provider: 'google',
-    start: '2026-09-01T00:00:00.000Z',
-    title: '이번 주 화요일 오전',
-  },
-  {
-    accountLabel: 'fixture@example.com',
-    allDay: false,
-    calendarLabel: 'Fixture',
-    end: '2026-09-01T07:00:00.000Z',
-    id: 'oldTuesdayPM',
-    provider: 'google',
-    start: '2026-09-01T06:00:00.000Z',
-    title: '이번 주 화요일 오후',
-  },
-  {
-    accountLabel: 'fixture@example.com',
-    allDay: false,
-    calendarLabel: 'Fixture',
-    end: '2026-09-07T04:00:00.000Z',
-    id: 'monday',
-    provider: 'google',
-    start: '2026-09-07T03:00:00.000Z',
-    title: '제외할 월요일 일정',
-  },
-  {
-    accountLabel: 'fixture@example.com',
-    allDay: false,
-    calendarLabel: 'Fixture',
-    end: '2026-09-08T01:00:00.000Z',
-    id: 'tuesday-am',
-    provider: 'google',
-    start: '2026-09-08T00:00:00.000Z',
-    title: '화요일 오전 일정',
-  },
-  {
-    accountLabel: 'fixture@example.com',
-    allDay: false,
-    calendarLabel: 'Fixture',
-    end: '2026-09-08T07:00:00.000Z',
-    id: 'tuesday-pm',
-    provider: 'google',
-    start: '2026-09-08T06:00:00.000Z',
-    title: '화요일 오후 일정',
-  },
-]
+const events: readonly CalendarEvent[] = createEvents({includePreviousWeek: true})
 
 beforeEach(() => {
   vi.mocked(apiJson).mockReset()
-  vi.mocked(apiJson).mockImplementation(async (input, options) => {
-    const search = new URL(String(input), 'https://fixture.invalid').searchParams
-    const start = search.get('start') ?? ''
-    const end = search.get('end') ?? ''
-    return options.responseSchema.parse({
-      connectedConnections: 1,
-      events: events.filter((event) => event.start < end && event.end > start),
-      timeZone: 'Asia/Seoul',
-      truncated: false,
-      unavailableConnections: 0,
-    })
-  })
+  vi.mocked(apiJson).mockImplementation(createRangeApi(events))
 })
 
 const observe = (context: string | null) => {
