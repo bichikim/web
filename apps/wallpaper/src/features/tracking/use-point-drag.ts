@@ -13,6 +13,7 @@ interface PointPointer {
   readonly clientY: number
   readonly currentTarget: {
     focus(options?: FocusOptions): void
+    hasPointerCapture(id: number): boolean
     setPointerCapture(id: number): void
     releasePointerCapture(id: number): void
   }
@@ -20,6 +21,7 @@ interface PointPointer {
 }
 interface PointDrag {
   readonly id: number
+  readonly target: PointPointer['currentTarget']
   readonly origin: TrackingPoint
   readonly start: TrackingPoint
   readonly width: number
@@ -50,8 +52,12 @@ export const usePointDrag = (props: UsePointDragProps) => {
   const [drag, setDrag] = createSignal<PointDrag | null>(null)
   const point = createMemo(() => draft() ?? props.value())
   const cancel = () => {
-    setDraft(null)
+    const active = drag()
     setDrag(null)
+    setDraft(null)
+    if (active !== null && active.target.hasPointerCapture(active.id)) {
+      active.target.releasePointerCapture(active.id)
+    }
     props.onPreview?.(null)
   }
   onCleanup(cancel)
@@ -84,6 +90,7 @@ export const usePointDrag = (props: UsePointDragProps) => {
       id: event.pointerId,
       origin,
       start: {x: event.clientX, y: event.clientY},
+      target: event.currentTarget,
       view: props.view?.() ?? bounds,
       width: rect.width,
     })
@@ -121,7 +128,6 @@ export const usePointDrag = (props: UsePointDragProps) => {
     }
     const next = draft()
     cancel()
-    event.currentTarget.releasePointerCapture(event.pointerId)
     if (next !== null) {
       return props.onChange?.(next)
     }
@@ -157,6 +163,7 @@ export const usePointDrag = (props: UsePointDragProps) => {
         return
     }
     event.preventDefault()
+    cancel()
     return props.onChange(next)
   }
   return {cancel, dragging: () => drag() !== null, finish, keyboard, move, point, start}
