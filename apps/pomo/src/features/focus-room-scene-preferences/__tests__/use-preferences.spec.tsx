@@ -1,10 +1,10 @@
 /** @vitest-environment jsdom */
 
-import {render} from '@solidjs/testing-library'
+import {renderHook} from '@solidjs/testing-library'
 import {beforeEach, expect, it, vi} from 'vitest'
 import {PreferenceProvider} from 'src/hooks/use-preference'
 
-import {type PScenePreferencesController, usePScenePreferences} from '../index'
+import {usePScenePreferences} from '../index'
 
 const storageMocks = vi.hoisted(() => ({
   read: vi.fn(),
@@ -20,23 +20,6 @@ vi.mock('../storage', async () => {
   }
 })
 
-interface ScenePreferencesHarnessProps {
-  readonly onController: (controller: PScenePreferencesController) => void
-}
-
-const ScenePreferencesHarness = (props: ScenePreferencesHarnessProps) => {
-  const controller = usePScenePreferences()
-  props.onController(controller)
-
-  return null
-}
-
-const ScenePreferencesProviderHarness = (props: ScenePreferencesHarnessProps) => (
-  <PreferenceProvider>
-    <ScenePreferencesHarness {...props} />
-  </PreferenceProvider>
-)
-
 const storedPreferences = {
   activity: 'typing',
   gaze: 'user',
@@ -49,39 +32,23 @@ beforeEach(() => {
 })
 
 it('should restore every stored scene preference after mounting', async () => {
-  let controller: PScenePreferencesController | undefined
+  const {result} = renderHook(usePScenePreferences, {wrapper: PreferenceProvider})
 
-  render(() => (
-    <ScenePreferencesProviderHarness
-      onController={(nextController) => {
-        controller = nextController
-      }}
-    />
-  ))
-
-  expect(controller?.isReady()).toBe(false)
-  await vi.waitFor(() => expect(controller?.timeMode()).toBe('auto'))
-  expect(controller?.activity()).toBe('typing')
-  expect(controller?.gaze()).toBe('user')
-  expect(controller?.isReady()).toBe(true)
+  expect(result?.isReady()).toBe(false)
+  await vi.waitFor(() => expect(result?.timeMode()).toBe('auto'))
+  expect(result?.activity()).toBe('typing')
+  expect(result?.gaze()).toBe('user')
+  expect(result?.isReady()).toBe(true)
 })
 
 it('should persist the complete latest snapshot after each choice', async () => {
   storageMocks.read.mockResolvedValueOnce({activity: 'reading', gaze: 'focused', timeMode: 'day'})
-  let controller: PScenePreferencesController | undefined
+  const {result} = renderHook(usePScenePreferences, {wrapper: PreferenceProvider})
 
-  render(() => (
-    <ScenePreferencesProviderHarness
-      onController={(nextController) => {
-        controller = nextController
-      }}
-    />
-  ))
-
-  await vi.waitFor(() => expect(controller?.isReady()).toBe(true))
-  controller?.onTimeModeChange('night')
-  controller?.onActivityChange('writing')
-  controller?.onGazeChange('user')
+  await vi.waitFor(() => expect(result?.isReady()).toBe(true))
+  result?.onTimeModeChange('night')
+  result?.onActivityChange('writing')
+  result?.onGazeChange('user')
 
   await vi.waitFor(() => expect(storageMocks.write).toHaveBeenCalledTimes(3))
 
@@ -109,23 +76,15 @@ it('should not overwrite newer choices when restoration finishes late', async ()
       completeRead = resolve
     }),
   )
-  let controller: PScenePreferencesController | undefined
+  const {result} = renderHook(usePScenePreferences, {wrapper: PreferenceProvider})
 
-  render(() => (
-    <ScenePreferencesProviderHarness
-      onController={(nextController) => {
-        controller = nextController
-      }}
-    />
-  ))
-
-  controller?.onActivityChange('writing')
+  result?.onActivityChange('writing')
   completeRead(storedPreferences)
 
-  await vi.waitFor(() => expect(controller?.isReady()).toBe(true))
-  expect(controller?.timeMode()).toBe('day')
-  expect(controller?.activity()).toBe('writing')
-  expect(controller?.gaze()).toBe('focused')
+  await vi.waitFor(() => expect(result?.isReady()).toBe(true))
+  expect(result?.timeMode()).toBe('day')
+  expect(result?.activity()).toBe('writing')
+  expect(result?.gaze()).toBe('focused')
   expect(storageMocks.write).toHaveBeenLastCalledWith({
     activity: 'writing',
     gaze: 'focused',
@@ -140,21 +99,14 @@ it('should ignore a pending restoration after cleanup', async () => {
       completeRead = resolve
     }),
   )
-  let controller: PScenePreferencesController | undefined
-  const result = render(() => (
-    <ScenePreferencesProviderHarness
-      onController={(nextController) => {
-        controller = nextController
-      }}
-    />
-  ))
+  const {result, cleanup} = renderHook(usePScenePreferences, {wrapper: PreferenceProvider})
 
-  result.unmount()
+  cleanup()
   completeRead(storedPreferences)
   await Promise.resolve()
   await Promise.resolve()
 
-  expect(controller?.isReady()).toBe(false)
-  expect(controller?.activity()).not.toBe(storedPreferences.activity)
+  expect(result?.isReady()).toBe(false)
+  expect(result?.activity()).not.toBe(storedPreferences.activity)
   expect(storageMocks.write).not.toHaveBeenCalled()
 })
