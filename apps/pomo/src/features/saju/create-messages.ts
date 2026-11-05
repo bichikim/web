@@ -7,6 +7,7 @@ import {
   type SipseongProfile,
 } from 'k-saju'
 import type {TextGenerationMessage} from 'src/features/text-generation'
+import {getDayPillarTerms} from './get-day-pillar-terms'
 import {getReadingTopics} from './get-reading-topics'
 
 interface CreateMessagesInput {
@@ -18,7 +19,6 @@ interface CreateMessagesInput {
 }
 
 const ELEMENTS = ['木', '火', '土', '金', '水'] as const
-const DAY_PILLAR_PATTERN = /일주|일간/u
 const SUBJECTS = {
   관성: '약속과 책임',
   비겁: '협력과 조율',
@@ -95,7 +95,7 @@ function createConsultationContext(input: CreateMessagesInput) {
 /** Builds a consultation from readable calculation facts, keeping requested day names exact. */
 export function createMessages(input: CreateMessagesInput): TextGenerationMessage[] {
   const readingTopics = getReadingTopics(input.question)
-  if (DAY_PILLAR_PATTERN.test(input.question) && readingTopics.length === 0) {
+  if (getDayPillarTerms(input.question).length > 0 && readingTopics.length === 0) {
     return [
       {
         content: [
