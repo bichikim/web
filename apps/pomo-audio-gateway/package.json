@@ -12,7 +12,8 @@
     "types": "wrangler types"
   },
   "dependencies": {
-    "@pomo/playback-token": "workspace:*"
+    "@pomo/playback-token": "workspace:*",
+    "@winter-love/utils": "workspace:*"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "5.20260822.1",

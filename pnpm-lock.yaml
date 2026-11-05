@@ -968,6 +968,9 @@ importers:
       '@pomo/playback-token':
         specifier: workspace:*
         version: link:../../packages/playback-token
+      '@winter-love/utils':
+        specifier: workspace:*
+        version: link:../../packages/utils
     devDependencies:
       '@cloudflare/workers-types':
         specifier: 5.20260822.1
