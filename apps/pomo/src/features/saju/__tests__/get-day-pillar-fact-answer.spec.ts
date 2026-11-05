@@ -12,8 +12,12 @@ it('should answer direct day-pillar questions with the calculated pillars', () =
   expect(getDayPillarFactAnswer('제 일간을 알려줘', CHART)).not.toMatch(/천간|지지|십성/u)
 })
 
-it('should answer a day-stem fact requested for a diary', () => {
-  expect(getDayPillarFactAnswer('제 일기에 적을 내 일간은 무엇인가요?', CHART)).toContain('병(丙)')
+it.each([
+  '제 일기에 적을 내 일간은 무엇인가요?',
+  '내일 일기에 적을 내 일간은 무엇인가요?',
+  '제일 먼저 제 일간을 알려줘',
+])('should answer a day-stem fact requested for a note or reminder: %s', (question) => {
+  expect(getDayPillarFactAnswer(question, CHART)).toContain('병(丙)')
 })
 
 it('should answer both names when both are requested without adding specialist explanations', () => {
@@ -63,4 +67,5 @@ it('should leave interpretive questions to the reading flow', () => {
   expect(getDayPillarFactAnswer('제 일주로 지금 하는 일이 맞을지 알려줘', CHART)).toBeNull()
   expect(getDayPillarFactAnswer('제 일주로 내 일이 맞을지 알려줘', CHART)).toBeNull()
   expect(getDayPillarFactAnswer('제 일주로 결혼운 알려줘', CHART)).toBeNull()
+  expect(getDayPillarFactAnswer('내일 면접 운세와 제 일간을 해석해줘', CHART)).toBeNull()
 })

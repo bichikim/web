@@ -130,9 +130,13 @@ it('should retain long-term subjects and their sequence when that topic is reque
   expect(context.daeun.periods.length).toBe(input.daeun?.pillars.length)
 })
 
-it('should include only the requested day name when a user asks for that technical fact', () => {
+it.each([
+  '제 일주는 무엇인가요?',
+  '내일 일기에 적을 내 일간은 무엇인가요?',
+  '제일 먼저 제 일간을 알려줘',
+])('should include only the day facts requested for %s', (question) => {
   const input = createInput(BIRTH)
-  const messages = createMessages({...input, question: '제 일주는 무엇인가요?'})
+  const messages = createMessages({...input, question})
   const context = JSON.parse(messages[1].content)
 
   expect(context.chart).toEqual({day: input.chart.day})
@@ -146,6 +150,7 @@ it.each([
   '제 일간으로 수입을 볼 수 있어?',
   '제 일주로 지금 하는 일이 맞을지 알려줘',
   '제 일주로 결혼운 알려줘',
+  '내일 제 일을 제 일간으로 풀이해줘',
 ])(
   'should preserve the consultation subjects when a question also mentions the day: %s',
   (question) => {

@@ -132,10 +132,12 @@ describe('calculateSajuReading', () => {
     })
   })
 
-  it('should answer a diary day-stem fact without requesting generation', () => {
-    expect(
-      calculateSajuReading({birth, gender: 'N', question: '제 일기에 적을 내 일간은 무엇인가요?'}),
-    ).toEqual({
+  it.each([
+    '제 일기에 적을 내 일간은 무엇인가요?',
+    '내일 일기에 적을 내 일간은 무엇인가요?',
+    '제일 먼저 제 일간을 알려줘',
+  ])('should answer a day-stem fact without requesting generation: %s', (question) => {
+    expect(calculateSajuReading({birth, gender: 'N', question})).toEqual({
       text: '일간은 병(丙)입니다. 태어난 날을 나타내는 두 글자 중 첫 글자로, 사주를 읽을 때 기준으로 삼습니다.',
       type: 'answer',
     })
@@ -160,12 +162,13 @@ describe('calculateSajuReading', () => {
     },
   )
 
-  it.each(['올해 일주는 무엇인가요?', '2024년에 시작한 회사가 나한테 맞을까?'])(
-    'should preserve annual guidance for a policy question outside this fix: %s',
-    (question) => {
-      expect(calculateSajuReading({birth, gender: 'N', question}).type).toBe('notice')
-    },
-  )
+  it.each([
+    '올해 일주는 무엇인가요?',
+    '2024년에 시작한 회사가 나한테 맞을까?',
+    '내년 일기에 적을 내 일간은 무엇인가요?',
+  ])('should preserve annual guidance for a policy question outside this fix: %s', (question) => {
+    expect(calculateSajuReading({birth, gender: 'N', question}).type).toBe('notice')
+  })
 
   it.each([
     '제 일주로 내 일과 돈복은 어떤지 알려줘',
@@ -175,8 +178,15 @@ describe('calculateSajuReading', () => {
     '제 일주로 하는 일이라면 무엇을 할까?',
     '제 일주로 내 일에는 어떤 의미가 있는지 알려줘',
     '제 일기에 적을 제 일주로 하는 일은 어떤지 알려줘',
+    '내일 제 일이 맞을까? 제 일간을 알려줘',
   ])('should keep a day-pillar work interpretation on the generation path: %s', (question) => {
     expect(calculateSajuReading({birth, gender: 'N', question}).type).toBe('generate')
+  })
+
+  it('should keep a tomorrow interview question on the generation path', () => {
+    expect(calculateSajuReading({birth, gender: 'N', question: '내일 면접 잘 볼까?'}).type).toBe(
+      'generate',
+    )
   })
 
   it('should send calculated facts and the user question for interpretation', () => {
