@@ -23,7 +23,7 @@ import {
   textMocks,
   validationError,
   voice,
-} from './fixtures/generation'
+} from './fixtures/worker'
 
 describe('generation', () => {
   it('should reject generation before a model is ready and ignore idle cancellation', async () => {

@@ -23,7 +23,7 @@ import {
   textMocks,
   validationError,
   voice,
-} from './fixtures/generation'
+} from './fixtures/worker'
 
 describe('worker lifecycle failures', () => {
   it('should dispose an initialized engine exactly once', async () => {
