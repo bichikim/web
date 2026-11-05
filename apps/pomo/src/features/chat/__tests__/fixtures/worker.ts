@@ -4,9 +4,6 @@ import {beforeEach, vi} from 'vitest'
 import type {GenerateTextOptions, TextGenerationRuntime} from '../../../text-generation'
 import type {ChatContext, ChatWorkerRequest, ChatWorkerResponse} from '../../messages'
 
-// Worker protocol assertions do not depend on model-storage discovery.
-vi.mock('../../../text-generation/download', () => ({isTextModelDownloaded: vi.fn()}))
-
 const koreanMocks = vi.hoisted(() => ({
   containsForeignCjk: vi.fn(),
   createForeignCjkTokenIds: vi.fn(),

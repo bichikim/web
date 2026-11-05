@@ -1,5 +1,8 @@
 /** @vitest-environment node */
-import {describe, expect, it} from 'vitest'
+import {describe, expect, it, vi} from 'vitest'
+
+// Worker protocol assertions do not depend on model-storage discovery.
+vi.mock('../../text-generation/download', () => ({isTextModelDownloaded: vi.fn()}))
 
 import type {GenerateTextOptions} from '../../text-generation'
 import {
