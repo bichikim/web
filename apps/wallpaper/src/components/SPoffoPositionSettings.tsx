@@ -1,6 +1,8 @@
 import {DEFAULT_POFFO_PLACEMENT, type PoffoPlacement} from '@winter-love/wallpaper/settings/model'
 import type {WallpaperController} from '../features/settings'
 import {SNumberInput} from './SNumberInput'
+import {SSelect} from './SSelect'
+import type {MediaFit} from '@winter-love/wallpaper/model'
 
 const PERCENT = 100
 
@@ -9,6 +11,16 @@ interface SPoffoPositionSettingsProps {
 }
 
 export const SPoffoPositionSettings = (props: SPoffoPositionSettingsProps) => {
+  const fit = () => {
+    const content = props.controller.current()?.content
+    return content?.mode === 'puppet' ? (content.fit ?? 'contain') : 'contain'
+  }
+  const handleFit = (fit: MediaFit) => {
+    const content = props.controller.current()?.content
+    if (content?.mode === 'puppet') {
+      return props.controller.setContent({...content, fit})
+    }
+  }
   const placement = () => {
     const content = props.controller.current()?.content
     return content?.mode === 'puppet'
@@ -24,6 +36,18 @@ export const SPoffoPositionSettings = (props: SPoffoPositionSettingsProps) => {
   return (
     <section aria-label="위치·크기">
       <h3 class="m-0 text-[13px] font-medium text-stone-700">위치·크기</h3>
+      <div class="wallpaper-row">
+        <span>표시 방식</span>
+        <SSelect
+          label="Poffo 표시 방식"
+          options={[
+            {label: '전체 보기', value: 'contain'},
+            {label: '화면 채우기', value: 'cover'},
+          ]}
+          value={fit()}
+          onChange={handleFit}
+        />
+      </div>
       <div class="wallpaper-row">
         <span>가로 위치</span>
         <span class="flex items-center justify-end gap-2">

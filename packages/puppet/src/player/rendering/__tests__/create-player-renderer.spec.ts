@@ -97,6 +97,27 @@ describe('createPlayerRenderer', () => {
     instance.destroy()
   })
 
+  test('should redraw paused fitting changes and ignore unchanged or disposed fitting', async () => {
+    const renderer = await createPlayerRenderer({
+      canvas: document.createElement('canvas'),
+      document: {...createEmptyDocument(), viewport: {height: 100, width: 200}},
+    })
+    renderer.setRunning(false)
+    renderer.setFit('cover')
+    expect(root.scale.set).toHaveBeenLastCalledWith(1)
+    expect(root.position.set).toHaveBeenLastCalledWith(-50, 0)
+    expect(application.render).toHaveBeenCalledOnce()
+    renderer.setFit('cover')
+    expect(application.render).toHaveBeenCalledOnce()
+    renderer.setFit('contain')
+    expect(root.scale.set).toHaveBeenLastCalledWith(0.5)
+    expect(root.position.set).toHaveBeenLastCalledWith(0, 25)
+    expect(application.render).toHaveBeenCalledTimes(2)
+    renderer.destroy()
+    renderer.setFit('cover')
+    expect(application.render).toHaveBeenCalledTimes(2)
+  })
+
   test('should only share graphics state while the optional external renderer is active', async () => {
     let active = false
     const onBeforeRender = vi.fn()

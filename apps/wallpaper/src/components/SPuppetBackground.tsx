@@ -3,6 +3,7 @@ import {type Accessor, createSignal} from 'solid-js'
 import {usePuppet} from '../features/background/use-puppet'
 import type {
   PoffoAgentControls,
+  PoffoDisplayOptions,
   PoffoLipSyncControls,
   PoffoMotionControls,
 } from '../features/background/types'
@@ -13,7 +14,7 @@ import type {
 } from '@winter-love/wallpaper/settings/tracking'
 
 interface SPuppetBackgroundProps
-  extends PoffoMotionControls, PoffoLipSyncControls, PoffoAgentControls {
+  extends PoffoDisplayOptions, PoffoMotionControls, PoffoLipSyncControls, PoffoAgentControls {
   readonly assetId: Accessor<string | null>
   readonly load: (id: string) => Promise<string | Blob>
   readonly onError: (error: unknown) => void
@@ -30,6 +31,7 @@ export const SPuppetBackground = (props: SPuppetBackgroundProps) => {
     assetId: () => props.assetId(),
     cameraSurface: () => props.cameraSurface?.(),
     canvas,
+    fit: () => props.fit?.(),
     lipsync: () => props.lipsync?.(),
     lipsyncId: () => props.lipsyncId?.(),
     load: (id) => props.load(id),

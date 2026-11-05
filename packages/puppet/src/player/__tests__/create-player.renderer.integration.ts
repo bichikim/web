@@ -18,6 +18,7 @@ const resource = (): PlayerRenderer => ({
   getRenderingInfo: vi.fn(() => ({antialiasing: 'ssaa' as const, renderer: 'webgl' as const})),
   redraw: vi.fn(),
   resize: vi.fn(),
+  setFit: vi.fn(),
   setRunning: vi.fn(),
   setViewCamera: vi.fn(),
   subscribeFrame: vi.fn(),

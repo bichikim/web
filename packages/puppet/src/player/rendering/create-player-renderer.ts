@@ -8,7 +8,7 @@ import type {PuppetParameterValueMap} from '../../deformation'
 import type {PuppetDocument} from '../document'
 import type {MotionMix} from '../playback'
 import {canReuseLayerResources, canReusePartResources} from '../internal/render-plan'
-import {layoutPlayerRoot, type PuppetFraming} from '../internal/layout-player-root'
+import {layoutPlayerRoot, type PuppetFit, type PuppetFraming} from '../internal/layout-player-root'
 import type {RenderOverrides} from '../internal/render-overrides'
 import {createNativeDeformation} from '../internal/create-native-deformation'
 import {applyRenderFrame} from './apply-render-frame'
@@ -27,6 +27,8 @@ const MINIMUM_MASK_RESOLUTION = 0.01
 const MILLISECONDS_PER_SECOND = 1000
 
 export interface CreatePlayerRendererOptions extends PlayerRenderingOptions {
+  /** Uniform sizing within the screen; omitted to show the whole framed rectangle. */
+  readonly fit?: PuppetFit
   readonly externalRendering?: () => boolean
   readonly canvas: HTMLCanvasElement
   readonly document: PuppetDocument
@@ -74,6 +76,7 @@ export interface PlayerRenderer {
   toDocumentPoint(point: {readonly x: number; readonly y: number}): {x: number; y: number}
   redraw(): void
   resize(resolution?: number): void
+  setFit(fit: PuppetFit): void
   setViewCamera(camera: PlayerViewCamera): void
   setRunning(running: boolean): void
   subscribeFrame(onFrame: (deltaTime: number) => void): void
@@ -212,6 +215,7 @@ export const createPlayerRenderer = async (
   const partById = new Map<string, RuntimePart>()
   const layerById = new Map<string, RuntimeLayer>()
   let {document} = options
+  let fit = options.fit ?? 'contain'
   let pendingDocument: PuppetDocument | undefined
   let native = createNativeDeformation(document)
   let camera: PlayerViewCamera | undefined
@@ -271,6 +275,7 @@ export const createPlayerRenderer = async (
     layoutPlayerRoot({
       camera,
       document,
+      fit,
       framing: options.framing,
       root,
       screen: application.screen,
@@ -383,6 +388,15 @@ export const createPlayerRenderer = async (
     redraw,
     resize(resolution) {
       resizeApplication(application, resolution)
+      layoutRoot()
+      renderMasks()
+      redraw()
+    },
+    setFit(nextFit) {
+      if (destroyed || nextFit === fit) {
+        return
+      }
+      fit = nextFit
       layoutRoot()
       renderMasks()
       redraw()

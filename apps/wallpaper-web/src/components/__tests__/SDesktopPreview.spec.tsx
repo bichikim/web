@@ -1,6 +1,7 @@
 /** @vitest-environment jsdom */
 import {cleanup, fireEvent, render, screen, within} from '@solidjs/testing-library'
 import {afterEach, beforeEach, expect, test, vi} from 'vitest'
+import {createSignal} from 'solid-js'
 import covers from '../../../public/music/ash-afternoon/covers.json'
 import {SDesktopPreview} from '../SDesktopPreview'
 import type SDesktopAlbum from '../SDesktopAlbum'
@@ -72,5 +73,32 @@ test('should wrap the album at the last cover', () => {
   }
   expect(screen.getByRole('img', {name: '노트북 앨범 배경'}).getAttribute('src')).toBe(
     covers.tracks[0]!.artwork,
+  )
+})
+
+test('should retain the current album image while the live wallpaper is displayed', () => {
+  const [live, setLive] = createSignal(false)
+  const [playing, setPlaying] = createSignal(true)
+  render(() => <SDesktopPreview live={live()} playing={playing()} />)
+  const desktop = screen.getByRole('region', {name: 'Poffo Wallpaper 데스크톱 미리보기'})
+  fireEvent.load(desktop.querySelector('img[aria-hidden="true"]')!)
+  renderer.presented?.()
+  fireEvent.animationEnd(screen.getByRole('img', {name: '노트북 앨범 배경'}))
+  const current = screen.getByRole('img', {name: '노트북 앨범 배경'})
+  setLive(true)
+  expect(current.isConnected).toBe(true)
+  expect(screen.queryByRole('img', {name: '노트북 앨범 배경'})).toBeNull()
+  setPlaying(false)
+  setLive(false)
+  expect(screen.getByRole('img', {name: '노트북 앨범 배경'})).toBe(current)
+  expect(current.getAttribute('src')).toBe(covers.tracks[1]!.artwork)
+  fireEvent.load(desktop.querySelector('img[aria-hidden="true"]')!)
+  renderer.presented?.()
+  fireEvent.animationEnd(current)
+  expect(screen.getByRole('img', {name: '노트북 앨범 배경'})).toBe(current)
+  setPlaying(true)
+  fireEvent.animationEnd(current)
+  expect(screen.getByRole('img', {name: '노트북 앨범 배경'}).getAttribute('src')).toBe(
+    covers.tracks[2]!.artwork,
   )
 })

@@ -6,7 +6,12 @@ import {usePuppetDocument} from './use-puppet-document'
 import {useTracking} from '../tracking/use-tracking'
 import {modelParameters} from '../tracking/model-parameters'
 import type {CameraSurface, TrackingParameter} from '../tracking/types'
-import type {PoffoAgentControls, PoffoLipSyncControls, PoffoMotionControls} from './types'
+import type {
+  PoffoAgentControls,
+  PoffoDisplayOptions,
+  PoffoLipSyncControls,
+  PoffoMotionControls,
+} from './types'
 import {useAgentState} from '../agent-state/use-agent-state'
 import {useLipSync} from '../lipsync/use-lipsync'
 import type {
@@ -15,7 +20,8 @@ import type {
   PoffoTrackingOptions,
 } from '@winter-love/wallpaper/settings/tracking'
 
-interface UsePuppetProps extends PoffoMotionControls, PoffoLipSyncControls, PoffoAgentControls {
+interface UsePuppetProps
+  extends PoffoDisplayOptions, PoffoMotionControls, PoffoLipSyncControls, PoffoAgentControls {
   readonly canvas: Accessor<HTMLCanvasElement | null>
   readonly assetId: Accessor<string | null>
   readonly load: (id: string) => Promise<string | Blob>
@@ -36,6 +42,9 @@ export const usePuppet = (props: UsePuppetProps): void => {
   const [active, setActive] = createSignal<Player | null>(null)
   const [parameters, setParameters] = createSignal<readonly TrackingParameter[]>([])
   const selection = createMemo(() => props.motionId?.())
+  createEffect(() => {
+    active()?.setFit(props.fit?.() ?? 'contain')
+  })
   createEffect(() => {
     const player = active()
     const selected = selection()
@@ -103,6 +112,7 @@ export const usePuppet = (props: UsePuppetProps): void => {
       const created = await createPlayer({
         canvas,
         document: prepared,
+        fit: untrack(() => props.fit?.()),
         ...(props.onAfterRender === undefined
           ? {}
           : {onAfterRender: () => props.onAfterRender?.()}),

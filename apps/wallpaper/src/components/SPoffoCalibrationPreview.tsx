@@ -93,7 +93,12 @@ export const SPoffoCalibrationPreview = (props: SPoffoCalibrationPreviewProps) =
         id={preview}
         aria-label={props.label ?? 'Poffo 미리보기'}
         class="relative m-0 w-full overflow-hidden rounded-xl bg-stone-200"
-        classList={{'h-52': mode() !== 'camera'}}
+        classList={{
+          '[aspect-ratio:var(--preview-aspect)]':
+            mode() !== 'camera' && props.screenAspect !== undefined,
+          'h-52': mode() !== 'camera' && props.screenAspect === undefined,
+        }}
+        style={{'--preview-aspect': props.screenAspect}}
       >
         <SPoffoTrackingPreview
           {...props}

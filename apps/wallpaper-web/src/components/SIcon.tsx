@@ -12,6 +12,7 @@ interface SIconProps {
     | 'pause'
     | 'play'
     | 'check'
+    | 'chevron'
     | 'close'
     | 'reset'
     | 'settings'
@@ -30,6 +31,7 @@ interface SIconProps {
 const PATHS = {
   arrow: 'M5 12h14m-6-6 6 6-6 6',
   check: 'm5 12 4 4L19 6',
+  chevron: 'm9 5 7 7-7 7',
   close: 'm6 6 12 12M18 6 6 18',
   download: 'M12 3v12m-5-5 5 5 5-5M5 16v4h14v-4',
   face: 'M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0ZM8 9h.01M16 9h.01M8 14a4 4 0 0 0 8 0',

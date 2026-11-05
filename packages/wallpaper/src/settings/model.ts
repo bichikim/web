@@ -19,6 +19,8 @@ import {
 const MAXIMUM_PHOTO_SECONDS = 300
 
 export interface PuppetWallpaper {
+  /** Uniform sizing within the monitor; omitted to show the whole Poffo scene. */
+  readonly fit?: MediaFit
   readonly mode: 'puppet'
   readonly assetId: string | null
   readonly placement?: PoffoPlacement
@@ -81,6 +83,7 @@ export const interactionSettingsSchema: z.ZodType<InteractionSettings> = z.objec
 export const wallpaperContentSchema: z.ZodType<WallpaperContent> = z.discriminatedUnion('mode', [
   z.object({
     assetId: z.string().min(1).nullable(),
+    fit: z.enum(['contain', 'cover']).optional(),
     mode: z.literal('puppet'),
     placement: poffoPlacementSchema.optional(),
     tracking: poffoTrackingSchema.optional(),

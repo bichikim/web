@@ -15,6 +15,7 @@ const resource = (): PlayerRenderer => ({
   getRenderingInfo: vi.fn(() => ({antialiasing: 'msaa' as const, renderer: 'webgl' as const})),
   redraw: vi.fn(),
   resize: vi.fn(),
+  setFit: vi.fn(),
   setRunning: vi.fn(),
   setViewCamera: vi.fn(),
   subscribeFrame: vi.fn(),
@@ -43,6 +44,7 @@ test('should replace GPU resources while retaining the last frame, camera, densi
   const onFrame = vi.fn()
   controller.applyFrame(frame, {angle: 2})
   controller.setViewCamera(camera)
+  controller.setFit('cover')
   controller.resize(0.4)
   controller.setRunning(false)
   controller.subscribeFrame(onFrame)
@@ -61,6 +63,8 @@ test('should replace GPU resources while retaining the last frame, camera, densi
   )
   expect(next.applyFrame).toHaveBeenCalledExactlyOnceWith(frame, {angle: 2})
   expect(next.setViewCamera).toHaveBeenCalledExactlyOnceWith(camera)
+  expect(previous.setFit).toHaveBeenCalledExactlyOnceWith('cover')
+  expect(next.setFit).toHaveBeenCalledExactlyOnceWith('cover')
   expect(next.setRunning).toHaveBeenLastCalledWith(false)
   expect(next.subscribeFrame).toHaveBeenCalledExactlyOnceWith(onFrame)
   expect(onFrame).not.toHaveBeenCalled()
@@ -84,6 +88,29 @@ test('should retain the current renderer when initialization fails', async () =>
   expect(previous.redraw).toHaveBeenCalledOnce()
   expect(previous.destroy).not.toHaveBeenCalled()
   controller.destroy()
+})
+
+test('should carry the latest fit into a renderer that finishes preparing later', async () => {
+  const previous = resource()
+  const next = resource()
+  let complete: (renderer: PlayerRenderer) => void = () => undefined
+  const pending = new Promise<PlayerRenderer>((resolve) => {
+    complete = resolve
+  })
+  vi.mocked(createPlayerRenderer).mockResolvedValueOnce(previous).mockReturnValueOnce(pending)
+  const controller = await createRendererController({
+    canvas: document.createElement('canvas'),
+    document: createEmptyDocument(),
+    fit: 'cover',
+  })
+  const changing = controller.configure({canvas: document.createElement('canvas')})
+  controller.setFit('contain')
+  complete(next)
+  await changing
+  expect(next.setFit).toHaveBeenCalledExactlyOnceWith('contain')
+  controller.destroy()
+  controller.setFit('cover')
+  expect(next.setFit).toHaveBeenCalledExactlyOnceWith('contain')
 })
 
 test('should replay owned vertices when the predicted frame buffer was transferred away', async () => {

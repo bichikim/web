@@ -293,6 +293,7 @@ export const createRuntimePlayer = (options: CreateRuntimePlayerOptions): Player
       }
       renderer.resize(resolution)
     },
+    setFit: renderer.setFit,
     setGroupOverride(groupId, override) {
       if (state.destroyed || !getSceneGroupIds(state.document.scene).has(groupId)) {
         return false

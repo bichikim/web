@@ -35,7 +35,9 @@ port.on('message', (job: AnalysisJob) => {
     } catch (error: unknown) {
       const failure: AnalysisFailure = {
         error: error instanceof Error ? (error.stack ?? error.message) : String(error),
+        filePath: job.filePath,
         identifier: job.identifier,
+        revision: job.revision,
       }
       port.postMessage(failure)
     }

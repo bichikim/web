@@ -4,6 +4,7 @@ import {SPoffoFacePosition} from './SPoffoFacePosition'
 import {SPositionedPoffo} from './SPositionedPoffo'
 import type {
   PoffoAgentControls,
+  PoffoDisplayOptions,
   PoffoLipSyncControls,
   PoffoMotionControls,
 } from '../features/background/types'
@@ -15,7 +16,7 @@ import type {
 } from '@winter-love/wallpaper/settings/tracking'
 
 interface SPuppetPreviewProps
-  extends PoffoMotionControls, PoffoLipSyncControls, PoffoAgentControls {
+  extends PoffoDisplayOptions, PoffoMotionControls, PoffoLipSyncControls, PoffoAgentControls {
   readonly assetId: Accessor<string | null>
   readonly load: (id: string) => Promise<string | Blob>
   readonly placement?: Accessor<PoffoPlacement | undefined>
@@ -47,6 +48,7 @@ export const SPuppetPreview = (props: SPuppetPreviewProps) => {
         <div class="absolute inset-0">
           <SPositionedPoffo
             assetId={props.assetId}
+            fit={props.fit}
             load={(id) => props.load(id)}
             agentBindings={props.agentBindings}
             semanticBindings={props.semanticBindings}
