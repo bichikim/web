@@ -4,7 +4,7 @@ import {isDialogueEditorBusy} from 'src/features/focus-room-dialogue/dialogue-ed
 import type {PDialogueEditorController} from 'src/features/focus-room-dialogue'
 import {localizeErrorMessage} from 'src/features/localization/localized-messages'
 import {useModelDownload} from 'src/features/model-download'
-import {isSupertonicModelDownloaded} from 'src/features/supertonic'
+import {isSupertonicModelDownloaded, type SupertonicModelId} from 'src/features/supertonic'
 
 export interface UseAudioGenerationProps {
   readonly editor: Pick<
@@ -26,10 +26,15 @@ export interface AudioGenerationController {
   readonly confirmDownload: () => Promise<void>
 }
 
+interface AudioDownloadError {
+  readonly message: string
+  readonly modelId: SupertonicModelId
+}
+
 /** Coordinates model availability, consent, download, and voice generation until owner disposal. */
 export const useAudioGeneration = (props: UseAudioGenerationProps): AudioGenerationController => {
   const [audioDownloadConsentOpen, setAudioDownloadConsentOpen] = createSignal(false)
-  const [audioDownloadError, setAudioDownloadError] = createSignal<string | null>(null)
+  const [audioDownloadError, setAudioDownloadError] = createSignal<AudioDownloadError | null>(null)
   const [isCheckingAudioModel, setIsCheckingAudioModel] = createSignal(false)
   const modelDownload = useModelDownload()
   let isDisposed = false
@@ -59,8 +64,8 @@ export const useAudioGeneration = (props: UseAudioGenerationProps): AudioGenerat
   const audioMessage = () => {
     const downloadError = audioDownloadError()
 
-    if (downloadError !== null) {
-      return localizeErrorMessage(downloadError, m.dialogue_voice_download_error())
+    if (downloadError !== null && downloadError.modelId === props.editor.modelId()) {
+      return localizeErrorMessage(downloadError.message, m.dialogue_voice_download_error())
     }
 
     return audioDownload() === null
@@ -105,7 +110,7 @@ export const useAudioGeneration = (props: UseAudioGenerationProps): AudioGenerat
     }
 
     if (result.status === 'error') {
-      setAudioDownloadError(result.message)
+      setAudioDownloadError({message: result.message, modelId: selectedModelId})
     }
   }
 
