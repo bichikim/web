@@ -414,6 +414,31 @@ const sampleThreeDimensionalVertices = (
       )
 }
 
+interface PartKeyforms {
+  readonly rest: ReadonlyArray<number>
+  readonly coordinates: ReadonlyArray<ReadonlyArray<number>>
+}
+
+const partKeyforms = new WeakMap<PuppetParameterBinding, Map<string, PartKeyforms>>()
+
+const getPartKeyforms = (
+  binding: PuppetParameterBinding,
+  partId: string,
+  rest: ReadonlyArray<number>,
+): ReadonlyArray<ReadonlyArray<number>> => {
+  let parts = partKeyforms.get(binding)
+  if (parts === undefined) {
+    parts = new Map()
+    partKeyforms.set(binding, parts)
+  }
+  let forms = parts.get(partId)
+  if (forms === undefined || forms.rest !== rest) {
+    forms = {coordinates: binding.keyforms.map((form) => getPartVertices(form, partId, rest)), rest}
+    parts.set(partId, forms)
+  }
+  return forms.coordinates
+}
+
 export const sampleParameterVertices = (options: SampleParameterVerticesOptions) => {
   const {binding} = options
   const targetPartIds = binding?.targetPartIds
@@ -431,9 +456,7 @@ export const sampleParameterVertices = (options: SampleParameterVerticesOptions)
   if (binding?.interpolation === 'grid') {
     return sampleParameterCoordinates({
       binding,
-      keyformCoordinates: binding.keyforms.map((keyform) =>
-        getPartVertices(keyform, options.partId, options.restVertices),
-      ),
+      keyformCoordinates: getPartKeyforms(binding, options.partId, options.restVertices),
       repeatRanges: options.repeatRanges,
       restCoordinates: options.restVertices,
       values: options.values,

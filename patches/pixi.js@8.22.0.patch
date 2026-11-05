@@ -1,0 +1,178 @@
+diff --git a/lib/rendering/batcher/gpu/getTextureBatchBindGroup.js b/lib/rendering/batcher/gpu/getTextureBatchBindGroup.js
+index c87625041835cbaf9d1280d6eaef70a3feccf4d2..9ecb3645bca17c6d528b8c86e7bb75162800f058 100644
+--- a/lib/rendering/batcher/gpu/getTextureBatchBindGroup.js
++++ b/lib/rendering/batcher/gpu/getTextureBatchBindGroup.js
+@@ -24,6 +24,13 @@ function generateTextureBatchBindGroup(textures, size, key, maxTextures) {
+   }
+   const bindGroup = new BindGroup.BindGroup(bindGroupResources);
+   cachedGroups[key] = bindGroup;
++  const sources = [...new Set(textures.slice(0, size))];
++  const release = () => {
++    if (cachedGroups[key] === bindGroup) delete cachedGroups[key];
++    for (const source of sources) source.off("destroy", release);
++    bindGroup.destroy();
++  };
++  for (const source of sources) source.once("destroy", release);
+   return bindGroup;
+ }
+ 
+diff --git a/lib/rendering/batcher/gpu/getTextureBatchBindGroup.mjs b/lib/rendering/batcher/gpu/getTextureBatchBindGroup.mjs
+index 433fedc5a99dea5dd01d0f55f0aba7dffdb6c795..d7f0e65a7730cf5b4e3bc011ebf7c07f5cb32896 100644
+--- a/lib/rendering/batcher/gpu/getTextureBatchBindGroup.mjs
++++ b/lib/rendering/batcher/gpu/getTextureBatchBindGroup.mjs
+@@ -22,6 +22,13 @@ function generateTextureBatchBindGroup(textures, size, key, maxTextures) {
+   }
+   const bindGroup = new BindGroup(bindGroupResources);
+   cachedGroups[key] = bindGroup;
++  const sources = [...new Set(textures.slice(0, size))];
++  const release = () => {
++    if (cachedGroups[key] === bindGroup) delete cachedGroups[key];
++    for (const source of sources) source.off("destroy", release);
++    bindGroup.destroy();
++  };
++  for (const source of sources) source.once("destroy", release);
+   return bindGroup;
+ }
+ 
+diff --git a/lib/rendering/batcher/shared/BatchTextureArray.js b/lib/rendering/batcher/shared/BatchTextureArray.js
+index b7fc07f1eb5c2a44710c416e13dc613ab7d75908..a8449acbf925ee477645ad22a7ecfb85348130e1 100644
+--- a/lib/rendering/batcher/shared/BatchTextureArray.js
++++ b/lib/rendering/batcher/shared/BatchTextureArray.js
+@@ -13,7 +13,7 @@ class BatchTextureArray {
+     for (let i = 0; i < this.count; i++) {
+       const t = this.textures[i];
+       this.textures[i] = null;
+-      this.ids[t.uid] = null;
++      delete this.ids[t.uid];
+     }
+     this.count = 0;
+   }
+diff --git a/lib/rendering/batcher/shared/BatchTextureArray.mjs b/lib/rendering/batcher/shared/BatchTextureArray.mjs
+index fe9a27de28032be0ed43e591cf4e16bd3e1756c6..f10eafd74f20df66e7a7d718b485410b3bce1dd6 100644
+--- a/lib/rendering/batcher/shared/BatchTextureArray.mjs
++++ b/lib/rendering/batcher/shared/BatchTextureArray.mjs
+@@ -11,7 +11,7 @@ class BatchTextureArray {
+     for (let i = 0; i < this.count; i++) {
+       const t = this.textures[i];
+       this.textures[i] = null;
+-      this.ids[t.uid] = null;
++      delete this.ids[t.uid];
+     }
+     this.count = 0;
+   }
+diff --git a/lib/rendering/batcher/shared/Batcher.js b/lib/rendering/batcher/shared/Batcher.js
+index b3b6e8158b4e66ee265dcd23b95b2e6e1a4a2d46..6d6617fba6845db67545b08ac7408c95294eb600 100644
+--- a/lib/rendering/batcher/shared/Batcher.js
++++ b/lib/rendering/batcher/shared/Batcher.js
+@@ -50,6 +50,11 @@ function getBatchFromPool() {
+   return batchPoolIndex > 0 ? batchPool[--batchPoolIndex] : new Batch();
+ }
+ function returnBatchToPool(batch) {
++  // Pool capacity is reusable; resources borrowed from the previous owner are not.
++  batch.textures.clear();
++  batch.batcher = null;
++  batch.bindGroup = null;
++  batch.gpuBindGroup = null;
+   batch.elements = null;
+   batchPool[batchPoolIndex++] = batch;
+ }
+diff --git a/lib/rendering/batcher/shared/Batcher.mjs b/lib/rendering/batcher/shared/Batcher.mjs
+index 0736d805402347a3d0ba33f62020272bcdaeefca..7bc022f7d04b4ba72b053ef3e0d9eec7b6dbb790 100644
+--- a/lib/rendering/batcher/shared/Batcher.mjs
++++ b/lib/rendering/batcher/shared/Batcher.mjs
+@@ -48,6 +48,11 @@ function getBatchFromPool() {
+   return batchPoolIndex > 0 ? batchPool[--batchPoolIndex] : new Batch();
+ }
+ function returnBatchToPool(batch) {
++  // Pool capacity is reusable; resources borrowed from the previous owner are not.
++  batch.textures.clear();
++  batch.batcher = null;
++  batch.bindGroup = null;
++  batch.gpuBindGroup = null;
+   batch.elements = null;
+   batchPool[batchPoolIndex++] = batch;
+ }
+diff --git a/lib/rendering/renderers/gl/shader/program/preprocessors/setProgramName.js b/lib/rendering/renderers/gl/shader/program/preprocessors/setProgramName.js
+index 7429b18acdf9f406b8200d4eab18f54fc5b85f2f..404c0d485958bb7d40fd81515c38427eab7f8f84 100644
+--- a/lib/rendering/renderers/gl/shader/program/preprocessors/setProgramName.js
++++ b/lib/rendering/renderers/gl/shader/program/preprocessors/setProgramName.js
+@@ -1,22 +1,24 @@
+-'use strict';
+-
+ "use strict";
+-const fragmentNameCache = {};
+-const VertexNameCache = {};
++// Shader labels are shared by source, not by transient renderer/program lifetime.
++const fragmentNameCache = new Map();
++const vertexNameCache = new Map();
+ function setProgramName(src, { name = `pixi-program` }, isFragment = true) {
++  if (src.indexOf("#define SHADER_NAME") !== -1) return src;
+   name = name.replace(/\s+/g, "-");
+   name += isFragment ? "-fragment" : "-vertex";
+-  const nameCache = isFragment ? fragmentNameCache : VertexNameCache;
+-  if (nameCache[name]) {
+-    nameCache[name]++;
+-    name += `-${nameCache[name]}`;
+-  } else {
+-    nameCache[name] = 1;
++  const nameCache = isFragment ? fragmentNameCache : vertexNameCache;
++  let sources = nameCache.get(name);
++  if (sources === void 0) {
++    sources = new Map();
++    nameCache.set(name, sources);
+   }
+-  if (src.indexOf("#define SHADER_NAME") !== -1) return src;
+-  const shaderName = `#define SHADER_NAME ${name}`;
+-  return `${shaderName}
+-${src}`;
++  let result = sources.get(src);
++  if (result === void 0) {
++    const suffix = sources.size === 0 ? "" : `-${sources.size + 1}`;
++    result = `#define SHADER_NAME ${name}${suffix}\n${src}`;
++    sources.set(src, result);
++  }
++  return result;
+ }
+ 
+ exports.setProgramName = setProgramName;
+diff --git a/lib/rendering/renderers/gl/shader/program/preprocessors/setProgramName.mjs b/lib/rendering/renderers/gl/shader/program/preprocessors/setProgramName.mjs
+index 77cff22f845dce5e1c89ae71075746c950caf1b5..c10cf28bd4516c79c026418b0cfba02edb191caa 100644
+--- a/lib/rendering/renderers/gl/shader/program/preprocessors/setProgramName.mjs
++++ b/lib/rendering/renderers/gl/shader/program/preprocessors/setProgramName.mjs
+@@ -1,20 +1,24 @@
+ "use strict";
+-const fragmentNameCache = {};
+-const VertexNameCache = {};
++// Shader labels are shared by source, not by transient renderer/program lifetime.
++const fragmentNameCache = new Map();
++const vertexNameCache = new Map();
+ function setProgramName(src, { name = `pixi-program` }, isFragment = true) {
++  if (src.indexOf("#define SHADER_NAME") !== -1) return src;
+   name = name.replace(/\s+/g, "-");
+   name += isFragment ? "-fragment" : "-vertex";
+-  const nameCache = isFragment ? fragmentNameCache : VertexNameCache;
+-  if (nameCache[name]) {
+-    nameCache[name]++;
+-    name += `-${nameCache[name]}`;
+-  } else {
+-    nameCache[name] = 1;
++  const nameCache = isFragment ? fragmentNameCache : vertexNameCache;
++  let sources = nameCache.get(name);
++  if (sources === void 0) {
++    sources = new Map();
++    nameCache.set(name, sources);
+   }
+-  if (src.indexOf("#define SHADER_NAME") !== -1) return src;
+-  const shaderName = `#define SHADER_NAME ${name}`;
+-  return `${shaderName}
+-${src}`;
++  let result = sources.get(src);
++  if (result === void 0) {
++    const suffix = sources.size === 0 ? "" : `-${sources.size + 1}`;
++    result = `#define SHADER_NAME ${name}${suffix}\n${src}`;
++    sources.set(src, result);
++  }
++  return result;
+ }
+ 
+ export { setProgramName };

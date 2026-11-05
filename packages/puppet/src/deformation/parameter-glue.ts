@@ -82,12 +82,53 @@ const getGlueBindings = (
   return indexed
 }
 
+interface GlueSample {
+  readonly parameterIds: ReadonlyArray<string>
+  values?: ReadonlyArray<number | undefined>
+  connections: ReadonlyArray<PuppetGlue>
+}
+
+const glueSamples = new WeakMap<PuppetDocument, GlueSample>()
+
 export const composeParameterGlue = (options: ComposeGlueOptions): ReadonlyArray<PuppetGlue> => {
   const connections = options.document.glue ?? []
   if (connections.length === 0) {
     return connections
   }
   const matching = getGlueBindings(options.document.parameterBindings ?? [], connections)
+  let sample = glueSamples.get(options.document)
+  if (sample === undefined) {
+    const bindings = [...new Set([...matching.values()].flat())]
+    sample = {
+      connections,
+      parameterIds: [
+        ...new Set(
+          bindings.flatMap((binding) => {
+            const keyed = binding.keyforms.some(
+              (form) =>
+                (form.glue?.length ?? 0) > 0 ||
+                form.parts.some((part) => (part.glue?.length ?? 0) > 0),
+            )
+            return [
+              // Unkeyed grid channels are constant; other interpolation retains its rounding inputs.
+              ...(keyed || binding.interpolation !== 'grid' ? binding.parameterIds : []),
+              ...(binding.influences ?? []).map((influence) => influence.parameterId),
+            ]
+          }),
+        ),
+      ],
+    }
+    glueSamples.set(options.document, sample)
+  }
+  const previous = sample.values
+  if (
+    previous !== undefined &&
+    sample.parameterIds.every((id, index) =>
+      Object.is(previous[index], options.parameterValues?.[id]),
+    )
+  ) {
+    return sample.connections
+  }
   const evaluations = new Map<
     PuppetParameterBinding,
     {
@@ -108,7 +149,7 @@ export const composeParameterGlue = (options: ComposeGlueOptions): ReadonlyArray
     }
     return result
   }
-  return connections.map((glue) => {
+  const composed = connections.map((glue) => {
     let {weight} = glue
     let {strength} = glue
     for (const binding of matching.get(glue) ?? []) {
@@ -123,4 +164,7 @@ export const composeParameterGlue = (options: ComposeGlueOptions): ReadonlyArray
       weight: 'edge' in glue.second ? 1 : clamp(weight, 0, 1),
     }
   })
+  sample.values = sample.parameterIds.map((id) => options.parameterValues?.[id])
+  sample.connections = composed
+  return composed
 }

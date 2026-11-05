@@ -1,5 +1,6 @@
 import type {PuppetSound} from '../audio/decode-wav'
 import {getMotionSoundMouth} from '../audio/motion-sound-mouth'
+import {prepareGridBindings} from '../../deformation/sample-grid-coordinates'
 import {noop} from 'es-toolkit'
 import type {BufferedInput} from './types'
 import type {PuppetDocument} from '../document'
@@ -7,11 +8,18 @@ import {createPlayerRuntime} from '../create-player-runtime'
 import type {PlayerRuntimeState} from '../player-runtime-types'
 import {markPreparedPuppetDocument} from '../internal/prepared-document'
 import {computeRenderFrame} from '../internal/compute-render-frame'
-import {createNativeDeformation} from '../internal/create-native-deformation'
+import {
+  createNativeDeformation,
+  type NativeTransformFactory,
+} from '../internal/create-native-deformation'
 import type {RendererController} from '../rendering/create-renderer-controller'
 
 /** Owns numeric geometry and simulation only; textures and GPU resources remain with the host. */
-export const createBufferEngine = (document: PuppetDocument) => {
+export const createBufferEngine = (
+  document: PuppetDocument,
+  transform?: NativeTransformFactory,
+) => {
+  prepareGridBindings(document.parameterBindings ?? [])
   const storage = new Float32Array(
     document.parts.reduce((total, part) => total + part.mesh.vertices.length, 0),
   )
@@ -23,7 +31,7 @@ export const createBufferEngine = (document: PuppetDocument) => {
       return [part.id, buffer] as const
     }),
   )
-  const native = createNativeDeformation(document)
+  const native = createNativeDeformation(document, transform)
   let evaluation: Parameters<RendererController['applyFrame']> | undefined
   let inputRevision = 0
   const renderer: RendererController = {

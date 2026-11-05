@@ -231,6 +231,7 @@ pnpmfileChecksum: sha256-g2BMt8/Oai/WjMrtIA305RlIOkSpDcdZ9J+xuvU7Oqs=
 patchedDependencies:
   '@dschz/solid-flow@0.2.6': d7b5ac8f5d14be953fc3ab56e5ab1f89d2f462c6d4cccc59c7b85cf10ea7ed9d
   '@kobalte/core@0.13.11': cf6d454621fe20fb0073f772486cdac9aca2a7556530d6de3e3b028f02234c29
+  pixi.js@8.22.0: 98761e15826d4f86e8dea477aed8bc94f1f89532593aa71ae81a316a0499b22a
 
 importers:
 
@@ -848,7 +849,7 @@ importers:
         version: 7.4.0(ws@8.21.3)(zod@4.6.5)
       pixi.js:
         specifier: ^8.22.0
-        version: 8.22.0
+        version: 8.22.0(patch_hash=98761e15826d4f86e8dea477aed8bc94f1f89532593aa71ae81a316a0499b22a)
       qrcode-generator:
         specifier: 2.0.4
         version: 2.0.4
@@ -1067,7 +1068,7 @@ importers:
         version: 3.15.0
       pixi.js:
         specifier: 8.22.0
-        version: 8.22.0
+        version: 8.22.0(patch_hash=98761e15826d4f86e8dea477aed8bc94f1f89532593aa71ae81a316a0499b22a)
       solid-js:
         specifier: 'catalog:'
         version: 1.9.14
@@ -1392,7 +1393,7 @@ importers:
         version: 0.8.3
       pixi.js:
         specifier: ^8.22.0
-        version: 8.22.0
+        version: 8.22.0(patch_hash=98761e15826d4f86e8dea477aed8bc94f1f89532593aa71ae81a316a0499b22a)
       three:
         specifier: ^0.186.1
         version: 0.186.1
@@ -1833,7 +1834,7 @@ importers:
         version: 1.52.0
       pixi.js:
         specifier: ^8.22.0
-        version: 8.22.0
+        version: 8.22.0(patch_hash=98761e15826d4f86e8dea477aed8bc94f1f89532593aa71ae81a316a0499b22a)
       solid-js:
         specifier: 'catalog:'
         version: 1.9.14
@@ -25155,7 +25156,7 @@ snapshots:
 
   pirates@4.0.7: {}
 
-  pixi.js@8.22.0:
+  pixi.js@8.22.0(patch_hash=98761e15826d4f86e8dea477aed8bc94f1f89532593aa71ae81a316a0499b22a):
     dependencies:
       '@pixi/colord': 2.9.6
       '@types/earcut': 3.0.0

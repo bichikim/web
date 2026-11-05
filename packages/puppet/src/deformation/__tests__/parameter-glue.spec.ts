@@ -2,7 +2,7 @@ import {isTwoDimensionalParameterBinding} from '../parameter'
 import {expect, test} from 'vitest'
 import {createDemoDocument, type PuppetParameterBinding1D} from '../../player'
 import {addGlue} from '../../editor/internal/glue'
-import {composeParameterGlue} from '../parameter-glue'
+import {composeParameterGlue, sampleParameterGlue} from '../parameter-glue'
 
 const createDocument = () => {
   const document = addGlue(
@@ -176,4 +176,37 @@ test('should leave an unlisted Glue connection at its base values', () => {
     parameters: [parameter],
   }
   expect(composeParameterGlue({document, parameterValues: {join: 1}})[1]).toEqual(other)
+})
+
+test('should replace static controls after an immutable edit without changing previous samples', () => {
+  const document = {...demo, glue: [glue], parameterBindings: [], parameters: [parameter]}
+  const before = composeParameterGlue({document, parameterValues: {join: 0}})
+  expect(composeParameterGlue({document, parameterValues: {join: 1}})).toEqual(before)
+  const updated = {...document, parameterBindings: [binding]}
+  expect(composeParameterGlue({document: updated, parameterValues: {join: 1}})[0]!.strength).toBe(1)
+  expect(composeParameterGlue({document: updated, parameterValues: {join: 0.5}})[0]!.strength).toBe(
+    0.5,
+  )
+  expect(before[0]!.strength).toBe(0)
+})
+
+test('should retain triangulated rounding when a binding has no keyed Glue values', () => {
+  const binding = demo.parameterBindings![0]!
+  const connection = {...glue, strength: 0.123456789}
+  const document = {...demo, glue: [connection], parameterBindings: [binding]}
+  for (const [x, y] of [
+    [-17, -7],
+    [0, 0],
+    [13, 19],
+    [1.1, -3.2],
+  ]) {
+    const values = [x!, y!] as const
+    const sampled = sampleParameterGlue({binding, glue: connection, values})
+    const actual = composeParameterGlue({
+      document,
+      parameterValues: {'angle-x': x!, 'angle-y': y!},
+    })[0]!
+    expect(actual.strength).toBe(connection.strength + (sampled.strength - connection.strength))
+    expect(actual.weight).toBe(connection.weight + (sampled.weight - connection.weight))
+  }
 })
