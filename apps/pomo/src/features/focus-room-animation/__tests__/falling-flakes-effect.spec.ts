@@ -1,16 +1,8 @@
 /** @vitest-environment node */
-import {Container, Particle, ParticleContainer, Rectangle, Sprite, Texture} from 'pixi.js'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
+import {createFallingMocks} from './support/falling'
 
 import {FallingFlakesEffect} from '../falling-flakes-effect'
-
-interface MockContainer {
-  addChild: ReturnType<typeof vi.fn>
-  destroy: ReturnType<typeof vi.fn>
-  removeFromParent: ReturnType<typeof vi.fn>
-  setMask: ReturnType<typeof vi.fn>
-  visible: boolean
-}
 
 interface MockParticle {
   rotation: number
@@ -20,14 +12,8 @@ interface MockParticle {
   y: number
 }
 
-interface MockParticleContainer {
-  addParticle: ReturnType<typeof vi.fn>
-  particles: MockParticle[]
-}
-
-const containers: MockContainer[] = []
-const particleContainers: MockParticleContainer[] = []
-const particles: MockParticle[] = []
+const mocks = createFallingMocks<MockParticle>()
+const {containers, particleContainers, particles} = mocks
 
 vi.mock('pixi.js', () => ({
   Container: vi.fn(),
@@ -43,36 +29,7 @@ beforeEach(() => {
   particleContainers.length = 0
   particles.length = 0
 
-  vi.mocked(Container).mockImplementation(function MockContainerConstructor() {
-    const container: MockContainer = {
-      addChild: vi.fn(),
-      destroy: vi.fn(),
-      removeFromParent: vi.fn(),
-      setMask: vi.fn(),
-      visible: true,
-    }
-    containers.push(container)
-    return container as never
-  })
-  vi.mocked(ParticleContainer).mockImplementation(function MockParticleContainerConstructor() {
-    const container: MockParticleContainer = {
-      addParticle: vi.fn((particle: MockParticle) => container.particles.push(particle)),
-      particles: [],
-    }
-    particleContainers.push(container)
-    return container as never
-  })
-  vi.mocked(Particle).mockImplementation(function MockParticleConstructor(options) {
-    const particle = {...options} as MockParticle
-    particles.push(particle)
-    return particle as never
-  })
-  vi.mocked(Rectangle).mockImplementation(function MockRectangleConstructor() {
-    return {} as never
-  })
-  vi.mocked(Sprite).mockImplementation(function MockSpriteConstructor() {
-    return {} as never
-  })
+  mocks.install()
 })
 
 describe('FallingFlakesEffect', () => {
