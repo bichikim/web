@@ -1,5 +1,6 @@
 /** @vitest-environment jsdom */
 import '@testing-library/jest-dom/vitest'
+import {createSignal} from 'solid-js'
 import {cleanup, fireEvent, render, screen} from '@solidjs/testing-library'
 import {afterEach, expect, test, vi} from 'vitest'
 import {SSlider} from '../SSlider'
@@ -31,6 +32,7 @@ test('should preview a slider drag and commit once on release', () => {
     top: 0,
     width: 200,
   } as DOMRect)
+  Object.defineProperty(slider, 'hasPointerCapture', {value: vi.fn(() => true)})
   Object.defineProperty(slider, 'setPointerCapture', {value: vi.fn()})
   Object.defineProperty(slider, 'releasePointerCapture', {value: vi.fn()})
   fireEvent(slider, pointer('pointerdown', 100))
@@ -71,6 +73,7 @@ test('should cancel a drag with Escape without persisting it', () => {
     top: 0,
     width: 200,
   } as DOMRect)
+  Object.defineProperty(slider, 'hasPointerCapture', {value: vi.fn(() => true)})
   Object.defineProperty(slider, 'setPointerCapture', {value: vi.fn()})
   Object.defineProperty(slider, 'releasePointerCapture', {value: vi.fn()})
   fireEvent(slider, pointer('pointerdown', 160))
@@ -79,4 +82,55 @@ test('should cancel a drag with Escape without persisting it', () => {
   expect(save).not.toHaveBeenCalled()
   expect(preview).toHaveBeenLastCalledWith(null)
   expect(slider).toHaveAttribute('aria-valuenow', '1')
+})
+
+test.each([
+  ['ArrowLeft', 3.9],
+  ['ArrowRight', 4.1],
+  ['ArrowUp', 4.1],
+  ['ArrowDown', 3.9],
+  ['Home', 0],
+  ['End', 5],
+])('should preserve %s during a captured slider drag', (key, expected) => {
+  const [value, setValue] = createSignal(1)
+  const save = vi.fn((next: number) => {
+    setValue(next)
+  })
+  const preview = vi.fn()
+  render(() => (
+    <SSlider
+      label="반응"
+      value={value()}
+      min={0}
+      max={5}
+      step={0.1}
+      onChange={save}
+      onPreview={preview}
+    />
+  ))
+  const slider = screen.getByRole('slider', {name: '반응'})
+  vi.spyOn(slider, 'getBoundingClientRect').mockReturnValue({
+    height: 20,
+    left: 0,
+    top: 0,
+    width: 200,
+  } as DOMRect)
+  const release = vi.fn()
+  Object.defineProperty(slider, 'hasPointerCapture', {value: vi.fn(() => true)})
+  Object.defineProperty(slider, 'setPointerCapture', {value: vi.fn()})
+  Object.defineProperty(slider, 'releasePointerCapture', {value: release})
+  fireEvent(slider, pointer('pointerdown', 100))
+  expect(slider).toHaveFocus()
+  fireEvent(slider, pointer('pointermove', 160))
+  expect(preview).toHaveBeenLastCalledWith(4)
+  fireEvent.keyDown(slider, {key})
+  expect(save).toHaveBeenCalledExactlyOnceWith(expected)
+  expect(preview).toHaveBeenLastCalledWith(null)
+  expect(release).toHaveBeenCalledExactlyOnceWith(1)
+  expect(slider).toHaveAttribute('aria-valuenow', String(expected))
+  fireEvent(slider, pointer('pointermove', 80))
+  fireEvent(slider, pointer('pointerup', 80))
+  expect(save).toHaveBeenCalledTimes(1)
+  expect(value()).toBe(expected)
+  expect(slider).toHaveAttribute('aria-valuenow', String(expected))
 })
