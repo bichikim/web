@@ -6,22 +6,10 @@ const outputDirectory = path.resolve('.output/public')
 const precompressedSuffixes = ['.br', '.gz']
 const excludedPackagePaths = new Set([path.join('localization', 'redirect.js')])
 
-const listFiles = async (directory) => {
-  const entries = await readdir(directory, {withFileTypes: true})
-  const nestedFiles = await Promise.all(
-    entries.map(async (entry) => {
-      const entryPath = path.join(directory, entry.name)
-
-      if (entry.isDirectory()) {
-        return listFiles(entryPath)
-      }
-
-      return entry.isFile() ? [entryPath] : []
-    }),
-  )
-
-  return nestedFiles.flat()
-}
+const listFiles = async (directory) =>
+  (await readdir(directory, {recursive: true, withFileTypes: true}))
+    .filter((entry) => entry.isFile())
+    .map((entry) => path.join(entry.parentPath, entry.name))
 
 const isPrecompressedCopy = (filePath, availableFiles) => {
   const suffix = precompressedSuffixes.find((candidate) => filePath.endsWith(candidate))
