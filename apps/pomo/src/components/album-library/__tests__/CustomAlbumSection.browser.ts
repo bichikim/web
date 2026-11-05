@@ -142,9 +142,9 @@ it('should keep saving open through overlay and Escape, then create a separate a
   expect(stored).toHaveLength(initial.length + 1)
   const original = initial.find((album) => album.title === firstTitle)!
   expect(stored.find((album) => album.id === original.id)?.title).toBe(editedTitle)
-  expect(
-    initial.some((album) => album.id === stored.find((album) => album.title === newTitle)?.id),
-  ).toBe(false)
+  const created = stored.filter((album) => !initial.some((original) => original.id === album.id))
+  expect(created).toHaveLength(1)
+  expect(created[0]).toMatchObject({title: newTitle})
   const other = initial.find((album) => album.title === secondTitle)!
   expect(stored.find((album) => album.id === other.id)).toEqual(other)
 })
