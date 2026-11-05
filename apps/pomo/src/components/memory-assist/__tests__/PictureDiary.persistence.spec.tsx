@@ -1,6 +1,7 @@
 /** @vitest-environment jsdom */
 import {fireEvent, render, screen, waitFor, within} from '@solidjs/testing-library'
 import {expect, it, vi} from 'vitest'
+import {sampleEntry} from './fixtures/sample-entry'
 import type {PictureDiaryEntry} from '../../../features/picture-diary'
 import {PictureDiary} from '../PictureDiary'
 import {setupDiary} from './fixtures/diary'
@@ -130,15 +131,10 @@ it('should save normally without weather while the current weather is unavailabl
 })
 
 it('should restore and delete a saved picture diary entry', async () => {
-  const entry = {
-    createdAt: '2026-09-04T03:00:00.000Z',
-    date: '2026-09-04',
+  const entry = sampleEntry('산책한 날', {
     id: 'entry-1',
     strokes: [{points: [{x: 0.25, y: 0.5}]}],
-    text: '산책한 날',
-    updatedAt: '2026-09-04T03:00:00.000Z',
-    version: 1,
-  } satisfies PictureDiaryEntry
+  }) satisfies PictureDiaryEntry
   const repository = createRepository([entry])
   render(() => (
     <PictureDiary
@@ -172,15 +168,9 @@ it('should restore and delete a saved picture diary entry', async () => {
 
 it('should clear the deletion failure after a successful retry without discarding the draft', async () => {
   vi.spyOn(console, 'error').mockImplementation(() => undefined)
-  const entry = {
-    createdAt: '2026-09-04T03:00:00.000Z',
-    date: '2026-09-04',
+  const entry = sampleEntry('삭제 재시도 대상', {
     id: 'entry-1',
-    strokes: [],
-    text: '삭제 재시도 대상',
-    updatedAt: '2026-09-04T03:00:00.000Z',
-    version: 1,
-  } satisfies PictureDiaryEntry
+  }) satisfies PictureDiaryEntry
   const repository = createRepository([entry])
   const failed = Promise.withResolvers<void>()
   const retried = Promise.withResolvers<void>()
@@ -223,15 +213,9 @@ it('should clear the deletion failure after a successful retry without discardin
 
 it('should ignore another confirmed deletion while the same entry is pending', async () => {
   vi.spyOn(console, 'error').mockImplementation(() => undefined)
-  const entry = {
-    createdAt: '2026-09-04T03:00:00.000Z',
-    date: '2026-09-04',
+  const entry = sampleEntry('삭제가 끝나야 할 일기', {
     id: 'overlapping-delete',
-    strokes: [],
-    text: '삭제가 끝나야 할 일기',
-    updatedAt: '2026-09-04T03:00:00.000Z',
-    version: 1,
-  } satisfies PictureDiaryEntry
+  }) satisfies PictureDiaryEntry
   const first = Promise.withResolvers<void>()
   const duplicate = Promise.withResolvers<void>()
   // The unused duplicate promise must also be handled when admission rejects the extra request.
@@ -273,15 +257,9 @@ it('should ignore another confirmed deletion while the same entry is pending', a
 
 it('should release pending deletion after failure and allow a confirmed retry', async () => {
   vi.spyOn(console, 'error').mockImplementation(() => undefined)
-  const entry = {
-    createdAt: '2026-09-04T03:00:00.000Z',
-    date: '2026-09-04',
+  const entry = sampleEntry('실패 후 삭제할 일기', {
     id: 'retry-delete',
-    strokes: [],
-    text: '실패 후 삭제할 일기',
-    updatedAt: '2026-09-04T03:00:00.000Z',
-    version: 1,
-  } satisfies PictureDiaryEntry
+  }) satisfies PictureDiaryEntry
   const pending = Promise.withResolvers<void>()
   const repository = createRepository([entry])
   repository.delete.mockReturnValueOnce(pending.promise)
@@ -315,15 +293,9 @@ it('should release pending deletion after failure and allow a confirmed retry', 
 })
 
 it('should admit deletion of another entry while the first entry is pending', async () => {
-  const older = {
-    createdAt: '2026-09-04T03:00:00.000Z',
-    date: '2026-09-04',
+  const older = sampleEntry('앞서 쓴 일기', {
     id: 'older-delete',
-    strokes: [],
-    text: '앞서 쓴 일기',
-    updatedAt: '2026-09-04T03:00:00.000Z',
-    version: 1,
-  } satisfies PictureDiaryEntry
+  }) satisfies PictureDiaryEntry
   const newer = {...older, date: '2026-09-05', id: 'newer-delete', text: '나중에 쓴 일기'}
   const first = Promise.withResolvers<void>()
   const second = Promise.withResolvers<void>()
@@ -463,15 +435,9 @@ it('should save multiple entries with distinct identities on the same date', asy
 })
 
 it('should report local load, save, and delete failures without discarding the draft', async () => {
-  const entry = {
-    createdAt: '2026-09-04T03:00:00.000Z',
-    date: '2026-09-04',
+  const entry = sampleEntry('남아 있어야 할 글', {
     id: 'entry-1',
-    strokes: [],
-    text: '남아 있어야 할 글',
-    updatedAt: '2026-09-04T03:00:00.000Z',
-    version: 1,
-  } satisfies PictureDiaryEntry
+  }) satisfies PictureDiaryEntry
   const repository = createRepository([entry])
   vi.mocked(repository.save).mockRejectedValue(new Error('save failed'))
   vi.mocked(repository.delete).mockRejectedValue(new Error('delete failed'))
