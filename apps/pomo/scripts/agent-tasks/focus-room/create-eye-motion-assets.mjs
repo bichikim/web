@@ -11,7 +11,6 @@ const IMAGE_WIDTH = 1672
 const IMAGE_HEIGHT = 941
 const RGBA_CHANNEL_COUNT = 4
 const ALPHA_CHANNEL_INDEX = 3
-const OPAQUE_ALPHA = 255
 const REMOVAL_MASK_FEATHER = 0.55
 const EYE_LAYER_MASK_FEATHER = 0.4
 const MASK_DILATION_SIZE = 5
@@ -131,15 +130,18 @@ const createPathMask = (paths, feather, offsetX) =>
 
 async function createAlphaMask(mask) {
   const {data, info} = await sharp(mask).greyscale().raw().toBuffer({resolveWithObject: true})
-  const alphaMask = Buffer.alloc(info.width * info.height * RGBA_CHANNEL_COUNT, OPAQUE_ALPHA)
-
-  for (let index = 0; index < data.length; index += 1) {
-    alphaMask[index * RGBA_CHANNEL_COUNT + ALPHA_CHANNEL_INDEX] = data[index]
-  }
-
-  return sharp(alphaMask, {
-    raw: {channels: RGBA_CHANNEL_COUNT, height: info.height, width: info.width},
+  // Keep the original raw prefix interpretation regardless of the source channel layout.
+  return sharp({
+    create: {
+      background: '#ffffff',
+      channels: 3,
+      height: info.height,
+      width: info.width,
+    },
   })
+    .joinChannel(data.subarray(0, info.width * info.height), {
+      raw: {channels: 1, height: info.height, width: info.width},
+    })
     .png()
     .toBuffer()
 }
