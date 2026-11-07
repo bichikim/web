@@ -57,11 +57,8 @@ export function createPcmCrossfade(options: PcmCrossfadeOptions): ArrayBuffer {
       const offset = frame * STEREO_FRAME_BYTES + channel * 2
       const previousSample = previousView.getInt16(offset, true)
       const nextSample = nextView.getInt16(offset, true)
-      resultView.setInt16(
-        offset,
-        Math.round(previousSample * previousWeight + nextSample * nextWeight),
-        true,
-      )
+      const mixedSample = Math.round(previousSample * previousWeight + nextSample * nextWeight)
+      resultView.setInt16(offset, clamp(mixedSample, -PCM16_SCALE, MAX_PCM16_SAMPLE), true)
     }
   }
   return result
