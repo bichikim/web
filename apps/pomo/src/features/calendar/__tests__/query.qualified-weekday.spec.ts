@@ -73,6 +73,44 @@ describe('createCalendarQuery qualified weekdays', () => {
     },
   )
 
+  it.each(
+    weeks.flatMap((week) =>
+      [
+        '수요일 일정과 금요일 일정',
+        '수요일 일정, 금요일 일정',
+        '수요일 일정 알려주고 금요일 약속',
+        '수 일정과 금 일정',
+      ].map((clauses) => ({...week, clauses})),
+    ),
+  )(
+    'should preserve every weekday across a calendar-intent clause in $phrase $clauses',
+    ({clauses, monday, phrase}) => {
+      const start = new Date(`${monday}T00:00:00+09:00`).getTime()
+      expect(createCalendarQuery({now, text: `${phrase} ${clauses} 알려줘`, timeZone})).toEqual({
+        end: new Date(start + 7 * 86_400_000).toISOString(),
+        start: new Date(start).toISOString(),
+      })
+    },
+  )
+
+  it.each(
+    weeks.flatMap((week) =>
+      ['수요일 일정 알려줄 수 있어?', '수요일 일정 중 할 일 알려줘'].map((clause) => ({
+        ...week,
+        clause,
+      })),
+    ),
+  )(
+    'should retain single-clause weekday selection in $phrase $clause',
+    ({clause, monday, phrase}) => {
+      const start = new Date(`${monday}T00:00:00+09:00`).getTime() + 2 * 86_400_000
+      expect(createCalendarQuery({now, text: `${phrase} ${clause}`, timeZone})).toEqual({
+        end: new Date(start + 86_400_000).toISOString(),
+        start: new Date(start).toISOString(),
+      })
+    },
+  )
+
   it.each([
     {
       end: '2026-03-09T04:00:00.000Z',

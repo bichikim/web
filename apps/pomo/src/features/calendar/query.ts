@@ -59,6 +59,7 @@ const {
   getRequestedWeekdays,
   getStandaloneWeekdayIntent,
   getWeekdayIntent,
+  hasMultipleWeekdays,
   isWeekSchedule,
   weekdayPatternSource: WEEKDAY_PATTERN_SOURCE,
 } = createCalendarWeekdayParser({
@@ -553,7 +554,7 @@ export const createCalendarQuery = (
   ) {
     const weekOffset = includesPreviousWeek ? -DAYS_PER_WEEK - DAYS_PER_WEEK : DAYS_PER_WEEK
     const {offsets} = getRequestedWeekdays({periodPattern: qualifiedPattern, text})
-    if (offsets.length === 1) {
+    if (offsets.length === 1 && !hasMultipleWeekdays(text, qualifiedPattern)) {
       const dayOffset = daysUntilNextMonday + weekOffset + offsets[0]!
       return toRange(boundary(dayOffset), boundary(dayOffset + 1))
     }

@@ -73,6 +73,24 @@ const scenarios = [
       text: '지난 주 일정 알려줘',
     },
   ].map((period) => ({...period, afternoon: false, earlierCount: 40, wholeWeek: true})),
+  ...[
+    {
+      ...periods[0],
+      end: '2026-09-20T15:00:00.000Z',
+      start: '2026-09-13T15:00:00.000Z',
+      targetDay: '2026-09-18',
+      text: '다다음 주 수요일 일정과 금요일 일정 알려줘',
+    },
+    {
+      ...periods[1],
+      end: '2026-08-30T15:00:00.000Z',
+      start: '2026-08-23T15:00:00.000Z',
+      targetDay: '2026-08-28',
+      text: '지난 주 수요일 일정과 금요일 일정 알려줘',
+    },
+  ].flatMap((period) =>
+    [2, 40].map((earlierCount) => ({...period, afternoon: false, earlierCount, wholeWeek: true})),
+  ),
 ]
 
 beforeEach(() => {
@@ -196,8 +214,12 @@ describe('loadCalendarPromptContext qualified weekdays', () => {
       }
       const providerResult = await providerCall.value
       const serviceResult = await serviceCall.value
-      const matchedCount = scenario.wholeWeek ? 41 : scenario.afternoon ? 2 : 1
-      const omitted = scenario.wholeWeek
+      const matchedCount = scenario.wholeWeek
+        ? scenario.earlierCount + 1
+        : scenario.afternoon
+          ? 2
+          : 1
+      const omitted = matchedCount > 40
       expect(context.includes(targetTitle)).toBe(!omitted)
       expect(providerResult.events).toHaveLength(matchedCount)
       expect(providerResult.events.some((event) => event.title === targetTitle)).toBe(true)
@@ -218,7 +240,9 @@ describe('loadCalendarPromptContext qualified weekdays', () => {
       expect(context.includes(availabilityWarning)).toBe(false)
       if (!omitted) {
         expect(context).toContain(`${scenario.targetDay.replace(/-0?/g, '. ')}.`)
-        expect(context).not.toContain('EARLIER-')
+        if (!scenario.wholeWeek) {
+          expect(context).not.toContain('EARLIER-')
+        }
       }
       expect(context.includes(afternoonTitle)).toBe(scenario.afternoon)
       const messages = createChatMessages({
