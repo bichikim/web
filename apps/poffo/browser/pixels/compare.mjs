@@ -41,9 +41,7 @@ const comparisons = others.map((report) => {
   }
   return {
     drawingBufferMatches: report.drawingBufferHash === reference.drawingBufferHash,
-    platform: identity(report),
     encodingControlMatches: report.control.pngPixelHash === reference.control.pngPixelHash,
-    pngMatches: report.pngPixelHash === reference.pngPixelHash,
     firstCommandDifference: firstDifference(reference.commands, report.commands),
     firstStageDifference:
       reference.stages.length === 0 || report.stages.length === 0
@@ -52,6 +50,8 @@ const comparisons = others.map((report) => {
     matches:
       report.drawingBufferHash === reference.drawingBufferHash &&
       report.pngPixelHash === reference.pngPixelHash,
+    platform: identity(report),
+    pngMatches: report.pngPixelHash === reference.pngPixelHash,
   }
 })
 if (!diagnostic) {

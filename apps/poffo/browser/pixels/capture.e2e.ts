@@ -9,6 +9,7 @@ import {startInstalledHost} from '../backend/installed-host'
 import {sendCommand} from '../../src/cli/connection'
 import {beginTrace, installTrace, readTrace} from './trace'
 import {encodingControl} from './encoding-control'
+import {encodeFramePng} from '../../src/backend/encode-frame-png'
 
 const hash = (value: Uint8Array | string) => createHash('sha256').update(value).digest('hex')
 
@@ -28,14 +29,7 @@ test('should preserve the captured frame while tracing pixel boundaries', async 
   try {
     await page.clock.install({time: new Date('2026-01-01T00:00:00Z')})
     await page.clock.pauseAt(new Date('2026-01-01T01:00:00Z'))
-    await installTrace(
-      page,
-      process.env.POFFO_PIXEL_STAGE === undefined || process.env.POFFO_PIXEL_STAGE === ''
-        ? undefined
-        : process.env.POFFO_PIXEL_STAGE === 'all'
-          ? 'all'
-          : Number(process.env.POFFO_PIXEL_STAGE),
-    )
+    await installTrace(page)
     await copyFile(
       fileURLToPath(
         new URL('../../../../packages/puppet/examples/development-model.json', import.meta.url),
@@ -60,8 +54,41 @@ test('should preserve the captured frame while tracing pixel boundaries', async 
     await beginTrace(page)
     const observed = await capture('observed.png')
     expect(hash(observed.data)).toBe(hash(baseline.data))
-    const {pixels, stages, ...trace} = await readTrace(page)
+    const installed = await readTrace(page)
+    // Profiling every draw runs outside the command deadline; its final GPU bytes must
+    // still equal the installed renderer before any intermediate result is accepted.
+    const probe = await page.context().newPage()
+    let dataUrl: string
+    let captured: Awaited<ReturnType<typeof readTrace>>
+    try {
+      const selection = process.env.POFFO_PIXEL_STAGE
+      await installTrace(
+        probe,
+        selection === 'all' ? 'all' : selection ? Number(selection) : undefined,
+      )
+      await probe.goto('http://127.0.0.1:4427/browser/pixels/index.html')
+      await expect
+        .poll(() => probe.evaluate(() => typeof Reflect.get(globalThis, 'poffoPixelRender')))
+        .toBe('function')
+      await beginTrace(probe)
+      dataUrl = await probe.evaluate(async () => {
+        const render = Reflect.get(globalThis, 'poffoPixelRender') as () => Promise<{
+          dataUrl: string
+        }>
+        return (await render()).dataUrl
+      })
+      captured = await readTrace(probe)
+    } finally {
+      await probe.close()
+    }
+    const {pixels, stages, ...trace} = captured
     const raw = Uint8Array.from(pixels)
+    expect(hash(raw)).toBe(hash(Uint8Array.from(installed.pixels)))
+    const canonical = Buffer.from(dataUrl.split(',')[1]!, 'base64')
+    expect(hash(canonical)).toBe(
+      hash(encodeFramePng({height: observed.height, pixels: raw, width: observed.width})),
+    )
+    await writeFile(join(output, 'canonical.png'), canonical)
     await writeFile(join(output, 'drawing-buffer.rgba'), raw)
     await Promise.all(
       stages.map(async (stage) => {
@@ -81,14 +108,15 @@ test('should preserve the captured frame while tracing pixel boundaries', async 
         {
           architecture: process.arch,
           browser: browser.version(),
-          drawingBufferHash: hash(raw),
           control: {
             pngPixelHash: hash(PNG.sync.read(encoded).data),
             rawHash: hash(Uint8Array.from(control.pixels)),
           },
+          drawingBufferHash: hash(raw),
           height: observed.height,
+          nativePngPixelHash: hash(observed.data),
           platform: process.platform,
-          pngPixelHash: hash(observed.data),
+          pngPixelHash: hash(PNG.sync.read(canonical).data),
           stageSelection: process.env.POFFO_PIXEL_STAGE || 'none',
           width: observed.width,
           ...trace,

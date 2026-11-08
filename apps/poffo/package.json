@@ -28,6 +28,7 @@
     "@winter-love/puppet": "workspace:*",
     "es-toolkit": "catalog:",
     "fast-json-patch": "^3.1.1",
+    "fast-png": "8.0.0",
     "pngjs": "7.0.0",
     "solid-js": "catalog:",
     "zod": "catalog:"

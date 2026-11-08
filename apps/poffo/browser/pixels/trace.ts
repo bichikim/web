@@ -25,6 +25,8 @@ interface PixelTrace {
   read(): PixelCapture
 }
 
+type PixelSnapshot = (trace: GlTrace, pixels: Uint8Array) => PixelCapture
+
 interface GlTrace {
   readonly gl: WebGL2RenderingContext
   readonly identities: WeakMap<object, number>
@@ -66,6 +68,7 @@ const TRACED_METHODS = [
   'drawElements',
   'drawArrays',
   'blitFramebuffer',
+  'readPixels',
 ] as const
 
 const installFingerprint = (page: Page) =>
@@ -105,26 +108,31 @@ const installFingerprint = (page: Page) =>
       }
       return value
     }
-    Reflect.set(globalThis, 'poffoPixelFingerprint', fingerprint)
     Reflect.set(globalThis, 'poffoPixelNormalize', normalize)
+    Reflect.set(
+      globalThis,
+      'poffoPixelSnapshot',
+      (trace: GlTrace, pixels: Uint8Array): PixelCapture => ({
+        colorSpace: trace.gl.drawingBufferColorSpace,
+        commands: trace.commands.slice(),
+        context: trace.gl.getContextAttributes(),
+        error: trace.gl.getError(),
+        maximumSamples: trace.gl.getParameter(trace.gl.MAX_SAMPLES),
+        pixels: Array.from(pixels),
+        stages: trace.stages.slice(),
+      }),
+    )
   })
 
 /** Observes only the detached capture canvas; the application's source stays unchanged. */
-export const installTrace = async (page: Page, selectedStage?: number | 'all'): Promise<void> => {
-  await installFingerprint(page)
-  await page.addInitScript(
+const installObserver = (page: Page, selectedStage?: number | 'all') =>
+  page.addInitScript(
     ({methods, selectedStage}) => {
       const COMPONENTS = 4
       const DESTINATION_START = 4
       const DESTINATION_END = 8
-      const fingerprint = (bytes: Uint8Array): string => {
-        const calculate = Reflect.get(globalThis, 'poffoPixelFingerprint') as (
-          input: Uint8Array,
-        ) => string
-        return calculate(bytes)
-      }
       let active = false
-      let last: PixelCapture | undefined
+      const capture: {last?: PixelCapture} = {}
       const traces = new WeakMap<HTMLCanvasElement, GlTrace>()
       const entry = (gl: WebGL2RenderingContext): GlTrace | undefined => {
         if (!active || !(gl.canvas instanceof HTMLCanvasElement) || gl.canvas.isConnected) {
@@ -193,7 +201,7 @@ export const installTrace = async (page: Page, selectedStage?: number | 'all'): 
         const identity = target === null ? 0 : (normalize(target, trace) as {id: number}).id
         trace.stages.push({
           error: gl.getError(),
-          fingerprint: fingerprint(pixels),
+          fingerprint: (normalize(pixels, trace) as {fingerprint: string}).fingerprint,
           index,
           kind,
           pixels: index === selectedStage ? Array.from(pixels) : undefined,
@@ -212,10 +220,14 @@ export const installTrace = async (page: Page, selectedStage?: number | 'all'): 
           new Proxy(original, {
             apply(target, gl: WebGL2RenderingContext, args: unknown[]) {
               const trace = entry(gl)
-              if (trace !== undefined && !trace.observing) {
+              if (name !== 'readPixels' && trace !== undefined && !trace.observing) {
                 trace.commands.push({args: args.map((value) => normalize(value, trace)), name})
               }
               const result: unknown = Reflect.apply(target, gl, args)
+              if (name === 'readPixels' && trace !== undefined && !trace.observing) {
+                const snapshot = Reflect.get(globalThis, 'poffoPixelSnapshot') as PixelSnapshot
+                capture.last = snapshot(trace, args[6] as Uint8Array)
+              }
               if (name === 'drawElements' || name === 'drawArrays' || name === 'blitFramebuffer') {
                 observe(gl, name, args)
               }
@@ -234,15 +246,8 @@ export const installTrace = async (page: Page, selectedStage?: number | 'all'): 
           gl.bindFramebuffer(gl.READ_FRAMEBUFFER, null)
           const pixels = new Uint8Array(this.width * this.height * COMPONENTS)
           gl.readPixels(0, 0, this.width, this.height, gl.RGBA, gl.UNSIGNED_BYTE, pixels)
-          last = {
-            colorSpace: gl.drawingBufferColorSpace,
-            commands: trace.commands.slice(),
-            context: gl.getContextAttributes(),
-            error: gl.getError(),
-            maximumSamples: gl.getParameter(gl.MAX_SAMPLES),
-            pixels: Array.from(pixels),
-            stages: trace.stages.slice(),
-          }
+          const snapshot = Reflect.get(globalThis, 'poffoPixelSnapshot') as PixelSnapshot
+          capture.last = snapshot(trace, pixels)
           gl.bindFramebuffer(gl.READ_FRAMEBUFFER, previous)
           trace.observing = false
         }
@@ -253,16 +258,20 @@ export const installTrace = async (page: Page, selectedStage?: number | 'all'): 
           active = true
         },
         read: () => {
-          if (last === undefined) {
+          if (capture.last === undefined) {
             throw new Error('No detached GPU capture was observed')
           }
           active = false
-          return last
+          return capture.last
         },
       } satisfies PixelTrace)
     },
     {methods: TRACED_METHODS, selectedStage},
   )
+
+export const installTrace = async (page: Page, selectedStage?: number | 'all'): Promise<void> => {
+  await installFingerprint(page)
+  await installObserver(page, selectedStage)
 }
 
 export const beginTrace = (page: Page): Promise<void> =>

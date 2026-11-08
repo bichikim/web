@@ -4,6 +4,8 @@ import {
   preparePuppetDocument,
   type PuppetDocument,
 } from '@winter-love/puppet/player'
+import {encodeFramePng, type FramePixels} from '../encode-frame-png'
+import {readCanvasFrame} from './read-canvas-frame'
 
 export interface RenderDocumentOptions {
   /** Immutable captured model, independent of the interactive player's pose. */
@@ -30,7 +32,7 @@ export const renderDocument = async (options: RenderDocumentOptions) => {
   const resolution =
     size / Math.max(prepared.document.viewport.width, prepared.document.viewport.height)
   let armed = false
-  let dataUrl: string | undefined
+  let frame: FramePixels | undefined
   let player: Player | undefined
   try {
     player = await createPlayer({
@@ -41,7 +43,7 @@ export const renderDocument = async (options: RenderDocumentOptions) => {
       motionId: options.motionId,
       onAfterRender: () => {
         if (armed) {
-          dataUrl = canvas.toDataURL('image/png')
+          frame = readCanvasFrame(canvas)
         }
       },
       parameterValues: options.parameters,
@@ -54,9 +56,17 @@ export const renderDocument = async (options: RenderDocumentOptions) => {
     player.seek(options.time ?? 0)
     armed = true
     player.redraw()
-    if (dataUrl === undefined || dataUrl === 'data:,') {
+    if (frame === undefined) {
       throw new Error('Renderer did not complete the requested frame')
     }
+    // Native canvas encoding unpremultiplies the same RGBA bytes differently across OSes.
+    const bytes = encodeFramePng(frame)
+    const dataUrl = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = () => resolve(reader.result as string)
+      reader.onerror = () => reject(reader.error ?? new Error('Could not encode the frame'))
+      reader.readAsDataURL(new Blob([new Uint8Array(bytes)], {type: 'image/png'}))
+    })
     return {dataUrl, height: canvas.height, width: canvas.width}
   } finally {
     player?.destroy()
