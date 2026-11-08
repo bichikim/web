@@ -236,6 +236,20 @@ final class NativeUITests: XCTestCase {
                 };
               } catch (error) { return {available: false, error: String(error)}; }
             })(),
+            pixiWebgl2Probe: (() => {
+              try {
+                const context = document.createElement('canvas').getContext('webgl2', {
+                  stencil: true, failIfMajorPerformanceCaveat: false
+                });
+                if (!context) return {available: false};
+                return {
+                  available: !!context.getContextAttributes()?.stencil,
+                  attributes: context.getContextAttributes(),
+                  lost: context.isContextLost(),
+                  error: context.getError()
+                };
+              } catch (error) { return {available: false, error: String(error)}; }
+            })(),
             userAgent: navigator.userAgent
           })
           """)
