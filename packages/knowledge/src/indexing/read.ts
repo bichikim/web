@@ -4,14 +4,18 @@ import type {
   KnowledgeIndexStateResult,
   KnowledgeIndexWriter,
   KnowledgeScope,
+  StoredKnowledgePoint,
 } from './store'
 
 export interface ReadKnowledgeOptions {
+  /** Caller-owned index reader; retrieval neither mutates nor closes it. */
   readonly index: Pick<KnowledgeIndexWriter, 'readState'>
+  /** Repository and workspace to constrain every read. */
   readonly scope: KnowledgeScope
 }
 
 export interface GetKnowledgeOptions extends ReadKnowledgeOptions {
+  /** Legacy document ID or docId#unitId, with its existing delimiter interpretation. */
   readonly logicalId: string
 }
 
@@ -33,6 +37,71 @@ export type GetKnowledgeResult =
   | KnowledgeIndexStateResult
   | {readonly ok: false; readonly error: InvalidLogicalIdError | KnowledgeNotFoundError}
 
+export interface KnowledgeIdentity {
+  /** Stored document ID, passed verbatim without delimiter parsing or decoding. */
+  readonly docId: string
+  /** Stored unit ID; omission selects every unit of the document. */
+  readonly unitId?: string
+}
+
+export interface GetKnowledgeByIdentityOptions extends ReadKnowledgeOptions {
+  /** Nonblank literal document and optional unit fields to retrieve. */
+  readonly identity: KnowledgeIdentity
+}
+
+export interface InvalidKnowledgeIdentityError {
+  readonly code: 'invalid-knowledge-identity'
+}
+
+export interface KnowledgeIdentityNotFoundError {
+  readonly code: 'knowledge-not-found'
+  readonly selector: KnowledgeIdentity
+}
+
+export type KnowledgeIdentityReadError =
+  | KnowledgeIndexError
+  | InvalidKnowledgeIdentityError
+  | KnowledgeIdentityNotFoundError
+
+export type GetKnowledgeByIdentityResult =
+  | KnowledgeIndexStateResult
+  | {
+      readonly ok: false
+      readonly error: InvalidKnowledgeIdentityError | KnowledgeIdentityNotFoundError
+    }
+
+const orderPoints = (
+  points: ReadonlyArray<StoredKnowledgePoint>,
+): ReadonlyArray<StoredKnowledgePoint> =>
+  points.toSorted(
+    (left, right) =>
+      left.payload.path.localeCompare(right.payload.path) ||
+      (left.payload.startLine ?? 1) - (right.payload.startLine ?? 1) ||
+      left.payload.unitId.localeCompare(right.payload.unitId),
+  )
+
+/** Reads separate identity fields verbatim, including literal # and % characters. */
+export const getKnowledgeByIdentity = async (
+  options: GetKnowledgeByIdentityOptions,
+): Promise<GetKnowledgeByIdentityResult> => {
+  const {docId, unitId} = options.identity
+  if (docId.trim() === '' || unitId?.trim() === '') {
+    return {error: {code: 'invalid-knowledge-identity'}, ok: false}
+  }
+  const result = await options.index.readState({
+    ...options.scope,
+    docId,
+    ...(unitId === undefined ? {} : {unitId}),
+  })
+  if (!result.ok) {
+    return result
+  }
+  if (result.value.length === 0) {
+    return {error: {code: 'knowledge-not-found', selector: options.identity}, ok: false}
+  }
+  return {ok: true, value: orderPoints(result.value)}
+}
+
 /** Reads a stored document or one unit, ordered by source location, without embedding. */
 export const getKnowledge = async (options: GetKnowledgeOptions): Promise<GetKnowledgeResult> => {
   const [docId, unitId, extra] = options.logicalId.split('#')
@@ -50,15 +119,7 @@ export const getKnowledge = async (options: GetKnowledgeOptions): Promise<GetKno
   if (result.value.length === 0) {
     return {error: {code: 'knowledge-not-found', logicalId: options.logicalId}, ok: false}
   }
-  return {
-    ok: true,
-    value: result.value.toSorted(
-      (left, right) =>
-        left.payload.path.localeCompare(right.payload.path) ||
-        (left.payload.startLine ?? 1) - (right.payload.startLine ?? 1) ||
-        left.payload.unitId.localeCompare(right.payload.unitId),
-    ),
-  }
+  return {ok: true, value: orderPoints(result.value)}
 }
 
 export interface KnowledgeIndexStatus {

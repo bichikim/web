@@ -64,6 +64,18 @@ export interface GetCommand {
   readonly json: boolean
   readonly logicalId: string
 }
+export interface GetIdentityCommand {
+  /** CLI operation selecting stored knowledge. */
+  readonly command: 'get'
+  /** Repository location; the parser defaults this to the current directory. */
+  readonly inputPath: string
+  /** Whether to print the structured response as JSON rather than readable text. */
+  readonly json: boolean
+  /** Literal stored document ID from --doc-id. */
+  readonly docId: string
+  /** Literal stored unit ID from --unit-id; omission selects the entire document. */
+  readonly unitId?: string
+}
 export interface ReindexCommand {
   readonly command: 'reindex'
   readonly inputPath: string
@@ -75,6 +87,7 @@ export type KnowledgeCommand =
   | RepositoryCommand
   | SearchCommand
   | GetCommand
+  | GetIdentityCommand
   | ReindexCommand
   | EvalCommand
   | GenerateCommand
@@ -105,6 +118,8 @@ const repositoryPath = (argument: string | undefined, repo: string | undefined):
 }
 
 interface CommandFlags {
+  readonly 'doc-id'?: string
+  readonly 'unit-id'?: string
   readonly 'inspection-mode'?: string
   readonly report?: string
   readonly 'cache-dir'?: string
@@ -126,7 +141,7 @@ const COMMAND_FLAGS: Readonly<Record<string, ReadonlyArray<string>>> = {
   'eval-approve': ['ids', 'reviewer', 'output', 'json'],
   'eval-generate': ['repo', 'json', 'model', 'output', 'cache-dir', 'limit'],
   'eval-inspection': ['report', 'baseline', 'output', 'json'],
-  get: ['repo', 'json'],
+  get: ['repo', 'json', 'doc-id', 'unit-id'],
   help: [],
   index: ['repo', 'json'],
   mcp: ['repo'],
@@ -180,6 +195,40 @@ const parseDoctorCommand = (options: ParseDoctorCommandOptions): DoctorCommand =
       }
 }
 
+interface ParseGetCommandOptions {
+  /** Positional legacy ID, or undefined when structured fields are used. */
+  readonly argument: string | undefined
+  /** Separate document field, or undefined for legacy positional input. */
+  readonly docId: string | undefined
+  /** Separate unit field; undefined selects the whole document. */
+  readonly unitId: string | undefined
+  /** Repository argument or current directory. */
+  readonly inputPath: string
+  /** Whether the resulting command emits JSON. */
+  readonly json: boolean
+}
+const parseGetCommand = (
+  options: ParseGetCommandOptions,
+): GetCommand | GetIdentityCommand | undefined => {
+  const {argument, docId, inputPath, json} = options
+  if (docId !== undefined) {
+    if (argument !== undefined) {
+      return undefined
+    }
+    const unitId = optionalArgument(options.unitId)
+    return {
+      command: 'get',
+      docId: requiredArgument(docId),
+      inputPath,
+      json,
+      ...(unitId === undefined ? {} : {unitId}),
+    }
+  }
+  return options.unitId === undefined
+    ? {command: 'get', inputPath, json, logicalId: requiredArgument(argument)}
+    : undefined
+}
+
 /** Parses CLI inputs; invalid combinations return undefined without running a command. */
 export const parseKnowledgeArguments = (
   arguments_: ReadonlyArray<string>,
@@ -191,12 +240,14 @@ export const parseKnowledgeArguments = (
       options: {
         baseline: {type: 'string'},
         'cache-dir': {type: 'string'},
+        'doc-id': {type: 'string'},
         help: {short: 'h', type: 'boolean'},
         ids: {type: 'string'},
         'inspection-mode': {type: 'string'},
         json: {type: 'boolean'},
-        // eslint-disable-next-line id-length -- Public metric notation uses --k.
         k: {type: 'string'},
+        // eslint-disable-next-line id-length -- Public metric notation uses --k.
+        'unit-id': {type: 'string'},
         limit: {type: 'string'},
         model: {type: 'string'},
         output: {type: 'string'},
@@ -271,12 +322,13 @@ export const parseKnowledgeArguments = (
           json,
         }
       case 'get':
-        return {
-          command,
+        return parseGetCommand({
+          argument,
+          docId: values['doc-id'],
           inputPath,
           json,
-          logicalId: requiredArgument(argument),
-        }
+          unitId: values['unit-id'],
+        })
       case 'search':
         return {
           command,
