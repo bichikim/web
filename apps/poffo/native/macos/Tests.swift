@@ -41,6 +41,7 @@ final class NativeUITests: XCTestCase {
         try validateFrame(output)
         XCTAssertTrue(named(app, "CLI 검증 모션 추가").waitForExistence(timeout: 30))
         attach(app, "character-window", output)
+        if environment["POFFO_NATIVE_GPU_ONLY"] == "true" { return }
 
         openMenu(app, "문서 저장")
         XCTAssertTrue(savePanel(app).buttons["Save"].waitForExistence(timeout: 60))

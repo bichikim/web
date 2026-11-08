@@ -33,6 +33,7 @@ const ORIGINAL_MOTIONS = 6
 const EDITED_MOTIONS = 7
 const ERROR_LENGTH = 2000
 const TRACE_CHECKPOINTS = 6
+const GPU_CHECKPOINTS = 4
 const source = join(directory, '../../../packages/puppet/examples/development-model.json')
 const sourceBytes = await readFile(source)
 await mkdir(workspace, {recursive: true})
@@ -44,9 +45,11 @@ const report = {
   architecture: process.arch,
   complete: false,
   framework: process.platform === 'darwin' ? 'XCTest/XCUIAutomation' : 'Windows UI Automation',
+  gpuOnly: process.env.POFFO_NATIVE_GPU_ONLY === 'true',
   installer: JSON.parse(await readFile(join(output, '../installer.json'), 'utf8')),
   platform: process.platform,
-  requireNativeGpu: process.env.POFFO_NATIVE_REQUIRE_GPU === 'true',
+  requireNativeGpu:
+    process.env.POFFO_NATIVE_REQUIRE_GPU === 'true' || process.env.POFFO_NATIVE_GPU_ONLY === 'true',
   sourceHash: hash(sourceBytes),
   steps: [],
 }
@@ -411,6 +414,7 @@ const runMac = async (environment) => {
     'POFFO_NATIVE_OUTPUT',
     'POFFO_NATIVE_CONTROL',
     'POFFO_NATIVE_TRACE',
+    'POFFO_NATIVE_GPU_ONLY',
   ]) {
     settings.NativeUITests.EnvironmentVariables[name] = environment[name]
   }
@@ -444,6 +448,14 @@ const stopWorkspace = async (root) => {
 }
 
 try {
+  if (report.gpuOnly) {
+    assert.equal(
+      process.platform,
+      'darwin',
+      'GPU-only validation currently uses the Mac native driver',
+    )
+    assert.notEqual(process.env.POFFO_NATIVE_TRACE, 'true')
+  }
   if (process.platform === 'darwin') {
     report.execution = await inspectMacExecution()
   }
@@ -477,9 +489,16 @@ try {
       environment,
     )
   }
-  assert.equal(report.steps.length, report.traceOnly ? TRACE_CHECKPOINTS : checkpoints.size)
+  const expected = report.gpuOnly
+    ? GPU_CHECKPOINTS
+    : report.traceOnly
+      ? TRACE_CHECKPOINTS
+      : checkpoints.size
+  assert.equal(report.steps.length, expected)
   assert.equal(hash(await readFile(join(workspace, 'source.json'))), report.sourceHash)
-  if (report.traceOnly) {
+  if (report.gpuOnly) {
+    report.gpuComplete = true
+  } else if (report.traceOnly) {
     report.traceComplete = true
   } else {
     report.complete = true

@@ -62,6 +62,10 @@ on:
         description: Compare native Metal rasterization and active WebKit contexts without UI Automation
         type: boolean
         default: false
+      native-gpu-only:
+        description: Validate native character GPU rendering without the full dialog lifecycle
+        type: boolean
+        default: false
 
 run-name: ${{ inputs.reuse-run != '' && format('Validate Poffo installers from run {0}', inputs.reuse-run) || format('Build Poffo Desktop from {0}', github.ref_name) }}
 
@@ -299,6 +303,7 @@ jobs:
           POFFO_NATIVE_TRACE: ${{ inputs.native-trace }}
           POFFO_NATIVE_REQUIRE_GPU: ${{ inputs.require-native-gpu }}
           POFFO_NATIVE_EXECUTION: ${{ matrix.target == 'x86_64-apple-darwin' && inputs.intel-execution || 'native' }}
+          POFFO_NATIVE_GPU_ONLY: ${{ inputs.native-gpu-only }}
         run: node apps/poffo/native/run.mjs
 
       - name: Upload runtime validation evidence

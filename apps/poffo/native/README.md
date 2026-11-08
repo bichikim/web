@@ -4,6 +4,8 @@
 
 [데스크톱 워크플로](../../../.github/workflows/poffo-desktop-build.yml)를 `native-ui=true`로 실행한다. `target`은 검사할 OS, `reuse-run`은 이미 빌드한 설치물의 실행 번호다. 설치물의 원본 커밋·SHA-256과 실행기의 OS·아키텍처를 함께 기록하므로 테스트 코드만 고칠 때 앱을 다시 빌드할 필요가 없다.
 
+Intel의 `intel-image`로 macOS 15와 26을 선택할 수 있다. `require-native-gpu=true`는 실제 설치 앱의 캐릭터 렌더가 없으면 실패시킨다. `graphics-probe=true`는 XCTest 없이 Metal과 WebKit만 대조하며 전체 앱 검증과 구분한다. `intel-execution=rosetta`는 동일한 Intel 설치물을 ARM에서 번역 실행하는 보조 검사다. [Intel GPU 조사 결과와 원격 물리 기기 실행 절차](macos/README.md)에 비용과 증거 경계를 정리한다.
+
 ```sh
 gh workflow run poffo-desktop-build.yml --ref YOUR_BRANCH \
   -f target=x86_64-apple-darwin -f reuse-run=INSTALLER_RUN -f native-ui=true
