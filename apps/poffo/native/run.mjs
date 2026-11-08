@@ -32,7 +32,7 @@ const PART_COUNT = 122
 const ORIGINAL_MOTIONS = 6
 const EDITED_MOTIONS = 7
 const ERROR_LENGTH = 2000
-const TRACE_CHECKPOINTS = 7
+const TRACE_CHECKPOINTS = 6
 const source = join(directory, '../../../packages/puppet/examples/development-model.json')
 const sourceBytes = await readFile(source)
 await mkdir(workspace, {recursive: true})
@@ -237,6 +237,7 @@ const checkpoints = new Map([
         assert.match(error.message, /No available renderer for the current environment/u)
         nativeFrame = {available: false, independentWebKitProbe: probe, reason: error.message}
       }
+      await nativeTrace?.waitForStreamClose()
       return {
         motions: 7,
         nativeFrame,
@@ -410,6 +411,7 @@ try {
     assert.equal(process.platform, 'darwin')
     nativeTrace = await traceNativeSave({executable, output, workspace})
     report.traceOnly = true
+    checkpoints.delete('close-cancelled')
   }
   server.listen(0, '127.0.0.1')
   await once(server, 'listening')

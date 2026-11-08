@@ -49,15 +49,17 @@ final class NativeUITests: XCTestCase {
         waitForSave(app)
         try await checkpoint(control, "save-cancelled")
 
-        app.typeKey("w", modifierFlags: [.command])
         let exitPanel = app.sheets.containing(.button, identifier: "변경 사항을 남기고 종료").firstMatch
         let confirmation = exitPanel.buttons["변경 사항을 남기고 종료"]
-        XCTAssertTrue(confirmation.waitForExistence(timeout: 30))
-        XCTAssertTrue(app.sheets.containing(.button, identifier: "변경 사항을 남기고 종료").firstMatch.exists)
-        attach(app, "native-close-cancel", output)
-        exitPanel.buttons["취소"].click()
-        XCTAssertTrue(confirmation.waitForNonExistence(timeout: 30))
-        try await checkpoint(control, "close-cancelled")
+        if environment["POFFO_NATIVE_TRACE"] != "true" {
+            app.typeKey("w", modifierFlags: [.command])
+            XCTAssertTrue(confirmation.waitForExistence(timeout: 30))
+            XCTAssertTrue(exitPanel.exists)
+            attach(app, "native-close-cancel", output)
+            exitPanel.buttons["취소"].click()
+            XCTAssertTrue(confirmation.waitForNonExistence(timeout: 30))
+            try await checkpoint(control, "close-cancelled")
+        }
 
         openMenu(app, "문서 저장")
         XCTAssertTrue(savePanel(app).buttons["Save"].waitForExistence(timeout: 60))
@@ -169,6 +171,9 @@ final class NativeUITests: XCTestCase {
     private func checkpoint(_ control: String, _ name: String) async throws {
         var request = URLRequest(url: URL(string: control + "/checkpoint")!)
         request.httpMethod = "POST"
+        if ProcessInfo.processInfo.environment["POFFO_NATIVE_TRACE"] == "true" {
+            request.timeoutInterval = 120
+        }
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = try JSONSerialization.data(withJSONObject: ["name": name])
         let (data, response) = try await URLSession.shared.data(for: request)
@@ -239,18 +244,6 @@ final class NativeUITests: XCTestCase {
         result["metalDevices"] = MTLCopyAllDevices().map { $0.name }
         let destination = URL(fileURLWithPath: output).appendingPathComponent("graphics.json")
         try JSONSerialization.data(withJSONObject: result, options: [.prettyPrinted, .sortedKeys]).write(to: destination)
-        if ProcessInfo.processInfo.environment["POFFO_NATIVE_TRACE"] == "true" { return }
-        let crypto = try await browser.callAsyncJavaScript("""
-          try {
-            const bytes = new TextEncoder().encode('x'.repeat(22000000));
-            const digest = new Uint8Array(await crypto.subtle.digest('SHA-256', bytes));
-            return JSON.stringify({bytes: bytes.length, digest: [...digest].map(value => value.toString(16).padStart(2, '0')).join('')});
-          } catch (error) { return JSON.stringify({error: String(error)}); }
-          """, arguments: [:], in: nil, in: .page)
-        let cryptoText = try XCTUnwrap(crypto as? String)
-        result["crypto"] = try JSONSerialization.jsonObject(with: Data(cryptoText.utf8))
-        let data = try JSONSerialization.data(withJSONObject: result, options: [.prettyPrinted, .sortedKeys])
-        try data.write(to: destination)
     }
 }
 

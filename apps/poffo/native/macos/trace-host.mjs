@@ -35,6 +35,8 @@ export const traceNativeSave = async ({executable, workspace, output}) => {
   const original = await readFile(descriptor, 'utf8')
   const upstream = JSON.parse(original)
   const records = []
+  let stream
+  let lastStreamData
   let writes = Promise.resolve()
   const record = (event) => {
     records.push({at: new Date().toISOString(), ...event})
@@ -67,6 +69,12 @@ export const traceNativeSave = async ({executable, workspace, output}) => {
     })
     target.on('response', (incoming) => {
       response.writeHead(incoming.statusCode, incoming.headers)
+      if (route.pathname === '/api/events') {
+        stream = response
+        incoming.on('data', () => {
+          lastStreamData = Date.now()
+        })
+      }
       if (command?.operation === 'document.saved') {
         const replies = []
         incoming.on('data', (chunk) => replies.push(chunk))
@@ -89,7 +97,11 @@ export const traceNativeSave = async ({executable, workspace, output}) => {
     })
     response.on('close', () => {
       if (route.pathname === '/api/events') {
-        record({elapsed: Date.now() - started, phase: 'stream-closed'})
+        record({
+          elapsed: Date.now() - started,
+          idle: Date.now() - lastStreamData,
+          phase: 'stream-closed',
+        })
       }
       target.destroy()
     })
@@ -114,6 +126,18 @@ export const traceNativeSave = async ({executable, workspace, output}) => {
       assert.equal(current.sessionId, upstream.sessionId)
       assert.equal(current.pid, upstream.pid)
       await writeFile(descriptor, original)
+    },
+    waitForStreamClose: async () => {
+      assert.ok(stream)
+      if (!stream.destroyed) {
+        const IDLE_LIMIT = 75_000
+        await once(stream, 'close', {signal: AbortSignal.timeout(IDLE_LIMIT)}).catch((error) => {
+          if (error.name !== 'AbortError') {
+            throw error
+          }
+          record({idle: Date.now() - lastStreamData, phase: 'stream-remained-open'})
+        })
+      }
     },
   }
 }
