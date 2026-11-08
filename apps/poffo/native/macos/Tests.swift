@@ -208,6 +208,12 @@ final class NativeUITests: XCTestCase {
         let configuration = WKWebViewConfiguration()
         configuration.setURLSchemeHandler(OriginPage(), forURLScheme: "tauri")
         let browser = WKWebView(frame: NSRect(x: 0, y: 0, width: 640, height: 640), configuration: configuration)
+        let window = NSWindow(contentRect: browser.frame, styleMask: [.titled], backing: .buffered, defer: false)
+        window.isReleasedWhenClosed = false
+        window.title = "WebKit graphics control"
+        window.contentView = browser
+        window.orderFrontRegardless()
+        defer { window.close() }
         let ready = expectation(description: "Independent WebKit canvas loaded")
         let navigation = ProbeNavigation(ready)
         browser.navigationDelegate = navigation
@@ -221,6 +227,7 @@ final class NativeUITests: XCTestCase {
             secureContext: isSecureContext,
             subtle: typeof crypto.subtle,
             randomUUID: typeof crypto.randomUUID,
+            visibility: document.visibilityState,
             pixiProbe: (() => {
               try {
                 const context = document.createElement('canvas').getContext('webgl', {
@@ -232,6 +239,7 @@ final class NativeUITests: XCTestCase {
                   available: !!context.getContextAttributes()?.stencil,
                   attributes: context.getContextAttributes(),
                   renderer: extension ? context.getParameter(extension.UNMASKED_RENDERER_WEBGL) : context.getParameter(context.RENDERER),
+                  lost: context.isContextLost(),
                   globalType: typeof WebGLRenderingContext
                 };
               } catch (error) { return {available: false, error: String(error)}; }
@@ -256,6 +264,8 @@ final class NativeUITests: XCTestCase {
         let value = try XCTUnwrap(evaluated as? String)
         var result = try XCTUnwrap(try JSONSerialization.jsonObject(with: Data(value.utf8)) as? [String: Any])
         result["metalDevices"] = MTLCopyAllDevices().map { $0.name }
+        result["nativeWindowVisible"] = window.isVisible
+        try XCUIScreen.main.screenshot().pngRepresentation.write(to: URL(fileURLWithPath: output).appendingPathComponent("graphics-control.png"))
         let destination = URL(fileURLWithPath: output).appendingPathComponent("graphics.json")
         try JSONSerialization.data(withJSONObject: result, options: [.prettyPrinted, .sortedKeys]).write(to: destination)
     }
