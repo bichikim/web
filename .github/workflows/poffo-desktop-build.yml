@@ -28,6 +28,10 @@ on:
         description: Exercise the installed native window and system dialogs
         type: boolean
         default: false
+      native-trace:
+        description: Observe a Mac native save through a separate CLI host
+        type: boolean
+        default: false
 
 run-name: ${{ inputs.reuse-run != '' && format('Validate Poffo installers from run {0}', inputs.reuse-run) || format('Build Poffo Desktop from {0}', github.ref_name) }}
 
@@ -244,6 +248,8 @@ jobs:
 
       - name: Validate installed native window, dialogs, save and recovery
         if: inputs.native-ui
+        env:
+          POFFO_NATIVE_TRACE: ${{ inputs.native-trace }}
         run: node apps/poffo/native/run.mjs
 
       - name: Upload runtime validation evidence

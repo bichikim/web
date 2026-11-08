@@ -69,6 +69,7 @@ final class NativeUITests: XCTestCase {
         savePanel(app).buttons["Save"].click()
         waitForSave(app)
         try await checkpoint(control, "saved")
+        if environment["POFFO_NATIVE_TRACE"] == "true" { return }
         closeClean(app)
         try await checkpoint(control, "clean-closed")
 
@@ -238,6 +239,7 @@ final class NativeUITests: XCTestCase {
         result["metalDevices"] = MTLCopyAllDevices().map { $0.name }
         let destination = URL(fileURLWithPath: output).appendingPathComponent("graphics.json")
         try JSONSerialization.data(withJSONObject: result, options: [.prettyPrinted, .sortedKeys]).write(to: destination)
+        if ProcessInfo.processInfo.environment["POFFO_NATIVE_TRACE"] == "true" { return }
         let crypto = try await browser.callAsyncJavaScript("""
           try {
             const bytes = new TextEncoder().encode('x'.repeat(22000000));

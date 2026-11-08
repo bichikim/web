@@ -10,6 +10,7 @@ import {dirname, join} from 'node:path'
 import {createInterface} from 'node:readline'
 import {fileURLToPath} from 'node:url'
 import {promisify} from 'node:util'
+import {traceNativeSave} from './macos/trace-host.mjs'
 
 const execute = promisify(execFile)
 const directory = dirname(fileURLToPath(import.meta.url))
@@ -31,6 +32,7 @@ const PART_COUNT = 122
 const ORIGINAL_MOTIONS = 6
 const EDITED_MOTIONS = 7
 const ERROR_LENGTH = 2000
+const TRACE_CHECKPOINTS = 7
 const source = join(directory, '../../../packages/puppet/examples/development-model.json')
 const sourceBytes = await readFile(source)
 await mkdir(workspace, {recursive: true})
@@ -55,6 +57,7 @@ let savedHash
 let attachedHost
 let attachedState
 let appSession
+let nativeTrace
 const connection = async (root = workspace) =>
   JSON.parse(await readFile(join(root, '.poffo/connection.json'), 'utf8'))
 
@@ -255,6 +258,18 @@ const checkpoints = new Map([
     async () => {
       savedHash = hash(await readNativeSave())
       await assertSnapshot(edited)
+      if (report.traceOnly) {
+        try {
+          await call('view.render', {
+            expectedRevision: edited.revision,
+            path: 'trace-frame.png',
+            size: 640,
+          })
+          report.rendererAfterSave = {available: true}
+        } catch (error) {
+          report.rendererAfterSave = {error: error.message}
+        }
+      }
       return {fileHash: savedHash, path: savedPath}
     },
   ],
@@ -357,6 +372,7 @@ const runMac = async (environment) => {
     'POFFO_NATIVE_WORKSPACE',
     'POFFO_NATIVE_OUTPUT',
     'POFFO_NATIVE_CONTROL',
+    'POFFO_NATIVE_TRACE',
   ]) {
     settings.NativeUITests.EnvironmentVariables[name] = environment[name]
   }
@@ -390,6 +406,11 @@ const stopWorkspace = async (root) => {
 }
 
 try {
+  if (process.env.POFFO_NATIVE_TRACE === 'true') {
+    assert.equal(process.platform, 'darwin')
+    nativeTrace = await traceNativeSave({executable, output, workspace})
+    report.traceOnly = true
+  }
   server.listen(0, '127.0.0.1')
   await once(server, 'listening')
   const environment = {
@@ -407,9 +428,13 @@ try {
       environment,
     )
   }
-  assert.equal(report.steps.length, checkpoints.size)
+  assert.equal(report.steps.length, report.traceOnly ? TRACE_CHECKPOINTS : checkpoints.size)
   assert.equal(hash(await readFile(join(workspace, 'source.json'))), report.sourceHash)
-  report.complete = true
+  if (report.traceOnly) {
+    report.traceComplete = true
+  } else {
+    report.complete = true
+  }
 } catch (error) {
   report.failure ??= {message: error.message, stage: [...checkpoints.keys()][report.steps.length]}
   process.exitCode = 1
@@ -429,7 +454,9 @@ try {
       report.lastState = {message: error.message.slice(0, ERROR_LENGTH)}
     }
   }
+  await nativeTrace?.restore()
   await Promise.all([workspace, attached].map(stopWorkspace))
+  await nativeTrace?.close()
   attachedHost?.stdin.end()
   if (
     attachedHost !== undefined &&
