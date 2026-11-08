@@ -1,0 +1,55 @@
+name: Diagnose installed Poffo Windows command
+
+on:
+  workflow_dispatch:
+    inputs:
+      run:
+        description: Desktop build run containing the Windows installer
+        required: true
+        type: string
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: windows-2025
+    timeout-minutes: 10
+    steps:
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24.x
+
+      - name: Inspect installed command invocation
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BUILD_RUN: ${{ inputs.run }}
+        run: |
+          $downloads = Join-Path $env:RUNNER_TEMP 'installer'
+          gh run download $env:BUILD_RUN --repo $env:GITHUB_REPOSITORY --name "poffo-desktop-x86_64-pc-windows-msvc-$env:BUILD_RUN" --dir $downloads
+          if ($LASTEXITCODE -ne 0) { throw 'Installer download failed' }
+          $installer = Get-ChildItem "$downloads/*.exe" | Select-Object -First 1
+          $destination = Join-Path $env:RUNNER_TEMP 'Poffo installed'
+          $process = Start-Process -FilePath $installer.FullName -ArgumentList "/S /D=$destination" -Wait -PassThru
+          if ($process.ExitCode -ne 0) { throw 'Installer failed' }
+          $env:POFFO_DIAGNOSTIC_CLI = Join-Path $destination 'poffo-cli.exe'
+          $env:POFFO_DIAGNOSTIC_BIN = Join-Path $env:RUNNER_TEMP 'Poffo command bin'
+          @'
+          const {execFileSync,spawnSync}=require('node:child_process')
+          const {readFileSync,writeFileSync}=require('node:fs')
+          const cli=process.env.POFFO_DIAGNOSTIC_CLI
+          console.log('direct',execFileSync(cli,['doctor'],{encoding:'utf8'}))
+          const installed=JSON.parse(execFileSync(cli,['install-cli','--directory',process.env.POFFO_DIAGNOSTIC_BIN],{encoding:'utf8'}))
+          const original=readFileSync(installed.path,'utf8')
+          console.log('registered-path',installed.path)
+          console.log('original-command',JSON.stringify(original))
+          for(const [label,content] of [['original',original],['without-verbatim-prefix',original.replaceAll('\\\\?\\','')]]){
+            writeFileSync(installed.path,content)
+            for(const command of [`""${installed.path}" doctor"`,`"${installed.path}" doctor`]){
+              const result=spawnSync(process.env.ComSpec,['/d','/s','/c',command],{encoding:'utf8',windowsVerbatimArguments:true})
+              console.log(JSON.stringify({label,command,status:result.status,error:result.error?.message,stdout:result.stdout,stderr:result.stderr}))
+            }
+          }
+          '@ | node
