@@ -47,6 +47,10 @@ on:
         description: Repeat installed character validation and capture request timing on failures
         type: boolean
         default: false
+      graphics-probe:
+        description: Compare native Metal rasterization and active WebKit contexts without UI Automation
+        type: boolean
+        default: false
 
 run-name: ${{ inputs.reuse-run != '' && format('Validate Poffo installers from run {0}', inputs.reuse-run) || format('Build Poffo Desktop from {0}', github.ref_name) }}
 
@@ -247,7 +251,7 @@ jobs:
           POFFO_VALIDATION_OUTPUT: ${{ runner.temp }}/poffo-validation
           POFFO_PIXEL_STAGE: ${{ inputs.pixel-stage }}
           POFFO_RUNTIME_DIAGNOSTICS: ${{ inputs.runtime-diagnostics }}
-        run: pnpm exec playwright test --config ${{ inputs.pixel-diagnostics && 'apps/poffo/playwright.pixels.config.ts' || 'apps/poffo/playwright.character.config.ts' }} --project chromium ${{ inputs.runtime-diagnostics && '--repeat-each=6' || '' }}
+        run: pnpm exec playwright test --config ${{ inputs.pixel-diagnostics && 'apps/poffo/playwright.pixels.config.ts' || 'apps/poffo/playwright.character.config.ts' }} --project chromium ${{ inputs.runtime-diagnostics && '--repeat-each=6 --max-failures=1' || '' }}
 
       - name: Prepare isolated native UI workspace
         if: inputs.native-ui
@@ -262,8 +266,13 @@ jobs:
           await appendFile(process.env.GITHUB_ENV, `POFFO_NATIVE_WORKSPACE=${workspace}\nPOFFO_NATIVE_OUTPUT=${output}\n`)
           NODE
 
+      - name: Probe native Metal and WebKit graphics
+        if: inputs.native-ui && inputs.graphics-probe && runner.os == 'macOS'
+        timeout-minutes: 3
+        run: swift apps/poffo/native/macos/Graphics.swift "$POFFO_NATIVE_OUTPUT/graphics-control.json"
+
       - name: Validate installed native window, dialogs, save and recovery
-        if: inputs.native-ui
+        if: inputs.native-ui && !inputs.graphics-probe
         env:
           POFFO_NATIVE_TRACE: ${{ inputs.native-trace }}
           POFFO_NATIVE_REQUIRE_GPU: ${{ inputs.require-native-gpu }}
