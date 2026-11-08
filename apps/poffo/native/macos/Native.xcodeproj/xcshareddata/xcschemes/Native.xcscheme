@@ -9,10 +9,5 @@
   </BuildAction>
   <TestAction buildConfiguration="Debug" selectedDebuggerIdentifier="" selectedLauncherIdentifier="Xcode.IDEFoundation.Launcher.PosixSpawn" shouldUseLaunchSchemeArgsEnv="NO">
     <Testables><TestableReference skipped="NO"><BuildableReference BuildableIdentifier="primary" BlueprintIdentifier="A00000000000000000000005" BuildableName="NativeUITests.xctest" BlueprintName="NativeUITests" ReferencedContainer="container:Native.xcodeproj"/></TestableReference></Testables>
-    <EnvironmentVariables>
-      <EnvironmentVariable key="POFFO_NATIVE_APP" value="$(POFFO_NATIVE_APP)" isEnabled="YES"/>
-      <EnvironmentVariable key="POFFO_NATIVE_WORKSPACE" value="$(POFFO_NATIVE_WORKSPACE)" isEnabled="YES"/>
-      <EnvironmentVariable key="POFFO_NATIVE_OUTPUT" value="$(POFFO_NATIVE_OUTPUT)" isEnabled="YES"/>
-    </EnvironmentVariables>
   </TestAction>
 </Scheme>

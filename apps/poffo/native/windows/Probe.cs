@@ -56,14 +56,19 @@ public static class NativeProbe {
         Automation.AddAutomationEventHandler(WindowPattern.WindowOpenedEvent, desktop, TreeScope.Subtree, opened);
         var process = Process.Start(new ProcessStartInfo(executable, "--workspace \"" + workspace + "\"") { UseShellExecute = false });
         var session = process.SessionId;
+        AutomationElement window = null;
+        var stage = "native-window";
         try {
-            var window = Wait(desktop, new AndCondition(new PropertyCondition(AutomationElement.ProcessIdProperty, process.Id),
+            window = Wait(desktop, new AndCondition(new PropertyCondition(AutomationElement.ProcessIdProperty, process.Id),
                 new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.Window)));
+            stage = "editor-ready";
+            Wait(window, new PropertyCondition(AutomationElement.NameProperty, "파츠 0개"));
             Wait(window, Named(ControlType.MenuItem, "파일"));
             File.WriteAllText(Path.Combine(output, "main-tree.txt"), Dump(window));
             Screenshot(window, Path.Combine(output, "main-window.png"));
             SetForegroundWindow(new IntPtr(window.Current.NativeWindowHandle));
             SendKeys.SendWait("^o");
+            stage = "native-open-dialog";
             var dialog = Wait(desktop, new AndCondition(new PropertyCondition(AutomationElement.ProcessIdProperty, process.Id),
                 new PropertyCondition(AutomationElement.ClassNameProperty, "#32770")));
             File.WriteAllText(Path.Combine(output, "open-tree.txt"), Dump(dialog));
@@ -73,6 +78,13 @@ public static class NativeProbe {
             ((WindowPattern)window.GetCurrentPattern(WindowPattern.Pattern)).Close();
             if (!process.WaitForExit(30000)) throw new Exception("Native app did not exit after cancelling open");
             File.WriteAllText(Path.Combine(output, "smoke.json"), "{\"nativeOpenCancelled\":true,\"cleanExit\":true,\"sessionId\":" + session + "}");
+        } catch (Exception error) {
+            File.WriteAllText(Path.Combine(output, "failure.txt"), stage + "\n" + error.ToString());
+            if (window != null) {
+                File.WriteAllText(Path.Combine(output, "failure-tree.txt"), Dump(window));
+                Screenshot(window, Path.Combine(output, "failure-window.png"));
+            }
+            throw;
         } finally {
             if (!process.HasExited) process.Kill();
             Automation.RemoveAllEventHandlers();
