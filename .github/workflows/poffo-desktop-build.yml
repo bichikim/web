@@ -43,6 +43,10 @@ on:
         description: Fail unless the installed native WebView renders the character
         type: boolean
         default: false
+      runtime-diagnostics:
+        description: Repeat installed character validation and capture request timing on failures
+        type: boolean
+        default: false
 
 run-name: ${{ inputs.reuse-run != '' && format('Validate Poffo installers from run {0}', inputs.reuse-run) || format('Build Poffo Desktop from {0}', github.ref_name) }}
 
@@ -242,7 +246,8 @@ jobs:
         env:
           POFFO_VALIDATION_OUTPUT: ${{ runner.temp }}/poffo-validation
           POFFO_PIXEL_STAGE: ${{ inputs.pixel-stage }}
-        run: pnpm exec playwright test --config ${{ inputs.pixel-diagnostics && 'apps/poffo/playwright.pixels.config.ts' || 'apps/poffo/playwright.character.config.ts' }} --project chromium
+          POFFO_RUNTIME_DIAGNOSTICS: ${{ inputs.runtime-diagnostics }}
+        run: pnpm exec playwright test --config ${{ inputs.pixel-diagnostics && 'apps/poffo/playwright.pixels.config.ts' || 'apps/poffo/playwright.character.config.ts' }} --project chromium ${{ inputs.runtime-diagnostics && '--repeat-each=6' || '' }}
 
       - name: Prepare isolated native UI workspace
         if: inputs.native-ui
@@ -298,7 +303,7 @@ jobs:
 
   compare-pixels:
     name: Compare cross-platform pixels
-    if: inputs.target == 'all' && !inputs.native-ui
+    if: inputs.target == 'all' && !inputs.native-ui && !inputs.runtime-diagnostics
     needs: build
     runs-on: ubuntu-latest
     timeout-minutes: 10

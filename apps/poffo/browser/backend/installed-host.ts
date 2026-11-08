@@ -4,6 +4,7 @@ import {once} from 'node:events'
 import {readFile} from 'node:fs/promises'
 import {join} from 'node:path'
 import {connectionSchema} from '../../src/backend/protocol'
+import {observeHostRequests} from './observe-host-requests'
 
 /** A shipped runtime must not discover a development Node installation through PATH. */
 export const installedEnvironment = () => ({
@@ -32,7 +33,7 @@ export const startInstalledHost = async (executable: string, workspace: string, 
   const lines = createInterface({input: child.stdout})
   let errors = ''
   child.stderr.on('data', (chunk) => {
-    errors += String(chunk)
+    errors += String(chunk).replace(/ws:\/\/\S+/gu, '[inspector endpoint]')
   })
   const LIMIT = 30_000
   try {
@@ -52,12 +53,26 @@ export const startInstalledHost = async (executable: string, workspace: string, 
     const connection = connectionSchema.parse(
       JSON.parse(await readFile(join(workspace, '.poffo/connection.json'), 'utf8')),
     )
+    const observation =
+      process.env.POFFO_RUNTIME_DIAGNOSTICS === 'true'
+        ? await observeHostRequests({
+            connection,
+            path: join(
+              process.env.POFFO_VALIDATION_OUTPUT ?? workspace,
+              'runtime',
+              connection.sessionId,
+              'requests.json',
+            ),
+            workspace,
+          })
+        : undefined
     return {
       close: async () => {
         if (child.exitCode !== null) {
           return
         }
         const exited = once(child, 'exit', {signal: AbortSignal.timeout(LIMIT)})
+        await observation?.restore()
         console.log('Closing installed host after parent EOF', {
           backendPid: connection.pid,
           launcherPid: child.pid,
@@ -94,8 +109,30 @@ export const startInstalledHost = async (executable: string, workspace: string, 
         })
         console.log('Installed host exited', {code: child.exitCode})
         lines.close()
+        await observation?.close()
       },
-      connection,
+      connection: observation?.connection ?? connection,
+      terminate: async () => {
+        if (child.exitCode === null) {
+          try {
+            process.kill(connection.pid, 'SIGKILL')
+          } catch (error) {
+            if (
+              !(
+                typeof error === 'object' &&
+                error !== null &&
+                'code' in error &&
+                error.code === 'ESRCH'
+              )
+            ) {
+              throw error
+            }
+          }
+          child.kill('SIGKILL')
+        }
+        lines.close()
+        await observation?.close()
+      },
     }
   } catch (error) {
     child.stdin.end()

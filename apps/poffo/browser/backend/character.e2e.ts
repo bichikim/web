@@ -16,6 +16,7 @@ import {Client} from '@modelcontextprotocol/sdk/client/index.js'
 import {StdioClientTransport} from '@modelcontextprotocol/sdk/client/stdio.js'
 import {installedEnvironment, startInstalledHost} from './installed-host'
 import {observeMotion} from './observe-motion'
+import {captureRuntimeState} from './capture-runtime-state'
 import {sendCommand} from '../../src/cli/connection'
 
 const executable = process.env.POFFO_INSTALLED_CLI
@@ -29,13 +30,16 @@ test('should author and reload a real character using the installed CLI, MCP and
 }, testInfo) => {
   test.skip(executable === undefined, 'Requires a built desktop runtime')
   const workspace = await mkdtemp(join(tmpdir(), 'Poffo character '))
-  const output =
+  const baseOutput =
     process.env.POFFO_VALIDATION_OUTPUT === undefined
       ? testInfo.outputPath('artifacts')
       : join(process.env.POFFO_VALIDATION_OUTPUT, browserName)
+  const diagnostic = process.env.POFFO_RUNTIME_DIAGNOSTICS === 'true'
+  const output = diagnostic ? join(baseOutput, `cycle-${testInfo.repeatEachIndex}`) : baseOutput
   await mkdir(output, {recursive: true})
   let host: Awaited<ReturnType<typeof startInstalledHost>> | undefined
   let complete = false
+  const failures: unknown[] = []
   const errors: string[] = []
   page.on('pageerror', (error) => errors.push(error.message))
   // Static CLI captures redraw explicitly. Keep the interactive SwiftShader ticker from
@@ -262,9 +266,30 @@ test('should author and reload a real character using the installed CLI, MCP and
       ),
     )
     complete = true
+  } catch (error) {
+    failures.push(error)
+    if (diagnostic && host !== undefined) {
+      await captureRuntimeState({
+        path: join(output, 'operation-failure.json'),
+        pid: host.connection.pid,
+        stage: 'operation',
+      }).catch((failure: unknown) => failures.push(failure))
+    }
   } finally {
     await page.goto('about:blank').catch(() => undefined)
-    await host?.close()
+    try {
+      await host?.close()
+    } catch (error) {
+      failures.push(error)
+      if (diagnostic && host !== undefined) {
+        await captureRuntimeState({
+          path: join(output, 'shutdown-failure.json'),
+          pid: host.connection.pid,
+          stage: 'parent-eof',
+        }).catch((failure: unknown) => failures.push(failure))
+      }
+      await host?.terminate().catch((failure: unknown) => failures.push(failure))
+    }
     if (!complete) {
       await cp(join(workspace, '.poffo/recipes'), join(output, 'recipes'), {
         preserveTimestamps: true,
@@ -274,5 +299,13 @@ test('should author and reload a real character using the installed CLI, MCP and
       )
     }
     await rm(workspace, {force: true, recursive: true})
+  }
+  if (failures.length === 1) {
+    throw failures[0]
+  }
+  if (failures.length > 1) {
+    throw new AggregateError(failures, 'Installed runtime operation and cleanup failed', {
+      cause: failures[0],
+    })
   }
 })
