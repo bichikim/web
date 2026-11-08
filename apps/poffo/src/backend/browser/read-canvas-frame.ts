@@ -41,7 +41,7 @@ const readResolvedPixels = (
   }
 }
 
-/** Reads the completed drawing buffer through an explicit RGBA8 resolve and restores GL state. */
+/** Reads the completed frame, using explicit RGBA8 resolves on WebGL2, and restores GL state. */
 export const readCanvasFrame = (canvas: HTMLCanvasElement): FramePixels => {
   const gl = canvas.getContext('webgl2') ?? canvas.getContext('webgl')
   if (gl === null || gl.isContextLost()) {

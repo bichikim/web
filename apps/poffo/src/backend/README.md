@@ -27,7 +27,7 @@ flowchart LR
 - Node는 [경로 입력](node/read-document-path.ts#L1)과 [PNG 인코더](node/encode-psd-texture.ts#L5)를 제공한다. 브라우저는 [File/Worker 입력](../../../../packages/puppet/src/editor/import-psd.ts#L12)과 브라우저 인코더를 사용한다.
 - [파일 저장](node/write-document-path.ts#L20)은 같은 디렉터리의 임시 파일을 완성·동기화한 뒤 확정한다. overwrite를 지정하지 않으면 기존 파일을 보존한다. 경로 접근은 workspace와 실제 symlink 대상을 검사한다.
 - [Node 호스트](node/start-node-host.ts#L1)는 단일 모델, 복구 저장, 인증, 클라이언트 수명과 GUI 연결을 구성한다. 최초 연결은 유한한 JSON snapshot으로 전달하고 이후 변경은 NDJSON delta로 전달한다. snapshot 로딩 중 들어온 이벤트는 sequence에 따라 연결해 큰 문서에서도 변경을 잃지 않는다. 연결 종료 시 그 클라이언트가 소유한 미완료 트랜잭션만 해제한다.
-- [렌더 어댑터](browser/render-document.ts#L19)는 별도 플레이어에서 요청 포즈를 그린 뒤 `onAfterRender`에서 PNG를 캡처한다. 현재 GUI 포즈를 수정하지 않는다. 물리는 끈 상태의 프레임 캡처이며 연속 물리 재생 검증은 별도다.
+- [렌더 어댑터](browser/render-document.ts#L24)는 별도 플레이어에서 요청 포즈를 그린 뒤 `onAfterRender`에서 RGBA를 읽는다. WebGL2에서는 같은 크기의 RGBA8 버퍼로 MSAA를 명시적으로 resolve하고, [공통 PNG 인코더](encode-frame-png.ts#L13)로 알파 형식과 행 방향을 변환한다. 현재 GUI 포즈를 수정하지 않는다. 물리는 끈 상태의 프레임 캡처이며 연속 물리 재생 검증은 별도다.
 
 PSD 인코더별 압축 바이트와 완전 투명한 픽셀의 RGB는 달라질 수 있다. 출력 비교에서는 바이트 일치와 문서·화면 픽셀의 의미 일치를 구분한다.
 
