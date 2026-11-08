@@ -13,7 +13,6 @@ test('should reject a clean shutdown when an already accepted edit makes the doc
   const host = await startNodeHost({workspace})
   try {
     const edited = host.service.execute({
-      operation: 'model.request',
       input: {
         document: {...host.model.read().document, framesPerSecond: 48},
         expectedRevision: 0,
@@ -21,6 +20,7 @@ test('should reject a clean shutdown when an already accepted edit makes the doc
         requestId: 'edit',
         type: 'edit',
       },
+      operation: 'model.request',
       requestId: 'edit',
     })
     await expect(host.close()).rejects.toThrow('unsaved-document')
