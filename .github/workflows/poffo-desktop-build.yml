@@ -130,7 +130,10 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: poffo-validation-${{ matrix.target }}-${{ github.run_id }}
-          path: ${{ runner.temp }}/poffo-validation/
+          path: |
+            ${{ runner.temp }}/poffo-validation/
+            apps/poffo/test-results/**/*.png
+            apps/poffo/test-results/**/*.webm
           if-no-files-found: ignore
           retention-days: 30
 

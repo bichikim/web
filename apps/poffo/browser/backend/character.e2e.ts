@@ -1,5 +1,5 @@
 import {expect, test} from 'playwright/test'
-import {copyFile, mkdir, mkdtemp, readFile, realpath, rm, writeFile} from 'node:fs/promises'
+import {copyFile, cp, mkdir, mkdtemp, readFile, realpath, rm, writeFile} from 'node:fs/promises'
 import {dirname, join} from 'node:path'
 import {tmpdir} from 'node:os'
 import {fileURLToPath} from 'node:url'
@@ -35,18 +35,43 @@ test('should author and reload a real character using the installed CLI, MCP and
       : join(process.env.POFFO_VALIDATION_OUTPUT, browserName)
   await mkdir(output, {recursive: true})
   let host: Awaited<ReturnType<typeof startInstalledHost>> | undefined
+  let complete = false
   const errors: string[] = []
   page.on('pageerror', (error) => errors.push(error.message))
-  const execute = async (...args: ReadonlyArray<string>) =>
-    JSON.parse(
-      (
-        await command(executable!, [...args, '--workspace', workspace], {
-          env: installedEnvironment(),
-          maxBuffer: 4 * 1024 * 1024,
-          timeout: 120_000,
-        })
-      ).stdout,
-    )
+  const execute = async (...args: ReadonlyArray<string>) => {
+    try {
+      return JSON.parse(
+        (
+          await command(executable!, [...args, '--workspace', workspace], {
+            env: installedEnvironment(),
+            maxBuffer: 4 * 1024 * 1024,
+            timeout: 120_000,
+          })
+        ).stdout,
+      )
+    } catch (error) {
+      if (error instanceof Error) {
+        await writeFile(
+          join(output, 'cli-failure.json'),
+          JSON.stringify(
+            {
+              command: args,
+              message: error.message,
+              ...Object.fromEntries(
+                ['code', 'signal', 'killed', 'stdout', 'stderr'].map((name) => [
+                  name,
+                  Reflect.get(error, name),
+                ]),
+              ),
+            },
+            null,
+            2,
+          ),
+        )
+      }
+      throw error
+    }
+  }
   try {
     const source = await readFile(
       fileURLToPath(
@@ -227,9 +252,18 @@ test('should author and reload a real character using the installed CLI, MCP and
         2,
       ),
     )
+    complete = true
   } finally {
     await page.goto('about:blank').catch(() => undefined)
     await host?.close()
+    if (!complete) {
+      await cp(join(workspace, '.poffo/recipes'), join(output, 'recipes'), {
+        preserveTimestamps: true,
+        recursive: true,
+      }).catch((error: unknown) =>
+        console.error('Could not retain recipe failure evidence.', error),
+      )
+    }
     await rm(workspace, {force: true, recursive: true})
   }
 })
