@@ -426,7 +426,14 @@ try {
     assert.equal(process.platform, 'win32')
     await run(
       'powershell.exe',
-      ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', join(directory, 'windows/run.ps1')],
+      [
+        '-Mta',
+        '-NoProfile',
+        '-ExecutionPolicy',
+        'Bypass',
+        '-File',
+        join(directory, 'windows/run.ps1'),
+      ],
       environment,
     )
   }

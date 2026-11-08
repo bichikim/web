@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Imaging;
@@ -28,6 +29,7 @@ public sealed class NativeDriver : IDisposable {
     private readonly object signalLock = new object();
     private bool disposed;
     private AutomationElement activeMenu;
+    private readonly List<Thread> actions = new List<Thread>();
 
     private void SignalChanged() {
         lock (signalLock) { if (!disposed) changed.Set(); }
@@ -40,6 +42,7 @@ public sealed class NativeDriver : IDisposable {
             finally { SignalChanged(); }
         }) {IsBackground = true};
         worker.SetApartmentState(ApartmentState.MTA);
+        actions.Add(worker);
         worker.Start();
     }
 
@@ -320,7 +323,13 @@ public sealed class NativeDriver : IDisposable {
 
     public void Dispose() {
         if (process != null && !process.HasExited) process.Kill();
+        Console.WriteLine("Native driver cleanup: waiting for modal actions");
+        foreach (var action in actions) {
+            if (!action.Join(TimeSpan.FromSeconds(30))) throw new TimeoutException("Native UI action did not finish before cleanup");
+        }
+        Console.WriteLine("Native driver cleanup: removing event handlers");
         Automation.RemoveAllEventHandlers();
         lock (signalLock) { disposed = true; changed.Dispose(); }
+        Console.WriteLine("Native driver cleanup: complete");
     }
 }
