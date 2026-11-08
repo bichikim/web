@@ -50,7 +50,7 @@ const report = {
   sourceHash: hash(sourceBytes),
   steps: [],
 }
-if (process.platform === 'darwin') {
+const inspectMacExecution = async () => {
   const translated = process.env.POFFO_NATIVE_EXECUTION === 'rosetta'
   const binaries = [join(application, 'Contents/MacOS/Poffo'), executable]
   const architectures = await Promise.all(
@@ -66,7 +66,7 @@ if (process.platform === 'darwin') {
         (binary) => binary.architectures.length === 1 && binary.architectures[0] === 'x86_64',
       ),
     )
-    const runtime = JSON.parse((await execute(executable, ['info'])).stdout)
+    const runtime = JSON.parse((await execute(executable, ['doctor'])).stdout)
     assert.equal(runtime.packaged, true)
     const expression = [
       'JSON.stringify({arch:process.arch,translated:',
@@ -76,7 +76,7 @@ if (process.platform === 'darwin') {
     const node = JSON.parse((await execute(runtime.executable, ['-p', expression])).stdout)
     assert.deepEqual(node, {arch: 'x64', translated: '1'})
   }
-  report.execution = {
+  return {
     binaries: architectures,
     hostArchitecture: process.arch,
     mode: translated ? 'rosetta' : 'native',
@@ -444,6 +444,9 @@ const stopWorkspace = async (root) => {
 }
 
 try {
+  if (process.platform === 'darwin') {
+    report.execution = await inspectMacExecution()
+  }
   if (process.env.POFFO_NATIVE_TRACE === 'true') {
     assert.equal(process.platform, 'darwin')
     nativeTrace = await traceNativeSave({executable, output, workspace})
