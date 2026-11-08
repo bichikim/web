@@ -58,8 +58,33 @@ export const startInstalledHost = async (executable: string, workspace: string, 
           return
         }
         const exited = once(child, 'exit', {signal: AbortSignal.timeout(LIMIT)})
+        console.log('Closing installed host after parent EOF', {
+          backendPid: connection.pid,
+          launcherPid: child.pid,
+        })
         child.stdin.end()
-        await exited
+        await exited.catch(async (error: unknown) => {
+          const descriptorPresent = await readFile(join(workspace, '.poffo/connection.json')).then(
+            () => true,
+            () => false,
+          )
+          const DIAGNOSTIC_LIMIT = 5000
+          const response = await fetch(`${connection.url}/api/snapshot`, {
+            headers: {Authorization: `Bearer ${connection.token}`},
+            signal: AbortSignal.timeout(DIAGNOSTIC_LIMIT),
+          }).then(
+            async (result) => {
+              await result.body?.cancel()
+              return result.status
+            },
+            (failure: unknown) => (failure instanceof Error ? failure.message : String(failure)),
+          )
+          throw new Error(
+            `Installed host EOF shutdown failed: ${JSON.stringify({backendPid: connection.pid, descriptorPresent, errors, exitCode: child.exitCode, launcherPid: child.pid, response, signalCode: child.signalCode})}`,
+            {cause: error},
+          )
+        })
+        console.log('Installed host exited', {code: child.exitCode})
         lines.close()
       },
       connection,

@@ -43,6 +43,7 @@ test('should author and reload a real character using the installed CLI, MCP and
   await page.clock.install({time: new Date('2026-01-01T00:00:00Z')})
   await page.clock.pauseAt(new Date('2026-01-01T01:00:00Z'))
   const execute = async (...args: ReadonlyArray<string>) => {
+    console.log('Installed CLI command', args[0])
     try {
       return JSON.parse(
         (
@@ -108,8 +109,10 @@ test('should author and reload a real character using the installed CLI, MCP and
         : await command(installed.path, ['doctor'])
     expect(JSON.parse(registered.stdout).packaged).toBe(true)
     host = await startInstalledHost(executable!, workspace, 'source.json')
-    const call = (operation: string, input?: unknown) =>
-      sendCommand(host!.connection, {input, operation, requestId: randomUUID()})
+    const call = async (operation: string, input?: unknown) => {
+      console.log('Installed host operation', operation)
+      return sendCommand(host!.connection, {input, operation, requestId: randomUUID()})
+    }
     await page.goto(`${host.connection.url}/editor#poffo-token=${host.connection.token}`)
     await expect(page.getByLabel('파츠 122개', {exact: true})).toBeVisible()
     const renderer = await page.evaluate(() => {
