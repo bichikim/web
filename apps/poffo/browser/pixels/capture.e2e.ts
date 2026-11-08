@@ -9,6 +9,7 @@ import {startInstalledHost} from '../backend/installed-host'
 import {sendCommand} from '../../src/cli/connection'
 import {beginTrace, installTrace, readTrace} from './trace'
 import {encodingControl} from './encoding-control'
+import {resolveControl} from './resolve-control'
 import {encodeFramePng} from '../../src/backend/encode-frame-png'
 
 const hash = (value: Uint8Array | string) => createHash('sha256').update(value).digest('hex')
@@ -98,6 +99,8 @@ test('should preserve the captured frame while tracing pixel boundaries', async 
       }),
     )
     const control = await encodingControl(page)
+    const resolves = await resolveControl(page)
+    expect(resolves.error).toBe(0)
     expect(control.error).toBe(0)
     expect(control.pixels).toEqual(control.input)
     const encoded = Buffer.from(control.dataUrl.split(',')[1]!, 'base64')
@@ -117,6 +120,7 @@ test('should preserve the captured frame while tracing pixel boundaries', async 
           nativePngPixelHash: hash(observed.data),
           platform: process.platform,
           pngPixelHash: hash(PNG.sync.read(canonical).data),
+          resolves,
           stageSelection: process.env.POFFO_PIXEL_STAGE || 'none',
           width: observed.width,
           ...trace,

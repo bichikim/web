@@ -16,7 +16,7 @@ export default defineConfig({
   ],
   reporter: 'list',
   testDir: './browser/backend',
-  testMatch: '**/character.e2e.ts',
+  testMatch: ['**/character.e2e.ts', '**/pixel-resolve.e2e.ts'],
   timeout: 480_000,
   use: {
     headless: true,
