@@ -53,3 +53,41 @@ jobs:
             }
           }
           '@ | node
+
+      - name: Measure a checkpoint without the interactive GPU
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BUILD_RUN: ${{ inputs.run }}
+        run: |
+          $evidence = Join-Path $env:RUNNER_TEMP 'prior-evidence'
+          gh run download $env:BUILD_RUN --repo $env:GITHUB_REPOSITORY --name "poffo-validation-x86_64-pc-windows-msvc-$env:BUILD_RUN" --dir $evidence
+          if ($LASTEXITCODE -ne 0) { throw 'Evidence download failed' }
+          $checkpoint = Get-ChildItem $evidence -Recurse -Filter 0.poffo | Select-Object -First 1
+          $env:POFFO_PROBE_WORKSPACE = Join-Path $env:RUNNER_TEMP 'Poffo save probe'
+          New-Item -ItemType Directory -Force $env:POFFO_PROBE_WORKSPACE | Out-Null
+          Copy-Item -LiteralPath $checkpoint.FullName -Destination (Join-Path $env:POFFO_PROBE_WORKSPACE 'model.poffo')
+          $env:POFFO_PROBE_CLI = Join-Path $env:RUNNER_TEMP 'Poffo installed/poffo-cli.exe'
+          @'
+          const {spawn}=require('node:child_process')
+          const {readFileSync}=require('node:fs')
+          const {join}=require('node:path')
+          const {createInterface}=require('node:readline')
+          const {once}=require('node:events')
+          ;(async()=>{
+            const workspace=process.env.POFFO_PROBE_WORKSPACE
+            const host=spawn(process.env.POFFO_PROBE_CLI,['start','--cli','--parent-stdio','--workspace',workspace,'--file','model.poffo'],{stdio:['pipe','pipe','pipe']})
+            const lines=createInterface({input:host.stdout})
+            host.stderr.on('data',value=>process.stderr.write(value))
+            try{
+              await new Promise((resolve,reject)=>{host.once('error',reject);host.once('exit',code=>reject(Error(`Host exited ${code}`)));lines.on('line',line=>{if(line.startsWith('{')&&JSON.parse(line).ready)resolve()})})
+              const connection=JSON.parse(readFileSync(join(workspace,'.poffo/connection.json'),'utf8'))
+              const started=Date.now()
+              const response=await fetch(`${connection.url}/api/command`,{method:'POST',headers:{Authorization:`Bearer ${connection.token}`,'Content-Type':'application/json'},body:JSON.stringify({operation:'document.save',requestId:crypto.randomUUID(),input:{expectedRevision:0,format:'poffo',path:'probe.poffo'}}),signal:AbortSignal.timeout(180000)})
+              console.log(JSON.stringify({operation:'document.save',milliseconds:Date.now()-started,result:await response.json()}))
+            }finally{
+              const exited=once(host,'exit',{signal:AbortSignal.timeout(30000)})
+              host.stdin.end();await exited;lines.close()
+            }
+          })().catch(error=>{console.error(error);process.exitCode=1})
+          '@ | node
