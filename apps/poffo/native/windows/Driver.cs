@@ -181,6 +181,8 @@ public sealed class NativeDriver : IDisposable {
 
     private void WaitForExit() {
         if (!process.WaitForExit(60000)) throw new Exception("Native application did not exit");
+        Console.WriteLine("Native application exit code: " + process.ExitCode);
+        if (process.ExitCode != 0) throw new Exception("Native application exited with code " + process.ExitCode);
     }
 
     private void Checkpoint(string name) {
