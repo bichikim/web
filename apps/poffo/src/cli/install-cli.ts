@@ -1,6 +1,7 @@
 import {lstat, mkdir, readFile, readlink, realpath, symlink, writeFile} from 'node:fs/promises'
 import {homedir} from 'node:os'
 import {delimiter, join, resolve} from 'node:path'
+import {createWindowsCommand} from './create-windows-command'
 
 const pointsToExecutable = async (path: string, executable: string) => {
   if ((await readlink(path)) === executable) {
@@ -25,7 +26,7 @@ export const installCli = async (directory?: string) => {
   )
   await mkdir(root, {recursive: true})
   const path = join(root, windows ? 'poffo.cmd' : 'poffo')
-  const content = `@echo off\r\n"${executable.replaceAll('%', '%%')}" %*\r\n`
+  const content = windows ? createWindowsCommand(executable) : ''
   const existing = await lstat(path).catch((error: unknown) => {
     if (typeof error === 'object' && error !== null && 'code' in error && error.code === 'ENOENT') {
       return undefined
