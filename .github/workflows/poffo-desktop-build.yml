@@ -65,6 +65,7 @@ jobs:
           persist-credentials: false
 
       - name: Set up pnpm
+        if: inputs.reuse-run == '' || !inputs.native-ui
         uses: pnpm/action-setup@v6
         with:
           version: ${{ env.PNPM_VERSION }}
@@ -73,7 +74,8 @@ jobs:
         uses: actions/setup-node@v6
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: pnpm
+          cache: ${{ (inputs.reuse-run == '' || !inputs.native-ui) && 'pnpm' || '' }}
+          package-manager-cache: ${{ inputs.reuse-run == '' || !inputs.native-ui }}
 
       - name: Set up Rust
         if: inputs.reuse-run == ''
