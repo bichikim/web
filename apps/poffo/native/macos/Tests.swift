@@ -207,6 +207,21 @@ final class NativeUITests: XCTestCase {
           JSON.stringify({
             webgl2: !!document.createElement('canvas').getContext('webgl2'),
             webgl: !!document.createElement('canvas').getContext('webgl'),
+            pixiProbe: (() => {
+              try {
+                const context = document.createElement('canvas').getContext('webgl', {
+                  stencil: true, failIfMajorPerformanceCaveat: false
+                });
+                if (!context) return {available: false};
+                const extension = context.getExtension('WEBGL_debug_renderer_info');
+                return {
+                  available: !!context.getContextAttributes()?.stencil,
+                  attributes: context.getContextAttributes(),
+                  renderer: extension ? context.getParameter(extension.UNMASKED_RENDERER_WEBGL) : context.getParameter(context.RENDERER),
+                  globalType: typeof WebGLRenderingContext
+                };
+              } catch (error) { return {available: false, error: String(error)}; }
+            })(),
             userAgent: navigator.userAgent
           })
           """)
