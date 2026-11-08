@@ -17,7 +17,7 @@ Mac의 `native-trace=true`는 별도의 CLI 호스트와 외부 HTTP 중계를 �
 
 Mac에서는 별도의 실제 창에 표시한 기본 WKWebView 캔버스와 Metal 장치 목록을 `graphics.json`으로 검사한다. 창의 표시 상태·화면과 WebGL1/2 stencil 속성·context 소실 여부를 함께 남긴다. 단순 context 생성과 Pixi가 요구하는 stencil context 속성 검사를 구분한다. Poffo가 렌더러를 찾지 못하고 이 대조 캔버스도 같은 속성 검사에 실패한 경우에만 `nativeFrame.available: false`를 남기고 시스템 대화상자 검사를 계속한다. 이 결과는 네이티브 캐릭터 렌더 통과를 뜻하지 않는다. 그 외 렌더 오류와 빈 PNG는 검증 실패다.
 
-Windows UI Automation은 별도 MTA 스레드에서 실행한다. 모달 창을 여는 호출도 보조 스레드로 보내고 실제 창 생성·종료 이벤트를 기다린다. Microsoft의 [Invoke 호출 주의사항](https://learn.microsoft.com/en-us/dotnet/api/system.windows.automation.invokepattern.invoke?view=netframework-4.8.1)과 [스레드 지침](https://learn.microsoft.com/en-us/dotnet/framework/ui-automation/ui-automation-threading-issues)을 따른다.
+Windows UI Automation은 PowerShell도 `-Mta`로 시작하고 별도 MTA 스레드에서 실행한다. 모달 창을 여는 호출도 보조 스레드로 보내고 실제 창 생성·종료 이벤트를 기다린다. 앱 종료 코드와 보조 호출 완료를 확인한 뒤 이벤트를 등록했던 스레드에서 해제한다. Microsoft의 [Invoke 호출 주의사항](https://learn.microsoft.com/en-us/dotnet/api/system.windows.automation.invokepattern.invoke?view=netframework-4.8.1)과 [스레드 지침](https://learn.microsoft.com/en-us/windows/win32/winauto/uiauto-threading)을 따른다.
 
 로컬 실행에는 설치된 앱·내장 CLI와 비어 있는 전용 작업 폴더가 필요하다. `POFFO_NATIVE_APP`, `POFFO_INSTALLED_CLI`, `POFFO_NATIVE_WORKSPACE`, `POFFO_NATIVE_OUTPUT`을 지정하고 `node apps/poffo/native/run.mjs`를 실행한다. 출력 폴더의 상위에는 워크플로가 생성한 `installer.json`이 있어야 한다. 테스트는 자체 workspace만 정리한다. UI 조작 중에는 클립보드와 포커스를 사용하므로 일상 작업과 동시에 실행하지 않는다.
 
