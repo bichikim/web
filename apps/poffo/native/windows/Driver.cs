@@ -101,10 +101,12 @@ public sealed class NativeDriver : IDisposable {
         AutomationElement result = null;
         var main = new IntPtr(window.Current.NativeWindowHandle);
         Until(() => {
-            foreach (AutomationElement candidate in AutomationElement.RootElement.FindAll(TreeScope.Children,
-                new PropertyCondition(AutomationElement.ClassNameProperty, "#32770"))) {
-                if (GetWindow(new IntPtr(candidate.Current.NativeWindowHandle), Owner) == main ||
-                    candidate.Current.ProcessId == process.Id) { result = candidate; return true; }
+            foreach (var root in new[] {window, AutomationElement.RootElement}) {
+                foreach (AutomationElement candidate in root.FindAll(TreeScope.Children,
+                    new PropertyCondition(AutomationElement.ClassNameProperty, "#32770"))) {
+                    if (GetWindow(new IntPtr(candidate.Current.NativeWindowHandle), Owner) == main ||
+                        candidate.Current.ProcessId == process.Id) { result = candidate; return true; }
+                }
             }
             return false;
         }, "owned Win32 dialog");
