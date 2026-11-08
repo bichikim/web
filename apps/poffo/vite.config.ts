@@ -1,6 +1,7 @@
 import {readFile, readFileSync} from 'node:fs'
+import {cp} from 'node:fs/promises'
 import {fileURLToPath} from 'node:url'
-import {defineConfig, type Plugin} from 'vite'
+import {build, defineConfig, type Plugin} from 'vite'
 import solid from 'vite-plugin-solid'
 import UnoCSS from 'unocss/vite'
 
@@ -11,6 +12,26 @@ const vendorAssets = [
   'vision_wasm_nosimd_internal.js',
   'vision_wasm_nosimd_internal.wasm',
 ]
+
+const cliBundle = (): Plugin => ({
+  apply: 'build',
+  async closeBundle() {
+    await cp(new URL('./skills', import.meta.url), new URL('./dist/skills', import.meta.url), {
+      recursive: true,
+    })
+    await build({
+      build: {
+        emptyOutDir: false,
+        minify: false,
+        outDir: fileURLToPath(new URL('./dist/cli', import.meta.url)),
+        ssr: fileURLToPath(new URL('./src/cli/main.ts', import.meta.url)),
+        target: 'node24',
+      },
+      configFile: false,
+    })
+  },
+  name: 'poffo-cli-bundle',
+})
 
 /** Serves the same worker dependencies in development and in the production artifact. */
 const trackingAssets = (): Plugin => {
@@ -69,7 +90,8 @@ const developmentExamples = (): Plugin => ({
 })
 
 export default defineConfig({
-  plugins: [UnoCSS(), solid(), trackingAssets(), developmentExamples()],
+  optimizeDeps: {exclude: ['es-toolkit']},
+  plugins: [UnoCSS(), solid(), trackingAssets(), developmentExamples(), cliBundle()],
   resolve: {
     // Build one shared Puppet graph instead of initializing Pixi from separate library bundles.
     alias: [

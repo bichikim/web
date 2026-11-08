@@ -5,7 +5,7 @@ import {
   type PuppetDocument,
 } from '../player/document'
 import {loadTextureImage} from '../player/internal/load-texture-image'
-import {MAXIMUM_TEXTURE_PIXELS} from './internal/texture-limits'
+import {MAXIMUM_TEXTURE_PIXELS} from '../texture-limits'
 
 export type ImportPngErrorCode =
   | GenerateMeshErrorCode

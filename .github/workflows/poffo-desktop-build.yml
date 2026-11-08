@@ -25,15 +25,15 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - runner: macos-latest
+          - runner: macos-15
             target: aarch64-apple-darwin
             bundles: dmg
             extension: dmg
-          - runner: macos-latest
+          - runner: macos-15-intel
             target: x86_64-apple-darwin
             bundles: dmg
             extension: dmg
-          - runner: windows-latest
+          - runner: windows-2025
             target: x86_64-pc-windows-msvc
             bundles: nsis
             extension: exe
@@ -71,10 +71,68 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Verify native runner architecture
+        env:
+          BUILD_TARGET: ${{ matrix.target }}
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict'
+          const expected = {
+            'aarch64-apple-darwin': ['darwin', 'arm64'],
+            'x86_64-apple-darwin': ['darwin', 'x64'],
+            'x86_64-pc-windows-msvc': ['win32', 'x64'],
+          }[process.env.BUILD_TARGET]
+          assert.deepEqual([process.platform, process.arch], expected)
+          console.log(JSON.stringify({platform: process.platform, arch: process.arch, node: process.version}))
+          NODE
+
       - name: Build desktop installer
         run: |
           pnpm --filter @winter-love/poffo exec tauri build --ci \
             --target "${{ matrix.target }}" --bundles "${{ matrix.bundles }}" -- --locked
+
+      - name: Install macOS artifact outside the checkout
+        if: runner.os == 'macOS'
+        env:
+          BUILD_TARGET: ${{ matrix.target }}
+        run: |
+          destination="$RUNNER_TEMP/Poffo installed"
+          mounted="$(mktemp -d)"
+          installer="$(find "apps/poffo/src-tauri/target/$BUILD_TARGET/release/bundle/dmg" -name '*.dmg' -print -quit)"
+          hdiutil attach -readonly -nobrowse -mountpoint "$mounted" "$installer"
+          trap 'hdiutil detach "$mounted"' EXIT
+          mkdir -p "$destination"
+          ditto "$mounted/Poffo.app" "$destination/Poffo App.app"
+          echo "POFFO_INSTALLED_CLI=$destination/Poffo App.app/Contents/MacOS/poffo-cli" >> "$GITHUB_ENV"
+
+      - name: Install Windows artifact outside the checkout
+        if: runner.os == 'Windows'
+        shell: pwsh
+        env:
+          BUILD_TARGET: ${{ matrix.target }}
+        run: |
+          $destination = Join-Path $env:RUNNER_TEMP 'Poffo installed'
+          $installer = Get-ChildItem "apps/poffo/src-tauri/target/$env:BUILD_TARGET/release/bundle/nsis/*.exe" | Select-Object -First 1
+          $process = Start-Process -FilePath $installer.FullName -ArgumentList "/S /D=$destination" -Wait -PassThru
+          if ($process.ExitCode -ne 0) { throw "Installer failed: $($process.ExitCode)" }
+          "POFFO_INSTALLED_CLI=$destination/poffo-cli.exe" >> $env:GITHUB_ENV
+
+      - name: Install Chromium for installed runtime validation
+        run: pnpm exec playwright install chromium
+
+      - name: Validate installed Node, CLI, MCP and real character workflow
+        env:
+          POFFO_VALIDATION_OUTPUT: ${{ runner.temp }}/poffo-validation
+        run: pnpm exec playwright test --config apps/poffo/playwright.character.config.ts --project chromium
+
+      - name: Upload runtime validation evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: poffo-validation-${{ matrix.target }}-${{ github.run_id }}
+          path: ${{ runner.temp }}/poffo-validation/
+          if-no-files-found: ignore
+          retention-days: 30
 
       - name: Upload installer
         id: installer

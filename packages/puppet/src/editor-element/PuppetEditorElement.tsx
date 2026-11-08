@@ -4,7 +4,7 @@ import {createEffect, createSignal, untrack} from 'solid-js'
 import {render} from 'solid-js/web'
 import {PuppetEditor} from '../editor/PuppetEditor'
 import type {EditorController, EditorState} from '../editor/control'
-import type {ModelApplied, ModelBinding, ModelChange} from '../editor/model'
+import type {LocalModelBinding, ModelApplied, ModelChange} from '../editor/model'
 import {EditorPortalProvider} from '../design-system'
 import {createEmptyDocument, parseDocumentValue, type PuppetDocument} from '../player'
 import {createElementModel} from './create-element-model'
@@ -29,7 +29,7 @@ export interface PuppetDocumentCommit {
 
 interface ElementConnection {
   readonly id: string
-  model: ModelBinding | null
+  model: LocalModelBinding | null
   control: EditorController | undefined
   boundControl: PuppetEditorElementControl | undefined
   dispose: (() => void) | null

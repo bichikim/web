@@ -1,6 +1,6 @@
+import {mapModelRequest, type ModelRequestResult} from './model'
 import {type Accessor, createMemo, createSignal, onCleanup} from 'solid-js'
 
-import type {ModelCommandResult} from './model'
 import type {PixelData} from '../mesh'
 import {
   getScenePartStates,
@@ -26,7 +26,7 @@ export interface UseAutoMeshProps {
   readonly document: Accessor<PuppetDocument>
   readonly onBeforeApply?: () => void
   /** Applies the generated model and returns the host commit outcome; rejection keeps the generator open. */
-  readonly onDocumentChange: (document: PuppetDocument) => ModelCommandResult
+  readonly onDocumentChange: (document: PuppetDocument) => ModelRequestResult
   readonly onNotice?: (message: string | null) => void
   readonly partIds: Accessor<ReadonlyArray<string>>
 }
@@ -94,13 +94,14 @@ export const useAutoMesh = (props: UseAutoMeshProps): UseAutoMeshResult => {
   }
   const applyGeneratedDocument = (document: PuppetDocument) => {
     props.onBeforeApply?.()
-    const committed = props.onDocumentChange(document)
-    if (!committed.ok) {
-      reportError('진행 중인 편집을 마친 후 다시 생성하세요.')
-      return false
-    }
-    props.onNotice?.(null)
-    return true
+    return mapModelRequest(props.onDocumentChange(document), (committed) => {
+      if (!committed.ok) {
+        reportError('진행 중인 편집을 마친 후 다시 생성하세요.')
+        return false
+      }
+      props.onNotice?.(null)
+      return true
+    })
   }
   const targets = createMemo(() => {
     const partIds = props.partIds()

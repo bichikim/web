@@ -2,6 +2,9 @@
   "name": "@winter-love/poffo",
   "version": "0.0.0",
   "private": true,
+  "bin": {
+    "poffo": "bin/poffo.mjs"
+  },
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -18,15 +21,21 @@
     "@dschz/solid-flow": "0.2.6",
     "@kobalte/core": "^0.13.13",
     "@mediapipe/tasks-vision": "^1.1.0",
+    "@modelcontextprotocol/sdk": "^1.32.2",
     "@tauri-apps/api": "2.12.4",
     "@tauri-apps/plugin-dialog": "^2.8.4",
     "@tauri-apps/plugin-fs": "^2.7.1",
     "@winter-love/puppet": "workspace:*",
     "es-toolkit": "catalog:",
-    "solid-js": "catalog:"
+    "fast-json-patch": "^3.1.1",
+    "pngjs": "7.0.0",
+    "solid-js": "catalog:",
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@tauri-apps/cli": "2.12.4",
+    "@types/pngjs": "^6.0.5",
+    "ag-psd": "^31.0.2",
     "typescript": "catalog:",
     "unocss": "catalog:",
     "vite": "catalog:",

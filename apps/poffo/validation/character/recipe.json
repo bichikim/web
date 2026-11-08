@@ -1,0 +1,378 @@
+{
+  "version": 1,
+  "input": "source.json",
+  "output": {
+    "path": "model.poffo"
+  },
+  "steps": [
+    {
+      "type": "patch",
+      "title": "CLI 검증 모션 추가",
+      "patch": [
+        {
+          "op": "add",
+          "path": "/motions/-",
+          "value": {
+            "id": "cli-verification",
+            "duration": 4,
+            "tracks": [
+              {
+                "kind": "parameter",
+                "parameterId": "face-x",
+                "keyframes": [
+                  {
+                    "easing": "ease-in-out",
+                    "time": 0,
+                    "value": 0
+                  },
+                  {
+                    "easing": "ease-in-out",
+                    "time": 1,
+                    "value": 24
+                  },
+                  {
+                    "easing": "ease-in-out",
+                    "time": 3,
+                    "value": -24
+                  },
+                  {
+                    "easing": "ease-in-out",
+                    "time": 4,
+                    "value": 0
+                  }
+                ]
+              },
+              {
+                "kind": "parameter",
+                "parameterId": "face-y",
+                "keyframes": [
+                  {
+                    "easing": "ease-in-out",
+                    "time": 0,
+                    "value": 0
+                  },
+                  {
+                    "easing": "ease-in-out",
+                    "time": 1,
+                    "value": 16
+                  },
+                  {
+                    "easing": "ease-in-out",
+                    "time": 3,
+                    "value": -16
+                  },
+                  {
+                    "easing": "ease-in-out",
+                    "time": 4,
+                    "value": 0
+                  }
+                ]
+              },
+              {
+                "kind": "parameter",
+                "parameterId": "face-z",
+                "keyframes": [
+                  {
+                    "easing": "ease-in-out",
+                    "time": 0,
+                    "value": 0
+                  },
+                  {
+                    "easing": "ease-in-out",
+                    "time": 1,
+                    "value": -8
+                  },
+                  {
+                    "easing": "ease-in-out",
+                    "time": 3,
+                    "value": 8
+                  },
+                  {
+                    "easing": "ease-in-out",
+                    "time": 4,
+                    "value": 0
+                  }
+                ]
+              },
+              {
+                "kind": "parameter",
+                "parameterId": "body-x",
+                "keyframes": [
+                  {
+                    "easing": "ease-in-out",
+                    "time": 0,
+                    "value": 0
+                  },
+                  {
+                    "easing": "ease-in-out",
+                    "time": 1,
+                    "value": -14
+                  },
+                  {
+                    "easing": "ease-in-out",
+                    "time": 3,
+                    "value": 14
+                  },
+                  {
+                    "easing": "ease-in-out",
+                    "time": 4,
+                    "value": 0
+                  }
+                ]
+              },
+              {
+                "kind": "parameter",
+                "parameterId": "full-body-x",
+                "keyframes": [
+                  {
+                    "easing": "ease-in-out",
+                    "time": 0,
+                    "value": 0
+                  },
+                  {
+                    "easing": "ease-in-out",
+                    "time": 1,
+                    "value": 12
+                  },
+                  {
+                    "easing": "ease-in-out",
+                    "time": 3,
+                    "value": -12
+                  },
+                  {
+                    "easing": "ease-in-out",
+                    "time": 4,
+                    "value": 0
+                  }
+                ]
+              },
+              {
+                "kind": "parameter",
+                "parameterId": "eye-close-left",
+                "keyframes": [
+                  {
+                    "easing": "ease-in-out",
+                    "time": 0,
+                    "value": 0
+                  },
+                  {
+                    "easing": "ease-in-out",
+                    "time": 0.75,
+                    "value": 0
+                  },
+                  {
+                    "easing": "ease-in-out",
+                    "time": 0.9,
+                    "value": 1
+                  },
+                  {
+                    "easing": "ease-in-out",
+                    "time": 1.05,
+                    "value": 0
+                  },
+                  {
+                    "easing": "ease-in-out",
+                    "time": 2.8,
+                    "value": 0
+                  },
+                  {
+                    "easing": "ease-in-out",
+                    "time": 2.95,
+                    "value": 1
+                  },
+                  {
+                    "easing": "ease-in-out",
+                    "time": 3.1,
+                    "value": 0
+                  },
+                  {
+                    "easing": "ease-in-out",
+                    "time": 4,
+                    "value": 0
+                  }
+                ]
+              },
+              {
+                "kind": "parameter",
+                "parameterId": "eye-close-right",
+                "keyframes": [
+                  {
+                    "easing": "ease-in-out",
+                    "time": 0,
+                    "value": 0
+                  },
+                  {
+                    "easing": "ease-in-out",
+                    "time": 0.75,
+                    "value": 0
+                  },
+                  {
+                    "easing": "ease-in-out",
+                    "time": 0.9,
+                    "value": 1
+                  },
+                  {
+                    "easing": "ease-in-out",
+                    "time": 1.05,
+                    "value": 0
+                  },
+                  {
+                    "easing": "ease-in-out",
+                    "time": 2.8,
+                    "value": 0
+                  },
+                  {
+                    "easing": "ease-in-out",
+                    "time": 2.95,
+                    "value": 1
+                  },
+                  {
+                    "easing": "ease-in-out",
+                    "time": 3.1,
+                    "value": 0
+                  },
+                  {
+                    "easing": "ease-in-out",
+                    "time": 4,
+                    "value": 0
+                  }
+                ]
+              },
+              {
+                "kind": "parameter",
+                "parameterId": "mouth-open",
+                "keyframes": [
+                  {
+                    "easing": "ease-in-out",
+                    "time": 0,
+                    "value": 0
+                  },
+                  {
+                    "easing": "ease-in-out",
+                    "time": 1.6,
+                    "value": 0.8
+                  },
+                  {
+                    "easing": "ease-in-out",
+                    "time": 2.4,
+                    "value": 0.2
+                  },
+                  {
+                    "easing": "ease-in-out",
+                    "time": 4,
+                    "value": 0
+                  }
+                ]
+              },
+              {
+                "kind": "parameter",
+                "parameterId": "mouth-smile",
+                "keyframes": [
+                  {
+                    "easing": "ease-in-out",
+                    "time": 0,
+                    "value": 0
+                  },
+                  {
+                    "easing": "ease-in-out",
+                    "time": 1.6,
+                    "value": 0.8
+                  },
+                  {
+                    "easing": "ease-in-out",
+                    "time": 3,
+                    "value": -0.4
+                  },
+                  {
+                    "easing": "ease-in-out",
+                    "time": 4,
+                    "value": 0
+                  }
+                ]
+              },
+              {
+                "kind": "parameter",
+                "parameterId": "tail-sway",
+                "keyframes": [
+                  {
+                    "easing": "ease-in-out",
+                    "time": 0,
+                    "value": 0
+                  },
+                  {
+                    "easing": "ease-in-out",
+                    "time": 1,
+                    "value": 0.6
+                  },
+                  {
+                    "easing": "ease-in-out",
+                    "time": 3,
+                    "value": -0.6
+                  },
+                  {
+                    "easing": "ease-in-out",
+                    "time": 4,
+                    "value": 0
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "type": "render",
+      "path": "neutral.png",
+      "size": 1280,
+      "parameters": {}
+    },
+    {
+      "type": "render",
+      "path": "head-left.png",
+      "size": 1280,
+      "parameters": {
+        "face-x": -30,
+        "face-y": 20
+      }
+    },
+    {
+      "type": "render",
+      "path": "head-right.png",
+      "size": 1280,
+      "parameters": {
+        "face-x": 30,
+        "face-y": -20
+      }
+    },
+    {
+      "type": "render",
+      "path": "blink.png",
+      "size": 1280,
+      "parameters": {
+        "eye-close-left": 1,
+        "eye-close-right": 1
+      }
+    },
+    {
+      "type": "render",
+      "path": "smile.png",
+      "size": 1280,
+      "parameters": {
+        "mouth-open": 0.8,
+        "mouth-smile": 1
+      }
+    },
+    {
+      "type": "render",
+      "path": "counterturn.png",
+      "size": 1280,
+      "parameters": {
+        "full-body-x": 15,
+        "body-x": -20,
+        "face-x": 25,
+        "face-y": 10
+      }
+    }
+  ]
+}

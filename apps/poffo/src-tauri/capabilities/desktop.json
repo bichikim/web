@@ -10,6 +10,9 @@
     "core:menu:default",
     "core:resources:allow-close",
     "core:window:allow-is-fullscreen",
-    "core:window:allow-set-fullscreen"
+    "core:window:allow-set-fullscreen",
+    "dialog:allow-save",
+    "fs:allow-write-file",
+    "dialog:allow-message"
   ]
 }

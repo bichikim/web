@@ -1,4 +1,5 @@
-import {isTauri} from '@tauri-apps/api/core'
+import {installDesktopCli} from './install-cli'
+import {invoke, isTauri} from '@tauri-apps/api/core'
 import {getCurrentWindow} from '@tauri-apps/api/window'
 import {Menu, MenuItem, PredefinedMenuItem, Submenu} from '@tauri-apps/api/menu'
 
@@ -82,6 +83,17 @@ const createActionItem = async ({action, accelerator, label}: DesktopMenuItemSpe
 
 const createSeparator = () => PredefinedMenuItem.new({item: 'Separator'})
 
+const createQuitItem = () =>
+  MenuItem.new({
+    accelerator: 'CmdOrCtrl+Q',
+    action: () =>
+      invoke('request_app_exit').catch((error: unknown) =>
+        console.error('Could not request exit.', error),
+      ),
+    id: 'quit',
+    text: '끝내기',
+  })
+
 const createApplicationMenu = async () =>
   Submenu.new({
     items: [
@@ -93,7 +105,7 @@ const createApplicationMenu = async () =>
       await PredefinedMenuItem.new({item: 'HideOthers'}),
       await PredefinedMenuItem.new({item: 'ShowAll'}),
       await createSeparator(),
-      await PredefinedMenuItem.new({item: 'Quit'}),
+      await createQuitItem(),
     ],
     text: 'Poffo',
   })
@@ -133,10 +145,7 @@ const createFileMenu = async (examples: ReadonlyArray<DesktopMenuExample>, isMac
     await createActionItem({action: DESKTOP_MENU_ACTION.studioSave, label: '스튜디오 저장'}),
   )
   if (!isMacOS) {
-    items.push(
-      await createSeparator(),
-      await PredefinedMenuItem.new({item: 'Quit', text: '끝내기'}),
-    )
+    items.push(await createSeparator(), await createQuitItem())
   }
   return Submenu.new({items, text: '파일'})
 }
@@ -205,7 +214,10 @@ const createViewMenu = async (isMacOS: boolean) => {
 
 const createHelpMenu = async (isMacOS: boolean) => {
   const menu = await Submenu.new({
-    items: [await createActionItem({action: DESKTOP_MENU_ACTION.helpOpen, label: 'Poffo 도움말'})],
+    items: [
+      await createActionItem({action: DESKTOP_MENU_ACTION.helpOpen, label: 'Poffo 도움말'}),
+      await MenuItem.new({action: installDesktopCli, id: 'install-cli', text: '터미널 명령 설치…'}),
+    ],
     text: '도움말',
   })
   if (isMacOS) {

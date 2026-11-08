@@ -1,6 +1,12 @@
 import {onCleanup} from 'solid-js'
+import {
+  mapModelRequest,
+  type ModelBinding,
+  type ModelHistoryEntry,
+  type ModelOrigin,
+  type ModelRequestResult,
+} from './model'
 import type {PuppetDocument} from '../player/document'
-import type {ModelBinding, ModelCommandResult, ModelHistoryEntry, ModelOrigin} from './model'
 
 export interface ModelHistoryBinding {
   readonly document: () => PuppetDocument
@@ -9,14 +15,14 @@ export interface ModelHistoryBinding {
   readonly canRedo: () => boolean
   readonly undoCount: () => number
   readonly redoCount: () => number
-  readonly beginTransaction: (title?: string) => ModelCommandResult
-  readonly endTransaction: () => ModelCommandResult
-  readonly setDocument: (document: PuppetDocument, title?: string) => ModelCommandResult
-  readonly replaceDocument: (document: PuppetDocument, title?: string) => ModelCommandResult
-  readonly resetDocument: (document: PuppetDocument) => ModelCommandResult
-  readonly undo: () => boolean
-  readonly redo: () => boolean
-  readonly goTo: (id: number) => boolean
+  readonly beginTransaction: (title?: string) => ModelRequestResult
+  readonly endTransaction: () => ModelRequestResult
+  readonly setDocument: (document: PuppetDocument, title?: string) => ModelRequestResult
+  readonly replaceDocument: (document: PuppetDocument, title?: string) => ModelRequestResult
+  readonly resetDocument: (document: PuppetDocument) => ModelRequestResult
+  readonly undo: () => boolean | Promise<boolean>
+  readonly redo: () => boolean | Promise<boolean>
+  readonly goTo: (id: number) => boolean | Promise<boolean>
 }
 
 /** Delegates document and history ownership to the host; only gesture identity is local. */
@@ -40,7 +46,7 @@ export const useModelHistory = (
     sequence += 1
     return {ownerId, requestId: `${ownerId}:${sequence}`, transactionId}
   }
-  const setDocument = (document: PuppetDocument, title?: string): ModelCommandResult => {
+  const setDocument = (document: PuppetDocument, title?: string): ModelRequestResult => {
     if (!writable()) {
       return {error: {code: 'inactive'}, ok: false}
     }
@@ -53,7 +59,7 @@ export const useModelHistory = (
       type: 'edit',
     })
   }
-  const beginTransaction = (title?: string): ModelCommandResult => {
+  const beginTransaction = (title?: string): ModelRequestResult => {
     if (!writable()) {
       return {error: {code: 'inactive'}, ok: false}
     }
@@ -62,13 +68,18 @@ export const useModelHistory = (
       return {changed: false, ok: true, revision: model.read().revision}
     }
     const id = request.requestId
-    const result = model.request({...request, title, transactionId: id, type: 'begin'})
-    if (result.ok) {
-      transactionId = id
-    }
-    return result
+    transactionId = id
+    return mapModelRequest(
+      model.request({...request, title, transactionId: id, type: 'begin'}),
+      (result) => {
+        if (!result.ok && transactionId === id) {
+          transactionId = undefined
+        }
+        return result
+      },
+    )
   }
-  const endTransaction = (): ModelCommandResult => {
+  const endTransaction = (): ModelRequestResult => {
     if (!writable()) {
       return {error: {code: 'inactive'}, ok: false}
     }
@@ -79,18 +90,22 @@ export const useModelHistory = (
     if (request.transactionId === undefined) {
       return {changed: false, ok: true, revision: model.read().revision}
     }
-    const result = model.request({...request, transactionId: request.transactionId, type: 'commit'})
-    if (result.ok) {
-      transactionId = undefined
-    }
-    return result
+    return mapModelRequest(
+      model.request({...request, transactionId: request.transactionId, type: 'commit'}),
+      (result) => {
+        if (result.ok) {
+          transactionId = undefined
+        }
+        return result
+      },
+    )
   }
-  const move = (type: 'undo' | 'redo' | 'go-to', id?: number): boolean => {
+  const move = (type: 'undo' | 'redo' | 'go-to', id?: number): boolean | Promise<boolean> => {
     if (!writable()) {
       return false
     }
     const result = model.request({...origin(), id, type})
-    return result.ok && result.changed
+    return mapModelRequest(result, (completed) => completed.ok && completed.changed)
   }
   onCleanup(() => {
     released = true

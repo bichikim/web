@@ -1,3 +1,4 @@
+import {mapModelRequest} from '@winter-love/puppet/model'
 import {createSignal, Show, Suspense, untrack} from 'solid-js'
 import {
   type DocumentRecovery,
@@ -19,6 +20,8 @@ import {useDocumentExport} from './use-document-export'
 import {useWorkspace} from '../workspace/context'
 
 export interface PoffoEditorProps {
+  /** Receives snapshots whose native file write completed. */
+  readonly onDocumentSaved?: (document: PuppetDocument) => void | Promise<void>
   /** Shared Poffo model; owned above the retained pages. */
   readonly model: ModelBinding
   /** File examples shown in the service menu; omitted for no examples. */
@@ -46,6 +49,7 @@ export const PoffoEditor = (props: PoffoEditorProps) => {
   const exporting = useDocumentExport(
     source,
     () => control()?.getState().hasTemporaryChanges ?? false,
+    (document) => props.onDocumentSaved?.(document),
   )
   const handleNotice = (message: string | null) => {
     exporting.dismissNotice()
@@ -61,10 +65,12 @@ export const PoffoEditor = (props: PoffoEditorProps) => {
       title,
       type: 'replace',
     })
-    if (!result.ok) {
-      handleNotice('진행 중인 편집을 마친 후 다시 시도하세요.')
-    }
-    return result
+    return mapModelRequest(result, (completed) => {
+      if (!completed.ok) {
+        handleNotice('진행 중인 편집을 마친 후 다시 시도하세요.')
+      }
+      return completed
+    })
   }
   const imports = useEditorImports({
     document: source,

@@ -10,6 +10,8 @@ macOS 데스크톱 앱은 `pnpm --filter @winter-love/poffo dev:desktop`으로 �
 
 `pnpm exec turbo run build --filter=@winter-love/poffo...`는 공개 패키지 산출물을 먼저 만들고 앱을 빌드한다. 출력은 `dist`다. 타입·lint 검사는 [앱 스크립트](package.json), 프로덕션 브라우저 검사는 [Playwright 구성](playwright.config.ts)을 따른다.
 
+Node 백엔드에 GUI·CLI를 함께 연결하려면 `node apps/poffo/bin/poffo.mjs dev` 또는 빌드 후 `start`를 사용한다. CLI·MCP·제작 레시피와 스킬은 [CLI 사용법](src/cli/README.md), 구현 상태와 남은 배포 작업은 [CLI 지원 계획](docs/cli-plan.md)에 정리했다.
+
 ## 색 테마
 
 웹에서는 에디터의 메인 메뉴 → **색 테마**, 데스크톱에서는 **보기 → 색 테마**에서 UI 색상을 변경한다. 변경 중에는 즉시 미리보기하고,
@@ -19,11 +21,11 @@ macOS 데스크톱 앱은 `pnpm --filter @winter-love/poffo dev:desktop`으로 �
 
 ## 문서와 복구
 
-공유 문서는 [모델 세션](src/model/create-model-session.ts)이 소유한다. 화면 이동은 복사·재로드·저장 완료를 요구하지 않는다. 임시 키폼 변경은 Editor 내부에 보관하며 선택 키폼에 저장할 때만 공유 문서에 반영한다.
+공유 문서와 이력은 [공통 모델 백엔드](src/backend/create-model-backend.ts#L11)가 소유한다. 브라우저 단독 모드는 로컬 바인딩을, Node 연결 모드는 원격 바인딩을 사용한다. 화면 이동은 복사·재로드·저장 완료를 요구하지 않는다. 임시 키폼 변경은 Editor 내부에 보관하며 선택 키폼에 저장할 때만 공유 문서에 반영한다.
 
-기존 Editor IndexedDB 이름과 탭별 sessionStorage 키를 유지한다. Viewer의 별도 문서 DB는 읽지 않는다. 이전 URL의 `session` 쿼리는 제거하며 문서 선택에 사용하지 않는다. Studio 설정은 기존 모델 signature·파라미터 호환 검사를 유지한다.
+브라우저 단독 모드는 기존 Editor IndexedDB 이름과 탭별 sessionStorage 키를 유지한다. Viewer의 별도 문서 DB는 읽지 않는다. 이전 URL의 `session` 쿼리는 제거하며 문서 선택에 사용하지 않는다. Studio 설정은 기존 모델 signature·파라미터 호환 검사를 유지한다.
 
-복구 저장은 완료된 변경을 순서대로 처리한다. 실패해도 화면 이동·메모리상 문서는 유지되며 다음 변경에서 다시 저장한다. 탭 종료 전에 비동기 쓰기가 완료된다는 보장은 없으므로 파일 백업은 JSON 내보내기를 사용한다. 다른 origin의 브라우저 저장소는 자동 이전하지 않는다.
+브라우저의 복구 저장은 완료된 변경을 순서대로 처리한다. 실패해도 화면 이동·메모리상 문서는 유지되며 다음 변경에서 다시 저장한다. 탭 종료 전에 비동기 쓰기가 완료된다는 보장은 없으므로 파일 백업은 JSON 내보내기를 사용한다. 다른 origin의 브라우저 저장소는 자동 이전하지 않는다.
 
 ## 배포
 

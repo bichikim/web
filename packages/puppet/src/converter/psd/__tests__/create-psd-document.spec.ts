@@ -1,20 +1,14 @@
-/** @vitest-environment jsdom */
+/** @vitest-environment node */
 import {afterEach, expect, test, vi} from 'vitest'
-import {createPsdDocument} from '../psd-document'
+import {createPsdDocument as convertDocument} from '../create-psd-document'
+const encodePsdTexture = vi.fn().mockResolvedValue('data:image/png;base64,test')
+const createPsdDocument = (psd: Parameters<typeof convertDocument>[0]) =>
+  convertDocument(psd, encodePsdTexture)
 
 const pixels = () => ({data: new Uint8ClampedArray(8 * 8 * 4).fill(255), height: 8, width: 8})
 afterEach(() => vi.restoreAllMocks())
 
 test('should retain layer hierarchy, paint order, names, offsets and visibility', async () => {
-  vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue({
-    createImageData: (width: number, height: number) => ({
-      data: new Uint8ClampedArray(width * height * 4),
-      height,
-      width,
-    }),
-    putImageData: vi.fn(),
-  } as unknown as ReturnType<HTMLCanvasElement['getContext']>)
-  vi.spyOn(HTMLCanvasElement.prototype, 'toDataURL').mockReturnValue('data:image/png;base64,test')
   const result = await createPsdDocument({
     children: [
       {
@@ -62,15 +56,6 @@ test('should reject oversized layer bounds before decoding', async () => {
 })
 
 test('should import layered art near the expanded total pixel budget', async () => {
-  vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue({
-    createImageData: (width: number, height: number) => ({
-      data: new Uint8ClampedArray(width * height * 4),
-      height,
-      width,
-    }),
-    putImageData: vi.fn(),
-  } as unknown as ReturnType<HTMLCanvasElement['getContext']>)
-  vi.spyOn(HTMLCanvasElement.prototype, 'toDataURL').mockReturnValue('data:image/png;base64,test')
   const result = await createPsdDocument({
     children: [
       ...Array.from({length: 33}, () => ({bottom: 2000, right: 2000})),
@@ -107,15 +92,6 @@ test('should reject a document without usable pixel layers', async () => {
 })
 
 test('should connect group clipping bases and preserve nested clipping inside clipped groups', async () => {
-  vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue({
-    createImageData: (width: number, height: number) => ({
-      data: new Uint8ClampedArray(width * height * 4),
-      height,
-      width,
-    }),
-    putImageData: vi.fn(),
-  } as unknown as ReturnType<HTMLCanvasElement['getContext']>)
-  vi.spyOn(HTMLCanvasElement.prototype, 'toDataURL').mockReturnValue('data:image/png;base64,test')
   const result = await createPsdDocument({
     children: [
       {
@@ -150,15 +126,6 @@ test('should connect group clipping bases and preserve nested clipping inside cl
 })
 
 test('should hide clipped pixels when their base group has no image', async () => {
-  vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue({
-    createImageData: (width: number, height: number) => ({
-      data: new Uint8ClampedArray(width * height * 4),
-      height,
-      width,
-    }),
-    putImageData: vi.fn(),
-  } as unknown as ReturnType<HTMLCanvasElement['getContext']>)
-  vi.spyOn(HTMLCanvasElement.prototype, 'toDataURL').mockReturnValue('data:image/png;base64,test')
   const result = await createPsdDocument({
     children: [
       {imageData: pixels(), name: 'previous base'},

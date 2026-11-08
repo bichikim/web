@@ -1,3 +1,4 @@
+import {mapModelRequest} from '@winter-love/puppet/model'
 import {type Accessor, createSignal, onCleanup} from 'solid-js'
 import {preparePuppetDocument, type PuppetDocument} from '@winter-love/puppet/player'
 import {
@@ -6,7 +7,7 @@ import {
   type ImportPngErrorCode,
   importPsd,
   mergeDocument,
-  type ModelCommandResult,
+  type ModelRequestResult,
   type PuppetExampleDocument,
   unpackTextureAtlas,
   usePsdReimport,
@@ -43,13 +44,15 @@ const commitImported = (
   props: UseEditorImportsProps,
   document: PuppetDocument,
   mode: 'append' | 'replace',
-): boolean => {
+): boolean | Promise<boolean> => {
   const result =
     mode === 'append' ? props.onReimportDocumentChange(document) : props.onDocumentChange(document)
-  if (!result.ok) {
-    props.onNotice('진행 중인 편집을 마친 후 파일을 다시 선택하세요.')
-  }
-  return result.ok
+  return mapModelRequest(result, (completed) => {
+    if (!completed.ok) {
+      props.onNotice('진행 중인 편집을 마친 후 파일을 다시 선택하세요.')
+    }
+    return completed.ok
+  })
 }
 
 export interface UseEditorImportsProps {
@@ -57,8 +60,8 @@ export interface UseEditorImportsProps {
   readonly revision?: Accessor<number>
   readonly readPsd?: typeof importPsd
   readonly document: Accessor<PuppetDocument>
-  readonly onReimportDocumentChange: (document: PuppetDocument) => ModelCommandResult
-  readonly onDocumentChange: (document: PuppetDocument) => ModelCommandResult
+  readonly onReimportDocumentChange: (document: PuppetDocument) => ModelRequestResult
+  readonly onDocumentChange: (document: PuppetDocument) => ModelRequestResult
   readonly onNotice: (message: string | null) => void
 }
 interface ReadFileSuccess {
@@ -167,7 +170,7 @@ export const useEditorImports = (props: UseEditorImportsProps) => {
         props.onNotice('모델의 연결 관계를 유지할 수 없어 추가하지 않았습니다.')
         return
       }
-      if (!commitImported(props, next.document, mode)) {
+      if (!(await commitImported(props, next.document, mode))) {
         return
       }
       if (mode === 'replace') {

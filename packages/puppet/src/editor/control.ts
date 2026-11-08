@@ -1,6 +1,6 @@
 import type {PlayerCanvasStatus} from './PlayerCanvas'
 import type {EditorPanelPosition} from './use-panel-layout'
-import type {ModelCommandResult, ModelVersion} from './model'
+import type {ModelRequestResult, ModelVersion} from './model'
 import type {PuppetDocument} from '../player'
 
 export type EditorMode = 'animation' | 'modeling'
@@ -61,13 +61,13 @@ export interface EditorController {
     readonly selectMode: (mode: EditorMode) => EditorAccepted | EditorRejected
     readonly setPanelOpen: (panel: EditorPanelPosition, open: boolean) => EditorCommandResult
     readonly togglePanel: (panel: EditorPanelPosition) => EditorCommandResult
-    readonly undo: () => ModelCommandResult | EditorRejected
-    readonly redo: () => ModelCommandResult | EditorRejected
+    readonly undo: () => ModelRequestResult | EditorRejected
+    readonly redo: () => ModelRequestResult | EditorRejected
     /** Use a captured version after asynchronous preparation; omitted to apply against the current binding. */
     readonly replaceDocument: (
       document: PuppetDocument,
       expected?: ModelVersion,
-    ) => ModelCommandResult | EditorRejected
+    ) => ModelRequestResult | EditorRejected
   }
   readonly lifecycle: {
     readonly activate: () => EditorCommandResult

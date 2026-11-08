@@ -23,7 +23,7 @@ test.each(['plain', 'colored'])(
       detached: process.platform !== 'win32',
       env: {...process.env, FORCE_COLOR: '1', NO_COLOR: outputStyle === 'plain' ? '1' : ''},
       shell: true,
-      signal: AbortSignal.timeout(10_000),
+      signal: AbortSignal.timeout(60_000),
       stdio: ['ignore', 'pipe', 'pipe'],
     })
     let output = ''
@@ -61,4 +61,5 @@ test.each(['plain', 'colored'])(
       }
     }
   },
+  65_000,
 )

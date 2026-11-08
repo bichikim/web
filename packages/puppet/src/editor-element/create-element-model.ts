@@ -2,9 +2,9 @@ import {batch, createMemo, createSignal} from 'solid-js'
 import {
   createModelState,
   getModelView,
+  type LocalModelBinding,
   type ModelAction,
   type ModelApplied,
-  type ModelBinding,
   type ModelChange,
   type ModelCommandResult,
   reduceModel,
@@ -24,7 +24,7 @@ export interface CreateElementModelOptions {
 }
 
 /** Standalone DOM host adapter. It never imports or shares Poffo's mutable session. */
-export const createElementModel = (options: CreateElementModelOptions): ModelBinding => {
+export const createElementModel = (options: CreateElementModelOptions): LocalModelBinding => {
   const [state, setState] = createSignal(createModelState(options))
   const [change, setChange] = createSignal<ModelChange | null>(null)
   const document = createMemo(() => state().document)

@@ -1,7 +1,7 @@
 import {
   type EditorController,
   type ModelBinding,
-  type ModelCommandResult,
+  type ModelRequestResult,
   type ViewportProps,
 } from '@winter-love/puppet/editor'
 import type {Accessor, JSX} from 'solid-js'
@@ -51,7 +51,7 @@ export interface WorkspaceContextValue {
   readonly replaceDocument: (
     document: PuppetDocument,
     expectedRevision?: number,
-  ) => ModelCommandResult
+  ) => ModelRequestResult
   readonly openRuntime: (page: 'studio' | 'viewer') => Promise<void>
   readonly setEditorControl: (control: EditorController) => void
   readonly bindHeader: (entry: SurfaceEntry<HeaderProps>) => () => void

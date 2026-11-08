@@ -9,6 +9,10 @@ import {PoffoEditor} from './editor/PoffoEditor'
 import {useWorkspace} from './workspace/context'
 
 export interface EditorAppProps {
+  /** Receives a snapshot after the native file writer has completed. */
+  readonly onDocumentSaved?: (document: PuppetDocument) => void | Promise<void>
+  /** Optional backend projection; omitted, compose a local browser backend. Fixed for this workspace. */
+  readonly model?: ModelBinding
   /** Optional existing editor recovery store; omitted to retain the default browser store. */
   readonly session?: DocumentSession
   /** Optional menu examples. */
@@ -31,6 +35,7 @@ export const EditorApp = (props: DocumentEditorProps) => {
   return (
     <PoffoEditor
       model={props.model}
+      onDocumentSaved={props.onDocumentSaved}
       examples={props.examples}
       recovery={props.recovery}
       initialMotionId={props.initialMotionId}

@@ -1,5 +1,7 @@
+import {ConnectedWorkspace} from './backend/browser/ConnectedWorkspace'
 import 'virtual:uno.css'
 import {render} from 'solid-js/web'
+import {connectDesktopBackend} from './desktop/connect-backend'
 import {initializeDesktopMenu} from './desktop/menu'
 
 import {WorkspaceApp} from './WorkspaceApp'
@@ -64,23 +66,45 @@ if (!(rootElement instanceof HTMLElement)) {
 
 restoreColorTheme(document.documentElement)
 
-const startApplication = () =>
+const connectionKey = 'poffo:backend-token:v1'
+const fragment = new URLSearchParams(location.hash.slice(1))
+const receivedToken = fragment.get('poffo-token')
+if (receivedToken !== null) {
+  sessionStorage.setItem(connectionKey, receivedToken)
+  history.replaceState(history.state, '', location.pathname + location.search)
+}
+const backendToken = receivedToken ?? sessionStorage.getItem(connectionKey)
+
+const startApplication = (
+  connection: {readonly url: string; readonly token: string} | null = null,
+) =>
   render(
-    () => (
-      <WorkspaceApp
-        examples={import.meta.env.DEV ? DEVELOPMENT_EXAMPLES : undefined}
-        loadInitialDocument={loadInitialDocument}
-        initialMotionId={import.meta.env.DEV ? DEVELOPMENT_INITIAL_MOTION_ID : undefined}
-        initialWorkspace={import.meta.env.DEV ? 'animation' : 'modeling'}
-      />
-    ),
+    () =>
+      backendToken === null && connection === null ? (
+        <WorkspaceApp
+          examples={import.meta.env.DEV ? DEVELOPMENT_EXAMPLES : undefined}
+          loadInitialDocument={loadInitialDocument}
+          initialMotionId={import.meta.env.DEV ? DEVELOPMENT_INITIAL_MOTION_ID : undefined}
+          initialWorkspace={import.meta.env.DEV ? 'animation' : 'modeling'}
+        />
+      ) : (
+        <ConnectedWorkspace
+          url={connection?.url ?? location.origin}
+          token={connection?.token ?? backendToken!}
+        />
+      ),
     rootElement,
   )
 
-initializeDesktopMenu(import.meta.env.DEV ? DEVELOPMENT_EXAMPLES : []).then(
-  startApplication,
-  (cause: unknown) => {
-    console.error('Poffo desktop menus could not be created.', cause)
-    startApplication()
-  },
-)
+const initialize = async () => {
+  await initializeDesktopMenu(import.meta.env.DEV ? DEVELOPMENT_EXAMPLES : [])
+  const attachment = await connectDesktopBackend()
+  startApplication(attachment?.connection ?? null)
+}
+
+initialize().catch((cause: unknown) => {
+  console.error('Poffo initialization failed.', cause)
+  if (rootElement !== null) {
+    rootElement.textContent = 'Poffo를 시작하지 못했습니다. 앱을 다시 실행하세요.'
+  }
+})

@@ -1,3 +1,4 @@
+import {mapModelRequest, type ModelRequestResult} from '../model'
 import {type Accessor, createMemo, createSignal} from 'solid-js'
 import {isEqual} from 'es-toolkit/predicate'
 import {
@@ -5,7 +6,7 @@ import {
   type PuppetParameterValueMap,
   type PuppetParameterValues,
 } from '../../deformation'
-import type {ModelCommandResult} from '../model'
+
 import type {PuppetDocument, PuppetParameterKeyformBase} from '../../player/document'
 import {getParameterBinding, getParameterTargetNodeIds} from './parameter-keyforms'
 import {
@@ -21,7 +22,7 @@ interface TemporaryFormOptions {
   readonly enabled: Accessor<boolean>
   readonly keyformValues: Accessor<PuppetParameterValues | null>
   readonly nodeId: Accessor<string | undefined>
-  readonly onDocumentChange: (document: PuppetDocument) => ModelCommandResult
+  readonly onDocumentChange: (document: PuppetDocument) => ModelRequestResult
   readonly parameterValueMap?: Accessor<PuppetParameterValueMap>
   readonly parameterValues: Accessor<PuppetParameterValues>
 }
@@ -63,19 +64,21 @@ const getSavedDocument = (
   return applyTemporaryForm({bindingId, document: options.document(), form: draft, nodeId, values})
 }
 
+const getTemporaryContext = (options: TemporaryFormOptions) =>
+  JSON.stringify([
+    options.nodeId(),
+    options.bindingId(),
+    options.parameterValues(),
+    options.keyformValues(),
+    options.enabled(),
+  ])
+
 export const useTemporaryForm = (options: TemporaryFormOptions) => {
   const [forms, setForms] = createSignal<ReadonlyMap<string, PuppetParameterKeyformBase>>(new Map())
   const [editing, setEditing] = createSignal<string | null>(null)
   const [preview, setPreview] = createSignal(false)
   const pending = new Map<string, PuppetParameterKeyformBase>()
-  const context = () =>
-    JSON.stringify([
-      options.nodeId(),
-      options.bindingId(),
-      options.parameterValues(),
-      options.keyformValues(),
-      options.enabled(),
-    ])
+  const context = () => getTemporaryContext(options)
   const form = () => forms().get(options.nodeId() ?? '')
   const selected = () =>
     isTargetSelected(
@@ -157,20 +160,29 @@ export const useTemporaryForm = (options: TemporaryFormOptions) => {
         return false
       }
       pending.set(nodeId, draft)
-      try {
-        const result = options.onDocumentChange(document)
-        if (!result.ok) {
-          return false
-        }
-        // A synchronous host notification may already have replaced or edited this local draft.
-        if (forms().get(nodeId) === draft) {
-          remove(nodeId)
-        }
-        return true
-      } finally {
+      const release = () => {
         if (pending.get(nodeId) === draft) {
           pending.delete(nodeId)
         }
+      }
+      try {
+        const saved = mapModelRequest(options.onDocumentChange(document), (result) => {
+          if (!result.ok) {
+            return false
+          }
+          if (forms().get(nodeId) === draft) {
+            remove(nodeId)
+          }
+          return true
+        })
+        if (saved instanceof Promise) {
+          return saved.finally(release)
+        }
+        release()
+        return saved
+      } catch (error) {
+        release()
+        throw error
       }
     },
     selected,

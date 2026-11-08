@@ -2,7 +2,7 @@ import {generateMesh, type GenerateMeshErrorCode, type PixelData} from '../mesh'
 import type {PuppetDocument, PuppetPart} from '../player/document'
 import {resetPartDeformations} from './internal/reset-part-deformations'
 import {reconcileSpatialGroups} from './internal/reconcile-spatial-groups'
-import {MAXIMUM_TEXTURE_PIXELS} from './internal/texture-limits'
+import {MAXIMUM_TEXTURE_PIXELS} from '../texture-limits'
 
 export interface AutoMeshSettings {
   readonly alphaThreshold: number

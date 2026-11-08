@@ -11,6 +11,11 @@
     "./dist/*.js"
   ],
   "exports": {
+    "./model": {
+      "types": "./dist/types/editor/model/index.d.ts",
+      "development": "./src/editor/model/index.ts",
+      "import": "./dist/model.js"
+    },
     "./converter": {
       "types": "./dist/types/converter/index.d.ts",
       "development": "./src/converter/index.ts",

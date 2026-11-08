@@ -43,7 +43,7 @@ export const useRuntimeDocument = () => {
       if (workspace.model.read().sessionId !== initial.sessionId) {
         return
       }
-      const applied = workspace.replaceDocument(document, initial.revision)
+      const applied = await workspace.replaceDocument(document, initial.revision)
       if (!applied.ok) {
         setError('문서가 변경되었거나 편집 중입니다. 다시 선택하세요.')
       }

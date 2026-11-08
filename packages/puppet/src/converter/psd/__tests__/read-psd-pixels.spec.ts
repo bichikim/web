@@ -1,5 +1,5 @@
 import {expect, test} from 'vitest'
-import {readPsdPixels} from '../psd-pixels'
+import {readPsdPixels} from '../read-psd-pixels'
 
 test('should apply mask coordinates and outside color without altering source pixels', () => {
   const imageData = {

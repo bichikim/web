@@ -6,6 +6,7 @@ const outputDirectory =
 export default defineConfig({
   reporter: 'list',
   testDir: './browser',
+  testIgnore: '**/backend/**',
   testMatch: '**/*.e2e.ts',
   use: {
     baseURL: 'http://127.0.0.1:4177',

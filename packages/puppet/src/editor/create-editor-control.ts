@@ -1,4 +1,5 @@
 import {batch, createEffect, createSignal, onCleanup} from 'solid-js'
+import {mapModelRequest, type ModelBinding, type ModelMove, type ModelOrigin} from './model'
 import type {
   EditorAccepted,
   EditorCancelled,
@@ -10,7 +11,7 @@ import type {
   EditorRejected,
   EditorState,
 } from './control'
-import type {ModelBinding, ModelMove, ModelOrigin} from './model'
+
 import type {EditorPanelPosition} from './use-panel-layout'
 
 export interface CreateEditorControlOptions {
@@ -53,10 +54,12 @@ const settleMode = (current: PendingMode, local: Pick<EditorState, 'appliedMode'
 
 const moveHistory = (options: CreateEditorControlOptions, action: ModelMove) => {
   const result = options.model.request(action)
-  if (result.ok && result.changed) {
-    options.stop()
-  }
-  return result
+  return mapModelRequest(result, (completed) => {
+    if (completed.ok && completed.changed) {
+      options.stop()
+    }
+    return completed
+  })
 }
 
 export const createEditorControl = (options: CreateEditorControlOptions): EditorController => {

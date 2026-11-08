@@ -1,37 +1,23 @@
-import type {PuppetDocument} from '../player/document'
-
-export type ImportPsdErrorCode =
-  | 'invalid-file'
-  | 'read-failed'
-  | 'decode-failed'
-  | 'unsupported-mode'
-  | 'too-large'
-  | 'empty-document'
-export interface ImportPsdSuccess {
-  readonly ok: true
-  readonly document: PuppetDocument
-  readonly warnings: ReadonlyArray<string>
-}
-export interface ImportPsdFailure {
-  readonly ok: false
-  readonly error: {readonly code: ImportPsdErrorCode}
-}
-export type ImportPsdResult = ImportPsdSuccess | ImportPsdFailure
-const MAXIMUM_FILE_BYTES = 268_435_456
+import {validatePsdSource} from '../converter/psd/validate-psd-source'
+import type {ImportPsdErrorCode, ImportPsdResult} from '../converter/psd/types'
+export type {
+  ImportPsdErrorCode,
+  ImportPsdResult,
+  ImportPsdFailure,
+  ImportPsdSuccess,
+} from '../converter/psd/types'
 
 /** Reads a PSD, terminating background processing when the optional signal aborts. */
 export const importPsd = async (file: File, signal?: AbortSignal): Promise<ImportPsdResult> => {
   signal?.throwIfAborted()
-  if (!/\.psd$/iu.test(file.name)) {
-    return {error: {code: 'invalid-file'}, ok: false}
-  }
-  if (file.size > MAXIMUM_FILE_BYTES) {
-    return {error: {code: 'too-large'}, ok: false}
+  const failure = validatePsdSource(file)
+  if (failure !== undefined) {
+    return failure
   }
   if (typeof Worker === 'undefined' || typeof OffscreenCanvas === 'undefined') {
     const {readPsdDocument} = await import('./internal/read-psd-document')
     signal?.throwIfAborted()
-    const result = await readPsdDocument(file)
+    const result = await readPsdDocument(file, signal)
     signal?.throwIfAborted()
     return result
   }

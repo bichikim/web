@@ -1,3 +1,4 @@
+import {mapModelRequest} from '../model'
 import {
   type Accessor,
   batch,
@@ -69,7 +70,7 @@ export interface UseEditorStateResult {
   readonly glueVertex: Accessor<PuppetVertexReference | null>
   readonly handleContainerUnwrap: () => void
   readonly handleDocumentEditStart: () => void
-  readonly handleHistorySelect: (id: number) => boolean
+  readonly handleHistorySelect: (id: number) => boolean | Promise<boolean>
   readonly handleInspectorDocumentChange: (document: PuppetDocument) => void
   readonly handleMaskPick: (partId: string) => void
   readonly handleMaskPickCancel: () => void
@@ -254,11 +255,14 @@ export const useEditorState = (props: UseEditorStateProps): UseEditorStateResult
     pausePlayback()
     history.beginTransaction()
   }
-  const handleHistoryChange = (changed: boolean) => {
-    if (changed) {
-      pausePlayback()
+  const handleHistoryChange = (result: boolean | Promise<boolean>): boolean | Promise<boolean> => {
+    const completed = (changed: boolean) => {
+      if (changed) {
+        pausePlayback()
+      }
+      return changed
     }
-    return changed
+    return result instanceof Promise ? result.then(completed) : completed(result)
   }
   const handleUndo = () => handleHistoryChange(history.undo())
   const handleRedo = () => handleHistoryChange(history.redo())
@@ -273,10 +277,12 @@ export const useEditorState = (props: UseEditorStateProps): UseEditorStateResult
     onBeforeApply: pausePlayback,
     onDocumentChange(document) {
       const result = history.setDocument(document, '자동 메시 생성')
-      if (result.ok) {
-        setActiveVertexIndex(null)
-      }
-      return result
+      return mapModelRequest(result, (completed) => {
+        if (completed.ok) {
+          setActiveVertexIndex(null)
+        }
+        return completed
+      })
     },
     onNotice: setNotice,
     partIds: () => selectionActions().autoMeshPartIds,

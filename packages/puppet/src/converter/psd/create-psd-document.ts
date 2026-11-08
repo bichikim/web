@@ -1,5 +1,4 @@
-import {encodePsdTexture} from './encode-psd-texture'
-import {readPsdPixels} from './psd-pixels'
+import {readPsdPixels} from './read-psd-pixels'
 import {type Layer, type Psd} from 'ag-psd'
 import {generateMesh} from '../../mesh'
 import {
@@ -9,8 +8,8 @@ import {
   type PuppetPartBlendMode,
   type PuppetSceneNode,
 } from '../../player/document'
-import type {ImportPsdResult} from '../import-psd'
-import {MAXIMUM_TEXTURE_PIXELS} from './texture-limits'
+import type {ImportPsdResult, PsdTextureEncoder} from './types'
+import {MAXIMUM_TEXTURE_PIXELS} from '../../texture-limits'
 
 /** Photoshop layer blend modes (ag-psd names) that Puppet draws the same way. */
 const PSD_BLEND_MODES: Readonly<Record<string, PuppetPartBlendMode>> = {
@@ -71,6 +70,7 @@ interface ConversionContext {
   readonly parts: Array<PuppetPart>
   readonly warnings: Set<string>
   count: number
+  readonly encodeTexture: PsdTextureEncoder
 }
 interface LayerContext {
   readonly path?: ReadonlyArray<string>
@@ -131,7 +131,7 @@ const convertPart = async (options: PartOptions): Promise<PuppetPart | undefined
     },
     texture: {
       height: pixels.height,
-      src: await encodePsdTexture(pixels),
+      src: await context.encodeTexture(pixels),
       width: pixels.width,
     },
   }
@@ -222,11 +222,14 @@ const convertLayers = async (
   return nodes
 }
 
-export const createPsdDocument = async (psd: Psd): Promise<ImportPsdResult> => {
+export const createPsdDocument = async (
+  psd: Psd,
+  encodeTexture: PsdTextureEncoder,
+): Promise<ImportPsdResult> => {
   if (!withinBudget(psd.children ?? [])) {
     return {error: {code: 'too-large'}, ok: false}
   }
-  const context: ConversionContext = {count: 0, parts: [], warnings: new Set()}
+  const context: ConversionContext = {count: 0, encodeTexture, parts: [], warnings: new Set()}
   const roots = await convertLayers(psd.children ?? [], context, {masks: [], opacity: 1})
   if (context.parts.length === 0) {
     return {error: {code: 'empty-document'}, ok: false}

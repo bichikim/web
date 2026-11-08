@@ -79,7 +79,7 @@ describe('createEditorControl', () => {
     await expect(next.operation.finished).resolves.toEqual({status: 'completed', value: 'modeling'})
   })
 
-  test('should restrict editor commands while inactive without locking host replacement', () => {
+  test('should restrict editor commands while inactive without locking host replacement', async () => {
     const {result} = setup()
     result.control.lifecycle.deactivate()
     expect(result.control.commands.togglePanel('left')).toEqual({
@@ -87,13 +87,15 @@ describe('createEditorControl', () => {
       status: 'rejected',
     })
     expect(
-      result.model.request({
-        document: {...createDemoDocument(), framesPerSecond: 48},
-        expectedRevision: 0,
-        ownerId: 'viewer',
-        requestId: 'replace',
-        type: 'replace',
-      }).ok,
+      (
+        await result.model.request({
+          document: {...createDemoDocument(), framesPerSecond: 48},
+          expectedRevision: 0,
+          ownerId: 'viewer',
+          requestId: 'replace',
+          type: 'replace',
+        })
+      ).ok,
     ).toBe(true)
     result.control.lifecycle.activate()
     expect(result.control.getState().canUndo).toBe(true)

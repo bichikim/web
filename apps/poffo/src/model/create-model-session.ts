@@ -1,14 +1,7 @@
-import {batch, createMemo, createSignal} from 'solid-js'
-import {
-  createModelState,
-  getModelView,
-  type ModelAction,
-  type ModelBinding,
-  type ModelChange,
-  type ModelCommandResult,
-  reduceModel,
-} from '@winter-love/puppet/editor'
+import {batch, createMemo, createSignal, onCleanup} from 'solid-js'
+import type {LocalModelBinding, ModelChange} from '@winter-love/puppet/model'
 import type {PuppetDocument} from '@winter-love/puppet/player'
+import {createModelBackend} from '../backend/create-model-backend'
 
 export interface CreateModelSessionOptions {
   /** Identity of the shared model; retained while changing pages. */
@@ -19,28 +12,18 @@ export interface CreateModelSessionOptions {
   readonly onCommit?: (document: PuppetDocument, change: ModelChange) => void
 }
 
-/** Owns the single mutable document/history state used by Editor, Studio and Viewer. */
-export const createModelSession = (options: CreateModelSessionOptions): ModelBinding => {
-  const [state, setState] = createSignal(createModelState(options))
-  const [change, setChange] = createSignal<ModelChange | null>(null)
-  const document = createMemo(() => state().document)
-  const revision = createMemo(() => state().revision)
-  const read = createMemo(() => getModelView(state(), change()))
-  const request = (action: ModelAction): ModelCommandResult => {
-    const result = reduceModel(state(), action)
-    if (!result.ok) {
-      return result
-    }
-    batch(() => {
-      setState(result.state)
-      if (result.change !== null) {
-        setChange(result.change)
-      }
-      if (result.change?.phase === 'commit' && result.change.kind !== 'reset') {
-        options.onCommit?.(result.state.document, result.change)
-      }
-    })
-    return {changed: result.change !== null, ok: true, revision: result.state.revision}
+/** Connects the common backend to Solid readers; this view does not own another history. */
+export const createModelSession = (options: CreateModelSessionOptions): LocalModelBinding => {
+  const backend = createModelBackend(options)
+  const [view, setView] = createSignal(backend.read())
+  const document = createMemo(() => view().document)
+  const revision = createMemo(() => view().revision)
+  const unsubscribe = backend.subscribe(setView)
+  onCleanup(unsubscribe)
+  return {
+    document,
+    read: view,
+    request: (action) => batch(() => backend.request(action)),
+    revision,
   }
-  return {document, read, request, revision}
 }

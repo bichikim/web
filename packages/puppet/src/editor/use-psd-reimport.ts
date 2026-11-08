@@ -1,5 +1,6 @@
+import {mapModelRequest, type ModelRequestResult} from './model'
 import {type Accessor, createMemo, createSignal, onCleanup} from 'solid-js'
-import type {ModelCommandResult} from './model'
+
 import type {PuppetDocument} from '../player/document'
 import {removeParts} from './internal/remove-parts'
 import {getPsdErrorMessage, importPsd, type ImportPsdResult} from './import-psd'
@@ -35,7 +36,7 @@ export interface UsePsdReimportProps {
   readonly revision?: Accessor<number>
   readonly readPsd?: (file: File, signal?: AbortSignal) => Promise<ImportPsdResult>
   readonly document: Accessor<PuppetDocument>
-  readonly onDocumentChange: (document: PuppetDocument) => ModelCommandResult
+  readonly onDocumentChange: (document: PuppetDocument) => ModelRequestResult
   readonly onNotice: (message: string | null) => void
 }
 
@@ -161,13 +162,14 @@ export const usePsdReimport = (props: UsePsdReimportProps): PsdReimportControlle
       })
       return
     }
-    const committed = props.onDocumentChange(result.document)
-    if (!committed.ok) {
-      props.onNotice('진행 중인 편집을 마친 후 다시 적용하세요.')
-      return
-    }
-    props.onNotice(null)
-    cancel()
+    return mapModelRequest(props.onDocumentChange(result.document), (committed) => {
+      if (!committed.ok) {
+        props.onNotice('진행 중인 편집을 마친 후 다시 적용하세요.')
+        return
+      }
+      props.onNotice(null)
+      cancel()
+    })
   }
   return {
     apply,

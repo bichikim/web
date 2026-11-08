@@ -1,7 +1,6 @@
-import type {ImportPsdResult} from '../import-psd'
-
-const RGB_MODE = 3
-const CHANNEL_BITS = 8
+import type {ImportPsdResult} from '../../converter/psd/types'
+import {importPsdSource} from '../../converter/import-psd-source'
+import {encodePsdTexture} from './encode-psd-texture'
 
 const readFile = (file: File): Promise<ArrayBuffer | undefined> =>
   new Promise((resolve) => {
@@ -11,43 +10,19 @@ const readFile = (file: File): Promise<ArrayBuffer | undefined> =>
     reader.readAsArrayBuffer(file)
   })
 
-export const readPsdDocument = async (file: File): Promise<ImportPsdResult> => {
-  const bytes = await readFile(file)
-  if (bytes === undefined) {
-    return {error: {code: 'read-failed'}, ok: false}
-  }
-  try {
-    const [{readPsd}, {createPsdDocument}] = await Promise.all([
-      import('ag-psd'),
-      import('./psd-document'),
-    ])
-    // Read dimensions before decompressing layer pixels.
-    const psd = readPsd(bytes, {
-      skipCompositeImageData: true,
-      skipThumbnail: true,
-      useRawData: true,
-    })
-    if (psd.bitsPerChannel !== CHANNEL_BITS || psd.colorMode !== RGB_MODE) {
-      return {error: {code: 'unsupported-mode'}, ok: false}
-    }
-    const result = await createPsdDocument(psd)
-    if (!result.ok) {
-      return result
-    }
-    return {
-      ...result,
-      document: {
-        ...result.document,
-        parts: result.document.parts.map((part) => ({
-          ...part,
-          psdSource:
-            part.psdSource === undefined
-              ? undefined
-              : {...part.psdSource, documentId: file.name, fileName: file.name},
-        })),
+export const readPsdDocument = (file: File, signal?: AbortSignal): Promise<ImportPsdResult> =>
+  importPsdSource({
+    encodeTexture: encodePsdTexture,
+    signal,
+    source: {
+      name: file.name,
+      read: async () => {
+        const bytes = await readFile(file)
+        if (bytes === undefined) {
+          throw new Error('PSD file read failed')
+        }
+        return bytes
       },
-    }
-  } catch {
-    return {error: {code: 'decode-failed'}, ok: false}
-  }
-}
+      size: file.size,
+    },
+  })

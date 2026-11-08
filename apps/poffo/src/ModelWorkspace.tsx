@@ -19,13 +19,15 @@ interface ModelWorkspaceProps extends EditorAppProps {
 }
 
 export const ModelWorkspace = (props: ModelWorkspaceProps) => {
-  const model = createModelSession({
-    document: untrack(() => props.document),
-    onCommit: (document) => {
-      props.recovery.save(document)
-    },
-    sessionId: crypto.randomUUID(),
-  })
+  const model =
+    untrack(() => props.model) ??
+    createModelSession({
+      document: untrack(() => props.document),
+      onCommit: (document) => {
+        props.recovery.save(document)
+      },
+      sessionId: crypto.randomUUID(),
+    })
   const [navigationError, setNavigationError] = createSignal<string | null>(null)
   if (location.pathname === '/') {
     history.replaceState(history.state, '', `/editor${location.search}${location.hash}`)

@@ -5,7 +5,17 @@ import {afterEach, expect, test, vi} from 'vitest'
 import {createEmptyDocument, type PuppetDocument} from '@winter-love/puppet/player'
 import {useDocumentExport} from '../use-document-export'
 
-const mocks = vi.hoisted(() => ({compress: vi.fn(), pack: vi.fn()}))
+const mocks = vi.hoisted(() => ({
+  compress: vi.fn(),
+  desktop: vi.fn(() => false),
+  pack: vi.fn(),
+  write: vi.fn(),
+}))
+vi.mock('@tauri-apps/api/core', async (original) => ({
+  ...(await original<typeof import('@tauri-apps/api/core')>()),
+  isTauri: mocks.desktop,
+}))
+vi.mock('../../desktop/write-document-file', () => ({writeDocumentFile: mocks.write}))
 vi.mock('@winter-love/puppet/player', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@winter-love/puppet/player')>()),
   serializePoffoDocument: mocks.compress,
@@ -15,7 +25,10 @@ vi.mock('@winter-love/puppet/editor', async (importOriginal) => ({
   packTextureAtlas: mocks.pack,
 }))
 
-afterEach(() => vi.restoreAllMocks())
+afterEach(() => {
+  vi.restoreAllMocks()
+  mocks.desktop.mockReturnValue(false)
+})
 
 test('should retain the download URL until replacement or editor disposal', () => {
   const create = vi
@@ -376,3 +389,32 @@ test('should download JSON even when whole-document stringification is unavailab
   })
   expect(JSON.parse(json)).toEqual(document)
 })
+
+test.each([true, false])(
+  'should acknowledge the exported native snapshot only after the file is saved: %s',
+  async (saved) => {
+    mocks.desktop.mockReturnValue(true)
+    mocks.write.mockResolvedValueOnce(saved)
+    mocks.compress.mockResolvedValueOnce(new Blob(['native bytes']))
+    const source = createEmptyDocument()
+    const acknowledge = vi.fn()
+    let dispose!: () => void
+    const exporting = createRoot((cleanup) => {
+      dispose = cleanup
+      return useDocumentExport(() => source, undefined, acknowledge)
+    })
+    try {
+      await exporting.exportPoffoDocument()
+      expect(mocks.write).toHaveBeenLastCalledWith(
+        expect.objectContaining({name: 'puppet-model.poffo'}),
+      )
+      expect(acknowledge).toHaveBeenCalledTimes(saved ? 1 : 0)
+      if (saved) {
+        expect(acknowledge).toHaveBeenCalledWith(source)
+      }
+      expect(exporting.pending()).toBeNull()
+    } finally {
+      dispose()
+    }
+  },
+)

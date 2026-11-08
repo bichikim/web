@@ -4,8 +4,8 @@ type HistoryShortcut = 'redo' | 'undo'
 
 interface UseDocumentHistoryShortcutsProps {
   readonly active?: Accessor<boolean>
-  readonly onRedo: () => boolean
-  readonly onUndo: () => boolean
+  readonly onRedo: () => boolean | Promise<boolean>
+  readonly onUndo: () => boolean | Promise<boolean>
 }
 
 let activeOwner: symbol | null = null
@@ -46,7 +46,7 @@ export const useDocumentHistoryShortcuts = (props: UseDocumentHistoryShortcutsPr
       }
 
       const changed = shortcut === 'undo' ? props.onUndo() : props.onRedo()
-      if (changed) {
+      if (changed instanceof Promise || changed) {
         event.preventDefault()
       }
     }

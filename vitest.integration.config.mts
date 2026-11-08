@@ -15,6 +15,8 @@ export default mergeConfig(baseConfig, {
           exclude: [
             ...configDefaults.exclude,
             '**/visual/**',
+            'apps/poffo/src/backend/**',
+            'apps/poffo/src/cli/**',
             'apps/wallpaper-web/src/**/*.integration.tsx',
           ],
           fileParallelism: false,
@@ -33,6 +35,7 @@ export default mergeConfig(baseConfig, {
       ...visualRegressionProjects,
       './packages/puppet/vitest.storybook.config.mts',
       './packages/puppet/vitest.browser.config.ts',
+      './apps/poffo/vitest.backend.config.ts',
     ],
   },
 })

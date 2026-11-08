@@ -47,8 +47,14 @@ export default defineConfig(({command, mode}) => {
       copyPublicDir: false,
       emptyOutDir: mode === 'player',
       lib: {
-        entry: new URL(BUILD_TARGETS[mode], import.meta.url).pathname,
-        fileName: () => `${mode}.js`,
+        entry:
+          mode === 'player'
+            ? {
+                model: fileURLToPath(new URL('./src/editor/model/index.ts', import.meta.url)),
+                player: fileURLToPath(new URL(BUILD_TARGETS.player, import.meta.url)),
+              }
+            : fileURLToPath(new URL(BUILD_TARGETS[mode], import.meta.url)),
+        fileName: (_format, entryName) => (mode === 'player' ? `${entryName}.js` : `${mode}.js`),
         formats: ['es'],
       },
       rollupOptions: {

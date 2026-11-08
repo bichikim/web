@@ -138,7 +138,14 @@ test('should replace export feedback with an editing notice without reviving the
   )
   const model = vi.mocked(PuppetEditor).mock.calls.at(-1)![0].model
   expect(
-    model.request({ownerId: 'editor', requestId: 'drag', transactionId: 'drag', type: 'begin'}).ok,
+    (
+      await model.request({
+        ownerId: 'editor',
+        requestId: 'drag',
+        transactionId: 'drag',
+        type: 'begin',
+      })
+    ).ok,
   ).toBe(true)
   fireEvent.click(view.getByRole('button', {name: '메인 메뉴'}))
   fireEvent.click(screen.getByRole('button', {name: 'JSON 내보내기'}))

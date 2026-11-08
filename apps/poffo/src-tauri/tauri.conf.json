@@ -4,8 +4,8 @@
   "version": "0.1.0",
   "identifier": "io.poffo.desktop",
   "build": {
-    "beforeBuildCommand": "pnpm exec turbo run build --filter=@winter-love/poffo...",
-    "beforeDevCommand": "pnpm run dev --host 127.0.0.1 --port 1421 --strictPort",
+    "beforeBuildCommand": "node bin/prepare-desktop.mjs",
+    "beforeDevCommand": "node bin/dev-desktop.mjs",
     "devUrl": "http://127.0.0.1:1421",
     "frontendDist": "../dist"
   },
@@ -21,7 +21,7 @@
       }
     ],
     "security": {
-      "csp": "default-src 'self'; connect-src 'self' blob: data:; img-src 'self' asset: http://asset.localhost blob: data: https:; media-src 'self' blob: data:; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; worker-src 'self' blob:"
+      "csp": "default-src 'self'; connect-src 'self' http://127.0.0.1:* blob: data:; img-src 'self' asset: http://asset.localhost blob: data: https:; media-src 'self' blob: data:; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; worker-src 'self' blob:"
     }
   },
   "bundle": {
@@ -29,6 +29,11 @@
     "category": "GraphicsAndDesign",
     "icon": ["icons/macos.car", "icons/icon.icns", "icons/icon.ico", "icons/icon.png"],
     "shortDescription": "캐릭터 모델링·애니메이션 편집기",
-    "targets": ["dmg", "nsis"]
-  }
+    "targets": ["dmg", "nsis"],
+    "externalBin": ["binaries/poffo-node", "binaries/poffo-cli"],
+    "resources": {
+      "runtime/": "runtime/"
+    }
+  },
+  "mainBinaryName": "Poffo"
 }

@@ -7,7 +7,7 @@ interface TemporaryFormButtonProps {
   readonly showing?: boolean
   readonly onPreview: (preview: boolean) => void
   readonly onRemove: () => void
-  readonly onSave: () => boolean
+  readonly onSave: () => boolean | Promise<boolean>
 }
 
 export const TemporaryFormButton = (props: TemporaryFormButtonProps) => {
@@ -104,10 +104,18 @@ export const TemporaryFormButton = (props: TemporaryFormButtonProps) => {
           <EditorButton onClick={() => dialog?.close()}>취소</EditorButton>
           <EditorButton
             onClick={() => {
-              if (props.onSave()) {
-                dialog?.close()
+              const finish = (saved: boolean) => {
+                if (saved) {
+                  dialog?.close()
+                } else {
+                  setError(true)
+                }
+              }
+              const result = props.onSave()
+              if (result instanceof Promise) {
+                result.then(finish, () => setError(true))
               } else {
-                setError(true)
+                finish(result)
               }
             }}
           >

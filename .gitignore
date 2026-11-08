@@ -112,3 +112,14 @@ opencode.jsonc
 .worktrees
 .vercel
 .env*
+
+# Local Poffo host credentials and recovery state
+.poffo/
+
+# Generated Poffo desktop runtime
+apps/poffo/src-tauri/binaries/
+apps/poffo/src-tauri/runtime/
+apps/poffo/src-tauri/cli/target/
+
+# Generated local character validation evidence
+apps/poffo/validation/character/output/

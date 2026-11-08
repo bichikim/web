@@ -1,7 +1,7 @@
 import type {PixelData} from '../../mesh'
 import type {PuppetTexture} from '../../player/document'
 import {loadTextureImage} from '../../player/internal/load-texture-image'
-import {MAXIMUM_TEXTURE_PIXELS} from './texture-limits'
+import {MAXIMUM_TEXTURE_PIXELS} from '../../texture-limits'
 
 export type ReadTexturePixelsErrorCode = 'decode-failed' | 'render-failed' | 'too-large'
 

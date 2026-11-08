@@ -140,6 +140,8 @@ export interface ModelCompleted {
 
 export type ModelCommandResult = ModelCompleted | ModelRejected
 
+export type ModelRequestResult = ModelCommandResult | Promise<ModelCommandResult>
+
 /** The host owns this binding. Disposing an editor releases only its own pending transaction. */
 export interface ModelBinding {
   /** Reactive document identity; transaction metadata alone must not notify this accessor. */
@@ -147,5 +149,10 @@ export interface ModelBinding {
   /** Reactive document revision; opening or ending an unchanged transaction does not notify it. */
   readonly revision: () => number
   readonly read: () => ModelView
+  readonly request: (action: ModelAction) => ModelRequestResult
+}
+
+/** In-process binding whose requests finish before returning. */
+export interface LocalModelBinding extends ModelBinding {
   readonly request: (action: ModelAction) => ModelCommandResult
 }
