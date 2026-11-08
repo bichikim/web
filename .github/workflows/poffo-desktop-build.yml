@@ -24,6 +24,10 @@ on:
         description: GPU stage index to retain, or all to fingerprint every stage
         type: string
         default: ''
+      native-ui:
+        description: Exercise the installed native window and system dialogs
+        type: boolean
+        default: false
 
 run-name: ${{ inputs.reuse-run != '' && format('Validate Poffo installers from run {0}', inputs.reuse-run) || format('Build Poffo Desktop from {0}', github.ref_name) }}
 
@@ -86,10 +90,11 @@ jobs:
           cache-on-failure: true
 
       - name: Install dependencies
+        if: inputs.reuse-run == '' || !inputs.native-ui
         run: pnpm install --frozen-lockfile
 
       - name: Build validation libraries
-        if: inputs.reuse-run != ''
+        if: inputs.reuse-run != '' && !inputs.native-ui
         run: pnpm --filter @winter-love/puppet build
 
       - name: Verify native runner architecture
@@ -196,6 +201,7 @@ jobs:
           mkdir -p "$destination"
           ditto "$mounted/Poffo.app" "$destination/Poffo App.app"
           echo "POFFO_INSTALLED_CLI=$destination/Poffo App.app/Contents/MacOS/poffo-cli" >> "$GITHUB_ENV"
+          echo "POFFO_NATIVE_APP=$destination/Poffo App.app" >> "$GITHUB_ENV"
 
       - name: Install Windows artifact outside the checkout
         if: runner.os == 'Windows'
@@ -208,15 +214,45 @@ jobs:
           $process = Start-Process -FilePath $installer.FullName -ArgumentList "/S /D=$destination" -Wait -PassThru
           if ($process.ExitCode -ne 0) { throw "Installer failed: $($process.ExitCode)" }
           "POFFO_INSTALLED_CLI=$destination/poffo-cli.exe" >> $env:GITHUB_ENV
+          "POFFO_NATIVE_APP=$destination/Poffo.exe" >> $env:GITHUB_ENV
 
       - name: Install Chromium for installed runtime validation
+        if: '!inputs.native-ui'
         run: pnpm exec playwright install chromium
 
       - name: Validate installed Node, CLI, MCP and real character workflow
+        if: '!inputs.native-ui'
         env:
           POFFO_VALIDATION_OUTPUT: ${{ runner.temp }}/poffo-validation
           POFFO_PIXEL_STAGE: ${{ inputs.pixel-stage }}
         run: pnpm exec playwright test --config ${{ inputs.pixel-diagnostics && 'apps/poffo/playwright.pixels.config.ts' || 'apps/poffo/playwright.character.config.ts' }} --project chromium
+
+      - name: Prepare isolated native UI workspace
+        if: inputs.native-ui
+        run: |
+          node --input-type=module <<'NODE'
+          import {mkdir, appendFile} from 'node:fs/promises'
+          import {join} from 'node:path'
+          const workspace = join(process.env.RUNNER_TEMP, 'Poffo native project')
+          const output = join(process.env.RUNNER_TEMP, 'poffo-validation', 'native')
+          await mkdir(workspace, {recursive: true})
+          await mkdir(output, {recursive: true})
+          await appendFile(process.env.GITHUB_ENV, `POFFO_NATIVE_WORKSPACE=${workspace}\nPOFFO_NATIVE_OUTPUT=${output}\n`)
+          NODE
+
+      - name: Validate native macOS window and dialogs
+        if: inputs.native-ui && runner.os == 'macOS'
+        run: |
+          xcodebuild test -project apps/poffo/native/macos/Native.xcodeproj -scheme Native \
+            -destination 'platform=macOS' -derivedDataPath "$RUNNER_TEMP/native-derived" \
+            -resultBundlePath "$POFFO_NATIVE_OUTPUT/results.xcresult" CODE_SIGNING_ALLOWED=NO \
+            "POFFO_NATIVE_APP=$POFFO_NATIVE_APP" "POFFO_NATIVE_WORKSPACE=$POFFO_NATIVE_WORKSPACE" \
+            "POFFO_NATIVE_OUTPUT=$POFFO_NATIVE_OUTPUT"
+
+      - name: Validate native Windows window and dialogs
+        if: inputs.native-ui && runner.os == 'Windows'
+        shell: powershell
+        run: '& apps/poffo/native/windows/run.ps1'
 
       - name: Upload runtime validation evidence
         if: always()
@@ -252,7 +288,7 @@ jobs:
 
   compare-pixels:
     name: Compare cross-platform pixels
-    if: inputs.target == 'all'
+    if: inputs.target == 'all' && !inputs.native-ui
     needs: build
     runs-on: ubuntu-latest
     timeout-minutes: 10
