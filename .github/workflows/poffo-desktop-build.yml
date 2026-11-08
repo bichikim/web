@@ -80,6 +80,10 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Build validation libraries
+        if: inputs.reuse-run != ''
+        run: pnpm --filter @winter-love/puppet build
+
       - name: Verify native runner architecture
         env:
           BUILD_TARGET: ${{ matrix.target }}
