@@ -1,8 +1,8 @@
 import '@unocss/reset/tailwind.css'
 import {cleanup, render} from '@solidjs/testing-library'
 import {createComponent} from 'solid-js'
-import {afterEach, expect, it, vi} from 'vitest'
-import {commands, page, userEvent} from 'vitest/browser'
+import {afterEach, expect, it, type Mock, vi} from 'vitest'
+import {commands, page, server, userEvent} from 'vitest/browser'
 import * as m from '@paraglide/message'
 import {CustomAlbumCoverCropModal} from '../CustomAlbumCoverCropModal'
 
@@ -19,6 +19,7 @@ const ALPHA_CHANNEL = 3
 const COLOR_DIVISOR = 4
 const PIXEL_TOLERANCE = 5
 const DRAG_DISTANCE = 15
+const TAB_KEY = server.browser === 'webkit' ? '{Alt>}{Tab}{/Alt}' : '{Tab}'
 
 const nativeToBlob = HTMLCanvasElement.prototype.toBlob
 let stylesheet: HTMLStyleElement | null = null
@@ -51,6 +52,20 @@ const holdEncoding = () => {
     },
   )
   return pending
+}
+
+const expectEncoding = async (onApply: Mock<(cover: Blob) => void>, blob: Blob | null) => {
+  await expect
+    .element(page.getByRole('button', {name: m.album_custom_cover_crop_apply()}))
+    .toBeEnabled()
+  if (blob?.type === 'image/webp') {
+    expect(onApply).toHaveBeenCalledExactlyOnceWith(blob)
+  } else {
+    expect(onApply).not.toHaveBeenCalled()
+    await expect
+      .element(page.getByText(m.album_custom_error_cover_invalid(), {exact: true}))
+      .toBeVisible()
+  }
 }
 
 const mount = async (type: 'image/png' | 'image/jpeg' = 'image/png') => {
@@ -98,28 +113,30 @@ it.each(['image/png', 'image/jpeg'] as const)(
       .element(page.getByRole('button', {name: m.album_custom_cover_cropping()}))
       .toBeDisabled()
     await expect.element(page.getByRole('button', {name: m.album_custom_cancel()})).toBeDisabled()
-    await userEvent.keyboard('{Tab}')
+    await userEvent.keyboard(TAB_KEY)
     expect(document.activeElement).toBe(selection.element())
     await userEvent.keyboard('{ArrowRight>10/}{ArrowDown>10/}{Escape}')
     expect(onCancel).not.toHaveBeenCalled()
     const displayed = snapshot()
     pending[0].complete(pending[0].blob)
-    await expect.poll(() => onApply.mock.calls.length).toBe(1)
-    const bitmap = await createImageBitmap(onApply.mock.calls[0][0])
-    const canvas = document.createElement('canvas')
-    canvas.width = VIEWPORT_EDGE
-    canvas.height = VIEWPORT_EDGE
-    const context = canvas.getContext('2d')!
-    context.drawImage(bitmap, 0, 0)
-    bitmap.close()
-    const pixel = [...context.getImageData(0, 0, 1, 1).data]
-    console.log('CROP_ENCODING_SNAPSHOT', JSON.stringify({applied, displayed, pixel, type}))
-    const [x, y] = applied!.split(' ').map(Number)
-    const coordinateColor = IMAGE_EDGE / VIEWPORT_EDGE / COLOR_DIVISOR
-    expect(Math.abs(pixel[0] - x * coordinateColor)).toBeLessThan(PIXEL_TOLERANCE)
-    expect(Math.abs(pixel[1] - y * coordinateColor)).toBeLessThan(PIXEL_TOLERANCE)
+    await expectEncoding(onApply, pending[0].blob)
+    if (pending[0].blob?.type === 'image/webp') {
+      const bitmap = await createImageBitmap(onApply.mock.calls[0][0])
+      const canvas = document.createElement('canvas')
+      canvas.width = VIEWPORT_EDGE
+      canvas.height = VIEWPORT_EDGE
+      const context = canvas.getContext('2d')!
+      context.drawImage(bitmap, 0, 0)
+      bitmap.close()
+      const pixel = [...context.getImageData(0, 0, 1, 1).data]
+      console.log('CROP_ENCODING_SNAPSHOT', JSON.stringify({applied, displayed, pixel, type}))
+      const [x, y] = applied!.split(' ').map(Number)
+      const coordinateColor = IMAGE_EDGE / VIEWPORT_EDGE / COLOR_DIVISOR
+      expect(Math.abs(pixel[0] - x * coordinateColor)).toBeLessThan(PIXEL_TOLERANCE)
+      expect(Math.abs(pixel[1] - y * coordinateColor)).toBeLessThan(PIXEL_TOLERANCE)
+    }
     expect(displayed).toBe(applied)
-    // A consumer that keeps the modal open can edit again after success.
+    // A consumer that keeps the modal open can edit again after encoding.
     await userEvent.keyboard('{ArrowRight}')
     expect(snapshot()).not.toBe(applied)
   },
@@ -128,13 +145,13 @@ it.each(['image/png', 'image/jpeg'] as const)(
 it('should freeze resize keys until a failed encoder allows editing and retry', async () => {
   const {selection, onApply, onCancel} = await mount()
   await selection.click()
-  await userEvent.keyboard('{Tab}{ArrowLeft}')
+  await userEvent.keyboard(`${TAB_KEY}{ArrowLeft}`)
   const applied = snapshot()
   expect(applied).not.toBe('128 128 256 256')
   const pending = holdEncoding()
   await page.getByRole('button', {name: m.album_custom_cover_crop_apply()}).click()
   await expect.poll(() => pending.length).toBe(1)
-  await userEvent.keyboard('{Tab}{Tab}{ArrowLeft}')
+  await userEvent.keyboard(`${TAB_KEY}${TAB_KEY}{ArrowLeft}`)
   expect(snapshot()).toBe(applied)
   pending[0].complete(null)
   await expect
@@ -149,12 +166,12 @@ it('should freeze resize keys until a failed encoder allows editing and retry', 
   await page.getByRole('button', {name: m.album_custom_cover_crop_apply()}).click()
   await expect.poll(() => pending.length).toBe(2)
   pending[1].complete(pending[1].blob)
-  await expect.poll(() => onApply.mock.calls.length).toBe(1)
+  await expectEncoding(onApply, pending[1].blob)
   expect(snapshot()).toBe(moved)
 })
 
 it.each(['move', 'southeast'] as const)(
-  'should block a new native %s drag while applying and restore it after success',
+  'should block a new native %s drag while applying and restore it after encoding',
   async (handle) => {
     const {onApply} = await mount()
     const canvas = page.getByRole('group', {name: m.album_custom_cover_crop_canvas()})
@@ -182,7 +199,7 @@ it.each(['move', 'southeast'] as const)(
     expect(snapshot()).toBe(applied)
     await expect.element(canvas).toHaveAttribute('aria-disabled', 'true')
     pending[0].complete(pending[0].blob)
-    await expect.poll(() => onApply.mock.calls.length).toBe(1)
+    await expectEncoding(onApply, pending[0].blob)
     await expect.element(canvas).toHaveAttribute('aria-disabled', 'false')
     await drag()
     expect(snapshot()).not.toBe(applied)
