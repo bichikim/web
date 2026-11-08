@@ -54,7 +54,8 @@ export const startInstalledHost = async (executable: string, workspace: string, 
       JSON.parse(await readFile(join(workspace, '.poffo/connection.json'), 'utf8')),
     )
     const observation =
-      process.env.POFFO_RUNTIME_DIAGNOSTICS === 'true'
+      process.env.POFFO_RUNTIME_DIAGNOSTICS === 'true' &&
+      process.env.POFFO_RUNTIME_OBSERVER !== 'false'
         ? await observeHostRequests({
             connection,
             path: join(

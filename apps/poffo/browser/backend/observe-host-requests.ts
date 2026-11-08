@@ -89,7 +89,9 @@ export const observeHostRequests = async (options: ObserveHostOptions) => {
         id,
         phase: 'closed',
       })
-      upstream.destroy()
+      if (!response.writableFinished) {
+        upstream.destroy()
+      }
     })
     request.pipe(upstream)
   })

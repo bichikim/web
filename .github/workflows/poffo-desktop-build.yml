@@ -54,6 +54,10 @@ on:
         description: Repeat installed character validation and capture request timing on failures
         type: boolean
         default: false
+      runtime-observer:
+        description: Record HTTP request timings through the diagnostic proxy
+        type: boolean
+        default: true
       graphics-probe:
         description: Compare native Metal rasterization and active WebKit contexts without UI Automation
         type: boolean
@@ -262,6 +266,7 @@ jobs:
           POFFO_VALIDATION_OUTPUT: ${{ runner.temp }}/poffo-validation
           POFFO_PIXEL_STAGE: ${{ inputs.pixel-stage }}
           POFFO_RUNTIME_DIAGNOSTICS: ${{ inputs.runtime-diagnostics }}
+          POFFO_RUNTIME_OBSERVER: ${{ inputs.runtime-observer }}
         run: pnpm exec playwright test --config ${{ inputs.pixel-diagnostics && 'apps/poffo/playwright.pixels.config.ts' || 'apps/poffo/playwright.character.config.ts' }} --project chromium ${{ inputs.runtime-diagnostics && '--repeat-each=6 --max-failures=1' || '' }}
 
       - name: Prepare isolated native UI workspace
