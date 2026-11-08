@@ -1,7 +1,7 @@
 name: Diagnose installed Poffo Windows command
 
 on:
-  workflow_dispatch:
+  workflow_call:
     inputs:
       run:
         description: Desktop build run containing the Windows installer

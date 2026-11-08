@@ -12,11 +12,15 @@ on:
           - aarch64-apple-darwin
           - x86_64-apple-darwin
           - x86_64-pc-windows-msvc
+      installer-run:
+        description: Diagnose an existing Windows installer instead of rebuilding
+        type: string
+        default: ''
 
 run-name: Build Poffo Desktop from ${{ github.ref_name }}
 
 concurrency:
-  group: poffo-desktop-${{ github.ref }}-${{ inputs.target }}
+  group: poffo-desktop-${{ github.ref }}-${{ inputs.target }}-${{ inputs.installer-run }}
   cancel-in-progress: false
 
 permissions:
@@ -27,7 +31,17 @@ env:
   PNPM_VERSION: 11.8.0
 
 jobs:
+  diagnose:
+    if: inputs.installer-run != ''
+    permissions:
+      actions: read
+      contents: read
+    uses: ./.github/workflows/poffo-windows-diagnostic.yml
+    with:
+      run: ${{ inputs.installer-run }}
+
   build:
+    if: inputs.installer-run == ''
     name: Build ${{ matrix.target }}
     runs-on: ${{ fromJSON('{"aarch64-apple-darwin":"macos-15","x86_64-apple-darwin":"macos-15-intel","x86_64-pc-windows-msvc":"windows-2025"}')[matrix.target] }}
     timeout-minutes: 60
