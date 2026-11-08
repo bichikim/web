@@ -56,7 +56,7 @@ export const useVolumeDucking = (): VolumeDuckingState => {
     )
     if (isSaveError) {
       const settled = saveQueue.settle(false)
-      if (settled.value !== null && !settled.hasPending) {
+      if (settled.value !== null && !settled.hasPending && pendingSettings === null) {
         setSettings(settled.committed)
         setStoredSettings(settled.committed, {persist: false})
       }
@@ -68,7 +68,7 @@ export const useVolumeDucking = (): VolumeDuckingState => {
       return
     }
     if (!isDisposed) {
-      if (!settled.hasPending) {
+      if (!settled.hasPending && pendingSettings === null) {
         setSettings(settled.committed)
       }
       setMessage(null)
