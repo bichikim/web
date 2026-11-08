@@ -80,6 +80,65 @@ afterEach(() => {
 })
 
 describe('createTransferSession', () => {
+  it.each(['connecting', 'closing', 'closed'])(
+    'should release a %s channel without sending and allow a fresh session',
+    async (readyState) => {
+      const initial = {...fileTransfer.state}
+      await fileTransfer.create()
+      const socket = Socket.instances[0]
+      socket.message({type: 'approved'})
+      const peer = Peer.instances[0]
+      peer.channel.readyState = readyState
+      fileTransfer.setAutoAccept(true)
+
+      fileTransfer.cancel()
+      expect(peer.channel.send).not.toHaveBeenCalled()
+      expect(fileTransfer.state).toEqual(initial)
+      expect(fileTransfer.isActive).toBe(false)
+      expect(peer.channel.close).toHaveBeenCalledOnce()
+      expect(peer.close).toHaveBeenCalledOnce()
+      expect(socket.close).toHaveBeenCalledOnce()
+
+      await fileTransfer.create()
+      expect(fileTransfer.state.phase).toBe('creating')
+      expect(Socket.instances).toHaveLength(2)
+      peer.channel.dispatchEvent(new Event('open'))
+      socket.message({type: 'peer-left'})
+      expect(fileTransfer.state.phase).toBe('creating')
+    },
+  )
+
+  it('should notify an open peer before closing and keep repeated cancellation idle', async () => {
+    const initial = {...fileTransfer.state}
+    const peer = await connect()
+    const socket = Socket.instances[0]
+    fileTransfer.cancel()
+    expect(peer.channel.send).toHaveBeenCalledExactlyOnceWith(JSON.stringify({type: 'cancel'}))
+    expect(peer.channel.send.mock.invocationCallOrder[0]).toBeLessThan(
+      peer.channel.close.mock.invocationCallOrder[0],
+    )
+    expect(fileTransfer.state).toEqual(initial)
+    fileTransfer.cancel()
+    expect(peer.channel.send).toHaveBeenCalledOnce()
+    expect(peer.channel.close).toHaveBeenCalledOnce()
+    expect(peer.close).toHaveBeenCalledOnce()
+    expect(socket.close).toHaveBeenCalledOnce()
+    expect(fileTransfer.state).toEqual(initial)
+  })
+
+  it('should finish local cancellation when an open channel cannot queue notification', async () => {
+    const initial = {...fileTransfer.state}
+    const peer = await connect()
+    peer.channel.send.mockImplementationOnce(() => {
+      throw new DOMException('Send buffer full', 'OperationError')
+    })
+    expect(() => fileTransfer.cancel()).not.toThrow()
+    expect(fileTransfer.state).toEqual(initial)
+    expect(peer.channel.close).toHaveBeenCalledOnce()
+    expect(peer.close).toHaveBeenCalledOnce()
+    expect(Socket.instances[0].close).toHaveBeenCalledOnce()
+  })
+
   it.each([
     {id: '', label: 'empty session', origin: 'http://localhost:3300', secret: 'secret'},
     {id: 'invitation', label: 'empty secret', origin: 'http://localhost:3300', secret: ''},
