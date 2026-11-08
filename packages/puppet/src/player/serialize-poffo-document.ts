@@ -1,10 +1,13 @@
 import type {PuppetDocument} from './document'
 import {encodeFile} from './poffo-file/encode-file'
 import {compactDocumentTextures} from './texture-assets'
+import type {PoffoCompressor} from './poffo-file/types'
 
 export interface SerializePoffoDocumentOptions {
   /** Cancels this independent export and terminates its Worker; omitted to finish exporting. */
   readonly signal?: AbortSignal
+  /** Environment Brotli stream; omitted, use WASM in an independent browser Worker when available. */
+  readonly compress?: PoffoCompressor
 }
 
 interface ExportSuccess {
@@ -21,10 +24,10 @@ export const serializePoffoDocument = async (
   document: PuppetDocument,
   options: SerializePoffoDocumentOptions = {},
 ): Promise<Blob> => {
-  const {signal} = options
+  const {signal, compress} = options
   signal?.throwIfAborted()
-  if (typeof Worker === 'undefined') {
-    return encodeFile(document, signal)
+  if (compress !== undefined || typeof Worker === 'undefined') {
+    return encodeFile(document, signal, compress)
   }
   return new Promise((resolve, reject) => {
     const worker = new Worker(new URL('./poffo-file/worker/encode.ts', import.meta.url), {

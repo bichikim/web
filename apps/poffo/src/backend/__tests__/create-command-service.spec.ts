@@ -10,6 +10,50 @@ const setup = () => {
   return {model, service: createCommandService({model})}
 }
 
+test('should finish an accepted file write before reporting that commands are idle', async () => {
+  const model = createModelBackend({document: createEmptyDocument(), sessionId: 'session'})
+  let release!: () => void
+  let started!: () => void
+  const writing = new Promise<void>((resolve) => {
+    release = resolve
+  })
+  const ready = new Promise<void>((resolve) => {
+    started = resolve
+  })
+  const order: string[] = []
+  const service = createCommandService({
+    files: {
+      read: async () => ({error: {code: 'unused'}, ok: false}),
+      write: async () => {
+        order.push('writing')
+        started()
+        await writing
+        order.push('written')
+      },
+    },
+    model,
+  })
+  const saved = service.execute({
+    input: {expectedRevision: 0, format: 'json', path: 'model.json'},
+    operation: 'document.save',
+    requestId: 'save',
+  })
+  try {
+    await ready
+    const idle = service.whenIdle().then(() => {
+      order.push('idle')
+    })
+    expect(order).toEqual(['writing'])
+    release()
+    await idle
+    expect((await saved).ok).toBe(true)
+    expect(order).toEqual(['writing', 'written', 'idle'])
+  } finally {
+    release()
+    await saved
+  }
+})
+
 test('should preview without changing the model and apply one shared undo step', async () => {
   const {model, service} = setup()
   const patch = [{op: 'add', path: '/framesPerSecond', value: 48}]

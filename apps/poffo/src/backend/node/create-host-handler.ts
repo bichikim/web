@@ -42,6 +42,10 @@ const handleCommand = async (
     sendJson(response, {error: 'invalid-request'}, constants.HTTP_STATUS_BAD_REQUEST)
     return
   }
+  if (options.isClosing()) {
+    sendJson(response, {error: 'closing'}, constants.HTTP_STATUS_SERVICE_UNAVAILABLE)
+    return
+  }
   options.clients.associate(request.headers['x-poffo-client'], parsed.data.input)
   sendJson(response, {
     ...(await options.service.execute(parsed.data)),

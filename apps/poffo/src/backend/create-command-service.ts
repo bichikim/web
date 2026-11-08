@@ -69,7 +69,7 @@ export const createCommandService = (options: CreateCommandServiceOptions) => {
     'operations.list',
     'edit.preview',
   ])
-  const execute = async (request: CommandRequest): Promise<CommandResponse> => {
+  const perform = async (request: CommandRequest): Promise<CommandResponse> => {
     if (readOperations.has(request.operation)) {
       return run(request)
     }
@@ -86,5 +86,23 @@ export const createCommandService = (options: CreateCommandServiceOptions) => {
     }
     return result
   }
-  return {catalog, execute}
+  const pending = new Set<Promise<CommandResponse>>()
+  const execute = (request: CommandRequest): Promise<CommandResponse> => {
+    const result = perform(request)
+    pending.add(result)
+    const release = () => {
+      pending.delete(result)
+    }
+    result.then(release, release)
+    return result
+  }
+  /** Waits for accepted commands, including file writes; the owner first stops accepting input. */
+  const whenIdle = async (): Promise<void> => {
+    while (pending.size > 0) {
+      // Each settlement is the completion signal, without polling or a delay.
+      // eslint-disable-next-line no-await-in-loop
+      await Promise.allSettled(pending)
+    }
+  }
+  return {catalog, execute, whenIdle}
 }

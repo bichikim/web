@@ -12,6 +12,7 @@ import {createModelPersistence} from './create-model-persistence'
 import {createRenderBroker} from './create-render-broker'
 import {createHostClients} from './create-host-clients'
 import {createHostHandler} from './create-host-handler'
+import {serializeNodeDocumentFile} from './serialize-document-file'
 
 export interface HostConnection {
   readonly version: 1
@@ -44,6 +45,7 @@ export const startNodeHost = async (options: StartNodeHostOptions) => {
     sessionId: randomUUID(),
   })
   const renderer = createRenderBroker()
+  let closing = false
   const service = createCommandService({
     files: {
       read: async (path) => readDocumentPath(await resolveWorkspacePath(workspace, path, 'read')),
@@ -57,12 +59,17 @@ export const startNodeHost = async (options: StartNodeHostOptions) => {
     },
     model,
     onSaved: persistence.markSaved,
-    render: (_document, input) => renderer.render(input),
+    render: (_document, input) => {
+      if (closing) {
+        throw new Error('host-closing: frame capture rejected during shutdown')
+      }
+      return renderer.render(input)
+    },
+    serialize: serializeNodeDocumentFile,
   })
   const TOKEN_BYTES = 32
   const token = randomBytes(TOKEN_BYTES).toString('base64url')
   let url = ''
-  let closing = false
   const clients = createHostClients(model, renderer)
   const canStop = () =>
     model.read().transaction === null && persistence.isSaved(model.read().document)
@@ -74,6 +81,12 @@ export const startNodeHost = async (options: StartNodeHostOptions) => {
       throw new Error('unsaved-document: save or explicitly discard')
     }
     closing = true
+    renderer.cancelAll()
+    await service.whenIdle()
+    if (!discard && !canStop()) {
+      closing = false
+      throw new Error('unsaved-document: save or explicitly discard')
+    }
     try {
       await persistence.flush()
     } catch (error) {
@@ -83,9 +96,11 @@ export const startNodeHost = async (options: StartNodeHostOptions) => {
       }
     }
     clients.close()
-    await new Promise<void>((resolve, reject) => {
+    const closed = new Promise<void>((resolve, reject) => {
       server.close((error) => (error === undefined ? resolve() : reject(error)))
     })
+    server.closeAllConnections()
+    await closed
     const stored = await readFile(persistence.connectionPath, 'utf8').catch(() => '')
     if (stored === JSON.stringify(connection)) {
       await rm(persistence.connectionPath)

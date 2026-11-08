@@ -256,6 +256,12 @@ jobs:
           "POFFO_INSTALLED_CLI=$destination/poffo-cli.exe" >> $env:GITHUB_ENV
           "POFFO_NATIVE_APP=$destination/Poffo.exe" >> $env:GITHUB_ENV
 
+      - name: Validate installed CLI shutdown with an incomplete HTTP client
+        if: '!inputs.native-ui'
+        env:
+          POFFO_VALIDATION_OUTPUT: ${{ runner.temp }}/poffo-validation
+        run: node apps/poffo/validation/runtime/shutdown.mjs
+
       - name: Install Chromium for installed runtime validation
         if: '!inputs.native-ui'
         run: pnpm exec playwright install chromium

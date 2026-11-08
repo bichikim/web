@@ -1,10 +1,15 @@
 import {createBrotliStream} from '../internal/brotli-stream'
-import type {PoffoCodec} from './types'
+import type {PoffoCodec, PoffoCompressor} from './types'
 
 /** Compresses a section only when it reduces its byte length; consumes and releases its stream. */
-export const encodeSection = async (source: Blob, signal?: AbortSignal) => {
+export const encodeSection = async (
+  source: Blob,
+  signal?: AbortSignal,
+  compress?: PoffoCompressor,
+) => {
   signal?.throwIfAborted()
-  const stream = await createBrotliStream(source.stream(), 'compress')
+  const stream = await (compress?.(source.stream()) ??
+    createBrotliStream(source.stream(), 'compress'))
   if (signal?.aborted === true) {
     await stream.cancel(signal.reason)
     signal.throwIfAborted()

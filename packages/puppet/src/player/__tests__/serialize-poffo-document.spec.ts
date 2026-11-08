@@ -10,6 +10,19 @@ vi.mock('brotli-wasm', () => ({
 }))
 afterEach(() => vi.unstubAllGlobals())
 
+test('should use an environment compressor without sending its function to a browser Worker', async () => {
+  const worker = vi.fn(function WorkerMock() {
+    throw new Error('Unexpected Worker')
+  })
+  vi.stubGlobal('Worker', worker)
+  const compress = vi.fn(async (source: ReadableStream<Uint8Array<ArrayBuffer>>) => source)
+  const source = {...createEmptyDocument(), sound: 'data:audio/wav;base64,AAEC'}
+  const blob = await serializePoffoDocument(source, {compress})
+  expect(await decodeFile(blob)).toEqual(source)
+  expect(compress).toHaveBeenCalledTimes(2)
+  expect(worker).not.toHaveBeenCalled()
+})
+
 test('should compress the complete document without mutating its source', async () => {
   const document = {
     ...createEmptyDocument(),

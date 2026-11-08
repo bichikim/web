@@ -11,6 +11,11 @@ export interface EncodedValue {
 
 export type PoffoCodec = 0 | 1
 
+/** Produces standard Brotli bytes and propagates stream cancellation to the source. */
+export type PoffoCompressor = (
+  source: ReadableStream<Uint8Array<ArrayBuffer>>,
+) => Promise<ReadableStream<Uint8Array<ArrayBuffer>>>
+
 export interface PoffoAssetEntry {
   readonly prefix: string
   readonly codec: PoffoCodec

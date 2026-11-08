@@ -52,6 +52,11 @@ export const createRenderBroker = () => {
     attach: (clientId: string, response: ServerResponse) => {
       renderers.set(clientId, response)
     },
+    cancelAll: () => {
+      for (const job of jobs.values()) {
+        job.reject(new Error('host-closing: pending frame capture cancelled'))
+      }
+    },
     complete: (clientId: string | string[] | undefined, value: unknown) => {
       const result = renderResultSchema.parse(value)
       const job = jobs.get(result.id)

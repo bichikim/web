@@ -68,7 +68,10 @@ export const createDocumentOperations = ({
     }),
     async (input) => {
       const view = checkRevision(input.expectedRevision)
-      const content = await serializeDocumentFile(view.document, input.format)
+      const content = await (options.serialize ?? serializeDocumentFile)(
+        view.document,
+        input.format,
+      )
       await requireFiles().write(input.path, content, input.overwrite)
       options.onSaved?.(view.document, view.revision)
       return {bytes: content.size, path: input.path, savedRevision: view.revision}

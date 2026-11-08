@@ -4,19 +4,23 @@ import {encodeHeader, POFFO_MIME_TYPE} from './header'
 import {encodeValue} from './encode-value'
 import {encodeSection} from './encode-section'
 import {digest, digestHex} from './digest'
-import type {PoffoAssetEntry} from './types'
+import type {PoffoAssetEntry, PoffoCompressor} from './types'
 
 /** Saves the web Poffo v1 container without modifying its document or embedded asset bytes. */
-export const encodeFile = async (document: PuppetDocument, signal?: AbortSignal): Promise<Blob> => {
+export const encodeFile = async (
+  document: PuppetDocument,
+  signal?: AbortSignal,
+  compress?: PoffoCompressor,
+): Promise<Blob> => {
   signal?.throwIfAborted()
   const value = encodeValue(getExportDocument(document))
-  const metadata = await encodeSection(new Blob([...value.parts]), signal)
+  const metadata = await encodeSection(new Blob([...value.parts]), signal, compress)
   const entries: PoffoAssetEntry[] = []
   const assets: Blob[] = []
   // Encoding sequential sections bounds WASM state and temporary asset memory.
   for (const asset of value.assets) {
     // eslint-disable-next-line no-await-in-loop
-    const encoded = await encodeSection(new Blob([asset.bytes]), signal)
+    const encoded = await encodeSection(new Blob([asset.bytes]), signal, compress)
     // eslint-disable-next-line no-await-in-loop
     const hash = await digest(encoded.blob, signal)
     signal?.throwIfAborted()

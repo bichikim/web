@@ -4,7 +4,7 @@ import {createEmptyDocument, type PuppetDocument} from '@winter-love/puppet/play
 import {readDocumentPath} from './read-document-path'
 import {resolveWorkspacePath} from './resolve-workspace-path'
 import {writeDocumentPath} from './write-document-path'
-import {serializeDocumentFile} from '../serialize-document-file'
+import {serializeNodeDocumentFile} from './serialize-document-file'
 
 /** Owns committed recovery snapshots; the caller awaits flush before shutting down. */
 export const createModelPersistence = async (workspace: string, file?: string) => {
@@ -51,7 +51,7 @@ export const createModelPersistence = async (workspace: string, file?: string) =
       writes = writes
         .then(async () => {
           await writeDocumentPath({
-            content: await serializeDocumentFile(document, 'poffo'),
+            content: await serializeNodeDocumentFile(document, 'poffo'),
             overwrite: true,
             path: recovery,
           })
