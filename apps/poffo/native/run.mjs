@@ -190,7 +190,19 @@ const checkpoints = new Map([
       assert.deepEqual(currentRig, originalRig)
       assert.deepEqual(motions.slice(0, ORIGINAL_MOTIONS), opened.document.motions)
       assert.equal(motions.length, EDITED_MOTIONS)
-      return {motions: 7, parts: 122, rigPreserved: true}
+      const frame = await call('view.render', {
+        expectedRevision: edited.revision,
+        path: 'native-frame.png',
+        size: 640,
+      })
+      const pixels = await readFile(join(workspace, 'native-frame.png'))
+      await copyFile(join(workspace, 'native-frame.png'), join(output, 'native-frame.png'))
+      return {
+        motions: 7,
+        nativeFrame: {hash: hash(pixels), ...frame.value},
+        parts: 122,
+        rigPreserved: true,
+      }
     },
   ],
   [
@@ -283,7 +295,7 @@ const run = async (command, arguments_, environment = process.env) => {
 }
 
 const runMac = async (environment) => {
-  const derived = join(dirname(output), 'native-derived')
+  const derived = join(dirname(workspace), 'poffo-native-derived')
   await run('xcodebuild', [
     'build-for-testing',
     '-project',

@@ -30,6 +30,7 @@ final class NativeUITests: XCTestCase {
         XCTAssertTrue(named(app, "파츠 122개").waitForExistence(timeout: 60))
         try await checkpoint(control, "opened")
         try await checkpoint(control, "edited")
+        try validateFrame(output)
         XCTAssertTrue(named(app, "CLI 검증 모션 추가").waitForExistence(timeout: 30))
         attach(app, "character-window", output)
 
@@ -162,5 +163,18 @@ final class NativeUITests: XCTestCase {
         request.httpBody = try JSONSerialization.data(withJSONObject: ["name": name])
         let (data, response) = try await URLSession.shared.data(for: request)
         XCTAssertEqual((response as? HTTPURLResponse)?.statusCode, 200, String(data: data, encoding: .utf8) ?? "")
+    }
+
+    private func validateFrame(_ output: String) throws {
+        let data = try Data(contentsOf: URL(fileURLWithPath: output).appendingPathComponent("native-frame.png"))
+        let bitmap = try XCTUnwrap(NSBitmapImageRep(data: data))
+        var occupied = 0
+        for row in 0..<20 {
+            for column in 0..<20 {
+                let color = bitmap.colorAt(x: column * bitmap.pixelsWide / 20, y: row * bitmap.pixelsHigh / 20)
+                if (color?.alphaComponent ?? 0) > 0 { occupied += 1 }
+            }
+        }
+        XCTAssertGreaterThan(occupied, 10)
     }
 }

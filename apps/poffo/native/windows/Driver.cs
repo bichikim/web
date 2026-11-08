@@ -65,12 +65,7 @@ public sealed class NativeDriver : IDisposable {
     }
 
     private static void Invoke(AutomationElement element) {
-        object pattern;
-        if (element.TryGetCurrentPattern(InvokePattern.Pattern, out pattern)) {
-            ((InvokePattern)pattern).Invoke();
-        } else {
-            ((LegacyIAccessiblePattern)element.GetCurrentPattern(LegacyIAccessiblePattern.Pattern)).DoDefaultAction();
-        }
+        ((InvokePattern)element.GetCurrentPattern(InvokePattern.Pattern)).Invoke();
     }
 
     private AutomationElement Dialog() {
@@ -141,6 +136,18 @@ public sealed class NativeDriver : IDisposable {
         }
     }
 
+    private void ValidateFrame() {
+        using (var bitmap = new Bitmap(Path.Combine(output, "native-frame.png"))) {
+            int occupied = 0;
+            for (int row = 0; row < 20; row++) {
+                for (int column = 0; column < 20; column++) {
+                    if (bitmap.GetPixel(column * bitmap.Width / 20, row * bitmap.Height / 20).A > 0) occupied++;
+                }
+            }
+            if (occupied <= 10) throw new Exception("Native renderer returned a blank frame");
+        }
+    }
+
     private static string Dump(AutomationElement root) {
         var text = new StringBuilder();
         foreach (AutomationElement item in root.FindAll(TreeScope.Descendants, Condition.TrueCondition)) {
@@ -176,6 +183,7 @@ public sealed class NativeDriver : IDisposable {
         Find(window, Named("파츠 122개"), "real character loaded");
         Checkpoint("opened");
         Checkpoint("edited");
+        ValidateFrame();
         Find(window, Named("CLI 검증 모션 추가"), "CLI edit projected to native webview");
         Capture(window, "character-window");
 
