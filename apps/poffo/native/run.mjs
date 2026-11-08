@@ -50,6 +50,38 @@ const report = {
   sourceHash: hash(sourceBytes),
   steps: [],
 }
+if (process.platform === 'darwin') {
+  const translated = process.env.POFFO_NATIVE_EXECUTION === 'rosetta'
+  const binaries = [join(application, 'Contents/MacOS/Poffo'), executable]
+  const architectures = await Promise.all(
+    binaries.map(async (path) => ({
+      architectures: (await execute('lipo', ['-archs', path])).stdout.trim().split(/\s+/u),
+      path,
+    })),
+  )
+  if (translated) {
+    assert.equal(process.arch, 'arm64')
+    assert.ok(
+      architectures.every(
+        (binary) => binary.architectures.length === 1 && binary.architectures[0] === 'x86_64',
+      ),
+    )
+    const runtime = JSON.parse((await execute(executable, ['info'])).stdout)
+    assert.equal(runtime.packaged, true)
+    const expression = [
+      'JSON.stringify({arch:process.arch,translated:',
+      'require("node:child_process").execFileSync("sysctl",',
+      '["-in","sysctl.proc_translated"],{encoding:"utf8"}).trim()})',
+    ].join('')
+    const node = JSON.parse((await execute(runtime.executable, ['-p', expression])).stdout)
+    assert.deepEqual(node, {arch: 'x64', translated: '1'})
+  }
+  report.execution = {
+    binaries: architectures,
+    hostArchitecture: process.arch,
+    mode: translated ? 'rosetta' : 'native',
+  }
+}
 let initial
 let opened
 let edited
