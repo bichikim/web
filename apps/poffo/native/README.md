@@ -17,6 +17,6 @@ Mac에서는 제품과 별개의 기본 WKWebView 캔버스와 Metal 장치 목�
 
 Windows UI Automation은 별도 MTA 스레드에서 실행한다. 모달 창을 여는 호출도 보조 스레드로 보내고 실제 창 생성·종료 이벤트를 기다린다. Microsoft의 [Invoke 호출 주의사항](https://learn.microsoft.com/en-us/dotnet/api/system.windows.automation.invokepattern.invoke?view=netframework-4.8.1)과 [스레드 지침](https://learn.microsoft.com/en-us/dotnet/framework/ui-automation/ui-automation-threading-issues)을 따른다.
 
-로컬 실행에는 설치된 앱·내장 CLI와 비어 있는 전용 작업 폴더가 필요하다. `POFFO_NATIVE_APP`, `POFFO_INSTALLED_CLI`, `POFFO_NATIVE_WORKSPACE`, `POFFO_NATIVE_OUTPUT`을 지정하고 `node apps/poffo/native/run.mjs`를 실행한다. 출력 폴더의 상위에는 워크플로가 생성한 `installer.json`이 있어야 한다. 테스트는 자체 workspace만 정리한다. Mac UI 조작 중에는 클립보드와 포커스를 사용하므로 일상 작업과 동시에 실행하지 않는다.
+로컬 실행에는 설치된 앱·내장 CLI와 비어 있는 전용 작업 폴더가 필요하다. `POFFO_NATIVE_APP`, `POFFO_INSTALLED_CLI`, `POFFO_NATIVE_WORKSPACE`, `POFFO_NATIVE_OUTPUT`을 지정하고 `node apps/poffo/native/run.mjs`를 실행한다. 출력 폴더의 상위에는 워크플로가 생성한 `installer.json`이 있어야 한다. 테스트는 자체 workspace만 정리한다. UI 조작 중에는 클립보드와 포커스를 사용하므로 일상 작업과 동시에 실행하지 않는다.
 
 OS 실행기의 네이티브 창·WebView·시스템 패널 검증과 물리 기기의 GPU·디스플레이 검증은 범위가 다르다. 이 검사만으로 모든 하드웨어의 픽셀 일치나 앱 서명·공증을 확인한 것으로 간주하지 않는다. 확정된 통과 기록은 [캐릭터 검증 기록](../validation/character/README.md)에 남긴다.

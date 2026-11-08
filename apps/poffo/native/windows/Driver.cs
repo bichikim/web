@@ -150,7 +150,19 @@ public sealed class NativeDriver : IDisposable {
         var name = Find(dialog, new AndCondition(
             new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.Edit),
             new OrCondition(Named("File name:"), new PropertyCondition(AutomationElement.AutomationIdProperty, "1148"))), "file name");
-        ((ValuePattern)name.GetCurrentPattern(ValuePattern.Pattern)).SetValue(path);
+        Exception failure = null;
+        var clipboard = new Thread(() => {
+            try { System.Windows.Forms.Clipboard.SetText(path); }
+            catch (Exception error) { failure = error; }
+        });
+        clipboard.SetApartmentState(ApartmentState.STA);
+        clipboard.Start();
+        clipboard.Join();
+        if (failure != null) throw new Exception("Could not prepare native path input", failure);
+        name.SetFocus();
+        System.Windows.Forms.SendKeys.SendWait("^a");
+        System.Windows.Forms.SendKeys.SendWait("^v");
+        System.Windows.Forms.SendKeys.SendWait("{TAB}");
     }
 
     private void WaitForSave() {
