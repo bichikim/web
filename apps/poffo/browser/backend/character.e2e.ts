@@ -38,6 +38,10 @@ test('should author and reload a real character using the installed CLI, MCP and
   let complete = false
   const errors: string[] = []
   page.on('pageerror', (error) => errors.push(error.message))
+  // Static CLI captures redraw explicitly. Keep the interactive SwiftShader ticker from
+  // competing with checkpoint serialization, then resume for the real playback assertions.
+  await page.clock.install({time: new Date('2026-01-01T00:00:00Z')})
+  await page.clock.pauseAt(new Date('2026-01-01T01:00:00Z'))
   const execute = async (...args: ReadonlyArray<string>) => {
     try {
       return JSON.parse(
@@ -127,6 +131,7 @@ test('should author and reload a real character using the installed CLI, MCP and
     const run = await test.step('Run the seven-step character recipe through the shipped CLI', () =>
       execute('recipe', 'recipe.json'))
     expect(run.report).toMatchObject({complete: true, completed: 7})
+    await page.clock.resume()
     await expect(page.getByRole('button', {exact: true, name: 'CLI 검증 모션 추가'})).toBeVisible()
     expect(await call('status')).toMatchObject({
       ok: true,
@@ -190,6 +195,7 @@ test('should author and reload a real character using the installed CLI, MCP and
     expect(Math.max(...times)).toBeGreaterThan(3.5)
     expect(Math.min(...times)).toBeLessThan(0.5)
     await page.screenshot({path: join(output, 'playback.png')})
+    await page.clock.pauseAt(new Date('2026-01-01T02:00:00Z'))
     const status = await call('status')
     if (!status.ok) {
       throw new Error(status.error.message)
@@ -232,6 +238,7 @@ test('should author and reload a real character using the installed CLI, MCP and
       JSON.stringify(
         {
           browserName,
+          clock: {playback: 'resumed', staticCaptures: 'paused'},
           doctor,
           errors,
           images,
