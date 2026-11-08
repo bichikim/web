@@ -14,6 +14,8 @@ public sealed class NativeDriver : IDisposable {
     [DllImport("user32.dll")] private static extern bool IsWindowVisible(IntPtr handle);
     [DllImport("user32.dll")] private static extern bool SetForegroundWindow(IntPtr handle);
     [DllImport("user32.dll")] private static extern IntPtr GetForegroundWindow();
+    [DllImport("user32.dll")] private static extern bool SetCursorPos(int x, int y);
+    [DllImport("user32.dll")] private static extern void mouse_event(uint flags, uint x, uint y, uint data, UIntPtr extra);
     private const uint Owner = 4;
     private readonly AutoResetEvent changed = new AutoResetEvent(false);
     private readonly string executable;
@@ -25,6 +27,7 @@ public sealed class NativeDriver : IDisposable {
     private Exception actionError;
     private readonly object signalLock = new object();
     private bool disposed;
+    private AutomationElement activeMenu;
 
     private void SignalChanged() {
         lock (signalLock) { if (!disposed) changed.Set(); }
@@ -49,6 +52,10 @@ public sealed class NativeDriver : IDisposable {
         Automation.AddAutomationEventHandler(WindowPattern.WindowOpenedEvent, desktop, TreeScope.Subtree, (sender, args) => SignalChanged());
         Automation.AddAutomationEventHandler(WindowPattern.WindowClosedEvent, desktop, TreeScope.Subtree, (sender, args) => SignalChanged());
         Automation.AddAutomationFocusChangedEventHandler((sender, args) => SignalChanged());
+        Automation.AddAutomationEventHandler(AutomationElement.MenuOpenedEvent, desktop, TreeScope.Subtree, (sender, args) => {
+            activeMenu = sender as AutomationElement;
+            SignalChanged();
+        });
         Automation.AddAutomationPropertyChangedEventHandler(desktop, TreeScope.Subtree, (sender, args) => SignalChanged(),
             AutomationElement.NameProperty, AutomationElement.IsEnabledProperty);
     }
@@ -63,9 +70,9 @@ public sealed class NativeDriver : IDisposable {
         }
     }
 
-    private AutomationElement Find(AutomationElement root, Condition condition, string description) {
+    private AutomationElement Find(AutomationElement root, Condition condition, string description, TreeScope scope = TreeScope.Descendants) {
         AutomationElement result = null;
-        Until(() => { result = root.FindFirst(TreeScope.Descendants, condition); return result != null; }, description);
+        Until(() => { result = root.FindFirst(scope, condition); return result != null; }, description);
         return result;
     }
 
@@ -80,7 +87,7 @@ public sealed class NativeDriver : IDisposable {
         process = Process.Start(new ProcessStartInfo(executable, arguments) {UseShellExecute = false});
         window = Find(AutomationElement.RootElement,
             new AndCondition(new PropertyCondition(AutomationElement.ProcessIdProperty, process.Id),
-                new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.Window)), "native window");
+                new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.Window)), "native window", TreeScope.Children);
         stage = "editor-ready";
         Find(window, Named("파츠 " + parts + "개"), "loaded editor");
     }
@@ -94,7 +101,7 @@ public sealed class NativeDriver : IDisposable {
         AutomationElement result = null;
         var main = new IntPtr(window.Current.NativeWindowHandle);
         Until(() => {
-            foreach (AutomationElement candidate in AutomationElement.RootElement.FindAll(TreeScope.Descendants,
+            foreach (AutomationElement candidate in AutomationElement.RootElement.FindAll(TreeScope.Children,
                 new PropertyCondition(AutomationElement.ClassNameProperty, "#32770"))) {
                 if (GetWindow(new IntPtr(candidate.Current.NativeWindowHandle), Owner) == main ||
                     candidate.Current.ProcessId == process.Id) { result = candidate; return true; }
@@ -111,10 +118,14 @@ public sealed class NativeDriver : IDisposable {
         Until(() => GetForegroundWindow() == handle, "editor foreground");
         var file = Find(window, new AndCondition(Named("파일"),
             new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.MenuItem)), "File menu");
-        object pattern;
-        if (file.TryGetCurrentPattern(ExpandCollapsePattern.Pattern, out pattern)) Begin(() => ((ExpandCollapsePattern)pattern).Expand());
-        else Begin(() => Invoke(file));
-        var item = Find(AutomationElement.RootElement, new AndCondition(Named(action),
+        activeMenu = null;
+        var point = file.GetClickablePoint();
+        if (!SetCursorPos((int)point.X, (int)point.Y)) throw new Exception("Could not position pointer on File menu");
+        mouse_event(0x0002, 0, 0, 0, UIntPtr.Zero);
+        mouse_event(0x0004, 0, 0, 0, UIntPtr.Zero);
+        Until(() => activeMenu != null, "native File menu opened");
+        Capture(activeMenu, "native-menu");
+        var item = Find(activeMenu, new AndCondition(Named(action),
             new PropertyCondition(AutomationElement.IsEnabledProperty, true),
             new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.MenuItem)), action);
         Begin(() => Invoke(item));
@@ -183,7 +194,6 @@ public sealed class NativeDriver : IDisposable {
     }
 
     private void Capture(AutomationElement element, string name) {
-        File.WriteAllText(Path.Combine(output, name + ".txt"), Dump(element));
         var bounds = element.Current.BoundingRectangle;
         using (var bitmap = new Bitmap((int)bounds.Width, (int)bounds.Height)) {
             using (var graphics = Graphics.FromImage(bitmap)) {
@@ -191,6 +201,7 @@ public sealed class NativeDriver : IDisposable {
             }
             bitmap.Save(Path.Combine(output, name + ".png"), ImageFormat.Png);
         }
+        File.WriteAllText(Path.Combine(output, name + ".txt"), Dump(element));
     }
 
     private void Exercise(string workspace) {
@@ -282,6 +293,8 @@ public sealed class NativeDriver : IDisposable {
             try { driver.Exercise(workspace); }
             catch (Exception error) {
                 File.WriteAllText(Path.Combine(output, "failure.txt"), driver.stage + "\n" + error.ToString());
+                if (driver.process != null && driver.process.HasExited)
+                    File.AppendAllText(Path.Combine(output, "failure.txt"), "\nNative process exit code: " + driver.process.ExitCode);
                 if (driver.window != null && !driver.process.HasExited) driver.Capture(driver.window, "failure-window");
                 throw;
             }
