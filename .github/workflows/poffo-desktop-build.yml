@@ -16,6 +16,10 @@ on:
         description: Validate unchanged installers from an earlier build run
         type: string
         default: ''
+      pixel-diagnostics:
+        description: Trace texture inputs, GPU pixels and PNG encoding
+        type: boolean
+        default: false
 
 run-name: ${{ inputs.reuse-run != '' && format('Validate Poffo installers from run {0}', inputs.reuse-run) || format('Build Poffo Desktop from {0}', github.ref_name) }}
 
@@ -207,7 +211,7 @@ jobs:
       - name: Validate installed Node, CLI, MCP and real character workflow
         env:
           POFFO_VALIDATION_OUTPUT: ${{ runner.temp }}/poffo-validation
-        run: pnpm exec playwright test --config apps/poffo/playwright.character.config.ts --project chromium
+        run: pnpm exec playwright test --config ${{ inputs.pixel-diagnostics && 'apps/poffo/playwright.pixels.config.ts' || 'apps/poffo/playwright.character.config.ts' }} --project chromium
 
       - name: Upload runtime validation evidence
         if: always()
