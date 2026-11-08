@@ -86,6 +86,8 @@ private final class GraphicsProbe: NSObject, WKNavigationDelegate, NSApplication
     func applicationDidFinishLaunching(_ notification: Notification) {
         result["metal"] = renderMetal()
         result["os"] = ProcessInfo.processInfo.operatingSystemVersionString
+        try? FileManager.default.createDirectory(at: output.deletingLastPathComponent(), withIntermediateDirectories: true)
+        try? JSONSerialization.data(withJSONObject: result, options: [.prettyPrinted,.sortedKeys]).write(to: output)
         let configuration = WKWebViewConfiguration()
         configuration.setURLSchemeHandler(OriginPage(), forURLScheme: "tauri")
         configuration.userContentController.add(self, name: "graphics")
@@ -132,7 +134,8 @@ private final class GraphicsProbe: NSObject, WKNavigationDelegate, NSApplication
               };
               canvas.addEventListener('webglcontextrestored',event=>{
                 result.events.push({kind:event.type});read();
-                if(contexts.filter(entry=>entry.attached).every(entry=>entry.available))finish('restored');
+                const attachedContexts=contexts.filter(entry=>entry.attached);
+                if(attachedContexts.length===2&&attachedContexts.every(entry=>entry.available))finish('restored');
               });
               try{gl=canvas.getContext(type,{stencil:true});read();}
               catch(error){result.error=String(error);result.available=false;}
