@@ -44,7 +44,7 @@ final class NativeUITests: XCTestCase {
         if environment["POFFO_NATIVE_GPU_ONLY"] == "true" { return }
 
         openMenu(app, "문서 저장")
-        XCTAssertTrue(savePanel(app).buttons["Save"].waitForExistence(timeout: 60))
+        try waitForSavePanel(app, output)
         attach(app, "native-save-cancel", output)
         savePanel(app).buttons["CancelButton"].click()
         waitForSave(app)
@@ -63,7 +63,7 @@ final class NativeUITests: XCTestCase {
         }
 
         openMenu(app, "문서 저장")
-        XCTAssertTrue(savePanel(app).buttons["Save"].waitForExistence(timeout: 60))
+        try waitForSavePanel(app, output)
         goTo(app, workspace)
         let name = savePanel(app).textFields["saveAsNameTextField"]
         XCTAssertTrue(name.waitForExistence(timeout: 10))
@@ -154,6 +154,14 @@ final class NativeUITests: XCTestCase {
     @MainActor
     private func savePanel(_ app: XCUIApplication) -> XCUIElement {
         app.sheets.containing(.button, identifier: "Save").firstMatch
+    }
+
+    @MainActor
+    private func waitForSavePanel(_ app: XCUIApplication, _ output: String) throws {
+        guard savePanel(app).buttons["Save"].waitForExistence(timeout: 60) else {
+            attach(app, "save-panel-not-ready", output)
+            throw NativeFailure("Native save panel did not appear before its deadline")
+        }
     }
 
     @MainActor
