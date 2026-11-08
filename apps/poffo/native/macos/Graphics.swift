@@ -76,7 +76,7 @@ private func renderMetal() -> [String: Any] {
     return result
 }
 
-private final class GraphicsProbe: NSObject, WKNavigationDelegate, NSApplicationDelegate {
+private final class GraphicsProbe: NSObject, WKNavigationDelegate, NSApplicationDelegate, WKScriptMessageHandler {
     let output: URL
     var browser: WKWebView!
     var window: NSWindow!
@@ -88,6 +88,7 @@ private final class GraphicsProbe: NSObject, WKNavigationDelegate, NSApplication
         result["os"] = ProcessInfo.processInfo.operatingSystemVersionString
         let configuration = WKWebViewConfiguration()
         configuration.setURLSchemeHandler(OriginPage(), forURLScheme: "tauri")
+        configuration.userContentController.add(self, name: "graphics")
         browser = WKWebView(frame: NSRect(x: 0, y: 0, width: 640, height: 640), configuration: configuration)
         browser.navigationDelegate = self
         window = NSWindow(contentRect: browser.frame, styleMask: [.titled], backing: .buffered, defer: false)
@@ -100,28 +101,71 @@ private final class GraphicsProbe: NSObject, WKNavigationDelegate, NSApplication
 
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
         let script = """
-          JSON.stringify({visibility:document.visibilityState, contexts:['webgl','webgl2'].map(type=>{
-            try {
-              const gl=document.createElement('canvas').getContext(type,{stencil:true});
-              if(!gl)return {type,available:false};
-              const attributes=gl.getContextAttributes();
-              return {type,attributes,lost:gl.isContextLost(),error:gl.getError(),available:!!attributes?.stencil};
-            }catch(error){return {type,error:String(error),available:false};}
-          })})
+          (() => {
+            const contexts=[];
+            let finished=false;
+            const finish=reason=>{
+              if(finished)return;
+              finished=true;
+              window.webkit.messageHandlers.graphics.postMessage({reason,visibility:document.visibilityState,contexts});
+            };
+            const inspect=(type,attached)=>{
+              const canvas=document.createElement('canvas');
+              canvas.width=8;canvas.height=8;
+              if(attached)document.body.append(canvas);
+              const result={type,attached,events:[]};
+              contexts.push(result);
+              canvas.addEventListener('webglcontextcreationerror',event=>result.events.push({kind:event.type,message:event.statusMessage}));
+              canvas.addEventListener('webglcontextlost',event=>{
+                event.preventDefault();result.events.push({kind:event.type,message:event.statusMessage});
+              });
+              let gl;
+              const read=()=>{
+                if(!gl)return;
+                result.attributes=gl.getContextAttributes();result.lost=gl.isContextLost();
+                result.error=gl.getError();result.available=!!result.attributes?.stencil;
+                if(result.available){
+                  gl.clearColor(0,1,0,1);gl.clear(gl.COLOR_BUFFER_BIT);
+                  const pixels=new Uint8Array(4);gl.readPixels(0,0,1,1,gl.RGBA,gl.UNSIGNED_BYTE,pixels);
+                  result.firstPixel=Array.from(pixels);
+                }
+              };
+              canvas.addEventListener('webglcontextrestored',event=>{
+                result.events.push({kind:event.type});read();
+                if(contexts.filter(entry=>entry.attached).every(entry=>entry.available))finish('restored');
+              });
+              try{gl=canvas.getContext(type,{stencil:true});read();}
+              catch(error){result.error=String(error);result.available=false;}
+            };
+            inspect('webgl',false);inspect('webgl2',false);
+            AbortSignal.timeout(15000).addEventListener('abort',()=>finish('deadline'),{once:true});
+            requestAnimationFrame(()=>{
+              inspect('webgl',true);inspect('webgl2',true);
+              if(contexts.filter(entry=>entry.attached).every(entry=>entry.available))finish('first-frame');
+            });
+          })()
           """
-        webView.evaluateJavaScript(script) { value, error in
-            if let value = value as? String, let data = value.data(using: .utf8) {
-                self.result["webKit"] = try? JSONSerialization.jsonObject(with: data)
+        webView.evaluateJavaScript(script) { _, error in
+            if let error {
+                self.result["webKitError"] = error.localizedDescription
+                self.finish()
             }
-            if let error { self.result["webKitError"] = error.localizedDescription }
-            self.result["windowVisible"] = self.window.isVisible
-            self.result["applicationActive"] = NSApplication.shared.isActive
-            do {
-                try FileManager.default.createDirectory(at: self.output.deletingLastPathComponent(), withIntermediateDirectories: true)
-                try JSONSerialization.data(withJSONObject: self.result, options: [.prettyPrinted,.sortedKeys]).write(to: self.output)
-            } catch { fputs("Graphics evidence write failed: \(error)\n", stderr) }
-            NSApplication.shared.terminate(nil)
         }
+    }
+
+    func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
+        result["webKit"] = message.body
+        finish()
+    }
+
+    private func finish() {
+        result["windowVisible"] = window.isVisible
+        result["applicationActive"] = NSApplication.shared.isActive
+        do {
+            try FileManager.default.createDirectory(at: output.deletingLastPathComponent(), withIntermediateDirectories: true)
+            try JSONSerialization.data(withJSONObject: result, options: [.prettyPrinted,.sortedKeys]).write(to: output)
+        } catch { fputs("Graphics evidence write failed: \(error)\n", stderr) }
+        NSApplication.shared.terminate(nil)
     }
 }
 

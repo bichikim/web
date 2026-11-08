@@ -55,7 +55,7 @@ on:
 run-name: ${{ inputs.reuse-run != '' && format('Validate Poffo installers from run {0}', inputs.reuse-run) || format('Build Poffo Desktop from {0}', github.ref_name) }}
 
 concurrency:
-  group: poffo-desktop-${{ github.ref }}-${{ inputs.target }}-${{ inputs.reuse-run }}-${{ inputs.intel-image }}
+  group: poffo-desktop-${{ github.ref }}-${{ inputs.target }}-${{ inputs.reuse-run }}-${{ inputs.intel-image }}-${{ inputs.native-ui }}-${{ inputs.graphics-probe }}
   cancel-in-progress: false
 
 permissions:
