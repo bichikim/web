@@ -43,7 +43,13 @@ export const downloadNode = async ({target, directory, licenses}) => {
     }
     const path = join(temporary, archive)
     await writeFile(path, bytes)
-    const child = spawn('tar', ['-xf', path, '-C', temporary], {stdio: 'inherit'})
+    const systemRoot = process.env.SystemRoot
+    if (process.platform === 'win32' && systemRoot === undefined) {
+      throw new Error('Windows SystemRoot is unavailable')
+    }
+    // Git Bash's GNU tar treats drive letters as remote hosts and does not extract ZIPs.
+    const extractor = process.platform === 'win32' ? join(systemRoot, 'System32', 'tar.exe') : 'tar'
+    const child = spawn(extractor, ['-xf', archive], {cwd: temporary, stdio: 'inherit'})
     const [code] = await once(child, 'exit')
     if (code !== 0) {
       throw new Error('Node archive extraction failed')
