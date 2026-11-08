@@ -12,7 +12,7 @@ final class NativeUITests: XCTestCase {
         let workspace = try XCTUnwrap(environment["POFFO_NATIVE_WORKSPACE"])
         let output = try XCTUnwrap(environment["POFFO_NATIVE_OUTPUT"])
         let control = try XCTUnwrap(environment["POFFO_NATIVE_CONTROL"])
-        try await probeGraphics(output, workspace)
+        try await probeGraphics(output)
         let app = XCUIApplication(url: URL(fileURLWithPath: path))
         defer { if app.state != .notRunning { app.terminate() } }
 
@@ -198,7 +198,7 @@ final class NativeUITests: XCTestCase {
     }
 
     @MainActor
-    private func probeGraphics(_ output: String, _ workspace: String) async throws {
+    private func probeGraphics(_ output: String) async throws {
         let configuration = WKWebViewConfiguration()
         configuration.setURLSchemeHandler(OriginPage(), forURLScheme: "tauri")
         let browser = WKWebView(frame: NSRect(x: 0, y: 0, width: 640, height: 640), configuration: configuration)
@@ -235,17 +235,20 @@ final class NativeUITests: XCTestCase {
           """)
         let value = try XCTUnwrap(evaluated as? String)
         var result = try XCTUnwrap(try JSONSerialization.jsonObject(with: Data(value.utf8)) as? [String: Any])
-        let source = try String(contentsOfFile: workspace + "/source.json", encoding: .utf8)
-        result["crypto"] = try await browser.callAsyncJavaScript("""
-          try {
-            const bytes = new TextEncoder().encode(JSON.stringify(JSON.parse(source)));
-            const digest = new Uint8Array(await crypto.subtle.digest('SHA-256', bytes));
-            return {bytes: bytes.length, digest: [...digest].map(value => value.toString(16).padStart(2, '0')).join('')};
-          } catch (error) { return {error: String(error)}; }
-          """, arguments: ["source": source], in: nil, in: .page)
         result["metalDevices"] = MTLCopyAllDevices().map { $0.name }
+        let destination = URL(fileURLWithPath: output).appendingPathComponent("graphics.json")
+        try JSONSerialization.data(withJSONObject: result, options: [.prettyPrinted, .sortedKeys]).write(to: destination)
+        let crypto = try await browser.callAsyncJavaScript("""
+          try {
+            const bytes = new TextEncoder().encode('x'.repeat(22000000));
+            const digest = new Uint8Array(await crypto.subtle.digest('SHA-256', bytes));
+            return JSON.stringify({bytes: bytes.length, digest: [...digest].map(value => value.toString(16).padStart(2, '0')).join('')});
+          } catch (error) { return JSON.stringify({error: String(error)}); }
+          """, arguments: [:], in: nil, in: .page)
+        let cryptoText = try XCTUnwrap(crypto as? String)
+        result["crypto"] = try JSONSerialization.jsonObject(with: Data(cryptoText.utf8))
         let data = try JSONSerialization.data(withJSONObject: result, options: [.prettyPrinted, .sortedKeys])
-        try data.write(to: URL(fileURLWithPath: output).appendingPathComponent("graphics.json"))
+        try data.write(to: destination)
     }
 }
 
