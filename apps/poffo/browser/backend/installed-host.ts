@@ -5,6 +5,7 @@ import {readFile} from 'node:fs/promises'
 import {join} from 'node:path'
 import {connectionSchema} from '../../src/backend/protocol'
 import {observeHostRequests} from './observe-host-requests'
+import {captureRuntimeState} from './capture-runtime-state'
 
 /** A shipped runtime must not discover a development Node installation through PATH. */
 export const installedEnvironment = () => ({
@@ -100,6 +101,7 @@ export const startInstalledHost = async (executable: string, workspace: string, 
             descriptorPresent,
             errors,
             exitCode: child.exitCode,
+            hostPort: new URL(connection.url).port,
             launcherPid: child.pid,
             response,
             signalCode: child.signalCode,
@@ -136,6 +138,24 @@ export const startInstalledHost = async (executable: string, workspace: string, 
       },
     }
   } catch (error) {
+    if (
+      process.env.POFFO_RUNTIME_DIAGNOSTICS === 'true' &&
+      process.platform === 'darwin' &&
+      child.pid !== undefined &&
+      child.exitCode === null &&
+      child.signalCode === null
+    ) {
+      // The Unix launcher execs its Node child in place; no unrelated PID is discovered.
+      await captureRuntimeState({
+        path: join(
+          process.env.POFFO_VALIDATION_OUTPUT ?? workspace,
+          'runtime',
+          `startup-${child.pid}.json`,
+        ),
+        pid: child.pid,
+        stage: 'startup',
+      })
+    }
     child.stdin.end()
     child.kill('SIGTERM')
     lines.close()

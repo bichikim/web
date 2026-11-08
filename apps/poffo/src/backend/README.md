@@ -26,7 +26,7 @@ flowchart LR
 - PSD 해석·레이어·마스크·메시 생성은 Puppet의 [공통 변환기](../../../../packages/puppet/src/converter/import-psd-source.ts#L10)에서 수행한다. 이름·크기·바이트 읽기와 PNG 인코더를 주입한다.
 - Node는 [경로 입력](node/read-document-path.ts#L1)과 [PNG 인코더](node/encode-psd-texture.ts#L5)를 제공한다. 브라우저는 [File/Worker 입력](../../../../packages/puppet/src/editor/import-psd.ts#L12)과 브라우저 인코더를 사용한다.
 - [파일 저장](node/write-document-path.ts#L20)은 같은 디렉터리의 임시 파일을 완성·동기화한 뒤 확정한다. overwrite를 지정하지 않으면 기존 파일을 보존한다. 경로 접근은 workspace와 실제 symlink 대상을 검사한다.
-- [Node 직렬화 어댑터](node/serialize-document-file.ts)는 공통 Poffo 컨테이너에 비동기 네이티브 Brotli를 주입한다. 브라우저는 기존 Worker/WASM 압축을 사용한다. 파일 형식과 압축 품질을 유지하면서 Node 이벤트 루프의 압축 대기를 줄인다.
+- [Node 직렬화 어댑터](node/serialize-document-file.ts)는 공통 Poffo 컨테이너에 비동기 네이티브 Brotli를 주입한다. 브라우저는 Worker/WASM에서 저장 속도에 맞춘 압축 설정을 사용한다. 두 경로 모두 원본 바이트를 보존하며 Node에서는 압축이 이벤트 루프를 막지 않는다.
 - [Node 호스트](node/start-node-host.ts#L1)는 단일 모델, 복구 저장, 인증, 클라이언트 수명과 GUI 연결을 구성한다. 최초 연결은 유한한 JSON snapshot으로 전달하고 이후 변경은 NDJSON delta로 전달한다. snapshot 로딩 중 들어온 이벤트는 sequence에 따라 연결해 큰 문서에서도 변경을 잃지 않는다. 연결 종료 시 그 클라이언트가 소유한 미완료 트랜잭션만 해제한다.
 - 종료 시 접수한 명령과 복구 저장을 마친 뒤 미완성 HTTP 연결을 정리한다. 대기 중인 렌더는 취소하며, 접수한 편집이 문서를 변경했다면 일반 종료의 저장 상태를 다시 확인한다. [종료 회귀 검증](node/__tests__/start-node-host.shutdown.integration.ts)과 [설치 CLI 대조](../../validation/runtime/README.md)를 함께 유지한다.
 - [연결 어댑터](browser/connect-model-host.ts)는 정상 연결 뒤 이벤트 응답 읽기가 중단되면 새 스트림과 snapshot으로 다시 동기화한다. 같은 sequence는 재적용하지 않아 저장 중인 문서의 동일성을 유지한다. 재연결 초기화가 끝난 뒤 명령을 보내며, 이미 보낸 편집 명령을 자동으로 재실행하지 않는다. 새 연결 실패와 잘못된 이벤트는 연결 오류로 보고한다.

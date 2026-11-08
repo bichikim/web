@@ -5,7 +5,8 @@ export const createBrotliStream = async (
 ): Promise<ReadableStream<Uint8Array<ArrayBuffer>>> => {
   const {default: loading} = await import('brotli-wasm')
   const brotli = await loading
-  const quality = 9
+  // Level 6 avoids expensive searches on embedded PNGs while preserving every decoded byte.
+  const quality = 6
   const outputSize = 65_536
   const codec =
     mode === 'compress' ? new brotli.CompressStream(quality) : new brotli.DecompressStream()
