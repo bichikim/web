@@ -20,6 +20,10 @@ on:
         description: Trace texture inputs, GPU pixels and PNG encoding
         type: boolean
         default: false
+      pixel-stage:
+        description: GPU stage index to retain, or all to fingerprint every stage
+        type: string
+        default: ''
 
 run-name: ${{ inputs.reuse-run != '' && format('Validate Poffo installers from run {0}', inputs.reuse-run) || format('Build Poffo Desktop from {0}', github.ref_name) }}
 
@@ -211,6 +215,7 @@ jobs:
       - name: Validate installed Node, CLI, MCP and real character workflow
         env:
           POFFO_VALIDATION_OUTPUT: ${{ runner.temp }}/poffo-validation
+          POFFO_PIXEL_STAGE: ${{ inputs.pixel-stage }}
         run: pnpm exec playwright test --config ${{ inputs.pixel-diagnostics && 'apps/poffo/playwright.pixels.config.ts' || 'apps/poffo/playwright.character.config.ts' }} --project chromium
 
       - name: Upload runtime validation evidence
@@ -244,3 +249,36 @@ jobs:
           BUILD_TARGET: ${{ matrix.target }}
         run: |
           echo "[Download ${BUILD_TARGET} installer](${ARTIFACT_URL}) (retained for 30 days)." >> "$GITHUB_STEP_SUMMARY"
+
+  compare-pixels:
+    name: Compare cross-platform pixels
+    if: inputs.target == 'all'
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Compare exact pixel hashes
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DIAGNOSTIC_MODE: ${{ inputs.pixel-diagnostics && 'diagnostic' || 'character' }}
+        run: |
+          gh run download "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" \
+            --pattern "poffo-validation-*-$GITHUB_RUN_ID" --dir "$RUNNER_TEMP/pixel-comparison"
+          node apps/poffo/browser/pixels/compare.mjs "$RUNNER_TEMP/pixel-comparison" "$DIAGNOSTIC_MODE"
+
+      - name: Upload pixel comparison
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: poffo-pixel-comparison-${{ github.run_id }}
+          path: ${{ runner.temp }}/pixel-comparison/summary.json
+          if-no-files-found: ignore
+          retention-days: 30

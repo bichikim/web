@@ -30,9 +30,11 @@ test('should preserve the captured frame while tracing pixel boundaries', async 
     await page.clock.pauseAt(new Date('2026-01-01T01:00:00Z'))
     await installTrace(
       page,
-      process.env.POFFO_PIXEL_STAGE === undefined
+      process.env.POFFO_PIXEL_STAGE === undefined || process.env.POFFO_PIXEL_STAGE === ''
         ? undefined
-        : Number(process.env.POFFO_PIXEL_STAGE),
+        : process.env.POFFO_PIXEL_STAGE === 'all'
+          ? 'all'
+          : Number(process.env.POFFO_PIXEL_STAGE),
     )
     await copyFile(
       fileURLToPath(
@@ -62,9 +64,9 @@ test('should preserve the captured frame while tracing pixel boundaries', async 
     const raw = Uint8Array.from(pixels)
     await writeFile(join(output, 'drawing-buffer.rgba'), raw)
     await Promise.all(
-      stages.map(async (stage, index) => {
+      stages.map(async (stage) => {
         if (stage.pixels !== undefined) {
-          await writeFile(join(output, `stage-${index}.rgba`), Uint8Array.from(stage.pixels))
+          await writeFile(join(output, `stage-${stage.index}.rgba`), Uint8Array.from(stage.pixels))
         }
       }),
     )
@@ -80,13 +82,14 @@ test('should preserve the captured frame while tracing pixel boundaries', async 
           architecture: process.arch,
           browser: browser.version(),
           drawingBufferHash: hash(raw),
-          height: observed.height,
           control: {
             pngPixelHash: hash(PNG.sync.read(encoded).data),
             rawHash: hash(Uint8Array.from(control.pixels)),
           },
+          height: observed.height,
           platform: process.platform,
           pngPixelHash: hash(observed.data),
+          stageSelection: process.env.POFFO_PIXEL_STAGE || 'none',
           width: observed.width,
           ...trace,
           stages: stages.map(({pixels: _pixels, ...stage}) => stage),

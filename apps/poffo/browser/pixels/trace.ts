@@ -1,6 +1,7 @@
 import type {Page} from 'playwright/test'
 
 export interface PixelStage {
+  readonly index: number
   readonly kind: string
   readonly target: number
   readonly rectangle: ReadonlyArray<number>
@@ -31,6 +32,7 @@ interface GlTrace {
   readonly commands: unknown[]
   nextId: number
   observing: boolean
+  stageCount: number
 }
 
 const TRACED_METHODS = [
@@ -108,7 +110,7 @@ const installFingerprint = (page: Page) =>
   })
 
 /** Observes only the detached capture canvas; the application's source stays unchanged. */
-export const installTrace = async (page: Page, selectedStage?: number): Promise<void> => {
+export const installTrace = async (page: Page, selectedStage?: number | 'all'): Promise<void> => {
   await installFingerprint(page)
   await page.addInitScript(
     ({methods, selectedStage}) => {
@@ -136,6 +138,7 @@ export const installTrace = async (page: Page, selectedStage?: number): Promise<
             identities: new WeakMap(),
             nextId: 0,
             observing: false,
+            stageCount: 0,
             stages: [],
           }
           traces.set(gl.canvas, trace)
@@ -150,12 +153,20 @@ export const installTrace = async (page: Page, selectedStage?: number): Promise<
         return convert(value, trace)
       }
       const observe = (gl: WebGL2RenderingContext, kind: string, arguments_: unknown[]): void => {
+        if (selectedStage === undefined) {
+          return
+        }
         const trace = entry(gl)
         if (trace === undefined || trace.observing) {
           return
         }
         const target: WebGLFramebuffer | null = gl.getParameter(gl.DRAW_FRAMEBUFFER_BINDING)
         if (target !== null && gl.getParameter(gl.SAMPLES) > 0) {
+          return
+        }
+        const index = trace.stageCount
+        trace.stageCount += 1
+        if (selectedStage !== 'all' && index !== selectedStage) {
           return
         }
         trace.observing = true
@@ -183,8 +194,9 @@ export const installTrace = async (page: Page, selectedStage?: number): Promise<
         trace.stages.push({
           error: gl.getError(),
           fingerprint: fingerprint(pixels),
+          index,
           kind,
-          pixels: trace.stages.length === selectedStage ? Array.from(pixels) : undefined,
+          pixels: index === selectedStage ? Array.from(pixels) : undefined,
           rectangle,
           target: identity,
         })
