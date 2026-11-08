@@ -2,11 +2,21 @@ name: Build Poffo Desktop
 
 on:
   workflow_dispatch:
+    inputs:
+      target:
+        description: Native platform to validate
+        type: choice
+        default: all
+        options:
+          - all
+          - aarch64-apple-darwin
+          - x86_64-apple-darwin
+          - x86_64-pc-windows-msvc
 
 run-name: Build Poffo Desktop from ${{ github.ref_name }}
 
 concurrency:
-  group: poffo-desktop-${{ github.ref }}
+  group: poffo-desktop-${{ github.ref }}-${{ inputs.target }}
   cancel-in-progress: false
 
 permissions:
@@ -19,24 +29,15 @@ env:
 jobs:
   build:
     name: Build ${{ matrix.target }}
-    runs-on: ${{ matrix.runner }}
+    runs-on: ${{ fromJSON('{"aarch64-apple-darwin":"macos-15","x86_64-apple-darwin":"macos-15-intel","x86_64-pc-windows-msvc":"windows-2025"}')[matrix.target] }}
     timeout-minutes: 60
+    env:
+      BUNDLE_TYPE: ${{ matrix.target == 'x86_64-pc-windows-msvc' && 'nsis' || 'dmg' }}
+      INSTALLER_EXTENSION: ${{ matrix.target == 'x86_64-pc-windows-msvc' && 'exe' || 'dmg' }}
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - runner: macos-15
-            target: aarch64-apple-darwin
-            bundles: dmg
-            extension: dmg
-          - runner: macos-15-intel
-            target: x86_64-apple-darwin
-            bundles: dmg
-            extension: dmg
-          - runner: windows-2025
-            target: x86_64-pc-windows-msvc
-            bundles: nsis
-            extension: exe
+        target: ${{ inputs.target == 'all' && fromJSON('["aarch64-apple-darwin","x86_64-apple-darwin","x86_64-pc-windows-msvc"]') || fromJSON(format('["{0}"]', inputs.target)) }}
     defaults:
       run:
         shell: bash
@@ -87,11 +88,41 @@ jobs:
           console.log(JSON.stringify({platform: process.platform, arch: process.arch, node: process.version}))
           NODE
 
+      - name: Prepare verified Windows installer tools
+        if: runner.os == 'Windows'
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $downloads = Join-Path $env:RUNNER_TEMP 'poffo-nsis'
+          New-Item -ItemType Directory -Force $downloads | Out-Null
+          gh release download nsis-3.13 --repo tauri-apps/binary-releases --pattern nsis-3.13.zip --dir $downloads
+          if ($LASTEXITCODE -ne 0) { throw 'NSIS download failed' }
+          gh release download nsis_tauri_utils-v0.5.3 --repo tauri-apps/nsis-tauri-utils --pattern nsis_tauri_utils.dll --dir $downloads
+          if ($LASTEXITCODE -ne 0) { throw 'NSIS plugin download failed' }
+          # Match the hashes in tauri-cli-v2.12.4's NSIS bundler.
+          $expected = @{
+            'nsis-3.13.zip' = 'DB14F8AF2EA346B786C6AE19343F61AAF5E09B8E'
+            'nsis_tauri_utils.dll' = '75197FEE3C6A814FE035788D1C34EAD39349B860'
+          }
+          foreach ($name in $expected.Keys) {
+            if ((Get-FileHash (Join-Path $downloads $name) -Algorithm SHA1).Hash -ne $expected[$name]) {
+              throw "Unexpected installer tool hash: $name"
+            }
+          }
+          Expand-Archive -LiteralPath (Join-Path $downloads 'nsis-3.13.zip') -DestinationPath $downloads
+          $toolset = Join-Path $env:LOCALAPPDATA 'tauri/NSIS'
+          New-Item -ItemType Directory -Force $toolset | Out-Null
+          Copy-Item -Path (Join-Path $downloads 'nsis-3.13/*') -Destination $toolset -Recurse -Force
+          $plugins = Join-Path $toolset 'Plugins/x86-unicode/additional'
+          New-Item -ItemType Directory -Force $plugins | Out-Null
+          Copy-Item -LiteralPath (Join-Path $downloads 'nsis_tauri_utils.dll') -Destination $plugins
+
       - name: Build desktop installer
         id: build
         run: |
           pnpm --filter @winter-love/poffo exec tauri build --ci \
-            --target "${{ matrix.target }}" --bundles "${{ matrix.bundles }}" -- --locked
+            --target "${{ matrix.target }}" --bundles "${{ env.BUNDLE_TYPE }}" -- --locked
 
       - name: Install macOS artifact outside the checkout
         if: runner.os == 'macOS'
@@ -146,7 +177,7 @@ jobs:
         with:
           name: poffo-desktop-${{ matrix.target }}-${{ github.run_id }}
           overwrite: true
-          path: apps/poffo/src-tauri/target/${{ matrix.target }}/release/bundle/${{ matrix.bundles }}/*.${{ matrix.extension }}
+          path: apps/poffo/src-tauri/target/${{ matrix.target }}/release/bundle/${{ env.BUNDLE_TYPE }}/*.${{ env.INSTALLER_EXTENSION }}
           if-no-files-found: error
           retention-days: 30
           compression-level: 0
