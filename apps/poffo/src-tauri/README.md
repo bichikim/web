@@ -28,6 +28,12 @@ pnpm exec playwright test --config apps/poffo/playwright.character.config.ts
 
 검사는 실제 캐릭터 레시피·렌더·모션 재생·MCP·독립 프로세스 재로드를 수행한다. 네이티브 저장 대화상자·미저장 종료 확인·창과 호스트의 수명은 별도 실제 앱 검증 대상이다. 데스크톱 빌드 워크플로는 macOS DMG를 읽기 전용으로 열어 앱을 복사하고, Windows NSIS는 공식 `/S /D=` 인자로 격리 경로에 설치한 후 Chromium 검증을 수행한다. 다른 OS의 실행과 GitHub runner 결과는 로컬 macOS 결과로 대신하지 않는다.
 
+[워크플로](../../../.github/workflows/poffo-desktop-build.yml)의 `target`으로 전체 또는 한 OS만 실행한다. GitHub의 Windows x64·Intel Mac·ARM Mac runner에서 실제 OS와 Node 아키텍처를 먼저 확인한다. 개인 기기가 없어도 해당 OS의 설치·내장 런타임·제작 흐름을 검사할 수 있다. runner의 Chromium/SwiftShader 결과는 물리 기기의 GPU나 네이티브 WebView·시스템 대화상자 조작을 증명하지 않는다.
+
+검증 코드만 바꿨을 때는 `reuse-run`에 기존 빌드 번호를 넣어 동일 설치물을 다시 설치한다. 원본 빌드·커밋·설치물 SHA-256과 검증 실행 번호를 `installer.json`에 기록한다. 제품 소스가 바뀌면 새 설치물을 빌드한다.
+
+Windows CI는 공식 NSIS 도구를 GitHub 릴리스 API로 미리 받는다. 현재 Tauri CLI의 [공식 번들러](https://github.com/tauri-apps/tauri/blob/tauri-cli-v2.12.4/crates/tauri-bundler/src/bundle/windows/nsis/mod.rs)에 명시된 해시를 확인한 뒤 동일한 도구 캐시에 넣는다. 일반 릴리스 다운로드 URL에서 반복된 HTTP 504를 피하기 위한 전송 경로 변경이며, Tauri의 번들링과 해시 검사는 유지한다.
+
 NSIS 무인 설치 인자는 [공식 명령행 문서](https://nsis.sourceforge.io/Docs/Chapter3.html#3.2.1)를 따른다.
 
 패키징은 [Tauri sidecar](https://v2.tauri.app/develop/sidecar/)와 [리소스 번들](https://v2.tauri.app/develop/resources/) 계약을 따른다.
