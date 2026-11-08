@@ -4,6 +4,7 @@ import {once} from 'node:events'
 import {copyFile, cp, mkdir, readFile, rm, writeFile} from 'node:fs/promises'
 import {join} from 'node:path'
 import {fileURLToPath} from 'node:url'
+import {createRequire} from 'node:module'
 import {parseArgs} from 'node:util'
 import {build} from 'vite'
 import {downloadNode} from './download-node.mjs'
@@ -55,7 +56,13 @@ await build({
   root: application,
   ssr: {external: ['vite'], noExternal: true},
 })
-await collectNotices(modules, join(runtime, 'licenses', 'dependencies.txt'))
+// Frame PNG encoding is bundled only into the GUI, outside the CLI module graph.
+const framePng = fileURLToPath(import.meta.resolve('fast-png'))
+const requireFramePng = createRequire(framePng)
+await collectNotices(
+  [...modules, framePng, requireFramePng.resolve('iobuffer'), requireFramePng.resolve('fflate')],
+  join(runtime, 'licenses', 'dependencies.txt'),
+)
 const node = await downloadNode({
   directory: join(desktop, 'binaries'),
   licenses: join(runtime, 'licenses'),
