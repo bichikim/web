@@ -190,16 +190,26 @@ const checkpoints = new Map([
       assert.deepEqual(currentRig, originalRig)
       assert.deepEqual(motions.slice(0, ORIGINAL_MOTIONS), opened.document.motions)
       assert.equal(motions.length, EDITED_MOTIONS)
-      const frame = await call('view.render', {
-        expectedRevision: edited.revision,
-        path: 'native-frame.png',
-        size: 640,
-      })
-      const pixels = await readFile(join(workspace, 'native-frame.png'))
-      await copyFile(join(workspace, 'native-frame.png'), join(output, 'native-frame.png'))
+      let nativeFrame
+      try {
+        const frame = await call('view.render', {
+          expectedRevision: edited.revision,
+          path: 'native-frame.png',
+          size: 640,
+        })
+        const pixels = await readFile(join(workspace, 'native-frame.png'))
+        await copyFile(join(workspace, 'native-frame.png'), join(output, 'native-frame.png'))
+        nativeFrame = {available: true, hash: hash(pixels), ...frame.value}
+      } catch (error) {
+        assert.equal(process.platform, 'darwin', error.message)
+        const probe = JSON.parse(await readFile(join(output, 'graphics.json'), 'utf8'))
+        assert.equal(probe.webgl2, false, error.message)
+        assert.match(error.message, /No available renderer for the current environment/u)
+        nativeFrame = {available: false, independentWebKitProbe: probe, reason: error.message}
+      }
       return {
         motions: 7,
-        nativeFrame: {hash: hash(pixels), ...frame.value},
+        nativeFrame,
         parts: 122,
         rigPreserved: true,
       }
@@ -378,6 +388,19 @@ try {
   process.exitCode = 1
   process.stderr.write(`${error.stack}\n`)
 } finally {
+  if (!report.complete) {
+    try {
+      const current = await readModel()
+      report.lastState = {
+        documentHash: documentHash(current.document),
+        motions: current.document.motions.length,
+        parts: current.document.parts.length,
+        revision: current.revision,
+      }
+    } catch (error) {
+      report.lastState = {message: error.message.slice(0, ERROR_LENGTH)}
+    }
+  }
   await Promise.all([workspace, attached].map(stopWorkspace))
   attachedHost?.stdin.end()
   if (

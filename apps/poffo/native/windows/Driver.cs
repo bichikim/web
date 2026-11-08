@@ -12,6 +12,8 @@ using System.Windows.Automation;
 public sealed class NativeDriver : IDisposable {
     [DllImport("user32.dll")] private static extern IntPtr GetWindow(IntPtr handle, uint command);
     [DllImport("user32.dll")] private static extern bool IsWindowVisible(IntPtr handle);
+    [DllImport("user32.dll")] private static extern bool SetForegroundWindow(IntPtr handle);
+    [DllImport("user32.dll")] private static extern IntPtr GetForegroundWindow();
     private const uint Owner = 4;
     private readonly AutoResetEvent changed = new AutoResetEvent(false);
     private readonly string executable;
@@ -20,22 +22,41 @@ public sealed class NativeDriver : IDisposable {
     private Process process;
     private AutomationElement window;
     private string stage = "launch";
+    private Exception actionError;
+    private readonly object signalLock = new object();
+    private bool disposed;
+
+    private void SignalChanged() {
+        lock (signalLock) { if (!disposed) changed.Set(); }
+    }
+
+    private void Begin(Action action) {
+        var worker = new Thread(() => {
+            try { action(); }
+            catch (Exception error) { Interlocked.CompareExchange(ref actionError, error, null); }
+            finally { SignalChanged(); }
+        }) {IsBackground = true};
+        worker.SetApartmentState(ApartmentState.MTA);
+        worker.Start();
+    }
 
     private NativeDriver(string executable, string output, string control) {
         this.executable = executable;
         this.output = output;
         this.control = control;
         var desktop = AutomationElement.RootElement;
-        Automation.AddStructureChangedEventHandler(desktop, TreeScope.Subtree, (sender, args) => changed.Set());
-        Automation.AddAutomationEventHandler(WindowPattern.WindowOpenedEvent, desktop, TreeScope.Subtree, (sender, args) => changed.Set());
-        Automation.AddAutomationEventHandler(WindowPattern.WindowClosedEvent, desktop, TreeScope.Subtree, (sender, args) => changed.Set());
-        Automation.AddAutomationPropertyChangedEventHandler(desktop, TreeScope.Subtree, (sender, args) => changed.Set(),
+        Automation.AddStructureChangedEventHandler(desktop, TreeScope.Subtree, (sender, args) => SignalChanged());
+        Automation.AddAutomationEventHandler(WindowPattern.WindowOpenedEvent, desktop, TreeScope.Subtree, (sender, args) => SignalChanged());
+        Automation.AddAutomationEventHandler(WindowPattern.WindowClosedEvent, desktop, TreeScope.Subtree, (sender, args) => SignalChanged());
+        Automation.AddAutomationFocusChangedEventHandler((sender, args) => SignalChanged());
+        Automation.AddAutomationPropertyChangedEventHandler(desktop, TreeScope.Subtree, (sender, args) => SignalChanged(),
             AutomationElement.NameProperty, AutomationElement.IsEnabledProperty);
     }
 
     private void Until(Func<bool> ready, string description) {
         var deadline = DateTime.UtcNow.AddSeconds(60);
         while (!ready()) {
+            if (actionError != null) throw new Exception("Native UI action failed: " + stage, actionError);
             var remaining = deadline - DateTime.UtcNow;
             if (remaining <= TimeSpan.Zero) throw new Exception("UI condition unavailable: " + description);
             changed.WaitOne(remaining);
@@ -85,15 +106,18 @@ public sealed class NativeDriver : IDisposable {
 
     private AutomationElement FileMenu(string action) {
         stage = action;
+        var handle = new IntPtr(window.Current.NativeWindowHandle);
+        SetForegroundWindow(handle);
+        Until(() => GetForegroundWindow() == handle, "editor foreground");
         var file = Find(window, new AndCondition(Named("파일"),
             new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.MenuItem)), "File menu");
         object pattern;
-        if (file.TryGetCurrentPattern(ExpandCollapsePattern.Pattern, out pattern)) ((ExpandCollapsePattern)pattern).Expand();
-        else Invoke(file);
+        if (file.TryGetCurrentPattern(ExpandCollapsePattern.Pattern, out pattern)) Begin(() => ((ExpandCollapsePattern)pattern).Expand());
+        else Begin(() => Invoke(file));
         var item = Find(AutomationElement.RootElement, new AndCondition(Named(action),
             new PropertyCondition(AutomationElement.IsEnabledProperty, true),
             new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.MenuItem)), action);
-        Invoke(item);
+        Begin(() => Invoke(item));
         return Dialog();
     }
 
@@ -102,8 +126,9 @@ public sealed class NativeDriver : IDisposable {
         var condition = identifier
             ? new PropertyCondition(AutomationElement.AutomationIdProperty, name)
             : Named(name);
-        Invoke(Find(dialog, new AndCondition(condition,
-            new PropertyCondition(AutomationElement.IsEnabledProperty, true)), name));
+        var button = Find(dialog, new AndCondition(condition,
+            new PropertyCondition(AutomationElement.IsEnabledProperty, true)), name);
+        Begin(() => Invoke(button));
         Until(() => !IsWindowVisible(handle), "dialog closed");
     }
 
@@ -120,7 +145,7 @@ public sealed class NativeDriver : IDisposable {
 
     private void CloseWindow() {
         stage = "window-close";
-        ((WindowPattern)window.GetCurrentPattern(WindowPattern.Pattern)).Close();
+        Begin(() => ((WindowPattern)window.GetCurrentPattern(WindowPattern.Pattern)).Close());
     }
 
     private void WaitForExit() {
@@ -241,6 +266,18 @@ public sealed class NativeDriver : IDisposable {
     }
 
     public static void Run(string executable, string workspace, string output, string control) {
+        Exception failure = null;
+        var worker = new Thread(() => {
+            try { RunOnWorker(executable, workspace, output, control); }
+            catch (Exception error) { failure = error; }
+        });
+        worker.SetApartmentState(ApartmentState.MTA);
+        worker.Start();
+        worker.Join();
+        if (failure != null) throw new Exception("Native UI validation failed", failure);
+    }
+
+    private static void RunOnWorker(string executable, string workspace, string output, string control) {
         using (var driver = new NativeDriver(executable, output, control)) {
             try { driver.Exercise(workspace); }
             catch (Exception error) {
@@ -254,6 +291,6 @@ public sealed class NativeDriver : IDisposable {
     public void Dispose() {
         if (process != null && !process.HasExited) process.Kill();
         Automation.RemoveAllEventHandlers();
-        changed.Dispose();
+        lock (signalLock) { disposed = true; changed.Dispose(); }
     }
 }

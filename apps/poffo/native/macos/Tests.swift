@@ -1,5 +1,7 @@
 import XCTest
 import AppKit
+import WebKit
+import Metal
 
 final class NativeUITests: XCTestCase {
     @MainActor
@@ -10,6 +12,7 @@ final class NativeUITests: XCTestCase {
         let workspace = try XCTUnwrap(environment["POFFO_NATIVE_WORKSPACE"])
         let output = try XCTUnwrap(environment["POFFO_NATIVE_OUTPUT"])
         let control = try XCTUnwrap(environment["POFFO_NATIVE_CONTROL"])
+        try await probeGraphics(output)
         let app = XCUIApplication(url: URL(fileURLWithPath: path))
         defer { if app.state != .notRunning { app.terminate() } }
 
@@ -26,8 +29,13 @@ final class NativeUITests: XCTestCase {
         openMenu(app, "불러오기")
         XCTAssertTrue(app.sheets["open-panel"].buttons["Open"].waitForExistence(timeout: 30))
         goTo(app, URL(fileURLWithPath: workspace).appendingPathComponent("source.json").path)
+        attach(app, "selected-open-file", output)
         app.sheets["open-panel"].buttons["Open"].click()
-        XCTAssertTrue(named(app, "파츠 122개").waitForExistence(timeout: 60))
+        XCTAssertTrue(app.sheets["open-panel"].waitForNonExistence(timeout: 30))
+        attach(app, "after-native-open", output)
+        let loaded = named(app, "파츠 122개").waitForExistence(timeout: 60)
+        attach(app, "loaded-or-failed", output)
+        guard loaded else { throw NativeFailure("Character did not load after native open") }
         try await checkpoint(control, "opened")
         try await checkpoint(control, "edited")
         try validateFrame(output)
@@ -162,11 +170,20 @@ final class NativeUITests: XCTestCase {
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = try JSONSerialization.data(withJSONObject: ["name": name])
         let (data, response) = try await URLSession.shared.data(for: request)
-        XCTAssertEqual((response as? HTTPURLResponse)?.statusCode, 200, String(data: data, encoding: .utf8) ?? "")
+        guard (response as? HTTPURLResponse)?.statusCode == 200 else {
+            throw NativeFailure(String(data: data, encoding: .utf8) ?? "Checkpoint request failed")
+        }
     }
 
     private func validateFrame(_ output: String) throws {
-        let data = try Data(contentsOf: URL(fileURLWithPath: output).appendingPathComponent("native-frame.png"))
+        let path = URL(fileURLWithPath: output).appendingPathComponent("native-frame.png")
+        if !FileManager.default.fileExists(atPath: path.path) {
+            let probe = try JSONSerialization.jsonObject(with: Data(contentsOf:
+                URL(fileURLWithPath: output).appendingPathComponent("graphics.json"))) as? [String: Any]
+            guard probe?["webgl2"] as? Bool == false else { throw NativeFailure("Missing native frame") }
+            return
+        }
+        let data = try Data(contentsOf: path)
         let bitmap = try XCTUnwrap(NSBitmapImageRep(data: data))
         var occupied = 0
         for row in 0..<20 {
@@ -177,4 +194,37 @@ final class NativeUITests: XCTestCase {
         }
         XCTAssertGreaterThan(occupied, 10)
     }
+
+    @MainActor
+    private func probeGraphics(_ output: String) async throws {
+        let browser = WKWebView(frame: NSRect(x: 0, y: 0, width: 640, height: 640))
+        let ready = expectation(description: "Independent WebKit canvas loaded")
+        let navigation = ProbeNavigation(ready)
+        browser.navigationDelegate = navigation
+        browser.loadHTMLString("<!doctype html><title>Graphics control</title>", baseURL: nil)
+        await fulfillment(of: [ready], timeout: 30)
+        let evaluated = try await browser.evaluateJavaScript("""
+          JSON.stringify({
+            webgl2: !!document.createElement('canvas').getContext('webgl2'),
+            webgl: !!document.createElement('canvas').getContext('webgl'),
+            userAgent: navigator.userAgent
+          })
+          """)
+        let value = try XCTUnwrap(evaluated as? String)
+        var result = try XCTUnwrap(try JSONSerialization.jsonObject(with: Data(value.utf8)) as? [String: Any])
+        result["metalDevices"] = MTLCopyAllDevices().map { $0.name }
+        let data = try JSONSerialization.data(withJSONObject: result, options: [.prettyPrinted, .sortedKeys])
+        try data.write(to: URL(fileURLWithPath: output).appendingPathComponent("graphics.json"))
+    }
+}
+
+private final class ProbeNavigation: NSObject, WKNavigationDelegate {
+    private let ready: XCTestExpectation
+    init(_ ready: XCTestExpectation) { self.ready = ready }
+    func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) { ready.fulfill() }
+}
+
+private struct NativeFailure: Error, CustomStringConvertible {
+    let description: String
+    init(_ description: String) { self.description = description }
 }
