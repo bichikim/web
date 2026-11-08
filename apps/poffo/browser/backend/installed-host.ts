@@ -79,10 +79,18 @@ export const startInstalledHost = async (executable: string, workspace: string, 
             },
             (failure: unknown) => (failure instanceof Error ? failure.message : String(failure)),
           )
-          throw new Error(
-            `Installed host EOF shutdown failed: ${JSON.stringify({backendPid: connection.pid, descriptorPresent, errors, exitCode: child.exitCode, launcherPid: child.pid, response, signalCode: child.signalCode})}`,
-            {cause: error},
-          )
+          const state = {
+            backendPid: connection.pid,
+            descriptorPresent,
+            errors,
+            exitCode: child.exitCode,
+            launcherPid: child.pid,
+            response,
+            signalCode: child.signalCode,
+          }
+          throw new Error(`Installed host EOF shutdown failed: ${JSON.stringify(state)}`, {
+            cause: error,
+          })
         })
         console.log('Installed host exited', {code: child.exitCode})
         lines.close()
