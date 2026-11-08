@@ -12,7 +12,7 @@ final class NativeUITests: XCTestCase {
         let workspace = try XCTUnwrap(environment["POFFO_NATIVE_WORKSPACE"])
         let output = try XCTUnwrap(environment["POFFO_NATIVE_OUTPUT"])
         let control = try XCTUnwrap(environment["POFFO_NATIVE_CONTROL"])
-        try await probeGraphics(output)
+        try await probeGraphics(output, workspace)
         let app = XCUIApplication(url: URL(fileURLWithPath: path))
         defer { if app.state != .notRunning { app.terminate() } }
 
@@ -198,17 +198,23 @@ final class NativeUITests: XCTestCase {
     }
 
     @MainActor
-    private func probeGraphics(_ output: String) async throws {
-        let browser = WKWebView(frame: NSRect(x: 0, y: 0, width: 640, height: 640))
+    private func probeGraphics(_ output: String, _ workspace: String) async throws {
+        let configuration = WKWebViewConfiguration()
+        configuration.setURLSchemeHandler(OriginPage(), forURLScheme: "tauri")
+        let browser = WKWebView(frame: NSRect(x: 0, y: 0, width: 640, height: 640), configuration: configuration)
         let ready = expectation(description: "Independent WebKit canvas loaded")
         let navigation = ProbeNavigation(ready)
         browser.navigationDelegate = navigation
-        browser.loadHTMLString("<!doctype html><title>Graphics control</title>", baseURL: nil)
+        browser.load(URLRequest(url: URL(string: "tauri://localhost/")!))
         await fulfillment(of: [ready], timeout: 30)
         let evaluated = try await browser.evaluateJavaScript("""
           JSON.stringify({
             webgl2: !!document.createElement('canvas').getContext('webgl2'),
             webgl: !!document.createElement('canvas').getContext('webgl'),
+            origin: location.origin,
+            secureContext: isSecureContext,
+            subtle: typeof crypto.subtle,
+            randomUUID: typeof crypto.randomUUID,
             pixiProbe: (() => {
               try {
                 const context = document.createElement('canvas').getContext('webgl', {
@@ -229,6 +235,14 @@ final class NativeUITests: XCTestCase {
           """)
         let value = try XCTUnwrap(evaluated as? String)
         var result = try XCTUnwrap(try JSONSerialization.jsonObject(with: Data(value.utf8)) as? [String: Any])
+        let source = try String(contentsOfFile: workspace + "/source.json", encoding: .utf8)
+        result["crypto"] = try await browser.callAsyncJavaScript("""
+          try {
+            const bytes = new TextEncoder().encode(JSON.stringify(JSON.parse(source)));
+            const digest = new Uint8Array(await crypto.subtle.digest('SHA-256', bytes));
+            return {bytes: bytes.length, digest: [...digest].map(value => value.toString(16).padStart(2, '0')).join('')};
+          } catch (error) { return {error: String(error)}; }
+          """, arguments: ["source": source], in: nil, in: .page)
         result["metalDevices"] = MTLCopyAllDevices().map { $0.name }
         let data = try JSONSerialization.data(withJSONObject: result, options: [.prettyPrinted, .sortedKeys])
         try data.write(to: URL(fileURLWithPath: output).appendingPathComponent("graphics.json"))
@@ -239,6 +253,16 @@ private final class ProbeNavigation: NSObject, WKNavigationDelegate {
     private let ready: XCTestExpectation
     init(_ ready: XCTestExpectation) { self.ready = ready }
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) { ready.fulfill() }
+}
+
+private final class OriginPage: NSObject, WKURLSchemeHandler {
+    func webView(_ webView: WKWebView, start task: WKURLSchemeTask) {
+        let data = Data("<!doctype html><title>Native origin control</title>".utf8)
+        task.didReceive(URLResponse(url: task.request.url!, mimeType: "text/html", expectedContentLength: data.count, textEncodingName: "utf-8"))
+        task.didReceive(data)
+        task.didFinish()
+    }
+    func webView(_ webView: WKWebView, stop task: WKURLSchemeTask) {}
 }
 
 private struct NativeFailure: Error, CustomStringConvertible {
