@@ -46,6 +46,7 @@ const report = {
   framework: process.platform === 'darwin' ? 'XCTest/XCUIAutomation' : 'Windows UI Automation',
   installer: JSON.parse(await readFile(join(output, '../installer.json'), 'utf8')),
   platform: process.platform,
+  requireNativeGpu: process.env.POFFO_NATIVE_REQUIRE_GPU === 'true',
   sourceHash: hash(sourceBytes),
   steps: [],
 }
@@ -237,6 +238,10 @@ const checkpoints = new Map([
         assert.match(error.message, /No available renderer for the current environment/u)
         nativeFrame = {available: false, independentWebKitProbe: probe, reason: error.message}
       }
+      assert.ok(
+        nativeFrame.available || !report.requireNativeGpu,
+        'Native character GPU rendering is required for this validation',
+      )
       await nativeTrace?.waitForStreamClose()
       return {
         motions: 7,

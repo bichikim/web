@@ -32,11 +32,22 @@ on:
         description: Observe a Mac native save through a separate CLI host
         type: boolean
         default: false
+      intel-image:
+        description: Intel macOS environment for native runtime validation
+        type: choice
+        default: macos-15-intel
+        options:
+          - macos-15-intel
+          - macos-26-intel
+      require-native-gpu:
+        description: Fail unless the installed native WebView renders the character
+        type: boolean
+        default: false
 
 run-name: ${{ inputs.reuse-run != '' && format('Validate Poffo installers from run {0}', inputs.reuse-run) || format('Build Poffo Desktop from {0}', github.ref_name) }}
 
 concurrency:
-  group: poffo-desktop-${{ github.ref }}-${{ inputs.target }}-${{ inputs.reuse-run }}
+  group: poffo-desktop-${{ github.ref }}-${{ inputs.target }}-${{ inputs.reuse-run }}-${{ inputs.intel-image }}
   cancel-in-progress: false
 
 permissions:
@@ -50,7 +61,7 @@ env:
 jobs:
   build:
     name: Build ${{ matrix.target }}
-    runs-on: ${{ fromJSON('{"aarch64-apple-darwin":"macos-15","x86_64-apple-darwin":"macos-15-intel","x86_64-pc-windows-msvc":"windows-2025"}')[matrix.target] }}
+    runs-on: ${{ matrix.target == 'x86_64-apple-darwin' && inputs.intel-image || fromJSON('{"aarch64-apple-darwin":"macos-15","x86_64-pc-windows-msvc":"windows-2025"}')[matrix.target] }}
     timeout-minutes: 60
     env:
       BUNDLE_TYPE: ${{ matrix.target == 'x86_64-pc-windows-msvc' && 'nsis' || 'dmg' }}
@@ -250,6 +261,7 @@ jobs:
         if: inputs.native-ui
         env:
           POFFO_NATIVE_TRACE: ${{ inputs.native-trace }}
+          POFFO_NATIVE_REQUIRE_GPU: ${{ inputs.require-native-gpu }}
         run: node apps/poffo/native/run.mjs
 
       - name: Upload runtime validation evidence
