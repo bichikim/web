@@ -27,12 +27,14 @@ const savedPath = join(workspace, '캐릭터 저장.poffo')
 const hash = (value) => createHash('sha256').update(value).digest('hex')
 const documentHash = (value) => hash(JSON.stringify(value))
 const REQUEST_LIMIT = 30_000
+const STANDARD_DRIVER_LIMIT = 600_000
+const TRANSLATED_LIFECYCLE_LIMIT = 900_000
 // Translation repeats process startup and accessibility setup across the full lifecycle.
 // This bounds the whole driver; individual request and dialog deadlines remain independent.
 const DRIVER_LIMIT =
   process.env.POFFO_NATIVE_EXECUTION === 'rosetta' && process.env.POFFO_NATIVE_GPU_ONLY !== 'true'
-    ? 900_000
-    : 600_000
+    ? TRANSLATED_LIFECYCLE_LIMIT
+    : STANDARD_DRIVER_LIMIT
 const PART_COUNT = 122
 const ORIGINAL_MOTIONS = 6
 const EDITED_MOTIONS = 7
