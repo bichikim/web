@@ -30,6 +30,8 @@ pnpm exec playwright test --config apps/poffo/playwright.character.config.ts
 
 [워크플로](../../../.github/workflows/poffo-desktop-build.yml)의 `target`으로 전체 또는 한 OS만 실행한다. GitHub의 Windows x64·Intel Mac·ARM Mac runner에서 실제 OS와 Node 아키텍처를 먼저 확인한다. 개인 기기가 없어도 해당 OS의 설치·내장 런타임·제작 흐름을 검사할 수 있다. runner의 Chromium/SwiftShader 결과는 물리 기기의 GPU나 네이티브 WebView·시스템 대화상자 조작을 증명하지 않는다.
 
+`native-ui=true`는 실제 설치 앱을 별도의 [네이티브 검사](../native/README.md)로 실행한다. Windows는 UI Automation, macOS는 XCTest로 창과 시스템 대화상자를 조작하며 파일·세션·복구 상태를 공개 백엔드 명령과 대조한다. `reuse-run`으로 기존 설치물을 재사용할 수 있다. 검사가 끝난 단계와 렌더러 제약은 artifact의 `native/report.json`에 기록한다.
+
 검증 코드만 바꿨을 때는 `reuse-run`에 기존 빌드 번호를 넣어 동일 설치물을 다시 설치한다. 원본 빌드·커밋·설치물 SHA-256과 검증 실행 번호를 `installer.json`에 기록한다. 제품 소스가 바뀌면 새 설치물을 빌드한다.
 
 전체 OS 실행은 마지막에 여섯 포즈의 RGBA 해시도 정확히 비교한다. `pixel-diagnostics`와 `pixel-stage`는 입력·GPU 버퍼·PNG 변환을 분리해 조사하는 용도다. [진단 절차와 확인한 원인](../browser/pixels/README.md)을 참고한다.
