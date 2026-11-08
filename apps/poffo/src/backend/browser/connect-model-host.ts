@@ -170,6 +170,14 @@ export const connectModelHost = async (options: ConnectModelHostOptions) => {
   let intentional = false
   let disconnected = false
   let attachment!: Promise<HostAttachment>
+  let sequence = -1
+  const onEvent = (event: ModelEvent) => {
+    // An unchanged reattachment must preserve the document captured by a native Save dialog.
+    if (event.sequence > sequence) {
+      sequence = event.sequence
+      options.onEvent(event)
+    }
+  }
   const disconnect = (error: unknown) => {
     if (intentional || disconnected) {
       return
@@ -179,7 +187,10 @@ export const connectModelHost = async (options: ConnectModelHostOptions) => {
     options.onDisconnect(error instanceof Error ? error.message : 'Backend disconnected')
   }
   const attach = () => {
-    attachment = attachModelHost(options, {onFailure: disconnect, onInterrupt: attach, signal})
+    attachment = attachModelHost(
+      {...options, onEvent},
+      {onFailure: disconnect, onInterrupt: attach, signal},
+    )
     attachment.catch(disconnect)
   }
   attach()

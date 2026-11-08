@@ -203,6 +203,71 @@ test('should report a failed reattachment once and reject later commands', async
   }
 })
 
+test('should preserve the current document identity when an idle reattachment has no new events', async () => {
+  const model = createModelBackend({document: createEmptyDocument(), sessionId: 'native'})
+  let stream!: ReadableStreamDefaultController<Uint8Array>
+  let snapshots = 0
+  let requested!: () => void
+  const nextSnapshot = new Promise<void>((resolve) => {
+    requested = resolve
+  })
+  const request = vi.fn<typeof fetch>(async (input, options) => {
+    if (String(input).endsWith('/api/snapshot')) {
+      snapshots += 1
+      if (snapshots === 2) {
+        requested()
+      }
+      return new Response(JSON.stringify(encodeModelEvent(model.read(), 0)))
+    }
+    if (String(input).endsWith('/api/command')) {
+      return new Response(
+        JSON.stringify({
+          ok: true,
+          requestId: 'saved',
+          revision: 0,
+          sessionId: 'native',
+          value: {savedRevision: 0},
+        }),
+      )
+    }
+    return new Response(
+      new ReadableStream<Uint8Array>({
+        start(controller) {
+          stream = controller
+          options?.signal?.addEventListener(
+            'abort',
+            () => controller.error(options.signal?.reason),
+            {once: true},
+          )
+        },
+      }),
+    )
+  })
+  vi.stubGlobal('fetch', request)
+  const onEvent = vi.fn()
+  const onDisconnect = vi.fn()
+  const connection = await connectModelHost({
+    onDisconnect,
+    onEvent,
+    onRender: async () => {
+      throw new Error('unused')
+    },
+    token: 'test',
+    url: 'http://127.0.0.1:1234',
+  })
+  try {
+    stream.error(new DOMException('Fetch is aborted', 'AbortError'))
+    await nextSnapshot
+    await connection.send('document.saved', {})
+    expect(onEvent).toHaveBeenCalledTimes(1)
+    expect(onEvent.mock.calls[0][0].document).toBe(connection.initial.document)
+    connection.close()
+    expect(onDisconnect).not.toHaveBeenCalled()
+  } finally {
+    connection.close()
+  }
+})
+
 test('should treat invalid model events as a protocol failure without reconnecting', async () => {
   const model = createModelBackend({document: createEmptyDocument(), sessionId: 'native'})
   let stream!: ReadableStreamDefaultController<Uint8Array>
