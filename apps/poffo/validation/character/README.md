@@ -73,8 +73,49 @@ Intel Mac에서는 파일은 저장됐지만 저장 상태 갱신이 실패해 �
 
 Windows는 16개 동작 검사를 마친 뒤 검사기 종료가 실패한 실행도 있었다. 검사기를 MTA로 시작하고 모달 호출을 마친 뒤 이벤트를 해제하도록 정리했다. 같은 설치물의 재검사에서 다섯 앱 종료 코드 `0`과 검사기 정리 완료까지 확인했다. 실패 실행을 통과 기록으로 사용하지 않는다.
 
-같은 새 설치물의 추가 Chromium 제작 회귀에서는 [첫 실행](https://github.com/bichikim/web/actions/runs/42508404719)에 Windows의 최종 호스트 종료와 Intel의 첫 레시피 편집 단계가 시간 초과로 실패했다. 앱 코드는 바꾸지 않고 요청 단계·종료 상태 진단을 보강한 [재검사](https://github.com/bichikim/web/actions/runs/42510100229)에서 세 OS의 제작·MCP·재열기·부모 EOF 종료가 통과했다. Chromium/SwiftShader의 여섯 포즈 RGBA도 세 OS에서 정확히 일치했다. 제한 시간은 유지했으며 첫 실패의 원인은 확정하지 않았다. 이 두 건을 제품 수정으로 해결했다고 기록하지 않는다.
+같은 새 설치물의 추가 Chromium 제작 회귀에서는 [첫 실행](https://github.com/bichikim/web/actions/runs/42508404719)에 Windows의 최종 호스트 종료와 Intel의 첫 레시피 단계가 시간 초과로 실패했다. 앱 코드는 바꾸지 않고 요청 단계·종료 상태 진단을 보강한 [재검사](https://github.com/bichikim/web/actions/runs/42510100229)에서 세 OS의 제작·MCP·재열기·부모 EOF 종료가 통과했다. Chromium/SwiftShader의 여섯 포즈 RGBA도 세 OS에서 정확히 일치했다. 이 재검사 시점에는 원인을 확정하지 못해 제품 수정으로 해결했다고 기록하지 않았다. 이후 재현과 수정은 아래에 정리한다.
 
 연결 변경을 포함한 백엔드 단위 회귀 8파일·32테스트, Node·CLI 회귀 45테스트와 실제 Chromium의 동기화·개발 모드 검사 2테스트도 통과했다. Poffo 프로덕션 빌드·타입 검사·린트 오류 0개를 확인했다. 최신 설치물의 플랫폼별 보고서·설치물 해시와 픽셀 비교는 `output/platforms/runs/42510100229/`에 보관한다.
 
 보고서·창 PNG·접근성 트리·Mac XCTest 결과는 `output/native-platforms/runs/`의 실행 번호와 OS별 폴더에 보관한다. 원인 추적 자료는 `output/diagnostics/native-intel-save-ack/`에 있다. Intel 실행기는 별도의 실제 창에 표시한 WebKit에서도 WebGL1/2 stencil 속성이 `null`이고 context가 소실됐다. 창 표시 상태와 전체 화면 PNG도 확인했다. 기본 context 객체가 생성된 사실만으로 렌더 통과로 기록하지 않는다. 실행기 밖의 다른 물리 GPU 전체를 보증하지 않는다. [검사 실행법과 한계](../../native/README.md)를 참고한다.
+
+## 반복 시간 초과 원인 추적
+
+기존 Windows 설치물을 중계 없이 반복한 [진단 실행](https://github.com/bichikim/web/actions/runs/42518014727)에서 다섯 번째 제작 검증의 재열기 호스트가 부모 EOF 뒤 종료되지 않았다. 실패 후 Node 공식 디버거로 확인한 활성 자원은 stdout·stderr pipe와 TCP 연결 하나였다. 서버 리스너와 stdin은 이미 닫혔고 이벤트 루프 유휴 시간은 37.201초였다. 연결 파일도 남았다. 어느 HTTP 요청이 그 연결을 남겼는지까지 기록한 것은 아니지만, 계산 작업이 아니라 종료되지 않은 연결이 프로세스를 유지하는 상태를 재현했다.
+
+미완성 HTTP 본문으로 같은 종료 대기를 별도 재현했고 읽지 않은 큰 snapshot·응답 없는 렌더도 경계 검사에 포함했다. 로컬의 큰 snapshot 대조는 기존 설치물도 바로 종료돼 원래 원인의 증거로 사용하지 않았다. [호스트 종료](../../src/backend/node/start-node-host.ts#L76)는 접수한 명령·복구 저장을 끝내고 남은 HTTP 연결을 정리한다. 대기 중인 렌더는 취소하며, 접수한 편집이 새 변경을 만들면 일반 종료의 저장 상태를 다시 확인한다. 저장 중 쓰기를 끊어 종료 시간만 줄이지 않는다.
+
+기존 Intel 설치물의 [요청별 반복 진단](https://github.com/bichikim/web/actions/runs/42514050557)에서는 `edit.preview`와 `edit.apply`가 HTTP 200으로 끝난 뒤 첫 체크포인트 `document.save`가 30.013초에 중단됐다. 성공한 반복에서도 같은 저장은 약 22~28초가 걸렸다. 로컬의 실제 122파츠 문서 CPU 대조에서 기존 Node 경로의 WASM 함수가 전체 프로파일 시간의 82.1%를 차지했다. 복구 저장과 명시적 저장이 함께 실행되는 동안의 첫 저장은 8.27초였다.
+
+[Node 압축 어댑터](../../src/backend/node/serialize-document-file.ts#L18)는 공통 컨테이너에 비동기 네이티브 Brotli를 연결한다. 같은 로컬 내장 Node 대조에서 첫 저장은 3.41초였고 이벤트 루프가 압축 중 대기할 수 있었다. 이 수치는 로컬 후보 CLI 측정이며 설치 앱의 CI 통과와 구분한다. 바이트·문서 보존과 독립 취소를 검사했다.
+
+수정 소스 `fa44dae6cef46b832c2a9b38c1fc1b211cd5b8f1`의 [Windows 반복 검사](https://github.com/bichikim/web/actions/runs/42519178200)는 제작 6회와 픽셀 대조 6회를 통과했고, 12개 호스트가 부모 EOF 후 모두 종료 코드 0으로 끝났다. [같은 설치물의 네이티브 검사](https://github.com/bichikim/web/actions/runs/42519183749)도 16단계를 통과했다. 실제 설치 CLI의 미완성 HTTP 요청 대조는 Windows에서 약 16ms, ARM Mac에서 약 6ms에 종료됐다. 요청·종료 제한 시간은 늘리지 않았다.
+
+[Intel 반복 검사](https://github.com/bichikim/web/actions/runs/42520219576)도 제작 6회·대조 6회를 통과했고 12개 호스트가 정상 종료했다. 체크포인트·결과 파일 저장 54회는 4.767~10.952초, 중앙값 5.386초였다. 48번의 렌더 요청도 최장 14.924초에 완료됐다. 이 계측은 요청 중계를 사용했으며, Windows 종료 대조는 중계 없이 실행했다.
+
+추가 네이티브 검사에서 저장 창 준비도 제한 시간에 걸려 브라우저 압축을 따로 비교했다. 같은 실제 문서의 로컬 WASM 대조에서 level 9는 4.74초·21,510,043바이트, level 6은 1.63초·21,888,280바이트였다. 원본을 보존하는 level 6으로 브라우저 저장 비용을 줄였다. 이는 파일 크기와 처리 시간의 조정이며 이미지 품질을 낮추지 않는다. 검사기도 저장 창이 나타나지 않으면 중단해 실패 이후 단계를 통과로 남기지 않는다.
+
+CPU 대조·원래 실패의 요청·프로세스 자료와 수정 후 반복 보고서는 `output/diagnostics/runtime-timeouts/`에 있다. 공통 컨테이너 92테스트와 Node·CLI 52테스트, 타입 검사와 린트 오류 0개를 확인했다. 설치물별 후속 결과는 실행 번호와 설치물 원본 커밋을 함께 대조한다.
+
+## Intel 바이너리 GPU의 추가 범위
+
+macOS 15·26 Intel VM의 Metal 삼각형은 실제 녹색 픽셀을 반환했지만 같은 창의 WebKit WebGL1/2는 소실됐다. 장치는 `Apple Paravirtual device`이고 Mac2 지원은 없었다. GPU 전체가 없다는 판정과 구분한다. 대조 JSON은 `output/diagnostics/native-gpu-control15/`와 `native-gpu-control26/`에 있다.
+
+같은 Intel 설치물을 ARM에서 번역한 [Rosetta GPU 전용 검사](https://github.com/bichikim/web/actions/runs/42520225690)는 실제 앱 열기·문서 열기·모션 추가·네이티브 PNG의 네 체크포인트를 통과했다. 앱·CLI는 단일 x86_64 바이너리, 내장 Node는 x64 번역 실행임을 확인했다. 122파츠·7모션과 기존 리그를 보존했고 361×640 PNG가 비어 있지 않았다. 보고서는 `gpuComplete: true`, 전체 UI의 `complete: false`다.
+
+이는 Intel 바이너리의 실제 WebView GPU 검사이며 물리 Intel CPU·GPU 검증은 아니다. [원격 물리 Intel Mac 실행 절차](../../native/macos/README.md)에 사전 검사·비용·정리 절차를 준비했다. 새 비용 승인을 받지 않아 물리 호스트는 생성하지 않았다. Rosetta 보고서와 PNG는 `output/diagnostics/native-gpu-rosetta/runs/42520225690/`에 있다.
+
+## 최종 설치물 검증
+
+압축 개선을 포함한 소스 `705506cb1c58d70006d875d2103c12565dfa310b`의 [최종 세 OS 실행](https://github.com/bichikim/web/actions/runs/42520522419)은 내장 Node·등록 CLI·MCP·7단계 레시피·연속 재생·저장/재열기·부모 EOF 종료를 모두 통과했다. Chromium/SwiftShader 여섯 포즈의 RGBA도 정확히 일치했다. 플랫폼별 설치물·보고서·픽셀 비교는 `output/platforms/runs/42520522419/`에 있다.
+
+| 실행 환경                   | 전체 네이티브 16단계                                             | 실제 앱 캐릭터 GPU         |
+| --------------------------- | ---------------------------------------------------------------- | -------------------------- |
+| Windows 2025 x64            | [통과](https://github.com/bichikim/web/actions/runs/42521546398) | PNG 생성                   |
+| macOS 15 ARM64              | [통과](https://github.com/bichikim/web/actions/runs/42521538471) | PNG 생성                   |
+| macOS 15 Intel VM           | [통과](https://github.com/bichikim/web/actions/runs/42522165358) | 독립 WebKit도 context 소실 |
+| ARM의 Intel 앱 Rosetta 실행 | [통과](https://github.com/bichikim/web/actions/runs/42523690145) | GPU 필수 조건으로 PNG 생성 |
+
+모두 동일한 최종 빌드 실행의 설치물을 사용했다. 한글 파일 저장·종료 취소·새 프로세스 재열기·미저장 복구·독립 호스트 유지와 문서 전체 일치를 확인했다. 압축 파일 해시는 플랫폼별로 기록하고 문서·렌더 픽셀 일치와 구분한다. Rosetta 전체 실행은 측정된 번역 실행 시간을 반영한 검사기 예산 15분으로 정상 종료까지 통과했으며, 요청 30초·저장 창 60초 제한은 유지했다. 실제 Intel Mac GPU까지 검사한 결과는 아니다.
+
+초기 `fa44dae6c` 빌드 후 Intel의 첫 54MB JSON 문서 호스트 시작이 30초를 넘은 실행도 있었다. 레시피 전의 별도 시작 실패이며 원인은 확정하지 못했다. 동일 설치물의 독립 반복 12개 호스트와 최종 소스의 빌드·제작 실행에서는 재현되지 않았다. 이 관측을 원래 체크포인트 저장 오류의 원인이나 수정 근거로 섞지 않는다.

@@ -14,6 +14,12 @@
 
 `native-gpu-only=true`는 첫 네 체크포인트의 실제 앱·로드·편집·PNG만 끝낸다. 드라이버와 모든 단언이 통과한 경우에만 `gpuComplete: true`를 기록하며 전체 `complete`는 `false`로 유지한다. 기존 시스템 대화상자 검사를 통과시키는 우회 옵션이 아니다.
 
+[새 Intel 설치물의 GPU 전용 실행](https://github.com/bichikim/web/actions/runs/42520225690)은 네 단계와 드라이버 종료를 모두 통과해 `gpuComplete: true`를 기록했다. 설치물 원본은 `fa44dae6cef46b832c2a9b38c1fc1b211cd5b8f1`, Intel DMG SHA-256은 `af9585440239e31e89bb553c7da986a38c5d55e7725ee04c8d92103b95eab5ec`다. 물리 Intel 환경은 아래 절차로 별도 검사한다.
+
+압축 개선 후 [Rosetta 전체 실행](https://github.com/bichikim/web/actions/runs/42522171408)은 16개 체크포인트가 완료됐지만 마지막 완료 약 3초 전에 검사기 전체 10분 마감이 Xcode를 중단했다. 전체 통과로 기록하지 않았다. Rosetta 전체 수명 검사의 드라이버 예산은 15분으로 분리하고 `driverLimitMs`를 보고서에 기록한다. GPU 전용·일반 실행은 기존 10분이며 요청 30초·저장 창 60초 등 개별 검사는 유지한다.
+
+[예산을 분리한 최종 전체 실행](https://github.com/bichikim/web/actions/runs/42523690145)은 동일한 소스 `705506cb1c58d70006d875d2103c12565dfa310b`의 Intel DMG로 16단계와 Xcode 정상 종료를 모두 통과했다. 실제 캐릭터 PNG, 저장 취소·완료, 새 프로세스 재열기·복구, 독립 호스트 유지까지 확인했고 `complete: true`, `nativeFrame.available: true`, `driverLimitMs: 900000`을 기록했다. 이는 번역 실행의 전체 통과다.
+
 ## 원격 물리 Intel Mac에서 실행할 절차
 
 후보는 [AWS EC2 `mac1.metal`](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-mac-instances.html)이다. 공식 사양은 2018 Intel Mac mini의 bare metal 호스트다. [Apple Metal 표](https://developer.apple.com/metal/capabilities/)는 Intel UHD Graphics 630의 Mac2 지원을 명시한다. 실제 할당된 환경에서 GPU 노출과 WebKit 렌더가 작동하는지는 먼저 아래 사전 검사로 확인해야 한다.
