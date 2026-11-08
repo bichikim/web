@@ -46,6 +46,7 @@ export const useAdminFeatureRequests = (): AdminFeatureRequestsController => {
     try {
       const result = await updateAdminFeatureRequest(input)
       if (result.status === 'updated') {
+        list.invalidatePagination()
         await invalidateFeatureRequestPages()
         list.updateRequest(input.requestId, (request) => ({
           ...request,

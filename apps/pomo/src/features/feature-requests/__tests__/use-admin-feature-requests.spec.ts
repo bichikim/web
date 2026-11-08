@@ -3,7 +3,7 @@
 import {MemoryRouter, query} from '@solidjs/router'
 import {renderHook, waitFor} from '@solidjs/testing-library'
 import {createComponent, type ParentComponent} from 'solid-js'
-import {beforeEach, expect, it, vi} from 'vitest'
+import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
 import type {FeatureRequest, FeatureRequestPage} from '../types'
 
@@ -34,6 +34,10 @@ const NEXT_REQUEST = {...REQUEST, id: '019d1990-1dc9-7255-a7b5-f9459dfaf783'}
 beforeEach(() => {
   vi.clearAllMocks()
   query.clear()
+})
+
+afterEach(() => {
+  vi.clearAllMocks()
 })
 
 it('should keep another request marked as updating when the first save completes', async () => {
@@ -255,4 +259,213 @@ it('should expose loading failures and ignore pagination without another page', 
 
   expect(apiMocks.listAdminFeatureRequests).toHaveBeenCalledOnce()
   cleanup()
+})
+
+it('should retry a failed reconciliation without hiding the loaded rows or ending pagination', async () => {
+  apiMocks.listAdminFeatureRequests
+    .mockResolvedValueOnce({hasMore: true, requests: [REQUEST]})
+    .mockRejectedValueOnce(new Error('unavailable'))
+    .mockResolvedValueOnce({hasMore: false, requests: [NEXT_REQUEST]})
+  apiMocks.updateAdminFeatureRequest.mockResolvedValue({status: 'updated'})
+  const view = renderHook(() => useAdminFeatureRequests(), {wrapper: RouterWrapper})
+  await waitFor(() => expect(view.result.isLoading()).toBe(false))
+  await view.result.updateRequest({
+    requestId: REQUEST.id,
+    status: 'completed',
+    targetVoteCount: null,
+  })
+  await view.result.loadMore()
+  expect(view.result.requests()).toMatchObject([{id: REQUEST.id, status: 'completed'}])
+  expect(view.result.hasMore()).toBe(true)
+  expect(view.result.loadMoreFailed()).toBe(true)
+  expect(view.result.loadFailed()).toBe(false)
+  await view.result.loadMore()
+  expect(view.result.requests().map((request) => request.id)).toEqual([REQUEST.id, NEXT_REQUEST.id])
+  expect(view.result.hasMore()).toBe(false)
+  expect(view.result.loadMoreFailed()).toBe(false)
+  view.cleanup()
+})
+
+it('should reconcile after a save finishes during an older last-page load', async () => {
+  const pending = Promise.withResolvers<FeatureRequestPage>()
+  apiMocks.listAdminFeatureRequests
+    .mockResolvedValueOnce({hasMore: true, requests: [REQUEST]})
+    .mockReturnValueOnce(pending.promise)
+    .mockResolvedValueOnce({hasMore: false, requests: [NEXT_REQUEST]})
+  apiMocks.updateAdminFeatureRequest.mockResolvedValue({status: 'updated'})
+  const view = renderHook(() => useAdminFeatureRequests(), {wrapper: RouterWrapper})
+  await waitFor(() => expect(view.result.isLoading()).toBe(false))
+  const more = view.result.loadMore()
+  await view.result.updateRequest({
+    requestId: REQUEST.id,
+    status: 'completed',
+    targetVoteCount: null,
+  })
+  pending.resolve({hasMore: false, requests: [REQUEST]})
+  await more
+  expect(view.result.hasMore()).toBe(true)
+  await view.result.loadMore()
+  expect(view.result.requests()).toMatchObject([
+    {id: REQUEST.id, status: 'completed'},
+    {id: NEXT_REQUEST.id},
+  ])
+  expect(view.result.hasMore()).toBe(false)
+  view.cleanup()
+})
+
+it('should preserve local forms and retry reconciliation when another save finishes during it', async () => {
+  const pending = Promise.withResolvers<FeatureRequestPage>()
+  apiMocks.listAdminFeatureRequests
+    .mockResolvedValueOnce({hasMore: true, requests: [REQUEST]})
+    .mockReturnValueOnce(pending.promise)
+    .mockResolvedValueOnce({hasMore: false, requests: [NEXT_REQUEST]})
+  apiMocks.updateAdminFeatureRequest.mockResolvedValue({status: 'updated'})
+  const view = renderHook(() => useAdminFeatureRequests(), {wrapper: RouterWrapper})
+  await waitFor(() => expect(view.result.isLoading()).toBe(false))
+  await view.result.updateRequest({
+    requestId: REQUEST.id,
+    status: 'completed',
+    targetVoteCount: null,
+  })
+  const more = view.result.loadMore()
+  await view.result.updateRequest({requestId: REQUEST.id, status: 'confirmed', targetVoteCount: 10})
+  pending.resolve({hasMore: false, requests: [REQUEST]})
+  await more
+  expect(view.result.requests()).toMatchObject([
+    {id: REQUEST.id, status: 'confirmed', targetVoteCount: 10},
+  ])
+  expect(view.result.hasMore()).toBe(true)
+  await view.result.loadMore()
+  expect(view.result.requests()).toMatchObject([
+    {id: REQUEST.id, status: 'confirmed'},
+    {id: NEXT_REQUEST.id},
+  ])
+  expect(view.result.hasMore()).toBe(false)
+  view.cleanup()
+})
+
+it('should retain rows discovered during reconciliation on a later manual refresh', async () => {
+  apiMocks.listAdminFeatureRequests
+    .mockResolvedValueOnce({hasMore: true, requests: [REQUEST]})
+    .mockResolvedValueOnce({hasMore: false, requests: [NEXT_REQUEST]})
+    .mockResolvedValueOnce({hasMore: false, requests: [NEXT_REQUEST]})
+  apiMocks.updateAdminFeatureRequest.mockResolvedValue({status: 'updated'})
+  const view = renderHook(() => useAdminFeatureRequests(), {wrapper: RouterWrapper})
+  await waitFor(() => expect(view.result.isLoading()).toBe(false))
+  await view.result.updateRequest({
+    requestId: REQUEST.id,
+    status: 'completed',
+    targetVoteCount: null,
+  })
+  await view.result.loadMore()
+  expect(view.result.requests()).toMatchObject([
+    {id: REQUEST.id, status: 'completed'},
+    {id: NEXT_REQUEST.id},
+  ])
+  await view.result.refresh()
+  expect(view.result.requests()).toMatchObject([
+    {id: NEXT_REQUEST.id},
+    {id: REQUEST.id, status: 'completed'},
+  ])
+  expect(view.result.hasMore()).toBe(false)
+  view.cleanup()
+})
+
+it('should retry a failed later reconciliation page from the server prefix', async () => {
+  apiMocks.listAdminFeatureRequests
+    .mockResolvedValueOnce({hasMore: true, requests: [REQUEST]})
+    .mockResolvedValueOnce({hasMore: true, requests: [REQUEST]})
+    .mockRejectedValueOnce(new Error('later page unavailable'))
+    .mockResolvedValueOnce({hasMore: true, requests: [REQUEST]})
+    .mockResolvedValueOnce({hasMore: false, requests: [NEXT_REQUEST]})
+  apiMocks.updateAdminFeatureRequest.mockResolvedValue({status: 'updated'})
+  const view = renderHook(() => useAdminFeatureRequests(), {wrapper: RouterWrapper})
+  await waitFor(() => expect(view.result.isLoading()).toBe(false))
+  await view.result.updateRequest({
+    requestId: REQUEST.id,
+    status: 'completed',
+    targetVoteCount: null,
+  })
+  await view.result.loadMore()
+  expect(view.result.loadMoreFailed()).toBe(true)
+  expect(view.result.hasMore()).toBe(true)
+  await view.result.loadMore()
+  expect(view.result.requests().map((request) => request.id)).toEqual([REQUEST.id, NEXT_REQUEST.id])
+  expect(view.result.loadMoreFailed()).toBe(false)
+  expect(view.result.hasMore()).toBe(false)
+  expect(apiMocks.listAdminFeatureRequests.mock.calls.map(([options]) => options.offset)).toEqual([
+    0, 0, 1, 0, 1,
+  ])
+  view.cleanup()
+})
+
+it('should clear a reconciliation failure after a successful manual refresh', async () => {
+  apiMocks.listAdminFeatureRequests
+    .mockResolvedValueOnce({hasMore: true, requests: [REQUEST]})
+    .mockRejectedValueOnce(new Error('unavailable'))
+    .mockResolvedValueOnce({hasMore: false, requests: [REQUEST]})
+  apiMocks.updateAdminFeatureRequest.mockResolvedValue({status: 'updated'})
+  const view = renderHook(() => useAdminFeatureRequests(), {wrapper: RouterWrapper})
+  await waitFor(() => expect(view.result.isLoading()).toBe(false))
+  await view.result.updateRequest({
+    requestId: REQUEST.id,
+    status: 'completed',
+    targetVoteCount: null,
+  })
+  await view.result.loadMore()
+  expect(view.result.loadMoreFailed()).toBe(true)
+  await view.result.refresh()
+  expect(view.result.loadMoreFailed()).toBe(false)
+  expect(view.result.loadFailed()).toBe(false)
+  view.cleanup()
+})
+
+it('should ignore a reconciliation response superseded by a manual refresh', async () => {
+  const pending = Promise.withResolvers<FeatureRequestPage>()
+  const refreshed = {...REQUEST, title: '갱신된 기능'}
+  apiMocks.listAdminFeatureRequests
+    .mockResolvedValueOnce({hasMore: true, requests: [REQUEST]})
+    .mockReturnValueOnce(pending.promise)
+    .mockResolvedValueOnce({hasMore: false, requests: [refreshed]})
+  apiMocks.updateAdminFeatureRequest.mockResolvedValue({status: 'updated'})
+  const view = renderHook(() => useAdminFeatureRequests(), {wrapper: RouterWrapper})
+  await waitFor(() => expect(view.result.isLoading()).toBe(false))
+  await view.result.updateRequest({
+    requestId: REQUEST.id,
+    status: 'completed',
+    targetVoteCount: null,
+  })
+  const more = view.result.loadMore()
+  await waitFor(() => expect(apiMocks.listAdminFeatureRequests).toHaveBeenCalledTimes(2))
+  await view.result.refresh()
+  pending.resolve({hasMore: true, requests: [NEXT_REQUEST]})
+  await more
+  expect(view.result.requests()).toEqual([refreshed])
+  expect(view.result.hasMore()).toBe(false)
+  expect(view.result.isLoading()).toBe(false)
+  expect(view.result.isLoadingMore()).toBe(false)
+  view.cleanup()
+})
+
+it('should ignore an unfinished reconciliation after disposal', async () => {
+  const pending = Promise.withResolvers<FeatureRequestPage>()
+  apiMocks.listAdminFeatureRequests
+    .mockResolvedValueOnce({hasMore: true, requests: [REQUEST]})
+    .mockReturnValueOnce(pending.promise)
+  apiMocks.updateAdminFeatureRequest.mockResolvedValue({status: 'updated'})
+  const view = renderHook(() => useAdminFeatureRequests(), {wrapper: RouterWrapper})
+  await waitFor(() => expect(view.result.isLoading()).toBe(false))
+  await view.result.updateRequest({
+    requestId: REQUEST.id,
+    status: 'completed',
+    targetVoteCount: null,
+  })
+  const more = view.result.loadMore()
+  await waitFor(() => expect(apiMocks.listAdminFeatureRequests).toHaveBeenCalledTimes(2))
+  const previous = view.result.requests()
+  view.cleanup()
+  pending.resolve({hasMore: false, requests: [NEXT_REQUEST]})
+  await more
+  expect(view.result.requests()).toBe(previous)
+  expect(view.result.hasMore()).toBe(true)
 })
