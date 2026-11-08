@@ -1,21 +1,17 @@
 import {limitAsync} from 'es-toolkit/promise'
-import {Container, MeshSimple, Texture} from 'pixi.js'
+import {Container, MeshSimple} from 'pixi.js'
 import type {PuppetDocument} from '../document'
 import {getPartRenderFrame} from '../internal/render-plan'
 import {applyDocumentScene} from './apply-document-scene'
 import {createRuntimePartMask} from './part-mask'
 import type {RuntimeLayer, RuntimePart} from './types'
-import {loadTextureImage} from './load-texture-image'
+import {loadTexture} from './load-texture'
 
 // Chromium fails some decodes ("cannot be decoded") when many large images, such as texture
 // atlas pages, decode at once; a few at a time keeps loading parallel without that.
 const MAXIMUM_CONCURRENT_DECODES = 4
 
-const loadTexture = limitAsync(async (source: string) => {
-  const image = await loadTextureImage(source)
-
-  return Texture.from({autoGenerateMipmaps: true, resource: image, scaleMode: 'linear'})
-}, MAXIMUM_CONCURRENT_DECODES)
+const decodeTexture = limitAsync(loadTexture, MAXIMUM_CONCURRENT_DECODES)
 
 interface InitializeRuntimePartsOptions {
   readonly antialias?: boolean
@@ -28,7 +24,7 @@ interface InitializeRuntimePartsOptions {
 export const initializeRuntimeParts = async (options: InitializeRuntimePartsOptions) => {
   // Parts sharing an image (an atlas) share one texture.
   const sources = [...new Set(options.document.parts.map((part) => part.texture.src))]
-  const loaded = await Promise.allSettled(sources.map(loadTexture))
+  const loaded = await Promise.allSettled(sources.map(decodeTexture))
   const resultBySource = new Map(sources.map((source, index) => [source, loaded[index]!]))
   const textureResults = options.document.parts.map((part) => resultBySource.get(part.texture.src)!)
   const failedTexture = textureResults.find(

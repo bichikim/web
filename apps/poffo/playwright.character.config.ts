@@ -17,7 +17,7 @@ export default defineConfig({
   reporter: 'list',
   testDir: './browser/backend',
   testMatch: '**/character.e2e.ts',
-  timeout: 150_000,
+  timeout: 480_000,
   use: {
     headless: true,
     screenshot: 'only-on-failure',

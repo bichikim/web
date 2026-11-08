@@ -45,7 +45,8 @@ test('should author and reload a real character using the installed CLI, MCP and
           await command(executable!, [...args, '--workspace', workspace], {
             env: installedEnvironment(),
             maxBuffer: 4 * 1024 * 1024,
-            timeout: 120_000,
+            // A recipe includes six GPU captures and seven full-document checkpoints on CI.
+            timeout: args[0] === 'recipe' ? 300_000 : 120_000,
           })
         ).stdout,
       )
@@ -213,10 +214,8 @@ test('should author and reload a real character using the installed CLI, MCP and
     ).toMatchObject({ok: true})
     const reloadedImage = PNG.sync.read(await readFile(join(workspace, 'reloaded.png')))
     const viewerParity = hash(reloadedImage.data) === reloadBaseline
-    // SwiftShader is the strict numerical reference. Hardware WebKit retains raw RGB diagnostics.
-    if (browserName === 'chromium') {
-      expect(viewerParity).toBe(true)
-    }
+    expect(viewerParity).toBe(true)
+    expect(reloadBaseline).toBe(images['neutral.png'])
     expect(reloadedImage.data.filter((_value, index) => index % 4 === 3)).toEqual(
       baselineImage.data.filter((_value, index) => index % 4 === 3),
     )

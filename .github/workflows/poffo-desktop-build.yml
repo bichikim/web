@@ -67,6 +67,7 @@ jobs:
         with:
           workspaces: apps/poffo/src-tauri -> target
           key: ${{ matrix.target }}
+          cache-on-failure: true
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -87,6 +88,7 @@ jobs:
           NODE
 
       - name: Build desktop installer
+        id: build
         run: |
           pnpm --filter @winter-love/poffo exec tauri build --ci \
             --target "${{ matrix.target }}" --bundles "${{ matrix.bundles }}" -- --locked
@@ -139,6 +141,7 @@ jobs:
 
       - name: Upload installer
         id: installer
+        if: always() && steps.build.outcome == 'success'
         uses: actions/upload-artifact@v7
         with:
           name: poffo-desktop-${{ matrix.target }}-${{ github.run_id }}
@@ -149,6 +152,7 @@ jobs:
           compression-level: 0
 
       - name: Summarize download
+        if: always() && steps.installer.outcome == 'success'
         env:
           ARTIFACT_URL: ${{ steps.installer.outputs.artifact-url }}
           BUILD_TARGET: ${{ matrix.target }}

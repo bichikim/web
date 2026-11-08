@@ -1,7 +1,11 @@
 /** @vitest-environment jsdom */
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
-import {Application, Container, MeshSimple, Texture} from 'pixi.js'
+import {Application, Container, MeshSimple} from 'pixi.js'
 import {createEmptyDocument, createPlayer, parseDocument, serializeDocument} from '..'
+
+vi.mock('../rendering/load-texture', () => ({
+  loadTexture: vi.fn(async () => ({destroy: vi.fn()})),
+}))
 
 vi.mock('pixi.js', () => ({
   Application: vi.fn(),
@@ -120,13 +124,6 @@ beforeEach(() => {
     }
     return mesh as unknown as MeshSimple
   })
-  vi.mocked(Texture.from).mockReturnValue({destroy: vi.fn()} as unknown as Texture)
-  vi.stubGlobal(
-    'Image',
-    class {
-      decode = vi.fn().mockResolvedValue(undefined)
-    },
-  )
 })
 afterEach(() => {
   vi.clearAllMocks()

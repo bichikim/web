@@ -8,8 +8,10 @@ import * as initialization from '../initialize-runtime-parts'
 import * as frames from '../apply-render-frame'
 import type {RuntimePart} from '../types'
 import type {PlayerRendererPreference} from '../../rendering-options'
+import {loadTexture} from '../load-texture'
 
 vi.mock('../render-mask-groups', () => ({renderMaskGroups: vi.fn()}))
+vi.mock('../load-texture', () => ({loadTexture: vi.fn()}))
 
 vi.mock('pixi.js', () => ({
   Application: vi.fn(),
@@ -166,16 +168,12 @@ describe('createPlayerRenderer', () => {
   test('should release decoded textures and application resources when one texture fails', async () => {
     const failure = new Error('Texture decode failed')
     const texture = {destroy: vi.fn()}
-    vi.mocked(Texture.from).mockReturnValue(texture as unknown as Texture)
-    vi.stubGlobal(
-      'Image',
-      class {
-        src = ''
-        decode() {
-          return this.src === 'broken.png' ? Promise.reject(failure) : Promise.resolve()
-        }
-      },
-    )
+    vi.mocked(loadTexture).mockImplementation(async (source) => {
+      if (source === 'broken.png') {
+        throw failure
+      }
+      return texture as unknown as Texture
+    })
     const result = createPlayerRenderer({
       canvas: document.createElement('canvas'),
       document: {
