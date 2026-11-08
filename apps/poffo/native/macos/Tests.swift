@@ -180,7 +180,8 @@ final class NativeUITests: XCTestCase {
         if !FileManager.default.fileExists(atPath: path.path) {
             let probe = try JSONSerialization.jsonObject(with: Data(contentsOf:
                 URL(fileURLWithPath: output).appendingPathComponent("graphics.json"))) as? [String: Any]
-            guard probe?["webgl2"] as? Bool == false else { throw NativeFailure("Missing native frame") }
+            let renderer = probe?["pixiProbe"] as? [String: Any]
+            guard renderer?["available"] as? Bool == false else { throw NativeFailure("Missing native frame") }
             return
         }
         let data = try Data(contentsOf: path)

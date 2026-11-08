@@ -203,7 +203,7 @@ const checkpoints = new Map([
       } catch (error) {
         assert.equal(process.platform, 'darwin', error.message)
         const probe = JSON.parse(await readFile(join(output, 'graphics.json'), 'utf8'))
-        assert.equal(probe.webgl2, false, error.message)
+        assert.equal(probe.pixiProbe.available, false, error.message)
         assert.match(error.message, /No available renderer for the current environment/u)
         nativeFrame = {available: false, independentWebKitProbe: probe, reason: error.message}
       }

@@ -140,6 +140,7 @@ public sealed class NativeDriver : IDisposable {
             ? new PropertyCondition(AutomationElement.AutomationIdProperty, name)
             : Named(name);
         var button = Find(dialog, new AndCondition(condition,
+            new PropertyCondition(AutomationElement.ControlTypeProperty, ControlType.Button),
             new PropertyCondition(AutomationElement.IsEnabledProperty, true)), name);
         Begin(() => Invoke(button));
         Until(() => !IsWindowVisible(handle), "dialog closed");
