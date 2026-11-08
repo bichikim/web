@@ -9,5 +9,5 @@ $references = @(
   [System.Diagnostics.Process].Assembly.Location
   [System.Linq.Enumerable].Assembly.Location
 )
-Add-Type -Path "$PSScriptRoot/Probe.cs" -ReferencedAssemblies ($references | Select-Object -Unique)
-[NativeProbe]::Run($env:POFFO_NATIVE_APP, $env:POFFO_NATIVE_WORKSPACE, $env:POFFO_NATIVE_OUTPUT)
+Add-Type -Path "$PSScriptRoot/Driver.cs" -ReferencedAssemblies ($references | Select-Object -Unique)
+[NativeDriver]::Run($env:POFFO_NATIVE_APP, $env:POFFO_NATIVE_WORKSPACE, $env:POFFO_NATIVE_OUTPUT, $env:POFFO_NATIVE_CONTROL)

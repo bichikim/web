@@ -240,28 +240,9 @@ jobs:
           await appendFile(process.env.GITHUB_ENV, `POFFO_NATIVE_WORKSPACE=${workspace}\nPOFFO_NATIVE_OUTPUT=${output}\n`)
           NODE
 
-      - name: Validate native macOS window and dialogs
-        if: inputs.native-ui && runner.os == 'macOS'
-        run: |
-          xcodebuild build-for-testing -project apps/poffo/native/macos/Native.xcodeproj -scheme Native \
-            -destination 'platform=macOS' -derivedDataPath "$RUNNER_TEMP/native-derived" \
-            CODE_SIGNING_ALLOWED=NO
-          python3 - <<'PY'
-          import os, pathlib, plistlib
-          path = next(pathlib.Path(os.environ['RUNNER_TEMP'], 'native-derived/Build/Products').glob('*.xctestrun'))
-          data = plistlib.loads(path.read_bytes())
-          data['NativeUITests']['EnvironmentVariables'].update({
-            name: os.environ[name] for name in ['POFFO_NATIVE_APP', 'POFFO_NATIVE_WORKSPACE', 'POFFO_NATIVE_OUTPUT']
-          })
-          path.write_bytes(plistlib.dumps(data))
-          PY
-          xcodebuild test-without-building -xctestrun "$RUNNER_TEMP"/native-derived/Build/Products/*.xctestrun \
-            -destination 'platform=macOS' -resultBundlePath "$POFFO_NATIVE_OUTPUT/results.xcresult"
-
-      - name: Validate native Windows window and dialogs
-        if: inputs.native-ui && runner.os == 'Windows'
-        shell: powershell
-        run: '& apps/poffo/native/windows/run.ps1'
+      - name: Validate installed native window, dialogs, save and recovery
+        if: inputs.native-ui
+        run: node apps/poffo/native/run.mjs
 
       - name: Upload runtime validation evidence
         if: always()
