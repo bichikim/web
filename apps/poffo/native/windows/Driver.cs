@@ -155,6 +155,8 @@ public sealed class NativeDriver : IDisposable {
 
     private void WaitForSave() {
         Until(() => window.FindFirst(TreeScope.Descendants, Named("저장하는 중…")) == null, "save acknowledgement completed");
+        Find(window, new AndCondition(Named("CLI 검증 모션 추가"),
+            new PropertyCondition(AutomationElement.IsEnabledProperty, true)), "editor restored after native save");
     }
 
     private void CloseWindow() {

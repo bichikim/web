@@ -62,7 +62,7 @@ final class NativeUITests: XCTestCase {
         openMenu(app, "문서 저장")
         XCTAssertTrue(savePanel(app).buttons["Save"].waitForExistence(timeout: 60))
         goTo(app, workspace)
-        let name = savePanel(app).textFields["Save As:"]
+        let name = savePanel(app).textFields["saveAsNameTextField"]
         XCTAssertTrue(name.waitForExistence(timeout: 10))
         paste("캐릭터 저장.poffo", into: name)
         attach(app, "native-save-complete", output)
@@ -156,6 +156,7 @@ final class NativeUITests: XCTestCase {
     private func waitForSave(_ app: XCUIApplication) {
         XCTAssertTrue(savePanel(app).buttons["Save"].waitForNonExistence(timeout: 30))
         XCTAssertTrue(named(app, "저장하는 중…").waitForNonExistence(timeout: 60))
+        XCTAssertTrue(named(app, "CLI 검증 모션 추가").waitForExistence(timeout: 30))
     }
 
     @MainActor

@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict'
 import {execFile, spawn} from 'node:child_process'
 import {createHash, randomUUID} from 'node:crypto'
-import {once} from 'node:events'
+import {on, once} from 'node:events'
+import {watch} from 'node:fs'
 import {createServer} from 'node:http'
 import {constants} from 'node:http2'
 import {copyFile, mkdir, readdir, readFile, writeFile} from 'node:fs/promises'
@@ -87,6 +88,32 @@ const applyPatch = async (patch, title) => {
 const assertStopped = async (root = workspace) => {
   await assert.rejects(readFile(join(root, '.poffo/connection.json')), {code: 'ENOENT'})
   return {ownedHostStopped: true}
+}
+
+const readNativeSave = async () => {
+  const watcher = watch(workspace)
+  const changes = on(watcher, 'change', {signal: AbortSignal.timeout(REQUEST_LIMIT)})
+  try {
+    while (true) {
+      try {
+        // Native file creation is independent of the accessibility provider's refresh.
+        // eslint-disable-next-line no-await-in-loop
+        const bytes = await readFile(savedPath)
+        if (bytes.length > 0) {
+          return bytes
+        }
+      } catch (error) {
+        if (error.code !== 'ENOENT') {
+          throw error
+        }
+      }
+      // eslint-disable-next-line no-await-in-loop
+      await changes.next()
+    }
+  } finally {
+    await changes.return()
+    watcher.close()
+  }
 }
 
 const assertSnapshot = async (expected, root = workspace) => {
@@ -226,7 +253,7 @@ const checkpoints = new Map([
   [
     'saved',
     async () => {
-      savedHash = hash(await readFile(savedPath))
+      savedHash = hash(await readNativeSave())
       await assertSnapshot(edited)
       return {fileHash: savedHash, path: savedPath}
     },
@@ -389,6 +416,7 @@ try {
   process.stderr.write(`${error.stack}\n`)
 } finally {
   if (!report.complete) {
+    report.workspaceFiles = await readdir(workspace)
     try {
       const current = await readModel()
       report.lastState = {
