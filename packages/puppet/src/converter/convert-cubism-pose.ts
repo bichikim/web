@@ -59,6 +59,7 @@ export const convertCubismPose = (value: unknown, document: PuppetDocument): Cub
       }
       return parameterId
     })
+    const fadeTime = jsonNumber(source.FadeInTime, DEFAULT_PUPPET_POSE_FADE_TIME)
     return {
       entries: entries.map((entry, entryIndex) => ({
         partIds: [jsonString(entry.Id), ...jsonArray(entry.Link ?? []).map(jsonString)].flatMap(
@@ -72,7 +73,7 @@ export const convertCubismPose = (value: unknown, document: PuppetDocument): Cub
         ),
         value: entryIndex,
       })),
-      fadeTime: jsonNumber(source.FadeInTime, DEFAULT_PUPPET_POSE_FADE_TIME),
+      fadeTime: fadeTime < 0 ? DEFAULT_PUPPET_POSE_FADE_TIME : fadeTime,
       id,
       parameterId: id,
       sourceParameterIds,
