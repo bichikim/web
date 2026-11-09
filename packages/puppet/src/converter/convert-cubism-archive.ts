@@ -228,7 +228,11 @@ const readUserData = (
       if (entry.Target !== 'ArtMesh') {
         throw new Error(`Cubism user data target ${String(entry.Target)} is not supported`)
       }
-      return [jsonString(entry.Id), jsonString(entry.Value)] as const
+      const content = entry.Value
+      return [
+        jsonString(entry.Id),
+        typeof content === 'string' ? content : jsonString(content),
+      ] as const
     }),
   )
 }
