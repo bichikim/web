@@ -9,7 +9,7 @@ import {
 
 import {expect, it, vi} from 'vitest'
 
-import {createFeedScript, type ParsedFeedItem, parseFeedXml} from '../feed-parser'
+import {composeFeedScript, type ParsedFeedItem, parseFeedXml} from '../feed-parser'
 import {deleteExpiredFeedDialogues} from '../feed-dialogue-lifecycle'
 import type {FeedDialogueMetadata} from '../feed-dialogue-schema'
 import {synchronizeFeeds} from '../feed-sync'
@@ -20,7 +20,7 @@ vi.mock('../feed-parser', async () => {
 
   return {
     ...actual,
-    createFeedScript: vi.fn(actual.createFeedScript),
+    composeFeedScript: vi.fn(actual.composeFeedScript),
     parseFeedXml: vi.fn(actual.parseFeedXml),
   }
 })
@@ -695,7 +695,7 @@ it('should retain a parser item whose generated script is empty with defensive d
     ],
     title: '',
   })
-  vi.mocked(createFeedScript).mockReturnValueOnce('')
+  vi.mocked(composeFeedScript).mockReturnValueOnce('')
 
   await synchronizeFeeds({
     connections: [CONNECTION],
