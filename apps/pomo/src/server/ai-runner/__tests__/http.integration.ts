@@ -1,5 +1,6 @@
 /** @vitest-environment node */
 import {request as httpRequest} from 'node:http'
+import {json} from 'node:stream/consumers'
 
 import {afterEach, describe, expect, it} from 'vitest'
 
@@ -30,14 +31,14 @@ const send = (
     const request = httpRequest(
       {headers: {}, hostname: '127.0.0.1', method: options.method, path: options.path, port},
       (response) => {
-        const chunks: Buffer[] = []
-        response.on('data', (chunk: Buffer) => chunks.push(chunk))
-        response.on('end', () => {
-          resolve({
-            body: JSON.parse(Buffer.concat(chunks).toString('utf8')) as unknown,
-            status: response.statusCode ?? 0,
-          })
-        })
+        json(response).then(
+          (body: unknown) =>
+            resolve({
+              body,
+              status: response.statusCode ?? 0,
+            }),
+          reject,
+        )
       },
     )
     if (options.token !== undefined) {
