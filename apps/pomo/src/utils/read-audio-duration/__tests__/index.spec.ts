@@ -1,4 +1,5 @@
 /** @vitest-environment node */
+import {getEventListeners} from 'node:events'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {readAudioDuration} from '..'
@@ -12,34 +13,13 @@ const createAudio = () => {
   })
   const readDuration = vi.fn(() => 60.6)
   Object.defineProperty(audio, 'duration', {get: readDuration})
-  const delivered = vi.fn()
-  const listeners = new Map<EventListenerOrEventListenerObject, EventListener>()
   const removeListener = audio.removeEventListener.bind(audio)
-  vi.spyOn(audio, 'removeEventListener').mockImplementation((event, listener, options) => {
-    if (listener !== null) {
-      removeListener(event, listeners.get(listener) ?? listener, options)
-    }
-  })
+  vi.spyOn(audio, 'removeEventListener').mockImplementation(removeListener)
   const addListener = audio.addEventListener.bind(audio)
-  const subscriptions = vi
-    .spyOn(audio, 'addEventListener')
-    .mockImplementation((event, listener, options) => {
-      if (listener !== null) {
-        const wrapped: EventListener = (notification) => {
-          delivered(notification.type)
-          if (typeof listener === 'function') {
-            listener.call(audio, notification)
-          } else {
-            listener.handleEvent(notification)
-          }
-        }
-        listeners.set(listener, wrapped)
-        addListener(event, wrapped, options)
-      }
-    })
+  const subscriptions = vi.spyOn(audio, 'addEventListener').mockImplementation(addListener)
   const createElement = vi.fn(() => audio)
   vi.stubGlobal('document', {createElement})
-  return {audio, createElement, delivered, readDuration, subscriptions}
+  return {audio, createElement, readDuration, subscriptions}
 }
 
 let capture: ReturnType<typeof createAudio>
@@ -59,10 +39,10 @@ afterEach(() => {
 const expectReleased = () => {
   expect(capture.audio.removeAttribute).toHaveBeenCalledExactlyOnceWith('src')
   expect(URL.revokeObjectURL).toHaveBeenCalledExactlyOnceWith('blob:audio')
-  const deliveries = capture.delivered.mock.calls.length
+  expect(getEventListeners(capture.audio, 'loadedmetadata')).toHaveLength(0)
+  expect(getEventListeners(capture.audio, 'error')).toHaveLength(0)
   capture.audio.dispatchEvent(new Event('loadedmetadata'))
   capture.audio.dispatchEvent(new Event('error'))
-  expect(capture.delivered).toHaveBeenCalledTimes(deliveries)
 }
 
 describe('readAudioDuration', () => {
