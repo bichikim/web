@@ -30,6 +30,7 @@ it('should keep native playback when an equivalent stored row is removed', async
   const otherWord = {...word, value: word.value.normalize('NFD')}
   const [words, setWords] = createSignal<ReadonlyArray<LanguageLearningWord>>([otherWord, word])
   const [autoplayKey, setAutoplayKey] = createSignal<string | null>(null)
+  const [selectedWords, setSelectedWords] = createSignal<ReadonlyArray<LanguageLearningWord>>([])
   const wave = encodeMonoPcm16Wav(new Float32Array(SAMPLE_RATE * DURATION_SECONDS), SAMPLE_RATE)
   audioUrl = URL.createObjectURL(new Blob([wave], {type: 'audio/wav'}))
   const {container} = render(() =>
@@ -42,7 +43,7 @@ it('should keep native playback when an equivalent stored row is removed', async
       onPronounce: (requestedWord) => setAutoplayKey(`ko:${requestedWord.value}`),
       onSelect: () => undefined,
       onToggleMemorized: () => undefined,
-      selectedWords: () => [],
+      selectedWords,
       get words() {
         return words()
       },
@@ -68,6 +69,12 @@ it('should keep native playback when an equivalent stored row is removed', async
     await expect.poll(() => audio.paused).toBe(false)
     await expect.poll(() => audio.currentTime).toBeGreaterThan(0)
     const position = audio.currentTime
+
+    setSelectedWords([{...otherWord}])
+    expect(button).toHaveAttribute('aria-pressed', 'false')
+    setSelectedWords([{...word}])
+    expect(button).toHaveAttribute('aria-pressed', 'true')
+    expect(pronounceButton).toHaveFocus()
 
     setWords([{...word}])
 

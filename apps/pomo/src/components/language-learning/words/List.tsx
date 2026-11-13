@@ -1,6 +1,6 @@
 import {KeyedList} from '../../keyed-list'
 import {cva, cx} from 'class-variance-authority'
-import {createMemo, Show} from 'solid-js'
+import {createMemo, createSelector, Show} from 'solid-js'
 import {type LanguageLearningWord} from '../../../features/language-learning'
 import {PSettingsEmptyState} from '../../settings/EmptyState'
 import {LanguageLearningWordPronunciationButton} from './PronunciationButton'
@@ -37,56 +37,60 @@ interface LanguageLearningWordListProps {
   readonly words: ReadonlyArray<LanguageLearningWord>
 }
 
-export const LanguageLearningWordList = (props: LanguageLearningWordListProps) => (
-  <div class="grid gap-2">
-    <Show
-      when={props.words.length > 0}
-      fallback={<PSettingsEmptyState>{props.emptyMessage}</PSettingsEmptyState>}
-    >
-      <ul
-        class={
-          'm-0 flex max-h-[19rem] list-none content-start items-start gap-2 overflow-y-auto ' +
-          'p-0 pr-1 flex-wrap ' +
-          '[scrollbar-color:var(--pomo-color-modal-scrollbar)_transparent] [scrollbar-width:thin]'
-        }
+export const LanguageLearningWordList = (props: LanguageLearningWordListProps) => {
+  const selectedValues = createMemo(() => new Set(props.selectedWords().map((word) => word.value)))
+  const isSelected = createSelector(selectedValues, (value: string, values) => values.has(value))
+
+  return (
+    <div class="grid gap-2">
+      <Show
+        when={props.words.length > 0}
+        fallback={<PSettingsEmptyState>{props.emptyMessage}</PSettingsEmptyState>}
       >
-        <KeyedList each={props.words} by={(word) => `${word.language}:${word.value}`}>
-          {(word) => {
-            const audioUrl = createMemo(() => props.getAudioUrl(word()))
-            const pronunciationLoading = createMemo(() => props.isPronunciationLoading(word()))
-            const selected = () =>
-              props.selectedWords().some((selectedWord) => selectedWord.value === word().value)
+        <ul
+          class={
+            'm-0 flex max-h-[19rem] list-none content-start items-start gap-2 overflow-y-auto ' +
+            'p-0 pr-1 flex-wrap ' +
+            '[scrollbar-color:var(--pomo-color-modal-scrollbar)_transparent] [scrollbar-width:thin]'
+          }
+        >
+          <KeyedList each={props.words} by={(word) => `${word.language}:${word.value}`}>
+            {(word) => {
+              const audioUrl = createMemo(() => props.getAudioUrl(word()))
+              const pronunciationLoading = createMemo(() => props.isPronunciationLoading(word()))
+              const selected = () => isSelected(word().value)
 
-            return (
-              <li class={WORD_CLASSES({selected: selected()})}>
-                <button
-                  aria-label={word().value}
-                  aria-pressed={selected()}
-                  class={WORD_SELECT_BUTTON_CLASS}
-                  onClick={() => props.onSelect(word())}
-                  type="button"
-                >
-                  {word().value}
-                </button>
-                <LanguageLearningWordPronunciationButton
-                  autoplay={props.autoplayKey() === `${word().language}:${word().value}`}
-                  disabled={pronunciationLoading()}
-                  loading={pronunciationLoading()}
-                  onPress={() => props.onPronounce(word())}
-                  src={audioUrl()}
-                  word={word().value}
-                />
-              </li>
-            )
-          }}
-        </KeyedList>
-      </ul>
-    </Show>
+              return (
+                <li class={WORD_CLASSES({selected: selected()})}>
+                  <button
+                    aria-label={word().value}
+                    aria-pressed={selected()}
+                    class={WORD_SELECT_BUTTON_CLASS}
+                    onClick={() => props.onSelect(word())}
+                    type="button"
+                  >
+                    {word().value}
+                  </button>
+                  <LanguageLearningWordPronunciationButton
+                    autoplay={props.autoplayKey() === `${word().language}:${word().value}`}
+                    disabled={pronunciationLoading()}
+                    loading={pronunciationLoading()}
+                    onPress={() => props.onPronounce(word())}
+                    src={audioUrl()}
+                    word={word().value}
+                  />
+                </li>
+              )
+            }}
+          </KeyedList>
+        </ul>
+      </Show>
 
-    <LanguageLearningWordActions
-      onDelete={props.onDelete}
-      onToggleMemorized={props.onToggleMemorized}
-      selectedWords={props.selectedWords()}
-    />
-  </div>
-)
+      <LanguageLearningWordActions
+        onDelete={props.onDelete}
+        onToggleMemorized={props.onToggleMemorized}
+        selectedWords={props.selectedWords()}
+      />
+    </div>
+  )
+}
