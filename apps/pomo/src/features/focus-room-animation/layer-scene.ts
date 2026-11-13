@@ -575,7 +575,6 @@ export class PixiLayerScene {
       motion.definition.kind === 'visibility-cycle'
         ? (motion.definition.phase ?? 0) * motion.state.travelSeconds
         : 0
-
     motion.state.twinkleState =
       motion.definition.kind === 'opacity-twinkle'
         ? createOpacityTwinkleState(motion.definition, this.#random)
@@ -587,6 +586,7 @@ export class PixiLayerScene {
       motion: motion.definition,
       phase: motion.state.elapsedSeconds / motion.state.travelSeconds,
       sprite: layer.sprite,
+      travelSeconds: motion.state.travelSeconds,
     })
 
     if (motion.state.twinkleState !== undefined) {

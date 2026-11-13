@@ -5,6 +5,7 @@ import {
   parseDocument,
   type PuppetDocument,
   type PuppetParameterBinding1D,
+  type PuppetParameterBinding3D,
   serializeDocument,
 } from '../../player'
 import {
@@ -74,6 +75,67 @@ describe('parameter composition', () => {
         parameterValues: {'angle-x': 100, 'angle-y': Number.NaN},
       }),
     ).toEqual([30, 0])
+  })
+
+  test('should resolve actual parameter axes independently of an array serialization hook', () => {
+    const document = createComposedDocument()
+    const original = document.parameterBindings.at(-1)!
+    const parameterIds = Object.assign(['angle-x'] as const, {toJSON: () => ['smile']})
+    const subject: PuppetParameterBinding1D = {id: 'subject', keyforms: [], parameterIds}
+    const parameterValues = {'angle-x': 15, smile: 3}
+    expect(getParameterBindingValues({binding: original, document, parameterValues})).toEqual([3])
+    expect(getParameterBindingValues({binding: subject, document, parameterValues})).toEqual([15])
+  })
+
+  test('should retain earlier samples while equivalent bindings read changing raw inputs', () => {
+    const document = createComposedDocument()
+    const binding = document.parameterBindings[0]!
+    const equivalent = {...binding, id: 'equivalent', keyforms: []}
+    const parameterValues: Record<string, number> = {'angle-x': 0.25, 'angle-y': 0.5}
+    const first = getParameterBindingValues({binding, document, parameterValues})
+    parameterValues['angle-x'] = 100
+    parameterValues['angle-y'] = Number.NaN
+    expect(getParameterBindingValues({binding: equivalent, document, parameterValues})).toEqual([
+      30, 0,
+    ])
+    parameterValues['angle-x'] = -0
+    delete parameterValues['angle-y']
+    const signed = getParameterBindingValues({binding, document, parameterValues})
+    expect(signed).toEqual([-0, 0])
+    expect(getParameterBindingValues({binding: equivalent, document})).toEqual([0, 0])
+    expect(first).toEqual([0.25, 0.5])
+    expect(signed).toEqual([-0, 0])
+  })
+
+  test('should retain axis order, wrapping, unknown parameters and independent document defaults', () => {
+    const document: PuppetDocument = {
+      ...createComposedDocument(),
+      parameters: [
+        {defaultValue: 0.25, id: 'p', maximum: 1, minimum: 0, name: 'P', repeat: true},
+        {defaultValue: 0, id: 'q', maximum: 2, minimum: 0, name: 'Q'},
+      ],
+    }
+    const binding: PuppetParameterBinding3D = {
+      id: 'three',
+      keyforms: [],
+      parameterIds: ['p', 'q', 'missing'],
+    }
+    const reversed: PuppetParameterBinding3D = {
+      ...binding,
+      id: 'reversed',
+      parameterIds: ['q', 'p', 'missing'],
+    }
+    const parameterValues = {missing: 100, p: 1.25, q: 1.8}
+    expect(getParameterBindingValues({binding, document, parameterValues})).toEqual([0.25, 1.8, 0])
+    expect(getParameterBindingValues({binding: reversed, document, parameterValues})).toEqual([
+      1.8, 0.25, 0,
+    ])
+    const updated = {
+      ...document,
+      parameters: document.parameters!.map((parameter) => ({...parameter, defaultValue: 0.75})),
+    }
+    expect(getParameterBindingValues({binding, document: updated})).toEqual([0.75, 0.75, 0])
+    expect(getParameterBindingValues({binding, document})).toEqual([0.25, 0, 0])
   })
 
   test('should retain the rest vertex reference when no binding targets the part', () => {
@@ -291,4 +353,125 @@ test('should leave vertices untouched for bindings that key only display propert
     }),
   ).toBe(rest)
   expect(rest).toEqual([0, 0, 10, 0, 0, 10])
+})
+
+test('should observe changed inputs without changing previously returned vertex snapshots', () => {
+  const source = createComposedDocument()
+  const part = source.parts[0]!
+  const document = {...source, parameterBindings: [source.parameterBindings.at(-1)!]}
+  const values = {smile: 5, unrelated: 0}
+  const sample = () =>
+    composeParameterVertices({
+      document,
+      parameterValues: values,
+      partId: part.id,
+      restVertices: part.mesh.vertices,
+    })
+  const first = sample()
+  values.unrelated = 1
+  expect(sample()).toEqual(first)
+  values.smile = 10
+  expect(sample().at(-2)).toBe(330)
+  values.smile = 0
+  expect(sample().at(-2)).toBe(320)
+  expect(first.at(-2)).toBe(325)
+  expect(part.mesh.vertices.at(-2)).toBe(320)
+})
+
+test('should observe influence changes while a keyed input stays constant', () => {
+  const source = createComposedDocument()
+  const part = source.parts[0]!
+  const document: PuppetDocument = {
+    ...source,
+    parameterBindings: [
+      {
+        ...source.parameterBindings.at(-1)!,
+        influences: [
+          {
+            parameterId: 'angle-y',
+            points: [
+              {value: 0, weight: 1},
+              {value: 30, weight: 0},
+            ],
+          },
+        ],
+      },
+    ],
+  }
+  const sample = (parameterValues: Record<string, number>) =>
+    composeParameterVertices({
+      document,
+      parameterValues,
+      partId: part.id,
+      restVertices: part.mesh.vertices,
+    })
+  const first = sample({smile: 10})
+  expect(first.at(-2)).toBe(330)
+  expect(sample({'angle-y': 15, smile: 10}).at(-2)).toBe(325)
+  expect(sample({'angle-y': 30, smile: 10}).at(-2)).toBe(320)
+  expect(sample({smile: 10})).toEqual(first)
+  expect(first.at(-2)).toBe(330)
+})
+
+test('should use each supplied rest array when keyform coordinates are missing', () => {
+  const document: PuppetDocument = {
+    ...createDemoDocument(),
+    parameterBindings: [
+      {
+        id: 'sparse',
+        interpolation: 'grid',
+        keyforms: [{parts: [{partId: 'part', vertices: [10]}], values: [1]}],
+        parameterIds: ['p'],
+        targetPartIds: ['part'],
+      },
+    ],
+    parameters: [{defaultValue: 1, id: 'p', maximum: 1, minimum: 0, name: 'P'}],
+  }
+  const sample = (restVertices: ReadonlyArray<number>) =>
+    composeParameterVertices({document, partId: 'part', restVertices})
+  const first = [0, 20]
+  const second = [2, 30]
+  expect(sample(first)).toEqual([10, 20])
+  expect(sample(second)).toEqual([10, 30])
+  expect(sample(first)).toEqual([10, 20])
+  expect(first).toEqual([0, 20])
+  expect(second).toEqual([2, 30])
+})
+
+test('should retain binding accumulation order through large-coordinate cancellation', () => {
+  const document: PuppetDocument = {
+    ...createDemoDocument(),
+    parameterBindings: [
+      {
+        id: 'first',
+        interpolation: 'grid',
+        keyforms: [{parts: [{partId: 'part', vertices: [0, 10]}], values: [1]}],
+        parameterIds: ['p'],
+        targetPartIds: ['part'],
+      },
+      {
+        id: 'second',
+        influences: [
+          {
+            parameterId: 'q',
+            points: [
+              {value: 0, weight: 0.5},
+              {value: 1, weight: 0.5},
+            ],
+          },
+        ],
+        interpolation: 'grid',
+        keyforms: [{parts: [{partId: 'part', vertices: [1e16 + 2, 22]}], values: [1]}],
+        parameterIds: ['p'],
+        targetPartIds: ['part'],
+      },
+    ],
+    parameters: [
+      {defaultValue: 1, id: 'p', maximum: 1, minimum: 0, name: 'P'},
+      {defaultValue: 0, id: 'q', maximum: 1, minimum: 0, name: 'Q'},
+    ],
+  }
+  const restVertices = [1e16, 20]
+  expect(composeParameterVertices({document, partId: 'part', restVertices})).toEqual([1, 11])
+  expect(restVertices).toEqual([1e16, 20])
 })

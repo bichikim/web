@@ -1,8 +1,10 @@
+type RenderPhase = 'animation' | 'immediate'
+
 export interface CreateRenderLoopOptions {
   /** Whether an external overlay needs every ticker frame; sampled once per draw decision. */
   readonly externalRendering: () => boolean
-  /** Draws one frame with the external-rendering state captured for that frame. */
-  readonly render: (external: boolean) => void
+  /** Draws with captured external state; immediate delivery submits GPU work before returning. */
+  readonly render: (external: boolean, phase: RenderPhase) => void
 }
 
 export interface RenderLoop {
@@ -20,28 +22,28 @@ export interface RenderLoop {
 export const createRenderLoop = (options: CreateRenderLoopOptions): RenderLoop => {
   let pending = false
   let previousExternal = false
-  const draw = (external: boolean) => {
+  const draw = (external: boolean, phase: RenderPhase) => {
     pending = false
     previousExternal = external
-    options.render(external)
+    options.render(external, phase)
   }
   return {
     flush() {
       const external = options.externalRendering()
       if (pending || external !== previousExternal) {
-        draw(external)
+        draw(external, 'immediate')
       }
     },
     invalidate() {
       pending = true
     },
     redraw() {
-      draw(options.externalRendering())
+      draw(options.externalRendering(), 'immediate')
     },
     tick() {
       const external = options.externalRendering()
       if (pending || external || external !== previousExternal) {
-        draw(external)
+        draw(external, 'animation')
       }
     },
   }

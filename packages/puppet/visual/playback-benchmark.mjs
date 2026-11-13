@@ -17,6 +17,7 @@ import {capturePlaybackProfile} from './capture-playback-profile.mjs'
 
 const DEFAULT_MEASURE_MILLIS = 5000
 const DEFAULT_WARMUP_MILLIS = 2000
+const DEFAULT_RANDOM_SEED = 42
 const NOT_FOUND = 404
 const SERVER_ERROR = 500
 const metric = (response, name) => response.metrics.find((entry) => entry.name === name)?.value ?? 0
@@ -75,6 +76,7 @@ const configuration = {
   model: modelPath,
   modes: (process.env.MODES ?? 'main,worker').split(','),
   motion: process.env.MOTION,
+  randomSeed: Number(process.env.RANDOM_SEED ?? DEFAULT_RANDOM_SEED),
   resolution: Number(process.env.RESOLUTION ?? 1),
   runs: Number(process.env.RUNS ?? 2),
   viewport: {height: 700, width: 900},
@@ -118,6 +120,7 @@ try {
               onFrame: () => {
                 state.published += 1
               },
+              randomSeed: options.randomSeed,
               renderer: 'webgl',
               resizeTo: document.documentElement,
               resolution: options.resolution,
