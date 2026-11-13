@@ -1,0 +1,2541 @@
+{
+  "schemaVersion": 1,
+  "measuredAt": "2026-11-04T22:24:12.988144+09:00",
+  "scope": "Detailed breakdown of playback Worker computation and elimination of redundant scene paint-order recomputation.",
+  "outcome": {
+    "retainedChange": "Cache the latest readonly paint-order snapshot by immutable document and its effective draw-order/visibility inputs. Reuse static tie-break metadata.",
+    "workerTimeImprovementVerified": true,
+    "fpsInterpretation": "The combined balanced-order sample median increased, but execution ranges overlap and the first ABBA set did not improve. Do not claim a fixed or consistently reproduced FPS uplift."
+  },
+  "environment": {
+    "cpu": "Apple M5 Pro",
+    "browser": "Chrome 156.0.8078.80",
+    "renderer": "ANGLE Metal / WebGL",
+    "viewport": {
+      "width": 900,
+      "height": 700
+    },
+    "resolution": 1,
+    "antialiasing": "ssaa",
+    "cpuThrottle": 1,
+    "physicalLowEndCPU": "not tested",
+    "model": {
+      "name": "white-cat-idle-english.poffo",
+      "sha256": "47c98e7473e79ffb249aa1acb5bed9b7d458f35c7c0d3502f281549c20c55035",
+      "parts": 852,
+      "vertices": 34452,
+      "parameters": 265,
+      "physicsChains": 25,
+      "motion": "Idle:0",
+      "seed": 42
+    }
+  },
+  "artifacts": {
+    "before": {
+      "playerSHA256": "0bbdd6b69502389ec80360c4e1c6808b13f3fab1c86d21fc90bc7fcb49232f48",
+      "workerSHA256": "2edd89c5d9633460a204497f347fa33a5f018729337da91f84fa39b723d690bb"
+    },
+    "candidate": {
+      "playerSHA256": "54fc6aa076eefc96f7d97cac79a5fec6e61b88e08917e9b4ff0044d920748c2b",
+      "workerSHA256": "396395665c40dc7cd1790e0fdb5ab5fbae6b1b7f21c5affc1777e5c661d702de"
+    },
+    "sourceSHA256": {
+      "src/player/internal/scene-draw-order.ts": "01e0a0cf1b7c8e41044cbe62046d075a2df9152c381d5a8b21da667b9196a93a",
+      "src/player/internal/__tests__/scene-draw-order.spec.ts": "61c2976c6fcf43aa36a62ad0a214c7d16f8dabb1a7700ce3133071f5178e730a",
+      "src/player/internal/wasm/deformation/kernel.wasm": "057998aa2815d5eabc33b7975b4b06478395f3dc429cdaa7f5086117122fa793"
+    }
+  },
+  "stageMeasurement": {
+    "method": "A temporary source copy adds nested synchronous Date.now timers at computation boundaries. Three 600-frame samples follow 360 warmup frames, with fixed 1/60 simulation delta. No diagnostic hooks are included in production sources/artifacts. Millisecond timer quantization is averaged across 1,800 completed frames. These diagnostic builds and their overhead are separate from uninstrumented Worker/FPS measurements.",
+    "relationToPrevious11Point3Millis": "The earlier 11.3 ms was a wall-time observation in another run. Current timer-instrumented step plus encoding averaged approximately 9.3 ms before optimization. Do not rescale the components to force a match; CPU load, simulation cadence and profiling overhead differ.",
+    "workerStepAndEncodingMeanMillis": 9.315555555555555,
+    "nonOverlappingComponentsBefore": [
+      {
+        "stage": "partMapping",
+        "meanMillisPerFrame": 3.3216666666666668,
+        "sharePercent": 35.65720419847329
+      },
+      {
+        "stage": "transformUpdates",
+        "meanMillisPerFrame": 1.6805555555555556,
+        "sharePercent": 18.040314885496183
+      },
+      {
+        "stage": "meshPreparation",
+        "meanMillisPerFrame": 1.7616666666666667,
+        "sharePercent": 18.911020992366414
+      },
+      {
+        "stage": "renderPlan",
+        "meanMillisPerFrame": 1.7977777777777777,
+        "sharePercent": 19.298664122137403
+      },
+      {
+        "stage": "physics",
+        "meanMillisPerFrame": 0.24388888888888888,
+        "sharePercent": 2.6180820610687023
+      },
+      {
+        "stage": "otherIncludingMotionGlueEncodingAndCheckpoint",
+        "meanMillisPerFrame": 0.5099999999999998
+      }
+    ],
+    "before": {
+      "playerSHA256": "b9513da0182ea7391b362eb8929976eac5d106a56921db221b4ce9ce9cc1f20b",
+      "workerSHA256": "d98fdeaacd2b2dd2482aa66c684a66c10eca8b346942bc0bcbe0178024452f25",
+      "stages": {
+        "automaticEffects": {
+          "meanMillisPerFrame": 0.007222222222222222,
+          "meanSelfMillisPerFrame": 0.007222222222222222,
+          "calls": 1800
+        },
+        "motionMix": {
+          "meanMillisPerFrame": 0.15888888888888889,
+          "meanSelfMillisPerFrame": 0.15888888888888889,
+          "calls": 1800
+        },
+        "adjustments": {
+          "meanMillisPerFrame": 0.0016666666666666668,
+          "meanSelfMillisPerFrame": 0.0016666666666666668,
+          "calls": 3600
+        },
+        "lookAndBreath": {
+          "meanMillisPerFrame": 0.0011111111111111111,
+          "meanSelfMillisPerFrame": 0.0,
+          "calls": 1800
+        },
+        "physics": {
+          "meanMillisPerFrame": 0.24388888888888888,
+          "meanSelfMillisPerFrame": 0.2427777777777778,
+          "calls": 1800
+        },
+        "pose": {
+          "meanMillisPerFrame": 0.008333333333333333,
+          "meanSelfMillisPerFrame": 0.008333333333333333,
+          "calls": 1800
+        },
+        "runtime": {
+          "meanMillisPerFrame": 0.47,
+          "meanSelfMillisPerFrame": 0.051111111111111114,
+          "calls": 1800
+        },
+        "drawOrder": {
+          "meanMillisPerFrame": 0.7272222222222222,
+          "meanSelfMillisPerFrame": 0.7272222222222222,
+          "calls": 1800
+        },
+        "renderPlan": {
+          "meanMillisPerFrame": 1.7977777777777777,
+          "meanSelfMillisPerFrame": 1.0705555555555555,
+          "calls": 1800
+        },
+        "meshPreparation": {
+          "meanMillisPerFrame": 1.7616666666666667,
+          "meanSelfMillisPerFrame": 1.7616666666666667,
+          "calls": 1800
+        },
+        "glueComposition": {
+          "meanMillisPerFrame": 0.0044444444444444444,
+          "meanSelfMillisPerFrame": 0.0044444444444444444,
+          "calls": 1800
+        },
+        "transformUpdates": {
+          "meanMillisPerFrame": 1.6805555555555556,
+          "meanSelfMillisPerFrame": 1.6805555555555556,
+          "calls": 1800
+        },
+        "partMapping": {
+          "meanMillisPerFrame": 3.3216666666666668,
+          "meanSelfMillisPerFrame": 3.3216666666666668,
+          "calls": 1800
+        },
+        "nativeApply": {
+          "meanMillisPerFrame": 5.003333333333333,
+          "meanSelfMillisPerFrame": 0.0011111111111111111,
+          "calls": 1800
+        },
+        "glue": {
+          "meanMillisPerFrame": 0.10111111111111111,
+          "meanSelfMillisPerFrame": 0.10111111111111111,
+          "calls": 1800
+        },
+        "sceneApply": {
+          "meanMillisPerFrame": 5.111111111111111,
+          "meanSelfMillisPerFrame": 0.0022222222222222222,
+          "calls": 1800
+        },
+        "renderFrame": {
+          "meanMillisPerFrame": 8.673333333333334,
+          "meanSelfMillisPerFrame": 0.002777777777777778,
+          "calls": 1800
+        },
+        "vertexCopy": {
+          "meanMillisPerFrame": 0.008333333333333333,
+          "meanSelfMillisPerFrame": 0.008333333333333333,
+          "calls": 1800
+        },
+        "stateCapture": {
+          "meanMillisPerFrame": 0.008333333333333333,
+          "meanSelfMillisPerFrame": 0.008333333333333333,
+          "calls": 1800
+        },
+        "step": {
+          "meanMillisPerFrame": 9.165,
+          "meanSelfMillisPerFrame": 0.005,
+          "calls": 1800
+        },
+        "encode": {
+          "meanMillisPerFrame": 0.15055555555555555,
+          "meanSelfMillisPerFrame": 0.15055555555555555,
+          "calls": 1800
+        }
+      },
+      "raw": [
+        {
+          "automaticEffects": {
+            "calls": 600,
+            "totalMillis": 4,
+            "selfMillis": 4,
+            "maximumMillis": 1
+          },
+          "motionMix": {
+            "calls": 600,
+            "totalMillis": 97,
+            "selfMillis": 97,
+            "maximumMillis": 1
+          },
+          "adjustments": {
+            "calls": 1200,
+            "totalMillis": 2,
+            "selfMillis": 2,
+            "maximumMillis": 1
+          },
+          "lookAndBreath": {
+            "calls": 600,
+            "totalMillis": 2,
+            "selfMillis": 0,
+            "maximumMillis": 1
+          },
+          "physics": {
+            "calls": 600,
+            "totalMillis": 159,
+            "selfMillis": 157,
+            "maximumMillis": 2
+          },
+          "pose": {
+            "calls": 600,
+            "totalMillis": 6,
+            "selfMillis": 6,
+            "maximumMillis": 1
+          },
+          "runtime": {
+            "calls": 600,
+            "totalMillis": 297,
+            "selfMillis": 31,
+            "maximumMillis": 3
+          },
+          "drawOrder": {
+            "calls": 600,
+            "totalMillis": 464,
+            "selfMillis": 464,
+            "maximumMillis": 2
+          },
+          "renderPlan": {
+            "calls": 600,
+            "totalMillis": 1150,
+            "selfMillis": 686,
+            "maximumMillis": 5
+          },
+          "meshPreparation": {
+            "calls": 600,
+            "totalMillis": 1134,
+            "selfMillis": 1134,
+            "maximumMillis": 4
+          },
+          "glueComposition": {
+            "calls": 600,
+            "totalMillis": 4,
+            "selfMillis": 4,
+            "maximumMillis": 1
+          },
+          "transformUpdates": {
+            "calls": 600,
+            "totalMillis": 1078,
+            "selfMillis": 1078,
+            "maximumMillis": 4
+          },
+          "partMapping": {
+            "calls": 600,
+            "totalMillis": 2083,
+            "selfMillis": 2083,
+            "maximumMillis": 9
+          },
+          "nativeApply": {
+            "calls": 600,
+            "totalMillis": 3163,
+            "selfMillis": 2,
+            "maximumMillis": 11
+          },
+          "glue": {
+            "calls": 600,
+            "totalMillis": 69,
+            "selfMillis": 69,
+            "maximumMillis": 1
+          },
+          "sceneApply": {
+            "calls": 600,
+            "totalMillis": 3237,
+            "selfMillis": 1,
+            "maximumMillis": 11
+          },
+          "renderFrame": {
+            "calls": 600,
+            "totalMillis": 5522,
+            "selfMillis": 1,
+            "maximumMillis": 16
+          },
+          "vertexCopy": {
+            "calls": 600,
+            "totalMillis": 2,
+            "selfMillis": 2,
+            "maximumMillis": 1
+          },
+          "stateCapture": {
+            "calls": 600,
+            "totalMillis": 11,
+            "selfMillis": 11,
+            "maximumMillis": 1
+          },
+          "step": {
+            "calls": 600,
+            "totalMillis": 5836,
+            "selfMillis": 4,
+            "maximumMillis": 17
+          },
+          "encode": {
+            "calls": 600,
+            "totalMillis": 87,
+            "selfMillis": 87,
+            "maximumMillis": 1
+          }
+        },
+        {
+          "automaticEffects": {
+            "calls": 600,
+            "totalMillis": 8,
+            "selfMillis": 8,
+            "maximumMillis": 1
+          },
+          "motionMix": {
+            "calls": 600,
+            "totalMillis": 94,
+            "selfMillis": 94,
+            "maximumMillis": 1
+          },
+          "adjustments": {
+            "calls": 1200,
+            "totalMillis": 1,
+            "selfMillis": 1,
+            "maximumMillis": 1
+          },
+          "lookAndBreath": {
+            "calls": 600,
+            "totalMillis": 0,
+            "selfMillis": 0,
+            "maximumMillis": 0
+          },
+          "physics": {
+            "calls": 600,
+            "totalMillis": 130,
+            "selfMillis": 130,
+            "maximumMillis": 1
+          },
+          "pose": {
+            "calls": 600,
+            "totalMillis": 4,
+            "selfMillis": 4,
+            "maximumMillis": 1
+          },
+          "runtime": {
+            "calls": 600,
+            "totalMillis": 273,
+            "selfMillis": 36,
+            "maximumMillis": 1
+          },
+          "drawOrder": {
+            "calls": 600,
+            "totalMillis": 424,
+            "selfMillis": 424,
+            "maximumMillis": 2
+          },
+          "renderPlan": {
+            "calls": 600,
+            "totalMillis": 1033,
+            "selfMillis": 609,
+            "maximumMillis": 3
+          },
+          "meshPreparation": {
+            "calls": 600,
+            "totalMillis": 1021,
+            "selfMillis": 1021,
+            "maximumMillis": 3
+          },
+          "glueComposition": {
+            "calls": 600,
+            "totalMillis": 1,
+            "selfMillis": 1,
+            "maximumMillis": 1
+          },
+          "transformUpdates": {
+            "calls": 600,
+            "totalMillis": 974,
+            "selfMillis": 974,
+            "maximumMillis": 3
+          },
+          "partMapping": {
+            "calls": 600,
+            "totalMillis": 1930,
+            "selfMillis": 1930,
+            "maximumMillis": 5
+          },
+          "nativeApply": {
+            "calls": 600,
+            "totalMillis": 2904,
+            "selfMillis": 0,
+            "maximumMillis": 7
+          },
+          "glue": {
+            "calls": 600,
+            "totalMillis": 60,
+            "selfMillis": 60,
+            "maximumMillis": 1
+          },
+          "sceneApply": {
+            "calls": 600,
+            "totalMillis": 2968,
+            "selfMillis": 3,
+            "maximumMillis": 7
+          },
+          "renderFrame": {
+            "calls": 600,
+            "totalMillis": 5022,
+            "selfMillis": 0,
+            "maximumMillis": 12
+          },
+          "vertexCopy": {
+            "calls": 600,
+            "totalMillis": 9,
+            "selfMillis": 9,
+            "maximumMillis": 1
+          },
+          "stateCapture": {
+            "calls": 600,
+            "totalMillis": 2,
+            "selfMillis": 2,
+            "maximumMillis": 1
+          },
+          "step": {
+            "calls": 600,
+            "totalMillis": 5307,
+            "selfMillis": 1,
+            "maximumMillis": 12
+          },
+          "encode": {
+            "calls": 600,
+            "totalMillis": 86,
+            "selfMillis": 86,
+            "maximumMillis": 1
+          }
+        },
+        {
+          "automaticEffects": {
+            "calls": 600,
+            "totalMillis": 1,
+            "selfMillis": 1,
+            "maximumMillis": 1
+          },
+          "motionMix": {
+            "calls": 600,
+            "totalMillis": 95,
+            "selfMillis": 95,
+            "maximumMillis": 1
+          },
+          "adjustments": {
+            "calls": 1200,
+            "totalMillis": 0,
+            "selfMillis": 0,
+            "maximumMillis": 0
+          },
+          "lookAndBreath": {
+            "calls": 600,
+            "totalMillis": 0,
+            "selfMillis": 0,
+            "maximumMillis": 0
+          },
+          "physics": {
+            "calls": 600,
+            "totalMillis": 150,
+            "selfMillis": 150,
+            "maximumMillis": 1
+          },
+          "pose": {
+            "calls": 600,
+            "totalMillis": 5,
+            "selfMillis": 5,
+            "maximumMillis": 1
+          },
+          "runtime": {
+            "calls": 600,
+            "totalMillis": 276,
+            "selfMillis": 25,
+            "maximumMillis": 1
+          },
+          "drawOrder": {
+            "calls": 600,
+            "totalMillis": 421,
+            "selfMillis": 421,
+            "maximumMillis": 2
+          },
+          "renderPlan": {
+            "calls": 600,
+            "totalMillis": 1053,
+            "selfMillis": 632,
+            "maximumMillis": 4
+          },
+          "meshPreparation": {
+            "calls": 600,
+            "totalMillis": 1016,
+            "selfMillis": 1016,
+            "maximumMillis": 3
+          },
+          "glueComposition": {
+            "calls": 600,
+            "totalMillis": 3,
+            "selfMillis": 3,
+            "maximumMillis": 1
+          },
+          "transformUpdates": {
+            "calls": 600,
+            "totalMillis": 973,
+            "selfMillis": 973,
+            "maximumMillis": 4
+          },
+          "partMapping": {
+            "calls": 600,
+            "totalMillis": 1966,
+            "selfMillis": 1966,
+            "maximumMillis": 6
+          },
+          "nativeApply": {
+            "calls": 600,
+            "totalMillis": 2939,
+            "selfMillis": 0,
+            "maximumMillis": 8
+          },
+          "glue": {
+            "calls": 600,
+            "totalMillis": 53,
+            "selfMillis": 53,
+            "maximumMillis": 1
+          },
+          "sceneApply": {
+            "calls": 600,
+            "totalMillis": 2995,
+            "selfMillis": 0,
+            "maximumMillis": 8
+          },
+          "renderFrame": {
+            "calls": 600,
+            "totalMillis": 5068,
+            "selfMillis": 4,
+            "maximumMillis": 13
+          },
+          "vertexCopy": {
+            "calls": 600,
+            "totalMillis": 4,
+            "selfMillis": 4,
+            "maximumMillis": 1
+          },
+          "stateCapture": {
+            "calls": 600,
+            "totalMillis": 2,
+            "selfMillis": 2,
+            "maximumMillis": 1
+          },
+          "step": {
+            "calls": 600,
+            "totalMillis": 5354,
+            "selfMillis": 4,
+            "maximumMillis": 14
+          },
+          "encode": {
+            "calls": 600,
+            "totalMillis": 98,
+            "selfMillis": 98,
+            "maximumMillis": 1
+          }
+        }
+      ]
+    },
+    "after": {
+      "playerSHA256": "586f19f4a5aded3c0890dfc708d2c72aa5d75f07790fd87edeeeebc51d4a1ba9",
+      "workerSHA256": "b628242855abab3aeccfb28ec744713f8cc12a96b211a2a5552424391d8a3a3f",
+      "stages": {
+        "automaticEffects": {
+          "meanMillisPerFrame": 0.006111111111111111,
+          "meanSelfMillisPerFrame": 0.006111111111111111,
+          "calls": 1800
+        },
+        "motionMix": {
+          "meanMillisPerFrame": 0.185,
+          "meanSelfMillisPerFrame": 0.185,
+          "calls": 1800
+        },
+        "adjustments": {
+          "meanMillisPerFrame": 0.0011111111111111111,
+          "meanSelfMillisPerFrame": 0.0011111111111111111,
+          "calls": 3600
+        },
+        "lookAndBreath": {
+          "meanMillisPerFrame": 0.0016666666666666668,
+          "meanSelfMillisPerFrame": 0.0005555555555555556,
+          "calls": 1800
+        },
+        "physics": {
+          "meanMillisPerFrame": 0.2477777777777778,
+          "meanSelfMillisPerFrame": 0.2461111111111111,
+          "calls": 1800
+        },
+        "pose": {
+          "meanMillisPerFrame": 0.0077777777777777776,
+          "meanSelfMillisPerFrame": 0.0077777777777777776,
+          "calls": 1800
+        },
+        "runtime": {
+          "meanMillisPerFrame": 0.4938888888888889,
+          "meanSelfMillisPerFrame": 0.04722222222222222,
+          "calls": 1800
+        },
+        "drawOrder": {
+          "meanMillisPerFrame": 0.0005555555555555556,
+          "meanSelfMillisPerFrame": 0.0005555555555555556,
+          "calls": 1800
+        },
+        "renderPlan": {
+          "meanMillisPerFrame": 1.2477777777777779,
+          "meanSelfMillisPerFrame": 1.2472222222222222,
+          "calls": 1800
+        },
+        "meshPreparation": {
+          "meanMillisPerFrame": 1.9533333333333334,
+          "meanSelfMillisPerFrame": 1.9533333333333334,
+          "calls": 1800
+        },
+        "glueComposition": {
+          "meanMillisPerFrame": 0.0016666666666666668,
+          "meanSelfMillisPerFrame": 0.0016666666666666668,
+          "calls": 1800
+        },
+        "transformUpdates": {
+          "meanMillisPerFrame": 1.9583333333333333,
+          "meanSelfMillisPerFrame": 1.9583333333333333,
+          "calls": 1800
+        },
+        "partMapping": {
+          "meanMillisPerFrame": 3.687222222222222,
+          "meanSelfMillisPerFrame": 3.687222222222222,
+          "calls": 1800
+        },
+        "nativeApply": {
+          "meanMillisPerFrame": 5.648333333333333,
+          "meanSelfMillisPerFrame": 0.002777777777777778,
+          "calls": 1800
+        },
+        "glue": {
+          "meanMillisPerFrame": 0.10666666666666667,
+          "meanSelfMillisPerFrame": 0.10666666666666667,
+          "calls": 1800
+        },
+        "sceneApply": {
+          "meanMillisPerFrame": 5.758333333333334,
+          "meanSelfMillisPerFrame": 0.0016666666666666668,
+          "calls": 1800
+        },
+        "renderFrame": {
+          "meanMillisPerFrame": 8.962222222222222,
+          "meanSelfMillisPerFrame": 0.002777777777777778,
+          "calls": 1800
+        },
+        "vertexCopy": {
+          "meanMillisPerFrame": 0.006111111111111111,
+          "meanSelfMillisPerFrame": 0.006111111111111111,
+          "calls": 1800
+        },
+        "stateCapture": {
+          "meanMillisPerFrame": 0.005555555555555556,
+          "meanSelfMillisPerFrame": 0.005555555555555556,
+          "calls": 1800
+        },
+        "step": {
+          "meanMillisPerFrame": 9.476666666666667,
+          "meanSelfMillisPerFrame": 0.008888888888888889,
+          "calls": 1800
+        },
+        "encode": {
+          "meanMillisPerFrame": 0.15888888888888889,
+          "meanSelfMillisPerFrame": 0.15888888888888889,
+          "calls": 1800
+        }
+      },
+      "raw": [
+        {
+          "automaticEffects": {
+            "calls": 600,
+            "totalMillis": 4,
+            "selfMillis": 4,
+            "maximumMillis": 1
+          },
+          "motionMix": {
+            "calls": 600,
+            "totalMillis": 106,
+            "selfMillis": 106,
+            "maximumMillis": 1
+          },
+          "adjustments": {
+            "calls": 1200,
+            "totalMillis": 1,
+            "selfMillis": 1,
+            "maximumMillis": 1
+          },
+          "lookAndBreath": {
+            "calls": 600,
+            "totalMillis": 2,
+            "selfMillis": 1,
+            "maximumMillis": 1
+          },
+          "physics": {
+            "calls": 600,
+            "totalMillis": 142,
+            "selfMillis": 140,
+            "maximumMillis": 2
+          },
+          "pose": {
+            "calls": 600,
+            "totalMillis": 7,
+            "selfMillis": 7,
+            "maximumMillis": 1
+          },
+          "runtime": {
+            "calls": 600,
+            "totalMillis": 293,
+            "selfMillis": 34,
+            "maximumMillis": 3
+          },
+          "drawOrder": {
+            "calls": 600,
+            "totalMillis": 0,
+            "selfMillis": 0,
+            "maximumMillis": 0
+          },
+          "renderPlan": {
+            "calls": 600,
+            "totalMillis": 739,
+            "selfMillis": 739,
+            "maximumMillis": 2
+          },
+          "meshPreparation": {
+            "calls": 600,
+            "totalMillis": 1175,
+            "selfMillis": 1175,
+            "maximumMillis": 3
+          },
+          "glueComposition": {
+            "calls": 600,
+            "totalMillis": 2,
+            "selfMillis": 2,
+            "maximumMillis": 1
+          },
+          "transformUpdates": {
+            "calls": 600,
+            "totalMillis": 1153,
+            "selfMillis": 1153,
+            "maximumMillis": 5
+          },
+          "partMapping": {
+            "calls": 600,
+            "totalMillis": 2178,
+            "selfMillis": 2178,
+            "maximumMillis": 5
+          },
+          "nativeApply": {
+            "calls": 600,
+            "totalMillis": 3333,
+            "selfMillis": 2,
+            "maximumMillis": 9
+          },
+          "glue": {
+            "calls": 600,
+            "totalMillis": 60,
+            "selfMillis": 60,
+            "maximumMillis": 1
+          },
+          "sceneApply": {
+            "calls": 600,
+            "totalMillis": 3395,
+            "selfMillis": 0,
+            "maximumMillis": 9
+          },
+          "renderFrame": {
+            "calls": 600,
+            "totalMillis": 5309,
+            "selfMillis": 0,
+            "maximumMillis": 14
+          },
+          "vertexCopy": {
+            "calls": 600,
+            "totalMillis": 6,
+            "selfMillis": 6,
+            "maximumMillis": 1
+          },
+          "stateCapture": {
+            "calls": 600,
+            "totalMillis": 5,
+            "selfMillis": 5,
+            "maximumMillis": 1
+          },
+          "step": {
+            "calls": 600,
+            "totalMillis": 5622,
+            "selfMillis": 9,
+            "maximumMillis": 16
+          },
+          "encode": {
+            "calls": 600,
+            "totalMillis": 98,
+            "selfMillis": 98,
+            "maximumMillis": 1
+          }
+        },
+        {
+          "automaticEffects": {
+            "calls": 600,
+            "totalMillis": 4,
+            "selfMillis": 4,
+            "maximumMillis": 1
+          },
+          "motionMix": {
+            "calls": 600,
+            "totalMillis": 105,
+            "selfMillis": 105,
+            "maximumMillis": 1
+          },
+          "adjustments": {
+            "calls": 1200,
+            "totalMillis": 0,
+            "selfMillis": 0,
+            "maximumMillis": 0
+          },
+          "lookAndBreath": {
+            "calls": 600,
+            "totalMillis": 0,
+            "selfMillis": 0,
+            "maximumMillis": 0
+          },
+          "physics": {
+            "calls": 600,
+            "totalMillis": 155,
+            "selfMillis": 155,
+            "maximumMillis": 1
+          },
+          "pose": {
+            "calls": 600,
+            "totalMillis": 5,
+            "selfMillis": 5,
+            "maximumMillis": 1
+          },
+          "runtime": {
+            "calls": 600,
+            "totalMillis": 299,
+            "selfMillis": 30,
+            "maximumMillis": 1
+          },
+          "drawOrder": {
+            "calls": 600,
+            "totalMillis": 1,
+            "selfMillis": 1,
+            "maximumMillis": 1
+          },
+          "renderPlan": {
+            "calls": 600,
+            "totalMillis": 779,
+            "selfMillis": 778,
+            "maximumMillis": 3
+          },
+          "meshPreparation": {
+            "calls": 600,
+            "totalMillis": 1236,
+            "selfMillis": 1236,
+            "maximumMillis": 5
+          },
+          "glueComposition": {
+            "calls": 600,
+            "totalMillis": 1,
+            "selfMillis": 1,
+            "maximumMillis": 1
+          },
+          "transformUpdates": {
+            "calls": 600,
+            "totalMillis": 1224,
+            "selfMillis": 1224,
+            "maximumMillis": 4
+          },
+          "partMapping": {
+            "calls": 600,
+            "totalMillis": 2251,
+            "selfMillis": 2251,
+            "maximumMillis": 7
+          },
+          "nativeApply": {
+            "calls": 600,
+            "totalMillis": 3475,
+            "selfMillis": 0,
+            "maximumMillis": 11
+          },
+          "glue": {
+            "calls": 600,
+            "totalMillis": 73,
+            "selfMillis": 73,
+            "maximumMillis": 1
+          },
+          "sceneApply": {
+            "calls": 600,
+            "totalMillis": 3550,
+            "selfMillis": 1,
+            "maximumMillis": 11
+          },
+          "renderFrame": {
+            "calls": 600,
+            "totalMillis": 5568,
+            "selfMillis": 3,
+            "maximumMillis": 15
+          },
+          "vertexCopy": {
+            "calls": 600,
+            "totalMillis": 5,
+            "selfMillis": 5,
+            "maximumMillis": 1
+          },
+          "stateCapture": {
+            "calls": 600,
+            "totalMillis": 1,
+            "selfMillis": 1,
+            "maximumMillis": 1
+          },
+          "step": {
+            "calls": 600,
+            "totalMillis": 5879,
+            "selfMillis": 6,
+            "maximumMillis": 15
+          },
+          "encode": {
+            "calls": 600,
+            "totalMillis": 103,
+            "selfMillis": 103,
+            "maximumMillis": 1
+          }
+        },
+        {
+          "automaticEffects": {
+            "calls": 600,
+            "totalMillis": 3,
+            "selfMillis": 3,
+            "maximumMillis": 1
+          },
+          "motionMix": {
+            "calls": 600,
+            "totalMillis": 122,
+            "selfMillis": 122,
+            "maximumMillis": 1
+          },
+          "adjustments": {
+            "calls": 1200,
+            "totalMillis": 1,
+            "selfMillis": 1,
+            "maximumMillis": 1
+          },
+          "lookAndBreath": {
+            "calls": 600,
+            "totalMillis": 1,
+            "selfMillis": 0,
+            "maximumMillis": 1
+          },
+          "physics": {
+            "calls": 600,
+            "totalMillis": 149,
+            "selfMillis": 148,
+            "maximumMillis": 1
+          },
+          "pose": {
+            "calls": 600,
+            "totalMillis": 2,
+            "selfMillis": 2,
+            "maximumMillis": 1
+          },
+          "runtime": {
+            "calls": 600,
+            "totalMillis": 297,
+            "selfMillis": 21,
+            "maximumMillis": 2
+          },
+          "drawOrder": {
+            "calls": 600,
+            "totalMillis": 0,
+            "selfMillis": 0,
+            "maximumMillis": 0
+          },
+          "renderPlan": {
+            "calls": 600,
+            "totalMillis": 728,
+            "selfMillis": 728,
+            "maximumMillis": 3
+          },
+          "meshPreparation": {
+            "calls": 600,
+            "totalMillis": 1105,
+            "selfMillis": 1105,
+            "maximumMillis": 4
+          },
+          "glueComposition": {
+            "calls": 600,
+            "totalMillis": 0,
+            "selfMillis": 0,
+            "maximumMillis": 0
+          },
+          "transformUpdates": {
+            "calls": 600,
+            "totalMillis": 1148,
+            "selfMillis": 1148,
+            "maximumMillis": 4
+          },
+          "partMapping": {
+            "calls": 600,
+            "totalMillis": 2208,
+            "selfMillis": 2208,
+            "maximumMillis": 9
+          },
+          "nativeApply": {
+            "calls": 600,
+            "totalMillis": 3359,
+            "selfMillis": 3,
+            "maximumMillis": 11
+          },
+          "glue": {
+            "calls": 600,
+            "totalMillis": 59,
+            "selfMillis": 59,
+            "maximumMillis": 1
+          },
+          "sceneApply": {
+            "calls": 600,
+            "totalMillis": 3420,
+            "selfMillis": 2,
+            "maximumMillis": 11
+          },
+          "renderFrame": {
+            "calls": 600,
+            "totalMillis": 5255,
+            "selfMillis": 2,
+            "maximumMillis": 17
+          },
+          "vertexCopy": {
+            "calls": 600,
+            "totalMillis": 0,
+            "selfMillis": 0,
+            "maximumMillis": 0
+          },
+          "stateCapture": {
+            "calls": 600,
+            "totalMillis": 4,
+            "selfMillis": 4,
+            "maximumMillis": 1
+          },
+          "step": {
+            "calls": 600,
+            "totalMillis": 5557,
+            "selfMillis": 1,
+            "maximumMillis": 17
+          },
+          "encode": {
+            "calls": 600,
+            "totalMillis": 85,
+            "selfMillis": 85,
+            "maximumMillis": 1
+          }
+        }
+      ]
+    },
+    "hierarchy": "renderPlan includes drawOrder. sceneApply includes nativeApply, glue and glueComposition. nativeApply includes transformUpdates and partMapping. runtime includes physics, motionMix, pose and effects. Inclusive rows must not be added together.",
+    "largestStage": "partMapping includes lazy parent-grid interpolation and all part vertex mappings; it is not only the previously isolated warm map_vertices microbenchmark."
+  },
+  "finding": {
+    "priority": "P2",
+    "title": "Rebuilding paint-order trees and sorted arrays for unchanged ordering inputs",
+    "cause": "Scene traversal, flags, tie-break maps and stable sorting were repeated each produced frame. In the supplied model, 667 inspected part bindings keyed draw orders equal to their respective rest orders; their animated geometry inputs do not affect those orders.",
+    "change": "Prepare static metadata once, track only potentially effective ordering and visibility inputs, and retain one readonly result per document. Constant-rest grid/one-axis channels follow the existing sampler omission rule. All legacy multi-axis triangulated bindings remain dependencies because weighted constant arithmetic can alter order through floating-point rounding.",
+    "tests": "Constant part/group orders reuse snapshots; independent influence, keyed part/group order, ancestor visibility, mutable value maps, document revisions, Cubism ties/rounding and legacy triangulated numeric behavior remain covered.",
+    "drawOrderMillisBefore": 0.7272222222222222,
+    "drawOrderMillisAfter": 0.0005555555555555556,
+    "ownership": "WeakMap by immutable document; one latest value/result snapshot, with no history per input or frame.",
+    "maintenanceLimit": "New ordering/visibility channels must be included in dependency analysis; preserve the legacy triangulation regression when modifying sampler omission rules."
+  },
+  "wholeWorker": {
+    "method": "Uninstrumented built artifacts, both Workers in one Chrome, fixed 1/60 delta, 1,200 warmup frames per variant, six 300-frame ABBA samples per variant. Includes host round trip.",
+    "comparison": {
+      "before": {
+        "samples": [
+          10.48106014, 10.90579236, 12.33382389, 11.250711806666667, 11.939214443333334, 9.99679986
+        ],
+        "median": 11.078252083333332,
+        "mean": 11.15123375,
+        "minimum": 9.99679986,
+        "maximum": 12.33382389
+      },
+      "after": {
+        "samples": [
+          10.268353193333335, 10.221821946666667, 11.696790553333333, 11.658324303333334,
+          10.459738473333333, 9.35543861
+        ],
+        "median": 10.364045833333334,
+        "mean": 10.610077846666666,
+        "minimum": 9.35543861,
+        "maximum": 11.696790553333333
+      },
+      "medianChangePercent": -6.446921812462502
+    },
+    "matchedWindows": [
+      {
+        "endFrame": 1500,
+        "before": 10.48106014,
+        "candidate": 10.268353193333335,
+        "reductionPercent": 2.0294411426463377
+      },
+      {
+        "endFrame": 1800,
+        "candidate": 10.221821946666667,
+        "before": 10.90579236,
+        "reductionPercent": 6.271625121361957
+      },
+      {
+        "endFrame": 2100,
+        "before": 12.33382389,
+        "candidate": 11.696790553333333,
+        "reductionPercent": 5.164929727780199
+      },
+      {
+        "endFrame": 2400,
+        "candidate": 11.658324303333334,
+        "before": 11.250711806666667,
+        "reductionPercent": -3.6229929596555355
+      },
+      {
+        "endFrame": 2700,
+        "before": 11.939214443333334,
+        "candidate": 10.459738473333333,
+        "reductionPercent": 12.391736299083867
+      },
+      {
+        "endFrame": 3000,
+        "candidate": 9.35543861,
+        "before": 9.99679986,
+        "reductionPercent": 6.415665602812215
+      }
+    ],
+    "raw": {
+      "hashes": {
+        "before": "0bbdd6b69502389ec80360c4e1c6808b13f3fab1c86d21fc90bc7fcb49232f48",
+        "candidate": "54fc6aa076eefc96f7d97cac79a5fec6e61b88e08917e9b4ff0044d920748c2b"
+      },
+      "metadata": {
+        "before": {
+          "parts": 852,
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+          "vertices": 34452
+        },
+        "candidate": {
+          "parts": 852,
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+          "vertices": 34452
+        }
+      },
+      "warmup": 1200,
+      "frames": 300,
+      "results": [
+        {
+          "name": "before",
+          "millis": 3144.318042,
+          "millisPerFrame": 10.48106014,
+          "progress": {
+            "frames": 1500,
+            "pendingRequests": 0,
+            "queuedNotices": 0
+          }
+        },
+        {
+          "name": "candidate",
+          "millis": 3080.505958,
+          "millisPerFrame": 10.268353193333335,
+          "progress": {
+            "frames": 1500,
+            "pendingRequests": 0,
+            "queuedNotices": 0
+          }
+        },
+        {
+          "name": "candidate",
+          "millis": 3066.546584,
+          "millisPerFrame": 10.221821946666667,
+          "progress": {
+            "frames": 1800,
+            "pendingRequests": 0,
+            "queuedNotices": 0
+          }
+        },
+        {
+          "name": "before",
+          "millis": 3271.737708,
+          "millisPerFrame": 10.90579236,
+          "progress": {
+            "frames": 1800,
+            "pendingRequests": 0,
+            "queuedNotices": 0
+          }
+        },
+        {
+          "name": "before",
+          "millis": 3700.147167,
+          "millisPerFrame": 12.33382389,
+          "progress": {
+            "frames": 2100,
+            "pendingRequests": 0,
+            "queuedNotices": 0
+          }
+        },
+        {
+          "name": "candidate",
+          "millis": 3509.037166,
+          "millisPerFrame": 11.696790553333333,
+          "progress": {
+            "frames": 2100,
+            "pendingRequests": 0,
+            "queuedNotices": 0
+          }
+        },
+        {
+          "name": "candidate",
+          "millis": 3497.497291,
+          "millisPerFrame": 11.658324303333334,
+          "progress": {
+            "frames": 2400,
+            "pendingRequests": 0,
+            "queuedNotices": 0
+          }
+        },
+        {
+          "name": "before",
+          "millis": 3375.213542,
+          "millisPerFrame": 11.250711806666667,
+          "progress": {
+            "frames": 2400,
+            "pendingRequests": 0,
+            "queuedNotices": 0
+          }
+        },
+        {
+          "name": "before",
+          "millis": 3581.764333,
+          "millisPerFrame": 11.939214443333334,
+          "progress": {
+            "frames": 2700,
+            "pendingRequests": 0,
+            "queuedNotices": 0
+          }
+        },
+        {
+          "name": "candidate",
+          "millis": 3137.921542,
+          "millisPerFrame": 10.459738473333333,
+          "progress": {
+            "frames": 2700,
+            "pendingRequests": 0,
+            "queuedNotices": 0
+          }
+        },
+        {
+          "name": "candidate",
+          "millis": 2806.631583,
+          "millisPerFrame": 9.35543861,
+          "progress": {
+            "frames": 3000,
+            "pendingRequests": 0,
+            "queuedNotices": 0
+          }
+        },
+        {
+          "name": "before",
+          "millis": 2999.039958,
+          "millisPerFrame": 9.99679986,
+          "progress": {
+            "frames": 3000,
+            "pendingRequests": 0,
+            "queuedNotices": 0
+          }
+        }
+      ],
+      "errors": []
+    }
+  },
+  "additionalModel": {
+    "description": "Development model: 122 parts, 20,297 vertices, including a spatial part. Covers the general scene evaluator path, not a smaller copy of the white-cat native rig.",
+    "comparison": {
+      "before": {
+        "samples": [
+          18.10606014, 18.264816666666665, 18.20978416666667, 17.88677861, 18.185369446666666,
+          18.824374723333335
+        ],
+        "median": 18.197576806666667,
+        "mean": 18.246197292222224,
+        "minimum": 17.88677861,
+        "maximum": 18.824374723333335
+      },
+      "after": {
+        "samples": [
+          17.74038222, 17.80469278, 18.200864303333333, 17.843189583333334, 17.976570973333335,
+          17.679578473333333
+        ],
+        "median": 17.82394118166667,
+        "mean": 17.874213055555558,
+        "minimum": 17.679578473333333,
+        "maximum": 18.200864303333333
+      },
+      "medianChangePercent": -2.053216364846544
+    },
+    "raw": {
+      "hashes": {
+        "before": "0bbdd6b69502389ec80360c4e1c6808b13f3fab1c86d21fc90bc7fcb49232f48",
+        "candidate": "54fc6aa076eefc96f7d97cac79a5fec6e61b88e08917e9b4ff0044d920748c2b"
+      },
+      "metadata": {
+        "before": {
+          "parts": 122,
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+          "vertices": 20297
+        },
+        "candidate": {
+          "parts": 122,
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+          "vertices": 20297
+        }
+      },
+      "warmup": 1200,
+      "frames": 300,
+      "results": [
+        {
+          "name": "before",
+          "millis": 5431.818042,
+          "millisPerFrame": 18.10606014,
+          "progress": {
+            "frames": 1500,
+            "pendingRequests": 0,
+            "queuedNotices": 0
+          }
+        },
+        {
+          "name": "candidate",
+          "millis": 5322.114666,
+          "millisPerFrame": 17.74038222,
+          "progress": {
+            "frames": 1500,
+            "pendingRequests": 0,
+            "queuedNotices": 0
+          }
+        },
+        {
+          "name": "candidate",
+          "millis": 5341.407834,
+          "millisPerFrame": 17.80469278,
+          "progress": {
+            "frames": 1800,
+            "pendingRequests": 0,
+            "queuedNotices": 0
+          }
+        },
+        {
+          "name": "before",
+          "millis": 5479.445,
+          "millisPerFrame": 18.264816666666665,
+          "progress": {
+            "frames": 1800,
+            "pendingRequests": 0,
+            "queuedNotices": 0
+          }
+        },
+        {
+          "name": "before",
+          "millis": 5462.93525,
+          "millisPerFrame": 18.20978416666667,
+          "progress": {
+            "frames": 2100,
+            "pendingRequests": 0,
+            "queuedNotices": 0
+          }
+        },
+        {
+          "name": "candidate",
+          "millis": 5460.259291,
+          "millisPerFrame": 18.200864303333333,
+          "progress": {
+            "frames": 2100,
+            "pendingRequests": 0,
+            "queuedNotices": 0
+          }
+        },
+        {
+          "name": "candidate",
+          "millis": 5352.956875,
+          "millisPerFrame": 17.843189583333334,
+          "progress": {
+            "frames": 2400,
+            "pendingRequests": 0,
+            "queuedNotices": 0
+          }
+        },
+        {
+          "name": "before",
+          "millis": 5366.033583,
+          "millisPerFrame": 17.88677861,
+          "progress": {
+            "frames": 2400,
+            "pendingRequests": 0,
+            "queuedNotices": 0
+          }
+        },
+        {
+          "name": "before",
+          "millis": 5455.610834,
+          "millisPerFrame": 18.185369446666666,
+          "progress": {
+            "frames": 2700,
+            "pendingRequests": 0,
+            "queuedNotices": 0
+          }
+        },
+        {
+          "name": "candidate",
+          "millis": 5392.971292,
+          "millisPerFrame": 17.976570973333335,
+          "progress": {
+            "frames": 2700,
+            "pendingRequests": 0,
+            "queuedNotices": 0
+          }
+        },
+        {
+          "name": "candidate",
+          "millis": 5303.873542,
+          "millisPerFrame": 17.679578473333333,
+          "progress": {
+            "frames": 3000,
+            "pendingRequests": 0,
+            "queuedNotices": 0
+          }
+        },
+        {
+          "name": "before",
+          "millis": 5647.312417,
+          "millisPerFrame": 18.824374723333335,
+          "progress": {
+            "frames": 3000,
+            "pendingRequests": 0,
+            "queuedNotices": 0
+          }
+        }
+      ],
+      "errors": []
+    }
+  },
+  "playbackFPS": {
+    "method": "Uninstrumented actual playback; one Chrome per balanced sequence, 10 seconds warmup and 20 seconds measurement per artifact. Model update callbacks are counted separately from rAF; physical panel presentation is not directly measured.",
+    "firstSequence": {
+      "order": ["before", "candidate", "candidate", "before"],
+      "comparison": {
+        "before": {
+          "samples": [94.8116013014729, 78.46822037074985],
+          "median": 86.63991083611137,
+          "mean": 86.63991083611137,
+          "minimum": 78.46822037074985,
+          "maximum": 94.8116013014729
+        },
+        "after": {
+          "samples": [88.08238352329536, 80.61734997326083],
+          "median": 84.34986674827809,
+          "mean": 84.34986674827809,
+          "minimum": 80.61734997326083,
+          "maximum": 88.08238352329536
+        },
+        "medianChangePercent": -2.643174566701878
+      },
+      "raw": {
+        "configuration": {
+          "antialiasing": "ssaa",
+          "cpuRates": [1],
+          "measureMillis": 20000,
+          "model": "/Users/bichi/Downloads/白猫/white-cat-idle-english.poffo",
+          "modes": ["worker"],
+          "randomSeed": 42,
+          "resolution": 1,
+          "runs": 1,
+          "viewport": {
+            "height": 700,
+            "width": 900
+          },
+          "warmupMillis": 10000
+        },
+        "results": [
+          {
+            "artifact": "before",
+            "computation": "worker",
+            "cpu": 1,
+            "run": 1,
+            "buffering": {
+              "enabled": true,
+              "framesAhead": 3,
+              "status": "active"
+            },
+            "canvasSize": {
+              "height": 700,
+              "width": 900
+            },
+            "chains": 25,
+            "hardwareConcurrency": 15,
+            "motion": "Idle:0",
+            "parameters": 265,
+            "parts": 852,
+            "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+            "vertices": 34452,
+            "duration": 20008.1,
+            "errors": [],
+            "frameP95": 8.700000000000728,
+            "observedModelFPS": 94.8116013014729,
+            "rafFPS": 120.00139943322955,
+            "updatedFPS": 94.8116013014729,
+            "heapBytes": 237156612,
+            "scriptSeconds": 6.380140000000001,
+            "taskSeconds": 7.012851
+          },
+          {
+            "artifact": "candidate",
+            "computation": "worker",
+            "cpu": 1,
+            "run": 1,
+            "buffering": {
+              "enabled": true,
+              "framesAhead": 3,
+              "status": "active"
+            },
+            "canvasSize": {
+              "height": 700,
+              "width": 900
+            },
+            "chains": 25,
+            "hardwareConcurrency": 15,
+            "motion": "Idle:0",
+            "parameters": 265,
+            "parts": 852,
+            "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+            "vertices": 34452,
+            "duration": 20003.999999999996,
+            "errors": [],
+            "frameP95": 9,
+            "observedModelFPS": 88.08238352329536,
+            "rafFPS": 120.02599480103981,
+            "updatedFPS": 88.08238352329536,
+            "heapBytes": 205852384,
+            "scriptSeconds": 6.413399,
+            "taskSeconds": 7.094467999999999
+          },
+          {
+            "artifact": "candidate",
+            "computation": "worker",
+            "cpu": 1,
+            "run": 1,
+            "buffering": {
+              "enabled": true,
+              "framesAhead": 3,
+              "status": "active"
+            },
+            "canvasSize": {
+              "height": 700,
+              "width": 900
+            },
+            "chains": 25,
+            "hardwareConcurrency": 15,
+            "motion": "Idle:0",
+            "parameters": 265,
+            "parts": 852,
+            "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+            "vertices": 34452,
+            "duration": 20008.1,
+            "errors": [],
+            "frameP95": 9,
+            "observedModelFPS": 80.56737021506291,
+            "rafFPS": 120.00139943322955,
+            "updatedFPS": 80.61734997326083,
+            "heapBytes": 188488328,
+            "scriptSeconds": 6.349117,
+            "taskSeconds": 7.018954000000001
+          },
+          {
+            "artifact": "before",
+            "computation": "worker",
+            "cpu": 1,
+            "run": 1,
+            "buffering": {
+              "enabled": true,
+              "framesAhead": 3,
+              "status": "active"
+            },
+            "canvasSize": {
+              "height": 700,
+              "width": 900
+            },
+            "chains": 25,
+            "hardwareConcurrency": 15,
+            "motion": "Idle:0",
+            "parameters": 265,
+            "parts": 852,
+            "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+            "vertices": 34452,
+            "duration": 20008.1,
+            "errors": [],
+            "frameP95": 9.099999999998545,
+            "observedModelFPS": 78.46822037074985,
+            "rafFPS": 120.00139943322955,
+            "updatedFPS": 78.46822037074985,
+            "heapBytes": 229971016,
+            "scriptSeconds": 5.864387000000001,
+            "taskSeconds": 6.477194999999999
+          }
+        ]
+      }
+    },
+    "reverseSequence": {
+      "order": ["candidate", "before", "before", "candidate"],
+      "comparison": {
+        "before": {
+          "samples": [80.11835325046606, 90.46381447421031],
+          "median": 85.29108386233818,
+          "mean": 85.29108386233818,
+          "minimum": 80.11835325046606,
+          "maximum": 90.46381447421031
+        },
+        "after": {
+          "samples": [94.58108378324337, 98.99802003959923],
+          "median": 96.7895519114213,
+          "mean": 96.7895519114213,
+          "minimum": 94.58108378324337,
+          "maximum": 98.99802003959923
+        },
+        "medianChangePercent": 13.481442055117876
+      },
+      "raw": {
+        "configuration": {
+          "antialiasing": "ssaa",
+          "cpuRates": [1],
+          "measureMillis": 20000,
+          "model": "/Users/bichi/Downloads/白猫/white-cat-idle-english.poffo",
+          "modes": ["worker"],
+          "randomSeed": 42,
+          "resolution": 1,
+          "runs": 1,
+          "viewport": {
+            "height": 700,
+            "width": 900
+          },
+          "warmupMillis": 10000
+        },
+        "results": [
+          {
+            "artifact": "candidate",
+            "computation": "worker",
+            "cpu": 1,
+            "run": 1,
+            "buffering": {
+              "enabled": true,
+              "framesAhead": 3,
+              "status": "active"
+            },
+            "canvasSize": {
+              "height": 700,
+              "width": 900
+            },
+            "chains": 25,
+            "hardwareConcurrency": 15,
+            "motion": "Idle:0",
+            "parameters": 265,
+            "parts": 852,
+            "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+            "vertices": 34452,
+            "duration": 20003.999999999996,
+            "errors": [],
+            "frameP95": 9,
+            "observedModelFPS": 94.53109378124377,
+            "rafFPS": 119.92601479704061,
+            "updatedFPS": 94.58108378324337,
+            "heapBytes": 273569436,
+            "scriptSeconds": 6.806422999999999,
+            "taskSeconds": 7.520193999999999
+          },
+          {
+            "artifact": "before",
+            "computation": "worker",
+            "cpu": 1,
+            "run": 1,
+            "buffering": {
+              "enabled": true,
+              "framesAhead": 3,
+              "status": "active"
+            },
+            "canvasSize": {
+              "height": 700,
+              "width": 900
+            },
+            "chains": 25,
+            "hardwareConcurrency": 15,
+            "motion": "Idle:0",
+            "parameters": 265,
+            "parts": 852,
+            "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+            "vertices": 34452,
+            "duration": 20007.9,
+            "errors": [],
+            "frameP95": 9,
+            "observedModelFPS": 80.11835325046606,
+            "rafFPS": 120.0025989734055,
+            "updatedFPS": 80.11835325046606,
+            "heapBytes": 253973064,
+            "scriptSeconds": 6.411229,
+            "taskSeconds": 7.085678000000001
+          },
+          {
+            "artifact": "before",
+            "computation": "worker",
+            "cpu": 1,
+            "run": 1,
+            "buffering": {
+              "enabled": true,
+              "framesAhead": 3,
+              "status": "active"
+            },
+            "canvasSize": {
+              "height": 700,
+              "width": 900
+            },
+            "chains": 25,
+            "hardwareConcurrency": 15,
+            "motion": "Idle:0",
+            "parameters": 265,
+            "parts": 852,
+            "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+            "vertices": 34452,
+            "duration": 20008,
+            "errors": [],
+            "frameP95": 9,
+            "observedModelFPS": 90.41383446621352,
+            "rafFPS": 120.00199920031987,
+            "updatedFPS": 90.46381447421031,
+            "heapBytes": 205928892,
+            "scriptSeconds": 6.435922000000001,
+            "taskSeconds": 7.063476
+          },
+          {
+            "artifact": "candidate",
+            "computation": "worker",
+            "cpu": 1,
+            "run": 1,
+            "buffering": {
+              "enabled": true,
+              "framesAhead": 3,
+              "status": "active"
+            },
+            "canvasSize": {
+              "height": 700,
+              "width": 900
+            },
+            "chains": 25,
+            "hardwareConcurrency": 15,
+            "motion": "Idle:0",
+            "parameters": 265,
+            "parts": 852,
+            "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+            "vertices": 34452,
+            "duration": 20000.399999999998,
+            "errors": [],
+            "frameP95": 9,
+            "observedModelFPS": 98.99802003959923,
+            "rafFPS": 119.99760004799906,
+            "updatedFPS": 98.99802003959923,
+            "heapBytes": 163856652,
+            "scriptSeconds": 6.741107,
+            "taskSeconds": 7.4100459999999995
+          }
+        ]
+      }
+    },
+    "combined": {
+      "before": {
+        "samples": [94.8116013014729, 78.46822037074985, 80.11835325046606, 90.46381447421031],
+        "median": 85.29108386233818,
+        "mean": 85.96549734922478,
+        "minimum": 78.46822037074985,
+        "maximum": 94.8116013014729
+      },
+      "after": {
+        "samples": [88.08238352329536, 80.61734997326083, 94.58108378324337, 98.99802003959923],
+        "median": 91.33173365326937,
+        "mean": 90.5697093298497,
+        "minimum": 80.61734997326083,
+        "maximum": 98.99802003959923
+      },
+      "medianChangePercent": 7.082393044366664
+    },
+    "limitation": "Ranges overlap materially and the first sequence median is lower after optimization. The combined median is an observation for these eight runs, not proof of a stable universal percentage. No further FPS reruns were selected or discarded."
+  },
+  "quality": {
+    "differentPixelChannels": 0,
+    "checkpoints": 32,
+    "comparisons": [
+      {
+        "antialiasing": "ssaa",
+        "artifactHashes": {
+          "after": "54fc6aa076eefc96f7d97cac79a5fec6e61b88e08917e9b4ff0044d920748c2b",
+          "before": "0bbdd6b69502389ec80360c4e1c6808b13f3fab1c86d21fc90bc7fcb49232f48"
+        },
+        "backend": "hardware",
+        "errors": [],
+        "metadata": [
+          {
+            "parts": 852,
+            "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M5 Pro, Unspecified Version)",
+            "rendering": {
+              "antialiasing": "ssaa",
+              "renderer": "webgl"
+            }
+          },
+          {
+            "parts": 852,
+            "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M5 Pro, Unspecified Version)",
+            "rendering": {
+              "antialiasing": "ssaa",
+              "renderer": "webgl"
+            }
+          }
+        ],
+        "model": "/Users/bichi/Downloads/白猫/white-cat-idle-english.poffo",
+        "modelSHA256": "47c98e7473e79ffb249aa1acb5bed9b7d458f35c7c0d3502f281549c20c55035",
+        "passed": true,
+        "referenceComputation": "worker",
+        "results": [
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 700,
+            "maximumDelta": 0,
+            "stage": "defaults",
+            "statuses": ["idle", "idle"],
+            "visiblePixels": 82314,
+            "width": 900,
+            "workerEqual": true
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 700,
+            "maximumDelta": 0,
+            "stage": "controls",
+            "statuses": ["idle", "idle"],
+            "visiblePixels": 82701,
+            "width": 900,
+            "workerEqual": true
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 700,
+            "maximumDelta": 0,
+            "stage": "burst",
+            "statuses": ["idle", "idle"],
+            "visiblePixels": 82599,
+            "width": 900,
+            "workerEqual": true
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 700,
+            "maximumDelta": 0,
+            "stage": "document-edit",
+            "statuses": ["idle", "idle"],
+            "visiblePixels": 82083,
+            "width": 900,
+            "workerEqual": true
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 700,
+            "maximumDelta": 0,
+            "stage": "buffer-off",
+            "statuses": ["disabled", "disabled"],
+            "visiblePixels": 82083,
+            "width": 900,
+            "workerEqual": null
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 700,
+            "maximumDelta": 0,
+            "stage": "buffer-on",
+            "statuses": ["idle", "idle"],
+            "visiblePixels": 82083,
+            "width": 900,
+            "workerEqual": true
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 1400,
+            "maximumDelta": 0,
+            "stage": "resize",
+            "statuses": ["idle", "idle"],
+            "visiblePixels": 319593,
+            "width": 1800,
+            "workerEqual": true
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 1400,
+            "maximumDelta": 0,
+            "stage": "renderer",
+            "statuses": ["idle", "idle"],
+            "visiblePixels": 319593,
+            "width": 1800,
+            "workerEqual": true
+          }
+        ],
+        "workersAfterDestroy": 0
+      },
+      {
+        "antialiasing": "msaa",
+        "artifactHashes": {
+          "after": "54fc6aa076eefc96f7d97cac79a5fec6e61b88e08917e9b4ff0044d920748c2b",
+          "before": "0bbdd6b69502389ec80360c4e1c6808b13f3fab1c86d21fc90bc7fcb49232f48"
+        },
+        "backend": "hardware",
+        "errors": [],
+        "metadata": [
+          {
+            "parts": 852,
+            "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M5 Pro, Unspecified Version)",
+            "rendering": {
+              "antialiasing": "msaa",
+              "renderer": "webgl"
+            }
+          },
+          {
+            "parts": 852,
+            "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M5 Pro, Unspecified Version)",
+            "rendering": {
+              "antialiasing": "msaa",
+              "renderer": "webgl"
+            }
+          }
+        ],
+        "model": "/Users/bichi/Downloads/白猫/white-cat-idle-english.poffo",
+        "modelSHA256": "47c98e7473e79ffb249aa1acb5bed9b7d458f35c7c0d3502f281549c20c55035",
+        "passed": true,
+        "referenceComputation": "worker",
+        "results": [
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 700,
+            "maximumDelta": 0,
+            "stage": "defaults",
+            "statuses": ["idle", "idle"],
+            "visiblePixels": 82458,
+            "width": 900,
+            "workerEqual": true
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 700,
+            "maximumDelta": 0,
+            "stage": "controls",
+            "statuses": ["idle", "idle"],
+            "visiblePixels": 82820,
+            "width": 900,
+            "workerEqual": true
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 700,
+            "maximumDelta": 0,
+            "stage": "burst",
+            "statuses": ["idle", "idle"],
+            "visiblePixels": 82708,
+            "width": 900,
+            "workerEqual": true
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 700,
+            "maximumDelta": 0,
+            "stage": "document-edit",
+            "statuses": ["idle", "idle"],
+            "visiblePixels": 82197,
+            "width": 900,
+            "workerEqual": true
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 700,
+            "maximumDelta": 0,
+            "stage": "buffer-off",
+            "statuses": ["disabled", "disabled"],
+            "visiblePixels": 82197,
+            "width": 900,
+            "workerEqual": null
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 700,
+            "maximumDelta": 0,
+            "stage": "buffer-on",
+            "statuses": ["idle", "idle"],
+            "visiblePixels": 82197,
+            "width": 900,
+            "workerEqual": true
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 1400,
+            "maximumDelta": 0,
+            "stage": "resize",
+            "statuses": ["idle", "idle"],
+            "visiblePixels": 319630,
+            "width": 1800,
+            "workerEqual": true
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 1400,
+            "maximumDelta": 0,
+            "stage": "renderer",
+            "statuses": ["idle", "idle"],
+            "visiblePixels": 319630,
+            "width": 1800,
+            "workerEqual": true
+          }
+        ],
+        "workersAfterDestroy": 0
+      },
+      {
+        "antialiasing": "ssaa",
+        "artifactHashes": {
+          "after": "54fc6aa076eefc96f7d97cac79a5fec6e61b88e08917e9b4ff0044d920748c2b",
+          "before": "0bbdd6b69502389ec80360c4e1c6808b13f3fab1c86d21fc90bc7fcb49232f48"
+        },
+        "backend": "hardware",
+        "errors": [],
+        "metadata": [
+          {
+            "parts": 122,
+            "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M5 Pro, Unspecified Version)",
+            "rendering": {
+              "antialiasing": "ssaa",
+              "renderer": "webgl"
+            }
+          },
+          {
+            "parts": 122,
+            "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M5 Pro, Unspecified Version)",
+            "rendering": {
+              "antialiasing": "ssaa",
+              "renderer": "webgl"
+            }
+          }
+        ],
+        "model": "/Users/bichi/.codex/worktrees/48ee/web/packages/puppet/examples/development-model.json",
+        "modelSHA256": "d2ee88f9f8a50273f7919bdd3b52691418a3d0d60e3501609edb7b175e81bfb5",
+        "passed": true,
+        "referenceComputation": "worker",
+        "results": [
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 700,
+            "maximumDelta": 0,
+            "stage": "defaults",
+            "statuses": ["idle", "idle"],
+            "visiblePixels": 111508,
+            "width": 900,
+            "workerEqual": true
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 700,
+            "maximumDelta": 0,
+            "stage": "controls",
+            "statuses": ["idle", "idle"],
+            "visiblePixels": 112111,
+            "width": 900,
+            "workerEqual": true
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 700,
+            "maximumDelta": 0,
+            "stage": "burst",
+            "statuses": ["idle", "idle"],
+            "visiblePixels": 112480,
+            "width": 900,
+            "workerEqual": true
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 700,
+            "maximumDelta": 0,
+            "stage": "document-edit",
+            "statuses": ["idle", "idle"],
+            "visiblePixels": 111310,
+            "width": 900,
+            "workerEqual": true
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 700,
+            "maximumDelta": 0,
+            "stage": "buffer-off",
+            "statuses": ["disabled", "disabled"],
+            "visiblePixels": 111310,
+            "width": 900,
+            "workerEqual": null
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 700,
+            "maximumDelta": 0,
+            "stage": "buffer-on",
+            "statuses": ["idle", "idle"],
+            "visiblePixels": 111310,
+            "width": 900,
+            "workerEqual": true
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 1400,
+            "maximumDelta": 0,
+            "stage": "resize",
+            "statuses": ["idle", "idle"],
+            "visiblePixels": 436961,
+            "width": 1800,
+            "workerEqual": true
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 1400,
+            "maximumDelta": 0,
+            "stage": "renderer",
+            "statuses": ["idle", "idle"],
+            "visiblePixels": 436961,
+            "width": 1800,
+            "workerEqual": true
+          }
+        ],
+        "workersAfterDestroy": 0
+      },
+      {
+        "antialiasing": "ssaa",
+        "artifactHashes": {
+          "after": "54fc6aa076eefc96f7d97cac79a5fec6e61b88e08917e9b4ff0044d920748c2b",
+          "before": "0bbdd6b69502389ec80360c4e1c6808b13f3fab1c86d21fc90bc7fcb49232f48"
+        },
+        "backend": "hardware",
+        "errors": [],
+        "metadata": [
+          {
+            "parts": 852,
+            "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M5 Pro, Unspecified Version)",
+            "rendering": {
+              "antialiasing": "ssaa",
+              "renderer": "webgl"
+            }
+          },
+          {
+            "parts": 852,
+            "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M5 Pro, Unspecified Version)",
+            "rendering": {
+              "antialiasing": "ssaa",
+              "renderer": "webgl"
+            }
+          }
+        ],
+        "model": "/Users/bichi/Downloads/白猫/white-cat-idle-english.poffo",
+        "modelSHA256": "47c98e7473e79ffb249aa1acb5bed9b7d458f35c7c0d3502f281549c20c55035",
+        "passed": true,
+        "referenceComputation": "main",
+        "results": [
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 700,
+            "maximumDelta": 0,
+            "stage": "defaults",
+            "statuses": ["disabled", "idle"],
+            "visiblePixels": 82314,
+            "width": 900,
+            "workerEqual": null
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 700,
+            "maximumDelta": 0,
+            "stage": "controls",
+            "statuses": ["disabled", "idle"],
+            "visiblePixels": 82701,
+            "width": 900,
+            "workerEqual": null
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 700,
+            "maximumDelta": 0,
+            "stage": "burst",
+            "statuses": ["disabled", "idle"],
+            "visiblePixels": 82599,
+            "width": 900,
+            "workerEqual": null
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 700,
+            "maximumDelta": 0,
+            "stage": "document-edit",
+            "statuses": ["disabled", "idle"],
+            "visiblePixels": 82083,
+            "width": 900,
+            "workerEqual": null
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 700,
+            "maximumDelta": 0,
+            "stage": "buffer-off",
+            "statuses": ["disabled", "disabled"],
+            "visiblePixels": 82083,
+            "width": 900,
+            "workerEqual": null
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 700,
+            "maximumDelta": 0,
+            "stage": "buffer-on",
+            "statuses": ["disabled", "idle"],
+            "visiblePixels": 82083,
+            "width": 900,
+            "workerEqual": null
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 1400,
+            "maximumDelta": 0,
+            "stage": "resize",
+            "statuses": ["disabled", "idle"],
+            "visiblePixels": 319593,
+            "width": 1800,
+            "workerEqual": null
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 1400,
+            "maximumDelta": 0,
+            "stage": "renderer",
+            "statuses": ["disabled", "idle"],
+            "visiblePixels": 319593,
+            "width": 1800,
+            "workerEqual": null
+          }
+        ],
+        "workersAfterDestroy": 0
+      }
+    ],
+    "modelVertexParity": {
+      "differentWords": 0,
+      "frames": 120,
+      "maximumVertexError": 0,
+      "memoryBytes": 19005440,
+      "model": "/Users/bichi/Downloads/白猫/white-cat-idle-english.poffo",
+      "nativeCalls": 102240,
+      "wasm": true
+    },
+    "note": "The native kernel and Float64 math are unchanged. Reuse changes scene-state computation frequency only; direct old/new artifact pixel comparisons include input bursts, document replacement, buffering changes, resize and renderer recreation."
+  },
+  "memory": {
+    "configuration": {
+      "cycles": 6,
+      "deltaTime": 0.016666666666666666,
+      "displayFrames": 600,
+      "frames": 2400,
+      "model": "/Users/bichi/Downloads/白猫/white-cat-idle-english.poffo",
+      "warmupFrames": 120
+    },
+    "hashes": {
+      "model": "47c98e7473e79ffb249aa1acb5bed9b7d458f35c7c0d3502f281549c20c55035",
+      "player": "54fc6aa076eefc96f7d97cac79a5fec6e61b88e08917e9b4ff0044d920748c2b",
+      "worker": "396395665c40dc7cd1790e0fdb5ab5fbae6b1b7f21c5affc1777e5c661d702de"
+    },
+    "samples": [
+      {
+        "completed": 0,
+        "main": {
+          "usedSize": 163585648,
+          "totalSize": 164610048,
+          "embedderHeapUsedSize": 360376,
+          "backingStorageSize": 4519261,
+          "wasmBytes": [12451840]
+        },
+        "progress": {
+          "frames": 120,
+          "pendingRequests": 0,
+          "queuedNotices": 0
+        },
+        "worker": {
+          "usedSize": 283889956,
+          "totalSize": 286261248,
+          "embedderHeapUsedSize": 20128,
+          "backingStorageSize": 446133,
+          "wasmBytes": [19005440]
+        }
+      },
+      {
+        "completed": 600,
+        "main": {
+          "usedSize": 163541300,
+          "totalSize": 164610048,
+          "embedderHeapUsedSize": 360376,
+          "backingStorageSize": 4519513,
+          "wasmBytes": [12451840]
+        },
+        "progress": {
+          "frames": 720,
+          "pendingRequests": 0,
+          "queuedNotices": 0
+        },
+        "worker": {
+          "usedSize": 284114108,
+          "totalSize": 287047680,
+          "embedderHeapUsedSize": 20128,
+          "backingStorageSize": 446133,
+          "wasmBytes": [19005440]
+        }
+      },
+      {
+        "completed": 1200,
+        "main": {
+          "usedSize": 163541888,
+          "totalSize": 164610048,
+          "embedderHeapUsedSize": 360376,
+          "backingStorageSize": 4519513,
+          "wasmBytes": [12451840]
+        },
+        "progress": {
+          "frames": 1320,
+          "pendingRequests": 0,
+          "queuedNotices": 0
+        },
+        "worker": {
+          "usedSize": 284089308,
+          "totalSize": 286785536,
+          "embedderHeapUsedSize": 20128,
+          "backingStorageSize": 446133,
+          "wasmBytes": [19005440]
+        }
+      },
+      {
+        "completed": 2400,
+        "main": {
+          "usedSize": 163541672,
+          "totalSize": 164610048,
+          "embedderHeapUsedSize": 360376,
+          "backingStorageSize": 4519513,
+          "wasmBytes": [12451840]
+        },
+        "progress": {
+          "frames": 2520,
+          "pendingRequests": 0,
+          "queuedNotices": 0
+        },
+        "worker": {
+          "usedSize": 284078864,
+          "totalSize": 287571968,
+          "embedderHeapUsedSize": 20128,
+          "backingStorageSize": 446133,
+          "wasmBytes": [19005440]
+        }
+      }
+    ],
+    "lifecycle": [
+      {
+        "contexts": 0,
+        "cycle": 0,
+        "dom": {
+          "documents": 1,
+          "nodes": 8,
+          "jsEventListeners": 0
+        },
+        "main": {
+          "usedSize": 161590976,
+          "totalSize": 164265984,
+          "embedderHeapUsedSize": 398328,
+          "backingStorageSize": 23293714,
+          "wasmBytes": [12451840]
+        }
+      },
+      {
+        "contexts": 0,
+        "cycle": 5,
+        "dom": {
+          "documents": 1,
+          "nodes": 8,
+          "jsEventListeners": 0
+        },
+        "main": {
+          "usedSize": 162923240,
+          "totalSize": 164790272,
+          "embedderHeapUsedSize": 422744,
+          "backingStorageSize": 23294194,
+          "wasmBytes": [12451840]
+        }
+      },
+      {
+        "contexts": 0,
+        "cycle": 6,
+        "dom": {
+          "documents": 1,
+          "nodes": 8,
+          "jsEventListeners": 0
+        },
+        "main": {
+          "usedSize": 162907372,
+          "totalSize": 164790272,
+          "embedderHeapUsedSize": 426216,
+          "backingStorageSize": 23294290,
+          "wasmBytes": [12451840]
+        }
+      }
+    ],
+    "display": [
+      {
+        "frames": 302,
+        "main": {
+          "usedSize": 160803828,
+          "totalSize": 162693120,
+          "embedderHeapUsedSize": 662688,
+          "backingStorageSize": 42758701,
+          "wasmBytes": [12451840]
+        }
+      },
+      {
+        "frames": 606,
+        "main": {
+          "usedSize": 161062444,
+          "totalSize": 163741696,
+          "embedderHeapUsedSize": 659568,
+          "backingStorageSize": 42789253,
+          "wasmBytes": [12451840]
+        }
+      },
+      {
+        "frames": 910,
+        "main": {
+          "usedSize": 161097444,
+          "totalSize": 164528128,
+          "embedderHeapUsedSize": 664608,
+          "backingStorageSize": 42789253,
+          "wasmBytes": [12451840]
+        }
+      }
+    ],
+    "workersAfterDestroy": 0,
+    "retainedDom": {
+      "canvases": [
+        {
+          "width": 0,
+          "height": 0,
+          "connected": false
+        }
+      ],
+      "images": []
+    },
+    "passed": true,
+    "limits": "GC heap/backing storage and logical resources were checked; GPU driver VRAM/RSS was not measured."
+  },
+  "validation": {
+    "unitTestsPassed": 2839,
+    "parityIntegrationTestsPassed": 2,
+    "metalBrowserTestsPassed": 65,
+    "memoryRegressionTestsPassed": 8,
+    "build": "passed",
+    "puppetTypecheck": "passed",
+    "poffoTypecheck": "passed",
+    "oxlint": "passed (existing repository warnings are not errors)",
+    "format": "passed",
+    "remoteCI": "not run",
+    "wallaby": "MCP unavailable and global CLI entrypoint missing; repository Vitest runner used."
+  },
+  "review": {
+    "scope": "Changed scene-order module and its rendering/runtime consumers.",
+    "p0p1": "None found in this scope.",
+    "p2": "One verified repeated-work finding fixed and measured.",
+    "p3p4": "No additional proposals retained.",
+    "verificationGaps": [
+      "FPS uplift varies by execution order and background conditions.",
+      "Physical low-end hardware and other browsers were not benchmarked."
+    ]
+  },
+  "evidenceDirectory": "/private/tmp/puppet-worker-stages-i5kyg1ka"
+}

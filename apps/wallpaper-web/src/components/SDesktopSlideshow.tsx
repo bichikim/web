@@ -5,7 +5,12 @@ import covers from '../../public/music/ash-afternoon/covers.json'
 const SDesktopAlbum = clientOnly(() => import('./SDesktopAlbum'), {lazy: true})
 const EFFECTS = ['directional-wipe', 'cross-warp', 'circle-open', 'rgb-kinetic', 'fade'] as const
 
-export const SDesktopSlideshow = () => {
+interface SDesktopSlideshowProps {
+  /** Suspend the display clock while hidden or masked; omitted advances covers normally. */
+  readonly playing?: boolean
+}
+
+export const SDesktopSlideshow = (props: SDesktopSlideshowProps) => {
   const [image, setImage] = createSignal(0)
   const [prepared, setPrepared] = createSignal(false)
   const [presented, setPresented] = createSignal(false)
@@ -15,7 +20,7 @@ export const SDesktopSlideshow = () => {
   const handlePrepared = () => setPrepared(true)
   const handlePresented = () => setPresented(true)
   const handleNext = () => {
-    if (prepared() && presented()) {
+    if (props.playing !== false && prepared() && presented()) {
       batch(() => {
         setPrepared(false)
         setPresented(false)
@@ -42,7 +47,10 @@ export const SDesktopSlideshow = () => {
               onAnimationEnd={handleNext}
               decoding="async"
               class="absolute inset-0 h-full w-full object-cover object-top [animation-timing-function:linear]"
-              classList={{'animate-desktop-wallpaper': prepared() && presented()}}
+              classList={{
+                '[animation-play-state:paused]!': props.playing === false,
+                'animate-desktop-wallpaper': prepared() && presented(),
+              }}
             />
           </>
         )}

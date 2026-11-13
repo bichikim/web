@@ -1,0 +1,2355 @@
+{
+  "measuredAt": "2026-11-04T17:56:10.995487+09:00",
+  "method": "Completed frame and owner-lifetime stress tests. Explicit Chromium full GC precedes every memory checkpoint. The supplied model remains local.",
+  "finding": {
+    "severity": "P2",
+    "status": "fixed",
+    "trigger": "A mask-only part with renderWhenUsedAsMask=false never enters the display tree.",
+    "cause": "Application.destroy traversed only attached children, leaving an unparented owned mesh and its texture alive. The Pixi global Cache retained its HTMLImageElement.",
+    "heapReferencePath": [
+      "Pixi module cache",
+      "Cache._cache / Cache._cacheMap",
+      "Texture._source",
+      "ImageSource.resource / options.resource",
+      "detached HTMLImageElement"
+    ],
+    "fix": "Destroy unparented owned part meshes, including their textures and sources, before Application destruction. Attached meshes retain the existing teardown path.",
+    "unitRegression": {
+      "path": "src/player/rendering/__tests__/create-player-renderer.spec.ts",
+      "before": "failed: orphan mesh.destroy not called",
+      "after": "12 tests passed, including exactly one release across repeated destroy calls"
+    },
+    "browserRegression": {
+      "path": "visual/__tests__/create-player.memory.integration.tsx",
+      "before": "failed: 12 extra DOM nodes after 12 lifetimes",
+      "after": "passed: no accumulation beyond the 2-node bound"
+    },
+    "integrationIsolation": "vitest.memory.config.ts runs GC tests alone; ordinary visual tests exclude *.memory.integration.tsx."
+  },
+  "steadyWorker": {
+    "configuration": {
+      "cycles": 20,
+      "frames": 12000,
+      "deltaTime": 0.016666666666666666,
+      "model": "/Users/bichi/Downloads/白猫/white-cat-idle-english.poffo",
+      "warmupFrames": 1200
+    },
+    "hashes": {
+      "model": "47c98e7473e79ffb249aa1acb5bed9b7d458f35c7c0d3502f281549c20c55035",
+      "player": "9933534b8b41715448dd9dbb1e5a1a132ba0c1ee3b9fc7312b3912af2a68e664",
+      "worker": "81b34c51925447bd1efb196b30115c73b1e71d498ebd0ba343801050cea1a014"
+    },
+    "metadata": {
+      "parts": 852,
+      "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+      "vertices": 34452
+    },
+    "limits": {
+      "backingStorage": 1048576,
+      "listeners": 8,
+      "mainHeap": 8388608,
+      "nodes": 16,
+      "workerHeap": 1048576
+    },
+    "samples": [
+      {
+        "completed": 0,
+        "main": {
+          "usedSize": 163584384,
+          "totalSize": 164610048,
+          "embedderHeapUsedSize": 356032,
+          "backingStorageSize": 4496010,
+          "wasmBytes": [12451840]
+        },
+        "progress": {
+          "frames": 1200,
+          "pendingRequests": 0,
+          "queuedNotices": 0
+        },
+        "worker": {
+          "usedSize": 284078440,
+          "totalSize": 287571968,
+          "embedderHeapUsedSize": 20128,
+          "backingStorageSize": 441328,
+          "wasmBytes": [16777216]
+        }
+      },
+      {
+        "completed": 3000,
+        "main": {
+          "usedSize": 163538800,
+          "totalSize": 164610048,
+          "embedderHeapUsedSize": 356032,
+          "backingStorageSize": 4496262,
+          "wasmBytes": [12451840]
+        },
+        "progress": {
+          "frames": 4200,
+          "pendingRequests": 0,
+          "queuedNotices": 0
+        },
+        "worker": {
+          "usedSize": 284092424,
+          "totalSize": 287834112,
+          "embedderHeapUsedSize": 20128,
+          "backingStorageSize": 441328,
+          "wasmBytes": [16777216]
+        }
+      },
+      {
+        "completed": 6000,
+        "main": {
+          "usedSize": 163539472,
+          "totalSize": 164610048,
+          "embedderHeapUsedSize": 356032,
+          "backingStorageSize": 4496262,
+          "wasmBytes": [12451840]
+        },
+        "progress": {
+          "frames": 7200,
+          "pendingRequests": 0,
+          "queuedNotices": 0
+        },
+        "worker": {
+          "usedSize": 284070296,
+          "totalSize": 287834112,
+          "embedderHeapUsedSize": 20128,
+          "backingStorageSize": 441328,
+          "wasmBytes": [16777216]
+        }
+      },
+      {
+        "completed": 12000,
+        "main": {
+          "usedSize": 163538920,
+          "totalSize": 164610048,
+          "embedderHeapUsedSize": 356032,
+          "backingStorageSize": 4496262,
+          "wasmBytes": [12451840]
+        },
+        "progress": {
+          "frames": 13200,
+          "pendingRequests": 0,
+          "queuedNotices": 0
+        },
+        "worker": {
+          "usedSize": 284085668,
+          "totalSize": 287571968,
+          "embedderHeapUsedSize": 20128,
+          "backingStorageSize": 441328,
+          "wasmBytes": [16777216]
+        }
+      }
+    ],
+    "lifecycle": [
+      {
+        "cycle": 0,
+        "contexts": 0,
+        "dom": {
+          "documents": 1,
+          "nodes": 10,
+          "jsEventListeners": 0
+        },
+        "main": {
+          "usedSize": 157261152,
+          "totalSize": 160595968,
+          "embedderHeapUsedSize": 395584,
+          "backingStorageSize": 23256297,
+          "wasmBytes": [12451840]
+        }
+      },
+      {
+        "cycle": 5,
+        "contexts": 0,
+        "dom": {
+          "documents": 1,
+          "nodes": 10,
+          "jsEventListeners": 0
+        },
+        "main": {
+          "usedSize": 159367252,
+          "totalSize": 160858112,
+          "embedderHeapUsedSize": 411960,
+          "backingStorageSize": 23266879,
+          "wasmBytes": [12451840]
+        }
+      },
+      {
+        "cycle": 10,
+        "contexts": 0,
+        "dom": {
+          "documents": 1,
+          "nodes": 10,
+          "jsEventListeners": 0
+        },
+        "main": {
+          "usedSize": 159854380,
+          "totalSize": 161644544,
+          "embedderHeapUsedSize": 426120,
+          "backingStorageSize": 23267359,
+          "wasmBytes": [12451840]
+        }
+      },
+      {
+        "cycle": 15,
+        "contexts": 0,
+        "dom": {
+          "documents": 1,
+          "nodes": 10,
+          "jsEventListeners": 0
+        },
+        "main": {
+          "usedSize": 159976576,
+          "totalSize": 161906688,
+          "embedderHeapUsedSize": 442336,
+          "backingStorageSize": 23267839,
+          "wasmBytes": [12451840]
+        }
+      },
+      {
+        "cycle": 20,
+        "contexts": 0,
+        "dom": {
+          "documents": 1,
+          "nodes": 10,
+          "jsEventListeners": 0
+        },
+        "main": {
+          "usedSize": 160074180,
+          "totalSize": 161906688,
+          "embedderHeapUsedSize": 456440,
+          "backingStorageSize": 23268319,
+          "wasmBytes": [12451840]
+        }
+      }
+    ],
+    "workersAfterDestroy": 0,
+    "elapsedMillis": 224976,
+    "passed": true
+  },
+  "steadyDisplayedPlayback": {
+    "configuration": {
+      "cycles": 2,
+      "displayFrames": 3000,
+      "deltaTime": 0.016666666666666666,
+      "frames": 60,
+      "model": "/Users/bichi/Downloads/白猫/white-cat-idle-english.poffo",
+      "warmupFrames": 60
+    },
+    "hashes": {
+      "model": "47c98e7473e79ffb249aa1acb5bed9b7d458f35c7c0d3502f281549c20c55035",
+      "player": "9933534b8b41715448dd9dbb1e5a1a132ba0c1ee3b9fc7312b3912af2a68e664",
+      "worker": "81b34c51925447bd1efb196b30115c73b1e71d498ebd0ba343801050cea1a014"
+    },
+    "metadata": {
+      "parts": 852,
+      "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+      "vertices": 34452
+    },
+    "limits": {
+      "backingStorage": 1048576,
+      "listeners": 8,
+      "mainHeap": 8388608,
+      "nodes": 16,
+      "workerHeap": 1048576
+    },
+    "samples": [
+      {
+        "completed": 0,
+        "main": {
+          "usedSize": 163584876,
+          "totalSize": 165134336,
+          "embedderHeapUsedSize": 360408,
+          "backingStorageSize": 4497631,
+          "wasmBytes": [12451840]
+        },
+        "progress": {
+          "frames": 60,
+          "pendingRequests": 0,
+          "queuedNotices": 0
+        },
+        "worker": {
+          "usedSize": 283735924,
+          "totalSize": 285474816,
+          "embedderHeapUsedSize": 20128,
+          "backingStorageSize": 441328,
+          "wasmBytes": [16777216]
+        }
+      },
+      {
+        "completed": 15,
+        "main": {
+          "usedSize": 163539268,
+          "totalSize": 164347904,
+          "embedderHeapUsedSize": 360376,
+          "backingStorageSize": 4497883,
+          "wasmBytes": [12451840]
+        },
+        "progress": {
+          "frames": 75,
+          "pendingRequests": 0,
+          "queuedNotices": 0
+        },
+        "worker": {
+          "usedSize": 283680016,
+          "totalSize": 284950528,
+          "embedderHeapUsedSize": 20128,
+          "backingStorageSize": 441328,
+          "wasmBytes": [16777216]
+        }
+      },
+      {
+        "completed": 30,
+        "main": {
+          "usedSize": 163539856,
+          "totalSize": 164347904,
+          "embedderHeapUsedSize": 360376,
+          "backingStorageSize": 4497883,
+          "wasmBytes": [12451840]
+        },
+        "progress": {
+          "frames": 90,
+          "pendingRequests": 0,
+          "queuedNotices": 0
+        },
+        "worker": {
+          "usedSize": 283682336,
+          "totalSize": 285212672,
+          "embedderHeapUsedSize": 20128,
+          "backingStorageSize": 441328,
+          "wasmBytes": [16777216]
+        }
+      },
+      {
+        "completed": 60,
+        "main": {
+          "usedSize": 163539304,
+          "totalSize": 164610048,
+          "embedderHeapUsedSize": 360376,
+          "backingStorageSize": 4497883,
+          "wasmBytes": [12451840]
+        },
+        "progress": {
+          "frames": 120,
+          "pendingRequests": 0,
+          "queuedNotices": 0
+        },
+        "worker": {
+          "usedSize": 283720724,
+          "totalSize": 285474816,
+          "embedderHeapUsedSize": 20128,
+          "backingStorageSize": 441328,
+          "wasmBytes": [16777216]
+        }
+      }
+    ],
+    "display": [
+      {
+        "frames": 302,
+        "main": {
+          "usedSize": 160699024,
+          "totalSize": 162955264,
+          "embedderHeapUsedSize": 782648,
+          "backingStorageSize": 42273618,
+          "wasmBytes": [12451840]
+        }
+      },
+      {
+        "frames": 1806,
+        "main": {
+          "usedSize": 161066472,
+          "totalSize": 165838848,
+          "embedderHeapUsedSize": 762064,
+          "backingStorageSize": 42304170,
+          "wasmBytes": [12451840]
+        }
+      },
+      {
+        "frames": 3310,
+        "main": {
+          "usedSize": 160695372,
+          "totalSize": 162168832,
+          "embedderHeapUsedSize": 720136,
+          "backingStorageSize": 42304170,
+          "wasmBytes": [12451840]
+        }
+      }
+    ],
+    "lifecycle": [
+      {
+        "contexts": 0,
+        "cycle": 0,
+        "dom": {
+          "documents": 1,
+          "nodes": 10,
+          "jsEventListeners": 0
+        },
+        "main": {
+          "usedSize": 161572404,
+          "totalSize": 162430976,
+          "embedderHeapUsedSize": 404704,
+          "backingStorageSize": 23268116,
+          "wasmBytes": [12451840]
+        }
+      },
+      {
+        "contexts": 0,
+        "cycle": 2,
+        "dom": {
+          "documents": 1,
+          "nodes": 10,
+          "jsEventListeners": 0
+        },
+        "main": {
+          "usedSize": 162151140,
+          "totalSize": 163217408,
+          "embedderHeapUsedSize": 410864,
+          "backingStorageSize": 23268308,
+          "wasmBytes": [12451840]
+        }
+      }
+    ],
+    "workersAfterDestroy": 0,
+    "elapsedMillis": 99710,
+    "passed": true
+  },
+  "developmentLifecycleBefore": {
+    "configuration": {
+      "cycles": 100,
+      "deltaTime": 0.016666666666666666,
+      "displayFrames": 30,
+      "frames": 60,
+      "model": "packages/puppet/examples/development-model.json",
+      "warmupFrames": 60
+    },
+    "hashes": {
+      "model": "d2ee88f9f8a50273f7919bdd3b52691418a3d0d60e3501609edb7b175e81bfb5",
+      "player": "9933534b8b41715448dd9dbb1e5a1a132ba0c1ee3b9fc7312b3912af2a68e664",
+      "worker": "81b34c51925447bd1efb196b30115c73b1e71d498ebd0ba343801050cea1a014"
+    },
+    "metadata": {
+      "parts": 122,
+      "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+      "vertices": 20297
+    },
+    "limits": {
+      "backingStorage": 1048576,
+      "listeners": 8,
+      "mainHeap": 8388608,
+      "nodes": 16,
+      "workerHeap": 1048576
+    },
+    "samples": [
+      {
+        "completed": 0,
+        "main": {
+          "usedSize": 34480900,
+          "totalSize": 37175296,
+          "embedderHeapUsedSize": 356440,
+          "backingStorageSize": 22758395,
+          "wasmBytes": []
+        },
+        "progress": {
+          "frames": 60,
+          "pendingRequests": 0,
+          "queuedNotices": 0
+        },
+        "worker": {
+          "usedSize": 33841388,
+          "totalSize": 37027840,
+          "embedderHeapUsedSize": 20000,
+          "backingStorageSize": 355928,
+          "wasmBytes": []
+        }
+      },
+      {
+        "completed": 15,
+        "main": {
+          "usedSize": 34434388,
+          "totalSize": 34816000,
+          "embedderHeapUsedSize": 356440,
+          "backingStorageSize": 22758647,
+          "wasmBytes": []
+        },
+        "progress": {
+          "frames": 75,
+          "pendingRequests": 0,
+          "queuedNotices": 0
+        },
+        "worker": {
+          "usedSize": 33900560,
+          "totalSize": 35717120,
+          "embedderHeapUsedSize": 20000,
+          "backingStorageSize": 359296,
+          "wasmBytes": []
+        }
+      },
+      {
+        "completed": 30,
+        "main": {
+          "usedSize": 34434976,
+          "totalSize": 34816000,
+          "embedderHeapUsedSize": 356440,
+          "backingStorageSize": 22758647,
+          "wasmBytes": []
+        },
+        "progress": {
+          "frames": 90,
+          "pendingRequests": 0,
+          "queuedNotices": 0
+        },
+        "worker": {
+          "usedSize": 33897640,
+          "totalSize": 36241408,
+          "embedderHeapUsedSize": 20000,
+          "backingStorageSize": 359296,
+          "wasmBytes": []
+        }
+      },
+      {
+        "completed": 60,
+        "main": {
+          "usedSize": 34434424,
+          "totalSize": 34816000,
+          "embedderHeapUsedSize": 356440,
+          "backingStorageSize": 22758647,
+          "wasmBytes": []
+        },
+        "progress": {
+          "frames": 120,
+          "pendingRequests": 0,
+          "queuedNotices": 0
+        },
+        "worker": {
+          "usedSize": 33935404,
+          "totalSize": 35979264,
+          "embedderHeapUsedSize": 20000,
+          "backingStorageSize": 359296,
+          "wasmBytes": []
+        }
+      }
+    ],
+    "display": [
+      {
+        "frames": 302,
+        "main": {
+          "usedSize": 39188024,
+          "totalSize": 40468480,
+          "embedderHeapUsedSize": 1280968,
+          "backingStorageSize": 27671776,
+          "wasmBytes": []
+        }
+      },
+      {
+        "frames": 321,
+        "main": {
+          "usedSize": 38967936,
+          "totalSize": 40206336,
+          "embedderHeapUsedSize": 1280816,
+          "backingStorageSize": 27682748,
+          "wasmBytes": []
+        }
+      },
+      {
+        "frames": 340,
+        "main": {
+          "usedSize": 38978604,
+          "totalSize": 40206336,
+          "embedderHeapUsedSize": 1266720,
+          "backingStorageSize": 27682748,
+          "wasmBytes": []
+        }
+      }
+    ],
+    "lifecycle": [
+      {
+        "contexts": 0,
+        "cycle": 0,
+        "dom": {
+          "documents": 2,
+          "nodes": 92,
+          "jsEventListeners": 0
+        },
+        "main": {
+          "usedSize": 37547040,
+          "totalSize": 38109184,
+          "embedderHeapUsedSize": 812440,
+          "backingStorageSize": 22682763,
+          "wasmBytes": []
+        }
+      },
+      {
+        "contexts": 0,
+        "cycle": 5,
+        "dom": {
+          "documents": 2,
+          "nodes": 97,
+          "jsEventListeners": 0
+        },
+        "main": {
+          "usedSize": 38116168,
+          "totalSize": 38895616,
+          "embedderHeapUsedSize": 864288,
+          "backingStorageSize": 22687839,
+          "wasmBytes": []
+        }
+      },
+      {
+        "contexts": 0,
+        "cycle": 10,
+        "dom": {
+          "documents": 2,
+          "nodes": 102,
+          "jsEventListeners": 0
+        },
+        "main": {
+          "usedSize": 38634096,
+          "totalSize": 39419904,
+          "embedderHeapUsedSize": 900384,
+          "backingStorageSize": 22688619,
+          "wasmBytes": []
+        }
+      },
+      {
+        "contexts": 0,
+        "cycle": 15,
+        "dom": {
+          "documents": 2,
+          "nodes": 107,
+          "jsEventListeners": 0
+        },
+        "main": {
+          "usedSize": 38706240,
+          "totalSize": 39419904,
+          "embedderHeapUsedSize": 934104,
+          "backingStorageSize": 22689399,
+          "wasmBytes": []
+        }
+      },
+      {
+        "contexts": 0,
+        "cycle": 20,
+        "dom": {
+          "documents": 2,
+          "nodes": 112,
+          "jsEventListeners": 0
+        },
+        "main": {
+          "usedSize": 38843060,
+          "totalSize": 39682048,
+          "embedderHeapUsedSize": 1003816,
+          "backingStorageSize": 22690179,
+          "wasmBytes": []
+        }
+      },
+      {
+        "contexts": 0,
+        "cycle": 25,
+        "dom": {
+          "documents": 2,
+          "nodes": 117,
+          "jsEventListeners": 0
+        },
+        "main": {
+          "usedSize": 38918944,
+          "totalSize": 39944192,
+          "embedderHeapUsedSize": 1038416,
+          "backingStorageSize": 22690959,
+          "wasmBytes": []
+        }
+      },
+      {
+        "contexts": 0,
+        "cycle": 30,
+        "dom": {
+          "documents": 2,
+          "nodes": 122,
+          "jsEventListeners": 0
+        },
+        "main": {
+          "usedSize": 39032892,
+          "totalSize": 39944192,
+          "embedderHeapUsedSize": 1089376,
+          "backingStorageSize": 22691739,
+          "wasmBytes": []
+        }
+      },
+      {
+        "contexts": 0,
+        "cycle": 35,
+        "dom": {
+          "documents": 2,
+          "nodes": 127,
+          "jsEventListeners": 0
+        },
+        "main": {
+          "usedSize": 39118500,
+          "totalSize": 40206336,
+          "embedderHeapUsedSize": 1144440,
+          "backingStorageSize": 22692519,
+          "wasmBytes": []
+        }
+      },
+      {
+        "contexts": 0,
+        "cycle": 40,
+        "dom": {
+          "documents": 2,
+          "nodes": 132,
+          "jsEventListeners": 0
+        },
+        "main": {
+          "usedSize": 39254612,
+          "totalSize": 40206336,
+          "embedderHeapUsedSize": 1226856,
+          "backingStorageSize": 22693299,
+          "wasmBytes": []
+        }
+      },
+      {
+        "contexts": 0,
+        "cycle": 45,
+        "dom": {
+          "documents": 2,
+          "nodes": 137,
+          "jsEventListeners": 0
+        },
+        "main": {
+          "usedSize": 39349908,
+          "totalSize": 40468480,
+          "embedderHeapUsedSize": 1285232,
+          "backingStorageSize": 22694079,
+          "wasmBytes": []
+        }
+      },
+      {
+        "contexts": 0,
+        "cycle": 50,
+        "dom": {
+          "documents": 2,
+          "nodes": 142,
+          "jsEventListeners": 0
+        },
+        "main": {
+          "usedSize": 39412692,
+          "totalSize": 40468480,
+          "embedderHeapUsedSize": 1334368,
+          "backingStorageSize": 22694859,
+          "wasmBytes": []
+        }
+      },
+      {
+        "contexts": 0,
+        "cycle": 55,
+        "dom": {
+          "documents": 2,
+          "nodes": 147,
+          "jsEventListeners": 0
+        },
+        "main": {
+          "usedSize": 39531164,
+          "totalSize": 40468480,
+          "embedderHeapUsedSize": 1387592,
+          "backingStorageSize": 22695639,
+          "wasmBytes": []
+        }
+      },
+      {
+        "contexts": 0,
+        "cycle": 60,
+        "dom": {
+          "documents": 2,
+          "nodes": 152,
+          "jsEventListeners": 0
+        },
+        "main": {
+          "usedSize": 39610924,
+          "totalSize": 40730624,
+          "embedderHeapUsedSize": 1447144,
+          "backingStorageSize": 22696419,
+          "wasmBytes": []
+        }
+      },
+      {
+        "contexts": 0,
+        "cycle": 65,
+        "dom": {
+          "documents": 2,
+          "nodes": 157,
+          "jsEventListeners": 0
+        },
+        "main": {
+          "usedSize": 39703940,
+          "totalSize": 40730624,
+          "embedderHeapUsedSize": 1504944,
+          "backingStorageSize": 22697199,
+          "wasmBytes": []
+        }
+      },
+      {
+        "contexts": 0,
+        "cycle": 70,
+        "dom": {
+          "documents": 2,
+          "nodes": 162,
+          "jsEventListeners": 0
+        },
+        "main": {
+          "usedSize": 39817416,
+          "totalSize": 40730624,
+          "embedderHeapUsedSize": 1556792,
+          "backingStorageSize": 22697979,
+          "wasmBytes": []
+        }
+      },
+      {
+        "contexts": 0,
+        "cycle": 75,
+        "dom": {
+          "documents": 2,
+          "nodes": 167,
+          "jsEventListeners": 0
+        },
+        "main": {
+          "usedSize": 39911432,
+          "totalSize": 40992768,
+          "embedderHeapUsedSize": 1675416,
+          "backingStorageSize": 22698759,
+          "wasmBytes": []
+        }
+      },
+      {
+        "contexts": 0,
+        "cycle": 80,
+        "dom": {
+          "documents": 2,
+          "nodes": 172,
+          "jsEventListeners": 0
+        },
+        "main": {
+          "usedSize": 40072448,
+          "totalSize": 40992768,
+          "embedderHeapUsedSize": 1728272,
+          "backingStorageSize": 22699539,
+          "wasmBytes": []
+        }
+      },
+      {
+        "contexts": 0,
+        "cycle": 85,
+        "dom": {
+          "documents": 2,
+          "nodes": 177,
+          "jsEventListeners": 0
+        },
+        "main": {
+          "usedSize": 40181376,
+          "totalSize": 41254912,
+          "embedderHeapUsedSize": 1782152,
+          "backingStorageSize": 22700319,
+          "wasmBytes": []
+        }
+      },
+      {
+        "contexts": 0,
+        "cycle": 90,
+        "dom": {
+          "documents": 2,
+          "nodes": 182,
+          "jsEventListeners": 0
+        },
+        "main": {
+          "usedSize": 40273532,
+          "totalSize": 41254912,
+          "embedderHeapUsedSize": 1831944,
+          "backingStorageSize": 22701099,
+          "wasmBytes": []
+        }
+      },
+      {
+        "contexts": 0,
+        "cycle": 95,
+        "dom": {
+          "documents": 2,
+          "nodes": 187,
+          "jsEventListeners": 0
+        },
+        "main": {
+          "usedSize": 40354924,
+          "totalSize": 41517056,
+          "embedderHeapUsedSize": 1885424,
+          "backingStorageSize": 22701879,
+          "wasmBytes": []
+        }
+      },
+      {
+        "contexts": 0,
+        "cycle": 100,
+        "dom": {
+          "documents": 2,
+          "nodes": 192,
+          "jsEventListeners": 0
+        },
+        "main": {
+          "usedSize": 40434268,
+          "totalSize": 41517056,
+          "embedderHeapUsedSize": 1931960,
+          "backingStorageSize": 22702659,
+          "wasmBytes": []
+        }
+      }
+    ],
+    "elapsedMillis": 146236,
+    "passed": false,
+    "failure": "AssertionError [ERR_ASSERTION]: Disposed canvases retain DOM nodes\n    at file:///Users/bichi/.codex/worktrees/48ee/web/packages/puppet/visual/playback-memory.mjs:365:5",
+    "numericKernel": "javascript"
+  },
+  "developmentLifecycleAfter": {
+    "configuration": {
+      "cycles": 100,
+      "deltaTime": 0.016666666666666666,
+      "displayFrames": 30,
+      "frames": 60,
+      "model": "packages/puppet/examples/development-model.json",
+      "warmupFrames": 60
+    },
+    "hashes": {
+      "model": "d2ee88f9f8a50273f7919bdd3b52691418a3d0d60e3501609edb7b175e81bfb5",
+      "player": "cfb95183f8b137227999131b14c8c61edf3491482552cee8ff830368bda06d23",
+      "worker": "81b34c51925447bd1efb196b30115c73b1e71d498ebd0ba343801050cea1a014"
+    },
+    "metadata": {
+      "parts": 122,
+      "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+      "vertices": 20297
+    },
+    "limits": {
+      "backingStorage": 1048576,
+      "listeners": 8,
+      "mainHeap": 8388608,
+      "nodes": 16,
+      "workerHeap": 1048576
+    },
+    "samples": [
+      {
+        "completed": 0,
+        "main": {
+          "usedSize": 34480988,
+          "totalSize": 36913152,
+          "embedderHeapUsedSize": 356440,
+          "backingStorageSize": 22758531,
+          "wasmBytes": []
+        },
+        "progress": {
+          "frames": 60,
+          "pendingRequests": 0,
+          "queuedNotices": 0
+        },
+        "worker": {
+          "usedSize": 33841092,
+          "totalSize": 35979264,
+          "embedderHeapUsedSize": 20000,
+          "backingStorageSize": 355928,
+          "wasmBytes": []
+        }
+      },
+      {
+        "completed": 15,
+        "main": {
+          "usedSize": 34434476,
+          "totalSize": 35078144,
+          "embedderHeapUsedSize": 356440,
+          "backingStorageSize": 22758783,
+          "wasmBytes": []
+        },
+        "progress": {
+          "frames": 75,
+          "pendingRequests": 0,
+          "queuedNotices": 0
+        },
+        "worker": {
+          "usedSize": 33900652,
+          "totalSize": 36765696,
+          "embedderHeapUsedSize": 20000,
+          "backingStorageSize": 359296,
+          "wasmBytes": []
+        }
+      },
+      {
+        "completed": 30,
+        "main": {
+          "usedSize": 34435064,
+          "totalSize": 35078144,
+          "embedderHeapUsedSize": 356440,
+          "backingStorageSize": 22758783,
+          "wasmBytes": []
+        },
+        "progress": {
+          "frames": 90,
+          "pendingRequests": 0,
+          "queuedNotices": 0
+        },
+        "worker": {
+          "usedSize": 33897128,
+          "totalSize": 36765696,
+          "embedderHeapUsedSize": 20000,
+          "backingStorageSize": 359296,
+          "wasmBytes": []
+        }
+      },
+      {
+        "completed": 60,
+        "main": {
+          "usedSize": 34434512,
+          "totalSize": 35078144,
+          "embedderHeapUsedSize": 356440,
+          "backingStorageSize": 22758783,
+          "wasmBytes": []
+        },
+        "progress": {
+          "frames": 120,
+          "pendingRequests": 0,
+          "queuedNotices": 0
+        },
+        "worker": {
+          "usedSize": 33935360,
+          "totalSize": 37289984,
+          "embedderHeapUsedSize": 20000,
+          "backingStorageSize": 359296,
+          "wasmBytes": []
+        }
+      }
+    ],
+    "display": [
+      {
+        "frames": 302,
+        "main": {
+          "usedSize": 39183724,
+          "totalSize": 40468480,
+          "embedderHeapUsedSize": 1309040,
+          "backingStorageSize": 27671912,
+          "wasmBytes": []
+        }
+      },
+      {
+        "frames": 321,
+        "main": {
+          "usedSize": 38960788,
+          "totalSize": 40206336,
+          "embedderHeapUsedSize": 1316384,
+          "backingStorageSize": 27682884,
+          "wasmBytes": []
+        }
+      },
+      {
+        "frames": 340,
+        "main": {
+          "usedSize": 38973376,
+          "totalSize": 40206336,
+          "embedderHeapUsedSize": 1302792,
+          "backingStorageSize": 27682884,
+          "wasmBytes": []
+        }
+      }
+    ],
+    "lifecycle": [
+      {
+        "contexts": 0,
+        "cycle": 0,
+        "dom": {
+          "documents": 2,
+          "nodes": 90,
+          "jsEventListeners": 0
+        },
+        "main": {
+          "usedSize": 37541596,
+          "totalSize": 38371328,
+          "embedderHeapUsedSize": 812608,
+          "backingStorageSize": 22682779,
+          "wasmBytes": []
+        }
+      },
+      {
+        "contexts": 0,
+        "cycle": 5,
+        "dom": {
+          "documents": 2,
+          "nodes": 90,
+          "jsEventListeners": 0
+        },
+        "main": {
+          "usedSize": 38062384,
+          "totalSize": 38633472,
+          "embedderHeapUsedSize": 875696,
+          "backingStorageSize": 22687555,
+          "wasmBytes": []
+        }
+      },
+      {
+        "contexts": 0,
+        "cycle": 10,
+        "dom": {
+          "documents": 2,
+          "nodes": 90,
+          "jsEventListeners": 0
+        },
+        "main": {
+          "usedSize": 38557192,
+          "totalSize": 39419904,
+          "embedderHeapUsedSize": 928576,
+          "backingStorageSize": 22688035,
+          "wasmBytes": []
+        }
+      },
+      {
+        "contexts": 0,
+        "cycle": 15,
+        "dom": {
+          "documents": 2,
+          "nodes": 90,
+          "jsEventListeners": 0
+        },
+        "main": {
+          "usedSize": 38631088,
+          "totalSize": 39682048,
+          "embedderHeapUsedSize": 992656,
+          "backingStorageSize": 22688515,
+          "wasmBytes": []
+        }
+      },
+      {
+        "contexts": 0,
+        "cycle": 20,
+        "dom": {
+          "documents": 2,
+          "nodes": 90,
+          "jsEventListeners": 0
+        },
+        "main": {
+          "usedSize": 38755464,
+          "totalSize": 39682048,
+          "embedderHeapUsedSize": 1047280,
+          "backingStorageSize": 22688995,
+          "wasmBytes": []
+        }
+      },
+      {
+        "contexts": 0,
+        "cycle": 25,
+        "dom": {
+          "documents": 2,
+          "nodes": 90,
+          "jsEventListeners": 0
+        },
+        "main": {
+          "usedSize": 38837208,
+          "totalSize": 39944192,
+          "embedderHeapUsedSize": 1104392,
+          "backingStorageSize": 22689475,
+          "wasmBytes": []
+        }
+      },
+      {
+        "contexts": 0,
+        "cycle": 30,
+        "dom": {
+          "documents": 2,
+          "nodes": 90,
+          "jsEventListeners": 0
+        },
+        "main": {
+          "usedSize": 38920296,
+          "totalSize": 39944192,
+          "embedderHeapUsedSize": 1194944,
+          "backingStorageSize": 22689955,
+          "wasmBytes": []
+        }
+      },
+      {
+        "contexts": 0,
+        "cycle": 35,
+        "dom": {
+          "documents": 2,
+          "nodes": 90,
+          "jsEventListeners": 0
+        },
+        "main": {
+          "usedSize": 39000436,
+          "totalSize": 39944192,
+          "embedderHeapUsedSize": 1254392,
+          "backingStorageSize": 22690435,
+          "wasmBytes": []
+        }
+      },
+      {
+        "contexts": 0,
+        "cycle": 40,
+        "dom": {
+          "documents": 2,
+          "nodes": 90,
+          "jsEventListeners": 0
+        },
+        "main": {
+          "usedSize": 39128916,
+          "totalSize": 39944192,
+          "embedderHeapUsedSize": 1307952,
+          "backingStorageSize": 22690915,
+          "wasmBytes": []
+        }
+      },
+      {
+        "contexts": 0,
+        "cycle": 45,
+        "dom": {
+          "documents": 2,
+          "nodes": 90,
+          "jsEventListeners": 0
+        },
+        "main": {
+          "usedSize": 39206392,
+          "totalSize": 40206336,
+          "embedderHeapUsedSize": 1364584,
+          "backingStorageSize": 22691395,
+          "wasmBytes": []
+        }
+      },
+      {
+        "contexts": 0,
+        "cycle": 50,
+        "dom": {
+          "documents": 2,
+          "nodes": 90,
+          "jsEventListeners": 0
+        },
+        "main": {
+          "usedSize": 39274232,
+          "totalSize": 40206336,
+          "embedderHeapUsedSize": 1423704,
+          "backingStorageSize": 22691875,
+          "wasmBytes": []
+        }
+      },
+      {
+        "contexts": 0,
+        "cycle": 55,
+        "dom": {
+          "documents": 2,
+          "nodes": 90,
+          "jsEventListeners": 0
+        },
+        "main": {
+          "usedSize": 39363156,
+          "totalSize": 40468480,
+          "embedderHeapUsedSize": 1479424,
+          "backingStorageSize": 22692355,
+          "wasmBytes": []
+        }
+      },
+      {
+        "contexts": 0,
+        "cycle": 60,
+        "dom": {
+          "documents": 2,
+          "nodes": 90,
+          "jsEventListeners": 0
+        },
+        "main": {
+          "usedSize": 39431892,
+          "totalSize": 40468480,
+          "embedderHeapUsedSize": 1601440,
+          "backingStorageSize": 22692835,
+          "wasmBytes": []
+        }
+      },
+      {
+        "contexts": 0,
+        "cycle": 65,
+        "dom": {
+          "documents": 2,
+          "nodes": 90,
+          "jsEventListeners": 0
+        },
+        "main": {
+          "usedSize": 39527828,
+          "totalSize": 40468480,
+          "embedderHeapUsedSize": 1654352,
+          "backingStorageSize": 22693315,
+          "wasmBytes": []
+        }
+      },
+      {
+        "contexts": 0,
+        "cycle": 70,
+        "dom": {
+          "documents": 2,
+          "nodes": 90,
+          "jsEventListeners": 0
+        },
+        "main": {
+          "usedSize": 39629016,
+          "totalSize": 40730624,
+          "embedderHeapUsedSize": 1705512,
+          "backingStorageSize": 22693795,
+          "wasmBytes": []
+        }
+      },
+      {
+        "contexts": 0,
+        "cycle": 75,
+        "dom": {
+          "documents": 2,
+          "nodes": 90,
+          "jsEventListeners": 0
+        },
+        "main": {
+          "usedSize": 39715660,
+          "totalSize": 40730624,
+          "embedderHeapUsedSize": 1756728,
+          "backingStorageSize": 22694275,
+          "wasmBytes": []
+        }
+      },
+      {
+        "contexts": 0,
+        "cycle": 80,
+        "dom": {
+          "documents": 2,
+          "nodes": 90,
+          "jsEventListeners": 0
+        },
+        "main": {
+          "usedSize": 39854908,
+          "totalSize": 40730624,
+          "embedderHeapUsedSize": 1808816,
+          "backingStorageSize": 22694755,
+          "wasmBytes": []
+        }
+      },
+      {
+        "contexts": 0,
+        "cycle": 85,
+        "dom": {
+          "documents": 2,
+          "nodes": 90,
+          "jsEventListeners": 0
+        },
+        "main": {
+          "usedSize": 39961652,
+          "totalSize": 40992768,
+          "embedderHeapUsedSize": 1861432,
+          "backingStorageSize": 22695235,
+          "wasmBytes": []
+        }
+      },
+      {
+        "contexts": 0,
+        "cycle": 90,
+        "dom": {
+          "documents": 2,
+          "nodes": 90,
+          "jsEventListeners": 0
+        },
+        "main": {
+          "usedSize": 40030644,
+          "totalSize": 40992768,
+          "embedderHeapUsedSize": 1912488,
+          "backingStorageSize": 22695715,
+          "wasmBytes": []
+        }
+      },
+      {
+        "contexts": 0,
+        "cycle": 95,
+        "dom": {
+          "documents": 2,
+          "nodes": 90,
+          "jsEventListeners": 0
+        },
+        "main": {
+          "usedSize": 40120380,
+          "totalSize": 40992768,
+          "embedderHeapUsedSize": 1961240,
+          "backingStorageSize": 22696195,
+          "wasmBytes": []
+        }
+      },
+      {
+        "contexts": 0,
+        "cycle": 100,
+        "dom": {
+          "documents": 2,
+          "nodes": 90,
+          "jsEventListeners": 0
+        },
+        "main": {
+          "usedSize": 40183616,
+          "totalSize": 41254912,
+          "embedderHeapUsedSize": 2010432,
+          "backingStorageSize": 22696675,
+          "wasmBytes": []
+        }
+      }
+    ],
+    "workersAfterDestroy": 0,
+    "elapsedMillis": 146845,
+    "passed": true,
+    "numericKernel": "javascript"
+  },
+  "whiteCatLifecycleAfter": {
+    "configuration": {
+      "cycles": 20,
+      "deltaTime": 0.016666666666666666,
+      "displayFrames": 30,
+      "frames": 60,
+      "model": "/Users/bichi/Downloads/白猫/white-cat-idle-english.poffo",
+      "warmupFrames": 60
+    },
+    "hashes": {
+      "model": "47c98e7473e79ffb249aa1acb5bed9b7d458f35c7c0d3502f281549c20c55035",
+      "player": "cfb95183f8b137227999131b14c8c61edf3491482552cee8ff830368bda06d23",
+      "worker": "81b34c51925447bd1efb196b30115c73b1e71d498ebd0ba343801050cea1a014"
+    },
+    "metadata": {
+      "parts": 852,
+      "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+      "vertices": 34452
+    },
+    "limits": {
+      "backingStorage": 1048576,
+      "listeners": 8,
+      "mainHeap": 8388608,
+      "nodes": 16,
+      "workerHeap": 1048576
+    },
+    "samples": [
+      {
+        "completed": 0,
+        "main": {
+          "usedSize": 163584880,
+          "totalSize": 164872192,
+          "embedderHeapUsedSize": 360376,
+          "backingStorageSize": 4497857,
+          "wasmBytes": [12451840]
+        },
+        "progress": {
+          "frames": 60,
+          "pendingRequests": 0,
+          "queuedNotices": 0
+        },
+        "worker": {
+          "usedSize": 283736012,
+          "totalSize": 285736960,
+          "embedderHeapUsedSize": 20128,
+          "backingStorageSize": 441328,
+          "wasmBytes": [16777216]
+        }
+      },
+      {
+        "completed": 15,
+        "main": {
+          "usedSize": 163539496,
+          "totalSize": 164610048,
+          "embedderHeapUsedSize": 360376,
+          "backingStorageSize": 4498109,
+          "wasmBytes": [12451840]
+        },
+        "progress": {
+          "frames": 75,
+          "pendingRequests": 0,
+          "queuedNotices": 0
+        },
+        "worker": {
+          "usedSize": 283680016,
+          "totalSize": 285212672,
+          "embedderHeapUsedSize": 20128,
+          "backingStorageSize": 441328,
+          "wasmBytes": [16777216]
+        }
+      },
+      {
+        "completed": 30,
+        "main": {
+          "usedSize": 163540084,
+          "totalSize": 164610048,
+          "embedderHeapUsedSize": 360376,
+          "backingStorageSize": 4498109,
+          "wasmBytes": [12451840]
+        },
+        "progress": {
+          "frames": 90,
+          "pendingRequests": 0,
+          "queuedNotices": 0
+        },
+        "worker": {
+          "usedSize": 283682220,
+          "totalSize": 285212672,
+          "embedderHeapUsedSize": 20128,
+          "backingStorageSize": 441328,
+          "wasmBytes": [16777216]
+        }
+      },
+      {
+        "completed": 60,
+        "main": {
+          "usedSize": 163539532,
+          "totalSize": 164610048,
+          "embedderHeapUsedSize": 360376,
+          "backingStorageSize": 4498109,
+          "wasmBytes": [12451840]
+        },
+        "progress": {
+          "frames": 120,
+          "pendingRequests": 0,
+          "queuedNotices": 0
+        },
+        "worker": {
+          "usedSize": 283720884,
+          "totalSize": 285474816,
+          "embedderHeapUsedSize": 20128,
+          "backingStorageSize": 441328,
+          "wasmBytes": [16777216]
+        }
+      }
+    ],
+    "display": [
+      {
+        "frames": 302,
+        "main": {
+          "usedSize": 160973828,
+          "totalSize": 164528128,
+          "embedderHeapUsedSize": 631096,
+          "backingStorageSize": 42273844,
+          "wasmBytes": [12451840]
+        }
+      },
+      {
+        "frames": 321,
+        "main": {
+          "usedSize": 160444684,
+          "totalSize": 162430976,
+          "embedderHeapUsedSize": 632440,
+          "backingStorageSize": 42304396,
+          "wasmBytes": [12451840]
+        }
+      },
+      {
+        "frames": 340,
+        "main": {
+          "usedSize": 160411352,
+          "totalSize": 162430976,
+          "embedderHeapUsedSize": 621544,
+          "backingStorageSize": 42304396,
+          "wasmBytes": [12451840]
+        }
+      }
+    ],
+    "lifecycle": [
+      {
+        "contexts": 0,
+        "cycle": 0,
+        "dom": {
+          "documents": 1,
+          "nodes": 10,
+          "jsEventListeners": 0
+        },
+        "main": {
+          "usedSize": 161523408,
+          "totalSize": 162430976,
+          "embedderHeapUsedSize": 404544,
+          "backingStorageSize": 23268342,
+          "wasmBytes": [12451840]
+        }
+      },
+      {
+        "contexts": 0,
+        "cycle": 5,
+        "dom": {
+          "documents": 1,
+          "nodes": 10,
+          "jsEventListeners": 0
+        },
+        "main": {
+          "usedSize": 162937052,
+          "totalSize": 164265984,
+          "embedderHeapUsedSize": 420784,
+          "backingStorageSize": 23268822,
+          "wasmBytes": [12451840]
+        }
+      },
+      {
+        "contexts": 0,
+        "cycle": 10,
+        "dom": {
+          "documents": 1,
+          "nodes": 10,
+          "jsEventListeners": 0
+        },
+        "main": {
+          "usedSize": 163430280,
+          "totalSize": 164265984,
+          "embedderHeapUsedSize": 434920,
+          "backingStorageSize": 23269302,
+          "wasmBytes": [12451840]
+        }
+      },
+      {
+        "contexts": 0,
+        "cycle": 15,
+        "dom": {
+          "documents": 1,
+          "nodes": 10,
+          "jsEventListeners": 0
+        },
+        "main": {
+          "usedSize": 163524408,
+          "totalSize": 164528128,
+          "embedderHeapUsedSize": 451056,
+          "backingStorageSize": 23269782,
+          "wasmBytes": [12451840]
+        }
+      },
+      {
+        "contexts": 0,
+        "cycle": 20,
+        "dom": {
+          "documents": 1,
+          "nodes": 10,
+          "jsEventListeners": 0
+        },
+        "main": {
+          "usedSize": 163669760,
+          "totalSize": 164790272,
+          "embedderHeapUsedSize": 465192,
+          "backingStorageSize": 23270262,
+          "wasmBytes": [12451840]
+        }
+      }
+    ],
+    "workersAfterDestroy": 0,
+    "elapsedMillis": 154847,
+    "passed": true,
+    "numericKernel": "wasm"
+  },
+  "summary": {
+    "workerFramesIncludingWarmup": 13200,
+    "workerHeapDeltaBytes": 7228,
+    "workerWasmBytes": [16777216],
+    "displayedFrameNotifications": 3310,
+    "displayHeapDeltaBytes": -3652,
+    "developmentBefore": {
+      "nodes": 100,
+      "listeners": 0,
+      "heapBytes": 2887228,
+      "backingBytes": 19896,
+      "workers": null,
+      "webgl2Contexts": 0
+    },
+    "developmentAfter": {
+      "nodes": 0,
+      "listeners": 0,
+      "heapBytes": 2642020,
+      "backingBytes": 13896,
+      "workers": 0,
+      "webgl2Contexts": 0
+    },
+    "whiteCatAfter": {
+      "nodes": 0,
+      "listeners": 0,
+      "heapBytes": 2146352,
+      "backingBytes": 1920,
+      "workers": 0,
+      "webgl2Contexts": 0
+    }
+  },
+  "detectorControl": {
+    "before": {
+      "usedSize": 283202732,
+      "totalSize": 284688384,
+      "embedderHeapUsedSize": 20128,
+      "backingStorageSize": 441200,
+      "wasmBytes": [16777216]
+    },
+    "released": {
+      "usedSize": 283138120,
+      "totalSize": 283901952,
+      "embedderHeapUsedSize": 20128,
+      "backingStorageSize": 441328,
+      "wasmBytes": [16777216]
+    },
+    "retained": {
+      "usedSize": 283138228,
+      "totalSize": 283901952,
+      "embedderHeapUsedSize": 20128,
+      "backingStorageSize": 8829936,
+      "wasmBytes": [16777216]
+    }
+  },
+  "remainingAllocations": {
+    "developmentAfterTopSampledStacks": [
+      {
+        "bytes": 468288,
+        "stack": [
+          {
+            "function": "contextChange",
+            "url": "http://127.0.0.1:61008/dist/player.js",
+            "line": 7607
+          },
+          {
+            "function": "Kt",
+            "url": "http://127.0.0.1:61008/dist/RenderTargetSystem-Dw-jckJH.js",
+            "line": 931
+          },
+          {
+            "function": "e",
+            "url": "http://127.0.0.1:61008/dist/CanvasPool-D2sbpzQh.js",
+            "line": 3067
+          },
+          {
+            "function": "Y",
+            "url": "http://127.0.0.1:61008/dist/CanvasPool-D2sbpzQh.js",
+            "line": 2974
+          }
+        ]
+      },
+      {
+        "bytes": 363384,
+        "stack": [
+          {
+            "function": "Vv.t.start",
+            "url": "http://127.0.0.1:61008/dist/player.js",
+            "line": 13238
+          },
+          {
+            "function": "zv",
+            "url": "http://127.0.0.1:61008/dist/player.js",
+            "line": 13207
+          },
+          {
+            "function": "e",
+            "url": "http://127.0.0.1:61008/dist/CanvasPool-D2sbpzQh.js",
+            "line": 3067
+          },
+          {
+            "function": "Y",
+            "url": "http://127.0.0.1:61008/dist/CanvasPool-D2sbpzQh.js",
+            "line": 2974
+          }
+        ]
+      },
+      {
+        "bytes": 320624,
+        "stack": [
+          {
+            "function": "init",
+            "url": "http://127.0.0.1:61008/dist/player.js",
+            "line": 7666
+          },
+          {
+            "function": "Kt",
+            "url": "http://127.0.0.1:61008/dist/RenderTargetSystem-Dw-jckJH.js",
+            "line": 931
+          },
+          {
+            "function": "e",
+            "url": "http://127.0.0.1:61008/dist/CanvasPool-D2sbpzQh.js",
+            "line": 3067
+          },
+          {
+            "function": "Y",
+            "url": "http://127.0.0.1:61008/dist/CanvasPool-D2sbpzQh.js",
+            "line": 2974
+          }
+        ]
+      },
+      {
+        "bytes": 147496,
+        "stack": [
+          {
+            "function": "collectRenderables",
+            "url": "http://127.0.0.1:61008/dist/CanvasPool-D2sbpzQh.js",
+            "line": 1836
+          },
+          {
+            "function": "collectRenderablesSimple",
+            "url": "http://127.0.0.1:61008/dist/CanvasPool-D2sbpzQh.js",
+            "line": 2727
+          },
+          {
+            "function": "addRenderable",
+            "url": "http://127.0.0.1:61008/dist/player.js",
+            "line": 4805
+          },
+          {
+            "function": "break",
+            "url": "http://127.0.0.1:61008/dist/RenderTargetSystem-Dw-jckJH.js",
+            "line": 679
+          }
+        ]
+      },
+      {
+        "bytes": 85276,
+        "stack": [
+          {
+            "function": "init",
+            "url": "http://127.0.0.1:61008/dist/RenderTargetSystem-Dw-jckJH.js",
+            "line": 390
+          },
+          {
+            "function": "init",
+            "url": "http://127.0.0.1:61008/dist/player.js",
+            "line": 5941
+          },
+          {
+            "function": "e",
+            "url": "http://127.0.0.1:61008/dist/CanvasPool-D2sbpzQh.js",
+            "line": 3067
+          },
+          {
+            "function": "Y",
+            "url": "http://127.0.0.1:61008/dist/CanvasPool-D2sbpzQh.js",
+            "line": 2974
+          }
+        ]
+      },
+      {
+        "bytes": 80208,
+        "stack": [
+          {
+            "function": "collectRenderablesWithEffects",
+            "url": "http://127.0.0.1:61008/dist/CanvasPool-D2sbpzQh.js",
+            "line": 1843
+          },
+          {
+            "function": "push",
+            "url": "http://127.0.0.1:61008/dist/FilterSystem-DzMeOWYz.js",
+            "line": 1043
+          },
+          {
+            "function": "break",
+            "url": "http://127.0.0.1:61008/dist/RenderTargetSystem-Dw-jckJH.js",
+            "line": 1240
+          },
+          {
+            "function": "break",
+            "url": "http://127.0.0.1:61008/dist/RenderTargetSystem-Dw-jckJH.js",
+            "line": 679
+          }
+        ]
+      },
+      {
+        "bytes": 67752,
+        "stack": [
+          {
+            "function": "collectRenderablesSimple",
+            "url": "http://127.0.0.1:61008/dist/CanvasPool-D2sbpzQh.js",
+            "line": 2727
+          },
+          {
+            "function": "addRenderable",
+            "url": "http://127.0.0.1:61008/dist/player.js",
+            "line": 4805
+          },
+          {
+            "function": "break",
+            "url": "http://127.0.0.1:61008/dist/RenderTargetSystem-Dw-jckJH.js",
+            "line": 1240
+          },
+          {
+            "function": "break",
+            "url": "http://127.0.0.1:61008/dist/RenderTargetSystem-Dw-jckJH.js",
+            "line": 679
+          }
+        ]
+      },
+      {
+        "bytes": 49268,
+        "stack": [
+          {
+            "function": "_addSystems",
+            "url": "http://127.0.0.1:61008/dist/RenderTargetSystem-Dw-jckJH.js",
+            "line": 452
+          },
+          {
+            "function": "_addSystem",
+            "url": "http://127.0.0.1:61008/dist/RenderTargetSystem-Dw-jckJH.js",
+            "line": 459
+          },
+          {
+            "function": "$",
+            "url": "http://127.0.0.1:61008/dist/FilterSystem-DzMeOWYz.js",
+            "line": 1105
+          },
+          {
+            "function": "Float32Array",
+            "url": "",
+            "line": 0
+          }
+        ]
+      },
+      {
+        "bytes": 49228,
+        "stack": [
+          {
+            "function": "_addSystems",
+            "url": "http://127.0.0.1:61008/dist/RenderTargetSystem-Dw-jckJH.js",
+            "line": 452
+          },
+          {
+            "function": "_addSystem",
+            "url": "http://127.0.0.1:61008/dist/RenderTargetSystem-Dw-jckJH.js",
+            "line": 459
+          },
+          {
+            "function": "$",
+            "url": "http://127.0.0.1:61008/dist/FilterSystem-DzMeOWYz.js",
+            "line": 1105
+          },
+          {
+            "function": "e",
+            "url": "http://127.0.0.1:61008/dist/CanvasPool-D2sbpzQh.js",
+            "line": 3552
+          }
+        ]
+      },
+      {
+        "bytes": 43128,
+        "stack": [
+          {
+            "function": "collectRenderables",
+            "url": "http://127.0.0.1:61008/dist/CanvasPool-D2sbpzQh.js",
+            "line": 1836
+          },
+          {
+            "function": "collectRenderablesSimple",
+            "url": "http://127.0.0.1:61008/dist/CanvasPool-D2sbpzQh.js",
+            "line": 2727
+          },
+          {
+            "function": "addRenderable",
+            "url": "http://127.0.0.1:61008/dist/player.js",
+            "line": 4805
+          },
+          {
+            "function": "break",
+            "url": "http://127.0.0.1:61008/dist/RenderTargetSystem-Dw-jckJH.js",
+            "line": 679
+          }
+        ]
+      },
+      {
+        "bytes": 43128,
+        "stack": [
+          {
+            "function": "collectRenderablesWithEffects",
+            "url": "http://127.0.0.1:61008/dist/CanvasPool-D2sbpzQh.js",
+            "line": 1843
+          },
+          {
+            "function": "push",
+            "url": "http://127.0.0.1:61008/dist/FilterSystem-DzMeOWYz.js",
+            "line": 1043
+          },
+          {
+            "function": "break",
+            "url": "http://127.0.0.1:61008/dist/RenderTargetSystem-Dw-jckJH.js",
+            "line": 1240
+          },
+          {
+            "function": "break",
+            "url": "http://127.0.0.1:61008/dist/RenderTargetSystem-Dw-jckJH.js",
+            "line": 679
+          }
+        ]
+      },
+      {
+        "bytes": 43128,
+        "stack": [
+          {
+            "function": "collectRenderablesSimple",
+            "url": "http://127.0.0.1:61008/dist/CanvasPool-D2sbpzQh.js",
+            "line": 2727
+          },
+          {
+            "function": "addRenderable",
+            "url": "http://127.0.0.1:61008/dist/player.js",
+            "line": 4805
+          },
+          {
+            "function": "break",
+            "url": "http://127.0.0.1:61008/dist/RenderTargetSystem-Dw-jckJH.js",
+            "line": 1240
+          },
+          {
+            "function": "break",
+            "url": "http://127.0.0.1:61008/dist/RenderTargetSystem-Dw-jckJH.js",
+            "line": 679
+          }
+        ]
+      }
+    ],
+    "whiteCatAfterTopSampledStacks": [
+      {
+        "bytes": 1133868,
+        "stack": [
+          {
+            "function": "of",
+            "url": "http://127.0.0.1:61595/dist/player.js",
+            "line": 10273
+          },
+          {
+            "function": "map",
+            "url": "",
+            "line": 0
+          },
+          {
+            "function": "",
+            "url": "http://127.0.0.1:61595/dist/player.js",
+            "line": 10277
+          },
+          {
+            "function": "i",
+            "url": "http://127.0.0.1:61595/dist/player.js",
+            "line": 10263
+          }
+        ]
+      },
+      {
+        "bytes": 722724,
+        "stack": [
+          {
+            "function": "wE",
+            "url": "http://127.0.0.1:61595/dist/player.js",
+            "line": 16679
+          },
+          {
+            "function": "CE",
+            "url": "http://127.0.0.1:61595/dist/player.js",
+            "line": 16670
+          },
+          {
+            "function": "UC",
+            "url": "http://127.0.0.1:61595/dist/player.js",
+            "line": 16379
+          },
+          {
+            "function": "VC",
+            "url": "http://127.0.0.1:61595/dist/player.js",
+            "line": 16376
+          }
+        ]
+      },
+      {
+        "bytes": 378948,
+        "stack": [
+          {
+            "function": "CE",
+            "url": "http://127.0.0.1:61595/dist/player.js",
+            "line": 16670
+          },
+          {
+            "function": "UC",
+            "url": "http://127.0.0.1:61595/dist/player.js",
+            "line": 16379
+          },
+          {
+            "function": "VC",
+            "url": "http://127.0.0.1:61595/dist/player.js",
+            "line": 16376
+          },
+          {
+            "function": "J",
+            "url": "http://127.0.0.1:61595/dist/player.js",
+            "line": 15932
+          }
+        ]
+      },
+      {
+        "bytes": 279152,
+        "stack": [
+          {
+            "function": "of",
+            "url": "http://127.0.0.1:61595/dist/player.js",
+            "line": 10273
+          },
+          {
+            "function": "map",
+            "url": "",
+            "line": 0
+          },
+          {
+            "function": "",
+            "url": "http://127.0.0.1:61595/dist/player.js",
+            "line": 10277
+          },
+          {
+            "function": "",
+            "url": "http://127.0.0.1:61595/dist/player.js",
+            "line": 10268
+          }
+        ]
+      },
+      {
+        "bytes": 196896,
+        "stack": [
+          {
+            "function": "gv",
+            "url": "http://127.0.0.1:61595/dist/player.js",
+            "line": 12897
+          },
+          {
+            "function": "",
+            "url": "http://127.0.0.1:61595/dist/player.js",
+            "line": 10928
+          },
+          {
+            "function": "Wp",
+            "url": "http://127.0.0.1:61595/dist/player.js",
+            "line": 10910
+          },
+          {
+            "function": "Up",
+            "url": "http://127.0.0.1:61595/dist/player.js",
+            "line": 10906
+          }
+        ]
+      },
+      {
+        "bytes": 196132,
+        "stack": [
+          {
+            "function": "Vv.t.start",
+            "url": "http://127.0.0.1:61595/dist/player.js",
+            "line": 13238
+          },
+          {
+            "function": "zv",
+            "url": "http://127.0.0.1:61595/dist/player.js",
+            "line": 13207
+          },
+          {
+            "function": "e",
+            "url": "http://127.0.0.1:61595/dist/CanvasPool-D2sbpzQh.js",
+            "line": 3067
+          },
+          {
+            "function": "Y",
+            "url": "http://127.0.0.1:61595/dist/CanvasPool-D2sbpzQh.js",
+            "line": 2974
+          }
+        ]
+      },
+      {
+        "bytes": 164064,
+        "stack": [
+          {
+            "function": "reduce",
+            "url": "",
+            "line": 0
+          },
+          {
+            "function": "",
+            "url": "http://127.0.0.1:61595/dist/player.js",
+            "line": 12061
+          },
+          {
+            "function": "nm",
+            "url": "http://127.0.0.1:61595/dist/player.js",
+            "line": 10999
+          },
+          {
+            "function": "em",
+            "url": "http://127.0.0.1:61595/dist/player.js",
+            "line": 10995
+          }
+        ]
+      },
+      {
+        "bytes": 131328,
+        "stack": [
+          {
+            "function": "gv",
+            "url": "http://127.0.0.1:61595/dist/player.js",
+            "line": 12897
+          },
+          {
+            "function": "Zp",
+            "url": "http://127.0.0.1:61595/dist/player.js",
+            "line": 10985
+          },
+          {
+            "function": "Yp",
+            "url": "http://127.0.0.1:61595/dist/player.js",
+            "line": 10985
+          },
+          {
+            "function": "Jp",
+            "url": "http://127.0.0.1:61595/dist/player.js",
+            "line": 10976
+          }
+        ]
+      },
+      {
+        "bytes": 98448,
+        "stack": [
+          {
+            "function": "Qp",
+            "url": "http://127.0.0.1:61595/dist/player.js",
+            "line": 10995
+          },
+          {
+            "function": "",
+            "url": "http://127.0.0.1:61595/dist/player.js",
+            "line": 10928
+          },
+          {
+            "function": "Wp",
+            "url": "http://127.0.0.1:61595/dist/player.js",
+            "line": 10910
+          },
+          {
+            "function": "Up",
+            "url": "http://127.0.0.1:61595/dist/player.js",
+            "line": 10906
+          }
+        ]
+      },
+      {
+        "bytes": 98408,
+        "stack": [
+          {
+            "function": "Ty",
+            "url": "http://127.0.0.1:61595/dist/player.js",
+            "line": 13941
+          },
+          {
+            "function": "Sv",
+            "url": "http://127.0.0.1:61595/dist/player.js",
+            "line": 12940
+          },
+          {
+            "function": "gv",
+            "url": "http://127.0.0.1:61595/dist/player.js",
+            "line": 12897
+          },
+          {
+            "function": "",
+            "url": "http://127.0.0.1:61595/dist/player.js",
+            "line": 10928
+          }
+        ]
+      },
+      {
+        "bytes": 83952,
+        "stack": [
+          {
+            "function": "collectRenderables",
+            "url": "http://127.0.0.1:61595/dist/CanvasPool-D2sbpzQh.js",
+            "line": 1836
+          },
+          {
+            "function": "collectRenderablesWithEffects",
+            "url": "http://127.0.0.1:61595/dist/CanvasPool-D2sbpzQh.js",
+            "line": 1843
+          },
+          {
+            "function": "pop",
+            "url": "http://127.0.0.1:61595/dist/FilterSystem-DzMeOWYz.js",
+            "line": 1052
+          },
+          {
+            "function": "break",
+            "url": "http://127.0.0.1:61595/dist/RenderTargetSystem-Dw-jckJH.js",
+            "line": 679
+          }
+        ]
+      },
+      {
+        "bytes": 82012,
+        "stack": [
+          {
+            "function": "pv",
+            "url": "http://127.0.0.1:61595/dist/player.js",
+            "line": 12876
+          },
+          {
+            "function": "bg",
+            "url": "http://127.0.0.1:61595/dist/player.js",
+            "line": 12058
+          },
+          {
+            "function": "reduce",
+            "url": "",
+            "line": 0
+          },
+          {
+            "function": "",
+            "url": "http://127.0.0.1:61595/dist/player.js",
+            "line": 12061
+          }
+        ]
+      }
+    ],
+    "interpretation": "JS heap is not byte-identical after repeated renderer lifetimes. About 2-3 MiB remained within the predeclared 8 MiB budget; sampled stacks include Pixi shader source identifier tables. The reproduced image/DOM accumulation is fixed. Listener, Worker and WebGL2-context counts remain bounded. This is not a claim that all retained cache bytes disappear."
+  },
+  "verification": {
+    "unit": {
+      "command": "node_modules/.bin/vitest run packages/puppet --reporter=default",
+      "filesPassed": 450,
+      "testsPassed": 2830
+    },
+    "memoryIntegration": {
+      "command": "node_modules/.bin/vitest run --config packages/puppet/vitest.memory.config.ts",
+      "testsPassed": 1
+    },
+    "browser": {
+      "command": "node_modules/.bin/vitest run --config /private/tmp/puppet-optimization-k_9o3fd8/vitest.metal.config.mts",
+      "testsPassed": 64,
+      "testsSkipped": 11
+    },
+    "typecheck": {
+      "command": "pnpm --dir packages/puppet typecheck",
+      "result": "passed"
+    },
+    "build": {
+      "command": "pnpm --dir packages/puppet build",
+      "result": "passed"
+    },
+    "lint": {
+      "command": "pnpm --dir packages/puppet lint",
+      "result": "passed, warnings retained"
+    },
+    "memoryConfigLint": {
+      "command": "pnpm exec oxlint packages/puppet/vitest.memory.config.ts",
+      "result": "passed"
+    },
+    "format": {
+      "command": "pnpm format",
+      "result": "passed"
+    },
+    "remoteCI": "not run",
+    "prUpdated": false
+  },
+  "limits": [
+    "Chromium JS heap, ArrayBuffer backing storage and Wasm linear-memory capacities are measured separately. GPU-driver VRAM and OS process RSS are not measured.",
+    "Frame counts and repeated ownership changes replace a real multi-hour timer soak. Time-based work only triggered after hours was not exercised.",
+    "The 13,200-frame Worker and 3,310-notification playback runs preceded the teardown fix. The Worker artifact remains identical; current-artifact lifecycle reruns follow the fix.",
+    "Finite tests cannot establish absence of arbitrarily small leaks or behavior on all devices."
+  ],
+  "reproduction": {
+    "script": "visual/playback-memory.mjs",
+    "requiredEnvironment": ["MODEL", "OUTPUT"],
+    "workloadEnvironment": ["FRAMES", "WARMUP_FRAMES", "DISPLAY_FRAMES", "CYCLES"],
+    "rawArtifacts": "/private/tmp/puppet-memory-ty52crud",
+    "beforeHeapSnapshot": "/private/tmp/puppet-memory-ty52crud/retainers.json.heapsnapshot"
+  },
+  "sourceSHA256": {
+    "visual/playback-memory.mjs": "1b280e13403d6d85ced1923e51ab4befe42197261a3f9091ff52d0e38d7f0f81",
+    "visual/memory/create-fixture.mjs": "9380ea24a7044b594d7a65fd372adb81fab4f29225490e9780150315fda7d8ef",
+    "visual/memory/create-playback.mjs": "8d059963b2f5129ca0eb4695d2e45eed2b5d7d78a65de01e23985bc8876e889a",
+    "src/player/rendering/create-player-renderer.ts": "ea1366ee260c0df74c63681b991752ddc3f0d519d2638cc41aa6854097add9a6",
+    "src/player/rendering/__tests__/create-player-renderer.spec.ts": "8227ffb49dd118cfa5de7cba8c7910cc054c20f30ae6ff99369e933a5358ace1",
+    "visual/__tests__/create-player.memory.integration.tsx": "c0e98bda65e55ab51bb4f4dfd2c2d6247702b417a651822c4424c3bc6aaeeefa",
+    "vitest.memory.config.ts": "38302f29a4d279512dcdfc81fa8373043a43f1897eb33e2c57d5be0994310ef1",
+    "vitest.browser.config.ts": "95207892a5b3eafdf32540e1c25531c8b8a145729bb7ed77f178092734e7e211"
+  }
+}

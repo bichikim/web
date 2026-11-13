@@ -36,7 +36,13 @@ test('starts dragging only on the visible character and keeps the capture outsid
   page,
 }) => {
   await page.goto('/')
-  await expect(page.getByRole('button', {exact: true, name: '일시 정지'})).toBeVisible()
+  await page.getByRole('button', {exact: true, name: '일시 정지'}).click()
+  await expect(page.getByRole('button', {exact: true, name: '재생'})).toBeVisible()
+  await page.getByRole('button', {name: '설정 열기'}).click()
+  const tracking = page.getByRole('button', {name: '커서 따라보기'})
+  await tracking.click()
+  await expect(tracking).toHaveAttribute('aria-pressed', 'false')
+  await page.getByRole('button', {name: '설정 닫기'}).click()
   const character = page.getByRole('button', {name: '흰 고양이 위젯. 드래그해서 이동'})
   const initial = await character.boundingBox()
   if (initial === null) {
@@ -67,6 +73,34 @@ test('starts dragging only on the visible character and keeps the capture outsid
 
 test.describe('mobile character drag', () => {
   test.use({hasTouch: true, isMobile: true, viewport: {height: 844, width: 390}})
+
+  test('advances from the playground when swiping upward on transparent character pixels', async ({
+    page,
+    context,
+  }) => {
+    await page.goto('/')
+    await expect(page.getByRole('button', {exact: true, name: '일시 정지'})).toBeVisible()
+    const character = page.getByRole('button', {name: '흰 고양이 위젯. 드래그해서 이동'})
+    const bounds = await character.boundingBox()
+    if (bounds === null) {
+      throw new Error('Character bounds are missing')
+    }
+    const x = bounds.x + bounds.width * 0.05
+    const y = bounds.y + bounds.height * 0.15
+    const session = await context.newCDPSession(page)
+    await session.send('Input.dispatchTouchEvent', {touchPoints: [{x, y}], type: 'touchStart'})
+    await session.send('Input.dispatchTouchEvent', {
+      touchPoints: [{x, y: y - 20}],
+      type: 'touchMove',
+    })
+    await session.send('Input.dispatchTouchEvent', {
+      touchPoints: [{x, y: y - 90}],
+      type: 'touchMove',
+    })
+    await session.send('Input.dispatchTouchEvent', {touchPoints: [], type: 'touchEnd'})
+    await expect(page.getByRole('heading', {name: 'YOUR DESKTOP.'})).toBeVisible()
+    await expect(page.locator('[data-story-transition]')).toHaveCount(0)
+  })
 
   test('ignores a touch starting on transparent pixels and drags from the character', async ({
     page,

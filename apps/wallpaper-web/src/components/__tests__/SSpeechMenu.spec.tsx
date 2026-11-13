@@ -11,6 +11,56 @@ afterEach(() => {
   vi.clearAllMocks()
 })
 
+test('should stop a pending preset without expanding custom input', () => {
+  const speak = vi.fn().mockReturnValue(Promise.withResolvers().promise)
+  vi.mocked(createBrowserSpeechSession).mockReturnValue({
+    dispose: vi.fn(),
+    speak,
+    unlock: vi.fn().mockResolvedValue(undefined),
+  })
+  const hook = renderHook(useCharacterSpeech)
+  render(() => <SSpeechMenu ready speech={hook.result} />)
+  const disclosure = screen.getByRole('button', {name: '직접 입력'})
+  expect(disclosure.getAttribute('aria-expanded')).toBe('false')
+  const preset = screen.getByRole('button', {name: /^안녕, 나는 애시야\./})
+  fireEvent.click(preset)
+  expect(preset.hasAttribute('disabled')).toBe(true)
+  const stop = screen.getByRole('button', {name: '정지'})
+  stop.focus()
+  fireEvent.click(stop)
+  expect((speak.mock.calls[0]![1] as AbortSignal).aborted).toBe(true)
+  expect(disclosure.getAttribute('aria-expanded')).toBe('false')
+  expect(preset.hasAttribute('disabled')).toBe(false)
+  expect(document.activeElement).toBe(preset)
+  hook.cleanup()
+})
+
+test('should return focus to custom input when stopping before the character is ready', () => {
+  vi.mocked(createBrowserSpeechSession).mockReturnValue({
+    dispose: vi.fn(),
+    speak: vi.fn().mockReturnValue(Promise.withResolvers().promise),
+    unlock: vi.fn().mockResolvedValue(undefined),
+  })
+  const hook = renderHook(useCharacterSpeech)
+  render(() => <SSpeechMenu ready={false} speech={hook.result} />)
+  void hook.result.speak('안녕')
+  const stop = screen.getByRole('button', {name: '정지'})
+  stop.focus()
+  fireEvent.click(stop)
+  expect(document.activeElement).toBe(screen.getByRole('button', {name: '직접 입력'}))
+  hook.cleanup()
+})
+
+test('should focus an enabled control when the speech dialog opens before the character is ready', () => {
+  const hook = renderHook(useCharacterSpeech)
+  render(() => <SSpeechMenu ready={false} speech={hook.result} />)
+  const opened = new Event('toggle')
+  Object.defineProperty(opened, 'newState', {value: 'open'})
+  fireEvent(screen.getByRole('dialog', {name: '말하기'}), opened)
+  expect(document.activeElement).toBe(screen.getByRole('button', {name: '직접 입력'}))
+  hook.cleanup()
+})
+
 test('should speak a preset and accept custom lines without activating an empty input', async () => {
   const speak = vi.fn().mockResolvedValue({ok: true})
   vi.mocked(createBrowserSpeechSession).mockReturnValue({
@@ -23,6 +73,10 @@ test('should speak a preset and accept custom lines without activating an empty 
   expect(screen.getByRole('button', {name: '대사 선택'}).getAttribute('aria-haspopup')).toBe(
     'dialog',
   )
+  const disclosure = screen.getByRole('button', {name: '직접 입력'})
+  expect(disclosure.getAttribute('aria-expanded')).toBe('false')
+  fireEvent.click(disclosure)
+  expect(disclosure.getAttribute('aria-expanded')).toBe('true')
   const submit = screen.getByRole('button', {name: '말하기'})
   expect(submit.hasAttribute('disabled')).toBe(true)
   const preset = screen.getByRole('button', {name: /^안녕, 나는 애시야\./})
@@ -38,6 +92,12 @@ test('should speak a preset and accept custom lines without activating an empty 
   fireEvent.submit(screen.getByRole('textbox').closest('form')!)
   expect(speak.mock.calls[1]![0]).toBe('오늘도 안녕!')
   await Promise.resolve()
+  fireEvent.click(disclosure)
+  expect(disclosure.getAttribute('aria-expanded')).toBe('false')
+  fireEvent.click(disclosure)
+  expect((screen.getByRole('textbox', {name: '직접 입력'}) as HTMLTextAreaElement).value).toBe(
+    '오늘도 안녕!',
+  )
   hook.cleanup()
 })
 
@@ -55,6 +115,7 @@ test('should wait for the character and offer stop while speech is pending', () 
   )
   view.unmount()
   render(() => <SSpeechMenu ready speech={hook.result} />)
+  fireEvent.click(screen.getByRole('button', {name: '직접 입력'}))
   fireEvent.click(screen.getByRole('button', {name: /^안녕, 나는 애시야\./}))
   fireEvent.click(screen.getByRole('button', {name: '정지'}))
   expect((speak.mock.calls[0]![1] as AbortSignal).aborted).toBe(true)
