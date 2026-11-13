@@ -36,9 +36,10 @@ export const SPoffoWidgetSettings = (props: SPoffoWidgetSettingsProps) => {
     )
   })
   const previewAsset = createMemo(() => widgetPreview()?.assetId ?? asset())
+  const {error, importFiles, selectAsset} = usePoffoImport(setAsset)
   const selectWidget = (id: string | null, assetId: string) =>
     batch(() => {
-      setAsset(assetId)
+      selectAsset(assetId)
       setPreviewId(id)
       setFolded(null)
     })
@@ -46,7 +47,6 @@ export const SPoffoWidgetSettings = (props: SPoffoWidgetSettingsProps) => {
     widgetPreview()?.id === id
       ? setFolded((value) => (value === id ? null : id))
       : selectWidget(id, assetId)
-  const {error, importFiles} = usePoffoImport(setAsset)
   const options = createMemo(() => [
     {label: 'Poffo 샘플', value: SAMPLE_PUPPET_ID},
     ...props.controller.puppets().map((item) => ({label: item.name, value: item.id})),
