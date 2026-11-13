@@ -1,5 +1,4 @@
-/** Normalizes searched history URLs while preserving non-tracking query encoding. */
-export const normalizeHistorySourceUrl = (value: string): string => {
+const normalizeSourceUrl = (value: string): URL => {
   const url = new URL(value)
   url.hostname = url.hostname.replace(/^www\./u, '')
   url.hash = ''
@@ -21,11 +20,14 @@ export const normalizeHistorySourceUrl = (value: string): string => {
     url.pathname = url.pathname.replace(/\/+$/u, '')
   }
 
-  return url.href
+  return url
 }
 
+/** Normalizes searched history URLs while preserving non-tracking query encoding. */
+export const normalizeHistorySourceUrl = (value: string): string => normalizeSourceUrl(value).href
+
 const getArticleIdentity = (value: string): string | undefined => {
-  const url = new URL(normalizeHistorySourceUrl(value))
+  const url = normalizeSourceUrl(value)
   const articleId = url.pathname.match(/-(?<articleId>\d{6,})$/u)?.groups?.articleId
 
   return articleId === undefined ? undefined : `${url.hostname}:${articleId}`

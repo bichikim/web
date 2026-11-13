@@ -18,6 +18,13 @@ describe('normalizeHistorySourceUrl', () => {
     ['https://www.archive.example/?utm_source=x#fragment', 'https://archive.example/'],
     ['https://archive.example/a?&&UTM_SOURCE=x&keep=%2f&', 'https://archive.example/a?&&keep=%2f&'],
     ['https://archive.example/a?q=%&x=a%20b', 'https://archive.example/a?q=%&x=a%20b'],
+    ['https://archive.example/a?', 'https://archive.example/a?'],
+    [
+      'https://www.예시.한국:443/a/../article-123456/#x',
+      'https://xn--vv4b11d.xn--3e0b707e/article-123456',
+    ],
+    ['ftp://www.archive.example/article-123456///#x', 'ftp://archive.example/article-123456'],
+    ['data:text/plain,article-123456#x', 'data:text/plain,article-123456'],
     [
       'https://www.archive.example/a?utmish=x&x=utm_source',
       'https://archive.example/a?utmish=x&x=utm_source',
@@ -55,6 +62,30 @@ describe('createHistorySourceResolver', () => {
     const resolve = createHistorySourceResolver([searched])
     expect(resolve(generated)).toBe(searched)
     expect(() => resolve('https://other.example/generated-123456')).toThrow(TypeError)
+  })
+
+  it.each([
+    [
+      'https://www.예시.한국:443/original-123456///?utm_source=x#section',
+      'https://xn--vv4b11d.xn--3e0b707e/generated-123456',
+    ],
+    [
+      'ftp://www.archive.example/original-123456///#section',
+      'ftp://archive.example/generated-123456',
+    ],
+    ['https://user:password@[::1]:8080/original-123456/?q=a%20b', 'https://[::1]/generated-123456'],
+    ['data:text/plain,original-123456#section', 'data:text/plain,generated-123456'],
+  ])('should preserve native parsed hostname and path identity for %s', (searched, citation) => {
+    expect(createHistorySourceResolver([searched])(citation)).toBe(searched)
+  })
+
+  it('should retain empty query delimiters as distinct exact-match keys', () => {
+    const searched = 'https://archive.example/document'
+    const citation = `${searched}?`
+    expect(() => createHistorySourceResolver([searched])(citation)).toThrow(
+      new TypeError(`A generated source was not returned by OpenAI web search: ${citation}`),
+    )
+    expect(createHistorySourceResolver([citation])(citation)).toBe(citation)
   })
 
   it('should isolate identity-free URLs from independent article groups', () => {
