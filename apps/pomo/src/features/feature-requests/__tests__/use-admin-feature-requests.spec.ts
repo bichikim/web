@@ -469,3 +469,30 @@ it('should ignore an unfinished reconciliation after disposal', async () => {
   expect(view.result.requests()).toBe(previous)
   expect(view.result.hasMore()).toBe(true)
 })
+
+it('should reconcile when a reordered last page finishes before the save response', async () => {
+  const pending = Promise.withResolvers<{status: 'updated'}>()
+  const updated = {...REQUEST, status: 'completed' as const, targetVoteCount: null}
+  apiMocks.listAdminFeatureRequests
+    .mockResolvedValueOnce({hasMore: true, requests: [REQUEST]})
+    .mockResolvedValueOnce({hasMore: false, requests: [updated]})
+    .mockResolvedValueOnce({hasMore: false, requests: [NEXT_REQUEST, updated]})
+  apiMocks.updateAdminFeatureRequest.mockReturnValueOnce(pending.promise)
+  const view = renderHook(() => useAdminFeatureRequests(), {wrapper: RouterWrapper})
+  await waitFor(() => expect(view.result.isLoading()).toBe(false))
+  const save = view.result.updateRequest({
+    requestId: REQUEST.id,
+    status: 'completed',
+    targetVoteCount: null,
+  })
+  await view.result.loadMore()
+  expect(view.result.hasMore()).toBe(false)
+  pending.resolve({status: 'updated'})
+  await save
+  expect(apiMocks.listAdminFeatureRequests).toHaveBeenCalledTimes(2)
+  expect(view.result.hasMore()).toBe(true)
+  await view.result.loadMore()
+  expect(view.result.requests()).toEqual([updated, NEXT_REQUEST])
+  expect(view.result.hasMore()).toBe(false)
+  view.cleanup()
+})

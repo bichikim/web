@@ -33,6 +33,8 @@ let database: PGlite
 const ownerId = '019d0000-0000-7000-8000-000000000001'
 const reads: Array<number> = []
 const writes: Array<unknown> = []
+let saveResponse: Promise<void> | undefined
+let notifyCommit: (() => void) | undefined
 
 beforeAll(async () => {
   vi.stubGlobal('Blob', Blob)
@@ -50,6 +52,8 @@ beforeEach(async () => {
   query.clear()
   reads.length = 0
   writes.length = 0
+  saveResponse = undefined
+  notifyCommit = undefined
   mocks.authorizeAdminRequest.mockResolvedValue({authorized: true, cookies: []})
   await database.exec('truncate feature_requests cascade')
   await database.query(
@@ -69,7 +73,10 @@ beforeEach(async () => {
     const match = /^\/api\/admin\/feature-requests\/([^/]+)\/status$/.exec(url.pathname)
     if (request.method === 'PATCH' && match !== null) {
       writes.push(await request.clone().json())
-      return invokeApiRoute(PATCH, request, {requestId: match[1]!})
+      const response = await invokeApiRoute(PATCH, request, {requestId: match[1]!})
+      notifyCommit?.()
+      await saveResponse
+      return response
     }
     throw new Error(`Unexpected request: ${request.method} ${url.pathname}`)
   })
@@ -83,6 +90,45 @@ afterEach(() => {
 })
 
 afterAll(() => database.close())
+
+it('should recover an unseen request when load more finishes before the committed save response', async () => {
+  const response = Promise.withResolvers<void>()
+  const committed = Promise.withResolvers<void>()
+  saveResponse = response.promise
+  notifyCommit = committed.resolve
+  render(() => <MemoryRouter root={AdminFeatureRequests} />)
+  await screen.findByRole('heading', {name: '요청 20'})
+  await screen.findByRole('button', {name: m.feature_request_load_more()})
+  const first = screen.getByRole('heading', {name: '요청 1'}).closest('article')!
+  try {
+    fireEvent.click(within(first).getByRole('button', {name: m.feature_request_status_completed()}))
+    fireEvent.click(within(first).getByRole('button', {name: m.admin_feature_request_approve()}))
+    await committed.promise
+    expect((await listAdminFeatureRequests({offset: 20})).requests).toMatchObject([
+      {status: 'completed', title: '요청 1'},
+    ])
+    expect(
+      within(first).getByRole('button', {name: m.admin_feature_request_saving()}),
+    ).toBeDisabled()
+    fireEvent.click(screen.getByRole('button', {name: m.feature_request_load_more()}))
+    await waitFor(() => {
+      expect(reads).toEqual([0, 20])
+      expect(
+        screen.queryByRole('button', {name: m.feature_request_loading_more()}),
+      ).not.toBeInTheDocument()
+    })
+    expect(screen.getAllByRole('article')).toHaveLength(20)
+    response.resolve()
+    await within(first).findByRole('button', {name: m.admin_feature_request_save()})
+    expect(reads).toEqual([0, 20])
+    fireEvent.click(await screen.findByRole('button', {name: m.feature_request_load_more()}))
+    await screen.findByRole('heading', {name: '요청 21'})
+    expect(screen.getAllByRole('article')).toHaveLength(21)
+    expect(screen.getAllByRole('article')[0]).toBe(first)
+  } finally {
+    response.resolve()
+  }
+})
 
 it.each([21, 61])(
   'should reveal unseen requests after a status save among %i rows',
@@ -104,6 +150,7 @@ it.each([21, 61])(
     expect(initial.hasMore).toBe(true)
     render(() => <MemoryRouter root={AdminFeatureRequests} />)
     await screen.findByRole('heading', {name: '요청 20'})
+    await screen.findByRole('button', {name: m.feature_request_load_more()})
     if (loadedCount === 40) {
       fireEvent.click(await screen.findByRole('button', {name: m.feature_request_load_more()}))
       await screen.findByRole('heading', {name: '요청 40'})

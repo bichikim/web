@@ -283,7 +283,10 @@ export const useFeatureRequestList = (
   const refresh = () => loadFirstPage()
   return {
     hasMore,
-    invalidatePagination: pagination.invalidatePagination,
+    invalidatePagination: () => {
+      pagination.invalidatePagination()
+      setHasMore(true)
+    },
     isLoading: () => (list.isLoading() && !pagination.isReconciling()) || isRefreshing(),
     isLoadingMore: () => list.isLoadingMore() || pagination.isReconciling(),
     loadFailed: () => list.loadFailed() && !pagination.reconcileFailed(),
