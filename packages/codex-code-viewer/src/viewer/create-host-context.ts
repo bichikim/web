@@ -72,6 +72,7 @@ export const createHostContext = (options: HostContextOptions) => {
     return result.content.flatMap((entry) => (entry.type === 'text' ? [entry.text] : [])).join('\n')
   }
   return {
+    addTextContext: (text: string): Promise<void> => update((current) => [...current, text]),
     context: (selection: ViewerContext): Promise<void> => {
       const text = formatContext(selection)
       if (

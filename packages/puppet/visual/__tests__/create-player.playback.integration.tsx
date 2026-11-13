@@ -2,6 +2,7 @@ import {afterEach, describe, expect, test} from 'vitest'
 import {
   createEmptyDocument,
   createPlayer,
+  flushPlayerInputs,
   parseDocument,
   type Player,
   type PuppetDocument,
@@ -72,52 +73,60 @@ const source: PuppetDocument = {
   scene: undefined,
   viewport: {height: 64, width: 64},
 }
-const setup = async () => {
+const setup = async (buffering: boolean) => {
   const parsed = parseDocument(serializeDocument(source))
   if (!parsed.ok) {
     throw new Error('Invalid playback fixture')
   }
   const canvas = document.createElement('canvas')
-  const player = await createPlayer({canvas, document: parsed.document, resolution: 1})
+  const player = await createPlayer({buffering, canvas, document: parsed.document, resolution: 1})
   players.push(player)
   player.stop()
   const copy = document.createElement('canvas')
   copy.width = 64
   copy.height = 64
   const context = copy.getContext('2d')!
-  const alpha = () => {
-    player.redraw()
+  const renderedAlpha = () => {
     context.clearRect(0, 0, 64, 64)
     context.drawImage(canvas, 0, 0)
     return context.getImageData(32, 32, 1, 1).data[3]!
   }
-  return {alpha, player}
+  const alpha = () => {
+    player.redraw()
+    return renderedAlpha()
+  }
+  return {alpha, player, renderedAlpha}
 }
 afterEach(() => players.splice(0).forEach((player) => player.destroy()))
 
-describe('createPlayer runtime playback', () => {
+describe.each([false, true])('createPlayer runtime playback (buffering=%s)', (buffering) => {
   test('should render weighted simultaneous animations and release direct parameter overrides', async () => {
-    const {alpha, player} = await setup()
+    const {alpha, player} = await setup(buffering)
     const fade = player.startMotion('fade', {weight: 0.5})!
     const hold = player.startMotion('hold', {weight: 0.5})!
     player.pause()
     fade.seek(0)
+    await flushPlayerInputs(player)
     expect(player.getParameterValue('opacity')).toBe(0.5)
     expect(Math.abs(alpha() - 128)).toBeLessThanOrEqual(1)
     player.setParameterValue('opacity', 0.25)
+    await flushPlayerInputs(player)
     expect(player.getParameterValue('opacity')).toBe(0.25)
     expect(Math.abs(alpha() - 64)).toBeLessThanOrEqual(1)
     player.clearParameterValues(['opacity'])
+    await flushPlayerInputs(player)
     expect(Math.abs(alpha() - 128)).toBeLessThanOrEqual(1)
     hold.stop()
     fade.setWeight(1)
     fade.seek(1)
+    await flushPlayerInputs(player)
     expect(alpha()).toBe(255)
     fade.stop()
+    await flushPlayerInputs(player)
     expect(alpha()).toBe(255)
   })
   test('should advance and finish independent one-shot playback on the real Pixi ticker', async () => {
-    const {alpha, player} = await setup()
+    const {renderedAlpha, player} = await setup(buffering)
     let complete = () => {}
     const completed = new Promise<void>((resolve) => {
       complete = resolve
@@ -127,6 +136,6 @@ describe('createPlayer runtime playback', () => {
     await completed
     expect(handle.getState()).toMatchObject({status: 'finished', time: 1})
     expect(player.getParameterValue('opacity')).toBe(1)
-    expect(alpha()).toBe(255)
+    expect(renderedAlpha()).toBe(255)
   })
 })

@@ -1,5 +1,6 @@
 /** @vitest-environment jsdom */
 import {cleanup, fireEvent, render, screen} from '@solidjs/testing-library'
+import {createSignal} from 'solid-js'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 import {SSpreadsheetDocument} from '../SSpreadsheetDocument'
 import type {SpreadsheetSheet} from '../types'
@@ -81,5 +82,21 @@ describe('SSpreadsheetDocument', () => {
   it('should disclose truncation without offering a nonexistent source view', () => {
     render(() => <SSpreadsheetDocument sheets={[{...sheets[0], truncated: true}]} />)
     expect(screen.getByText(/처음 10,000행·100열/u).textContent).not.toContain('원문')
+  })
+  it('should clear the selected label with no sheets and restore the sheet on repopulation', () => {
+    const [entries, setEntries] = createSignal(sheets)
+    render(() => <SSpreadsheetDocument sheets={entries()} />)
+    const trigger = screen.getByRole<HTMLButtonElement>('combobox', {name: '시트 선택'})
+    fireEvent.click(trigger)
+    fireEvent.click(screen.getByRole('option', {name: '메모'}))
+    expect(trigger.textContent).toBe('메모')
+    setEntries([])
+    expect(trigger.disabled).toBe(true)
+    expect(trigger.textContent).toBe('선택 항목 없음')
+    expect(screen.getByRole('status').textContent).toBe('표시할 시트가 없습니다.')
+    setEntries(sheets)
+    expect(trigger.disabled).toBe(false)
+    expect(trigger.textContent).toBe('메모')
+    expect(screen.getByRole('cell', {name: '<script>내용</script>'})).toBeTruthy()
   })
 })

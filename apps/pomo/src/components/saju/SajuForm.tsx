@@ -30,9 +30,10 @@ const BUTTON_CLASSES = cx(
   'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white',
 )
 const SECONDARY_BUTTON_CLASSES = cx(
-  'justify-self-start self-center rounded-2 px-2 py-1 text-sm text-#d2c4d7 underline',
-  'underline-offset-3 hover:text-white focus-visible:outline-2',
-  'focus-visible:outline-offset-2 focus-visible:outline-#f0c99a',
+  'inline-flex min-h-11 items-center justify-center gap-2 rounded-3 border border-white/20',
+  'bg-white/5 px-3 text-sm font-650 text-#e1d4e4 hover:border-#d6b783/50 hover:bg-white/10',
+  'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-#f0c99a',
+  'disabled:cursor-not-allowed disabled:opacity-45',
 )
 const QUESTION_CLASSES = cx(
   'min-h-24 w-full rounded-3 border border-white/20 bg-#211a2b p-3 text-#f8edf1',
@@ -180,30 +181,46 @@ export function SajuForm(props: SajuFormProps) {
           onInput={(event) => updateDraft({question: event.currentTarget.value})}
         />
       </label>
-      <button
-        aria-busy={props.busy}
-        class={cx(BUTTON_CLASSES, 'flex items-center justify-center gap-2')}
-        disabled={props.busy || props.ready === false}
-        type="submit"
-      >
-        <Show when={props.busy} fallback="사주 풀이 생성">
-          <span
-            aria-hidden="true"
-            class="i-tabler-loader-2 size-5 animate-spin motion-reduce:animate-none"
-          />
-          사주 풀이 중…
+      <div class="grid gap-2 sm:col-span-2 sm:grid-cols-2 sm:gap-4">
+        <button
+          aria-busy={props.busy}
+          class={cx(BUTTON_CLASSES, 'flex items-center justify-center gap-2')}
+          disabled={props.busy || props.ready === false}
+          type="submit"
+        >
+          <Show when={props.busy} fallback="사주 풀이 생성">
+            <span
+              aria-hidden="true"
+              class="i-tabler-loader-2 size-5 animate-spin motion-reduce:animate-none"
+            />
+            사주 풀이 중…
+          </Show>
+        </button>
+        <Show when={props.draftPersistence || props.onCancel}>
+          <div class="flex min-h-11 items-center justify-between gap-2">
+            <Show when={props.draftPersistence}>
+              <button
+                class={SECONDARY_BUTTON_CLASSES}
+                disabled={props.busy}
+                onClick={resetDraft}
+                type="button"
+              >
+                <span aria-hidden="true" class="i-tabler-eraser size-4 shrink-0" />
+                입력 지우기
+              </button>
+            </Show>
+            <Show when={props.onCancel}>
+              <button
+                class={SECONDARY_BUTTON_CLASSES}
+                onClick={() => props.onCancel?.()}
+                type="button"
+              >
+                취소
+              </button>
+            </Show>
+          </div>
         </Show>
-      </button>
-      <Show when={props.onCancel}>
-        <button class={SECONDARY_BUTTON_CLASSES} onClick={() => props.onCancel?.()} type="button">
-          취소
-        </button>
-      </Show>
-      <Show when={props.draftPersistence}>
-        <button class={SECONDARY_BUTTON_CLASSES} onClick={resetDraft} type="button">
-          입력 지우기
-        </button>
-      </Show>
+      </div>
     </form>
   )
 }

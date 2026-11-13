@@ -1,3 +1,4 @@
+import {usePointerGesture} from './use-pointer-gesture'
 import {solveBoneIk} from '../../deformation/inverse-kinematics'
 import {type Accessor, createEffect, createMemo, createSignal, on, onCleanup} from 'solid-js'
 import type {PuppetPoint, PuppetSceneDeformerNode} from '../../player'
@@ -79,7 +80,11 @@ export const useBoneEditor = (props: UseBoneEditorProps) => {
   const mode = () => props.deformerMode ?? localMode()
   const [selected, setSelected] = createSignal<number | null>(null)
   let svg: SVGSVGElement | undefined
-  let dragging = false
+  const gesture = usePointerGesture({
+    element: () => svg,
+    onEnd: () => props.onEditEnd?.(),
+    onStart: () => props.onEditStart?.(),
+  })
   const viewBox = () => getEditorViewBox(props.document)
   const display = () => props.previewDocument ?? props.document
   const locked = () => isSceneNodeLocked(props.document, props.node.id)
@@ -152,12 +157,7 @@ export const useBoneEditor = (props: UseBoneEditorProps) => {
     saveBonePose(props, controlPoints)
   }
 
-  const stop = () => {
-    if (dragging) {
-      props.onEditEnd?.()
-    }
-    dragging = false
-  }
+  const {stop} = gesture
   const nodeId = createMemo(() => props.node.id)
   createEffect(
     on(nodeId, () => {
@@ -177,7 +177,7 @@ export const useBoneEditor = (props: UseBoneEditorProps) => {
     drag: (event: PointerEvent) => {
       const index = selected()
       const position = eventPoint(event)
-      if (dragging && index !== null && position !== undefined) {
+      if (gesture.owns(event) && index !== null && position !== undefined) {
         move(index, position)
       }
     },
@@ -203,16 +203,13 @@ export const useBoneEditor = (props: UseBoneEditorProps) => {
     },
     setSelected,
     start: (event: PointerEvent, index: number) => {
-      if (event.button !== 0 || !editable()) {
+      if (event.button !== 0 || event.isPrimary === false || gesture.active() || !editable()) {
         return
       }
       event.preventDefault()
       event.stopPropagation()
       setSelected(index)
-      svg?.focus()
-      svg?.setPointerCapture?.(event.pointerId)
-      dragging = true
-      props.onEditStart?.()
+      gesture.start(event)
     },
     stop,
     toggleInverse: () => {

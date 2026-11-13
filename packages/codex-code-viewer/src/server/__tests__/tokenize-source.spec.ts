@@ -2,6 +2,20 @@ import {describe, expect, it} from 'vitest'
 import {tokenizeSource} from '../tokenize-source'
 
 describe('tokenizeSource', () => {
+  it('should display CR-delimited source as separate lines and preserve navigation offsets', () => {
+    const source = 'const value = 1\rvalue()\r'
+    const lines = tokenizeSource('main.ts', source)
+    expect(lines.map((line) => line.map((token) => token.text).join(''))).toEqual([
+      'const value = 1',
+      'value()',
+      '',
+    ])
+    expect(lines[1]?.find((token) => token.text === 'value')).toMatchObject({
+      navigation: 'definition',
+      offset: source.indexOf('value()'),
+    })
+  })
+
   it('should retain CRLF line contents and Unicode token offsets', () => {
     const text = "// 🦊\r\nimport {인사} from './인사'\r\n인사()\r\n"
     const lines = tokenizeSource('main.ts', text)

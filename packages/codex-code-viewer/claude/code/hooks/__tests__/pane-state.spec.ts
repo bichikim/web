@@ -17,6 +17,22 @@ const document = followDocument(emptyPane(), {
   source: 'first\r\nsecond\r\n',
 }).documents[0]
 
+it('should follow, edit and attach CR-delimited logical lines without replacing their separators', () => {
+  const state = followDocument(emptyPane(), {
+    location: {column: 1, line: 2, path: 'cr.ts'},
+    revision: 'original',
+    source: 'first\rsecond\rthird',
+  })
+  const document = state.documents[0]!
+  expect(document.line).toBe(2)
+  const changed = changeLine(document, 'replace', 'edited')
+  expect(changed.source).toBe('first\redited\rthird')
+  const inserted = changeLine(changed, 'insert')
+  expect(inserted.source).toBe('first\redited\r\rthird')
+  expect(changeLine(inserted, 'remove').source).toBe(changed.source)
+  expect(attachRange(state, document, 2)?.attachments[0].text).toContain('second')
+})
+
 it('should edit, insert and remove lines while retaining untouched CRLF endings', () => {
   const changed = changeLine(document, 'replace', 'edited')
   expect(changed.source).toBe('edited\r\nsecond\r\n')
@@ -30,7 +46,7 @@ it('should retain a snapshot after later edits and reject invalid or oversized a
   const state = {...emptyPane(), active: document.path, documents: [document]}
   const draft = changeLine(document, 'replace', 'snapshot')
   const attached = attachRange(state, draft, 2)
-  expect(attached?.attachments[0].text).toContain('snapshot\r\nsecond\r')
+  expect(attached?.attachments[0].text).toMatch(/snapshot\r\nsecond$/u)
   expect(changeLine(draft, 'replace', 'later').source).toContain('later')
   expect(attached?.attachments[0].text).not.toContain('later')
   expect(attachRange(state, draft, 0)).toBeUndefined()

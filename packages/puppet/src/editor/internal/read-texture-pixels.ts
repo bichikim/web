@@ -1,5 +1,6 @@
 import type {PixelData} from '../../mesh'
 import type {PuppetTexture} from '../../player/document'
+import {loadTextureImage} from '../../player/internal/load-texture-image'
 import {MAXIMUM_TEXTURE_PIXELS} from './texture-limits'
 
 export type ReadTexturePixelsErrorCode = 'decode-failed' | 'render-failed' | 'too-large'
@@ -21,14 +22,8 @@ export interface ReadTexturePixelsOptions {
 }
 
 const decodeTexture = async (texture: PuppetTexture) => {
-  const image = new Image()
-  image.crossOrigin = 'anonymous'
-  image.decoding = 'async'
-  image.src = texture.src
-
   try {
-    await image.decode()
-    return image
+    return await loadTextureImage(texture.src)
   } catch {
     return undefined
   }

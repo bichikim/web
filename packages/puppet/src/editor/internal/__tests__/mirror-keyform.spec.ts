@@ -1,5 +1,6 @@
+import {isTwoDimensionalParameterBinding} from '../../../deformation'
 import {expect, test} from 'vitest'
-import {createDemoDocument, type PuppetDocument} from '../../../player'
+import {createDemoDocument, parseDocumentValue, type PuppetDocument} from '../../../player'
 import {mirrorKeyform} from '../mirror-keyform'
 
 const createSource = (): PuppetDocument => ({
@@ -205,4 +206,185 @@ test('should mirror only the selected parameter axis of a two-dimensional keyfor
   if (result.ok) {
     expect(result.values).toEqual([1, -2])
   }
+})
+
+test.each([
+  {expected: [-1, 1, 2], parameterIndex: 0},
+  {expected: [1, -1, 2], parameterIndex: 1},
+  {expected: [1, 1, -2], parameterIndex: 2},
+])('should retain all three coordinates when mirroring axis $parameterIndex', (options) => {
+  const original = createSource()
+  const binding = original.parameterBindings![0]!
+  const source: PuppetDocument = {
+    ...original,
+    motions: [],
+    parameterBindings: [
+      {
+        ...binding,
+        keyforms: [
+          {...binding.keyforms[0]!, values: [0, 0, 0]},
+          {...binding.keyforms[1]!, values: [1, 1, 2]},
+        ],
+        parameterIds: ['x', 'y', 'z'],
+      },
+    ],
+    parameters: ['x', 'y', 'z'].map((id) => ({
+      defaultValue: 0,
+      id,
+      maximum: 3,
+      minimum: -3,
+      name: id,
+    })),
+    parts: original.parts.map((part) => ({...part, texture: {...part.texture, src: 'part.png'}})),
+  }
+  expect(parseDocumentValue(source).ok).toBe(true)
+  const result = mirrorKeyform({
+    axis: 'x',
+    bindingId: binding.id,
+    center: 50,
+    document: source,
+    overwrite: false,
+    parameterIndex: options.parameterIndex,
+    values: [1, 1, 2],
+  })
+  expect(result.ok).toBe(true)
+  if (!result.ok) {
+    return
+  }
+  expect(result.values).toEqual(options.expected)
+  const mirrored = result.document.parameterBindings![0]!.keyforms.find((keyform) =>
+    keyform.values.every((value, index) => value === options.expected[index]),
+  )
+  expect(mirrored?.parts[0]?.vertices).toEqual([-20, 0, 90, 0, -20, 100, 90, 100])
+  expect(parseDocumentValue(result.document).ok).toBe(true)
+})
+
+test('should reverse full authored turns instead of retaining the source angle', () => {
+  const source = createSource()
+  const rotationAngle = Math.PI * 2 + 0.5
+  const rest = [0, 0, 100, 0]
+  const node = {
+    boneRestPoints: rest,
+    bounds: {height: 100, width: 100, x: 0, y: 0},
+    children: source.scene!.roots,
+    columns: 1,
+    controlPoints: rest,
+    deformerType: 'rotation' as const,
+    id: 'rotation',
+    kind: 'deformer' as const,
+    locked: false,
+    name: 'Rotation',
+    rotationAngle: 0,
+    rows: 1,
+    visible: true,
+  }
+  const document = {
+    ...source,
+    parameterBindings: [
+      {
+        id: 'binding',
+        keyforms: [
+          {
+            deformers: [
+              {
+                controlPoints: rest,
+                kind: 'deformer' as const,
+                nodeId: 'rotation',
+                rotationAngle: 0,
+              },
+            ],
+            parts: [],
+            values: [0] as const,
+          },
+          {
+            deformers: [
+              {
+                controlPoints: [0, 0, 100 * Math.cos(rotationAngle), 100 * Math.sin(rotationAngle)],
+                kind: 'deformer' as const,
+                nodeId: 'rotation',
+                rotationAngle,
+              },
+            ],
+            parts: [],
+            values: [1] as const,
+          },
+        ],
+        parameterIds: ['x'] as const,
+        targetDeformerIds: ['rotation'],
+        targetPartIds: [],
+      },
+    ],
+    scene: {roots: [node]},
+  }
+  const result = mirrorKeyform({
+    axis: 'x',
+    bindingId: 'binding',
+    center: 0,
+    document,
+    overwrite: false,
+    parameterIndex: 0,
+    values: [1],
+  })
+  expect(result.ok).toBe(true)
+  if (result.ok) {
+    expect(
+      result.document.parameterBindings![0]!.keyforms.find((form) => form.values[0] === -1)!
+        .deformers![0]!.rotationAngle,
+    ).toBeCloseTo(-rotationAngle)
+  }
+})
+
+test('should retain group and direct Glue channels when mirroring geometry', () => {
+  const base = createDemoDocument()
+  const binding = base.parameterBindings![0]!
+  if (!isTwoDimensionalParameterBinding(binding)) {
+    throw new Error('Expected demo XY binding')
+  }
+  const document: PuppetDocument = {
+    ...base,
+    glue: [
+      {
+        first: {partId: 'mesh-preview', vertexIndex: 0},
+        id: 'join',
+        second: {partId: 'shape-diamond', vertexIndex: 0},
+        strength: 1,
+        weight: 0.5,
+      },
+    ],
+    parameterBindings: [
+      {
+        ...binding,
+        keyforms: binding.keyforms.map((form) => ({
+          ...form,
+          glue: [{id: 'join', strength: 0.4, weight: 0.3}],
+          groups: [{groupId: 'shapes', properties: {opacity: 0.25}}],
+        })),
+        targetGlueIds: ['join'],
+        targetGroupIds: ['shapes'],
+      },
+    ],
+  }
+  const result = mirrorKeyform({
+    axis: 'x',
+    bindingId: binding.id,
+    center: 320,
+    document,
+    overwrite: true,
+    parameterIndex: 0,
+    values: [30, 0],
+  })
+  expect(result.ok).toBe(true)
+  if (!result.ok) {
+    return
+  }
+  const mirrored = result.document.parameterBindings![0]!.keyforms.find(
+    (form) => form.values[0] === -30 && form.values[1] === 0,
+  )!
+  expect(mirrored.groups).toEqual([
+    expect.objectContaining({
+      groupId: 'shapes',
+      properties: expect.objectContaining({opacity: 0.25}),
+    }),
+  ])
+  expect(mirrored.glue).toEqual([{id: 'join', strength: 0.4, weight: 0.3}])
 })

@@ -8,6 +8,8 @@ export interface MotionSoundError {
 }
 
 export interface MotionSoundLoader {
+  /** Decoded resources copied by map; sample arrays remain immutable and shared. */
+  snapshot(): Map<string, PuppetSound>
   /** The decoded sound, once loaded. */
   get(src: string): PuppetSound | undefined
   /**
@@ -21,6 +23,8 @@ export interface CreateMotionSoundLoaderOptions {
   /** Reads a `src` (a data URL or a URL relative to the page); `fetch` when omitted. */
   readonly fetchBytes?: (src: string) => Promise<ArrayBuffer>
   readonly onError?: (error: MotionSoundError) => void
+  /** Called after a current sound becomes available; omitted, no resource notification. */
+  readonly onLoad?: () => void
 }
 
 const fetchBytes = async (src: string) => {
@@ -61,6 +65,7 @@ export const createMotionSoundLoader = (
     const decoded = decodeWav(bytes)
     if (decoded.ok) {
       sounds.set(src, decoded.sound)
+      options.onLoad?.()
     } else {
       options.onError?.({reason: decoded.error, src})
     }
@@ -83,5 +88,6 @@ export const createMotionSoundLoader = (
         }
       }
     },
+    snapshot: () => new Map(sounds),
   }
 }

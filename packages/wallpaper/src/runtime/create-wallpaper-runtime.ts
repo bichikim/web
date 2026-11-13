@@ -1,9 +1,9 @@
 import {completeSurfaceChanges} from './complete-surface-changes'
-import type {MonitorWallpaper, WallpaperContent} from '../settings/model'
+import type {MonitorWallpaper, WallpaperContent, WebsiteCustomization} from '../settings/model'
 
 export type SurfaceInteraction = 'interactive' | 'passThrough'
 export interface WallpaperSurfacePort {
-  readonly open: (monitorId: string) => Promise<string>
+  readonly open: (monitorId: string, customization?: WebsiteCustomization) => Promise<string>
   readonly close: (monitorId: string, label: string) => Promise<void>
   readonly setSurface: (label: string, interaction: SurfaceInteraction) => Promise<void>
   readonly setInteraction: (label: string, interaction: SurfaceInteraction) => Promise<void>
@@ -20,9 +20,18 @@ export interface WallpaperRuntime {
 }
 interface AppliedSurface {
   readonly label: string
+  readonly customization: string
   source: string | null
   interaction: SurfaceInteraction | null
 }
+
+const customizationKey = (code?: WebsiteCustomization): string =>
+  JSON.stringify([
+    code?.css ?? '',
+    code?.script ?? '',
+    code?.scriptStart ?? '',
+    code?.scriptDom ?? '',
+  ])
 
 /** Reports whether the selected content can be displayed without additional user input. */
 export const hasWallpaperContent = (content: WallpaperContent): boolean => {
@@ -50,9 +59,28 @@ export const createWallpaperRuntime = (surfaces: WallpaperSurfacePort): Wallpape
     applied.delete(monitorId)
   }
   const apply = async (settings: MonitorWallpaper) => {
+    const code =
+      settings.content.mode === 'website'
+        ? {
+            css: settings.content.css,
+            script: settings.content.script,
+            scriptDom: settings.content.scriptDom,
+            scriptStart: settings.content.scriptStart,
+          }
+        : undefined
+    const customization = customizationKey(code)
     let surface = applied.get(settings.monitorId)
+    if (surface !== undefined && surface.customization !== customization) {
+      await close(settings.monitorId, surface)
+      surface = undefined
+    }
     if (surface === undefined) {
-      surface = {interaction: null, label: await surfaces.open(settings.monitorId), source: null}
+      surface = {
+        customization,
+        interaction: null,
+        label: await surfaces.open(settings.monitorId, code),
+        source: null,
+      }
       applied.set(settings.monitorId, surface)
     }
     const interaction = settings.interaction.activation === 'always' ? 'interactive' : 'passThrough'

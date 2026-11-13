@@ -7,7 +7,7 @@ import type {
   PuppetPartBlendMode,
 } from '../player/document'
 import type {PuppetParameterValueMap} from './composition'
-import {composeKeyedColorEffect} from './keyed-color-effect'
+import {type ColorEffectComposer, createColorEffectComposer} from './keyed-color-effect'
 
 export interface ResolvedPartRenderProperties {
   readonly alphaBlendMode: PuppetAlphaBlendMode
@@ -52,15 +52,25 @@ export const getPartRenderProperties = (part: PuppetPart): ResolvedPartRenderPro
   screenColor: part.properties?.screenColor ?? DEFAULT_PROPERTIES.screenColor,
 })
 
+const composers = new WeakMap<
+  PuppetDocument,
+  Map<string, ColorEffectComposer<ResolvedPartRenderProperties>>
+>()
+
 export const composeParameterPartProperties = (
   options: ComposeParameterPartPropertiesOptions,
 ): ResolvedPartRenderProperties => {
+  let byPart = composers.get(options.document)
+  const previous = byPart?.get(options.partId)
+  if (previous !== undefined) {
+    return previous(options.parameterValues)
+  }
   const part = options.document.parts.find((candidate) => candidate.id === options.partId)
   if (part === undefined) {
     return DEFAULT_PROPERTIES
   }
 
-  return composeKeyedColorEffect({
+  const compose = createColorEffectComposer({
     bindings: getTargetBindings(
       options.document.parameterBindings ?? [],
       'targetPartIds',
@@ -74,7 +84,12 @@ export const composeParameterPartProperties = (
               keyform.parts.find((candidate) => candidate.partId === options.partId)?.properties,
           )
         : undefined,
-    parameterValues: options.parameterValues,
     rest: getPartRenderProperties(part),
   })
+  if (byPart === undefined) {
+    byPart = new Map()
+    composers.set(options.document, byPart)
+  }
+  byPart.set(options.partId, compose)
+  return compose(options.parameterValues)
 }

@@ -1,6 +1,6 @@
 import {type Accessor, batch, createSignal, onCleanup, onMount} from 'solid-js'
 
-interface UnsavedChangesOptions {
+interface UseUnsavedChangesProps {
   readonly pending: Accessor<boolean>
   readonly saving: Accessor<boolean>
   readonly saveAll: () => Promise<boolean>
@@ -10,27 +10,27 @@ interface UnsavedChangesOptions {
 type LeaveChoice = 'save' | 'discard' | 'cancel'
 
 /** Requests a save/discard/cancel choice before teardown or replacing the current connection. */
-export const useUnsavedChanges = (options: UnsavedChangesOptions) => {
+export const useUnsavedChanges = (props: UseUnsavedChangesProps) => {
   const [confirming, setConfirming] = createSignal(false)
   let leaving: ReturnType<typeof Promise.withResolvers<boolean>> | null = null
   const confirmLeave = (): Promise<boolean> => {
     if (leaving !== null) {
       return leaving.promise
     }
-    if (!options.pending() && !options.saving()) {
+    if (!props.pending() && !props.saving()) {
       return Promise.resolve(true)
     }
     leaving = Promise.withResolvers<boolean>()
     const {promise} = leaving
-    if (!options.saving()) {
+    if (!props.saving()) {
       setConfirming(true)
       return promise
     }
-    options.settle().then(() => {
+    props.settle().then(() => {
       if (leaving === null) {
         return
       }
-      if (options.pending()) {
+      if (props.pending()) {
         setConfirming(true)
       } else {
         leaving.resolve(true)
@@ -40,17 +40,17 @@ export const useUnsavedChanges = (options: UnsavedChangesOptions) => {
     return promise
   }
   const resolveLeave = async (choice: LeaveChoice): Promise<void> => {
-    if (leaving === null || options.saving()) {
+    if (leaving === null || props.saving()) {
       return
     }
-    if (choice === 'save' && (!(await options.saveAll()) || options.pending())) {
+    if (choice === 'save' && (!(await props.saveAll()) || props.pending())) {
       return
     }
     const pending = leaving
     leaving = null
     batch(() => {
       if (choice === 'discard') {
-        options.discardAll()
+        props.discardAll()
       }
       setConfirming(false)
     })
@@ -58,7 +58,7 @@ export const useUnsavedChanges = (options: UnsavedChangesOptions) => {
   }
   onMount(() => {
     const beforeUnload = (event: BeforeUnloadEvent): void => {
-      if (options.pending() || options.saving()) {
+      if (props.pending() || props.saving()) {
         event.preventDefault()
         event.returnValue = ''
       }

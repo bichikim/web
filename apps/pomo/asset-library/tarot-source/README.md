@@ -8,6 +8,14 @@
 - 공통 투명 프레임, 그림, 카드 이름을 [일반 카드 렌더링](/Users/bichi/.codex/worktrees/f432/web/apps/pomo/src/components/tarot/TarotCardArtwork.tsx:51)에서 합성한다. 원본 보존과 프레임 교체를 위한 구조이며, 두 이미지의 합성으로 구현 비용이 작다.
 - 깊이 맵 78장은 새 그림에서 로컬 DA3MONO-LARGE로 만들었다. [확대 렌더러](/Users/bichi/.codex/worktrees/f432/web/apps/pomo/src/features/tarot-depth/renderer.ts:77)는 그림에만 깊이 필터를 적용하고 프레임과 이름은 별도 레이어로 합성한다. 카드 전체는 함께 기울어진다.
 
+## 그림 압축
+
+타로 그림의 PNG 원본은 `illustrations/`에 보관하고, 앱은 `src/features/tarot/assets/illustrations/`의 WebP를 사용한다. 각 원본의 경로와 체크섬은 [생성 기록](./illustrations/manifest.json)에 있다. 깊이 맵도 압축 전 PNG에서 생성한다.
+
+그림을 교체한 뒤 저장소 루트에서 `node apps/pomo/scripts/agent-tasks/tarot/compress-illustrations.mjs`를 실행한다. [변환 스크립트](../../scripts/agent-tasks/tarot/compress-illustrations.mjs)는 원본 체크섬, 해상도, 알파와 픽셀 차이를 검사한 뒤 WebP를 기록한다.
+
+원본을 같은 저장소에 보존하므로 이 변환은 배포용 이미지 용량을 줄인다. 로컬 저장소에는 WebP 파일 용량이 추가된다.
+
 ## 검토 결과
 
 동작, 리팩터링, 이름과 구조를 각각 검토했다. 구현 중 발견한 아래 P2를 수정한 후 최종 전체 검토를 2회 수행했다. P0/P1 발견 없음. 남은 P0/P1/P2 없음 (`no remaining P0/P1/P2 findings`).

@@ -13,7 +13,7 @@ import type {CodeSelection} from './types'
 import {useFileViewState} from './view-state/context'
 import {readCodeFolds} from './editor/read-code-folds'
 
-interface CodeFoldingOptions {
+interface UseCodeFoldingProps {
   readonly document: Accessor<CodeDocument>
   readonly selection: Accessor<CodeSelection | undefined>
   readonly matches: Accessor<readonly TextMatch[] | undefined>
@@ -22,16 +22,16 @@ interface CodeFoldingOptions {
 }
 
 /** Retains per-revision folds and reveals explicit navigation and active search destinations. */
-export const useCodeFolding = (options: CodeFoldingOptions) => {
+export const useCodeFolding = (props: UseCodeFoldingProps) => {
   const binding = useFileViewState()
   const initial = untrack(() => binding?.read()?.codeFolds)
   const [closed, setClosed] = createSignal<ReadonlySet<number>>(
-    new Set(initial?.revision === options.document().revision ? initial.lines : []),
+    new Set(initial?.revision === props.document().revision ? initial.lines : []),
   )
   const [ranges, setRanges] = createSignal<ReadonlyMap<number, number>>(new Map())
-  const path = createMemo(() => options.document().location.path)
-  const source = createMemo(() => options.document().source)
-  const revision = createMemo(() => options.document().revision)
+  const path = createMemo(() => props.document().location.path)
+  const source = createMemo(() => props.document().source)
+  const revision = createMemo(() => props.document().revision)
   createEffect(on(revision, () => setClosed(new Set<number>()), {defer: true}))
   createEffect(() => {
     const name = path()
@@ -91,7 +91,7 @@ export const useCodeFolding = (options: CodeFoldingOptions) => {
   }
   createEffect(
     on(
-      () => [options.document().location, options.selection(), ranges()] as const,
+      () => [props.document().location, props.selection(), ranges()] as const,
       ([location, selection]) => {
         if (binding?.request().restore !== true) {
           untrack(() => reveal(selection?.line ?? location.line))
@@ -101,11 +101,11 @@ export const useCodeFolding = (options: CodeFoldingOptions) => {
   )
   createEffect(
     on(
-      () => [options.searchRequest(), ranges()] as const,
+      () => [props.searchRequest(), ranges()] as const,
       ([request]) => {
         if ((request ?? 0) > 0) {
           untrack(() => {
-            const match = options.matches()?.[options.active() ?? -1]
+            const match = props.matches()?.[props.active() ?? -1]
             if (match !== undefined) {
               reveal(
                 source()
@@ -118,7 +118,7 @@ export const useCodeFolding = (options: CodeFoldingOptions) => {
       },
     ),
   )
-  const lines = createMemo(() => options.document().lines)
+  const lines = createMemo(() => props.document().lines)
   const rows = createMemo(() => lines().map((tokens, index) => ({line: index + 1, tokens})))
   const visible = createMemo(() => {
     const hidden = new Set<number>()

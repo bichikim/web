@@ -1,3 +1,4 @@
+import type {TextOutputSchema} from './types'
 import type {TextModelId} from './model'
 import type {TextGenerationProgress} from './progress'
 
@@ -19,6 +20,7 @@ export interface GenerateTextOptions {
   readonly maximumTokens: number
   readonly messages: Array<TextGenerationMessage>
   readonly noRepeatNgramSize: number
+  readonly outputSchema?: TextOutputSchema
   readonly onToken?: (text: string) => void
   readonly repetitionPenalty: number
   readonly signal?: AbortSignal

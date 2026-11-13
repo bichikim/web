@@ -65,7 +65,7 @@ describe('createCalendarQuery next-week weekdays', () => {
     ).toEqual({end: '2026-09-10T15:00:00.000Z', start: '2026-09-09T15:00:00.000Z'})
   })
 
-  it.each(['빼고', '제외하고', '아니고', '안 돼'])(
+  it.each(['빼고', '제외', '제외하고', '아니고', '아닌', '안되', '안돼', '안 돼'])(
     'should select the remaining weekday after excluding Wednesday with "%s"',
     (exclusion) => {
       expect(
@@ -277,6 +277,26 @@ describe('createCalendarQuery next-week weekdays', () => {
 
 describe('createCalendarQuery implicit weekday questions', () => {
   const now = new Date('2026-09-04T10:30:00.000Z')
+
+  it.each([
+    ['새벽', {end: '2026-09-06T21:00:00.000Z', start: '2026-09-06T15:00:00.000Z'}],
+    ['아침', {end: '2026-09-07T01:00:00.000Z', start: '2026-09-06T21:00:00.000Z'}],
+    ['오전', {end: '2026-09-07T03:00:00.000Z', start: '2026-09-06T15:00:00.000Z'}],
+    ['점심', {end: '2026-09-07T05:00:00.000Z', start: '2026-09-07T02:00:00.000Z'}],
+    ['오후', {end: '2026-09-07T15:00:00.000Z', start: '2026-09-07T03:00:00.000Z'}],
+    ['저녁', {end: '2026-09-07T12:00:00.000Z', start: '2026-09-07T09:00:00.000Z'}],
+    ['밤', {end: '2026-09-07T15:00:00.000Z', start: '2026-09-07T12:00:00.000Z'}],
+    ['낮', {end: '2026-09-07T09:00:00.000Z', start: '2026-09-07T00:00:00.000Z'}],
+    ['정오', {at: '2026-09-07T03:00:00.000Z'}],
+  ])('should resolve the implicit weekday window for %s', (daypart, expected) => {
+    expect(
+      createCalendarQuery({
+        now,
+        text: `월요일 ${daypart} 뭐 있어?`,
+        timeZone: 'Asia/Seoul',
+      }),
+    ).toEqual(expected)
+  })
 
   it.each([
     ['일요일 뭐 있어?', '2026-09-05T15:00:00.000Z', '2026-09-06T15:00:00.000Z'],

@@ -1,6 +1,7 @@
 import {Match, Show, Switch, untrack} from 'solid-js'
 import * as m from '@paraglide/message'
-import {type BackgroundError, type BackgroundMode, useBackground} from 'src/features/background'
+import {type BackgroundError, useBackground} from 'src/features/background'
+import {type BackgroundMode} from '@winter-love/wallpaper/model'
 import {synchronizeDesktopBackground} from 'src/features/desktop-mode'
 import {PRadioSwitch} from '../../p-radio-switch/PRadioSwitch'
 import {PSettingsActionButton} from '../ActionButton'

@@ -1,6 +1,11 @@
 import {expect, test} from 'vitest'
 import type {PuppetParameterBinding1D} from '../../player'
-import {sampleGridCoordinates} from '../sample-grid-coordinates'
+import {
+  createGridCoordinateSampler,
+  getGridCorners,
+  prepareGridBindings,
+  sampleGridCoordinates,
+} from '../sample-grid-coordinates'
 
 const binding: PuppetParameterBinding1D = {
   id: 'grid',
@@ -12,6 +17,44 @@ const binding: PuppetParameterBinding1D = {
   parameterIds: ['p'],
 }
 const options = {binding, keyformCoordinates: [[0], [1]], restCoordinates: [0]}
+
+class RoundedSampling {
+  get continuousPrecision() {
+    return 'float32' as const
+  }
+}
+
+test('should retain per-coordinate rest fallbacks and corner accumulation order', () => {
+  const query = {
+    ...options,
+    keyformCoordinates: [[1e16, 20], [1e16 + 4]],
+    restCoordinates: [0, 12, 7],
+    values: [0.5],
+  }
+  expect(sampleGridCoordinates(query)).toEqual([1e16 + 2, 16, 7])
+  expect(sampleGridCoordinates({...query, keyformCoordinates: [undefined, [8, 16, 9]]})).toEqual([
+    4, 14, 8,
+  ])
+})
+
+test('should reuse interpolation independently of channel coordinates and observe new point values', () => {
+  const values = [0.25]
+  expect(sampleGridCoordinates({...options, values})).toEqual([0.25])
+  const channel = {...options, keyformCoordinates: [[10], [30]], restCoordinates: [99], values}
+  expect(sampleGridCoordinates(channel)).toEqual([15])
+  values[0] = 0.75
+  expect(sampleGridCoordinates(channel)).toEqual([25])
+  expect(sampleGridCoordinates({...channel, sampling: 'step'})).toEqual([10])
+  expect(sampleGridCoordinates(channel)).toEqual([25])
+})
+
+test('should resample a repeated point when the wrap range changes', () => {
+  const repeatRanges: [number, number][] = [[0, 2]]
+  const query = {...options, keyformCoordinates: [[0], [10]], repeatRanges, values: [1.5]}
+  expect(sampleGridCoordinates(query)).toEqual([5])
+  repeatRanges[0] = [0, 3]
+  expect(sampleGridCoordinates(query)).toEqual([7.5])
+})
 
 test('should preserve legacy continuous snapping and discrete Float32 defaults', () => {
   expect(sampleGridCoordinates({...options, values: [0.99999]})).toEqual([1])
@@ -114,3 +157,141 @@ test('should keep the first duplicate corner and refresh a replaced keyform grid
     }),
   ).toEqual([5])
 })
+
+test('should share compatible interpolation without retaining another channel or changing a snapshot', () => {
+  const first = {...binding, id: 'first'}
+  const second = {...binding, id: 'second', keyforms: [...binding.keyforms]}
+  prepareGridBindings([first, second])
+  const values = [0.25]
+  const query = {
+    ...options,
+    binding: first,
+    keyformCoordinates: [[10], [30]],
+    values,
+  }
+  const corners = getGridCorners(query)
+  expect(getGridCorners({...query, binding: second})).toBe(corners)
+  const snapshot = createGridCoordinateSampler(query)
+  expect(snapshot(0)).toBe(15)
+  expect(
+    sampleGridCoordinates({
+      ...query,
+      binding: second,
+      keyformCoordinates: [undefined, [8]],
+      restCoordinates: [4],
+    }),
+  ).toEqual([5])
+  values[0] = 0.75
+  expect(sampleGridCoordinates({...query, binding: second})).toEqual([25])
+  expect(sampleGridCoordinates({...query, sampling: 'step'})).toEqual([10])
+  expect(snapshot(0)).toBe(15)
+})
+
+test('should retain keyform order, precision and changing repeat ranges after sharing preparation', () => {
+  const first = {...binding, id: 'first'}
+  const reversed = {...binding, id: 'reversed', keyforms: binding.keyforms.toReversed()}
+  const rounded = {
+    ...binding,
+    id: 'rounded',
+    sampling: {continuousPrecision: 'float32' as const, keyTolerance: 0},
+  }
+  prepareGridBindings([first, reversed, rounded])
+  const query = {...options, keyformCoordinates: [[10], [30]], values: [0.25]}
+  expect(sampleGridCoordinates({...query, binding: first})).toEqual([15])
+  expect(sampleGridCoordinates({...query, binding: reversed})).toEqual([25])
+  expect(sampleGridCoordinates({...options, binding: rounded, values: [0.7]})).toEqual([
+    Math.fround(0.7),
+  ])
+  expect(sampleGridCoordinates({...options, binding: first, values: [0.7]})).toEqual([0.7])
+  const repeated = {...options, binding: first, keyformCoordinates: [[0], [10]], values: [1.5]}
+  expect(sampleGridCoordinates({...repeated, repeatRanges: [[0, 2]]})).toEqual([5])
+  expect(sampleGridCoordinates({...repeated, repeatRanges: [[0, 3]]})).toEqual([7.5])
+})
+
+test('should preserve signed zero and nonfinite keys when preparing independent grids', () => {
+  const bindings = [-0, 0, Number.NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY].map(
+    (key, index): PuppetParameterBinding1D => ({
+      ...binding,
+      id: `grid-${index}`,
+      keyforms: [{parts: [], values: [key]}, binding.keyforms[1]!],
+    }),
+  )
+  const queries = bindings.map((binding) => ({...options, binding, values: [0.25]}))
+  const expected = queries.map(sampleGridCoordinates)
+  prepareGridBindings(bindings)
+  expect(queries.map(sampleGridCoordinates)).toEqual(expected)
+})
+
+test.each([
+  ['inherited', new RoundedSampling()],
+  [
+    'non-enumerable',
+    Object.defineProperty({continuousPrecision: 'float32' as const}, 'continuousPrecision', {
+      enumerable: false,
+    }),
+  ],
+] as const)('should retain %s sampling policies when sharing grids', (_kind, sampling) => {
+  const precise = {...binding, id: 'precise'}
+  const rounded = {...binding, id: 'rounded', sampling}
+  prepareGridBindings([precise, rounded])
+  expect(sampleGridCoordinates({...options, binding: precise, values: [0.7]})).toEqual([0.7])
+  expect(sampleGridCoordinates({...options, binding: rounded, values: [0.7]})).toEqual([
+    Math.fround(0.7),
+  ])
+})
+
+test('should ignore unrelated sampling metadata while preparing a grid', () => {
+  const metadata: Record<string, unknown> = {}
+  metadata.self = metadata
+  const sampling = {continuousPrecision: 'float64' as const, metadata}
+  const subject = {...binding, sampling}
+  prepareGridBindings([subject])
+  expect(sampleGridCoordinates({...options, binding: subject, values: [0.7]})).toEqual([0.7])
+})
+
+test('should index numeric keyforms independently of an array serialization hook', () => {
+  const values = Object.assign([2] as const, {toJSON: () => [1]})
+  const subject = {...binding, keyforms: [binding.keyforms[0]!, {parts: [], values}]}
+  expect(sampleGridCoordinates({...options, binding: subject, values: [1]})).toEqual([0.5])
+})
+
+test('should keep distinct numeric grids independent when their serialization hooks match', () => {
+  const values = Object.assign([2] as const, {toJSON: () => [1]})
+  const first = {...binding}
+  const second = {...binding, keyforms: [binding.keyforms[0]!, {parts: [], values}]}
+  prepareGridBindings([first, second])
+  expect(sampleGridCoordinates({...options, binding: first, values: [1]})).toEqual([1])
+  expect(sampleGridCoordinates({...options, binding: second, values: [1]})).toEqual([0.5])
+})
+
+test.each([
+  ['discretePrecision', {discretePrecision: 'float64', keyTolerance: 0}, [0, 1], 1 - 1e-8, 'step'],
+  ['keyTolerance', {keyTolerance: 0}, [0, 1], 0.99999, undefined],
+  [
+    'keyToleranceUnit',
+    {keyTolerance: 0.1, keyToleranceUnit: 'parameter'},
+    [0, 0.01],
+    0.005,
+    undefined,
+  ],
+] as const)(
+  'should keep %s independent when the policy field is non-enumerable',
+  (field, policy, keys, value, sampling) => {
+    const rest = Object.fromEntries(Object.entries(policy).filter(([key]) => key !== field))
+    const first = {
+      ...binding,
+      keyforms: keys.map((key) => ({parts: [], values: [key] as const})),
+      sampling: rest,
+    }
+    const second = {
+      ...first,
+      sampling: Object.defineProperty({...policy}, field, {enumerable: false}),
+    }
+    const query = {...options, sampling, values: [value]}
+    const expected = sampleGridCoordinates({...query, binding: second})
+    expect(sampleGridCoordinates({...query, binding: first})).not.toEqual(expected)
+    prepareGridBindings([first, second])
+    sampleGridCoordinates({...query, binding: first})
+    expect(sampleGridCoordinates({...query, binding: second})).toEqual(expected)
+  },
+)

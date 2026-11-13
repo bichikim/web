@@ -1,4 +1,5 @@
 import type {PuppetDeformerShape, PuppetSceneDeformerNode} from '../player/document'
+import {isEqual} from 'es-toolkit'
 
 export const getDeformerShape = (node: PuppetDeformerShape): PuppetDeformerShape => ({
   boneRestPoints: node.boneRestPoints,
@@ -26,7 +27,7 @@ export const getDeformerShape = (node: PuppetDeformerShape): PuppetDeformerShape
 })
 
 export const sameDeformerShape = (left: PuppetDeformerShape, right: PuppetDeformerShape): boolean =>
-  JSON.stringify(getDeformerShape(left)) === JSON.stringify(getDeformerShape(right))
+  isEqual(getDeformerShape(left), getDeformerShape(right))
 
 /** Changes the control layout while preserving its existing point mapping. */
 export const rebindDeformer = (

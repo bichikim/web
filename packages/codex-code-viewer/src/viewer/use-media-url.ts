@@ -5,13 +5,13 @@ import {createMediaCache} from './create-media-cache'
 import {MediaCacheContext} from './media-cache-context'
 import {readMediaBlob} from './read-media-blob'
 
-interface MediaUrlOptions {
+interface UseMediaUrlProps {
   document: Accessor<CodeDocument | undefined>
   session: Accessor<string>
   port: Accessor<ViewerPort | undefined>
   onError?: (error: unknown) => void
 }
-export const useMediaUrl = (options: MediaUrlOptions) => {
+export const useMediaUrl = (props: UseMediaUrlProps) => {
   const shared = useContext(MediaCacheContext)
   const cache = shared ?? createMediaCache({maxBytes: 0, maxEntries: 0})
   if (shared === undefined) {
@@ -22,13 +22,13 @@ export const useMediaUrl = (options: MediaUrlOptions) => {
   const [progress, setProgress] = createSignal(0)
   const [error, setError] = createSignal<string>()
   createEffect(() => {
-    const document = options.document()
-    const session = options.session()
+    const document = props.document()
+    const session = props.session()
     setUrl(undefined)
     setBlob(undefined)
     setProgress(0)
     setError(undefined)
-    const port = options.port()
+    const port = props.port()
     if (document?.media === undefined || port === undefined) {
       return
     }
@@ -66,7 +66,7 @@ export const useMediaUrl = (options: MediaUrlOptions) => {
       .catch((reason: unknown) => {
         if (!disposed) {
           setError(reason instanceof Error ? reason.message : '미디어를 읽지 못했습니다.')
-          options.onError?.(reason)
+          props.onError?.(reason)
         }
       })
   })

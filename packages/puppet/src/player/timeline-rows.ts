@@ -4,6 +4,7 @@ import {
   type PuppetKeyframe,
   type PuppetModelTrackTarget,
   type PuppetParameter,
+  type PuppetSceneGroupNode,
   type PuppetSceneNode,
   type PuppetTrack,
 } from './document'
@@ -95,6 +96,14 @@ const MODEL_ROW_NAMES: Readonly<Record<PuppetModelTrackTarget, string>> = {
   opacity: '모델 불투명도',
 }
 
+const createEffectParameter = (id: string, name: string, defaultValue = 1): PuppetParameter => ({
+  defaultValue,
+  id,
+  maximum: 1,
+  minimum: 0,
+  name,
+})
+
 const findGroup = (
   nodes: ReadonlyArray<PuppetSceneNode>,
   id: string,
@@ -121,38 +130,59 @@ export const getRowParameter = (
   }
   const target = findModelTarget(rowId, document)
   if (target !== undefined) {
-    return {
-      defaultValue: target === 'lip-sync' ? 0 : 1,
-      id: rowId,
-      maximum: 1,
-      minimum: 0,
-      name: MODEL_ROW_NAMES[target],
-    }
+    return createEffectParameter(rowId, MODEL_ROW_NAMES[target], target === 'lip-sync' ? 0 : 1)
   }
   const groupId = getRowGroupId(rowId, document)
   if (groupId === undefined) {
     return undefined
   }
   const group = findGroup(document.scene?.roots ?? [], groupId)
-  return group === undefined
-    ? undefined
-    : {defaultValue: 1, id: rowId, maximum: 1, minimum: 0, name: `${group.name} 불투명도`}
+  return group === undefined ? undefined : createEffectParameter(rowId, `${group.name} 불투명도`)
 }
 
-/** IDs of every scene group, in depth-first document order. */
-const collectGroupIds = (nodes: ReadonlyArray<PuppetSceneNode>): ReadonlyArray<string> =>
+const collectGroups = (
+  nodes: ReadonlyArray<PuppetSceneNode>,
+): ReadonlyArray<PuppetSceneGroupNode> =>
   nodes.flatMap((node) =>
     node.kind === 'part'
       ? []
-      : [...(node.kind === 'group' ? [node.id] : []), ...collectGroupIds(node.children)],
+      : [...(node.kind === 'group' ? [node] : []), ...collectGroups(node.children)],
   )
 
+/** IDs of every scene group, in depth-first document order. */
+const collectGroupIds = (nodes: ReadonlyArray<PuppetSceneNode>): ReadonlyArray<string> =>
+  collectGroups(nodes).map((group) => group.id)
+
+const effectRowsByDocument = new WeakMap<PuppetDocument, ReadonlyArray<PuppetParameter>>()
+
 /** Model rows, then one opacity row per scene group. */
-export const getEffectRows = (document: PuppetDocument): ReadonlyArray<PuppetParameter> =>
-  [
-    ...PUPPET_MODEL_TRACK_TARGETS.map((target) => getModelTrackRowId(target, document)),
-    ...collectGroupIds(document.scene?.roots ?? []).map((id) => getGroupOpacityRowId(id, document)),
-  ].flatMap((rowId) => {
-    const parameter = getRowParameter(document, rowId)
-    return parameter === undefined ? [] : [parameter]
-  })
+export const getEffectRows = (document: PuppetDocument): ReadonlyArray<PuppetParameter> => {
+  const cached = effectRowsByDocument.get(document)
+  if (cached !== undefined) {
+    return cached
+  }
+  const groups = collectGroups(document.scene?.roots ?? [])
+  const names = new Map<string, string>()
+  for (const group of groups) {
+    if (!names.has(group.id)) {
+      names.set(group.id, group.name)
+    }
+  }
+  const rows = [
+    ...PUPPET_MODEL_TRACK_TARGETS.map((target) =>
+      createEffectParameter(
+        getModelTrackRowId(target, document),
+        MODEL_ROW_NAMES[target],
+        target === 'lip-sync' ? 0 : 1,
+      ),
+    ),
+    ...groups.map((group) =>
+      createEffectParameter(
+        getGroupOpacityRowId(group.id, document),
+        `${names.get(group.id)} 불투명도`,
+      ),
+    ),
+  ]
+  effectRowsByDocument.set(document, rows)
+  return rows
+}

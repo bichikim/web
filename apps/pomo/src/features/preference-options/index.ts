@@ -1,5 +1,5 @@
 import type {PreferenceOptions} from 'src/hooks/use-preference/use-preference'
-import type {PreferenceStorage} from 'src/utils/preference-storage'
+import type {PreferenceStorage} from 'src/hooks/use-preference/types'
 export type PreferenceCallbacks = Pick<PreferenceOptions<unknown>, 'onError' | 'onSaved'>
 export interface StoredPreferenceOptions<Value> extends PreferenceOptions<Value> {
   readonly storage: PreferenceStorage

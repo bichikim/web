@@ -42,6 +42,9 @@ export const useDeformerGestureCancellation = (
     ),
   )
   onCleanup(cancel)
+  const handleBlur = () => cancel()
+  globalThis.addEventListener('blur', handleBlur)
+  onCleanup(() => globalThis.removeEventListener('blur', handleBlur))
   return {
     changeDocument: (document: PuppetDocument) =>
       batch(() => {

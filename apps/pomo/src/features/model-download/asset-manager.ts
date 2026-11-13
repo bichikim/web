@@ -1,6 +1,7 @@
 import {getErrorMessage} from 'src/utils/get-error-message'
 
-import {isSupertonicModelDownloaded, type SupertonicModelId} from '../supertonic'
+import {isSupertonicModelDownloaded} from '../supertonic'
+import {type SupertonicModelId} from '@winter-love/supertonic/model'
 import {isTextModelDownloaded} from '../text-generation'
 import type {ModelDownloadController, ModelDownloadTarget} from './controller'
 

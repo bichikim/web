@@ -1,57 +1,21 @@
 import type {Container} from 'pixi.js'
-import {
-  composeParameterGlue,
-  composeParameterScene,
-  composeParameterVertices,
-  type PuppetParameterValueMap,
-} from '../../deformation'
+import type {PuppetParameterValueMap} from '../../deformation'
 import type {PuppetDocument} from '../document'
-import {mixMotionVertices, type MotionMix} from '../playback'
-import {getPartRenderFrame} from '../internal/render-plan'
+import type {MotionMix} from '../playback'
+import {type ComputedRenderFrame, computeRenderFrame} from '../internal/compute-render-frame'
 import type {RenderOverrides} from '../internal/render-overrides'
-import {applySceneDeformers} from '../internal/scene-deformation'
-import type {SpatialPartPose} from '../internal/spatial-part'
+import type {NativeDeformation} from '../internal/create-native-deformation'
 import {applyDocumentScene} from './apply-document-scene'
 import {applyLayerRenderProperties, applyPartRenderProperties} from './apply-effect-filters'
 import {cullFlippedTriangles} from './cull-flipped-triangles'
 import {updateRuntimeMask} from './part-mask'
 import type {RuntimeLayer, RuntimePart} from './types'
 
-interface ApplyFrameVerticesOptions {
-  readonly document: PuppetDocument
-  readonly mix: MotionMix
-  readonly parameterValues: PuppetParameterValueMap | undefined
-  readonly partId: string
-  readonly runtimePart: RuntimePart
-  readonly spatialPose?: SpatialPartPose
-}
-
-const applyFrameVertices = (options: ApplyFrameVerticesOptions) => {
-  options.runtimePart.vertices.set(
-    composeParameterVertices({
-      document: options.document,
-      parameterValues: options.parameterValues,
-      partId: options.partId,
-      restVertices: options.runtimePart.restVertices,
-    }),
-  )
-  options.runtimePart.vertices.set(
-    mixMotionVertices({
-      partId: options.partId,
-      restVertices: options.runtimePart.restVertices,
-      samples: options.mix.vertexSamples,
-      vertices: options.runtimePart.vertices,
-    }),
-  )
-  if (options.spatialPose !== undefined) {
-    for (let index = 0; index < options.spatialPose.vertices.length; index += 1) {
-      options.runtimePart.vertices[index] +=
-        options.spatialPose.vertices[index]! - options.runtimePart.restVertices[index]!
-    }
-  }
-}
-
 interface ApplyRenderFrameOptions {
+  /** Precomputed vertices and display plan; omitted, evaluate the original frame. */
+  readonly prepared?: ComputedRenderFrame
+  /** Owned native coordinate evaluator; omitted, compose the general scene. */
+  readonly native?: NativeDeformation
   readonly mix: MotionMix
   readonly parameterValues: PuppetParameterValueMap
   readonly overrides?: RenderOverrides
@@ -65,40 +29,29 @@ interface ApplyRenderFrameOptions {
 
 /** Applies one frame and returns the part IDs in paint order, back to front. */
 export const applyRenderFrame = (options: ApplyRenderFrameOptions): ReadonlyArray<string> => {
-  const frameParameterValues = options.parameterValues
-  const posedScene = composeParameterScene(options.document, frameParameterValues)
-  const frame = getPartRenderFrame(options.document, frameParameterValues, posedScene, {
-    mix: options.mix,
-    overrides: options.overrides,
-    poseOpacityByPartId: options.poseOpacityByPartId,
-  })
-  const {plans: renderPlans, spatialPoses} = frame
-  const planById = new Map(renderPlans.map((plan) => [plan.partId, plan]))
-
-  for (const [partId, runtimePart] of options.partById) {
-    applyFrameVertices({
+  const frame =
+    options.prepared?.frame ??
+    computeRenderFrame({
       document: options.document,
       mix: options.mix,
-      parameterValues: frameParameterValues,
-      partId,
-      runtimePart,
-      spatialPose: spatialPoses.get(partId),
+      native: options.native,
+      overrides: options.overrides,
+      parameterValues: options.parameterValues,
+      poseOpacityByPartId: options.poseOpacityByPartId,
+      verticesByPartId: new Map([...options.partById].map(([id, part]) => [id, part.vertices])),
     })
+  const {plans: renderPlans} = frame
+  const planById = new Map(renderPlans.map((plan) => [plan.partId, plan]))
+  if (options.prepared !== undefined) {
+    let offset = 0
+    for (const part of options.document.parts) {
+      const runtime = options.partById.get(part.id)
+      runtime?.vertices.set(
+        options.prepared.vertices.subarray(offset, offset + part.mesh.vertices.length),
+      )
+      offset += part.mesh.vertices.length
+    }
   }
-
-  applySceneDeformers({
-    document: {
-      ...options.document,
-      glue: composeParameterGlue({
-        document: options.document,
-        parameterValues: frameParameterValues,
-      }),
-      scene: posedScene,
-    },
-    verticesByPartId: new Map(
-      [...options.partById].map(([partId, runtimePart]) => [partId, runtimePart.vertices]),
-    ),
-  })
 
   const documentPartById = new Map(options.document.parts.map((part) => [part.id, part]))
   for (const runtimePart of options.partById.values()) {

@@ -69,7 +69,14 @@ it('should send the expense text to the local chat model with a structured extra
 
   expect(chatMocks.setDraft).toHaveBeenCalledWith('당근 2000원\n고구마 1000원 2개')
   expect(chatMocks.send).toHaveBeenCalledWith(
-    expect.objectContaining({refineAnswer: false, supplementaryContext: expect.any(String)}),
+    expect.objectContaining({
+      outputSchema: expect.objectContaining({
+        required: expect.arrayContaining(['date', 'questions', 'items']),
+        type: 'object',
+      }),
+      refineAnswer: false,
+      supplementaryContext: expect.any(String),
+    }),
   )
 })
 
@@ -100,6 +107,7 @@ it.each(['고구마 1000원 2개', '고구마 1000원2개'])(
     ])
 
     await waitFor(() => expect(screen.getByText('고구마')).toBeDefined())
+    expect(screen.getByText('합계 2,000원')).toBeDefined()
     expect(screen.queryByRole('alert')).toBeNull()
     expect(screen.getByRole('button', {name: '양식 필드에 적용'})).toBeDefined()
     fireEvent.click(screen.getByRole('button', {name: '양식 필드에 적용'}))

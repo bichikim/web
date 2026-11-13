@@ -18,6 +18,8 @@ export interface SettingsRepository {
   readonly addPuppet: (name: string, source: string) => Promise<PuppetAsset>
   readonly listPuppets: () => Promise<readonly PuppetAsset[]>
   readonly loadPuppet: (id: string) => Promise<string>
+  /** Removes an item from all monitor album selections in one transaction. */
+  readonly removeMediaReferences: (id: string) => Promise<void>
   readonly removePuppet: (id: string) => Promise<void>
   readonly subscribe: (refresh: () => void, onError: (error: unknown) => void) => () => void
   readonly close: () => void
@@ -45,6 +47,25 @@ export const createSettingsRepository = (databaseName: string): SettingsReposito
       return puppet.source
     },
     read,
+    async removeMediaReferences(id) {
+      await database.transaction('rw', database.monitors, async () => {
+        const monitors = await read()
+        await Promise.all(
+          monitors.map((monitor) => {
+            const {content} = monitor
+            return content.mode === 'album' && content.mediaIds.includes(id)
+              ? database.monitors.put({
+                  ...monitor,
+                  content: {
+                    ...content,
+                    mediaIds: content.mediaIds.filter((selected) => selected !== id),
+                  },
+                })
+              : Promise.resolve()
+          }),
+        )
+      })
+    },
     async removePuppet(id) {
       await database.transaction('rw', database.monitors, database.puppets, async () => {
         const monitors = await read()

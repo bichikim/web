@@ -5,21 +5,20 @@ import {getPartRenderFrame} from '../internal/render-plan'
 import {applyDocumentScene} from './apply-document-scene'
 import {createRuntimePartMask} from './part-mask'
 import type {RuntimeLayer, RuntimePart} from './types'
+import {loadTextureImage} from './load-texture-image'
 
 // Chromium fails some decodes ("cannot be decoded") when many large images, such as texture
 // atlas pages, decode at once; a few at a time keeps loading parallel without that.
 const MAXIMUM_CONCURRENT_DECODES = 4
 
 const loadTexture = limitAsync(async (source: string) => {
-  const image = new Image()
-  image.decoding = 'async'
-  image.src = source
-  await image.decode()
+  const image = await loadTextureImage(source)
 
   return Texture.from({autoGenerateMipmaps: true, resource: image, scaleMode: 'linear'})
 }, MAXIMUM_CONCURRENT_DECODES)
 
 interface InitializeRuntimePartsOptions {
+  readonly antialias?: boolean
   readonly document: PuppetDocument
   readonly layerById: Map<string, RuntimeLayer>
   readonly partById: Map<string, RuntimePart>
@@ -74,6 +73,7 @@ export const initializeRuntimeParts = async (options: InitializeRuntimePartsOpti
     const plan = planById.get(runtimePart.partId)
     if (plan?.mask !== undefined) {
       const mask = createRuntimePartMask({
+        antialias: options.antialias,
         document: options.document,
         partById: options.partById,
         plan: plan.mask,
@@ -91,6 +91,7 @@ export const initializeRuntimeParts = async (options: InitializeRuntimePartsOpti
         layer.mask === undefined
           ? undefined
           : createRuntimePartMask({
+              antialias: options.antialias,
               document: options.document,
               partById: options.partById,
               plan: layer.mask,

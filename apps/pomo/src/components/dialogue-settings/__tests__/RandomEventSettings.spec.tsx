@@ -10,7 +10,7 @@ import {
   DEFAULT_RANDOM_EVENT_SETTINGS,
   type RandomEventSettings as RandomEventSettingsValue,
 } from 'src/features/focus-room-dialogue/random-event-settings'
-import {webLocalStorage} from 'src/utils/preference-storage/web-local-storage'
+import {webLocalStorage} from 'src/hooks/use-preference/web-local-storage'
 import {RandomEventSettings} from '../RandomEventSettings'
 
 const settingsMocks = vi.hoisted(() => ({

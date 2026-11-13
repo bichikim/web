@@ -36,7 +36,7 @@ export type GetKnowledgeResult =
 /** Reads a stored document or one unit, ordered by source location, without embedding. */
 export const getKnowledge = async (options: GetKnowledgeOptions): Promise<GetKnowledgeResult> => {
   const [docId, unitId, extra] = options.logicalId.split('#')
-  if (docId.trim() === '' || unitId === '' || extra !== undefined) {
+  if (docId.trim() === '' || unitId?.trim() === '' || extra !== undefined) {
     return {error: {code: 'invalid-logical-id'}, ok: false}
   }
   const result = await options.index.readState({

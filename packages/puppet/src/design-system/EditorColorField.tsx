@@ -1,3 +1,4 @@
+import {preventInternalDismiss} from './prevent-internal-dismiss'
 import {usePopoverSurface} from './use-popover-surface'
 import type {ControlSizeProps} from './control-size'
 import {ColorArea} from '@kobalte/core/color-area'
@@ -57,6 +58,7 @@ export const EditorColorField = (props: EditorColorFieldProps) => {
           <ColorSwatch class="editor-color-swatch" value={color()} />
         </Popover.Trigger>
         <Popover.Content
+          onInteractOutside={(event) => preventInternalDismiss(event, surface())}
           ref={setSurface}
           class="mask-picker editor-color-picker"
           popover="manual"

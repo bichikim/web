@@ -1,6 +1,6 @@
 import {type Accessor, createMemo, onCleanup, untrack, useContext} from 'solid-js'
 import {PreferenceContext, type PreferenceSetValueOptions} from './context'
-import type {PreferenceStorage} from 'src/utils/preference-storage'
+import type {PreferenceStorage} from './types'
 
 export interface PreferenceOptions<Value> {
   /** Selected by the first consumer of this key for the provider lifetime. */

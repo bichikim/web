@@ -31,7 +31,7 @@ const nativeHorizontalWheel: BrowserCommand<[delta: number]> = async ({page}, de
 }
 
 export default defineConfig({
-  optimizeDeps: {include: ['media-chrome']},
+  optimizeDeps: {exclude: ['es-toolkit'], include: ['media-chrome']},
   plugins: [solidPlugin({hot: false})],
   resolve: {conditions: ['development', 'browser'], tsconfigPaths: true},
   root: fileURLToPath(new URL('.', import.meta.url)),

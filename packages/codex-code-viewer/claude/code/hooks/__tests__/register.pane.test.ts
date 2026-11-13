@@ -1,6 +1,7 @@
+import {activateTree, editLine, paneTarget, projectFixture, required} from './fixture'
+import {readField} from './read-field'
 /* eslint-disable eslint-js/camelcase -- Claude tool arguments use snake case. */
 import {expect, test} from 'claude-code/testing'
-import {activateTree, editLine, paneTarget, projectFixture} from './fixture'
 
 test('should preserve drafts and attach unsaved snapshots after following', async (engine, on) => {
   const fixture = projectFixture(on)
@@ -33,7 +34,7 @@ test('should preserve drafts and attach unsaved snapshots after following', asyn
   ])
   const peer = await engine.prompt.submit({origin: {kind: 'peer'}, text: 'background', wait: false})
   expect(peer.context).toBeUndefined()
-  expect(fixture.files.get('a.ts').source).toContain("'disk'")
+  expect(required(fixture.files.get('a.ts')).source).toContain("'disk'")
   expect(fixture.calls.filter((entry) => entry === 'mcp__Claude_Browser__navigate')).toHaveLength(1)
   expect(fixture.requests.every((entry) => entry.arguments.session === 'viewer-session')).toBe(true)
 })
@@ -47,18 +48,20 @@ test('should save against the original revision and retain a draft on a disk con
   await pane.press({key: 'edit'})
   await editLine(pane, 1, 'export const saved = 1')
   await pane.press({key: 'save'})
-  expect(fixture.files.get('a.ts').source).toBe('export const saved = 1\n')
-  expect(fixture.requests.at(-1).arguments.revision).toBe('a1')
+  expect(required(fixture.files.get('a.ts')).source).toBe('export const saved = 1\n')
+  expect(required(fixture.requests.at(-1)).arguments.revision).toBe('a1')
   await pane.press({key: 'edit'})
   await editLine(pane, 1, 'export const draft = 2')
   fixture.files.set('a.ts', {revision: 'external', source: 'external edit\n'})
   await engine.tool.call({file_path: '/project/a.ts', tool: 'Read'})
   expect(JSON.stringify(await pane.drawn())).toContain('디스크 변경 · 초안 유지')
   await pane.press({key: 'save'})
-  expect(fixture.files.get('a.ts').source).toBe('external edit\n')
+  expect(required(fixture.files.get('a.ts')).source).toBe('external edit\n')
   expect(JSON.stringify(await pane.drawn())).toContain('export const draft = 2')
   expect(fixture.notices.at(-1)).toContain('초안을 유지했습니다')
-  expect(fixture.stored.get('pane:/project:session-one').documents[0].source).toContain('draft = 2')
+  expect(
+    readField(fixture.stored.get('pane:/project:session-one'), 'documents', 0, 'source'),
+  ).toContain('draft = 2')
 })
 
 test('should retain the file after a rejected project escape', async (engine, on) => {
@@ -126,12 +129,12 @@ test('should share search, undo, redo and patch snapshots while preserving navig
   await pane.press({key: 'redo'})
   expect(JSON.stringify(await pane.drawn())).toContain("export const value = 'edited'")
   await pane.press({key: 'attach-changes'})
-  expect(fixture.stored.get('pane:/project:session-one').attachments[0].text).toContain(
-    '-export const value',
-  )
-  expect(fixture.stored.get('pane:/project:session-one').attachments[0].text).toContain(
-    'Base revision',
-  )
+  expect(
+    readField(fixture.stored.get('pane:/project:session-one'), 'attachments', 0, 'text'),
+  ).toContain('-export const value')
+  expect(
+    readField(fixture.stored.get('pane:/project:session-one'), 'attachments', 0, 'text'),
+  ).toContain('Base revision')
   await pane.input({key: 'path', text: 'b.ts'})
   await pane.press({key: 'back'})
   expect(JSON.stringify(await pane.drawn())).toContain('edited')
@@ -157,7 +160,7 @@ test('should expand the shared file tree and navigate against draft sources', as
   await pane.press({key: 'definition'})
   expect(JSON.stringify(await pane.drawn())).toContain('b.ts:1:1')
   const navigation = fixture.requests.find((request) => request.name === 'code.navigate')
-  expect(navigation.arguments).toMatchObject({
+  expect(required(navigation).arguments).toMatchObject({
     offset: 0,
     path: 'src/nested.ts',
     revision: 'nested',
@@ -173,7 +176,9 @@ test('should render native Markdown and parse table previews through the shared 
   const pane = await engine.ui.mount(paneTarget)
   await pane.input({key: 'path', text: 'notes.md'})
   await pane.press({key: 'preview'})
-  expect((await pane.find({type: 'Markdown'}))?.props.text).toBe('# Heading\n\n**Bold**')
+  expect(readField(await pane.find({type: 'Markdown'}), 'props', 'text')).toBe(
+    '# Heading\n\n**Bold**',
+  )
   await pane.input({key: 'path', text: 'rows.csv'})
   await pane.press({key: 'preview'})
   expect(JSON.stringify(await pane.drawn())).toContain('quoted, name │ 2')
@@ -187,9 +192,9 @@ test('should render native Markdown and parse table previews through the shared 
   await pane.press({key: 'table-header'})
   expect(JSON.stringify(await pane.drawn())).toContain('열 1 │ 열 2')
 
-  expect(fixture.requests.find((request) => request.name === 'code.preview').arguments.source).toBe(
-    'name,count\n"quoted, name",2',
-  )
+  expect(
+    required(fixture.requests.find((request) => request.name === 'code.preview')).arguments.source,
+  ).toBe('name,count\n"quoted, name",2')
 })
 
 test('should create and rename through the existing revision-checked file tools', async (engine, on) => {
@@ -206,7 +211,7 @@ test('should create and rename through the existing revision-checked file tools'
   await pane.press({key: 'rename-confirm'})
   expect(JSON.stringify(await pane.drawn())).toContain('renamed.ts:1:1')
   const rename = fixture.requests.find((request) => request.name === 'code.rename')
-  expect(rename.arguments).toMatchObject({
+  expect(required(rename).arguments).toMatchObject({
     name: 'renamed.ts',
     path: 'created.ts',
     revision: 'created',

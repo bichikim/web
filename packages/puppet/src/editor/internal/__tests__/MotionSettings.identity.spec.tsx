@@ -4,7 +4,7 @@ import {fireEvent, render, screen} from '@solidjs/testing-library'
 import {expect, test} from 'vitest'
 
 import {PUPPET_DOCUMENT_FORMAT, PUPPET_DOCUMENT_VERSION, type PuppetDocument} from '../../../player'
-import {useDocumentHistory} from '../../use-document-history'
+import {createHistory as useDocumentHistory} from '../../__tests__/fixtures/history'
 import {MotionSettings} from '../MotionSettings'
 
 const createDocument = (): PuppetDocument => ({

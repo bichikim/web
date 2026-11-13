@@ -1,8 +1,7 @@
 import {isObject} from 'src/utils/is-object'
 import {sumBy} from 'es-toolkit/math'
-import {normalizePasteNumericInput} from 'src/utils/normalize-paste-numeric-input'
+import {normalizePasteNumericInput} from '@winter-love/supertonic/normalize-paste-numeric-input'
 import {parseDate} from 'src/features/civil-date'
-import {iterateJsonObjectSlices} from 'src/utils/json'
 import {isNonBlankString} from 'src/utils/is-non-blank-string'
 
 export interface ExpenseItem {
@@ -153,7 +152,7 @@ const createExpenseForm = (
   return {ok: true, value: {date, items, questions, total}}
 }
 
-const parseExpenseAssistantCandidate = (json: string): ExpenseParseResult => {
+export const parseExpenseAssistantResponse = (json: string): ExpenseParseResult => {
   let parsed: unknown
   try {
     parsed = JSON.parse(json)
@@ -177,25 +176,6 @@ const parseExpenseAssistantCandidate = (json: string): ExpenseParseResult => {
   }
 
   return createExpenseForm(date, items, questions)
-}
-
-export const parseExpenseAssistantResponse = (text: string): ExpenseParseResult => {
-  let invalidShape: ExpenseParseResult | null = null
-  const candidates = iterateJsonObjectSlices(text)
-  let candidate = candidates.next()
-  while (!candidate.done) {
-    const result = parseExpenseAssistantCandidate(candidate.value.slice)
-    if (result.ok) {
-      return result
-    }
-    const skipNested = result.error.code === 'invalid-shape'
-    if (skipNested) {
-      invalidShape = result
-    }
-    candidate = candidates.next(skipNested ? candidate.value.end + 1 : undefined)
-  }
-
-  return invalidShape ?? invalid('invalid-json')
 }
 
 export const parseExpenseText = (text: string): ExpenseParseResult => {

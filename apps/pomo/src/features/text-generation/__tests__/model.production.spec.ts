@@ -28,3 +28,15 @@ it('should use versioned R2 assets for the production LFM model', async () => {
     weightFile: 'LFM2.5-2.6B-QAD-Q4_0.gguf',
   })
 })
+
+it.each(['qwen-0.8b', 'qwen-2b', 'qwen-4b', 'lfm-1.2b'] as const)(
+  'should reject development model %s outside development',
+  async (modelId) => {
+    vi.stubEnv('DEV', false)
+    const {getTextModel, getTextModelImplementation} = await import('../model')
+    const message = `현재 빌드에서 사용할 수 없는 텍스트 모델이에요: ${modelId}`
+
+    expect(() => getTextModel(modelId)).toThrow(message)
+    expect(() => getTextModelImplementation(modelId)).toThrow(message)
+  },
+)

@@ -11,6 +11,8 @@ const position = '(?::(?<line>\\d+)(?::(?<column>\\d+))?)?(?:-\\d+(?::\\d+)?)?'
 const directPath = new RegExp(`^(?<path>${prefix}${filename})${position}$`, 'iu')
 const quotedPath = new RegExp(`^(?<path>(?:/|\\.\\.?/|[^/\\r\\n]+/)${filename})${position}$`, 'iu')
 const quotedContent = /(?<quote>["'`])(?<content>.*?)\k<quote>/gu
+const windowsPath =
+  /^(?<path>(?:[a-z]:[\\/]|\\\\).+?)(?::(?<line>\d+)(?::(?<column>\d+))?)?(?:-\d+(?::\d+)?)?$/iu
 const embeddedPath = new RegExp(
   `(?:^|[\\s(\\[\\x22\\x27\\x60])` +
     `(?<path>${prefix}[^\\s()\\[\\]\\x22\\x27\\x60]*?(?:\\.[\\p{L}\\p{N}_-]+|${TEXT_FILE_NAMES.join('|')}))` +
@@ -21,12 +23,15 @@ const embeddedPath = new RegExp(
 export const parseFileInput = (input: string): FileInput => {
   const query = input.trim()
   const candidate = query.replace(/^(?<quote>["'`])(?<content>[\s\S]+)\k<quote>$/u, '$<content>')
-  const quotedMatch = Array.from(query.matchAll(quotedContent), (entry) =>
-    quotedPath.exec(entry.groups?.content ?? ''),
+  const quotedMatch = Array.from(
+    query.matchAll(quotedContent),
+    (entry) =>
+      windowsPath.exec(entry.groups?.content ?? '') ?? quotedPath.exec(entry.groups?.content ?? ''),
   ).find((entry) => entry !== null)
   const explicitPath =
     /^(?<path>(?:\/|\.\.?\/).+?)(?::(?<line>\d+)(?::(?<column>\d+))?)?(?:-\d+(?::\d+)?)?$/u
   const match =
+    windowsPath.exec(candidate) ??
     explicitPath.exec(candidate) ??
     directPath.exec(candidate) ??
     quotedMatch ??

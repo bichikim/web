@@ -138,11 +138,14 @@ jobs:
       - name: Build Code Viewer distribution
         run: pnpm --filter @winter-love/codex-code-viewer build
 
+      - name: Build Puppet distribution
+        run: pnpm --filter @winter-love/puppet build
+
       - name: Install integration test browsers
         run: pnpm exec playwright install --with-deps chromium webkit
 
       - name: Run integration tests
-        run: pnpm test:integration --project=integration
+        run: pnpm test:integration --project=integration --project=wallpaper-web-browser --project=pomo-album-editor-browser
 
   tests:
     name: Tests

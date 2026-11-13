@@ -75,7 +75,7 @@ try {
               result.application,
               'If permission errors persist, remove the Code Viewer Attachment entry and add the app above again.',
               'Start a local Code session in Claude Desktop. Use the Code Viewer button or a file link in a response.',
-              'If the button is missing, update Desktop (Claude Code 2.1.286+). Existing sessions were not reloaded.',
+              'If the button is missing, update Desktop (Claude Code 2.1.287+). Existing sessions were not reloaded.',
             ].join('\n'),
           )
           break

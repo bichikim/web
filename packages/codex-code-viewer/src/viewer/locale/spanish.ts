@@ -99,6 +99,7 @@ export const spanish = {
     'los cambios y revisa el original.',
   '다른 창에서 업데이트를 설치 중입니다. 완료 후 다시 확인해 주세요.':
     'Otra ventana está instalando una actualización. Compruébalo de nuevo cuando termine.',
+  '다시 시도': 'Reintentar',
   '다음 PDF 페이지': 'Página siguiente del PDF',
   '다음 검색 결과': 'Resultado de búsqueda siguiente',
   '다음 결과 (Enter)': 'Resultado siguiente (Enter)',
@@ -111,6 +112,17 @@ export const spanish = {
   만들기: 'Crear',
   '만들지 못했습니다. 대상 폴더와 파일 권한을 확인해 주세요.':
     'No se ha podido crear el elemento. Comprueba la carpeta de destino y los permisos.',
+  메모: 'Notas',
+  '메모 목록': 'Lista de notas',
+  '메모 수정': 'Editar nota',
+  '메모 작업': 'Acciones de nota',
+  '메모 접기': 'Contraer notas',
+  '메모 추가': 'Añadir nota',
+  '메모 추가…': 'Añadir una nota…',
+  '메모 펼치기': 'Expandir notas',
+  '메모 표시/숨기기': 'Mostrar/ocultar notas',
+  '메모를 저장하지 못했습니다. 저장 권한과 남은 공간을 확인해 주세요.':
+    'No se han podido guardar las notas. Comprueba los permisos de escritura y el espacio disponible.',
   '모두 저장': 'Guardar todo',
   '모든 변경 사항': 'Todos los cambios',
   '문서 도구': 'Herramientas del documento',
@@ -158,6 +170,7 @@ export const spanish = {
   '삭제된 원문': 'Contenido original eliminado',
   '삭제된 파일': 'Archivo eliminado',
   '삭제된 파일 · 변경 사항 보기': 'Archivo eliminado · Ver cambios',
+  '새 메모': 'Nueva nota',
   '새 버전 {version}': 'Nueva versión {version}',
   '새 탭에서 열기': 'Abrir en una pestaña nueva',
   '새 파일': 'Nuevo archivo',
@@ -180,6 +193,7 @@ export const spanish = {
   '셀 내용을 표시합니다. 수식은 다시 계산하지 않습니다.':
     'Se muestran los valores de las celdas. Las fórmulas no se recalculan.',
   '소스 코드': 'Código fuente',
+  수정: 'Editar',
   '수정 변경 보기': 'Ver líneas modificadas',
   '수정된 파일': 'Archivo modificado',
   '스트림에 연결할 수 없습니다.': 'No se puede conectar al flujo de datos.',
@@ -281,6 +295,7 @@ export const spanish = {
   '채팅 첨부 {count}개': 'Archivos adjuntos del chat: {count}',
   '채팅 첨부는 20개, 전체 64 KiB까지 추가할 수 있습니다.':
     'Los archivos adjuntos del chat están limitados a 20 elementos y 64 KiB en total.',
+  '채팅에 추가': 'Añadir al chat',
   '채팅을 확인할 수 없어 작업 폴더를 기억할 수 없습니다. 채팅에서 뷰어를 다시 열어 주세요.':
     'No se puede identificar este chat. Vuelve a abrir el visor desde el chat para recordar el espacio de trabajo.',
   '채팅창에 추가': 'Añadir al chat',

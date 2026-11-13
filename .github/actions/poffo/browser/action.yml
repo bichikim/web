@@ -1,0 +1,18 @@
+name: Verify Poffo browser
+description: Check the built app and Custom Element in Chromium.
+inputs:
+  vercel-output:
+    description: Use the locally built .vercel/output artifact instead of apps/poffo/dist.
+    required: false
+    default: 'false'
+runs:
+  using: composite
+  steps:
+    - name: Install browser
+      shell: bash
+      run: pnpm exec playwright install --with-deps chromium
+    - name: Verify UI and assets
+      shell: bash
+      env:
+        POFFO_VERCEL_OUTPUT: ${{ inputs.vercel-output }}
+      run: pnpm exec playwright test --config apps/poffo/playwright.config.ts

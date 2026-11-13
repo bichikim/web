@@ -13,7 +13,7 @@ import type {NavigationPoint, ReferenceChoices, ViewerPort} from './types'
 import type {useLatestRequest} from './use-latest-request'
 import {readNavigationStream} from './read-navigation-stream'
 
-interface DefinitionNavigationOptions {
+interface UseDefinitionNavigationProps {
   readonly onOpen: (location: CodeLocation) => Promise<void>
   readonly port: ViewerPort
   readonly run: ReturnType<typeof useLatestRequest>['run']
@@ -79,7 +79,7 @@ const appendDiscoveries = (
   ],
 })
 
-const readSnapshot = (options: DefinitionNavigationOptions): NavigationSnapshot | null => {
+const readSnapshot = (options: UseDefinitionNavigationProps): NavigationSnapshot | null => {
   const current = options.session()
   return current === null
     ? null
@@ -108,12 +108,12 @@ const completeReferences = (previous: ReferenceChoices | null): ReferenceChoices
 
 /** Follows a unique definition or exposes destinations and unresolved/ambiguous result feedback. */
 export const useDefinitionNavigation = (
-  options: DefinitionNavigationOptions,
+  props: UseDefinitionNavigationProps,
 ): DefinitionNavigation => {
   const [references, setReferences] = createSignal<ReferenceChoices | null>(null)
   const [choices, setChoices] = createSignal<CodeLocation[]>([])
   const [feedback, setFeedback] = createSignal<DefinitionFeedback | null>(null)
-  const request = createSessionRequest(options)
+  const request = createSessionRequest(props)
   let controller: AbortController | null = null
   let origin: NavigationSnapshot | null = null
   const dismissReferences = (): void => {
@@ -121,7 +121,7 @@ export const useDefinitionNavigation = (
     controller = null
     setReferences(null)
   }
-  const snapshot = (): NavigationSnapshot | null => readSnapshot(options)
+  const snapshot = (): NavigationSnapshot | null => readSnapshot(props)
   createEffect(() => {
     const current = snapshot()
     if (origin !== null && !sameNavigation(origin, current)) {
@@ -137,7 +137,7 @@ export const useDefinitionNavigation = (
     dismissReferences()
     const [location] = locations
     if (locations.length === 1 && location !== undefined) {
-      await options.onOpen(location)
+      await props.onOpen(location)
     } else {
       setChoices(locations)
       setFeedback({kind: location === undefined ? 'missing' : 'choose'})
@@ -161,7 +161,7 @@ export const useDefinitionNavigation = (
     controller = operation
     origin = current
     setReferences({label: token.text, locations: [], point, status: 'resolving'})
-    const result = await options.run(
+    const result = await props.run(
       () =>
         request(
           'code.navigate',
@@ -171,15 +171,15 @@ export const useDefinitionNavigation = (
             path: current.path,
             revision: current.revision,
             stream: true,
-            ...(options.sources === undefined ? {} : {sources: current.sources}),
+            ...(props.sources === undefined ? {} : {sources: current.sources}),
           },
           z.union([streamEndpointSchema, navigationSchema]),
         ),
-      (discarded) => closeStream(options.port.call, discarded),
+      (discarded) => closeStream(props.port.call, discarded),
     )
     if (operation.signal.aborted || result === null || !sameNavigation(current, snapshot())) {
       if (result !== null) {
-        await closeStream(options.port.call, result)
+        await closeStream(props.port.call, result)
       }
       if (!operation.signal.aborted) {
         dismissReferences()
@@ -189,7 +189,7 @@ export const useDefinitionNavigation = (
     if ('url' in result) {
       try {
         const definition = await readNavigationStream({
-          call: options.port.call,
+          call: props.port.call,
           receive: (locations, groups) => {
             if (!retainOrigin(current, snapshot(), operation)) {
               return
@@ -233,7 +233,7 @@ export const useDefinitionNavigation = (
               ? null
               : {...previous, status: 'failed'},
           )
-          options.onError?.(error)
+          props.onError?.(error)
         }
       }
       return

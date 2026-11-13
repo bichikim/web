@@ -11,9 +11,11 @@ import {
   type HistoryTargetDate,
 } from 'src/features/history-generation'
 import {env} from 'src/env'
-import {getExceptionMessage} from 'src/features/error-detail'
 
 import {isGpt56Model} from './is-gpt-56-model'
+import {HistorySubmissionError} from './submission-error'
+
+export {HistorySubmissionError} from './submission-error'
 
 interface OpenAiConfiguration {
   readonly apiKey: string
@@ -37,20 +39,6 @@ export interface SubmitHistoryResponseOptions {
 
 export interface SubmittedHistoryResponse {
   readonly responseId: string
-}
-
-type SubmissionAcceptance = 'rejected' | 'unknown'
-
-export class HistorySubmissionError extends Error {
-  readonly acceptance: SubmissionAcceptance
-
-  constructor(acceptance: SubmissionAcceptance, cause: unknown) {
-    const message = getExceptionMessage(cause, 'Unknown OpenAI submission error')
-
-    super(message, {cause})
-    this.name = 'HistorySubmissionError'
-    this.acceptance = acceptance
-  }
 }
 
 let openAiClient: OpenAI | undefined

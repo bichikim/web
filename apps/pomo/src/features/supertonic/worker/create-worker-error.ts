@@ -1,4 +1,4 @@
-import {getErrorDetail, type WorkerFailedError} from '../errors'
+import {getErrorDetail, type WorkerFailedError} from '@winter-love/supertonic/errors'
 
 export const createWorkerError = (
   phase: WorkerFailedError['phase'],

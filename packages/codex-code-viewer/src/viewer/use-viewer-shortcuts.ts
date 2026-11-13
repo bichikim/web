@@ -1,6 +1,6 @@
 import {onCleanup} from 'solid-js'
 
-interface ViewerShortcutsOptions {
+interface UseViewerShortcutsProps {
   onSearch: () => void
   onMove: (direction: -1 | 1) => void
   onDismiss: () => void
@@ -8,7 +8,7 @@ interface ViewerShortcutsOptions {
   onSave?: () => void
 }
 
-export const useViewerShortcuts = (options: ViewerShortcutsOptions): void => {
+export const useViewerShortcuts = (props: UseViewerShortcutsProps): void => {
   const handleKeyboard = (event: KeyboardEvent): void => {
     if (event.isComposing || event.defaultPrevented) {
       return
@@ -16,33 +16,33 @@ export const useViewerShortcuts = (options: ViewerShortcutsOptions): void => {
     if (
       (event.metaKey || event.ctrlKey) &&
       event.key.toLowerCase() === 's' &&
-      options.onSave !== undefined
+      props.onSave !== undefined
     ) {
       event.preventDefault()
-      options.onSave()
+      props.onSave()
     }
     if (event.key === 'Escape') {
-      options.onDismiss()
+      props.onDismiss()
     }
     if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'p') {
       event.preventDefault()
-      options.onSearch()
+      props.onSearch()
     }
     if (
       (event.metaKey || event.ctrlKey) &&
       event.key.toLowerCase() === 'f' &&
-      options.onFind !== undefined
+      props.onFind !== undefined
     ) {
       event.preventDefault()
-      options.onFind()
+      props.onFind()
     }
     if (event.altKey && event.key === 'ArrowLeft') {
       event.preventDefault()
-      options.onMove(-1)
+      props.onMove(-1)
     }
     if (event.altKey && event.key === 'ArrowRight') {
       event.preventDefault()
-      options.onMove(1)
+      props.onMove(1)
     }
   }
   if (typeof globalThis.addEventListener === 'function') {

@@ -4,6 +4,26 @@ import {createCalendarQuery} from '../query'
 
 describe('createCalendarQuery approved local daypart windows', () => {
   it.each([
+    ['새벽', {end: '2026-09-04T21:00:00.000Z', start: '2026-09-04T15:00:00.000Z'}],
+    ['아침', {end: '2026-09-05T01:00:00.000Z', start: '2026-09-04T21:00:00.000Z'}],
+    ['오전', {end: '2026-09-05T03:00:00.000Z', start: '2026-09-04T15:00:00.000Z'}],
+    ['점심', {end: '2026-09-05T05:00:00.000Z', start: '2026-09-05T02:00:00.000Z'}],
+    ['오후', {end: '2026-09-05T15:00:00.000Z', start: '2026-09-05T03:00:00.000Z'}],
+    ['저녁', {end: '2026-09-05T12:00:00.000Z', start: '2026-09-05T09:00:00.000Z'}],
+    ['밤', {end: '2026-09-05T15:00:00.000Z', start: '2026-09-05T12:00:00.000Z'}],
+    ['낮', {end: '2026-09-05T09:00:00.000Z', start: '2026-09-05T00:00:00.000Z'}],
+    ['정오', {at: '2026-09-05T03:00:00.000Z'}],
+  ])('should resolve the implicit relative-day window for %s', (daypart, expected) => {
+    expect(
+      createCalendarQuery({
+        now: new Date('2026-09-04T10:30:00.000Z'),
+        text: `내일 ${daypart} 뭐 있어?`,
+        timeZone: 'Asia/Seoul',
+      }),
+    ).toEqual(expected)
+  })
+
+  it.each([
     ['새벽', '2026-09-04T15:00:00.000Z', '2026-09-04T21:00:00.000Z'],
     ['아침', '2026-09-04T21:00:00.000Z', '2026-09-05T01:00:00.000Z'],
     ['점심', '2026-09-05T02:00:00.000Z', '2026-09-05T05:00:00.000Z'],
@@ -51,18 +71,21 @@ describe('createCalendarQuery approved local daypart windows', () => {
     })
   })
 
-  it('should use the requested daypart after excluding a competing daypart', () => {
-    expect(
-      createCalendarQuery({
-        now: new Date('2026-09-04T10:30:00.000Z'),
-        text: '점심 말고 저녁 내일 일정 알려줘',
-        timeZone: 'Asia/Seoul',
-      }),
-    ).toEqual({
-      end: '2026-09-05T12:00:00.000Z',
-      start: '2026-09-05T09:00:00.000Z',
-    })
-  })
+  it.each(['말고', '빼고', '제외', '제외하고', '아니', '아닌', '안되', '안돼', '안 돼'])(
+    'should use the requested daypart after excluding a competing daypart with %s',
+    (exclusion) => {
+      expect(
+        createCalendarQuery({
+          now: new Date('2026-09-04T10:30:00.000Z'),
+          text: `점심 ${exclusion} 저녁 내일 일정 알려줘`,
+          timeZone: 'Asia/Seoul',
+        }),
+      ).toEqual({
+        end: '2026-09-05T12:00:00.000Z',
+        start: '2026-09-05T09:00:00.000Z',
+      })
+    },
+  )
 
   it('should use an unexcluded 점심 instead of an excluded 정오', () => {
     expect(

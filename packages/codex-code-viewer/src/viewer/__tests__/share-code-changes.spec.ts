@@ -32,7 +32,7 @@ describe('shareCodeChanges', () => {
       expect.objectContaining({
         kind: 'changes',
         patch: expect.stringContaining('+const value = 2\n'),
-        path: '/project/src/main.ts',
+        path: 'src/main.ts',
         revision: 'original-revision',
       }),
     )
@@ -46,7 +46,7 @@ describe('shareCodeChanges', () => {
     const changes = options.port.context.mock.calls[0][0]
     expect(changes).toMatchObject({
       kind: 'changes',
-      path: '/project/src/main.ts',
+      path: 'src/main.ts',
       revision: 'original-revision',
     })
     expect(changes.patch).toContain('-const value = 1\n+const value = 2\n')

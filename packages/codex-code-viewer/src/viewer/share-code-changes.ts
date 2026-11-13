@@ -35,7 +35,7 @@ export const shareCodeChanges = async (options: ShareCodeChangesOptions): Promis
       selection: {
         kind: 'changes',
         patch,
-        path: `${session.workspace.replace(/\/$/u, '')}/${path}`,
+        path,
         revision,
       },
     })

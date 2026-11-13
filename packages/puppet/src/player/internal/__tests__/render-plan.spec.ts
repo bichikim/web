@@ -345,3 +345,122 @@ describe('canReusePartResources', () => {
     ).toBe(false)
   })
 })
+
+test('should refresh inherited properties and remove overrides without changing prior frames', () => {
+  const source = createDocument()
+  const document: PuppetDocument = {
+    ...source,
+    scene: {
+      roots: [
+        {
+          children: source.scene!.roots,
+          id: 'parent',
+          kind: 'group',
+          locked: false,
+          name: 'Parent',
+          properties: {opacity: 0.5},
+          visible: true,
+        },
+      ],
+    },
+  }
+  const groups = new Map<string, import('../render-overrides').PuppetRenderOverride>()
+  const parts = new Map<string, import('../render-overrides').PuppetRenderOverride>()
+  const overrides = {groups, parts}
+  const before = getPartRenderFrame(document).plans.find((plan) => plan.partId === 'target')!
+  expect(before.properties.opacity).toBe(0.25)
+  groups.set('parent', {opacity: 0.2})
+  parts.set('target', {culling: true, opacity: 0.8, screenColor: [0.2, 0.3, 0.4]})
+  const overridden = getPartRenderFrame(document, undefined, undefined, {overrides}).plans.find(
+    (plan) => plan.partId === 'target',
+  )!
+  expect(overridden.properties).toMatchObject({culling: true, screenColor: [0.2, 0.3, 0.4]})
+  expect(overridden.properties.opacity).toBeCloseTo(0.16)
+  groups.clear()
+  parts.clear()
+  const restored = getPartRenderFrame(document, undefined, undefined, {overrides}).plans.find(
+    (plan) => plan.partId === 'target',
+  )!
+  expect(restored.properties).toEqual(before.properties)
+  expect(before.properties.opacity).toBe(0.25)
+  expect(overridden.properties.culling).toBe(true)
+})
+
+test('should refresh a retained child effect when only its parent override changes', () => {
+  const source = createDocument()
+  const document: PuppetDocument = {
+    ...source,
+    scene: {
+      roots: [
+        {
+          children: [
+            {
+              children: source.scene!.roots,
+              id: 'child',
+              kind: 'group',
+              locked: false,
+              name: 'Child',
+              properties: {opacity: 0.5},
+              visible: true,
+            },
+          ],
+          id: 'parent',
+          kind: 'group',
+          locked: false,
+          name: 'Parent',
+          properties: {opacity: 0.5},
+          visible: true,
+        },
+      ],
+    },
+  }
+  const groups = new Map<string, import('../render-overrides').PuppetRenderOverride>()
+  const overrides = {groups, parts: new Map()}
+  const sample = () =>
+    getPartRenderFrame(document, undefined, undefined, {overrides}).plans.find(
+      (plan) => plan.partId === 'target',
+    )!.properties
+  const first = sample()
+  expect(first.opacity).toBe(0.125)
+  groups.set('parent', {opacity: 0.2})
+  expect(sample().opacity).toBeCloseTo(0.05)
+  groups.set('child', {opacity: 0.8})
+  expect(sample().opacity).toBeCloseTo(0.08)
+  groups.delete('parent')
+  expect(sample().opacity).toBe(0.2)
+  groups.clear()
+  expect(sample()).toEqual(first)
+  expect(first.opacity).toBe(0.125)
+})
+
+test('should retain independent inherited frames for documents sharing scene nodes', () => {
+  const source = createDocument()
+  const first: PuppetDocument = {
+    ...source,
+    scene: {
+      roots: [
+        {
+          children: source.scene!.roots,
+          id: 'outer',
+          kind: 'group',
+          locked: false,
+          name: 'Outer',
+          properties: {multiplyColor: [0.7, 0.8, 0.9], opacity: 0.5, screenColor: [0.1, 0.2, 0.3]},
+          visible: true,
+        },
+      ],
+    },
+  }
+  const second: PuppetDocument = {...first, colorComposition: 'cubism'}
+  const initial = getPartRenderFrame(first)
+  const independent = getPartRenderFrame(second)
+  expect(getPartRenderFrame(first)).toEqual(initial)
+  const overrides = {groups: new Map([['outer', {opacity: 0.2}]]), parts: new Map()}
+  const changed = getPartRenderFrame(first, undefined, undefined, {overrides})
+  expect(changed.plans.find((plan) => plan.partId === 'target')!.properties.opacity).toBeCloseTo(
+    0.1,
+  )
+  expect(getPartRenderFrame(second)).toEqual(independent)
+  expect(getPartRenderFrame(first)).toEqual(initial)
+  expect(initial.plans.find((plan) => plan.partId === 'target')!.properties.opacity).toBe(0.25)
+})

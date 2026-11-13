@@ -4,7 +4,7 @@ import {
   SUPERTONIC_MODEL_IDS,
   type SupertonicModelId,
   type SupertonicVoiceId,
-} from '../supertonic/model'
+} from '@winter-love/supertonic/model'
 import {isSupertonicVoiceId} from '../supertonic/is-supertonic-voice-id'
 
 const supertonicVoiceIdSchema = z.custom<SupertonicVoiceId>(isSupertonicVoiceId)

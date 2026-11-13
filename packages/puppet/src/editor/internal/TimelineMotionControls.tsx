@@ -1,3 +1,4 @@
+import {preventInternalDismiss} from '../../design-system/prevent-internal-dismiss'
 import {DropdownMenu} from '@kobalte/core/dropdown-menu'
 import {createSignal, Show} from 'solid-js'
 
@@ -17,6 +18,8 @@ export interface TimelineMotionControlsProps {
 }
 
 export const TimelineMotionControls = (props: TimelineMotionControlsProps) => {
+  let surface: HTMLDivElement | undefined
+
   const mount = useEditorPortalMount()
   const [renaming, setRenaming] = createSignal(false)
   const canManage = () => props.editableMotionId !== undefined && props.onRename !== undefined
@@ -54,7 +57,14 @@ export const TimelineMotionControls = (props: TimelineMotionControlsProps) => {
                 <span aria-hidden="true">•••</span>
               </DropdownMenu.Trigger>
               <DropdownMenu.Portal mount={mount}>
-                <DropdownMenu.Content aria-label="모션 관리" class="editor-context-menu-content">
+                <DropdownMenu.Content
+                  ref={(element) => {
+                    surface = element
+                  }}
+                  onInteractOutside={(event) => preventInternalDismiss(event, surface)}
+                  aria-label="모션 관리"
+                  class="editor-context-menu-content"
+                >
                   <DropdownMenu.Item
                     class="editor-context-menu-item"
                     disabled={props.onDuplicate === undefined}

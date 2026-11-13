@@ -114,22 +114,30 @@ describe('createBrowserServer', () => {
     })
   })
 
-  it('should export only the requested file with its original name and bytes', async () => {
-    const {session} = await browser.open()
-    const bytes = Buffer.from([0, 1, 255, 10])
-    writeFileSync(join(root, '선택한 파일.png'), bytes)
-    await call('code.stage-context', {content: ['unrelated retained snapshot'], session})
-    expect(
-      await call('code.attach-to-composer', {
-        attachment: {kind: 'file', path: join(root, '선택한 파일.png')},
-        session,
-      }),
-    ).toMatchObject({structuredContent: {attached: true}})
-    expect(writeAttachment).toHaveBeenCalledExactlyOnceWith(bytes, '선택한 파일.png')
-    expect(await client.callTool({arguments: {session}, name: 'code.attachments'})).toMatchObject({
-      content: [{text: 'unrelated retained snapshot', type: 'text'}],
-    })
-  })
+  it.each(['relative', 'absolute'])(
+    'should export only the requested file with its original name and bytes for %s input',
+    async (input) => {
+      const {session} = await browser.open()
+      const bytes = Buffer.from([0, 1, 255, 10])
+      writeFileSync(join(root, '선택한 파일.png'), bytes)
+      await call('code.stage-context', {content: ['unrelated retained snapshot'], session})
+      expect(
+        await call('code.attach-to-composer', {
+          attachment: {
+            kind: 'file',
+            path: input === 'relative' ? '선택한 파일.png' : join(root, '선택한 파일.png'),
+          },
+          session,
+        }),
+      ).toMatchObject({structuredContent: {attached: true}})
+      expect(writeAttachment).toHaveBeenCalledExactlyOnceWith(bytes, '선택한 파일.png')
+      expect(await client.callTool({arguments: {session}, name: 'code.attachments'})).toMatchObject(
+        {
+          content: [{text: 'unrelated retained snapshot', type: 'text'}],
+        },
+      )
+    },
+  )
 
   it('should preserve a named text snapshot through the native attachment boundary', async () => {
     const {session} = await browser.open()

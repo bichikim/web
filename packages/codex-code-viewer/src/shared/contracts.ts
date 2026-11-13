@@ -142,6 +142,7 @@ export const errorSchema = z.object({
     'stale-document',
     'write-conflict',
     'write-failed',
+    'memo-write-failed',
     'invalid-name',
     'already-exists',
     'create-failed',

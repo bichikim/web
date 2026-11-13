@@ -1,3 +1,4 @@
+import type {TextOutputSchema} from './types'
 import {memoizeAsync} from 'src/utils/memoize-async'
 import {failureResult, type Result, successResult} from 'src/features/result'
 import {getErrorMessage} from 'src/utils/get-error-message'
@@ -66,6 +67,7 @@ export type TextGenerationError =
 export interface TextGenerationParameters {
   readonly maximumTokens: number
   readonly noRepeatNgramSize: number
+  readonly outputSchema?: TextOutputSchema
   readonly repetitionPenalty: number
   readonly suppressedTokenIds?: ReadonlyArray<number>
   readonly temperature: number
@@ -271,6 +273,7 @@ const createDeviceTextGenerationProvider = (options: {
           messages: [...request.messages].map((message) => ({...message})),
           noRepeatNgramSize: parameters.noRepeatNgramSize,
           onToken,
+          outputSchema: parameters.outputSchema,
           repetitionPenalty: parameters.repetitionPenalty,
           signal: controller.signal,
           suppressedTokenIds:

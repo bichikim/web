@@ -1,7 +1,7 @@
 import {type Accessor, batch, createMemo, createSignal} from 'solid-js'
 import {findText, type TextMatch} from './find-text'
 
-interface DocumentSearchOptions {
+interface UseDocumentSearchProps {
   source: Accessor<string>
 }
 
@@ -10,13 +10,13 @@ interface SearchCursor {
   index: number
 }
 
-export const useDocumentSearch = (options: DocumentSearchOptions) => {
+export const useDocumentSearch = (props: UseDocumentSearchProps) => {
   const [visible, setVisible] = createSignal(false)
   const [query, setQuery] = createSignal('')
   const [focusRequest, setFocusRequest] = createSignal(0)
   const [scrollRequest, setScrollRequest] = createSignal(0)
   const [cursor, setCursor] = createSignal<SearchCursor | null>(null)
-  const matches = createMemo(() => (visible() ? findText(options.source(), query()) : []))
+  const matches = createMemo(() => (visible() ? findText(props.source(), query()) : []))
   const active = createMemo(() => {
     const results = matches()
     if (results.length === 0) {

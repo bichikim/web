@@ -19,7 +19,7 @@ import {
   useLanguageLearningSentences,
 } from '../../features/language-learning'
 import {excludeMemoryMemoDialogues} from '../../features/memory-assist'
-import {SUPERTONIC_VOICES} from '../../features/supertonic'
+import {SUPERTONIC_VOICES} from '@winter-love/supertonic/model'
 import * as m from '@paraglide/message'
 import {getDialogueEventActions, getDialogueEvents} from './event-definitions'
 import {DialogueConnectionMenu} from './ConnectionMenu'

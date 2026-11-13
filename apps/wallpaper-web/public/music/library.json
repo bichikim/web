@@ -1,0 +1,47 @@
+{
+  "version": 1,
+  "albums": [
+    {
+      "id": "ash-afternoon",
+      "title": "오후의 거리",
+      "artist": "ASH",
+      "tracks": [
+        {
+          "id": "lavalle-street",
+          "title": "Lavalle Street",
+          "artist": "rainymonday",
+          "src": "/music/ash-afternoon/lavalle-street/audio.mp3",
+          "artwork": "/music/ash-afternoon/window/cover.webp"
+        },
+        {
+          "id": "morning-light",
+          "title": "Morning Light",
+          "artist": "rainymonday",
+          "src": "/music/ash-afternoon/morning-light/audio.mp3",
+          "artwork": "/music/ash-afternoon/boot-laces/cover.webp"
+        },
+        {
+          "id": "ready-to-go-out",
+          "title": "Ready to Go Out",
+          "artist": "rainymonday",
+          "src": "/music/ash-afternoon/ready-to-go-out/audio.mp3",
+          "artwork": "/music/ash-afternoon/corner/cover.webp"
+        },
+        {
+          "id": "sparkling-afternoon",
+          "title": "Sparkling Afternoon",
+          "artist": "rainymonday",
+          "src": "/music/ash-afternoon/sparkling-afternoon/audio.mp3",
+          "artwork": "/music/ash-afternoon/shop-window/cover.webp"
+        },
+        {
+          "id": "bouture-window",
+          "title": "Bouture Window",
+          "artist": "rainymonday",
+          "src": "/music/ash-afternoon/bouture-window/audio.mp3",
+          "artwork": "/music/ash-afternoon/shop-window/cover.webp"
+        }
+      ]
+    }
+  ]
+}

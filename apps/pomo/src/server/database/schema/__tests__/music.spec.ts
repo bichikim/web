@@ -2,7 +2,11 @@
 import {getTableConfig} from 'drizzle-orm/pg-core'
 import {expect, it} from 'vitest'
 import {ALBUM_LOCALES} from 'src/features/admin-music/album-draft'
-import {ALBUM_STATUSES, TRACK_ASSET_STATUSES} from 'src/features/admin-music/catalog-values'
+import {
+  ALBUM_STATUSES,
+  COVER_FALLBACKS,
+  TRACK_ASSET_STATUSES,
+} from 'src/features/admin-music/catalog-values'
 
 import {
   musicAlbumCoverReservations,
@@ -11,6 +15,7 @@ import {
   musicAlbumStatusEnum,
   musicAlbumTracks,
   musicAlbumTranslations,
+  musicCoverFallbackEnum,
   musicTrackAssets,
   musicTrackAssetStatusEnum,
   musicTrackDeletionJobs,
@@ -20,6 +25,7 @@ import {
 
 it('should keep constructor-owned database enum arrays separate from the shared declarations', () => {
   expect(musicAlbumLocaleEnum.enumValues).not.toBe(ALBUM_LOCALES)
+  expect(musicCoverFallbackEnum.enumValues).not.toBe(COVER_FALLBACKS)
   expect(musicAlbumStatusEnum.enumValues).not.toBe(ALBUM_STATUSES)
   expect(musicTrackAssetStatusEnum.enumValues).not.toBe(TRACK_ASSET_STATUSES)
 })
@@ -30,6 +36,14 @@ it('should retain the ordered album locale enum and its required translation col
   expect(musicAlbumTranslations.locale.enumValues).toBe(musicAlbumLocaleEnum.enumValues)
   expect(musicAlbumTranslations.locale.notNull).toBe(true)
   expect(musicAlbumTranslations.locale.hasDefault).toBe(false)
+})
+
+it('should retain the ordered cover fallback enum and its required lp default', () => {
+  expect(musicCoverFallbackEnum.enumName).toBe('music_cover_fallback')
+  expect(musicCoverFallbackEnum.enumValues).toEqual(['lp', 'cd', 'music'])
+  expect(musicAlbums.coverFallback.enumValues).toBe(musicCoverFallbackEnum.enumValues)
+  expect(musicAlbums.coverFallback.default).toBe('lp')
+  expect(musicAlbums.coverFallback.notNull).toBe(true)
 })
 
 it('should retain the ordered album enum and its required draft default', () => {

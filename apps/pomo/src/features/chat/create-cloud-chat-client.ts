@@ -9,6 +9,14 @@ export const createCloudChatClient = (options: CreateChatClientOptions): ChatCli
   return {
     dispose: task.dispose,
     generate: (context, replyId, generateOptions = {}) => {
+      if (generateOptions.outputSchema !== undefined) {
+        options.onResponse({
+          message: '구조화 출력은 기기 모델에서만 사용할 수 있어요.',
+          restartRequired: false,
+          type: 'error',
+        })
+        return
+      }
       task.generate({
         maximumTokens: MAXIMUM_NEW_TOKENS,
         messages: createChatMessages({

@@ -4,7 +4,7 @@ import type {CodeSelection, CodeTextRange, NavigationPoint} from './types'
 import {useTextSelection} from './use-text-selection'
 import {getKeyboardLine} from './get-keyboard-line'
 
-interface CodeInteractionOptions {
+interface UseCodeInteractionProps {
   container: Accessor<HTMLElement | null>
   document: Accessor<CodeDocument>
   selection: Accessor<CodeSelection | undefined>
@@ -20,49 +20,49 @@ interface LineDrag {
   pointerId: number
 }
 
-export const useCodeInteraction = (options: CodeInteractionOptions) => {
+export const useCodeInteraction = (props: UseCodeInteractionProps) => {
   const [anchor, setAnchor] = createSignal<number | null>(null)
   const [drag, setDrag] = createSignal<LineDrag | null>(null)
   const selectText = (range: CodeTextRange): void => {
     setAnchor(range.line)
-    options.onSelectText?.(range)
+    props.onSelectText?.(range)
   }
   const selectRange = (line: number, endLine: number): void => {
-    const previous = options.selection()
+    const previous = props.selection()
     if (
       previous?.line !== Math.min(line, endLine) ||
       previous.endLine !== Math.max(line, endLine)
     ) {
       setAnchor(line)
     }
-    options.onSelect?.(line, endLine)
+    props.onSelect?.(line, endLine)
   }
   const textSelection = useTextSelection({
-    container: options.container,
+    container: props.container,
     onSelect: selectText,
   })
   const selected = (line: number): boolean => {
-    const selection = options.selection() ?? null
-    const location = selection ?? options.document().location
+    const selection = props.selection() ?? null
+    const location = selection ?? props.document().location
     const endLine = selection?.endLine ?? location.line
     const lastSelectedLine =
       selection?.endColumn === 1 && endLine > location.line ? endLine - 1 : endLine
     return line >= location.line && line <= lastSelectedLine
   }
   createEffect(() => {
-    options.document()
+    props.document()
     setAnchor(null)
     setDrag(null)
   })
   const selectLine = (line: number, extend: boolean): number => {
-    const start = extend ? (anchor() ?? options.selection()?.line ?? line) : line
+    const start = extend ? (anchor() ?? props.selection()?.line ?? line) : line
     setAnchor(start)
-    options.onSelect?.(start, line)
+    props.onSelect?.(start, line)
     return start
   }
   const handlePointerDown = (event: PointerEvent & {currentTarget: HTMLDivElement}): void => {
     const {target} = event
-    if (event.button !== 0 || !(target instanceof HTMLElement) || !options.selectable()) {
+    if (event.button !== 0 || !(target instanceof HTMLElement) || !props.selectable()) {
       return
     }
     const button = target.closest<HTMLButtonElement>('button[data-line-number]')
@@ -89,7 +89,7 @@ export const useCodeInteraction = (options: CodeInteractionOptions) => {
       const line = Number(row.dataset.line)
       if (line !== current.focus) {
         setDrag({...current, focus: line})
-        options.onSelect?.(current.anchor, line)
+        props.onSelect?.(current.anchor, line)
       }
     }
   }
@@ -100,7 +100,7 @@ export const useCodeInteraction = (options: CodeInteractionOptions) => {
     }
     if (current !== null && current.pointerId === event.pointerId) {
       setDrag(null)
-      options
+      props
         .container()
         ?.querySelector<HTMLButtonElement>(`[data-line-number="${current.focus}"]`)
         ?.focus({preventScroll: true})
@@ -112,13 +112,13 @@ export const useCodeInteraction = (options: CodeInteractionOptions) => {
       return
     }
     const line = Number(target.dataset.lineNumber)
-    const next = getKeyboardLine(event.key, line, options.document().lines.length)
+    const next = getKeyboardLine(event.key, line, props.document().lines.length)
     if (next === null) {
       return
     }
     event.preventDefault()
     selectLine(next, event.shiftKey)
-    options.container()?.querySelector<HTMLButtonElement>(`[data-line-number="${next}"]`)?.focus()
+    props.container()?.querySelector<HTMLButtonElement>(`[data-line-number="${next}"]`)?.focus()
   }
   const handleClick = (event: MouseEvent): void => {
     const {target} = event
@@ -142,13 +142,13 @@ export const useCodeInteraction = (options: CodeInteractionOptions) => {
       textSelection.synchronize()
       return
     }
-    const token = options
+    const token = props
       .document()
       .lines.flat()
       .find((entry) => entry.offset === offset && entry.navigation !== null)
     if (token !== undefined) {
       const rect = link.getBoundingClientRect()
-      options.onFollow(token, {x: rect.left, y: rect.bottom})
+      props.onFollow(token, {x: rect.left, y: rect.bottom})
     }
   }
   return {

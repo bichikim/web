@@ -54,7 +54,7 @@ it.each([
     content: string
     role: string
   }>
-  expect(JSON.parse(messages[1].content)).toMatchObject({question})
+  expect(JSON.parse(messages[1].content.split('\n\n')[0])).toMatchObject({question})
   expect(GenerationWorkspace).toHaveBeenCalledExactlyOnceWith({messages})
 })
 

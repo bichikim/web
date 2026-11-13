@@ -55,7 +55,11 @@ describe('applyPartRenderProperties', () => {
       vertices: new Float32Array([0, 0, 1, 0, 0, 1]),
     }
 
-    applyPartRenderProperties(createPartProperties('multiply'), runtimePart)
+    const properties = createPartProperties('multiply')
+    applyPartRenderProperties(properties, runtimePart)
+    const retained = runtimePart.mesh.filters
+    applyPartRenderProperties(properties, runtimePart)
+    expect(runtimePart.mesh.filters).toBe(retained)
     expect(mask.filter.blendMode).toBe('multiply')
 
     applyPartRenderProperties(createPartProperties('overlay'), runtimePart)

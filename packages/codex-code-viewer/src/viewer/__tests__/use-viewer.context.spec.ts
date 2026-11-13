@@ -42,12 +42,19 @@ describe('useViewer context', () => {
     viewer.selectLines(3, 5)
     const previous = viewer.session()?.document
     await viewer.sharePath({kind: 'directory', path: '/project/src'})
-    expect(port.context).toHaveBeenCalledWith({kind: 'directory', path: '/project/src'})
+    expect(port.context).toHaveBeenCalledWith({kind: 'directory', path: 'src'})
     expect(viewer.session()?.document).toBe(previous)
     expect(viewer.selection()).toMatchObject({endLine: 5, line: 3})
     expect(port.call).not.toHaveBeenCalled()
     expect(viewer.canBack()).toBe(false)
     expect(viewer.notice()?.message).toBe('폴더를 다음 채팅 메시지에 추가했습니다.')
+  })
+
+  it('should attach the workspace root as a relative folder', async () => {
+    const port = createPort()
+    const viewer = mount(port)
+    await viewer.sharePath({kind: 'directory', path: '/project'})
+    expect(port.context).toHaveBeenCalledExactlyOnceWith({kind: 'directory', path: '.'})
   })
 
   it('should attach selected draft text without saving it or replacing it with disk content', async () => {
@@ -65,7 +72,7 @@ describe('useViewer context', () => {
       text: 'const draft = 42',
     }
     await viewer.share(snippet)
-    expect(port.context).toHaveBeenCalledWith({...snippet, path: '/project/main.tsx'})
+    expect(port.context).toHaveBeenCalledWith({...snippet, path: 'main.tsx'})
     expect(port.call).not.toHaveBeenCalled()
     expect(viewer.editing.dirty()).toBe(true)
     expect(viewer.notice()?.message).toBe('선택한 코드를 다음 채팅 메시지에 추가했습니다.')
@@ -107,7 +114,7 @@ describe('useViewer context', () => {
       }
       expect(port.attachSelection).toHaveBeenCalledExactlyOnceWith({
         ...selection,
-        path: '/project/main.tsx',
+        path: 'main.tsx',
       })
       expect(port.context).not.toHaveBeenCalled()
       expect(viewer.editing.dirty()).toBe(true)
@@ -127,12 +134,15 @@ describe('useViewer context', () => {
     expect(viewer.notice()?.message).toBe('composer unavailable')
   })
 
-  it('should reject a tree attachment from a previous workspace', async () => {
-    const port = createPort()
-    const viewer = mount(port)
-    await viewer.sharePath({kind: 'file', path: '/other/file.ts'})
-    expect(port.context).not.toHaveBeenCalled()
-  })
+  it.each(['/other/file.ts', '/project-other/file.ts'])(
+    'should reject a tree attachment outside the workspace at %s',
+    async (path) => {
+      const port = createPort()
+      const viewer = mount(port)
+      await viewer.sharePath({kind: 'file', path})
+      expect(port.context).not.toHaveBeenCalled()
+    },
+  )
 
   it('should select a line locally and add its address to chat without navigating', async () => {
     const port = createPort()
@@ -148,7 +158,7 @@ describe('useViewer context', () => {
       column: 1,
       endLine: 8,
       line: 8,
-      path: '/project/main.tsx',
+      path: 'main.tsx',
     })
   })
 
@@ -174,34 +184,38 @@ describe('useViewer context', () => {
       endColumn: 7,
       endLine: 1,
       line: 1,
-      path: '/project/main.tsx',
+      path: 'main.tsx',
     })
   })
 
-  it('should attach SVG as a file by default and retain an explicit source selection', async () => {
-    const port = createPort()
-    port.start = async (receive) => {
-      receive({
-        ...initial,
-        document: {
-          ...document('icon.svg'),
-          media: {kind: 'image', mimeType: 'image/svg+xml', size: 10},
-        },
+  it.each(['/project', '/project/', '/'])(
+    'should attach media with a relative path in workspace %s and retain a source selection',
+    async (workspace) => {
+      const port = createPort()
+      port.start = async (receive) => {
+        receive({
+          ...initial,
+          document: {
+            ...document('icon.svg'),
+            media: {kind: 'image', mimeType: 'image/svg+xml', size: 10},
+          },
+          workspace,
+        })
+        return () => {}
+      }
+      const viewer = mount(port)
+      await viewer.share()
+      expect(port.context).toHaveBeenLastCalledWith({kind: 'file', path: 'icon.svg'})
+      await viewer.share({column: 2, endColumn: 5, endLine: 1, line: 1, path: 'icon.svg'})
+      expect(port.context).toHaveBeenLastCalledWith({
+        column: 2,
+        endColumn: 5,
+        endLine: 1,
+        line: 1,
+        path: 'icon.svg',
       })
-      return () => {}
-    }
-    const viewer = mount(port)
-    await viewer.share()
-    expect(port.context).toHaveBeenLastCalledWith({kind: 'file', path: '/project/icon.svg'})
-    await viewer.share({column: 2, endColumn: 5, endLine: 1, line: 1, path: 'icon.svg'})
-    expect(port.context).toHaveBeenLastCalledWith({
-      column: 2,
-      endColumn: 5,
-      endLine: 1,
-      line: 1,
-      path: '/project/icon.svg',
-    })
-  })
+    },
+  )
 
   it('should normalize an upward selection and add the entire range to chat', async () => {
     const port = createPort()
@@ -213,7 +227,7 @@ describe('useViewer context', () => {
       column: 1,
       endLine: 9,
       line: 3,
-      path: '/project/main.tsx',
+      path: 'main.tsx',
     })
   })
 
@@ -242,7 +256,7 @@ describe('useViewer context', () => {
       expect.objectContaining({
         kind: 'changes',
         patch: expect.stringContaining('+edited source\n'),
-        path: '/project/main.tsx',
+        path: 'main.tsx',
         revision: 'main.tsx',
       }),
     )

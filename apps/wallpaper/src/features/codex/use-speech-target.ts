@@ -1,6 +1,6 @@
 import {createEffect, createSignal, onCleanup} from 'solid-js'
 import {invoke, isTauri} from '@tauri-apps/api/core'
-import {listen} from '@tauri-apps/api/event'
+import {getCurrentWebviewWindow} from '@tauri-apps/api/webviewWindow'
 import type {CodexSpeechTarget} from './types'
 
 export const useSpeechTarget = () => {
@@ -18,7 +18,8 @@ export const useSpeechTarget = () => {
         setTarget(point)
       }
     }
-    listen<CodexSpeechTarget>('poffo-speech-target', (event) => receive(event.payload))
+    getCurrentWebviewWindow()
+      .listen<CodexSpeechTarget>('poffo-speech-target', (event) => receive(event.payload))
       .then(async (unsubscribe) => {
         if (disposed) {
           unsubscribe()

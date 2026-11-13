@@ -3,11 +3,8 @@ import {replaceBlobObjectUrl} from 'src/features/blob-object-url'
 import * as m from '@paraglide/message'
 import {generateCompressedDialogueAudio} from '../../features/focus-room-dialogue'
 import type {LanguageLearningLanguage} from '../../features/language-learning'
-import {
-  getSupertonicErrorMessage,
-  type SupertonicModelId,
-  type SupertonicVoiceId,
-} from '../../features/supertonic'
+import {getSupertonicErrorMessage} from '../../features/supertonic'
+import {type SupertonicModelId, type SupertonicVoiceId} from '@winter-love/supertonic/model'
 import {type LanguageLearningCandidate, revokeLanguageLearningAudioUrls} from './candidate'
 import {runLanguageLearningSupertonic} from './supertonic-lifecycle'
 

@@ -66,6 +66,7 @@ const createConvertedDeformer = (
     kind: 'deformer',
     locked: node.locked,
     name: node.name,
+    parameterVisibility: node.parameterVisibility,
     properties: getSharedRenderProperties(node.properties),
     rotationOrigin: {x: bounds.x + bounds.width / 2, y: bounds.y + bounds.height / 2},
     rows: 2,
@@ -81,6 +82,7 @@ const createConvertedGroup = (node: PuppetSceneDeformerNode): PuppetSceneGroupNo
   kind: 'group',
   locked: node.locked,
   name: node.name,
+  parameterVisibility: node.parameterVisibility,
   properties: getSharedRenderProperties(node.properties),
   visible: node.visible,
 })

@@ -10,7 +10,7 @@ import {shareCodeChanges} from './share-code-changes'
 import {useEditingDrafts} from './drafts/use-editing-drafts'
 import type {EditingDraft as Draft} from './drafts/types'
 
-interface EditingOptions {
+interface UseCodeEditingProps {
   readonly port: ViewerPort
   readonly session: Accessor<ViewerSession | null>
   readonly onSaved?: (value: ViewerSession) => void
@@ -62,26 +62,26 @@ const editableDocument = (document: CodeDocument | undefined): boolean =>
   document !== undefined && document.readOnly !== true && isEditableFile(document.location.path)
 
 /** Retains per-file drafts and revision-checked explicit saves until they are saved or discarded. */
-export const useCodeEditing = (options: EditingOptions) => {
+export const useCodeEditing = (props: UseCodeEditingProps) => {
   const [enabled, setEnabled] = createSignal(false)
   const [saving, setSaving] = createSignal(false)
   const [feedback, setFeedback] = createSignal<string | null>(null)
-  const retained = useEditingDrafts({onError: setFeedback, storage: options.port.draftStorage})
+  const retained = useEditingDrafts({onError: setFeedback, storage: props.port.draftStorage})
   const {drafts} = retained
   let writing: Promise<boolean> | null = null
   let writingKey: string | null = null
   let writingSource: string | undefined
   const current = createMemo(() => {
-    const value = options.session()
+    const value = props.session()
     return value === null ? undefined : drafts()[keyOf(value)]
   })
   const pendingDrafts = createMemo(() =>
     Object.entries(drafts()).filter(([, value]) => changed(value)),
   )
   const dirty = (): boolean => current() !== undefined && changed(current()!)
-  const editable = (): boolean => editableDocument(options.session()?.document)
+  const editable = (): boolean => editableDocument(props.session()?.document)
   const change = (source: string): void => {
-    const value = options.session()
+    const value = props.session()
     if (value === null || !editable()) {
       return
     }
@@ -103,13 +103,13 @@ export const useCodeEditing = (options: EditingOptions) => {
           source: draft.source,
         },
         onMissing: () => markDeleted(draft.session),
-        port: options.port,
+        port: props.port,
       })
       const session = {...draft.session, document: result.document}
       batch(() => {
         setFeedback('저장했습니다.')
         retained.saved(session)
-        options.onSaved?.(session)
+        props.onSaved?.(session)
       })
       return true
     } catch (error) {
@@ -133,11 +133,11 @@ export const useCodeEditing = (options: EditingOptions) => {
     return writing
   }
   const save = (): Promise<boolean> => {
-    const value = options.session()
+    const value = props.session()
     return value === null ? Promise.resolve(false) : saveKey(keyOf(value))
   }
   const discard = (): void => {
-    const value = options.session()
+    const value = props.session()
     if (value !== null && !saving()) {
       const key = keyOf(value)
       const deleted = drafts()[key]?.deleted === true
@@ -145,7 +145,7 @@ export const useCodeEditing = (options: EditingOptions) => {
         setFeedback(null)
         retained.discard(value)
         if (deleted) {
-          options.onDiscardDeleted?.(value)
+          props.onDiscardDeleted?.(value)
         }
       })
     }
@@ -194,22 +194,22 @@ export const useCodeEditing = (options: EditingOptions) => {
     discard,
     dismissFeedback: () => setFeedback(null),
     draftDocument: (workspace: string | undefined, path: string) =>
-      retainedDocument(drafts(), options.session(), workspace, path),
+      retainedDocument(drafts(), props.session(), workspace, path),
     editable,
     enabled,
     feedback,
     markDeleted,
     pendingFiles: () => pendingDrafts().map(([, value]) => value.base.location.path),
     restoreDrafts: retained.restore,
-    revision: () => current()?.base.revision ?? options.session()?.document.revision ?? '',
+    revision: () => current()?.base.revision ?? props.session()?.document.revision ?? '',
     save,
     saveDeleted,
     saving,
     shareChanges: () =>
-      shareDraftChanges({draft: current(), feedback: setFeedback, port: options.port}),
-    source: (): string => current()?.source ?? options.session()?.document.source ?? '',
+      shareDraftChanges({draft: current(), feedback: setFeedback, port: props.port}),
+    source: (): string => current()?.source ?? props.session()?.document.source ?? '',
     sourceFor: retained.sourceFor,
-    sources: () => analysisSources(pendingDrafts(), options.session()?.workspace),
+    sources: () => analysisSources(pendingDrafts(), props.session()?.workspace),
     toggle: () => setEnabled((previous) => !previous),
   }
 }

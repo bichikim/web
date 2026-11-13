@@ -1,35 +1,24 @@
 import type {Meta, StoryObj} from 'storybook-solidjs-vite'
-import {fn} from 'storybook/test'
 
 import {createDemoDocument} from '../player'
 import {PuppetEditor} from './PuppetEditor'
+import type {PuppetEditorProps} from './types'
+import {createElementModel} from '../editor-element/create-element-model'
+
+const EditorStory = (props: Omit<PuppetEditorProps, 'model'>) => {
+  const model = createElementModel({document: createDemoDocument(), sessionId: 'storybook'})
+  return (
+    <div class="puppet-editor-story">
+      <PuppetEditor {...props} model={model} />
+    </div>
+  )
+}
 
 const meta = {
-  args: {
-    initialDocument: createDemoDocument(),
-    onDocumentChange: fn(),
-  },
-  argTypes: {
-    initialDocument: {
-      control: false,
-      table: {category: 'Props'},
-    },
-    onDocumentChange: {
-      table: {category: 'Events'},
-      type: {name: 'function', required: false},
-    },
-  },
-  component: PuppetEditor,
-  parameters: {
-    layout: 'fullscreen',
-  },
-  render: (props) => (
-    <div class="puppet-editor-story">
-      <PuppetEditor {...props} />
-    </div>
-  ),
+  component: EditorStory,
+  parameters: {layout: 'fullscreen'},
   title: 'Puppet/Editor/PuppetEditor',
-} satisfies Meta<typeof PuppetEditor>
+} satisfies Meta<typeof EditorStory>
 
 export default meta
 type Story = StoryObj<typeof meta>
