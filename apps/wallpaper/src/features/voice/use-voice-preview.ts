@@ -34,8 +34,10 @@ export const useVoicePreview = (voice: Accessor<PoffoVoice>) => {
       }
       const played = client.play(audio, voice(), request.signal)
       played.catch((cause: unknown) => {
-        playbackError = cause
-        request.abort()
+        if (!request.signal.aborted) {
+          playbackError = cause
+          request.abort()
+        }
       })
       playback.push(played)
     }
@@ -60,7 +62,7 @@ export const useVoicePreview = (voice: Accessor<PoffoVoice>) => {
       await Promise.all(playback)
     } catch (cause) {
       const failure = playbackError ?? (request.signal.aborted ? null : cause)
-      if (failure !== null) {
+      if (failure !== null && active === request) {
         console.error('Poffo voice preview failed', failure)
         setError(failure instanceof Error ? failure.message : '미리듣기에 실패했어요.')
       }
