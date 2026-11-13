@@ -63,8 +63,11 @@ const writeText = (target: Uint8Array, offset: number, text: string) => {
   target.set(textEncoder.encode(text), offset)
 }
 
+// An exact segment-size multiple still needs a terminating zero lace.
+const getLacingCount = (packetLength: number) => Math.floor(packetLength / OGG_SEGMENT_SIZE) + 1
+
 const getLacingValues = (packetLength: number) => {
-  const values = new Uint8Array(Math.floor(packetLength / OGG_SEGMENT_SIZE) + 1)
+  const values = new Uint8Array(getLacingCount(packetLength))
   values.fill(OGG_SEGMENT_SIZE, 0, values.length - 1)
   values[values.length - 1] = packetLength % OGG_SEGMENT_SIZE
   return values
@@ -141,7 +144,13 @@ const createAudioPages = (packets: ReadonlyArray<OpusPacket>, streamSerial: numb
   let currentSegmentCount = 0
 
   for (const packet of packets) {
-    const packetSegmentCount = getLacingValues(packet.data.length).length
+    const packetLength = packet.data.length
+    const lacingCount = getLacingCount(packetLength)
+    // Preserve TypedArray normalization and failures outside the page-sized fast path.
+    const packetSegmentCount =
+      lacingCount >= 0 && lacingCount <= OGG_MAXIMUM_SEGMENTS
+        ? lacingCount
+        : getLacingValues(packetLength).length
 
     if (packetSegmentCount > OGG_MAXIMUM_SEGMENTS) {
       throw new RangeError('An Opus packet is too large for one Ogg page.')

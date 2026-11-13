@@ -126,3 +126,77 @@ it('should reject a packet that exceeds one page with the existing diagnostic', 
     }),
   ).toThrow(new RangeError('An Opus packet is too large for one Ogg page.'))
 })
+
+it.each([
+  [254, [254]],
+  [255, [255, 0]],
+  [256, [255, 1]],
+  [509, [255, 254]],
+  [510, [255, 255, 0]],
+  [511, [255, 255, 1]],
+] as const)(
+  'should retain packet termination around a %i-byte boundary',
+  async (length, lacing) => {
+    const packet = new Uint8Array(length).fill(7)
+    const pages = await readPages(
+      createOpusContainer({
+        packets: [{data: packet, granulePosition: 960}],
+        preSkip: 0,
+        sampleRate: 48_000,
+        streamSerial: 1,
+      }),
+    )
+
+    expect(pages).toHaveLength(3)
+    expect(pages[2]!.lacing).toEqual(lacing)
+    expect(pages[2]!.payload).toEqual(packet)
+    expect(pages.every(hasValidChecksum)).toBe(true)
+  },
+)
+
+it('should include an exact-multiple terminator in the page segment budget', async () => {
+  const pages = await readPages(
+    createOpusContainer({
+      packets: [
+        {data: new Uint8Array(64_770), granulePosition: 960},
+        {data: Uint8Array.of(9), granulePosition: 1920},
+      ],
+      preSkip: 0,
+      sampleRate: 48_000,
+      streamSerial: 1,
+    }),
+  )
+
+  expect(pages).toHaveLength(4)
+  expect(pages[2]!.lacing).toEqual([...new Array(254).fill(255), 0])
+  expect(pages[2]!.header.getUint32(6, true)).toBe(960)
+  expect(pages[3]!.payload).toEqual(Uint8Array.of(9))
+  expect(pages[3]!.header.getUint32(6, true)).toBe(1920)
+  expect(pages.every(hasValidChecksum)).toBe(true)
+})
+
+it('should retain array length normalization when planning an overridden packet length', () => {
+  const empty = new Uint8Array()
+  let reads = 0
+  Object.defineProperty(empty, 'length', {
+    get: () => {
+      const length = reads === 0 ? Number.NaN : 0
+      reads += 1
+      return length
+    },
+  })
+
+  const blob = createOpusContainer({
+    packets: [
+      {data: empty, granulePosition: 960},
+      {data: new Uint8Array(65_024), granulePosition: 1920},
+      {data: Uint8Array.of(9), granulePosition: 2880},
+    ],
+    preSkip: 0,
+    sampleRate: 48_000,
+    streamSerial: 1,
+  })
+
+  expect(blob.size).toBe(65_444)
+  expect(reads).toBe(4)
+})
