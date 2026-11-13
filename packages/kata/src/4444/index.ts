@@ -21,15 +21,15 @@ export const memo = <T extends (...args: any) => any>(func: T): T => {
   const cacheMap = new Map<string, any>()
 
   return ((...args: any) => {
-    const cachedResult = getCache(cacheMap, args)
+    const cacheKey = stringifyArgs(args)
 
-    if (cachedResult) {
-      return cachedResult
+    if (cacheMap.has(cacheKey)) {
+      return cacheMap.get(cacheKey)
     }
 
     const result = func(...args)
 
-    setCache(cacheMap, args, result)
+    cacheMap.set(cacheKey, result)
 
     return result
   }) as any
