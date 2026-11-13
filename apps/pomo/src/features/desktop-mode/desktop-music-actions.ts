@@ -116,14 +116,10 @@ export const createDesktopMusicActionInbox = (): DesktopMusicActionInbox => {
       channel?.postMessage({type: 'player-ready'})
     }
 
-    let isSubscribed = true
     return () => {
-      if (!isSubscribed) {
+      if (!subscribers.delete(subscriber)) {
         return
       }
-
-      isSubscribed = false
-      subscribers.delete(subscriber)
       if (!isClosed && subscribers.size === 0) {
         channel?.postMessage({type: 'player-unavailable'})
       }
