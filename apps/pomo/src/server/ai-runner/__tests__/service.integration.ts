@@ -209,13 +209,16 @@ it('should preserve queued work on shutdown without starting another inference',
 
 it('should delete an uploaded artifact when the deadline passes during upload', async () => {
   const {directory, store} = await createStore()
+  const deadline = new AbortController()
+  const timeout = vi.spyOn(AbortSignal, 'timeout').mockReturnValue(deadline.signal)
+  const entered = Promise.withResolvers<void>()
+  const upload = Promise.withResolvers<void>()
   const remove = vi.fn(async () => undefined)
   const artifactStore: RunnerArtifactStore = {
     delete: remove,
     put: async ({objectKeyPrefix}) => {
-      await new Promise<void>((resolve) => {
-        setTimeout(resolve, 30)
-      })
+      entered.resolve()
+      await upload.promise
       return {contentType: 'audio/wav', objectKey: `${objectKeyPrefix}/result.wav`, sizeBytes: 1}
     },
   }
@@ -233,6 +236,12 @@ it('should delete an uploaded artifact when the deadline passes during upload', 
   })
   try {
     service.submit(createRequest(firstJobId, 'text_to_speech'))
+    await Promise.race([entered.promise, service.waitForIdle()])
+    expect(timeout).toHaveBeenCalledExactlyOnceWith(5)
+    expect(service.getStatus(firstJobId)?.status).toBe('running')
+    expect(remove).not.toHaveBeenCalled()
+    deadline.abort()
+    upload.resolve()
     await service.waitForIdle()
     expect(service.getStatus(firstJobId)).toMatchObject({
       error: {code: 'timeout'},
@@ -240,6 +249,8 @@ it('should delete an uploaded artifact when the deadline passes during upload', 
     })
     expect(remove).toHaveBeenCalledWith(`ai/jobs/${firstJobId}/temporary/result.wav`)
   } finally {
+    upload.resolve()
+    timeout.mockRestore()
     await service.close()
     await rm(directory, {force: true, recursive: true})
   }
