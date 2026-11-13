@@ -1,5 +1,6 @@
 import {describe, expect, it} from 'vitest'
 import {drawTarotCards, TAROT_CARDS} from '../cards'
+import {REVERSED_MEANINGS} from '../reversed-meanings'
 
 describe('tarot cards', () => {
   it('should contain 78 distinct cards with meanings for both orientations and languages', () => {
@@ -37,6 +38,21 @@ describe('tarot cards', () => {
     expect(drawTarotCards({count: 1, random: () => 0})).toEqual([
       {...TAROT_CARDS[0], orientation: 'upright'},
     ])
+  })
+
+  it('should retain reversed reading records and omit suits only for major cards', () => {
+    const reversedMeanings = new Map(Object.entries(REVERSED_MEANINGS))
+    for (const card of TAROT_CARDS) {
+      expect(card.reversedReadingMeaning).toBe(reversedMeanings.get(card.id))
+      expect(card.readingMeaning).not.toBe(card.meaning)
+      expect(card.reversedReadingMeaning).not.toBe(card.reversedMeaning)
+
+      if (card.arcana === 'major') {
+        expect(card).not.toHaveProperty('suit')
+      } else {
+        expect(card).toHaveProperty('suit', card.id.split('-')[0])
+      }
+    }
   })
 
   it('should draw three distinct cards in draw order without changing the deck', () => {

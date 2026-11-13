@@ -277,6 +277,31 @@ const SUITS = [
   readonly cards: ReadonlyArray<MinorRow>
 }>
 
+interface CreateTarotCardOptions extends Pick<
+  TarotCard,
+  'arcana' | 'name' | 'readingMeaning' | 'suit'
+> {
+  readonly context: Readonly<Record<TarotLocale, string>>
+  readonly id: keyof typeof REVERSED_MEANINGS
+}
+
+const createTarotCard = (options: CreateTarotCardOptions): TarotCard => ({
+  arcana: options.arcana,
+  id: options.id,
+  meaning: {
+    en: `${options.context.en} Upright: ${options.readingMeaning.en}.`,
+    ko: `${options.context.ko} 정방향: ${options.readingMeaning.ko}.`,
+  },
+  name: options.name,
+  readingMeaning: options.readingMeaning,
+  reversedMeaning: {
+    en: `${options.context.en} Reversed: ${REVERSED_MEANINGS[options.id].en}`,
+    ko: `${options.context.ko} 역방향: ${REVERSED_MEANINGS[options.id].ko}`,
+  },
+  reversedReadingMeaning: REVERSED_MEANINGS[options.id],
+  ...(options.suit === undefined ? {} : {suit: options.suit}),
+})
+
 export const TAROT_CARDS: ReadonlyArray<TarotCard> = [
   ...MAJOR_ROWS.map(([id, english, korean, meaningEn, meaningKo], number) => {
     const context = {
@@ -289,21 +314,13 @@ export const TAROT_CARDS: ReadonlyArray<TarotCard> = [
         '메이저 아르카나는 삶의 큰 주제와 전환을 다루고, ' +
         '번호는 광대(0)에서 세계(21)로 이어지는 상징의 순서 속 위치를 나타내요.',
     }
-    return {
-      arcana: 'major' as const,
+    return createTarotCard({
+      arcana: 'major',
+      context,
       id,
-      meaning: {
-        en: `${context.en} Upright: ${meaningEn}.`,
-        ko: `${context.ko} 정방향: ${meaningKo}.`,
-      },
       name: {en: english, ko: korean},
       readingMeaning: {en: meaningEn, ko: meaningKo},
-      reversedMeaning: {
-        en: `${context.en} Reversed: ${REVERSED_MEANINGS[id].en}`,
-        ko: `${context.ko} 역방향: ${REVERSED_MEANINGS[id].ko}`,
-      },
-      reversedReadingMeaning: REVERSED_MEANINGS[id],
-    }
+    })
   }),
   ...SUITS.flatMap((suit) =>
     suit.cards.map(([rank, meaningEn, meaningKo]) => {
@@ -318,22 +335,14 @@ export const TAROT_CARDS: ReadonlyArray<TarotCard> = [
           `${SUIT_CONTEXT[suit.id].en} ${RANK_CONTEXT[rank].en}`,
         ko: `${name.ko}는 일상적인 경험을 다루는 마이너 아르카나 카드예요. ${SUIT_CONTEXT[suit.id].ko} ${RANK_CONTEXT[rank].ko}`,
       }
-      return {
-        arcana: 'minor' as const,
+      return createTarotCard({
+        arcana: 'minor',
+        context,
         id,
-        meaning: {
-          en: `${context.en} Upright: ${meaningEn}.`,
-          ko: `${context.ko} 정방향: ${meaningKo}.`,
-        },
         name,
         readingMeaning: {en: meaningEn, ko: meaningKo},
-        reversedMeaning: {
-          en: `${context.en} Reversed: ${REVERSED_MEANINGS[id].en}`,
-          ko: `${context.ko} 역방향: ${REVERSED_MEANINGS[id].ko}`,
-        },
-        reversedReadingMeaning: REVERSED_MEANINGS[id],
         suit: suit.id,
-      }
+      })
     }),
   ),
 ]
