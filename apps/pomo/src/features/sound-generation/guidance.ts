@@ -41,9 +41,13 @@ export function createClassifierFreeGuidedVelocity(
   const conditionedNorm = Math.max(Math.sqrt(conditionedNormSquared), MIN_CONDITIONED_NORM)
   const parallelScale = differenceDotConditioned / (conditionedNorm * conditionedNorm)
   const guidance = cfgScale - 1
-  const guidedVelocity = new Float32Array(latent.length)
+  const outputLength = latent.length
+  // Each negative sample is consumed before its slot becomes the final velocity.
+  const guidedVelocity =
+    negativeDenoised.length === outputLength ? negativeDenoised : new Float32Array(outputLength)
 
-  for (let index = 0; index < latent.length; index += 1) {
+  let index = 0
+  for (; index < latent.length; index += 1) {
     const difference = positiveDenoised[index] - negativeDenoised[index]
     const parallelDifference = parallelScale * positiveDenoised[index]
     const orthogonalDifference = difference - parallelDifference
@@ -57,6 +61,10 @@ export function createClassifierFreeGuidedVelocity(
     guidedVelocity[index] = (latent[index] - guidedDenoised) / timestep
   }
 
+  // Preserve the original zero-filled tail if the input view becomes shorter.
+  if (guidedVelocity === negativeDenoised && index < guidedVelocity.length) {
+    guidedVelocity.fill(0, index)
+  }
   return guidedVelocity
 }
 
