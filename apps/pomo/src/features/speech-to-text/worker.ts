@@ -15,15 +15,18 @@ import type {SpeechBackend} from './recognizer'
 const MINIMUM_PROGRESS = 0
 const workerScope = globalThis.self as DedicatedWorkerGlobalScope
 
-let transcriber: AutomaticSpeechRecognitionPipeline | null = null
-let activeBackend: SpeechBackend | null = null
-let activeModelId: SpeechModelId | null = null
+interface PreparedSpeechModel {
+  readonly backend: SpeechBackend
+  readonly modelId: SpeechModelId
+  readonly transcriber: AutomaticSpeechRecognitionPipeline | null
+}
 
 interface PendingPreparation {
   readonly modelId: SpeechModelId
   readonly promise: Promise<SpeechBackend>
 }
 
+let preparedModel: PreparedSpeechModel | null = null
 let pendingPreparation: PendingPreparation | null = null
 
 const sendResponse = (response: SpeechWorkerResponse) => workerScope.postMessage(response)
@@ -47,9 +50,7 @@ const loadTranscriber = async (backend: SpeechBackend, model: SpeechModelDefinit
     device: backend,
     progress_callback: reportProgress,
   })
-  transcriber = loadedTranscriber
-  activeBackend = backend
-  activeModelId = model.id
+  preparedModel = {backend, modelId: model.id, transcriber: loadedTranscriber}
   return backend
 }
 
@@ -66,8 +67,12 @@ const prepareModel = async (preferredBackend: SpeechBackend, modelId: SpeechMode
     return prepareModel(preferredBackend, modelId)
   }
 
-  if (transcriber !== null && activeBackend !== null && activeModelId === modelId) {
-    return activeBackend
+  if (
+    preparedModel !== null &&
+    preparedModel.transcriber !== null &&
+    preparedModel.modelId === modelId
+  ) {
+    return preparedModel.backend
   }
 
   if (existingPreparation !== null) {
@@ -81,9 +86,7 @@ const prepareModel = async (preferredBackend: SpeechBackend, modelId: SpeechMode
       try {
         return await loadTranscriber('webgpu', model)
       } catch {
-        transcriber = null
-        activeBackend = null
-        activeModelId = null
+        preparedModel = null
         sendResponse({backend: 'wasm', type: 'backend-changed'})
       }
     }
@@ -129,7 +132,7 @@ const transcribe = async (request: Extract<SpeechWorkerRequest, {readonly type: 
     return
   }
 
-  if (transcriber === null) {
+  if (preparedModel === null || preparedModel.transcriber === null) {
     sendResponse({
       error: createModelError(new Error('음성 인식 모델이 준비되지 않았습니다.'), 'transcribe'),
       requestId: request.requestId,
@@ -140,6 +143,7 @@ const transcribe = async (request: Extract<SpeechWorkerRequest, {readonly type: 
 
   try {
     const model = getSpeechModel(request.modelId)
+    const {transcriber} = preparedModel
     const result =
       model.family === 'whisper'
         ? await transcriber(request.audio, {

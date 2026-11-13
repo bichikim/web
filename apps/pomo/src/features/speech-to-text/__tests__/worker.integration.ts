@@ -553,6 +553,190 @@ describe('speech recognition worker', () => {
     },
   )
 
+  it('should reuse the loaded backend and invoke its transcriber without a receiver', async () => {
+    const receivers: unknown[] = []
+    const transcriber = vi.fn(function transcriber(this: unknown) {
+      receivers.push(this)
+      return Promise.resolve({text: ' GPU 모델 '})
+    })
+    transformers.pipeline.mockResolvedValue(transcriber)
+    const worker = await loadWorker()
+    worker.dispatch({
+      modelId: 'whisper-base',
+      preferredBackend: 'webgpu',
+      requestId: 90,
+      type: 'prepare',
+    })
+    await vi.waitFor(() =>
+      expect(worker.postMessage).toHaveBeenCalledWith({
+        backend: 'webgpu',
+        requestId: 90,
+        type: 'ready',
+      }),
+    )
+
+    worker.dispatch({
+      audio: Float32Array.of(0.1),
+      language: 'korean',
+      modelId: 'whisper-base',
+      preferredBackend: 'wasm',
+      requestId: 91,
+      type: 'transcribe',
+    })
+    await vi.waitFor(() =>
+      expect(worker.postMessage).toHaveBeenCalledWith({
+        backend: 'webgpu',
+        requestId: 91,
+        text: 'GPU 모델',
+        type: 'complete',
+      }),
+    )
+    expect(transformers.pipeline).toHaveBeenCalledOnce()
+    expect(receivers).toEqual([undefined])
+  })
+
+  it('should retain the previous model after a WASM-only replacement fails', async () => {
+    const originalTranscriber = vi.fn().mockResolvedValue({text: '기존 모델'})
+    transformers.pipeline
+      .mockResolvedValueOnce(originalTranscriber)
+      .mockRejectedValueOnce(new Error('교체 실패'))
+    const worker = await loadWorker()
+    worker.dispatch({
+      modelId: 'whisper-base',
+      preferredBackend: 'wasm',
+      requestId: 92,
+      type: 'prepare',
+    })
+    await vi.waitFor(() =>
+      expect(worker.postMessage).toHaveBeenCalledWith({
+        backend: 'wasm',
+        requestId: 92,
+        type: 'ready',
+      }),
+    )
+
+    worker.dispatch({
+      modelId: 'moonshine-tiny-ko',
+      preferredBackend: 'wasm',
+      requestId: 93,
+      type: 'prepare',
+    })
+    await vi.waitFor(() =>
+      expect(worker.postMessage).toHaveBeenCalledWith(
+        expect.objectContaining({requestId: 93, type: 'error'}),
+      ),
+    )
+    worker.dispatch({
+      audio: Float32Array.of(0.2),
+      language: 'korean',
+      modelId: 'whisper-base',
+      preferredBackend: 'wasm',
+      requestId: 94,
+      type: 'transcribe',
+    })
+    await vi.waitFor(() =>
+      expect(worker.postMessage).toHaveBeenCalledWith({
+        backend: 'wasm',
+        requestId: 94,
+        text: '기존 모델',
+        type: 'complete',
+      }),
+    )
+    expect(transformers.pipeline).toHaveBeenCalledTimes(2)
+    expect(originalTranscriber).toHaveBeenCalledOnce()
+  })
+
+  it('should clear the previous model when GPU fallback and its WASM retry both fail', async () => {
+    const originalTranscriber = vi.fn().mockResolvedValue({text: '기존 모델'})
+    const replacementTranscriber = vi.fn().mockResolvedValue({text: '다시 준비한 모델'})
+    transformers.pipeline
+      .mockResolvedValueOnce(originalTranscriber)
+      .mockRejectedValueOnce(new Error('GPU 실패'))
+      .mockRejectedValueOnce(new Error('WASM 실패'))
+      .mockResolvedValueOnce(replacementTranscriber)
+    const worker = await loadWorker()
+    worker.dispatch({
+      modelId: 'whisper-base',
+      preferredBackend: 'wasm',
+      requestId: 95,
+      type: 'prepare',
+    })
+    await vi.waitFor(() =>
+      expect(worker.postMessage).toHaveBeenCalledWith({
+        backend: 'wasm',
+        requestId: 95,
+        type: 'ready',
+      }),
+    )
+
+    worker.dispatch({
+      modelId: 'moonshine-tiny-ko',
+      preferredBackend: 'webgpu',
+      requestId: 96,
+      type: 'prepare',
+    })
+    await vi.waitFor(() =>
+      expect(worker.postMessage).toHaveBeenCalledWith(
+        expect.objectContaining({requestId: 96, type: 'error'}),
+      ),
+    )
+    worker.dispatch({
+      audio: Float32Array.of(0.3),
+      language: 'korean',
+      modelId: 'whisper-base',
+      preferredBackend: 'wasm',
+      requestId: 97,
+      type: 'transcribe',
+    })
+    await vi.waitFor(() =>
+      expect(worker.postMessage).toHaveBeenCalledWith({
+        backend: 'wasm',
+        requestId: 97,
+        text: '다시 준비한 모델',
+        type: 'complete',
+      }),
+    )
+    expect(transformers.pipeline).toHaveBeenCalledTimes(4)
+    expect(originalTranscriber).not.toHaveBeenCalled()
+    expect(replacementTranscriber).toHaveBeenCalledOnce()
+  })
+
+  it('should reload a model whose preparation returned no transcriber', async () => {
+    transformers.pipeline.mockResolvedValueOnce(null)
+    const worker = await loadWorker()
+    worker.dispatch({
+      modelId: 'whisper-base',
+      preferredBackend: 'wasm',
+      requestId: 98,
+      type: 'prepare',
+    })
+    await vi.waitFor(() =>
+      expect(worker.postMessage).toHaveBeenCalledWith({
+        backend: 'wasm',
+        requestId: 98,
+        type: 'ready',
+      }),
+    )
+
+    worker.dispatch({
+      audio: Float32Array.of(0.4),
+      language: 'korean',
+      modelId: 'whisper-base',
+      preferredBackend: 'wasm',
+      requestId: 99,
+      type: 'transcribe',
+    })
+    await vi.waitFor(() =>
+      expect(worker.postMessage).toHaveBeenCalledWith({
+        backend: 'wasm',
+        requestId: 99,
+        text: '안녕하세요',
+        type: 'complete',
+      }),
+    )
+    expect(transformers.pipeline).toHaveBeenCalledTimes(2)
+  })
+
   it('should reject an unsupported worker request', async () => {
     const worker = await loadWorker()
 
