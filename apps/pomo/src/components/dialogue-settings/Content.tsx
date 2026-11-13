@@ -97,6 +97,9 @@ export function PDialogueSettingsContent() {
   const eventDialogues = createMemo(() =>
     excludeFeedDialogues(events.dialogues(), feeds.dialogues()),
   )
+  const availableDialogueIds = createMemo(
+    () => new Set(eventDialogues().map((dialogue) => dialogue.id)),
+  )
   const learningSentences = useLanguageLearningSentences()
   const libraryDialogues = createMemo(() =>
     excludeMemoryMemoDialogues(
@@ -170,11 +173,10 @@ export function PDialogueSettingsContent() {
                   ]
                   const playbackMode = () =>
                     events.eventPlaybackModes()[event.id] ?? DEFAULT_DIALOGUE_EVENT_PLAYBACK_MODE
-                  const selectedDialogues = () =>
-                    selectedDialogueIds().flatMap((dialogueId) => {
-                      const dialogue = eventDialogues().find((item) => item.id === dialogueId)
-                      return dialogue === undefined ? [] : [dialogue]
-                    })
+                  const hasMultipleReferences = () => {
+                    const availableIds = availableDialogueIds()
+                    return selectedDialogueIds().filter((id) => availableIds.has(id)).length > 1
+                  }
 
                   return (
                     <li data-connected={selectedItems().length === 0 ? undefined : ''}>
@@ -222,7 +224,7 @@ export function PDialogueSettingsContent() {
                         />
                       </div>
 
-                      <Show when={selectedDialogues().length > 1}>
+                      <Show when={hasMultipleReferences()}>
                         <DialoguePlaybackModeSelect
                           eventLabel={event.label}
                           onChange={(nextMode) => {
