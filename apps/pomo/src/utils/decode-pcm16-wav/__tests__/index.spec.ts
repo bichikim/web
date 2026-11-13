@@ -77,4 +77,61 @@ describe('decodePcm16Wav', () => {
       new Float32Array([-1]),
     )
   })
+
+  it.each([
+    ['RIFF', 0],
+    ['WAVE', 8],
+    ['fmt ', 12],
+    ['data', 36],
+  ] as const)('should require every byte of the %s identifier', (_identifier, offset) => {
+    const original = new Uint8Array(encodeMonoPcm16Wav(Float32Array.of(-1), 8000))
+    for (let index = 0; index < 4; index += 1) {
+      const bytes = original.slice()
+      bytes[offset + index] += 0x80
+      expect(decodePcm16Wav(bytes)).toBeNull()
+    }
+    const reversed = original.slice()
+    reversed.subarray(offset, offset + 4).reverse()
+    expect(decodePcm16Wav(reversed)).toBeNull()
+  })
+
+  it('should skip non-ASCII and odd-sized unknown identifiers in an unaligned view', () => {
+    const original = new Uint8Array(encodeMonoPcm16Wav(Float32Array.of(-1, 1), 8000))
+    const backing = new Uint8Array(original.length + 16)
+    backing.fill(0xff)
+    const bytes = backing.subarray(3, 3 + original.length + 10)
+    bytes.set(original.subarray(0, 12))
+    bytes.set([0x80, 0x66, 0x6d, 0x74], 12)
+    new DataView(bytes.buffer, bytes.byteOffset).setUint32(16, 1, true)
+    bytes.set(original.subarray(12), 22)
+
+    expect(decodePcm16Wav(bytes)).toEqual({
+      channels: 1,
+      sampleRate: 8000,
+      samples: Float32Array.of(-1, 32767 / 32768),
+    })
+  })
+
+  it('should retain the first format and data chunks when identifiers repeat', () => {
+    const first = new Uint8Array(encodeMonoPcm16Wav(Float32Array.of(-1), 8000))
+    const second = new Uint8Array(encodeMonoPcm16Wav(Float32Array.of(1), 16000))
+    const bytes = new Uint8Array(first.length + second.length - 12)
+    bytes.set(first)
+    bytes.set(second.subarray(12), first.length)
+
+    expect(decodePcm16Wav(bytes)).toEqual({
+      channels: 1,
+      sampleRate: 8000,
+      samples: Float32Array.of(-1),
+    })
+  })
+
+  it('should ignore an incomplete trailing chunk header without reading past the view', () => {
+    const original = new Uint8Array(encodeMonoPcm16Wav(Float32Array.of(-1), 8000))
+    for (let length = 1; length < 8; length += 1) {
+      const bytes = new Uint8Array(original.length + length)
+      bytes.set(original)
+      expect(decodePcm16Wav(bytes)?.samples).toEqual(Float32Array.of(-1))
+    }
+  })
 })

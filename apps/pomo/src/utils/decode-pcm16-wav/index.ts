@@ -1,4 +1,9 @@
-// oxlint-disable no-magic-numbers -- RIFF 청크 오프셋과 PCM16 배율은 형식에 정의된 상수다.
+// oxlint-disable no-magic-numbers -- RIFF 식별자·청크 오프셋과 PCM16 배율은 형식에 정의된 상수다.
+const RIFF_ID = 0x5249_4646
+const WAVE_ID = 0x5741_5645
+const FORMAT_ID = 0x666d_7420
+const DATA_ID = 0x6461_7461
+
 export interface DecodedPcm16Wave {
   /** 원본 WAV의 채널 수이다. */
   readonly channels: number
@@ -15,27 +20,24 @@ interface WaveChunk {
   readonly offset: number
   readonly size: number
 }
-const readText = (view: DataView, offset: number) =>
-  String.fromCharCode(...new Uint8Array(view.buffer, view.byteOffset + offset, 4))
-
 const readPcmChunks = (view: DataView, options: WaveDecodeOptions) => {
   let format: WaveChunk | null = null
   let data: WaveChunk | null = null
   let offset = 12
   while (offset + 8 <= view.byteLength) {
-    const kind = readText(view, offset)
+    const kind = view.getUint32(offset)
     const size = view.getUint32(offset + 4, true)
     const start = offset + 8
     if (
       start + size > view.byteLength &&
-      !(kind === 'data' && options.truncatedData === 'read-available')
+      !(kind === DATA_ID && options.truncatedData === 'read-available')
     ) {
       return null
     }
-    if (kind === 'fmt ' && format === null) {
+    if (kind === FORMAT_ID && format === null) {
       format = {offset: start, size}
     }
-    if (kind === 'data' && data === null) {
+    if (kind === DATA_ID && data === null) {
       data = {offset: start, size: Math.min(size, view.byteLength - start)}
     }
     offset = start + size + (size % 2)
@@ -54,7 +56,7 @@ export const decodePcm16Wav = (
     bytes instanceof Uint8Array
       ? new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength)
       : new DataView(bytes)
-  if (view.byteLength < 12 || readText(view, 0) !== 'RIFF' || readText(view, 8) !== 'WAVE') {
+  if (view.byteLength < 12 || view.getUint32(0) !== RIFF_ID || view.getUint32(8) !== WAVE_ID) {
     return null
   }
   const chunks = readPcmChunks(view, options)
