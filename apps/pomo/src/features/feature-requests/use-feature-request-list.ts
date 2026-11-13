@@ -97,7 +97,9 @@ const useRequestPagination = (props: UseRequestPaginationProps) => {
         }),
       )
     } finally {
-      setIsReconciling(false)
+      if (generation === props.generation()) {
+        setIsReconciling(false)
+      }
     }
   }
 
@@ -122,14 +124,16 @@ const useRequestPagination = (props: UseRequestPaginationProps) => {
     }
   }
 
-  const clearFailure = () => setReconcileFailed(false)
+  const resetReconciliation = () => {
+    setIsReconciling(false)
+    setReconcileFailed(false)
+  }
   const reset = () => {
     paginationRevision = 0
     reconciledRevision = 0
-    clearFailure()
+    resetReconciliation()
   }
   return {
-    clearFailure,
     invalidatePagination: () => {
       paginationRevision += 1
     },
@@ -137,6 +141,7 @@ const useRequestPagination = (props: UseRequestPaginationProps) => {
     loadMore,
     reconcileFailed,
     reset,
+    resetReconciliation,
   }
 }
 
@@ -217,7 +222,7 @@ export const useFeatureRequestList = (
   const loadFirstPage = async (
     refreshOptions: FeatureRequestsRefreshOptions = {},
   ): Promise<void> => {
-    pagination.clearFailure()
+    pagination.resetReconciliation()
     if (props.refreshLoadedPages === true) {
       return reloadVisiblePages(refreshOptions)
     }
@@ -277,6 +282,7 @@ export const useFeatureRequestList = (
       loadFirstPage({invalidate: false})
       onCleanup(() => {
         listGeneration += 1
+        pagination.resetReconciliation()
       })
     }),
   )

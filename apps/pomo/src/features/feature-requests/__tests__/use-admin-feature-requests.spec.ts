@@ -2,8 +2,9 @@
 
 import {MemoryRouter, query} from '@solidjs/router'
 import {renderHook, waitFor} from '@solidjs/testing-library'
-import {createComponent, type ParentComponent} from 'solid-js'
+import {createComponent, createSignal, type ParentComponent} from 'solid-js'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
+import {withPagination} from 'src/utils/with-pagination'
 
 import type {FeatureRequest, FeatureRequestPage} from '../types'
 
@@ -18,6 +19,7 @@ const apiMocks = vi.hoisted(() => ({
 vi.mock('../api', () => apiMocks)
 
 import {useAdminFeatureRequests} from '../use-admin-feature-requests'
+import {useFeatureRequestList} from '../use-feature-request-list'
 
 const REQUEST: FeatureRequest = {
   createdAt: '2026-09-17T01:00:00.000Z',
@@ -495,4 +497,115 @@ it('should reconcile when a reordered last page finishes before the save respons
   expect(view.result.requests()).toEqual([updated, NEXT_REQUEST])
   expect(view.result.hasMore()).toBe(false)
   view.cleanup()
+})
+
+it('should release a superseded reconciliation and preserve the next reconciliation during refresh', async () => {
+  const stalePage = Promise.withResolvers<FeatureRequestPage>()
+  const currentPage = Promise.withResolvers<FeatureRequestPage>()
+  const staleStarted = Promise.withResolvers<void>()
+  const currentStarted = Promise.withResolvers<void>()
+  const refreshed = {...REQUEST, status: 'completed' as const, title: '갱신된 요청'}
+  apiMocks.listAdminFeatureRequests
+    .mockResolvedValueOnce({hasMore: true, requests: [REQUEST]})
+    .mockImplementationOnce(() => {
+      staleStarted.resolve()
+      return stalePage.promise
+    })
+    .mockResolvedValueOnce({hasMore: true, requests: [refreshed]})
+    .mockImplementationOnce(() => {
+      currentStarted.resolve()
+      return currentPage.promise
+    })
+  apiMocks.updateAdminFeatureRequest.mockResolvedValueOnce({status: 'updated'})
+  const view = renderHook(() => useAdminFeatureRequests(), {wrapper: RouterWrapper})
+  try {
+    await waitFor(() => expect(view.result.isLoading()).toBe(false))
+    await view.result.updateRequest({
+      requestId: REQUEST.id,
+      status: 'completed',
+      targetVoteCount: null,
+    })
+    const stale = view.result.loadMore()
+    await staleStarted.promise
+    await view.result.refresh()
+    expect(view.result.requests()).toEqual([refreshed])
+    expect(view.result.hasMore()).toBe(true)
+    expect(view.result.isLoadingMore()).toBe(false)
+    const current = view.result.loadMore()
+    await currentStarted.promise
+    expect(apiMocks.listAdminFeatureRequests).toHaveBeenCalledTimes(4)
+    stalePage.resolve({hasMore: false, requests: [REQUEST]})
+    await stale
+    expect(view.result.isLoadingMore()).toBe(true)
+    await view.result.loadMore()
+    expect(apiMocks.listAdminFeatureRequests).toHaveBeenCalledTimes(4)
+    currentPage.resolve({hasMore: false, requests: [NEXT_REQUEST, refreshed]})
+    await current
+    expect(view.result.requests()).toEqual([refreshed, NEXT_REQUEST])
+    expect(view.result.isLoadingMore()).toBe(false)
+    expect(view.result.hasMore()).toBe(false)
+  } finally {
+    stalePage.resolve({hasMore: false, requests: [REQUEST]})
+    currentPage.resolve({hasMore: false, requests: [NEXT_REQUEST, refreshed]})
+    view.cleanup()
+  }
+})
+
+it('should release a superseded reconciliation and preserve the next reconciliation during scope changes', async () => {
+  const stalePage = Promise.withResolvers<FeatureRequestPage>()
+  const currentPage = Promise.withResolvers<FeatureRequestPage>()
+  const staleStarted = Promise.withResolvers<void>()
+  const currentStarted = Promise.withResolvers<void>()
+  const third = {...REQUEST, id: '019d1990-1dc9-7255-a7b5-f9459dfaf784'}
+  const load = vi.fn(
+    async (_scope: string, _offset: number): Promise<FeatureRequestPage> => ({
+      hasMore: true,
+      requests: [REQUEST],
+    }),
+  )
+  load
+    .mockResolvedValueOnce({hasMore: true, requests: [REQUEST]})
+    .mockImplementationOnce(() => {
+      staleStarted.resolve()
+      return stalePage.promise
+    })
+    .mockResolvedValueOnce({hasMore: true, requests: [NEXT_REQUEST]})
+    .mockImplementationOnce(() => {
+      currentStarted.resolve()
+      return currentPage.promise
+    })
+  const pageQuery = withPagination(query(load, 'request-scope-reconciliation'), {
+    getNextPageParam: (page, _pages, offset) =>
+      page.hasMore ? offset + page.requests.length : null,
+    initialPageParam: 0,
+  })
+  const [scope, setScope] = createSignal('first')
+  const view = renderHook(() => useFeatureRequestList({pageQuery, scope}), {wrapper: RouterWrapper})
+  try {
+    await waitFor(() => expect(view.result.isLoading()).toBe(false))
+    view.result.invalidatePagination()
+    const stale = view.result.loadMore()
+    await staleStarted.promise
+    setScope('second')
+    await waitFor(() => expect(view.result.requests()).toEqual([NEXT_REQUEST]))
+    expect(view.result.isLoadingMore()).toBe(false)
+    view.result.invalidatePagination()
+    const current = view.result.loadMore()
+    await currentStarted.promise
+    expect(load).toHaveBeenNthCalledWith(4, 'second', 0)
+    stalePage.resolve({hasMore: false, requests: [REQUEST]})
+    await stale
+    expect(view.result.isLoadingMore()).toBe(true)
+    await view.result.loadMore()
+    expect(load).toHaveBeenCalledTimes(4)
+    currentPage.resolve({hasMore: false, requests: [NEXT_REQUEST, third]})
+    await current
+    expect(view.result.requests()).toEqual([NEXT_REQUEST, third])
+    expect(view.result.isLoadingMore()).toBe(false)
+    expect(view.result.hasMore()).toBe(false)
+  } finally {
+    stalePage.resolve({hasMore: false, requests: [REQUEST]})
+    currentPage.resolve({hasMore: false, requests: [NEXT_REQUEST, third]})
+    view.cleanup()
+  }
 })
