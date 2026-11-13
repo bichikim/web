@@ -34,8 +34,14 @@ export const AlbumWorkspace = (props: AlbumWorkspaceProps) => {
   const pendingTracks = () =>
     props.model.catalog().pendingTracks.filter((track) => track.albumId === props.album.id)
   const trackIds = () => new Set([...albumTracks(), ...pendingTracks()].map((track) => track.id))
-  const albumAssets = () =>
-    props.model.catalog().assets.filter((asset) => trackIds().has(asset.trackId))
+  const albumAssets = () => {
+    const assets = props.model.catalog().assets
+    if (assets.length === 0) {
+      return []
+    }
+    const ids = trackIds()
+    return assets.filter((asset) => ids.has(asset.trackId))
+  }
   const albumOffers = () =>
     props.model.catalog().offers.filter((offer) => offer.albumId === props.album.id)
   const albumTitle = () => getAlbumTranslation(props.album, 'ko')?.title ?? '제목 없음'
