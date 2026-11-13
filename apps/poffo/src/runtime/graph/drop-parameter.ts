@@ -16,6 +16,9 @@ export const dropParameter = (options: DropParameterOptions) => {
   if (node.type !== 'parameters') {
     return undefined
   }
+  const groupHeaders = new Map<string, number>(
+    options.groups.map((group) => [`parameter:group:${group.id}`, getGroupHeader(group)] as const),
+  )
   const parent = options.nodes.find((candidate) => candidate.id === node.parentId)
   const position = {
     x: node.position.x + (parent?.position.x ?? 0),
@@ -31,7 +34,9 @@ export const dropParameter = (options: DropParameterOptions) => {
       center.x >= candidate.position.x &&
       center.x <= candidate.position.x + (candidate.measured?.width ?? GROUP_WIDTH) &&
       center.y >= candidate.position.y &&
-      center.y <= candidate.position.y + (candidate.measured?.height ?? GROUP_HEIGHT),
+      center.y <=
+        candidate.position.y +
+          (candidate.measured?.height ?? groupHeaders.get(candidate.id) ?? GROUP_HEIGHT),
   )
   if (target === undefined && node.parentId === undefined) {
     return undefined
