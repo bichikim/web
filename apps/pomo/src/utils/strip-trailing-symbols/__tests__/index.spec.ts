@@ -94,6 +94,22 @@ describe('stripTrailingSymbols', () => {
     expect(stripTrailingSymbols(value)).toBe(value)
   })
 
+  it.each([
+    ['Text 👋\u200D ☀', 'Text'],
+    ['Text 👋 \u200D☀', 'Text 👋 \u200D☀'],
+    ['Text x\uFE0F👋', 'Text x\uFE0F👋'],
+    ['Text 👋\uFE0F👋', 'Text'],
+    ['Hello\u200D1\uFE0F\u20E3', 'Hello\u200D1\uFE0F\u20E3'],
+    ['\uFE0F👋', '\uFE0F👋'],
+    ['👋\u200D👋', ''],
+    ['\uFE0F👋\u200D👋', '\uFE0F👋\u200D👋'],
+  ])(
+    'should retain current symbol resolution and whitespace boundaries in %j',
+    (value, expected) => {
+      expect(stripTrailingSymbols(value)).toBe(expected)
+    },
+  )
+
   it('should preserve unpaired surrogates outside the removed suffix', () => {
     expect(stripTrailingSymbols('\uD800Text\uDC00 👋')).toBe('\uD800Text\uDC00')
   })

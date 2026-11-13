@@ -85,42 +85,46 @@ const getSymbolStart = (characters: readonly string[], index: number) => {
 export const stripTrailingSymbols = (value: string): string => {
   const characters = Array.from(value)
   let index = characters.length - 1
-  let hasTrailingSymbols = false
-  let requiresPrecedingSymbol = false
+  let suffixState: 'absent' | 'complete' | 'symbol-required' = 'absent'
 
   while (index >= 0) {
     const character = characters[index]!
     const symbolStartIndex = getSymbolStart(characters, index)
 
-    if (requiresPrecedingSymbol) {
-      if (symbolStartIndex >= 0) {
-        requiresPrecedingSymbol = false
-        hasTrailingSymbols = true
-        index = symbolStartIndex - 1
-      } else if (ATTACHED_MARK_PATTERN.test(character)) {
-        index -= 1
-      } else {
+    switch (suffixState) {
+      case 'symbol-required':
+        if (symbolStartIndex >= 0) {
+          suffixState = 'complete'
+          index = symbolStartIndex - 1
+        } else if (ATTACHED_MARK_PATTERN.test(character)) {
+          index -= 1
+        } else {
+          return value
+        }
         break
+      case 'absent':
+      case 'complete':
+        if (WHITESPACE_PATTERN.test(character)) {
+          index -= 1
+        } else if (character === '\u200D' && suffixState === 'complete') {
+          suffixState = 'symbol-required'
+          index -= 1
+        } else if (symbolStartIndex >= 0) {
+          suffixState = 'complete'
+          index = symbolStartIndex - 1
+        } else if (ATTACHED_MARK_PATTERN.test(character)) {
+          suffixState = 'symbol-required'
+          index -= 1
+        } else {
+          return suffixState === 'complete' ? characters.slice(0, index + 1).join('') : value
+        }
+        break
+      default: {
+        const exhaustive: never = suffixState
+        return exhaustive
       }
-    } else if (WHITESPACE_PATTERN.test(character)) {
-      index -= 1
-    } else if (character === '\u200D' && hasTrailingSymbols) {
-      requiresPrecedingSymbol = true
-      index -= 1
-    } else if (symbolStartIndex >= 0) {
-      hasTrailingSymbols = true
-      index = symbolStartIndex - 1
-    } else if (ATTACHED_MARK_PATTERN.test(character)) {
-      requiresPrecedingSymbol = true
-      index -= 1
-    } else {
-      break
     }
   }
 
-  if (!hasTrailingSymbols || requiresPrecedingSymbol) {
-    return value
-  }
-
-  return characters.slice(0, index + 1).join('')
+  return suffixState === 'complete' ? characters.slice(0, index + 1).join('') : value
 }
