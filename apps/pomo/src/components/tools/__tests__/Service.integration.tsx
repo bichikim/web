@@ -63,3 +63,41 @@ it('should persist and restore pasted service days with surrounding whitespace',
   })
   secondView.unmount()
 })
+
+it.each([
+  {days: '1,000', end: '2028-09-26'},
+  {days: '５，０００', end: '2039-09-09'},
+])(
+  'should persist and restore grouped service days $days before rejecting malformed groups',
+  async ({days, end}) => {
+    const runtime = createFixedRuntime()
+    localStorage.setItem(
+      'pomo:service-settings:v1',
+      JSON.stringify({branch: 'army', days: '300', manual: true, start: '2026-01-01'}),
+    )
+    const firstView = mountService(runtime)
+    await waitFor(() =>
+      expect(screen.getByRole('switch', {name: '복무기간 직접 입력'})).toBeEnabled(),
+    )
+    const input = screen.getByRole('textbox', {name: /복무기간 \(일\)/u})
+    fireEvent.input(input, {target: {value: days}})
+    expect(input).toHaveAttribute('aria-invalid', 'false')
+    expect(screen.getByRole('region', {name: '예상 전역일'})).toHaveTextContent(end)
+    await waitFor(() => {
+      const saved = JSON.parse(localStorage.getItem('pomo:service-settings:v1') ?? 'null')
+      expect(saved.days).toBe(days)
+    })
+    firstView.unmount()
+
+    const secondView = mountService(runtime)
+    await waitFor(() =>
+      expect(screen.getByRole('textbox', {name: /복무기간 \(일\)/u})).toHaveValue(days),
+    )
+    expect(screen.getByRole('region', {name: '예상 전역일'})).toHaveTextContent(end)
+    const restored = screen.getByRole('textbox', {name: /복무기간 \(일\)/u})
+    fireEvent.input(restored, {target: {value: '1,00'}})
+    expect(restored).toHaveAttribute('aria-invalid', 'true')
+    expect(screen.queryByRole('region', {name: '예상 전역일'})).toBeNull()
+    secondView.unmount()
+  },
+)

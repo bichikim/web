@@ -1,6 +1,6 @@
 import {normalizePasteNumericInput} from '@winter-love/supertonic/normalize-paste-numeric-input'
 
-const SERVICE_DAYS_PATTERN = /^\d+$/u
+const SERVICE_DAYS_PATTERN = /^(?:\d+|\d{1,3}(?:,\d{3})+)$/u
 
 export const isValidServiceDays = (value: number): boolean =>
   Number.isSafeInteger(value) && value > 0
@@ -10,7 +10,7 @@ export const parseServiceDays = (value: string): number | null => {
   if (!SERVICE_DAYS_PATTERN.test(normalizedValue)) {
     return null
   }
-  const numericValue = Number(normalizedValue)
+  const numericValue = Number(normalizedValue.replaceAll(',', ''))
   return isValidServiceDays(numericValue) ? numericValue : null
 }
 
