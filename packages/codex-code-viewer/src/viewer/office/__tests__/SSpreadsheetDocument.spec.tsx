@@ -99,4 +99,23 @@ describe('SSpreadsheetDocument', () => {
     expect(trigger.textContent).toBe('메모')
     expect(screen.getByRole('cell', {name: '<script>내용</script>'})).toBeTruthy()
   })
+  it('should recover keyboard focus when the open worksheet list loses its active entry', () => {
+    const [entries, setEntries] = createSignal(sheets)
+    render(() => <SSpreadsheetDocument sheets={entries()} />)
+    const trigger = screen.getByRole('combobox', {name: '시트 선택'})
+    trigger.focus()
+    fireEvent.keyDown(trigger, {key: 'End'})
+    expect(trigger.getAttribute('aria-activedescendant')).toBe(
+      screen.getByRole('option', {name: '빈시트'}).id,
+    )
+    expect(trigger.textContent).toBe('매출')
+    setEntries([sheets[0]])
+    expect(trigger.getAttribute('aria-activedescendant')).toBe(
+      screen.getByRole('option', {name: '매출'}).id,
+    )
+    fireEvent.keyDown(trigger, {key: 'Enter'})
+    expect(screen.queryByRole('listbox')).toBeNull()
+    expect(screen.getByRole('cell', {name: '항목'})).toBeTruthy()
+    expect(document.activeElement).toBe(trigger)
+  })
 })
