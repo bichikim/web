@@ -53,7 +53,7 @@ it('should ignore an aborted load rejection while the replacement presents', asy
   }
   render(() => createComponent(Canvas, {background}))
   await expect.poll(() => vi.mocked(showFrame).mock.calls.length).toBe(1)
-  const {signal} = vi.mocked(showFrame).mock.calls[0]![0]
+  const [{signal}] = vi.mocked(showFrame).mock.calls[0]!
   const trace: string[] = []
   signal.addEventListener('abort', () => {
     trace.push('abort')
@@ -78,7 +78,7 @@ it('should cancel an unmounted load before its successful completion', async () 
   const background = {...createBackground(), items: () => [primary], load: () => pending.promise}
   const view = render(() => createComponent(Canvas, {background}))
   await expect.poll(() => vi.mocked(showFrame).mock.calls.length).toBe(1)
-  const {signal} = vi.mocked(showFrame).mock.calls[0]![0]
+  const [{signal}] = vi.mocked(showFrame).mock.calls[0]!
 
   view.unmount()
   pending.resolve(new Blob(['image']))
@@ -99,7 +99,7 @@ it('should ignore a presentation rejected synchronously by its abort listener', 
   const background = {...createBackground(), items: () => [primary]}
   const view = render(() => createComponent(Canvas, {background}))
   await expect.poll(() => renderer.present.mock.calls.length).toBe(1)
-  const {signal} = vi.mocked(showFrame).mock.calls[0]![0]
+  const [{signal}] = vi.mocked(showFrame).mock.calls[0]!
   signal.addEventListener('abort', () => pending.reject(new Error('Interrupted presentation')))
 
   view.unmount()
