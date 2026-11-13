@@ -204,3 +204,108 @@ it('should keep the legacy alarm inactive when its cleanup cannot start', async 
   ])
   expect(reportError).toHaveBeenCalledExactlyOnceWith(error)
 })
+
+it.each([memo.text, options.text])(
+  'should preserve snapshot order and references when saving text %s',
+  async (text) => {
+    const legacyMemoId = 'calendar-alarm:legacy'
+    const unrelated = Object.freeze({...memo, id: 'unrelated'})
+    const retiredDialogueIds = Object.freeze([
+      'previous-dialogue',
+      memo.dialogueId,
+      memo.dialogueId,
+    ])
+    const currentMemo = Object.freeze({...memo, retiredDialogueIds})
+    const legacyMemo = Object.freeze({...memo, deletionPending: true, id: legacyMemoId})
+    const current = Object.freeze([
+      unrelated,
+      currentMemo,
+      legacyMemo,
+      {...memo, id: options.memoId, text: 'Duplicate alarm'},
+      {...memo, id: legacyMemoId, text: 'Duplicate legacy alarm'},
+      unrelated,
+    ])
+    let stored: ReadonlyArray<MemoryMemo> = current
+    const cleanup = vi.fn().mockResolvedValue(undefined)
+    const deleteMemo = vi.fn().mockResolvedValue(undefined)
+    const save = createCalendarAlarmSaver({
+      cleanup,
+      deleteMemo,
+      reportError: vi.fn(),
+      updateMemos: async (update) => {
+        stored = update(current)
+        return stored
+      },
+    })
+
+    await save({...options, legacyMemoId, text})
+
+    expect(stored.map((entry) => entry.id)).toEqual([
+      options.memoId,
+      legacyMemoId,
+      unrelated.id,
+      unrelated.id,
+    ])
+    const [savedAlarm, savedLegacy, firstUnrelated, secondUnrelated] = stored
+    expect(savedAlarm).toMatchObject({
+      dialogueId: text === memo.text ? memo.dialogueId : null,
+      retiredDialogueIds:
+        text === memo.text ? retiredDialogueIds : ['previous-dialogue', memo.dialogueId],
+      text,
+    })
+    expect(savedLegacy).toBe(legacyMemo)
+    expect(firstUnrelated).toBe(unrelated)
+    expect(secondUnrelated).toBe(unrelated)
+    expect(currentMemo.retiredDialogueIds).toBe(retiredDialogueIds)
+    expect(cleanup).toHaveBeenCalledExactlyOnceWith(options.memoId)
+    expect(deleteMemo).toHaveBeenCalledExactlyOnceWith(legacyMemoId)
+  },
+)
+
+it('should base legacy cleanup on the committed snapshot after current cleanup settles', async () => {
+  const legacyMemoId = 'calendar-alarm:legacy'
+  const committed = Promise.withResolvers<ReadonlyArray<MemoryMemo>>()
+  const cleanupFinished = Promise.withResolvers<void>()
+  const cleanupStarted = Promise.withResolvers<void>()
+  const cleanup = vi.fn(() => {
+    cleanupStarted.resolve()
+    return cleanupFinished.promise
+  })
+  const deleteMemo = vi.fn().mockResolvedValue(undefined)
+  const save = createCalendarAlarmSaver({
+    cleanup,
+    deleteMemo,
+    reportError: vi.fn(),
+    updateMemos: async (update) => {
+      update([memo, {...memo, id: legacyMemoId}])
+      return committed.promise
+    },
+  })
+
+  const saving = save({...options, legacyMemoId})
+  expect(cleanup).not.toHaveBeenCalled()
+  committed.resolve([{...memo, id: legacyMemoId}])
+  await cleanupStarted.promise
+  expect(deleteMemo).not.toHaveBeenCalled()
+  cleanupFinished.resolve()
+  await saving
+  expect(deleteMemo).toHaveBeenCalledExactlyOnceWith(legacyMemoId)
+})
+
+it('should skip legacy cleanup when persistence returns a snapshot without it', async () => {
+  const legacyMemoId = 'calendar-alarm:legacy'
+  const deleteMemo = vi.fn()
+  const save = createCalendarAlarmSaver({
+    cleanup: vi.fn().mockResolvedValue(undefined),
+    deleteMemo,
+    reportError: vi.fn(),
+    updateMemos: async (update) => {
+      update([memo, {...memo, id: legacyMemoId}])
+      return [memo]
+    },
+  })
+
+  await save({...options, legacyMemoId})
+
+  expect(deleteMemo).not.toHaveBeenCalled()
+})

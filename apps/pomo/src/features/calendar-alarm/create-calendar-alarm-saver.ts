@@ -59,28 +59,21 @@ export const createCalendarAlarmSaver =
         legacyMemo === undefined || isMemoryMemoDeletionPending(legacyMemo)
           ? legacyMemo
           : {...legacyMemo, deletionPending: true as const}
-      if (
+      const savedAlarm =
         existingMemo?.dialogueId !== null &&
         existingMemo?.dialogueId !== undefined &&
         alarm.dialogueId !== existingMemo.dialogueId &&
         isMemoryMemoOwnedDialogue(existingMemo.dialogueId, existingMemo.id)
-      ) {
-        return [
-          {
-            ...alarm,
-            retiredDialogueIds: uniq([
-              ...(existingMemo.retiredDialogueIds ?? []),
-              existingMemo.dialogueId,
-            ]),
-          },
-          ...(pendingLegacyMemo === undefined ? [] : [pendingLegacyMemo]),
-          ...currentMemos.filter(
-            (memo) => memo.id !== options.memoId && memo.id !== options.legacyMemoId,
-          ),
-        ]
-      }
+          ? {
+              ...alarm,
+              retiredDialogueIds: uniq([
+                ...(existingMemo.retiredDialogueIds ?? []),
+                existingMemo.dialogueId,
+              ]),
+            }
+          : alarm
       return [
-        alarm,
+        savedAlarm,
         ...(pendingLegacyMemo === undefined ? [] : [pendingLegacyMemo]),
         ...currentMemos.filter(
           (memo) => memo.id !== options.memoId && memo.id !== options.legacyMemoId,
