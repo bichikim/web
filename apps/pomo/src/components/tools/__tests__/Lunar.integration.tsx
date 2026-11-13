@@ -66,6 +66,11 @@ it('should render 29-day months and reconcile a selected day after changing mont
   const dayListbox = screen.getByRole('listbox', {name: '음력 일'})
   expect(within(dayListbox).getByRole('option', {name: '29'})).toBeVisible()
   expect(within(dayListbox).queryByRole('option', {name: '30'})).not.toBeInTheDocument()
+
+  fireEvent.keyDown(dayListbox, {key: 'Escape'})
+  await Promise.resolve()
+  await selectOption(/음력 월/u, '1')
+  expect(screen.getByRole('button', {name: /음력 일/u})).toHaveTextContent('29')
 })
 
 it('should reconcile a selected day at the 2050 converter cutoff', async () => {
@@ -80,4 +85,7 @@ it('should reconcile a selected day at the 2050 converter cutoff', async () => {
   expect(screen.getByRole('button', {name: /음력 월/u})).toHaveTextContent('11')
   expect(screen.getByRole('button', {name: /음력 일/u})).toHaveTextContent('18')
   expect(screen.getByText('2050-12-31')).toBeVisible()
+
+  await selectOption(/음력 월/u, '10')
+  expect(screen.getByRole('button', {name: /음력 일/u})).toHaveTextContent('18')
 })
