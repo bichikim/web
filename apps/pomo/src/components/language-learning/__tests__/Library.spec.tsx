@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 
 import {fireEvent, render, screen} from '@solidjs/testing-library'
-import {For, type JSX} from 'solid-js'
+import {createSignal, For, type JSX} from 'solid-js'
 import {beforeEach, expect, it, vi} from 'vitest'
 
 import {
@@ -273,4 +273,88 @@ it('should filter an edited learning dialogue by its current language', () => {
   expect(screen.getByText('家に帰ります。')).toBeDefined()
 
   result.unmount()
+})
+
+it('should retain saved order and the first matching dialogue before filtering language', () => {
+  const first = createDialogue('first', 'en', 'First current text.')
+  const second = createDialogue('second', 'en', 'Second current text.')
+  vi.mocked(usePEvents).mockReturnValue({
+    ...createEvents(),
+    dialogues: () => [
+      first,
+      createDialogue('hidden', 'ja', '最初の一致'),
+      second,
+      createDialogue('first', 'en', 'Later duplicate.'),
+      createDialogue('hidden', 'en', 'Later English duplicate.'),
+    ],
+  })
+  writeLanguageLearningSentences(
+    ['second', 'missing', 'hidden', 'first'].map((dialogueId) => ({
+      createdAt: '2026-08-28T00:00:00.000Z',
+      dialogueId,
+      language: 'en',
+      tags: [],
+      text: 'Stored text.',
+      version: 1,
+    })),
+  )
+
+  const view = render(() => <LanguageLearningLibrary />)
+
+  expect(
+    screen.getAllByRole('link', {name: '편집'}).map((link) => link.getAttribute('href')),
+  ).toEqual(['/dialogue?dialogueId=second', '/dialogue?dialogueId=first'])
+  expect(screen.getByText(second.text)).toBeDefined()
+  expect(screen.getByText(first.text)).toBeDefined()
+  expect(screen.queryByText('Later duplicate.')).toBeNull()
+  expect(screen.queryByText('Later English duplicate.')).toBeNull()
+  view.unmount()
+})
+
+it('should refresh saved entries when current dialogues change on the same mount', () => {
+  const [dialogues, setDialogues] = createSignal([ENGLISH_DIALOGUE])
+  vi.mocked(usePEvents).mockReturnValue({...createEvents(), dialogues})
+  writeLanguageLearningSentences([
+    {
+      createdAt: '2026-08-28T00:00:00.000Z',
+      dialogueId: ENGLISH_DIALOGUE.id,
+      language: 'en',
+      tags: [],
+      text: ENGLISH_DIALOGUE.text,
+      version: 1,
+    },
+  ])
+  const view = render(() => <LanguageLearningLibrary />)
+  const editLink = screen.getByRole('link', {name: '편집'})
+
+  setDialogues([createDialogue(ENGLISH_DIALOGUE.id, 'en', 'Updated current text.')])
+  expect(screen.getByText('Updated current text.')).toBeDefined()
+  expect(screen.queryByText(ENGLISH_DIALOGUE.text)).toBeNull()
+  expect(screen.getByRole('link', {name: '편집'})).toBe(editLink)
+
+  setDialogues([createDialogue(ENGLISH_DIALOGUE.id, 'ja', '今の文章')])
+  expect(screen.getByText('저장된 학습 문장이 없어요.')).toBeDefined()
+  fireEvent.change(screen.getByRole('combobox', {name: '학습 언어'}), {
+    target: {value: 'ja'},
+  })
+  expect(screen.getByText('今の文章')).toBeDefined()
+
+  setDialogues([])
+  expect(screen.getByText('저장된 학습 문장이 없어요.')).toBeDefined()
+  setDialogues([createDialogue(ENGLISH_DIALOGUE.id, 'ja', '戻った文章')])
+  expect(screen.getByText('戻った文章')).toBeDefined()
+  view.unmount()
+})
+
+it('should leave current dialogues unread when no learning sentences are saved', () => {
+  const dialogues = vi.fn((): readonly PDialogue[] => {
+    throw new Error('The empty library must not read dialogues.')
+  })
+  vi.mocked(usePEvents).mockReturnValue({...createEvents(), dialogues})
+
+  const view = render(() => <LanguageLearningLibrary />)
+
+  expect(screen.getByText('저장된 학습 문장이 없어요.')).toBeDefined()
+  expect(dialogues).not.toHaveBeenCalled()
+  view.unmount()
 })
