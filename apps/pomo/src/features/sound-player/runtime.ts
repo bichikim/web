@@ -24,8 +24,7 @@ function createVoice(
   let overlap: number | undefined
   let offset = 0
   let startedAt = 0
-  let finished = false
-  let active = false
+  let playbackState: 'finished' | 'inactive' | 'playing' = 'inactive'
   let disposed = false
   const position = (time: number) => {
     const elapsed = offset + Math.max(0, time - startedAt)
@@ -40,11 +39,10 @@ function createVoice(
   player.onstop = () => {
     // Tone updates source state after invoking onstop; a restarted source must remain active.
     queueMicrotask(() => {
-      if (disposed || !active || player.loop || player.state === 'started') {
+      if (disposed || playbackState !== 'playing' || player.loop || player.state === 'started') {
         return
       }
-      active = false
-      finished = true
+      playbackState = 'finished'
       options.onEnded()
     })
   }
@@ -61,7 +59,7 @@ function createVoice(
         ? source
         : createCrossfadeBuffer({buffer: source, overlapSeconds: nextOverlap})
     const time = player.now()
-    const playing = active && player.state === 'started'
+    const playing = playbackState === 'playing' && player.state === 'started'
     if (playing) {
       offset = position(time)
       player.stop(time)
@@ -80,12 +78,14 @@ function createVoice(
     configure,
     dispose: () => {
       disposed = true
-      active = false
+      if (playbackState === 'playing') {
+        playbackState = 'inactive'
+      }
       player.dispose()
       original = undefined
     },
     get finished() {
-      return finished
+      return playbackState === 'finished'
     },
     load: async (source) => {
       await player.load(source)
@@ -98,30 +98,31 @@ function createVoice(
       }
     },
     pause: (time) => {
-      if (!active || finished) {
+      if (playbackState !== 'playing') {
         return
       }
       offset = position(time)
-      active = false
+      playbackState = 'inactive'
       player.stop(time)
     },
     play: (time, resume) => {
-      if (resume && finished) {
+      if (resume && playbackState === 'finished') {
         return
       }
-      if (finished) {
+      if (playbackState === 'finished') {
         offset = 0
-        finished = false
       }
       startedAt = time
-      active = true
+      playbackState = 'playing'
       player.start(time, offset)
     },
     stop: () => {
-      active = false
+      if (playbackState === 'playing') {
+        playbackState = 'inactive'
+      }
       player.stop()
       offset = 0
-      finished = false
+      playbackState = 'inactive'
     },
   }
 }

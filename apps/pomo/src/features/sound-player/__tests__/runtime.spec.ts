@@ -166,3 +166,73 @@ it('should update overlap without reloading and reject an invalid overlap', asyn
   expect(load).toHaveBeenCalledOnce()
   voice.dispose()
 })
+
+it.each(['stop', 'dispose'] as const)(
+  'should preserve finished status when native %s throws',
+  async (operation) => {
+    const {voice, onEnded} = await createLoadedVoice({...settings, loop: false})
+    voice.play(0, false)
+    players[0].end()
+    await Promise.resolve()
+    const failure = new Error('native failure')
+    players[0][operation].mockImplementationOnce(() => {
+      expect(voice.finished).toBe(true)
+      throw failure
+    })
+
+    expect(() => voice[operation]()).toThrow(failure)
+    expect(voice.finished).toBe(true)
+    voice.play(1, true)
+    expect(players[0].start).toHaveBeenCalledOnce()
+    await Promise.resolve()
+    expect(onEnded).toHaveBeenCalledOnce()
+    voice.dispose()
+  },
+)
+
+it.each(['pause', 'stop', 'dispose'] as const)(
+  'should suppress completion when active native %s throws after stopping',
+  async (operation) => {
+    const {voice, onEnded} = await createLoadedVoice({...settings, loop: false})
+    voice.play(0, false)
+    const failure = new Error('native failure')
+    players[0][operation === 'pause' ? 'stop' : operation].mockImplementationOnce(() => {
+      players[0].end()
+      throw failure
+    })
+
+    expect(() => {
+      if (operation === 'pause') {
+        voice.pause(1)
+      } else {
+        voice[operation]()
+      }
+    }).toThrow(failure)
+    await Promise.resolve()
+    expect(voice.finished).toBe(false)
+    expect(onEnded).not.toHaveBeenCalled()
+    voice.dispose()
+  },
+)
+
+it('should retain a new playback started from its natural completion callback', async () => {
+  const {voice, onEnded} = await createLoadedVoice({...settings, loop: false})
+  onEnded.mockImplementationOnce(() => {
+    expect(voice.finished).toBe(true)
+    voice.play(1, false)
+    expect(voice.finished).toBe(false)
+  })
+  voice.play(0, false)
+  players[0].end()
+  await Promise.resolve()
+  expect(onEnded).toHaveBeenCalledOnce()
+  expect(players[0].start).toHaveBeenCalledTimes(2)
+  expect(voice.finished).toBe(false)
+
+  players[0].end()
+  await Promise.resolve()
+  expect(onEnded).toHaveBeenCalledTimes(2)
+  expect(voice.finished).toBe(true)
+  voice.dispose()
+  expect(voice.finished).toBe(true)
+})
