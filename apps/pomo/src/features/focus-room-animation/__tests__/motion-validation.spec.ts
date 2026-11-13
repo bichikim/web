@@ -25,6 +25,60 @@ const expectInvalid = (motion: PixiSceneMotion, message: string) => {
 }
 
 describe('scene motion validation', () => {
+  it.each(['travel', 'rise', 'fall', 'flashRise', 'flashHold', 'flashFall'] as const)(
+    'should preserve comparison semantics for a NaN $0 range bound',
+    (field) => {
+      const motion = {...validTwinkle, [field]: {maximumSeconds: 2, minimumSeconds: Number.NaN}}
+
+      expect(() => validateSceneMotion('layer', motion, SCENE_SIZE)).not.toThrow()
+    },
+  )
+
+  it.each([
+    {kind: 'opacity-pulse', maximumOpacity: 1, minimumOpacity: 0, travel: TRAVEL},
+    {...validTwinkle},
+  ] satisfies PixiSceneMotion[])(
+    'should preserve comparison semantics for a NaN $kind opacity bound',
+    (motion) => {
+      expect(() =>
+        validateSceneMotion('layer', {...motion, minimumOpacity: Number.NaN}, SCENE_SIZE),
+      ).not.toThrow()
+    },
+  )
+
+  it.each([
+    {from: {x: 0, y: 0}, kind: 'looping-translation', to: {x: 1, y: 0}, travel: TRAVEL},
+    {kind: 'opacity-pulse', maximumOpacity: 1, minimumOpacity: 0, travel: TRAVEL},
+    {kind: 'visibility-cycle', travel: TRAVEL, visibleFraction: 1},
+  ] satisfies PixiSceneMotion[])(
+    'should preserve comparison semantics for a NaN $kind phase',
+    (motion) => {
+      expect(() =>
+        validateSceneMotion('layer', {...motion, phase: Number.NaN}, SCENE_SIZE),
+      ).not.toThrow()
+    },
+  )
+
+  it('should report travel failure before a conflicting pulse range or phase failure', () => {
+    expectInvalid(
+      {
+        kind: 'opacity-pulse',
+        maximumOpacity: 1,
+        minimumOpacity: 1,
+        phase: 1,
+        travel: {maximumSeconds: 2, minimumSeconds: 0},
+      },
+      'Invalid motion travel range for layer: layer',
+    )
+  })
+
+  it('should report a pulse range failure before a conflicting phase failure', () => {
+    expectInvalid(
+      {kind: 'opacity-pulse', maximumOpacity: 1, minimumOpacity: 1, phase: 1, travel: TRAVEL},
+      'Invalid opacity pulse range for layer: layer',
+    )
+  })
+
   it('should reject multiple motions that overwrite the same sprite opacity', () => {
     const motions = [
       {
