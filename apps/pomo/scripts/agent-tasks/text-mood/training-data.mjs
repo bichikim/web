@@ -219,15 +219,14 @@ export const loadEmbeddings = async (items) => {
         return items.map((item, index) => ({...item, embedding: cachedRows[index].embedding}))
       }
 
-      const cachedByIdentity = new Map(cachedRows.map((row) => [`${row.id}\u0000${row.text}`, row]))
+      const rowsByIdentity = new Map(cachedRows.map((row) => [`${row.id}\u0000${row.text}`, row]))
       const missingItems = items.filter(
-        (item) => !cachedByIdentity.has(`${item.id}\u0000${item.text}`),
+        (item) => !rowsByIdentity.has(`${item.id}\u0000${item.text}`),
       )
       const extractedRows = missingItems.length === 0 ? [] : await extractEmbeddings(missingItems)
-      const rowsByIdentity = new Map([
-        ...cachedByIdentity,
-        ...extractedRows.map((row) => [`${row.id}\u0000${row.text}`, row]),
-      ])
+      for (const row of extractedRows) {
+        rowsByIdentity.set(`${row.id}\u0000${row.text}`, row)
+      }
       const rows = items.map((item) => {
         const cachedRow = rowsByIdentity.get(`${item.id}\u0000${item.text}`)
         return cachedRow === undefined ? undefined : {...item, embedding: cachedRow.embedding}
