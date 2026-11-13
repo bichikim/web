@@ -351,3 +351,125 @@ it('should retain an error during an existing start and clear it for an actual r
   await Promise.resolve()
   root.dispose()
 })
+
+it('should block activation reentered synchronously by play', async () => {
+  const pending = Promise.withResolvers<boolean>()
+  const playback = createPlayback()
+  let onReady: ((duration: number) => void) | undefined
+  vi.mocked(createLoopPlayer).mockImplementation((_url, _status, ready) => {
+    onReady = ready
+    return playback
+  })
+  const root = createRoot((dispose) => ({
+    controller: useSoundEffectPlayback(() => EFFECT),
+    dispose,
+  }))
+  playback.play.mockImplementationOnce(() => {
+    root.controller.activate()
+    return pending.promise
+  })
+  await Promise.resolve()
+  onReady?.(EFFECT.durationSeconds)
+  expect(playback.play).toHaveBeenCalledOnce()
+  pending.resolve(true)
+  await pending.promise
+  expect(root.controller.playing()).toBe(true)
+  root.dispose()
+})
+
+it('should start one replacement after a stale play rejection releases startup', async () => {
+  const first = Promise.withResolvers<boolean>()
+  const replacement = Promise.withResolvers<boolean>()
+  const playback = createPlayback()
+  playback.play.mockReturnValueOnce(first.promise).mockReturnValueOnce(replacement.promise)
+  let onReady: ((duration: number) => void) | undefined
+  vi.mocked(createLoopPlayer).mockImplementation((_url, _status, ready) => {
+    onReady = ready
+    return playback
+  })
+  const root = createRoot((dispose) => ({
+    controller: useSoundEffectPlayback(() => EFFECT),
+    dispose,
+  }))
+  await Promise.resolve()
+  onReady?.(EFFECT.durationSeconds)
+  root.controller.stop()
+  root.controller.activate()
+  root.controller.activate()
+  expect(playback.play).toHaveBeenCalledOnce()
+
+  first.reject(new Error('Previous play failed'))
+  await first.promise.catch(() => undefined)
+  expect(playback.play).toHaveBeenCalledTimes(2)
+  expect(root.controller.error()).toBeNull()
+  expect(root.controller.playing()).toBe(false)
+  root.controller.activate()
+  expect(playback.play).toHaveBeenCalledTimes(2)
+  replacement.resolve(true)
+  await replacement.promise
+  expect(root.controller.playing()).toBe(true)
+  root.dispose()
+})
+
+it('should release startup after a current play failure and allow an explicit retry', async () => {
+  const pending = Promise.withResolvers<boolean>()
+  const playback = createPlayback()
+  playback.play.mockReturnValueOnce(pending.promise)
+  let onReady: ((duration: number) => void) | undefined
+  vi.mocked(createLoopPlayer).mockImplementation((_url, _status, ready) => {
+    onReady = ready
+    return playback
+  })
+  const root = createRoot((dispose) => ({
+    controller: useSoundEffectPlayback(() => EFFECT),
+    dispose,
+  }))
+  await Promise.resolve()
+  onReady?.(EFFECT.durationSeconds)
+  const failure = new Error('Playback failed')
+  pending.reject(failure)
+  await pending.promise.catch(() => undefined)
+  expect(root.controller.error()).toBe(failure)
+  expect(root.controller.playing()).toBe(false)
+
+  root.controller.activate()
+  expect(playback.play).toHaveBeenCalledTimes(2)
+  expect(root.controller.error()).toBeNull()
+  await Promise.resolve()
+  expect(root.controller.playing()).toBe(true)
+  root.dispose()
+})
+
+it.each(['resolve', 'reject'] as const)(
+  'should close once and ignore a pending play %s after disposal',
+  async (outcome) => {
+    const pending = Promise.withResolvers<boolean>()
+    const playback = createPlayback()
+    playback.play.mockReturnValueOnce(pending.promise)
+    let onReady: ((duration: number) => void) | undefined
+    vi.mocked(createLoopPlayer).mockImplementation((_url, _status, ready) => {
+      onReady = ready
+      return playback
+    })
+    const root = createRoot((dispose) => ({
+      controller: useSoundEffectPlayback(() => EFFECT),
+      dispose,
+    }))
+    await Promise.resolve()
+    onReady?.(EFFECT.durationSeconds)
+    root.controller.stop()
+    root.controller.activate()
+    root.dispose()
+    root.dispose()
+    expect(playback.close).toHaveBeenCalledOnce()
+    if (outcome === 'resolve') {
+      pending.resolve(true)
+    } else {
+      pending.reject(new Error('Disposed play failed'))
+    }
+    await pending.promise.catch(() => undefined)
+    expect(playback.play).toHaveBeenCalledOnce()
+    expect(root.controller.playing()).toBe(false)
+    expect(root.controller.error()).toBeNull()
+  },
+)

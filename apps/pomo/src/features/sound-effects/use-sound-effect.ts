@@ -51,7 +51,6 @@ export const useSoundEffectPlayback = (getEffect: Accessor<SoundEffect>): SoundE
   const [volume, setVolumeState] = createSignal(DEFAULT_SOUND_EFFECT_VOLUME)
   let player: LoopPlayback | undefined
   let pendingPlay = false
-  let starting = false
   let startingRevision: number | undefined
   let effectId: string | undefined
   let manuallyStopped = false
@@ -60,11 +59,10 @@ export const useSoundEffectPlayback = (getEffect: Accessor<SoundEffect>): SoundE
   const start = async () => {
     const current = player
     const currentRevision = playbackRevision
-    if (current === undefined || !ready() || volume() <= 0 || starting) {
+    if (current === undefined || !ready() || volume() <= 0 || startingRevision !== undefined) {
       return
     }
 
-    starting = true
     startingRevision = currentRevision
     pendingPlay = false
     setError(null)
@@ -79,7 +77,6 @@ export const useSoundEffectPlayback = (getEffect: Accessor<SoundEffect>): SoundE
         setError(toError(cause))
       }
     } finally {
-      starting = false
       startingRevision = undefined
       if (current === player && pendingPlay && volume() > 0) {
         start().catch(() => undefined)
@@ -91,7 +88,7 @@ export const useSoundEffectPlayback = (getEffect: Accessor<SoundEffect>): SoundE
     if (playing() || volume() <= 0) {
       return
     }
-    if (starting) {
+    if (startingRevision !== undefined) {
       if (startingRevision !== playbackRevision) {
         pendingPlay = true
       }
