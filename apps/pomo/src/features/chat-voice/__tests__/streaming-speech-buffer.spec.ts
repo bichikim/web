@@ -429,4 +429,35 @@ describe('createStreamingSpeechBuffer', () => {
     expect(buffer.update('\n')).toEqual([])
     expect(buffer.flush('\n')).toBeNull()
   })
+
+  it('should retain Unicode sentence boundaries across every UTF-16 streaming prefix', () => {
+    const buffer = createStreamingSpeechBuffer({locale: 'en'})
+    const text = '😀 Café is open. 🦉 Next sentence.'
+    const spoken: string[] = []
+
+    for (let end = 1; end <= text.length; end += 1) {
+      spoken.push(...buffer.update(text.slice(0, end)))
+    }
+
+    expect(spoken).toEqual(['😀 Café is open.', '🦉 Next sentence.'])
+    expect(buffer.flush(text)).toBeNull()
+    expect(buffer.update(text)).toEqual([])
+  })
+
+  it('should reset consumption after a corrected prefix and a flushed Unicode tail', () => {
+    const buffer = createStreamingSpeechBuffer({locale: 'en'})
+    const prefix = '😀 First sentence.'
+    const revised = '😀 First sentence!'
+    const finalText = `${revised} 🦉 Unfinished tail`
+
+    expect(buffer.update(`${prefix} 🦉 Unfinished`)).toEqual([prefix])
+    expect(buffer.update(`${revised} 🦉 Unfinished`)).toEqual([])
+    expect(buffer.flush(finalText)).toBe('🦉 Unfinished tail')
+    expect(buffer.flush(finalText)).toBeNull()
+
+    buffer.reset()
+
+    expect(buffer.update(`${finalText}.`)).toEqual([revised, '🦉 Unfinished tail.'])
+    expect(buffer.flush(`${finalText}.`)).toBeNull()
+  })
 })
