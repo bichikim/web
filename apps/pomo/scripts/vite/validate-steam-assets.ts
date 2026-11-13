@@ -129,7 +129,7 @@ const validateManifestFileList = (
   assetsDirectory: string,
   manifestFiles: ReadonlyArray<string>,
   strict: boolean,
-): void => {
+): ReadonlySet<string> => {
   const uniqueFiles = new Set(manifestFiles)
   if (uniqueFiles.size !== manifestFiles.length) {
     throw new TypeError('Steam asset manifest lists a file more than once.')
@@ -142,17 +142,18 @@ const validateManifestFileList = (
     const resolvedPath = resolveManifestAssetPath(assetsDirectory, assetPath)
     validateListedAssetFile(assetPath, resolvedPath, strict)
   })
+
+  return uniqueFiles
 }
 
 const validateCompleteInventory = (
   assetsDirectory: string,
-  manifestFiles: ReadonlyArray<string>,
+  listedFiles: ReadonlySet<string>,
 ): ReadonlyArray<string> => {
-  const actualFiles = listSteamAssetFiles(assetsDirectory).filter(
-    (assetPath) => assetPath !== STEAM_ASSET_MANIFEST_FILE,
+  const actualFiles = listSteamAssetFiles(assetsDirectory)
+  return actualFiles.filter(
+    (assetPath) => assetPath !== STEAM_ASSET_MANIFEST_FILE && !listedFiles.has(assetPath),
   )
-  const listedFiles = new Set(manifestFiles)
-  return actualFiles.filter((assetPath) => !listedFiles.has(assetPath))
 }
 
 const validateRequiredAssetTypes = (manifestFiles: ReadonlyArray<string>): void => {
@@ -174,13 +175,13 @@ export const validateSteamAssets = ({
 }: ValidateSteamAssetsOptions): void => {
   const assetRoot = resolve(assetsDirectory)
   const manifest = readSteamAssetManifest(join(assetRoot, STEAM_ASSET_MANIFEST_FILE))
-  validateManifestFileList(assetRoot, manifest.files, strict)
+  const listedFiles = validateManifestFileList(assetRoot, manifest.files, strict)
 
   if (!strict) {
     return
   }
 
-  const omittedFiles = validateCompleteInventory(assetRoot, manifest.files)
+  const omittedFiles = validateCompleteInventory(assetRoot, listedFiles)
   if (omittedFiles.length > 0) {
     throw new Error(
       `Steam asset manifest omits files present in the bundle: ${omittedFiles.join(', ')}`,
