@@ -165,6 +165,115 @@ describe('createStreamingSpeechBuffer', () => {
   })
 
   it.each([
+    'Examples include e.g. apples and pears.',
+    'Use a fruit, i.e. an apple.',
+    'The meeting is at 3 p.m. today.',
+    'Examples include “e.g.” apples and pears.',
+    'Choose an option e.g. apples and pears.',
+    'Read the section i.e. the introduction.',
+    'The next step p.m. remains unchanged.',
+  ])('should preserve reported dotted abbreviations across every chunk size: %s', (sentence) => {
+    const text = `${sentence} Next step.`
+
+    for (let chunkSize = 1; chunkSize <= text.length; chunkSize += 1) {
+      expect(speakStreamed(text, chunkSize)).toEqual([sentence, 'Next step.'])
+    }
+  })
+
+  it.each([
+    'Examples include e.g. apples and pears.',
+    'Use a fruit, i.e. an apple.',
+    'The meeting is at 3 p.m. today.',
+    'Choose an option e.g. apples and pears.',
+    'Read the section i.e. the introduction.',
+    'Read e.',
+    'Read i.',
+    'Read p.',
+    'Choose category e.',
+    'Pick option i.',
+    'Read section p.',
+  ])('should preserve sentence boundaries at every single split: %s', (sentence) => {
+    const text = `${sentence} Next sentence.`
+
+    for (let split = 1; split < text.length; split += 1) {
+      const buffer = createStreamingSpeechBuffer({locale: 'ko'})
+      const spoken = [...buffer.update(text.slice(0, split)), ...buffer.update(text)]
+      const remainder = buffer.flush(text)
+
+      expect(remainder === null ? spoken : [...spoken, remainder]).toEqual([
+        sentence,
+        'Next sentence.',
+      ])
+    }
+  })
+
+  it.each(['g', 'm', 't'])(
+    'should retain the existing immediate handling of unrelated lowercase %s. endings',
+    (letter) => {
+      const buffer = createStreamingSpeechBuffer({locale: 'ko'})
+      const text = `Read ${letter}.`
+
+      expect(buffer.update(text)).toEqual([text])
+      expect(buffer.flush(text)).toBeNull()
+    },
+  )
+
+  it.each(['e', 'i', 'p'])(
+    'should hold a possible %s. abbreviation without delaying an earlier sentence',
+    (letter) => {
+      const buffer = createStreamingSpeechBuffer({locale: 'ko'})
+      const prefix = `First sentence. Read ${letter}.`
+
+      expect(buffer.update(prefix)).toEqual(['First sentence.'])
+      expect(buffer.update(prefix)).toEqual([])
+      expect(buffer.flush(prefix)).toBe(`Read ${letter}.`)
+      expect(buffer.flush(prefix)).toBeNull()
+    },
+  )
+
+  it.each(['e', 'i', 'p'])(
+    'should resolve a genuine %s. ending when a separator arrives',
+    (letter) => {
+      const buffer = createStreamingSpeechBuffer({locale: 'ko'})
+      const sentence = `Read ${letter}.`
+
+      expect(buffer.update(sentence)).toEqual([])
+      expect(buffer.update(`${sentence} `)).toEqual([sentence])
+      expect(buffer.update(`${sentence} Next sentence.`)).toEqual(['Next sentence.'])
+      expect(buffer.flush(`${sentence} Next sentence.`)).toBeNull()
+    },
+  )
+
+  it.each(['e', 'i', 'p'])(
+    'should preserve completed lowercase %s. labels and quoted endings',
+    (letter) => {
+      const buffer = createStreamingSpeechBuffer({locale: 'ko'})
+      const text = `Choose category ${letter}. Read “${letter}.” Next sentence.`
+
+      expect(speakStreamed(text, 1)).toEqual([
+        `Choose category ${letter}.`,
+        `Read “${letter}.”`,
+        'Next sentence.',
+      ])
+      expect(buffer.update(`Choose category ${letter}.`)).toEqual([])
+      expect(buffer.update(`Choose category ${letter}.`)).toEqual([])
+      expect(buffer.update(`Choose category ${letter}. `)).toEqual([`Choose category ${letter}.`])
+      expect(buffer.update(`${text} `)).toEqual([`Read “${letter}.”`, 'Next sentence.'])
+      expect(buffer.flush(text)).toBeNull()
+    },
+  )
+
+  it.each(['e', 'i', 'p'])('should flush a genuine lowercase %s. label exactly once', (letter) => {
+    const buffer = createStreamingSpeechBuffer({locale: 'ko'})
+    const text = `Choose category ${letter}.`
+
+    expect(buffer.update(text)).toEqual([])
+    expect(buffer.flush(text)).toBe(text)
+    expect(buffer.flush(text)).toBeNull()
+    expect(buffer.update(text)).toEqual([])
+  })
+
+  it.each([
     ['Dr.', 'Please ask', 'Smith', 'to call.'],
     ['“Dr.”', 'Please ask', 'Smith', 'to call.'],
     ['Prof.', 'Please ask', 'Smith', 'to call.'],

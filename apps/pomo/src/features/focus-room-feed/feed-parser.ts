@@ -277,17 +277,19 @@ export const parseFeedXml = (xml: string, feedUrl: string): ParsedFeed => {
   return {items, title}
 }
 
-export const createFeedScript = (title: string, content: string) => {
-  const cleanTitle = cleanFeedText(title)
-  const cleanContent = cleanFeedText(content)
-
-  if (cleanContent.length === 0) {
-    return cleanTitle
+/** Combines normalized plain text without interpreting literal markup as HTML. */
+export const composeFeedScript = (title: string, content: string): string => {
+  if (content.length === 0) {
+    return title
   }
 
-  if (cleanTitle.length === 0) {
-    return cleanContent
+  if (title.length === 0) {
+    return content
   }
 
-  return cleanContent === cleanTitle ? cleanTitle : `${cleanTitle}\n\n${cleanContent}`
+  return content === title ? title : `${title}\n\n${content}`
 }
+
+/** Cleans HTML title and content before composing the speech script. */
+export const createFeedScript = (title: string, content: string): string =>
+  composeFeedScript(cleanFeedText(title), cleanFeedText(content))
