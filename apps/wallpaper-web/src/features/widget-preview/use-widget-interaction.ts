@@ -35,6 +35,12 @@ export const useWidgetInteraction = (props: UseWidgetInteractionProps) => {
     }
   }
   const handleHover = (event: PointerEvent) => {
+    if (event.pointerType === 'touch') {
+      restingPointer = null
+      setHovered(false)
+      setPointer(null)
+      return
+    }
     restingPointer = event
     const over = !props.locked() && props.hitTest()?.(event) === true
     setHovered(over)

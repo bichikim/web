@@ -11,6 +11,8 @@ const SINGLE_LETTER_LABEL_END =
   /(?:^|\s)(?:category|option|answer|choice|part|section|step|level|plan)\s+[A-Z]\.\s*$/iu
 const LAST_TOKEN = /(?:^|\s)[["'“‘({]*(?<token>\S+?)["'”’)}\]]*\s*$/u
 const UNRESOLVED_DECIMAL_POINT = /\p{Nd}\.$/u
+// Wait for the next character to distinguish e.g., i.e. and p.m. from real endings.
+const UNRESOLVED_DOTTED_PREFIX = /(?:^|\s)[["'“‘({]*[eip]\.$/u
 
 export interface CreateStreamingSpeechBufferOptions {
   readonly locale: string
@@ -55,7 +57,8 @@ const shouldMergeSegments = (previousSegment: string, nextSegment: string, local
 const isCompletedSentence = (segment: string, locale: string) =>
   SENTENCE_END.test(segment) &&
   !endsWithAbbreviation(segment, locale) &&
-  !UNRESOLVED_DECIMAL_POINT.test(segment)
+  !UNRESOLVED_DECIMAL_POINT.test(segment) &&
+  !UNRESOLVED_DOTTED_PREFIX.test(segment)
 
 const isCompletedSegment = (segment: string, hasFollowingSegment: boolean, locale: string) =>
   hasFollowingSegment || isCompletedSentence(segment, locale)
