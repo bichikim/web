@@ -4,6 +4,7 @@ import {
   type PTrack,
   resolvePPlaylist,
 } from '../../features/focus-room-audio'
+import {createEntryReader} from './create-entry-reader'
 
 export interface RestorePPlayerStateOptions {
   /** 비동기 조회 전후에 복원이 여전히 유효한지 판단한다. false이면 복원 콜백을 호출하지 않는다. */
@@ -93,20 +94,13 @@ const resolveEntryIdsForTracks = (options: {
     return undefined
   }
 
-  const entriesByTrackId = new Map<string, string[]>()
-  options.storedTrackIds.forEach((trackId, index) => {
-    const entryId = options.entryIds[index]
-    if (entryId === undefined) {
-      return
-    }
-    const entries = entriesByTrackId.get(trackId) ?? []
-    entries.push(entryId)
-    entriesByTrackId.set(trackId, entries)
+  const takeEntryId = createEntryReader({
+    entryIds: options.entryIds,
+    getTrackId: (trackId) => trackId,
+    tracks: options.storedTrackIds,
   })
 
-  const restoredEntryIds = options.restoredTracks.map((track) =>
-    entriesByTrackId.get(track.id)?.shift(),
-  )
+  const restoredEntryIds = options.restoredTracks.map((track) => takeEntryId(track.id))
   return restoredEntryIds.every((entryId) => entryId !== undefined)
     ? (restoredEntryIds as string[])
     : undefined
