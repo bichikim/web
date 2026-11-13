@@ -4,10 +4,18 @@ export interface TextCounts {
   readonly bytes: number
 }
 export const countText = (text: string): TextCounts => {
-  const segments = Array.from(new Intl.Segmenter('ko', {granularity: 'grapheme'}).segment(text))
+  const segments = new Intl.Segmenter('ko', {granularity: 'grapheme'}).segment(text)
+  let characters = 0
+  let withoutSpaces = 0
+  for (const {segment} of segments) {
+    characters += 1
+    if (!/^\s+$/u.test(segment)) {
+      withoutSpaces += 1
+    }
+  }
   return {
     bytes: new TextEncoder().encode(text).length,
-    characters: segments.length,
-    withoutSpaces: segments.filter((item) => !/^\s+$/u.test(item.segment)).length,
+    characters,
+    withoutSpaces,
   }
 }
