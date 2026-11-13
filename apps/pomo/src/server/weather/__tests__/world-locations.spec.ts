@@ -73,7 +73,7 @@ it('should reserve, register, and return fixed coordinates from provider search'
   ])
 })
 
-it('should register distinct OpenWeather coordinates and deduplicate exact duplicates', async () => {
+it('should register distinct coordinates and retain the first duplicate metadata in provider order', async () => {
   const {searchOpenWeatherLocations} =
     await vi.importActual<typeof import('../openweather-client')>('../openweather-client')
   apiMocks.searchOpenWeatherLocations.mockImplementation(searchOpenWeatherLocations)
@@ -94,11 +94,12 @@ it('should register distinct OpenWeather coordinates and deduplicate exact dupli
         state: 'England',
       },
       {
-        country: 'GB',
+        country: 'FR',
         lat: 51.52001,
+        local_names: {en: 'Later A', ko: '나중 이름'},
         lon: -0.11001,
-        name: 'Location A',
-        state: 'England',
+        name: 'Later A',
+        state: 'Later region',
       },
     ]),
   )
@@ -144,6 +145,57 @@ it('should register distinct OpenWeather coordinates and deduplicate exact dupli
   ])
   expect(fetcher).toHaveBeenCalledOnce()
 })
+
+it('should retain first object data and nested identity without mutating readonly provider results', async () => {
+  const first = Object.freeze({
+    country: 'GB',
+    latitude: 51.52,
+    longitude: -0.11,
+    name: 'First A',
+    names: Object.freeze({en: 'First A', ko: '첫 이름'}),
+    providerLocationId: '51.52,-0.11',
+    region: 'First region',
+  })
+  const second = Object.freeze({
+    ...first,
+    latitude: 48.85,
+    longitude: 2.35,
+    name: 'B',
+    providerLocationId: '48.85,2.35',
+  })
+  const duplicate = Object.freeze({...first, name: 'Later A', names: {en: 'Later A'}})
+  apiMocks.searchOpenWeatherLocations.mockResolvedValue(Object.freeze([first, second, duplicate]))
+  const mocks = createDatabase()
+
+  const locations = await searchWorldWeatherLocations({query: 'nearby'}, mocks.database)
+
+  expect(locations.map((location) => location.name)).toEqual(['First A', 'B'])
+  expect(locations[0]?.names).toBe(first.names)
+  expect(mocks.values).toHaveBeenCalledExactlyOnceWith([
+    expect.objectContaining({name: 'First A', providerLocationId: first.providerLocationId}),
+    expect.objectContaining({name: 'B', providerLocationId: second.providerLocationId}),
+  ])
+})
+
+it.each(['quota', 'provider'] as const)(
+  'should propagate a %s failure before database access',
+  async (stage) => {
+    const cause = new Error(`${stage} failed`)
+    apiMocks.searchOpenWeatherLocations.mockResolvedValue([])
+    if (stage === 'quota') {
+      quotaMocks.reserveOpenWeatherRequest.mockRejectedValueOnce(cause)
+    } else {
+      apiMocks.searchOpenWeatherLocations.mockRejectedValueOnce(cause)
+    }
+    const mocks = createDatabase()
+
+    await expect(searchWorldWeatherLocations({query: 'nearby'}, mocks.database)).rejects.toBe(cause)
+
+    expect(apiMocks.searchOpenWeatherLocations).toHaveBeenCalledTimes(stage === 'quota' ? 0 : 1)
+    expect(mocks.database.select).not.toHaveBeenCalled()
+    expect(mocks.insert).not.toHaveBeenCalled()
+  },
+)
 
 it('should preserve a rounded ID only for exact registered coordinates', async () => {
   apiMocks.searchOpenWeatherLocations.mockResolvedValue([
@@ -255,6 +307,39 @@ it('should avoid a database write for an empty provider search', async () => {
 
   await expect(searchWorldWeatherLocations({query: 'none'}, mocks.database)).resolves.toEqual([])
   expect(mocks.insert).not.toHaveBeenCalled()
+})
+
+it('should retain a first legacy match among mixed new locations and later duplicates', async () => {
+  const seoul = {
+    country: 'KR',
+    latitude: 37.5683,
+    longitude: 126.9778,
+    name: 'Seoul',
+    providerLocationId: '37.5683,126.9778',
+    region: 'Seoul',
+  }
+  const tokyo = {
+    country: 'JP',
+    latitude: 35.69,
+    longitude: 139.69,
+    name: 'Tokyo',
+    providerLocationId: '35.69,139.69',
+    region: 'Tokyo',
+  }
+  apiMocks.searchOpenWeatherLocations.mockResolvedValue([
+    seoul,
+    tokyo,
+    {...seoul, name: 'Later neighborhood'},
+  ])
+  const mocks = createDatabase()
+
+  await expect(searchWorldWeatherLocations({query: 'mixed'}, mocks.database)).resolves.toEqual([
+    LEGACY_WEATHER_LOCATIONS.seoul,
+    {country: 'JP', id: 'openweather:35.69,139.69', name: 'Tokyo', region: 'Tokyo'},
+  ])
+  expect(mocks.values).toHaveBeenCalledExactlyOnceWith([
+    expect.objectContaining({name: 'Tokyo', providerLocationId: tokyo.providerLocationId}),
+  ])
 })
 
 it('should return a known provider coordinate as its stable legacy location', async () => {

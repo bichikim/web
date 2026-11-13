@@ -1,4 +1,5 @@
 import {eq, inArray, sql} from 'drizzle-orm'
+import {uniqBy} from 'es-toolkit/array'
 
 import {
   LEGACY_WEATHER_LOCATIONS,
@@ -165,28 +166,16 @@ const getSearchWeatherLocation = (location: OpenWeatherSearchLocation): WeatherL
     : toWeatherLocation(legacyLocation)
 }
 
-const deduplicateProviderLocations = (
-  locations: ReadonlyArray<OpenWeatherSearchLocation>,
-): ReadonlyArray<OpenWeatherSearchLocation> => {
-  const seenIds = new Set<string>()
-
-  return locations.filter((location) => {
-    if (seenIds.has(location.providerLocationId)) {
-      return false
-    }
-
-    seenIds.add(location.providerLocationId)
-    return true
-  })
-}
-
 /** 검색한 위치의 좌표를 등록하되, 같은 위치의 기존 저장 ID는 유지한다. */
 export const searchWorldWeatherLocations = async (
   options: SearchOpenWeatherLocationsOptions,
   database: Database = getDatabase(),
 ): Promise<ReadonlyArray<WeatherLocation>> => {
   await reserveOpenWeatherRequest('search')
-  const providerLocations = deduplicateProviderLocations(await searchOpenWeatherLocations(options))
+  const providerLocations = uniqBy(
+    await searchOpenWeatherLocations(options),
+    (location) => location.providerLocationId,
+  )
 
   if (providerLocations.length === 0) {
     return []
