@@ -41,7 +41,6 @@ export const RelaxGlassBackground = (props: RelaxGlassBackgroundProps) => {
       daylight: untrack(() => props.daylightPosition ?? DEFAULT_DAYLIGHT_POSITION),
       interior: untrack(() => props.interiorPosition ?? DEFAULT_INTERIOR_POSITION),
     })
-    let disposed = false
     setReady(false)
     setRenderer(instance)
     instance.setRainEnabled(untrack(() => props.weather === 'rainy'))
@@ -51,17 +50,16 @@ export const RelaxGlassBackground = (props: RelaxGlassBackgroundProps) => {
     instance
       .initialize(source, props.depthSrc)
       .then(() => {
-        if (!disposed) {
+        if (untrack(renderer) === instance) {
           setReady(true)
         }
       })
       .catch((error: unknown) => {
-        if (!disposed) {
+        if (untrack(renderer) === instance) {
           reportClientError(error, {feature: 'relax-glass-renderer', source: 'direct'})
         }
       })
     onCleanup(() => {
-      disposed = true
       setRenderer(null)
       instance.destroy()
     })
