@@ -93,6 +93,7 @@ const getCropGridPath = (frame: CropFrame): string => {
 export const CustomAlbumCoverCropCanvas = (props: CustomAlbumCoverCropCanvasProps) => (
   <div class="grid items-start gap-3 sm:grid-cols-[minmax(0,1fr)_6rem]">
     <svg
+      aria-disabled={props.crop.isCropping()}
       aria-describedby="custom-cover-crop-instruction"
       aria-label={m.album_custom_cover_crop_canvas()}
       class="mx-auto block aspect-square w-full max-w-80 touch-none overflow-visible
