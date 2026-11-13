@@ -171,4 +171,64 @@ describe('memoizeAsync', () => {
     expect(await getValue('A')).toBe('A')
     expect(await getValue()).toBeUndefined()
   })
+
+  it('should preserve omitted arguments while sharing their undefined cache key', async () => {
+    const load = vi.fn(async (...values: [value?: string]) => values.length)
+    const getValue = memoizeAsync(load)
+    const first = getValue()
+
+    expect(getValue(undefined)).toBe(first)
+    expect(load).toHaveBeenCalledExactlyOnceWith()
+    await expect(first).resolves.toBe(0)
+
+    const getExplicitValue = memoizeAsync(load)
+    await expect(getExplicitValue(undefined)).resolves.toBe(1)
+    expect(load).toHaveBeenLastCalledWith(undefined)
+  })
+
+  it.each([
+    [NaN, NaN],
+    [-0, 0],
+  ])('should share SameValueZero keys %s and %s', async (firstKey, secondKey) => {
+    const load = vi.fn(async (value: number) => value)
+    const getValue = memoizeAsync(load)
+    const first = getValue(firstKey)
+
+    expect(getValue(secondKey)).toBe(first)
+    await expect(first).resolves.toBe(firstKey)
+    expect(load).toHaveBeenCalledOnce()
+  })
+
+  it('should propagate a key resolver exception synchronously without starting work', async () => {
+    const failure = new Error('key failed')
+    const load = vi.fn(async (value: string) => value)
+    const getCacheKey = vi.fn<(value: string) => unknown>().mockImplementationOnce(() => {
+      throw failure
+    })
+    const getValue = memoizeAsync(load, {getCacheKey})
+
+    expect(() => getValue('A')).toThrow(failure)
+    expect(load).not.toHaveBeenCalled()
+    await expect(getValue('A')).resolves.toBe('A')
+    expect(getCacheKey).toHaveBeenCalledTimes(2)
+  })
+
+  it('should retain synchronous same-key reentry and cache the outer invocation', async () => {
+    const requests: Promise<string>[] = []
+    const load = vi
+      .fn<() => Promise<string>>()
+      .mockImplementationOnce(() => {
+        requests.push(getValue())
+        return Promise.resolve('outer')
+      })
+      .mockResolvedValue('inner')
+    const getValue = memoizeAsync(load)
+    const outer = getValue()
+
+    expect(load).toHaveBeenCalledTimes(2)
+    expect(getValue()).toBe(outer)
+    expect(requests[0]).not.toBe(outer)
+    await expect(requests[0]).resolves.toBe('inner')
+    await expect(outer).resolves.toBe('outer')
+  })
 })

@@ -1,5 +1,3 @@
-import {memoize} from 'es-toolkit/function'
-
 export interface MemoizeAsyncOptions<Argument> {
   /** 인자를 캐시 키로 변환한다. 생략하면 인자 자체를 키로 사용하며, 객체는 참조로 구분한다. 인자가 없으면 undefined를 전달한다. */
   readonly getCacheKey?: (argument: Argument) => unknown
@@ -7,11 +5,6 @@ export interface MemoizeAsyncOptions<Argument> {
 
 export interface MemoizedAsync<Arguments extends ReadonlyArray<unknown>, Value> {
   (...values: Arguments): Promise<Value>
-}
-
-interface MemoizeAsyncRequest<Arguments extends ReadonlyArray<unknown>> {
-  readonly key: unknown
-  readonly values: Arguments
 }
 
 /**
@@ -25,17 +18,17 @@ export const memoizeAsync = <Arguments extends [argument?: unknown], Value>(
   const cache = new Map<unknown, Promise<Value>>()
   const getCacheKey = options.getCacheKey ?? ((argument: Arguments[0]) => argument)
   const execute = async (values: Arguments): Promise<Value> => operation(...values)
-  const cached = memoize(
-    (request: MemoizeAsyncRequest<Arguments>): Promise<Value> =>
-      execute(request.values).catch((error: unknown) => {
-        cache.delete(request.key)
-        throw error
-      }),
-    {cache, getCacheKey: (request) => request.key},
-  )
-
   return (...values) => {
     const key = getCacheKey(values[0])
-    return cached({key, values})
+    const cached = cache.get(key)
+    if (cached !== undefined) {
+      return cached
+    }
+    const pending = execute(values).catch((error: unknown) => {
+      cache.delete(key)
+      throw error
+    })
+    cache.set(key, pending)
+    return pending
   }
 }
