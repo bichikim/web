@@ -26,6 +26,9 @@ export const EditableCardName = (props: EditableCardNameProps) => {
   }
   const editKey = (event: KeyboardEvent) => {
     event.stopPropagation()
+    if (event.isComposing) {
+      return
+    }
     if (event.key === 'Escape') {
       event.preventDefault()
       setDraft(undefined)

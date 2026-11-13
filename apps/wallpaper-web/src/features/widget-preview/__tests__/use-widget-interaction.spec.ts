@@ -71,6 +71,24 @@ test('should keep transparent pixels unhovered after readiness changes', () => {
   expect(hook.result.tooltip()).toBeNull()
 })
 
+test('should recheck a pixel that becomes transparent between hover and press', () => {
+  const hook = setup()
+  const hitTest = vi.fn().mockReturnValueOnce(true).mockReturnValue(false)
+  hook.setHitTest(() => hitTest)
+  hook.result.handleHover(hover())
+  expect(hook.result.hovered()).toBe(true)
+  const preventDefault = vi.fn()
+  hook.result.handlePress({
+    button: 0,
+    currentTarget: hook.button,
+    pointerId: 1,
+    preventDefault,
+  } as unknown as PointerEvent & {currentTarget: HTMLButtonElement})
+  expect(hitTest).toHaveBeenCalledTimes(2)
+  expect(hook.preview.press).not.toHaveBeenCalled()
+  expect(preventDefault).not.toHaveBeenCalled()
+})
+
 test('should wait for first-render initialization before replaying the stationary pointer', () => {
   const hook = setup()
   let initialized = false
@@ -105,12 +123,15 @@ test('should forget a pointer that leaves before loading finishes', () => {
   expect(hook.result.tooltip()).toBeNull()
 })
 
-test('should retain touch tooltip suppression when hit testing becomes ready', () => {
+test('should avoid GPU pixel readbacks for touch hover and movement', () => {
   const hook = setup()
+  const hitTest = vi.fn(() => true)
   hook.result.handleHover(hover('touch'))
-  hook.setHitTest(() => () => true)
+  hook.setHitTest(() => hitTest)
   hook.renderFrame()
-  expect(hook.result.hovered()).toBe(true)
+  hook.result.handleHover(hover('touch'))
+  expect(hitTest).not.toHaveBeenCalled()
+  expect(hook.result.hovered()).toBe(false)
   expect(hook.result.tooltip()).toBeNull()
 })
 

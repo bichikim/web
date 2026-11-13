@@ -231,6 +231,7 @@ pnpmfileChecksum: sha256-g2BMt8/Oai/WjMrtIA305RlIOkSpDcdZ9J+xuvU7Oqs=
 patchedDependencies:
   '@dschz/solid-flow@0.2.6': d7b5ac8f5d14be953fc3ab56e5ab1f89d2f462c6d4cccc59c7b85cf10ea7ed9d
   '@kobalte/core@0.13.11': cf6d454621fe20fb0073f772486cdac9aca2a7556530d6de3e3b028f02234c29
+  pixi.js@8.22.0: 98761e15826d4f86e8dea477aed8bc94f1f89532593aa71ae81a316a0499b22a
 
 importers:
 
@@ -608,6 +609,43 @@ importers:
         specifier: ^0.34.5
         version: 0.34.5(solid-js@1.9.14)(vite@8.1.5(@types/node@24.13.6)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.46.2)(tsx@4.21.0))
 
+  apps/fortune:
+    dependencies:
+      '@solidjs/meta':
+        specifier: 'catalog:'
+        version: 0.29.4(solid-js@1.9.14)
+      '@solidjs/router':
+        specifier: 'catalog:'
+        version: 1.0.0(solid-js@1.9.14)
+      '@solidjs/start':
+        specifier: 'catalog:'
+        version: 2.0.0-rc.9(@solidjs/router@1.0.0(solid-js@1.9.14))(@testing-library/jest-dom@6.9.1)(crossws@0.4.12(srvx@1.0.5))(vite@8.1.5(@types/node@24.13.6)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.46.2)(tsx@4.21.0))
+      '@winter-love/puppet':
+        specifier: workspace:*
+        version: link:../../packages/puppet
+      solid-js:
+        specifier: 'catalog:'
+        version: 1.9.14
+    devDependencies:
+      '@types/node':
+        specifier: 'catalog:'
+        version: 24.13.6
+      '@winter-love/unocss-config':
+        specifier: workspace:*
+        version: link:../../packages/unocss-config
+      nitro:
+        specifier: catalog:pomo
+        version: 3.0.260903-beta
+      typescript:
+        specifier: 'catalog:'
+        version: 7.0.2
+      unocss:
+        specifier: 'catalog:'
+        version: 66.7.5(vite@8.1.5(@types/node@24.13.6)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.46.2)(tsx@4.21.0))
+      vite:
+        specifier: 'catalog:'
+        version: 8.1.5(@types/node@24.13.6)(esbuild@0.28.2)(jiti@2.7.0)(terser@5.46.2)(tsx@4.21.0)
+
   apps/hate-react:
     dependencies:
       '@iconify-icon/solid':
@@ -848,7 +886,7 @@ importers:
         version: 7.4.0(ws@8.21.3)(zod@4.6.5)
       pixi.js:
         specifier: ^8.22.0
-        version: 8.22.0
+        version: 8.22.0(patch_hash=98761e15826d4f86e8dea477aed8bc94f1f89532593aa71ae81a316a0499b22a)
       qrcode-generator:
         specifier: 2.0.4
         version: 2.0.4
@@ -1067,7 +1105,7 @@ importers:
         version: 3.15.0
       pixi.js:
         specifier: 8.22.0
-        version: 8.22.0
+        version: 8.22.0(patch_hash=98761e15826d4f86e8dea477aed8bc94f1f89532593aa71ae81a316a0499b22a)
       solid-js:
         specifier: 'catalog:'
         version: 1.9.14
@@ -1392,7 +1430,7 @@ importers:
         version: 0.8.3
       pixi.js:
         specifier: ^8.22.0
-        version: 8.22.0
+        version: 8.22.0(patch_hash=98761e15826d4f86e8dea477aed8bc94f1f89532593aa71ae81a316a0499b22a)
       three:
         specifier: ^0.186.1
         version: 0.186.1
@@ -1833,7 +1871,7 @@ importers:
         version: 1.52.0
       pixi.js:
         specifier: ^8.22.0
-        version: 8.22.0
+        version: 8.22.0(patch_hash=98761e15826d4f86e8dea477aed8bc94f1f89532593aa71ae81a316a0499b22a)
       solid-js:
         specifier: 'catalog:'
         version: 1.9.14
@@ -10462,8 +10500,8 @@ packages:
   hoist-non-react-statics@3.3.2:
     resolution: {integrity: sha512-/gGivxi8JPKWNm/W0jSmzcMPpfpPLc3dY/6GxhX2hQ9iGj3aDfklV4ET7NjKpSinLpJ5vafa9iiGIEZg10SfBw==}
 
-  hono@4.13.8:
-    resolution: {integrity: sha512-/Gng7NfoykZl2pjukW5Z6+8Yxm3BPRf86GTbQnt0SbySkvax4fyL4H3HhY1cCpBGmiW9XDRFzRV+CXK2W8QudQ==}
+  hono@4.13.18:
+    resolution: {integrity: sha512-H9q/E1XizaWstJxUW881dmLxEj+t/TrGGnyxINkm4+sK0qUwsMtFdo2BWI9Vs3cIS19MU6b6iCijoUoEf4f3DA==}
     engines: {node: '>=16.9.0'}
 
   hookable@5.5.3:
@@ -11641,8 +11679,8 @@ packages:
       encoding:
         optional: true
 
-  node-forge@1.4.0:
-    resolution: {integrity: sha512-LarFH0+6VfriEhqMMcLX2F7SwSXeWwnEAJEsYm5QKWchiVYVvJyV9v7UDvUv+w5HO23ZpQTXDv/GxdDdMyOuoQ==}
+  node-forge@1.4.3:
+    resolution: {integrity: sha512-P6wzfh6t70avmV8FrVEAd/36sOPJQ+hkaJVX1Laap9J/77m7M0eyozDvc8SwnDf4P7MP94gwbAAo0rg3YVXT+g==}
     engines: {node: '>= 6.13.0'}
 
   node-gyp-build@4.8.4:
@@ -16662,9 +16700,9 @@ snapshots:
 
   '@hexagon/base64@1.1.28': {}
 
-  '@hono/node-server@2.1.1(hono@4.13.8)':
+  '@hono/node-server@2.1.1(hono@4.13.18)':
     dependencies:
-      hono: 4.13.8
+      hono: 4.13.18
 
   '@hookform/resolvers@5.9.1(@sinclair/typebox@0.31.30)(@standard-schema/spec@1.1.0)(ajv@8.18.0)(class-transformer@0.5.1)(class-validator@0.14.4)(react-hook-form@7.85.0(react@19.2.5))(typanion@3.14.0)(valibot@1.4.2(typescript@7.0.2))(zod@4.6.5)':
     dependencies:
@@ -17483,7 +17521,7 @@ snapshots:
 
   '@modelcontextprotocol/sdk@1.31.0(@cfworker/json-schema@4.1.1)(zod@4.6.5)':
     dependencies:
-      '@hono/node-server': 2.1.1(hono@4.13.8)
+      '@hono/node-server': 2.1.1(hono@4.13.18)
       ajv: 8.18.0
       ajv-formats: 3.0.1(ajv@8.18.0)
       content-type: 1.0.5
@@ -17493,7 +17531,7 @@ snapshots:
       eventsource-parser: 3.1.1
       express: 5.2.1
       express-rate-limit: 8.7.0(express@5.2.1)
-      hono: 4.13.8
+      hono: 4.13.18
       jose: 6.2.5
       json-schema-typed: 8.0.2
       pkce-challenge: 5.0.1
@@ -17507,7 +17545,7 @@ snapshots:
 
   '@modelcontextprotocol/sdk@1.32.1(@cfworker/json-schema@4.1.1)(zod@4.6.5)':
     dependencies:
-      '@hono/node-server': 2.1.1(hono@4.13.8)
+      '@hono/node-server': 2.1.1(hono@4.13.18)
       ajv: 8.18.0
       ajv-formats: 3.0.1(ajv@8.18.0)
       content-type: 1.0.5
@@ -17517,7 +17555,7 @@ snapshots:
       eventsource-parser: 3.1.1
       express: 5.2.1
       express-rate-limit: 8.7.0(express@5.2.1)
-      hono: 4.13.8
+      hono: 4.13.18
       jose: 6.2.5
       json-schema-typed: 8.0.2
       pkce-challenge: 5.0.1
@@ -20799,7 +20837,7 @@ snapshots:
       http-shutdown: 1.2.2
       jiti: 1.21.7
       mlly: 1.8.2
-      node-forge: 1.4.0
+      node-forge: 1.4.3
       pathe: 1.1.2
       std-env: 3.10.0
       ufo: 1.6.4
@@ -23098,7 +23136,7 @@ snapshots:
     dependencies:
       react-is: 16.13.1
 
-  hono@4.13.8: {}
+  hono@4.13.18: {}
 
   hookable@5.5.3: {}
 
@@ -23653,7 +23691,7 @@ snapshots:
       http-shutdown: 1.2.2
       jiti: 2.7.0
       mlly: 1.8.2
-      node-forge: 1.4.0
+      node-forge: 1.4.3
       pathe: 2.0.3
       std-env: 4.3.0
       tinyclip: 0.1.12
@@ -24702,7 +24740,7 @@ snapshots:
     optionalDependencies:
       encoding: 0.1.13
 
-  node-forge@1.4.0: {}
+  node-forge@1.4.3: {}
 
   node-gyp-build@4.8.4: {}
 
@@ -25155,7 +25193,7 @@ snapshots:
 
   pirates@4.0.7: {}
 
-  pixi.js@8.22.0:
+  pixi.js@8.22.0(patch_hash=98761e15826d4f86e8dea477aed8bc94f1f89532593aa71ae81a316a0499b22a):
     dependencies:
       '@pixi/colord': 2.9.6
       '@types/earcut': 3.0.0

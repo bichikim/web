@@ -91,11 +91,14 @@ export const createBufferSession = (options: CreateBufferSessionOptions) => {
       animation = scheduler.requestFrame(tick)
     }
   }
-  const pump = () => {
+  const pump = (mode: 'latest' | 'prediction' = 'latest') => {
     if (!active || disposed || presenting || flight !== undefined) {
       return
     }
     const input = options.input?.()
+    if (mode === 'prediction' && input !== undefined) {
+      return
+    }
     if (input !== undefined) {
       clearPredictions()
     }
@@ -114,7 +117,6 @@ export const createBufferSession = (options: CreateBufferSessionOptions) => {
       ? clock.next(scheduler.now() - (presentationDelay ?? 0))
       : {deltaTime: 0, time: lastTime}
     const request = {generation}
-    const began = scheduler.now()
     first = false
     flight = request
     worker
@@ -139,19 +141,20 @@ export const createBufferSession = (options: CreateBufferSessionOptions) => {
           frame.kind === 'stale'
         ) {
           release(frame)
+        } else if (immediate || !isRunning() || options.input?.() !== undefined) {
+          clearPredictions()
+          presenting = true
+          // Host callbacks run outside the Worker promise rejection boundary.
+          scheduler.queueMicrotask(() => present(frame, request.generation))
         } else {
-          clock.observeCompute(scheduler.now() - began)
-          if (immediate || !isRunning() || options.input?.() !== undefined) {
-            clearPredictions()
-            presenting = true
-            // Host callbacks run outside the Worker promise rejection boundary.
-            scheduler.queueMicrotask(() => present(frame, request.generation))
-          } else {
-            frames.push(frame)
-          }
+          frames.push(frame)
         }
         pump()
         schedule()
+        if (frame.kind === 'frame' && frames.includes(frame)) {
+          // Display decoding overlaps the next Worker calculation rather than delaying its request.
+          const {plans: _plans, layers: _layers} = frame.computed.frame
+        }
       })
       .catch(() => {
         if (flight === request) {
@@ -167,6 +170,8 @@ export const createBufferSession = (options: CreateBufferSessionOptions) => {
       if (!disposed && active && request === generation) {
         lastTime = frame.time
         presentationDelay ??= Math.max(0, scheduler.now() - lastTime)
+        // Predict in parallel with submission; pending input needs the newly presented checkpoint.
+        pump('prediction')
         options.onFrame(frame)
       }
     } finally {
@@ -178,17 +183,18 @@ export const createBufferSession = (options: CreateBufferSessionOptions) => {
       }
     }
   }
-  function tick() {
+  function tick(timestamp?: number) {
     animation = undefined
     if (disposed || !active) {
       return
     }
     const request = generation
     const now = scheduler.now()
+    const refreshTime = timestamp ?? now
     if (previousRefresh !== undefined) {
-      clock.observeRefresh(now - previousRefresh)
+      clock.observeRefresh(refreshTime - previousRefresh)
     }
-    previousRefresh = now
+    previousRefresh = refreshTime
     if (presentationDelay === undefined && frames.length >= PLAYER_BUFFER_FRAMES) {
       presentationDelay = now - origin
     }

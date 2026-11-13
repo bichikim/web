@@ -1,0 +1,1828 @@
+{
+  "recordedAt": "2026-11-04T03:25:13.876201+00:00",
+  "status": "complete",
+  "requestedOutcome": "Identify and fix the remaining Metal pixel differences, without increasing tolerance or substituting software rendering.",
+  "environment": {
+    "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M5 Pro, Unspecified Version)",
+    "model": "/Users/bichi/Downloads/白猫/white-cat-idle-english.poffo",
+    "modelSHA256": "47c98e7473e79ffb249aa1acb5bed9b7d458f35c7c0d3502f281549c20c55035",
+    "parts": 852,
+    "viewport": [900, 700],
+    "antialiasing": "ssaa",
+    "resolution": 1
+  },
+  "fixedFindings": [
+    {
+      "priority": "P2",
+      "title": "Submit immediate draws and external-consumer boundaries",
+      "cause": "The render loop did not distinguish ticker draws from immediate redraw/flush calls. Immediate WebGL rendering and onAfterRender consumption had no explicit command-submission boundary.",
+      "change": "Render phases are explicit; submit WebGL commands before the external consumer and after immediate drawing, preserving ordinary animation ticks without an explicit flush.",
+      "limit": "gl.flush submits work; it is not a GPU completion wait and does not solve the residual WhiteCat mismatch.",
+      "negativeControl": {
+        "artifactHashes": {
+          "after": "abd895054ced9a81483b110cbf3f3bd63e18c5af1577c6bca0d6dc573487f001",
+          "before": "abd895054ced9a81483b110cbf3f3bd63e18c5af1577c6bca0d6dc573487f001"
+        },
+        "backend": "hardware",
+        "errors": [],
+        "metadata": [
+          {
+            "parts": 122,
+            "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M5 Pro, Unspecified Version)",
+            "rendering": {
+              "antialiasing": "ssaa",
+              "renderer": "webgl"
+            }
+          },
+          {
+            "parts": 122,
+            "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M5 Pro, Unspecified Version)",
+            "rendering": {
+              "antialiasing": "ssaa",
+              "renderer": "webgl"
+            }
+          }
+        ],
+        "model": "/Users/bichi/.codex/worktrees/48ee/web/packages/puppet/examples/development-model.json",
+        "modelSHA256": "d2ee88f9f8a50273f7919bdd3b52691418a3d0d60e3501609edb7b175e81bfb5",
+        "passed": false,
+        "results": [
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 700,
+            "maximumDelta": 0,
+            "stage": "defaults",
+            "statuses": ["idle", "idle"],
+            "visiblePixels": 111508,
+            "width": 900,
+            "workerEqual": true
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 700,
+            "maximumDelta": 0,
+            "stage": "controls",
+            "statuses": ["idle", "idle"],
+            "visiblePixels": 112111,
+            "width": 900,
+            "workerEqual": true
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 700,
+            "maximumDelta": 0,
+            "stage": "burst",
+            "statuses": ["idle", "idle"],
+            "visiblePixels": 112480,
+            "width": 900,
+            "workerEqual": true
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 700,
+            "maximumDelta": 0,
+            "stage": "document-edit",
+            "statuses": ["idle", "idle"],
+            "visiblePixels": 111310,
+            "width": 900,
+            "workerEqual": true
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 700,
+            "maximumDelta": 0,
+            "stage": "buffer-off",
+            "statuses": ["disabled", "disabled"],
+            "visiblePixels": 111310,
+            "width": 900,
+            "workerEqual": null
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 3,
+            "height": 700,
+            "maximumDelta": 1,
+            "stage": "buffer-on",
+            "statuses": ["idle", "idle"],
+            "visiblePixels": 111310,
+            "width": 900,
+            "workerEqual": true
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 1400,
+            "maximumDelta": 0,
+            "stage": "resize",
+            "statuses": ["idle", "idle"],
+            "visiblePixels": 436961,
+            "width": 1800,
+            "workerEqual": true
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 1400,
+            "maximumDelta": 0,
+            "stage": "renderer",
+            "statuses": ["idle", "idle"],
+            "visiblePixels": 436961,
+            "width": 1800,
+            "workerEqual": true
+          }
+        ],
+        "workersAfterDestroy": 0
+      },
+      "positiveControl": {
+        "artifactHashes": {
+          "after": "adbbe1ceb03529f400911c3bdce6f298b895383f7892359a2faf92fbc16ff3a7",
+          "before": "abd895054ced9a81483b110cbf3f3bd63e18c5af1577c6bca0d6dc573487f001"
+        },
+        "backend": "hardware",
+        "errors": [],
+        "metadata": [
+          {
+            "parts": 122,
+            "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M5 Pro, Unspecified Version)",
+            "rendering": {
+              "antialiasing": "ssaa",
+              "renderer": "webgl"
+            }
+          },
+          {
+            "parts": 122,
+            "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M5 Pro, Unspecified Version)",
+            "rendering": {
+              "antialiasing": "ssaa",
+              "renderer": "webgl"
+            }
+          }
+        ],
+        "model": "/Users/bichi/.codex/worktrees/48ee/web/packages/puppet/examples/development-model.json",
+        "modelSHA256": "d2ee88f9f8a50273f7919bdd3b52691418a3d0d60e3501609edb7b175e81bfb5",
+        "passed": true,
+        "results": [
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 700,
+            "maximumDelta": 0,
+            "stage": "defaults",
+            "statuses": ["idle", "idle"],
+            "visiblePixels": 111508,
+            "width": 900,
+            "workerEqual": true
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 700,
+            "maximumDelta": 0,
+            "stage": "controls",
+            "statuses": ["idle", "idle"],
+            "visiblePixels": 112111,
+            "width": 900,
+            "workerEqual": true
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 700,
+            "maximumDelta": 0,
+            "stage": "burst",
+            "statuses": ["idle", "idle"],
+            "visiblePixels": 112480,
+            "width": 900,
+            "workerEqual": true
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 700,
+            "maximumDelta": 0,
+            "stage": "document-edit",
+            "statuses": ["idle", "idle"],
+            "visiblePixels": 111310,
+            "width": 900,
+            "workerEqual": true
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 700,
+            "maximumDelta": 0,
+            "stage": "buffer-off",
+            "statuses": ["disabled", "disabled"],
+            "visiblePixels": 111310,
+            "width": 900,
+            "workerEqual": null
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 700,
+            "maximumDelta": 0,
+            "stage": "buffer-on",
+            "statuses": ["idle", "idle"],
+            "visiblePixels": 111310,
+            "width": 900,
+            "workerEqual": true
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 1400,
+            "maximumDelta": 0,
+            "stage": "resize",
+            "statuses": ["idle", "idle"],
+            "visiblePixels": 436961,
+            "width": 1800,
+            "workerEqual": true
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 1400,
+            "maximumDelta": 0,
+            "stage": "renderer",
+            "statuses": ["idle", "idle"],
+            "visiblePixels": 436961,
+            "width": 1800,
+            "workerEqual": true
+          }
+        ],
+        "workersAfterDestroy": 0
+      }
+    },
+    {
+      "priority": "P2",
+      "title": "Replace varying fragment UV derivatives with affine triangle gradients",
+      "cause": "The first observed GPU mismatch is dFdy(UV); mip filtering then returns different sampled colors. CPU/Worker frame equality alone cannot establish GPU pixel equality.",
+      "change": "Use a triangle Jacobian carried in a flat attribute with textureGrad; retain shared vertices and reusable owned buffers.",
+      "before": {
+        "count": 6,
+        "max": 1,
+        "first": [
+          {
+            "index": 437574,
+            "x": 493,
+            "y": 121,
+            "channel": 2,
+            "a": 46,
+            "b": 47
+          },
+          {
+            "index": 451960,
+            "x": 490,
+            "y": 125,
+            "channel": 0,
+            "a": 208,
+            "b": 207
+          },
+          {
+            "index": 451961,
+            "x": 490,
+            "y": 125,
+            "channel": 1,
+            "a": 198,
+            "b": 197
+          },
+          {
+            "index": 459170,
+            "x": 492,
+            "y": 127,
+            "channel": 2,
+            "a": 112,
+            "b": 113
+          },
+          {
+            "index": 491481,
+            "x": 470,
+            "y": 136,
+            "channel": 1,
+            "a": 169,
+            "b": 170
+          },
+          {
+            "index": 495077,
+            "x": 469,
+            "y": 137,
+            "channel": 1,
+            "a": 154,
+            "b": 153
+          }
+        ]
+      },
+      "after": "Zero different channels in all 8 stages for SSAA, MSAA, main-thread/Worker and development-model comparisons.",
+      "regressionTests": [
+        "src/player/rendering/__tests__/pack-gradient-vertices.spec.ts",
+        "src/player/rendering/__tests__/create-gradient-geometry.spec.ts",
+        "src/player/rendering/__tests__/configure-batch-gradients.spec.ts",
+        "visual/__tests__/batch-gradients.integration.tsx",
+        "visual/playback-comparison.mjs"
+      ]
+    }
+  ],
+  "experiments": [
+    {
+      "name": "native-commands",
+      "observation": "All 4876 final-frame write calls match, including uploaded bytes. GL object references have a bijection over 205 objects; this is not a comparison that merely removes all object identities.",
+      "passed": false,
+      "differences": [
+        {
+          "stage": "buffer-off",
+          "channels": 6,
+          "maximumDelta": 4
+        }
+      ],
+      "report": "/private/tmp/puppet-metal-internals/native-commands.json"
+    },
+    {
+      "name": "shadow-state",
+      "observation": "405 draws: lifetime CPU shadows of attribute/index buffers and effective uniform values match. Buffer hashes are FNV-1a, not bytewise GPU readback.",
+      "passed": false,
+      "differences": [
+        {
+          "stage": "buffer-off",
+          "channels": 6,
+          "maximumDelta": 4
+        }
+      ],
+      "report": "/private/tmp/puppet-metal-internals/shadow-state.json"
+    },
+    {
+      "name": "textures",
+      "observation": "Two 8192x8192 source images and all 14 mip levels match by readback hash after the differing frame.",
+      "passed": false,
+      "differences": [
+        {
+          "stage": "buffer-off",
+          "channels": 6,
+          "maximumDelta": 4
+        }
+      ],
+      "report": "/private/tmp/puppet-metal-internals/textures.json"
+    },
+    {
+      "name": "padding",
+      "observation": "94 end-of-frame textures: only the final back buffer and one 64x32 copied backdrop differ. The two bytes in that backdrop are inside its copied 42x18 area and correspond to already-different source pixels at (470,136) and (469,137); not stale padding.",
+      "passed": false,
+      "differences": [
+        {
+          "stage": "buffer-off",
+          "channels": 6,
+          "maximumDelta": 4
+        }
+      ],
+      "report": "/private/tmp/puppet-metal-internals/padding.json"
+    },
+    {
+      "name": "shaders",
+      "observation": "All 13 GLSL shader sources match exactly.",
+      "passed": false,
+      "differences": [
+        {
+          "stage": "buffer-off",
+          "channels": 6,
+          "maximumDelta": 4
+        }
+      ],
+      "report": "/private/tmp/puppet-metal-internals/shaders.json"
+    },
+    {
+      "name": "single-pass",
+      "observation": "One asynchronous PBO sample after draw 100 removes the buffer-off mismatch, but burst still differs. This is an observer effect, not an accepted fix.",
+      "passed": false,
+      "differences": [
+        {
+          "stage": "burst",
+          "channels": 7,
+          "maximumDelta": 4
+        }
+      ],
+      "report": "/private/tmp/puppet-metal-internals/single-pass.json"
+    },
+    {
+      "name": "before-color-original",
+      "observation": "Adding a submission boundary before the scene does not fix all stages.",
+      "passed": false,
+      "differences": [
+        {
+          "stage": "burst",
+          "channels": 7,
+          "maximumDelta": 4
+        }
+      ],
+      "report": "/private/tmp/puppet-metal-internals/before-color-original.json"
+    },
+    {
+      "name": "copy-blit",
+      "observation": "Replacing backdrop copyTexSubImage2D with NEAREST framebuffer blits does not fix all stages.",
+      "passed": false,
+      "differences": [
+        {
+          "stage": "burst",
+          "channels": 7,
+          "maximumDelta": 4
+        }
+      ],
+      "report": "/private/tmp/puppet-metal-internals/copy-blit.json"
+    },
+    {
+      "name": "dither-init",
+      "observation": "Disabling DITHER from context creation does not fix the mismatch.",
+      "passed": false,
+      "differences": [
+        {
+          "stage": "buffer-off",
+          "channels": 6,
+          "maximumDelta": 4
+        }
+      ],
+      "report": "/private/tmp/puppet-metal-internals/dither-init.json"
+    },
+    {
+      "name": "orphan",
+      "observation": "Orphaning ARRAY_BUFFER storage before updates does not fix all stages.",
+      "passed": false,
+      "differences": [
+        {
+          "stage": "burst",
+          "channels": 7,
+          "maximumDelta": 4
+        }
+      ],
+      "report": "/private/tmp/puppet-metal-internals/orphan.json"
+    },
+    {
+      "name": "grad",
+      "observation": "Explicit derivatives in the batch sampler do not fix all stages.",
+      "passed": false,
+      "differences": [
+        {
+          "stage": "buffer-off",
+          "channels": 3,
+          "maximumDelta": 4
+        }
+      ],
+      "report": "/private/tmp/puppet-metal-internals/grad.json"
+    },
+    {
+      "name": "invariant-matched",
+      "observation": "Matching highp/invariant varying declarations does not fix the mismatch.",
+      "passed": false,
+      "differences": [
+        {
+          "stage": "buffer-off",
+          "channels": 6,
+          "maximumDelta": 4
+        }
+      ],
+      "report": "/private/tmp/puppet-metal-internals/invariant-matched.json"
+    },
+    {
+      "name": "flat-mesh",
+      "observation": "Flat per-triangle colors and texture IDs in GLSL 300 mesh/batch shaders do not fix the mismatch.",
+      "passed": false,
+      "differences": [
+        {
+          "stage": "buffer-off",
+          "channels": 6,
+          "maximumDelta": 4
+        }
+      ],
+      "report": "/private/tmp/puppet-metal-internals/flat-mesh.json"
+    },
+    {
+      "name": "color-direct",
+      "observation": "Algebraically equivalent premultiplied color matrix evaluation does not fix all stages.",
+      "passed": false,
+      "differences": [
+        {
+          "stage": "burst",
+          "channels": 7,
+          "maximumDelta": 4
+        }
+      ],
+      "report": "/private/tmp/puppet-metal-internals/color-direct.json"
+    },
+    {
+      "name": "copy-flush",
+      "observation": "Submitting before backdrop copies does not fix the mismatch.",
+      "passed": false,
+      "differences": [
+        {
+          "stage": "buffer-off",
+          "channels": 6,
+          "maximumDelta": 4
+        }
+      ],
+      "report": "/private/tmp/puppet-metal-internals/copy-flush.json"
+    },
+    {
+      "name": "finish",
+      "observation": "Forcing GPU completion in place of submission does not fix the mismatch. No finish/readback was added to production.",
+      "passed": false,
+      "differences": [
+        {
+          "stage": "buffer-off",
+          "channels": 6,
+          "maximumDelta": 4
+        }
+      ],
+      "report": "/private/tmp/puppet-metal-internals/finish.json"
+    },
+    {
+      "name": "float-targets",
+      "observation": "RGBA32F intermediates do not fix the mismatch. No format or memory changes were added to production.",
+      "passed": false,
+      "differences": [
+        {
+          "stage": "buffer-off",
+          "channels": 11,
+          "maximumDelta": 3
+        }
+      ],
+      "report": "/private/tmp/puppet-metal-internals/float-targets.json"
+    },
+    {
+      "name": "validated-stderr",
+      "observation": "Metal API and GPU validation are explicitly confirmed enabled in stderr; no resource-access or load/store validation fault was reported, while the strict pixel comparison still fails.",
+      "passed": false,
+      "differences": [
+        {
+          "stage": "buffer-off",
+          "channels": 6,
+          "maximumDelta": 4
+        }
+      ],
+      "report": "/private/tmp/puppet-metal-internals/validated-stderr.json"
+    }
+  ],
+  "nativeDiagnostics": {
+    "mslDump": "/private/tmp/puppet-metal-internals/msl.log",
+    "mslObservation": "ANGLE_METAL_PRINT_MSL_ENABLE captured native translated Metal source. WEBGL_debug_shaders returned empty strings; those empty values were not treated as proof of translated-code equality.",
+    "validationLog": "/private/tmp/puppet-metal-internals/validated-stderr.log",
+    "frameCapture": "The installed release Chrome binary does not expose the ANGLE_METAL_FRAME_CAPTURE environment hook. A native frame debugger/replay capable of identifying the first differing GPU operation is still required; shader text and API traces alone did not establish it."
+  },
+  "review": {
+    "perspectives": ["behavior", "refactoring", "naming and structure"],
+    "p0ToP2": {
+      "discoveredAcrossThisReport": 2,
+      "fixed": 2,
+      "remaining": 0
+    },
+    "newRefactoringOrNamingFindings": [],
+    "verificationGapsWithinRequestedScope": [],
+    "outOfScopeVerification": [
+      "Other devices and browsers; low-end performance; long-duration retained-memory profiling."
+    ]
+  },
+  "checks": {
+    "unit": {
+      "command": "pnpm exec vitest run --project=unit packages/puppet",
+      "result": "448 files, 2813 tests passed"
+    },
+    "focusedUnit": {
+      "command": "pnpm exec vitest run --project=unit packages/puppet/src/player/rendering/__tests__/configure-batch-gradients.spec.ts packages/puppet/src/player/rendering/__tests__/create-gradient-geometry.spec.ts packages/puppet/src/player/rendering/__tests__/pack-gradient-vertices.spec.ts",
+      "result": "10 tests passed, including the additional growth/shrink and packed-white-color checks"
+    },
+    "browser": {
+      "command": "pnpm exec vitest run --config packages/puppet/vitest.browser.config.ts",
+      "result": "63 passed, 11 skipped; original assertions and timeouts retained"
+    },
+    "build": {
+      "command": "pnpm --filter @winter-love/puppet build",
+      "result": "passed"
+    },
+    "typecheck": {
+      "command": "pnpm typecheck",
+      "result": "21 tasks passed"
+    },
+    "lint": {
+      "command": "pnpm lint",
+      "result": "passed"
+    },
+    "format": {
+      "command": "pnpm format",
+      "result": "passed"
+    },
+    "diff": {
+      "command": "git diff --check",
+      "result": "passed"
+    }
+  },
+  "performance": {
+    "protocol": "ABBA; one browser at a time; same WhiteCat; Worker; SSAA; resolution 1; CPU rate 1; 2 s warmup + 10 s measurement; two samples per version.",
+    "runs": [
+      {
+        "variant": "before",
+        "sample": {
+          "computation": "worker",
+          "cpu": 1,
+          "run": 1,
+          "buffering": {
+            "enabled": true,
+            "framesAhead": 3,
+            "status": "active"
+          },
+          "canvasSize": {
+            "height": 700,
+            "width": 900
+          },
+          "chains": 25,
+          "hardwareConcurrency": 15,
+          "motion": "Idle:0",
+          "parameters": 265,
+          "parts": 852,
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+          "vertices": 34452,
+          "duration": 10000,
+          "errors": [],
+          "frameP95": 9.100000000000364,
+          "observedModelFPS": 79.5,
+          "rafFPS": 120,
+          "updatedFPS": 79.5,
+          "heapBytes": 173444636,
+          "scriptSeconds": 3.3690180000000005,
+          "taskSeconds": 3.655714
+        }
+      },
+      {
+        "variant": "after",
+        "sample": {
+          "computation": "worker",
+          "cpu": 1,
+          "run": 1,
+          "buffering": {
+            "enabled": true,
+            "framesAhead": 3,
+            "status": "active"
+          },
+          "canvasSize": {
+            "height": 700,
+            "width": 900
+          },
+          "chains": 25,
+          "hardwareConcurrency": 15,
+          "motion": "Idle:0",
+          "parameters": 265,
+          "parts": 852,
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+          "vertices": 34452,
+          "duration": 10006.5,
+          "errors": [],
+          "frameP95": 9.5,
+          "observedModelFPS": 78.14920301803828,
+          "rafFPS": 120.02198570928896,
+          "updatedFPS": 78.14920301803828,
+          "heapBytes": 235740356,
+          "scriptSeconds": 3.9070739999999997,
+          "taskSeconds": 4.179233
+        }
+      },
+      {
+        "variant": "after",
+        "sample": {
+          "computation": "worker",
+          "cpu": 1,
+          "run": 1,
+          "buffering": {
+            "enabled": true,
+            "framesAhead": 3,
+            "status": "active"
+          },
+          "canvasSize": {
+            "height": 700,
+            "width": 900
+          },
+          "chains": 25,
+          "hardwareConcurrency": 15,
+          "motion": "Idle:0",
+          "parameters": 265,
+          "parts": 852,
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+          "vertices": 34452,
+          "duration": 10008.2,
+          "errors": [],
+          "frameP95": 9.700000000000728,
+          "observedModelFPS": 79.03519114326252,
+          "rafFPS": 120.00159868907495,
+          "updatedFPS": 79.03519114326252,
+          "heapBytes": 278471284,
+          "scriptSeconds": 3.915483,
+          "taskSeconds": 4.179930000000001
+        }
+      },
+      {
+        "variant": "before",
+        "sample": {
+          "computation": "worker",
+          "cpu": 1,
+          "run": 1,
+          "buffering": {
+            "enabled": true,
+            "framesAhead": 3,
+            "status": "active"
+          },
+          "canvasSize": {
+            "height": 700,
+            "width": 900
+          },
+          "chains": 25,
+          "hardwareConcurrency": 15,
+          "motion": "Idle:0",
+          "parameters": 265,
+          "parts": 852,
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+          "vertices": 34452,
+          "duration": 10008.3,
+          "errors": [],
+          "frameP95": 8.699999999998909,
+          "observedModelFPS": 78.83456730913342,
+          "rafFPS": 120.00039966827534,
+          "updatedFPS": 78.83456730913342,
+          "heapBytes": 171589100,
+          "scriptSeconds": 3.2696069999999997,
+          "taskSeconds": 3.54373
+        }
+      }
+    ],
+    "meanObservedModelFPS": {
+      "before": 79.16728365456672,
+      "after": 78.59219708065041
+    },
+    "relativeFpsChangePercent": -0.726419484626506,
+    "meanMainThreadScriptSecondsPer10SecondSample": {
+      "before": 3.3193125,
+      "after": 3.9112785
+    },
+    "interpretation": "Mean FPS changed by about -0.7%; two samples do not establish a universal performance difference. Main-thread script work increased. The first fully expanded prototype measured about -6.1% in a separate ABBA run and was replaced with shared vertices. Absolute FPS between those measurement periods is not compared.",
+    "memory": "Extra packed geometry is bounded by source vertex count plus one vertex per triangle. CPU arrays and GPU buffers are reused until capacity grows. Raw JS heap samples include GC timing and do not measure retained-memory growth.",
+    "notTested": "Low-end GPU performance and long-duration heap retention."
+  },
+  "outOfScope": [
+    "Committing, pushing, or updating a PR",
+    "Driver security/signing changes",
+    "Applying unsuccessful shader, precision, synchronization or buffer-allocation experiments"
+  ],
+  "previousUnresolvedOutcome": {
+    "model": "WhiteCat",
+    "strictMetalComparison": {
+      "artifactHashes": {
+        "after": "adbbe1ceb03529f400911c3bdce6f298b895383f7892359a2faf92fbc16ff3a7",
+        "before": "abd895054ced9a81483b110cbf3f3bd63e18c5af1577c6bca0d6dc573487f001"
+      },
+      "backend": "hardware",
+      "errors": [],
+      "metadata": [
+        {
+          "parts": 852,
+          "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M5 Pro, Unspecified Version)",
+          "rendering": {
+            "antialiasing": "ssaa",
+            "renderer": "webgl"
+          }
+        },
+        {
+          "parts": 852,
+          "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M5 Pro, Unspecified Version)",
+          "rendering": {
+            "antialiasing": "ssaa",
+            "renderer": "webgl"
+          }
+        }
+      ],
+      "model": "/Users/bichi/Downloads/白猫/white-cat-idle-english.poffo",
+      "modelSHA256": "47c98e7473e79ffb249aa1acb5bed9b7d458f35c7c0d3502f281549c20c55035",
+      "passed": false,
+      "results": [
+        {
+          "controlsEqual": true,
+          "differentChannels": 0,
+          "height": 700,
+          "maximumDelta": 0,
+          "stage": "defaults",
+          "statuses": ["idle", "idle"],
+          "visiblePixels": 82313,
+          "width": 900,
+          "workerEqual": true
+        },
+        {
+          "controlsEqual": true,
+          "differentChannels": 0,
+          "height": 700,
+          "maximumDelta": 0,
+          "stage": "controls",
+          "statuses": ["idle", "idle"],
+          "visiblePixels": 82700,
+          "width": 900,
+          "workerEqual": true
+        },
+        {
+          "controlsEqual": true,
+          "differentChannels": 0,
+          "height": 700,
+          "maximumDelta": 0,
+          "stage": "burst",
+          "statuses": ["idle", "idle"],
+          "visiblePixels": 82597,
+          "width": 900,
+          "workerEqual": true
+        },
+        {
+          "controlsEqual": true,
+          "differentChannels": 0,
+          "height": 700,
+          "maximumDelta": 0,
+          "stage": "document-edit",
+          "statuses": ["idle", "idle"],
+          "visiblePixels": 82082,
+          "width": 900,
+          "workerEqual": true
+        },
+        {
+          "controlsEqual": true,
+          "differentChannels": 6,
+          "height": 700,
+          "maximumDelta": 4,
+          "stage": "buffer-off",
+          "statuses": ["disabled", "disabled"],
+          "visiblePixels": 82082,
+          "width": 900,
+          "workerEqual": null
+        },
+        {
+          "controlsEqual": true,
+          "differentChannels": 0,
+          "height": 700,
+          "maximumDelta": 0,
+          "stage": "buffer-on",
+          "statuses": ["idle", "idle"],
+          "visiblePixels": 82082,
+          "width": 900,
+          "workerEqual": true
+        },
+        {
+          "controlsEqual": true,
+          "differentChannels": 0,
+          "height": 1400,
+          "maximumDelta": 0,
+          "stage": "resize",
+          "statuses": ["idle", "idle"],
+          "visiblePixels": 319589,
+          "width": 1800,
+          "workerEqual": true
+        },
+        {
+          "controlsEqual": true,
+          "differentChannels": 0,
+          "height": 1400,
+          "maximumDelta": 0,
+          "stage": "renderer",
+          "statuses": ["idle", "idle"],
+          "visiblePixels": 319589,
+          "width": 1800,
+          "workerEqual": true
+        }
+      ],
+      "workersAfterDestroy": 0
+    },
+    "cause": "Not established. First differing values were observed in the internal scene color texture before canvas presentation. Matching API/CPU-input traces and end-of-frame textures do not prove every intermediate input at its sampling time, or identify the first differing GPU instruction.",
+    "notClaimed": [
+      "No generic Metal driver defect has been established.",
+      "Bit-identical Metal output has not been achieved.",
+      "No software-renderer pass is used as a substitute for this failing Metal check."
+    ]
+  },
+  "gpuSamplingFollowUp": {
+    "firstObservedGpuDivergence": {
+      "backend": "ANGLE Metal on Apple M5 Pro, Chrome 156",
+      "operation": "dFdy(vUV) in the first batched mesh draw",
+      "drawIndexOneBased": 4,
+      "triangleIndexZeroBased": 874,
+      "sourceVertexIndices": [677, 712, 678],
+      "pointInSceneTexture": [493, 121],
+      "precedingThreeDraws": {
+        "difference": {
+          "count": 0,
+          "max": 0,
+          "first": []
+        },
+        "pixelsAtAllFiveAffectedPoints": [
+          [
+            [0, 0, 0, 0],
+            [0, 0, 0, 0],
+            [0, 0, 0, 0],
+            [0, 0, 0, 0],
+            [0, 0, 0, 0]
+          ],
+          [
+            [0, 0, 0, 0],
+            [0, 0, 0, 0],
+            [0, 0, 0, 0],
+            [0, 0, 0, 0],
+            [0, 0, 0, 0]
+          ]
+        ]
+      },
+      "uv": {
+        "before": [0.3049834966659546, 0.4773481786251068],
+        "after": [0.3049834966659546, 0.4773481786251068]
+      },
+      "dFdx": {
+        "before": [0.0010459423065185547, -3.8743019104003906e-7],
+        "after": [0.0010459423065185547, -3.8743019104003906e-7]
+      },
+      "dFdy": {
+        "before": [1.3113021850585938e-6, 0.00104561448097229],
+        "after": [9.238719940185547e-7, 0.001046299934387207]
+      },
+      "sampledRgb": {
+        "before": [0.07009804248809814, 0.0681372582912445, 0.0936274528503418],
+        "after": [0.07058823853731155, 0.06862745434045792, 0.0941176488995552]
+      },
+      "rawSourceDifference": {
+        "count": 6,
+        "max": 1,
+        "first": [
+          {
+            "index": 437574,
+            "x": 493,
+            "y": 121,
+            "channel": 2,
+            "a": 46,
+            "b": 47
+          },
+          {
+            "index": 451960,
+            "x": 490,
+            "y": 125,
+            "channel": 0,
+            "a": 208,
+            "b": 207
+          },
+          {
+            "index": 451961,
+            "x": 490,
+            "y": 125,
+            "channel": 1,
+            "a": 198,
+            "b": 197
+          },
+          {
+            "index": 459170,
+            "x": 492,
+            "y": 127,
+            "channel": 2,
+            "a": 112,
+            "b": 113
+          },
+          {
+            "index": 491481,
+            "x": 470,
+            "y": 136,
+            "channel": 1,
+            "a": 169,
+            "b": 170
+          },
+          {
+            "index": 495077,
+            "x": 469,
+            "y": 137,
+            "channel": 1,
+            "a": 154,
+            "b": 153
+          }
+        ]
+      },
+      "measurement": "UV, derivatives and sampled RGB were written to independent RGBA32F attachments in the same actual GPU draw; color writes to those attachments were disabled after that draw. Readback occurred after the captured prefix.",
+      "interpretation": "Finite-difference UV gradients vary despite identical center UV and uploaded geometry. The different sampling footprint changes mip filtering. An analytic triangle Jacobian removes this source of variation.",
+      "limit": "Shader-stage GPU tracing, not a native ISA debugger. No generic Metal driver defect is claimed."
+    },
+    "implementation": [
+      "Compute the affine UV Jacobian from the packed Float32 triangle coordinates, using JS arithmetic before storing the result as Float32.",
+      "Send it as a flat vertex attribute and use textureGrad with the screen-space Jacobian.",
+      "Keep shared vertices and add one provoking vertex per triangle; select FIRST when the extension is available, otherwise LAST.",
+      "Reuse vertex and index capacity; refresh indices when source vertex counts change; release owned geometry and shaders with their source/renderer."
+    ],
+    "regressionTests": [
+      "src/player/rendering/__tests__/pack-gradient-vertices.spec.ts",
+      "src/player/rendering/__tests__/create-gradient-geometry.spec.ts",
+      "src/player/rendering/__tests__/configure-batch-gradients.spec.ts",
+      "visual/__tests__/batch-gradients.integration.tsx",
+      "visual/playback-comparison.mjs"
+    ],
+    "comparisonContract": "The final shader is checked for repeat-render and main-thread/Worker pixel identity. This does not assert byte identity between the old implicit-gradient filter and the intentionally corrected analytic-gradient filter. No pixel tolerance was introduced or increased.",
+    "comparisons": {
+      "final-repeat": {
+        "antialiasing": "ssaa",
+        "referenceComputation": "worker",
+        "artifactHashes": {
+          "after": "c4b7d4538171df29e55f840e43c5499bcc72cb3c4211f381d02a62bf62bc30a7",
+          "before": "c4b7d4538171df29e55f840e43c5499bcc72cb3c4211f381d02a62bf62bc30a7"
+        },
+        "backend": "hardware",
+        "errors": [],
+        "metadata": [
+          {
+            "parts": 852,
+            "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M5 Pro, Unspecified Version)",
+            "rendering": {
+              "antialiasing": "ssaa",
+              "renderer": "webgl"
+            }
+          },
+          {
+            "parts": 852,
+            "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M5 Pro, Unspecified Version)",
+            "rendering": {
+              "antialiasing": "ssaa",
+              "renderer": "webgl"
+            }
+          }
+        ],
+        "model": "/Users/bichi/Downloads/白猫/white-cat-idle-english.poffo",
+        "modelSHA256": "47c98e7473e79ffb249aa1acb5bed9b7d458f35c7c0d3502f281549c20c55035",
+        "passed": true,
+        "results": [
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 700,
+            "maximumDelta": 0,
+            "stage": "defaults",
+            "statuses": ["idle", "idle"],
+            "visiblePixels": 82314,
+            "width": 900,
+            "workerEqual": true
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 700,
+            "maximumDelta": 0,
+            "stage": "controls",
+            "statuses": ["idle", "idle"],
+            "visiblePixels": 82701,
+            "width": 900,
+            "workerEqual": true
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 700,
+            "maximumDelta": 0,
+            "stage": "burst",
+            "statuses": ["idle", "idle"],
+            "visiblePixels": 82599,
+            "width": 900,
+            "workerEqual": true
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 700,
+            "maximumDelta": 0,
+            "stage": "document-edit",
+            "statuses": ["idle", "idle"],
+            "visiblePixels": 82083,
+            "width": 900,
+            "workerEqual": true
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 700,
+            "maximumDelta": 0,
+            "stage": "buffer-off",
+            "statuses": ["disabled", "disabled"],
+            "visiblePixels": 82083,
+            "width": 900,
+            "workerEqual": null
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 700,
+            "maximumDelta": 0,
+            "stage": "buffer-on",
+            "statuses": ["idle", "idle"],
+            "visiblePixels": 82083,
+            "width": 900,
+            "workerEqual": true
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 1400,
+            "maximumDelta": 0,
+            "stage": "resize",
+            "statuses": ["idle", "idle"],
+            "visiblePixels": 319593,
+            "width": 1800,
+            "workerEqual": true
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 1400,
+            "maximumDelta": 0,
+            "stage": "renderer",
+            "statuses": ["idle", "idle"],
+            "visiblePixels": 319593,
+            "width": 1800,
+            "workerEqual": true
+          }
+        ],
+        "workersAfterDestroy": 0
+      },
+      "final-msaa": {
+        "antialiasing": "msaa",
+        "artifactHashes": {
+          "after": "c4b7d4538171df29e55f840e43c5499bcc72cb3c4211f381d02a62bf62bc30a7",
+          "before": "c4b7d4538171df29e55f840e43c5499bcc72cb3c4211f381d02a62bf62bc30a7"
+        },
+        "referenceComputation": "worker",
+        "backend": "hardware",
+        "errors": [],
+        "metadata": [
+          {
+            "parts": 852,
+            "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M5 Pro, Unspecified Version)",
+            "rendering": {
+              "antialiasing": "msaa",
+              "renderer": "webgl"
+            }
+          },
+          {
+            "parts": 852,
+            "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M5 Pro, Unspecified Version)",
+            "rendering": {
+              "antialiasing": "msaa",
+              "renderer": "webgl"
+            }
+          }
+        ],
+        "model": "/Users/bichi/Downloads/白猫/white-cat-idle-english.poffo",
+        "modelSHA256": "47c98e7473e79ffb249aa1acb5bed9b7d458f35c7c0d3502f281549c20c55035",
+        "passed": true,
+        "results": [
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 700,
+            "maximumDelta": 0,
+            "stage": "defaults",
+            "statuses": ["idle", "idle"],
+            "visiblePixels": 82458,
+            "width": 900,
+            "workerEqual": true
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 700,
+            "maximumDelta": 0,
+            "stage": "controls",
+            "statuses": ["idle", "idle"],
+            "visiblePixels": 82820,
+            "width": 900,
+            "workerEqual": true
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 700,
+            "maximumDelta": 0,
+            "stage": "burst",
+            "statuses": ["idle", "idle"],
+            "visiblePixels": 82708,
+            "width": 900,
+            "workerEqual": true
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 700,
+            "maximumDelta": 0,
+            "stage": "document-edit",
+            "statuses": ["idle", "idle"],
+            "visiblePixels": 82197,
+            "width": 900,
+            "workerEqual": true
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 700,
+            "maximumDelta": 0,
+            "stage": "buffer-off",
+            "statuses": ["disabled", "disabled"],
+            "visiblePixels": 82197,
+            "width": 900,
+            "workerEqual": null
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 700,
+            "maximumDelta": 0,
+            "stage": "buffer-on",
+            "statuses": ["idle", "idle"],
+            "visiblePixels": 82197,
+            "width": 900,
+            "workerEqual": true
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 1400,
+            "maximumDelta": 0,
+            "stage": "resize",
+            "statuses": ["idle", "idle"],
+            "visiblePixels": 319630,
+            "width": 1800,
+            "workerEqual": true
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 1400,
+            "maximumDelta": 0,
+            "stage": "renderer",
+            "statuses": ["idle", "idle"],
+            "visiblePixels": 319630,
+            "width": 1800,
+            "workerEqual": true
+          }
+        ],
+        "workersAfterDestroy": 0
+      },
+      "main-worker": {
+        "antialiasing": "ssaa",
+        "artifactHashes": {
+          "after": "c4b7d4538171df29e55f840e43c5499bcc72cb3c4211f381d02a62bf62bc30a7",
+          "before": "c4b7d4538171df29e55f840e43c5499bcc72cb3c4211f381d02a62bf62bc30a7"
+        },
+        "referenceComputation": "main",
+        "backend": "hardware",
+        "errors": [],
+        "metadata": [
+          {
+            "parts": 852,
+            "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M5 Pro, Unspecified Version)",
+            "rendering": {
+              "antialiasing": "ssaa",
+              "renderer": "webgl"
+            }
+          },
+          {
+            "parts": 852,
+            "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M5 Pro, Unspecified Version)",
+            "rendering": {
+              "antialiasing": "ssaa",
+              "renderer": "webgl"
+            }
+          }
+        ],
+        "model": "/Users/bichi/Downloads/白猫/white-cat-idle-english.poffo",
+        "modelSHA256": "47c98e7473e79ffb249aa1acb5bed9b7d458f35c7c0d3502f281549c20c55035",
+        "passed": true,
+        "results": [
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 700,
+            "maximumDelta": 0,
+            "stage": "defaults",
+            "statuses": ["disabled", "idle"],
+            "visiblePixels": 82314,
+            "width": 900,
+            "workerEqual": null
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 700,
+            "maximumDelta": 0,
+            "stage": "controls",
+            "statuses": ["disabled", "idle"],
+            "visiblePixels": 82701,
+            "width": 900,
+            "workerEqual": null
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 700,
+            "maximumDelta": 0,
+            "stage": "burst",
+            "statuses": ["disabled", "idle"],
+            "visiblePixels": 82599,
+            "width": 900,
+            "workerEqual": null
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 700,
+            "maximumDelta": 0,
+            "stage": "document-edit",
+            "statuses": ["disabled", "idle"],
+            "visiblePixels": 82083,
+            "width": 900,
+            "workerEqual": null
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 700,
+            "maximumDelta": 0,
+            "stage": "buffer-off",
+            "statuses": ["disabled", "disabled"],
+            "visiblePixels": 82083,
+            "width": 900,
+            "workerEqual": null
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 700,
+            "maximumDelta": 0,
+            "stage": "buffer-on",
+            "statuses": ["disabled", "idle"],
+            "visiblePixels": 82083,
+            "width": 900,
+            "workerEqual": null
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 1400,
+            "maximumDelta": 0,
+            "stage": "resize",
+            "statuses": ["disabled", "idle"],
+            "visiblePixels": 319593,
+            "width": 1800,
+            "workerEqual": null
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 1400,
+            "maximumDelta": 0,
+            "stage": "renderer",
+            "statuses": ["disabled", "idle"],
+            "visiblePixels": 319593,
+            "width": 1800,
+            "workerEqual": null
+          }
+        ],
+        "workersAfterDestroy": 0
+      },
+      "final-development": {
+        "antialiasing": "ssaa",
+        "artifactHashes": {
+          "after": "c4b7d4538171df29e55f840e43c5499bcc72cb3c4211f381d02a62bf62bc30a7",
+          "before": "c4b7d4538171df29e55f840e43c5499bcc72cb3c4211f381d02a62bf62bc30a7"
+        },
+        "referenceComputation": "worker",
+        "backend": "hardware",
+        "errors": [],
+        "metadata": [
+          {
+            "parts": 122,
+            "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M5 Pro, Unspecified Version)",
+            "rendering": {
+              "antialiasing": "ssaa",
+              "renderer": "webgl"
+            }
+          },
+          {
+            "parts": 122,
+            "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M5 Pro, Unspecified Version)",
+            "rendering": {
+              "antialiasing": "ssaa",
+              "renderer": "webgl"
+            }
+          }
+        ],
+        "model": "packages/puppet/examples/development-model.json",
+        "modelSHA256": "d2ee88f9f8a50273f7919bdd3b52691418a3d0d60e3501609edb7b175e81bfb5",
+        "passed": true,
+        "results": [
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 700,
+            "maximumDelta": 0,
+            "stage": "defaults",
+            "statuses": ["idle", "idle"],
+            "visiblePixels": 111508,
+            "width": 900,
+            "workerEqual": true
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 700,
+            "maximumDelta": 0,
+            "stage": "controls",
+            "statuses": ["idle", "idle"],
+            "visiblePixels": 112111,
+            "width": 900,
+            "workerEqual": true
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 700,
+            "maximumDelta": 0,
+            "stage": "burst",
+            "statuses": ["idle", "idle"],
+            "visiblePixels": 112480,
+            "width": 900,
+            "workerEqual": true
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 700,
+            "maximumDelta": 0,
+            "stage": "document-edit",
+            "statuses": ["idle", "idle"],
+            "visiblePixels": 111310,
+            "width": 900,
+            "workerEqual": true
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 700,
+            "maximumDelta": 0,
+            "stage": "buffer-off",
+            "statuses": ["disabled", "disabled"],
+            "visiblePixels": 111310,
+            "width": 900,
+            "workerEqual": null
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 700,
+            "maximumDelta": 0,
+            "stage": "buffer-on",
+            "statuses": ["idle", "idle"],
+            "visiblePixels": 111310,
+            "width": 900,
+            "workerEqual": true
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 1400,
+            "maximumDelta": 0,
+            "stage": "resize",
+            "statuses": ["idle", "idle"],
+            "visiblePixels": 436961,
+            "width": 1800,
+            "workerEqual": true
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 1400,
+            "maximumDelta": 0,
+            "stage": "renderer",
+            "statuses": ["idle", "idle"],
+            "visiblePixels": 436961,
+            "width": 1800,
+            "workerEqual": true
+          }
+        ],
+        "workersAfterDestroy": 0
+      }
+    },
+    "sourceSHA256": {
+      "packages/puppet/src/player/rendering/configure-batch-gradients.ts": "e8277062609a98d3a8e4c0aff50c6af56ddef2106ecc14550db5bc80005e50a6",
+      "packages/puppet/src/player/rendering/create-gradient-geometry.ts": "b2a042ccf5fbe21fbfa5e0711eff9533feba96581d928608895def64b4cc6976",
+      "packages/puppet/src/player/rendering/create-gradient-shader.ts": "9965c7db34529790ec8c169a4d3e6d8e96e000d310d396e70ec15e7888ad0d72",
+      "packages/puppet/src/player/rendering/pack-gradient-vertices.ts": "93cfbec94dc364c6aab4ec8241bc23dd8fafdb231dea5336a3ea4e437a99c4f4"
+    },
+    "performance": {
+      "protocol": "ABBA; one browser at a time; same WhiteCat; Worker; SSAA; resolution 1; CPU rate 1; 2 s warmup + 10 s measurement; two samples per version.",
+      "runs": [
+        {
+          "variant": "before",
+          "sample": {
+            "computation": "worker",
+            "cpu": 1,
+            "run": 1,
+            "buffering": {
+              "enabled": true,
+              "framesAhead": 3,
+              "status": "active"
+            },
+            "canvasSize": {
+              "height": 700,
+              "width": 900
+            },
+            "chains": 25,
+            "hardwareConcurrency": 15,
+            "motion": "Idle:0",
+            "parameters": 265,
+            "parts": 852,
+            "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+            "vertices": 34452,
+            "duration": 10000,
+            "errors": [],
+            "frameP95": 9.100000000000364,
+            "observedModelFPS": 79.5,
+            "rafFPS": 120,
+            "updatedFPS": 79.5,
+            "heapBytes": 173444636,
+            "scriptSeconds": 3.3690180000000005,
+            "taskSeconds": 3.655714
+          }
+        },
+        {
+          "variant": "after",
+          "sample": {
+            "computation": "worker",
+            "cpu": 1,
+            "run": 1,
+            "buffering": {
+              "enabled": true,
+              "framesAhead": 3,
+              "status": "active"
+            },
+            "canvasSize": {
+              "height": 700,
+              "width": 900
+            },
+            "chains": 25,
+            "hardwareConcurrency": 15,
+            "motion": "Idle:0",
+            "parameters": 265,
+            "parts": 852,
+            "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+            "vertices": 34452,
+            "duration": 10006.5,
+            "errors": [],
+            "frameP95": 9.5,
+            "observedModelFPS": 78.14920301803828,
+            "rafFPS": 120.02198570928896,
+            "updatedFPS": 78.14920301803828,
+            "heapBytes": 235740356,
+            "scriptSeconds": 3.9070739999999997,
+            "taskSeconds": 4.179233
+          }
+        },
+        {
+          "variant": "after",
+          "sample": {
+            "computation": "worker",
+            "cpu": 1,
+            "run": 1,
+            "buffering": {
+              "enabled": true,
+              "framesAhead": 3,
+              "status": "active"
+            },
+            "canvasSize": {
+              "height": 700,
+              "width": 900
+            },
+            "chains": 25,
+            "hardwareConcurrency": 15,
+            "motion": "Idle:0",
+            "parameters": 265,
+            "parts": 852,
+            "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+            "vertices": 34452,
+            "duration": 10008.2,
+            "errors": [],
+            "frameP95": 9.700000000000728,
+            "observedModelFPS": 79.03519114326252,
+            "rafFPS": 120.00159868907495,
+            "updatedFPS": 79.03519114326252,
+            "heapBytes": 278471284,
+            "scriptSeconds": 3.915483,
+            "taskSeconds": 4.179930000000001
+          }
+        },
+        {
+          "variant": "before",
+          "sample": {
+            "computation": "worker",
+            "cpu": 1,
+            "run": 1,
+            "buffering": {
+              "enabled": true,
+              "framesAhead": 3,
+              "status": "active"
+            },
+            "canvasSize": {
+              "height": 700,
+              "width": 900
+            },
+            "chains": 25,
+            "hardwareConcurrency": 15,
+            "motion": "Idle:0",
+            "parameters": 265,
+            "parts": 852,
+            "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+            "vertices": 34452,
+            "duration": 10008.3,
+            "errors": [],
+            "frameP95": 8.699999999998909,
+            "observedModelFPS": 78.83456730913342,
+            "rafFPS": 120.00039966827534,
+            "updatedFPS": 78.83456730913342,
+            "heapBytes": 171589100,
+            "scriptSeconds": 3.2696069999999997,
+            "taskSeconds": 3.54373
+          }
+        }
+      ],
+      "meanObservedModelFPS": {
+        "before": 79.16728365456672,
+        "after": 78.59219708065041
+      },
+      "relativeFpsChangePercent": -0.726419484626506,
+      "meanMainThreadScriptSecondsPer10SecondSample": {
+        "before": 3.3193125,
+        "after": 3.9112785
+      },
+      "interpretation": "Mean FPS changed by about -0.7%; two samples do not establish a universal performance difference. Main-thread script work increased. The first fully expanded prototype measured about -6.1% in a separate ABBA run and was replaced with shared vertices. Absolute FPS between those measurement periods is not compared.",
+      "memory": "Extra packed geometry is bounded by source vertex count plus one vertex per triangle. CPU arrays and GPU buffers are reused until capacity grows. Raw JS heap samples include GC timing and do not measure retained-memory growth.",
+      "notTested": "Low-end GPU performance and long-duration heap retention."
+    }
+  },
+  "remainingOutcome": {
+    "status": "resolved in the tested Metal environment",
+    "differentChannels": 0,
+    "maximumDelta": 0,
+    "stagesPerComparison": 8,
+    "comparisons": ["final-repeat", "final-msaa", "main-worker", "final-development"],
+    "referenceContract": "The final shader is checked for repeat-render and main-thread/Worker pixel identity. This does not assert byte identity between the old implicit-gradient filter and the intentionally corrected analytic-gradient filter. No pixel tolerance was introduced or increased."
+  },
+  "previousSubmissionPerformance": {
+    "status": "measured",
+    "protocol": "Frozen before/after artifacts, ABBA, same local WhiteCat model, Worker, SSAA resolution 1, randomSeed 42, CPU rate 1, warmup 2s and measurement 10s. Callback throughput is not a physical monitor FPS measurement.",
+    "runs": [
+      {
+        "variant": "before",
+        "file": "/private/tmp/puppet-metal-internals/performance-0-before.json",
+        "result": {
+          "computation": "worker",
+          "cpu": 1,
+          "run": 1,
+          "buffering": {
+            "enabled": true,
+            "framesAhead": 3,
+            "status": "active"
+          },
+          "canvasSize": {
+            "height": 700,
+            "width": 900
+          },
+          "chains": 25,
+          "hardwareConcurrency": 15,
+          "motion": "Idle:0",
+          "parameters": 265,
+          "parts": 852,
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+          "vertices": 34452,
+          "duration": 10000,
+          "errors": [],
+          "frameP95": 9.599999999999454,
+          "observedModelFPS": 86.1,
+          "rafFPS": 120,
+          "updatedFPS": 86.2,
+          "heapBytes": 227710592,
+          "scriptSeconds": 3.2591180000000004,
+          "taskSeconds": 3.5258830000000003
+        }
+      },
+      {
+        "variant": "after",
+        "file": "/private/tmp/puppet-metal-internals/performance-1-after.json",
+        "result": {
+          "computation": "worker",
+          "cpu": 1,
+          "run": 1,
+          "buffering": {
+            "enabled": true,
+            "framesAhead": 3,
+            "status": "active"
+          },
+          "canvasSize": {
+            "height": 700,
+            "width": 900
+          },
+          "chains": 25,
+          "hardwareConcurrency": 15,
+          "motion": "Idle:0",
+          "parameters": 265,
+          "parts": 852,
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+          "vertices": 34452,
+          "duration": 10008,
+          "errors": [],
+          "frameP95": 9.899999999999636,
+          "observedModelFPS": 82.83373301358912,
+          "rafFPS": 120.00399680255795,
+          "updatedFPS": 82.93365307753797,
+          "heapBytes": 176419412,
+          "scriptSeconds": 3.217125,
+          "taskSeconds": 3.4925260000000002
+        }
+      },
+      {
+        "variant": "after",
+        "file": "/private/tmp/puppet-metal-internals/performance-2-after.json",
+        "result": {
+          "computation": "worker",
+          "cpu": 1,
+          "run": 1,
+          "buffering": {
+            "enabled": true,
+            "framesAhead": 3,
+            "status": "active"
+          },
+          "canvasSize": {
+            "height": 700,
+            "width": 900
+          },
+          "chains": 25,
+          "hardwareConcurrency": 15,
+          "motion": "Idle:0",
+          "parameters": 265,
+          "parts": 852,
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+          "vertices": 34452,
+          "duration": 10000,
+          "errors": [],
+          "frameP95": 9.5,
+          "observedModelFPS": 82.7,
+          "rafFPS": 120,
+          "updatedFPS": 82.7,
+          "heapBytes": 182642540,
+          "scriptSeconds": 3.3349159999999998,
+          "taskSeconds": 3.608105
+        }
+      },
+      {
+        "variant": "before",
+        "file": "/private/tmp/puppet-metal-internals/performance-3-before.json",
+        "result": {
+          "computation": "worker",
+          "cpu": 1,
+          "run": 1,
+          "buffering": {
+            "enabled": true,
+            "framesAhead": 3,
+            "status": "active"
+          },
+          "canvasSize": {
+            "height": 700,
+            "width": 900
+          },
+          "chains": 25,
+          "hardwareConcurrency": 15,
+          "motion": "Idle:0",
+          "parameters": 265,
+          "parts": 852,
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+          "vertices": 34452,
+          "duration": 10000.099999999999,
+          "errors": [],
+          "frameP95": 9.700000000000728,
+          "observedModelFPS": 81.89918100818993,
+          "rafFPS": 119.9988000119999,
+          "updatedFPS": 81.99918000819993,
+          "heapBytes": 317948068,
+          "scriptSeconds": 3.2669450000000007,
+          "taskSeconds": 3.5287029999999997
+        }
+      }
+    ],
+    "observedModelFPS": {
+      "before": [86.1, 81.89918100818993],
+      "after": [82.83373301358912, 82.7]
+    },
+    "meanObservedModelFPS": {
+      "before": 83.99959050409495,
+      "after": 82.76686650679457
+    },
+    "relativeChangePercent": -1.4675357223798424,
+    "interpretation": "Before mean 84.00 and after mean 82.77 callbacks/s (-1.47%). Two samples per artifact are insufficient to distinguish the change from variability; the before samples range from 81.90 to 86.10. No speed improvement or absence of a performance cost is claimed. rAF measured about 120 Hz; this is not physical display presentation FPS."
+  }
+}
