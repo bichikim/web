@@ -164,6 +164,40 @@ describe('installClientErrorHandlers', () => {
     expect(second.send).not.toHaveBeenCalled()
   })
 
+  it('should retire both old listeners when reporting synchronously replaces the final registration', () => {
+    const second = createReporter()
+    let cleanupFirst: () => void = () => undefined
+    let cleanupSecond: () => void = () => undefined
+    const reporter = {
+      report: () => {
+        cleanupFirst()
+        cleanupSecond = installClientErrorHandlers({reporter: second.reporter})
+        return {deduplicated: false, errorId: 'POMO-FIRST'}
+      },
+    } satisfies ClientErrorReporter
+    cleanupFirst = installClientErrorHandlers({reporter})
+    cleanups.push(cleanupFirst, () => cleanupSecond())
+
+    globalThis.dispatchEvent(new ErrorEvent('error', {error: new Error('replace reporter')}))
+    dispatchRejection(new Error('replacement rejection'))
+    cleanupFirst()
+    globalThis.dispatchEvent(new ErrorEvent('error', {error: new Error('replacement error')}))
+
+    expect(second.send.mock.calls.map(([event]) => event.source)).toEqual([
+      'unhandled-rejection',
+      'global-error',
+    ])
+    cleanupSecond()
+    dispatchRejection(new Error('after final cleanup'))
+    const preventDefault = (event: ErrorEvent) => event.preventDefault()
+    globalThis.addEventListener('error', preventDefault)
+    globalThis.dispatchEvent(
+      new ErrorEvent('error', {cancelable: true, error: new Error('disposed')}),
+    )
+    globalThis.removeEventListener('error', preventDefault)
+    expect(second.send).toHaveBeenCalledTimes(2)
+  })
+
   it('should restore the native reportError function and make cleanup idempotent', () => {
     const previousReportError = vi.fn()
     Object.defineProperty(globalThis, 'reportError', {

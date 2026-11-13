@@ -71,6 +71,7 @@ const createHandlerState = (
 ): ClientErrorHandlerState => {
   const previousReportErrorDescriptor = Object.getOwnPropertyDescriptor(globalThis, 'reportError')
   const previousReportError = readPreviousReportError(previousReportErrorDescriptor)
+  const listeners = new AbortController()
   const handleError = (event: ErrorEvent) => {
     reportSafely(state, getErrorEventValue(event), 'global-error')
   }
@@ -80,10 +81,7 @@ const createHandlerState = (
   const state = {
     previousReportErrorDescriptor,
     registrations: [registration],
-    removeListeners: () => {
-      globalThis.removeEventListener('error', handleError)
-      globalThis.removeEventListener('unhandledrejection', handleRejection)
-    },
+    removeListeners: () => listeners.abort(),
     reportError: (error: unknown) => {
       reportSafely(state, error, 'report-error')
       try {
@@ -94,8 +92,8 @@ const createHandlerState = (
     },
   } satisfies ClientErrorHandlerState
 
-  globalThis.addEventListener('error', handleError)
-  globalThis.addEventListener('unhandledrejection', handleRejection)
+  globalThis.addEventListener('error', handleError, {signal: listeners.signal})
+  globalThis.addEventListener('unhandledrejection', handleRejection, {signal: listeners.signal})
   installReportError(state)
   return state
 }
