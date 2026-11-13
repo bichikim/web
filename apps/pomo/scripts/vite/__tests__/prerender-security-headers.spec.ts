@@ -59,4 +59,43 @@ describe('createInlineContentHashes', () => {
       styleHashes: [createHashSource(style)],
     })
   })
+
+  it.each([
+    {attributes: 'nonce="build" data-value="other"', marked: true},
+    {attributes: 'data-value="other" nonce="build"', marked: true},
+    {attributes: "NoNcE \n=\t'build' disabled", marked: true},
+    {attributes: 'nonce = "" data-value="other"', marked: true},
+    {attributes: 'nonce=build data-value=other', marked: true},
+    {attributes: 'nonce="build" nonce disabled=other', marked: true},
+    {attributes: 'nonce nonce="build" data-value="other"', marked: true},
+    {attributes: 'nonce data-value="other"', marked: false},
+    {attributes: 'data-nonce="build" nonce-like="build"', marked: false},
+  ])('should preserve nonce marking across $attributes', ({attributes, marked}) => {
+    const script = 'window.marked = "한글"'
+    const style = 'body { color: white; }'
+
+    expect(
+      createInlineContentHashes(
+        `<script ${attributes}>${script}</script><style ${attributes}>${style}</style>`,
+      ),
+    ).toEqual({
+      scriptHashes: marked ? [createHashSource(script)] : [],
+      styleHashes: marked ? [createHashSource(style)] : [],
+    })
+  })
+
+  it('should reset attribute tracking between marked and boolean-nonce siblings', () => {
+    const marked = 'window.marked = true'
+    const unmarked = 'window.unmarked = true'
+    const html = [
+      `<script nonce="build" data-value="other">${marked}</script>`,
+      `<script nonce data-value="other">${unmarked}</script>`,
+      `<style data-value="other" nonce>body { color: red; }</style>`,
+    ].join('')
+
+    expect(createInlineContentHashes(html)).toEqual({
+      scriptHashes: [createHashSource(marked)],
+      styleHashes: [],
+    })
+  })
 })

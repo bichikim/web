@@ -12,9 +12,8 @@ export interface InlineContentHashes {
 interface TokenState {
   activeContent: string
   activeName: InlineElementName | undefined
-  attributeEndIndex: number | undefined
-  attributeName: string | undefined
   hasNonceValue: boolean
+  nonceEndIndex: number | undefined
   openingName: InlineElementName | undefined
   readonly scriptContents: Array<string>
   readonly styleContents: Array<string>
@@ -48,21 +47,19 @@ const createTokenConsumer =
     switch (token) {
       case 'START_TAG_NAME': {
         state.openingName = readElementName(html, startIndex, endIndex)
-        state.attributeEndIndex = undefined
-        state.attributeName = undefined
+        state.nonceEndIndex = undefined
         state.hasNonceValue = false
         return
       }
       case 'ATTRIBUTE_NAME': {
-        state.attributeName = html.slice(startIndex, endIndex).toLowerCase()
-        state.attributeEndIndex = endIndex
+        state.nonceEndIndex =
+          html.slice(startIndex, endIndex).toLowerCase() === 'nonce' ? endIndex : undefined
         return
       }
       case 'ATTRIBUTE_VALUE': {
         if (
-          state.attributeName === 'nonce' &&
-          state.attributeEndIndex !== undefined &&
-          html.slice(state.attributeEndIndex, startIndex).includes('=')
+          state.nonceEndIndex !== undefined &&
+          html.slice(state.nonceEndIndex, startIndex).includes('=')
         ) {
           state.hasNonceValue = true
         }
@@ -92,9 +89,8 @@ const readNonceMarkedContents = (html: string): TokenState => {
   const state: TokenState = {
     activeContent: '',
     activeName: undefined,
-    attributeEndIndex: undefined,
-    attributeName: undefined,
     hasNonceValue: false,
+    nonceEndIndex: undefined,
     openingName: undefined,
     scriptContents: [],
     styleContents: [],
