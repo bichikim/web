@@ -1,6 +1,15 @@
 import {expect, it} from 'vitest'
 import {layoutSource, sourceViewport} from '../source-rows'
 
+it('should lay out CR logical lines with their original source offsets', () => {
+  const source = 'first\rnext\r'
+  expect(layoutSource(source, 20, false).map(({from, to, number}) => [from, to, number])).toEqual([
+    [0, 5, 1],
+    [6, 10, 2],
+    [11, 11, 3],
+  ])
+})
+
 it('should wrap long logical lines without breaking graphemes or losing source offsets', () => {
   const source = 'ab한🙂éz\r\nnext\n'
   const rows = layoutSource(source, 4, true)

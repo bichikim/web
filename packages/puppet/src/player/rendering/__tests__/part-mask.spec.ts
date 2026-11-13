@@ -1,6 +1,12 @@
-import {Container, type Renderer, RenderTexture, Sprite} from 'pixi.js'
+import {Container, MeshSimple, type Renderer, RenderTexture, Sprite, Texture} from 'pixi.js'
 import {describe, expect, test, vi} from 'vitest'
-import {getVertexBounds, renderRuntimeMask} from '../part-mask'
+import {
+  createRuntimePartMask,
+  destroyRuntimeMask,
+  getVertexBounds,
+  renderRuntimeMask,
+} from '../part-mask'
+import {createEmptyDocument} from '../../create-empty-document'
 import type {RuntimePartMask} from '../types'
 
 describe('getVertexBounds', () => {
@@ -36,10 +42,18 @@ describe('renderRuntimeMask', () => {
   test('should bound mask allocation to the visible document area as zoom changes', () => {
     const texture = RenderTexture.create({dynamic: true, height: 1, width: 1})
     const sprite = new Sprite(texture)
+    const source = new MeshSimple({
+      indices: new Uint32Array([0, 1, 2]),
+      texture: Texture.WHITE,
+      uvs: new Float32Array([0, 0, 1, 0, 0, 1]),
+      vertices: new Float32Array([0, 0, 6000, 0, 0, 8400]),
+    })
+    const container = new Container()
+    container.addChild(source)
     const render = vi.fn()
     const mask = {
-      container: new Container(),
-      meshes: [],
+      container,
+      meshes: [{mesh: source, sourcePartId: 'source'}],
       sprite,
       texture,
     } as unknown as RuntimePartMask
@@ -64,6 +78,128 @@ describe('renderRuntimeMask', () => {
     expect(render).toHaveBeenCalledTimes(4)
     sprite.destroy()
     texture.destroy(true)
-    mask.container.destroy()
+    mask.container.destroy({children: true})
   })
+})
+
+describe('createRuntimePartMask', () => {
+  test('should keep empty mask sources out of GPU batches', () => {
+    const part = {
+      id: 'auxiliary',
+      mesh: {indices: [], uvs: [0, 0], vertices: [0, 0]},
+      texture: {height: 1, src: '', width: 1},
+    }
+    const source = new MeshSimple({
+      indices: new Uint32Array(),
+      texture: Texture.WHITE,
+      uvs: new Float32Array([0, 0]),
+      vertices: new Float32Array([0, 0]),
+    })
+    const mask = createRuntimePartMask({
+      document: {...createEmptyDocument(), parts: [part]},
+      partById: new Map([
+        [
+          part.id,
+          {
+            mesh: source,
+            partId: part.id,
+            restVertices: part.mesh.vertices,
+            vertices: new Float32Array(part.mesh.vertices),
+          },
+        ],
+      ]),
+      plan: {sources: [{invertedMask: false, partId: part.id}]},
+    })
+    expect(mask.meshes).toHaveLength(1)
+    expect(mask.meshes[0]?.mesh.renderable).toBe(false)
+    destroyRuntimeMask(mask)
+    source.destroy()
+  })
+})
+
+test('should retain a cleared one-pixel target for an empty mask across viewport changes', () => {
+  const part = {
+    id: 'empty',
+    mesh: {indices: [], uvs: [0, 0], vertices: [0, 0]},
+    texture: {height: 1, src: '', width: 1},
+  }
+  const source = new MeshSimple({
+    indices: new Uint32Array(),
+    texture: Texture.WHITE,
+    uvs: new Float32Array([0, 0]),
+    vertices: new Float32Array([0, 0]),
+  })
+  const mask = createRuntimePartMask({
+    document: {...createEmptyDocument(), parts: [part]},
+    partById: new Map([
+      [
+        'empty',
+        {
+          mesh: source,
+          partId: 'empty',
+          restVertices: part.mesh.vertices,
+          vertices: new Float32Array(source.vertices),
+        },
+      ],
+    ]),
+    plan: {sources: [{invertedMask: false, partId: 'empty'}]},
+  })
+  const render = vi.fn()
+  const renderer = {render} as unknown as Renderer
+  for (const resolution of [0.25, 2, 16]) {
+    renderRuntimeMask({mask, renderer, resolution, vertexSets: [[0, 0, 6000, 8400]]})
+  }
+  expect(render).toHaveBeenCalledTimes(1)
+  expect(mask.texture.source.pixelWidth).toBe(1)
+  expect(mask.texture.source.pixelHeight).toBe(1)
+  const other = vi.fn()
+  renderRuntimeMask({
+    mask,
+    renderer: {render: other} as unknown as Renderer,
+    resolution: 1,
+    vertexSets: [[0, 0, 10, 10]],
+  })
+  expect(other).toHaveBeenCalledTimes(1)
+  destroyRuntimeMask(mask)
+  source.destroy()
+})
+
+test('should retain active capacity at one resolution and resize when the resolution changes', () => {
+  const vertices = [0, 0, 100, 0, 0, 100]
+  const part = {
+    id: 'source',
+    mesh: {indices: [0, 1, 2], uvs: [0, 0, 1, 0, 0, 1], vertices},
+    texture: {height: 1, src: '', width: 1},
+  }
+  const source = new MeshSimple({
+    indices: new Uint32Array(part.mesh.indices),
+    texture: Texture.WHITE,
+    uvs: new Float32Array(part.mesh.uvs),
+    vertices: new Float32Array(vertices),
+  })
+  const mask = createRuntimePartMask({
+    document: {...createEmptyDocument(), parts: [part]},
+    partById: new Map([
+      [
+        'source',
+        {
+          mesh: source,
+          partId: 'source',
+          restVertices: vertices,
+          vertices: new Float32Array(source.vertices),
+        },
+      ],
+    ]),
+    plan: {sources: [{invertedMask: false, partId: 'source'}]},
+  })
+  const renderer = {render: vi.fn()} as unknown as Renderer
+  renderRuntimeMask({mask, renderer, resolution: 1, vertexSets: [[0, 0, 100, 100]]})
+  const width = mask.texture.source.pixelWidth
+  renderRuntimeMask({mask, renderer, resolution: 1, vertexSets: [[0, 0, 40, 40]]})
+  expect(mask.texture.source.pixelWidth).toBe(width)
+  renderRuntimeMask({mask, renderer, resolution: 0.5, vertexSets: [[0, 0, 40, 40]]})
+  expect(mask.texture.source.resolution).toBe(0.5)
+  expect(mask.texture.source.pixelWidth).toBeLessThan(width)
+  destroyRuntimeMask(mask)
+  source.destroy()
 })

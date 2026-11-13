@@ -11,7 +11,9 @@ const renderer = vi.hoisted(() => ({
   subscribeFrame: vi.fn(),
   updateDocument: vi.fn(() => true),
 }))
-vi.mock('../rendering', () => ({createPlayerRenderer: vi.fn(async () => renderer)}))
+vi.mock('../rendering/create-player-renderer', () => ({
+  createPlayerRenderer: vi.fn(async () => renderer),
+}))
 
 test('should recompute imported motion frames without accumulating their fade again', async () => {
   const document = prepareDocument({

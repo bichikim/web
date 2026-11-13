@@ -11,7 +11,7 @@ test('should load the recovery list and replace the document only after a succes
     listRecoveries: vi.fn().mockResolvedValue([entry]),
     loadRecovery: vi.fn().mockResolvedValue(document),
   }
-  const onRestore = vi.fn()
+  const onRestore = vi.fn(() => ({changed: true, ok: true as const, revision: 1}))
   const onClose = vi.fn()
   const {result} = renderHook(() => useDocumentRecovery({onClose, onRestore, recovery}))
   await waitFor(() => expect(result.loading()).toBe(false))
@@ -28,7 +28,7 @@ test('should leave the current document open when a recovery is missing or inval
     listRecoveries: vi.fn().mockResolvedValue([]),
     loadRecovery: vi.fn().mockResolvedValueOnce(null).mockRejectedValueOnce(new Error('invalid')),
   }
-  const onRestore = vi.fn()
+  const onRestore = vi.fn(() => ({changed: true, ok: true as const, revision: 1}))
   const onClose = vi.fn()
   const {result} = renderHook(() => useDocumentRecovery({onClose, onRestore, recovery}))
   await result.restore('missing')
@@ -65,7 +65,7 @@ test('should not replace the document after the recovery dialog has been closed'
     listRecoveries: vi.fn().mockResolvedValue([]),
     loadRecovery: vi.fn().mockReturnValue(pending),
   }
-  const onRestore = vi.fn()
+  const onRestore = vi.fn(() => ({changed: true, ok: true as const, revision: 1}))
   const onClose = vi.fn()
   const {result, cleanup} = renderHook(() => useDocumentRecovery({onClose, onRestore, recovery}))
   const restoring = result.restore('previous')
@@ -75,4 +75,35 @@ test('should not replace the document after the recovery dialog has been closed'
   await restoring
   expect(onRestore).not.toHaveBeenCalled()
   expect(onClose).not.toHaveBeenCalled()
+})
+
+test('should keep recovery open when the host rejects the replacement', async () => {
+  const onClose = vi.fn()
+  const onRestore = vi.fn(() => ({error: {code: 'busy' as const}, ok: false as const}))
+  const recovery = {listRecoveries: async () => [], loadRecovery: async () => createDemoDocument()}
+  const {result} = renderHook(() => useDocumentRecovery({onClose, onRestore, recovery}))
+  await result.restore('previous')
+  expect(onRestore).toHaveBeenCalledOnce()
+  expect(onClose).not.toHaveBeenCalled()
+  expect(result.error()).not.toBeNull()
+})
+
+test('should reject a recovery read that belongs to an earlier document revision', async () => {
+  let revision = 0
+  let finish!: (document: ReturnType<typeof createDemoDocument>) => void
+  const pending = new Promise<ReturnType<typeof createDemoDocument>>((resolve) => {
+    finish = resolve
+  })
+  const onRestore = vi.fn(() => ({changed: true, ok: true as const, revision: 1}))
+  const onClose = vi.fn()
+  const recovery = {listRecoveries: async () => [], loadRecovery: () => pending}
+  const options = {onClose, onRestore, recovery, revision: () => revision}
+  const {result} = renderHook(() => useDocumentRecovery(options))
+  const restoring = result.restore('previous')
+  revision += 1
+  finish(createDemoDocument())
+  await restoring
+  expect(onRestore).not.toHaveBeenCalled()
+  expect(onClose).not.toHaveBeenCalled()
+  expect(result.error()).not.toBeNull()
 })

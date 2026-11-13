@@ -2,7 +2,11 @@
 import {renderHook, waitFor} from '@solidjs/testing-library'
 import {beforeEach, expect, it, vi} from 'vitest'
 import {reportClientError} from 'src/features/client-error-reporter'
-import {type BackgroundRepository, type BackgroundSnapshot, DEFAULT_BACKGROUND} from '../model'
+import {
+  type BackgroundRepository,
+  type BackgroundSnapshot,
+  DEFAULT_BACKGROUND,
+} from '@winter-love/wallpaper/model'
 import {getBackgroundRepository} from '../repository'
 import {useBackground} from '../use-background'
 

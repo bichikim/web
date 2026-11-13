@@ -10,7 +10,7 @@ import {
   MAX_PHOTO_BYTES,
   MAX_VIDEO_BYTES,
   type MediaKind,
-} from './model'
+} from '@winter-love/wallpaper/model'
 import {getBackgroundRepository} from './repository'
 import {pickNativeMedia} from './picker'
 

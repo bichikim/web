@@ -19,15 +19,53 @@ export const boundParameterValue = (parameter: PuppetParameter, value: number) =
   return parameter.minimum + (offset < 0 ? offset + span : offset)
 }
 
-/** Repeat ranges of a binding's parameters, for keyform sampling. */
+/** Cubism 모션 표본을 페이드 전에 제한한다. 반복 범위의 양 끝은 그대로 유지한다. */
+export const boundParameterSample = (parameter: PuppetParameter, value: number) => {
+  if (parameter.repeat !== true) {
+    return boundParameterValue(parameter, value)
+  }
+  const {minimum, maximum} = parameter
+  const span = maximum - minimum
+  if (span === 0) {
+    return minimum
+  }
+  if (value < minimum) {
+    return maximum - ((minimum - value) % span)
+  }
+  return value > maximum ? minimum + ((value - maximum) % span) : value
+}
+
+type RepeatRanges = ReadonlyArray<readonly [number, number] | undefined>
+
+const repeatRanges = new WeakMap<
+  ReadonlyArray<PuppetParameter>,
+  WeakMap<ReadonlyArray<string>, RepeatRanges>
+>()
+
+/** Repeat ranges for keyform sampling; immutable definitions and binding IDs share metadata. */
 export const getRepeatRanges = (
   parameterIds: ReadonlyArray<string>,
   parameters: ReadonlyArray<PuppetParameter> | undefined,
-): ReadonlyArray<readonly [number, number] | undefined> =>
-  parameterIds.map((id) => {
+): RepeatRanges => {
+  if (parameters === undefined) {
+    return parameterIds.map(() => undefined)
+  }
+  let byBinding = repeatRanges.get(parameters)
+  if (byBinding === undefined) {
+    byBinding = new WeakMap()
+    repeatRanges.set(parameters, byBinding)
+  }
+  const cached = byBinding.get(parameterIds)
+  if (cached !== undefined) {
+    return cached
+  }
+  const ranges = parameterIds.map((id): readonly [number, number] | undefined => {
     const parameter = parameters?.find((candidate) => candidate.id === id)
     return parameter?.repeat === true ? [parameter.minimum, parameter.maximum] : undefined
   })
+  byBinding.set(parameterIds, ranges)
+  return ranges
+}
 
 export const resolveParameterValue = (parameter: PuppetParameter, value: number | undefined) => {
   const finiteValue =

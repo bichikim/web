@@ -10,7 +10,7 @@ import type {
 } from '../player/document'
 import {transformCurvePoint} from './curve'
 import {sampleDeformerSurface} from './internal/surface'
-import {sampleWarpGrid} from './sample-warp-grid'
+import {sampleWarpGrid, sampleWeightedWarpGrid} from './sample-warp-grid'
 
 const bindingMatches = new WeakMap<PuppetSceneDeformerNode, boolean>()
 
@@ -90,6 +90,15 @@ export const transformDeformerPoint = (
   const weight = getVertexInfluence(node, vertex)
   if (weight === 0) {
     return point
+  }
+  if (
+    node.binding === undefined &&
+    node.pins === undefined &&
+    node.boneRestPoints === undefined &&
+    node.curveAxis === undefined &&
+    node.interpolation !== undefined
+  ) {
+    return sampleWeightedWarpGrid(node, point, weight)
   }
   const transformed = transformUnweightedPoint(node, point, vertex)
   return {

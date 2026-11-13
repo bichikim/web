@@ -1,0 +1,80 @@
+name: Release Poffo Production
+
+on:
+  workflow_dispatch:
+
+run-name: Release Poffo Production from ${{ github.ref_name }} at ${{ github.sha }}
+
+permissions:
+  contents: read
+
+env:
+  VERCEL_ORG_ID: team_Ic8YKQ9jWkFLhVzeljhB4ZLV
+  VERCEL_PROJECT_ID: prj_Z4eAdSeyU1sCn9rx0fGOjCWFj8EK
+  VERCEL_CLI_VERSION: 59.5.0
+
+jobs:
+  deploy:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    concurrency:
+      group: poffo-production
+      cancel-in-progress: false
+    environment:
+      name: Production – poffo
+      url: ${{ steps.deploy.outputs.url }}
+    steps:
+      - name: Validate release source
+        run: |
+          test "${GITHUB_REF}" = "refs/heads/main" || {
+            echo "::error::Select the main branch for production deployment."
+            exit 1
+          }
+      - uses: actions/checkout@v5
+      - name: Verify source and document contracts
+        uses: ./.github/actions/poffo/verify
+      - name: Pull production settings
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: >-
+          pnpm dlx vercel@${VERCEL_CLI_VERSION} pull --yes --environment=production
+          --local-config=apps/poffo/vercel.json --token="$VERCEL_TOKEN"
+      - name: Build production deployment artifact
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: >-
+          pnpm dlx vercel@${VERCEL_CLI_VERSION} build --prod
+          --local-config=apps/poffo/vercel.json --token="$VERCEL_TOKEN"
+      - name: Verify build UI and assets
+        uses: ./.github/actions/poffo/browser
+        with:
+          vercel-output: 'true'
+      - name: Deploy verified artifact without assigning production domains
+        id: deploy
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          deployment_url="$(pnpm dlx vercel@${VERCEL_CLI_VERSION} deploy \
+            --prebuilt --prod --skip-domain --yes --local-config=apps/poffo/vercel.json \
+            --token="$VERCEL_TOKEN" --meta githubCommitSha="$GITHUB_SHA" \
+            --meta githubCommitRef="$GITHUB_REF_NAME")"
+          echo "url=${deployment_url}" >> "$GITHUB_OUTPUT"
+          echo "Source commit: ${GITHUB_SHA}" >> "$GITHUB_STEP_SUMMARY"
+          echo "Deployment: ${deployment_url}" >> "$GITHUB_STEP_SUMMARY"
+      - name: Check deployment routes and promote
+        env:
+          DEPLOYMENT_URL: ${{ steps.deploy.outputs.url }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          for path in /editor /studio /viewer /converter /tracking/worker.js /tracking/vendor/vision_wasm_internal.wasm; do
+            pnpm dlx vercel@${VERCEL_CLI_VERSION} curl "$path" --deployment="$DEPLOYMENT_URL" \
+              --token="$VERCEL_TOKEN" -- --fail --silent --show-error --max-time 30 --output /dev/null
+          done
+          pnpm dlx vercel@${VERCEL_CLI_VERSION} promote "$DEPLOYMENT_URL" --yes --token="$VERCEL_TOKEN"
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: poffo-production-browser-diagnostics
+          path: apps/poffo/test-results
+          if-no-files-found: ignore

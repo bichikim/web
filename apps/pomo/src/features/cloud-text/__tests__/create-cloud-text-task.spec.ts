@@ -22,6 +22,20 @@ beforeEach(() => {
   vi.resetAllMocks()
 })
 
+it.each([{temperature: undefined}, {temperature: 0.2}])(
+  'should forward only an explicitly requested sampling temperature: $temperature',
+  async ({temperature}) => {
+    vi.mocked(requestCloudText).mockResolvedValue(response)
+    await createCloudTextTask().generate({...options(), temperature})
+    const request = vi.mocked(requestCloudText).mock.calls[0]![0]
+    if (temperature === undefined) {
+      expect(request).not.toHaveProperty('temperature')
+    } else {
+      expect(request).toHaveProperty('temperature', temperature)
+    }
+  },
+)
+
 it('should issue one request while an action is active and complete with its server result', async () => {
   const deferred = createDeferred<CloudTextResponse>()
   vi.mocked(requestCloudText).mockReturnValue(deferred.promise)

@@ -5,7 +5,11 @@ import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 import type {EntryPlaybackController} from '../../entry-playback-controller'
 import type {EventDialogueIds, EventPlaybackModes} from '../../event-context'
 import type {PDialogueRepository} from '../../repository'
-import {createEntryEventPlayback, type EntryPlaybackSessionStorage} from '../entry-playback'
+import {
+  createEntryEventPlayback,
+  type CreateEntryEventPlaybackOptions,
+  type EntryPlaybackSessionStorage,
+} from '../entry-playback'
 
 const ENTRY_DIALOGUE_IDS: EventDialogueIds = {'room-enter': ['dialogue']}
 const ENTRY_PLAYBACK_MODES: EventPlaybackModes = {'room-enter': 'sequential-all'}
@@ -15,13 +19,13 @@ const createPlayback = () => {
   const playSequence = vi.fn<EntryPlaybackController['playSequence']>()
 
   return {
-    playback: {playSequence} as unknown as EntryPlaybackController,
+    playback: {playSequence} satisfies CreateEntryEventPlaybackOptions['playback'],
     playSequence,
   }
 }
 
 const createEntryPlayback = (
-  playback: EntryPlaybackController,
+  playback: CreateEntryEventPlaybackOptions['playback'],
   onEvent: () => void = vi.fn(),
   sessionStorage?: EntryPlaybackSessionStorage,
 ) =>

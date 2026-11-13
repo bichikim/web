@@ -37,15 +37,12 @@ it.each(['web', 'apps-in-toss', 'desktop', 'android', 'ios'] as const)(
   },
 )
 
-it('should use shared routes and development assets without a static preset when serving', () => {
+it('should use shared routes and font assets without a static preset when serving', () => {
   const config = createNitroConfig({...options, command: 'serve', target: 'ios'})
   expect(config.preset).toBeUndefined()
   expect(config.prerender.routes).toEqual(['/shared'])
   expect(config.prerender.failOnError).toBe(true)
-  expect(config.publicAssets).toEqual([
-    {baseURL: '/', dir: './dev-public', maxAge: 0},
-    options.fontAsset,
-  ])
+  expect(config.publicAssets).toEqual([options.fontAsset])
 })
 
 it('should emit a dedicated 300-second queue trigger only for the web backend', () => {

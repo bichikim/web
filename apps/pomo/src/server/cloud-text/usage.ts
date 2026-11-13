@@ -1,6 +1,6 @@
 import {and, eq, gt, inArray, isNotNull, isNull, or} from 'drizzle-orm'
 import {CLOUD_TEXT_DAILY_LIMIT, type CloudTextUsage} from 'src/features/cloud-text/contracts'
-import {cloudTextRequests} from '../database'
+import {cloudTextRequests} from '../database/schema/cloud-text'
 import {getCloudTextDay} from './day'
 
 /** 완료된 생성, 차감된 취소, 유효한 예약을 일일 사용량에 포함한다. */

@@ -1,3 +1,4 @@
+import {preventInternalDismiss} from '../../design-system/prevent-internal-dismiss'
 import {DropdownMenu} from '@kobalte/core/dropdown-menu'
 import {useEditorPortalMount} from '../../design-system'
 import {For} from 'solid-js'
@@ -26,6 +27,8 @@ const kinds: ReadonlyArray<{value: SceneContainerConversionTarget; label: string
   {label: '핀 디포머', value: 'pin'},
 ]
 export const ContainerKindSelect = (props: ContainerKindSelectProps) => {
+  let surface: HTMLDivElement | undefined
+
   const mount = useEditorPortalMount()
   const change = (value: string) => {
     const kind = kinds.find((kind) => kind.value === value)
@@ -60,7 +63,14 @@ export const ContainerKindSelect = (props: ContainerKindSelectProps) => {
         <span aria-hidden="true" class="kind-chevron puppet-icon puppet-icon-chevron-down" />
       </DropdownMenu.Trigger>
       <DropdownMenu.Portal mount={mount}>
-        <DropdownMenu.Content class="kind-menu" aria-label="레이어 종류">
+        <DropdownMenu.Content
+          ref={(element) => {
+            surface = element
+          }}
+          onInteractOutside={(event) => preventInternalDismiss(event, surface)}
+          class="kind-menu"
+          aria-label="레이어 종류"
+        >
           <DropdownMenu.Group>
             <DropdownMenu.GroupLabel class="kind-menu-heading">레이어 종류</DropdownMenu.GroupLabel>
             <DropdownMenu.RadioGroup value={getContainerKind(props.node)} onChange={change}>

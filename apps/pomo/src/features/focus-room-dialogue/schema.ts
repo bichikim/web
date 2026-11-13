@@ -1,13 +1,9 @@
 import {z} from 'zod'
 
 import {P_VISEMES} from '../lip-sync'
-import {
-  isSupertonicVoiceId,
-  SUPERTONIC_LANGUAGES,
-  type SupertonicLanguage,
-  type SupertonicVoiceId,
-} from '../supertonic'
-import {SUPERTONIC_MODEL_IDS} from '../supertonic/model'
+import {isSupertonicVoiceId} from '../supertonic'
+import {SUPERTONIC_LANGUAGES, type SupertonicLanguage} from '@winter-love/supertonic/language'
+import {SUPERTONIC_MODEL_IDS, type SupertonicVoiceId} from '@winter-love/supertonic/model'
 import {MOOD_MODIFIER_IDS, PRIMARY_MOOD_IDS} from '../text-mood/labels'
 
 export const DEFAULT_FOCUS_ROOM_DIALOGUE_LANGUAGE = 'ko' satisfies SupertonicLanguage

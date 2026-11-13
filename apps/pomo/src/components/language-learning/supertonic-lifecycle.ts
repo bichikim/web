@@ -4,9 +4,9 @@ import {
   createSupertonicClient,
   type InitializeSupertonicOptions,
   type SupertonicClient,
-  type SupertonicError,
-  type SupertonicModelId,
 } from '../../features/supertonic'
+import {type SupertonicError} from '@winter-love/supertonic/errors'
+import {type SupertonicModelId} from '@winter-love/supertonic/model'
 
 interface CancelledLanguageLearningSupertonicRun {
   readonly status: 'cancelled'

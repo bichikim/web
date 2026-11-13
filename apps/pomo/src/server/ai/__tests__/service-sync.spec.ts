@@ -15,7 +15,7 @@ const createDependencies = () =>
       requeueAiJobForRunnerRecovery: vi.fn(),
       updateAiJobProgress: vi.fn(),
     },
-    retrieveLunaTextJob: vi.fn(),
+    retrieveLunaTextJob: vi.fn<AiJobSynchronizerDependencies['retrieveLunaTextJob']>(),
   }) satisfies AiJobSynchronizerDependencies
 
 it.each(['before', 'at'] as const)(
@@ -25,7 +25,11 @@ it.each(['before', 'at'] as const)(
     const job = createJob({runnerJobId: 'openai:response-1', status: 'running'})
     const now = new Date(job.timeoutAt.getTime() - (boundary === 'before' ? 1 : 0))
     const expired = createJob({status: 'timed_out'})
-    dependencies.retrieveLunaTextJob.mockResolvedValue({output_text: 'done', status: 'completed'})
+    dependencies.retrieveLunaTextJob.mockResolvedValue({
+      error: null,
+      output_text: 'done',
+      status: 'completed',
+    })
     dependencies.repository.finalizeAiJob.mockResolvedValue(createJob({status: 'succeeded'}))
     dependencies.expireAiProviderJob.mockResolvedValue(expired)
     await createAiJobSynchronizer({...dependencies, clock: () => now}).synchronizeOpenAiJob(job)
@@ -48,7 +52,7 @@ it('should recheck the injected clock after an awaited provider retrieval', asyn
   let now = NOW
   dependencies.retrieveLunaTextJob.mockImplementation(async () => {
     now = job.timeoutAt
-    return {output_text: 'late', status: 'completed'}
+    return {error: null, output_text: 'late', status: 'completed'}
   })
   dependencies.expireAiProviderJob.mockResolvedValue(createJob({status: 'timed_out'}))
   await createAiJobSynchronizer({...dependencies, clock: () => now}).synchronizeRunningJob(job)

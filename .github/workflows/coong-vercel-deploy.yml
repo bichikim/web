@@ -1,4 +1,4 @@
-name: Release Coong
+name: Release Coong Production
 
 on:
   workflow_dispatch:

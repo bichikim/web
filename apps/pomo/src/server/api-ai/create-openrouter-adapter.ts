@@ -27,6 +27,7 @@ export const createOpenRouterAdapter = (
       model: typeof body.model === 'string' ? body.model : (provider.models['cloud-text'] ?? ''),
       store: false,
       stream: false,
+      temperature: typeof body.temperature === 'number' ? body.temperature : undefined,
     })
     if (response.status === 'queued' || response.status === 'in_progress') {
       throw new TypeError('OpenRouter must return a terminal response')

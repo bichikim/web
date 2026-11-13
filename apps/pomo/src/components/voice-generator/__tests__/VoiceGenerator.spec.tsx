@@ -4,9 +4,9 @@ import {fireEvent, render, screen, waitFor} from '@solidjs/testing-library'
 import {createSignal} from 'solid-js'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 
+import {parseSupertonicVoiceStyle} from '@winter-love/supertonic/voice-style'
+import {type SupertonicVoiceId} from '@winter-love/supertonic/model'
 import {
-  parseSupertonicVoiceStyle,
-  type SupertonicVoiceId,
   type SupertonicVoiceLabController,
   useSupertonicVoiceLab,
 } from '../../../features/supertonic'
@@ -18,13 +18,13 @@ import {VoiceFields} from '../Fields'
 import {VoiceHeader} from '../Header'
 import {ModelPicker} from '../ModelPicker'
 
-vi.mock('../../../features/supertonic', () => ({
-  parseSupertonicVoiceStyle: vi.fn(),
+vi.mock('../../../features/supertonic', () => ({useSupertonicVoiceLab: vi.fn()}))
+vi.mock('@winter-love/supertonic/voice-style', () => ({parseSupertonicVoiceStyle: vi.fn()}))
+vi.mock('@winter-love/supertonic/model', () => ({
   SUPERTONIC_VOICES: [
     {id: 'Yuna', label: 'Yuna'},
     {id: 'F1', label: 'Sarah'},
   ],
-  useSupertonicVoiceLab: vi.fn(),
 }))
 vi.mock('../Actions', () => ({VoiceActions: vi.fn()}))
 vi.mock('../AudioChunks', () => ({AudioChunks: vi.fn()}))

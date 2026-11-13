@@ -16,7 +16,7 @@ if (values['da3-source'] === undefined) {
 }
 
 const root = fileURLToPath(new URL('../../../', import.meta.url))
-const cardsDirectory = path.join(root, 'src/features/tarot/assets/illustrations')
+const cardsDirectory = path.join(root, 'asset-library/tarot-source/illustrations')
 const sourceDirectory = path.join(root, 'asset-library/tarot-source/depth')
 const runtimeDirectory = path.join(root, 'src/features/tarot/assets/depth')
 const CARD_COUNT = 78

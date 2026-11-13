@@ -1,23 +1,35 @@
+import {createRenderLoop} from './create-render-loop'
+import type {ComputedRenderFrame} from '../internal/compute-render-frame'
 import type {PlayerViewCamera} from '../view-camera'
+import type {PlayerRenderingInfo, PlayerRenderingOptions} from '../rendering-options'
 import 'pixi.js/unsafe-eval'
-import {Application, Container, UPDATE_PRIORITY} from 'pixi.js'
+import {Application, Container, RendererType, UPDATE_PRIORITY, type WebGLRenderer} from 'pixi.js'
 import type {PuppetParameterValueMap} from '../../deformation'
 import type {PuppetDocument} from '../document'
 import type {MotionMix} from '../playback'
 import {canReuseLayerResources, canReusePartResources} from '../internal/render-plan'
-import {layoutPlayerRoot, type PuppetFraming} from '../internal/layout-player-root'
+import {layoutPlayerRoot, type PuppetFit, type PuppetFraming} from '../internal/layout-player-root'
 import type {RenderOverrides} from '../internal/render-overrides'
+import {createNativeDeformation} from '../internal/create-native-deformation'
 import {applyRenderFrame} from './apply-render-frame'
 import {replaceBackBufferPresentation} from './back-buffer-presentation'
 import {documentUsesBackdropBlend} from './part-blend-filter'
 import {initializeRuntimeParts} from './initialize-runtime-parts'
-import {destroyRuntimeMask, renderRuntimeMask} from './part-mask'
+import {destroyRuntimeMask} from './part-mask'
+import {renderMaskGroups} from './render-mask-groups'
+import {configureBackdropCopies} from './backdrop-copies'
+import {configureResolvedTargets} from './resolved-targets'
+import {configureFilterResolves} from './filter-resolves'
+import {configureBatchGradients} from './configure-batch-gradients'
 import type {RuntimeLayer, RuntimePart} from './types'
 
 const MINIMUM_MASK_RESOLUTION = 0.01
 const MILLISECONDS_PER_SECOND = 1000
 
-interface CreatePlayerRendererOptions {
+export interface CreatePlayerRendererOptions extends PlayerRenderingOptions {
+  /** Uniform sizing within the screen; omitted to show the whole framed rectangle. */
+  readonly fit?: PuppetFit
+  readonly externalRendering?: () => boolean
   readonly canvas: HTMLCanvasElement
   readonly document: PuppetDocument
   readonly onAfterRender?: () => void
@@ -28,7 +40,26 @@ interface CreatePlayerRendererOptions {
   readonly viewportPadding?: number
 }
 
+const getRendererPreference = (options: CreatePlayerRendererOptions): Array<'webgl' | 'webgpu'> => {
+  switch (options.renderer) {
+    case undefined:
+      return options.onAfterRender === undefined ? ['webgl', 'webgpu'] : ['webgl']
+    case 'auto':
+      return ['webgl', 'webgpu']
+    case 'webgl':
+      return ['webgl']
+    case 'webgpu':
+      return ['webgpu']
+    default: {
+      const exhaustive: never = options.renderer
+      throw new Error(`Unknown renderer preference: ${exhaustive}`)
+    }
+  }
+}
+
 export interface PlayerRenderer {
+  /** Borrows a computed frame for this call; copies its vertices into owned GPU geometry. */
+  applyPreparedFrame(frame: ComputedRenderFrame): void
   applyFrame(
     mix: MotionMix,
     parameterValues: PuppetParameterValueMap,
@@ -40,14 +71,17 @@ export interface PlayerRenderer {
   getPaintOrder(): ReadonlyArray<string>
   /** Deformed vertices of the last applied frame in document coordinates. */
   getPartVertices(partId: string): ArrayLike<number> | undefined
+  getRenderingInfo(): PlayerRenderingInfo
   /** Converts canvas CSS pixels to document coordinates. */
   toDocumentPoint(point: {readonly x: number; readonly y: number}): {x: number; y: number}
   redraw(): void
-  resize(): void
+  resize(resolution?: number): void
+  setFit(fit: PuppetFit): void
   setViewCamera(camera: PlayerViewCamera): void
   setRunning(running: boolean): void
   subscribeFrame(onFrame: (deltaTime: number) => void): void
-  updateDocument(document: PuppetDocument): boolean
+  /** Defers compatible geometry changes until the next applied frame when requested. */
+  updateDocument(document: PuppetDocument, deferred?: boolean): boolean
 }
 
 interface RenderPartMasksOptions {
@@ -61,7 +95,7 @@ interface RenderPartMasksOptions {
 /** Masks of visible parts and layers with the vertex arrays that bound them. */
 const visibleMasks = (options: RenderPartMasksOptions) => [
   ...[...options.partById.values()].flatMap((part) =>
-    part.mask !== undefined && part.mesh.visible
+    part.mask !== undefined && part.mesh.visible && part.mesh.renderable && part.mesh.alpha > 0
       ? [{mask: part.mask, vertexSets: [part.vertices]}]
       : [],
   ),
@@ -95,33 +129,40 @@ const renderPartMasks = (options: RenderPartMasksOptions) => {
     y: -root.position.y / zoom,
   }
   const resolution = Math.max(MINIMUM_MASK_RESOLUTION, application.renderer.resolution * zoom)
-  let stateReset = false
-  for (const {mask, vertexSets} of masks) {
-    if (!stateReset && options.externalRendering) {
-      // External drawing can change the shared WebGL state before this mask pass.
-      options.application.renderer.resetState()
-      stateReset = true
-    }
-    renderRuntimeMask({mask, renderer: application.renderer, resolution, vertexSets, viewport})
+  if (options.externalRendering) {
+    // External drawing can change the shared WebGL state before the mask passes.
+    application.renderer.resetState()
   }
+  renderMaskGroups({renderer: application.renderer, requests: masks, resolution, viewport})
 }
 
 const createApplication = async (options: CreatePlayerRendererOptions) => {
   const application = new Application()
   const resizeTarget = options.resizeTo ?? options.canvas.parentElement
   await application.init({
-    antialias: true,
+    antialias: options.antialiasing !== 'ssaa',
     autoDensity: true,
     backgroundAlpha: 0,
     canvas: options.canvas,
     height: options.document.viewport.height,
-    ...(options.onAfterRender === undefined ? {} : {preference: 'webgl' as const}),
+    preference: getRendererPreference(options),
     resolution: options.resolution ?? Math.min(window.devicePixelRatio, 2),
     // WebGL reads the drawn scene for backdrop blending only through a back buffer.
     useBackBuffer: documentUsesBackdropBlend(options.document),
     width: options.document.viewport.width,
     ...(resizeTarget === null ? {} : {resizeTo: resizeTarget}),
   })
+  if (documentUsesBackdropBlend(options.document)) {
+    configureBackdropCopies(application.renderer.filter)
+  }
+  if (
+    application.renderer?.type !== undefined &&
+    application.renderer.type === RendererType.WEBGL
+  ) {
+    configureResolvedTargets(application.renderer as WebGLRenderer)
+    configureFilterResolves(application.renderer as WebGLRenderer)
+    configureBatchGradients(application.renderer as WebGLRenderer)
+  }
   const presentation = replaceBackBufferPresentation(
     (application.renderer as {backBuffer?: unknown} | undefined)?.backBuffer,
   )
@@ -129,6 +170,13 @@ const createApplication = async (options: CreatePlayerRendererOptions) => {
     console.warn('Puppet player could not replace the PixiJS back buffer presentation.')
   }
   return application
+}
+
+const resizeApplication = (application: Application, resolution?: number) => {
+  if (resolution !== undefined && application.renderer.resolution !== resolution) {
+    application.renderer.resolution = resolution
+  }
+  application.resize()
 }
 
 /** Releases the masks and filters of parts and offscreen layers. */
@@ -142,6 +190,23 @@ const destroyRuntimeFilters = (items: ReadonlyArray<RuntimeLayer | RuntimePart>)
   }
 }
 
+const updatePartGeometry = (
+  document: PuppetDocument,
+  partById: ReadonlyMap<string, RuntimePart>,
+) => {
+  for (const part of document.parts) {
+    const runtimePart = partById.get(part.id)
+    if (runtimePart !== undefined) {
+      runtimePart.restVertices = part.mesh.vertices
+      runtimePart.vertices = new Float32Array(runtimePart.restVertices)
+      runtimePart.mesh.geometry.positions = runtimePart.vertices
+      runtimePart.mesh.geometry.uvs = new Float32Array(part.mesh.uvs)
+      runtimePart.mesh.geometry.indices = new Uint32Array(part.mesh.indices)
+    }
+  }
+}
+
+// eslint-disable-next-line max-lines-per-function -- Owns one GPU resource lifetime.
 export const createPlayerRenderer = async (
   options: CreatePlayerRendererOptions,
 ): Promise<PlayerRenderer> => {
@@ -150,76 +215,140 @@ export const createPlayerRenderer = async (
   const partById = new Map<string, RuntimePart>()
   const layerById = new Map<string, RuntimeLayer>()
   let {document} = options
+  let fit = options.fit ?? 'contain'
+  let pendingDocument: PuppetDocument | undefined
+  let native = createNativeDeformation(document)
   let camera: PlayerViewCamera | undefined
   let paintOrder: ReadonlyArray<string> = []
   let destroyed = false
   let running = true
+  let masksDirty = false
+  const restoreContext = () => {
+    // Restored render textures have storage again, but their mask pixels were lost.
+    masksDirty = true
+    redraw()
+  }
   const destroy = () => {
     if (destroyed) {
       return
     }
     destroyed = true
+    options.canvas.removeEventListener('webglcontextrestored', restoreContext)
+    native = undefined
     destroyRuntimeFilters([...partById.values(), ...layerById.values()])
+    for (const {mesh} of partById.values()) {
+      // Mask-only parts never enter the display tree destroyed by Application.
+      if (mesh.parent === null) {
+        mesh.destroy({texture: true, textureSource: true})
+      }
+    }
     application.destroy(
       {removeView: false},
       {children: true, context: false, texture: true, textureSource: true},
     )
   }
   try {
-    await initializeRuntimeParts({document, layerById, partById, root})
+    await initializeRuntimeParts({
+      antialias: options.antialiasing !== 'ssaa',
+      document,
+      layerById,
+      partById,
+      root,
+    })
     application.stage.addChild(root)
   } catch (error) {
     destroy()
     throw new Error('Puppet player resource initialization failed', {cause: error})
   }
+  const commitDocument = (nextDocument: PuppetDocument) => {
+    document = nextDocument
+    pendingDocument = undefined
+    native = createNativeDeformation(document)
+    updatePartGeometry(document, partById)
+  }
+  const commitPending = () => {
+    if (pendingDocument !== undefined) {
+      commitDocument(pendingDocument)
+    }
+  }
   const layoutRoot = () =>
     layoutPlayerRoot({
       camera,
       document,
+      fit,
       framing: options.framing,
       root,
       screen: application.screen,
       viewportPadding: options.viewportPadding,
     })
-  const renderMasks = () =>
+  const externalRendering = () =>
+    options.externalRendering?.() ?? options.onAfterRender !== undefined
+  const renderMasks = () => {
     renderPartMasks({
       application,
-      externalRendering: options.onAfterRender !== undefined,
+      externalRendering: externalRendering(),
       layerById,
       partById,
       root,
     })
-  const finishRender = () => {
-    options.onAfterRender?.()
-    application.renderer.resetState()
+    masksDirty = false
   }
-  const prepareRender = () => {
-    options.onBeforeRender?.()
-    application.renderer.resetState()
+  const flushMasks = () => {
+    if (!destroyed && masksDirty) {
+      renderMasks()
+    }
   }
-  if (options.onAfterRender !== undefined) {
-    application.ticker.add(prepareRender, undefined, UPDATE_PRIORITY.LOW + 1)
-    application.ticker.add(finishRender, undefined, UPDATE_PRIORITY.LOW - 1)
+  const submitRender = () => {
+    const {renderer} = application
+    if (renderer?.type !== undefined && renderer.type === RendererType.WEBGL) {
+      const webgl = renderer as WebGLRenderer
+      webgl.gl.flush()
+    }
   }
-  const redraw = () => {
-    if (destroyed) {
-      return
-    }
-    if (options.onAfterRender !== undefined) {
-      prepareRender()
-    }
-    application.render()
-    if (options.onAfterRender !== undefined) {
-      finishRender()
-    }
+  const renderLoop = createRenderLoop({
+    externalRendering,
+    render(external, phase) {
+      if (destroyed) {
+        return
+      }
+      flushMasks()
+      const shared = external && options.onAfterRender !== undefined
+      if (shared) {
+        options.onBeforeRender?.()
+        application.renderer.resetState()
+      }
+      application.render()
+      if (shared) {
+        // A synchronous canvas consumer runs before the browser's implicit frame submission.
+        submitRender()
+        options.onAfterRender?.()
+        application.renderer.resetState()
+      }
+      if (phase === 'immediate') {
+        submitRender()
+      }
+    },
+  })
+  application.ticker.remove(application.render, application)
+  application.ticker.add(renderLoop.tick, undefined, UPDATE_PRIORITY.LOW)
+  const {redraw} = renderLoop
+  options.canvas.addEventListener('webglcontextrestored', restoreContext)
+  const emptyMix: MotionMix = {
+    groupOpacitySamples: new Map(),
+    modelOpacity: 1,
+    motionParameterValues: {},
+    parameterValues: {},
+    vertexSamples: new Map(),
   }
   return {
     applyFrame(mix, parameterValues, poseOpacityByPartId, overrides) {
+      commitPending()
       paintOrder = applyRenderFrame({
         document,
         layerById,
         layoutRoot,
         mix,
+        native,
         overrides,
         parameterValues,
         partById,
@@ -227,19 +356,59 @@ export const createPlayerRenderer = async (
         root,
       })
       renderMasks()
+      renderLoop.invalidate()
+    },
+    applyPreparedFrame(prepared) {
+      commitPending()
+      paintOrder = applyRenderFrame({
+        document,
+        layerById,
+        layoutRoot,
+        mix: emptyMix,
+        native,
+        parameterValues: {},
+        partById,
+        prepared,
+        root,
+      })
+      masksDirty = true
+      renderLoop.invalidate()
     },
     destroy,
     getPaintOrder: () => paintOrder,
     getPartVertices: (partId) => partById.get(partId)?.vertices,
+    getRenderingInfo: () => ({
+      antialiasing: options.antialiasing === 'ssaa' ? 'ssaa' : 'msaa',
+      renderer:
+        application.renderer?.type !== undefined &&
+        application.renderer.type === RendererType.WEBGPU
+          ? 'webgpu'
+          : 'webgl',
+    }),
     redraw,
-    resize() {
-      application.resize()
+    resize(resolution) {
+      resizeApplication(application, resolution)
+      layoutRoot()
+      renderMasks()
+      redraw()
+    },
+    setFit(nextFit) {
+      if (destroyed || nextFit === fit) {
+        return
+      }
+      fit = nextFit
       layoutRoot()
       renderMasks()
       redraw()
     },
     setRunning(nextRunning) {
-      if (destroyed || nextRunning === running) {
+      if (destroyed) {
+        return
+      }
+      if (!nextRunning) {
+        renderLoop.flush()
+      }
+      if (nextRunning === running) {
         return
       }
       running = nextRunning
@@ -256,6 +425,7 @@ export const createPlayerRenderer = async (
       camera = nextCamera
       layoutRoot()
       renderMasks()
+      renderLoop.invalidate()
     },
     subscribeFrame(onFrame) {
       application.ticker.add((ticker) => {
@@ -268,7 +438,7 @@ export const createPlayerRenderer = async (
       const local = root.toLocal(point)
       return {x: local.x, y: local.y}
     },
-    updateDocument(nextDocument) {
+    updateDocument(nextDocument, deferred = false) {
       if (
         destroyed ||
         !canReusePartResources(document, nextDocument) ||
@@ -277,16 +447,10 @@ export const createPlayerRenderer = async (
       ) {
         return false
       }
-      document = nextDocument
-      for (const part of document.parts) {
-        const runtimePart = partById.get(part.id)
-        if (runtimePart !== undefined) {
-          runtimePart.restVertices = part.mesh.vertices
-          runtimePart.vertices = new Float32Array(runtimePart.restVertices)
-          runtimePart.mesh.geometry.positions = runtimePart.vertices
-          runtimePart.mesh.geometry.uvs = new Float32Array(part.mesh.uvs)
-          runtimePart.mesh.geometry.indices = new Uint32Array(part.mesh.indices)
-        }
+      if (deferred) {
+        pendingDocument = nextDocument
+      } else {
+        commitDocument(nextDocument)
       }
       return true
     },

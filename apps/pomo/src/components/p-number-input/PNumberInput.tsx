@@ -3,7 +3,7 @@ import {createEffect, createSignal, type JSX, Show, splitProps, untrack} from 's
 import {CONTROL_HEIGHT_CLASSES, CONTROL_PADDING_CLASSES} from '../control-size-classes'
 import {clampOptionalBounds} from './clamp-optional-bounds'
 import {type NumberInputRange, useNumberInputGesture} from './use-number-input-gesture'
-import {normalizePasteNumericInput} from 'src/utils/normalize-paste-numeric-input'
+import {normalizePasteNumericInput} from '@winter-love/supertonic/normalize-paste-numeric-input'
 
 const DEFAULT_STEP = 1
 const EXTRA_PRECISION_DIGITS = 6

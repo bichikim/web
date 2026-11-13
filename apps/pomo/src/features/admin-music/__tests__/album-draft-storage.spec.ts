@@ -111,13 +111,39 @@ const delayCoverDeletion = (storage: AlbumDraftStorage) => {
 }
 
 describe('album draft data storage', () => {
-  it('should restore album metadata saved in the current session', () => {
+  it.each(['lp', 'cd', 'music'] as const)(
+    'should restore album metadata with the cover fallback %s',
+    (coverFallback) => {
+      const storage = createStorage()
+      const draft = {...createDraft(), coverFallback}
+
+      writeAlbumDraftData(draft, storage)
+
+      expect(readAlbumDraftDataOrNull(storage)).toEqual(draft)
+    },
+  )
+
+  it('should retain the invalid fallback diagnostic without deleting stored metadata', () => {
     const storage = createStorage()
-    const draft = createDraft()
+    const data = JSON.stringify({...createDraft(), coverFallback: 'dvd'})
+    storage.writeData(data)
+    vi.spyOn(console, 'warn').mockImplementation(() => undefined)
 
-    writeAlbumDraftData(draft, storage)
-
-    expect(readAlbumDraftDataOrNull(storage)).toEqual(draft)
+    expect(readAlbumDraftData(storage)).toEqual({
+      error: expect.objectContaining({
+        issues: [
+          {
+            code: 'invalid_value',
+            message: expect.any(String),
+            path: ['coverFallback'],
+            values: ['lp', 'cd', 'music'],
+          },
+        ],
+      }),
+      success: false,
+    })
+    expect(storage.deleteData).not.toHaveBeenCalled()
+    expect(storage.readData()).toBe(data)
   })
 
   it('should ignore malformed stored metadata', () => {

@@ -1,4 +1,4 @@
-name: Deploy Pomo and Audio Gateway
+name: Deploy Pomo Dev / Preview / Staging
 
 on:
   pull_request:
@@ -189,6 +189,7 @@ jobs:
         run: |
           deployment_json="$(pnpm dlx vercel@${VERCEL_CLI_VERSION} deploy \
             --target=preview \
+            --archive=tgz \
             --yes \
             --no-wait \
             --json \

@@ -1,8 +1,10 @@
 import {clamp} from 'es-toolkit/math'
+import {poseBoneChannels} from '../../deformation/bone'
 import {
   PUPPET_DEFAULT_DRAW_ORDER,
   PUPPET_MAXIMUM_DRAW_ORDER,
   type PuppetColor,
+  type PuppetParameterDeformerKeyform,
   type PuppetParameterKeyform,
   type PuppetPoint,
 } from '../../player'
@@ -12,6 +14,29 @@ const blendVector = (
   second: readonly number[],
   base: readonly number[],
 ) => base.map((value, index) => (first[index] ?? value) + (second[index] ?? value) - value)
+
+const blendDeformerPose = (
+  first: PuppetParameterDeformerKeyform,
+  second: PuppetParameterDeformerKeyform,
+  base: PuppetParameterDeformerKeyform,
+) => {
+  const coordinates = blendVector(first.controlPoints, second.controlPoints, base.controlPoints)
+  if (base.rotationAngle === undefined) {
+    return {controlPoints: coordinates}
+  }
+  const rotationAngle =
+    (first.rotationAngle ?? base.rotationAngle) +
+    (second.rotationAngle ?? base.rotationAngle) -
+    base.rotationAngle
+  return {
+    controlPoints: poseBoneChannels(base.controlPoints, [
+      coordinates[0]!,
+      coordinates[1]!,
+      rotationAngle - base.rotationAngle,
+    ]),
+    rotationAngle,
+  }
+}
 const blendTriple = (
   first?: PuppetColor,
   second?: PuppetColor,
@@ -97,13 +122,13 @@ export const blendKeyformDeltas = (
   first: PuppetParameterKeyform,
   second: PuppetParameterKeyform,
   base: PuppetParameterKeyform,
-): Pick<PuppetParameterKeyform, 'deformers' | 'groups' | 'parts'> => ({
+): Pick<PuppetParameterKeyform, 'deformers' | 'glue' | 'groups' | 'parts'> => ({
   deformers: base.deformers?.map((node) => {
     const x = first.deformers?.find((entry) => entry.nodeId === node.nodeId) ?? node
     const y = second.deformers?.find((entry) => entry.nodeId === node.nodeId) ?? node
     return {
       ...node,
-      controlPoints: blendVector(x.controlPoints, y.controlPoints, node.controlPoints),
+      ...blendDeformerPose(x, y, node),
       curveHandles: node.curveHandles?.map((handle) => {
         const horizontal =
           x.curveHandles?.find((entry) => entry.pointIndex === handle.pointIndex) ?? handle
@@ -134,6 +159,15 @@ export const blendKeyformDeltas = (
         y.spatialTranslation,
         node.spatialTranslation,
       ),
+    }
+  }),
+  glue: base.glue?.map((glue) => {
+    const horizontal = first.glue?.find((entry) => entry.id === glue.id) ?? glue
+    const vertical = second.glue?.find((entry) => entry.id === glue.id) ?? glue
+    return {
+      ...glue,
+      strength: clamp(horizontal.strength + vertical.strength - glue.strength, 0, 1),
+      weight: clamp(horizontal.weight + vertical.weight - glue.weight, 0, 1),
     }
   }),
   groups: base.groups?.map((group) => ({

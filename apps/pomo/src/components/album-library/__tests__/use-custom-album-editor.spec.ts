@@ -109,3 +109,35 @@ it('should preserve removed IDs on a failed save and report them after retry', a
   await result.handleSubmit(event)
   expect([...onSaved.mock.calls[0]![0]]).toEqual(['a'])
 })
+
+it.each(['storage', 'refresh'] as const)(
+  'should preserve a new editor when the disposed editor finishes its pending %s',
+  async (stage) => {
+    const storage = Promise.withResolvers<string>()
+    const refresh = Promise.withResolvers<void>()
+    mocks.saveCustomAlbum.mockReturnValue(storage.promise)
+    const onSaved = vi.fn(() => refresh.promise)
+    const onOpenChange = vi.fn()
+    const previous = renderHook(() => useCustomAlbumEditor({albumId: null, onOpenChange, onSaved}))
+    previous.result.setTitle('Previous album')
+    const saving = previous.result.handleSubmit({preventDefault: vi.fn()} as unknown as Parameters<
+      typeof previous.result.handleSubmit
+    >[0])
+
+    if (stage === 'refresh') {
+      storage.resolve('previous')
+      await Promise.resolve()
+      expect(onSaved).toHaveBeenCalledOnce()
+    }
+    previous.cleanup()
+    const next = renderHook(() => useCustomAlbumEditor({albumId: null, onOpenChange, onSaved}))
+    next.result.setTitle('New unsaved draft')
+    storage.resolve('previous')
+    refresh.resolve()
+    await saving
+
+    expect(onSaved).toHaveBeenCalledOnce()
+    expect(onOpenChange).not.toHaveBeenCalled()
+    expect(next.result.title()).toBe('New unsaved draft')
+  },
+)

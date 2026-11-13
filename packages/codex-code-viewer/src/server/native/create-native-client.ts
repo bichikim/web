@@ -1,19 +1,16 @@
-import {type ChildProcess, spawn} from 'node:child_process'
-import {once} from 'node:events'
 import {readFileSync} from 'node:fs'
 import {relative, resolve} from 'node:path'
 import {fileURLToPath, pathToFileURL} from 'node:url'
-import {
-  createMessageConnection,
-  type MessageConnection,
-  StreamMessageReader,
-  StreamMessageWriter,
-} from 'vscode-jsonrpc/node.js'
+import type {MessageConnection} from 'vscode-jsonrpc/node.js'
 import {z} from 'zod'
+import {createNativeTransport} from './create-native-transport'
 import {createNativePreparation} from './create-native-preparation'
 import {createResultDelivery} from './create-result-delivery'
+import {createDiagnosticLog} from './create-diagnostic-log'
 import {readCompilerSource} from '../read-compiler-source'
 import {requestNativeMessage} from './request-native-message'
+import {withAbort} from '../with-abort'
+import {offsetPosition} from '../../headless/position'
 import type {NativeLocation, NativeOptions, NativePreparationOptions, NativeQuery} from './types'
 
 const positionSchema = z.object({character: z.number(), line: z.number()})
@@ -23,11 +20,6 @@ const locationSchema = z.union([
   z.object({targetSelectionRange: rangeSchema, targetUri: z.string()}),
 ])
 const locationsSchema = z.array(locationSchema).nullable()
-const positionAt = (source: string, offset: number) => {
-  const lines = source.slice(0, offset).split('\n')
-  return {character: lines.at(-1)?.length ?? 0, line: lines.length - 1}
-}
-
 const normalizeNativeLocations = (value: unknown, root: string): NativeLocation[] =>
   (locationsSchema.parse(value) ?? []).map((location) => {
     const uri = 'uri' in location ? location.uri : location.targetUri
@@ -38,21 +30,6 @@ const normalizeNativeLocations = (value: unknown, root: string): NativeLocation[
       path: relative(root, fileURLToPath(uri)).split('\\').join('/'),
     }
   })
-
-const disposeNativeClient = async (
-  child: ChildProcess,
-  connection: Pick<MessageConnection, 'dispose'>,
-  ready: Promise<void>,
-): Promise<void> => {
-  const exited =
-    child.pid !== undefined && child.exitCode === null && child.signalCode === null
-      ? once(child, 'close')
-      : undefined
-  const completed = Promise.allSettled([ready, exited])
-  connection.dispose()
-  child.kill()
-  await completed
-}
 
 interface DocumentPreparation {
   readonly open: (path: string, source?: string) => Promise<void>
@@ -111,14 +88,14 @@ const prepareDocuments = async ({
 
 interface NativeInitialization {
   readonly connection: Pick<MessageConnection, 'sendNotification' | 'sendRequest'>
-  readonly notifications: unknown[]
+  readonly recordNotification: (value: unknown) => void
   readonly open: (file: string, source?: string) => Promise<void>
   readonly options: NativeOptions
   readonly spawning: Promise<unknown>
 }
 const initializeNativeClient = async ({
   connection,
-  notifications,
+  recordNotification,
   open,
   options,
   spawning,
@@ -139,7 +116,7 @@ const initializeNativeClient = async ({
     rootUri: pathToFileURL(options.root).href,
     workspaceFolders: [{name: options.root, uri: pathToFileURL(options.root).href}],
   })
-  notifications.push({capabilities})
+  recordNotification({capabilities})
   await connection.sendNotification('initialized', {})
   for (const path of options.documents) {
     // oxlint-disable-next-line no-await-in-loop -- Preserve the document order delivered to the server.
@@ -147,48 +124,13 @@ const initializeNativeClient = async ({
   }
 }
 
-/** Runs the native LSP independently, preserving its unmodified results and progress messages. */
-export const createNativeClient = (options: NativeOptions) => {
-  const child = spawn(options.binary, ['--lsp', '--stdio'], {cwd: options.root, stdio: 'pipe'})
-  const spawning = once(child, 'spawn')
-  const connection = createMessageConnection(
-    new StreamMessageReader(child.stdout),
-    new StreamMessageWriter(child.stdin),
-  )
-  const preparation = createNativePreparation(connection)
-  const retained = new Set<string>()
-  const notifications: unknown[] = []
-  const errors: string[] = []
-  let partialBatches = 0
-  let sequence = 0
-  const receivers = new Map<string | number, NativeOptions['receive']>()
-  child.stderr.on('data', (chunk: Buffer) => errors.push(chunk.toString()))
-  child.once('error', () => connection.dispose())
-  child.once('exit', () => connection.dispose())
-  connection.onRequest('client/registerCapability', () => null)
-  connection.onRequest('window/workDoneProgress/create', () => null)
-  connection.onRequest('workspace/configuration', (value: unknown) =>
-    z
-      .object({items: z.array(z.unknown())})
-      .parse(value)
-      .items.map(() => ({})),
-  )
-  connection.onNotification('$/progress', (value: unknown) => {
-    notifications.push(value)
-    const progress = z
-      .object({token: z.union([z.string(), z.number()]), value: z.unknown()})
-      .parse(value)
-    const receive = receivers.get(progress.token)
-    if (receive !== undefined) {
-      partialBatches += 1
-      receive(normalizeNativeLocations(progress.value, options.root))
-    }
-  })
-  connection.onNotification('window/logMessage', (value: unknown) => notifications.push(value))
-  connection.listen()
+const createDocumentWriter = (
+  root: string,
+  connection: Pick<MessageConnection, 'sendNotification'>,
+) => {
   const opened = new Map<string, {source: string; version: number}>()
   const open = async (file: string, provided?: string): Promise<void> => {
-    const path = resolve(options.root, file)
+    const path = resolve(root, file)
     const source = provided ?? readFileSync(path, 'utf8')
     const previous = opened.get(path)
     if (previous === undefined) {
@@ -210,11 +152,54 @@ export const createNativeClient = (options: NativeOptions) => {
       })
     }
   }
-  const ready = initializeNativeClient({connection, notifications, open, options, spawning})
+  return {open, opened}
+}
+
+/** Runs the native LSP independently, preserving its unmodified results and progress messages. */
+export const createNativeClient = (options: NativeOptions) => {
+  const notifications = createDiagnosticLog<unknown>()
+  const errors = createDiagnosticLog<string>()
+  const transport = createNativeTransport({...options, onStderr: errors.append})
+  const {connection} = transport
+  const preparation = createNativePreparation(connection)
+  const retained = new Set<string>()
+  let partialBatches = 0
+  let sequence = 0
+  const receivers = new Map<string | number, NativeOptions['receive']>()
+  connection.onRequest('client/registerCapability', () => null)
+  connection.onRequest('window/workDoneProgress/create', () => null)
+  connection.onRequest('workspace/configuration', (value: unknown) =>
+    z
+      .object({items: z.array(z.unknown())})
+      .parse(value)
+      .items.map(() => ({})),
+  )
+  connection.onNotification('$/progress', (value: unknown) => {
+    notifications.append(value)
+    const progress = z
+      .object({token: z.union([z.string(), z.number()]), value: z.unknown()})
+      .parse(value)
+    const receive = receivers.get(progress.token)
+    if (receive !== undefined) {
+      partialBatches += 1
+      receive(normalizeNativeLocations(progress.value, options.root))
+    }
+  })
+  connection.onNotification('window/logMessage', notifications.append)
+  const {open, opened} = createDocumentWriter(options.root, connection)
+  const ready = initializeNativeClient({
+    connection,
+    open,
+    options,
+    recordNotification: notifications.append,
+    spawning: transport.started,
+  })
   return {
     diagnostics: () => ({
-      errors,
-      notifications,
+      errorOmissions: errors.omitted(),
+      errors: errors.read(),
+      notificationOmissions: notifications.omitted(),
+      notifications: notifications.read(),
       opened: opened.size,
       partialBatches,
       preparation: preparation.diagnostics(),
@@ -222,14 +207,17 @@ export const createNativeClient = (options: NativeOptions) => {
     dispose: (): Promise<void> => {
       preparation.dispose()
       retained.clear()
-      return disposeNativeClient(child, connection, ready)
+      return transport.dispose(ready).finally(() => {
+        errors.clear()
+        notifications.clear()
+      })
     },
     prepare: async (
       paths: readonly string[],
       sources?: ReadonlyMap<string, string>,
       preparationOptions?: NativePreparationOptions,
     ): Promise<void> => {
-      await ready
+      await withAbort(ready, preparationOptions?.signal)
       await prepareDocuments({
         open,
         opened,
@@ -253,7 +241,7 @@ export const createNativeClient = (options: NativeOptions) => {
       sources,
     }: NativeQuery): Promise<NativeLocation[]> => {
       signal?.throwIfAborted()
-      await ready
+      await withAbort(ready, signal)
       signal?.throwIfAborted()
       const path = resolve(options.root, file)
       let needsOverlay = document === 'open' || opened.has(path) || sources?.has(path) === true
@@ -277,7 +265,7 @@ export const createNativeClient = (options: NativeOptions) => {
       receivers.set(token, delivery.publish)
       const params = {
         partialResultToken: token,
-        position: positionAt(source, offset),
+        position: offsetPosition(source, offset),
         textDocument: {uri: pathToFileURL(resolve(options.root, file)).href},
       }
       try {

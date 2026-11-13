@@ -17,6 +17,7 @@ import {
 } from 'src/server/api-ai/routing'
 import {getApiAiModelCatalog} from 'src/server/api-ai/model-catalog'
 import type {ApiAiProvider} from 'src/server/api-ai/types'
+import {createAdminPage} from 'src/server/api-ai/create-admin-page'
 
 // The existing cloud-text row stores the common server order.
 const ROUTING_KEY = 'cloud-text'
@@ -30,23 +31,7 @@ export const readAdminApiAiPage = async (
     .select()
     .from(apiAiRouting)
     .where(eq(apiAiRouting.kind, ROUTING_KEY))
-  const routing =
-    stored === undefined
-      ? getDefaultApiAiRouting(defaults, ROUTING_KEY)
-      : apiAiRoutingSchema.parse(stored.routing)
-  return {
-    ...routing,
-    catalog: getApiAiModelCatalog(routing.catalog ?? [], routing.routes, providers),
-    providers: providers
-      .filter((provider) => provider.models['cloud-text'] !== undefined)
-      .map((provider) => ({
-        id: provider.id,
-        models: provider.models,
-        protocol: provider.protocol ?? 'openai-responses-background',
-      })),
-    revision: stored?.revision ?? 0,
-    source: stored === undefined ? 'environment' : 'admin',
-  }
+  return createAdminPage({defaults, providers, stored})
 }
 
 /** Saves an order only if its revision still matches the administrator's read. */

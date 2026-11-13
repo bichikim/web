@@ -15,7 +15,7 @@ import {
   useLanguageLearningWords,
 } from '../../features/language-learning'
 import {useModelDownload} from '../../features/model-download'
-import type {SupertonicModelId, SupertonicVoiceId} from '../../features/supertonic'
+import type {SupertonicModelId, SupertonicVoiceId} from '@winter-love/supertonic/model'
 import {type LanguageLearningCandidate, revokeLanguageLearningAudioUrls} from './candidate'
 import {
   getLanguageLearningGenerationStatus,

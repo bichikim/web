@@ -3,7 +3,7 @@ import {type CodeDocument, type CodeLocation, type ViewerSession} from '../share
 import type {useLatestRequest} from './use-latest-request'
 import {isMissingDocument} from './is-missing-document'
 
-interface DocumentRefreshOptions {
+interface UseDocumentRefreshProps {
   readonly session: Accessor<ViewerSession | null>
   readonly dirty: Accessor<boolean>
   readonly saving: Accessor<boolean>
@@ -17,7 +17,7 @@ interface DocumentRefreshOptions {
 }
 
 /** Checks deletion while retaining drafts and defers content replacement until editing is settled. */
-export const useDocumentRefresh = (options: DocumentRefreshOptions) => {
+export const useDocumentRefresh = (props: UseDocumentRefreshProps) => {
   const [deleted, setDeleted] = createSignal(false)
   const [deferred, setDeferred] = createSignal(false)
   const reset = (): void =>
@@ -27,7 +27,7 @@ export const useDocumentRefresh = (options: DocumentRefreshOptions) => {
     })
   const read = async (location: CodeLocation): Promise<{document: CodeDocument | null}> => {
     try {
-      return await options.read(location)
+      return await props.read(location)
     } catch (error) {
       if (isMissingDocument(error)) {
         return {document: null}
@@ -36,34 +36,34 @@ export const useDocumentRefresh = (options: DocumentRefreshOptions) => {
     }
   }
   const refresh = async (): Promise<void> => {
-    const current = options.session()
-    if (current === null || options.navigation.pending() || options.saving()) {
+    const current = props.session()
+    if (current === null || props.navigation.pending() || props.saving()) {
       return
     }
-    options.onRefresh?.()
-    const result = await options.navigation.run(() => read(current.document.location))
+    props.onRefresh?.()
+    const result = await props.navigation.run(() => read(current.document.location))
     if (result === null) {
       return
     }
     if (result.document === null) {
-      options.onDeleted(current)
+      props.onDeleted(current)
     } else {
-      options.onPresent({...current, document: result.document})
+      props.onPresent({...current, document: result.document})
     }
-    const dirty = options.dirty()
+    const dirty = props.dirty()
     setDeleted(result.document === null)
     setDeferred(result.document !== null && dirty)
     if (result.document !== null && !dirty) {
-      options.onDocument(current, result.document)
+      props.onDocument(current, result.document)
     }
   }
   createEffect(
     on(
-      [deferred, options.dirty, options.saving, options.navigation.pending],
+      [deferred, props.dirty, props.saving, props.navigation.pending],
       ([requested, dirty, saving, pending]) => {
         if (requested && !dirty && !saving && !pending) {
           setDeferred(false)
-          refresh().catch(options.report)
+          refresh().catch(props.report)
         }
       },
     ),

@@ -1,6 +1,7 @@
 import type {Accessor} from 'solid-js'
 import type {CodeLocation, ViewerSession} from '../shared/contracts'
 import type {NavigationOptions} from './types'
+import {isAbsolutePath} from './is-absolute-path'
 
 interface LocationOpenerOptions {
   readonly go: (location: CodeLocation, options?: NavigationOptions) => Promise<void>
@@ -11,7 +12,7 @@ interface LocationOpenerOptions {
 export const createLocationOpener =
   (options: LocationOpenerOptions) =>
   async (location: CodeLocation, navigation?: NavigationOptions): Promise<void> => {
-    if (!location.path.startsWith('/')) {
+    if (!isAbsolutePath(location.path)) {
       await options.go(location, navigation)
       return
     }

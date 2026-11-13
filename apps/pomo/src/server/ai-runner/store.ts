@@ -45,8 +45,7 @@ interface CreateRunnerJobStoreOptions {
   readonly now?: () => number
 }
 
-const JOB_STATUS_VALUES = ['queued', 'running', 'succeeded', 'failed', 'cancelled'] as const
-const JOB_STATUS_SQL = JOB_STATUS_VALUES.map((value) => `'${value}'`).join(', ')
+const JOB_STATUS_SQL = aiRunnerJobStatusSchema.options.map((value) => `'${value}'`).join(', ')
 
 const getString = (row: SqliteRow, key: string): string => {
   const value = row[key]

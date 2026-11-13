@@ -83,7 +83,6 @@ export const createNitroConfig = (options: CreateNitroConfigOptions) => {
           },
         }),
     publicAssets: [
-      ...(options.command === 'serve' ? [{baseURL: '/', dir: './dev-public', maxAge: 0}] : []),
       ...(options.steamAsset === undefined ? [] : [options.steamAsset]),
       options.fontAsset,
     ],

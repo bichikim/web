@@ -76,3 +76,19 @@ test.each([
     owned.dispose()
   }
 })
+
+test('should stop value scrubbing after window blur', () => {
+  const onMove = vi.fn()
+  const owned = createRoot((dispose) => ({
+    dispose,
+    drag: usePointerValueDrag({enabled: () => true, getBounds: () => new DOMRect(), onMove}),
+  }))
+  try {
+    owned.drag.handlePointerDown(createPointerEvent('pointerdown', 1))
+    globalThis.dispatchEvent(new Event('blur'))
+    globalThis.dispatchEvent(createPointerEvent('pointermove', 1))
+    expect(onMove).toHaveBeenCalledOnce()
+  } finally {
+    owned.dispose()
+  }
+})

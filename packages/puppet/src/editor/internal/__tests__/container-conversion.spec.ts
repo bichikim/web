@@ -4,6 +4,7 @@ import {describe, expect, test} from 'vitest'
 import {
   createDemoDocument,
   getDocumentScene,
+  getScenePartStates,
   parseDocument,
   type PuppetDocument,
 } from '../../../player'
@@ -13,6 +14,38 @@ import {createDeformer, createSceneGroup, setSceneNodeState} from '../scene-grap
 import {convertSceneContainers, getContainerKind} from '../container-conversion'
 
 describe('convertSceneContainers', () => {
+  test.each(['deformer', 'group', 'curve', 'bone', 'pin', 'rotation', 'spatial'] as const)(
+    'should preserve parameter visibility while converting to %s',
+    (targetKind) => {
+      const original = createDemoDocument()
+      const source =
+        targetKind === 'group'
+          ? convertSceneContainers({
+              document: original,
+              nodeIds: ['shapes'],
+              targetKind: 'deformer',
+            })!
+          : original
+      const document = {
+        ...source,
+        scene: {
+          roots: getDocumentScene(source).roots.map((node) =>
+            node.id === 'shapes'
+              ? {...node, parameterVisibility: [{maximum: 30, minimum: 1, parameterId: 'angle-x'}]}
+              : node,
+          ),
+        },
+      }
+      const before = getScenePartStates(document).find((part) => part.partId === 'shape-circle')!
+      expect(before.visible).toBe(false)
+      const converted = convertSceneContainers({document, nodeIds: ['shapes'], targetKind})!
+      expect(
+        getScenePartStates(converted).find((part) => part.partId === 'shape-circle')?.visible,
+      ).toBe(false)
+      expect(parseDocument(JSON.stringify(converted)).ok).toBe(true)
+    },
+  )
+
   test('should create a 3D deformer and attach its child image surfaces', () => {
     const source = createDemoDocument()
     const converted = convertSceneContainers({

@@ -1,8 +1,7 @@
 import {isObject} from 'src/utils/is-object'
 import {sumBy} from 'es-toolkit/math'
-import {normalizePasteNumericInput} from 'src/utils/normalize-paste-numeric-input'
+import {normalizePasteNumericInput} from '@winter-love/supertonic/normalize-paste-numeric-input'
 import {parseDate} from 'src/features/civil-date'
-import {iterateJsonObjectSlices} from 'src/utils/json'
 import {isNonBlankString} from 'src/utils/is-non-blank-string'
 
 export interface ExpenseItem {
@@ -34,7 +33,7 @@ export type ExpenseParseResult =
 
 const MAXIMUM_ITEMS = 20
 const EXPENSE_LINE_PATTERN =
-  /^\s*(?<name>.+?)\s+(?<unitPrice>[\d０-９,]+)\s*원(?:\s+(?<quantity>[\d,]+)\s*개)?\s*$/u
+  /^\s*(?<name>.+?)\s+(?<unitPrice>[\d０-９,]+)\s*원(?:\s*(?<quantity>[\d,]+)\s*개)?\s*$/u
 const DATE_LINE_PATTERN =
   /^\s*(?<year>[0-9０-９]{4})-(?<month>[0-9０-９]{1,2})-(?<day>[0-9０-９]{1,2})(?:\s+[월화수목금토일]요일)?\s*$/u
 
@@ -153,7 +152,7 @@ const createExpenseForm = (
   return {ok: true, value: {date, items, questions, total}}
 }
 
-const parseExpenseAssistantCandidate = (json: string): ExpenseParseResult => {
+export const parseExpenseAssistantResponse = (json: string): ExpenseParseResult => {
   let parsed: unknown
   try {
     parsed = JSON.parse(json)
@@ -165,7 +164,8 @@ const parseExpenseAssistantCandidate = (json: string): ExpenseParseResult => {
     return invalid('invalid-shape')
   }
 
-  const dateValue = typeof parsed.date === 'string' ? parsed.date.trim() : parsed.date
+  const dateValue =
+    typeof parsed.date === 'string' ? parsed.date.replace(/^[\s\u200b]+$/u, '').trim() : parsed.date
   const date = readDate(dateValue)
   const questions = readQuestions(parsed.questions)
   const items = readItems(parsed.items)
@@ -177,25 +177,6 @@ const parseExpenseAssistantCandidate = (json: string): ExpenseParseResult => {
   }
 
   return createExpenseForm(date, items, questions)
-}
-
-export const parseExpenseAssistantResponse = (text: string): ExpenseParseResult => {
-  let invalidShape: ExpenseParseResult | null = null
-  const candidates = iterateJsonObjectSlices(text)
-  let candidate = candidates.next()
-  while (!candidate.done) {
-    const result = parseExpenseAssistantCandidate(candidate.value.slice)
-    if (result.ok) {
-      return result
-    }
-    const skipNested = result.error.code === 'invalid-shape'
-    if (skipNested) {
-      invalidShape = result
-    }
-    candidate = candidates.next(skipNested ? candidate.value.end + 1 : undefined)
-  }
-
-  return invalidShape ?? invalid('invalid-json')
 }
 
 export const parseExpenseText = (text: string): ExpenseParseResult => {

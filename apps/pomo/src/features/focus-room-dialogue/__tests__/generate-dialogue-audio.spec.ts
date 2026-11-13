@@ -29,9 +29,13 @@ vi.mock('../../supertonic/client', () => ({
 vi.mock('../../supertonic/error-message', () => ({
   getSupertonicErrorMessage: errorMocks.getSupertonicErrorMessage,
 }))
-vi.mock('../../supertonic/model', () => ({getSupertonicModel: modelMocks.getSupertonicModel}))
+vi.mock('@winter-love/supertonic/model', () => ({
+  getSupertonicModel: modelMocks.getSupertonicModel,
+}))
 vi.mock('../../supertonic/opus-client', () => ({createOpusBlob: opusMocks.createOpusBlob}))
-vi.mock('../../supertonic/text-chunking', () => ({splitSpeechText: textMocks.splitSpeechText}))
+vi.mock('@winter-love/supertonic/text-chunking', () => ({
+  splitSpeechText: textMocks.splitSpeechText,
+}))
 vi.mock('../../supertonic/wav', () => ({createWaveBlob: waveMocks.createWaveBlob}))
 vi.mock('../timeline', () => ({createDialogueTimeline: timelineMocks.createDialogueTimeline}))
 

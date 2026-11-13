@@ -8,6 +8,12 @@ interface PreparePuppetDocumentValueRequest {
   readonly type: 'document'
 }
 
+interface PreparePuppetDocumentBlobRequest {
+  readonly source: Blob
+  readonly type: 'blob'
+}
+
 export type PreparePuppetDocumentRequest =
   | PreparePuppetDocumentSourceRequest
   | PreparePuppetDocumentValueRequest
+  | PreparePuppetDocumentBlobRequest

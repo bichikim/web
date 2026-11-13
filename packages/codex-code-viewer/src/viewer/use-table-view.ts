@@ -4,7 +4,7 @@ import {type Accessor, batch, createEffect, createMemo, createSignal} from 'soli
 import {parseDelimitedText} from './parse-delimited-text'
 import type {TableResult} from './table/types'
 
-interface TableViewOptions {
+interface UseTableViewProps {
   readonly source?: Accessor<string>
   readonly delimiter?: Accessor<',' | '\t'>
   readonly data?: Accessor<TableResult | undefined>
@@ -15,24 +15,24 @@ interface TableSort {
   readonly descending: boolean
 }
 const PAGE_ROWS = 50
-export const useTableView = (options: TableViewOptions) => {
+export const useTableView = (props: UseTableViewProps) => {
   const t = useTranslations()
   const data = createMemo(
     () =>
-      options.data?.() ??
+      props.data?.() ??
       parseDelimitedText({
-        delimiter: options.delimiter?.() ?? ',',
-        source: options.source?.() ?? '',
+        delimiter: props.delimiter?.() ?? ',',
+        source: props.source?.() ?? '',
       }),
   )
-  const [header, setHeader] = createSignal(options.initialHeader?.() ?? true)
+  const [header, setHeader] = createSignal(props.initialHeader?.() ?? true)
   const [query, setQuery] = createSignal('')
   const [sort, setSort] = createSignal<TableSort | null>(null)
   const [page, setPage] = createSignal(1)
   createEffect(() => {
     data()
     batch(() => {
-      setHeader(options.initialHeader?.() ?? true)
+      setHeader(props.initialHeader?.() ?? true)
       setQuery('')
       setSort(null)
       setPage(1)

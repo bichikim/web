@@ -1,17 +1,10 @@
+import {keyBy} from 'es-toolkit'
 import {POMO_R2_ASSET_HOST} from '../product-assets'
-
-const DEVELOPMENT_TEXT_MODEL_IDS = ['qwen-0.8b', 'qwen-2b', 'qwen-4b', 'lfm-1.2b'] as const
-
-const PRODUCTION_TEXT_MODEL_IDS = ['gemma-4-e2b', 'gemma-4-e2b-mobile', 'lfm-2.6b-qad'] as const
 
 export type TextModelId =
   | 'cloud'
-  | (typeof DEVELOPMENT_TEXT_MODEL_IDS)[number]
-  | (typeof PRODUCTION_TEXT_MODEL_IDS)[number]
-
-export const TEXT_MODEL_IDS: ReadonlyArray<TextModelId> = import.meta.env.DEV
-  ? [...DEVELOPMENT_TEXT_MODEL_IDS, ...PRODUCTION_TEXT_MODEL_IDS]
-  : PRODUCTION_TEXT_MODEL_IDS
+  | (typeof DEVELOPMENT_TEXT_MODELS)[number]['id']
+  | (typeof PRODUCTION_TEXT_MODELS)[number]['id']
 
 export interface TextModelDefinition {
   readonly description: string
@@ -60,11 +53,8 @@ const createPomoR2ModelSource = (revision: string): TextModelAssetSource => ({
   revision,
 })
 
-const PRODUCTION_TEXT_MODEL_IMPLEMENTATIONS: Record<
-  (typeof PRODUCTION_TEXT_MODEL_IDS)[number],
-  TextModelImplementation
-> = {
-  'gemma-4-e2b': {
+const PRODUCTION_TEXT_MODELS = [
+  {
     architecture: 'gemma-4',
     assetSource: createPomoR2ModelSource('9f4bef82ea6e296bc69f8a2f5939f73af81b07a6'),
     description: '다른 모델 계열의 한국어 표현 비교용',
@@ -74,7 +64,7 @@ const PRODUCTION_TEXT_MODEL_IMPLEMENTATIONS: Record<
     quantization: 'q4',
     repositoryId: 'onnx-community/gemma-4-E2B-it-ONNX',
   },
-  'gemma-4-e2b-mobile': {
+  {
     architecture: 'gemma-4',
     assetSource: HUGGING_FACE_MODEL_SOURCE,
     description: 'q2f16 모바일 양자화 품질 비교용',
@@ -84,7 +74,7 @@ const PRODUCTION_TEXT_MODEL_IMPLEMENTATIONS: Record<
     quantization: 'q2f16',
     repositoryId: 'onnx-community/gemma-4-E2B-it-qat-mobile-ONNX',
   },
-  'lfm-2.6b-qad': {
+  {
     architecture: 'lfm-2-gguf',
     assetSource: createPomoR2ModelSource('e7caca5d835a3901a8e0d63e94009429bafafdfc'),
     description: 'QAD Q4_0 경량화 모델의 한국어 표현 비교용',
@@ -96,20 +86,10 @@ const PRODUCTION_TEXT_MODEL_IMPLEMENTATIONS: Record<
     tokenizerSubfolder: 'qad',
     weightFile: 'LFM2.5-2.6B-QAD-Q4_0.gguf',
   },
-}
+] as const
 
-const createDevelopmentTextModels = (): Partial<Record<TextModelId, TextModelImplementation>> => ({
-  'lfm-1.2b': {
-    architecture: 'lfm-2',
-    assetSource: HUGGING_FACE_MODEL_SOURCE,
-    description: '경량 다국어 모델의 한국어 표현 비교용',
-    downloadSize: '약 1.2GB',
-    id: 'lfm-1.2b',
-    label: 'LFM2.5-1.2B Instruct',
-    quantization: 'q4',
-    repositoryId: 'LiquidAI/LFM2.5-1.2B-Instruct-ONNX',
-  },
-  'qwen-0.8b': {
+const DEVELOPMENT_TEXT_MODELS = [
+  {
     architecture: 'qwen-3.5',
     assetSource: HUGGING_FACE_MODEL_SOURCE,
     description: '빠른 초안과 간단한 요청',
@@ -119,7 +99,7 @@ const createDevelopmentTextModels = (): Partial<Record<TextModelId, TextModelImp
     quantization: 'q4',
     repositoryId: 'onnx-community/Qwen3.5-0.8B-ONNX',
   },
-  'qwen-2b': {
+  {
     architecture: 'qwen-3.5',
     assetSource: HUGGING_FACE_MODEL_SOURCE,
     description: '더 자연스러운 장문 원고',
@@ -129,7 +109,7 @@ const createDevelopmentTextModels = (): Partial<Record<TextModelId, TextModelImp
     quantization: 'q4',
     repositoryId: 'onnx-community/Qwen3.5-2B-ONNX',
   },
-  'qwen-4b': {
+  {
     architecture: 'qwen-3.5',
     assetSource: HUGGING_FACE_MODEL_SOURCE,
     description: '한국어 문맥과 표현력 비교용',
@@ -139,12 +119,28 @@ const createDevelopmentTextModels = (): Partial<Record<TextModelId, TextModelImp
     quantization: 'q4',
     repositoryId: 'onnx-community/Qwen3.5-4B-ONNX',
   },
-})
+  {
+    architecture: 'lfm-2',
+    assetSource: HUGGING_FACE_MODEL_SOURCE,
+    description: '경량 다국어 모델의 한국어 표현 비교용',
+    downloadSize: '약 1.2GB',
+    id: 'lfm-1.2b',
+    label: 'LFM2.5-1.2B Instruct',
+    quantization: 'q4',
+    repositoryId: 'LiquidAI/LFM2.5-1.2B-Instruct-ONNX',
+  },
+] as const
 
-const TEXT_MODEL_IMPLEMENTATIONS: Partial<Record<TextModelId, TextModelImplementation>> = {
-  ...PRODUCTION_TEXT_MODEL_IMPLEMENTATIONS,
-  ...(import.meta.env.DEV ? createDevelopmentTextModels() : {}),
-}
+export const TEXT_MODEL_IDS: ReadonlyArray<TextModelId> = (
+  import.meta.env.DEV
+    ? [...DEVELOPMENT_TEXT_MODELS, ...PRODUCTION_TEXT_MODELS]
+    : PRODUCTION_TEXT_MODELS
+).map((model) => model.id)
+
+const TEXT_MODEL_IMPLEMENTATIONS: Partial<Record<TextModelId, TextModelImplementation>> = keyBy(
+  [...PRODUCTION_TEXT_MODELS, ...(import.meta.env.DEV ? DEVELOPMENT_TEXT_MODELS : [])],
+  (model) => model.id,
+)
 
 const getAvailableTextModel = (modelId: TextModelId): TextModelImplementation => {
   const model = TEXT_MODEL_IMPLEMENTATIONS[modelId]

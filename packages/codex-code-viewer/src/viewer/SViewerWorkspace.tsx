@@ -17,6 +17,8 @@ import {SViewerSettings} from './SViewerSettings'
 import {useViewerSettings} from './use-viewer-settings'
 import {SUnsavedChanges} from './editor/SUnsavedChanges'
 import {SContextAttachments} from './SContextAttachments'
+import {useMemos} from './use-memos'
+import {SMemos} from './SMemos'
 
 interface SViewerWorkspaceProps {
   readonly embedded?: boolean
@@ -27,6 +29,7 @@ export const SViewerWorkspace = (props: SViewerWorkspaceProps) => {
   const t = useTranslations()
   const port = untrack(() => props.port)
   const viewer = useViewer(port)
+  const memos = useMemos({onError: viewer.reportError, port})
   const [settingsOpen, setSettingsOpen] = createSignal(false)
   const mediaCache = useMediaCache(() => viewer.session()?.session ?? null)
   const [focusRequest, setFocusRequest] = createSignal(0)
@@ -64,6 +67,9 @@ export const SViewerWorkspace = (props: SViewerWorkspaceProps) => {
             treeVisible={tree.visible()}
             onToggleTree={tree.toggle}
             onSettings={() => setSettingsOpen(true)}
+            memosAvailable={memos.available}
+            memosVisible={memos.visible()}
+            onToggleMemos={memos.toggleVisible}
           />
           <Show when={documents.visible() && documents.sourceAvailable()}>
             <SFindBar
@@ -107,6 +113,9 @@ export const SViewerWorkspace = (props: SViewerWorkspaceProps) => {
               previewLines={props.settings.previewLines()}
             />
           </SResizablePanels>
+          <Show when={memos.available}>
+            <SMemos memos={memos} />
+          </Show>
           <SContextAttachments port={port} onError={viewer.reportError} onNotice={viewer.notify} />
           <footer class="mt-auto flex shrink-0 items-center gap-3 border-t border-divider px-4 py-1">
             <span class="min-w-0 flex-1 truncate text-sm text-muted" title={documents.address()}>

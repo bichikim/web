@@ -38,7 +38,12 @@ export const EditorKeyformMarker = (props: EditorKeyformMarkerProps) => {
     if (event.pointerType === 'touch' || event.pointerType === 'pen') {
       props.onContextMenu?.()
     }
-    if (event.button !== 0 || props.onMove === undefined) {
+    if (
+      event.button !== 0 ||
+      event.isPrimary === false ||
+      removePointerListeners !== undefined ||
+      props.onMove === undefined
+    ) {
       return
     }
 
@@ -69,19 +74,28 @@ export const EditorKeyformMarker = (props: EditorKeyformMarkerProps) => {
       }
     }
 
+    const cancel = () => finishPointerDrag(false)
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        cancel()
+      }
+    }
     event.preventDefault()
     event.stopPropagation()
     event.currentTarget.focus()
     props.onSelect?.()
-    removePointerListeners?.()
     // The stored callback only removes native gesture listeners during completion or cleanup.
     // eslint-disable-next-line solid/reactivity
     removePointerListeners = () => {
+      globalThis.removeEventListener('blur', cancel)
+      globalThis.removeEventListener('keydown', handleEscape)
       globalThis.removeEventListener('pointercancel', handlePointerCancel)
       globalThis.removeEventListener('pointermove', handlePointerMove)
       globalThis.removeEventListener('pointerup', handlePointerUp)
       removePointerListeners = undefined
     }
+    globalThis.addEventListener('blur', cancel)
+    globalThis.addEventListener('keydown', handleEscape)
     globalThis.addEventListener('pointercancel', handlePointerCancel)
     globalThis.addEventListener('pointermove', handlePointerMove)
     globalThis.addEventListener('pointerup', handlePointerUp)

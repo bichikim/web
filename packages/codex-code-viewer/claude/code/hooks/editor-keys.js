@@ -1,5 +1,6 @@
+import {readEditorLines} from './read-editor-lines.ts'
 import {EditorSelection, findClusterBreak, Text} from '@codemirror/state'
-const lineEnd = (line) => line.to - (line.text.endsWith('\r') ? 1 : 0)
+const lineEnd = (line) => line.to
 const cluster = (document, offset, forward) => {
   const line = document.lineAt(offset)
   if (forward && offset >= lineEnd(line)) {
@@ -12,7 +13,7 @@ const cluster = (document, offset, forward) => {
 }
 function navigationHead(editor, event, rows) {
   const selected = editor.selection.main
-  const document = editor.doc
+  const document = readEditorLines(editor.doc)
   const current = document.lineAt(selected.head)
   switch (event.key) {
     case 'home':
@@ -76,14 +77,14 @@ function modifiedKey(editor, event) {
     return select(editor, editor.doc.length, event.shift)
   }
   if (key === 'left' || key === 'right') {
-    const line = editor.doc.lineAt(editor.selection.main.head)
+    const line = readEditorLines(editor.doc).lineAt(editor.selection.main.head)
     return select(editor, key === 'left' ? line.from : lineEnd(line), event.shift)
   }
   return {}
 }
 function editTransaction(editor, event) {
   const selected = editor.selection.main
-  const document = editor.doc
+  const document = readEditorLines(editor.doc)
   let {from, to} = selected
   let insert = event.key
   switch (event.key) {
@@ -96,7 +97,7 @@ function editTransaction(editor, event) {
       insert = ''
       break
     case 'return':
-      insert = document.toString().includes('\r\n') ? '\r\n' : '\n'
+      insert = document.toString().match(/\r\n|\n|\r/u)?.[0] ?? '\n'
       break
     case 'space':
       insert = ' '

@@ -1,6 +1,6 @@
 import {replaceBlobObjectUrl} from 'src/features/blob-object-url'
 import type {DialogueSegment} from '../../features/focus-room-dialogue'
-import type {SupertonicModelId, SupertonicVoiceId} from '../../features/supertonic'
+import type {SupertonicModelId, SupertonicVoiceId} from '@winter-love/supertonic/model'
 
 export interface LanguageLearningCandidate {
   readonly audio: Blob

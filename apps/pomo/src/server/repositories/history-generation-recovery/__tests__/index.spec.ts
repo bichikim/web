@@ -60,13 +60,9 @@ it('should report when an ambiguous submission lost the expiration race', async 
   await expect(expireGenerationSubmission('run-1', RECOVERY_CUTOFFS, database)).resolves.toBe(false)
 })
 
-it('should list submitted responses and expired ambiguous submissions', async () => {
+it('should query recovery candidates and classify the returned rows', async () => {
   const limit = vi.fn(async () => [
-    {id: 'run-preparing', responseId: null, status: 'preparing', submissionState: null},
-    {id: 'run-unknown', responseId: null, status: 'preparing', submissionState: 'unknown'},
-    {id: 'run-missing', responseId: null, status: 'submitted', submissionState: null},
     {id: 'run-1', responseId: 'resp-1', status: 'submitted', submissionState: null},
-    {id: 'run-2', responseId: 'resp-2', status: 'submitted', submissionState: null},
   ])
   const orderBy = vi.fn(() => ({limit}))
   const where = vi.fn((_condition: SQL) => ({orderBy}))
@@ -85,12 +81,7 @@ it('should list submitted responses and expired ambiguous submissions', async ()
       submissionExpiredBefore: new Date('2026-08-16T00:30:00.000Z'),
       submittedBefore: new Date('2026-08-16T00:00:00.000Z'),
     }),
-  ).resolves.toEqual([
-    {kind: 'submission_unknown', runId: 'run-preparing'},
-    {kind: 'submission_unknown', runId: 'run-unknown'},
-    {kind: 'response', responseId: 'resp-1'},
-    {kind: 'response', responseId: 'resp-2'},
-  ])
+  ).resolves.toEqual([{kind: 'response', responseId: 'resp-1'}])
   expect(orderBy).toHaveBeenCalledOnce()
   const condition = where.mock.calls[0]?.[0]
   const query = new PgDialect({casing: 'snake_case'}).sqlToQuery(condition)

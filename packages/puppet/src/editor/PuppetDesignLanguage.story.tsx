@@ -2,8 +2,6 @@ import {Button} from '@kobalte/core/button'
 import {For} from 'solid-js'
 import type {Meta, StoryObj} from 'storybook-solidjs-vite'
 
-import {PuppetEditor} from './PuppetEditor'
-
 const SWATCHES = [
   {color: '#0b0f0e', label: 'Canvas', use: '작업 공간의 가장 깊은 바탕'},
   {color: '#101513', label: 'Panel', use: '레이어, 속성, 타임라인 패널'},
@@ -50,12 +48,11 @@ const SPACING = [
 ] as const
 
 const meta = {
-  component: PuppetEditor,
   parameters: {
     layout: 'fullscreen',
   },
   title: 'Puppet/Design System/Foundation',
-} satisfies Meta<typeof PuppetEditor>
+} satisfies Meta
 
 export default meta
 type Story = StoryObj<typeof meta>
@@ -127,13 +124,16 @@ export const DesignLanguage: Story = {
         <h2 id="puppet-control-title">Control hierarchy</h2>
         <div class="puppet-editor puppet-story-surface">
           <div class="puppet-control-row">
-            <Button class="toolbar-button primary" type="button">
+            <Button
+              class="editor-button !border-[#64e5c4] !bg-[#64e5c4] !text-[#07110f] font-bold"
+              type="button"
+            >
               주요 행동
             </Button>
-            <Button class="toolbar-button" type="button">
+            <Button class="editor-button" type="button">
               보조 행동
             </Button>
-            <Button class="toolbar-button" disabled type="button">
+            <Button class="editor-button" disabled type="button">
               비활성
             </Button>
             <div class="renderer-status" data-status="ready">

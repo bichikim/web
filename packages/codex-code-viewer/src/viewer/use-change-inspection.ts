@@ -2,13 +2,13 @@ import {type Accessor, createEffect, createMemo, createSignal, on} from 'solid-j
 import type {ChangeHunk} from '../shared/change-contracts'
 import type {InlineChange} from './types'
 
-interface ChangeInspectionProps {
+interface UseChangeInspectionProps {
   readonly path: Accessor<string | undefined>
   readonly base: Accessor<string | null>
   readonly source: Accessor<string>
   readonly hunks: Accessor<readonly ChangeHunk[]>
 }
-export const useChangeInspection = (props: ChangeInspectionProps) => {
+export const useChangeInspection = (props: UseChangeInspectionProps) => {
   const [active, setActive] = createSignal<number | null>(null)
   let origin: HTMLElement | null = null
   createEffect(on([props.path, props.source, props.hunks], () => setActive(null)))

@@ -3,7 +3,7 @@ import {fireEvent, render} from '@solidjs/testing-library'
 import {createSignal} from 'solid-js'
 import {expect, test} from 'vitest'
 import {createDemoDocument} from '../../../player'
-import {useDocumentHistory} from '../../use-document-history'
+import {createHistory as useDocumentHistory} from '../../__tests__/fixtures/history'
 import {BoundaryGlueEditor} from '../BoundaryGlueEditor'
 
 test('should batch attach without selecting a vertex and undo the entire operation', () => {

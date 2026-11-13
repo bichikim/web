@@ -60,6 +60,13 @@ describe('text model definitions', () => {
     expect(getTextModel('gemma-4-e2b')).toMatchObject({id: 'gemma-4-e2b'})
   })
 
+  it('should share catalog entries between display and implementation lookups', () => {
+    for (const model of TEXT_MODELS) {
+      expect(getTextModel(model.id)).toBe(model)
+      expect(getTextModelImplementation(model.id)).toBe(model)
+    }
+  })
+
   it('should reject a text model unavailable in the current build', () => {
     expect(() => getTextModelImplementation('unavailable-model' as TextModelId)).toThrow(
       '현재 빌드에서 사용할 수 없는 텍스트 모델이에요: unavailable-model',

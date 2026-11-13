@@ -1,3 +1,4 @@
+import {readEditorLines} from './read-editor-lines.ts'
 import {EditorSelection, EditorState, Text} from '@codemirror/state'
 import {isEditableFile, offsetPosition, sourceOffset} from '../../../src/headless/index.ts'
 import {editorKey} from './editor-keys.js'
@@ -218,11 +219,12 @@ async function clipboardCommand(command, context) {
     )
     return
   }
-  const line = editor.doc.lineAt(range.head)
+  const lines = readEditorLines(editor.doc)
+  const line = lines.lineAt(range.head)
   const from = range.empty ? line.from : range.from
   const to = range.empty
-    ? line.number < editor.doc.lines
-      ? editor.doc.line(line.number + 1).from
+    ? line.number < lines.lines
+      ? lines.line(line.number + 1).from
       : line.to
     : range.to
   await context.copy(
@@ -244,19 +246,20 @@ async function clipboardCommand(command, context) {
 }
 
 async function selectGutter(event, context) {
-  if (!Number.isInteger(event.line) || event.line < 1 || event.line > editor.doc.lines) {
+  const lines = readEditorLines(editor.doc)
+  if (!Number.isInteger(event.line) || event.line < 1 || event.line > lines.lines) {
     return
   }
   if (event.begin) {
-    lineAnchor = event.shift ? editor.doc.lineAt(editor.selection.main.anchor).number : event.line
+    lineAnchor = event.shift ? lines.lineAt(editor.selection.main.anchor).number : event.line
   }
-  const anchor = Math.min(editor.doc.lines, lineAnchor ?? event.line)
-  const first = editor.doc.line(Math.min(anchor, event.line))
-  const last = editor.doc.line(Math.max(anchor, event.line))
+  const anchor = Math.min(lines.lines, lineAnchor ?? event.line)
+  const first = lines.line(Math.min(anchor, event.line))
+  const last = lines.line(Math.max(anchor, event.line))
   await applyEditor(
     context,
     editor.update({
-      selection: EditorSelection.range(first.from, last.to - Number(last.text.endsWith('\r'))),
+      selection: EditorSelection.range(first.from, last.to),
     }).state,
   )
 }

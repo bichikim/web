@@ -108,6 +108,55 @@ describe('useViewer navigation', () => {
     expect(viewer.address()).toBe('main.tsx:1:1')
   })
 
+  it.each([
+    {changed: false, path: 'editor.tsx', revision: 'main.tsx'},
+    {changed: true, path: 'main.tsx', revision: 'updated'},
+  ])(
+    'should retain streamed definition navigation only for unchanged focus refreshes (changed: $changed)',
+    async ({changed, path, revision}) => {
+      const port = createPort()
+      const attached = Promise.withResolvers<ReadableStreamDefaultController<Uint8Array>>()
+      vi.stubGlobal(
+        'fetch',
+        vi.fn(
+          async () =>
+            new Response(
+              new ReadableStream<Uint8Array>({
+                start: (controller) => attached.resolve(controller),
+              }),
+            ),
+        ),
+      )
+      vi.mocked(port.call)
+        .mockResolvedValueOnce({
+          content: [],
+          structuredContent: {url: 'http://127.0.0.1:4321/scan/navigation'},
+        })
+        .mockResolvedValueOnce({
+          content: [],
+          structuredContent: {document: {...document('main.tsx'), revision}},
+        })
+      const viewer = mount(port)
+      const following = viewer.follow({
+        kind: 'identifier',
+        navigation: 'definition',
+        offset: 0,
+        text: 'Editor',
+      })
+      const output = await attached.promise
+      await viewer.refresh()
+      output.enqueue(
+        new TextEncoder().encode(
+          `${JSON.stringify({kind: 'definition', locations: [document('editor.tsx').location]})}\n{"done":true}\n`,
+        ),
+      )
+      output.close()
+      await following
+      expect(viewer.session()?.document.location.path).toBe(path)
+      expect(viewer.canBack()).toBe(!changed)
+    },
+  )
+
   it('should preserve the latest selection when a pending refresh finishes', async () => {
     const port = createPort()
     const pending = Promise.withResolvers<CallToolResult>()

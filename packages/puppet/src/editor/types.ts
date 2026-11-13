@@ -1,5 +1,6 @@
-import type {PuppetExampleDocument} from './example-document'
-import type {DocumentRecovery} from './document-recovery'
+import type {JSX} from 'solid-js'
+import type {ModelBinding} from './model'
+import type {EditorController} from './control'
 import type {MeshPoint} from '../mesh'
 import type {PuppetDocument} from '../player/document'
 
@@ -57,14 +58,22 @@ export interface EditPartEdgeOptions {
   readonly secondVertexIndex: number
 }
 
+export interface EditorHeaderMounts {
+  /** Supplies a host toolbar mount for the existing editor brush controls; undefined detaches it. */
+  readonly setBrushSettingsMount: (element: HTMLDivElement | undefined) => void
+}
+
 export interface PuppetEditorProps {
-  /** Externally loaded document; omitted, retain the local editor document and history. */
-  readonly replacementDocument?: PuppetDocument
-  readonly onDocumentCommit?: (document: PuppetDocument) => void
-  readonly examples?: ReadonlyArray<PuppetExampleDocument>
-  readonly initialDocument?: PuppetDocument
+  /** Host-owned model and undo/redo, fixed for this instance; mount a new editor to bind another session. */
+  readonly model: ModelBinding
+  /** Initial local animation selection; omitted to use the first motion. */
   readonly initialMotionId?: string
+  /** Initial local editing mode; omitted for modeling. */
   readonly initialWorkspace?: 'animation' | 'modeling'
-  readonly onDocumentChange?: (document: PuppetDocument) => void
-  readonly recovery?: DocumentRecovery
+  /** Host header composition; omitted for an editor body without a header. */
+  readonly header?: (control: EditorController, mounts: EditorHeaderMounts) => JSX.Element
+  /** Reports this instance's control handle once. The handle becomes stale on disposal. */
+  readonly onControl?: (control: EditorController) => void
+  /** Requested host input activity; deactivation waits for an open transaction to finish. Omitted for active input. */
+  readonly active?: boolean
 }

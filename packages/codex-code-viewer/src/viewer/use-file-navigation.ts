@@ -16,7 +16,7 @@ interface LocatedDocument {
   readonly document: CodeDocument
   readonly deleted: boolean
 }
-interface FileNavigationOptions {
+interface UseFileNavigationProps {
   readonly connection: Accessor<ViewerConnection | null>
   readonly revision: Accessor<number>
   readonly history: ReturnType<typeof useFileHistory>
@@ -38,20 +38,20 @@ interface HistoryTarget {
 }
 
 /** Navigates live files or retained drafts and skips confirmed missing history entries. */
-export const useFileNavigation = (options: FileNavigationOptions) => {
-  createEffect(on(options.revision, () => options.history.retryMissing()))
+export const useFileNavigation = (props: UseFileNavigationProps) => {
+  createEffect(on(props.revision, () => props.history.retryMissing()))
   const read = async (
     connection: ViewerConnection,
     location: CodeLocation,
   ): Promise<Result<LocatedDocument>> => {
     try {
-      const result = await options.read(location)
+      const result = await props.read(location)
       return success({deleted: false, document: result.document})
     } catch (error) {
       if (!isMissingDocument(error)) {
         throw error
       }
-      const document = options.retained(connection.workspace, location.path)
+      const document = props.retained(connection.workspace, location.path)
       return document === undefined ? failure('not-found') : success({deleted: true, document})
     }
   }
@@ -62,46 +62,46 @@ export const useFileNavigation = (options: FileNavigationOptions) => {
     navigation?: NavigationOptions,
   ): void => {
     if (!value.deleted) {
-      options.history.markPresent(location.path)
+      props.history.markPresent(location.path)
     }
-    options.show(connection, value.document, location, {...navigation, deleted: value.deleted})
+    props.show(connection, value.document, location, {...navigation, deleted: value.deleted})
   }
   const go = async (location: CodeLocation, navigation?: NavigationOptions): Promise<void> => {
-    const connection = options.connection()
+    const connection = props.connection()
     if (connection === null) {
       return
     }
-    await options.navigation.run(async (current) => {
+    await props.navigation.run(async (current) => {
       const result = await read(connection, location)
       if (current()) {
         if (result.ok) {
           show(connection, result.value, location, navigation)
         } else {
-          options.report(result.error)
+          props.report(result.error)
         }
       }
     })
   }
   const traverse = async (targets: readonly HistoryTarget[], recover = false): Promise<void> => {
-    const connection = options.connection()
+    const connection = props.connection()
     if (connection === null) {
       return
     }
-    const generation = options.history.generation()
+    const generation = props.history.generation()
     if (recover) {
-      options.clear(connection)
+      props.clear(connection)
     }
-    await options.navigation.run(async (current) => {
-      const active = (): boolean => current() && generation === options.history.generation()
+    await props.navigation.run(async (current) => {
+      const active = (): boolean => current() && generation === props.history.generation()
       const visited = new Set<string>()
       await targets.reduce(async (previous, target) => {
         if ((await previous) || !active()) {
           return true
         }
         const {path} = target.location
-        if (!visited.has(path) && options.history.available(path)) {
+        if (!visited.has(path) && props.history.available(path)) {
           visited.add(path)
-          const revision = options.revision()
+          const revision = props.revision()
           const result = await read(connection, target.location)
           if (!active()) {
             return true
@@ -113,8 +113,8 @@ export const useFileNavigation = (options: FileNavigationOptions) => {
             })
             return true
           }
-          if (revision === options.revision()) {
-            options.history.markMissing(path)
+          if (revision === props.revision()) {
+            props.history.markMissing(path)
           }
         }
         return false
@@ -124,19 +124,19 @@ export const useFileNavigation = (options: FileNavigationOptions) => {
   const recover = () =>
     traverse(
       [
-        options.history.current(),
-        ...options.history.candidates(-1),
-        ...options.history.candidates(1),
+        props.history.current(),
+        ...props.history.candidates(-1),
+        ...props.history.candidates(1),
       ].filter((target) => target !== undefined),
       true,
     )
   return {
     forget: (path: string) => {
-      options.history.applyMutation({action: 'delete', entry: {kind: 'file', path}, source: path})
+      props.history.applyMutation({action: 'delete', entry: {kind: 'file', path}, source: path})
       return recover()
     },
     go,
-    move: (direction: -1 | 1) => traverse(options.history.candidates(direction)),
+    move: (direction: -1 | 1) => traverse(props.history.candidates(direction)),
     recover,
   }
 }

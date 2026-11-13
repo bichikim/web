@@ -112,7 +112,7 @@ const waitForFrame = () =>
     requestAnimationFrame(() => resolve())
   })
 
-const renderDocument = async (document: PuppetDocument) => {
+const renderDocument = async (document: PuppetDocument, renderScale?: number) => {
   const root = globalThis.document.createElement('div')
   globalThis.document.body.replaceChildren(root)
   const ready = new Promise<void>((resolve, reject) => {
@@ -129,7 +129,11 @@ const renderDocument = async (document: PuppetDocument) => {
         <>
           <style>{STAGE_STYLE}</style>
           <section class="visual-stage" data-testid="visual-stage">
-            <PlayerCanvas document={document} onStatusChange={handleStatusChange} />
+            <PlayerCanvas
+              document={document}
+              renderScale={renderScale}
+              onStatusChange={handleStatusChange}
+            />
           </section>
         </>
       ),
@@ -206,6 +210,13 @@ describe('PlayerCanvas visual rendering', () => {
 
   test('should render an overlapping chained mask', async () => {
     const stage = await renderDocument(createOverlappingChainedMaskDocument())
+
+    await expect.element(stage).toMatchScreenshot('overlapping-chained-mask-supersampled')
+  })
+
+  test('should preserve an overlapping chained mask at one render pixel per CSS pixel', async () => {
+    // The original snapshot used one sample; the editor now defaults to two.
+    const stage = await renderDocument(createOverlappingChainedMaskDocument(), 0.5)
 
     await expect.element(stage).toMatchScreenshot('overlapping-chained-mask')
   })

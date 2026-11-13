@@ -58,7 +58,12 @@ export const TimelineKeyframeMarker = (props: TimelineKeyframeMarkerProps) => {
     }
   }
   const handlePointerDown = (event: PointerEvent & {currentTarget: HTMLButtonElement}) => {
-    if (event.button !== 0 || props.onMove === undefined) {
+    if (
+      event.button !== 0 ||
+      event.isPrimary === false ||
+      drag() !== null ||
+      props.onMove === undefined
+    ) {
       return
     }
 
@@ -106,7 +111,19 @@ export const TimelineKeyframeMarker = (props: TimelineKeyframeMarkerProps) => {
     props.onMovePreviewEnd?.()
     props.onEditEnd?.()
   }
-  onCleanup(() => finishDrag(false))
+  const cancel = () => finishDrag(false)
+  const handleEscape = (event: KeyboardEvent) => {
+    if (event.key === 'Escape') {
+      cancel()
+    }
+  }
+  globalThis.addEventListener('blur', cancel)
+  globalThis.addEventListener('keydown', handleEscape)
+  onCleanup(() => {
+    globalThis.removeEventListener('blur', cancel)
+    globalThis.removeEventListener('keydown', handleEscape)
+    cancel()
+  })
   createEffect(
     on(
       () => props.keyframe,

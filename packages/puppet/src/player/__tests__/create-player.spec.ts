@@ -27,6 +27,7 @@ vi.mock('pixi.js', () => ({
   Container: mocks.Container,
   MeshSimple: mocks.MeshSimple,
   Texture: {from: mocks.TextureFrom},
+  UPDATE_PRIORITY: {LOW: -25},
 }))
 
 afterEach(() => {
@@ -48,12 +49,13 @@ describe('createPlayer', () => {
       destroy: vi.fn(),
       init: vi.fn().mockResolvedValue(undefined),
       render: vi.fn(),
+      renderer: {resolution: 1},
       resize: vi.fn(),
       screen: {height: 100, width: 200},
       stage: {addChild: vi.fn()},
       start: vi.fn(),
       stop: vi.fn(),
-      ticker: {add: vi.fn()},
+      ticker: {add: vi.fn(), remove: vi.fn()},
     }
     const root = {
       addChild: vi.fn(),
@@ -110,6 +112,12 @@ describe('createPlayer', () => {
     expect(application.resize).toHaveBeenCalledOnce()
     // Creation, pause (the stopped frame), seek and resize each draw once.
     expect(application.render).toHaveBeenCalledTimes(4)
+    player.resize(0.5)
+    expect(application.renderer.resolution).toBe(0.5)
+    expect(application.resize).toHaveBeenCalledTimes(2)
+    player.resize(0)
+    player.resize(Number.NaN)
+    expect(application.resize).toHaveBeenCalledTimes(2)
     expect(player.updateDocument(preparedDocument)).toBe(true)
     expect(player.updateDocument(replacementDocument)).toBe(false)
     expect(() => player.updateDocument(puppetDocument as PreparedPuppetDocument)).toThrow(
@@ -135,6 +143,7 @@ describe('createPlayer', () => {
         add: vi.fn((handler: (ticker: {readonly deltaMS: number}) => void) => {
           tick = handler
         }),
+        remove: vi.fn(),
       },
     }
     const root = {
