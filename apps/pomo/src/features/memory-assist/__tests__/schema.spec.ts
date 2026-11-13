@@ -4,6 +4,53 @@ import {expect, it} from 'vitest'
 import {getDueMemoryReminder} from '../schedule'
 import {parseMemoryMemos} from '../schema'
 
+it.each([
+  {expected: null, kind: 'exact', marker: undefined, next: 'same', rearmed: false},
+  {expected: 'same', kind: 'exact', marker: true, next: 'same', rearmed: true},
+  {expected: 'different', kind: 'exact', marker: true, next: 'different', rearmed: false},
+  {expected: 'same', kind: 'recall', marker: true, next: 'same', rearmed: false},
+  {expected: null, kind: 'exact', marker: true, next: null, rearmed: false},
+  {expected: null, kind: 'exact', marker: true, next: undefined, rearmed: false},
+  {expected: 'same', kind: 'recall', marker: true, next: undefined, rearmed: false},
+  {expected: 'equivalent', kind: 'exact', marker: true, next: 'equivalent', rearmed: false},
+] as const)(
+  'should normalize the next occurrence and rearm marker together (%j)',
+  ({kind, marker, next, expected, rearmed}) => {
+    const times = {
+      different: '2026-09-04T04:10:00.000Z',
+      equivalent: '2026-09-04T04:00:00Z',
+      same: '2026-09-04T04:00:00.000Z',
+    }
+    const input = {
+      createdAt: '2026-09-04T03:00:00.000Z',
+      dialogueId: null,
+      exactReminderAt: times.same,
+      id: 'memo-1',
+      nextExactReminderAt: next === null || next === undefined ? next : times[next],
+      nextExactReminderRearmed: marker,
+      nextRecallAt: null,
+      recallMode: 'none',
+      reinforcementIndex: 0,
+      reminderEvents: [{deliveredAt: times.different, kind, scheduledAt: times.same}],
+      reminderHistory: [times.different],
+      text: '여권 갱신하기',
+      updatedAt: times.different,
+      version: 1,
+    }
+    const original = structuredClone(input)
+    const result = parseMemoryMemos([input])
+
+    expect(result).not.toBeNull()
+    expect(result?.[0]?.nextExactReminderAt).toBe(expected === null ? null : times[expected])
+    expect(Object.hasOwn(result?.[0] ?? {}, 'nextExactReminderRearmed')).toBe(rearmed)
+    if (rearmed) {
+      expect(result?.[0]?.nextExactReminderRearmed).toBe(true)
+    }
+    expect(parseMemoryMemos(result)).toEqual(result)
+    expect(input).toEqual(original)
+  },
+)
+
 it('should restore an unconsumed legacy exact reminder with non-repeating defaults', () => {
   const exactReminderAt = '2026-09-04T04:00:00.000Z'
   const result = parseMemoryMemos([

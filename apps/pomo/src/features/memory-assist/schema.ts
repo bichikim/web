@@ -74,42 +74,31 @@ const hasConsumedExactReminder = (memo: z.infer<typeof memoryMemoSchema>) => {
   )
 }
 
-const isIntentionalExactReminderRearm = (memo: z.infer<typeof memoryMemoSchema>) =>
-  memo.nextExactReminderRearmed === true &&
-  memo.nextExactReminderAt !== undefined &&
-  memo.nextExactReminderAt !== null &&
-  memo.reminderEvents.some(
-    (event) => event.kind === 'exact' && event.scheduledAt === memo.nextExactReminderAt,
-  )
-
-const getNormalizedNextExactReminderAt = (memo: z.infer<typeof memoryMemoSchema>) => {
-  if (memo.nextExactReminderAt !== undefined) {
-    if (
-      memo.nextExactReminderAt !== null &&
-      !isIntentionalExactReminderRearm(memo) &&
-      memo.reminderEvents.some(
-        (event) => event.kind === 'exact' && event.scheduledAt === memo.nextExactReminderAt,
-      )
-    ) {
-      return null
-    }
-
-    return memo.nextExactReminderAt
-  }
-
-  return hasConsumedExactReminder(memo) ? null : getFirstExactReminderAt(memo)
-}
-
 const normalizedMemoryMemoSchema = memoryMemoSchema.transform((memo) => {
   const hasExactReminder = memo.exactReminderAt !== null
-  const hasIntentionalRearm = isIntentionalExactReminderRearm(memo)
+  const storedNextReminderAt = memo.nextExactReminderAt
+  const hasDeliveredNextReminder =
+    storedNextReminderAt !== undefined &&
+    storedNextReminderAt !== null &&
+    memo.reminderEvents.some(
+      (event) => event.kind === 'exact' && event.scheduledAt === storedNextReminderAt,
+    )
+  const hasIntentionalRearm = memo.nextExactReminderRearmed === true && hasDeliveredNextReminder
+  const nextExactReminderAt =
+    storedNextReminderAt === undefined
+      ? hasConsumedExactReminder(memo)
+        ? null
+        : getFirstExactReminderAt(memo)
+      : hasDeliveredNextReminder && !hasIntentionalRearm
+        ? null
+        : storedNextReminderAt
   const memoWithoutRearmMarker = {...memo}
   delete memoWithoutRearmMarker.nextExactReminderRearmed
 
   return {
     ...memoWithoutRearmMarker,
     ...(hasIntentionalRearm ? {nextExactReminderRearmed: true as const} : {}),
-    nextExactReminderAt: getNormalizedNextExactReminderAt(memo),
+    nextExactReminderAt,
     nextRecallAt: hasExactReminder ? null : memo.nextRecallAt,
     recallMode: hasExactReminder ? ('none' as const) : memo.recallMode,
     reinforcementIndex: hasExactReminder ? 0 : memo.reinforcementIndex,
