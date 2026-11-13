@@ -8,8 +8,104 @@ import type {PuppetPart} from '../../../player'
 import {createSpatialEditorObject} from '../spatial-editor-objects'
 import {SpatialMeshDialog} from '../SpatialMeshDialog'
 import {SpatialMeshPreview} from '../SpatialMeshPreview'
+import {useDocumentHistoryShortcuts} from '../../use-document-history-shortcuts'
 
 const imported = vi.hoisted(() => ({parse: vi.fn()}))
+
+test.each([
+  {ctrlKey: true, key: 'z'},
+  {key: 'z', metaKey: true},
+  {ctrlKey: true, key: 'z', shiftKey: true},
+  {key: 'z', metaKey: true, shiftKey: true},
+  {ctrlKey: true, key: 'y'},
+])('should isolate modal history keys from the document: %j', (shortcut) => {
+  const onUndo = vi.fn(() => true)
+  const onRedo = vi.fn(() => true)
+  const view = render(() => {
+    useDocumentHistoryShortcuts({onRedo, onUndo})
+    return (
+      <SpatialMeshDialog
+        bounds={{height: 100, width: 100, x: 0, y: 0}}
+        isOpen
+        onApply={() => true}
+        onOpenChange={vi.fn()}
+      />
+    )
+  })
+  fireEvent.click(screen.getByRole('button', {name: '박스 추가'}))
+  const button = screen.getByRole('button', {name: '회전'})
+  button.focus()
+  const event = new KeyboardEvent('keydown', {bubbles: true, cancelable: true, ...shortcut})
+  button.dispatchEvent(event)
+  expect(onUndo).not.toHaveBeenCalled()
+  expect(onRedo).not.toHaveBeenCalled()
+  expect(event.defaultPrevented).toBe(true)
+  expect(screen.getByRole('button', {name: '박스 편집'})).toBeVisible()
+  expect(button).toHaveFocus()
+  view.unmount()
+})
+
+test.each([
+  {name: '메시 이름', role: 'textbox'},
+  {name: 'center X', role: 'spinbutton'},
+])(
+  'should preserve native input history without routing it to the document: %j',
+  ({name, role}) => {
+    const onUndo = vi.fn(() => true)
+    const view = render(() => {
+      useDocumentHistoryShortcuts({onRedo: () => true, onUndo})
+      return (
+        <SpatialMeshDialog
+          bounds={{height: 100, width: 100, x: 0, y: 0}}
+          isOpen
+          onApply={() => true}
+          onOpenChange={vi.fn()}
+        />
+      )
+    })
+    fireEvent.click(screen.getByRole('button', {name: '박스 추가'}))
+    const input = screen.getByRole(role, {name})
+    input.focus()
+    const event = new KeyboardEvent('keydown', {
+      bubbles: true,
+      cancelable: true,
+      ctrlKey: true,
+      key: 'z',
+    })
+    input.dispatchEvent(event)
+    expect(event.defaultPrevented).toBe(false)
+    expect(onUndo).not.toHaveBeenCalled()
+    expect(input).toHaveFocus()
+    view.unmount()
+  },
+)
+
+test.each([
+  {name: '박스 합성 선택', role: 'checkbox'},
+  {name: '더하기', role: 'radio'},
+])('should suppress native background undo for a non-text input: %j', ({name, role}) => {
+  const view = render(() => (
+    <SpatialMeshDialog
+      bounds={{height: 100, width: 100, x: 0, y: 0}}
+      isOpen
+      onApply={() => true}
+      onOpenChange={vi.fn()}
+    />
+  ))
+  fireEvent.click(screen.getByRole('button', {name: '박스 추가'}))
+  const input = screen.getByRole(role, {name})
+  input.focus()
+  const event = new KeyboardEvent('keydown', {
+    bubbles: true,
+    cancelable: true,
+    ctrlKey: true,
+    key: 'z',
+  })
+  input.dispatchEvent(event)
+  expect(event.defaultPrevented).toBe(true)
+  expect(input).toHaveFocus()
+  view.unmount()
+})
 
 const findButton = (buttons: ReadonlyArray<HTMLElement>, name: string) => {
   const matchingButtons = buttons.filter(
