@@ -41,14 +41,10 @@ it('should release initialization waiters when disposed before the repository mo
 
 it('should ignore repository initialization that finishes after disposal', async () => {
   const dialogue = createDialogue('delayed')
-  let resolveDialogues: (dialogues: ReadonlyArray<PDialogue>) => void = () => undefined
-  let resolveBindings: (bindings: ReadonlyArray<DialogueEventBinding>) => void = () => undefined
-  const dialogues = new Promise<ReadonlyArray<PDialogue>>((resolve) => {
-    resolveDialogues = resolve
-  })
-  const bindings = new Promise<ReadonlyArray<DialogueEventBinding>>((resolve) => {
-    resolveBindings = resolve
-  })
+  const {promise: dialogues, resolve: resolveDialogues} =
+    Promise.withResolvers<ReadonlyArray<PDialogue>>()
+  const {promise: bindings, resolve: resolveBindings} =
+    Promise.withResolvers<ReadonlyArray<DialogueEventBinding>>()
   const repository = createRepository([dialogue])
   repository.listDialogues.mockReturnValue(dialogues)
   repository.listEventBindings.mockReturnValue(bindings)
@@ -67,10 +63,8 @@ it('should ignore repository initialization that finishes after disposal', async
 })
 
 it('should suppress an initialization rejection after disposal', async () => {
-  let rejectDialogues: (error: Error) => void = () => undefined
-  const dialogues = new Promise<ReadonlyArray<PDialogue>>((_resolve, reject) => {
-    rejectDialogues = reject
-  })
+  const {promise: dialogues, reject: rejectDialogues} =
+    Promise.withResolvers<ReadonlyArray<PDialogue>>()
   const repository = createRepository([])
   repository.listDialogues.mockReturnValue(dialogues)
   repositoryMocks.create.mockReturnValue(repository)
@@ -214,10 +208,7 @@ it('should skip retries when playback is disabled', async () => {
 
 it('should preserve the later same-event binding when the previous update fails', async () => {
   const dialogues = [createDialogue('first'), createDialogue('second')]
-  let rejectFirst: (error: Error) => void = () => undefined
-  const firstUpdate = new Promise<void>((_resolve, reject) => {
-    rejectFirst = reject
-  })
+  const {promise: firstUpdate, reject: rejectFirst} = Promise.withResolvers<void>()
   const repository = createRepository(dialogues)
   repository.setEventBinding.mockReturnValueOnce(firstUpdate).mockResolvedValueOnce(undefined)
   repositoryMocks.create.mockReturnValue(repository)
@@ -234,10 +225,7 @@ it('should preserve the later same-event binding when the previous update fails'
 })
 
 it('should ignore binding completion and rejection after disposal', async () => {
-  let resolveUpdate: () => void = () => undefined
-  const update = new Promise<void>((resolve) => {
-    resolveUpdate = resolve
-  })
+  const {promise: update, resolve: resolveUpdate} = Promise.withResolvers<void>()
   const repository = createRepository([createDialogue('first')])
   repository.setEventBinding.mockReturnValue(update)
   repositoryMocks.create.mockReturnValue(repository)
@@ -247,10 +235,7 @@ it('should ignore binding completion and rejection after disposal', async () => 
   resolveUpdate()
   await persisted
 
-  let rejectUpdate: (error: Error) => void = () => undefined
-  const rejectedUpdate = new Promise<void>((_resolve, reject) => {
-    rejectUpdate = reject
-  })
+  const {promise: rejectedUpdate, reject: rejectUpdate} = Promise.withResolvers<void>()
   const nextRepository = createRepository([createDialogue('second')])
   nextRepository.setEventBinding.mockReturnValue(rejectedUpdate)
   repositoryMocks.create.mockReturnValue(nextRepository)
@@ -268,18 +253,12 @@ it('should keep newer bindings when a concurrent refresh completes and ignore re
   const repository = createRepository([first, second])
   repositoryMocks.create.mockReturnValue(repository)
   const {events, result} = await renderContext({enter: false})
-  let resolveDialogues: (dialogues: ReadonlyArray<PDialogue>) => void = () => undefined
-  let resolveBindings: (bindings: ReadonlyArray<DialogueEventBinding>) => void = () => undefined
-  repository.listDialogues.mockReturnValueOnce(
-    new Promise((resolve) => {
-      resolveDialogues = resolve
-    }),
-  )
-  repository.listEventBindings.mockReturnValueOnce(
-    new Promise((resolve) => {
-      resolveBindings = resolve
-    }),
-  )
+  const {promise: refreshedDialogues, resolve: resolveDialogues} =
+    Promise.withResolvers<ReadonlyArray<PDialogue>>()
+  const {promise: refreshedBindings, resolve: resolveBindings} =
+    Promise.withResolvers<ReadonlyArray<DialogueEventBinding>>()
+  repository.listDialogues.mockReturnValueOnce(refreshedDialogues)
+  repository.listEventBindings.mockReturnValueOnce(refreshedBindings)
   const refresh = events.refreshDialogues()
   await waitFor(() => expect(repository.listDialogues).toHaveBeenCalledTimes(2))
   await events.setEventDialogues('focus-start', [second.id])
@@ -297,19 +276,12 @@ it('should keep newer bindings when a concurrent refresh completes and ignore re
   expect(events.dialogues()).toEqual([first])
   expect(events.eventDialogueIds()).toEqual({'focus-start': [second.id]})
 
-  let resolveDisposedDialogues: (dialogues: ReadonlyArray<PDialogue>) => void = () => undefined
-  let resolveDisposedBindings: (bindings: ReadonlyArray<DialogueEventBinding>) => void = () =>
-    undefined
-  repository.listDialogues.mockReturnValueOnce(
-    new Promise((resolve) => {
-      resolveDisposedDialogues = resolve
-    }),
-  )
-  repository.listEventBindings.mockReturnValueOnce(
-    new Promise((resolve) => {
-      resolveDisposedBindings = resolve
-    }),
-  )
+  const {promise: disposedDialogues, resolve: resolveDisposedDialogues} =
+    Promise.withResolvers<ReadonlyArray<PDialogue>>()
+  const {promise: disposedBindings, resolve: resolveDisposedBindings} =
+    Promise.withResolvers<ReadonlyArray<DialogueEventBinding>>()
+  repository.listDialogues.mockReturnValueOnce(disposedDialogues)
+  repository.listEventBindings.mockReturnValueOnce(disposedBindings)
   const disposedRefresh = events.refreshDialogues()
   await waitFor(() => expect(repository.listDialogues).toHaveBeenCalledTimes(3))
   result.unmount()
@@ -387,10 +359,7 @@ it('should absorb a failed binding before delete and refresh operations', async 
 
 it('should ignore dialogue deletion that completes after disposal', async () => {
   const dialogue = createDialogue('dialogue')
-  let resolveDeletion: () => void = () => undefined
-  const deletion = new Promise<undefined>((resolve) => {
-    resolveDeletion = () => resolve(undefined)
-  })
+  const {promise: deletion, resolve: resolveDeletion} = Promise.withResolvers<undefined>()
   const repository = createRepository([dialogue])
   repository.deleteDialogue.mockReturnValue(deletion)
   repositoryMocks.create.mockReturnValue(repository)
@@ -399,7 +368,7 @@ it('should ignore dialogue deletion that completes after disposal', async () => 
   const pendingDeletion = events.deleteDialogue(dialogue.id)
   await waitFor(() => expect(repository.deleteDialogue).toHaveBeenCalledWith(dialogue.id))
   result.unmount()
-  resolveDeletion()
+  resolveDeletion(undefined)
   await pendingDeletion
 
   expect(events.dialogues()).toEqual([dialogue])
