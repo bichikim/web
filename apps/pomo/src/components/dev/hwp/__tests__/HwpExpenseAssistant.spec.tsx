@@ -135,3 +135,53 @@ it('should recover clear original expense text when Gemma replies in natural lan
   expect(screen.getByText('고구마')).toBeDefined()
   expect(screen.getByRole('button', {name: '양식 필드에 적용'})).toBeDefined()
 })
+
+it.each([
+  {questions: [], state: 'confirmed'},
+  {questions: ['단가를 확인해 주세요.'], state: 'unresolved'},
+])('should retain a $state expense response with an invisible blank date', async ({questions}) => {
+  const [messages, setMessages] = createSignal<ReadonlyArray<ChatMessage>>([])
+  chatMocks.controller = createController(messages)
+  chatMocks.useChat.mockReturnValue(chatMocks.controller)
+  const onApply = vi.fn()
+  render(() => <HwpExpenseAssistant onApply={onApply} />)
+
+  const text = '지출을 정리해 줘'
+  fireEvent.input(screen.getByRole('textbox', {name: '가계부 입력'}), {
+    target: {value: text},
+  })
+  fireEvent.click(screen.getByRole('button', {name: 'AI로 가계부 읽기'}))
+  expect(chatMocks.setDraft).toHaveBeenCalledWith(text)
+  setMessages([
+    {content: text, id: 'user-1', role: 'user'},
+    {
+      content: JSON.stringify({
+        date: '\u200b',
+        items: [{name: '두부', quantity: 1, unitPrice: 1500}],
+        questions,
+      }),
+      id: 'assistant-1',
+      role: 'assistant',
+    },
+  ])
+
+  await waitFor(() => expect(screen.getByRole('heading', {name: '해석 결과'})).toBeDefined())
+  expect(screen.getByText('합계 1,500원')).toBeDefined()
+  expect(screen.queryByRole('alert')).toBeNull()
+  const applyButton = screen.getByRole('button', {name: '양식 필드에 적용'})
+  if (questions.length > 0) {
+    expect(screen.getByText('· 단가를 확인해 주세요.')).toBeDefined()
+    expect(applyButton).toBeDisabled()
+    fireEvent.click(applyButton)
+    expect(onApply).not.toHaveBeenCalled()
+  } else {
+    expect(applyButton).toBeEnabled()
+    fireEvent.click(applyButton)
+    expect(onApply).toHaveBeenCalledExactlyOnceWith({
+      date: null,
+      items: [{amount: 1500, name: '두부', quantity: 1, unitPrice: 1500}],
+      questions: [],
+      total: 1500,
+    })
+  }
+})

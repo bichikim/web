@@ -164,7 +164,8 @@ export const parseExpenseAssistantResponse = (json: string): ExpenseParseResult 
     return invalid('invalid-shape')
   }
 
-  const dateValue = typeof parsed.date === 'string' ? parsed.date.trim() : parsed.date
+  const dateValue =
+    typeof parsed.date === 'string' ? parsed.date.replace(/^[\s\u200b]+$/u, '').trim() : parsed.date
   const date = readDate(dateValue)
   const questions = readQuestions(parsed.questions)
   const items = readItems(parsed.items)

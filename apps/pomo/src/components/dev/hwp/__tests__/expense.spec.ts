@@ -229,28 +229,56 @@ describe('parseExpenseAssistantResponse', () => {
     },
   )
 
-  it.each([undefined, null, '', '   ', '\t\n', '\u3000'])(
-    'should treat an absent or blank date as missing: %j',
-    (date) => {
-      const result = parseExpenseAssistantResponse(
-        JSON.stringify({
-          date,
-          items: [{name: '두부', quantity: 1, unitPrice: 1500}],
-          questions: ['단가를 확인해 주세요.'],
-        }),
-      )
+  it.each([
+    undefined,
+    null,
+    '',
+    '   ',
+    '\t\n',
+    '\u3000',
+    '\u200b',
+    '\u200b\u200b',
+    ' \u200b\t\u3000\u200b\n',
+  ])('should treat an absent or blank date as missing: %j', (date) => {
+    const result = parseExpenseAssistantResponse(
+      JSON.stringify({
+        date,
+        items: [{name: '두부', quantity: 1, unitPrice: 1500}],
+        questions: ['단가를 확인해 주세요.'],
+      }),
+    )
 
-      expect(result).toEqual({
-        ok: true,
-        value: {
-          date: null,
-          items: [{amount: 1500, name: '두부', quantity: 1, unitPrice: 1500}],
-          questions: ['단가를 확인해 주세요.'],
-          total: 1500,
-        },
-      })
+    expect(result).toEqual({
+      ok: true,
+      value: {
+        date: null,
+        items: [{amount: 1500, name: '두부', quantity: 1, unitPrice: 1500}],
+        questions: ['단가를 확인해 주세요.'],
+        total: 1500,
+      },
+    })
+  })
+
+  it.each(['\u200b2026-09-05', '2026-09-05\u200b', '2026-\u200b09-05'])(
+    'should reject zero-width spaces in a nonblank structured date: %j',
+    (date) => {
+      expect(
+        parseExpenseAssistantResponse(
+          JSON.stringify({date, items: [{name: '두부', quantity: 1, unitPrice: 1500}]}),
+        ),
+      ).toEqual({error: {code: 'invalid-shape'}, ok: false})
     },
   )
+
+  it.each([
+    {items: [{name: '두부', quantity: 0, unitPrice: 1500}], questions: []},
+    {items: [{name: '두부', quantity: 1, unitPrice: 1500}], questions: [null]},
+  ])('should reject invalid expense data with a zero-width-space-only date: %j', (value) => {
+    expect(parseExpenseAssistantResponse(JSON.stringify({date: '\u200b', ...value}))).toEqual({
+      error: {code: 'invalid-shape'},
+      ok: false,
+    })
+  })
 
   it.each([0, false, [], {}])('should reject a non-string date: %j', (date) => {
     expect(
