@@ -12,15 +12,10 @@ vi.mock('src/server/auth/authorize-admin-request', () => ({
 }))
 vi.mock('src/server/repositories/music-track-registration', () => repository)
 
+import {RED_ASSET, artworkPath, createStorage, sourcePath} from './fixtures/artwork'
 import {PUT} from '../assets'
 import {invokeApiRoute} from '../../../__tests__/invoke'
 
-const TRACK_ID = '11111111-1111-4111-8111-111111111111'
-const RED_ASSET = '22222222-2222-4222-8222-222222222222'
-const BLUE_ASSET = '33333333-3333-4333-8333-333333333333'
-const sourcePath = (assetId: string) => `tracks/${TRACK_ID}/${assetId}/source.mp3`
-const artworkPath = (assetId: string) => `/public/track-artwork/${assetId}/cover`
-const artworkUrl = (assetId: string) => `https://images.example/track-artwork/${assetId}/cover`
 const complete = (assetId: string) =>
   invokeApiRoute(
     PUT,
@@ -30,70 +25,6 @@ const complete = (assetId: string) =>
       method: 'PUT',
     }),
   )
-
-interface StoredObject {
-  readonly body: Uint8Array
-  readonly contentType: string | null
-}
-
-// ID3v2 permits zero padding between its frames and the MPEG audio.
-const padMetadata = (source: Buffer, paddingBytes: number): Buffer => {
-  const headerBytes = 10
-  const integerBase = 128
-  const size = [...source.subarray(6, headerBytes)].reduce(
-    (value, byte) => value * integerBase + byte,
-    0,
-  )
-  const header = Buffer.from(source.subarray(0, headerBytes))
-  let paddedSize = size + paddingBytes
-  for (let index = headerBytes - 1; index >= 6; index -= 1) {
-    header[index] = paddedSize % integerBase
-    paddedSize = Math.floor(paddedSize / integerBase)
-  }
-  return Buffer.concat([
-    header,
-    source.subarray(headerBytes, headerBytes + size),
-    Buffer.alloc(paddingBytes),
-    source.subarray(headerBytes + size),
-  ])
-}
-
-const createStorage = async (paddingBytes = 0) => {
-  const red = await readFile(new URL('./fixtures/artwork/red.mp3', import.meta.url))
-  const blue = await readFile(new URL('./fixtures/artwork/blue.mp3', import.meta.url))
-  const sources = new Map([
-    [`/private/${sourcePath(RED_ASSET)}`, padMetadata(red, paddingBytes)],
-    [`/private/${sourcePath(BLUE_ASSET)}`, blue],
-  ])
-  const objects = new Map<string, StoredObject>()
-  const fetcher = vi.fn<typeof fetch>(async (input) => {
-    if (!(input instanceof Request)) {
-      throw new Error('Expected a signed storage request')
-    }
-    const path = new URL(input.url).pathname
-    if (input.method === 'GET') {
-      const source = sources.get(path)
-      if (source === undefined) {
-        throw new Error(`Unexpected storage read: ${path}`)
-      }
-      const range = /^bytes=(\d+)-(\d+)$/u.exec(input.headers.get('Range') ?? '')
-      const body = range === null ? source : source.subarray(Number(range[1]), Number(range[2]) + 1)
-      return new Response(new Uint8Array(body), {
-        headers: {'Content-Length': String(body.byteLength), ETag: path},
-      })
-    }
-    if (input.method === 'PUT') {
-      objects.set(path, {
-        body: new Uint8Array(await input.arrayBuffer()),
-        contentType: input.headers.get('Content-Type'),
-      })
-      return new Response(null, {status: 200})
-    }
-    throw new Error(`Unexpected storage operation: ${input.method}`)
-  })
-  vi.stubGlobal('fetch', fetcher)
-  return {fetcher, objects}
-}
 
 beforeEach(() => {
   vi.resetAllMocks()
