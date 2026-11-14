@@ -18,7 +18,7 @@ const nextIndex = (current: number, length: number): number => {
 const getMessageAt =
   (messages: string[], fallback: string) =>
   (index: number): string => {
-    return messages.length > 0 ? (messages[index] ?? fallback) : fallback
+    return messages.length > 0 ? (messages[index % messages.length] ?? fallback) : fallback
   }
 
 /**
