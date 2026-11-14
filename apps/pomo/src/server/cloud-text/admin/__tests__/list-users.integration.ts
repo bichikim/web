@@ -52,6 +52,11 @@ beforeAll(async () => {
     'neon',
     'toss',
   ])
+  await database.query(
+    'insert into pomo_identities values ($1, $2), ($3, $4), ($5, $6), ' +
+      '($1, $7), ($8, $9), ($1, $2), ($10, $11)',
+    [id(2), 'toss', id(31), 'neon', id(30), 'neon', 'neon', id(32), 'toss', id(99), 'toss'],
+  )
   await database.query('insert into cloud_text_limits (user_id, daily_limit) values ($1, 5)', [
     id(1),
   ])
@@ -109,9 +114,34 @@ it('should paginate active users without repeating rows or listing deleted users
   expect(page.users).toHaveLength(30)
   expect(page.nextCursor).toBe(id(30))
   expect(page.users[1]?.usage).toMatchObject({limit: 3, remaining: 3, used: 0})
+  expect(page.users.at(-1)).toMatchObject({id: id(30), providers: ['neon']})
   const next = await listAdminCloudTextUsers({cursor: page.nextCursor!})
-  expect(next.users.map((user) => user.id)).toEqual([id(31), id(32)])
+  expect(next.users.map(({id, providers}) => ({id, providers}))).toEqual([
+    {id: id(31), providers: ['neon']},
+    {id: id(32), providers: ['toss']},
+  ])
   expect(next.nextCursor).toBe(null)
+})
+it('should preserve provider order and duplicates for each user without mixing accounts', async () => {
+  const page = await listAdminCloudTextUsers({})
+  expect(page.users.slice(0, 4).map(({id, providers}) => ({id, providers}))).toEqual([
+    {id: id(1), providers: ['neon', 'toss']},
+    {id: id(2), providers: ['toss', 'neon', 'toss']},
+    {id: id(3), providers: []},
+    {id: id(4), providers: []},
+  ])
+})
+it('should return independently owned provider arrays for users and subsequent calls', async () => {
+  const page = await listAdminCloudTextUsers({})
+  page.users[1]!.providers.push('neon')
+  page.users[2]!.providers.push('toss')
+  expect(page.users[3]!.providers).toEqual([])
+  expect((await listAdminCloudTextUsers({userId: id(2)})).users[0]!.providers).toEqual([
+    'toss',
+    'neon',
+    'toss',
+  ])
+  expect((await listAdminCloudTextUsers({userId: id(3)})).users[0]!.providers).toEqual([])
 })
 it('should return an empty list for an unknown or deleted user', async () => {
   expect(await listAdminCloudTextUsers({userId: id(99)})).toEqual({nextCursor: null, users: []})
