@@ -16,6 +16,9 @@ export const decodeAnswer = (
   logits: readonly number[],
   temperature: number,
 ): Answer => {
+  if (!Number.isFinite(temperature) || temperature <= 0) {
+    throw new TypeError('Temperatures must be positive finite numbers.')
+  }
   if (logits.length !== renderOptions(question).length || !logits.every(Number.isFinite)) {
     throw new Error('Unexpected scorer output.')
   }
