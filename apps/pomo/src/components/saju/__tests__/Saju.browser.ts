@@ -113,15 +113,19 @@ it.each([
   expect(page.getByRole('alert').query()).toBeNull()
 })
 
-it('should display a diary day-stem fact without accessing a model', async () => {
+it.each([
+  '제 일기에 적을 내 일간은 무엇인가요?',
+  '내일 일기에 적을 내 일간은 무엇인가요?',
+  '제일 먼저 제 일간을 알려줘',
+])('should display a day-stem fact without accessing a model for %s', async (question) => {
   const services = openReading()
   await selectBirthDate()
-  await page.getByRole('textbox', {name: '질문'}).fill('제 일기에 적을 내 일간은 무엇인가요?')
+  await page.getByRole('textbox', {name: '질문'}).fill(question)
   await page.getByRole('button', {exact: true, name: '사주 풀이 생성'}).click()
-  await expect
-    .element(page.getByRole('region', {name: '사주 풀이 결과'}))
-    .toHaveTextContent('일간은 병(丙)입니다.')
   expect(services.createClient).not.toHaveBeenCalled()
   expect(services.isDownloaded).not.toHaveBeenCalled()
   expect(services.startTextModel).not.toHaveBeenCalled()
+  await expect
+    .element(page.getByRole('region', {name: '사주 풀이 결과'}))
+    .toHaveTextContent('일간은 병(丙)입니다.')
 })

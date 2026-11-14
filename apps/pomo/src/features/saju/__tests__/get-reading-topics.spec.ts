@@ -13,12 +13,14 @@ it('should share the same wealth and personality classification across reading f
   expect(getReadingTopics('제 성향과 인간관계는?')).toEqual(['personality', 'other'])
 })
 
-it.each(['제 일기에 적을 내 일간은 무엇인가요?', '내 일기장에 적을 일주는 무엇인가요?'])(
-  'should leave non-work words out of career topics: %s',
-  (question) => {
-    expect(getReadingTopics(question)).toEqual([])
-  },
-)
+it.each([
+  '제 일기에 적을 내 일간은 무엇인가요?',
+  '내 일기장에 적을 일주는 무엇인가요?',
+  '내일 일기에 적을 내 일간은 무엇인가요?',
+  '제일 먼저 제 일간을 알려줘',
+])('should leave non-work words out of career topics: %s', (question) => {
+  expect(getReadingTopics(question)).toEqual([])
+})
 
 it.each([
   '내 일과 돈복은 어때?',
@@ -31,6 +33,11 @@ it.each([
   '하는 일이라면 무엇을 할까?',
   '내 일에는 어떤 의미가 있나요?',
   '제 일기에 적을 제 일주로 하는 일은 어떤지 알려줘',
+  '내일 제 일은 어떨까요?',
+  '제일 먼저 내 일에 대해 알려줘',
+  '제가 하는일은 어떤가요?',
+  '제가 맡은일은 어떤가요?',
+  '제\t일은 어떤가요?',
 ])('should retain career topics for work expressions: %s', (question) => {
   expect(getReadingTopics(question)).toContain('career')
 })
