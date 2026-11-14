@@ -72,7 +72,6 @@ export const Canvas = (props: CanvasProps) => {
       currentRenderer.clear()
       return
     }
-    let disposed = false
     const controller = new AbortController()
     setCompanionId(null)
     playback.onLoading()
@@ -87,7 +86,7 @@ export const Canvas = (props: CanvasProps) => {
       transition: untrack(() => selectTransition(props.background.preferences())),
     })
       .then((shown) => {
-        if (disposed) {
+        if (controller.signal.aborted) {
           return
         }
         if (shown === null) {
@@ -101,13 +100,12 @@ export const Canvas = (props: CanvasProps) => {
         playback.onReady()
       })
       .catch((error: unknown) => {
-        if (!disposed) {
+        if (!controller.signal.aborted) {
           reportClientError(error, {feature: 'background-playback', source: 'direct'})
           playback.onError()
         }
       })
     onCleanup(() => {
-      disposed = true
       controller.abort()
       currentRenderer.cancelPending()
     })
