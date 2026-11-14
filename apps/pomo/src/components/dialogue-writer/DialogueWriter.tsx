@@ -34,41 +34,34 @@ const activateModel = (
 }
 
 export const DialogueWriter = () => {
-  const compactModel = getTextModel('qwen-0.8b')
-  const qualityModel = getTextModel('qwen-2b')
-  const largerModel = getTextModel('qwen-4b')
-  const gemmaModel = getTextModel('gemma-4-e2b')
-  const mobileGemmaModel = getTextModel('gemma-4-e2b-mobile')
-  const compactWriter = useDialogueWriter({
-    initialRequest: INITIAL_REQUEST,
-    modelId: compactModel.id,
+  const models = [
+    getTextModel('qwen-0.8b'),
+    getTextModel('qwen-2b'),
+    getTextModel('qwen-4b'),
+    getTextModel('gemma-4-e2b'),
+    getTextModel('gemma-4-e2b-mobile'),
+  ]
+  const modelWriters = models.map((model) => {
+    const writer = useDialogueWriter({initialRequest: INITIAL_REQUEST, modelId: model.id})
+    return {model, writer}
   })
-  const qualityWriter = useDialogueWriter({
-    initialRequest: INITIAL_REQUEST,
-    modelId: qualityModel.id,
-  })
-  const largerWriter = useDialogueWriter({
-    initialRequest: INITIAL_REQUEST,
-    modelId: largerModel.id,
-  })
-  const gemmaWriter = useDialogueWriter({
-    initialRequest: INITIAL_REQUEST,
-    modelId: gemmaModel.id,
-  })
-  const mobileGemmaWriter = useDialogueWriter({
-    initialRequest: INITIAL_REQUEST,
-    modelId: mobileGemmaModel.id,
-  })
-  const writers = [compactWriter, qualityWriter, largerWriter, gemmaWriter, mobileGemmaWriter]
+  const writers = modelWriters.map(({writer}) => writer)
+  const firstWriter = writers[0]
   const isBusy = () => writers.some((writer) => writer.isBusy())
 
   const handleRequestInput = (event: InputEvent & {currentTarget: HTMLTextAreaElement}) => {
-    compactWriter.setRequest(event.currentTarget.value)
-    qualityWriter.setRequest(event.currentTarget.value)
-    largerWriter.setRequest(event.currentTarget.value)
-    gemmaWriter.setRequest(event.currentTarget.value)
-    mobileGemmaWriter.setRequest(event.currentTarget.value)
+    for (const writer of writers) {
+      writer.setRequest(event.currentTarget.value)
+    }
   }
+  const modelPanels = modelWriters.map((modelWriter) => (
+    <ModelPanel
+      disabled={isBusy() && modelWriter.writer.state().status !== 'loading'}
+      model={modelWriter.model}
+      onActivate={() => activateModel(modelWriter.writer, writers)}
+      writer={modelWriter.writer}
+    />
+  ))
 
   return (
     <section class={SECTION_CLASSES}>
@@ -80,7 +73,7 @@ export const DialogueWriter = () => {
           <span class="flex items-center justify-between gap-4 text-sm font-650 text-#eee5ef">
             무엇을 물어볼까요?
             <span class="text-xs font-500 text-#8f8297">
-              {compactWriter.request().length} / {MAXIMUM_REQUEST_LENGTH}
+              {firstWriter.request().length} / {MAXIMUM_REQUEST_LENGTH}
             </span>
           </span>
           <PTextarea
@@ -90,41 +83,12 @@ export const DialogueWriter = () => {
             maxlength={MAXIMUM_REQUEST_LENGTH}
             onInput={handleRequestInput}
             placeholder="예: 삶의 행복에 대해 이야기해줘"
-            value={compactWriter.request()}
+            value={firstWriter.request()}
           />
         </label>
 
         <div class="grid grid-cols-[repeat(auto-fit,_minmax(min(100%,_17rem),_1fr))] gap-4">
-          <ModelPanel
-            disabled={isBusy() && compactWriter.state().status !== 'loading'}
-            model={compactModel}
-            onActivate={() => activateModel(compactWriter, writers)}
-            writer={compactWriter}
-          />
-          <ModelPanel
-            disabled={isBusy() && qualityWriter.state().status !== 'loading'}
-            model={qualityModel}
-            onActivate={() => activateModel(qualityWriter, writers)}
-            writer={qualityWriter}
-          />
-          <ModelPanel
-            disabled={isBusy() && largerWriter.state().status !== 'loading'}
-            model={largerModel}
-            onActivate={() => activateModel(largerWriter, writers)}
-            writer={largerWriter}
-          />
-          <ModelPanel
-            disabled={isBusy() && gemmaWriter.state().status !== 'loading'}
-            model={gemmaModel}
-            onActivate={() => activateModel(gemmaWriter, writers)}
-            writer={gemmaWriter}
-          />
-          <ModelPanel
-            disabled={isBusy() && mobileGemmaWriter.state().status !== 'loading'}
-            model={mobileGemmaModel}
-            onActivate={() => activateModel(mobileGemmaWriter, writers)}
-            writer={mobileGemmaWriter}
-          />
+          {modelPanels}
         </div>
 
         <p class="m-0 text-xs leading-5 text-#8f8297">
