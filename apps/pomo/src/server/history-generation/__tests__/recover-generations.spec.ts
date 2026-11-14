@@ -258,3 +258,85 @@ it('should propagate the next-generation failure after recovery completes', asyn
   expect(mocks.expireGenerationSubmission).toHaveBeenCalledOnce()
   expect(mocks.startHistoryGeneration).toHaveBeenCalledOnce()
 })
+
+it('should use one status read to select and name a terminal replay', async () => {
+  const readStatus = vi.fn().mockReturnValueOnce('completed').mockReturnValue('failed')
+  mocks.listRecoverableGenerationRuns.mockResolvedValue([
+    {kind: 'response', responseId: 'resp-snapshot'},
+  ])
+  mocks.retrieveHistoryResponse.mockResolvedValue({
+    get status() {
+      return readStatus()
+    },
+  })
+
+  await expect(recoverHistoryGenerations(NOW)).resolves.toEqual({
+    checked: 1,
+    failed: 0,
+    terminal: 1,
+  })
+
+  expect(readStatus).toHaveBeenCalledOnce()
+  expect(mocks.handleOpenAiResponseEvent).toHaveBeenCalledWith({
+    data: {id: 'resp-snapshot'},
+    id: 'recovery:resp-snapshot',
+    type: 'response.completed',
+  })
+})
+
+it('should retain the separate diagnostic status read for an unknown status', async () => {
+  const readStatus = vi
+    .fn()
+    .mockReturnValueOnce('future-status')
+    .mockReturnValue('diagnostic-status')
+  vi.spyOn(console, 'error').mockImplementation(() => undefined)
+  mocks.listRecoverableGenerationRuns.mockResolvedValue([
+    {kind: 'response', responseId: 'resp-unknown-status'},
+  ])
+  mocks.retrieveHistoryResponse.mockResolvedValue({
+    get status() {
+      return readStatus()
+    },
+  })
+
+  await expect(recoverHistoryGenerations(NOW)).resolves.toEqual({
+    checked: 1,
+    failed: 1,
+    terminal: 0,
+  })
+
+  expect(readStatus).toHaveBeenCalledTimes(2)
+  expect(mocks.handleOpenAiResponseEvent).not.toHaveBeenCalled()
+  expect(console.error).toHaveBeenCalledWith(
+    'Failed to recover OpenAI response',
+    {responseId: 'resp-unknown-status'},
+    expect.objectContaining({message: 'Unhandled OpenAI response status: diagnostic-status'}),
+  )
+})
+
+it('should wait for the terminal replay before counting it or starting generation', async () => {
+  const entered = Promise.withResolvers<void>()
+  const replay = Promise.withResolvers<void>()
+  const settled = vi.fn()
+  mocks.listRecoverableGenerationRuns.mockResolvedValue([
+    {kind: 'response', responseId: 'resp-pending-replay'},
+  ])
+  mocks.retrieveHistoryResponse.mockResolvedValue({status: 'completed'})
+  mocks.handleOpenAiResponseEvent.mockImplementationOnce(() => {
+    entered.resolve()
+    return replay.promise
+  })
+
+  const recovery = recoverHistoryGenerations(NOW)
+  void recovery.then(settled, settled)
+  await entered.promise
+  await Promise.resolve()
+  await Promise.resolve()
+
+  expect(settled).not.toHaveBeenCalled()
+  expect(mocks.startHistoryGeneration).not.toHaveBeenCalled()
+  replay.resolve()
+  await expect(recovery).resolves.toEqual({checked: 1, failed: 0, terminal: 1})
+  expect(settled).toHaveBeenCalledOnce()
+  expect(mocks.startHistoryGeneration).toHaveBeenCalledOnce()
+})

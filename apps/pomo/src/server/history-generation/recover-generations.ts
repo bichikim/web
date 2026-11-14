@@ -37,48 +37,28 @@ const recoverGenerationRun = async (
 
   try {
     const response = await retrieveHistoryResponse(run.responseId)
-    let eventType:
-      | 'response.cancelled'
-      | 'response.completed'
-      | 'response.failed'
-      | 'response.incomplete'
-      | undefined
+    const observedStatus = response.status
 
-    switch (response.status) {
+    switch (observedStatus) {
       case 'cancelled':
-        eventType = 'response.cancelled'
-        break
       case 'completed':
-        eventType = 'response.completed'
-        break
       case 'failed':
-        eventType = 'response.failed'
-        break
       case 'incomplete':
-        eventType = 'response.incomplete'
-        break
+        await handleOpenAiResponseEvent({
+          data: {id: run.responseId},
+          id: `recovery:${run.responseId}`,
+          type: `response.${observedStatus}`,
+        })
+        return 'terminal'
       case 'in_progress':
       case 'queued':
       case undefined:
-        eventType = undefined
-        break
+        return 'pending'
       default: {
-        const unhandledStatus: never = response.status
-        throw new Error(`Unhandled OpenAI response status: ${unhandledStatus}`)
+        const _unhandledStatus: never = observedStatus
+        throw new Error(`Unhandled OpenAI response status: ${response.status}`)
       }
     }
-
-    if (eventType === undefined) {
-      return 'pending'
-    }
-
-    await handleOpenAiResponseEvent({
-      data: {id: run.responseId},
-      id: `recovery:${run.responseId}`,
-      type: eventType,
-    })
-
-    return 'terminal'
   } catch (error) {
     console.error('Failed to recover OpenAI response', {responseId: run.responseId}, error)
     return 'failed'
