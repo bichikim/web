@@ -377,6 +377,91 @@ describe('useDialogueWriter', () => {
     root.dispose()
   })
 
+  it.each<DialogueWorkerResponse[]>([
+    [],
+    [{files: [], loadedBytes: 50, percentage: 50, totalBytes: 100, type: 'loading'}],
+    [{type: 'started'}, {text: '부분 응답', type: 'token'}],
+  ])('should keep a re-prepared model ready for edits after cancellation (%j)', (...responses) => {
+    const onComplete = vi.fn()
+    const runtime = createRuntime(true)
+    const root = createDialogueRoot(runtime, onComplete)
+
+    try {
+      root.controller.prepare()
+      runtime.emit({type: 'ready'})
+
+      for (const request of ['두 번째 요청', '세 번째 요청']) {
+        root.controller.generate()
+        responses.forEach(runtime.emit)
+        const calls = vi.mocked(runtime.createClient).mock.calls
+        const previousResponse = calls[calls.length - 1]![0].onResponse
+        const disposals = vi.mocked(runtime.client.dispose).mock.calls.length
+
+        root.controller.setRequest(request)
+        expect(root.controller.state()).toEqual({status: 'idle'})
+        expect(root.controller.canGenerate()).toBe(false)
+        expect(runtime.client.dispose).toHaveBeenCalledTimes(disposals + 1)
+
+        root.controller.prepare()
+        runtime.emit({type: 'ready'})
+        previousResponse({type: 'started'})
+        previousResponse({text: '오래된 응답', type: 'token'})
+        previousResponse({text: '오래된 결과', type: 'complete'})
+        previousResponse({message: '오래된 오류', restartRequired: true, type: 'error'})
+        expect(root.controller.state()).toEqual({status: 'ready'})
+        expect(root.controller.output()).toBe('')
+        expect(root.controller.canCopy()).toBe(false)
+        expect(onComplete).not.toHaveBeenCalled()
+
+        root.controller.setRequest(`${request} 수정`)
+        expect(root.controller.state()).toEqual({status: 'ready'})
+        expect(root.controller.canGenerate()).toBe(true)
+        expect(runtime.client.dispose).toHaveBeenCalledTimes(disposals + 1)
+      }
+
+      root.controller.generate()
+      expect(runtime.client.generate).toHaveBeenLastCalledWith('세 번째 요청 수정')
+      runtime.emit({text: '새 결과', type: 'complete'})
+      expect(onComplete).toHaveBeenCalledExactlyOnceWith('새 결과')
+      expect(runtime.createClient).toHaveBeenCalledTimes(3)
+    } finally {
+      root.dispose()
+    }
+    expect(runtime.client.dispose).toHaveBeenCalledTimes(3)
+  })
+
+  it('should clear an in-flight generation on release and ignore the released session', () => {
+    const runtime = createRuntime(true)
+    const onComplete = vi.fn()
+    const root = createDialogueRoot(runtime, onComplete)
+
+    try {
+      root.controller.prepare()
+      runtime.emit({type: 'ready'})
+      root.controller.generate()
+      const previousResponse = vi.mocked(runtime.createClient).mock.calls[0]![0].onResponse
+
+      root.controller.release()
+      root.controller.release()
+      expect(root.controller.state()).toEqual({status: 'idle'})
+      expect(runtime.client.dispose).toHaveBeenCalledOnce()
+      root.controller.prepare()
+      runtime.emit({type: 'ready'})
+      previousResponse({type: 'started'})
+      previousResponse({text: '해제된 결과', type: 'complete'})
+      root.controller.setRequest('해제 후 새 질문')
+
+      expect(root.controller.state()).toEqual({status: 'ready'})
+      expect(root.controller.canGenerate()).toBe(true)
+      expect(root.controller.output()).toBe('')
+      expect(onComplete).not.toHaveBeenCalled()
+      expect(runtime.client.dispose).toHaveBeenCalledOnce()
+    } finally {
+      root.dispose()
+    }
+    expect(runtime.client.dispose).toHaveBeenCalledTimes(2)
+  })
+
   it('should generate the latest request after invalidating a generating client', () => {
     const runtime = createRuntime(true)
     const root = createDialogueRoot(runtime)
