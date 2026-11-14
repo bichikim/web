@@ -1,5 +1,5 @@
 /** @vitest-environment jsdom */
-import {fireEvent, render, screen, waitFor} from '@solidjs/testing-library'
+import {cleanup, fireEvent, render, screen, waitFor} from '@solidjs/testing-library'
 import {createSignal, Show} from 'solid-js'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 import {useCardExpansion} from '../use-card-expansion'
@@ -10,9 +10,6 @@ const close = vi.fn(function close(this: HTMLDialogElement) {
   this.dispatchEvent(new Event('close'))
 })
 let reduced = false
-let frames = new Map<number, FrameRequestCallback>()
-let frameIndex = 0
-
 const Harness = () => {
   const [dialog, setDialog] = createSignal<HTMLDialogElement | null>(null)
   const [target, setTarget] = createSignal<HTMLDivElement | null>(null)
@@ -40,26 +37,12 @@ const Harness = () => {
   )
 }
 
-const advanceFrame = () => {
-  const pending = [...frames.values()]
-  frames.clear()
-  for (const frame of pending) {
-    frame(0)
-  }
-}
-
 beforeEach(() => {
+  vi.useFakeTimers({toFake: ['requestAnimationFrame', 'cancelAnimationFrame']})
   reduced = false
-  frames = new Map()
   animations.mockReset().mockReturnValue([])
   close.mockClear()
   vi.stubGlobal('matchMedia', () => ({matches: reduced}))
-  vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => {
-    frameIndex += 1
-    frames.set(frameIndex, callback)
-    return frameIndex
-  })
-  vi.stubGlobal('cancelAnimationFrame', (id: number) => frames.delete(id))
   Object.defineProperty(Element.prototype, 'getAnimations', {configurable: true, value: animations})
   Object.defineProperty(HTMLDialogElement.prototype, 'showModal', {
     configurable: true,
@@ -80,6 +63,8 @@ beforeEach(() => {
 })
 
 afterEach(() => {
+  cleanup()
+  vi.useRealTimers()
   vi.restoreAllMocks()
   vi.unstubAllGlobals()
   Reflect.deleteProperty(Element.prototype, 'getAnimations')
@@ -102,7 +87,7 @@ describe('useCardExpansion', () => {
     expect(target.style.getPropertyValue('--card-expansion-x')).toBe('-460px')
     expect(target.style.getPropertyValue('--card-expansion-y')).toBe('-240px')
     expect(Number(target.style.getPropertyValue('--card-expansion-scale'))).toBeCloseTo(1 / 3)
-    advanceFrame()
+    vi.advanceTimersToNextFrame()
     expect(target).toHaveAttribute('data-phase', 'expanding')
     opening.resolve()
     await waitFor(() => expect(target).toHaveAttribute('data-phase', 'expanded'))
@@ -123,7 +108,7 @@ describe('useCardExpansion', () => {
       .mockReturnValueOnce([{finished: closing.promise}])
     render(Harness)
     fireEvent.click(screen.getByRole('button', {name: 'expand'}))
-    advanceFrame()
+    vi.advanceTimersToNextFrame()
     fireEvent.click(screen.getByRole('button', {name: 'close'}))
     opening.reject(new Error('Transition reversed'))
     await waitFor(() =>
@@ -139,7 +124,7 @@ describe('useCardExpansion', () => {
     render(Harness)
     fireEvent.click(screen.getByRole('button', {name: 'expand'}))
     expect(screen.getByRole('group')).toHaveAttribute('data-phase', 'expanded')
-    expect(frames.size).toBe(0)
+    expect(vi.getTimerCount()).toBe(0)
     fireEvent.click(screen.getByRole('button', {name: 'close'}))
     expect(close).toHaveBeenCalledOnce()
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
@@ -148,20 +133,20 @@ describe('useCardExpansion', () => {
   it('should cancel a queued opening when closed before its first frame', () => {
     render(Harness)
     fireEvent.click(screen.getByRole('button', {name: 'expand'}))
-    expect(frames.size).toBe(1)
+    expect(vi.getTimerCount()).toBe(1)
     fireEvent.click(screen.getByRole('button', {name: 'close'}))
-    expect(frames.size).toBe(0)
+    expect(vi.getTimerCount()).toBe(0)
     expect(close).toHaveBeenCalledOnce()
-    advanceFrame()
+    vi.advanceTimersToNextFrame()
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   })
 
   it('should cancel queued frames when unmounted', () => {
     const view = render(Harness)
     fireEvent.click(screen.getByRole('button', {name: 'expand'}))
-    expect(frames.size).toBe(1)
+    expect(vi.getTimerCount()).toBe(1)
     view.unmount()
-    expect(frames.size).toBe(0)
+    expect(vi.getTimerCount()).toBe(0)
     expect(close).not.toHaveBeenCalled()
   })
 })
