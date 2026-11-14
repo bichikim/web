@@ -71,3 +71,106 @@ test('should keep individual bindings when dropped into an organizing group', ()
   const result = dropParameter({groups, mappings: bindings, node, nodes: [...containers, node]})!
   expect(result.mappings).toEqual(bindings)
 })
+
+test.each([20.01, 30, 44])('should accept an unmeasured broadcast header drop at y=%s', (y) => {
+  const container = {
+    data: {},
+    id: 'parameter:group:two',
+    position: {x: 0, y: 0},
+    type: 'parameterGroup',
+  }
+  const node = {data: {}, id: 'parameter:mouth', position: {x: 30, y}, type: 'parameters'}
+
+  const result = dropParameter({groups, mappings: bindings, node, nodes: [container, node]})!
+
+  expect(result.node).toMatchObject({
+    parentId: 'parameter:group:two',
+    position: {x: 0, y: 64},
+  })
+  expect(result.groups[1].parameterIds).toEqual(['mouth'])
+  expect(result.mappings.map((mapping) => mapping.parameterId)).toEqual(['other', 'group:two'])
+})
+
+test.each([
+  {accepted: true, groupIndex: 0, y: 20},
+  {accepted: false, groupIndex: 0, y: 20.01},
+  {accepted: false, groupIndex: 1, y: 44.01},
+])('should retain the unmeasured header boundary for group $groupIndex at y=$y', (scenario) => {
+  const container = {
+    data: {},
+    id: `parameter:group:${groups[scenario.groupIndex].id}`,
+    position: {x: 0, y: 0},
+    type: 'parameterGroup',
+  }
+  const node = {
+    data: {},
+    id: 'parameter:mouth',
+    position: {x: 30, y: scenario.y},
+    type: 'parameters',
+  }
+
+  const result = dropParameter({groups, node, nodes: [container, node]})
+
+  if (scenario.accepted) {
+    expect(result?.node.parentId).toBe(container.id)
+    expect(result?.node.position.y).toBe(40)
+  } else {
+    expect(result).toBeUndefined()
+  }
+})
+
+test.each([
+  {accepted: false, height: 0, y: 0},
+  {accepted: false, height: 30, y: 20},
+  {accepted: true, height: 100, y: 70},
+])('should prioritize measured height $height over the broadcast fallback', (scenario) => {
+  const container = {
+    data: {},
+    id: 'parameter:group:two',
+    measured: {height: scenario.height, width: 288},
+    position: {x: 0, y: 0},
+    type: 'parameterGroup',
+  }
+  const node = {
+    data: {},
+    id: 'parameter:mouth',
+    position: {x: 30, y: scenario.y},
+    type: 'parameters',
+  }
+
+  const result = dropParameter({groups, node, nodes: [container, node]})
+
+  if (scenario.accepted) {
+    expect(result?.node.parentId).toBe(container.id)
+    expect(result?.node.position.y).toBe(64)
+  } else {
+    expect(result).toBeUndefined()
+  }
+})
+
+test.each([
+  {accepted: true, y: 10},
+  {accepted: false, y: 30},
+])('should retain the 40px fallback for unknown group nodes at y=$y', (scenario) => {
+  const container = {
+    data: {},
+    id: 'parameter:group:unknown',
+    position: {x: 0, y: 0},
+    type: 'parameterGroup',
+  }
+  const node = {
+    data: {},
+    id: 'parameter:mouth',
+    position: {x: 30, y: scenario.y},
+    type: 'parameters',
+  }
+
+  const result = dropParameter({groups: [], node, nodes: [container, node]})
+
+  if (scenario.accepted) {
+    expect(result?.node.parentId).toBe(container.id)
+    expect(result?.node.position).toEqual({x: 0, y: 0})
+  } else {
+    expect(result).toBeUndefined()
+  }
+})
