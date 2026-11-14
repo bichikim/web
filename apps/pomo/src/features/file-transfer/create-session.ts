@@ -571,7 +571,13 @@ class TransferSession implements FileTransfer {
     })
   }
   readonly cancel = (): void => {
-    this.sendControl({type: 'cancel'})
+    if (this.channel?.readyState === 'open') {
+      try {
+        this.sendControl({type: 'cancel'})
+      } catch {
+        // Peer notification is best effort; local cancellation must still complete.
+      }
+    }
     this.setState({...INITIAL_STATE})
     this.closeConnections()
   }
