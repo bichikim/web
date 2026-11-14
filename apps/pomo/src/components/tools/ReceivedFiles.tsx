@@ -3,7 +3,8 @@ import * as m from '@paraglide/message'
 import {fileTransfer, receivedFiles} from 'src/features/file-transfer/session'
 import {PButton} from '../p-button/PButton'
 import {PSwitch} from '../p-switch/PSwitch'
-import {formatFileSize, ReceivedFileCard} from './ReceivedFileCard'
+import {ReceivedFileCard} from './ReceivedFileCard'
+import {formatFileSize} from './format-file-size'
 
 const files = () => receivedFiles.state.files
 

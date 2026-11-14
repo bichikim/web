@@ -4,7 +4,7 @@ import {createSignal} from 'solid-js'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 import type {ReceivedFile} from 'src/features/file-transfer/received-files'
 import {PButton} from '../../p-button/PButton'
-import {ReceivedFileCard} from '../ReceivedFileCard'
+import {formatFileSize, ReceivedFileCard} from '../ReceivedFileCard'
 
 vi.mock('src/features/file-transfer/session', () => ({
   receivedFiles: {remove: vi.fn(), save: vi.fn(), state: {saving: false}},
@@ -99,4 +99,16 @@ describe('ReceivedFileCard', () => {
 
     expect(icon('report.pdf')).toHaveClass('i-tabler-file-type-pdf')
   })
+})
+
+it('should retain decimal megabyte formatting through the card module export', () => {
+  const bytes = 1_000_000_000
+  const megabytes = 1_000
+  const expected = new Intl.NumberFormat(undefined, {
+    maximumFractionDigits: 1,
+    style: 'unit',
+    unit: 'megabyte',
+  }).format(megabytes)
+
+  expect(formatFileSize(bytes)).toBe(expected)
 })

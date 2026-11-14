@@ -1,7 +1,7 @@
 import {Show} from 'solid-js'
 import * as m from '@paraglide/message'
 import {PButton} from '../p-button/PButton'
-import {formatFileSize} from './ReceivedFileCard'
+import {formatFileSize} from './format-file-size'
 
 interface TransferFileRequestProps {
   readonly file: {readonly name: string; readonly size: number}
