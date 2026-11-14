@@ -1,5 +1,6 @@
 import type {APIEvent} from '@solidjs/start/server'
 import {z} from 'zod'
+import {parseByteRange} from '@winter-love/utils/data/http/byte-range'
 
 import {findPublishedTrackPreviewAsset} from 'src/server/repositories/music-catalog'
 import {verifyPreviewAccess} from 'src/server/music/preview-access'
@@ -13,43 +14,6 @@ const HTTP_UNAUTHORIZED = 401
 const HTTP_SERVICE_UNAVAILABLE = 503
 const trackIdSchema = z.string().uuid()
 const assetIdSchema = z.string().uuid()
-const byteRangePattern = /^bytes=(?<start>\d*)-(?<end>\d*)$/u
-
-interface ByteRange {
-  readonly end: number
-  readonly start: number
-}
-
-const parseByteRange = (value: string, contentLength: number): ByteRange | null => {
-  const match = byteRangePattern.exec(value)
-  const startText = match?.groups?.start
-  const endText = match?.groups?.end
-
-  if (startText === undefined || endText === undefined || (startText === '' && endText === '')) {
-    return null
-  }
-
-  if (startText === '') {
-    const suffixLength = Number(endText)
-
-    return Number.isSafeInteger(suffixLength) && suffixLength > 0
-      ? {end: contentLength - 1, start: Math.max(0, contentLength - suffixLength)}
-      : null
-  }
-
-  const start = Number(startText)
-  const requestedEnd = endText === '' ? contentLength - 1 : Number(endText)
-  const end = Math.min(requestedEnd, contentLength - 1)
-
-  return Number.isSafeInteger(start) &&
-    Number.isSafeInteger(requestedEnd) &&
-    start >= 0 &&
-    start <= end &&
-    start < contentLength
-    ? {end, start}
-    : null
-}
-
 const errorResponse = (code: string, status: number): Response =>
   Response.json(
     {error: code},
