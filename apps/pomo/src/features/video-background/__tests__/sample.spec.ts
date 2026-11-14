@@ -310,6 +310,54 @@ it('should retain readiness when later events and a start exception follow it', 
   expect(vi.getTimerCount()).toBe(0)
 })
 
+it('should retain readiness when cancellation and a start exception follow it synchronously', async () => {
+  vi.useFakeTimers()
+  const {load, video} = createDecoder(0)
+  const controller = new AbortController()
+  load.mockImplementationOnce(() => {
+    video.dispatchEvent(new Event('loadeddata'))
+    controller.abort('later cancellation')
+    throw new Error('later start failure')
+  })
+
+  await expect(sampleVideo(new Blob(), controller.signal)).resolves.toHaveLength(1)
+
+  expect(vi.getTimerCount()).toBe(0)
+})
+
+it('should retain cancellation when readiness and a start exception follow it synchronously', async () => {
+  vi.useFakeTimers()
+  const {load, video} = createDecoder(0)
+  const controller = new AbortController()
+  const reason = new Error('cancelled first')
+  load.mockImplementationOnce(() => {
+    controller.abort(reason)
+    video.dispatchEvent(new Event('loadeddata'))
+    throw new Error('later start failure')
+  })
+
+  await expect(sampleVideo(new Blob(), controller.signal)).rejects.toBe(reason)
+
+  expect(vi.getTimerCount()).toBe(0)
+})
+
+it('should finish successive waits without cancelling the caller signal', async () => {
+  vi.useFakeTimers()
+  const {load, seek, video} = createDecoder(0.04)
+  const controller = new AbortController()
+  const cancelled = vi.fn()
+  controller.signal.addEventListener('abort', cancelled)
+  load.mockImplementationOnce(() => video.dispatchEvent(new Event('loadeddata')))
+  seek.mockImplementation(() => video.dispatchEvent(new Event('seeked')))
+
+  const samples = await sampleVideo(new Blob(), controller.signal)
+
+  expect(samples.map((sample) => sample.time)).toEqual([0, 0.04])
+  expect(controller.signal.aborted).toBe(false)
+  expect(cancelled).not.toHaveBeenCalled()
+  expect(vi.getTimerCount()).toBe(0)
+})
+
 it('should retain the decoding error when readiness and a start exception follow it', async () => {
   vi.useFakeTimers()
   const {load, video} = createDecoder(0)
@@ -332,9 +380,7 @@ it.each(['success', 'error', 'abort', 'timeout', 'start failure'] as const)(
     const {load, video} = createDecoder(0)
     const controller = new AbortController()
     const subscribeVideo = vi.spyOn(video, 'addEventListener')
-    const unsubscribeVideo = vi.spyOn(video, 'removeEventListener')
     const subscribeSignal = vi.spyOn(controller.signal, 'addEventListener')
-    const unsubscribeSignal = vi.spyOn(controller.signal, 'removeEventListener')
     if (outcome === 'start failure') {
       load.mockImplementationOnce(() => {
         throw new Error('start failure')
@@ -366,11 +412,13 @@ it.each(['success', 'error', 'abort', 'timeout', 'start failure'] as const)(
       }
     }
     await assertion
-    for (const [event, listener] of subscribeVideo.mock.calls) {
-      expect(unsubscribeVideo).toHaveBeenCalledWith(event, listener, false)
-    }
-    for (const [event, listener] of subscribeSignal.mock.calls) {
-      expect(unsubscribeSignal).toHaveBeenCalledWith(event, listener, false)
+    const subscriptions = [...subscribeVideo.mock.calls, ...subscribeSignal.mock.calls].map(
+      ([, , options]) => (options as AddEventListenerOptions).signal,
+    )
+    expect(subscriptions[0]).toBeInstanceOf(AbortSignal)
+    for (const signal of subscriptions) {
+      expect(signal).toBe(subscriptions[0])
+      expect(signal?.aborted).toBe(true)
     }
     expect(subscribeVideo).toHaveBeenCalledTimes(2)
     expect(subscribeSignal).toHaveBeenCalledOnce()
