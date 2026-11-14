@@ -13,6 +13,27 @@ interface BundleRustAnalyzersOptions {
   readonly assets: readonly RustAnalyzerAsset[]
 }
 
+const MAX_DOWNLOAD_ATTEMPTS = 3
+const downloadRustAnalyzer = async (
+  asset: RustAnalyzerAsset,
+  version: string,
+  attempts = MAX_DOWNLOAD_ATTEMPTS,
+): Promise<Uint8Array> => {
+  const MIN_SERVER_ERROR = 500
+  const MAX_SERVER_ERROR = 599
+  const response = await fetch(
+    `https://github.com/rust-lang/rust-analyzer/releases/download/${version}/${asset.archive}`,
+  )
+  if (response.ok) {
+    return new Uint8Array(await response.arrayBuffer())
+  }
+  await response.body?.cancel()
+  if (response.status >= MIN_SERVER_ERROR && response.status <= MAX_SERVER_ERROR && attempts > 1) {
+    return downloadRustAnalyzer(asset, version, attempts - 1)
+  }
+  throw new Error(`Cannot download Rust analyzer: ${response.status} ${asset.archive}`)
+}
+
 /** Bundles pinned, checksum-verified native analyzers for supported desktop hosts. */
 export const bundleRustAnalyzers = async (options: BundleRustAnalyzersOptions): Promise<void> => {
   const EXECUTABLE_MODE = 0o755
@@ -25,13 +46,7 @@ export const bundleRustAnalyzers = async (options: BundleRustAnalyzersOptions): 
       try {
         bytes = await readFile(compressed)
       } catch {
-        const response = await fetch(
-          `https://github.com/rust-lang/rust-analyzer/releases/download/${options.version}/${asset.archive}`,
-        )
-        if (!response.ok) {
-          throw new Error(`Cannot download Rust analyzer: ${response.status} ${asset.archive}`)
-        }
-        bytes = new Uint8Array(await response.arrayBuffer())
+        bytes = await downloadRustAnalyzer(asset, options.version)
       }
       if (createHash('sha256').update(bytes).digest('hex') !== asset.sha256) {
         throw new Error(`Rust analyzer checksum mismatch: ${asset.archive}`)

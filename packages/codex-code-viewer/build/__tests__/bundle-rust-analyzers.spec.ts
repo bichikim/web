@@ -101,5 +101,28 @@ describe('bundleRustAnalyzers', () => {
     await expect(
       bundleRustAnalyzers({assets: [asset], output, version: 'pinned-version'}),
     ).rejects.toThrow('Cannot download Rust analyzer: 404')
+    expect(fetch).toHaveBeenCalledOnce()
+  })
+  it('should recover from a temporary release server error', async () => {
+    fetch.mockResolvedValueOnce(new Response('', {status: 504}))
+    await bundleRustAnalyzers({assets: [asset], output, version: 'pinned-version'})
+    expect(readFileSync(join(output, 'rust/darwin-arm64/rust-analyzer'))).toEqual(executable)
+    expect(fetch).toHaveBeenCalledTimes(2)
+  })
+  it('should stop after three server errors without publishing an analyzer', async () => {
+    fetch.mockImplementation(() => Promise.resolve(new Response('', {status: 503})))
+    await expect(
+      bundleRustAnalyzers({assets: [asset], output, version: 'pinned-version'}),
+    ).rejects.toThrow('Cannot download Rust analyzer: 503')
+    expect(fetch).toHaveBeenCalledTimes(3)
+    expect(readdirSync(output)).toEqual([])
+  })
+  it('should reject a corrupted download without retrying it', async () => {
+    fetch.mockResolvedValue(new Response('corrupted'))
+    await expect(
+      bundleRustAnalyzers({assets: [asset], output, version: 'pinned-version'}),
+    ).rejects.toThrow('checksum mismatch')
+    expect(fetch).toHaveBeenCalledOnce()
+    expect(readdirSync(output)).toEqual([])
   })
 })
