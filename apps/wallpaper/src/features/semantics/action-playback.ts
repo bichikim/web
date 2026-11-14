@@ -3,7 +3,10 @@ import type {SemanticPlayer, SemanticSelection} from './types'
 const actionKey = (selection: SemanticSelection) =>
   JSON.stringify([selection.group, selection.action.action.kind, selection.action.action.id])
 
-const startAction = (player: SemanticPlayer, selection: SemanticSelection): (() => void) => {
+const startAction = (
+  player: SemanticPlayer,
+  selection: SemanticSelection,
+): (() => void) | undefined => {
   const {action} = selection.action
   switch (action.kind) {
     case 'expression': {
@@ -15,8 +18,11 @@ const startAction = (player: SemanticPlayer, selection: SemanticSelection): (() 
     }
     case 'motion': {
       const playback = player.startMotion(action.id, {loop: true})
+      if (playback === undefined) {
+        return undefined
+      }
       return () => {
-        playback?.stop()
+        playback.stop()
         player.resetMotionHistory(selection.action.parameterIds ?? [])
       }
     }
@@ -28,7 +34,7 @@ const startAction = (player: SemanticPlayer, selection: SemanticSelection): (() 
 }
 /** Owns this widget's action channels, keeping unchanged actions running until explicitly disposed. */
 export const createActionPlayback = (player: SemanticPlayer) => {
-  const active = new Map<string, ReturnType<typeof startAction>>()
+  const active = new Map<string, NonNullable<ReturnType<typeof startAction>>>()
   return {
     dispose: () => {
       for (const release of active.values()) {
@@ -47,7 +53,10 @@ export const createActionPlayback = (player: SemanticPlayer) => {
       for (const selection of selections) {
         const key = actionKey(selection)
         if (!active.has(key)) {
-          active.set(key, startAction(player, selection))
+          const release = startAction(player, selection)
+          if (release !== undefined) {
+            active.set(key, release)
+          }
         }
       }
     },
