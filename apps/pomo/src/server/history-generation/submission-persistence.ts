@@ -21,19 +21,14 @@ const persistWithRetry = async (
   action: () => Promise<void>,
   errorMessage: string,
 ): Promise<void> => {
-  let firstError: unknown
-
   try {
     await action()
-    return
-  } catch (error) {
-    firstError = error
-  }
-
-  try {
-    await action()
-  } catch (retryError) {
-    throw new AggregateError([firstError, retryError], errorMessage)
+  } catch (firstError) {
+    try {
+      await action()
+    } catch (retryError) {
+      throw new AggregateError([firstError, retryError], errorMessage)
+    }
   }
 }
 

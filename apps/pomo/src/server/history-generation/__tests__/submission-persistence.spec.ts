@@ -45,6 +45,102 @@ it('should preserve both persistence failures', async () => {
   })
 })
 
+it.each([
+  {first: 'throw', retry: 'throw'},
+  {first: 'throw', retry: 'reject'},
+  {first: 'reject', retry: 'throw'},
+])('should preserve failure identity and order for $first then $retry', async ({first, retry}) => {
+  const firstError = new Error('first')
+  const retryError = new Error('retry')
+  const markSubmitted = vi
+    .fn()
+    .mockImplementationOnce(() => {
+      if (first === 'throw') {
+        throw firstError
+      }
+      return Promise.reject(firstError)
+    })
+    .mockImplementationOnce(() => {
+      if (retry === 'throw') {
+        throw retryError
+      }
+      return Promise.reject(retryError)
+    })
+
+  const result = persistGenerationSubmission(
+    'run-id',
+    'submission-key',
+    'response-id',
+    markSubmitted,
+  )
+  const error = await result.catch((failure: unknown) => failure)
+
+  expect(markSubmitted).toHaveBeenCalledTimes(2)
+  expect(error).toBeInstanceOf(AggregateError)
+  if (!(error instanceof AggregateError)) {
+    throw new TypeError('Expected the persistence failures to be aggregated')
+  }
+  expect(error.errors).toHaveLength(2)
+  expect(error.errors[0]).toBe(firstError)
+  expect(error.errors[1]).toBe(retryError)
+  expect(error.message).toBe('Failed to persist the accepted OpenAI response ID')
+})
+
+it('should wait for each persistence attempt before retrying or settling', async () => {
+  const first = Promise.withResolvers<void>()
+  const retry = Promise.withResolvers<void>()
+  const markSubmitted = vi
+    .fn()
+    .mockReturnValueOnce(first.promise)
+    .mockReturnValueOnce(retry.promise)
+  const settled = vi.fn()
+  const result = persistGenerationSubmission(
+    'run-id',
+    'submission-key',
+    'response-id',
+    markSubmitted,
+  )
+  void result.then(settled, settled)
+
+  expect(markSubmitted).toHaveBeenCalledOnce()
+  expect(settled).not.toHaveBeenCalled()
+  first.reject(new Error('first'))
+  await Promise.resolve()
+
+  expect(markSubmitted).toHaveBeenCalledTimes(2)
+  expect(markSubmitted.mock.calls).toEqual([
+    ['run-id', 'submission-key', 'response-id'],
+    ['run-id', 'submission-key', 'response-id'],
+  ])
+  expect(settled).not.toHaveBeenCalled()
+  retry.resolve()
+  await result
+
+  expect(settled).toHaveBeenCalledOnce()
+  expect(markSubmitted).toHaveBeenCalledTimes(2)
+})
+
+it('should retain an undefined first rejection in the aggregate', async () => {
+  const retryError = new Error('retry')
+  const markSubmitted = vi.fn().mockRejectedValueOnce(undefined).mockRejectedValueOnce(retryError)
+  const result = persistGenerationSubmission(
+    'run-id',
+    'submission-key',
+    'response-id',
+    markSubmitted,
+  )
+  const error = await result.catch((failure: unknown) => failure)
+
+  expect(error).toBeInstanceOf(AggregateError)
+  if (!(error instanceof AggregateError)) {
+    throw new TypeError('Expected the persistence failures to be aggregated')
+  }
+  expect(error.errors).toHaveLength(2)
+  expect(error.errors[0]).toBeUndefined()
+  expect(error.errors[1]).toBe(retryError)
+  expect(markSubmitted).toHaveBeenCalledTimes(2)
+})
+
 it('should record accepted response persistence as ambiguous', async () => {
   const markSubmitted = vi
     .fn()
