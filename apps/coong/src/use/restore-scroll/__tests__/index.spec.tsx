@@ -7,7 +7,7 @@ import {beforeEach, describe, expect, it, vi} from 'vitest'
 const mocks = vi.hoisted(() => ({setStored: vi.fn(), useStorage: vi.fn()}))
 vi.mock('@winter-love/solid-use', () => ({useStorage: mocks.useStorage}))
 
-import {useRestoreScroll} from '../index'
+import {useRestoreScroll} from '..'
 
 describe('useRestoreScroll', () => {
   beforeEach(() => vi.clearAllMocks())
@@ -38,5 +38,29 @@ describe('useRestoreScroll', () => {
     element.scrollLeft = 400
     fireEvent.scroll(element)
     expect(mocks.setStored).toHaveBeenCalledWith(0.5)
+  })
+
+  it('should preserve the saved ratio without overflow and resume saving after overflow returns', () => {
+    mocks.useStorage.mockReturnValue([() => 0.25, mocks.setStored])
+    const view = render(() => {
+      const [element, setElement] = createSignal<HTMLElement | null>(null)
+      const scroll = useRestoreScroll(element)
+      const handleRef = (node: HTMLDivElement) => {
+        Object.defineProperties(node, {
+          clientWidth: {configurable: true, value: 400},
+          scrollWidth: {configurable: true, value: 400},
+        })
+        setElement(node)
+      }
+      return <div ref={handleRef} onScroll={scroll.onScroll} />
+    })
+    const element = view.container.firstElementChild as HTMLDivElement
+    fireEvent.scroll(element)
+    expect(mocks.setStored).not.toHaveBeenCalled()
+
+    Object.defineProperty(element, 'scrollWidth', {value: 1200})
+    element.scrollLeft = 200
+    fireEvent.scroll(element)
+    expect(mocks.setStored).toHaveBeenCalledExactlyOnceWith(0.25)
   })
 })

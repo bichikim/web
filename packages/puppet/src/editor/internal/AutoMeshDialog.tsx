@@ -4,6 +4,7 @@ import {Dialog} from '@kobalte/core/dialog'
 import {createEffect, createSignal, For, Show} from 'solid-js'
 import {type AutoMeshSettings, getMinimumAutoMeshCellSize} from '../auto-mesh-part'
 import {AutoMeshDialogFooter} from './AutoMeshDialogFooter'
+import {createAutoMeshDismissal} from './create-auto-mesh-dismissal'
 
 type AutoMeshPreset = 'balanced' | 'custom' | 'detailed' | 'flexible'
 
@@ -56,6 +57,8 @@ const getPresetCellSize = (preset: Exclude<AutoMeshPreset, 'custom'>, maximumSiz
 
 export const AutoMeshDialog = (props: AutoMeshDialogProps) => {
   const portalMount = useEditorPortalMount()
+  const [surface, setSurface] = createSignal<HTMLDivElement>()
+  const dismissal = createAutoMeshDismissal(surface)
   const [preset, setPreset] = createSignal<AutoMeshPreset>('balanced')
   const [cellSize, setCellSize] = createSignal(1)
   const [alphaThreshold, setAlphaThreshold] = createSignal(DEFAULT_ALPHA_THRESHOLD)
@@ -111,7 +114,12 @@ export const AutoMeshDialog = (props: AutoMeshDialogProps) => {
     <Dialog modal open={props.isOpen ?? false} onOpenChange={props.onOpenChange}>
       <Dialog.Portal mount={portalMount}>
         <Dialog.Overlay class="auto-mesh-dialog-overlay" />
-        <Dialog.Content aria-busy={isGenerating()} class="auto-mesh-dialog-content">
+        <Dialog.Content
+          {...dismissal}
+          ref={setSurface}
+          aria-busy={isGenerating()}
+          class="auto-mesh-dialog-content"
+        >
           <form onSubmit={handleSubmit}>
             <header>
               <div>
