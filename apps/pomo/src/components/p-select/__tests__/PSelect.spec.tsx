@@ -1,7 +1,6 @@
 /** @vitest-environment jsdom */
 
 import {render} from '@solidjs/testing-library'
-import {type JSX, Match, Switch} from 'solid-js'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {Select} from '@kobalte/core/select'
@@ -12,12 +11,6 @@ import {PSelect} from '../PSelect'
 vi.mock('@kobalte/core/select', () => ({Select: vi.fn()}))
 vi.mock('../Item', () => ({PSelectItem: vi.fn()}))
 vi.mock('../Parts', () => ({PSelectParts: vi.fn()}))
-vi.mock('solid-js', async () => {
-  const actual: typeof import('solid-js') = await vi.importActual('solid-js')
-
-  return {...actual, Match: vi.fn(), Switch: vi.fn()}
-})
-
 const options = [
   {description: '첫 번째 항목', icon: 'i-tabler-sun', label: '낮', value: 'day'},
   {icon: 'i-tabler-moon', label: '밤', value: 'night'},
@@ -38,16 +31,6 @@ const emitChange = (props: ReturnType<typeof getSelectProps>, value: unknown) =>
 }
 
 beforeEach(() => {
-  vi.mocked(Match).mockImplementation((props) => {
-    const current = typeof props.when === 'function' ? props.when() : props.when
-
-    const children = props.children as
-      | ((value: NonNullable<typeof current>) => JSX.Element)
-      | undefined
-
-    return current && children ? <>{children(current)}</> : <></>
-  })
-  vi.mocked(Switch).mockImplementation((props) => <>{props.children}</>)
   vi.mocked(Select).mockImplementation((props) => {
     Object.values(props)
     return <div>{props.children}</div>
