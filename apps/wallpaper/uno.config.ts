@@ -1,4 +1,5 @@
 import {defineConfig, presetWind3} from 'unocss'
+import {COVERED_HEIGHT, COVERED_OVERLAP} from './src/features/speech/constants'
 
 export default defineConfig({
   presets: [presetWind3()],
@@ -6,15 +7,17 @@ export default defineConfig({
     ['wallpaper-speech-motion', {'transition-property': '--speech-height, --speech-y'}],
     [
       'wallpaper-speech',
-      {'--speech-painted-height': 'min(100%,calc(48px + (100% - 48px) * var(--speech-reveal,1)))'},
+      {
+        '--speech-painted-height': [
+          `min(100%,calc(${COVERED_HEIGHT}px +`,
+          `(100% - ${COVERED_HEIGHT}px) * var(--speech-reveal,1)))`,
+        ].join(' '),
+      },
     ],
     ['wallpaper-speech-stacked', {'--speech-painted-height': 'var(--speech-height)'}],
     [
       'wallpaper-speech-frame',
       {
-        // Fill the next header's rounded corners while retaining the content's intrinsic layout.
-        'border-bottom-left-radius': 'calc(.75rem * var(--speech-reveal,1))',
-        'border-bottom-right-radius': 'calc(.75rem * var(--speech-reveal,1))',
         height: 'var(--speech-painted-height)',
       },
     ],
@@ -24,12 +27,12 @@ export default defineConfig({
         'clip-path': `polygon(
           -36px calc(100% - var(--speech-height) - 36px),
           calc(100% + 36px) calc(100% - var(--speech-height) - 36px),
-          calc(100% + 36px) calc(100% + 48px * var(--speech-reveal,0)),
-          calc(100% - .75rem) calc(100% + 48px * var(--speech-reveal,0)),
-          calc(100% - .75rem) calc(100% - .75rem + 48px * var(--speech-reveal,0)),
-          .75rem calc(100% - .75rem + 48px * var(--speech-reveal,0)),
-          .75rem calc(100% + 48px * var(--speech-reveal,0)),
-          -36px calc(100% + 48px * var(--speech-reveal,0))
+          calc(100% + 36px) calc(100% + ${COVERED_HEIGHT}px * var(--speech-reveal,0)),
+          calc(100% - .75rem) calc(100% + ${COVERED_HEIGHT}px * var(--speech-reveal,0)),
+          calc(100% - .75rem) calc(100% - ${COVERED_OVERLAP}px + ${COVERED_HEIGHT}px * var(--speech-reveal,0)),
+          .75rem calc(100% - ${COVERED_OVERLAP}px + ${COVERED_HEIGHT}px * var(--speech-reveal,0)),
+          .75rem calc(100% + ${COVERED_HEIGHT}px * var(--speech-reveal,0)),
+          -36px calc(100% + ${COVERED_HEIGHT}px * var(--speech-reveal,0))
         )`,
       },
     ],
@@ -37,12 +40,12 @@ export default defineConfig({
       'wallpaper-speech-covered-top',
       {
         'clip-path': `polygon(
-        -36px calc(-48px * var(--speech-reveal,0)),
-        .75rem calc(-48px * var(--speech-reveal,0)),
-        .75rem calc(.75rem - 48px * var(--speech-reveal,0)),
-        calc(100% - .75rem) calc(.75rem - 48px * var(--speech-reveal,0)),
-        calc(100% - .75rem) calc(-48px * var(--speech-reveal,0)),
-        calc(100% + 36px) calc(-48px * var(--speech-reveal,0)),
+        -36px calc(-${COVERED_HEIGHT}px * var(--speech-reveal,0)),
+        .75rem calc(-${COVERED_HEIGHT}px * var(--speech-reveal,0)),
+        .75rem calc(${COVERED_OVERLAP}px - ${COVERED_HEIGHT}px * var(--speech-reveal,0)),
+        calc(100% - .75rem) calc(${COVERED_OVERLAP}px - ${COVERED_HEIGHT}px * var(--speech-reveal,0)),
+        calc(100% - .75rem) calc(-${COVERED_HEIGHT}px * var(--speech-reveal,0)),
+        calc(100% + 36px) calc(-${COVERED_HEIGHT}px * var(--speech-reveal,0)),
         calc(100% + 36px) calc(var(--speech-height) + 36px), -36px calc(var(--speech-height) + 36px)
       )`,
       },
@@ -51,9 +54,9 @@ export default defineConfig({
       'wallpaper-speech-contents',
       {
         'clip-path': [
-          'inset(0 0 calc(100% - var(--speech-painted-height) + 12px * (1 - var(--speech-reveal,1))) 0 round',
-          '.75rem .75rem',
-          'calc(.75rem * var(--speech-reveal,1)) calc(.75rem * var(--speech-reveal,1)))',
+          'inset(0 0 calc(100% - var(--speech-painted-height) +',
+          `${COVERED_OVERLAP}px * (1 - var(--speech-reveal,1))) 0 round`,
+          '.75rem)',
         ].join(' '),
         transform: 'translateY(calc(100% - var(--speech-painted-height)))',
       },
@@ -62,10 +65,11 @@ export default defineConfig({
       'wallpaper-speech-contents-top',
       {
         'clip-path': [
-          'inset(0 0 calc(100% - var(--speech-painted-height) + 12px * (1 - var(--speech-reveal,1))) 0 round',
-          'calc(.75rem * var(--speech-reveal,1)) calc(.75rem * var(--speech-reveal,1)) .75rem .75rem)',
+          'inset(0 0 calc(100% - var(--speech-painted-height) +',
+          `${COVERED_OVERLAP}px * (1 - var(--speech-reveal,1))) 0 round`,
+          '.75rem)',
         ].join(' '),
-        transform: 'translateY(calc(12px * (1 - var(--speech-reveal,1))))',
+        transform: `translateY(calc(${COVERED_OVERLAP}px * (1 - var(--speech-reveal,1))))`,
       },
     ],
     [
@@ -129,6 +133,13 @@ export default defineConfig({
     'wallpaper-row': [
       'box-border grid min-h-12 grid-cols-[minmax(0,1fr)_minmax(8rem,auto)] items-center gap-4',
       'border-0 border-b border-solid border-stone-200 py-2 text-[13px] text-stone-800',
+    ],
+    'wallpaper-section-tab': [
+      'flex min-h-10 min-w-0 items-center justify-center gap-2 border-0 border-b-2 border-solid',
+      'border-transparent px-2 text-[13px] text-stone-600',
+      'peer-checked:border-blue-700 peer-checked:text-blue-700 peer-checked:font-semibold',
+      'peer-focus-visible:outline-solid peer-focus-visible:outline-2',
+      'peer-focus-visible:outline-offset-[-2px] peer-focus-visible:outline-blue-700 peer-disabled:opacity-50',
     ],
     'wallpaper-segment': [
       'flex min-h-8 min-w-0 items-center justify-center gap-2 rounded-md px-3 text-[13px] text-stone-700',

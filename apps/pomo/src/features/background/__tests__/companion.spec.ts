@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 import {afterEach, expect, it, vi} from 'vitest'
 import {findCompanion, loadPhoto} from '../companion'
-import type {BackgroundMedia} from '../model'
+import type {BackgroundMedia} from '@winter-love/wallpaper/model'
 
 afterEach(() => {
   vi.restoreAllMocks()

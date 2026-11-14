@@ -1,7 +1,7 @@
 import {COVER_UV} from './cover-uv'
 import {Filter, GlProgram, type Texture, UniformGroup} from 'pixi.js'
 
-import {FULLSCREEN_VERTEX} from 'src/utils/shader'
+import {FULLSCREEN_VERTEX} from '@winter-love/wallpaper/frame-renderer/fullscreen-vertex'
 import {DEPTH_PARALLAX_FRAGMENT} from './depth-shader'
 
 const FRAGMENT = `

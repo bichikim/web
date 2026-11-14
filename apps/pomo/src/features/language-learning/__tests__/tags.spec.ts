@@ -7,6 +7,44 @@ it('should discard empty values and preserve the first casing after trimming', (
   expect(parseLanguageLearningTags(' Home,HOME\n home,Work ')).toEqual(['Home', 'Work'])
 })
 
+it.each(['NFC', 'NFD'] as const)(
+  'should deduplicate canonical Unicode equivalents and preserve the first %s spelling',
+  (form) => {
+    const first = '한글'.normalize(form)
+    const duplicate = '한글'.normalize(form === 'NFC' ? 'NFD' : 'NFC')
+
+    expect(parseLanguageLearningTags(` ${first},${duplicate},단어 `)).toEqual([first, '단어'])
+  },
+)
+
+it('should combine canonical equivalence with case-insensitive comparison', () => {
+  const first = 'CAFÉ'.normalize('NFD')
+
+  expect(parseLanguageLearningTags(`${first},café,Cafe`)).toEqual([first, 'Cafe'])
+})
+
+it('should keep compatibility-distinct tags separate', () => {
+  expect(parseLanguageLearningTags('Ａ,A,①,1')).toEqual(['Ａ', 'A', '①', '1'])
+})
+
+it('should deduplicate Unicode equivalents after grapheme truncation and before the tag limit', () => {
+  const first = '한'.repeat(MAXIMUM_LANGUAGE_LEARNING_TAG_LENGTH).normalize('NFD')
+  const duplicate = first.normalize('NFC')
+
+  expect(parseLanguageLearningTags(`${first}끝,${duplicate}말,a,b,c,d,e,f,g,h,i,j`)).toEqual([
+    first,
+    'a',
+    'b',
+    'c',
+    'd',
+    'e',
+    'f',
+    'g',
+    'h',
+    'i',
+  ])
+})
+
 it('should split tags on the fullwidth comma used in Korean IME input', () => {
   expect(parseLanguageLearningTags('home，work')).toEqual(['home', 'work'])
 })

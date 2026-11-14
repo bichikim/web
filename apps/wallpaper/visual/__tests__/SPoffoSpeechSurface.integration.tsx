@@ -10,7 +10,11 @@ import {
   useSpeechTarget,
 } from '../../src/features/codex'
 import {SPoffoSpeechSurface} from '../../src/components/SPoffoSpeechSurface'
+import {invoke, isTauri} from '@tauri-apps/api/core'
+import {createLibraryRepository} from '@winter-love/wallpaper/settings/library-repository'
 import 'virtual:uno.css'
+
+vi.mock('@tauri-apps/api/core', () => ({Channel: vi.fn(), invoke: vi.fn(), isTauri: vi.fn()}))
 
 vi.mock('../../src/features/codex/use-codex-notifications', () => ({
   useCodexNotifications: vi.fn(),
@@ -24,7 +28,7 @@ vi.mock('../../src/features/speech/use-widget-speech', () => ({
 }))
 afterEach(() => {
   cleanup()
-  vi.clearAllMocks()
+  vi.resetAllMocks()
 })
 
 const mount = (
@@ -33,6 +37,7 @@ const mount = (
   additional: readonly CodexActivity[] = [],
   insets: {insetTop?: number; insetBottom?: number} = {},
   movingTarget?: Accessor<CodexSpeechTarget>,
+  widgetId?: string,
 ) => {
   const activity: CodexActivity = {
     notificationId: 1,
@@ -63,7 +68,7 @@ const mount = (
     snapshot,
   })
   vi.mocked(useSpeechTarget).mockReturnValue(movingTarget ?? (() => target))
-  render(() => <SPoffoSpeechSurface />)
+  render(() => <SPoffoSpeechSurface widgetId={widgetId} />)
   const update = (text: string) =>
     setSnapshot((value) => ({...value, sessions: [{...activity, text}]}))
   return update
@@ -417,4 +422,74 @@ test('should animate new content again after the character changes the available
   expect(list.getBoundingClientRect().height).toBeGreaterThan(
     screen.getByRole('status').getBoundingClientRect().height,
   )
+})
+
+test('should drag a speech header, persist placement and suppress the following click', async () => {
+  vi.mocked(isTauri).mockReturnValue(true)
+  vi.mocked(invoke).mockResolvedValue(undefined)
+  const repository = createLibraryRepository('wallpaper-library')
+  const widget = await repository.addWidget('drag-character')
+  try {
+    mount(
+      'bottom',
+      640,
+      [
+        {
+          notificationId: 2,
+          phase: 'working',
+          receivedAt: 2,
+          sessionId: 'rear',
+          text: '뒤쪽 메시지',
+          title: '뒤쪽',
+          tool: null,
+        },
+      ],
+      {},
+      () => ({
+        anchor: 'bottom',
+        maxHeight: 640,
+        widgetHeight: 400,
+        widgetWidth: 200,
+        x: 160,
+        y: 680,
+      }),
+      widget.id,
+    )
+    const list = screen.getByRole('list')
+    await expect.poll(() => list.getAnimations({subtree: true}).length).toBe(0)
+    const header = screen.getByRole('button', {name: '채팅 뒤쪽 선택'})
+    expect(getComputedStyle(header).cursor).toBe('grab')
+    vi.spyOn(header, 'setPointerCapture').mockImplementation(() => undefined)
+    vi.spyOn(header, 'hasPointerCapture').mockReturnValue(true)
+    vi.spyOn(header, 'releasePointerCapture').mockImplementation(() => undefined)
+    fireEvent.pointerDown(header, {button: 0, pointerId: 1, screenX: 100, screenY: 200})
+    fireEvent.pointerMove(header, {pointerId: 1, screenX: 140, screenY: 240})
+    expect(screen.getByRole('main')).toHaveAttribute('data-dragging', 'true')
+    expect(getComputedStyle(header).cursor).toBe('grabbing')
+    expect(
+      (await repository.read()).widgets.find((item) => item.id === widget.id)?.speech,
+    ).toBeUndefined()
+    fireEvent.pointerUp(header, {pointerId: 1, screenX: 140, screenY: 240})
+    fireEvent.click(header, {detail: 1})
+    expect(header).toHaveAttribute('aria-pressed', 'false')
+    expect(screen.getByRole('main')).toHaveAttribute('data-dragging', 'false')
+    await expect
+      .poll(
+        async () => (await repository.read()).widgets.find((item) => item.id === widget.id)?.speech,
+      )
+      .toMatchObject({x: 1.1, y: 0.15})
+    expect(invoke).toHaveBeenCalledWith('move_poffo_speech', {anchor: 'bottom', x: 1.1, y: 0.15})
+    await expect
+      .poll(
+        () =>
+          vi
+            .mocked(invoke)
+            .mock.calls.filter(([command]) => command === 'set_widget_hit_region')
+            .at(-1)?.[1],
+      )
+      .toMatchObject({region: {interactive: false}})
+  } finally {
+    await repository.removeWidget(widget.id)
+    repository.close()
+  }
 })

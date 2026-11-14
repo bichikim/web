@@ -1,6 +1,6 @@
 import {expect, it} from 'vitest'
-import {splitReferenceSpeechText} from './fixtures/text-chunking'
-import {splitSpeechText} from '../text-chunking'
+import {splitReferenceSpeechText} from '../../../../../../packages/supertonic/src/__tests__/fixtures/text-chunking'
+import {splitSpeechText} from '@winter-love/supertonic/text-chunking'
 
 it('should preserve native browser Unicode and paragraph chunking', () => {
   const policy = Object.freeze({

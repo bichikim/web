@@ -6,6 +6,7 @@ import {defineConfig} from 'vitest/config'
 import uno from './uno.config'
 
 export default defineConfig({
+  optimizeDeps: {include: ['@tauri-apps/api/webviewWindow']},
   plugins: [
     UnoCSS({
       ...uno,
@@ -39,6 +40,7 @@ export default defineConfig({
       ],
       provider: playwright(),
     },
+    exclude: ['**/*.memory.integration.tsx'],
     include: ['visual/__tests__/**/*.integration.tsx'],
     name: 'wallpaper-visual',
   },

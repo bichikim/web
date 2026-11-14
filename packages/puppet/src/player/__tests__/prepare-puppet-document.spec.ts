@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 
-import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
+import {afterEach, beforeEach, describe, expect, it, test, vi} from 'vitest'
 
 import {
   createDemoDocument,
@@ -10,6 +10,7 @@ import {
   serializeDocument,
 } from '..'
 import {compactDocumentTextures} from '../texture-assets'
+import {markPreparedPuppetDocument} from '../internal/prepared-document'
 
 class MockWorker extends EventTarget {
   public static instances: MockWorker[] = []
@@ -64,6 +65,28 @@ afterEach(() => {
 })
 
 describe('preparePuppetDocument', () => {
+  test('should send file content to the Worker without reading its full text', async () => {
+    const source = new Blob(['{}'], {type: 'application/json'})
+    const promise = preparePuppetDocument({source})
+    const worker = getWorker()
+    expect(worker.postMessage).toHaveBeenCalledWith({source, type: 'blob'})
+    const result: ParseDocumentResult = {error: {code: 'invalid-document'}, ok: false}
+    worker.emitMessage(result)
+    expect(await promise).toEqual(result)
+    expect(worker.terminate).toHaveBeenCalledOnce()
+  })
+
+  test('should reject a reported file read failure and release its Worker', async () => {
+    const promise = preparePuppetDocument({source: new Blob(['{}'])})
+    const worker = getWorker()
+    worker.dispatchEvent(
+      new MessageEvent('message', {
+        data: {error: {message: 'disk read failed'}, type: 'error'},
+      }),
+    )
+    await expect(promise).rejects.toThrow('could not read the source')
+    expect(worker.terminate).toHaveBeenCalledOnce()
+  })
   it('should resolve the prepared result from the Worker', async () => {
     const result: ParseDocumentResult = {error: {code: 'invalid-document'}, ok: false}
     const promise = preparePuppetDocument({source: '{}'})
@@ -141,6 +164,22 @@ describe('preparePuppetDocument', () => {
 
     expect(worker.terminate).toHaveBeenCalledOnce()
     return expect(promise).rejects.toThrow('cancelled')
+  })
+
+  test('should ignore a late cancelled Worker result and allow a fresh validation', async () => {
+    const controller = new AbortController()
+    const first = preparePuppetDocument({signal: controller.signal, source: '{}'})
+    const cancelled = getWorker()
+    controller.abort(new Error('cancelled'))
+    await expect(first).rejects.toThrow('cancelled')
+    const document = markPreparedPuppetDocument(createDemoDocument())
+    cancelled.emitMessage({document, ok: true})
+    const second = preparePuppetDocument({source: '{}'})
+    const worker = MockWorker.instances[1]!
+    worker.emitMessage({document, ok: true})
+    expect(await second).toEqual({document, ok: true})
+    expect(cancelled.terminate).toHaveBeenCalledOnce()
+    expect(worker.terminate).toHaveBeenCalledOnce()
   })
 
   it('should reject Worker execution errors', () => {

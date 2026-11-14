@@ -16,6 +16,7 @@ import {
 } from './period-range'
 import {
   createCalendarWeekdayParser,
+  DAYPART_PATTERN_SOURCE,
   isImplicitWeekdaySchedule,
   type RequestedWeekdayIntent,
   type WeekdayQueryPeriodContext,
@@ -58,6 +59,7 @@ const {
   getRequestedWeekdays,
   getStandaloneWeekdayIntent,
   getWeekdayIntent,
+  hasMultipleWeekdays,
   isWeekSchedule,
   weekdayPatternSource: WEEKDAY_PATTERN_SOURCE,
 } = createCalendarWeekdayParser({
@@ -169,7 +171,7 @@ const IMPLICIT_SCHEDULE_PATTERN = new RegExp(
     `${THIS_MONTH_PATTERN.source}|${NEXT_MONTH_PATTERN.source}|${MONTH_AFTER_NEXT_PATTERN.source}|` +
     `${PREVIOUS_MONTH_PATTERN.source}|${TWO_MONTHS_AGO_PATTERN.source}|주말)` +
     `(?:\\s*(?:에는|에|엔|은|는|도))?` +
-    `(?:\\s*(?:새벽|아침|오전|점심|오후|저녁|밤|낮|정오))?` +
+    `(?:\\s*${DAYPART_PATTERN_SOURCE})?` +
     `(?:\\s*(?:에는|에|엔|은|는|도))?\\s*` +
     `(?:뭐|무엇|무슨\\s+일)(?:가|이|은|는)?\\s*(?:있|하|했)`,
   'u',
@@ -543,6 +545,20 @@ export const createCalendarQuery = (
   })
   const weekday = local.day()
   const daysUntilNextMonday = weekday === 0 ? 1 : DAYS_PER_WEEK + 1 - weekday
+  const qualifiedPattern = includesPreviousWeek ? PREVIOUS_WEEK_PATTERN : WEEK_AFTER_NEXT_PATTERN
+  const otherText = text.replace(qualifiedPattern, '')
+  if (
+    (includesPreviousWeek || includesWeekAfterNext) &&
+    !NEXT_WEEK_PATTERN.test(otherText) &&
+    !CALENDAR_OTHER_PERIOD_TERM_PATTERN.test(otherText)
+  ) {
+    const weekOffset = includesPreviousWeek ? -DAYS_PER_WEEK - DAYS_PER_WEEK : DAYS_PER_WEEK
+    const {offsets} = getRequestedWeekdays({periodPattern: qualifiedPattern, text})
+    if (offsets.length === 1 && !hasMultipleWeekdays(text, qualifiedPattern)) {
+      const dayOffset = daysUntilNextMonday + weekOffset + offsets[0]!
+      return toRange(boundary(dayOffset), boundary(dayOffset + 1))
+    }
+  }
   const weekRange = createCalendarPeriodRange({
     boundary,
     daysUntilNextMonday,

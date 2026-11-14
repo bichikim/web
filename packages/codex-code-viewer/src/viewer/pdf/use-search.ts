@@ -12,7 +12,7 @@ import {createTextSearch} from './create-text-search'
 import type {TextMatch} from '../find-text'
 import type {PdfDocument} from './types'
 
-interface PdfSearchOptions {
+interface UsePdfSearchProps {
   readonly document: Accessor<PdfDocument | null>
   readonly turn: (page: number) => void
 }
@@ -37,7 +37,7 @@ const MAX_PAGES = 2048
 const MAX_CHARACTERS = 4194304
 
 /** Provides lazy document-wide PDF search with bounded extracted text and page navigation. */
-export const usePdfSearch = (options: PdfSearchOptions) => {
+export const usePdfSearch = (props: UsePdfSearchProps) => {
   const t = useTranslations()
   const [visible, setVisible] = createSignal(false)
   const [query, setQuery] = createSignal('')
@@ -48,7 +48,7 @@ export const usePdfSearch = (options: PdfSearchOptions) => {
   const [status, setStatus] = createSignal('')
   const [pending, setPending] = createSignal(false)
   createEffect(() => {
-    const document = options.document()
+    const document = props.document()
     const opened = visible()
     if (document === null || !opened || untrack(index)?.document === document) {
       return
@@ -99,7 +99,7 @@ export const usePdfSearch = (options: PdfSearchOptions) => {
   })
   const found = createMemo<readonly PageMatch[]>(() => {
     const value = index()
-    if (!visible() || value?.document !== options.document()) {
+    if (!visible() || value?.document !== props.document()) {
       return []
     }
     const results: PageMatch[] = []
@@ -127,7 +127,7 @@ export const usePdfSearch = (options: PdfSearchOptions) => {
     scrollRequest()
     const match = current()
     if (match !== undefined) {
-      untrack(() => options.turn(match.page))
+      untrack(() => props.turn(match.page))
     }
   })
   return {

@@ -1,3 +1,6 @@
+import {type PoffoConnections, poffoConnectionsSchema} from './connections'
+import {toggleMenuAction} from './toggle-menu-action'
+import {mergeConnections} from './merge-connections'
 import Dexie, {liveQuery, type Table} from 'dexie'
 import {poffoVoiceSchema} from './voice'
 import {
@@ -9,8 +12,10 @@ import {
   poffoTrackingSchema,
 } from './tracking'
 import {
+  DEFAULT_POFFO_SPEECH,
   poffoMotionSchema,
   type PoffoSpeech,
+  type PoffoSpeechPosition,
   poffoSpeechSchema,
   type PoffoWidget,
   type RememberedWebsite,
@@ -30,6 +35,11 @@ interface LibraryDatabase extends Dexie {
   readonly widgets: Table<PoffoWidget, string>
 }
 export interface LibraryRepository {
+  readonly configureConnections: (
+    id: string,
+    connections: PoffoConnections,
+    mode?: 'replace' | 'missing',
+  ) => Promise<void>
   readonly read: () => Promise<WallpaperLibrary>
   readonly visit: (options: VisitWebsiteOptions) => Promise<void>
   readonly removeVisit: (url: string) => Promise<void>
@@ -40,7 +50,9 @@ export interface LibraryRepository {
   readonly trackWidget: (id: string, tracking: PoffoTracking) => Promise<void>
   readonly configureTracking: (id: string, options: PoffoTrackingOptions) => Promise<void>
   readonly bindWidget: (id: string, bindings: PoffoTrackingBindings) => Promise<void>
+  readonly moveSpeech: (id: string, position: PoffoSpeechPosition) => Promise<void>
   readonly configureSpeech: (id: string, speech: PoffoSpeech) => Promise<void>
+  readonly toggleWidgetAction: (id: string, bindingId: string) => Promise<void>
   readonly setWidgetMotion: (id: string, motionId: string | null | undefined) => Promise<void>
   readonly subscribe: (refresh: () => void, onError: (error: unknown) => void) => () => void
   readonly close: () => void
@@ -80,12 +92,34 @@ export const createLibraryRepository = (name: string): LibraryRepository => {
       await database.widgets.update(id, {trackingBindings: poffoBindingsSchema.parse(bindings)})
     },
     close: () => database.close(),
+    async configureConnections(id, connections, mode = 'replace') {
+      const parsed = poffoConnectionsSchema.parse(connections)
+      await database.transaction('rw', database.widgets, async () => {
+        const widget = await database.widgets.get(id)
+        if (widget === undefined) {
+          throw new Error('Poffo widget is unavailable')
+        }
+        await database.widgets.put(mergeConnections({connections: parsed, mode, widget}))
+      })
+    },
     async configureSpeech(id, speech) {
       await database.widgets.update(id, {speech: poffoSpeechSchema.parse(speech)})
     },
     async configureTracking(id, options) {
       await database.widgets.update(id, {
         trackingOptions: poffoTrackingOptionsSchema.parse(options),
+      })
+    },
+    async moveSpeech(id, position) {
+      const point = poffoSpeechSchema.pick({anchor: true, x: true, y: true}).parse(position)
+      await database.transaction('rw', database.widgets, async () => {
+        const widget = await database.widgets.get(id)
+        if (widget === undefined) {
+          throw new Error('Poffo widget is unavailable')
+        }
+        await database.widgets.update(id, {
+          speech: poffoSpeechSchema.parse({...DEFAULT_POFFO_SPEECH, ...widget.speech, ...point}),
+        })
       })
     },
     async moveWidget(id, position) {
@@ -107,6 +141,19 @@ export const createLibraryRepository = (name: string): LibraryRepository => {
     subscribe(refresh, onError) {
       const subscription = liveQuery(read).subscribe({error: onError, next: refresh})
       return () => subscription.unsubscribe()
+    },
+    async toggleWidgetAction(id, bindingId) {
+      await database.transaction('rw', database.widgets, async () => {
+        const widget = await database.widgets.get(id)
+        const bindings = widget?.speech?.semanticBindings
+        if (widget === undefined || bindings === undefined) {
+          return
+        }
+        const next = toggleMenuAction(bindings, bindingId)
+        if (next !== bindings) {
+          await database.widgets.update(id, {speech: {...widget.speech!, semanticBindings: next}})
+        }
+      })
     },
     async trackWidget(id, tracking) {
       await database.widgets.update(id, {tracking: poffoTrackingSchema.parse(tracking)})

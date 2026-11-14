@@ -4,7 +4,7 @@ import {fireEvent, render, screen, waitFor} from '@solidjs/testing-library'
 import {createSignal} from 'solid-js'
 import {afterEach, expect, it, vi} from 'vitest'
 
-import {DEFAULT_BACKGROUND} from 'src/features/background'
+import {DEFAULT_BACKGROUND} from '@winter-love/wallpaper/model'
 import {createBackground} from 'src/features/background/__tests__/fixtures/controller'
 import {synchronizeDesktopBackground} from 'src/features/desktop-mode'
 import {Website} from '../Website'

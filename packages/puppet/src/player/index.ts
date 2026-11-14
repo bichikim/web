@@ -2,17 +2,39 @@ export * from './audio'
 export * from './create-demo-document'
 export * from './create-empty-document'
 export * from './create-player'
+export * from './create-runtime-effects'
+export * from './create-runtime-notices'
 export * from './document'
+export * from './get-export-document'
 export * from './look'
 export * from './motion-timeline-rows'
 export * from './parameter-value'
 export * from './parse-document'
+export * from './parse-document-blob'
+export * from './parse-document-stream'
+export {
+  configurePlayerBuffering,
+  flushPlayerInputs,
+  getPlayerBufferingInfo,
+  type PlayerBufferingChange,
+  type PlayerBufferingConfiguration,
+  type PlayerBufferingInfo,
+  type PlayerBufferingStatus,
+  type PlayerInputChange,
+} from './player-buffering'
 export * from './part-mask'
 export * from './physics'
 export * from './playback/types'
 export * from './prepare-puppet-document'
+export * from './rendering-options'
+export * from './runtime'
+export * from './runtime-notice-types'
 export * from './scene'
 export * from './serialize-document'
+export * from './serialize-document-chunks'
+export * from './serialize-poffo-document'
+export * from './texture-assets'
 export * from './timeline-rows'
 export * from './view-camera'
 export * from './voice'
+export type {PuppetParameterValueMap, PuppetParameterValues} from '../deformation'

@@ -1,0 +1,32 @@
+name: Verify Wallpaper source and build
+description: Install dependencies, build the static site, and check its source.
+runs:
+  using: composite
+  steps:
+    - uses: pnpm/action-setup@v6
+      with:
+        version: 11.8.0
+    - uses: actions/setup-node@v6
+      with:
+        node-version: 24.x
+        cache: pnpm
+    - name: Install dependencies
+      shell: bash
+      run: pnpm install --frozen-lockfile
+    - name: Build Wallpaper and its libraries
+      shell: bash
+      run: pnpm exec turbo run build --filter=@apps/wallpaper-web...
+    - name: Check Wallpaper source
+      shell: bash
+      run: |
+        pnpm --dir apps/wallpaper-web typecheck
+        pnpm exec oxlint apps/wallpaper-web/src apps/wallpaper-web/browser \
+          apps/wallpaper-web/scripts apps/wallpaper-web/playwright.config.ts
+        pnpm exec oxfmt --check apps/wallpaper-web .github/actions/wallpaper-web \
+          .github/workflows/wallpaper-web-deploy.yml \
+          .github/workflows/wallpaper-web-production-deploy.yml
+    - name: Check Wallpaper behavior
+      shell: bash
+      env:
+        NODE_OPTIONS: --no-experimental-webstorage
+      run: pnpm exec vitest run --project=unit apps/wallpaper-web/src

@@ -1,7 +1,7 @@
 import type {TextModelId} from 'src/features/text-generation'
 import * as m from '@paraglide/message'
 import type {ModelDownloadController} from '../../features/model-download/controller'
-import type {SupertonicModelId} from '../../features/supertonic'
+import type {SupertonicModelId} from '@winter-love/supertonic/model'
 import type {LanguageLearningEditorPhase, LanguageLearningPendingDownload} from './editor-state'
 
 interface LanguageLearningDownloadController {

@@ -1,19 +1,20 @@
+import {readField} from './read-field'
 import {expect, it, vi} from 'vitest'
 import TreeClient from '../tree-client.js'
 
 const setup = () => {
-  let state
+  let state: unknown
   let pointer: (event: unknown) => void = vi.fn()
   const post = vi.fn()
   const surface = {
     columns: 40,
-    elements: {Box: (props) => props, Text: vi.fn()},
+    elements: {Box: (props: unknown) => props, Text: vi.fn()},
     onKey: vi.fn(),
     onPointer: (listener: typeof pointer) => {
       pointer = listener
     },
     post,
-    setState: (next) => {
+    setState: (next: unknown) => {
       state = next
     },
     get state() {
@@ -26,7 +27,7 @@ const setup = () => {
     cursor: '',
     rows: [{path: 'a.ts'}, {path: 'b.ts'}, {path: 'c.ts'}],
   }
-  return {pointer: (event) => pointer(event), post, props, surface}
+  return {pointer: (event: unknown) => pointer(event), post, props, surface}
 }
 
 it('should route the painted row after repeated local width changes without posting from renders', () => {
@@ -36,7 +37,11 @@ it('should route the painted row after repeated local width changes without post
     surface.columns = index % 2 === 0 ? 25 : 60
     const drawing = TreeClient(props, surface)
     expect(drawing.children).toHaveLength(props.rows.length)
-    expect(drawing.children.every((row) => row.height === 1 && row.flexShrink === 0)).toBe(true)
+    expect(
+      drawing.children.every(
+        (row: unknown) => readField(row, 'height') === 1 && readField(row, 'flexShrink') === 0,
+      ),
+    ).toBe(true)
   }
   expect(post).not.toHaveBeenCalled()
   pointer({button: 'left', type: 'down', x: 4, y: 1})

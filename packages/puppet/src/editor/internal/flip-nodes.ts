@@ -92,7 +92,9 @@ const getSelectionCenter = (
   })
   return coordinates.length === 0
     ? undefined
-    : (Math.min(...coordinates) + Math.max(...coordinates)) / 2
+    : (coordinates.reduce((minimum, value) => Math.min(minimum, value), Infinity) +
+        coordinates.reduce((maximum, value) => Math.max(maximum, value), -Infinity)) /
+        2
 }
 
 const mirrorBinding = (

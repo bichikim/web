@@ -3,7 +3,7 @@ import {
   composeParameterPartDrawOrder,
 } from '../../deformation/draw-order'
 import type {PuppetParameterValueMap} from '../../deformation'
-import type {PuppetDocument, PuppetSceneNode} from '../document'
+import {PUPPET_DEFAULT_DRAW_ORDER, type PuppetDocument, type PuppetSceneNode} from '../document'
 import {getDocumentScene, getScenePartStates, type PuppetScenePartState} from '../scene'
 import {isParameterVisible} from '../parameter-visibility'
 
@@ -106,26 +106,124 @@ const sortItems = (items: ReadonlyArray<DrawOrderItem>, context: SortContext) =>
     )
     .flatMap((item) => item.states)
 
+interface OrderSnapshot {
+  readonly values: ReadonlyArray<number | undefined>
+  readonly states: ReadonlyArray<PuppetScenePartState>
+}
+
+interface DrawOrderFrame {
+  readonly context: Omit<SortContext, 'parameterValues'>
+  readonly parameterIds: ReadonlyArray<string>
+  readonly roots: ReadonlyArray<PuppetSceneNode>
+  readonly sortable: boolean
+  snapshot?: OrderSnapshot
+}
+
+const getVisibilityParameters = (nodes: ReadonlyArray<PuppetSceneNode>): ReadonlyArray<string> =>
+  nodes.flatMap((node) => [
+    ...(node.parameterVisibility ?? []).map((range) => range.parameterId),
+    ...(node.kind === 'part' ? [] : getVisibilityParameters(node.children)),
+  ])
+
+const getGroupOrders = (
+  nodes: ReadonlyArray<PuppetSceneNode>,
+): ReadonlyArray<readonly [string, number]> =>
+  nodes.flatMap(
+    (node): ReadonlyArray<readonly [string, number]> =>
+      node.kind === 'part'
+        ? []
+        : [
+            ...(node.kind === 'group'
+              ? ([[node.id, node.properties?.drawOrder ?? PUPPET_DEFAULT_DRAW_ORDER]] as const)
+              : []),
+            ...getGroupOrders(node.children),
+          ],
+  )
+
+const getOrderParameters = (document: PuppetDocument): ReadonlyArray<string> => {
+  const partOrders = new Map(
+    document.parts.map((part) => [
+      part.id,
+      part.properties?.drawOrder ?? PUPPET_DEFAULT_DRAW_ORDER,
+    ]),
+  )
+  const groupOrders = new Map(getGroupOrders(getDocumentScene(document).roots))
+  return (document.parameterBindings ?? [])
+    .filter(
+      (binding) =>
+        // Legacy triangulated channels can change an equal rest order through rounding alone.
+        (binding.interpolation !== 'grid' && binding.parameterIds.length > 1) ||
+        binding.keyforms.some(
+          (form) =>
+            // Constant rest channels are omitted by the draw-order sampler as well.
+            form.parts.some(
+              (part) =>
+                part.properties?.drawOrder !== undefined &&
+                part.properties.drawOrder !== partOrders.get(part.partId),
+            ) ||
+            form.groups?.some(
+              (group) =>
+                group.properties.drawOrder !== undefined &&
+                group.properties.drawOrder !== groupOrders.get(group.groupId),
+            ),
+        ),
+    )
+    .flatMap((binding) => [
+      ...binding.parameterIds,
+      ...(binding.influences ?? []).map((influence) => influence.parameterId),
+    ])
+}
+
+const orderFrames = new WeakMap<PuppetDocument, DrawOrderFrame>()
+
+const getOrderFrame = (document: PuppetDocument): DrawOrderFrame => {
+  let frame = orderFrames.get(document)
+  if (frame === undefined) {
+    const {roots} = getDocumentScene(document)
+    frame = {
+      context: {
+        document,
+        sourceOrder:
+          document.drawOrderTieBreak === 'parts'
+            ? new Map(document.parts.map((part, index) => [part.id, index]))
+            : undefined,
+      },
+      parameterIds: [
+        ...new Set([...getOrderParameters(document), ...getVisibilityParameters(roots)]),
+      ],
+      roots,
+      sortable: usesDrawOrder(document) || document.drawOrderTieBreak === 'parts',
+    }
+    orderFrames.set(document, frame)
+  }
+  return frame
+}
+
 /**
  * Scene parts in paint order (back to front) after Cubism draw order: parts and draw order
- * groups sort by their keyed draw order within each level.
+ * groups sort by their keyed draw order within each level. Immutable documents retain the
+ * latest readonly snapshot until an ordering or visibility input changes.
  */
 export const getDrawOrderedPartStates = (
   document: PuppetDocument,
   parameterValues?: PuppetParameterValueMap,
 ): ReadonlyArray<PuppetScenePartState> => {
-  const context: SortContext = {
-    document,
-    parameterValues,
-    sourceOrder:
-      document.drawOrderTieBreak === 'parts'
-        ? new Map(document.parts.map((part, index) => [part.id, index]))
-        : undefined,
+  const frame = getOrderFrame(document)
+  const values = frame.parameterIds.map((id) => parameterValues?.[id])
+  const previous = frame.snapshot
+  if (
+    previous !== undefined &&
+    values.every((value, index) => Object.is(value, previous.values[index]))
+  ) {
+    return previous.states
   }
-  return usesDrawOrder(document) || document.drawOrderTieBreak === 'parts'
-    ? sortItems(
-        collectItems(getDocumentScene(document).roots, {locked: false, visible: true}, context),
-        context,
-      )
+  const context: SortContext = {
+    ...frame.context,
+    parameterValues,
+  }
+  const states = frame.sortable
+    ? sortItems(collectItems(frame.roots, {locked: false, visible: true}, context), context)
     : getScenePartStates(document, parameterValues)
+  frame.snapshot = {states, values}
+  return states
 }

@@ -35,7 +35,11 @@ export const useAdminApiAi = () => {
     setFeedback(null)
   }
   const changeProvider = (index: number, providerId: string): void => {
-    const model = saved()?.catalog.find((value) => value.providerId === providerId)?.model ?? ''
+    const current = saved()
+    const model =
+      current?.providers.find((provider) => provider.id === providerId)?.models['cloud-text'] ??
+      current?.catalog.find((value) => value.providerId === providerId)?.model ??
+      ''
     replaceRoute(index, {model, providerId})
   }
   const moveRoute = (index: number, offset: -1 | 1): void => {

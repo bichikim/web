@@ -43,6 +43,7 @@ struct ProbeState(Mutex<Option<WindowProbe>>);
 #[serde(rename_all = "camelCase")]
 struct HarnessMode {
     smoke: bool,
+    events: bool,
 }
 
 fn probe_window<R: Runtime>(window: &Window<R>) -> Result<WindowProbe, String> {
@@ -407,9 +408,10 @@ fn finish_smoke(app: AppHandle, error: Option<String>) {
 
 fn main() {
     let smoke = std::env::args().any(|argument| argument == "--smoke");
+    let events = std::env::args().any(|argument| argument == "--event-smoke");
 
     tauri::Builder::default()
-        .manage(HarnessMode { smoke })
+        .manage(HarnessMode { smoke, events })
         .manage(ProbeState::default())
         .plugin(tauri_plugin_desktop_surface::init())
         .invoke_handler(tauri::generate_handler![

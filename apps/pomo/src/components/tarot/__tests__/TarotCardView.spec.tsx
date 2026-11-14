@@ -42,7 +42,7 @@ it('should update the illustration, marker, and localized name when the drawn ca
   render(() => <TarotCardView card={card()} locale={locale()} />)
 
   const article = screen.getByRole('article', {name: 'The Fool'})
-  expect(article.querySelector('img')).toHaveAttribute('src', expect.stringContaining('fool.png'))
+  expect(article.querySelector('img')).toHaveAttribute('src', expect.stringContaining('fool.webp'))
   expect(screen.queryByRole('heading', {name: 'The Fool'})).not.toBeInTheDocument()
   fireEvent.load(article.querySelector('img')!)
   fireEvent.load(article.querySelectorAll('img')[1]!)
@@ -52,7 +52,7 @@ it('should update the illustration, marker, and localized name when the drawn ca
   setCard({...TAROT_CARDS.find((item) => item.id === 'pentacles-king')!, orientation: 'upright'})
   expect(
     screen.getByRole('article', {name: 'King of Pentacles'}).querySelector('img'),
-  ).toHaveAttribute('src', expect.stringContaining('pentacles-king.png'))
+  ).toHaveAttribute('src', expect.stringContaining('pentacles-king.webp'))
   fireEvent.load(screen.getByRole('article', {name: 'King of Pentacles'}).querySelector('img')!)
   fireEvent.load(
     screen.getByRole('article', {name: 'King of Pentacles'}).querySelectorAll('img')[1]!,
@@ -239,7 +239,7 @@ describe('card enlargement', () => {
     const dialog = screen.getByRole('dialog', {name: '광대'})
     expect(showModal).toHaveBeenCalledOnce()
     const image = dialog.querySelector('img')!
-    expect(image).toHaveAttribute('src', expect.stringContaining('fool.png'))
+    expect(image).toHaveAttribute('src', expect.stringContaining('fool.webp'))
     fireEvent.load(image)
     fireEvent.load(dialog.querySelectorAll('img')[1]!)
     expect(within(dialog).getByRole('heading', {name: '광대'})).toBeInTheDocument()

@@ -8,7 +8,7 @@ import {
   type PoffoTrackingOptions,
 } from '@winter-love/wallpaper/settings/tracking'
 import {createTrackingCenters, createTrackingParameters} from './parameters'
-import {smoothTrackingPoint} from './smooth-point'
+import {smoothTrackingPoint} from '@winter-love/wallpaper/tracking/smooth-point'
 import type {
   CameraSurface,
   CursorPosition,
@@ -19,6 +19,8 @@ import type {
 import {cameraTrackingPoints} from './camera-points'
 import {canvasCameraSurface} from './canvas-camera-surface'
 import {useViewport} from './use-viewport'
+import {createTrackingBlends} from './blends'
+import {createCursorTarget} from './cursor-target'
 
 interface UseTrackingProps {
   readonly mode: Accessor<PoffoTracking>
@@ -34,8 +36,6 @@ const bounded = (value: number) => (Number.isFinite(value) ? Math.max(-1, Math.m
 const FRAMES_PER_SECOND = 60
 const FRAME_SECONDS = 1 / FRAMES_PER_SECOND
 const MILLISECONDS_PER_SECOND = 1000
-const SETTLE_DISTANCE = 0.001
-const FACE_HEIGHT = 0.3
 
 export const useTracking = (props: UseTrackingProps) => {
   const viewport = useViewport(
@@ -50,18 +50,24 @@ export const useTracking = (props: UseTrackingProps) => {
     const reference = props.cameraSurface?.()
     const parameters = props.parameters()
     const bindings = props.bindings()
-    const map = createTrackingParameters(parameters, bindings, options)
+    const source = mode === 'cursor' ? 'cursor' : 'camera'
+    const map = createTrackingParameters(parameters, bindings, options, source)
     if (player === null) {
       return
     }
+    const blend = createTrackingBlends(parameters, bindings)
+    const apply = (values: Readonly<Record<string, number>>) =>
+      player.patchParameterBlends(blend(values))
+    const release = (ids: readonly string[]) =>
+      player.patchParameterBlends(Object.fromEntries(ids.map((id) => [id, undefined])))
     const centers = createTrackingCenters(parameters, bindings, options)
     const centerIds = Object.keys(centers)
     if (centerIds.length > 0) {
-      player.patchParameterValues(centers)
+      apply(centers)
     }
     if (mode === 'off' || canvas === null) {
       if (centerIds.length > 0) {
-        onCleanup(() => player.clearParameterValues(centerIds))
+        onCleanup(() => release(centerIds))
       }
       return
     }
@@ -71,22 +77,22 @@ export const useTracking = (props: UseTrackingProps) => {
     }
     let disposed = false
     let origin: TrackingPoint = {x: 0, y: 0}
-    let target: TrackingPoint = {x: 0, y: 0}
+    let target: TrackingPoint | null = null
     let current: TrackingPoint = {x: 0, y: 0}
     let frame = 0
     let previous: number | null = null
     let stop: (() => void) | null = null
     const step = (timestamp: number) => {
       frame = 0
-      if (disposed) {
+      if (disposed || target === null) {
         return
       }
       const seconds =
         previous === null ? FRAME_SECONDS : (timestamp - previous) / MILLISECONDS_PER_SECOND
       previous = timestamp
       current = smoothTrackingPoint(current, target, seconds)
-      player.patchParameterValues(map(current, origin))
-      if (Math.abs(target.x - current.x) + Math.abs(target.y - current.y) > SETTLE_DISTANCE) {
+      apply(map(current, origin))
+      if (current.x !== target.x || current.y !== target.y) {
         frame = requestAnimationFrame(step)
       } else {
         previous = null
@@ -97,7 +103,7 @@ export const useTracking = (props: UseTrackingProps) => {
         return
       }
       const next = {x: bounded(point.x), y: bounded(point.y)}
-      if (next.x === target.x && next.y === target.y) {
+      if (next.x === target?.x && next.y === target?.y) {
         return
       }
       target = next
@@ -106,15 +112,14 @@ export const useTracking = (props: UseTrackingProps) => {
       }
     }
     const cursor = (position: CursorPosition) => {
-      const bounds = canvas.getBoundingClientRect()
-      follow({
-        x:
-          (position.x - bounds.left - bounds.width / 2) /
-          Math.max(bounds.width, position.width / 2, 1),
-        y:
-          -(position.y - bounds.top - bounds.height * FACE_HEIGHT) /
-          Math.max(bounds.height, position.height / 2, 1),
-      })
+      follow(
+        createCursorTarget({
+          bounds: canvas.getBoundingClientRect(),
+          options,
+          point: position,
+          viewport: {height: innerHeight, width: innerWidth},
+        }),
+      )
     }
     const camera = (point: FacePosition) => {
       const surface =
@@ -174,7 +179,7 @@ export const useTracking = (props: UseTrackingProps) => {
       disposed = true
       stop?.()
       cancelAnimationFrame(frame)
-      player.clearParameterValues(parameterIds)
+      release(parameterIds)
       if (isTauri() && mode === 'cursor') {
         invoke('subscribe_poffo_cursor', {enabled: false, subscription}).catch(props.onError)
       }

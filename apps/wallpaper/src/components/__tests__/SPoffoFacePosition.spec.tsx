@@ -14,7 +14,7 @@ afterEach(() => {
 test('should drag the face anchor over the rendered character and save on release', () => {
   const save = vi.fn()
   render(() => <SPoffoFacePosition onChange={save} />)
-  const handle = screen.getByRole('button', {name: '캐릭터 얼굴 기준 조정'})
+  const handle = screen.getByRole('button', {name: '얼굴 기준 조정'})
   vi.spyOn(handle.parentElement!, 'getBoundingClientRect').mockReturnValue({
     height: 100,
     width: 200,
@@ -40,6 +40,6 @@ test('should move the face anchor without changing camera calibration', () => {
     faceY: 0.3,
   })
   render(() => <SPoffoFacePosition value={options()} onChange={setOptions} />)
-  fireEvent.keyDown(screen.getByRole('button', {name: '캐릭터 얼굴 기준 조정'}), {key: 'ArrowDown'})
+  fireEvent.keyDown(screen.getByRole('button', {name: '얼굴 기준 조정'}), {key: 'ArrowDown'})
   expect(options()).toEqual({cameraX: -0.2, faceX: 0.5, faceY: 0.31})
 })

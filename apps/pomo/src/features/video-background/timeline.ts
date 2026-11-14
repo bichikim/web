@@ -10,5 +10,3 @@ export const sampleTimes = (duration: number): number[] => {
   const count = Math.min(MAX_SAMPLES, Math.max(2, Math.ceil(duration / SAMPLE_SECONDS) + 1))
   return Array.from({length: count}, (_, index) => (end * index) / (count - 1))
 }
-
-export {sampleBlend} from '@winter-love/wallpaper/frame-renderer/sample-blend'

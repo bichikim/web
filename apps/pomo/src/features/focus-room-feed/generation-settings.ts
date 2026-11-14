@@ -2,7 +2,7 @@ import type {
   AutomaticDialogueSettings,
   AutomaticDialogueSettingsStorage,
 } from '../focus-room-dialogue/automatic-dialogue-settings-contract'
-import type {SupertonicModelId, SupertonicVoiceId} from '../supertonic'
+import type {SupertonicModelId, SupertonicVoiceId} from '@winter-love/supertonic/model'
 import type {FeedConnectionRepository} from './repository'
 import {DEFAULT_FEED_VOICE_ID} from './schema'
 

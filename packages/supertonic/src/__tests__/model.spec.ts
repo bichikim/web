@@ -1,0 +1,80 @@
+/** @vitest-environment node */
+import {describe, expect, it} from 'vitest'
+
+import {
+  getSupertonicAssetUrl,
+  getSupertonicModel,
+  getSupertonicModelFileUrl,
+  SUPERTONIC_MODEL_ASSETS_URL,
+  SUPERTONIC_MODELS,
+  SUPERTONIC_VOICES,
+} from '@winter-love/supertonic/model'
+
+const FULL_MODEL_SIZE = 398_075_273
+const INT8_MODEL_SIZE = 144_508_203
+const VOICE_COUNT = 14
+
+describe('Supertonic model manifest', () => {
+  it('should expose full and INT8 profiles with independent execution policies', () => {
+    expect(SUPERTONIC_MODELS).toMatchObject([
+      {id: 'full', preferredBackend: 'webgpu', size: FULL_MODEL_SIZE},
+      {id: 'int8', preferredBackend: 'wasm', size: INT8_MODEL_SIZE},
+    ])
+    expect(SUPERTONIC_MODELS.every((model) => model.files.length === 4)).toBe(true)
+    expect(SUPERTONIC_MODELS.every((model) => model.speechPolicy)).toBe(true)
+    expect(getSupertonicModel('full').speechPolicy).toMatchObject({
+      considerSplitLength: 120,
+      maximumLength: 200,
+      recommendedLength: 150,
+    })
+  })
+
+  it('should resolve version-pinned model and shared asset URLs', () => {
+    const int8Model = getSupertonicModel('int8')
+    const vectorEstimator = int8Model.files.find((file) => file.key === 'vectorEstimator')
+
+    expect(vectorEstimator).toBeDefined()
+    expect(getSupertonicModelFileUrl(int8Model, vectorEstimator!)).toBe(
+      'https://storage.pomofi.io/models/supertonic-3-int8/cca5a0e6c96e1d2c720986bf7e75fcc81dee3ae4/vector_estimator.int8.onnx',
+    )
+    expect(getSupertonicAssetUrl('onnx/tts.json')).toBe(
+      'https://storage.pomofi.io/models/supertonic-3/3cadd1e/onnx/tts.json',
+    )
+    expect(
+      SUPERTONIC_MODELS.every(({baseUrl}) => baseUrl.startsWith('https://storage.pomofi.io/')),
+    ).toBe(true)
+    expect(SUPERTONIC_MODEL_ASSETS_URL).toBe('/models/supertonic-3/manifest.json')
+  })
+
+  it('should expose all fixed voices and reject unsupported model identifiers at runtime', () => {
+    expect(SUPERTONIC_VOICES).toHaveLength(VOICE_COUNT)
+    expect(new Set(SUPERTONIC_VOICES.map((voice) => voice.id)).size).toBe(VOICE_COUNT)
+    expect(SUPERTONIC_VOICES[0]).toMatchObject({
+      gender: 'female',
+      id: 'Yuna',
+      label: 'Yuna',
+      recommended: true,
+    })
+    expect(SUPERTONIC_VOICES.find((voice) => voice.id === 'F1')).toMatchObject({
+      recommended: false,
+    })
+    expect(SUPERTONIC_VOICES.find((voice) => voice.id === 'Hana')).toMatchObject({
+      gender: 'female',
+      label: 'Hana',
+      recommended: false,
+    })
+    expect(SUPERTONIC_VOICES.find((voice) => voice.id === 'Sora')).toMatchObject({
+      gender: 'female',
+      label: 'Sora',
+      recommended: false,
+    })
+    expect(SUPERTONIC_VOICES.find((voice) => voice.id === 'Mina')).toMatchObject({
+      gender: 'female',
+      label: 'Mina',
+      recommended: false,
+    })
+    expect(() => Reflect.apply(getSupertonicModel, null, ['unknown'])).toThrow(
+      '지원하지 않는 Supertonic 모델입니다',
+    )
+  })
+})

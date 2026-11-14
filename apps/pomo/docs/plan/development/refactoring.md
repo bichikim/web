@@ -161,9 +161,10 @@
   - [x] 관련 calendar query 스펙 · lint 통과
 
 - [x] [#2369](https://github.com/bichikim/web/issues/2369) Refactor: Pomo expense·album-translation JSON candidate scan twin — iterateJsonObjectSlices (#2354 follow-up)
-  - [x] expense·album-translation이 공유 candidate-slice helper를 씀
-  - [x] `#2354` expense prose/brace·skip-unrelated-JSON 스펙과 album translation JSON 스펙 유지
-  - [x] invalid-shape skip 정책(expense) vs every-`{`(album) 계약이 호출부에 명시적으로 남음
+  - 2026-10-29: 구조화 출력 적용으로 공유 후보 추출기를 제거했습니다. 아래는 현재 계약입니다.
+  - [x] expense·album-translation은 응답 전체를 JSON으로 읽고 업무 데이터 검증을 유지
+  - [x] 설명문·코드 블록·여러 객체·미완성 응답은 거부
+  - [x] 정상 문자열의 중괄호·이스케이프 및 날짜·금액·번역 필드 검증 유지
   - [x] 관련 단위 테스트 · typecheck · lint 통과
 
 - [x] [#2370](https://github.com/bichikim/web/issues/2370) Refactor: Pomo expense·ai-runner local isRecord leftover — src/utils/is-object (#1504 follow-up)
@@ -187,7 +188,7 @@
   - [x] video-loop·video-edges fade 계약·스펙 수치 동일
   - [x] typecheck · lint 통과
 
-- [x] [#2428](https://github.com/bichikim/web/issues/2428) Refactor: Pomo weather·feed ISO calendar-date validation twin — shared hasValidIsoCalendarDate
+- [x] [#2428](https://github.com/bichikim/web/issues/2428) Refactor: Pomo weather·feed ISO calendar-date validation twin — shared hasIsoDatePrefix
   - [x] ISO `YYYY-MM-DD` calendar-day validity implemented in one place
   - [x] weather expiry · feed timestamp both use it
   - [x] `#2410`/`#2418` regression specs still pass
@@ -519,7 +520,7 @@
 
 | 이슈                                                 | 상태           | 구현 위치                                                                                                                                                                                                                     |
 | ---------------------------------------------------- | -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [#2193](https://github.com/bichikim/web/issues/2193) | 적용           | [src/utils/normalize-pathname/index.ts ](/Users/bichi/.codex/worktrees/aa4c/web/apps/pomo/src/utils/normalize-pathname/index.ts:2)                                                                                            |
+| [#2193](https://github.com/bichikim/web/issues/2193) | 적용           | [src/utils/remove-trailing-slashes/index.ts ](/Users/bichi/.codex/worktrees/ac10/web/apps/pomo/src/utils/remove-trailing-slashes/index.ts:2)                                                                                  |
 | [#2214](https://github.com/bichikim/web/issues/2214) | 적용           | [src/features/civil-date/index.ts ](/Users/bichi/.codex/worktrees/aa4c/web/apps/pomo/src/features/civil-date/index.ts:43)                                                                                                     |
 | [#2232](https://github.com/bichikim/web/issues/2232) | 적용           | [src/features/tools/calculate-service.ts ](/Users/bichi/.codex/worktrees/aa4c/web/apps/pomo/src/features/tools/calculate-service.ts:1)                                                                                        |
 | [#2265](https://github.com/bichikim/web/issues/2265) | 적용           | [src/features/calendar/create-calendar-exclusion-pattern.ts ](/Users/bichi/.codex/worktrees/aa4c/web/apps/pomo/src/features/calendar/create-calendar-exclusion-pattern.ts:4)                                                  |
@@ -539,16 +540,16 @@
 | [#2395](https://github.com/bichikim/web/issues/2395) | 적용           | [src/utils/numerically-stable-softmax/index.ts ](/Users/bichi/.codex/worktrees/aa4c/web/apps/pomo/src/utils/numerically-stable-softmax/index.ts:4)                                                                            |
 | [#2358](https://github.com/bichikim/web/issues/2358) | 적용           | [src/features/calendar/query.ts ](/Users/bichi/.codex/worktrees/aa4c/web/apps/pomo/src/features/calendar/query.ts:10)                                                                                                         |
 | [#2368](https://github.com/bichikim/web/issues/2368) | 적용           | [src/features/calendar/query.ts ](/Users/bichi/.codex/worktrees/aa4c/web/apps/pomo/src/features/calendar/query.ts:20)                                                                                                         |
-| [#2369](https://github.com/bichikim/web/issues/2369) | 적용           | [src/utils/json/iterate-json-object-slices.ts ](/Users/bichi/.codex/worktrees/aa4c/web/apps/pomo/src/utils/json/iterate-json-object-slices.ts:2)                                                                              |
+| [#2369](https://github.com/bichikim/web/issues/2369) | 적용           | [src/features/album-translation/output.ts ](/Users/bichi/.codex/worktrees/ac10/web/apps/pomo/src/features/album-translation/output.ts:12)                                                                                     |
 | [#2370](https://github.com/bichikim/web/issues/2370) | 적용           | [src/server/ai-runner/store.ts ](/Users/bichi/.codex/worktrees/aa4c/web/apps/pomo/src/server/ai-runner/store.ts:51)                                                                                                           |
 | [#2400](https://github.com/bichikim/web/issues/2400) | 적용           | [src/utils/exponential-approach-factor/index.ts ](/Users/bichi/.codex/worktrees/aa4c/web/apps/pomo/src/utils/exponential-approach-factor/index.ts:2)                                                                          |
 | [#2401](https://github.com/bichikim/web/issues/2401) | 적용           | [src/features/frame-renderer/cosine-ease-out-alpha.ts ](/Users/bichi/.codex/worktrees/aa4c/web/apps/pomo/src/features/frame-renderer/cosine-ease-out-alpha.ts:3)                                                              |
-| [#2428](https://github.com/bichikim/web/issues/2428) | 적용           | [src/utils/iso-calendar-date/index.ts ](/Users/bichi/.codex/worktrees/aa4c/web/apps/pomo/src/utils/iso-calendar-date/index.ts:2)                                                                                              |
+| [#2428](https://github.com/bichikim/web/issues/2428) | 적용           | [src/utils/has-iso-date-prefix/index.ts ](/Users/bichi/.codex/worktrees/aa4c/web/apps/pomo/src/utils/has-iso-date-prefix/index.ts:2)                                                                                          |
 | [#2454](https://github.com/bichikim/web/issues/2454) | 적용           | [src/utils/english-title-abbreviation/index.ts ](/Users/bichi/.codex/worktrees/aa4c/web/apps/pomo/src/utils/english-title-abbreviation/index.ts:1)                                                                            |
 | [#2518](https://github.com/bichikim/web/issues/2518) | 적용           | [src/utils/random-in-range/index.ts ](/Users/bichi/.codex/worktrees/aa4c/web/apps/pomo/src/utils/random-in-range/index.ts:2)                                                                                                  |
 | [#2575](https://github.com/bichikim/web/issues/2575) | 적용           | [src/features/calendar/all-day-date.ts ](/Users/bichi/.codex/worktrees/aa4c/web/apps/pomo/src/features/calendar/all-day-date.ts:5)                                                                                            |
 | [#2583](https://github.com/bichikim/web/issues/2583) | 적용           | [src/features/calendar/parse-timed-interval.ts ](/Users/bichi/.codex/worktrees/aa4c/web/apps/pomo/src/features/calendar/parse-timed-interval.ts:8)                                                                            |
-| [#2599](https://github.com/bichikim/web/issues/2599) | 적용           | [src/utils/normalize-paste-numeric-input/index.ts ](/Users/bichi/.codex/worktrees/aa4c/web/apps/pomo/src/utils/normalize-paste-numeric-input/index.ts:2)                                                                      |
+| [#2599](https://github.com/bichikim/web/issues/2599) | 적용           | [packages/supertonic/src/normalize-paste-numeric-input.ts ](/Users/bichi/.codex/worktrees/ac10/web/packages/supertonic/src/normalize-paste-numeric-input.ts:2)                                                                |
 | [#2600](https://github.com/bichikim/web/issues/2600) | 적용           | [src/features/dialogue-writer/answer.ts ](/Users/bichi/.codex/worktrees/aa4c/web/apps/pomo/src/features/dialogue-writer/answer.ts:1)                                                                                          |
 | [#2601](https://github.com/bichikim/web/issues/2601) | 적용           | [src/features/supertonic/number-speech/number-patterns.ts ](/Users/bichi/.codex/worktrees/aa4c/web/apps/pomo/src/features/supertonic/number-speech/number-patterns.ts:1)                                                      |
 | [#2326](https://github.com/bichikim/web/issues/2326) | 적용           | [src/server/http/list-offset-query-schema.ts ](/Users/bichi/.codex/worktrees/aa4c/web/apps/pomo/src/server/http/list-offset-query-schema.ts:3)                                                                                |

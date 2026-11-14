@@ -2,24 +2,24 @@ import {type Accessor, createEffect, onCleanup} from 'solid-js'
 import type {CodeTextRange} from './types'
 import {readTextSelection} from './read-text-selection'
 
-interface TextSelectionOptions {
+interface UseTextSelectionProps {
   container: Accessor<HTMLElement | null>
   onSelect: (range: CodeTextRange) => void
 }
 
-export const useTextSelection = (options: TextSelectionOptions) => {
+export const useTextSelection = (props: UseTextSelectionProps) => {
   const read = () => {
-    const container = options.container()
+    const container = props.container()
     return container === null ? null : readTextSelection(container)
   }
   const synchronize = (): void => {
     const selection = read()
     if (selection !== null) {
-      options.onSelect(selection)
+      props.onSelect(selection)
     }
   }
   createEffect(() => {
-    const document = options.container()?.ownerDocument
+    const document = props.container()?.ownerDocument
     if (document === undefined) {
       return
     }

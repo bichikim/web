@@ -1,4 +1,4 @@
-import {normalizePathname} from 'src/utils/normalize-pathname'
+import {removeTrailingSlashes} from 'src/utils/remove-trailing-slashes'
 import {Meta, Title} from '@solidjs/meta'
 import {type Component, type JSX, lazy, Show} from 'solid-js'
 
@@ -6,18 +6,6 @@ const DEV_PAGE_COMPONENTS: Readonly<Partial<Record<string, Component>>> = {
   '/dev': lazy(async () => {
     const {HomePage} = await import('./HomePage')
     return {default: HomePage}
-  }),
-  '/dev/3d-world': lazy(async () => {
-    const {WorldPage} = await import('./WorldPage')
-    return {default: WorldPage}
-  }),
-  '/dev/ai-conversation': lazy(async () => {
-    const {AiConversationPage} = await import('./AiConversationPage')
-    return {default: AiConversationPage}
-  }),
-  '/dev/character': lazy(async () => {
-    const {CharacterPage} = await import('./CharacterPage')
-    return {default: CharacterPage}
   }),
   '/dev/chat': lazy(async () => {
     const {ChatPage} = await import('./ChatPage')
@@ -102,7 +90,7 @@ export interface PageDispatcherProps {
 }
 
 export function PageDispatcher(props: PageDispatcherProps) {
-  const pathname = () => normalizePathname(props.pathname)
+  const pathname = () => removeTrailingSlashes(props.pathname)
   const Page = () => DEV_PAGE_COMPONENTS[pathname()]
 
   return (

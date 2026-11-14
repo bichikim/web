@@ -11,7 +11,7 @@ import {
   SUPERTONIC_VOICES,
   type SupertonicModelId,
   type SupertonicVoiceId,
-} from '../../features/supertonic'
+} from '@winter-love/supertonic/model'
 
 // oxlint-disable-next-line eslint/no-magic-numbers -- Product count options are the persisted user choices.
 const COUNTS = [1, 2, 3, 4, 5] as const

@@ -27,6 +27,30 @@ const node: PuppetSceneDeformerNode = {
   visible: true,
 }
 
+test('should refresh reused control layouts when scale, reflection or parent transforms change', () => {
+  const shape: PuppetSceneDeformerNode = {
+    ...node,
+    boneRestPoints: [0, 0, 50, 0],
+    boneWeights: undefined,
+    children: [node.children[0]!],
+    controlPoints: [0, 0, 50, 0],
+    deformerType: 'rotation',
+  }
+  const sample = (root: PuppetSceneDeformerNode) => {
+    const vertices = new Map([['a', [20, 10]]])
+    applySceneNodeDeformers([root], vertices)
+    return vertices.get('a')
+  }
+  expect(sample(shape)).toEqual([20, 10])
+  expect(sample({...shape, rotationScale: 2})).toEqual([40, 20])
+  expect(sample({...shape, rotationReflection: [true, false]})).toEqual([-20, 10])
+  expect(sample(shape)).toEqual([20, 10])
+  const parent = {...shape, children: [shape], controlPoints: [10, 0, 60, 0], id: 'parent'}
+  expect(sample(parent)).toEqual([30, 10])
+  expect(sample({...parent, controlPoints: [30, 0, 80, 0]})).toEqual([50, 10])
+  expect(sample(shape)).toEqual([20, 10])
+})
+
 test('should carry a parent-space rotation rigidly through its parent warp', () => {
   const rotation: PuppetSceneDeformerNode = {
     ...node,

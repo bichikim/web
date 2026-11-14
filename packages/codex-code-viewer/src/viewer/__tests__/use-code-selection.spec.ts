@@ -39,7 +39,7 @@ describe('useCodeSelection', () => {
         endColumn: 4,
         endLine: 3,
         line: 2,
-        path: '/project/large.ts',
+        path: 'large.ts',
       })
       state.selection.selectLines(3, 4)
       expect(state.selection.selection()).toMatchObject({endLine: 4, line: 3})

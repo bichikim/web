@@ -1,12 +1,17 @@
 import {getTargetBindings} from './target-bindings'
 import {getBindingInfluence} from './influence'
-import {getBoneChannels, poseBoneChannels} from './bone'
+import {poseBoneChannels} from './bone'
+import {
+  getCurveHandleCoordinates,
+  getDeformerCoordinates,
+  getDeformerKeyforms,
+  getDeformerRest,
+} from './deformer-coordinates'
 import {sampleDeformerProperties} from './deformer-properties'
 import type {
   PuppetDocument,
   PuppetParameterBinding,
   PuppetParameterDeformerKeyform,
-  PuppetParameterKeyform,
   PuppetScene,
   PuppetSceneDeformerNode,
   PuppetSceneNode,
@@ -43,69 +48,11 @@ export const createDeformerKeyform = (
   ...(node.spatialTranslation === undefined ? {} : {spatialTranslation: node.spatialTranslation}),
 })
 
-const getDeformerCoordinates = (
-  deformer: PuppetSceneDeformerNode,
-  coordinates: ReadonlyArray<number>,
-  rotationAngle?: number,
-) => {
-  if (deformer.deformerType === 'rotation' && rotationAngle !== undefined) {
-    const rest = deformer.boneRestPoints ?? [0, 0, 1, 0]
-    const angle = Math.atan2(rest[3]! - rest[1]!, rest[2]! - rest[0]!)
-    const direction = Math.atan2(
-      coordinates[3]! - coordinates[1]!,
-      coordinates[2]! - coordinates[0]!,
-    )
-    const offset = direction - rotationAngle
-    const unwrapped = rotationAngle + Math.atan2(Math.sin(offset), Math.cos(offset))
-    return [coordinates[0]!, coordinates[1]!, unwrapped - angle]
-  }
-  return deformer.boneRestPoints === undefined
-    ? coordinates
-    : getBoneChannels(deformer.boneRestPoints, coordinates)
-}
-
-const getKeyformCoordinates = (
-  keyform: PuppetParameterKeyform,
-  deformer: PuppetSceneDeformerNode,
-) => {
-  const keyed = keyform.deformers?.find((candidate) => candidate.nodeId === deformer.id)
-  const coordinates = keyed?.controlPoints
-  if (coordinates === undefined) {
-    return undefined
-  }
-  const sampled = getDeformerCoordinates(deformer, coordinates, keyed?.rotationAngle)
-  if (deformer.boneRestPoints === undefined || keyed?.rotationAngle !== undefined) {
-    return sampled
-  }
-  const reference = getRestCoordinates(deformer)
-  return sampled.map((value, index) => {
-    if (index < 2) {
-      return value
-    }
-    const center = reference[index] ?? 0
-    const offset = value - center
-    return center + Math.atan2(Math.sin(offset), Math.cos(offset))
-  })
-}
-
 const getRestCoordinates = (deformer: PuppetSceneDeformerNode) =>
-  getDeformerCoordinates(deformer, deformer.controlPoints, deformer.rotationAngle)
-
-const getControlPointCenter = (controlPoints: ReadonlyArray<number>) => {
-  const pointCount = controlPoints.length / 2
-  let x = 0
-  let y = 0
-
-  for (let index = 0; index < controlPoints.length; index += 2) {
-    x += controlPoints[index] ?? 0
-    y += controlPoints[index + 1] ?? 0
-  }
-
-  return {x: x / pointCount, y: y / pointCount}
-}
+  getDeformerRest(deformer).coordinates
 
 const getRestRotationOrigin = (deformer: PuppetSceneDeformerNode) =>
-  deformer.rotationOrigin ?? getControlPointCenter(deformer.controlPoints)
+  getDeformerRest(deformer).rotationOrigin
 
 type SpatialProperty =
   | 'spatialMeshPosition'
@@ -114,8 +61,10 @@ type SpatialProperty =
   | 'spatialScale'
   | 'spatialTranslation'
 
+const SPATIAL_ORIGIN = [0, 0, 0] as const
+const SPATIAL_SCALE = [1, 1, 1] as const
 const getRestSpatialCoordinates = (deformer: PuppetSceneDeformerNode, key: SpatialProperty) =>
-  deformer[key] ?? (key === 'spatialScale' ? ([1, 1, 1] as const) : ([0, 0, 0] as const))
+  deformer[key] ?? (key === 'spatialScale' ? SPATIAL_SCALE : SPATIAL_ORIGIN)
 
 const toSpatialCoordinates = (
   values: ReadonlyArray<number>,
@@ -146,26 +95,6 @@ const sampleSpatialCoordinates = (
     key === 'spatialScale' ? 1 : 0,
   )
 }
-
-const getKeyformRotationOrigin = (
-  keyform: PuppetParameterKeyform,
-  deformer: PuppetSceneDeformerNode,
-) => {
-  const origin =
-    keyform.deformers?.find((candidate) => candidate.nodeId === deformer.id)?.rotationOrigin ??
-    getRestRotationOrigin(deformer)
-  return [origin.x, origin.y]
-}
-
-const getCurveHandleCoordinates = (
-  handles: PuppetParameterDeformerKeyform['curveHandles'],
-  deformer: PuppetSceneDeformerNode,
-) =>
-  (deformer.curveHandles ?? []).flatMap((restHandle) => {
-    const handle =
-      handles?.find((candidate) => candidate.pointIndex === restHandle.pointIndex) ?? restHandle
-    return [handle.horizontal.x, handle.horizontal.y, handle.vertical.x, handle.vertical.y]
-  })
 
 const createCurveHandles = (
   deformer: PuppetSceneDeformerNode,
@@ -235,34 +164,28 @@ const addDeformerDelta = (
   )
 
 /** 기본 배율을 기준으로 회전 디포머의 키폼 배율을 계산한다. */
-const sampleRotationScale = (options: SampleParameterDeformerOptions) =>
-  sampleParameterCoordinates({
-    binding: options.binding,
-    keyformCoordinates: options.binding.keyforms.map((keyform) => [
-      keyform.deformers?.find((candidate) => candidate.nodeId === options.deformer.id)
-        ?.rotationScale ??
-        options.deformer.rotationScale ??
-        1,
-    ]),
-    repeatRanges: options.repeatRanges,
-    restCoordinates: [options.deformer.rotationScale ?? 1],
-    values: options.values,
-  })[0] ?? 1
+const sampleRotationScale = (options: SampleParameterDeformerOptions) => {
+  const channels = getDeformerKeyforms(options.binding, options.deformer)
+  return (
+    sampleParameterCoordinates({
+      binding: options.binding,
+      keyformCoordinates: channels.rotationScale,
+      repeatRanges: options.repeatRanges,
+      restCoordinates: channels.rest.rotationScale,
+      values: options.values,
+    })[0] ?? 1
+  )
+}
 
 const sampleRotationReflection = (
   options: SampleParameterDeformerOptions,
 ): readonly [boolean, boolean] => {
+  const channels = getDeformerKeyforms(options.binding, options.deformer)
   const values = sampleParameterCoordinates({
     binding: options.binding,
-    keyformCoordinates: options.binding.keyforms.map((keyform) =>
-      (
-        keyform.deformers?.find((candidate) => candidate.nodeId === options.deformer.id)
-          ?.rotationReflection ??
-        options.deformer.rotationReflection ?? [false, false]
-      ).map(Number),
-    ),
+    keyformCoordinates: channels.rotationReflection,
     repeatRanges: options.repeatRanges,
-    restCoordinates: (options.deformer.rotationReflection ?? [false, false]).map(Number),
+    restCoordinates: channels.rest.rotationReflection,
     sampling: 'step',
     values: options.values,
   })
@@ -279,35 +202,28 @@ export interface SampleParameterDeformerOptions {
 export const sampleParameterDeformer = (
   options: SampleParameterDeformerOptions,
 ): PuppetParameterDeformerKeyform => {
+  const channels = getDeformerKeyforms(options.binding, options.deformer)
   const sampled = createSampledDeformer(
     options.deformer,
     sampleParameterCoordinates({
       binding: options.binding,
-      keyformCoordinates: options.binding.keyforms.map((keyform) =>
-        getKeyformCoordinates(keyform, options.deformer),
-      ),
+      keyformCoordinates: channels.coordinates,
       repeatRanges: options.repeatRanges,
       restCoordinates: getRestCoordinates(options.deformer),
       values: options.values,
     }),
+    channels.rest.curveHandles.length === 0
+      ? channels.rest.curveHandles
+      : sampleParameterCoordinates({
+          binding: options.binding,
+          keyformCoordinates: channels.curveHandles,
+          repeatRanges: options.repeatRanges,
+          restCoordinates: channels.rest.curveHandles,
+          values: options.values,
+        }),
     sampleParameterCoordinates({
       binding: options.binding,
-      keyformCoordinates: options.binding.keyforms.map((keyform) =>
-        getCurveHandleCoordinates(
-          keyform.deformers?.find((candidate) => candidate.nodeId === options.deformer.id)
-            ?.curveHandles,
-          options.deformer,
-        ),
-      ),
-      repeatRanges: options.repeatRanges,
-      restCoordinates: getCurveHandleCoordinates(options.deformer.curveHandles, options.deformer),
-      values: options.values,
-    }),
-    sampleParameterCoordinates({
-      binding: options.binding,
-      keyformCoordinates: options.binding.keyforms.map((keyform) =>
-        getKeyformRotationOrigin(keyform, options.deformer),
-      ),
+      keyformCoordinates: channels.rotationOrigin,
       repeatRanges: options.repeatRanges,
       restCoordinates: Object.values(getRestRotationOrigin(options.deformer)),
       values: options.values,
@@ -339,13 +255,14 @@ const getExplicitAngle = (
   sampled: {readonly rotationAngle?: number},
 ) => (deformer.rotationAngle === undefined ? {} : {rotationAngle: sampled.rotationAngle})
 
-export const composeParameterDeformer = (
+const composeDeformer = (
   document: PuppetDocument,
   deformer: PuppetSceneDeformerNode,
   parameterValues: PuppetParameterValueMap | undefined,
 ) => {
-  const restCoordinates = getRestCoordinates(deformer)
-  const restCurveHandleCoordinates = getCurveHandleCoordinates(deformer.curveHandles, deformer)
+  const rest = getDeformerRest(deformer)
+  const restCoordinates = rest.coordinates
+  const restCurveHandleCoordinates = rest.curveHandles
   const restRotationOrigin = Object.values(getRestRotationOrigin(deformer))
   const restSpatialOrigin = getRestSpatialCoordinates(deformer, 'spatialOrigin')
   const restSpatialMeshPosition = getRestSpatialCoordinates(deformer, 'spatialMeshPosition')
@@ -360,9 +277,9 @@ export const composeParameterDeformer = (
   let spatialRotationCoordinates: ReadonlyArray<number> = restSpatialRotation
   let spatialScaleCoordinates: ReadonlyArray<number> = restSpatialScale
   let spatialTranslationCoordinates: ReadonlyArray<number> = restSpatialTranslation
-  const restRotationScale = [deformer.rotationScale ?? 1]
+  const restRotationScale = rest.rotationScale
   let rotationScale: ReadonlyArray<number> = restRotationScale
-  const restReflection = (deformer.rotationReflection ?? [false, false]).map(Number)
+  const restReflection = rest.rotationReflection
   let rotationReflection: ReadonlyArray<number> = restReflection
 
   for (const binding of getTargetBindings(
@@ -476,20 +393,100 @@ export const composeParameterDeformer = (
   }
 }
 
+interface DeformerSample {
+  readonly parameterIds: ReadonlyArray<string>
+  readonly values: ReadonlyArray<number | undefined>
+  readonly posed: ReturnType<typeof composeDeformer>
+}
+
+// Keep only the latest input/pose for each rest node; released documents release their samples.
+const deformerSamples = new WeakMap<
+  PuppetDocument,
+  WeakMap<PuppetSceneDeformerNode, DeformerSample>
+>()
+
+export const composeParameterDeformer = (
+  document: PuppetDocument,
+  deformer: PuppetSceneDeformerNode,
+  parameterValues: PuppetParameterValueMap | undefined,
+) => {
+  let samples = deformerSamples.get(document)
+  if (samples === undefined) {
+    samples = new WeakMap()
+    deformerSamples.set(document, samples)
+  }
+  const previous = samples.get(deformer)
+  if (
+    previous !== undefined &&
+    previous.parameterIds.every((id, index) =>
+      Object.is(parameterValues?.[id], previous.values[index]),
+    )
+  ) {
+    return previous.posed
+  }
+  const parameterIds = previous?.parameterIds ?? [
+    ...new Set(
+      getTargetBindings(document.parameterBindings ?? [], 'targetDeformerIds', deformer.id).flatMap(
+        (binding) => [
+          ...binding.parameterIds,
+          ...(binding.influences ?? []).map((influence) => influence.parameterId),
+        ],
+      ),
+    ),
+  ]
+  const posed = composeDeformer(document, deformer, parameterValues)
+  samples.set(deformer, {
+    parameterIds,
+    posed,
+    values: parameterIds.map((id) => parameterValues?.[id]),
+  })
+  return posed
+}
+
+interface SceneSample {
+  readonly poses: ReadonlyArray<PuppetSceneNode>
+  readonly output: ReadonlyArray<PuppetSceneNode>
+}
+
+const sceneSamples = new WeakMap<
+  PuppetDocument,
+  WeakMap<ReadonlyArray<PuppetSceneNode>, SceneSample>
+>()
+
 const composeSceneNodes = (
   document: PuppetDocument,
   nodes: ReadonlyArray<PuppetSceneNode>,
   parameterValues: PuppetParameterValueMap | undefined,
-): ReadonlyArray<PuppetSceneNode> =>
-  nodes.map((node) => {
-    if (node.kind === 'part') {
-      return node
+): ReadonlyArray<PuppetSceneNode> => {
+  let samples = sceneSamples.get(document)
+  if (samples === undefined) {
+    samples = new WeakMap()
+    sceneSamples.set(document, samples)
+  }
+  const previous = samples.get(nodes)
+  const poses = nodes.map((node) =>
+    node.kind === 'deformer' ? composeParameterDeformer(document, node, parameterValues) : node,
+  )
+  const output = poses.map((pose, index) => {
+    if (pose.kind === 'part') {
+      return pose
     }
-    const children = composeSceneNodes(document, node.children, parameterValues)
-    return node.kind === 'group'
-      ? {...node, children}
-      : {...composeParameterDeformer(document, node, parameterValues), children}
+    const children = composeSceneNodes(document, pose.children, parameterValues)
+    const prior = previous?.output[index]
+    return prior !== undefined &&
+      prior.kind !== 'part' &&
+      previous?.poses[index] === pose &&
+      prior.children === children
+      ? prior
+      : {...pose, children}
   })
+  const stable =
+    previous !== undefined && output.every((node, index) => node === previous.output[index])
+      ? previous.output
+      : output
+  samples.set(nodes, {output: stable, poses})
+  return stable
+}
 
 export const composeParameterScene = (
   document: PuppetDocument,

@@ -1,0 +1,67 @@
+name: Release Wallpaper Production
+
+on:
+  workflow_dispatch:
+
+run-name: Release Wallpaper Production from ${{ github.ref_name }} at ${{ github.sha }}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: wallpaper-web-production
+  cancel-in-progress: false
+
+env:
+  VERCEL_ORG_ID: team_Ic8YKQ9jWkFLhVzeljhB4ZLV
+  VERCEL_PROJECT_ID: ${{ vars.WALLPAPER_VERCEL_PROJECT_ID }}
+  VERCEL_CLI_VERSION: 59.5.0
+
+jobs:
+  verify:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - name: Validate Wallpaper project configuration
+        run: |
+          test -n "${VERCEL_PROJECT_ID}" || {
+            echo '::error::Set the WALLPAPER_VERCEL_PROJECT_ID Actions variable.'; exit 1;
+          }
+      - uses: ./.github/actions/wallpaper-web/verify
+      - uses: ./.github/actions/wallpaper-web/browser
+      - name: Prepare static deployment artifact
+        run: node apps/wallpaper-web/scripts/prepare-deployment.mjs
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wallpaper-static
+          path: .vercel/output
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 1
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: wallpaper-production-browser-diagnostics
+          path: apps/wallpaper-web/test-results
+          if-no-files-found: ignore
+  deploy-production:
+    needs: verify
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment:
+      name: Production – wallpaper
+      url: ${{ steps.deploy.outputs.url }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/wallpaper-web/deploy
+        id: deploy
+        with:
+          target: production
+          token: ${{ secrets.VERCEL_TOKEN }}

@@ -7,7 +7,7 @@ interface AddAlbumFilesOptions {
   /** Stores media and returns the ID of either new or identical existing content. */
   readonly media: MediaImportRepository
   /** Owns persisted monitor album selection; the caller owns closing it. */
-  readonly settings: SettingsRepository
+  readonly settings: Pick<SettingsRepository, 'read' | 'save'>
   /** Selects imported IDs in this monitor's album; null imports into the library only. */
   readonly monitorId: string | null
   /** Photos and videos to import in selection order. */

@@ -1,7 +1,7 @@
 import {replaceBlobObjectUrl} from 'src/features/blob-object-url'
 import * as m from '@paraglide/message'
 import {isAbortError} from 'src/utils/is-cancellation-reason'
-import {normalizePasteNumericInput} from 'src/utils/normalize-paste-numeric-input'
+import {normalizePasteNumericInput} from '@winter-love/supertonic/normalize-paste-numeric-input'
 import {getExceptionMessage} from '../error-detail'
 import {type ModelDownloadItem, useModelDownload} from '../model-download'
 import {createMemo, createSignal, onCleanup, type Setter} from 'solid-js'

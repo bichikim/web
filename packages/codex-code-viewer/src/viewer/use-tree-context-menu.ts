@@ -9,17 +9,17 @@ interface TreeContext {
   y: number
   returnFocus: HTMLElement
 }
-interface TreeContextMenuOptions {
+interface UseTreeContextMenuProps {
   node: (path: string) => FileTreeNode | undefined
   session: Accessor<WorkspaceSession | null>
   visible: Accessor<boolean>
   onFocus: (path: string) => void
 }
 
-export const useTreeContextMenu = (options: TreeContextMenuOptions) => {
+export const useTreeContextMenu = (props: UseTreeContextMenuProps) => {
   const [context, setContext] = createSignal<TreeContext | null>(null)
-  const sessionId = createMemo(() => options.session()?.session)
-  const workspace = createMemo(() => options.session()?.workspace)
+  const sessionId = createMemo(() => props.session()?.session)
+  const workspace = createMemo(() => props.session()?.workspace)
   const close = (settings?: ContextMenuCloseOptions): void => {
     const previous = context()
     setContext(null)
@@ -28,16 +28,16 @@ export const useTreeContextMenu = (options: TreeContextMenuOptions) => {
     }
   }
   createEffect(
-    on([sessionId, workspace, options.visible], () => untrack(() => close({restoreFocus: false}))),
+    on([sessionId, workspace, props.visible], () => untrack(() => close({restoreFocus: false}))),
   )
   const open = (target: HTMLElement, path: string, x: number, y: number): void => {
-    const current = options.session()
-    const node = options.node(path)
-    if (current === null || (node === undefined && path !== '') || !options.visible()) {
+    const current = props.session()
+    const node = props.node(path)
+    if (current === null || (node === undefined && path !== '') || !props.visible()) {
       return
     }
     if (path !== '') {
-      options.onFocus(path)
+      props.onFocus(path)
     }
     setContext({
       returnFocus: target,

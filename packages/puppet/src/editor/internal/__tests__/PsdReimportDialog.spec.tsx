@@ -1,14 +1,19 @@
 /** @vitest-environment jsdom */
 import {fireEvent, render, screen, waitFor} from '@solidjs/testing-library'
 import {expect, test, vi} from 'vitest'
-import {createDemoDocument} from '../../../player'
+import type {ModelCommandResult} from '../../model'
+import {createDemoDocument, type PuppetDocument} from '../../../player'
 import type {ImportPsdResult} from '../../import-psd'
 import {type PsdReimportController, usePsdReimport} from '../../use-psd-reimport'
 import {PsdReimportDialog} from '../PsdReimportDialog'
 
 test('should keep additions opt-in and apply the count shown in the review', async () => {
   const document = createDemoDocument()
-  const onDocumentChange = vi.fn()
+  const onDocumentChange = vi.fn<(document: PuppetDocument) => ModelCommandResult>(() => ({
+    changed: true,
+    ok: true,
+    revision: 1,
+  }))
   let controller!: PsdReimportController
   render(() => {
     controller = usePsdReimport({
@@ -40,7 +45,11 @@ test('should allow dismissal while loading and display a read failure without en
   })
   const readPsd = vi.fn<() => Promise<ImportPsdResult>>().mockReturnValueOnce(pending)
   readPsd.mockRejectedValueOnce(new Error('read failed'))
-  const onDocumentChange = vi.fn()
+  const onDocumentChange = vi.fn<(document: PuppetDocument) => ModelCommandResult>(() => ({
+    changed: true,
+    ok: true,
+    revision: 1,
+  }))
   let controller!: PsdReimportController
   render(() => {
     controller = usePsdReimport({

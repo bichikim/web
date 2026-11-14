@@ -1,6 +1,8 @@
 import Dexie, {type Table} from 'dexie'
 import {z} from 'zod'
 
+import {COVER_FALLBACKS} from './catalog-values'
+
 import {type AlbumDraftData, hasSameAlbumDraft} from './album-draft'
 
 interface AlbumCoverRecord {
@@ -81,7 +83,7 @@ const translationSchema = z.object({description: z.string(), title: z.string()})
 const albumDraftSchema = z.object({
   albumId: z.string().uuid().optional(),
   coverDraftId: z.string().min(1).nullable().optional().default(null),
-  coverFallback: z.enum(['lp', 'cd', 'music']),
+  coverFallback: z.enum(COVER_FALLBACKS),
   coverImageUrl: z.string(),
   hasCoverFile: z.boolean(),
   translations: z.object({

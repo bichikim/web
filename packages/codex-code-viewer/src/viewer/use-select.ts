@@ -1,4 +1,4 @@
-import {type Accessor, createMemo, createSignal} from 'solid-js'
+import {type Accessor, createEffect, createMemo, createSignal, on} from 'solid-js'
 
 interface UseSelectProps {
   readonly options: Accessor<readonly string[]>
@@ -10,11 +10,31 @@ export const useSelect = (props: UseSelectProps) => {
   const [expanded, setExpanded] = createSignal(false)
   const [activeIndex, setActiveIndex] = createSignal(0)
   const [chosen, setChosen] = createSignal<string | null>(null)
-  const value = createMemo(() => props.value() ?? chosen() ?? props.options()[0])
+  const value = createMemo(() => {
+    const external = props.value()
+    if (external !== undefined) {
+      return external
+    }
+    const options = props.options()
+    const selected = chosen()
+    return selected !== null && options.includes(selected) ? selected : options[0]
+  })
   const selectedIndex = createMemo(() => Math.max(0, props.options().indexOf(value() ?? '')))
   const dismiss = (): void => {
     setExpanded(false)
   }
+  createEffect(
+    on(
+      () => props.options().length,
+      (count) => {
+        if (count === 0) {
+          dismiss()
+          return
+        }
+        setActiveIndex((index) => (index >= 0 && index < count ? index : selectedIndex()))
+      },
+    ),
+  )
   const show = (): void => {
     if (props.options().length > 0 && !expanded()) {
       setActiveIndex(selectedIndex())

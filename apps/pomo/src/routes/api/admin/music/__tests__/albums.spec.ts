@@ -14,11 +14,11 @@ import {invokeApiRoute} from '../../../__tests__/invoke'
 
 const ALBUM_ID = '00000000-0000-4000-8000-000000000002'
 
-const createRequest = (): Request =>
+const createRequest = (coverFallback: unknown = 'lp'): Request =>
   new Request('https://www.pomofi.io/api/admin/music/albums', {
     body: JSON.stringify({
       coverDraftId: null,
-      coverFallback: 'lp',
+      coverFallback,
       coverImageUrl: null,
       coverReservationId: null,
       id: ALBUM_ID,
@@ -82,6 +82,38 @@ describe('admin music album route', () => {
       ],
     })
   })
+
+  it.each(['cd', 'music'] as const)(
+    'should forward the cover fallback %s to album creation',
+    async (coverFallback) => {
+      const response = await invokeApiRoute(POST, createRequest(coverFallback))
+
+      expect(response.status).toBe(201)
+      expect(repositoryMocks.createAlbum).toHaveBeenCalledWith(
+        expect.objectContaining({coverFallback}),
+      )
+    },
+  )
+
+  it.each(['dvd', 'LP', 'music ', null])(
+    'should reject the unsupported cover fallback %j before storage or creation',
+    async (coverFallback) => {
+      authMocks.authorizeAdminRequest.mockResolvedValue({
+        authorized: true,
+        cookies: ['session=renewed; HttpOnly; Path=/'],
+      })
+
+      const response = await invokeApiRoute(POST, createRequest(coverFallback))
+      const body: unknown = await response.json()
+
+      expect(response.status).toBe(400)
+      expect(body).toEqual({error: 'invalid_request'})
+      expect(response.headers.get('Set-Cookie')).toBe('session=renewed; HttpOnly; Path=/')
+      expect(response.headers.get('Cache-Control')).toBe('no-store')
+      expect(storageMocks.isManagedAlbumCoverUrl).not.toHaveBeenCalled()
+      expect(repositoryMocks.createAlbum).not.toHaveBeenCalled()
+    },
+  )
 
   it('should create an album with only its required Korean metadata', async () => {
     const request = new Request('https://www.pomofi.io/api/admin/music/albums', {

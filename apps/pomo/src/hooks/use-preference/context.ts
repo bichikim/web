@@ -1,5 +1,5 @@
 import {type Accessor, createContext} from 'solid-js'
-import type {PreferenceStorage} from 'src/utils/preference-storage'
+import type {PreferenceStorage} from './types'
 
 export interface PreferenceSnapshot {
   readonly value: unknown

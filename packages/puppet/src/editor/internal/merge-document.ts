@@ -38,7 +38,7 @@ const mergePhysics = (document: PuppetDocument, added: PuppetDocument) => {
   const pendulums = [...(document.physics?.pendulums ?? []), ...(added.physics?.pendulums ?? [])]
   const chains = listed([...(document.physics?.chains ?? []), ...(added.physics?.chains ?? [])])
   const world = document.physics ?? added.physics
-  return pendulums.length === 0 && chains === undefined ? undefined : {...world, chains, pendulums}
+  return world === undefined ? undefined : {...world, chains, pendulums}
 }
 
 /** Appends an independently identified model while preserving the current viewport and model. */

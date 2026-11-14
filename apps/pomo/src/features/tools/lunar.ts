@@ -1,5 +1,5 @@
 import KoreanLunarCalendar from 'korean-lunar-calendar'
-import {normalizePasteNumericInput} from 'src/utils/normalize-paste-numeric-input'
+import {normalizePasteNumericInput} from '@winter-love/supertonic/normalize-paste-numeric-input'
 import {type CivilDate, daysInMonth, formatDate, parseDate} from '../civil-date'
 
 const DAY_CYCLE = 10

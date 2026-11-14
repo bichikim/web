@@ -7,6 +7,8 @@ import type {PuppetDocument} from '../document'
 /** `layout` frames the document's default rectangle; `viewport` frames the whole document. */
 export type PuppetFraming = 'layout' | 'viewport'
 
+export type PuppetFit = 'contain' | 'cover'
+
 const CENTER = 0.5
 
 /** Document coordinates to screen pixels: `screen = document · scale + offset`. */
@@ -16,6 +18,8 @@ export interface DocumentFit {
 }
 
 interface FitDocumentOptions {
+  /** Uniform sizing within the screen; omitted to show the whole framed rectangle. */
+  readonly fit?: PuppetFit
   readonly document: PuppetDocument
   readonly framing?: PuppetFraming
   readonly screen: {
@@ -27,8 +31,8 @@ interface FitDocumentOptions {
 }
 
 /**
- * Fits the framed rectangle, grown by the padding, into the screen and places it by its
- * alignment (centered by default) along the axis with room to spare.
+ * Fits or fills the screen uniformly with the padded rectangle, using its alignment
+ * (centered by default) to place spare space or crop overflow.
  */
 export const fitDocument = (options: FitDocumentOptions): DocumentFit => {
   const padding = Math.max(0, options.viewportPadding ?? 0)
@@ -40,7 +44,8 @@ export const fitDocument = (options: FitDocumentOptions): DocumentFit => {
   const [alignX, alignY] = rect === layout ? (layout.align ?? [CENTER, CENTER]) : [CENTER, CENTER]
   const paddedWidth = rect.width * (1 + padding * 2)
   const paddedHeight = rect.height * (1 + padding * 2)
-  const scale = Math.min(options.screen.width / paddedWidth, options.screen.height / paddedHeight)
+  const ratios = [options.screen.width / paddedWidth, options.screen.height / paddedHeight]
+  const scale = options.fit === 'cover' ? Math.max(...ratios) : Math.min(...ratios)
   /** The offset along one axis that puts the padded rectangle at its alignment. */
   const place = (
     axis: {screen: number; padded: number; size: number; start: number},

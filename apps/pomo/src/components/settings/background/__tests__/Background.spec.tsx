@@ -2,11 +2,8 @@
 import {fireEvent, render, screen} from '@solidjs/testing-library'
 import {createSignal} from 'solid-js'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
-import {
-  type BackgroundController,
-  type BackgroundPreferences,
-  DEFAULT_BACKGROUND,
-} from 'src/features/background'
+import {type BackgroundController} from 'src/features/background'
+import {type BackgroundPreferences, DEFAULT_BACKGROUND} from '@winter-love/wallpaper/model'
 import {createBackground} from 'src/features/background/__tests__/fixtures/controller'
 import {Background} from '../Background'
 import {Scene} from '../Scene'

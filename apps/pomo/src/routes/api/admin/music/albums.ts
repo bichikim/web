@@ -9,6 +9,7 @@ import {createAlbum} from 'src/server/repositories/music-album-creation'
 import {isManagedAlbumCoverUrl} from 'src/server/music/cover-upload'
 import {hasUniqueIds} from 'src/features/catalog-policy'
 import {ALBUM_LOCALES} from 'src/features/admin-music/album-draft'
+import {COVER_FALLBACKS} from 'src/features/admin-music/catalog-values'
 
 const MAXIMUM_BODY_SIZE = 65_536
 const MAXIMUM_DESCRIPTION_LENGTH = 2000
@@ -25,7 +26,7 @@ const translationSchema = z.object({
 })
 const albumSchema = z.object({
   coverDraftId: z.string().uuid().nullable().default(null),
-  coverFallback: z.enum(['lp', 'cd', 'music']),
+  coverFallback: z.enum(COVER_FALLBACKS),
   coverImageUrl: z.string().url().startsWith('https://').nullable(),
   coverReservationId: z.string().uuid().nullable().default(null),
   id: z

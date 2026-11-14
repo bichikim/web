@@ -1,0 +1,82 @@
+[
+  {
+    "id": "greeting",
+    "text": "안녕, 나는 애시야. 여긴 처음이지? 배경이 마음에 들면 그대로 써도 되고, 나를 잡아서 편한 곳에 옮겨 놔도 돼. 표정도 몇 개 골라 봐. 커피도 들 수 있고 안경도 쓸 수 있거든. 나는 커피 들고 있는 게 좋더라. 뭐, 마시지는 못하지만.",
+    "voice": "Sora",
+    "cacheKey": "7b67e08ba1cf909eed314408148b9b15516e4c46adaffc1caae33d92c623b37b",
+    "audio": "/speech/greeting/audio.mp3",
+    "mouth": "/speech/greeting/mouth.json"
+  },
+  {
+    "id": "music",
+    "text": "이 곡 끝나면 뭐 들을까? 나는 아침에 들었던 노래가 자꾸 생각나는데, 제목이 기억이 안 나. 조금만 들어 보면 알 것 같아. 일단 다음 곡 틀어 볼래? 아, 마음에 안 들면 다시 넘겨도 돼. 찾던 노래가 나오면 그때는 끝까지 듣자.",
+    "voice": "Sora",
+    "cacheKey": "59bbd0bb87bb3f6abc77e5b41956e65dfe9b0e5e272311da28d4c7d76dd2800a",
+    "audio": "/speech/music/audio.mp3",
+    "mouth": "/speech/music/mouth.json"
+  },
+  {
+    "id": "break",
+    "text": "오래 앉아 있었으면 잠깐 일어날래? 하던 건 잠깐 내려놓고 기지개부터 켜자. 물도 한 모금 마시고. 나는 여기서 기다릴 테니까 천천히 다녀와. 돌아오면 아까 듣던 노래부터 다시 틀자. 쉬는 동안까지 뭘 끝내려고 하지는 말고.",
+    "voice": "Sora",
+    "cacheKey": "e3d3c7ffd0e68a4971312a8e244067571089d26aafc75ee3293721bce9c0c947",
+    "audio": "/speech/break/audio.mp3",
+    "mouth": "/speech/break/mouth.json"
+  },
+  {
+    "id": "codex",
+    "text": "부탁한 작업을 마쳤어요. 변경한 내용은 코덱스에서 확인해 주세요.",
+    "voice": "Sora",
+    "audio": "/speech/codex/audio.mp3",
+    "mouth": "/speech/codex/mouth.json",
+    "cacheKey": "4a619a3aa5ff05e871043511a64c98b352ccb0b94ea279a2337bbefd8499e69f"
+  },
+  {
+    "audio": "/speech/overview/audio.mp3",
+    "id": "overview",
+    "mouth": "/speech/overview/mouth.json",
+    "text": "지금 보고 있는 배경과 캐릭터를 데스크톱에서도 사용할 수 있어요.",
+    "voice": "Sora",
+    "cacheKey": "8b98b7b9737c152f21049a374035d9b489d8ec7c98abdf37c993e229a6495ef1"
+  },
+  {
+    "audio": "/speech/details/audio.mp3",
+    "id": "details",
+    "mouth": "/speech/details/mouth.json",
+    "text": "모델의 표정과 동작을 불러옵니다. 위젯마다 크기와 시선 추적을 설정하세요.",
+    "voice": "Sora",
+    "cacheKey": "b0dcebbb272cde68e087a9a6975f8511d1bdd993d0057ec3bc2ab3d2fe81aa10"
+  },
+  {
+    "audio": "/speech/connection/audio.mp3",
+    "id": "connection",
+    "mouth": "/speech/connection/mouth.json",
+    "text": "Codex의 답변과 질문을 말풍선으로 보고, 캐릭터의 목소리로 들으세요.",
+    "voice": "Sora",
+    "cacheKey": "f7b48e4d5a2f53d91c94e3d16aa8126de0ca5ca766b300177abb47cbef30857f"
+  },
+  {
+    "audio": "/speech/wallpaper/audio.mp3",
+    "id": "wallpaper",
+    "mouth": "/speech/wallpaper/mouth.json",
+    "text": "사진·동영상, 웹사이트와 라이브 배경을 지원합니다.",
+    "voice": "Sora",
+    "cacheKey": "af5a1a425b23d64d8386e4e6156a7e239ccde229f101a5665a141b00cb8298b7"
+  },
+  {
+    "audio": "/speech/download/audio.mp3",
+    "id": "download",
+    "mouth": "/speech/download/mouth.json",
+    "text": "지금 다운로드하세요.",
+    "voice": "Sora",
+    "cacheKey": "5b7d92559201fd96114fb9dbd7375fbab99fdbe0c621375d7634538b71ee1e79"
+  },
+  {
+    "audio": "/speech/widgets/audio.mp3",
+    "id": "widgets",
+    "mouth": "/speech/widgets/mouth.json",
+    "text": "배경화면 위에 캐릭터를 표시하고, 크기와 위치 등 다양한 설정을 조절하세요.",
+    "voice": "Sora",
+    "cacheKey": "e5ccc017ba06c585245da5715ab1bd91b1a6b9ebd72febec01c1b7f7be7ae296"
+  }
+]

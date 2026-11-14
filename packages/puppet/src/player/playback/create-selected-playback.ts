@@ -1,13 +1,25 @@
 import type {PuppetMotion, PuppetMotionEvent} from '../document'
 import {getMotionFadeOutTime, getPassedEvents} from './motion-fade'
-import type {MotionEvent, MotionFrame, MotionPlaybackStatus} from './types'
+import type {
+  MotionEvent,
+  MotionFrame,
+  MotionPlaybackStatus,
+  OutgoingPlaybackState,
+  SelectedPlaybackState,
+} from './types'
 import {validatePlaybackNumber} from './validate-playback-number'
 
 interface CreateSelectedPlaybackOptions {
+  /** Starts with a fade-in; omitted, the initial selection is settled. */
   readonly fadeIn?: boolean
+  /** Motion definitions owned by the current document. */
   readonly motions: ReadonlyArray<PuppetMotion>
+  /** Initial selection; omitted, select the first motion. */
   readonly motionId?: string
+  /** Receives crossed motion events; omitted, events are ignored. */
   readonly onEvent?: (event: MotionEvent) => void
+  /** Receives a completed numerical token; omitted, tokens have no external effect. */
+  readonly onCompletion?: (completion: number) => void
 }
 
 /** The previously selected motion, still playing while it fades out after a switch. */
@@ -32,6 +44,8 @@ const stepTime = (motion: PuppetMotion, time: number, step: number, loop: boolea
 }
 
 interface SelectedPlaybackOptions {
+  /** Serializable completion identity; omitted, do not emit a token. */
+  readonly completion?: number
   readonly loop?: boolean
   readonly onComplete?: () => void
   readonly speed?: number
@@ -46,6 +60,8 @@ interface SelectedPlaybackFrame {
 export type MotionSelection = 'changed' | 'missing' | 'unchanged'
 
 export interface SelectedPlayback {
+  capture(): SelectedPlaybackState
+  restore(state: SelectedPlaybackState): void
   advance(deltaTime: number): (() => void) | undefined
   frames(): ReadonlyArray<MotionFrame>
   getFrame(): SelectedPlaybackFrame
@@ -112,7 +128,6 @@ const createOutgoingMotions = (onEvent: ((event: MotionEvent) => void) | undefin
   let outgoing: ReadonlyArray<OutgoingMotion> = []
   return {
     active: () => outgoing.length > 0,
-    /** Advances them and returns the events they passed; drops those faded out. */
     advance(deltaTime: number) {
       if (outgoing.length === 0) {
         return undefined
@@ -131,10 +146,12 @@ const createOutgoingMotions = (onEvent: ((event: MotionEvent) => void) | undefin
         }
       }
     },
+    capture: (): ReadonlyArray<OutgoingPlaybackState> =>
+      outgoing.map(({motion, ...entry}) => ({...entry, motionId: motion.id})),
+    /** Advances them and returns the events they passed; drops those faded out. */
     clear() {
       outgoing = []
     },
-    /** Their frames; a paused player holds them still (rate 0, so their sounds stop too). */
     frames: (paused: boolean): ReadonlyArray<MotionFrame> =>
       outgoing.map((motion) => ({
         blend: 'replace',
@@ -146,13 +163,23 @@ const createOutgoingMotions = (onEvent: ((event: MotionEvent) => void) | undefin
         time: motion.time,
         weight: 1,
       })),
-    /** Starts fading `current` out, if its motion has a fade-out time left. */
+    /** Their frames; a paused player holds them still (rate 0, so their sounds stop too). */
     release(current: Omit<OutgoingMotion, 'remaining'>) {
       const left = current.loop ? Number.POSITIVE_INFINITY : current.motion.duration - current.time
       const remaining = Math.min(getMotionFadeOutTime(current.motion), left)
       if (remaining > 0) {
         outgoing = [...outgoing, {...current, remaining}]
       }
+    },
+    /** Starts fading `current` out, if its motion has a fade-out time left. */
+    restore(state: ReadonlyArray<OutgoingPlaybackState>, motions: ReadonlyArray<PuppetMotion>) {
+      outgoing = state.map(({motionId, ...entry}) => {
+        const motion = motions.find((candidate) => candidate.id === motionId)
+        if (motion === undefined) {
+          throw new Error('Playback checkpoint motion is missing')
+        }
+        return {...entry, motion}
+      })
     },
   }
 }
@@ -186,6 +213,7 @@ const selectedFrames = (state: {
         },
       ]
 
+// eslint-disable-next-line max-lines-per-function -- Selected and fading motions share one timing and checkpoint boundary.
 export const createSelectedPlayback = (
   options: CreateSelectedPlaybackOptions,
 ): SelectedPlayback => {
@@ -196,6 +224,7 @@ export const createSelectedPlayback = (
   let speed = 1
   let time = 0
   let onComplete: (() => void) | undefined
+  let completion: number | undefined
   // Motion seconds since the selection started fading in; undefined when it started settled.
   let elapsed: number | undefined = options.fadeIn === true ? 0 : undefined
   // A time reached by seeking or selecting shows without fades until playback resumes.
@@ -228,8 +257,10 @@ export const createSelectedPlayback = (
       }
       const completedMotion = motion
       const complete = onComplete
+      const token = completion
       status = 'finished'
       onComplete = undefined
+      completion = undefined
       return () => {
         events()
         if (
@@ -238,9 +269,24 @@ export const createSelectedPlayback = (
           time === completedMotion.duration
         ) {
           complete?.()
+          if (token !== undefined) {
+            options.onCompletion?.(token)
+          }
         }
       }
     },
+    capture: () => ({
+      completion,
+      elapsed,
+      held,
+      loop,
+      motionId: motion?.id,
+      outgoing: outgoing.capture(),
+      scrubbed,
+      speed,
+      status,
+      time,
+    }),
     frames: () => [
       ...outgoing.frames(held),
       ...selectedFrames({elapsed, loop, motion, scrubbed, speed, status, time}),
@@ -249,9 +295,9 @@ export const createSelectedPlayback = (
       const selected = status === 'stopped' ? undefined : motion
       return {duration: selected?.duration ?? 0, motionId: selected?.id ?? null, time}
     },
-    // Without a motion nothing plays, so automatic effects that rest during motions keep running.
     isPlaying: () =>
       (status === 'playing' && speed > 0 && motion !== undefined) || (!held && outgoing.active()),
+    // Without a motion nothing plays, so automatic effects that rest during motions keep running.
     pause() {
       held = status !== 'stopped'
       status = status === 'playing' ? 'paused' : status
@@ -268,6 +314,7 @@ export const createSelectedPlayback = (
       speed = nextSpeed
       loop = settings?.loop ?? motion?.loop ?? true
       onComplete = settings?.onComplete
+      completion = settings?.completion
       return activating
     },
     playMotion(motionId, settings = {}) {
@@ -287,8 +334,13 @@ export const createSelectedPlayback = (
       held = false
       scrubbed = false
       speed = nextSpeed
-      ;({onComplete} = settings)
+      ;({onComplete, completion} = settings)
       return true
+    },
+    restore(state) {
+      ;({completion, elapsed, held, loop, scrubbed, speed, status, time} = state)
+      motion = state.motionId === undefined ? undefined : getMotion(motions, state.motionId)
+      outgoing.restore(state.outgoing, motions)
     },
     resume() {
       if (status !== 'stopped') {
@@ -321,6 +373,7 @@ export const createSelectedPlayback = (
       outgoing.clear()
       loop = nextMotion.loop ?? true
       onComplete = undefined
+      completion = undefined
       return 'changed'
     },
     setSpeed(nextSpeed) {
@@ -330,6 +383,7 @@ export const createSelectedPlayback = (
       status = 'stopped'
       time = 0
       onComplete = undefined
+      completion = undefined
       outgoing.clear()
     },
     update(nextMotions) {
@@ -338,6 +392,7 @@ export const createSelectedPlayback = (
       loop = motion?.loop ?? true
       outgoing.clear()
       onComplete = undefined
+      completion = undefined
       time = getSeekTime(motion, time)
     },
   }

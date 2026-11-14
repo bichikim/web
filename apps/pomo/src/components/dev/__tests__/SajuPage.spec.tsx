@@ -39,6 +39,13 @@ vi.mock('../../p-select/PSelect', () => ({
 afterEach(cleanup)
 afterEach(vi.clearAllMocks)
 
+const readChart = () => {
+  const code = screen
+    .getByRole('heading', {name: '사주팔자 · deriveSaju()'})
+    .nextElementSibling!.querySelector('code')!
+  return JSON.parse(code.textContent!) as ReturnType<typeof deriveSaju>
+}
+
 it('should calculate and display each k-saju result for the entered birth', () => {
   render(() => <SajuPage />)
 
@@ -57,10 +64,10 @@ it('should calculate and display each k-saju result for the entered birth', () =
   ) as Array<{role: string; content: string}>
   expect(messages.map((message) => message.role)).toEqual(['system', 'user'])
   expect(messages[1].content).toContain('재물에 대해 알려줘')
-  expect(JSON.parse(messages[1].content)).toMatchObject({birth: {date: '1995-03-17'}})
-  expect(JSON.parse(messages[1].content).birth.time).toBeUndefined()
-  expect(messages[1].content).toContain('"재성"')
-  expect(messages[1].content).toContain('"金"')
+  expect(readChart()).toEqual(deriveSaju({calendar: 'solar', date: '1995-03-17'}))
+  expect(JSON.parse(messages[1].content.split('\n\n')[0])).not.toHaveProperty('birth')
+  expect(messages[1].content).toContain('돈과 시간 관리')
+  expect(messages[1].content).not.toMatch(/재성|[\u3400-\u9fff]/u)
   expect(GenerationWorkspace).toHaveBeenCalledExactlyOnceWith({messages})
 })
 
@@ -78,17 +85,11 @@ it('should include a chosen birth time and omit it after clearing', () => {
   })
   fireEvent.submit(form)
 
-  const userMessage = () => {
-    const messages = JSON.parse(
-      screen.getByRole('region', {name: 'LLM 전달 값'}).querySelector('code')!.textContent!,
-    ) as Array<{content: string}>
-    return JSON.parse(messages[1].content) as {birth: {time?: string}}
-  }
-  expect(userMessage().birth.time).toBe('07:30')
+  expect(readChart()).toEqual(deriveSaju({calendar: 'solar', date: '1995-03-16', time: '07:30'}))
 
   fireEvent.click(screen.getByRole('button', {name: /출생 시각.*지우기/u}))
   fireEvent.submit(form)
-  expect(userMessage().birth.time).toBeUndefined()
+  expect(readChart().hour).toBeNull()
 })
 
 it('should clear the previous result when a lunar leap month has no valid date', () => {
@@ -125,12 +126,7 @@ it('should use the last valid solar day when the selected year changes', () => {
   fireEvent.input(screen.getByLabelText('질문'), {target: {value: '재물에 대해 알려줘'}})
   fireEvent.submit(screen.getByRole('button', {name: '사주 풀이 생성'}).closest('form')!)
 
-  const messages = JSON.parse(
-    screen.getByRole('region', {name: 'LLM 전달 값'}).querySelector('code')!.textContent!,
-  ) as Array<{content: string}>
-  expect(JSON.parse(messages[1].content)).toMatchObject({
-    birth: {calendar: 'solar', date: '2025-02-28'},
-  })
+  expect(readChart()).toEqual(deriveSaju({calendar: 'solar', date: '2025-02-28'}))
 })
 
 it('should pass a lunar birth date and leap-month choice to the calculation', () => {
@@ -150,15 +146,10 @@ it('should pass a lunar birth date and leap-month choice to the calculation', ()
   fireEvent.input(screen.getByLabelText('질문'), {target: {value: '재물에 대해 알려줘'}})
   fireEvent.submit(screen.getByRole('button', {name: '사주 풀이 생성'}).closest('form')!)
 
-  const messages = JSON.parse(
-    screen.getByRole('region', {name: 'LLM 전달 값'}).querySelector('code')!.textContent!,
-  ) as Array<{content: string}>
-  expect(JSON.parse(messages[1].content)).toMatchObject({
-    birth: {calendar: 'lunar', date: '1995-03-17', isLeapMonth: false},
-  })
+  expect(readChart()).toEqual(deriveSaju({calendar: 'solar', date: '1995-04-16'}))
 })
 
-it('should calculate a selectable lunar year-end day while keeping its lunar birth in messages', () => {
+it('should calculate a selectable lunar year-end day and supply readable consultation facts', () => {
   render(() => <SajuPage />)
 
   fireEvent.click(screen.getByRole('radio', {name: '음력'}))
@@ -191,18 +182,17 @@ it('should calculate a selectable lunar year-end day while keeping its lunar bir
   const messages = JSON.parse(
     screen.getByRole('region', {name: 'LLM 전달 값'}).querySelector('code')!.textContent!,
   ) as Array<{content: string}>
-  const userPayload = JSON.parse(messages[1].content) as {
-    birth: unknown
-    chart: unknown
-    daeun: unknown
+  const userPayload = JSON.parse(messages[1].content.split('\n\n')[0]) as {
+    themes: ReadonlyArray<{observed: boolean; prominent: boolean; subject: string}>
   }
-  expect(userPayload.birth).toEqual({
-    calendar: 'lunar',
-    date: '1999-12-20',
-    isLeapMonth: false,
+  expect(userPayload).not.toHaveProperty('birth')
+  expect(userPayload).not.toHaveProperty('chart')
+  expect(userPayload).not.toHaveProperty('daeun')
+  expect(userPayload.themes).toContainEqual({
+    observed: true,
+    prominent: true,
+    subject: '약속과 책임',
   })
-  expect(userPayload.chart).toEqual(expectedChart)
-  expect(userPayload.daeun).toEqual(expectedDaeun)
 
   fireEvent.submit(screen.getByRole('button', {name: '사주 풀이 생성'}).closest('form')!)
   const repeatedMessages = JSON.parse(
@@ -256,7 +246,8 @@ it('should omit daeun when its calculation input is unspecified', () => {
   const messages = JSON.parse(
     screen.getByRole('region', {name: 'LLM 전달 값'}).querySelector('code')!.textContent!,
   ) as Array<{content: string}>
-  expect(JSON.parse(messages[1].content)).toMatchObject({daeun: null})
+  expect(JSON.parse(messages[1].content.split('\n\n')[0])).not.toHaveProperty('daeun')
+  expect(messages[0].content).toContain('장기 구간을 계산하지 않았다')
   expect(
     screen.getByRole('heading', {name: '대운 · analyzeDaeun()'}).nextElementSibling?.textContent,
   ).toBe('null')

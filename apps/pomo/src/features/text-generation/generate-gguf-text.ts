@@ -32,7 +32,15 @@ const generateAnswer = async ({model, options}: GenerateGgufTextOptions): Promis
   await model.createChatCompletion({
     ...tokenBans,
     abortSignal: options.signal,
-    chat_template_kwargs: {enable_thinking: true},
+    chat_template_kwargs: {enable_thinking: options.outputSchema === undefined},
+    ...(options.outputSchema === undefined
+      ? {}
+      : {
+          response_format: {
+            json_schema: {name: 'response', schema: options.outputSchema, strict: true},
+            type: 'json_schema' as const,
+          },
+        }),
     // Reserve the requested answer allowance after reasoning and its closing sequence.
     max_tokens:
       options.maximumTokens +
@@ -58,7 +66,7 @@ const generateAnswer = async ({model, options}: GenerateGgufTextOptions): Promis
       appendAnswer(answerPrefix)
       answerPrefix = ''
     },
-    penalty_repeat: options.repetitionPenalty,
+    penalty_repeat: options.outputSchema === undefined ? options.repetitionPenalty : 1,
     stream: true,
     temperature: options.temperature,
     top_k: options.topK,
@@ -75,6 +83,9 @@ const generateAnswer = async ({model, options}: GenerateGgufTextOptions): Promis
       maximumTokens: options.maximumTokens,
       reasoningTokens,
     })
+  }
+  if (options.outputSchema !== undefined) {
+    JSON.parse(output)
   }
   return output
 }

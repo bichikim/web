@@ -226,3 +226,43 @@ test('should create four missing corners in one document change without moving t
   expect(document().parameterBindings![0]!.keyforms).toHaveLength(9)
   expect(editor.parameterValues()).toEqual([0, 0])
 })
+
+test('should insert an interpolated keyform for a group-only binding', () => {
+  let editor!: ParameterEditorResult
+  const initial: PuppetDocument = {
+    ...createDemoDocument(),
+    parameterBindings: [
+      {
+        id: 'group-only',
+        keyforms: [-30, 30].map((value) => ({
+          groups: [{groupId: 'shapes', properties: {opacity: (value + 30) / 60}}],
+          parts: [],
+          values: [value],
+        })),
+        parameterIds: ['angle-x'],
+        targetGroupIds: ['shapes'],
+      },
+    ],
+  }
+  const [document, setDocument] = createSignal(initial)
+  render(() => {
+    editor = useParameterEditor({
+      document,
+      onDocumentChange: setDocument,
+      onNotice: vi.fn(),
+      selectedNodeIds: () => [],
+    })
+    return <div />
+  })
+  editor.setAllParametersVisible(true)
+  editor.selectBinding('group-only')
+  editor.setParameterValues([0])
+  editor.addKeyform()
+  expect(document().parameterBindings![0]!.keyforms).toHaveLength(3)
+  expect(document().parameterBindings![0]!.keyforms[1]!.groups).toEqual([
+    expect.objectContaining({
+      groupId: 'shapes',
+      properties: expect.objectContaining({opacity: 0.5}),
+    }),
+  ])
+})

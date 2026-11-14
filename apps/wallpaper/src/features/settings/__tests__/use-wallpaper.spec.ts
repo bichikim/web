@@ -1,4 +1,5 @@
 /** @vitest-environment jsdom */
+import 'fake-indexeddb/auto'
 import {renderHook, waitFor} from '@solidjs/testing-library'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 import {
@@ -11,12 +12,15 @@ import {
   type WebBackgroundRepository,
 } from '@winter-love/wallpaper/web-repository'
 import {type BackgroundMedia, DEFAULT_BACKGROUND} from '@winter-love/wallpaper/model'
-import {listWallpaperMonitors} from '../monitors'
+import {listWallpaperMonitors, subscribeWallpaperMonitors} from '../monitors'
 import {useWallpaper} from '../use-wallpaper'
 
 vi.mock('@winter-love/wallpaper/settings/repository', () => ({createSettingsRepository: vi.fn()}))
 vi.mock('@winter-love/wallpaper/web-repository', () => ({createWebRepository: vi.fn()}))
-vi.mock('../monitors', () => ({listWallpaperMonitors: vi.fn()}))
+vi.mock('../monitors', () => ({
+  listWallpaperMonitors: vi.fn(),
+  subscribeWallpaperMonitors: vi.fn(),
+}))
 
 let stored: Map<string, MonitorWallpaper>
 let repository: SettingsRepository
@@ -31,6 +35,7 @@ beforeEach(() => {
     listPuppets: vi.fn(async () => []),
     loadPuppet: vi.fn(),
     read: vi.fn(async () => Array.from(stored.values())),
+    removeMediaReferences: vi.fn(),
     removePuppet: vi.fn(),
     save: vi.fn(async (settings) => {
       stored.set(settings.monitorId, settings)
@@ -53,10 +58,70 @@ beforeEach(() => {
     {id: 'first', name: 'First'},
     {id: 'second', name: 'Second'},
   ])
+  vi.mocked(subscribeWallpaperMonitors).mockResolvedValue(vi.fn())
 })
 afterEach(() => {
   vi.clearAllMocks()
   vi.restoreAllMocks()
+})
+
+it('should refresh connected screens without resetting the selected screen', async () => {
+  const {result, cleanup} = renderHook(useWallpaper)
+  await waitFor(() => expect(result.selectedId()).toBe('first'))
+  result.selectMonitor('second')
+  vi.mocked(listWallpaperMonitors).mockResolvedValue([
+    {id: 'first', name: 'First'},
+    {height: 2160, id: 'second', name: 'Second', scale: 2, width: 3840, x: 1920, y: 0},
+    {id: 'third', name: 'Third'},
+  ])
+  vi.mocked(subscribeWallpaperMonitors).mock.calls[0][0]()
+  await waitFor(() => expect(result.monitors()).toHaveLength(3))
+  expect(result.selectedId()).toBe('second')
+  expect(result.monitors()[1]).toMatchObject({height: 2160, scale: 2, width: 3840, x: 1920})
+  cleanup()
+})
+
+it('should select a connected screen after removal and retain its saved wallpaper for reconnection', async () => {
+  stored.set('second', createMonitorWallpaper('second'))
+  const {result, cleanup} = renderHook(useWallpaper)
+  await waitFor(() => expect(result.selectedId()).toBe('first'))
+  result.selectMonitor('second')
+  vi.mocked(listWallpaperMonitors).mockResolvedValue([{id: 'first', name: 'First'}])
+  vi.mocked(subscribeWallpaperMonitors).mock.calls[0][0]()
+  await waitFor(() => expect(result.selectedId()).toBe('first'))
+  expect(result.monitors()).toEqual([{id: 'first', name: 'First'}])
+  expect(stored.has('second')).toBe(true)
+  vi.mocked(listWallpaperMonitors).mockResolvedValue([])
+  vi.mocked(subscribeWallpaperMonitors).mock.calls[0][0]()
+  await waitFor(() => expect(result.selectedId()).toBeNull())
+  expect(result.current()).toBeNull()
+  cleanup()
+})
+
+it('should ignore a stale initial screen read after a newer display change', async () => {
+  const initial = Promise.withResolvers<Awaited<ReturnType<typeof listWallpaperMonitors>>>()
+  vi.mocked(listWallpaperMonitors).mockReturnValueOnce(initial.promise)
+  const {result, cleanup} = renderHook(useWallpaper)
+  await waitFor(() => expect(listWallpaperMonitors).toHaveBeenCalledOnce())
+  vi.mocked(listWallpaperMonitors).mockResolvedValue([{id: 'new', name: 'New'}])
+  vi.mocked(subscribeWallpaperMonitors).mock.calls[0][0]()
+  await waitFor(() => expect(result.selectedId()).toBe('new'))
+  initial.resolve([{id: 'old', name: 'Old'}])
+  await initial.promise
+  expect(result.monitors()).toEqual([{id: 'new', name: 'New'}])
+  cleanup()
+})
+
+it('should unsubscribe even when screen subscription completes after disposal', async () => {
+  const subscription = Promise.withResolvers<() => void>()
+  const stop = vi.fn()
+  vi.mocked(subscribeWallpaperMonitors).mockReturnValueOnce(subscription.promise)
+  const {cleanup} = renderHook(useWallpaper)
+  cleanup()
+  subscription.resolve(stop)
+  await subscription.promise
+  expect(stop).toHaveBeenCalledOnce()
+  expect(listWallpaperMonitors).not.toHaveBeenCalled()
 })
 
 it('should retain a queued change on the selected monitor when selection changes immediately', async () => {
@@ -183,12 +248,12 @@ it('should preserve media identities across settings refreshes while applying me
     preferences: DEFAULT_BACKGROUND,
   }))
   const {result, cleanup} = renderHook(useWallpaper)
-  await waitFor(() => expect(result.items()).toHaveLength(1))
-  const original = result.items()[0]
+  await waitFor(() => expect(result.items().find((item) => item.id === 'photo')).toBeDefined())
+  const original = result.items().find((item) => item.id === 'photo')
   name = 'Renamed photo'
   await result.setInteraction({activation: 'always'})
-  expect(result.items()[0]).toBe(original)
-  expect(result.items()[0]?.name).toBe(name)
+  expect(result.items().find((item) => item.id === 'photo')).toBe(original)
+  expect(result.items().find((item) => item.id === 'photo')?.name).toBe(name)
   cleanup()
 })
 
@@ -201,12 +266,17 @@ it('should apply additions removals and reordering without replacing retained me
     preferences: DEFAULT_BACKGROUND,
   }))
   const {result, cleanup} = renderHook(useWallpaper)
-  await waitFor(() => expect(result.items()).toHaveLength(2))
-  const retained = result.items()[1]
+  await waitFor(() => expect(result.items().find((item) => item.id === 'second')).toBeDefined())
+  const retained = result.items().find((item) => item.id === 'second')
   files = [{...second}, {id: 'third', kind: 'photo', name: 'Third', size: 1}]
   await result.setInteraction({activation: 'always'})
-  expect(result.items().map((item) => item.id)).toEqual(['second', 'third'])
-  expect(result.items()[0]).toBe(retained)
+  expect(
+    result
+      .items()
+      .filter((item) => !item.id.startsWith('builtin:'))
+      .map((item) => item.id),
+  ).toEqual(['second', 'third'])
+  expect(result.items().find((item) => item.id === 'second')).toBe(retained)
   cleanup()
 })
 
@@ -261,4 +331,83 @@ it('should stop subscriptions immediately and close owned repositories after pen
   await saving
   expect(repository.close).toHaveBeenCalledOnce()
   expect(media.close).toHaveBeenCalledOnce()
+})
+
+it('should expose bundled content without importing or replacing saved monitor settings', async () => {
+  const original = {
+    ...createMonitorWallpaper('first'),
+    content: {mode: 'website' as const, url: 'https://example.com'},
+  }
+  stored.set('first', original)
+  const {result, cleanup} = renderHook(useWallpaper)
+  await waitFor(() => expect(result.puppets()).toContainEqual({id: 'builtin:ash', name: '애시'}))
+  expect(result.items().filter((item) => item.id.startsWith('builtin:cover:'))).toHaveLength(10)
+  expect(result.current()?.content).toEqual(original.content)
+  expect(repository.save).not.toHaveBeenCalled()
+  expect(repository.addPuppet).not.toHaveBeenCalled()
+  expect(media.importMedia).not.toHaveBeenCalled()
+  cleanup()
+})
+
+it('should persist album fit and keep it when a subsequent independent album field changes', async () => {
+  const {result, cleanup} = renderHook(useWallpaper)
+  await waitFor(() => expect(result.selectedId()).toBe('first'))
+  const original = result.current()!.content
+  if (original.mode !== 'album') {
+    throw new Error('Expected album')
+  }
+  const fitting = result.setContent({...original, fit: 'cover'})
+  const optimistic = result.current()!.content
+  if (optimistic.mode !== 'album') {
+    throw new Error('Expected album')
+  }
+  const timing = result.setContent({...optimistic, photoSeconds: 20})
+  await Promise.all([fitting, timing])
+  expect(stored.get('first')?.content).toMatchObject({fit: 'cover', photoSeconds: 20})
+  cleanup()
+})
+
+it('should persist Poffo fit alongside a subsequent placement change', async () => {
+  const original = {assetId: 'character', mode: 'puppet' as const}
+  stored.set('first', {...createMonitorWallpaper('first'), content: original})
+  const {result, cleanup} = renderHook(useWallpaper)
+  await waitFor(() => expect(result.selectedId()).toBe('first'))
+  const fitting = result.setContent({...original, fit: 'cover'})
+  const optimistic = result.current()!.content
+  if (optimistic.mode !== 'puppet') {
+    throw new Error('Expected Poffo')
+  }
+  const placement = {scale: 1.2, x: 0.4, y: 0.6}
+  const moving = result.setContent({...optimistic, placement})
+  await Promise.all([fitting, moving])
+  expect(stored.get('first')?.content).toEqual({...original, fit: 'cover', placement})
+  cleanup()
+})
+
+it('should remove album references before deleting stored media', async () => {
+  const {result, cleanup} = renderHook(useWallpaper)
+  await waitFor(() => expect(result.selectedId()).toBe('first'))
+  const references = Promise.withResolvers<void>()
+  vi.mocked(repository.removeMediaReferences).mockReturnValueOnce(references.promise)
+  const removing = result.removeMedia('photo')
+  await waitFor(() => expect(repository.removeMediaReferences).toHaveBeenCalledWith('photo'))
+  expect(media.remove).not.toHaveBeenCalled()
+  references.resolve()
+  await removing
+  expect(media.remove).toHaveBeenCalledWith('photo')
+  expect(result.error()).toBeNull()
+  cleanup()
+})
+
+it('should retain stored media when reference cleanup fails and permit retry', async () => {
+  const {result, cleanup} = renderHook(useWallpaper)
+  await waitFor(() => expect(result.selectedId()).toBe('first'))
+  vi.mocked(repository.removeMediaReferences).mockRejectedValueOnce(new Error('storage'))
+  await result.removeMedia('photo')
+  expect(media.remove).not.toHaveBeenCalled()
+  expect(result.error()).toBe('사진·동영상을 삭제하지 못했어요.')
+  await result.removeMedia('photo')
+  expect(media.remove).toHaveBeenCalledWith('photo')
+  expect(result.error()).toBeNull()
+  cleanup()
 })

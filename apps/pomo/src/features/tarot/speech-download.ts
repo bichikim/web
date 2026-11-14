@@ -4,7 +4,7 @@ import {getExceptionMessage} from '../error-detail'
 import {type ModelDownloadController, type ModelDownloadResult} from '../model-download'
 import {formatModelDownloadSize} from '../model-storage/size'
 import {DEFAULT_DIALOGUE_MODEL_ID} from '../focus-room-dialogue/speech-defaults'
-import {getSupertonicModel} from '../supertonic/model'
+import {getSupertonicModel} from '@winter-love/supertonic/model'
 
 export interface TarotSpeechDownloads {
   readonly cancel: () => void

@@ -3,7 +3,7 @@ import {cleanup, renderHook} from '@solidjs/testing-library'
 import {afterEach, expect, it, vi} from 'vitest'
 import {createRenderEffect} from 'solid-js'
 import {PreferenceProvider, usePreference} from '..'
-import type {PreferenceStorage} from 'src/utils/preference-storage'
+import type {PreferenceStorage} from 'src/hooks/use-preference/types'
 
 const options = {
   defaultValue: 10,

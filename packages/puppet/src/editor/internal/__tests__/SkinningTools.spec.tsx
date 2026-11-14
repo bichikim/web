@@ -11,7 +11,7 @@ import {
 import {createSkinBinding} from '../../../deformation/skinning'
 import {composeParameterScene} from '../../../deformation/scene'
 import {applySceneNodeDeformers} from '../../../deformation/vertices'
-import {useDocumentHistory} from '../../use-document-history'
+import {createHistory as useDocumentHistory} from '../../__tests__/fixtures/history'
 import {setPartSkinning} from '../skinning'
 import {findNode} from '../scene-tree'
 import {SkinningTools} from '../SkinningTools'

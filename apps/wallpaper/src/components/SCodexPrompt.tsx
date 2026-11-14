@@ -1,5 +1,25 @@
-import {Show} from 'solid-js'
+import {type JSX, Show} from 'solid-js'
 import {type CodexPort, usePromptSend} from '../features/codex'
+
+const COMPOSITION_KEY_CODE = 229
+
+const handleKeyDown: JSX.EventHandler<HTMLTextAreaElement, KeyboardEvent> = (event) => {
+  if (
+    event.key !== 'Enter' ||
+    !(event.ctrlKey || event.metaKey) ||
+    event.altKey ||
+    event.shiftKey ||
+    event.defaultPrevented ||
+    event.isComposing ||
+    event.keyCode === COMPOSITION_KEY_CODE
+  ) {
+    return
+  }
+  event.preventDefault()
+  if (!event.repeat) {
+    event.currentTarget.form?.requestSubmit()
+  }
+}
 
 interface SCodexPromptProps {
   readonly sessionId: string
@@ -25,6 +45,7 @@ export const SCodexPrompt = (props: SCodexPromptProps) => {
       >
         <textarea
           aria-label="Codex에 보낼 메시지"
+          aria-keyshortcuts="Control+Enter Meta+Enter"
           placeholder="다음 요청"
           rows={2}
           maxLength={4000}
@@ -32,6 +53,7 @@ export const SCodexPrompt = (props: SCodexPromptProps) => {
           class="wallpaper-field resize-none appearance-none [font-family:inherit]"
           value={prompt.draft()}
           onInput={(event) => prompt.edit(event.currentTarget.value)}
+          onKeyDown={handleKeyDown}
         />
         <button
           type="submit"

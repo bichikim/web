@@ -6,11 +6,8 @@ import * as m from '@paraglide/message'
 import {useStudioTourHint} from './use-studio-tour-hint'
 import {useUiAutoHide} from 'src/features/ui-auto-hide'
 import {useStudioDesktopSceneSettings} from './use-studio-desktop-scene-settings'
-import {
-  type BackgroundController,
-  type BackgroundPreferences,
-  useBackground,
-} from '../../features/background'
+import {type BackgroundController, useBackground} from '../../features/background'
+import {type BackgroundPreferences} from '@winter-love/wallpaper/model'
 import {Player as FramePlayer} from '../frame/Player'
 import {
   createEffect,

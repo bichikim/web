@@ -1,7 +1,7 @@
 /** @vitest-environment node */
 import {expect, it} from 'vitest'
 import {isSupertonicVoiceId} from '../is-supertonic-voice-id'
-import {SUPERTONIC_VOICES, type SupertonicVoiceId} from '../model'
+import {SUPERTONIC_VOICES, type SupertonicVoiceId} from '@winter-love/supertonic/model'
 
 it.each(SUPERTONIC_VOICES)('should accept the registered $id identifier', ({id}) => {
   const value: unknown = id

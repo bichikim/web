@@ -20,7 +20,12 @@ export const usePointerValueDrag = (props: UsePointerValueDragProps): UsePointer
     return owner === null ? move() : runWithOwner(owner, move)
   }
   const handlePointerDown = (event: PointerEvent) => {
-    if (event.button !== 0 || !enabled()) {
+    if (
+      event.button !== 0 ||
+      event.isPrimary === false ||
+      removeListeners !== undefined ||
+      !enabled()
+    ) {
       return
     }
     const bounds = props.getBounds(event)
@@ -29,6 +34,10 @@ export const usePointerValueDrag = (props: UsePointerValueDragProps): UsePointer
     }
     const {pointerId} = event
     const handlePointerMove = (moveEvent: PointerEvent) => {
+      if (!enabled()) {
+        removeListeners?.()
+        return
+      }
       if (moveEvent.pointerId === pointerId) {
         moveEvent.preventDefault()
         update(moveEvent, bounds)
@@ -39,20 +48,29 @@ export const usePointerValueDrag = (props: UsePointerValueDragProps): UsePointer
         removeListeners?.()
       }
     }
+    const cancel = () => removeListeners?.()
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        cancel()
+      }
+    }
     event.preventDefault()
     if (props.stopPropagation === true) {
       event.stopPropagation()
     }
-    removeListeners?.()
     update(event, bounds)
     // Global pointer events follow the active gesture beyond the original element.
     // eslint-disable-next-line solid/reactivity
     removeListeners = () => {
+      globalThis.removeEventListener('blur', cancel)
+      globalThis.removeEventListener('keydown', handleKeyDown)
       globalThis.removeEventListener('pointercancel', finishDrag)
       globalThis.removeEventListener('pointermove', handlePointerMove)
       globalThis.removeEventListener('pointerup', finishDrag)
       removeListeners = undefined
     }
+    globalThis.addEventListener('blur', cancel)
+    globalThis.addEventListener('keydown', handleKeyDown)
     globalThis.addEventListener('pointercancel', finishDrag)
     globalThis.addEventListener('pointermove', handlePointerMove)
     globalThis.addEventListener('pointerup', finishDrag)

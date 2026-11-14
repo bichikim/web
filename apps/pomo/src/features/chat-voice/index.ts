@@ -6,16 +6,18 @@ import {
   type CreateSupertonicAudioPlayerOptions,
   createSupertonicClient,
   getSupertonicErrorMessage,
-  getSupertonicModel,
   type InitializeSupertonicOptions,
   type SupertonicAudioPlayer,
   type SupertonicClient,
+} from '../supertonic'
+import {
+  getSupertonicModel,
   type SupertonicModelId,
   type SupertonicSpeechPolicy,
   type SupertonicVoiceId,
-} from '../supertonic'
+} from '@winter-love/supertonic/model'
 import {type PViseme} from '../lip-sync'
-import {splitSpeechText} from '../supertonic/text-chunking'
+import {splitSpeechText} from '@winter-love/supertonic/text-chunking'
 
 export {createStreamingSpeechBuffer} from './streaming-speech-buffer'
 export type {

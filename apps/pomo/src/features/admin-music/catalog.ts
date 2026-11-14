@@ -1,10 +1,10 @@
 import {z} from 'zod'
 
 import {ALBUM_LOCALES} from './album-draft'
-import {ALBUM_STATUSES, TRACK_ASSET_STATUSES} from './catalog-values'
+import {ALBUM_STATUSES, COVER_FALLBACKS, TRACK_ASSET_STATUSES} from './catalog-values'
 import {OFFER_BILLING_TYPES, OFFER_STATUSES, PRODUCT_STATUSES} from '../commerce'
 
-const coverFallbackSchema = z.enum(['lp', 'cd', 'music'])
+const coverFallbackSchema = z.enum(COVER_FALLBACKS)
 const albumTranslationSchema = z.object({
   albumId: z.string(),
   description: z.string(),

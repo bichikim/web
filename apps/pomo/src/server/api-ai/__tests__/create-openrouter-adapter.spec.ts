@@ -84,6 +84,22 @@ it('should preserve a confirmed 429 without hidden SDK retries', async () => {
   expect(fetch).toHaveBeenCalledOnce()
 })
 
+it.each([{temperature: undefined}, {temperature: 0.2}])(
+  'should preserve explicit sampling and omit it when unspecified: $temperature',
+  async ({temperature}) => {
+    const fetch = vi.fn().mockResolvedValue(Response.json(completed))
+    await createOpenRouterAdapter({fetch}).submit(provider, {input: '질문', temperature}, 'attempt')
+    const body = JSON.parse(fetch.mock.calls[0]![1].body)
+    if (temperature === undefined) {
+      expect(body).not.toHaveProperty('temperature')
+    } else {
+      expect(body).toHaveProperty('temperature', temperature)
+    }
+    expect(body.model).toBe(provider.models['cloud-text'])
+    expect(fetch).toHaveBeenCalledOnce()
+  },
+)
+
 it.each([
   {output: [], usage: completed.usage},
   {output: completed.output, usage: undefined},

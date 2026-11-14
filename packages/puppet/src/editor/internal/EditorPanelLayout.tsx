@@ -1,5 +1,5 @@
 import {EditorTooltip} from '../../design-system'
-import type {JSX} from 'solid-js'
+import {type JSX, untrack} from 'solid-js'
 
 import {usePanelLayout} from '../use-panel-layout'
 import {EditorPanelResizer} from './EditorPanelResizer'
@@ -14,6 +14,8 @@ export interface EditorPanelVisibility {
 }
 
 export interface EditorPanelLayoutProps {
+  readonly layout?: ReturnType<typeof usePanelLayout>
+  readonly inactive?: boolean
   readonly bottom?: JSX.Element
   readonly inspector?: JSX.Element
   readonly layers?: JSX.Element
@@ -23,7 +25,7 @@ export interface EditorPanelLayoutProps {
 }
 
 export const EditorPanelLayout = (props: EditorPanelLayoutProps) => {
-  const layout = usePanelLayout()
+  const layout = untrack(() => props.layout) ?? usePanelLayout()
   const visibility: EditorPanelVisibility = {
     get bottomOpen() {
       return layout.bottomOpen()
@@ -42,10 +44,12 @@ export const EditorPanelLayout = (props: EditorPanelLayoutProps) => {
   return (
     <main
       class="puppet-editor"
+      inert={props.inactive}
       classList={{
         'bottom-panel-closed': !layout.bottomOpen(),
         'left-panel-closed': !layout.leftOpen(),
         'right-panel-closed': !layout.rightOpen(),
+        'without-header': props.toolbar === undefined,
       }}
       style={{
         '--bottom-panel-size': `${layout.bottomSize()}px`,

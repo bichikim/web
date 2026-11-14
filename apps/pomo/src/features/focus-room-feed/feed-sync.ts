@@ -13,7 +13,7 @@ import {
 import type {FeedDialogueRepository} from './feed-dialogue-repository'
 import {
   cleanFeedText,
-  createFeedScript,
+  composeFeedScript,
   extractArticleText,
   type ParsedFeedItem,
   parseFeedXml,
@@ -118,7 +118,7 @@ const resolveContent = async (options: ResolveContentOptions) => {
   const feedContent = cleanFeedText(options.item.content)
 
   if (options.item.contentKind === 'full' && feedContent.length > 0) {
-    return options.item.content
+    return feedContent
   }
 
   if (options.item.link.length === 0) {
@@ -184,7 +184,7 @@ const processFeedItem = async (options: ProcessFeedItemOptions): Promise<string 
     return null
   }
 
-  const script = createFeedScript(itemTitle, content)
+  const script = composeFeedScript(itemTitle, content)
 
   if (script.length > MAXIMUM_FEED_SCRIPT_LENGTH) {
     const item = {

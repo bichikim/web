@@ -1,13 +1,14 @@
 /** @vitest-environment jsdom */
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 import {Application, Container, MeshSimple, Texture} from 'pixi.js'
-import {createEmptyDocument, createPlayer, parseDocument, serializeDocument} from '../index'
+import {createEmptyDocument, createPlayer, parseDocument, serializeDocument} from '..'
 
 vi.mock('pixi.js', () => ({
   Application: vi.fn(),
   Container: vi.fn(),
   MeshSimple: vi.fn(),
   Texture: {from: vi.fn()},
+  UPDATE_PRIORITY: {LOW: -25},
 }))
 
 const source = {
@@ -91,12 +92,14 @@ beforeEach(() => {
         add: vi.fn((handler) => {
           tick = handler
         }),
+        remove: vi.fn(),
       },
     } as unknown as Application
   })
   vi.mocked(Container).mockImplementation(function mockContainer() {
     return {
       addChild: vi.fn(),
+      children: [],
       position: {set: vi.fn()},
       scale: {set: vi.fn()},
     } as unknown as Container

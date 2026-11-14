@@ -1,4 +1,5 @@
 /** @vitest-environment node */
+vi.mock('@huggingface/transformers-structured-output', () => ({StructuredOutputProcessor: vi.fn()}))
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
 const mocks = vi.hoisted(() => ({
@@ -328,7 +329,7 @@ it('should interrupt Transformers generation when its signal is aborted', async 
   expect(mocks.interrupt).toHaveBeenCalledOnce()
 
   resolveGeneration?.()
-  await expect(generation).resolves.toBe('')
+  await expect(generation).rejects.toMatchObject({name: 'AbortError'})
 })
 
 it('should enforce preparation and prompt contracts', async () => {
@@ -471,4 +472,37 @@ it('should reject Qwen outside development before invoking its lazy loader', asy
     'Qwen 텍스트 모델은 개발 빌드에서만 사용할 수 있어요.',
   )
   expect(mocks.loadQwenModel).not.toHaveBeenCalled()
+})
+
+it('should constrain each JSON request without repetition bans and reject incomplete output', async () => {
+  const processor = createProcessor()
+  const model = {
+    generate: vi.fn(async () => mocks.streamerOptions?.callback_function('{"value":2000}')),
+  }
+  mocks.processorFromPretrained.mockResolvedValue(processor)
+  mocks.gemmaFromPretrained.mockResolvedValue(model)
+  const runtime = createTransformersRuntime({onProgress: vi.fn()})
+  await runtime.prepare('gemma-4-e2b')
+  const options = {
+    maximumTokens: 100,
+    messages,
+    noRepeatNgramSize: 4,
+    outputSchema: {properties: {value: {type: 'number'}}, required: ['value'], type: 'object'},
+    repetitionPenalty: 1.1,
+    temperature: 0.1,
+    topK: 20,
+    topP: 0.9,
+  }
+  await expect(runtime.generate(options)).resolves.toBe('{"value":2000}')
+  expect(model.generate).toHaveBeenCalledWith(
+    expect.objectContaining({
+      logits_processor: expect.anything(),
+      no_repeat_ngram_size: 0,
+      repetition_penalty: 1,
+    }),
+  )
+  model.generate.mockImplementationOnce(async () =>
+    mocks.streamerOptions?.callback_function('{"value":'),
+  )
+  await expect(runtime.generate(options)).rejects.toThrow()
 })

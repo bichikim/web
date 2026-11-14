@@ -1,5 +1,5 @@
 import {describe, expect, it, vi} from 'vitest'
-import {getKnowledge, getKnowledgeStatus} from '../read'
+import {getKnowledge, getKnowledgeStatus} from '..'
 import type {KnowledgeIndexWriter, StoredKnowledgePoint} from '../store'
 
 const scope = {repoId: 'test/repo', workspaceId: 'refs/heads/main'}
@@ -44,26 +44,48 @@ describe('getKnowledge', () => {
       pointId: 'two',
     }
     const points = [point, first]
-    expect(await getKnowledge({index: reader(points), logicalId: 'auth/session', scope})).toEqual({
+    const index = reader(points)
+    expect(await getKnowledge({index, logicalId: 'auth/session', scope})).toEqual({
       ok: true,
       value: [first, point],
     })
+    expect(index.readState).toHaveBeenCalledExactlyOnceWith({...scope, docId: 'auth/session'})
     expect(points).toEqual([point, first])
   })
-  it.each(['', '#unit', 'doc#', 'doc#unit#extra'])(
-    'should reject malformed logical ID %s before reading',
-    async (logicalId) => {
-      const index = reader([])
-      expect(await getKnowledge({index, logicalId, scope})).toMatchObject({
-        error: {code: 'invalid-logical-id'},
-        ok: false,
-      })
-      expect(index.readState).not.toHaveBeenCalled()
-    },
-  )
-  it('should return a distinct not-found result for an absent ID', async () => {
-    expect(await getKnowledge({index: reader([]), logicalId: 'missing', scope})).toMatchObject({
-      error: {code: 'knowledge-not-found'},
+  it.each([
+    '',
+    ' \t',
+    '#unit',
+    ' \t#unit',
+    'doc#',
+    'doc# ',
+    'doc#\t\n',
+    'doc#\u00a0\u3000',
+    'doc#unit#extra',
+  ])('should reject malformed logical ID %s before reading', async (logicalId) => {
+    const index = reader([])
+    expect(await getKnowledge({index, logicalId, scope})).toMatchObject({
+      error: {code: 'invalid-logical-id'},
+      ok: false,
+    })
+    expect(index.readState).not.toHaveBeenCalled()
+  })
+  it('should preserve nonblank document and unit IDs without trimming', async () => {
+    const index = reader([point])
+    expect(await getKnowledge({index, logicalId: ' auth/session # refresh ', scope})).toEqual({
+      ok: true,
+      value: [point],
+    })
+    expect(index.readState).toHaveBeenCalledExactlyOnceWith({
+      ...scope,
+      docId: ' auth/session ',
+      unitId: ' refresh ',
+    })
+  })
+  it('should return a distinct not-found result with the original ID', async () => {
+    const logicalId = 'missing# unit '
+    expect(await getKnowledge({index: reader([]), logicalId, scope})).toEqual({
+      error: {code: 'knowledge-not-found', logicalId},
       ok: false,
     })
   })

@@ -14,6 +14,7 @@ const withPresets = (changes: Partial<PuppetDocument>): PuppetDocument => ({
     {
       fadeInTime: 0.2,
       id: 'smile',
+      name: 'Smile',
       parameters: [{blend: 'add', parameterId, value: 3}],
     },
   ],
@@ -47,6 +48,7 @@ describe('parseDocument expressions, pose groups and hit areas', () => {
       {...expression, parameters: [...expression.parameters, ...expression.parameters]},
       {...expression, fadeOutTime: -1},
       {...expression, composition: 'unknown'},
+      {...expression, name: 1},
     ]
     for (const variant of variants) {
       expect(parses(withPresets({expressions: [variant as never]}))).toBe(false)

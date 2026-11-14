@@ -83,6 +83,156 @@ describe('useAiTextJob', () => {
     cleanup()
   })
 
+  it.each([
+    ['ai_artifact_not_available', 404, '결과 보관 기간이 지났거나 결과를 더 이상 열 수 없어요.'],
+    ['http_503', 503, '완료된 결과를 열지 못했어요. 다시 시도해 주세요.'],
+  ])(
+    'should recover the same completed job after result error %s',
+    async (code, status, message) => {
+      const client = createClient({getJob: vi.fn(async () => createJob('succeeded'))})
+      vi.mocked(client.getJobResult).mockRejectedValueOnce(new AiJobClientError({code, status}))
+      const onComplete = vi.fn(async () => undefined)
+      const storage = createStorage()
+      const {cleanup, result} = renderHook(() => useAiTextJob({client, onComplete, storage}))
+      await vi.waitFor(() => expect(result.serverAvailable()).toBe(true))
+      await result.submit('결과 재조회')
+
+      expect(await result.refresh()).toBe(false)
+      expect(result.errorMessage()).toBe(message)
+      expect(result.jobStatus()).toBe('error')
+      expect(result.statusMessage()).toBe(message)
+      expect(result.job()?.status).toBe('succeeded')
+      expect(result.jobResult()).toBeNull()
+      expect(result.isBusy()).toBe(false)
+      expect(onComplete).not.toHaveBeenCalled()
+      expect(storage.read()?.jobId).toBe(JOB_ID)
+
+      expect(await result.retry()).toBe(true)
+      expect(result.jobStatus()).toBe('succeeded')
+      expect(result.errorMessage()).toBeNull()
+      expect(result.jobResult()).toEqual(textResult)
+      expect(client.submitTextJob).toHaveBeenCalledTimes(1)
+      expect(onComplete).toHaveBeenCalledTimes(1)
+      cleanup()
+    },
+  )
+
+  it('should clear the download error after explicitly reopening the same result', async () => {
+    const client = createClient({getJob: vi.fn(async () => createJob('succeeded'))})
+    vi.mocked(client.getJobResult).mockRejectedValueOnce(new Error('download failed'))
+    const {cleanup, result} = renderHook(() =>
+      useAiTextJob({client, onComplete: vi.fn(), storage: createStorage()}),
+    )
+    await vi.waitFor(() => expect(result.serverAvailable()).toBe(true))
+    await result.submit('결과 다시 열기')
+    await result.refresh()
+    expect(result.jobStatus()).toBe('error')
+    expect(await result.refreshResult()).toBe(true)
+    expect(result.jobStatus()).toBe('succeeded')
+    expect(result.errorMessage()).toBeNull()
+    expect(result.jobResult()).toEqual(textResult)
+    expect(client.submitTextJob).toHaveBeenCalledTimes(1)
+    cleanup()
+  })
+
+  it('should preserve a fetched result and successful status when playback fails', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    const client = createClient({getJob: vi.fn(async () => createJob('succeeded'))})
+    const onComplete = vi
+      .fn()
+      .mockRejectedValueOnce(new Error('playback'))
+      .mockResolvedValue(undefined)
+    const {cleanup, result} = renderHook(() =>
+      useAiTextJob({client, onComplete, storage: createStorage()}),
+    )
+    await vi.waitFor(() => expect(result.serverAvailable()).toBe(true))
+    await result.submit('음성 재시도')
+    expect(await result.refresh()).toBe(false)
+    expect(result.jobStatus()).toBe('succeeded')
+    expect(result.jobResult()).toEqual(textResult)
+    expect(result.errorMessage()).toBe('음성을 재생하지 못했어요.')
+    expect(await result.speakResult()).toBe(true)
+    cleanup()
+  })
+
+  it('should ignore a late result failure after cancellation', async () => {
+    const download = Promise.withResolvers<AiJobResult>()
+    const client = createClient({
+      getJob: vi.fn(async () => createJob('succeeded')),
+      getJobResult: vi.fn(() => download.promise),
+    })
+    const {cleanup, result} = renderHook(() =>
+      useAiTextJob({client, onComplete: vi.fn(), storage: createStorage()}),
+    )
+    await vi.waitFor(() => expect(result.serverAvailable()).toBe(true))
+    await result.submit('취소 경합')
+    const refresh = result.refresh()
+    await vi.waitFor(() => expect(client.getJobResult).toHaveBeenCalled())
+    await result.cancel()
+    download.reject(new AiJobClientError({code: 'ai_artifact_not_available', status: 404}))
+    expect(await refresh).toBe(false)
+    expect(result.jobStatus()).toBe('cancelled')
+    expect(result.errorMessage()).toBe('서버 요청을 취소했어요.')
+    cleanup()
+  })
+
+  it.each(['failed', 'cancelled', 'timed_out'] as const)(
+    'should preserve terminal server status %s without fetching a result',
+    async (status) => {
+      const client = createClient({getJob: vi.fn(async () => createJob(status))})
+      const {cleanup, result} = renderHook(() =>
+        useAiTextJob({client, onComplete: vi.fn(), storage: createStorage()}),
+      )
+      await vi.waitFor(() => expect(result.serverAvailable()).toBe(true))
+      await result.submit('서버 종료')
+      await result.refresh()
+      expect(result.jobStatus()).toBe(status)
+      expect(result.statusMessage()).toBe(result.errorMessage())
+      expect(client.getJobResult).not.toHaveBeenCalled()
+      cleanup()
+    },
+  )
+
+  it('should ignore a result failure superseded by a new request', async () => {
+    const download = Promise.withResolvers<AiJobResult>()
+    const client = createClient({
+      getJob: vi.fn(async () => createJob('succeeded')),
+      getJobResult: vi.fn(() => download.promise),
+    })
+    const {cleanup, result} = renderHook(() =>
+      useAiTextJob({client, onComplete: vi.fn(), storage: createStorage()}),
+    )
+    await vi.waitFor(() => expect(result.serverAvailable()).toBe(true))
+    await result.submit('이전 요청')
+    const refresh = result.refresh()
+    await vi.waitFor(() => expect(client.getJobResult).toHaveBeenCalled())
+    await result.submit('새 요청')
+    download.reject(new Error('late failure'))
+    expect(await refresh).toBe(false)
+    expect(result.jobStatus()).toBe('queued')
+    expect(result.errorMessage()).toBeNull()
+    cleanup()
+  })
+
+  it('should ignore a result failure after disposal', async () => {
+    const download = Promise.withResolvers<AiJobResult>()
+    const client = createClient({
+      getJob: vi.fn(async () => createJob('succeeded')),
+      getJobResult: vi.fn(() => download.promise),
+    })
+    const {cleanup, result} = renderHook(() =>
+      useAiTextJob({client, onComplete: vi.fn(), storage: createStorage()}),
+    )
+    await vi.waitFor(() => expect(result.serverAvailable()).toBe(true))
+    await result.submit('언마운트')
+    const refresh = result.refresh()
+    await vi.waitFor(() => expect(client.getJobResult).toHaveBeenCalled())
+    cleanup()
+    download.reject(new Error('late failure'))
+    expect(await refresh).toBe(false)
+    expect(result.errorMessage()).toBeNull()
+  })
+
   it('should retry an ambiguous submission with the same idempotency key', async () => {
     const client = createClient({
       submitTextJob: vi

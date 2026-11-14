@@ -1,5 +1,5 @@
 import {expect, test} from 'vitest'
-import {createDemoDocument, parseDocumentValue} from '../index'
+import {createDemoDocument, parseDocumentValue} from '..'
 
 test('should round trip explicit precision, sampling and sound policies', () => {
   const demo = createDemoDocument()

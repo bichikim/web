@@ -22,6 +22,8 @@ export interface MotionPlaybackState {
 }
 
 export interface MotionPlayback {
+  /** Stable identity within this player, including across Worker checkpoints. */
+  readonly id: number
   /** Fades the playback out over the motion's fade-out time, then stops it. */
   fadeOut(): void
   getState(): MotionPlaybackState
@@ -52,4 +54,52 @@ export interface MotionEvent {
   readonly motionId: string
   readonly time: number
   readonly value: string
+}
+
+/** Serializable selected playback state; callbacks remain with the host player. */
+export interface SelectedPlaybackState {
+  readonly completion: number | undefined
+  readonly elapsed: number | undefined
+  readonly held: boolean
+  readonly loop: boolean
+  readonly motionId: string | undefined
+  readonly outgoing: ReadonlyArray<OutgoingPlaybackState>
+  readonly scrubbed: boolean
+  readonly speed: number
+  readonly status: MotionPlaybackStatus
+  readonly time: number
+}
+
+export interface OutgoingPlaybackState {
+  readonly elapsed: number | undefined
+  readonly loop: boolean
+  readonly motionId: string
+  readonly remaining: number
+  readonly speed: number
+  readonly time: number
+}
+
+export interface SerializedMotionFrame extends Omit<MotionFrame, 'motion'> {
+  readonly motionId: string
+}
+
+/** Independent motion state transferred without callbacks or document object identities. */
+export interface AdditionalPlaybackState extends Omit<
+  MotionFrame,
+  'motion' | 'rate' | 'remaining'
+> {
+  readonly id: number
+  readonly motionId: string
+  readonly elapsed: number
+  readonly loop: boolean
+  readonly speed: number
+  readonly status: MotionPlaybackStatus
+  readonly stopping: number | undefined
+  readonly completion: number | undefined
+}
+
+/** Numerical completion token; callback functions remain with the presenting host. */
+export interface RuntimePlaybackOptions extends MotionPlaybackOptions {
+  /** Host-owned callback identity; omitted, do not emit completion tokens. */
+  readonly completion?: number
 }

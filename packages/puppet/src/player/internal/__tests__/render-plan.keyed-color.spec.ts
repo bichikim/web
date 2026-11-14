@@ -15,8 +15,6 @@ vi.mock('../../../deformation/keyed-color-effect', async (importOriginal) => {
     properties?.screenColor !== undefined
   return {
     ...original,
-    // Keys the rest opacity on keyforms without opacity or colors, so every targeting binding
-    // is sampled as it was before such bindings were skipped.
     composeKeyedColorEffect: ((options) =>
       original.composeKeyedColorEffect(
         sampling.everyTargetingBinding
@@ -33,6 +31,26 @@ vi.mock('../../../deformation/keyed-color-effect', async (importOriginal) => {
             }
           : options,
       )) satisfies typeof original.composeKeyedColorEffect,
+    // Keys the rest opacity on keyforms without opacity or colors, so every targeting binding
+    // is sampled as it was before such bindings were skipped.
+    createColorEffectComposer: ((options) => {
+      const prepared = original.createColorEffectComposer(options)
+      return (parameterValues) =>
+        sampling.everyTargetingBinding
+          ? original.composeKeyedColorEffect({
+              ...options,
+              keyedProperties: (binding) =>
+                options
+                  .keyedProperties(binding)
+                  ?.map((properties) =>
+                    keysColorEffect(properties)
+                      ? properties
+                      : {...properties, opacity: options.rest.opacity},
+                  ),
+              parameterValues,
+            })
+          : prepared(parameterValues)
+    }) satisfies typeof original.createColorEffectComposer,
   }
 })
 

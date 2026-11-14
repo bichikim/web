@@ -135,3 +135,18 @@ describe('generateMesh', () => {
     })
   })
 })
+
+it.each([Number.MIN_VALUE, 0.5, 1.5])('should reject fractional pixel spacing %s', (cellSize) => {
+  expect(
+    generateMesh({
+      cellSize,
+      pixels: createPixels(2, 2, [
+        [0, 0],
+        [1, 1],
+      ]),
+    }),
+  ).toEqual({
+    error: {code: 'invalid-cell-size'},
+    ok: false,
+  })
+})

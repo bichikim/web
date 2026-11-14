@@ -8,12 +8,12 @@ import {createParsedPreferenceStorage} from '../parsed-preference-storage'
 import {createJsonCodec, createValueStorage} from '../value-storage'
 import {z} from 'zod'
 
-import {webLocalStorage} from 'src/utils/preference-storage'
+import {webLocalStorage} from 'src/hooks/use-preference/web-local-storage'
 import {
   SUPERTONIC_MODELS,
   type SupertonicModelId,
   type SupertonicVoiceId,
-} from '../supertonic/model'
+} from '@winter-love/supertonic/model'
 import {isSupertonicVoiceId} from '../supertonic/is-supertonic-voice-id'
 import {
   type AutomaticDialogueSettings,

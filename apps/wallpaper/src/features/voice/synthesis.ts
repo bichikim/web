@@ -5,6 +5,7 @@ import type {PoffoVoice} from '@winter-love/wallpaper/settings/voice'
 import type {VoiceStatus} from './readout'
 
 export interface VoiceAudio {
+  readonly text?: string
   readonly sampleRate: number
   readonly samples: Float32Array
 }

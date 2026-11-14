@@ -7,7 +7,7 @@ import {Router} from '@solidjs/router'
 import {FileRoutes} from '@solidjs/start/router'
 import {Suspense} from 'solid-js'
 import {PreferenceProvider} from './hooks/use-preference'
-import {webLocalStorage} from './utils/preference-storage'
+import {webLocalStorage} from 'src/hooks/use-preference/web-local-storage'
 
 import {PDocumentMetadata} from './components/p-document-metadata/PDocumentMetadata'
 import {PRecoveryBoundary} from './components/p-recovery-boundary/PRecoveryBoundary'

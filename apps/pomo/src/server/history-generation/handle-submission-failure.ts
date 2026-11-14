@@ -2,7 +2,7 @@ import {
   type markGenerationFailed,
   type markGenerationSubmissionUnknown,
 } from '../repositories/history-generation'
-import {HistorySubmissionError} from './openai-client'
+import {HistorySubmissionError} from './submission-error'
 import {getSubmissionRecoveryDeadline} from './submission-recovery-policy'
 import {persistUnknownGenerationSubmission} from './submission-persistence'
 

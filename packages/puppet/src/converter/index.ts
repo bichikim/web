@@ -7,3 +7,7 @@ export {convertCubismMotion, type CubismMotionOptions} from './convert-cubism-mo
 export {convertCubismLayout} from './convert-cubism-layout'
 export {convertCubismPhysics} from './convert-cubism-physics'
 export {convertCubismPose, type CubismPose} from './convert-cubism-pose'
+export * from './convert-model-files'
+export * from './read-cubism-motions'
+export * from './read-vtube-settings'
+export * from './resolve-vtube-asset'

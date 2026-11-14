@@ -10,7 +10,7 @@ export interface RecoverMissingFeedDialogueOptions {
   readonly createId: () => string
   readonly listItem: FeedDialogueListItem
   readonly now: Date
-  readonly repository: FeedDialogueRepository
+  readonly repository: Pick<FeedDialogueRepository, 'listItems' | 'recoverMissingDialogue'>
 }
 
 /** Replaces an unavailable feed dialogue with a generation job for the same item. */

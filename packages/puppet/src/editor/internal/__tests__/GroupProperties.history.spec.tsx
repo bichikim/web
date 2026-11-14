@@ -4,7 +4,7 @@ import {fireEvent, render, screen} from '@solidjs/testing-library'
 import {expect, test} from 'vitest'
 
 import {createDemoDocument} from '../../../player'
-import {useDocumentHistory} from '../../use-document-history'
+import {createHistory as useDocumentHistory} from '../../__tests__/fixtures/history'
 import {getSceneGroup} from '../group-properties'
 import {GroupProperties} from '../GroupProperties'
 

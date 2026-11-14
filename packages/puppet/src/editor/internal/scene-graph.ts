@@ -113,14 +113,17 @@ const createSceneContainer = (options: CreateSceneContainerOptions) => {
     return undefined
   }
 
-  const partIds = selectedNodes.flatMap((node) => {
+  const parentId = parentIds.values().next().value ?? null
+  const parent = parentId === null ? undefined : findNode(scene.roots, parentId)
+  const siblings = parent === undefined || parent.kind === 'part' ? scene.roots : parent.children
+  const orderedNodes = siblings.filter((node) => selectedIds.has(node.id))
+  const partIds = orderedNodes.flatMap((node) => {
     const ids = new Set<string>()
     collectPartIds(node, ids)
     return [...ids]
   })
-  const parentId = parentIds.values().next().value ?? null
   const id = createNodeId(scene, options.prefix)
-  const container = options.create(id, selectedNodes, partIds)
+  const container = options.create(id, orderedNodes, partIds)
 
   if (container === undefined) {
     return undefined

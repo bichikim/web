@@ -1,3 +1,4 @@
+import {expenseOutputSchema} from './expense/output-schema'
 import {PTextarea} from 'src/components/p-textarea/PTextarea'
 import {isNonBlankString} from 'src/utils/is-non-blank-string'
 import {cx} from 'class-variance-authority'
@@ -81,7 +82,11 @@ export function HwpExpenseAssistant(props: HwpExpenseAssistantProps) {
     setParseError(null)
     setIsApplied(false)
     chat.setDraft(text)
-    chat.send({refineAnswer: false, supplementaryContext: EXPENSE_PROMPT})
+    chat.send({
+      outputSchema: expenseOutputSchema,
+      refineAnswer: false,
+      supplementaryContext: EXPENSE_PROMPT,
+    })
   }
 
   const handleApply = async () => {

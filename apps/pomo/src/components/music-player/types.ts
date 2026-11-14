@@ -6,7 +6,7 @@ export interface MusicPlaybackActions {
   readonly play: () => void
 }
 
-export interface PMusicPlayerContentProps extends MediaPlayerOptions {
+export interface PMusicPlayerProps extends MediaPlayerOptions {
   readonly backdropBlur?: boolean
   readonly expanded?: boolean
   readonly onExpandedChange?: (expanded: boolean) => void

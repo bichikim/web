@@ -9,8 +9,9 @@ import type {
 } from './types'
 import {formatSelection} from './format-selection'
 import {addChatContext} from './add-chat-context'
+import {relativeWorkspacePath} from './relative-workspace-path'
 
-interface CodeSelectionOptions {
+interface UseCodeSelectionProps {
   onError: (error: unknown) => void
   onNotice: (message: string) => void
   port: ViewerPort
@@ -24,12 +25,12 @@ const documentRows = (document: CodeDocument | undefined, source?: string): stri
     ? document.lines.map((tokens) => tokens.map((token) => token.text).join(''))
     : (source ?? document?.source ?? '').split(/\r\n|\n|\r/u)
 
-export const useCodeSelection = (options: CodeSelectionOptions) => {
+export const useCodeSelection = (props: UseCodeSelectionProps) => {
   const [selection, setSelection] = createSignal<CodeSelection | null>(null)
-  const rows = createMemo(() => documentRows(options.session()?.document, options.source?.()))
+  const rows = createMemo(() => documentRows(props.session()?.document, props.source?.()))
 
   const address = createMemo(() => {
-    const document = options.session()?.document
+    const document = props.session()?.document
     if (document?.media !== undefined) {
       return document.location.path
     }
@@ -49,7 +50,7 @@ export const useCodeSelection = (options: CodeSelectionOptions) => {
       reset(document)
       return
     }
-    const draft = options.source?.()
+    const draft = props.source?.()
     const rows = documentRows(document, draft)
     const last = Math.max(
       1,
@@ -73,11 +74,11 @@ export const useCodeSelection = (options: CodeSelectionOptions) => {
     setSelection(selected)
   }
   const selectLines = (anchor: number, focus: number = anchor): void => {
-    const current = options.session()
+    const current = props.session()
     if (current === null || !Number.isInteger(anchor) || !Number.isInteger(focus)) {
       return
     }
-    const draft = options.source?.()
+    const draft = props.source?.()
     const last = Math.max(
       1,
       draft === undefined
@@ -93,7 +94,7 @@ export const useCodeSelection = (options: CodeSelectionOptions) => {
     setSelection(selected)
   }
   const selectText = (range: CodeTextRange): void => {
-    const current = options.session()
+    const current = props.session()
     if (
       current === null ||
       ![range.line, range.column, range.endLine, range.endColumn].every(
@@ -117,11 +118,11 @@ export const useCodeSelection = (options: CodeSelectionOptions) => {
     })
   }
   const share = async (snapshot?: CodeSelection | CodeSnippet): Promise<void> => {
-    const current = options.session()
+    const current = props.session()
     if (current?.document.media !== undefined && snapshot === undefined) {
       await sharePath({
         kind: 'file',
-        path: `${current.workspace}/${current.document.location.path}`,
+        path: `${current.workspace.replace(/\/$/u, '')}/${current.document.location.path}`,
       })
       return
     }
@@ -133,18 +134,19 @@ export const useCodeSelection = (options: CodeSelectionOptions) => {
             'kind' in selected
               ? '선택한 코드를 다음 채팅 메시지에 추가했습니다.'
               : '선택한 파일과 줄 정보를 다음 채팅 메시지에 추가했습니다.',
-          onNotice: options.onNotice,
-          port: options.port,
-          selection: {...selected, path: `${current.workspace}/${selected.path}`},
+          onNotice: props.onNotice,
+          port: props.port,
+          selection: selected,
         })
       } catch (error) {
-        options.onError(error)
+        props.onError(error)
       }
     }
   }
   const sharePath = async (selected: WorkspaceSelection): Promise<void> => {
-    const workspace = options.workspace?.() ?? options.session()?.workspace
-    if (workspace === undefined || !selected.path.startsWith(`${workspace.replace(/\/$/u, '')}/`)) {
+    const workspace = props.workspace?.() ?? props.session()?.workspace
+    const path = workspace === undefined ? null : relativeWorkspacePath(workspace, selected.path)
+    if (path === null) {
       return
     }
     try {
@@ -153,12 +155,12 @@ export const useCodeSelection = (options: CodeSelectionOptions) => {
           selected.kind === 'file'
             ? '파일을 다음 채팅 메시지에 추가했습니다.'
             : '폴더를 다음 채팅 메시지에 추가했습니다.',
-        onNotice: options.onNotice,
-        port: options.port,
-        selection: selected,
+        onNotice: props.onNotice,
+        port: props.port,
+        selection: {...selected, path: path === '' ? '.' : path},
       })
     } catch (error) {
-      options.onError(error)
+      props.onError(error)
     }
   }
   return {

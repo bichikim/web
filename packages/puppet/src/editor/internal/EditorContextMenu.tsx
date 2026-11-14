@@ -1,24 +1,9 @@
+import {preventInternalDismiss} from '../../design-system/prevent-internal-dismiss'
 import {ContextMenu} from '@kobalte/core/context-menu'
-import {For, type JSX, Show} from 'solid-js'
-
+import {For, type JSX} from 'solid-js'
 import {useEditorPortalMount} from '../../design-system'
-
-export interface EditorContextMenuAction {
-  readonly disabled?: boolean
-  readonly id: string
-  readonly label: string
-  readonly onSelect?: () => void
-  readonly shortcut?: string
-  readonly tone?: 'danger' | 'default'
-  readonly type: 'action'
-}
-
-export interface EditorContextMenuSeparator {
-  readonly id: string
-  readonly type: 'separator'
-}
-
-export type EditorContextMenuEntry = EditorContextMenuAction | EditorContextMenuSeparator
+import type {EditorContextMenuEntry} from './context-menu/types'
+import {EditorContextMenuEntryView} from './context-menu/EditorContextMenuEntryView'
 
 export interface EditorContextMenuProps {
   readonly triggerClass?: string
@@ -33,39 +18,9 @@ export interface EditorContextMenuProps {
   readonly onPointerDown?: (event: PointerEvent) => void
 }
 
-interface EditorContextMenuEntryProps {
-  readonly entry: EditorContextMenuEntry
-}
-
-const EditorContextMenuEntryView = (props: EditorContextMenuEntryProps) => {
-  const action = () => (props.entry.type === 'action' ? props.entry : null)
-
-  return (
-    <Show
-      when={action()}
-      fallback={<ContextMenu.Separator class="editor-context-menu-separator" />}
-    >
-      {(entry) => (
-        <ContextMenu.Item
-          class="editor-context-menu-item"
-          classList={{danger: entry().tone === 'danger'}}
-          disabled={entry().disabled || entry().onSelect === undefined}
-          textValue={entry().label}
-          onSelect={() => entry().onSelect?.()}
-        >
-          <ContextMenu.ItemLabel>{entry().label}</ContextMenu.ItemLabel>
-          {entry().shortcut === undefined ? null : (
-            <span class="editor-context-menu-shortcut" aria-hidden="true">
-              {entry().shortcut}
-            </span>
-          )}
-        </ContextMenu.Item>
-      )}
-    </Show>
-  )
-}
-
 export const EditorContextMenu = (props: EditorContextMenuProps) => {
+  let surface: HTMLDivElement | undefined
+
   const portalMount = useEditorPortalMount()
 
   return (
@@ -80,10 +35,16 @@ export const EditorContextMenu = (props: EditorContextMenuProps) => {
       </ContextMenu.Trigger>
       <ContextMenu.Portal mount={portalMount}>
         <ContextMenu.Content
+          ref={(element) => {
+            surface = element
+          }}
           aria-label={props.label ?? '작업 메뉴'}
           class="editor-context-menu-content"
           onCloseAutoFocus={props.onCloseAutoFocus}
-          onInteractOutside={props.onInteractOutside}
+          onInteractOutside={(event) => {
+            props.onInteractOutside?.(event)
+            preventInternalDismiss(event, surface)
+          }}
         >
           <For each={props.entries}>{(entry) => <EditorContextMenuEntryView entry={entry} />}</For>
         </ContextMenu.Content>
@@ -91,3 +52,9 @@ export const EditorContextMenu = (props: EditorContextMenuProps) => {
     </ContextMenu>
   )
 }
+
+export type {EditorContextMenuAction} from './context-menu/types'
+
+export type {EditorContextMenuSeparator} from './context-menu/types'
+
+export type {EditorContextMenuEntry} from './context-menu/types'

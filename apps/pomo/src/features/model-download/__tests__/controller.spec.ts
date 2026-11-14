@@ -146,11 +146,8 @@ it('should download a voice model through the same global lifecycle', async () =
     options.onProgress({fileName: 'vocoder.onnx', loadedBytes: 75, totalBytes: 100})
     return successResult(undefined)
   })
-  const voiceClient: SupertonicClient = {
-    cancelGeneration: vi.fn(),
+  const voiceClient: ReturnType<ModelDownloadRuntime['createVoiceClient']> = {
     dispose,
-    generate: vi.fn(),
-    generateStream: vi.fn(),
     initialize,
   }
   const runtime: ModelDownloadRuntime = {
@@ -185,11 +182,8 @@ it('should expose a typed voice initialization failure and zero-byte progress', 
       status: 503,
     })
   })
-  const voiceClient: SupertonicClient = {
-    cancelGeneration: vi.fn(),
+  const voiceClient: ReturnType<ModelDownloadRuntime['createVoiceClient']> = {
     dispose,
-    generate: vi.fn(),
-    generateStream: vi.fn(),
     initialize,
   }
   const runtime: ModelDownloadRuntime = {
@@ -215,11 +209,8 @@ it('should expose a typed voice initialization failure and zero-byte progress', 
 
 it('should normalize a non-error voice initialization rejection', async () => {
   const dispose = vi.fn()
-  const voiceClient: SupertonicClient = {
-    cancelGeneration: vi.fn(),
+  const voiceClient: ReturnType<ModelDownloadRuntime['createVoiceClient']> = {
     dispose,
-    generate: vi.fn(),
-    generateStream: vi.fn(),
     initialize: vi.fn().mockRejectedValue('network unavailable'),
   }
   const runtime: ModelDownloadRuntime = {

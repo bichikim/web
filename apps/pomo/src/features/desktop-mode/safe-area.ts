@@ -1,7 +1,8 @@
 import type {Monitor} from '@tauri-apps/api/window'
 import {type Accessor, createEffect, createSignal, onCleanup, onMount} from 'solid-js'
 
-import {type DesktopMode, isDesktopBackgroundMode} from './model'
+import {type DesktopMode} from 'src/features/desktop-mode/is-desktop-mode'
+import {isDesktopBackgroundMode} from './model'
 
 type MonitorReader = () => Promise<Monitor | null>
 

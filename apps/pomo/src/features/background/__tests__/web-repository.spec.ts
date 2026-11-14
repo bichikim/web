@@ -3,7 +3,7 @@ import 'fake-indexeddb/auto'
 import Dexie from 'dexie'
 import {afterEach, expect, it, vi} from 'vitest'
 import {createWebRepository} from '../web-repository'
-import {DEFAULT_BACKGROUND} from '../model'
+import {DEFAULT_BACKGROUND} from '@winter-love/wallpaper/model'
 vi.mock('../../video-background', () => ({
   prepareVideoBackground: vi.fn(),
   removeVideoBackground: vi.fn(async () => undefined),

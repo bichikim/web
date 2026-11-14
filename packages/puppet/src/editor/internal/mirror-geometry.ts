@@ -66,6 +66,7 @@ interface DeformerForm {
   readonly controlPoints: ReadonlyArray<number>
   readonly curveHandles?: ReadonlyArray<PuppetDeformerCurveHandle>
   readonly rotationOrigin?: PuppetPoint
+  readonly rotationAngle?: number
 }
 
 /**
@@ -104,6 +105,9 @@ export const mirrorDeformerForm = <Form extends DeformerForm>(
   return {
     ...form,
     controlPoints,
+    ...(form.rotationAngle === undefined
+      ? {}
+      : {rotationAngle: (mirror.axis === 'x' ? Math.PI : 0) - form.rotationAngle}),
     ...(curveHandles === undefined ? {} : {curveHandles}),
     ...(form.rotationOrigin === undefined
       ? {}

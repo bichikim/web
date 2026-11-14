@@ -182,3 +182,58 @@ it('should reload connections when the authenticated email account changes', asy
   expect(screen.queryByText('person@example.com')).not.toBeInTheDocument()
   expect(listCalendarConnections).toHaveBeenCalledTimes(2)
 })
+
+it('should report unavailable authentication without calling calendar APIs', () => {
+  vi.mocked(useAuth).mockReturnValue({
+    session: () => null,
+    state: () => ({kind: 'unavailable'}),
+  })
+  render(() => <CalendarConnections />)
+
+  expect(screen.getByRole('alert')).toHaveTextContent(
+    '로그인 상태를 확인하지 못했습니다. 계정 화면에서 다시 시도해 주세요.',
+  )
+  expect(screen.queryByText('캘린더 연결을 확인하지 못했습니다.')).not.toBeInTheDocument()
+  expect(screen.queryByRole('button', {name: 'Google Calendar 연결'})).not.toBeInTheDocument()
+  expect(listCalendarConnections).not.toHaveBeenCalled()
+  expect(authorizeCalendarConnection).not.toHaveBeenCalled()
+  expect(deleteCalendarConnection).not.toHaveBeenCalled()
+})
+
+it('should keep calendar list failures distinct from authentication failures', async () => {
+  vi.mocked(listCalendarConnections).mockRejectedValueOnce(new Error('Calendar API unavailable'))
+  render(() => <CalendarConnections />)
+
+  expect(await screen.findByRole('alert')).toHaveTextContent('캘린더 연결을 확인하지 못했습니다.')
+  expect(listCalendarConnections).toHaveBeenCalledTimes(1)
+  expect(
+    screen.queryByText('로그인 상태를 확인하지 못했습니다. 계정 화면에서 다시 시도해 주세요.'),
+  ).not.toBeInTheDocument()
+  expect(screen.queryByRole('button', {name: 'Google Calendar 연결'})).not.toBeInTheDocument()
+})
+
+it('should replace the checking notice with an auth error and recover after authentication', async () => {
+  const [state, setState] = createSignal<AuthenticationState>({kind: 'checking'})
+  vi.mocked(useAuth).mockReturnValue({
+    session: () => {
+      const current = state()
+      return current.kind === 'authenticated' ? current : null
+    },
+    state,
+  })
+  render(() => <CalendarConnections />)
+  expect(screen.getByText('캘린더 연결 확인 중…')).toBeVisible()
+  expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+  expect(listCalendarConnections).not.toHaveBeenCalled()
+
+  setState({kind: 'unavailable'})
+  expect(screen.getByRole('alert')).toHaveTextContent(
+    '로그인 상태를 확인하지 못했습니다. 계정 화면에서 다시 시도해 주세요.',
+  )
+  expect(listCalendarConnections).not.toHaveBeenCalled()
+
+  setState({kind: 'authenticated', provider: 'toss'})
+  expect(await screen.findByText('person@example.com')).toBeVisible()
+  expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+  expect(listCalendarConnections).toHaveBeenCalledTimes(1)
+})

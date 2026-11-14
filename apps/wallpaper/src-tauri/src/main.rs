@@ -10,6 +10,7 @@ mod poffo_resize;
 mod settings;
 mod tracking;
 mod tray;
+mod website;
 
 fn main() {
     if codex::relay::command_mode() || codex::questions::protocol::command_mode() {
@@ -42,6 +43,7 @@ fn main() {
             codex::prompt::send_codex_prompt,
             codex::chat::open_codex_chat,
             codex::configure_poffo_speech,
+            codex::move_poffo_speech,
             codex::poffo_speech_target,
             codex::resize_poffo_speech,
             codex::dismiss_poffo_speech,

@@ -32,7 +32,7 @@ runtime에 이름을 묶지 않아 두 기능을 한 모델 계약 아래 둘 �
 - `/studio`: 카메라·수동·버튼 입력을 그래프로 모델 파라미터에 연결한다.
 - `/viewer`: 모션 재생, 수동 파라미터와 카메라 추적을 검증한다.
 
-Studio와 Viewer는 개발 서버에서 제공한다. 상단의 **Editor**, **Studio**, **Viewer**로
+Studio와 Viewer는 [Poffo 앱](../../apps/poffo/README.md)의 개발 서버에서 제공한다. 상단의 **Editor**, **Studio**, **Viewer**로
 현재 모델과 선택 모션을 유지한 채 같은 탭에서 화면을 전환한다. 페이지를 새로 불러오지 않으며,
 브라우저 뒤로·앞으로 이동도 지원한다. 전달한 모델은 에디터 기본 복구 기록과 별도의
 IndexedDB 세션에 저장되고, 해당 모델을 에디터에서 수정하면 화면 이동 시 반영된다.
@@ -63,9 +63,9 @@ Studio에서 카메라를 시작한 뒤 입력 포트를 보정 카드나 파라
 카메라 추론은 로컬 MediaPipe Worker에서 수행하며 영상은 서버로 전송하지 않는다.
 카메라는 시작할 때 권한을 요청하고, 중지·화면 종료·모델 변경 시 자원을 해제한다.
 얼굴을 찾지 못하거나 카메라를 중지하면 추적값을 해제한다.
-추적 채널 변환은 [tracking/worker.js](public/tracking/worker.js),
-모델 출처는 [tracking/README.md](public/tracking/README.md),
-런타임 자산 경로는 [vite.config.ts](vite.config.ts)를 따른다.
+추적 채널 변환은 [tracking/worker.js](../../apps/poffo/public/tracking/worker.js),
+모델 출처는 [tracking/README.md](../../apps/poffo/public/tracking/README.md),
+런타임 자산 경로는 [Poffo Vite 구성](../../apps/poffo/vite.config.ts)를 따른다.
 실제 웹캠의 각도·표정 반응과 방송 출력은 별도의 실기 검증 대상이다.
 
 ## PSD 파일 지원
@@ -232,16 +232,9 @@ cd packages/puppet
 pnpm dev
 ```
 
-저장소 루트에서는 `pnpm --filter @winter-love/puppet dev`로 실행한다. `/`는 SolidJS 컴포넌트,
-`/element.html`은 일반 HTML에서 웹 컴포넌트를 불러오는 개발 화면이다.
+저장소 루트에서는 `pnpm --filter @winter-love/puppet dev`로 실행한 뒤 `/element.html`을 연다. 패키지 개발 화면은 독립 Custom Element를 확인하는 용도다. 서비스의 `/`·Editor·Studio·Viewer·Converter는 [Poffo 앱](../../apps/poffo/README.md)에서 실행한다.
 
-`/`에서는 편집을 확정할 때 문서를 IndexedDB에 저장하고, sessionStorage의 탭별 키로
-새로고침 후 복원한다. 저장과 복원 성공은 별도로 알리지 않는다.
-브라우저 저장소가 차단되거나 저장에 실패하면 토스트로 JSON 내보내기를 안내한다. 같은
-오류는 저장이 정상화될 때까지 반복해서 알리지 않는다. 탭을 닫은 뒤의
-복원이나 별도 파일 백업을 대신하지 않는다. 연결은
-[`EditorApp`](src/EditorApp.tsx), 저장 경계는
-[`createDocumentSession`](src/create-document-session.ts)에 둔다.
+Solid 편집기는 외부 `ModelBinding`을 필수로 받는다. 호스트가 문서·undo/redo를 소유하고 편집기는 상태·명령을 제공한다. [공개 계약](src/editor/model/types.ts)과 [Custom Element 호환성·헤더 연결 예](../../apps/poffo/docs/editor-element.md)를 따른다.
 
 ## 앱에서 플레이어 제어
 

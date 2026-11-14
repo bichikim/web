@@ -1,4 +1,5 @@
 import {invoke, isTauri} from '@tauri-apps/api/core'
+import {listen} from '@tauri-apps/api/event'
 
 export interface WallpaperMonitor {
   readonly id: string
@@ -16,4 +17,11 @@ export const listWallpaperMonitors = async (): Promise<readonly WallpaperMonitor
     return [{id: 'browser-preview', name: '미리보기 화면'}]
   }
   return invoke<readonly WallpaperMonitor[]>('list_wallpaper_monitors')
+}
+
+export const subscribeWallpaperMonitors = async (receive: () => void): Promise<() => void> => {
+  if (!isTauri()) {
+    return () => undefined
+  }
+  return listen('desktop-surface-monitors-changed', receive)
 }

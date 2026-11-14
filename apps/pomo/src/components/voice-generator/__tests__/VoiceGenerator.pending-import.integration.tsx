@@ -16,8 +16,8 @@ const harness = vi.hoisted(() => ({
 }))
 
 vi.mock('../../../features/supertonic', async () => {
-  const model = await vi.importActual('../../../features/supertonic/model')
-  const style = await vi.importActual('../../../features/supertonic/voice-style')
+  const model = await vi.importActual('@winter-love/supertonic/model')
+  const style = await vi.importActual('@winter-love/supertonic/voice-style')
   return {
     ...model,
     ...style,

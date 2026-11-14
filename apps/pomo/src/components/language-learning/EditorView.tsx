@@ -2,7 +2,7 @@ import {Show} from 'solid-js'
 
 import * as m from '@paraglide/message'
 import {formatModelDownloadSize} from '../../features/model-storage'
-import {getSupertonicModel} from '../../features/supertonic'
+import {getSupertonicModel} from '@winter-love/supertonic/model'
 import {getTextModel} from '../../features/text-generation'
 import {PGenerationStatus} from '../p-generation-status/PGenerationStatus'
 import {PModelDownloadConsent} from '../p-model-download-consent/PModelDownloadConsent'

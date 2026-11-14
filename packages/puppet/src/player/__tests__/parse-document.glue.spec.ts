@@ -1,5 +1,5 @@
 import {expect, test} from 'vitest'
-import {createDemoDocument, parseDocument, serializeDocument} from '../index'
+import {createDemoDocument, parseDocument, serializeDocument} from '..'
 import {addGlue, setGlueKeyform} from '../../editor/internal/glue'
 
 test('should validate independent Glue targets and reject ambiguous or dangling direct samples', () => {

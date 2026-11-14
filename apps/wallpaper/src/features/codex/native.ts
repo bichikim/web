@@ -1,5 +1,5 @@
 import {invoke, isTauri} from '@tauri-apps/api/core'
-import {listen} from '@tauri-apps/api/event'
+import {getCurrentWebviewWindow} from '@tauri-apps/api/webviewWindow'
 import type {CodexPort, CodexSnapshot} from './types'
 
 export const codexPort: CodexPort = {
@@ -16,5 +16,7 @@ export const codexPort: CodexPort = {
   readTitle: (sessionId) => invoke('codex_thread_title', {sessionId}),
   sendPrompt: (sessionId, message) => invoke('send_codex_prompt', {message, sessionId}),
   subscribe: async (receive) =>
-    listen<CodexSnapshot>('poffo-codex-state', ({payload}) => receive(payload)),
+    getCurrentWebviewWindow().listen<CodexSnapshot>('poffo-codex-state', ({payload}) =>
+      receive(payload),
+    ),
 }

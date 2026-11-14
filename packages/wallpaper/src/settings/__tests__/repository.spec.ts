@@ -92,3 +92,34 @@ it('should share Puppet assets across monitors and clear references when deletin
   ])
   await expect(repository.loadPuppet(asset.id)).rejects.toThrow('missing')
 })
+
+it('should remove a media reference from every album without changing other content or preferences', async () => {
+  const repository = openRepository()
+  const base = createMonitorWallpaper('first')
+  if (base.content.mode !== 'album') {
+    throw new Error('Expected album')
+  }
+  await repository.save({
+    ...base,
+    content: {...base.content, fit: 'cover', mediaIds: ['remove', 'keep']},
+  })
+  await repository.save({
+    ...base,
+    content: {...base.content, mediaIds: ['remove']},
+    monitorId: 'second',
+  })
+  const website = {
+    ...base,
+    content: {mode: 'website' as const, url: 'https://example.com'},
+    monitorId: 'website',
+  }
+  await repository.save(website)
+  await repository.removeMediaReferences('remove')
+  const stored = await repository.read()
+  expect(stored.find((item) => item.monitorId === 'first')?.content).toMatchObject({
+    fit: 'cover',
+    mediaIds: ['keep'],
+  })
+  expect(stored.find((item) => item.monitorId === 'second')?.content).toMatchObject({mediaIds: []})
+  expect(stored.find((item) => item.monitorId === 'website')).toEqual(website)
+})

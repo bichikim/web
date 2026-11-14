@@ -1,9 +1,9 @@
 import {EditorButton} from '../../design-system'
-import {onCleanup, Show} from 'solid-js'
-
+import {Show} from 'solid-js'
 import type {PuppetParameterValues} from '../../deformation'
 import type {PuppetParameterBinding} from '../../player/document'
 import {EditorKeyformTools, type EditorKeyformToolsProps} from './EditorKeyformTools'
+import {EditorBrushControlsMount} from './EditorBrushControlsMount'
 
 export interface EditorKeyformToolbarProps extends Pick<
   EditorKeyformToolsProps,
@@ -17,13 +17,6 @@ export interface EditorKeyformToolbarProps extends Pick<
   readonly parameterCreationAvailable?: boolean
   readonly setBrushControlsMount?: (element: HTMLDivElement | undefined) => void
   readonly titleId: string
-}
-
-const BrushControlsMount = (props: {
-  readonly setMount: (element: HTMLDivElement | undefined) => void
-}) => {
-  onCleanup(() => props.setMount(undefined))
-  return <div class="keyform-brush-mount" ref={props.setMount} />
 }
 
 export const EditorKeyformToolbar = (props: EditorKeyformToolbarProps) => {
@@ -78,7 +71,7 @@ export const EditorKeyformToolbar = (props: EditorKeyformToolbarProps) => {
           />
         </Show>
         <Show when={props.setBrushControlsMount}>
-          {(setMount) => <BrushControlsMount setMount={setMount()} />}
+          {(setMount) => <EditorBrushControlsMount setMount={setMount()} />}
         </Show>
       </div>
     </header>

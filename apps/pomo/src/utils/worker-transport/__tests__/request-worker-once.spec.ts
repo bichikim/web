@@ -20,7 +20,7 @@ it('should reject the returned Promise when reading an option throws', async () 
     get signal(): AbortSignal {
       throw failure
     },
-    worker: worker as unknown as Worker,
+    worker,
   }
 
   await expect(requestWorkerOnce<string, string, string>(options)).rejects.toBe(failure)
@@ -36,7 +36,7 @@ it('should keep the original message callback after options are reassigned', asy
     failureMessage: 'worker failed',
     handleResponse,
     request: 'request',
-    worker: worker as unknown as Worker,
+    worker,
   }
   const result = requestWorkerOnce<string, string, string>(options)
   options.handleResponse = vi.fn((_: string, reply: RequestWorkerOnceReply<string>) =>
@@ -63,7 +63,7 @@ it('should keep the original abort signal and callback and remove its listener',
     handleResponse: vi.fn(),
     request: 'request',
     signal: original.signal,
-    worker: worker as unknown as Worker,
+    worker,
   }
   const result = requestWorkerOnce<string, string, string>(options)
   const assertion = expect(result).rejects.toBe(failure)
@@ -87,7 +87,7 @@ it.each(['error', 'messageerror'] as const)(
       handleResponse: vi.fn(),
       messageFailureMessage: 'original message failure',
       request: 'request',
-      worker: worker as unknown as Worker,
+      worker,
     }
     const result = requestWorkerOnce<string, string, string>(options)
     const assertion = expect(result).rejects.toThrow(
@@ -118,11 +118,11 @@ it('should capture send options before the Worker factory changes them', async (
     mapSendError,
     request,
     transfer,
-    worker: (): Worker => {
+    worker: () => {
       options.request = {type: 'replacement'}
       options.transfer = []
       options.mapSendError = vi.fn((_error: unknown) => new Error('replacement send failure'))
-      return worker as unknown as Worker
+      return worker
     },
   }
   const sendFailure = new Error('postMessage failed')

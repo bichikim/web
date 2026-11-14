@@ -1,7 +1,7 @@
 import {type Accessor, batch, createEffect, createSignal, onCleanup, untrack} from 'solid-js'
 import {createStackMotion, type StackElement, type StackPose} from './stack-motion'
 import type {SpeechAnchor} from './types'
-import {COVERED_HEIGHT} from './constants'
+import {COVERED_HEIGHT, COVERED_STEP} from './constants'
 
 interface UseOverlapStackProps {
   readonly ids: Accessor<readonly string[]>
@@ -10,7 +10,6 @@ interface UseOverlapStackProps {
   readonly height?: Accessor<number>
   readonly anchor?: Accessor<SpeechAnchor>
 }
-const STEP = 36
 const report = (cause: unknown) => console.error('Poffo speech motion failed', cause)
 const mergeOrder = (props: {
   readonly previous: readonly string[]
@@ -50,7 +49,7 @@ export const useOverlapStack = (props: UseOverlapStackProps) => {
   const [poses, setPoses] = createSignal<ReadonlyMap<string, StackPose>>(new Map())
   const [active, setActive] = createSignal<string | null>(null)
   const [revision, setRevision] = createSignal(0)
-  const step = () => props.step ?? STEP
+  const step = () => props.step ?? COVERED_STEP
   let request = 0
   let disposed = false
   let layoutRequest = 0

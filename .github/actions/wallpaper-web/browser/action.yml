@@ -1,0 +1,11 @@
+name: Verify Wallpaper browser
+description: Check the actual static site and its embedded character in Chromium.
+runs:
+  using: composite
+  steps:
+    - name: Install browser
+      shell: bash
+      run: pnpm exec playwright install --with-deps chromium
+    - name: Check static browser behavior
+      shell: bash
+      run: pnpm exec playwright test --config apps/wallpaper-web/playwright.config.ts

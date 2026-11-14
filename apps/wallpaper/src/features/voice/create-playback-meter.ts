@@ -1,3 +1,6 @@
+import {LIP_SYNC_SHAPES, type LipSyncShape} from '@winter-love/wallpaper/settings/lipsync'
+import type {LipSyncOutput, LipSyncWeights} from '../lipsync/types'
+import {analyzeSpeechFrame} from './analyze-speech-frame'
 import type {VoiceAudio} from './synthesis'
 
 interface PlaybackClip {
@@ -6,13 +9,17 @@ interface PlaybackClip {
   readonly speed: number
 }
 interface PlaybackMeterOptions {
+  readonly enabled?: () => boolean
   readonly clock: () => number
   readonly onLevel: (level: number) => void
+  readonly onShape?: LipSyncOutput
 }
 const WINDOW_SECONDS = 0.04
 const AMPLITUDE_GAIN = 6
 const OPEN_SECONDS = 0.035
 const CLOSE_SECONDS = 0.09
+const ANALYSIS_SECONDS = 0.03
+const SHAPING_SECONDS = 0.06
 const SILENT_LEVEL = 0.005
 const clipLevel = (clip: PlaybackClip, clock: number): number => {
   const offset = Math.floor((clock - clip.start) * clip.speed * clip.audio.sampleRate)
@@ -36,11 +43,16 @@ export const createPlaybackMeter = (options: PlaybackMeterOptions) => {
   let frame = 0
   let previous = options.clock()
   let level = 0
+  let shown: LipSyncWeights = {}
+  let analysis: {clip: PlaybackClip; index: number; weights: LipSyncWeights} | null = null
   const reset = () => {
     cancelAnimationFrame(frame)
     frame = 0
     level = 0
+    shown = {}
+    analysis = null
     options.onLevel(0)
+    options.onShape?.(null, 0)
   }
   const step = () => {
     frame = 0
@@ -51,6 +63,38 @@ export const createPlaybackMeter = (options: PlaybackMeterOptions) => {
     level = target + (level - target) * Math.exp(-seconds / smoothing)
     previous = clock
     options.onLevel(level < SILENT_LEVEL ? 0 : level)
+    const active = Array.from(clips).find((clip) => {
+      const elapsed = (clock - clip.start) * clip.speed
+      return elapsed >= 0 && elapsed < clip.audio.samples.length / clip.audio.sampleRate
+    })
+    const elapsed = active === undefined ? 0 : (clock - active.start) * active.speed
+    if (options.onShape !== undefined && active !== undefined && (options.enabled?.() ?? true)) {
+      const index = Math.floor(elapsed / ANALYSIS_SECONDS)
+      if (analysis?.clip !== active || analysis.index !== index) {
+        analysis = {clip: active, index, weights: analyzeSpeechFrame(active.audio, elapsed)}
+      }
+      const smoothing = 1 - Math.exp(-seconds / SHAPING_SECONDS)
+      const {weights} = analysis
+      shown = Object.fromEntries(
+        LIP_SYNC_SHAPES.map((shape) => [
+          shape,
+          (shown[shape] ?? 0) + ((weights[shape] ?? 0) - (shown[shape] ?? 0)) * smoothing,
+        ]),
+      )
+      const strongest = LIP_SYNC_SHAPES.reduce<LipSyncShape>(
+        (best, candidate) => ((shown[candidate] ?? 0) > (shown[best] ?? 0) ? candidate : best),
+        'a',
+      )
+      options.onShape(
+        (shown[strongest] ?? 0) > 0 ? strongest : null,
+        level < SILENT_LEVEL ? 0 : level,
+        shown,
+      )
+    } else {
+      shown = {}
+      analysis = null
+      options.onShape?.(null, 0)
+    }
     if (clips.size > 0) {
       frame = requestAnimationFrame(step)
     }

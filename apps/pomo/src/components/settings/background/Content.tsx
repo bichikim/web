@@ -1,7 +1,8 @@
 import {replaceBlobObjectUrl} from 'src/features/blob-object-url'
 import {createSignal, onCleanup, onMount, Show} from 'solid-js'
 import * as m from '@paraglide/message'
-import type {BackgroundController, BackgroundMedia} from 'src/features/background'
+import type {BackgroundController} from 'src/features/background'
+import type {BackgroundMedia} from '@winter-love/wallpaper/model'
 import {PSettingsActionButton} from '../ActionButton'
 
 export interface ContentProps {

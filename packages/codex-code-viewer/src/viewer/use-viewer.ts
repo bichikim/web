@@ -155,7 +155,13 @@ const createDocumentReceiver =
       navigation,
     })
     options.history.record(document.location, navigation?.historyIndex)
-    options.onNavigate()
+    if (
+      navigation?.preserveSelection !== true ||
+      !('document' in current) ||
+      !sameDocument(current.document, nextDocument)
+    ) {
+      options.onNavigate()
+    }
     options.synchronize({...current, document: nextDocument})
   }
 

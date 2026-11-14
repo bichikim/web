@@ -134,7 +134,7 @@ export const SpatialDeformerEditor = (props: SpatialDeformerEditorProps) => {
     }
   }
   const startRotationDrag = (event: PointerEvent, axis: number) => {
-    if (!editable() || event.button !== 0) {
+    if (!editable() || event.button !== 0 || event.isPrimary === false || drag !== undefined) {
       return
     }
     event.preventDefault()
@@ -152,7 +152,13 @@ export const SpatialDeformerEditor = (props: SpatialDeformerEditorProps) => {
   }
   const startTranslationDrag = (event: PointerEvent, axis: number) => {
     const point = pointerPoint(event)
-    if (!editable() || event.button !== 0 || point === undefined) {
+    if (
+      !editable() ||
+      event.button !== 0 ||
+      event.isPrimary === false ||
+      drag !== undefined ||
+      point === undefined
+    ) {
       return
     }
     event.preventDefault()

@@ -40,9 +40,10 @@ vi.mock('../../../features/model-download', () => ({
   useModelAssetManager: vi.fn(),
   useModelDownload: vi.fn(),
 }))
-vi.mock('../../../features/supertonic', () => ({
+vi.mock('../../../features/supertonic', () => ({isSupertonicModelDownloaded: vi.fn()}))
+vi.mock('@winter-love/supertonic/model', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@winter-love/supertonic/model')>()),
   getSupertonicModel: vi.fn(() => ({size: 1})),
-  isSupertonicModelDownloaded: vi.fn(),
 }))
 vi.mock('../word-pronunciation', () => ({
   generateLanguageLearningWordPronunciation: vi.fn(),

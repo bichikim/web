@@ -6,15 +6,17 @@ import {
   DESKTOP_CLEAN_EXIT_STORAGE_KEY,
   DESKTOP_MODE_OWNER_STORAGE_KEY,
   DESKTOP_MODE_STORAGE_KEY,
+  readDesktopModeOwnerStorage,
+  writeDesktopModeOwnerStorage,
+} from 'src/features/desktop-mode/storage'
+import {
   isDesktopBackgroundMode,
-  isDesktopMode,
   readCleanExit,
   readDesktopMode,
-  readDesktopModeOwnerStorage,
   writeCleanExit,
   writeDesktopMode,
-  writeDesktopModeOwnerStorage,
 } from '../model'
+import {isDesktopMode} from 'src/features/desktop-mode/is-desktop-mode'
 
 beforeEach(() => localStorage.clear())
 

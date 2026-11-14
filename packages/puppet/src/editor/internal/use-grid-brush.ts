@@ -101,7 +101,10 @@ export const useGridBrush = (props: UseGridBrushProps) => {
   const available = () => supportsGridBrush(props.node())
   const canSmooth = () => (props.node()?.columns ?? 0) > 1 && (props.node()?.rows ?? 0) > 1
   const enabled = () => mode() !== 'select' && available() && (mode() !== 'smooth' || canSmooth())
-  const cancel = () => {
+  const cancel = (event?: PointerEvent) => {
+    if (event !== undefined && stroke?.pointerId !== event.pointerId) {
+      return
+    }
     const previous = stroke
     stroke = null
     setDraft(null)
@@ -160,6 +163,7 @@ export const useGridBrush = (props: UseGridBrushProps) => {
     if (
       !enabled() ||
       !available() ||
+      stroke !== null ||
       !props.editable() ||
       event.button !== 0 ||
       node === undefined ||
@@ -217,12 +221,7 @@ export const useGridBrush = (props: UseGridBrushProps) => {
     enabled,
     finish,
     hardness,
-    maximumRadius: () =>
-      Math.max(
-        INITIAL_RADIUS,
-        props.editor.document.viewport.width,
-        props.editor.document.viewport.height,
-      ),
+    maximumRadius: () => getMaximumRadius(props.editor.document),
     mode,
     move,
     radius,
@@ -237,3 +236,6 @@ export const useGridBrush = (props: UseGridBrushProps) => {
     strength,
   }
 }
+
+const getMaximumRadius = (document: PuppetDocument) =>
+  Math.max(INITIAL_RADIUS, document.viewport.width, document.viewport.height)

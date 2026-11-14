@@ -8,13 +8,13 @@ import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import type {ModelResource} from '../../model-storage'
 import type {Result} from 'src/features/result'
-import type {SupertonicSessions, SupertonicVoice} from '../engine'
-import type {SupertonicError} from '../errors'
+import type {SupertonicSessions, SupertonicVoice} from '@winter-love/supertonic/engine'
+import type {SupertonicError} from '@winter-love/supertonic/errors'
 import type {SupertonicWorkerInput, SupertonicWorkerOutput} from '../messages'
 import type {InitializationAssets, ModelAssets} from '../model-assets'
-import type {SupertonicModel} from '../model'
-import type {SupertonicBackend, SupertonicRuntime} from '../runtime'
-import type {LoadBufferOptions} from '../sessions'
+import type {SupertonicModel} from '@winter-love/supertonic/model'
+import type {SupertonicBackend, SupertonicRuntime} from '@winter-love/supertonic/runtime'
+import type {LoadBufferOptions} from '@winter-love/supertonic/sessions'
 
 const httpMocks = vi.hoisted(() => ({fetch: vi.fn()}))
 const storageMocks = vi.hoisted(() => ({
@@ -47,7 +47,7 @@ vi.mock('../../model-storage', () => ({
   reportModelStorageError: storageMocks.report,
 }))
 vi.mock('../audio', () => ({joinAudioChunks: audioMocks.join}))
-vi.mock('../engine', () => ({
+vi.mock('@winter-love/supertonic/engine', () => ({
   createSupertonicVoice: engineMocks.createVoice,
   parseSupertonicVoice: engineMocks.parseVoice,
   SupertonicEngine: engineMocks.Constructor,
@@ -56,17 +56,17 @@ vi.mock('../model-assets', () => ({
   getVoiceStyleUrl: assetMocks.getVoiceUrl,
   parseInitializationAssets: assetMocks.parse,
 }))
-vi.mock('../model', () => ({
+vi.mock('@winter-love/supertonic/model', () => ({
   getSupertonicAssetUrl: modelMocks.getAssetUrl,
   getSupertonicModel: modelMocks.getModel,
   SUPERTONIC_MODEL_ASSETS_URL: '/manifest.json',
 }))
-vi.mock('../runtime', () => ({loadSupertonicRuntime: runtimeMocks.load}))
-vi.mock('../sessions', () => ({
+vi.mock('@winter-love/supertonic/runtime', () => ({loadSupertonicRuntime: runtimeMocks.load}))
+vi.mock('@winter-love/supertonic/sessions', () => ({
   loadSessions: sessionMocks.load,
   releaseSessions: sessionMocks.release,
 }))
-vi.mock('../text-chunking', () => ({splitSpeechText: textMocks.split}))
+vi.mock('@winter-love/supertonic/text-chunking', () => ({splitSpeechText: textMocks.split}))
 
 type WorkerMessageHandler = (event: MessageEvent<SupertonicWorkerInput>) => Promise<void>
 

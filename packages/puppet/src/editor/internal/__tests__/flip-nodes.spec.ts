@@ -1,6 +1,12 @@
+import {updateNode} from '../scene-tree'
+import {getSceneNode} from '../scene-graph'
 import {describe, expect, test} from 'vitest'
 
-import {composeParameterScene, composeParameterVertices} from '../../../deformation'
+import {
+  composeParameterScene,
+  composeParameterVertices,
+  mapBindingKeyforms,
+} from '../../../deformation'
 import {rebindDeformer} from '../../../deformation/binding'
 import {applySceneNodeDeformers} from '../../../deformation/vertices'
 import {
@@ -13,6 +19,7 @@ import {
 } from '../../../player'
 import {flipSceneNodes} from '../flip-nodes'
 import {mirrorCoordinates} from '../mirror-geometry'
+import {createDenseMesh} from './fixtures/dense-mesh'
 
 const part = (id: string, vertices: number[]): PuppetPart => ({
   id,
@@ -374,3 +381,55 @@ describe('flipSceneNodes', () => {
     expect(result).toEqual({message: '잠긴 레이어가 있어 반전할 수 없습니다.', ok: false})
   })
 })
+
+test.each(['x', 'y'] as const)('should reflect full authored rotation turns on %s', (axis) => {
+  const source = createDocument()
+  const angle = Math.PI * 2 + Math.PI / 2
+  const document = {
+    ...source,
+    parameterBindings: source.parameterBindings!.map((binding) =>
+      binding.id === 'turn'
+        ? mapBindingKeyforms(binding, (form) => ({
+            ...form,
+            deformers: form.deformers!.map((entry) => ({
+              ...entry,
+              rotationAngle: form.values[0] === 0 ? 0 : angle,
+            })),
+          }))
+        : binding,
+    ),
+    scene: {roots: updateNode(source.scene!.roots, 'rot', (node) => ({...node, rotationAngle: 0}))},
+  }
+  const result = flipSceneNodes({axis, document, nodeIds: ['rot'], reference: 'canvas'})
+  expect(result.ok).toBe(true)
+  if (result.ok) {
+    const mirrored = result.document.parameterBindings!.find((binding) => binding.id === 'turn')!
+      .keyforms[1]!.deformers![0]!
+    expect(mirrored.rotationAngle).toBeCloseTo((axis === 'x' ? Math.PI : 0) - angle)
+    const pose = composeParameterScene(result.document, {turn: 0.5})
+    const frame = getSceneNode({...result.document, scene: pose}, 'rot')!
+    expect(frame.kind === 'deformer' ? frame.rotationAngle : undefined).toBeCloseTo(
+      (axis === 'x' ? Math.PI : 0) - angle / 2,
+    )
+  }
+})
+
+test.each([3, 150_000])(
+  'should flip a selection with %i vertices about its own center',
+  (count) => {
+    const mesh = createDenseMesh(count)
+    const document = {
+      ...createDocument(),
+      motions: [],
+      parameterBindings: [],
+      parts: [{...part('large', []), mesh}],
+      scene: {roots: [partNode('large')]},
+    }
+    const result = flipSceneNodes({axis: 'x', document, nodeIds: ['large'], reference: 'selection'})
+    expect(result.ok).toBe(true)
+    if (result.ok) {
+      expect(result.document.parts[0]!.mesh.vertices.slice(0, 2)).toEqual([count - 1, 0])
+      expect(result.document.parts[0]!.mesh.vertices.slice(-2)).toEqual([0, (count - 1) % 2])
+    }
+  },
+)

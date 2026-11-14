@@ -5,39 +5,40 @@ import {afterEach, expect, test} from 'vitest'
 import {type SettingsPage, SSettingsNavigation} from '../SSettingsNavigation'
 
 afterEach(cleanup)
-test('should expose one selected tab and associated panel while keeping navigation outside panel content', () => {
+test('should identify the current settings page and keep navigation outside its content', () => {
   const [page, setPage] = createSignal<SettingsPage>('background')
   render(() => (
     <SSettingsNavigation value={page()} onChange={setPage}>
       {(page) => <button>{page} content</button>}
     </SSettingsNavigation>
   ))
-  const tabs = screen.getByRole('tablist', {name: '설정 화면'})
-  const panel = screen.getByRole('tabpanel', {name: '배경'})
-  expect(panel.contains(tabs)).toBe(false)
-  expect(
-    screen.getByRole('tab', {name: '배경', selected: true}).getAttribute('aria-controls'),
-  ).toBe(panel.id)
-  fireEvent.click(screen.getByRole('tab', {name: '위젯'}))
-  expect(screen.getByRole('tabpanel', {name: '위젯'}).textContent).toBe('widget content')
-  expect(screen.queryByRole('tabpanel', {name: '배경'})).toBeNull()
+  const navigation = screen.getByRole('navigation', {name: '설정 화면'})
+  const panel = screen.getByRole('region', {name: '배경 설정'})
+  expect(panel.contains(navigation)).toBe(false)
+  expect(screen.getByRole('button', {current: 'page', name: '배경'})).toBeInTheDocument()
+  expect(screen.getByRole('heading', {level: 2, name: '배경'})).toBeInTheDocument()
+  fireEvent.click(screen.getByRole('button', {name: '위젯'}))
+  expect(screen.getByRole('region', {name: '위젯 설정'})).toHaveTextContent('widget content')
+  expect(screen.getByRole('heading', {level: 2, name: '위젯'})).toBeInTheDocument()
+  expect(screen.queryByRole('region', {name: '배경 설정'})).toBeNull()
+  expect(screen.getAllByRole('button', {current: 'page'})).toHaveLength(1)
 })
-test('should move focus using arrow and boundary keys and activate explicitly', () => {
+test('should navigate locally without requiring controlled state', () => {
+  render(() => <SSettingsNavigation>{(page) => page}</SSettingsNavigation>)
+  fireEvent.click(screen.getByRole('button', {name: '일반'}))
+  expect(screen.getByRole('region', {name: '일반 설정'})).toHaveTextContent('general')
+  expect(screen.getByRole('button', {current: 'page', name: '일반'})).toBeInTheDocument()
+})
+test('should follow the controlled page and report navigation changes', () => {
   const [page, setPage] = createSignal<SettingsPage>('background')
   render(() => (
     <SSettingsNavigation value={page()} onChange={setPage}>
       {(page) => page}
     </SSettingsNavigation>
   ))
-  const background = screen.getByRole('tab', {name: '배경'})
-  background.focus()
-  fireEvent.keyDown(background, {key: 'ArrowRight'})
-  expect(document.activeElement).toBe(screen.getByRole('tab', {name: '위젯'}))
-  expect(page()).toBe('background')
-  fireEvent.click(document.activeElement!)
+  fireEvent.click(screen.getByRole('button', {name: '위젯'}))
   expect(page()).toBe('widget')
-  fireEvent.keyDown(screen.getByRole('tab', {name: '위젯'}), {key: 'End'})
-  expect(document.activeElement).toBe(screen.getByRole('tab', {name: '일반'}))
-  fireEvent.keyDown(document.activeElement!, {key: 'Home'})
-  expect(document.activeElement).toBe(background)
+  setPage('interaction')
+  expect(screen.getByRole('button', {current: 'page', name: '조작'})).toBeInTheDocument()
+  expect(screen.getByRole('region', {name: '조작 설정'})).toHaveTextContent('interaction')
 })

@@ -9,9 +9,9 @@ const WINDOW_WIDTH: f64 = 320.0;
 #[cfg(target_os = "macos")]
 mod frame;
 
-#[derive(Clone, Copy, Serialize)]
+#[derive(Clone, Copy, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
-enum Anchor {
+pub enum Anchor {
     Top,
     Bottom,
 }
@@ -19,6 +19,10 @@ enum Anchor {
 #[derive(Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Target {
+    position_x: f64,
+    position_y: f64,
+    widget_width: f64,
+    widget_height: f64,
     anchor: Anchor,
     x: f64,
     y: f64,
@@ -34,6 +38,10 @@ fn relative_target(
     scale: f64,
 ) -> Target {
     Target {
+        position_x: 0.0,
+        position_y: 0.0,
+        widget_width: f64::from(size.width) / scale,
+        widget_height: f64::from(size.height) / scale,
         anchor: Anchor::Bottom,
         x: (f64::from(origin.x - bubble.x) + f64::from(size.width) * 0.5) / scale,
         y: (f64::from(origin.y - bubble.y) + f64::from(size.height) * 0.3) / scale,
@@ -68,12 +76,18 @@ pub fn target(app: &AppHandle, id: &str) -> Result<Option<Target>, String> {
     let origin = bubble.outer_position().map_err(|error| error.to_string())?;
     let bounds = bubble.inner_size().map_err(|error| error.to_string())?;
     let scale = bubble.scale_factor().map_err(|error| error.to_string())?;
-    let mut point = relative_target(
-        widget.outer_position().map_err(|error| error.to_string())?,
-        widget.inner_size().map_err(|error| error.to_string())?,
-        origin,
-        scale,
-    );
+    let widget_origin = widget.outer_position().map_err(|error| error.to_string())?;
+    let widget_size = widget.inner_size().map_err(|error| error.to_string())?;
+    let mut point = relative_target(widget_origin, widget_size, origin, scale);
+    point.position_x =
+        (f64::from(origin.x - widget_origin.x) + 24.0 * scale) / f64::from(widget_size.width);
+    let anchor_y = layout.edge_y
+        + if matches!(layout.anchor, Anchor::Bottom) {
+            -24.0 * scale
+        } else {
+            24.0 * scale
+        };
+    point.position_y = (anchor_y - f64::from(widget_origin.y)) / f64::from(widget_size.height);
     point.max_height = layout.max_height;
     point.anchor = layout.anchor;
     (point.inset_top, point.inset_bottom) = content_insets(&layout, origin.y, bounds.height, scale);
@@ -90,6 +104,8 @@ pub fn emit_target(app: &AppHandle, id: &str) -> Result<(), String> {
 
 #[derive(Clone, Deserialize, Serialize)]
 pub struct Speech {
+    #[serde(default)]
+    pub anchor: Option<Anchor>,
     pub enabled: bool,
     pub x: f64,
     pub y: f64,
@@ -97,6 +113,7 @@ pub struct Speech {
 impl Default for Speech {
     fn default() -> Self {
         Self {
+            anchor: None,
             enabled: true,
             x: 0.9,
             y: 0.05,
@@ -154,12 +171,15 @@ fn placement(
             padded.x.clamp(start.x + inset, start.x + remaining - inset)
         })
         .unwrap_or(padded.x);
-    let above = speech.y <= 0.3;
+    let above = speech
+        .anchor
+        .map(|anchor| matches!(anchor, Anchor::Bottom))
+        .unwrap_or(speech.y <= 0.3);
     let overlaps_character = f64::from(x) + 36.0 * scale
         < f64::from(origin.x) + f64::from(size.width)
         && f64::from(x) + f64::from(bounds.width) - 36.0 * scale > f64::from(origin.x);
     let requested_anchor = f64::from(origin.y) + f64::from(size.height) * speech.y;
-    let anchor = if !overlaps_character {
+    let anchor = if speech.anchor.is_some() || !overlaps_character {
         requested_anchor
     } else if above {
         requested_anchor.min(f64::from(origin.y))
@@ -438,6 +458,39 @@ mod tests {
     use super::*;
 
     #[test]
+    fn direct_drag_preserves_direction_and_follows_the_pointer_through_the_character() {
+        for anchor in [Anchor::Top, Anchor::Bottom] {
+            let speech = Speech {
+                anchor: Some(anchor),
+                enabled: true,
+                x: 0.5,
+                y: 0.2,
+            };
+            let before = placement(
+                PhysicalPosition::new(600, 400),
+                PhysicalSize::new(400, 600),
+                &speech,
+                2.0,
+                None,
+                PhysicalSize::new(640, 360),
+            );
+            let after = placement(
+                PhysicalPosition::new(600, 400),
+                PhysicalSize::new(400, 600),
+                &Speech { y: 0.4, ..speech },
+                2.0,
+                None,
+                PhysicalSize::new(640, 360),
+            );
+            assert!((after.edge_y - before.edge_y - 120.0).abs() < 0.001);
+            assert!(matches!(
+                (before.anchor, after.anchor),
+                (Anchor::Top, Anchor::Top) | (Anchor::Bottom, Anchor::Bottom)
+            ));
+        }
+    }
+
+    #[test]
     fn minimum_content_height_does_not_shift_the_character_attachment_at_screen_edges() {
         for scale in [1.0, 2.0] {
             let area = (
@@ -452,6 +505,7 @@ mod tests {
                 let speech = Speech {
                     x: 0.5,
                     y: if above { 0.0 } else { 1.0 },
+                    anchor: None,
                     enabled: true,
                 };
                 let layout = placement(
@@ -511,6 +565,7 @@ mod tests {
     fn clears_the_character_even_when_the_saved_anchor_is_inside_its_frame() {
         let area = Some((PhysicalPosition::new(0, 24), PhysicalSize::new(1920, 1056)));
         let speech = Speech {
+            anchor: None,
             enabled: true,
             x: 0.5,
             y: 0.25,
@@ -541,6 +596,7 @@ mod tests {
             PhysicalPosition::new(1700, 700),
             PhysicalSize::new(220, 420),
             &Speech {
+                anchor: None,
                 enabled: true,
                 x: 2.0,
                 y: 0.25,
@@ -558,6 +614,7 @@ mod tests {
         let origin = PhysicalPosition::new(600, 700);
         let size = PhysicalSize::new(320, 420);
         let speech = Speech {
+            anchor: None,
             enabled: true,
             x: 0.5,
             y: 0.0,
@@ -591,6 +648,7 @@ mod tests {
     fn uses_the_space_above_before_allowing_overlap_at_the_top_edge() {
         let area = Some((PhysicalPosition::new(0, 24), PhysicalSize::new(1920, 1056)));
         let speech = Speech {
+            anchor: None,
             enabled: true,
             x: 0.5,
             y: 0.0,
@@ -626,6 +684,7 @@ mod tests {
             PhysicalSize::new(2560, 1600),
         ));
         let speech = Speech {
+            anchor: None,
             enabled: true,
             x: 0.5,
             y: 0.8,
@@ -659,6 +718,7 @@ mod tests {
                 PhysicalPosition::new(-1200, 300),
                 PhysicalSize::new(640, 840),
                 &Speech {
+                    anchor: None,
                     enabled: true,
                     x: 0.5,
                     y: 0.5,
@@ -678,6 +738,8 @@ mod tests {
             PhysicalPosition::new(1500, 200),
             2.0,
         );
+        assert_eq!(target.widget_width, 320.0);
+        assert_eq!(target.widget_height, 420.0);
         assert_eq!(target.x, 310.0);
         assert_eq!(target.y, 226.0);
     }

@@ -20,7 +20,8 @@ import {
   useModelDownload,
 } from '../../../features/model-download'
 import {formatModelDownloadSize} from '../../../features/model-storage'
-import {getSupertonicModel, isSupertonicModelDownloaded} from '../../../features/supertonic'
+import {getSupertonicModel} from '@winter-love/supertonic/model'
+import {isSupertonicModelDownloaded} from '../../../features/supertonic'
 import {getPrimaryMood} from '../../../features/text-mood'
 import {PFaceIcon} from '../../p-face-icon/PFaceIcon'
 import {PGenerationStatus} from '../../p-generation-status/PGenerationStatus'
@@ -41,11 +42,14 @@ vi.mock('../../../features/supertonic', async () => {
     '../../../features/supertonic',
   )
 
-  return {
-    ...actual,
-    getSupertonicModel: vi.fn(),
-    isSupertonicModelDownloaded: vi.fn(),
-  }
+  return {...actual, isSupertonicModelDownloaded: vi.fn()}
+})
+vi.mock('@winter-love/supertonic/model', async () => {
+  const actual: typeof import('@winter-love/supertonic/model') = await vi.importActual(
+    '@winter-love/supertonic/model',
+  )
+
+  return {...actual, getSupertonicModel: vi.fn()}
 })
 vi.mock('../../../features/text-mood', () => ({getPrimaryMood: vi.fn()}))
 vi.mock('../DraftGenerator', () => ({PDialogueDraftGenerator: vi.fn()}))

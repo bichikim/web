@@ -18,9 +18,10 @@ test('should publish real layout changes, coalesce unchanged regions and release
   vi.mocked(invoke).mockResolvedValue(undefined)
   const onError = vi.fn()
   const [text, setText] = createSignal('한 줄')
+  const [dragging, setDragging] = createSignal(false)
   const view = render(() => {
     const [element, setElement] = createSignal<HTMLElement | null>(null)
-    useSpeechHitTest({element, onError})
+    useSpeechHitTest({dragging, element, onError})
     return (
       <main ref={setElement} class="p-9">
         <div role="listitem" class="w-60">
@@ -54,6 +55,10 @@ test('should publish real layout changes, coalesce unchanged regions and release
     requestAnimationFrame(() => resolve())
   })
   expect(regions()).toHaveLength(2)
+  setDragging(true)
+  await expect.poll(() => regions().at(-1)?.interactive).toBe(true)
+  setDragging(false)
+  await expect.poll(() => regions().at(-1)?.interactive).toBe(false)
   view.unmount()
   await expect.poll(() => vi.mocked(invoke).mock.lastCall?.[0]).toBe('clear_widget_hit_region')
   expect(onError).not.toHaveBeenCalled()

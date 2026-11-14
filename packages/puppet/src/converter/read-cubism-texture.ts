@@ -1,6 +1,6 @@
 /* eslint-disable no-magic-numbers -- PNG signature and IHDR offsets. */
 import type {PuppetPart} from '../player/document'
-import {encodeBase64} from './encode-base64'
+import {encodeBase64} from '../encoding/encode-base64'
 
 /** Embeds a Cubism PNG texture, validating its signature and dimensions. */
 export const readCubismTexture = (source: Uint8Array): PuppetPart['texture'] => {

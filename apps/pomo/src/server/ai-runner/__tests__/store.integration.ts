@@ -2,6 +2,7 @@
 import {mkdtemp, rm} from 'node:fs/promises'
 import {tmpdir} from 'node:os'
 import {join} from 'node:path'
+import {DatabaseSync} from 'node:sqlite'
 
 import {afterEach, beforeEach, describe, expect, it} from 'vitest'
 
@@ -42,6 +43,25 @@ describe('SqliteRunnerJobStore', () => {
     expect(second.created).toBe(false)
     expect(second.job.jobId).toBe(jobId)
     expect(second.job.status).toBe('queued')
+  })
+
+  it('should constrain stored statuses to the runner protocol', () => {
+    store.create(createRequest())
+    const database = new DatabaseSync(join(directory, 'runner.sqlite'))
+
+    try {
+      const update = database.prepare('UPDATE runner_jobs SET status = ? WHERE job_id = ?')
+
+      for (const status of ['queued', 'running', 'succeeded', 'failed', 'cancelled']) {
+        update.run(status, jobId)
+        expect(store.get(jobId)?.status).toBe(status)
+      }
+
+      expect(() => update.run('paused', jobId)).toThrow(/CHECK constraint failed/u)
+      expect(store.get(jobId)?.status).toBe('cancelled')
+    } finally {
+      database.close()
+    }
   })
 
   it('should reject a duplicate job ID with a different request hash', () => {

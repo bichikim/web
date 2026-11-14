@@ -27,7 +27,7 @@ vi.mock('../../../features/desktop-mode', () => ({
   useDesktopSurfaceSize: vi.fn(),
 }))
 vi.mock('../../../features/weather', () => ({useWeather: vi.fn()}))
-vi.mock('../../p-music-player/PMusicPlayer', () => ({
+vi.mock('../../music-player/PMusicPlayer', () => ({
   PMusicPlayer: vi.fn((props) => (
     <div data-expanded={String(props.expanded)} data-style={props.sceneStyle}>
       플레이어

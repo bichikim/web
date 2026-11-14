@@ -1,5 +1,5 @@
 import {webcrypto} from 'node:crypto'
-import {DEFAULT_BACKGROUND} from '../model'
+import {DEFAULT_BACKGROUND} from '@winter-love/wallpaper/model'
 /** @vitest-environment jsdom */
 import {Storage} from '@apps-in-toss/web-framework'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'

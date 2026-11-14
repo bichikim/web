@@ -25,6 +25,6 @@ export const parseLanguageLearningTags = (input: string): ReadonlyArray<string> 
     input.split(LANGUAGE_LEARNING_TAG_DELIMITER_PATTERN),
     map((value) => truncateLanguageLearningTag(value.trim())),
     filter((tag) => tag.length > 0),
-    uniqBy((tag) => tag.toLocaleLowerCase()),
+    uniqBy((tag) => tag.toLocaleLowerCase().normalize('NFC')),
     take(MAXIMUM_LANGUAGE_LEARNING_TAGS),
   )

@@ -13,6 +13,8 @@ import {
 } from '../mesh'
 import type {PuppetDocument, PuppetMesh, PuppetPart} from '../player/document'
 import {type EditDocumentResult, type EditPartEdgeOptions, movePartVertex} from './edit-document'
+import {createPartResult as createTopologyPartResult} from './internal/create-part-result'
+import {resetResultParameterVertices} from './internal/reset-result-parameter-vertices'
 import {replaceTriangleVertex} from './internal/triangles'
 
 interface TriangleRecord {
@@ -364,19 +366,27 @@ export const collapsePartEdge = (options: EditPartEdgeOptions): EditDocumentResu
     options.secondVertexIndex,
     [...uniqueTriangles.values()].flatMap((triangle) => triangle),
   )
-  const result = createPartResult(movedResult.document, movedPart, mesh)
+  const result = createTopologyPartResult(
+    movedResult.document,
+    movedPart,
+    mesh,
+    options.secondVertexIndex,
+  )
 
-  return result.ok
-    ? {
-        ...result,
-        document: {
-          ...result.document,
-          motions: updateMotionIndices(
-            movedResult.document,
-            movedPart.id,
-            options.secondVertexIndex,
-          ),
-        },
-      }
-    : result
+  return resetResultParameterVertices(
+    result.ok
+      ? {
+          ...result,
+          document: {
+            ...result.document,
+            motions: updateMotionIndices(
+              movedResult.document,
+              movedPart.id,
+              options.secondVertexIndex,
+            ),
+          },
+        }
+      : result,
+    movedPart.id,
+  )
 }

@@ -1,9 +1,11 @@
-import {expect, test} from 'claude-code/testing'
-import {paneTarget, projectFixture} from './fixture'
+import {paneTarget, projectFixture, required} from './fixture'
+import type {On} from 'claude-code'
+import {expect, type Mounted, test} from 'claude-code/testing'
+import {readField} from './read-field'
 
 const SYMBOL_COLUMN = 7
 const PATH_COLUMN = 27
-const navigationFixture = (on) => {
+const navigationFixture = (on: On) => {
   const fixture = projectFixture(on)
   const source = "import {greet} from './b'\ngreet('one')\n"
   fixture.files.set('a.ts', {revision: 'a1', source})
@@ -18,7 +20,12 @@ const navigationFixture = (on) => {
   ])
   return fixture
 }
-const click = async (pane, x, y, extra = {}) => {
+const click = async (
+  pane: Mounted<'desktop', 'Pane'>,
+  x: number,
+  y: number,
+  extra: {ctrl?: true; meta?: true} = {},
+) => {
   await pane.pointer({button: 'left', in: 'code-editor', type: 'down', x, y, ...extra})
   await pane.pointer({button: 'left', in: 'code-editor', type: 'up', x, y, ...extra})
 }
@@ -33,13 +40,14 @@ test('should follow an identifier or import path through a plain source click', 
   await pane.input({key: 'path', text: 'a.ts'})
   await click(pane, SYMBOL_COLUMN, 1)
   expect(
-    fixture.requests.filter((entry) => entry.name === 'code.navigate').at(-1).arguments,
+    required(fixture.requests.filter((entry) => entry.name === 'code.navigate').at(-1)).arguments,
   ).toMatchObject({navigation: 'definition', offset: 26, path: 'a.ts'})
-  expect(fixture.stored.get('pane:/project:session-one').active).toBe('b.ts')
+  expect(readField(fixture.stored.get('pane:/project:session-one'), 'active')).toBe('b.ts')
   await pane.press({key: 'back'})
   await click(pane, PATH_COLUMN, 0)
   expect(
-    fixture.requests.filter((entry) => entry.name === 'code.navigate').at(-1).arguments.navigation,
+    required(fixture.requests.filter((entry) => entry.name === 'code.navigate').at(-1)).arguments
+      .navigation,
   ).toBe('path')
 })
 

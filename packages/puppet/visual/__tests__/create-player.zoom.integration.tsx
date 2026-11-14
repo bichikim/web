@@ -1,4 +1,5 @@
-import {afterEach, describe, expect, test} from 'vitest'
+import {afterEach, describe, expect, test, vi} from 'vitest'
+import {RenderTexture} from 'pixi.js'
 import {createPlayer, type Player} from '../../src/player/create-player'
 import {createEmptyDocument} from '../../src/player/create-empty-document'
 import type {PuppetDocument, PuppetPart} from '../../src/player/document'
@@ -12,7 +13,10 @@ const MODEL_WIDTH = 600
 const MODEL_HEIGHT = 842
 const players: Player[] = []
 
-afterEach(() => players.splice(0).forEach((player) => player.destroy()))
+afterEach(() => {
+  players.splice(0).forEach((player) => player.destroy())
+  vi.restoreAllMocks()
+})
 
 const createCanvas = (width: number, height: number) => {
   const canvas = document.createElement('canvas')
@@ -161,6 +165,60 @@ const createFixturePlayer = async (resolution: number, size: ViewportSize) => {
 }
 
 describe('createPlayer zoomed compositing', () => {
+  test.each([1, 2])(
+    'should retain uniform masked fitting without accumulating render targets at resolution %i',
+    async (resolution) => {
+      const allocations = vi.spyOn(RenderTexture, 'create')
+      const size = {height: HEIGHT, width: WIDTH}
+      const {actual, backdrop, canvas, player} = await createFixturePlayer(resolution, size)
+      const expected = createCanvas(canvas.width, canvas.height)
+      const graphics = canvas.getContext('webgl2')!
+      const cases = [
+        {fit: 'contain', height: 230, width: 320},
+        {fit: 'cover', height: 230, width: 320},
+        {fit: 'contain', height: 320, width: 230},
+        {fit: 'cover', height: 320, width: 230},
+        {fit: 'contain', height: 64, width: 1280},
+        {fit: 'cover', height: 64, width: 1280},
+        {fit: 'contain', height: 1280, width: 64},
+        {fit: 'cover', height: 1280, width: 64},
+      ] as const
+      const verify = (scenario: (typeof cases)[number]) => {
+        Object.assign(size, scenario)
+        player.resize()
+        player.setFit(scenario.fit)
+        const ratios = [size.width / MODEL_WIDTH, size.height / MODEL_HEIGHT]
+        const zoom = scenario.fit === 'cover' ? Math.max(...ratios) : Math.min(...ratios)
+        const camera = {
+          x: (MODEL_WIDTH - size.width / zoom) / 2,
+          y: (MODEL_HEIGHT - size.height / zoom) / 2,
+          zoom,
+        }
+        expected.canvas.width = canvas.width
+        expected.canvas.height = canvas.height
+        expected.context.setTransform(
+          zoom * resolution,
+          0,
+          0,
+          zoom * resolution,
+          -camera.x * zoom * resolution,
+          -camera.y * zoom * resolution,
+        )
+        expected.context.drawImage(backdrop, 0, 0)
+        expect(graphics.getError()).toBe(0)
+        expect(comparePixels(actual.context, expected.context, camera, resolution)).toEqual([])
+      }
+      cases.forEach(verify)
+      const warmed = allocations.mock.calls.length
+      for (const count of [1, 8, 32]) {
+        for (let index = 0; index < count; index += 1) {
+          verify(cases[index % cases.length]!)
+        }
+        expect(allocations).toHaveBeenCalledTimes(warmed)
+      }
+    },
+  )
+
   test.each([1, 2])(
     'should preserve the backdrop through masked blending at resolution %i while zooming and panning',
     async (resolution) => {

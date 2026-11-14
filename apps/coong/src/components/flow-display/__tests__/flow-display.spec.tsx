@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 
-import {render, screen} from '@solidjs/testing-library'
+import {render, screen, waitFor} from '@solidjs/testing-library'
 import {createRoot, createSignal} from 'solid-js'
 import {afterEach, describe, expect, it, vi} from 'vitest'
 
@@ -121,6 +121,72 @@ describe('SFlowDisplay', () => {
     view.unmount()
     globalThis.dispatchEvent(new Event('resize'))
     expect(measureText).toHaveBeenCalledTimes(measuredBeforeUnmount)
+  })
+
+  it.each([false, true])('should remeasure changed DOM text (nested: %s)', async (nested) => {
+    let textWidth = 50
+    vi.spyOn(HTMLElement.prototype, 'clientWidth', 'get').mockReturnValue(150)
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(
+      () => new DOMRect(0, 0, textWidth, 10),
+    )
+    const [label, setLabel] = createSignal('short')
+    const view = render(() => (
+      <div>
+        <SFlowDisplay move speed={2} data-testid="flow" tabindex={0}>
+          {nested ? <span>{label()}</span> : label()}
+        </SFlowDisplay>
+      </div>
+    ))
+    const flow = view.getByTestId('flow')
+    const text = flow.firstElementChild
+    flow.focus()
+    textWidth = 300
+    setLabel('long title')
+    await waitFor(() => expect(flow.children).toHaveLength(2))
+    expect(flow).toHaveClass('animate-slide-text')
+    expect(flow.style.animationDuration).toBe('6s')
+    textWidth = 400
+    setLabel('even longer title')
+    await waitFor(() => expect(flow.style.animationDuration).toBe('8s'))
+    textWidth = 50
+    setLabel('short again')
+    await waitFor(() => expect(flow.children).toHaveLength(1))
+    expect(flow).not.toHaveClass('animate-slide-text')
+    expect(flow.style.animationDuration).toBe('0s')
+    expect(flow.firstElementChild).toBe(text)
+    expect(document.activeElement).toBe(flow)
+  })
+
+  it('should stop observing text when disabled and disconnect on unmount', async () => {
+    vi.spyOn(HTMLElement.prototype, 'clientWidth', 'get').mockReturnValue(100)
+    const measure = vi
+      .spyOn(HTMLElement.prototype, 'getBoundingClientRect')
+      .mockReturnValue(new DOMRect(0, 0, 200, 10))
+    const disconnect = vi.spyOn(MutationObserver.prototype, 'disconnect')
+    const [move, setMove] = createSignal(false)
+    const [label, setLabel] = createSignal('first')
+    const view = render(() => (
+      <div>
+        <SFlowDisplay move={move()}>{label()}</SFlowDisplay>
+      </div>
+    ))
+    setLabel('disabled')
+    await Promise.resolve()
+    expect(measure).not.toHaveBeenCalled()
+    setMove(true)
+    setLabel('enabled')
+    await Promise.resolve()
+    const calls = measure.mock.calls.length
+    setMove(false)
+    expect(disconnect).toHaveBeenCalledOnce()
+    setLabel('disabled again')
+    await Promise.resolve()
+    expect(measure).toHaveBeenCalledTimes(calls)
+    setMove(true)
+    view.unmount()
+    expect(disconnect).toHaveBeenCalledTimes(2)
+    await Promise.resolve()
+    expect(measure).toHaveBeenCalledTimes(calls + 1)
   })
 
   it('should render a single static copy when movement is disabled', () => {

@@ -45,6 +45,7 @@ export type BackgroundMode = 'character' | 'frame' | 'website'
 export type PlaybackOrder = 'sequential' | 'random'
 export type TransitionEffect = 'none' | (typeof RANDOM_TRANSITIONS)[number]
 export type MediaKind = 'photo' | 'video'
+export type MediaFit = 'contain' | 'cover'
 export type VideoPlaybackMode = 'end' | 'hold' | 'loop'
 export interface BackgroundPreferences {
   readonly videoMode: VideoPlaybackMode

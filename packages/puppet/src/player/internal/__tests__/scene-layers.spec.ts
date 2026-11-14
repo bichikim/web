@@ -7,11 +7,12 @@ import {
   type PuppetDocument,
   type PuppetGroupRenderProperties,
   type PuppetPart,
+  type PuppetSceneGroupNode,
   type PuppetSceneNode,
 } from '../../document'
 import {parseDocumentValue} from '../../parse-document'
 import {canReuseLayerResources, getPartRenderFrame} from '../render-plan'
-import {gatherLayers} from '../scene-layers'
+import {gatherLayers, getSceneLayerStructure, inheritGroupEffects} from '../scene-layers'
 
 const createPart = (id: string): PuppetPart => ({
   id,
@@ -37,7 +38,7 @@ const group = (
   id: string,
   children: ReadonlyArray<PuppetSceneNode>,
   properties?: PuppetGroupRenderProperties,
-): PuppetSceneNode => ({
+): PuppetSceneGroupNode => ({
   children,
   id,
   kind: 'group',
@@ -45,6 +46,46 @@ const group = (
   name: id,
   properties,
   visible: true,
+})
+
+describe('inheritGroupEffects', () => {
+  test.each([false, true])(
+    'should extend an inherited prefix with offscreen=%s without changing it',
+    (offscreen) => {
+      const outer = group('outer', [], {
+        multiplyColor: [0.6, 0.7, 0.8],
+        offscreen,
+        opacity: 0.7,
+        screenColor: [0.1, 0.2, 0.3],
+      })
+      const inner = group('inner', [], {multiplyColor: [0.8, 0.5, 1], offscreen, opacity: 0.4})
+      const prefix = inheritGroupEffects([outer])
+      const snapshot = structuredClone(prefix)
+      expect(inheritGroupEffects([inner], undefined, undefined, prefix)).toEqual(
+        inheritGroupEffects([outer, inner]),
+      )
+      expect(prefix).toEqual(snapshot)
+    },
+  )
+})
+
+test('should retain only contributing containers while preserving empty offscreen layers', () => {
+  const document = createDocument([
+    group('unused', [group('unused-child', [])]),
+    group('layer-parent', [group('empty-layer', [], {offscreen: true, opacity: 0.4})], {
+      opacity: 0.5,
+    }),
+    ...['back', 'a', 'b', 'c', 'mask'].map(part),
+  ])
+  const structure = getSceneLayerStructure(document)
+  expect(structure.containers.map(({node}) => node.id)).toEqual(['layer-parent', 'empty-layer'])
+  expect(structure.layers.map(({group}) => group.id)).toEqual(['empty-layer'])
+  expect(getPartRenderFrame(document).layers.get('empty-layer')).toMatchObject({
+    groupId: 'empty-layer',
+    layerIds: [],
+    properties: {opacity: 0.2},
+    visible: true,
+  })
 })
 
 const createDocument = (roots: ReadonlyArray<PuppetSceneNode>): PuppetDocument => ({

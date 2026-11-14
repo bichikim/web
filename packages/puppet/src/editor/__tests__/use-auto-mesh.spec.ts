@@ -37,7 +37,7 @@ describe('useAutoMesh', () => {
       },
     )
     mocks.readTexturePixels.mockReturnValueOnce(pendingResult)
-    const onDocumentChange = vi.fn()
+    const onDocumentChange = vi.fn(() => ({changed: true, ok: true as const, revision: 1}))
     const onBeforeApply = vi.fn()
     const onNotice = vi.fn()
     const document = createDemoDocument()
@@ -66,7 +66,7 @@ describe('useAutoMesh', () => {
     const document = createDemoDocument()
     const generatedDocument = {...document, motions: []}
     const onBeforeApply = vi.fn()
-    const onDocumentChange = vi.fn()
+    const onDocumentChange = vi.fn(() => ({changed: true, ok: true as const, revision: 1}))
     const onNotice = vi.fn()
     mocks.autoMeshPart.mockReturnValue({document: generatedDocument, ok: true})
 
@@ -100,7 +100,7 @@ describe('useAutoMesh', () => {
     const document = createDemoDocument()
     const firstDocument = {...document, motions: []}
     const generatedDocument = {...firstDocument, motions: document.motions.slice(0, 1)}
-    const onDocumentChange = vi.fn()
+    const onDocumentChange = vi.fn(() => ({changed: true, ok: true as const, revision: 1}))
     const onNotice = vi.fn()
     mocks.autoMeshPart
       .mockReturnValueOnce({document: firstDocument, ok: true})
@@ -133,7 +133,7 @@ describe('useAutoMesh', () => {
 
   test('should avoid partial updates when any selected texture fails', async () => {
     const document = createDemoDocument()
-    const onDocumentChange = vi.fn()
+    const onDocumentChange = vi.fn(() => ({changed: true, ok: true as const, revision: 1}))
     mocks.readTexturePixels
       .mockResolvedValueOnce({ok: true, pixels})
       .mockResolvedValueOnce({error: {code: 'decode-failed'}, ok: false})
@@ -164,7 +164,7 @@ describe('useAutoMesh', () => {
         resolvePixels = resolve
       }),
     )
-    const onDocumentChange = vi.fn()
+    const onDocumentChange = vi.fn(() => ({changed: true, ok: true as const, revision: 1}))
     const onNotice = vi.fn()
 
     await createRoot(async (dispose) => {
@@ -201,7 +201,7 @@ describe('useAutoMesh', () => {
         resolvePixels = resolve
       }),
     )
-    const onDocumentChange = vi.fn()
+    const onDocumentChange = vi.fn(() => ({changed: true, ok: true as const, revision: 1}))
     const onNotice = vi.fn()
 
     await createRoot(async (dispose) => {
@@ -230,7 +230,7 @@ describe('useAutoMesh', () => {
 
   test('should convert an unexpected generation rejection into an actionable notice', async () => {
     const document = createDemoDocument()
-    const onDocumentChange = vi.fn()
+    const onDocumentChange = vi.fn(() => ({changed: true, ok: true as const, revision: 1}))
     const onNotice = vi.fn()
     mocks.readTexturePixels.mockRejectedValue(new Error('unexpected'))
 
@@ -253,7 +253,7 @@ describe('useAutoMesh', () => {
 
   test('should translate expected texture reading failures into an actionable notice', async () => {
     const document = createDemoDocument()
-    const onDocumentChange = vi.fn()
+    const onDocumentChange = vi.fn(() => ({changed: true, ok: true as const, revision: 1}))
     const onNotice = vi.fn()
     mocks.readTexturePixels.mockResolvedValue({error: {code: 'decode-failed'}, ok: false})
 
@@ -277,7 +277,7 @@ describe('useAutoMesh', () => {
 
   test('should reject invalid settings before reading texture pixels', async () => {
     const document = createDemoDocument()
-    const onDocumentChange = vi.fn()
+    const onDocumentChange = vi.fn(() => ({changed: true, ok: true as const, revision: 1}))
     const onNotice = vi.fn()
 
     await createRoot(async (dispose) => {
@@ -297,5 +297,26 @@ describe('useAutoMesh', () => {
       expect(onNotice).toHaveBeenCalledWith('자동 메시 생성 설정이 올바르지 않습니다.')
       dispose()
     })
+  })
+})
+
+test('should keep the generator open when the host rejects the document commit', async () => {
+  await createRoot(async (dispose) => {
+    const document = createDemoDocument()
+    const generated = {...document, framesPerSecond: 48}
+    mocks.autoMeshPart.mockReturnValue({document: generated, ok: true})
+    const changed = vi.fn(() => ({error: {code: 'busy' as const}, ok: false as const}))
+    const session = useAutoMesh({
+      document: () => document,
+      onDocumentChange: changed,
+      partIds: () => [document.parts[0]!.id],
+    })
+    session.onOpenChange(true)
+    const applied = await session.generate({alphaThreshold: 1, cellSize: 20})
+    expect(changed).toHaveBeenCalledOnce()
+    expect(applied).toBe(false)
+    expect(session.isOpen()).toBe(true)
+    expect(session.errorMessage()).not.toBeNull()
+    dispose()
   })
 })

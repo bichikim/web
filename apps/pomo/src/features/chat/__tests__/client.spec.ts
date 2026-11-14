@@ -139,3 +139,22 @@ it('should preserve chat history and produce one assistant reply per cloud actio
   )
   client.dispose()
 })
+
+it('should send the JSON schema across the actual worker message contract', () => {
+  const client = createChatClient({modelId: 'gemma-4-e2b', onResponse: vi.fn()})
+  const outputSchema = {properties: {value: {type: 'number'}}, type: 'object'}
+  client.generate({messages: [], summary: ''}, 'structured', {outputSchema})
+  expect(send).toHaveBeenCalledWith(expect.objectContaining({outputSchema, replyId: 'structured'}))
+  client.dispose()
+})
+
+it('should reject unsupported cloud structured output instead of silently generating prose', () => {
+  const onResponse = vi.fn()
+  const client = createChatClient({modelId: 'cloud', onResponse})
+  client.generate({messages: [], summary: ''}, 'structured', {outputSchema: {type: 'object'}})
+  expect(requestCloudText).not.toHaveBeenCalled()
+  expect(onResponse).toHaveBeenCalledWith(
+    expect.objectContaining({restartRequired: false, type: 'error'}),
+  )
+  client.dispose()
+})

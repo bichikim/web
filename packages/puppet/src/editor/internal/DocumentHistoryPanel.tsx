@@ -1,7 +1,7 @@
 import {createEffect, createMemo, Index, Show} from 'solid-js'
 import {EditorButton} from '../../design-system'
 import {EditorPropertyGroup} from './EditorPropertyGroup'
-import type {DocumentHistoryEntry} from '../use-document-history'
+import type {ModelHistoryEntry as DocumentHistoryEntry} from '../model'
 
 interface DocumentHistoryPanelProps {
   readonly entries: ReadonlyArray<DocumentHistoryEntry>

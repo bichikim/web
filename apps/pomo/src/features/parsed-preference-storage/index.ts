@@ -1,4 +1,4 @@
-import type {PreferenceStorage, PreferenceStorageResult} from 'src/utils/preference-storage'
+import type {PreferenceStorage, PreferenceStorageResult} from 'src/hooks/use-preference/types'
 
 export interface CreateParsedPreferenceStorageOptions<Value> {
   readonly read: PreferenceStorage['read']

@@ -1,10 +1,7 @@
 import {generateCompressedDialogueAudio, type PDialogueRepository} from '../focus-room-dialogue'
-import type {
-  SupertonicClient,
-  SupertonicLanguage,
-  SupertonicModelId,
-  SupertonicVoiceId,
-} from '../supertonic'
+import type {SupertonicClient} from '../supertonic'
+import type {SupertonicLanguage} from '@winter-love/supertonic/language'
+import type {SupertonicModelId, SupertonicVoiceId} from '@winter-love/supertonic/model'
 import {getMemoryMemoDialogueId} from './dialogue-id'
 import type {MemoryMemo} from './schema'
 

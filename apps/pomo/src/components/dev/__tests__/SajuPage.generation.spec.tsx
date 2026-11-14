@@ -71,8 +71,8 @@ it('should send displayed messages through the real generation workspace', async
   ) as Array<{role: string; content: string}>
   expect(messages.map((message) => message.role)).toEqual(['system', 'user'])
   expect(messages[1].content).toContain('재물에 대해 알려줘')
-  expect(messages[1].content).toContain('"재성"')
-  expect(messages[1].content).toContain('"金"')
+  expect(messages[1].content).toContain('돈과 시간 관리')
+  expect(messages[1].content).not.toMatch(/재성|[\u3400-\u9fff]/u)
   await vi.dynamicImportSettled()
   expect(send).toHaveBeenCalledExactlyOnceWith({
     messages,

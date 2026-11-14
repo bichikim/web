@@ -13,9 +13,9 @@ import type {WeatherLocation} from '../../../features/weather'
 import {SceneToolbar} from '../Toolbar'
 
 vi.mock('../../p-select/PSelect', () => ({PSelect: () => null}))
-vi.mock('../MemoryAssistPanel', () => ({MemoryAssistPanel: () => null}))
+vi.mock('../../p-memory-assist/PMemoryAssist', () => ({PMemoryAssist: () => null}))
 vi.mock('../VersionNoticePanel', () => ({VersionNoticePanel: () => null}))
-vi.mock('../SettingsPanel', () => ({SceneSettingsPanel: () => null}))
+vi.mock('../../p-settings/PSettings', () => ({PSettings: () => null}))
 
 const seoulLocation = {
   country: '대한민국',

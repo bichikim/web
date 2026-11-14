@@ -1,4 +1,5 @@
 /// <reference lib="webworker" />
+import type {TextOutputSchema} from '../text-generation/types'
 import {listenTextGenerationRequests} from '../text-generation/listen-text-generation-requests'
 import {unwrapGenerationResult} from '../text-generation/unwrap-generation-result'
 
@@ -34,6 +35,8 @@ const FAILURE_MESSAGE = '채팅 모델을 실행하지 못했어요.'
 const CONTEXT_COMPACTION_TOKENS = 4608
 const MAXIMUM_ANSWER_TOKENS = 2048
 const MAXIMUM_SUMMARY_TOKENS = 384
+const CHAT_TEMPERATURE = 0.65
+const STRUCTURED_TEMPERATURE = 0.1
 const workerScope = globalThis.self as DedicatedWorkerGlobalScope
 
 const sendResponse = (response: ChatWorkerResponse) => workerScope.postMessage(response)
@@ -66,6 +69,7 @@ const countPromptTokens = async (
 }
 
 interface GenerateChatTextOptions {
+  readonly outputSchema?: TextOutputSchema
   readonly maximumTokens: number
   readonly messages: Array<TextGenerationMessage>
   readonly modelId: TextModelId
@@ -81,9 +85,10 @@ const generateText = async (options: GenerateChatTextOptions) => {
       parameters: {
         maximumTokens: options.maximumTokens,
         noRepeatNgramSize: 4,
+        outputSchema: options.outputSchema,
         repetitionPenalty: 1.1,
         suppressedTokenIds: options.suppressedTokenIds,
-        temperature: 0.65,
+        temperature: options.outputSchema === undefined ? CHAT_TEMPERATURE : STRUCTURED_TEMPERATURE,
         topK: 40,
         topP: 0.9,
       },
@@ -101,7 +106,7 @@ const generateText = async (options: GenerateChatTextOptions) => {
 
   const output = resultValue
 
-  return trimRepetitiveTail(output).trim()
+  return options.outputSchema === undefined ? trimRepetitiveTail(output).trim() : output
 }
 
 const refineKoreanSegment = async (
@@ -191,6 +196,7 @@ const compactContext = async (
 }
 
 interface GenerateAnswerOptions {
+  readonly outputSchema?: TextOutputSchema
   readonly context: ChatContext
   readonly modelId: TextModelId
   readonly refineAnswer: boolean
@@ -221,12 +227,14 @@ const generateAnswer = async (options: GenerateAnswerOptions) => {
         sendResponse({text: token, type: 'token'})
       }
     },
+    outputSchema: options.outputSchema,
   })
   const generatedText = rawGeneratedText
   sendResponse({draft: {content: generatedText, id: options.replyId}, type: 'draft'})
-  const refinedText = options.refineAnswer
-    ? await refineKoreanAnswer(generatedText, options.modelId)
-    : generatedText
+  const refinedText =
+    options.refineAnswer && options.outputSchema === undefined
+      ? await refineKoreanAnswer(generatedText, options.modelId)
+      : generatedText
   const text = refinedText
   const message: ChatMessage = {content: text, id: options.replyId, role: 'assistant'}
   const completedContext: ChatContext = {

@@ -17,11 +17,14 @@ const createController = (): WallpaperController => ({
   current: () => null,
   dismissError: vi.fn(),
   error: () => null,
+  hasHiddenMedia: () => false,
   items: () => [],
   loadMedia: vi.fn(async () => new Blob()),
   loadPuppet: vi.fn(async () => ''),
   monitors: () => [],
   puppets: () => [],
+  removeMedia: vi.fn(async () => undefined),
+  restoreBuiltinMedia: vi.fn(async () => undefined),
   selectedId: () => null,
   selectMonitor: vi.fn(),
   setContent: vi.fn(async () => undefined),
@@ -63,4 +66,31 @@ it('should follow a committed album selection and announce preview focus', () =>
   expect(onPreview).toHaveBeenCalledWith(ITEM.id)
   fireEvent.click(checkbox)
   expect(checkbox).not.toBeChecked()
+})
+
+it.each(['photo', 'video'] as const)(
+  'should request %s deletion without changing the album selection',
+  (kind) => {
+    const controller = createController()
+    const onRemove = vi.fn()
+    render(() => (
+      <SAlbumItem item={{...ITEM, kind}} controller={controller} selected onRemove={onRemove} />
+    ))
+    fireEvent.click(screen.getByRole('button', {name: 'Photo 삭제'}))
+    expect(onRemove).toHaveBeenCalledOnce()
+    expect(controller.toggleMedia).not.toHaveBeenCalled()
+    expect(screen.getByRole('checkbox', {name: 'Photo'})).toBeChecked()
+  },
+)
+
+it('should offer hiding instead of deletion for a bundled wallpaper', () => {
+  render(() => (
+    <SAlbumItem
+      item={{...ITEM, id: 'builtin:cover:window'}}
+      controller={createController()}
+      selected
+      onRemove={vi.fn()}
+    />
+  ))
+  expect(screen.getByRole('button', {name: 'Photo 숨기기'})).toBeDefined()
 })

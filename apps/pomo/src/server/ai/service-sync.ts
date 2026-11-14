@@ -24,7 +24,14 @@ export interface AiJobSynchronizerDependencies {
   readonly dispatchJob: typeof Dispatch.dispatchJob
   readonly persistAcceptedProvider: typeof Dispatch.persistAcceptedProvider
   readonly expireAiProviderJob: typeof Provider.expireAiProviderJob
-  readonly retrieveLunaTextJob: typeof retrieveLunaTextJob
+  readonly retrieveLunaTextJob: (
+    ...parameters: Parameters<typeof retrieveLunaTextJob>
+  ) => Promise<
+    Pick<
+      Awaited<ReturnType<typeof retrieveLunaTextJob>>,
+      'error' | 'output_text' | 'status' | 'usage'
+    >
+  >
   readonly getRunnerStatus: (jobId: string) => Promise<AiRunnerJobStatusResponse>
   readonly repository: Pick<
     typeof Repository,

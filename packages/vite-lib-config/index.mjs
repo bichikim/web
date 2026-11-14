@@ -21,7 +21,7 @@ const defaultRoot = process.cwd()
  * @return {UserConfig}
  */
 export const createConfig = ({
-  root = defaultRoot,
+  root: explicitRoot,
   packageJson,
   external = [],
   entry = {},
@@ -31,6 +31,7 @@ export const createConfig = ({
   plugins = [],
   rollupOutputPlugins = [],
 } = {}) => {
+  const root = explicitRoot === undefined ? defaultRoot : path.resolve(explicitRoot)
   const _packageJson =
     packageJson ?? JSON.parse(readFileSync(path.join(root, 'package.json'), 'utf8'))
 
@@ -48,6 +49,7 @@ export const createConfig = ({
 
   return defineConfig(() => {
     return {
+      ...(explicitRoot === undefined ? {} : {root}),
       build: {
         lib: {
           entry: {

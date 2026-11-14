@@ -1,15 +1,18 @@
 import type {PuppetMotion} from '../document'
 import {getMotionFadeOutTime, getPassedEvents} from './motion-fade'
 import type {
+  AdditionalPlaybackState,
   MotionEvent,
   MotionFrame,
   MotionPlayback,
   MotionPlaybackOptions,
   MotionPlaybackStatus,
+  RuntimePlaybackOptions,
 } from './types'
 import {validatePlaybackNumber} from './validate-playback-number'
 
 interface Playback extends MotionFrame {
+  readonly completion?: number
   readonly elapsed: number
   readonly loop: boolean
   readonly onComplete?: () => void
@@ -24,18 +27,25 @@ interface PlaybackEntry {
 }
 
 interface CreateMotionPlaybacksOptions {
+  /** Motion definitions owned by the current document. */
   readonly motions: ReadonlyArray<PuppetMotion>
+  /** Receives completed numerical tokens; omitted, tokens have no external effect. */
+  readonly onCompletion?: (completion: number) => void
+  /** Refreshes the owner after an independent control mutation. */
   readonly onChange: () => void
+  /** Receives crossed motion events; omitted, events are ignored. */
   readonly onEvent?: (event: MotionEvent) => void
 }
 
 export interface MotionPlaybacks {
+  capture(): ReadonlyArray<AdditionalPlaybackState>
+  restore(state: ReadonlyArray<AdditionalPlaybackState>): void
   advance(deltaTime: number): ReadonlyArray<() => void>
   frames(): ReadonlyArray<MotionFrame>
   isPlaying(): boolean
   pause(): void
   resume(): void
-  start(motionId: string, settings?: MotionPlaybackOptions): MotionPlayback | undefined
+  start(motionId: string, settings?: RuntimePlaybackOptions): MotionPlayback | undefined
   stop(): void
   update(motions: ReadonlyArray<PuppetMotion>): void
 }
@@ -74,6 +84,7 @@ const getRemaining = (playback: Playback) => {
 }
 
 interface PlaybackHandleContext {
+  readonly id: number
   readonly change: (update: Partial<Playback>) => void
   readonly current: () => Playback
   readonly motionId: string
@@ -83,6 +94,7 @@ interface PlaybackHandleContext {
 const createPlaybackHandle = ({
   change,
   current,
+  id,
   motionId,
   stop,
 }: PlaybackHandleContext): MotionPlayback => {
@@ -106,6 +118,7 @@ const createPlaybackHandle = ({
         weight: playback.weight,
       }
     },
+    id,
     pause() {
       if (current().status === 'playing') {
         change({status: 'paused'})
@@ -138,10 +151,56 @@ const createPlaybackHandle = ({
   }
 }
 
+const capturePlayback = ([id, {playback}]: [number, PlaybackEntry]): AdditionalPlaybackState => {
+  const {motion, onComplete: _callback, ...state} = playback
+  return {
+    ...state,
+    completion: playback.completion,
+    id,
+    motionId: motion.id,
+    stopping: playback.stopping,
+  }
+}
+
+interface RestorePlaybacksOptions {
+  /** Reuses entries so active handles keep their identity. */
+  readonly playbacks: Map<number, PlaybackEntry>
+  /** Numeric state received from the computing runtime. */
+  readonly state: ReadonlyArray<AdditionalPlaybackState>
+  /** Motions belonging to the receiving document. */
+  readonly motions: ReadonlyArray<PuppetMotion>
+}
+const restorePlaybacks = ({playbacks, state, motions}: RestorePlaybacksOptions) => {
+  let nextId = 1
+  const previous = new Map(playbacks)
+  playbacks.clear()
+  for (const {id, motionId, ...value} of state) {
+    const motion = motions.find((candidate) => candidate.id === motionId)
+    if (motion === undefined) {
+      throw new Error('Independent playback checkpoint motion is missing')
+    }
+    const entry = previous.get(id) ?? {playback: {...value, motion}}
+    entry.playback = {...value, motion, onComplete: entry.playback.onComplete}
+    playbacks.set(id, entry)
+    previous.delete(id)
+    nextId = Math.max(nextId, id + 1)
+  }
+  for (const entry of previous.values()) {
+    entry.playback = {
+      ...entry.playback,
+      completion: undefined,
+      onComplete: undefined,
+      status: 'stopped',
+    }
+  }
+  return nextId
+}
+
 export const createMotionPlaybacks = (options: CreateMotionPlaybacksOptions): MotionPlaybacks => {
   let {motions} = options
-  const playbacks = new Map<symbol, PlaybackEntry>()
-  const change = (id: symbol, update: Partial<Playback>) => {
+  const playbacks = new Map<number, PlaybackEntry>()
+  let nextId = 1
+  const change = (id: number, update: Partial<Playback>) => {
     const entry = playbacks.get(id)
     if (entry !== undefined) {
       entry.playback = {...entry.playback, ...update}
@@ -150,7 +209,7 @@ export const createMotionPlaybacks = (options: CreateMotionPlaybacksOptions): Mo
   }
   const start = (
     motionId: string,
-    settings: MotionPlaybackOptions = {},
+    settings: RuntimePlaybackOptions = {},
   ): MotionPlayback | undefined => {
     const motion = motions.find((candidate) => candidate.id === motionId)
     if (motion === undefined) {
@@ -158,6 +217,7 @@ export const createMotionPlaybacks = (options: CreateMotionPlaybacksOptions): Mo
     }
     const playback: Playback = {
       blend: settings.blend ?? 'replace',
+      completion: settings.completion,
       elapsed: 0,
       loop: settings.loop ?? motion.loop ?? true,
       motion,
@@ -168,9 +228,10 @@ export const createMotionPlaybacks = (options: CreateMotionPlaybacksOptions): Mo
       time: 0,
       weight: validatePlaybackNumber(settings.weight ?? 1, 'Weight'),
     }
-    const id = Symbol(motionId)
+    const id = nextId
+    nextId += 1
     const entry: PlaybackEntry = {playback}
-    const current = () => entry.playback
+    const current = () => playbacks.get(id)?.playback ?? entry.playback
     const stop = () => {
       entry.playback = {...current(), onComplete: undefined, status: 'stopped'}
       if (playbacks.delete(id)) {
@@ -179,7 +240,13 @@ export const createMotionPlaybacks = (options: CreateMotionPlaybacksOptions): Mo
     }
     playbacks.set(id, entry)
     options.onChange()
-    return createPlaybackHandle({change: (update) => change(id, update), current, motionId, stop})
+    return createPlaybackHandle({
+      change: (update) => change(id, update),
+      current,
+      id,
+      motionId,
+      stop,
+    })
   }
   const advance = (deltaTime: number): ReadonlyArray<() => void> => {
     const callbacks: Array<() => void> = []
@@ -199,7 +266,10 @@ export const createMotionPlaybacks = (options: CreateMotionPlaybacksOptions): Mo
         if (nextPlayback.stopping !== undefined && nextPlayback.stopping <= 0) {
           entry.playback = {...nextPlayback, onComplete: undefined, status: 'stopped'}
           playbacks.delete(id)
-        } else if (nextPlayback.status === 'finished' && playback.onComplete !== undefined) {
+        } else if (
+          nextPlayback.status === 'finished' &&
+          (playback.onComplete !== undefined || playback.completion !== undefined)
+        ) {
           callbacks.push(() => {
             const current = entry.playback
             if (
@@ -208,6 +278,9 @@ export const createMotionPlaybacks = (options: CreateMotionPlaybacksOptions): Mo
               current.time >= current.motion.duration
             ) {
               playback.onComplete?.()
+              if (playback.completion !== undefined) {
+                options.onCompletion?.(playback.completion)
+              }
             }
           })
         }
@@ -238,6 +311,7 @@ export const createMotionPlaybacks = (options: CreateMotionPlaybacksOptions): Mo
   }
   return {
     advance,
+    capture: () => [...playbacks].map(capturePlayback),
     frames: (): ReadonlyArray<MotionFrame> =>
       [...playbacks.values()].map(({playback}) => ({
         ...playback,
@@ -250,6 +324,9 @@ export const createMotionPlaybacks = (options: CreateMotionPlaybacksOptions): Mo
           playback.status === 'playing' && (playback.speed > 0 || playback.stopping !== undefined),
       ),
     pause: () => setStatus('playing', 'paused'),
+    restore(state) {
+      nextId = Math.max(nextId, restorePlaybacks({motions, playbacks, state}))
+    },
     resume: () => setStatus('paused', 'playing'),
     start,
     stop: () => {

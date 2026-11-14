@@ -1,6 +1,6 @@
 import {POMODORO_TIMER_LIMITS} from '../../features/pomodoro-timer/limits'
 import type {PomodoroTimerConfig} from '../../features/pomodoro-timer/model'
-import {normalizePasteNumericInput} from 'src/utils/normalize-paste-numeric-input'
+import {normalizePasteNumericInput} from '@winter-love/supertonic/normalize-paste-numeric-input'
 
 export interface DurationDraft {
   /** 집중 시간의 분 단위 문자열. */

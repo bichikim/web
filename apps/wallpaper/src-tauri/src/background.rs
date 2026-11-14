@@ -81,6 +81,7 @@ pub(crate) async fn open_background(
     app: AppHandle,
     caller: Webview,
     monitor_id: String,
+    customization: Option<crate::website::Customization>,
 ) -> Result<String, String> {
     require_manager(&caller)?;
     let monitors = app
@@ -101,6 +102,17 @@ pub(crate) async fn open_background(
         .append_pair("monitor", &monitor_id);
     let path = format!("index.html?{}", url.query().unwrap_or_default());
     WebviewWindowBuilder::new(&app, &label, WebviewUrl::App(path.into()))
+        .initialization_script(
+            crate::website::initialization_script(
+                &customization.unwrap_or_default(),
+                app.config()
+                    .build
+                    .dev_url
+                    .as_ref()
+                    .map(|url| url.origin().ascii_serialization()),
+            )
+            .map_err(|error| error.to_string())?,
+        )
         .title(format!(
             "Wallpaper 배경 — {}",
             monitor_identity(&monitors, index).name
@@ -143,7 +155,18 @@ pub(crate) async fn close_background(
 ) -> Result<(), String> {
     require_manager(&caller)?;
     if let Some(window) = app.get_webview_window(&window_label(&monitor_id)) {
+        let (sender, receiver) = tokio::sync::oneshot::channel();
+        let sender = std::sync::Mutex::new(Some(sender));
+        window.on_window_event(move |event| {
+            if matches!(event, tauri::WindowEvent::Destroyed)
+                && let Ok(mut sender) = sender.lock()
+                && let Some(sender) = sender.take()
+            {
+                let _ = sender.send(());
+            }
+        });
         window.close().map_err(|error| error.to_string())?;
+        receiver.await.map_err(|error| error.to_string())?;
     }
     Ok(())
 }

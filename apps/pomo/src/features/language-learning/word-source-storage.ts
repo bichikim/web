@@ -1,6 +1,6 @@
 import {z} from 'zod'
 
-import type {PreferenceStorage} from 'src/utils/preference-storage'
+import type {PreferenceStorage} from 'src/hooks/use-preference/types'
 import {readWebStorageJson, writeWebStorageJson} from 'src/utils/runtime-storage'
 import type {LanguageLearningWordSource} from './word-selection'
 

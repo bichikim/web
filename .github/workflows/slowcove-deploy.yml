@@ -1,4 +1,4 @@
-name: Release Slowcove
+name: Release Slowcove Production
 
 on:
   push:

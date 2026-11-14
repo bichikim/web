@@ -1,0 +1,1562 @@
+{
+  "schemaVersion": 1,
+  "reviewedAt": "2026-11-05T15:21:23.806632+09:00",
+  "scope": "Latest interpolation/parameter-reader Worker optimization: five anchored source/test files and their direct relevance cone. Older unrelated dirty work was preserved.",
+  "anchor": "packages/puppet/visual/worker-interpolation-performance.json: artifacts.sourceSHA256",
+  "overallRisk": "Scoped correctness defects were reproduced and fixed; no remaining P0/P1/P2 findings in the reviewed cone.",
+  "status": "no remaining P0/P1/P2 findings",
+  "counts": {
+    "P0": {
+      "discovered": 0,
+      "fixed": 0,
+      "remaining": 0
+    },
+    "P1": {
+      "discovered": 0,
+      "fixed": 0,
+      "remaining": 0
+    },
+    "P2": {
+      "discovered": 2,
+      "fixed": 2,
+      "remaining": 0
+    }
+  },
+  "findings": [
+    {
+      "id": "P2-1",
+      "title": "Sampling-policy identity depended on enumerable metadata",
+      "risk": "Valid inherited or non-enumerable policies could share a grid point with a different effective precision/tolerance; unrelated circular metadata could throw during preparation.",
+      "cause": "Object.entries(sampling) missed effective inherited/non-enumerable fields and serialized unrelated metadata.",
+      "fix": "Use only the four effective policy fields in a fixed tuple.",
+      "production": {
+        "file": "packages/puppet/src/deformation/sample-grid-coordinates.ts",
+        "line": 65
+      },
+      "regressions": [
+        {
+          "file": "packages/puppet/src/deformation/__tests__/sample-grid-coordinates.spec.ts",
+          "line": 225,
+          "cases": 2
+        },
+        {
+          "file": "packages/puppet/src/deformation/__tests__/sample-grid-coordinates.spec.ts",
+          "line": 243,
+          "cases": 1
+        },
+        {
+          "file": "packages/puppet/src/deformation/__tests__/sample-grid-coordinates.spec.ts",
+          "line": 267,
+          "cases": 3
+        }
+      ],
+      "observedBefore": "6 regression cases failed; float32 sampling returned 0.7 instead of 0.699999988079071; circular metadata threw TypeError.",
+      "observedAfter": "All 6 regression cases pass."
+    },
+    {
+      "id": "P2-2",
+      "title": "Caller serialization hooks changed parameter/grid identities",
+      "risk": "Valid programmatic arrays with toJSON could alias different axes or keyform grids and produce wrong samples.",
+      "cause": "JSON.stringify was applied directly to caller-owned arrays for reader identity, grid fingerprints, and corner indexing. Corner indexing predates the latest optimization but belongs to the same affected call path.",
+      "fix": "Build reader keys from the actual indexed axes; serialize owned parameter-id arrays; copy numeric arrays only when they expose toJSON. Ordinary numeric arrays preserve their existing preparation path.",
+      "tradeoff": "Conditional copying avoids the measured cold metadata preparation overhead of copying every keyform array.",
+      "production": [
+        {
+          "file": "packages/puppet/src/deformation/composition.ts",
+          "line": 112
+        },
+        {
+          "file": "packages/puppet/src/deformation/sample-grid-coordinates.ts",
+          "line": 34
+        }
+      ],
+      "regressions": [
+        {
+          "file": "packages/puppet/src/deformation/__tests__/composition.spec.ts",
+          "line": 80,
+          "cases": 1
+        },
+        {
+          "file": "packages/puppet/src/deformation/__tests__/sample-grid-coordinates.spec.ts",
+          "line": 252,
+          "cases": 2
+        }
+      ],
+      "observedBefore": "Reader returned [3] instead of [15]; keyform cases returned 0 or 1 instead of 0.5. All 3 cases failed before their corresponding fixes.",
+      "observedAfter": "All 3 regression cases pass."
+    }
+  ],
+  "passes": [
+    {
+      "pass": 1,
+      "result": "Full P0-P4 review; two P2 causes reproduced with 7 failing regression cases; fixed."
+    },
+    {
+      "pass": 2,
+      "result": "Fresh full review; the remaining keyform serialization path of P2-2 reproduced with 2 failing cases; fixed."
+    },
+    {
+      "pass": 3,
+      "result": "Fresh full review and resource/scaling checks; unconditional array copies added preparation overhead, so restrict copying to caller serialization hooks."
+    },
+    {
+      "pass": 4,
+      "result": "Fresh behavior/refactoring/naming review after the conditional-copy refinement; final complete checks, resource probes, numeric/pixel comparisons and ABBA playback measurements pass."
+    }
+  ],
+  "perspectives": {
+    "behavior": "Reviewed interpolation precision, tolerance, repeats, step/continuous points, rest fallbacks, channel sharing, raw parameter changes, immutable binding/document contracts, Worker initialization, JS/Wasm callers, recovery and cache ownership. Local typed-input helpers add no new remote side effects or trust boundary. Public playback bindings retain their existing parser validation and three-axis contract. Converter grid sampling also exercised at five axes.",
+    "refactoring": "Reviewed coupling, testability, state derivation, pure computation and cache boundaries. No new production test hooks, runtime options, dependencies or UI paths. No verified structural P3 findings.",
+    "namingAndStructure": "Role-based names, existing module ownership, TypeScript/comment conventions reviewed. Changed production files remain below 600 lines. No verified P3/P4 findings."
+  },
+  "checks": [
+    {
+      "command": "node node_modules/vitest/vitest.mjs run packages/puppet/src/deformation/__tests__/sample-grid-coordinates.spec.ts packages/puppet/src/deformation/__tests__/composition.spec.ts --reporter=dot",
+      "result": "30 passed on the review-start source; 7 failed / 30 passed before the first fix; 37 passed after it; 2 failed / 37 passed before the keyform follow-up; 39 passed after fixes",
+      "logs": [
+        "/private/tmp/puppet-interpolation-review-baseline.log",
+        "/private/tmp/puppet-interpolation-review-red.log",
+        "/private/tmp/puppet-interpolation-review-green.log",
+        "/private/tmp/puppet-interpolation-review-pass2-red.log",
+        "/private/tmp/puppet-interpolation-review-green-final.log"
+      ]
+    },
+    {
+      "command": "node node_modules/vitest/vitest.mjs run packages/puppet/src --reporter=dot",
+      "result": "450 files, 2862 tests passed on final source",
+      "log": "/private/tmp/puppet-interpolation-review-final-unit.log"
+    },
+    {
+      "command": "pnpm_config_verify_deps_before_run=false pnpm --filter @winter-love/puppet build",
+      "result": "passed including package declarations",
+      "log": "/private/tmp/puppet-interpolation-review-final-build.log"
+    },
+    {
+      "command": "node node_modules/typescript/bin/tsc -p packages/puppet/tsconfig.json --noEmit",
+      "result": "passed",
+      "log": "/private/tmp/puppet-interpolation-review-final-typecheck.log"
+    },
+    {
+      "command": "node node_modules/typescript/bin/tsc -p apps/poffo/tsconfig.json --noEmit",
+      "result": "passed",
+      "log": "/private/tmp/puppet-interpolation-review-final-poffo-typecheck.log"
+    },
+    {
+      "command": "node node_modules/vitest/vitest.mjs run --config /var/folders/x7/f3kxjy_13fd3g9jp5fhgv96h0000gn/T/puppet-interpolation-review-0b2lfyyk/vitest.metal.config.mts",
+      "result": "23 files passed, 1 skipped; 66 tests passed, 11 optional experiment tests skipped",
+      "log": "/private/tmp/puppet-interpolation-review-final-browser.log",
+      "config": "import {defineConfig} from 'vitest/config'\nimport {playwright} from '@vitest/browser-playwright'\nimport base from '/Users/bichi/.codex/worktrees/48ee/web/packages/puppet/vitest.browser.config'\nexport default defineConfig({...base,test:{...base.test,browser:{...base.test.browser,provider:playwright({launchOptions:{channel:'chrome',args:['--use-angle=metal']},contextOptions:{deviceScaleFactor:1}})}}})\n",
+      "skipReason": "Opt-in rendering-experiment artifact generation; VITE_PUPPET_RENDERING_EXPERIMENT was not 1. These skips are not Rust-fixture availability skips."
+    },
+    {
+      "command": "MODEL='/Users/bichi/Downloads/白猫/white-cat-idle-english.poffo' FRAMES=120 PARITY_OUTPUT=/private/tmp/puppet-interpolation-review-final-parity.json node node_modules/vitest/vitest.mjs run --config vitest.integration.config.mts --project=integration packages/puppet/src/player/internal/wasm/deformation/__tests__/create-transform.parity.integration.ts --reporter=dot",
+      "result": "2 integration tests passed; 120 actual-model frames, 0 different Float32 words",
+      "log": "/private/tmp/puppet-interpolation-review-final-parity.log"
+    },
+    {
+      "command": "node_modules/.bin/oxlint",
+      "result": "exit 0; no lint errors; existing repository warnings remain",
+      "log": "/private/tmp/puppet-interpolation-review-final-lint.log"
+    },
+    {
+      "command": "node_modules/.bin/oxlint --fix packages/puppet/src/deformation/composition.ts packages/puppet/src/deformation/sample-grid-coordinates.ts packages/puppet/src/deformation/__tests__/composition.spec.ts packages/puppet/src/deformation/__tests__/sample-grid-coordinates.spec.ts",
+      "result": "exit 0"
+    },
+    {
+      "command": "pnpm_config_verify_deps_before_run=false pnpm format packages/puppet/src/deformation/composition.ts packages/puppet/src/deformation/sample-grid-coordinates.ts packages/puppet/src/deformation/__tests__/composition.spec.ts packages/puppet/src/deformation/__tests__/sample-grid-coordinates.spec.ts packages/puppet/visual/worker-interpolation-review.json",
+      "result": "passed"
+    },
+    {
+      "command": "git diff --check",
+      "result": "passed"
+    }
+  ],
+  "artifacts": {
+    "before": {
+      "playerSHA256": "7fbb3cde56397bb924fd15d9ecd12cc102243d0e0d2cd2b70192eaa7b85b6a46",
+      "worker": "assets/worker-d3Etw5w5.js",
+      "workerSHA256": "9e53f6e2e99dd2fb57b41e5a446b0be4eb032065d5952c33683f43d9250fca92"
+    },
+    "candidate": {
+      "playerSHA256": "80ab099d662f3dbf913892286794e2d786a034b0f687ac1773aeb6d25ece94d5",
+      "worker": "assets/worker-jFdmpiU8.js",
+      "workerSHA256": "2064d7a57d5230d4c13941866976411345cf078e922ac975da80ab9caa1d17f2"
+    }
+  },
+  "finalSourceSHA256": {
+    "packages/puppet/src/deformation/sample-grid-coordinates.ts": "0f16467d8c07a804a00602aeb3414fc20c005431c8f16629b0268577ab21d76e",
+    "packages/puppet/src/deformation/composition.ts": "afe8fefe41a31785ba201a60788abfa9eaa44fb1964ccab3a55544d92862344d",
+    "packages/puppet/src/deformation/__tests__/sample-grid-coordinates.spec.ts": "204c9cd0f6d810dc965a0a424e7f2a2bb1cf2424717ddb8d8b950c272eb96edb",
+    "packages/puppet/src/deformation/__tests__/composition.spec.ts": "21f6f19029943de388e27b31f8b67a0cb86d292c3fe9ec276e7178e073a48899",
+    "packages/puppet/src/player/buffering/create-buffer-engine.ts": "46298d0cbb8628753dc8c574d4291fb1a591b7c288cc4f62af07a80a80ecc00c"
+  },
+  "evidenceDirectory": "/var/folders/x7/f3kxjy_13fd3g9jp5fhgv96h0000gn/T/puppet-interpolation-review-0b2lfyyk",
+  "rendering": {
+    "checkpointCount": 32,
+    "differentChannels": 0,
+    "cases": {
+      "ssaa": {
+        "antialiasing": "ssaa",
+        "artifactHashes": {
+          "after": "80ab099d662f3dbf913892286794e2d786a034b0f687ac1773aeb6d25ece94d5",
+          "before": "7fbb3cde56397bb924fd15d9ecd12cc102243d0e0d2cd2b70192eaa7b85b6a46"
+        },
+        "backend": "hardware",
+        "errors": [],
+        "metadata": [
+          {
+            "parts": 852,
+            "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M5 Pro, Unspecified Version)",
+            "rendering": {
+              "antialiasing": "ssaa",
+              "renderer": "webgl"
+            }
+          },
+          {
+            "parts": 852,
+            "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M5 Pro, Unspecified Version)",
+            "rendering": {
+              "antialiasing": "ssaa",
+              "renderer": "webgl"
+            }
+          }
+        ],
+        "model": "/Users/bichi/Downloads/白猫/white-cat-idle-english.poffo",
+        "modelSHA256": "47c98e7473e79ffb249aa1acb5bed9b7d458f35c7c0d3502f281549c20c55035",
+        "passed": true,
+        "referenceComputation": "worker",
+        "results": [
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 700,
+            "maximumDelta": 0,
+            "stage": "defaults",
+            "statuses": ["idle", "idle"],
+            "visiblePixels": 82314,
+            "width": 900,
+            "workerEqual": true
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 700,
+            "maximumDelta": 0,
+            "stage": "controls",
+            "statuses": ["idle", "idle"],
+            "visiblePixels": 82701,
+            "width": 900,
+            "workerEqual": true
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 700,
+            "maximumDelta": 0,
+            "stage": "burst",
+            "statuses": ["idle", "idle"],
+            "visiblePixels": 82599,
+            "width": 900,
+            "workerEqual": true
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 700,
+            "maximumDelta": 0,
+            "stage": "document-edit",
+            "statuses": ["idle", "idle"],
+            "visiblePixels": 82083,
+            "width": 900,
+            "workerEqual": true
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 700,
+            "maximumDelta": 0,
+            "stage": "buffer-off",
+            "statuses": ["disabled", "disabled"],
+            "visiblePixels": 82083,
+            "width": 900,
+            "workerEqual": null
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 700,
+            "maximumDelta": 0,
+            "stage": "buffer-on",
+            "statuses": ["idle", "idle"],
+            "visiblePixels": 82083,
+            "width": 900,
+            "workerEqual": true
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 1400,
+            "maximumDelta": 0,
+            "stage": "resize",
+            "statuses": ["idle", "idle"],
+            "visiblePixels": 319593,
+            "width": 1800,
+            "workerEqual": true
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 1400,
+            "maximumDelta": 0,
+            "stage": "renderer",
+            "statuses": ["idle", "idle"],
+            "visiblePixels": 319593,
+            "width": 1800,
+            "workerEqual": true
+          }
+        ],
+        "workersAfterDestroy": 0
+      },
+      "msaa": {
+        "antialiasing": "msaa",
+        "artifactHashes": {
+          "after": "80ab099d662f3dbf913892286794e2d786a034b0f687ac1773aeb6d25ece94d5",
+          "before": "7fbb3cde56397bb924fd15d9ecd12cc102243d0e0d2cd2b70192eaa7b85b6a46"
+        },
+        "backend": "hardware",
+        "errors": [],
+        "metadata": [
+          {
+            "parts": 852,
+            "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M5 Pro, Unspecified Version)",
+            "rendering": {
+              "antialiasing": "msaa",
+              "renderer": "webgl"
+            }
+          },
+          {
+            "parts": 852,
+            "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M5 Pro, Unspecified Version)",
+            "rendering": {
+              "antialiasing": "msaa",
+              "renderer": "webgl"
+            }
+          }
+        ],
+        "model": "/Users/bichi/Downloads/白猫/white-cat-idle-english.poffo",
+        "modelSHA256": "47c98e7473e79ffb249aa1acb5bed9b7d458f35c7c0d3502f281549c20c55035",
+        "passed": true,
+        "referenceComputation": "worker",
+        "results": [
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 700,
+            "maximumDelta": 0,
+            "stage": "defaults",
+            "statuses": ["idle", "idle"],
+            "visiblePixels": 82458,
+            "width": 900,
+            "workerEqual": true
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 700,
+            "maximumDelta": 0,
+            "stage": "controls",
+            "statuses": ["idle", "idle"],
+            "visiblePixels": 82820,
+            "width": 900,
+            "workerEqual": true
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 700,
+            "maximumDelta": 0,
+            "stage": "burst",
+            "statuses": ["idle", "idle"],
+            "visiblePixels": 82708,
+            "width": 900,
+            "workerEqual": true
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 700,
+            "maximumDelta": 0,
+            "stage": "document-edit",
+            "statuses": ["idle", "idle"],
+            "visiblePixels": 82197,
+            "width": 900,
+            "workerEqual": true
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 700,
+            "maximumDelta": 0,
+            "stage": "buffer-off",
+            "statuses": ["disabled", "disabled"],
+            "visiblePixels": 82197,
+            "width": 900,
+            "workerEqual": null
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 700,
+            "maximumDelta": 0,
+            "stage": "buffer-on",
+            "statuses": ["idle", "idle"],
+            "visiblePixels": 82197,
+            "width": 900,
+            "workerEqual": true
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 1400,
+            "maximumDelta": 0,
+            "stage": "resize",
+            "statuses": ["idle", "idle"],
+            "visiblePixels": 319630,
+            "width": 1800,
+            "workerEqual": true
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 1400,
+            "maximumDelta": 0,
+            "stage": "renderer",
+            "statuses": ["idle", "idle"],
+            "visiblePixels": 319630,
+            "width": 1800,
+            "workerEqual": true
+          }
+        ],
+        "workersAfterDestroy": 0
+      },
+      "development": {
+        "antialiasing": "ssaa",
+        "artifactHashes": {
+          "after": "80ab099d662f3dbf913892286794e2d786a034b0f687ac1773aeb6d25ece94d5",
+          "before": "7fbb3cde56397bb924fd15d9ecd12cc102243d0e0d2cd2b70192eaa7b85b6a46"
+        },
+        "backend": "hardware",
+        "errors": [],
+        "metadata": [
+          {
+            "parts": 122,
+            "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M5 Pro, Unspecified Version)",
+            "rendering": {
+              "antialiasing": "ssaa",
+              "renderer": "webgl"
+            }
+          },
+          {
+            "parts": 122,
+            "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M5 Pro, Unspecified Version)",
+            "rendering": {
+              "antialiasing": "ssaa",
+              "renderer": "webgl"
+            }
+          }
+        ],
+        "model": "/Users/bichi/.codex/worktrees/48ee/web/packages/puppet/examples/development-model.json",
+        "modelSHA256": "d2ee88f9f8a50273f7919bdd3b52691418a3d0d60e3501609edb7b175e81bfb5",
+        "passed": true,
+        "referenceComputation": "worker",
+        "results": [
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 700,
+            "maximumDelta": 0,
+            "stage": "defaults",
+            "statuses": ["idle", "idle"],
+            "visiblePixels": 111508,
+            "width": 900,
+            "workerEqual": true
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 700,
+            "maximumDelta": 0,
+            "stage": "controls",
+            "statuses": ["idle", "idle"],
+            "visiblePixels": 112111,
+            "width": 900,
+            "workerEqual": true
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 700,
+            "maximumDelta": 0,
+            "stage": "burst",
+            "statuses": ["idle", "idle"],
+            "visiblePixels": 112480,
+            "width": 900,
+            "workerEqual": true
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 700,
+            "maximumDelta": 0,
+            "stage": "document-edit",
+            "statuses": ["idle", "idle"],
+            "visiblePixels": 111310,
+            "width": 900,
+            "workerEqual": true
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 700,
+            "maximumDelta": 0,
+            "stage": "buffer-off",
+            "statuses": ["disabled", "disabled"],
+            "visiblePixels": 111310,
+            "width": 900,
+            "workerEqual": null
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 700,
+            "maximumDelta": 0,
+            "stage": "buffer-on",
+            "statuses": ["idle", "idle"],
+            "visiblePixels": 111310,
+            "width": 900,
+            "workerEqual": true
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 1400,
+            "maximumDelta": 0,
+            "stage": "resize",
+            "statuses": ["idle", "idle"],
+            "visiblePixels": 436961,
+            "width": 1800,
+            "workerEqual": true
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 1400,
+            "maximumDelta": 0,
+            "stage": "renderer",
+            "statuses": ["idle", "idle"],
+            "visiblePixels": 436961,
+            "width": 1800,
+            "workerEqual": true
+          }
+        ],
+        "workersAfterDestroy": 0
+      },
+      "main-reference": {
+        "antialiasing": "ssaa",
+        "artifactHashes": {
+          "after": "80ab099d662f3dbf913892286794e2d786a034b0f687ac1773aeb6d25ece94d5",
+          "before": "7fbb3cde56397bb924fd15d9ecd12cc102243d0e0d2cd2b70192eaa7b85b6a46"
+        },
+        "backend": "hardware",
+        "errors": [],
+        "metadata": [
+          {
+            "parts": 852,
+            "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M5 Pro, Unspecified Version)",
+            "rendering": {
+              "antialiasing": "ssaa",
+              "renderer": "webgl"
+            }
+          },
+          {
+            "parts": 852,
+            "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M5 Pro, Unspecified Version)",
+            "rendering": {
+              "antialiasing": "ssaa",
+              "renderer": "webgl"
+            }
+          }
+        ],
+        "model": "/Users/bichi/Downloads/白猫/white-cat-idle-english.poffo",
+        "modelSHA256": "47c98e7473e79ffb249aa1acb5bed9b7d458f35c7c0d3502f281549c20c55035",
+        "passed": true,
+        "referenceComputation": "main",
+        "results": [
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 700,
+            "maximumDelta": 0,
+            "stage": "defaults",
+            "statuses": ["disabled", "idle"],
+            "visiblePixels": 82314,
+            "width": 900,
+            "workerEqual": null
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 700,
+            "maximumDelta": 0,
+            "stage": "controls",
+            "statuses": ["disabled", "idle"],
+            "visiblePixels": 82701,
+            "width": 900,
+            "workerEqual": null
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 700,
+            "maximumDelta": 0,
+            "stage": "burst",
+            "statuses": ["disabled", "idle"],
+            "visiblePixels": 82599,
+            "width": 900,
+            "workerEqual": null
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 700,
+            "maximumDelta": 0,
+            "stage": "document-edit",
+            "statuses": ["disabled", "idle"],
+            "visiblePixels": 82083,
+            "width": 900,
+            "workerEqual": null
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 700,
+            "maximumDelta": 0,
+            "stage": "buffer-off",
+            "statuses": ["disabled", "disabled"],
+            "visiblePixels": 82083,
+            "width": 900,
+            "workerEqual": null
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 700,
+            "maximumDelta": 0,
+            "stage": "buffer-on",
+            "statuses": ["disabled", "idle"],
+            "visiblePixels": 82083,
+            "width": 900,
+            "workerEqual": null
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 1400,
+            "maximumDelta": 0,
+            "stage": "resize",
+            "statuses": ["disabled", "idle"],
+            "visiblePixels": 319593,
+            "width": 1800,
+            "workerEqual": null
+          },
+          {
+            "controlsEqual": true,
+            "differentChannels": 0,
+            "height": 1400,
+            "maximumDelta": 0,
+            "stage": "renderer",
+            "statuses": ["disabled", "idle"],
+            "visiblePixels": 319593,
+            "width": 1800,
+            "workerEqual": null
+          }
+        ],
+        "workersAfterDestroy": 0
+      }
+    }
+  },
+  "numericEquality": {
+    "hashes": {
+      "before": "7fbb3cde56397bb924fd15d9ecd12cc102243d0e0d2cd2b70192eaa7b85b6a46",
+      "candidate": "80ab099d662f3dbf913892286794e2d786a034b0f687ac1773aeb6d25ece94d5"
+    },
+    "metadata": {
+      "before": {
+        "parts": 852,
+        "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+        "vertices": 34452
+      },
+      "candidate": {
+        "parts": 852,
+        "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+        "vertices": 34452
+      }
+    },
+    "warmup": 0,
+    "frames": 120,
+    "results": [
+      {
+        "name": "before",
+        "millis": 1312.359625,
+        "millisPerFrame": 10.936330208333334,
+        "progress": {
+          "frames": 120,
+          "pendingRequests": 0,
+          "queuedNotices": 0,
+          "snapshots": [
+            "8009c0036850056a97ec1b0c6c6e9ee0b0a26ec0326445f8dbc5f616a4d27c7c",
+            "1f0cc281af286c510f14712faca47806192f3394f06495cb2ffd085e5a16e95c",
+            "21f8d7899124e2a186239ab8a9d07fd94103d7acfb2541e6a33fddb3af9d4fa6",
+            "06813e03827b6a8642ba386bfe3792cc468bf127353b4871bdb892afa0bbae44",
+            "b4fc1b2f2cc298d8f98def21d3c1656cf89caf43b4586c88059afd592b6d7999",
+            "5c675f6073559499737553b0276f284425a33d42c3e26b4e54076e1093fe9249",
+            "05130bdadb5d3e723d1ea9191a5bb7c9a5ac532f48480c6c8895e019b9aca51a",
+            "7eca44c5c04b23c9ba1b93e923f2bb55d64dddac2471d052c2ad846b5e3a5b00",
+            "a289f076beac2ae612006e309029500580e74ab887151edb906b6a336357cd6d",
+            "6d4cae2f215a908cc78c5910a2fbe9dc7fb402b9343b1e25865e3d49c2ee7210",
+            "3d712123a3313d4d97754f539a5678aa2d3e896d3a278b74c314fe091a47e79a",
+            "564ecd0f122b30772934a2535835dfa7086d2ca5ffd99d000ef3f32699f9ef90",
+            "fd37f9b8ddb9b3f88afbe2c18392d4f377aba646a7850cf23e3c7f009a0a11ec",
+            "fd310fe58248bdd88209989b835c1b24b5ecd268c8003d1af86faeb3a4732f74",
+            "8f373ebf6c5c897553240edb22bc456d11d61cc3bcc86499988c97e0924bf495",
+            "a5638bde87e9c95d1b7faaa29912b69ab53139b93581eff8eccd1db93644a0f6",
+            "7f0539ab3ed43a26dba0bd4896a0c69b2ba3711ad078ac8ed34d8da3fce06117",
+            "5da6363134b4b66639c95cd0b60595a2e789d00f5919b7b4573948fa4c58e91c",
+            "af8accb59b2c586af9c0de50863328c8dc1072f2eb995cbedcc38ff45912f6c3",
+            "50f46413880c2d5e8d33d9c306e30f0cb2c9c819318f3eb16ff1fe0783e4a8d3",
+            "b7d8037a021f16f572df458ce38398ab54f2ee4cefeb66af77784fd63b55fa89",
+            "848fbaeaded5861ff937aab0cdd381016112427c13db796557c2423060931f8b",
+            "266acd3d02b9cebd154a25c93f31b3072998713606cfaddd23e2cf95b44eefc6",
+            "d82e72f760d2c5803312e92f52030044e7a4f9406cd758983a8db6744ec1deab",
+            "5af83a0eb135047bcfd7dd70f0c2d3e111b04e8dc41b1fa6ca2f70cb4e1bd829",
+            "810a24d636d187c7dd4288e980ede788b40f68d333071f58974ee37713001150",
+            "a55491fe5d4e690d708dca5713559ef600ea58142c8d904eef2b61ad1e8aeeaa",
+            "864971a452f8c617a1e4785845b18a1bc53b360c01f4d81661f341f4ef19b2fb",
+            "936ac9fa1c6bb319455d5fdb0fea6416f4db559f0bd9bf67094fa36f4c13bb4b",
+            "d255dd8f4d0285b7b37fc748f812f827ec4a7be7bd04d71ba3dfdd8932d981c2",
+            "57b6917aad6345031558eea3ca9f1aece98e728bacd21e20aedf157f5a22aa27",
+            "3ac8b110529dfe2472c269425566cab0e7442b0928ad3d64cc9442a838478f05",
+            "7b1a7e06f97f3830503493627163c523de2d9cd4f6d5ed576945837b65d3f2fb",
+            "c1c1eb4b4e739091554d01883de7ae4e9d3417a745708d3fff1afbeef151fabd",
+            "a26e01fd1d5c6fef2fdcd5b868d548307ae350a50d4cf438e9a1a8d7cc992ed0",
+            "509faf99eb5d3e32db4dab84ecd9d52399376e5d9d3321f5f75aa6d5b9f92369",
+            "0455b3fba1b7ee1d1da7dc44064b3b04ff08fb4c9ea12ca13bc525c42a900cad",
+            "3562cf6f15bf8672b150310107dd46645be7b0092b7c021eb263621f157ffba6",
+            "e1e00ffeaa0fc87632ccfe7089fdf6f32f6a8108942e910636bf688772321b3b",
+            "8197970644da01a023e24d73f5896ff9d6b1e7c5bf9e172ac3819a2d9f56ec9c",
+            "ea1f87c14f9e3bc582db394989f24ba7653f27570ccef96273bc412f20283b35",
+            "dd4156a318cbb4680a2ee486bb481772523d0204fc8a5059867c937e9468e79a",
+            "eebbf465ae6f8397965ab3bf9124d8240fa45d7276dbda42593322812d542e09",
+            "65693f83d4dd1b712325a6cfcd84387f56e55f8815690e09bad8e6d33988500b",
+            "a96a50dca4e13304876187b9dcff80d19b03a8835bd53ae38b3b111d868cb270",
+            "67005f2fff6ac075fda2a99b29838bcbe608e98eb7c86c41a1ca45a9fbbdca8b",
+            "1ec61043401a3f087d1fcb5313bed2cae7d9b68332cbc60dbd893d2cf26efc9b",
+            "f8e5d04215209ea3bfc367961677a0bf667374b919615ff156f8efc96ea3711e",
+            "1fed99150742512b9531ec25abdb936bf04c63345e4b0582d1eb5182b6ea8f38",
+            "1215e1ffebbcee842537f68f2f059805a65bdf2f68d11233a231714b98463cf6",
+            "613750ca68ac7b870fa881864881700491aa61f94306befa44042b63a6c36020",
+            "33eb47b46d4810c747370b6880d820f7f614f922f1d584f953e643a0100bcb88",
+            "53fa0a823ab63bd4dcf86b97e468d589191a945cd4909f80698c863569e55eb3",
+            "e5b90778e0e4cdc781ac0685c12e25a7135388afc6626d7d3bd68a09a1006aea",
+            "6647657bd0182fa1efc63058349a4540c8a9e7d88c47d9a6fd738989de4d0403",
+            "67d64d84bf34a6ef270c21cbd2cc35f7e8e3a3d206099aa4a2cfb4fbc4b99ecc",
+            "40a4d9eb7c5ce968d567ae0c85dfde611aa2320c8ed3dfa359c253d79f8008c8",
+            "3fa171ed92711bd38e34f3973372bd5f1a400765eb20d0e550c47769318b2623",
+            "702f4e03a3e5d7964e1099dba7ced45ed68a195de8565c2ca7a2371e71cea407",
+            "1e6eaba41ea5e6af8f8118c2aeb0391c2d899018da788e923f553799477a26ec",
+            "575cf21edc3062777123a3dc2b325a5f458c8e7caf3f5d4d4280017136ceba9b",
+            "3ceb5121220666f0a3557730601d1537a50457696026cfb53763c91e2f9d4736",
+            "947d5bf40f86b80fd9ea9b0217e96891f610b242330a9bf27c63f00c0d0f4c75",
+            "6835a8ec81e9c95ee214b2e2896fa2db1108cfffda67d4e28596ad3f88148e48",
+            "265b5231194e12f3cce4b45e8a232851764263d1eb6b7e82a90fe5fb1979e99f",
+            "e345dcadae66d9110af8046f70b99863de4ebe21a2dd4ce842efd5fe2b56a8e4",
+            "1cdb733336530baf8992eba79455a9b1c439901810a62f82b27a5aa88f8d7a58",
+            "6108048f12ab0312b189ea56f1979425c4abef41eaf9fb703b1e910000a76e53",
+            "f62a142fd4abf0627970d1c15e12f38a26dfecd86f512882b3ce6b30d95eb735",
+            "4ca7c11d9b4b8301a8aea9144c08fcc40894bb97abf48a416312f27d167f2b9a",
+            "11daab59c227ea982707a00fbc93fedba0df19c9138b6a08ef4001304227287e",
+            "7a36707f134d5d23ba815adbea968761974b5b9ce8a29a405258e30f7cb1a5d2",
+            "b2a94260fc205cbc9d3517f8d129163b4f1d278c2c2f7afebde15281273d18cb",
+            "b2b3cf89f03254088a77656ab527ac767d98a0db09b1ab370133fe2625d645cd",
+            "7a9fb30c3457d705ac63cb0787dce9f3773558c315c1d8286f68d77fcefd73ed",
+            "1836915305dc4c6d2ac1d520eaa26c2534afb7060268f3412c6a37639f992465",
+            "161b6a5e175563bb0f1f2bacf3d7735aebaaed31a97b636aa8dbafd47de90cc4",
+            "18ca4e0a28ac6da0e20d716864240a51c532d23ca33e4d6d0228b35e59a74743",
+            "ceb15e8f97418b5f139cefef89f1bee0dcb9593de6a6130f5e9150bed1573a7a",
+            "c9cde6dc1c7aba353781c9ce7c3e40013eb99538606820beed9b7669b382023d",
+            "9d473c9d5c985bf827baa8a793771e113c459189b0c940b74800d9e2cdd9fe6e",
+            "d4192f0b3b8e130c28ff3283accb132cdfd215a730cb5c5559a87ea1531287a9",
+            "edb131eca60cfc4d625f2619821ee30d05f8bd5c44dfdc8c9b0451b711dda3ed",
+            "546781b2e0332fbdf19a54d06e625dab56a62ee62ecc341cda7e94e84ca6f673",
+            "44b79cc9160978d6c46662b5d944306a0f4e34b702d20e4668a8349f45724786",
+            "c626dc159c27bcc7993d0d196776dd490990debe843502f8599d97f1985332fc",
+            "8c2d9261306a46035184a8f76243b4103c3ec92612c88c9722e919c0321cf757",
+            "86222aa45754a1724e70a75d2e17aca63c1dbe4ce8a1143a10987024db96347f",
+            "fba9c53a0a348fd11af26c578de652d6d57e0462a6b9bc2173686e1659befd07",
+            "27dd91da34fc18013df08516b15d35e82474523fd449503b9b3578eaef2d1a74",
+            "a0466f907e24b921201dc73c5fffe34c190841cbca557d6340bd84faff19c263",
+            "2f03ca5f92042be4598ff6b6c6ac4761ca45eb4c25af54b3ca733d067642c15a",
+            "47fff3f88b1c33a4489c517d68a685eaf819220f2613ddb262fcf6ec733ed79d",
+            "316bb8c42fa6efaef8d729af082464690603318f1a7e6e4e3897022ab51acfc2",
+            "8b0b4b7257964f112de13c62a99c0fc26c188aa81bf0b4992a5737edb42dda11",
+            "fce0dafa23c899d7bc1af029199d196edb237b374f2708d1e2e5bbc0f849352c",
+            "479c5d46771a246f13ed767768ff3dc9114f0b1932ff2d2f2ee48e972abde4b9",
+            "b4147882e725ccd513e61d1b5658c1fcd3a656ebe62a5c90c326b56fb1c38c7f",
+            "49a90f46e5f4f78741631ed729271625a03e16c7683d198f8cc1edd80ebc3eb3",
+            "781d46482af6121c5c45e91914700b1ccb8a6324fcbb229a369cf987ec275879",
+            "c15805970d599f77b831096c268b9434fdb50d18545acf9c98250a7d8c002907",
+            "09d48b0e3e2fdd7b931359b29de26bf6b4cb37ee582931ac45e105b5dd245423",
+            "c78ea440aae1dc00a2ff709be100d39e655b983e60ea88c7c4a35b86eb91265e",
+            "6e4a7a0c42874ce598d01d0f7e44f42df641719b725690c2e688d63e48ba5904",
+            "f64f4a39408b5d8f4af10c9fd69aac65a0fd909cc4c5b1c950c6a2af0af3ed6a",
+            "f418e873096482d33c788fe5350596f0873bad10425106b156c221c0086745f4",
+            "7605f93c592384b0ffeb46663f03435b1caf88e30e047971ab3d882973cbb2ff",
+            "1a41d661574fcc40f283109b54076230dbecdf85e7e58b6b7096ebaba30193fa",
+            "b355efd20974e43c946ba8017321e465cfe44bcfafb0da15dacdc02f4aed509b",
+            "da5bedf5cdbc3cfe80c101b64c92315429ce266ec0a11f41b7714324e34caaa1",
+            "c6e8302b673b8c72ad38fa599d3ea1a20212bf3f01f941bc8f7182a30999a7c0",
+            "8f0bb9bbeb2784bc226f410421093d8ddbd8ef9253540e00ae0ed32538ab9b98",
+            "d97e602de24dc3cf382aeb7b9544e48e91400e98b2f3eefa0143a8d7620e1018",
+            "e0672f13aecd9c2f123b9eaa55001e4046f166e308ae685566c9a189a4d6728a",
+            "aaf708c3c1e3f165ff642f3b25c0cd77baa6cf4d4fb3a2bc29961ebfc3cd0221",
+            "ce25abbfd2603d962db64a0d118f26ba387e9417ebf1a53c509db3bfe52e167d",
+            "c8526d7df4af16528c90090504f16466d42fbb1b1fd79280a4c48d4d9bc3e04f",
+            "105180d501c16e7afff8dd7a082fac5a34ae1733da60daf34458287ce75f0b0a",
+            "6c1f8d5b861498f2504349f0af177cf1a9b5f7ce89ff30301bba9f30a3f0b2e5",
+            "c618282249f868db6f18cf617876d0d276366c32bf3a4117a0d8cd099ab18c27"
+          ]
+        }
+      },
+      {
+        "name": "candidate",
+        "millis": 1308.182333,
+        "millisPerFrame": 10.901519441666666,
+        "progress": {
+          "frames": 120,
+          "pendingRequests": 0,
+          "queuedNotices": 0,
+          "snapshots": [
+            "8009c0036850056a97ec1b0c6c6e9ee0b0a26ec0326445f8dbc5f616a4d27c7c",
+            "1f0cc281af286c510f14712faca47806192f3394f06495cb2ffd085e5a16e95c",
+            "21f8d7899124e2a186239ab8a9d07fd94103d7acfb2541e6a33fddb3af9d4fa6",
+            "06813e03827b6a8642ba386bfe3792cc468bf127353b4871bdb892afa0bbae44",
+            "b4fc1b2f2cc298d8f98def21d3c1656cf89caf43b4586c88059afd592b6d7999",
+            "5c675f6073559499737553b0276f284425a33d42c3e26b4e54076e1093fe9249",
+            "05130bdadb5d3e723d1ea9191a5bb7c9a5ac532f48480c6c8895e019b9aca51a",
+            "7eca44c5c04b23c9ba1b93e923f2bb55d64dddac2471d052c2ad846b5e3a5b00",
+            "a289f076beac2ae612006e309029500580e74ab887151edb906b6a336357cd6d",
+            "6d4cae2f215a908cc78c5910a2fbe9dc7fb402b9343b1e25865e3d49c2ee7210",
+            "3d712123a3313d4d97754f539a5678aa2d3e896d3a278b74c314fe091a47e79a",
+            "564ecd0f122b30772934a2535835dfa7086d2ca5ffd99d000ef3f32699f9ef90",
+            "fd37f9b8ddb9b3f88afbe2c18392d4f377aba646a7850cf23e3c7f009a0a11ec",
+            "fd310fe58248bdd88209989b835c1b24b5ecd268c8003d1af86faeb3a4732f74",
+            "8f373ebf6c5c897553240edb22bc456d11d61cc3bcc86499988c97e0924bf495",
+            "a5638bde87e9c95d1b7faaa29912b69ab53139b93581eff8eccd1db93644a0f6",
+            "7f0539ab3ed43a26dba0bd4896a0c69b2ba3711ad078ac8ed34d8da3fce06117",
+            "5da6363134b4b66639c95cd0b60595a2e789d00f5919b7b4573948fa4c58e91c",
+            "af8accb59b2c586af9c0de50863328c8dc1072f2eb995cbedcc38ff45912f6c3",
+            "50f46413880c2d5e8d33d9c306e30f0cb2c9c819318f3eb16ff1fe0783e4a8d3",
+            "b7d8037a021f16f572df458ce38398ab54f2ee4cefeb66af77784fd63b55fa89",
+            "848fbaeaded5861ff937aab0cdd381016112427c13db796557c2423060931f8b",
+            "266acd3d02b9cebd154a25c93f31b3072998713606cfaddd23e2cf95b44eefc6",
+            "d82e72f760d2c5803312e92f52030044e7a4f9406cd758983a8db6744ec1deab",
+            "5af83a0eb135047bcfd7dd70f0c2d3e111b04e8dc41b1fa6ca2f70cb4e1bd829",
+            "810a24d636d187c7dd4288e980ede788b40f68d333071f58974ee37713001150",
+            "a55491fe5d4e690d708dca5713559ef600ea58142c8d904eef2b61ad1e8aeeaa",
+            "864971a452f8c617a1e4785845b18a1bc53b360c01f4d81661f341f4ef19b2fb",
+            "936ac9fa1c6bb319455d5fdb0fea6416f4db559f0bd9bf67094fa36f4c13bb4b",
+            "d255dd8f4d0285b7b37fc748f812f827ec4a7be7bd04d71ba3dfdd8932d981c2",
+            "57b6917aad6345031558eea3ca9f1aece98e728bacd21e20aedf157f5a22aa27",
+            "3ac8b110529dfe2472c269425566cab0e7442b0928ad3d64cc9442a838478f05",
+            "7b1a7e06f97f3830503493627163c523de2d9cd4f6d5ed576945837b65d3f2fb",
+            "c1c1eb4b4e739091554d01883de7ae4e9d3417a745708d3fff1afbeef151fabd",
+            "a26e01fd1d5c6fef2fdcd5b868d548307ae350a50d4cf438e9a1a8d7cc992ed0",
+            "509faf99eb5d3e32db4dab84ecd9d52399376e5d9d3321f5f75aa6d5b9f92369",
+            "0455b3fba1b7ee1d1da7dc44064b3b04ff08fb4c9ea12ca13bc525c42a900cad",
+            "3562cf6f15bf8672b150310107dd46645be7b0092b7c021eb263621f157ffba6",
+            "e1e00ffeaa0fc87632ccfe7089fdf6f32f6a8108942e910636bf688772321b3b",
+            "8197970644da01a023e24d73f5896ff9d6b1e7c5bf9e172ac3819a2d9f56ec9c",
+            "ea1f87c14f9e3bc582db394989f24ba7653f27570ccef96273bc412f20283b35",
+            "dd4156a318cbb4680a2ee486bb481772523d0204fc8a5059867c937e9468e79a",
+            "eebbf465ae6f8397965ab3bf9124d8240fa45d7276dbda42593322812d542e09",
+            "65693f83d4dd1b712325a6cfcd84387f56e55f8815690e09bad8e6d33988500b",
+            "a96a50dca4e13304876187b9dcff80d19b03a8835bd53ae38b3b111d868cb270",
+            "67005f2fff6ac075fda2a99b29838bcbe608e98eb7c86c41a1ca45a9fbbdca8b",
+            "1ec61043401a3f087d1fcb5313bed2cae7d9b68332cbc60dbd893d2cf26efc9b",
+            "f8e5d04215209ea3bfc367961677a0bf667374b919615ff156f8efc96ea3711e",
+            "1fed99150742512b9531ec25abdb936bf04c63345e4b0582d1eb5182b6ea8f38",
+            "1215e1ffebbcee842537f68f2f059805a65bdf2f68d11233a231714b98463cf6",
+            "613750ca68ac7b870fa881864881700491aa61f94306befa44042b63a6c36020",
+            "33eb47b46d4810c747370b6880d820f7f614f922f1d584f953e643a0100bcb88",
+            "53fa0a823ab63bd4dcf86b97e468d589191a945cd4909f80698c863569e55eb3",
+            "e5b90778e0e4cdc781ac0685c12e25a7135388afc6626d7d3bd68a09a1006aea",
+            "6647657bd0182fa1efc63058349a4540c8a9e7d88c47d9a6fd738989de4d0403",
+            "67d64d84bf34a6ef270c21cbd2cc35f7e8e3a3d206099aa4a2cfb4fbc4b99ecc",
+            "40a4d9eb7c5ce968d567ae0c85dfde611aa2320c8ed3dfa359c253d79f8008c8",
+            "3fa171ed92711bd38e34f3973372bd5f1a400765eb20d0e550c47769318b2623",
+            "702f4e03a3e5d7964e1099dba7ced45ed68a195de8565c2ca7a2371e71cea407",
+            "1e6eaba41ea5e6af8f8118c2aeb0391c2d899018da788e923f553799477a26ec",
+            "575cf21edc3062777123a3dc2b325a5f458c8e7caf3f5d4d4280017136ceba9b",
+            "3ceb5121220666f0a3557730601d1537a50457696026cfb53763c91e2f9d4736",
+            "947d5bf40f86b80fd9ea9b0217e96891f610b242330a9bf27c63f00c0d0f4c75",
+            "6835a8ec81e9c95ee214b2e2896fa2db1108cfffda67d4e28596ad3f88148e48",
+            "265b5231194e12f3cce4b45e8a232851764263d1eb6b7e82a90fe5fb1979e99f",
+            "e345dcadae66d9110af8046f70b99863de4ebe21a2dd4ce842efd5fe2b56a8e4",
+            "1cdb733336530baf8992eba79455a9b1c439901810a62f82b27a5aa88f8d7a58",
+            "6108048f12ab0312b189ea56f1979425c4abef41eaf9fb703b1e910000a76e53",
+            "f62a142fd4abf0627970d1c15e12f38a26dfecd86f512882b3ce6b30d95eb735",
+            "4ca7c11d9b4b8301a8aea9144c08fcc40894bb97abf48a416312f27d167f2b9a",
+            "11daab59c227ea982707a00fbc93fedba0df19c9138b6a08ef4001304227287e",
+            "7a36707f134d5d23ba815adbea968761974b5b9ce8a29a405258e30f7cb1a5d2",
+            "b2a94260fc205cbc9d3517f8d129163b4f1d278c2c2f7afebde15281273d18cb",
+            "b2b3cf89f03254088a77656ab527ac767d98a0db09b1ab370133fe2625d645cd",
+            "7a9fb30c3457d705ac63cb0787dce9f3773558c315c1d8286f68d77fcefd73ed",
+            "1836915305dc4c6d2ac1d520eaa26c2534afb7060268f3412c6a37639f992465",
+            "161b6a5e175563bb0f1f2bacf3d7735aebaaed31a97b636aa8dbafd47de90cc4",
+            "18ca4e0a28ac6da0e20d716864240a51c532d23ca33e4d6d0228b35e59a74743",
+            "ceb15e8f97418b5f139cefef89f1bee0dcb9593de6a6130f5e9150bed1573a7a",
+            "c9cde6dc1c7aba353781c9ce7c3e40013eb99538606820beed9b7669b382023d",
+            "9d473c9d5c985bf827baa8a793771e113c459189b0c940b74800d9e2cdd9fe6e",
+            "d4192f0b3b8e130c28ff3283accb132cdfd215a730cb5c5559a87ea1531287a9",
+            "edb131eca60cfc4d625f2619821ee30d05f8bd5c44dfdc8c9b0451b711dda3ed",
+            "546781b2e0332fbdf19a54d06e625dab56a62ee62ecc341cda7e94e84ca6f673",
+            "44b79cc9160978d6c46662b5d944306a0f4e34b702d20e4668a8349f45724786",
+            "c626dc159c27bcc7993d0d196776dd490990debe843502f8599d97f1985332fc",
+            "8c2d9261306a46035184a8f76243b4103c3ec92612c88c9722e919c0321cf757",
+            "86222aa45754a1724e70a75d2e17aca63c1dbe4ce8a1143a10987024db96347f",
+            "fba9c53a0a348fd11af26c578de652d6d57e0462a6b9bc2173686e1659befd07",
+            "27dd91da34fc18013df08516b15d35e82474523fd449503b9b3578eaef2d1a74",
+            "a0466f907e24b921201dc73c5fffe34c190841cbca557d6340bd84faff19c263",
+            "2f03ca5f92042be4598ff6b6c6ac4761ca45eb4c25af54b3ca733d067642c15a",
+            "47fff3f88b1c33a4489c517d68a685eaf819220f2613ddb262fcf6ec733ed79d",
+            "316bb8c42fa6efaef8d729af082464690603318f1a7e6e4e3897022ab51acfc2",
+            "8b0b4b7257964f112de13c62a99c0fc26c188aa81bf0b4992a5737edb42dda11",
+            "fce0dafa23c899d7bc1af029199d196edb237b374f2708d1e2e5bbc0f849352c",
+            "479c5d46771a246f13ed767768ff3dc9114f0b1932ff2d2f2ee48e972abde4b9",
+            "b4147882e725ccd513e61d1b5658c1fcd3a656ebe62a5c90c326b56fb1c38c7f",
+            "49a90f46e5f4f78741631ed729271625a03e16c7683d198f8cc1edd80ebc3eb3",
+            "781d46482af6121c5c45e91914700b1ccb8a6324fcbb229a369cf987ec275879",
+            "c15805970d599f77b831096c268b9434fdb50d18545acf9c98250a7d8c002907",
+            "09d48b0e3e2fdd7b931359b29de26bf6b4cb37ee582931ac45e105b5dd245423",
+            "c78ea440aae1dc00a2ff709be100d39e655b983e60ea88c7c4a35b86eb91265e",
+            "6e4a7a0c42874ce598d01d0f7e44f42df641719b725690c2e688d63e48ba5904",
+            "f64f4a39408b5d8f4af10c9fd69aac65a0fd909cc4c5b1c950c6a2af0af3ed6a",
+            "f418e873096482d33c788fe5350596f0873bad10425106b156c221c0086745f4",
+            "7605f93c592384b0ffeb46663f03435b1caf88e30e047971ab3d882973cbb2ff",
+            "1a41d661574fcc40f283109b54076230dbecdf85e7e58b6b7096ebaba30193fa",
+            "b355efd20974e43c946ba8017321e465cfe44bcfafb0da15dacdc02f4aed509b",
+            "da5bedf5cdbc3cfe80c101b64c92315429ce266ec0a11f41b7714324e34caaa1",
+            "c6e8302b673b8c72ad38fa599d3ea1a20212bf3f01f941bc8f7182a30999a7c0",
+            "8f0bb9bbeb2784bc226f410421093d8ddbd8ef9253540e00ae0ed32538ab9b98",
+            "d97e602de24dc3cf382aeb7b9544e48e91400e98b2f3eefa0143a8d7620e1018",
+            "e0672f13aecd9c2f123b9eaa55001e4046f166e308ae685566c9a189a4d6728a",
+            "aaf708c3c1e3f165ff642f3b25c0cd77baa6cf4d4fb3a2bc29961ebfc3cd0221",
+            "ce25abbfd2603d962db64a0d118f26ba387e9417ebf1a53c509db3bfe52e167d",
+            "c8526d7df4af16528c90090504f16466d42fbb1b1fd79280a4c48d4d9bc3e04f",
+            "105180d501c16e7afff8dd7a082fac5a34ae1733da60daf34458287ce75f0b0a",
+            "6c1f8d5b861498f2504349f0af177cf1a9b5f7ce89ff30301bba9f30a3f0b2e5",
+            "c618282249f868db6f18cf617876d0d276366c32bf3a4117a0d8cd099ab18c27"
+          ]
+        }
+      }
+    ],
+    "errors": []
+  },
+  "jsWasmParity": {
+    "differentWords": 0,
+    "frames": 120,
+    "maximumVertexError": 0,
+    "memoryBytes": 19005440,
+    "model": "/Users/bichi/Downloads/白猫/white-cat-idle-english.poffo",
+    "nativeCalls": 102240,
+    "wasm": true
+  },
+  "playback": {
+    "method": "Review-start optimized build versus final review fixes, ABBA, one visible Chrome player at a time; no simultaneous tests or builds. Per run: 10s warmup + 20s measurement. displayed model-update FPS is distinct from rAF frequency.",
+    "meanObservedModelFPS": {
+      "before": 119.79998313893192,
+      "candidate": 119.62535610494658
+    },
+    "relativeChangePercent": -0.14576549128795246,
+    "raw": {
+      "configuration": {
+        "antialiasing": "ssaa",
+        "cpuRates": [1],
+        "measureMillis": 20000,
+        "model": "/Users/bichi/Downloads/白猫/white-cat-idle-english.poffo",
+        "modes": ["worker"],
+        "motion": "Idle:0",
+        "randomSeed": 42,
+        "resolution": 1,
+        "runs": 1,
+        "viewport": {
+          "height": 700,
+          "width": 900
+        },
+        "warmupMillis": 10000
+      },
+      "results": [
+        {
+          "artifact": "before",
+          "computation": "worker",
+          "cpu": 1,
+          "run": 1,
+          "buffering": {
+            "enabled": true,
+            "framesAhead": 3,
+            "status": "active"
+          },
+          "canvasSize": {
+            "height": 700,
+            "width": 900
+          },
+          "chains": 25,
+          "hardwareConcurrency": 15,
+          "workerReadyMillis": 4149,
+          "motion": "Idle:0",
+          "parameters": 265,
+          "parts": 852,
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+          "vertices": 34452,
+          "duration": 20008.500000000004,
+          "errors": [],
+          "frameP95": 9.200000000000728,
+          "observedModelFPS": 119.8490641477372,
+          "rafFPS": 119.99900042481943,
+          "updatedFPS": 119.8990429067646,
+          "heapBytes": 177141852,
+          "scriptSeconds": 6.40896,
+          "taskSeconds": 6.963534
+        },
+        {
+          "artifact": "candidate",
+          "computation": "worker",
+          "cpu": 1,
+          "run": 1,
+          "buffering": {
+            "enabled": true,
+            "framesAhead": 3,
+            "status": "active"
+          },
+          "canvasSize": {
+            "height": 700,
+            "width": 900
+          },
+          "chains": 25,
+          "hardwareConcurrency": 15,
+          "workerReadyMillis": 4160,
+          "motion": "Idle:0",
+          "parameters": 265,
+          "parts": 852,
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+          "vertices": 34452,
+          "duration": 20008.199999999997,
+          "errors": [],
+          "frameP95": 9.200000000000728,
+          "observedModelFPS": 119.75090213012666,
+          "rafFPS": 120.00079967213445,
+          "updatedFPS": 119.80088163852822,
+          "heapBytes": 170411344,
+          "scriptSeconds": 6.126068999999999,
+          "taskSeconds": 6.645764000000001
+        },
+        {
+          "artifact": "candidate",
+          "computation": "worker",
+          "cpu": 1,
+          "run": 1,
+          "buffering": {
+            "enabled": true,
+            "framesAhead": 3,
+            "status": "active"
+          },
+          "canvasSize": {
+            "height": 700,
+            "width": 900
+          },
+          "chains": 25,
+          "hardwareConcurrency": 15,
+          "workerReadyMillis": 4172,
+          "motion": "Idle:0",
+          "parameters": 265,
+          "parts": 852,
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+          "vertices": 34452,
+          "duration": 20008.399999999998,
+          "errors": [],
+          "frameP95": 9.299999999999272,
+          "observedModelFPS": 119.4998100797665,
+          "rafFPS": 119.99960016792949,
+          "updatedFPS": 119.54978908858281,
+          "heapBytes": 186023420,
+          "scriptSeconds": 6.117506,
+          "taskSeconds": 6.647248000000001
+        },
+        {
+          "artifact": "before",
+          "computation": "worker",
+          "cpu": 1,
+          "run": 1,
+          "buffering": {
+            "enabled": true,
+            "framesAhead": 3,
+            "status": "active"
+          },
+          "canvasSize": {
+            "height": 700,
+            "width": 900
+          },
+          "chains": 25,
+          "hardwareConcurrency": 15,
+          "workerReadyMillis": 4192,
+          "motion": "Idle:0",
+          "parameters": 265,
+          "parts": 852,
+          "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+          "vertices": 34452,
+          "duration": 20008.2,
+          "errors": [],
+          "frameP95": 9.400000000001455,
+          "observedModelFPS": 119.75090213012665,
+          "rafFPS": 120.00079967213442,
+          "updatedFPS": 119.8008816385282,
+          "heapBytes": 190069600,
+          "scriptSeconds": 6.11632,
+          "taskSeconds": 6.658035
+        }
+      ]
+    },
+    "interpretation": "Four local runs describe this review-fix comparison only; they do not establish statistical equivalence, a universal speedup, or low-end-device performance. The previous optimization report remains historical and its performance figures were not overwritten."
+  },
+  "resources": {
+    "method": "Cold metadata preparation at multiple scales with ABBA order. Node process CPU and wall time; no renderer or FPS inference. Forced GC checks ad hoc-binding recovery while the document remains alive and model-owner recovery after release. No production hooks.",
+    "scales": [
+      {
+        "bindings": 32,
+        "axes": 3,
+        "distinctGridGroups": 16,
+        "meanMillis": {
+          "before": 0.195521,
+          "current": 0.23443750000000002
+        }
+      },
+      {
+        "bindings": 32,
+        "axes": 3,
+        "distinctGridGroups": 32,
+        "meanMillis": {
+          "before": 0.14291700000000002,
+          "current": 0.147125
+        }
+      },
+      {
+        "bindings": 512,
+        "axes": 3,
+        "distinctGridGroups": 16,
+        "meanMillis": {
+          "before": 1.0653329999999999,
+          "current": 1.0939165000000002
+        }
+      },
+      {
+        "bindings": 512,
+        "axes": 3,
+        "distinctGridGroups": 512,
+        "meanMillis": {
+          "before": 2.2105829999999997,
+          "current": 1.9482705
+        }
+      },
+      {
+        "bindings": 512,
+        "axes": 5,
+        "distinctGridGroups": 16,
+        "meanMillis": {
+          "before": 3.8263335,
+          "current": 3.8306665000000004
+        }
+      },
+      {
+        "bindings": 5042,
+        "axes": 3,
+        "distinctGridGroups": 16,
+        "meanMillis": {
+          "before": 9.990562,
+          "current": 10.257646000000001
+        }
+      },
+      {
+        "bindings": 5042,
+        "axes": 3,
+        "distinctGridGroups": 5042,
+        "meanMillis": {
+          "before": 18.178645500000002,
+          "current": 16.580125000000002
+        }
+      },
+      {
+        "bindings": 16384,
+        "axes": 3,
+        "distinctGridGroups": 16,
+        "meanMillis": {
+          "before": 31.062708,
+          "current": 31.0450205
+        }
+      },
+      {
+        "bindings": 16384,
+        "axes": 3,
+        "distinctGridGroups": 16384,
+        "meanMillis": {
+          "before": 55.252209,
+          "current": 53.564062500000006
+        }
+      }
+    ],
+    "raw": {
+      "scales": [
+        {
+          "variant": "before",
+          "count": 32,
+          "axes": 3,
+          "groups": 16,
+          "millis": 0.26125,
+          "cpuMillis": 0.452
+        },
+        {
+          "variant": "current",
+          "count": 32,
+          "axes": 3,
+          "groups": 16,
+          "millis": 0.31025,
+          "cpuMillis": 1.227
+        },
+        {
+          "variant": "current",
+          "count": 32,
+          "axes": 3,
+          "groups": 16,
+          "millis": 0.158625,
+          "cpuMillis": 1.08
+        },
+        {
+          "variant": "before",
+          "count": 32,
+          "axes": 3,
+          "groups": 16,
+          "millis": 0.129792,
+          "cpuMillis": 0.729
+        },
+        {
+          "variant": "before",
+          "count": 32,
+          "axes": 3,
+          "groups": 32,
+          "millis": 0.151792,
+          "cpuMillis": 0.955
+        },
+        {
+          "variant": "current",
+          "count": 32,
+          "axes": 3,
+          "groups": 32,
+          "millis": 0.146958,
+          "cpuMillis": 0.807
+        },
+        {
+          "variant": "current",
+          "count": 32,
+          "axes": 3,
+          "groups": 32,
+          "millis": 0.147292,
+          "cpuMillis": 0.827
+        },
+        {
+          "variant": "before",
+          "count": 32,
+          "axes": 3,
+          "groups": 32,
+          "millis": 0.134042,
+          "cpuMillis": 0.818
+        },
+        {
+          "variant": "before",
+          "count": 512,
+          "axes": 3,
+          "groups": 16,
+          "millis": 1.098041,
+          "cpuMillis": 1.408
+        },
+        {
+          "variant": "current",
+          "count": 512,
+          "axes": 3,
+          "groups": 16,
+          "millis": 1.123458,
+          "cpuMillis": 1.311
+        },
+        {
+          "variant": "current",
+          "count": 512,
+          "axes": 3,
+          "groups": 16,
+          "millis": 1.064375,
+          "cpuMillis": 1.375
+        },
+        {
+          "variant": "before",
+          "count": 512,
+          "axes": 3,
+          "groups": 16,
+          "millis": 1.032625,
+          "cpuMillis": 2.889
+        },
+        {
+          "variant": "before",
+          "count": 512,
+          "axes": 3,
+          "groups": 512,
+          "millis": 2.294708,
+          "cpuMillis": 6.314
+        },
+        {
+          "variant": "current",
+          "count": 512,
+          "axes": 3,
+          "groups": 512,
+          "millis": 1.98725,
+          "cpuMillis": 3.092
+        },
+        {
+          "variant": "current",
+          "count": 512,
+          "axes": 3,
+          "groups": 512,
+          "millis": 1.909291,
+          "cpuMillis": 2.331
+        },
+        {
+          "variant": "before",
+          "count": 512,
+          "axes": 3,
+          "groups": 512,
+          "millis": 2.126458,
+          "cpuMillis": 2.559
+        },
+        {
+          "variant": "before",
+          "count": 5042,
+          "axes": 3,
+          "groups": 16,
+          "millis": 9.312458,
+          "cpuMillis": 9.503
+        },
+        {
+          "variant": "current",
+          "count": 5042,
+          "axes": 3,
+          "groups": 16,
+          "millis": 10.528292,
+          "cpuMillis": 12.93
+        },
+        {
+          "variant": "current",
+          "count": 5042,
+          "axes": 3,
+          "groups": 16,
+          "millis": 9.987,
+          "cpuMillis": 12.444
+        },
+        {
+          "variant": "before",
+          "count": 5042,
+          "axes": 3,
+          "groups": 16,
+          "millis": 10.668666,
+          "cpuMillis": 12.921
+        },
+        {
+          "variant": "before",
+          "count": 5042,
+          "axes": 3,
+          "groups": 5042,
+          "millis": 18.54825,
+          "cpuMillis": 23.703
+        },
+        {
+          "variant": "current",
+          "count": 5042,
+          "axes": 3,
+          "groups": 5042,
+          "millis": 16.64825,
+          "cpuMillis": 21.562
+        },
+        {
+          "variant": "current",
+          "count": 5042,
+          "axes": 3,
+          "groups": 5042,
+          "millis": 16.512,
+          "cpuMillis": 22.66
+        },
+        {
+          "variant": "before",
+          "count": 5042,
+          "axes": 3,
+          "groups": 5042,
+          "millis": 17.809041,
+          "cpuMillis": 23.621
+        },
+        {
+          "variant": "before",
+          "count": 16384,
+          "axes": 3,
+          "groups": 16,
+          "millis": 32.547041,
+          "cpuMillis": 36.834
+        },
+        {
+          "variant": "current",
+          "count": 16384,
+          "axes": 3,
+          "groups": 16,
+          "millis": 31.582083,
+          "cpuMillis": 36.127
+        },
+        {
+          "variant": "current",
+          "count": 16384,
+          "axes": 3,
+          "groups": 16,
+          "millis": 30.507958,
+          "cpuMillis": 30.497
+        },
+        {
+          "variant": "before",
+          "count": 16384,
+          "axes": 3,
+          "groups": 16,
+          "millis": 29.578375,
+          "cpuMillis": 29.564
+        },
+        {
+          "variant": "before",
+          "count": 16384,
+          "axes": 3,
+          "groups": 16384,
+          "millis": 56.942959,
+          "cpuMillis": 79.8
+        },
+        {
+          "variant": "current",
+          "count": 16384,
+          "axes": 3,
+          "groups": 16384,
+          "millis": 53.61925,
+          "cpuMillis": 75.957
+        },
+        {
+          "variant": "current",
+          "count": 16384,
+          "axes": 3,
+          "groups": 16384,
+          "millis": 53.508875,
+          "cpuMillis": 74.884
+        },
+        {
+          "variant": "before",
+          "count": 16384,
+          "axes": 3,
+          "groups": 16384,
+          "millis": 53.561459,
+          "cpuMillis": 75.475
+        },
+        {
+          "variant": "before",
+          "count": 512,
+          "axes": 5,
+          "groups": 16,
+          "millis": 3.901042,
+          "cpuMillis": 3.982
+        },
+        {
+          "variant": "current",
+          "count": 512,
+          "axes": 5,
+          "groups": 16,
+          "millis": 3.894458,
+          "cpuMillis": 3.976
+        },
+        {
+          "variant": "current",
+          "count": 512,
+          "axes": 5,
+          "groups": 16,
+          "millis": 3.766875,
+          "cpuMillis": 3.844
+        },
+        {
+          "variant": "before",
+          "count": 512,
+          "axes": 5,
+          "groups": 16,
+          "millis": 3.751625,
+          "cpuMillis": 3.833
+        }
+      ],
+      "memory": {
+        "adHocBindings": 10000,
+        "maximumRetainedBudgetBytes": 2097152,
+        "baselineHeapBytes": 8904448,
+        "waves": [
+          {
+            "bindings": 2500,
+            "heapDeltaBytes": 222200
+          },
+          {
+            "bindings": 5000,
+            "heapDeltaBytes": 338232
+          },
+          {
+            "bindings": 7500,
+            "heapDeltaBytes": 418472
+          },
+          {
+            "bindings": 10000,
+            "heapDeltaBytes": 557248
+          }
+        ],
+        "adHocBindingsStillReachable": 0,
+        "ownerAndBindingWeakReferences": 128,
+        "ownerAndBindingReferencesStillReachable": 0
+      },
+      "method": "Cold metadata preparation at multiple scales with ABBA order. Node process CPU and wall time; no renderer or FPS inference. Forced GC checks ad hoc-binding recovery while the document remains alive and model-owner recovery after release. No production hooks."
+    },
+    "interpretation": "Forced GC found all 10000 ad hoc binding objects and all 128 released owner/binding probes unreachable. The heap delta includes the retained WeakRef probe list and does not establish a renderer-wide leak result. Scale timings are Node cold metadata preparation, not browser startup time or FPS."
+  },
+  "tooling": {
+    "wallaby": "Wallaby MCP unavailable; wallaby --help failed because its global CLI module was missing. Repository Vitest was used as the supported fallback."
+  },
+  "verificationGaps": [],
+  "verificationLimits": [
+    "Executed on this Apple M5 Pro with Chrome/Metal; no cross-browser or low-end hardware claim.",
+    "11 opt-in rendering artifact experiments were intentionally skipped by their existing feature flag; required browser tests passed.",
+    "No remote GitHub CI run was requested or used as evidence."
+  ],
+  "P3P4Proposals": "none",
+  "outOfScope": [
+    "Older Worker/Wasm/renderer dirty changes were not re-reviewed in their entirety.",
+    "This is a cache/interpolation review, not a new renderer-wide memory audit."
+  ],
+  "prUpdated": false
+}

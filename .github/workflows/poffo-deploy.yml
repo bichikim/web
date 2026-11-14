@@ -1,0 +1,91 @@
+name: Deploy Poffo Dev
+
+on:
+  pull_request:
+    paths:
+      - apps/poffo/**
+      - packages/**
+      - package.json
+      - pnpm-lock.yaml
+      - pnpm-workspace.yaml
+      - turbo.json
+      - vitest*.mts
+      - vitest.setup.ts
+      - .github/workflows/poffo-*.yml
+      - .github/actions/poffo/**
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  VERCEL_ORG_ID: team_Ic8YKQ9jWkFLhVzeljhB4ZLV
+  VERCEL_PROJECT_ID: prj_Z4eAdSeyU1sCn9rx0fGOjCWFj8EK
+  VERCEL_CLI_VERSION: 59.5.0
+
+jobs:
+  verify-and-deploy-dev:
+    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/dev'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    concurrency:
+      group: poffo-${{ github.event_name == 'workflow_dispatch' && 'dev' || github.ref }}
+      cancel-in-progress: false
+    steps:
+      - name: Validate dev source
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          test "${GITHUB_REF}" = "refs/heads/dev" || {
+            echo "::error::Select the dev branch for preview deployment."
+            exit 1
+          }
+      - uses: actions/checkout@v5
+      - name: Verify source and document contracts
+        uses: ./.github/actions/poffo/verify
+      - name: Pull Preview settings
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: >-
+          pnpm dlx vercel@${VERCEL_CLI_VERSION} pull --yes --environment=preview --git-branch="$GITHUB_REF_NAME"
+          --local-config=apps/poffo/vercel.json --token="$VERCEL_TOKEN"
+      - name: Build Preview deployment artifact
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: >-
+          pnpm dlx vercel@${VERCEL_CLI_VERSION} build --target=preview
+          --local-config=apps/poffo/vercel.json --token="$VERCEL_TOKEN"
+      - name: Verify build UI and assets
+        uses: ./.github/actions/poffo/browser
+        with:
+          vercel-output: ${{ github.event_name == 'workflow_dispatch' && 'true' || 'false' }}
+      - name: Deploy verified artifact to Preview
+        if: github.event_name == 'workflow_dispatch'
+        id: deploy
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          deployment_url="$(pnpm dlx vercel@${VERCEL_CLI_VERSION} deploy \
+            --prebuilt --target=preview --yes --local-config=apps/poffo/vercel.json \
+            --token="$VERCEL_TOKEN" --meta githubCommitSha="$GITHUB_SHA" \
+            --meta githubCommitRef="$GITHUB_REF_NAME")"
+          echo "url=${deployment_url}" >> "$GITHUB_OUTPUT"
+          echo "Source commit: ${GITHUB_SHA}" >> "$GITHUB_STEP_SUMMARY"
+          echo "Deployment: ${deployment_url}" >> "$GITHUB_STEP_SUMMARY"
+      - name: Check Preview deployment routes
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          DEPLOYMENT_URL: ${{ steps.deploy.outputs.url }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          for path in /editor /studio /viewer /converter /tracking/worker.js /tracking/vendor/vision_wasm_internal.wasm; do
+            pnpm dlx vercel@${VERCEL_CLI_VERSION} curl "$path" --deployment="$DEPLOYMENT_URL" \
+              --token="$VERCEL_TOKEN" -- --fail --silent --show-error --max-time 30 --output /dev/null
+          done
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: poffo-dev-browser-diagnostics
+          path: apps/poffo/test-results
+          if-no-files-found: ignore

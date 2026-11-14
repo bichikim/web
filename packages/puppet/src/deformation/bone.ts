@@ -1,7 +1,15 @@
-import type {PuppetDeformerShape, PuppetPoint, PuppetVertexReference} from '../player/document'
+import type {
+  PuppetBoneWeights,
+  PuppetDeformerShape,
+  PuppetPoint,
+  PuppetVertexReference,
+} from '../player/document'
 
 const EPSILON = 0.000001
 const COORDINATES = 2
+const UNIT_WEIGHT = [1] as const
+const RIGID_COORDINATE_MARGIN = 8
+const MAXIMUM_RIGID_COORDINATE = Math.sqrt(Number.MAX_VALUE) / RIGID_COORDINATE_MARGIN
 
 const joint = (points: readonly number[], index: number): PuppetPoint => ({
   x: points[index * COORDINATES]!,
@@ -69,18 +77,57 @@ export const moveBoneJoint = (options: MoveBoneJointOptions): number[] => {
   })
 }
 
+const manualWeightIndexes = new WeakMap<
+  ReadonlyArray<PuppetBoneWeights>,
+  ReadonlyMap<string, ReadonlyMap<number, ReadonlyArray<number>>>
+>()
+
+const getManualWeights = (
+  entries: ReadonlyArray<PuppetBoneWeights>,
+  vertex: PuppetVertexReference,
+) => {
+  let indexed = manualWeightIndexes.get(entries)
+  if (indexed === undefined) {
+    const parts = new Map<string, Map<number, ReadonlyArray<number>>>()
+    for (const entry of entries) {
+      const weights = parts.get(entry.partId) ?? new Map<number, ReadonlyArray<number>>()
+      if (!weights.has(entry.vertexIndex)) {
+        weights.set(entry.vertexIndex, entry.weights)
+      }
+      parts.set(entry.partId, weights)
+    }
+    indexed = parts
+    manualWeightIndexes.set(entries, indexed)
+  }
+  return indexed.get(vertex.partId)?.get(vertex.vertexIndex)
+}
+
 export const getBoneWeights = (
   node: PuppetDeformerShape,
   point: PuppetPoint,
   vertex?: PuppetVertexReference,
 ): readonly number[] => {
-  const manual = node.boneWeights?.find(
-    (entry) => entry.partId === vertex?.partId && entry.vertexIndex === vertex?.vertexIndex,
-  )
+  const manual =
+    node.boneWeights === undefined || vertex === undefined
+      ? undefined
+      : getManualWeights(node.boneWeights, vertex)
   if (manual !== undefined) {
-    return manual.weights
+    return manual
   }
   const rest = node.boneRestPoints!
+  // One non-degenerate segment always has normalized automatic weight 1. Keep the original
+  // path for extreme coordinates, where squared distances can overflow or underflow.
+  if (
+    rest.length === COORDINATES * 2 &&
+    rest.every((value) => Number.isFinite(value) && Math.abs(value) < MAXIMUM_RIGID_COORDINATE) &&
+    Number.isFinite(point.x) &&
+    Number.isFinite(point.y) &&
+    Math.abs(point.x) < MAXIMUM_RIGID_COORDINATE &&
+    Math.abs(point.y) < MAXIMUM_RIGID_COORDINATE &&
+    (rest[2]! - rest[0]!) ** 2 + (rest[3]! - rest[1]!) ** 2 > 0
+  ) {
+    return UNIT_WEIGHT
+  }
   const weights = Array.from({length: rest.length / COORDINATES - 1}, (_, index) => {
     const start = joint(rest, index)
     const end = joint(rest, index + 1)
@@ -104,19 +151,28 @@ export const getBoneWeights = (
   return weights.map((value) => value / total)
 }
 
-export const transformBonePoint = (
+export interface BoneSegmentTransform {
+  readonly start: PuppetPoint
+  readonly origin: PuppetPoint
+  readonly cosine: number
+  readonly sine: number
+}
+
+// A posed shape is immutable. Compile its frame once, instead of once for every vertex.
+const segmentTransforms = new WeakMap<PuppetDeformerShape, ReadonlyArray<BoneSegmentTransform>>()
+
+/** Compiled segment frames for an immutable posed shape with bone rest points. */
+export const getBoneSegmentTransforms = (
   node: PuppetDeformerShape,
-  point: PuppetPoint,
-  vertex?: PuppetVertexReference,
-): PuppetPoint => {
+): ReadonlyArray<BoneSegmentTransform> => {
+  const cached = segmentTransforms.get(node)
+  if (cached !== undefined) {
+    return cached
+  }
   const rest = node.boneRestPoints!
   const pose = normalizeBonePose(rest, node.controlPoints)
-  const weights = getBoneWeights(node, point, vertex)
-  // Rotation deformers also scale about their pivot.
   const scale = node.deformerType === 'rotation' ? (node.rotationScale ?? 1) : 1
-  const [reflectX, reflectY] =
-    node.deformerType === 'rotation' ? (node.rotationReflection ?? [false, false]) : [false, false]
-  const influences = Array.from({length: rest.length / COORDINATES - 1}, (_, index) => {
+  const segments = Array.from({length: rest.length / COORDINATES - 1}, (_, index) => {
     const start = joint(rest, index)
     const end = joint(rest, index + 1)
     const horizontal = end.x - start.x
@@ -125,8 +181,35 @@ export const transformBonePoint = (
     const target = joint(pose, index + 1)
     const angle =
       Math.atan2(target.y - origin.y, target.x - origin.x) - Math.atan2(vertical, horizontal)
-    const cosine = Math.cos(angle) * scale
-    const sine = Math.sin(angle) * scale
+    return {
+      cosine: Math.cos(angle) * scale,
+      origin,
+      sine: Math.sin(angle) * scale,
+      start,
+    }
+  })
+  segmentTransforms.set(node, segments)
+  return segments
+}
+
+export const transformBonePoint = (
+  node: PuppetDeformerShape,
+  point: PuppetPoint,
+  vertex?: PuppetVertexReference,
+): PuppetPoint => {
+  const segments = getBoneSegmentTransforms(node)
+  const weights = getBoneWeights(node, point, vertex)
+  const [reflectX, reflectY] =
+    node.deformerType === 'rotation' ? (node.rotationReflection ?? [false, false]) : [false, false]
+  if (segments.length === 1) {
+    const {start, origin, cosine, sine} = segments[0]!
+    const localX = (point.x - start.x) * (reflectX ? -1 : 1)
+    const localY = (point.y - start.y) * (reflectY ? -1 : 1)
+    const x = origin.x + localX * cosine - localY * sine
+    const y = origin.y + localX * sine + localY * cosine
+    return {x: point.x + (x - point.x) * weights[0]!, y: point.y + (y - point.y) * weights[0]!}
+  }
+  const influences = segments.map(({start, origin, cosine, sine}, index) => {
     const localX = (point.x - start.x) * (reflectX ? -1 : 1)
     const localY = (point.y - start.y) * (reflectY ? -1 : 1)
     return {
@@ -135,13 +218,6 @@ export const transformBonePoint = (
       y: origin.y + localX * sine + localY * cosine,
     }
   })
-  if (influences.length === 1) {
-    const influence = influences[0]!
-    return {
-      x: point.x + (influence.x - point.x) * influence.weight,
-      y: point.y + (influence.y - point.y) * influence.weight,
-    }
-  }
   const weight = influences.reduce((sum, influence) => sum + influence.weight, 0)
   return influences.reduce(
     (result, influence) => ({

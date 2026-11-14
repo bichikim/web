@@ -7,35 +7,18 @@ export type {
 export {createSupertonicAudioPlayer} from './audio-player'
 export type {CreateSupertonicAudioPlayerOptions, SupertonicAudioPlayer} from './audio-player'
 export {joinAudioChunks} from './audio'
-export {createGaussianNoise} from './noise'
-export type {CreateGaussianNoiseOptions} from './noise'
+
 export {isSupertonicModelDownloaded} from './download'
 export type {IsSupertonicModelDownloadedOptions} from './download'
 export {getSupertonicErrorMessage} from './error-message'
-export type {SupertonicError, SupertonicPhase} from './errors'
-export {SUPERTONIC_LANGUAGES, SUPERTONIC_LANGUAGE_OPTIONS} from './language'
-export type {SupertonicLanguage, SupertonicLanguageOption} from './language'
-export {classifySpeechNumber, normalizeSpeechText} from './number-speech'
-export type {
-  ClassifySpeechNumberOptions,
-  NormalizeSpeechTextOptions,
-  SpeechNumberDecision,
-  SpeechNumberKind,
-} from './number-speech'
+
 export type {
   SupertonicAudio,
   SupertonicAudioChunk,
   SupertonicGenerationEvent,
   SupertonicVoiceSource,
 } from './messages'
-export {getSupertonicModel, SUPERTONIC_MODELS, SUPERTONIC_VOICES} from './model'
-export type {
-  SupertonicModel,
-  SupertonicModelId,
-  SupertonicSpeechPolicy,
-  SupertonicVoice,
-  SupertonicVoiceId,
-} from './model'
+
 export {createOpusBlob} from './opus-client'
 export type {CreateOpusBlobOptions} from './opus-client'
 export {createWaveBlob} from './wav'
@@ -49,7 +32,5 @@ export type {
   SupertonicVoiceResult,
   UseSupertonicVoiceLabProps,
 } from './use-supertonic-voice-lab'
-export {parseSupertonicVoiceStyle} from './voice-style'
+
 export {isSupertonicVoiceId} from './is-supertonic-voice-id'
-export type {SupertonicVoiceStyle} from './voice-style'
-export {splitSpeechText} from './text-chunking'

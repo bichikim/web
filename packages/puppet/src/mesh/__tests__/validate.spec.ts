@@ -1,4 +1,4 @@
-import {describe, expect, it} from 'vitest'
+import {describe, expect, it, test} from 'vitest'
 
 import type {PuppetMesh} from '../../player'
 import {validateMesh} from '../validate'
@@ -45,7 +45,7 @@ describe('validateMesh', () => {
     })
   })
 
-  it('should detect duplicate vertices within the geometry tolerance after sorting', () => {
+  it('should detect duplicate vertices within the geometry tolerance', () => {
     expect(
       validateMesh(
         createMesh({
@@ -57,6 +57,33 @@ describe('validateMesh', () => {
     ).toEqual(
       expect.objectContaining({issues: expect.arrayContaining(['duplicate-vertex']), valid: false}),
     )
+  })
+
+  test.each([
+    [-0.000_000_1, 0, 0.000_000_1, 0],
+    [0.000_001_9, 0.000_001_9, 0.000_002_1, 0.000_002_1],
+    [1e308, 0, 1e308, 0],
+    [1e9, 0, 1e9 + 0.000_000_5, 0],
+  ])('should find close vertices across coordinate buckets: %j', (...points) => {
+    const vertices = [0, 10, 10, 10, 0, 20, ...points]
+    const result = validateMesh(createMesh({uvs: vertices.map(() => 0), vertices}))
+    expect(result).toMatchObject({
+      issues: expect.arrayContaining(['duplicate-vertex']),
+      valid: false,
+    })
+  })
+
+  test('should accept distinct vertices aligned along the same X coordinates', () => {
+    const count = 2000
+    const vertices = Array.from({length: count * 2}, (_, index) =>
+      index % 2 === 0 ? Math.floor(index / 2) % 2 : Math.floor(index / 4),
+    )
+    expect(validateMesh(createMesh({uvs: vertices.map(() => 0), vertices}))).toEqual({valid: true})
+  })
+
+  test('should retain distinct vertices sharing a coordinate bucket', () => {
+    const vertices = [0, 10, 10, 10, 0, 20, 0, 0, 0.000_000_9, 0.000_000_9]
+    expect(validateMesh(createMesh({uvs: vertices.map(() => 0), vertices}))).toEqual({valid: true})
   })
 
   it('should report duplicate triangles and non-manifold edges', () => {
@@ -113,3 +140,28 @@ describe('validateMesh', () => {
     }
   })
 })
+
+test.each([Number.NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY])(
+  'should reject a non-finite vertex coordinate %s',
+  (coordinate) => {
+    expect(
+      validateMesh({
+        indices: [0, 1, 2],
+        uvs: [0, 0, 1, 0, 0, 1],
+        vertices: [coordinate, 0, 1, 0, 0, 1],
+      }),
+    ).toMatchObject({valid: false})
+  },
+)
+test.each([Number.NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY])(
+  'should reject a non-finite UV coordinate %s',
+  (coordinate) => {
+    expect(
+      validateMesh({
+        indices: [0, 1, 2],
+        uvs: [coordinate, 0, 1, 0, 0, 1],
+        vertices: [0, 0, 1, 0, 0, 1],
+      }),
+    ).toMatchObject({valid: false})
+  },
+)

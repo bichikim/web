@@ -1,5 +1,5 @@
 // oxlint-disable no-await-in-loop -- Each model must finish preparing before settings can be checked again.
-import type {SupertonicModelId} from '../supertonic'
+import type {SupertonicModelId} from '@winter-love/supertonic/model'
 import type {FeedDialogueRepository} from './feed-dialogue-repository'
 import type {FeedDialogueJob} from './feed-dialogue-schema'
 import type {FeedGenerationSettings} from './generation-settings'

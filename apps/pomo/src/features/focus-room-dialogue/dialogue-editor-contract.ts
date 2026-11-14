@@ -1,6 +1,7 @@
 import type {Accessor} from 'solid-js'
 
-import type {SupertonicLanguage, SupertonicModelId, SupertonicVoiceId} from '../supertonic'
+import type {SupertonicLanguage} from '@winter-love/supertonic/language'
+import type {SupertonicModelId, SupertonicVoiceId} from '@winter-love/supertonic/model'
 import type {TextMoodRuntime} from '../text-mood'
 import type {DialogueEditorState} from './dialogue-editor-state'
 import type {DialogueSegment} from './schema'

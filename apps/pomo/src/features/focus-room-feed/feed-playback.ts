@@ -16,7 +16,10 @@ export interface CreateFeedPlaybackControllerOptions {
   readonly events: FeedPlaybackEvents
   readonly isDisposed: () => boolean
   readonly now: () => Date
-  readonly repository: () => FeedDialogueRepository
+  readonly repository: () => Pick<
+    FeedDialogueRepository,
+    'listItems' | 'markListened' | 'recoverMissingDialogue'
+  >
   readonly scheduleJobs: (jobIds: ReadonlyArray<string>) => void
   readonly setDialogues: Setter<ReadonlyArray<FeedDialogueListItem>>
 }

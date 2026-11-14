@@ -72,3 +72,26 @@ it('should retain local models only for narration and keep previews on their own
   expect(createSynthesis).toHaveBeenCalledOnce()
   narration.dispose()
 })
+
+it('should preserve audio streaming while acoustic lip sync is enabled', async () => {
+  const audio = {sampleRate: 16000, samples: new Float32Array(640)}
+  const pending = Promise.withResolvers<typeof audio>()
+  chatgpt.generate.mockImplementationOnce((_text, _voice, _signal, observer) => {
+    observer.audio?.(audio)
+    return pending.promise
+  })
+  const client = createVoiceClient({analyzeSpeech: () => true})
+  const status = vi.fn()
+  const stream = vi.fn()
+  const preparing = client.prepare(
+    '아이우에오',
+    {...DEFAULT_POFFO_VOICE, provider: 'chatgpt'},
+    new AbortController().signal,
+    {audio: stream, status},
+  )
+  expect(stream).toHaveBeenCalledExactlyOnceWith(audio)
+  expect(chatgpt.generate.mock.lastCall?.[3]).toEqual({audio: stream, status})
+  pending.resolve(audio)
+  expect(await preparing).toBe(audio)
+  client.dispose()
+})

@@ -1,6 +1,7 @@
 import {cleanup, fireEvent, render, screen} from '@solidjs/testing-library'
 import {createSignal} from 'solid-js'
 import {afterEach, expect, it, vi} from 'vitest'
+import {userEvent} from 'vitest/browser'
 import {codexPort} from '../../src/features/codex/native'
 import type {CodexActivity} from '../../src/features/codex'
 import {SCodexSpeech} from '../../src/components/SCodexSpeech'
@@ -10,6 +11,37 @@ afterEach(() => {
   cleanup()
   vi.restoreAllMocks()
 })
+
+it.each(['Control', 'Meta'])(
+  'should send from the speech bubble with %s+Enter and preserve plain Enter',
+  async (modifier) => {
+    const send = vi.spyOn(codexPort, 'sendPrompt').mockResolvedValue(undefined)
+    render(() => (
+      <div class="w-68">
+        <SCodexSpeech
+          activity={{
+            notificationId: 1,
+            phase: 'response',
+            receivedAt: 1,
+            response: '응답',
+            sessionId: 'shortcut-chat',
+            text: '응답 도착',
+            tool: null,
+          }}
+        />
+      </div>
+    ))
+    const input = screen.getByRole('textbox')
+    await userEvent.type(input, 'first')
+    await userEvent.keyboard('{Enter}')
+    expect(input).toHaveValue('first\n')
+    expect(send).not.toHaveBeenCalled()
+    await userEvent.type(input, 'second')
+    await userEvent.keyboard(`{${modifier}>}{Enter}{/${modifier}}`)
+    expect(send).toHaveBeenCalledExactlyOnceWith('shortcut-chat', 'first\nsecond')
+    expect(screen.queryByRole('textbox')).not.toBeInTheDocument()
+  },
+)
 
 it('should hide the composer through delivery and show it for failure or the next response', async () => {
   const accepted = Promise.withResolvers<void>()

@@ -132,6 +132,8 @@ export interface PuppetMotion extends PuppetMotionFade {
   readonly loop?: boolean
   /** Display name; the ID is shown when omitted. */
   readonly name?: string
+  /** 원본 범위 밖 키를 보존하고, 보간값을 페이드 전에 제한하거나 반복한다. 생략하면 키부터 범위 안이어야 한다. */
+  readonly parameterBounds?: 'sample'
   readonly sound?: PuppetMotionSound
   /** 종류로 구분하는 효과 행. 생략하면 기존 문자열 효과 행도 읽는다. */
   readonly timelineEffectRows?: ReadonlyArray<PuppetTimelineEffectRow>

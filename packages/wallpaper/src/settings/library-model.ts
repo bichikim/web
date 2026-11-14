@@ -1,3 +1,5 @@
+import {type RandomActionSettings, randomActionSettingsSchema} from './random-actions'
+import {type SemanticBinding, semanticBindingsSchema} from './semantics'
 import {z} from 'zod'
 import {type PoffoVoice, poffoVoiceSchema} from './voice'
 import {type PoffoLipSync, poffoLipSyncSchema} from './lipsync'
@@ -26,21 +28,29 @@ export interface PoffoWidget {
   readonly motionId?: string | null
 }
 export const poffoMotionSchema = z.string().min(1).nullish()
-export interface PoffoSpeech {
+export interface PoffoSpeechPosition {
+  readonly anchor?: 'top' | 'bottom'
+  readonly x: number
+  readonly y: number
+}
+export interface PoffoSpeech extends PoffoSpeechPosition {
+  readonly randomActions?: RandomActionSettings
+  readonly semanticBindings?: readonly SemanticBinding[]
   readonly agentBindings?: AgentStateBindings
   readonly lipsync?: PoffoLipSync
   readonly wrap?: boolean
   readonly voice?: PoffoVoice
   readonly enabled: boolean
-  readonly x: number
-  readonly y: number
 }
 export const DEFAULT_POFFO_SPEECH: PoffoSpeech = {enabled: true, x: 0.9, y: 0.05}
 export const POFFO_SPEECH_BOUNDS = {maxX: 2, maxY: 1.5, minX: -1, minY: -0.5}
 export const poffoSpeechSchema = z.object({
   agentBindings: agentStateBindingsSchema.optional(),
+  anchor: z.enum(['top', 'bottom']).optional(),
   enabled: z.boolean(),
   lipsync: poffoLipSyncSchema.optional(),
+  randomActions: randomActionSettingsSchema.optional(),
+  semanticBindings: semanticBindingsSchema.optional(),
   voice: poffoVoiceSchema.optional(),
   wrap: z.boolean().optional(),
   x: z.number().finite().min(POFFO_SPEECH_BOUNDS.minX).max(POFFO_SPEECH_BOUNDS.maxX),

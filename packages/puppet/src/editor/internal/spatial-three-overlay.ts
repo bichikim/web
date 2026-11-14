@@ -150,6 +150,19 @@ export const createSpatialThreeOverlay = (canvas: HTMLCanvasElement): SpatialThr
     edgePositions.needsUpdate = true
   }
 
+  const render = () => {
+    if (faces === undefined || edges === undefined) {
+      return
+    }
+    const style = getComputedStyle(canvas)
+    ambient.color.setStyle(style.getPropertyValue('--spatial-mesh-light').trim())
+    directional.color.setStyle(style.getPropertyValue('--spatial-mesh-light').trim())
+    faceMaterial.color.setStyle(style.getPropertyValue('--spatial-mesh-face').trim())
+    edgeMaterial.color.setStyle(style.getPropertyValue('--spatial-mesh-edge').trim())
+    renderer.resetState()
+    renderer.clearDepth()
+    renderer.render(scene, camera)
+  }
   return {
     destroy() {
       clearSurface()
@@ -166,14 +179,7 @@ export const createSpatialThreeOverlay = (canvas: HTMLCanvasElement): SpatialThr
       height = nextHeight
       renderer.setSize(width, height, false)
     },
-    render() {
-      if (faces === undefined || edges === undefined) {
-        return
-      }
-      renderer.resetState()
-      renderer.clearDepth()
-      renderer.render(scene, camera)
-    },
+    render,
     update(surface) {
       const mesh = surface?.node.spatialMesh
       if (surface === undefined || mesh === undefined) {

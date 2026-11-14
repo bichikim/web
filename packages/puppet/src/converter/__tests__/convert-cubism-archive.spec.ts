@@ -383,3 +383,109 @@ test('should report all missing referenced files before attempting model convers
   )
   expect(convertMoc3).not.toHaveBeenCalled()
 })
+
+test('should import VTube idle and hotkey motions once alongside declared motion metadata', () => {
+  const entries = fixture()
+  const motion = entries['model/idle.motion3.json']
+  const {document, warnings} = convertCubismArchive(
+    zipSync({
+      ...entries,
+      'model/avatar.vtube.json': strToU8(
+        JSON.stringify({
+          FileReferences: {
+            IdleAnimation: 'idle.motion3.json',
+            IdleAnimationWhenTrackingLost: 'lost.motion3.json',
+            Model: 'avatar.model3.json',
+          },
+          Hotkeys: [
+            {Action: 'ChangeIdleAnimation', File: 'Walk.motion3.json', Name: 'Walk'},
+            {Action: 'ChangeIdleAnimation', File: 'idle.motion3.json', Name: 'Stop walk'},
+            {Action: 'TriggerAnimation', File: 'jump.motion3.json', Name: 'Jump'},
+            {Action: 'ToggleExpression', File: 'face.exp3.json', Name: 'Face'},
+          ],
+        }),
+      ),
+      'model/face.exp3.json': strToU8('{"Parameters":[]}'),
+      'model/jump.motion3.json': motion,
+      'model/lost.motion3.json': motion,
+      'model/motions/Walk.motion3.json': motion,
+    }),
+  )
+  expect(document.motions.map(({id}) => id)).toEqual([
+    'Idle:0',
+    'IdleTrackingLost:0',
+    'Walk:0',
+    'Jump:0',
+  ])
+  expect(document.motions[0]?.fadeInTime).toBe(0.5)
+  expect(warnings.filter((warning) => warning.startsWith('선택 파일 누락:'))).toEqual([])
+})
+
+test('should import the default VTube idle motion without a model3 motion declaration', () => {
+  const entries = fixture()
+  const model = JSON.parse(new TextDecoder().decode(entries['model/avatar.model3.json']))
+  delete model.FileReferences.Motions
+  const {document} = convertCubismArchive(
+    zipSync({
+      ...entries,
+      'model/avatar.model3.json': strToU8(JSON.stringify(model)),
+      'model/avatar.vtube.json': strToU8(
+        JSON.stringify({
+          FileReferences: {IdleAnimation: 'idle.motion3.json', Model: 'avatar.model3.json'},
+        }),
+      ),
+    }),
+  )
+  expect(document.motions.map(({id}) => id)).toEqual(['Idle:0'])
+})
+
+test('should ignore motion settings belonging to another model', () => {
+  const {document} = convertCubismArchive(
+    zipSync({
+      ...fixture(),
+      'model/avatar.vtube.json': strToU8(
+        JSON.stringify({
+          FileReferences: {IdleAnimation: 'missing.motion3.json', Model: 'other.model3.json'},
+          Hotkeys: [{Action: 'TriggerAnimation', File: 'missing.motion3.json', Name: 'Wrong'}],
+        }),
+      ),
+    }),
+  )
+  expect(document.motions.map(({id}) => id)).toEqual(['Idle:0'])
+})
+
+test('should report a missing VTube motion while preserving available motions', () => {
+  const {document, warnings} = convertCubismArchive(
+    zipSync({
+      ...fixture(),
+      'model/avatar.vtube.json': strToU8(
+        JSON.stringify({
+          FileReferences: {IdleAnimation: '', Model: 'avatar.model3.json'},
+          Hotkeys: [{Action: 'ChangeIdleAnimation', File: 'missing.motion3.json', Name: 'Missing'}],
+        }),
+      ),
+    }),
+  )
+  expect(document.motions.map(({id}) => id)).toEqual(['Idle:0'])
+  expect(warnings).toContain('선택 파일 누락: 모션: model/missing.motion3.json')
+})
+
+test('should preserve motion curves beyond model limits and clamp their samples during playback', () => {
+  const entries = fixture()
+  const {document} = convertCubismArchive(
+    zipSync({
+      ...entries,
+      'model/idle.motion3.json': strToU8(
+        JSON.stringify({
+          Curves: [{Id: 'p', Segments: [0, 0, 0, 1, 2], Target: 'Parameter'}],
+          Meta: {Duration: 1, Fps: 30},
+          Version: 3,
+        }),
+      ),
+    }),
+  )
+  expect(parseDocumentValue(document).ok).toBe(true)
+  expect(document.parameters?.find(({id}) => id === 'p')?.maximum).toBe(1)
+  expect(document.motions[0]).toMatchObject({parameterBounds: 'sample'})
+  expect(document.motions[0]?.tracks[0]?.keyframes.at(-1)?.value).toBe(2)
+})

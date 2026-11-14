@@ -1,11 +1,8 @@
 import * as m from '@paraglide/message'
 import {generateCompressedDialogueAudio} from '../../features/focus-room-dialogue'
 import type {LanguageLearningLanguage} from '../../features/language-learning'
-import {
-  getSupertonicErrorMessage,
-  type SupertonicModelId,
-  type SupertonicVoiceId,
-} from '../../features/supertonic'
+import {getSupertonicErrorMessage} from '../../features/supertonic'
+import {type SupertonicModelId, type SupertonicVoiceId} from '@winter-love/supertonic/model'
 import {runLanguageLearningSupertonic} from './supertonic-lifecycle'
 
 interface CompletedWordPronunciation {

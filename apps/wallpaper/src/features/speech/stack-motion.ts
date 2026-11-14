@@ -32,8 +32,20 @@ const EASING = 'cubic-bezier(.22, .8, .25, 1)'
 const SPEED = 160
 const SECOND = 1000
 const LIFT = 8
-const LIFT_DURATION = 200
+const LIFT_DURATION = 300
+const PREVIEW_HEIGHT = 144
+const EDGE_SPACE = 12
 const SETTLE_DURATION = 180
+const liftPose = (from: StackElement, anchor: SpeechAnchor): StackPose => {
+  const bounds = from.element.getBoundingClientRect()
+  const height = Math.max(from.height, Math.min(PREVIEW_HEIGHT, bounds.height))
+  const shift = anchor === 'top' ? LIFT : height - from.height - LIFT
+  const top = anchor === 'top' ? bounds.top + shift : bounds.bottom + shift - height
+  const viewport = from.element.ownerDocument.defaultView?.innerHeight ?? bounds.bottom
+  const correction =
+    Math.max(0, EDGE_SPACE - top) - Math.max(0, top + height - viewport + EDGE_SPACE)
+  return {depth: 1, height, reveal: 1, y: from.y + shift + correction}
+}
 const readPose = (props: {
   readonly element: HTMLElement
   readonly origin: number
@@ -232,12 +244,7 @@ export const createStackMotion = (props: StackMotionProps) => {
         duration: LIFT_DURATION,
         from,
         id,
-        to: {
-          depth: 1,
-          height: from.height,
-          reveal: from.reveal,
-          y: from.y + (props.anchor() === 'top' ? LIFT : -LIFT),
-        },
+        to: liftPose(from, props.anchor()),
       }),
     phase: () => phase,
     rebase,

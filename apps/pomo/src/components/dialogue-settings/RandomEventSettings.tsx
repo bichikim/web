@@ -2,7 +2,7 @@ import {createPreferenceSaveQueue} from 'src/features/preference-save-queue'
 import {createPendingSave} from 'src/features/pending-save'
 import {PNumberInput} from 'src/components/p-number-input/PNumberInput'
 import {usePreference} from 'src/hooks/use-preference'
-import {normalizePasteNumericInput} from 'src/utils/normalize-paste-numeric-input'
+import {normalizePasteNumericInput} from '@winter-love/supertonic/normalize-paste-numeric-input'
 import {
   type Accessor,
   createEffect,

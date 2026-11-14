@@ -1,0 +1,4752 @@
+{
+  "recordedAt": "2026-11-03T08:10:53.141482+00:00",
+  "baseCommit": "20c0207172103a1629ded80fb15bb8fc9ae26622",
+  "branch": "codex/feature/puppet-wasm-deformation",
+  "candidateState": "Local hybrid Worker with binding-level sampling, single-array vertex composition, inherited-container effects and Glue-setting reuse",
+  "summary": {
+    "defaultStrategy": "JavaScript Worker with Wasm deformation",
+    "previousHybridFPS": 83.47624155102285,
+    "optimizedHybridFPS": 89.01829318429546,
+    "relativeFPSGainPercent": 6.639076616650441,
+    "computeOnlyPreviousMillisPerFrame": 12.296684633333333,
+    "computeOnlyOptimizedMillisPerFrame": 10.903087152083334,
+    "computeOnlyReductionPercent": 11.333115573870167,
+    "differentFloat32Words": 0,
+    "maximumVertexError": 0,
+    "wasmLinearMemoryMiB": 16.0
+  },
+  "remainingWorkerOptimization": {
+    "memoryPolicy": "Moderate memory increases are explicitly permitted. Reuse is bounded by the latest binding samples and immutable document/scene lifetimes.",
+    "profile": {
+      "worker": "/private/tmp/puppet-remaining-profile/worker-cpu-1-run-1-worker.cpuprofile",
+      "summary": "/private/tmp/puppet-remaining-profile-summary.json",
+      "sampledInclusiveMillis": {
+        "nativeDeformation": 1893.98,
+        "renderPlan": 601.71,
+        "parameterVertices": 451.1,
+        "glueConfiguration": 269.03,
+        "postMessage": 294.84
+      },
+      "interpretation": "Verified minified source offsets identify the functions. Inclusive stack samples overlap and are not measured phase wall times; profiling is disabled for FPS comparisons."
+    },
+    "modelInspection": {
+      "glue": 5114,
+      "bindings": 5042,
+      "keyedGlueBindings": 0,
+      "nonGridBindings": 0,
+      "influencedBindings": 99,
+      "keyedGlueIds": []
+    },
+    "changes": [
+      {
+        "file": "src/deformation/composition.ts",
+        "change": "Keep the latest sampled vertices and influence for each binding. A changed input no longer resamples unrelated bindings. Compose all active binding deltas into one output array per part, keeping each coordinate in original binding accumulation order."
+      },
+      {
+        "file": "src/deformation/parameter.ts",
+        "change": "Index immutable grid keyform coordinates once per binding, part and rest-array identity instead of rebuilding keyform arrays and searching parts per sample."
+      },
+      {
+        "files": ["src/player/internal/scene-layers.ts", "src/player/internal/render-plan.ts"],
+        "change": "Retain parent-before-child container metadata. Evaluate inherited effects once per container and reuse the result for descendant parts and layers. Cache invalidation includes the resolved properties, parent result and color-composition mode; offscreen layer boundaries are preserved."
+      },
+      {
+        "file": "src/deformation/parameter-glue.ts",
+        "change": "Reuse composed Glue settings while its relevant inputs are equal. Keyed controls, non-grid interpolation rounding inputs, and influence parameters remain dependencies. Actual per-frame vertex joining still runs."
+      }
+    ],
+    "sourceSHA256": {
+      "src/deformation/composition.ts": "64d4196a75ce53a10f3d261384f67a4b39e89713df20c58bbe05e88bd0dc74dc",
+      "src/deformation/parameter.ts": "bb472454aaddfb7e10b0340f71a5c206113c33a13959d6dae44c4f56c686325c",
+      "src/deformation/parameter-glue.ts": "4f74b0e5b7709fb9d698aa9f961dccc601c60e5e334161021f0284a64804ea7a",
+      "src/player/internal/render-plan.ts": "4843f8f621c996e4cc447fa314fd2249051fed78f11ce075f1893b45d051a866",
+      "src/player/internal/scene-layers.ts": "cbf250622c3584028f1b42dc63721a8a3599c5b9440e285c71e1da2a289be854"
+    },
+    "browser": {
+      "method": {
+        "antialiasing": "ssaa",
+        "cpuRates": [1],
+        "measureMillis": 15000,
+        "model": "/Users/bichi/Downloads/白猫/white-cat-idle-english.poffo",
+        "modes": ["worker"],
+        "randomSeed": 42,
+        "resolution": 1,
+        "runs": 1,
+        "viewport": {
+          "height": 700,
+          "width": 900
+        },
+        "warmupMillis": 5000,
+        "runsPerVariant": 4,
+        "freshBrowserForEveryRun": true,
+        "profiling": false,
+        "metric": "Player onFrame model publications per second. observedModelFPS counts display callbacks seeing a new publication, not distinct vertex buffers or physical monitor scanout.",
+        "order": [
+          {
+            "repeat": 1,
+            "variant": "before"
+          },
+          {
+            "repeat": 1,
+            "variant": "after"
+          },
+          {
+            "repeat": 2,
+            "variant": "after"
+          },
+          {
+            "repeat": 2,
+            "variant": "before"
+          },
+          {
+            "repeat": 3,
+            "variant": "before"
+          },
+          {
+            "repeat": 3,
+            "variant": "after"
+          },
+          {
+            "repeat": 4,
+            "variant": "after"
+          },
+          {
+            "repeat": 4,
+            "variant": "before"
+          }
+        ],
+        "comparison": "Compare only these fresh paired runs. The baseline is the previously selected copy-elimination/whole-part memoization build, not the earlier unoptimized JS or complete-Wasm builds."
+      },
+      "statistics": {
+        "before": {
+          "meanFPS": 83.47624155102285,
+          "medianFPS": 83.14154486995825,
+          "standardDeviationFPS": 3.455928924738429,
+          "runsFPS": [87.73274844834368, 81.62150276846812, 79.88912801583123, 84.66158697144839]
+        },
+        "after": {
+          "meanFPS": 89.01829318429546,
+          "medianFPS": 88.75119084382268,
+          "standardDeviationFPS": 2.0206004876536037,
+          "runsFPS": [91.41669220825949, 89.95082688130489, 87.15409884127693, 87.55155480634049]
+        }
+      },
+      "measurements": [
+        {
+          "repeat": 1,
+          "variant": "before",
+          "result": {
+            "configuration": {
+              "antialiasing": "ssaa",
+              "cpuRates": [1],
+              "measureMillis": 15000,
+              "model": "/Users/bichi/Downloads/白猫/white-cat-idle-english.poffo",
+              "modes": ["worker"],
+              "randomSeed": 42,
+              "resolution": 1,
+              "runs": 1,
+              "viewport": {
+                "height": 700,
+                "width": 900
+              },
+              "warmupMillis": 5000
+            },
+            "results": [
+              {
+                "computation": "worker",
+                "cpu": 1,
+                "run": 1,
+                "buffering": {
+                  "enabled": true,
+                  "framesAhead": 3,
+                  "status": "active"
+                },
+                "canvasSize": {
+                  "height": 700,
+                  "width": 900
+                },
+                "chains": 25,
+                "hardwareConcurrency": 15,
+                "motion": "Idle:0",
+                "parameters": 265,
+                "parts": 852,
+                "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+                "vertices": 34452,
+                "duration": 15000.099999999999,
+                "errors": [],
+                "frameP95": 9,
+                "observedModelFPS": 87.6660822261185,
+                "rafFPS": 119.99920000533331,
+                "updatedFPS": 87.73274844834368,
+                "heapBytes": 276387844,
+                "scriptSeconds": 4.613598,
+                "taskSeconds": 4.965017
+              }
+            ]
+          }
+        },
+        {
+          "repeat": 1,
+          "variant": "after",
+          "result": {
+            "configuration": {
+              "antialiasing": "ssaa",
+              "cpuRates": [1],
+              "measureMillis": 15000,
+              "model": "/Users/bichi/Downloads/白猫/white-cat-idle-english.poffo",
+              "modes": ["worker"],
+              "randomSeed": 42,
+              "resolution": 1,
+              "runs": 1,
+              "viewport": {
+                "height": 700,
+                "width": 900
+              },
+              "warmupMillis": 5000
+            },
+            "results": [
+              {
+                "computation": "worker",
+                "cpu": 1,
+                "run": 1,
+                "buffering": {
+                  "enabled": true,
+                  "framesAhead": 3,
+                  "status": "active"
+                },
+                "canvasSize": {
+                  "height": 700,
+                  "width": 900
+                },
+                "chains": 25,
+                "hardwareConcurrency": 15,
+                "motion": "Idle:0",
+                "parameters": 265,
+                "parts": 852,
+                "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+                "vertices": 34452,
+                "duration": 15008.199999999999,
+                "errors": [],
+                "frameP95": 8.899999999999636,
+                "observedModelFPS": 91.3500619661252,
+                "rafFPS": 120.00106608387416,
+                "updatedFPS": 91.41669220825949,
+                "heapBytes": 282870640,
+                "scriptSeconds": 4.9088709999999995,
+                "taskSeconds": 5.295649999999999
+              }
+            ]
+          }
+        },
+        {
+          "repeat": 2,
+          "variant": "after",
+          "result": {
+            "configuration": {
+              "antialiasing": "ssaa",
+              "cpuRates": [1],
+              "measureMillis": 15000,
+              "model": "/Users/bichi/Downloads/白猫/white-cat-idle-english.poffo",
+              "modes": ["worker"],
+              "randomSeed": 42,
+              "resolution": 1,
+              "runs": 1,
+              "viewport": {
+                "height": 700,
+                "width": 900
+              },
+              "warmupMillis": 5000
+            },
+            "results": [
+              {
+                "computation": "worker",
+                "cpu": 1,
+                "run": 1,
+                "buffering": {
+                  "enabled": true,
+                  "framesAhead": 3,
+                  "status": "active"
+                },
+                "canvasSize": {
+                  "height": 700,
+                  "width": 900
+                },
+                "chains": 25,
+                "hardwareConcurrency": 15,
+                "motion": "Idle:0",
+                "parameters": 265,
+                "parts": 852,
+                "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+                "vertices": 34452,
+                "duration": 15008.199999999999,
+                "errors": [],
+                "frameP95": 9.19999999999709,
+                "observedModelFPS": 89.95082688130489,
+                "rafFPS": 120.00106608387416,
+                "updatedFPS": 89.95082688130489,
+                "heapBytes": 300361448,
+                "scriptSeconds": 4.960989,
+                "taskSeconds": 5.347568999999999
+              }
+            ]
+          }
+        },
+        {
+          "repeat": 2,
+          "variant": "before",
+          "result": {
+            "configuration": {
+              "antialiasing": "ssaa",
+              "cpuRates": [1],
+              "measureMillis": 15000,
+              "model": "/Users/bichi/Downloads/白猫/white-cat-idle-english.poffo",
+              "modes": ["worker"],
+              "randomSeed": 42,
+              "resolution": 1,
+              "runs": 1,
+              "viewport": {
+                "height": 700,
+                "width": 900
+              },
+              "warmupMillis": 5000
+            },
+            "results": [
+              {
+                "computation": "worker",
+                "cpu": 1,
+                "run": 1,
+                "buffering": {
+                  "enabled": true,
+                  "framesAhead": 3,
+                  "status": "active"
+                },
+                "canvasSize": {
+                  "height": 700,
+                  "width": 900
+                },
+                "chains": 25,
+                "hardwareConcurrency": 15,
+                "motion": "Idle:0",
+                "parameters": 265,
+                "parts": 852,
+                "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+                "vertices": 34452,
+                "duration": 15008.3,
+                "errors": [],
+                "frameP95": 9,
+                "observedModelFPS": 81.62150276846812,
+                "rafFPS": 120.00026651919272,
+                "updatedFPS": 81.62150276846812,
+                "heapBytes": 268975924,
+                "scriptSeconds": 4.5019540000000005,
+                "taskSeconds": 4.856903
+              }
+            ]
+          }
+        },
+        {
+          "repeat": 3,
+          "variant": "before",
+          "result": {
+            "configuration": {
+              "antialiasing": "ssaa",
+              "cpuRates": [1],
+              "measureMillis": 15000,
+              "model": "/Users/bichi/Downloads/白猫/white-cat-idle-english.poffo",
+              "modes": ["worker"],
+              "randomSeed": 42,
+              "resolution": 1,
+              "runs": 1,
+              "viewport": {
+                "height": 700,
+                "width": 900
+              },
+              "warmupMillis": 5000
+            },
+            "results": [
+              {
+                "computation": "worker",
+                "cpu": 1,
+                "run": 1,
+                "buffering": {
+                  "enabled": true,
+                  "framesAhead": 3,
+                  "status": "active"
+                },
+                "canvasSize": {
+                  "height": 700,
+                  "width": 900
+                },
+                "chains": 25,
+                "hardwareConcurrency": 15,
+                "motion": "Idle:0",
+                "parameters": 265,
+                "parts": 852,
+                "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+                "vertices": 34452,
+                "duration": 15008.300000000001,
+                "errors": [],
+                "frameP95": 9.5,
+                "observedModelFPS": 79.82249821765289,
+                "rafFPS": 120.0002665191927,
+                "updatedFPS": 79.88912801583123,
+                "heapBytes": 177411416,
+                "scriptSeconds": 4.592236,
+                "taskSeconds": 4.963785000000001
+              }
+            ]
+          }
+        },
+        {
+          "repeat": 3,
+          "variant": "after",
+          "result": {
+            "configuration": {
+              "antialiasing": "ssaa",
+              "cpuRates": [1],
+              "measureMillis": 15000,
+              "model": "/Users/bichi/Downloads/白猫/white-cat-idle-english.poffo",
+              "modes": ["worker"],
+              "randomSeed": 42,
+              "resolution": 1,
+              "runs": 1,
+              "viewport": {
+                "height": 700,
+                "width": 900
+              },
+              "warmupMillis": 5000
+            },
+            "results": [
+              {
+                "computation": "worker",
+                "cpu": 1,
+                "run": 1,
+                "buffering": {
+                  "enabled": true,
+                  "framesAhead": 3,
+                  "status": "active"
+                },
+                "canvasSize": {
+                  "height": 700,
+                  "width": 900
+                },
+                "chains": 25,
+                "hardwareConcurrency": 15,
+                "motion": "Idle:0",
+                "parameters": 265,
+                "parts": 852,
+                "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+                "vertices": 34452,
+                "duration": 15007.9,
+                "errors": [],
+                "frameP95": 8.900000000001455,
+                "observedModelFPS": 87.08746726723926,
+                "rafFPS": 120.00346484184996,
+                "updatedFPS": 87.15409884127693,
+                "heapBytes": 284631932,
+                "scriptSeconds": 4.890375000000001,
+                "taskSeconds": 5.285739
+              }
+            ]
+          }
+        },
+        {
+          "repeat": 4,
+          "variant": "after",
+          "result": {
+            "configuration": {
+              "antialiasing": "ssaa",
+              "cpuRates": [1],
+              "measureMillis": 15000,
+              "model": "/Users/bichi/Downloads/白猫/white-cat-idle-english.poffo",
+              "modes": ["worker"],
+              "randomSeed": 42,
+              "resolution": 1,
+              "runs": 1,
+              "viewport": {
+                "height": 700,
+                "width": 900
+              },
+              "warmupMillis": 5000
+            },
+            "results": [
+              {
+                "computation": "worker",
+                "cpu": 1,
+                "run": 1,
+                "buffering": {
+                  "enabled": true,
+                  "framesAhead": 3,
+                  "status": "active"
+                },
+                "canvasSize": {
+                  "height": 700,
+                  "width": 900
+                },
+                "chains": 25,
+                "hardwareConcurrency": 15,
+                "motion": "Idle:0",
+                "parameters": 265,
+                "parts": 852,
+                "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+                "vertices": 34452,
+                "duration": 15008.300000000001,
+                "errors": [],
+                "frameP95": 9,
+                "observedModelFPS": 87.55155480634049,
+                "rafFPS": 120.0002665191927,
+                "updatedFPS": 87.55155480634049,
+                "heapBytes": 311092988,
+                "scriptSeconds": 5.008246,
+                "taskSeconds": 5.403726
+              }
+            ]
+          }
+        },
+        {
+          "repeat": 4,
+          "variant": "before",
+          "result": {
+            "configuration": {
+              "antialiasing": "ssaa",
+              "cpuRates": [1],
+              "measureMillis": 15000,
+              "model": "/Users/bichi/Downloads/白猫/white-cat-idle-english.poffo",
+              "modes": ["worker"],
+              "randomSeed": 42,
+              "resolution": 1,
+              "runs": 1,
+              "viewport": {
+                "height": 700,
+                "width": 900
+              },
+              "warmupMillis": 5000
+            },
+            "results": [
+              {
+                "computation": "worker",
+                "cpu": 1,
+                "run": 1,
+                "buffering": {
+                  "enabled": true,
+                  "framesAhead": 3,
+                  "status": "active"
+                },
+                "canvasSize": {
+                  "height": 700,
+                  "width": 900
+                },
+                "chains": 25,
+                "hardwareConcurrency": 15,
+                "motion": "Idle:0",
+                "parameters": 265,
+                "parts": 852,
+                "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+                "vertices": 34452,
+                "duration": 15000.899999999998,
+                "errors": [],
+                "frameP95": 9.099999999998545,
+                "observedModelFPS": 84.59492430454173,
+                "rafFPS": 119.92613776506745,
+                "updatedFPS": 84.66158697144839,
+                "heapBytes": 322864120,
+                "scriptSeconds": 4.521952000000001,
+                "taskSeconds": 4.884577
+              }
+            ]
+          }
+        }
+      ],
+      "artifacts": {
+        "before": {
+          "root": "/private/tmp/puppet-next-candidate-uaku0jae",
+          "worker": "dist/assets/worker-BFTo-GIQ.js",
+          "workerSHA256": "947c85b59d5fc7d59394c9e6eaf1f0e62ee634afed1adc35bec03a83494a8451",
+          "workerBytes": 164374
+        },
+        "after": {
+          "root": "/private/tmp/puppet-remaining-candidate-am6wrar3",
+          "worker": "dist/assets/worker-T72OreDP.js",
+          "workerSHA256": "422b1e68444093113b7cdd855b58f337c9aae942286c71996b4f986f8bf83dec",
+          "workerBytes": 165760
+        }
+      }
+    },
+    "computeDiagnostic": {
+      "warmup": 120,
+      "framesPerBlock": 60,
+      "rounds": 8,
+      "results": [
+        {
+          "round": 0,
+          "variant": "before",
+          "millisecondsPerFrame": 11.125645133333334
+        },
+        {
+          "round": 0,
+          "variant": "after",
+          "millisecondsPerFrame": 10.620708333333333
+        },
+        {
+          "round": 1,
+          "variant": "after",
+          "millisecondsPerFrame": 10.402284033333332
+        },
+        {
+          "round": 1,
+          "variant": "before",
+          "millisecondsPerFrame": 11.60241805
+        },
+        {
+          "round": 2,
+          "variant": "before",
+          "millisecondsPerFrame": 14.469270133333334
+        },
+        {
+          "round": 2,
+          "variant": "after",
+          "millisecondsPerFrame": 11.589715983333333
+        },
+        {
+          "round": 3,
+          "variant": "after",
+          "millisecondsPerFrame": 12.252162499999999
+        },
+        {
+          "round": 3,
+          "variant": "before",
+          "millisecondsPerFrame": 12.128665283333333
+        },
+        {
+          "round": 4,
+          "variant": "before",
+          "millisecondsPerFrame": 12.119570833333334
+        },
+        {
+          "round": 4,
+          "variant": "after",
+          "millisecondsPerFrame": 10.579954166666665
+        },
+        {
+          "round": 5,
+          "variant": "after",
+          "millisecondsPerFrame": 10.6375736
+        },
+        {
+          "round": 5,
+          "variant": "before",
+          "millisecondsPerFrame": 12.365671533333334
+        },
+        {
+          "round": 6,
+          "variant": "before",
+          "millisecondsPerFrame": 12.440731933333332
+        },
+        {
+          "round": 6,
+          "variant": "after",
+          "millisecondsPerFrame": 10.831575683333334
+        },
+        {
+          "round": 7,
+          "variant": "after",
+          "millisecondsPerFrame": 10.310722916666666
+        },
+        {
+          "round": 7,
+          "variant": "before",
+          "millisecondsPerFrame": 12.121504166666666
+        }
+      ],
+      "meanMillisecondsPerFrame": {
+        "before": 12.296684633333333,
+        "after": 10.903087152083334
+      },
+      "method": "Node, independent structured-cloned model documents and separate Wasm instances. Each engine warms for 120 frames. Eight alternating-order blocks of 60 fixed 1/120 s steps are timed with process.hrtime.bigint. No renderer, postMessage or per-export timing wrappers.",
+      "referenceSource": "/private/tmp/puppet-remaining-before-ivsakh09",
+      "log": "/private/tmp/puppet-remaining-compute-final.log",
+      "scope": "Includes simulation, geometry, display plans, checkpoint capture and newly allocated output buffers. Node computation time is separate from browser FPS."
+    },
+    "parity": {
+      "differentWords": 0,
+      "frames": 600,
+      "maximumVertexError": 0,
+      "memoryBytes": 16777216,
+      "model": "/Users/bichi/Downloads/白猫/white-cat-idle-english.poffo",
+      "nativeCalls": 511200,
+      "wasm": true,
+      "developmentModelAlsoPassed": true,
+      "method": "Compare 600 frames for each model against the pre-change full source snapshot JS evaluator. Assert full state, playback and render-plan equality and compare every Float32 vertex bit. The supplied-model run confirms actual Wasm mapping calls.",
+      "referenceSource": "/private/tmp/puppet-remaining-before-ivsakh09",
+      "log": "/private/tmp/puppet-remaining-final-parity.log"
+    },
+    "verification": {
+      "unit": {
+        "filesPassed": 500,
+        "testsPassed": 3116,
+        "log": "/private/tmp/puppet-remaining-all-tests.log"
+      },
+      "browser": {
+        "filesPassed": 19,
+        "filesSkipped": 1,
+        "testsPassed": 62,
+        "testsSkipped": 11,
+        "log": "/private/tmp/puppet-remaining-browser.log"
+      },
+      "typecheck": {
+        "tasksPassed": 21,
+        "log": "/private/tmp/puppet-remaining-types.log"
+      },
+      "build": {
+        "passed": true,
+        "log": "/private/tmp/puppet-remaining-build.log"
+      },
+      "lint": {
+        "passed": true,
+        "log": "/private/tmp/puppet-remaining-root-lint-final.log"
+      },
+      "format": "pnpm format on changed paths",
+      "newRegressionCoverage": [
+        "Large-coordinate cancellation retains binding accumulation order",
+        "Inherited-prefix extension preserves offscreen ancestry and leaves its input unchanged",
+        "A parent-only override invalidates a retained child effect",
+        "Static Glue controls refresh after immutable edits without mutating earlier samples",
+        "Unkeyed triangulated Glue channels preserve parameter-dependent rounding"
+      ]
+    },
+    "reproduction": {
+      "build": "pnpm --filter @winter-love/puppet build",
+      "benchmark": "MODEL=/absolute/white-cat-idle-english.poffo CPU_RATES=1 MODES=worker RUNS=1 RESOLUTION=1 ANTIALIASING=ssaa RANDOM_SEED=42 WARMUP_MS=5000 MEASURE_MS=15000 PLAYER_ROOT=file:///absolute/frozen-artifact/ OUTPUT=/absolute/results.json node packages/puppet/visual/playback-benchmark.mjs",
+      "comparison": "before/after, after/before, before/after, after/before. Start a fresh browser per invocation. Each artifact root contains dist/.",
+      "reference": "The complete pre-change src/ and examples/ trees, diagnostic/parity test sources and local dependency symlink are preserved under referenceSource."
+    },
+    "limits": [
+      "One local WhiteCat Player workload in Chrome 156, 900x700 backing pixels, resolution=1, SSAA and no CPU throttling. Full Poffo UI and low-end devices were not benchmarked.",
+      "Ambient machine load was not controlled. Use paired means rather than comparing peak values or measurements from different turns.",
+      "Wasm linear memory stays 16 MiB. Additional JS binding, keyform and scene caches are retained; their heap delta and long-duration memory behavior were not measured.",
+      "Changes are local; no commit, pull-request update or deployment was made in this turn."
+    ]
+  },
+  "previousOptimizationSummary": {
+    "defaultStrategy": "JavaScript Worker with Wasm deformation",
+    "previousHybridFPS": 78.45685150879227,
+    "optimizedHybridFPS": 85.79705129314499,
+    "followupFPSGainPercent": 9.355715457852831,
+    "computeOnlyPreviousMillisPerFrame": 15.222611458333333,
+    "computeOnlyOptimizedMillisPerFrame": 12.321419677777778,
+    "computeOnlyReductionPercent": 19.058436776742095,
+    "maximumVertexError": 0,
+    "differentFloat32Words": 0,
+    "wasmLinearMemoryMiB": 16.0
+  },
+  "model": {
+    "file": "white-cat-idle-english.poffo",
+    "sha256": "47c98e7473e79ffb249aa1acb5bed9b7d458f35c7c0d3502f281549c20c55035",
+    "motion": "Idle:0",
+    "parts": 852,
+    "vertices": 34452,
+    "parameters": 265,
+    "chains": 25,
+    "glueConnections": 5114,
+    "parameterBindings": 5042
+  },
+  "followupOptimization": {
+    "memoryPolicy": "The user permits moderate memory increases. Experiments are selected by measured speed, not by minimizing memory.",
+    "selected": [
+      {
+        "file": "src/player/internal/compute-render-frame.ts",
+        "change": "Skip Array.from and Float32 round-trip copies for parts without keyed vertex samples. Existing sparse vertex animation still uses the original mixer."
+      },
+      {
+        "file": "src/deformation/composition.ts",
+        "change": "Retain the latest read-only vertex sample per part and immutable document/rest-array identity. Watch all keyed and influence inputs; changed inputs recompute without mutating previously returned arrays."
+      }
+    ],
+    "initialProfile": {
+      "path": "/private/tmp/puppet-hybrid-next-profile/worker-cpu-1-run-1-worker.cpuprofile",
+      "summary": "/private/tmp/puppet-hybrid-next-worker-summary.json",
+      "computeRenderFrameSelfSampledMillis": 550.04,
+      "parameterVerticesInclusiveSampledMillis": 576.07,
+      "renderPlanInclusiveSampledMillis": 559.13,
+      "sampleInterpretation": "Function attribution comes from sampled stacks and verified minified source offsets. Inclusive times overlap; they are not measured wall-clock phase durations."
+    },
+    "browser": {
+      "method": {
+        "antialiasing": "ssaa",
+        "cpuRates": [1],
+        "measureMillis": 15000,
+        "model": "/Users/bichi/Downloads/白猫/white-cat-idle-english.poffo",
+        "modes": ["worker"],
+        "randomSeed": 42,
+        "resolution": 1,
+        "runs": 1,
+        "viewport": {
+          "height": 700,
+          "width": 900
+        },
+        "warmupMillis": 5000,
+        "runsPerVariant": 4,
+        "freshBrowserForEveryRun": true,
+        "profiling": false,
+        "order": [
+          {
+            "repeat": 1,
+            "variant": "before"
+          },
+          {
+            "repeat": 1,
+            "variant": "after"
+          },
+          {
+            "repeat": 2,
+            "variant": "after"
+          },
+          {
+            "repeat": 2,
+            "variant": "before"
+          },
+          {
+            "repeat": 3,
+            "variant": "before"
+          },
+          {
+            "repeat": 3,
+            "variant": "after"
+          },
+          {
+            "repeat": 4,
+            "variant": "after"
+          },
+          {
+            "repeat": 4,
+            "variant": "before"
+          }
+        ],
+        "metric": "updatedFPS counts Player onFrame publications per second. observedModelFPS counts rAF samples seeing a new publication; it does not inspect vertex bytes or measure physical display scanout.",
+        "comparison": "Only compare the two variants within this final 5 s warmup / 15 s measurement experiment. Earlier shorter-window results vary with execution time and ambient machine load."
+      },
+      "statistics": {
+        "before": {
+          "meanFPS": 78.45685150879227,
+          "medianFPS": 78.42353483387927,
+          "standardDeviationFPS": 1.1224686985536874,
+          "runsFPS": [78.09012346501603, 77.15730629051924, 79.8230300768913, 78.7569462027425]
+        },
+        "after": {
+          "meanFPS": 85.79705129314499,
+          "medianFPS": 85.38636872153407,
+          "standardDeviationFPS": 2.8711593103708,
+          "runsFPS": [89.61767567063339, 86.01906944823864, 82.79779205887843, 84.75366799482948]
+        }
+      },
+      "measurements": [
+        {
+          "repeat": 1,
+          "variant": "before",
+          "result": {
+            "configuration": {
+              "antialiasing": "ssaa",
+              "cpuRates": [1],
+              "measureMillis": 15000,
+              "model": "/Users/bichi/Downloads/白猫/white-cat-idle-english.poffo",
+              "modes": ["worker"],
+              "randomSeed": 42,
+              "resolution": 1,
+              "runs": 1,
+              "viewport": {
+                "height": 700,
+                "width": 900
+              },
+              "warmupMillis": 5000
+            },
+            "results": [
+              {
+                "computation": "worker",
+                "cpu": 1,
+                "run": 1,
+                "buffering": {
+                  "enabled": true,
+                  "framesAhead": 3,
+                  "status": "active"
+                },
+                "canvasSize": {
+                  "height": 700,
+                  "width": 900
+                },
+                "chains": 25,
+                "hardwareConcurrency": 15,
+                "motion": "Idle:0",
+                "parameters": 265,
+                "parts": 852,
+                "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+                "vertices": 34452,
+                "duration": 15008.3,
+                "errors": [],
+                "frameP95": 8.800000000001091,
+                "observedModelFPS": 78.02349366683768,
+                "rafFPS": 120.00026651919272,
+                "updatedFPS": 78.09012346501603,
+                "heapBytes": 168100036,
+                "scriptSeconds": 4.19007,
+                "taskSeconds": 4.542330000000001
+              }
+            ]
+          }
+        },
+        {
+          "repeat": 1,
+          "variant": "after",
+          "result": {
+            "configuration": {
+              "antialiasing": "ssaa",
+              "cpuRates": [1],
+              "measureMillis": 15000,
+              "model": "/Users/bichi/Downloads/白猫/white-cat-idle-english.poffo",
+              "modes": ["worker"],
+              "randomSeed": 42,
+              "resolution": 1,
+              "runs": 1,
+              "viewport": {
+                "height": 700,
+                "width": 900
+              },
+              "warmupMillis": 5000
+            },
+            "results": [
+              {
+                "computation": "worker",
+                "cpu": 1,
+                "run": 1,
+                "buffering": {
+                  "enabled": true,
+                  "framesAhead": 3,
+                  "status": "active"
+                },
+                "canvasSize": {
+                  "height": 700,
+                  "width": 900
+                },
+                "chains": 25,
+                "hardwareConcurrency": 15,
+                "motion": "Idle:0",
+                "parameters": 265,
+                "parts": 852,
+                "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+                "vertices": 34452,
+                "duration": 15008.2,
+                "errors": [],
+                "frameP95": 8.899999999999636,
+                "observedModelFPS": 89.55104542849908,
+                "rafFPS": 120.00106608387415,
+                "updatedFPS": 89.61767567063339,
+                "heapBytes": 226540420,
+                "scriptSeconds": 4.721627999999999,
+                "taskSeconds": 5.088603
+              }
+            ]
+          }
+        },
+        {
+          "repeat": 2,
+          "variant": "after",
+          "result": {
+            "configuration": {
+              "antialiasing": "ssaa",
+              "cpuRates": [1],
+              "measureMillis": 15000,
+              "model": "/Users/bichi/Downloads/白猫/white-cat-idle-english.poffo",
+              "modes": ["worker"],
+              "randomSeed": 42,
+              "resolution": 1,
+              "runs": 1,
+              "viewport": {
+                "height": 700,
+                "width": 900
+              },
+              "warmupMillis": 5000
+            },
+            "results": [
+              {
+                "computation": "worker",
+                "cpu": 1,
+                "run": 1,
+                "buffering": {
+                  "enabled": true,
+                  "framesAhead": 3,
+                  "status": "active"
+                },
+                "canvasSize": {
+                  "height": 700,
+                  "width": 900
+                },
+                "chains": 25,
+                "hardwareConcurrency": 15,
+                "motion": "Idle:0",
+                "parameters": 265,
+                "parts": 852,
+                "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+                "vertices": 34452,
+                "duration": 15008.3,
+                "errors": [],
+                "frameP95": 8.900000000001455,
+                "observedModelFPS": 85.9524396500603,
+                "rafFPS": 120.00026651919272,
+                "updatedFPS": 86.01906944823864,
+                "heapBytes": 213997108,
+                "scriptSeconds": 4.601902000000001,
+                "taskSeconds": 4.967682000000001
+              }
+            ]
+          }
+        },
+        {
+          "repeat": 2,
+          "variant": "before",
+          "result": {
+            "configuration": {
+              "antialiasing": "ssaa",
+              "cpuRates": [1],
+              "measureMillis": 15000,
+              "model": "/Users/bichi/Downloads/白猫/white-cat-idle-english.poffo",
+              "modes": ["worker"],
+              "randomSeed": 42,
+              "resolution": 1,
+              "runs": 1,
+              "viewport": {
+                "height": 700,
+                "width": 900
+              },
+              "warmupMillis": 5000
+            },
+            "results": [
+              {
+                "computation": "worker",
+                "cpu": 1,
+                "run": 1,
+                "buffering": {
+                  "enabled": true,
+                  "framesAhead": 3,
+                  "status": "active"
+                },
+                "canvasSize": {
+                  "height": 700,
+                  "width": 900
+                },
+                "chains": 25,
+                "hardwareConcurrency": 15,
+                "motion": "Idle:0",
+                "parameters": 265,
+                "parts": 852,
+                "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+                "vertices": 34452,
+                "duration": 15008.300000000001,
+                "errors": [],
+                "frameP95": 9,
+                "observedModelFPS": 77.0906764923409,
+                "rafFPS": 120.0002665191927,
+                "updatedFPS": 77.15730629051924,
+                "heapBytes": 293993648,
+                "scriptSeconds": 4.295751,
+                "taskSeconds": 4.642205
+              }
+            ]
+          }
+        },
+        {
+          "repeat": 3,
+          "variant": "before",
+          "result": {
+            "configuration": {
+              "antialiasing": "ssaa",
+              "cpuRates": [1],
+              "measureMillis": 15000,
+              "model": "/Users/bichi/Downloads/白猫/white-cat-idle-english.poffo",
+              "modes": ["worker"],
+              "randomSeed": 42,
+              "resolution": 1,
+              "runs": 1,
+              "viewport": {
+                "height": 700,
+                "width": 900
+              },
+              "warmupMillis": 5000
+            },
+            "results": [
+              {
+                "computation": "worker",
+                "cpu": 1,
+                "run": 1,
+                "buffering": {
+                  "enabled": true,
+                  "framesAhead": 3,
+                  "status": "active"
+                },
+                "canvasSize": {
+                  "height": 700,
+                  "width": 900
+                },
+                "chains": 25,
+                "hardwareConcurrency": 15,
+                "motion": "Idle:0",
+                "parameters": 265,
+                "parts": 852,
+                "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+                "vertices": 34452,
+                "duration": 15008.2,
+                "errors": [],
+                "frameP95": 8.899999999997817,
+                "observedModelFPS": 79.75639983475699,
+                "rafFPS": 120.00106608387415,
+                "updatedFPS": 79.8230300768913,
+                "heapBytes": 322173508,
+                "scriptSeconds": 4.240845,
+                "taskSeconds": 4.5748310000000005
+              }
+            ]
+          }
+        },
+        {
+          "repeat": 3,
+          "variant": "after",
+          "result": {
+            "configuration": {
+              "antialiasing": "ssaa",
+              "cpuRates": [1],
+              "measureMillis": 15000,
+              "model": "/Users/bichi/Downloads/白猫/white-cat-idle-english.poffo",
+              "modes": ["worker"],
+              "randomSeed": 42,
+              "resolution": 1,
+              "runs": 1,
+              "viewport": {
+                "height": 700,
+                "width": 900
+              },
+              "warmupMillis": 5000
+            },
+            "results": [
+              {
+                "computation": "worker",
+                "cpu": 1,
+                "run": 1,
+                "buffering": {
+                  "enabled": true,
+                  "framesAhead": 3,
+                  "status": "active"
+                },
+                "canvasSize": {
+                  "height": 700,
+                  "width": 900
+                },
+                "chains": 25,
+                "hardwareConcurrency": 15,
+                "motion": "Idle:0",
+                "parameters": 265,
+                "parts": 852,
+                "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+                "vertices": 34452,
+                "duration": 15000.400000000001,
+                "errors": [],
+                "frameP95": 8.899999999999636,
+                "observedModelFPS": 82.79779205887843,
+                "rafFPS": 119.99680008533105,
+                "updatedFPS": 82.79779205887843,
+                "heapBytes": 377391580,
+                "scriptSeconds": 4.490385,
+                "taskSeconds": 4.848065
+              }
+            ]
+          }
+        },
+        {
+          "repeat": 4,
+          "variant": "after",
+          "result": {
+            "configuration": {
+              "antialiasing": "ssaa",
+              "cpuRates": [1],
+              "measureMillis": 15000,
+              "model": "/Users/bichi/Downloads/白猫/white-cat-idle-english.poffo",
+              "modes": ["worker"],
+              "randomSeed": 42,
+              "resolution": 1,
+              "runs": 1,
+              "viewport": {
+                "height": 700,
+                "width": 900
+              },
+              "warmupMillis": 5000
+            },
+            "results": [
+              {
+                "computation": "worker",
+                "cpu": 1,
+                "run": 1,
+                "buffering": {
+                  "enabled": true,
+                  "framesAhead": 3,
+                  "status": "active"
+                },
+                "canvasSize": {
+                  "height": 700,
+                  "width": 900
+                },
+                "chains": 25,
+                "hardwareConcurrency": 15,
+                "motion": "Idle:0",
+                "parameters": 265,
+                "parts": 852,
+                "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+                "vertices": 34452,
+                "duration": 15008.2,
+                "errors": [],
+                "frameP95": 9,
+                "observedModelFPS": 84.68703775269519,
+                "rafFPS": 120.00106608387415,
+                "updatedFPS": 84.75366799482948,
+                "heapBytes": 337395728,
+                "scriptSeconds": 4.53673,
+                "taskSeconds": 4.898396999999999
+              }
+            ]
+          }
+        },
+        {
+          "repeat": 4,
+          "variant": "before",
+          "result": {
+            "configuration": {
+              "antialiasing": "ssaa",
+              "cpuRates": [1],
+              "measureMillis": 15000,
+              "model": "/Users/bichi/Downloads/白猫/white-cat-idle-english.poffo",
+              "modes": ["worker"],
+              "randomSeed": 42,
+              "resolution": 1,
+              "runs": 1,
+              "viewport": {
+                "height": 700,
+                "width": 900
+              },
+              "warmupMillis": 5000
+            },
+            "results": [
+              {
+                "computation": "worker",
+                "cpu": 1,
+                "run": 1,
+                "buffering": {
+                  "enabled": true,
+                  "framesAhead": 3,
+                  "status": "active"
+                },
+                "canvasSize": {
+                  "height": 700,
+                  "width": 900
+                },
+                "chains": 25,
+                "hardwareConcurrency": 15,
+                "motion": "Idle:0",
+                "parameters": 265,
+                "parts": 852,
+                "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+                "vertices": 34452,
+                "duration": 15008.2,
+                "errors": [],
+                "frameP95": 9,
+                "observedModelFPS": 78.6903159606082,
+                "rafFPS": 120.00106608387415,
+                "updatedFPS": 78.7569462027425,
+                "heapBytes": 416943428,
+                "scriptSeconds": 4.224489999999999,
+                "taskSeconds": 4.563448999999999
+              }
+            ]
+          }
+        }
+      ],
+      "artifacts": {
+        "before": {
+          "root": "/private/tmp/puppet-hybrid-final-rshnwwct",
+          "worker": "dist/assets/worker-Cp6jxf4O.js",
+          "workerBytes": 163735,
+          "workerSHA256": "c96bbd9caf94da449a0df7e27675016142cb99cdc89c18f3a1b2cc0e8868d719"
+        },
+        "after": {
+          "root": "/private/tmp/puppet-next-candidate-uaku0jae",
+          "worker": "dist/assets/worker-BFTo-GIQ.js",
+          "workerBytes": 164374,
+          "workerSHA256": "947c85b59d5fc7d59394c9e6eaf1f0e62ee634afed1adc35bec03a83494a8451"
+        }
+      }
+    },
+    "computeDiagnostic": {
+      "warmup": 120,
+      "framesPerBlock": 60,
+      "rounds": 6,
+      "results": [
+        {
+          "round": 0,
+          "variant": "previous",
+          "millisecondsPerFrame": 14.43968125
+        },
+        {
+          "round": 0,
+          "variant": "copyOnly",
+          "millisecondsPerFrame": 12.043122216666665
+        },
+        {
+          "round": 0,
+          "variant": "stencilCache",
+          "millisecondsPerFrame": 12.40568195
+        },
+        {
+          "round": 1,
+          "variant": "copyOnly",
+          "millisecondsPerFrame": 11.4447764
+        },
+        {
+          "round": 1,
+          "variant": "stencilCache",
+          "millisecondsPerFrame": 12.294757633333335
+        },
+        {
+          "round": 1,
+          "variant": "previous",
+          "millisecondsPerFrame": 14.993911116666668
+        },
+        {
+          "round": 2,
+          "variant": "stencilCache",
+          "millisecondsPerFrame": 12.635226399999999
+        },
+        {
+          "round": 2,
+          "variant": "previous",
+          "millisecondsPerFrame": 14.936520833333333
+        },
+        {
+          "round": 2,
+          "variant": "copyOnly",
+          "millisecondsPerFrame": 12.97541875
+        },
+        {
+          "round": 3,
+          "variant": "previous",
+          "millisecondsPerFrame": 16.07098125
+        },
+        {
+          "round": 3,
+          "variant": "copyOnly",
+          "millisecondsPerFrame": 12.272432633333333
+        },
+        {
+          "round": 3,
+          "variant": "stencilCache",
+          "millisecondsPerFrame": 12.519743066666667
+        },
+        {
+          "round": 4,
+          "variant": "copyOnly",
+          "millisecondsPerFrame": 13.523709733333334
+        },
+        {
+          "round": 4,
+          "variant": "stencilCache",
+          "millisecondsPerFrame": 12.983626383333332
+        },
+        {
+          "round": 4,
+          "variant": "previous",
+          "millisecondsPerFrame": 18.413596533333337
+        },
+        {
+          "round": 5,
+          "variant": "stencilCache",
+          "millisecondsPerFrame": 11.974773616666665
+        },
+        {
+          "round": 5,
+          "variant": "previous",
+          "millisecondsPerFrame": 12.480977766666665
+        },
+        {
+          "round": 5,
+          "variant": "copyOnly",
+          "millisecondsPerFrame": 11.669058333333334
+        }
+      ],
+      "meanMillisecondsPerFrame": {
+        "previous": 15.222611458333333,
+        "copyOnly": 12.321419677777778,
+        "stencilCache": 12.468968175
+      },
+      "method": "Node, no renderer or postMessage. Independent structured-cloned model documents avoid sharing per-document caches. Three engines are warmed for 120 frames, then six 60-frame blocks rotate execution order. Timing uses process.hrtime.bigint around each block; no Wasm export timing wrappers are added.",
+      "interpretation": "Computation includes simulation, geometry, render-plan and checkpoint construction, plus fresh output-buffer allocation. Node timings are separate from browser FPS. copyOnly is the selected final implementation; stencilCache is a rejected experimental kernel.",
+      "sourceReference": "/private/tmp/puppet-next-reference-b3vwjqsl",
+      "log": "/private/tmp/puppet-next-stencil-compute.log"
+    },
+    "parity": {
+      "reference": "/private/tmp/puppet-next-reference-b3vwjqsl",
+      "differentWords": 0,
+      "frames": 600,
+      "maximumVertexError": 0,
+      "memoryBytes": 16777216,
+      "model": "/Users/bichi/Downloads/白猫/white-cat-idle-english.poffo",
+      "nativeCalls": 511200,
+      "wasm": true,
+      "developmentModelAlsoPassed": true,
+      "method": "Compare 600 fixed-step frames of both models against a separate engine containing the pre-optimization compute-render-frame and composition sources. Assert complete state, playback and render-plan equality, then every Float32 vertex bit. The supplied-model comparison confirms actual Wasm calls.",
+      "referenceSource": "/private/tmp/puppet-next-reference-b3vwjqsl",
+      "log": "/private/tmp/puppet-next-selected-parity.log"
+    },
+    "verification": {
+      "unit": {
+        "filesPassed": 500,
+        "testsPassed": 3110,
+        "log": "/private/tmp/puppet-next-selected-unit.log"
+      },
+      "browser": {
+        "filesPassed": 19,
+        "filesSkipped": 1,
+        "testsPassed": 62,
+        "testsSkipped": 11,
+        "log": "/private/tmp/puppet-next-selected-browser.log"
+      },
+      "typecheck": {
+        "tasksPassed": 21,
+        "log": "/private/tmp/puppet-next-selected-types.log"
+      },
+      "build": {
+        "passed": true,
+        "log": "/private/tmp/puppet-next-selected-build.log"
+      },
+      "lint": {
+        "passed": true,
+        "log": "/private/tmp/puppet-next-selected-root-lint.log"
+      },
+      "format": "pnpm format on changed paths",
+      "newRegressionCoverage": [
+        "Changes to an existing input map are observed while old vertex snapshots stay unchanged",
+        "Influence-only changes invalidate the sample",
+        "Changing the supplied rest-array identity preserves sparse-coordinate fallback"
+      ]
+    },
+    "rejectedExperiments": {
+      "virtualCorners": {
+        "change": "Cache extrapolated grid corners by transform revision.",
+        "memoryBytes": 19529728,
+        "source": "/private/tmp/puppet-next-virtual-experiment-2jfskpli",
+        "computeDiagnostic": {
+          "warmup": 120,
+          "framesPerBlock": 60,
+          "rounds": 6,
+          "results": [
+            {
+              "round": 0,
+              "variant": "previous",
+              "millisecondsPerFrame": 18.72743195
+            },
+            {
+              "round": 0,
+              "variant": "copyOnly",
+              "millisecondsPerFrame": 18.004511116666666
+            },
+            {
+              "round": 0,
+              "variant": "virtualCache",
+              "millisecondsPerFrame": 17.839333333333332
+            },
+            {
+              "round": 1,
+              "variant": "copyOnly",
+              "millisecondsPerFrame": 15.815731950000002
+            },
+            {
+              "round": 1,
+              "variant": "virtualCache",
+              "millisecondsPerFrame": 15.06425765
+            },
+            {
+              "round": 1,
+              "variant": "previous",
+              "millisecondsPerFrame": 18.60036181666667
+            },
+            {
+              "round": 2,
+              "variant": "virtualCache",
+              "millisecondsPerFrame": 14.899679166666665
+            },
+            {
+              "round": 2,
+              "variant": "previous",
+              "millisecondsPerFrame": 17.719079866666668
+            },
+            {
+              "round": 2,
+              "variant": "copyOnly",
+              "millisecondsPerFrame": 16.140126383333335
+            },
+            {
+              "round": 3,
+              "variant": "previous",
+              "millisecondsPerFrame": 19.66853125
+            },
+            {
+              "round": 3,
+              "variant": "copyOnly",
+              "millisecondsPerFrame": 15.877399316666667
+            },
+            {
+              "round": 3,
+              "variant": "virtualCache",
+              "millisecondsPerFrame": 16.582454866666666
+            },
+            {
+              "round": 4,
+              "variant": "copyOnly",
+              "millisecondsPerFrame": 17.9431507
+            },
+            {
+              "round": 4,
+              "variant": "virtualCache",
+              "millisecondsPerFrame": 25.369874316666667
+            },
+            {
+              "round": 4,
+              "variant": "previous",
+              "millisecondsPerFrame": 20.0035493
+            },
+            {
+              "round": 5,
+              "variant": "virtualCache",
+              "millisecondsPerFrame": 18.653646516666665
+            },
+            {
+              "round": 5,
+              "variant": "previous",
+              "millisecondsPerFrame": 20.59930693333333
+            },
+            {
+              "round": 5,
+              "variant": "copyOnly",
+              "millisecondsPerFrame": 16.053238883333332
+            }
+          ]
+        },
+        "decision": "No repeatable gain over the two selected JS changes; removed."
+      },
+      "vertexStencils": {
+        "change": "Also retain per-input vertex grid cells and interpolation progress, reserving five coordinate planes instead of three.",
+        "source": "/private/tmp/puppet-next-stencil-experiment-s8b8z2o1",
+        "meanMillisecondsPerFrame": 12.468968175,
+        "decision": "No additional compute-time gain over copyOnly (12.47 versus 12.32 ms/frame in the final diagnostic); removed. Memory usage was permitted and was not the rejection criterion."
+      },
+      "shortWindowTrialWithVirtualCorners": {
+        "measurements": [
+          {
+            "repeat": 1,
+            "variant": "before",
+            "result": {
+              "configuration": {
+                "antialiasing": "ssaa",
+                "cpuRates": [1],
+                "measureMillis": 5000,
+                "model": "/Users/bichi/Downloads/白猫/white-cat-idle-english.poffo",
+                "modes": ["worker"],
+                "randomSeed": 42,
+                "resolution": 1,
+                "runs": 1,
+                "viewport": {
+                  "height": 700,
+                  "width": 900
+                },
+                "warmupMillis": 2000
+              },
+              "results": [
+                {
+                  "computation": "worker",
+                  "cpu": 1,
+                  "run": 1,
+                  "buffering": {
+                    "enabled": true,
+                    "framesAhead": 3,
+                    "status": "active"
+                  },
+                  "canvasSize": {
+                    "height": 700,
+                    "width": 900
+                  },
+                  "chains": 25,
+                  "hardwareConcurrency": 15,
+                  "motion": "Idle:0",
+                  "parameters": 265,
+                  "parts": 852,
+                  "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+                  "vertices": 34452,
+                  "duration": 5000,
+                  "errors": [],
+                  "frameP95": 9.100000000000364,
+                  "observedModelFPS": 67.4,
+                  "rafFPS": 120,
+                  "updatedFPS": 67.4,
+                  "heapBytes": 183612396,
+                  "scriptSeconds": 1.4016920000000002,
+                  "taskSeconds": 1.534866
+                }
+              ]
+            }
+          },
+          {
+            "repeat": 1,
+            "variant": "after",
+            "result": {
+              "configuration": {
+                "antialiasing": "ssaa",
+                "cpuRates": [1],
+                "measureMillis": 5000,
+                "model": "/Users/bichi/Downloads/白猫/white-cat-idle-english.poffo",
+                "modes": ["worker"],
+                "randomSeed": 42,
+                "resolution": 1,
+                "runs": 1,
+                "viewport": {
+                  "height": 700,
+                  "width": 900
+                },
+                "warmupMillis": 2000
+              },
+              "results": [
+                {
+                  "computation": "worker",
+                  "cpu": 1,
+                  "run": 1,
+                  "buffering": {
+                    "enabled": true,
+                    "framesAhead": 3,
+                    "status": "active"
+                  },
+                  "canvasSize": {
+                    "height": 700,
+                    "width": 900
+                  },
+                  "chains": 25,
+                  "hardwareConcurrency": 15,
+                  "motion": "Idle:0",
+                  "parameters": 265,
+                  "parts": 852,
+                  "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+                  "vertices": 34452,
+                  "duration": 5008.2,
+                  "errors": [],
+                  "frameP95": 9.099999999999454,
+                  "observedModelFPS": 67.88866259334691,
+                  "rafFPS": 120.00319476059263,
+                  "updatedFPS": 68.08833513038617,
+                  "heapBytes": 372353120,
+                  "scriptSeconds": 1.6106749999999999,
+                  "taskSeconds": 1.7385740000000003
+                }
+              ]
+            }
+          },
+          {
+            "repeat": 2,
+            "variant": "after",
+            "result": {
+              "configuration": {
+                "antialiasing": "ssaa",
+                "cpuRates": [1],
+                "measureMillis": 5000,
+                "model": "/Users/bichi/Downloads/白猫/white-cat-idle-english.poffo",
+                "modes": ["worker"],
+                "randomSeed": 42,
+                "resolution": 1,
+                "runs": 1,
+                "viewport": {
+                  "height": 700,
+                  "width": 900
+                },
+                "warmupMillis": 2000
+              },
+              "results": [
+                {
+                  "computation": "worker",
+                  "cpu": 1,
+                  "run": 1,
+                  "buffering": {
+                    "enabled": true,
+                    "framesAhead": 3,
+                    "status": "active"
+                  },
+                  "canvasSize": {
+                    "height": 700,
+                    "width": 900
+                  },
+                  "chains": 25,
+                  "hardwareConcurrency": 15,
+                  "motion": "Idle:0",
+                  "parameters": 265,
+                  "parts": 852,
+                  "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+                  "vertices": 34452,
+                  "duration": 5008.299999999999,
+                  "errors": [],
+                  "frameP95": 9.099999999998545,
+                  "observedModelFPS": 74.2767006768764,
+                  "rafFPS": 120.00079867420084,
+                  "updatedFPS": 74.47636922708305,
+                  "heapBytes": 242795616,
+                  "scriptSeconds": 1.5579999999999998,
+                  "taskSeconds": 1.6901139999999995
+                }
+              ]
+            }
+          },
+          {
+            "repeat": 2,
+            "variant": "before",
+            "result": {
+              "configuration": {
+                "antialiasing": "ssaa",
+                "cpuRates": [1],
+                "measureMillis": 5000,
+                "model": "/Users/bichi/Downloads/白猫/white-cat-idle-english.poffo",
+                "modes": ["worker"],
+                "randomSeed": 42,
+                "resolution": 1,
+                "runs": 1,
+                "viewport": {
+                  "height": 700,
+                  "width": 900
+                },
+                "warmupMillis": 2000
+              },
+              "results": [
+                {
+                  "computation": "worker",
+                  "cpu": 1,
+                  "run": 1,
+                  "buffering": {
+                    "enabled": true,
+                    "framesAhead": 3,
+                    "status": "active"
+                  },
+                  "canvasSize": {
+                    "height": 700,
+                    "width": 900
+                  },
+                  "chains": 25,
+                  "hardwareConcurrency": 15,
+                  "motion": "Idle:0",
+                  "parameters": 265,
+                  "parts": 852,
+                  "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+                  "vertices": 34452,
+                  "duration": 5004.2,
+                  "errors": [],
+                  "frameP95": 9,
+                  "observedModelFPS": 69.74141720954398,
+                  "rafFPS": 119.89928460093522,
+                  "updatedFPS": 69.94124935054555,
+                  "heapBytes": 234695576,
+                  "scriptSeconds": 1.420193,
+                  "taskSeconds": 1.543602
+                }
+              ]
+            }
+          },
+          {
+            "repeat": 3,
+            "variant": "before",
+            "result": {
+              "configuration": {
+                "antialiasing": "ssaa",
+                "cpuRates": [1],
+                "measureMillis": 5000,
+                "model": "/Users/bichi/Downloads/白猫/white-cat-idle-english.poffo",
+                "modes": ["worker"],
+                "randomSeed": 42,
+                "resolution": 1,
+                "runs": 1,
+                "viewport": {
+                  "height": 700,
+                  "width": 900
+                },
+                "warmupMillis": 2000
+              },
+              "results": [
+                {
+                  "computation": "worker",
+                  "cpu": 1,
+                  "run": 1,
+                  "buffering": {
+                    "enabled": true,
+                    "framesAhead": 3,
+                    "status": "active"
+                  },
+                  "canvasSize": {
+                    "height": 700,
+                    "width": 900
+                  },
+                  "chains": 25,
+                  "hardwareConcurrency": 15,
+                  "motion": "Idle:0",
+                  "parameters": 265,
+                  "parts": 852,
+                  "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+                  "vertices": 34452,
+                  "duration": 5000,
+                  "errors": [],
+                  "frameP95": 8.899999999999636,
+                  "observedModelFPS": 68.8,
+                  "rafFPS": 120,
+                  "updatedFPS": 69,
+                  "heapBytes": 194413848,
+                  "scriptSeconds": 1.390098,
+                  "taskSeconds": 1.5200570000000004
+                }
+              ]
+            }
+          },
+          {
+            "repeat": 3,
+            "variant": "after",
+            "result": {
+              "configuration": {
+                "antialiasing": "ssaa",
+                "cpuRates": [1],
+                "measureMillis": 5000,
+                "model": "/Users/bichi/Downloads/白猫/white-cat-idle-english.poffo",
+                "modes": ["worker"],
+                "randomSeed": 42,
+                "resolution": 1,
+                "runs": 1,
+                "viewport": {
+                  "height": 700,
+                  "width": 900
+                },
+                "warmupMillis": 2000
+              },
+              "results": [
+                {
+                  "computation": "worker",
+                  "cpu": 1,
+                  "run": 1,
+                  "buffering": {
+                    "enabled": true,
+                    "framesAhead": 3,
+                    "status": "active"
+                  },
+                  "canvasSize": {
+                    "height": 700,
+                    "width": 900
+                  },
+                  "chains": 25,
+                  "hardwareConcurrency": 15,
+                  "motion": "Idle:0",
+                  "parameters": 265,
+                  "parts": 852,
+                  "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+                  "vertices": 34452,
+                  "duration": 5008.3,
+                  "errors": [],
+                  "frameP95": 9,
+                  "observedModelFPS": 78.8690773316295,
+                  "rafFPS": 120.00079867420082,
+                  "updatedFPS": 79.06874588183615,
+                  "heapBytes": 186473344,
+                  "scriptSeconds": 1.54627,
+                  "taskSeconds": 1.6821169999999999
+                }
+              ]
+            }
+          },
+          {
+            "repeat": 4,
+            "variant": "after",
+            "result": {
+              "configuration": {
+                "antialiasing": "ssaa",
+                "cpuRates": [1],
+                "measureMillis": 5000,
+                "model": "/Users/bichi/Downloads/白猫/white-cat-idle-english.poffo",
+                "modes": ["worker"],
+                "randomSeed": 42,
+                "resolution": 1,
+                "runs": 1,
+                "viewport": {
+                  "height": 700,
+                  "width": 900
+                },
+                "warmupMillis": 2000
+              },
+              "results": [
+                {
+                  "computation": "worker",
+                  "cpu": 1,
+                  "run": 1,
+                  "buffering": {
+                    "enabled": true,
+                    "framesAhead": 3,
+                    "status": "active"
+                  },
+                  "canvasSize": {
+                    "height": 700,
+                    "width": 900
+                  },
+                  "chains": 25,
+                  "hardwareConcurrency": 15,
+                  "motion": "Idle:0",
+                  "parameters": 265,
+                  "parts": 852,
+                  "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+                  "vertices": 34452,
+                  "duration": 5000,
+                  "errors": [],
+                  "frameP95": 8.899999999999636,
+                  "observedModelFPS": 73,
+                  "rafFPS": 120,
+                  "updatedFPS": 73.2,
+                  "heapBytes": 162463132,
+                  "scriptSeconds": 1.4982349999999998,
+                  "taskSeconds": 1.63619
+                }
+              ]
+            }
+          },
+          {
+            "repeat": 4,
+            "variant": "before",
+            "result": {
+              "configuration": {
+                "antialiasing": "ssaa",
+                "cpuRates": [1],
+                "measureMillis": 5000,
+                "model": "/Users/bichi/Downloads/白猫/white-cat-idle-english.poffo",
+                "modes": ["worker"],
+                "randomSeed": 42,
+                "resolution": 1,
+                "runs": 1,
+                "viewport": {
+                  "height": 700,
+                  "width": 900
+                },
+                "warmupMillis": 2000
+              },
+              "results": [
+                {
+                  "computation": "worker",
+                  "cpu": 1,
+                  "run": 1,
+                  "buffering": {
+                    "enabled": true,
+                    "framesAhead": 3,
+                    "status": "active"
+                  },
+                  "canvasSize": {
+                    "height": 700,
+                    "width": 900
+                  },
+                  "chains": 25,
+                  "hardwareConcurrency": 15,
+                  "motion": "Idle:0",
+                  "parameters": 265,
+                  "parts": 852,
+                  "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+                  "vertices": 34452,
+                  "duration": 5008.299999999999,
+                  "errors": [],
+                  "frameP95": 9,
+                  "observedModelFPS": 67.68763852005672,
+                  "rafFPS": 120.00079867420084,
+                  "updatedFPS": 67.88730707026338,
+                  "heapBytes": 186416796,
+                  "scriptSeconds": 1.3706740000000002,
+                  "taskSeconds": 1.4999719999999996
+                }
+              ]
+            }
+          }
+        ],
+        "interpretation": "The initial 4-pair 2 s warmup / 5 s measurement run suggested a larger gain, but follow-up ablation varied; it is not the final headline."
+      },
+      "shortWindowAblation": [
+        {
+          "repeat": 1,
+          "variant": "previous",
+          "result": {
+            "configuration": {
+              "antialiasing": "ssaa",
+              "cpuRates": [1],
+              "measureMillis": 5000,
+              "model": "/Users/bichi/Downloads/白猫/white-cat-idle-english.poffo",
+              "modes": ["worker"],
+              "randomSeed": 42,
+              "resolution": 1,
+              "runs": 1,
+              "viewport": {
+                "height": 700,
+                "width": 900
+              },
+              "warmupMillis": 2000
+            },
+            "results": [
+              {
+                "computation": "worker",
+                "cpu": 1,
+                "run": 1,
+                "buffering": {
+                  "enabled": true,
+                  "framesAhead": 3,
+                  "status": "active"
+                },
+                "canvasSize": {
+                  "height": 700,
+                  "width": 900
+                },
+                "chains": 25,
+                "hardwareConcurrency": 15,
+                "motion": "Idle:0",
+                "parameters": 265,
+                "parts": 852,
+                "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+                "vertices": 34452,
+                "duration": 5008.2,
+                "errors": [],
+                "frameP95": 9.199999999999818,
+                "observedModelFPS": 76.67425422307416,
+                "rafFPS": 120.00319476059263,
+                "updatedFPS": 76.67425422307416,
+                "heapBytes": 254596928,
+                "scriptSeconds": 1.4284119999999998,
+                "taskSeconds": 1.5495100000000006
+              }
+            ]
+          }
+        },
+        {
+          "repeat": 1,
+          "variant": "copyOnly",
+          "result": {
+            "configuration": {
+              "antialiasing": "ssaa",
+              "cpuRates": [1],
+              "measureMillis": 5000,
+              "model": "/Users/bichi/Downloads/白猫/white-cat-idle-english.poffo",
+              "modes": ["worker"],
+              "randomSeed": 42,
+              "resolution": 1,
+              "runs": 1,
+              "viewport": {
+                "height": 700,
+                "width": 900
+              },
+              "warmupMillis": 2000
+            },
+            "results": [
+              {
+                "computation": "worker",
+                "cpu": 1,
+                "run": 1,
+                "buffering": {
+                  "enabled": true,
+                  "framesAhead": 3,
+                  "status": "active"
+                },
+                "canvasSize": {
+                  "height": 700,
+                  "width": 900
+                },
+                "chains": 25,
+                "hardwareConcurrency": 15,
+                "motion": "Idle:0",
+                "parameters": 265,
+                "parts": 852,
+                "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+                "vertices": 34452,
+                "duration": 5000,
+                "errors": [],
+                "frameP95": 8.899999999999636,
+                "observedModelFPS": 80.2,
+                "rafFPS": 120,
+                "updatedFPS": 80.4,
+                "heapBytes": 177261328,
+                "scriptSeconds": 1.51499,
+                "taskSeconds": 1.6562640000000002
+              }
+            ]
+          }
+        },
+        {
+          "repeat": 1,
+          "variant": "virtualCache",
+          "result": {
+            "configuration": {
+              "antialiasing": "ssaa",
+              "cpuRates": [1],
+              "measureMillis": 5000,
+              "model": "/Users/bichi/Downloads/白猫/white-cat-idle-english.poffo",
+              "modes": ["worker"],
+              "randomSeed": 42,
+              "resolution": 1,
+              "runs": 1,
+              "viewport": {
+                "height": 700,
+                "width": 900
+              },
+              "warmupMillis": 2000
+            },
+            "results": [
+              {
+                "computation": "worker",
+                "cpu": 1,
+                "run": 1,
+                "buffering": {
+                  "enabled": true,
+                  "framesAhead": 3,
+                  "status": "active"
+                },
+                "canvasSize": {
+                  "height": 700,
+                  "width": 900
+                },
+                "chains": 25,
+                "hardwareConcurrency": 15,
+                "motion": "Idle:0",
+                "parameters": 265,
+                "parts": 852,
+                "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+                "vertices": 34452,
+                "duration": 5000.000000000001,
+                "errors": [],
+                "frameP95": 9,
+                "observedModelFPS": 74.79999999999998,
+                "rafFPS": 119.99999999999997,
+                "updatedFPS": 74.99999999999999,
+                "heapBytes": 395071384,
+                "scriptSeconds": 1.5596750000000001,
+                "taskSeconds": 1.686645
+              }
+            ]
+          }
+        },
+        {
+          "repeat": 2,
+          "variant": "copyOnly",
+          "result": {
+            "configuration": {
+              "antialiasing": "ssaa",
+              "cpuRates": [1],
+              "measureMillis": 5000,
+              "model": "/Users/bichi/Downloads/白猫/white-cat-idle-english.poffo",
+              "modes": ["worker"],
+              "randomSeed": 42,
+              "resolution": 1,
+              "runs": 1,
+              "viewport": {
+                "height": 700,
+                "width": 900
+              },
+              "warmupMillis": 2000
+            },
+            "results": [
+              {
+                "computation": "worker",
+                "cpu": 1,
+                "run": 1,
+                "buffering": {
+                  "enabled": true,
+                  "framesAhead": 3,
+                  "status": "active"
+                },
+                "canvasSize": {
+                  "height": 700,
+                  "width": 900
+                },
+                "chains": 25,
+                "hardwareConcurrency": 15,
+                "motion": "Idle:0",
+                "parameters": 265,
+                "parts": 852,
+                "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+                "vertices": 34452,
+                "duration": 5000.5,
+                "errors": [],
+                "frameP95": 9,
+                "observedModelFPS": 72.59274072592741,
+                "rafFPS": 119.98800119988002,
+                "updatedFPS": 72.7927207279272,
+                "heapBytes": 283474692,
+                "scriptSeconds": 1.4513309999999997,
+                "taskSeconds": 1.5874619999999995
+              }
+            ]
+          }
+        },
+        {
+          "repeat": 2,
+          "variant": "virtualCache",
+          "result": {
+            "configuration": {
+              "antialiasing": "ssaa",
+              "cpuRates": [1],
+              "measureMillis": 5000,
+              "model": "/Users/bichi/Downloads/白猫/white-cat-idle-english.poffo",
+              "modes": ["worker"],
+              "randomSeed": 42,
+              "resolution": 1,
+              "runs": 1,
+              "viewport": {
+                "height": 700,
+                "width": 900
+              },
+              "warmupMillis": 2000
+            },
+            "results": [
+              {
+                "computation": "worker",
+                "cpu": 1,
+                "run": 1,
+                "buffering": {
+                  "enabled": true,
+                  "framesAhead": 3,
+                  "status": "active"
+                },
+                "canvasSize": {
+                  "height": 700,
+                  "width": 900
+                },
+                "chains": 25,
+                "hardwareConcurrency": 15,
+                "motion": "Idle:0",
+                "parameters": 265,
+                "parts": 852,
+                "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+                "vertices": 34452,
+                "duration": 5000,
+                "errors": [],
+                "frameP95": 8.899999999999636,
+                "observedModelFPS": 78.4,
+                "rafFPS": 120,
+                "updatedFPS": 78.6,
+                "heapBytes": 238576960,
+                "scriptSeconds": 1.549872,
+                "taskSeconds": 1.6842489999999999
+              }
+            ]
+          }
+        },
+        {
+          "repeat": 2,
+          "variant": "previous",
+          "result": {
+            "configuration": {
+              "antialiasing": "ssaa",
+              "cpuRates": [1],
+              "measureMillis": 5000,
+              "model": "/Users/bichi/Downloads/白猫/white-cat-idle-english.poffo",
+              "modes": ["worker"],
+              "randomSeed": 42,
+              "resolution": 1,
+              "runs": 1,
+              "viewport": {
+                "height": 700,
+                "width": 900
+              },
+              "warmupMillis": 2000
+            },
+            "results": [
+              {
+                "computation": "worker",
+                "cpu": 1,
+                "run": 1,
+                "buffering": {
+                  "enabled": true,
+                  "framesAhead": 3,
+                  "status": "active"
+                },
+                "canvasSize": {
+                  "height": 700,
+                  "width": 900
+                },
+                "chains": 25,
+                "hardwareConcurrency": 15,
+                "motion": "Idle:0",
+                "parameters": 265,
+                "parts": 852,
+                "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+                "vertices": 34452,
+                "duration": 5000,
+                "errors": [],
+                "frameP95": 8.700000000000728,
+                "observedModelFPS": 75.8,
+                "rafFPS": 120,
+                "updatedFPS": 75.8,
+                "heapBytes": 230011700,
+                "scriptSeconds": 1.389689,
+                "taskSeconds": 1.5119919999999998
+              }
+            ]
+          }
+        },
+        {
+          "repeat": 3,
+          "variant": "virtualCache",
+          "result": {
+            "configuration": {
+              "antialiasing": "ssaa",
+              "cpuRates": [1],
+              "measureMillis": 5000,
+              "model": "/Users/bichi/Downloads/白猫/white-cat-idle-english.poffo",
+              "modes": ["worker"],
+              "randomSeed": 42,
+              "resolution": 1,
+              "runs": 1,
+              "viewport": {
+                "height": 700,
+                "width": 900
+              },
+              "warmupMillis": 2000
+            },
+            "results": [
+              {
+                "computation": "worker",
+                "cpu": 1,
+                "run": 1,
+                "buffering": {
+                  "enabled": true,
+                  "framesAhead": 3,
+                  "status": "active"
+                },
+                "canvasSize": {
+                  "height": 700,
+                  "width": 900
+                },
+                "chains": 25,
+                "hardwareConcurrency": 15,
+                "motion": "Idle:0",
+                "parameters": 265,
+                "parts": 852,
+                "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+                "vertices": 34452,
+                "duration": 5003.4,
+                "errors": [],
+                "frameP95": 8.700000000000728,
+                "observedModelFPS": 77.54726785785667,
+                "rafFPS": 120.11831954271096,
+                "updatedFPS": 77.54726785785667,
+                "heapBytes": 175020240,
+                "scriptSeconds": 1.51423,
+                "taskSeconds": 1.6529440000000006
+              }
+            ]
+          }
+        },
+        {
+          "repeat": 3,
+          "variant": "previous",
+          "result": {
+            "configuration": {
+              "antialiasing": "ssaa",
+              "cpuRates": [1],
+              "measureMillis": 5000,
+              "model": "/Users/bichi/Downloads/白猫/white-cat-idle-english.poffo",
+              "modes": ["worker"],
+              "randomSeed": 42,
+              "resolution": 1,
+              "runs": 1,
+              "viewport": {
+                "height": 700,
+                "width": 900
+              },
+              "warmupMillis": 2000
+            },
+            "results": [
+              {
+                "computation": "worker",
+                "cpu": 1,
+                "run": 1,
+                "buffering": {
+                  "enabled": true,
+                  "framesAhead": 3,
+                  "status": "active"
+                },
+                "canvasSize": {
+                  "height": 700,
+                  "width": 900
+                },
+                "chains": 25,
+                "hardwareConcurrency": 15,
+                "motion": "Idle:0",
+                "parameters": 265,
+                "parts": 852,
+                "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+                "vertices": 34452,
+                "duration": 5004.200000000001,
+                "errors": [],
+                "frameP95": 8.899999999999636,
+                "observedModelFPS": 72.33923504256424,
+                "rafFPS": 119.8992846009352,
+                "updatedFPS": 72.33923504256424,
+                "heapBytes": 252751172,
+                "scriptSeconds": 1.388206,
+                "taskSeconds": 1.5083789999999997
+              }
+            ]
+          }
+        },
+        {
+          "repeat": 3,
+          "variant": "copyOnly",
+          "result": {
+            "configuration": {
+              "antialiasing": "ssaa",
+              "cpuRates": [1],
+              "measureMillis": 5000,
+              "model": "/Users/bichi/Downloads/白猫/white-cat-idle-english.poffo",
+              "modes": ["worker"],
+              "randomSeed": 42,
+              "resolution": 1,
+              "runs": 1,
+              "viewport": {
+                "height": 700,
+                "width": 900
+              },
+              "warmupMillis": 2000
+            },
+            "results": [
+              {
+                "computation": "worker",
+                "cpu": 1,
+                "run": 1,
+                "buffering": {
+                  "enabled": true,
+                  "framesAhead": 3,
+                  "status": "active"
+                },
+                "canvasSize": {
+                  "height": 700,
+                  "width": 900
+                },
+                "chains": 25,
+                "hardwareConcurrency": 15,
+                "motion": "Idle:0",
+                "parameters": 265,
+                "parts": 852,
+                "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+                "vertices": 34452,
+                "duration": 5008.299999999999,
+                "errors": [],
+                "frameP95": 9,
+                "observedModelFPS": 74.07703212666974,
+                "rafFPS": 120.00079867420084,
+                "updatedFPS": 74.2767006768764,
+                "heapBytes": 182417092,
+                "scriptSeconds": 1.552732,
+                "taskSeconds": 1.6852780000000003
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "reproduction": {
+      "build": "pnpm --filter @winter-love/puppet build",
+      "benchmark": "MODEL=/absolute/white-cat-idle-english.poffo CPU_RATES=1 MODES=worker RUNS=1 RESOLUTION=1 ANTIALIASING=ssaa RANDOM_SEED=42 WARMUP_MS=5000 MEASURE_MS=15000 PLAYER_ROOT=file:///absolute/frozen-artifact/ OUTPUT=/absolute/results.json node packages/puppet/visual/playback-benchmark.mjs",
+      "order": "before/after, after/before, before/after, after/before; each invocation starts a fresh browser.",
+      "parity": "The separate pre-optimization engine and diagnostic test sources are preserved under referenceSource. Standard JS/Wasm parity remains in src/player/internal/wasm/deformation/__tests__/create-transform.parity.integration.ts."
+    },
+    "limits": [
+      "One local WhiteCat model in an isolated Player benchmark, Chrome 156, 900x700 backing pixels, SSAA, resolution=1, no CPU throttling; full Poffo UI and low-end devices were not benchmarked.",
+      "Ambient machine load was not controlled. The final headline uses longer paired samples and includes all runs, not the fastest sample.",
+      "Wasm linear memory is not total Worker memory or process RSS. Latest-part JS samples retain additional bounded per-document arrays; no long-duration memory soak was performed.",
+      "Local changes only; no commit, pull-request update or deployment in this follow-up turn."
+    ]
+  },
+  "previousHybridExperiment": {
+    "recordedAt": "2026-11-03T06:21:16.167464+00:00",
+    "baseCommit": "20c0207172103a1629ded80fb15bb8fc9ae26622",
+    "branch": "codex/feature/puppet-wasm-deformation",
+    "candidateState": "Local hybrid Worker implementation; production Worker loads the numeric deformation kernel",
+    "summary": {
+      "defaultStrategy": "JavaScript Worker with Wasm deformation",
+      "javascriptWorkerFPS": 55.441300774048415,
+      "completeWasmWorkerFPS": 38.27206635151032,
+      "hybridWorkerFPS": 76.38048972039748,
+      "hybridGainOverJavascriptPercent": 37.76821368547418,
+      "hybridGainOverCompleteWasmPercent": 99.57242187782552,
+      "completeWasmLinearMemoryMiB": 622.9375,
+      "hybridWasmLinearMemoryMiB": 16.0,
+      "maximumVertexError": 0,
+      "differentFloat32Words": 0
+    },
+    "model": {
+      "file": "white-cat-idle-english.poffo",
+      "sha256": "47c98e7473e79ffb249aa1acb5bed9b7d458f35c7c0d3502f281549c20c55035",
+      "motion": "Idle:0",
+      "parts": 852,
+      "vertices": 34452,
+      "parameters": 265,
+      "chains": 25,
+      "glueConnections": 5114,
+      "parameterBindings": 5042
+    },
+    "diagnosis": {
+      "conclusion": "The full-runtime port pays for repeated native evaluation/allocation and complete frame/checkpoint JSON materialization. Small JS-to-Wasm input writes are not the dominant observed cost.",
+      "boundaryMethod": "Node integration diagnostic, no renderer or postMessage. 60 warmup steps and 120 measured steps at 1/120 s. Existing Wasm exports are wrapped with process.hrtime.bigint. Each strategy runs sequentially, so timings are diagnostic rather than a browser FPS comparison.",
+      "boundary": {
+        "frames": 120,
+        "model": "/Users/bichi/Downloads/白猫/white-cat-idle-english.poffo",
+        "results": [
+          {
+            "millisecondsPerFrame": 25.410317016666667,
+            "mode": "js",
+            "totalMillis": 4870.511125
+          },
+          {
+            "javascriptMillisPerFrame": 6.981661791666658,
+            "linearMemoryBytes": 653197312,
+            "metadataBytesPerFrame": 371399.24166666664,
+            "millisecondsPerFrame": 33.373353466666664,
+            "mode": "full",
+            "nativeCallsMillisPerFrame": {
+              "worker_input": 0.0023087583333333294,
+              "worker_process": 26.383817016666676,
+              "worker_output": 0.001392349999999999,
+              "worker_output_length": 0.00017215833333333338,
+              "worker_vertices": 0.0035909749999999967,
+              "worker_vertices_length": 0.0004104166666666668
+            },
+            "nativeMillisPerFrame": 26.391691675000008,
+            "requestBytesPerFrame": 108.19166666666666
+          },
+          {
+            "javascriptMillisPerFrame": 12.90772113333284,
+            "linearMemoryBytes": 16777216,
+            "millisecondsPerFrame": 16.974649658333334,
+            "mode": "hybrid",
+            "nativeCallsMillisPerFrame": {
+              "sample": 0.15382340833336144,
+              "map_vertices": 3.9131051166671322
+            },
+            "nativeMillisPerFrame": 4.066928525000494
+          }
+        ],
+        "warmup": 60
+      },
+      "boundaryInterpretation": "javascriptMillisPerFrame is total measured time minus wrapped Wasm calls. For the full runtime it includes request serialization, UTF-8 output decoding, JSON parsing and vertex copies; it is not a measurement of memcpy alone. Metadata size excludes the separate vertex plane. worker_process includes native evaluation and native JSON serialization.",
+      "workerCPUProfile": {
+        "path": "/private/tmp/puppet-optimization-full-profile/worker-cpu-1-run-1-worker.cpuprofile",
+        "sampledMicroseconds": {
+          "native evaluation including allocation": 2821801,
+          "native JSON and result materialization": 1106855,
+          "JS or runtime": 606215,
+          "idle": 456568,
+          "other native": 306170
+        },
+        "activeSampleSharePercent": {
+          "native evaluation including allocation": 58.289136572071996,
+          "native JSON and result materialization": 22.863987311819916,
+          "JS or runtime": 12.522409952735373,
+          "other native": 6.324466163372713
+        },
+        "topLeafFunctions": [
+          [
+            "_ZN13poffo_runtime6deform9warp_grid18sample_coordinates28_$u7b$$u7b$closure$u7d$$u7d$17h0e2875b9c35e3ef8E",
+            473831
+          ],
+          ["process", 459170],
+          ["(idle)", 456568],
+          [
+            "_ZN13poffo_runtime7compose45_$LT$impl$u20$poffo_runtime..model..Model$GT$13pose_deformer17h860824c3b718894bE",
+            359200
+          ],
+          [
+            "_RNvMs0_NtCsjS594RgRNR8_8dlmalloc8dlmallocINtB5_8DlmallocNtNtB7_3sys6SystemE6mallocCsljiztaTWNn0_3std",
+            305101
+          ],
+          ["_ZN13poffo_runtime6deform5shape6Layout9transform17h3239668c68e792c5E", 261869],
+          [
+            "_ZN102_$LT$core..iter..adapters..map..Map$LT$I$C$F$GT$$u20$as$u20$core..iter..traits..iterator..Iterator$GT$4fold17h2d0cef26db9ab9e7E",
+            231399
+          ],
+          ["round", 222561],
+          [
+            "_RNvMs0_NtCsjS594RgRNR8_8dlmalloc8dlmallocINtB5_8DlmallocNtNtB7_3sys6SystemE4freeCsljiztaTWNn0_3std",
+            165517
+          ],
+          [
+            "_ZN5alloc11collections5btree3map25BTreeMap$LT$K$C$V$C$A$GT$6insert17h9bf7341b3a9be6bdE",
+            131901
+          ],
+          [
+            "_ZN10serde_json5value3ser81_$LT$impl$u20$serde_core..ser..Serialize$u20$for$u20$serde_json..value..Value$GT$9serialize17h55594df366ced67fE.llvm.12139492004964334955",
+            106538
+          ],
+          ["l", 103238],
+          [
+            "_ZN102_$LT$core..iter..adapters..map..Map$LT$I$C$F$GT$$u20$as$u20$core..iter..traits..iterator..Iterator$GT$4fold17h654c5862b8d0e460E",
+            95560
+          ],
+          ["_ZN13poffo_runtime6deform13PosedDeformer9transform17h02b2a9004df9b25fE", 92288],
+          [
+            "_ZN102_$LT$core..iter..adapters..map..Map$LT$I$C$F$GT$$u20$as$u20$core..iter..traits..iterator..Iterator$GT$4fold17h8e7267cb7af504d2E",
+            84001
+          ]
+        ],
+        "interpretation": "Categories are inferred from sampled stack names (Player/apply_frame/update, serde_json/capture_worker/worker_frame). They are not directly measured wall-clock phase durations. Profiling is disabled in all FPS comparisons."
+      }
+    },
+    "implementation": {
+      "javascriptWorker": [
+        "selected, outgoing and independent playback; interpolation policy and descriptors",
+        "expressions, effects and seeded randomness",
+        "decoded audio analysis, physics and Glue",
+        "render plans, visibility, masks, layers and checkpoints",
+        "generation/revision protocol, notice acknowledgements and transferred buffers",
+        "rotation-frame trigonometry"
+      ],
+      "wasm": [
+        "numeric grid keyform coordinate evaluation",
+        "lazy weighted parent-space grid interpolation",
+        "rigid point transforms and batched part vertex mappings",
+        "coordinate and transformed-vertex caching"
+      ],
+      "boundary": [
+        "immutable geometry arrays copied once per kernel instance",
+        "numeric interpolation inputs and transform versions updated per frame",
+        "no complete frame/checkpoint JSON round trip in the production deformation path",
+        "retain typed input/output views; refresh only when size or memory backing changes"
+      ],
+      "fallback": "Unsupported geometry or unavailable Wasm retains the JavaScript evaluator inside the Worker. Playback, physics, Glue and audio remain available.",
+      "fullRuntimeReference": "The full Rust runtime, adapter and tests are preserved for comparison. The production Worker does not import the full-runtime module.",
+      "kernel": {
+        "path": "packages/puppet/src/player/internal/wasm/deformation/kernel.wasm",
+        "bytes": 23908,
+        "sha256": "d230bd58b8fec2e0821bbeafd20d29b3a7901ea7b606eedced544c441bff97dc",
+        "compiler": "rustc 1.96.0 (ac68faa20 2026-05-25), wasm32-unknown-unknown, opt-level=3, panic=abort, simd128, strip=symbols",
+        "frozenWorkerContainsCurrentKernel": true,
+        "frozenWorkerContainsFullRuntime": false
+      }
+    },
+    "method": {
+      "antialiasing": "ssaa",
+      "cpuRates": [1],
+      "measureMillis": 5000,
+      "model": "/Users/bichi/Downloads/白猫/white-cat-idle-english.poffo",
+      "modes": ["worker"],
+      "randomSeed": 42,
+      "resolution": 1,
+      "runs": 1,
+      "viewport": {
+        "height": 700,
+        "width": 900
+      },
+      "warmupMillis": 2000,
+      "runsPerVariant": 3,
+      "browser": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+      "headed": true,
+      "freshBrowserForEveryRun": true,
+      "profiling": false,
+      "order": [
+        {
+          "repeat": 1,
+          "variant": "js"
+        },
+        {
+          "repeat": 1,
+          "variant": "full"
+        },
+        {
+          "repeat": 1,
+          "variant": "hybrid"
+        },
+        {
+          "repeat": 2,
+          "variant": "hybrid"
+        },
+        {
+          "repeat": 2,
+          "variant": "js"
+        },
+        {
+          "repeat": 2,
+          "variant": "full"
+        },
+        {
+          "repeat": 3,
+          "variant": "full"
+        },
+        {
+          "repeat": 3,
+          "variant": "hybrid"
+        },
+        {
+          "repeat": 3,
+          "variant": "js"
+        }
+      ],
+      "metric": "updatedFPS counts Player onFrame model updates per second; observedModelFPS samples changing vertices at rAF. These are separate from rafFPS.",
+      "comparison": "Three frozen builds, one shared model and configuration; balanced variant order across three repetitions. The headline compares only these fresh runs, not earlier experiments."
+    },
+    "measurements": [
+      {
+        "repeat": 1,
+        "variant": "js",
+        "result": {
+          "configuration": {
+            "antialiasing": "ssaa",
+            "cpuRates": [1],
+            "measureMillis": 5000,
+            "model": "/Users/bichi/Downloads/白猫/white-cat-idle-english.poffo",
+            "modes": ["worker"],
+            "randomSeed": 42,
+            "resolution": 1,
+            "runs": 1,
+            "viewport": {
+              "height": 700,
+              "width": 900
+            },
+            "warmupMillis": 2000
+          },
+          "results": [
+            {
+              "computation": "worker",
+              "cpu": 1,
+              "run": 1,
+              "buffering": {
+                "enabled": true,
+                "framesAhead": 3,
+                "status": "active"
+              },
+              "canvasSize": {
+                "height": 700,
+                "width": 900
+              },
+              "chains": 25,
+              "hardwareConcurrency": 15,
+              "motion": "Idle:0",
+              "parameters": 265,
+              "parts": 852,
+              "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+              "vertices": 34452,
+              "duration": 5008.3,
+              "errors": [],
+              "frameP95": 9,
+              "observedModelFPS": 55.108519857037315,
+              "rafFPS": 120.00079867420082,
+              "updatedFPS": 55.108519857037315,
+              "heapBytes": 185404316,
+              "scriptSeconds": 1.179432,
+              "taskSeconds": 1.3121389999999997
+            }
+          ]
+        }
+      },
+      {
+        "repeat": 1,
+        "variant": "full",
+        "result": {
+          "configuration": {
+            "antialiasing": "ssaa",
+            "cpuRates": [1],
+            "measureMillis": 5000,
+            "model": "/Users/bichi/Downloads/白猫/white-cat-idle-english.poffo",
+            "modes": ["worker"],
+            "randomSeed": 42,
+            "resolution": 1,
+            "runs": 1,
+            "viewport": {
+              "height": 700,
+              "width": 900
+            },
+            "warmupMillis": 2000
+          },
+          "results": [
+            {
+              "computation": "worker",
+              "cpu": 1,
+              "run": 1,
+              "buffering": {
+                "enabled": true,
+                "framesAhead": 3,
+                "status": "active"
+              },
+              "canvasSize": {
+                "height": 700,
+                "width": 900
+              },
+              "chains": 25,
+              "hardwareConcurrency": 15,
+              "motion": "Idle:0",
+              "parameters": 265,
+              "parts": 852,
+              "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+              "vertices": 34452,
+              "duration": 5008.299999999999,
+              "errors": [],
+              "frameP95": 8.900000000001455,
+              "observedModelFPS": 37.737355989058166,
+              "rafFPS": 120.00079867420084,
+              "updatedFPS": 37.737355989058166,
+              "heapBytes": 214363476,
+              "scriptSeconds": 0.7207399999999999,
+              "taskSeconds": 0.8140160000000001
+            }
+          ]
+        }
+      },
+      {
+        "repeat": 1,
+        "variant": "hybrid",
+        "result": {
+          "configuration": {
+            "antialiasing": "ssaa",
+            "cpuRates": [1],
+            "measureMillis": 5000,
+            "model": "/Users/bichi/Downloads/白猫/white-cat-idle-english.poffo",
+            "modes": ["worker"],
+            "randomSeed": 42,
+            "resolution": 1,
+            "runs": 1,
+            "viewport": {
+              "height": 700,
+              "width": 900
+            },
+            "warmupMillis": 2000
+          },
+          "results": [
+            {
+              "computation": "worker",
+              "cpu": 1,
+              "run": 1,
+              "buffering": {
+                "enabled": true,
+                "framesAhead": 3,
+                "status": "active"
+              },
+              "canvasSize": {
+                "height": 700,
+                "width": 900
+              },
+              "chains": 25,
+              "hardwareConcurrency": 15,
+              "motion": "Idle:0",
+              "parameters": 265,
+              "parts": 852,
+              "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+              "vertices": 34452,
+              "duration": 5008.299999999999,
+              "errors": [],
+              "frameP95": 9.200000000000728,
+              "observedModelFPS": 77.4713974801829,
+              "rafFPS": 120.00079867420084,
+              "updatedFPS": 77.67106603038957,
+              "heapBytes": 218336264,
+              "scriptSeconds": 1.424898,
+              "taskSeconds": 1.545464
+            }
+          ]
+        }
+      },
+      {
+        "repeat": 2,
+        "variant": "hybrid",
+        "result": {
+          "configuration": {
+            "antialiasing": "ssaa",
+            "cpuRates": [1],
+            "measureMillis": 5000,
+            "model": "/Users/bichi/Downloads/白猫/white-cat-idle-english.poffo",
+            "modes": ["worker"],
+            "randomSeed": 42,
+            "resolution": 1,
+            "runs": 1,
+            "viewport": {
+              "height": 700,
+              "width": 900
+            },
+            "warmupMillis": 2000
+          },
+          "results": [
+            {
+              "computation": "worker",
+              "cpu": 1,
+              "run": 1,
+              "buffering": {
+                "enabled": true,
+                "framesAhead": 3,
+                "status": "active"
+              },
+              "canvasSize": {
+                "height": 700,
+                "width": 900
+              },
+              "chains": 25,
+              "hardwareConcurrency": 15,
+              "motion": "Idle:0",
+              "parameters": 265,
+              "parts": 852,
+              "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+              "vertices": 34452,
+              "duration": 5000.000000000001,
+              "errors": [],
+              "frameP95": 8.899999999999636,
+              "observedModelFPS": 73.19999999999999,
+              "rafFPS": 119.99999999999997,
+              "updatedFPS": 73.39999999999999,
+              "heapBytes": 183777140,
+              "scriptSeconds": 1.382796,
+              "taskSeconds": 1.508587
+            }
+          ]
+        }
+      },
+      {
+        "repeat": 2,
+        "variant": "js",
+        "result": {
+          "configuration": {
+            "antialiasing": "ssaa",
+            "cpuRates": [1],
+            "measureMillis": 5000,
+            "model": "/Users/bichi/Downloads/白猫/white-cat-idle-english.poffo",
+            "modes": ["worker"],
+            "randomSeed": 42,
+            "resolution": 1,
+            "runs": 1,
+            "viewport": {
+              "height": 700,
+              "width": 900
+            },
+            "warmupMillis": 2000
+          },
+          "results": [
+            {
+              "computation": "worker",
+              "cpu": 1,
+              "run": 1,
+              "buffering": {
+                "enabled": true,
+                "framesAhead": 3,
+                "status": "active"
+              },
+              "canvasSize": {
+                "height": 700,
+                "width": 900
+              },
+              "chains": 25,
+              "hardwareConcurrency": 15,
+              "motion": "Idle:0",
+              "parameters": 265,
+              "parts": 852,
+              "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+              "vertices": 34452,
+              "duration": 5008.299999999999,
+              "errors": [],
+              "frameP95": 9,
+              "observedModelFPS": 57.50454245951721,
+              "rafFPS": 120.00079867420084,
+              "updatedFPS": 57.50454245951721,
+              "heapBytes": 183265884,
+              "scriptSeconds": 1.099277,
+              "taskSeconds": 1.2109539999999996
+            }
+          ]
+        }
+      },
+      {
+        "repeat": 2,
+        "variant": "full",
+        "result": {
+          "configuration": {
+            "antialiasing": "ssaa",
+            "cpuRates": [1],
+            "measureMillis": 5000,
+            "model": "/Users/bichi/Downloads/白猫/white-cat-idle-english.poffo",
+            "modes": ["worker"],
+            "randomSeed": 42,
+            "resolution": 1,
+            "runs": 1,
+            "viewport": {
+              "height": 700,
+              "width": 900
+            },
+            "warmupMillis": 2000
+          },
+          "results": [
+            {
+              "computation": "worker",
+              "cpu": 1,
+              "run": 1,
+              "buffering": {
+                "enabled": true,
+                "framesAhead": 3,
+                "status": "active"
+              },
+              "canvasSize": {
+                "height": 700,
+                "width": 900
+              },
+              "chains": 25,
+              "hardwareConcurrency": 15,
+              "motion": "Idle:0",
+              "parameters": 265,
+              "parts": 852,
+              "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+              "vertices": 34452,
+              "duration": 5007.4,
+              "errors": [],
+              "frameP95": 9.200000000000728,
+              "observedModelFPS": 37.54443423732876,
+              "rafFPS": 120.02236689699247,
+              "updatedFPS": 37.74413867476136,
+              "heapBytes": 200850032,
+              "scriptSeconds": 0.722431,
+              "taskSeconds": 0.8166190000000002
+            }
+          ]
+        }
+      },
+      {
+        "repeat": 3,
+        "variant": "full",
+        "result": {
+          "configuration": {
+            "antialiasing": "ssaa",
+            "cpuRates": [1],
+            "measureMillis": 5000,
+            "model": "/Users/bichi/Downloads/白猫/white-cat-idle-english.poffo",
+            "modes": ["worker"],
+            "randomSeed": 42,
+            "resolution": 1,
+            "runs": 1,
+            "viewport": {
+              "height": 700,
+              "width": 900
+            },
+            "warmupMillis": 2000
+          },
+          "results": [
+            {
+              "computation": "worker",
+              "cpu": 1,
+              "run": 1,
+              "buffering": {
+                "enabled": true,
+                "framesAhead": 3,
+                "status": "active"
+              },
+              "canvasSize": {
+                "height": 700,
+                "width": 900
+              },
+              "chains": 25,
+              "hardwareConcurrency": 15,
+              "motion": "Idle:0",
+              "parameters": 265,
+              "parts": 852,
+              "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+              "vertices": 34452,
+              "duration": 5008.299999999999,
+              "errors": [],
+              "frameP95": 8.799999999999272,
+              "observedModelFPS": 39.33470439071142,
+              "rafFPS": 120.00079867420084,
+              "updatedFPS": 39.33470439071142,
+              "heapBytes": 191113952,
+              "scriptSeconds": 0.7363599999999999,
+              "taskSeconds": 0.8231709999999994
+            }
+          ]
+        }
+      },
+      {
+        "repeat": 3,
+        "variant": "hybrid",
+        "result": {
+          "configuration": {
+            "antialiasing": "ssaa",
+            "cpuRates": [1],
+            "measureMillis": 5000,
+            "model": "/Users/bichi/Downloads/白猫/white-cat-idle-english.poffo",
+            "modes": ["worker"],
+            "randomSeed": 42,
+            "resolution": 1,
+            "runs": 1,
+            "viewport": {
+              "height": 700,
+              "width": 900
+            },
+            "warmupMillis": 2000
+          },
+          "results": [
+            {
+              "computation": "worker",
+              "cpu": 1,
+              "run": 1,
+              "buffering": {
+                "enabled": true,
+                "framesAhead": 3,
+                "status": "active"
+              },
+              "canvasSize": {
+                "height": 700,
+                "width": 900
+              },
+              "chains": 25,
+              "hardwareConcurrency": 15,
+              "motion": "Idle:0",
+              "parameters": 265,
+              "parts": 852,
+              "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+              "vertices": 34452,
+              "duration": 5008.3,
+              "errors": [],
+              "frameP95": 8.900000000000546,
+              "observedModelFPS": 78.07040313080286,
+              "rafFPS": 120.00079867420082,
+              "updatedFPS": 78.07040313080286,
+              "heapBytes": 238328236,
+              "scriptSeconds": 1.4241300000000001,
+              "taskSeconds": 1.5424739999999995
+            }
+          ]
+        }
+      },
+      {
+        "repeat": 3,
+        "variant": "js",
+        "result": {
+          "configuration": {
+            "antialiasing": "ssaa",
+            "cpuRates": [1],
+            "measureMillis": 5000,
+            "model": "/Users/bichi/Downloads/白猫/white-cat-idle-english.poffo",
+            "modes": ["worker"],
+            "randomSeed": 42,
+            "resolution": 1,
+            "runs": 1,
+            "viewport": {
+              "height": 700,
+              "width": 900
+            },
+            "warmupMillis": 2000
+          },
+          "results": [
+            {
+              "computation": "worker",
+              "cpu": 1,
+              "run": 1,
+              "buffering": {
+                "enabled": true,
+                "framesAhead": 3,
+                "status": "active"
+              },
+              "canvasSize": {
+                "height": 700,
+                "width": 900
+              },
+              "chains": 25,
+              "hardwareConcurrency": 15,
+              "motion": "Idle:0",
+              "parameters": 265,
+              "parts": 852,
+              "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+              "vertices": 34452,
+              "duration": 5008.3,
+              "errors": [],
+              "frameP95": 8.900000000001455,
+              "observedModelFPS": 53.71084000559072,
+              "rafFPS": 120.00079867420082,
+              "updatedFPS": 53.71084000559072,
+              "heapBytes": 216037420,
+              "scriptSeconds": 1.065338,
+              "taskSeconds": 1.173349
+            }
+          ]
+        }
+      }
+    ],
+    "artifacts": {
+      "js": {
+        "root": "/private/tmp/puppet-wasm-baseline",
+        "worker": "dist/assets/worker-grFiyhRT.js",
+        "workerBytes": 126954,
+        "workerSHA256": "ca084e90d32422c8e8211337c62a16a59dd64bb3b50288bc3b4a823a08053b53"
+      },
+      "full": {
+        "root": "/private/tmp/puppet-full-wasm-transport-5ezyfk7e",
+        "worker": "dist/assets/worker-B7qMFgFX.js",
+        "workerBytes": 2724190,
+        "workerSHA256": "9ad2362c1980d17822ce0ec86f76f87384076cf602cdc53ddf2f753eb7518b2b"
+      },
+      "hybrid": {
+        "root": "/private/tmp/puppet-hybrid-final-rshnwwct",
+        "worker": "dist/assets/worker-Cp6jxf4O.js",
+        "workerBytes": 163735,
+        "workerSHA256": "c96bbd9caf94da449a0df7e27675016142cb99cdc89c18f3a1b2cc0e8868d719"
+      }
+    },
+    "parity": {
+      "differentWords": 0,
+      "frames": 600,
+      "maximumVertexError": 0,
+      "memoryBytes": 16777216,
+      "model": "/Users/bichi/Downloads/白猫/white-cat-idle-english.poffo",
+      "nativeCalls": 511200,
+      "wasm": true,
+      "developmentModelAlsoPassed": true,
+      "comparison": "600 fixed-step frames for each of the development and supplied models. Compare complete playback/state/render plans plus every Float32 vertex bit against JavaScript. The supplied-model run also asserts actual Wasm map_vertices calls.",
+      "integration": "packages/puppet/src/player/internal/wasm/deformation/__tests__/create-transform.parity.integration.ts"
+    },
+    "verification": {
+      "unit": {
+        "command": "pnpm exec vitest run packages/puppet apps/poffo",
+        "filesPassed": 500,
+        "testsPassed": 3107,
+        "log": "/private/tmp/puppet-hybrid-all-tests.log"
+      },
+      "focusedFinal": {
+        "filesPassed": 3,
+        "testsPassed": 15,
+        "log": "/private/tmp/puppet-hybrid-focused-final.log"
+      },
+      "browser": {
+        "command": "pnpm exec vitest run --config packages/puppet/vitest.browser.config.ts",
+        "filesPassed": 19,
+        "filesSkipped": 1,
+        "testsPassed": 62,
+        "testsSkipped": 11,
+        "log": "/private/tmp/puppet-hybrid-browser.log"
+      },
+      "types": {
+        "command": "pnpm typecheck",
+        "tasksPassed": 21,
+        "log": "/private/tmp/puppet-hybrid-types-final.log"
+      },
+      "packageBuild": {
+        "command": "pnpm --filter @winter-love/puppet build",
+        "log": "/private/tmp/puppet-hybrid-package.log"
+      },
+      "parity": {
+        "filesPassed": 1,
+        "testsPassed": 2,
+        "log": "/private/tmp/puppet-hybrid-parity-final.log"
+      },
+      "boundaryDiagnostic": {
+        "filesPassed": 1,
+        "testsPassed": 1,
+        "log": "/private/tmp/puppet-boundary-final.log"
+      },
+      "regressions": [
+        "Worker initialization/message ordering with audio",
+        "memory growth after a sibling vertex mapper allocation",
+        "memory growth after views were cached",
+        "unsupported-geometry JavaScript fallback"
+      ],
+      "lint": {
+        "command": "pnpm lint",
+        "passed": true,
+        "log": "/private/tmp/puppet-hybrid-root-lint.log"
+      },
+      "format": {
+        "command": "pnpm format <changed paths>",
+        "passed": true,
+        "log": "/private/tmp/puppet-hybrid-format-final.log"
+      }
+    },
+    "reproduction": {
+      "build": "pnpm --filter @winter-love/puppet build",
+      "benchmark": "MODEL=/absolute/white-cat-idle-english.poffo CPU_RATES=1 MODES=worker RUNS=1 RESOLUTION=1 ANTIALIASING=ssaa RANDOM_SEED=42 PLAYER_ROOT=file:///absolute/frozen-package-artifact/ OUTPUT=/absolute/results.json node packages/puppet/visual/playback-benchmark.mjs",
+      "comparison": "Use each frozen PLAYER_ROOT in the recorded balanced order, starting a fresh browser for each run. Each root contains dist/.",
+      "boundary": "MODEL=/absolute/white-cat-idle-english.poffo BOUNDARY_OUTPUT=/absolute/boundary.json pnpm exec vitest run --config vitest.integration.config.mts --project integration packages/puppet/src/player/internal/wasm/__tests__/create-worker.compute.integration.ts",
+      "parity": "MODEL=/absolute/white-cat-idle-english.poffo FRAMES=600 PARITY_OUTPUT=/absolute/parity.json pnpm exec vitest run --config vitest.integration.config.mts --project integration packages/puppet/src/player/internal/wasm/deformation/__tests__/create-transform.parity.integration.ts",
+      "compiler": "See src/player/internal/wasm/deformation/README.md"
+    },
+    "limits": [
+      "One supplied model on this Mac, isolated Player benchmark. Full Poffo UI and low-end devices were not benchmarked.",
+      "Chrome 156, 900x700 backing buffer, resolution=1, SSAA, no CPU throttling. Other resolutions and workloads may change the gain.",
+      "rAF remained approximately 120 Hz. Model update rates are below 120/s; physical monitor scanout and input latency were not measured.",
+      "Linear-memory figures cover Wasm memory only, not total Worker heap or process RSS. No long-duration memory soak was performed.",
+      "Node export instrumentation and Chrome CPU profiling are separate diagnostic runs with overhead; do not equate their frame times with the unprofiled browser FPS.",
+      "Results are local. No commit, pull request update, or deployment was performed in this optimization turn."
+    ],
+    "previousFullRuntimeExperiment": {
+      "recordedAt": "2026-11-03T05:28:52.711962+00:00",
+      "baseCommit": "20c0207172103a1629ded80fb15bb8fc9ae26622",
+      "branch": "codex/feature/puppet-wasm-deformation",
+      "candidateState": "Local full-runtime migration",
+      "summary": {
+        "javascriptWorkerFPS": 60.366744537401246,
+        "completeWasmWorkerFPS": 42.487924711645334,
+        "relativeFPSChangePercent": -29.61700181575766,
+        "faster": false,
+        "wasmLinearMemoryMiB": 622.9375,
+        "maximumVertexError": 0.000244140625
+      },
+      "model": {
+        "file": "white-cat-idle-english.poffo",
+        "sha256": "47c98e7473e79ffb249aa1acb5bed9b7d458f35c7c0d3502f281549c20c55035",
+        "motion": "Idle:0",
+        "parts": 852,
+        "vertices": 34452,
+        "parameters": 265,
+        "chains": 25,
+        "glueConnections": 5114,
+        "parameterBindings": 5042
+      },
+      "implementation": {
+        "wasm": [
+          "Worker generation/revision protocol",
+          "selected, outgoing and independent motion playback",
+          "motion interpolation and previous-frame history",
+          "selected, stacked and independent expression channels",
+          "eye blink, seeded randomness, look, breath, lip sync and vowel following",
+          "decoded audio analysis",
+          "before-physics and after-physics parameter blends",
+          "pendulums and physics chains including gravity/wind overrides",
+          "keyforms, scene deformation, spatial projection and skinning",
+          "Glue",
+          "visibility, masks, layers and render plans",
+          "checkpoint restore/capture and sequenced notices"
+        ],
+        "javascriptWorker": [
+          "module loading",
+          "memory allocation/copies and message serialization",
+          "postMessage with transferable buffers",
+          "browser-boundary exception marshalling"
+        ],
+        "host": [
+          "GPU rendering",
+          "Web Audio output",
+          "requestAnimationFrame scheduling and buffering control",
+          "existing host fallback when Worker initialization fails"
+        ],
+        "optimizations": [
+          "numeric arrays copied directly into Wasm memory",
+          "compiled Glue and deformer binding indices",
+          "equivalent deformer coordinate and transform sharing",
+          "borrowed keyform grid coordinates",
+          "lazy weighted parent grid sampling",
+          "pre-Glue vertex reuse using exact input and transform versions"
+        ],
+        "wasmImports": [],
+        "sourceOrigin": {
+          "repository": "team-monolith-product/tnm-puppet-sdk",
+          "commit": "280ab56",
+          "notes": "Format/runtime snapshot with web checkpoint, expression, history and fixed-step compatibility changes."
+        }
+      },
+      "method": {
+        "antialiasing": "ssaa",
+        "cpuRates": [1],
+        "measureMillis": 5000,
+        "model": "/Users/bichi/Downloads/白猫/white-cat-idle-english.poffo",
+        "modes": ["worker"],
+        "randomSeed": 42,
+        "resolution": 1,
+        "runs": 3,
+        "viewport": {
+          "height": 700,
+          "width": 900
+        },
+        "warmupMillis": 2000,
+        "browser": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+        "metric": "onFrame model updates per second; observedModelFPS samples changing vertices at rAF",
+        "profiling": false,
+        "baselineOrder": "JS / Wasm / Wasm / JS / JS / Wasm",
+        "finalConfirmation": "Three full-Wasm runs after final expression/checkpoint compatibility fixes; same input, viewport and graphics settings. Browser reused across these three page lifetimes.",
+        "rafIsNotModelFPS": true,
+        "freshBrowserBaseline": true
+      },
+      "measurements": {
+        "javascript": [
+          {
+            "computation": "worker",
+            "cpu": 1,
+            "run": 1,
+            "buffering": {
+              "enabled": true,
+              "framesAhead": 3,
+              "status": "active"
+            },
+            "canvasSize": {
+              "height": 700,
+              "width": 900
+            },
+            "chains": 25,
+            "hardwareConcurrency": 15,
+            "motion": "Idle:0",
+            "parameters": 265,
+            "parts": 852,
+            "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+            "vertices": 34452,
+            "duration": 5000,
+            "errors": [],
+            "frameP95": 9.099999999999454,
+            "observedModelFPS": 60.6,
+            "rafFPS": 120,
+            "updatedFPS": 60.6,
+            "heapBytes": 222375676,
+            "scriptSeconds": 1.088633,
+            "taskSeconds": 1.1881509999999995
+          },
+          {
+            "computation": "worker",
+            "cpu": 1,
+            "run": 1,
+            "buffering": {
+              "enabled": true,
+              "framesAhead": 3,
+              "status": "active"
+            },
+            "canvasSize": {
+              "height": 700,
+              "width": 900
+            },
+            "chains": 25,
+            "hardwareConcurrency": 15,
+            "motion": "Idle:0",
+            "parameters": 265,
+            "parts": 852,
+            "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+            "vertices": 34452,
+            "duration": 5000,
+            "errors": [],
+            "frameP95": 8.400000000000546,
+            "observedModelFPS": 60.2,
+            "rafFPS": 120,
+            "updatedFPS": 60.4,
+            "heapBytes": 186312060,
+            "scriptSeconds": 1.078551,
+            "taskSeconds": 1.1882420000000002
+          },
+          {
+            "computation": "worker",
+            "cpu": 1,
+            "run": 1,
+            "buffering": {
+              "enabled": true,
+              "framesAhead": 3,
+              "status": "active"
+            },
+            "canvasSize": {
+              "height": 700,
+              "width": 900
+            },
+            "chains": 25,
+            "hardwareConcurrency": 15,
+            "motion": "Idle:0",
+            "parameters": 265,
+            "parts": 852,
+            "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+            "vertices": 34452,
+            "duration": 5008.300000000001,
+            "errors": [],
+            "frameP95": 8.5,
+            "observedModelFPS": 60.10023361220373,
+            "rafFPS": 120.0007986742008,
+            "updatedFPS": 60.10023361220373,
+            "heapBytes": 352126152,
+            "scriptSeconds": 1.152232,
+            "taskSeconds": 1.2408349999999997
+          }
+        ],
+        "completeWasmFinal": [
+          {
+            "computation": "worker",
+            "cpu": 1,
+            "run": 1,
+            "buffering": {
+              "enabled": true,
+              "framesAhead": 3,
+              "status": "active"
+            },
+            "canvasSize": {
+              "height": 700,
+              "width": 900
+            },
+            "chains": 25,
+            "hardwareConcurrency": 15,
+            "motion": "Idle:0",
+            "parameters": 265,
+            "parts": 852,
+            "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+            "vertices": 34452,
+            "duration": 5008.300000000001,
+            "errors": [],
+            "frameP95": 8.400000000001455,
+            "observedModelFPS": 42.729069744224574,
+            "rafFPS": 120.0007986742008,
+            "updatedFPS": 42.928738294431234,
+            "heapBytes": 167016060,
+            "scriptSeconds": 0.7503190000000001,
+            "taskSeconds": 0.8300140000000003
+          },
+          {
+            "computation": "worker",
+            "cpu": 1,
+            "run": 2,
+            "buffering": {
+              "enabled": true,
+              "framesAhead": 3,
+              "status": "active"
+            },
+            "canvasSize": {
+              "height": 700,
+              "width": 900
+            },
+            "chains": 25,
+            "hardwareConcurrency": 15,
+            "motion": "Idle:0",
+            "parameters": 265,
+            "parts": 852,
+            "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+            "vertices": 34452,
+            "duration": 5000,
+            "errors": [],
+            "frameP95": 8.400000000001455,
+            "observedModelFPS": 45.2,
+            "rafFPS": 120,
+            "updatedFPS": 45.4,
+            "heapBytes": 180793304,
+            "scriptSeconds": 0.759819,
+            "taskSeconds": 0.8426819999999999
+          },
+          {
+            "computation": "worker",
+            "cpu": 1,
+            "run": 3,
+            "buffering": {
+              "enabled": true,
+              "framesAhead": 3,
+              "status": "active"
+            },
+            "canvasSize": {
+              "height": 700,
+              "width": 900
+            },
+            "chains": 25,
+            "hardwareConcurrency": 15,
+            "motion": "Idle:0",
+            "parameters": 265,
+            "parts": 852,
+            "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+            "vertices": 34452,
+            "duration": 5008.299999999999,
+            "errors": [],
+            "frameP95": 8.800000000001091,
+            "observedModelFPS": 39.13503584050477,
+            "rafFPS": 120.00079867420084,
+            "updatedFPS": 39.13503584050477,
+            "heapBytes": 166301276,
+            "scriptSeconds": 0.7214510000000001,
+            "taskSeconds": 0.817577
+          }
+        ],
+        "earlierMatchedPairs": [
+          {
+            "pair": 1,
+            "variant": "js",
+            "result": {
+              "configuration": {
+                "antialiasing": "ssaa",
+                "cpuRates": [1],
+                "measureMillis": 5000,
+                "model": "/Users/bichi/Downloads/白猫/white-cat-idle-english.poffo",
+                "modes": ["worker"],
+                "randomSeed": 42,
+                "resolution": 1,
+                "runs": 1,
+                "viewport": {
+                  "height": 700,
+                  "width": 900
+                },
+                "warmupMillis": 2000
+              },
+              "results": [
+                {
+                  "computation": "worker",
+                  "cpu": 1,
+                  "run": 1,
+                  "buffering": {
+                    "enabled": true,
+                    "framesAhead": 3,
+                    "status": "active"
+                  },
+                  "canvasSize": {
+                    "height": 700,
+                    "width": 900
+                  },
+                  "chains": 25,
+                  "hardwareConcurrency": 15,
+                  "motion": "Idle:0",
+                  "parameters": 265,
+                  "parts": 852,
+                  "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+                  "vertices": 34452,
+                  "duration": 5000,
+                  "errors": [],
+                  "frameP95": 9.099999999999454,
+                  "observedModelFPS": 60.6,
+                  "rafFPS": 120,
+                  "updatedFPS": 60.6,
+                  "heapBytes": 222375676,
+                  "scriptSeconds": 1.088633,
+                  "taskSeconds": 1.1881509999999995
+                }
+              ]
+            }
+          },
+          {
+            "pair": 1,
+            "variant": "wasm",
+            "result": {
+              "configuration": {
+                "antialiasing": "ssaa",
+                "cpuRates": [1],
+                "measureMillis": 5000,
+                "model": "/Users/bichi/Downloads/白猫/white-cat-idle-english.poffo",
+                "modes": ["worker"],
+                "randomSeed": 42,
+                "resolution": 1,
+                "runs": 1,
+                "viewport": {
+                  "height": 700,
+                  "width": 900
+                },
+                "warmupMillis": 2000
+              },
+              "results": [
+                {
+                  "computation": "worker",
+                  "cpu": 1,
+                  "run": 1,
+                  "buffering": {
+                    "enabled": true,
+                    "framesAhead": 3,
+                    "status": "active"
+                  },
+                  "canvasSize": {
+                    "height": 700,
+                    "width": 900
+                  },
+                  "chains": 25,
+                  "hardwareConcurrency": 15,
+                  "motion": "Idle:0",
+                  "parameters": 265,
+                  "parts": 852,
+                  "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+                  "vertices": 34452,
+                  "duration": 5008.299999999999,
+                  "errors": [],
+                  "frameP95": 8.5,
+                  "observedModelFPS": 39.13503584050477,
+                  "rafFPS": 120.00079867420084,
+                  "updatedFPS": 39.13503584050477,
+                  "heapBytes": 173453108,
+                  "scriptSeconds": 0.7351099999999999,
+                  "taskSeconds": 0.829742
+                }
+              ]
+            }
+          },
+          {
+            "pair": 2,
+            "variant": "wasm",
+            "result": {
+              "configuration": {
+                "antialiasing": "ssaa",
+                "cpuRates": [1],
+                "measureMillis": 5000,
+                "model": "/Users/bichi/Downloads/白猫/white-cat-idle-english.poffo",
+                "modes": ["worker"],
+                "randomSeed": 42,
+                "resolution": 1,
+                "runs": 1,
+                "viewport": {
+                  "height": 700,
+                  "width": 900
+                },
+                "warmupMillis": 2000
+              },
+              "results": [
+                {
+                  "computation": "worker",
+                  "cpu": 1,
+                  "run": 1,
+                  "buffering": {
+                    "enabled": true,
+                    "framesAhead": 3,
+                    "status": "active"
+                  },
+                  "canvasSize": {
+                    "height": 700,
+                    "width": 900
+                  },
+                  "chains": 25,
+                  "hardwareConcurrency": 15,
+                  "motion": "Idle:0",
+                  "parameters": 265,
+                  "parts": 852,
+                  "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+                  "vertices": 34452,
+                  "duration": 5000.000000000001,
+                  "errors": [],
+                  "frameP95": 8.5,
+                  "observedModelFPS": 41.599999999999994,
+                  "rafFPS": 119.99999999999997,
+                  "updatedFPS": 41.599999999999994,
+                  "heapBytes": 225430656,
+                  "scriptSeconds": 0.7780520000000001,
+                  "taskSeconds": 0.858787
+                }
+              ]
+            }
+          },
+          {
+            "pair": 2,
+            "variant": "js",
+            "result": {
+              "configuration": {
+                "antialiasing": "ssaa",
+                "cpuRates": [1],
+                "measureMillis": 5000,
+                "model": "/Users/bichi/Downloads/白猫/white-cat-idle-english.poffo",
+                "modes": ["worker"],
+                "randomSeed": 42,
+                "resolution": 1,
+                "runs": 1,
+                "viewport": {
+                  "height": 700,
+                  "width": 900
+                },
+                "warmupMillis": 2000
+              },
+              "results": [
+                {
+                  "computation": "worker",
+                  "cpu": 1,
+                  "run": 1,
+                  "buffering": {
+                    "enabled": true,
+                    "framesAhead": 3,
+                    "status": "active"
+                  },
+                  "canvasSize": {
+                    "height": 700,
+                    "width": 900
+                  },
+                  "chains": 25,
+                  "hardwareConcurrency": 15,
+                  "motion": "Idle:0",
+                  "parameters": 265,
+                  "parts": 852,
+                  "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+                  "vertices": 34452,
+                  "duration": 5000,
+                  "errors": [],
+                  "frameP95": 8.400000000000546,
+                  "observedModelFPS": 60.2,
+                  "rafFPS": 120,
+                  "updatedFPS": 60.4,
+                  "heapBytes": 186312060,
+                  "scriptSeconds": 1.078551,
+                  "taskSeconds": 1.1882420000000002
+                }
+              ]
+            }
+          },
+          {
+            "pair": 3,
+            "variant": "js",
+            "result": {
+              "configuration": {
+                "antialiasing": "ssaa",
+                "cpuRates": [1],
+                "measureMillis": 5000,
+                "model": "/Users/bichi/Downloads/白猫/white-cat-idle-english.poffo",
+                "modes": ["worker"],
+                "randomSeed": 42,
+                "resolution": 1,
+                "runs": 1,
+                "viewport": {
+                  "height": 700,
+                  "width": 900
+                },
+                "warmupMillis": 2000
+              },
+              "results": [
+                {
+                  "computation": "worker",
+                  "cpu": 1,
+                  "run": 1,
+                  "buffering": {
+                    "enabled": true,
+                    "framesAhead": 3,
+                    "status": "active"
+                  },
+                  "canvasSize": {
+                    "height": 700,
+                    "width": 900
+                  },
+                  "chains": 25,
+                  "hardwareConcurrency": 15,
+                  "motion": "Idle:0",
+                  "parameters": 265,
+                  "parts": 852,
+                  "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+                  "vertices": 34452,
+                  "duration": 5008.300000000001,
+                  "errors": [],
+                  "frameP95": 8.5,
+                  "observedModelFPS": 60.10023361220373,
+                  "rafFPS": 120.0007986742008,
+                  "updatedFPS": 60.10023361220373,
+                  "heapBytes": 352126152,
+                  "scriptSeconds": 1.152232,
+                  "taskSeconds": 1.2408349999999997
+                }
+              ]
+            }
+          },
+          {
+            "pair": 3,
+            "variant": "wasm",
+            "result": {
+              "configuration": {
+                "antialiasing": "ssaa",
+                "cpuRates": [1],
+                "measureMillis": 5000,
+                "model": "/Users/bichi/Downloads/白猫/white-cat-idle-english.poffo",
+                "modes": ["worker"],
+                "randomSeed": 42,
+                "resolution": 1,
+                "runs": 1,
+                "viewport": {
+                  "height": 700,
+                  "width": 900
+                },
+                "warmupMillis": 2000
+              },
+              "results": [
+                {
+                  "computation": "worker",
+                  "cpu": 1,
+                  "run": 1,
+                  "buffering": {
+                    "enabled": true,
+                    "framesAhead": 3,
+                    "status": "active"
+                  },
+                  "canvasSize": {
+                    "height": 700,
+                    "width": 900
+                  },
+                  "chains": 25,
+                  "hardwareConcurrency": 15,
+                  "motion": "Idle:0",
+                  "parameters": 265,
+                  "parts": 852,
+                  "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+                  "vertices": 34452,
+                  "duration": 5008.3,
+                  "errors": [],
+                  "frameP95": 8.600000000000364,
+                  "observedModelFPS": 41.531058442984644,
+                  "rafFPS": 120.00079867420082,
+                  "updatedFPS": 41.531058442984644,
+                  "heapBytes": 179473004,
+                  "scriptSeconds": 0.754618,
+                  "taskSeconds": 0.8490920000000002
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "parity": {
+        "models": ["development-model.json", "white-cat-idle-english.poffo"],
+        "framesPerModel": 600,
+        "deltaSeconds": 0.008333333333333333,
+        "parameterStateAndRenderPlanComparison": "Numbers within relative 1e-8, other values and map membership equal. Undefined/missing optional properties are equivalent.",
+        "vertices": "At most one Float32 quantization step per coordinate",
+        "suppliedModelResult": {
+          "computeMillis": 36088.412458,
+          "frames": 600,
+          "initializeMillis": 12763.990208,
+          "maximumQuantization": 1,
+          "maximumVertexError": 0.000244140625,
+          "memoryBytes": 653197312,
+          "model": "/Users/bichi/Downloads/白猫/white-cat-idle-english.poffo"
+        },
+        "initializationTiming": "Node adapter process(initialize) during concurrent verification, excluding file decoding, module compilation and instance creation; not a startup benchmark",
+        "linearMemory": "Allocated Wasm linear memory after the comparison; additional to JS heap, not process RSS"
+      },
+      "artifacts": {
+        "completeModule": {
+          "file": "/Users/bichi/.codex/worktrees/48ee/web/packages/puppet/src/player/internal/wasm/runtime.wasm",
+          "bytes": 2040681,
+          "sha256": "247fc1bca63c34b022bb1200b940bee1455345d7f14abbe5654ef4dc92830470"
+        },
+        "completeWorkers": [
+          {
+            "file": "/private/tmp/puppet-full-wasm-transport-5ezyfk7e/dist/assets/worker-B7qMFgFX.js",
+            "bytes": 2724190,
+            "sha256": "9ad2362c1980d17822ce0ec86f76f87384076cf602cdc53ddf2f753eb7518b2b"
+          }
+        ],
+        "javascriptWorkers": [
+          {
+            "file": "/private/tmp/puppet-wasm-baseline/dist/assets/worker-grFiyhRT.js",
+            "bytes": 126954,
+            "sha256": "ca084e90d32422c8e8211337c62a16a59dd64bb3b50288bc3b4a823a08053b53"
+          }
+        ],
+        "nativeSourceSHA256": "2e330e81f80c73b3aded6d7d595ab98673e8451a0d92941fb455cbd480ba204c",
+        "compiler": "rustc 1.96.0 (ac68faa20 2026-05-25)",
+        "target": "wasm32-unknown-unknown",
+        "releaseProfile": {
+          "optLevel": 3,
+          "lto": "thin",
+          "panic": "abort",
+          "strip": "debuginfo"
+        },
+        "embeddedModuleMatches": true
+      },
+      "verification": {
+        "focusedWasmAndMessageTests": 17,
+        "nativeFormatUnitTests": 44,
+        "nativeRuntimeUnitTests": 62,
+        "browser": {
+          "filesPassed": 19,
+          "filesSkipped": 1,
+          "testsPassed": 62,
+          "testsSkipped": 11
+        },
+        "workspaceTypecheckTasks": 21,
+        "packageBuild": "Player, editor, editor-element, converter and declarations passed",
+        "rustClippy": "passed with -D warnings",
+        "format": "oxfmt and cargo fmt passed",
+        "unitScope": {
+          "paths": ["packages/puppet", "apps/poffo"],
+          "filesPassed": 498,
+          "testsPassed": 3093,
+          "focusedTransportRegressionTestsPassed": 17
+        },
+        "remoteCI": "not run for this local change"
+      },
+      "limits": [
+        "Measured on this desktop in headed Chrome, 900x700 backing canvas, SSAA, no CPU throttle; does not establish low-end device performance.",
+        "120Hz rAF was observed separately from model FPS; physical display scanout was not measured.",
+        "Complete migration is slower than the JS Worker for this model and uses substantially more Wasm linear memory than the previous partial kernel."
+      ],
+      "reproduction": {
+        "build": "See ../native/README.md",
+        "benchmark": "MODEL=/absolute/model.poffo CPU_RATES=1 MODES=worker RUNS=3 RESOLUTION=1 ANTIALIASING=ssaa RANDOM_SEED=42 node packages/puppet/visual/playback-benchmark.mjs"
+      },
+      "previousDeformationOnlyExperiment": {
+        "recordedAt": "2026-11-03T04:08:43.002746+00:00",
+        "baseCommit": "20c0207172103a1629ded80fb15bb8fc9ae26622",
+        "branch": "codex/feature/puppet-wasm-deformation",
+        "candidateState": "Local implementation, not pushed",
+        "model": {
+          "file": "white-cat-idle-english.poffo",
+          "sha256": "47c98e7473e79ffb249aa1acb5bed9b7d458f35c7c0d3502f281549c20c55035",
+          "motion": "Idle:0",
+          "parts": 852,
+          "vertices": 34452
+        },
+        "implementation": {
+          "wasm": [
+            "lazy grid keyform coordinate evaluation",
+            "parent-space grid interpolation",
+            "rigid rotation point mapping",
+            "cached part vertex mapping"
+          ],
+          "javascript": [
+            "motion and expression playback",
+            "effects and physics",
+            "rotation frame trigonometry",
+            "Glue",
+            "display plans",
+            "checkpoint serialization and host rendering"
+          ],
+          "kernel": {
+            "bytes": 23908,
+            "sha256": "d230bd58b8fec2e0821bbeafd20d29b3a7901ea7b606eedced544c441bff97dc",
+            "compiler": "rustc 1.96.0 (ac68faa20 2026-05-25)",
+            "target": "wasm32-unknown-unknown",
+            "flags": ["opt-level=3", "panic=abort", "target-feature=+simd128", "strip=symbols"]
+          }
+        },
+        "method": {
+          "machine": "arm64",
+          "browser": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+          "cpuThrottlingRate": 1,
+          "profilingDuringComparison": false,
+          "warmupMilliseconds": 2000,
+          "measurementMilliseconds": 5000,
+          "pairsPerResolution": 3,
+          "orderPerResolution": ["javascript", "wasm", "wasm", "javascript", "javascript", "wasm"],
+          "randomSeed": 42,
+          "viewportCss": {
+            "width": 900,
+            "height": 700
+          },
+          "antialiasing": "ssaa",
+          "metric": "onFrame model updates per second; observedModelFPS also samples new results at rAF",
+          "harness": "playback-benchmark.mjs"
+        },
+        "artifacts": {
+          "javascript": [
+            {
+              "file": "assets/worker-grFiyhRT.js",
+              "bytes": 126954,
+              "sha256": "ca084e90d32422c8e8211337c62a16a59dd64bb3b50288bc3b4a823a08053b53"
+            }
+          ],
+          "wasmComparison": [
+            {
+              "file": "assets/worker-mPP2IMkd.js",
+              "bytes": 163425,
+              "sha256": "5121ad2e82c066d1cef165ec36b0e1434d30d40f70626d22a93776fdbc3b0c7a"
+            }
+          ],
+          "wasmFinal": [
+            {
+              "file": "assets/worker-sa7JARBl.js",
+              "bytes": 163501,
+              "sha256": "92db5e02d760b408d32ca591a26369f28fb2cd587dd75b06f74e7955f7d0ca03"
+            }
+          ]
+        },
+        "summary": [
+          {
+            "resolution": 1,
+            "javascript": {
+              "mean": 60.56612689601927,
+              "runs": [61.897250564063654, 60.49957071261704, 59.30155941137712]
+            },
+            "wasm": {
+              "mean": 78.395259352745,
+              "runs": [78.39999999999999, 77.59844803103937, 79.18733002719566]
+            },
+            "improvementPercent": 29.437465082314105
+          },
+          {
+            "resolution": 2,
+            "javascript": {
+              "mean": 59.26726434119362,
+              "runs": [59.70089651179044, 58.4, 59.70089651179044]
+            },
+            "wasm": {
+              "mean": 77.73762221379177,
+              "runs": [77.8707345805962, 77.07206037976958, 78.27007168100953]
+            },
+            "improvementPercent": 31.164519027345005
+          }
+        ],
+        "measurements": [
+          {
+            "variant": "javascript",
+            "resolution": 1,
+            "pair": 1,
+            "configuration": {
+              "antialiasing": "ssaa",
+              "cpuRates": [1],
+              "measureMillis": 5000,
+              "model": "white-cat-idle-english.poffo",
+              "modes": ["worker"],
+              "randomSeed": 42,
+              "resolution": 1,
+              "runs": 1,
+              "viewport": {
+                "height": 700,
+                "width": 900
+              },
+              "warmupMillis": 2000
+            },
+            "measurement": {
+              "computation": "worker",
+              "cpu": 1,
+              "run": 1,
+              "buffering": {
+                "enabled": true,
+                "framesAhead": 3,
+                "status": "active"
+              },
+              "canvasSize": {
+                "height": 700,
+                "width": 900
+              },
+              "chains": 25,
+              "hardwareConcurrency": 15,
+              "motion": "Idle:0",
+              "parameters": 265,
+              "parts": 852,
+              "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+              "vertices": 34452,
+              "duration": 5008.3,
+              "errors": [],
+              "frameP95": 8.400000000000546,
+              "observedModelFPS": 61.897250564063654,
+              "rafFPS": 120.00079867420082,
+              "updatedFPS": 61.897250564063654,
+              "heapBytes": 192467840,
+              "scriptSeconds": 1.115828,
+              "taskSeconds": 1.2219350000000002
+            }
+          },
+          {
+            "variant": "wasm",
+            "resolution": 1,
+            "pair": 1,
+            "configuration": {
+              "antialiasing": "ssaa",
+              "cpuRates": [1],
+              "measureMillis": 5000,
+              "model": "white-cat-idle-english.poffo",
+              "modes": ["worker"],
+              "randomSeed": 42,
+              "resolution": 1,
+              "runs": 1,
+              "viewport": {
+                "height": 700,
+                "width": 900
+              },
+              "warmupMillis": 2000
+            },
+            "measurement": {
+              "computation": "worker",
+              "cpu": 1,
+              "run": 1,
+              "buffering": {
+                "enabled": true,
+                "framesAhead": 3,
+                "status": "active"
+              },
+              "canvasSize": {
+                "height": 700,
+                "width": 900
+              },
+              "chains": 25,
+              "hardwareConcurrency": 15,
+              "motion": "Idle:0",
+              "parameters": 265,
+              "parts": 852,
+              "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+              "vertices": 34452,
+              "duration": 5000.000000000001,
+              "errors": [],
+              "frameP95": 8.5,
+              "observedModelFPS": 78.19999999999999,
+              "rafFPS": 119.99999999999997,
+              "updatedFPS": 78.39999999999999,
+              "heapBytes": 189418488,
+              "scriptSeconds": 1.422833,
+              "taskSeconds": 1.5377930000000002
+            }
+          },
+          {
+            "variant": "wasm",
+            "resolution": 1,
+            "pair": 2,
+            "configuration": {
+              "antialiasing": "ssaa",
+              "cpuRates": [1],
+              "measureMillis": 5000,
+              "model": "white-cat-idle-english.poffo",
+              "modes": ["worker"],
+              "randomSeed": 42,
+              "resolution": 1,
+              "runs": 1,
+              "viewport": {
+                "height": 700,
+                "width": 900
+              },
+              "warmupMillis": 2000
+            },
+            "measurement": {
+              "computation": "worker",
+              "cpu": 1,
+              "run": 1,
+              "buffering": {
+                "enabled": true,
+                "framesAhead": 3,
+                "status": "active"
+              },
+              "canvasSize": {
+                "height": 700,
+                "width": 900
+              },
+              "chains": 25,
+              "hardwareConcurrency": 15,
+              "motion": "Idle:0",
+              "parameters": 265,
+              "parts": 852,
+              "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+              "vertices": 34452,
+              "duration": 5000.1,
+              "errors": [],
+              "frameP95": 8.5,
+              "observedModelFPS": 77.59844803103937,
+              "rafFPS": 119.99760004799903,
+              "updatedFPS": 77.59844803103937,
+              "heapBytes": 252741456,
+              "scriptSeconds": 1.4106079999999999,
+              "taskSeconds": 1.522052
+            }
+          },
+          {
+            "variant": "javascript",
+            "resolution": 1,
+            "pair": 2,
+            "configuration": {
+              "antialiasing": "ssaa",
+              "cpuRates": [1],
+              "measureMillis": 5000,
+              "model": "white-cat-idle-english.poffo",
+              "modes": ["worker"],
+              "randomSeed": 42,
+              "resolution": 1,
+              "runs": 1,
+              "viewport": {
+                "height": 700,
+                "width": 900
+              },
+              "warmupMillis": 2000
+            },
+            "measurement": {
+              "computation": "worker",
+              "cpu": 1,
+              "run": 1,
+              "buffering": {
+                "enabled": true,
+                "framesAhead": 3,
+                "status": "active"
+              },
+              "canvasSize": {
+                "height": 700,
+                "width": 900
+              },
+              "chains": 25,
+              "hardwareConcurrency": 15,
+              "motion": "Idle:0",
+              "parameters": 265,
+              "parts": 852,
+              "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+              "vertices": 34452,
+              "duration": 5008.300000000001,
+              "errors": [],
+              "frameP95": 8.400000000001455,
+              "observedModelFPS": 60.49957071261704,
+              "rafFPS": 120.0007986742008,
+              "updatedFPS": 60.49957071261704,
+              "heapBytes": 184592676,
+              "scriptSeconds": 1.1146029999999998,
+              "taskSeconds": 1.2247190000000003
+            }
+          },
+          {
+            "variant": "javascript",
+            "resolution": 1,
+            "pair": 3,
+            "configuration": {
+              "antialiasing": "ssaa",
+              "cpuRates": [1],
+              "measureMillis": 5000,
+              "model": "white-cat-idle-english.poffo",
+              "modes": ["worker"],
+              "randomSeed": 42,
+              "resolution": 1,
+              "runs": 1,
+              "viewport": {
+                "height": 700,
+                "width": 900
+              },
+              "warmupMillis": 2000
+            },
+            "measurement": {
+              "computation": "worker",
+              "cpu": 1,
+              "run": 1,
+              "buffering": {
+                "enabled": true,
+                "framesAhead": 3,
+                "status": "active"
+              },
+              "canvasSize": {
+                "height": 700,
+                "width": 900
+              },
+              "chains": 25,
+              "hardwareConcurrency": 15,
+              "motion": "Idle:0",
+              "parameters": 265,
+              "parts": 852,
+              "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+              "vertices": 34452,
+              "duration": 5008.299999999999,
+              "errors": [],
+              "frameP95": 8.5,
+              "observedModelFPS": 59.10189086117047,
+              "rafFPS": 120.00079867420084,
+              "updatedFPS": 59.30155941137712,
+              "heapBytes": 228795792,
+              "scriptSeconds": 1.107237,
+              "taskSeconds": 1.206598
+            }
+          },
+          {
+            "variant": "wasm",
+            "resolution": 1,
+            "pair": 3,
+            "configuration": {
+              "antialiasing": "ssaa",
+              "cpuRates": [1],
+              "measureMillis": 5000,
+              "model": "white-cat-idle-english.poffo",
+              "modes": ["worker"],
+              "randomSeed": 42,
+              "resolution": 1,
+              "runs": 1,
+              "viewport": {
+                "height": 700,
+                "width": 900
+              },
+              "warmupMillis": 2000
+            },
+            "measurement": {
+              "computation": "worker",
+              "cpu": 1,
+              "run": 1,
+              "buffering": {
+                "enabled": true,
+                "framesAhead": 3,
+                "status": "active"
+              },
+              "canvasSize": {
+                "height": 700,
+                "width": 900
+              },
+              "chains": 25,
+              "hardwareConcurrency": 15,
+              "motion": "Idle:0",
+              "parameters": 265,
+              "parts": 852,
+              "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+              "vertices": 34452,
+              "duration": 5000.799999999999,
+              "errors": [],
+              "frameP95": 9.299999999999272,
+              "observedModelFPS": 78.98736202207648,
+              "rafFPS": 119.98080307150857,
+              "updatedFPS": 79.18733002719566,
+              "heapBytes": 186320976,
+              "scriptSeconds": 1.4369660000000002,
+              "taskSeconds": 1.5552600000000005
+            }
+          },
+          {
+            "variant": "javascript",
+            "resolution": 2,
+            "pair": 1,
+            "configuration": {
+              "antialiasing": "ssaa",
+              "cpuRates": [1],
+              "measureMillis": 5000,
+              "model": "white-cat-idle-english.poffo",
+              "modes": ["worker"],
+              "randomSeed": 42,
+              "resolution": 2,
+              "runs": 1,
+              "viewport": {
+                "height": 700,
+                "width": 900
+              },
+              "warmupMillis": 2000
+            },
+            "measurement": {
+              "computation": "worker",
+              "cpu": 1,
+              "run": 1,
+              "buffering": {
+                "enabled": true,
+                "framesAhead": 3,
+                "status": "active"
+              },
+              "canvasSize": {
+                "height": 1400,
+                "width": 1800
+              },
+              "chains": 25,
+              "hardwareConcurrency": 15,
+              "motion": "Idle:0",
+              "parameters": 265,
+              "parts": 852,
+              "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+              "vertices": 34452,
+              "duration": 5008.299999999999,
+              "errors": [],
+              "frameP95": 8.400000000001455,
+              "observedModelFPS": 59.70089651179044,
+              "rafFPS": 120.00079867420084,
+              "updatedFPS": 59.70089651179044,
+              "heapBytes": 359161272,
+              "scriptSeconds": 1.150176,
+              "taskSeconds": 1.2418230000000001
+            }
+          },
+          {
+            "variant": "wasm",
+            "resolution": 2,
+            "pair": 1,
+            "configuration": {
+              "antialiasing": "ssaa",
+              "cpuRates": [1],
+              "measureMillis": 5000,
+              "model": "white-cat-idle-english.poffo",
+              "modes": ["worker"],
+              "randomSeed": 42,
+              "resolution": 2,
+              "runs": 1,
+              "viewport": {
+                "height": 700,
+                "width": 900
+              },
+              "warmupMillis": 2000
+            },
+            "measurement": {
+              "computation": "worker",
+              "cpu": 1,
+              "run": 1,
+              "buffering": {
+                "enabled": true,
+                "framesAhead": 3,
+                "status": "active"
+              },
+              "canvasSize": {
+                "height": 1400,
+                "width": 1800
+              },
+              "chains": 25,
+              "hardwareConcurrency": 15,
+              "motion": "Idle:0",
+              "parameters": 265,
+              "parts": 852,
+              "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+              "vertices": 34452,
+              "duration": 5008.3,
+              "errors": [],
+              "frameP95": 8.400000000001455,
+              "observedModelFPS": 77.8707345805962,
+              "rafFPS": 120.00079867420082,
+              "updatedFPS": 77.8707345805962,
+              "heapBytes": 392484340,
+              "scriptSeconds": 1.5356909999999997,
+              "taskSeconds": 1.6448729999999996
+            }
+          },
+          {
+            "variant": "wasm",
+            "resolution": 2,
+            "pair": 2,
+            "configuration": {
+              "antialiasing": "ssaa",
+              "cpuRates": [1],
+              "measureMillis": 5000,
+              "model": "white-cat-idle-english.poffo",
+              "modes": ["worker"],
+              "randomSeed": 42,
+              "resolution": 2,
+              "runs": 1,
+              "viewport": {
+                "height": 700,
+                "width": 900
+              },
+              "warmupMillis": 2000
+            },
+            "measurement": {
+              "computation": "worker",
+              "cpu": 1,
+              "run": 1,
+              "buffering": {
+                "enabled": true,
+                "framesAhead": 3,
+                "status": "active"
+              },
+              "canvasSize": {
+                "height": 1400,
+                "width": 1800
+              },
+              "chains": 25,
+              "hardwareConcurrency": 15,
+              "motion": "Idle:0",
+              "parameters": 265,
+              "parts": 852,
+              "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+              "vertices": 34452,
+              "duration": 5008.3,
+              "errors": [],
+              "frameP95": 8.5,
+              "observedModelFPS": 76.87239182956293,
+              "rafFPS": 120.00079867420082,
+              "updatedFPS": 77.07206037976958,
+              "heapBytes": 385864672,
+              "scriptSeconds": 1.509378,
+              "taskSeconds": 1.617204
+            }
+          },
+          {
+            "variant": "javascript",
+            "resolution": 2,
+            "pair": 2,
+            "configuration": {
+              "antialiasing": "ssaa",
+              "cpuRates": [1],
+              "measureMillis": 5000,
+              "model": "white-cat-idle-english.poffo",
+              "modes": ["worker"],
+              "randomSeed": 42,
+              "resolution": 2,
+              "runs": 1,
+              "viewport": {
+                "height": 700,
+                "width": 900
+              },
+              "warmupMillis": 2000
+            },
+            "measurement": {
+              "computation": "worker",
+              "cpu": 1,
+              "run": 1,
+              "buffering": {
+                "enabled": true,
+                "framesAhead": 3,
+                "status": "active"
+              },
+              "canvasSize": {
+                "height": 1400,
+                "width": 1800
+              },
+              "chains": 25,
+              "hardwareConcurrency": 15,
+              "motion": "Idle:0",
+              "parameters": 265,
+              "parts": 852,
+              "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+              "vertices": 34452,
+              "duration": 5000,
+              "errors": [],
+              "frameP95": 9,
+              "observedModelFPS": 58.4,
+              "rafFPS": 120,
+              "updatedFPS": 58.4,
+              "heapBytes": 346407948,
+              "scriptSeconds": 1.157914,
+              "taskSeconds": 1.2537170000000004
+            }
+          },
+          {
+            "variant": "javascript",
+            "resolution": 2,
+            "pair": 3,
+            "configuration": {
+              "antialiasing": "ssaa",
+              "cpuRates": [1],
+              "measureMillis": 5000,
+              "model": "white-cat-idle-english.poffo",
+              "modes": ["worker"],
+              "randomSeed": 42,
+              "resolution": 2,
+              "runs": 1,
+              "viewport": {
+                "height": 700,
+                "width": 900
+              },
+              "warmupMillis": 2000
+            },
+            "measurement": {
+              "computation": "worker",
+              "cpu": 1,
+              "run": 1,
+              "buffering": {
+                "enabled": true,
+                "framesAhead": 3,
+                "status": "active"
+              },
+              "canvasSize": {
+                "height": 1400,
+                "width": 1800
+              },
+              "chains": 25,
+              "hardwareConcurrency": 15,
+              "motion": "Idle:0",
+              "parameters": 265,
+              "parts": 852,
+              "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+              "vertices": 34452,
+              "duration": 5008.299999999999,
+              "errors": [],
+              "frameP95": 9.299999999999272,
+              "observedModelFPS": 59.50122796158378,
+              "rafFPS": 120.00079867420084,
+              "updatedFPS": 59.70089651179044,
+              "heapBytes": 362885340,
+              "scriptSeconds": 1.169731,
+              "taskSeconds": 1.2625529999999996
+            }
+          },
+          {
+            "variant": "wasm",
+            "resolution": 2,
+            "pair": 3,
+            "configuration": {
+              "antialiasing": "ssaa",
+              "cpuRates": [1],
+              "measureMillis": 5000,
+              "model": "white-cat-idle-english.poffo",
+              "modes": ["worker"],
+              "randomSeed": 42,
+              "resolution": 2,
+              "runs": 1,
+              "viewport": {
+                "height": 700,
+                "width": 900
+              },
+              "warmupMillis": 2000
+            },
+            "measurement": {
+              "computation": "worker",
+              "cpu": 1,
+              "run": 1,
+              "buffering": {
+                "enabled": true,
+                "framesAhead": 3,
+                "status": "active"
+              },
+              "canvasSize": {
+                "height": 1400,
+                "width": 1800
+              },
+              "chains": 25,
+              "hardwareConcurrency": 15,
+              "motion": "Idle:0",
+              "parameters": 265,
+              "parts": 852,
+              "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+              "vertices": 34452,
+              "duration": 5008.3,
+              "errors": [],
+              "frameP95": 8.5,
+              "observedModelFPS": 78.07040313080286,
+              "rafFPS": 120.00079867420082,
+              "updatedFPS": 78.27007168100953,
+              "heapBytes": 395614188,
+              "scriptSeconds": 1.5256779999999999,
+              "taskSeconds": 1.634216
+            }
+          }
+        ],
+        "finalBuildConfirmation": {
+          "note": "One additional run after exhaustive initialization-dispatch cleanup; numeric kernel unchanged.",
+          "configuration": {
+            "antialiasing": "ssaa",
+            "cpuRates": [1],
+            "measureMillis": 5000,
+            "model": "white-cat-idle-english.poffo",
+            "modes": ["worker"],
+            "randomSeed": 42,
+            "resolution": 2,
+            "runs": 1,
+            "viewport": {
+              "height": 700,
+              "width": 900
+            },
+            "warmupMillis": 2000
+          },
+          "results": [
+            {
+              "computation": "worker",
+              "cpu": 1,
+              "run": 1,
+              "buffering": {
+                "enabled": true,
+                "framesAhead": 3,
+                "status": "active"
+              },
+              "canvasSize": {
+                "height": 1400,
+                "width": 1800
+              },
+              "chains": 25,
+              "hardwareConcurrency": 15,
+              "motion": "Idle:0",
+              "parameters": 265,
+              "parts": 852,
+              "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36",
+              "vertices": 34452,
+              "duration": 5000,
+              "errors": [],
+              "frameP95": 8.400000000001455,
+              "observedModelFPS": 79.6,
+              "rafFPS": 120,
+              "updatedFPS": 79.6,
+              "heapBytes": 392089736,
+              "scriptSeconds": 1.5225960000000003,
+              "taskSeconds": 1.631396
+            }
+          ]
+        },
+        "parity": {
+          "frames": 600,
+          "simulationSeconds": 5,
+          "parts": 852,
+          "verticesPerFrame": 34452,
+          "maximumAbsoluteVertexError": 0,
+          "differentCoordinates": 0,
+          "wasmMemoryBytes": 16777216
+        },
+        "verification": {
+          "unit": {
+            "command": "pnpm test:vitest packages/puppet apps/poffo",
+            "filesPassed": 499,
+            "testsPassed": 3090
+          },
+          "focusedFinal": {
+            "testsPassed": 14,
+            "note": "Rerun after the ES2023-compatible promise helper and dispatch cleanup."
+          },
+          "browser": {
+            "command": "pnpm exec vitest run --config packages/puppet/vitest.browser.config.ts --fileParallelism=false --reporter=dot",
+            "filesPassed": 19,
+            "filesSkipped": 1,
+            "testsPassed": 62,
+            "testsSkipped": 11
+          },
+          "types": "pnpm typecheck",
+          "lint": "pnpm lint",
+          "format": ["pnpm format", "pnpm format:check"],
+          "workerExecution": "Separate initial CPU profiles contained 965 and 955 Wasm samples, confirming execution rather than a JS-only fallback.",
+          "orderingRegression": "Audio requests sent before Wasm initialization completed failed before ordered message processing; the retained regression passes after the correction."
+        },
+        "reproduction": {
+          "build": "pnpm --filter @winter-love/puppet build",
+          "benchmark": "MODEL=/absolute/white-cat-idle-english.poffo CPU_RATES=1 MODES=worker RUNS=3 RESOLUTION=1 ANTIALIASING=ssaa RANDOM_SEED=42 PLAYER_ROOT=file:///absolute/frozen-package-artifact/ OUTPUT=/absolute/results.json node packages/puppet/visual/playback-benchmark.mjs",
+          "comparison": "Alternate frozen JS and Wasm PLAYER_ROOT artifacts; repeat with RESOLUTION=2. Each artifact directory contains dist/.",
+          "compiler": "See src/player/internal/wasm/README.md"
+        },
+        "limits": [
+          "One supplied model on this Mac; isolated Player measurements, not full Poffo UI or low-end-device measurements.",
+          "Wasm covers numeric deformation, not the complete Worker runtime.",
+          "rAF stayed approximately 120 Hz; model updates were below 120/s. Physical monitor scanout and input latency were not measured.",
+          "Wasm linear memory was 16 MiB for this model, additional to JavaScript heap. No long-duration memory soak was performed.",
+          "Unsupported rigs and unavailable Wasm retain the existing JavaScript implementation."
+        ]
+      }
+    }
+  }
+}

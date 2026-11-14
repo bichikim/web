@@ -39,11 +39,13 @@ describe('createAiJobOutput', () => {
     })
     const onComplete = vi.fn(async () => undefined)
     const onError = vi.fn()
+    const onLoadError = vi.fn()
     const onResult = vi.fn()
     const {loadResult} = createAiJobOutput({
       client,
       onComplete,
       onError,
+      onLoadError,
       onResult,
       result: () => null,
       session,
@@ -53,7 +55,10 @@ describe('createAiJobOutput', () => {
     expect(await loadResult(completedJob, revision, true)).toBe(false)
 
     expect(onComplete).not.toHaveBeenCalled()
-    expect(onError).toHaveBeenCalledWith('결과 보관 기간이 지났거나 결과를 더 이상 열 수 없어요.')
+    expect(onLoadError).toHaveBeenCalledWith(
+      '결과 보관 기간이 지났거나 결과를 더 이상 열 수 없어요.',
+    )
+    expect(onError).not.toHaveBeenCalled()
     expect(onResult).not.toHaveBeenCalled()
   })
 
@@ -69,11 +74,13 @@ describe('createAiJobOutput', () => {
     onComplete.mockRejectedValueOnce(new Error('transient TTS failure'))
     onComplete.mockResolvedValueOnce(undefined)
     const onError = vi.fn()
+    const onLoadError = vi.fn()
     const onResult = vi.fn()
     const {loadResult} = createAiJobOutput({
       client,
       onComplete,
       onError,
+      onLoadError,
       onResult,
       result: () => null,
       session,
@@ -89,6 +96,7 @@ describe('createAiJobOutput', () => {
     expect(onComplete).toHaveBeenNthCalledWith(1, result.text)
     expect(onComplete).toHaveBeenNthCalledWith(2, result.text)
     expect(onError).toHaveBeenCalledWith('음성을 재생하지 못했어요.')
+    expect(onLoadError).not.toHaveBeenCalled()
   })
 
   it('should not repeat successful TTS when its session is superseded', async () => {
@@ -106,6 +114,7 @@ describe('createAiJobOutput', () => {
       client,
       onComplete,
       onError: vi.fn(),
+      onLoadError: vi.fn(),
       onResult: vi.fn(),
       result: () => null,
       session,

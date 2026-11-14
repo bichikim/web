@@ -229,6 +229,60 @@ function* batches(
   }
 }
 
+interface ResetNavigationLocationsOptions {
+  readonly locations: NavigationLocation[]
+  readonly retained: ReadonlyMap<string, readonly NavigationLocation[]>
+  readonly kind: NavigationResult['kind']
+  readonly previous: NavigationResult['kind']
+  readonly signal: AbortSignal
+}
+function* resetNavigationLocations(
+  options: ResetNavigationLocationsOptions,
+): Generator<NavigationResult> {
+  const {locations, retained, kind, previous, signal} = options
+  if (kind === previous) {
+    return
+  }
+  locations.splice(0)
+  if (kind === 'references' && retained.size > 0) {
+    for (const group of retained.values()) {
+      for (const location of group) {
+        locations.push(location)
+      }
+    }
+    for (const batch of batches('references', retained)) {
+      signal.throwIfAborted()
+      yield batch
+    }
+  }
+}
+
+const isRetainedReference = (
+  kind: NavigationResult['kind'],
+  retained: ReadonlyMap<string, readonly NavigationLocation[]>,
+  location: NavigationLocation,
+): boolean => kind === 'references' && retained.has(indexedPath(location.path))
+
+const mergeRetainedGroups = (
+  batch: NavigationResult,
+  retained: ReadonlyMap<string, readonly NavigationLocation[]>,
+  locations: NavigationLocation[],
+): NavigationResult => ({
+  ...batch,
+  ...(batch.groups === undefined
+    ? {}
+    : {
+        groups: [
+          ...[...retained].map(([path, group]) => ({
+            count: group.length,
+            path: group[0]?.path ?? path,
+          })),
+          ...batch.groups.filter((group) => !retained.has(indexedPath(group.path))),
+        ],
+      }),
+  locations,
+})
+
 const prepareQuery = async (
   options: NavigationCacheOptions,
   input: NavigationInput,
@@ -318,29 +372,25 @@ export const createNavigationCache = (options: NavigationCacheOptions) => {
       })) {
         signal.throwIfAborted()
         const {kind: resultKind, locations: found} = batch
+        // oxlint-disable-next-line eslint-js/yield-star-spacing -- Oxfmt formats generator delegation with this spacing.
+        yield* resetNavigationLocations({
+          kind: resultKind,
+          locations,
+          previous: kind,
+          retained,
+          signal,
+        })
         kind = resultKind
-        const updated = found.filter((location) => !retained.has(indexedPath(location.path)))
+        const updated = found.filter(
+          (location) => !isRetainedReference(resultKind, retained, location),
+        )
         locations.push(...updated)
         if (
           batch.groups !== undefined ||
           updated.length > 0 ||
-          (locations.length === 0 && retained.size === 0)
+          (locations.length === 0 && (kind !== 'references' || retained.size === 0))
         ) {
-          yield {
-            ...batch,
-            ...(batch.groups === undefined
-              ? {}
-              : {
-                  groups: [
-                    ...[...retained].map(([path, group]) => ({
-                      count: group.length,
-                      path: group[0]?.path ?? path,
-                    })),
-                    ...batch.groups.filter((group) => !retained.has(indexedPath(group.path))),
-                  ],
-                }),
-            locations: updated,
-          }
+          yield mergeRetainedGroups(batch, retained, updated)
           preparation.start({kind, locations: updated})
         }
       }

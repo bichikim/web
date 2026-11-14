@@ -1,5 +1,8 @@
-import {For, Show} from 'solid-js'
+import {createSignal, For, Show} from 'solid-js'
 import type {WallpaperController} from '../features/settings'
+import {isBuiltinMedia} from '../features/builtin-assets'
+import type {BackgroundMedia} from '@winter-love/wallpaper/model'
+import {SAlbumDeleteDialog} from './SAlbumDeleteDialog'
 import type {AlbumWallpaper} from '@winter-love/wallpaper/settings/model'
 import {SAlbumItem} from './SAlbumItem'
 import {SAlbumImport} from './SAlbumImport'
@@ -24,6 +27,13 @@ interface SAlbumSettingsProps {
   readonly onPreview?: (id: string) => void
 }
 export const SAlbumSettings = (props: SAlbumSettingsProps) => {
+  const [removing, setRemoving] = createSignal<BackgroundMedia | null>(null)
+  const requestRemove = (item: BackgroundMedia) => {
+    if (isBuiltinMedia(item.id)) {
+      return props.controller.removeMedia(item.id)
+    }
+    setRemoving(item)
+  }
   const album = (): AlbumWallpaper | null => {
     const current = props.controller.current()!.content
     return current.mode === 'album' ? current : null
@@ -34,6 +44,7 @@ export const SAlbumSettings = (props: SAlbumSettingsProps) => {
       return props.controller.setContent({...current, ...patch})
     }
   }
+  const handleFit = (fit: NonNullable<AlbumWallpaper['fit']>) => saveContent({fit})
   const handleOrder = (order: AlbumWallpaper['order']) => saveContent({order})
   const handleSeconds = (photoSeconds: number) => saveContent({photoSeconds})
   const handleTransition = (transition: AlbumWallpaper['transition']) => saveContent({transition})
@@ -54,12 +65,44 @@ export const SAlbumSettings = (props: SAlbumSettingsProps) => {
                   controller={props.controller}
                   selected={album()?.mediaIds.includes(item.id) ?? false}
                   onPreview={props.onPreview}
+                  onRemove={() => requestRemove(item)}
                 />
               )}
             </For>
             <SAlbumImport controller={props.controller} />
           </div>
+          <Show when={props.controller.hasHiddenMedia()}>
+            <button
+              type="button"
+              class="wallpaper-file-button justify-self-end"
+              onClick={props.controller.restoreBuiltinMedia}
+            >
+              기본 배경 복원
+            </button>
+          </Show>
+          <Show when={removing()}>
+            {(item) => (
+              <SAlbumDeleteDialog
+                name={item().name}
+                error={props.controller.error()}
+                onDelete={() => props.controller.removeMedia(item().id)}
+                onClose={() => setRemoving(null)}
+              />
+            )}
+          </Show>
           <div>
+            <div class="wallpaper-row">
+              <span>표시 방식</span>
+              <SSelect
+                label="사진·동영상 표시 방식"
+                options={[
+                  {label: '전체 보기', value: 'contain'},
+                  {label: '화면 채우기', value: 'cover'},
+                ]}
+                value={current().fit ?? 'contain'}
+                onChange={handleFit}
+              />
+            </div>
             <div class="wallpaper-row">
               <span>재생 순서</span>
               <SSelect

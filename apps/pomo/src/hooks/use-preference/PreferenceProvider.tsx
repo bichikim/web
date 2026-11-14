@@ -1,5 +1,6 @@
 import {batch, type JSX, onCleanup, onMount, untrack} from 'solid-js'
-import {type PreferenceStorage, webLocalStorage} from 'src/utils/preference-storage'
+import {type PreferenceStorage} from './types'
+import {webLocalStorage} from './web-local-storage'
 import {PreferenceContext, type PreferenceEntry} from './context'
 import {createPreferenceEntry, type StoredPreference} from './create-preference-entry'
 

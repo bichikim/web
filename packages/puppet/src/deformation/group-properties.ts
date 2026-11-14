@@ -9,7 +9,7 @@ import type {
   PuppetSceneGroupNode,
 } from '../player/document'
 import type {PuppetParameterValueMap} from './composition'
-import {composeKeyedColorEffect} from './keyed-color-effect'
+import {type ColorEffectComposer, createColorEffectComposer} from './keyed-color-effect'
 
 export interface ResolvedGroupRenderProperties {
   readonly alphaBlendMode: PuppetAlphaBlendMode
@@ -70,30 +70,50 @@ export const getContainerRenderProperties = (
 ): ResolvedGroupRenderProperties =>
   node.kind === 'group' ? getGroupRenderProperties(node) : getDeformerRenderProperties(node)
 
+const composers = new WeakMap<
+  PuppetDocument,
+  WeakMap<PuppetSceneContainerNode, ColorEffectComposer<ResolvedGroupRenderProperties>>
+>()
+
+const getContainerComposer = (
+  document: PuppetDocument,
+  node: PuppetSceneContainerNode,
+): ColorEffectComposer<ResolvedGroupRenderProperties> => {
+  let byNode = composers.get(document)
+  const previous = byNode?.get(node)
+  if (previous !== undefined) {
+    return previous
+  }
+  const deformer = node.kind === 'deformer'
+  const target = deformer ? 'targetDeformerIds' : 'targetGroupIds'
+  const compose = createColorEffectComposer({
+    bindings: getTargetBindings(document.parameterBindings ?? [], target, node.id),
+    document,
+    keyedProperties: (binding) =>
+      binding[target]?.includes(node.id) === true
+        ? binding.keyforms.map((form) =>
+            deformer
+              ? form.deformers?.find((candidate) => candidate.nodeId === node.id)?.properties
+              : form.groups?.find((candidate) => candidate.groupId === node.id)?.properties,
+          )
+        : undefined,
+    rest: getContainerRenderProperties(node),
+  })
+  if (byNode === undefined) {
+    byNode = new WeakMap()
+    composers.set(document, byNode)
+  }
+  byNode.set(node, compose)
+  return compose
+}
+
 /** Rest properties with the opacity and colors keyed by bindings targeting the deformer. */
 export const composeParameterDeformerProperties = (options: {
   readonly deformer: PuppetSceneDeformerNode
   readonly document: PuppetDocument
   readonly parameterValues?: PuppetParameterValueMap
 }): ResolvedGroupRenderProperties =>
-  composeKeyedColorEffect({
-    bindings: getTargetBindings(
-      options.document.parameterBindings ?? [],
-      'targetDeformerIds',
-      options.deformer.id,
-    ),
-    document: options.document,
-    keyedProperties: (binding) =>
-      binding.targetDeformerIds?.includes(options.deformer.id) === true
-        ? binding.keyforms.map(
-            (keyform) =>
-              keyform.deformers?.find((candidate) => candidate.nodeId === options.deformer.id)
-                ?.properties,
-          )
-        : undefined,
-    parameterValues: options.parameterValues,
-    rest: getDeformerRenderProperties(options.deformer),
-  })
+  getContainerComposer(options.document, options.deformer)(options.parameterValues)
 
 /** Rest properties with the opacity and colors keyed by bindings targeting the group. */
 export const composeParameterGroupProperties = (options: {
@@ -101,24 +121,7 @@ export const composeParameterGroupProperties = (options: {
   readonly group: PuppetSceneGroupNode
   readonly parameterValues?: PuppetParameterValueMap
 }): ResolvedGroupRenderProperties =>
-  composeKeyedColorEffect({
-    bindings: getTargetBindings(
-      options.document.parameterBindings ?? [],
-      'targetGroupIds',
-      options.group.id,
-    ),
-    document: options.document,
-    keyedProperties: (binding) =>
-      binding.targetGroupIds?.includes(options.group.id) === true
-        ? binding.keyforms.map(
-            (keyform) =>
-              keyform.groups?.find((candidate) => candidate.groupId === options.group.id)
-                ?.properties,
-          )
-        : undefined,
-    parameterValues: options.parameterValues,
-    rest: getGroupRenderProperties(options.group),
-  })
+  getContainerComposer(options.document, options.group)(options.parameterValues)
 
 const mapChannels = (map: (index: 0 | 1 | 2) => number): PuppetColor => [map(0), map(1), map(2)]
 

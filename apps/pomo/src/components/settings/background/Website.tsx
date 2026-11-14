@@ -2,7 +2,8 @@ import * as m from '@paraglide/message'
 import {createEffect, createMemo, createSignal, untrack} from 'solid-js'
 
 import {synchronizeDesktopBackground} from 'src/features/desktop-mode'
-import {type BackgroundController, backgroundWebsiteUrlSchema} from 'src/features/background'
+import {type BackgroundController} from 'src/features/background'
+import {backgroundWebsiteUrlSchema} from '@winter-love/wallpaper/model'
 import {PTextField} from '../../p-text-field/PTextField'
 import {PSettingsActionButton} from '../ActionButton'
 

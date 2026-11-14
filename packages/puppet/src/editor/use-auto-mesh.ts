@@ -1,5 +1,6 @@
 import {type Accessor, createMemo, createSignal, onCleanup} from 'solid-js'
 
+import type {ModelCommandResult} from './model'
 import type {PixelData} from '../mesh'
 import {
   getScenePartStates,
@@ -20,9 +21,12 @@ import {
 } from './internal/read-texture-pixels'
 
 export interface UseAutoMeshProps {
+  /** Host revision; omitted for unversioned callers. Invalidates late geometry results. */
+  readonly revision?: Accessor<number>
   readonly document: Accessor<PuppetDocument>
   readonly onBeforeApply?: () => void
-  readonly onDocumentChange: (document: PuppetDocument) => void
+  /** Applies the generated model and returns the host commit outcome; rejection keeps the generator open. */
+  readonly onDocumentChange: (document: PuppetDocument) => ModelCommandResult
   readonly onNotice?: (message: string | null) => void
   readonly partIds: Accessor<ReadonlyArray<string>>
 }
@@ -88,6 +92,16 @@ export const useAutoMesh = (props: UseAutoMeshProps): UseAutoMeshResult => {
     setErrorMessage(message)
     props.onNotice?.(message)
   }
+  const applyGeneratedDocument = (document: PuppetDocument) => {
+    props.onBeforeApply?.()
+    const committed = props.onDocumentChange(document)
+    if (!committed.ok) {
+      reportError('진행 중인 편집을 마친 후 다시 생성하세요.')
+      return false
+    }
+    props.onNotice?.(null)
+    return true
+  }
   const targets = createMemo(() => {
     const partIds = props.partIds()
     const document = props.document()
@@ -105,6 +119,7 @@ export const useAutoMesh = (props: UseAutoMeshProps): UseAutoMeshResult => {
   const generate = async (settings: AutoMeshSettings) => {
     generation += 1
     const activeGeneration = generation
+    const originalRevision = props.revision?.()
     setErrorMessage(null)
     const document = props.document()
     const parts = targets()
@@ -138,6 +153,7 @@ export const useAutoMesh = (props: UseAutoMeshProps): UseAutoMeshResult => {
     const currentPartIds = props.partIds()
     if (
       props.document() !== document ||
+      originalRevision !== props.revision?.() ||
       currentPartIds.length !== parts.length ||
       parts.some((part, index) => currentPartIds[index] !== part.id)
     ) {
@@ -178,10 +194,7 @@ export const useAutoMesh = (props: UseAutoMeshProps): UseAutoMeshResult => {
       generatedDocument = result.document
     }
 
-    props.onBeforeApply?.()
-    props.onDocumentChange(generatedDocument)
-    props.onNotice?.(null)
-    return true
+    return applyGeneratedDocument(generatedDocument)
   }
 
   const onOpenChange = (open: boolean) => {

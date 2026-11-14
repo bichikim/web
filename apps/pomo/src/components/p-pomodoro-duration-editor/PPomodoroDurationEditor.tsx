@@ -40,16 +40,23 @@ const getDraftForConfig = (
 }
 
 export const PPomodoroDurationEditor = (props: PPomodoroDurationEditorProps) => {
+  const baseConfig = createMemo(() => ({...props.config}), undefined, {
+    equals: (previous, next) =>
+      previous.focusSeconds === next.focusSeconds &&
+      previous.focusSessionsPerCycle === next.focusSessionsPerCycle &&
+      previous.longBreakSeconds === next.longBreakSeconds &&
+      previous.shortBreakSeconds === next.shortBreakSeconds,
+  })
   const [draftState, setDraftState] = createSignal<DurationDraftState>(
     untrack(() => {
-      const config = props.config
+      const config = baseConfig()
 
       return {baseConfig: config, draft: createDurationDraft(config)}
     }),
   )
-  const draft = createMemo(() => getDraftForConfig(props.config, draftState()))
+  const draft = createMemo(() => getDraftForConfig(baseConfig(), draftState()))
   const updateDraft = (update: (current: DurationDraft) => DurationDraft) => {
-    const config = props.config
+    const config = baseConfig()
 
     setDraftState({baseConfig: config, draft: update(getDraftForConfig(config, draftState()))})
   }
@@ -65,7 +72,7 @@ export const PPomodoroDurationEditor = (props: PPomodoroDurationEditorProps) => 
     const nextEditing = !props.isEditing
 
     if (nextEditing) {
-      const config = props.config
+      const config = baseConfig()
 
       setDraftState({baseConfig: config, draft: createDurationDraft(config)})
     }

@@ -40,6 +40,30 @@ describe('readContext', () => {
     expect(result).not.toMatchObject({value: {text: expect.stringContaining('node_modules')}})
     expect(result).not.toMatchObject({value: {text: expect.stringContaining('link.ts')}})
   })
+  it.each(['main.ts', 'absolute'])(
+    'should identify file content relative to the workspace for %s input',
+    async (path) => {
+      writeFileSync(join(root, 'main.ts'), 'hello\nworld')
+      expect(
+        await readContext({path: path === 'absolute' ? join(root, 'main.ts') : path, root}),
+      ).toEqual({
+        ok: true,
+        value: {text: 'main.ts:1-2\nhello\nworld'},
+      })
+    },
+  )
+  it('should identify the root and nested folder relative to the workspace', async () => {
+    mkdirSync(join(root, 'folder'))
+    writeFileSync(join(root, 'folder', 'main.ts'), 'hello')
+    expect(await readContext({path: root, root})).toEqual({
+      ok: true,
+      value: {text: '.\nfolder/'},
+    })
+    expect(await readContext({path: 'folder', root})).toEqual({
+      ok: true,
+      value: {text: 'folder\nfolder/main.ts'},
+    })
+  })
   it('should report large contexts rather than silently truncate a long line', async () => {
     writeFileSync(join(root, 'long.ts'), 'a'.repeat(70 * 1024))
     expect(await readContext({path: 'long.ts', root})).toMatchObject({

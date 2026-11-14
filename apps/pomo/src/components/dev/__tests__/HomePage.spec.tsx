@@ -16,9 +16,6 @@ vi.mock('@solidjs/router', () => ({
 vi.mock('src/features/model-download', () => ({
   useModelDownload: vi.fn(),
 }))
-vi.mock('src/components/character-studio/CharacterStudio', () => ({
-  CharacterStudio: () => <p>character studio</p>,
-}))
 vi.mock('src/components/p-layer-review/PLayerReview', () => ({
   PLayerReview: () => <p>layer review</p>,
 }))
@@ -98,13 +95,16 @@ it('should link the development home to the HWP editor', () => {
     '/dev/hwp',
   )
 })
-it('should link the development home to the AI conversation scene', () => {
-  render(() => <HomePage />)
+it.each(['/dev/character', '/dev/3d-world', '/dev/ai-conversation'])(
+  'should omit the removed 3D experiment link %s',
+  (pathname) => {
+    render(() => <HomePage />)
 
-  expect(screen.getByRole('link', {name: /AI끼리 대화/u}).getAttribute('href')).toBe(
-    '/dev/ai-conversation',
-  )
-})
+    expect(screen.getAllByRole('link').map((link) => link.getAttribute('href'))).not.toContain(
+      pathname,
+    )
+  },
+)
 it('should link the development home to the k-saju experiment', () => {
   render(() => <HomePage />)
 

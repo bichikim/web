@@ -1,11 +1,8 @@
 /** @vitest-environment jsdom */
 import {expect, it, vi} from 'vitest'
 
-vi.mock('src/env', () => ({
-  env: {},
-}))
-
 import type {Database} from '../../../database'
+import {weather, weatherCollectionState} from '../../../database/schema/weather'
 import {
   getLatestWeather,
   hasCurrentWeather,
@@ -26,7 +23,7 @@ const createTransaction = (records: ReadonlyArray<Record<string, unknown>> = [])
   const execute = vi.fn().mockResolvedValue([])
   const onConflictDoUpdate = vi.fn().mockResolvedValue(undefined)
   const values = vi.fn(() => ({onConflictDoUpdate}))
-  const insert = vi.fn(() => ({values}))
+  const insert = vi.fn((_table: unknown) => ({values}))
   const transaction = {execute, insert, select} as unknown as WeatherTransaction
 
   return {execute, insert, onConflictDoUpdate, transaction, values}
@@ -60,7 +57,7 @@ it.each([
 )
 
 it('should persist a complete collection lease', async () => {
-  const {transaction, values} = createTransaction()
+  const {insert, transaction, values} = createTransaction()
   const attemptedAt = new Date('2026-08-22T05:50:00.000Z')
   const lease = {
     expiresAt: new Date('2026-08-22T05:50:15.000Z'),
@@ -70,6 +67,7 @@ it('should persist a complete collection lease', async () => {
 
   await setWeatherCollectionLease('seoul', lease, attemptedAt, transaction)
 
+  expect(insert.mock.calls[0]?.[0]).toBe(weatherCollectionState)
   expect(values).toHaveBeenCalledWith({
     lastAttemptedAt: attemptedAt,
     leaseExpiresAt: lease.expiresAt,
@@ -178,10 +176,11 @@ it('should return the latest weather row for a location', async () => {
   const limit = vi.fn().mockResolvedValue([record])
   const orderBy = vi.fn(() => ({limit}))
   const where = vi.fn(() => ({orderBy}))
-  const from = vi.fn(() => ({where}))
+  const from = vi.fn((_table: unknown) => ({where}))
   const database = {select: vi.fn(() => ({from}))} as unknown as Database
 
   await expect(getLatestWeather('seoul', database)).resolves.toEqual(record)
+  expect(from.mock.calls[0]?.[0]).toBe(weather)
 })
 
 it('should return undefined when no weather row has been collected', async () => {

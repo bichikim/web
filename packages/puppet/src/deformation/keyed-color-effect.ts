@@ -103,3 +103,83 @@ export const composeKeyedColorEffect = <Subject extends PuppetColorEffect>(
 
   return {...rest, ...fromColorEffectCoordinates(coordinates)}
 }
+
+export type ColorEffectComposer<Effect extends PuppetColorEffect> = (
+  values?: PuppetParameterValueMap,
+) => Effect
+
+/** Prepares immutable channels once and retains only the latest input/result snapshot. */
+export const createColorEffectComposer = <Effect extends PuppetColorEffect>(
+  options: Omit<ComposeKeyedColorEffectOptions<Effect>, 'parameterValues'>,
+): ColorEffectComposer<Effect> => {
+  const restCoordinates = toColorEffectCoordinates(options.rest)
+  const inputs = (options.bindings ?? options.document.parameterBindings ?? []).flatMap(
+    (binding) => {
+      const properties = options.keyedProperties(binding)
+      if (properties === undefined) {
+        return []
+      }
+      const coordinates = properties.map((property) =>
+        property === undefined
+          ? undefined
+          : toColorEffectCoordinates({
+              multiplyColor: property.multiplyColor ?? options.rest.multiplyColor,
+              opacity: property.opacity ?? options.rest.opacity,
+              screenColor: property.screenColor ?? options.rest.screenColor,
+            }),
+      )
+      return coordinates.some((values) =>
+        values?.some((value, index) => value !== restCoordinates[index]),
+      )
+        ? [{binding, coordinates}]
+        : []
+    },
+  )
+  const parameterIds = [
+    ...new Set(
+      inputs.flatMap(({binding}) => [
+        ...binding.parameterIds,
+        ...(binding.influences ?? []).map((influence) => influence.parameterId),
+      ]),
+    ),
+  ]
+  let previousValues: ReadonlyArray<number | undefined> | undefined
+  let previous: Effect | undefined
+  return (parameterValues) => {
+    if (
+      previous !== undefined &&
+      parameterIds.every((id, index) => Object.is(parameterValues?.[id], previousValues?.[index]))
+    ) {
+      return previous
+    }
+    const coordinates = inputs.reduce((current, {binding, coordinates}) => {
+      const sampled = sampleParameterCoordinates({
+        binding,
+        keyformCoordinates: coordinates,
+        repeatRanges: getRepeatRanges(binding.parameterIds, options.document.parameters),
+        restCoordinates,
+        values: getParameterBindingValues({binding, document: options.document, parameterValues}),
+      })
+      const weight = getBindingInfluence({binding, document: options.document, parameterValues})
+      return current.map(
+        (coordinate, index) =>
+          coordinate +
+          ((sampled[index] ?? restCoordinates[index]!) - restCoordinates[index]!) * weight,
+      )
+    }, restCoordinates)
+    previousValues = parameterIds.map((id) => parameterValues?.[id])
+    const effect = fromColorEffectCoordinates(coordinates)
+    if (
+      previous !== undefined &&
+      Object.is(previous.opacity, effect.opacity) &&
+      previous.multiplyColor.every((value, index) =>
+        Object.is(value, effect.multiplyColor[index]),
+      ) &&
+      previous.screenColor.every((value, index) => Object.is(value, effect.screenColor[index]))
+    ) {
+      return previous
+    }
+    previous = {...options.rest, ...effect}
+    return previous
+  }
+}

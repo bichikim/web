@@ -1,6 +1,10 @@
 import {sql} from 'drizzle-orm'
 import {ALBUM_LOCALES} from 'src/features/admin-music/album-draft'
-import {ALBUM_STATUSES, TRACK_ASSET_STATUSES} from 'src/features/admin-music/catalog-values'
+import {
+  ALBUM_STATUSES,
+  COVER_FALLBACKS,
+  TRACK_ASSET_STATUSES,
+} from 'src/features/admin-music/catalog-values'
 import {
   bigint,
   check,
@@ -19,7 +23,7 @@ import {
 
 export const musicAlbumStatusEnum = pgEnum('music_album_status', ALBUM_STATUSES)
 export const musicAlbumLocaleEnum = pgEnum('music_album_locale', ALBUM_LOCALES)
-export const musicCoverFallbackEnum = pgEnum('music_cover_fallback', ['lp', 'cd', 'music'])
+export const musicCoverFallbackEnum = pgEnum('music_cover_fallback', COVER_FALLBACKS)
 export const musicAlbumCoverReservationStatusEnum = pgEnum('music_album_cover_reservation_status', [
   'uploading',
   'pending',

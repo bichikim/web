@@ -6,4 +6,12 @@ interface PrepareDocumentWireSuccess {
   readonly ok: true
 }
 
-export type PreparePuppetDocumentResponse = ParseDocumentFailure | PrepareDocumentWireSuccess
+interface PrepareDocumentReadFailure {
+  readonly type: 'error'
+  readonly error: {readonly message: string}
+}
+
+export type PreparePuppetDocumentResponse =
+  | ParseDocumentFailure
+  | PrepareDocumentWireSuccess
+  | PrepareDocumentReadFailure

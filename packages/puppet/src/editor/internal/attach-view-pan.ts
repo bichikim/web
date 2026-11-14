@@ -9,11 +9,15 @@ interface AttachViewPanOptions {
 export const attachViewPan = (options: AttachViewPanOptions) => {
   let drag: {pointer: number; x: number; y: number; camera: ViewCamera} | undefined
   const stop = () => {
+    const captured = drag?.pointer
     drag = undefined
+    if (captured !== undefined && options.element.hasPointerCapture(captured)) {
+      options.element.releasePointerCapture(captured)
+    }
     options.onPanningChange?.(false)
   }
   const down = (event: PointerEvent) => {
-    if (event.button !== 1) {
+    if (event.button !== 1 || drag !== undefined) {
       return
     }
     event.preventDefault()
@@ -34,19 +38,21 @@ export const attachViewPan = (options: AttachViewPanOptions) => {
   const up = (event: PointerEvent) => {
     if (drag?.pointer === event.pointerId) {
       stop()
-      options.element.releasePointerCapture(event.pointerId)
     }
   }
   options.element.addEventListener('pointerdown', down)
   options.element.addEventListener('pointermove', move)
   options.element.addEventListener('pointerup', up)
-  options.element.addEventListener('pointercancel', stop)
-  options.element.addEventListener('lostpointercapture', stop)
+  options.element.addEventListener('pointercancel', up)
+  options.element.addEventListener('lostpointercapture', up)
+  window.addEventListener('blur', stop)
   return () => {
+    stop()
     options.element.removeEventListener('pointerdown', down)
     options.element.removeEventListener('pointermove', move)
     options.element.removeEventListener('pointerup', up)
-    options.element.removeEventListener('pointercancel', stop)
-    options.element.removeEventListener('lostpointercapture', stop)
+    options.element.removeEventListener('pointercancel', up)
+    options.element.removeEventListener('lostpointercapture', up)
+    window.removeEventListener('blur', stop)
   }
 }

@@ -1,13 +1,11 @@
-import {EditorNumberField, EditorToggleButton} from '../design-system'
-import {ToggleButton} from '@kobalte/core/toggle-button'
-import {createEffect, createSignal, createUniqueId, Index, type JSX, Show} from 'solid-js'
+import {EditorToggleButton} from '../design-system'
+import {createEffect, createSignal, createUniqueId, Index, Show} from 'solid-js'
 import {Portal} from 'solid-js/web'
-
 import type {MeshEditorProps} from './mesh-editor-contract'
 import {getEditorViewBox} from './internal/viewport'
-import {type MeshTriangle, useMeshEditor, type UseMeshEditorResult} from './use-mesh-editor'
-
-export type {MeshEditorProps} from './mesh-editor-contract'
+import {type MeshTriangle, useMeshEditor} from './use-mesh-editor'
+import {MeshBrushControls} from './mesh-editor/MeshBrushControls'
+import {MeshBrushSettings} from './mesh-editor/MeshBrushSettings'
 
 const getPolygonPoints = (points: ReadonlyArray<{readonly x: number; readonly y: number}>) =>
   points.map((point) => `${point.x},${point.y}`).join(' ')
@@ -21,120 +19,6 @@ const getBoundaryPath = (
 
 const getTrianglePoints = (triangle: MeshTriangle) =>
   getPolygonPoints([triangle.first, triangle.second, triangle.third])
-
-interface DeformBrushControlsProps {
-  readonly editor: UseMeshEditorResult
-  readonly modeControls?: JSX.Element
-}
-
-const DeformBrushControls = (props: DeformBrushControlsProps) => {
-  return (
-    <div class="mesh-editing-toolbar" role="group" aria-label="메시 편집">
-      <Show when={props.modeControls}>{props.modeControls}</Show>
-      <Show when={props.modeControls}>
-        <span class="mesh-editing-separator" aria-hidden="true" />
-      </Show>
-      <div
-        class="editor-control editor-segmented-field deform-brush-toolbar"
-        data-control-size="md"
-        data-size="md"
-        role="group"
-        aria-label="편집 도구"
-      >
-        <ToggleButton
-          type="button"
-          aria-label="정점 선택·이동"
-          title="정점 선택·이동"
-          pressed={!props.editor.brushEnabled()}
-          onClick={() => props.editor.setBrushEnabled(false)}
-        >
-          <span class="puppet-icon puppet-icon-pointer" aria-hidden="true" />
-          <span class="editor-segmented-label" aria-hidden="true">
-            정점 선택·이동
-          </span>
-        </ToggleButton>
-        <ToggleButton
-          type="button"
-          aria-label="변형 브러시"
-          title="변형 브러시"
-          pressed={props.editor.brushEnabled() && props.editor.brushMode() === 'move'}
-          onClick={() => props.editor.setBrushMode('move')}
-        >
-          <span class="puppet-icon puppet-icon-brush" aria-hidden="true" />
-          <span class="editor-segmented-label" aria-hidden="true">
-            변형 브러시
-          </span>
-        </ToggleButton>
-        <ToggleButton
-          type="button"
-          aria-label="팽창·수축 브러시"
-          title="오른쪽으로 드래그하면 팽창, 왼쪽이나 Shift 드래그는 수축"
-          pressed={props.editor.brushEnabled() && props.editor.brushMode() === 'expand'}
-          onClick={() => props.editor.setBrushMode('expand')}
-        >
-          <span class="puppet-icon puppet-icon-brush-expand" aria-hidden="true" />
-          <span class="editor-segmented-label" aria-hidden="true">
-            팽창·수축
-          </span>
-        </ToggleButton>
-        <ToggleButton
-          type="button"
-          aria-label="정점 부드럽게 브러시"
-          title="연결된 이웃 정점을 기준으로 내부 정점을 부드럽게 정리합니다. 외곽선은 유지합니다."
-          pressed={props.editor.brushEnabled() && props.editor.brushMode() === 'smooth'}
-          disabled={!props.editor.canSmooth()}
-          onClick={() => props.editor.setBrushMode('smooth')}
-        >
-          <span class="puppet-icon puppet-icon-brush-smooth" aria-hidden="true" />
-          <span class="editor-segmented-label" aria-hidden="true">
-            부드럽게
-          </span>
-        </ToggleButton>
-      </div>
-    </div>
-  )
-}
-
-const DeformBrushSettings = (props: DeformBrushControlsProps) => (
-  <fieldset class="deform-brush-settings" aria-label="변형 브러시 설정">
-    <label>
-      반경
-      <EditorNumberField
-        label="변형 브러시 반경"
-        maximumFractionDigits={2}
-        value={props.editor.brushRadius()}
-        minimum={1}
-        onValueChange={props.editor.setBrushRadius}
-      />
-    </label>
-    <label>
-      강도
-      <EditorNumberField
-        label="변형 브러시 강도"
-        maximumFractionDigits={2}
-        value={props.editor.brushStrength()}
-        minimum={1}
-        maximum={100}
-        unit="%"
-        onValueChange={props.editor.setBrushStrength}
-      />
-    </label>
-    <Show when={props.editor.brushMode() !== 'smooth'}>
-      <label>
-        경도
-        <EditorNumberField
-          label="변형 브러시 경도"
-          maximumFractionDigits={2}
-          value={props.editor.brushHardness()}
-          minimum={0}
-          maximum={100}
-          unit="%"
-          onValueChange={props.editor.setBrushHardness}
-        />
-      </label>
-    </Show>
-  </fieldset>
-)
 
 export const MeshEditor = (props: MeshEditorProps) => {
   const editor = useMeshEditor(props)
@@ -156,7 +40,7 @@ export const MeshEditor = (props: MeshEditorProps) => {
   const displayControls = (
     <div class="display-controls" role="group" aria-label="표시 설정">
       <Show when={!props.brushControlsExternal}>
-        <DeformBrushControls editor={editor} modeControls={props.modeControls} />
+        <MeshBrushControls editor={editor} modeControls={props.modeControls} />
       </Show>
       <Show when={editor.clippedPartViews().length > 0}>
         <EditorToggleButton
@@ -176,13 +60,13 @@ export const MeshEditor = (props: MeshEditorProps) => {
     <div class="mesh-editor">
       <Show when={editor.brushEnabled() && props.brushSettingsMount}>
         <Portal mount={props.brushSettingsMount!}>
-          <DeformBrushSettings editor={editor} />
+          <MeshBrushSettings editor={editor} />
         </Portal>
       </Show>
       <Show when={props.brushControlsMount}>
         {(mount) => (
           <Portal mount={mount()}>
-            <DeformBrushControls editor={editor} modeControls={props.modeControls} />
+            <MeshBrushControls editor={editor} modeControls={props.modeControls} />
           </Portal>
         )}
       </Show>
@@ -286,3 +170,5 @@ export const MeshEditor = (props: MeshEditorProps) => {
     </div>
   )
 }
+
+export type {MeshEditorProps} from './mesh-editor-contract'

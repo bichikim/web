@@ -1,13 +1,13 @@
 /** @vitest-environment node */
 import {expect, it, vi} from 'vitest'
 
-import type {PDialogue, PDialogueRepository} from '../../focus-room-dialogue'
+import type {PDialogue} from '../../focus-room-dialogue'
 import {
   isLegacyDevFeedFailure,
   isMalformedDevFeedDialogue,
   repairStoredDevFeedDialogues,
+  type RepairStoredDevFeedDialoguesOptions,
 } from '../feed-dialogue-repair'
-import type {FeedDialogueRepository} from '../feed-dialogue-repository'
 import type {FeedDialogueMetadata, FeedItemRecord} from '../feed-dialogue-schema'
 import type {FeedConnection} from '../schema'
 
@@ -121,7 +121,7 @@ it('should remove malformed dialogues, metadata, and legacy failed items', async
     ]),
     removeItem,
     removeMetadata,
-  } as unknown as FeedDialogueRepository
+  } satisfies RepairStoredDevFeedDialoguesOptions['feedRepository']
   const dialogueRepository = {
     deleteDialogue,
     getDialogue: vi.fn(async (id: string) => {
@@ -139,7 +139,7 @@ it('should remove malformed dialogues, metadata, and legacy failed items', async
 
       return null
     }),
-  } as unknown as PDialogueRepository
+  } satisfies RepairStoredDevFeedDialoguesOptions['dialogueRepository']
 
   const repaired = await repairStoredDevFeedDialogues({
     connections: [{id: 'feed'} as FeedConnection],

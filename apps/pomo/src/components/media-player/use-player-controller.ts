@@ -30,8 +30,8 @@ import {
   getCurrentPlaybackTransition,
   persistRestoredPlayback,
   type PlaybackTransition,
-  readPlaybackPosition,
 } from './playback-transition'
+import {readPlaybackPosition} from 'src/features/focus-room-audio/read-playback-position'
 
 export interface UsePlayerControllerProps extends MediaPlayerOptions {
   readonly element: Accessor<HTMLAudioElement | undefined>

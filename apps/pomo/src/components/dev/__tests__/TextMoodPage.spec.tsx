@@ -16,9 +16,6 @@ vi.mock('@solidjs/router', () => ({
 vi.mock('src/features/model-download', () => ({
   useModelDownload: vi.fn(),
 }))
-vi.mock('src/components/character-studio/CharacterStudio', () => ({
-  CharacterStudio: () => <p>character studio</p>,
-}))
 vi.mock('src/components/p-layer-review/PLayerReview', () => ({
   PLayerReview: () => <p>layer review</p>,
 }))

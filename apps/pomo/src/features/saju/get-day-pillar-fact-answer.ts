@@ -17,9 +17,16 @@ export function getDayPillarFactAnswer(question: string, chart: Saju): string | 
   }
 
   const stem = `${chart.day.korean.at(0)}(${chart.day.stem})`
-  if (question.includes('일주')) {
-    return `입력한 생년월일의 일주는 ${chart.day.korean}(${chart.day.hanja})입니다. 일주는 태어난 날의 천간과 지지를 합친 두 글자입니다. 일간은 ${stem}입니다.`
-  }
-
-  return `입력한 생년월일의 일간은 ${stem}입니다. 일간은 일주의 천간으로, 십성 관계를 계산할 때 기준이 됩니다.`
+  return [
+    ...(question.includes('일주')
+      ? [
+          `일주는 ${chart.day.korean}(${chart.day.hanja})입니다. 태어난 날을 나타내는 두 글자를 말합니다.`,
+        ]
+      : []),
+    ...(question.includes('일간')
+      ? [
+          `일간은 ${stem}입니다. 태어난 날을 나타내는 두 글자 중 첫 글자로, 사주를 읽을 때 기준으로 삼습니다.`,
+        ]
+      : []),
+  ].join(' ')
 }

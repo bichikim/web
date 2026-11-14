@@ -86,3 +86,15 @@ test('should weight property deltas before clamping the combined result', () => 
     screenColor: [0.5, 0.5, 0.5],
   })
 })
+
+test('should rebuild prepared channels when an edited document replaces property definitions', () => {
+  const source = createDemoDocument()
+  const original = composeParameterPartProperties({document: source, partId: 'mesh-preview'})
+  const document = {
+    ...source,
+    parts: source.parts.map((part) => ({...part, properties: {...part.properties, opacity: 0.25}})),
+  }
+  expect(composeParameterPartProperties({document, partId: 'mesh-preview'}).opacity).toBe(0.25)
+  expect(composeParameterPartProperties({document: source, partId: 'mesh-preview'})).toBe(original)
+  expect(original.opacity).toBe(1)
+})

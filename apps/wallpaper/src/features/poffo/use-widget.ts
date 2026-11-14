@@ -1,29 +1,38 @@
 import {isTauri} from '@tauri-apps/api/core'
 import {getCurrentWindow} from '@tauri-apps/api/window'
-import {type Accessor, createEffect, createSignal, onCleanup, onMount} from 'solid-js'
+import {type Accessor, createEffect, createMemo, createSignal, onCleanup, onMount} from 'solid-js'
+import {createStore, reconcile} from 'solid-js/store'
 import {createLibraryRepository} from '@winter-love/wallpaper/settings/library-repository'
-import {createSettingsRepository} from '@winter-love/wallpaper/settings/repository'
+import {menuActions} from '../semantics/menu-actions'
+import {createBuiltinSettings} from '../builtin-assets'
 import type {PoffoWidget, WidgetSize} from '@winter-love/wallpaper/settings/library-model'
 
+interface WidgetState {
+  widget: PoffoWidget | null
+}
 export const useWidget = (id: Accessor<string>) => {
   const library = createLibraryRepository('wallpaper-library')
-  const assets = createSettingsRepository('wallpaper-settings')
-  const [widget, setWidget] = createSignal<PoffoWidget | null>(null)
+  const assets = createBuiltinSettings('wallpaper-settings')
+  const [state, setState] = createStore<WidgetState>({widget: null})
   const [error, setError] = createSignal<string | null>(null)
+  const [actionError, setActionError] = createSignal<string | null>(null)
   let disposed = false
   let stopMove: (() => void) | null = null
   let pending = Promise.resolve()
   const report = (cause: unknown) => {
     if (!disposed) {
       console.error('Poffo widget failed', cause)
-      setError('캐릭터를 불러올 수 없어요.')
+      setError('Poffo를 불러올 수 없어요.')
     }
   }
   const refresh = async () => {
     const currentId = id()
     const snapshot = await library.read()
     if (!disposed) {
-      setWidget(snapshot.widgets.find((widget) => widget.id === currentId) ?? null)
+      setState(
+        'widget',
+        reconcile(snapshot.widgets.find((widget) => widget.id === currentId) ?? null),
+      )
     }
   }
   const stopLibrary = library.subscribe(() => {
@@ -77,18 +86,42 @@ export const useWidget = (id: Accessor<string>) => {
     }
     getCurrentWindow().startDragging().catch(report)
   }
+  const registered = createMemo(() => menuActions(state.widget?.speech?.semanticBindings ?? []))
+  const toggleAction = (bindingId: string) => {
+    const widgetId = id()
+    pending = pending
+      .then(async () => {
+        if (!disposed) {
+          await library.toggleWidgetAction(widgetId, bindingId)
+          if (!disposed) {
+            setActionError(null)
+          }
+        }
+      })
+      .catch((cause: unknown) => {
+        if (!disposed) {
+          console.error('Poffo action update failed', cause)
+          setActionError('행동을 변경하지 못했어요.')
+        }
+      })
+    return pending
+  }
   return {
-    agentBindings: () => widget()?.speech?.agentBindings,
-    assetId: () => widget()?.assetId ?? null,
+    agentBindings: () => state.widget?.speech?.agentBindings,
+    assetId: () => state.widget?.assetId ?? null,
     drag,
-    error,
-    lipsync: () => (widget()?.speech?.enabled === false ? undefined : widget()?.speech?.lipsync),
+    error: () => actionError() ?? error(),
+    lipsync: () =>
+      state.widget?.speech?.enabled === false ? undefined : state.widget?.speech?.lipsync,
     load: assets.loadPuppet,
-    motionId: () => widget()?.motionId,
+    menuActions: registered,
+    motionId: () => state.widget?.motionId,
     report,
     saveSize: (size: WidgetSize) => library.resizeWidget(id(), size),
-    tracking: () => widget()?.tracking,
-    trackingBindings: () => widget()?.trackingBindings,
-    trackingOptions: () => widget()?.trackingOptions,
+    semanticBindings: () => state.widget?.speech?.semanticBindings,
+    toggleAction,
+    tracking: () => state.widget?.tracking,
+    trackingBindings: () => state.widget?.trackingBindings,
+    trackingOptions: () => state.widget?.trackingOptions,
   }
 }

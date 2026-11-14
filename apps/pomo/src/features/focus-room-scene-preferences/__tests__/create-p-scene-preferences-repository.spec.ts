@@ -1,4 +1,5 @@
 import {describe, expect, it, vi} from 'vitest'
+import {DEFAULT_P_SCENE_PREFERENCES} from '../model'
 import {
   createPScenePreferencesRepository,
   type PScenePreferencesStorage,
@@ -107,6 +108,26 @@ describe('createPScenePreferencesRepository', () => {
 
     await expect(repository.read()).resolves.toEqual(preferences)
     expect(writeWeb).toHaveBeenCalledWith('pomo:focus-room-scene-preferences:v1', preferences)
+  })
+
+  it('should load defaults when native and browser reads both fail', async () => {
+    const writeWeb = vi.fn<PScenePreferencesStorage['writeWeb']>().mockReturnValue(null)
+    const repository = createPScenePreferencesRepository({
+      storage: {
+        readToss: vi.fn(async () => {
+          throw new Error('native unavailable')
+        }),
+        readWeb: () => {
+          throw new Error('browser unavailable')
+        },
+        usesTossStorage: () => true,
+        writeToss: vi.fn(async () => undefined),
+        writeWeb,
+      },
+    })
+
+    await expect(repository.read()).resolves.toEqual(DEFAULT_P_SCENE_PREFERENCES)
+    expect(writeWeb).not.toHaveBeenCalled()
   })
 
   it('should preserve browser preferences after a native write fails', async () => {

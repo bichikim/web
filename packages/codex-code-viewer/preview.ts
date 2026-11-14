@@ -38,9 +38,12 @@ const transport = new StdioClientTransport({
 })
 await client.connect(transport)
 const token = randomUUID()
+const threadId = randomUUID()
 const base = `/${token}/`
 const streams = createPreviewStreams(base)
 const allowed = new Set([
+  'code.memos',
+  'code.save-memos',
   'code.changes',
   'code.workspace',
   'code.tree-state',
@@ -91,7 +94,7 @@ const serveTool = async (request: IncomingMessage, response: ServerResponse): Pr
     await client.callTool(
       {
         ...input.params,
-        _meta: {'openai/resource': {path: anchor}},
+        _meta: {'openai/resource': {path: anchor}, threadId},
       },
       undefined,
       input.params.name === 'code.update-install'
@@ -135,7 +138,10 @@ const server = createServer(async (request, response) => {
     if (request.method === 'GET' && route === 'initial') {
       if (process.argv.includes('--panel')) {
         const result = await client.callTool({
-          _meta: process.argv.includes('--empty') ? undefined : {'openai/resource': {path: anchor}},
+          _meta: {
+            ...(process.argv.includes('--empty') ? {} : {'openai/resource': {path: anchor}}),
+            threadId,
+          },
           arguments: {},
           name: 'code.panel',
         })

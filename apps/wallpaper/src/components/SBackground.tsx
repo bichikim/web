@@ -43,6 +43,7 @@ export const SBackground = (props: SBackgroundProps) => {
           {(content) => (
             <SPositionedPoffo
               assetId={() => content().assetId}
+              fit={() => content().fit}
               load={background.loadPuppet}
               onError={report}
               placement={() => content().placement}

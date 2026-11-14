@@ -31,7 +31,7 @@ const setUpRenderer = () => {
     stage: {addChild: vi.fn()},
     start: vi.fn(),
     stop: vi.fn(),
-    ticker: {add: vi.fn()},
+    ticker: {add: vi.fn(), remove: vi.fn()},
   }
   const root = {addChild: vi.fn(), position: {set: vi.fn()}, scale: {set: vi.fn()}}
   for (const [mock, value] of [
@@ -170,6 +170,44 @@ test('should add an app blend after motions and before physics', async () => {
   expect(player.getParameterValue('angle')).toBe(0)
   player.destroy()
 })
+test('should batch gesture blends and release them without discarding cursor overrides', async () => {
+  setUpRenderer()
+  const player = await createPlayer({
+    canvas: globalThis.document.createElement('canvas'),
+    document: prepare({...document, breath: undefined, physics: undefined}),
+  })
+  player.patchParameterValues({angle: 12, hair: 8})
+  const application = mocks.Application.mock.results[0].value
+  application.render.mockClear()
+  player.patchParameterBlends({
+    angle: {mode: 'overwrite', value: -5},
+    hair: {mode: 'overwrite', value: 4},
+  })
+  expect([player.getParameterValue('angle'), player.getParameterValue('hair')]).toEqual([-5, 4])
+  expect(application.render).toHaveBeenCalledOnce()
+  player.patchParameterValues({angle: 20})
+  expect(player.getParameterValue('angle')).toBe(-5)
+  player.patchParameterBlends({angle: undefined, hair: undefined})
+  expect([player.getParameterValue('angle'), player.getParameterValue('hair')]).toEqual([20, 8])
+  player.destroy()
+})
+test('should release post-physics overrides while retaining earlier blends', async () => {
+  setUpRenderer()
+  const player = await createPlayer({
+    canvas: globalThis.document.createElement('canvas'),
+    document: prepare({...document, breath: undefined}),
+  })
+  player.setPhysicsPreview(false)
+  player.patchParameterValues({angle: 12})
+  player.setParameterBlend('angle', {mode: 'add', value: 3})
+  const simulated = player.getParameterValue('hair')
+  player.patchParameterBlends({hair: {mode: 'overwrite', value: -20}}, 'after-physics')
+  expect(player.getParameterValue('hair')).toBe(-20)
+  player.patchParameterBlends({hair: undefined}, 'after-physics')
+  expect(player.getParameterValue('hair')).toBe(simulated)
+  expect(player.getParameterValue('angle')).toBe(15)
+  player.destroy()
+})
 
 test('should refuse eye blink timing that is not positive and finite', async () => {
   setUpRenderer()
@@ -197,7 +235,7 @@ test('should blink with the timing the app sets', async () => {
         {defaultValue: 1, id: 'eye', maximum: 1, minimum: 0, name: 'Eye'},
       ],
     }),
-    random: () => 0.5,
+    randomSeed: 2023651103,
   })
   // Half of twice the interval: the blink starts after 0.25 s and closes over 1 s.
   expect(player.setEyeBlinkTiming({closed: 1, closing: 1, interval: 0.25, opening: 1})).toBe(true)

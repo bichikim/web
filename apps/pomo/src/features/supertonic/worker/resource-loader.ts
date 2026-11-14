@@ -4,9 +4,9 @@ import {concatUint8Arrays} from 'uint8array-extras'
 import {httpFetch} from '../../http-client'
 import {loadModelResource, type ModelStorage, reportModelStorageError} from '../../model-storage'
 import {failureResult, type Result, successResult} from '../../result'
-import type {CancelledError, DownloadFailedError} from '../errors'
+import type {CancelledError, DownloadFailedError} from '@winter-love/supertonic/errors'
 import type {SupertonicProgress} from '../messages'
-import type {LoadBufferOptions} from '../sessions'
+import type {LoadBufferOptions} from '@winter-love/supertonic/sessions'
 
 export interface LoadJsonOptions {
   readonly fileName: string

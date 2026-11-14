@@ -384,6 +384,67 @@ describe('keyboard adaptation', () => {
 })
 
 describe('crop encoding', () => {
+  it.each(['resolve', 'reject'] as const)(
+    'should freeze canvas input and discard an active gesture across an encoding %s',
+    async (settlement) => {
+      const {crop, onApply} = createHarness()
+      const {pointer} = createSurface()
+      crop.handleZoomInput(createInput(200))
+      crop.handlePointerDown(pointer())
+      crop.handlePointerMove(pointer({clientX: 244}))
+      const applied = crop.imageFrame()
+      const pending = Promise.withResolvers<Blob>()
+      vi.mocked(cropCustomAlbumImage).mockReturnValueOnce(pending.promise)
+      const applying = crop.handleCrop()
+
+      crop.handlePointerMove(pointer({clientX: 260}))
+      const arrow = createKey('ArrowRight')
+      crop.handleSelectionKeyDown(
+        arrow as Parameters<CustomAlbumCoverCropController['handleSelectionKeyDown']>[0],
+      )
+      crop.handleResizeKeyDown('southeast')(
+        arrow as Parameters<ReturnType<CustomAlbumCoverCropController['handleResizeKeyDown']>>[0],
+      )
+      expect(crop.imageFrame()).toEqual(applied)
+
+      const cover = new Blob(['encoded'], {type: 'image/webp'})
+      if (settlement === 'resolve') {
+        pending.resolve(cover)
+      } else {
+        pending.reject(new Error('Encoding failed'))
+      }
+      await applying
+      expect(crop.isCropping()).toBe(false)
+      expect(onApply).toHaveBeenCalledTimes(settlement === 'resolve' ? 1 : 0)
+      crop.handlePointerMove(pointer({clientX: 276}))
+      expect(crop.imageFrame()).toEqual(applied)
+      crop.handleSelectionKeyDown(
+        arrow as Parameters<CustomAlbumCoverCropController['handleSelectionKeyDown']>[0],
+      )
+      expect(crop.imageFrame()).not.toEqual(applied)
+    },
+  )
+
+  it('should reject new pointer gestures during encoding and accept them after completion', async () => {
+    const {crop} = createHarness()
+    const {pointer, svg} = createSurface('southeast')
+    crop.handleZoomInput(createInput(200))
+    const pending = Promise.withResolvers<Blob>()
+    vi.mocked(cropCustomAlbumImage).mockReturnValueOnce(pending.promise)
+    const applying = crop.handleCrop()
+    const applied = crop.imageFrame()
+    crop.handlePointerDown(pointer())
+    crop.handlePointerMove(pointer({clientX: 260}))
+    expect(crop.imageFrame()).toEqual(applied)
+    expect(svg.setPointerCapture).not.toHaveBeenCalled()
+    pending.resolve(new Blob(['encoded']))
+    await applying
+    crop.handlePointerDown(pointer())
+    crop.handlePointerMove(pointer({clientX: 260}))
+    expect(crop.imageFrame()).not.toEqual(applied)
+    expect(svg.setPointerCapture).toHaveBeenCalledOnce()
+  })
+
   it('should encode original image coordinates, block concurrent applies, and allow a later apply', async () => {
     const image = createBitmap(2048, 1024)
     const {crop, onApply} = createHarness(image)

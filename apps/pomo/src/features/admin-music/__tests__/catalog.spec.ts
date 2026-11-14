@@ -54,6 +54,15 @@ const offer = {
 const catalog = {albums: [], assets: [], offers: [offer], pendingTracks: [], tracks: []}
 
 describe('catalogSchema', () => {
+  it.each(['lp', 'cd'] as const)(
+    'should preserve the cover fallback %s in a catalog response',
+    (coverFallback) => {
+      const input = {...catalog, albums: [{...albumWithTranslations, coverFallback}]}
+
+      expect(catalogSchema.parse(input)).toEqual(input)
+    },
+  )
+
   it.each(['draft', 'published', 'archived'] as const)(
     'should preserve the album status %s in a catalog response',
     (status) => {
@@ -73,6 +82,11 @@ describe('catalogSchema', () => {
   )
 
   it.each([
+    {
+      input: {...catalog, albums: [{...albumWithTranslations, coverFallback: 'draft'}]},
+      path: ['albums', 0, 'coverFallback'],
+      values: ['lp', 'cd', 'music'],
+    },
     {
       input: {...catalog, albums: [{...albumWithTranslations, status: 'pending'}]},
       path: ['albums', 0, 'status'],

@@ -49,6 +49,9 @@ export const MotionNameEditor = (props: MotionNameEditorProps) => {
           onBlur={commit}
           onInput={() => setError(undefined)}
           onKeyDown={(event) => {
+            if (event.isComposing) {
+              return
+            }
             if (event.key === 'Enter') {
               event.preventDefault()
               commit()

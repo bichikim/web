@@ -1,3 +1,4 @@
+import type {TextOutputSchema} from '../text-generation/types'
 import type {ChatContext, ChatWorkerRequest, ChatWorkerResponse} from './messages'
 import {createWorkerFailureHandler} from '../worker-failure'
 import type {TextModelId} from '../text-generation/model'
@@ -16,6 +17,7 @@ export interface ChatClient {
 }
 
 export interface GenerateChatOptions {
+  readonly outputSchema?: TextOutputSchema
   readonly refineAnswer?: boolean
   readonly supplementaryContext?: string
 }
@@ -44,6 +46,9 @@ export const createChatClient = (options: CreateChatClientOptions): ChatClient =
     generate: (context, replyId, generateOptions = {}) =>
       transport.send({
         context,
+        ...(generateOptions.outputSchema === undefined
+          ? {}
+          : {outputSchema: generateOptions.outputSchema}),
         modelId: options.modelId,
         refineAnswer: generateOptions.refineAnswer ?? true,
         replyId,

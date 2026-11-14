@@ -515,6 +515,8 @@ export interface PuppetExpression {
   /** Seconds to release; defaults to `DEFAULT_PUPPET_EXPRESSION_FADE_TIME`. */
   readonly fadeOutTime?: number
   readonly id: string
+  /** Display name independent of the stable preset ID; omitted displays the ID. */
+  readonly name?: string
   readonly parameters: ReadonlyArray<PuppetExpressionParameter>
 }
 

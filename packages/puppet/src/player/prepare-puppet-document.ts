@@ -7,6 +7,7 @@ import type {PreparePuppetDocumentRequest} from './internal/prepare-puppet-docum
 import {expandDocumentTextureAssets} from './texture-assets'
 import type {PuppetDocument} from './document'
 import type {PreparePuppetDocumentResponse} from './internal/prepare-puppet-document-response'
+import {parseDocumentBlob} from './parse-document-blob'
 import {
   parseDocument,
   type ParseDocumentFailure,
@@ -17,12 +18,16 @@ import {
 export type {PreparedPuppetDocument} from './internal/prepared-document'
 
 export interface PreparePuppetDocumentSourceOptions {
+  /** Cancels validation and releases its Worker; omitted to finish validation. */
   readonly signal?: AbortSignal
-  readonly source: string
+  /** JSON text or a file read in the validation Worker without expanding large files to text. */
+  readonly source: string | Blob
 }
 
 export interface PreparePuppetDocumentValueOptions {
+  /** Already decoded document value to validate. */
   readonly document: unknown
+  /** Cancels validation and releases its Worker; omitted to finish validation. */
   readonly signal?: AbortSignal
 }
 
@@ -37,12 +42,22 @@ export interface PreparePuppetDocumentSuccess {
 
 export type PreparePuppetDocumentResult = ParseDocumentFailure | PreparePuppetDocumentSuccess
 
-const prepareSynchronously = (options: PreparePuppetDocumentOptions): PreparePuppetDocumentResult =>
-  'source' in options ? parseDocument(options.source) : parseDocumentValue(options.document)
+const prepareWithoutWorker = (
+  options: PreparePuppetDocumentOptions,
+): PreparePuppetDocumentResult | Promise<PreparePuppetDocumentResult> => {
+  if (!('source' in options)) {
+    return parseDocumentValue(options.document)
+  }
+  return typeof options.source === 'string'
+    ? parseDocument(options.source)
+    : parseDocumentBlob({signal: options.signal, source: options.source})
+}
 
 const prepareRequest = (options: PreparePuppetDocumentOptions): PreparePuppetDocumentRequest =>
   'source' in options
-    ? {source: options.source, type: 'source'}
+    ? typeof options.source === 'string'
+      ? {source: options.source, type: 'source'}
+      : {source: options.source, type: 'blob'}
     : {document: options.document, type: 'document'}
 
 export const preparePuppetDocument = (
@@ -59,7 +74,7 @@ export const preparePuppetDocument = (
   }
 
   if (typeof Worker === 'undefined') {
-    return Promise.resolve(prepareSynchronously(options))
+    return Promise.resolve(prepareWithoutWorker(options))
   }
 
   return new Promise((resolve, reject) => {
@@ -86,6 +101,14 @@ export const preparePuppetDocument = (
     const handleMessage = (event: MessageEvent<PreparePuppetDocumentResponse>) => {
       dispose()
       const result = event.data
+      if ('type' in result) {
+        reject(
+          new Error('Puppet document validation Worker could not read the source', {
+            cause: result.error,
+          }),
+        )
+        return
+      }
 
       resolve(
         result.ok

@@ -1,8 +1,6 @@
 import type {PPlaybackState} from '../../features/focus-room-audio'
 import {readPlaybackPosition} from 'src/features/focus-room-audio/read-playback-position'
 
-export {readPlaybackPosition} from 'src/features/focus-room-audio/read-playback-position'
-
 export interface TrackLoadTransition {
   readonly phase: 'loading' | 'awaiting-metadata'
   readonly pauseProtected: true

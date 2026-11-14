@@ -1,6 +1,7 @@
 /** @vitest-environment node */
 import {describe, expect, it} from 'vitest'
-import {sampleBlend, sampleTimes} from '../timeline'
+import {sampleTimes} from '../timeline'
+import {sampleBlend} from '@winter-love/wallpaper/frame-renderer/sample-blend'
 
 describe('video background timeline', () => {
   it('should bound analysis and include both ends of a long video', () => {
@@ -21,11 +22,5 @@ describe('video background timeline', () => {
       expect(times).toEqual([0, duration])
       expect(sampleBlend(times, duration / 2)).toEqual({first: 0, mix: 0.5, next: 1})
     }
-  })
-  it('should interpolate using actual timestamps and clamp outside the timeline', () => {
-    expect(sampleBlend([0, 5, 10], 7.5)).toEqual({first: 1, mix: 0.5, next: 2})
-    expect(sampleBlend([0, 5, 10], -1)).toEqual({first: 0, mix: 0, next: 1})
-    expect(sampleBlend([0, 5, 10], 20)).toEqual({first: 2, mix: 0, next: 2})
-    expect(sampleBlend([0], 2)).toEqual({first: 0, mix: 0, next: 0})
   })
 })

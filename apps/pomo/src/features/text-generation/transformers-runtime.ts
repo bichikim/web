@@ -1,4 +1,6 @@
 /// <reference lib="webworker" />
+import {StructuredOutputProcessor} from '@huggingface/transformers-structured-output'
+import {z} from 'zod'
 import {getTextModelCacheKey} from './get-text-model-cache-key'
 import {resolveTextModelAssetUrl} from './resolve-text-model-asset-url'
 import {createTransformersLoadOptions} from './create-transformers-load-options'
@@ -299,15 +301,24 @@ export const createTransformersRuntime = (
 
     try {
       const tokenizer = getProcessorTokenizer()
+      generationOptions.signal?.throwIfAborted()
       const inputs = await processor(createPrompt(processor, generationOptions.messages))
+      const structured = generationOptions.outputSchema !== undefined
+      const constraint = structured
+        ? new StructuredOutputProcessor(tokenizer, {
+            json_schema: z.record(z.string(), z.json()).parse(generationOptions.outputSchema),
+            type: 'json_schema',
+          })
+        : undefined
       let output = ''
 
       await model.generate({
         ...inputs,
         do_sample: true,
         max_new_tokens: generationOptions.maximumTokens,
-        no_repeat_ngram_size: generationOptions.noRepeatNgramSize,
-        repetition_penalty: generationOptions.repetitionPenalty,
+        no_repeat_ngram_size: structured ? 0 : generationOptions.noRepeatNgramSize,
+        ...(constraint === undefined ? {} : {logits_processor: constraint}),
+        repetition_penalty: structured ? 1 : generationOptions.repetitionPenalty,
         ...(stoppingCriteria === undefined ? {} : {stopping_criteria: stoppingCriteria}),
         streamer: new TextStreamer(tokenizer, {
           callback_function: (text) => {
@@ -323,6 +334,10 @@ export const createTransformersRuntime = (
         top_p: generationOptions.topP,
       })
 
+      generationOptions.signal?.throwIfAborted()
+      if (structured) {
+        JSON.parse(output)
+      }
       return output
     } finally {
       cleanup()

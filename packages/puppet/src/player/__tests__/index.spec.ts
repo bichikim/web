@@ -1,6 +1,6 @@
 import {describe, expect, test} from 'vitest'
 
-import * as player from '../index'
+import * as player from '..'
 
 describe('player public API', () => {
   test('should exclude deformation implementation and editor operations', () => {

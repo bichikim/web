@@ -15,11 +15,11 @@ import * as m from '@paraglide/message'
 import {PLoadingStatus} from '../p-loading-status/PLoadingStatus'
 import {PModelDownloadStatus} from '../p-model-download-status/PModelDownloadStatus'
 import {PScribbleCircleControl} from '../scribble/CircleControl'
-import {SceneSettingsPanel} from './SettingsPanel'
+import {PSettings} from '../p-settings/PSettings'
 import {CLASSES} from './shared'
 import {PWeatherStatus} from '../p-weather-status/PWeatherStatus'
 import type {PSettingsProps} from '../settings/types'
-import {MemoryAssistPanel} from './MemoryAssistPanel'
+import {PMemoryAssist} from '../p-memory-assist/PMemoryAssist'
 import {VersionNoticePanel} from './VersionNoticePanel'
 import {GLASS_ICON_BUTTON} from '../button-presets'
 import {PButton} from '../p-button/PButton'
@@ -81,7 +81,7 @@ export const SceneToolbar = (props: SceneToolbarProps) => {
         </Show>
         <Show when={props.memoryAssistVisible ?? true}>
           <div class="inline-flex" data-tour-step="memory-assist">
-            <MemoryAssistPanel
+            <PMemoryAssist
               desktopSurface={props.layout === 'surface'}
               sceneStyle={props.sceneStyle}
               weatherState={props.weatherState}
@@ -89,7 +89,7 @@ export const SceneToolbar = (props: SceneToolbarProps) => {
           </div>
         </Show>
         <div class="inline-flex" data-tour-step="settings">
-          <SceneSettingsPanel
+          <PSettings
             desktopSurface={props.layout === 'surface'}
             uiAutoHide={props.uiAutoHide}
             playerVisible={props.playerVisible}

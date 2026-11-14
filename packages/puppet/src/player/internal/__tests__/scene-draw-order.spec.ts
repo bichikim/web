@@ -151,3 +151,140 @@ describe('scene draw order', () => {
     expect(parseDocumentValue(keyed()).ok).toBe(false)
   })
 })
+
+test('should preserve paint order from legacy triangulated channels with equal rest orders', () => {
+  const document = createDocument(
+    [part('plain', 500), part('keyed', 500)],
+    [node('plain'), node('keyed')],
+    {
+      parameterBindings: [
+        {
+          id: 'opacity',
+          keyforms: (
+            [
+              [0, 0],
+              [1, 0],
+              [0, 1],
+            ] as const
+          ).map((values) => ({
+            parts: [{partId: 'keyed', properties: {opacity: 0.5}, vertices: []}],
+            values,
+          })),
+          parameterIds: ['x', 'y'],
+          targetPartIds: ['keyed'],
+        },
+      ],
+      parameters: ['x', 'y'].map((id) => ({defaultValue: 0, id, maximum: 1, minimum: 0, name: id})),
+    },
+  )
+  expect(parseDocumentValue(document).ok).toBe(true)
+  expect(order(document, {x: 0.02, y: 0.17})).toEqual(['keyed', 'plain'])
+  expect(order(document, {x: 0, y: 0})).toEqual(['plain', 'keyed'])
+  expect(order(document, {x: 0.02, y: 0.17})).toEqual(['keyed', 'plain'])
+})
+
+test('should reuse paint order while unrelated geometry parameters change', () => {
+  const document = createDocument([part('a', 200), part('b', 600)], [node('a'), node('b')], {
+    parameterBindings: [
+      {
+        id: 'bend',
+        interpolation: 'grid',
+        keyforms: [0, 1].map((value) => ({
+          parts: [{partId: 'a', properties: {drawOrder: 200}, vertices: []}],
+          values: [value],
+        })),
+        parameterIds: ['bend'],
+        targetPartIds: ['a'],
+      },
+    ],
+    parameters: [{defaultValue: 0, id: 'bend', maximum: 1, minimum: 0, name: 'Bend'}],
+  })
+  const initial = getDrawOrderedPartStates(document, {bend: 0})
+  expect(getDrawOrderedPartStates(document, {bend: 1})).toBe(initial)
+  expect(initial.map((state) => state.partId)).toEqual(['a', 'b'])
+  expect(
+    order({...document, parameterBindings: [], parts: [part('a', 900), part('b', 600)]}),
+  ).toEqual(['b', 'a'])
+})
+
+test('should reuse constant grid group orders across parameter changes', () => {
+  const document = createDocument(
+    [part('a'), part('b', 500)],
+    [group('group', [node('a')], {drawOrder: 400}), node('b')],
+    {
+      parameterBindings: [
+        {
+          id: 'constant',
+          interpolation: 'grid',
+          keyforms: [0, 1].map((value) => ({
+            groups: [{groupId: 'group', properties: {drawOrder: 400}}],
+            parts: [],
+            values: [value],
+          })),
+          parameterIds: ['p'],
+          targetGroupIds: ['group'],
+        },
+      ],
+      parameters: [{defaultValue: 0, id: 'p', maximum: 1, minimum: 0, name: 'P'}],
+    },
+  )
+  const initial = getDrawOrderedPartStates(document, {p: 0})
+  expect(initial.map((state) => state.partId)).toEqual(['a', 'b'])
+  expect(getDrawOrderedPartStates(document, {p: 1})).toBe(initial)
+})
+
+test('should refresh group order for influence changes and inherited parameter visibility', () => {
+  const document = createDocument(
+    [part('a'), part('b', 500)],
+    [
+      {
+        ...group('group', [node('a')], {drawOrder: 400}),
+        parameterVisibility: [{maximum: 1, minimum: 0.5, parameterId: 'visible'}],
+      },
+      node('b'),
+    ],
+    {
+      parameterBindings: [
+        {
+          id: 'order',
+          influenceMode: 'multiply',
+          influences: [
+            {
+              parameterId: 'weight',
+              points: [
+                {value: 0, weight: 0},
+                {value: 1, weight: 1},
+              ],
+            },
+          ],
+          interpolation: 'grid',
+          keyforms: [0, 1].map((value) => ({
+            groups: [{groupId: 'group', properties: {drawOrder: 400 + value * 400}}],
+            parts: [],
+            values: [value],
+          })),
+          parameterIds: ['order'],
+          targetGroupIds: ['group'],
+        },
+      ],
+      parameters: ['order', 'weight', 'visible'].map((id) => ({
+        defaultValue: 1,
+        id,
+        maximum: 1,
+        minimum: 0,
+        name: id,
+      })),
+    },
+  )
+  const values = {order: 1, visible: 1, weight: 0}
+  expect(order(document, values)).toEqual(['a', 'b'])
+  values.weight = 1
+  expect(order(document, values)).toEqual(['b', 'a'])
+  values.order = 0
+  expect(order(document, values)).toEqual(['a', 'b'])
+  values.visible = 0
+  expect(getDrawOrderedPartStates(document, values)).toEqual([
+    {locked: false, partId: 'a', visible: false},
+    {locked: false, partId: 'b', visible: true},
+  ])
+})

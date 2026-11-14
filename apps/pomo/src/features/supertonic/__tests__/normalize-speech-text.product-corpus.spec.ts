@@ -4,7 +4,7 @@ import {readFileSync} from 'node:fs'
 import {describe, expect, it} from 'vitest'
 import {z} from 'zod'
 
-import {normalizeSpeechText} from '../index'
+import {normalizeSpeechText} from '@winter-love/supertonic/number-speech/index'
 
 const narrationSchema = z.object({
   clips: z.array(z.object({id: z.string(), text: z.string()})),

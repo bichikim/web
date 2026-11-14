@@ -74,7 +74,7 @@ export const readContextSelection = (options: ContextSelectionOptions) => {
   }
   const selected =
     row === null ? selection : {column: 1, endLine: line, line, path: document.location.path}
-  const rows = document.source.split('\n').slice(selected.line - 1, selected.endLine)
+  const rows = document.source.split(/\r\n|\n|\r/u).slice(selected.line - 1, selected.endLine)
   if (selected.endColumn !== undefined) {
     const last = rows.length - 1
     rows[last] = rows[last]?.slice(0, selected.endColumn - 1) ?? ''
