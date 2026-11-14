@@ -4,6 +4,7 @@ import {Tabs} from '@kobalte/core/tabs'
 import {fireEvent, render, screen, within} from '@solidjs/testing-library'
 import {For, type JSX} from 'solid-js'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
+import {createEvents as createSettingsEvents} from './fixtures/create-events'
 
 import {getLocale, overwriteGetLocale} from '@paraglide/runtime'
 import {PSelect} from 'src/components/p-select/PSelect'
@@ -72,53 +73,8 @@ const DIALOGUE: PDialogue = {
   voiceId: 'Yuna',
 }
 
-const createEvents = (overrides: Partial<PEventContextValue> = {}): PEventContextValue => ({
-  activeDialogueId: () => null,
-  activeSegmentCount: () => 0,
-  activeSegmentMood: () => null,
-  activeSegmentPosition: () => null,
-  activeText: () => null,
-  activeViseme: () => 'rest',
-  cancelDelayedEndEvent: vi.fn(),
-  delayedEndEventDurationMinutes: () => 30,
-  delayedEndEventIsRunning: () => false,
-  deleteDialogue: vi.fn(async () => undefined),
-  dialogues: () => [DIALOGUE],
-  enterFocusRoom: vi.fn(),
-  entryDialogueId: () => null,
-  entryDialogueIds: () => [],
-  errorMessage: () => null,
-  eventActionIds: () => ({}),
-  eventDialogueIds: () => ({}),
-  eventPlaybackModes: () => ({}),
-  getAudio: vi.fn(async () => null),
-  hasEnteredFocusRoom: () => true,
-  isDialoguePlaybackBlocked: () => false,
-  isDialoguePlaying: () => false,
-  isDialogueScheduled: () => false,
-  isEntryPlaybackBlocked: () => false,
-  isLoading: () => false,
-  onStopDialoguePlayback: vi.fn(),
-  onStopEntryPlayback: vi.fn(),
-  playDialogue: vi.fn(async () => true),
-  playDialogueEvents: vi.fn(async () => undefined),
-  playDialogueSequence: vi.fn(async () => undefined),
-  refreshDialogues: vi.fn(async () => undefined),
-  registerEventActionExecutor: vi.fn(() => vi.fn()),
-  retryDialoguePlayback: vi.fn(),
-  retryEntryPlayback: vi.fn(),
-  scheduledDialogueCount: () => 0,
-  setDelayedEndEventDuration: vi.fn(async () => undefined),
-  setEntryDialogue: vi.fn(async () => undefined),
-  setEntryDialogues: vi.fn(async () => undefined),
-  setEventDialogue: vi.fn(async () => undefined),
-  setEventDialogues: vi.fn(async () => undefined),
-  setEventItems: vi.fn(async () => undefined),
-  setEventPlaybackMode: vi.fn(async () => undefined),
-  skipDialoguePlayback: vi.fn(),
-  startDelayedEndEvent: vi.fn(),
-  ...overrides,
-})
+const createEvents = (overrides: Partial<PEventContextValue> = {}): PEventContextValue =>
+  createSettingsEvents(overrides, () => [DIALOGUE])
 
 const createFeeds = (): PFeedController => ({
   cancelProcessing: vi.fn(async () => undefined),
