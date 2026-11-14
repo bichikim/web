@@ -13,25 +13,16 @@ import {
 import type {SpeechEndDetector} from '../speech-end-detector'
 import type {Accessor} from 'solid-js'
 
-type RecorderListener = (event: BlobEvent | Event) => void
-type TrackListener = (event: Event) => void
-
-class FakeMediaRecorder {
+class FakeMediaRecorder extends EventTarget {
   static current: FakeMediaRecorder | null = null
   static autoStop = true
 
   readonly mimeType = 'audio/webm'
-  readonly #listeners = new Map<string, Array<RecorderListener>>()
   state: RecordingState = 'inactive'
 
   constructor() {
+    super()
     FakeMediaRecorder.current = this
-  }
-
-  addEventListener(type: string, listener: RecorderListener) {
-    const listeners = this.#listeners.get(type) ?? []
-    listeners.push(listener)
-    this.#listeners.set(type, listeners)
   }
 
   start() {
@@ -47,43 +38,22 @@ class FakeMediaRecorder {
 
   emitStop() {
     this.state = 'inactive'
-    for (const listener of this.#listeners.get('dataavailable') ?? []) {
-      listener({data: new Blob(['audio'])} as BlobEvent)
-    }
-    for (const listener of this.#listeners.get('stop') ?? []) {
-      listener(new Event('stop'))
-    }
+    this.dispatchEvent(Object.assign(new Event('dataavailable'), {data: new Blob(['audio'])}))
+    this.dispatchEvent(new Event('stop'))
   }
 
   emitError() {
     this.state = 'inactive'
-    for (const listener of this.#listeners.get('error') ?? []) {
-      listener(new Event('error'))
-    }
+    this.dispatchEvent(new Event('error'))
     this.emitStop()
   }
 }
 
-class FakeMediaStreamTrack {
-  readonly #listeners = new Map<string, Array<TrackListener>>()
+class FakeMediaStreamTrack extends EventTarget {
   readonly stop = vi.fn(() => {
     this.readyState = 'ended'
   })
   readyState: MediaStreamTrackState = 'live'
-
-  addEventListener(type: string, listener: TrackListener) {
-    const listeners = this.#listeners.get(type) ?? []
-    listeners.push(listener)
-    this.#listeners.set(type, listeners)
-  }
-
-  removeEventListener(type: string, listener: TrackListener) {
-    const listeners = this.#listeners.get(type) ?? []
-    this.#listeners.set(
-      type,
-      listeners.filter((candidate) => candidate !== listener),
-    )
-  }
 
   emitEnded() {
     this.readyState = 'ended'
@@ -91,9 +61,7 @@ class FakeMediaStreamTrack {
   }
 
   emit(type: string) {
-    for (const listener of this.#listeners.get(type) ?? []) {
-      listener(new Event(type))
-    }
+    this.dispatchEvent(new Event(type))
   }
 }
 
