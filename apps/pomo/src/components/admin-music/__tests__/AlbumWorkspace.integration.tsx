@@ -3,7 +3,6 @@
 import {cleanup, fireEvent, render, screen, waitFor} from '@solidjs/testing-library'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
-import type {AdminAlbum} from 'src/features/admin-music'
 import {AlbumWorkspace} from '../AlbumWorkspace'
 
 vi.mock('solid-js/web', async (importOriginal) => {
@@ -23,69 +22,19 @@ vi.mock('solid-js/web', async (importOriginal) => {
     },
   }
 })
-vi.mock('@solidjs/start', () => ({
-  clientOnly:
-    () =>
-    (props: {
-      readonly active: boolean
-      readonly autoplay: boolean
-      readonly fallback: unknown
-      readonly onPlay: () => void
-      readonly onRequest: () => void
-      readonly title: string
-      readonly trackId: string
-    }) => {
-      void props.fallback
-      return (
-        <button
-          aria-label={`${props.title} 미리듣기`}
-          data-active={String(props.active)}
-          data-autoplay={String(props.autoplay)}
-          data-track-id={props.trackId}
-          onClick={props.onRequest}
-          onDblClick={props.onPlay}
-          type="button"
-        >
-          미리듣기
-        </button>
-      )
-    },
-}))
-vi.mock('../AlbumReleaseCard', () => ({
-  AlbumReleaseCard: (props: {
-    readonly activeOfferCount: number
-    readonly album: AdminAlbum
-    readonly onPublicSettingsSelect: () => void
-    readonly trackCount: number
-  }) => {
-    void props.album
-    return (
-      <button onClick={props.onPublicSettingsSelect} type="button">
-        공개 설정 {props.trackCount}/{props.activeOfferCount}
-      </button>
-    )
-  },
-}))
-vi.mock('../TrackFields', () => ({
-  TrackFields: (props: {
-    readonly artist: string
-    readonly onArtistChange: (value: string) => void
-    readonly onTitleChange: (value: string) => void
-    readonly resetVersion: number
-    readonly title: string
-  }) => (
-    <div data-reset={props.resetVersion}>
-      <button onClick={() => props.onArtistChange('새 가수')} type="button">
-        가수 변경
-      </button>
-      <button onClick={() => props.onTitleChange('새 제목')} type="button">
-        제목 변경
-      </button>
-      <span>{props.artist}</span>
-      <span>{props.title}</span>
-    </div>
-  ),
-}))
+// Keep the web shim local; the JSX helper depends on that mocked runtime.
+vi.mock('@solidjs/start', async () => {
+  const {clientOnly} = await import('./fixtures/workspace')
+  return {clientOnly}
+})
+vi.mock('../AlbumReleaseCard', async () => {
+  const {AlbumReleaseCard} = await import('./fixtures/workspace')
+  return {AlbumReleaseCard}
+})
+vi.mock('../TrackFields', async () => {
+  const {TrackFields} = await import('./fixtures/workspace')
+  return {TrackFields}
+})
 
 import {BASE_CATALOG, createAlbum, createModelHarness} from './fixtures/model'
 
