@@ -1,5 +1,5 @@
 /** @vitest-environment jsdom */
-import {Application, Container, MeshSimple, Texture} from 'pixi.js'
+import {Application, Container, MeshSimple, RendererType, Texture} from 'pixi.js'
 import {afterEach, beforeEach, describe, expect, test, vi} from 'vitest'
 import {createEmptyDocument} from '../../create-empty-document'
 import {createPlayerRenderer} from '../create-player-renderer'
@@ -15,6 +15,7 @@ vi.mock('pixi.js', () => ({
   Application: vi.fn(),
   Container: vi.fn(),
   MeshSimple: vi.fn(),
+  RendererType: {WEBGL: 1},
   Texture: {from: vi.fn()},
   UPDATE_PRIORITY: {LOW: 0},
 }))
@@ -23,7 +24,12 @@ const application = {
   destroy: vi.fn(),
   init: vi.fn().mockResolvedValue(undefined),
   render: vi.fn(),
-  renderer: {resetState: vi.fn(), resolution: 1},
+  renderer: {
+    gl: {flush: vi.fn()},
+    resetState: vi.fn(),
+    resolution: 1,
+    type: undefined as number | undefined,
+  },
   resize: vi.fn(),
   screen: {height: 100, width: 100},
   stage: {addChild: vi.fn()},
@@ -39,6 +45,7 @@ const part = (id: string) => ({
 })
 
 beforeEach(() => {
+  application.renderer.type = undefined
   vi.mocked(Application).mockImplementation(function mockApplication() {
     return application as unknown as Application
   })
@@ -53,6 +60,43 @@ afterEach(() => {
 })
 
 describe('createPlayerRenderer', () => {
+  test('should release a mask-only mesh that never entered the display tree', async () => {
+    const mesh = {destroy: vi.fn(), parent: null}
+    vi.spyOn(initialization, 'initializeRuntimeParts').mockImplementation(async ({partById}) => {
+      partById.set('mask-only', {
+        mesh,
+        partId: 'mask-only',
+        restVertices: [],
+        vertices: new Float32Array(),
+      } as unknown as RuntimePart)
+    })
+    const renderer = await createPlayerRenderer({
+      canvas: document.createElement('canvas'),
+      document: createEmptyDocument(),
+    })
+    renderer.destroy()
+    renderer.destroy()
+    expect(mesh.destroy).toHaveBeenCalledExactlyOnceWith({texture: true, textureSource: true})
+  })
+
+  test('should submit drawing before an external consumer and submit its completed commands', async () => {
+    const events: string[] = []
+    const instance = await createPlayerRenderer({
+      canvas: document.createElement('canvas'),
+      document: createEmptyDocument(),
+      onAfterRender: () => events.push('consumer'),
+    })
+    application.renderer.type = RendererType.WEBGL
+    application.render.mockImplementationOnce(() => events.push('draw'))
+    application.renderer.gl.flush
+      .mockImplementationOnce(() => events.push('submit'))
+      .mockImplementationOnce(() => events.push('submit'))
+    events.length = 0
+    instance.redraw()
+    expect(events).toEqual(['draw', 'submit', 'consumer', 'submit'])
+    instance.destroy()
+  })
+
   test('should redraw paused fitting changes and ignore unchanged or disposed fitting', async () => {
     const renderer = await createPlayerRenderer({
       canvas: document.createElement('canvas'),
@@ -251,4 +295,40 @@ test('should retain submitted meshes until the deferred document has a computed 
   })
   expect(apply).toHaveBeenLastCalledWith(expect.objectContaining({document: replacement}))
   renderer.destroy()
+})
+
+test('should restore paused masks after context restoration and release the listener on destruction', async () => {
+  const destroy = vi.fn()
+  vi.spyOn(initialization, 'initializeRuntimeParts').mockImplementation(async ({partById}) => {
+    partById.set('masked', {
+      mask: {
+        container: {destroy},
+        filter: {destroy},
+        meshes: [],
+        sprite: {destroy},
+        texture: {destroy},
+      },
+      mesh: {alpha: 1, renderable: true, visible: true},
+      partId: 'masked',
+      restVertices: [],
+      vertices: new Float32Array(0),
+    } as unknown as RuntimePart)
+  })
+  vi.spyOn(frames, 'applyRenderFrame').mockReturnValue([])
+  const canvas = document.createElement('canvas')
+  const renderer = await createPlayerRenderer({canvas, document: createEmptyDocument()})
+  renderer.setRunning(false)
+  renderer.applyPreparedFrame({
+    frame: {layers: new Map(), plans: [], spatialPoses: new Map()},
+    vertices: new Float32Array(0),
+  })
+  renderer.redraw()
+  expect(renderMaskGroups).toHaveBeenCalledOnce()
+  canvas.dispatchEvent(new Event('webglcontextrestored'))
+  expect(renderMaskGroups).toHaveBeenCalledTimes(2)
+  expect(application.render).toHaveBeenCalledTimes(2)
+  renderer.destroy()
+  canvas.dispatchEvent(new Event('webglcontextrestored'))
+  expect(renderMaskGroups).toHaveBeenCalledTimes(2)
+  expect(application.render).toHaveBeenCalledTimes(2)
 })

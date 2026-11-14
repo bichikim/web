@@ -22,13 +22,17 @@ const KEY_PROGRESS_EPSILON = 0.0001
 const getCoordinates = (options: SampleGridCoordinatesOptions, index: number) =>
   options.keyformCoordinates[index] ?? options.restCoordinates
 
-const grids = new WeakMap<
-  SampleGridCoordinatesOptions['binding'],
-  {
-    readonly axes: ReadonlyArray<{readonly keys: number[]; readonly rounded: number[]}>
-    readonly corners: ReadonlyMap<string, number>
-  }
->()
+interface GridData {
+  readonly axes: ReadonlyArray<{readonly keys: number[]; readonly rounded: number[]}>
+  readonly corners: ReadonlyMap<string, number>
+  readonly points: Map<boolean, GridPoint>
+}
+
+const grids = new WeakMap<SampleGridCoordinatesOptions['binding'], GridData>()
+
+// Cached identity follows indexed numbers, independently of caller serialization hooks.
+const getGridValues = (values: ReadonlyArray<number>): ReadonlyArray<number> =>
+  'toJSON' in values ? Array.from({length: values.length}, (_, index) => values[index]!) : values
 
 const getGrid = (binding: SampleGridCoordinatesOptions['binding']) => {
   let grid = grids.get(binding)
@@ -41,18 +45,47 @@ const getGrid = (binding: SampleGridCoordinatesOptions['binding']) => {
     })
     const corners = new Map<string, number>()
     binding.keyforms.forEach((form, index) => {
-      const key = JSON.stringify(form.values)
+      const key = JSON.stringify(getGridValues(form.values))
       if (!corners.has(key)) {
         corners.set(key, index)
       }
     })
-    grid = {axes, corners}
+    grid = {axes, corners, points: new Map()}
     grids.set(binding, grid)
   }
   return grid
 }
 
-interface GridCorner {
+const encodeGridIdentity = (_key: string, value: unknown): unknown =>
+  typeof value === 'number' && (Object.is(value, -0) || !Number.isFinite(value))
+    ? `number:${Object.is(value, -0) ? '-0' : String(value)}`
+    : value
+
+/** Shares sampling metadata for equivalent immutable bindings without retaining their owner. */
+export const prepareGridBindings = (bindings: ReadonlyArray<GridBinding>): void => {
+  const shared = new Map<string, GridData>()
+  for (const binding of bindings) {
+    const policy = binding.sampling
+    const key = JSON.stringify(
+      [
+        [...binding.parameterIds],
+        binding.keyforms.map((form) => getGridValues(form.values)),
+        [
+          policy?.continuousPrecision,
+          policy?.discretePrecision,
+          policy?.keyTolerance,
+          policy?.keyToleranceUnit,
+        ],
+      ],
+      encodeGridIdentity,
+    )
+    const grid = shared.get(key) ?? getGrid(binding)
+    shared.set(key, grid)
+    grids.set(binding, grid)
+  }
+}
+
+export interface GridCorner {
   readonly index: number
   readonly weight: number
 }
@@ -116,15 +149,12 @@ interface GridPoint {
 }
 
 // Channels share one interpolation point. Retain only the latest continuous/discrete point
-// per immutable binding; channel coordinates and rest values are always read from the caller.
-const gridPoints = new WeakMap<GridBinding, Map<boolean, GridPoint>>()
+// per immutable grid; channel coordinates and rest values are always read from the caller.
 
-const getGridCorners = (options: SampleGridCoordinatesOptions) => {
-  let points = gridPoints.get(options.binding)
-  if (points === undefined) {
-    points = new Map()
-    gridPoints.set(options.binding, points)
-  }
+export const getGridCorners = (
+  options: SampleGridCoordinatesOptions,
+): ReadonlyArray<GridCorner> => {
+  const {points} = getGrid(options.binding)
   const discrete = options.sampling === 'step'
   const previous = points.get(discrete)
   if (
@@ -151,11 +181,10 @@ const getGridCorners = (options: SampleGridCoordinatesOptions) => {
   return corners
 }
 
-/** Snapshots the interpolation point; each indexed read samples the supplied coordinate channels. */
-export const createGridCoordinateSampler = (
+const createCoordinateSampler = (
   options: SampleGridCoordinatesOptions,
+  samples: ReadonlyArray<GridCorner>,
 ): ((index: number) => number) => {
-  const samples = getGridCorners(options)
   if (samples.length === 0) {
     return (index) => options.restCoordinates[index]!
   }
@@ -184,13 +213,19 @@ export const createGridCoordinateSampler = (
   }
 }
 
+/** Snapshots the interpolation point; each indexed read samples the supplied coordinate channels. */
+export const createGridCoordinateSampler = (
+  options: SampleGridCoordinatesOptions,
+): ((index: number) => number) => createCoordinateSampler(options, getGridCorners(options))
+
 /** 직교 키폼 격자를 보간하며, 이산 채널은 각 축의 낮은 키를 유지한다. */
 export const sampleGridCoordinates = (
   options: SampleGridCoordinatesOptions,
 ): ReadonlyArray<number> => {
-  if (getGridCorners(options).length === 0) {
+  const samples = getGridCorners(options)
+  if (samples.length === 0) {
     return options.restCoordinates
   }
-  const sample = createGridCoordinateSampler(options)
+  const sample = createCoordinateSampler(options, samples)
   return options.restCoordinates.map((_, index) => sample(index))
 }

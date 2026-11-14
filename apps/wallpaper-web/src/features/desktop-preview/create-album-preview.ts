@@ -12,6 +12,28 @@ export interface AlbumPreview {
   readonly destroy: () => void
 }
 
+const decodeAlbumImage = async (source: string): Promise<HTMLImageElement | ImageBitmap> => {
+  if (typeof globalThis.createImageBitmap !== 'function') {
+    const image = new Image()
+    image.decoding = 'async'
+    image.src = source
+    await image.decode()
+    return image
+  }
+  const response = await fetch(source)
+  if (!response.ok) {
+    throw new Error(`Album image request failed (${response.status})`)
+  }
+  // Decode the encoded bytes before WebGL upload instead of decoding inside texImage2D.
+  return globalThis.createImageBitmap(await response.blob())
+}
+
+const releaseImage = (image: HTMLImageElement | ImageBitmap | null) => {
+  if (image !== null && 'close' in image) {
+    image.close()
+  }
+}
+
 /** Owns the preview canvas while borrowing the desktop app's transition implementation. */
 export const createAlbumPreview = async (canvas: HTMLCanvasElement): Promise<AlbumPreview> => {
   const application = new Application()
@@ -27,6 +49,7 @@ export const createAlbumPreview = async (canvas: HTMLCanvasElement): Promise<Alb
   })
   const transition = new PhotoTransition(application)
   let current: Sprite | null = null
+  let imageSource: HTMLImageElement | ImageBitmap | null = null
   let version = 0
   let disposed = false
   const resize = () => {
@@ -51,17 +74,17 @@ export const createAlbumPreview = async (canvas: HTMLCanvasElement): Promise<Alb
     const CENTER_ANCHOR = 0.5
     cancelPending()
     const revision = version
-    const image = new Image()
-    image.decoding = 'async'
-    image.src = source
-    await image.decode()
+    const image = await decodeAlbumImage(source)
     if (disposed || version !== revision) {
+      releaseImage(image)
       return false
     }
     if (current !== null) {
       transition.capture()
       current.destroy({texture: true, textureSource: true})
     }
+    releaseImage(imageSource)
+    imageSource = image
     current = new Sprite(Texture.from(image))
     current.anchor.set(CENTER_ANCHOR, 0)
     application.stage.addChildAt(current, 0)
@@ -79,6 +102,8 @@ export const createAlbumPreview = async (canvas: HTMLCanvasElement): Promise<Alb
     transition.clear()
     current?.destroy({texture: true, textureSource: true})
     current = null
+    releaseImage(imageSource)
+    imageSource = null
     application.destroy(false, {children: true})
   }
   return {cancelPending, destroy, show}

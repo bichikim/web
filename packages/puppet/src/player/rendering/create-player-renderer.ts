@@ -20,6 +20,7 @@ import {renderMaskGroups} from './render-mask-groups'
 import {configureBackdropCopies} from './backdrop-copies'
 import {configureResolvedTargets} from './resolved-targets'
 import {configureFilterResolves} from './filter-resolves'
+import {configureBatchGradients} from './configure-batch-gradients'
 import type {RuntimeLayer, RuntimePart} from './types'
 
 const MINIMUM_MASK_RESOLUTION = 0.01
@@ -160,6 +161,7 @@ const createApplication = async (options: CreatePlayerRendererOptions) => {
   ) {
     configureResolvedTargets(application.renderer as WebGLRenderer)
     configureFilterResolves(application.renderer as WebGLRenderer)
+    configureBatchGradients(application.renderer as WebGLRenderer)
   }
   const presentation = replaceBackBufferPresentation(
     (application.renderer as {backBuffer?: unknown} | undefined)?.backBuffer,
@@ -221,13 +223,25 @@ export const createPlayerRenderer = async (
   let destroyed = false
   let running = true
   let masksDirty = false
+  const restoreContext = () => {
+    // Restored render textures have storage again, but their mask pixels were lost.
+    masksDirty = true
+    redraw()
+  }
   const destroy = () => {
     if (destroyed) {
       return
     }
     destroyed = true
+    options.canvas.removeEventListener('webglcontextrestored', restoreContext)
     native = undefined
     destroyRuntimeFilters([...partById.values(), ...layerById.values()])
+    for (const {mesh} of partById.values()) {
+      // Mask-only parts never enter the display tree destroyed by Application.
+      if (mesh.parent === null) {
+        mesh.destroy({texture: true, textureSource: true})
+      }
+    }
     application.destroy(
       {removeView: false},
       {children: true, context: false, texture: true, textureSource: true},
@@ -284,9 +298,16 @@ export const createPlayerRenderer = async (
       renderMasks()
     }
   }
+  const submitRender = () => {
+    const {renderer} = application
+    if (renderer?.type !== undefined && renderer.type === RendererType.WEBGL) {
+      const webgl = renderer as WebGLRenderer
+      webgl.gl.flush()
+    }
+  }
   const renderLoop = createRenderLoop({
     externalRendering,
-    render(external) {
+    render(external, phase) {
       if (destroyed) {
         return
       }
@@ -298,14 +319,20 @@ export const createPlayerRenderer = async (
       }
       application.render()
       if (shared) {
+        // A synchronous canvas consumer runs before the browser's implicit frame submission.
+        submitRender()
         options.onAfterRender?.()
         application.renderer.resetState()
+      }
+      if (phase === 'immediate') {
+        submitRender()
       }
     },
   })
   application.ticker.remove(application.render, application)
   application.ticker.add(renderLoop.tick, undefined, UPDATE_PRIORITY.LOW)
   const {redraw} = renderLoop
+  options.canvas.addEventListener('webglcontextrestored', restoreContext)
   const emptyMix: MotionMix = {
     groupOpacitySamples: new Map(),
     modelOpacity: 1,

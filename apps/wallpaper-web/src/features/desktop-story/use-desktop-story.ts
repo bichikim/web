@@ -8,10 +8,12 @@ interface UseDesktopStoryProps {
   readonly onRequest?: () => void
   /** Visible stage receiving gestures and defining character placement. */
   readonly stage: Accessor<HTMLElement | null>
+  readonly dragging?: Accessor<boolean>
 }
 
 export const useDesktopStory = (props: UseDesktopStoryProps) => {
   const [viewport, setViewport] = createSignal({
+    animated: true,
     height: 0,
     reducedMotion: false,
     width: 0,
@@ -20,12 +22,20 @@ export const useDesktopStory = (props: UseDesktopStoryProps) => {
   const [state, setState] = createSignal(INITIAL_STORY)
   createEffect(() => {
     const chapter = requested()
-    const {reducedMotion} = viewport()
+    const {animated, reducedMotion} = viewport()
     setState((current) =>
-      advanceStoryTransition(current, {chapter, reducedMotion, type: 'request'}),
+      advanceStoryTransition(current, {
+        chapter,
+        reducedMotion: reducedMotion || !animated,
+        type: 'request',
+      }),
     )
   })
   const transition = createMemo(() => state().transition)
+  const aspectRatio = createMemo(() => {
+    const {height, width} = viewport()
+    return height > 0 ? width / height : 1
+  })
   const frame = createMemo(() => {
     const current = state()
     const settled = resolveStoryFrame({...viewport(), distance: STORY_CUTS[current.chapter] ?? 0})
@@ -67,17 +77,22 @@ export const useDesktopStory = (props: UseDesktopStoryProps) => {
       return
     }
     const media = globalThis.matchMedia('(prefers-reduced-motion: reduce)')
+    const animated =
+      CSS.supports('height', '100dvh') &&
+      CSS.supports('clip-path', 'polygon(0 0,100% 0,100% 100%,0 100%)')
     let pending: number | null = null
     const measure = () => {
       pending = null
       const height = stage.clientHeight
       const width = stage.clientWidth
+      const reducedMotion = media.matches
       setViewport((current) =>
+        current.animated === animated &&
         current.height === height &&
         current.width === width &&
-        current.reducedMotion === media.matches
+        current.reducedMotion === reducedMotion
           ? current
-          : {height, reducedMotion: media.matches, width},
+          : {animated, height, reducedMotion, width},
       )
     }
     const schedule = () => {
@@ -89,6 +104,7 @@ export const useDesktopStory = (props: UseDesktopStoryProps) => {
     measure()
     const disconnectInput = connectStoryInput({
       chapter: () => state().chapter,
+      dragging: props.dragging,
       request: requestChapter,
       target: stage,
       transitioning: () => transition() !== null,
@@ -104,5 +120,15 @@ export const useDesktopStory = (props: UseDesktopStoryProps) => {
   })
   const returnToPlayground = () => requestChapter(-1)
   const startIntroduction = () => requestChapter(0)
-  return {covered, finished, frame, returnToPlayground, scenes, startIntroduction, transition}
+  return {
+    aspectRatio,
+    covered,
+    finished,
+    frame,
+    returnToPlayground,
+    scenes,
+    startIntroduction,
+    transition,
+    viewportWidth: () => viewport().width,
+  }
 }
