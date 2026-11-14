@@ -38,9 +38,11 @@ export interface SupertonicVoice {
 
 const FULL_MODEL_REVISION = '3cadd1e'
 const MODEL_STORAGE_URL = 'https://storage.pomofi.io/models'
-const FULL_MODEL_BASE_URL = `${MODEL_STORAGE_URL}/supertonic-3/${FULL_MODEL_REVISION}`
+/** Revision-pinned directory for full models and shared metadata and voice styles. */
+export const FULL_MODEL_BASE_URL = `${MODEL_STORAGE_URL}/supertonic-3/${FULL_MODEL_REVISION}`
 const INT8_MODEL_REVISION = 'cca5a0e6c96e1d2c720986bf7e75fcc81dee3ae4'
-const INT8_MODEL_BASE_URL = `${MODEL_STORAGE_URL}/supertonic-3-int8/${INT8_MODEL_REVISION}`
+/** Revision-pinned directory for the quantized model files. */
+export const INT8_MODEL_BASE_URL = `${MODEL_STORAGE_URL}/supertonic-3-int8/${INT8_MODEL_REVISION}`
 
 export const getSupertonicAssetUrl = (path: string) => `${FULL_MODEL_BASE_URL}/${path}`
 
