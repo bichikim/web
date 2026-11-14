@@ -1,5 +1,6 @@
 /** @vitest-environment node */
 import {afterEach, describe, expect, it, vi} from 'vitest'
+import {createWorkerHarness, type WorkerHarness} from 'src/__tests__/create-worker-harness'
 
 import {createWorkerTransport, type WorkerTransportFailure} from '..'
 
@@ -11,37 +12,11 @@ interface TestResponse {
   readonly type: 'complete'
 }
 
-type WorkerListener = (event: ErrorEvent | MessageEvent<TestResponse>) => void
+type FakeWorker = WorkerHarness<TestResponse>
 
-class FakeWorker {
-  readonly postMessage = vi.fn()
-  readonly terminate = vi.fn()
-  readonly #listeners = new Map<string, Array<WorkerListener>>()
-
-  addEventListener(type: string, listener: WorkerListener) {
-    const listeners = this.#listeners.get(type) ?? []
-    listeners.push(listener)
-    this.#listeners.set(type, listeners)
-  }
-
-  emitError(message: string, error?: unknown) {
-    this.#emit('error', {error, message} as ErrorEvent)
-  }
-
-  emitMessage(response: TestResponse) {
-    this.#emit('message', {data: response} as MessageEvent<TestResponse>)
-  }
-
-  emitMessageError() {
-    this.#emit('messageerror', {} as MessageEvent<TestResponse>)
-  }
-
-  #emit(type: string, event: ErrorEvent | MessageEvent<TestResponse>) {
-    for (const listener of this.#listeners.get(type) ?? []) {
-      listener(event)
-    }
-  }
-}
+const FakeWorker = createWorkerHarness<TestResponse>({
+  createErrorEvent: (message, error) => ({error, message}),
+})
 
 const createTransport = (
   worker: FakeWorker,
@@ -58,6 +33,7 @@ const createTransport = (
 }
 
 afterEach(() => {
+  FakeWorker.current = null
   vi.clearAllMocks()
 })
 
