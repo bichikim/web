@@ -18,6 +18,7 @@ const prepare = (label: string) => {
     top: 0,
     width: 200,
   } as DOMRect)
+  Object.defineProperty(area, 'hasPointerCapture', {value: vi.fn(() => true)})
   Object.defineProperty(area, 'setPointerCapture', {value: vi.fn()})
   Object.defineProperty(area, 'releasePointerCapture', {value: vi.fn()})
   return area
