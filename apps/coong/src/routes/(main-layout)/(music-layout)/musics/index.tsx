@@ -44,13 +44,15 @@ export default function MusicPage() {
 
   const handleGetSample = async () => {
     setIsLoading(true)
-    const {musics} = (await getSample()) ?? {}
+    try {
+      const {musics} = (await getSample()) ?? {}
 
-    if (musics && musics.length > 0) {
-      handleAddPlayItem(musics)
+      if (musics && musics.length > 0) {
+        handleAddPlayItem(musics)
+      }
+    } finally {
+      setIsLoading(false)
     }
-
-    setIsLoading(false)
   }
 
   return (
