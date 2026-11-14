@@ -5,6 +5,8 @@ import {PreferenceProvider} from 'src/hooks/use-preference'
 import flushPromises from 'flush-promises'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 
+import {configureReminderMocks} from './fixtures/configure-reminder-mocks'
+
 import type {PEventContextValue} from '../../focus-room-dialogue'
 import {createMemoryMemo} from '../schedule'
 import type {MemoryMemo} from '../schema'
@@ -43,23 +45,7 @@ beforeEach(() => {
   vi.useFakeTimers()
   vi.setSystemTime(new Date('2026-09-04T03:00:00.000Z'))
   vi.clearAllMocks()
-  mocks.retryDeletions.mockResolvedValue(undefined)
-  mocks.createClient.mockReturnValue({
-    dispose: vi.fn(),
-    initialize: mocks.initializeClient,
-  })
-  mocks.initializeClient.mockResolvedValue({ok: true, value: undefined})
-  mocks.loadSettings.mockResolvedValue({modelId: 'int8', version: 1, voiceId: 'Yuna'})
-  mocks.createRepository.mockReturnValue({
-    deleteDialogue: mocks.deleteDialogue,
-    dispose: vi.fn(),
-  })
-  mocks.deleteDialogue.mockResolvedValue(undefined)
-  mocks.createDialogue.mockResolvedValue('memory-memo-memo-1')
-  mocks.updateMemos.mockImplementation(async (update) => {
-    mocks.memos = update(mocks.memos)
-    return mocks.memos
-  })
+  configureReminderMocks(mocks)
 })
 
 afterEach(() => {
