@@ -90,11 +90,9 @@ export const createStreamingSpeechBuffer = (
   options: CreateStreamingSpeechBufferOptions,
 ): StreamingSpeechBuffer => {
   const segmenter = new Intl.Segmenter(options.locale, {granularity: 'sentence'})
-  let consumedLength = 0
   let consumedText = ''
 
   const reset = () => {
-    consumedLength = 0
     consumedText = ''
   }
 
@@ -157,7 +155,7 @@ export const createStreamingSpeechBuffer = (
       const lastUnchangedSegment = getCompletedSegments(text)
         .filter(({index, segment}) => index + segment.trimEnd().length <= commonPrefixLength)
         .at(-1)
-      consumedLength =
+      const consumedLength =
         lastUnchangedSegment === undefined
           ? 0
           : lastUnchangedSegment.index + lastUnchangedSegment.segment.trimEnd().length
@@ -167,12 +165,13 @@ export const createStreamingSpeechBuffer = (
 
   const update = (text: string) => {
     reconcileConsumedText(text)
-    const remainingText = text.slice(consumedLength)
+    const remainingText = text.slice(consumedText.length)
     const completedSegments = getCompletedSegments(remainingText)
     const lastSegment = completedSegments.at(-1)
 
     if (lastSegment !== undefined) {
-      consumedLength += lastSegment.index + lastSegment.segment.trimEnd().length
+      const consumedLength =
+        consumedText.length + lastSegment.index + lastSegment.segment.trimEnd().length
       consumedText = text.slice(0, consumedLength)
     }
 
@@ -182,13 +181,12 @@ export const createStreamingSpeechBuffer = (
   }
 
   const flush = (text: string) => {
-    if (text.length < consumedLength) {
+    if (text.length < consumedText.length) {
       return null
     }
 
     reconcileConsumedText(text)
-    const remainingText = text.slice(consumedLength).trim()
-    consumedLength = text.length
+    const remainingText = text.slice(consumedText.length).trim()
     consumedText = text
     return remainingText.length > 0 ? remainingText : null
   }
