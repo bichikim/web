@@ -284,6 +284,7 @@ export const useDialogueWriter = (props: UseDialogueWriterProps): DialogueWriter
     setHasCompleteOutput(false)
 
     if (generationInFlight) {
+      generationInFlight = false
       clientSession.dispose()
       setState({status: 'idle'})
       return
