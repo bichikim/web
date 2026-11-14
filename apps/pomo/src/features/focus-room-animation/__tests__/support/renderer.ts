@@ -3,12 +3,13 @@ import {vi} from 'vitest'
 
 import {DepthParallaxFilter} from '../../depth-parallax-filter'
 import {PEyeController} from '../../eye-animation-controller'
-import {PixiLayerScene} from '../../layer-scene'
+import {PixiLayerScene, type PixiLayerSceneDefinition} from '../../layer-scene'
 import {ParallaxController} from '../../parallax-controller'
 import {createSceneTransitions} from '../../scene-composite-transition'
 import {getPScenePanPosition} from '../../scene-motion'
 import {SceneLoadingState} from '../../scene-loading-state'
 import {createPSceneMouthController} from '../../scene-mouth-controller'
+import type {PSceneState} from '../../scene-renderer'
 import {PSceneSteamController} from '../../scene-steam-controller'
 import {acquireTextureGroup} from '../../texture-leases'
 
@@ -124,7 +125,36 @@ export interface RendererMocks {
   readonly transitionInstances: ReadonlyArray<MockTransitions>
 }
 
-const createLease = (source: string) => ({source, texture: {source}})
+interface MockTexture {
+  source: string
+}
+
+interface MockLease {
+  source: string
+  texture: MockTexture
+}
+
+export const createLease = (source: string): MockLease => ({source, texture: {source}})
+
+export const createState = (overrides: Partial<PSceneState> = {}): PSceneState => ({
+  activity: 'reading',
+  depthSource: '/depth.webp',
+  gaze: 'user',
+  layerScene: null,
+  sceneStyle: 'original',
+  source: '/scene.webp',
+  time: 'day',
+  viseme: 'rest',
+  ...overrides,
+})
+
+export const layerDefinition = (id = 'layers'): PixiLayerSceneDefinition => ({
+  background: '#fff',
+  height: 100,
+  id,
+  layers: [{id: 'base', source: '/layer.webp'}],
+  width: 100,
+})
 
 interface RendererRegistries {
   readonly applications: MockApplication[]
