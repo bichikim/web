@@ -226,16 +226,17 @@ describe('MusicPlayerView', () => {
     expect(status).toHaveTextContent(m.player_next_track_preparing())
     expect(status).toHaveAttribute('aria-busy', 'true')
     expect(playbackControls).toHaveLength(2)
-    expect(playbackControls[0]).toHaveAttribute('aria-busy', 'true')
     for (const control of playbackControls) {
+      expect(control).toHaveAttribute('aria-busy', 'true')
       expect(control.querySelector('.i-tabler-loader-2')).toBeNull()
     }
     expect(level).toHaveClass('opacity-76')
     expect(getPlayerShell(result.container)).toHaveAttribute('data-preparing', 'true')
 
-    fireEvent.click(playbackControls[0]!)
-
-    expect(onPause).toHaveBeenCalledOnce()
+    for (const [index, control] of playbackControls.entries()) {
+      fireEvent.click(control)
+      expect(onPause).toHaveBeenCalledTimes(index + 1)
+    }
   })
 
   it('should keep the collapsed player layers visually present but inactive', () => {
