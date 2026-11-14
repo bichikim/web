@@ -22,10 +22,19 @@ export interface SceneLayer {
 }
 
 export interface SceneLayerStructure {
+  /** Containers contributing to a part or offscreen layer, in parent-before-child order. */
+  readonly containers: ReadonlyArray<SceneContainer>
   /** Group and deformer ancestors of each part, outermost first. */
   readonly groupsByPartId: ReadonlyMap<string, ReadonlyArray<PuppetSceneContainerNode>>
   /** Offscreen groups in scene order. */
   readonly layers: ReadonlyArray<SceneLayer>
+}
+
+export interface SceneContainer {
+  /** Container whose inherited effects are evaluated after its parent. */
+  readonly node: PuppetSceneContainerNode
+  /** Parent container, or undefined for scene roots. */
+  readonly parent: PuppetSceneContainerNode | undefined
 }
 
 /** Offscreen ancestors and the effect inherited from the groups below the innermost one. */
@@ -37,18 +46,22 @@ export interface InheritedGroupEffect {
 
 const structureByDocument = new WeakMap<PuppetDocument, SceneLayerStructure>()
 
+interface CollectedLayers {
+  readonly containers: Array<SceneContainer>
+  readonly groupsByPartId: Map<string, ReadonlyArray<PuppetSceneContainerNode>>
+  readonly layers: Array<SceneLayer>
+}
+
 const collect = (
   nodes: ReadonlyArray<PuppetSceneNode>,
   ancestors: ReadonlyArray<PuppetSceneContainerNode>,
   visible: boolean,
-  structure: {
-    groupsByPartId: Map<string, ReadonlyArray<PuppetSceneContainerNode>>
-    layers: Array<SceneLayer>
-  },
+  structure: CollectedLayers,
 ) => {
   for (const node of nodes) {
     const nodeVisible = visible && node.visible
     if (isSceneContainerNode(node)) {
+      structure.containers.push({node, parent: ancestors.at(-1)})
       if (node.kind === 'group' && node.properties?.offscreen === true) {
         structure.layers.push({ancestors, group: node, visible: nodeVisible})
       }
@@ -62,9 +75,16 @@ const collect = (
 export const getSceneLayerStructure = (document: PuppetDocument): SceneLayerStructure => {
   let structure = structureByDocument.get(document)
   if (structure === undefined) {
-    const collected = {groupsByPartId: new Map(), layers: []}
+    const collected: CollectedLayers = {containers: [], groupsByPartId: new Map(), layers: []}
     collect(getDocumentScene(document).roots, [], true, collected)
-    structure = collected
+    const contributing = new Set([
+      ...[...collected.groupsByPartId.values()].flat(),
+      ...collected.layers.flatMap(({ancestors, group}) => [...ancestors, group]),
+    ])
+    structure = {
+      ...collected,
+      containers: collected.containers.filter(({node}) => contributing.has(node)),
+    }
     structureByDocument.set(document, structure)
   }
   return structure
@@ -73,7 +93,8 @@ export const getSceneLayerStructure = (document: PuppetDocument): SceneLayerStru
 /**
  * Folds container properties from the outermost container inwards: a plain group's or a
  * deformer's effect applies after everything inside it, and an offscreen group starts a new layer
- * whose content inherits nothing.
+ * whose content inherits nothing. An initial prefix extends an already evaluated outer chain;
+ * omitted, the chain starts with the identity effect and no layers.
  */
 export const inheritGroupEffects = (
   groups: ReadonlyArray<PuppetSceneContainerNode>,
@@ -81,27 +102,25 @@ export const inheritGroupEffects = (
     group: PuppetSceneContainerNode,
   ) => ResolvedGroupRenderProperties = getContainerRenderProperties,
   composition?: 'cubism',
+  initial: InheritedGroupEffect = {effect: IDENTITY_COLOR_EFFECT, layerIds: []},
 ): InheritedGroupEffect =>
-  groups.reduce<InheritedGroupEffect>(
-    (inherited, group) => {
-      const properties = resolve(group)
-      return properties.offscreen
-        ? {effect: IDENTITY_COLOR_EFFECT, layerIds: [...inherited.layerIds, group.id]}
-        : {
-            effect: composeColorEffects(
-              {
-                multiplyColor: properties.multiplyColor,
-                opacity: properties.opacity,
-                screenColor: properties.screenColor,
-              },
-              inherited.effect,
-              composition,
-            ),
-            layerIds: inherited.layerIds,
-          }
-    },
-    {effect: IDENTITY_COLOR_EFFECT, layerIds: []},
-  )
+  groups.reduce<InheritedGroupEffect>((inherited, group) => {
+    const properties = resolve(group)
+    return properties.offscreen
+      ? {effect: IDENTITY_COLOR_EFFECT, layerIds: [...inherited.layerIds, group.id]}
+      : {
+          effect: composeColorEffects(
+            {
+              multiplyColor: properties.multiplyColor,
+              opacity: properties.opacity,
+              screenColor: properties.screenColor,
+            },
+            inherited.effect,
+            composition,
+          ),
+          layerIds: inherited.layerIds,
+        }
+  }, initial)
 
 /**
  * Moves the members of each layer, recursively, to the position of the first one so that every

@@ -189,6 +189,7 @@ jobs:
         run: |
           deployment_json="$(pnpm dlx vercel@${VERCEL_CLI_VERSION} deploy \
             --target=preview \
+            --archive=tgz \
             --yes \
             --no-wait \
             --json \

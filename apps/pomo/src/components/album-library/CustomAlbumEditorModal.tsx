@@ -19,6 +19,11 @@ const formatBytes = (bytes: number): string => `${(bytes / BYTES_PER_MEBIBYTE).t
 
 export const CustomAlbumEditorModal = (props: CustomAlbumEditorModalProps) => {
   const editor = useCustomAlbumEditor(props)
+  const handleOpenChange = (isOpen: boolean) => {
+    if (isOpen || !editor.isSaving()) {
+      props.onOpenChange(isOpen)
+    }
+  }
 
   return (
     <>
@@ -28,7 +33,7 @@ export const CustomAlbumEditorModal = (props: CustomAlbumEditorModalProps) => {
         contentOverflow="auto"
         description={m.album_custom_limits()}
         isOpen={props.isOpen}
-        onOpenChange={props.onOpenChange}
+        onOpenChange={handleOpenChange}
         placement="top"
         size="wide"
         title={props.albumId === null ? m.album_custom_create_title() : m.album_custom_edit_title()}

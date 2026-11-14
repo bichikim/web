@@ -1,11 +1,12 @@
 import type {PuppetSound} from '../audio/decode-wav'
 import type {PuppetDocument} from '../document'
 import type {PlayerRuntimeState} from '../player-runtime-types'
-import type {BufferRequest, BufferResponse, BufferWorker, ProduceBufferFrame} from './types'
+import type {BufferRequest, BufferWorker, PackedBufferResponse, ProduceBufferFrame} from './types'
+import {createDecoder} from './render-frame/create-decoder'
 
 interface PendingRequest {
   readonly reject: (cause: Error) => void
-  readonly resolve: (response: BufferResponse) => void
+  readonly resolve: (response: PackedBufferResponse) => void
 }
 
 /** Creates one owned Worker; the caller must dispose it on replacement or player destruction. */
@@ -14,6 +15,7 @@ export const createBufferWorker = (onError: (cause: Error) => void): BufferWorke
   const pending = new Map<number, PendingRequest>()
   let sequence = 0
   let knownAudio = new Map<string, PuppetSound>()
+  let decodeFrame = createDecoder()
   const nextSequence = () => {
     sequence += 1
     return sequence
@@ -30,7 +32,7 @@ export const createBufferWorker = (onError: (cause: Error) => void): BufferWorke
   }
   worker.onerror = (event) => fail(new Error(event.message || 'Playback Worker failed'))
   worker.onmessageerror = () => fail(new Error('Playback Worker response could not be decoded'))
-  worker.onmessage = (event: MessageEvent<BufferResponse>) => {
+  worker.onmessage = (event: MessageEvent<PackedBufferResponse>) => {
     const response = event.data
     const request = pending.get(response.id)
     if (request !== undefined) {
@@ -43,7 +45,7 @@ export const createBufferWorker = (onError: (cause: Error) => void): BufferWorke
     }
   }
   const request = (message: BufferRequest, transfer: Transferable[] = []) =>
-    new Promise<BufferResponse>((resolve, reject) => {
+    new Promise<PackedBufferResponse>((resolve, reject) => {
       pending.set(message.id, {reject, resolve})
       try {
         worker.postMessage(message, transfer)
@@ -56,6 +58,7 @@ export const createBufferWorker = (onError: (cause: Error) => void): BufferWorke
     destroy() {
       worker.terminate()
       knownAudio.clear()
+      decodeFrame = createDecoder()
       rejectPending(new Error('Playback Worker was disposed'))
     },
     async initialize(
@@ -63,6 +66,7 @@ export const createBufferWorker = (onError: (cause: Error) => void): BufferWorke
       audio: ReadonlyMap<string, PuppetSound> = new Map(),
     ) {
       knownAudio = new Map(audio)
+      decodeFrame = createDecoder()
       const numeric = {
         ...document,
         parts: document.parts.map((part) => ({...part, texture: {...part.texture, src: ''}})),
@@ -79,14 +83,20 @@ export const createBufferWorker = (onError: (cause: Error) => void): BufferWorke
       }
       return response.bytes
     },
-    async produce(frame: ProduceBufferFrame) {
-      const response = await request({id: nextSequence(), kind: 'produce', request: frame}, [
-        frame.buffer,
+    async produce(input: ProduceBufferFrame) {
+      const response = await request({id: nextSequence(), kind: 'produce', request: input}, [
+        input.buffer,
       ])
       if (response.kind !== 'produced') {
         throw new Error('Unexpected playback frame response')
       }
-      return response.frame
+      const {frame} = response
+      return frame.kind === 'stale'
+        ? frame
+        : {
+            ...frame,
+            computed: {...frame.computed, frame: decodeFrame(frame.computed.frame)},
+          }
     },
     async reset(state: PlayerRuntimeState, generation: number, inputRevision = 0) {
       const response = await request({

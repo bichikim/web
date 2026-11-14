@@ -1,16 +1,19 @@
 import {createBufferEngine} from './create-buffer-engine'
-import type {BufferRequest, BufferResponse} from './types'
+import type {BufferRequest, PackedBufferResponse} from './types'
+import {loadWasmTransform} from '../internal/wasm/deformation/load-transform'
+import {createEncoder} from './render-frame/create-encoder'
 
 let engine: ReturnType<typeof createBufferEngine> | undefined
 let generation = 0
-const respond = (response: BufferResponse, transfer: Transferable[] = []) =>
+let encodeFrame = createEncoder()
+const respond = (response: PackedBufferResponse, transfer: Transferable[] = []) =>
   self.postMessage(response, {transfer})
-self.addEventListener('message', (event: MessageEvent<BufferRequest>) => {
-  const message = event.data
+const processMessage = async (message: BufferRequest) => {
   try {
     switch (message.kind) {
       case 'initialize':
-        engine = createBufferEngine(message.document)
+        engine = createBufferEngine(message.document, await loadWasmTransform(message.document))
+        encodeFrame = createEncoder()
         engine.updateAudio(message.audio)
         respond({bytes: engine.bytes, id: message.id, kind: 'initialized'})
         return
@@ -35,19 +38,26 @@ self.addEventListener('message', (event: MessageEvent<BufferRequest>) => {
           throw new Error('A playback Worker must be initialized')
         }
         if (request.generation === generation) {
+          const computed = engine.step(
+            request.deltaTime,
+            request.buffer,
+            request.input,
+            request.acknowledgedNotices,
+          )
+          const packed = encodeFrame(computed.computed.frame)
           const frame = {
             deltaTime: request.deltaTime,
             generation,
             kind: 'frame' as const,
             time: request.time,
-            ...engine.step(
-              request.deltaTime,
-              request.buffer,
-              request.input,
-              request.acknowledgedNotices,
-            ),
+            ...computed,
+            computed: {...computed.computed, frame: packed},
           }
-          respond({frame, id: message.id, kind: 'produced'}, [request.buffer])
+          respond({frame, id: message.id, kind: 'produced'}, [
+            request.buffer,
+            packed.parts.buffer,
+            packed.layers.buffer,
+          ])
         } else {
           respond(
             {
@@ -72,4 +82,10 @@ self.addEventListener('message', (event: MessageEvent<BufferRequest>) => {
       message: cause instanceof Error ? cause.message : String(cause),
     })
   }
+}
+
+// Preserve the Worker message order while the numeric module loads asynchronously.
+let pending = Promise.resolve()
+self.addEventListener('message', (event: MessageEvent<BufferRequest>) => {
+  pending = pending.then(() => processMessage(event.data))
 })
