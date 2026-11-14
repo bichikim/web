@@ -17,13 +17,16 @@ export interface Preview {
   readonly workspace: string
   readonly url: string
   close(): Promise<void>
+  stderr(): string
 }
 
 const LOG_TAIL_BYTES = 8192
 const STARTUP_DEADLINE_MS = 15000
 const CLOSE_DEADLINE_MS = 5000
 
-const previewAddress = async (child: ChildProcessWithoutNullStreams): Promise<string> => {
+const previewAddress = async (
+  child: ChildProcessWithoutNullStreams,
+): Promise<Pick<Preview, 'url' | 'stderr'>> => {
   const ready = Promise.withResolvers<string>()
   let output = ''
   let errors = ''
@@ -41,16 +44,16 @@ const previewAddress = async (child: ChildProcessWithoutNullStreams): Promise<st
   }
   child.stdout.on('data', read)
   child.stderr.on('data', record)
+  child.once('close', () => child.stderr.off('data', record))
   child.once('error', fail)
   child.once('exit', exit)
   const deadline = addAbortListener(AbortSignal.timeout(STARTUP_DEADLINE_MS), () =>
     fail(new Error(`Preview startup deadline: ${errors}`)),
   )
   try {
-    return await ready.promise
+    return {stderr: () => errors, url: await ready.promise}
   } finally {
     child.stdout.off('data', read)
-    child.stderr.off('data', record)
     child.off('error', fail)
     child.off('exit', exit)
     deadline[Symbol.dispose]()
@@ -97,7 +100,8 @@ export const createPreview = async (options: CreatePreviewOptions = {}): Promise
     return stopping
   }
   try {
-    return {child, close, directory, url: await previewAddress(child), workspace}
+    const address = await previewAddress(child)
+    return {...address, child, close, directory, workspace}
   } catch (error) {
     await close()
     throw error
