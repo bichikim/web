@@ -28,7 +28,7 @@ export interface CreateEntryEventPlaybackOptions {
   readonly getRepository: () => PDialogueRepository | null
   readonly isPlaybackEnabled: () => boolean
   readonly onEvent?: () => Promise<void> | void
-  readonly playback: EntryPlaybackController
+  readonly playback: Pick<EntryPlaybackController, 'playSequence'>
   readonly sessionStorage?: EntryPlaybackSessionStorage
 }
 

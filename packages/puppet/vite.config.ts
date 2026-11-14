@@ -1,8 +1,8 @@
-import {readFile, readFileSync} from 'node:fs'
+import {readFileSync} from 'node:fs'
 import {fileURLToPath} from 'node:url'
 import UnoCSS from 'unocss/vite'
 import solidPlugin from 'vite-plugin-solid'
-import {defineConfig, type Plugin} from 'vite'
+import {defineConfig} from 'vite'
 
 import unoConfig from './uno.config'
 
@@ -17,42 +17,6 @@ type BuildTarget = keyof typeof BUILD_TARGETS
 
 const isBuildTarget = (mode: string): mode is BuildTarget => mode in BUILD_TARGETS
 
-const trackingAssets = (): Plugin => ({
-  configureServer(server) {
-    const assets = new Map(
-      [
-        'vision_bundle.js',
-        'vision_wasm_internal.js',
-        'vision_wasm_internal.wasm',
-        'vision_wasm_nosimd_internal.js',
-        'vision_wasm_nosimd_internal.wasm',
-      ].map((name) => [
-        `/tracking/vendor/${name}`,
-        fileURLToPath(import.meta.resolve(`@mediapipe/tasks-vision/${name}`)),
-      ]),
-    )
-    server.middlewares.use((request, response, next) => {
-      const path = assets.get(request.url ?? '')
-      if (path === undefined) {
-        next()
-        return
-      }
-      readFile(path, (error, content) => {
-        if (error !== null) {
-          next(error)
-          return
-        }
-        response.setHeader(
-          'Content-Type',
-          path.endsWith('.wasm') ? 'application/wasm' : 'text/javascript',
-        )
-        response.end(content)
-      })
-    })
-  },
-  name: 'puppet-tracking-assets',
-})
-
 const converterBanner = () => {
   const notices = readFileSync(new URL('./licenses/converter.txt', import.meta.url), 'utf8')
   return `/*!\n${notices.replaceAll('*/', '* /')}*/`
@@ -64,7 +28,7 @@ export default defineConfig(({command, mode}) => {
   if (command !== 'build') {
     return {
       optimizeDeps: {exclude: ['es-toolkit']},
-      plugins: [...plugins, trackingAssets()],
+      plugins,
       resolve: {
         alias: {
           '/converter.js': fileURLToPath(new URL(BUILD_TARGETS.converter, import.meta.url)),

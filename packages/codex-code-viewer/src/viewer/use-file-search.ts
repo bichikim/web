@@ -4,7 +4,7 @@ import {readWorkspaceStream} from './read-workspace-stream'
 import type {ViewerPort} from './types'
 import {useLatestRequest} from './use-latest-request'
 
-interface FileSearchOptions {
+interface UseFileSearchProps {
   readonly onError: (error: unknown) => void
   readonly port: ViewerPort
   readonly session: Accessor<WorkspaceSession | null>
@@ -13,23 +13,23 @@ interface FileSearchOptions {
 const MAX_RESULTS = 100
 
 /** Finds files in the active workspace and discards results when that workspace changes. */
-export const useFileSearch = (options: FileSearchOptions) => {
+export const useFileSearch = (props: UseFileSearchProps) => {
   const [files, setFiles] = createSignal<string[]>([])
   const [search, setSearch] = createSignal('')
-  const searching = useLatestRequest(options.onError)
+  const searching = useLatestRequest(props.onError)
   let controller: AbortController | null = null
   const reset = (): void => {
     controller?.abort()
     searching.cancel()
     setFiles([])
   }
-  const session = createMemo(() => options.session()?.session)
+  const session = createMemo(() => props.session()?.session)
   createEffect(on(session, reset))
   onCleanup(reset)
   const find = async (query: string): Promise<void> => {
     reset()
     setSearch(query)
-    const current = options.session()
+    const current = props.session()
     if (current === null) {
       return
     }
@@ -40,9 +40,9 @@ export const useFileSearch = (options: FileSearchOptions) => {
       readWorkspaceStream({
         input: {query, session: current.session},
         name: 'code.list',
-        port: options.port,
+        port: props.port,
         receive: (batch) => {
-          if (!active.signal.aborted && current.session === options.session()?.session) {
+          if (!active.signal.aborted && current.session === props.session()?.session) {
             if (batch.failed) {
               throw new Error('일부 폴더를 읽지 못해 검색 결과가 불완전합니다.')
             }

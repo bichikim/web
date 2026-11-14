@@ -4,7 +4,7 @@ import {type ChangedFile, type WorkspaceChanges} from '../shared/change-contract
 import {useLatestRequest} from './use-latest-request'
 import type {ViewerPort} from './types'
 
-interface WorkspaceChangesProps {
+interface UseWorkspaceChangesProps {
   readonly port: ViewerPort
   readonly session: Accessor<ViewerConnection | null>
   readonly revision: Accessor<number>
@@ -13,7 +13,7 @@ interface WorkspaceChangesProps {
 }
 const EMPTY: WorkspaceChanges = {available: false, base: null, files: []}
 
-export const useWorkspaceChanges = (props: WorkspaceChangesProps) => {
+export const useWorkspaceChanges = (props: UseWorkspaceChangesProps) => {
   const [snapshot, setSnapshot] = createSignal(EMPTY)
   const listing = useLatestRequest(props.onError)
   const session = createMemo(() => props.session()?.session)

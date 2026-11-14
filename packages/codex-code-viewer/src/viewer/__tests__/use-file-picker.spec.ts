@@ -38,6 +38,18 @@ describe('useFilePicker', () => {
     )
   })
 
+  it.each(['C:\\My Project\\main.ts', 'C:/project/main.ts', '\\\\server\\share\\main.ts'])(
+    'should enable opening %s without an existing workspace',
+    (path) => {
+      const picker = mount(false)
+      picker.change(path)
+      expect(picker.canSubmit()).toBe(true)
+      picker.submit()
+      expect(onOpen).toHaveBeenCalledWith({column: 1, line: 1, path}, {restoreView: true})
+      expect(onFind).not.toHaveBeenCalled()
+    },
+  )
+
   it('should open an embedded relative address directly rather than search it', () => {
     const picker = mount()
     picker.change('위치: src/editor.tsx:9')

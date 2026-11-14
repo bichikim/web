@@ -48,6 +48,9 @@ export const PresetNameField = (props: PresetNameFieldProps) => {
           aria-label={props.label}
           onBlur={commit}
           onKeyDown={(event) => {
+            if (event.isComposing) {
+              return
+            }
             if (event.key === 'Enter') {
               event.preventDefault()
               commit()

@@ -3,6 +3,7 @@ import {expect, test} from 'vitest'
 import {
   createEmptyDocument,
   createRowTrack,
+  getEffectRows,
   getGroupOpacityRowId,
   getModelTrackRowId,
   getRowParameter,
@@ -11,6 +12,34 @@ import {
   type PuppetDocument,
   type PuppetTrack,
 } from '..'
+
+test('should refresh effect row names and collision IDs after an immutable document replacement', () => {
+  const source: PuppetDocument = {
+    ...createEmptyDocument(),
+    scene: {
+      roots: [
+        {children: [], id: 'group', kind: 'group', locked: false, name: 'First', visible: true},
+      ],
+    },
+  }
+  const first = getEffectRows(source)
+  expect(first.find((row) => row.id === 'group-opacity:group')?.name).toBe('First 불투명도')
+  const replacement: PuppetDocument = {
+    ...source,
+    parameters: [
+      {defaultValue: 0, id: 'group-opacity:group', maximum: 1, minimum: 0, name: 'Parameter'},
+    ],
+    scene: {
+      roots: [
+        {children: [], id: 'group', kind: 'group', locked: false, name: 'Second', visible: true},
+      ],
+    },
+  }
+  expect(
+    getEffectRows(replacement).find((row) => row.id === 'effect:group-opacity:group')?.name,
+  ).toBe('Second 불투명도')
+  expect(getEffectRows(source)).toEqual(first)
+})
 
 const document: PuppetDocument = {
   ...createEmptyDocument(),

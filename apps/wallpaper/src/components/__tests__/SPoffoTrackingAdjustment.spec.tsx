@@ -13,6 +13,20 @@ afterEach(() => {
   vi.clearAllMocks()
 })
 
+test('should configure cursor reach distance without showing camera controls or changing movement bounds', () => {
+  vi.mocked(useFacePosition).mockReturnValue({error: () => null, point: () => null})
+  const [value, setValue] = createSignal<PoffoTrackingOptions>({headMaximumX: 20})
+  const [mode, setMode] = createSignal<'camera' | 'cursor'>('cursor')
+  render(() => <SPoffoTrackingAdjustment mode={mode()} value={value()} onChange={setValue} />)
+  const reach = screen.getByRole('spinbutton', {name: '최대 도달 거리'})
+  expect(reach).toHaveValue('1')
+  fireEvent.input(reach, {target: {value: '0.5'}})
+  fireEvent.blur(reach)
+  expect(value()).toEqual({cursorReach: 0.5, headMaximumX: 20})
+  setMode('camera')
+  expect(screen.queryByRole('spinbutton', {name: '최대 도달 거리'})).toBeNull()
+})
+
 test('should calibrate the user position without replacing character or camera calibration', () => {
   vi.mocked(useFacePosition).mockReturnValue({error: () => null, point: () => ({x: 0.2, y: -0.1})})
   const [options, setOptions] = createSignal<PoffoTrackingOptions>({cameraX: -0.25, eyeScale: 0.5})

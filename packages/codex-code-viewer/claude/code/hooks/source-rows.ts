@@ -1,3 +1,4 @@
+import {sourceLines} from '../../../src/headless/source-lines'
 import {findClusterBreak} from '@codemirror/state'
 
 export interface SourceRow {
@@ -34,9 +35,7 @@ const clusterWidth = (text: string, column: number): number =>
 export const layoutSource = (source: string, columns: number, wrap: boolean): SourceRow[] => {
   const width = Math.max(2, Math.floor(columns))
   const rows: SourceRow[] = []
-  let offset = 0
-  for (const [index, raw] of source.split('\n').entries()) {
-    const text = raw.replace(/\r$/u, '')
+  for (const {from: offset, number, text} of sourceLines(source)) {
     let start = 0
     let column = 0
     let startColumn = 0
@@ -49,7 +48,7 @@ export const layoutSource = (source: string, columns: number, wrap: boolean): So
           column: startColumn,
           continuation: start > 0,
           from: offset + start,
-          number: index + 1,
+          number,
           to: offset + cursor,
         })
         start = cursor
@@ -62,10 +61,9 @@ export const layoutSource = (source: string, columns: number, wrap: boolean): So
       column: startColumn,
       continuation: start > 0,
       from: offset + start,
-      number: index + 1,
+      number,
       to: offset + text.length,
     })
-    offset += raw.length + 1
   }
   return rows
 }

@@ -1,3 +1,4 @@
+export * from './apply-stacked-expression-layers'
 export * from './create-motion-parameter-history'
 export * from './create-motion-playbacks'
 export * from './create-selected-playback'

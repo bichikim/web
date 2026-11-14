@@ -1,6 +1,6 @@
 import {z} from 'zod'
 import {createLatestAsyncTask} from 'src/utils/create-latest-async-task'
-import type {PreferenceStorage} from 'src/utils/preference-storage'
+import type {PreferenceStorage} from 'src/hooks/use-preference/types'
 import {
   hasNativeStorageBridge,
   readTossStorageJson,

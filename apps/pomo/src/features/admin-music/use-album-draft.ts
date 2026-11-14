@@ -3,6 +3,8 @@ import {useAction, useSubmission} from '@solidjs/router'
 import {createSignal, type JSX, onCleanup, type Setter} from 'solid-js'
 import {z} from 'zod'
 
+import {COVER_FALLBACKS} from './catalog-values'
+
 import {createSerialTaskQueue} from 'src/utils/create-serial-task-queue'
 
 import {replaceBlobObjectUrl} from '../blob-object-url'
@@ -33,7 +35,7 @@ import {
   type DraftReferenceUpdater,
 } from './create-draft-reference-lifecycle'
 
-const coverFallbackSchema = z.enum(['lp', 'cd', 'music'])
+const coverFallbackSchema = z.enum(COVER_FALLBACKS)
 const COVER_SELECTION_ERROR = '커버 이미지를 선택하지 못했습니다.'
 
 type UseAlbumDraftProps = AlbumCreationCallbacks

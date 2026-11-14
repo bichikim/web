@@ -186,3 +186,114 @@ test('should release previous Cubism expressions when the active preset is remov
   expect(playback.layers()).toEqual([])
   expect(playback.isAnimating()).toBe(false)
 })
+
+describe('independent expressions', () => {
+  const controller: PuppetExpression = {
+    composition: 'cubism',
+    fadeInTime: 0,
+    fadeOutTime: 0,
+    id: 'controller',
+    parameters: [{blend: 'add', parameterId: 'held', value: 1}],
+  }
+  const left: PuppetExpression = {
+    composition: 'cubism',
+    fadeInTime: 1,
+    fadeOutTime: 1,
+    id: 'left',
+    parameters: [{blend: 'add', parameterId: 'left', value: 1}],
+  }
+  test('should retain a held expression while another fades in and out independently', () => {
+    const playback = createExpressionPlayback([controller, left])
+    playback.setMany(['controller'])
+    playback.setMany(['controller', 'left', 'left'])
+    playback.advance(0.5)
+    const parameters = [parameter('held'), parameter('left')]
+    const values = applyExpressionLayers(parameters, {}, playback.layers())
+    expect(values.held).toBe(1)
+    expect(values.left).toBeCloseTo(0.5)
+    playback.setMany(['controller'])
+    playback.advance(0.5)
+    expect(applyExpressionLayers(parameters, {}, playback.layers())).toEqual({held: 1, left: 0})
+    expect(playback.layers().map((layer) => layer.expression.id)).toEqual(['controller'])
+    expect(playback.setMany(['missing'])).toBe(false)
+    expect(playback.layers().map((layer) => layer.expression.id)).toEqual(['controller'])
+    playback.setMany([])
+    expect(playback.layers()).toEqual([])
+  })
+  test('should reverse a partial release and remove deleted expressions', () => {
+    const playback = createExpressionPlayback([left])
+    playback.setMany(['left'])
+    playback.advance(0.5)
+    playback.setMany([])
+    playback.advance(0.25)
+    playback.setMany(['left'])
+    expect(playback.layers()[0]?.weight).toBeCloseTo(0.1464466094)
+    playback.advance(1)
+    expect(playback.layers()[0]?.weight).toBe(1)
+    playback.update([])
+    expect(playback.layers()).toEqual([])
+  })
+})
+
+test('should give a reactivated independent overwrite the latest activation priority', () => {
+  const expression = (id: string, value: number): PuppetExpression => ({
+    fadeInTime: 0,
+    fadeOutTime: 1,
+    id,
+    parameters: [{blend: 'overwrite', parameterId: 'p', value}],
+  })
+  const playback = createExpressionPlayback([expression('first', 2), expression('second', 4)])
+  playback.setMany(['first', 'second'])
+  playback.setMany(['second'])
+  playback.advance(0.25)
+  playback.setMany(['second', 'first'])
+  expect(applyExpressionLayers([parameter('p')], {}, playback.layers()).p).toBe(2)
+})
+
+describe('expression API transitions', () => {
+  const expression: PuppetExpression = {...smile, composition: 'cubism'}
+  test('should fade stacked expressions when the single-expression API clears them', () => {
+    const playback = createExpressionPlayback([expression])
+    playback.setMany([expression.id])
+    playback.advance(1)
+    playback.set(undefined)
+    expect(playback.layers()[0]?.weight).toBe(1)
+    playback.advance(0.25)
+    expect(playback.layers()[0]?.weight).toBeCloseTo(0.5)
+    playback.advance(0.25)
+    expect(playback.layers()).toEqual([])
+  })
+  test('should fade a single expression when the independent API clears it', () => {
+    const playback = createExpressionPlayback([expression])
+    playback.set(expression.id)
+    playback.advance(1)
+    playback.setMany([])
+    expect(playback.layers()[0]?.weight).toBe(1)
+    playback.advance(0.25)
+    expect(playback.layers()[0]?.weight).toBeCloseTo(0.5)
+  })
+  test.each(['single-to-stack', 'stack-to-single'] as const)(
+    'should preserve outgoing contributions during %s replacement',
+    (direction) => {
+      const next: PuppetExpression = {...expression, id: 'next', parameters: []}
+      const playback = createExpressionPlayback([expression, next])
+      if (direction === 'single-to-stack') {
+        playback.set(expression.id)
+      } else {
+        playback.setMany([expression.id])
+      }
+      playback.advance(1)
+      const parameters = [parameter('mouth')]
+      if (direction === 'single-to-stack') {
+        playback.setMany([next.id])
+      } else {
+        playback.set(next.id)
+      }
+      expect(applyExpressionLayers(parameters, {}, playback.layers()).mouth).toBe(2)
+      playback.advance(0.25)
+      expect(applyExpressionLayers(parameters, {}, playback.layers()).mouth).toBeCloseTo(1)
+      playback.advance(1)
+      expect(applyExpressionLayers(parameters, {}, playback.layers()).mouth).toBe(0)
+    },
+  )
+})

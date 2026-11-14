@@ -2,7 +2,7 @@ import {type Accessor, createEffect, createMemo, createSignal, on, onCleanup} fr
 import type {ViewerConnection} from '../shared/contracts'
 import type {ViewerPort} from './types'
 
-interface WorkspaceUpdatesOptions {
+interface UseWorkspaceUpdatesProps {
   readonly port: ViewerPort
   readonly session: Accessor<ViewerConnection | null>
   readonly blocked: Accessor<boolean>
@@ -10,17 +10,17 @@ interface WorkspaceUpdatesOptions {
   readonly report: (error: unknown) => void
 }
 
-export const useWorkspaceUpdates = (options: WorkspaceUpdatesOptions): Accessor<number> => {
+export const useWorkspaceUpdates = (props: UseWorkspaceUpdatesProps): Accessor<number> => {
   const [revision, setRevision] = createSignal(0)
   const [pending, setPending] = createSignal(false)
-  const session = createMemo(() => options.session()?.session)
+  const session = createMemo(() => props.session()?.session)
   createEffect(
     on(session, (current) => {
       let disposed = false
       let stop: (() => Promise<void>) | undefined
       setPending(false)
       if (current !== undefined) {
-        options.port
+        props.port
           .watch?.(
             current,
             () => {
@@ -29,7 +29,7 @@ export const useWorkspaceUpdates = (options: WorkspaceUpdatesOptions): Accessor<
                 setPending(true)
               }
             },
-            options.report,
+            props.report,
           )
           .then(async (dispose) => {
             if (disposed) {
@@ -38,19 +38,19 @@ export const useWorkspaceUpdates = (options: WorkspaceUpdatesOptions): Accessor<
               stop = dispose
             }
           })
-          .catch(options.report)
+          .catch(props.report)
       }
       onCleanup(() => {
         disposed = true
-        stop?.().catch(options.report)
+        stop?.().catch(props.report)
       })
     }),
   )
   createEffect(
-    on([pending, options.blocked], ([requested, blocked]) => {
+    on([pending, props.blocked], ([requested, blocked]) => {
       if (requested && !blocked) {
         setPending(false)
-        options.refresh().catch(options.report)
+        props.refresh().catch(props.report)
       }
     }),
   )

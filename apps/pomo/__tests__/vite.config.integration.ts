@@ -164,7 +164,7 @@ it.each([
   ).rejects.toThrow(message)
 })
 
-it('should keep every development asset available at its existing URL in development', async () => {
+it('should omit removed 3D assets and their public directory in development', async () => {
   const result = await loadConfigFromFile(
     {command: 'serve', mode: 'development'},
     resolve(root, 'vite.config.ts'),
@@ -177,9 +177,10 @@ it('should keep every development asset available at its existing URL in develop
       .map((asset) => resolve(root, asset.dir)),
   ]
   expect(result).not.toBeNull()
+  expect(directories).not.toContain(resolve(root, 'dev-public'))
   expect(
-    developmentAssetPaths.every((asset) =>
-      directories.some((directory) => existsSync(resolve(directory, asset))),
+    directories.flatMap((directory) =>
+      developmentAssetPaths.filter((asset) => existsSync(resolve(directory, asset))),
     ),
-  ).toBe(true)
+  ).toEqual([])
 })

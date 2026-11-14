@@ -27,6 +27,7 @@ vi.mock('pixi.js', () => ({
   Container: mocks.Container,
   MeshSimple: mocks.MeshSimple,
   Texture: {from: mocks.TextureFrom},
+  UPDATE_PRIORITY: {LOW: -25},
 }))
 
 afterEach(() => {
@@ -50,10 +51,12 @@ describe('createPlayer physics', () => {
         add: vi.fn((handler: (ticker: {readonly deltaMS: number}) => void) => {
           tick = handler
         }),
+        remove: vi.fn(),
       },
     }
     const root = {
       addChild: vi.fn(),
+      children: [],
       position: {set: vi.fn()},
       scale: {set: vi.fn()},
     }
@@ -181,10 +184,12 @@ describe('createPlayer physics', () => {
         add: vi.fn((handler: (ticker: {readonly deltaMS: number}) => void) => {
           tick = handler
         }),
+        remove: vi.fn(),
       },
     }
     const root = {
       addChild: vi.fn(),
+      children: [],
       position: {set: vi.fn()},
       scale: {set: vi.fn()},
     }

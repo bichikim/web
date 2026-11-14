@@ -8,10 +8,9 @@ import {
 } from './model'
 import {
   parsePScenePreferences,
-  readPScenePreferences,
   SCENE_PREFERENCES_STORAGE_KEY,
-  writePScenePreferences,
-} from './storage'
+} from 'src/features/focus-room-scene-preferences/create-p-scene-preferences-repository'
+import {readPScenePreferences, writePScenePreferences} from './storage'
 
 const pScenePreferencesStorage = createParsedPreferenceStorage({
   invalidMessage: 'Invalid focus-room scene preferences.',

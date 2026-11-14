@@ -158,3 +158,40 @@ describe('collapsePartEdge', () => {
     ).toEqual({error: {code: 'minimum-vertex-count'}, ok: false})
   })
 })
+
+it('should reconcile keyed and spatial vertex data when collapsing an edge', () => {
+  const base = createDocument()
+  const part = base.parts[0]!
+  const document: PuppetDocument = {
+    ...base,
+    parameterBindings: [
+      {
+        id: 'binding',
+        keyforms: [{parts: [{partId: PART_ID, vertices: part.mesh.vertices}], values: [0]}],
+        parameterIds: ['angle'],
+        targetPartIds: [PART_ID],
+      },
+    ],
+    parameters: [{defaultValue: 0, id: 'angle', maximum: 1, minimum: -1, name: 'Angle'}],
+    parts: [
+      {
+        ...part,
+        spatial: {controlPoints: [0, 0, 1, 100, 0, 2, 100, 100, 3, 0, 100, 4], origin: [0, 0, 0]},
+      },
+    ],
+  }
+  const result = collapsePartEdge({
+    document,
+    firstVertexIndex: 0,
+    partId: PART_ID,
+    secondVertexIndex: 1,
+  })
+  expect(result.ok).toBe(true)
+  if (!result.ok) {
+    return
+  }
+  expect(result.document.parameterBindings![0]!.keyforms[0]!.parts[0]!.vertices).toEqual(
+    result.document.parts[0]!.mesh.vertices,
+  )
+  expect(result.document.parts[0]!.spatial?.controlPoints).toHaveLength(9)
+})

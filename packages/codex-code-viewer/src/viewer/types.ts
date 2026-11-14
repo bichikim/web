@@ -10,6 +10,61 @@ import type {
 } from '../shared/contracts'
 import type {DraftStorage} from './drafts/types'
 import type {TreeState} from '../shared/tree-state'
+import type {MemoPatch, MemoState} from '../shared/memo-state'
+import type {Accessor} from 'solid-js'
+
+export interface MemoSwipePoint {
+  readonly pointer: number
+  readonly x: number
+  readonly y: number
+}
+export interface MemoSwipeStart extends MemoSwipePoint {
+  readonly offset: number
+}
+export interface MemoSwipePosition {
+  readonly extent: number
+  readonly offset: number
+}
+export interface MemoSwipeEnd extends MemoSwipePosition {
+  readonly pointer: number
+}
+export interface MemoSwipeMotion {
+  readonly capture: boolean
+  readonly offset: number
+}
+export interface MemoSwipeWheel {
+  readonly horizontal: number
+  readonly vertical: number
+  readonly zoom: boolean
+}
+export interface MemoSwipeTouch {
+  readonly touches: number
+  readonly interactive: boolean
+}
+export interface MemoSwipeRelease {
+  readonly remaining: number
+  readonly centered: boolean
+}
+export interface UseMemoSwipeProps {
+  readonly disabled?: Accessor<boolean>
+  readonly onAttach?: () => Promise<void>
+  readonly onRemove?: () => Promise<boolean>
+}
+export interface MemoSwipe {
+  readonly blocked: Accessor<boolean>
+  readonly dragging: Accessor<boolean>
+  readonly pending: Accessor<boolean>
+  readonly resetRevision: Accessor<number>
+  readonly cancel: () => void
+  readonly startPointer: (point: MemoSwipeStart) => boolean
+  readonly movePointer: (point: MemoSwipePoint) => MemoSwipeMotion | null
+  readonly endPointer: (position: MemoSwipeEnd) => Promise<void>
+  readonly cancelPointer: (pointer: number) => void
+  readonly wheel: (input: MemoSwipeWheel) => void
+  readonly startTouch: (input: MemoSwipeTouch) => void
+  readonly endTouch: (input: MemoSwipeRelease) => void
+  readonly endNative: (position: MemoSwipePosition) => Promise<void>
+}
 
 export interface InlineChange extends ChangePreview {
   readonly active: number
@@ -115,6 +170,9 @@ export interface ViewerSettingsEnvironment {
 }
 
 export interface ViewerPort {
+  readonly readMemos?: () => Promise<MemoState>
+  readonly saveMemos?: (patch: MemoPatch) => Promise<MemoState>
+  readonly addTextContext?: (text: string) => Promise<void>
   readonly readChanges?: (session: string) => Promise<WorkspaceChanges>
   readonly readBaseline?: (session: string, path: string) => Promise<FileBaseline>
   /** 현재 채팅의 파일트리 상태를 저장합니다. 미지원 호스트에서는 생략합니다. */

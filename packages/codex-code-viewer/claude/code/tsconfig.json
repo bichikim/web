@@ -1,0 +1,10 @@
+{
+  "extends": "../../../../tsconfig.json",
+  "compilerOptions": {
+    "allowImportingTsExtensions": true,
+    "noImplicitAny": true,
+    "types": ["node"],
+    "jsx": "preserve"
+  },
+  "include": [".cache/claude-code.d.ts", "hooks/**/*.ts", "prepare-types.ts"]
+}

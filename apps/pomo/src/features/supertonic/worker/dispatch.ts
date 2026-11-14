@@ -1,10 +1,10 @@
 /// <reference lib="webworker" />
 
 import {type Result} from 'src/features/result'
-import {type SupertonicError} from '../errors'
+import {type SupertonicError} from '@winter-love/supertonic/errors'
 import type {SupertonicWorkerInput, SupertonicWorkerOutput} from '../messages'
-import {getSupertonicModel} from '../model'
-import type {SupertonicBackend} from '../runtime'
+import {getSupertonicModel} from '@winter-love/supertonic/model'
+import type {SupertonicBackend} from '@winter-love/supertonic/runtime'
 import {createWorkerError} from './create-worker-error'
 
 interface GeneratedAudio {

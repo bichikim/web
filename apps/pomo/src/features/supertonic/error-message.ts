@@ -1,6 +1,6 @@
 import * as m from '@paraglide/message'
 import {getLocale} from '@paraglide/runtime'
-import type {SupertonicError} from './errors'
+import type {SupertonicError} from '@winter-love/supertonic/errors'
 
 const assertNever = (value: never): never => {
   throw new Error(`처리하지 않은 Supertonic 오류: ${JSON.stringify(value)}`)

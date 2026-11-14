@@ -1,8 +1,12 @@
 import {type Accessor, createMemo, createSignal} from 'solid-js'
 import {getLocale} from '@paraglide/runtime'
-import type {PFeedController} from 'src/features/focus-room-feed'
-import type {useModelDownload} from 'src/features/model-download'
+import type {FeedDialogueJob, PFeedController} from 'src/features/focus-room-feed'
+import type {ModelDownloadController} from 'src/features/model-download'
 import * as m from '@paraglide/message'
+
+interface FeedProgressController extends Pick<PFeedController, 'cancelProcessing' | 'state'> {
+  readonly recoveryJobs: Accessor<ReadonlyArray<Pick<FeedDialogueJob, 'modelId'>>>
+}
 
 const localizeFeedGenerationMessage = (message: string): string => {
   const started = /^(?<title>.+) 음성을 만들고 있어요\.$/su.exec(message)
@@ -27,8 +31,8 @@ const localizeFeedGenerationMessage = (message: string): string => {
 }
 
 export const useFeedProgress = (
-  controller: Accessor<PFeedController>,
-  download: ReturnType<typeof useModelDownload>,
+  controller: Accessor<FeedProgressController>,
+  download: Pick<ModelDownloadController, 'cancel' | 'state'>,
 ) => {
   const [stopping, setStopping] = createSignal(false)
   const [error, setError] = createSignal<string | null>(null)

@@ -169,6 +169,7 @@ const hasValidMotionMetadata = (value: Record<string, unknown>) =>
   (value.loop === undefined || typeof value.loop === 'boolean') &&
   isOptionalName(value.name) &&
   isOptionalName(value.group) &&
+  (value.parameterBounds === undefined || value.parameterBounds === 'sample') &&
   isOptionalFramesPerSecond(value.framesPerSecond) &&
   isOptionalSound(value.sound)
 
@@ -260,13 +261,14 @@ const isParameterKeyframeValue = (parameter: PuppetParameter, value: number) =>
     ? value >= parameter.minimum && value <= parameter.maximum
     : resolveParameterValue(parameter, value) === value
 
-const hasTrackTarget = (track: PuppetTrack, targets: TrackTargets) => {
+const hasTrackTarget = (track: PuppetTrack, targets: TrackTargets, motion: PuppetMotion) => {
   switch (track.kind) {
     case 'parameter': {
       const parameter = targets.parameters.get(track.parameterId)
       return (
         parameter !== undefined &&
-        track.keyframes.every((keyframe) => isParameterKeyframeValue(parameter, keyframe.value))
+        (motion.parameterBounds === 'sample' ||
+          track.keyframes.every((keyframe) => isParameterKeyframeValue(parameter, keyframe.value)))
       )
     }
     case 'vertex': {
@@ -319,7 +321,7 @@ export const hasValidTrackTargets = (
         ),
       ) &&
       (motion.timelineParameterIds ?? []).every((id) => isTimelineRow(id, targets)) &&
-      motion.tracks.every((track) => hasTrackTarget(track, targets))
+      motion.tracks.every((track) => hasTrackTarget(track, targets, motion))
     )
   })
 }

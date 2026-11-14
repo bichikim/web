@@ -1,3 +1,6 @@
+import {getDirectGlueIds} from '../../deformation/get-direct-glue-ids'
+import {sampleParameterGlue} from '../../deformation/parameter-glue'
+import {getRepeatRanges} from '../../player/parameter-value'
 import {
   parameterValuesEqual,
   type PuppetParameterValues,
@@ -70,8 +73,21 @@ export const sampleBindingKeyform = (
   deformers: readonly PuppetSceneDeformerNode[],
 ): PuppetParameterKeyform => {
   const partIds = new Set(getParameterTargetPartIds(binding))
+  const glueIds = new Set(getDirectGlueIds(binding))
+  const glue = options.document.glue?.filter((connection) => glueIds.has(connection.id)) ?? []
   const geometry = {
     deformers: deformers.map((deformer) => sampleParameterDeformer({binding, deformer, values})),
+    glue:
+      glue.length === 0
+        ? undefined
+        : glue.map((connection) =>
+            sampleParameterGlue({
+              binding,
+              glue: connection,
+              repeatRanges: getRepeatRanges(binding.parameterIds, options.document.parameters),
+              values,
+            }),
+          ),
     groups: sampleKeyformGroups(options.document, binding, values),
     parts: options.document.parts
       .filter((part) => partIds.has(part.id))

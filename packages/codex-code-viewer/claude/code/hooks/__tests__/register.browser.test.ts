@@ -1,7 +1,7 @@
+import {required, url} from './fixture'
 /* eslint-disable eslint-js/camelcase, id-length -- Claude tools use snake case and the literal $ API parameter. */
 import {expect, test} from 'claude-code/testing'
-import type {UiPane} from 'claude-code'
-import {url} from './fixture'
+import type {On, UiPane} from 'claude-code'
 
 const reply = {
   component: 'AssistantMessage' as const,
@@ -18,8 +18,8 @@ const launcher = {
   surface: 'desktop' as const,
 }
 
-function fixture(on) {
-  const calls = []
+function fixture(on: On) {
+  const calls: Record<string, unknown>[] = []
   const contexts = ['unsaved snapshot']
   const panes: UiPane[] = []
   const tabs: {tabId: string; origin: string; isActive: boolean}[] = []
@@ -32,9 +32,9 @@ function fixture(on) {
     tabs,
     url,
   }
-  const notices = []
-  const logs = []
-  const reveals = []
+  const notices: string[] = []
+  const logs: string[] = []
+  const reveals: (readonly string[])[] = []
   on('session.id', () => ({value: 'dbba577c-cad5-4c96-8f31-76d6fef6a09d'}))
   on('env.get', (_, input) => ({value: input.name === 'HOME' ? '/Users/example' : undefined}))
   on('fs.read', (_, input) => {
@@ -50,6 +50,8 @@ function fixture(on) {
     return {
       value: {
         exitCode: failed ? 1 : 0,
+        isStderrTruncated: false,
+        isStdoutTruncated: false,
         stderr: failed ? '현재 Code 세션의 Browser를 펼치지 못했습니다.' : '',
         stdout: '',
       },
@@ -71,9 +73,10 @@ function fixture(on) {
       value: outcomes.fail
         ? {content: [], isError: true}
         : input.tool === 'code.attachments'
-          ? {content: contexts.map((text) => ({text, type: 'text'}))}
+          ? {content: contexts.map((text) => ({text, type: 'text' as const})), isError: false}
           : {
               content: [],
+              isError: false,
               structuredContent: {session: 'one', url: outcomes.url, workspace: '/project'},
             },
     }
@@ -107,21 +110,22 @@ function fixture(on) {
       })
       return {result: 'Fronted tab viewer.'}
     }
-    return input.tool === 'Read'
-      ? {result: {file: {filePath: input.file_path, startLine: input.offset ?? 1}, type: 'text'}}
-      : {
-          isError: outcomes.fail,
-          result: JSON.stringify({
-            capabilities: {reveal: true},
-            session: 'one',
-            url: outcomes.url,
-            workspace: '/project',
-          }),
-        }
+    if (input.tool === 'Read') {
+      return {
+        result: {file: {filePath: input.file_path, startLine: input.offset ?? 1}, type: 'text'},
+      }
+    }
+    const result = JSON.stringify({
+      capabilities: {reveal: true},
+      session: 'one',
+      url: outcomes.url,
+      workspace: '/project',
+    })
+    return outcomes.fail ? {isError: true, result} : {result}
   })
   on('ui.open', (_, input) => {
     calls.push(input)
-    return {value: undefined}
+    return {value: {isPlaced: true}}
   })
   on('ui.log', (_, input) => {
     logs.push(input.text)
@@ -132,7 +136,7 @@ function fixture(on) {
     return {value: undefined}
   })
   on('ui.render', ($, event) =>
-    $.ui.resolve(event).Text({children: [event.props.text ?? 'original']}),
+    $.ui.resolve(event).Text({children: ['text' in event.props ? event.props.text : 'original']}),
   )
   on('prompt.submit', (_, event) => ({context: event.context ?? [], text: event.text}))
   return {calls, contexts, logs, notices, outcomes, reveals}
@@ -216,7 +220,7 @@ test('should open a clicked project file link at its line and preserve external 
   }
   const drawing = await engine.ui.mount(target)
   const markdown = await drawing.find({type: 'Markdown'})
-  expect(markdown.props.pressableLinks).toEqual(['file:///project/a.ts#L7C3'])
+  expect(required(markdown).props.pressableLinks).toEqual(['file:///project/a.ts#L7C3'])
   await drawing.press({key: 'code-viewer:links', link: {href: 'file:///project/a.ts#L7C3'}})
   expect(
     calls.find((call) => call.tool === 'mcp__plugin_code-viewer_viewer__code_browser'),
@@ -267,7 +271,12 @@ test('should deliver retained Browser snapshots with composer input intact', asy
   await engine.session.start({cwd: '/project', isInteractive: false, surface: 'desktop'})
   const drawing = await engine.ui.mount(launcher)
   await drawing.press({key: 'code-viewer:open'})
-  const input = {context: ['existing'], origin: {kind: 'composer'} as const, text: '첨부 설명'}
+  const input = {
+    context: ['existing'],
+    origin: {kind: 'composer'} as const,
+    text: '첨부 설명',
+    wait: false,
+  }
   expect(await engine.prompt.submit(input)).toEqual({
     context: ['existing', 'unsaved snapshot'],
     text: input.text,
@@ -280,7 +289,7 @@ test('should retain live snapshots across sends and respect removals', async (en
   await engine.session.start({cwd: '/project', isInteractive: false, surface: 'desktop'})
   const drawing = await engine.ui.mount(launcher)
   await drawing.press({key: 'code-viewer:open'})
-  const input = {origin: {kind: 'composer'} as const, text: '설명'}
+  const input = {origin: {kind: 'composer'} as const, text: '설명', wait: false}
   expect((await engine.prompt.submit(input)).context).toEqual(['unsaved snapshot'])
   expect((await engine.prompt.submit(input)).context).toEqual(['unsaved snapshot'])
   contexts.splice(0)
@@ -290,7 +299,7 @@ test('should retain live snapshots across sends and respect removals', async (en
 test('should leave unopened sessions independent of the attachment server', async (engine, on) => {
   const {calls} = fixture(on)
   await engine.session.start({cwd: '/project', isInteractive: false, surface: 'desktop'})
-  const input = {origin: {kind: 'composer'} as const, text: 'hello'}
+  const input = {origin: {kind: 'composer'} as const, text: 'hello', wait: false}
   expect(await engine.prompt.submit(input)).toEqual({context: [], text: 'hello'})
   expect(calls).toEqual([])
 })
@@ -301,23 +310,34 @@ test('should refuse sending an incomplete attachment when its server fails', asy
   const drawing = await engine.ui.mount(launcher)
   await drawing.press({key: 'code-viewer:open'})
   outcomes.fail = true
-  const result = await engine.prompt.submit({origin: {kind: 'composer'}, text: '첨부 설명'})
+  const result = await engine.prompt.submit({
+    origin: {kind: 'composer'},
+    text: '첨부 설명',
+    wait: false,
+  })
   expect(result.drop).toContain('첨부')
 })
 
 test('should open the command locally without asking the model to run setup', async (engine, on) => {
   const {calls} = fixture(on)
   await engine.session.start({cwd: '/project', isInteractive: false, surface: 'desktop'})
-  expect(await engine.command.run({args: '', command: 'code-viewer:open'})).toEqual({})
+  expect(
+    await engine.command.run({
+      args: '',
+      command: 'code-viewer:open',
+      origin: {kind: 'composer'},
+      presentation: {columns: 80, isFullscreen: false},
+    }),
+  ).toEqual({})
   expect(calls.filter((call) => call.tool === 'mcp__Claude_Browser__preview_start')).toHaveLength(1)
 })
 
 test('should keep CLI messages and prompts unchanged', async (engine, on) => {
   const {calls} = fixture(on)
-  await engine.session.start({cwd: '/project', isInteractive: false, surface: 'cli'})
+  await engine.session.start({cwd: '/project', isInteractive: false, surface: 'terminal'})
   const result = await engine.ui.render({...reply, surface: 'terminal'})
   expect(JSON.stringify(result)).not.toContain('code-viewer:open')
-  const input = {origin: {kind: 'composer'} as const, text: 'hello'}
+  const input = {origin: {kind: 'composer'} as const, text: 'hello', wait: false}
   expect(await engine.prompt.submit(input)).toEqual({context: [], text: 'hello'})
   expect(calls).toEqual([])
 })
@@ -353,7 +373,7 @@ test('should expose an open button in the Desktop session footer without opening
     requestId: 'footer',
     surface: 'desktop',
   })
-  expect((await footer.find({key: 'code-viewer:open'})).text).toBe('코드 뷰어 열기')
+  expect(required(await footer.find({key: 'code-viewer:open'})).text).toBe('코드 뷰어 열기')
   expect(calls).toEqual([])
 })
 
@@ -390,24 +410,24 @@ for (const {config, name, text} of [
     outcomes.desktopConfig = config
     await engine.session.start({cwd: '/project', isInteractive: false, surface: 'desktop'})
     const footer = await engine.ui.mount(launcher)
-    expect((await footer.find({key: 'code-viewer:open'})).text).toBe(text)
+    expect(required(await footer.find({key: 'code-viewer:open'})).text).toBe(text)
   })
 }
 
 test('should update the button after the app language changes and the footer redraws', async (engine, on) => {
   const {outcomes} = fixture(on)
   const footer = await engine.ui.mount(launcher)
-  expect((await footer.find({key: 'code-viewer:open'})).text).toBe('코드 뷰어 열기')
+  expect(required(await footer.find({key: 'code-viewer:open'})).text).toBe('코드 뷰어 열기')
   outcomes.desktopConfig = '{"locale":"en-US"}'
   await footer.redraw()
-  expect((await footer.find({key: 'code-viewer:open'})).text).toBe('Open Code Viewer')
+  expect(required(await footer.find({key: 'code-viewer:open'})).text).toBe('Open Code Viewer')
 })
 
 test('should omit configuration contents from language diagnostic logs', async (engine, on) => {
   const {logs, outcomes} = fixture(on)
   outcomes.desktopConfig = '{"locale":"en-US","oauth:tokenCache":SYNTHETIC_PRIVATE_TOKEN}'
   const footer = await engine.ui.mount(launcher)
-  expect((await footer.find({key: 'code-viewer:open'})).text).toBe('Open Code Viewer')
+  expect(required(await footer.find({key: 'code-viewer:open'})).text).toBe('Open Code Viewer')
   expect(logs).toHaveLength(1)
   expect(logs[0]).not.toContain('SYNTHETIC')
   expect(logs[0]).not.toContain('tokenCache')
@@ -430,7 +450,11 @@ test('should translate attachment errors in English', async (engine, on) => {
   const footer = await engine.ui.mount(launcher)
   await footer.press({key: 'code-viewer:open'})
   outcomes.fail = true
-  const result = await engine.prompt.submit({origin: {kind: 'composer'}, text: 'Explain this'})
+  const result = await engine.prompt.submit({
+    origin: {kind: 'composer'},
+    text: 'Explain this',
+    wait: false,
+  })
   expect(result.drop).toBe('Could not retrieve Code Viewer attachments. Please send again.')
   expect(notices).toEqual(['Code Viewer: Could not retrieve attachments.'])
 })
@@ -467,7 +491,7 @@ test('should route links from the changed worktree through the viewer', async (e
     ...reply,
     props: {isFirstOfReply: true, text: '[코드](a.ts:7:3)'},
   })
-  expect((await drawing.find({type: 'Markdown'})).props.pressableLinks).toEqual([
+  expect(required(await drawing.find({type: 'Markdown'})).props.pressableLinks).toEqual([
     'file:///project-worktree/a.ts#L7C3',
   ])
   await drawing.press({

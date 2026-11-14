@@ -5,7 +5,7 @@ import {cleanup, fireEvent, render} from '@solidjs/testing-library'
 import {createSignal} from 'solid-js'
 import {afterEach, expect, test, vi} from 'vitest'
 import {createDemoDocument, type PuppetDocument} from '../../../player'
-import {useDocumentHistory} from '../../use-document-history'
+import {createHistory as useDocumentHistory} from '../../__tests__/fixtures/history'
 import {DeformerEditor} from '../DeformerEditor'
 import {convertSceneContainers} from '../container-conversion'
 import {insertParameterKeyform} from '../parameter-keyforms'
@@ -27,7 +27,7 @@ const pointer = (type: string, options: MouseEventInit = {}) => {
 afterEach(cleanup)
 
 test.each(['surface', 'spatial'] as const)(
-  'should discard a %s drag when its document is undone',
+  'should reject undo during a %s drag and discard the gesture after completed undo',
   (kind) => {
     const initial =
       kind === 'spatial'
@@ -60,6 +60,8 @@ test.each(['surface', 'spatial'] as const)(
     fireEvent(svg, pointer('pointermove', {clientX: 280, clientY: 210}))
     expect(history.document()).not.toBe(firstMove)
     expect(end).not.toHaveBeenCalled()
+    expect(history.undo()).toBe(false)
+    history.endTransaction()
     expect(history.undo()).toBe(true)
     fireEvent(svg, pointer('pointermove', {clientX: 210, clientY: 220}))
     fireEvent(svg, pointer('pointerup'))

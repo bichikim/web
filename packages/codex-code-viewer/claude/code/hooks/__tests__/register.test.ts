@@ -45,7 +45,7 @@ test('should open a Desktop pane even when the Browser connection fails', async 
   on('mcp.connect', () => ({deny: 'connection unavailable'}))
   on('ui.open', (_, input) => {
     panes.push(input)
-    return {value: undefined}
+    return {value: {isPlaced: true}}
   })
   on('ui.toast', () => ({value: undefined}))
   on('ui.log', () => ({value: undefined}))
@@ -61,11 +61,11 @@ test('should wait for Desktop before opening the dedicated pane', async (engine,
   on('mcp.connect', () => ({deny: 'connection unavailable'}))
   on('ui.open', (_, input) => {
     panes.push(input)
-    return {value: undefined}
+    return {value: {isPlaced: true}}
   })
   on('ui.toast', () => ({value: undefined}))
   on('ui.log', () => ({value: undefined}))
-  await engine.session.start({cwd: '/project', isInteractive: false, surface: 'cli'})
+  await engine.session.start({cwd: '/project', isInteractive: false, surface: 'terminal'})
   expect(panes).toEqual([])
   await engine.session.attach({clientId: 'desktop', surface: 'desktop'})
   expect(panes).toEqual([{columns: 100, id: 'code-viewer-pane', title: 'Code Viewer Pane'}])
@@ -165,7 +165,7 @@ test('should leave CLI prompt context and reads unchanged', async (engine, on) =
     calls.push(input)
     return {value: {content: [], isError: false}}
   })
-  await engine.session.start({cwd: '/project', isInteractive: false, surface: 'cli'})
+  await engine.session.start({cwd: '/project', isInteractive: false, surface: 'terminal'})
   expect(await engine.prompt.context({blocks: []})).toEqual(context)
   await engine.tool.call({file_path: '/project/example.ts', tool: 'Read'})
   expect(calls).toEqual([])

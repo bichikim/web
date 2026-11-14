@@ -48,9 +48,10 @@ vi.mock('../../../features/language-learning', async () => {
 })
 vi.mock('../../../features/model-download', () => ({useModelDownload: vi.fn()}))
 vi.mock('../../../features/model-storage', () => ({formatModelDownloadSize: vi.fn(() => '1 MB')}))
-vi.mock('../../../features/supertonic', () => ({
+vi.mock('../../../features/supertonic', () => ({isSupertonicModelDownloaded: vi.fn()}))
+vi.mock('@winter-love/supertonic/model', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@winter-love/supertonic/model')>()),
   getSupertonicModel: vi.fn(() => ({size: 1})),
-  isSupertonicModelDownloaded: vi.fn(),
 }))
 vi.mock('../../../features/text-generation', () => ({
   getTextModel: vi.fn(() => ({downloadSize: '2 MB'})),

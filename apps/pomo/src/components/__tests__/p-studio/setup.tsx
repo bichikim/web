@@ -37,12 +37,8 @@ import {PStudioTourHint} from 'src/components/p-studio/TourHint'
 import {useStudioScreenSaver} from 'src/components/p-studio/use-screen-saver'
 import {PScreenSaver} from 'src/components/p-screen-saver/PScreenSaver'
 import {PStudio} from 'src/components/p-studio/PStudio'
-import {
-  type BackgroundController,
-  type BackgroundPreferences,
-  DEFAULT_BACKGROUND,
-  useBackground,
-} from 'src/features/background'
+import {type BackgroundController, useBackground} from 'src/features/background'
+import {type BackgroundPreferences, DEFAULT_BACKGROUND} from '@winter-love/wallpaper/model'
 import {Player as FramePlayer} from 'src/components/frame/Player'
 import {PTour} from 'src/components/tour/PTour'
 import {useDialogueSceneGaze} from 'src/components/use-dialogue-scene-gaze'
@@ -86,14 +82,14 @@ vi.mock('src/features/desktop-mode', () => ({
     handleWheel: vi.fn(),
   })),
 }))
-vi.mock('src/features/background', () => ({
+vi.mock('src/features/background', () => ({useBackground: vi.fn()}))
+vi.mock('@winter-love/wallpaper/model', () => ({
   DEFAULT_BACKGROUND: {
     mode: 'character',
     order: 'sequential',
     photoSeconds: 10,
     websiteUrl: null,
   },
-  useBackground: vi.fn(),
 }))
 vi.mock('src/components/frame/Player', () => ({Player: vi.fn()}))
 vi.mock('src/components/p-studio/Entry', () => ({PEntry: vi.fn()}))

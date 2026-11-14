@@ -1,22 +1,37 @@
+import type {PlayerBufferingInfo} from './buffering/types'
 import type {PuppetParameterValueMap} from '../deformation'
 import type {MotionSoundError} from './audio/motion-sound-loader'
 import type {PuppetVowelWeights} from './document'
-import type {PuppetFraming} from './internal/layout-player-root'
+import type {PuppetFit, PuppetFraming} from './internal/layout-player-root'
 import type {PreparedPuppetDocument} from './internal/prepared-document'
 import type {PuppetRenderOverride} from './internal/render-overrides'
 import type {LookTarget} from './look'
 import type {EyeBlinkTiming} from './eye-blink'
 import type {RandomSource} from './random'
-import type {PuppetParameterBlend} from './parameter-blends'
+import type {ParameterBlendStage, PuppetParameterBlend} from './parameter-blends'
 import type {PuppetPhysicsOptions} from './physics-options'
 import type {MotionEvent, MotionPlayback, MotionPlaybackOptions} from './playback'
 import type {PlayerViewCamera} from './view-camera'
+import type {
+  PlayerRendererChange,
+  PlayerRendererConfiguration,
+  PlayerRenderingInfo,
+  PlayerRenderingOptions,
+} from './rendering-options'
 
+/**
+ * Commands validate synchronously. With buffering enabled, controls are coalesced and evaluated in
+ * the Worker; resolved values, expression and hitTest describe the last displayed frame. Await
+ * flushPlayerInputs before reading an applied input. Buffering off retains synchronous evaluation.
+ */
 export interface Player {
+  /** Replaces only GPU resources; playback, physics, overrides and the document are retained. */
+  configureRenderer(options: PlayerRendererConfiguration): Promise<PlayerRendererChange>
+  getRenderingInfo(): PlayerRenderingInfo
   /** Releases external overrides; omitted IDs release all overrides. */
   clearParameterValues(parameterIds?: ReadonlyArray<string>): void
   destroy(): void
-  /** The expression fading in or held, if any. */
+  /** The expression fading in or held in the last displayed frame, if any. */
   getExpression(): string | undefined
   getParameterValue(parameterId: string): number | undefined
   /** Returns a snapshot of resolved parameter values used by the last rendered frame. */
@@ -25,21 +40,33 @@ export interface Player {
   hitTest(point: {readonly x: number; readonly y: number}): string | undefined
   /** 지정한 외부 값만 병합하며 다른 입력과 모션 재생은 유지한다. */
   patchParameterValues(values: PuppetParameterValueMap): void
+  /** Merges blends in one frame. Stage defaults to before physics; undefined releases only that stage's blends. */
+  patchParameterBlends(
+    values: Readonly<Record<string, PuppetParameterBlend | undefined>>,
+    stage?: ParameterBlendStage,
+  ): void
   pause(): void
   play(options?: PlayerPlaybackOptions): void
   playMotion(motionId: string, options?: PlayerPlaybackOptions): boolean
   /** Plays a random motion of `group` (Cubism's random motion); returns its ID. */
   playGroup(group: string, options?: PlayerPlaybackOptions): string | undefined
   redraw(): void
-  resize(): void
+  /** Resizes to the host; a positive finite resolution also updates backing pixels per CSS pixel. */
+  resize(resolution?: number): void
   /** Pins the specified parameters to their defaults; omitted IDs reset all parameters. */
   resetParameters(parameterIds?: ReadonlyArray<string>): void
   /** Removes inertia at the current input pose without changing timeline time. */
   resetPhysics(): void
+  /** Clears retained motion values for the specified parameters; omitted clears all motion history. */
+  resetMotionHistory(parameterIds?: ReadonlyArray<string>): void
   resume(): void
   seek(time: number): void
   /** Cross-fades to an expression; omitted IDs fade the current one out. Unknown IDs return false. */
   setExpression(expressionId?: string): boolean
+  /** Sets an independently fading expression layer; omitted expression releases only this layer. Unknown expressions return false. */
+  setExpressionLayer(layerId: string, expressionId?: string): boolean
+  /** 여러 표정을 독립적으로 페이드한다. 빈 목록은 모두 해제하며 모르는 ID는 변경 없이 거부한다. */
+  setExpressions(expressionIds: ReadonlyArray<string>): boolean
   /** Breathes with the document's `breath` parameters, added after motions and before physics. */
   setBreath(enabled: boolean): void
   /**
@@ -56,6 +83,8 @@ export interface Player {
    * nothing. The blink already scheduled keeps its time.
    */
   setEyeBlinkTiming(timing?: Partial<EyeBlinkTiming>): boolean
+  /** Fits or fills the screen uniformly without changing playback or the document. */
+  setFit(fit: PuppetFit): void
   /** Adds a mouth level to the lip-sync role parameters after physics; omitted stops. */
   setLipSync(level?: number): void
   /**
@@ -120,7 +149,15 @@ export interface PlayerFrame {
   readonly time: number
 }
 
-export interface CreatePlayerOptions {
+export interface CreatePlayerOptions extends PlayerRenderingOptions {
+  /** Uniform sizing within the screen; omitted to show the whole framed rectangle. */
+  readonly fit?: PuppetFit
+  /** Enables up to three predicted frames; omitted, retain the original synchronous rendering path. */
+  readonly buffering?: boolean
+  /** Reports requested and actual buffering status; omitted, use getPlayerBufferingInfo to query it. */
+  readonly onBufferingChange?: (info: PlayerBufferingInfo) => void
+  /** Whether the shared external renderer is active. Omitted, render callbacks are always active. */
+  readonly externalRendering?: () => boolean
   readonly canvas: HTMLCanvasElement
   readonly document: PreparedPuppetDocument
   readonly motionId?: string
@@ -133,8 +170,10 @@ export interface CreatePlayerOptions {
   readonly onSoundError?: (error: MotionSoundError) => void
   readonly parameterValues?: PuppetParameterValueMap
   readonly physicsPreview?: boolean
-  /** Random numbers for eye blinks and motion groups; `Math.random` when omitted. */
+  /** Custom blink and motion randomness; when supplied, retain synchronous evaluation. */
   readonly random?: RandomSource
+  /** Seed for reproducible blinks and motion choices; omitted, sample a seed once at creation. */
+  readonly randomSeed?: number
   readonly resolution?: number
   readonly resizeTo?: HTMLElement
   /**

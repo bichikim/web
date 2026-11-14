@@ -5,6 +5,22 @@ import {addGlue, setGlueKeyform} from '../glue'
 import {mergeDocument} from '../merge-document'
 import {updatePhysics} from '../physics'
 
+test.each(['existing', 'incoming'] as const)(
+  'should preserve world physics settings without rigs from the %s model',
+  (placement) => {
+    const plain = createDemoDocument()
+    const physics = {fps: 30, gravity: [0, -1] as const, pendulums: [], wind: [0.5, 0] as const}
+    const configured = {...plain, physics}
+    expect(parseDocument(serializeDocument(configured)).ok).toBe(true)
+    const result =
+      placement === 'existing' ? mergeDocument(configured, plain) : mergeDocument(plain, configured)
+    expect(result.ok).toBe(true)
+    if (result.ok) {
+      expect(result.document.physics).toEqual(physics)
+    }
+  },
+)
+
 test('should retain existing and imported conditional layer rules with renamed references', () => {
   const document = {
     ...createDemoDocument(),

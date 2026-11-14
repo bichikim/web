@@ -12,7 +12,9 @@ const renderer = vi.hoisted(() => ({
   subscribeFrame: vi.fn(),
   updateDocument: vi.fn(() => true),
 }))
-vi.mock('../rendering', () => ({createPlayerRenderer: vi.fn(async () => renderer)}))
+vi.mock('../rendering/create-player-renderer', () => ({
+  createPlayerRenderer: vi.fn(async () => renderer),
+}))
 afterEach(() => vi.clearAllMocks())
 const source = {
   ...puppetDocument,

@@ -1,0 +1,70 @@
+{
+  "version": 1,
+  "album": {
+    "artist": "ASH",
+    "id": "ash-afternoon",
+    "title": "오후의 거리"
+  },
+  "tracks": [
+    {
+      "number": 1,
+      "id": "window",
+      "title": "창문",
+      "artwork": "/music/ash-afternoon/window/cover.webp"
+    },
+    {
+      "number": 2,
+      "id": "boot-laces",
+      "title": "부츠 끈",
+      "artwork": "/music/ash-afternoon/boot-laces/cover.webp"
+    },
+    {
+      "number": 3,
+      "id": "corner",
+      "title": "모퉁이",
+      "artwork": "/music/ash-afternoon/corner/cover.webp"
+    },
+    {
+      "number": 4,
+      "id": "shop-window",
+      "title": "쇼윈도",
+      "artwork": "/music/ash-afternoon/shop-window/cover.webp"
+    },
+    {
+      "number": 5,
+      "id": "lemon-soda",
+      "title": "레몬소다",
+      "artwork": "/music/ash-afternoon/lemon-soda/cover.webp"
+    },
+    {
+      "number": 6,
+      "id": "blue-ribbon",
+      "title": "파란 리본",
+      "artwork": "/music/ash-afternoon/blue-ribbon/cover.webp"
+    },
+    {
+      "number": 7,
+      "id": "one-earbud",
+      "title": "한쪽 이어폰",
+      "artwork": "/music/ash-afternoon/one-earbud/cover.webp"
+    },
+    {
+      "number": 8,
+      "id": "long-shadow",
+      "title": "긴 그림자",
+      "artwork": "/music/ash-afternoon/long-shadow/cover.webp"
+    },
+    {
+      "number": 9,
+      "id": "streetlamp",
+      "title": "가로등",
+      "artwork": "/music/ash-afternoon/streetlamp/cover.webp"
+    },
+    {
+      "number": 10,
+      "id": "doorstep",
+      "title": "현관 앞",
+      "artwork": "/music/ash-afternoon/doorstep/cover.webp"
+    }
+  ]
+}

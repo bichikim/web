@@ -11,7 +11,7 @@ import type {PdfViewState} from './view-state/types'
 import {createDocument} from './pdf/create-document'
 import type {PdfDocument, PdfRender} from './pdf/types'
 
-interface PdfOptions {
+interface UsePdfDocumentProps {
   readonly blob: Accessor<Blob>
   readonly canvas: Accessor<HTMLCanvasElement | null>
   readonly width: Accessor<number>
@@ -23,7 +23,7 @@ const MIN_PERCENT = 25
 const MAX_PERCENT = 400
 const MAX_PIXELS = 16777216
 
-export const usePdfDocument = (options: PdfOptions) => {
+export const usePdfDocument = (props: UsePdfDocumentProps) => {
   const [document, setDocument] = createSignal<PdfDocument | null>(null)
   const [page, setPage] = createSignal(1)
   const [percent, setPercent] = createSignal(BASE_PERCENT)
@@ -35,11 +35,11 @@ export const usePdfDocument = (options: PdfOptions) => {
   const report = (reason: unknown): void => {
     const message = 'PDF를 표시할 수 없습니다. 파일이 손상되었거나 암호가 필요한지 확인해 주세요.'
     setError(message)
-    untrack(() => options.onError?.(new Error(message, {cause: reason})))
+    untrack(() => props.onError?.(new Error(message, {cause: reason})))
   }
   createEffect(() => {
-    const blob = options.blob()
-    const saved = untrack(() => options.initial?.())
+    const blob = props.blob()
+    const saved = untrack(() => props.initial?.())
     setDocument(null)
     setPage(1)
     setPending(true)
@@ -76,8 +76,8 @@ export const usePdfDocument = (options: PdfOptions) => {
   createEffect(() => {
     const current = document()
     const number = page()
-    const target = options.canvas()
-    const available = options.width()
+    const target = props.canvas()
+    const available = props.width()
     const fit = fitting()
     const requested = percent()
     if (current === null || target === null) {

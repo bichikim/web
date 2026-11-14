@@ -1,5 +1,6 @@
 import {limitAsync} from 'es-toolkit/promise'
 import type {PuppetDocument, PuppetTextureRegion} from '../../player'
+import {loadTextureImage} from '../../player/internal/load-texture-image'
 import {
   applyTextureAtlas,
   DEFAULT_TEXTURE_ATLAS_OPTIONS,
@@ -14,13 +15,7 @@ import {
 // Many large images decoding at once can fail in Chromium; see `initializeRuntimeParts`.
 const MAXIMUM_CONCURRENT_DECODES = 4
 
-const loadImage = limitAsync(async (src: string) => {
-  const image = new Image()
-  image.decoding = 'async'
-  image.src = src
-  await image.decode()
-  return image
-}, MAXIMUM_CONCURRENT_DECODES)
+const loadImage = limitAsync(loadTextureImage, MAXIMUM_CONCURRENT_DECODES)
 
 const createContext = (width: number, height: number) => {
   const canvas = document.createElement('canvas')

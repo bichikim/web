@@ -3,7 +3,7 @@ import type {ChangeRow} from './types'
 import type {TextMatch} from './find-text'
 import {createChangeWindow} from './create-change-window'
 
-interface ChangeViewportOptions {
+interface UseChangeViewportProps {
   readonly rows: Accessor<readonly ChangeRow[]>
   readonly element: Accessor<HTMLDivElement | null>
   readonly match: Accessor<TextMatch | undefined>
@@ -12,21 +12,21 @@ interface ChangeViewportOptions {
 const VIRTUAL_THRESHOLD = 500
 const INITIAL_HEIGHT = 400
 
-export const useChangeViewport = (options: ChangeViewportOptions) => {
+export const useChangeViewport = (props: UseChangeViewportProps) => {
   const [width, setWidth] = createSignal(0)
   const [offset, setOffset] = createSignal(0)
   const [height, setHeight] = createSignal(INITIAL_HEIGHT)
   const source = createMemo(() =>
-    options
+    props
       .rows()
       .map((row) => row.text)
       .join('\n'),
   )
-  const virtual = createMemo(() => options.rows().length > VIRTUAL_THRESHOLD)
+  const virtual = createMemo(() => props.rows().length > VIRTUAL_THRESHOLD)
   const offsets = createMemo(() => Array.from(source().matchAll(/^/gmu), (match) => match.index))
   const current = createMemo(() => {
-    const match = options.match()
-    return match === undefined || options.request() === 0
+    const match = props.match()
+    return match === undefined || props.request() === 0
       ? -1
       : Math.max(
           0,
@@ -35,7 +35,7 @@ export const useChangeViewport = (options: ChangeViewportOptions) => {
   })
   const viewport = createMemo(() =>
     createChangeWindow({
-      count: options.rows().length,
+      count: props.rows().length,
       height: height(),
       offset: offset(),
     }),
@@ -44,14 +44,14 @@ export const useChangeViewport = (options: ChangeViewportOptions) => {
     on(source, () => {
       setWidth(0)
       setOffset(0)
-      const container = options.element()
+      const container = props.element()
       if (container !== null) {
         container.scrollTop = 0
       }
     }),
   )
   createEffect(
-    on(options.element, (container) => {
+    on(props.element, (container) => {
       if (container !== null) {
         setHeight(container.clientHeight || INITIAL_HEIGHT)
         if (typeof ResizeObserver !== 'undefined') {
@@ -79,10 +79,10 @@ export const useChangeViewport = (options: ChangeViewportOptions) => {
             {length: viewport().end - viewport().start},
             (_, index) => viewport().start + index,
           )
-        : options.rows().map((_, index) => index),
+        : props.rows().map((_, index) => index),
     ),
     locate: (): void => {
-      const container = options.element()
+      const container = props.element()
       if (virtual() && current() >= 0 && container !== null) {
         container.scrollTop = viewport().locate(current())
         setOffset(container.scrollTop)

@@ -1,6 +1,6 @@
 import {isPromise} from '@winter-love/utils'
 import {batch, createSignal} from 'solid-js'
-import type {PreferenceStorage} from 'src/utils/preference-storage'
+import type {PreferenceStorage} from './types'
 import type {PreferenceEntry, PreferenceSetValueOptions, PreferenceSnapshot} from './context'
 
 interface PreferenceReadFailure {

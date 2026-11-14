@@ -25,6 +25,7 @@ export type MeshIssueCode =
   | 'invalid-coordinate-count'
   | 'invalid-index'
   | 'invalid-uv-count'
+  | 'non-finite-coordinate'
   | 'non-manifold-edge'
 
 export interface ValidMeshResult {
@@ -127,33 +128,45 @@ const collectEdges = (mesh: PuppetMesh) => {
   return {edgeCount, edges: [...edges.values()]}
 }
 
-const hasDuplicateVertices = (mesh: PuppetMesh, vertexCount: number) => {
-  const vertices: MeshPoint[] = []
+const getVertexBucket = (coordinate: number) => {
+  const bucket = Math.floor(coordinate / (GEOMETRY_EPSILON * 2))
+  return Number.isFinite(bucket) ? bucket : coordinate
+}
 
-  for (let index = 0; index < vertexCount; index += 1) {
-    const vertex = getMeshVertex(mesh, index)
-
-    if (vertex !== undefined) {
-      vertices.push(vertex)
-    }
-  }
-
-  vertices.sort((first, second) => first.x - second.x)
-
-  for (const [firstIndex, first] of vertices.entries()) {
-    let secondIndex = firstIndex + 1
-    let second = vertices[secondIndex]
-
-    while (second !== undefined && second.x - first.x <= GEOMETRY_EPSILON) {
-      if (hasSamePoint(first, second)) {
+const hasNearbyVertex = (
+  buckets: ReadonlyMap<string, ReadonlyArray<MeshPoint>>,
+  vertex: MeshPoint,
+) => {
+  const horizontal = getVertexBucket(vertex.x)
+  const vertical = getVertexBucket(vertex.y)
+  for (const xOffset of [-1, 0, 1]) {
+    for (const yOffset of [-1, 0, 1]) {
+      const neighbors = buckets.get(`${horizontal + xOffset}:${vertical + yOffset}`)
+      if (neighbors?.some((neighbor) => hasSamePoint(vertex, neighbor))) {
         return true
       }
-
-      secondIndex += 1
-      second = vertices[secondIndex]
     }
   }
+  return false
+}
 
+const hasDuplicateVertices = (mesh: PuppetMesh, vertexCount: number) => {
+  const buckets = new Map<string, MeshPoint[]>()
+  for (let index = 0; index < vertexCount; index += 1) {
+    const vertex = getMeshVertex(mesh, index)
+    if (vertex !== undefined) {
+      if (hasNearbyVertex(buckets, vertex)) {
+        return true
+      }
+      const key = `${getVertexBucket(vertex.x)}:${getVertexBucket(vertex.y)}`
+      const bucket = buckets.get(key)
+      if (bucket === undefined) {
+        buckets.set(key, [vertex])
+      } else {
+        bucket.push(vertex)
+      }
+    }
+  }
   return false
 }
 
@@ -380,7 +393,25 @@ const hasValidBoundaryLoops = (mesh: PuppetMesh, vertexCount: number) => {
 const getMetadataIssues = (mesh: PuppetMesh, vertexCount: number): ReadonlyArray<MeshIssueCode> =>
   hasValidBoundaryLoops(mesh, vertexCount) ? [] : (['invalid-boundary'] as const)
 
+const isDegenerateTriangle = (mesh: PuppetMesh, triangle: MeshTriangleIndices) => {
+  const first = getMeshVertex(mesh, triangle[0])
+  const second = getMeshVertex(mesh, triangle[1])
+  const third = getMeshVertex(mesh, triangle[2])
+  return (
+    first === undefined ||
+    second === undefined ||
+    third === undefined ||
+    isDegenerateArea(getSignedArea(first, second, third))
+  )
+}
+
+const hasFiniteCoordinates = (mesh: PuppetMesh) =>
+  mesh.vertices.every(Number.isFinite) && mesh.uvs.every(Number.isFinite)
+
 export const validateMesh = (mesh: PuppetMesh): ValidateMeshResult => {
+  if (!hasFiniteCoordinates(mesh)) {
+    return {issues: ['non-finite-coordinate'], valid: false}
+  }
   const issues = new Set<MeshIssueCode>()
   const vertexCount = mesh.vertices.length / COORDINATES_PER_VERTEX
   const hasCoordinatePairs = Number.isInteger(vertexCount)
@@ -412,19 +443,11 @@ export const validateMesh = (mesh: PuppetMesh): ValidateMeshResult => {
     )
 
     if (hasValidIndices) {
-      const first = getMeshVertex(mesh, triangle[0])
-      const second = getMeshVertex(mesh, triangle[1])
-      const third = getMeshVertex(mesh, triangle[2])
       const key = [...triangle]
         .sort((firstIndex, secondIndex) => firstIndex - secondIndex)
         .join(':')
 
-      if (
-        first === undefined ||
-        second === undefined ||
-        third === undefined ||
-        isDegenerateArea(getSignedArea(first, second, third))
-      ) {
+      if (isDegenerateTriangle(mesh, triangle)) {
         issues.add('degenerate-triangle')
       }
 

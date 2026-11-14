@@ -1,3 +1,4 @@
+import {preventInternalDismiss} from '../../design-system/prevent-internal-dismiss'
 import {
   EditorButton,
   EditorRangeInput,
@@ -14,6 +15,8 @@ import {type InfluenceRelationProps, useInfluenceSettings} from './use-influence
 const WHOLE_PERCENT = 100
 
 export const InfluenceRelation = (props: InfluenceRelationProps) => {
+  let surface: HTMLDivElement | undefined
+
   const settings = useInfluenceSettings(props)
   const mount = useEditorPortalMount()
   return (
@@ -50,7 +53,13 @@ export const InfluenceRelation = (props: InfluenceRelationProps) => {
           직접 설정 <span aria-hidden="true" class="puppet-icon puppet-icon-chevron-down" />
         </Popover.Trigger>
         <Popover.Portal mount={mount}>
-          <Popover.Content class="influence-popover">
+          <Popover.Content
+            ref={(element) => {
+              surface = element
+            }}
+            onInteractOutside={(event) => preventInternalDismiss(event, surface)}
+            class="influence-popover"
+          >
             <header>
               <Popover.Title>커스텀 곡선</Popover.Title>
               <Popover.CloseButton as={EditorButton} aria-label="커스텀 곡선 닫기">

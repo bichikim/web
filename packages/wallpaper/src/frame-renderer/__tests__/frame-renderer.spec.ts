@@ -426,3 +426,27 @@ it('should ignore a replaced video that finishes texture loading late', async ()
   renderer.destroy()
   expect(disposeMedia).toHaveBeenCalledTimes(2)
 })
+
+it.each(['photo', 'video'] as const)(
+  'should change %s fit immediately without reloading or restarting media',
+  async (kind) => {
+    const canvas = document.createElement('canvas')
+    Object.defineProperties(canvas, {clientHeight: {value: 600}, clientWidth: {value: 300}})
+    const renderer = new FrameRenderer({canvas, onEnded: vi.fn(), onError: vi.fn()})
+    await renderer.initialize()
+    const showing = renderer.show(new Blob(['media']), kind)
+    finishMedia(true)
+    await showing
+    vi.mocked(createMedia).mockClear()
+    const play = vi.mocked(video.play)
+    play.mockClear()
+    renderer.setFit('cover')
+    expect(sprite.scale.set).toHaveBeenLastCalledWith(3)
+    expect(sprite.position.set).toHaveBeenLastCalledWith(150, 300)
+    expect(createMedia).not.toHaveBeenCalled()
+    expect(play).not.toHaveBeenCalled()
+    renderer.setFit('contain')
+    expect(sprite.scale.set).toHaveBeenLastCalledWith(0.75)
+    renderer.destroy()
+  },
+)

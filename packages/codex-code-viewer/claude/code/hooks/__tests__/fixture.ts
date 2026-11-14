@@ -1,3 +1,10 @@
+import {readRecord} from './read-record'
+import {readField} from './read-field'
+import {readArray} from './read-array'
+import {readText} from './read-text'
+import type {CodeDocument} from '../../../../src/shared/contracts'
+import type {On} from 'claude-code'
+import type {Mounted} from 'claude-code/testing'
 /* eslint-disable eslint-js/camelcase -- Claude tool arguments use snake case. */
 const TOKEN_LENGTH = 64
 export const url = `http://127.0.0.1:54321/#token=${'a'.repeat(TOKEN_LENGTH)}`
@@ -16,16 +23,16 @@ export const paneTarget = {
   surface: 'desktop' as const,
 }
 
-export function projectFixture(on, clipboardEnabled = false) {
-  const highlights = new Map()
-  const previews = new Map()
-  const destinations = new Map()
+export function projectFixture(on: On, clipboardEnabled = false) {
+  const highlights = new Map<string, unknown>()
+  const previews = new Map<string, Record<string, unknown>>()
+  const destinations = new Map<string, unknown>()
   const clipboard = {text: ''}
-  const stored = new Map()
-  const requests = []
-  const calls = []
-  const notices = []
-  const files = new Map([
+  const stored = new Map<string, unknown>()
+  const requests: ViewerRequest[] = []
+  const calls: string[] = []
+  const notices: string[] = []
+  const files = new Map<string, Pick<CodeDocument, 'revision' | 'source' | 'media'>>([
     ['a.ts', {revision: 'a1', source: "export const value = 'disk'\n"}],
     ['b.ts', {revision: 'b1', source: 'export const other = 2\n'}],
   ])
@@ -52,21 +59,25 @@ export function projectFixture(on, clipboardEnabled = false) {
           }),
         }
   })
-  on('ui.open', () => ({value: undefined}))
+  on('ui.open', () => ({value: {isPlaced: true}}))
   on('ui.toast', (_, input) => {
     notices.push(input.text)
     return {value: undefined}
   })
   on('ui.log', () => ({value: undefined}))
   on('http.fetch', (_, input) => {
-    const request = JSON.parse(input.init.body)
+    const value: unknown = JSON.parse(String(required(input.init).body))
+    const request: ViewerRequest = {
+      arguments: readRecord(readField(value, 'arguments')),
+      name: readText(readField(value, 'name')),
+    }
     requests.push(request)
     const args = request.arguments
     const path =
       typeof args.path === 'string'
         ? args.path.replace(/^\/project\//u, '').replace(/^\.\//u, '')
         : ''
-    let result
+    let result: unknown
     const clipboardResult = boundaryResponse(request.name, args, clipboard, previews)
     if (clipboardResult !== undefined) {
       result = clipboardResult
@@ -78,7 +89,7 @@ export function projectFixture(on, clipboardEnabled = false) {
       result = {structuredContent: {kind: 'file', path, revision: files.get(path)?.revision}}
     } else if (request.name === 'code.rename') {
       const renamed = [...path.split('/').slice(0, -1), args.name].join('/')
-      files.set(renamed, files.get(path))
+      files.set(renamed, required(files.get(path)))
       files.delete(path)
       result = {structuredContent: {kind: 'file', path: renamed}}
     } else if (request.name === 'code.tree') {
@@ -112,17 +123,25 @@ export function projectFixture(on, clipboardEnabled = false) {
       }
     } else if (request.name === 'code.list') {
       result = {
-        structuredContent: {paths: [...files.keys()].filter((entry) => entry.includes(args.query))},
+        structuredContent: {
+          paths: [...files.keys()].filter((entry) => entry.includes(readText(args.query))),
+        },
       }
     } else if (path.startsWith('../')) {
       result = {isError: true, structuredContent: {code: 'outside-workspace'}}
     } else if (!files.has(path)) {
       result = {isError: true, structuredContent: {code: 'not-found'}}
-    } else if (request.name === 'code.write' && args.revision !== files.get(path).revision) {
+    } else if (
+      request.name === 'code.write' &&
+      args.revision !== required(files.get(path)).revision
+    ) {
       result = {isError: true, structuredContent: {code: 'write-conflict'}}
     } else {
       if (request.name === 'code.write') {
-        files.set(path, {revision: `${files.get(path).revision}-saved`, source: args.source})
+        files.set(path, {
+          revision: `${required(files.get(path)).revision}-saved`,
+          source: readText(args.source),
+        })
       }
       result = {
         structuredContent: {
@@ -138,45 +157,59 @@ export function projectFixture(on, clipboardEnabled = false) {
   return {calls, clipboard, destinations, files, highlights, notices, previews, requests, stored}
 }
 
-export async function activateTree(pane, path, kind = 'activate') {
+export async function activateTree(
+  pane: Mounted<'desktop', 'Pane'>,
+  path: string,
+  kind = 'activate',
+) {
   const [tree] = await treeInputs(pane)
-  const index = tree?.props.props.rows.findIndex((row) => row.path === path) ?? -1
+  const index = (await treeRows(pane)).findIndex((row) => row.path === path)
   if (index < 0) {
     throw new Error(`Tree row missing: ${path}`)
   }
-  await pane.post({index, kind, path}, {in: tree.props.key})
+  await pane.post({index, kind, path}, {in: readText(tree?.props.key)})
 }
 
-export const treeInputs = async (pane) =>
+export const treeInputs = async (pane: Mounted<'desktop', 'Pane'>) =>
   (await pane.findAll({type: 'Client'})).filter((entry) => entry.props.key === 'file-tree:viewport')
-export const treeRows = async (pane) => (await treeInputs(pane))[0]?.props.props.rows ?? []
+export const treeRows = async (
+  pane: Mounted<'desktop', 'Pane'>,
+): Promise<readonly {path: string}[]> =>
+  readArray(readField((await treeInputs(pane))[0], 'props', 'props', 'rows') ?? []).map((row) => ({
+    path: readText(readField(row, 'path')),
+  }))
 
-export async function editLine(pane, line, text) {
+export async function editLine(pane: Mounted<'desktop', 'Pane'>, line: number, text: string) {
   let client = await pane.find({key: 'code-editor', type: 'Client'})
-  if (!client.props.props.editable) {
+  if (!readField(client, 'props', 'props', 'editable')) {
     await pane.press({key: 'edit'})
     client = await pane.find({key: 'code-editor', type: 'Client'})
   }
-  const {props} = client.props
-  const lines = props.source.split('\n')
+  const source = readText(readField(client, 'props', 'props', 'source'))
+  const lines = source.split('\n')
   lines[line - 1] = text + (lines[line - 1].endsWith('\r') ? '\r' : '')
   await pane.key({ctrl: true, in: 'code-editor', key: 'a'})
   await pane.key({in: 'code-editor', key: lines.join('\n')})
   await pane.key({ctrl: true, in: 'code-editor', key: 'home'})
 }
 
-function boundaryResponse(name, args, clipboard, previews) {
+function boundaryResponse(
+  name: string,
+  args: Readonly<Record<string, unknown>>,
+  clipboard: {text: string},
+  previews: Map<string, Record<string, unknown>>,
+) {
   if (name === 'code.documentPreview') {
-    return {structuredContent: previews.get(args.path)}
+    return {structuredContent: previews.get(readText(args.path))}
   }
   if (name === 'code.media') {
-    return {structuredContent: previews.get(args.path) ?? {data: 'AAE=', next: 2}}
+    return {structuredContent: previews.get(readText(args.path)) ?? {data: 'AAE=', next: 2}}
   }
   if (name === 'code.pdfPreview') {
-    return {structuredContent: {...previews.get(args.path), page: args.page}}
+    return {structuredContent: {...previews.get(readText(args.path)), page: args.page}}
   }
   if (name === 'code.copy') {
-    clipboard.text = args.text
+    clipboard.text = readText(args.text)
     return {structuredContent: {copied: true}}
   }
   if (name === 'code.paste') {
@@ -185,7 +218,10 @@ function boundaryResponse(name, args, clipboard, previews) {
   return undefined
 }
 
-function navigationResult(destinations, args) {
+function navigationResult(
+  destinations: Map<string, unknown>,
+  args: Readonly<Record<string, unknown>>,
+) {
   return (
     destinations.get(`${args.path}:${args.offset}`) ?? {
       kind: 'definition',
@@ -193,14 +229,27 @@ function navigationResult(destinations, args) {
     }
   )
 }
-function highlightLines(highlights, args) {
+function highlightLines(highlights: Map<string, unknown>, args: Readonly<Record<string, unknown>>) {
   let offset = 0
   return (
-    highlights.get(args.path) ??
-    args.source.split('\n').map((text) => {
-      const token = {kind: 'plain', navigation: null, offset, text}
-      offset += text.length + 1
-      return [token]
-    })
+    highlights.get(readText(args.path)) ??
+    readText(args.source)
+      .split('\n')
+      .map((text) => {
+        const token = {kind: 'plain', navigation: null, offset, text}
+        offset += text.length + 1
+        return [token]
+      })
   )
+}
+
+export interface ViewerRequest {
+  readonly name: string
+  readonly arguments: Readonly<Record<string, unknown>>
+}
+export const required = <Value>(value: Value | undefined): Value => {
+  if (value === undefined) {
+    throw new Error('Missing fixture value')
+  }
+  return value
 }

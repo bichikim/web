@@ -1,7 +1,6 @@
 import {A} from '@solidjs/router'
 import {cx} from 'class-variance-authority'
 
-import {AiConversationCard} from './AiConversationCard'
 import {HwpCard} from './HwpCard'
 import {ImageGenerationCard} from './ImageGenerationCard'
 import {OptionsCard} from './OptionsCard'
@@ -9,7 +8,6 @@ import {StorageCard} from './StorageCard'
 import {CARD_CLASSES} from './shared'
 import {SoundGenerationCard} from './SoundGenerationCard'
 import {TextMoodCard} from './TextMoodCard'
-import {WorldCard} from './WorldCard'
 
 export function HomeCards() {
   return (
@@ -49,26 +47,6 @@ export function HomeCards() {
         </div>
         <span class="mt-8 text-sm font-700 text-#f4d7b5">프리뷰 열기 →</span>
       </A>
-
-      <A class={CARD_CLASSES} href="/dev/character">
-        <div class="flex items-start justify-between gap-5">
-          <div>
-            <p class="m-0 text-xs font-700 tracking-[0.2em] text-#9ed6bb uppercase">
-              Babylon.js · Blender
-            </p>
-            <h2 class="mb-0 mt-3 text-2xl font-750">3D 캐릭터 스튜디오</h2>
-            <p class="mb-0 mt-3 max-w-sm text-sm leading-6 text-#aaa0b1">
-              GLB 캐릭터를 렌더링하고 Blender에서 내보낸 모델로 바로 교체해요.
-            </p>
-          </div>
-          <span class="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-#9ed6bb/12 text-xl text-#b8e8d0">
-            ◇
-          </span>
-        </div>
-        <span class="mt-8 text-sm font-700 text-#b8e8d0">3D 실험실 열기 →</span>
-      </A>
-      <WorldCard />
-      <AiConversationCard />
 
       <A class={CARD_CLASSES} href="/dev/voice">
         <div class="flex items-start justify-between gap-5">

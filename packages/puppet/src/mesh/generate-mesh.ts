@@ -9,6 +9,7 @@ export interface PixelData {
 
 export interface GenerateMeshOptions {
   readonly alphaThreshold?: number
+  /** Positive whole-pixel spacing; omitted, derive spacing from the image size. */
   readonly cellSize?: number
   readonly pixels: PixelData
 }
@@ -188,7 +189,7 @@ const hasValidPixels = (pixels: PixelData) =>
 const hasValidAlphaThreshold = (alphaThreshold: number) =>
   Number.isInteger(alphaThreshold) && alphaThreshold >= 0 && alphaThreshold <= MAXIMUM_ALPHA
 
-const hasValidCellSize = (cellSize: number) => Number.isFinite(cellSize) && cellSize > 0
+const hasValidCellSize = (cellSize: number) => Number.isInteger(cellSize) && cellSize > 0
 
 export const generateMesh = (options: GenerateMeshOptions): GenerateMeshResult => {
   const {pixels} = options

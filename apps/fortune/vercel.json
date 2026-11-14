@@ -1,0 +1,5 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "pnpm --filter @winter-love/puppet exec vite build --mode player && pnpm exec vite build",
+  "framework": null
+}

@@ -18,9 +18,10 @@ import {findCubismModel} from './find-cubism-model'
 import {findMissingCubismAssets} from './find-missing-cubism-assets'
 import {filterCubismReferences} from './filter-cubism-references'
 import {readCubismExpressions} from './read-cubism-expressions'
+import {readCubismMotions} from './read-cubism-motions'
 import {reverseCmo3Parameters} from './reverse-cmo3-parameters'
 import {convertCubismLayout} from './convert-cubism-layout'
-import {encodeBase64} from './encode-base64'
+import {encodeBase64} from '../encoding/encode-base64'
 import {readWavHeader} from '../player/audio/decode-wav'
 
 export interface ConvertCubismArchiveOptions {
@@ -280,6 +281,7 @@ export const convertCubismArchive = (
   const sourceReferences = {
     ...declaredReferences,
     Expressions: readCubismExpressions(archive, modelPath, declaredReferences.Expressions),
+    Motions: readCubismMotions(archive, modelPath, declaredReferences.Motions),
   }
   const editorSource =
     options.modelSource !== undefined ||

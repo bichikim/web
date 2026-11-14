@@ -39,8 +39,7 @@ pnpm --filter @apps/pomo test:e2e --config=playwright.settings.config.ts --worke
 열린 테마 목록을 PNG로 비교하고, 도구·생각 보조·투어 버튼을 숨긴 뒤 새로고침해도 선택이 유지되는지
 확인합니다. 플레이어·뽀모도로 표시 설정도 숨기기·새로고침·다시 켜기로 검증하며,
 숨긴 타이머가 중지되고 다시 켜도 자동으로 재생되지 않는지 확인합니다.
-두 위젯이 꺼진 설정 화면은 [별도 최초 기준과 실행 증거](rendering/evidence/widgets/manifest.json)를
-보존합니다. 빈 재생목록을 사용하므로 실제 음악 재생 중지나 네이티브 Storage는 이 테스트의 검증 범위가 아닙니다.
+빈 재생목록을 사용하므로 실제 음악 재생 중지나 네이티브 Storage는 이 테스트의 검증 범위가 아닙니다.
 기본 E2E 수집 경로에는 포함하지 않습니다.
 
 타이머 팝업과 시간 편집 화면도 PNG로 비교합니다. 실제 입력의 범위 검증·취소·저장,
@@ -50,8 +49,7 @@ pnpm --filter @apps/pomo test:e2e --config=playwright.settings.config.ts --worke
 
 [배경 탭 테스트](rendering/background.e2e.ts)는 실제 웹 IndexedDB에 저장한 액자 모드·랜덤 재생·
 사진 두 장 표시 설정을 새로고침 후 확인하고, 캐릭터 모드로 돌아갈 수 있는지 검증합니다.
-다크·라이트 액자 설정 화면의 [최초 기준](rendering/background.e2e.ts-snapshots)과
-[현재 이미지·촬영 환경](rendering/evidence/background/manifest.json)을 함께 보존합니다.
+다크·라이트 액자 설정 화면도 PNG로 비교합니다.
 미디어 목록은 비어 있으므로 파일 업로드·사진/영상 재생·네이티브 저장소는 검증하지 않습니다.
 
 ```sh
@@ -62,17 +60,15 @@ pnpm --filter @apps/pomo test:e2e --config=playwright.rendering.config.ts e2e/re
 pnpm --filter @apps/pomo test:e2e --config=playwright.rendering.config.ts
 ```
 
-[촬영 환경](rendering/evidence/manifest.json)의 OS·Chromium 버전·화면 크기·DPR·언어·시간대와
-같은 환경에서 비교해야 합니다. [설정 기준 PNG](rendering/settings.e2e.ts-snapshots)와
-[타이머 기준 PNG](rendering/pomodoro.e2e.ts-snapshots)는 Git에 보존합니다.
+기준 이미지를 촬영한 OS·Chromium 버전·화면 크기·DPR·언어·시간대와 같은 환경에서 비교해야 합니다.
+비교용 기준 PNG는 `rendering/` 아래의 `*-snapshots/` 폴더에 보존합니다.
 
 [포모도로 테스트](rendering/pomodoro.e2e.ts)의 빠른 제어·세션 초기화 시나리오는
 실제 버튼으로 시작·일시정지·재개하고, 완료 횟수가 있는 휴식 도중 세션을 초기화합니다.
 새로고침 뒤에도 완료 횟수는 0이며 저장한 시간 설정은 유지되고, 타이머는 멈춰 있어야 합니다.
 타이머 상태나 저장소는 모킹하지 않으며 비교와 무관한 재생목록만 비웁니다.
 브라우저 시계는 고정하고, 다이얼로그 포커스와 일시정지·완료 상태의 PNG도 확인합니다.
-두 상태는 이전 기준이 없는 최초 기준입니다. [촬영 기록](rendering/evidence/timer-controls/manifest.json)에
-현재 이미지와 환경을 보존하며, 실제 Toss·데스크톱 앱·원격 DB·음성 재생 검증은 포함하지 않습니다.
+실제 Toss·데스크톱 앱·원격 DB·음성 재생 검증은 포함하지 않습니다.
 설정 기준에는 병합된 배경 탭·위젯 표시 설정 변경을 반영했으며, 타이머 기준은 최초 생성입니다.
 다른 OS의 기준 부재나 실행 실패를 변경 없음으로 해석하지 마세요.
 변경이 실패하면 기준·현재·차이 이미지를 확인하고 원인이 입증되기 전에는 기준을 갱신하지 않습니다.
@@ -80,7 +76,7 @@ pnpm --filter @apps/pomo test:e2e --config=playwright.rendering.config.ts
 테스트는 실제 홈 화면과 저장소를 사용합니다. 배경 재생목록은 빈 목록으로 고정하고, 장면·폰트·이미지가
 준비된 뒤 시계를 멈춰 촬영합니다. 앱의 동작 줄이기 설정과 Playwright의 애니메이션 제어를 사용하며
 설정 화면을 마스킹하거나 비교 오차를 늘리지 않습니다. 성공한 화면도 현재 PNG와 촬영 환경을
-`test-results`에 남깁니다. 대표 이미지는 [렌더링 증거](rendering/evidence)에 보존합니다. 녹화는 꺼져 있습니다.
+`test-results`에 남깁니다. 녹화는 꺼져 있습니다.
 화면 비교는 soft assertion을 사용해 한 화면이 달라도 나머지 현재 PNG를 수집합니다.
 차이가 하나라도 있으면 테스트 전체는 실패하며 비교 허용 오차는 그대로 유지합니다.
 실제 DB·인증 서비스와 네이티브 브리지는 검증하지 않으며, 서버 환경값은 기존 로컬 설정의 테스트용 값입니다.
@@ -89,14 +85,12 @@ pnpm --filter @apps/pomo test:e2e --config=playwright.rendering.config.ts
 [시계 제어](https://playwright.dev/docs/clock)를 따릅니다. PR 이미지에는 로컬 파일 경로 대신
 고정 commit SHA의 GitHub 이미지 URL을 사용합니다.
 
-설정 Esc 동작 보강 시 실행한 [렌더링 비교 기록](rendering/evidence/dismissal/manifest.json)은
-기존 여섯 기준을 유지하며 대표 현재 PNG를 보존합니다. 정확한 커밋의 로컬 실행 결과는 해당 PR 본문에 기록합니다.
+정확한 커밋의 로컬 실행 결과는 해당 PR 본문에 기록합니다.
 
 [캐릭터 장면 테스트](rendering/character.e2e.ts)는 배경 탭에서 키보드로 밤을 선택하고,
 타이핑·사용자 보기를 선택한 뒤 새로고침합니다. 복원된 라디오 선택과 실제 장면의
 접근성 이름, canvas 준비를 확인하고 다크·라이트 설정 화면을 PNG로 비교합니다.
-두 화면은 이전 기준이 없는 최초 기준이며 [촬영 기록](rendering/evidence/character/manifest.json)에
-현재 이미지와 환경을 보존합니다. 설정값과 API 응답을 mock하지 않으며 웹 localStorage를 사용합니다.
+설정값과 API 응답을 mock하지 않으며 웹 localStorage를 사용합니다.
 빈 재생목록과 고정 시각을 사용하므로 실제 오디오·대화 중 시선 전환, 네이티브 Storage 및
 데스크톱 창 간 동기화는 검증 범위가 아닙니다.
 
@@ -110,8 +104,6 @@ PNG로 비교하고, 팝업을 닫은 뒤 포커스 복원과 재생·곡 이동
 목록 조작과 웹 localStorage는 실제 구현을 사용합니다. 번들·공개 카탈로그 HTTP 응답은
 두 곡의 테스트 데이터로 고정하고 음원 요청에는 1초 무음 WAV fixture를 반환합니다.
 실제 음원 재생·R2·구매 권한·네이티브 저장소는 검증 범위가 아닙니다.
-두 화면은 이전 기준이 없는 최초 기준이며, [촬영 기록](rendering/evidence/playlist/manifest.json)에
-기준·현재 이미지와 실행 환경을 보존합니다.
 
 ```sh
 pnpm --filter @apps/pomo test:e2e --config=playwright.rendering.config.ts e2e/rendering/playlist.e2e.ts
@@ -124,9 +116,7 @@ pnpm --filter @apps/pomo test:e2e --config=playwright.rendering.config.ts e2e/re
 음악 재생·네이티브 Storage·실제 인증 서버는 검증 범위가 아닙니다.
 
 화면 보호기의 다크 화면은 이전 기준이 없는 최초 PNG입니다. 폰트와 이미지·장면 준비를 기다리고,
-촬영할 때만 CSS 애니메이션을 고정합니다. [실행 기록](rendering/evidence/screen-saver/manifest.json)에
-기준·현재 이미지와 환경을 보존합니다. 빈 재생목록의 기존 PNG는 병합된 `5959c865e1d7`의
-둘러보기 안내 아이콘 추가를 반영하며, 갱신 전·현재·차이 PNG를 같은 폴더에 보존합니다.
+촬영할 때만 CSS 애니메이션을 고정합니다.
 
 ```sh
 pnpm --filter @apps/pomo test:e2e --config=playwright.rendering.config.ts e2e/rendering/screen-saver.e2e.ts
@@ -138,8 +128,7 @@ pnpm --filter @apps/pomo test:e2e --config=playwright.rendering.config.ts e2e/re
 브라우저 API와 이벤트는 모킹하지 않습니다. 마지막 닫기에서 설정 버튼의 포커스 복원도 확인합니다.
 
 전체 화면이 켜진 다크 설정 화면은 이전 기준이 없는 최초 PNG이며, 생성 후 일반 비교를 다시
-실행했습니다. [촬영 기록](rendering/evidence/fullscreen/manifest.json)은 대표 현재 이미지와
-기존 일반 설정의 기준·현재·차이 이미지를 포함합니다. 기존 일반 설정의 흐린 배경 차이는
+실행했습니다. 기존 일반 설정의 흐린 배경 차이는
 원인 미확인으로 남기며 기준을 갱신하지 않습니다. 빈 재생목록과 고정 시각을 사용하고,
 실제 OS 창 장식·하드웨어 화면 유지·네이티브 플랫폼은 검증 범위에 포함하지 않습니다.
 
@@ -150,7 +139,6 @@ pnpm --filter @apps/pomo test:e2e --config=playwright.rendering.config.ts e2e/re
 생각 보조의 학습 단어는 [단어 관리 E2E](rendering/words.e2e.ts)에서 실제 입력과 버튼 조작으로
 저장·대소문자 중복 제거·다중 선택·외움 상태 이동·필터·삭제·새로고침 후 복원을 검증합니다.
 다중 선택 화면과 외운 단어 필터 화면은 최초 PNG 기준이며, 생성 후 일반 비교로 다시 확인했습니다.
-[촬영 환경과 비교 기록](rendering/evidence/words/manifest.json)에 기준과 현재 이미지의 해시를 보존합니다.
 빈 재생목록만 준비하고 단어 저장소·UI·외부 API를 mock하지 않습니다. 영어 단어와 로컬 Chromium
 웹 환경을 검증하며, 발음 생성·오디오 재생·다른 탭과의 동기화·네이티브 저장소는 범위 밖입니다.
 

@@ -5,7 +5,7 @@ import type {useCodeEditing} from './use-code-editing'
 import type {DeletedDocument, NavigationOptions, ViewerPort} from './types'
 import {useLatestRequest} from './use-latest-request'
 
-interface DeletedDocumentOptions {
+interface UseDeletedDocumentProps {
   /** Shares the viewer's draft storage and save queue; omitted views remain read-only. */
   readonly editing?: ReturnType<typeof useCodeEditing>
   readonly port: ViewerPort
@@ -19,17 +19,17 @@ interface DeletedDocumentOptions {
 }
 
 /** Retains a deleted baseline and a separate draft without replacing the live document. */
-export const useDeletedDocument = (options: DeletedDocumentOptions) => {
+export const useDeletedDocument = (props: UseDeletedDocumentProps) => {
   const [document, setDocument] = createSignal<DeletedDocument | null>(null)
   const [enabled, setEnabled] = createSignal(false)
   let generation = 0
   const draftSession = createMemo<ViewerSession | null>(() => {
     const current = document()
-    const session = options.session()
+    const session = props.session()
     return current === null ||
       current.source === null ||
       session === null ||
-      options.editing === undefined ||
+      props.editing === undefined ||
       !isEditableFile(current.path)
       ? null
       : {
@@ -46,7 +46,7 @@ export const useDeletedDocument = (options: DeletedDocumentOptions) => {
   const request = useLatestRequest((error) => {
     setDocument(null)
     setEnabled(false)
-    options.onError(error)
+    props.onError(error)
   })
   const close = (): void => {
     generation += 1
@@ -56,14 +56,14 @@ export const useDeletedDocument = (options: DeletedDocumentOptions) => {
   }
   onCleanup(close)
   const scope = createMemo(() => {
-    const session = options.session()
+    const session = props.session()
     return session === null ? '' : JSON.stringify([session.session, session.workspace])
   })
-  const documentPath = createMemo(options.documentPath)
+  const documentPath = createMemo(props.documentPath)
   createEffect(on([scope, documentPath], close))
   const openLocation = (location: CodeLocation, navigation?: NavigationOptions): void => {
     close()
-    options.onOpen(location, navigation)
+    props.onOpen(location, navigation)
   }
   const save = async (): Promise<void> => {
     const current = draftSession()
@@ -71,15 +71,15 @@ export const useDeletedDocument = (options: DeletedDocumentOptions) => {
     if (
       current !== null &&
       enabled() &&
-      (await options.editing?.saveDeleted(current)) &&
+      (await props.editing?.saveDeleted(current)) &&
       version === generation
     ) {
       openLocation(current.document.location)
     }
   }
   const load = async (path: string): Promise<void> => {
-    const session = options.session()
-    const read = options.port.readBaseline
+    const session = props.session()
+    const read = props.port.readBaseline
     if (session === null || read === undefined) {
       close()
       return
@@ -92,13 +92,13 @@ export const useDeletedDocument = (options: DeletedDocumentOptions) => {
   const refresh = async (): Promise<void> => {
     const current = document()
     if (current === null) {
-      await options.onRefresh()
+      await props.onRefresh()
     } else {
       await load(current.path)
     }
   }
   createEffect(
-    on(options.revision, () => {
+    on(props.revision, () => {
       const current = document()
       if (current !== null) {
         load(current.path)
@@ -109,7 +109,7 @@ export const useDeletedDocument = (options: DeletedDocumentOptions) => {
     change: (source: string): void => {
       const current = draftSession()
       if (current !== null && enabled()) {
-        options.editing?.changeDeleted(current, source)
+        props.editing?.changeDeleted(current, source)
       }
     },
     close,
@@ -118,7 +118,7 @@ export const useDeletedDocument = (options: DeletedDocumentOptions) => {
     enabled,
     move: async (direction: -1 | 1): Promise<void> => {
       if (document() === null) {
-        await options.onMove(direction)
+        await props.onMove(direction)
       } else if (direction === -1) {
         close()
       }
@@ -131,20 +131,20 @@ export const useDeletedDocument = (options: DeletedDocumentOptions) => {
       await load(path)
       const current = draftSession()
       if (version === generation && current !== null) {
-        options.editing?.restoreDrafts(current)
+        props.editing?.restoreDrafts(current)
       }
     },
     openLocation,
     pending: request.pending,
     refresh,
     save,
-    saving: () => options.editing?.saving() ?? false,
+    saving: () => props.editing?.saving() ?? false,
     source: (): string => {
       const current = draftSession()
-      return current === null ? '' : (options.editing?.sourceFor(current) ?? '')
+      return current === null ? '' : (props.editing?.sourceFor(current) ?? '')
     },
     toggleEditing: (): void => {
-      if (draftSession() !== null && !options.editing?.saving()) {
+      if (draftSession() !== null && !props.editing?.saving()) {
         setEnabled((previous) => !previous)
       }
     },

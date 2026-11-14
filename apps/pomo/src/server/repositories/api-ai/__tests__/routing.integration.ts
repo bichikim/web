@@ -85,6 +85,16 @@ it('should keep environment defaults before a save and expose no provider creden
   const history = await resolveApiAiJobProviders(await enqueue('history'), providers, [provider])
   expect(history[0].models.history).toBe('history')
 })
+it('should return an empty environment page when no providers are configured', async () => {
+  await expect(readAdminApiAiPage([], [])).resolves.toEqual({
+    catalog: [],
+    providers: [],
+    revision: 0,
+    routes: [],
+    source: 'environment',
+  })
+})
+
 it('should permit only one concurrent administrator to replace the same revision', async () => {
   expect(
     await Promise.all([
