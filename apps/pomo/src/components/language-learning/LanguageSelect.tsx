@@ -3,7 +3,7 @@ import * as m from '@paraglide/message'
 import {
   LANGUAGE_LEARNING_LANGUAGES,
   type LanguageLearningLanguage,
-} from '../../features/language-learning'
+} from '../../features/language-learning/schema'
 import {PSelect, type PSelectOption} from '../p-select/PSelect'
 import {getLanguageLabel} from './get-language-label'
 
