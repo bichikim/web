@@ -1,6 +1,7 @@
 import {Show} from 'solid-js'
 import {cx} from 'class-variance-authority'
 
+import {SERVICE_OPERATOR} from 'src/features/service-operator'
 import {SERVICE_POLICY_PATHS} from 'src/features/service-terms'
 
 import {
@@ -60,7 +61,7 @@ export const EnglishServiceTermsContent = (props: PServiceTermsProps) => {
           <dt class="font-750 text-#f8edf1">Representative</dt>
           <dd class="m-0">{ENGLISH_OPERATOR.representative}</dd>
           <dt class="font-750 text-#f8edf1">Business registration number</dt>
-          <dd class="m-0">720-42-01404</dd>
+          <dd class="m-0">{SERVICE_OPERATOR.businessRegistrationNumber}</dd>
           <dt class="font-750 text-#f8edf1">Mail-order business registration</dt>
           <dd class="m-0">
             Exempt because the previous year&apos;s mail-order transactions were fewer than 50
@@ -68,11 +69,11 @@ export const EnglishServiceTermsContent = (props: PServiceTermsProps) => {
           <dt class="font-750 text-#f8edf1">Business address</dt>
           <dd class="m-0">{ENGLISH_OPERATOR.address}</dd>
           <dt class="font-750 text-#f8edf1">Customer support phone</dt>
-          <dd class="m-0">070-5236-4741</dd>
+          <dd class="m-0">{SERVICE_OPERATOR.supportPhone}</dd>
           <dt class="font-750 text-#f8edf1">Customer support</dt>
           <dd class="m-0">
-            <a class={CONTENT_LINK_CLASSES} href="mailto:info@pomofi.io">
-              info@pomofi.io
+            <a class={CONTENT_LINK_CLASSES} href={`mailto:${SERVICE_OPERATOR.supportEmail}`}>
+              {SERVICE_OPERATOR.supportEmail}
             </a>
           </dd>
         </dl>
@@ -92,8 +93,8 @@ export const EnglishServiceTermsContent = (props: PServiceTermsProps) => {
         <>
           <span>
             Terms inquiries:{' '}
-            <a class={CONTENT_LINK_CLASSES} href="mailto:info@pomofi.io">
-              info@pomofi.io
+            <a class={CONTENT_LINK_CLASSES} href={`mailto:${SERVICE_OPERATOR.supportEmail}`}>
+              {SERVICE_OPERATOR.supportEmail}
             </a>
           </span>
           <span>© Pomofi</span>
@@ -375,8 +376,8 @@ export const EnglishServiceTermsContent = (props: PServiceTermsProps) => {
           <h2 class={HEADING_CLASSES}>Article 14. Inquiries and disputes</h2>
           <p class={PARAGRAPH_CLASSES}>
             Users may contact customer support at{' '}
-            <a class={CONTENT_LINK_CLASSES} href="mailto:info@pomofi.io">
-              info@pomofi.io
+            <a class={CONTENT_LINK_CLASSES} href={`mailto:${SERVICE_OPERATOR.supportEmail}`}>
+              {SERVICE_OPERATOR.supportEmail}
             </a>{' '}
             about these terms, restrictions, payment, or refunds and may raise objections. Kuwoong
             will review the inquiry within a reasonable period and explain the result.
