@@ -1,3 +1,4 @@
+/** @vitest-environment jsdom */
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {createSupertonicClient} from '../client'
@@ -6,42 +7,27 @@ import type {SupertonicWorkerOutput} from '../messages'
 const SAMPLE_RATE = 24_000
 const GENERATION_TIME = 850
 
-class FakeWorker {
+class FakeWorker extends EventTarget {
   static current: FakeWorker | null = null
 
   readonly postMessage = vi.fn()
   readonly terminate = vi.fn()
-  readonly #listeners = new Map<
-    string,
-    Array<(event: MessageEvent<SupertonicWorkerOutput>) => void>
-  >()
 
   constructor() {
+    super()
     FakeWorker.current = this
   }
 
-  addEventListener(type: string, listener: (event: MessageEvent<SupertonicWorkerOutput>) => void) {
-    const listeners = this.#listeners.get(type) ?? []
-    listeners.push(listener)
-    this.#listeners.set(type, listeners)
-  }
-
   emitMessage(message: SupertonicWorkerOutput) {
-    for (const listener of this.#listeners.get('message') ?? []) {
-      listener({data: message} as MessageEvent<SupertonicWorkerOutput>)
-    }
+    this.dispatchEvent(new MessageEvent('message', {data: message}))
   }
 
-  emitError(event: Partial<ErrorEvent> = {}) {
-    for (const listener of this.#listeners.get('error') ?? []) {
-      listener(event as MessageEvent<SupertonicWorkerOutput>)
-    }
+  emitError(event: ErrorEventInit = {}) {
+    this.dispatchEvent(new ErrorEvent('error', event))
   }
 
   emitMessageError() {
-    for (const listener of this.#listeners.get('messageerror') ?? []) {
-      listener({} as MessageEvent<SupertonicWorkerOutput>)
-    }
+    this.dispatchEvent(new MessageEvent('messageerror'))
   }
 }
 
