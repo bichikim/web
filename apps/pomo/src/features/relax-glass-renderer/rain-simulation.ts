@@ -131,7 +131,13 @@ export class RainSimulation {
       }
     }
 
-    const trails = this.#drops.flatMap((drop) => this.#updateDrop(drop, duration))
+    const trails = this.#drops.reduce<SimulatedDrop[]>((created, drop) => {
+      const trail = this.#updateDrop(drop, duration)
+      if (trail !== undefined) {
+        created.push(trail)
+      }
+      return created
+    }, [])
     this.#drops.push(...trails)
     this.#mergeDrops()
     this.#drops = this.#drops.filter(
@@ -185,14 +191,14 @@ export class RainSimulation {
     return drop
   }
 
-  #updateDrop(drop: SimulatedDrop, duration: number): SimulatedDrop[] {
+  #updateDrop(drop: SimulatedDrop, duration: number): SimulatedDrop | undefined {
     drop.motionElapsed += duration
     if (drop.motionElapsed >= drop.nextMotion) {
       this.#randomizeMotion(drop)
     }
     drop.mass = Math.max(0, drop.mass - EVAPORATION_PER_SECOND * duration)
     if (drop.mass === 0) {
-      return []
+      return undefined
     }
     const acceleration = GRAVITY - drop.resistance / drop.mass
     drop.velocity = Math.max(0, drop.velocity + acceleration * duration)
@@ -206,7 +212,7 @@ export class RainSimulation {
 
     const trailDistance = (drop.x - drop.lastTrailX) ** 2 + (drop.y - drop.lastTrailY) ** 2
     if (drop.mass < TRAIL_MASS_THRESHOLD || trailDistance < drop.nextTrailDistance ** 2) {
-      return []
+      return undefined
     }
     const size = dropSize(drop)
     const trail = this.#createDrop({
@@ -223,7 +229,7 @@ export class RainSimulation {
     drop.lastTrailX = drop.x
     drop.lastTrailY = drop.y
     drop.nextTrailDistance = TRAIL_DISTANCE_MIN + this.#random() * TRAIL_DISTANCE_RANGE
-    return [trail]
+    return trail
   }
 
   #randomizeMotion(drop: SimulatedDrop) {
