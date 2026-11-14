@@ -1,6 +1,6 @@
 import {A} from '@solidjs/router'
 import {cx} from 'class-variance-authority'
-import {For} from 'solid-js'
+import {For, Show} from 'solid-js'
 import * as m from '@paraglide/message'
 import {PAppReturnLink} from '../p-app-return-link/PAppReturnLink'
 import {ReleaseBody} from '../version-notice/ReleaseBody'
@@ -50,6 +50,9 @@ export const VersionCatalogDocument = (props: {readonly catalog: VersionCatalog}
               </h2>
               <div class="mt-5 text-#d8cbd9">
                 <ReleaseBody release={release} />
+                <Show when={!release.changes.length && !release.summary && !release.notes?.length}>
+                  <p class="m-0 text-sm leading-7">{m.version_notice_initial_release()}</p>
+                </Show>
               </div>
             </article>
           )}
