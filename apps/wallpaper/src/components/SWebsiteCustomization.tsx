@@ -1,8 +1,9 @@
-import {createEffect, createMemo, createSignal, For} from 'solid-js'
+import {createEffect, createMemo, createSignal, For, on} from 'solid-js'
 import type {WebsiteWallpaper} from '@winter-love/wallpaper/settings/model'
 
 interface SWebsiteCustomizationProps {
   readonly content: WebsiteWallpaper
+  readonly monitorId?: string
   readonly busy?: boolean
   readonly onApply: (content: WebsiteWallpaper) => Promise<void>
 }
@@ -19,12 +20,33 @@ export const SWebsiteCustomization = (props: SWebsiteCustomizationProps) => {
     loaded,
   ]
   const [stage, setStage] = createSignal(loaded)
-  createEffect(() => {
-    setCss(props.content.css ?? '')
-    setScript(props.content.script ?? '')
-    setStart(props.content.scriptStart ?? '')
-    setDom(props.content.scriptDom ?? '')
-  })
+  createEffect(
+    on(
+      () => ({content: props.content, monitorId: props.monitorId}),
+      (next, previous) => {
+        const reset =
+          previous === undefined ||
+          next.monitorId !== previous.monitorId ||
+          next.content.url !== previous.content.url
+        setCss((draft) =>
+          reset || draft === (previous?.content.css ?? '') ? (next.content.css ?? '') : draft,
+        )
+        setScript((draft) =>
+          reset || draft === (previous?.content.script ?? '') ? (next.content.script ?? '') : draft,
+        )
+        setStart((draft) =>
+          reset || draft === (previous?.content.scriptStart ?? '')
+            ? (next.content.scriptStart ?? '')
+            : draft,
+        )
+        setDom((draft) =>
+          reset || draft === (previous?.content.scriptDom ?? '')
+            ? (next.content.scriptDom ?? '')
+            : draft,
+        )
+      },
+    ),
+  )
   const changed = createMemo(
     () =>
       css() !== (props.content.css ?? '') ||
