@@ -7,13 +7,6 @@ import * as m from '@paraglide/message'
 import {CustomAlbumCoverCropCanvas} from '../CustomAlbumCoverCropCanvas'
 import type {CropFrame, CustomAlbumCoverCropController} from '../use-custom-album-cover-crop'
 
-vi.mock('src/features/custom-albums', async () => {
-  const model = await vi.importActual<typeof import('src/features/custom-albums/model')>(
-    'src/features/custom-albums/model',
-  )
-  return model
-})
-
 const frame: CropFrame = {
   cropSize: 256,
   cropX: 128,
