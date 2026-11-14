@@ -1,37 +1,8 @@
 import {afterEach, expect, it, vi} from 'vitest'
 import {createAudioPlayer} from '../audio-player'
 
-class AudioSource {
-  playbackRate = {value: 1}
-  buffer = null
-  onended: (() => void) | null = null
-  connect = vi.fn((value) => value)
-  disconnect = vi.fn()
-  start = vi.fn()
-  stop = vi.fn()
-}
-class AudioRuntime {
-  static instances: AudioRuntime[] = []
-  currentTime = 3.25
-  destination = {}
-  sources: AudioSource[] = []
-  resume = vi.fn().mockResolvedValue(undefined)
-  close = vi.fn().mockResolvedValue(undefined)
-  constructor() {
-    AudioRuntime.instances.push(this)
-  }
-  createBufferSource() {
-    const source = new AudioSource()
-    this.sources.push(source)
-    return source
-  }
-  createGain() {
-    return {connect: vi.fn(), disconnect: vi.fn(), gain: {value: 0}}
-  }
-  createBuffer(_: number, length: number, rate: number) {
-    return {copyToChannel: vi.fn(), duration: length / rate}
-  }
-}
+import {AudioRuntime} from './fixtures/audio-runtime'
+
 const audio = {sampleRate: 10, samples: new Float32Array(5)}
 afterEach(() => {
   AudioRuntime.instances = []

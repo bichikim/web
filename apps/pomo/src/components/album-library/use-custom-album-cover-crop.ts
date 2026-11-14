@@ -158,7 +158,7 @@ export const useCustomAlbumCoverCrop = (
 
   const handlePointerDown: JSX.EventHandler<SVGSVGElement, PointerEvent> = (event) => {
     const handle = getCropHandle(event.target)
-    if (event.button !== 0 || imageFrame() === null || handle === null) {
+    if (isCropping() || event.button !== 0 || imageFrame() === null || handle === null) {
       return
     }
     const point = getViewBoxPoint(event.currentTarget, event)
@@ -169,17 +169,15 @@ export const useCustomAlbumCoverCrop = (
 
   const handlePointerMove: JSX.EventHandler<SVGSVGElement, PointerEvent> = (event) => {
     const point = getViewBoxPoint(event.currentTarget, event)
-    if (point !== null) {
+    if (!isCropping() && point !== null) {
       crop.moveGesture({point, pointerId: event.pointerId})
     }
   }
 
-  const handlePointerEnd = (event?: PointerEvent): void => {
-    crop.endGesture(event?.pointerId)
-  }
+  const handlePointerEnd = (event?: PointerEvent): void => crop.endGesture(event?.pointerId)
 
   const handleSelectionKeyDown: JSX.EventHandler<SVGRectElement, KeyboardEvent> = (event) => {
-    if (crop.moveWithKeyboard(event.key)) {
+    if (!isCropping() && crop.moveWithKeyboard(event.key)) {
       event.preventDefault()
     }
   }
@@ -187,7 +185,7 @@ export const useCustomAlbumCoverCrop = (
   const handleResizeKeyDown =
     (handle: SquareCropResizeHandle): JSX.EventHandler<SVGCircleElement, KeyboardEvent> =>
     (event) => {
-      if (crop.resizeWithKeyboard(handle, event.key)) {
+      if (!isCropping() && crop.resizeWithKeyboard(handle, event.key)) {
         event.preventDefault()
       }
     }
@@ -201,6 +199,7 @@ export const useCustomAlbumCoverCrop = (
     }
 
     setCropErrorMessage(null)
+    crop.endGesture()
     setIsCropping(true)
     cropOperationVersion += 1
     const operationVersion = cropOperationVersion

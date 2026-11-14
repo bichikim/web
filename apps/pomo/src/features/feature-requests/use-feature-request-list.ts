@@ -1,5 +1,9 @@
 import {type Accessor, createEffect, createSignal, on, onCleanup} from 'solid-js'
-import {usePaginatedQuery} from 'src/hooks/use-paginated-query'
+import {
+  type PageLoadResult,
+  type PaginatedQuery,
+  usePaginatedQuery,
+} from 'src/hooks/use-paginated-query'
 
 import type {FeatureRequest, FeatureRequestPage, FeatureRequestPageQuery} from './types'
 
@@ -27,6 +31,7 @@ export interface FeatureRequestListController {
   readonly refresh: () => Promise<void>
   readonly refreshAfterMutation: () => Promise<void>
   readonly loadMore: () => Promise<void>
+  readonly invalidatePagination: () => void
   readonly updateRequest: (
     requestId: string,
     update: (request: FeatureRequest) => FeatureRequest,
@@ -45,6 +50,101 @@ export type FeatureRequestListView = Pick<
   | 'requests'
 >
 
+interface UseRequestPaginationProps {
+  /** Whether the owning list currently permits another page request. */
+  readonly canLoadMore: Accessor<boolean>
+  /** The owning list generation; changed by refresh, scope changes and disposal. */
+  readonly generation: Accessor<number>
+  /** The query controller owned and disposed by the list. */
+  readonly list: PaginatedQuery<FeatureRequestPage, FeatureRequest, string, number>
+  /** Records a completed page and its pagination state for the owning list. */
+  readonly onLoaded: (page: FeatureRequestPage) => void
+}
+
+const useRequestPagination = (props: UseRequestPaginationProps) => {
+  const [isReconciling, setIsReconciling] = createSignal(false)
+  const [reconcileFailed, setReconcileFailed] = createSignal(false)
+  let paginationRevision = 0
+  let reconciledRevision = 0
+  const reconcilePagination = async (): Promise<void> => {
+    const generation = props.generation()
+    const revision = paginationRevision
+    const itemCount = props.list.items().length
+    setIsReconciling(true)
+    setReconcileFailed(false)
+    try {
+      const scan = async (result: PageLoadResult<FeatureRequestPage>): Promise<void> => {
+        if (generation !== props.generation()) {
+          return
+        }
+        if (result.status !== 'loaded') {
+          setReconcileFailed(result.status === 'failed')
+          return
+        }
+        if (!result.page.hasMore || props.list.items().length > itemCount) {
+          reconciledRevision = revision
+          props.onLoaded({
+            ...result.page,
+            hasMore: result.page.hasMore || revision !== paginationRevision,
+          })
+          return
+        }
+        return scan(await props.list.loadMore())
+      }
+      return await scan(
+        await props.list.refresh({
+          reconcileItems: (current, incoming) => [...current, ...incoming],
+        }),
+      )
+    } finally {
+      if (generation === props.generation()) {
+        setIsReconciling(false)
+      }
+    }
+  }
+
+  const loadMore = async (): Promise<void> => {
+    if (!props.canLoadMore() || isReconciling() || props.list.isLoadingMore()) {
+      return
+    }
+    if (paginationRevision !== reconciledRevision) {
+      return reconcilePagination()
+    }
+    const generation = props.generation()
+    const revision = paginationRevision
+    const result = await props.list.loadMore()
+    if (generation !== props.generation()) {
+      return
+    }
+    if (result.status === 'loaded') {
+      props.onLoaded({
+        ...result.page,
+        hasMore: result.page.hasMore || revision !== paginationRevision,
+      })
+    }
+  }
+
+  const resetReconciliation = () => {
+    setIsReconciling(false)
+    setReconcileFailed(false)
+  }
+  const reset = () => {
+    paginationRevision = 0
+    reconciledRevision = 0
+    resetReconciliation()
+  }
+  return {
+    invalidatePagination: () => {
+      paginationRevision += 1
+    },
+    isReconciling,
+    loadMore,
+    reconcileFailed,
+    reset,
+    resetReconciliation,
+  }
+}
+
 /** Loads request pages and preserves the feature’s first-page refresh policy. */
 export const useFeatureRequestList = (
   props: UseFeatureRequestListProps,
@@ -61,6 +161,16 @@ export const useFeatureRequestList = (
   let loadedPagesState: LoadedPagesState = 'none'
   let refreshFallbackHasMore: boolean | undefined
   let refreshingItemCount: number | undefined
+
+  const pagination = useRequestPagination({
+    canLoadMore: () => hasMore() && !isRefreshing(),
+    generation: () => listGeneration,
+    list,
+    onLoaded: (page) => {
+      setHasMore(page.hasMore)
+      loadedPagesState = 'loaded'
+    },
+  })
 
   const reloadNextPages = async (generation: number, itemCount: number): Promise<void> => {
     if (generation !== listGeneration || !hasMore() || list.items().length >= itemCount) {
@@ -112,6 +222,7 @@ export const useFeatureRequestList = (
   const loadFirstPage = async (
     refreshOptions: FeatureRequestsRefreshOptions = {},
   ): Promise<void> => {
+    pagination.resetReconciliation()
     if (props.refreshLoadedPages === true) {
       return reloadVisiblePages(refreshOptions)
     }
@@ -160,42 +271,33 @@ export const useFeatureRequestList = (
     }
   }
 
-  const loadMore = async (): Promise<void> => {
-    if (!hasMore() || isRefreshing() || list.isLoadingMore()) {
-      return
-    }
-    const generation = listGeneration
-    const result = await list.loadMore()
-    if (generation !== listGeneration) {
-      return
-    }
-    if (result.status === 'loaded') {
-      setHasMore(result.page.hasMore)
-      loadedPagesState = 'loaded'
-    }
-  }
-
   createEffect(
     on(props.scope, () => {
       listGeneration += 1
       loadedPagesState = 'none'
       refreshFallbackHasMore = undefined
       refreshingItemCount = undefined
+      pagination.reset()
       setHasMore(false)
       loadFirstPage({invalidate: false})
       onCleanup(() => {
         listGeneration += 1
+        pagination.resetReconciliation()
       })
     }),
   )
   const refresh = () => loadFirstPage()
   return {
     hasMore,
-    isLoading: () => list.isLoading() || isRefreshing(),
-    isLoadingMore: list.isLoadingMore,
-    loadFailed: list.loadFailed,
-    loadMore,
-    loadMoreFailed: list.loadMoreFailed,
+    invalidatePagination: () => {
+      pagination.invalidatePagination()
+      setHasMore(true)
+    },
+    isLoading: () => (list.isLoading() && !pagination.isReconciling()) || isRefreshing(),
+    isLoadingMore: () => list.isLoadingMore() || pagination.isReconciling(),
+    loadFailed: () => list.loadFailed() && !pagination.reconcileFailed(),
+    loadMore: pagination.loadMore,
+    loadMoreFailed: () => list.loadMoreFailed() || pagination.reconcileFailed(),
     refresh,
     refreshAfterMutation: () => loadFirstPage({preserveLoadedPages: loadedPagesState !== 'none'}),
     requests: list.items,
