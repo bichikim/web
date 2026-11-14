@@ -4,6 +4,7 @@ import type {PlayerRuntimeState} from '../player-runtime-types'
 import type {ComputedRenderFrame} from '../internal/compute-render-frame'
 import type {AdditionalPlaybackState} from '../playback/types'
 import type {PlayerFrame} from '../player-types'
+import type {PackedRenderFrame} from './render-frame/types'
 
 export const PLAYER_BUFFER_FRAMES = 3
 
@@ -40,6 +41,12 @@ export interface StaleBufferFrame {
   readonly generation: number
   readonly buffer: ArrayBuffer
 }
+export interface PackedComputedFrame extends Omit<ComputedRenderFrame, 'frame'> {
+  readonly frame: PackedRenderFrame
+}
+export interface PackedBufferFrame extends Omit<BufferFrame, 'computed'> {
+  readonly computed: PackedComputedFrame
+}
 export interface ProduceBufferFrame {
   readonly acknowledgedNotices?: number
   readonly input?: BufferedInput
@@ -73,8 +80,19 @@ export type BufferResponse =
   | {readonly id: number; readonly kind: 'initialized'; readonly bytes: number}
   | {readonly id: number; readonly kind: 'reset'}
   | {readonly id: number; readonly kind: 'audio'}
-  | {readonly id: number; readonly kind: 'produced'; readonly frame: BufferFrame | StaleBufferFrame}
+  | {
+      readonly id: number
+      readonly kind: 'produced'
+      readonly frame: BufferFrame | StaleBufferFrame
+    }
   | {readonly id: number; readonly kind: 'error'; readonly message: string}
+export type PackedBufferResponse =
+  | Exclude<BufferResponse, {readonly kind: 'produced'}>
+  | {
+      readonly id: number
+      readonly kind: 'produced'
+      readonly frame: PackedBufferFrame | StaleBufferFrame
+    }
 export interface BufferWorker {
   initialize(document: PuppetDocument, audio?: ReadonlyMap<string, PuppetSound>): Promise<number>
   updateAudio(sounds: ReadonlyMap<string, PuppetSound>): Promise<void>
@@ -82,6 +100,9 @@ export interface BufferWorker {
   produce(request: ProduceBufferFrame): Promise<BufferFrame | StaleBufferFrame>
   destroy(): void
 }
+
+/** A supplied timestamp follows one refresh epoch; omitted, the scheduler's clock is used. */
+export type BufferRefreshCallback = (timestamp?: number) => void
 
 /** Borrowed host scheduling capabilities; each session cancels only its own frame requests. */
 export interface BufferScheduler {
@@ -91,8 +112,11 @@ export interface BufferScheduler {
   now(): number
   /** Runs after the current task, reporting callback exceptions to the host. */
   queueMicrotask(callback: () => void): void
-  /** Defers one display-refresh callback; returns a handle unique among pending requests. */
-  requestFrame(callback: () => void): number
+  /**
+   * Defers one display-refresh callback; returns a handle unique among pending requests.
+   * A supplied timestamp uses a consistent refresh epoch; omitted, cadence uses now().
+   */
+  requestFrame(callback: BufferRefreshCallback): number
 }
 
 /** Controls may change on the host; integrated simulation remains owned by the Worker. */

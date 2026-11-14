@@ -1,0 +1,885 @@
+{
+  "recordedAt": "2026-11-03T12:50:01.584678+00:00",
+  "scope": "Correctness review of the latest binding sampling, keyform lookup, inherited-container and Glue caches; fix reproducible defects without another optimization cycle.",
+  "environment": {
+    "platform": "macOS-26.5.2-arm64-arm-64bit-Mach-O",
+    "browser": "Local headed Google Chrome 156, real Workers and WebGL SSAA",
+    "viewport": {
+      "width": 900,
+      "height": 700
+    },
+    "deviceScaleFactor": 1,
+    "randomSeed": 42
+  },
+  "review": {
+    "perspectives": [
+      "behavior, lifecycle, input-dependent resource growth and performance",
+      "coupling, testability, state derivation and side-effect boundaries",
+      "naming, module structure and file-size rules"
+    ],
+    "p0p1Found": 0,
+    "p2Found": 1,
+    "p2Fixed": 1,
+    "p2RemainingVerified": 0,
+    "p3p4Proposals": [],
+    "result": "No rendering-calculation mismatch found in the executed differential and Worker comparisons. This is bounded evidence, not proof for every possible document or environment."
+  },
+  "sourceSHA256": {
+    "src/deformation/composition.ts": "64d4196a75ce53a10f3d261384f67a4b39e89713df20c58bbe05e88bd0dc74dc",
+    "src/deformation/parameter.ts": "bb472454aaddfb7e10b0340f71a5c206113c33a13959d6dae44c4f56c686325c",
+    "src/deformation/parameter-glue.ts": "4f74b0e5b7709fb9d698aa9f961dccc601c60e5e334161021f0284a64804ea7a",
+    "src/deformation/sample-grid-coordinates.ts": "9e5705c579812f19bc0a091b3d35d455d3fc36d230235c7a1a3e885cfd0f206d",
+    "src/player/internal/render-plan.ts": "4843f8f621c996e4cc447fa314fd2249051fed78f11ce075f1893b45d051a866",
+    "src/player/internal/scene-layers.ts": "238654e9aac14da87f8260ef50038f34365a33183eb609d12e766caba9f4f93f"
+  },
+  "artifacts": {
+    "before": {
+      "root": "/private/tmp/puppet-next-candidate-uaku0jae",
+      "sha256": {
+        "dist/player.js": "36f23f78df58cce8bdf8d3096639e3fe0122e6c52c7b5a446eb3411cac77066b",
+        "dist/assets/worker-BFTo-GIQ.js": "947c85b59d5fc7d59394c9e6eaf1f0e62ee634afed1adc35bec03a83494a8451"
+      }
+    },
+    "regression": {
+      "root": "/private/tmp/puppet-remaining-candidate-am6wrar3",
+      "sha256": {
+        "dist/player.js": "bed37f8110434c99f981212f0a960b652737ae6e43e5c86650ed8d0d290bccc7",
+        "dist/assets/worker-T72OreDP.js": "422b1e68444093113b7cdd855b58f337c9aae942286c71996b4f986f8bf83dec"
+      }
+    },
+    "fixed": {
+      "root": "/Users/bichi/.codex/worktrees/48ee/web/packages/puppet",
+      "sha256": {
+        "dist/player.js": "abd895054ced9a81483b110cbf3f3bd63e18c5af1577c6bca0d6dc573487f001",
+        "dist/assets/worker-BU6E9_7m.js": "0510256e896f273a44fa3d21585eb5b6611cbd89e18e00b6f32b9e8c74ab04b6"
+      }
+    }
+  },
+  "finding": {
+    "severity": "P2",
+    "status": "fixed",
+    "title": "Evaluate unused ordinary scene containers every frame",
+    "cause": "The new parent-before-child container index included ordinary groups with neither part descendants nor offscreen-layer descendants. createInheritedResolver evaluated their render properties every frame.",
+    "impact": "Additional per-frame work scales with valid unused scene groups and delays applying visible controls. It does not change the render plan.",
+    "reproduction": "Valid parsed documents with 100, 1000 and 5000 unused ordinary scene groups. A focused regression assertion failed before the fix and passed after it.",
+    "fix": "Retain only ancestors of scene parts and offscreen layers, including empty offscreen layers themselves. Preserve scene traversal order so retained parents precede their children.",
+    "location": "src/player/internal/scene-layers.ts:75",
+    "regressionTest": "src/player/internal/__tests__/scene-layers.spec.ts:72",
+    "regressionAssertions": [
+      "Unused ordinary subtree is excluded from the inherited-effect index",
+      "Empty offscreen layer and its ordinary parent remain",
+      "The empty layer inherits its parent opacity: 0.5 * 0.4 = 0.2"
+    ],
+    "redLog": "/private/tmp/puppet-review-regression-before.log",
+    "greenLog": "/private/tmp/puppet-review-regression-after.log",
+    "clientMeasurement": {
+      "method": "Two local compiled Player artifacts, 5000 unused groups, main-thread mode, 20 warmup opacity commands followed by 100 measured synchronous alternating opacity commands. CDP TaskDuration delta includes host task overhead. One diagnostic sample per artifact, not an FPS or statistically stable speedup measurement.",
+      "samples": [
+        {
+          "variant": "buggy",
+          "groups": 5000,
+          "commands": 100,
+          "scriptMillisPerCommand": 0.0003099999999999978,
+          "taskMillisPerCommand": 0.9286899999999999
+        },
+        {
+          "variant": "after",
+          "groups": 5000,
+          "commands": 100,
+          "scriptMillisPerCommand": 0.00016999999999999654,
+          "taskMillisPerCommand": 0.17883999999999997
+        }
+      ]
+    },
+    "focusedNodeMeasurement": {
+      "comparison": "Pre-optimization source versus fixed source, not the regressed artifact. Four rounds per scale, 20 warmup and 100 measured calls per round. Render plans are asserted equal.",
+      "samples": [
+        {
+          "count": 100,
+          "round": 0,
+          "variant": "before",
+          "millisecondsPerFrame": 0.013456250000000001
+        },
+        {
+          "count": 100,
+          "round": 0,
+          "variant": "after",
+          "millisecondsPerFrame": 0.00898833
+        },
+        {
+          "count": 100,
+          "round": 1,
+          "variant": "after",
+          "millisecondsPerFrame": 0.01135125
+        },
+        {
+          "count": 100,
+          "round": 1,
+          "variant": "before",
+          "millisecondsPerFrame": 0.00751792
+        },
+        {
+          "count": 100,
+          "round": 2,
+          "variant": "before",
+          "millisecondsPerFrame": 0.00874625
+        },
+        {
+          "count": 100,
+          "round": 2,
+          "variant": "after",
+          "millisecondsPerFrame": 0.00881375
+        },
+        {
+          "count": 100,
+          "round": 3,
+          "variant": "after",
+          "millisecondsPerFrame": 0.00811625
+        },
+        {
+          "count": 100,
+          "round": 3,
+          "variant": "before",
+          "millisecondsPerFrame": 0.0052870799999999996
+        },
+        {
+          "count": 1000,
+          "round": 0,
+          "variant": "before",
+          "millisecondsPerFrame": 0.03979958
+        },
+        {
+          "count": 1000,
+          "round": 0,
+          "variant": "after",
+          "millisecondsPerFrame": 0.047380000000000005
+        },
+        {
+          "count": 1000,
+          "round": 1,
+          "variant": "after",
+          "millisecondsPerFrame": 0.028222499999999998
+        },
+        {
+          "count": 1000,
+          "round": 1,
+          "variant": "before",
+          "millisecondsPerFrame": 0.03270166
+        },
+        {
+          "count": 1000,
+          "round": 2,
+          "variant": "before",
+          "millisecondsPerFrame": 0.03080333
+        },
+        {
+          "count": 1000,
+          "round": 2,
+          "variant": "after",
+          "millisecondsPerFrame": 0.02712625
+        },
+        {
+          "count": 1000,
+          "round": 3,
+          "variant": "after",
+          "millisecondsPerFrame": 0.0316225
+        },
+        {
+          "count": 1000,
+          "round": 3,
+          "variant": "before",
+          "millisecondsPerFrame": 0.0284675
+        },
+        {
+          "count": 5000,
+          "round": 0,
+          "variant": "before",
+          "millisecondsPerFrame": 0.14665125
+        },
+        {
+          "count": 5000,
+          "round": 0,
+          "variant": "after",
+          "millisecondsPerFrame": 0.13550208
+        },
+        {
+          "count": 5000,
+          "round": 1,
+          "variant": "after",
+          "millisecondsPerFrame": 0.128095
+        },
+        {
+          "count": 5000,
+          "round": 1,
+          "variant": "before",
+          "millisecondsPerFrame": 0.143755
+        },
+        {
+          "count": 5000,
+          "round": 2,
+          "variant": "before",
+          "millisecondsPerFrame": 0.14978875
+        },
+        {
+          "count": 5000,
+          "round": 2,
+          "variant": "after",
+          "millisecondsPerFrame": 0.14000542
+        },
+        {
+          "count": 5000,
+          "round": 3,
+          "variant": "after",
+          "millisecondsPerFrame": 0.1496875
+        },
+        {
+          "count": 5000,
+          "round": 3,
+          "variant": "before",
+          "millisecondsPerFrame": 0.1521475
+        }
+      ]
+    }
+  },
+  "differential": {
+    "states": 1024,
+    "variants": [
+      {
+        "grid": false,
+        "cubism": false,
+        "keyedGlue": false,
+        "states": 128
+      },
+      {
+        "grid": false,
+        "cubism": false,
+        "keyedGlue": true,
+        "states": 128
+      },
+      {
+        "grid": false,
+        "cubism": true,
+        "keyedGlue": false,
+        "states": 128
+      },
+      {
+        "grid": false,
+        "cubism": true,
+        "keyedGlue": true,
+        "states": 128
+      },
+      {
+        "grid": true,
+        "cubism": false,
+        "keyedGlue": false,
+        "states": 128
+      },
+      {
+        "grid": true,
+        "cubism": false,
+        "keyedGlue": true,
+        "states": 128
+      },
+      {
+        "grid": true,
+        "cubism": true,
+        "keyedGlue": false,
+        "states": 128
+      },
+      {
+        "grid": true,
+        "cubism": true,
+        "keyedGlue": true,
+        "states": 128
+      }
+    ],
+    "comparison": "Current functions versus the frozen pre-optimization source. Exact Float64 array values, composed Glue settings and complete render plans; no relaxed tolerance.",
+    "scenarios": [
+      "Grid and non-grid interpolation",
+      "Default and Cubism color composition",
+      "Keyed and unkeyed Glue, including influence inputs",
+      "Nested groups, offscreen boundaries, masks and multiply blending",
+      "Repeated and changed raw parameter maps, missing controls, endpoints and out-of-range values",
+      "Group/part overrides set and cleared, pose opacity adjustment",
+      "Immutable document replacement changing defaults and rest vertices while reusing binding identities"
+    ],
+    "fixtureValidity": "All eight source fixture variants are accepted by parseDocumentValue.",
+    "log": "/private/tmp/puppet-review-differential-fixed.log",
+    "experimentSource": "/private/tmp/puppet-correctness-evidence/differential.integration.ts"
+  },
+  "browser": {
+    "modelSHA256": {
+      "whitecat": "47c98e7473e79ffb249aa1acb5bed9b7d458f35c7c0d3502f281549c20c55035",
+      "development": "d2ee88f9f8a50273f7919bdd3b52691418a3d0d60e3501609edb7b175e81bfb5"
+    },
+    "method": "Three independent Players on one page per model: two frozen pre-optimization copies as a control plus the fixed artifact. Blink, breath and physics preview disabled; parsed document reset while paused before deterministic inputs. flushPlayerInputs awaits submitted controls, and onBufferingChange awaits ready Worker state. Each stage compares displayed parameter maps and RGBA readback.",
+    "workerComparison": "Capture and clone each produced computed frame before the application listener can recycle its transferred memory. Compare complete render-plan Maps, parameter values and all Float32 vertex words exactly across the three Players. Seven Worker stages per model; buffer-off has no fresh Worker frame and is excluded from this assertion.",
+    "pixels": "Compare every RGBA channel without changing tolerance. 12 of 16 before/fixed stage pairs match exactly. Remaining pairs differ in at most 6 channels with maximum absolute delta 4/255. The unchanged before/before control also differs in 3 channels by 1/255 in one stage. Strict pixel equality is not claimed. These small readback differences did not correspond to a Worker calculation mismatch.",
+    "visibleInspection": "Opened the actual WhiteCat document-edit PNG and confirmed the supplied character is visibly rendered; nontransparent pixel counts are recorded for every stage.",
+    "results": [
+      {
+        "model": "whitecat",
+        "parts": 852,
+        "pageErrors": [],
+        "liveWorkersAfterDestroy": 0,
+        "frames": [
+          {
+            "workerFramesIdentical": true,
+            "stage": "defaults",
+            "differingChannels": 0,
+            "maximumDelta": 0,
+            "baselineDifferingChannels": 0,
+            "baselineMaximumDelta": 0,
+            "opaquePixels": 82313,
+            "width": 900,
+            "height": 700,
+            "buffering": [
+              {
+                "enabled": true,
+                "framesAhead": 0,
+                "status": "idle"
+              },
+              {
+                "enabled": true,
+                "framesAhead": 0,
+                "status": "idle"
+              },
+              {
+                "enabled": true,
+                "framesAhead": 0,
+                "status": "idle"
+              }
+            ]
+          },
+          {
+            "workerFramesIdentical": true,
+            "stage": "controls",
+            "differingChannels": 0,
+            "maximumDelta": 0,
+            "baselineDifferingChannels": 0,
+            "baselineMaximumDelta": 0,
+            "opaquePixels": 82700,
+            "width": 900,
+            "height": 700,
+            "buffering": [
+              {
+                "enabled": true,
+                "framesAhead": 0,
+                "status": "idle"
+              },
+              {
+                "enabled": true,
+                "framesAhead": 0,
+                "status": "idle"
+              },
+              {
+                "enabled": true,
+                "framesAhead": 0,
+                "status": "idle"
+              }
+            ]
+          },
+          {
+            "workerFramesIdentical": true,
+            "stage": "burst",
+            "differingChannels": 0,
+            "maximumDelta": 0,
+            "baselineDifferingChannels": 0,
+            "baselineMaximumDelta": 0,
+            "opaquePixels": 82597,
+            "width": 900,
+            "height": 700,
+            "buffering": [
+              {
+                "enabled": true,
+                "framesAhead": 0,
+                "status": "idle"
+              },
+              {
+                "enabled": true,
+                "framesAhead": 0,
+                "status": "idle"
+              },
+              {
+                "enabled": true,
+                "framesAhead": 0,
+                "status": "idle"
+              }
+            ]
+          },
+          {
+            "workerFramesIdentical": true,
+            "stage": "document-edit",
+            "differingChannels": 0,
+            "maximumDelta": 0,
+            "baselineDifferingChannels": 0,
+            "baselineMaximumDelta": 0,
+            "opaquePixels": 82082,
+            "width": 900,
+            "height": 700,
+            "buffering": [
+              {
+                "enabled": true,
+                "framesAhead": 0,
+                "status": "idle"
+              },
+              {
+                "enabled": true,
+                "framesAhead": 0,
+                "status": "idle"
+              },
+              {
+                "enabled": true,
+                "framesAhead": 0,
+                "status": "idle"
+              }
+            ]
+          },
+          {
+            "stage": "buffer-off",
+            "differingChannels": 6,
+            "maximumDelta": 4,
+            "baselineDifferingChannels": 0,
+            "baselineMaximumDelta": 0,
+            "opaquePixels": 82082,
+            "width": 900,
+            "height": 700,
+            "buffering": [
+              {
+                "enabled": false,
+                "framesAhead": 0,
+                "status": "disabled"
+              },
+              {
+                "enabled": false,
+                "framesAhead": 0,
+                "status": "disabled"
+              },
+              {
+                "enabled": false,
+                "framesAhead": 0,
+                "status": "disabled"
+              }
+            ]
+          },
+          {
+            "workerFramesIdentical": true,
+            "stage": "buffer-on",
+            "differingChannels": 0,
+            "maximumDelta": 0,
+            "baselineDifferingChannels": 0,
+            "baselineMaximumDelta": 0,
+            "opaquePixels": 82082,
+            "width": 900,
+            "height": 700,
+            "buffering": [
+              {
+                "enabled": true,
+                "framesAhead": 0,
+                "status": "idle"
+              },
+              {
+                "enabled": true,
+                "framesAhead": 0,
+                "status": "idle"
+              },
+              {
+                "enabled": true,
+                "framesAhead": 0,
+                "status": "idle"
+              }
+            ]
+          },
+          {
+            "workerFramesIdentical": true,
+            "stage": "resize",
+            "differingChannels": 0,
+            "maximumDelta": 0,
+            "baselineDifferingChannels": 0,
+            "baselineMaximumDelta": 0,
+            "opaquePixels": 319589,
+            "width": 1800,
+            "height": 1400,
+            "buffering": [
+              {
+                "enabled": true,
+                "framesAhead": 0,
+                "status": "idle"
+              },
+              {
+                "enabled": true,
+                "framesAhead": 0,
+                "status": "idle"
+              },
+              {
+                "enabled": true,
+                "framesAhead": 0,
+                "status": "idle"
+              }
+            ]
+          },
+          {
+            "workerFramesIdentical": true,
+            "stage": "renderer",
+            "differingChannels": 0,
+            "maximumDelta": 0,
+            "baselineDifferingChannels": 0,
+            "baselineMaximumDelta": 0,
+            "opaquePixels": 319589,
+            "width": 1800,
+            "height": 1400,
+            "buffering": [
+              {
+                "enabled": true,
+                "framesAhead": 0,
+                "status": "idle"
+              },
+              {
+                "enabled": true,
+                "framesAhead": 0,
+                "status": "idle"
+              },
+              {
+                "enabled": true,
+                "framesAhead": 0,
+                "status": "idle"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "model": "development",
+        "parts": 122,
+        "pageErrors": [],
+        "liveWorkersAfterDestroy": 0,
+        "frames": [
+          {
+            "workerFramesIdentical": true,
+            "stage": "defaults",
+            "differingChannels": 0,
+            "maximumDelta": 0,
+            "baselineDifferingChannels": 0,
+            "baselineMaximumDelta": 0,
+            "opaquePixels": 111508,
+            "width": 900,
+            "height": 700,
+            "buffering": [
+              {
+                "enabled": true,
+                "framesAhead": 0,
+                "status": "idle"
+              },
+              {
+                "enabled": true,
+                "framesAhead": 0,
+                "status": "idle"
+              },
+              {
+                "enabled": true,
+                "framesAhead": 0,
+                "status": "idle"
+              }
+            ]
+          },
+          {
+            "workerFramesIdentical": true,
+            "stage": "controls",
+            "differingChannels": 1,
+            "maximumDelta": 1,
+            "baselineDifferingChannels": 0,
+            "baselineMaximumDelta": 0,
+            "opaquePixels": 112111,
+            "width": 900,
+            "height": 700,
+            "buffering": [
+              {
+                "enabled": true,
+                "framesAhead": 0,
+                "status": "idle"
+              },
+              {
+                "enabled": true,
+                "framesAhead": 0,
+                "status": "idle"
+              },
+              {
+                "enabled": true,
+                "framesAhead": 0,
+                "status": "idle"
+              }
+            ]
+          },
+          {
+            "workerFramesIdentical": true,
+            "stage": "burst",
+            "differingChannels": 3,
+            "maximumDelta": 1,
+            "baselineDifferingChannels": 0,
+            "baselineMaximumDelta": 0,
+            "opaquePixels": 112480,
+            "width": 900,
+            "height": 700,
+            "buffering": [
+              {
+                "enabled": true,
+                "framesAhead": 0,
+                "status": "idle"
+              },
+              {
+                "enabled": true,
+                "framesAhead": 0,
+                "status": "idle"
+              },
+              {
+                "enabled": true,
+                "framesAhead": 0,
+                "status": "idle"
+              }
+            ]
+          },
+          {
+            "workerFramesIdentical": true,
+            "stage": "document-edit",
+            "differingChannels": 3,
+            "maximumDelta": 1,
+            "baselineDifferingChannels": 3,
+            "baselineMaximumDelta": 1,
+            "opaquePixels": 111310,
+            "width": 900,
+            "height": 700,
+            "buffering": [
+              {
+                "enabled": true,
+                "framesAhead": 0,
+                "status": "idle"
+              },
+              {
+                "enabled": true,
+                "framesAhead": 0,
+                "status": "idle"
+              },
+              {
+                "enabled": true,
+                "framesAhead": 0,
+                "status": "idle"
+              }
+            ]
+          },
+          {
+            "stage": "buffer-off",
+            "differingChannels": 0,
+            "maximumDelta": 0,
+            "baselineDifferingChannels": 0,
+            "baselineMaximumDelta": 0,
+            "opaquePixels": 111310,
+            "width": 900,
+            "height": 700,
+            "buffering": [
+              {
+                "enabled": false,
+                "framesAhead": 0,
+                "status": "disabled"
+              },
+              {
+                "enabled": false,
+                "framesAhead": 0,
+                "status": "disabled"
+              },
+              {
+                "enabled": false,
+                "framesAhead": 0,
+                "status": "disabled"
+              }
+            ]
+          },
+          {
+            "workerFramesIdentical": true,
+            "stage": "buffer-on",
+            "differingChannels": 0,
+            "maximumDelta": 0,
+            "baselineDifferingChannels": 0,
+            "baselineMaximumDelta": 0,
+            "opaquePixels": 111310,
+            "width": 900,
+            "height": 700,
+            "buffering": [
+              {
+                "enabled": true,
+                "framesAhead": 0,
+                "status": "idle"
+              },
+              {
+                "enabled": true,
+                "framesAhead": 0,
+                "status": "idle"
+              },
+              {
+                "enabled": true,
+                "framesAhead": 0,
+                "status": "idle"
+              }
+            ]
+          },
+          {
+            "workerFramesIdentical": true,
+            "stage": "resize",
+            "differingChannels": 0,
+            "maximumDelta": 0,
+            "baselineDifferingChannels": 0,
+            "baselineMaximumDelta": 0,
+            "opaquePixels": 436961,
+            "width": 1800,
+            "height": 1400,
+            "buffering": [
+              {
+                "enabled": true,
+                "framesAhead": 0,
+                "status": "idle"
+              },
+              {
+                "enabled": true,
+                "framesAhead": 0,
+                "status": "idle"
+              },
+              {
+                "enabled": true,
+                "framesAhead": 0,
+                "status": "idle"
+              }
+            ]
+          },
+          {
+            "workerFramesIdentical": true,
+            "stage": "renderer",
+            "differingChannels": 0,
+            "maximumDelta": 0,
+            "baselineDifferingChannels": 0,
+            "baselineMaximumDelta": 0,
+            "opaquePixels": 436961,
+            "width": 1800,
+            "height": 1400,
+            "buffering": [
+              {
+                "enabled": true,
+                "framesAhead": 0,
+                "status": "idle"
+              },
+              {
+                "enabled": true,
+                "framesAhead": 0,
+                "status": "idle"
+              },
+              {
+                "enabled": true,
+                "framesAhead": 0,
+                "status": "idle"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "rawResults": "/private/tmp/puppet-correctness-browser/results/comparison.json",
+    "harness": "/private/tmp/puppet-correctness-browser/check.mjs",
+    "screenshots": [
+      "/private/tmp/puppet-correctness-browser/results/development-defaults-after.png",
+      "/private/tmp/puppet-correctness-browser/results/development-document-edit-after.png",
+      "/private/tmp/puppet-correctness-browser/results/whitecat-defaults-after.png",
+      "/private/tmp/puppet-correctness-browser/results/whitecat-document-edit-after.png"
+    ]
+  },
+  "checks": {
+    "unit": {
+      "command": "pnpm exec vitest run --project=unit packages/puppet apps/poffo",
+      "result": "500 files, 3117 tests passed",
+      "log": "/private/tmp/puppet-correctness-unit.log"
+    },
+    "browserParallel": {
+      "command": "pnpm exec vitest run --config vitest.integration.config.mts --project=puppet-visual",
+      "result": "61 passed, 11 skipped, 1 timeout at 15 seconds in the zoom/pan test; executed concurrently with unit/type/lint checks",
+      "log": "/private/tmp/puppet-correctness-visual.log"
+    },
+    "browserSerial": {
+      "command": "pnpm exec vitest run --config vitest.integration.config.mts --project=puppet-visual --no-file-parallelism",
+      "result": "62 passed, 11 skipped; original assertions and timeouts unchanged",
+      "log": "/private/tmp/puppet-correctness-visual-serial.log"
+    },
+    "build": {
+      "command": "pnpm --filter @winter-love/puppet build",
+      "result": "passed after the fix, including generated declarations",
+      "log": "/private/tmp/puppet-review-build.log"
+    },
+    "typecheck": {
+      "command": "pnpm typecheck",
+      "result": "21 tasks passed",
+      "log": "/private/tmp/puppet-correctness-typecheck.log"
+    },
+    "lint": {
+      "command": "pnpm lint",
+      "result": "exit 0; repository warnings remain, no errors",
+      "log": "/private/tmp/puppet-correctness-lint.log"
+    },
+    "continuousPlayback": {
+      "command": "MODEL=<local WhiteCat file> FRAMES=600 pnpm exec vitest run --config vitest.integration.config.mts --project=integration packages/puppet/src/player/internal/wasm/deformation/__tests__/create-transform.parity.integration.ts",
+      "result": "2 models passed, 600 frames each",
+      "log": "/private/tmp/puppet-correctness-parity.log"
+    },
+    "format": {
+      "command": "pnpm format <review source, regression test, verification report>",
+      "result": "passed",
+      "log": "/private/tmp/puppet-correctness-format.log"
+    },
+    "diff": {
+      "command": "git diff --check",
+      "result": "passed"
+    }
+  },
+  "verificationGaps": [
+    "Hardware Metal output is not guaranteed bit-identical. Its internal source of one-unit variability remains below the traced API boundary; the strict zero-difference check is explicitly scoped to the verified reference renderer.",
+    "Other browsers/devices and a long-duration memory soak were not executed. Immutable identities and WeakMap ownership were reviewed, but this is not a heap-retention measurement."
+  ],
+  "outOfScope": [
+    "Additional performance optimizations",
+    "Changing physics, Glue, or visual behavior to obtain a passing comparison",
+    "Publishing, committing or updating a pull request"
+  ],
+  "continuousPlayback": {
+    "comparison": "The current JS compute engine versus the current hybrid Wasm deformation engine, each advanced 600 times with deltaTime 1/120. Exact runtime state, full render plans and playback snapshots every frame, and all Float32 vertex words. This compares computation paths; simulated steps are not browser FPS measurements.",
+    "models": [
+      "examples/development-model.json",
+      "/Users/bichi/Downloads/白猫/white-cat-idle-english.poffo"
+    ],
+    "framesPerModel": 600,
+    "result": "Both models passed with zero mismatched vertex words and zero maximum vertex error.",
+    "whitecat": {
+      "differentWords": 0,
+      "frames": 600,
+      "maximumVertexError": 0,
+      "memoryBytes": 16777216,
+      "model": "/Users/bichi/Downloads/白猫/white-cat-idle-english.poffo",
+      "nativeCalls": 511200,
+      "wasm": true
+    },
+    "log": "/private/tmp/puppet-correctness-parity.log"
+  },
+  "followUp": {
+    "recordedAt": "2026-11-03T18:49:53.336126+00:00",
+    "report": "playback-diagnostics.json",
+    "pixelComparison": "Exact SwiftShader comparison passed all 16 model/stage pairs; actual mismatches are caught by the negative control. Multipass Metal raw-output variability is separately documented.",
+    "parallelTests": "Project maxWorkers=2; 62 passed, 11 skipped while unit and type checks ran concurrently. Original assertions and timeout retained."
+  },
+  "metalFollowUp": {
+    "report": "playback-metal.json",
+    "status": "resolved in the tested Metal environment",
+    "fixed": "UV dFdy mismatch traced in the actual first batched GPU draw; affine triangle gradients and textureGrad restore strict repeat-render and main/Worker parity.",
+    "remaining": "No remaining channels in the tested WhiteCat SSAA/MSAA and development-model comparisons.",
+    "differentChannels": 0
+  },
+  "previousMetalFollowUp": {
+    "report": "playback-metal.json",
+    "status": "incomplete",
+    "fixed": "Immediate GPU submission boundaries; development-model before failed 3 channels and after passed all 8 stages.",
+    "remaining": "WhiteCat strict Metal comparison still fails: 6 channels, maximum straight-alpha delta 4. Internal first-divergent draw/instruction has not been established."
+  }
+}

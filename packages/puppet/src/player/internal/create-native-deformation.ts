@@ -20,7 +20,9 @@ import type {
 // Internal results are borrowed until that transform is sampled again.
 type PointTransform = (point: PuppetPoint) => PuppetPoint
 
-interface NativeTransform {
+export interface NativeTransform {
+  /** Creates an independent mapper retaining inputs and outputs before Glue. Omitted, use scalar sampling. */
+  readonly createMapper?: () => (vertices: Float32Array | number[]) => void
   readonly rotation: boolean
   readonly version: number
   sample(point: PuppetPoint): PuppetPoint
@@ -226,6 +228,7 @@ const createNativeTransform = (
 const compileNodes = (
   document: PuppetDocument,
   nodes: ReadonlyArray<PuppetSceneNode>,
+  factory?: NativeTransformFactory,
 ): CompiledScene => {
   const transforms: NativeTransform[] = []
   const parts: CompiledPart[] = []
@@ -239,7 +242,7 @@ const compileNodes = (
     const key = getNativeTransformKey(document, node)
     let transform = group.get(key)
     if (transform === undefined) {
-      transform = createNativeTransform(document, node, parent)
+      transform = factory?.(node, parent) ?? createNativeTransform(document, node, parent)
       group.set(key, transform)
       transforms.push(transform)
     }
@@ -269,6 +272,9 @@ const compileNodes = (
 
 /** Retains unrounded outputs before downstream Glue mutates the caller's buffers. */
 const createVertexTransform = (transform: NativeTransform | undefined) => {
+  if (transform?.createMapper !== undefined) {
+    return transform.createMapper()
+  }
   const sample = transform?.sample ?? identity
   const input = {x: 0, y: 0}
   let previousVersion = -1
@@ -317,15 +323,22 @@ const applyParts = (
   }
 }
 
-/** Owns reusable native parent-space buffers; unsupported rigs keep the general evaluator. */
+/** Creates one owner-scoped numeric transform with the supplied parent mapping. */
+export type NativeTransformFactory = (
+  node: PuppetSceneDeformerNode,
+  parent: NativeTransform | undefined,
+) => NativeTransform
+
+/** Owns reusable parent-space buffers; an optional factory supplies another numeric implementation. */
 export const createNativeDeformation = (
   document: PuppetDocument,
+  factory?: NativeTransformFactory,
 ): NativeDeformation | undefined => {
   const nodes = getDocumentScene(document).roots
   if (document.parts.some((part) => part.spatial !== undefined) || !nodes.every(supportsNode)) {
     return undefined
   }
-  const compiled = compileNodes(document, nodes)
+  const compiled = compileNodes(document, nodes, factory)
   return {
     apply: (values, vertices) => {
       const selected =
