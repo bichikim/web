@@ -1,6 +1,7 @@
 /** @vitest-environment jsdom */
 import {fireEvent, render, screen, waitFor, within} from '@solidjs/testing-library'
 import {expect, it, vi} from 'vitest'
+import {sampleEntry} from './fixtures/sample-entry'
 import type {PictureDiaryEntry} from '../../../features/picture-diary'
 import {PictureDiary} from '../PictureDiary'
 import {setupDiary} from './fixtures/diary'
@@ -34,15 +35,9 @@ it('should close and reopen the final cover on a compact empty diary', async () 
 })
 
 it('should keep saved entries read-only and preserve the draft through newer navigation', async () => {
-  const entry = {
-    createdAt: '2026-09-04T03:00:00.000Z',
-    date: '2026-09-04',
+  const entry = sampleEntry('처음 쓴 글', {
     id: 'entry-1',
-    strokes: [],
-    text: '처음 쓴 글',
-    updatedAt: '2026-09-04T03:00:00.000Z',
-    version: 1,
-  } satisfies PictureDiaryEntry
+  }) satisfies PictureDiaryEntry
   const repository = createRepository([entry])
   render(() => (
     <PictureDiary
@@ -81,15 +76,9 @@ it('should keep saved entries read-only and preserve the draft through newer nav
 })
 
 it('should page backward and forward through locally stored entries', async () => {
-  const newerEntry = {
-    createdAt: '2026-09-04T03:00:00.000Z',
-    date: '2026-09-04',
+  const newerEntry = sampleEntry('최근 일기', {
     id: 'newer-entry',
-    strokes: [],
-    text: '최근 일기',
-    updatedAt: '2026-09-04T03:00:00.000Z',
-    version: 1,
-  } satisfies PictureDiaryEntry
+  }) satisfies PictureDiaryEntry
   const olderEntry = {
     ...newerEntry,
     createdAt: '2026-09-03T03:00:00.000Z',
@@ -129,15 +118,13 @@ it('should page backward and forward through locally stored entries', async () =
 it.each([0, 2, 4])(
   'should turn writing to blank and cover and back with %i entries',
   async (count) => {
-    const entries: Array<PictureDiaryEntry> = Array.from({length: count}, (_, index) => ({
-      createdAt: '2026-09-05T00:00:00.000Z',
-      date: '2026-09-05',
-      id: String(index),
-      strokes: [],
-      text: String(index),
-      updatedAt: '2026-09-05T00:00:00.000Z',
-      version: 1,
-    }))
+    const entries: Array<PictureDiaryEntry> = Array.from({length: count}, (_, index) =>
+      sampleEntry(String(index), {
+        createdAt: '2026-09-05T00:00:00.000Z',
+        date: '2026-09-05',
+        updatedAt: '2026-09-05T00:00:00.000Z',
+      }),
+    )
     const repository = createRepository(entries)
     render(() => (
       <PictureDiary
@@ -166,15 +153,12 @@ it.each([0, 2, 4])(
 )
 
 it('should close the right cover and reopen the writing page without losing the draft', async () => {
-  const entry: PictureDiaryEntry = {
+  const entry: PictureDiaryEntry = sampleEntry('일기 1', {
     createdAt: '2026-09-05T00:00:00.000Z',
     date: '2026-09-05',
     id: 'one',
-    strokes: [],
-    text: '일기 1',
     updatedAt: '2026-09-05T00:00:00.000Z',
-    version: 1,
-  }
+  })
   render(() => (
     <PictureDiary
       environment={environment}
@@ -227,15 +211,12 @@ it('should close an empty diary and reopen its unchanged draft', async () => {
 })
 
 it('should close the back cover after the oldest entry and reopen to that entry', async () => {
-  const oldestEntry = {
+  const oldestEntry = sampleEntry('가장 오래된 일기', {
     createdAt: '2026-09-01T03:00:00.000Z',
     date: '2026-09-01',
     id: 'oldest-entry',
-    strokes: [],
-    text: '가장 오래된 일기',
     updatedAt: '2026-09-01T03:00:00.000Z',
-    version: 1,
-  } satisfies PictureDiaryEntry
+  }) satisfies PictureDiaryEntry
   render(() => (
     <PictureDiary
       environment={environment}

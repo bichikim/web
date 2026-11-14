@@ -2,10 +2,11 @@
 
 import {fireEvent, render, screen} from '@solidjs/testing-library'
 import {expect, it, vi} from 'vitest'
+import {sampleEntry} from '../../__tests__/fixtures/sample-entry'
 import type {PictureDiaryEntry} from '../../../../features/picture-diary'
 import {getBookPagination} from '../pagination'
 import {PictureDiaryEditor} from '../Editor'
-import {finishPageTurn, renderEditor, sampleEntry, turns} from './fixtures/editor'
+import {finishPageTurn, renderEditor, turns} from './fixtures/editor'
 
 it('should reveal the ending cover page during the back-cover turn', () => {
   const entries = [sampleEntry('newest'), sampleEntry('oldest')]
@@ -110,24 +111,16 @@ it('should turn the visible outgoing page on a compact older turn', () => {
 it('should show the previous complete entry and animate turns through diary entries', () => {
   const onGoNewer = vi.fn()
   const onGoOlder = vi.fn()
-  const currentEntry = {
-    createdAt: '2026-09-04T03:00:00.000Z',
-    date: '2026-09-04',
+  const currentEntry = sampleEntry('오늘은 자전거를 탔다.', {
     id: 'current-entry',
-    strokes: [],
-    text: '오늘은 자전거를 탔다.',
-    updatedAt: '2026-09-04T03:00:00.000Z',
-    version: 1,
-  } satisfies PictureDiaryEntry
-  const previousEntry = {
+  }) satisfies PictureDiaryEntry
+  const previousEntry = sampleEntry('어제는 산책했다.', {
     createdAt: '2026-09-03T03:00:00.000Z',
     date: '2026-09-03',
     id: 'previous-entry',
     strokes: [{points: [{x: 0.25, y: 0.5}]}],
-    text: '어제는 산책했다.',
     updatedAt: '2026-09-03T03:00:00.000Z',
-    version: 1,
-  } satisfies PictureDiaryEntry
+  }) satisfies PictureDiaryEntry
   renderEditor({
     canGoNewer: true,
     canGoOlder: true,
@@ -190,15 +183,12 @@ it('should show the previous complete entry and animate turns through diary entr
 it('should close the back cover after the last entry and reopen it toward that entry', () => {
   const onCloseBackCover = vi.fn()
   const onOpenBackCover = vi.fn()
-  const lastEntry = {
+  const lastEntry = sampleEntry('가장 오래된 일기', {
     createdAt: '2026-09-01T03:00:00.000Z',
     date: '2026-09-01',
     id: 'last-entry',
-    strokes: [],
-    text: '가장 오래된 일기',
     updatedAt: '2026-09-01T03:00:00.000Z',
-    version: 1,
-  } satisfies PictureDiaryEntry
+  }) satisfies PictureDiaryEntry
   const {unmount} = renderEditor({
     canCloseBackCover: true,
     currentEntry: lastEntry,
