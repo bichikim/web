@@ -1,5 +1,6 @@
 export * from './MediaPlayer'
 export * from './context'
+export * from './create-entry-reader'
 export * from './preview-playback'
 export * from './restoration'
 export * from './types'
