@@ -155,6 +155,32 @@ describe('calculateSajuReading', () => {
   })
 
   it.each([
+    '1995년 3월 16일생인데 일간은 무엇인가요?',
+    '1995년3월16일생의 일간은 무엇인가요?',
+    '1995년 03월 16일생인 제 일간은 무엇인가요?',
+    '1995년 3월 16일생이에요. 일간은 무엇인가요?',
+    '1995년 3월 16일생이고 일간은 무엇인가요?',
+    '1995년 3월 16일생이지만 일간은 무엇인가요?',
+    '1995년 3월 16일생임. 일간은 무엇인가요?',
+  ])('should answer a natal day-stem fact with a full birth date: %s', (question) => {
+    expect(calculateSajuReading({birth, gender: 'N', question})).toEqual({
+      text: '일간은 병(丙)입니다. 태어난 날을 나타내는 두 글자 중 첫 글자로, 사주를 읽을 때 기준으로 삼습니다.',
+      type: 'answer',
+    })
+  })
+
+  it.each([
+    '1995년 3월 16일생인데 올해 일간은 무엇인가요?',
+    '1995년 3월 16일생인데 내년 운세는?',
+    '1995년 3월 16일생인데 2026년 운세는?',
+    '2026년 3월 16일 생일 운세는?',
+    '2026년 3월 16일생일 수입은?',
+    '2026년 3월 16일생일 지출은?',
+  ])('should retain the annual notice alongside birth-date context: %s', (question) => {
+    expect(calculateSajuReading({birth, gender: 'N', question}).type).toBe('notice')
+  })
+
+  it.each([
     '제 일주로 내 일과 돈복은 어떤지 알려줘',
     '제 일주로 내 일이 맞을지 알려줘',
     '제 일주로 하는 일은 어떤지 알려줘',
