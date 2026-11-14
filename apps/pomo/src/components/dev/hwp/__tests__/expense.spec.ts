@@ -4,6 +4,32 @@ import {describe, expect, it} from 'vitest'
 import {parseExpenseAssistantResponse, parseExpenseText} from '../expense'
 
 describe('parseExpenseText', () => {
+  it.each(['고구마 1000원2개', '고구마 1000원2 개', '고구마 1000 원2개'])(
+    'should preserve explicit quantity when the currency and quantity touch in %s',
+    (text) => {
+      expect(parseExpenseText(text)).toEqual({
+        ok: true,
+        value: {
+          date: null,
+          items: [{amount: 2000, name: '고구마', quantity: 2, unitPrice: 1000}],
+          questions: [],
+          total: 2000,
+        },
+      })
+    },
+  )
+
+  it.each([
+    '고구마 1000원0개',
+    '고구마 1000원-2개',
+    '고구마 1000원2.5개',
+    '고구마 1000원２개',
+    '고구마1000원2개',
+    '고구마 1000원2개 추가',
+  ])('should reject invalid or ambiguous compact expense input %s', (text) => {
+    expect(parseExpenseText(text)).toEqual({error: {code: 'invalid-input'}, ok: false})
+  })
+
   it('should parse clear Korean expense lines with quantities', () => {
     expect(parseExpenseText('당근 2000원\n고구마 1000원 2개')).toEqual({
       ok: true,
@@ -203,28 +229,56 @@ describe('parseExpenseAssistantResponse', () => {
     },
   )
 
-  it.each([undefined, null, '', '   ', '\t\n', '\u3000'])(
-    'should treat an absent or blank date as missing: %j',
-    (date) => {
-      const result = parseExpenseAssistantResponse(
-        JSON.stringify({
-          date,
-          items: [{name: '두부', quantity: 1, unitPrice: 1500}],
-          questions: ['단가를 확인해 주세요.'],
-        }),
-      )
+  it.each([
+    undefined,
+    null,
+    '',
+    '   ',
+    '\t\n',
+    '\u3000',
+    '\u200b',
+    '\u200b\u200b',
+    ' \u200b\t\u3000\u200b\n',
+  ])('should treat an absent or blank date as missing: %j', (date) => {
+    const result = parseExpenseAssistantResponse(
+      JSON.stringify({
+        date,
+        items: [{name: '두부', quantity: 1, unitPrice: 1500}],
+        questions: ['단가를 확인해 주세요.'],
+      }),
+    )
 
-      expect(result).toEqual({
-        ok: true,
-        value: {
-          date: null,
-          items: [{amount: 1500, name: '두부', quantity: 1, unitPrice: 1500}],
-          questions: ['단가를 확인해 주세요.'],
-          total: 1500,
-        },
-      })
+    expect(result).toEqual({
+      ok: true,
+      value: {
+        date: null,
+        items: [{amount: 1500, name: '두부', quantity: 1, unitPrice: 1500}],
+        questions: ['단가를 확인해 주세요.'],
+        total: 1500,
+      },
+    })
+  })
+
+  it.each(['\u200b2026-09-05', '2026-09-05\u200b', '2026-\u200b09-05'])(
+    'should reject zero-width spaces in a nonblank structured date: %j',
+    (date) => {
+      expect(
+        parseExpenseAssistantResponse(
+          JSON.stringify({date, items: [{name: '두부', quantity: 1, unitPrice: 1500}]}),
+        ),
+      ).toEqual({error: {code: 'invalid-shape'}, ok: false})
     },
   )
+
+  it.each([
+    {items: [{name: '두부', quantity: 0, unitPrice: 1500}], questions: []},
+    {items: [{name: '두부', quantity: 1, unitPrice: 1500}], questions: [null]},
+  ])('should reject invalid expense data with a zero-width-space-only date: %j', (value) => {
+    expect(parseExpenseAssistantResponse(JSON.stringify({date: '\u200b', ...value}))).toEqual({
+      error: {code: 'invalid-shape'},
+      ok: false,
+    })
+  })
 
   it.each([0, false, [], {}])('should reject a non-string date: %j', (date) => {
     expect(
