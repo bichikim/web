@@ -2,8 +2,7 @@
 
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
-import type {PDialogueRepository} from '../repository'
-import type {PDialogue} from '../schema'
+import {createPlaybackRuntime, flush} from './support/playback'
 import {createEntryPlaybackController} from '../entry-playback-controller'
 import {P_SILENT_MOUTH_RETURN_DELAY_MS} from '../../lip-sync/silent-mouth-return'
 
@@ -45,63 +44,7 @@ vi.mock('../timeline', () => ({
   getDialogueVisemeAtTime: playbackMocks.viseme,
 }))
 
-const DIALOGUE: PDialogue = {
-  audioKey: 'audio-1',
-  createdAt: '2026-08-16T00:00:00.000Z',
-  durationMs: 1000,
-  id: 'dialogue-1',
-  language: 'ko',
-  modelId: 'int8',
-  segments: [{durationMs: 1000, index: 0, startMs: 0, text: '안녕하세요'}],
-  text: '안녕하세요',
-  updatedAt: '2026-08-16T00:00:00.000Z',
-  version: 1,
-  voiceId: 'F1',
-}
-const AUDIO_BLOB = {
-  arrayBuffer: vi.fn().mockResolvedValue(new ArrayBuffer(8)),
-} as unknown as Blob
-
-class TestAudio extends EventTarget {
-  static readonly instances: TestAudio[] = []
-  static playImplementation: () => Promise<void> = () => Promise.resolve()
-  currentTime = 0.25
-  ended = false
-  readonly pause = vi.fn()
-  readonly play = vi.fn<() => Promise<void>>(() => TestAudio.playImplementation())
-
-  constructor(readonly src: string) {
-    super()
-    TestAudio.instances.push(this)
-  }
-}
-
-const createRepository = (dialogue: PDialogue | null = DIALOGUE, audio: Blob | null = AUDIO_BLOB) =>
-  ({
-    getAudio: vi.fn().mockResolvedValue(audio),
-    getDialogue: vi.fn().mockResolvedValue(dialogue),
-  }) as unknown as PDialogueRepository
-
-const latestAudio = () => {
-  const audio = TestAudio.instances.at(-1)
-
-  if (audio === undefined) {
-    throw new Error('Expected an audio instance')
-  }
-
-  return audio
-}
-
-const flush = async () => {
-  await Promise.resolve()
-  await Promise.resolve()
-  await Promise.resolve()
-  await Promise.resolve()
-  await Promise.resolve()
-  await Promise.resolve()
-  await Promise.resolve()
-  await Promise.resolve()
-}
+const {DIALOGUE, TestAudio, createRepository, latestAudio} = createPlaybackRuntime()
 
 beforeEach(() => {
   vi.useFakeTimers()
