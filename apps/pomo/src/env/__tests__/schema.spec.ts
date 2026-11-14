@@ -1,5 +1,6 @@
 /** @vitest-environment node */
-import {describe, expect, it} from 'vitest'
+import {describe, expect, expectTypeOf, it} from 'vitest'
+import type {z} from 'zod'
 
 import {
   allowedStringSchema,
@@ -133,6 +134,60 @@ describe('postgresUrlSchema', () => {
     } catch (error) {
       expect(String(error)).not.toContain(invalidUrl)
     }
+  })
+})
+
+describe.each([
+  {
+    name: 'DATABASE_URL_UNPOOLED',
+    protocols: 'postgres: or postgresql:',
+    schema: envSchema.DATABASE_URL_UNPOOLED,
+    unsupportedUrl: 'https://database.example.test/pomo',
+    validUrls: ['postgres://database.example.test/pomo', 'POSTGRESQL://database.example.test/pomo'],
+  },
+  {
+    name: 'POMO_AI_RUNNER_URL',
+    protocols: 'https:',
+    schema: envSchema.POMO_AI_RUNNER_URL,
+    unsupportedUrl: 'http://runner.example.test/',
+    validUrls: ['https://runner.example.test/', 'HTTPS://RUNNER.example.test:443/path?q=%2f#part'],
+  },
+])('$name optional URL', ({name, protocols, schema, unsupportedUrl, validUrls}) => {
+  it.each([undefined, '', ' \t\r\n', '\u00a0\ufeff'])(
+    'should omit an absent or whitespace-only URL',
+    (value) => {
+      expect(schema.parse(value)).toBeUndefined()
+    },
+  )
+
+  it.each(validUrls)('should trim a supported URL without normalizing it', (value) => {
+    expect(schema.parse(`  ${value}  `)).toBe(value)
+  })
+
+  it.each(['https://', 'not-a-url-with-sensitive-text'])(
+    'should preserve the malformed URL issue without echoing input',
+    (value) => {
+      expect(schema.safeParse(value).error?.issues).toEqual([
+        {code: 'custom', message: `${name} must be a valid URL`, path: []},
+      ])
+    },
+  )
+
+  it('should preserve the unsupported protocol issue', () => {
+    expect(schema.safeParse(unsupportedUrl).error?.issues).toEqual([
+      {code: 'custom', message: `${name} must use ${protocols}`, path: []},
+    ])
+  })
+
+  it.each([null, 0, false, [], {}])('should reject a non-string without coercion', (value) => {
+    expect(schema.safeParse(value).error?.issues).toEqual([
+      expect.objectContaining({code: 'invalid_type', expected: 'string', path: []}),
+    ])
+  })
+
+  it('should preserve optional string input and output types', () => {
+    expectTypeOf<z.input<typeof schema>>().toEqualTypeOf<string | undefined>()
+    expectTypeOf<z.output<typeof schema>>().toEqualTypeOf<string | undefined>()
   })
 })
 

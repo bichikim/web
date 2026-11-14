@@ -116,26 +116,7 @@ const optionalMonthlyCreditCapSchema = z.preprocess(
 )
 
 const optionalUrlSchema = (name: string, protocols: ReadonlyArray<string>) =>
-  optionalStringSchema.superRefine((value, context) => {
-    if (value === undefined) {
-      return
-    }
-
-    let url: URL
-    try {
-      url = new URL(value)
-    } catch {
-      context.addIssue({code: 'custom', message: `${name} must be a valid URL`})
-      return
-    }
-
-    if (!protocols.includes(url.protocol)) {
-      context.addIssue({
-        code: 'custom',
-        message: `${name} must use ${protocols.join(' or ')}`,
-      })
-    }
-  })
+  optionalStringSchema.pipe(urlSchema(name, protocols).optional())
 
 export const envSchema = {
   CRON_SECRET: requiredStringSchema('CRON_SECRET').min(
