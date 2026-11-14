@@ -1,6 +1,7 @@
 /** @vitest-environment jsdom */
 
 import {fireEvent, render, screen} from '@solidjs/testing-library'
+import {createSignal} from 'solid-js'
 import {describe, expect, it, vi} from 'vitest'
 
 import {VoiceDropZone} from '../DropZone'
@@ -75,5 +76,66 @@ describe('VoiceDropZone', () => {
     const input = document.querySelector('input[type="file"]') as HTMLInputElement
     fireEvent.change(input, {target: {files: undefined}})
     expect(onFileSelect).toHaveBeenCalledWith(undefined)
+  })
+
+  it('should retain nested hover while disabled and recover after an empty drop', () => {
+    const [disabled, setDisabled] = createSignal(false)
+    const onFileSelect = vi.fn(async () => undefined)
+    render(() => (
+      <VoiceDropZone
+        disabled={disabled()}
+        fileError={null}
+        importedVoice={null}
+        onFileSelect={onFileSelect}
+      />
+    ))
+    const hint = screen.getByText('JSON 파일을 놓거나 클릭해 선택')
+    const dropZone = hint.closest('label')!
+
+    fireEvent.dragLeave(dropZone)
+    fireEvent.dragEnter(dropZone)
+    fireEvent.dragEnter(hint)
+    setDisabled(true)
+    fireEvent.dragEnter(hint)
+    fireEvent.dragLeave(hint)
+    expect(screen.getByText('여기에 놓아 가져오기')).toBeInTheDocument()
+    expect(dropZone).toHaveClass('border-#f2a7b8')
+
+    fireEvent.drop(dropZone, {dataTransfer: null})
+    expect(screen.getByText('JSON 파일을 놓거나 클릭해 선택')).toBeInTheDocument()
+    expect(onFileSelect).not.toHaveBeenCalled()
+
+    setDisabled(false)
+    fireEvent.dragLeave(dropZone)
+    fireEvent.dragEnter(dropZone)
+    fireEvent.dragLeave(dropZone)
+    expect(screen.getByText('JSON 파일을 놓거나 클릭해 선택')).toBeInTheDocument()
+    expect(dropZone).not.toHaveClass('border-#f2a7b8')
+  })
+
+  it('should reset the previous depth and retain a drag started by selection', () => {
+    const onFileSelect = vi.fn(() => {
+      fireEvent.dragEnter(dropZone)
+      return Promise.resolve()
+    })
+    render(() => (
+      <VoiceDropZone
+        disabled={false}
+        fileError={null}
+        importedVoice={null}
+        onFileSelect={onFileSelect}
+      />
+    ))
+    const dropZone = screen.getByText('JSON 파일을 놓거나 클릭해 선택').closest('label')!
+    const file = new File(['{}'], 'voice.json', {type: 'application/json'})
+
+    fireEvent.dragEnter(dropZone)
+    fireEvent.dragEnter(dropZone)
+    fireEvent.drop(dropZone, {dataTransfer: {files: [file]}})
+
+    expect(onFileSelect).toHaveBeenCalledExactlyOnceWith(file)
+    expect(screen.getByText('여기에 놓아 가져오기')).toBeInTheDocument()
+    fireEvent.dragLeave(dropZone)
+    expect(screen.getByText('JSON 파일을 놓거나 클릭해 선택')).toBeInTheDocument()
   })
 })
