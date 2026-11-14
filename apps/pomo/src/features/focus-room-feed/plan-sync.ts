@@ -1,4 +1,4 @@
-import {differenceBy} from 'es-toolkit/array'
+import {differenceBy, uniqWith} from 'es-toolkit/array'
 import type {ParsedFeedItem} from './feed-parser'
 
 const MAXIMUM_FEED_ITEM_AGE_DAYS = 3
@@ -50,6 +50,15 @@ const isHistoricalItem = (
 const isStaleItem = (item: ParsedFeedItem, oldestAcceptedTimestamp: number) =>
   item.publishedAt !== null && Date.parse(item.publishedAt) < oldestAcceptedTimestamp
 
+const isSameFeedItem = (left: ParsedFeedItem, right: ParsedFeedItem) =>
+  left.id === right.id &&
+  left.legacyId === right.legacyId &&
+  left.title === right.title &&
+  left.link === right.link &&
+  left.content === right.content &&
+  left.contentKind === right.contentKind &&
+  left.publishedAt === right.publishedAt
+
 /** Selects unseen feed items to process or ignore within the existing sync limits. */
 export const planFeedSync = (options: PlanFeedSyncOptions): FeedSyncPlan => {
   const storedIds = new Set(options.storedItemIds)
@@ -98,5 +107,5 @@ export const planFeedSync = (options: PlanFeedSyncOptions): FeedSyncPlan => {
     reason: staleIds.has(item.id) ? ('stale' as const) : ('historical' as const),
   }))
 
-  return {ignoredItems, itemsToProcess}
+  return {ignoredItems, itemsToProcess: uniqWith(itemsToProcess, isSameFeedItem)}
 }
