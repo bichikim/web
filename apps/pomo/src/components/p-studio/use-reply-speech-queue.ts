@@ -22,8 +22,7 @@ const createCancelledError = () =>
 /** Plays generated replies in order after the active dialogue stack becomes idle. */
 export const useReplySpeechQueue = (options: UseReplySpeechQueueOptions) => {
   const [requests, setRequests] = createSignal<ReadonlyArray<ReplySpeechRequest>>([])
-  const [isSpeaking, setIsSpeaking] = createSignal(false)
-  let activeRequest: ReplySpeechRequest | null = null
+  const [activeRequest, setActiveRequest] = createSignal<ReplySpeechRequest | null>(null)
   let activeSpeechRevision: number | undefined
   let disposed = false
 
@@ -41,15 +40,12 @@ export const useReplySpeechQueue = (options: UseReplySpeechQueueOptions) => {
     })
 
   const releaseActiveRequest = (request: ReplySpeechRequest) => {
-    if (activeRequest !== request) {
+    if (untrack(activeRequest) !== request) {
       return
     }
 
-    activeRequest = null
     activeSpeechRevision = undefined
-    if (!disposed) {
-      setIsSpeaking(false)
-    }
+    setActiveRequest(null)
   }
 
   const runRequest = async (request: ReplySpeechRequest) => {
@@ -76,7 +72,7 @@ export const useReplySpeechQueue = (options: UseReplySpeechQueueOptions) => {
     pendingRequests.forEach((request) => request.reject(error))
   }
   const rejectActiveRequest = () => {
-    const request = activeRequest
+    const request = untrack(activeRequest)
 
     if (request === null) {
       return false
@@ -105,8 +101,9 @@ export const useReplySpeechQueue = (options: UseReplySpeechQueueOptions) => {
     const occupied = options.isOccupied()
     const isDialogueOccupied = options.isDialogueOccupied?.() ?? false
     const speechRevision = options.speechRevision?.()
+    const currentRequest = untrack(activeRequest)
     const isSpeechSuperseded =
-      activeRequest !== null &&
+      currentRequest !== null &&
       activeSpeechRevision !== undefined &&
       speechRevision !== undefined &&
       activeSpeechRevision !== speechRevision
@@ -132,13 +129,12 @@ export const useReplySpeechQueue = (options: UseReplySpeechQueueOptions) => {
     if (occupied && options.speechRevision === undefined) {
       cancelActiveRequest()
     }
-    if (request === undefined || isSpeaking() || occupied) {
+    if (request === undefined || activeRequest() !== null || occupied) {
       return
     }
 
     setRequests((current) => current.slice(1))
-    setIsSpeaking(true)
-    activeRequest = request
+    setActiveRequest(request)
     runRequest(request)
   })
 
