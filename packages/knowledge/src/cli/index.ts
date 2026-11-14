@@ -1,5 +1,6 @@
 export * from './arguments'
 export * from './artifacts'
+export * from './create-knowledge-get-command'
 export * from './evaluation'
 export * from './generation'
 export * from './inspection'

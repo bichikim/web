@@ -13,11 +13,27 @@ describe('know CLI process', () => {
     expect(result.stdout).toContain('know index')
     expect(result.stdout).toContain('know search')
     expect(result.stdout).toContain('know get')
+    expect(result.stdout).toContain('--doc-id')
     expect(result.stdout).toContain('know status')
     expect(result.stdout).toContain('know doctor')
     expect(result.stdout).toContain('know reindex')
     expect(result.stdout).toContain('know mcp')
     expect(result.stderr).toBe('')
+  })
+  it('should route structured get input through the real executable and reject mixed input', async () => {
+    await expect(
+      execute(process.execPath, [
+        entry,
+        'get',
+        '--doc-id=docs/C#.md',
+        '--unit-id=overview',
+        '--repo',
+        '/nonexistent-knowledge-test',
+      ]),
+    ).rejects.toMatchObject({code: 1, stderr: expect.stringContaining('repository-unavailable')})
+    await expect(
+      execute(process.execPath, [entry, 'get', 'legacy', '--doc-id=docs/C#.md']),
+    ).rejects.toMatchObject({code: 2})
   })
   it('should reject missing queries and invalid limits with a nonzero exit code', async () => {
     await expect(execute(process.execPath, [entry, 'get'])).rejects.toMatchObject({code: 2})

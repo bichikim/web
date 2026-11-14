@@ -79,6 +79,10 @@ point ID를 포함한 진단·근거 연결·평가 기록은 그대로 새 실�
 
 `know get "문서ID"`는 해당 문서의 모든 unit을 원문 순서로 반환하고, `know get "문서ID#unitID"`는 특정 unit을 반환한다. ID는 검색 결과에 표시된 값을 사용한다. 본문은 Qdrant에 저장된 색인 내용이며 현재 작업 파일을 다시 읽은 결과가 아니다. 없는 ID는 `knowledge-not-found` 오류와 exit code 1로 반환한다.
 
+문서 ID에 `#`가 있거나 ID를 구분자 없이 전달하려면 `know get --doc-id='docs/C#.md' --unit-id='overview'`를 사용한다. `--unit-id`를 생략하면 문서 전체를 조회한다. positional ID와 이 옵션을 함께 사용할 수 없으며, 옵션처럼 시작하는 값은 `--doc-id='--option.md'`처럼 `=`로 전달한다. 검색 결과의 `Get:` 명령은 POSIX shell에서 그대로 복사해 실행할 수 있다. 현재 Node와 패키지 진입점의 절대경로를 포함하므로 전역 `know` 등록이 없어도 실행한다. JSON 조회 응답은 기존 입력에 `logicalId`, 구조화 입력에 `selector: {docId, unitId?}`를 반환한다.
+
+구조화 조회는 기존 색인을 그대로 읽으며 저장된 ID·point ID·관계를 변경하거나 재색인하지 않는다. 기존 positional ID의 `#` 구분과 literal `%23` 해석, `[[...]]` 논리 링크 문법은 유지한다. 따라서 `get 'docs/C#.md#overview'`나 같은 문자열의 논리 링크를 새로 해석하지 않는다. 파일명에 `#`가 있는 Markdown 경로 링크에는 `./C%23.md#overview`처럼 경로를 인코딩한다.
+
 `know status [repository]`는 현재 저장소·브랜치 범위의 저장된 문서 수, unit 수와 상태별 unit 수를 반환한다. 이 명령은 작업 파일과의 차이나 마지막 색인 시각을 판단하지 않는다. 현재 구현은 scope의 payload를 페이지별로 읽어 집계하며 동시 색인 중에는 변경 중인 상태가 반영될 수 있다. collection이 없거나 Qdrant에 연결할 수 없으면 0건으로 숨기지 않고 오류를 반환한다.
 
 두 명령 모두 `--repo`와 `--json`을 지원하고 Ollama를 호출하거나 색인을 변경하지 않는다.
@@ -142,6 +146,8 @@ know mcp --repo /path/to/repository
 - `knowledge_search`: `{query, limit?}` — CLI와 같은 hybrid 검색. 기본 limit은 10, 최대 100이다.
 - `knowledge_get`: `{logicalId}` — 문서 전체 또는 `docId#unitId`의 저장된 내용 조회.
 - `knowledge_related`: `{logicalId, limit?}` — 같은 scope의 직접적인 outgoing 관계를 한 단계 조회. 최대 limit개 대상과 limit개 결과를 반환하고, 없는 대상과 잘린 결과를 `missing`, `truncated`로 표시한다. 역방향 관계와 재귀 탐색은 하지 않는다.
+
+`knowledge_get`과 `knowledge_related`는 `{docId, unitId?}` 입력도 받는다. 예를 들어 `{"docId":"docs/C#.md","unitId":"overview"}`로 구간을, `{"docId":"docs/C#.md"}`로 문서 전체를 선택한다. `knowledge_related`에는 기존 `limit`도 지정할 수 있다. `logicalId`와 구조화 필드를 혼용하거나 `unitId`만 지정할 수 없다. 구조화 응답은 `logicalId` 대신 `selector`를 포함하며 기존 입력과 응답은 유지한다.
 
 저장소 경로는 시작 인자로만 지정하며 도구 호출로 다른 경로를 넘길 수 없다. 각 호출은 지정한 저장소의 현재 branch/workspace를 확인하므로, 서버 실행 중 branch를 바꾸면 이후 호출의 scope도 바뀐다. 결과의 `repoId`, `workspaceId`를 확인한다. 색인 생성·변경 도구는 노출하지 않으므로 먼저 CLI로 `index`를 실행해야 한다.
 

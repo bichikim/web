@@ -10,8 +10,18 @@ import {loadKnowledgeSettings} from '../config/runtime'
 import {executeKnowledgeIndex, type IndexProgress} from '../indexing/execute'
 import {diagnoseKnowledge, type DoctorSource, type KnowledgeDoctorReport} from '../indexing/doctor'
 import {prepareKnowledgeIndex} from '../indexing/prepare'
-import {getKnowledge, getKnowledgeStatus, type KnowledgeIndexStatus} from '../indexing/read'
-import {getRelatedKnowledge, type RelatedKnowledge} from '../indexing/related'
+import {
+  getKnowledge,
+  getKnowledgeByIdentity,
+  getKnowledgeStatus,
+  type KnowledgeIdentity,
+  type KnowledgeIndexStatus,
+} from '../indexing/read'
+import {
+  getRelatedKnowledge,
+  getRelatedKnowledgeByIdentity,
+  type RelatedKnowledge,
+} from '../indexing/related'
 import type {KnowledgeScope, StoredKnowledgePoint} from '../indexing/store'
 import type {KnowledgeNeighborReader, ResearchReader} from '../inspection/index'
 import {readKnowledgeFiles} from '../source/files'
@@ -217,6 +227,55 @@ export interface GetKnowledgeRepositoryOptions {
 
 export interface RelatedKnowledgeRepositoryOptions extends GetKnowledgeRepositoryOptions {
   readonly limit: number
+}
+
+export interface GetKnowledgeRepositoryByIdentityOptions {
+  /** Location inside the Git repository whose current workspace will be read. */
+  readonly inputPath: string
+  /** Stored document and optional unit fields; omission of unitId selects the whole document. */
+  readonly identity: KnowledgeIdentity
+}
+export interface RelatedKnowledgeRepositoryByIdentityOptions extends GetKnowledgeRepositoryByIdentityOptions {
+  /** Maximum direct targets and returned units, from 1 to 100. */
+  readonly limit: number
+}
+export interface GetKnowledgeRepositoryByIdentityResult extends KnowledgeScope {
+  readonly command: 'get'
+  readonly selector: KnowledgeIdentity
+  readonly points: ReadonlyArray<StoredKnowledgePoint>
+}
+export interface RelatedKnowledgeRepositoryByIdentityResult
+  extends KnowledgeScope, RelatedKnowledge {
+  readonly selector: KnowledgeIdentity
+}
+
+export const getKnowledgeRepositoryByIdentity = async (
+  options: GetKnowledgeRepositoryByIdentityOptions,
+): Promise<GetKnowledgeRepositoryByIdentityResult> => {
+  const {index, repository} = await createContext(options.inputPath)
+  const points = unwrap(await getKnowledgeByIdentity({...options, index, scope: repository}))
+  return {
+    command: 'get',
+    points,
+    repoId: repository.repoId,
+    selector: options.identity,
+    workspaceId: repository.workspaceId,
+  }
+}
+
+export const relatedKnowledgeRepositoryByIdentity = async (
+  options: RelatedKnowledgeRepositoryByIdentityOptions,
+): Promise<RelatedKnowledgeRepositoryByIdentityResult> => {
+  const {index, repository} = await createContext(options.inputPath)
+  const related = unwrap(
+    await getRelatedKnowledgeByIdentity({...options, index, scope: repository}),
+  )
+  return {
+    ...related,
+    repoId: repository.repoId,
+    selector: options.identity,
+    workspaceId: repository.workspaceId,
+  }
 }
 export interface RelatedKnowledgeRepositoryResult extends KnowledgeScope, RelatedKnowledge {
   readonly logicalId: string
