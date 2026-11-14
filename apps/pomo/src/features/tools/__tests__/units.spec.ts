@@ -37,6 +37,19 @@ it('should convert values pasted with fullwidth digits', () => {
     value: 10 / 0.3048,
   })
 })
+it('should convert decimals pasted with a fullwidth full stop', () => {
+  for (const [value, expected] of [
+    ['１０．５', 10.5],
+    ['－．５', -0.5],
+    ['1，000．5', 1000.5],
+  ] as const) {
+    expect(convertUnit({from: 'm', to: 'm', value})).toEqual({kind: 'valid', value: expected})
+  }
+  expect(convertUnit({from: 'C', to: 'F', value: '＋３６．５'})).toEqual({
+    kind: 'valid',
+    value: 97.7,
+  })
+})
 it('should reject malformed mismatched and overflowing values while keeping blank input empty', () => {
   expect(convertUnit({from: 'm', to: 'ft', value: ''}).kind).toBe('empty')
   for (const value of ['abc', '0xff', '1,23', 'Infinity', '1e2', '1E2', '1e309']) {
@@ -72,7 +85,18 @@ it('should convert grouped values pasted with fullwidth and mixed commas', () =>
 })
 
 it('should reject malformed groups and unrelated fullwidth punctuation', () => {
-  for (const value of ['1，23', '12，34', '1，00,000', '1,000，00', '1.000，5', '1，000．5']) {
+  for (const value of [
+    '1，23',
+    '12，34',
+    '1，00,000',
+    '1,000，00',
+    '1.000，5',
+    '1．000，5',
+    '１．２．３',
+    '1．2.3',
+    'Ａ．',
+    '１／２',
+  ]) {
     expect(convertUnit({from: 'm', to: 'm', value}).kind).toBe('invalid')
   }
 })

@@ -78,3 +78,19 @@ it('should update, swap, reject malformed input, and reset units on the same mou
 it('should enable unit selection controls after restoring saved preferences', async () => {
   await renderReadyUnits()
 })
+
+it('should convert fullwidth decimals entered in the value field and reject multiple separators', () => {
+  renderUnitsWithSelection()
+  const input = screen.getByRole('textbox', {name: '변환할 값'})
+  fireEvent.input(input, {target: {value: '１０．５'}})
+  expect(screen.getByText('34.4488188976 ft')).toBeVisible()
+  expect(input).not.toHaveAttribute('aria-invalid', 'true')
+
+  fireEvent.input(input, {target: {value: '１．２．３'}})
+  expect(input).toHaveAttribute('aria-invalid', 'true')
+  expect(screen.queryByRole('button', {name: '결과 복사'})).not.toBeInTheDocument()
+
+  fireEvent.input(input, {target: {value: '１０．５'}})
+  expect(screen.getByText('34.4488188976 ft')).toBeVisible()
+  expect(input).not.toHaveAttribute('aria-invalid', 'true')
+})
