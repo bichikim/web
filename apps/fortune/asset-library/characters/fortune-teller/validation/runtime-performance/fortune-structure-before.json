@@ -1,0 +1,225 @@
+{
+  "label": "fortune",
+  "parts": 510,
+  "vertices": 37946,
+  "glue": 11103,
+  "deformers": 1494,
+  "controlPoints": 406287,
+  "bindings": 3392,
+  "keyforms": 12538,
+  "keyformCoordinates": 8754762,
+  "native": false,
+  "unsupported": [
+    {
+      "id": "fortune:hat-flex",
+      "fields": ["interpolation"]
+    },
+    {
+      "id": "fortune:hat-back:volume",
+      "type": "spatial",
+      "space": "parent",
+      "fields": []
+    },
+    {
+      "id": "fortune:hat-chain:drape:curve",
+      "space": "parent",
+      "fields": ["curveAxis"]
+    },
+    {
+      "id": "fortune:hat-chain:upper:curve",
+      "space": "parent",
+      "fields": ["curveAxis"]
+    },
+    {
+      "id": "fortune:hat:volume",
+      "type": "spatial",
+      "space": "parent",
+      "fields": []
+    },
+    {
+      "id": "fortune:hat-brim-shadow:volume",
+      "type": "spatial",
+      "space": "parent",
+      "fields": []
+    },
+    {
+      "id": "fortune:hat-bow:attachment-frame",
+      "space": "parent",
+      "fields": []
+    },
+    {
+      "id": "fortune:hat-bow:tail-long:root",
+      "type": "rotation",
+      "fields": []
+    },
+    {
+      "id": "fortune:hat-bow:tail-long:cloth",
+      "fields": ["interpolation"]
+    },
+    {
+      "id": "fortune:hat-bow:tail-long:volume",
+      "type": "spatial",
+      "fields": []
+    },
+    {
+      "id": "fortune:hat-bow:tail-long:shadow-volume",
+      "type": "spatial",
+      "fields": []
+    },
+    {
+      "id": "fortune:hat-bow:tail-short:root",
+      "type": "rotation",
+      "fields": []
+    },
+    {
+      "id": "fortune:hat-bow:tail-short:cloth",
+      "fields": ["interpolation"]
+    },
+    {
+      "id": "fortune:hat-bow:tail-short:volume",
+      "type": "spatial",
+      "fields": []
+    },
+    {
+      "id": "fortune:hat-bow:tail-short:shadow-volume",
+      "type": "spatial",
+      "fields": []
+    },
+    {
+      "id": "fortune:hat-bow:loop-left:root",
+      "type": "rotation",
+      "fields": []
+    },
+    {
+      "id": "fortune:hat-bow:loop-left:cloth",
+      "fields": ["interpolation"]
+    },
+    {
+      "id": "fortune:hat-bow:loop-left:volume",
+      "type": "spatial",
+      "fields": []
+    },
+    {
+      "id": "fortune:hat-bow:loop-left:shadow-volume",
+      "type": "spatial",
+      "fields": []
+    },
+    {
+      "id": "fortune:hat-bow:loop-right:root",
+      "type": "rotation",
+      "fields": []
+    },
+    {
+      "id": "fortune:hat-bow:loop-right:cloth",
+      "fields": ["interpolation"]
+    },
+    {
+      "id": "fortune:hat-bow:loop-right:volume",
+      "type": "spatial",
+      "fields": []
+    },
+    {
+      "id": "fortune:hat-bow:loop-right:shadow-volume",
+      "type": "spatial",
+      "fields": []
+    },
+    {
+      "id": "fortune:hat-bow:brooch:volume",
+      "type": "spatial",
+      "space": "parent",
+      "fields": []
+    },
+    {
+      "id": "fortune:hair-motion:rear",
+      "fields": ["interpolation"]
+    },
+    {
+      "id": "fortune:hair-motion:side-left",
+      "fields": ["interpolation"]
+    },
+    {
+      "id": "fortune:hair-motion:ribbon-left-lag",
+      "fields": ["interpolation"]
+    },
+    {
+      "id": "fortune:hair-motion:charm-left-lag",
+      "fields": ["interpolation"]
+    },
+    {
+      "id": "fortune:hair-motion:side-right",
+      "fields": ["interpolation"]
+    },
+    {
+      "id": "fortune:hair-motion:ribbon-right-lag",
+      "fields": ["interpolation"]
+    },
+    {
+      "id": "fortune:hair-motion:charm-right-lag",
+      "fields": ["interpolation"]
+    },
+    {
+      "id": "fortune:hair-motion:front-side-left",
+      "fields": ["interpolation"]
+    },
+    {
+      "id": "fortune:hair-motion:front-side-right",
+      "fields": ["interpolation"]
+    },
+    {
+      "id": "fortune:hair-motion:bang-left",
+      "fields": ["interpolation"]
+    },
+    {
+      "id": "fortune:hair-motion:bang-right",
+      "fields": ["interpolation"]
+    },
+    {
+      "id": "fortune:hair-motion:bang-center",
+      "fields": ["interpolation"]
+    },
+    {
+      "id": "fortune:cape:body-warp",
+      "fields": ["interpolation"]
+    },
+    {
+      "id": "fortune:cravat:tail-long:fold-2",
+      "fields": ["interpolation"]
+    },
+    {
+      "id": "fortune:cravat:tail-long:fold-3",
+      "fields": ["interpolation"]
+    },
+    {
+      "id": "fortune:cravat:tail-long:fold-4",
+      "fields": ["interpolation"]
+    },
+    {
+      "id": "fortune:cravat:tail-long:fold-5",
+      "fields": ["interpolation"]
+    },
+    {
+      "id": "fortune:cravat:tail-short:fold-2",
+      "fields": ["interpolation"]
+    },
+    {
+      "id": "fortune:cravat:tail-short:fold-3",
+      "fields": ["interpolation"]
+    },
+    {
+      "id": "fortune:cravat:tail-short:fold-4",
+      "fields": ["interpolation"]
+    },
+    {
+      "id": "fortune:cravat:tail-short:fold-5",
+      "fields": ["interpolation"]
+    },
+    {
+      "id": "fortune:mantle-back:body-warp",
+      "fields": ["interpolation"]
+    },
+    {
+      "id": "fortune:skirt:body-warp",
+      "fields": ["interpolation"]
+    }
+  ]
+}

@@ -7,10 +7,10 @@ export default function Home() {
   return (
     <>
       <SPageMetadata />
-      <section class="grid items-center gap-4 py-12 sm:py-20 md:grid-cols-2 md:gap-12">
+      <section class="grid items-center gap-4 py-8 sm:grid-cols-2 sm:gap-8 sm:py-10">
         <div>
           <p class="mb-5 text-sm font-medium text-[#65488a]">사주와 타로, 캐릭터의 목소리로</p>
-          <h1 class="text-4xl font-semibold leading-snug tracking-tight sm:text-5xl sm:leading-snug">
+          <h1 class="break-keep text-4xl font-semibold leading-snug tracking-tight lg:text-5xl">
             당신의 이야기를,
             <br />
             조금 다른 시선으로.
