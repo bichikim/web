@@ -1,0 +1,111 @@
+{
+  "frames": 240,
+  "stepSeconds": 0.016666666666666666,
+  "motion": "Idle:0",
+  "lookChanges": [
+    {
+      "frame": 20,
+      "target": {
+        "x": -1,
+        "y": -0.7
+      }
+    },
+    {
+      "frame": 80,
+      "target": {
+        "x": 1,
+        "y": 0.7
+      }
+    },
+    {
+      "frame": 140,
+      "target": {
+        "x": -1,
+        "y": 0.7
+      }
+    },
+    {
+      "frame": 200,
+      "target": {
+        "x": 0,
+        "y": 0
+      }
+    }
+  ],
+  "comparedFloat32Coordinates": 18214080,
+  "maximumCoordinateDifference": 0,
+  "differingCoordinates": 0,
+  "renderFramesIdentical": true,
+  "physicsChains": 40,
+  "hatPhysicsOutputRanges": {
+    "fortune:hat-pendant:large:swing": {
+      "minimum": -0.04087395042649122,
+      "maximum": 0.06342913959572472
+    },
+    "fortune:hat-pendant:small:swing": {
+      "minimum": -0.07393994094115985,
+      "maximum": 0.1970804024207493
+    },
+    "fortune:hat-chain:drape:sway": {
+      "minimum": -0.12,
+      "maximum": 0.12
+    },
+    "fortune:hat-pendant:inner:swing": {
+      "minimum": -0.12418228176495649,
+      "maximum": 0.19131187395012184
+    },
+    "fortune:hat-pendant:tip:swing": {
+      "minimum": -0.19305751329507848,
+      "maximum": 0.07141405944846402
+    },
+    "fortune:hat-pendant:right-short:swing": {
+      "minimum": -0.18692489856862604,
+      "maximum": 0.07712598400867532
+    },
+    "fortune:hat-pendant:right-long:swing": {
+      "minimum": -0.18721233872064347,
+      "maximum": 0.1729125683415622
+    },
+    "fortune:hat-chain:upper:sway": {
+      "minimum": -0.12,
+      "maximum": 0.09960851267627091
+    },
+    "fortune:hat-pendant:upper:swing": {
+      "minimum": -0.19148795014199105,
+      "maximum": 0.10312477637923645
+    },
+    "fortune:hat-bow:loop-left:sway": {
+      "minimum": -0.055,
+      "maximum": 0.055
+    },
+    "fortune:hat-bow:loop-left:bend": {
+      "minimum": -0.035,
+      "maximum": 0.035
+    },
+    "fortune:hat-bow:loop-right:sway": {
+      "minimum": -0.065,
+      "maximum": 0.065
+    },
+    "fortune:hat-bow:loop-right:bend": {
+      "minimum": -0.045,
+      "maximum": 0.045
+    },
+    "fortune:hat-bow:tail-short:sway": {
+      "minimum": -0.09,
+      "maximum": 0.09
+    },
+    "fortune:hat-bow:tail-short:bend": {
+      "minimum": -0.075,
+      "maximum": 0.075
+    },
+    "fortune:hat-bow:tail-long:sway": {
+      "minimum": -0.105,
+      "maximum": 0.105
+    },
+    "fortune:hat-bow:tail-long:bend": {
+      "minimum": -0.09,
+      "maximum": 0.09
+    }
+  },
+  "method": "A seeded runtime drives the actual motion, look smoothing, blink, breath and physics. The same emitted inputs are evaluated by the general and optimized geometry paths every frame."
+}

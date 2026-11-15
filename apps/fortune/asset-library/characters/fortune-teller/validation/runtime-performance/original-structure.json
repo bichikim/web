@@ -1,0 +1,13 @@
+{
+  "label": "original",
+  "parts": 852,
+  "vertices": 34452,
+  "glue": 5114,
+  "deformers": 2518,
+  "controlPoints": 792236,
+  "bindings": 5042,
+  "keyforms": 15514,
+  "keyformCoordinates": 14812312,
+  "native": true,
+  "unsupported": []
+}

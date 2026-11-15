@@ -7,6 +7,8 @@ import {
 import {composeParameterScene} from '../../../deformation/scene'
 import {applySceneNodeDeformers} from '../../../deformation/vertices'
 import {createNativeDeformation} from '../create-native-deformation'
+import {computeRenderFrame} from '../compute-render-frame'
+import {mixMotionFrames} from '../../playback/mix-motion-frames'
 const shape: PuppetSceneDeformerNode = {
   bounds: {height: 1, width: 1, x: 0, y: 0},
   children: [{id: 'part', kind: 'part', locked: false, name: 'Part', visible: true}],
@@ -123,7 +125,7 @@ test('should preserve rotation inheritance, reflection and scale inside a moving
 })
 test('should defer unsupported bindings and vertex-dependent rigs to the general evaluator', () => {
   expect(
-    createNativeDeformation(createDocument({...shape, coordinateSpace: undefined})),
+    createNativeDeformation(createDocument({...shape, binding: {rest: shape, steps: []}})),
   ).toBeUndefined()
   expect(createNativeDeformation(createDocument({...shape, vertexInfluences: []}))).toBeUndefined()
   expect(createNativeDeformation(createDocument({...shape, pins: []}))).toBeUndefined()
@@ -141,20 +143,6 @@ test('should defer unsupported bindings and vertex-dependent rigs to the general
       }),
     ),
   ).toBeUndefined()
-})
-test('should use the general evaluator for a document containing spatial geometry', () => {
-  const document: PuppetDocument = {
-    ...createDocument(),
-    parts: [
-      {
-        id: 'part',
-        mesh: {indices: [0, 1, 2], uvs: [0, 0, 1, 0, 0, 1], vertices: [0, 0, 1, 0, 0, 1]},
-        spatial: {controlPoints: [0, 0, 0, 1, 0, 0, 0, 1, 0], origin: [0, 0, 0]},
-        texture: {height: 1, src: '', width: 1},
-      },
-    ],
-  }
-  expect(createNativeDeformation(document)).toBeUndefined()
 })
 test('should update only the requested branch and refresh a previously skipped sibling when needed', () => {
   const sibling = {
@@ -222,4 +210,167 @@ test('should retain precision across changing vertex inputs and caller buffers',
   }
   expect(previous[1]).toBe(previous[3])
   expect(previous[0]).not.toBe(previous[1])
+})
+
+test('should preserve mixed parent and document-space branches across changing shared ancestors', () => {
+  const legacy: PuppetSceneDeformerNode = {
+    ...shape,
+    children: [{...shape.children[0]!, id: 'legacy-part'}],
+    controlPoints: [0.1, 0.2, 1.2, 0.3, 0.2, 1.1, 1.3, 1.4],
+    coordinateSpace: undefined,
+    id: 'legacy',
+    vertexInfluences: [],
+  }
+  const parent = {...shape, children: [shape, legacy], id: 'parent'}
+  const document: PuppetDocument = {
+    ...createDocument(parent),
+    parameterBindings: [
+      {
+        id: 'move',
+        keyforms: [0, 1].map((p) => ({
+          deformers: [
+            {
+              controlPoints: parent.controlPoints.map((value) => value + p),
+              kind: 'deformer',
+              nodeId: parent.id,
+            },
+          ],
+          parts: [],
+          values: [p],
+        })),
+        parameterIds: ['p'],
+        targetDeformerIds: [parent.id],
+      },
+    ],
+  }
+  const native = createNativeDeformation(document)
+  expect(native).toBeDefined()
+  for (const p of [0, 0.3, 1, 0.3, 0]) {
+    const expected = new Map([...createVertices(), ['legacy-part', [0.17, 0.29, 0.7, 0.9]]])
+    const actual = new Map([...expected].map(([id, vertices]) => [id, [...vertices]]))
+    applySceneNodeDeformers(composeParameterScene(document, {p}).roots, expected)
+    native!.apply({p}, actual)
+    expect(actual).toEqual(expected)
+  }
+})
+
+test('should preserve nested document-space grids before applying a moving parent warp', () => {
+  const local: PuppetSceneDeformerNode = {
+    ...shape,
+    columns: 2,
+    controlPoints: [0, 0, 0.4, 0.1, 1, 0, 0.1, 0.5, 0.6, 0.6, 1.1, 0.5, 0, 1, 0.5, 1.2, 1, 1],
+    coordinateSpace: undefined,
+    rows: 2,
+  }
+  const parent = {
+    ...shape,
+    children: [{...local, children: [local], id: 'outer-local'}],
+    controlPoints: [0.1, 0.3, 1.2, 0.2, 0.2, 1.3, 1.3, 1.4],
+    id: 'parent',
+  }
+  const document: PuppetDocument = {
+    ...createDocument(parent),
+    parameterBindings: [
+      {
+        id: 'move',
+        keyforms: [0, 1].map((p) => ({
+          deformers: [
+            {
+              controlPoints: parent.controlPoints.map((value) => value + p),
+              kind: 'deformer',
+              nodeId: parent.id,
+            },
+          ],
+          parts: [],
+          values: [p],
+        })),
+        parameterIds: ['p'],
+        targetDeformerIds: [parent.id],
+      },
+    ],
+  }
+  expect(createNativeDeformation(document)).toBeDefined()
+  compare(document, [0, 0.3, 1, 0.3, 0])
+})
+
+test('should preserve spatial projection and render plans beside a compiled branch', () => {
+  const spatial: PuppetSceneDeformerNode = {
+    ...shape,
+    children: [{...shape.children[0]!, id: 'spatial-part'}],
+    deformerType: 'spatial',
+    id: 'volume',
+    spatialRotation: [0, 0.4, 0],
+  }
+  const part = {
+    id: 'part',
+    mesh: {indices: [0, 1, 2], uvs: [0, 0, 1, 0, 0, 1], vertices: [0, 0, 1, 0, 0, 1]},
+    texture: {height: 1, src: '', width: 1},
+  }
+  const document: PuppetDocument = {
+    ...createDocument(),
+    parts: [
+      part,
+      {
+        ...part,
+        id: 'spatial-part',
+        spatial: {
+          controlPoints: [0, 0, 0.1, 1, 0, 0.2, 0, 1, 0.3],
+          groupId: spatial.id,
+          origin: [0, 0, 0],
+        },
+      },
+    ],
+    scene: {roots: [shape, spatial]},
+  }
+  const native = createNativeDeformation(document)
+  expect(native).toBeDefined()
+  const createBuffers = () =>
+    new Map(document.parts.map((part) => [part.id, new Float32Array(part.mesh.vertices)]))
+  const expected = createBuffers()
+  const actual = createBuffers()
+  const options = {
+    document,
+    mix: mixMotionFrames({document, frames: [], parameterValues: {}}),
+    parameterValues: {},
+  }
+  const expectedFrame = computeRenderFrame({...options, verticesByPartId: expected})
+  const actualFrame = computeRenderFrame({...options, native, verticesByPartId: actual})
+  expect(actual).toEqual(expected)
+  expect(actualFrame).toEqual(expectedFrame)
+})
+
+test('should retain external skinning frames when only the skinned branch uses the general evaluator', () => {
+  const identity = {x: 0, xx: 1, xy: 0, y: 0, yx: 0, yy: 1}
+  const rotation: PuppetSceneDeformerNode = {
+    ...shape,
+    boneRestPoints: [0, 0, 1, 0],
+    controlPoints: [2, 0, 3, 0],
+    deformerType: 'rotation',
+    id: 'bone',
+  }
+  const document: PuppetDocument = {
+    ...createDocument(),
+    scene: {
+      roots: [
+        rotation,
+        {
+          ...shape.children[0]!,
+          id: 'skinned',
+          kind: 'part',
+          skinning: {
+            bind: identity,
+            influences: [{inverseBind: identity, nodeId: rotation.id, weights: [1]}],
+          },
+        },
+      ],
+    },
+  }
+  const native = createNativeDeformation(document)
+  expect(native).toBeDefined()
+  const expected = new Map([...createVertices(), ['skinned', [0.2, 0.3]]])
+  const actual = new Map([...expected].map(([id, vertices]) => [id, [...vertices]]))
+  applySceneNodeDeformers(composeParameterScene(document, {}).roots, expected)
+  native!.apply({}, actual)
+  expect(actual).toEqual(expected)
+  expect(actual.get('skinned')).not.toEqual([0.2, 0.3])
 })
