@@ -26,12 +26,24 @@ const mode = (interpolation: PuppetSceneDeformerNode['interpolation']) => {
     }
   }
 }
+const supportsCoordinates = (node: PuppetSceneDeformerNode): boolean =>
+  node.coordinateSpace === 'parent' &&
+  node.binding === undefined &&
+  node.pins === undefined &&
+  node.curveAxis === undefined &&
+  node.curveHandles === undefined &&
+  node.boneWeights === undefined &&
+  node.vertexInfluences === undefined
+
 const supports = (node: PuppetSceneNode): boolean => {
   if (node.kind === 'part') {
     return true
   }
   if (node.kind === 'group') {
     return node.children.every(supports)
+  }
+  if (!supportsCoordinates(node)) {
+    return false
   }
   const rigid = node.deformerType === 'rotation'
   const SEGMENT_COORDINATES = 4
@@ -41,7 +53,10 @@ const supports = (node: PuppetSceneNode): boolean => {
       ? rest?.length === SEGMENT_COORDINATES &&
         rest.every(Number.isFinite) &&
         (rest[0] !== rest[2] || rest[1] !== rest[3])
-      : node.rotationAngle === undefined &&
+      : node.deformerType === undefined &&
+        node.boneRestPoints === undefined &&
+        node.interpolation !== undefined &&
+        node.rotationAngle === undefined &&
         node.rows > 0 &&
         node.columns > 0 &&
         node.bounds.width !== 0 &&

@@ -1,0 +1,50 @@
+{
+  "model": {
+    "path": "apps/fortune/public/models/fortune-teller/model.poffo",
+    "sha256": "d076f202fdf78af82d96061cec6222e49bd17b714c4b2fa08897d6b4d6e48cfd",
+    "bytes": 15405795
+  },
+  "modelBytesChanged": false,
+  "engine": {
+    "path": "packages/puppet/src/player/internal/create-native-deformation.ts",
+    "beforeSha256": "468b6e2fbc0e5d02a00ca766ae4392c0597b654c6a2323f1c06883fe9a96a5c1",
+    "afterSha256": "8420c253f8e77b641f5065144e5b068348f765ce3c037ff605ab74fce9fe5e61"
+  },
+  "compiledPlayer": {
+    "beforeSha256": "cccfba43f03f6a52a52cf67222e81da30cf993988e34a4e588433039560e1eb0",
+    "afterSha256": "e245c3f115e1b9c407a48abfeecb2f184bc8004606d219a55ff4e50c4c758051"
+  },
+  "cause": "The remaining 21 parts caused a full composeRenderScene pass for the 1494-node deformer hierarchy each frame, despite only 680 part vertices using the general vertex path.",
+  "diagnostics": {
+    "method": "A separate Node seeded 120-frame trace instruments the existing math boundaries with process.hrtime.bigint. These phase times are not browser FPS measurements.",
+    "beforeMillisecondsPerFrame": {
+      "generalScenePreparation": 11.138970475,
+      "generalPartVertices": 2.177737141666667,
+      "fullGeometry": 37.03934963333334
+    },
+    "afterMillisecondsPerFrame": {
+      "fullGeometry": 31.039265333333333
+    },
+    "perPartLimitation": "Independent part probes include shared selection and traversal work and must not be summed into a frame total."
+  },
+  "changes": [
+    "Retain the canonical parent-space surface and curve formulas inside owner-scoped compiled transform buffers.",
+    "Preserve copied parent point results when canonical surface handles retain more than one sample.",
+    "Compile independent document-space rotation paths and spatial parts after the existing 3D projection step.",
+    "Remove the full-scene reconstruction fallback for this model while retaining fallback for vertex-dependent and rebound rigs."
+  ],
+  "routing": {
+    "before": {
+      "compiledParts": 489,
+      "generalParts": 21
+    },
+    "after": {
+      "compiledParts": 510,
+      "generalParts": 0
+    }
+  },
+  "preserved": [
+    "Model bytes, textures, meshes, keyforms, physics chains and outputs, motion data, render options.",
+    "Existing 3D projection, facing, depth order, curve interpolation, rotation inheritance and coordinate precision."
+  ]
+}
