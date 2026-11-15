@@ -1,7 +1,9 @@
 /** @vitest-environment node */
-import {beforeEach, expect, it, vi} from 'vitest'
+import {beforeEach, describe, expect, it, vi} from 'vitest'
 import {createApiAiService} from '../create-api-ai-service'
+import {API_AI_POLICY} from '../policy'
 import type {
+  ApiAiCallback,
   ApiAiClaim,
   ApiAiProvider,
   ApiAiRepository,
@@ -346,4 +348,235 @@ it('should recover terminal state when cancellation loses a race with provider c
     now,
   )
   expect(repository.failUnknownApiAiJob).not.toHaveBeenCalled()
+})
+
+interface DeadlineItem {
+  readonly id: string
+}
+
+interface DeadlineScenario {
+  readonly label: string
+  readonly items: ReadonlyArray<DeadlineItem>
+  readonly list: typeof repository.listPendingApiAiCallbacks
+  readonly claim: typeof repository.claimApiAiCallback
+  /** Clock reads before this flow starts pulling its first item. */
+  readonly outsideClocks: number
+  readonly propagatesClaimFailure: boolean
+}
+
+type ClockSample = Date | Error
+
+const callback: ApiAiCallback = {
+  eventId: 'event-1',
+  eventType: 'response.completed',
+  id: 'callback-1',
+  providerId: provider.id,
+  responseId: response.responseId,
+}
+const deadlineScenarios: ReadonlyArray<DeadlineScenario> = [
+  {
+    claim: repository.claimApiAiCallback,
+    items: [1, 2, 3].map((index) => ({...callback, id: String(index)})),
+    label: 'callbacks',
+    list: repository.listPendingApiAiCallbacks,
+    outsideClocks: 2,
+    propagatesClaimFailure: false,
+  },
+  {
+    claim: repository.claimApiAiAttemptRecovery,
+    items: [1, 2, 3].map((index) => ({...claim.attempt, id: String(index)})),
+    label: 'attempt recovery',
+    list: repository.listActiveApiAiAttempts,
+    outsideClocks: 3,
+    propagatesClaimFailure: true,
+  },
+  {
+    claim: repository.claimApiAiJobDelivery,
+    items: [1, 2, 3].map((index) => ({...claim.job, id: String(index)})),
+    label: 'result delivery',
+    list: repository.listUndeliveredApiAiJobs,
+    outsideClocks: 4,
+    propagatesClaimFailure: false,
+  },
+]
+
+describe.each(deadlineScenarios)('$label deadline traversal', (scenario) => {
+  const createProbe = (
+    dates: ReadonlyArray<ClockSample>,
+    entries: ReadonlyArray<DeadlineItem> = scenario.items,
+  ) => {
+    let active = false
+    let index = 0
+    const samples: ClockSample[] = []
+    const pulled: DeadlineItem[] = []
+    const closed = vi.fn()
+    const items = [...entries]
+    const values = items.values.bind(items)
+    Object.defineProperty(items, Symbol.iterator, {
+      value: function* () {
+        active = true
+        try {
+          for (const item of values()) {
+            pulled.push(item)
+            yield item
+          }
+        } finally {
+          active = false
+          closed()
+        }
+      },
+    })
+    const clock = vi.fn(function clock(this: ApiAiServiceDependencies): Date {
+      if (!active) {
+        return now
+      }
+      const sample = dates[index] ?? dates.at(-1) ?? now
+      index += 1
+      samples.push(sample)
+      if (sample instanceof Error) {
+        throw sample
+      }
+      return sample
+    })
+    const scoped = {...dependencies, clock}
+    const clockGetter = vi.fn(() => clock)
+    Object.defineProperty(scoped, 'clock', {get: clockGetter})
+    scenario.list.mockResolvedValueOnce(items)
+    scenario.claim.mockResolvedValue(false)
+    return {clock, clockGetter, closed, pulled, samples, scoped}
+  }
+  const assertClockReceiver = (probe: ReturnType<typeof createProbe>, count: number) => {
+    expect(probe.clock).toHaveBeenCalledTimes(count)
+    expect(probe.clockGetter).toHaveBeenCalledTimes(count)
+    expect(probe.clock.mock.contexts.every((receiver) => receiver === probe.scoped)).toBe(true)
+  }
+
+  it.each([
+    {label: 'at', offset: 0},
+    {label: 'after', offset: 1},
+  ])('should close the input $label the deadline without pulling later items', async ({offset}) => {
+    const first = new Date(now.getTime() + 1)
+    const boundary = new Date(now.getTime() + API_AI_POLICY.invocationMilliseconds + offset)
+    const probe = createProbe([first, boundary])
+    await createApiAiService(probe.scoped).recover()
+    expect(scenario.claim).toHaveBeenCalledExactlyOnceWith(scenario.items[0]?.id, first)
+    expect(scenario.claim.mock.calls[0]?.[1]).toBe(first)
+    expect(probe.samples).toEqual([first, boundary])
+    expect(probe.pulled).toHaveLength(2)
+    expect(probe.closed).toHaveBeenCalledOnce()
+    assertClockReceiver(probe, 9)
+  })
+
+  it('should wait for the pending item before reading the next item or clock', async () => {
+    const first = new Date(now.getTime() + 1)
+    const boundary = new Date(now.getTime() + API_AI_POLICY.invocationMilliseconds)
+    const probe = createProbe([first, boundary])
+    const started = Promise.withResolvers<void>()
+    const pending = Promise.withResolvers<boolean>()
+    scenario.claim.mockImplementationOnce(() => {
+      started.resolve()
+      return pending.promise
+    })
+    const completion = createApiAiService(probe.scoped).recover()
+    await started.promise
+    expect(scenario.claim).toHaveBeenCalledOnce()
+    expect(probe.samples).toEqual([first])
+    expect(probe.pulled).toHaveLength(1)
+    expect(probe.closed).not.toHaveBeenCalled()
+    assertClockReceiver(probe, scenario.outsideClocks + 1)
+    pending.resolve(false)
+    await completion
+    expect(probe.samples).toEqual([first, boundary])
+    expect(probe.pulled).toHaveLength(2)
+    expect(probe.closed).toHaveBeenCalledOnce()
+    assertClockReceiver(probe, 9)
+  })
+
+  it('should retain invalid Date traversal and pass each sampled Date by identity', async () => {
+    const invalid = new Date(Number.NaN)
+    const probe = createProbe([invalid])
+    await createApiAiService(probe.scoped).recover()
+    expect(scenario.claim).toHaveBeenCalledTimes(3)
+    expect(scenario.claim.mock.calls.every(([, checkedAt]) => checkedAt === invalid)).toBe(true)
+    expect(probe.samples).toHaveLength(3)
+    expect(probe.samples.every((sample) => sample === invalid)).toBe(true)
+    expect(probe.pulled).toHaveLength(3)
+    expect(probe.closed).toHaveBeenCalledOnce()
+    assertClockReceiver(probe, 10)
+  })
+
+  it('should finish an empty input without sampling an item clock', async () => {
+    const probe = createProbe([], [])
+    await createApiAiService(probe.scoped).recover()
+    expect(scenario.claim).not.toHaveBeenCalled()
+    expect(probe.samples).toEqual([])
+    expect(probe.pulled).toEqual([])
+    expect(probe.closed).toHaveBeenCalledOnce()
+    assertClockReceiver(probe, 7)
+  })
+
+  it.each(['clock', 'getTime'] as const)(
+    'should propagate the original %s error and close the input before claiming',
+    async (origin) => {
+      const failure = new Error('clock failed')
+      const date = new Date(now.getTime())
+      Object.defineProperty(date, 'getTime', {
+        value: () => {
+          throw failure
+        },
+      })
+      const probe = createProbe([origin === 'clock' ? failure : date])
+      const [result] = await Promise.allSettled([createApiAiService(probe.scoped).recover()])
+      expect(result?.status).toBe('rejected')
+      expect(result?.status === 'rejected' ? result.reason : undefined).toBe(failure)
+      expect(scenario.claim).not.toHaveBeenCalled()
+      expect(probe.pulled).toHaveLength(1)
+      expect(probe.closed).toHaveBeenCalledOnce()
+      assertClockReceiver(probe, scenario.outsideClocks + 1)
+    },
+  )
+
+  it('should propagate an input close error at the deadline', async () => {
+    const first = new Date(now.getTime() + 1)
+    const boundary = new Date(now.getTime() + API_AI_POLICY.invocationMilliseconds)
+    const probe = createProbe([first, boundary])
+    const failure = new Error('iterator close failed')
+    probe.closed.mockImplementationOnce(() => {
+      throw failure
+    })
+    const [result] = await Promise.allSettled([createApiAiService(probe.scoped).recover()])
+    expect(result?.status).toBe('rejected')
+    expect(result?.status === 'rejected' ? result.reason : undefined).toBe(failure)
+    expect(scenario.claim).toHaveBeenCalledOnce()
+    expect(probe.pulled).toHaveLength(2)
+    expect(probe.closed).toHaveBeenCalledOnce()
+    assertClockReceiver(probe, scenario.outsideClocks + 2)
+  })
+
+  it('should retain the per-flow claim failure policy', async () => {
+    const probe = createProbe([now])
+    const failure = new Error('claim failed')
+    scenario.claim.mockRejectedValueOnce(failure)
+    const logger = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    try {
+      const [result] = await Promise.allSettled([createApiAiService(probe.scoped).recover()])
+      expect(result?.status).toBe(scenario.propagatesClaimFailure ? 'rejected' : 'fulfilled')
+      if (scenario.propagatesClaimFailure) {
+        expect(result?.status === 'rejected' ? result.reason : undefined).toBe(failure)
+        expect(scenario.claim).toHaveBeenCalledOnce()
+        expect(probe.pulled).toHaveLength(1)
+        expect(logger).not.toHaveBeenCalled()
+        assertClockReceiver(probe, scenario.outsideClocks + 1)
+      } else {
+        expect(scenario.claim).toHaveBeenCalledTimes(3)
+        expect(probe.pulled).toHaveLength(3)
+        expect(logger).toHaveBeenCalledOnce()
+        expect(logger.mock.calls[0]?.[2]).toBe(failure)
+        assertClockReceiver(probe, 10)
+      }
+      expect(probe.closed).toHaveBeenCalledOnce()
+    } finally {
+      logger.mockRestore()
+    }
+  })
 })
