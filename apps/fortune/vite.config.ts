@@ -40,7 +40,7 @@ export default defineConfig({
   nitro: {
     prerender: {
       failOnError: true,
-      routes: ['/', '/about'],
+      routes: ['/', '/about', '/character'],
     },
   },
   plugins: [

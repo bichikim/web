@@ -1,0 +1,102 @@
+{
+  "model": {
+    "path": "apps/fortune/public/models/fortune-teller/model.poffo",
+    "bytes": 15405795,
+    "sha256": "d076f202fdf78af82d96061cec6222e49bd17b714c4b2fa08897d6b4d6e48cfd"
+  },
+  "modelBytesChanged": false,
+  "summary": {
+    "original-before": {
+      "observedFPS": 52.86873411035248,
+      "frameP95Milliseconds": 25.100000000000364,
+      "meanHeapBytes": 227354832,
+      "samples": 2
+    },
+    "fortune-before": {
+      "observedFPS": 20.813305450343123,
+      "frameP95Milliseconds": 54.649999999999636,
+      "meanHeapBytes": 254130886,
+      "samples": 2
+    },
+    "fortune-after": {
+      "observedFPS": 33.545401267790936,
+      "frameP95Milliseconds": 33.45000000000073,
+      "meanHeapBytes": 170043476,
+      "samples": 2
+    },
+    "original-after": {
+      "observedFPS": 51.85740870155542,
+      "frameP95Milliseconds": 25.049999999999727,
+      "meanHeapBytes": 251511530,
+      "samples": 2
+    }
+  },
+  "improvementPercent": 61.172867749547756,
+  "conditions": {
+    "antialiasing": "msaa",
+    "cpuRates": [1],
+    "measureMillis": 5000,
+    "model": "apps/fortune/public/models/fortune-teller/model.poffo",
+    "modes": ["main"],
+    "motion": "Idle:0",
+    "resolution": 1,
+    "runs": 2,
+    "viewport": {
+      "height": 700,
+      "width": 900
+    },
+    "warmupMillis": 2000
+  },
+  "order": [
+    [1, "original-before"],
+    [1, "fortune-before"],
+    [1, "fortune-after"],
+    [1, "original-after"],
+    [2, "original-after"],
+    [2, "fortune-after"],
+    [2, "fortune-before"],
+    [2, "original-before"]
+  ],
+  "geometry": {
+    "sampledPoses": 68,
+    "maximumCoordinateDifference": 0,
+    "renderFramesIdentical": true,
+    "proof": "coordinate-proof.json"
+  },
+  "simulation": {
+    "frames": 120,
+    "coordinates": 9107040,
+    "maximumCoordinateDifference": 0,
+    "renderFramesIdentical": true,
+    "proof": "dynamic-proof.json"
+  },
+  "pixels": {
+    "cases": 13,
+    "changedChannels": 0,
+    "renderer": "WebGL / SwiftShader",
+    "proof": "visual-comparison.json"
+  },
+  "limits": [
+    "Measurements cover this machine and browser with two samples per version, 900x700, resolution 1, MSAA, Idle:0 and main-thread computation.",
+    "The fortune model remains slower than White Cat; profiling still identifies coordinate deformation and sampling as the main CPU cost.",
+    "Pixel equality is verified for the captured 13 static poses; dynamic equality is verified for the sampled 120 geometry frames, not every possible interaction."
+  ],
+  "checks": {
+    "unitTests": {
+      "runner": "Vitest",
+      "testFiles": 44,
+      "tests": 255,
+      "result": "passed",
+      "note": "Wallaby MCP unavailable; installed Wallaby CLI failed with MODULE_NOT_FOUND."
+    },
+    "typecheck": "passed",
+    "oxlint": "passed",
+    "format": "pnpm format passed"
+  },
+  "dev": {
+    "url": "http://127.0.0.1:3412/character",
+    "status": "loaded; left and right head controls reviewed; returned to front",
+    "modelSha256": "d076f202fdf78af82d96061cec6222e49bd17b714c4b2fa08897d6b4d6e48cfd",
+    "evidence": ["dev-left.png", "dev-right.png", "dev-front.png"]
+  }
+}

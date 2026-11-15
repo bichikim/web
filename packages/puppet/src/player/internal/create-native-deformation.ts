@@ -7,8 +7,11 @@ import {
 } from '../../deformation/create-deformer-sampler'
 import type {PuppetParameterValueMap} from '../../deformation/composition'
 import {composeParameterDeformer} from '../../deformation/scene'
+import {composeRenderScene} from '../../deformation/compose-render-scene'
+import {applySceneNodeDeformers} from '../../deformation/vertices'
 import {getDocumentScene} from '../scene'
 import {createWarpGridSampler} from '../../deformation/sample-warp-grid'
+import {createDeferredParentSpaceTransform} from '../../deformation/parent-space'
 import {getNativeTransformKey} from './get-native-transform-key'
 import type {
   PuppetDocument,
@@ -61,19 +64,25 @@ const supportsNode = (node: PuppetSceneNode): boolean => {
   }
   const supported =
     node.kind === 'group' ||
-    (node.coordinateSpace === 'parent' &&
-      node.binding === undefined &&
+    (node.binding === undefined &&
       node.pins === undefined &&
-      node.curveAxis === undefined &&
-      node.curveHandles === undefined &&
       node.boneWeights === undefined &&
       node.vertexInfluences === undefined &&
-      (node.deformerType === 'rotation' ||
-        (node.deformerType === undefined &&
-          node.boneRestPoints === undefined &&
-          node.interpolation !== undefined)))
+      (node.boneRestPoints === undefined || node.deformerType === 'rotation'))
   return supported && node.children.every(supportsNode)
 }
+
+const selectNativeNodes = (nodes: ReadonlyArray<PuppetSceneNode>): ReadonlyArray<PuppetSceneNode> =>
+  nodes.flatMap((node): ReadonlyArray<PuppetSceneNode> => {
+    if (node.kind === 'part') {
+      return supportsNode(node) ? [node] : []
+    }
+    if (!supportsNode({...node, children: []})) {
+      return []
+    }
+    const children = selectNativeNodes(node.children)
+    return children.length === 0 ? [] : [{...node, children}]
+  })
 
 const createRotationBuffer = (parent: NativeTransform | undefined): TransformBuffer => {
   const mapParent = parent?.sample ?? identity
@@ -145,6 +154,8 @@ const createGridBuffer = (
   local: DeformerSampler,
 ): TransformBuffer => {
   const mapParent = parent?.sample ?? identity
+  const parentSpace = node.coordinateSpace === 'parent'
+  const mapControl = parentSpace ? mapParent : identity
   const values = new Float64Array(node.controlPoints.length)
   const input = {x: 0, y: 0}
   const output = {x: 0, y: 0}
@@ -157,7 +168,7 @@ const createGridBuffer = (
       resolve: (point) => {
         if (initialized[point] !== version) {
           local.samplePoint(point, input)
-          const transformed = mapParent(input)
+          const transformed = mapControl(input)
           values[point * 2] = transformed.x
           values[point * 2 + 1] = transformed.y
           initialized[point] = version
@@ -165,6 +176,15 @@ const createGridBuffer = (
       },
     },
   })
+  const sample: PointTransform = parentSpace
+    ? (point) => {
+        sampler.sampleInto(point, output, 1)
+        return output
+      }
+    : (point) => {
+        sampler.sampleInto(point, output, 1)
+        return mapParent(output)
+      }
   return {
     refresh() {
       version += 1
@@ -175,10 +195,7 @@ const createGridBuffer = (
       }
       sampler.reset()
     },
-    sample: (point) => {
-      sampler.sampleInto(point, output, 1)
-      return output
-    },
+    sample,
   }
 }
 
@@ -188,8 +205,15 @@ const createNativeTransform = (
   parent: NativeTransform | undefined,
 ): NativeTransform => {
   const rotation = node.deformerType === 'rotation'
-  const local = rotation ? undefined : createDeformerSampler(document, node)
-  const buffer = rotation ? createRotationBuffer(parent) : createGridBuffer(node, parent, local!)
+  const simpleGrid =
+    node.deformerType === undefined &&
+    node.interpolation !== undefined &&
+    node.curveAxis === undefined &&
+    node.curveHandles === undefined &&
+    node.boneRestPoints === undefined &&
+    node.rotationAngle === undefined
+  const local = simpleGrid ? createDeformerSampler(document, node) : undefined
+  const buffer = createTransformBuffer(node, parent, local)
   let shape: PuppetSceneDeformerNode | undefined
   let parentVersion = -1
   let version = 0
@@ -223,6 +247,39 @@ const createNativeTransform = (
       return version
     },
   }
+}
+
+const createGeneralBuffer = (parent: NativeTransform | undefined): TransformBuffer => {
+  const mapParent = (point: PuppetPoint): PuppetPoint => {
+    const transformed = parent?.sample(point) ?? point
+    // Canonical transforms can retain several results, including independent curve handles.
+    return {x: transformed.x, y: transformed.y}
+  }
+  let sample: PointTransform = identity
+  return {
+    refresh(node) {
+      const shape = {...node, children: []}
+      sample =
+        shape.coordinateSpace === 'parent'
+          ? createDeferredParentSpaceTransform(shape, mapParent)
+          : (point) => mapParent(transformDeformerPoint(shape, point))
+    },
+    sample: (point) => sample(point),
+  }
+}
+
+const createTransformBuffer = (
+  node: PuppetSceneDeformerNode,
+  parent: NativeTransform | undefined,
+  local: DeformerSampler | undefined,
+): TransformBuffer => {
+  if (local !== undefined) {
+    return createGridBuffer(node, parent, local)
+  }
+  if (node.deformerType === 'rotation' && node.coordinateSpace === 'parent') {
+    return createRotationBuffer(parent)
+  }
+  return createGeneralBuffer(parent)
 }
 
 const compileNodes = (
@@ -329,16 +386,19 @@ export type NativeTransformFactory = (
   parent: NativeTransform | undefined,
 ) => NativeTransform
 
-/** Owns reusable parent-space buffers; an optional factory supplies another numeric implementation. */
+/** Reuses supported ancestor paths while preserving general evaluation for the other parts. */
 export const createNativeDeformation = (
   document: PuppetDocument,
   factory?: NativeTransformFactory,
 ): NativeDeformation | undefined => {
   const nodes = getDocumentScene(document).roots
-  if (document.parts.some((part) => part.spatial !== undefined) || !nodes.every(supportsNode)) {
+  const complete = nodes.every(supportsNode)
+  const selectedNodes = complete ? nodes : selectNativeNodes(nodes)
+  if (!complete && selectedNodes.length === 0) {
     return undefined
   }
-  const compiled = compileNodes(document, nodes, factory)
+  const compiled = compileNodes(document, selectedNodes, factory)
+  const partIds = new Set(compiled.parts.map((part) => part.partId))
   return {
     apply: (values, vertices) => {
       const selected =
@@ -355,6 +415,15 @@ export const createNativeDeformation = (
         }
       }
       applyParts(compiled.parts, vertices)
+      if (!complete) {
+        const general = new Map([...vertices].filter(([id]) => !partIds.has(id)))
+        if (general.size > 0) {
+          // Keep the whole scene for skinning references outside the selected part's branch.
+          applySceneNodeDeformers(composeRenderScene(document, values).roots, general, {
+            deferCoordinates: true,
+          })
+        }
+      }
     },
   }
 }

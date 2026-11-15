@@ -1,0 +1,32 @@
+[
+  {
+    "name": "physics-and-playback",
+    "calls": 120,
+    "millisecondsPerFrame": 0.9646066083333333
+  },
+  {
+    "name": "compiled-update",
+    "calls": 120,
+    "millisecondsPerFrame": 2.058489933333333
+  },
+  {
+    "name": "compiled-vertices",
+    "calls": 120,
+    "millisecondsPerFrame": 10.832682316666668
+  },
+  {
+    "name": "general-scene",
+    "calls": 120,
+    "millisecondsPerFrame": 11.138970475
+  },
+  {
+    "name": "general-vertices",
+    "calls": 120,
+    "millisecondsPerFrame": 2.177737141666667
+  },
+  {
+    "name": "full-geometry",
+    "calls": 120,
+    "millisecondsPerFrame": 37.03934963333334
+  }
+]

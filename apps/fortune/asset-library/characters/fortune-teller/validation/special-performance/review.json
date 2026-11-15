@@ -1,0 +1,124 @@
+{
+  "model": {
+    "path": "apps/fortune/public/models/fortune-teller/model.poffo",
+    "sha256": "d076f202fdf78af82d96061cec6222e49bd17b714c4b2fa08897d6b4d6e48cfd",
+    "bytes": 15405795
+  },
+  "modelBytesChanged": false,
+  "summary": {
+    "original-before": {
+      "meanFPS": 53.32261900239731,
+      "frameP95Milliseconds": 25.099999999999454,
+      "samples": 2
+    },
+    "fortune-before": {
+      "meanFPS": 33.989183819438935,
+      "frameP95Milliseconds": 33.40000000000009,
+      "samples": 2
+    },
+    "fortune-after": {
+      "meanFPS": 43.114145736722065,
+      "frameP95Milliseconds": 25.199999999999818,
+      "samples": 2
+    },
+    "original-after": {
+      "meanFPS": 50.888594999685125,
+      "frameP95Milliseconds": 25.100000000000364,
+      "samples": 2
+    }
+  },
+  "improvementPercent": 26.846663826227047,
+  "conditions": {
+    "antialiasing": "msaa",
+    "cpuRates": [1],
+    "measureMillis": 5000,
+    "model": "apps/fortune/public/models/fortune-teller/model.poffo",
+    "modes": ["main"],
+    "motion": "Idle:0",
+    "resolution": 1,
+    "runs": 2,
+    "viewport": {
+      "height": 700,
+      "width": 900
+    },
+    "warmupMillis": 2000
+  },
+  "order": [
+    [1, "original-before"],
+    [1, "fortune-before"],
+    [1, "fortune-after"],
+    [1, "original-after"],
+    [2, "original-after"],
+    [2, "fortune-after"],
+    [2, "fortune-before"],
+    [2, "original-before"]
+  ],
+  "checks": {
+    "unitTests": {
+      "files": 46,
+      "tests": 265,
+      "runner": "Vitest",
+      "result": "passed"
+    },
+    "typecheck": "passed",
+    "lint": "passed",
+    "format": "pnpm format passed",
+    "build": "player build passed"
+  },
+  "geometry": {
+    "poses": 86,
+    "maximumCoordinateDifference": 0,
+    "renderFramesIdentical": true,
+    "proof": "coordinate-proof.json"
+  },
+  "dynamic": {
+    "frames": 240,
+    "comparedFloat32Coordinates": 18214080,
+    "maximumCoordinateDifference": 0,
+    "renderFramesIdentical": true,
+    "hatPhysicsOutputsActuallyChanged": true,
+    "proof": "dynamic-proof.json"
+  },
+  "pixels": {
+    "poses": 18,
+    "changedChannels": 0,
+    "backend": "WebGL / SwiftShader",
+    "proof": "visual-comparison.json",
+    "hatDetails": ["hat-left", "hat-right", "hat-down", "hat-up-tilt", "hat-ribbon"]
+  },
+  "limits": [
+    "Two measurements per model/engine in one browser, counterbalanced order, 900x700, resolution 1, MSAA, Idle:0, main-thread computation.",
+    "White Cat measured 53.3 FPS before and 50.9 after this engine change in this run. No claim of identical FPS across runtime compilation or machine load.",
+    "Static pixel equality and sampled dynamic geometry equality do not cover every possible interaction."
+  ],
+  "dev": {
+    "url": "http://127.0.0.1:3412/character",
+    "status": "loaded; left and right turns reviewed; returned to front",
+    "servedModelSHA256": "d076f202fdf78af82d96061cec6222e49bd17b714c4b2fa08897d6b4d6e48cfd",
+    "evidence": ["dev-left.png", "dev-right.png", "dev-front.png"]
+  },
+  "prIntegration": {
+    "baseCommit": "cdd8800dfd",
+    "engineSha256": "f8f621bd7c1f9ba825b717b0bd8939c69828fe9d8dd136022caa4f23a9f93d8a",
+    "playerSha256": "1a91965172f8e2755da7799e624942819bc03624f8aabb87036d39ef4db7d8e3",
+    "changes": [
+      "Preserve the current dev NativeTransformFactory and independent mapper hooks.",
+      "Retain JavaScript deformation for layouts unsupported by the existing WebAssembly grid kernel."
+    ],
+    "verification": {
+      "testFiles": 55,
+      "tests": 362,
+      "unitTests": "passed",
+      "puppetTypecheck": "passed",
+      "fortuneTypecheck": "passed",
+      "lint": "passed",
+      "format": "pnpm format passed",
+      "playerBuild": "passed",
+      "poses": 86,
+      "dynamicFrames": 240,
+      "comparedFloat32Coordinates": 18214080,
+      "maximumCoordinateDifference": 0
+    },
+    "benchmarkScope": "The FPS table and pixel captures above were measured on the optimized checkpoint before integration with the latest dev. Static and dynamic geometry parity was rerun after integration."
+  }
+}
