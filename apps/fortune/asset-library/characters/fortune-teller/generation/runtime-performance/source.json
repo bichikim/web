@@ -1,0 +1,47 @@
+{
+  "model": {
+    "path": "apps/fortune/public/models/fortune-teller/model.poffo",
+    "bytes": 15405795,
+    "sha256": "d076f202fdf78af82d96061cec6222e49bd17b714c4b2fa08897d6b4d6e48cfd"
+  },
+  "modelBytesChanged": false,
+  "sourceRevision": "bd2a329b6011271411f0aecfd13f15f9a68f0064",
+  "code": {
+    "packages/puppet/src/player/internal/create-native-deformation.ts": "468b6e2fbc0e5d02a00ca766ae4392c0597b654c6a2323f1c06883fe9a96a5c1",
+    "packages/puppet/src/player/internal/get-native-transform-key.ts": "c0cf1f30ae7c47fc35a984414d933beb70217dee2f7f54acef92268c90f113ff",
+    "packages/puppet/src/deformation/vertices.ts": "25b96deb4bc8e4d57235fdb0a8bbaf1ad9a1db5731889d0908de96bbbde8d6d9"
+  },
+  "compiledPlayer": {
+    "beforeSha256": "a62970d3b34febf629298fb8524763ec0cc63a669693edf0573c48b0f12973c2",
+    "afterSha256": "cccfba43f03f6a52a52cf67222e81da30cf993988e34a4e588433039560e1eb0"
+  },
+  "cause": "A single unsupported scene path or spatial part disabled the compiled deformation evaluator for the whole document. The fortune model therefore repeatedly sampled parent-space grids through the general evaluator, with additional transient coordinate allocations.",
+  "changes": [
+    "Compile supported ancestor paths independently; retain the general evaluator for special paths.",
+    "Reuse coordinate buffers for document-space grids while preserving local-before-parent evaluation order.",
+    "Skip geometry evaluation for branches without requested vertex buffers while retaining complete skinning frames.",
+    "Include coordinate space in shared-transform keys."
+  ],
+  "routing": {
+    "before": {
+      "compiledParts": 0,
+      "generalParts": 510
+    },
+    "after": {
+      "compiledParts": 489,
+      "generalParts": 21,
+      "compiledVertices": 37266,
+      "generalVertices": 680
+    }
+  },
+  "preserved": [
+    "All model file bytes, textures, meshes, bindings, physics, motions and rendering options.",
+    "Unrounded coordinate arithmetic and general evaluation for spatial, curved and vertex-dependent paths."
+  ],
+  "profiles": [
+    "profiles/original/main.cpuprofile",
+    "profiles/fortune-before/main.cpuprofile",
+    "profiles/fortune-after/main.cpuprofile"
+  ],
+  "note": "Profile captures demonstrate the cause and intermediate optimized path. The final benchmark is a separate unprofiled alternating run in one browser, after formatting and other checks completed."
+}

@@ -19,6 +19,7 @@ interface DeformationContext {
   readonly deferCoordinates: boolean
   readonly parentDeformer?: PuppetSceneDeformerNode
   readonly frames: ReadonlyMap<string, SkinFrame>
+  readonly selectedNodes: ReadonlySet<PuppetSceneNode>
   readonly vertexDependent: boolean
 }
 
@@ -114,6 +115,26 @@ const applyTransform = (
   }
 }
 
+const getSelectedNodes = (
+  nodes: ReadonlyArray<PuppetSceneNode>,
+  vertices: ReadonlyMap<string, Float32Array | number[]>,
+): ReadonlySet<PuppetSceneNode> => {
+  const selected = new Set<PuppetSceneNode>()
+  const visit = (children: ReadonlyArray<PuppetSceneNode>): boolean => {
+    let included = false
+    for (const node of children) {
+      const active = node.kind === 'part' ? vertices.has(node.id) : visit(node.children)
+      if (active) {
+        selected.add(node)
+        included = true
+      }
+    }
+    return included
+  }
+  visit(nodes)
+  return selected
+}
+
 const applyNodes = (
   nodes: ReadonlyArray<PuppetSceneNode>,
   parentTransform: PointTransform,
@@ -121,7 +142,7 @@ const applyNodes = (
   context: DeformationContext,
 ) => {
   const {frames, vertexDependent} = context
-  for (const node of nodes) {
+  for (const node of nodes.filter((node) => context.selectedNodes.has(node))) {
     if (node.kind === 'part') {
       const vertices = verticesByPartId.get(node.id)
 
@@ -146,6 +167,7 @@ const applyNodes = (
         deferCoordinates: context.deferCoordinates,
         frames,
         parentDeformer: node.kind === 'deformer' ? node : context.parentDeformer,
+        selectedNodes: context.selectedNodes,
         vertexDependent:
           vertexDependent ||
           (node.kind === 'deformer' &&
@@ -168,6 +190,7 @@ export const applySceneNodeDeformers = (
   applyNodes(nodes, identityPoint, verticesByPartId, {
     deferCoordinates: options.deferCoordinates ?? false,
     frames: getSkinFrames(nodes),
+    selectedNodes: getSelectedNodes(nodes, verticesByPartId),
     vertexDependent: false,
   })
 }

@@ -25,7 +25,9 @@ export const getNativeTransformKey = (
     sampling: binding.sampling,
   }))
   // JSON's default normalization would merge -0 with +0 and change cancellation at the boundary.
-  return JSON.stringify([getDeformerShape(node), inputs], (_key, value: unknown) =>
-    typeof value === 'number' && Object.is(value, -0) ? 'number:-0' : value,
+  return JSON.stringify(
+    [node.coordinateSpace, getDeformerShape(node), inputs],
+    (_key, value: unknown) =>
+      typeof value === 'number' && Object.is(value, -0) ? 'number:-0' : value,
   )
 }
