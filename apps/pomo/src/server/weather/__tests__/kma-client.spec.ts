@@ -6,8 +6,10 @@ vi.mock('src/env', () => ({
 }))
 
 import {fetchKmaObservation, fetchKmaSky} from '../kma-client'
+import * as kmaTime from '../kma-time'
 
 afterEach(() => {
+  vi.restoreAllMocks()
   vi.clearAllMocks()
 })
 
@@ -308,4 +310,212 @@ it('should use the global fetcher when one is not supplied', async () => {
 
   expect(fetcher).toHaveBeenCalledTimes(2)
   vi.unstubAllGlobals()
+})
+
+it.each([
+  ['1', '4', 'clear'],
+  ['4', '1', 'overcast'],
+] as const)('should keep the first sky %s on an equal-distance tie', async (first, second, sky) => {
+  const fetcher = vi
+    .fn<typeof fetch>()
+    .mockResolvedValue(
+      createKmaResponse([createSkyItem('1500', first), createSkyItem('1600', second)]),
+    )
+  await expect(
+    fetchKmaSky({
+      baseTime: {date: '20260822', time: '1430'},
+      fetcher,
+      location: {gridX: 60, gridY: 127},
+      targetTime: new Date('2026-08-22T06:30:00.000Z'),
+    }),
+  ).resolves.toBe(sky)
+})
+
+it('should skip timestamp and target reads when only one sky item remains', async () => {
+  const parse = vi.spyOn(kmaTime, 'parseKmaDateTime')
+  const targetTime = new Date(0)
+  const getTime = vi.spyOn(targetTime, 'getTime').mockImplementation(() => {
+    throw new Error('the target is not needed for a singleton')
+  })
+  const fetcher = vi.fn<typeof fetch>().mockResolvedValue(
+    createKmaResponse([
+      {...createSkyItem('xxxx', '1'), fcstDate: 'notadate'},
+      {...createSkyItem('1500', '4'), category: 'T1H'},
+    ]),
+  )
+  await expect(
+    fetchKmaSky({
+      baseTime: {date: '20260822', time: '1430'},
+      fetcher,
+      location: {gridX: 60, gridY: 127},
+      targetTime,
+    }),
+  ).resolves.toBe('clear')
+  expect(parse).not.toHaveBeenCalled()
+  expect(getTime).not.toHaveBeenCalled()
+})
+
+it.each(['forecast', 'target'] as const)(
+  'should retain the existing first sky when the %s timestamp is NaN',
+  async (invalid) => {
+    const first = createSkyItem('1500', '1')
+    const fetcher = vi
+      .fn<typeof fetch>()
+      .mockResolvedValue(
+        createKmaResponse([
+          invalid === 'forecast' ? {...first, fcstDate: 'notadate'} : first,
+          createSkyItem('1600', '4'),
+          createSkyItem('1700', '3'),
+        ]),
+      )
+    const targetTime =
+      invalid === 'target' ? new Date(Number.NaN) : new Date('2026-08-22T06:30:00.000Z')
+    await expect(
+      fetchKmaSky({
+        baseTime: {date: '20260822', time: '1430'},
+        fetcher,
+        location: {gridX: 60, gridY: 127},
+        targetTime,
+      }),
+    ).resolves.toBe('clear')
+  },
+)
+
+it('should propagate the same target error after reading both forecast timestamps', async () => {
+  const parse = vi.spyOn(kmaTime, 'parseKmaDateTime')
+  const failure = new Error('caller target failed')
+  const targetTime = new Date(0)
+  vi.spyOn(targetTime, 'getTime').mockImplementation(() => {
+    throw failure
+  })
+  const fetcher = vi
+    .fn<typeof fetch>()
+    .mockResolvedValue(createKmaResponse([createSkyItem('1500', '1'), createSkyItem('1600', '4')]))
+  await expect(
+    fetchKmaSky({
+      baseTime: {date: '20260822', time: '1430'},
+      fetcher,
+      location: {gridX: 60, gridY: 127},
+      targetTime,
+    }),
+  ).rejects.toBe(failure)
+  expect(parse).toHaveBeenCalledTimes(2)
+})
+
+it('should keep an independently reentrant request from the target Date isolated', async () => {
+  const targetTime = new Date('2026-08-22T05:50:00.000Z')
+  const targetInstant = targetTime.getTime()
+  const fetcher = vi
+    .fn<typeof fetch>()
+    .mockResolvedValue(createKmaResponse([createSkyItem('1500', '1'), createSkyItem('1600', '4')]))
+  let nested: ReturnType<typeof fetchKmaSky> | undefined
+  const nestedFetcher = vi
+    .fn<typeof fetch>()
+    .mockResolvedValue(createKmaResponse([createSkyItem('1700', '3'), createSkyItem('1800', '4')]))
+  const getTime = vi.spyOn(targetTime, 'getTime').mockImplementationOnce(() => {
+    nested = fetchKmaSky({
+      baseTime: {date: '20260822', time: '1430'},
+      fetcher: nestedFetcher,
+      location: {gridX: 60, gridY: 127},
+      targetTime: new Date('2026-08-22T08:50:00.000Z'),
+    })
+    return targetInstant
+  })
+  await expect(
+    fetchKmaSky({
+      baseTime: {date: '20260822', time: '1430'},
+      fetcher,
+      location: {gridX: 60, gridY: 127},
+      targetTime,
+    }),
+  ).resolves.toBe('clear')
+  expect(nested).toBeDefined()
+  await expect(nested).resolves.toBe('overcast')
+  expect(getTime).toHaveBeenCalledTimes(2)
+})
+
+it.each([
+  ['reverse', ['1800', '1700', '1600', '1500']],
+  ['shuffled', ['1700', '1500', '1800', '1600']],
+] as const)('should select the nearest distinct sky from %s forecasts', async (_, times) => {
+  const skyValues: Readonly<Record<string, string>> = {1500: '1', 1600: '3', 1700: '4', 1800: '1'}
+  const fetcher = vi
+    .fn<typeof fetch>()
+    .mockResolvedValue(createKmaResponse(times.map((time) => createSkyItem(time, skyValues[time]))))
+  await expect(
+    fetchKmaSky({
+      baseTime: {date: '20260822', time: '1430'},
+      fetcher,
+      location: {gridX: 60, gridY: 127},
+      targetTime: new Date('2026-08-22T06:50:00.000Z'),
+    }),
+  ).resolves.toBe('cloudy')
+})
+
+it('should retain the first sky for duplicate forecast timestamps', async () => {
+  const fetcher = vi
+    .fn<typeof fetch>()
+    .mockResolvedValue(
+      createKmaResponse([
+        createSkyItem('1500', '4'),
+        createSkyItem('1500', '1'),
+        createSkyItem('1600', '3'),
+      ]),
+    )
+  await expect(
+    fetchKmaSky({
+      baseTime: {date: '20260822', time: '1430'},
+      fetcher,
+      location: {gridX: 60, gridY: 127},
+      targetTime: new Date('2026-08-22T06:00:00.000Z'),
+    }),
+  ).resolves.toBe('overcast')
+})
+
+it.each([
+  ['epoch zero', '19700101', ['0903', '0900', '0905', '0901', '0904', '0902']],
+  ['NaN', 'notadate', ['xxxx', '0902', '0901', '0900', '0904', '0903']],
+] as const)(
+  'should parse each compared %s timestamp at most once per request',
+  async (_, date, times) => {
+    const items = times.map((time) => ({...createSkyItem(time, '3'), fcstDate: date}))
+    const fetcher = vi.fn<typeof fetch>().mockImplementation(async () => createKmaResponse(items))
+    const parse = vi.spyOn(kmaTime, 'parseKmaDateTime')
+    const options = {
+      baseTime: {date: '20260822', time: '1430'},
+      fetcher,
+      location: {gridX: 60, gridY: 127},
+      targetTime: new Date('1970-01-01T00:00:00.000Z'),
+    }
+    await expect(fetchKmaSky(options)).resolves.toBe('cloudy')
+    expect(parse.mock.calls.length).toBeGreaterThan(0)
+    expect(parse.mock.calls.length).toBeLessThanOrEqual(items.length)
+    parse.mockClear()
+    await expect(fetchKmaSky(options)).resolves.toBe('cloudy')
+    expect(parse.mock.calls.length).toBeGreaterThan(0)
+    expect(parse.mock.calls.length).toBeLessThanOrEqual(items.length)
+  },
+)
+
+it.each([36, 360, 1000])('should bound parsing to the %i compared forecast items', async (size) => {
+  const items = Array.from({length: size}, (_, index) => {
+    const minute = (index * 37) % size
+    const hourText = Math.floor(minute / 60)
+      .toString()
+      .padStart(2, '0')
+    const minuteText = (minute % 60).toString().padStart(2, '0')
+    return createSkyItem(`${hourText}${minuteText}`, '3')
+  })
+  const parse = vi.spyOn(kmaTime, 'parseKmaDateTime')
+  const fetcher = vi.fn<typeof fetch>().mockResolvedValue(createKmaResponse(items))
+  await expect(
+    fetchKmaSky({
+      baseTime: {date: '20260822', time: '1430'},
+      fetcher,
+      location: {gridX: 60, gridY: 127},
+      targetTime: new Date('2026-08-22T05:50:00.000Z'),
+    }),
+  ).resolves.toBe('cloudy')
+  expect(parse.mock.calls.length).toBeGreaterThan(0)
+  expect(parse.mock.calls.length).toBeLessThanOrEqual(size)
 })
