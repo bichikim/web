@@ -333,33 +333,33 @@ const convergeWebStorage = (
   snapshots: ReadonlyArray<TossSnapshot>,
   initialUnresolvedKeys: ReadonlyArray<string> = [],
 ): OptionResetResult => {
-  const preservedKeys: Array<string> = []
-  const resetKeys: Array<string> = []
-  const unresolvedKeys = [...initialUnresolvedKeys]
+  let preservedCount = 0
+  let resetCount = 0
+  let unresolvedCount = initialUnresolvedKeys.length
 
   for (const snapshot of snapshots) {
     try {
       if (snapshot.value === null) {
         storage.removeWeb(snapshot.key)
-        resetKeys.push(snapshot.key)
+        resetCount += 1
       } else {
         storage.setWeb(snapshot.key, snapshot.value)
-        preservedKeys.push(snapshot.key)
+        preservedCount += 1
       }
     } catch {
-      unresolvedKeys.push(snapshot.key)
+      unresolvedCount += 1
     }
   }
 
-  if (preservedKeys.length === 0 && unresolvedKeys.length === 0) {
+  if (preservedCount === 0 && unresolvedCount === 0) {
     return COMPLETE_RESET_RESULT
   }
 
   return {
-    preservedCount: preservedKeys.length,
-    resetCount: resetKeys.length,
+    preservedCount,
+    resetCount,
     status: 'partial',
-    unresolvedCount: unresolvedKeys.length,
+    unresolvedCount,
   }
 }
 
