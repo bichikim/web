@@ -1,12 +1,13 @@
 /** @vitest-environment node */
-import {beforeEach, expect, it, vi} from 'vitest'
+import {beforeEach, describe, expect, it, vi} from 'vitest'
 import type {SQL} from 'drizzle-orm'
 import {PgDialect} from 'drizzle-orm/pg-core'
-import type {Database} from '../../../database'
+import type {Database, TransactionalDatabase} from '../../../database'
 
 import {
   associateGenerationResponse,
   asTransactionalDatabase,
+  createClaimProbe,
   createResponseTransaction,
   createRun,
   failHistoryResponse,
@@ -231,4 +232,157 @@ it('should handle duplicate, missing, successful, and default terminal events', 
     callback(rejectedDatabase),
   )
   await expect(rejectHistoryResponse('evt-rejected', RESPONSE_ID, 'rejected')).resolves.toBe(true)
+})
+
+const publishOptions = {
+  eventId: 'evt-claim',
+  generation: GENERATION,
+  model: 'gpt-5',
+  replaceDate: false,
+  responseId: RESPONSE_ID,
+  searchSourceUrls: SOURCE_URLS,
+} as const
+
+interface ResponseFlow {
+  readonly name: string
+  readonly invoke: (database: TransactionalDatabase) => Promise<boolean>
+}
+
+const responseFlows: ReadonlyArray<ResponseFlow> = [
+  {invoke: (database) => publishHistoryResponse(publishOptions, database), name: 'publish'},
+  {
+    invoke: (database) => failHistoryResponse('evt-claim', RESPONSE_ID, 'failed', database),
+    name: 'failure',
+  },
+  {
+    invoke: (database) => rejectHistoryResponse('evt-claim', RESPONSE_ID, 'rejected', database),
+    name: 'rejection',
+  },
+]
+
+describe.each(responseFlows)('$name response acceptance', ({invoke}) => {
+  it('should stop before a run lookup when the event is already claimed', async () => {
+    const response = createResponseTransaction(createRun('submitted'), {claimed: false})
+    await expect(invoke(asTransactionalDatabase(response.transaction))).resolves.toBe(false)
+    expect(response.transaction.select).not.toHaveBeenCalled()
+    expect(response.update).not.toHaveBeenCalled()
+    expect(response.momentValues).not.toHaveBeenCalled()
+  })
+
+  it('should reject a claimed event with no matching run', async () => {
+    const response = createResponseTransaction(undefined)
+    await expect(invoke(asTransactionalDatabase(response.transaction))).rejects.toThrow(
+      `Generation run not found for response: ${RESPONSE_ID}`,
+    )
+    expect(response.update).not.toHaveBeenCalled()
+    expect(response.momentValues).not.toHaveBeenCalled()
+  })
+
+  it.each(['preparing', 'completed', 'failed', 'rejected'] as const)(
+    'should keep a %s run unchanged after claiming the event',
+    async (status) => {
+      const response = createResponseTransaction(createRun(status))
+      await expect(invoke(asTransactionalDatabase(response.transaction))).resolves.toBe(false)
+      expect(response.transaction.select).toHaveBeenCalledOnce()
+      expect(response.update).not.toHaveBeenCalled()
+      expect(response.momentValues).not.toHaveBeenCalled()
+    },
+  )
+
+  it.each(['claim', 'lookup'] as const)(
+    'should propagate the original %s failure without writing a result',
+    async (phase) => {
+      const probe = createClaimProbe()
+      const failure = new Error(`${phase} unavailable`)
+      const outcome = Promise.allSettled([invoke(probe.database)])
+      await probe.claimStarted.promise
+      if (phase === 'claim') {
+        probe.claim.reject(failure)
+      } else {
+        probe.claim.resolve([{eventId: 'evt-claim'}])
+        await probe.lookupStarted.promise
+        probe.lookup.reject(failure)
+      }
+
+      const [result] = await outcome
+      expect(result.status).toBe('rejected')
+      if (result.status === 'rejected') {
+        expect(result.reason).toBe(failure)
+      }
+      expect(probe.update).not.toHaveBeenCalled()
+      expect(probe.momentValues).not.toHaveBeenCalled()
+      expect(probe.transaction.select).toHaveBeenCalledTimes(phase === 'claim' ? 0 : 1)
+    },
+  )
+
+  it('should await the event claim and locked run before writing', async () => {
+    const probe = createClaimProbe()
+    const pending = invoke(probe.database)
+    await probe.claimStarted.promise
+    expect(probe.transaction.select).not.toHaveBeenCalled()
+    expect(probe.update).not.toHaveBeenCalled()
+
+    probe.claim.resolve([{eventId: 'evt-claim'}])
+    await probe.lookupStarted.promise
+    expect(probe.locks).toEqual(['update'])
+    expect(new PgDialect({casing: 'snake_case'}).sqlToQuery(probe.queries[0])).toMatchObject({
+      params: [RESPONSE_ID],
+      sql: expect.stringContaining('"open_ai_response_id" = $1'),
+    })
+    expect(probe.update).not.toHaveBeenCalled()
+    expect(probe.momentValues).not.toHaveBeenCalled()
+
+    probe.lookup.resolve([createRun('submitted')])
+    await expect(pending).resolves.toBe(true)
+    expect(probe.update).toHaveBeenCalledOnce()
+  })
+})
+
+it('should not read response details for a duplicate publish event', async () => {
+  const response = createResponseTransaction(createRun('submitted'), {claimed: false})
+  const responseId = vi.fn(() => {
+    throw new Error('Duplicate event response must not be read')
+  })
+  await expect(
+    publishHistoryResponse(
+      {
+        ...publishOptions,
+        get responseId() {
+          return responseId()
+        },
+      },
+      asTransactionalDatabase(response.transaction),
+    ),
+  ).resolves.toBe(false)
+  expect(responseId).not.toHaveBeenCalled()
+})
+
+it('should read the response at lookup time and again only for a missing-run error', async () => {
+  const probe = createClaimProbe()
+  const responseId = vi.fn(() => RESPONSE_ID)
+  const outcome = Promise.allSettled([
+    publishHistoryResponse(
+      {
+        ...publishOptions,
+        get responseId() {
+          return responseId()
+        },
+      },
+      probe.database,
+    ),
+  ])
+  await probe.claimStarted.promise
+  expect(responseId).not.toHaveBeenCalled()
+  probe.claim.resolve([{eventId: 'evt-claim'}])
+  await probe.lookupStarted.promise
+  expect(responseId).toHaveBeenCalledOnce()
+  probe.lookup.resolve([])
+  const [result] = await outcome
+  expect(result.status).toBe('rejected')
+  if (result.status === 'rejected') {
+    expect(result.reason).toEqual(
+      new Error(`Generation run not found for response: ${RESPONSE_ID}`),
+    )
+  }
+  expect(responseId).toHaveBeenCalledTimes(2)
 })

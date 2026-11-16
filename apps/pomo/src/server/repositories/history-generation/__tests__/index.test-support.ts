@@ -271,3 +271,62 @@ export const asTransactionalDatabase = (transaction: object) =>
       callback(transaction),
     ),
   }) as unknown as TransactionalDatabase
+
+export const createClaimProbe = () => {
+  const response = createResponseTransaction(undefined)
+  const claim = Promise.withResolvers<Array<{eventId: string}>>()
+  const claimStarted = Promise.withResolvers<void>()
+  const lookup = Promise.withResolvers<HistoricalGenerationRunRow[]>()
+  const lookupStarted = Promise.withResolvers<void>()
+  const locks: string[] = []
+  const queries: SQL[] = []
+  const transaction = {
+    ...response.transaction,
+    insert: vi.fn((table: unknown) => {
+      if (table !== processedOpenAiWebhookEvents) {
+        return response.insert(table)
+      }
+
+      return {
+        values: vi.fn(() => ({
+          onConflictDoNothing: vi.fn(() => ({
+            returning: vi.fn(() => {
+              claimStarted.resolve()
+              return claim.promise
+            }),
+          })),
+        })),
+      }
+    }),
+    select: vi.fn(() => ({
+      from: vi.fn(() => ({
+        where: vi.fn((condition: SQL) => {
+          queries.push(condition)
+          return {
+            for: vi.fn((mode: string) => {
+              locks.push(mode)
+              return {
+                limit: vi.fn(() => {
+                  lookupStarted.resolve()
+                  return lookup.promise
+                }),
+              }
+            }),
+          }
+        }),
+      })),
+    })),
+  }
+
+  return {
+    ...response,
+    claim,
+    claimStarted,
+    database: asTransactionalDatabase(transaction),
+    locks,
+    lookup,
+    lookupStarted,
+    queries,
+    transaction,
+  }
+}
