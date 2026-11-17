@@ -124,3 +124,37 @@ it('should use the default unsupported runtime when none is provided', () => {
 
   expect(controller.state()).toEqual({status: 'unsupported'})
 })
+
+it.each([
+  new Error('Worker denied'),
+  new DOMException('Worker denied', 'SecurityError'),
+  undefined,
+])('should unlock and retry after client creation throws %s', (failure) => {
+  const translate = vi.fn()
+  const createClient = vi
+    .fn()
+    .mockImplementationOnce(() => {
+      throw failure
+    })
+    .mockReturnValue({dispose: vi.fn(), translate})
+  let cleanup: () => void = () => undefined
+  const controller = createRoot((disposeRoot) => {
+    cleanup = disposeRoot
+    return useAlbumTranslation({
+      onComplete: vi.fn(),
+      runtime: {createClient, supportsWebGpu: () => true},
+    })
+  })
+
+  expect(() => controller.translate({description: '설명', title: '제목'})).not.toThrow()
+  expect(controller.state()).toEqual({
+    message: '번역을 시작하지 못했습니다. 다시 시도해 주세요.',
+    status: 'error',
+  })
+  expect(controller.isBusy()).toBe(false)
+  controller.translate({description: '새 설명', title: '새 제목'})
+  expect(createClient).toHaveBeenCalledTimes(2)
+  expect(translate).toHaveBeenCalledWith({description: '새 설명', title: '새 제목'})
+  expect(controller.isBusy()).toBe(true)
+  cleanup()
+})

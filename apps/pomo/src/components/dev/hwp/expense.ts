@@ -33,7 +33,7 @@ export type ExpenseParseResult =
 
 const MAXIMUM_ITEMS = 20
 const EXPENSE_LINE_PATTERN =
-  /^\s*(?<name>.+?)\s+(?<unitPrice>[\d０-９,]+)\s*원(?:\s+(?<quantity>[\d,]+)\s*개)?\s*$/u
+  /^\s*(?<name>.+?)\s+(?<unitPrice>[\d０-９,]+)\s*원(?:\s*(?<quantity>[\d,]+)\s*개)?\s*$/u
 const DATE_LINE_PATTERN =
   /^\s*(?<year>[0-9０-９]{4})-(?<month>[0-9０-９]{1,2})-(?<day>[0-9０-９]{1,2})(?:\s+[월화수목금토일]요일)?\s*$/u
 
@@ -164,7 +164,8 @@ export const parseExpenseAssistantResponse = (json: string): ExpenseParseResult 
     return invalid('invalid-shape')
   }
 
-  const dateValue = typeof parsed.date === 'string' ? parsed.date.trim() : parsed.date
+  const dateValue =
+    typeof parsed.date === 'string' ? parsed.date.replace(/^[\s\u200b]+$/u, '').trim() : parsed.date
   const date = readDate(dateValue)
   const questions = readQuestions(parsed.questions)
   const items = readItems(parsed.items)

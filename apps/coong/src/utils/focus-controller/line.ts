@@ -12,7 +12,7 @@ export function* generateLine(
   const start = includeOrigin ? 0 : 1
 
   for (let index = start; index < range; index += 1) {
-    yield {x: startX + index, y: startY + index}
+    yield {x: startX + direction.x * index, y: startY + direction.y * index}
   }
 }
 

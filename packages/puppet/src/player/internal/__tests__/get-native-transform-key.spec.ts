@@ -38,6 +38,12 @@ test('should share coordinate work across names and IDs when geometry and curves
     getNativeTransformKey(document, {...shape, id: 'b', name: 'B', visible: false}),
   )
 })
+test('should distinguish grids evaluated before and after their parent transform', () => {
+  const document = createEmptyDocument()
+  expect(getNativeTransformKey(document, shape)).not.toBe(
+    getNativeTransformKey(document, {...shape, coordinateSpace: undefined}),
+  )
+})
 test('should distinguish different parameter inputs, arithmetic signs and sampling policies', () => {
   const document = {
     ...createEmptyDocument(),

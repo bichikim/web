@@ -44,6 +44,7 @@ export const SWebsiteSettings = (props: SWebsiteSettingsProps) => {
         {(content) => (
           <SWebsiteCustomization
             content={content()}
+            monitorId={props.controller.selectedId() ?? undefined}
             busy={props.controller.busy()}
             onApply={props.controller.setContent}
           />

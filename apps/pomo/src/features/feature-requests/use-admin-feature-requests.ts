@@ -41,11 +41,15 @@ export const useAdminFeatureRequests = (): AdminFeatureRequestsController => {
     if (isUpdatingRequest(input.requestId)) {
       return {status: 'conflict'}
     }
+    const hadMore = hasMore()
     setUpdatingRequestIds((current) => [...current, input.requestId])
 
     try {
       const result = await updateAdminFeatureRequest(input)
       if (result.status === 'updated') {
+        if (hadMore || hasMore()) {
+          list.invalidatePagination()
+        }
         await invalidateFeatureRequestPages()
         list.updateRequest(input.requestId, (request) => ({
           ...request,

@@ -20,7 +20,7 @@ export const getElementLine = (
 ) => {
   const elementRect = elementFrom.getBoundingClientRect()
   const line = createLine(
-    {x: elementRect.top, y: elementRect.left},
+    {x: elementRect.left, y: elementRect.top},
     direction,
     range,
     includeOrigin,
