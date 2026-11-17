@@ -27,6 +27,27 @@ const node: PuppetSceneDeformerNode = {
   visible: true,
 }
 
+test('should leave unrequested branch coordinates unevaluated while transforming the selected sibling', () => {
+  let reads = 0
+  const unused: PuppetSceneDeformerNode = {
+    ...node,
+    boneRestPoints: undefined,
+    boneWeights: undefined,
+    children: [{id: 'unused', kind: 'part', locked: false, name: 'Unused', visible: true}],
+    get controlPoints() {
+      reads += 1
+      return node.controlPoints
+    },
+    coordinateSpace: 'parent',
+    id: 'unused-warp',
+  }
+  const selected = {...node, children: [node.children[0]!], id: 'selected'}
+  const vertices = new Map([['a', [75, 0]]])
+  applySceneNodeDeformers([selected, unused], vertices, {deferCoordinates: true})
+  expect(vertices.get('a')).toEqual([75, 0])
+  expect(reads).toBe(0)
+})
+
 test('should refresh reused control layouts when scale, reflection or parent transforms change', () => {
   const shape: PuppetSceneDeformerNode = {
     ...node,

@@ -1,0 +1,151 @@
+{
+  "backend": "SwiftShader",
+  "resolution": 1,
+  "canvas": [1024, 1024],
+  "metrics": [
+    {
+      "pose": "front",
+      "meanAbsoluteChannelDifference": 0,
+      "maxChannelDifference": 0,
+      "changedChannels": 0,
+      "channelsAbove2": 0,
+      "fractionAbove2": 0
+    },
+    {
+      "pose": "arms",
+      "meanAbsoluteChannelDifference": 0,
+      "maxChannelDifference": 0,
+      "changedChannels": 0,
+      "channelsAbove2": 0,
+      "fractionAbove2": 0
+    },
+    {
+      "pose": "left",
+      "meanAbsoluteChannelDifference": 0,
+      "maxChannelDifference": 0,
+      "changedChannels": 0,
+      "channelsAbove2": 0,
+      "fractionAbove2": 0
+    },
+    {
+      "pose": "right",
+      "meanAbsoluteChannelDifference": 0,
+      "maxChannelDifference": 0,
+      "changedChannels": 0,
+      "channelsAbove2": 0,
+      "fractionAbove2": 0
+    },
+    {
+      "pose": "walk",
+      "meanAbsoluteChannelDifference": 0,
+      "maxChannelDifference": 0,
+      "changedChannels": 0,
+      "channelsAbove2": 0,
+      "fractionAbove2": 0
+    },
+    {
+      "pose": "shift",
+      "meanAbsoluteChannelDifference": 0,
+      "maxChannelDifference": 0,
+      "changedChannels": 0,
+      "channelsAbove2": 0,
+      "fractionAbove2": 0
+    },
+    {
+      "pose": "bow",
+      "meanAbsoluteChannelDifference": 0,
+      "maxChannelDifference": 0,
+      "changedChannels": 0,
+      "channelsAbove2": 0,
+      "fractionAbove2": 0
+    },
+    {
+      "pose": "up",
+      "meanAbsoluteChannelDifference": 0,
+      "maxChannelDifference": 0,
+      "changedChannels": 0,
+      "channelsAbove2": 0,
+      "fractionAbove2": 0
+    },
+    {
+      "pose": "down",
+      "meanAbsoluteChannelDifference": 0,
+      "maxChannelDifference": 0,
+      "changedChannels": 0,
+      "channelsAbove2": 0,
+      "fractionAbove2": 0
+    },
+    {
+      "pose": "up-left",
+      "meanAbsoluteChannelDifference": 0,
+      "maxChannelDifference": 0,
+      "changedChannels": 0,
+      "channelsAbove2": 0,
+      "fractionAbove2": 0
+    },
+    {
+      "pose": "tilt",
+      "meanAbsoluteChannelDifference": 0,
+      "maxChannelDifference": 0,
+      "changedChannels": 0,
+      "channelsAbove2": 0,
+      "fractionAbove2": 0
+    },
+    {
+      "pose": "hat-left",
+      "meanAbsoluteChannelDifference": 0,
+      "maxChannelDifference": 0,
+      "changedChannels": 0,
+      "channelsAbove2": 0,
+      "fractionAbove2": 0
+    },
+    {
+      "pose": "hat-right",
+      "meanAbsoluteChannelDifference": 0,
+      "maxChannelDifference": 0,
+      "changedChannels": 0,
+      "channelsAbove2": 0,
+      "fractionAbove2": 0
+    },
+    {
+      "pose": "hat-down",
+      "meanAbsoluteChannelDifference": 0,
+      "maxChannelDifference": 0,
+      "changedChannels": 0,
+      "channelsAbove2": 0,
+      "fractionAbove2": 0
+    },
+    {
+      "pose": "hat-up-tilt",
+      "meanAbsoluteChannelDifference": 0,
+      "maxChannelDifference": 0,
+      "changedChannels": 0,
+      "channelsAbove2": 0,
+      "fractionAbove2": 0
+    },
+    {
+      "pose": "hat-ribbon",
+      "meanAbsoluteChannelDifference": 0,
+      "maxChannelDifference": 0,
+      "changedChannels": 0,
+      "channelsAbove2": 0,
+      "fractionAbove2": 0
+    },
+    {
+      "pose": "collar",
+      "meanAbsoluteChannelDifference": 0,
+      "maxChannelDifference": 0,
+      "changedChannels": 0,
+      "channelsAbove2": 0,
+      "fractionAbove2": 0
+    },
+    {
+      "pose": "hair",
+      "meanAbsoluteChannelDifference": 0,
+      "maxChannelDifference": 0,
+      "changedChannels": 0,
+      "channelsAbove2": 0,
+      "fractionAbove2": 0
+    }
+  ]
+}

@@ -1,0 +1,137 @@
+[
+  {
+    "name": "physics-and-playback",
+    "calls": 120,
+    "millisecondsPerFrame": 0.9164290916666666
+  },
+  {
+    "name": "compiled-update",
+    "calls": 120,
+    "millisecondsPerFrame": 2.163712175
+  },
+  {
+    "name": "compiled-vertices",
+    "calls": 120,
+    "millisecondsPerFrame": 11.943590541666667
+  },
+  {
+    "name": "general-scene",
+    "calls": 120,
+    "millisecondsPerFrame": 12.196612191666667
+  },
+  {
+    "name": "part:fortune:hat",
+    "calls": 120,
+    "millisecondsPerFrame": 0.7531829166666667
+  },
+  {
+    "name": "part:fortune:hat-pendant:tip",
+    "calls": 120,
+    "millisecondsPerFrame": 0.2052719
+  },
+  {
+    "name": "part:fortune:hat-back",
+    "calls": 120,
+    "millisecondsPerFrame": 0.322084725
+  },
+  {
+    "name": "part:fortune:hat-chain:upper",
+    "calls": 120,
+    "millisecondsPerFrame": 0.19629966666666665
+  },
+  {
+    "name": "part:fortune:hat-pendant:upper",
+    "calls": 120,
+    "millisecondsPerFrame": 0.14106870833333335
+  },
+  {
+    "name": "part:fortune:hat-pendant:right-long",
+    "calls": 120,
+    "millisecondsPerFrame": 0.100716975
+  },
+  {
+    "name": "part:fortune:hat-pendant:right-short",
+    "calls": 120,
+    "millisecondsPerFrame": 0.09302845
+  },
+  {
+    "name": "part:fortune:hat-chain:drape",
+    "calls": 120,
+    "millisecondsPerFrame": 0.1971596833333333
+  },
+  {
+    "name": "part:fortune:hat-pendant:inner",
+    "calls": 120,
+    "millisecondsPerFrame": 0.11191213333333333
+  },
+  {
+    "name": "part:fortune:hat-pendant:large",
+    "calls": 120,
+    "millisecondsPerFrame": 0.08957990833333333
+  },
+  {
+    "name": "part:fortune:hat-pendant:small",
+    "calls": 120,
+    "millisecondsPerFrame": 0.09290900833333333
+  },
+  {
+    "name": "part:fortune:hat-brim-shadow",
+    "calls": 120,
+    "millisecondsPerFrame": 0.4414843666666667
+  },
+  {
+    "name": "part:fortune:hat-bow:tail-long",
+    "calls": 120,
+    "millisecondsPerFrame": 0.27605345833333333
+  },
+  {
+    "name": "part:fortune:hat-bow:tail-long:shadow",
+    "calls": 120,
+    "millisecondsPerFrame": 0.20284303333333334
+  },
+  {
+    "name": "part:fortune:hat-bow:tail-short",
+    "calls": 120,
+    "millisecondsPerFrame": 0.25662395
+  },
+  {
+    "name": "part:fortune:hat-bow:tail-short:shadow",
+    "calls": 120,
+    "millisecondsPerFrame": 0.23003438333333334
+  },
+  {
+    "name": "part:fortune:hat-bow:loop-left",
+    "calls": 120,
+    "millisecondsPerFrame": 0.13823399166666667
+  },
+  {
+    "name": "part:fortune:hat-bow:loop-left:shadow",
+    "calls": 120,
+    "millisecondsPerFrame": 0.15778328333333333
+  },
+  {
+    "name": "part:fortune:hat-bow:loop-right",
+    "calls": 120,
+    "millisecondsPerFrame": 0.20575939999999998
+  },
+  {
+    "name": "part:fortune:hat-bow:loop-right:shadow",
+    "calls": 120,
+    "millisecondsPerFrame": 0.15263922500000002
+  },
+  {
+    "name": "part:fortune:hat-bow:brooch",
+    "calls": 120,
+    "millisecondsPerFrame": 0.17118754166666666
+  },
+  {
+    "name": "general-vertices",
+    "calls": 120,
+    "millisecondsPerFrame": 1.7704149166666667
+  },
+  {
+    "name": "full-geometry",
+    "calls": 120,
+    "millisecondsPerFrame": 44.08010243333333
+  }
+]

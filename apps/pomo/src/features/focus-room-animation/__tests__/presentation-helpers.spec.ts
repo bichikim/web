@@ -53,6 +53,7 @@ it('should reset every motion presentation kind', () => {
     currentTarget: {x: 7, y: 8},
     phase: 0.5,
     sprite,
+    travelSeconds: 2,
   }
   const reset = (motion: object) =>
     resetMotionPresentation({...common, motion: motion as PixiSceneMotion})

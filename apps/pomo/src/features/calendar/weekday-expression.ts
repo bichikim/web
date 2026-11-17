@@ -395,13 +395,14 @@ const resolveWeekdaySelection = (
   }
 }
 
-export const createCalendarWeekdayParser = ({
-  calendarIntentPattern,
-  calendarPeriodBoundaryPattern,
-  calendarPeriodParticlePattern,
-  calendarRemainingSchedulePattern,
-  calendarWordStartPattern,
-}: CreateCalendarWeekdayParserOptions) => {
+export const createCalendarWeekdayParser = (options: CreateCalendarWeekdayParserOptions) => {
+  const {
+    calendarIntentPattern,
+    calendarPeriodBoundaryPattern,
+    calendarPeriodParticlePattern,
+    calendarRemainingSchedulePattern,
+    calendarWordStartPattern,
+  } = options
   const weekdayPattern = new RegExp(
     `${calendarWordStartPattern}` +
       `(?<weekday>${WEEKDAY_NAME_PATTERN_SOURCE})(?:요일)?${calendarPeriodBoundaryPattern.source}`,
@@ -531,11 +532,7 @@ export const createCalendarWeekdayParser = ({
   const isWeekSchedule = createWeekMatcher({getWeekdayIntent, periodPattern: thisWeekPattern})
 
   const getStandaloneWeekdayIntent = createStandaloneWeekdayIntentResolver({
-    calendarIntentPattern,
-    calendarPeriodBoundaryPattern,
-    calendarPeriodParticlePattern,
-    calendarRemainingSchedulePattern,
-    calendarWordStartPattern,
+    ...options,
     getRequestedWeekdays,
     getWeekdayIntent,
     thisWeekPattern,
@@ -551,6 +548,8 @@ export const createCalendarWeekdayParser = ({
       toRequestedWeekdayIntent(getRequestedWeekdays(options)),
     getStandaloneWeekdayIntent,
     getWeekdayIntent: (text: string) => toWeekdayIntent(getWeekdayIntent(text)),
+    hasMultipleWeekdays: (text: string, periodPattern: RegExp): boolean =>
+      hasMultipleWeekdayExpressions({...options, periodPattern, text}),
     isWeekSchedule,
     weekdayExclusionPattern: WEEKDAY_EXCLUSION_PATTERN,
     weekdayPatternSource: WEEKDAY_PATTERN_SOURCE,

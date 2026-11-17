@@ -125,3 +125,40 @@ it('should display a diary day-stem fact without accessing a model', async () =>
   expect(services.isDownloaded).not.toHaveBeenCalled()
   expect(services.startTextModel).not.toHaveBeenCalled()
 })
+
+it.each([
+  '1995년 3월 16일생인데 일간은 무엇인가요?',
+  '1995년 3월 16일생이에요. 일간은 무엇인가요?',
+])(
+  'should display a full-birth-date day-stem fact without an annual notice or model access for %s',
+  async (question) => {
+    const services = openReading()
+    await selectBirthDate()
+    await page.getByRole('textbox', {name: '질문'}).fill(question)
+    await page.getByRole('button', {exact: true, name: '사주 풀이 생성'}).click()
+    expect(page.getByRole('alert').query()).toBeNull()
+    await expect
+      .element(page.getByRole('region', {name: '사주 풀이 결과'}))
+      .toHaveTextContent('일간은 병(丙)입니다.')
+    expect(services.createClient).not.toHaveBeenCalled()
+    expect(services.isDownloaded).not.toHaveBeenCalled()
+    expect(services.startTextModel).not.toHaveBeenCalled()
+  },
+)
+
+it.each([
+  '1995년 3월 16일생인데 올해 일간은 무엇인가요?',
+  '2026년 3월 16일 생일 운세는?',
+  '2026년 3월 16일생일 수입은?',
+])('should retain an annual notice without model access for %s', async (question) => {
+  const services = openReading()
+  await selectBirthDate()
+  await page.getByRole('textbox', {name: '질문'}).fill(question)
+  await page.getByRole('button', {exact: true, name: '사주 풀이 생성'}).click()
+  await expect
+    .element(page.getByRole('alert'))
+    .toHaveTextContent('특정 연도 운세는 계산하지 않아요. 연도를 빼고 다시 질문해 주세요.')
+  expect(services.createClient).not.toHaveBeenCalled()
+  expect(services.isDownloaded).not.toHaveBeenCalled()
+  expect(services.startTextModel).not.toHaveBeenCalled()
+})

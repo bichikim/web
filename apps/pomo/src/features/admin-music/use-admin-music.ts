@@ -136,7 +136,13 @@ export const useAdminMusic = () => {
     const result = await connectOffer(form)
     offerSubmission.clear()
     if (result.status === 'succeeded') {
-      offerForm.reset()
+      const currentForm = new FormData(offerForm)
+      if (
+        currentForm.get('albumId') === form.get('albumId') &&
+        currentForm.get('externalProductId') === form.get('externalProductId')
+      ) {
+        offerForm.reset()
+      }
       await refreshCatalog()
       setMessage('앱인토스 일회성 판매 상품을 연결했습니다.')
       return

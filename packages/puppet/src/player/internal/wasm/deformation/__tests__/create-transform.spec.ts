@@ -41,6 +41,21 @@ const create = (document: PuppetDocument) => {
   return createNativeDeformation(document, factory)!
 }
 
+const specialNodes: ReadonlyArray<PuppetSceneDeformerNode> = [
+  {...shape, coordinateSpace: undefined, id: 'document-grid'},
+  {...shape, curveAxis: 'y', id: 'curved-strand'},
+  {...shape, curveHandles: [], id: 'surface-handles'},
+  {...shape, deformerType: 'spatial', id: 'spatial-surface'},
+  {...shape, id: 'general-surface', interpolation: undefined},
+  {...shape, id: 'pinned-surface', pins: []},
+  {...shape, id: 'skinned-surface', vertexInfluences: []},
+]
+
+test.each(specialNodes)('should retain the JavaScript evaluator for $id', (node) => {
+  const factory = createWasmTransform(documentFor(node), new WebAssembly.Instance(module))
+  expect(factory).toBeUndefined()
+})
+
 test.each(['bilinear', 'triangles', 'triangles-mirrored'] as const)(
   'should retain %s shared interior and exterior cells through parent updates',
   (interpolation) => {

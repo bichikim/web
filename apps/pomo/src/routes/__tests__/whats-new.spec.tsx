@@ -79,6 +79,7 @@ it('should show the newest changes and the first release from the public catalog
   expect(screen.getAllByRole('listitem')).toHaveLength(58)
   expect(screen.getByRole('heading', {name: '첫 출시'})).toBeTruthy()
   expect(firstRelease.getByRole('heading', {name: '첫 출시'})).toBeTruthy()
+  expect(firstRelease.getByText('Pomofi의 첫 출시입니다.')).toBeVisible()
   const returnLinks = screen.getAllByRole('link', {name: '앱으로 돌아가기'})
   expect(returnLinks).toHaveLength(2)
   expect(returnLinks[0]).toHaveClass('min-h-11', 'rounded-full', 'text-base', 'text-foreground')
