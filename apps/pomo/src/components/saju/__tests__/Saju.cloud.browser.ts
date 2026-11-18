@@ -54,6 +54,9 @@ it.each([
   '미래의 재물운은 어떨까요?',
   '미래 재물운 좀 알려줘',
   '운세 중 연애운 좀 봐줘',
+  '앞날운세 중 연애운 좀 봐줘',
+  '앞날운세는 어땠나요?',
+  '앞날운세는 어때요? 제 일간도 알려줘',
 ])('should display a cloud reading without model downloads for %s', async (question) => {
   vi.mocked(requestCloudText).mockResolvedValue(CLOUD_TEXT_RESPONSE)
   const startTextModel = vi.fn()
@@ -84,7 +87,13 @@ it.each([
   expect(page.getByRole('alert').query()).toBeNull()
 })
 
-it.each(['2026년 생활은 어떤가요?', '2026년생활은 어떤가요?'])(
+it.each([
+  '2026년 생활은 어떤가요?',
+  '2026년생활은 어떤가요?',
+  '올해 앞날운세는 어때요?',
+  '앞날운세는? 내년에는?',
+  '2026년 앞날운세는 어때요?',
+])(
   'should display annual guidance without requesting cloud generation for %s',
   async (question) => {
     vi.mocked(requestCloudText).mockResolvedValue(CLOUD_TEXT_RESPONSE)

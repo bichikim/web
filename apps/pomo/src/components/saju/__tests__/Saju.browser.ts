@@ -96,6 +96,10 @@ it('should keep a valid selected birth date available for a calculated answer', 
 it.each([
   '미래는 어떨까요?',
   '앞날은 어떨까요?',
+  '앞으로운세는?',
+  '앞날운세는 어때요?',
+  '앞날 운세는 어때요?',
+  '내 앞날운세 좀 봐줘',
   '내 앞날은 어떨까요?',
   '미래 좀 알려줘',
   '운세 좀 봐줘',
@@ -103,6 +107,7 @@ it.each([
   const services = openReading()
   await selectBirthDate()
   await page.getByRole('textbox', {name: '질문'}).fill(question)
+  await expect.element(page.getByRole('textbox', {name: '질문'})).toHaveValue(question)
   await page.getByRole('button', {exact: true, name: '사주 풀이 생성'}).click()
   expect(services.isDownloaded).not.toHaveBeenCalled()
   expect(services.createClient).not.toHaveBeenCalled()
