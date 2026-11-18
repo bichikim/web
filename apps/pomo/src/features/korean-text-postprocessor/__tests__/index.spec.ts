@@ -28,8 +28,6 @@ const TITLES = [
   'Sgt',
   'St',
   'Mt',
-  'Jr',
-  'Sr',
   'vs',
 ]
 
@@ -193,6 +191,20 @@ describe('createForeignCjkTokenIds', () => {
 })
 
 describe('replaceUnrefinedSentences', () => {
+  it.each(['Jr.', 'Sr.'])('should preserve a clean sentence ending in %s', (suffix) => {
+    const cleanSentence = `그의 이름은 Robert Downey ${suffix}`
+    const unrefinedSentence = ' 다음은 人生에 관한 이야기입니다.'
+    const text = cleanSentence + unrefinedSentence
+
+    expect(createKoreanTextSegments(text)).toEqual([
+      {kind: 'text', text: cleanSentence},
+      {kind: 'refining', text: unrefinedSentence},
+    ])
+    expect(replaceUnrefinedSentences(text)).toBe(
+      `${cleanSentence} 답변의 일부 표현을 자연스러운 한국어로 바꾸지 못했어요.`,
+    )
+  })
+
   it('should preserve clean sentences and replace unresolved contamination', () => {
     expect(replaceUnrefinedSentences('괜찮아요. 人生은 길어요.')).toBe(
       '괜찮아요. 답변의 일부 표현을 자연스러운 한국어로 바꾸지 못했어요.',

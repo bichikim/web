@@ -6,11 +6,14 @@ import {createTokenIdsMatching} from '../text-generation/create-token-ids-matchi
 import type {TextTokenVocabulary} from '../text-generation/runtime'
 
 const FOREIGN_CJK_PATTERN = /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}]/u
+const SENTENCE_CONTINUATION_ABBREVIATIONS = ENGLISH_TITLE_ABBREVIATIONS.filter(
+  (abbreviation) => abbreviation !== 'Jr' && abbreviation !== 'Sr',
+)
 const SENTENCE_CONTENT_PATTERN = [
   String.raw`(?<!\S)\d+\.(?=\s+\S)`,
   String.raw`[^.!?\n。！？]`,
   String.raw`(?<=[\p{Script=Latin}\p{N}])\.(?=[\p{Script=Latin}\p{N}])`,
-  String.raw`(?<=\b(?:${ENGLISH_TITLE_ABBREVIATIONS.join('|')}))\.(?=\s+\p{L})`,
+  String.raw`(?<=\b(?:${SENTENCE_CONTINUATION_ABBREVIATIONS.join('|')}))\.(?=\s+\p{L})`,
 ].join('|')
 const SENTENCE_PATTERN_SOURCE = [
   '(?:',
