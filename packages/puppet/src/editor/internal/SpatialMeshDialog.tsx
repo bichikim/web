@@ -1,4 +1,5 @@
 import {useSpatialMeshImport} from './use-spatial-mesh-import'
+import {isolateMeshHistory} from './isolate-mesh-history'
 import {KeyedFor} from './KeyedFor'
 import {Dialog} from '@kobalte/core/dialog'
 import {createEffect, createMemo, createSignal, For, Show} from 'solid-js'
@@ -230,7 +231,7 @@ export const SpatialMeshDialog = (props: SpatialMeshDialogProps) => {
     <Dialog modal open={props.isOpen} onOpenChange={props.onOpenChange}>
       <Dialog.Portal mount={portalMount}>
         <Dialog.Overlay class="auto-mesh-dialog-overlay" />
-        <Dialog.Content class="spatial-mesh-dialog-content">
+        <Dialog.Content class="spatial-mesh-dialog-content" onKeyDown={isolateMeshHistory}>
           <form onSubmit={apply}>
             <Dialog.Title class="spatial-mesh-accessible-label">메시 편집</Dialog.Title>
             <Dialog.Description class="spatial-mesh-accessible-label">

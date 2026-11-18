@@ -1,0 +1,777 @@
+[
+  {
+    "id": "fortune:hat-back",
+    "vertices": 91,
+    "spatial": true,
+    "groupId": "fortune:hat-back:volume",
+    "unsupported": [
+      {
+        "id": "fortune:hat-back:volume",
+        "type": "spatial",
+        "space": "parent",
+        "points": 4,
+        "fields": []
+      }
+    ],
+    "ancestors": [
+      "moc3:canvas",
+      "Part30",
+      "Part32",
+      "Part33",
+      "Rotation@Part33",
+      "Warp92@Part33",
+      "Warp91@Part33",
+      "Warp93@Part33",
+      "Warp53@Part33",
+      "Rotation4@Part33",
+      "Rotation34@Part33",
+      "Rotation97@Part33",
+      "fortune:hat-flex",
+      "fortune:hat-back:volume"
+    ]
+  },
+  {
+    "id": "fortune:hat-pendant:large",
+    "vertices": 4,
+    "spatial": false,
+    "unsupported": [
+      {
+        "id": "fortune:hat-back:volume",
+        "type": "spatial",
+        "space": "parent",
+        "points": 4,
+        "fields": []
+      }
+    ],
+    "ancestors": [
+      "moc3:canvas",
+      "Part30",
+      "Part32",
+      "Part33",
+      "Rotation@Part33",
+      "Warp92@Part33",
+      "Warp91@Part33",
+      "Warp93@Part33",
+      "Warp53@Part33",
+      "Rotation4@Part33",
+      "Rotation34@Part33",
+      "Rotation97@Part33",
+      "fortune:hat-flex",
+      "fortune:hat-back:volume",
+      "fortune:hat-pendant:large:pivot"
+    ]
+  },
+  {
+    "id": "fortune:hat-pendant:small",
+    "vertices": 4,
+    "spatial": false,
+    "unsupported": [
+      {
+        "id": "fortune:hat-back:volume",
+        "type": "spatial",
+        "space": "parent",
+        "points": 4,
+        "fields": []
+      }
+    ],
+    "ancestors": [
+      "moc3:canvas",
+      "Part30",
+      "Part32",
+      "Part33",
+      "Rotation@Part33",
+      "Warp92@Part33",
+      "Warp91@Part33",
+      "Warp93@Part33",
+      "Warp53@Part33",
+      "Rotation4@Part33",
+      "Rotation34@Part33",
+      "Rotation97@Part33",
+      "fortune:hat-flex",
+      "fortune:hat-back:volume",
+      "fortune:hat-pendant:small:pivot"
+    ]
+  },
+  {
+    "id": "fortune:hat-chain:drape",
+    "vertices": 43,
+    "spatial": false,
+    "unsupported": [
+      {
+        "id": "fortune:hat-back:volume",
+        "type": "spatial",
+        "space": "parent",
+        "points": 4,
+        "fields": []
+      },
+      {
+        "id": "fortune:hat-chain:drape:curve",
+        "space": "parent",
+        "points": 19,
+        "fields": ["curveAxis"]
+      }
+    ],
+    "ancestors": [
+      "moc3:canvas",
+      "Part30",
+      "Part32",
+      "Part33",
+      "Rotation@Part33",
+      "Warp92@Part33",
+      "Warp91@Part33",
+      "Warp93@Part33",
+      "Warp53@Part33",
+      "Rotation4@Part33",
+      "Rotation34@Part33",
+      "Rotation97@Part33",
+      "fortune:hat-flex",
+      "fortune:hat-back:volume",
+      "fortune:hat-chain:drape:curve"
+    ]
+  },
+  {
+    "id": "fortune:hat-pendant:inner",
+    "vertices": 4,
+    "spatial": false,
+    "unsupported": [
+      {
+        "id": "fortune:hat-back:volume",
+        "type": "spatial",
+        "space": "parent",
+        "points": 4,
+        "fields": []
+      }
+    ],
+    "ancestors": [
+      "moc3:canvas",
+      "Part30",
+      "Part32",
+      "Part33",
+      "Rotation@Part33",
+      "Warp92@Part33",
+      "Warp91@Part33",
+      "Warp93@Part33",
+      "Warp53@Part33",
+      "Rotation4@Part33",
+      "Rotation34@Part33",
+      "Rotation97@Part33",
+      "fortune:hat-flex",
+      "fortune:hat-back:volume",
+      "fortune:hat-pendant:inner:pivot"
+    ]
+  },
+  {
+    "id": "fortune:hat-pendant:right-short",
+    "vertices": 6,
+    "spatial": false,
+    "unsupported": [
+      {
+        "id": "fortune:hat-back:volume",
+        "type": "spatial",
+        "space": "parent",
+        "points": 4,
+        "fields": []
+      }
+    ],
+    "ancestors": [
+      "moc3:canvas",
+      "Part30",
+      "Part32",
+      "Part33",
+      "Rotation@Part33",
+      "Warp92@Part33",
+      "Warp91@Part33",
+      "Warp93@Part33",
+      "Warp53@Part33",
+      "Rotation4@Part33",
+      "Rotation34@Part33",
+      "Rotation97@Part33",
+      "fortune:hat-flex",
+      "fortune:hat-back:volume",
+      "fortune:hat-pendant:right-short:pivot"
+    ]
+  },
+  {
+    "id": "fortune:hat-pendant:right-long",
+    "vertices": 14,
+    "spatial": false,
+    "unsupported": [
+      {
+        "id": "fortune:hat-back:volume",
+        "type": "spatial",
+        "space": "parent",
+        "points": 4,
+        "fields": []
+      }
+    ],
+    "ancestors": [
+      "moc3:canvas",
+      "Part30",
+      "Part32",
+      "Part33",
+      "Rotation@Part33",
+      "Warp92@Part33",
+      "Warp91@Part33",
+      "Warp93@Part33",
+      "Warp53@Part33",
+      "Rotation4@Part33",
+      "Rotation34@Part33",
+      "Rotation97@Part33",
+      "fortune:hat-flex",
+      "fortune:hat-back:volume",
+      "fortune:hat-pendant:right-long:pivot"
+    ]
+  },
+  {
+    "id": "fortune:hat-chain:upper",
+    "vertices": 27,
+    "spatial": false,
+    "unsupported": [
+      {
+        "id": "fortune:hat-back:volume",
+        "type": "spatial",
+        "space": "parent",
+        "points": 4,
+        "fields": []
+      },
+      {
+        "id": "fortune:hat-chain:upper:curve",
+        "space": "parent",
+        "points": 19,
+        "fields": ["curveAxis"]
+      }
+    ],
+    "ancestors": [
+      "moc3:canvas",
+      "Part30",
+      "Part32",
+      "Part33",
+      "Rotation@Part33",
+      "Warp92@Part33",
+      "Warp91@Part33",
+      "Warp93@Part33",
+      "Warp53@Part33",
+      "Rotation4@Part33",
+      "Rotation34@Part33",
+      "Rotation97@Part33",
+      "fortune:hat-flex",
+      "fortune:hat-back:volume",
+      "fortune:hat-chain:upper:curve"
+    ]
+  },
+  {
+    "id": "fortune:hat-pendant:upper",
+    "vertices": 4,
+    "spatial": false,
+    "unsupported": [
+      {
+        "id": "fortune:hat-back:volume",
+        "type": "spatial",
+        "space": "parent",
+        "points": 4,
+        "fields": []
+      }
+    ],
+    "ancestors": [
+      "moc3:canvas",
+      "Part30",
+      "Part32",
+      "Part33",
+      "Rotation@Part33",
+      "Warp92@Part33",
+      "Warp91@Part33",
+      "Warp93@Part33",
+      "Warp53@Part33",
+      "Rotation4@Part33",
+      "Rotation34@Part33",
+      "Rotation97@Part33",
+      "fortune:hat-flex",
+      "fortune:hat-back:volume",
+      "fortune:hat-pendant:upper:pivot"
+    ]
+  },
+  {
+    "id": "fortune:hat",
+    "vertices": 130,
+    "spatial": true,
+    "groupId": "fortune:hat:volume",
+    "unsupported": [
+      {
+        "id": "fortune:hat:volume",
+        "type": "spatial",
+        "space": "parent",
+        "points": 4,
+        "fields": []
+      }
+    ],
+    "ancestors": [
+      "moc3:canvas",
+      "Part30",
+      "Part32",
+      "Part33",
+      "Rotation@Part33",
+      "Warp92@Part33",
+      "Warp91@Part33",
+      "Warp93@Part33",
+      "Warp53@Part33",
+      "Rotation4@Part33",
+      "Rotation34@Part33",
+      "Rotation97@Part33",
+      "fortune:hat-flex",
+      "fortune:hat:volume"
+    ]
+  },
+  {
+    "id": "fortune:hat-pendant:tip",
+    "vertices": 8,
+    "spatial": false,
+    "unsupported": [
+      {
+        "id": "fortune:hat:volume",
+        "type": "spatial",
+        "space": "parent",
+        "points": 4,
+        "fields": []
+      }
+    ],
+    "ancestors": [
+      "moc3:canvas",
+      "Part30",
+      "Part32",
+      "Part33",
+      "Rotation@Part33",
+      "Warp92@Part33",
+      "Warp91@Part33",
+      "Warp93@Part33",
+      "Warp53@Part33",
+      "Rotation4@Part33",
+      "Rotation34@Part33",
+      "Rotation97@Part33",
+      "fortune:hat-flex",
+      "fortune:hat:volume",
+      "fortune:hat-pendant:tip:pivot"
+    ]
+  },
+  {
+    "id": "fortune:hat-brim-shadow",
+    "vertices": 130,
+    "spatial": true,
+    "groupId": "fortune:hat-brim-shadow:volume",
+    "unsupported": [
+      {
+        "id": "fortune:hat-brim-shadow:volume",
+        "type": "spatial",
+        "space": "parent",
+        "points": 4,
+        "fields": []
+      }
+    ],
+    "ancestors": [
+      "moc3:canvas",
+      "Part30",
+      "Part32",
+      "Part33",
+      "Rotation@Part33",
+      "Warp92@Part33",
+      "Warp91@Part33",
+      "Warp93@Part33",
+      "Warp53@Part33",
+      "Rotation4@Part33",
+      "Rotation34@Part33",
+      "Rotation97@Part33",
+      "fortune:hat-flex",
+      "fortune:hat-brim-shadow:volume"
+    ]
+  },
+  {
+    "id": "fortune:hat-bow:tail-long",
+    "vertices": 30,
+    "spatial": true,
+    "groupId": "fortune:hat-bow:tail-long:volume",
+    "unsupported": [
+      {
+        "id": "fortune:hat-bow:attachment-frame",
+        "space": "parent",
+        "points": 4,
+        "fields": []
+      },
+      {
+        "id": "fortune:hat-bow:tail-long:root",
+        "type": "rotation",
+        "points": 2,
+        "fields": []
+      },
+      {
+        "id": "fortune:hat-bow:tail-long:volume",
+        "type": "spatial",
+        "points": 4,
+        "fields": []
+      }
+    ],
+    "ancestors": [
+      "moc3:canvas",
+      "Part30",
+      "Part32",
+      "Part33",
+      "Rotation@Part33",
+      "Warp92@Part33",
+      "Warp91@Part33",
+      "Warp93@Part33",
+      "Warp53@Part33",
+      "Rotation4@Part33",
+      "Rotation34@Part33",
+      "Rotation97@Part33",
+      "fortune:hat-flex",
+      "fortune:hat-bow:attachment-frame",
+      "fortune:hat-bow:tail-long:root",
+      "fortune:hat-bow:tail-long:cloth",
+      "fortune:hat-bow:tail-long:volume"
+    ]
+  },
+  {
+    "id": "fortune:hat-bow:tail-long:shadow",
+    "vertices": 36,
+    "spatial": true,
+    "groupId": "fortune:hat-bow:tail-long:shadow-volume",
+    "unsupported": [
+      {
+        "id": "fortune:hat-bow:attachment-frame",
+        "space": "parent",
+        "points": 4,
+        "fields": []
+      },
+      {
+        "id": "fortune:hat-bow:tail-long:root",
+        "type": "rotation",
+        "points": 2,
+        "fields": []
+      },
+      {
+        "id": "fortune:hat-bow:tail-long:shadow-volume",
+        "type": "spatial",
+        "points": 4,
+        "fields": []
+      }
+    ],
+    "ancestors": [
+      "moc3:canvas",
+      "Part30",
+      "Part32",
+      "Part33",
+      "Rotation@Part33",
+      "Warp92@Part33",
+      "Warp91@Part33",
+      "Warp93@Part33",
+      "Warp53@Part33",
+      "Rotation4@Part33",
+      "Rotation34@Part33",
+      "Rotation97@Part33",
+      "fortune:hat-flex",
+      "fortune:hat-bow:attachment-frame",
+      "fortune:hat-bow:tail-long:root",
+      "fortune:hat-bow:tail-long:cloth",
+      "fortune:hat-bow:tail-long:shadow-volume"
+    ]
+  },
+  {
+    "id": "fortune:hat-bow:tail-short",
+    "vertices": 27,
+    "spatial": true,
+    "groupId": "fortune:hat-bow:tail-short:volume",
+    "unsupported": [
+      {
+        "id": "fortune:hat-bow:attachment-frame",
+        "space": "parent",
+        "points": 4,
+        "fields": []
+      },
+      {
+        "id": "fortune:hat-bow:tail-short:root",
+        "type": "rotation",
+        "points": 2,
+        "fields": []
+      },
+      {
+        "id": "fortune:hat-bow:tail-short:volume",
+        "type": "spatial",
+        "points": 4,
+        "fields": []
+      }
+    ],
+    "ancestors": [
+      "moc3:canvas",
+      "Part30",
+      "Part32",
+      "Part33",
+      "Rotation@Part33",
+      "Warp92@Part33",
+      "Warp91@Part33",
+      "Warp93@Part33",
+      "Warp53@Part33",
+      "Rotation4@Part33",
+      "Rotation34@Part33",
+      "Rotation97@Part33",
+      "fortune:hat-flex",
+      "fortune:hat-bow:attachment-frame",
+      "fortune:hat-bow:tail-short:root",
+      "fortune:hat-bow:tail-short:cloth",
+      "fortune:hat-bow:tail-short:volume"
+    ]
+  },
+  {
+    "id": "fortune:hat-bow:tail-short:shadow",
+    "vertices": 26,
+    "spatial": true,
+    "groupId": "fortune:hat-bow:tail-short:shadow-volume",
+    "unsupported": [
+      {
+        "id": "fortune:hat-bow:attachment-frame",
+        "space": "parent",
+        "points": 4,
+        "fields": []
+      },
+      {
+        "id": "fortune:hat-bow:tail-short:root",
+        "type": "rotation",
+        "points": 2,
+        "fields": []
+      },
+      {
+        "id": "fortune:hat-bow:tail-short:shadow-volume",
+        "type": "spatial",
+        "points": 4,
+        "fields": []
+      }
+    ],
+    "ancestors": [
+      "moc3:canvas",
+      "Part30",
+      "Part32",
+      "Part33",
+      "Rotation@Part33",
+      "Warp92@Part33",
+      "Warp91@Part33",
+      "Warp93@Part33",
+      "Warp53@Part33",
+      "Rotation4@Part33",
+      "Rotation34@Part33",
+      "Rotation97@Part33",
+      "fortune:hat-flex",
+      "fortune:hat-bow:attachment-frame",
+      "fortune:hat-bow:tail-short:root",
+      "fortune:hat-bow:tail-short:cloth",
+      "fortune:hat-bow:tail-short:shadow-volume"
+    ]
+  },
+  {
+    "id": "fortune:hat-bow:loop-left",
+    "vertices": 13,
+    "spatial": true,
+    "groupId": "fortune:hat-bow:loop-left:volume",
+    "unsupported": [
+      {
+        "id": "fortune:hat-bow:attachment-frame",
+        "space": "parent",
+        "points": 4,
+        "fields": []
+      },
+      {
+        "id": "fortune:hat-bow:loop-left:root",
+        "type": "rotation",
+        "points": 2,
+        "fields": []
+      },
+      {
+        "id": "fortune:hat-bow:loop-left:volume",
+        "type": "spatial",
+        "points": 4,
+        "fields": []
+      }
+    ],
+    "ancestors": [
+      "moc3:canvas",
+      "Part30",
+      "Part32",
+      "Part33",
+      "Rotation@Part33",
+      "Warp92@Part33",
+      "Warp91@Part33",
+      "Warp93@Part33",
+      "Warp53@Part33",
+      "Rotation4@Part33",
+      "Rotation34@Part33",
+      "Rotation97@Part33",
+      "fortune:hat-flex",
+      "fortune:hat-bow:attachment-frame",
+      "fortune:hat-bow:loop-left:root",
+      "fortune:hat-bow:loop-left:cloth",
+      "fortune:hat-bow:loop-left:volume"
+    ]
+  },
+  {
+    "id": "fortune:hat-bow:loop-left:shadow",
+    "vertices": 16,
+    "spatial": true,
+    "groupId": "fortune:hat-bow:loop-left:shadow-volume",
+    "unsupported": [
+      {
+        "id": "fortune:hat-bow:attachment-frame",
+        "space": "parent",
+        "points": 4,
+        "fields": []
+      },
+      {
+        "id": "fortune:hat-bow:loop-left:root",
+        "type": "rotation",
+        "points": 2,
+        "fields": []
+      },
+      {
+        "id": "fortune:hat-bow:loop-left:shadow-volume",
+        "type": "spatial",
+        "points": 4,
+        "fields": []
+      }
+    ],
+    "ancestors": [
+      "moc3:canvas",
+      "Part30",
+      "Part32",
+      "Part33",
+      "Rotation@Part33",
+      "Warp92@Part33",
+      "Warp91@Part33",
+      "Warp93@Part33",
+      "Warp53@Part33",
+      "Rotation4@Part33",
+      "Rotation34@Part33",
+      "Rotation97@Part33",
+      "fortune:hat-flex",
+      "fortune:hat-bow:attachment-frame",
+      "fortune:hat-bow:loop-left:root",
+      "fortune:hat-bow:loop-left:cloth",
+      "fortune:hat-bow:loop-left:shadow-volume"
+    ]
+  },
+  {
+    "id": "fortune:hat-bow:loop-right",
+    "vertices": 22,
+    "spatial": true,
+    "groupId": "fortune:hat-bow:loop-right:volume",
+    "unsupported": [
+      {
+        "id": "fortune:hat-bow:attachment-frame",
+        "space": "parent",
+        "points": 4,
+        "fields": []
+      },
+      {
+        "id": "fortune:hat-bow:loop-right:root",
+        "type": "rotation",
+        "points": 2,
+        "fields": []
+      },
+      {
+        "id": "fortune:hat-bow:loop-right:volume",
+        "type": "spatial",
+        "points": 4,
+        "fields": []
+      }
+    ],
+    "ancestors": [
+      "moc3:canvas",
+      "Part30",
+      "Part32",
+      "Part33",
+      "Rotation@Part33",
+      "Warp92@Part33",
+      "Warp91@Part33",
+      "Warp93@Part33",
+      "Warp53@Part33",
+      "Rotation4@Part33",
+      "Rotation34@Part33",
+      "Rotation97@Part33",
+      "fortune:hat-flex",
+      "fortune:hat-bow:attachment-frame",
+      "fortune:hat-bow:loop-right:root",
+      "fortune:hat-bow:loop-right:cloth",
+      "fortune:hat-bow:loop-right:volume"
+    ]
+  },
+  {
+    "id": "fortune:hat-bow:loop-right:shadow",
+    "vertices": 22,
+    "spatial": true,
+    "groupId": "fortune:hat-bow:loop-right:shadow-volume",
+    "unsupported": [
+      {
+        "id": "fortune:hat-bow:attachment-frame",
+        "space": "parent",
+        "points": 4,
+        "fields": []
+      },
+      {
+        "id": "fortune:hat-bow:loop-right:root",
+        "type": "rotation",
+        "points": 2,
+        "fields": []
+      },
+      {
+        "id": "fortune:hat-bow:loop-right:shadow-volume",
+        "type": "spatial",
+        "points": 4,
+        "fields": []
+      }
+    ],
+    "ancestors": [
+      "moc3:canvas",
+      "Part30",
+      "Part32",
+      "Part33",
+      "Rotation@Part33",
+      "Warp92@Part33",
+      "Warp91@Part33",
+      "Warp93@Part33",
+      "Warp53@Part33",
+      "Rotation4@Part33",
+      "Rotation34@Part33",
+      "Rotation97@Part33",
+      "fortune:hat-flex",
+      "fortune:hat-bow:attachment-frame",
+      "fortune:hat-bow:loop-right:root",
+      "fortune:hat-bow:loop-right:cloth",
+      "fortune:hat-bow:loop-right:shadow-volume"
+    ]
+  },
+  {
+    "id": "fortune:hat-bow:brooch",
+    "vertices": 23,
+    "spatial": true,
+    "groupId": "fortune:hat-bow:brooch:volume",
+    "unsupported": [
+      {
+        "id": "fortune:hat-bow:brooch:volume",
+        "type": "spatial",
+        "space": "parent",
+        "points": 4,
+        "fields": []
+      }
+    ],
+    "ancestors": [
+      "moc3:canvas",
+      "Part30",
+      "Part32",
+      "Part33",
+      "Rotation@Part33",
+      "Warp92@Part33",
+      "Warp91@Part33",
+      "Warp93@Part33",
+      "Warp53@Part33",
+      "Rotation4@Part33",
+      "Rotation34@Part33",
+      "Rotation97@Part33",
+      "fortune:hat-flex",
+      "fortune:hat-bow:brooch:volume"
+    ]
+  }
+]
