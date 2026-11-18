@@ -1,5 +1,14 @@
 import {createSync, MaybeAccessor, resolveAccessor} from '@winter-love/solid-use'
-import {Accessor, createContext, createMemo, createSignal, Setter, useContext} from 'solid-js'
+import {
+  Accessor,
+  createContext,
+  createEffect,
+  createMemo,
+  createSignal,
+  onCleanup,
+  Setter,
+  useContext,
+} from 'solid-js'
 
 export interface SliderContextValue {
   setContainerElement: Setter<HTMLElement | null>
@@ -42,7 +51,25 @@ export const useSlider = (
   const [getEndPercentValue, setEndPercentValue] = createSync(endPercentAccessor)
   const [containerElement, setContainerElement] = createSignal<HTMLElement | null>(null)
 
+  const [layoutVersion, setLayoutVersion] = createSignal(0)
+
+  createEffect(() => {
+    const element = containerElement()
+    if (element === null) {
+      return
+    }
+    const refreshLayout = () => setLayoutVersion((value) => value + 1)
+    refreshLayout()
+    const observer =
+      typeof globalThis.ResizeObserver === 'undefined'
+        ? undefined
+        : new globalThis.ResizeObserver(refreshLayout)
+    observer?.observe(element)
+    onCleanup(() => observer?.disconnect())
+  })
+
   const sliderValue = createMemo(() => {
+    layoutVersion()
     const element = containerElement()
     const type = typeAccessor()
 

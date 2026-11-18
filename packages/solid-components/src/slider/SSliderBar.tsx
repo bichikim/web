@@ -1,4 +1,4 @@
-import {createMemo, ValidComponent} from 'solid-js'
+import {createMemo, JSX, ValidComponent} from 'solid-js'
 import {Dynamic, DynamicProps} from 'solid-js/web'
 import {BAR_PERCENT} from '../css-var'
 import {useSliderContext} from './slider-context'
@@ -8,8 +8,14 @@ export type SSliderBarProps<T extends ValidComponent> = DynamicProps<T>
 export const SSliderBar = <T extends ValidComponent>(props: SSliderBarProps<T>) => {
   const sliderContext = useSliderContext()
 
-  const onClick = (event: MouseEvent) => {
-    const {type, containerSize} = sliderContext.value()
+  const handleClick: JSX.EventHandler<HTMLElement, MouseEvent> = (event) => {
+    const {type} = sliderContext.value()
+    const {width, height} = event.currentTarget.getBoundingClientRect()
+    const containerSize = type === 'horizontal' ? width : height
+
+    if (containerSize <= 0) {
+      return
+    }
 
     if (type === 'horizontal') {
       sliderContext.setPercent(event.offsetX / containerSize)
@@ -30,7 +36,7 @@ export const SSliderBar = <T extends ValidComponent>(props: SSliderBarProps<T>) 
     <Dynamic
       {...props}
       ref={sliderContext.setContainerElement}
-      onClick={onClick}
+      onClick={handleClick}
       style={barStyle()}
     >
       {props.children}
