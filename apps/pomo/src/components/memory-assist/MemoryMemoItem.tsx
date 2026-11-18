@@ -1,6 +1,6 @@
 import {formatMediumDateTime} from 'src/utils/format-medium-date-time'
 import {cx} from 'class-variance-authority'
-import {createMemo, createSignal, onCleanup, Show, untrack} from 'solid-js'
+import {batch, createMemo, createSignal, onCleanup, Show, untrack} from 'solid-js'
 
 import * as m from '@paraglide/message'
 import {getLocale} from '@paraglide/runtime'
@@ -13,13 +13,17 @@ import {
 } from './reminder-draft'
 import type {ReminderDraft} from './ReminderFields'
 
-export interface MemoryMemoEdit {
+interface MemoryMemoReminderEdit {
   readonly exactEnabled: boolean
   readonly exactReminderAdvanceMinutes: number
   readonly exactReminderAt: string | null
   readonly exactReminderRepeatIntervalMinutes: number | null
   readonly exactReminderRepeatUntilMinutes: number
   readonly recallMode: MemoryRecallMode
+}
+
+export interface MemoryMemoEdit {
+  readonly reminder: MemoryMemoReminderEdit | null
   readonly text: string
 }
 
@@ -92,29 +96,46 @@ export const MemoryMemoItem = (props: MemoryMemoItemProps) => {
     setIsEditing(isOpen)
   }
 
+  const syncSavedReminder = (submittedDraft: ReminderDraft) => {
+    const memo = props.memo
+    const completedAt = new Date()
+    const resolvedReminder = resolveReminderDraft(submittedDraft, completedAt)
+    const savedDraft =
+      resolvedReminder.exactReminderAt === memo.exactReminderAt
+        ? submittedDraft
+        : createStoredReminderDraft(memo, completedAt)
+    const activeDraft = reminderDraft()
+    const baseline = originalReminderDraft()
+
+    batch(() => {
+      if (activeDraft === submittedDraft || activeDraft === baseline) {
+        setReminderDraft(savedDraft)
+      }
+      setOriginalReminderDraft(savedDraft)
+    })
+  }
+
   const handleSave = async () => {
     if (!canSave()) {
       return
     }
 
     const savedRevision = draftRevision
-    const currentReminderDraft = reminderDraft()
-    const now = new Date()
-    const savedReminder = resolveReminderDraft(currentReminderDraft, now)
+    const submittedDraft = reminderDraft()
+    const reminder =
+      submittedDraft === originalReminderDraft()
+        ? null
+        : {
+            ...resolveReminderDraft(submittedDraft, new Date()),
+            exactEnabled: submittedDraft.exactEnabled,
+          }
     const errorMessage = await props.onSave(props.memo, {
-      ...savedReminder,
-      exactEnabled: currentReminderDraft.exactEnabled,
+      reminder,
       text: draft(),
     })
 
     if (errorMessage === null) {
-      const completedAt = new Date()
-      const currentReminder = resolveReminderDraft(currentReminderDraft, completedAt)
-      setOriginalReminderDraft(
-        currentReminder.exactReminderAt === savedReminder.exactReminderAt
-          ? currentReminderDraft
-          : createStoredReminderDraft(props.memo, completedAt),
-      )
+      syncSavedReminder(submittedDraft)
     }
 
     if (savedRevision !== draftRevision) {

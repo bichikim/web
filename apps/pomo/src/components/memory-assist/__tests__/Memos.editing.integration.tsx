@@ -83,6 +83,13 @@ const startPendingEdit = async (beforeSave?: () => void) => {
   return pending
 }
 
+const selectTomorrowReminder = () => {
+  fireEvent.click(screen.getByRole('switch', {name: '날짜와 시간에 알려주기'}))
+  fireEvent.keyDown(screen.getByRole('button', {name: /알림 날짜/}), {key: 'ArrowDown'})
+  fireEvent.keyDown(screen.getByRole('option', {name: '오늘'}), {key: 'ArrowDown'})
+  fireEvent.keyDown(screen.getByRole('option', {name: '내일'}), {key: 'Enter'})
+}
+
 it('should retain a reopened edit and save its new draft after the previous native write succeeds', async () => {
   const pending = await startPendingEdit()
   const row = screen.getByRole('listitem', {hidden: true})
@@ -215,12 +222,7 @@ it('should keep a today reminder savable when the previous native save completes
 it('should not mark a saved tomorrow reminder dirty because of its hidden custom date', async () => {
   vi.useFakeTimers({toFake: ['Date']})
   vi.setSystemTime(new Date(2026, 0, 31, 12))
-  const pending = await startPendingEdit(() => {
-    fireEvent.click(screen.getByRole('switch', {name: '날짜와 시간에 알려주기'}))
-    fireEvent.keyDown(screen.getByRole('button', {name: /알림 날짜/}), {key: 'ArrowDown'})
-    fireEvent.keyDown(screen.getByRole('option', {name: '오늘'}), {key: 'ArrowDown'})
-    fireEvent.keyDown(screen.getByRole('option', {name: '내일'}), {key: 'Enter'})
-  })
+  const pending = await startPendingEdit(selectTomorrowReminder)
   const editor = screen.getByRole('textbox', {name: '기억할 메모'})
   fireEvent.input(editor, {target: {value: nextText}})
   fireEvent.input(editor, {target: {value: savedText}})
@@ -232,6 +234,71 @@ it('should not mark a saved tomorrow reminder dirty because of its hidden custom
   ])
   expect(screen.getByRole('dialog')).toHaveAttribute('data-expanded')
   expect(screen.getByRole('button', {name: '변경 저장'})).toBeDisabled()
+})
+
+it.each(['same edit', 'reopened edit'] as const)(
+  'should retain the saved reminder after a pending write crosses midnight (%s)',
+  async (session) => {
+    vi.useFakeTimers({toFake: ['Date']})
+    vi.setSystemTime(new Date(2026, 0, 31, 12))
+    const pending = await startPendingEdit(selectTomorrowReminder)
+    if (session === 'reopened edit') {
+      fireEvent.click(screen.getByRole('button', {name: '닫기'}))
+      fireEvent.click(screen.getByRole('button', {name: `${initialText} 메모 편집`}))
+    }
+    const editor = screen.getByRole('textbox', {name: '기억할 메모'})
+    fireEvent.input(editor, {target: {value: nextText}})
+
+    vi.setSystemTime(new Date(2026, 1, 1, 0, 1))
+    pending.resolve()
+
+    const savedReminder = new Date(2026, 1, 1, 12, 10).toISOString()
+    const save = screen.getByRole('button', {name: '변경 저장'})
+    await waitFor(() => expect(save).toBeEnabled())
+    expect(editor).toHaveValue(nextText)
+    expect(JSON.parse(nativeValue)).toMatchObject([
+      {exactReminderAt: savedReminder, text: savedText},
+    ])
+
+    fireEvent.click(save)
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
+    expect(JSON.parse(nativeValue)).toMatchObject([
+      {exactReminderAt: savedReminder, text: nextText},
+    ])
+  },
+)
+
+it('should retain a completed reminder without rearming it when editing only the text across midnight', async () => {
+  vi.useFakeTimers({toFake: ['Date']})
+  const beforeMidnight = new Date(2026, 0, 31, 23, 48)
+  const savedReminder = new Date(2026, 0, 31, 23, 59).toISOString()
+  vi.setSystemTime(beforeMidnight)
+  nativeValue = JSON.stringify([
+    {
+      ...createMemoryMemo({
+        exactReminderAt: savedReminder,
+        id: 'memo-editing',
+        now: beforeMidnight,
+        random: () => 0,
+        recallMode: 'none',
+        text: initialText,
+      }),
+      nextExactReminderAt: null,
+    },
+  ])
+  render(() => <MemoryMemoList />)
+  fireEvent.click(await screen.findByRole('button', {name: `${initialText} 메모 편집`}))
+
+  vi.setSystemTime(new Date(2026, 1, 1, 0, 1))
+  fireEvent.input(screen.getByRole('textbox', {name: '기억할 메모'}), {
+    target: {value: nextText},
+  })
+  fireEvent.click(screen.getByRole('button', {name: '변경 저장'}))
+
+  await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
+  expect(JSON.parse(nativeValue)).toMatchObject([
+    {exactReminderAt: savedReminder, nextExactReminderAt: null, text: nextText},
+  ])
 })
 
 it('should close an unchanged editing session only after its native write completes', async () => {

@@ -190,10 +190,9 @@ it('should preserve a pending exact reminder when its schedule is unchanged', as
   expect(mocks.memos[0]?.nextExactReminderAt).toBe(nextExactReminderAt)
 })
 
-it('should resolve a today reminder from save time after midnight while editing', async () => {
+it('should keep the stored reminder when only the text changes after midnight', async () => {
   vi.useFakeTimers()
   const exactReminderAt = new Date(2026, 0, 31, 23, 45).toISOString()
-  const savedReminderAt = new Date(2026, 1, 1, 23, 45).toISOString()
   vi.setSystemTime(new Date(2026, 0, 31, 23))
   mocks.memos = [
     {
@@ -216,7 +215,7 @@ it('should resolve a today reminder from save time after midnight while editing'
 
   await vi.runAllTimersAsync()
   expect(mocks.updateMemos).toHaveBeenCalledOnce()
-  expect(mocks.memos[0]?.exactReminderAt).toBe(savedReminderAt)
+  expect(mocks.memos[0]?.exactReminderAt).toBe(exactReminderAt)
 })
 
 it('should resolve tomorrow from the save time after midnight while editing', async () => {
