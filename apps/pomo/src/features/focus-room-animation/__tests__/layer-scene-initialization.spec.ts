@@ -343,6 +343,55 @@ describe('PixiLayerScene initialization', () => {
     expect(releaseTextureGroup).toHaveBeenCalledOnce()
   })
 
+  it.each([true, false])(
+    'should apply the latest visibility and opacity when texture loading finishes (%s)',
+    async (visible) => {
+      const loading = Promise.withResolvers<Awaited<ReturnType<typeof acquireTextureGroup>>>()
+      vi.mocked(acquireTextureGroup).mockReturnValueOnce(loading.promise)
+      const scene = new PixiLayerScene(
+        createDefinition({
+          layers: [{attachmentId: 'hand', channel: 'hands', id: 'hand', source: '/hand.webp'}],
+        }),
+        {onRender: vi.fn()},
+      )
+      const initialization = scene.initialize({
+        animationEnabled: false,
+        channels: {hands: {opacity: 1, visible: !visible}},
+      })
+      scene.update({animationEnabled: false, channels: {hands: {visible: !visible}}})
+      scene.update({animationEnabled: false, channels: {hands: {opacity: 0.25, visible}}})
+      expect(scene.getAttachment('hand')).toBeNull()
+
+      loading.resolve([createLease('/hand.webp')] as never)
+      await initialization
+
+      expect(scene.getAttachment('hand')).toMatchObject({alpha: 0.25, visible})
+      scene.destroy()
+    },
+  )
+
+  it.each([true, false])(
+    'should preserve animation commands during texture loading (%s)',
+    async (animationEnabled) => {
+      const loading = Promise.withResolvers<Awaited<ReturnType<typeof acquireTextureGroup>>>()
+      vi.mocked(acquireTextureGroup).mockReturnValueOnce(loading.promise)
+      const scene = new PixiLayerScene(
+        createDefinition({layers: [{id: 'base', motion: translation(), source: '/base.webp'}]}),
+        {onRender: vi.fn()},
+      )
+      const initialization = scene.initialize({animationEnabled: !animationEnabled})
+      scene.update({animationEnabled: !animationEnabled})
+      scene.setAnimationEnabled(animationEnabled)
+      loading.resolve([createLease('/base.webp')] as never)
+      await initialization
+
+      const effects = vi.mocked(createSceneEffects).mock.results[0].value
+      expect(effects.setAnimationEnabled).toHaveBeenLastCalledWith(animationEnabled)
+      expect(tickers[0].start).toHaveBeenCalledTimes(animationEnabled ? 1 : 0)
+      scene.destroy()
+    },
+  )
+
   it('should retain layer leases and acquire each shared mask once in first occurrence order', async () => {
     vi.mocked(getMotionEffects).mockImplementation((motion) =>
       motion.kind === 'pixel-oscillation' ? motion.effects : [],
