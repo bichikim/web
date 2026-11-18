@@ -70,6 +70,7 @@ export const withViewer = async <Value>(
       await Promise.all([...sessions].map((session) => call('code.close', {session})))
       sessions.clear()
     }
+    const failures: unknown[] = []
     try {
       const result = await exercise({
         ...preview,
@@ -90,12 +91,25 @@ export const withViewer = async <Value>(
         .innerText({timeout: 1000})
         .catch(() => 'unavailable')
       const MAX_STATE_LENGTH = 6000
-      throw new Error(
-        `${error instanceof Error ? error.message : String(error)}\nViewer state: ${state.slice(0, MAX_STATE_LENGTH)}`,
+      const failure = new Error(
+        [
+          error instanceof Error ? error.message : String(error),
+          `Viewer state: ${state.slice(0, MAX_STATE_LENGTH)}`,
+          `Preview stderr: ${preview.stderr()}`,
+        ].join('\n'),
         {cause: error},
       )
+      failures.push(failure)
+      throw failure
     } finally {
-      await releaseSessions()
+      try {
+        await releaseSessions()
+      } catch (error) {
+        throw new AggregateError(
+          [...failures, error],
+          `Viewer session cleanup failed.\nPreview stderr: ${preview.stderr()}`,
+        )
+      }
     }
   } finally {
     try {
