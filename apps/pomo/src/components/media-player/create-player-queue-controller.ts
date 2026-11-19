@@ -19,6 +19,7 @@ import type {PreviewPlayback} from './preview-playback'
 import type {Playback} from './use-playback'
 import type {PlaylistLoad} from './use-playlist-restoration'
 import type {PlaybackOrder} from './use-playback-order'
+import {createEntryReader} from './create-entry-reader'
 
 export interface CreatePlayerQueueControllerOptions {
   readonly cancelPendingRestart: () => void
@@ -390,23 +391,15 @@ const loadTrackQueue = (
   const currentIndex = options.readCurrentIndex()
   const mergedTracks = appendUniqueTracks(availableTracks, currentTracks)
   const currentEntryIds = getPlaylistEntryIds(options, currentTracks)
-  const currentEntryIdsByTrackId = new Map<string, string[]>()
-  currentTracks.forEach((track, index) => {
-    const entryId = currentEntryIds[index]
-    if (entryId === undefined) {
-      return
-    }
-
-    const entryIds = currentEntryIdsByTrackId.get(track.id) ?? []
-    entryIds.push(entryId)
-    currentEntryIdsByTrackId.set(track.id, entryIds)
+  const takeEntryId = createEntryReader({
+    entryIds: currentEntryIds,
+    getTrackId: (track) => track.id,
+    tracks: currentTracks,
   })
   const mergedEntryIds = createLegacyPlaylistEntryIds(mergedTracks.map((track) => track.id)).map(
     (legacyEntryId, index) => {
       const track = mergedTracks[index]
-      return track === undefined
-        ? legacyEntryId
-        : (currentEntryIdsByTrackId.get(track.id)?.shift() ?? legacyEntryId)
+      return track === undefined ? legacyEntryId : (takeEntryId(track.id) ?? legacyEntryId)
     },
   )
   const activeEntryId = currentEntryIds[currentIndex]
