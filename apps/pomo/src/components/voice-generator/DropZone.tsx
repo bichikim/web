@@ -1,5 +1,5 @@
 import {cx} from 'class-variance-authority'
-import {createSignal, type JSX, Show} from 'solid-js'
+import {createMemo, createSignal, type JSX, Show} from 'solid-js'
 
 const BYTES_PER_KILOBYTE = 1000
 const formatFileSize = (size: number) => `${Math.ceil(size / BYTES_PER_KILOBYTE)}KB`
@@ -17,8 +17,8 @@ interface VoiceDropZoneProps {
 }
 
 export const VoiceDropZone = (props: VoiceDropZoneProps) => {
-  const [isDragging, setIsDragging] = createSignal(false)
-  let dragDepth = 0
+  const [dragDepth, setDragDepth] = createSignal(0)
+  const isDragging = createMemo(() => dragDepth() > 0)
 
   const handleFileChange: JSX.EventHandler<HTMLInputElement, Event> = (event) => {
     const file = event.currentTarget.files?.[0]
@@ -29,8 +29,7 @@ export const VoiceDropZone = (props: VoiceDropZoneProps) => {
     event.preventDefault()
 
     if (!props.disabled) {
-      dragDepth += 1
-      setIsDragging(true)
+      setDragDepth((depth) => depth + 1)
     }
   }
   const handleDragOver: JSX.EventHandler<HTMLLabelElement, DragEvent> = (event) => {
@@ -43,17 +42,12 @@ export const VoiceDropZone = (props: VoiceDropZoneProps) => {
   }
   const handleDragLeave: JSX.EventHandler<HTMLLabelElement, DragEvent> = (event) => {
     event.preventDefault()
-    dragDepth = Math.max(0, dragDepth - 1)
-
-    if (dragDepth === 0) {
-      setIsDragging(false)
-    }
+    setDragDepth((depth) => Math.max(0, depth - 1))
   }
   const handleDrop: JSX.EventHandler<HTMLLabelElement, DragEvent> = (event) => {
     event.preventDefault()
     const file = event.dataTransfer?.files[0]
-    dragDepth = 0
-    setIsDragging(false)
+    setDragDepth(0)
 
     if (!props.disabled && file !== undefined) {
       props.onFileSelect(file)
