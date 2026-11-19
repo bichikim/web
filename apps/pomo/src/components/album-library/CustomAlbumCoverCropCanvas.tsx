@@ -1,7 +1,7 @@
 import {For} from 'solid-js'
 
 import * as m from '@paraglide/message'
-import {CUSTOM_ALBUM_COVER_EDGE} from '../../features/custom-albums'
+import {CUSTOM_ALBUM_COVER_EDGE} from '../../features/custom-albums/model'
 import type {CropFrame, CustomAlbumCoverCropController} from './use-custom-album-cover-crop'
 
 const CROP_GRID_DIVISIONS = 3
