@@ -1,4 +1,5 @@
 import {isValidTimeZone} from 'src/utils/is-valid-time-zone'
+import {Buffer} from 'node:buffer'
 import {createHash} from 'node:crypto'
 
 import {
@@ -162,7 +163,7 @@ export const createFeedResponse = async (options: CreateFeedResponseOptions): Pr
       updatedAt: feed.updatedAt,
     })
 
-    if (new TextEncoder().encode(document).byteLength > MAX_DOCUMENT_BYTES) {
+    if (Buffer.byteLength(document, 'utf8') > MAX_DOCUMENT_BYTES) {
       throw new RangeError('Serialized feed exceeds 512 KiB')
     }
 

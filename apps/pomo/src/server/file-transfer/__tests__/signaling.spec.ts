@@ -100,6 +100,67 @@ describe('signaling handshake', () => {
     expect(joiner.close).toHaveBeenCalledWith(1008, 'Session unavailable')
   })
 
+  describe.each(['ASCII', '한글', 'e\u0301', '😀', '\ud800', '\udc00', '\ud800a\udc00'])(
+    '%j message byte limit',
+    (text) => {
+      it.each([-1, 0, 1])('should enforce the UTF-8 limit at offset %i', (offset) => {
+        const target = peer()
+        // Raw JSON keeps lone surrogates literal rather than JSON.stringify escaping them.
+        const prefix = `{"type":"create","padding":"${text.repeat(100)}`
+        const suffix = '"}'
+        const padding = 'a'.repeat(
+          20_000 + offset - new TextEncoder().encode(prefix + suffix).byteLength,
+        )
+        const raw = prefix + padding + suffix
+        expect(new TextEncoder().encode(raw).byteLength).toBe(20_000 + offset)
+
+        hooks.message?.(target as unknown as WebSocketPeer, {text: () => raw} as WebSocketMessage)
+
+        if (offset > 0) {
+          expect(target.close).toHaveBeenCalledWith(1009, 'Handshake limit exceeded')
+          expect(target.send).not.toHaveBeenCalled()
+        } else {
+          expect(target.close).not.toHaveBeenCalled()
+          expect(target.send).toHaveBeenCalledWith(expect.stringContaining('"type":"created"'))
+        }
+      })
+    },
+  )
+
+  it('should count oversized messages before parsing and reject message 257', () => {
+    const target = peer()
+    const oversized = 'x'.repeat(20_001)
+    hooks.message?.(target as unknown as WebSocketPeer, {text: () => oversized} as WebSocketMessage)
+    expect(target.close).toHaveBeenLastCalledWith(1009, 'Handshake limit exceeded')
+    for (let index = 0; index < 254; index += 1) {
+      message(target, {})
+    }
+    expect(target.close).toHaveBeenLastCalledWith(1007, 'Invalid message')
+    message(target, {type: 'create'})
+    expect(target.send).toHaveBeenCalledTimes(1)
+    message(target, {})
+    expect(target.close).toHaveBeenLastCalledWith(1009, 'Handshake limit exceeded')
+  })
+
+  it('should sweep expired sessions before rejecting an oversized invalid message', () => {
+    const now = vi.spyOn(Date, 'now').mockReturnValue(0)
+    const creator = peer()
+    invitation(creator)
+    now.mockReturnValue(300_001)
+    const target = peer()
+    hooks.message?.(
+      target as unknown as WebSocketPeer,
+      {text: () => 'x'.repeat(20_001)} as WebSocketMessage,
+    )
+
+    expect(creator.close).toHaveBeenCalledWith(1000, 'session-expired')
+    expect(target.close).toHaveBeenCalledWith(1009, 'Handshake limit exceeded')
+    expect(creator.close.mock.invocationCallOrder[0]).toBeLessThan(
+      target.close.mock.invocationCallOrder[0],
+    )
+    expect(target.send).not.toHaveBeenCalled()
+  })
+
   it('should reject cross-origin upgrades and permit the application and desktop origins', () => {
     const request = (origin: string) =>
       new Request('http://localhost:3300/api/transfer/socket', {headers: {origin}})

@@ -1,3 +1,4 @@
+import {createHash} from 'node:crypto'
 import {describe, expect, it, vi} from 'vitest'
 
 import {
@@ -307,6 +308,63 @@ describe('createFeedResponse', () => {
     } finally {
       consoleError.mockRestore()
     }
+  })
+
+  describe.each(['rss', 'atom'])('%s document byte limit', (format) => {
+    describe.each(['GET', 'HEAD'])('%s', (method) => {
+      it.each([-1, 0, 1])('should enforce the serialized limit at offset %i', async (offset) => {
+        const limit = 512 * 1024
+        const content = '가e\u0301😀'.repeat(16)
+        const url = `https://pomo.example/api/feeds/today-in-history/${format}.xml`
+        const initial = await createResponse(
+          new Request(url),
+          createProvider(async () => [{...ENTRY, contentHtml: content}]),
+        )
+        const initialDocument = await initial.text()
+        const padding = 'a'.repeat(
+          limit + offset - new TextEncoder().encode(initialDocument).byteLength,
+        )
+        const document = initialDocument.replace(content, content + padding)
+        const logger = {error: vi.fn()}
+        const provider = createProvider(async () => [{...ENTRY, contentHtml: content + padding}])
+        const response = await createResponse(new Request(url, {method}), provider, logger)
+        const conditional = await createResponse(
+          new Request(url, {headers: {'If-None-Match': '*'}, method}),
+          provider,
+          logger,
+        )
+
+        expect(new TextEncoder().encode(document).byteLength).toBe(limit + offset)
+        if (offset > 0) {
+          for (const rejected of [response, conditional]) {
+            expect(rejected.status).toBe(500)
+            expect(rejected.headers.get('Cache-Control')).toBe('no-store')
+            expect(rejected.headers.has('ETag')).toBe(false)
+            expect(rejected.headers.has('Vercel-CDN-Cache-Control')).toBe(false)
+          }
+          await expect(Promise.all([response.text(), conditional.text()])).resolves.toEqual([
+            '',
+            '',
+          ])
+          expect(logger.error).toHaveBeenCalledTimes(2)
+          expect(logger.error).toHaveBeenCalledWith(
+            'Failed to render feed: today-in-history',
+            new RangeError('Serialized feed exceeds 512 KiB'),
+          )
+        } else {
+          expect(response.status).toBe(200)
+          expect(response.headers.get('ETag')).toBe(
+            `"${createHash('sha256').update(document).digest('base64url')}"`,
+          )
+          expect(response.headers.get('Cache-Control')).toBe('public, max-age=300')
+          await expect(response.text()).resolves.toBe(method === 'HEAD' ? '' : document)
+          expect(conditional.status).toBe(304)
+          expect([...conditional.headers]).toEqual([...response.headers])
+          await expect(conditional.text()).resolves.toBe('')
+          expect(logger.error).not.toHaveBeenCalled()
+        }
+      })
+    })
   })
 
   it('should reject a serialized document larger than 512 KiB', async () => {
