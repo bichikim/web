@@ -12,15 +12,34 @@ it('should emit 500 tiny droplets per simulated second at the source size range'
   expect(simulation.drops).toHaveLength(1)
 })
 
-it('should create separate trail beads as a raindrop slides', () => {
-  const simulation = new RainSimulation(800, 450, () => 0)
+it('should append new trail beads after updating the existing drops', () => {
+  let calls = 0
+  const simulation = new RainSimulation(800, 450, () => {
+    calls += 1
+    return 0
+  })
 
-  for (let frame = 0; frame < 5; frame += 1) {
+  for (let frame = 0; frame < 3; frame += 1) {
     simulation.step(0.05)
   }
 
-  expect(simulation.drops.some((drop) => drop.trail)).toBe(true)
-  expect(simulation.drops.every((drop) => drop.width > 0 && drop.height > 0)).toBe(true)
+  expect(calls).toBe(310)
+  expect(simulation.drops).toEqual([
+    {
+      height: expect.closeTo(108.92187704722565, 10),
+      trail: false,
+      width: expect.closeTo(108.92187704722565, 10),
+      x: 0,
+      y: expect.closeTo(30.18806684975399, 10),
+    },
+    {
+      height: expect.closeTo(103.3973221390924, 10),
+      trail: true,
+      width: expect.closeTo(36.051988508414276, 10),
+      x: -5,
+      y: expect.closeTo(2.8759543433795365, 10),
+    },
+  ])
 })
 
 it('should merge droplets that touch on the glass', () => {
