@@ -122,6 +122,31 @@ it('should reject replies enqueued after disposal', async () => {
   return expect(reply).rejects.toMatchObject({name: 'AbortError'})
 })
 
+it('should keep the queue stopped after disposal and late speech completion', async () => {
+  let completeSpeech: VoidFunction = () => undefined
+  const speech = new Promise<void>((resolve) => {
+    completeSpeech = resolve
+  })
+  const speak = vi.fn(() => speech)
+  const stop = vi.fn()
+  const {cleanup, result} = renderHook(() =>
+    useReplySpeechQueue({isOccupied: () => false, speak, stop}),
+  )
+  const activeReply = result.enqueue('재생 중인 답변')
+  const queuedReply = result.enqueue('대기 중인 답변')
+  const activeCancellation = expect(activeReply).rejects.toMatchObject({name: 'AbortError'})
+  const queuedCancellation = expect(queuedReply).rejects.toMatchObject({name: 'AbortError'})
+
+  cleanup()
+  await Promise.all([activeCancellation, queuedCancellation])
+  completeSpeech()
+  await speech
+  await expect(result.enqueue('종료 뒤 새 답변')).rejects.toMatchObject({name: 'AbortError'})
+
+  expect(speak).toHaveBeenCalledExactlyOnceWith('재생 중인 답변')
+  expect(stop).toHaveBeenCalledOnce()
+})
+
 it('should reject pending replies when disabled', async () => {
   const [isEnabled, setIsEnabled] = createSignal(true)
   const [isOccupied, setIsOccupied] = createSignal(true)
@@ -349,4 +374,85 @@ it('should wait for canceled in-flight speech before continuing after dialogue c
   completions[1]?.()
   await expect(queuedReply).resolves.toBeUndefined()
   cleanup()
+})
+
+it('should wait for active speech to settle when stop reenters the queue', async () => {
+  const [isDialogueOccupied, setIsDialogueOccupied] = createSignal(false)
+  let completeSpeech: VoidFunction = () => undefined
+  const firstSpeech = new Promise<void>((resolve) => {
+    completeSpeech = resolve
+  })
+  const speak = vi.fn().mockReturnValueOnce(firstSpeech).mockResolvedValueOnce(undefined)
+  let queuedReply: Promise<void> | undefined
+  const stop = vi.fn(() => {
+    queuedReply = result.enqueue('정지 콜백에서 추가한 답변')
+    setIsDialogueOccupied(false)
+  })
+  const {cleanup, result} = renderHook(() =>
+    useReplySpeechQueue({isDialogueOccupied, isOccupied: isDialogueOccupied, speak, stop}),
+  )
+
+  try {
+    const activeReply = result.enqueue('취소할 답변')
+    const cancelledReply = expect(activeReply).rejects.toMatchObject({name: 'AbortError'})
+    setIsDialogueOccupied(true)
+    await cancelledReply
+
+    expect(stop).toHaveBeenCalledOnce()
+    expect(speak).toHaveBeenCalledTimes(1)
+    expect(queuedReply).toBeDefined()
+
+    completeSpeech()
+    await queuedReply
+
+    expect(speak).toHaveBeenNthCalledWith(2, '정지 콜백에서 추가한 답변')
+    expect(speak).toHaveBeenCalledTimes(2)
+  } finally {
+    completeSpeech()
+    cleanup()
+  }
+})
+
+it('should retain the next speech revision after a superseded request settles', async () => {
+  const [speechRevision, setSpeechRevision] = createSignal(0)
+  let completeFirst: VoidFunction = () => undefined
+  let completeSecond: VoidFunction = () => undefined
+  const firstSpeech = new Promise<void>((resolve) => {
+    completeFirst = resolve
+  })
+  const secondSpeech = new Promise<void>((resolve) => {
+    completeSecond = resolve
+  })
+  const speak = vi.fn((text: string) => {
+    setSpeechRevision((revision) => revision + 1)
+    return text === '첫 답변' ? firstSpeech : secondSpeech
+  })
+  const stop = vi.fn()
+  const {cleanup, result} = renderHook(() =>
+    useReplySpeechQueue({isOccupied: () => false, speak, speechRevision, stop}),
+  )
+
+  try {
+    const activeReply = result.enqueue('첫 답변')
+    const queuedReply = result.enqueue('두 번째 답변')
+    const cancelledReply = expect(activeReply).rejects.toMatchObject({name: 'AbortError'})
+    setSpeechRevision((revision) => revision + 1)
+    await cancelledReply
+
+    expect(speak).toHaveBeenCalledTimes(1)
+    expect(stop).not.toHaveBeenCalled()
+
+    completeFirst()
+    await firstSpeech
+    expect(speak).toHaveBeenNthCalledWith(2, '두 번째 답변')
+    expect(speechRevision()).toBe(3)
+
+    completeSecond()
+    await expect(queuedReply).resolves.toBeUndefined()
+    expect(stop).not.toHaveBeenCalled()
+  } finally {
+    completeFirst()
+    completeSecond()
+    cleanup()
+  }
 })
