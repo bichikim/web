@@ -14,6 +14,21 @@ import type {
 import {classifyApiAiSubmissionError} from './submission-error'
 import {isApiAiJobActive} from './status'
 
+/** Yields each item with one sampled Date until the deadline is reached. */
+function* iterateBeforeDeadline<Item>(
+  items: Iterable<Item>,
+  deadline: number,
+  clock: () => Date,
+): Iterable<readonly [Item, Date]> {
+  for (const item of items) {
+    const now = clock()
+    if (now.getTime() >= deadline) {
+      return
+    }
+    yield [item, now] as const
+  }
+}
+
 const dispatchClaim = async (
   dependencies: ApiAiServiceDependencies,
   claim: ApiAiClaim,
@@ -66,11 +81,7 @@ const deliverJobs = async (
   deadline: number,
 ): Promise<void> => {
   const jobs = await dependencies.repository.listUndeliveredApiAiJobs(dependencies.clock())
-  for (const job of jobs) {
-    const now = dependencies.clock()
-    if (now.getTime() >= deadline) {
-      return
-    }
+  for (const [job, now] of iterateBeforeDeadline(jobs, deadline, () => dependencies.clock())) {
     try {
       if (await dependencies.repository.claimApiAiJobDelivery(job.id, now)) {
         await dependencies.deliver(job)
@@ -132,13 +143,11 @@ const processCallbacks = async (
   providers: ReadonlyArray<ApiAiProvider>,
   deadline: number,
 ): Promise<void> => {
-  for (const callback of await dependencies.repository.listPendingApiAiCallbacks(
-    dependencies.clock(),
+  for (const [callback, now] of iterateBeforeDeadline(
+    await dependencies.repository.listPendingApiAiCallbacks(dependencies.clock()),
+    deadline,
+    () => dependencies.clock(),
   )) {
-    const now = dependencies.clock()
-    if (now.getTime() >= deadline) {
-      return
-    }
     await processCallback(dependencies, providers, callback, now)
   }
 }
@@ -215,13 +224,11 @@ const recoverAttempts = async (
   providers: ReadonlyArray<ApiAiProvider>,
   deadline: number,
 ): Promise<void> => {
-  for (const attempt of await dependencies.repository.listActiveApiAiAttempts(
-    dependencies.clock(),
+  for (const [attempt, now] of iterateBeforeDeadline(
+    await dependencies.repository.listActiveApiAiAttempts(dependencies.clock()),
+    deadline,
+    () => dependencies.clock(),
   )) {
-    const now = dependencies.clock()
-    if (now.getTime() >= deadline) {
-      return
-    }
     await recoverAttempt(dependencies, providers, attempt, now)
   }
 }
