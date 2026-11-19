@@ -5,6 +5,7 @@ const MILLISECONDS_PER_SECOND = 1000
 const SECONDS_PER_MINUTE = 60
 const MINUTES_PER_DOWNLOAD = 10
 const MONTHS_PER_YEAR = 12
+const MINIMUM_ESTIMATE_YEAR = 100
 const DAYS_IN_MONTH_INDEX_OFFSET = 1
 const DATE_KEY_LENGTH = 10
 const DAYS_PER_RETENTION_PERIOD = {
@@ -62,6 +63,17 @@ const addMonthsWithClampedDay = (dateValue: Date, months: number): Date => {
   )
 
   return new Date(Date.UTC(year, month, day))
+}
+
+const isPlainDate = (value: Date): boolean => {
+  try {
+    Date.prototype.getTime.call(value)
+  } catch {
+    // Coercible Date proxies need the original search without prototype inspection.
+    return false
+  }
+
+  return Object.getPrototypeOf(value) === Date.prototype && Reflect.ownKeys(value).length === 0
 }
 
 const toDateKey = (dateValue: Date): string => dateValue.toISOString().slice(0, DATE_KEY_LENGTH)
@@ -123,13 +135,36 @@ export const getSubscriptionUsagePeriod = (
     throw new RangeError('Usage period cannot precede the subscription start')
   }
 
+  const startYear = isPlainDate(subscriptionStartsAt)
+    ? subscriptionStartsAt.getUTCFullYear()
+    : Number.NaN
+  // Date.UTC remaps years 0–99, so keep their existing search and custom Date behavior.
+  const elapsedMonths =
+    startYear >= MINIMUM_ESTIMATE_YEAR && isPlainDate(now)
+      ? (now.getUTCFullYear() - startYear) * MONTHS_PER_YEAR +
+        now.getUTCMonth() -
+        subscriptionStartsAt.getUTCMonth()
+      : Number.NaN
+
   let monthOffset = 0
-  while (addMonthsWithClampedDay(subscriptionStartsAt, monthOffset + 1) <= now) {
-    monthOffset += 1
+  let start: Date
+  let nextRenewal: Date
+  if (Number.isFinite(elapsedMonths)) {
+    monthOffset = Math.max(0, elapsedMonths)
+    start = addMonthsWithClampedDay(subscriptionStartsAt, monthOffset)
+    if (monthOffset > 0 && !(start <= now)) {
+      monthOffset -= 1
+      start = addMonthsWithClampedDay(subscriptionStartsAt, monthOffset)
+    }
+    nextRenewal = addMonthsWithClampedDay(subscriptionStartsAt, monthOffset + 1)
+  } else {
+    while (addMonthsWithClampedDay(subscriptionStartsAt, monthOffset + 1) <= now) {
+      monthOffset += 1
+    }
+    start = addMonthsWithClampedDay(subscriptionStartsAt, monthOffset)
+    nextRenewal = addMonthsWithClampedDay(subscriptionStartsAt, monthOffset + 1)
   }
 
-  const start = addMonthsWithClampedDay(subscriptionStartsAt, monthOffset)
-  const nextRenewal = addMonthsWithClampedDay(subscriptionStartsAt, monthOffset + 1)
   const entitlementEnd = subscriptionEndsAt ?? nextRenewal
   const end = entitlementEnd < nextRenewal ? entitlementEnd : nextRenewal
 
