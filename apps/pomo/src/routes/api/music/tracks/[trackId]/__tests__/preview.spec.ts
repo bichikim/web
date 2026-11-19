@@ -145,6 +145,22 @@ describe('authenticated track preview route', () => {
     expect(response.body).toBeNull()
   })
 
+  it('should preserve the existing empty suffix response for a zero-length preview', async () => {
+    storageMocks.ensureTrackPreviewObject.mockResolvedValue({
+      body: new Response(new Uint8Array()).body,
+      contentLength: 0,
+      etag: null,
+    })
+    const request = new Request(createRequest(), {headers: {Range: 'bytes=-1'}})
+
+    const response = await invokeApiRoute(GET, request, {trackId: TRACK_ID})
+
+    expect(response.status).toBe(206)
+    expect(response.headers.get('Content-Range')).toBe('bytes 0--1/0')
+    expect(response.headers.get('Content-Length')).toBe('0')
+    expect(new Uint8Array(await response.arrayBuffer())).toHaveLength(0)
+  })
+
   it('should not reveal an unpublished or unknown track', async () => {
     repositoryMocks.findPublishedTrackPreviewAsset.mockResolvedValue(null)
 

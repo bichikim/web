@@ -1,3 +1,5 @@
+import {parseByteRange} from '@winter-love/utils/data/http/byte-range'
+
 const EDGE_CACHE_SECONDS = 31_536_000
 const BROWSER_CACHE_SECONDS = 3600
 const HTTP_PARTIAL_CONTENT = 206
@@ -81,41 +83,12 @@ const createRangeNotSatisfiableResponse = async (
   return new Response(null, {headers, status: HTTP_RANGE_NOT_SATISFIABLE})
 }
 
-const isRequestedRangeUnsatisfiable = (rangeHeader: string, objectSize: number): boolean => {
-  const match = SINGLE_BYTE_RANGE_PATTERN.exec(rangeHeader)
-
-  if (match === null) {
-    return false
-  }
-
-  const firstValue = match.groups?.first ?? ''
-  const lastValue = match.groups?.last ?? ''
-
-  if (firstValue.length === 0) {
-    const suffixLength = Number(lastValue)
-    return !Number.isSafeInteger(suffixLength) || suffixLength === 0
-  }
-
-  const firstPosition = Number(firstValue)
-
-  if (!Number.isSafeInteger(firstPosition) || firstPosition >= objectSize) {
-    return true
-  }
-
-  if (lastValue.length === 0) {
-    return false
-  }
-
-  const lastPosition = Number(lastValue)
-  return !Number.isSafeInteger(lastPosition) || lastPosition < firstPosition
-}
-
 export const createRangedObjectResponse = async (
   object: R2ObjectBody,
   assetId: string,
   rangeHeader: string,
 ): Promise<Response> => {
-  if (isRequestedRangeUnsatisfiable(rangeHeader, object.size)) {
+  if (isSingleByteRange(rangeHeader) && parseByteRange(rangeHeader, object.size) === null) {
     return createRangeNotSatisfiableResponse(object, assetId)
   }
 

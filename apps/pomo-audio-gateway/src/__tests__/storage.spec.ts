@@ -60,6 +60,23 @@ describe('createHeadObjectResponse', () => {
 })
 
 describe('createRangedObjectResponse', () => {
+  it('should retain the R2 range instead of substituting boundaries parsed from the request', async () => {
+    const object = {
+      body: new Response(new Uint8Array([4, 5, 6, 7])).body,
+      httpEtag: '"audio-etag"',
+      range: {length: 4, offset: 4},
+      size: 10,
+      writeHttpMetadata: vi.fn(),
+    } as unknown as R2ObjectBody
+
+    const response = await createRangedObjectResponse(object, 'asset-id', 'bytes=0-9')
+
+    expect(response.status).toBe(206)
+    expect(response.headers.get('Content-Range')).toBe('bytes 4-7/10')
+    expect(response.headers.get('Content-Length')).toBe('4')
+    expect(new Uint8Array(await response.arrayBuffer())).toEqual(new Uint8Array([4, 5, 6, 7]))
+  })
+
   it('should translate an R2 range into an HTTP partial response', async () => {
     const body = new Response(new Uint8Array([4, 5, 6, 7])).body
 
