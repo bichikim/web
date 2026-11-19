@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 
 import {fireEvent, render, screen} from '@solidjs/testing-library'
-import {createSignal} from 'solid-js'
+import {createSignal, getOwner} from 'solid-js'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 
 import {
@@ -20,6 +20,7 @@ vi.mock('../AnswerHeader', () => ({DirectAnswerHeader: vi.fn()}))
 vi.mock('../ModelPanel', () => ({ModelPanel: vi.fn()}))
 
 const MODEL_IDS = ['qwen-0.8b', 'qwen-2b', 'qwen-4b', 'gemma-4-e2b', 'gemma-4-e2b-mobile'] as const
+const MODELS = MODEL_IDS.map((id) => ({description: '', downloadSize: '', id, label: id}))
 
 interface WriterHarness {
   readonly controller: DialogueWriterController
@@ -28,10 +29,10 @@ interface WriterHarness {
   readonly setState: (value: DialogueWriterState) => void
 }
 
-const createWriterHarness = (): WriterHarness => {
+const createWriterHarness = (initialRequest = '초기 질문'): WriterHarness => {
   const [busy, setBusy] = createSignal(false)
   const [modelReady, setModelReady] = createSignal(false)
-  const [request, setRequest] = createSignal('초기 질문')
+  const [request, setRequest] = createSignal(initialRequest)
   const [state, setState] = createSignal<DialogueWriterState>({status: 'idle'})
   const controller: DialogueWriterController = {
     canCopy: () => false,
@@ -58,17 +59,20 @@ const createWriterHarness = (): WriterHarness => {
 }
 
 const renderWriter = (writers: ReadonlyArray<WriterHarness>) => {
-  vi.mocked(useDialogueWriter).mockImplementationOnce(() => writers[0]!.controller)
-  vi.mocked(useDialogueWriter).mockImplementationOnce(() => writers[1]!.controller)
-  vi.mocked(useDialogueWriter).mockImplementationOnce(() => writers[2]!.controller)
-  vi.mocked(useDialogueWriter).mockImplementationOnce(() => writers[3]!.controller)
-  vi.mocked(useDialogueWriter).mockImplementationOnce(() => writers[4]!.controller)
-  return render(() => <DialogueWriter />)
+  const owners: ReturnType<typeof getOwner>[] = []
+  for (const writer of writers) {
+    vi.mocked(useDialogueWriter).mockImplementationOnce(() => {
+      owners.push(getOwner())
+      return writer.controller
+    })
+  }
+  const result = render(() => <DialogueWriter />)
+  return {...result, owners}
 }
 
 beforeEach(() => {
   vi.clearAllMocks()
-  vi.mocked(getTextModel).mockImplementation((id) => ({id, label: id}) as never)
+  vi.mocked(getTextModel).mockImplementation((id) => MODELS.find((model) => model.id === id)!)
   vi.mocked(DirectAnswerHeader).mockImplementation(() => <div data-testid="answer-header" />)
   vi.mocked(ModelPanel).mockImplementation((props: Parameters<typeof ModelPanel>[0]) => (
     <button
@@ -84,15 +88,38 @@ beforeEach(() => {
 
 describe('DialogueWriter', () => {
   it('should initialize every model and synchronize request input', () => {
-    const writers = MODEL_IDS.map(() => createWriterHarness())
-    renderWriter(writers)
+    const writers = MODEL_IDS.map((_, index) =>
+      createWriterHarness(index === 0 ? '초기 질문' : `다른 질문 ${index}`),
+    )
+    const panelOwners: ReturnType<typeof getOwner>[] = []
+    const renderPanel = vi.mocked(ModelPanel).getMockImplementation()!
+    vi.mocked(ModelPanel).mockImplementation((props) => {
+      panelOwners.push(getOwner())
+      return renderPanel(props)
+    })
+    const {owners} = renderWriter(writers)
 
     expect(getTextModel).toHaveBeenCalledTimes(5)
-    expect(vi.mocked(getTextModel).mock.calls.map(([id]) => id)).toEqual(MODEL_IDS)
+    expect(vi.mocked(getTextModel).mock.calls).toEqual(MODEL_IDS.map((id) => [id]))
     expect(useDialogueWriter).toHaveBeenCalledTimes(5)
     expect(vi.mocked(useDialogueWriter).mock.calls).toEqual(
       MODEL_IDS.map((modelId) => [{initialRequest: '삶의 행복에 대해 이야기해줘', modelId}]),
     )
+    const creationOrder = [
+      ...vi.mocked(getTextModel).mock.invocationCallOrder,
+      ...vi.mocked(useDialogueWriter).mock.invocationCallOrder,
+    ]
+    expect(creationOrder).toEqual([...creationOrder].sort((left, right) => left - right))
+    expect(owners[0]).not.toBeNull()
+    expect(owners.every((owner) => owner === owners[0])).toBe(true)
+    expect(ModelPanel).toHaveBeenCalledTimes(5)
+    expect(panelOwners.every((owner) => owner?.owner === owners[0])).toBe(true)
+    vi.mocked(ModelPanel).mock.calls.forEach(([props], index) => {
+      expect(props.model).toBe(MODELS[index])
+      expect(props.writer).toBe(writers[index]!.controller)
+    })
+    const panels = screen.getAllByRole('button')
+    expect(panels.map((panel) => panel.textContent)).toEqual(MODEL_IDS)
     expect(screen.getByTestId('answer-header')).toBeInTheDocument()
     expect(screen.getByText((_, element) => element?.textContent === '5 / 800')).toBeInTheDocument()
 
@@ -102,12 +129,28 @@ describe('DialogueWriter', () => {
     fireEvent.input(textbox, {target: {value: '모두에게 전달할 질문'}})
 
     for (const writer of writers) {
-      expect(writer.controller.setRequest).toHaveBeenCalledWith('모두에게 전달할 질문')
+      expect(writer.controller.setRequest).toHaveBeenCalledExactlyOnceWith('모두에게 전달할 질문')
+      expect(vi.mocked(writer.controller.setRequest).mock.contexts[0]).toBe(writer.controller)
       expect(writer.controller.request()).toBe('모두에게 전달할 질문')
     }
+    const inputOrder = writers.map(
+      ({controller}) => vi.mocked(controller.setRequest).mock.invocationCallOrder[0]!,
+    )
+    expect(inputOrder).toEqual([...inputOrder].sort((left, right) => left - right))
     expect(
       screen.getByText((_, element) => element?.textContent === '11 / 800'),
     ).toBeInTheDocument()
+    writers[1]!.controller.setRequest('두 번째 writer의 질문')
+    expect(textbox).toHaveValue('모두에게 전달할 질문')
+    writers[0]!.controller.setRequest('첫 질문')
+    expect(textbox).toHaveValue('첫 질문')
+    expect(screen.getByText((_, element) => element?.textContent === '4 / 800')).toBeInTheDocument()
+    expect(getTextModel).toHaveBeenCalledTimes(5)
+    expect(useDialogueWriter).toHaveBeenCalledTimes(5)
+    expect(ModelPanel).toHaveBeenCalledTimes(5)
+    screen.getAllByRole('button').forEach((panel, index) => {
+      expect(panel).toBe(panels[index])
+    })
   })
 
   it('should release other models and prepare each inactive model', () => {
@@ -166,6 +209,7 @@ describe('DialogueWriter', () => {
     const writers = MODEL_IDS.map(() => createWriterHarness())
     renderWriter(writers)
     const textbox = screen.getByRole('textbox', {name: /^무엇을 물어볼까요\?/})
+    const panels = screen.getAllByRole('button')
 
     expect(textbox).toBeEnabled()
     for (const modelId of MODEL_IDS) {
@@ -195,6 +239,13 @@ describe('DialogueWriter', () => {
 
       writers[loadingIndex]!.setBusy(false)
       writers[loadingIndex]!.setState({status: 'idle'})
+      expect(textbox).toBeEnabled()
+      expect(getTextModel).toHaveBeenCalledTimes(5)
+      expect(useDialogueWriter).toHaveBeenCalledTimes(5)
+      expect(ModelPanel).toHaveBeenCalledTimes(5)
+      screen.getAllByRole('button').forEach((panel, index) => {
+        expect(panel).toBe(panels[index])
+      })
     }
   })
 })
