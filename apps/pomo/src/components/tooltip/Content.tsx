@@ -43,12 +43,14 @@ export const PTooltipContent = () => {
         close()
       }
     }
-    document.addEventListener('keydown', handleKey, true)
-    document.addEventListener('pointerdown', close, true)
-    document.addEventListener('click', close, true)
-    document.addEventListener('scroll', close, true)
-    document.defaultView?.addEventListener('blur', close)
-    document.defaultView?.addEventListener('resize', close)
+    const controller = new AbortController()
+    const {signal} = controller
+    document.addEventListener('keydown', handleKey, {capture: true, signal})
+    document.addEventListener('pointerdown', close, {capture: true, signal})
+    document.addEventListener('click', close, {capture: true, signal})
+    document.addEventListener('scroll', close, {capture: true, signal})
+    document.defaultView?.addEventListener('blur', close, {signal})
+    document.defaultView?.addEventListener('resize', close, {signal})
     onCleanup(() => {
       if (content.isConnected) {
         content.hidePopover()
@@ -68,12 +70,7 @@ export const PTooltipContent = () => {
       } else {
         target.style.setProperty('--pomo-tooltip-anchor', previousAnchor)
       }
-      document.removeEventListener('keydown', handleKey, true)
-      document.removeEventListener('pointerdown', close, true)
-      document.removeEventListener('click', close, true)
-      document.removeEventListener('scroll', close, true)
-      document.defaultView?.removeEventListener('blur', close)
-      document.defaultView?.removeEventListener('resize', close)
+      controller.abort()
     })
   })
   return (
