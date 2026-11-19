@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 
-import {cleanup, render, screen, waitFor} from '@solidjs/testing-library'
+import {cleanup, render, renderHook, screen, waitFor} from '@solidjs/testing-library'
 import {createSignal, Show} from 'solid-js'
 import {afterEach, expect, it, vi} from 'vitest'
 
@@ -80,25 +80,16 @@ it('should retry global playback on the first user interaction', async () => {
   const playback = createPlayback()
   mocks.loadSoundEffects.mockResolvedValue([EFFECT])
   mocks.useSoundEffectPlayback.mockReturnValue(playback)
-  let observedController: ReturnType<typeof useSoundEffects> | undefined
+  const {result: controller, cleanup: dispose} = renderHook(useSoundEffects, {
+    wrapper: SoundEffectsProvider,
+  })
 
-  const Consumer = () => {
-    observedController = useSoundEffects()
-    return null
-  }
-
-  const result = render(() => (
-    <SoundEffectsProvider>
-      <Consumer />
-    </SoundEffectsProvider>
-  ))
-
-  await waitFor(() => expect(observedController?.getPlayback(EFFECT.id)).toBe(playback))
+  await waitFor(() => expect(controller.getPlayback(EFFECT.id)).toBe(playback))
 
   document.dispatchEvent(new Event('pointerdown'))
 
   expect(playback.activate).toHaveBeenCalledOnce()
-  result.unmount()
+  dispose()
 })
 
 it.each(['keydown', 'pointerdown'] as const)(
@@ -108,28 +99,19 @@ it.each(['keydown', 'pointerdown'] as const)(
     const catalog = Promise.withResolvers<ReadonlyArray<typeof EFFECT>>()
     mocks.loadSoundEffects.mockReturnValue(catalog.promise)
     mocks.useSoundEffectPlayback.mockReturnValue(playback)
-    let observedController: ReturnType<typeof useSoundEffects> | undefined
-
-    const Consumer = () => {
-      observedController = useSoundEffects()
-      return null
-    }
-
-    const result = render(() => (
-      <SoundEffectsProvider>
-        <Consumer />
-      </SoundEffectsProvider>
-    ))
+    const {result: controller, cleanup: dispose} = renderHook(useSoundEffects, {
+      wrapper: SoundEffectsProvider,
+    })
 
     document.dispatchEvent(new Event(eventType))
 
     expect(playback.activate).not.toHaveBeenCalled()
     catalog.resolve([EFFECT])
 
-    await waitFor(() => expect(observedController?.getPlayback(EFFECT.id)).toBe(playback))
+    await waitFor(() => expect(controller.getPlayback(EFFECT.id)).toBe(playback))
 
     expect(playback.activate).toHaveBeenCalledOnce()
-    result.unmount()
+    dispose()
   },
 )
 
@@ -138,77 +120,50 @@ it('should expose a global playback activation command', async () => {
   localStorage.setItem(STOP_STORAGE_KEY, 'true')
   mocks.loadSoundEffects.mockResolvedValue([EFFECT])
   mocks.useSoundEffectPlayback.mockReturnValue(playback)
-  let observedController: ReturnType<typeof useSoundEffects> | undefined
+  const {result: controller, cleanup: dispose} = renderHook(useSoundEffects, {
+    wrapper: SoundEffectsProvider,
+  })
 
-  const Consumer = () => {
-    observedController = useSoundEffects()
-    return null
-  }
+  await waitFor(() => expect(controller.getPlayback(EFFECT.id)).toBe(playback))
 
-  const result = render(() => (
-    <SoundEffectsProvider>
-      <Consumer />
-    </SoundEffectsProvider>
-  ))
-
-  await waitFor(() => expect(observedController?.getPlayback(EFFECT.id)).toBe(playback))
-
-  observedController?.activate()
+  controller.activate()
 
   expect(playback.activate).toHaveBeenCalledOnce()
   expect(localStorage.getItem(STOP_STORAGE_KEY)).toBe('false')
-  result.unmount()
+  dispose()
 })
 
 it('should expose a global playback stop command', async () => {
   const playback = createPlayback()
   mocks.loadSoundEffects.mockResolvedValue([EFFECT])
   mocks.useSoundEffectPlayback.mockReturnValue(playback)
-  let observedController: ReturnType<typeof useSoundEffects> | undefined
+  const {result: controller, cleanup: dispose} = renderHook(useSoundEffects, {
+    wrapper: SoundEffectsProvider,
+  })
 
-  const Consumer = () => {
-    observedController = useSoundEffects()
-    return null
-  }
+  await waitFor(() => expect(controller.getPlayback(EFFECT.id)).toBe(playback))
 
-  const result = render(() => (
-    <SoundEffectsProvider>
-      <Consumer />
-    </SoundEffectsProvider>
-  ))
-
-  await waitFor(() => expect(observedController?.getPlayback(EFFECT.id)).toBe(playback))
-
-  observedController?.stop()
+  controller.stop()
 
   expect(playback.stop).toHaveBeenCalledOnce()
-  result.unmount()
+  dispose()
 })
 
 it('should preserve a global stop across later user activation attempts', async () => {
   const playback = createPlayback()
   mocks.loadSoundEffects.mockResolvedValue([EFFECT])
   mocks.useSoundEffectPlayback.mockReturnValue(playback)
-  let observedController: ReturnType<typeof useSoundEffects> | undefined
+  const {result: controller, cleanup: dispose} = renderHook(useSoundEffects, {
+    wrapper: SoundEffectsProvider,
+  })
 
-  const Consumer = () => {
-    observedController = useSoundEffects()
-    return null
-  }
+  await waitFor(() => expect(controller.getPlayback(EFFECT.id)).toBe(playback))
 
-  const result = render(() => (
-    <SoundEffectsProvider>
-      <Consumer />
-    </SoundEffectsProvider>
-  ))
-
-  await waitFor(() => expect(observedController?.getPlayback(EFFECT.id)).toBe(playback))
-
-  observedController?.stop()
+  controller.stop()
   document.dispatchEvent(new Event('pointerdown'))
 
   expect(playback.activate).not.toHaveBeenCalled()
-  result.unmount()
+  dispose()
 })
 
 it('should persist a global stop across provider remounts', async () => {
@@ -216,37 +171,26 @@ it('should persist a global stop across provider remounts', async () => {
   const remountedPlayback = createPlayback()
   mocks.loadSoundEffects.mockResolvedValue([EFFECT])
   mocks.useSoundEffectPlayback.mockReturnValueOnce(playback).mockReturnValueOnce(remountedPlayback)
-  let observedController: ReturnType<typeof useSoundEffects> | undefined
+  const {result: controller, cleanup: dispose} = renderHook(useSoundEffects, {
+    wrapper: SoundEffectsProvider,
+  })
 
-  const Consumer = () => {
-    observedController = useSoundEffects()
-    return null
-  }
+  await waitFor(() => expect(controller.getPlayback(EFFECT.id)).toBe(playback))
 
-  const result = render(() => (
-    <SoundEffectsProvider>
-      <Consumer />
-    </SoundEffectsProvider>
-  ))
-
-  await waitFor(() => expect(observedController?.getPlayback(EFFECT.id)).toBe(playback))
-
-  observedController?.stop()
+  controller.stop()
 
   expect(localStorage.getItem(STOP_STORAGE_KEY)).toBe('true')
-  result.unmount()
+  dispose()
 
-  const remountedResult = render(() => (
-    <SoundEffectsProvider>
-      <Consumer />
-    </SoundEffectsProvider>
-  ))
+  const {result: remountedController, cleanup: disposeRemount} = renderHook(useSoundEffects, {
+    wrapper: SoundEffectsProvider,
+  })
 
-  await waitFor(() => expect(observedController?.getPlayback(EFFECT.id)).toBe(remountedPlayback))
+  await waitFor(() => expect(remountedController.getPlayback(EFFECT.id)).toBe(remountedPlayback))
 
-  expect(observedController?.isStopped()).toBe(true)
+  expect(remountedController.isStopped()).toBe(true)
   expect(remountedPlayback.stop).toHaveBeenCalledOnce()
   document.dispatchEvent(new Event('pointerdown'))
   expect(remountedPlayback.activate).not.toHaveBeenCalled()
-  remountedResult.unmount()
+  disposeRemount()
 })
