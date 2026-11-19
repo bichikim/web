@@ -17,16 +17,13 @@ export interface ResizeObserverControls {
 export const useResizeObserver = (props: UseResizeObserverProps): ResizeObserverControls => {
   const [active, setActive] = createSignal(false)
   let observer: ResizeObserver | undefined
-  let disposed = false
 
   const disconnect = () => {
     observer?.disconnect()
     observer = undefined
   }
   const start = () => {
-    if (!disposed) {
-      setActive(true)
-    }
+    setActive(true)
   }
   const stop = () => {
     disconnect()
@@ -58,10 +55,7 @@ export const useResizeObserver = (props: UseResizeObserverProps): ResizeObserver
     }
   })
 
-  onCleanup(() => {
-    disposed = true
-    stop()
-  })
+  onCleanup(stop)
 
   return {start, stop}
 }
