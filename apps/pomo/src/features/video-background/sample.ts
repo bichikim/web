@@ -1,4 +1,3 @@
-import {subscribeEvent} from 'src/utils/subscribe-event'
 import {videoSamplingRuntime} from './runtime'
 import {sampleTimes} from './timeline'
 
@@ -24,24 +23,22 @@ const waitForMedia = (options: MediaWaitOptions): Promise<void> =>
   new Promise((resolve, reject) => {
     const {event, signal, start, video} = options
     signal.throwIfAborted()
-    let settled = false
+    const subscriptions = new AbortController()
     const finish = (complete: () => void) => {
-      if (settled) {
+      if (subscriptions.signal.aborted) {
         return
       }
-      settled = true
+      subscriptions.abort()
       clearTimeout(timeout)
-      releaseReady()
-      releaseFailure()
-      releaseAbort()
       complete()
     }
     const ready = () => finish(resolve)
     const fail = () => finish(() => reject(new Error('Video background decoding failed.')))
     const abort = () => finish(() => reject(signal.reason))
-    const releaseReady = subscribeEvent(video, event, ready, {once: true})
-    const releaseFailure = subscribeEvent(video, 'error', fail, {once: true})
-    const releaseAbort = subscribeEvent(signal, 'abort', abort, {once: true})
+    const listenerOptions = {once: true, signal: subscriptions.signal}
+    video.addEventListener(event, ready, listenerOptions)
+    video.addEventListener('error', fail, listenerOptions)
+    signal.addEventListener('abort', abort, listenerOptions)
     const timeout = setTimeout(fail, DECODE_TIMEOUT)
     try {
       start()
