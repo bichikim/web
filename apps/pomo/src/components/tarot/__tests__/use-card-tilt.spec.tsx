@@ -1,22 +1,11 @@
 /** @vitest-environment jsdom */
-import {fireEvent, render, screen} from '@solidjs/testing-library'
+import {cleanup, fireEvent, render, screen} from '@solidjs/testing-library'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 import {useCardTilt} from '../use-card-tilt'
 
+const SETTLE_DURATION_MILLISECONDS = 3000
 const preference = new EventTarget()
 let reduced = false
-let frames = new Map<number, FrameRequestCallback>()
-let frameIndex = 0
-const flushFrames = () => {
-  for (let time = 0; frames.size > 0 && time < 3000; time += 64) {
-    const pending = [...frames.values()]
-    frames.clear()
-    for (const callback of pending) {
-      callback(time)
-    }
-  }
-}
-
 const Card = () => {
   const tilt = useCardTilt()
   return (
@@ -42,8 +31,8 @@ const pointerEvent = (type: string, properties: Record<string, number | string>)
 }
 
 beforeEach(() => {
+  vi.useFakeTimers({toFake: ['requestAnimationFrame', 'cancelAnimationFrame']})
   reduced = false
-  frames = new Map()
   vi.stubGlobal('matchMedia', () => ({
     addEventListener: preference.addEventListener.bind(preference),
     get matches() {
@@ -51,12 +40,6 @@ beforeEach(() => {
     },
     removeEventListener: preference.removeEventListener.bind(preference),
   }))
-  vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => {
-    frameIndex += 1
-    frames.set(frameIndex, callback)
-    return frameIndex
-  })
-  vi.stubGlobal('cancelAnimationFrame', (id: number) => frames.delete(id))
   vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue({
     bottom: 600,
     height: 600,
@@ -71,6 +54,8 @@ beforeEach(() => {
 })
 
 afterEach(() => {
+  cleanup()
+  vi.useRealTimers()
   vi.restoreAllMocks()
   vi.unstubAllGlobals()
 })
@@ -80,11 +65,11 @@ describe('useCardTilt', () => {
     render(Card)
     const card = screen.getByRole('group', {name: 'card'})
     fireEvent(card, pointerEvent('pointermove', {clientX: 400, clientY: 300, pointerType: 'mouse'}))
-    flushFrames()
+    vi.advanceTimersByTime(SETTLE_DURATION_MILLISECONDS)
     expect(screen.getByLabelText('tilt')).toHaveTextContent('0,0')
-    expect(frames.size).toBe(0)
+    expect(vi.getTimerCount()).toBe(0)
     fireEvent.pointerLeave(card)
-    flushFrames()
+    vi.advanceTimersByTime(SETTLE_DURATION_MILLISECONDS)
     expect(screen.getByLabelText('tilt')).toHaveTextContent('0,0')
   })
 
@@ -107,16 +92,16 @@ describe('useCardTilt', () => {
         card,
         pointerEvent('pointermove', {clientX: 600, clientY: -200, pointerId: 1, pointerType}),
       )
-      flushFrames()
+      vi.advanceTimersByTime(SETTLE_DURATION_MILLISECONDS)
       expect(screen.getByLabelText('tilt')).toHaveTextContent('-1,1')
       fireEvent(card, pointerEvent('pointerup', {pointerId: 1}))
-      flushFrames()
+      vi.advanceTimersByTime(SETTLE_DURATION_MILLISECONDS)
       expect(screen.getByLabelText('tilt')).toHaveTextContent('0,0')
       fireEvent(
         card,
         pointerEvent('pointermove', {clientX: 400, clientY: 0, pointerId: 1, pointerType}),
       )
-      flushFrames()
+      vi.advanceTimersByTime(SETTLE_DURATION_MILLISECONDS)
       expect(screen.getByLabelText('tilt')).toHaveTextContent('0,0')
     },
   )
@@ -125,7 +110,7 @@ describe('useCardTilt', () => {
     render(Card)
     const card = screen.getByRole('group', {name: 'card'})
     fireEvent.keyDown(card, {key: 'ArrowRight'})
-    flushFrames()
+    vi.advanceTimersByTime(SETTLE_DURATION_MILLISECONDS)
     fireEvent(
       card,
       pointerEvent('pointerdown', {button: 0, clientX: 100, clientY: 100, pointerId: 1}),
@@ -138,22 +123,22 @@ describe('useCardTilt', () => {
       card,
       pointerEvent('pointermove', {clientX: 400, clientY: 100, pointerId: 2, pointerType: 'mouse'}),
     )
-    flushFrames()
+    vi.advanceTimersByTime(SETTLE_DURATION_MILLISECONDS)
     expect(screen.getByLabelText('tilt')).toHaveTextContent('0.25,0')
     fireEvent(card, pointerEvent('pointermove', {clientX: 135, clientY: 100, pointerId: 1}))
-    flushFrames()
+    vi.advanceTimersByTime(SETTLE_DURATION_MILLISECONDS)
     expect(screen.getByLabelText('tilt')).toHaveTextContent('0,0')
   })
 
   it('should support arrow keys and cancel scheduled rendering when unmounted', () => {
     const view = render(Card)
     fireEvent.keyDown(screen.getByRole('group', {name: 'card'}), {key: 'ArrowLeft'})
-    flushFrames()
+    vi.advanceTimersByTime(SETTLE_DURATION_MILLISECONDS)
     expect(screen.getByLabelText('tilt')).toHaveTextContent('-0.25,0')
     fireEvent.keyDown(screen.getByRole('group', {name: 'card'}), {key: 'ArrowRight'})
-    expect(frames.size).toBe(1)
+    expect(vi.getTimerCount()).toBe(1)
     view.unmount()
-    expect(frames.size).toBe(0)
+    expect(vi.getTimerCount()).toBe(0)
   })
 
   it.each([
@@ -173,7 +158,7 @@ describe('useCardTilt', () => {
     const prevent = event.preventDefault.bind(event)
     const stop = event.stopPropagation.bind(event)
     vi.spyOn(event, 'preventDefault').mockImplementation(() => {
-      expect(frames.size).toBe(1)
+      expect(vi.getTimerCount()).toBe(1)
       calls.push('preventDefault')
       prevent()
     })
@@ -185,7 +170,7 @@ describe('useCardTilt', () => {
     fireEvent(card, event)
     expect(calls).toEqual(['key', 'preventDefault', 'stopPropagation'])
     expect(event.defaultPrevented).toBe(true)
-    flushFrames()
+    vi.advanceTimersByTime(SETTLE_DURATION_MILLISECONDS)
     expect(screen.getByLabelText('tilt')).toHaveTextContent(expected)
   })
 
@@ -196,14 +181,14 @@ describe('useCardTilt', () => {
       fireEvent.keyDown(card, {key: 'ArrowRight'})
       fireEvent.keyDown(card, {key: 'ArrowDown'})
     }
-    expect(frames.size).toBe(1)
-    flushFrames()
+    expect(vi.getTimerCount()).toBe(1)
+    vi.advanceTimersByTime(SETTLE_DURATION_MILLISECONDS)
     expect(screen.getByLabelText('tilt')).toHaveTextContent('1,1')
 
     const event = new KeyboardEvent('keydown', {bubbles: true, cancelable: true, key: 'Home'})
     fireEvent(card, event)
     expect(event.defaultPrevented).toBe(true)
-    flushFrames()
+    vi.advanceTimersByTime(SETTLE_DURATION_MILLISECONDS)
     expect(screen.getByLabelText('tilt')).toHaveTextContent('0,0')
   })
 
@@ -211,14 +196,14 @@ describe('useCardTilt', () => {
     render(Card)
     const card = screen.getByRole('group', {name: 'card'})
     fireEvent.keyDown(card, {key: 'ArrowRight'})
-    flushFrames()
+    vi.advanceTimersByTime(SETTLE_DURATION_MILLISECONDS)
     const event = new KeyboardEvent('keydown', {bubbles: true, cancelable: true, key: 'End'})
     const stop = vi.spyOn(event, 'stopPropagation')
 
     fireEvent(card, event)
     expect(event.defaultPrevented).toBe(false)
     expect(stop).not.toHaveBeenCalled()
-    expect(frames.size).toBe(0)
+    expect(vi.getTimerCount()).toBe(0)
     expect(screen.getByLabelText('tilt')).toHaveTextContent('0.25,0')
   })
 
@@ -226,7 +211,7 @@ describe('useCardTilt', () => {
     render(Card)
     const card = screen.getByRole('group', {name: 'card'})
     fireEvent.keyDown(card, {key: 'ArrowRight'})
-    flushFrames()
+    vi.advanceTimersByTime(SETTLE_DURATION_MILLISECONDS)
     expect(screen.getByLabelText('tilt')).toHaveTextContent('0.25,0')
     reduced = true
     preference.dispatchEvent(new Event('change'))
@@ -239,8 +224,8 @@ describe('useCardTilt', () => {
     fireEvent(card, event)
     expect(event.defaultPrevented).toBe(true)
     expect(stop).toHaveBeenCalledExactlyOnceWith()
-    flushFrames()
+    vi.advanceTimersByTime(SETTLE_DURATION_MILLISECONDS)
     expect(screen.getByLabelText('tilt')).toHaveTextContent('0,0')
-    expect(frames.size).toBe(0)
+    expect(vi.getTimerCount()).toBe(0)
   })
 })
