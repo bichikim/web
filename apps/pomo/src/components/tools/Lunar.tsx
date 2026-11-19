@@ -48,17 +48,11 @@ export const Lunar = () => {
     )
   })
   createEffect(() => {
-    const availableDays = lunarDayOptions()
-    if (availableDays.length === 0) {
-      return
-    }
+    // Track the raw day even when the selected day's memo value stays equal.
     const currentDay = day()
-    if (availableDays.some((option) => option.value === currentDay)) {
-      return
-    }
-    const lastAvailableDay = availableDays.at(-1)
-    if (lastAvailableDay !== undefined) {
-      setDay(lastAvailableDay.value)
+    const normalizedDay = selectedLunarDay()
+    if (currentDay !== normalizedDay) {
+      setDay(normalizedDay)
     }
   })
   const lunarConversion = createMemo(() =>
