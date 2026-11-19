@@ -331,22 +331,10 @@ const runCompressionJobs = async (jobs) => {
   }
 }
 
-const readWebpPaths = async (directory) => {
-  const entries = await readdir(directory, {withFileTypes: true})
-  const nestedPaths = await Promise.all(
-    entries.map((entry) => {
-      const entryPath = path.join(directory, entry.name)
-
-      if (entry.isDirectory()) {
-        return readWebpPaths(entryPath)
-      }
-
-      return path.extname(entry.name) === '.webp' ? [entryPath] : []
-    }),
-  )
-
-  return nestedPaths.flat()
-}
+const readWebpPaths = async (directory) =>
+  (await readdir(directory, {recursive: true, withFileTypes: true}))
+    .filter((entry) => !entry.isDirectory() && path.extname(entry.name) === '.webp')
+    .map((entry) => path.join(entry.parentPath, entry.name))
 
 const removeStaleWebps = async ({directories, expectedPaths}) => {
   const stalePaths = (
