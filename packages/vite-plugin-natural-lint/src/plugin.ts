@@ -64,10 +64,12 @@ export class NaturalLintSession {
   async initialize(): Promise<ProjectAnalysisReport> {
     const report = await analyzeProject(this.core, this.options)
     this.diagnostics.clear()
-    for (const diagnostic of report.diagnostics) {
-      if (!this.revisions.has(path.resolve(diagnostic.filePath))) {
-        const existing = this.diagnostics.get(diagnostic.filePath) ?? []
-        this.diagnostics.set(diagnostic.filePath, [...existing, diagnostic])
+    for (const [filePath, diagnostics] of Map.groupBy(
+      report.diagnostics,
+      ({filePath}) => filePath,
+    )) {
+      if (!this.revisions.has(path.resolve(filePath))) {
+        this.diagnostics.set(filePath, diagnostics)
       }
     }
     return report
