@@ -1,10 +1,10 @@
 /** @vitest-environment node */
 import type {SQL} from 'drizzle-orm'
 import {PgDialect} from 'drizzle-orm/pg-core'
-import {beforeEach, expect, it, vi} from 'vitest'
+import {beforeEach, describe, expect, it, vi} from 'vitest'
 
 import type {Database} from '../../../database'
-import {expireGenerationSubmission, listRecoverableGenerationRuns} from '..'
+import {expireGenerationSubmission, listRecoverableGenerationRuns, type RecoveryCutoffs} from '..'
 
 const databaseMocks = vi.hoisted(() => ({getDatabase: vi.fn()}))
 
@@ -23,6 +23,32 @@ const RECOVERY_CUTOFFS = {
   submissionExpiredBefore: new Date('2026-08-15T00:30:00.000Z'),
   submittedBefore: new Date('2026-08-15T00:00:00.000Z'),
 }
+
+const RECOVERY_ROW = {
+  id: 'run-1',
+  responseId: null,
+  status: 'preparing',
+  submissionState: 'unknown',
+} as const
+
+const createDatabaseProbe = () => {
+  const completion = vi.fn(async () => [RECOVERY_ROW])
+  const where = vi.fn((_condition: SQL) => ({
+    orderBy: vi.fn(() => ({limit: completion})),
+    returning: completion,
+  }))
+  const set = vi.fn(() => ({where}))
+  const database = {
+    select: vi.fn(() => ({from: vi.fn(() => ({where}))})),
+    update: vi.fn(() => ({set})),
+  } as unknown as Database
+  return {completion, database, set, where}
+}
+
+const runOperation = (operation: 'expire' | 'list', cutoffs: RecoveryCutoffs, database: Database) =>
+  operation === 'expire'
+    ? expireGenerationSubmission(RECOVERY_ROW.id, cutoffs, database)
+    : listRecoverableGenerationRuns(cutoffs, database)
 
 it('should expire only an ambiguous submission past its recovery deadline', async () => {
   const returning = vi.fn(async () => [{id: 'run-1'}])
@@ -87,4 +113,112 @@ it('should query recovery candidates and classify the returned rows', async () =
   const query = new PgDialect({casing: 'snake_case'}).sqlToQuery(condition)
   expect(query.params).toContain('preparing')
   expect(query.sql).toContain('"updated_at" <')
+})
+
+it('should use the default database for an expiration request', async () => {
+  const probe = createDatabaseProbe()
+  databaseMocks.getDatabase.mockReturnValue(probe.database)
+  await expect(expireGenerationSubmission(RECOVERY_ROW.id, RECOVERY_CUTOFFS)).resolves.toBe(true)
+  expect(databaseMocks.getDatabase).toHaveBeenCalledExactlyOnceWith()
+})
+
+describe.each(['expire', 'list'] as const)('%s cutoff contract', (operation) => {
+  it('should preserve cutoff reads and SQL parameter order', async () => {
+    const reads: Array<keyof RecoveryCutoffs> = []
+    const cutoffs: RecoveryCutoffs = {
+      get preparingBefore() {
+        reads.push('preparingBefore')
+        return RECOVERY_CUTOFFS.preparingBefore
+      },
+      get submissionExpiredBefore() {
+        reads.push('submissionExpiredBefore')
+        return RECOVERY_CUTOFFS.submissionExpiredBefore
+      },
+      get submittedBefore() {
+        reads.push('submittedBefore')
+        return RECOVERY_CUTOFFS.submittedBefore
+      },
+    }
+    const probe = createDatabaseProbe()
+    await runOperation(operation, cutoffs, probe.database)
+
+    expect(reads).toEqual([
+      ...(operation === 'list' ? ['submittedBefore'] : []),
+      'submissionExpiredBefore',
+      'preparingBefore',
+    ])
+    const condition = probe.where.mock.calls[0]?.[0]
+    const query = new PgDialect({casing: 'snake_case'}).sqlToQuery(condition)
+    expect(query.params).toEqual([
+      ...(operation === 'expire'
+        ? [RECOVERY_ROW.id]
+        : ['submitted', RECOVERY_CUTOFFS.submittedBefore.toISOString()]),
+      'preparing',
+      'unknown',
+      RECOVERY_CUTOFFS.submissionExpiredBefore.toISOString(),
+      RECOVERY_CUTOFFS.preparingBefore.toISOString(),
+    ])
+  })
+
+  it.each(['submissionExpiredBefore', 'preparingBefore'] as const)(
+    'should retain a %s getter failure before sending the query',
+    async (failedCutoff) => {
+      const failure = new Error('cutoff access failed')
+      const reads: Array<keyof RecoveryCutoffs> = []
+      const read = (name: keyof RecoveryCutoffs) => {
+        reads.push(name)
+        if (name === failedCutoff) {
+          throw failure
+        }
+        return RECOVERY_CUTOFFS[name]
+      }
+      const cutoffs: RecoveryCutoffs = {
+        get preparingBefore() {
+          return read('preparingBefore')
+        },
+        get submissionExpiredBefore() {
+          return read('submissionExpiredBefore')
+        },
+        get submittedBefore() {
+          return read('submittedBefore')
+        },
+      }
+      const probe = createDatabaseProbe()
+      await expect(runOperation(operation, cutoffs, probe.database)).rejects.toBe(failure)
+      expect(reads).toEqual([
+        ...(operation === 'list' ? ['submittedBefore'] : []),
+        'submissionExpiredBefore',
+        ...(failedCutoff === 'preparingBefore' ? ['preparingBefore'] : []),
+      ])
+      expect(probe.where).not.toHaveBeenCalled()
+      expect(probe.completion).not.toHaveBeenCalled()
+    },
+  )
+
+  it('should propagate the database failure unchanged', async () => {
+    const probe = createDatabaseProbe()
+    const failure = new Error('database failed')
+    probe.completion.mockRejectedValueOnce(failure)
+    await expect(runOperation(operation, RECOVERY_CUTOFFS, probe.database)).rejects.toBe(failure)
+  })
+
+  it('should wait for the database result before reporting completion', async () => {
+    const probe = createDatabaseProbe()
+    const started = Promise.withResolvers<void>()
+    const pending = Promise.withResolvers<Array<typeof RECOVERY_ROW>>()
+    probe.completion.mockImplementationOnce(() => {
+      started.resolve()
+      return pending.promise
+    })
+    let settled = false
+    const result = runOperation(operation, RECOVERY_CUTOFFS, probe.database).finally(() => {
+      settled = true
+    })
+    await started.promise
+    expect(settled).toBe(false)
+    pending.resolve([RECOVERY_ROW])
+    await expect(result).resolves.toEqual(
+      operation === 'expire' ? true : [{kind: 'submission_unknown', runId: RECOVERY_ROW.id}],
+    )
+  })
 })

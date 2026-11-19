@@ -16,6 +16,23 @@ export interface RecoveryCutoffs extends SubmissionExpirationCutoffs {
   readonly submittedBefore: Date
 }
 
+/** Matches ambiguous submissions past their stored or legacy recovery deadline. */
+const createExpirationFilter = (cutoffs: SubmissionExpirationCutoffs) =>
+  and(
+    eq(historicalGenerationRuns.status, 'preparing'),
+    isNull(historicalGenerationRuns.openAiResponseId),
+    or(
+      and(
+        eq(historicalGenerationRuns.submissionState, 'unknown'),
+        lte(historicalGenerationRuns.submissionExpiresAt, cutoffs.submissionExpiredBefore),
+      ),
+      and(
+        isNull(historicalGenerationRuns.submissionState),
+        lt(historicalGenerationRuns.updatedAt, cutoffs.preparingBefore),
+      ),
+    ),
+  )
+
 /** Terminates an ambiguous submission only after its stored recovery deadline. */
 export const expireGenerationSubmission = async (
   runId: string,
@@ -25,23 +42,7 @@ export const expireGenerationSubmission = async (
   const [expired] = await database
     .update(historicalGenerationRuns)
     .set({submissionState: 'expired', updatedAt: new Date()})
-    .where(
-      and(
-        eq(historicalGenerationRuns.id, runId),
-        eq(historicalGenerationRuns.status, 'preparing'),
-        isNull(historicalGenerationRuns.openAiResponseId),
-        or(
-          and(
-            eq(historicalGenerationRuns.submissionState, 'unknown'),
-            lte(historicalGenerationRuns.submissionExpiresAt, cutoffs.submissionExpiredBefore),
-          ),
-          and(
-            isNull(historicalGenerationRuns.submissionState),
-            lt(historicalGenerationRuns.updatedAt, cutoffs.preparingBefore),
-          ),
-        ),
-      ),
-    )
+    .where(and(eq(historicalGenerationRuns.id, runId), createExpirationFilter(cutoffs)))
     .returning({id: historicalGenerationRuns.id})
 
   return expired !== undefined
@@ -66,20 +67,7 @@ export const listRecoverableGenerationRuns = async (
           eq(historicalGenerationRuns.status, 'submitted'),
           lt(historicalGenerationRuns.updatedAt, cutoffs.submittedBefore),
         ),
-        and(
-          eq(historicalGenerationRuns.status, 'preparing'),
-          isNull(historicalGenerationRuns.openAiResponseId),
-          or(
-            and(
-              eq(historicalGenerationRuns.submissionState, 'unknown'),
-              lte(historicalGenerationRuns.submissionExpiresAt, cutoffs.submissionExpiredBefore),
-            ),
-            and(
-              isNull(historicalGenerationRuns.submissionState),
-              lt(historicalGenerationRuns.updatedAt, cutoffs.preparingBefore),
-            ),
-          ),
-        ),
+        createExpirationFilter(cutoffs),
       ),
     )
     .orderBy(
