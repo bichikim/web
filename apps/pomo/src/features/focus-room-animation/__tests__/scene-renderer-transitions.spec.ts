@@ -1,11 +1,9 @@
 /** @vitest-environment jsdom */
 
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
-import {createRendererMocks} from './support/renderer'
+import {createLease, createRendererMocks, createState, layerDefinition} from './support/renderer'
 
-import {type PixiLayerSceneDefinition} from '../layer-scene'
-
-import {PSceneRenderer, type PSceneState} from '../scene-renderer'
+import {PSceneRenderer} from '../scene-renderer'
 
 import {acquireTextureGroup, releaseTextureGroup} from '../texture-leases'
 
@@ -43,28 +41,6 @@ const {
   parallaxInstances,
   transitionInstances,
 } = mocks
-
-const createLease = (source: string) => ({source, texture: {source}})
-
-const createState = (overrides: Partial<PSceneState> = {}): PSceneState => ({
-  activity: 'reading',
-  depthSource: '/depth.webp',
-  gaze: 'user',
-  layerScene: null,
-  sceneStyle: 'original',
-  source: '/scene.webp',
-  time: 'day',
-  viseme: 'rest',
-  ...overrides,
-})
-
-const layerDefinition = (id = 'layers'): PixiLayerSceneDefinition => ({
-  background: '#fff',
-  height: 100,
-  id,
-  layers: [{id: 'base', source: '/layer.webp'}],
-  width: 100,
-})
 
 const flushPromises = async () => {
   await Promise.resolve()

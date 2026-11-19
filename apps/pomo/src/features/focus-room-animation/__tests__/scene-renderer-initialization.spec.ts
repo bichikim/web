@@ -2,17 +2,17 @@
 
 import {Application, Sprite} from 'pixi.js'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
-import {createRendererMocks} from './support/renderer'
+import {createLease, createRendererMocks, createState, layerDefinition} from './support/renderer'
 
 import {DepthParallaxFilter} from '../depth-parallax-filter'
 
-import {PixiLayerScene, type PixiLayerSceneDefinition} from '../layer-scene'
+import {PixiLayerScene} from '../layer-scene'
 
 import {SCENE_HEIGHT, SCENE_WIDTH} from '../scene-composite-transition'
 
 import {SceneLoadingState} from '../scene-loading-state'
 
-import {PSceneRenderer, type PSceneState} from '../scene-renderer'
+import {PSceneRenderer} from '../scene-renderer'
 
 import {acquireTextureGroup, releaseTextureGroup} from '../texture-leases'
 
@@ -54,28 +54,6 @@ const {
   steamInstances,
   transitionInstances,
 } = mocks
-
-const createLease = (source: string) => ({source, texture: {source}})
-
-const createState = (overrides: Partial<PSceneState> = {}): PSceneState => ({
-  activity: 'reading',
-  depthSource: '/depth.webp',
-  gaze: 'user',
-  layerScene: null,
-  sceneStyle: 'original',
-  source: '/scene.webp',
-  time: 'day',
-  viseme: 'rest',
-  ...overrides,
-})
-
-const layerDefinition = (id = 'layers'): PixiLayerSceneDefinition => ({
-  background: '#fff',
-  height: 100,
-  id,
-  layers: [{id: 'base', source: '/layer.webp'}],
-  width: 100,
-})
 
 const flushPromises = async () => {
   await Promise.resolve()

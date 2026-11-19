@@ -1,11 +1,9 @@
 /** @vitest-environment jsdom */
 
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
-import {createRendererMocks} from './support/renderer'
+import {createRendererMocks, createState, layerDefinition} from './support/renderer'
 
-import {type PixiLayerSceneDefinition} from '../layer-scene'
-
-import {PSceneRenderer, type PSceneState} from '../scene-renderer'
+import {PSceneRenderer} from '../scene-renderer'
 
 vi.mock('pixi.js', () => ({
   Application: vi.fn(),
@@ -32,26 +30,6 @@ vi.mock('../texture-leases', () => ({
 
 const mocks = createRendererMocks()
 const {applications, depthFilters, layerScenes, loadings, parallaxInstances} = mocks
-
-const createState = (overrides: Partial<PSceneState> = {}): PSceneState => ({
-  activity: 'reading',
-  depthSource: '/depth.webp',
-  gaze: 'user',
-  layerScene: null,
-  sceneStyle: 'original',
-  source: '/scene.webp',
-  time: 'day',
-  viseme: 'rest',
-  ...overrides,
-})
-
-const layerDefinition = (id = 'layers'): PixiLayerSceneDefinition => ({
-  background: '#fff',
-  height: 100,
-  id,
-  layers: [{id: 'base', source: '/layer.webp'}],
-  width: 100,
-})
 
 const flushPromises = async () => {
   await Promise.resolve()
