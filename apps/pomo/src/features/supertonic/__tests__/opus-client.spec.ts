@@ -6,58 +6,33 @@ import {createOpusBlob} from '../opus-client'
 
 type WorkerListener = (event: ErrorEvent | MessageEvent<OpusWorkerResponse>) => void
 
+// These tests share one fake Worker state and exercise one request at a time.
 const workerMocks = {
-  listeners: new Map<string, WorkerListener>(),
+  onerror: null as WorkerListener | null,
+  onmessage: null as WorkerListener | null,
+  onmessageerror: null as WorkerListener | null,
   postMessage: vi.fn<(message: OpusWorkerRequest, transfer: Transferable[]) => void>(),
   terminate: vi.fn(),
 }
 
-const dispatch = (type: string, event: ErrorEvent | MessageEvent<OpusWorkerResponse>) => {
-  const listener = workerMocks.listeners.get(type)
+const dispatch = (
+  type: 'error' | 'message' | 'messageerror',
+  event: ErrorEvent | MessageEvent<OpusWorkerResponse>,
+) => {
+  const listener = workerMocks[`on${type}`]
 
   listener?.(event)
 }
 
 beforeEach(() => {
   vi.clearAllMocks()
-  workerMocks.listeners.clear()
+  workerMocks.onerror = null
+  workerMocks.onmessage = null
+  workerMocks.onmessageerror = null
   vi.stubGlobal(
     'Worker',
     vi.fn(function WorkerMock() {
-      return {
-        get onerror() {
-          return workerMocks.listeners.get('error') ?? null
-        },
-        set onerror(listener: WorkerListener | null) {
-          if (listener === null) {
-            workerMocks.listeners.delete('error')
-          } else {
-            workerMocks.listeners.set('error', listener)
-          }
-        },
-        get onmessage() {
-          return workerMocks.listeners.get('message') ?? null
-        },
-        set onmessage(listener: WorkerListener | null) {
-          if (listener === null) {
-            workerMocks.listeners.delete('message')
-          } else {
-            workerMocks.listeners.set('message', listener)
-          }
-        },
-        get onmessageerror() {
-          return workerMocks.listeners.get('messageerror') ?? null
-        },
-        set onmessageerror(listener: WorkerListener | null) {
-          if (listener === null) {
-            workerMocks.listeners.delete('messageerror')
-          } else {
-            workerMocks.listeners.set('messageerror', listener)
-          }
-        },
-        postMessage: workerMocks.postMessage,
-        terminate: workerMocks.terminate,
-      }
+      return workerMocks
     }),
   )
 })
