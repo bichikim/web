@@ -2,6 +2,7 @@
 import {createRoot, createSignal} from 'solid-js'
 import {fireEvent, render, screen, waitFor, within} from '@solidjs/testing-library'
 import {expect, it, vi} from 'vitest'
+import {sampleEntry} from './fixtures/sample-entry'
 import type {PictureDiaryEntry} from '../../../features/picture-diary'
 import {PictureDiaryEditor} from '../picture-diary/Editor'
 import {PictureDiary} from '../PictureDiary'
@@ -12,16 +13,12 @@ vi.mock('src/features/model-download', () => ({useModelDownload: vi.fn()}))
 vi.mock('src/features/image-generation/client', () => ({runImageGeneration: vi.fn()}))
 const {createRepository, environment, finishPageTurn, turns} = setupDiary()
 
-const createExistingEntry = (): PictureDiaryEntry => ({
-  createdAt: '2026-09-04T03:00:00.000Z',
-  date: '2026-09-04',
-  id: 'edit-entry',
-  strokes: [{points: [{x: 0.5, y: 0.5}]}],
-  text: '기존 일기',
-  updatedAt: '2026-09-04T03:00:00.000Z',
-  version: 1,
-  weather: {condition: 'clear', temperatureCelsius: 24},
-})
+const createExistingEntry = (): PictureDiaryEntry =>
+  sampleEntry('기존 일기', {
+    id: 'edit-entry',
+    strokes: [{points: [{x: 0.5, y: 0.5}]}],
+    weather: {condition: 'clear', temperatureCelsius: 24},
+  })
 
 const renderExistingEntry = (
   entry: PictureDiaryEntry,
@@ -148,15 +145,9 @@ it('should preserve a new diary draft after saving an existing entry', async () 
 it('should keep an edit save completed after disposal', async () => {
   const pending = Promise.withResolvers<void>()
   const updatedAt = '2026-09-26T00:00:00.000Z'
-  const entry: PictureDiaryEntry = {
-    createdAt: '2026-09-04T03:00:00.000Z',
-    date: '2026-09-04',
+  const entry: PictureDiaryEntry = sampleEntry('기존 일기', {
     id: 'edit-entry',
-    strokes: [],
-    text: '기존 일기',
-    updatedAt: '2026-09-04T03:00:00.000Z',
-    version: 1,
-  }
+  })
   const repository = createRepository([entry])
   repository.save.mockReturnValue(pending.promise)
   const onSaved = vi.fn()

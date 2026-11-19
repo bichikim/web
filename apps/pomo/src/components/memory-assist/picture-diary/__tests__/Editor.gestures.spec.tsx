@@ -2,8 +2,9 @@
 
 import {fireEvent, screen} from '@solidjs/testing-library'
 import {expect, it, vi} from 'vitest'
+import {sampleEntry} from '../../__tests__/fixtures/sample-entry'
 import type {PictureDiaryEntry} from '../../../../features/picture-diary'
-import {finishPageTurn, renderEditor, sampleEntry, turns} from './fixtures/editor'
+import {finishPageTurn, renderEditor, turns} from './fixtures/editor'
 
 it('should cancel a turn when its responsive page geometry changes before completion', () => {
   turns.setCompact(true)
@@ -71,15 +72,9 @@ it('should complete without animation when reduced motion is requested', () => {
 it('should turn pages by dragging and releasing the outer page edges', () => {
   const onGoNewer = vi.fn()
   const onGoOlder = vi.fn()
-  const currentEntry = {
-    createdAt: '2026-09-04T03:00:00.000Z',
-    date: '2026-09-04',
+  const currentEntry = sampleEntry('오늘 일기', {
     id: 'current-entry',
-    strokes: [],
-    text: '오늘 일기',
-    updatedAt: '2026-09-04T03:00:00.000Z',
-    version: 1,
-  } satisfies PictureDiaryEntry
+  }) satisfies PictureDiaryEntry
   const previousEntry = {
     ...currentEntry,
     date: '2026-09-03',
@@ -127,15 +122,9 @@ it('should turn pages by dragging and releasing the outer page edges', () => {
 it('should ignore short, vertical, reversed, and cancelled edge drags', () => {
   const onGoNewer = vi.fn()
   const onGoOlder = vi.fn()
-  const entry = {
-    createdAt: '2026-09-04T03:00:00.000Z',
-    date: '2026-09-04',
+  const entry = sampleEntry('일기', {
     id: 'entry',
-    strokes: [],
-    text: '일기',
-    updatedAt: '2026-09-04T03:00:00.000Z',
-    version: 1,
-  } satisfies PictureDiaryEntry
+  }) satisfies PictureDiaryEntry
   renderEditor({
     canGoNewer: true,
     canGoOlder: true,
