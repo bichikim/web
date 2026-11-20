@@ -203,6 +203,55 @@ describe('projectCard', () => {
     },
   )
 
+  it.each([
+    {
+      horizontal: [-200, 200, 200, -200],
+      input: {height: 600, width: 400, x: 0, y: 0},
+      name: 'resting bounds',
+      vertical: [-300, -300, 300, 300],
+    },
+    {
+      horizontal: [-203.6471847033913, 202.68695027087247, 196.42205067868846, -197.32371023500423],
+      input: {height: 600, width: 400, x: 0.125, y: -0.875},
+      name: 'fractional bounds',
+      vertical: [-304.2903146932488, -303.41366478448657, 293.4944949067889, 295.3851246528848],
+    },
+    {
+      horizontal: [0, -0, -0, 0],
+      input: {height: 600, width: -0, x: -0, y: 0},
+      name: 'signed zero bounds',
+      vertical: [-300, -300, 300, 300],
+    },
+    {
+      horizontal: [NaN, NaN, NaN, NaN],
+      input: {height: 600, width: Infinity, x: 0, y: 0},
+      name: 'nonfinite bounds',
+      vertical: [NaN, NaN, NaN, NaN],
+    },
+  ])(
+    'should pass all four ordered coordinates to native extrema for $name',
+    ({horizontal, input, vertical}) => {
+      const calls: [string, number[]][] = []
+      const minimum = Math.min
+      const maximum = Math.max
+      vi.spyOn(Math, 'min').mockImplementation((...values) => {
+        calls.push(['min', values])
+        return minimum(...values)
+      })
+      vi.spyOn(Math, 'max').mockImplementation((...values) => {
+        calls.push(['max', values])
+        return maximum(...values)
+      })
+      projectCard(input)
+      expect(calls.filter(([, values]) => values.length === 4)).toEqual([
+        ['min', horizontal],
+        ['max', horizontal],
+        ['min', vertical],
+        ['max', vertical],
+      ])
+    },
+  )
+
   it('should calculate each rotation sine and cosine once for all four corners', () => {
     const sine = vi.spyOn(Math, 'sin')
     const cosine = vi.spyOn(Math, 'cos')

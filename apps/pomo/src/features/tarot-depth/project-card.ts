@@ -40,10 +40,10 @@ export const projectCard = (options: ProjectCardOptions): CardCorners => {
     const perspective = distance / (distance - depth)
     return {x: rotatedX * perspective, y: rotatedY * perspective}
   })
-  const left = Math.min(...points.map((point) => point.x))
-  const right = Math.max(...points.map((point) => point.x))
-  const top = Math.min(...points.map((point) => point.y))
-  const bottom = Math.max(...points.map((point) => point.y))
+  const left = Math.min(points[0]!.x, points[1]!.x, points[2]!.x, points[3]!.x)
+  const right = Math.max(points[0]!.x, points[1]!.x, points[2]!.x, points[3]!.x)
+  const top = Math.min(points[0]!.y, points[1]!.y, points[2]!.y, points[3]!.y)
+  const bottom = Math.max(points[0]!.y, points[1]!.y, points[2]!.y, points[3]!.y)
   const scale = Math.min(1, options.width / (right - left), options.height / (bottom - top))
   const centered = points.map((point) => ({
     x: clamp((point.x - (left + right) / 2) * scale + options.width / 2, 0, options.width),
