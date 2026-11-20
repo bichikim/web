@@ -1,6 +1,6 @@
 import {type Accessor, createSignal, type Setter} from 'solid-js'
 
-import type {PEventContextValue} from '../focus-room-dialogue'
+import type {PEventContextValue, PlayPDialogueSequenceOptions} from '../focus-room-dialogue'
 import type {FeedDialogueListItem} from './feed-controller'
 import type {FeedDialogueRepository} from './feed-dialogue-repository'
 import {recoverMissingFeedDialogue} from './missing-dialogue-recovery'
@@ -88,59 +88,55 @@ export const createFeedPlaybackController = (
     await options.events.deleteDialogue(dialogueId)
   }
   const markListened = (dialogueId: string) => markDialoguesListened([dialogueId])
+  const runPlayback = async (
+    getDialogueIds: () => ReadonlyArray<string>,
+    onSequenceStop: PlayPDialogueSequenceOptions['onSequenceStop'],
+  ) => {
+    if (isListening()) {
+      return
+    }
+
+    const dialogueIds = getDialogueIds()
+
+    if (dialogueIds.length === 0) {
+      return
+    }
+
+    setIsListening(true)
+
+    try {
+      await options.events.playDialogueSequence({
+        dialogueIds,
+        onDialogueStart: markListened,
+        onDialogueUnavailable: recoverUnavailableDialogue,
+        onSequenceStop,
+      })
+    } finally {
+      if (!options.isDisposed()) {
+        setIsListening(false)
+      }
+    }
+  }
 
   return {
     isListening,
-    async listen(dialogueId) {
-      if (isListening()) {
-        return
-      }
-
-      setIsListening(true)
-
-      try {
-        await options.events.playDialogueSequence({
-          dialogueIds: [dialogueId],
-          onDialogueStart: markListened,
-          onDialogueUnavailable: recoverUnavailableDialogue,
-          onSequenceStop: () => undefined,
-        })
-      } finally {
-        if (!options.isDisposed()) {
-          setIsListening(false)
-        }
-      }
+    listen(dialogueId) {
+      return runPlayback(
+        () => [dialogueId],
+        () => undefined,
+      )
     },
-    async listenAll() {
-      if (isListening()) {
-        return
-      }
-
-      const dialogueIds = options
-        .dialogues()
-        .filter((item) => item.metadata.listenedAt === null)
-        .map((item) => item.dialogue.id)
-        .toReversed()
-
-      if (dialogueIds.length === 0) {
-        return
-      }
-
-      setIsListening(true)
-
-      try {
-        await options.events.playDialogueSequence({
-          dialogueIds,
-          onDialogueStart: markListened,
-          onDialogueUnavailable: recoverUnavailableDialogue,
-          // A user stop dismisses the whole feed batch; cancellations and playback failures do not.
-          onSequenceStop: markDialoguesListened,
-        })
-      } finally {
-        if (!options.isDisposed()) {
-          setIsListening(false)
-        }
-      }
+    listenAll() {
+      // A user stop dismisses the whole feed batch; cancellations and playback failures do not.
+      return runPlayback(
+        () =>
+          options
+            .dialogues()
+            .filter((item) => item.metadata.listenedAt === null)
+            .map((item) => item.dialogue.id)
+            .toReversed(),
+        markDialoguesListened,
+      )
     },
   }
 }
