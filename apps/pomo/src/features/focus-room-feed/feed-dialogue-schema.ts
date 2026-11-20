@@ -19,104 +19,95 @@ export const FEED_DIALOGUE_EXPIRATION_MS =
   EXPIRATION_HOURS * MINUTES_PER_HOUR * SECONDS_PER_MINUTE * MILLISECONDS_PER_SECOND
 export const MAXIMUM_FEED_SCRIPT_LENGTH = 3000
 
-export interface FeedDialogueMetadata {
+const feedItemFieldsSchema = z.object({
+  feedConnectionId: z.string().min(1),
+  feedItemId: z.string().min(1),
+  itemTitle: z.string().min(1),
+  publishedAt: z.iso.datetime(),
+  sourceTitle: z.string().min(1),
+  sourceUrl: z.url(),
+  version: z.literal(1),
+})
+
+type FeedItemFields = Readonly<z.infer<typeof feedItemFieldsSchema>>
+
+const feedIdentityShape = feedItemFieldsSchema.pick({
+  feedConnectionId: true,
+  feedItemId: true,
+}).shape
+const feedSourceShape = feedItemFieldsSchema.pick({sourceTitle: true, sourceUrl: true}).shape
+
+export interface FeedDialogueMetadata extends FeedItemFields {
   readonly createdAt: string
   readonly dialogueId: string
   readonly expiresAt: string
-  readonly feedConnectionId: string
-  readonly feedItemId: string
-  readonly itemTitle: string
   readonly listenedAt: string | null
-  readonly publishedAt: string
-  readonly sourceTitle: string
-  readonly sourceUrl: string
-  readonly version: 1
 }
 
 export const feedDialogueMetadataSchema: z.ZodType<FeedDialogueMetadata> = z.object({
   createdAt: z.iso.datetime(),
   dialogueId: z.string().min(1),
   expiresAt: z.iso.datetime(),
-  feedConnectionId: z.string().min(1),
-  feedItemId: z.string().min(1),
-  itemTitle: z.string().min(1),
+  ...feedIdentityShape,
+  itemTitle: feedItemFieldsSchema.shape.itemTitle,
   listenedAt: z.iso.datetime().nullable(),
-  publishedAt: z.iso.datetime(),
-  sourceTitle: z.string().min(1),
-  sourceUrl: z.url(),
-  version: z.literal(1),
+  publishedAt: feedItemFieldsSchema.shape.publishedAt,
+  ...feedSourceShape,
+  version: feedItemFieldsSchema.shape.version,
 })
 
 export type FeedDialogueJobStatus = 'failed' | 'generating' | 'interrupted' | 'pending' | 'queued'
 
-export interface FeedDialogueJob {
+export interface FeedDialogueJob extends FeedItemFields {
   readonly createdAt: string
   readonly errorMessage: string | null
-  readonly feedConnectionId: string
-  readonly feedItemId: string
   readonly id: string
-  readonly itemTitle: string
   readonly modelId: SupertonicModelId
-  readonly publishedAt: string
   readonly script: string
-  readonly sourceTitle: string
-  readonly sourceUrl: string
   readonly status: FeedDialogueJobStatus
   readonly updatedAt: string
-  readonly version: 1
   readonly voiceId: SupertonicVoiceId
 }
 
 export const feedDialogueJobSchema: z.ZodType<FeedDialogueJob> = z.object({
   createdAt: z.iso.datetime(),
   errorMessage: z.string().nullable(),
-  feedConnectionId: z.string().min(1),
-  feedItemId: z.string().min(1),
+  ...feedIdentityShape,
   id: z.string().min(1),
-  itemTitle: z.string().min(1),
+  itemTitle: feedItemFieldsSchema.shape.itemTitle,
   modelId: modelIdSchema,
-  publishedAt: z.iso.datetime(),
+  publishedAt: feedItemFieldsSchema.shape.publishedAt,
   script: z.string().min(1).max(MAXIMUM_FEED_SCRIPT_LENGTH),
-  sourceTitle: z.string().min(1),
-  sourceUrl: z.url(),
+  ...feedSourceShape,
   status: z.enum(['failed', 'generating', 'interrupted', 'pending', 'queued']),
   updatedAt: z.iso.datetime(),
-  version: z.literal(1),
+  version: feedItemFieldsSchema.shape.version,
   voiceId: supertonicVoiceIdSchema,
 })
 
 export type FeedItemStatus = 'dismissed' | 'failed' | 'ignored' | 'queued' | 'ready' | 'too-long'
 
-export interface FeedItemRecord {
+export interface FeedItemRecord extends FeedItemFields {
   readonly contentLength: number
   readonly discoveredAt: string
-  readonly feedConnectionId: string
-  readonly feedItemId: string
   readonly id: string
-  readonly itemTitle: string
   readonly message: string | null
-  readonly publishedAt: string
-  readonly sourceTitle: string
-  readonly sourceUrl: string
   readonly status: FeedItemStatus
   readonly updatedAt: string
-  readonly version: 1
 }
 
 export const feedItemRecordSchema: z.ZodType<FeedItemRecord> = z.object({
   contentLength: z.number().int().nonnegative(),
   discoveredAt: z.iso.datetime(),
-  feedConnectionId: z.string().min(1),
-  feedItemId: z.string().min(1),
+  ...feedIdentityShape,
   id: z.string().min(1),
-  itemTitle: z.string().min(1),
+  itemTitle: feedItemFieldsSchema.shape.itemTitle,
   message: z.string().nullable(),
-  publishedAt: z.iso.datetime(),
-  sourceTitle: z.string().min(1),
-  sourceUrl: z.url(),
+  publishedAt: feedItemFieldsSchema.shape.publishedAt,
+  ...feedSourceShape,
   status: z.enum(['dismissed', 'failed', 'ignored', 'queued', 'ready', 'too-long']),
   updatedAt: z.iso.datetime(),
-  version: z.literal(1),
+  version: feedItemFieldsSchema.shape.version,
 })
 
 export const getFeedItemRecordId = (feedConnectionId: string, feedItemId: string) =>
