@@ -6,13 +6,7 @@ import {
   type PomodoroTimerState,
 } from './model'
 
-export type PomodoroTimerEvent =
-  | 'break-end'
-  | 'break-start'
-  | 'focus-end'
-  | 'focus-start'
-  | 'long-break-end'
-  | 'long-break-start'
+export type PomodoroTimerEvent = ReturnType<typeof getPhaseEvent>
 
 // oxlint-disable-next-line eslint/no-magic-numbers -- Bound for delayed timer event delivery.
 export const MAX_POMODORO_TIMER_CATCH_UP_EVENTS = 16 as const
@@ -31,28 +25,14 @@ interface AppendTransitionEventsOptions {
   readonly shouldEmitStartEvent: boolean
 }
 
-const getEndEvent = (state: PomodoroTimerState): PomodoroTimerEvent => {
+const getPhaseEvent = (state: PomodoroTimerState, event: 'start' | 'end') => {
   switch (state.phase) {
     case 'focus':
-      return 'focus-end'
+      return event === 'start' ? 'focus-start' : 'focus-end'
     case 'longBreak':
-      return 'long-break-end'
+      return event === 'start' ? 'long-break-start' : 'long-break-end'
     case 'shortBreak':
-      return 'break-end'
-  }
-
-  const exhaustivePhase: never = state.phase
-  return exhaustivePhase
-}
-
-const getStartEvent = (state: PomodoroTimerState): PomodoroTimerEvent => {
-  switch (state.phase) {
-    case 'focus':
-      return 'focus-start'
-    case 'longBreak':
-      return 'long-break-start'
-    case 'shortBreak':
-      return 'break-start'
+      return event === 'start' ? 'break-start' : 'break-end'
   }
 
   const exhaustivePhase: never = state.phase
@@ -152,10 +132,10 @@ const appendTransitionEvents = (
   nextState: PomodoroTimerState,
   options: AppendTransitionEventsOptions,
 ) => {
-  events.push(getEndEvent(currentState))
+  events.push(getPhaseEvent(currentState, 'end'))
 
   if (options.shouldEmitStartEvent) {
-    events.push(getStartEvent(nextState))
+    events.push(getPhaseEvent(nextState, 'start'))
   }
 
   if (options.maxEventCount !== undefined && events.length > options.maxEventCount) {
@@ -212,11 +192,11 @@ export const getPomodoroTimerEvents = (
   }
 
   if (previousState.status !== 'idle' && (phaseChanged || nextState.status === 'idle')) {
-    events.push(getEndEvent(previousState))
+    events.push(getPhaseEvent(previousState, 'end'))
   }
 
   if (nextState.status === 'running' && (phaseChanged || previousState.status === 'idle')) {
-    events.push(getStartEvent(nextState))
+    events.push(getPhaseEvent(nextState, 'start'))
   }
 
   return events
