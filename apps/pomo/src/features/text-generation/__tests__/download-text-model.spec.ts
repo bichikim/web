@@ -1,8 +1,10 @@
 /** @vitest-environment node */
+import {sumBy} from 'es-toolkit/math'
 import {beforeEach, expect, it, vi} from 'vitest'
 import {successResult} from 'src/features/result'
 import type {ModelStorage, ModelStorageError} from '../../model-storage'
 import {downloadTextModel, type TextModelDownloadRuntime} from '../download-text-model'
+import type {TextGenerationProgress} from '../progress'
 
 const createRuntime = () =>
   ({
@@ -129,6 +131,101 @@ it('should skip storage and network access for a bundled model', async () => {
   expect(runtime.storage.get).not.toHaveBeenCalled()
   expect(runtime.storage.set).not.toHaveBeenCalled()
   expect(runtime.resumable.fetch).not.toHaveBeenCalled()
+  expect(runtime.resumable.deletePartial).not.toHaveBeenCalled()
+})
+
+it.each([
+  ['ordinary', ['6', '2', '3', '4', '4']],
+  ['unknown totals', ['0', '0', '0', '0', '0']],
+  ['negative zero', ['-0', '-0', '-0', '-0', '-0']],
+  ['NaN', ['NaN', '2', '3', '4', '4']],
+  ['infinity', ['Infinity', '2', '3', '4', '4']],
+  ['opposite infinities', ['Infinity', '-Infinity', '3', '4', '4']],
+  ['overflow', ['1.7976931348623157e308', '1.7976931348623157e308', '-1', '1', '4']],
+  ['rounding order', ['9007199254740992', '1', '-9007199254740992', '1', '4']],
+  ['subnormal', ['5e-324', '-5e-324', '0.1', '0.2', '4']],
+])('should preserve ordered progress snapshots for %s', async (_name, headers) => {
+  let inspected = 0
+  runtime.storage.get.mockImplementation(async () => {
+    const index = inspected
+    inspected += 1
+    return successResult(
+      index < 4 ? new Response(null, {headers: {'content-length': headers[index]}}) : null,
+    )
+  })
+  runtime.resumable.fetch.mockImplementation(
+    async (_input, options) =>
+      new Response(
+        options?.method === 'HEAD'
+          ? null
+          : new ReadableStream<Uint8Array>({
+              start(controller) {
+                for (const size of [0, 1, 3]) {
+                  controller.enqueue(new Uint8Array(size))
+                }
+                controller.close()
+              },
+            }),
+        {headers: {'content-length': headers[4]}},
+      ),
+  )
+  const snapshots: TextGenerationProgress[] = []
+  const onProgress = vi.fn((progress: TextGenerationProgress) => {
+    expect(runtime.storage.set).toHaveBeenCalledTimes(snapshots.length === 0 ? 0 : 1)
+    expect(runtime.resumable.deletePartial).toHaveBeenCalledTimes(snapshots.length === 0 ? 0 : 4)
+    snapshots.push(progress)
+  })
+
+  await downloadTextModel({modelId: 'lfm-2.6b-qad', onProgress, runtime})
+
+  expect(onProgress).toHaveBeenCalledTimes(4)
+  const names = runtime.storage.get.mock.calls.map(([url]) => url)
+  const totals = headers.map(Number)
+  for (const [index, streamed] of [0, 0, 1, 4].entries()) {
+    const progress = snapshots[index]
+    const loaded = [...totals.slice(0, 4), streamed]
+    const loadedBytes = sumBy(loaded, (value) => value)
+    const totalBytes = sumBy(totals, (value) => value)
+    expect(progress.loadedBytes).toBe(loadedBytes)
+    expect(progress.totalBytes).toBe(totalBytes)
+    expect(progress.percentage).toBe(
+      totalBytes > 0 ? Math.round((loadedBytes / totalBytes) * 100) : 0,
+    )
+    expect(Object.keys(progress)).toEqual(['files', 'loadedBytes', 'percentage', 'totalBytes'])
+    expect(progress.files).toEqual(
+      names.map((fileName, file) => ({
+        fileName,
+        loadedBytes: loaded[file],
+        percentage: totals[file] > 0 ? Math.round((loaded[file] / totals[file]) * 100) : 0,
+        totalBytes: totals[file],
+      })),
+    )
+    for (const row of progress.files) {
+      expect(Object.keys(row)).toEqual(['fileName', 'loadedBytes', 'percentage', 'totalBytes'])
+    }
+    if (index > 0) {
+      expect(progress).not.toBe(snapshots[index - 1])
+      expect(progress.files).not.toBe(snapshots[index - 1].files)
+      for (const [file, row] of progress.files.entries()) {
+        expect(row).not.toBe(snapshots[index - 1].files[file])
+      }
+    }
+  }
+})
+
+it.each([1, 2])('should propagate the error from progress callback %i', async (throwAt) => {
+  const error = new Error('progress failed')
+  let calls = 0
+  const onProgress = () => {
+    calls += 1
+    if (calls === throwAt) {
+      throw error
+    }
+  }
+  const download = downloadTextModel({modelId: 'lfm-2.6b-qad', onProgress, runtime})
+  await expect(download).rejects.toBe(error)
+  expect(calls).toBe(throwAt)
+  expect(runtime.storage.set).toHaveBeenCalledTimes(throwAt - 1)
   expect(runtime.resumable.deletePartial).not.toHaveBeenCalled()
 })
 

@@ -1,5 +1,4 @@
 // oxlint-disable no-await-in-loop -- Sequential file writes bound download memory independently of model size.
-import {sumBy} from 'es-toolkit/math'
 import type {ModelStorage, ModelStorageError, ResumableModelFetch} from '../model-storage'
 import {getTextModelWeightUrls} from './download'
 import {getTextModelCacheKey} from './get-text-model-cache-key'
@@ -138,14 +137,21 @@ export const downloadTextModel = async (options: DownloadTextModelOptions): Prom
       {loaded: asset.cached ? asset.total : 0, total: asset.total},
     ]),
   )
-  const reportProgress = () =>
-    options.onProgress(
+  const reportProgress = () => {
+    let loadedBytes = 0
+    let totalBytes = 0
+    for (const file of Object.values(files)) {
+      loadedBytes += file.loaded
+      totalBytes += file.total
+    }
+    return options.onProgress(
       createTextGenerationProgress({
         files,
-        loadedBytes: sumBy(Object.values(files), (file) => file.loaded),
-        totalBytes: sumBy(Object.values(files), (file) => file.total),
+        loadedBytes,
+        totalBytes,
       }),
     )
+  }
   reportProgress()
   for (const asset of downloads) {
     await storeAsset({
