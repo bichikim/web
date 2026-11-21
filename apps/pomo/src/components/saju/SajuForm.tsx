@@ -71,7 +71,7 @@ function createSajuFormInput(current: SajuFormDraft, day: string): SajuFormInput
   if (calendar === 'lunar') {
     birth.isLeapMonth = current.leapMonth
   }
-  return {birth, gender: current.gender, question: current.question.trim()}
+  return {birth, gender: current.gender, question: current.question}
 }
 
 export function SajuForm(props: SajuFormProps) {

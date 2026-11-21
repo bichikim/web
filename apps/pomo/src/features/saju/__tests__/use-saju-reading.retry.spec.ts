@@ -12,7 +12,7 @@ const flush = async () => {
 }
 
 it.each([
-  {input: {...generationInput, question: '올해 운세는?'}, label: 'annual notice'},
+  {input: {...generationInput, question: ' \n '}, label: 'blank question'},
   {
     input: {...generationInput, birth: {...birth, date: ''}},
     label: 'calculation error',

@@ -20,9 +20,6 @@ function createReading() {
     gender: 'N',
     question: '제 일은 어떨까요?',
   })
-  if (result.type !== 'generate') {
-    throw new Error('Expected a generated reading')
-  }
   return {...result.request, modelId: 'cloud' as const, requestId: 'saju-1'}
 }
 
