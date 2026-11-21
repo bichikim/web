@@ -10,18 +10,16 @@ export const SSliderBar = <T extends ValidComponent>(props: SSliderBarProps<T>) 
 
   const handleClick: JSX.EventHandler<HTMLElement, MouseEvent> = (event) => {
     const {type} = sliderContext.value()
-    const {width, height} = event.currentTarget.getBoundingClientRect()
-    const containerSize = type === 'horizontal' ? width : height
+    const {width, height, left, top} = event.currentTarget.getBoundingClientRect()
+    const isHorizontal = type === 'horizontal'
+    const containerSize = isHorizontal ? width : height
 
     if (containerSize <= 0) {
       return
     }
 
-    if (type === 'horizontal') {
-      sliderContext.setPercent(event.offsetX / containerSize)
-    } else {
-      sliderContext.setPercent(event.offsetY / containerSize)
-    }
+    const position = isHorizontal ? event.clientX - left : event.clientY - top
+    sliderContext.setPercent(Math.min(1, Math.max(0, position / containerSize)))
   }
 
   const barStyle = createMemo(() => {

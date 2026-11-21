@@ -7,7 +7,7 @@ import {useSlider, useSliderContext} from '../slider-context'
 afterEach(() => vi.unstubAllGlobals())
 
 describe('useSlider', () => {
-  it('should follow resized and replaced containers and detach their observers', () => {
+  it('should observe border-box resizes on the current container and detach replaced observers', () => {
     const callbacks: Array<() => void> = []
     const observe = vi.fn()
     const disconnect = vi.fn()
@@ -30,14 +30,14 @@ describe('useSlider', () => {
     slider.setContainerElement(first)
     slider.setPercent(0.5)
     expect(slider.value()).toMatchObject({containerPosition: 10, containerSize: 200, percent: 0.5})
-    expect(observe).toHaveBeenCalledWith(first)
+    expect(observe).toHaveBeenCalledWith(first, {box: 'border-box'})
     bounds.mockReturnValue(new DOMRect(5, 10, 20, 400))
     callbacks[0]()
     callbacks[0]()
     expect(slider.value()).toMatchObject({containerSize: 400, percent: 0.5})
     slider.setContainerElement(second)
     expect(disconnect).toHaveBeenCalledOnce()
-    expect(observe).toHaveBeenLastCalledWith(second)
+    expect(observe).toHaveBeenLastCalledWith(second, {box: 'border-box'})
     expect(slider.value()).toMatchObject({containerPosition: 30, containerSize: 100, percent: 0.5})
     slider.setContainerElement(null)
     expect(disconnect).toHaveBeenCalledTimes(2)

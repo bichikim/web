@@ -64,7 +64,7 @@ export const useSlider = (
       typeof globalThis.ResizeObserver === 'undefined'
         ? undefined
         : new globalThis.ResizeObserver(refreshLayout)
-    observer?.observe(element)
+    observer?.observe(element, {box: 'border-box'})
     onCleanup(() => observer?.disconnect())
   })
 
