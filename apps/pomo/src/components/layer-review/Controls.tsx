@@ -10,6 +10,7 @@ import {PANEL_CLASSES} from './shared'
 import {VisemePicker} from './VisemePicker'
 
 const PERCENT_SCALE = 100
+const toReferencePercentage = (opacity: number) => Math.round(opacity * PERCENT_SCALE)
 const SLIDER_THUMB_CLASSES = [
   'block size-5 -top-[0.4375rem] rounded-full border-2 border-#241b12',
   'bg-#e8c795 outline-none focus-visible:shadow-focus',
@@ -38,7 +39,6 @@ interface ReviewControlsProps {
   readonly onSceneStyleChange: (sceneStyle: PSceneStyle) => void
   readonly onShowAll: () => void
   readonly referenceOpacity: number
-  readonly referencePercentage: number
   readonly sceneStyle: PSceneStyle
   readonly viseme: PViseme
   readonly onVisemeChange: (viseme: PViseme) => void
@@ -155,7 +155,7 @@ export const ReviewControls = (props: ReviewControlsProps) => (
 
     <Slider
       class="mt-3 border-t border-white/8 pt-3 sm:mt-4 sm:pt-4"
-      getValueLabel={({values}) => `${Math.round((values[0] ?? 0) * PERCENT_SCALE)}%`}
+      getValueLabel={({values}) => `${toReferencePercentage(values[0] ?? 0)}%`}
       maxValue={1}
       minValue={0}
       onChange={(values) => props.onReferenceChange(values[0] ?? 0)}
@@ -164,7 +164,9 @@ export const ReviewControls = (props: ReviewControlsProps) => (
     >
       <div class="flex items-center justify-between gap-4">
         <Slider.Label class="text-sm font-700 text-#fffaf1">원본 오버레이</Slider.Label>
-        <output class="text-xs tabular-nums text-#e8c795">{props.referencePercentage}%</output>
+        <output class="text-xs tabular-nums text-#e8c795">
+          {toReferencePercentage(props.referenceOpacity)}%
+        </output>
       </div>
       <Slider.Track class="relative mt-3 h-1.5 w-full rounded-full bg-white/15">
         <Slider.Fill class="absolute h-full rounded-full bg-#e8c795" />
