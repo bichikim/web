@@ -17,7 +17,7 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:studio": "drizzle-kit studio",
-    "dev": "vite dev --host",
+    "dev": "vite dev",
     "dev:apps-in-toss": "cross-env POMO_RUNTIME_TARGET=apps-in-toss POMO_APPS_IN_TOSS_DEVTOOLS=true vite dev --host",
     "dev:desktop": "tauri dev",
     "dev:desktop:web": "cross-env POMO_RUNTIME_TARGET=desktop vite dev --host 127.0.0.1 --port 1420",
