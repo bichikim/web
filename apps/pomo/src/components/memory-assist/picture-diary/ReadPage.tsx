@@ -3,7 +3,7 @@ import {Show} from 'solid-js'
 import * as m from '@paraglide/message'
 import {type PictureDiaryEntry} from '../../../features/picture-diary'
 import {getLocalizedWeatherLabel} from '../../../features/localization'
-import {getWeatherPresentation} from '../../../features/weather'
+import {getWeatherIcon} from '../../../features/weather'
 import {HConfirmButton} from '../../h-confirm-button/HConfirmButton'
 import {PictureDiaryCanvas} from './Canvas'
 import {type PageSide} from './editor-props'
@@ -82,15 +82,12 @@ export const PictureDiaryReadPage = (props: PictureDiaryReadPageProps) => (
             </div>
             <Show when={entry().weather}>
               {(weather) => {
-                const presentation = getWeatherPresentation(weather().condition)
+                const icon = getWeatherIcon(weather().condition)
                 const temperature = formatTemperature(weather().temperatureCelsius)
 
                 return (
                   <span class="picture-diary-book__weather">
-                    <span
-                      aria-hidden="true"
-                      class={`${presentation.icon} picture-diary-book__weather-icon`}
-                    />
+                    <span aria-hidden="true" class={`${icon} picture-diary-book__weather-icon`} />
                     <span>{getLocalizedWeatherLabel(weather().condition)}</span>
                     <Show when={temperature}>{(label) => <span> · {label()}</span>}</Show>
                   </span>

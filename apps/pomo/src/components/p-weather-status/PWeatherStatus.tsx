@@ -6,7 +6,7 @@ import {
   getLocalizedWeatherLabel,
   getLocalizedWeatherLocationLabel,
 } from '../../features/localization'
-import {getWeatherPresentation, type WeatherState} from '../../features/weather'
+import {getWeatherIcon, type WeatherState} from '../../features/weather'
 import * as m from '@paraglide/message'
 import {WeatherStatusSurface} from '../weather-status/Surface'
 
@@ -38,7 +38,7 @@ export const PWeatherStatus = (props: PWeatherStatusProps) => (
     </Match>
     <Match when={props.state.status === 'ready' ? props.state : undefined}>
       {(state) => {
-        const presentation = () => getWeatherPresentation(state().feed.current.condition)
+        const icon = () => getWeatherIcon(state().feed.current.condition)
         const temperatureLabel = () => {
           const temperature = state().feed.current.temperatureCelsius
           return temperature === null ? null : ` · ${Math.round(temperature)}°`
@@ -46,7 +46,7 @@ export const PWeatherStatus = (props: PWeatherStatusProps) => (
 
         return (
           <WeatherStatusSurface sceneStyle={props.sceneStyle}>
-            <span aria-hidden="true" class={cx(presentation().icon, 'size-4.5 text-highlight')} />
+            <span aria-hidden="true" class={cx(icon(), 'size-4.5 text-highlight')} />
             <span>
               {getLocalizedWeatherLocationLabel(state().feed.location)} ·{' '}
               {getLocalizedWeatherLabel(state().feed.current.condition)}
