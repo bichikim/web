@@ -33,9 +33,6 @@ it.each(['cloud', 'gemma-4-e2b', 'lfm-2.6b-qad'] as const)(
       gender: 'N',
       question: '제 일은 어떨까요?',
     })
-    if (calculation.type !== 'generate') {
-      throw new Error('Expected a generated reading')
-    }
     const request = {...calculation.request, modelId: selectedId, requestId: 'catalog-reading'}
     const pending = Promise.withResolvers<CloudTextResponse>()
     vi.mocked(requestCloudText).mockReturnValue(pending.promise)

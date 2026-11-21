@@ -260,20 +260,9 @@ export function useSajuReading(props: UseSajuReadingProps = {}): SajuReadingCont
     setAnswer('')
     setError(null)
     try {
-      const result = calculateSajuReading(input)
-      if (result.type === 'generate') {
-        const {request: nextRequest} = result
-        setRequest(nextRequest)
-        checkModel()
-      } else {
-        setRequest(null)
-        setAnswer(result.text)
-        setStatus(result.type === 'answer' ? 'complete' : 'error')
-        if (result.type === 'notice') {
-          setError(result.text)
-          setAnswer('')
-        }
-      }
+      const {request: nextRequest} = calculateSajuReading(input)
+      setRequest(nextRequest)
+      checkModel()
     } catch (cause: unknown) {
       setRequest(null)
       setError(getExceptionMessage(cause, '사주 계산에 실패했어요.'))
