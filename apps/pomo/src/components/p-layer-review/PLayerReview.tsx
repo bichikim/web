@@ -18,7 +18,6 @@ import {ReviewControls} from '../layer-review/Controls'
 import {ScenePicker} from '../layer-review/ScenePicker'
 import {PANEL_CLASSES} from '../layer-review/shared'
 
-const PERCENT_SCALE = 100
 const INITIAL_SCENE_ID: PSceneId = 'day-reading-focused'
 
 export const PLayerReview = () => {
@@ -164,7 +163,6 @@ export const PLayerReview = () => {
             setMouthFrame(null)
           }}
           referenceOpacity={referenceOpacity()}
-          referencePercentage={Math.round(referenceOpacity() * PERCENT_SCALE)}
           sceneStyle={sceneStyle()}
           viseme={viseme()}
         />

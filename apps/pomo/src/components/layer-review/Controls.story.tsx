@@ -27,7 +27,6 @@ const meta = {
     onShowAll: fn(),
     onVisemeChange: fn(),
     referenceOpacity: 0.5,
-    referencePercentage: 50,
     sceneStyle: 'scribble' as const,
     viseme: 'rest' as const,
   },

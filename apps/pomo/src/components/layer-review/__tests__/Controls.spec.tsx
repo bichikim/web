@@ -1,6 +1,7 @@
 /** @vitest-environment jsdom */
 
 import {fireEvent, render, screen} from '@solidjs/testing-library'
+import {createSignal} from 'solid-js'
 import {describe, expect, it, vi} from 'vitest'
 import type {PEyeMode} from '../../../features/focus-room-animation'
 import type {PReviewMouthFrame} from 'src/features/focus-room-layer-review'
@@ -93,12 +94,52 @@ const createProps = () => ({
   onShowAll: vi.fn(),
   onVisemeChange: vi.fn(),
   referenceOpacity: 0.5,
-  referencePercentage: 50,
   sceneStyle: 'scribble' as const,
   viseme: 'rest' as const,
 })
 
 describe('ReviewControls', () => {
+  it.each([
+    [0, '0%'],
+    [0.0049, '0%'],
+    [0.005, '1%'],
+    [0.145, '14%'],
+    [0.14500000000000002, '15%'],
+    [0.525, '53%'],
+    [0.995, '100%'],
+    [1, '100%'],
+  ])('should display the owner opacity %s as %s', (opacity, percentage) => {
+    const view = render(() => <ReviewControls {...createProps()} referenceOpacity={opacity} />)
+
+    expect(view.container.querySelector('output')).toHaveTextContent(percentage)
+  })
+
+  it('should react to owner opacity changes and keep slider keyboard values separate', () => {
+    const props = createProps()
+    const [opacity, setOpacity] = createSignal(0.5)
+    const view = render(() => <ReviewControls {...props} referenceOpacity={opacity()} />)
+    const slider = screen.getByRole('slider', {name: '원본 오버레이'})
+    const output = view.container.querySelector('output')
+
+    expect(output).toHaveTextContent('50%')
+    expect(slider).toHaveAttribute('aria-valuetext', '0.5')
+    slider.focus()
+    fireEvent.keyDown(slider, {key: 'ArrowRight'})
+    expect(slider).toHaveFocus()
+    expect(props.onReferenceChange).toHaveBeenLastCalledWith(0.55)
+    expect(output).toHaveTextContent('50%')
+
+    setOpacity(0.55)
+    expect(output).toHaveTextContent('55%')
+    expect(slider).toHaveAttribute('aria-valuenow', '0.55')
+    expect(slider).toHaveAttribute('aria-valuetext', '0.55')
+    setOpacity(0)
+    expect(output).toHaveTextContent('0%')
+    expect(slider).toHaveAttribute('aria-valuetext', '0')
+    expect(screen.getByRole('slider', {name: '원본 오버레이'})).toBe(slider)
+    expect(slider).toHaveFocus()
+  })
+
   it('should render scribble controls and forward every child control change', () => {
     const props = createProps()
     const view = render(() => <ReviewControls {...props} />)
