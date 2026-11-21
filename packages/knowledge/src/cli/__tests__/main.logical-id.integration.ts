@@ -1,7 +1,9 @@
 /** @vitest-environment jsdom */
 /* oxlint-disable no-await-in-loop -- Capture process stdout sequentially while executing copied commands. */
 import {execFile} from 'node:child_process'
-import {access, mkdir, mkdtemp, rm, unlink, writeFile} from 'node:fs/promises'
+import {once} from 'node:events'
+import {access, mkdir, mkdtemp, rename, rm, unlink, writeFile} from 'node:fs/promises'
+import {createServer} from 'node:http'
 import {tmpdir} from 'node:os'
 import {join, resolve} from 'node:path'
 import {promisify} from 'node:util'
@@ -47,6 +49,47 @@ const run = async (arguments_: string[]) => {
 }
 const index = () => run(['index', root, '--json'])
 const get = (id: string) => run(['get', id, '--repo', root, '--json'])
+
+const executeCopiedLookup = async (command: string) => {
+  const server = createServer((request, response) => {
+    response.setHeader('content-type', 'application/json')
+    if (request.method === 'GET' && request.url === '/') {
+      response.end(JSON.stringify({version: '1.19.0'}))
+      return
+    }
+    if (
+      request.method !== 'POST' ||
+      request.url !== '/collections/logical-id-fixture/points/scroll'
+    ) {
+      response.writeHead(404).end()
+      return
+    }
+    let body = ''
+    request.setEncoding('utf8')
+    request.on('data', (chunk: string) => {
+      body += chunk
+    })
+    request.on('end', () => {
+      const filter = JSON.parse(body) as FilterRequest
+      const points = stored.filter((point) => matches(point, filter))
+      response.end(JSON.stringify({result: {next_page_offset: null, points}}))
+    })
+  })
+  await once(server.listen(0, '127.0.0.1'), 'listening')
+  try {
+    const address = server.address()
+    if (address === null || typeof address === 'string') {
+      throw new Error('Expected a loopback fixture address')
+    }
+    return await execute('sh', ['-c', command], {
+      env: {...process.env, KNOWLEDGE_QDRANT_URL: `http://127.0.0.1:${address.port}`},
+    })
+  } finally {
+    const closed = once(server, 'close')
+    server.close()
+    await closed
+  }
+}
 
 beforeEach(async () => {
   root = await mkdtemp(join(tmpdir(), 'knowledge-logical-id-'))
@@ -211,6 +254,26 @@ describe('Git source → production CLI/runtime/parser/index/adapters → local 
     await expect(access(join(root, 'injected'))).rejects.toMatchObject({code: 'ENOENT'})
     expect(stored).toEqual(snapshot)
   })
+
+  it.each(["repo's\nsecond line", 'repo ends with a newline\n'])(
+    'should execute the single Get line for repository path %j',
+    async (directory) => {
+      const multilineRoot = join(root, directory)
+      await mkdir(multilineRoot)
+      await rename(join(root, '.git'), join(multilineRoot, '.git'))
+      await rename(join(root, 'docs'), join(multilineRoot, 'docs'))
+
+      expect(await run(['index', multilineRoot, '--json'])).toMatchObject({code: 0})
+      const search = await run(['search', 'C# guide', '--repo', multilineRoot])
+      expect(search.code).toBe(0)
+      const commands = search.stdout.split('\n').filter((line) => line.startsWith('Get: '))
+      expect(commands).toHaveLength(1)
+
+      const result = await executeCopiedLookup(commands[0].slice('Get: '.length))
+      expect(result.stdout).toContain('C# guide')
+    },
+  )
+
   it('should demonstrate literal percent paths remain distinct and encoded path links resolve', async () => {
     await writeFile(join(root, 'docs/C%23.md'), '# Overview\nLiteral percent filename\n')
     await writeFile(
