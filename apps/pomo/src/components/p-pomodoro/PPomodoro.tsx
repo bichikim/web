@@ -154,10 +154,6 @@ const PomodoroPanel = (props: PomodoroPanelProps) => (
       <PomodoroSessionProgress
         completedCount={props.completedInCycle()}
         onReset={props.timer.onReset}
-        positions={Array.from(
-          {length: props.timer.config().focusSessionsPerCycle},
-          (_, position) => position,
-        )}
         sceneStyle={props.sceneStyle}
         sessionCount={props.timer.config().focusSessionsPerCycle}
       />

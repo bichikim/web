@@ -8,7 +8,6 @@ import {CLASSES} from './shared'
 interface PomodoroSessionProgressProps {
   readonly completedCount: number
   readonly onReset: () => void
-  readonly positions: readonly number[]
   readonly sceneStyle?: PSceneStyle
   readonly sessionCount: number
 }
@@ -22,7 +21,7 @@ export const PomodoroSessionProgress = (props: PomodoroSessionProgressProps) => 
       })}
       class={CLASSES.pomodoroPanelSessions}
     >
-      <For each={props.positions}>
+      <For each={Array.from({length: props.sessionCount}, (_, position) => position)}>
         {(position) => (
           <span
             aria-hidden="true"
