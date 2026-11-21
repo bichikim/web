@@ -1,5 +1,5 @@
 /** @vitest-environment node */
-import {expect, it} from 'vitest'
+import {describe, expect, it} from 'vitest'
 import {createPcmCrossfade, createPcmEdgeBlend, createPcmLevelMatchedBuffer} from '../connection'
 
 const frame = (left: number, right: number) => {
@@ -23,6 +23,62 @@ const samples = (buffer: ArrayBuffer) => {
     view.getInt16(index * 4 + 2, true),
   ])
 }
+
+describe('createPcmCrossfade', () => {
+  it('should preserve the equal-power curve for non-clipping and opposite-sign samples', () => {
+    const previous = pcm(...Array.from({length: 5}, () => frame(10000, -5000)))
+    const next = pcm(...Array.from({length: 5}, () => frame(-2000, 7000)))
+
+    expect(samples(createPcmCrossfade({next, previous}))).toEqual([
+      [10000, -5000],
+      [8473, -1941],
+      [5657, 1414],
+      [1979, 4554],
+      [-2000, 7000],
+    ])
+  })
+
+  it.each([
+    [32767, -30000, 32767, -32768],
+    [-32768, 30000, -32768, 32767],
+  ])(
+    'should saturate mixed peaks from left %s and right %s without wrapping',
+    (left, right, mixedLeft, mixedRight) => {
+      const previous = pcm(frame(left, right), frame(left, right), frame(left, right))
+      const next = previous.slice(0)
+
+      const result = createPcmCrossfade({next, previous})
+
+      expect(samples(result)).toEqual([
+        [left, right],
+        [mixedLeft, mixedRight],
+        [left, right],
+      ])
+      expect(result.byteLength).toBe(previous.byteLength)
+      expect(samples(previous)).toEqual(samples(next))
+      expect(samples(previous)[1]).toEqual([left, right])
+    },
+  )
+
+  it('should preserve both full-range channels from the next buffer for a single frame', () => {
+    const result = createPcmCrossfade({
+      next: frame(32767, -32768),
+      previous: frame(-32768, 32767),
+    })
+
+    expect(samples(result)).toEqual([[32767, -32768]])
+  })
+
+  it.each([
+    [new ArrayBuffer(0), new ArrayBuffer(0)],
+    [new ArrayBuffer(4), new ArrayBuffer(8)],
+    [new ArrayBuffer(2), new ArrayBuffer(2)],
+  ])('should reject empty, unequal or unaligned PCM pairs (%s, %s)', (previous, next) => {
+    expect(() => createPcmCrossfade({next, previous})).toThrow(
+      '연결할 오디오가 같은 길이의 스테레오 PCM16 프레임이어야 합니다.',
+    )
+  })
+})
 
 it('should crossfade stereo PCM frames while preserving channel order', () => {
   const result = createPcmCrossfade({
