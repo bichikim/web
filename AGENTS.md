@@ -46,6 +46,14 @@ Explanations and notices tend to accumulate as AI adds features, crowding the wo
 - **Declarative programming (required; very important)**: Write code declaratively by composing reusable operations. Judge readability by how clearly the composition expresses intent, not by code length.
 - Evaluate changes in repository-wide context, prioritizing compatibility, reusability, and readability over local optimization.
 
+## LLM이 판단하는 기능
+
+- 처리 순서는 **판단에 필요한 데이터 → LLM 판단·출력 → 출력 사용**으로 한다.
+- 코드는 입력을 검증하고 규칙이 명확한 계산을 수행한다. 사용자 원문과 판단에 필요한 사실을 LLM에 전달한다.
+- 키워드, 정규식, 휴리스틱으로 사용자 의도를 미리 판단해 질문을 바꾸거나, 근거를 걸러내거나, 응답 경로를 결정하지 않는다.
+- 프롬프트에는 판단 기준, 시점과 맥락에 관한 유의사항, 데이터의 한계, 출력 형식을 명시할 수 있다. 질문에 어떤 기준을 적용하고 어떻게 답할지는 LLM이 판단한다.
+- 코드는 출력 형식과 후속 처리 조건을 검증한 뒤 모델의 출력을 사용한다.
+
 ## Side effects
 
 - Write computation and transformation logic as pure functions whenever possible, and concentrate side effects at input/output boundaries.
