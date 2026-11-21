@@ -126,26 +126,29 @@ export const PDatePicker = (props: PDatePickerProps) => {
         <For each={picker.cells()}>
           {(date) => (
             <Show when={date} fallback={<span />} keyed>
-              {(day) => (
-                <button
-                  type="button"
-                  data-date={formatDate(day)}
-                  aria-label={formatDate(day)}
-                  aria-pressed={picker.value() === formatDate(day)}
-                  disabled={!picker.allowed(formatDate(day))}
-                  tabIndex={picker.view().day === day.day ? 0 : -1}
-                  onClick={() => picker.select(formatDate(day))}
-                  onKeyDown={(event) => picker.onKeyDown(event, day)}
-                  class={
-                    'min-h-10 min-w-0 rounded-control border-0 bg-transparent text-foreground outline-none ' +
-                    'hover:bg-surface-interactive focus-visible:shadow-focus aria-pressed:bg-primary-soft ' +
-                    'aria-pressed:hover:bg-primary-soft ' +
-                    'aria-pressed:font-750 disabled:opacity-30'
-                  }
-                >
-                  {day.day}
-                </button>
-              )}
+              {(day) => {
+                const dateValue = formatDate(day)
+                return (
+                  <button
+                    type="button"
+                    data-date={dateValue}
+                    aria-label={dateValue}
+                    aria-pressed={picker.value() === dateValue}
+                    disabled={!picker.allowed(dateValue)}
+                    tabIndex={picker.view().day === day.day ? 0 : -1}
+                    onClick={() => picker.select(dateValue)}
+                    onKeyDown={(event) => picker.onKeyDown(event, day)}
+                    class={
+                      'min-h-10 min-w-0 rounded-control border-0 bg-transparent text-foreground outline-none ' +
+                      'hover:bg-surface-interactive focus-visible:shadow-focus aria-pressed:bg-primary-soft ' +
+                      'aria-pressed:hover:bg-primary-soft ' +
+                      'aria-pressed:font-750 disabled:opacity-30'
+                    }
+                  >
+                    {day.day}
+                  </button>
+                )
+              }}
             </Show>
           )}
         </For>
