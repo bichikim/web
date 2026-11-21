@@ -1,5 +1,5 @@
 import {describe, expect, it, vi} from 'vitest'
-import {getRelatedKnowledge} from '../related'
+import {getRelatedKnowledge, getRelatedKnowledgeByIdentity} from '..'
 import type {KnowledgeIndexWriter, StoredKnowledgePoint} from '../store'
 
 const scope = {repoId: 'test/repo', workspaceId: 'refs/heads/main'}
@@ -19,6 +19,64 @@ const point: StoredKnowledgePoint = {
   },
   pointId: 'a',
 }
+
+describe('getRelatedKnowledgeByIdentity', () => {
+  it('should follow stored targets from literal identity fields', async () => {
+    const source = {
+      ...point,
+      payload: {
+        ...point.payload,
+        docId: 'docs/C#.md',
+        relations: [
+          {targetDocId: 'docs/C%23.md', targetUnitId: 'overview', type: 'links-to' as const},
+        ],
+      },
+    }
+    const readState = vi
+      .fn<KnowledgeIndexWriter['readState']>()
+      .mockResolvedValueOnce({ok: true, value: [source]})
+      .mockResolvedValueOnce({ok: true, value: [point]})
+    expect(
+      await getRelatedKnowledgeByIdentity({
+        identity: {docId: 'docs/C#.md', unitId: 'overview'},
+        index: {readState},
+        limit: 2,
+        scope,
+      }),
+    ).toEqual({ok: true, value: {missing: [], points: [point], truncated: false}})
+    expect(readState.mock.calls).toEqual([
+      [{...scope, docId: 'docs/C#.md', unitId: 'overview'}],
+      [{...scope, docId: 'docs/C%23.md', unitId: 'overview'}],
+    ])
+  })
+  it.each([0, 101, 1.5])(
+    'should reject invalid structured related limit %s before reading',
+    async (limit) => {
+      const readState = vi.fn<KnowledgeIndexWriter['readState']>()
+      expect(
+        await getRelatedKnowledgeByIdentity({
+          identity: {docId: 'docs/C#.md'},
+          index: {readState},
+          limit,
+          scope,
+        }),
+      ).toMatchObject({error: {code: 'invalid-related-limit'}, ok: false})
+      expect(readState).not.toHaveBeenCalled()
+    },
+  )
+  it('should propagate structured source failures without following targets', async () => {
+    const readState = vi.fn<KnowledgeIndexWriter['readState']>(async () => ({ok: true, value: []}))
+    expect(
+      await getRelatedKnowledgeByIdentity({
+        identity: {docId: 'docs/C#.md'},
+        index: {readState},
+        limit: 2,
+        scope,
+      }),
+    ).toEqual({error: {code: 'knowledge-not-found', selector: {docId: 'docs/C#.md'}}, ok: false})
+    expect(readState).toHaveBeenCalledTimes(1)
+  })
+})
 
 describe('getRelatedKnowledge', () => {
   it.each([0, 101, 1.5])('should reject invalid limit %s before reading', async (limit) => {

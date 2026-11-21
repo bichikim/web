@@ -1,16 +1,18 @@
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 import {
   doctorKnowledgeRepository,
+  getKnowledgeRepositoryByIdentity,
   loadGenerationSource,
   loadInspectionSource,
   reindexKnowledgeRepository,
+  relatedKnowledgeRepositoryByIdentity,
 } from '../runtime'
 import {createGitRepositoryProbe} from '../../adapters/git'
 import {createOllamaEmbeddingProvider} from '../../adapters/ollama'
 import {createQdrantKnowledgeIndex, type QdrantKnowledgeIndex} from '../../adapters/qdrant'
 import {loadKnowledgeSettings} from '../../config/runtime'
 import {readKnowledgeFiles} from '../../source/files'
-import type {KnowledgeIndexWriter} from '../../indexing/store'
+import type {KnowledgeIndexWriter, StoredKnowledgePoint} from '../../indexing/store'
 
 vi.mock('../../adapters/git', () => ({createGitRepositoryProbe: vi.fn()}))
 vi.mock('../../adapters/ollama', () => ({createOllamaEmbeddingProvider: vi.fn()}))
@@ -73,6 +75,84 @@ beforeEach(() => {
 afterEach(() => vi.clearAllMocks())
 
 describe('maintenance runtime', () => {
+  it('should return separate get identity fields and existing point IDs without embedding or writes', async () => {
+    const point: StoredKnowledgePoint = {
+      payload: {
+        ...scope,
+        contentHash: 'hash',
+        docId: 'docs/C#.md',
+        path: 'docs/C#.md',
+        relations: [],
+        status: 'active',
+        tags: [],
+        text: 'Stored C# guide',
+        title: 'Overview',
+        type: 'document',
+        unitId: 'overview',
+      },
+      pointId: 'stored',
+    }
+    index.readState.mockResolvedValueOnce({ok: true, value: [point]})
+    const result = await getKnowledgeRepositoryByIdentity({
+      identity: {docId: 'docs/C#.md'},
+      inputPath: '/repo',
+    })
+    expect(result).toEqual({
+      ...scope,
+      command: 'get',
+      points: [point],
+      selector: {docId: 'docs/C#.md'},
+    })
+    expect(index.readState).toHaveBeenCalledWith(
+      expect.objectContaining({...scope, docId: 'docs/C#.md'}),
+    )
+    expect(embed).not.toHaveBeenCalled()
+    expect(index.upsert).not.toHaveBeenCalled()
+  })
+  it('should follow existing relation identity fields from a structured source without writes', async () => {
+    const source: StoredKnowledgePoint = {
+      payload: {
+        ...scope,
+        contentHash: 'hash',
+        docId: 'docs/C#.md',
+        path: 'docs/C#.md',
+        relations: [{targetDocId: 'docs/C%23.md', targetUnitId: 'overview', type: 'links-to'}],
+        status: 'active',
+        tags: [],
+        text: 'Source',
+        title: 'Overview',
+        type: 'document',
+        unitId: 'overview',
+      },
+      pointId: 'source',
+    }
+    const target = {
+      ...source,
+      payload: {...source.payload, docId: 'docs/C%23.md', relations: []},
+      pointId: 'target',
+    }
+    index.readState
+      .mockResolvedValueOnce({ok: true, value: [source]})
+      .mockResolvedValueOnce({ok: true, value: [target]})
+    const result = await relatedKnowledgeRepositoryByIdentity({
+      identity: {docId: 'docs/C#.md', unitId: 'overview'},
+      inputPath: '/repo',
+      limit: 2,
+    })
+    expect(result).toEqual({
+      ...scope,
+      missing: [],
+      points: [target],
+      selector: {docId: 'docs/C#.md', unitId: 'overview'},
+      truncated: false,
+    })
+    expect(index.readState.mock.calls).toMatchObject([
+      [{...scope, docId: 'docs/C#.md', unitId: 'overview'}],
+      [{...scope, docId: 'docs/C%23.md', unitId: 'overview'}],
+    ])
+    expect(embed).not.toHaveBeenCalled()
+    expect(index.upsert).not.toHaveBeenCalled()
+  })
   it('should expose scoped read-only hybrid research search and separate transport failures', async () => {
     index.search.mockResolvedValue({ok: true, value: []})
     const context = await loadInspectionSource('/repo')

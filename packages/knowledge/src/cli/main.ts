@@ -1,7 +1,10 @@
+import {dirname, resolve} from 'node:path'
+import {fileURLToPath} from 'node:url'
 import {
   type DoctorCommand,
   type EvalCommand,
   type GetCommand,
+  type GetIdentityCommand,
   type InspectionEvalCommand,
   parseKnowledgeArguments,
   type ReindexCommand,
@@ -12,10 +15,12 @@ import {evaluateKnowledgeRepository} from './evaluation'
 import {evaluateInspectionArtifact} from './inspection-evaluation'
 import {inspectKnowledgeRepository, type OptionalInspection} from './inspection'
 import {approveKnowledgeEvaluation, generateKnowledgeEvaluation} from './generation'
+import {createKnowledgeGetCommand} from './create-knowledge-get-command'
 
 import {
   doctorKnowledgeRepository,
   getKnowledgeRepository,
+  getKnowledgeRepositoryByIdentity,
   indexKnowledgeRepository,
   KnowledgeCommandFailure,
   reindexKnowledgeRepository,
@@ -27,6 +32,7 @@ const USAGE = `Usage:
   know index [repository] [--json]
   know search "query" [--repo repository] [--limit 10] [--json]
   know get "docId[#unitId]" [--repo repository] [--json]
+  know get --doc-id document [--unit-id unit] [--repo repository] [--json]
   know status [repository] [--json]
   know doctor [repository] [--model name --limit 10 --cache-dir path] [--json]
     [--inspection-mode combined|separated|contextual|research]
@@ -44,6 +50,7 @@ KNOWLEDGE_COLLECTION, KNOWLEDGE_QDRANT_API_KEY.
 const USAGE_EXIT = 2
 const METRIC_PRECISION = 4
 const DEFAULT_INSPECTION_LIMIT = 10
+const CLI_ENTRY_PATH = resolve(dirname(fileURLToPath(import.meta.url)), '../../bin/know.mjs')
 const runInspectionEval = async (command: InspectionEvalCommand): Promise<number> => {
   const report = await evaluateInspectionArtifact(command)
   const regressions =
@@ -103,25 +110,56 @@ const runSearch = async (options: SearchCommand): Promise<void> => {
     process.stdout.write('No results in this repository/workspace.\n')
   } else {
     for (const hit of result.hits) {
+      const reference =
+        hit.payload.docId.includes('#') || hit.payload.unitId.includes('#')
+          ? ''
+          : `  ${hit.payload.docId}#${hit.payload.unitId}`
+      const command = createKnowledgeGetCommand({
+        entryPath: CLI_ENTRY_PATH,
+        executable: process.execPath,
+        identity: hit.payload,
+        repositoryPath: resolve(options.inputPath),
+      })
       process.stdout.write(
         `${hit.payload.title} (${hit.payload.status})\n` +
-          `${hit.payload.path}:${hit.payload.startLine ?? 1}  ${hit.payload.docId}#${hit.payload.unitId}\n` +
+          `${hit.payload.path}:${hit.payload.startLine ?? 1}${reference}\n` +
+          `Get: ${command}\n` +
           `${hit.payload.text}\n\n`,
       )
     }
   }
 }
 
-const runGet = async (options: GetCommand): Promise<void> => {
-  const result = await getKnowledgeRepository(options)
+const runGet = async (options: GetCommand | GetIdentityCommand): Promise<void> => {
+  const result =
+    'docId' in options
+      ? await getKnowledgeRepositoryByIdentity({
+          identity: {
+            docId: options.docId,
+            ...(options.unitId === undefined ? {} : {unitId: options.unitId}),
+          },
+          inputPath: options.inputPath,
+        })
+      : await getKnowledgeRepository(options)
   if (options.json) {
     process.stdout.write(`${JSON.stringify(result)}\n`)
   } else {
     for (const point of result.points) {
       const {payload} = point
+      const source = `${payload.path}:${payload.startLine ?? 1}`
+      const command =
+        'docId' in options
+          ? createKnowledgeGetCommand({
+              entryPath: CLI_ENTRY_PATH,
+              executable: process.execPath,
+              identity: payload,
+              repositoryPath: resolve(options.inputPath),
+            })
+          : undefined
+      const reference =
+        command === undefined ? `  ${payload.docId}#${payload.unitId}` : `\nGet: ${command}`
       process.stdout.write(
-        `${payload.title} (${payload.status})\n` +
-          `${payload.path}:${payload.startLine ?? 1}  ${payload.docId}#${payload.unitId}\n${payload.text}\n\n`,
+        `${payload.title} (${payload.status})\n${source}${reference}\n${payload.text}\n\n`,
       )
     }
   }

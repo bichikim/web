@@ -2,6 +2,37 @@ import {describe, expect, it} from 'vitest'
 import {parseKnowledgeArguments} from '../arguments'
 
 describe('parseKnowledgeArguments', () => {
+  it.each(['docs/C#.md', 'docs/C%23.md', "docs/It's a guide.md", '--option.md'])(
+    'should preserve structured document identity %s with an optional unit',
+    (docId) => {
+      expect(parseKnowledgeArguments(['get', `--doc-id=${docId}`, '--repo', '/repo'])).toEqual({
+        command: 'get',
+        docId,
+        inputPath: '/repo',
+        json: false,
+      })
+      expect(
+        parseKnowledgeArguments(['get', `--doc-id=${docId}`, '--unit-id=overview']),
+      ).toMatchObject({
+        command: 'get',
+        docId,
+        unitId: 'overview',
+      })
+    },
+  )
+  it.each(
+    [
+      ['get', 'legacy#unit', '--doc-id=doc'],
+      ['get', 'legacy#unit', '--unit-id=unit'],
+      ['get', '--unit-id=unit'],
+      ['get', '--doc-id= '],
+      ['get', '--doc-id=doc', '--unit-id= '],
+      ['search', 'text', '--doc-id=doc'],
+      ['get', '--doc-id=doc', '--limit=2'],
+    ].map((arguments_) => ({arguments_})),
+  )('should reject mixed or incomplete lookup input %j', ({arguments_}) => {
+    expect(parseKnowledgeArguments(arguments_)).toBeUndefined()
+  })
   it('should parse explicit inspection modes only for doctor with a model', () => {
     expect(
       parseKnowledgeArguments(['doctor', '--model', 'test', '--inspection-mode', 'research']),
