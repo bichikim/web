@@ -101,3 +101,23 @@ it.each([
     secondView.unmount()
   },
 )
+
+it('should mark grouped service days invalid when the end date is out of range', async () => {
+  localStorage.setItem(
+    'pomo:service-settings:v1',
+    JSON.stringify({branch: 'army', days: '300', manual: true, start: '2026-01-01'}),
+  )
+  mountService(createFixedRuntime())
+  await waitFor(() =>
+    expect(screen.getByRole('switch', {name: '복무기간 직접 입력'})).toBeEnabled(),
+  )
+  const days = screen.getByRole('textbox', {name: /복무기간 \(일\)/u})
+
+  fireEvent.input(days, {target: {value: '9,007,199,254,740,991'}})
+  expect(screen.queryByRole('region', {name: '예상 전역일'})).toBeNull()
+  expect(days).toHaveAttribute('aria-invalid', 'true')
+
+  fireEvent.input(days, {target: {value: '5,000'}})
+  expect(days).toHaveAttribute('aria-invalid', 'false')
+  expect(screen.getByRole('region', {name: '예상 전역일'})).toHaveTextContent('2039-09-09')
+})
