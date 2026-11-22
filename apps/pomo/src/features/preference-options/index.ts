@@ -1,12 +1,15 @@
 import type {PreferenceOptions} from 'src/hooks/use-preference/use-preference'
 import type {PreferenceStorage} from 'src/hooks/use-preference/types'
-export type PreferenceCallbacks = Pick<PreferenceOptions<unknown>, 'onError' | 'onSaved'>
+export type PreferenceCallbacks = Pick<
+  PreferenceOptions<unknown>,
+  'onError' | 'onSaved' | 'onStorageError'
+>
 export interface StoredPreferenceOptions<Value> extends PreferenceOptions<Value> {
   readonly storage: PreferenceStorage
 }
 export interface PreferenceDefinition<Value> extends Omit<
   StoredPreferenceOptions<Value>,
-  'onError' | 'onSaved'
+  keyof PreferenceCallbacks
 > {}
 /** Combines a fixed preference definition with subscriber callbacks. */
 export const createPreferenceOptions =
