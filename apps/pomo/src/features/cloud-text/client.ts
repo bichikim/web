@@ -32,8 +32,18 @@ const checkResponse = async (response: Response): Promise<void> => {
   if (response.ok) {
     return
   }
-  const error = await parseJsonResponse(response, errorSchema)
-  switch (error.error) {
+  // An error body may be a platform page (text/plain or HTML) or an off-schema
+  // payload. Treat an unreadable error the same as an unknown error code so the
+  // translated generic failure reaches the user instead of a parser message.
+  let body: unknown
+  try {
+    body = await response.json()
+  } catch {
+    body = undefined
+  }
+  const parsed = errorSchema.safeParse(body)
+  const code = parsed.success ? parsed.data.error : 'unknown'
+  switch (code) {
     case 'unauthorized':
       throw new Error(m.cloud_text_login_required())
     case 'daily_limit':

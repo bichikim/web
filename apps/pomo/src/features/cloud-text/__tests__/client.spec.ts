@@ -118,6 +118,23 @@ it('should not reconnect a notification rejected by authentication', async () =>
   expect(apiJsonRequest).toHaveBeenCalledTimes(2)
 })
 
+it.each([
+  {body: 'FUNCTION_INVOCATION_TIMEOUT', label: 'plain text'},
+  {body: '<html><body>Bad Gateway</body></html>', label: 'HTML'},
+  {body: '{"unexpected":"shape"}', label: 'off-schema JSON'},
+])(
+  'should show the translated failure for a $label error body on the notification fetch',
+  async ({body}) => {
+    vi.mocked(apiJsonRequest).mockResolvedValueOnce(
+      new Response(body, {headers: {'Content-Type': 'text/plain'}, status: 504}),
+    )
+    await expect(requestCloudText(request, new AbortController().signal)).rejects.toThrow(
+      m.cloud_text_failed(),
+    )
+    expect(apiJsonRequest).toHaveBeenCalledTimes(2)
+  },
+)
+
 it('should stop notification reconnection when the request is aborted', async () => {
   const controller = new AbortController()
   vi.mocked(apiJsonRequest)
