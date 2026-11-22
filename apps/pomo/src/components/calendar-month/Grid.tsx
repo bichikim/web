@@ -11,12 +11,12 @@ const WEEKDAY_REFERENCE_YEAR = 2024
 
 const FIRST_SUNDAY_DATE = 7
 
-const getWeekdayLabels = () =>
-  Array.from({length: WEEK_LENGTH}, (_, index) =>
-    new Intl.DateTimeFormat(getLocale(), {weekday: 'short'}).format(
-      new Date(WEEKDAY_REFERENCE_YEAR, 0, FIRST_SUNDAY_DATE + index),
-    ),
+const getWeekdayLabels = () => {
+  const formatter = new Intl.DateTimeFormat(getLocale(), {weekday: 'short'})
+  return Array.from({length: WEEK_LENGTH}, (_, index) =>
+    formatter.format(new Date(WEEKDAY_REFERENCE_YEAR, 0, FIRST_SUNDAY_DATE + index)),
   )
+}
 
 interface CalendarGridProps {
   readonly days: ReadonlyArray<ReadonlyArray<CalendarDay | null>>
