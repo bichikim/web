@@ -1,11 +1,12 @@
 /** @vitest-environment node */
-import {beforeEach, describe, expect, it, vi} from 'vitest'
+import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
 import type {PDatabase} from '../../focus-room-dialogue/database'
 import type {PDialogue} from '../../focus-room-dialogue/schema'
 import {
   type FeedDialogueJob,
   type FeedDialogueMetadata,
+  feedDialogueMetadataSchema,
   type FeedItemRecord,
   getFeedItemRecordId,
 } from '../feed-dialogue-schema'
@@ -167,6 +168,10 @@ beforeEach(() => {
   databaseTransactionContext.abort.mockImplementation(() => {
     databaseTransactionContext.active = false
   })
+})
+
+afterEach(() => {
+  vi.restoreAllMocks()
 })
 
 describe('feed dialogue repository writes', () => {
@@ -451,6 +456,146 @@ describe('feed dialogue repository reads and recovery', () => {
     expect(itemWhere).toHaveBeenCalledWith('feedConnectionId')
     expect(itemEquals).toHaveBeenCalledWith('feed-1')
     expect(jobOrderBy).toHaveBeenCalledWith('updatedAt')
+  })
+
+  it('should sort primary-key ordered metadata numerically and preserve equal-time order', async () => {
+    const repository = createFeedDialogueRepository()
+    const oldMetadata = createMetadata({dialogueId: 'a-old'})
+    const preciseMetadata = createMetadata({
+      createdAt: '2026-08-25T01:00:00.0009Z',
+      dialogueId: 'b-precise',
+    })
+    const newMetadata = createMetadata({createdAt: '2026-08-25T01:00:00.001Z', dialogueId: 'c-new'})
+    const shortMetadata = createMetadata({createdAt: '2026-08-25T01:00:00Z', dialogueId: 'd-short'})
+    const exactMetadata = createMetadata({createdAt: UPDATED_AT, dialogueId: 'e-exact'})
+    const stored = [oldMetadata, preciseMetadata, newMetadata, shortMetadata, exactMetadata]
+    feedDialogueMetadata.toArray.mockResolvedValue(stored)
+
+    await expect(repository.listMetadata()).resolves.toEqual([
+      newMetadata,
+      preciseMetadata,
+      shortMetadata,
+      exactMetadata,
+      oldMetadata,
+    ])
+    expect(stored).toEqual([
+      oldMetadata,
+      preciseMetadata,
+      newMetadata,
+      shortMetadata,
+      exactMetadata,
+    ])
+    expect(feedDialogueMetadata.toArray).toHaveBeenCalledOnce()
+    expect(metadataWhere).not.toHaveBeenCalled()
+  })
+
+  it('should preserve input order for equal times without adding a secondary key', async () => {
+    const repository = createFeedDialogueRepository()
+    const stored = [
+      createMetadata({dialogueId: 'z-last-key'}),
+      createMetadata({createdAt: '2026-08-25T00:00:00Z', dialogueId: 'a-first-key'}),
+      createMetadata({createdAt: '2026-08-25T00:00:00.0009Z', dialogueId: 'm-middle-key'}),
+    ]
+    feedDialogueMetadata.toArray.mockResolvedValue(stored)
+
+    await expect(repository.listMetadata()).resolves.toEqual(stored)
+  })
+
+  it('should preserve the native numeric comparator behavior when a parsed time is NaN', async () => {
+    const repository = createFeedDialogueRepository()
+    const oldMetadata = createMetadata()
+    const unparseable = createMetadata({
+      createdAt: '2026-08-25T00:30:00.000Z',
+      dialogueId: 'dialogue-2',
+    })
+    const newMetadata = createMetadata({createdAt: UPDATED_AT, dialogueId: 'dialogue-3'})
+    const parseDate = Date.parse
+    vi.spyOn(Date, 'parse').mockImplementation((value) =>
+      value === unparseable.createdAt ? Number.NaN : parseDate(value),
+    )
+    feedDialogueMetadata.toArray.mockResolvedValue([oldMetadata, unparseable, newMetadata])
+
+    await expect(repository.listMetadata()).resolves.toEqual([
+      oldMetadata,
+      unparseable,
+      newMetadata,
+    ])
+  })
+
+  it.each([
+    {name: 'empty', stored: []},
+    {name: 'singleton', stored: [createMetadata()]},
+  ])('should return validated metadata for a $name collection', async ({stored}) => {
+    const repository = createFeedDialogueRepository()
+    feedDialogueMetadata.toArray.mockResolvedValue(stored)
+
+    await expect(repository.listMetadata()).resolves.toEqual(stored)
+  })
+
+  it('should return schema-parsed metadata without stored unknown fields', async () => {
+    const repository = createFeedDialogueRepository()
+    const metadata = createMetadata({listenedAt: UPDATED_AT})
+    const stored = {...metadata, storedOnly: 'remove at the validation boundary'}
+    feedDialogueMetadata.toArray.mockResolvedValue([stored])
+
+    await expect(repository.listMetadata()).resolves.toEqual([metadata])
+    expect(stored.storedOnly).toBe('remove at the validation boundary')
+  })
+
+  it.each([0, 1])(
+    'should reject the first invalid record at %i before parsing times',
+    async (validCount) => {
+      const repository = createFeedDialogueRepository()
+      const invalid = {...createMetadata(), dialogueId: '', version: 2}
+      const expected = feedDialogueMetadataSchema.safeParse(invalid)
+      const parseDate = vi.spyOn(Date, 'parse')
+      feedDialogueMetadata.toArray.mockResolvedValue([
+        ...Array.from({length: validCount}, () => createMetadata()),
+        invalid,
+        {...createMetadata(), createdAt: 'invalid-date'},
+      ])
+
+      await expect(repository.listMetadata()).rejects.toMatchObject({
+        issues: expected.error?.issues,
+      })
+      expect(parseDate).not.toHaveBeenCalled()
+    },
+  )
+
+  it('should validate a singleton with an invalid creation date instead of skipping it', async () => {
+    const repository = createFeedDialogueRepository()
+    feedDialogueMetadata.toArray.mockResolvedValue([
+      {...createMetadata(), createdAt: 'invalid-date'},
+    ])
+
+    await expect(repository.listMetadata()).rejects.toMatchObject({
+      issues: [expect.objectContaining({code: 'invalid_format', path: ['createdAt']})],
+    })
+  })
+
+  it('should propagate a metadata storage read rejection unchanged', async () => {
+    const repository = createFeedDialogueRepository()
+    const readError = new Error('metadata storage unavailable')
+    feedDialogueMetadata.toArray.mockRejectedValueOnce(readError)
+
+    await expect(repository.listMetadata()).rejects.toBe(readError)
+  })
+
+  it('should parse each validated creation time once when sorting metadata', async () => {
+    const repository = createFeedDialogueRepository()
+    const stored = [
+      createMetadata({dialogueId: 'a-old'}),
+      createMetadata({createdAt: UPDATED_AT, dialogueId: 'b-new'}),
+      createMetadata({createdAt: '2026-08-25T00:30:00.000Z', dialogueId: 'c-middle'}),
+    ]
+    const parseDate = vi.spyOn(Date, 'parse')
+    feedDialogueMetadata.toArray.mockResolvedValue(stored)
+
+    await expect(repository.listMetadata()).resolves.toEqual([stored[1], stored[2], stored[0]])
+    expect(parseDate).toHaveBeenCalledTimes(stored.length)
+    for (const metadata of stored) {
+      expect(parseDate).toHaveBeenCalledWith(metadata.createdAt)
+    }
   })
 
   it('should mark existing metadata listened and ignore a missing record', async () => {
