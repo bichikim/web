@@ -137,13 +137,11 @@ const createPersistedStream = (
 
     chunks = []
     chunkBytes = 0
-    if (storageAvailable) {
-      try {
-        await storage.append(url, chunk)
-      } catch (error: unknown) {
-        storageAvailable = false
-        console.warn('Partial model download could not be stored.', error)
-      }
+    try {
+      await storage.append(url, chunk)
+    } catch (error: unknown) {
+      storageAvailable = false
+      console.warn('Partial model download could not be stored.', error)
     }
   }
 
@@ -161,10 +159,12 @@ const createPersistedStream = (
         return
       }
 
-      chunks.push(result.value)
-      chunkBytes += result.value.byteLength
-      if (chunkBytes >= PARTIAL_CHUNK_SIZE) {
-        await flush()
+      if (storageAvailable) {
+        chunks.push(result.value)
+        chunkBytes += result.value.byteLength
+        if (chunkBytes >= PARTIAL_CHUNK_SIZE) {
+          await flush()
+        }
       }
       controller.enqueue(result.value)
     },

@@ -1,8 +1,13 @@
+import {concatUint8Arrays} from 'uint8array-extras'
 import {afterEach, describe, expect, it, vi} from 'vitest'
 
 const httpMocks = vi.hoisted(() => ({fetch: vi.fn()}))
 
 vi.mock('../../http-client', () => ({httpFetch: httpMocks.fetch}))
+vi.mock(import('uint8array-extras'), async (importOriginal) => {
+  const original = await importOriginal()
+  return {...original, concatUint8Arrays: vi.fn(original.concatUint8Arrays)}
+})
 
 import {createResumableModelFetch, type PartialDownloadStorage} from '../resumable-fetch'
 import {createPartialStorage, createTestBlob} from './support/partial-storage'
@@ -22,6 +27,7 @@ const createMetadata = (
 })
 
 afterEach(() => {
+  vi.mocked(concatUint8Arrays).mockClear()
   vi.unstubAllGlobals()
   vi.restoreAllMocks()
 })
@@ -69,6 +75,119 @@ describe('createResumableModelFetch stream lifecycle', () => {
     backing[1] = 9
     expect(persisted).toEqual(Uint8Array.of(1, 2, 3, 4))
     expect(backing).toEqual(Uint8Array.of(99, 9, 2, 3, 4, 88))
+  })
+
+  it('should stop combining chunks after partial storage rejects an append', async () => {
+    const url = 'https://models.test/model.onnx'
+    const batch = new Uint8Array(8 * 1024 * 1024)
+    const chunks = [batch, batch.subarray(0), Uint8Array.of(1, 2)]
+    const partial = createPartialStorage()
+    const error = new Error('storage unavailable')
+    const append = vi.mocked(partial.storage.append).mockRejectedValueOnce(error)
+    const concat = vi.mocked(concatUint8Arrays).mockClear()
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+    const length = chunks.reduce((total, chunk) => total + chunk.byteLength, 0)
+    const fetcher = vi.fn<typeof fetch>(
+      async () =>
+        new Response(
+          new ReadableStream({
+            start(controller) {
+              for (const chunk of chunks) {
+                controller.enqueue(chunk)
+              }
+              controller.close()
+            },
+          }),
+          {headers: createHeaders(length)},
+        ),
+    )
+    const resumable = createResumableModelFetch({fetcher, partialStorage: partial.storage})
+    const {body} = await resumable.fetch(url)
+    if (body === null) {
+      throw new Error('Expected a streamed model response.')
+    }
+    const reader = body.getReader()
+
+    const results = [await reader.read(), await reader.read(), await reader.read()]
+    for (const [index, result] of results.entries()) {
+      expect(result.done).toBe(false)
+      expect(result.value).toBe(chunks[index])
+    }
+    expect((await reader.read()).done).toBe(true)
+    expect(append).toHaveBeenCalledOnce()
+    expect(append.mock.calls[0]?.[0]).toBe(url)
+    expect(append.mock.calls[0]?.[1].byteLength).toBe(batch.byteLength)
+    expect(warn).toHaveBeenCalledExactlyOnceWith(
+      'Partial model download could not be stored.',
+      error,
+    )
+    expect(concat).toHaveBeenCalledOnce()
+  })
+
+  it('should await the first failed append and cancel without combining later bytes', async () => {
+    const url = 'https://models.test/model.onnx'
+    const batch = new Uint8Array(8 * 1024 * 1024)
+    const tail = Uint8Array.of(1, 2)
+    const partial = createPartialStorage()
+    const started = Promise.withResolvers<void>()
+    const pending = Promise.withResolvers<void>()
+    const events: string[] = []
+    const append = vi.mocked(partial.storage.append).mockImplementationOnce(async () => {
+      events.push('append')
+      started.resolve()
+      await pending.promise
+    })
+    const error = new Error('storage unavailable')
+    const reason = {message: 'stop'}
+    const cancel = vi.fn((value: unknown) => {
+      expect(value).toBe(reason)
+      events.push('source cancel')
+    })
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {
+      events.push('warn')
+    })
+    const fetcher = vi.fn<typeof fetch>(
+      async () =>
+        new Response(
+          new ReadableStream({
+            cancel: (value) => cancel(value),
+            start(controller) {
+              controller.enqueue(batch)
+              controller.enqueue(tail)
+            },
+          }),
+          {headers: createHeaders(batch.byteLength + tail.byteLength)},
+        ),
+    )
+    const response = await createResumableModelFetch({
+      fetcher,
+      partialStorage: partial.storage,
+    }).fetch(url)
+    if (response.body === null) {
+      throw new Error('Expected a streamed model response.')
+    }
+    const reader = response.body.getReader()
+    const first = reader.read().then((result) => {
+      events.push('first chunk')
+      return result
+    })
+    await started.promise
+    expect(events).toEqual(['append'])
+    pending.reject(error)
+    expect((await first).value).toBe(batch)
+    expect((await reader.read()).value).toBe(tail)
+    events.push('tail')
+
+    await reader.cancel(reason)
+
+    expect(events).toEqual(['append', 'warn', 'first chunk', 'tail', 'source cancel'])
+    expect(append).toHaveBeenCalledOnce()
+    expect(warn).toHaveBeenCalledExactlyOnceWith(
+      'Partial model download could not be stored.',
+      error,
+    )
+    expect(cancel).toHaveBeenCalledExactlyOnceWith(reason)
+    expect(concatUint8Arrays).toHaveBeenCalledOnce()
   })
 
   it('should restart when a valid partial response has no body', async () => {
