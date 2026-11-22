@@ -103,7 +103,11 @@ export const createPreview = async (options: CreatePreviewOptions = {}): Promise
     const address = await previewAddress(child)
     return {...address, child, close, directory, workspace}
   } catch (error) {
-    await close()
+    try {
+      await close()
+    } catch (cleanupError) {
+      throw new AggregateError([error, cleanupError], 'Preview startup and cleanup failed.')
+    }
     throw error
   }
 }

@@ -1,8 +1,21 @@
 import {expect, it, vi} from 'vitest'
+import * as previewModule from './create-preview'
 import {withViewer} from './with-viewer'
 
-it('should retain the exercise error and real server diagnostics when cleanup receives HTTP 500', async () => {
+it('should retain the exercise error and real diagnostics even if preview cleanup also fails', async () => {
   const original = new Error('exercise assertion failed')
+  const previewFailure = new Error('preview close failed')
+  const createPreview = previewModule.createPreview
+  vi.spyOn(previewModule, 'createPreview').mockImplementation(async (options) => {
+    const preview = await createPreview(options)
+    return {
+      ...preview,
+      close: async () => {
+        await preview.close()
+        throw previewFailure
+      },
+    }
+  })
   try {
     const error = await withViewer({}, async (viewer) => {
       const initial = viewer.page.waitForResponse(`${viewer.url}initial`)
@@ -23,6 +36,7 @@ it('should retain the exercise error and real server diagnostics when cleanup re
     expect(error.errors[1]).toMatchObject({
       message: expect.stringContaining('Preview code.close: 500'),
     })
+    expect(error.errors[2]).toBe(previewFailure)
     expect(error.message).toContain('Preview stderr:')
     expect(error.message).toContain('SyntaxError:')
   } finally {

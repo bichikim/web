@@ -6,7 +6,9 @@ const state = vi.hoisted(() => ({
   browserClose: vi.fn(),
   cleanup: new Error('cleanup failed'),
   close: vi.fn(),
+  launch: vi.fn(),
   post: vi.fn(),
+  sessions: vi.fn<() => string[]>().mockReturnValue(['one']),
 }))
 vi.mock('./create-preview', () => ({
   createPreview: async () => ({
@@ -19,23 +21,28 @@ vi.mock('./create-preview', () => ({
 }))
 vi.mock('playwright', () => ({
   chromium: {
-    launch: async () => ({
-      close: state.browserClose,
-      newPage: async () => ({
-        addInitScript: vi.fn(),
-        frameLocator: () => ({locator: () => ({innerText: async () => 'viewer state'})}),
-        on: (name: string, listener: (response: unknown) => void) => {
-          if (name === 'response') {
-            listener({
-              json: async () => ({content: [], structuredContent: {session: 'one'}}),
-              url: () => 'http://preview/initial',
-            })
-          }
-        },
-        request: {post: state.post},
-        setDefaultTimeout: vi.fn(),
-      }),
-    }),
+    launch: async () => {
+      await state.launch()
+      return {
+        close: state.browserClose,
+        newPage: async () => ({
+          addInitScript: vi.fn(),
+          frameLocator: () => ({locator: () => ({innerText: async () => 'viewer state'})}),
+          on: (name: string, listener: (response: unknown) => void) => {
+            if (name === 'response') {
+              for (const session of state.sessions()) {
+                listener({
+                  json: async () => ({content: [], structuredContent: {session}}),
+                  url: () => 'http://preview/initial',
+                })
+              }
+            }
+          },
+          request: {post: state.post},
+          setDefaultTimeout: vi.fn(),
+        }),
+      }
+    },
   },
 }))
 
@@ -92,5 +99,53 @@ it('should retain the original failure and server stderr when session cleanup al
   expect(aggregate.errors[0]).toMatchObject({cause: original})
   expect(aggregate.errors[1]).toBe(state.cleanup)
   expect(state.close).toHaveBeenCalledOnce()
+  expect(state.browserClose).toHaveBeenCalledOnce()
+})
+
+it('should retain exercise, session, browser and preview failures together', async () => {
+  const original = new Error('exercise failed')
+  const browserFailure = new Error('browser close failed')
+  const previewFailure = new Error('preview close failed')
+  state.post.mockRejectedValueOnce(state.cleanup)
+  state.browserClose.mockRejectedValueOnce(browserFailure)
+  state.close.mockRejectedValueOnce(previewFailure)
+
+  await expect(
+    withViewer({}, async () => {
+      throw original
+    }),
+  ).rejects.toMatchObject({
+    errors: [
+      expect.objectContaining({cause: original}),
+      state.cleanup,
+      browserFailure,
+      previewFailure,
+    ],
+    message: expect.stringContaining('server diagnostic'),
+  })
+})
+
+it('should retain the browser launch failure if the preview cannot close', async () => {
+  const original = new Error('launch failed')
+  const previewFailure = new Error('preview close failed')
+  state.launch.mockRejectedValueOnce(original)
+  state.close.mockRejectedValueOnce(previewFailure)
+
+  await expect(withViewer({}, async () => 0)).rejects.toMatchObject({
+    errors: [original, previewFailure],
+  })
+  expect(state.browserClose).not.toHaveBeenCalled()
+})
+
+it('should retain every failure when several sessions fail to release', async () => {
+  const first = new Error('first session close failed')
+  const second = new Error('second session close failed')
+  state.sessions.mockReturnValueOnce(['one', 'two'])
+  state.post.mockRejectedValueOnce(first).mockRejectedValueOnce(second)
+
+  await expect(withViewer({}, async () => 0)).rejects.toMatchObject({
+    errors: [expect.objectContaining({errors: [first, second]})],
+  })
+  expect(state.post).toHaveBeenCalledTimes(2)
   expect(state.browserClose).toHaveBeenCalledOnce()
 })

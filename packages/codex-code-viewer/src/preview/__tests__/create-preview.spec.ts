@@ -1,8 +1,13 @@
 /** @vitest-environment node */
+import {rm} from 'node:fs/promises'
 import {expect, it, vi} from 'vitest'
 import {createPreview} from './create-preview'
 
-const state = vi.hoisted(() => ({errorListeners: vi.fn(), writeError: vi.fn()}))
+const state = vi.hoisted(() => ({
+  errorListeners: vi.fn(),
+  startupError: vi.fn<() => Error | undefined>(),
+  writeError: vi.fn(),
+}))
 vi.mock('node:fs/promises', async (importOriginal) => ({
   ...(await importOriginal<typeof import('node:fs/promises')>()),
   mkdir: vi.fn(),
@@ -32,9 +37,14 @@ vi.mock('node:child_process', async (importOriginal) => {
       const child = new Child()
       state.writeError.mockImplementation((text: string) => child.stderr.write(text))
       state.errorListeners.mockImplementation(() => child.stderr.listenerCount('data'))
-      queueMicrotask(() =>
-        child.stdout.write('Code Viewer preview: http://127.0.0.1:1234/token/\n'),
-      )
+      queueMicrotask(() => {
+        const error = state.startupError()
+        if (error === undefined) {
+          child.stdout.write('Code Viewer preview: http://127.0.0.1:1234/token/\n')
+        } else {
+          child.emit('error', error)
+        }
+      })
       return child
     },
   }
@@ -54,4 +64,13 @@ it('should preserve a bounded stderr tail after preview startup', async () => {
     await preview.close()
   }
   expect(state.errorListeners()).toBe(0)
+})
+
+it('should retain the startup error when removing the preview directory also fails', async () => {
+  const startup = new Error('preview startup failed')
+  const cleanup = new Error('preview cleanup failed')
+  state.startupError.mockReturnValueOnce(startup)
+  vi.mocked(rm).mockRejectedValueOnce(cleanup)
+
+  await expect(createPreview()).rejects.toMatchObject({errors: [startup, cleanup]})
 })
