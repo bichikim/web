@@ -5,6 +5,13 @@ export interface PreferenceSnapshot {
   readonly value: unknown
 }
 
+export interface PreferenceErrorContext {
+  readonly operation: 'read' | 'write'
+  readonly isCurrent: boolean
+}
+
+export type PreferenceErrorListener = (error: unknown, context: PreferenceErrorContext) => void
+
 /** Controls whether a provider-owned preference snapshot update writes to storage. */
 export interface PreferenceSetValueOptions {
   readonly persist?: boolean
@@ -15,7 +22,7 @@ export interface PreferenceEntry {
   readonly snapshot: Accessor<PreferenceSnapshot | null>
   readonly setValue: (value: unknown, options?: PreferenceSetValueOptions) => void
   readonly subscribeSaves: (listener: () => void) => () => void
-  readonly subscribeErrors: (listener: (error: unknown) => void) => () => void
+  readonly subscribeErrors: (listener: PreferenceErrorListener) => () => void
 }
 
 export interface PreferenceContextValue {

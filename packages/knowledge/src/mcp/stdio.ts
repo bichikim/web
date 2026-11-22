@@ -3,8 +3,10 @@ import {StdioServerTransport} from '@modelcontextprotocol/sdk/server/stdio.js'
 import {z} from 'zod'
 import {
   getKnowledgeRepository,
+  getKnowledgeRepositoryByIdentity,
   KnowledgeCommandFailure,
   relatedKnowledgeRepository,
+  relatedKnowledgeRepositoryByIdentity,
   searchKnowledgeRepository,
 } from '../cli/runtime'
 import {createKnowledgeServer, type KnowledgeToolResult} from './server'
@@ -28,7 +30,11 @@ export const serveKnowledgeStdio = async (inputPath: string): Promise<number> =>
   const root = resolve(inputPath)
   const server = createKnowledgeServer({
     get: (logicalId) => invoke(() => getKnowledgeRepository({inputPath: root, logicalId})),
+    getByIdentity: (identity) =>
+      invoke(() => getKnowledgeRepositoryByIdentity({identity, inputPath: root})),
     related: (options) => invoke(() => relatedKnowledgeRepository({...options, inputPath: root})),
+    relatedByIdentity: ({limit, ...identity}) =>
+      invoke(() => relatedKnowledgeRepositoryByIdentity({identity, inputPath: root, limit})),
     search: (options) => invoke(() => searchKnowledgeRepository({...options, inputPath: root})),
   })
   const transport = new StdioServerTransport()

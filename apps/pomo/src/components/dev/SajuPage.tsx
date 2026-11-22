@@ -1,23 +1,11 @@
 import {Title} from '@solidjs/meta'
 import {A} from '@solidjs/router'
 import {cx} from 'class-variance-authority'
-import {
-  analyzeDaeun,
-  analyzeElements,
-  analyzeSipseong,
-  type BirthInput,
-  deriveSaju,
-  ENGINE_VERSION,
-  iljuInfo,
-} from 'k-saju'
+import {ENGINE_VERSION, iljuInfo} from 'k-saju'
 import {createSignal, For, onMount, Show} from 'solid-js'
-import {createMessages} from 'src/features/saju/create-messages'
-import {GenerationWorkspace} from './saju/GenerationWorkspace'
-import {getBroadFutureAnswer} from 'src/features/saju/get-broad-future-answer'
-import {getDayPillarFactAnswer} from 'src/features/saju/get-day-pillar-fact-answer'
+import {calculateSajuReading} from 'src/features/saju/calculate-reading'
 import type {GenerateSajuRequest} from 'src/features/saju/messages'
-import {requiresAnnualReading} from 'src/features/saju/requires-annual-reading'
-import {toSajuCalculationBirth} from 'src/features/saju/to-saju-calculation-birth'
+import {GenerationWorkspace} from './saju/GenerationWorkspace'
 import {SajuForm, type SajuFormInput} from '../saju/SajuForm'
 
 interface CalculationSection {
@@ -25,8 +13,6 @@ interface CalculationSection {
   value: string
 }
 
-const MINIMUM_BIRTH_DATE = '1900-01-01'
-const MAXIMUM_BIRTH_DATE = '2050-12-31'
 const JSON_CLASSES = cx(
   'mb-0 mt-4 overflow-x-auto whitespace-pre-wrap break-words rounded-3 bg-#100d16 p-4',
   'text-xs leading-6 text-#e8ddeb sm:text-sm',
@@ -52,15 +38,6 @@ function CalculationResults(props: {readonly sections: ReadonlyArray<Calculation
   )
 }
 
-function FactAnswer(props: {readonly answer: string}) {
-  return (
-    <section aria-label="계산값 답변" class="rounded-5 border border-white/10 bg-white/5 p-5">
-      <h2 class="m-0 text-lg font-750">사주 답변</h2>
-      <p class="mb-0 mt-3 whitespace-pre-wrap text-sm leading-7">{props.answer}</p>
-    </section>
-  )
-}
-
 function SajuIntro() {
   return (
     <header>
@@ -73,71 +50,30 @@ function SajuIntro() {
   )
 }
 
-function calculateSections(birth: BirthInput, gender: 'M' | 'F' | 'N', question: string) {
-  const calculationBirth = toSajuCalculationBirth(birth)
-  const chart = deriveSaju(calculationBirth)
-  const elements = analyzeElements(chart)
-  const sipseong = analyzeSipseong(chart)
-  const ilju = iljuInfo(chart)
-  const daeun = gender === 'N' ? null : analyzeDaeun(calculationBirth, chart, gender)
-  const messages = createMessages({chart, daeun, elements, question, sipseong})
-
-  return {
-    factAnswer: getDayPillarFactAnswer(question, chart) ?? getBroadFutureAnswer(question),
-    generation: {
-      messages,
-      type: 'generate',
-    } satisfies GenerateSajuRequest,
-    sections: [
-      formatResult('사주팔자 · deriveSaju()', chart),
-      formatResult('오행 · analyzeElements()', elements),
-      formatResult('십성 · analyzeSipseong()', sipseong),
-      formatResult('일주 · iljuInfo()', ilju),
-      formatResult('대운 · analyzeDaeun()', daeun),
-    ],
-  }
-}
-
 export function SajuPage() {
   const [ready, setReady] = createSignal(false)
   const [sections, setSections] = createSignal<CalculationSection[]>([])
   const [generation, setGeneration] = createSignal<GenerateSajuRequest | null>(null)
-  const [factAnswer, setFactAnswer] = createSignal<string | null>(null)
   const [error, setError] = createSignal<string | null>(null)
-  const [notice, setNotice] = createSignal<string | null>(null)
 
   onMount(() => setReady(true))
 
   function handleSubmit(input: SajuFormInput) {
     setSections([])
     setGeneration(null)
-    setFactAnswer(null)
     setError(null)
-    setNotice(null)
-
-    if (input.birth.date === '') {
-      setError('생년월일을 선택해 주세요.')
-      return
-    }
-    if (input.birth.date < MINIMUM_BIRTH_DATE || input.birth.date > MAXIMUM_BIRTH_DATE) {
-      setError('생년월일은 1900년부터 2050년까지 입력해 주세요.')
-      return
-    }
-    if (!input.question) {
-      setError('해석할 질문을 입력해 주세요.')
-      return
-    }
 
     try {
-      const result = calculateSections(input.birth, input.gender, input.question)
-      setSections(result.sections)
-      if (requiresAnnualReading(input.question)) {
-        setNotice('특정 연도 운세는 계산하지 않아요. 연도를 빼고 다시 질문해 주세요.')
-      } else if (result.factAnswer === null) {
-        setGeneration(result.generation)
-      } else {
-        setFactAnswer(result.factAnswer)
-      }
+      const {calculation, request} = calculateSajuReading(input)
+      const {chart, daeun, elements, sipseong} = calculation
+      setSections([
+        formatResult('사주팔자 · deriveSaju()', chart),
+        formatResult('오행 · analyzeElements()', elements),
+        formatResult('십성 · analyzeSipseong()', sipseong),
+        formatResult('일주 · iljuInfo()', iljuInfo(chart)),
+        formatResult('대운 · analyzeDaeun()', daeun),
+      ])
+      setGeneration(request)
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : '사주 계산에 실패했습니다.')
     }
@@ -159,12 +95,6 @@ export function SajuPage() {
             {error()}
           </p>
         </Show>
-        <Show when={notice()}>
-          <p class="m-0 rounded-3 border border-#f0c99a/50 bg-#f0c99a/10 p-4 text-sm" role="note">
-            {notice()}
-          </p>
-        </Show>
-        <Show when={factAnswer()}>{(answer) => <FactAnswer answer={answer()} />}</Show>
         <Show when={sections().length > 0}>
           <Show keyed when={generation()}>
             {(value) => <GenerationWorkspace messages={value.messages} />}
@@ -176,7 +106,7 @@ export function SajuPage() {
             >
               <h2 class="m-0 text-lg font-750">LLM 전달 값</h2>
               <p class="mb-0 mt-2 text-sm leading-6 text-#cbbfd0">
-                사주 계산을 일상적인 상담 주제로 정리해 AI에 전달하는 내용입니다.
+                질문 원문과 사주 계산값을 모델에 전달합니다.
               </p>
               <pre class={JSON_CLASSES}>
                 <code>{JSON.stringify(generation()?.messages, null, 2)}</code>

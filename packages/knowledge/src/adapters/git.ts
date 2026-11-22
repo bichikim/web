@@ -71,8 +71,9 @@ export const createGitRepositoryProbe = (
   return {
     async inspect(inputPath): Promise<RepositoryProbeResult> {
       try {
-        const discoveredRoot = await output(runner, inputPath, ['rev-parse', '--show-toplevel'])
-        const root = await resolveRealpath(discoveredRoot)
+        const {stdout} = await runner.run(['-C', inputPath, 'rev-parse', '--show-toplevel'])
+        const lineEnding = process.platform === 'win32' ? /\r?\n$/u : /\n$/u
+        const root = await resolveRealpath(stdout.replace(lineEnding, ''))
         const [commit, originRemote, ref] = await Promise.all([
           output(runner, root, ['rev-parse', 'HEAD']),
           optionalOutput(runner, root, ['remote', 'get-url', 'origin']),

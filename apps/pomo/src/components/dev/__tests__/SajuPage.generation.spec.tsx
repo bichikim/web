@@ -57,7 +57,8 @@ afterEach(async () => {
 it('should send displayed messages through the real generation workspace', async () => {
   render(() => <SajuPage />)
 
-  fireEvent.input(screen.getByLabelText('질문'), {target: {value: '재물에 대해 알려줘'}})
+  const question = '  앞날운세는 어때요?\n제 일간도 알려줘  '
+  fireEvent.input(screen.getByRole('textbox', {name: '질문'}), {target: {value: question}})
   fireEvent.submit(screen.getByRole('button', {name: '사주 풀이 생성'}).closest('form')!)
 
   expect(screen.getByRole('heading', {name: '사주팔자 · deriveSaju()'})).toBeTruthy()
@@ -70,9 +71,11 @@ it('should send displayed messages through the real generation workspace', async
     screen.getByRole('region', {name: 'LLM 전달 값'}).querySelector('code')!.textContent!,
   ) as Array<{role: string; content: string}>
   expect(messages.map((message) => message.role)).toEqual(['system', 'user'])
-  expect(messages[1].content).toContain('재물에 대해 알려줘')
-  expect(messages[1].content).toContain('돈과 시간 관리')
-  expect(messages[1].content).not.toMatch(/재성|[\u3400-\u9fff]/u)
+  expect(JSON.parse(messages[1].content)).toMatchObject({
+    chart: {day: {hanja: '丙午'}, hour: null},
+    elements: {lacking: ['金']},
+    question,
+  })
   await vi.dynamicImportSettled()
   expect(send).toHaveBeenCalledExactlyOnceWith({
     messages,

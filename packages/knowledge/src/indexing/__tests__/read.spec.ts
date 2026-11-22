@@ -1,5 +1,5 @@
 import {describe, expect, it, vi} from 'vitest'
-import {getKnowledge, getKnowledgeStatus} from '..'
+import {getKnowledge, getKnowledgeByIdentity, getKnowledgeStatus} from '..'
 import type {KnowledgeIndexWriter, StoredKnowledgePoint} from '../store'
 
 const scope = {repoId: 'test/repo', workspaceId: 'refs/heads/main'}
@@ -22,6 +22,61 @@ const point: StoredKnowledgePoint = {
 }
 const reader = (points: ReadonlyArray<StoredKnowledgePoint>) => ({
   readState: vi.fn<KnowledgeIndexWriter['readState']>(async () => ({ok: true, value: points})),
+})
+
+describe('getKnowledgeByIdentity', () => {
+  it('should pass raw identity fields without splitting, decoding or trimming and retain source order', async () => {
+    const first = {...point, payload: {...point.payload, startLine: 1}, pointId: 'first'}
+    const points = [point, first]
+    const index = reader(points)
+    expect(
+      await getKnowledgeByIdentity({
+        identity: {docId: ' docs/C%23#.md ', unitId: ' %23#unit '},
+        index,
+        scope,
+      }),
+    ).toEqual({ok: true, value: [first, point]})
+    expect(index.readState).toHaveBeenCalledExactlyOnceWith({
+      ...scope,
+      docId: ' docs/C%23#.md ',
+      unitId: ' %23#unit ',
+    })
+    expect(points).toEqual([point, first])
+  })
+  it('should omit the unit filter for an entire document', async () => {
+    const index = reader([point])
+    expect(await getKnowledgeByIdentity({identity: {docId: 'docs/C#.md'}, index, scope})).toEqual({
+      ok: true,
+      value: [point],
+    })
+    expect(index.readState).toHaveBeenCalledExactlyOnceWith({...scope, docId: 'docs/C#.md'})
+  })
+  it.each([{docId: ''}, {docId: ' \t'}, {docId: 'doc', unitId: ''}, {docId: 'doc', unitId: ' \t'}])(
+    'should reject blank structured identity %j before reading',
+    async (identity) => {
+      const index = reader([])
+      expect(await getKnowledgeByIdentity({identity, index, scope})).toMatchObject({
+        error: {code: 'invalid-knowledge-identity'},
+        ok: false,
+      })
+      expect(index.readState).not.toHaveBeenCalled()
+    },
+  )
+  it('should report a structured not-found selector without a fabricated logical ID', async () => {
+    const identity = {docId: 'docs/C#.md', unitId: 'missing'}
+    expect(await getKnowledgeByIdentity({identity, index: reader([]), scope})).toEqual({
+      error: {code: 'knowledge-not-found', selector: identity},
+      ok: false,
+    })
+  })
+  it('should propagate storage failure', async () => {
+    const error = {code: 'index-unavailable', detail: 'offline', retryable: true} as const
+    const index = {readState: vi.fn(async () => ({error, ok: false as const}))}
+    expect(await getKnowledgeByIdentity({identity: {docId: 'docs/C#.md'}, index, scope})).toEqual({
+      error,
+      ok: false,
+    })
+  })
 })
 
 describe('getKnowledge', () => {

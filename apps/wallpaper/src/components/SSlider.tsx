@@ -50,6 +50,7 @@ export const SSlider = (props: SSliderProps) => {
       case 'Home':
       case 'End':
         event.preventDefault()
+        movement.cancel()
         return props.onChange?.(event.key === 'Home' ? min() : max())
       case 'ArrowUp':
         return movement.keyboard({key: 'ArrowRight', preventDefault: () => event.preventDefault()})

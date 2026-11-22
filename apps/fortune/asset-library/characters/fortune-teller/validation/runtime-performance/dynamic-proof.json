@@ -1,0 +1,41 @@
+{
+  "frames": 120,
+  "stepSeconds": 0.016666666666666666,
+  "motion": "Idle:0",
+  "lookChanges": [
+    {
+      "frame": 10,
+      "target": {
+        "x": -1,
+        "y": -0.7
+      }
+    },
+    {
+      "frame": 40,
+      "target": {
+        "x": 1,
+        "y": 0.7
+      }
+    },
+    {
+      "frame": 70,
+      "target": {
+        "x": -1,
+        "y": 0.7
+      }
+    },
+    {
+      "frame": 100,
+      "target": {
+        "x": 0,
+        "y": 0
+      }
+    }
+  ],
+  "comparedFloat32Coordinates": 9107040,
+  "maximumCoordinateDifference": 0,
+  "differingCoordinates": 0,
+  "renderFramesIdentical": true,
+  "physicsChains": 40,
+  "method": "A seeded runtime drives the actual motion, look smoothing, blink, breath and physics. The same emitted inputs are evaluated by the general and optimized geometry paths every frame."
+}

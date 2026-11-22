@@ -2,10 +2,15 @@ import {cleanup, render} from '@solidjs/testing-library'
 import {createComponent} from 'solid-js'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 import {page, userEvent} from 'vitest/browser'
+import type {
+  SajuGenerateRequest,
+  SajuGenerationResponse,
+} from 'src/features/saju/generation-messages'
 import {type SajuReadingServices, useSajuReading} from 'src/features/saju/use-saju-reading'
 import {Saju} from '../Saju'
 
 const draftKey = 'pomo:saju:form-draft:v1'
+const modelAnswer = '일간은 병(丙)입니다. 면접에서는 준비한 사례를 구체적으로 설명해 보세요.'
 let previousDraft: string | null
 
 beforeEach(() => {
@@ -22,7 +27,12 @@ afterEach(() => {
 })
 
 const openReading = () => {
-  const createClient = vi.fn(() => ({dispose: vi.fn(), generate: vi.fn()}))
+  const createClient = vi.fn((onResponse: (response: SajuGenerationResponse) => void) => ({
+    dispose: vi.fn(),
+    generate: vi.fn((request: SajuGenerateRequest) => {
+      onResponse({requestId: request.requestId, text: modelAnswer, type: 'complete'})
+    }),
+  }))
   const isDownloaded = vi.fn(async () => true)
   const startTextModel = vi.fn(async () => ({status: 'complete' as const}))
   const services: SajuReadingServices = {
@@ -65,63 +75,26 @@ it.each(['양력', '음력'])(
   },
 )
 
-it('should accept a selected birth date after showing the missing-date guidance', async () => {
+it('should send the original compound question after selecting the missing birth date', async () => {
+  const question = '  내일 면접 잘 볼까?\n제 일간을 알려줘  '
   const services = openReading()
-  await page.getByRole('textbox', {name: '질문'}).fill('나의 미래는?')
-  await page.getByRole('button', {exact: true, name: '사주 풀이 생성'}).click()
+  const submit = page.getByRole('button', {exact: true, name: '사주 풀이 생성'})
+  await page.getByRole('textbox', {name: '질문'}).fill(question)
+  await submit.click()
   await expect.element(page.getByRole('alert')).toHaveTextContent('생년월일을 선택해 주세요.')
   await selectBirthDate()
-  await page.getByRole('button', {exact: true, name: '사주 풀이 생성'}).click()
+  await submit.click()
+
   await expect
     .element(page.getByRole('region', {name: '사주 풀이 결과'}))
-    .toHaveTextContent('재물, 일, 관계')
-  expect(page.getByRole('alert').query()).toBeNull()
-  expect(services.createClient).not.toHaveBeenCalled()
-  expect(services.isDownloaded).not.toHaveBeenCalled()
-})
-
-it('should keep a valid selected birth date available for a calculated answer', async () => {
-  const services = openReading()
-  await selectBirthDate()
-  await page.getByRole('textbox', {name: '질문'}).fill('나의 미래는?')
-  await page.getByRole('button', {exact: true, name: '사주 풀이 생성'}).click()
-  await expect
-    .element(page.getByRole('region', {name: '사주 풀이 결과'}))
-    .toHaveTextContent('재물, 일, 관계')
-  expect(page.getByRole('alert').query()).toBeNull()
-  expect(services.createClient).not.toHaveBeenCalled()
-  expect(services.isDownloaded).not.toHaveBeenCalled()
-})
-
-it.each([
-  '미래는 어떨까요?',
-  '앞날은 어떨까요?',
-  '내 앞날은 어떨까요?',
-  '미래 좀 알려줘',
-  '운세 좀 봐줘',
-])('should display topic guidance without accessing a model for %s', async (question) => {
-  const services = openReading()
-  await selectBirthDate()
-  await page.getByRole('textbox', {name: '질문'}).fill(question)
-  await page.getByRole('button', {exact: true, name: '사주 풀이 생성'}).click()
-  expect(services.isDownloaded).not.toHaveBeenCalled()
-  expect(services.createClient).not.toHaveBeenCalled()
+    .toHaveTextContent(modelAnswer)
+  const {generate} = services.createClient.mock.results[0].value
+  expect(generate).toHaveBeenCalledOnce()
+  expect(JSON.parse(generate.mock.calls[0][0].messages[1].content)).toMatchObject({
+    chart: {day: {hanja: '丙午'}, hour: null},
+    question,
+  })
+  expect(services.isDownloaded).toHaveBeenCalledOnce()
   expect(services.startTextModel).not.toHaveBeenCalled()
-  await expect
-    .element(page.getByRole('region', {name: '사주 풀이 결과'}))
-    .toHaveTextContent('재물, 일, 관계')
   expect(page.getByRole('alert').query()).toBeNull()
-})
-
-it('should display a diary day-stem fact without accessing a model', async () => {
-  const services = openReading()
-  await selectBirthDate()
-  await page.getByRole('textbox', {name: '질문'}).fill('제 일기에 적을 내 일간은 무엇인가요?')
-  await page.getByRole('button', {exact: true, name: '사주 풀이 생성'}).click()
-  await expect
-    .element(page.getByRole('region', {name: '사주 풀이 결과'}))
-    .toHaveTextContent('일간은 병(丙)입니다.')
-  expect(services.createClient).not.toHaveBeenCalled()
-  expect(services.isDownloaded).not.toHaveBeenCalled()
-  expect(services.startTextModel).not.toHaveBeenCalled()
 })

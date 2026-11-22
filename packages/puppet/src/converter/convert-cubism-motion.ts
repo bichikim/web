@@ -105,7 +105,7 @@ export const convertCubismMotion = (value: unknown, options: CubismMotionOptions
     throw new Error('Cubism motion version must be 3')
   }
   const metadata = jsonObject(source.Meta)
-  const fade = readFade(source)
+  const fade = readFade(metadata)
   return {
     duration: jsonNumber(metadata.Duration),
     events: jsonArray(source.UserData ?? []).map((entry) => {

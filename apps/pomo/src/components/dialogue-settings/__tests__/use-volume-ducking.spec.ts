@@ -180,7 +180,7 @@ it('should report a queued save failure as a save failure after an earlier save 
   view.cleanup()
 })
 
-it('should clear an earlier save failure when the following save succeeds without success feedback', async () => {
+it('should keep an earlier save failure out of the UI while the latest save runs', async () => {
   vi.spyOn(console, 'error').mockImplementation(() => undefined)
   const firstWrite = Promise.withResolvers<void>()
   const secondWrite = Promise.withResolvers<void>()
@@ -199,7 +199,8 @@ it('should clear an earlier save failure when the following save succeeds withou
   firstWrite.reject(new Error('first save failed'))
   await vi.advanceTimersByTimeAsync(0)
   expect(settingsMocks.write).toHaveBeenCalledTimes(2)
-  expect(view.result.message()).toBe('플레이어 음량 설정을 저장하지 못했어요.')
+  expect(view.result.message()).toBeNull()
+  expect(view.result.settings().playerVolumePercent).toBe(40)
 
   secondWrite.resolve()
   await vi.advanceTimersByTimeAsync(0)

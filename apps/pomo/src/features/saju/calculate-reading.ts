@@ -1,9 +1,6 @@
 import {analyzeDaeun, analyzeElements, analyzeSipseong, type BirthInput, deriveSaju} from 'k-saju'
 import {createMessages} from './create-messages'
-import {getBroadFutureAnswer} from './get-broad-future-answer'
-import {getDayPillarFactAnswer} from './get-day-pillar-fact-answer'
 import type {GenerateSajuRequest} from './messages'
-import {requiresAnnualReading} from './requires-annual-reading'
 import {toSajuCalculationBirth} from './to-saju-calculation-birth'
 
 export interface SajuReadingInput {
@@ -12,45 +9,29 @@ export interface SajuReadingInput {
   readonly question: string
 }
 
-export type SajuReadingResult =
-  | {readonly text: string; readonly type: 'answer' | 'notice'}
-  | {readonly request: GenerateSajuRequest; readonly type: 'generate'}
-
-/** Calculates the chart and chooses the response path for one question. */
-export function calculateSajuReading(input: SajuReadingInput): SajuReadingResult {
-  const {birth} = input
-  const question = input.question.trim()
+export function calculateSajuReading(input: SajuReadingInput) {
+  const {birth, gender, question} = input
   if (birth.date === '') {
     throw new Error('생년월일을 선택해 주세요.')
   }
   if (birth.date < '1900-01-01' || birth.date > '2050-12-31') {
     throw new Error('생년월일은 1900년부터 2050년까지 선택해 주세요.')
   }
-  if (question === '') {
+  if (question.trim() === '') {
     throw new Error('해석할 질문을 입력해 주세요.')
-  }
-  if (requiresAnnualReading(question)) {
-    return {
-      text: '특정 연도 운세는 계산하지 않아요. 연도를 빼고 다시 질문해 주세요.',
-      type: 'notice',
-    }
   }
 
   const calculationBirth = toSajuCalculationBirth(birth)
   const chart = deriveSaju(calculationBirth)
-  const answer = getDayPillarFactAnswer(question, chart) ?? getBroadFutureAnswer(question)
-  if (answer !== null) {
-    return {text: answer, type: 'answer'}
+  const calculation = {
+    chart,
+    daeun: gender === 'N' ? null : analyzeDaeun(calculationBirth, chart, gender),
+    elements: analyzeElements(chart),
+    sipseong: analyzeSipseong(chart),
   }
-
-  const elements = analyzeElements(chart)
-  const sipseong = analyzeSipseong(chart)
-  const daeun = input.gender === 'N' ? null : analyzeDaeun(calculationBirth, chart, input.gender)
-  return {
-    request: {
-      messages: createMessages({chart, daeun, elements, question, sipseong}),
-      type: 'generate',
-    },
+  const request: GenerateSajuRequest = {
+    messages: createMessages({...calculation, question}),
     type: 'generate',
   }
+  return {calculation, request}
 }

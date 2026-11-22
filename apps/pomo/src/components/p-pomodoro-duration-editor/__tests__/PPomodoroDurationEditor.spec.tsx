@@ -204,6 +204,161 @@ describe('PPomodoroDurationEditor', () => {
     expect(onChange).toHaveBeenCalledWith(expect.objectContaining({focusSeconds: 23 * 60}))
   })
 
+  it('should preserve and save drafts across equivalent config snapshots', () => {
+    const [config, setConfig] = createSignal(CONFIG)
+    const onChange = vi.fn()
+    render(() => (
+      <PPomodoroDurationEditor
+        config={config()}
+        isEditing
+        onChange={onChange}
+        onEditingChange={vi.fn()}
+      />
+    ))
+    const focusInput = screen.getByRole('spinbutton', {name: '집중 시간(분)'})
+    const sessionInput = screen.getByRole('spinbutton', {name: '집중 횟수(회)'})
+    const shortBreakInput = screen.getByRole('spinbutton', {name: '짧은 휴식 시간(분)'})
+    const longBreakInput = screen.getByRole('spinbutton', {name: '긴 휴식 시간(분)'})
+    fireEvent.input(focusInput, {target: {value: '31'}})
+    fireEvent.input(sessionInput, {target: {value: '6'}})
+    fireEvent.input(shortBreakInput, {target: {value: '7'}})
+    fireEvent.input(longBreakInput, {target: {value: '20'}})
+
+    setConfig({...CONFIG})
+    setConfig({...CONFIG})
+
+    expect(screen.getByRole('spinbutton', {name: '집중 시간(분)'})).toBe(focusInput)
+    expect(focusInput).toHaveProperty('value', '31')
+    expect(sessionInput).toHaveProperty('value', '6')
+    expect(shortBreakInput).toHaveProperty('value', '7')
+    expect(longBreakInput).toHaveProperty('value', '20')
+    fireEvent.click(screen.getByRole('button', {name: '설정 저장'}))
+    expect(onChange).toHaveBeenCalledWith({...SYNCED_CONFIG, focusSeconds: 31 * 60})
+  })
+
+  it('should preserve an incomplete draft and disabled save across an equivalent snapshot', () => {
+    const [config, setConfig] = createSignal(CONFIG)
+    const onChange = vi.fn()
+    render(() => (
+      <PPomodoroDurationEditor
+        config={config()}
+        isEditing
+        onChange={onChange}
+        onEditingChange={vi.fn()}
+      />
+    ))
+    const focusInput = screen.getByRole('spinbutton', {name: '집중 시간(분)'})
+    fireEvent.input(focusInput, {target: {value: ''}})
+
+    setConfig({...CONFIG})
+
+    expect(focusInput).toHaveProperty('value', '')
+    expect(screen.getByRole('button', {name: '설정 저장'})).toHaveProperty('disabled', true)
+    expect(onChange).not.toHaveBeenCalled()
+  })
+
+  it.each([
+    {focusSeconds: 30 * 60},
+    {focusSessionsPerCycle: 6},
+    {shortBreakSeconds: 7 * 60},
+    {longBreakSeconds: 20 * 60},
+  ])('should discard a draft when a duration setting changes to %j', (change) => {
+    const [config, setConfig] = createSignal(CONFIG)
+    const onChange = vi.fn()
+    render(() => (
+      <PPomodoroDurationEditor
+        config={config()}
+        isEditing
+        onChange={onChange}
+        onEditingChange={vi.fn()}
+      />
+    ))
+    fireEvent.input(screen.getByRole('spinbutton', {name: '집중 시간(분)'}), {
+      target: {value: '31'},
+    })
+    const received = {...CONFIG, ...change}
+
+    setConfig(received)
+
+    expect(screen.getByRole('spinbutton', {name: '집중 시간(분)'})).toHaveProperty(
+      'value',
+      String(received.focusSeconds / 60),
+    )
+    expect(screen.getByRole('spinbutton', {name: '집중 횟수(회)'})).toHaveProperty(
+      'value',
+      String(received.focusSessionsPerCycle),
+    )
+    expect(screen.getByRole('spinbutton', {name: '짧은 휴식 시간(분)'})).toHaveProperty(
+      'value',
+      String(received.shortBreakSeconds / 60),
+    )
+    expect(screen.getByRole('spinbutton', {name: '긴 휴식 시간(분)'})).toHaveProperty(
+      'value',
+      String(received.longBreakSeconds / 60),
+    )
+    fireEvent.click(screen.getByRole('button', {name: '설정 저장'}))
+    expect(onChange).toHaveBeenCalledWith(received)
+  })
+
+  it('should not revive a discarded draft when remote durations return to their earlier values', () => {
+    const [config, setConfig] = createSignal(CONFIG)
+    const onChange = vi.fn()
+    render(() => (
+      <PPomodoroDurationEditor
+        config={config()}
+        isEditing
+        onChange={onChange}
+        onEditingChange={vi.fn()}
+      />
+    ))
+    const focusInput = screen.getByRole('spinbutton', {name: '집중 시간(분)'})
+    fireEvent.input(focusInput, {target: {value: '31'}})
+    setConfig(SYNCED_CONFIG)
+    expect(focusInput).toHaveProperty('value', '30')
+
+    setConfig({...CONFIG})
+
+    expect(focusInput).toHaveProperty('value', '25')
+    fireEvent.click(screen.getByRole('button', {name: '설정 저장'}))
+    expect(onChange).toHaveBeenCalledWith(CONFIG)
+  })
+
+  it('should reset a preserved draft on cancel and reopen without retaining it after unmount', () => {
+    const [config, setConfig] = createSignal(CONFIG)
+    const [editing, setEditing] = createSignal(true)
+    const onChange = vi.fn()
+    const view = render(() => (
+      <PPomodoroDurationEditor
+        config={config()}
+        isEditing={editing()}
+        onChange={onChange}
+        onEditingChange={setEditing}
+      />
+    ))
+    fireEvent.input(screen.getByRole('spinbutton', {name: '집중 시간(분)'}), {
+      target: {value: '31'},
+    })
+    setConfig({...CONFIG})
+    fireEvent.click(screen.getByRole('button', {name: '취소'}))
+    fireEvent.click(screen.getByRole('button', {name: /4세션/}))
+    expect(screen.getByRole('spinbutton', {name: '집중 시간(분)'})).toHaveProperty('value', '25')
+    fireEvent.input(screen.getByRole('spinbutton', {name: '집중 시간(분)'}), {
+      target: {value: '32'},
+    })
+    view.unmount()
+    setConfig(SYNCED_CONFIG)
+    render(() => (
+      <PPomodoroDurationEditor
+        config={config()}
+        isEditing
+        onChange={onChange}
+        onEditingChange={vi.fn()}
+      />
+    ))
+    expect(screen.getByRole('spinbutton', {name: '집중 시간(분)'})).toHaveProperty('value', '30')
+    expect(onChange).not.toHaveBeenCalled()
+  })
+
   it('should refresh and save the config received while editing', () => {
     const [config, setConfig] = createSignal(CONFIG)
     const onChange = vi.fn()
