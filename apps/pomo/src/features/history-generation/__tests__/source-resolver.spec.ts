@@ -18,6 +18,11 @@ describe('normalizeHistorySourceUrl', () => {
     ['https://www.archive.example/?utm_source=x#fragment', 'https://archive.example/'],
     ['https://archive.example/a?&&UTM_SOURCE=x&keep=%2f&', 'https://archive.example/a?&&keep=%2f&'],
     ['https://archive.example/a?q=%&x=a%20b', 'https://archive.example/a?q=%&x=a%20b'],
+    ['https://archive.example/a?', 'https://archive.example/a?'],
+    [
+      'https://user:pass@WWW.ARCHIVE.EXAMPLE:443/parent/../a///#section',
+      'https://user:pass@archive.example/a',
+    ],
     [
       'https://www.archive.example/a?utmish=x&x=utm_source',
       'https://archive.example/a?utmish=x&x=utm_source',
@@ -57,6 +62,42 @@ describe('createHistorySourceResolver', () => {
     expect(() => resolve('https://other.example/generated-123456')).toThrow(TypeError)
   })
 
+  it.each([
+    [
+      'https://user:pass@WWW.ARCHIVE.EXAMPLE:443/parent/../original-123456///?utm_source=x#section',
+      generated,
+    ],
+    ['http://archive.example:8080/original-123456', generated],
+    [
+      'https://www.www.archive.example/original-123456/',
+      'https://www.www.archive.example/generated-123456',
+    ],
+  ])('should preserve native hostname and path identity matching for %s', (searched, candidate) => {
+    expect(createHistorySourceResolver([searched])(candidate)).toBe(searched)
+  })
+
+  it('should strip only one www prefix when comparing article identities', () => {
+    const resolve = createHistorySourceResolver(['https://www.www.archive.example/original-123456'])
+    expect(() => resolve(generated)).toThrow(
+      new TypeError(`A generated source was not returned by OpenAI web search: ${generated}`),
+    )
+  })
+
+  it('should preserve distinct exact keys for a trailing empty query delimiter', () => {
+    const plain = 'https://archive.example/document'
+    const trailing = `${plain}?`
+    const resolve = createHistorySourceResolver([plain, trailing])
+
+    expect(resolve(plain)).toBe(plain)
+    expect(resolve(trailing)).toBe(trailing)
+    expect(() => createHistorySourceResolver([plain])(trailing)).toThrow(
+      new TypeError(`A generated source was not returned by OpenAI web search: ${trailing}`),
+    )
+    expect(() => createHistorySourceResolver([trailing])(plain)).toThrow(
+      new TypeError(`A generated source was not returned by OpenAI web search: ${plain}`),
+    )
+  })
+
   it('should isolate identity-free URLs from independent article groups', () => {
     const plain = 'https://archive.example/document?q=original'
     const other = 'https://archive.example/other-654321'
@@ -87,6 +128,7 @@ describe('createHistorySourceResolver', () => {
       'https://archive.example/document?symbol=A/RES/260(III)',
     ],
     ['https://archive.example/document?q=a%20b', 'https://archive.example/document?q=a+b'],
+    ['https://archive.example/original-12345%36', 'https://archive.example/generated-123456'],
   ])('should reject a different identity for %s', (searched, candidate) => {
     expect(() => createHistorySourceResolver([searched])(candidate)).toThrow(
       new TypeError(`A generated source was not returned by OpenAI web search: ${candidate}`),

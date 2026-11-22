@@ -24,8 +24,7 @@ export const normalizeHistorySourceUrl = (value: string): string => {
   return url.href
 }
 
-const getArticleIdentity = (value: string): string | undefined => {
-  const url = new URL(normalizeHistorySourceUrl(value))
+const getArticleIdentity = (url: URL): string | undefined => {
   const articleId = url.pathname.match(/-(?<articleId>\d{6,})$/u)?.groups?.articleId
 
   return articleId === undefined ? undefined : `${url.hostname}:${articleId}`
@@ -33,10 +32,17 @@ const getArticleIdentity = (value: string): string | undefined => {
 
 /** Resolves citations to searched URLs by normalized URL or an unambiguous article identity. */
 export const createHistorySourceResolver = (searchSourceUrls: ReadonlyArray<string>) => {
-  const sourcesByUrl = new Map(
-    searchSourceUrls.map((value) => [normalizeHistorySourceUrl(value), value]),
-  )
-  const sourcesByArticleIdentity = Map.groupBy(searchSourceUrls, getArticleIdentity)
+  const sources = searchSourceUrls.map((value) => {
+    const normalizedUrl = normalizeHistorySourceUrl(value)
+
+    return {
+      identity: getArticleIdentity(new URL(normalizedUrl)),
+      normalizedUrl,
+      value,
+    }
+  })
+  const sourcesByUrl = new Map(sources.map(({normalizedUrl, value}) => [normalizedUrl, value]))
+  const sourcesByArticleIdentity = Map.groupBy(sources, ({identity}) => identity)
 
   return (value: string): string => {
     const normalizedUrl = normalizeHistorySourceUrl(value)
@@ -46,12 +52,12 @@ export const createHistorySourceResolver = (searchSourceUrls: ReadonlyArray<stri
       return exactSource
     }
 
-    const identity = getArticleIdentity(value)
+    const identity = getArticleIdentity(new URL(normalizedUrl))
     const articleSources =
       identity === undefined ? undefined : sourcesByArticleIdentity.get(identity)
 
     if (articleSources?.length === 1) {
-      return articleSources[0]!
+      return articleSources[0]!.value
     }
 
     throw new TypeError(
