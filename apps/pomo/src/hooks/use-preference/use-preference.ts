@@ -1,5 +1,9 @@
 import {type Accessor, createMemo, onCleanup, untrack, useContext} from 'solid-js'
-import {PreferenceContext, type PreferenceSetValueOptions} from './context'
+import {
+  PreferenceContext,
+  type PreferenceErrorListener,
+  type PreferenceSetValueOptions,
+} from './context'
 import type {PreferenceStorage} from './types'
 
 export interface PreferenceOptions<Value> {
@@ -8,6 +12,8 @@ export interface PreferenceOptions<Value> {
   /** Called after successful writes while this consumer remains mounted. */
   readonly onSaved?: () => void
   readonly onError?: (error: unknown) => void
+  /** Reports storage failures with their operation and whether they still apply to the shared value. */
+  readonly onStorageError?: PreferenceErrorListener
   readonly key: string
   readonly defaultValue: Value
   readonly parse: (value: unknown) => Value | null
@@ -25,8 +31,15 @@ export const usePreference = <Value>(options: PreferenceOptions<Value>): Prefere
     throw new Error('PreferenceProvider is required')
   }
   const entry = preferences.get(options.key, options.storage)
-  if (options.onError !== undefined) {
-    onCleanup(entry.subscribeErrors((error) => untrack(() => options.onError?.(error))))
+  if (options.onError !== undefined || options.onStorageError !== undefined) {
+    onCleanup(
+      entry.subscribeErrors((error, context) =>
+        untrack(() => {
+          options.onError?.(error)
+          options.onStorageError?.(error, context)
+        }),
+      ),
+    )
   }
   if (options.onSaved !== undefined) {
     onCleanup(entry.subscribeSaves(() => untrack(() => options.onSaved?.())))

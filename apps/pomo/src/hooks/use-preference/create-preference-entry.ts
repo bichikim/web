@@ -1,7 +1,12 @@
 import {isPromise} from '@winter-love/utils'
 import {batch, createSignal} from 'solid-js'
 import type {PreferenceStorage} from './types'
-import type {PreferenceEntry, PreferenceSetValueOptions, PreferenceSnapshot} from './context'
+import type {
+  PreferenceEntry,
+  PreferenceErrorListener,
+  PreferenceSetValueOptions,
+  PreferenceSnapshot,
+} from './context'
 
 interface PreferenceReadFailure {
   readonly error: unknown
@@ -20,13 +25,13 @@ export interface PreferenceEntryOptions {
 
 interface PreferenceWrite {
   readonly value: unknown
-  readonly revision: number
+  readonly editRevision: number
   readonly rollbackOnError: boolean
 }
 
 interface PreferenceWriterOptions {
-  readonly canRollback: (revision: number) => boolean
-  readonly onError: (error: unknown) => void
+  readonly isCurrent: (editRevision: number) => boolean
+  readonly onError: PreferenceErrorListener
   readonly onRollback: (snapshot: PreferenceSnapshot) => void
   readonly onSaved: () => void
   readonly write: (value: unknown) => ReturnType<PreferenceStorage['write']>
@@ -35,10 +40,11 @@ interface PreferenceWriterOptions {
 const createPreferenceWriter = (options: PreferenceWriterOptions) => {
   let committed: PreferenceSnapshot = {value: null}
   const reportFailure = (error: unknown, write: PreferenceWrite) => {
-    if (write.rollbackOnError && options.canRollback(write.revision)) {
+    const isCurrent = options.isCurrent(write.editRevision)
+    if (write.rollbackOnError && isCurrent) {
       options.onRollback(committed)
     }
-    options.onError(error)
+    options.onError(error, {isCurrent, operation: 'write'})
   }
   const reportWrite = (error: unknown, write: PreferenceWrite) => {
     if (error !== null && error !== undefined) {
@@ -80,23 +86,25 @@ const subscribePreferenceListener = <Listener>(
 export const createPreferenceEntry = (options: PreferenceEntryOptions): StoredPreference => {
   const [snapshot, setSnapshot] = createSignal<PreferenceSnapshot | null>(null)
   const saves = new Set<() => void>()
-  const listeners = new Set<(error: unknown) => void>()
+  const listeners = new Set<PreferenceErrorListener>()
   let revision = 0
+  // A storage refresh invalidates reads but does not supersede a local edit.
+  let editRevision = 0
   let initialized = false
   let restoring = false
   let edited = false
   let shouldPersistInitialEdit = false
   let rollbackInitialEdit = false
   let pending: Promise<void> | null = null
-  const reportError = (error: unknown) => {
+  const reportError: PreferenceErrorListener = (error, context) => {
     if (listeners.size === 0) {
       options.onError(error)
     } else {
-      listeners.forEach((listener) => listener(error))
+      listeners.forEach((listener) => listener(error, context))
     }
   }
   const writer = createPreferenceWriter({
-    canRollback: (version) => version === revision && options.isActive(),
+    isCurrent: (version) => version === editRevision && options.isActive(),
     onError: reportError,
     onRollback: setSnapshot,
     onSaved: () => saves.forEach((listener) => listener()),
@@ -118,7 +126,7 @@ export const createPreferenceEntry = (options: PreferenceEntryOptions): StoredPr
     restoring = false
     const current = snapshot()
     if (edited && current !== null && shouldPersistInitialEdit) {
-      enqueue({revision, rollbackOnError: rollbackInitialEdit, value: current.value})
+      enqueue({editRevision, rollbackOnError: rollbackInitialEdit, value: current.value})
     }
     shouldPersistInitialEdit = false
   }
@@ -155,7 +163,7 @@ export const createPreferenceEntry = (options: PreferenceEntryOptions): StoredPr
           finishInitial()
         }
         if ('error' in result) {
-          reportError(result.error)
+          reportError(result.error, {isCurrent: true, operation: 'read'})
         }
       })
     const accept = (value: unknown) => complete({value})
@@ -200,6 +208,7 @@ export const createPreferenceEntry = (options: PreferenceEntryOptions): StoredPr
         return
       }
       revision += 1
+      editRevision += 1
       const shouldPersist = valueOptions?.persist !== false
       edited = true
       if (shouldPersist) {
@@ -209,7 +218,7 @@ export const createPreferenceEntry = (options: PreferenceEntryOptions): StoredPr
       batch(() => {
         setSnapshot({value})
         if (initialized && shouldPersist) {
-          enqueue({revision, rollbackOnError: valueOptions?.rollbackOnError === true, value})
+          enqueue({editRevision, rollbackOnError: valueOptions?.rollbackOnError === true, value})
         }
       })
     },
