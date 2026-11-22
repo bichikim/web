@@ -26,13 +26,14 @@ it('should expose selected words and forward word selection', () => {
     version: 1 as const,
   }
   const onSelect = vi.fn()
+  const onPronounce = vi.fn()
   render(() => (
     <LanguageLearningWordList
       autoplayKey={() => null}
       getAudioUrl={() => null}
       isPronunciationLoading={() => false}
       onDelete={vi.fn()}
-      onPronounce={vi.fn()}
+      onPronounce={onPronounce}
       onToggleMemorized={vi.fn()}
       emptyMessage="단어 없음"
       onSelect={onSelect}
@@ -44,6 +45,8 @@ it('should expose selected words and forward word selection', () => {
   expect(button).toHaveAttribute('aria-pressed', 'true')
   fireEvent.click(button)
   expect(onSelect).toHaveBeenCalledWith(word)
+  fireEvent.click(screen.getByRole('button', {name: 'apple 발음 듣기'}))
+  expect(onPronounce).toHaveBeenCalledExactlyOnceWith(word)
 })
 
 it('should display existing canonical spellings as distinct word rows', () => {
@@ -197,6 +200,8 @@ it('should update selection by value through same-size selections and keyed row 
   setSelectedWords([{...apple}])
   expect(appleButton).toHaveAttribute('aria-pressed', 'true')
   expect(pearButton).toHaveAttribute('aria-pressed', 'false')
+  expect(appleButton.closest('li')).toHaveClass('border-primary', 'bg-primary-soft')
+  expect(pearButton.closest('li')).toHaveClass('border-border', 'bg-content-surface')
 
   setSelectedWords([{...pear}])
   const updatedPear = {...pear, memorized: true}
@@ -204,12 +209,17 @@ it('should update selection by value through same-size selections and keyed row 
 
   expect(appleButton).toHaveAttribute('aria-pressed', 'false')
   expect(pearButton).toHaveAttribute('aria-pressed', 'true')
+  expect(appleButton.closest('li')).toHaveClass('border-border', 'bg-content-surface')
+  expect(appleButton.closest('li')).not.toHaveClass('border-primary', 'bg-primary-soft')
+  expect(pearButton.closest('li')).toHaveClass('border-primary', 'bg-primary-soft')
   expect(screen.getByRole('button', {name: 'apple'})).toBe(appleButton)
   expect(appleButton).toHaveFocus()
   fireEvent.click(pearButton)
   expect(onSelect).toHaveBeenCalledExactlyOnceWith(updatedPear)
   setSelectedWords([])
   expect(pearButton).toHaveAttribute('aria-pressed', 'false')
+  expect(pearButton.closest('li')).toHaveClass('border-border', 'bg-content-surface')
+  expect(pearButton.closest('li')).not.toHaveClass('border-primary', 'bg-primary-soft')
   setWords([])
   expect(screen.getByText('단어 없음')).toBeInTheDocument()
   setSelectedWords([apple])
@@ -228,9 +238,12 @@ it('should retain raw value membership and forward duplicate selections unchange
   const decomposed = {...composed, value: composed.value.normalize('NFD')}
   const selection: ReadonlyArray<LanguageLearningWord> = [
     {...composed, language: 'en'},
+    {...composed, value: 'hidden'},
     {...composed},
   ]
+  const [selectedWords, setSelectedWords] = createSignal(selection)
   const onDelete = vi.fn()
+  const onToggleMemorized = vi.fn()
   render(() => (
     <LanguageLearningWordList
       autoplayKey={() => null}
@@ -240,8 +253,8 @@ it('should retain raw value membership and forward duplicate selections unchange
       onDelete={onDelete}
       onPronounce={vi.fn()}
       onSelect={vi.fn()}
-      onToggleMemorized={vi.fn()}
-      selectedWords={() => selection}
+      onToggleMemorized={onToggleMemorized}
+      selectedWords={selectedWords}
       words={[composed, decomposed]}
     />
   ))
@@ -250,7 +263,30 @@ it('should retain raw value membership and forward duplicate selections unchange
     'aria-pressed',
     'false',
   )
-  fireEvent.click(screen.getByRole('button', {name: '선택한 2개 단어 삭제'}))
+  expect(screen.getByRole('button', {name: composed.value}).closest('li')).toHaveClass(
+    'border-primary',
+    'bg-primary-soft',
+  )
+  fireEvent.click(screen.getByRole('button', {name: '선택한 3개 단어 삭제'}))
   expect(onDelete).toHaveBeenCalledOnce()
   expect(onDelete.mock.calls[0]![0]).toBe(selection)
+  fireEvent.click(screen.getByRole('button', {name: '선택한 3개 단어를 외운 단어로 이동'}))
+  expect(onToggleMemorized).toHaveBeenCalledOnce()
+  expect(onToggleMemorized.mock.calls[0]![0]).toBe(selection)
+
+  const nextSelection = [decomposed, decomposed]
+  setSelectedWords(nextSelection)
+  expect(screen.getByRole('button', {name: composed.value})).toHaveAttribute(
+    'aria-pressed',
+    'false',
+  )
+  expect(screen.getByRole('button', {name: decomposed.value})).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  )
+  fireEvent.click(screen.getByRole('button', {name: '선택한 2개 단어 삭제'}))
+  expect(onDelete.mock.calls[1]![0]).toBe(nextSelection)
+  setSelectedWords([])
+  expect(screen.getByRole('button', {name: '선택한 0개 단어 삭제'})).toBeDisabled()
+  expect(screen.getByRole('button', {name: '선택한 0개 단어를 외운 단어로 이동'})).toBeDisabled()
 })

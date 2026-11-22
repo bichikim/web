@@ -1,6 +1,6 @@
 import {KeyedList} from '../../keyed-list'
 import {cva, cx} from 'class-variance-authority'
-import {createMemo, createSelector, Show} from 'solid-js'
+import {createMemo, Show} from 'solid-js'
 import {type LanguageLearningWord} from '../../../features/language-learning'
 import {PSettingsEmptyState} from '../../settings/EmptyState'
 import {LanguageLearningWordPronunciationButton} from './PronunciationButton'
@@ -39,7 +39,6 @@ interface LanguageLearningWordListProps {
 
 export const LanguageLearningWordList = (props: LanguageLearningWordListProps) => {
   const selectedValues = createMemo(() => new Set(props.selectedWords().map((word) => word.value)))
-  const isSelected = createSelector(selectedValues, (value: string, values) => values.has(value))
 
   return (
     <div class="grid gap-2">
@@ -58,7 +57,7 @@ export const LanguageLearningWordList = (props: LanguageLearningWordListProps) =
             {(word) => {
               const audioUrl = createMemo(() => props.getAudioUrl(word()))
               const pronunciationLoading = createMemo(() => props.isPronunciationLoading(word()))
-              const selected = () => isSelected(word().value)
+              const selected = () => selectedValues().has(word().value)
 
               return (
                 <li class={WORD_CLASSES({selected: selected()})}>
