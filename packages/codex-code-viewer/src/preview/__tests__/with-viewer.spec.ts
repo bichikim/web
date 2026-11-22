@@ -8,6 +8,7 @@ const state = vi.hoisted(() => ({
   close: vi.fn(),
   launch: vi.fn(),
   post: vi.fn(),
+  readInitial: vi.fn(async (session: string) => ({content: [], structuredContent: {session}})),
   sessions: vi.fn<() => string[]>().mockReturnValue(['one']),
 }))
 vi.mock('./create-preview', () => ({
@@ -28,11 +29,12 @@ vi.mock('playwright', () => ({
         newPage: async () => ({
           addInitScript: vi.fn(),
           frameLocator: () => ({locator: () => ({innerText: async () => 'viewer state'})}),
+          off: vi.fn(),
           on: (name: string, listener: (response: unknown) => void) => {
             if (name === 'response') {
               for (const session of state.sessions()) {
                 listener({
-                  json: async () => ({content: [], structuredContent: {session}}),
+                  json: () => state.readInitial(session),
                   url: () => 'http://preview/initial',
                 })
               }
@@ -147,5 +149,17 @@ it('should retain every failure when several sessions fail to release', async ()
     errors: [expect.objectContaining({errors: [first, second]})],
   })
   expect(state.post).toHaveBeenCalledTimes(2)
+  expect(state.browserClose).toHaveBeenCalledOnce()
+})
+
+it('should report a failed initial response and still close valid sessions', async () => {
+  const initialFailure = new Error('initial response could not be read')
+  state.sessions.mockReturnValueOnce(['one', 'two'])
+  state.readInitial.mockRejectedValueOnce(initialFailure)
+
+  await expect(withViewer({}, async () => 0)).rejects.toMatchObject({errors: [initialFailure]})
+  expect(state.post).toHaveBeenCalledExactlyOnceWith('http://preview/tool', {
+    data: {arguments: {session: 'two'}, name: 'code.close'},
+  })
   expect(state.browserClose).toHaveBeenCalledOnce()
 })

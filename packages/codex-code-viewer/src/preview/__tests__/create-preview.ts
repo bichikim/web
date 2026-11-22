@@ -20,7 +20,7 @@ export interface Preview {
   stderr(): string
 }
 
-const LOG_TAIL_BYTES = 8192
+const LOG_TAIL_CODE_UNITS = 8192
 const STARTUP_DEADLINE_MS = 15000
 const CLOSE_DEADLINE_MS = 5000
 
@@ -30,23 +30,23 @@ const previewAddress = async (
   const ready = Promise.withResolvers<string>()
   let output = ''
   let errors = ''
-  const read = (data: Buffer): void => {
-    output = (output + data.toString()).slice(-LOG_TAIL_BYTES)
-    const address = /Code Viewer preview: (?<url>http:\/\/\S+)/u.exec(output)?.groups?.url
-    if (address !== undefined) {
+  const read = (data: string): void => {
+    output = (output + data).slice(-LOG_TAIL_CODE_UNITS)
+    const address = /Code Viewer preview: (?<url>http:\/\/\S+)\r?\n/u.exec(output)?.groups?.url
+    if (address !== undefined && child.exitCode === null && child.signalCode === null) {
       ready.resolve(address)
     }
   }
   const fail = (error: Error): void => ready.reject(error)
-  const exit = (): void => fail(new Error(`Preview exited before startup: ${errors}`))
-  const record = (data: Buffer): void => {
-    errors = (errors + data.toString()).slice(-LOG_TAIL_BYTES)
+  const failBeforeReady = (): void => fail(new Error(`Preview exited before startup: ${errors}`))
+  const record = (data: string): void => {
+    errors = (errors + data).slice(-LOG_TAIL_CODE_UNITS)
   }
-  child.stdout.on('data', read)
-  child.stderr.on('data', record)
+  child.stdout.setEncoding('utf8').on('data', read)
+  child.stderr.setEncoding('utf8').on('data', record)
   child.once('close', () => child.stderr.off('data', record))
   child.once('error', fail)
-  child.once('exit', exit)
+  child.once('close', failBeforeReady)
   const deadline = addAbortListener(AbortSignal.timeout(STARTUP_DEADLINE_MS), () =>
     fail(new Error(`Preview startup deadline: ${errors}`)),
   )
@@ -55,51 +55,66 @@ const previewAddress = async (
   } finally {
     child.stdout.off('data', read)
     child.off('error', fail)
-    child.off('exit', exit)
+    child.off('close', failBeforeReady)
     deadline[Symbol.dispose]()
     child.stdout.resume()
     child.stderr.resume()
   }
 }
 
-/** Owns a real preview and bundled MCP server with an isolated chat profile until close. */
-export const createPreview = async (options: CreatePreviewOptions = {}): Promise<Preview> => {
-  const directory = await realpath(await mkdtemp(join(tmpdir(), 'viewer-e2e-')))
+const prepareWorkspace = async (directory: string, options: CreatePreviewOptions) => {
   const workspace = options.workspace ?? join(directory, 'workspace')
   await mkdir(workspace, {recursive: true})
   if (options.workspace === undefined) {
     await mkdir(join(workspace, '.git'))
-    await Promise.all(
+    const writes = await Promise.allSettled(
       Object.entries(options.files ?? {}).map(async ([name, content]) => {
         const path = join(workspace, name)
         await mkdir(dirname(path), {recursive: true})
         await writeFile(path, content)
       }),
     )
+    const failures = writes.flatMap((write) => (write.status === 'rejected' ? [write.reason] : []))
+    if (failures.length === 1) {
+      throw failures[0]
+    }
+    if (failures.length > 1) {
+      throw new AggregateError(failures, 'Preview fixture files could not be written.')
+    }
   }
-  const root = fileURLToPath(new URL('../../../', import.meta.url))
-  const child = spawn(
-    process.execPath,
-    ['--import', import.meta.resolve('tsx'), join(root, 'preview.ts'), workspace, '--panel'],
-    {cwd: root, env: {...process.env, CODEX_HOME: join(directory, 'home')}, stdio: 'pipe'},
-  )
-  const closed = new Promise<void>((resolve) => {
-    child.once('close', () => resolve())
-  })
-  let stopping: Promise<void> | undefined
-  const close = (): Promise<void> => {
-    stopping ??= (async () => {
-      if (child.exitCode === null && child.signalCode === null) {
-        const ended = once(child, 'close', {signal: AbortSignal.timeout(CLOSE_DEADLINE_MS)})
-        child.kill('SIGINT')
-        await ended.catch(() => child.kill('SIGKILL'))
-      }
-      await closed
-      await rm(directory, {force: true, recursive: true})
-    })()
-    return stopping
-  }
+  return workspace
+}
+
+/** Owns a real preview and bundled MCP server with an isolated chat profile until close. */
+export const createPreview = async (options: CreatePreviewOptions = {}): Promise<Preview> => {
+  const temporaryDirectory = await mkdtemp(join(tmpdir(), 'viewer-e2e-'))
+  const removeDirectory = () => rm(temporaryDirectory, {force: true, recursive: true})
+  let close = removeDirectory
   try {
+    const directory = await realpath(temporaryDirectory)
+    const workspace = await prepareWorkspace(directory, options)
+    const root = fileURLToPath(new URL('../../../', import.meta.url))
+    const child = spawn(
+      process.execPath,
+      ['--import', import.meta.resolve('tsx'), join(root, 'preview.ts'), workspace, '--panel'],
+      {cwd: root, env: {...process.env, CODEX_HOME: join(directory, 'home')}, stdio: 'pipe'},
+    )
+    const closed = new Promise<void>((resolve) => {
+      child.once('close', () => resolve())
+    })
+    let stopping: Promise<void> | undefined
+    close = (): Promise<void> => {
+      stopping ??= (async () => {
+        if (child.exitCode === null && child.signalCode === null) {
+          const ended = once(child, 'close', {signal: AbortSignal.timeout(CLOSE_DEADLINE_MS)})
+          child.kill('SIGINT')
+          await ended.catch(() => child.kill('SIGKILL'))
+        }
+        await closed
+        await removeDirectory()
+      })()
+      return stopping
+    }
     const address = await previewAddress(child)
     return {...address, child, close, directory, workspace}
   } catch (error) {
