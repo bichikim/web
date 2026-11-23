@@ -1,6 +1,6 @@
 ---
 name: main-release-pr
-description: 명시적으로 호출했을 때 최신 dev에서 날짜 기반 배포 브랜치를 만들고 main 대상 배포 PR을 생성한다.
+description: 명시 호출 시 최신 dev에서 날짜 기반 배포 브랜치를 만들고 main 대상 배포 PR을 생성한다.
 disable-model-invocation: true
 ---
 

@@ -1,6 +1,6 @@
 ---
 name: skill-diet
-description: Reduce a Codex skill to its minimum useful form or delete it when redundant while preserving triggers, tone, safety constraints, and usefulness; extract conditional context when needed.
+description: Audit or shorten SKILL.md while preserving invocation boundaries, repository rules, and workflow outcomes.
 ---
 
 # Skill Diet

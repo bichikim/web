@@ -1,11 +1,11 @@
 ---
 name: solidjs
-description: Apply project conventions for Solid.js components, hooks, reactivity, and styling when editing Solid.js .tsx/.ts files.
+description: Apply Solid component, hook, prop, reactivity, and DOM conventions when editing Solid implementation.
 ---
 
 # Solid.js
 
-Open and apply the linked rule for the task. TypeScript naming, typing, formatting, and object-parameter conventions come from the typescript skill (also triggers on `.tsx` / `.ts`).
+Open the linked rules that match the task. Follow [typescript-conventions](../typescript-conventions/SKILL.md) for TypeScript naming, typing, formatting, and object parameters.
 
 ## Core Rules
 
@@ -16,7 +16,7 @@ Open and apply the linked rule for the task. TypeScript naming, typing, formatti
 5. Built-in control flow (`Show` / `Switch` / `Match` / `For` / `Index`); Suspense + ErrorBoundary for async/errors. See [references/rendering.md](references/rendering.md).
 6. Props: never destructure; `splitProps` only when needed. Derived values: prefer `createMemo` for simple, readable compositions. Before choosing the shape of complex derivations, apply the TypeScript function-decomposition workflow; prefer a plain accessor when the remaining logic is still a complex function composition, provided the required reactive behavior is preserved. Effects: `onCleanup` inside `createEffect`. Hooks: do not track user callbacks — track config inputs; read signals at callback time. See [references/reactivity.md](references/reactivity.md).
 7. Current SolidJS docs: context7 MCP first.
-8. Do not wrap code in `onMount` solely because an API is unavailable during SSR. When possible, read the API from `globalThis`, check `typeof ... === 'undefined'`, and return without running the dependent work when unavailable. Use `onMount` when the work actually requires mounted DOM or must be deferred to preserve identical server and initial client rendering. In SolidStart, apply the `solidstart` skill before accessing browser globals; availability guards must not cause server and initial client markup or reactive state to differ.
+8. Do not wrap code in `onMount` solely because an API is unavailable during SSR. When possible, read the API from `globalThis`, check `typeof ... === 'undefined'`, and return without running the dependent work when unavailable. Use `onMount` when the work actually requires mounted DOM or must be deferred to preserve identical server and initial client rendering. For browser globals in SolidStart, apply the [SolidStart runtime boundaries](../solidstart/SKILL.md#runtime-boundaries) before editing.
 
 ## Hook inputs
 

@@ -1,6 +1,6 @@
 ---
 name: dispatch-bug-fixes
-description: Select up to three open bug issues without WIP, label them WIP, and dispatch each to a separate Luna max worktree for review, fixing, and a draft PR.
+description: Use only on explicit invocation to label up to three eligible GitHub bugs WIP and dispatch separate worktree tasks for draft fixes.
 ---
 
 # Dispatch bug fixes

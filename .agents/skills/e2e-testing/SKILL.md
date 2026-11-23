@@ -1,6 +1,6 @@
 ---
 name: e2e-testing
-description: Write, modify, or diagnose end-to-end tests and their fixtures using observable readiness and completion conditions. Use for browser E2E synchronization and test-server lifecycle; not unit tests.
+description: Write, edit, or diagnose browser E2E tests and fixtures, including observable synchronization and test-server readiness.
 ---
 
 # E2E 작성

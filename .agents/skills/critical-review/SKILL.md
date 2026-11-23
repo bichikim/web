@@ -1,6 +1,6 @@
 ---
 name: critical-review
-description: Review code for correctness, maintainability, security (including abuse resistance), lifecycle, and performance; verify every finding's cause and concrete impact first.
+description: Review a code change for verified defects and maintainability issues, including lifecycle, security, and performance.
 disable-model-invocation: true
 ---
 
@@ -21,6 +21,7 @@ Read the matching rules during every review:
 - For paths crossing trust boundaries or exposing caller-triggered side effects: [abuse resistance](rules/abuse-resistance.md).
 - For rendering stalls or any path whose work or retained resources can grow with input, accumulated data, concurrency, or duration: [performance](rules/performance.md).
 - For Solid code: [reactivity and lifecycle](rules/solid.md).
+- For changes to SolidStart SSR, hydration, browser-only execution, or server-function boundaries: [SolidStart](../solidstart/SKILL.md).
 
 Report behavior defects found through any perspective by verified impact; never downgrade them to P3. Merge shared causes and fixes while preserving distinct impacts and locations. Disclose unfinished perspectives or required verification; do not claim completion.
 
@@ -32,7 +33,7 @@ Apply these rules within the refactoring and naming/structure perspectives:
 - Require deterministic tests of production behavior and failure paths through explicit inputs and replaceable boundaries. Report invasive mocking or hidden global, time, random, network, or process dependencies as P3 even without a behavior defect.
 - Prefer deleting unnecessary branches, helpers, modes, or layers over rearranging them.
 - Flag changed code files over 600 lines; exclude test files and non-code assets.
-- Keep directory-wide context in `README.md`; explain an item in its own file when possible, otherwise in `[filename].md`.
+- For documentation placement and duplication, apply [write-documentation](../write-documentation/SKILL.md).
 - Config `.ts` files directly under `apps/pomo`, `apps/coong`, or `packages/*` must not import their `src/**`. Report reverse imports; ask before implementing an unavoidable exception.
 
 ## Evidence and severity

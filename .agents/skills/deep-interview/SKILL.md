@@ -1,6 +1,6 @@
 ---
 name: deep-interview
-description: Interview the user with Socratic questions when a request needs actionable requirements or its goal, scope, constraints, or done criteria are unclear; skip concrete or low-value fixes.
+description: Clarify material product requirements, constraints, scope, or acceptance criteria that the repository cannot answer.
 argument-hint: '<rough request>'
 ---
 
