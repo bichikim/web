@@ -12,7 +12,7 @@ export const getAppLocale = (): ReturnType<typeof getLocale> => {
 }
 
 /** Preserves Paraglide's reload behavior and updates mounted locale-dependent data. */
-export const setAppLocale: typeof setLocale = async (locale, options) => {
-  await setLocale(locale, options)
+export const setAppLocale: typeof setLocale = async (...args) => {
+  await setLocale(...args)
   setLocaleVersion((version) => version + 1)
 }

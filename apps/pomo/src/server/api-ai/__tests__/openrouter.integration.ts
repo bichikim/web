@@ -327,7 +327,7 @@ it('should retain one use after user cancellation of an unacknowledged submissio
   await client.update(apiAiJobs).set({cancelRequestedAt: now}).where(eq(apiAiJobs.id, id))
 
   await createService(() => new Date(now.getTime() + 120001)).recover()
-  expect(await readCloudTextJob(userId, id)).toMatchObject({kind: 'failed', usage: {used: 1}})
+  expect(await readCloudTextJob(userId, id)).toMatchObject({kind: 'cancelled', usage: {used: 1}})
   expect(fetch).toHaveBeenCalledOnce()
 })
 

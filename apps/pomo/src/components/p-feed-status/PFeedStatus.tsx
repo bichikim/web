@@ -99,7 +99,13 @@ const createFeedStatusActions = (
       setIsCheckingModel(false)
     }
 
-    if (isRetryDisabled() || feeds.recoveryJobs() !== recoveryJobs) {
+    const currentJobs = feeds.recoveryJobs()
+    const checkedModels = new Map(recoveryJobs.map(({id, modelId}) => [id, modelId]))
+    if (
+      isRetryDisabled() ||
+      currentJobs.length !== checkedModels.size ||
+      currentJobs.some(({id, modelId}) => checkedModels.get(id) !== modelId)
+    ) {
       return
     }
 
