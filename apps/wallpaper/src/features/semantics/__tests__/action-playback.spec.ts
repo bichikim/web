@@ -35,3 +35,90 @@ test('should keep bundled actions independent and release only removed actions b
   expect(player.setExpressionLayer).toHaveBeenLastCalledWith(notesLayer)
   expect(stop).toHaveBeenCalledOnce()
 })
+
+test('should retry a rejected motion and retain only the successful playback until removal', () => {
+  const stop = vi.fn()
+  const player = {
+    resetMotionHistory: vi.fn(),
+    setExpressionLayer: vi.fn(() => true),
+    startMotion: vi
+      .fn<() => {stop: () => void} | undefined>()
+      .mockReturnValueOnce(undefined)
+      .mockReturnValue({stop}),
+  }
+  const walk: SemanticSelection = {
+    action: {
+      action: {id: 'walk', kind: 'motion'},
+      label: '걷기',
+      parameterIds: ['ParamBody'],
+    },
+    group: 'body',
+  }
+  const playback = createActionPlayback(player)
+  playback.sync([walk])
+  expect(player.startMotion).toHaveBeenCalledTimes(1)
+  playback.sync([walk])
+  expect(player.startMotion).toHaveBeenCalledTimes(2)
+  expect(player.startMotion).toHaveBeenLastCalledWith('walk', {loop: true})
+  playback.sync([walk])
+  expect(player.startMotion).toHaveBeenCalledTimes(2)
+  expect(stop).not.toHaveBeenCalled()
+  expect(player.resetMotionHistory).not.toHaveBeenCalled()
+  playback.sync([])
+  expect(stop).toHaveBeenCalledOnce()
+  expect(player.resetMotionHistory).toHaveBeenCalledExactlyOnceWith(['ParamBody'])
+  playback.dispose()
+  expect(stop).toHaveBeenCalledOnce()
+})
+
+test('should release no motion channels after every start attempt is rejected', () => {
+  const player = {
+    resetMotionHistory: vi.fn(),
+    setExpressionLayer: vi.fn(() => true),
+    startMotion: vi.fn(() => undefined),
+  }
+  const walk: SemanticSelection = {
+    action: {
+      action: {id: 'missing', kind: 'motion'},
+      label: '걷기',
+      parameterIds: ['ParamBody'],
+    },
+    group: 'body',
+  }
+  const playback = createActionPlayback(player)
+  playback.sync([walk])
+  playback.sync([walk])
+  expect(player.startMotion).toHaveBeenCalledTimes(2)
+  playback.sync([])
+  playback.dispose()
+  expect(player.resetMotionHistory).not.toHaveBeenCalled()
+})
+
+test('should retry a rejected expression without releasing a layer it did not start', () => {
+  const player = {
+    resetMotionHistory: vi.fn(),
+    setExpressionLayer: vi.fn<(layer: string, id?: string) => boolean>(() => true),
+    startMotion: vi.fn(() => undefined),
+  }
+  const expression: SemanticSelection = {
+    action: {action: {id: 'smile', kind: 'expression'}, label: '미소'},
+    group: 'face',
+  }
+  const playback = createActionPlayback(player)
+
+  player.setExpressionLayer.mockReturnValueOnce(false)
+  playback.sync([expression])
+  playback.sync([])
+  expect(player.setExpressionLayer).toHaveBeenCalledTimes(1)
+
+  player.setExpressionLayer.mockReturnValueOnce(false)
+  playback.sync([expression])
+  playback.sync([expression])
+  playback.sync([expression])
+  expect(player.setExpressionLayer).toHaveBeenCalledTimes(3)
+  const [layer] = player.setExpressionLayer.mock.calls[2]!
+  expect(player.setExpressionLayer).toHaveBeenLastCalledWith(layer, 'smile')
+  playback.dispose()
+  expect(player.setExpressionLayer).toHaveBeenCalledTimes(4)
+  expect(player.setExpressionLayer).toHaveBeenLastCalledWith(layer)
+})
