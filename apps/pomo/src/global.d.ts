@@ -76,6 +76,10 @@ type MediaChromeAttributes = JSX.HTMLAttributes<HTMLElement> & {
 
 declare module 'solid-js' {
   namespace JSX {
+    interface ExplicitProperties {
+      indeterminate: boolean
+    }
+
     interface ExplicitAttributes {
       autofocus: string
       checked: string
