@@ -11,7 +11,9 @@ const startAction = (
   switch (action.kind) {
     case 'expression': {
       const layer = `semantic:${actionKey(selection)}`
-      player.setExpressionLayer(layer, action.id)
+      if (!player.setExpressionLayer(layer, action.id)) {
+        return undefined
+      }
       return () => {
         player.setExpressionLayer(layer)
       }
