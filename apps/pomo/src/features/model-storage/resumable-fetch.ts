@@ -127,16 +127,10 @@ const createPersistedStream = (
   let chunks: Array<Uint8Array> = []
   let chunkBytes = 0
   let storageAvailable = true
+  let cancelled = false
+  let pendingWrite: Promise<void> | undefined
 
-  const flush = async () => {
-    if (chunkBytes === 0) {
-      return
-    }
-
-    const chunk = concatUint8Arrays(chunks)
-
-    chunks = []
-    chunkBytes = 0
+  const writeChunk = async (chunk: Uint8Array) => {
     try {
       await storage.append(url, chunk)
     } catch (error: unknown) {
@@ -145,17 +139,37 @@ const createPersistedStream = (
     }
   }
 
+  const flush = async () => {
+    if (chunkBytes === 0) {
+      await pendingWrite
+      return
+    }
+
+    const chunk = concatUint8Arrays(chunks)
+    chunks = []
+    chunkBytes = 0
+    pendingWrite = writeChunk(chunk)
+    await pendingWrite
+    pendingWrite = undefined
+  }
+
   return new ReadableStream({
     async cancel(reason) {
+      cancelled = true
       await flush()
       await reader.cancel(reason)
     },
     async pull(controller) {
       const result = await reader.read()
+      if (cancelled) {
+        return
+      }
 
       if (result.done) {
         await flush()
-        controller.close()
+        if (!cancelled) {
+          controller.close()
+        }
         return
       }
 
@@ -166,7 +180,9 @@ const createPersistedStream = (
           await flush()
         }
       }
-      controller.enqueue(result.value)
+      if (!cancelled) {
+        controller.enqueue(result.value)
+      }
     },
   })
 }
