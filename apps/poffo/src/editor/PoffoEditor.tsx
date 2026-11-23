@@ -137,6 +137,7 @@ export const PoffoEditor = (props: PoffoEditorProps) => {
       onPoffoExport={() => exportWhenIdle(exporting.exportPoffoDocument)}
       onExport={() => exportWhenIdle(exporting.exportDocument)}
       onAtlasExport={() => exportWhenIdle(exporting.exportAtlasDocument)}
+      workspaceNavigationActive={workspace?.mode() === 'editor'}
       onStudioOpen={workspace === undefined ? undefined : () => workspace.openRuntime('studio')}
       onViewerOpen={workspace === undefined ? undefined : () => workspace.openRuntime('viewer')}
       onRecoveryOpen={props.recovery === undefined ? undefined : openRecovery}

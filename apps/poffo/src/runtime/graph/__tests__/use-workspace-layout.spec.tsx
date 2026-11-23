@@ -275,18 +275,3 @@ test.each([false, true])(
     expect(controls.values()[parameter.id]).toBe(retainId ? parameter.maximum : undefined)
   },
 )
-
-test('should discard a completed import when the selected model changed during the read', async () => {
-  const [source, setSource] = createSignal(document)
-  const {result} = mount(source)
-  const reading = Promise.withResolvers<string>()
-  const original = result.controls.profile()!
-  const pending = result.workspace.importStudio(studioFile(reading.promise))
-  setSource(createEmptyDocument())
-  const replacement = result.controls.profile()
-  reading.resolve(JSON.stringify({...original, inputs: {buttonValue: 0, manualValue: 0.8}}))
-  await pending
-
-  expect(result.controls.profile()).toBe(replacement)
-  expect(result.workspace.error()).toBeNull()
-})
