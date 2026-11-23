@@ -16,9 +16,15 @@ export const LanguageLearningLibrary = () => {
   const events = usePEvents()
   const [language, setLanguage] = createSignal<LanguageLearningLanguage>('en')
   const sentences = useLanguageLearningSentences()
-  const filteredEntries = createMemo(() =>
-    sentences().flatMap((sentence) => {
-      const dialogue = events.dialogues().find((item) => item.id === sentence.dialogueId)
+  const filteredEntries = createMemo(() => {
+    const currentSentences = sentences()
+    if (currentSentences.length === 0) {
+      return []
+    }
+
+    const dialoguesById = Map.groupBy(events.dialogues(), (dialogue) => dialogue.id)
+    return currentSentences.flatMap((sentence) => {
+      const dialogue = dialoguesById.get(sentence.dialogueId)?.[0]
       return dialogue === undefined || dialogue.language !== language()
         ? []
         : [
@@ -26,8 +32,8 @@ export const LanguageLearningLibrary = () => {
               dialogue,
             },
           ]
-    }),
-  )
+    })
+  })
 
   return (
     <section class="grid gap-4.5 settings-compact:gap-4">
