@@ -86,7 +86,7 @@ export const convertCubismPhysics = (value: unknown): PuppetPhysics => {
       }
     }),
     fps: jsonNumber(metadata.Fps, FRAME_TIME_PHYSICS_FPS),
-    gravity: [jsonNumber(gravity.X), -jsonNumber(gravity.Y)],
+    gravity: [jsonNumber(gravity.X), 0 - jsonNumber(gravity.Y)],
     pendulums: [],
     wind: [jsonNumber(wind.X), jsonNumber(wind.Y)],
   }

@@ -550,3 +550,68 @@ test.each(['', 'Part', undefined, 1])(
     ).toThrow('Cubism user data target')
   },
 )
+
+test('should import model3 when optional VTube settings contain malformed JSON', () => {
+  const result = convertCubismArchive(
+    zipSync({...fixture(), 'model/avatar.vtube.json': strToU8('{invalid')}),
+  )
+
+  expect(result.document.motions.map(({id}) => id)).toEqual(['Idle:0'])
+  expect(parseDocumentValue(result.document).ok).toBe(true)
+})
+
+test('should ignore unassigned VTube hotkeys while keeping assigned ones', () => {
+  const result = convertCubismArchive(
+    zipSync({
+      ...fixture(),
+      'model/avatar.vtube.json': strToU8(
+        JSON.stringify({
+          FileReferences: {Model: 'avatar.model3.json'},
+          Hotkeys: [
+            {Action: 'TriggerAnimation', Name: 'Unassigned motion'},
+            {Action: 'ToggleExpression', Name: 'Unassigned expression'},
+            {Action: 'ToggleExpression', File: 'smile.exp3.json', Name: 'Smile'},
+          ],
+        }),
+      ),
+      'model/smile.exp3.json': strToU8('{"Parameters":[]}'),
+    }),
+  )
+
+  expect(result.document.motions.map(({id}) => id)).toEqual(['Idle:0'])
+  expect(result.document.expressions?.map(({id}) => id)).toEqual(['Smile'])
+})
+
+test('should import Cubism pose entries and links identified by ArtMesh IDs', () => {
+  const result = convertCubismArchive(
+    zipSync({
+      ...fixture(),
+      'model/pose.json': strToU8(
+        JSON.stringify({
+          Groups: [[{Id: 'mesh-preview', Link: ['shape-diamond']}, {Id: 'shape-circle'}]],
+        }),
+      ),
+    }),
+  )
+
+  expect(result.document.poseGroups?.[0]?.entries.map(({partIds}) => partIds)).toEqual([
+    ['mesh-preview', 'shape-diamond'],
+    ['shape-circle'],
+  ])
+  expect(parseDocumentValue(result.document).ok).toBe(true)
+})
+
+test('should import a Cubism archive with its zero gravity and pendulum chains intact', () => {
+  const entries = fixture()
+  const physics = new TextDecoder().decode(entries['model/physics.json'])
+  const zeroGravity = physics.replace('"Gravity":{"X":0,"Y":-1}', '"Gravity":{"X":0,"Y":0}')
+  expect(zeroGravity).not.toBe(physics)
+
+  const {document} = convertCubismArchive(
+    zipSync({...entries, 'model/physics.json': strToU8(zeroGravity)}),
+  )
+
+  expect(document.physics?.gravity).toEqual([0, 0])
+  expect(document.physics?.chains).toHaveLength(1)
+  expect(parseDocumentValue(document).ok).toBe(true)
+})

@@ -30,9 +30,9 @@ export const readCubismMotions = (
     {File: references.IdleAnimationWhenTrackingLost ?? '', Name: 'IdleTrackingLost'},
     ...jsonArray(settings.Hotkeys ?? []).flatMap((value) => {
       const entry = jsonObject(value)
-      return entry.Action === 'ChangeIdleAnimation' || entry.Action === 'TriggerAnimation'
-        ? [{File: entry.File, Name: jsonString(entry.Name)}]
-        : []
+      const file = entry.File ?? ''
+      const isMotion = entry.Action === 'ChangeIdleAnimation' || entry.Action === 'TriggerAnimation'
+      return isMotion && file !== '' ? [{File: file, Name: jsonString(entry.Name)}] : []
     }),
   ]
   for (const candidate of candidates) {

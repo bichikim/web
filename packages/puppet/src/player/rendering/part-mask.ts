@@ -91,11 +91,12 @@ export const getVertexBounds = (vertexSets: ReadonlyArray<ArrayLike<number>>): V
   for (const vertices of vertexSets) {
     for (let index = 0; index < vertices.length; index += 1) {
       const coordinate = vertices[index]!
-      if (index % 2 === 0) {
+      const finite = Number.isFinite(coordinate)
+      if (finite && index % 2 === 0) {
         left = Math.min(left, coordinate)
         right = Math.max(right, coordinate)
         horizontalCount += 1
-      } else {
+      } else if (finite) {
         top = Math.min(top, coordinate)
         bottom = Math.max(bottom, coordinate)
         verticalCount += 1

@@ -43,10 +43,11 @@ export const readCubismExpressions = (
   const known = new Set(explicit.map((entry) => resolveCubismAsset(modelPath, entry.File)))
   const imported = jsonArray(settings.Hotkeys ?? []).flatMap((value) => {
     const entry = jsonObject(value)
-    if (entry.Action !== 'ToggleExpression' || entry.File === '') {
+    const reference = entry.File ?? ''
+    if (entry.Action !== 'ToggleExpression' || reference === '') {
       return []
     }
-    const file = resolveVtubeAsset(archive.entries, modelPath, jsonString(entry.File))
+    const file = resolveVtubeAsset(archive.entries, modelPath, jsonString(reference))
     const path = resolveCubismAsset(modelPath, file)
     if (known.has(path)) {
       return []

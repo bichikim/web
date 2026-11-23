@@ -18,6 +18,7 @@ const partIds = (nodes: ReadonlyArray<PuppetSceneNode>): ReadonlyArray<string> =
 /** Cubism 포즈의 파츠 선택 입력과 링크를 Poffo 포즈 그룹으로 변환한다. */
 export const convertCubismPose = (value: unknown, document: PuppetDocument): CubismPose => {
   const source = jsonObject(value)
+  const modelPartIds = new Set(document.parts.map((part) => part.id))
   const groups = new Map<string, ReadonlyArray<string>>()
   const visit = (nodes: ReadonlyArray<PuppetSceneNode>) => {
     for (const node of nodes) {
@@ -64,7 +65,8 @@ export const convertCubismPose = (value: unknown, document: PuppetDocument): Cub
       entries: entries.map((entry, entryIndex) => ({
         partIds: [jsonString(entry.Id), ...jsonArray(entry.Link ?? []).map(jsonString)].flatMap(
           (groupId) => {
-            const members = groups.get(groupId)
+            const members =
+              groups.get(groupId) ?? (modelPartIds.has(groupId) ? [groupId] : undefined)
             if (members === undefined || members.length === 0) {
               throw new Error(`Cubism pose group is missing: ${groupId}`)
             }

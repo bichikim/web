@@ -713,3 +713,34 @@ test('should retain both errors when initial creation and its destruction observ
   expect(renderer.destroy).toHaveBeenCalledOnce()
   player.destroy()
 })
+
+test('should preserve other parameter overrides through consecutive buffered patches', async () => {
+  const context = await setup(42)
+  const {player} = context
+  const animation = prepareDocument({
+    ...context.animation,
+    parameters: [
+      ...context.animation.parameters!,
+      {defaultValue: 0, id: 'smile', maximum: 1, minimum: 0, name: 'Smile'},
+    ],
+  })
+  const advance = driveWorker({...context, animation})
+  try {
+    expect(player.updateDocument(animation)).toBe(true)
+    await configurePlayerBuffering(player, {enabled: true})
+    player.patchParameterValues({angle: 0.6})
+    player.patchParameterValues({smile: 0.7})
+    const flushed = flushPlayerInputs(player)
+    await advance(20)
+    await expect(flushed).resolves.toBe('applied')
+    expect(player.getParameterValues()).toMatchObject({angle: 0.6, smile: 0.7})
+
+    player.setParameterValues({smile: 0.3})
+    const replaced = flushPlayerInputs(player)
+    await advance(20)
+    await expect(replaced).resolves.toBe('applied')
+    expect(player.getParameterValues()).toMatchObject({angle: 0, smile: 0.3})
+  } finally {
+    player.destroy()
+  }
+})

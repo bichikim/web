@@ -120,8 +120,8 @@ export interface Player {
   setPlaybackSpeed(speed: number): void
   /**
    * Replaces the document's chain gravity and wind (Cubism's physics options); omitted values
-   * keep the document's and no argument restores it. Non-finite vectors or zero gravity return
-   * false and change nothing.
+   * keep the document's and no argument restores it. Zero gravity disables the chain pull.
+   * Non-finite vectors return false and change nothing.
    */
   setPhysicsOptions(options?: PuppetPhysicsOptions): boolean
   /** Enables inertia; when disabled, physics outputs follow their static input equilibrium. */

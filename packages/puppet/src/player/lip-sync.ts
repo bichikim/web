@@ -8,16 +8,13 @@ export const applyLipSync = (
   values: PuppetParameterValueMap,
   level: number,
 ): PuppetParameterValueMap => {
-  const ids = new Set(document.parameterRoles?.lipSync ?? [])
-  return Object.fromEntries(
-    Object.entries(values).map(([id, value]) => {
-      const parameter = document.parameters?.find((candidate) => candidate.id === id)
-      return [
-        id,
-        parameter === undefined || !ids.has(id)
-          ? value
-          : resolveParameterValue(parameter, value + level),
-      ]
-    }),
-  )
+  const adjusted = (document.parameterRoles?.lipSync ?? []).flatMap((id) => {
+    const parameter = document.parameters?.find((candidate) => candidate.id === id)
+    if (parameter === undefined) {
+      return []
+    }
+    const current = Object.hasOwn(values, id) ? values[id] : parameter.defaultValue
+    return [[id, resolveParameterValue(parameter, current + level)]]
+  })
+  return {...values, ...Object.fromEntries(adjusted)}
 }

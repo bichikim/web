@@ -40,7 +40,7 @@ export const reconcileTimelineKeyframes = (
   const removed = options.previous.filter((_, index) => !nextSlots.has(previousSlots[index]!))
   const inserted = slots.filter((slot) => !previousByTime.has(slot))
   const moved =
-    removed.length === inserted.length
+    moves.size > 0 && removed.length === inserted.length
       ? new Map(inserted.map((slot, index) => [slot, removed[index]!.key]))
       : new Map<string, number>()
   let nextKey = Math.max(-1, ...options.previous.map((view) => view.key)) + 1
