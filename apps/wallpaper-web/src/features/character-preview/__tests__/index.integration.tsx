@@ -4,6 +4,8 @@ import {afterEach, expect, test, vi} from 'vitest'
 import * as playerModule from '@winter-love/puppet/player'
 import {cursorResponse} from '@winter-love/wallpaper/tracking/cursor-response'
 import SPuppetCharacter from '../../../components/SPuppetCharacter'
+import {createMouthTrack, sampleMouthTrack} from '../../character-speech/mouth-track'
+import type {MouthPose} from '../../character-speech/types'
 import geometry from '../../../data/character-look.json'
 import {frames} from './fixtures/frames'
 import 'virtual:uno.css'
@@ -12,6 +14,35 @@ afterEach(() => {
   cleanup()
   frames.clear()
   vi.clearAllMocks()
+})
+
+test('should animate the rendered character through short vowels and final lip closure', async () => {
+  const ready = Promise.withResolvers<void>()
+  const [mouth, setMouth] = createSignal<MouthPose | null>(null)
+  const view = render(() => (
+    <div class="h-50 w-40">
+      <SPuppetCharacter
+        mouth={mouth()}
+        tracking={false}
+        onReady={() => ready.resolve()}
+        onError={() => ready.reject(new Error('Character preview failed'))}
+      />
+    </div>
+  ))
+  await ready.promise
+  const player: playerModule.Player = await vi.mocked(playerModule.createPlayer).mock.results[0]!
+    .value
+  expect(view.getByLabelText('흰 고양이 캐릭터 실시간 렌더링')).toBeVisible()
+  const sampleRate = 1000
+  const short = createMouthTrack({sampleRate, samples: new Float32Array(50).fill(0.1)}, '빠')
+  const final = createMouthTrack({sampleRate, samples: new Float32Array(200).fill(0.1)}, '암')
+  setMouth(sampleMouthTrack(short, 0.02))
+  expect(player.getParameterValue('ParamMouthOpenY')).toBeGreaterThan(0.2)
+  setMouth(sampleMouthTrack(final, 0.1))
+  const open = player.getParameterValue('ParamMouthOpenY')!
+  expect(open).toBeGreaterThan(0.6)
+  setMouth(sampleMouthTrack(final, 0.18))
+  expect(player.getParameterValue('ParamMouthOpenY')).toBeLessThan(open * 0.8)
 })
 
 test('should add default mouse tracking to the compact Poffo idle animation without accumulating values', async () => {

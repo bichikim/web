@@ -26,7 +26,6 @@ const HANGUL_END = 0xd7a3
 const HANGUL_FINAL_COUNT = 28
 const HANGUL_VOWEL_COUNT = 21
 const HANGUL_BLOCK_SIZE = HANGUL_FINAL_COUNT * HANGUL_VOWEL_COUNT
-const MINIMUM_CUE_DURATION_MS = 70
 const ONSET_CLOSURE_WEIGHT = 0.28
 const FINAL_CLOSURE_WEIGHT = 0.22
 const LONG_PAUSE_WEIGHT = 0.55
@@ -171,23 +170,6 @@ const createWeightedVisemes = (text: string) => {
   return visemes
 }
 
-const mergeShortCues = (cues: ReadonlyArray<VisemeCue>) => {
-  const merged: Array<VisemeCue> = []
-
-  for (const cue of cues) {
-    const previous = merged.at(-1)
-    const durationMs = cue.endMs - cue.startMs
-
-    if (previous !== undefined && durationMs < MINIMUM_CUE_DURATION_MS) {
-      merged[merged.length - 1] = {...previous, endMs: cue.endMs}
-    } else {
-      merged.push(cue)
-    }
-  }
-
-  return merged
-}
-
 /** Maps written pronunciation cues onto the exact rendered audio duration. */
 export const createVisemeTrack = (options: CreateVisemeTrackOptions): ReadonlyArray<VisemeCue> => {
   const durationMs = Math.max(0, options.durationMs)
@@ -199,7 +181,7 @@ export const createVisemeTrack = (options: CreateVisemeTrackOptions): ReadonlyAr
   const visemes = createWeightedVisemes(options.text)
   const totalWeight = visemes.reduce((sum, viseme) => sum + viseme.weight, 0)
   let startMs = 0
-  const cues = visemes.map((weightedViseme, index): VisemeCue => {
+  return visemes.map((weightedViseme, index): VisemeCue => {
     const isLast = index === visemes.length - 1
     const endMs = isLast
       ? durationMs
@@ -208,8 +190,6 @@ export const createVisemeTrack = (options: CreateVisemeTrackOptions): ReadonlyAr
     startMs = endMs
     return cue
   })
-
-  return mergeShortCues(cues)
 }
 
 /** Resolves the current mouth shape from an audio-clock position. */
@@ -222,7 +202,7 @@ export const getVisemeAtTime = (cues: ReadonlyArray<VisemeCue>, currentTimeMs: n
   return cue?.viseme ?? 'rest'
 }
 
-/** Anticipates the next cue so the renderer can crossfade into it before its audio boundary. */
+/** Anticipates a single boundary without consuming more than half of either cue. */
 export const getCoarticulatedVisemeAtTime = (
   cues: ReadonlyArray<VisemeCue>,
   currentTimeMs: number,
@@ -231,5 +211,19 @@ export const getCoarticulatedVisemeAtTime = (
     return 'rest'
   }
 
-  return getVisemeAtTime(cues, currentTimeMs + VISEME_COARTICULATION_MS)
+  const index = cues.findIndex((cue) => currentTimeMs < cue.endMs)
+  if (index < 0) {
+    return 'rest'
+  }
+  const current = cues[index]!
+  const next = cues[index + 1]
+  if (next === undefined) {
+    return current.viseme
+  }
+  const anticipation = Math.min(
+    VISEME_COARTICULATION_MS,
+    (current.endMs - current.startMs) / 2,
+    (next.endMs - next.startMs) / 2,
+  )
+  return currentTimeMs >= current.endMs - anticipation ? next.viseme : current.viseme
 }

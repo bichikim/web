@@ -2,6 +2,8 @@ import type {Accessor} from 'solid-js'
 import type {Observer} from 'gsap/Observer'
 import {STORY_CUTS} from './frame'
 
+const ACTION_CONTROL_SELECTOR = 'button,a[href],[role="button"]'
+
 interface ConnectStoryInputProps {
   /** Mounted stage whose document owns viewport-wide gestures. */
   readonly target: HTMLElement
@@ -33,7 +35,7 @@ const ignoreCheck = (event: Event, pointer: boolean, dragging: boolean) =>
     event.target instanceof Element &&
     (event.target.closest('[data-character-drag]')
       ? dragging || !isTouch(event)
-      : event.target.closest('button,a[href],[role="button"]')),
+      : event.target.closest(ACTION_CONTROL_SELECTOR)),
   )
 
 const keyboardChapter = (event: KeyboardEvent, chapter: number) => {
@@ -75,7 +77,7 @@ export const connectStoryInput = (props: ConnectStoryInputProps) => {
       isControl(event) ||
       (event.key === ' ' &&
         event.target instanceof Element &&
-        event.target.closest('button,[role="button"]'))
+        event.target.closest(ACTION_CONTROL_SELECTOR))
     ) {
       return
     }
