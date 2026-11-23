@@ -1,6 +1,6 @@
 ---
 name: typescript-conventions
-description: Apply project TypeScript conventions, functional error contracts, and library boundaries when editing .ts/.tsx files, APIs, cross-layer contracts, errors, or dependencies.
+description: Apply repository conventions for .ts/.tsx edits, TypeScript API or error contracts, and dependency selection.
 ---
 
 # TypeScript

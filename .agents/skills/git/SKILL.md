@@ -1,6 +1,6 @@
 ---
 name: git
-description: Apply project Git commit-message conventions when writing commit messages, reviewing staged changes, or helping with git commits.
+description: Apply repository commit-message conventions when drafting or checking a Git commit message.
 ---
 
 # Git Commit Rules

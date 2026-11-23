@@ -1,6 +1,6 @@
 ---
 name: unit-test
-description: Apply Vitest and @solidjs/testing-library conventions when adding or editing unit tests, or when separating production responsibilities to make them testable without test-only production code.
+description: Add or edit Vitest unit tests, including Solid DOM tests, or separate production responsibilities for unit testing.
 ---
 
 # Unit Test
@@ -18,6 +18,10 @@ Complete these steps in order before final verification:
 1. Write the tests.
 2. Review the tests against the specification and observable contract for missing cases, then add the missing coverage. Passing tests or high code coverage alone do not establish completeness.
 3. Review the resulting tests for excessive scope, redundancy, or assertions that do not detect the intended regression. Remove, merge, or revise them while preserving distinct required behaviors and failure cases.
+
+## Execution time
+
+Apply the root AGENTS.md per-test authoring target. If an isolated Vitest unit test exceeds it, check for missing mocks, then combined independent scenarios, then integration-test responsibilities. Mock missing boundaries where appropriate, split only independent scenarios, and keep genuine integration behavior in integration tests. Preserve assertions, shared-mount scenarios, and required coverage.
 
 ## Component DOM Query Priority
 

@@ -8,8 +8,6 @@
 
 ## UI communication
 
-Explanations and notices tend to accumulate as AI adds features, crowding the workspace and competing with the user's actual task. Keep feedback proportionate so the interface remains focused on the work.
-
 - Keep user-facing UI text concise; avoid verbose explanations and persistent status text whenever possible.
 - Prefer toasts or other transient feedback that does not consume layout space. Keep routine success silent; show concise feedback when the user needs to act.
 - Use persistent inline guidance only when it is necessary to complete the current task or understand the current state.
@@ -60,19 +58,11 @@ Explanations and notices tend to accumulate as AI adds features, crowding the wo
 - Implement ordinary side effects needed to fulfill the user's requested functionality without separate approval.
 - Obtain approval before implementing external changes beyond the requested scope, destructive operations, or actions requiring new permissions or costs.
 
-## Evidence
+## Evidence and completion
 
-- Establish factual or technical conclusions only from evidence capable of proving them: the actual project's files, configuration, data, runtime, executed tests, current authoritative documentation, or a focused experiment.
-- Match the evidence to the claim: source inspection does not prove runtime behavior, an unexecuted test does not prove behavior, and a passing test proves only the assertions and environment it exercised. For changeable external information, verify the exact meaning and relevant consequence from a current authoritative source in the same turn.
-- When direct evidence is missing, run the smallest relevant test or runtime experiment and distinguish product defects from setup, runner, sandbox, and environment failures.
-- Show the decisive evidence. If no permitted source or viable experiment can establish the claim, state that it cannot be determined instead of guessing.
-
-## Completion
-
-- Keep the user's requested outcome, scope, constraints, and completion criteria as the task's authority throughout the work. Do not silently narrow or replace them with intermediate artifacts or checks.
-- Before reporting completion, compare the actual result against each of the user's original completion criteria. For each criterion, cite evidence that proves that criterion; a plan, edited file, or passing partial check cannot substitute for a different requested outcome.
-- Keep source inspection, executed checks, and user-goal completion as separate claims. Verify runtime behavior when the requested outcome depends on it. Do not infer that the whole task is complete from implementation or test progress alone.
-- If a criterion remains unmet or unverified, report the exact remaining work or blocker and the verified progress; do not label the whole task complete.
+- Keep the user's requested outcome, scope, constraints, and completion criteria throughout the work. Before reporting completion, compare the result with every criterion and cite decisive evidence for each.
+- Match evidence to the claim. Distinguish source inspection, executed checks, and verified outcomes. Verify runtime behavior when the outcome depends on it and limit test claims to the assertions and environment exercised. Verify changeable external information against current authoritative sources in the same turn.
+- When direct evidence is missing, run the smallest relevant test or runtime experiment. Distinguish product defects from setup, runner, sandbox, and environment failures. If evidence remains unavailable, report verified progress and the exact gap or blocker. Report the task as complete only once every criterion is met and verified.
 
 ## Architecture authority
 
@@ -108,8 +98,7 @@ Explanations and notices tend to accumulate as AI adds features, crowding the wo
 
 ## Unit test execution time
 
-- Write each Vitest unit test to complete within 150ms when that individual test is run by itself. This is per-test authoring guidance, not a timeout for a whole file or parallel suite.
-- When an individual unit test exceeds 150ms, diagnose in order: missing mocks; too many independent scenarios combined in one test; whether the test has integration-test characteristics. Preserve assertions, scenarios that require the same mount, and required coverage. Mock missing boundaries where appropriate, split only independent scenarios, and keep genuine integration behavior in integration tests.
+- Write each Vitest unit test to complete within 150ms when run in isolation. This authoring target does not set a file or suite timeout. For a test exceeding that authoring target, follow the [unit-test diagnosis workflow](.agents/skills/unit-test/SKILL.md#execution-time).
 
 ## Required after changes
 
@@ -124,17 +113,12 @@ Explanations and notices tend to accumulate as AI adds features, crowding the wo
 
 ## Dependency installation
 
-When dependency installation is required:
-
-- Do not run `pnpm install` or `pnpm i` inside the sandbox first.
-- Always request escalated execution for `pnpm install` or `pnpm i` from the first attempt.
-- Use the global pnpm store.
-- Do not create or use a local `.pnpm-store`.
-- Do not add `store-dir=.pnpm-store` to `.npmrc`.
+- Request escalated execution for `pnpm install` or `pnpm i` on the first attempt.
+- Use the global pnpm store. Do not create or use a local `.pnpm-store` or configure it in `.npmrc`.
 
 ## Cursor Cloud
 
-pnpm + Turborepo (`@winter-love/web`) · Node ≥24 · pnpm 11.x (`package.json`). `pnpm install` runs root `postinstall` → `turbo prepare-build` (package builds; Coong Supabase type gen; Turbo-cached). `optimisticRepeatInstall: false` in `pnpm-workspace.yaml` so postinstall still runs when Already up to date. `globalPassThroughEnv` includes `pnpm_config_verify_deps_before_run` so Turbo strict mode does not strip pnpm 11’s lifecycle marker (which would re-enter `pnpm install` → postinstall).
+See the [workspace README](README.md) for pnpm/Turbo setup and [package.json](package.json) for Node and pnpm versions. When changing the install lifecycle, preserve repeat-install `postinstall` and pass pnpm’s lifecycle marker through Turbo to avoid recursive installation. See [pnpm-workspace.yaml](pnpm-workspace.yaml) and [turbo.json](turbo.json).
 
 - **Coong** — `apps/coong` (SolidStart SSR). `pnpm dev` (:3000). Copy `apps/coong/.env.e2e` → `.env` for dev without Supabase (see `.env.example`).
 - **Pomo** — `apps/pomo` (SolidStart SSR). `pnpm dev --port 3300` (:3300).

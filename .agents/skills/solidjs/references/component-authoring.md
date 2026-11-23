@@ -5,12 +5,12 @@
 - Component files use `PascalCase.tsx` and match the exported public component name.
 - Keep one public component per component file.
 - Define components at module scope in their own files, never inside another component. Pass dependencies through props rather than capturing the enclosing component scope.
-- Do not use a `.client` suffix; filenames do not create client-only runtime boundaries.
+- Do not use a `.client` suffix. For client-only SolidStart components, follow the [runtime boundary rules](../../solidstart/SKILL.md#runtime-boundaries).
 - Do not name component files after helper, adapter, wrapper, or implementation roles.
 - Prefix styled components with `S`, headless components with `H`, and generic/base components with no prefix.
 - Use kebab-case for component directories and Solid custom hooks; write hooks as `.ts` files.
 - Use descriptive sub-component suffixes.
-- Name stories `<ComponentName>.story.tsx` and tests `<ComponentName>.spec.tsx`.
+- Follow [storybook-solidjs](../../storybook-solidjs/SKILL.md) for stories. Name component tests `<ComponentName>.spec.tsx`.
 
 ## Structure and variants
 

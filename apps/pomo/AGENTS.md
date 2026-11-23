@@ -2,12 +2,11 @@
 
 ## Component prefixes
 
-- Styled components normally use the `S` prefix and headless components use `H`; in Pomo, styled components use `P` instead of `S`.
+- In Pomo, use `P` for styled components instead of the [Solid.js default](../../.agents/skills/solidjs/references/component-authoring.md#files). Use `H` for headless components.
 
 ## SolidStart and Solid.js
 
-- Pomo is SolidStart on Solid.js. Use SolidStart and Solid.js folder layouts, file conventions, APIs, and component patterns.
-- Follow current SolidStart and Solid.js documentation for structure.
+- Use the current SolidStart and Solid.js folder layouts, file conventions, APIs, and component patterns, following official documentation for structure.
 
 ## Runtime topology
 
@@ -20,5 +19,5 @@
 ## Apps in Toss
 
 - For Apps in Toss runtime verification, run `pnpm --filter @apps/pomo dev:apps-in-toss` from the repository root and open the printed local URL.
-- If verification cannot be completed, report the blocker, continue other applicable checks, and identify the runtime behavior that remains unverified.
+- If verification is blocked, continue the other applicable checks and report the unverified Toss behavior under the root evidence and completion rules.
 - Do not replace documented Apps in Toss behavior with general web conventions. Disclose unsupported mappings or conflicts and ask before deviating.
