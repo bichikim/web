@@ -55,6 +55,33 @@ describe('useWorkspace', () => {
     expect(workspace.processing()).toBe(false)
   })
 
+  it.each([true, false])(
+    'should apply a pending result only if the native cancel is too late (%s)',
+    async (cancelled) => {
+      const upscale = Promise.withResolvers<typeof result>()
+      const cancel = Promise.withResolvers<boolean>()
+      const invoke = vi
+        .fn()
+        .mockResolvedValueOnce(original)
+        .mockReturnValueOnce(upscale.promise)
+        .mockReturnValueOnce(cancel.promise)
+      globalThis.__TAURI__ = {core: {invoke}}
+      const workspace = setup()
+      await workspace.open(false)
+      const processing = workspace.upscale()
+      const cancelling = workspace.cancel()
+      upscale.resolve(result)
+      await Promise.resolve()
+      expect(workspace.result()).toBeNull()
+
+      cancel.resolve(cancelled)
+      await Promise.all([processing, cancelling])
+
+      expect(workspace.result()).toEqual(cancelled ? null : result)
+      expect(workspace.busy()).toBe(false)
+    },
+  )
+
   it('should recover from native errors without replacing the original', async () => {
     const invoke = vi.fn().mockResolvedValueOnce(original).mockRejectedValueOnce('upscale_failed')
     globalThis.__TAURI__ = {core: {invoke}}
@@ -65,5 +92,14 @@ describe('useWorkspace', () => {
     expect(workspace.result()).toBeNull()
     expect(workspace.error()).not.toBeNull()
     expect(workspace.busy()).toBe(false)
+  })
+
+  it('should tell the user to open or capture an image when the native operation has no input', async () => {
+    globalThis.__TAURI__ = {core: {invoke: vi.fn().mockRejectedValueOnce('no_image')}}
+    const workspace = setup()
+
+    await workspace.upscale()
+
+    expect(workspace.error()).toBe('이미지를 먼저 열거나 화면을 캡처해 주세요.')
   })
 })
