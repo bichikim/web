@@ -1,5 +1,5 @@
 import {z} from 'zod'
-import {TEXT_MESSAGE_ROLES} from 'src/features/ai-job/text-message-roles'
+import {aiTextJobInputSchema} from 'src/features/ai-job/contracts'
 
 import {AI_CAPABILITIES, type AiCapability} from './model-catalog.ts'
 
@@ -11,7 +11,6 @@ const MAXIMUM_IDEMPOTENCY_KEY_LENGTH = 128
 const MAXIMUM_IMAGE_DIMENSION = 1024
 const MAXIMUM_IMAGE_IDEA_LENGTH = 2000
 const MAXIMUM_IMAGE_STEPS = 50
-const MAXIMUM_MESSAGES = 64
 const MAXIMUM_MODEL_ID_LENGTH = 128
 const MAXIMUM_SOUND_PROMPT_LENGTH = 1000
 const MAXIMUM_SOUND_DURATION_SECONDS = 120
@@ -25,23 +24,15 @@ const MAXIMUM_TEXT_LENGTH = 12_000
 const MAXIMUM_TEXT_OUTPUT_TOKENS = 4096
 const IMAGE_DIMENSION_STEP = 16
 
-const textMessageSchema = z.object({
-  content: z.string().trim().min(1).max(MAXIMUM_TEXT_LENGTH),
-  role: z.enum(TEXT_MESSAGE_ROLES),
-})
+const textParametersSchema = aiTextJobInputSchema.shape.parameters.unwrap()
 
-export const textJobInputSchema = z.object({
-  messages: z.array(textMessageSchema).min(1).max(MAXIMUM_MESSAGES),
+export const textJobInputSchema = aiTextJobInputSchema.extend({
   parameters: z
     .object({
-      maximumTokens: z
-        .number()
-        .int()
-        .min(1)
-        .max(MAXIMUM_TEXT_OUTPUT_TOKENS)
+      ...textParametersSchema.shape,
+      maximumTokens: textParametersSchema.shape.maximumTokens
+        .unwrap()
         .default(MAXIMUM_TEXT_OUTPUT_TOKENS),
-      temperature: z.number().min(0).max(2).optional(),
-      topP: z.number().min(0).max(1).optional(),
     })
     .default({maximumTokens: MAXIMUM_TEXT_OUTPUT_TOKENS}),
 })
