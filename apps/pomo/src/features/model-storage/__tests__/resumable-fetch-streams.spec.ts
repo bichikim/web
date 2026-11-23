@@ -252,7 +252,7 @@ describe('createResumableModelFetch stream lifecycle', () => {
           size: 4,
           stream: () =>
             new ReadableStream({
-              cancel: existingCancel,
+              cancel: (reason) => existingCancel(reason),
               start(controller) {
                 controller.enqueue(new TextEncoder().encode('part'))
               },
@@ -266,7 +266,7 @@ describe('createResumableModelFetch stream lifecycle', () => {
       async () =>
         new Response(
           new ReadableStream({
-            cancel: remainingCancel,
+            cancel: (reason) => remainingCancel(reason),
             start(controller) {
               controller.enqueue(new TextEncoder().encode('done'))
             },
@@ -279,8 +279,8 @@ describe('createResumableModelFetch stream lifecycle', () => {
 
     await response.body?.cancel('stop')
 
-    expect(existingCancel).toHaveBeenCalledWith('stop')
-    expect(remainingCancel).toHaveBeenCalledWith('stop')
+    expect(existingCancel).toHaveBeenCalledExactlyOnceWith('stop')
+    expect(remainingCancel).toHaveBeenCalledExactlyOnceWith('stop')
   })
 
   it('should tolerate internal and explicit partial deletion failures', async () => {

@@ -105,7 +105,7 @@ describe('createResumableModelFetch recovery', () => {
     const cancel = vi.fn()
     const response = new Response(
       new ReadableStream({
-        cancel,
+        cancel: (reason) => cancel(reason),
         start(controller) {
           controller.enqueue(Uint8Array.of(1, 2))
         },
@@ -126,7 +126,7 @@ describe('createResumableModelFetch recovery', () => {
       'https://models.test/model.onnx',
       Uint8Array.of(1, 2),
     )
-    expect(cancel).toHaveBeenCalledWith('stop')
+    expect(cancel).toHaveBeenCalledExactlyOnceWith('stop')
   })
 
   it('should restart after a zero-byte partial', async () => {
