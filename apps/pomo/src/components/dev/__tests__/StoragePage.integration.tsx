@@ -39,9 +39,10 @@ const createManager = (): ModelStorageManager => ({
 
 beforeEach(() => {
   const [downloadState] = createSignal<ModelDownloadState>({status: 'idle'})
-  vi.mocked(useModelDownload).mockReturnValue({state: downloadState} as ReturnType<
-    typeof useModelDownload
-  >)
+  vi.mocked(useModelDownload).mockReturnValue({
+    downloads: () => [],
+    state: downloadState,
+  } as ReturnType<typeof useModelDownload>)
   vi.mocked(PModal).mockImplementation((props: PModalProps) => (
     <Show when={props.isOpen}>
       <div aria-label={props.title} role="dialog">
