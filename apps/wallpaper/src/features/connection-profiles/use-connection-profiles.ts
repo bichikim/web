@@ -83,7 +83,7 @@ export const useConnectionProfiles = (options: UseConnectionProfilesOptions) => 
         setError(IMPORT_ERRORS[parsed.reason])
         return
       }
-      await repository.configureConnections(widget.id, parsed.profile.connections)
+      await repository.configureConnections(widget.id, parsed.profile.connections, 'replace')
     })
   }
   const exportFile = () => {
@@ -127,7 +127,7 @@ export const useConnectionProfiles = (options: UseConnectionProfilesOptions) => 
     const widget = options.widget()
     return profile === undefined || widget === undefined
       ? pending
-      : run(() => repository.configureConnections(widget.id, profile.connections))
+      : run(() => repository.configureConnections(widget.id, profile.connections, 'replace'))
   }
   return {busy, error, exportFile, hasBuiltin: () => builtin() !== undefined, importFile, restore}
 }

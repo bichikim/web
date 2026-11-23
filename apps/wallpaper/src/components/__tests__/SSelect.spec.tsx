@@ -99,3 +99,15 @@ it('should dismiss when the platform closes the popover and disable selection wh
   expect(screen.queryByRole('listbox')).toBeNull()
   expect(trigger).toHaveAttribute('aria-disabled', 'true')
 })
+
+it('should fall back to the first current option when the local choice disappears', () => {
+  const [options, setOptions] = createSignal<ReadonlyArray<(typeof OPTIONS)[number]>>(OPTIONS)
+  render(() => <SSelect label="Order" options={options()} />)
+  const trigger = screen.getByRole('combobox', {name: 'Order'})
+  fireEvent.click(trigger)
+  fireEvent.click(screen.getByRole('option', {name: 'Random'}))
+  setOptions([OPTIONS[2]])
+  expect(trigger).toHaveTextContent('Reverse')
+  setOptions(OPTIONS)
+  expect(trigger).toHaveTextContent('Sequential')
+})
