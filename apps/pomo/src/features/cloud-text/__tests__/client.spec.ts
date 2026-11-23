@@ -151,3 +151,22 @@ it('should stop notification reconnection when the request is aborted', async ()
     vi.mocked(apiJsonRequest).mock.calls.filter(([url]) => String(url).endsWith('events=true')),
   ).toHaveLength(1)
 })
+
+it('should preserve cancellation while reading a notification error body', async () => {
+  const controller = new AbortController()
+  const reason = new DOMException('Request cancelled', 'AbortError')
+  const body = new ReadableStream(
+    {
+      pull: (stream) => {
+        controller.abort(reason)
+        stream.error(reason)
+      },
+    },
+    {highWaterMark: 0},
+  )
+  vi.mocked(apiJsonRequest)
+    .mockResolvedValueOnce(new Response(body, {status: 502}))
+    .mockResolvedValueOnce(new Response(null, {status: 204}))
+
+  await expect(requestCloudText(request, controller.signal)).rejects.toBe(reason)
+})
