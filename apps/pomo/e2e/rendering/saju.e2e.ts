@@ -148,3 +148,24 @@ test('should display a nonempty provider response even when it contains only a r
   await panel.getByRole('button', {exact: true, name: '사주 풀이 생성'}).click()
   await expect(panel.getByRole('region', {name: '사주 풀이 결과'})).toHaveText(OPENING.trim())
 })
+
+test('should show translated cloud text failure when the server sends a timeout page', async ({
+  page,
+}) => {
+  await page.route('**/api/cloud-text*', async (route) => {
+    if (route.request().method() === 'POST') {
+      await route.fulfill({
+        body: 'FUNCTION_INVOCATION_TIMEOUT',
+        contentType: 'text/plain',
+        status: 504,
+      })
+    } else {
+      await route.fulfill({json: USAGE})
+    }
+  })
+  const panel = await openSaju(page)
+  await panel.getByRole('button', {exact: true, name: '사주 풀이 생성'}).click()
+  await expect(panel.getByRole('alert')).toHaveText(
+    '클라우드 텍스트를 생성하지 못했어요. 잠시 후 다시 시도해 주세요.',
+  )
+})

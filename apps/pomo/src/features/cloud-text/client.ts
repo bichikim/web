@@ -1,7 +1,12 @@
 // oxlint-disable no-await-in-loop -- Consume notification frames and reconnect in order.
 import {z} from 'zod'
 import * as m from '@paraglide/message'
-import {apiJsonRequest, type ApiJsonRequestOptions, parseJsonResponse} from '../api-json'
+import {
+  ApiJsonError,
+  apiJsonRequest,
+  type ApiJsonRequestOptions,
+  parseJsonResponse,
+} from '../api-json'
 import {type CloudTextConnectionResult, readCloudTextEvents} from './job-events'
 import {readStoredAppSession} from '../user-auth/app-session'
 import {
@@ -28,12 +33,17 @@ const createRequestOptions = async (): Promise<
   return token === null ? {} : {headers: {Authorization: `Bearer ${token}`}}
 }
 
-const checkResponse = async (response: Response): Promise<void> => {
+const checkResponse = async (response: Response, signal?: AbortSignal): Promise<void> => {
   if (response.ok) {
     return
   }
-  const error = await parseJsonResponse(response, errorSchema)
-  switch (error.error) {
+  const error = await parseJsonResponse(response, errorSchema, signal).catch((cause: unknown) => {
+    if (cause instanceof ApiJsonError) {
+      return undefined
+    }
+    throw cause
+  })
+  switch (error?.error) {
     case 'unauthorized':
       throw new Error(m.cloud_text_login_required())
     case 'daily_limit':
@@ -63,7 +73,7 @@ const readJobConnection = async (
     }
     throw cause
   }
-  await checkResponse(notifications)
+  await checkResponse(notifications, signal)
   if (notifications.body === null) {
     throw new Error(m.cloud_text_failed())
   }
@@ -101,7 +111,7 @@ export const requestCloudText = async (
       retry: false,
       signal,
     })
-    await checkResponse(response)
+    await checkResponse(response, signal)
     if (response.status !== HTTP_ACCEPTED) {
       return parseJsonResponse(response, cloudTextResponseSchema, signal)
     }
