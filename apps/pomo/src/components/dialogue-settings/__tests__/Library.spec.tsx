@@ -130,6 +130,37 @@ it('should use a custom deletion handler for the selected dialogue', async () =>
   expect(vi.mocked(usePEvents)().deleteDialogue).not.toHaveBeenCalled()
 })
 
+it('should clear the previous delete failure when a retry succeeds', async () => {
+  const retry = Promise.withResolvers<void>()
+  const remove = vi
+    .fn()
+    .mockRejectedValueOnce(new Error('unable to delete'))
+    .mockReturnValueOnce(retry.promise)
+  vi.spyOn(console, 'error').mockImplementation(() => undefined)
+  render(() => <DialogueLibrary entries={[{dialogue: DIALOGUE}]} onDelete={remove} />)
+  fireEvent.click(screen.getByRole('button', {name: '삭제'}))
+  fireEvent.click(screen.getByRole('button', {name: '삭제 확인'}))
+  const failure = await screen.findByText('대화를 삭제하지 못했어요.')
+  fireEvent.click(screen.getByRole('button', {name: '삭제 확인'}))
+  retry.resolve()
+  await vi.waitFor(() => expect(screen.queryByRole('button', {name: '삭제 확인'})).toBeNull())
+  expect(failure).not.toBeInTheDocument()
+})
+
+it('should stop character speech before starting local library audio', async () => {
+  const events = createEvents({getAudio: vi.fn(async () => new Blob(['voice']))})
+  vi.mocked(usePEvents).mockReturnValue(events)
+  vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => undefined)
+  vi.spyOn(HTMLMediaElement.prototype, 'load').mockImplementation(() => undefined)
+  const play = vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue(undefined)
+  render(() => <DialogueLibrary entries={[{dialogue: DIALOGUE}]} />)
+
+  fireEvent.click(screen.getByRole('button', {name: '듣기'}))
+
+  await vi.waitFor(() => expect(play).toHaveBeenCalledOnce())
+  expect(events.onStopDialoguePlayback).toHaveBeenCalledBefore(play)
+})
+
 it('should ignore a superseded character playback request', async () => {
   const firstAudio = Promise.withResolvers<Blob>()
   const secondAudio = Promise.withResolvers<Blob>()

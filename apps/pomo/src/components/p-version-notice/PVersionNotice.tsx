@@ -1,4 +1,5 @@
-import {createSignal, For, onCleanup, onMount, Show} from 'solid-js'
+import {getAppLocale} from 'src/features/locale'
+import {createEffect, createSignal, For, onCleanup, Show} from 'solid-js'
 import * as m from '@paraglide/message'
 import type {PSceneStyle} from '../../features/focus-room-animation'
 import {
@@ -34,10 +35,12 @@ export const PVersionNotice = (props: PVersionNoticeProps) => {
   const [releases, setReleases] = createSignal<ReadonlyArray<VersionRelease>>([])
   const [triggerElement, setTriggerElement] = createSignal<HTMLButtonElement | null>(null)
 
-  onMount(() => {
+  createEffect(() => {
+    const locale = getAppLocale()
     let disposed = false
+    setReleases([])
 
-    Promise.all([loadVersionCatalog(), readViewedRelease()])
+    Promise.all([loadVersionCatalog(locale), readViewedRelease()])
       .then(([catalog, viewedRelease]) => {
         if (!disposed) {
           setCatalogAvailable(true)

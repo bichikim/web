@@ -4,6 +4,7 @@ import {formatModelDownloadSize} from '../../features/model-storage'
 import {
   appendLanguageLearningWords,
   deleteLanguageLearningWords,
+  hasOverlongLanguageLearningTag,
   type LanguageLearningLanguage,
   type LanguageLearningWord,
   parseLanguageLearningTags,
@@ -84,7 +85,10 @@ export const LanguageLearningWords = () => {
   const selectedWords = createMemo(() =>
     getSelectedLanguageLearningWords(filterView().words, selectedWordValues()),
   )
-  const wordsToSave = () => parseLanguageLearningTags([...pendingWords(), inputValue()].join(','))
+  const wordsToSave = () =>
+    hasOverlongLanguageLearningTag(inputValue())
+      ? []
+      : parseLanguageLearningTags([...pendingWords(), inputValue()].join(','))
   const handleLanguageChange = (value: LanguageLearningLanguage) => {
     setSelectedWordValues([])
     setLanguage(value)

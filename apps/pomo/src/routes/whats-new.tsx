@@ -1,11 +1,12 @@
 import {maxBy} from 'es-toolkit/array'
 import {createEffect, createResource, ErrorBoundary, Show, Suspense} from 'solid-js'
 import * as m from '@paraglide/message'
+import {getAppLocale} from 'src/features/locale'
 import {loadVersionCatalog, writeViewedRelease} from 'src/features/version-catalog'
 import {VersionCatalogDocument} from '../components/whats-new/Document'
 
 export default function WhatsNewPage() {
-  const [catalog] = createResource(loadVersionCatalog)
+  const [catalog] = createResource(getAppLocale, loadVersionCatalog)
 
   createEffect(() => {
     if (catalog.state !== 'ready') {
@@ -17,7 +18,11 @@ export default function WhatsNewPage() {
       return
     }
 
-    const newestRelease = maxBy(loadedCatalog.releases, (release) => Date.parse(release.releasedAt))
+    const now = Date.now()
+    const publishedReleases = loadedCatalog.releases
+      .map((release) => ({release, releasedAt: Date.parse(release.releasedAt)}))
+      .filter(({releasedAt}) => releasedAt <= now)
+    const newestRelease = maxBy(publishedReleases, ({releasedAt}) => releasedAt)?.release
     if (newestRelease === undefined) {
       return
     }

@@ -1,21 +1,11 @@
 import * as m from '@paraglide/message'
 import {Show} from 'solid-js'
 import type {SajuReadingController} from '../../features/saju'
-import {
-  deleteSajuFormDraftFromLocalStorage,
-  readSajuFormDraftFromLocalStorage,
-  writeSajuFormDraftToLocalStorage,
-} from '../../features/saju/form-draft-storage'
+import {sajuFormDraftPersistence} from '../../features/saju/form-draft-storage'
 import {SajuForm} from './SajuForm'
 import {PModelDownloadConsent} from '../p-model-download-consent/PModelDownloadConsent'
 import cornerOrnament from './assets/corner-ornament.svg?url'
 import radialSeal from './assets/radial-seal.svg?url'
-
-const SAJU_DRAFT_PERSISTENCE = {
-  delete: deleteSajuFormDraftFromLocalStorage,
-  read: readSajuFormDraftFromLocalStorage,
-  write: writeSajuFormDraftToLocalStorage,
-}
 
 export interface SajuProps {
   readonly reading: SajuReadingController
@@ -51,7 +41,7 @@ export function Saju(props: SajuProps) {
       <div class="relative">
         <SajuForm
           busy={isBusy()}
-          draftPersistence={SAJU_DRAFT_PERSISTENCE}
+          draftPersistence={sajuFormDraftPersistence}
           initialDate=""
           onCancel={props.reading.status() === 'generating' ? handleCancel : undefined}
           onSubmit={props.reading.submit}

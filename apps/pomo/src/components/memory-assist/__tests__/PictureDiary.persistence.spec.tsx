@@ -513,3 +513,33 @@ it('should report local load, save, and delete failures without discarding the d
   ))
   expect(await screen.findByText('이 기기의 일기장을 불러오지 못했어요.')).toBeInTheDocument()
 })
+
+it('should stay on the adjacent diary entry after deleting the selected one', async () => {
+  const older = {
+    createdAt: '2026-09-03T03:00:00.000Z',
+    date: '2026-09-03',
+    id: 'older',
+    strokes: [],
+    text: '삭제할 일기',
+    updatedAt: '2026-09-03T03:00:00.000Z',
+    version: 1,
+  } satisfies PictureDiaryEntry
+  const newer = {...older, date: '2026-09-04', id: 'newer', text: '남아 있는 일기'}
+  const repository = createRepository([older, newer])
+  render(() => (
+    <PictureDiary
+      environment={environment}
+      turnEnvironment={turns.environment}
+      repository={repository}
+    />
+  ))
+  await waitFor(() => expect(screen.getByRole('button', {name: '이전 일기 보기'})).toBeEnabled())
+  fireEvent.click(screen.getAllByRole('button', {name: '이전 일기 보기'})[0]!)
+  await finishPageTurn()
+  const remove = screen.getByRole('button', {name: '2026. 09. 03. 일기 삭제'})
+  fireEvent.click(remove)
+  fireEvent.click(remove)
+
+  await waitFor(() => expect(repository.delete).toHaveBeenCalledWith('older'))
+  expect(within(getSpread()).getByText('남아 있는 일기')).toBeVisible()
+})

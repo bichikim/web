@@ -194,6 +194,18 @@ describe('createPSceneStyleRepository', () => {
     expect(storage.writeWeb).not.toHaveBeenCalled()
   })
 
+  it('should retain the browser choice when native writing fails and a new owner reads', async () => {
+    const storage = createStorage()
+    const values = new Map<string, unknown>()
+    storage.readToss.mockResolvedValue('original')
+    storage.readWeb.mockImplementation((key) => values.get(key) ?? null)
+    storage.writeWeb.mockImplementation((key, value) => void values.set(key, value))
+    storage.writeToss.mockRejectedValueOnce(new Error('native unavailable'))
+
+    await createPSceneStyleRepository(storage).write('scribble')
+    await expect(createPSceneStyleRepository(storage).read()).resolves.toBe('scribble')
+  })
+
   it('should restore a pending read despite writes in another repository', async () => {
     const firstStorage = createStorage()
     const secondStorage = createStorage()

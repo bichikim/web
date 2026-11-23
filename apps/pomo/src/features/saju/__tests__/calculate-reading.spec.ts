@@ -6,7 +6,10 @@ const birth = {calendar: 'solar', date: '1995-03-16'} as const
 
 const getReadingPayload = (birth: BirthInput, gender: 'M' | 'F' | 'N', question: string) => {
   const {request} = calculateSajuReading({birth, gender, question})
-  return JSON.parse(request.messages[1].content)
+  return {
+    ...JSON.parse(request.messages[0].content.split('\n사주 계산값: ')[1]!),
+    question: request.messages[1].content,
+  }
 }
 
 const boundaryBirthScenarios = [
@@ -75,11 +78,12 @@ describe('calculateSajuReading', () => {
     '올해 운세는? 제 일간도 알려줘',
     '나의 미래는?',
   ])('should send the original question with the same calculation: %s', (question) => {
-    const payload = getReadingPayload(birth, 'M', question)
-    const referencePayload = getReadingPayload(birth, 'M', '제 대운은?')
+    const result = calculateSajuReading({birth, gender: 'M', question})
+    const reference = calculateSajuReading({birth, gender: 'M', question: '제 대운은?'})
 
-    expect(payload).toEqual({...referencePayload, question})
-    expect(payload.chart.day).toMatchObject({hanja: '丙午', korean: '병오'})
+    expect(result.calculation).toEqual(reference.calculation)
+    expect(result.request.messages[1]).toEqual({content: question, role: 'user'})
+    expect(result.calculation.chart.day).toMatchObject({hanja: '丙午', korean: '병오'})
   })
 
   it.each(boundaryReadingScenarios)(

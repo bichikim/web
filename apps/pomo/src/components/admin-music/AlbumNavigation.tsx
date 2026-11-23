@@ -1,5 +1,6 @@
 import {cx} from 'class-variance-authority'
-import {For, Show} from 'solid-js'
+import {For} from 'solid-js'
+import {ImageWithFallback} from '../image/ImageWithFallback'
 import {type AdminAlbum, getAlbumTranslation} from '../../features/admin-music/catalog'
 
 interface AlbumNavigationProps {
@@ -42,16 +43,14 @@ export const AlbumNavigation = (props: AlbumNavigationProps) => (
                   'text-xs font-800 text-#e8bc88',
                 )}
               >
-                <Show
+                <ImageWithFallback
+                  alt=""
+                  class="size-full object-cover"
                   fallback={
                     album.coverFallback === 'music' ? '♪' : album.coverFallback.toUpperCase()
                   }
-                  when={album.coverImageUrl}
-                >
-                  {(coverImageUrl) => (
-                    <img alt="" class="size-full object-cover" src={coverImageUrl()} />
-                  )}
-                </Show>
+                  src={album.coverImageUrl}
+                />
               </span>
               <span class="min-w-0 grow">
                 <span class="block truncate text-sm font-750">

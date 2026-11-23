@@ -47,6 +47,7 @@ export interface CreatePlayerQueueControllerOptions {
 
 export interface PlayerQueueController {
   readonly addTracksToQueue: (tracks: readonly PTrack[]) => void
+  readonly updateTrackArtists: (tracks: readonly Pick<PTrack, 'artist' | 'id'>[]) => void
   readonly clearTrackQueue: () => void
   readonly initializePlayback: (
     tracks: readonly PTrack[],
@@ -427,6 +428,25 @@ const loadTrackQueue = (
   return mergedTracks
 }
 
+const updateTrackArtists = (
+  options: CreatePlayerQueueControllerOptions,
+  tracks: readonly Pick<PTrack, 'artist' | 'id'>[],
+) => {
+  if (options.isQueueControlled() || tracks.length === 0) {
+    return
+  }
+
+  const artists = new Map(tracks.map(({id, artist}) => [id, artist]))
+  const currentTracks = options.readTracks()
+  const updatedTracks = currentTracks.map((track) => {
+    const artist = artists.get(track.id)
+    return artist === undefined || artist === track.artist ? track : {...track, artist}
+  })
+  if (updatedTracks.some((track, index) => track !== currentTracks[index])) {
+    options.setLoadedTracks(updatedTracks)
+  }
+}
+
 /** Coordinates playlist state changes without owning transport or navigation policy. */
 export const createPlayerQueueController = (
   options: CreatePlayerQueueControllerOptions,
@@ -453,5 +473,6 @@ export const createPlayerQueueController = (
       removeTrackFromQueue(options, state, state.initialPlaylistResolved, removeIndex),
     reorderTrackInQueue: (fromIndex, toIndex) =>
       reorderTrackInQueue(options, state, fromIndex, toIndex),
+    updateTrackArtists: (tracks) => updateTrackArtists(options, tracks),
   }
 }

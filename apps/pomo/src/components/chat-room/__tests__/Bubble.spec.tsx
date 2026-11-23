@@ -40,6 +40,18 @@ describe('ChatBubble', () => {
     expect(screen.getByText('답변 음성 생성 중')).toBeInTheDocument()
   })
 
+  it('should display completed text even when it contains a character from another script', () => {
+    vi.mocked(ProcessedKoreanText).mockImplementationOnce(() => <span>답변을 다듬고 있어요.</span>)
+    render(() => (
+      <ChatBubble
+        isVoiceGenerating={false}
+        message={{content: '한국과 日本', id: 'assistant', role: 'assistant'}}
+      />
+    ))
+    expect(screen.getByText('한국과 日本')).toBeInTheDocument()
+    expect(screen.queryByText('답변을 다듬고 있어요.')).toBeNull()
+  })
+
   it('should omit voice generation status for a completed assistant message', () => {
     render(() => (
       <ChatBubble

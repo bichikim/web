@@ -1,3 +1,4 @@
+import * as m from '@paraglide/message'
 import {NO_FEED_CONNECTIONS_STATE, type PFeedState} from './feed-controller'
 import type {FeedDialogueRepository} from './feed-dialogue-repository'
 import type {FeedFetcher, FeedSyncSummary, SynchronizeFeedsOptions} from './feed-sync'
@@ -100,7 +101,7 @@ const runFeedSync = async (context: FeedSyncContext): Promise<void> => {
 
     if (summary.failures.length > 0) {
       setSyncState(context, {
-        message: `${summary.failures.length}개 피드를 가져오지 못했어요. 주소나 CORS 설정을 확인해 주세요.`,
+        message: m.feed_fetch_failed({count: summary.failures.length}),
         status: 'error',
       })
     } else if (summary.queuedJobIds.length === 0) {
@@ -115,7 +116,7 @@ const runFeedSync = async (context: FeedSyncContext): Promise<void> => {
     }
   } catch (error: unknown) {
     console.error('Failed to synchronize focus room feeds.', error)
-    setSyncState(context, {message: '피드를 확인하지 못했어요.', status: 'error'})
+    setSyncState(context, {message: m.feed_sync_failed(), status: 'error'})
   } finally {
     if (finishFeedSync(context.gate) && !context.isDisposed) {
       await runFeedSync(context)

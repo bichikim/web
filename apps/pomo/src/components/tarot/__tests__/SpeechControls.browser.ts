@@ -4,7 +4,7 @@ import {cleanup, render} from '@solidjs/testing-library'
 import {createComponent, createSignal} from 'solid-js'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 import {commands, page} from 'vitest/browser'
-import {setLocale} from '@paraglide/runtime'
+import {getAppLocale, setAppLocale} from 'src/features/locale'
 import {PModal} from '../../p-modal/PModal'
 import {type TarotSpeechController, useTarotSpeech} from '../../../features/tarot/use-tarot-speech'
 import {useModelAssetManager, useModelDownload} from '../../../features/model-download'
@@ -35,7 +35,7 @@ let stylesheet: HTMLStyleElement | undefined
 let speech: TarotSpeechController
 
 beforeEach(async () => {
-  await setLocale('en', {reload: false})
+  await setAppLocale('en', {reload: false})
   vi.mocked(useModelAssetManager).mockReturnValue({
     runAfterModel: vi.fn(),
     runAfterVoiceModel: async (options) => ({status: 'complete', value: await options.task()}),
@@ -66,7 +66,7 @@ afterEach(async () => {
   stylesheet = undefined
   vi.restoreAllMocks()
   vi.clearAllMocks()
-  await setLocale('ko', {reload: false})
+  await setAppLocale('ko', {reload: false})
 })
 
 const mountReading = () =>
@@ -74,7 +74,7 @@ const mountReading = () =>
     const [open, setOpen] = createSignal(false)
     const [tab, setTab] = createSignal('tarot')
     const [text, setText] = createSignal('')
-    speech = useTarotSpeech({locale: () => 'en', text})
+    speech = useTarotSpeech({locale: getAppLocale, text})
     speech.setAutoRead(true)
     const trigger = document.createElement('button')
     trigger.textContent = 'Open reading'
@@ -220,3 +220,19 @@ it.each(['modal', 'tab'] as const)(
     expect(createDialogueAudioPreview).toHaveBeenCalledOnce()
   },
 )
+
+it('should regenerate completed reading audio after a language change without remounting', async () => {
+  mockMedia()
+  mountReading()
+  await page.getByRole('button', {exact: true, name: 'Open reading'}).click()
+  await page.getByRole('button', {exact: true, name: 'Complete reading'}).click()
+  await expect.poll(() => vi.mocked(generateDialogueAudio).mock.lastCall?.[0].language).toBe('en')
+  await expect.poll(speech.audioUrl).toMatch(/^blob:/u)
+  const englishAudio = speech.audioUrl()
+
+  await setAppLocale('ko', {reload: false})
+
+  await expect.poll(() => vi.mocked(generateDialogueAudio).mock.lastCall?.[0].language).toBe('ko')
+  await expect.poll(speech.audioUrl).not.toBe(englishAudio)
+  expect(generateDialogueAudio).toHaveBeenCalledTimes(2)
+})

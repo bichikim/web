@@ -56,6 +56,17 @@ describe('startPomodoroTimer', () => {
     })
   })
 
+  it('should restart an expired preserved focus at the configured duration', () => {
+    const running = startPomodoroTimer(createPomodoroTimerState(CONFIG), 1_000)
+    const stopped = stopPomodoroTimer(running, CONFIG, {
+      now: 12_000,
+      preserveRemainingProgress: true,
+    })
+    const restarted = startPomodoroTimer(stopped, 15_000, CONFIG)
+    expect(restarted).toMatchObject({endsAt: 25_000, phase: 'focus', status: 'running'})
+    expect(synchronizePomodoroTimer(restarted, 15_000, CONFIG)).toBe(restarted)
+  })
+
   it('should preserve an already running timer', () => {
     const runningState = startPomodoroTimer(createPomodoroTimerState(CONFIG), 1_000)
 

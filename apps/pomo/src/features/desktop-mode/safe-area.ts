@@ -27,8 +27,7 @@ export const useDesktopSafeAreaTop = (mode: Accessor<DesktopMode>): Accessor<num
   const [measurementRevision, setMeasurementRevision] = createSignal(0)
   let disposed = false
   let requestId = 0
-  let removeResizeListener: (() => void) | undefined
-  let removeScaleListener: (() => void) | undefined
+  const removeListeners: Array<() => void> = []
 
   createEffect(() => {
     const currentMode = mode()
@@ -63,22 +62,25 @@ export const useDesktopSafeAreaTop = (mode: Accessor<DesktopMode>): Accessor<num
           return
         }
 
-        const refresh = () => setMeasurementRevision((revision) => revision + 1)
+        const refresh = () => {
+          if (!disposed) {
+            setMeasurementRevision((revision) => revision + 1)
+          }
+        }
         setMonitorReader(() => currentMonitor)
         const window = getCurrentWindow()
-        const [unlistenResize, unlistenScale] = await Promise.all([
-          window.onResized(refresh),
-          window.onScaleChanged(refresh),
-        ])
-
-        if (disposed) {
-          unlistenResize()
-          unlistenScale()
-          return
+        const register = async (subscribe: () => Promise<() => void>) => {
+          const unsubscribe = await subscribe()
+          if (disposed) {
+            unsubscribe()
+          } else {
+            removeListeners.push(unsubscribe)
+          }
         }
-
-        removeResizeListener = unlistenResize
-        removeScaleListener = unlistenScale
+        await Promise.all([
+          register(() => window.onResized(refresh)),
+          register(() => window.onScaleChanged(refresh)),
+        ])
       })
       .catch((error: unknown) => {
         if (!disposed) {
@@ -90,8 +92,7 @@ export const useDesktopSafeAreaTop = (mode: Accessor<DesktopMode>): Accessor<num
   onCleanup(() => {
     disposed = true
     requestId += 1
-    removeResizeListener?.()
-    removeScaleListener?.()
+    removeListeners.forEach((remove) => remove())
   })
 
   return inset

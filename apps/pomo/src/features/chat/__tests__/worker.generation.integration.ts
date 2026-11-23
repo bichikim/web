@@ -105,6 +105,14 @@ describe('chat worker generation', () => {
     expect(runtimeMocks.generate).toHaveBeenCalledTimes(2)
   })
 
+  it('should send an error without a draft or completion for whitespace-only output', async () => {
+    runtimeMocks.generate.mockResolvedValueOnce(' \n\uFEFF ')
+    const worker = await loadWorker()
+    worker.dispatch(generateRequest())
+    await expect(waitForResponse(worker, 'complete')).rejects.toThrow('채팅 모델')
+    expect(worker.postMessage).not.toHaveBeenCalledWith(expect.objectContaining({type: 'draft'}))
+  })
+
   it('should stream only visible text and complete without refinement', async () => {
     runtimeMocks.generate.mockImplementation(async (options: GenerateTextOptions) => {
       options.onToken?.('보이는 답변')

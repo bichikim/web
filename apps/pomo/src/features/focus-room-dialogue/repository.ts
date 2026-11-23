@@ -18,6 +18,7 @@ import {
   FOCUS_ROOM_DIALOGUE_EVENTS,
   FOCUS_ROOM_ENTRY_EVENT,
   focusRoomDialogueSchema,
+  focusRoomDialogueWriteSchema,
   type PDialogue,
 } from './schema'
 
@@ -239,7 +240,7 @@ export const createPDialogueRepository = (): PDialogueRepository => {
       return parsedBindings
     },
     async saveDialogue(options) {
-      const nextDialogue = focusRoomDialogueSchema.parse(options.dialogue)
+      const nextDialogue = focusRoomDialogueWriteSchema.parse(options.dialogue)
       const previous = await database.dialogues.get(nextDialogue.id)
       const previousDialogue =
         previous === undefined ? null : focusRoomDialogueSchema.parse(previous)

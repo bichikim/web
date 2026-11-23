@@ -151,47 +151,51 @@ it.each([
   },
 )
 
-it('should continue an exact repeat after invalidating an edited playback occurrence', async () => {
-  const memo = {
-    ...createMemoryMemo({
-      exactReminderAt: '2026-09-04T03:00:00.000Z',
-      exactReminderRepeatIntervalMinutes: 10,
-      exactReminderRepeatUntilMinutes: 20,
-      id: 'memo-1',
-      now: new Date('2026-09-04T02:00:00.000Z'),
-      random: () => 0,
-      recallMode: 'none',
-      text: '메모',
-    }),
-    dialogueId: 'existing-dialogue',
-  }
-  mocks.memos = [memo]
-  const playback = Promise.withResolvers<boolean>()
-  const playDialogue = vi.fn().mockReturnValue(playback.promise)
-  const events = {
-    playDialogue,
-    refreshDialogues: vi.fn().mockResolvedValue(undefined),
-  } as unknown as PEventContextValue
-  const view = renderReminders(() => useMemoryReminders({events, random: () => 0}))
+it.each([0, 15 * 60_000])(
+  'should retain the next scheduled repeat after an edited playback ends %i ms later',
+  async (playbackDelay) => {
+    const memo = {
+      ...createMemoryMemo({
+        exactReminderAt: '2026-09-04T03:00:00.000Z',
+        exactReminderRepeatIntervalMinutes: 10,
+        exactReminderRepeatUntilMinutes: 20,
+        id: 'memo-1',
+        now: new Date('2026-09-04T02:00:00.000Z'),
+        random: () => 0,
+        recallMode: 'none',
+        text: '메모',
+      }),
+      dialogueId: 'existing-dialogue',
+    }
+    mocks.memos = [memo]
+    const playback = Promise.withResolvers<boolean>()
+    const playDialogue = vi.fn().mockReturnValue(playback.promise)
+    const events = {
+      playDialogue,
+      refreshDialogues: vi.fn().mockResolvedValue(undefined),
+    } as unknown as PEventContextValue
+    const view = renderReminders(() => useMemoryReminders({events, random: () => 0}))
 
-  try {
-    await vi.advanceTimersToNextTimerAsync()
-    expect(playDialogue).toHaveBeenCalledOnce()
+    try {
+      await vi.advanceTimersToNextTimerAsync()
+      expect(playDialogue).toHaveBeenCalledOnce()
 
-    const editedMemo = {...memo, updatedAt: '2026-09-04T03:00:01.000Z'}
-    mocks.memos = [editedMemo]
-    playback.resolve(true)
-    await flushPromises()
+      const editedMemo = {...memo, updatedAt: '2026-09-04T03:00:01.000Z'}
+      mocks.memos = [editedMemo]
+      await vi.advanceTimersByTimeAsync(playbackDelay)
+      playback.resolve(true)
+      await flushPromises()
 
-    await vi.advanceTimersByTimeAsync(10 * 60_000)
-    await flushPromises()
+      await vi.advanceTimersByTimeAsync(Math.max(1, 10 * 60_000 - playbackDelay))
+      await flushPromises()
 
-    expect(playDialogue).toHaveBeenCalledTimes(2)
-    expect(mocks.memos[0]?.nextExactReminderAt).toBe('2026-09-04T03:20:00.000Z')
-  } finally {
-    view.cleanup()
-  }
-})
+      expect(playDialogue).toHaveBeenCalledTimes(2)
+      expect(mocks.memos[0]?.nextExactReminderAt).toBe('2026-09-04T03:20:00.000Z')
+    } finally {
+      view.cleanup()
+    }
+  },
+)
 
 it('should retain an invalidated occurrence across later edits to the same schedule', async () => {
   const memo = {

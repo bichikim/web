@@ -173,6 +173,25 @@ describe('generateDialogueAudio', () => {
     })
   })
 
+  it('should keep returned audio in timeline order when stream chunks arrive out of order', async () => {
+    const client = createClient()
+    vi.mocked(client.generateStream).mockImplementationOnce(async function* outOfOrder() {
+      yield successResult({audio: SECOND_CHUNK, type: 'chunk' as const})
+      yield successResult({audio: FIRST_CHUNK, type: 'chunk' as const})
+      yield successResult({audio: {...FIRST_CHUNK}, type: 'complete' as const})
+    })
+    const options = createOptions(client)
+
+    await expect(generateDialogueAudio(options)).resolves.toMatchObject({
+      ok: true,
+      value: {audioChunks: [FIRST_CHUNK, SECOND_CHUNK]},
+    })
+    expect(vi.mocked(options.onChunk).mock.calls).toEqual([
+      [1, 2],
+      [2, 2],
+    ])
+  })
+
   it('should return the Supertonic failure reported by the stream', async () => {
     const client = createClient()
     vi.mocked(client.generateStream).mockImplementationOnce(async function* failedStream() {

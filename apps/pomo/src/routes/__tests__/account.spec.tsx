@@ -9,8 +9,15 @@ const mocks = vi.hoisted(() => ({search: {} as Record<string, string | string[] 
 
 vi.mock('@solidjs/router', () => ({useSearchParams: () => [mocks.search]}))
 vi.mock('../../components/account-page/AccountPage', () => ({
-  AccountPage: (props: {connectedCalendarProvider?: string}) => (
-    <p>{props.connectedCalendarProvider ?? 'account'}</p>
+  AccountPage: (props: {
+    calendarConnectionFailed?: boolean
+    connectedCalendarProvider?: string
+  }) => (
+    <p>
+      {props.calendarConnectionFailed
+        ? 'calendar failed'
+        : (props.connectedCalendarProvider ?? 'account')}
+    </p>
   ),
 }))
 
@@ -27,11 +34,16 @@ it.each(['google', 'microsoft'])(
 
 it.each([
   {},
-  {calendar: 'failed', provider: 'google'},
   {calendar: 'connected', provider: 'unknown'},
   {calendar: 'connected', provider: ['google', 'microsoft']},
 ])('should show the ordinary account page without a valid successful callback: %j', (search) => {
   mocks.search = search
   render(() => <AccountRoute />)
   expect(screen.getByText('account')).toBeVisible()
+})
+
+it('should pass a failed OAuth callback to the account page', () => {
+  mocks.search = {calendar: 'failed'}
+  render(() => <AccountRoute />)
+  expect(screen.getByText('calendar failed')).toBeVisible()
 })

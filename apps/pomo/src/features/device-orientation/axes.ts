@@ -16,8 +16,16 @@ export interface OrientationAxes {
 
 const removeDeadZone = (value: number) =>
   Math.abs(value) < DEVICE_ORIENTATION_DEAD_ZONE ? 0 : value
-const getAngleDelta = (current: number, baseline: number) =>
-  wrapDegrees(current - baseline + HALF_ROTATION_DEGREES) - HALF_ROTATION_DEGREES
+const getAngleDelta = (angle: number, baseline: number) =>
+  wrapDegrees(angle - baseline + HALF_ROTATION_DEGREES) - HALF_ROTATION_DEGREES
+
+export const getOrientationDelta = (
+  current: OrientationAxes,
+  baseline: OrientationAxes,
+): OrientationAxes => ({
+  x: getAngleDelta(current.x, baseline.x),
+  y: getAngleDelta(current.y, baseline.y),
+})
 
 export const getOrientationAxes = (
   beta: number | null,
@@ -45,11 +53,10 @@ export const getOrientationAxes = (
 export const getOrientationOffset = (
   current: OrientationAxes,
   baseline: OrientationAxes,
-): OrientationAxes => ({
-  x: removeDeadZone(
-    clamp(getAngleDelta(current.x, baseline.x) / DEVICE_ORIENTATION_RANGE_X, -1, 1),
-  ),
-  y: removeDeadZone(
-    clamp(getAngleDelta(current.y, baseline.y) / DEVICE_ORIENTATION_RANGE_Y, -1, 1),
-  ),
-})
+): OrientationAxes => {
+  const {x, y} = getOrientationDelta(current, baseline)
+  return {
+    x: removeDeadZone(clamp(x / DEVICE_ORIENTATION_RANGE_X, -1, 1)),
+    y: removeDeadZone(clamp(y / DEVICE_ORIENTATION_RANGE_Y, -1, 1)),
+  }
+}

@@ -177,7 +177,13 @@ export const LanguageLearningWordSets = (props: LanguageLearningWordSetsProps) =
 
             <Tabs.Content value={filter()}>
               <Show
-                fallback={<PSettingsEmptyState>{m.learning_word_sets_empty()}</PSettingsEmptyState>}
+                fallback={
+                  <PSettingsEmptyState>
+                    {(props.sets?.length ?? 0) === 0
+                      ? m.learning_word_sets_empty()
+                      : m.learning_word_sets_language_empty()}
+                  </PSettingsEmptyState>
+                }
                 when={filteredSets().length > 0}
               >
                 <ul

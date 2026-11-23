@@ -15,7 +15,9 @@ const createAlbum = async (
 ): Promise<AlbumCreationResult> => {
   const configuredCoverImageUrl = draft.coverImageUrl.trim()
   const uploadedCover =
-    coverFile === null ? null : await uploadAlbumCover(coverFile, draft.coverDraftId)
+    configuredCoverImageUrl === '' && coverFile !== null
+      ? await uploadAlbumCover(coverFile, draft.coverDraftId)
+      : null
   const coverImageUrl = uploadedCover?.coverImageUrl ?? configuredCoverImageUrl
   const response = await apiJsonRequest('admin/music/albums', {
     body: {

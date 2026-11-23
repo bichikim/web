@@ -16,6 +16,7 @@ interface OwnedSource {
   readonly id: string
   readonly lease: TrackPlaybackSource
   readonly source: string
+  readonly sourceBlob: PTrack['sourceBlob']
 }
 export const useTrackPlaybackSource = (options: SourceOwnerOptions) => {
   let owned: OwnedSource | null = null
@@ -39,7 +40,12 @@ export const useTrackPlaybackSource = (options: SourceOwnerOptions) => {
       clearOwned()
       return false
     }
-    if (owned?.element === element && owned.id === track.id && owned.source === track.source) {
+    if (
+      owned?.element === element &&
+      owned.id === track.id &&
+      owned.source === track.source &&
+      owned.sourceBlob === track.sourceBlob
+    ) {
       return true
     }
     let lease: TrackPlaybackSource
@@ -58,7 +64,7 @@ export const useTrackPlaybackSource = (options: SourceOwnerOptions) => {
       previous.element.load()
     }
     element.src = lease.source
-    owned = {element, id: track.id, lease, source: track.source}
+    owned = {element, id: track.id, lease, source: track.source, sourceBlob: track.sourceBlob}
     previous?.lease.release?.()
     return true
   }

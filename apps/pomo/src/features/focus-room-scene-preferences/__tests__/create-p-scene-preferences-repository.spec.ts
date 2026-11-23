@@ -130,6 +130,33 @@ describe('createPScenePreferencesRepository', () => {
     expect(writeWeb).not.toHaveBeenCalled()
   })
 
+  it('should reject a write when both native and web storage fail', async () => {
+    const {storage} = createRepository()
+    const webError = new Error('web unavailable')
+    const nativeError = new Error('native unavailable')
+    storage.writeToss.mockRejectedValueOnce(nativeError)
+    const repository = createPScenePreferencesRepository({
+      storage: {...storage, writeWeb: () => webError},
+    })
+
+    await expect(repository.write(preferences)).rejects.toThrow(
+      'Failed to persist scene preferences.',
+    )
+  })
+
+  it('should restore a changed preference from successful native storage when the web mirror fails', async () => {
+    const {storage} = createRepository()
+    storage.writeToss.mockImplementation(async (_key, value) => {
+      storage.readToss.mockResolvedValue(value)
+    })
+    const repository = createPScenePreferencesRepository({
+      storage: {...storage, writeWeb: () => new Error('web unavailable')},
+    })
+
+    await expect(repository.write(preferences)).resolves.toBeUndefined()
+    await expect(repository.read()).resolves.toEqual(preferences)
+  })
+
   it('should preserve browser preferences after a native write fails', async () => {
     const {repository, storage} = createRepository()
     storage.writeToss.mockRejectedValueOnce(new Error('unavailable'))

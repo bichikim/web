@@ -170,3 +170,32 @@ it.each(['Escape', 'Cancel'] as const)(
     expect(await readCustomAlbums()).toEqual(initial)
   },
 )
+
+it('should open the crop editor for a JPEG file without a supplied MIME type', async () => {
+  await mountSection()
+  await openFirst()
+  const canvas = document.createElement('canvas')
+  canvas.width = 32
+  canvas.height = 32
+  const jpeg = await new Promise<Blob>((resolve, reject) => {
+    canvas.toBlob(
+      (blob) =>
+        blob === null ? reject(new Error('JPEG fixture could not be encoded')) : resolve(blob),
+      'image/jpeg',
+    )
+  })
+  const input = page.getByLabelText(m.album_custom_cover_add_image()).element()
+  if (!(input instanceof HTMLInputElement)) {
+    throw new TypeError('Cover file input missing')
+  }
+  const transfer = new DataTransfer()
+  transfer.items.add(new File([jpeg], 'cover.JPG'))
+  input.files = transfer.files
+  input.dispatchEvent(new Event('change', {bubbles: true}))
+
+  const crop = page.getByRole('dialog', {name: m.album_custom_cover_crop_title()})
+  await expect.element(crop).toBeVisible()
+  await expect
+    .element(crop.getByRole('button', {name: m.album_custom_cover_crop_apply()}))
+    .toBeEnabled()
+})

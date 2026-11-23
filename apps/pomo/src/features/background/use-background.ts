@@ -33,7 +33,16 @@ export interface BackgroundController {
 
 const getSupportedExtensionKind = (name: string): MediaKind | null => {
   const extension = name.slice(name.lastIndexOf('.')).toLowerCase()
-  return extension === '.png' ? 'photo' : extension === '.mp4' ? 'video' : null
+  switch (extension) {
+    case '.jpg':
+    case '.jpeg':
+    case '.png':
+      return 'photo'
+    case '.mp4':
+      return 'video'
+    default:
+      return null
+  }
 }
 
 const getCandidateMediaKind = (file: File): MediaKind | null => {

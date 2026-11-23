@@ -18,10 +18,12 @@ interface Voice {
 }
 export const MAX_SOUND_LAYERS = 8
 export const DEFAULT_SOUND_VOLUME = 0.5
+class SoundLayerSettingsError extends Error {}
+
 const resolveSettings = (layer: SoundLayer): VoiceSettings => {
   const volume = layer.volume ?? DEFAULT_SOUND_VOLUME
   if (!Number.isFinite(volume) || volume < 0 || volume > 1) {
-    throw new Error('음량은 0부터 1 사이여야 합니다.')
+    throw new SoundLayerSettingsError('음량은 0부터 1 사이여야 합니다.')
   }
   return {
     enabled: layer.enabled !== false,
@@ -32,10 +34,10 @@ const resolveSettings = (layer: SoundLayer): VoiceSettings => {
 }
 const validateLayers = (layers: readonly SoundLayer[]) => {
   if (layers.length === 0 || layers.length > MAX_SOUND_LAYERS) {
-    throw new Error(`음원을 1개부터 ${MAX_SOUND_LAYERS}개까지 선택하세요.`)
+    throw new SoundLayerSettingsError(`음원을 1개부터 ${MAX_SOUND_LAYERS}개까지 선택하세요.`)
   }
   if (new Set(layers.map((layer) => layer.id)).size !== layers.length) {
-    throw new Error('음원 ID가 중복되었습니다.')
+    throw new SoundLayerSettingsError('음원 ID가 중복되었습니다.')
   }
   for (const layer of layers) {
     resolveSettings(layer)
@@ -58,6 +60,7 @@ export const useSoundPlayer = (props: UseSoundPlayerProps): SoundPlayback => {
   let voices: Voice[] = []
   let revision = 0
   let disposed = false
+  let hasSettingsError = false
   const release = () => {
     for (const voice of voices) {
       voice.playback.dispose()
@@ -65,10 +68,15 @@ export const useSoundPlayer = (props: UseSoundPlayerProps): SoundPlayback => {
     voices = []
   }
   const fail = (cause: unknown) => {
+    hasSettingsError = cause instanceof SoundLayerSettingsError
     revision += 1
     release()
     setError(getExceptionMessage(cause, '효과음을 재생하지 못했습니다.'))
     setStatus('error')
+  }
+  const clearError = () => {
+    hasSettingsError = false
+    setError(null)
   }
   let sourceKey = ''
   createEffect(() => {
@@ -79,9 +87,14 @@ export const useSoundPlayer = (props: UseSoundPlayerProps): SoundPlayback => {
       revision += 1
       release()
       setStatus('idle')
-      setError(null)
+      clearError()
     }
     try {
+      if (hasSettingsError) {
+        validateLayers(layers)
+        clearError()
+        setStatus('idle')
+      }
       configureVoices(voices, layers)
     } catch (cause) {
       fail(cause)
@@ -116,7 +129,7 @@ export const useSoundPlayer = (props: UseSoundPlayerProps): SoundPlayback => {
     const resume = status() === 'paused'
     const layers = untrack(props.layers)
     const request = (revision += 1)
-    setError(null)
+    clearError()
     setStatus('loading')
     try {
       validateLayers(layers)
@@ -160,7 +173,7 @@ export const useSoundPlayer = (props: UseSoundPlayerProps): SoundPlayback => {
     const wasLoading = status() === 'loading'
     revision += 1
     setStatus('idle')
-    setError(null)
+    clearError()
     if (wasLoading) {
       release()
       return

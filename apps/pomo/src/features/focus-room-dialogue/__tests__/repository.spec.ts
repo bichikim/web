@@ -275,6 +275,29 @@ it('should roll back newly written audio when metadata persistence fails', async
   expect(storageMocks.delete).toHaveBeenCalledWith('/__pomo/dialogue-audio/new-audio.wav')
 })
 
+it('should preserve a legacy dialogue over the editor limit while rejecting new oversized writes', async () => {
+  const text = '가'.repeat(10_001)
+  const dialogue = {
+    audioKey: 'legacy-audio',
+    createdAt: '2026-08-13T00:00:00.000Z',
+    durationMs: 1000,
+    id: 'legacy-dialogue',
+    language: 'ko',
+    modelId: 'full',
+    segments: [{durationMs: 1000, index: 0, startMs: 0, text}],
+    text,
+    updatedAt: '2026-08-13T00:00:00.000Z',
+    version: 1,
+    voiceId: 'Yuna',
+  } as const
+  databaseMocks.dialogues.get.mockResolvedValue(dialogue)
+  const repository = createPDialogueRepository()
+  await expect(repository.getDialogue(dialogue.id)).resolves.toEqual(dialogue)
+  await expect(repository.saveDialogue({audio: new Blob(['audio']), dialogue})).rejects.toThrow()
+  expect(storageMocks.set).not.toHaveBeenCalled()
+  expect(databaseMocks.dialogues.put).not.toHaveBeenCalled()
+})
+
 it('should store new compressed audio as Opus', async () => {
   databaseMocks.dialogues.get.mockResolvedValue(undefined)
   const repository = createPDialogueRepository()

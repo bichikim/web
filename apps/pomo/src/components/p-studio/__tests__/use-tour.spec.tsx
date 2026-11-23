@@ -1,3 +1,4 @@
+import {setAppLocale} from 'src/features/locale'
 /** @vitest-environment jsdom */
 
 import {getLocale, overwriteGetLocale, setLocale} from '@paraglide/runtime'
@@ -384,7 +385,8 @@ describe('useStudioTour', () => {
       vi.stubGlobal('Audio', AudioMock)
 
       const view = renderHook(() => useStudioTour())
-      await setLocale('en', {reload: false})
+      await setAppLocale('en', {reload: false})
+      expect(view.result.steps()[1]?.video?.source).toBe('/tour/en/pomodoro-control.webm')
 
       expect(getLocale()).toBe('en')
       expect(document.documentElement.lang).toBe('ko')

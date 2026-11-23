@@ -120,7 +120,7 @@ export const useSwipeTrackGesture = (props: UseSwipeTrackGestureProps): SwipeTra
   }
 
   const handleClick: JSX.EventHandler<HTMLButtonElement, MouseEvent> = (event) => {
-    if (!suppressClick) {
+    if (!suppressClick || event.detail === 0) {
       return
     }
 

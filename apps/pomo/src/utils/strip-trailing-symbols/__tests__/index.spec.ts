@@ -61,6 +61,7 @@ describe('stripTrailingSymbols', () => {
     'x\u{E0067}\u{E007F}',
     '👋\u200D',
     'a\u200D👋',
+    '\u200D1\uFE0F\u20E3',
     '\u202E',
     '\u200B',
     '👋\uFEFF',

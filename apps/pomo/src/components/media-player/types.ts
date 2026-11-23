@@ -50,6 +50,7 @@ export interface PlayerState {
   readonly shuffleEnabled: Accessor<boolean>
   readonly canEditQueue: Accessor<boolean>
   readonly addTracksToQueue: (tracks: readonly PTrack[]) => void
+  readonly updateTrackArtists: (tracks: readonly Pick<PTrack, 'artist' | 'id'>[]) => void
   readonly removeTrackFromQueue: (index: number) => void
   readonly reorderTrackInQueue: (fromIndex: number, toIndex: number) => void
   readonly clearTrackQueue: () => void

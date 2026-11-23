@@ -20,6 +20,15 @@ const createAllDayEvent = (start: string, end: string): CalendarEvent => ({
   title: 'Boundary event',
 })
 
+it('should keep all-day intervals with surrounding whitespace in grouping and prompt context', () => {
+  const date = '2026-09-05'
+  const event = createAllDayEvent(` ${date} `, ' 2026-09-06 ')
+  expect(parseAllDayDateKey(event.start)).toBe(date)
+  expect(parseAllDayDate(event.end)).toEqual({day: 6, month: 9, year: 2026})
+  expect(groupCalendarEvents([event], [date], 'UTC').get(date)).toEqual([event])
+  expect(createCalendarPromptContext({events: [event], timeZone: 'UTC'})).toContain(event.title)
+})
+
 it.each([
   {
     description: 'minimum supported date',

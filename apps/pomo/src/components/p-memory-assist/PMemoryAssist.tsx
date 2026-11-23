@@ -1,3 +1,4 @@
+import {getAppLocale} from 'src/features/locale'
 import {PLoadingStatus} from '../p-loading-status/PLoadingStatus'
 import {Tabs} from '@kobalte/core/tabs'
 import {createSignal, ErrorBoundary, lazy, onMount, Suspense} from 'solid-js'
@@ -10,6 +11,7 @@ import {getPomoIconClass} from '../icon-style'
 import {GLASS_ICON_BUTTON} from '../button-presets'
 import {PButton} from '../p-button/PButton'
 import {PModal} from '../p-modal/PModal'
+import type {CalendarMonthView} from '../calendar-month/use-month'
 import {MEMORY_ASSIST_ICON} from '../memory-assist/icon'
 import {PMemoryAssistTabList} from '../memory-assist/TabList'
 import {PScribbleCircleControl} from '../scribble/CircleControl'
@@ -43,12 +45,13 @@ export const PMemoryAssist = (props: PMemoryAssistProps) => {
   const tarot = useTarotReading({locale: getLocale})
   const saju = useSajuReading()
   const tarotSpeech = useTarotSpeech({
-    locale: getLocale,
+    locale: getAppLocale,
     text: () => (tarot.status() === 'complete' ? tarot.output() : ''),
   })
   const [isOpen, setIsOpen] = createSignal(false)
   const [activeTab, setActiveTab] = createSignal('sentences')
   const [calendarRevision, setCalendarRevision] = createSignal(0)
+  const [calendarView, setCalendarView] = createSignal<CalendarMonthView>()
   const [triggerElement, setTriggerElement] = createSignal<HTMLButtonElement | null>(null)
   const refreshCalendar = () => setCalendarRevision((revision) => revision + 1)
   const handleOpen = (source: HTMLButtonElement) => {
@@ -125,6 +128,8 @@ export const PMemoryAssist = (props: PMemoryAssistProps) => {
                 saju={saju}
                 weatherState={props.weatherState}
                 calendarRevision={calendarRevision()}
+                calendarView={calendarView()}
+                onCalendarViewChange={setCalendarView}
                 onRefreshCalendar={refreshCalendar}
               />
             </Suspense>

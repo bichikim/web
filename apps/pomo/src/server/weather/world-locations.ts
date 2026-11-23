@@ -2,6 +2,7 @@ import {eq, inArray, sql} from 'drizzle-orm'
 
 import {
   LEGACY_WEATHER_LOCATIONS,
+  WEATHER_CITY_ALIASES,
   type WeatherCitySlug,
   type WeatherLocation,
   type WeatherLocationId,
@@ -43,12 +44,6 @@ const LEGACY_WORLD_WEATHER_LOCATIONS = Object.fromEntries(
     ]
   }),
 ) as Readonly<Record<WeatherCitySlug, LegacyWorldWeatherLocation>>
-
-const LEGACY_PROVIDER_LOCATION_ALIASES: Partial<
-  Readonly<Record<WeatherCitySlug, ReadonlyArray<string>>>
-> = {
-  jeju: ['Jeju City', '제주시'],
-}
 
 const createProviderLocationId = (providerLocationId: string): WeatherLocationId =>
   `openweather:${providerLocationId}`
@@ -92,7 +87,7 @@ const findLegacyWorldWeatherLocation = (
 
   const locationName = normalizeLocationName(location.name)
   return Object.values(LEGACY_WORLD_WEATHER_LOCATIONS).find((legacyLocation) => {
-    const providerAliases = LEGACY_PROVIDER_LOCATION_ALIASES[legacyLocation.legacyCitySlug] ?? []
+    const providerAliases = WEATHER_CITY_ALIASES[legacyLocation.legacyCitySlug] ?? []
     const matchesName = [
       legacyLocation.legacyCitySlug,
       legacyLocation.name,

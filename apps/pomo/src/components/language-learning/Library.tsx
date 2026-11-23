@@ -16,17 +16,15 @@ export const LanguageLearningLibrary = () => {
   const events = usePEvents()
   const [language, setLanguage] = createSignal<LanguageLearningLanguage>('en')
   const sentences = useLanguageLearningSentences()
-  const filteredEntries = createMemo(() =>
+  const dialogueById = createMemo(() => new Map(events.dialogues().map((item) => [item.id, item])))
+  const availableEntries = createMemo(() =>
     sentences().flatMap((sentence) => {
-      const dialogue = events.dialogues().find((item) => item.id === sentence.dialogueId)
-      return dialogue === undefined || dialogue.language !== language()
-        ? []
-        : [
-            {
-              dialogue,
-            },
-          ]
+      const dialogue = dialogueById().get(sentence.dialogueId)
+      return dialogue === undefined ? [] : [{dialogue}]
     }),
+  )
+  const filteredEntries = createMemo(() =>
+    availableEntries().filter(({dialogue}) => dialogue.language === language()),
   )
 
   return (
@@ -44,7 +42,11 @@ export const LanguageLearningLibrary = () => {
 
       <Show
         when={filteredEntries().length > 0}
-        fallback={<PSettingsEmptyState>{m.learning_empty()}</PSettingsEmptyState>}
+        fallback={
+          <PSettingsEmptyState>
+            {availableEntries().length === 0 ? m.learning_empty() : m.learning_language_empty()}
+          </PSettingsEmptyState>
+        }
       >
         <DialogueLibrary
           entries={filteredEntries()}

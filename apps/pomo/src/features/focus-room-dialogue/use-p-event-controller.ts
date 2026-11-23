@@ -343,7 +343,8 @@ export const usePEventController = (props: UsePEventControllerProps): PEventCont
         if (
           wasTimerRunningAtSave &&
           delayedEndEvent.isRunning() &&
-          delayedEndEvent.getTimerGeneration() === timerGenerationAtSave
+          delayedEndEvent.getTimerGeneration() === timerGenerationAtSave &&
+          activeDelayedEndEventDurationMinutes !== nextSettings.durationMinutes
         ) {
           startDelayedEndEventTimer(nextSettings.durationMinutes)
         }

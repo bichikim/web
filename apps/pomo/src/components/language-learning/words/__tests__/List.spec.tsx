@@ -1,5 +1,5 @@
 /** @vitest-environment jsdom */
-import {cleanup, fireEvent, render, screen} from '@solidjs/testing-library'
+import {cleanup, fireEvent, render, renderHook, screen} from '@solidjs/testing-library'
 import {useLanguageLearningWords} from '../../../../features/language-learning/use-words'
 import {
   appendLanguageLearningWords,
@@ -161,4 +161,27 @@ it('should preserve playing word audio and focus when another stored word change
   expect(play).toHaveBeenCalledOnce()
   fireEvent.click(screen.getByRole('button', {name: 'pear'}))
   expect(onSelect).toHaveBeenCalledWith(expect.objectContaining({memorized: true, value: 'pear'}))
+})
+
+it('should update open word lists after another tab saves or clears words', () => {
+  const {result} = renderHook(() => useLanguageLearningWords())
+  const key = 'pomo:language-learning:words:v1'
+  const word = {
+    createdAt: '2026-09-06T00:00:00Z',
+    language: 'en',
+    memorized: false,
+    value: 'orange',
+    version: 1,
+  }
+  localStorage.setItem(key, JSON.stringify([word]))
+  globalThis.dispatchEvent(new StorageEvent('storage', {key, storageArea: sessionStorage}))
+  globalThis.dispatchEvent(
+    new StorageEvent('storage', {key: 'unrelated', storageArea: localStorage}),
+  )
+  expect(result()).toEqual([])
+  globalThis.dispatchEvent(new StorageEvent('storage', {key, storageArea: localStorage}))
+  expect(result()).toEqual([word])
+  localStorage.clear()
+  globalThis.dispatchEvent(new StorageEvent('storage', {key: null, storageArea: localStorage}))
+  expect(result()).toEqual([])
 })

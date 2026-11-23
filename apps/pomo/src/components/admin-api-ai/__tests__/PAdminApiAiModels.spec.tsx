@@ -82,9 +82,27 @@ it('should filter models by provider and report actual model output for an expli
   fireEvent.click(screen.getByRole('button', {name: '안녕 테스트'}))
   expect(await screen.findByRole('status')).toHaveTextContent('actual-luna')
   expect(screen.getByRole('status')).toHaveTextContent('안녕하세요!')
-  expect(testAdminApiAiModel).toHaveBeenCalledExactlyOnceWith({model: 'luna', providerId: 'openai'})
+  expect(testAdminApiAiModel).toHaveBeenCalledExactlyOnceWith(
+    {model: 'luna', providerId: 'openai'},
+    expect.any(AbortSignal),
+  )
   expect(saveAdminApiAiCatalog).not.toHaveBeenCalled()
 })
+it('should cancel the in-flight provider test on page disposal', async () => {
+  const pending = Promise.withResolvers<Awaited<ReturnType<typeof testAdminApiAiModel>>>()
+  vi.mocked(testAdminApiAiModel).mockReturnValue(pending.promise)
+  const {unmount} = render(() => <PAdminApiAiModels />)
+  fireEvent.click(await screen.findByRole('button', {name: '안녕 테스트'}))
+  const [, signal] = vi.mocked(testAdminApiAiModel).mock.lastCall!
+  expect(signal).toBeInstanceOf(AbortSignal)
+  expect(signal?.aborted).toBe(false)
+
+  unmount()
+  expect(signal?.aborted).toBe(true)
+  pending.resolve({kind: 'success', modelId: 'gemma:free', text: '안녕하세요', tokenCount: null})
+  await pending.promise
+})
+
 it('should show a provider limit failure and block repeated clicks while awaiting the response', async () => {
   let finish!: (result: Awaited<ReturnType<typeof testAdminApiAiModel>>) => void
   vi.mocked(testAdminApiAiModel).mockImplementation(
@@ -125,4 +143,32 @@ it('should remove only unused registered models with a clean registration payloa
       }),
     {interval: 1},
   )
+})
+
+it('should drop the old test output after removing and registering the same model again', async () => {
+  const entry = {label: 'Unused', model: 'unused', providerId: 'openrouter', removable: true}
+  vi.mocked(readAdminApiAiPage).mockResolvedValue({...page, catalog: [...page.catalog, entry]})
+  vi.mocked(saveAdminApiAiCatalog)
+    .mockResolvedValueOnce({kind: 'saved', page: {...page, revision: 3}})
+    .mockResolvedValueOnce({
+      kind: 'saved',
+      page: {...page, catalog: [...page.catalog, entry], revision: 4},
+    })
+  vi.mocked(testAdminApiAiModel).mockResolvedValue({
+    kind: 'success',
+    modelId: 'unused',
+    text: '이전 모델 응답',
+    tokenCount: null,
+  })
+  render(() => <PAdminApiAiModels />)
+  const name = 'openrouter unused'
+  const article = await screen.findByRole('article', {name})
+  fireEvent.click(within(article).getByRole('button', {name: '안녕 테스트'}))
+  expect(await within(article).findByText('이전 모델 응답')).toBeVisible()
+  fireEvent.click(within(article).getByRole('button', {name: '삭제'}))
+  await waitFor(() => expect(screen.queryByRole('article', {name})).toBeNull(), {interval: 1})
+  fireEvent.input(screen.getByRole('textbox', {name: '모델 ID'}), {target: {value: entry.model}})
+  fireEvent.submit(screen.getByRole('button', {name: '모델 등록'}).closest('form')!)
+  const restored = await screen.findByRole('article', {name})
+  expect(within(restored).queryByText('이전 모델 응답')).toBeNull()
 })

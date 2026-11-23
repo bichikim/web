@@ -119,6 +119,16 @@ describe('useReplySpeech with accumulated chat tokens', () => {
     cleanup()
   })
 
+  it('should speak a streamed reply only once when completion trims its edges', () => {
+    const {respond, complete, voice, cleanup} = setup(true)
+    respond({text: '  같은 답변. \n', type: 'token'})
+    respond({draft: {content: '같은 답변.', id: '2'}, type: 'draft'})
+    complete('같은 답변.')
+    expect(voice.speak).toHaveBeenCalledExactlyOnceWith('같은 답변.')
+    expect(voice.finish).toHaveBeenCalledOnce()
+    cleanup()
+  })
+
   it.each([true, false])('should speak a complete-only reply once (streaming: %s)', (streaming) => {
     const {complete, voice, cleanup} = setup(streaming)
     const text = 'Examples include e.g. apples and pears. Next step.'

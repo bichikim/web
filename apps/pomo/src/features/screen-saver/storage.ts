@@ -4,6 +4,7 @@ import {
   createTossWebStorageAdapter,
   type TimestampedPreferenceStorage,
 } from 'src/utils/runtime-storage'
+import {normalizeStoredInteger} from 'src/utils/runtime-storage/normalize-stored-integer'
 
 import {z} from 'zod'
 
@@ -17,6 +18,7 @@ const screenSaverDelaySchema = import.meta.env.DEV
 const codec = createTimestampedFieldCodec<'delay', ScreenSaverDelay>(
   'delay',
   screenSaverDelaySchema,
+  z.preprocess(normalizeStoredInteger, z.number().finite().nonnegative()),
 )
 export const parseScreenSaverDelay = codec.parseValue
 

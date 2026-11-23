@@ -267,3 +267,24 @@ describe('prepareAlbumCover', () => {
     expect(close).toHaveBeenCalledOnce()
   })
 })
+
+it.each([
+  {height: 1200, width: Number.NaN},
+  {height: Number.POSITIVE_INFINITY, width: 1200},
+])(
+  'should reject non-finite dimensions $width by $height and release the decoder',
+  async (size) => {
+    const close = vi.fn()
+    const encode = vi.fn(async () => new Blob(['webp'], {type: COVER_IMAGE_TYPE}))
+    const file = new File(['jpeg'], 'cover.jpg', {type: 'image/jpeg'})
+
+    await expect(
+      prepareAlbumCover(file, {
+        decode: async () => ({...size, close, source: document.createElement('canvas')}),
+        encode,
+      }),
+    ).rejects.toThrow(TypeError)
+    expect(encode).not.toHaveBeenCalled()
+    expect(close).toHaveBeenCalledOnce()
+  },
+)

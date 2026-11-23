@@ -95,3 +95,14 @@ it('should add a selected set and announce added and skipped word counts', () =>
     screen.getByRole('status', {name: 'English B1 단어는 이미 모두 추가되어 있어요.'}),
   ).toBeInTheDocument()
 })
+
+it('should distinguish an empty language tab from an empty catalog', () => {
+  render(() => (
+    <LanguageLearningWordSets sets={[{id: 'en-b1', language: 'en', title: 'English B1'}]} />
+  ))
+  fireEvent.click(screen.getByRole('tab', {name: '일본어'}))
+  expect(screen.getByText('선택한 언어의 단어 세트가 없어요.')).toBeVisible()
+  expect(screen.queryByText('가져올 수 있는 단어 세트를 준비 중이에요.')).toBeNull()
+  fireEvent.click(screen.getByRole('tab', {name: '영어'}))
+  expect(screen.getByText('English B1')).toBeVisible()
+})

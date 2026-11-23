@@ -1,8 +1,13 @@
-import {cleanup, render, screen} from '@solidjs/testing-library'
+import {cleanup, render, renderHook, screen} from '@solidjs/testing-library'
 import {createComponent, createSignal} from 'solid-js'
 import {afterEach, expect, it} from 'vitest'
 import {userEvent} from 'vitest/browser'
 import {encodeMonoPcm16Wav} from 'src/utils/encode-mono-pcm16-wav'
+import {useLanguageLearningWords} from '../../../../features/language-learning/use-words'
+import {
+  appendLanguageLearningWords,
+  LANGUAGE_LEARNING_WORDS_STORAGE_KEY,
+} from '../../../../features/language-learning/word-storage'
 import type {LanguageLearningWord} from '../../../../features/language-learning/word-schema'
 import {LanguageLearningWordList} from '../List'
 
@@ -78,5 +83,23 @@ it('should keep native playback when an equivalent stored row is removed', async
     expect(sourceMutations).toHaveLength(0)
   } finally {
     observer.disconnect()
+  }
+})
+
+it('should refresh the open word collection after another document adds a word', async () => {
+  localStorage.removeItem(LANGUAGE_LEARNING_WORDS_STORAGE_KEY)
+  const {result} = renderHook(useLanguageLearningWords)
+  const frame = document.createElement('iframe')
+  document.body.append(frame)
+  try {
+    const sourceWindow = frame.contentWindow!
+    appendLanguageLearningWords('en', ['orange'], {
+      events: sourceWindow,
+      storage: sourceWindow.localStorage,
+    })
+    await expect.poll(() => result().map((word) => word.value)).toEqual(['orange'])
+  } finally {
+    frame.remove()
+    localStorage.removeItem(LANGUAGE_LEARNING_WORDS_STORAGE_KEY)
   }
 })

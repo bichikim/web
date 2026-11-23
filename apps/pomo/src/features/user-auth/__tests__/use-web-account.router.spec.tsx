@@ -216,3 +216,17 @@ it.each([200, 409, 410])(
     expect(fetchMock).toHaveBeenCalledOnce()
   },
 )
+
+it('should replace the expired account link warning with the newly sent login link feedback', async () => {
+  globalThis.history.replaceState(null, '', `/account?link_token=${'a'.repeat(32)}`)
+  vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(null, {status: 410})))
+  vi.mocked(requestUserMagicLink).mockResolvedValue(true)
+  vi.mocked(readAccountSession).mockResolvedValue(null)
+  render(() => <MemoryRouter root={RouterRoot} />)
+
+  expect(await screen.findByRole('alert')).toHaveTextContent('계정 연결이 만료')
+  fireEvent.click(screen.getByRole('button', {name: '전송'}))
+
+  expect(await screen.findByRole('status')).toHaveTextContent('로그인 링크를 이메일로 보냈습니다')
+  expect(screen.queryByRole('alert')).toBeNull()
+})

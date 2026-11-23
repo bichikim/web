@@ -76,3 +76,24 @@ it('should disable duplicate stop requests and show failures', async () => {
   await vi.waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent('중지하지 못했어요'))
   expect(button).not.toBeDisabled()
 })
+
+it('should clear a stop failure when the job finishes and keep the next job clean', async () => {
+  const [state, setState] = createSignal<PFeedState>({
+    message: '생성 중',
+    progress: null,
+    status: 'generating',
+  })
+  const feeds = createFeeds([], false, [], {
+    cancelProcessing: vi.fn().mockRejectedValue(new Error('failed')),
+    state,
+  })
+  vi.spyOn(console, 'error').mockImplementation(() => undefined)
+  render(() => <PFeedProgress controller={feeds} />, {wrapper: PreferenceProvider})
+  fireEvent.click(screen.getByRole('button', {name: '중지'}))
+  expect(await screen.findByRole('alert')).toHaveTextContent('중지하지 못했어요')
+  setState({message: '완료', status: 'idle'})
+  expect(screen.queryByRole('alert')).toBeNull()
+  setState({message: '다음 생성', progress: null, status: 'generating'})
+  expect(screen.getByRole('button', {name: '중지'})).toBeEnabled()
+  expect(screen.queryByRole('alert')).toBeNull()
+})

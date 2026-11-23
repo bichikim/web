@@ -1,7 +1,7 @@
 import {createCloudTextTask} from '../cloud-text/create-cloud-text-task'
 import type {SajuClient} from './client'
 import type {SajuGenerationResponse} from './generation-messages'
-import {formatSajuAnswer} from './format-answer'
+import {formatGeneratedSajuAnswer} from './format-answer'
 
 /** Generates a calculated reading through the cancellable cloud text service. */
 export function createCloudSajuClient(
@@ -17,7 +17,7 @@ export function createCloudSajuClient(
         onComplete: (response) =>
           onResponse({
             requestId: request.requestId,
-            text: formatSajuAnswer(response.text),
+            text: formatGeneratedSajuAnswer(response.text, request.messages),
             type: 'complete',
           }),
         onError: (message) => onResponse({message, requestId: request.requestId, type: 'error'}),

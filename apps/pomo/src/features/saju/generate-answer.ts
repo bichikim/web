@@ -1,5 +1,5 @@
 import type {GenerateSajuRequest, SajuWorkerResponse} from './messages'
-import {formatSajuAnswer} from './format-answer'
+import {formatGeneratedSajuAnswer} from './format-answer'
 
 type CompleteResponse = Extract<SajuWorkerResponse, {type: 'complete'}>
 type GenerateText = (messages: GenerateSajuRequest['messages']) => Promise<string>
@@ -10,5 +10,5 @@ export async function generateSajuAnswer(
   generateText: GenerateText,
 ): Promise<CompleteResponse> {
   const text = await generateText(request.messages)
-  return {text: formatSajuAnswer(text), type: 'complete'}
+  return {text: formatGeneratedSajuAnswer(text, request.messages), type: 'complete'}
 }

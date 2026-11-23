@@ -33,7 +33,11 @@ import {
 } from './dialogue-audio-runtime'
 import type {GeneratedDialogueAudio} from './generate-dialogue-audio'
 import {createPDialogueRepository} from './repository'
-import {DEFAULT_FOCUS_ROOM_DIALOGUE_LANGUAGE, type PDialogue} from './schema'
+import {
+  DEFAULT_FOCUS_ROOM_DIALOGUE_LANGUAGE,
+  MAXIMUM_DIALOGUE_TEXT_LENGTH,
+  type PDialogue,
+} from './schema'
 import {DEFAULT_DIALOGUE_MODEL_ID, DEFAULT_DIALOGUE_VOICE_ID} from './speech-defaults'
 
 const MAXIMUM_PROGRESS = 100
@@ -122,11 +126,13 @@ export const usePDialogueEditor = (props: UsePDialogueEditorProps): PDialogueEdi
   const isBusy = createMemo(() => isDialogueEditorBusy(state()))
   const currentGenerationKey = () => getGenerationKey(language(), modelId(), voiceId(), text())
   const hasCurrentAudio = () => audioBlob !== null && generatedKey === currentGenerationKey()
-  const canGenerate = createMemo(() => !isBusy() && isNonBlankString(text()))
+  const canGenerate = createMemo(
+    () => !isBusy() && isNonBlankString(text()) && text().length <= MAXIMUM_DIALOGUE_TEXT_LENGTH,
+  )
   const canRegenerateSegments = createMemo(
     () => !isBusy() && editableAudio() !== null && hasCurrentAudio(),
   )
-  const canSave = createMemo(() => !isBusy() && hasCurrentAudio() && segments().length > 0)
+  const canSave = createMemo(() => canGenerate() && hasCurrentAudio() && segments().length > 0)
   const progress = createMemo(() => {
     const currentState = state()
     return currentState.status === 'preparing'

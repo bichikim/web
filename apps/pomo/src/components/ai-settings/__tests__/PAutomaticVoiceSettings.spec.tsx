@@ -21,6 +21,7 @@ const VoiceDefaults = () => {
 
 const mocks = vi.hoisted(() => ({
   read: vi.fn(),
+  subscribe: vi.fn(),
   write: vi.fn(),
 }))
 
@@ -35,6 +36,7 @@ vi.mock('../../../features/focus-room-dialogue', async () => {
       ...actual.createAutomaticDialoguePreferenceOptions(options),
       storage: {
         read: () => mocks.read(),
+        subscribe: (notify: (key: string | null) => void) => mocks.subscribe(notify),
         write: (key: string, value: unknown) => mocks.write(key, value),
       },
     }),
@@ -127,6 +129,37 @@ describe('AutomaticDialogueSettings', () => {
     await waitFor(() =>
       expect(screen.getByRole('status')).toHaveTextContent('자동 음성 생성 설정을 저장했어요.'),
     )
+  })
+
+  it('should report success only when all queued edits have finished saving', async () => {
+    const first = Promise.withResolvers<void>()
+    const second = Promise.withResolvers<void>()
+    mocks.write.mockReturnValueOnce(first.promise).mockReturnValueOnce(second.promise)
+    render(() => <PAutomaticVoiceSettings />, {wrapper: PreferenceProvider})
+    const model = await screen.findByRole('combobox', {name: '자동 음성 생성 모델'})
+    const voice = screen.getByRole('combobox', {name: '자동 음성 생성 목소리'})
+    fireEvent.change(model, {target: {value: 'full'}})
+    fireEvent.change(voice, {target: {value: 'Hana'}})
+    first.resolve()
+    await waitFor(() => expect(mocks.write).toHaveBeenCalledTimes(2))
+    expect(screen.queryByRole('status')).toBeNull()
+    second.resolve()
+    await screen.findByText('자동 음성 생성 설정을 저장했어요.')
+  })
+
+  it('should clear a save error once the other tab saves the requested setting', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    mocks.write.mockReturnValueOnce(new Error('storage unavailable'))
+    render(() => <PAutomaticVoiceSettings />, {wrapper: PreferenceProvider})
+    const voice = await screen.findByRole('combobox', {name: '자동 음성 생성 목소리'})
+    fireEvent.change(voice, {target: {value: 'Hana'}})
+    await screen.findByText('자동 음성 생성 설정을 저장하지 못했어요.')
+    expect(voice).toHaveValue(DEFAULT_AUTOMATIC_DIALOGUE_SETTINGS.voiceId)
+    const [notify] = mocks.subscribe.mock.lastCall!
+    mocks.read.mockResolvedValueOnce({...DEFAULT_AUTOMATIC_DIALOGUE_SETTINGS, voiceId: 'Hana'})
+    notify(AUTOMATIC_DIALOGUE_SETTINGS_STORAGE_KEY)
+    await waitFor(() => expect(screen.queryByRole('status')).toBeNull())
+    expect(voice).toHaveValue('Hana')
   })
 
   it('should expose the stable preference key used by storage writes', async () => {

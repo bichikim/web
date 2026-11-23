@@ -137,3 +137,15 @@ describe('createBlobArchive', () => {
     expect(open).not.toHaveBeenCalled()
   })
 })
+
+it('should replace forbidden Windows characters before resolving ZIP name collisions', async () => {
+  const archive = await createBlobArchive(
+    ['a<>"|?:*.txt', 'a_______.txt', '한글.txt'].map((name) => ({blob: new Blob([name]), name})),
+  )
+
+  expect(await readArchive(archive)).toEqual([
+    ['a_______.txt', 'a<>"|?:*.txt'],
+    ['1-a_______.txt', 'a_______.txt'],
+    ['한글.txt', '한글.txt'],
+  ])
+})

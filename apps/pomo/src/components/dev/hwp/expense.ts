@@ -35,7 +35,7 @@ const MAXIMUM_ITEMS = 20
 const EXPENSE_LINE_PATTERN =
   /^\s*(?<name>.+?)\s+(?<unitPrice>[\d０-９,]+)\s*원(?:\s*(?<quantity>[\d,]+)\s*개)?\s*$/u
 const DATE_LINE_PATTERN =
-  /^\s*(?<year>[0-9０-９]{4})-(?<month>[0-9０-９]{1,2})-(?<day>[0-9０-９]{1,2})(?:\s+[월화수목금토일]요일)?\s*$/u
+  /^\s*(?<year>[0-9０-９]{4})(?<sep>[-./])(?<month>[0-9０-９]{1,2})\k<sep>(?<day>[0-9０-９]{1,2})(?:\s+[월화수목금토일]요일)?\s*$/u
 
 const invalid = (code: ExpenseParseError['code']): ExpenseParseResult => ({
   error: {code},
@@ -59,16 +59,12 @@ const toPositiveInteger = (value: unknown) => {
   return Number.isSafeInteger(parsed) && parsed > 0 ? parsed : null
 }
 
-const readExpenseDate = (value: string, allowFullwidthDateDigits = false) => {
+const readExpenseDate = (value: string) => {
   const dateMatch = DATE_LINE_PATTERN.exec(value)
   const year = dateMatch?.groups?.year
   const month = dateMatch?.groups?.month
   const day = dateMatch?.groups?.day
   if (year === undefined || month === undefined || day === undefined) {
-    return null
-  }
-
-  if (!allowFullwidthDateDigits && [year, month, day].some((part) => /[０-９]/u.test(part))) {
     return null
   }
 
@@ -116,7 +112,11 @@ const readItems = (value: unknown) => {
       return null
     }
 
-    const unitPrice = toPositiveInteger(item.unitPrice)
+    const unitPrice = toPositiveInteger(
+      typeof item.unitPrice === 'string'
+        ? item.unitPrice.replace(/[０-９]+/gu, normalizePasteNumericInput)
+        : item.unitPrice,
+    )
     const quantity = toPositiveInteger(item.quantity)
     if (unitPrice === null || quantity === null) {
       return null
@@ -188,7 +188,7 @@ export const parseExpenseText = (text: string): ExpenseParseResult => {
   const items: Array<ExpenseItem> = []
 
   for (const line of lines) {
-    const dateValue = readExpenseDate(line, true)
+    const dateValue = readExpenseDate(line)
     if (dateValue === null) {
       const expenseMatch = EXPENSE_LINE_PATTERN.exec(line)
       if (expenseMatch?.groups === undefined) {

@@ -62,6 +62,15 @@ describe('extractMp3Preview', () => {
     expect(Array.from(result.slice(0, 4))).toEqual([0xff, 0xfb, 0x90, 0x00])
   })
 
+  it('should start at the first MPEG frame when an oversized ID3 header points into the audio', () => {
+    const id3 = new Uint8Array(14)
+    id3.set([0x49, 0x44, 0x33, 0x04, 0, 0, 0, 0, 0x03, 0x50])
+    const audio = createMp3(6)
+    audio[9] = 73
+    const result = extractMp3Preview(concatUint8Arrays([id3, audio]), Math.ceil(FRAME_DURATION_MS))
+    expect(result).toEqual(audio.slice(0, FRAME_BYTES))
+  })
+
   it('should rewrite the Xing frame count to the bounded preview frame count', () => {
     const source = createMp3(1200)
     const markerOffset = 32

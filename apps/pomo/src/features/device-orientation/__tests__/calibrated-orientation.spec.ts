@@ -20,6 +20,16 @@ it('should reset the baseline when the screen rotates', () => {
   expect(rotated?.reference).toEqual({angle: 90, axes: {x: 7, y: -11}})
 })
 
+it.each([
+  {first: 179, last: -179, movement: 2},
+  {first: -179, last: 179, movement: -2},
+])('should measure the shortest beta movement across the half turn', ({first, last, movement}) => {
+  const initial = getCalibratedOrientation(first, 0, 0, null)
+  const next = getCalibratedOrientation(last, 0, 0, initial?.reference ?? null)
+
+  expect(next?.delta).toEqual({x: 0, y: movement})
+})
+
 it('should ignore incomplete sensor samples without changing calibration', () => {
   expect(getCalibratedOrientation(null, 5, 0, null)).toBeNull()
   expect(getCalibratedOrientation(3, null, 0, null)).toBeNull()

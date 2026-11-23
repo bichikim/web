@@ -1,9 +1,10 @@
 import {cx} from 'class-variance-authority'
 import {Show} from 'solid-js'
 
-import {type PResolvedAlbum, type PTrack} from '../../features/focus-room-audio/index'
+import {type PResolvedAlbum, type PTrack} from '../../features/focus-room-audio'
 import * as m from '@paraglide/message'
 import {HConfirmButton} from '../h-confirm-button/HConfirmButton'
+import {ImageWithFallback} from '../image/ImageWithFallback'
 import {P_BUTTON_CLASSES, PButton} from '../p-button/PButton'
 import {CustomAlbumCoverImage} from './CustomAlbumCoverImage'
 
@@ -45,7 +46,9 @@ interface AlbumSummaryProps {
 
 export const AlbumSummary = (props: AlbumSummaryProps) => (
   <div class="flex gap-3.5 p-4">
-    <Show
+    <ImageWithFallback
+      alt={m.album_cover_alt({title: props.album.title})}
+      class="size-16 flex-none rounded-4 object-cover shadow-panel"
       fallback={
         <Show
           fallback={
@@ -59,7 +62,7 @@ export const AlbumSummary = (props: AlbumSummaryProps) => (
               <span class={`${props.album.icon} size-6.5 opacity-90`} />
             </div>
           }
-          when={props.coverImage}
+          when={props.album.coverImageUrl ? undefined : props.coverImage}
         >
           {(coverImage) => (
             <CustomAlbumCoverImage
@@ -70,16 +73,8 @@ export const AlbumSummary = (props: AlbumSummaryProps) => (
           )}
         </Show>
       }
-      when={props.album.coverImageUrl}
-    >
-      {(coverImageUrl) => (
-        <img
-          alt={m.album_cover_alt({title: props.album.title})}
-          class="size-16 flex-none rounded-4 object-cover shadow-panel"
-          src={coverImageUrl()}
-        />
-      )}
-    </Show>
+      src={props.album.coverImageUrl}
+    />
     <div class="min-w-0 flex-1 py-0.5">
       <div class="flex min-w-0 items-start justify-between gap-2">
         <h3 class="m-0 min-w-0 flex-1 truncate text-base font-750 leading-5 text-foreground">

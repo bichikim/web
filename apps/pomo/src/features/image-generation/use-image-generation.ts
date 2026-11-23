@@ -71,8 +71,14 @@ const selectDownload = (options: DownloadProgressOptions) =>
   options.items.find(
     (item) =>
       item.status === 'loading' &&
-      ((item.target.kind === 'image' && item.target.modelId === options.variant) ||
-        (item.target.kind === 'text' && item.target.modelId === options.modelId)),
+      item.target.kind === 'image' &&
+      item.target.modelId === options.variant,
+  ) ??
+  options.items.find(
+    (item) =>
+      item.status === 'loading' &&
+      item.target.kind === 'text' &&
+      item.target.modelId === options.modelId,
   )
 
 interface GenerationUpdateHandlers {

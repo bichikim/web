@@ -1,4 +1,4 @@
-import {createMemo, createSignal, onMount} from 'solid-js'
+import {createMemo, createSignal, onCleanup, onMount} from 'solid-js'
 import {daysInMonth} from 'src/features/civil-date'
 import type {SajuFormDraft, SajuFormDraftPersistence} from 'src/features/saju/form-draft-storage'
 import {getConvertibleLunarDays} from 'src/features/tools'
@@ -39,19 +39,50 @@ function createInitialDraft(initialDate: string): SajuFormDraft {
   }
 }
 
+const getDraftSnapshot = (draft: SajuFormDraft | null): string | null =>
+  draft === null ? null : JSON.stringify(draft)
+
 export function useSajuFormDraft(input: UseSajuFormDraftInput) {
   const [draft, setDraft] = createSignal(createInitialDraft(input.initialDate))
+  let storageSnapshot: string | null = null
   onMount(() => {
-    const saved = input.persistence?.read()
-    if (saved !== null && saved !== undefined) {
-      setDraft(saved)
+    const {persistence} = input
+    if (persistence === undefined) {
+      return
     }
+    const restore = () => {
+      const saved = persistence.read()
+      const snapshot = getDraftSnapshot(saved)
+      if (snapshot !== storageSnapshot) {
+        storageSnapshot = snapshot
+        setDraft(saved ?? createInitialDraft(input.initialDate))
+      }
+    }
+    const unsubscribe = persistence.subscribe?.(restore)
+    if (unsubscribe !== undefined) {
+      onCleanup(unsubscribe)
+    }
+    restore()
   })
-  const updateDraft = (change: Partial<SajuFormDraft>) => {
-    const next = {...draft(), ...change}
+  const patchDraft = (change: (current: SajuFormDraft) => Partial<SajuFormDraft>) => {
+    const {persistence} = input
+    const subscribed = persistence?.subscribe !== undefined
+    const latest = subscribed ? persistence.read() : null
+    const snapshot = getDraftSnapshot(latest)
+    // Retain local edits if the last persistence attempt failed and storage is unchanged.
+    const current = snapshot !== storageSnapshot && latest !== null ? latest : draft()
+    storageSnapshot = snapshot
+    const next = {...current, ...change(current)}
     setDraft(next)
-    input.persistence?.write(next)
+    persistence?.write(next)
+    if (subscribed) {
+      const expected = getDraftSnapshot(next)
+      if (getDraftSnapshot(persistence.read()) === expected) {
+        storageSnapshot = expected
+      }
+    }
   }
+  const updateDraft = (change: Partial<SajuFormDraft>) => patchDraft(() => change)
   const calendar = createMemo(() => draft().calendar)
   const gender = createMemo(() => draft().gender)
   const leapMonth = createMemo(() => draft().leapMonth)
@@ -96,14 +127,19 @@ export function useSajuFormDraft(input: UseSajuFormDraftInput) {
     )
   })
   const changeYear = (value: string) =>
-    updateDraft(draft().calendar === 'solar' ? {solarYear: value} : {lunarYear: value})
+    patchDraft((current) =>
+      current.calendar === 'solar' ? {solarYear: value} : {lunarYear: value},
+    )
   const changeMonth = (value: string) =>
-    updateDraft(draft().calendar === 'solar' ? {solarMonth: value} : {lunarMonth: value})
+    patchDraft((current) =>
+      current.calendar === 'solar' ? {solarMonth: value} : {lunarMonth: value},
+    )
   const changeDay = (value: string) =>
-    updateDraft(draft().calendar === 'solar' ? {solarDay: value} : {lunarDay: value})
+    patchDraft((current) => (current.calendar === 'solar' ? {solarDay: value} : {lunarDay: value}))
   const resetDraft = () => {
     setDraft(createInitialDraft(input.initialDate))
     input.persistence?.delete()
+    storageSnapshot = getDraftSnapshot(input.persistence?.read() ?? null)
   }
 
   return {

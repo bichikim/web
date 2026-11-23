@@ -71,10 +71,11 @@ it('should send displayed messages through the real generation workspace', async
     screen.getByRole('region', {name: 'LLM 전달 값'}).querySelector('code')!.textContent!,
   ) as Array<{role: string; content: string}>
   expect(messages.map((message) => message.role)).toEqual(['system', 'user'])
-  expect(JSON.parse(messages[1].content)).toMatchObject({
+  expect(messages[1].content).toBe(question)
+  expect(JSON.parse(messages[0].content.split('\n사주 계산값: ')[1]!)).toMatchObject({
+    birthDayStem: '병(丙)',
     chart: {day: {hanja: '丙午'}, hour: null},
     elements: {lacking: ['金']},
-    question,
   })
   await vi.dynamicImportSettled()
   expect(send).toHaveBeenCalledExactlyOnceWith({

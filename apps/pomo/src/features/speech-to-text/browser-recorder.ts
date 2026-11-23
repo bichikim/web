@@ -1,3 +1,4 @@
+import {isPromise} from '@winter-love/utils'
 import {decodeSpeechRecording, type SpeechAudioDecoder} from './audio'
 import type {SpeechCaptureError} from './errors'
 import type {SpeechRecorder, SpeechRecording} from './recorder'
@@ -6,7 +7,61 @@ import {createBrowserSpeechEndDetector, type SpeechEndDetector} from './speech-e
 
 export interface CreateBrowserSpeechRecorderOptions {
   readonly decodeRecording?: SpeechAudioDecoder
-  readonly createSpeechEndDetector?: (stream: MediaStream) => SpeechEndDetector | null
+  readonly createSpeechEndDetector?: (
+    stream: MediaStream,
+    signal: AbortSignal,
+  ) => SpeechEndDetector | Promise<SpeechEndDetector | null> | null
+}
+
+const subscribeWhenDetectorReady = (
+  detector: Promise<SpeechEndDetector | null>,
+  handler: () => void,
+  signal: AbortSignal,
+) => {
+  let subscribed = true
+  let unsubscribe: (() => void) | undefined
+  detector
+    .then((ready) => {
+      if (subscribed && !signal.aborted) {
+        unsubscribe = ready?.subscribe(handler)
+      }
+    })
+    .catch(() => undefined)
+  return () => {
+    subscribed = false
+    unsubscribe?.()
+  }
+}
+
+const createSpeechEndSession = (
+  stream: MediaStream,
+  factory: NonNullable<CreateBrowserSpeechRecorderOptions['createSpeechEndDetector']>,
+) => {
+  const lifetime = new AbortController()
+  const {signal} = lifetime
+  let detector: ReturnType<typeof factory> | undefined
+  return {
+    dispose() {
+      lifetime.abort()
+      if (isPromise(detector)) {
+        detector.then((ready) => ready?.dispose()).catch(() => undefined)
+      } else {
+        detector?.dispose()
+      }
+    },
+    subscribe(handler: () => void) {
+      if (detector === undefined) {
+        try {
+          detector = factory(stream, signal)
+        } catch {
+          detector = null
+        }
+      }
+      return isPromise(detector)
+        ? subscribeWhenDetectorReady(detector, handler, signal)
+        : (detector?.subscribe(handler) ?? (() => undefined))
+    },
+  }
 }
 
 const createCaptureError = (error: unknown): SpeechCaptureError => {
@@ -210,12 +265,15 @@ export const createBrowserSpeechRecorder = (
         stream: acquiredStream,
       })
       tracks.forEach((track) => track.addEventListener('ended', onTrackEnded))
-      let speechEndDetector: SpeechEndDetector | null | undefined
+      const speechEnd = createSpeechEndSession(
+        acquiredStream,
+        options.createSpeechEndDetector ?? createBrowserSpeechEndDetector,
+      )
       let segmentOperation: Promise<Result<Float32Array, SpeechCaptureError>> | null = null
       const release = () => {
         if (activeSession === session) {
           activeSession = null
-          speechEndDetector?.dispose()
+          speechEnd.dispose()
           tracks.forEach((track) => {
             track.removeEventListener('ended', onTrackEnded)
             track.stop()
@@ -235,23 +293,7 @@ export const createBrowserSpeechRecorder = (
             release()
           }
         },
-        onSpeechEnd: (handler) => {
-          if (closed) {
-            return () => undefined
-          }
-
-          if (speechEndDetector === undefined) {
-            try {
-              speechEndDetector = (
-                options.createSpeechEndDetector ?? createBrowserSpeechEndDetector
-              )(acquiredStream)
-            } catch {
-              speechEndDetector = null
-            }
-          }
-
-          return speechEndDetector?.subscribe(handler) ?? (() => undefined)
-        },
+        onSpeechEnd: (handler) => (closed ? () => undefined : speechEnd.subscribe(handler)),
         stop: () => {
           const segment = currentSegment
 

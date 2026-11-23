@@ -215,3 +215,21 @@ test('should use quick controls and persist a completed-session reset', async ({
   await expect(time).toHaveText('01:00')
   await expect(panel).toHaveAttribute('data-phase', 'focus')
 })
+
+test('should retain remaining time when saving a paused timer routine', async ({page}) => {
+  await openHome(page)
+  const dialog = await openTimer(page)
+  const time = dialog.locator('[data-pomo-timer-ring] strong')
+  const routine = dialog.getByRole('button', {name: /세션 · 집중/u})
+  await dialog.getByRole('button', {exact: true, name: '집중 시작'}).click()
+  await page.clock.fastForward(10_000)
+  await dialog.getByRole('button', {exact: true, name: '일시정지'}).click()
+  await expect(time).toHaveText('24:50')
+
+  await routine.click()
+  await dialog.getByRole('spinbutton', {exact: true, name: '집중 횟수(회)'}).fill('3')
+  await dialog.getByRole('button', {exact: true, name: '설정 저장'}).click()
+
+  await expect(time).toHaveText('24:50')
+  await expect(routine).toHaveText(/3세션/u)
+})

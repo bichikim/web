@@ -11,6 +11,7 @@ const ITEM_FINGERPRINT_RADIX = 36
 const ITEM_FINGERPRINT_SECONDARY_BASE = 37
 const ITEM_FINGERPRINT_SECONDARY_MODULUS = 2_147_483_629
 const ISO_DATE_PREFIX_PATTERN = /^(?<year>\d{4})-(?<month>\d{2})-(?<day>\d{2})/u
+const MONTH_ABBREVIATION_LENGTH = 3
 const MONTH_ABBREVIATIONS = [
   'jan',
   'feb',
@@ -25,8 +26,10 @@ const MONTH_ABBREVIATIONS = [
   'nov',
   'dec',
 ] as const
-const RFC_822_DATE_PREFIX_PATTERN =
-  /^(?:[A-Z]{3},\s*)?(?<day>\d{1,2})\s+(?<month>[A-Z]{3})\s+(?<year>\d{2,4})\b/iu
+const DAY_FIRST_DATE_PREFIX_PATTERN =
+  /^(?:[A-Z]+,\s*)?(?<day>\d{1,2})\s+(?<month>[A-Z]{3,9})\s+(?<year>\d{2,4})\b/iu
+const MONTH_FIRST_DATE_PREFIX_PATTERN =
+  /^(?:[A-Z]+,\s*)?(?<month>[A-Z]{3,9})\s+(?<day>\d{1,2}),?\s+(?<year>\d{2,4})\b/iu
 
 export interface ParsedFeedItem {
   readonly content: string
@@ -139,13 +142,15 @@ const parseFeedTimestamp = (value: string): number | null => {
     return null
   }
 
-  const rfc822DateParts = normalizedValue.match(RFC_822_DATE_PREFIX_PATTERN)?.groups
+  const namedDateParts =
+    normalizedValue.match(DAY_FIRST_DATE_PREFIX_PATTERN)?.groups ??
+    normalizedValue.match(MONTH_FIRST_DATE_PREFIX_PATTERN)?.groups
 
-  if (rfc822DateParts !== undefined) {
-    const day = Number(rfc822DateParts.day)
-    const monthName = rfc822DateParts.month!.toLowerCase()
+  if (namedDateParts !== undefined) {
+    const day = Number(namedDateParts.day)
+    const monthName = namedDateParts.month!.slice(0, MONTH_ABBREVIATION_LENGTH).toLowerCase()
     const month = MONTH_ABBREVIATIONS.findIndex((abbreviation) => abbreviation === monthName) + 1
-    const yearTimestamp = Date.parse(`1 ${monthName} ${rfc822DateParts.year} 00:00 GMT`)
+    const yearTimestamp = Date.parse(`1 ${monthName} ${namedDateParts.year} 00:00 GMT`)
 
     if (
       Number.isNaN(yearTimestamp) ||

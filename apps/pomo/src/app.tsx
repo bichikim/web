@@ -5,7 +5,6 @@ import 'virtual:uno.css'
 import {MetaProvider} from '@solidjs/meta'
 import {Router} from '@solidjs/router'
 import {FileRoutes} from '@solidjs/start/router'
-import {Suspense} from 'solid-js'
 import {PreferenceProvider} from './hooks/use-preference'
 import {webLocalStorage} from 'src/hooks/use-preference/web-local-storage'
 
@@ -45,7 +44,7 @@ export default function App() {
                             onReload={applicationRecovery.onReload}
                             onRetry={applicationRecovery.onRetry}
                           >
-                            <Suspense>{props.children}</Suspense>
+                            {props.children}
                           </PRecoveryBoundary>
                         </PStudioMotionInputSessionProvider>
                       </ToastProvider>

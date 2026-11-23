@@ -15,7 +15,7 @@ export const parseLanguageLearningWordSourcePreference = (
   value: unknown,
 ): LanguageLearningWordSource | null => {
   const result = wordSourcePreferenceSchema.safeParse(value)
-  return result.success ? result.data.source : null
+  return result.success ? result.data.source : parseLanguageLearningWordSource(value)
 }
 
 export const parseLanguageLearningWordSource = (

@@ -15,6 +15,21 @@ beforeEach(() => {
 afterEach(() => vi.restoreAllMocks())
 
 describe('AudioPlayerRoot', () => {
+  it('should call a bound media event handler with its data and dispatch event', () => {
+    const onPlay = vi.fn()
+    const boundData = {mediaId: 'intro'}
+    const result = render(() => (
+      <AudioPlayer.Root>
+        <AudioPlayer.Media onPlay={[onPlay, boundData]} />
+      </AudioPlayer.Root>
+    ))
+    const audio = result.container.querySelector('audio')!
+    const event = new Event('play')
+    fireEvent(audio, event)
+
+    expect(onPlay).toHaveBeenCalledExactlyOnceWith(boundData, event)
+  })
+
   it('should expose media handlers without attaching listeners through its ref', () => {
     const Media = () => {
       const player = useAudioPlayer()

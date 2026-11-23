@@ -251,6 +251,14 @@ describe('language learning word source preference', () => {
     expect(readLanguageLearningWordSource()).toBe('saved')
   })
 
+  it('should restore a bare saved word source without changing the next write format', () => {
+    const key = 'pomo:language-learning:word-source:v1'
+    localStorage.setItem(key, JSON.stringify('saved'))
+    expect(readLanguageLearningWordSource()).toBe('saved')
+    writeLanguageLearningWordSource('direct')
+    expect(JSON.parse(localStorage.getItem(key)!)).toEqual({source: 'direct', version: 1})
+  })
+
   it('should fall back to direct input when the stored value is invalid', () => {
     localStorage.setItem(
       'pomo:language-learning:word-source:v1',

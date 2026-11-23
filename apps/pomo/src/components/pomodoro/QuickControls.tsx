@@ -6,8 +6,8 @@ import {
   PCharacterEmotion,
   type PCharacterEmotionType,
 } from '../p-character-emotion/PCharacterEmotion'
-import type {PSceneStyle} from '../../features/focus-room-animation/index'
-import {type PomodoroPhase} from '../../features/pomodoro-timer/index'
+import type {PSceneStyle} from '../../features/focus-room-animation'
+import {type PomodoroPhase} from '../../features/pomodoro-timer'
 import * as m from '@paraglide/message'
 import {CIRCLE_PATHS} from '../scribble/circle-paths'
 import {PScribbleFrame} from '../scribble/Frame'
@@ -17,6 +17,7 @@ interface PomodoroQuickControlsProps {
   readonly characterEmotion: PCharacterEmotionType
   readonly characterImage: string
   readonly isActive: boolean
+  readonly isOpen: boolean
   readonly onOpen: (source: HTMLButtonElement) => void
   readonly onPrimaryPress: () => void
   readonly phase: PomodoroPhase
@@ -119,6 +120,7 @@ export const PomodoroQuickControls = (props: PomodoroQuickControlsProps) => {
 
         <button
           ref={openTooltip.setTarget}
+          aria-expanded={props.isOpen}
           aria-haspopup="dialog"
           aria-label={m.pomodoro_open({status: props.statusLabel, time: props.timeLabel})}
           class={cx(
@@ -126,6 +128,7 @@ export const PomodoroQuickControls = (props: PomodoroQuickControlsProps) => {
             STRONG_FOCUS_RING_CLASSES,
             CLASSES.pomodoroTimeAction,
           )}
+          data-expanded={props.isOpen ? '' : undefined}
           data-glass-part=""
           data-glass-trigger=""
           onClick={(event) => props.onOpen(event.currentTarget)}

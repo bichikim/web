@@ -176,19 +176,57 @@ describe('useAiTextJob', () => {
     cleanup()
   })
 
-  it.each(['failed', 'cancelled', 'timed_out'] as const)(
-    'should preserve terminal server status %s without fetching a result',
-    async (status) => {
-      const client = createClient({getJob: vi.fn(async () => createJob(status))})
+  it.each([
+    [
+      'failed',
+      'OpenAI returned text outside the result contract',
+      '서버에서 대화를 만들지 못했어요. 다시 시도해 주세요.',
+    ],
+    ['cancelled', 'AI job cancelled by the user', '서버 요청을 취소했어요.'],
+    [
+      'timed_out',
+      'AI job timed out before completion',
+      '서버 요청 시간이 초과됐어요. 다시 시도해 주세요.',
+    ],
+  ] as const)(
+    'should present terminal server status %s as user-facing guidance',
+    async (status, diagnostic, message) => {
+      const job = {...createJob(status), error: {code: status, message: diagnostic}}
+      const client = createClient({getJob: vi.fn(async () => job)})
       const {cleanup, result} = renderHook(() =>
+        useAiTextJob({client, onComplete: vi.fn(), storage: createStorage()}),
+      )
+
+      await vi.waitFor(() => expect(result.serverAvailable()).toBe(true))
+      await result.submit('서버 종료')
+      await result.refresh()
+
+      expect(result.jobStatus()).toBe(status)
+      expect(result.errorMessage()).toBe(message)
+      expect(result.statusMessage()).toBe(message)
+      expect(result.job()?.error?.message).toBe(diagnostic)
+      expect(client.getJobResult).not.toHaveBeenCalled()
+      cleanup()
+    },
+  )
+
+  it.each(['', ' \t '])(
+    'should display a terminal failure when the server message is blank: %j',
+    async (message) => {
+      const client = createClient({
+        getJob: vi.fn(async () => ({
+          ...createJob('failed'),
+          error: {code: 'runner-failed', message},
+        })),
+      })
+      const {result, cleanup} = renderHook(() =>
         useAiTextJob({client, onComplete: vi.fn(), storage: createStorage()}),
       )
       await vi.waitFor(() => expect(result.serverAvailable()).toBe(true))
       await result.submit('서버 종료')
       await result.refresh()
-      expect(result.jobStatus()).toBe(status)
-      expect(result.statusMessage()).toBe(result.errorMessage())
-      expect(client.getJobResult).not.toHaveBeenCalled()
+
+      expect(result.statusMessage()).toBe('서버에서 대화를 만들지 못했어요. 다시 시도해 주세요.')
       cleanup()
     },
   )
@@ -361,3 +399,19 @@ describe('useAiTextJob', () => {
 
 // Exercise the retained implementation without changing the production release decision.
 vi.mock('src/features/ai-job/release', () => ({SERVER_AI_RELEASED: true}))
+
+it('should not submit more server work when retrying a failed job in local mode', async () => {
+  const client = createClient({getJob: vi.fn(async () => createJob('failed'))})
+  const {cleanup, result} = renderHook(() =>
+    useAiTextJob({client, onComplete: vi.fn(), storage: createStorage()}),
+  )
+  await vi.waitFor(() => expect(result.serverAvailable()).toBe(true), {interval: 1})
+  await result.submit('서버 풀이')
+  await result.refresh()
+  expect(result.jobStatus()).toBe('failed')
+  result.setExecutionMode('local')
+  expect(await result.retry()).toBe(false)
+  expect(client.submitTextJob).toHaveBeenCalledOnce()
+  expect(result.jobStatus()).toBe('failed')
+  cleanup()
+})

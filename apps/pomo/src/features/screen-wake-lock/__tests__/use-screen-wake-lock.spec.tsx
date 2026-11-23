@@ -82,6 +82,73 @@ describe('useScreenWakeLock', () => {
     vi.mocked(browserWakeLock.request).mockImplementation(request)
   }
 
+  it('should request a browser wake lock once the early enable request becomes supported', async () => {
+    const {sentinel} = createSentinel()
+    setBrowserWakeLock(async () => sentinel)
+    let controller: ScreenWakeLockController | undefined
+    render(() => (
+      <ScreenWakeLockHarness
+        onController={(value) => {
+          controller = value
+          expect(value.availability()).toBe('checking')
+          value.onEnabledChange(true)
+        }}
+      />
+    ))
+    await waitFor(() => expect(browserWakeLock.request).toHaveBeenCalledOnce(), {interval: 1})
+    expect(controller?.availability()).toBe('supported')
+    expect(controller?.isEnabled()).toBe(true)
+  })
+
+  it('should retain the acquired browser lock after a failed release and retry the same lock', async () => {
+    const {sentinel} = createSentinel()
+    const release = vi.mocked(sentinel.release).mockRejectedValueOnce(new Error('release failed'))
+    setBrowserWakeLock(async () => sentinel)
+    const {getController} = renderController()
+    const controller = getController()!
+    await waitFor(() => expect(controller.availability()).toBe('supported'), {interval: 1})
+    controller.onEnabledChange(true)
+    await waitFor(() => expect(sentinel.addEventListener).toHaveBeenCalledOnce(), {interval: 1})
+    controller.onEnabledChange(false)
+    await waitFor(() => expect(controller.errorMessage()).toContain('해제하지 못했어요'), {
+      interval: 1,
+    })
+    expect(controller.isEnabled()).toBe(true)
+    controller.onEnabledChange(false)
+    await waitFor(() => expect(release).toHaveBeenCalledTimes(2), {interval: 1})
+    expect(controller.isEnabled()).toBe(false)
+    expect(controller.errorMessage()).toBeNull()
+  })
+
+  it('should reacquire the browser lock after a pending release succeeds following a new enable', async () => {
+    const pending = Promise.withResolvers<void>()
+    const first = createSentinel()
+    const next = createSentinel()
+    vi.mocked(first.sentinel.release).mockReturnValue(pending.promise)
+    const request = vi
+      .fn()
+      .mockResolvedValueOnce(first.sentinel)
+      .mockResolvedValueOnce(next.sentinel)
+    setBrowserWakeLock(request)
+    const {getController} = renderController()
+    const controller = getController()!
+    await waitFor(() => expect(controller.availability()).toBe('supported'), {interval: 1})
+    controller.onEnabledChange(true)
+    await waitFor(() => expect(first.sentinel.addEventListener).toHaveBeenCalledOnce(), {
+      interval: 1,
+    })
+    controller.onEnabledChange(false)
+    controller.onEnabledChange(true)
+    expect(request).toHaveBeenCalledOnce()
+    first.getReleaseListener()?.()
+    pending.resolve()
+    await waitFor(() => expect(next.sentinel.addEventListener).toHaveBeenCalledOnce(), {
+      interval: 1,
+    })
+    expect(controller.isEnabled()).toBe(true)
+    expect(controller.errorMessage()).toBeNull()
+  })
+
   it.each(['', 'true'])(
     'should unsubscribe visibility when the owner unmounts with Toss target %s',
     async (target) => {

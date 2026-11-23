@@ -72,6 +72,8 @@ const dialogueSegmentSchema = z.object({
 })
 const supertonicVoiceIdSchema = z.custom<SupertonicVoiceId>(isSupertonicVoiceId)
 
+export const MAXIMUM_DIALOGUE_TEXT_LENGTH = 10_000
+
 export const focusRoomDialogueSchema = z.object({
   audioKey: z.string().min(1),
   createdAt: z.iso.datetime(),
@@ -84,6 +86,10 @@ export const focusRoomDialogueSchema = z.object({
   updatedAt: z.iso.datetime(),
   version: z.literal(1),
   voiceId: supertonicVoiceIdSchema,
+})
+
+export const focusRoomDialogueWriteSchema = focusRoomDialogueSchema.extend({
+  text: focusRoomDialogueSchema.shape.text.max(MAXIMUM_DIALOGUE_TEXT_LENGTH),
 })
 
 const legacyDialogueEventBindingSchema = z.object({

@@ -17,8 +17,13 @@ const MIN_DURATION_MINUTES = 1
 const MIN_FOCUS_SESSIONS = 1
 const SECONDS_PER_MINUTE = 60
 
+const parseDecimalInteger = (value: string): number => {
+  const normalized = normalizePasteNumericInput(value).trim()
+  return /^\+?\d+$/u.test(normalized) ? Number(normalized) : Number.NaN
+}
+
 const parseDurationMinutes = (value: string) => {
-  const minutes = Number(normalizePasteNumericInput(value))
+  const minutes = parseDecimalInteger(value)
 
   if (
     !Number.isInteger(minutes) ||
@@ -33,13 +38,13 @@ const parseDurationMinutes = (value: string) => {
 
 /**
  * 네 입력을 정규화해 타이머 설정으로 해석하며 범위를 벗어나면 null을 반환한다.
- * 분은 1~120, 횟수는 1~12의 정수이며 기존 Number 표기 허용 규칙을 유지한다.
+ * 분은 1~120, 횟수는 1~12의 십진 정수다.
  * 입력을 수정하지 않고 매번 새 설정을 만들며 입력 읽기 오류는 그대로 전파한다.
  */
 export const parseDurationDraft = (durationDraft: DurationDraft): PomodoroTimerConfig | null => {
   const focusMinutes = parseDurationMinutes(durationDraft.focus)
   const longBreakMinutes = parseDurationMinutes(durationDraft.longBreak)
-  const sessionCount = Number(normalizePasteNumericInput(durationDraft.sessions))
+  const sessionCount = parseDecimalInteger(durationDraft.sessions)
   const shortBreakMinutes = parseDurationMinutes(durationDraft.shortBreak)
 
   if (

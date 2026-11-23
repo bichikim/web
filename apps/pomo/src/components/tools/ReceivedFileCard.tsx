@@ -4,17 +4,18 @@ import type {ReceivedFile} from 'src/features/file-transfer/received-files'
 import {receivedFiles} from 'src/features/file-transfer/session'
 import {PButton} from '../p-button/PButton'
 
-const BYTES_PER_MEGABYTE = 1_000_000
+const BYTES_PER_KIBIBYTE = 1024
+const BYTES_PER_MEBIBYTE = BYTES_PER_KIBIBYTE ** 2
 
 export const formatFileSize = (size: number): string => {
-  const kilobyte = 1_000
-  const unit = size < kilobyte ? 'byte' : size < BYTES_PER_MEGABYTE ? 'kilobyte' : 'megabyte'
-  const divisor = size < kilobyte ? 1 : size < BYTES_PER_MEGABYTE ? kilobyte : BYTES_PER_MEGABYTE
-  return new Intl.NumberFormat(undefined, {
-    maximumFractionDigits: 1,
-    style: 'unit',
-    unit,
-  }).format(size / divisor)
+  const format = new Intl.NumberFormat(undefined, {maximumFractionDigits: 1})
+  if (size < BYTES_PER_KIBIBYTE) {
+    return `${format.format(size)} B`
+  }
+  if (size < BYTES_PER_MEBIBYTE) {
+    return `${format.format(size / BYTES_PER_KIBIBYTE)} KiB`
+  }
+  return `${format.format(size / BYTES_PER_MEBIBYTE)} MiB`
 }
 
 const formats = [

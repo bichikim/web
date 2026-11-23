@@ -6,7 +6,7 @@ import {getLocale, overwriteGetLocale} from '@paraglide/runtime'
 
 import {useAuth} from '../../../features/auth/AuthProvider'
 import type {AuthenticationState} from '../../../features/auth/machine'
-import {listCalendarConnections} from '../../../features/calendar'
+import {authorizeCalendarConnection, listCalendarConnections} from '../../../features/calendar'
 import {CalendarConnections} from '../CalendarConnections'
 
 vi.mock('../../../features/auth/AuthProvider', () => ({useAuth: vi.fn()}))
@@ -73,4 +73,26 @@ it('should show the correct auth and API notices in the native settings popover'
 
   await userEvent.keyboard('{Escape}')
   await expect.poll(() => popover.matches(':popover-open')).toBe(false)
+})
+
+it('should clear a failed connection attempt when reopening the settings popover', async () => {
+  overwriteGetLocale(() => 'ko')
+  const session = {email: 'calendar@example.com', kind: 'authenticated', provider: 'email'} as const
+  vi.mocked(useAuth).mockReturnValue({session: () => session, state: () => session})
+  vi.mocked(listCalendarConnections).mockResolvedValue([])
+  vi.mocked(authorizeCalendarConnection).mockRejectedValueOnce(new Error('Connection failed'))
+  const view = render(() => createComponent(CalendarConnections, {}))
+  const popover = view.container.querySelector<HTMLElement>('[popover]')!
+  const settings = page.getByRole('button', {name: '캘린더 연결 설정'})
+
+  await settings.click()
+  await page.getByRole('button', {name: 'Google Calendar 연결'}).click()
+  await expect.element(page.getByRole('alert')).toBeVisible()
+  await userEvent.keyboard('{Escape}')
+  await expect.poll(() => popover.matches(':popover-open')).toBe(false)
+
+  await settings.click()
+
+  await expect.element(page.getByRole('button', {name: 'Google Calendar 연결'})).toBeVisible()
+  await expect.element(page.getByRole('alert')).not.toBeInTheDocument()
 })

@@ -10,6 +10,8 @@ import {apiAiAttempts, apiAiJobs, getDatabase, withTransactionalDatabase} from '
 import * as repository from 'src/server/repositories/api-ai'
 import {readCloudTextUsage, releaseCloudText, reserveCloudText} from 'src/server/cloud-text/quota'
 import {readCloudTextJob} from 'src/server/cloud-text/job-status'
+import {planCloudChatRequest} from 'src/features/chat/plan-cloud-chat-request'
+import {type TextGenerationMessage} from 'src/features/text-generation/runtime'
 import {prepareApiAiQueue} from 'src/server/cloud-text/__tests__/fixtures/api-ai-queue'
 import {prepareProductLimits} from 'src/server/cloud-text/__tests__/fixtures/product-limits'
 import {createApiAiService} from '../create-api-ai-service'
@@ -59,14 +61,18 @@ const createService = (
     queue: {adapter: createOpenRouterAdapter({fetch}), enqueue, monitorBackground},
     repository,
   })
-const reserve = async () => {
+const reserve = async (
+  messages: ReadonlyArray<TextGenerationMessage> = [
+    {content: '이직할까요? 바보, 마법사, 별 정방향', role: 'user'},
+  ],
+) => {
   const id = crypto.randomUUID()
   await reserveCloudText({
     now,
     queue: {
       input: {
         body: {
-          input: [{content: '이직할까요? 바보, 마법사, 별 정방향', role: 'user'}],
+          input: messages,
           max_output_tokens: 100,
         },
         generationMilliseconds: 120000,
@@ -139,6 +145,36 @@ it('should generate and settle one Korean result across two instances and repeat
     text: '새로운 시작을 준비하세요.',
     tokenCount: 30,
     usage: {used: 1},
+  })
+})
+
+it('should charge one allowance for a combined summary and answer across repeated job deliveries', async () => {
+  const messages = Array.from({length: 65}, (_, index) => ({
+    content: `메시지 ${index}`,
+    id: String(index),
+    role: index % 2 === 0 ? ('user' as const) : ('assistant' as const),
+  }))
+  const plan = planCloudChatRequest({messages, summary: ''}, undefined)
+  expect(plan?.mode).toBe('compact')
+  const id = await reserve(plan?.messages)
+  const text = JSON.stringify({answer: '다음 답변', summary: '이전 대화 요약'})
+  fetch.mockResolvedValueOnce(
+    Response.json({
+      ...response,
+      output: [{content: [{text, type: 'output_text'}], type: 'message'}],
+    }),
+  )
+  const first = createService()
+  const second = createService()
+  await first.dispatch()
+  await Promise.all([first.executeQueuedJob(id), second.executeQueuedJob(id)])
+  await second.executeQueuedJob(id)
+
+  expect(fetch).toHaveBeenCalledOnce()
+  expect(await readCloudTextJob(userId, id)).toMatchObject({
+    kind: 'complete',
+    text,
+    usage: {remaining: 2, used: 1},
   })
 })
 

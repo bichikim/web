@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 import {fireEvent, render, screen} from '@solidjs/testing-library'
-import {createSignal} from 'solid-js'
+import {createResource, createSignal} from 'solid-js'
 import {expect, it, vi} from 'vitest'
 
 import {SometimesBroken} from '../../__tests__/support/SometimesBroken'
@@ -73,4 +73,30 @@ it('should restore one retry after the recovered subtree mounts successfully', (
   fireEvent.click(screen.getByRole('button', {name: '나중에 실패'}))
 
   expect(screen.getByRole('button', {name: '다시 시도'})).toBeTruthy()
+})
+
+it('should keep retry exhausted until the suspended route actually becomes ready', async () => {
+  const reportError = vi.fn(() => 'POMO-SUSPENSE')
+  const response = Promise.withResolvers<string>()
+  let renderCount = 0
+  const Route = () => {
+    renderCount += 1
+    if (renderCount === 1) {
+      throw new Error('initial route failure')
+    }
+    const [value] = createResource(() => response.promise)
+    return <p>{value()}</p>
+  }
+
+  render(() => (
+    <TestRecovery onReload={vi.fn()} reportError={reportError}>
+      <Route />
+    </TestRecovery>
+  ))
+
+  fireEvent.click(screen.getByRole('button', {name: '다시 시도'}))
+  expect(screen.queryByRole('button', {name: '다시 시도'})).toBeNull()
+  response.reject(new Error('pending route failed'))
+  await screen.findByText(/자동 복구를 중단했어요/u)
+  expect(screen.queryByRole('button', {name: '다시 시도'})).toBeNull()
 })

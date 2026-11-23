@@ -60,8 +60,11 @@ describe('chat worker Korean refinement', () => {
     )
   })
 
-  it('should preserve leading whitespace when a refined segment becomes Korean', async () => {
-    koreanMocks.createKoreanTextSegments.mockReturnValue([{kind: 'refining', text: '  나쁜 人生'}])
+  it('should preserve spacing and line breaks when a refined segment becomes Korean', async () => {
+    koreanMocks.createKoreanTextSegments.mockReturnValue([
+      {kind: 'refining', text: '  나쁜 人生\n'},
+      {kind: 'text', text: '- 다음 항목'},
+    ])
     runtimeMocks.generate.mockResolvedValueOnce('나쁜 人生').mockResolvedValueOnce('좋은 하루')
     const worker = await loadWorker()
 
@@ -69,7 +72,9 @@ describe('chat worker Korean refinement', () => {
     await waitForResponse(worker, 'complete')
 
     expect(worker.postMessage).toHaveBeenLastCalledWith(
-      expect.objectContaining({message: expect.objectContaining({content: '  좋은 하루'})}),
+      expect.objectContaining({
+        message: expect.objectContaining({content: '  좋은 하루\n- 다음 항목'}),
+      }),
     )
     expect(runtimeMocks.generate).toHaveBeenLastCalledWith(
       expect.objectContaining({suppressedTokenIds: [17, 23]}),
@@ -131,4 +136,29 @@ describe('chat worker Korean refinement', () => {
       expect.objectContaining({message: expect.objectContaining({content: '좋은 하루'})}),
     )
   })
+})
+
+it('should send and return the full sentence when a Korean particle attaches to a title', async () => {
+  const answer = '배우 Robert Downey Jr.이 人生에 대해 말했어요.'
+  const refined = '배우 Robert Downey Jr.이 인생에 대해 말했어요.'
+  const actual = await vi.importActual<typeof import('../../korean-text-postprocessor')>(
+    '../../korean-text-postprocessor',
+  )
+  koreanMocks.createKoreanTextSegments.mockImplementation(actual.createKoreanTextSegments)
+  koreanMocks.containsForeignCjk.mockImplementation(actual.containsForeignCjk)
+  koreanMocks.createKoreanRefinementMessages.mockImplementation(
+    actual.createKoreanRefinementMessages,
+  )
+  runtimeMocks.generate.mockResolvedValueOnce(answer).mockResolvedValueOnce(refined)
+  const worker = await loadWorker()
+
+  worker.dispatch(generateRequest({refineAnswer: true}))
+  await waitForResponse(worker, 'complete')
+
+  expect(runtimeMocks.generate).toHaveBeenLastCalledWith(
+    expect.objectContaining({messages: expect.arrayContaining([{content: answer, role: 'user'}])}),
+  )
+  expect(worker.postMessage).toHaveBeenLastCalledWith(
+    expect.objectContaining({message: expect.objectContaining({content: refined})}),
+  )
 })

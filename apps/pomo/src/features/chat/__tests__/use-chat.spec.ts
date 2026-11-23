@@ -3,7 +3,7 @@
 import {renderHook} from '@solidjs/testing-library'
 import {beforeEach, describe, expect, it, vi} from 'vitest'
 
-import {type ChatClient, type ChatRuntime, type ChatWorkerResponse, useChat} from '../index'
+import {type ChatClient, type ChatRuntime, type ChatWorkerResponse, useChat} from '..'
 
 const moduleMocks = vi.hoisted(() => ({
   createChatClient: vi.fn(),
@@ -394,6 +394,37 @@ describe('useChat', () => {
     )
     cleanup()
   })
+
+  it.each([false, true])(
+    'should clear a generation error and preserve model readiness (restartRequired=%s)',
+    (restartRequired) => {
+      const {clients, runtime} = createRuntime()
+      const {cleanup, result} = renderHook(() => useChat({modelId: 'qwen-4b', runtime}))
+      result.prepare()
+      const clientRecord = clients[0]
+      clientRecord?.respond({type: 'ready'})
+      result.setDraft('첫 질문')
+      result.send()
+      const answer = {content: '첫 답변', id: 'assistant-1', role: 'assistant'} as const
+      clientRecord?.respond({
+        context: {messages: [...result.messages(), answer], summary: ''},
+        contextTokens: 8,
+        message: answer,
+        type: 'complete',
+        wasCompacted: false,
+      })
+      result.setDraft('두 번째 질문')
+      result.send()
+      clientRecord?.respond({message: '생성에 실패했어요.', restartRequired, type: 'error'})
+
+      result.clear()
+
+      expect(result.messages()).toEqual([])
+      expect(result.state()).toEqual({status: restartRequired ? 'idle' : 'ready'})
+      expect(result.statusMessage()).not.toBe('생성에 실패했어요.')
+      cleanup()
+    },
+  )
 
   it('should preserve a newer draft after a recoverable generation error', () => {
     const {clients, runtime} = createRuntime()

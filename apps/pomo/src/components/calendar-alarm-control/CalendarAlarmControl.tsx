@@ -1,4 +1,5 @@
 import {PInput} from 'src/components/p-input/PInput'
+import {normalizeClockInput, readFormattedPaste} from 'src/utils/formatted-input-paste'
 import {cx} from 'class-variance-authority'
 import {type Accessor, createSignal, Show} from 'solid-js'
 import * as m from '@paraglide/message'
@@ -29,6 +30,12 @@ export const CalendarAlarmControl = (props: CalendarAlarmControlProps) => {
     memos: () => props.memos(),
     timeZone,
   })
+  const handleTimePaste = (event: ClipboardEvent) => {
+    const time = readFormattedPaste(event, normalizeClockInput)
+    if (time !== null) {
+      alarm.setTime(time)
+    }
+  }
 
   return (
     <>
@@ -104,6 +111,7 @@ export const CalendarAlarmControl = (props: CalendarAlarmControlProps) => {
               unstyled
               class={INPUT_CLASSES}
               onInput={(event) => alarm.setTime(event.currentTarget.value)}
+              onPaste={handleTimePaste}
               type="time"
               value={alarm.time()}
             />

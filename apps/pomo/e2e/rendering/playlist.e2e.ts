@@ -170,3 +170,42 @@ test('should undo clearing a playlist and preserve an intentionally empty queue 
     )
     .toEqual([])
 })
+
+test('should show the album type icon when a remote cover fails', async ({page}) => {
+  const coverImageUrl = '/audio/unavailable-cover.webp'
+  await page.route('**/audio/tracks.json', (route) => route.fulfill({json: {tracks, version: 1}}))
+  await page.route('**/audio/playlist.json', (route) =>
+    route.fulfill({json: {trackIds: ['first'], version: 1}}),
+  )
+  await page.route('**/audio/albums.json', (route) =>
+    route.fulfill({
+      json: {
+        albums: [
+          {
+            coverImageUrl,
+            description: 'Test album with a failed cover request',
+            icon: 'i-tabler-vinyl',
+            id: 'unavailable-cover',
+            title: 'Unavailable Cover',
+            trackIds: ['first'],
+          },
+        ],
+        version: 1,
+      },
+    }),
+  )
+  await page.route('**/api/music/albums?*', (route) =>
+    route.fulfill({json: {albums: [], version: 1}}),
+  )
+  await page.route(`**${coverImageUrl}`, (route) => route.fulfill({status: 404}))
+  await page.goto('/')
+  await page.getByRole('button', {exact: true, name: '시작하기'}).click()
+  const player = page.locator('.pomo-player-stage')
+  await player.getByRole('button', {exact: true, name: '플레이어 펼치기'}).click()
+  await player.getByRole('button', {exact: true, name: '앨범 추가'}).click()
+
+  const album = page.getByRole('dialog', {exact: true, name: '앨범'})
+  await expect(album.getByRole('heading', {name: 'Unavailable Cover'})).toBeVisible()
+  await expect(album.locator('.i-tabler-vinyl')).toBeVisible()
+  await expect(album.locator(`img[src="${coverImageUrl}"]`)).toHaveCount(0)
+})

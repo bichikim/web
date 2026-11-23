@@ -7,7 +7,7 @@ import {
   createKoreanRefinementMessages,
   createKoreanTextSegments,
   replaceUnrefinedSentences,
-} from '../index'
+} from '..'
 
 const TITLES = [
   'Dr',
@@ -216,4 +216,24 @@ describe('replaceUnrefinedSentences', () => {
       '좋아요. 국어·영어·수학을 공부해요.',
     )
   })
+})
+
+it('should retain the line break belonging to a replaced sentence', () => {
+  expect(replaceUnrefinedSentences('人生이에요.\n- 다음이에요.')).toBe(
+    '답변의 일부 표현을 자연스러운 한국어로 바꾸지 못했어요.\n- 다음이에요.',
+  )
+})
+
+it.each([
+  '배우 Robert Downey Jr.이 人生입니다.',
+  'Prof.는 人生을 설명해요.',
+  'Dr.가 人生을 말했어요.',
+])('should refine an abbreviation and its attached Korean particle as one sentence: %s', (text) => {
+  expect(createKoreanTextSegments(text)).toEqual([{kind: 'refining', text}])
+})
+
+it('should replace the entire contaminated sentence after an abbreviation with a Korean particle', () => {
+  expect(
+    replaceUnrefinedSentences('좋아요. 배우 Robert Downey Jr.이 人生입니다. 다음입니다.'),
+  ).toBe('좋아요. 답변의 일부 표현을 자연스러운 한국어로 바꾸지 못했어요. 다음입니다.')
 })

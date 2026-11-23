@@ -29,7 +29,7 @@ const appendArchive = async (archive: Zip, blob: Blob, name: string): Promise<vo
   }
 }
 
-/** Blob을 입력 순서대로 압축하고 이름이 겹치면 증가하는 정수를 앞에 붙인다. 그 외의 이름은 그대로 유지한다. */
+/** Blob을 입력 순서대로 압축하고 Windows 금지 문자를 바꾼 뒤 이름이 겹치면 증가하는 정수를 앞에 붙인다. */
 export const createBlobArchive = async (files: readonly NamedBlob[]): Promise<Blob> => {
   const chunks: BlobPart[] = []
   const archive = new Zip((error, data) => {
@@ -40,10 +40,11 @@ export const createBlobArchive = async (files: readonly NamedBlob[]): Promise<Bl
   })
   const names = new Set<string>()
   for (const file of files) {
-    let {name} = file
+    const normalizedName = file.name.replaceAll(/[<>:"|?*]/gu, '_')
+    let name = normalizedName
     let suffix = 1
     while (names.has(name)) {
-      name = `${suffix}-${file.name}`
+      name = `${suffix}-${normalizedName}`
       suffix += 1
     }
     names.add(name)

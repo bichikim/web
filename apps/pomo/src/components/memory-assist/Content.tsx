@@ -3,6 +3,7 @@ import type {WeatherState} from '../../features/weather'
 import {clearCalendarMonthCache} from '../../features/calendar'
 import {CalendarConnections} from '../calendar-connections/CalendarConnections'
 import {CalendarMonth} from '../calendar-month/CalendarMonth'
+import type {CalendarMonthView} from '../calendar-month/use-month'
 import {MemoryMemoList} from './Memos'
 import {PictureDiary} from './PictureDiary'
 import {LanguageLearningLibrary} from '../language-learning/Library'
@@ -16,6 +17,8 @@ import {getLocale} from '@paraglide/runtime'
 interface PMemoryAssistContentProps {
   readonly weatherState?: WeatherState
   readonly calendarRevision?: number
+  readonly calendarView?: CalendarMonthView
+  readonly onCalendarViewChange?: (view: CalendarMonthView) => void
   readonly onRefreshCalendar?: () => void
   readonly tarot: TarotReadingController
   readonly tarotSpeech: TarotSpeechController
@@ -37,6 +40,8 @@ export const PMemoryAssistContent = (props: PMemoryAssistContentProps) => (
     </Tabs.Content>
     <Tabs.Content value="calendar">
       <CalendarMonth
+        initialView={props.calendarView}
+        onViewChange={props.onCalendarViewChange}
         revision={props.calendarRevision ?? 0}
         settings={
           <CalendarConnections

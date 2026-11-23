@@ -54,14 +54,15 @@ export const prepareAlbumCover = async (
   const image = await runtime.decode(file)
 
   try {
-    if (image.width <= 0 || image.height <= 0) {
+    const {height, width} = image
+    if (!(Number.isFinite(width) && Number.isFinite(height) && width > 0 && height > 0)) {
       throw new TypeError('크기를 확인할 수 없는 커버 이미지입니다.')
     }
 
     const blob = await runtime.encode({
       quality: COVER_IMAGE_QUALITY,
       source: image.source,
-      ...getCenteredSquareCrop(image.width, image.height),
+      ...getCenteredSquareCrop(width, height),
       targetSize: COVER_IMAGE_EDGE,
       type: COVER_IMAGE_TYPE,
     })

@@ -103,6 +103,8 @@ export const requestCloudText = async (
   request: CloudTextRequest,
   signal: AbortSignal,
 ): Promise<CloudTextResponse> => {
+  let activeRequestId = request.requestId
+  let shouldCancel = false
   try {
     const response = await apiJsonRequest('cloud-text', {
       ...(await createRequestOptions()),
@@ -116,6 +118,7 @@ export const requestCloudText = async (
       return parseJsonResponse(response, cloudTextResponseSchema, signal)
     }
     const accepted = await parseJsonResponse(response, cloudTextAcceptedSchema, signal)
+    activeRequestId = accepted.requestId
     for (let connection = 0; connection < MAXIMUM_EVENT_RECONNECTIONS; connection += 1) {
       signal.throwIfAborted()
       const result = await readJobConnection(accepted.requestId, signal)
@@ -133,10 +136,11 @@ export const requestCloudText = async (
         }
       }
     }
+    shouldCancel = true
     throw new Error(m.cloud_text_failed())
   } finally {
-    if (signal.aborted) {
-      cancelRequest(request.requestId).catch((error: unknown) => {
+    if (signal.aborted || shouldCancel) {
+      cancelRequest(activeRequestId).catch((error: unknown) => {
         console.error('Failed to request cloud text cancellation', error)
       })
     }

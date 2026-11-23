@@ -32,46 +32,36 @@ interface WakeLockLifecycleOptions {
   readonly onVisible: () => void
 }
 
-const startBrowserWakeLockLifecycle = (
-  options: WakeLockLifecycleOptions,
-): (() => void) | undefined => {
-  const supportsWakeLock = browserWakeLock.isSupported()
-
-  if (!supportsWakeLock) {
-    return undefined
-  }
-
-  const handleVisibilityChange = () => {
+const startWakeLockLifecycle = (options: WakeLockLifecycleOptions) => {
+  const onVisibilityChange = () => {
     if (browserWakeLock.isVisible() && options.isEnabled()) {
       options.onVisible()
     }
   }
 
-  const unsubscribe = browserWakeLock.subscribeVisibility(handleVisibilityChange)
-
-  return () => {
-    unsubscribe()
-    options.onDispose()
-  }
-}
-
-const startAppsInTossWakeLockLifecycle = (options: WakeLockLifecycleOptions) => {
-  const handleVisibilityChange = () => {
-    if (browserWakeLock.isVisible() && options.isEnabled()) {
-      options.onVisible()
-    }
-  }
-
-  onCleanup(browserWakeLock.subscribeVisibility(handleVisibilityChange))
+  onCleanup(browserWakeLock.subscribeVisibility(onVisibilityChange))
   onCleanup(options.onDispose)
 }
 
-const releaseBrowserWakeLock = (sentinel: WakeLockSentinel | null, onError: () => void) => {
-  if (sentinel === null || sentinel.released) {
-    return
+const createBrowserWakeLockRelease = (
+  onFinished: (sentinel: WakeLockSentinel, succeeded: boolean) => void,
+) => {
+  let pending = false
+  const release = (sentinel: WakeLockSentinel | null) => {
+    if (sentinel === null || sentinel.released || pending) {
+      return
+    }
+    pending = true
+    const finish = (succeeded: boolean) => {
+      pending = false
+      onFinished(sentinel, succeeded)
+    }
+    sentinel.release().then(
+      () => finish(true),
+      () => finish(false),
+    )
   }
-
-  sentinel.release().catch(onError)
+  return {isPending: () => pending, release}
 }
 
 export const useScreenWakeLock = (): ScreenWakeLockController => {
@@ -111,17 +101,20 @@ export const useScreenWakeLock = (): ScreenWakeLockController => {
     wakeLockTask.execute(nextEnabled).catch(() => undefined)
   }
 
-  const releaseWakeLock = () => {
-    const currentSentinel = sentinel
-    sentinel = null
-
-    const revision = requestRevision
-    releaseBrowserWakeLock(currentSentinel, () => {
-      if (!disposed && revision === requestRevision) {
-        setErrorMessage(SCREEN_WAKE_LOCK_DISABLE_ERROR)
-      }
-    })
-  }
+  const browserRelease = createBrowserWakeLockRelease((released, succeeded) => {
+    if (succeeded || released.released) {
+      sentinel = null
+    }
+    if (disposed) {
+      return
+    }
+    if (!succeeded && !isEnabled()) {
+      setIsEnabled(sentinel !== null)
+      setErrorMessage(SCREEN_WAKE_LOCK_DISABLE_ERROR)
+    } else if (isEnabled() && sentinel === null) {
+      requestWakeLock()
+    }
+  })
 
   const acquireWakeLock = async () => {
     if (
@@ -153,7 +146,7 @@ export const useScreenWakeLock = (): ScreenWakeLockController => {
           }
 
           sentinel = null
-          if (isEnabled() && browserWakeLock.isVisible()) {
+          if (!browserRelease.isPending() && isEnabled() && browserWakeLock.isVisible()) {
             setIsEnabled(false)
             setErrorMessage('화면 유지가 해제되었어요. 다시 켜 주세요.')
           }
@@ -169,7 +162,7 @@ export const useScreenWakeLock = (): ScreenWakeLockController => {
   }
 
   const requestWakeLock = () => {
-    if (!isRequestPending()) {
+    if (!browserRelease.isPending() && !isRequestPending()) {
       wakeLockTask.execute(true).catch(() => undefined)
     }
   }
@@ -191,42 +184,42 @@ export const useScreenWakeLock = (): ScreenWakeLockController => {
       return
     }
 
-    releaseWakeLock()
+    browserRelease.release(sentinel)
   }
 
-  onMount(() => {
-    if (import.meta.env.VITE_POMO_IS_APPS_IN_TOSS === 'true') {
-      startAppsInTossWakeLockLifecycle({
-        isEnabled,
-        onDispose: () => {
-          disposed = true
-          setIsEnabled(false)
+  createEffect(() => {
+    const supported = availability() === 'supported'
+    untrack(() => {
+      if (supported && isEnabled() && !isRequestPending()) {
+        if (import.meta.env.VITE_POMO_IS_APPS_IN_TOSS === 'true') {
+          setAppsInTossWakeLock(true)
+        } else {
+          requestWakeLock()
+        }
+      }
+    })
+  })
 
-          wakeLockTask.reset()
-          if (appsInTossWakeLockRequested) {
-            requestQueue.run(() => requestAppsInTossWakeLock(false)).catch(() => undefined)
-          }
-        },
-        onVisible: () => setAppsInTossWakeLock(true),
-      })
+  onMount(() => {
+    const native = import.meta.env.VITE_POMO_IS_APPS_IN_TOSS === 'true'
+    if (!native && !browserWakeLock.isSupported()) {
       return
     }
-
-    const disposeBrowserWakeLock = startBrowserWakeLockLifecycle({
+    startWakeLockLifecycle({
       isEnabled,
       onDispose: () => {
         disposed = true
         requestRevision += 1
         wakeLockTask.reset()
         setIsEnabled(false)
-        releaseWakeLock()
+        if (!native) {
+          browserRelease.release(sentinel)
+        } else if (appsInTossWakeLockRequested) {
+          requestQueue.run(() => requestAppsInTossWakeLock(false)).catch(() => undefined)
+        }
       },
-      onVisible: requestWakeLock,
+      onVisible: native ? () => setAppsInTossWakeLock(true) : requestWakeLock,
     })
-
-    if (disposeBrowserWakeLock !== undefined) {
-      onCleanup(disposeBrowserWakeLock)
-    }
   })
 
   return {

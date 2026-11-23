@@ -65,6 +65,15 @@ afterEach(() => {
 })
 
 describe('focus-room display preference repository', () => {
+  it('should restore hidden widgets from explicit legacy boolean strings', async () => {
+    const {repository, webValues} = createStorageHarness()
+    webValues.set(STORAGE_KEY, {
+      ...visiblePreferences,
+      playerVisible: 'false',
+      tourButtonVisible: 'true',
+    })
+    await expect(repository.read()).resolves.toEqual({...visiblePreferences, playerVisible: false})
+  })
   it('should reject a browser save when browser storage fails', async () => {
     const {repository, storage} = createStorageHarness()
     storage.writeWeb.mockImplementation(() => {

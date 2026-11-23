@@ -153,22 +153,22 @@ export const resolveManualNavigation = (
   }
 
   if (options.direction === 'next' && options.shuffleEnabled) {
-    const [nextShuffleIndex] = options.shuffleQueue
-
-    if (nextShuffleIndex === undefined) {
-      return options.repeatMode === 'none' ? {type: 'none'} : {type: 'reset-shuffle-queue'}
-    }
-
-    const selectedIndex = normalizeTrackIndex(nextShuffleIndex, options.trackCount)
-
+    const nextPosition = options.shuffleQueue.findIndex(
+      (index) =>
+        Number.isInteger(index) &&
+        index >= 0 &&
+        index < options.trackCount &&
+        index !== currentIndex,
+    )
+    const selectedIndex = options.shuffleQueue[nextPosition]
     if (selectedIndex === undefined) {
-      return {type: 'none'}
+      return options.repeatMode === 'none' ? {type: 'none'} : {type: 'reset-shuffle-queue'}
     }
 
     return {
       index: selectedIndex,
       shuffleHistory: [...options.shuffleHistory, currentIndex],
-      shuffleQueue: options.shuffleQueue.slice(1),
+      shuffleQueue: options.shuffleQueue.slice(nextPosition + 1),
       type: 'select',
     }
   }

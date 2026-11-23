@@ -26,7 +26,12 @@ export const useAdminCloudText = () => {
   const [page] = createResource(() => (active() ? query() : false), readAdminCloudTextUsers)
   onMount(() => setActive(true))
   createEffect(() => {
-    if (page.loading || page.error !== undefined) {
+    if (page.error !== undefined) {
+      setUsers([])
+      setNextCursor(null)
+      return
+    }
+    if (page.loading) {
       return
     }
     const current = page()
@@ -63,7 +68,7 @@ export const useAdminCloudText = () => {
     operation: () => Promise<UpdateCloudTextLimitResult>,
     success: 'updated' | 'reset',
   ): Promise<void> => {
-    if (savingUserId() !== null || page.loading) {
+    if (savingUserId() !== null || page.loading || page.error !== undefined) {
       return
     }
     setSavingUserId(userId)

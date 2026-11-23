@@ -45,6 +45,14 @@ it.each([
   15_000,
 )
 
+it('should show the calendar error and continue offering the account page', () => {
+  vi.stubEnv('VITE_POMO_IS_APPS_IN_TOSS', '')
+  render(() => <AccountPage calendarConnectionFailed />)
+  expect(screen.getByRole('alert')).toHaveTextContent('캘린더 연결을 완료하지 못했어요.')
+  expect(screen.getByRole('link', {name: '앱으로 돌아가기'})).toHaveAttribute('href', '/')
+  expect(screen.getByText('Web account')).toBeVisible()
+})
+
 it.each([
   ['google', 'Google 캘린더가 연결되었습니다'],
   ['microsoft', 'Microsoft Outlook 캘린더가 연결되었습니다'],

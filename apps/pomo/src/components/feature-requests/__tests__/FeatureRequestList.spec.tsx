@@ -21,13 +21,13 @@ const model: FeatureRequestsController = {
   isLoading: () => false,
   isLoadingMore: () => false,
   isSubmitting: () => false,
+  isVoting: () => false,
   loadFailed: () => false,
   loadMore: vi.fn(async () => undefined),
   loadMoreFailed: () => false,
   refresh: vi.fn(async () => undefined),
   requests: () => [],
   voteRequest: vi.fn(),
-  votingRequestId: () => null,
 }
 
 it('should place the new request action in the list header', () => {

@@ -1,4 +1,5 @@
 import {z} from 'zod'
+import {normalizeStoredInteger} from 'src/utils/runtime-storage/normalize-stored-integer'
 
 const MILLISECONDS_PER_MINUTE = 60_000
 
@@ -22,7 +23,9 @@ const memoryMemoSchema = z.object({
   createdAt: z.iso.datetime(),
   deletionPending: z.literal(true).optional(),
   dialogueId: z.string().min(1).nullable(),
-  exactReminderAdvanceMinutes: z.number().int().nonnegative().default(0),
+  exactReminderAdvanceMinutes: z
+    .preprocess(normalizeStoredInteger, z.number().int().nonnegative())
+    .default(0),
   exactReminderAt: z.iso.datetime().nullable(),
   exactReminderRepeatIntervalMinutes: z.number().int().positive().nullable().default(null),
   exactReminderRepeatUntilMinutes: z.number().int().nonnegative().default(0),

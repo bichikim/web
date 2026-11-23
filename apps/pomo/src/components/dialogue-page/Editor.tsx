@@ -14,6 +14,7 @@ import {
   type UsePDialogueEditorProps,
   usePEvents,
 } from '../../features/focus-room-dialogue'
+import {MAXIMUM_DIALOGUE_TEXT_LENGTH} from '../../features/focus-room-dialogue/schema'
 import {getLocalizedPrimaryMoodLabel} from '../../features/localization/localized-messages'
 import {formatModelDownloadSize} from '../../features/model-storage'
 import {
@@ -144,8 +145,6 @@ const CLASSES = {
   dialogueEditorVoiceActions: 'flex justify-end gap-3',
 } as const
 
-const MAXIMUM_TEXT_LENGTH = 10000
-
 const getLanguageOptions = () => {
   const displayNames = new Intl.DisplayNames([getLocale()], {type: 'language'})
 
@@ -218,13 +217,13 @@ export function PDialogueEditor(props: PDialogueEditorProps) {
             <span class={CLASSES.dialogueEditorFieldLabel}>
               {m.dialogue_editor_script_label()}
               <small>
-                {editor.text().length} / {MAXIMUM_TEXT_LENGTH}
+                {editor.text().length} / {MAXIMUM_DIALOGUE_TEXT_LENGTH}
               </small>
             </span>
             <PTextarea
               unstyled
               disabled={audio.busy()}
-              maxlength={MAXIMUM_TEXT_LENGTH}
+              maxlength={MAXIMUM_DIALOGUE_TEXT_LENGTH}
               onInput={(event) => editor.setText(event.currentTarget.value)}
               placeholder={m.dialogue_editor_script_placeholder()}
               value={editor.text()}

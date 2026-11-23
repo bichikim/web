@@ -129,4 +129,15 @@ describe('opacity twinkle', () => {
       phase: 'holding',
     })
   })
+
+  it('should interpolate the opacity while a transition is still in progress', () => {
+    const random = createRandom([1, 0])
+    const state = createOpacityTwinkleState(motion, random)
+
+    advanceOpacityTwinkle(state, motion, motion.travel.minimumSeconds, random)
+    const midpoint = advanceOpacityTwinkle(state, motion, motion.fall.minimumSeconds / 2, random)
+
+    expect(midpoint).toBeCloseTo(0.2)
+    expect(state.phase).toBe('transitioning')
+  })
 })

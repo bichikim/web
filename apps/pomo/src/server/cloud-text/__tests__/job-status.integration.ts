@@ -95,28 +95,31 @@ it('should not expose a queued generation belonging to another account', async (
   await reserveCloudText({now, requestHash: 'a'.repeat(64), requestId, userId})
   expect(await readCloudTextJob('00000000-0000-4000-8000-000000000003', requestId)).toBeNull()
 })
-it('should expose a charged cancellation without a generated result or a pending subscription', async () => {
-  await reserveCloudText({now, requestHash: 'a'.repeat(64), requestId, userId})
-  await client.insert(apiAiJobs).values({
-    body: {max_output_tokens: 100},
-    cancelRequestedAt: now,
-    generationMilliseconds: 120000,
-    id: requestId,
-    kind: 'cloud-text',
-    ownerId: userId,
-    queueExpiresAt: new Date(now.getTime() + 900000),
-    requestHash: 'a'.repeat(64),
-    status: 'cancelled',
-  })
-  await client
-    .update(cloudTextRequests)
-    .set({status: 'cancelled'})
-    .where(eq(cloudTextRequests.id, requestId))
+it.each(['cancelled', 'failed'] as const)(
+  'should expose a charged cancellation after a %s worker status',
+  async (status) => {
+    await reserveCloudText({now, requestHash: 'a'.repeat(64), requestId, userId})
+    await client.insert(apiAiJobs).values({
+      body: {max_output_tokens: 100},
+      cancelRequestedAt: now,
+      generationMilliseconds: 120000,
+      id: requestId,
+      kind: 'cloud-text',
+      ownerId: userId,
+      queueExpiresAt: new Date(now.getTime() + 900000),
+      requestHash: 'a'.repeat(64),
+      status,
+    })
+    await client
+      .update(cloudTextRequests)
+      .set({status: 'cancelled'})
+      .where(eq(cloudTextRequests.id, requestId))
 
-  const result = await readCloudTextJob(userId, requestId)
-  expect(result).toMatchObject({kind: 'cancelled', requestId, usage: {remaining: 2, used: 1}})
-  expect(result).not.toHaveProperty('text')
-})
+    const result = await readCloudTextJob(userId, requestId)
+    expect(result).toMatchObject({kind: 'cancelled', requestId, usage: {remaining: 2, used: 1}})
+    expect(result).not.toHaveProperty('text')
+  },
+)
 it('should expose the model from the final response after fallback', async () => {
   await reserveCloudText({now, requestHash: 'a'.repeat(64), requestId, userId})
   await client.insert(apiAiJobs).values({

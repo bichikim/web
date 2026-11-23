@@ -29,14 +29,14 @@ const setup = (loading = Promise.resolve()) => {
   return {context, node, processor, source}
 }
 
-it('should return null without Web Audio', () => {
+it('should return null without Web Audio', async () => {
   vi.stubGlobal('AudioContext', undefined)
-  expect(createBrowserSpeechEndDetector({} as MediaStream)).toBeNull()
+  expect(await createBrowserSpeechEndDetector({} as MediaStream)).toBeNull()
 })
 
 it('should deliver only speech end messages and dispose audio resources', async () => {
   const {context, processor, source} = setup()
-  const detector = createBrowserSpeechEndDetector({} as MediaStream)
+  const detector = await createBrowserSpeechEndDetector({} as MediaStream)
   const listener = vi.fn()
   const unsubscribe = detector?.subscribe(listener)
   await Promise.resolve()
@@ -59,18 +59,17 @@ it('should deliver only speech end messages and dispose audio resources', async 
 it('should not connect after disposal during module loading', async () => {
   const pending = Promise.withResolvers<void>()
   const {node, context} = setup(pending.promise)
-  const detector = createBrowserSpeechEndDetector({} as MediaStream)
-  detector?.dispose()
+  const controller = new AbortController()
+  const detector = createBrowserSpeechEndDetector({} as MediaStream, controller.signal)
+  controller.abort()
   pending.resolve()
-  await Promise.resolve()
+  expect(await detector).toBeNull()
   expect(node).not.toHaveBeenCalled()
   expect(context.close).toHaveBeenCalledOnce()
 })
 
 it('should close the context when loading fails', async () => {
   const {context} = setup(Promise.reject(new Error('load failed')))
-  createBrowserSpeechEndDetector({} as MediaStream)
-  await Promise.resolve()
-  await Promise.resolve()
+  expect(await createBrowserSpeechEndDetector({} as MediaStream)).toBeNull()
   expect(context.close).toHaveBeenCalledOnce()
 })

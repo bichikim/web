@@ -1,5 +1,4 @@
-import {getMp3AudioOffset} from '../get-mp3-audio-offset'
-import {extractMp3Preview} from '../mp3-preview'
+import {extractMp3Preview, getMp3PreviewAudioOffset} from '../mp3-preview'
 import {createTrackObjectUrl, signTrackObjectRequest, type TrackStorageOptions} from './storage'
 
 const MILLISECONDS_PER_SECOND = 1000
@@ -80,7 +79,7 @@ export const createTrackPreviewObject = async (
     return requireBoundedAudioResponse(sourceResponse, MAXIMUM_PREVIEW_INPUT_BYTES)
   }
   const sourceBytes = await readSource(0)
-  const audioOffset = getMp3AudioOffset(sourceBytes)
+  const audioOffset = getMp3PreviewAudioOffset(sourceBytes)
   // Skip metadata tags in storage to reserve the bounded read window for audio.
   const audioBytes =
     audioOffset > MAXIMUM_INLINE_METADATA_BYTES ? await readSource(audioOffset) : sourceBytes

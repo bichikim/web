@@ -42,6 +42,34 @@ it('should synchronize timer actions between mounted controllers', async () => {
   second.cleanup()
 })
 
+it('should receive a pause broadcast while mounting from a running snapshot', async () => {
+  vi.stubGlobal('BroadcastChannel', TestBroadcastChannel)
+  const source = renderHook(() => usePomodoroTimer(), {wrapper: PreferenceProvider})
+  await finishInitialization(source)
+  source.result.onConfigChange(CONFIG)
+  source.result.onStart()
+  const storage = {
+    getItem(key: string) {
+      const value = localStorage.getItem(key)
+      if (key === STATE_STORAGE_KEY && source.result.state().status === 'running') {
+        source.result.onPause()
+      }
+      return value
+    },
+    setItem: (key: string, value: string) => localStorage.setItem(key, value),
+  }
+
+  const receiver = renderHook(() => usePomodoroTimer({storage}), {wrapper: PreferenceProvider})
+  await finishInitialization(receiver)
+
+  expect(receiver.result.state().status).toBe('paused')
+  expect(JSON.parse(localStorage.getItem(STATE_STORAGE_KEY) ?? 'null')).toMatchObject({
+    status: 'paused',
+  })
+  receiver.cleanup()
+  source.cleanup()
+})
+
 it('should deliver lifecycle events for a cross-tab phase transition', async () => {
   const sourceEvents = vi.fn()
   const receiverEvents = vi.fn()

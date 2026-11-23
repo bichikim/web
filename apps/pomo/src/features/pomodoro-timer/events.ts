@@ -173,6 +173,17 @@ const shouldEmitTransitionStartEvent = (
   (nextState.status === 'paused' &&
     nextState.remainingSeconds < getPomodoroPhaseDuration(nextState.phase, config))
 
+const shouldEmitEndEvent = (
+  previousState: PomodoroTimerState,
+  nextState: PomodoroTimerState,
+  phaseChanged: boolean,
+) =>
+  (previousState.status === 'idle' &&
+    previousState.phase === 'focus' &&
+    phaseChanged &&
+    nextState.completedFocusSessions > previousState.completedFocusSessions) ||
+  (previousState.status !== 'idle' && (phaseChanged || nextState.status === 'idle'))
+
 /** Returns lifecycle events caused by one observable timer state transition. */
 export const getPomodoroTimerEvents = (
   previousState: PomodoroTimerState,
@@ -211,7 +222,7 @@ export const getPomodoroTimerEvents = (
     return events
   }
 
-  if (previousState.status !== 'idle' && (phaseChanged || nextState.status === 'idle')) {
+  if (shouldEmitEndEvent(previousState, nextState, phaseChanged)) {
     events.push(getEndEvent(previousState))
   }
 

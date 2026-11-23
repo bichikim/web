@@ -45,6 +45,7 @@ describe('ReceivedFiles', () => {
     ).toEqual(['first.txt', 'second.txt', 'third.txt'])
     expect(screen.getAllByRole('button', {name: m.transfer_save()})).toHaveLength(3)
     expect(screen.getAllByRole('button', {name: m.transfer_remove()})).toHaveLength(3)
+    expect(screen.getByText(/3\s*B \/ 286[.,]1\s*MiB/u)).toBeVisible()
   })
   it('should allow clearing the collection when only deleted cards remain', () => {
     receivedFiles.state.files = receivedFiles.state.files.map((file) => ({

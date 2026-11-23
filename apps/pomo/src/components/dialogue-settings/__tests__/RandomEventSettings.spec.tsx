@@ -1,7 +1,10 @@
 import {createDeferred} from 'src/__tests__/create-deferred'
 /** @vitest-environment jsdom */
 
-import {PreferenceProvider} from 'src/hooks/use-preference'
+import {createRandomEventPreferenceOptions} from 'src/features/focus-room-dialogue'
+import {getRandomEventDelay} from 'src/features/focus-room-dialogue/use-random-event'
+import {createEffect} from 'solid-js'
+import {PreferenceProvider, usePreference} from 'src/hooks/use-preference'
 import {fireEvent, render, screen} from '@solidjs/testing-library'
 import userEvent from '@testing-library/user-event'
 import {afterEach, beforeEach, expect, it, vi} from 'vitest'
@@ -166,6 +169,45 @@ it('should restore the persisted interval after an automatic save failure', asyn
   expect(screen.getByRole('status').textContent).toBe('랜덤 이벤트 설정을 저장하지 못했어요.')
   expect(minimumInput).toHaveValue(String(DEFAULT_RANDOM_EVENT_SETTINGS.minimumMinutes))
   expect(consoleError).toHaveBeenCalledOnce()
+})
+
+it('should restore the interval used for the next focus-room event when saving fails', async () => {
+  const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+  settingsMocks.write.mockRejectedValueOnce(new Error('Storage unavailable'))
+  const recordDelay = vi.fn()
+  const SchedulerProbe = () => {
+    const [settings] = usePreference(createRandomEventPreferenceOptions())
+    createEffect(() => {
+      const current = settings()
+      if (current !== null) {
+        recordDelay(getRandomEventDelay(current, () => 0))
+      }
+    })
+    return null
+  }
+  render(
+    () => (
+      <>
+        <RandomEventSettings />
+        <SchedulerProbe />
+      </>
+    ),
+    {wrapper: PreferenceProvider},
+  )
+  try {
+    await vi.advanceTimersByTimeAsync(0)
+    const minimum = screen.getByRole('spinbutton', {name: '랜덤 이벤트 최소 간격(분)'})
+    fireEvent.input(minimum, {target: {value: '15'}})
+    await vi.advanceTimersByTimeAsync(500)
+
+    expect(screen.getByRole('status')).toHaveTextContent('랜덤 이벤트 설정을 저장하지 못했어요.')
+    expect(minimum).toHaveValue(String(DEFAULT_RANDOM_EVENT_SETTINGS.minimumMinutes))
+    expect(recordDelay).toHaveBeenLastCalledWith(
+      DEFAULT_RANDOM_EVENT_SETTINGS.minimumMinutes * 60_000,
+    )
+  } finally {
+    consoleError.mockRestore()
+  }
 })
 
 it('should report a load failure after a successful edit when settings reload', async () => {
@@ -345,4 +387,22 @@ it('should avoid showing a save error after disposal during an in-flight save', 
   await vi.advanceTimersByTimeAsync(0)
 
   expect(consoleError).not.toHaveBeenCalled()
+})
+
+it('should announce saving success only after persistence confirms the interval', async () => {
+  const write = createDeferred<void>()
+  settingsMocks.write.mockReturnValueOnce(write.promise)
+  render(() => <RandomEventSettings />, {wrapper: PreferenceProvider})
+  await vi.advanceTimersByTimeAsync(0)
+
+  const minimum = screen.getByRole('spinbutton', {name: '랜덤 이벤트 최소 간격(분)'})
+  fireEvent.input(minimum, {target: {value: '12'}})
+  await vi.advanceTimersByTimeAsync(500)
+
+  expect(settingsMocks.write).toHaveBeenCalledOnce()
+  expect(screen.queryByText('랜덤 이벤트 설정을 저장했어요.')).not.toBeInTheDocument()
+
+  write.resolve()
+  await vi.advanceTimersByTimeAsync(0)
+  expect(screen.getByRole('status')).toHaveTextContent('랜덤 이벤트 설정을 저장했어요.')
 })

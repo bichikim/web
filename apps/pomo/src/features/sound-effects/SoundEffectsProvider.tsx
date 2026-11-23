@@ -2,7 +2,11 @@ import {createSignal, For, type JSX, onCleanup, onMount} from 'solid-js'
 
 import {readWebStorageJson, writeWebStorageJson} from 'src/utils/runtime-storage'
 
-import {SoundEffectsContext, type SoundEffectsController} from './context'
+import {
+  SoundEffectsContext,
+  type SoundEffectsController,
+  type StopSoundEffectsOptions,
+} from './context'
 import {loadSoundEffects} from './load-sound-effects'
 import type {SoundEffect} from './types'
 import {type SoundEffectPlayback, useSoundEffectPlayback} from './use-sound-effect'
@@ -49,10 +53,11 @@ export const SoundEffectsProvider = (props: SoundEffectsProviderProps) => {
   const [status, setStatus] = createSignal<'loading' | 'ready' | 'failed'>('loading')
   const [isStopped, setIsStopped] = createSignal(false)
   const controller = new AbortController()
-  let hasUserActivation = false
+  let hasActivationRequest = false
+  let isTemporarilyStopped = false
 
   const registerPlayback = (effectId: string, playback: SoundEffectPlayback) => {
-    const stopped = isStopped()
+    const stopped = isStopped() || isTemporarilyStopped
     if (stopped) {
       playback.stop()
     }
@@ -61,7 +66,7 @@ export const SoundEffectsProvider = (props: SoundEffectsProviderProps) => {
       next.set(effectId, playback)
       return next
     })
-    if (!stopped && hasUserActivation) {
+    if (!stopped && hasActivationRequest) {
       playback.activate()
     }
   }
@@ -79,6 +84,8 @@ export const SoundEffectsProvider = (props: SoundEffectsProviderProps) => {
   }
 
   const activate = () => {
+    hasActivationRequest = true
+    isTemporarilyStopped = false
     setIsStopped(false)
     writeStoredStopped(false)
     const currentPlaybacks = playbacks()
@@ -87,9 +94,13 @@ export const SoundEffectsProvider = (props: SoundEffectsProviderProps) => {
     }
   }
 
-  const stop = () => {
-    setIsStopped(true)
-    writeStoredStopped(true)
+  const stop = (options?: StopSoundEffectsOptions) => {
+    if (options?.temporary === true) {
+      isTemporarilyStopped = true
+    } else {
+      setIsStopped(true)
+      writeStoredStopped(true)
+    }
     const currentPlaybacks = playbacks()
     for (const playback of currentPlaybacks.values()) {
       playback.stop()
@@ -97,11 +108,11 @@ export const SoundEffectsProvider = (props: SoundEffectsProviderProps) => {
   }
 
   const handleUserActivation = () => {
-    if (isStopped()) {
+    if (isStopped() || isTemporarilyStopped) {
       return
     }
 
-    hasUserActivation = true
+    hasActivationRequest = true
     if (playbacks().size > 0) {
       activate()
     }

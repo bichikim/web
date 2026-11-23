@@ -28,7 +28,7 @@ export interface AudioGenerationController {
 }
 
 interface AudioDownloadError {
-  readonly message: string
+  readonly message: string | null
   readonly modelId: SupertonicModelId
 }
 
@@ -66,7 +66,9 @@ export const useAudioGeneration = (props: UseAudioGenerationProps): AudioGenerat
     const downloadError = audioDownloadError()
 
     if (downloadError !== null && downloadError.modelId === props.editor.modelId()) {
-      return localizeErrorMessage(downloadError.message, m.dialogue_voice_download_error())
+      return downloadError.message === null
+        ? m.dialogue_voice_availability_error()
+        : localizeErrorMessage(downloadError.message, m.dialogue_voice_download_error())
     }
 
     return audioDownload() === null
@@ -81,13 +83,23 @@ export const useAudioGeneration = (props: UseAudioGenerationProps): AudioGenerat
     const selectedModelId = props.editor.modelId()
     setAudioDownloadError(null)
     setIsCheckingAudioModel(true)
-    const isDownloaded = await isSupertonicModelDownloaded({modelId: selectedModelId})
-
-    if (isDisposed) {
+    let isDownloaded: boolean
+    try {
+      isDownloaded = await isSupertonicModelDownloaded({modelId: selectedModelId})
+    } catch {
+      if (!isDisposed) {
+        setAudioDownloadError({message: null, modelId: selectedModelId})
+      }
       return
+    } finally {
+      if (!isDisposed) {
+        setIsCheckingAudioModel(false)
+      }
     }
 
-    setIsCheckingAudioModel(false)
+    if (isDisposed || selectedModelId !== props.editor.modelId()) {
+      return
+    }
 
     if (isDownloaded) {
       await props.editor.generate()

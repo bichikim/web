@@ -1,6 +1,8 @@
+import {z} from 'zod'
 import {createPDatabase, type PDatabase} from '../focus-room-dialogue/database'
 import {deleteDialogueRecord} from '../focus-room-dialogue/dialogue-record'
 import {focusRoomDialogueSchema} from '../focus-room-dialogue/schema'
+import type {ParsedFeedItem} from './feed-parser'
 import {
   type FeedDialogueJob,
   feedDialogueJobSchema,
@@ -58,22 +60,52 @@ export interface GeneratingFeedDialogueJob extends FeedDialogueJob {
   readonly status: 'generating'
 }
 
+const backlogSchema = z.object({
+  connectionId: z.string(),
+  feedTitle: z.string(),
+  items: z.array(
+    z.object({
+      content: z.string(),
+      contentKind: z.enum(['full', 'none', 'summary']),
+      id: z.string(),
+      legacyId: z.string().optional(),
+      link: z.string(),
+      publishedAt: z.null(),
+      title: z.string(),
+    }),
+  ),
+  revision: z.string(),
+})
+type FeedBacklog = z.infer<typeof backlogSchema>
+
+interface ReplaceFeedBacklogOptions {
+  readonly connectionId: string
+  readonly expectedRevision?: string
+  readonly next: {
+    readonly feedTitle: string
+    readonly items: ReadonlyArray<ParsedFeedItem>
+  } | null
+}
+
 export interface FeedDialogueRepository {
   readonly complete: (options: CompleteFeedDialogueOptions) => Promise<void>
   readonly deleteJobs: (jobIds: ReadonlyArray<string>, updatedAt: string) => Promise<void>
   readonly dismissItem: (options: DismissFeedItemOptions) => Promise<void>
+  readonly discardBacklogs: (connectionIds: ReadonlySet<string>) => Promise<void>
   readonly dispose: () => void
   readonly failJob: (options: FailFeedDialogueJobOptions) => Promise<boolean>
   readonly interruptUnfinishedJobs: (updatedAt: string) => Promise<ReadonlyArray<FeedDialogueJob>>
   readonly listExpiredMetadata: (expiresAt: string) => Promise<ReadonlyArray<FeedDialogueMetadata>>
   readonly listItems: (feedConnectionId: string) => Promise<ReadonlyArray<FeedItemRecord>>
+  readonly loadBacklog: (connectionId: string) => Promise<FeedBacklog | undefined>
   readonly listJobs: () => Promise<ReadonlyArray<FeedDialogueJob>>
   readonly listMetadata: () => Promise<ReadonlyArray<FeedDialogueMetadata>>
   readonly markListened: (dialogueId: string, listenedAt: string) => Promise<void>
-  readonly queue: (job: FeedDialogueJob, item: FeedItemRecord) => Promise<void>
+  readonly queue: (job: FeedDialogueJob, item: FeedItemRecord) => Promise<boolean>
   readonly recoverMissingDialogue: (options: RecoverMissingDialogueOptions) => Promise<boolean>
   readonly removeMetadata: (dialogueId: string) => Promise<void>
   readonly removeItem: (feedConnectionId: string, feedItemId: string) => Promise<void>
+  readonly replaceBacklog: (options: ReplaceFeedBacklogOptions) => Promise<boolean>
   readonly retryJobs: (jobIds: ReadonlyArray<string>, updatedAt: string) => Promise<void>
   readonly saveItems: (items: ReadonlyArray<FeedItemRecord>) => Promise<void>
   readonly startJob: (job: GeneratingFeedDialogueJob) => Promise<boolean>
@@ -252,6 +284,41 @@ const persistFeedDialogueCompletion = async (
   }
 }
 
+const createFeedBacklogs = (
+  database: PDatabase,
+): Pick<FeedDialogueRepository, 'discardBacklogs' | 'loadBacklog' | 'replaceBacklog'> => ({
+  async discardBacklogs(connectionIds) {
+    await database.transaction('rw', database.feedBacklogs, async () => {
+      const keys = await database.feedBacklogs.toCollection().primaryKeys()
+      await database.feedBacklogs.bulkDelete(keys.filter((key) => !connectionIds.has(key)))
+    })
+  },
+  async loadBacklog(connectionId) {
+    const value = await database.feedBacklogs.get(connectionId)
+    return value === undefined ? undefined : backlogSchema.parse(value)
+  },
+  async replaceBacklog({connectionId, expectedRevision, next}) {
+    return database.transaction('rw', database.feedBacklogs, async () => {
+      const value = await database.feedBacklogs.get(connectionId)
+      const revision = value === undefined ? undefined : backlogSchema.parse(value).revision
+      if (revision !== expectedRevision) {
+        return false
+      }
+      if (next === null) {
+        await database.feedBacklogs.delete(connectionId)
+      } else {
+        const updated = backlogSchema.parse({
+          ...next,
+          connectionId,
+          revision: crypto.randomUUID(),
+        })
+        await database.feedBacklogs.put(updated)
+      }
+      return true
+    })
+  },
+})
+
 /** Persists feed discovery and generation state beside compatible dialogue records. */
 export const createFeedDialogueRepository = (
   options: CreateFeedDialogueRepositoryOptions,
@@ -260,6 +327,7 @@ export const createFeedDialogueRepository = (
   const {deleteDialogueAudio} = options
 
   return {
+    ...createFeedBacklogs(database),
     complete: (completeOptions) => persistFeedDialogueCompletion(database, completeOptions),
     deleteJobs: (jobIds, updatedAt) =>
       updateRecoverableJobs(database, jobIds, updatedAt, 'dismissed'),
@@ -316,9 +384,13 @@ export const createFeedDialogueRepository = (
     async queue(job, item) {
       const nextJob = feedDialogueJobSchema.parse(job)
       const nextItem = feedItemRecordSchema.parse(item)
-      await database.transaction('rw', database.feedDialogueJobs, database.feedItems, async () => {
+      return database.transaction('rw', database.feedDialogueJobs, database.feedItems, async () => {
+        if ((await database.feedItems.get(nextItem.id)) !== undefined) {
+          return false
+        }
         await database.feedDialogueJobs.put(nextJob)
         await database.feedItems.put(nextItem)
+        return true
       })
     },
     async recoverMissingDialogue(options) {
@@ -381,7 +453,13 @@ export const createFeedDialogueRepository = (
     },
     retryJobs: (jobIds, updatedAt) => updateRecoverableJobs(database, jobIds, updatedAt, 'queued'),
     async saveItems(items) {
-      await database.feedItems.bulkPut(items.map((item) => feedItemRecordSchema.parse(item)))
+      const candidates = items.map((item) => feedItemRecordSchema.parse(item))
+      await database.transaction('rw', database.feedItems, async () => {
+        const stored = await database.feedItems.bulkGet(candidates.map(({id}) => id))
+        await database.feedItems.bulkPut(
+          candidates.filter((_item, index) => stored[index] === undefined),
+        )
+      })
     },
     startJob: (job) => startQueuedJob(database, job),
   }

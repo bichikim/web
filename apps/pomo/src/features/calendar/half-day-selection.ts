@@ -61,16 +61,16 @@ export const createCalendarDateRange = ({
     return toRange(start, morningEnd)
   }
 
+  if (daypartQuery !== null) {
+    return daypartQuery
+  }
+
   if (text.includes('오후')) {
     const afternoonRangeStart =
       now.getTime() < afternoonStart.getTime() || now.getTime() >= end.getTime()
         ? afternoonStart
         : now
     return toRange(afternoonRangeStart, end)
-  }
-
-  if (daypartQuery !== null) {
-    return daypartQuery
   }
 
   return toRange(start, end)

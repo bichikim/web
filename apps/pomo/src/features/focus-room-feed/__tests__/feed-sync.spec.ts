@@ -540,9 +540,14 @@ it('should synchronize connections concurrently and isolate an unknown connectio
     updatedAt: '2026-08-14T00:00:00.000Z',
     version: 1,
   })
-  const fetcher = vi.fn((url: string) =>
-    url === CONNECTION.url ? feedResponse : Promise.reject(new Error('')),
-  )
+  const secondFetch = Promise.withResolvers<void>()
+  const fetcher = vi.fn((url: string) => {
+    if (url === CONNECTION.url) {
+      return feedResponse
+    }
+    secondFetch.resolve()
+    return Promise.reject(new Error(''))
+  })
 
   const synchronization = synchronizeFeeds({
     connections: [CONNECTION, secondConnection],
@@ -553,6 +558,7 @@ it('should synchronize connections concurrently and isolate an unknown connectio
     resolveGenerationSettings: createSettingsResolver(),
   })
 
+  await secondFetch.promise
   expect(fetcher).toHaveBeenCalledTimes(2)
   releaseFeed(createBodylessResponse('<rss><channel><title>빈 피드</title></channel></rss>'))
 

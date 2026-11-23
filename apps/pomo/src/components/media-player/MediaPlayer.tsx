@@ -63,6 +63,7 @@ export const MediaPlayer = (props: MediaPlayerProps) => {
     toggleRepeatMode: player.toggleRepeatMode,
     toggleShuffle: player.toggleShuffle,
     tracks: player.tracks,
+    updateTrackArtists: player.updateTrackArtists,
   }
   const handlePauseRequest = () => {
     player.previewPlayback.preventResume()

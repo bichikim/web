@@ -25,6 +25,8 @@ describe('parseExpenseText', () => {
     '고구마 1000원2.5개',
     '고구마 1000원２개',
     '고구마1000원2개',
+    '당근2000원',
+    '비타민B122000원',
     '고구마 1000원2개 추가',
   ])('should reject invalid or ambiguous compact expense input %s', (text) => {
     expect(parseExpenseText(text)).toEqual({error: {code: 'invalid-input'}, ok: false})
@@ -302,19 +304,29 @@ describe('parseExpenseAssistantResponse', () => {
     })
   })
 
-  it.each(['２０２６-０９-０５', '２0２6-０9-０５', '２０２６-9-５', '202６-0９-5'])(
-    'should reject fullwidth digits in structured date value %s',
-    (date) => {
-      expect(
-        parseExpenseAssistantResponse(
-          JSON.stringify({date, items: [{name: '두부', quantity: 1, unitPrice: 1500}]}),
-        ),
-      ).toEqual({
-        error: {code: 'invalid-shape'},
-        ok: false,
-      })
-    },
-  )
+  it.each([
+    ['２０２６-０９-０５', '2026-09-05'],
+    ['２0２6-０9-０５', '2026-09-05'],
+    ['２０２６-9-５', '2026-9-5'],
+    ['202６-0９-5', '2026-09-5'],
+  ])('should normalize fullwidth digits in structured date value %s', (date, normalizedDate) => {
+    expect(
+      parseExpenseAssistantResponse(
+        JSON.stringify({date, items: [{name: '두부２', quantity: 1, unitPrice: 1500}]}),
+      ),
+    ).toMatchObject({ok: true, value: {date: normalizedDate, items: [{name: '두부２'}]}})
+  })
+
+  it('should reject an impossible fullwidth date in an otherwise valid response', () => {
+    expect(
+      parseExpenseAssistantResponse(
+        JSON.stringify({
+          date: '２０２６-０２-３０',
+          items: [{name: '두부', quantity: 1, unitPrice: 1500}],
+        }),
+      ),
+    ).toEqual({error: {code: 'invalid-shape'}, ok: false})
+  })
 
   it.each([
     '',
@@ -387,4 +399,39 @@ describe('parseExpenseAssistantResponse', () => {
       ok: false,
     })
   })
+})
+
+it.each(['2026.09.05', '2026/9/5'])('should accept a consistently delimited date %s', (date) => {
+  const expected = date.replaceAll(/[./]/gu, '-')
+  expect(parseExpenseText(`${date}\n두부 1500원`)).toMatchObject({
+    ok: true,
+    value: {date: expected},
+  })
+  expect(
+    parseExpenseAssistantResponse(
+      JSON.stringify({date, items: [{name: '두부', quantity: 1, unitPrice: 1500}]}),
+    ),
+  ).toMatchObject({ok: true, value: {date: expected}})
+})
+
+it.each(['2026.09/05', '2026/02/30'])('should reject an invalid date %s', (date) => {
+  expect(parseExpenseText(`${date}\n두부 1500원`).ok).toBe(false)
+  expect(
+    parseExpenseAssistantResponse(
+      JSON.stringify({date, items: [{name: '두부', quantity: 1, unitPrice: 1500}]}),
+    ).ok,
+  ).toBe(false)
+})
+
+it('should normalize fullwidth digits in a structured unit-price string', () => {
+  expect(
+    parseExpenseAssistantResponse(
+      '{"date":null,"items":[{"name":"두부","quantity":1,"unitPrice":"１,５００"}]}',
+    ),
+  ).toMatchObject({ok: true, value: {total: 1500}})
+  expect(
+    parseExpenseAssistantResponse(
+      '{"date":null,"items":[{"name":"두부","quantity":"１","unitPrice":1500}]}',
+    ).ok,
+  ).toBe(false)
 })

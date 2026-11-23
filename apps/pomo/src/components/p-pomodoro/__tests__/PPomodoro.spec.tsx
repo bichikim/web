@@ -102,6 +102,21 @@ describe('PPomodoro', () => {
     vi.useRealTimers()
   })
 
+  it('should name a long break before the idle timer starts', async () => {
+    const {quickControls, timeTrigger} = await renderPomodoro()
+    fireEvent.click(timeTrigger)
+    const dialog = screen.getByRole('dialog', {name: '포모도로'})
+    fireEvent.click(within(dialog).getByRole('button', {name: /4세션/u}))
+    fireEvent.input(within(dialog).getByRole('spinbutton', {name: '집중 횟수(회)'}), {
+      target: {value: '1'},
+    })
+    fireEvent.click(within(dialog).getByRole('button', {name: '설정 저장'}))
+    fireEvent.click(within(dialog).getByRole('button', {name: '다음 단계로 이동'}))
+
+    expect(quickControls).toHaveAttribute('data-phase', 'longBreak')
+    expect(timeTrigger).toHaveAccessibleName(/^포모도로 열기, 긴 휴식 준비,/u)
+  })
+
   it('should leave the modal body vertically scrollable', () => {
     render(() => (
       <PreferenceProvider>
