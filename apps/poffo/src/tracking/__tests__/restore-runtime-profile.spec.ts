@@ -54,3 +54,21 @@ test('should migrate legacy mouth sensitivity once while preserving neutral cali
   expect(restored.mouth!.openSensitivity).toBe(1)
   expect(restoreRuntimeProfile(restored, document)).toEqual(restored)
 })
+
+test('should restore a profile without opening gain and reject missing round or spread gain', () => {
+  const profile = createRuntimeProfile(document)
+  const mouth = {
+    neutral: {mouthOpen: 0.1, mouthRound: 0.2, mouthSpread: 0.3},
+    roundSensitivity: 1,
+    spreadSensitivity: 1,
+  }
+  const legacy = {...profile, mouth}
+
+  expect(restoreRuntimeProfile(legacy, document)).toEqual(legacy)
+  expect(
+    restoreRuntimeProfile({...legacy, mouth: {...mouth, roundSensitivity: undefined}}, document),
+  ).toBeUndefined()
+  expect(
+    restoreRuntimeProfile({...legacy, mouth: {...mouth, spreadSensitivity: undefined}}, document),
+  ).toBeUndefined()
+})

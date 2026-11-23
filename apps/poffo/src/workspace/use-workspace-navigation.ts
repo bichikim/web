@@ -1,12 +1,15 @@
 import {type Accessor, batch, createEffect, createSignal, on, onCleanup, untrack} from 'solid-js'
 import {useDeferredValue} from '@winter-love/puppet/editor'
-import type {WorkspaceMode} from './types'
+import type {WorkspaceMode, WorkspaceNavigationResult} from './types'
 
 interface WorkspaceNavigationOptions {
   /** 실제로 표시 중인 작업 공간. 외부 경로 변경 시 대기 중인 선택을 취소한다. */
   readonly current: Accessor<WorkspaceMode>
   /** 선택 표시가 그려진 뒤 실행한다. signal이 중단되면 저장 후에도 화면을 바꾸지 않는다. */
-  readonly onNavigate: (mode: WorkspaceMode, signal: AbortSignal) => void | Promise<void>
+  readonly onNavigate: (
+    mode: WorkspaceMode,
+    signal: AbortSignal,
+  ) => WorkspaceNavigationResult | Promise<WorkspaceNavigationResult>
 }
 
 interface WorkspaceNavigationState {
@@ -32,15 +35,18 @@ export const useWorkspaceNavigation = (
       return
     }
     try {
-      await options.onNavigate(mode, active.signal)
+      const accepted = await options.onNavigate(mode, active.signal)
+      if (request === active && accepted === false) {
+        selection.reset(options.current())
+      }
     } catch (cause) {
       if (!active.signal.aborted) {
         setError(cause instanceof Error ? cause.message : '화면을 전환하지 못했습니다.')
+        selection.reset(options.current())
       }
     } finally {
       if (request === active) {
         request = null
-        selection.reset(options.current())
       }
     }
   }
