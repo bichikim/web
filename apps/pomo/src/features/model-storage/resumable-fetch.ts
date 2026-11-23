@@ -127,46 +127,62 @@ const createPersistedStream = (
   let chunks: Array<Uint8Array> = []
   let chunkBytes = 0
   let storageAvailable = true
+  let cancelled = false
+  let pendingWrite: Promise<void> | undefined
+
+  const writeChunk = async (chunk: Uint8Array) => {
+    try {
+      await storage.append(url, chunk)
+    } catch (error: unknown) {
+      storageAvailable = false
+      console.warn('Partial model download could not be stored.', error)
+    }
+  }
 
   const flush = async () => {
     if (chunkBytes === 0) {
+      await pendingWrite
       return
     }
 
     const chunk = concatUint8Arrays(chunks)
-
     chunks = []
     chunkBytes = 0
-    if (storageAvailable) {
-      try {
-        await storage.append(url, chunk)
-      } catch (error: unknown) {
-        storageAvailable = false
-        console.warn('Partial model download could not be stored.', error)
-      }
-    }
+    pendingWrite = writeChunk(chunk)
+    await pendingWrite
+    pendingWrite = undefined
   }
 
   return new ReadableStream({
     async cancel(reason) {
+      cancelled = true
       await flush()
       await reader.cancel(reason)
     },
     async pull(controller) {
       const result = await reader.read()
-
-      if (result.done) {
-        await flush()
-        controller.close()
+      if (cancelled) {
         return
       }
 
-      chunks.push(result.value)
-      chunkBytes += result.value.byteLength
-      if (chunkBytes >= PARTIAL_CHUNK_SIZE) {
+      if (result.done) {
         await flush()
+        if (!cancelled) {
+          controller.close()
+        }
+        return
       }
-      controller.enqueue(result.value)
+
+      if (storageAvailable) {
+        chunks.push(result.value)
+        chunkBytes += result.value.byteLength
+        if (chunkBytes >= PARTIAL_CHUNK_SIZE) {
+          await flush()
+        }
+      }
+      if (!cancelled) {
+        controller.enqueue(result.value)
+      }
     },
   })
 }
