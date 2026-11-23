@@ -147,9 +147,18 @@ export const ResizeCardProvider = (props: ResizeCardProviderProps) => {
   }
 
   const stopResize = (position: Position) => {
+    const surface = element()
+    if (startPosition === undefined || startSize === undefined || surface === undefined) {
+      return
+    }
     updateSize(position)
     startPosition = undefined
     startSize = undefined
+    const current = size()
+    props.onResize?.({
+      height: current?.height ?? surface.offsetHeight,
+      width: current?.width ?? surface.offsetWidth,
+    })
   }
 
   return (
