@@ -61,14 +61,13 @@ export const createPlayer = (
 
   createEffect(() => {
     const element = videoElement()
+    _setState(getState(element))
 
     if (!element) {
       return
     }
 
     const {api = 'shaka'} = options
-
-    _setState(getState(element))
 
     switch (api) {
       case 'shaka': {
