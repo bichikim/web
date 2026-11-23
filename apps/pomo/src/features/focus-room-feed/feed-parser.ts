@@ -162,11 +162,15 @@ const parseFeedTimestamp = (value: string): number | null => {
   return Number.isNaN(timestamp) ? null : timestamp
 }
 const getPublishedAt = (children: ChildGroups) => {
-  const timestamp = ['published', 'pubdate', 'updated', 'date', 'created', 'issued']
-    .map((name) => parseFeedTimestamp(getChildText(children, [name])))
-    .find((value) => value !== null)
+  for (const name of ['published', 'pubdate', 'updated', 'date', 'created', 'issued']) {
+    const timestamp = parseFeedTimestamp(getChildText(children, [name]))
 
-  return timestamp === undefined ? null : new Date(timestamp).toISOString()
+    if (timestamp !== null) {
+      return new Date(timestamp).toISOString()
+    }
+  }
+
+  return null
 }
 const getItemFingerprint = (element: Element) => {
   const serializedItem = new XMLSerializer().serializeToString(element).replace(/>\s+</gu, '><')
