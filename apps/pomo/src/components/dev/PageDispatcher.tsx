@@ -23,6 +23,10 @@ const DEV_PAGE_COMPONENTS: Readonly<Partial<Record<string, Component>>> = {
     const {HwpPage} = await import('./HwpPage')
     return {default: HwpPage}
   }),
+  '/dev/image-composition': lazy(async () => {
+    const {ImageCompositionPage} = await import('./ImageCompositionPage')
+    return {default: ImageCompositionPage}
+  }),
   '/dev/image-generation': lazy(async () => {
     const {ImageGenerationPage} = await import('./ImageGenerationPage')
     return {default: ImageGenerationPage}

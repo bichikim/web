@@ -13,6 +13,10 @@ export function HomeCards() {
   return (
     <div class="mt-10 grid gap-4 md:grid-cols-2">
       <ImageGenerationCard />
+      <A class={CARD_CLASSES} href="/dev/image-composition">
+        <h2>이미지 조합 실험실</h2>
+        <p>분리한 캐릭터와 방 파트를 겹치고 위치와 크기를 조절해요.</p>
+      </A>
       <SoundGenerationCard />
       <A class={CARD_CLASSES} href="/dev/sound-player">
         <h2>효과음 플레이어</h2>
