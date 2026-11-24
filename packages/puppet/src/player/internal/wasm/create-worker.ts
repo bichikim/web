@@ -85,7 +85,9 @@ export const createWasmWorker = (instance: WebAssembly.Instance): WasmWorker => 
     if (shared) {
       outputBytes.set(view)
     }
-    const response = decodeWorkerResponse(decoder.decode(shared ? outputBytes.subarray(0, length) : view))
+    const response = decodeWorkerResponse(
+      decoder.decode(shared ? outputBytes.subarray(0, length) : view),
+    )
     if (response.kind === 'error') {
       return {...response, id: message.id}
     }

@@ -22,7 +22,10 @@ bytemuck = { version = "=1.25.2", features = ["derive"] }
 
 [target.'cfg(target_os = "macos")'.dependencies]
 objc2 = "0.6.4"
-objc2-metal = { version = "0.3.2", default-features = false, features = ["std", "MTLCommandBuffer"] }
+objc2-metal = { version = "0.3.2", default-features = false, features = [
+  "std",
+  "MTLCommandBuffer",
+] }
 wgpu = { version = "=29.0.4", default-features = false, features = ["std", "metal", "wgsl"] }
 
 [target.'cfg(target_os = "windows")'.dependencies]

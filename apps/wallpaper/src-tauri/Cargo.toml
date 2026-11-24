@@ -31,7 +31,15 @@ sha2 = { version = "0.10", features = ["asm"] }
 block2 = "0.6.2"
 objc2-quartz-core = { version = "0.3.2", features = ["CALayer", "CAMetalLayer"] }
 objc2 = "0.6.4"
-objc2-app-kit = { version = "0.3.2", features = ["NSEvent", "NSSavePanel", "NSWindow", "NSGraphics", "NSView", "objc2-quartz-core", "block2"] }
+objc2-app-kit = { version = "0.3.2", features = [
+  "NSEvent",
+  "NSSavePanel",
+  "NSWindow",
+  "NSGraphics",
+  "NSView",
+  "objc2-quartz-core",
+  "block2",
+] }
 objc2-foundation = { version = "0.3.2", features = ["NSArray", "NSString"] }
 
 [target.'cfg(any(target_os = "macos", windows))'.dependencies]
