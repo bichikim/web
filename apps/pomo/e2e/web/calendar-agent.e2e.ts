@@ -32,7 +32,6 @@ test('should display the events in the range selected by the agent alone', async
     (url) => url.pathname.endsWith('/text-generation/transformers-runtime.ts'),
     (route) =>
       route.fulfill({
-        contentType: 'text/javascript',
         body: `
           export const createTransformersRuntime = () => ({
             prepare: async () => {},
@@ -47,6 +46,7 @@ test('should display the events in the range selected by the agent alone', async
             },
           });
         `,
+        contentType: 'text/javascript',
       }),
   )
   await page.route('**/__e2e/calendar-model', async (route) => {
