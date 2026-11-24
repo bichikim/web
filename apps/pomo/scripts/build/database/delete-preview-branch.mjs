@@ -1,6 +1,8 @@
 // Deletes the exact Neon Preview branch requested by the Preview cleanup workflow.
 import {pathToFileURL} from 'node:url'
 
+import {createPreviewCleanupGuard} from '../../../../../scripts/ci/create-preview-cleanup-guard.mjs'
+
 import {requireValue} from '../require-value.mjs'
 
 const NEON_API_ORIGIN = 'https://console.neon.tech'
@@ -22,10 +24,20 @@ const requestNeon = async (path, apiKey, options = {}, fetchImplementation = fet
   return response
 }
 
-/** Deletes one exact Preview branch and treats an absent branch as already cleaned up. */
+/**
+ * Deletes one exact Preview branch and treats an absent branch as already cleaned up.
+ *
+ * @param {{apiKey: string, branchName: string, projectId: string}} input Neon project and branch credentials.
+ * @param {object} [dependencies] Optional request and reporting dependencies.
+ * @param {() => boolean | Promise<boolean>} [dependencies.canDelete]
+ *   Called after resolving the branch and immediately before deletion. When omitted,
+ *   the caller is responsible for checking whether deletion is allowed.
+ * @param {typeof fetch} [dependencies.fetchImplementation] Defaults to global fetch.
+ * @param {(message: string) => void} [dependencies.write] Defaults to console.log.
+ */
 export const deletePreviewBranch = async (
   {apiKey, branchName, projectId},
-  {fetchImplementation = fetch, write = console.log} = {},
+  {canDelete, fetchImplementation = fetch, write = console.log} = {},
 ) => {
   const normalizedApiKey = requireValue(apiKey, 'NEON_API_KEY')
   const normalizedBranchName = requireValue(branchName, 'NEON_BRANCH_NAME')
@@ -61,6 +73,10 @@ export const deletePreviewBranch = async (
     throw new TypeError(`Neon Preview branch ${normalizedBranchName} is ambiguous.`)
   }
 
+  if (canDelete && !(await canDelete())) {
+    return 'skipped'
+  }
+
   await requestNeon(
     `${projectPath}/branches/${encodeURIComponent(matchingBranches[0].id)}`,
     normalizedApiKey,
@@ -73,11 +89,15 @@ export const deletePreviewBranch = async (
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
-  deletePreviewBranch({
-    apiKey: process.env.NEON_API_KEY,
-    branchName: process.env.NEON_BRANCH_NAME,
-    projectId: process.env.NEON_PROJECT_ID,
-  }).catch((error) => {
+  const branchName = process.env.NEON_BRANCH_NAME ?? ''
+  deletePreviewBranch(
+    {
+      apiKey: process.env.NEON_API_KEY ?? '',
+      branchName,
+      projectId: process.env.NEON_PROJECT_ID ?? '',
+    },
+    {canDelete: createPreviewCleanupGuard({sharedHeadRef: branchName.slice('preview/'.length)})},
+  ).catch((error) => {
     console.error(error instanceof Error ? error.message : 'Unknown Neon cleanup failure.')
     process.exitCode = 1
   })

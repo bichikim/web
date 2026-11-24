@@ -58,6 +58,29 @@ describe('deletePreviewAudio', () => {
     expect(write).toHaveBeenCalledWith('Deleted 2 R2 Preview objects under previews/pr-123/.')
   })
 
+  it('should stop before the next deletion batch when the PR reopens', async () => {
+    const objects = () =>
+      new Response(
+        '<ListBucketResult><Contents><Key>previews%2Fpr-123%2Fsource.mp3</Key></Contents></ListBucketResult>',
+      )
+    const fetchImplementation = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(objects())
+      .mockResolvedValueOnce(new Response('<DeleteResult />'))
+      .mockResolvedValueOnce(objects())
+    const canDelete = vi.fn().mockResolvedValueOnce(true).mockResolvedValueOnce(false)
+
+    const result = await deletePreviewAudio(input, {
+      canDelete,
+      fetchImplementation,
+      signerFactory,
+    })
+
+    expect(result).toBe(1)
+    expect(canDelete).toHaveBeenCalledTimes(2)
+    expect(fetchImplementation).toHaveBeenCalledTimes(3)
+  })
+
   it('should reject a prefix outside one PR namespace', () =>
     expect(deletePreviewAudio({...input, prefix: 'previews/'}, {signerFactory})).rejects.toThrow(
       'POMO_PAID_AUDIO_R2_PREFIX must identify one PR Preview.',
