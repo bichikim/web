@@ -390,7 +390,12 @@ it('should persist a complete connection profile atomically without changing spe
   expect(stored.tracking).toBe('cursor')
   expect(stored.trackingBindings?.headX).toEqual({inverted: true, parameterId: 'ParamAngleX'})
   await reopened.configureConnections(widget.id, {trackingOptions: {eyeCenterX: 0.2}})
-  expect((await reopened.read()).widgets[0]?.tracking).toBe('cursor')
+  expect((await reopened.read()).widgets[0]).toMatchObject({
+    tracking: 'cursor',
+    trackingOptions: {eyeCenterX: 0.2, headMaximumX: 18, headMinimumX: -12},
+  })
+  await reopened.configureConnections(widget.id, {trackingOptions: {eyeCenterX: 0.3}}, 'replace')
+  expect((await reopened.read()).widgets[0]?.trackingOptions).toEqual({eyeCenterX: 0.3})
 })
 
 it('should retain explicit empty bindings when initializing defaults', async () => {

@@ -14,7 +14,11 @@ export const useSelect = <Value extends string>(props: UseSelectProps<Value>) =>
   const [expanded, setExpanded] = createSignal(false)
   const [activeIndex, setActiveIndex] = createSignal(0)
   const [local, setLocal] = createSignal<Value | null>(null)
-  const value = createMemo(() => props.value() ?? local() ?? props.options()[0]?.value)
+  const localOption = createMemo(() => {
+    const choice = local()
+    return choice === null ? undefined : props.options().find((option) => option.value === choice)
+  })
+  const value = createMemo(() => props.value() ?? localOption()?.value ?? props.options()[0]?.value)
   const selectedIndex = createMemo(() =>
     Math.max(
       0,
@@ -123,6 +127,9 @@ export const useSelect = <Value extends string>(props: UseSelectProps<Value>) =>
     }
   }
   createEffect(() => {
+    if (local() !== null && localOption() === undefined) {
+      setLocal(null)
+    }
     if (props.disabled() || props.options().length === 0) {
       dismiss()
     } else if (activeIndex() >= props.options().length) {

@@ -1,6 +1,6 @@
 import {type PoffoConnections, poffoConnectionsSchema} from './connections'
 import {toggleMenuAction} from './toggle-menu-action'
-import {mergeConnections} from './merge-connections'
+import {type ConnectionUpdateMode, mergeConnections} from './merge-connections'
 import Dexie, {liveQuery, type Table} from 'dexie'
 import {poffoVoiceSchema} from './voice'
 import {
@@ -38,7 +38,7 @@ export interface LibraryRepository {
   readonly configureConnections: (
     id: string,
     connections: PoffoConnections,
-    mode?: 'replace' | 'missing',
+    mode?: ConnectionUpdateMode,
   ) => Promise<void>
   readonly read: () => Promise<WallpaperLibrary>
   readonly visit: (options: VisitWebsiteOptions) => Promise<void>
@@ -92,7 +92,7 @@ export const createLibraryRepository = (name: string): LibraryRepository => {
       await database.widgets.update(id, {trackingBindings: poffoBindingsSchema.parse(bindings)})
     },
     close: () => database.close(),
-    async configureConnections(id, connections, mode = 'replace') {
+    async configureConnections(id, connections, mode = 'merge') {
       const parsed = poffoConnectionsSchema.parse(connections)
       await database.transaction('rw', database.widgets, async () => {
         const widget = await database.widgets.get(id)

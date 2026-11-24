@@ -7,6 +7,8 @@ import {createBuiltinLibrary} from '../../src/features/builtin-assets/create-bui
 import {SPoffoConnectionProfiles} from '../../src/components/SPoffoConnectionProfiles'
 import type {PoffoWidget} from '@winter-love/wallpaper/settings/library-model'
 import type {ConnectionProfile} from '@winter-love/wallpaper/settings/connections'
+import {semanticTargets} from '@winter-love/wallpaper/settings/semantic-targets'
+import {builtinConnectionProfile} from '../../src/features/connection-profiles/builtin-profile'
 import ash from '../../src/features/connection-profiles/ash.json'
 import 'virtual:uno.css'
 
@@ -33,6 +35,7 @@ it('should round-trip connections, reject invalid JSON, and restore defaults', a
   const parameters = [
     'ParamAngleX',
     'ParamMouthOpenY',
+    'Param71',
     ...ash.connections.semanticBindings.map((item) => item.parameterId),
   ].map((id) => ({defaultValue: 0, id, maximum: 30, minimum: -30}))
   let url = ''
@@ -41,8 +44,13 @@ it('should round-trip connections, reject invalid JSON, and restore defaults', a
       url = this.href
     },
   )
-  const view = render(() => <SPoffoConnectionProfiles widget={widget()} parameters={parameters} />)
-  await userEvent.click(screen.getByRole('button', {name: '연결 JSON 저장'}))
+  const actions = (builtinConnectionProfile('builtin:ash')?.connections.semanticBindings ?? [])
+    .flatMap(semanticTargets)
+    .map((action) => ({action, label: action.id}))
+  const view = render(() => (
+    <SPoffoConnectionProfiles actions={actions} widget={widget()} parameters={parameters} />
+  ))
+  await userEvent.click(screen.getByRole('button', {name: '설정 JSON 저장'}))
   const json = await (await fetch(url)).text()
   const exported: ConnectionProfile = JSON.parse(json)
   expect(exported.connections).toMatchObject({
