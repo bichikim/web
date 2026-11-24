@@ -1,6 +1,7 @@
 /** @vitest-environment jsdom */
 
 import {createSignal} from 'solid-js'
+import {createTestBroadcastChannel} from 'src/__tests__/create-test-broadcast-channel'
 import type {PSceneStyle} from 'src/features/focus-room-animation'
 import {PreferenceProvider} from 'src/hooks/use-preference'
 import {fireEvent, render, screen, within} from '@solidjs/testing-library'
@@ -14,6 +15,10 @@ import focusStatusIcon from '../../assets/pomodoro-status-icons/focus.webp'
 import scribbleBreakStatusIcon from '../../assets/pomodoro-status-icons/scribble/break.webp'
 import scribbleFocusStatusIcon from '../../assets/pomodoro-status-icons/scribble/focus.webp'
 import {PPomodoro} from '../PPomodoro'
+
+const {PModal: RealPModal} = await vi.importActual<typeof import('src/components/p-modal/PModal')>(
+  'src/components/p-modal/PModal',
+)
 
 const bridgeStorageMocks = vi.hoisted(() => ({
   getItem: vi.fn<(key: string) => Promise<string | null>>(),
@@ -515,6 +520,122 @@ describe('PPomodoro', () => {
       within(quickControls).getByRole('button', {name: '포모도로 열기, 휴식 중, 00:01'}),
     ).toBeDefined()
     expect(onEvents).toHaveBeenCalledWith(['focus-end', 'break-start'], {isCatchUp: true})
+  })
+
+  it.each([false, true])(
+    'should retain progress nodes through live config and completion synchronization (desktopDialog: %s)',
+    async (desktopDialog) => {
+      const Channel = createTestBroadcastChannel({broadcast: true, removeOnClose: true})
+      vi.stubGlobal('BroadcastChannel', Channel)
+      const source = new Channel('pomo:pomodoro-timer:v1')
+      try {
+        render(() => (
+          <PreferenceProvider>
+            <PPomodoro desktopDialog={desktopDialog} />
+          </PreferenceProvider>
+        ))
+        await vi.advanceTimersByTimeAsync(0)
+        if (!desktopDialog) {
+          fireEvent.click(screen.getByRole('button', {name: /포모도로 열기/}))
+        }
+        const progress = screen.getByLabelText('4회 중 0회 집중 완료')
+        const markers = Array.from(progress.children)
+        const send = (count: number, completed: number, focusSeconds = 1_500) =>
+          source.postMessage({
+            config: {
+              focusSeconds,
+              focusSessionsPerCycle: count,
+              longBreakSeconds: 900,
+              shortBreakSeconds: 300,
+            },
+            isAutoStartEnabled: false,
+            state: {
+              completedFocusSessions: completed,
+              phase: 'focus',
+              remainingSeconds: focusSeconds,
+              status: 'idle',
+            },
+          })
+
+        send(4, 1)
+        expect(screen.getByLabelText('4회 중 1회 집중 완료')).toBe(progress)
+        expect(progress.children[0]).toHaveAttribute('data-complete', '')
+        expect(progress.children[1]).not.toHaveAttribute('data-complete')
+        send(6, 2)
+        expect(screen.getByLabelText('6회 중 2회 집중 완료')).toBe(progress)
+        expect(progress.children).toHaveLength(6)
+        markers.forEach((marker, position) => expect(progress.children[position]).toBe(marker))
+        expect(progress.children[1]).toHaveAttribute('data-complete', '')
+        expect(progress.children[2]).not.toHaveAttribute('data-complete')
+        send(6, 2, 1_800)
+        expect(screen.getByLabelText('6회 중 2회 집중 완료')).toBe(progress)
+        markers.forEach((marker, position) => expect(progress.children[position]).toBe(marker))
+        expect(screen.getByRole('button', {name: /6세션 · 집중 30분/})).toBeDefined()
+        send(1, 2)
+        expect(screen.getByLabelText('1회 중 0회 집중 완료')).toBe(progress)
+        expect(progress.children).toHaveLength(1)
+        expect(progress.firstElementChild).toBe(markers[0])
+        expect(markers.slice(1).every((marker) => !marker.isConnected)).toBe(true)
+      } finally {
+        source.close()
+        vi.unstubAllGlobals()
+      }
+    },
+  )
+
+  it('should preserve progress lifecycle through the real modal portal', async () => {
+    // jsdom has no stylesheet animation engine; use the modal suite's no-animation boundary.
+    const readStyles = globalThis.getComputedStyle.bind(globalThis)
+    const styleSpy = vi.spyOn(globalThis, 'getComputedStyle').mockImplementation((element) => {
+      const styles = readStyles(element)
+      Object.defineProperty(styles, 'animationName', {configurable: true, value: 'none'})
+      return styles
+    })
+    try {
+      vi.mocked(PModal).mockImplementation(RealPModal)
+      const [style, setStyle] = createSignal<PSceneStyle>('original')
+      const view = render(() => (
+        <PreferenceProvider>
+          <PPomodoro sceneStyle={style()} />
+        </PreferenceProvider>
+      ))
+      await vi.advanceTimersByTimeAsync(0)
+      expect(screen.queryByRole('dialog', {name: '포모도로'})).toBeNull()
+      const trigger = screen.getByRole('button', {name: /포모도로 열기/})
+      fireEvent.click(trigger)
+      const dialog = screen.getByRole('dialog', {name: '포모도로'})
+      expect(view.container.contains(dialog)).toBe(false)
+      const initial = within(dialog).getByLabelText('4회 중 0회 집중 완료')
+      fireEvent.click(within(dialog).getByRole('button', {name: '다음 단계로 이동'}))
+      expect(within(dialog).getByLabelText('4회 중 1회 집중 완료')).toBe(initial)
+      setStyle('scribble')
+      expect(within(dialog).getByLabelText('4회 중 1회 집중 완료')).toBe(initial)
+      expect(
+        within(dialog).getByRole('button', {name: '세션 초기화'}).firstElementChild,
+      ).toHaveClass('i-pomo-scribble:refresh')
+      fireEvent.click(within(dialog).getByRole('button', {name: /4세션/}))
+      expect(initial.isConnected).toBe(false)
+      fireEvent.click(within(dialog).getByRole('button', {name: '취소'}))
+      const afterEditing = within(dialog).getByLabelText('4회 중 1회 집중 완료')
+      expect(afterEditing).not.toBe(initial)
+      expect(afterEditing.children).toHaveLength(4)
+      expect(afterEditing.firstElementChild).toHaveAttribute('data-complete', '')
+      fireEvent.click(within(dialog).getByRole('button', {name: '닫기'}))
+      await vi.advanceTimersByTimeAsync(0)
+      expect(screen.queryByRole('dialog', {name: '포모도로'})).toBeNull()
+      expect(afterEditing.isConnected).toBe(false)
+      fireEvent.click(trigger)
+      const reopened = screen.getByRole('dialog', {name: '포모도로'})
+      const progress = within(reopened).getByLabelText('4회 중 1회 집중 완료')
+      expect(progress).not.toBe(afterEditing)
+      expect(progress.children).toHaveLength(4)
+      expect(progress.firstElementChild).toHaveAttribute('data-complete', '')
+      fireEvent.click(within(reopened).getByRole('button', {name: '세션 초기화'}))
+      expect(within(reopened).getByLabelText('4회 중 0회 집중 완료')).toBe(progress)
+      expect(progress.querySelector('[data-complete]')).toBeNull()
+    } finally {
+      styleSpy.mockRestore()
+    }
   })
 
   it('should preserve an unsupported runtime timer status for exhaustive diagnostics', async () => {
