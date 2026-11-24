@@ -207,14 +207,24 @@ const parseObservation = (items: ReadonlyArray<KmaItem>): WeatherObservationInpu
 }
 
 const parseNearestSky = (items: ReadonlyArray<KmaItem>, targetTime: Date): WeatherSky => {
+  const forecastTimes = new Map<KmaItem, number>()
+  const getForecastTime = (item: KmaItem): number => {
+    const cachedTime = forecastTimes.get(item)
+    if (cachedTime !== undefined) {
+      return cachedTime
+    }
+    const forecastTime = parseKmaDateTime(item.fcstDate!, item.fcstTime!).getTime()
+    forecastTimes.set(item, forecastTime)
+    return forecastTime
+  }
   const skyItems = items
     .filter(
       (item) =>
         item.category === 'SKY' && item.fcstDate !== undefined && item.fcstTime !== undefined,
     )
     .sort((left, right) => {
-      const leftTime = parseKmaDateTime(left.fcstDate!, left.fcstTime!).getTime()
-      const rightTime = parseKmaDateTime(right.fcstDate!, right.fcstTime!).getTime()
+      const leftTime = getForecastTime(left)
+      const rightTime = getForecastTime(right)
       return Math.abs(leftTime - targetTime.getTime()) - Math.abs(rightTime - targetTime.getTime())
     })
   const [nearestSky] = skyItems
