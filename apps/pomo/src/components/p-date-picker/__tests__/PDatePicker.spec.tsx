@@ -1,6 +1,7 @@
 /** @vitest-environment jsdom */
 import {fireEvent, render, screen, within} from '@solidjs/testing-library'
 import {createSignal} from 'solid-js'
+import {getLocale, overwriteGetLocale} from '@paraglide/runtime'
 import {expect, it, vi} from 'vitest'
 import {PDatePicker} from '../PDatePicker'
 it('should select a bounded date with a custom calendar and return focus', async () => {
@@ -98,4 +99,159 @@ it('should preserve every date button while moving focus within the same month',
   expect(screen.getByRole('button', {name: '2026-10-16'})).toHaveFocus()
   expect(screen.getByRole('button', {name: '2026-10-16'})).toHaveAttribute('tabindex', '0')
   expect(screen.getByRole('button', {name: '2026-10-15'})).toHaveAttribute('tabindex', '-1')
+})
+
+it('should update controlled selection and bounds without replacing mounted date buttons', () => {
+  const [value, setValue] = createSignal('2026-10-15')
+  const [minimum, setMinimum] = createSignal('2026-10-01')
+  const [maximum, setMaximum] = createSignal('2026-10-31')
+  const onChange = vi.fn()
+  const view = render(() => (
+    <PDatePicker label="날짜" value={value()} min={minimum()} max={maximum()} onChange={onChange} />
+  ))
+  const trigger = screen.getByRole('button', {name: '날짜: 2026-10-15'})
+  fireEvent.click(trigger)
+  const buttons = Array.from(view.container.querySelectorAll<HTMLButtonElement>('[data-date]'))
+  const selected = buttons[14]
+  const next = buttons[15]
+  expect(selected).toHaveAttribute('aria-pressed', 'true')
+  setValue('2026-10-16')
+  expect(selected).toHaveAttribute('aria-pressed', 'false')
+  expect(next).toHaveAttribute('aria-pressed', 'true')
+  setMinimum('2026-10-16')
+  setMaximum('2026-10-16')
+  expect(selected).toBeDisabled()
+  expect(next).toBeEnabled()
+  expect(buttons[16]).toBeDisabled()
+  const currentButtons = Array.from(view.container.querySelectorAll('[data-date]'))
+  expect(currentButtons).toHaveLength(buttons.length)
+  currentButtons.forEach((button, index) => expect(button).toBe(buttons[index]))
+  fireEvent.click(next)
+  expect(onChange).toHaveBeenCalledExactlyOnceWith('2026-10-16')
+  expect(trigger).toHaveFocus()
+})
+
+it.each([
+  {count: 31, date: '2024-02-29', key: 'PageDown', target: '2024-03-29'},
+  {count: 29, date: '2024-03-31', key: 'PageUp', target: '2024-02-29'},
+  {count: 31, date: '2026-12-31', key: 'ArrowRight', target: '2027-01-01'},
+  {count: 31, date: '2027-01-01', key: 'ArrowLeft', target: '2026-12-31'},
+])(
+  'should replace date cells and focus $target after $key from $date',
+  ({date, key, target, count}) => {
+    const onChange = vi.fn()
+    const view = render(() => (
+      <PDatePicker
+        label="날짜"
+        value={date}
+        min="2024-01-01"
+        max="2027-12-31"
+        onChange={onChange}
+      />
+    ))
+    fireEvent.click(screen.getByRole('button', {name: `날짜: ${date}`}))
+    const oldButtons = Array.from(view.container.querySelectorAll('[data-date]'))
+    fireEvent.keyDown(screen.getByRole('button', {name: date}), {key})
+    const buttons = Array.from(view.container.querySelectorAll<HTMLButtonElement>('[data-date]'))
+    expect(buttons).toHaveLength(count)
+    expect(new Set(buttons.map((button) => button.dataset.date)).size).toBe(count)
+    expect(buttons.every((button) => button.dataset.date?.startsWith(target.slice(0, 7)))).toBe(
+      true,
+    )
+    expect(oldButtons.every((button) => !button.isConnected)).toBe(true)
+    const focused = screen.getByRole('button', {name: target})
+    expect(focused).toHaveFocus()
+    expect(focused).toHaveAttribute('tabindex', '0')
+    fireEvent.click(focused)
+    expect(onChange).toHaveBeenCalledExactlyOnceWith(target)
+  },
+)
+
+it.each([
+  {key: 'Home', target: '2026-10-11'},
+  {key: 'End', target: '2026-10-17'},
+])('should keep the date object available for $key navigation', ({key, target}) => {
+  render(() => <PDatePicker label="날짜" value="2026-10-15" min="2026-01-01" max="2026-12-31" />)
+  fireEvent.click(screen.getByRole('button', {name: '날짜: 2026-10-15'}))
+  fireEvent.keyDown(screen.getByRole('button', {name: '2026-10-15'}), {key})
+  expect(screen.getByRole('button', {name: target})).toHaveFocus()
+})
+
+it('should restore the selected date with new cells on reopen and preserve blank placeholders', () => {
+  const [value, setValue] = createSignal('2026-10-15')
+  const view = render(() => (
+    <PDatePicker
+      label="날짜"
+      value={value()}
+      min="2026-01-01"
+      max="2026-12-31"
+      onChange={setValue}
+      clearable
+    />
+  ))
+  const trigger = screen.getByRole('button', {name: '날짜: 2026-10-15'})
+  fireEvent.click(trigger)
+  const old = screen.getByRole('button', {name: '2026-10-15'})
+  const grid = old.parentElement!
+  expect(
+    Array.from(grid.children)
+      .slice(7, 11)
+      .every((cell) => cell.outerHTML === '<span></span>'),
+  ).toBe(true)
+  fireEvent.click(screen.getByRole('button', {name: '2026-10-16'}))
+  expect(value()).toBe('2026-10-16')
+  expect(trigger).toHaveFocus()
+  fireEvent.click(trigger)
+  expect(old).not.toBeInTheDocument()
+  expect(screen.getByRole('button', {name: '2026-10-16'})).toHaveFocus()
+  expect(screen.getByRole('button', {name: '2026-10-16'})).toHaveAttribute('aria-pressed', 'true')
+  fireEvent.click(screen.getByRole('button', {name: '선택 지우기'}))
+  expect(value()).toBe('')
+  expect(trigger).toHaveAccessibleName('날짜: 날짜 선택')
+  expect(trigger).toHaveFocus()
+})
+
+it('should preserve date keys during locale re-evaluation and format labels again on reopen', () => {
+  const originalGetLocale = getLocale
+  const [locale, setLocale] = createSignal<'ko' | 'en'>('ko')
+  overwriteGetLocale(locale)
+  try {
+    const view = render(() => (
+      <PDatePicker label="날짜" value="2026-10-15" min="2026-01-01" max="2026-12-31" />
+    ))
+    const trigger = screen.getByRole('button', {name: '날짜: 2026-10-15'})
+    fireEvent.click(trigger)
+    const button = screen.getByRole('button', {name: '2026-10-15'})
+    const weekdays = () =>
+      Array.from(button.parentElement!.querySelectorAll('[aria-hidden]')).map(
+        (cell) => cell.textContent,
+      )
+    const expectedWeekdays = (language: string) =>
+      Array.from({length: 7}, (_, index) =>
+        new Intl.DateTimeFormat(language, {timeZone: 'UTC', weekday: 'narrow'}).format(
+          Date.UTC(2026, 0, 4 + index),
+        ),
+      )
+    expect(weekdays()).toEqual(expectedWeekdays('ko'))
+    setLocale('en')
+    expect(weekdays()).toEqual(expectedWeekdays('en'))
+    expect(screen.getByRole('button', {name: '2026-10-15'})).toBe(button)
+    expect(button).toHaveFocus()
+    expect(button).toHaveAttribute('data-date', '2026-10-15')
+    fireEvent.keyDown(button, {key: 'Escape'})
+    expect(trigger).toHaveFocus()
+    fireEvent.click(trigger)
+    expect(screen.getByRole('button', {name: '2026-10-15'})).not.toBe(button)
+    expect(screen.getByRole('button', {name: '2026-10-15'})).toHaveFocus()
+    expect(view.container.querySelectorAll('[data-date]')).toHaveLength(31)
+    expect(screen.getByRole('button', {name: /October|Oct/u})).toBeVisible()
+    view.unmount()
+    setLocale('ko')
+    render(() => <PDatePicker label="날짜" value="2026-10-15" min="2026-01-01" max="2026-12-31" />)
+    fireEvent.click(screen.getByRole('button', {name: '날짜: 2026-10-15'}))
+    expect(screen.getByRole('button', {name: '2026-10-15'})).toHaveFocus()
+    expect(screen.getByRole('button', {name: /10월/u})).toBeVisible()
+  } finally {
+    overwriteGetLocale(originalGetLocale)
+  }
 })
