@@ -252,25 +252,17 @@ const scheduleAlbumWrite = (
         const albumsRequest = albumStore.getAll()
         const tracksRequest = trackStore.getAll()
         let failure: unknown = null
-        let completedReads = 0
-        let rawAlbums: unknown[] = []
-        let rawTracks: unknown[] = []
 
-        const writeWhenRead = () => {
-          completedReads += 1
-
-          if (completedReads < 2) {
-            return
-          }
-
+        // IndexedDB returns same-transaction requests in order, so both reads are ready here.
+        tracksRequest.onsuccess = () => {
           try {
-            const allAlbums = parseStoredAlbums(rawAlbums)
+            const allAlbums = parseStoredAlbums(albumsRequest.result)
             const existingAlbum = resolveExistingAlbum(
               allAlbums.find((album) => album.id === albumId),
               albumId,
               options.albumId,
             )
-            const allTracks = parseStoredTracks(rawTracks)
+            const allTracks = parseStoredTracks(tracksRequest.result)
             const existingTracks = allTracks.filter((track) => track.albumId === albumId)
             const plan = createAlbumWritePlan({
               albumId,
@@ -287,15 +279,6 @@ const scheduleAlbumWrite = (
             failure = error
             transaction.abort()
           }
-        }
-
-        albumsRequest.onsuccess = () => {
-          rawAlbums = albumsRequest.result
-          writeWhenRead()
-        }
-        tracksRequest.onsuccess = () => {
-          rawTracks = tracksRequest.result
-          writeWhenRead()
         }
 
         finished.then(resolve, (error: unknown) => {
