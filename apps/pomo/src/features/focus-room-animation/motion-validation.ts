@@ -1,5 +1,11 @@
 import {getMotionEffects} from './motion-definition'
-import type {PixiSceneMotion, PixiScenePixelPush, PixiScenePoint} from './layer-scene-definition'
+import type {
+  PixiSceneMotion,
+  PixiSceneOpacityPulse,
+  PixiScenePixelPush,
+  PixiScenePoint,
+  PixiSceneTravelRange,
+} from './layer-scene-definition'
 
 interface SceneSize {
   readonly height: number
@@ -8,6 +14,19 @@ interface SceneSize {
 
 const MAXIMUM_FADE_EDGE_FRACTION = 0.5
 const MAXIMUM_FLASH_CHANCE = 0.5
+
+const isInvalidTravel = (range: PixiSceneTravelRange) =>
+  range.minimumSeconds <= 0 || range.maximumSeconds < range.minimumSeconds
+
+const isInvalidPhase = (phase: number | undefined) =>
+  phase !== undefined && (phase < 0 || phase >= 1)
+
+const isInvalidOpacity = (
+  motion: Pick<PixiSceneOpacityPulse, 'maximumOpacity' | 'minimumOpacity'>,
+) =>
+  motion.minimumOpacity < 0 ||
+  motion.maximumOpacity > 1 ||
+  motion.minimumOpacity >= motion.maximumOpacity
 
 const isValidPixelPush = (effect: PixiScenePixelPush, scene: SceneSize) => {
   const {region} = effect
@@ -60,7 +79,7 @@ const affectsSpriteOpacity = (motion: PixiSceneMotion) =>
 const validateTravel = (layerId: string, motion: PixiSceneMotion) => {
   const {travel} = motion
 
-  if (travel.minimumSeconds <= 0 || travel.maximumSeconds < travel.minimumSeconds) {
+  if (isInvalidTravel(travel)) {
     throw new Error(`Invalid motion travel range for layer: ${layerId}`)
   }
 }
@@ -92,11 +111,7 @@ const validateLoopingTranslation = (layerId: string, motion: PixiSceneMotion) =>
     throw new Error(`Looping translation requires distinct positions: ${layerId}`)
   }
 
-  if (
-    motion.kind === 'looping-translation' &&
-    motion.phase !== undefined &&
-    (motion.phase < 0 || motion.phase >= 1)
-  ) {
+  if (motion.kind === 'looping-translation' && isInvalidPhase(motion.phase)) {
     throw new Error(`Looping translation phase must be in [0, 1): ${layerId}`)
   }
 
@@ -117,15 +132,11 @@ const validateOpacityPulse = (layerId: string, motion: PixiSceneMotion) => {
     return
   }
 
-  if (
-    motion.minimumOpacity < 0 ||
-    motion.maximumOpacity > 1 ||
-    motion.minimumOpacity >= motion.maximumOpacity
-  ) {
+  if (isInvalidOpacity(motion)) {
     throw new Error(`Invalid opacity pulse range for layer: ${layerId}`)
   }
 
-  if (motion.phase !== undefined && (motion.phase < 0 || motion.phase >= 1)) {
+  if (isInvalidPhase(motion.phase)) {
     throw new Error(`Opacity pulse phase must be in [0, 1): ${layerId}`)
   }
 }
@@ -136,21 +147,14 @@ const validateOpacityTwinkle = (layerId: string, motion: PixiSceneMotion) => {
   }
 
   if (
-    motion.minimumOpacity < 0 ||
-    motion.maximumOpacity > 1 ||
-    motion.minimumOpacity >= motion.maximumOpacity ||
+    isInvalidOpacity(motion) ||
     motion.flashChance <= 0 ||
     motion.flashChance >= MAXIMUM_FLASH_CHANCE ||
-    motion.rise.minimumSeconds <= 0 ||
-    motion.rise.maximumSeconds < motion.rise.minimumSeconds ||
-    motion.fall.minimumSeconds <= 0 ||
-    motion.fall.maximumSeconds < motion.fall.minimumSeconds ||
-    motion.flashRise.minimumSeconds <= 0 ||
-    motion.flashRise.maximumSeconds < motion.flashRise.minimumSeconds ||
-    motion.flashHold.minimumSeconds <= 0 ||
-    motion.flashHold.maximumSeconds < motion.flashHold.minimumSeconds ||
-    motion.flashFall.minimumSeconds <= 0 ||
-    motion.flashFall.maximumSeconds < motion.flashFall.minimumSeconds
+    isInvalidTravel(motion.rise) ||
+    isInvalidTravel(motion.fall) ||
+    isInvalidTravel(motion.flashRise) ||
+    isInvalidTravel(motion.flashHold) ||
+    isInvalidTravel(motion.flashFall)
   ) {
     throw new Error(`Invalid opacity twinkle configuration for layer: ${layerId}`)
   }
@@ -165,7 +169,7 @@ const validateVisibilityCycle = (layerId: string, motion: PixiSceneMotion) => {
     throw new Error(`Visibility cycle fraction must be in (0, 1]: ${layerId}`)
   }
 
-  if (motion.phase !== undefined && (motion.phase < 0 || motion.phase >= 1)) {
+  if (isInvalidPhase(motion.phase)) {
     throw new Error(`Visibility cycle phase must be in [0, 1): ${layerId}`)
   }
 }
