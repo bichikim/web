@@ -40,7 +40,8 @@ export const AuthProvider = (props: AuthProviderProps) => {
       }
 
       checkingSession = true
-      revalidate(accountSessionQuery.key).then(finishCheck, finishCheck)
+      const invalidation = revalidate(accountSessionQuery.key)
+      Promise.allSettled([invalidation, accountSessionQuery()]).then(finishCheck)
     })
     onCleanup(unsubscribe)
   })

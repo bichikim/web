@@ -50,7 +50,7 @@ export const PWeatherStatus = (props: PWeatherStatusProps) => (
             <span>
               {getLocalizedWeatherLocationLabel(state().feed.location)} ·{' '}
               {getLocalizedWeatherLabel(state().feed.current.condition)}
-              <Show when={temperatureLabel()}>{(label) => label()}</Show>
+              {temperatureLabel()}
               <Show
                 fallback={<Show when={state().feed.stale}> · {m.weather_stale()}</Show>}
                 when={state().refreshing}

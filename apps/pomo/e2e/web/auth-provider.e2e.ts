@@ -1,6 +1,6 @@
 import {expect, test} from '@playwright/test'
 
-import {enterFocusRoom, openUserSettings} from '../helpers/settings'
+import {enterFocusRoom, openSettings, openUserSettings} from '../helpers/settings'
 
 const TEST_EMAIL = 'auth-provider@example.com'
 
@@ -52,33 +52,52 @@ test('shares the web session across account and settings consumers after sign-ou
 for (const source of ['AI settings', 'calendar'] as const) {
   test(`refreshes an expired web session after a 401 from ${source}`, async ({page}) => {
     let sessionExpired = false
-    let sessionReads = 0
+    let expiredSessionReads = 0
     await page.route('**/api/account', async (route) => {
-      sessionReads += 1
-      await route.fulfill(sessionExpired ? {status: 401} : {json: {email: TEST_EMAIL}})
+      if (sessionExpired) {
+        expiredSessionReads += 1
+        await route.fulfill({status: 401})
+        return
+      }
+      await route.fulfill({json: {email: TEST_EMAIL}})
     })
-    const protectedRoute =
-      source === 'AI settings' ? '**/api/cloud-text' : '**/api/calendar/events?*'
-    await page.route(protectedRoute, (route) =>
+    await page.route('**/api/cloud-text', (route) =>
+      route.fulfill(
+        sessionExpired
+          ? {json: {error: 'unauthorized'}, status: 401}
+          : {
+              json: {
+                day: '2026-11-24',
+                limit: 3,
+                remaining: 2,
+                resetsAt: '2026-11-25T00:00:00Z',
+                used: 1,
+              },
+            },
+      ),
+    )
+    await page.route('**/api/calendar/events?*', (route) =>
       route.fulfill({json: {error: 'unauthorized'}, status: 401}),
     )
 
+    const initialSession = page.waitForResponse(
+      (response) => new URL(response.url()).pathname === '/api/account' && response.ok(),
+    )
     await page.goto('/')
+    await initialSession
     await enterFocusRoom(page)
-    await openUserSettings(page)
-    await expect(page.getByText(TEST_EMAIL, {exact: true})).toBeVisible()
-    sessionExpired = true
 
-    const settings = page.getByRole('dialog', {name: 'Pomofi 설정'})
     if (source === 'AI settings') {
-      await settings.getByRole('tab', {exact: true, name: 'AI'}).click()
+      const settings = await openSettings(page, 'AI')
       await settings.getByRole('button', {name: /기본 문장 생성 모델/u}).click()
+      await expect(page.getByRole('option', {name: 'Cloud Model · 2회 남음'})).toBeEnabled()
+      sessionExpired = true
+      await page.evaluate(() => globalThis.dispatchEvent(new Event('focus')))
       await expect(
         page.getByRole('option', {name: 'Cloud Model (로그인 해주세요)'}),
       ).toHaveAttribute('aria-disabled', 'true')
     } else {
-      await page.keyboard.press('Escape')
-      await expect(settings).toBeHidden()
+      sessionExpired = true
       await page.getByRole('button', {exact: true, name: '생각 보조'}).click()
       const dialog = page.getByRole('dialog', {name: 'Pomofi 생각 보조'})
       await dialog.getByRole('tab', {name: '캘린더'}).click()
@@ -90,6 +109,6 @@ for (const source of ['AI settings', 'calendar'] as const) {
       await openUserSettings(page)
       await expect(page.getByText('로그인하지 않았어요.', {exact: true})).toBeVisible()
     }
-    expect(sessionReads).toBe(2)
+    expect(expiredSessionReads).toBe(1)
   })
 }
