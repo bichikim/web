@@ -23,7 +23,6 @@ const memberships = new Map<string, Session>()
 const messageCounts = new Map<string, number>()
 const MAXIMUM_SESSIONS = 100
 const HANDSHAKE_DURATION_MS = 5 * 60 * 1000
-const encoder = new TextEncoder()
 
 const send = (peer: Peer, value: unknown): void => {
   peer.send(JSON.stringify(value))
@@ -114,7 +113,7 @@ const handleMessage = (peer: Peer, raw: string): void => {
   sweepExpired()
   const count = (messageCounts.get(peer.id) ?? 0) + 1
   messageCounts.set(peer.id, count)
-  if (encoder.encode(raw).byteLength > 20_000 || count > 256) {
+  if (Buffer.byteLength(raw, 'utf8') > 20_000 || count > 256) {
     peer.close(1009, 'Handshake limit exceeded')
     return
   }
