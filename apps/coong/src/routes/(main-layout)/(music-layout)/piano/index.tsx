@@ -57,14 +57,17 @@ export default function HomePage() {
 
   const handleGetSample = async () => {
     setIsLoading(true)
-    const {musics} = (await getSample()) ?? {}
+    try {
+      const {musics} = (await getSample()) ?? {}
 
-    if (musics && musics.length > 0) {
-      handleAddPlayItem(musics)
+      if (musics && musics.length > 0) {
+        handleAddPlayItem(musics)
+      }
+
+      setIsShowAddMidisMessage(false)
+    } finally {
+      setIsLoading(false)
     }
-
-    setIsLoading(false)
-    setIsShowAddMidisMessage(false)
   }
 
   // piano loading message to

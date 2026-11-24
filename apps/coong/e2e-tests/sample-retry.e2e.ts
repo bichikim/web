@@ -57,3 +57,41 @@ for (const failure of ['invalid-json', 'transport'] as const) {
     expect(errors).toHaveLength(1)
   })
 }
+
+for (const entry of ['direct', 'client-side'] as const) {
+  test(`should offer the piano sample again after a failed request on a ${entry} visit`, async ({
+    page,
+  }) => {
+    let requests = 0
+    await page.route('**/api/preset/hidden-teenieping', async (route) => {
+      requests += 1
+      if (requests === 1) {
+        await route.abort('failed')
+        return
+      }
+      await route.fulfill({json: {musics: [sample]}})
+    })
+
+    if (entry === 'direct') {
+      await page.goto('/piano')
+    } else {
+      await page.goto('/')
+      await page.getByRole('link', {name: 'Explore Piano'}).click()
+      await expect(page).toHaveURL(/\/piano$/u)
+    }
+    const button = page.getByRole('button', {name: 'Get Now'})
+    const failed = page.waitForEvent('requestfailed', (request) =>
+      request.url().endsWith('/api/preset/hidden-teenieping'),
+    )
+    await button.click()
+    await failed
+    await expect(button).toBeEnabled({timeout: 5000})
+
+    const received = page.waitForResponse('**/api/preset/hidden-teenieping')
+    await button.click()
+    expect((await received).ok()).toBe(true)
+    await expect(page.getByTitle(sample.name, {exact: true})).toHaveCount(1)
+    await expect(button).toBeHidden()
+    expect(requests).toBe(2)
+  })
+}
