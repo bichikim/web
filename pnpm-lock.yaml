@@ -231,6 +231,7 @@ pnpmfileChecksum: sha256-g2BMt8/Oai/WjMrtIA305RlIOkSpDcdZ9J+xuvU7Oqs=
 patchedDependencies:
   '@dschz/solid-flow@0.2.6': d7b5ac8f5d14be953fc3ab56e5ab1f89d2f462c6d4cccc59c7b85cf10ea7ed9d
   '@kobalte/core@0.13.11': cf6d454621fe20fb0073f772486cdac9aca2a7556530d6de3e3b028f02234c29
+  '@tonejs/midi@2.0.28': 131e3e34abb120f7bbd69bdcaa54ec6e3fb480c5b10837538d060cfd30a41d11
   pixi.js@8.22.0: 98761e15826d4f86e8dea477aed8bc94f1f89532593aa71ae81a316a0499b22a
 
 importers:
@@ -471,7 +472,7 @@ importers:
         version: 2.105.1
       '@tonejs/midi':
         specifier: 'catalog:'
-        version: 2.0.28
+        version: 2.0.28(patch_hash=131e3e34abb120f7bbd69bdcaa54ec6e3fb480c5b10837538d060cfd30a41d11)
       '@unocss/reset':
         specifier: 'catalog:'
         version: 66.7.5
@@ -1607,7 +1608,7 @@ importers:
     devDependencies:
       '@tonejs/midi':
         specifier: 'catalog:'
-        version: 2.0.28
+        version: 2.0.28(patch_hash=131e3e34abb120f7bbd69bdcaa54ec6e3fb480c5b10837538d060cfd30a41d11)
       '@types/node':
         specifier: 'catalog:'
         version: 24.13.6
@@ -20160,7 +20161,7 @@ snapshots:
 
   '@tokenizer/token@0.3.0': {}
 
-  '@tonejs/midi@2.0.28':
+  '@tonejs/midi@2.0.28(patch_hash=131e3e34abb120f7bbd69bdcaa54ec6e3fb480c5b10837538d060cfd30a41d11)':
     dependencies:
       array-flatten: 3.0.0
       midi-file: 1.2.4
