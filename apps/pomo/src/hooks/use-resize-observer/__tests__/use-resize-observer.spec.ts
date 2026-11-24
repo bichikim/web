@@ -101,6 +101,69 @@ describe('useResizeObserver', () => {
     cleanup()
   })
 
+  it.each([false, true])(
+    'should keep controls inert after disposal when started is %s',
+    (started) => {
+      const [target, setTarget] = createSignal<Element>(document.createElement('div'))
+      const readTarget = vi.fn(target)
+      const onResize = vi.fn()
+      const {result, cleanup} = renderHook(() => useResizeObserver({onResize, target: readTarget}))
+      if (started) {
+        result.start()
+      }
+      const observers = [...TestResizeObserver.instances]
+      const reads = readTarget.mock.calls.length
+      cleanup()
+
+      expect(result.start()).toBeUndefined()
+      setTarget(document.createElement('span'))
+      expect(result.stop()).toBeUndefined()
+      expect(result.start()).toBeUndefined()
+      for (const observer of observers) {
+        observer.notify()
+        expect(observer.disconnect).toHaveBeenCalledOnce()
+      }
+
+      expect(readTarget).toHaveBeenCalledTimes(reads)
+      expect(TestResizeObserver.instances).toEqual(observers)
+      expect(onResize).not.toHaveBeenCalled()
+    },
+  )
+
+  it('should not resume observation when a callback disposes its owner and restarts', () => {
+    const [target, setTarget] = createSignal<Element>(document.createElement('div'))
+    const onResize = vi.fn(() => {
+      cleanup()
+      result.start()
+    })
+    const {result, cleanup} = renderHook(() => useResizeObserver({onResize, target}))
+    result.start()
+    const observer = TestResizeObserver.instances[0]!
+
+    observer.notify()
+    setTarget(document.createElement('span'))
+    observer.notify()
+
+    expect(onResize).toHaveBeenCalledOnce()
+    expect(observer.disconnect).toHaveBeenCalledOnce()
+    expect(TestResizeObserver.instances).toHaveLength(1)
+  })
+
+  it('should not start after disposal when the observer capability becomes available', () => {
+    vi.stubGlobal('ResizeObserver', undefined)
+    const target = vi.fn(() => document.createElement('div'))
+    const {result, cleanup} = renderHook(() => useResizeObserver({onResize: vi.fn(), target}))
+    result.start()
+    cleanup()
+    vi.stubGlobal('ResizeObserver', TestResizeObserver)
+
+    result.stop()
+    result.start()
+
+    expect(target).toHaveBeenCalledOnce()
+    expect(TestResizeObserver.instances).toHaveLength(0)
+  })
+
   it('should observe the latest target on restart after stopped target changes', () => {
     const [target, setTarget] = createSignal<Element | null>(null)
     const {result, cleanup} = renderHook(() => useResizeObserver({onResize: vi.fn(), target}))
