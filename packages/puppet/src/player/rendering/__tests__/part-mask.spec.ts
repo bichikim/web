@@ -18,6 +18,14 @@ describe('getVertexBounds', () => {
       top: -2,
     })
   })
+  test('should bound finite coordinates when other coordinates are invalid', () => {
+    expect(getVertexBounds([new Float32Array([Number.NaN, Infinity, 2, 3, -4, 1])])).toEqual({
+      bottom: 3,
+      left: -4,
+      right: 2,
+      top: 1,
+    })
+  })
   test('should leave the origin of an axis without coordinates undefined', () => {
     expect(getVertexBounds([])).toEqual({
       bottom: Number.NEGATIVE_INFINITY,

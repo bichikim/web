@@ -2,7 +2,12 @@ import {cleanup, fireEvent, render} from '@solidjs/testing-library'
 import {createSignal} from 'solid-js'
 import {afterEach, expect, test} from 'vitest'
 
-import {createEmptyDocument, parseDocumentValue, type PuppetDocument} from '../../src/player'
+import {
+  createDemoDocument,
+  createEmptyDocument,
+  parseDocumentValue,
+  type PuppetDocument,
+} from '../../src/player'
 import {EditorTimeline} from '../../src/editor/internal/EditorTimeline'
 
 afterEach(cleanup)
@@ -36,4 +41,39 @@ test('should edit colliding parameter and model effect values independently in t
     {keyframes: [{time: 0, value: 0.25}], kind: 'model', target: 'opacity'},
   ])
   expect(parseDocumentValue(document()).ok).toBe(true)
+})
+
+test('should release focus when a focused keyframe is deleted and another is inserted', () => {
+  const [document, setDocument] = createSignal(createDemoDocument())
+  const view = render(() => <EditorTimeline document={document()} onDocumentChange={setDocument} />)
+  const removed = view.getByRole('button', {name: 'Angle Y 1.00초 키프레임'})
+  const retained = view.getByRole('button', {name: 'Angle Y 2.00초 키프레임'})
+  removed.focus()
+  expect(removed).toHaveFocus()
+
+  setDocument((current) => ({
+    ...current,
+    motions: current.motions.map((motion, index) =>
+      index === 0
+        ? {
+            ...motion,
+            tracks: motion.tracks.map((track) =>
+              'parameterId' in track && track.parameterId === 'angle-y'
+                ? {
+                    ...track,
+                    keyframes: track.keyframes.map((frame) =>
+                      frame.time === 1 ? {...frame, time: 1.5} : frame,
+                    ),
+                  }
+                : track,
+            ),
+          }
+        : motion,
+    ),
+  }))
+
+  const inserted = view.getByRole('button', {name: 'Angle Y 1.50초 키프레임'})
+  expect(removed).not.toBeInTheDocument()
+  expect(inserted).not.toHaveFocus()
+  expect(view.getByRole('button', {name: 'Angle Y 2.00초 키프레임'})).toBe(retained)
 })

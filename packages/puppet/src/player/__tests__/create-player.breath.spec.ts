@@ -143,13 +143,13 @@ test('should refuse overrides of unknown parts and groups', async () => {
   player.destroy()
 })
 
-test('should refuse physics options without a gravity direction or finite values', async () => {
+test('should allow zero gravity and refuse non-finite physics options', async () => {
   setUpRenderer()
   const player = await createPlayer({
     canvas: globalThis.document.createElement('canvas'),
     document: prepare(document),
   })
-  expect(player.setPhysicsOptions({gravity: [0, 0]})).toBe(false)
+  expect(player.setPhysicsOptions({gravity: [0, 0]})).toBe(true)
   expect(player.setPhysicsOptions({wind: [Number.NaN, 0]})).toBe(false)
   expect(player.setPhysicsOptions({gravity: [1, 1], wind: [2, 0]})).toBe(true)
   expect(player.setPhysicsOptions()).toBe(true)

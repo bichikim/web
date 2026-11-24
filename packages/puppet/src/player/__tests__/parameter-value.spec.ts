@@ -1,6 +1,6 @@
 import {describe, expect, test} from 'vitest'
 import type {PuppetParameter} from '../document'
-import {boundParameterSample, getRepeatRanges} from '../parameter-value'
+import {boundParameterSample, getRepeatRanges, resolveParameterValue} from '../parameter-value'
 
 const angle: PuppetParameter = {
   defaultValue: 0,
@@ -72,4 +72,18 @@ test.each([
   expect(
     boundParameterSample({defaultValue: 0, id: 'p', maximum: 1, minimum: 0, name: 'P'}, value),
   ).toBe(expected)
+})
+
+test('should resolve a fixed repeat range to its only value', () => {
+  const fixed = {...angle, defaultValue: 5, maximum: 5, minimum: 5}
+
+  expect(resolveParameterValue(fixed, 15)).toBe(5)
+  expect(resolveParameterValue(fixed, undefined)).toBe(5)
+})
+
+test('should use the start of the cycle for a resolved repeat endpoint', () => {
+  const repeat = {...angle, maximum: 1}
+  expect(boundParameterSample(repeat, -2)).toBe(1)
+  expect(resolveParameterValue(repeat, -2)).toBe(0)
+  expect(resolveParameterValue(repeat, 1)).toBe(0)
 })

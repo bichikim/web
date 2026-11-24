@@ -114,6 +114,18 @@ describe('physics chains', () => {
     expect(history.at(-1)?.['hair-swing']).toBeCloseTo(-Math.PI / 4, 3)
   })
 
+  test('should keep a neutral rest angle under tilt when gravity is zero', () => {
+    const document = createDocument({gravity: [0, 0]})
+    expect(parseDocumentValue(document).ok).toBe(true)
+    expect(settle(document, {'head-angle': 15})['hair-swing']).toBeCloseTo(0)
+  })
+
+  test('should allow wind to act without a downward pull when gravity is zero', () => {
+    const document = createDocument({gravity: [0, 0], wind: [1, 0]})
+    expect(settle(document, {})['hair-swing']).toBeCloseTo(-Math.PI / 2)
+    expect(simulate(document, {'head-x': 5}, 20).at(-1)?.['hair-swing']).toBeCloseTo(-Math.PI / 2)
+  })
+
   test('should step at the physics rate and blend outputs between steps', () => {
     const document = createDocument({fps: 30})
     const start = (values: Readonly<Record<string, number>>) =>
@@ -167,7 +179,7 @@ describe('physics chains', () => {
     expect(parseDocumentValue(createDocument({chains: [feedback]})).ok).toBe(false)
     const loose = {...chain, pendulums: [{...chain.pendulums[0]!, mobility: 1.5}]}
     expect(parseDocumentValue(createDocument({chains: [loose]})).ok).toBe(false)
-    expect(parseDocumentValue(createDocument({gravity: [0, 0]})).ok).toBe(false)
+    expect(parseDocumentValue(createDocument({gravity: [Number.NaN, 0]})).ok).toBe(false)
   })
 })
 
