@@ -90,61 +90,46 @@ const persistAcceptedProviderAfterClaimLoss = async (
   return persisted
 }
 
-const dispatchOpenAiJob = async (job: AiJobRecord): Promise<AiJobRecord> => {
-  const handle = await submitLunaTextJob(job.id, job.request)
+const dispatchProviderJob = async (
+  job: AiJobRecord,
+  runner: 'local-runner' | 'openai',
+): Promise<AiJobRecord> => {
+  let getProviderId: () => string
+  let persistenceError: string
+  let claimLossError: string
+  if (runner === 'openai') {
+    const handle = await submitLunaTextJob(job.id, job.request)
+    getProviderId = () => `${OPENAI_RESPONSE_PREFIX}${handle.responseId}`
+    persistenceError = 'Failed to persist OpenAI response ID'
+    claimLossError = 'OpenAI accepted the response but the job claim was lost'
+  } else {
+    const client = createAiRunnerClient()
+    const runnerJob = await client.submit(
+      createAiRunnerJobRequest({
+        capability: toCatalogCapability(job.capability),
+        input: {...job.request},
+        jobId: job.id,
+        modelId: job.modelId,
+      }),
+    )
+    getProviderId = () => runnerJob.jobId
+    persistenceError = 'Failed to persist runner job ID'
+    claimLossError = 'AI runner accepted the job but the durable claim was lost'
+  }
+
   let running: AiJobRecord | null
   try {
-    running = await markAiJobRunning(
-      job.id,
-      `${OPENAI_RESPONSE_PREFIX}${handle.responseId}`,
-      job.timeoutAt,
-    )
+    running = await markAiJobRunning(job.id, getProviderId(), job.timeoutAt)
   } catch (error: unknown) {
     return persistAcceptedProviderAfterClaimLoss(
       job,
-      `${OPENAI_RESPONSE_PREFIX}${handle.responseId}`,
-      getExceptionMessage(error, 'Failed to persist OpenAI response ID'),
+      getProviderId(),
+      getExceptionMessage(error, persistenceError),
     )
   }
 
   if (running === null) {
-    return persistAcceptedProviderAfterClaimLoss(
-      job,
-      `${OPENAI_RESPONSE_PREFIX}${handle.responseId}`,
-      'OpenAI accepted the response but the job claim was lost',
-    )
-  }
-
-  return running
-}
-
-const dispatchRunnerJob = async (job: AiJobRecord): Promise<AiJobRecord> => {
-  const client = createAiRunnerClient()
-  const runnerJob = await client.submit(
-    createAiRunnerJobRequest({
-      capability: toCatalogCapability(job.capability),
-      input: {...job.request},
-      jobId: job.id,
-      modelId: job.modelId,
-    }),
-  )
-  let running: AiJobRecord | null
-  try {
-    running = await markAiJobRunning(job.id, runnerJob.jobId, job.timeoutAt)
-  } catch (error: unknown) {
-    return persistAcceptedProviderAfterClaimLoss(
-      job,
-      runnerJob.jobId,
-      getExceptionMessage(error, 'Failed to persist runner job ID'),
-    )
-  }
-
-  if (running === null) {
-    return persistAcceptedProviderAfterClaimLoss(
-      job,
-      runnerJob.jobId,
-      'AI runner accepted the job but the durable claim was lost',
-    )
+    return persistAcceptedProviderAfterClaimLoss(job, getProviderId(), claimLossError)
   }
 
   return running
@@ -233,8 +218,7 @@ const dispatchClaimedJob = async (
   }
 
   try {
-    const running =
-      runner === 'openai' ? await dispatchOpenAiJob(job) : await dispatchRunnerJob(job)
+    const running = await dispatchProviderJob(job, runner)
     return {
       job: running,
       kind: running.status === 'recovery_pending' ? 'recovery-pending' : 'dispatched',
