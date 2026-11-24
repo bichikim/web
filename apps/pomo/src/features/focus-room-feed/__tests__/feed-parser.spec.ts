@@ -123,6 +123,92 @@ it('should use a valid Atom updated date when published date is invalid', () => 
   expect(feed.items[0]?.publishedAt).toBe('2026-08-14T01:00:00.000Z')
 })
 
+it.each(['published', 'pubdate', 'updated', 'date', 'created', 'issued'] as const)(
+  'should select %s by date alias priority rather than document order',
+  (preferred) => {
+    const names = ['published', 'pubdate', 'updated', 'date', 'created', 'issued']
+    const preferredIndex = names.indexOf(preferred)
+    const fields = names
+      .map((name, index) => {
+        const value = index < preferredIndex ? 'not-a-date' : `2026-08-14T0${index}:00:00Z`
+        return `<d:${name.toUpperCase()}>${value}</d:${name.toUpperCase()}>`
+      })
+      .toReversed()
+      .join('')
+    const feed = parseFeedXml(
+      `<rss xmlns:d="urn:dates"><item><guid>priority</guid>
+        <wrapper><published>2020-01-01T00:00:00Z</published></wrapper>${fields}
+      </item></rss>`,
+      'https://example.com/feed.xml',
+    )
+
+    expect(feed.items[0]?.publishedAt).toBe(`2026-08-14T0${preferredIndex}:00:00.000Z`)
+  },
+)
+
+it('should fall back from an empty first date child without using a later duplicate', () => {
+  const feed = parseFeedXml(
+    `<rss xmlns:d="urn:dates"><item><d:published /><published>2020-01-01T00:00:00Z</published>
+      <updated>2026-08-14T00:00:00Z</updated>
+    </item></rss>`,
+    'https://example.com/feed.xml',
+  )
+
+  expect(feed.items[0]?.publishedAt).toBe('2026-08-14T00:00:00.000Z')
+})
+
+it('should accept epoch zero before a later valid date and retain its legacy identity', () => {
+  const feed = parseFeedXml(
+    `<rss><item><title>Epoch</title><published>1970-01-01T00:00:00Z</published>
+      <updated>2026-08-14T00:00:00Z</updated>
+    </item></rss>`,
+    'https://example.com/feed.xml',
+  )
+
+  expect(feed.items[0]?.publishedAt).toBe('1970-01-01T00:00:00.000Z')
+  expect(feed.items[0]?.legacyId).toBe('Epoch\u00001970-01-01T00:00:00.000Z')
+})
+
+it.each([
+  {published: '2026-08-14T24:00:00Z', publishedAt: '2026-08-15T00:00:00.000Z'},
+  {published: '2026-08-14T24:00:00+09:00', publishedAt: '2026-08-14T15:00:00.000Z'},
+  {published: '2026-08-14T24:01:00Z', publishedAt: '2026-08-16T00:00:00.000Z'},
+])('should retain ISO overflow-hour handling for $published', ({published, publishedAt}) => {
+  const feed = parseFeedXml(
+    `<rss><item><published>${published}</published><updated>2026-08-16T00:00:00Z</updated></item></rss>`,
+    'https://example.com/feed.xml',
+  )
+
+  expect(feed.items[0]?.publishedAt).toBe(publishedAt)
+})
+
+it('should return null when all date aliases are invalid or empty', () => {
+  const feed = parseFeedXml(
+    `<rss><item><published>invalid</published><pubDate /><updated>2026-02-30T00:00:00Z</updated>
+      <date>invalid</date><created /><issued>invalid</issued>
+    </item></rss>`,
+    'https://example.com/feed.xml',
+  )
+
+  expect(feed.items[0]?.publishedAt).toBeNull()
+  expect(feed.items[0]?.legacyId).toBeUndefined()
+})
+
+it('should stop parsing date aliases after the first valid timestamp', () => {
+  const parseDate = vi.spyOn(Date, 'parse')
+  const feed = parseFeedXml(
+    `<rss><item><published>2026-08-14T00:00:00Z</published>
+      <pubDate>Fri, 14 Aug 2026 01:00:00 GMT</pubDate><updated>2026-08-15T00:00:00Z</updated>
+      <date>2026-08-16T00:00:00Z</date><created>2026-08-17T00:00:00Z</created>
+      <issued>2026-08-18T00:00:00Z</issued>
+    </item></rss>`,
+    'https://example.com/feed.xml',
+  )
+
+  expect(feed.items[0]?.publishedAt).toBe('2026-08-14T00:00:00.000Z')
+  expect(parseDate).toHaveBeenCalledExactlyOnceWith('2026-08-14T00:00:00Z')
+})
+
 it('should reject an Atom updated date with an impossible calendar day', () => {
   const feed = parseFeedXml(
     `<feed xmlns="http://www.w3.org/2005/Atom"><title>테스트 Atom</title><entry>
