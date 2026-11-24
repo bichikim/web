@@ -107,6 +107,7 @@ export const deleteCalendarConnection = async (connectionId: string): Promise<vo
 
 export const listCalendarEvents = async (
   options: ListCalendarEventsOptions,
+  signal?: AbortSignal,
 ): Promise<CalendarEvents> => {
   const timeZone = options.timeZone ?? Intl.DateTimeFormat().resolvedOptions().timeZone
   const search = new URLSearchParams({...options, timeZone})
@@ -115,6 +116,7 @@ export const listCalendarEvents = async (
     ...requestOptions,
     recheckWebSessionOnUnauthorized: requestOptions.credentials === 'include',
     responseSchema: calendarEventsSchema,
+    ...(signal === undefined ? {} : {signal}),
   })
 }
 

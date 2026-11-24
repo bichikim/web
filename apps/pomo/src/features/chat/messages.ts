@@ -1,3 +1,4 @@
+import type {CalendarToolClock} from '../calendar/agent-tool-contract'
 import type {TextOutputSchema} from '../text-generation/types'
 import type {
   PrepareTextModelRequest,
@@ -25,7 +26,13 @@ export interface ChatAnswerDraft {
   readonly id: string
 }
 
+export interface DeviceCalendarTool {
+  readonly clock: CalendarToolClock
+  readonly port: MessagePort
+}
+
 export interface GenerateChatRequest {
+  readonly calendarTool?: DeviceCalendarTool
   readonly outputSchema?: TextOutputSchema
   readonly context: ChatContext
   readonly modelId: TextModelId
