@@ -45,15 +45,14 @@ export const listAdminCloudTextUsers = async (
     readUserCloudTextLimits(database, userIds, now),
   ])
   const counts = new Map(usage.map((entry) => [entry.userId, entry.used]))
+  const identitiesByUser = Map.groupBy(identities, (identity) => identity.userId)
   return {
     nextCursor: entries.length > PAGE_SIZE ? (users.at(-1)?.id ?? null) : null,
     users: users.map((user) => ({
       createdAt: user.createdAt.toISOString(),
       dailyLimitOverride: limits.get(user.id)?.override ?? null,
       id: user.id,
-      providers: identities
-        .filter((identity) => identity.userId === user.id)
-        .map((identity) => identity.provider),
+      providers: (identitiesByUser.get(user.id) ?? []).map((identity) => identity.provider),
       usage: createCloudTextUsage(counts.get(user.id) ?? 0, now, limits.get(user.id)?.limit),
     })),
   }
