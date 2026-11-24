@@ -2,7 +2,8 @@ import {For, Show} from 'solid-js'
 import {type ExpenseForm} from '../expense'
 import {BUTTON_CLASSES} from './button-classes'
 
-const formatWon = (amount: number) => `${new Intl.NumberFormat('ko-KR').format(amount)}원`
+const WON_FORMATTER = new Intl.NumberFormat('ko-KR')
+const formatWon = (amount: number) => `${WON_FORMATTER.format(amount)}원`
 
 interface ExpenseResultProps {
   readonly form: ExpenseForm
