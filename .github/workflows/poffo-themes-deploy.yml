@@ -1,0 +1,51 @@
+name: Deploy Poffo Themes Dev
+
+on:
+  pull_request:
+    paths:
+      - apps/poffo-themes/**
+      - apps/wallpaper-web/public/wallpapers/ash-afternoon/**
+      - packages/**
+      - package.json
+      - pnpm-lock.yaml
+      - pnpm-workspace.yaml
+      - turbo.json
+      - .github/actions/poffo-themes/**
+      - .github/workflows/poffo-themes-*.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: poffo-themes-${{ github.event_name == 'workflow_dispatch' && 'dev' || github.ref }}
+  cancel-in-progress: false
+
+env:
+  VERCEL_ORG_ID: team_Ic8YKQ9jWkFLhVzeljhB4ZLV
+  VERCEL_PROJECT_ID: ${{ vars.POFFO_THEMES_VERCEL_PROJECT_ID }}
+  VERCEL_CLI_VERSION: 59.5.0
+
+jobs:
+  verify:
+    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/dev'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/poffo-themes/verify
+  deploy-preview:
+    needs: verify
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/dev'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/poffo-themes/deploy
+        with:
+          target: preview
+          token: ${{ secrets.VERCEL_TOKEN }}

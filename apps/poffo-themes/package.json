@@ -1,0 +1,20 @@
+{
+  "name": "@apps/poffo-themes",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@solidjs/meta": "catalog:",
+    "@solidjs/router": "catalog:",
+    "@solidjs/start": "catalog:",
+    "@winter-love/wallpaper": "workspace:*",
+    "solid-js": "catalog:"
+  },
+  "devDependencies": {
+    "@unocss/vite": "catalog:",
+    "nitro": "catalog:pomo",
+    "typescript": "catalog:",
+    "unocss": "catalog:",
+    "vite": "catalog:"
+  }
+}
