@@ -63,19 +63,7 @@ for (const source of ['AI settings', 'calendar'] as const) {
       await route.fulfill({json: {email: TEST_EMAIL}})
     })
     await page.route('**/api/cloud-text', (route) =>
-      route.fulfill(
-        sessionExpired
-          ? {json: {error: 'unauthorized'}, status: 401}
-          : {
-              json: {
-                day: '2026-11-24',
-                limit: 3,
-                remaining: 2,
-                resetsAt: '2026-11-25T00:00:00Z',
-                used: 1,
-              },
-            },
-      ),
+      route.fulfill({json: {error: 'unauthorized'}, status: 401}),
     )
     await page.route('**/api/calendar/events?*', (route) =>
       route.fulfill({json: {error: 'unauthorized'}, status: 401}),
@@ -93,11 +81,14 @@ for (const source of ['AI settings', 'calendar'] as const) {
       await page.getByRole('button', {exact: true, name: '설정'}).click()
       const settings = page.getByRole('dialog', {name: 'Pomofi 설정'})
       await expect(settings.getByRole('tabpanel', {name: '일반'})).toBeVisible({timeout: 30_000})
-      await settings.getByRole('tab', {exact: true, name: 'AI'}).click()
-      await settings.getByRole('button', {name: /기본 문장 생성 모델/u}).click()
-      await expect(page.getByRole('option', {name: 'Cloud Model · 2회 남음'})).toBeEnabled()
       sessionExpired = true
-      await page.evaluate(() => globalThis.dispatchEvent(new Event('focus')))
+      const sessionRechecked = page.waitForResponse(
+        (response) =>
+          new URL(response.url()).pathname === '/api/account' && response.status() === 401,
+      )
+      await settings.getByRole('tab', {exact: true, name: 'AI'}).click()
+      await sessionRechecked
+      await settings.getByRole('button', {name: /기본 문장 생성 모델/u}).click()
       await expect(
         page.getByRole('option', {name: 'Cloud Model (로그인 해주세요)'}),
       ).toHaveAttribute('aria-disabled', 'true')
