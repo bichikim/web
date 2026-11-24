@@ -3,6 +3,12 @@
 import 'fake-indexeddb/auto'
 import {afterEach, expect, it, vi} from 'vitest'
 
+import {
+  clearStoredTracks,
+  createStoredTrack,
+  putStoredTracks,
+  readStoredTrack,
+} from 'src/features/custom-albums/__tests__/fixtures/stored-tracks'
 import * as customAlbumDatabase from 'src/features/custom-albums/database'
 import {revokeCustomTrackObjectUrls} from 'src/features/custom-albums/to-custom-p-track'
 import {resolveStoredPlaylistTracks} from '../resolve-stored-playlist-tracks'
@@ -20,49 +26,6 @@ const BUNDLED_TRACK = {
   source: '/bundled.mp3',
   title: 'Bundled',
 } as const satisfies PTrack
-
-const createStoredTrack = (id: string, durationSeconds = 60) => ({
-  albumId: 'custom-album:test',
-  artist: 'Artist',
-  audio: new Blob(['audio'], {type: 'audio/mpeg'}),
-  durationSeconds,
-  fileName: `${id}.mp3`,
-  id,
-  title: id,
-})
-
-const putStoredTracks = async (tracks: readonly unknown[]): Promise<void> => {
-  const database = await customAlbumDatabase.openCustomAlbumDatabase()
-  const transaction = database.transaction(customAlbumDatabase.TRACK_STORE_NAME, 'readwrite')
-  const finished = customAlbumDatabase.waitForTransaction(transaction)
-  const store = transaction.objectStore(customAlbumDatabase.TRACK_STORE_NAME)
-
-  tracks.forEach((track) => store.put(track))
-
-  await finished
-}
-
-const clearStoredTracks = async (): Promise<void> => {
-  const database = await customAlbumDatabase.openCustomAlbumDatabase()
-  const transaction = database.transaction(customAlbumDatabase.TRACK_STORE_NAME, 'readwrite')
-  const finished = customAlbumDatabase.waitForTransaction(transaction)
-
-  transaction.objectStore(customAlbumDatabase.TRACK_STORE_NAME).clear()
-
-  await finished
-}
-
-const readStoredTrack = async (trackId: string): Promise<unknown> => {
-  const database = await customAlbumDatabase.openCustomAlbumDatabase()
-  const transaction = database.transaction(customAlbumDatabase.TRACK_STORE_NAME, 'readonly')
-  const finished = customAlbumDatabase.waitForTransaction(transaction)
-  const track = customAlbumDatabase.readRequest<unknown>(
-    transaction.objectStore(customAlbumDatabase.TRACK_STORE_NAME).get(trackId),
-  )
-  const [storedTrack] = await Promise.all([track, finished])
-
-  return storedTrack
-}
 
 const seedMixedTracks = async (): Promise<void> => {
   await putStoredTracks([
