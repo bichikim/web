@@ -6,10 +6,7 @@ use std::{
     io::Cursor,
     path::{Path, PathBuf},
     process::{Child, Command, Stdio},
-    sync::{
-        Arc, Mutex,
-        atomic::{AtomicBool, Ordering},
-    },
+    sync::{Arc, Mutex},
     time::Duration,
 };
 use tauri::Manager;
@@ -18,39 +15,88 @@ pub struct Workspace {
     directory: tempfile::TempDir,
     operation: Mutex<()>,
     document: Mutex<Option<tempfile::TempDir>>,
-    worker: Mutex<Option<Child>>,
-    cancelled: AtomicBool,
+    worker: Mutex<UpscaleWorker>,
 }
+
+#[derive(Default, PartialEq)]
+enum UpscaleStatus {
+    #[default]
+    Idle,
+    Running,
+    Cancelled,
+    Published,
+}
+
+#[derive(Default)]
+struct UpscaleWorker {
+    child: Option<Child>,
+    status: UpscaleStatus,
+}
+
+struct UpscaleSession(Arc<Workspace>);
+
+impl UpscaleSession {
+    fn begin(workspace: Arc<Workspace>) -> Result<Self, String> {
+        let mut worker = workspace.worker.lock().map_err(|_| "internal_error")?;
+        if worker.status != UpscaleStatus::Idle {
+            return Err("busy".into());
+        }
+        worker.status = UpscaleStatus::Running;
+        drop(worker);
+        Ok(Self(workspace))
+    }
+
+    fn publish(&self, pending: &Path) -> Result<bool, String> {
+        let mut worker = self.0.worker.lock().map_err(|_| "internal_error")?;
+        if worker.status == UpscaleStatus::Cancelled {
+            return Ok(false);
+        }
+        std::fs::rename(pending, self.0.document_path("output.png")?).map_err(|_| "save_failed")?;
+        worker.status = UpscaleStatus::Published;
+        Ok(true)
+    }
+}
+
+impl Drop for UpscaleSession {
+    fn drop(&mut self) {
+        if let Ok(mut worker) = self.0.worker.lock() {
+            if let Some(mut child) = worker.child.take() {
+                let _ = child.kill();
+                let _ = child.wait();
+            }
+            worker.status = UpscaleStatus::Idle;
+        }
+    }
+}
+
 impl Workspace {
     pub fn new() -> std::io::Result<Self> {
         Ok(Self {
             directory: tempfile::tempdir()?,
             operation: Mutex::new(()),
             document: Mutex::new(None),
-            worker: Mutex::new(None),
-            cancelled: AtomicBool::new(false),
+            worker: Mutex::new(UpscaleWorker::default()),
         })
     }
     fn document_path(&self, name: &str) -> Result<PathBuf, String> {
         let document = self.document.lock().map_err(|_| "internal_error")?;
         Ok(document.as_ref().ok_or("no_image")?.path().join(name))
     }
-    pub fn cancel(&self) -> Result<(), String> {
-        self.cancelled.store(true, Ordering::SeqCst);
+    pub fn cancel(&self) -> Result<bool, String> {
         let mut worker = self.worker.lock().map_err(|_| "internal_error")?;
-        if let Some(child) = worker.as_mut() {
-            child.kill().map_err(|_| "cancel_failed")?;
-        }
-        Ok(())
-    }
-}
-impl Drop for Workspace {
-    fn drop(&mut self) {
-        if let Ok(worker) = self.worker.get_mut()
-            && let Some(child) = worker.as_mut()
-        {
-            let _ = child.kill();
-            let _ = child.wait();
+        match worker.status {
+            UpscaleStatus::Idle | UpscaleStatus::Published => Ok(false),
+            UpscaleStatus::Cancelled => Ok(true),
+            UpscaleStatus::Running => {
+                if let Some(child) = worker.child.as_mut()
+                    && child.kill().is_err()
+                    && child.try_wait().map_err(|_| "cancel_failed")?.is_none()
+                {
+                    return Err("cancel_failed".into());
+                }
+                worker.status = UpscaleStatus::Cancelled;
+                Ok(true)
+            }
         }
     }
 }
@@ -145,9 +191,9 @@ pub async fn upscale_image(
     method: Method,
     state: tauri::State<'_, Arc<Workspace>>,
 ) -> Result<Option<Preview>, String> {
-    let workspace = state.inner().clone();
-    workspace.cancelled.store(false, Ordering::SeqCst);
+    let session = UpscaleSession::begin(state.inner().clone())?;
     tauri::async_runtime::spawn_blocking(move || {
+        let workspace = &session.0;
         let _guard = workspace.operation.try_lock().map_err(|_| "busy")?;
         let input = workspace.document_path("input.png")?;
         if !input.exists() {
@@ -155,7 +201,7 @@ pub async fn upscale_image(
         }
         let output = workspace.document_path("pending.png")?;
         let mut worker = workspace.worker.lock().map_err(|_| "internal_error")?;
-        if workspace.cancelled.load(Ordering::SeqCst) {
+        if worker.status == UpscaleStatus::Cancelled {
             return Ok(None);
         }
         let child = Command::new(std::env::current_exe().map_err(|_| "internal_error")?)
@@ -170,21 +216,27 @@ pub async fn upscale_image(
             .stdout(Stdio::null())
             .spawn()
             .map_err(|_| "upscale_failed")?;
-        *worker = Some(child);
+        worker.child = Some(child);
         drop(worker);
         let status = loop {
             let mut worker = workspace.worker.lock().map_err(|_| "internal_error")?;
-            let child = worker.as_mut().ok_or("internal_error")?;
+            let child = worker.child.as_mut().ok_or("internal_error")?;
             if let Some(status) = child.try_wait().map_err(|_| "upscale_failed")? {
-                *worker = None;
+                worker.child = None;
                 break status;
             }
             drop(worker);
             std::thread::sleep(Duration::from_millis(40));
         };
-        if !status.success() || workspace.cancelled.load(Ordering::SeqCst) {
+        let cancelled = workspace
+            .worker
+            .lock()
+            .map_err(|_| "internal_error")?
+            .status
+            == UpscaleStatus::Cancelled;
+        if !status.success() || cancelled {
             let _ = std::fs::remove_file(output);
-            return if workspace.cancelled.load(Ordering::SeqCst) {
+            return if cancelled {
                 Ok(None)
             } else {
                 Err("upscale_failed".into())
@@ -192,19 +244,17 @@ pub async fn upscale_image(
         }
         let image = image::open(&output).map_err(|_| "upscale_failed")?;
         let result = preview(&image)?;
-        if workspace.cancelled.load(Ordering::SeqCst) {
+        if !session.publish(&output)? {
             let _ = std::fs::remove_file(output);
             return Ok(None);
         }
-        std::fs::rename(output, workspace.document_path("output.png")?)
-            .map_err(|_| "save_failed")?;
         Ok(Some(result))
     })
     .await
     .map_err(|_| "internal_error")?
 }
 #[tauri::command]
-pub fn cancel_upscale(state: tauri::State<'_, Arc<Workspace>>) -> Result<(), String> {
+pub fn cancel_upscale(state: tauri::State<'_, Arc<Workspace>>) -> Result<bool, String> {
     state.cancel()
 }
 #[tauri::command]

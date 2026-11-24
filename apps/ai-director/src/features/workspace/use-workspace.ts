@@ -10,9 +10,7 @@ interface NativeBridge {
   core: {invoke: (command: string, payload?: Record<string, unknown>) => Promise<unknown>}
 }
 declare global {
-  interface Window {
-    __TAURI__?: NativeBridge
-  }
+  var __TAURI__: NativeBridge | undefined
 }
 
 const errorMessage = (error: unknown): string => {
@@ -21,6 +19,8 @@ const errorMessage = (error: unknown): string => {
       return '4배 결과가 4천만 픽셀을 넘습니다. 더 작은 영역을 캡처해 주세요.'
     case 'invalid_image':
       return 'PNG, JPEG, WebP 이미지를 열어 주세요.'
+    case 'no_image':
+      return '이미지를 먼저 열거나 화면을 캡처해 주세요.'
     case 'capture_failed':
       return '캡처하지 못했습니다. macOS 설정에서 화면 기록 권한을 확인해 주세요.'
     case 'capture_unsupported':
@@ -61,6 +61,7 @@ export const useWorkspace = () => {
   const [processing, setProcessing] = createSignal(false)
   const [message, setMessage] = createSignal('영역을 캡처하거나 이미지를 열어 시작하세요.')
   const [error, setError] = createSignal<string | null>(null)
+  let cancellation: Promise<boolean> | undefined
   onMount(() => setAvailable(globalThis.__TAURI__ !== undefined))
 
   const run = async (operation: () => Promise<void>) => {
@@ -75,6 +76,7 @@ export const useWorkspace = () => {
       setError(errorMessage(cause))
       setMessage('작업이 완료되지 않았습니다.')
     } finally {
+      cancellation = undefined
       setBusy(false)
       setProcessing(false)
     }
@@ -101,7 +103,18 @@ export const useWorkspace = () => {
       setMessage(
         selected === 'spanf' ? 'SPAN-F로 확대하고 있습니다…' : 'Lanczos로 확대하고 있습니다…',
       )
-      const value = await invoke('upscale_image', {method: selected})
+      const outcome = await invoke('upscale_image', {method: selected}).then(
+        (value) => ({ok: true as const, value}),
+        (cause: unknown) => ({cause, ok: false as const}),
+      )
+      if ((await cancellation) === true) {
+        setMessage('확대를 취소했습니다.')
+        return
+      }
+      if (!outcome.ok) {
+        throw outcome.cause
+      }
+      const {value} = outcome
       if (value === null) {
         setMessage('확대를 취소했습니다.')
         return
@@ -114,12 +127,18 @@ export const useWorkspace = () => {
       setMessage('확대가 완료됐습니다. 원본과 비교하고 PNG로 저장하세요.')
     })
   const cancel = async () => {
-    try {
-      setMessage('작업을 중지하고 있습니다…')
-      await invoke('cancel_upscale')
-    } catch (cause) {
-      setError(errorMessage(cause))
+    if (!processing() || cancellation !== undefined) {
+      return
     }
+    setMessage('작업을 중지하고 있습니다…')
+    cancellation = invoke('cancel_upscale').then(
+      (accepted) => accepted === true,
+      (cause: unknown) => {
+        setError(errorMessage(cause))
+        return false
+      },
+    )
+    await cancellation
   }
   const save = () =>
     run(async () => {
