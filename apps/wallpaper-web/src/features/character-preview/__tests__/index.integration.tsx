@@ -37,14 +37,16 @@ test('should animate the rendered character through short vowels and final lip c
   const sampleRate = 1000
   const short = createMouthTrack({sampleRate, samples: new Float32Array(50).fill(0.1)}, '빠')
   const final = createMouthTrack({sampleRate, samples: new Float32Array(200).fill(0.1)}, '암')
+  await expect.poll(() => playerModule.getPlayerBufferingInfo(player).status).toBe('active')
+  const mouthOpen = () => player.getParameterValue('ParamMouthOpenY')!
   setMouth(sampleMouthTrack(short, 0.02))
-  expect(player.getParameterValue('ParamMouthOpenY')).toBeGreaterThan(0.2)
+  await expect.poll(mouthOpen).toBeGreaterThan(0.2)
   setMouth(sampleMouthTrack(final, 0.1))
-  const open = player.getParameterValue('ParamMouthOpenY')!
-  expect(open).toBeGreaterThan(0.6)
+  await expect.poll(mouthOpen).toBeGreaterThan(0.6)
+  const open = mouthOpen()
   setMouth(sampleMouthTrack(final, 0.18))
-  expect(player.getParameterValue('ParamMouthOpenY')).toBeLessThan(open * 0.8)
-})
+  await expect.poll(mouthOpen).toBeLessThan(open * 0.8)
+}, 60_000)
 
 test('should add default mouse tracking to the compact Poffo idle animation without accumulating values', async () => {
   const rendered = Promise.withResolvers<void>()

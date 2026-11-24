@@ -23,7 +23,7 @@ afterEach(() => {
 
 test('should discard an unfinished head preview when changing the tracking input', () => {
   const [mode, setMode] = createSignal<'cursor' | 'camera-pose'>('cursor')
-  render(() => (
+  const {unmount} = render(() => (
     <SPoffoCalibrationPreview
       mode={mode()}
       assetId={() => 'character'}
@@ -41,13 +41,20 @@ test('should discard an unfinished head preview when changing the tracking input
     top: 0,
     width: 200,
   } as DOMRect)
-  Object.defineProperty(area, 'setPointerCapture', {value: vi.fn()})
+  const release = vi.fn()
+  Object.defineProperties(area, {
+    hasPointerCapture: {value: () => true},
+    releasePointerCapture: {value: release},
+    setPointerCapture: {value: vi.fn()},
+  })
   const event = new MouseEvent('pointerdown', {bubbles: true, button: 0, clientX: 150, clientY: 50})
   Object.defineProperty(event, 'pointerId', {value: 1})
   fireEvent(area, event)
   expect(rendering.trackingOptions?.()?.headCenterX).toBe(50)
   setMode('camera-pose')
   expect(rendering.trackingOptions?.()).toEqual({headCenterX: 5})
+  unmount()
+  expect(release).toHaveBeenCalledWith(1)
 })
 
 test('should fold only the optional preview while keeping settings and the same canvas', () => {

@@ -25,7 +25,7 @@ it('should preview one state over live status and response content, then restore
     clearParameterValues: vi.fn(),
     patchParameterValues: vi.fn(),
     resetMotionHistory: vi.fn(),
-    setExpressionLayer: vi.fn(),
+    setExpressionLayer: vi.fn<(layer: string, id?: string) => boolean>(() => true),
     startMotion: vi.fn(),
   }
   const actions = ['notes', 'thumbs', 'error'].map((id) => ({
@@ -139,7 +139,7 @@ it('should hold complete state actions, replace them by priority, and release on
     clearParameterValues: vi.fn(),
     patchParameterValues: vi.fn(),
     resetMotionHistory: vi.fn(),
-    setExpressionLayer: vi.fn(),
+    setExpressionLayer: vi.fn<(layer: string, id?: string) => boolean>(() => true),
     startMotion: vi.fn(),
   }
   const actions = ['노트 들기', '필기 동작', '긴장'].map((id) => ({
@@ -183,7 +183,7 @@ it('should yield response actions and overrides to content and restore working b
     clearParameterValues: vi.fn(),
     patchParameterValues: vi.fn(),
     resetMotionHistory: vi.fn(),
-    setExpressionLayer: vi.fn(),
+    setExpressionLayer: vi.fn<(layer: string, id?: string) => boolean>(() => true),
     startMotion: vi.fn(),
   }
   const actions = ['notes', 'writing', 'thumbs'].map((id) => ({

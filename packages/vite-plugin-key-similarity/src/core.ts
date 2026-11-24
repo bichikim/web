@@ -4,6 +4,7 @@ import {hrtime} from 'node:process'
 import {glob} from 'tinyglobby'
 import {CachedEmbeddingProvider, createLocalE5Provider} from './embedding'
 import {extractKeys} from './extractor'
+import {modelDirectory} from './model-cache'
 import {createDiagnostic} from './similarity'
 import type {
   AnalysisReport,
@@ -272,7 +273,10 @@ export class KeySimilarityCore {
   }
 
   private async validatePaths(): Promise<void> {
-    const required = [this.options.modelPath, this.options.wasmPath].filter(
+    // The default provider prepares its shared cache before opening the model.
+    const customModel =
+      this.options.modelPath === modelDirectory() ? undefined : this.options.modelPath
+    const required = [customModel, this.options.wasmPath].filter(
       (filePath): filePath is string => filePath !== undefined,
     )
     await Promise.all(

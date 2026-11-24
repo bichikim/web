@@ -7,7 +7,7 @@ import {useSemanticActions} from '../use-semantic-actions'
 it('should defer conflicting bundles to states while retaining unrelated expressions', async () => {
   const player = {
     resetMotionHistory: vi.fn(),
-    setExpressionLayer: vi.fn(),
+    setExpressionLayer: vi.fn<(layer: string, id?: string) => boolean>(() => true),
     startMotion: vi.fn(),
   }
   const [reserved, setReserved] = createSignal<ReadonlySet<string>>(new Set())

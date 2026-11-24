@@ -4,6 +4,7 @@ import path from 'node:path'
 import {afterEach, describe, expect, it, vi} from 'vitest'
 import {resolveOptions} from '../config'
 import {KeySimilarityCore} from '../core'
+import * as modelCache from '../model-cache'
 import type {EmbeddingProvider} from '../types'
 
 const embeddingMocks = vi.hoisted(() => ({createLocalE5Provider: vi.fn()}))
@@ -75,6 +76,19 @@ const createCore = (
 }
 
 describe('KeySimilarityCore', () => {
+  it('should start the default provider when its shared model cache is empty', async () => {
+    const root = await createFixture()
+    const directory = vi
+      .spyOn(modelCache, 'modelDirectory')
+      .mockReturnValue(path.join(root, 'unprepared'))
+    try {
+      const report = await createCore(root, createProvider()).initialize()
+      expect(report.diagnostics).toHaveLength(1)
+    } finally {
+      directory.mockRestore()
+    }
+  })
+
   it('should produce deterministic pairs independent of file creation order', async () => {
     const first = await createCore(await createFixture('forward'), createProvider()).initialize()
     const second = await createCore(await createFixture('reverse'), createProvider()).initialize()
