@@ -4,7 +4,6 @@ import {render, waitFor} from '@solidjs/testing-library'
 import {createSignal} from 'solid-js'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
-import {loadCalendarPromptContext} from '../../../features/calendar'
 import {
   type ChatClient,
   type ChatController,
@@ -37,7 +36,6 @@ import {ChatTranscript} from '../Transcript'
 import {ChatRoom} from '../ChatRoom'
 
 vi.mock('../../../features/chat', () => ({useChat: vi.fn()}))
-vi.mock('../../../features/calendar', () => ({loadCalendarPromptContext: vi.fn()}))
 vi.mock('../../../features/chat-voice', () => ({
   createStreamingSpeechBuffer: vi.fn(),
   useChatVoice: vi.fn(),
@@ -186,7 +184,6 @@ beforeEach(() => {
   vi.clearAllMocks()
   createControllers()
   vi.mocked(useChat).mockReset().mockReturnValue(chat)
-  vi.mocked(loadCalendarPromptContext).mockResolvedValue(null)
   vi.mocked(useChatVoice).mockReturnValue(voice)
   vi.mocked(createStreamingSpeechBuffer).mockReturnValue(speechBuffer)
   vi.mocked(useSpeechToText).mockImplementation((props) => {
@@ -233,121 +230,57 @@ afterEach(() => {
 })
 
 describe('ChatRoom', () => {
-  it.each([
-    {change: 'clear', outcome: 'success'},
-    {change: 'clear', outcome: 'failure'},
-    {change: 'model', outcome: 'success'},
-    {change: 'model', outcome: 'failure'},
-  ] as const)(
-    'should send a new draft after same-mount $change while the old lookup $outcome settles',
-    async ({change, outcome}) => {
-      const oldRequest = Promise.withResolvers<string | null>()
-      const currentRequest = Promise.withResolvers<string | null>()
-      const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
-      const {clients, runtime} = createChatRuntime()
-      let actualChat: ChatController | undefined
-      vi.mocked(useChat).mockImplementation((props) => {
-        actualChat = useActualChat({...props, runtime})
-        return actualChat
-      })
-      vi.mocked(loadCalendarPromptContext)
-        .mockReturnValueOnce(oldRequest.promise)
-        .mockReturnValueOnce(currentRequest.promise)
-      render(() => <ChatRoom />)
-      const currentChat = actualChat
-      if (currentChat === undefined) {
-        throw new Error('ChatRoom did not create a chat controller')
-      }
+  it.each(['clear', 'model'] as const)('should send a fresh calendar turn after %s', (change) => {
+    const {clients, runtime} = createChatRuntime()
+    let actualChat: ChatController | undefined
+    vi.mocked(useChat).mockImplementation((props) => {
+      actualChat = useActualChat({...props, runtime})
+      return actualChat
+    })
+    render(() => <ChatRoom />)
+    const currentChat = actualChat!
+    currentChat.prepare()
+    currentChat.setDraft('이전 질문')
+    composerProps.onSend()
+    composerProps.onSend()
+    const initialClient = clients[0]!
+    expect(initialClient.client.generate).toHaveBeenCalledOnce()
+    const initialMessage: ChatMessage = {content: '초기 답변', id: 'id-2', role: 'assistant'}
+    initialClient.respond({
+      context: {
+        messages: [{content: '이전 질문', id: 'id-1', role: 'user'}, initialMessage],
+        summary: '',
+      },
+      contextTokens: 12,
+      message: initialMessage,
+      type: 'complete',
+      wasCompacted: false,
+    })
+
+    if (change === 'clear') {
+      sidebarProps.onClear()
+      expect(currentChat.messages()).toEqual([])
+    } else {
+      headerProps.onModelChange('qwen-2b')
+      expect(initialClient.client.dispose).toHaveBeenCalledOnce()
+      expect(currentChat.canSend()).toBe(false)
       currentChat.prepare()
-      currentChat.setDraft('초기 질문')
-      expect(currentChat.canSend()).toBe(true)
-      const initialClient = clients[0]
-      if (initialClient === undefined) {
-        throw new Error('ChatRoom did not create its initial chat client')
-      }
-      currentChat.send()
-      expect(initialClient.client.generate).toHaveBeenCalledOnce()
-      const initialMessage: ChatMessage = {content: '초기 답변', id: 'id-2', role: 'assistant'}
-      initialClient.respond({
-        context: {
-          messages: [{content: '초기 질문', id: 'id-1', role: 'user'}, initialMessage],
-          summary: '',
-        },
-        contextTokens: 12,
-        message: initialMessage,
-        type: 'complete',
-        wasCompacted: false,
-      })
-      expect(currentChat.canClear()).toBe(true)
-      currentChat.setDraft('이전 질문')
-      composerProps.onSend()
-      composerProps.onSend()
-      expect(loadCalendarPromptContext).toHaveBeenCalledOnce()
-      expect(voice.arm).not.toHaveBeenCalled()
+    }
 
-      if (change === 'clear') {
-        expect(currentChat.messages()).toHaveLength(2)
-        expect(currentChat.canClear()).toBe(true)
-        sidebarProps.onClear()
-        expect(currentChat.messages()).toEqual([])
-        expect(currentChat.canClear()).toBe(false)
-        currentChat.setDraft('새 대화 초안')
-      } else {
-        headerProps.onModelChange('qwen-2b')
-        expect(currentChat.modelId()).toBe('qwen-2b')
-        expect(currentChat.canSend()).toBe(false)
-        currentChat.setDraft('새 모델 초안')
-        composerProps.onSend()
-        expect(loadCalendarPromptContext).toHaveBeenCalledOnce()
-        currentChat.prepare()
-        expect(currentChat.canSend()).toBe(true)
-      }
-
-      composerProps.onSend()
-      const callsAfterCurrentSend = vi.mocked(loadCalendarPromptContext).mock.calls.length
-
-      if (outcome === 'success') {
-        oldRequest.resolve('폐기할 일정')
-      } else {
-        oldRequest.reject(new Error('obsolete calendar failed'))
-      }
-      await oldRequest.promise.catch(() => undefined)
-
-      composerProps.onSend()
-      const callsAfterDuplicateSend = vi.mocked(loadCalendarPromptContext).mock.calls.length
-      currentRequest.resolve('새 일정 결과')
-      const activeClient = clients.at(-1)
-      if (activeClient === undefined) {
-        throw new Error('ChatRoom did not create a chat client')
-      }
-      expect(activeClient.modelId).toBe(change === 'clear' ? 'qwen-4b' : 'qwen-2b')
-      await waitFor(() =>
-        expect(activeClient.client.generate).toHaveBeenCalledTimes(change === 'clear' ? 2 : 1),
-      )
-
-      expect(callsAfterCurrentSend).toBe(2)
-      expect(callsAfterDuplicateSend).toBe(2)
-      expect(loadCalendarPromptContext).toHaveBeenCalledTimes(2)
-      expect(loadCalendarPromptContext).toHaveBeenNthCalledWith(1, {text: '이전 질문'})
-      expect(loadCalendarPromptContext).toHaveBeenNthCalledWith(2, {
-        text: change === 'clear' ? '새 대화 초안' : '새 모델 초안',
-      })
-      expect(activeClient.client.generate).toHaveBeenCalledWith(
-        expect.objectContaining({
-          messages: expect.arrayContaining([
-            expect.objectContaining({
-              content: change === 'clear' ? '새 대화 초안' : '새 모델 초안',
-              role: 'user',
-            }),
-          ]),
-        }),
-        expect.any(String),
-        {refineAnswer: true, supplementaryContext: '새 일정 결과'},
-      )
-      expect(consoleError).not.toHaveBeenCalled()
-      expect(voice.arm).toHaveBeenCalledOnce()
-    },
-  )
+    currentChat.setDraft('새 일정 질문')
+    composerProps.onSend()
+    const activeClient = clients.at(-1)!
+    expect(activeClient.modelId).toBe(change === 'clear' ? 'qwen-4b' : 'qwen-2b')
+    expect(activeClient.client.generate).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        messages: expect.arrayContaining([
+          expect.objectContaining({content: '새 일정 질문', role: 'user'}),
+        ]),
+      }),
+      expect.any(String),
+      {calendarTool: {now: expect.any(String), timeZone: expect.any(String)}, refineAnswer: true},
+    )
+  })
 
   it('should discard a recording completion after starting a new conversation', async () => {
     const deferred = Promise.withResolvers<void>()
@@ -358,11 +291,10 @@ describe('ChatRoom', () => {
     sidebarProps.onClear()
     deferred.resolve()
     await deferred.promise
-    expect(loadCalendarPromptContext).not.toHaveBeenCalled()
     expect(chat.send).not.toHaveBeenCalled()
   })
 
-  it('should wire controllers and apply transcript limits and settings', async () => {
+  it('should wire controllers and apply transcript limits and settings', () => {
     render(() => <ChatRoom />)
 
     expect(useChat).toHaveBeenCalledWith({modelId: 'qwen-4b'})
@@ -393,9 +325,9 @@ describe('ChatRoom', () => {
     expect(sidebarProps.disableRefining).toBe(true)
     expect(sidebarProps.speakBeforeRefining).toBe(true)
     composerProps.onSend()
-    expect(voice.arm).not.toHaveBeenCalled()
-    expect(speechBuffer.reset).not.toHaveBeenCalled()
-    await waitFor(() => expect(chat.send).toHaveBeenCalledWith({refineAnswer: false}))
+    expect(chat.send).toHaveBeenCalledWith(
+      expect.objectContaining({calendarTool: expect.any(Object), refineAnswer: false}),
+    )
     expect(voice.arm).toHaveBeenCalledOnce()
     expect(speechBuffer.reset).toHaveBeenCalledOnce()
   })
@@ -413,7 +345,9 @@ describe('ChatRoom', () => {
     controls.setActivity('recording')
     composerProps.onSend()
     await waitFor(() => expect(speech.stopRecording).toHaveBeenCalledOnce())
-    await waitFor(() => expect(chat.send).toHaveBeenCalledWith({refineAnswer: true}))
+    expect(chat.send).toHaveBeenCalledWith(
+      expect.objectContaining({calendarTool: expect.any(Object), refineAnswer: true}),
+    )
 
     controls.setActivity('processing')
     composerProps.onSend()

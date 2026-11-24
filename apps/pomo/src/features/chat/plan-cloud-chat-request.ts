@@ -1,3 +1,5 @@
+import {CALENDAR_TOOL_FORMAT, createCalendarToolInstruction} from '../calendar/agent-prompt'
+import type {CalendarToolClock} from '../calendar/agent-tool-contract'
 import {sumBy} from 'es-toolkit/math'
 import {CLOUD_TEXT_LIMITS, cloudTextRequestSchema} from '../cloud-text/contracts'
 import type {TextGenerationMessage} from '../text-generation/runtime'
@@ -25,6 +27,18 @@ const COMPACTION_INSTRUCTION = `이 응답은 요약과 답변을 함께 생성�
 최근 대화는 그대로 보관하므로 요약에 넣지 마세요.
 그 요약과 최근 대화를 사용해 마지막 사용자 메시지에 원래 답변 지침대로 답하세요.
 요약을 먼저 생성하고 답변을 이어서 생성하세요. 다른 텍스트 없이 {"summary":"요약","answer":"답변"} 형태의 JSON 객체 하나만 반환하세요.`
+
+const calendarResponseInstruction = (clock: CalendarToolClock, compact: boolean): string => {
+  const instructions = createCalendarToolInstruction(clock)
+  return compact
+    ? `${instructions}
+일정 조회가 필요하면 답변 대신 요약과 도구 호출을 같이 반환하세요.
+JSON 객체의 형식은 {"summary":"요약","answer":"","calendarTool":${CALENDAR_TOOL_FORMAT}}입니다.
+조회하지 않으면 요약과 답변 형식을 그대로 사용합니다.`
+    : `${instructions}
+일정 조회가 필요하면 답변 대신 {"calendarTool":${CALENDAR_TOOL_FORMAT}} 형식의 JSON 객체만 출력하세요.
+조회가 필요 없으면 평소처럼 답변을 작성하세요.`
+}
 
 interface CloudChatPlan {
   readonly context: ChatContext
@@ -80,6 +94,7 @@ const splitCloudMessage = (message: TextGenerationMessage): TextGenerationMessag
 const planCompaction = (
   context: ChatContext,
   supplementaryContext: string | undefined,
+  calendarTool?: CalendarToolClock,
 ): CloudChatPlan | null => {
   const {messagesToSummarize, recentMessages} = partitionChatHistory(context.messages)
   if (messagesToSummarize.length === 0) {
@@ -89,7 +104,10 @@ const planCompaction = (
     messages: recentMessages,
     summary: context.summary,
     supplementaryContext,
-    taskInstruction: COMPACTION_INSTRUCTION,
+    taskInstruction:
+      calendarTool === undefined
+        ? COMPACTION_INSTRUCTION
+        : `${COMPACTION_INSTRUCTION}\n\n${calendarResponseInstruction(calendarTool, true)}`,
   })
   const instructions = splitCloudMessage(system)
   const retained = recent.flatMap(splitCloudMessage)
@@ -120,14 +138,20 @@ const planCompaction = (
 export const planCloudChatRequest = (
   context: ChatContext,
   supplementaryContext: string | undefined,
+  calendarTool?: CalendarToolClock,
 ): CloudChatPlan | null => {
-  const messages = createChatMessages({...context, supplementaryContext}).flatMap(splitCloudMessage)
+  const messages = createChatMessages({
+    ...context,
+    supplementaryContext,
+    taskInstruction:
+      calendarTool === undefined ? undefined : calendarResponseInstruction(calendarTool, false),
+  }).flatMap(splitCloudMessage)
   const plain = fitsCloudRequest(messages)
   const nearLimit =
     messages.length >= CLOUD_TEXT_LIMITS.messages - MESSAGE_HEADROOM ||
     contentLength(messages) >= CLOUD_TEXT_LIMITS.inputCharacters - CHARACTER_HEADROOM
   if (nearLimit || !plain) {
-    const compact = planCompaction(context, supplementaryContext)
+    const compact = planCompaction(context, supplementaryContext, calendarTool)
     if (compact !== null) {
       return compact
     }

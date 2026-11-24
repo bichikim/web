@@ -9,7 +9,7 @@ interface CloudTextTaskOptions {
   /** Conversation supplied to the selected cloud model. */
   readonly messages: ReadonlyArray<TextGenerationMessage>
   /** Receives the completed result while the task remains active. */
-  readonly onComplete: (response: CloudTextResponse) => void
+  readonly onComplete: (response: CloudTextResponse, signal: AbortSignal) => void | Promise<void>
   /** Receives a failure while the task remains active. */
   readonly onError: (message: string) => void
   /** Runs when a request starts. */
@@ -41,7 +41,7 @@ export const createCloudTextTask = () => {
         controller.signal,
       )
       if (!disposed && !controller.signal.aborted) {
-        options.onComplete(text)
+        await options.onComplete(text, controller.signal)
       }
     } catch (error: unknown) {
       if (!disposed && !controller.signal.aborted) {

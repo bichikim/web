@@ -59,11 +59,14 @@ const formatEvent = (event: CalendarEvent, timeZone: string) =>
   `- [${PROVIDER_LABELS[event.provider]} · ${event.accountLabel} · ${event.calendarLabel}] ` +
   `${formatEventTime(event, timeZone)} · ${event.title}`
 
+export const formatCalendarEventList = (events: ReadonlyArray<CalendarEvent>, timeZone: string) =>
+  events.filter(hasValidEventTimes).map((event) => formatEvent(event, timeZone))
+
 /** Produces a compact, provider-neutral calendar grounding block for local chat generation. */
 export const createCalendarPromptContext = (
   options: CreateCalendarPromptContextOptions,
 ): string => {
-  const events = options.events.filter(hasValidEventTimes)
+  const events = formatCalendarEventList(options.events, options.timeZone)
   const incomplete = options.incomplete === true || events.length < options.events.length
   const header = [
     incomplete
@@ -79,5 +82,5 @@ export const createCalendarPromptContext = (
     ].join('\n')
   }
 
-  return [...header, ...events.map((event) => formatEvent(event, options.timeZone))].join('\n')
+  return [...header, ...events].join('\n')
 }

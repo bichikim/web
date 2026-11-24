@@ -1,6 +1,7 @@
 import {isValidTimeZone} from 'src/utils/is-valid-time-zone'
 import type {APIEvent} from '@solidjs/start/server'
 import {z} from 'zod'
+import {MAXIMUM_CALENDAR_RANGE_MILLISECONDS} from 'src/features/calendar/types'
 
 import {getCalendarService} from 'src/server/calendar/runtime'
 import {noStoreJson} from 'src/server/http/response'
@@ -9,17 +10,6 @@ import {resolveUserRequestOrUnavailable} from 'src/server/auth/resolve-user-requ
 const HTTP_BAD_REQUEST = 400
 const HTTP_UNAUTHORIZED = 401
 const HTTP_SERVICE_UNAVAILABLE = 503
-const MILLISECONDS_PER_SECOND = 1000
-const SECONDS_PER_MINUTE = 60
-const MINUTES_PER_HOUR = 60
-const HOURS_PER_DAY = 24
-const MAXIMUM_RANGE_DAYS = 32
-const MAXIMUM_RANGE_MILLISECONDS =
-  MAXIMUM_RANGE_DAYS *
-  HOURS_PER_DAY *
-  MINUTES_PER_HOUR *
-  SECONDS_PER_MINUTE *
-  MILLISECONDS_PER_SECOND
 const MAXIMUM_TIME_ZONE_CHARACTERS = 100
 const querySchema = z.union([
   z.object({
@@ -70,7 +60,7 @@ export const GET = async (event: APIEvent): Promise<Response> => {
   if (!('at' in parsed.data)) {
     const startTime = new Date(parsed.data.start).getTime()
     const endTime = new Date(parsed.data.end).getTime()
-    if (endTime <= startTime || endTime - startTime > MAXIMUM_RANGE_MILLISECONDS) {
+    if (endTime <= startTime || endTime - startTime > MAXIMUM_CALENDAR_RANGE_MILLISECONDS) {
       return noStoreJson(
         {error: 'invalid_calendar_range'},
         {cookies: identity.cookies, status: HTTP_BAD_REQUEST},

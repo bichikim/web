@@ -1,9 +1,13 @@
-import type {TextOutputSchema} from '../text-generation/types'
 import {clampFiniteNumber} from 'src/utils/clamp-finite-number'
 import {type Accessor, createMemo, createSignal, onCleanup, untrack} from 'solid-js'
 import {isNonBlankString} from 'src/utils/is-non-blank-string'
 
-import {type ChatClient, createChatClient, type CreateChatClientOptions} from './client'
+import {
+  type ChatClient,
+  createChatClient,
+  type CreateChatClientOptions,
+  type GenerateChatOptions,
+} from './client'
 import type {ChatAnswerDraft, ChatContext, ChatMessage, ChatWorkerResponse} from './messages'
 import {supportsWebGpu} from '../text-generation/environment'
 import {supportsTextModel} from '../text-generation/supports-text-model'
@@ -78,11 +82,7 @@ export interface ChatController {
   readonly summaryCount: Accessor<number>
 }
 
-export interface SendChatOptions {
-  readonly outputSchema?: TextOutputSchema
-  readonly refineAnswer?: boolean
-  readonly supplementaryContext?: string
-}
+export type SendChatOptions = GenerateChatOptions
 
 interface PendingUser {
   readonly draftRevision: number
@@ -326,11 +326,8 @@ export const useChat = (props: UseChatProps): ChatController => {
     setState({status: 'generating'})
     try {
       clientOwner.get().generate(nextContext, runtime.createId(), {
-        ...(options.outputSchema === undefined ? {} : {outputSchema: options.outputSchema}),
+        ...options,
         refineAnswer: options.refineAnswer ?? true,
-        ...(options.supplementaryContext === undefined
-          ? {}
-          : {supplementaryContext: options.supplementaryContext}),
       })
     } catch {
       restorePendingUser()

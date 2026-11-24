@@ -1,3 +1,10 @@
+import {MILLISECONDS_PER_DAY} from 'src/utils/time-units'
+
+const MAXIMUM_CALENDAR_RANGE_DAYS = 32
+
+export const MAXIMUM_CALENDAR_RANGE_MILLISECONDS =
+  MAXIMUM_CALENDAR_RANGE_DAYS * MILLISECONDS_PER_DAY
+
 export const CALENDAR_PROVIDERS = ['google', 'microsoft'] as const
 
 export type CalendarProviderId = (typeof CALENDAR_PROVIDERS)[number]
