@@ -35,7 +35,7 @@ const weatherPreferenceStorage = createParsedPreferenceStorage({
 export type WeatherState =
   | {readonly status: 'disabled'}
   | {readonly location: WeatherLocation; readonly status: 'loading'}
-  | {readonly feed: WeatherFeed; readonly status: 'ready'}
+  | {readonly feed: WeatherFeed; readonly refreshing?: true; readonly status: 'ready'}
   | {readonly location: WeatherLocation; readonly status: 'error'}
 
 export interface WeatherController {
@@ -91,6 +91,7 @@ export const useWeather = (): WeatherController => {
     location: DEFAULT_WEATHER_PREFERENCE.location,
     status: 'loading',
   })
+  const [refreshingFeed, setRefreshingFeed] = createSignal<WeatherState>()
   const preference = () => storedPreference() ?? DEFAULT_WEATHER_PREFERENCE
   const preferenceReady = () => storedPreference() !== null
   const isWeatherEnabled = () => {
@@ -167,6 +168,7 @@ export const useWeather = (): WeatherController => {
 
   createQueryRevalidationScheduler({
     key: () => weatherFeedQuery.keyFor(preference().location.id),
+    onRevalidate: () => setRefreshingFeed(feedState()),
     schedule: () => {
       const currentPreference = preference()
       return resolveWeatherRevalidationSchedule({
@@ -204,6 +206,15 @@ export const useWeather = (): WeatherController => {
       return resolveWeatherSceneCondition(currentPreference.sceneMode, observedCondition)
     },
     sceneMode: () => preference().sceneMode,
-    state: () => (isWeatherEnabled() ? feedState() : DISABLED_WEATHER_STATE),
+    state: () => {
+      if (!isWeatherEnabled()) {
+        return DISABLED_WEATHER_STATE
+      }
+
+      const currentState = feedState()
+      return currentState.status === 'ready' && currentState === refreshingFeed()
+        ? {...currentState, refreshing: true}
+        : currentState
+    },
   }
 }

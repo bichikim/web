@@ -65,6 +65,7 @@ it('should stop pending voice generation after disposal', async () => {
   setWriterState({status: 'complete'})
   await waitFor(() => expect(generateVoiceCandidates).toHaveBeenCalled())
   view.unmount()
+  expect(vi.mocked(generateVoiceCandidates).mock.calls[0]?.[0].signal?.aborted).toBe(true)
   voiceGeneration.resolve({candidates: [candidate()], status: 'complete'})
   await flush()
 })
@@ -87,6 +88,7 @@ it('should stop pending voice regeneration after disposal', async () => {
   fireEvent.click(screen.getByRole('button', {name: 'regenerate'}))
   await waitFor(() => expect(regenerateCandidateVoice).toHaveBeenCalled())
   view.unmount()
+  expect(vi.mocked(regenerateCandidateVoice).mock.calls[0]?.[0].signal?.aborted).toBe(true)
   regeneration.resolve({
     candidate: {...candidate(), audioUrl: 'blob:disposed-regeneration'},
     status: 'complete',

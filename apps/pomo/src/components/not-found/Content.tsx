@@ -18,16 +18,14 @@ const LINK_CLASSES = cx(
 export const NotFoundContent = () => {
   return (
     <main class={MAIN_CLASSES}>
-      <Title>페이지를 찾을 수 없어요 — Pomofi</Title>
+      <Title>{m.not_found_title()}</Title>
       <HttpStatusCode code={404} />
       <section class="max-w-lg text-center" aria-labelledby="not-found-heading">
         <p class="m-0 text-sm font-750 tracking-[0.24em] text-#f2a7b8 uppercase">404</p>
         <h1 class="mb-0 mt-4 text-3xl font-800 tracking--0.04em xs:text-5xl" id="not-found-heading">
-          페이지를 찾을 수 없어요
+          {m.not_found_heading()}
         </h1>
-        <p class="mb-0 mt-5 leading-7 text-#d8cbd9">
-          주소가 올바른지 확인하거나 Pomofi 첫 화면으로 돌아가 주세요.
-        </p>
+        <p class="mb-0 mt-5 leading-7 text-#d8cbd9">{m.not_found_description()}</p>
         <A class={LINK_CLASSES} href="/">
           {m.app_return()}
         </A>

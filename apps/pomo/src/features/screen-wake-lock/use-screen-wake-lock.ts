@@ -1,13 +1,10 @@
+import * as m from '@paraglide/message'
 import {createSerialTaskQueue} from 'src/utils/create-serial-task-queue'
 import {type Accessor, createEffect, createSignal, onCleanup, onMount, untrack} from 'solid-js'
 import {type CapabilityAvailability, useCapabilityTask} from 'src/hooks/use-capability-task'
 import {browserWakeLock} from './browser-wake-lock'
 
 export type ScreenWakeLockAvailability = CapabilityAvailability
-
-const APPS_IN_TOSS_ENABLE_ERROR = '화면 유지 요청을 허용하지 못했어요. 앱 설정을 확인해 주세요.'
-const SCREEN_WAKE_LOCK_DISABLE_ERROR =
-  '화면 유지 기능을 해제하지 못했어요. 잠시 후 다시 시도해 주세요.'
 
 export interface ScreenWakeLockController {
   readonly availability: Accessor<ScreenWakeLockAvailability>
@@ -89,7 +86,9 @@ export const useScreenWakeLock = (): ScreenWakeLockController => {
     const state = wakeLockTask.state()
     untrack(() => {
       if (state.status === 'error') {
-        setErrorMessage(isEnabled() ? APPS_IN_TOSS_ENABLE_ERROR : SCREEN_WAKE_LOCK_DISABLE_ERROR)
+        setErrorMessage(
+          isEnabled() ? m.settings_wake_lock_toss_denied() : m.settings_wake_lock_release_failed(),
+        )
         setIsEnabled(false)
       }
     })
@@ -110,7 +109,7 @@ export const useScreenWakeLock = (): ScreenWakeLockController => {
     }
     if (!succeeded && !isEnabled()) {
       setIsEnabled(sentinel !== null)
-      setErrorMessage(SCREEN_WAKE_LOCK_DISABLE_ERROR)
+      setErrorMessage(m.settings_wake_lock_release_failed())
     } else if (isEnabled() && sentinel === null) {
       requestWakeLock()
     }
@@ -148,7 +147,7 @@ export const useScreenWakeLock = (): ScreenWakeLockController => {
           sentinel = null
           if (!browserRelease.isPending() && isEnabled() && browserWakeLock.isVisible()) {
             setIsEnabled(false)
-            setErrorMessage('화면 유지가 해제되었어요. 다시 켜 주세요.')
+            setErrorMessage(m.settings_wake_lock_released())
           }
         },
         {once: true},
@@ -156,7 +155,7 @@ export const useScreenWakeLock = (): ScreenWakeLockController => {
     } catch {
       if (!disposed && revision === requestRevision) {
         setIsEnabled(false)
-        setErrorMessage('화면 유지 요청을 허용하지 못했어요. 브라우저 설정을 확인해 주세요.')
+        setErrorMessage(m.settings_wake_lock_browser_denied())
       }
     }
   }

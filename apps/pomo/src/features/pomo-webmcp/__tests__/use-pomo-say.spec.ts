@@ -65,7 +65,8 @@ describe('usePSay', () => {
       completeSpeech = resolve
     })
     const [isPlaying, setIsPlaying] = createSignal(false)
-    const voice = {...createVoice(), isPlaying}
+    const [isGenerating, setIsGenerating] = createSignal(false)
+    const voice = {...createVoice(), isGenerating, isPlaying}
     vi.mocked(voice.speak).mockReturnValueOnce(speech)
     vi.mocked(useLazyChatVoice).mockReturnValue(voice)
     const {cleanup, result} = renderHook(() => usePSay({onBeforeSpeech: vi.fn()}))
@@ -74,6 +75,10 @@ describe('usePSay', () => {
 
     expect(result.isPreparing()).toBe(true)
     expect(result.speechText()).toBeNull()
+    await vi.waitFor(() => expect(voice.speak).toHaveBeenCalledOnce(), {interval: 1})
+    setIsGenerating(true)
+    expect(result.speechText()).toBe('한 번만 들려줄 답변')
+    expect(result.isPreparing()).toBe(true)
     setIsPlaying(true)
     await vi.waitFor(() => expect(result.speechText()).toBe('한 번만 들려줄 답변'))
     expect(result.isPreparing()).toBe(false)

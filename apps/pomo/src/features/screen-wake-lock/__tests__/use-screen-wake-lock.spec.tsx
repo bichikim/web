@@ -1,5 +1,6 @@
 /** @vitest-environment jsdom */
 
+import {getLocale, overwriteGetLocale} from '@paraglide/runtime'
 import {render, waitFor} from '@solidjs/testing-library'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
 
@@ -33,6 +34,8 @@ const ScreenWakeLockHarness = (props: ScreenWakeLockHarnessProps) => {
   return null
 }
 
+const originalGetLocale = getLocale
+
 describe('useScreenWakeLock', () => {
   beforeEach(() => {
     vi.resetAllMocks()
@@ -46,6 +49,7 @@ describe('useScreenWakeLock', () => {
   })
 
   afterEach(() => {
+    overwriteGetLocale(originalGetLocale)
     vi.unstubAllEnvs()
     vi.restoreAllMocks()
   })
@@ -597,21 +601,28 @@ describe('useScreenWakeLock', () => {
     },
   )
 
-  it('should surface an unexpected browser wake-lock release while visible', async () => {
-    const {getReleaseListener, sentinel} = createSentinel()
-    const request = vi.fn().mockResolvedValue(sentinel)
-    setBrowserWakeLock(request)
-    vi.mocked(browserWakeLock.isVisible).mockReturnValue(true)
-    const {getController} = renderController()
-    await waitFor(() => expect(getController()?.availability()).toBe('supported'))
-    getController()?.onEnabledChange(true)
-    await waitFor(() => expect(getReleaseListener()).toBeTypeOf('function'))
+  it.each([
+    {locale: 'ko', notice: '화면 유지가 해제되었어요. 다시 켜 주세요.'},
+    {locale: 'en', notice: 'The screen wake lock was released. Turn it on again.'},
+  ] as const)(
+    'should report an unexpected browser wake-lock release in $locale',
+    async ({locale, notice}) => {
+      overwriteGetLocale(() => locale)
+      const {getReleaseListener, sentinel} = createSentinel()
+      const request = vi.fn().mockResolvedValue(sentinel)
+      setBrowserWakeLock(request)
+      vi.mocked(browserWakeLock.isVisible).mockReturnValue(true)
+      const {getController} = renderController()
+      await waitFor(() => expect(getController()?.availability()).toBe('supported'))
+      getController()?.onEnabledChange(true)
+      await waitFor(() => expect(getReleaseListener()).toBeTypeOf('function'))
 
-    getReleaseListener()?.()
+      getReleaseListener()?.()
 
-    expect(getController()?.isEnabled()).toBe(false)
-    expect(getController()?.errorMessage()).toBe('화면 유지가 해제되었어요. 다시 켜 주세요.')
-  })
+      expect(getController()?.isEnabled()).toBe(false)
+      expect(getController()?.errorMessage()).toBe(notice)
+    },
+  )
 
   it('should preserve the current state for a stale or hidden release event', async () => {
     const first = createSentinel()

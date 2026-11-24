@@ -94,7 +94,11 @@ const cancelRequest = async (requestId: string): Promise<void> => {
 }
 
 export const readCloudTextUsage = async (): Promise<CloudTextUsage> => {
-  const response = await apiJsonRequest('cloud-text', await createRequestOptions())
+  const requestOptions = await createRequestOptions()
+  const response = await apiJsonRequest('cloud-text', {
+    ...requestOptions,
+    recheckWebSessionOnUnauthorized: requestOptions.credentials === 'include',
+  })
   await checkResponse(response)
   return parseJsonResponse(response, cloudTextUsageSchema)
 }
