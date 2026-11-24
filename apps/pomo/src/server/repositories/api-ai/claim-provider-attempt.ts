@@ -1,3 +1,4 @@
+import {Buffer} from 'node:buffer'
 import {eq} from 'drizzle-orm'
 import {apiAiAttempts, apiAiJobs, apiAiPools} from 'src/server/database'
 import type {ApiAiClaim, ApiAiProvider} from 'src/server/api-ai/types'
@@ -22,7 +23,7 @@ const getTokenReservation = (body: Readonly<Record<string, unknown>>): number =>
   ) {
     throw new TypeError('Queued AI requests require a bounded output token count')
   }
-  return new TextEncoder().encode(JSON.stringify(body)).length + maximumTokens
+  return Buffer.byteLength(JSON.stringify(body) ?? '', 'utf8') + maximumTokens
 }
 
 /** Creates one execution attempt for the selected model. */
