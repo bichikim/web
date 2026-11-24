@@ -367,9 +367,10 @@ export const createFeedDialogueRepository = (
     },
     async listMetadata() {
       const metadata = parseMetadata(await database.feedDialogueMetadata.toArray())
-      return metadata.sort(
-        (left, right) => Date.parse(right.createdAt) - Date.parse(left.createdAt),
-      )
+      return metadata
+        .map((item) => ({createdTime: Date.parse(item.createdAt), item}))
+        .sort((left, right) => right.createdTime - left.createdTime)
+        .map(({item}) => item)
     },
     async markListened(dialogueId, listenedAt) {
       const value = await database.feedDialogueMetadata.get(dialogueId)
