@@ -104,6 +104,15 @@ describe('registerFetchHandler', () => {
     expect(staleWhileRevalidate).toHaveBeenCalledWith(expect.objectContaining({request}), 'image')
   })
 
+  it('should cache a page whose path starts with api without an API segment', () => {
+    registerFetchHandler({origin: 'https://example.com', strategies: {}, strategyHandlers})
+
+    const request = createRequest('https://example.com/apiculture')
+    dispatchFetch(request)
+
+    expect(cacheFirst).toHaveBeenCalledWith(expect.objectContaining({request}), 'default')
+  })
+
   it('should invoke network-only without a destination argument', () => {
     registerFetchHandler({
       origin: 'https://example.com',
@@ -122,6 +131,8 @@ describe('registerFetchHandler', () => {
     {label: 'non-GET', request: createRequest('https://example.com/data', 'POST')},
     {label: 'cross-origin', request: createRequest('https://other.example/data')},
     {label: 'API', request: createRequest('https://example.com/api/items')},
+    {label: 'API root', request: createRequest('https://example.com/api')},
+    {label: 'API root with a query', request: createRequest('https://example.com/api?limit=5')},
     {label: 'instrument', request: createRequest('https://example.com/instruments/piano.ogg')},
     {label: 'Vercel internal', request: createRequest('https://example.com/_vercel/insights.js')},
   ])('should ignore $label requests', ({request}) => {
