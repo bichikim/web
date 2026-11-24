@@ -118,6 +118,17 @@ it.each([null, undefined])(
   'should retain the first active artwork even when it is %s',
   (artworkUrl) => {
     const {model} = createModelHarness()
+    const initialAssets: ReadonlyArray<AdminAsset> = [
+      {artworkUrl, id: 'first', status: 'active', trackId: 'one'},
+      {
+        artworkUrl: 'https://images.example/later.png',
+        id: 'later',
+        status: 'active',
+        trackId: 'one',
+      },
+      {id: 'orphan', status: 'active', trackId: 'missing'},
+    ]
+    const [assets, setAssets] = createSignal(initialAssets)
     render(() => (
       <TrackPanel
         albumId="album"
@@ -126,21 +137,42 @@ it.each([null, undefined])(
         model={model}
         pendingTracks={[]}
         tracks={BASE_CATALOG.tracks.filter((track) => track.id === 'one')}
-        assets={[
-          {artworkUrl, id: 'first', status: 'active', trackId: 'one'},
-          {
-            artworkUrl: 'https://images.example/later.png',
-            id: 'later',
-            status: 'active',
-            trackId: 'one',
-          },
-          {id: 'orphan', status: 'active', trackId: 'missing'},
-        ]}
+        assets={assets()}
       />
     ))
 
     expect(screen.getByRole('heading', {name: '수록곡 1'})).toBeVisible()
     expect(screen.queryByRole('img')).not.toBeInTheDocument()
+    const row = screen.getByRole('button', {name: 'Track one 수록곡 삭제'}).closest('li')!
+    const audio = row.querySelector('audio')!
+    audio.currentTime = 12
+
+    setAssets(initialAssets.filter((asset) => asset.id !== 'first'))
+    expect(screen.getByRole('img', {name: 'Track one 곡 이미지'})).toHaveAttribute(
+      'src',
+      'https://images.example/later.png',
+    )
+
+    setAssets(initialAssets)
+    expect(screen.queryByRole('img')).not.toBeInTheDocument()
+
+    setAssets(initialAssets.toReversed())
+    const image = screen.getByRole('img', {name: 'Track one 곡 이미지'})
+    expect(image).toHaveAttribute('src', 'https://images.example/later.png')
+
+    setAssets((current) =>
+      current.map((asset) =>
+        asset.id === 'later' ? {...asset, artworkUrl: 'https://images.example/updated.png'} : asset,
+      ),
+    )
+    expect(screen.getByRole('img', {name: 'Track one 곡 이미지'})).toBe(image)
+    expect(image).toHaveAttribute('src', 'https://images.example/updated.png')
+    expect(screen.getByRole('heading', {name: '수록곡 1'})).toBeVisible()
+    expect(screen.getByRole('button', {name: 'Track one 수록곡 삭제'}).closest('li')).toBe(row)
+    expect(row.querySelector('audio')).toBe(audio)
+    expect(audio.currentTime).toBe(12)
+    expect(initialAssets.map((asset) => asset.id)).toEqual(['first', 'later', 'orphan'])
+    expect(initialAssets[0]?.artworkUrl).toBe(artworkUrl)
   },
 )
 
