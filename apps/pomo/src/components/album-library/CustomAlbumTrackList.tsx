@@ -1,6 +1,6 @@
 import {For, Show} from 'solid-js'
 
-import {BYTES_PER_MEBIBYTE, type CustomAlbumTrack} from '../../features/custom-albums'
+import {BYTES_PER_MEBIBYTE, type CustomAlbumTrack} from '../../features/custom-albums/model'
 import {PButton} from '../p-button/PButton'
 import * as m from '@paraglide/message'
 
