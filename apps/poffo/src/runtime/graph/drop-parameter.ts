@@ -25,18 +25,28 @@ export const dropParameter = (options: DropParameterOptions) => {
     x: position.x + (node.measured?.width ?? PARAMETER_WIDTH) / 2,
     y: position.y + (node.measured?.height ?? PARAMETER_HEIGHT) / 2,
   }
-  const target = options.nodes.findLast(
-    (candidate) =>
-      candidate.type === 'parameterGroup' &&
+  const groupsByNodeId = new Map(
+    options.groups.map((group) => [`parameter:group:${group.id}`, group]),
+  )
+  const getGroup = (candidate?: Node) =>
+    candidate === undefined ? undefined : groupsByNodeId.get(candidate.id)
+  const target = options.nodes.findLast((candidate) => {
+    if (candidate.type !== 'parameterGroup') {
+      return false
+    }
+    const group = getGroup(candidate)
+    const fallbackHeight = group === undefined ? GROUP_HEIGHT : getGroupHeader(group)
+    return (
       center.x >= candidate.position.x &&
       center.x <= candidate.position.x + (candidate.measured?.width ?? GROUP_WIDTH) &&
       center.y >= candidate.position.y &&
-      center.y <= candidate.position.y + (candidate.measured?.height ?? GROUP_HEIGHT),
-  )
+      center.y <= candidate.position.y + (candidate.measured?.height ?? fallbackHeight)
+    )
+  })
   if (target === undefined && node.parentId === undefined) {
     return undefined
   }
-  const group = options.groups.find((group) => `parameter:group:${group.id}` === target?.id)
+  const group = getGroup(target)
   const members = group?.parameterIds ?? []
   const header = group === undefined ? 0 : getGroupHeader(group)
   const parameterId = node.id.replace(/^parameter:/u, '')

@@ -63,7 +63,7 @@ export const WorkspaceProvider = (props: WorkspaceProviderProps) => {
       if (result?.status === 'rejected') {
         throw new Error('진행 중인 편집을 마친 후 이동하세요.')
       }
-      navigateWorkspace(new URL(`/${page}${location.search}`, location.origin).href)
+      return navigateWorkspace(new URL(`/${page}${location.search}`, location.origin).href)
     },
     renderingInfo,
     renderingPreferences: rendering.preferences,

@@ -10,11 +10,12 @@ export const registerWorkspaceNavigationGuard = (guard: WorkspaceNavigationGuard
 }
 
 /** Changes this tab only after every active model host accepts navigation. */
-export const navigateWorkspace = (href: string): void => {
+export const navigateWorkspace = (href: string): boolean => {
   const target = new URL(href, location.href)
   if (target.href === location.href || ![...guards].every((guard) => guard(target))) {
-    return
+    return false
   }
   history.pushState(null, '', target)
   globalThis.dispatchEvent(new PopStateEvent('popstate'))
+  return true
 }

@@ -197,6 +197,39 @@ test('should retain the latest selection when a superseded asynchronous handoff 
   expect(openViewer).toHaveBeenCalledOnce()
 })
 
+test('should hold the accepted destination until the next workspace is rendered', async () => {
+  const [current, setCurrent] = createSignal<'editor' | 'studio'>('editor')
+  const handoff = Promise.withResolvers<boolean>()
+  render(() => <WorkspaceNavigation current={current()} onStudioOpen={() => handoff.promise} />)
+  fireEvent.click(screen.getByRole('button', {name: 'Studio'}))
+  paint()
+  paint()
+
+  handoff.resolve(true)
+  await handoff.promise
+  expect(screen.getByRole('button', {name: 'Studio', pressed: true})).toBeVisible()
+  expect(screen.getByRole('link', {current: 'page', name: 'Editor'})).toBeVisible()
+
+  setCurrent('studio')
+  expect(screen.getByRole('link', {current: 'page', name: 'Studio'})).toHaveAttribute(
+    'data-selected',
+  )
+})
+
+test('should restore the current selection when the navigation was declined', async () => {
+  const handoff = Promise.withResolvers<boolean>()
+  render(() => <WorkspaceNavigation current="editor" onStudioOpen={() => handoff.promise} />)
+  fireEvent.click(screen.getByRole('button', {name: 'Studio'}))
+  paint()
+  paint()
+  handoff.resolve(false)
+  await handoff.promise
+
+  expect(screen.getByRole('link', {current: 'page', name: 'Editor'})).toHaveAttribute(
+    'data-selected',
+  )
+})
+
 test('should discard a deferred choice when the navigation is unmounted', () => {
   const open = vi.fn()
   const view = render(() => <WorkspaceNavigation current="editor" onStudioOpen={open} />)

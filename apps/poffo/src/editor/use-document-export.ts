@@ -106,11 +106,9 @@ export const useDocumentExport = (
     setNotice('텍스처 아틀라스를 만드는 중입니다.')
     try {
       const packed = await packTextureAtlas(source)
-      if (!disposed) {
+      if (!disposed && version === exportVersion) {
         download(packed, omitted)
-        if (version === exportVersion) {
-          setNotice(null)
-        }
+        setNotice(null)
       }
     } catch {
       if (!disposed && version === exportVersion) {

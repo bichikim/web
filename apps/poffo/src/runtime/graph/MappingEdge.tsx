@@ -3,6 +3,7 @@ import {BezierEdge, type EdgeProps, useSolidFlow, type XYPosition} from '@dschz/
 import {useMappingGraph} from './context'
 const HANDLE_OFFSET = 24
 const HANDLE_RADIUS = 9
+const DROP_HANDLE = '[data-nodeid]'
 export const MappingEdge = (props: EdgeProps) => {
   const graph = useMappingGraph()
   const flow = useSolidFlow()
@@ -31,7 +32,15 @@ export const MappingEdge = (props: EdgeProps) => {
     event.stopPropagation()
     dragPointer = undefined
     setPointer(null)
-    const handle = document.elementFromPoint(event.clientX, event.clientY)?.closest('[data-nodeid]')
+    const {clientX, clientY, currentTarget} = event
+    const hit = document.elementFromPoint(clientX, clientY)
+    const handle =
+      hit === currentTarget
+        ? document
+            .elementsFromPoint(clientX, clientY)
+            .map((element) => element.closest(DROP_HANDLE))
+            .find((element) => element !== null)
+        : hit?.closest(DROP_HANDLE)
     const node = handle?.getAttribute('data-nodeid')
     if (node === null || node === undefined) {
       return

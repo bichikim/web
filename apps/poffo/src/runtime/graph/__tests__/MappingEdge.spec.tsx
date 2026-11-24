@@ -15,6 +15,7 @@ vi.mock('@dschz/solid-flow', () => ({
 afterEach(() => {
   vi.clearAllMocks()
   Reflect.deleteProperty(document, 'elementFromPoint')
+  Reflect.deleteProperty(document, 'elementsFromPoint')
 })
 const mount = () => {
   render(() => (
@@ -44,7 +45,7 @@ const mount = () => {
     configurable: true,
     value: () => destination,
   })
-  return handle
+  return {destination, handle}
 }
 const pointer = (element: Element, type: string, pointerId: number) =>
   fireEvent(
@@ -56,7 +57,7 @@ const pointer = (element: Element, type: string, pointerId: number) =>
 test.each(['pointerup', 'pointercancel'])(
   'should ignore a foreign %s during an edge drag',
   (type) => {
-    const handle = mount()
+    const {handle} = mount()
     pointer(handle, 'pointerdown', 1)
     pointer(handle, type, 2)
     expect(mocks.connect).not.toHaveBeenCalled()
@@ -71,9 +72,29 @@ test.each(['pointerup', 'pointercancel'])(
   },
 )
 test('should discard an edge drag after its pointer capture is lost', () => {
-  const handle = mount()
+  const {handle} = mount()
   pointer(handle, 'pointerdown', 1)
   pointer(handle, 'lostpointercapture', 1)
   pointer(handle, 'pointerup', 1)
   expect(mocks.connect).not.toHaveBeenCalled()
+})
+
+test('should connect to the destination underneath the dragged edge handle', () => {
+  const {destination, handle} = mount()
+  Object.defineProperty(document, 'elementFromPoint', {configurable: true, value: () => handle})
+  Object.defineProperty(document, 'elementsFromPoint', {
+    configurable: true,
+    value: () => [handle, destination],
+  })
+
+  pointer(handle, 'pointerdown', 1)
+  pointer(handle, 'pointerup', 1)
+
+  expect(mocks.connect).toHaveBeenCalledExactlyOnceWith({
+    previousId: 'angle',
+    source: 'manual',
+    sourceHandle: 'manualValue',
+    target: 'parameter:next',
+    targetHandle: 'next',
+  })
 })

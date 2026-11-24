@@ -15,7 +15,10 @@ import type {
 import type {RenderingPreferences} from './use-rendering-preferences'
 
 export type WorkspaceMode = 'editor' | 'studio' | 'viewer'
-export type WorkspaceNavigationAction = (signal?: AbortSignal) => void | Promise<void>
+export type WorkspaceNavigationResult = boolean | void
+export type WorkspaceNavigationAction = (
+  signal?: AbortSignal,
+) => WorkspaceNavigationResult | Promise<WorkspaceNavigationResult>
 export type WorkspaceOwner = 'editor' | 'runtime'
 export interface HeaderProps {
   /** Surface owner, used to choose the active retained header. */
@@ -52,7 +55,7 @@ export interface WorkspaceContextValue {
     document: PuppetDocument,
     expectedRevision?: number,
   ) => ModelCommandResult
-  readonly openRuntime: (page: 'studio' | 'viewer') => Promise<void>
+  readonly openRuntime: (page: 'studio' | 'viewer') => Promise<boolean>
   readonly setEditorControl: (control: EditorController) => void
   readonly bindHeader: (entry: SurfaceEntry<HeaderProps>) => () => void
   readonly bindViewport: (entry: SurfaceEntry<ViewportProps>) => () => void

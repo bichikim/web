@@ -218,16 +218,31 @@ test.each(['disposal', 'model-change'] as const)(
   },
 )
 
-test('should ignore a pending import failure after changing the model', async () => {
-  const [source, setSource] = createSignal(document)
-  const {result} = mount(source)
-  const reading = Promise.withResolvers<string>()
-  const pending = result.workspace.importStudio(studioFile(reading.promise))
-  setSource(createEmptyDocument())
-  reading.reject(new Error('previous model read failed'))
-  await pending
-  expect(result.workspace.error()).toBeNull()
-})
+test.each(['success', 'failure'] as const)(
+  'should ask for a new file on model change and ignore the previous read %s',
+  async (outcome) => {
+    const [source, setSource] = createSignal(document)
+    const {result} = mount(source)
+    const reading = Promise.withResolvers<string>()
+    const previous = result.controls.profile()
+    const pending = result.workspace.importStudio(studioFile(reading.promise))
+    setSource(createEmptyDocument())
+    const notice = '모델이 바뀌었습니다. 스튜디오 파일을 다시 선택해 주세요.'
+    const profile = result.controls.profile()
+    expect(result.workspace.error()).toBe(notice)
+
+    if (outcome === 'success') {
+      reading.resolve(JSON.stringify(previous))
+    } else {
+      reading.reject(new Error('previous model read failed'))
+    }
+    await pending
+    expect(result.controls.profile()).toBe(profile)
+    expect(result.workspace.error()).toBe(notice)
+    await result.workspace.importStudio(studioFile(Promise.resolve(JSON.stringify(profile))))
+    expect(result.workspace.error()).toBeNull()
+  },
+)
 
 test.each([false, true])(
   'should reconcile the selected expression after importing a profile (retain ID: %s)',
