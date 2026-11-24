@@ -14,6 +14,9 @@ export const createContentChange = (options: CreateContentChangeOptions) => {
       ...(before.fit === after.fit ? {} : {fit: after.fit}),
       ...(before.placement === after.placement ? {} : {placement: after.placement}),
       ...(before.tracking === after.tracking ? {} : {tracking: after.tracking}),
+      ...(before.trackingProfiles === after.trackingProfiles
+        ? {}
+        : {trackingProfiles: after.trackingProfiles}),
       ...(before.trackingOptions === after.trackingOptions
         ? {}
         : {trackingOptions: after.trackingOptions}),

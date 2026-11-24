@@ -1,16 +1,24 @@
 //! A validated document compiled into index-based lookups for per-frame evaluation.
 
+mod bindings;
+mod masks;
+mod scene;
+
+use bindings::{compile_binding, compile_glue_bindings};
+use masks::MaskPlans;
+pub use masks::{MaskPlan, MaskSource};
+pub(crate) use scene::{CompiledSkin, SceneTree};
+use scene::{compile_scene, flatten_scene, uses_skinning};
+
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 
 use poffo_format::ValidDocument;
 use poffo_format::document::{
-    AlphaBlendMode, BlendMode, Document, LayerOrderRule, Parameter, ParameterBinding, Part,
-    SceneNode,
+    AlphaBlendMode, BlendMode, Document, LayerOrderRule, Parameter, Part,
 };
 
 use crate::deform::CompiledDeformer;
-use crate::deform::skin::Matrix;
 use crate::keyform::KeyformSpace;
 use crate::layers::{self, CompiledGroup, CompiledLayer, GroupPath};
 use crate::spatial::{self, Sampler};
@@ -64,120 +72,6 @@ impl PartProperties {
     }
 }
 
-/// Clip sources of a masked part; each source may itself be masked.
-///
-/// Plans nest as deep as a document's mask chains, which validation does not limit, so
-/// equality, `Debug` and dropping walk them without recursion. Within one [`Model`], equal plans
-/// are the same [`Arc`], so comparing them by pointer ([`Arc::ptr_eq`]) is enough there.
-#[derive(Clone)]
-pub struct MaskPlan {
-    pub sources: Vec<MaskSource>,
-}
-
-#[derive(Debug, Clone)]
-pub struct MaskSource {
-    pub part: usize,
-    /// The source part's own `invertedMask`, applied to its nested mask.
-    pub inverted_mask: bool,
-    pub mask: Option<Arc<MaskPlan>>,
-}
-
-impl MaskSource {
-    /// Equal apart from the nested masks, which are equal when pointers match.
-    fn shallow_eq(&self, other: &Self) -> bool {
-        self.part == other.part
-            && self.inverted_mask == other.inverted_mask
-            && self.mask.is_some() == other.mask.is_some()
-    }
-}
-
-/// Structural equality, short-cutting on shared [`Arc`]s.
-impl PartialEq for MaskPlan {
-    fn eq(&self, other: &Self) -> bool {
-        // Nested pairs still to compare; allocates only for nested masks at different addresses.
-        let mut pending = Vec::new();
-        let mut pair = (self, other);
-        loop {
-            let (a, b) = pair;
-            if !std::ptr::eq(a, b) {
-                if a.sources.len() != b.sources.len() {
-                    return false;
-                }
-                for (x, y) in a.sources.iter().zip(&b.sources) {
-                    if !x.shallow_eq(y) {
-                        return false;
-                    }
-                    if let (Some(x), Some(y)) = (&x.mask, &y.mask)
-                        && !Arc::ptr_eq(x, y)
-                    {
-                        pending.push((&**x, &**y));
-                    }
-                }
-            }
-            match pending.pop() {
-                Some(next) => pair = next,
-                None => return true,
-            }
-        }
-    }
-}
-
-impl Eq for MaskPlan {}
-
-impl PartialEq for MaskSource {
-    fn eq(&self, other: &Self) -> bool {
-        self.shallow_eq(other)
-            && match (&self.mask, &other.mask) {
-                (Some(a), Some(b)) => a == b,
-                _ => true,
-            }
-    }
-}
-
-impl Eq for MaskSource {}
-
-/// Lists the sources one level deep; a nested mask shows only as present.
-impl std::fmt::Debug for MaskPlan {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        struct Shallow<'a>(&'a MaskSource);
-        impl std::fmt::Debug for Shallow<'_> {
-            fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-                f.debug_struct("MaskSource")
-                    .field("part", &self.0.part)
-                    .field("inverted_mask", &self.0.inverted_mask)
-                    .field("masked", &self.0.mask.is_some())
-                    .finish()
-            }
-        }
-        f.debug_struct("MaskPlan")
-            .field(
-                "sources",
-                &self.sources.iter().map(Shallow).collect::<Vec<_>>(),
-            )
-            .finish()
-    }
-}
-
-/// Releases nested plans this plan last owns one at a time instead of recursively.
-impl Drop for MaskPlan {
-    fn drop(&mut self) {
-        let mut owned: Vec<Arc<MaskPlan>> = self
-            .sources
-            .iter_mut()
-            .filter_map(|source| source.mask.take())
-            .collect();
-        while let Some(plan) = owned.pop() {
-            if let Some(mut plan) = Arc::into_inner(plan) {
-                owned.extend(
-                    plan.sources
-                        .iter_mut()
-                        .filter_map(|source| source.mask.take()),
-                );
-            }
-        }
-    }
-}
-
 #[derive(Debug, Clone)]
 pub(crate) struct CompiledPart {
     pub(crate) rest: Vec<f64>,
@@ -214,37 +108,25 @@ pub(crate) struct GlueBinding {
 }
 
 #[derive(Debug, Clone)]
-pub(crate) struct CompiledSkin {
-    pub(crate) bind: Matrix,
-    /// `(deformer id, inverse bind, per-vertex weights)`.
-    pub(crate) influences: Vec<(String, Matrix, Vec<f64>)>,
-}
-
-/// Scene graph with resolved part and deformer indices.
-#[derive(Debug, Clone)]
-pub(crate) enum SceneTree {
-    Group {
-        visible: bool,
-        children: Vec<SceneTree>,
-    },
-    Deformer {
-        index: usize,
-        visible: bool,
-        children: Vec<SceneTree>,
-    },
-    Part {
-        part: Option<usize>,
-        visible: bool,
-        skin: Option<CompiledSkin>,
-    },
-}
-
-#[derive(Debug, Clone)]
 pub(crate) struct CompiledRule {
     pub(crate) parts: Vec<usize>,
     pub(crate) reference: usize,
     pub(crate) rule: LayerOrderRule,
     pub(crate) parameters: Vec<usize>,
+}
+
+/// Glue topology resolved once; only strength and weight are keyed per frame.
+#[derive(Debug, Clone, Copy)]
+pub(crate) struct GlueConnection {
+    pub(crate) first_part: usize,
+    pub(crate) second_part: usize,
+    pub(crate) first_offset: usize,
+    pub(crate) second_offset: usize,
+    pub(crate) edge: Option<poffo_format::document::GlueEdge>,
+    pub(crate) mode: Option<poffo_format::document::GlueMode>,
+    pub(crate) rotation: Option<poffo_format::document::GlueRotation>,
+    pub(crate) weight: f64,
+    pub(crate) strength: f64,
 }
 
 /// Static attachment data of a spatial part bound to a spatial deformer's mesh.
@@ -269,6 +151,12 @@ pub struct Model {
     pub(crate) deformer_index: HashMap<String, usize>,
     pub(crate) deformer_bindings: Vec<Vec<usize>>,
     pub(crate) scene: Vec<SceneTree>,
+    pub(crate) geometry_steps: Vec<crate::apply::Step>,
+    pub(crate) uses_skinning: bool,
+    pub(crate) part_effects: Vec<Vec<crate::compose::EffectBinding>>,
+    pub(crate) group_effects: Vec<Vec<crate::compose::EffectBinding>>,
+    pub(crate) part_orders: Vec<Vec<crate::draw_order::OrderBinding>>,
+    pub(crate) group_orders: Vec<Vec<crate::draw_order::OrderBinding>>,
     /// `(part, visible)` in scene paint order (`getScenePartStates`).
     pub(crate) scene_order: Vec<(usize, bool)>,
     /// Draw order tree; `None` when nothing has a draw order and scene order stands.
@@ -280,259 +168,13 @@ pub struct Model {
     pub(crate) group_ids: Vec<String>,
     pub(crate) coordinate_ids: Vec<usize>,
     pub(crate) glue_bindings: Vec<Vec<GlueBinding>>,
+    pub(crate) glue_connections: Vec<GlueConnection>,
     pub(crate) geometry_deformers: Vec<Vec<usize>>,
     pub(crate) geometry_cacheable: Vec<bool>,
     /// Offscreen groups in scene order.
     pub(crate) layers: Vec<CompiledLayer>,
     /// `parameterVisibility` intervals of scene containers and parts.
     pub(crate) visibility: crate::visibility::SceneVisibility,
-}
-
-fn compile_scene(
-    nodes: &[SceneNode],
-    part_index: &HashMap<String, usize>,
-    deformers: &mut Vec<CompiledDeformer>,
-    deformer_index: &mut HashMap<String, usize>,
-) -> Vec<SceneTree> {
-    let lookup = |id: &str| part_index.get(id).copied();
-    nodes
-        .iter()
-        .map(|node| match node {
-            SceneNode::Group(group) => SceneTree::Group {
-                visible: group.visible,
-                children: compile_scene(&group.children, part_index, deformers, deformer_index),
-            },
-            SceneNode::Deformer(deformer) => {
-                let index = deformers.len();
-                deformers.push(CompiledDeformer::new(deformer, &lookup));
-                deformer_index.insert(deformer.id.clone(), index);
-                SceneTree::Deformer {
-                    index,
-                    visible: deformer.visible,
-                    children: compile_scene(
-                        &deformer.children,
-                        part_index,
-                        deformers,
-                        deformer_index,
-                    ),
-                }
-            }
-            SceneNode::Part(part) => SceneTree::Part {
-                part: part_index.get(&part.id).copied(),
-                visible: part.visible,
-                skin: part.skinning.as_ref().map(|skin| CompiledSkin {
-                    bind: skin.bind.into(),
-                    influences: skin
-                        .influences
-                        .iter()
-                        .map(|i| (i.node_id.clone(), i.inverse_bind.into(), i.weights.clone()))
-                        .collect(),
-                }),
-            },
-        })
-        .collect()
-}
-
-fn flatten_scene(nodes: &[SceneTree], visible: bool, out: &mut Vec<(usize, bool)>) {
-    for node in nodes {
-        match node {
-            SceneTree::Group {
-                visible: v,
-                children,
-            }
-            | SceneTree::Deformer {
-                visible: v,
-                children,
-                ..
-            } => {
-                flatten_scene(children, visible && *v, out);
-            }
-            SceneTree::Part {
-                part: Some(part),
-                visible: v,
-                ..
-            } => out.push((*part, visible && *v)),
-            SceneTree::Part { part: None, .. } => {}
-        }
-    }
-}
-
-/// A plan's sources with each nested plan by address: interned plans are equal exactly when
-/// their keys are.
-type SourcesKey = Vec<(usize, bool, Option<*const MaskPlan>)>;
-
-/// Builds each part's clip plan once, sharing it with every plan that uses the part as a source
-/// and with every equal plan. Works with an explicit stack: chains can be arbitrarily deep.
-struct MaskPlans<'d> {
-    document: &'d Document,
-    part_index: &'d HashMap<String, usize>,
-    plans: Vec<MaskState>,
-    /// Each distinct plan by its sources, whose nested plans are themselves interned.
-    interned: HashMap<SourcesKey, Arc<MaskPlan>>,
-}
-
-#[derive(Clone)]
-enum MaskState {
-    Unvisited,
-    /// Being built: a source reached again closes a cycle (validation rejects those) and is
-    /// left unmasked.
-    Building,
-    Built(Option<Arc<MaskPlan>>),
-}
-
-impl<'d> MaskPlans<'d> {
-    fn new(document: &'d Document, part_index: &'d HashMap<String, usize>) -> Self {
-        Self {
-            document,
-            part_index,
-            plans: vec![MaskState::Unvisited; document.parts.len()],
-            interned: HashMap::new(),
-        }
-    }
-
-    /// The mask ids of `part`.
-    fn mask_ids(&self, part: usize) -> &'d [String] {
-        let document = self.document;
-        document.parts[part]
-            .properties
-            .as_ref()
-            .and_then(|p| p.clipping_mask_ids.as_deref())
-            .unwrap_or_default()
-    }
-
-    /// Known parts among `ids`, in order.
-    fn resolve<'a>(&'a self, ids: &'a [String]) -> impl Iterator<Item = usize> + 'a {
-        ids.iter().filter_map(|id| self.part_index.get(id).copied())
-    }
-
-    /// The plan of `root`, building it and everything it nests in post-order first.
-    fn part(&mut self, root: usize) -> Option<Arc<MaskPlan>> {
-        // `(part, sources pushed)`: a part is built once all its sources are.
-        let mut stack = vec![(root, false)];
-        while let Some((part, expanded)) = stack.pop() {
-            match (&self.plans[part], expanded) {
-                (MaskState::Unvisited, false) => {
-                    self.plans[part] = MaskState::Building;
-                    stack.push((part, true));
-                    let ids = self.mask_ids(part);
-                    let sources: Vec<usize> = self
-                        .resolve(ids)
-                        .filter(|&s| matches!(self.plans[s], MaskState::Unvisited))
-                        .collect();
-                    stack.extend(sources.into_iter().map(|s| (s, false)));
-                }
-                (_, true) => {
-                    let plan = self.assemble(self.mask_ids(part));
-                    self.plans[part] = MaskState::Built(plan);
-                }
-                // Built already, or an ancestor still building (a cycle).
-                (MaskState::Built(_) | MaskState::Building, false) => {}
-            }
-        }
-        self.built(root)
-    }
-
-    fn built(&self, part: usize) -> Option<Arc<MaskPlan>> {
-        match &self.plans[part] {
-            MaskState::Built(plan) => plan.clone(),
-            MaskState::Unvisited | MaskState::Building => None,
-        }
-    }
-
-    /// The clip plan of the mask sources `ids`, each with its own nested mask.
-    fn sources(&mut self, ids: &[String]) -> Option<Arc<MaskPlan>> {
-        let sources: Vec<usize> = self.resolve(ids).collect();
-        for source in sources {
-            self.part(source);
-        }
-        self.assemble(ids)
-    }
-
-    /// The plan of `ids` from the sources' plans built so far.
-    fn assemble(&mut self, ids: &[String]) -> Option<Arc<MaskPlan>> {
-        if ids.is_empty() {
-            return None;
-        }
-        let sources: Vec<MaskSource> = self
-            .resolve(ids)
-            .map(|source| MaskSource {
-                part: source,
-                inverted_mask: PartProperties::of(&self.document.parts[source]).inverted_mask,
-                mask: self.built(source),
-            })
-            .collect();
-        let key = sources
-            .iter()
-            .map(|s| (s.part, s.inverted_mask, s.mask.as_ref().map(Arc::as_ptr)))
-            .collect();
-        Some(Arc::clone(
-            self.interned
-                .entry(key)
-                .or_insert_with(|| Arc::new(MaskPlan { sources })),
-        ))
-    }
-}
-
-fn compile_binding(
-    binding: &ParameterBinding,
-    parameter_index: &HashMap<String, usize>,
-    part_index: &HashMap<String, usize>,
-    deformer_index: &HashMap<String, usize>,
-    parameters: &[Parameter],
-) -> CompiledBinding {
-    let values: Vec<Vec<f64>> = binding.keyforms.iter().map(|k| k.values.clone()).collect();
-    let mut part_entries: HashMap<usize, Vec<Option<usize>>> = HashMap::new();
-    let mut deformer_entries: HashMap<usize, Vec<Option<usize>>> = HashMap::new();
-    for (k, keyform) in binding.keyforms.iter().enumerate() {
-        for (entry, deformer) in keyform.deformers.iter().flatten().enumerate() {
-            if let Some(&index) = deformer_index.get(&deformer.node_id) {
-                deformer_entries
-                    .entry(index)
-                    .or_insert_with(|| vec![None; binding.keyforms.len()])[k]
-                    .get_or_insert(entry);
-            }
-        }
-        for (entry, part) in keyform.parts.iter().enumerate() {
-            if let Some(&index) = part_index.get(&part.part_id) {
-                part_entries
-                    .entry(index)
-                    .or_insert_with(|| vec![None; binding.keyforms.len()])[k] = Some(entry);
-            }
-        }
-    }
-    let step_grid = crate::grid_keyform::GridSpace::new(binding, parameters);
-    CompiledBinding {
-        parameters: binding
-            .parameter_ids
-            .iter()
-            .filter_map(|id| parameter_index.get(id).copied())
-            .collect(),
-        grid: binding.interpolation.map(|_| step_grid.clone()),
-        step_grid,
-        space: KeyformSpace::new(
-            &values,
-            binding.parameter_ids.len(),
-            binding
-                .parameter_ids
-                .last()
-                .and_then(|id| parameters.get(*parameter_index.get(id)?))
-                .and_then(Parameter::repeat_range),
-        ),
-        influences: crate::influence::BindingInfluence::new(binding, parameter_index, parameters),
-        part_entries,
-        deformer_entries,
-        explicit_parts: binding.target_part_ids.as_ref().map(|ids| {
-            ids.iter()
-                .filter_map(|id| part_index.get(id).copied())
-                .collect()
-        }),
-        explicit_deformers: binding
-            .target_deformer_ids
-            .iter()
-            .flatten()
-            .filter_map(|id| deformer_index.get(id).copied())
-            .collect(),
-    }
 }
 
 impl Model {
@@ -721,6 +363,21 @@ impl Model {
             })
             .collect();
         let glue_bindings = compile_glue_bindings(&document);
+        let glue_connections = document
+            .glue
+            .iter()
+            .map(|glue| GlueConnection {
+                first_part: part_index[&glue.first.part_id],
+                second_part: part_index[&glue.second.part_id],
+                first_offset: glue.first.vertex_index * 2,
+                second_offset: glue.second.vertex_index * 2,
+                edge: glue.second.edge,
+                mode: glue.mode,
+                rotation: glue.rotation,
+                weight: glue.weight,
+                strength: glue.strength,
+            })
+            .collect();
         let mut deformer_bindings = vec![Vec::new(); deformers.len()];
         for (index, binding) in bindings.iter().enumerate() {
             for &deformer in &binding.explicit_deformers {
@@ -728,10 +385,16 @@ impl Model {
             }
         }
         let mut model = Self {
+            uses_skinning: uses_skinning(&scene),
+            part_effects: Vec::new(),
+            group_effects: Vec::new(),
+            part_orders: Vec::new(),
+            group_orders: Vec::new(),
             geometry_deformers: Vec::new(),
             geometry_cacheable: Vec::new(),
             spatial_parts,
             glue_bindings,
+            glue_connections,
             document,
             part_index,
             parameter_index,
@@ -742,6 +405,7 @@ impl Model {
             deformers,
             deformer_index,
             deformer_bindings,
+            geometry_steps: crate::apply::compile_steps(&scene),
             scene,
             scene_order,
             draw_order,
@@ -753,6 +417,18 @@ impl Model {
         };
         (model.geometry_deformers, model.geometry_cacheable) =
             crate::geometry_cache::dependencies(&model);
+        model.part_effects = (0..model.parts.len())
+            .map(|part| model.compile_part_effects(part))
+            .collect();
+        model.group_effects = (0..model.groups.len())
+            .map(|group| model.compile_group_effects(group))
+            .collect();
+        model.part_orders = (0..model.parts.len())
+            .map(|part| model.compile_part_orders(part))
+            .collect();
+        model.group_orders = (0..model.groups.len())
+            .map(|group| model.compile_group_orders(group))
+            .collect();
         model
     }
 
@@ -795,77 +471,4 @@ impl Model {
     pub fn mask_plan(&self, part: usize) -> Option<&Arc<MaskPlan>> {
         self.parts.get(part)?.mask.as_ref()
     }
-}
-
-fn compile_glue_bindings(document: &Document) -> Vec<Vec<GlueBinding>> {
-    let indices: HashMap<&str, usize> = document
-        .glue
-        .iter()
-        .enumerate()
-        .map(|(i, g)| (g.id.as_str(), i))
-        .collect();
-    let mut owners: HashMap<&str, Vec<usize>> = HashMap::new();
-    for (i, glue) in document.glue.iter().enumerate() {
-        owners.entry(&glue.first.part_id).or_default().push(i);
-    }
-    let mut result = vec![Vec::new(); document.glue.len()];
-    for (b, binding) in document.parameter_bindings.iter().enumerate() {
-        let parts: HashSet<&str> = binding
-            .target_part_ids
-            .as_ref()
-            .map(|ids| ids.iter().map(String::as_str).collect())
-            .unwrap_or_else(|| {
-                binding
-                    .keyforms
-                    .iter()
-                    .flat_map(|f| f.parts.iter().map(|p| p.part_id.as_str()))
-                    .collect()
-            });
-        let mut candidates: HashSet<usize> = parts
-            .iter()
-            .flat_map(|id| owners.get(id).into_iter().flatten().copied())
-            .collect();
-        let direct: Vec<&str> = binding
-            .target_glue_ids
-            .as_ref()
-            .map(|ids| ids.iter().map(String::as_str).collect())
-            .unwrap_or_else(|| {
-                binding
-                    .keyforms
-                    .iter()
-                    .flat_map(|f| f.glue.iter().flatten().map(|g| g.id.as_str()))
-                    .collect()
-            });
-        candidates.extend(direct.into_iter().filter_map(|id| indices.get(id).copied()));
-        for index in candidates {
-            let glue = &document.glue[index];
-            let coordinates: Vec<_> = binding
-                .keyforms
-                .iter()
-                .map(|f| {
-                    f.glue
-                        .iter()
-                        .flatten()
-                        .find(|g| g.id == glue.id)
-                        .or_else(|| {
-                            f.parts
-                                .iter()
-                                .find(|p| p.part_id == glue.first.part_id)?
-                                .glue
-                                .as_ref()?
-                                .iter()
-                                .find(|g| g.id == glue.id)
-                        })
-                        .map(|g| [g.weight, g.strength])
-                })
-                .collect();
-            if coordinates.iter().any(Option::is_some) {
-                result[index].push(GlueBinding {
-                    binding: b,
-                    coordinates,
-                });
-            }
-        }
-    }
-    result
 }

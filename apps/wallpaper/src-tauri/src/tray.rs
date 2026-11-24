@@ -1,13 +1,45 @@
 use tauri::{
+    Manager,
     menu::{Menu, MenuItem, PredefinedMenuItem},
     tray::TrayIconBuilder,
 };
 
+struct LocalizedMenu {
+    settings: MenuItem<tauri::Wry>,
+    quit: MenuItem<tauri::Wry>,
+}
+
+pub(crate) fn localize_menu(
+    app: &tauri::AppHandle,
+    language: crate::locale::Language,
+) -> tauri::Result<()> {
+    if let Some(menu) = app.try_state::<LocalizedMenu>() {
+        menu.settings
+            .set_text(crate::locale::text_for(language, "설정…"))?;
+        menu.quit
+            .set_text(crate::locale::text_for(language, "Wallpaper 종료"))?;
+    }
+    Ok(())
+}
+
 pub(crate) fn install(app: &tauri::App) -> tauri::Result<()> {
-    let settings = MenuItem::with_id(app, "settings", "설정…", true, Some("CmdOrCtrl+,"))?;
+    let settings = MenuItem::with_id(
+        app,
+        "settings",
+        crate::locale::text(app.handle(), "설정…"),
+        true,
+        Some("CmdOrCtrl+,"),
+    )?;
     let separator = PredefinedMenuItem::separator(app)?;
-    let quit = MenuItem::with_id(app, "quit", "Wallpaper 종료", true, None::<&str>)?;
+    let quit = MenuItem::with_id(
+        app,
+        "quit",
+        crate::locale::text(app.handle(), "Wallpaper 종료"),
+        true,
+        None::<&str>,
+    )?;
     let menu = Menu::with_items(app, &[&settings, &separator, &quit])?;
+    app.manage(LocalizedMenu { settings, quit });
 
     let tray = TrayIconBuilder::with_id("wallpaper")
         .menu(&menu)

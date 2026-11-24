@@ -2,14 +2,27 @@ import {expect, it} from 'vitest'
 import {builtinConnectionProfile} from '../builtin-profile'
 import {semanticTargets} from '@winter-love/wallpaper/settings/semantic-targets'
 
-it('should connect all 27 character presets and walking without individual parameter bindings', () => {
+it('should default every Ash tracking axis to additive blending', () => {
+  const connections = builtinConnectionProfile('builtin:ash')!.connections
+  expect(connections.trackingBindingsVersion).toBe(1)
+  expect(connections.trackingBindings).toEqual({
+    bodyX: {blend: 'add', parameterId: 'ParamBodyAngleX'},
+    eyeX: {blend: 'add'},
+    eyeY: {blend: 'add'},
+    headX: {blend: 'add'},
+    headY: {blend: 'add'},
+    headZ: {blend: 'add'},
+  })
+})
+
+it('should connect all 28 character presets and walking without individual parameter bindings', () => {
   const bindings = builtinConnectionProfile('builtin:ash')!.connections.semanticBindings!
-  expect(bindings).toHaveLength(28)
+  expect(bindings).toHaveLength(29)
   expect(
     new Set(bindings.flatMap((binding) => semanticTargets(binding).map((action) => action.id)))
       .size,
-  ).toBe(28)
-  expect(new Set(bindings.map((binding) => binding.text)).size).toBe(28)
+  ).toBe(29)
+  expect(new Set(bindings.map((binding) => binding.text)).size).toBe(29)
   expect(
     bindings.every(
       (binding) => semanticTargets(binding).length > 0 && binding.parameterId === null,
@@ -20,7 +33,7 @@ it('should connect all 27 character presets and walking without individual param
     kind: 'expression',
   })
   expect(bindings.find((binding) => binding.id === 'ash:sad-tears')?.excludeText).toContain(
-    '울지는 않았어요',
+    'did not cry',
   )
 })
 
@@ -52,6 +65,16 @@ it('should reserve the cute miniature pose for the context menu rather than apol
   const binding = builtinConnectionProfile('builtin:ash')!.connections.semanticBindings!.find(
     (item) => item.id === 'ash:shrink',
   )!
-  expect(binding).toMatchObject({category: 'menu', menuLabel: '귀엽게 작아지기'})
+  expect(binding).toMatchObject({category: 'menu', menuLabel: 'Shrink'})
   expect(binding.text).not.toContain('죄송')
+})
+
+it('should use English for every default group, menu name and matching example', () => {
+  const bindings = builtinConnectionProfile('builtin:ash')!.connections.semanticBindings!
+  for (const binding of bindings) {
+    expect(binding.exclusiveGroup).not.toMatch(/[가-힣]/u)
+    expect(binding.menuLabel ?? '').not.toMatch(/[가-힣]/u)
+    expect(binding.text).not.toMatch(/[가-힣]/u)
+    expect(binding.excludeText ?? '').not.toMatch(/[가-힣]/u)
+  }
 })

@@ -1,0 +1,16 @@
+{
+  "sourceSha256": "4141d54d32b7a9f3c6937c469f2c732793a67592f71ae1872d990ca5665eab36",
+  "sha256": "eb1b2ff4be261a9b934a436beef1dec2306480a4ebce7180114c84d906a52da2",
+  "bytes": 20787106,
+  "frontId": "ArtMesh47",
+  "rearId": "ArtMesh62",
+  "anchor": 38,
+  "removedIndependentLinks": [
+    "coat-free:noodles:joints:prepare:ArtMesh62",
+    "coat-free:noodles:joints:follow:ArtMesh62"
+  ],
+  "allTexturesPreserved": true,
+  "otherPartDataPreserved": true,
+  "physicsPreserved": true,
+  "method": "Reparent the original cup back to the cup front deformation branch, retain the original unglued cup shape, and follow the final front translation after wrist glue."
+}

@@ -1,5 +1,7 @@
 export type CodexPhase = 'idle' | 'working' | 'approval' | 'question' | 'response' | 'interrupted'
 export interface CodexSpeechTarget {
+  /** False until the widget has rendered a nonempty character region. */
+  readonly visible?: boolean
   readonly positionX?: number
   readonly positionY?: number
   readonly widgetWidth?: number

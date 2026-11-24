@@ -4,6 +4,7 @@ import type {MouthPose} from '../features/character-speech/types'
 import type {CharacterHitTest} from '../features/character-preview/types'
 
 interface SPuppetCharacterProps {
+  readonly coatOff?: boolean
   readonly expressionId?: string | null
   readonly mouth?: MouthPose | null
   readonly motionId?: string
@@ -17,6 +18,7 @@ export default function SPuppetCharacter(props: SPuppetCharacterProps) {
   const [canvas, setCanvas] = createSignal<HTMLCanvasElement | null>(null)
   const preview = useCharacterPreview({
     canvas,
+    coatOff: () => props.coatOff ?? false,
     expressionId: () => props.expressionId ?? null,
     motionId: () => props.motionId ?? 'Idle:0',
     mouth: () => props.mouth ?? null,

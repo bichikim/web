@@ -1,6 +1,6 @@
 # SPAN-F
 
-`spanf.onnx` is the FP32, opset-17 export of NTIRE 2025 team 24 SPAN-F (RGB, scale 4, feature channels 32). Dynamic NCHW input `input`, output `output`; RGB float values in [0, 1].
+The cached `spanf.onnx` is the FP32, opset-17 export of NTIRE 2025 team 24 SPAN-F (RGB, scale 4, feature channels 32). Dynamic NCHW input `input`, output `output`; RGB float values in [0, 1]. The binary is no longer tracked by Git. The build prepares it in the shared OS `io.winterlove.models/spanf/<sha256>` cache using [the pinned manifest](../../spanf-model.json). Verified files are reused offline; missing or invalid files are downloaded from the existing immutable export URL. The build embeds the verified cached bytes so installed apps still require no model download.
 
 - [Pinned implementation](https://github.com/Amazingren/NTIRE2025_ESR/blob/b69fb668c0362deb696eecbfdebfaa5c2fcdfcb4/models/team24_SPANF.py)
 - [Pinned checkpoint](https://github.com/Amazingren/NTIRE2025_ESR/blob/b69fb668c0362deb696eecbfdebfaa5c2fcdfcb4/model_zoo/team24_spanf.pth)

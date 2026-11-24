@@ -28,7 +28,7 @@ test.each(['header', 'index', 'metadata', 'asset'])(
       metadata: POFFO_HEADER_BYTES + header.indexLength,
     }
     const offset = positions[section as keyof typeof positions]
-    bytes[offset] = (bytes[offset]! + 1) % 256
+    bytes[offset] = section === 'header' ? 255 : (bytes[offset]! + 1) % 256
     await expect(decodeFile(new Blob([bytes]))).rejects.toBeInstanceOf(SyntaxError)
   },
 )
@@ -64,3 +64,12 @@ test.each(['raw', 'compressed'])(
     expect(await decodeFile(new Blob([bytes]))).toEqual(expected)
   },
 )
+
+test('should read the v2 SDK fixture with independently editable exact coordinate copies', async () => {
+  const directory = new URL('./fixtures/', import.meta.url)
+  const expected = JSON.parse(await readFile(new URL('document.json', directory), 'utf8'))
+  expected.authoring.float32[1] = -0
+  expected.authoring.copiedCoordinates = [...expected.authoring.float32]
+  const bytes = await readFile(new URL('referenced.poffo', directory))
+  expect(await decodeFile(new Blob([bytes]))).toEqual(expected)
+})

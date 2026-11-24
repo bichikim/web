@@ -10,25 +10,26 @@ use super::{Budget, corrupt};
 use crate::error::FormatError;
 
 /// Deepest nesting the web writes and reads; the root is depth 0.
-pub(super) const MAX_DEPTH: usize = 256;
+pub(in crate::container) const MAX_DEPTH: usize = 256;
 
-mod tag {
-    pub(super) const NULL: u8 = 0;
-    pub(super) const FALSE: u8 = 1;
-    pub(super) const TRUE: u8 = 2;
-    pub(super) const STRING: u8 = 3;
-    pub(super) const REFERENCE: u8 = 4;
-    pub(super) const NUMBER: u8 = 5;
-    pub(super) const FLOAT64: u8 = 6;
-    pub(super) const UINT32: u8 = 7;
-    pub(super) const FLOAT32: u8 = 8;
-    pub(super) const ARRAY: u8 = 9;
-    pub(super) const ASSET: u8 = 10;
-    pub(super) const OBJECT: u8 = 11;
-    pub(super) const ESCAPED: u8 = 12;
-    pub(super) const UINT8: u8 = 13;
-    pub(super) const UINT16: u8 = 14;
-    pub(super) const INT32: u8 = 15;
+pub(super) mod tag {
+    pub(in crate::container) const NULL: u8 = 0;
+    pub(in crate::container) const FALSE: u8 = 1;
+    pub(in crate::container) const TRUE: u8 = 2;
+    pub(in crate::container) const STRING: u8 = 3;
+    pub(in crate::container) const REFERENCE: u8 = 4;
+    pub(in crate::container) const NUMBER: u8 = 5;
+    pub(in crate::container) const FLOAT64: u8 = 6;
+    pub(in crate::container) const UINT32: u8 = 7;
+    pub(in crate::container) const FLOAT32: u8 = 8;
+    pub(in crate::container) const ARRAY: u8 = 9;
+    pub(in crate::container) const ASSET: u8 = 10;
+    pub(in crate::container) const OBJECT: u8 = 11;
+    pub(in crate::container) const ESCAPED: u8 = 12;
+    pub(in crate::container) const UINT8: u8 = 13;
+    pub(in crate::container) const UINT16: u8 = 14;
+    pub(in crate::container) const INT32: u8 = 15;
+    pub(in crate::container) const NUMBER_REFERENCE: u8 = 16;
 }
 
 /// A bounded little-endian reader (`createByteReader`).
@@ -94,7 +95,17 @@ struct Decoder<'a> {
     reader: Reader<'a>,
     strings: Vec<Entry>,
     assets: Vec<String>,
+    number_arrays: Vec<NumberArray<'a>>,
+    retain_arrays: bool,
+    version: u16,
     budget: &'a mut Budget,
+}
+
+#[derive(Clone, Copy)]
+struct NumberArray<'a> {
+    tag: u8,
+    width: usize,
+    bytes: &'a [u8],
 }
 
 /// Bytes one decoded array element occupies, charged before allocating since a one-byte null
@@ -164,8 +175,39 @@ impl Decoder<'_> {
             _ => return Err(corrupt("unknown value tag")),
         };
         let length = self.reader.length(width)?;
-        self.reserve(length, ELEMENT_BYTES)?;
         let bytes = self.reader.take(length * width)?;
+        let index = self.number_arrays.len();
+        self.number_arrays.push(NumberArray { tag, width, bytes });
+        self.numeric_array(index)
+    }
+
+    fn number_reference(&mut self) -> Result<Value, FormatError> {
+        let index = self.reader.u32()? as usize;
+        if self.version != 2 {
+            return Err(corrupt("numeric array references require v2"));
+        }
+        self.numeric_array(index)
+    }
+
+    fn numeric_array(&mut self, index: usize) -> Result<Value, FormatError> {
+        let source = *self
+            .number_arrays
+            .get(index)
+            .ok_or_else(|| corrupt("invalid numeric array reference"))?;
+        let element_bytes = if self.retain_arrays {
+            size_of::<f64>()
+        } else {
+            ELEMENT_BYTES
+        };
+        self.reserve(source.bytes.len() / source.width, element_bytes)?;
+        if self.retain_arrays {
+            Ok(serde_json::json!({super::packed::MARKER:index}))
+        } else {
+            Self::numbers(source.tag, source.bytes, source.width)
+        }
+    }
+
+    fn numbers(tag: u8, bytes: &[u8], width: usize) -> Result<Value, FormatError> {
         bytes
             .chunks_exact(width)
             .map(|b| match tag {
@@ -194,6 +236,7 @@ impl Decoder<'_> {
             tag::NUMBER => finite(f64::from_le_bytes(self.reader.array()?))?,
             tag::STRING | tag::ESCAPED => Value::String(self.string(tag)?),
             tag::REFERENCE => Value::String(self.reference()?),
+            tag::NUMBER_REFERENCE => self.number_reference()?,
             tag::ASSET => Value::String(self.asset()?),
             tag::ARRAY => {
                 let length = self.reader.length(1)?;
@@ -212,6 +255,9 @@ impl Decoder<'_> {
                     let Value::String(key) = self.value(depth + 1)? else {
                         return Err(corrupt("object key is not a string"));
                     };
+                    if self.retain_arrays && key == super::packed::MARKER {
+                        return Err(corrupt("reserved runtime key"));
+                    }
                     if map.contains_key(&key) {
                         return Err(corrupt("duplicate object key"));
                     }
@@ -231,18 +277,46 @@ pub(super) fn decode(
     bytes: &[u8],
     assets: Vec<String>,
     budget: &mut Budget,
+    version: u16,
 ) -> Result<Value, FormatError> {
+    decode_mode(bytes, assets, budget, version, false).map(|(value, _)| value)
+}
+
+pub(super) fn decode_mode(
+    bytes: &[u8],
+    assets: Vec<String>,
+    budget: &mut Budget,
+    version: u16,
+    retain_arrays: bool,
+) -> Result<(Value, Vec<super::packed::Array>), FormatError> {
     let mut decoder = Decoder {
         reader: Reader { bytes, offset: 0 },
         strings: Vec::new(),
         assets,
         budget,
+        number_arrays: Vec::new(),
+        retain_arrays,
+        version,
     };
     let value = decoder.value(0)?;
     if !decoder.reader.ended() {
         return Err(corrupt("trailing value bytes"));
     }
-    Ok(value)
+    let arrays = if retain_arrays {
+        decoder
+            .number_arrays
+            .into_iter()
+            .map(|array| super::packed::Array {
+                tag: array.tag,
+                width: array.width,
+                start: (array.bytes.as_ptr() as usize) - (bytes.as_ptr() as usize),
+                length: array.bytes.len(),
+            })
+            .collect()
+    } else {
+        Vec::new()
+    };
+    Ok((value, arrays))
 }
 
 /// The text of a JSON string literal (tag 12). A lone UTF-16 surrogate, which the web keeps but
@@ -319,6 +393,7 @@ mod tests {
             bytes,
             vec!["data:a;base64,AA==".into()],
             &mut Budget(1 << 20),
+            1,
         )
     }
 
@@ -422,5 +497,64 @@ mod tests {
         );
         let value = decode_bytes(&[tag::INT32, 1, 0, 0, 0, 0, 0, 0, 0x80]).expect("int32");
         assert_eq!(value[0], i64::from(i32::MIN));
+    }
+
+    #[test]
+    fn v2_references_restore_coordinates_and_reject_unresolved_or_v1_references() {
+        let bytes = [
+            tag::ARRAY,
+            2,
+            0,
+            0,
+            0,
+            tag::UINT8,
+            2,
+            0,
+            0,
+            0,
+            7,
+            8,
+            tag::NUMBER_REFERENCE,
+            0,
+            0,
+            0,
+            0,
+        ];
+        let value = decode(&bytes, vec![], &mut Budget(1024), 2).expect("v2");
+        assert_eq!(value, serde_json::json!([[7, 8], [7, 8]]));
+        assert!(decode(&bytes, vec![], &mut Budget(1024), 1).is_err());
+        assert!(
+            decode(
+                &[tag::NUMBER_REFERENCE, 0, 0, 0, 0],
+                vec![],
+                &mut Budget(1024),
+                2
+            )
+            .is_err()
+        );
+    }
+
+    #[test]
+    fn numeric_references_are_charged_before_restoring_the_array() {
+        let bytes = [
+            tag::ARRAY,
+            2,
+            0,
+            0,
+            0,
+            tag::UINT8,
+            2,
+            0,
+            0,
+            0,
+            7,
+            8,
+            tag::NUMBER_REFERENCE,
+            0,
+            0,
+            0,
+            0,
+        ];
+        assert!(decode(&bytes, vec![], &mut Budget(5 * ELEMENT_BYTES), 2).is_err());
     }
 }

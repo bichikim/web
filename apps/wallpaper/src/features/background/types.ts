@@ -1,3 +1,4 @@
+import type {PoffoTouch} from '@winter-love/wallpaper/settings/touch'
 import type {SemanticBinding} from '@winter-love/wallpaper/settings/semantics'
 import type {Accessor} from 'solid-js'
 import type {PoffoLipSync} from '@winter-love/wallpaper/settings/lipsync'
@@ -22,4 +23,8 @@ export interface PoffoLipSyncControls {
 export interface PoffoMotionControls {
   readonly motionId?: Accessor<string | null | undefined>
   readonly onMotions?: (ids: readonly string[]) => void
+}
+
+export interface PoffoTouchControls {
+  readonly touch?: Accessor<PoffoTouch | undefined>
 }

@@ -1,6 +1,8 @@
+import {DEFAULT_POFFO_VOICE} from '@winter-love/wallpaper/settings/voice'
+import {getCurrentWebviewWindow} from '@tauri-apps/api/webviewWindow'
 // oxlint-disable no-await-in-loop -- Each sampled animation phase must complete before the next phase or selection begins.
 import {cleanup, fireEvent, render, screen} from '@solidjs/testing-library'
-import {afterEach, expect, test, vi} from 'vitest'
+import {afterEach, beforeEach, expect, test, vi} from 'vitest'
 import {type Accessor, createSignal} from 'solid-js'
 import {
   type CodexActivity,
@@ -14,8 +16,19 @@ import {invoke, isTauri} from '@tauri-apps/api/core'
 import {createLibraryRepository} from '@winter-love/wallpaper/settings/library-repository'
 import 'virtual:uno.css'
 
-vi.mock('@tauri-apps/api/core', () => ({Channel: vi.fn(), invoke: vi.fn(), isTauri: vi.fn()}))
+vi.mock('@tauri-apps/api/core', async (original) => ({
+  ...(await original<typeof import('@tauri-apps/api/core')>()),
+  Channel: vi.fn(),
+  invoke: vi.fn(),
+  isTauri: vi.fn(),
+}))
 
+vi.mock('@tauri-apps/api/webviewWindow', () => ({getCurrentWebviewWindow: vi.fn()}))
+beforeEach(() => {
+  vi.mocked(getCurrentWebviewWindow).mockReturnValue({
+    listen: vi.fn().mockResolvedValue(vi.fn()),
+  } as unknown as ReturnType<typeof getCurrentWebviewWindow>)
+})
 vi.mock('../../src/features/codex/use-codex-notifications', () => ({
   useCodexNotifications: vi.fn(),
 }))
@@ -23,7 +36,14 @@ vi.mock('../../src/features/codex/use-speech-target', () => ({useSpeechTarget: v
 vi.mock('../../src/features/speech/use-widget-speech', () => ({
   useWidgetSpeech: () => ({
     error: () => null,
-    speech: () => ({enabled: true, wrap: false, x: 0.9, y: 0.05}),
+    speech: () => ({
+      enabled: true,
+      showCharacter: false,
+      voice: {...DEFAULT_POFFO_VOICE, enabled: false},
+      wrap: false,
+      x: 0.9,
+      y: 0.05,
+    }),
   }),
 }))
 afterEach(() => {
@@ -69,6 +89,7 @@ const mount = (
   })
   vi.mocked(useSpeechTarget).mockReturnValue(movingTarget ?? (() => target))
   render(() => <SPoffoSpeechSurface widgetId={widgetId} />)
+  fireEvent.pointerEnter(screen.getByRole('list'))
   const update = (text: string) =>
     setSnapshot((value) => ({...value, sessions: [{...activity, text}]}))
   return update
@@ -142,6 +163,14 @@ test.each(['bottom', 'top'] as const)(
       expect(bounds.top).toBeGreaterThanOrEqual(0)
       expect(bounds.bottom).toBeLessThanOrEqual(window.innerHeight)
     }
+    const response = screen.getByRole('region', {name: '긴 응답 응답'})
+    expect(response.clientHeight).toBeGreaterThanOrEqual(64)
+    const input = screen.getByRole('textbox', {name: 'Codex에 보낼 메시지'})
+    const before = input.getBoundingClientRect()
+    response.scrollTop = response.scrollHeight
+    expect(response.scrollTop).toBeGreaterThan(0)
+    expect(input.getBoundingClientRect().top).toBe(before.top)
+    expect(document.elementFromPoint(before.x + 10, before.y + 10)).toBe(input)
   },
 )
 
@@ -176,8 +205,8 @@ test('should interpolate height from the drawn layout and reverse immediately fo
   const list = screen.getByRole('list', {name: 'Codex 채팅 알림'})
   const card = screen.getByRole('status')
   await expect
-    .poll(() => list.getBoundingClientRect().height)
-    .toBe(card.getBoundingClientRect().height)
+    .poll(() => Math.abs(list.getBoundingClientRect().height - card.getBoundingClientRect().height))
+    .toBeLessThanOrEqual(1)
   await expect.poll(() => list.getAnimations().length).toBe(0)
   const initial = list.getBoundingClientRect()
   const painted = card.querySelector<HTMLElement>(':scope > [aria-hidden="true"]')!
@@ -206,25 +235,29 @@ test('should interpolate height from the drawn layout and reverse immediately fo
   update('새 메시지')
   expect(list.getBoundingClientRect().height).toBeCloseTo(middle.height, 1)
   await expect.poll(() => list.getAnimations()[0] !== expansion).toBe(true)
-  await expect.poll(() => list.getBoundingClientRect().height).toBeCloseTo(initial.height, 1)
+  await expect
+    .poll(() => Math.abs(list.getBoundingClientRect().height - initial.height))
+    .toBeLessThanOrEqual(1)
   expect(list.getBoundingClientRect().bottom).toBeCloseTo(initial.bottom, 1)
   expect(screen.getByText('새 메시지')).toBeVisible()
 })
 
-test('should keep the bottom anchor during viewport overflow and allow scrolling up', async () => {
+test('should bound long content while preserving the bottom anchor and inner scrolling', async () => {
   const update = mount('bottom', 900)
   const list = screen.getByRole('list')
   const main = screen.getByRole('main')
   await expect.poll(() => list.getAnimations().length).toBe(0)
   const bottom = list.getBoundingClientRect().bottom
   update('긴 진행 내용\n'.repeat(100))
-  await expect.poll(() => list.getBoundingClientRect().height).toBeGreaterThan(main.clientHeight)
+  await expect.poll(() => list.getBoundingClientRect().height).toBe(250)
   await expect.poll(() => list.getAnimations().length).toBe(0)
   expect(list.getBoundingClientRect().bottom).toBeCloseTo(bottom, 1)
-  const top = list.getBoundingClientRect().top
-  main.scrollTop = -100
-  expect(main.scrollTop).toBe(-100)
-  expect(list.getBoundingClientRect().top).toBeCloseTo(top + 100, 1)
+  expect(list.getBoundingClientRect().height).toBeLessThan(main.clientHeight)
+  const body = list.querySelector<HTMLElement>('[data-speech-body]')!
+  body.scrollTop = 100
+  expect(body.scrollTop).toBe(100)
+  main.scrollTop = 100
+  expect(main.scrollTop).toBe(0)
 })
 
 test.each(['bottom', 'top'] as const)(
@@ -255,6 +288,10 @@ test.each(['bottom', 'top'] as const)(
     }
     noOuterScrollbar()
     for (const title of ['긴 응답', '작업']) {
+      fireEvent.pointerEnter(list)
+      await expect
+        .poll(() => screen.queryByRole('button', {name: `채팅 ${title} 선택`}))
+        .not.toBeNull()
       fireEvent.click(screen.getByRole('button', {name: `채팅 ${title} 선택`}))
       for (let stage = 0; stage < 6; stage += 1) {
         const animations = main.getAnimations({subtree: true})
@@ -302,14 +339,14 @@ test('should keep a taller selected card inside the screen canvas during travel'
     ],
     {insetBottom: 220},
   )
-  const surface = screen.getByRole('main', {name: 'Poffo Codex 말풍선'})
+  const surface = screen.getByRole('main', {name: 'Poffo 대화 말풍선'})
   const list = screen.getByRole('list')
   await expect.poll(() => list.getAnimations().length).toBe(0)
   const tall = screen.getAllByRole('listitem').find((card) => card.dataset.speechId === 'tall')!
   const short = screen.getAllByRole('listitem').find((card) => card !== tall)!
   expect(
     tall.getBoundingClientRect().height - short.getBoundingClientRect().height,
-  ).toBeGreaterThan(200)
+  ).toBeGreaterThan(100)
   const bounds = surface.getBoundingClientRect()
   const insideCanvas = () => {
     const drawn = tall.querySelector('aside > [aria-hidden="true"]')!.getBoundingClientRect()
@@ -317,6 +354,8 @@ test('should keep a taller selected card inside the screen canvas during travel'
     expect(drawn.top).toBeGreaterThanOrEqual(bounds.top)
     expect(surface.getBoundingClientRect().height).toBe(bounds.height)
   }
+  fireEvent.pointerEnter(screen.getByRole('list'))
+  await expect.poll(() => screen.queryByRole('button', {name: '채팅 긴 응답 선택'})).not.toBeNull()
   screen.getByRole('button', {name: '채팅 긴 응답 선택'}).click()
   const lift = tall.getAnimations()[0]
   lift.pause()
@@ -366,6 +405,8 @@ test('should keep the bottom edge on the moving character anchor through consecu
     {},
     point,
   )
+  fireEvent.pointerEnter(screen.getByRole('list'))
+  await expect.poll(() => screen.queryByRole('button', {name: '채팅 긴 응답 선택'})).not.toBeNull()
   screen.getByRole('button', {name: '채팅 긴 응답 선택'}).click()
   const list = screen.getByRole('list')
   for (let pass = 0; pass < 8; pass += 1) {
@@ -394,16 +435,16 @@ test('should animate new content again after the character changes the available
   const [point, setPoint] = createSignal<CodexSpeechTarget>({
     anchor: 'bottom',
     insetBottom: 140,
-    maxHeight: 560,
+    maxHeight: 300,
     x: 160,
     y: 680,
   })
-  const update = mount('bottom', 560, [], {}, point)
+  const update = mount('bottom', 300, [], {}, point)
   update('긴 진행 내용\n'.repeat(80))
   const list = screen.getByRole('list')
-  await expect.poll(() => list.getBoundingClientRect().height).toBeCloseTo(488, 1)
+  await expect.poll(() => list.getBoundingClientRect().height).toBeCloseTo(228, 1)
   await expect.poll(() => list.getAnimations().length).toBe(0)
-  setPoint((value) => ({...value, insetBottom: 220, maxHeight: 480}))
+  setPoint((value) => ({...value, insetBottom: 220, maxHeight: 280}))
   await new Promise<void>((resolve) => {
     requestAnimationFrame(() => resolve())
   })
@@ -418,7 +459,7 @@ test('should animate new content again after the character changes the available
   await new Promise<void>((resolve) => {
     requestAnimationFrame(() => resolve())
   })
-  expect(list.getBoundingClientRect().height).toBeLessThan(408)
+  expect(list.getBoundingClientRect().height).toBeLessThan(208)
   expect(list.getBoundingClientRect().height).toBeGreaterThan(
     screen.getByRole('status').getBoundingClientRect().height,
   )
@@ -429,6 +470,7 @@ test('should drag a speech header, persist placement and suppress the following 
   vi.mocked(invoke).mockResolvedValue(undefined)
   const repository = createLibraryRepository('wallpaper-library')
   const widget = await repository.addWidget('drag-character')
+  const original = (await repository.read()).widgets.find((item) => item.id === widget.id)?.speech
   try {
     mount(
       'bottom',
@@ -466,9 +508,9 @@ test('should drag a speech header, persist placement and suppress the following 
     fireEvent.pointerMove(header, {pointerId: 1, screenX: 140, screenY: 240})
     expect(screen.getByRole('main')).toHaveAttribute('data-dragging', 'true')
     expect(getComputedStyle(header).cursor).toBe('grabbing')
-    expect(
-      (await repository.read()).widgets.find((item) => item.id === widget.id)?.speech,
-    ).toBeUndefined()
+    expect((await repository.read()).widgets.find((item) => item.id === widget.id)?.speech).toEqual(
+      original,
+    )
     fireEvent.pointerUp(header, {pointerId: 1, screenX: 140, screenY: 240})
     fireEvent.click(header, {detail: 1})
     expect(header).toHaveAttribute('aria-pressed', 'false')

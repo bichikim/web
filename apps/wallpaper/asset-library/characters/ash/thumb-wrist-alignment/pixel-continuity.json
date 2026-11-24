@@ -1,0 +1,968 @@
+{
+  "frames": 160,
+  "actualPointerMatchesTarget": false,
+  "continuousSkinFrames": 160,
+  "discontinuities": [],
+  "connectivity": [
+    {
+      "file": "left-1-00.png",
+      "hand": 9,
+      "forearm": 9,
+      "continuousSkin": true
+    },
+    {
+      "file": "left-1-01.png",
+      "hand": 12,
+      "forearm": 12,
+      "continuousSkin": true
+    },
+    {
+      "file": "left-1-02.png",
+      "hand": 10,
+      "forearm": 10,
+      "continuousSkin": true
+    },
+    {
+      "file": "left-1-03.png",
+      "hand": 10,
+      "forearm": 10,
+      "continuousSkin": true
+    },
+    {
+      "file": "left-1-04.png",
+      "hand": 12,
+      "forearm": 12,
+      "continuousSkin": true
+    },
+    {
+      "file": "left-1-05.png",
+      "hand": 12,
+      "forearm": 12,
+      "continuousSkin": true
+    },
+    {
+      "file": "left-1-06.png",
+      "hand": 10,
+      "forearm": 10,
+      "continuousSkin": true
+    },
+    {
+      "file": "left-1-07.png",
+      "hand": 10,
+      "forearm": 10,
+      "continuousSkin": true
+    },
+    {
+      "file": "left-1-08.png",
+      "hand": 11,
+      "forearm": 11,
+      "continuousSkin": true
+    },
+    {
+      "file": "left-1-09.png",
+      "hand": 10,
+      "forearm": 10,
+      "continuousSkin": true
+    },
+    {
+      "file": "left-1-10.png",
+      "hand": 13,
+      "forearm": 13,
+      "continuousSkin": true
+    },
+    {
+      "file": "left-1-11.png",
+      "hand": 10,
+      "forearm": 10,
+      "continuousSkin": true
+    },
+    {
+      "file": "left-1-12.png",
+      "hand": 11,
+      "forearm": 11,
+      "continuousSkin": true
+    },
+    {
+      "file": "left-1-13.png",
+      "hand": 11,
+      "forearm": 11,
+      "continuousSkin": true
+    },
+    {
+      "file": "left-1-14.png",
+      "hand": 10,
+      "forearm": 10,
+      "continuousSkin": true
+    },
+    {
+      "file": "left-1-15.png",
+      "hand": 9,
+      "forearm": 9,
+      "continuousSkin": true
+    },
+    {
+      "file": "left-1-16.png",
+      "hand": 10,
+      "forearm": 10,
+      "continuousSkin": true
+    },
+    {
+      "file": "left-1-17.png",
+      "hand": 10,
+      "forearm": 10,
+      "continuousSkin": true
+    },
+    {
+      "file": "left-1-18.png",
+      "hand": 12,
+      "forearm": 12,
+      "continuousSkin": true
+    },
+    {
+      "file": "left-1-19.png",
+      "hand": 11,
+      "forearm": 11,
+      "continuousSkin": true
+    },
+    {
+      "file": "left-1-20.png",
+      "hand": 13,
+      "forearm": 13,
+      "continuousSkin": true
+    },
+    {
+      "file": "left-1-21.png",
+      "hand": 12,
+      "forearm": 12,
+      "continuousSkin": true
+    },
+    {
+      "file": "left-1-22.png",
+      "hand": 11,
+      "forearm": 11,
+      "continuousSkin": true
+    },
+    {
+      "file": "left-1-23.png",
+      "hand": 14,
+      "forearm": 14,
+      "continuousSkin": true
+    },
+    {
+      "file": "left-1-24.png",
+      "hand": 15,
+      "forearm": 15,
+      "continuousSkin": true
+    },
+    {
+      "file": "left-1-25.png",
+      "hand": 12,
+      "forearm": 12,
+      "continuousSkin": true
+    },
+    {
+      "file": "left-1-26.png",
+      "hand": 13,
+      "forearm": 13,
+      "continuousSkin": true
+    },
+    {
+      "file": "left-1-27.png",
+      "hand": 18,
+      "forearm": 18,
+      "continuousSkin": true
+    },
+    {
+      "file": "left-1-28.png",
+      "hand": 14,
+      "forearm": 14,
+      "continuousSkin": true
+    },
+    {
+      "file": "left-1-29.png",
+      "hand": 19,
+      "forearm": 19,
+      "continuousSkin": true
+    },
+    {
+      "file": "left-1-30.png",
+      "hand": 18,
+      "forearm": 18,
+      "continuousSkin": true
+    },
+    {
+      "file": "left-1-31.png",
+      "hand": 18,
+      "forearm": 18,
+      "continuousSkin": true
+    },
+    {
+      "file": "right-1-00.png",
+      "hand": 15,
+      "forearm": 15,
+      "continuousSkin": true
+    },
+    {
+      "file": "right-1-01.png",
+      "hand": 24,
+      "forearm": 24,
+      "continuousSkin": true
+    },
+    {
+      "file": "right-1-02.png",
+      "hand": 16,
+      "forearm": 16,
+      "continuousSkin": true
+    },
+    {
+      "file": "right-1-03.png",
+      "hand": 23,
+      "forearm": 23,
+      "continuousSkin": true
+    },
+    {
+      "file": "right-1-04.png",
+      "hand": 18,
+      "forearm": 18,
+      "continuousSkin": true
+    },
+    {
+      "file": "right-1-05.png",
+      "hand": 20,
+      "forearm": 20,
+      "continuousSkin": true
+    },
+    {
+      "file": "right-1-06.png",
+      "hand": 21,
+      "forearm": 21,
+      "continuousSkin": true
+    },
+    {
+      "file": "right-1-07.png",
+      "hand": 22,
+      "forearm": 22,
+      "continuousSkin": true
+    },
+    {
+      "file": "right-1-08.png",
+      "hand": 19,
+      "forearm": 19,
+      "continuousSkin": true
+    },
+    {
+      "file": "right-1-09.png",
+      "hand": 19,
+      "forearm": 19,
+      "continuousSkin": true
+    },
+    {
+      "file": "right-1-10.png",
+      "hand": 17,
+      "forearm": 17,
+      "continuousSkin": true
+    },
+    {
+      "file": "right-1-11.png",
+      "hand": 22,
+      "forearm": 22,
+      "continuousSkin": true
+    },
+    {
+      "file": "right-1-12.png",
+      "hand": 22,
+      "forearm": 22,
+      "continuousSkin": true
+    },
+    {
+      "file": "right-1-13.png",
+      "hand": 19,
+      "forearm": 19,
+      "continuousSkin": true
+    },
+    {
+      "file": "right-1-14.png",
+      "hand": 19,
+      "forearm": 19,
+      "continuousSkin": true
+    },
+    {
+      "file": "right-1-15.png",
+      "hand": 19,
+      "forearm": 19,
+      "continuousSkin": true
+    },
+    {
+      "file": "right-1-16.png",
+      "hand": 20,
+      "forearm": 20,
+      "continuousSkin": true
+    },
+    {
+      "file": "right-1-17.png",
+      "hand": 25,
+      "forearm": 25,
+      "continuousSkin": true
+    },
+    {
+      "file": "right-1-18.png",
+      "hand": 19,
+      "forearm": 19,
+      "continuousSkin": true
+    },
+    {
+      "file": "right-1-19.png",
+      "hand": 19,
+      "forearm": 19,
+      "continuousSkin": true
+    },
+    {
+      "file": "right-1-20.png",
+      "hand": 21,
+      "forearm": 21,
+      "continuousSkin": true
+    },
+    {
+      "file": "right-1-21.png",
+      "hand": 21,
+      "forearm": 21,
+      "continuousSkin": true
+    },
+    {
+      "file": "right-1-22.png",
+      "hand": 21,
+      "forearm": 21,
+      "continuousSkin": true
+    },
+    {
+      "file": "right-1-23.png",
+      "hand": 18,
+      "forearm": 18,
+      "continuousSkin": true
+    },
+    {
+      "file": "right-1-24.png",
+      "hand": 23,
+      "forearm": 23,
+      "continuousSkin": true
+    },
+    {
+      "file": "right-1-25.png",
+      "hand": 26,
+      "forearm": 26,
+      "continuousSkin": true
+    },
+    {
+      "file": "right-1-26.png",
+      "hand": 23,
+      "forearm": 23,
+      "continuousSkin": true
+    },
+    {
+      "file": "right-1-27.png",
+      "hand": 21,
+      "forearm": 21,
+      "continuousSkin": true
+    },
+    {
+      "file": "right-1-28.png",
+      "hand": 22,
+      "forearm": 22,
+      "continuousSkin": true
+    },
+    {
+      "file": "right-1-29.png",
+      "hand": 18,
+      "forearm": 18,
+      "continuousSkin": true
+    },
+    {
+      "file": "right-1-30.png",
+      "hand": 20,
+      "forearm": 20,
+      "continuousSkin": true
+    },
+    {
+      "file": "right-1-31.png",
+      "hand": 19,
+      "forearm": 19,
+      "continuousSkin": true
+    },
+    {
+      "file": "left-2-00.png",
+      "hand": 19,
+      "forearm": 19,
+      "continuousSkin": true
+    },
+    {
+      "file": "left-2-01.png",
+      "hand": 17,
+      "forearm": 17,
+      "continuousSkin": true
+    },
+    {
+      "file": "left-2-02.png",
+      "hand": 17,
+      "forearm": 17,
+      "continuousSkin": true
+    },
+    {
+      "file": "left-2-03.png",
+      "hand": 20,
+      "forearm": 20,
+      "continuousSkin": true
+    },
+    {
+      "file": "left-2-04.png",
+      "hand": 20,
+      "forearm": 20,
+      "continuousSkin": true
+    },
+    {
+      "file": "left-2-05.png",
+      "hand": 18,
+      "forearm": 18,
+      "continuousSkin": true
+    },
+    {
+      "file": "left-2-06.png",
+      "hand": 16,
+      "forearm": 16,
+      "continuousSkin": true
+    },
+    {
+      "file": "left-2-07.png",
+      "hand": 18,
+      "forearm": 18,
+      "continuousSkin": true
+    },
+    {
+      "file": "left-2-08.png",
+      "hand": 20,
+      "forearm": 20,
+      "continuousSkin": true
+    },
+    {
+      "file": "left-2-09.png",
+      "hand": 22,
+      "forearm": 22,
+      "continuousSkin": true
+    },
+    {
+      "file": "left-2-10.png",
+      "hand": 15,
+      "forearm": 15,
+      "continuousSkin": true
+    },
+    {
+      "file": "left-2-11.png",
+      "hand": 14,
+      "forearm": 14,
+      "continuousSkin": true
+    },
+    {
+      "file": "left-2-12.png",
+      "hand": 15,
+      "forearm": 15,
+      "continuousSkin": true
+    },
+    {
+      "file": "left-2-13.png",
+      "hand": 10,
+      "forearm": 10,
+      "continuousSkin": true
+    },
+    {
+      "file": "left-2-14.png",
+      "hand": 10,
+      "forearm": 10,
+      "continuousSkin": true
+    },
+    {
+      "file": "left-2-15.png",
+      "hand": 12,
+      "forearm": 12,
+      "continuousSkin": true
+    },
+    {
+      "file": "left-2-16.png",
+      "hand": 10,
+      "forearm": 10,
+      "continuousSkin": true
+    },
+    {
+      "file": "left-2-17.png",
+      "hand": 12,
+      "forearm": 12,
+      "continuousSkin": true
+    },
+    {
+      "file": "left-2-18.png",
+      "hand": 9,
+      "forearm": 9,
+      "continuousSkin": true
+    },
+    {
+      "file": "left-2-19.png",
+      "hand": 9,
+      "forearm": 9,
+      "continuousSkin": true
+    },
+    {
+      "file": "left-2-20.png",
+      "hand": 12,
+      "forearm": 12,
+      "continuousSkin": true
+    },
+    {
+      "file": "left-2-21.png",
+      "hand": 12,
+      "forearm": 12,
+      "continuousSkin": true
+    },
+    {
+      "file": "left-2-22.png",
+      "hand": 11,
+      "forearm": 11,
+      "continuousSkin": true
+    },
+    {
+      "file": "left-2-23.png",
+      "hand": 10,
+      "forearm": 10,
+      "continuousSkin": true
+    },
+    {
+      "file": "left-2-24.png",
+      "hand": 8,
+      "forearm": 8,
+      "continuousSkin": true
+    },
+    {
+      "file": "left-2-25.png",
+      "hand": 10,
+      "forearm": 10,
+      "continuousSkin": true
+    },
+    {
+      "file": "left-2-26.png",
+      "hand": 9,
+      "forearm": 9,
+      "continuousSkin": true
+    },
+    {
+      "file": "left-2-27.png",
+      "hand": 8,
+      "forearm": 8,
+      "continuousSkin": true
+    },
+    {
+      "file": "left-2-28.png",
+      "hand": 10,
+      "forearm": 10,
+      "continuousSkin": true
+    },
+    {
+      "file": "left-2-29.png",
+      "hand": 10,
+      "forearm": 10,
+      "continuousSkin": true
+    },
+    {
+      "file": "left-2-30.png",
+      "hand": 10,
+      "forearm": 10,
+      "continuousSkin": true
+    },
+    {
+      "file": "left-2-31.png",
+      "hand": 12,
+      "forearm": 12,
+      "continuousSkin": true
+    },
+    {
+      "file": "right-2-00.png",
+      "hand": 13,
+      "forearm": 13,
+      "continuousSkin": true
+    },
+    {
+      "file": "right-2-01.png",
+      "hand": 16,
+      "forearm": 16,
+      "continuousSkin": true
+    },
+    {
+      "file": "right-2-02.png",
+      "hand": 16,
+      "forearm": 16,
+      "continuousSkin": true
+    },
+    {
+      "file": "right-2-03.png",
+      "hand": 18,
+      "forearm": 18,
+      "continuousSkin": true
+    },
+    {
+      "file": "right-2-04.png",
+      "hand": 23,
+      "forearm": 23,
+      "continuousSkin": true
+    },
+    {
+      "file": "right-2-05.png",
+      "hand": 17,
+      "forearm": 17,
+      "continuousSkin": true
+    },
+    {
+      "file": "right-2-06.png",
+      "hand": 19,
+      "forearm": 19,
+      "continuousSkin": true
+    },
+    {
+      "file": "right-2-07.png",
+      "hand": 18,
+      "forearm": 18,
+      "continuousSkin": true
+    },
+    {
+      "file": "right-2-08.png",
+      "hand": 23,
+      "forearm": 23,
+      "continuousSkin": true
+    },
+    {
+      "file": "right-2-09.png",
+      "hand": 21,
+      "forearm": 21,
+      "continuousSkin": true
+    },
+    {
+      "file": "right-2-10.png",
+      "hand": 22,
+      "forearm": 22,
+      "continuousSkin": true
+    },
+    {
+      "file": "right-2-11.png",
+      "hand": 19,
+      "forearm": 19,
+      "continuousSkin": true
+    },
+    {
+      "file": "right-2-12.png",
+      "hand": 22,
+      "forearm": 22,
+      "continuousSkin": true
+    },
+    {
+      "file": "right-2-13.png",
+      "hand": 21,
+      "forearm": 21,
+      "continuousSkin": true
+    },
+    {
+      "file": "right-2-14.png",
+      "hand": 17,
+      "forearm": 17,
+      "continuousSkin": true
+    },
+    {
+      "file": "right-2-15.png",
+      "hand": 18,
+      "forearm": 18,
+      "continuousSkin": true
+    },
+    {
+      "file": "right-2-16.png",
+      "hand": 18,
+      "forearm": 18,
+      "continuousSkin": true
+    },
+    {
+      "file": "right-2-17.png",
+      "hand": 24,
+      "forearm": 24,
+      "continuousSkin": true
+    },
+    {
+      "file": "right-2-18.png",
+      "hand": 21,
+      "forearm": 21,
+      "continuousSkin": true
+    },
+    {
+      "file": "right-2-19.png",
+      "hand": 21,
+      "forearm": 21,
+      "continuousSkin": true
+    },
+    {
+      "file": "right-2-20.png",
+      "hand": 20,
+      "forearm": 20,
+      "continuousSkin": true
+    },
+    {
+      "file": "right-2-21.png",
+      "hand": 28,
+      "forearm": 28,
+      "continuousSkin": true
+    },
+    {
+      "file": "right-2-22.png",
+      "hand": 24,
+      "forearm": 24,
+      "continuousSkin": true
+    },
+    {
+      "file": "right-2-23.png",
+      "hand": 24,
+      "forearm": 24,
+      "continuousSkin": true
+    },
+    {
+      "file": "right-2-24.png",
+      "hand": 21,
+      "forearm": 21,
+      "continuousSkin": true
+    },
+    {
+      "file": "right-2-25.png",
+      "hand": 18,
+      "forearm": 18,
+      "continuousSkin": true
+    },
+    {
+      "file": "right-2-26.png",
+      "hand": 20,
+      "forearm": 20,
+      "continuousSkin": true
+    },
+    {
+      "file": "right-2-27.png",
+      "hand": 20,
+      "forearm": 20,
+      "continuousSkin": true
+    },
+    {
+      "file": "right-2-28.png",
+      "hand": 24,
+      "forearm": 24,
+      "continuousSkin": true
+    },
+    {
+      "file": "right-2-29.png",
+      "hand": 22,
+      "forearm": 22,
+      "continuousSkin": true
+    },
+    {
+      "file": "right-2-30.png",
+      "hand": 18,
+      "forearm": 18,
+      "continuousSkin": true
+    },
+    {
+      "file": "right-2-31.png",
+      "hand": 20,
+      "forearm": 20,
+      "continuousSkin": true
+    },
+    {
+      "file": "center-00.png",
+      "hand": 21,
+      "forearm": 21,
+      "continuousSkin": true
+    },
+    {
+      "file": "center-01.png",
+      "hand": 19,
+      "forearm": 19,
+      "continuousSkin": true
+    },
+    {
+      "file": "center-02.png",
+      "hand": 18,
+      "forearm": 18,
+      "continuousSkin": true
+    },
+    {
+      "file": "center-03.png",
+      "hand": 18,
+      "forearm": 18,
+      "continuousSkin": true
+    },
+    {
+      "file": "center-04.png",
+      "hand": 20,
+      "forearm": 20,
+      "continuousSkin": true
+    },
+    {
+      "file": "center-05.png",
+      "hand": 16,
+      "forearm": 16,
+      "continuousSkin": true
+    },
+    {
+      "file": "center-06.png",
+      "hand": 18,
+      "forearm": 18,
+      "continuousSkin": true
+    },
+    {
+      "file": "center-07.png",
+      "hand": 18,
+      "forearm": 18,
+      "continuousSkin": true
+    },
+    {
+      "file": "center-08.png",
+      "hand": 23,
+      "forearm": 23,
+      "continuousSkin": true
+    },
+    {
+      "file": "center-09.png",
+      "hand": 20,
+      "forearm": 20,
+      "continuousSkin": true
+    },
+    {
+      "file": "center-10.png",
+      "hand": 22,
+      "forearm": 22,
+      "continuousSkin": true
+    },
+    {
+      "file": "center-11.png",
+      "hand": 22,
+      "forearm": 22,
+      "continuousSkin": true
+    },
+    {
+      "file": "center-12.png",
+      "hand": 20,
+      "forearm": 20,
+      "continuousSkin": true
+    },
+    {
+      "file": "center-13.png",
+      "hand": 18,
+      "forearm": 18,
+      "continuousSkin": true
+    },
+    {
+      "file": "center-14.png",
+      "hand": 18,
+      "forearm": 18,
+      "continuousSkin": true
+    },
+    {
+      "file": "center-15.png",
+      "hand": 15,
+      "forearm": 15,
+      "continuousSkin": true
+    },
+    {
+      "file": "center-16.png",
+      "hand": 15,
+      "forearm": 15,
+      "continuousSkin": true
+    },
+    {
+      "file": "center-17.png",
+      "hand": 19,
+      "forearm": 19,
+      "continuousSkin": true
+    },
+    {
+      "file": "center-18.png",
+      "hand": 17,
+      "forearm": 17,
+      "continuousSkin": true
+    },
+    {
+      "file": "center-19.png",
+      "hand": 20,
+      "forearm": 20,
+      "continuousSkin": true
+    },
+    {
+      "file": "center-20.png",
+      "hand": 17,
+      "forearm": 17,
+      "continuousSkin": true
+    },
+    {
+      "file": "center-21.png",
+      "hand": 20,
+      "forearm": 20,
+      "continuousSkin": true
+    },
+    {
+      "file": "center-22.png",
+      "hand": 19,
+      "forearm": 19,
+      "continuousSkin": true
+    },
+    {
+      "file": "center-23.png",
+      "hand": 18,
+      "forearm": 18,
+      "continuousSkin": true
+    },
+    {
+      "file": "center-24.png",
+      "hand": 18,
+      "forearm": 18,
+      "continuousSkin": true
+    },
+    {
+      "file": "center-25.png",
+      "hand": 22,
+      "forearm": 22,
+      "continuousSkin": true
+    },
+    {
+      "file": "center-26.png",
+      "hand": 19,
+      "forearm": 19,
+      "continuousSkin": true
+    },
+    {
+      "file": "center-27.png",
+      "hand": 18,
+      "forearm": 18,
+      "continuousSkin": true
+    },
+    {
+      "file": "center-28.png",
+      "hand": 17,
+      "forearm": 17,
+      "continuousSkin": true
+    },
+    {
+      "file": "center-29.png",
+      "hand": 24,
+      "forearm": 24,
+      "continuousSkin": true
+    },
+    {
+      "file": "center-30.png",
+      "hand": 24,
+      "forearm": 24,
+      "continuousSkin": true
+    },
+    {
+      "file": "center-31.png",
+      "hand": 22,
+      "forearm": 22,
+      "continuousSkin": true
+    }
+  ]
+}

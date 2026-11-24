@@ -5,6 +5,24 @@ import {afterEach, expect, it, vi} from 'vitest'
 import type {PoffoSpeech} from '@winter-love/wallpaper/settings/library-model'
 import {createLipSyncPublisher} from '../channel'
 import {useSpeechLipSync} from '../use-speech-lipsync'
+import type {VoiceMessage} from '../../voice/text'
+
+it('should leave microphone poses alone when a bubble changes or readout audio arrives', () => {
+  const publish = vi.fn()
+  vi.mocked(createLipSyncPublisher).mockReturnValue(publish)
+  const [message, setMessage] = createSignal<VoiceMessage | null>(null)
+  const hook = renderHook(() =>
+    useSpeechLipSync({
+      message,
+      speech: () => ({enabled: true, lipsync: {source: 'microphone'}, x: 0, y: 0}),
+      widgetId: () => 'widget',
+    }),
+  )
+  hook.result.audioShape('a', 1)
+  setMessage({chat: 'chat', id: 'reply', text: '말풍선 변경'})
+  hook.result.audioShape('o', 1)
+  expect(publish).not.toHaveBeenCalled()
+})
 
 vi.mock('../channel', () => ({createLipSyncPublisher: vi.fn()}))
 afterEach(() => {
@@ -58,7 +76,7 @@ it('should animate unread prose without audio and stop on selection or settings 
   hook.result.audioShape('a', 0.8)
   expect(publish).toHaveBeenLastCalledWith('voice', 0.8, 'a', undefined)
   hook.result.audioShape('i', 0.7, {e: 0.2, i: 0.8})
-  expect(publish).toHaveBeenLastCalledWith('voice', 0.7, 'i', {e: 0.2, i: 0.8})
+  expect(publish).toHaveBeenLastCalledWith('voice', 0.7, 'i', {weights: {e: 0.2, i: 0.8}})
   setSpeech({...speech(), enabled: false})
   hook.result.audioShape('i', 1)
   expect(publish).toHaveBeenLastCalledWith('voice', 0)

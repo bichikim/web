@@ -1,23 +1,47 @@
-import {useSemanticInput} from '../features/semantics/use-semantic-input'
+import {text as uiText} from '../features/localization'
+import {useSpeechSemantics} from '../features/semantics/use-speech-semantics'
 import {useVoice} from '../features/voice/use-voice'
-import type {SemanticNarration} from '@winter-love/wallpaper/settings/semantics'
 import {useSpeechLipSync} from '../features/lipsync'
 import {voiceMessage} from '../features/voice/text'
 import {createMemo, createSignal, type JSX, Show} from 'solid-js'
+import {useAgentSelection} from '../features/agent-state/use-agent-selection'
 import {codexPort, useCodexNotifications, useCodexTitles, useSpeechTarget} from '../features/codex'
 import {useSpeechSize} from '../features/codex/use-speech-size'
 import {useSpeechDrag, useSpeechHitTest, useWidgetSpeech} from '../features/speech'
 import {SCodexSpeechStack} from './SCodexSpeechStack'
+import {CHARACTER_SPEECH_ID, useCharacterChat} from '../features/conversation'
 
 export const SPoffoSpeechSurface = (props: {readonly widgetId?: string} = {}) => {
   const connection = useCodexNotifications()
   const target = useSpeechTarget()
+  const characterTarget = createMemo(() => {
+    const current = target()
+    return current?.visible === false ? undefined : current
+  })
   const settings = useWidgetSpeech(() => props.widgetId)
+  const [recording, setRecording] = createSignal(false)
+  const [selected, setSelected] = createSignal<string | null>(null)
+  const codexVisible = () => settings.speech().enabled && settings.speech().showCodex !== false
+  const characterVisible = () =>
+    props.widgetId !== undefined &&
+    settings.speech().enabled &&
+    settings.speech().showCharacter !== false
+  useAgentSelection(
+    () => (codexVisible() && selected() !== CHARACTER_SPEECH_ID ? selected() : null),
+    () => props.widgetId !== undefined,
+  )
+  const character = useCharacterChat({
+    conversation: () => settings.speech().conversation,
+    recording: () => recording() && selected() === CHARACTER_SPEECH_ID,
+    widgetId: () => props.widgetId,
+  })
   const [content, setContent] = createSignal<HTMLDivElement | null>(null)
   const [surface, setSurface] = createSignal<HTMLElement | null>(null)
   const [scroll, setScroll] = createSignal(0)
   const sessions = createMemo(() =>
-    connection.snapshot().sessions.filter((item) => item.phase !== 'idle'),
+    codexVisible() && connection.snapshot().registered
+      ? connection.snapshot().sessions.filter((item) => item.phase !== 'idle')
+      : [],
   )
   const titles = useCodexTitles({activities: sessions})
   const labeled = createMemo(() =>
@@ -26,47 +50,36 @@ export const SPoffoSpeechSurface = (props: {readonly widgetId?: string} = {}) =>
       title: item.title ?? titles().get(item.sessionId),
     })),
   )
-  const [selected, setSelected] = createSignal<string | null>(null)
-  const message = createMemo(() =>
-    connection.snapshot().registered
-      ? voiceMessage(
+  const message = createMemo(() => {
+    if (recording()) {
+      return null
+    }
+    return selected() === CHARACTER_SPEECH_ID
+      ? characterVisible()
+        ? character.message()
+        : null
+      : voiceMessage(
           sessions().find((item) => item.sessionId === selected()),
           connection.snapshot().questions,
         )
-      : null,
-  )
+  })
   const lipsync = useSpeechLipSync({
     message,
     speech: settings.speech,
     widgetId: () => props.widgetId,
   })
   const voice = useVoice({message, onShape: lipsync.audioShape, speech: settings.speech})
-  const narration = (): SemanticNarration | undefined => {
-    const speech = settings.speech()
-    if (!speech.enabled || !speech.voice?.enabled) {
-      return undefined
-    }
-    if (voice.status() === 'idle') {
-      return {phase: 'ended'}
-    }
-    const readoutId = voice.readoutId()
-    return readoutId === undefined ? {phase: 'waiting'} : {phase: 'playing', readoutId}
-  }
-  useSemanticInput({
-    narration,
-    text: () => {
-      const speech = settings.speech()
-      return !speech.enabled || (speech.voice?.enabled && voice.status() === 'idle')
-        ? ''
-        : (message()?.text ?? '')
-    },
+  const voiceToggle = () => (voice.available() ? voice.toggle : undefined)
+  useSpeechSemantics({
+    enabled: () => settings.speech().enabled,
+    message,
+    playback: voice.playback,
+    status: voice.status,
+    voiceEnabled: () => settings.speech().voice?.enabled ?? false,
     widgetId: () => props.widgetId,
   })
   const movement = useSpeechDrag({speech: settings.speech, target, widgetId: () => props.widgetId})
-  const voiceNotice = () => movement.error() ?? voice.error() ?? settings.error() ?? undefined
-  const frame = useSpeechSize(content, {
-    viewport: surface,
-  })
+  const frame = useSpeechSize(content, {viewport: surface})
   const reverse = createMemo(() =>
     frame.overflow() ? target()?.anchor !== 'top' : target()?.anchor === 'top',
   )
@@ -76,12 +89,10 @@ export const SPoffoSpeechSurface = (props: {readonly widgetId?: string} = {}) =>
     layout: scroll,
     onError: (cause) => console.error('Poffo speech input failed', cause),
   })
-  const handleScroll: JSX.EventHandler<HTMLElement, Event> = (event) =>
-    setScroll(event.currentTarget.scrollTop)
   return (
     <main
       ref={setSurface}
-      aria-label="Poffo Codex 말풍선"
+      aria-label={uiText('Poffo 대화 말풍선')}
       data-draggable={props.widgetId !== undefined}
       data-dragging={movement.dragging()}
       onPointerDown={movement.start}
@@ -109,9 +120,9 @@ export const SPoffoSpeechSurface = (props: {readonly widgetId?: string} = {}) =>
         'overflow-y-auto': frame.overflow(),
       }}
       tabIndex={0}
-      onScroll={handleScroll}
+      onScroll={(event) => setScroll(event.currentTarget.scrollTop)}
     >
-      <Show when={connection.snapshot().registered}>
+      <Show when={(codexVisible() && connection.snapshot().registered) || characterVisible()}>
         <div
           ref={setContent}
           data-anchor={target()?.anchor ?? 'bottom'}
@@ -120,20 +131,23 @@ export const SPoffoSpeechSurface = (props: {readonly widgetId?: string} = {}) =>
           data-[overflow=true]:mt-0 data-[overflow=true]:mb-0"
         >
           <SCodexSpeechStack
+            dragging={movement.dragging()}
+            character={characterVisible() ? character : undefined}
+            onRecording={setRecording}
             anchor={target()?.anchor}
             activities={labeled()}
             wrap={settings.speech().wrap !== false}
             approvals={connection.snapshot().approvals}
             questions={connection.snapshot().questions}
-            target={target()}
+            target={characterTarget()}
             maxHeight={target()?.maxHeight}
             layout={scroll()}
             onDismiss={connection.dismiss}
             onOpen={codexPort.openChat}
             onSelected={setSelected}
-            voiceNotice={voiceNotice()}
+            voiceNotice={movement.error() ?? voice.error() ?? settings.error() ?? undefined}
             voiceState={voice.status()}
-            onVoiceRetry={voice.retry}
+            onVoiceToggle={voiceToggle()}
           />
         </div>
       </Show>

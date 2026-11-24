@@ -1,0 +1,69 @@
+{
+  "group": "coffee-left",
+  "sourceModelSha256": "404a5a884fa552f548f09973ca7e37d008f81388e27fdb9c438f946880efa927",
+  "wristSha256": "1a015a7e46252900fe22135128c22bcae958099539c7925e94a5bc634dc9114d",
+  "placement": {
+    "action": "coffee",
+    "expression": "커피 들기",
+    "group": "coffee-left",
+    "wrist": [2216.7354491523593, 1701.440353536852],
+    "elbow": [1890.606211231115, 2140.6666974533173],
+    "axis": [0.5961435421966003, -0.8028778718443361],
+    "normal": [0.8028778718443361, 0.5961435421966003],
+    "box": {
+      "x": 2050,
+      "y": 1305,
+      "width": 336,
+      "height": 560,
+      "scale": 2
+    },
+    "referenceSize": [672, 1120],
+    "arm": "coat-free:coffee-left:ArtMesh900",
+    "armIds": ["coat-free:coffee-left:ArtMesh900", "coat-free:coffee-left:ArtMesh901"],
+    "followers": [
+      "ArtMesh928",
+      "ArtMesh950",
+      "ArtMesh952",
+      "ArtMesh954",
+      "ArtMesh956",
+      "ArtMesh958",
+      "ArtMesh960",
+      "ArtMesh961",
+      "ArtMesh106",
+      "ArtMesh107",
+      "ArtMesh108",
+      "ArtMesh109",
+      "ArtMesh110",
+      "ArtMesh103",
+      "ArtMesh104",
+      "ArtMesh105",
+      "ArtMesh111",
+      "ArtMesh112",
+      "ArtMesh962",
+      "ArtMesh963",
+      "ArtMesh964"
+    ],
+    "hand": {
+      "partId": "ArtMesh960",
+      "triangle": [7, 23, 22],
+      "weights": [0.15429117988007776, 0.6469601024494036, 0.1987487176705186]
+    },
+    "actualHand": "ArtMesh960",
+    "selected": ["ArtMesh960", "ArtMesh961", "ArtMesh962"],
+    "generationOffset": {
+      "x": 13,
+      "y": 313
+    },
+    "wristGeneration": {
+      "x": 2056.7354491523593,
+      "y": 1461.440353536852,
+      "width": 320,
+      "height": 384,
+      "scale": 2
+    }
+  },
+  "generatedPixelsUsed": "Short wrist only. Original fingers and nails remain on the original parts. Forearm geometry and physics are unchanged.",
+  "method": "Local Qwen Image 2.1 Turbo 8-step wrist repair; original skin and ink palette; forearm outline registered in the new wrist mesh; barycentric surface contacts at both ends; original cuff drawing with coat on.",
+  "referenceModelSha256": "7c81a99a94605bd34078b0cccdeef99af18446ea0e769953a5ecd3ed0ac39813",
+  "execution": "Local ComfyUI; no hosted model"
+}

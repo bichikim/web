@@ -1,13 +1,24 @@
 // oxlint-disable no-await-in-loop -- Observe animation completion before sampling the following layout frames.
-import {cleanup, render, screen} from '@solidjs/testing-library'
+import {cleanup, fireEvent, render, screen} from '@solidjs/testing-library'
+import {getCurrentWebviewWindow} from '@tauri-apps/api/webviewWindow'
 import {createSignal} from 'solid-js'
-import {afterEach, expect, test, vi} from 'vitest'
+import {afterEach, beforeEach, expect, test, vi} from 'vitest'
 import {invoke, isTauri} from '@tauri-apps/api/core'
 import {SCodexSpeechStack} from '../../src/components/SCodexSpeechStack'
 import {useSpeechSize} from '../../src/features/codex/use-speech-size'
 import 'virtual:uno.css'
 
-vi.mock('@tauri-apps/api/core', () => ({invoke: vi.fn(), isTauri: vi.fn()}))
+vi.mock('@tauri-apps/api/core', async (original) => ({
+  ...(await original<typeof import('@tauri-apps/api/core')>()),
+  invoke: vi.fn(),
+  isTauri: vi.fn(),
+}))
+vi.mock('@tauri-apps/api/webviewWindow', () => ({getCurrentWebviewWindow: vi.fn()}))
+beforeEach(() => {
+  vi.mocked(getCurrentWebviewWindow).mockReturnValue({
+    listen: vi.fn().mockResolvedValue(vi.fn()),
+  } as unknown as ReturnType<typeof getCurrentWebviewWindow>)
+})
 afterEach(() => {
   cleanup()
   vi.clearAllMocks()
@@ -76,8 +87,16 @@ test.each(['top', 'bottom'] as const)(
         .mock.calls.filter(([command]) => command === 'resize_poffo_speech')
         .map(([, options]) => (options as {height: number}).height)
     expect(heights()).toEqual([])
+    fireEvent.pointerEnter(screen.getByRole('list'))
+    await expect
+      .poll(() => screen.queryByRole('button', {name: '채팅 긴 말풍선 선택'}))
+      .not.toBeNull()
     screen.getByRole('button', {name: '채팅 긴 말풍선 선택'}).click()
     await settle()
+    fireEvent.pointerEnter(screen.getByRole('list'))
+    await expect
+      .poll(() => screen.queryByRole('button', {name: '채팅 짧은 말풍선 선택'}))
+      .not.toBeNull()
     screen.getByRole('button', {name: '채팅 짧은 말풍선 선택'}).click()
     await settle()
     const front = screen.getAllByRole('listitem').find((card) => card.ariaPosInSet === '1')!

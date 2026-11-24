@@ -1,0 +1,3474 @@
+{
+  "coffee-left:1": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "source-coffee-left.png"
+    }
+  },
+  "coffee-left:2": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "arm-coffee-left.png"
+    }
+  },
+  "coffee-left:3": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "matched-coffee-left.png"
+    }
+  },
+  "coffee-left:4": {
+    "class_type": "EmptyImage",
+    "inputs": {
+      "width": 672,
+      "height": 1120,
+      "batch_size": 1,
+      "color": 16777215
+    }
+  },
+  "coffee-left:5": {
+    "class_type": "SolidMask",
+    "inputs": {
+      "value": 1,
+      "width": 672,
+      "height": 1120
+    }
+  },
+  "coffee-left:6": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["coffee-left:4", 0],
+      "alpha": ["coffee-left:5", 0]
+    }
+  },
+  "coffee-left:7": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["coffee-left:3", 0],
+      "alpha": ["coffee-left:3", 1]
+    }
+  },
+  "coffee-left:8": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["coffee-left:6", 0],
+      "source": ["coffee-left:7", 0],
+      "x": 13,
+      "y": 313,
+      "resize_source": false
+    }
+  },
+  "coffee-left:9": {
+    "class_type": "InvertMask",
+    "inputs": {
+      "mask": ["coffee-left:1", 1]
+    }
+  },
+  "coffee-left:10": {
+    "class_type": "ThresholdMask",
+    "inputs": {
+      "mask": ["coffee-left:9", 0],
+      "value": 0
+    }
+  },
+  "coffee-left:11": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["coffee-left:4", 0],
+      "source": ["coffee-left:1", 0],
+      "x": 0,
+      "y": 0,
+      "resize_source": false,
+      "mask": ["coffee-left:10", 0]
+    }
+  },
+  "coffee-left:12": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["coffee-left:11", 0],
+      "alpha": ["coffee-left:1", 1]
+    }
+  },
+  "coffee-left:13": {
+    "class_type": "LoadImageMask",
+    "inputs": {
+      "image": "bounded-edit-coffee-left.png",
+      "channel": "red"
+    }
+  },
+  "coffee-left:14": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["coffee-left:12", 0],
+      "source": ["coffee-left:8", 0],
+      "x": 0,
+      "y": 0,
+      "resize_source": false,
+      "mask": ["coffee-left:13", 0]
+    }
+  },
+  "coffee-left:15": {
+    "class_type": "InvertMask",
+    "inputs": {
+      "mask": ["coffee-left:2", 1]
+    }
+  },
+  "coffee-left:16": {
+    "class_type": "ThresholdMask",
+    "inputs": {
+      "mask": ["coffee-left:15", 0],
+      "value": 0
+    }
+  },
+  "coffee-left:17": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["coffee-left:4", 0],
+      "source": ["coffee-left:2", 0],
+      "x": 0,
+      "y": 0,
+      "resize_source": false,
+      "mask": ["coffee-left:16", 0]
+    }
+  },
+  "coffee-left:18": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["coffee-left:17", 0],
+      "alpha": ["coffee-left:2", 1]
+    }
+  },
+  "coffee-left:19": {
+    "class_type": "LoadImageMask",
+    "inputs": {
+      "image": "arm-restore-coffee-left.png",
+      "channel": "red"
+    }
+  },
+  "coffee-left:20": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["coffee-left:14", 0],
+      "source": ["coffee-left:18", 0],
+      "x": 0,
+      "y": 0,
+      "resize_source": false,
+      "mask": ["coffee-left:19", 0]
+    }
+  },
+  "coffee-left:21": {
+    "class_type": "SplitImageWithAlpha",
+    "inputs": {
+      "image": ["coffee-left:8", 0]
+    }
+  },
+  "coffee-left:22": {
+    "class_type": "InvertMask",
+    "inputs": {
+      "mask": ["coffee-left:21", 1]
+    }
+  },
+  "coffee-left:23": {
+    "class_type": "LoadImageMask",
+    "inputs": {
+      "image": "fade-coffee-left.png",
+      "channel": "red"
+    }
+  },
+  "coffee-left:24": {
+    "class_type": "MaskComposite",
+    "inputs": {
+      "destination": ["coffee-left:22", 0],
+      "source": ["coffee-left:23", 0],
+      "x": 0,
+      "y": 0,
+      "operation": "multiply"
+    }
+  },
+  "coffee-left:25": {
+    "class_type": "MaskComposite",
+    "inputs": {
+      "destination": ["coffee-left:24", 0],
+      "source": ["coffee-left:29", 0],
+      "x": 0,
+      "y": 0,
+      "operation": "multiply"
+    }
+  },
+  "coffee-left:26": {
+    "class_type": "InvertMask",
+    "inputs": {
+      "mask": ["coffee-left:31", 0]
+    }
+  },
+  "coffee-left:27": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["coffee-left:8", 0],
+      "alpha": ["coffee-left:26", 0]
+    }
+  },
+  "coffee-left:28": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": ["coffee-left:27", 0],
+      "filename_prefix": "Wallpaper/wrists/coffee-left-fitted-wrist"
+    }
+  },
+  "coffee-left:29": {
+    "class_type": "LoadImageMask",
+    "inputs": {
+      "image": "edit-coffee-left.png",
+      "channel": "red"
+    }
+  },
+  "coffee-left:30": {
+    "class_type": "LoadImageMask",
+    "inputs": {
+      "image": "skin-colour-coffee-left.png",
+      "channel": "red"
+    }
+  },
+  "coffee-left:31": {
+    "class_type": "MaskComposite",
+    "inputs": {
+      "destination": ["coffee-left:25", 0],
+      "source": ["coffee-left:32", 0],
+      "x": 0,
+      "y": 0,
+      "operation": "multiply"
+    }
+  },
+  "coffee-left:32": {
+    "class_type": "GrowMask",
+    "inputs": {
+      "mask": ["coffee-left:30", 0],
+      "expand": 6,
+      "tapered_corners": true
+    }
+  },
+  "microphone-left:1": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "source-microphone-left.png"
+    }
+  },
+  "microphone-left:2": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "arm-microphone-left.png"
+    }
+  },
+  "microphone-left:3": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "matched-microphone-left.png"
+    }
+  },
+  "microphone-left:4": {
+    "class_type": "EmptyImage",
+    "inputs": {
+      "width": 800,
+      "height": 960,
+      "batch_size": 1,
+      "color": 16777215
+    }
+  },
+  "microphone-left:5": {
+    "class_type": "SolidMask",
+    "inputs": {
+      "value": 1,
+      "width": 800,
+      "height": 960
+    }
+  },
+  "microphone-left:6": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["microphone-left:4", 0],
+      "alpha": ["microphone-left:5", 0]
+    }
+  },
+  "microphone-left:7": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["microphone-left:3", 0],
+      "alpha": ["microphone-left:3", 1]
+    }
+  },
+  "microphone-left:8": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["microphone-left:6", 0],
+      "source": ["microphone-left:7", 0],
+      "x": 12,
+      "y": 165,
+      "resize_source": false
+    }
+  },
+  "microphone-left:9": {
+    "class_type": "InvertMask",
+    "inputs": {
+      "mask": ["microphone-left:1", 1]
+    }
+  },
+  "microphone-left:10": {
+    "class_type": "ThresholdMask",
+    "inputs": {
+      "mask": ["microphone-left:9", 0],
+      "value": 0
+    }
+  },
+  "microphone-left:11": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["microphone-left:4", 0],
+      "source": ["microphone-left:1", 0],
+      "x": 0,
+      "y": 0,
+      "resize_source": false,
+      "mask": ["microphone-left:10", 0]
+    }
+  },
+  "microphone-left:12": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["microphone-left:11", 0],
+      "alpha": ["microphone-left:1", 1]
+    }
+  },
+  "microphone-left:13": {
+    "class_type": "LoadImageMask",
+    "inputs": {
+      "image": "bounded-edit-microphone-left.png",
+      "channel": "red"
+    }
+  },
+  "microphone-left:14": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["microphone-left:12", 0],
+      "source": ["microphone-left:8", 0],
+      "x": 0,
+      "y": 0,
+      "resize_source": false,
+      "mask": ["microphone-left:13", 0]
+    }
+  },
+  "microphone-left:15": {
+    "class_type": "InvertMask",
+    "inputs": {
+      "mask": ["microphone-left:2", 1]
+    }
+  },
+  "microphone-left:16": {
+    "class_type": "ThresholdMask",
+    "inputs": {
+      "mask": ["microphone-left:15", 0],
+      "value": 0
+    }
+  },
+  "microphone-left:17": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["microphone-left:4", 0],
+      "source": ["microphone-left:2", 0],
+      "x": 0,
+      "y": 0,
+      "resize_source": false,
+      "mask": ["microphone-left:16", 0]
+    }
+  },
+  "microphone-left:18": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["microphone-left:17", 0],
+      "alpha": ["microphone-left:2", 1]
+    }
+  },
+  "microphone-left:19": {
+    "class_type": "LoadImageMask",
+    "inputs": {
+      "image": "arm-restore-microphone-left.png",
+      "channel": "red"
+    }
+  },
+  "microphone-left:20": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["microphone-left:14", 0],
+      "source": ["microphone-left:18", 0],
+      "x": 0,
+      "y": 0,
+      "resize_source": false,
+      "mask": ["microphone-left:19", 0]
+    }
+  },
+  "microphone-left:21": {
+    "class_type": "SplitImageWithAlpha",
+    "inputs": {
+      "image": ["microphone-left:8", 0]
+    }
+  },
+  "microphone-left:22": {
+    "class_type": "InvertMask",
+    "inputs": {
+      "mask": ["microphone-left:21", 1]
+    }
+  },
+  "microphone-left:23": {
+    "class_type": "LoadImageMask",
+    "inputs": {
+      "image": "fade-microphone-left.png",
+      "channel": "red"
+    }
+  },
+  "microphone-left:24": {
+    "class_type": "MaskComposite",
+    "inputs": {
+      "destination": ["microphone-left:22", 0],
+      "source": ["microphone-left:23", 0],
+      "x": 0,
+      "y": 0,
+      "operation": "multiply"
+    }
+  },
+  "microphone-left:25": {
+    "class_type": "MaskComposite",
+    "inputs": {
+      "destination": ["microphone-left:24", 0],
+      "source": ["microphone-left:29", 0],
+      "x": 0,
+      "y": 0,
+      "operation": "multiply"
+    }
+  },
+  "microphone-left:26": {
+    "class_type": "InvertMask",
+    "inputs": {
+      "mask": ["microphone-left:31", 0]
+    }
+  },
+  "microphone-left:27": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["microphone-left:8", 0],
+      "alpha": ["microphone-left:26", 0]
+    }
+  },
+  "microphone-left:28": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": ["microphone-left:27", 0],
+      "filename_prefix": "Wallpaper/wrists/microphone-left-fitted-wrist"
+    }
+  },
+  "microphone-left:29": {
+    "class_type": "LoadImageMask",
+    "inputs": {
+      "image": "edit-microphone-left.png",
+      "channel": "red"
+    }
+  },
+  "microphone-left:30": {
+    "class_type": "LoadImageMask",
+    "inputs": {
+      "image": "skin-colour-microphone-left.png",
+      "channel": "red"
+    }
+  },
+  "microphone-left:31": {
+    "class_type": "MaskComposite",
+    "inputs": {
+      "destination": ["microphone-left:25", 0],
+      "source": ["microphone-left:32", 0],
+      "x": 0,
+      "y": 0,
+      "operation": "multiply"
+    }
+  },
+  "microphone-left:32": {
+    "class_type": "GrowMask",
+    "inputs": {
+      "mask": ["microphone-left:30", 0],
+      "expand": 6,
+      "tapered_corners": true
+    }
+  },
+  "knife-left:1": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "source-knife-left.png"
+    }
+  },
+  "knife-left:2": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "arm-knife-left.png"
+    }
+  },
+  "knife-left:3": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "matched-knife-left.png"
+    }
+  },
+  "knife-left:4": {
+    "class_type": "EmptyImage",
+    "inputs": {
+      "width": 672,
+      "height": 960,
+      "batch_size": 1,
+      "color": 16777215
+    }
+  },
+  "knife-left:5": {
+    "class_type": "SolidMask",
+    "inputs": {
+      "value": 1,
+      "width": 672,
+      "height": 960
+    }
+  },
+  "knife-left:6": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["knife-left:4", 0],
+      "alpha": ["knife-left:5", 0]
+    }
+  },
+  "knife-left:7": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["knife-left:3", 0],
+      "alpha": ["knife-left:3", 1]
+    }
+  },
+  "knife-left:8": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["knife-left:6", 0],
+      "source": ["knife-left:7", 0],
+      "x": 14,
+      "y": 165,
+      "resize_source": false
+    }
+  },
+  "knife-left:9": {
+    "class_type": "InvertMask",
+    "inputs": {
+      "mask": ["knife-left:1", 1]
+    }
+  },
+  "knife-left:10": {
+    "class_type": "ThresholdMask",
+    "inputs": {
+      "mask": ["knife-left:9", 0],
+      "value": 0
+    }
+  },
+  "knife-left:11": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["knife-left:4", 0],
+      "source": ["knife-left:1", 0],
+      "x": 0,
+      "y": 0,
+      "resize_source": false,
+      "mask": ["knife-left:10", 0]
+    }
+  },
+  "knife-left:12": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["knife-left:11", 0],
+      "alpha": ["knife-left:1", 1]
+    }
+  },
+  "knife-left:13": {
+    "class_type": "LoadImageMask",
+    "inputs": {
+      "image": "bounded-edit-knife-left.png",
+      "channel": "red"
+    }
+  },
+  "knife-left:14": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["knife-left:12", 0],
+      "source": ["knife-left:8", 0],
+      "x": 0,
+      "y": 0,
+      "resize_source": false,
+      "mask": ["knife-left:13", 0]
+    }
+  },
+  "knife-left:15": {
+    "class_type": "InvertMask",
+    "inputs": {
+      "mask": ["knife-left:2", 1]
+    }
+  },
+  "knife-left:16": {
+    "class_type": "ThresholdMask",
+    "inputs": {
+      "mask": ["knife-left:15", 0],
+      "value": 0
+    }
+  },
+  "knife-left:17": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["knife-left:4", 0],
+      "source": ["knife-left:2", 0],
+      "x": 0,
+      "y": 0,
+      "resize_source": false,
+      "mask": ["knife-left:16", 0]
+    }
+  },
+  "knife-left:18": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["knife-left:17", 0],
+      "alpha": ["knife-left:2", 1]
+    }
+  },
+  "knife-left:19": {
+    "class_type": "LoadImageMask",
+    "inputs": {
+      "image": "arm-restore-knife-left.png",
+      "channel": "red"
+    }
+  },
+  "knife-left:20": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["knife-left:14", 0],
+      "source": ["knife-left:18", 0],
+      "x": 0,
+      "y": 0,
+      "resize_source": false,
+      "mask": ["knife-left:19", 0]
+    }
+  },
+  "knife-left:21": {
+    "class_type": "SplitImageWithAlpha",
+    "inputs": {
+      "image": ["knife-left:8", 0]
+    }
+  },
+  "knife-left:22": {
+    "class_type": "InvertMask",
+    "inputs": {
+      "mask": ["knife-left:21", 1]
+    }
+  },
+  "knife-left:23": {
+    "class_type": "LoadImageMask",
+    "inputs": {
+      "image": "fade-knife-left.png",
+      "channel": "red"
+    }
+  },
+  "knife-left:24": {
+    "class_type": "MaskComposite",
+    "inputs": {
+      "destination": ["knife-left:22", 0],
+      "source": ["knife-left:23", 0],
+      "x": 0,
+      "y": 0,
+      "operation": "multiply"
+    }
+  },
+  "knife-left:25": {
+    "class_type": "MaskComposite",
+    "inputs": {
+      "destination": ["knife-left:24", 0],
+      "source": ["knife-left:29", 0],
+      "x": 0,
+      "y": 0,
+      "operation": "multiply"
+    }
+  },
+  "knife-left:26": {
+    "class_type": "InvertMask",
+    "inputs": {
+      "mask": ["knife-left:31", 0]
+    }
+  },
+  "knife-left:27": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["knife-left:8", 0],
+      "alpha": ["knife-left:26", 0]
+    }
+  },
+  "knife-left:28": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": ["knife-left:27", 0],
+      "filename_prefix": "Wallpaper/wrists/knife-left-fitted-wrist"
+    }
+  },
+  "knife-left:29": {
+    "class_type": "LoadImageMask",
+    "inputs": {
+      "image": "edit-knife-left.png",
+      "channel": "red"
+    }
+  },
+  "knife-left:30": {
+    "class_type": "LoadImageMask",
+    "inputs": {
+      "image": "skin-colour-knife-left.png",
+      "channel": "red"
+    }
+  },
+  "knife-left:31": {
+    "class_type": "MaskComposite",
+    "inputs": {
+      "destination": ["knife-left:25", 0],
+      "source": ["knife-left:32", 0],
+      "x": 0,
+      "y": 0,
+      "operation": "multiply"
+    }
+  },
+  "knife-left:32": {
+    "class_type": "GrowMask",
+    "inputs": {
+      "mask": ["knife-left:30", 0],
+      "expand": 6,
+      "tapered_corners": true
+    }
+  },
+  "heart-right:1": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "source-heart-right.png"
+    }
+  },
+  "heart-right:2": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "arm-heart-right.png"
+    }
+  },
+  "heart-right:3": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "matched-heart-right.png"
+    }
+  },
+  "heart-right:4": {
+    "class_type": "EmptyImage",
+    "inputs": {
+      "width": 800,
+      "height": 1120,
+      "batch_size": 1,
+      "color": 16777215
+    }
+  },
+  "heart-right:5": {
+    "class_type": "SolidMask",
+    "inputs": {
+      "value": 1,
+      "width": 800,
+      "height": 1120
+    }
+  },
+  "heart-right:6": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["heart-right:4", 0],
+      "alpha": ["heart-right:5", 0]
+    }
+  },
+  "heart-right:7": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["heart-right:3", 0],
+      "alpha": ["heart-right:3", 1]
+    }
+  },
+  "heart-right:8": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["heart-right:6", 0],
+      "source": ["heart-right:7", 0],
+      "x": 13,
+      "y": 325,
+      "resize_source": false
+    }
+  },
+  "heart-right:9": {
+    "class_type": "InvertMask",
+    "inputs": {
+      "mask": ["heart-right:1", 1]
+    }
+  },
+  "heart-right:10": {
+    "class_type": "ThresholdMask",
+    "inputs": {
+      "mask": ["heart-right:9", 0],
+      "value": 0
+    }
+  },
+  "heart-right:11": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["heart-right:4", 0],
+      "source": ["heart-right:1", 0],
+      "x": 0,
+      "y": 0,
+      "resize_source": false,
+      "mask": ["heart-right:10", 0]
+    }
+  },
+  "heart-right:12": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["heart-right:11", 0],
+      "alpha": ["heart-right:1", 1]
+    }
+  },
+  "heart-right:13": {
+    "class_type": "LoadImageMask",
+    "inputs": {
+      "image": "bounded-edit-heart-right.png",
+      "channel": "red"
+    }
+  },
+  "heart-right:14": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["heart-right:12", 0],
+      "source": ["heart-right:8", 0],
+      "x": 0,
+      "y": 0,
+      "resize_source": false,
+      "mask": ["heart-right:13", 0]
+    }
+  },
+  "heart-right:15": {
+    "class_type": "InvertMask",
+    "inputs": {
+      "mask": ["heart-right:2", 1]
+    }
+  },
+  "heart-right:16": {
+    "class_type": "ThresholdMask",
+    "inputs": {
+      "mask": ["heart-right:15", 0],
+      "value": 0
+    }
+  },
+  "heart-right:17": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["heart-right:4", 0],
+      "source": ["heart-right:2", 0],
+      "x": 0,
+      "y": 0,
+      "resize_source": false,
+      "mask": ["heart-right:16", 0]
+    }
+  },
+  "heart-right:18": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["heart-right:17", 0],
+      "alpha": ["heart-right:2", 1]
+    }
+  },
+  "heart-right:19": {
+    "class_type": "LoadImageMask",
+    "inputs": {
+      "image": "arm-restore-heart-right.png",
+      "channel": "red"
+    }
+  },
+  "heart-right:20": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["heart-right:14", 0],
+      "source": ["heart-right:18", 0],
+      "x": 0,
+      "y": 0,
+      "resize_source": false,
+      "mask": ["heart-right:19", 0]
+    }
+  },
+  "heart-right:21": {
+    "class_type": "SplitImageWithAlpha",
+    "inputs": {
+      "image": ["heart-right:8", 0]
+    }
+  },
+  "heart-right:22": {
+    "class_type": "InvertMask",
+    "inputs": {
+      "mask": ["heart-right:21", 1]
+    }
+  },
+  "heart-right:23": {
+    "class_type": "LoadImageMask",
+    "inputs": {
+      "image": "fade-heart-right.png",
+      "channel": "red"
+    }
+  },
+  "heart-right:24": {
+    "class_type": "MaskComposite",
+    "inputs": {
+      "destination": ["heart-right:22", 0],
+      "source": ["heart-right:23", 0],
+      "x": 0,
+      "y": 0,
+      "operation": "multiply"
+    }
+  },
+  "heart-right:25": {
+    "class_type": "MaskComposite",
+    "inputs": {
+      "destination": ["heart-right:24", 0],
+      "source": ["heart-right:29", 0],
+      "x": 0,
+      "y": 0,
+      "operation": "multiply"
+    }
+  },
+  "heart-right:26": {
+    "class_type": "InvertMask",
+    "inputs": {
+      "mask": ["heart-right:31", 0]
+    }
+  },
+  "heart-right:27": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["heart-right:8", 0],
+      "alpha": ["heart-right:26", 0]
+    }
+  },
+  "heart-right:28": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": ["heart-right:27", 0],
+      "filename_prefix": "Wallpaper/wrists/heart-right-fitted-wrist"
+    }
+  },
+  "heart-right:29": {
+    "class_type": "LoadImageMask",
+    "inputs": {
+      "image": "edit-heart-right.png",
+      "channel": "red"
+    }
+  },
+  "heart-right:30": {
+    "class_type": "LoadImageMask",
+    "inputs": {
+      "image": "skin-colour-heart-right.png",
+      "channel": "red"
+    }
+  },
+  "heart-right:31": {
+    "class_type": "MaskComposite",
+    "inputs": {
+      "destination": ["heart-right:25", 0],
+      "source": ["heart-right:32", 0],
+      "x": 0,
+      "y": 0,
+      "operation": "multiply"
+    }
+  },
+  "heart-right:32": {
+    "class_type": "GrowMask",
+    "inputs": {
+      "mask": ["heart-right:30", 0],
+      "expand": 6,
+      "tapered_corners": true
+    }
+  },
+  "paws-right:1": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "source-paws-right.png"
+    }
+  },
+  "paws-right:2": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "arm-paws-right.png"
+    }
+  },
+  "paws-right:3": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "matched-paws-right.png"
+    }
+  },
+  "paws-right:4": {
+    "class_type": "EmptyImage",
+    "inputs": {
+      "width": 736,
+      "height": 928,
+      "batch_size": 1,
+      "color": 16777215
+    }
+  },
+  "paws-right:5": {
+    "class_type": "SolidMask",
+    "inputs": {
+      "value": 1,
+      "width": 736,
+      "height": 928
+    }
+  },
+  "paws-right:6": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["paws-right:4", 0],
+      "alpha": ["paws-right:5", 0]
+    }
+  },
+  "paws-right:7": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["paws-right:3", 0],
+      "alpha": ["paws-right:3", 1]
+    }
+  },
+  "paws-right:8": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["paws-right:6", 0],
+      "source": ["paws-right:7", 0],
+      "x": 58,
+      "y": 117,
+      "resize_source": false
+    }
+  },
+  "paws-right:9": {
+    "class_type": "InvertMask",
+    "inputs": {
+      "mask": ["paws-right:1", 1]
+    }
+  },
+  "paws-right:10": {
+    "class_type": "ThresholdMask",
+    "inputs": {
+      "mask": ["paws-right:9", 0],
+      "value": 0
+    }
+  },
+  "paws-right:11": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["paws-right:4", 0],
+      "source": ["paws-right:1", 0],
+      "x": 0,
+      "y": 0,
+      "resize_source": false,
+      "mask": ["paws-right:10", 0]
+    }
+  },
+  "paws-right:12": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["paws-right:11", 0],
+      "alpha": ["paws-right:1", 1]
+    }
+  },
+  "paws-right:13": {
+    "class_type": "LoadImageMask",
+    "inputs": {
+      "image": "bounded-edit-paws-right.png",
+      "channel": "red"
+    }
+  },
+  "paws-right:14": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["paws-right:12", 0],
+      "source": ["paws-right:8", 0],
+      "x": 0,
+      "y": 0,
+      "resize_source": false,
+      "mask": ["paws-right:13", 0]
+    }
+  },
+  "paws-right:15": {
+    "class_type": "InvertMask",
+    "inputs": {
+      "mask": ["paws-right:2", 1]
+    }
+  },
+  "paws-right:16": {
+    "class_type": "ThresholdMask",
+    "inputs": {
+      "mask": ["paws-right:15", 0],
+      "value": 0
+    }
+  },
+  "paws-right:17": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["paws-right:4", 0],
+      "source": ["paws-right:2", 0],
+      "x": 0,
+      "y": 0,
+      "resize_source": false,
+      "mask": ["paws-right:16", 0]
+    }
+  },
+  "paws-right:18": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["paws-right:17", 0],
+      "alpha": ["paws-right:2", 1]
+    }
+  },
+  "paws-right:19": {
+    "class_type": "LoadImageMask",
+    "inputs": {
+      "image": "arm-restore-paws-right.png",
+      "channel": "red"
+    }
+  },
+  "paws-right:20": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["paws-right:14", 0],
+      "source": ["paws-right:18", 0],
+      "x": 0,
+      "y": 0,
+      "resize_source": false,
+      "mask": ["paws-right:19", 0]
+    }
+  },
+  "paws-right:21": {
+    "class_type": "SplitImageWithAlpha",
+    "inputs": {
+      "image": ["paws-right:8", 0]
+    }
+  },
+  "paws-right:22": {
+    "class_type": "InvertMask",
+    "inputs": {
+      "mask": ["paws-right:21", 1]
+    }
+  },
+  "paws-right:23": {
+    "class_type": "LoadImageMask",
+    "inputs": {
+      "image": "fade-paws-right.png",
+      "channel": "red"
+    }
+  },
+  "paws-right:24": {
+    "class_type": "MaskComposite",
+    "inputs": {
+      "destination": ["paws-right:22", 0],
+      "source": ["paws-right:23", 0],
+      "x": 0,
+      "y": 0,
+      "operation": "multiply"
+    }
+  },
+  "paws-right:25": {
+    "class_type": "MaskComposite",
+    "inputs": {
+      "destination": ["paws-right:24", 0],
+      "source": ["paws-right:29", 0],
+      "x": 0,
+      "y": 0,
+      "operation": "multiply"
+    }
+  },
+  "paws-right:26": {
+    "class_type": "InvertMask",
+    "inputs": {
+      "mask": ["paws-right:31", 0]
+    }
+  },
+  "paws-right:27": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["paws-right:8", 0],
+      "alpha": ["paws-right:26", 0]
+    }
+  },
+  "paws-right:28": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": ["paws-right:27", 0],
+      "filename_prefix": "Wallpaper/wrists/paws-right-fitted-wrist"
+    }
+  },
+  "paws-right:29": {
+    "class_type": "LoadImageMask",
+    "inputs": {
+      "image": "edit-paws-right.png",
+      "channel": "red"
+    }
+  },
+  "paws-right:30": {
+    "class_type": "LoadImageMask",
+    "inputs": {
+      "image": "skin-colour-paws-right.png",
+      "channel": "red"
+    }
+  },
+  "paws-right:31": {
+    "class_type": "MaskComposite",
+    "inputs": {
+      "destination": ["paws-right:25", 0],
+      "source": ["paws-right:32", 0],
+      "x": 0,
+      "y": 0,
+      "operation": "multiply"
+    }
+  },
+  "paws-right:32": {
+    "class_type": "GrowMask",
+    "inputs": {
+      "mask": ["paws-right:30", 0],
+      "expand": 6,
+      "tapered_corners": true
+    }
+  },
+  "paws-left:1": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "source-paws-left.png"
+    }
+  },
+  "paws-left:2": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "arm-paws-left.png"
+    }
+  },
+  "paws-left:3": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "matched-paws-left.png"
+    }
+  },
+  "paws-left:4": {
+    "class_type": "EmptyImage",
+    "inputs": {
+      "width": 736,
+      "height": 928,
+      "batch_size": 1,
+      "color": 16777215
+    }
+  },
+  "paws-left:5": {
+    "class_type": "SolidMask",
+    "inputs": {
+      "value": 1,
+      "width": 736,
+      "height": 928
+    }
+  },
+  "paws-left:6": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["paws-left:4", 0],
+      "alpha": ["paws-left:5", 0]
+    }
+  },
+  "paws-left:7": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["paws-left:3", 0],
+      "alpha": ["paws-left:3", 1]
+    }
+  },
+  "paws-left:8": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["paws-left:6", 0],
+      "source": ["paws-left:7", 0],
+      "x": 13,
+      "y": 119,
+      "resize_source": false
+    }
+  },
+  "paws-left:9": {
+    "class_type": "InvertMask",
+    "inputs": {
+      "mask": ["paws-left:1", 1]
+    }
+  },
+  "paws-left:10": {
+    "class_type": "ThresholdMask",
+    "inputs": {
+      "mask": ["paws-left:9", 0],
+      "value": 0
+    }
+  },
+  "paws-left:11": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["paws-left:4", 0],
+      "source": ["paws-left:1", 0],
+      "x": 0,
+      "y": 0,
+      "resize_source": false,
+      "mask": ["paws-left:10", 0]
+    }
+  },
+  "paws-left:12": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["paws-left:11", 0],
+      "alpha": ["paws-left:1", 1]
+    }
+  },
+  "paws-left:13": {
+    "class_type": "LoadImageMask",
+    "inputs": {
+      "image": "bounded-edit-paws-left.png",
+      "channel": "red"
+    }
+  },
+  "paws-left:14": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["paws-left:12", 0],
+      "source": ["paws-left:8", 0],
+      "x": 0,
+      "y": 0,
+      "resize_source": false,
+      "mask": ["paws-left:13", 0]
+    }
+  },
+  "paws-left:15": {
+    "class_type": "InvertMask",
+    "inputs": {
+      "mask": ["paws-left:2", 1]
+    }
+  },
+  "paws-left:16": {
+    "class_type": "ThresholdMask",
+    "inputs": {
+      "mask": ["paws-left:15", 0],
+      "value": 0
+    }
+  },
+  "paws-left:17": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["paws-left:4", 0],
+      "source": ["paws-left:2", 0],
+      "x": 0,
+      "y": 0,
+      "resize_source": false,
+      "mask": ["paws-left:16", 0]
+    }
+  },
+  "paws-left:18": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["paws-left:17", 0],
+      "alpha": ["paws-left:2", 1]
+    }
+  },
+  "paws-left:19": {
+    "class_type": "LoadImageMask",
+    "inputs": {
+      "image": "arm-restore-paws-left.png",
+      "channel": "red"
+    }
+  },
+  "paws-left:20": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["paws-left:14", 0],
+      "source": ["paws-left:18", 0],
+      "x": 0,
+      "y": 0,
+      "resize_source": false,
+      "mask": ["paws-left:19", 0]
+    }
+  },
+  "paws-left:21": {
+    "class_type": "SplitImageWithAlpha",
+    "inputs": {
+      "image": ["paws-left:8", 0]
+    }
+  },
+  "paws-left:22": {
+    "class_type": "InvertMask",
+    "inputs": {
+      "mask": ["paws-left:21", 1]
+    }
+  },
+  "paws-left:23": {
+    "class_type": "LoadImageMask",
+    "inputs": {
+      "image": "fade-paws-left.png",
+      "channel": "red"
+    }
+  },
+  "paws-left:24": {
+    "class_type": "MaskComposite",
+    "inputs": {
+      "destination": ["paws-left:22", 0],
+      "source": ["paws-left:23", 0],
+      "x": 0,
+      "y": 0,
+      "operation": "multiply"
+    }
+  },
+  "paws-left:25": {
+    "class_type": "MaskComposite",
+    "inputs": {
+      "destination": ["paws-left:24", 0],
+      "source": ["paws-left:29", 0],
+      "x": 0,
+      "y": 0,
+      "operation": "multiply"
+    }
+  },
+  "paws-left:26": {
+    "class_type": "InvertMask",
+    "inputs": {
+      "mask": ["paws-left:31", 0]
+    }
+  },
+  "paws-left:27": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["paws-left:8", 0],
+      "alpha": ["paws-left:26", 0]
+    }
+  },
+  "paws-left:28": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": ["paws-left:27", 0],
+      "filename_prefix": "Wallpaper/wrists/paws-left-fitted-wrist"
+    }
+  },
+  "paws-left:29": {
+    "class_type": "LoadImageMask",
+    "inputs": {
+      "image": "edit-paws-left.png",
+      "channel": "red"
+    }
+  },
+  "paws-left:30": {
+    "class_type": "LoadImageMask",
+    "inputs": {
+      "image": "skin-colour-paws-left.png",
+      "channel": "red"
+    }
+  },
+  "paws-left:31": {
+    "class_type": "MaskComposite",
+    "inputs": {
+      "destination": ["paws-left:25", 0],
+      "source": ["paws-left:32", 0],
+      "x": 0,
+      "y": 0,
+      "operation": "multiply"
+    }
+  },
+  "paws-left:32": {
+    "class_type": "GrowMask",
+    "inputs": {
+      "mask": ["paws-left:30", 0],
+      "expand": 6,
+      "tapered_corners": true
+    }
+  },
+  "fists-right:1": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "source-fists-right.png"
+    }
+  },
+  "fists-right:2": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "arm-fists-right.png"
+    }
+  },
+  "fists-right:3": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "matched-fists-right.png"
+    }
+  },
+  "fists-right:4": {
+    "class_type": "EmptyImage",
+    "inputs": {
+      "width": 672,
+      "height": 1056,
+      "batch_size": 1,
+      "color": 16777215
+    }
+  },
+  "fists-right:5": {
+    "class_type": "SolidMask",
+    "inputs": {
+      "value": 1,
+      "width": 672,
+      "height": 1056
+    }
+  },
+  "fists-right:6": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["fists-right:4", 0],
+      "alpha": ["fists-right:5", 0]
+    }
+  },
+  "fists-right:7": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["fists-right:3", 0],
+      "alpha": ["fists-right:3", 1]
+    }
+  },
+  "fists-right:8": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["fists-right:6", 0],
+      "source": ["fists-right:7", 0],
+      "x": 14,
+      "y": 256,
+      "resize_source": false
+    }
+  },
+  "fists-right:9": {
+    "class_type": "InvertMask",
+    "inputs": {
+      "mask": ["fists-right:1", 1]
+    }
+  },
+  "fists-right:10": {
+    "class_type": "ThresholdMask",
+    "inputs": {
+      "mask": ["fists-right:9", 0],
+      "value": 0
+    }
+  },
+  "fists-right:11": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["fists-right:4", 0],
+      "source": ["fists-right:1", 0],
+      "x": 0,
+      "y": 0,
+      "resize_source": false,
+      "mask": ["fists-right:10", 0]
+    }
+  },
+  "fists-right:12": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["fists-right:11", 0],
+      "alpha": ["fists-right:1", 1]
+    }
+  },
+  "fists-right:13": {
+    "class_type": "LoadImageMask",
+    "inputs": {
+      "image": "bounded-edit-fists-right.png",
+      "channel": "red"
+    }
+  },
+  "fists-right:14": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["fists-right:12", 0],
+      "source": ["fists-right:8", 0],
+      "x": 0,
+      "y": 0,
+      "resize_source": false,
+      "mask": ["fists-right:13", 0]
+    }
+  },
+  "fists-right:15": {
+    "class_type": "InvertMask",
+    "inputs": {
+      "mask": ["fists-right:2", 1]
+    }
+  },
+  "fists-right:16": {
+    "class_type": "ThresholdMask",
+    "inputs": {
+      "mask": ["fists-right:15", 0],
+      "value": 0
+    }
+  },
+  "fists-right:17": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["fists-right:4", 0],
+      "source": ["fists-right:2", 0],
+      "x": 0,
+      "y": 0,
+      "resize_source": false,
+      "mask": ["fists-right:16", 0]
+    }
+  },
+  "fists-right:18": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["fists-right:17", 0],
+      "alpha": ["fists-right:2", 1]
+    }
+  },
+  "fists-right:19": {
+    "class_type": "LoadImageMask",
+    "inputs": {
+      "image": "arm-restore-fists-right.png",
+      "channel": "red"
+    }
+  },
+  "fists-right:20": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["fists-right:14", 0],
+      "source": ["fists-right:18", 0],
+      "x": 0,
+      "y": 0,
+      "resize_source": false,
+      "mask": ["fists-right:19", 0]
+    }
+  },
+  "fists-right:21": {
+    "class_type": "SplitImageWithAlpha",
+    "inputs": {
+      "image": ["fists-right:8", 0]
+    }
+  },
+  "fists-right:22": {
+    "class_type": "InvertMask",
+    "inputs": {
+      "mask": ["fists-right:21", 1]
+    }
+  },
+  "fists-right:23": {
+    "class_type": "LoadImageMask",
+    "inputs": {
+      "image": "fade-fists-right.png",
+      "channel": "red"
+    }
+  },
+  "fists-right:24": {
+    "class_type": "MaskComposite",
+    "inputs": {
+      "destination": ["fists-right:22", 0],
+      "source": ["fists-right:23", 0],
+      "x": 0,
+      "y": 0,
+      "operation": "multiply"
+    }
+  },
+  "fists-right:25": {
+    "class_type": "MaskComposite",
+    "inputs": {
+      "destination": ["fists-right:24", 0],
+      "source": ["fists-right:29", 0],
+      "x": 0,
+      "y": 0,
+      "operation": "multiply"
+    }
+  },
+  "fists-right:26": {
+    "class_type": "InvertMask",
+    "inputs": {
+      "mask": ["fists-right:31", 0]
+    }
+  },
+  "fists-right:27": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["fists-right:8", 0],
+      "alpha": ["fists-right:26", 0]
+    }
+  },
+  "fists-right:28": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": ["fists-right:27", 0],
+      "filename_prefix": "Wallpaper/wrists/fists-right-fitted-wrist"
+    }
+  },
+  "fists-right:29": {
+    "class_type": "LoadImageMask",
+    "inputs": {
+      "image": "edit-fists-right.png",
+      "channel": "red"
+    }
+  },
+  "fists-right:30": {
+    "class_type": "LoadImageMask",
+    "inputs": {
+      "image": "skin-colour-fists-right.png",
+      "channel": "red"
+    }
+  },
+  "fists-right:31": {
+    "class_type": "MaskComposite",
+    "inputs": {
+      "destination": ["fists-right:25", 0],
+      "source": ["fists-right:32", 0],
+      "x": 0,
+      "y": 0,
+      "operation": "multiply"
+    }
+  },
+  "fists-right:32": {
+    "class_type": "GrowMask",
+    "inputs": {
+      "mask": ["fists-right:30", 0],
+      "expand": 6,
+      "tapered_corners": true
+    }
+  },
+  "fists-left:1": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "source-fists-left.png"
+    }
+  },
+  "fists-left:2": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "arm-fists-left.png"
+    }
+  },
+  "fists-left:3": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "matched-fists-left.png"
+    }
+  },
+  "fists-left:4": {
+    "class_type": "EmptyImage",
+    "inputs": {
+      "width": 672,
+      "height": 992,
+      "batch_size": 1,
+      "color": 16777215
+    }
+  },
+  "fists-left:5": {
+    "class_type": "SolidMask",
+    "inputs": {
+      "value": 1,
+      "width": 672,
+      "height": 992
+    }
+  },
+  "fists-left:6": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["fists-left:4", 0],
+      "alpha": ["fists-left:5", 0]
+    }
+  },
+  "fists-left:7": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["fists-left:3", 0],
+      "alpha": ["fists-left:3", 1]
+    }
+  },
+  "fists-left:8": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["fists-left:6", 0],
+      "source": ["fists-left:7", 0],
+      "x": 13,
+      "y": 184,
+      "resize_source": false
+    }
+  },
+  "fists-left:9": {
+    "class_type": "InvertMask",
+    "inputs": {
+      "mask": ["fists-left:1", 1]
+    }
+  },
+  "fists-left:10": {
+    "class_type": "ThresholdMask",
+    "inputs": {
+      "mask": ["fists-left:9", 0],
+      "value": 0
+    }
+  },
+  "fists-left:11": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["fists-left:4", 0],
+      "source": ["fists-left:1", 0],
+      "x": 0,
+      "y": 0,
+      "resize_source": false,
+      "mask": ["fists-left:10", 0]
+    }
+  },
+  "fists-left:12": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["fists-left:11", 0],
+      "alpha": ["fists-left:1", 1]
+    }
+  },
+  "fists-left:13": {
+    "class_type": "LoadImageMask",
+    "inputs": {
+      "image": "bounded-edit-fists-left.png",
+      "channel": "red"
+    }
+  },
+  "fists-left:14": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["fists-left:12", 0],
+      "source": ["fists-left:8", 0],
+      "x": 0,
+      "y": 0,
+      "resize_source": false,
+      "mask": ["fists-left:13", 0]
+    }
+  },
+  "fists-left:15": {
+    "class_type": "InvertMask",
+    "inputs": {
+      "mask": ["fists-left:2", 1]
+    }
+  },
+  "fists-left:16": {
+    "class_type": "ThresholdMask",
+    "inputs": {
+      "mask": ["fists-left:15", 0],
+      "value": 0
+    }
+  },
+  "fists-left:17": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["fists-left:4", 0],
+      "source": ["fists-left:2", 0],
+      "x": 0,
+      "y": 0,
+      "resize_source": false,
+      "mask": ["fists-left:16", 0]
+    }
+  },
+  "fists-left:18": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["fists-left:17", 0],
+      "alpha": ["fists-left:2", 1]
+    }
+  },
+  "fists-left:19": {
+    "class_type": "LoadImageMask",
+    "inputs": {
+      "image": "arm-restore-fists-left.png",
+      "channel": "red"
+    }
+  },
+  "fists-left:20": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["fists-left:14", 0],
+      "source": ["fists-left:18", 0],
+      "x": 0,
+      "y": 0,
+      "resize_source": false,
+      "mask": ["fists-left:19", 0]
+    }
+  },
+  "fists-left:21": {
+    "class_type": "SplitImageWithAlpha",
+    "inputs": {
+      "image": ["fists-left:8", 0]
+    }
+  },
+  "fists-left:22": {
+    "class_type": "InvertMask",
+    "inputs": {
+      "mask": ["fists-left:21", 1]
+    }
+  },
+  "fists-left:23": {
+    "class_type": "LoadImageMask",
+    "inputs": {
+      "image": "fade-fists-left.png",
+      "channel": "red"
+    }
+  },
+  "fists-left:24": {
+    "class_type": "MaskComposite",
+    "inputs": {
+      "destination": ["fists-left:22", 0],
+      "source": ["fists-left:23", 0],
+      "x": 0,
+      "y": 0,
+      "operation": "multiply"
+    }
+  },
+  "fists-left:25": {
+    "class_type": "MaskComposite",
+    "inputs": {
+      "destination": ["fists-left:24", 0],
+      "source": ["fists-left:29", 0],
+      "x": 0,
+      "y": 0,
+      "operation": "multiply"
+    }
+  },
+  "fists-left:26": {
+    "class_type": "InvertMask",
+    "inputs": {
+      "mask": ["fists-left:31", 0]
+    }
+  },
+  "fists-left:27": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["fists-left:8", 0],
+      "alpha": ["fists-left:26", 0]
+    }
+  },
+  "fists-left:28": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": ["fists-left:27", 0],
+      "filename_prefix": "Wallpaper/wrists/fists-left-fitted-wrist"
+    }
+  },
+  "fists-left:29": {
+    "class_type": "LoadImageMask",
+    "inputs": {
+      "image": "edit-fists-left.png",
+      "channel": "red"
+    }
+  },
+  "fists-left:30": {
+    "class_type": "LoadImageMask",
+    "inputs": {
+      "image": "skin-colour-fists-left.png",
+      "channel": "red"
+    }
+  },
+  "fists-left:31": {
+    "class_type": "MaskComposite",
+    "inputs": {
+      "destination": ["fists-left:25", 0],
+      "source": ["fists-left:32", 0],
+      "x": 0,
+      "y": 0,
+      "operation": "multiply"
+    }
+  },
+  "fists-left:32": {
+    "class_type": "GrowMask",
+    "inputs": {
+      "mask": ["fists-left:30", 0],
+      "expand": 6,
+      "tapered_corners": true
+    }
+  },
+  "gamepad-right:1": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "source-gamepad-right.png"
+    }
+  },
+  "gamepad-right:2": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "arm-gamepad-right.png"
+    }
+  },
+  "gamepad-right:3": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "matched-gamepad-right.png"
+    }
+  },
+  "gamepad-right:4": {
+    "class_type": "EmptyImage",
+    "inputs": {
+      "width": 928,
+      "height": 928,
+      "batch_size": 1,
+      "color": 16777215
+    }
+  },
+  "gamepad-right:5": {
+    "class_type": "SolidMask",
+    "inputs": {
+      "value": 1,
+      "width": 928,
+      "height": 928
+    }
+  },
+  "gamepad-right:6": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["gamepad-right:4", 0],
+      "alpha": ["gamepad-right:5", 0]
+    }
+  },
+  "gamepad-right:7": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["gamepad-right:3", 0],
+      "alpha": ["gamepad-right:3", 1]
+    }
+  },
+  "gamepad-right:8": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["gamepad-right:6", 0],
+      "source": ["gamepad-right:7", 0],
+      "x": 274,
+      "y": 123,
+      "resize_source": false
+    }
+  },
+  "gamepad-right:9": {
+    "class_type": "InvertMask",
+    "inputs": {
+      "mask": ["gamepad-right:1", 1]
+    }
+  },
+  "gamepad-right:10": {
+    "class_type": "ThresholdMask",
+    "inputs": {
+      "mask": ["gamepad-right:9", 0],
+      "value": 0
+    }
+  },
+  "gamepad-right:11": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["gamepad-right:4", 0],
+      "source": ["gamepad-right:1", 0],
+      "x": 0,
+      "y": 0,
+      "resize_source": false,
+      "mask": ["gamepad-right:10", 0]
+    }
+  },
+  "gamepad-right:12": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["gamepad-right:11", 0],
+      "alpha": ["gamepad-right:1", 1]
+    }
+  },
+  "gamepad-right:13": {
+    "class_type": "LoadImageMask",
+    "inputs": {
+      "image": "bounded-edit-gamepad-right.png",
+      "channel": "red"
+    }
+  },
+  "gamepad-right:14": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["gamepad-right:12", 0],
+      "source": ["gamepad-right:8", 0],
+      "x": 0,
+      "y": 0,
+      "resize_source": false,
+      "mask": ["gamepad-right:13", 0]
+    }
+  },
+  "gamepad-right:15": {
+    "class_type": "InvertMask",
+    "inputs": {
+      "mask": ["gamepad-right:2", 1]
+    }
+  },
+  "gamepad-right:16": {
+    "class_type": "ThresholdMask",
+    "inputs": {
+      "mask": ["gamepad-right:15", 0],
+      "value": 0
+    }
+  },
+  "gamepad-right:17": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["gamepad-right:4", 0],
+      "source": ["gamepad-right:2", 0],
+      "x": 0,
+      "y": 0,
+      "resize_source": false,
+      "mask": ["gamepad-right:16", 0]
+    }
+  },
+  "gamepad-right:18": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["gamepad-right:17", 0],
+      "alpha": ["gamepad-right:2", 1]
+    }
+  },
+  "gamepad-right:19": {
+    "class_type": "LoadImageMask",
+    "inputs": {
+      "image": "arm-restore-gamepad-right.png",
+      "channel": "red"
+    }
+  },
+  "gamepad-right:20": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["gamepad-right:14", 0],
+      "source": ["gamepad-right:18", 0],
+      "x": 0,
+      "y": 0,
+      "resize_source": false,
+      "mask": ["gamepad-right:19", 0]
+    }
+  },
+  "gamepad-right:21": {
+    "class_type": "SplitImageWithAlpha",
+    "inputs": {
+      "image": ["gamepad-right:8", 0]
+    }
+  },
+  "gamepad-right:22": {
+    "class_type": "InvertMask",
+    "inputs": {
+      "mask": ["gamepad-right:21", 1]
+    }
+  },
+  "gamepad-right:23": {
+    "class_type": "LoadImageMask",
+    "inputs": {
+      "image": "fade-gamepad-right.png",
+      "channel": "red"
+    }
+  },
+  "gamepad-right:24": {
+    "class_type": "MaskComposite",
+    "inputs": {
+      "destination": ["gamepad-right:22", 0],
+      "source": ["gamepad-right:23", 0],
+      "x": 0,
+      "y": 0,
+      "operation": "multiply"
+    }
+  },
+  "gamepad-right:25": {
+    "class_type": "MaskComposite",
+    "inputs": {
+      "destination": ["gamepad-right:24", 0],
+      "source": ["gamepad-right:29", 0],
+      "x": 0,
+      "y": 0,
+      "operation": "multiply"
+    }
+  },
+  "gamepad-right:26": {
+    "class_type": "InvertMask",
+    "inputs": {
+      "mask": ["gamepad-right:31", 0]
+    }
+  },
+  "gamepad-right:27": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["gamepad-right:8", 0],
+      "alpha": ["gamepad-right:26", 0]
+    }
+  },
+  "gamepad-right:28": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": ["gamepad-right:27", 0],
+      "filename_prefix": "Wallpaper/wrists/gamepad-right-fitted-wrist"
+    }
+  },
+  "gamepad-right:29": {
+    "class_type": "LoadImageMask",
+    "inputs": {
+      "image": "edit-gamepad-right.png",
+      "channel": "red"
+    }
+  },
+  "gamepad-right:30": {
+    "class_type": "LoadImageMask",
+    "inputs": {
+      "image": "skin-colour-gamepad-right.png",
+      "channel": "red"
+    }
+  },
+  "gamepad-right:31": {
+    "class_type": "MaskComposite",
+    "inputs": {
+      "destination": ["gamepad-right:25", 0],
+      "source": ["gamepad-right:32", 0],
+      "x": 0,
+      "y": 0,
+      "operation": "multiply"
+    }
+  },
+  "gamepad-right:32": {
+    "class_type": "GrowMask",
+    "inputs": {
+      "mask": ["gamepad-right:30", 0],
+      "expand": 6,
+      "tapered_corners": true
+    }
+  },
+  "gamepad-left:1": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "source-gamepad-left.png"
+    }
+  },
+  "gamepad-left:2": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "arm-gamepad-left.png"
+    }
+  },
+  "gamepad-left:3": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "matched-gamepad-left.png"
+    }
+  },
+  "gamepad-left:4": {
+    "class_type": "EmptyImage",
+    "inputs": {
+      "width": 960,
+      "height": 896,
+      "batch_size": 1,
+      "color": 16777215
+    }
+  },
+  "gamepad-left:5": {
+    "class_type": "SolidMask",
+    "inputs": {
+      "value": 1,
+      "width": 960,
+      "height": 896
+    }
+  },
+  "gamepad-left:6": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["gamepad-left:4", 0],
+      "alpha": ["gamepad-left:5", 0]
+    }
+  },
+  "gamepad-left:7": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["gamepad-left:3", 0],
+      "alpha": ["gamepad-left:3", 1]
+    }
+  },
+  "gamepad-left:8": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["gamepad-left:6", 0],
+      "source": ["gamepad-left:7", 0],
+      "x": 12,
+      "y": 113,
+      "resize_source": false
+    }
+  },
+  "gamepad-left:9": {
+    "class_type": "InvertMask",
+    "inputs": {
+      "mask": ["gamepad-left:1", 1]
+    }
+  },
+  "gamepad-left:10": {
+    "class_type": "ThresholdMask",
+    "inputs": {
+      "mask": ["gamepad-left:9", 0],
+      "value": 0
+    }
+  },
+  "gamepad-left:11": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["gamepad-left:4", 0],
+      "source": ["gamepad-left:1", 0],
+      "x": 0,
+      "y": 0,
+      "resize_source": false,
+      "mask": ["gamepad-left:10", 0]
+    }
+  },
+  "gamepad-left:12": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["gamepad-left:11", 0],
+      "alpha": ["gamepad-left:1", 1]
+    }
+  },
+  "gamepad-left:13": {
+    "class_type": "LoadImageMask",
+    "inputs": {
+      "image": "bounded-edit-gamepad-left.png",
+      "channel": "red"
+    }
+  },
+  "gamepad-left:14": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["gamepad-left:12", 0],
+      "source": ["gamepad-left:8", 0],
+      "x": 0,
+      "y": 0,
+      "resize_source": false,
+      "mask": ["gamepad-left:13", 0]
+    }
+  },
+  "gamepad-left:15": {
+    "class_type": "InvertMask",
+    "inputs": {
+      "mask": ["gamepad-left:2", 1]
+    }
+  },
+  "gamepad-left:16": {
+    "class_type": "ThresholdMask",
+    "inputs": {
+      "mask": ["gamepad-left:15", 0],
+      "value": 0
+    }
+  },
+  "gamepad-left:17": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["gamepad-left:4", 0],
+      "source": ["gamepad-left:2", 0],
+      "x": 0,
+      "y": 0,
+      "resize_source": false,
+      "mask": ["gamepad-left:16", 0]
+    }
+  },
+  "gamepad-left:18": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["gamepad-left:17", 0],
+      "alpha": ["gamepad-left:2", 1]
+    }
+  },
+  "gamepad-left:19": {
+    "class_type": "LoadImageMask",
+    "inputs": {
+      "image": "arm-restore-gamepad-left.png",
+      "channel": "red"
+    }
+  },
+  "gamepad-left:20": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["gamepad-left:14", 0],
+      "source": ["gamepad-left:18", 0],
+      "x": 0,
+      "y": 0,
+      "resize_source": false,
+      "mask": ["gamepad-left:19", 0]
+    }
+  },
+  "gamepad-left:21": {
+    "class_type": "SplitImageWithAlpha",
+    "inputs": {
+      "image": ["gamepad-left:8", 0]
+    }
+  },
+  "gamepad-left:22": {
+    "class_type": "InvertMask",
+    "inputs": {
+      "mask": ["gamepad-left:21", 1]
+    }
+  },
+  "gamepad-left:23": {
+    "class_type": "LoadImageMask",
+    "inputs": {
+      "image": "fade-gamepad-left.png",
+      "channel": "red"
+    }
+  },
+  "gamepad-left:24": {
+    "class_type": "MaskComposite",
+    "inputs": {
+      "destination": ["gamepad-left:22", 0],
+      "source": ["gamepad-left:23", 0],
+      "x": 0,
+      "y": 0,
+      "operation": "multiply"
+    }
+  },
+  "gamepad-left:25": {
+    "class_type": "MaskComposite",
+    "inputs": {
+      "destination": ["gamepad-left:24", 0],
+      "source": ["gamepad-left:29", 0],
+      "x": 0,
+      "y": 0,
+      "operation": "multiply"
+    }
+  },
+  "gamepad-left:26": {
+    "class_type": "InvertMask",
+    "inputs": {
+      "mask": ["gamepad-left:31", 0]
+    }
+  },
+  "gamepad-left:27": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["gamepad-left:8", 0],
+      "alpha": ["gamepad-left:26", 0]
+    }
+  },
+  "gamepad-left:28": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": ["gamepad-left:27", 0],
+      "filename_prefix": "Wallpaper/wrists/gamepad-left-fitted-wrist"
+    }
+  },
+  "gamepad-left:29": {
+    "class_type": "LoadImageMask",
+    "inputs": {
+      "image": "edit-gamepad-left.png",
+      "channel": "red"
+    }
+  },
+  "gamepad-left:30": {
+    "class_type": "LoadImageMask",
+    "inputs": {
+      "image": "skin-colour-gamepad-left.png",
+      "channel": "red"
+    }
+  },
+  "gamepad-left:31": {
+    "class_type": "MaskComposite",
+    "inputs": {
+      "destination": ["gamepad-left:25", 0],
+      "source": ["gamepad-left:32", 0],
+      "x": 0,
+      "y": 0,
+      "operation": "multiply"
+    }
+  },
+  "gamepad-left:32": {
+    "class_type": "GrowMask",
+    "inputs": {
+      "mask": ["gamepad-left:30", 0],
+      "expand": 6,
+      "tapered_corners": true
+    }
+  },
+  "cuffs-right:1": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "source-cuffs-right.png"
+    }
+  },
+  "cuffs-right:2": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "arm-cuffs-right.png"
+    }
+  },
+  "cuffs-right:3": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "matched-cuffs-right.png"
+    }
+  },
+  "cuffs-right:4": {
+    "class_type": "EmptyImage",
+    "inputs": {
+      "width": 672,
+      "height": 1056,
+      "batch_size": 1,
+      "color": 16777215
+    }
+  },
+  "cuffs-right:5": {
+    "class_type": "SolidMask",
+    "inputs": {
+      "value": 1,
+      "width": 672,
+      "height": 1056
+    }
+  },
+  "cuffs-right:6": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["cuffs-right:4", 0],
+      "alpha": ["cuffs-right:5", 0]
+    }
+  },
+  "cuffs-right:7": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["cuffs-right:3", 0],
+      "alpha": ["cuffs-right:3", 1]
+    }
+  },
+  "cuffs-right:8": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["cuffs-right:6", 0],
+      "source": ["cuffs-right:7", 0],
+      "x": 14,
+      "y": 256,
+      "resize_source": false
+    }
+  },
+  "cuffs-right:9": {
+    "class_type": "InvertMask",
+    "inputs": {
+      "mask": ["cuffs-right:1", 1]
+    }
+  },
+  "cuffs-right:10": {
+    "class_type": "ThresholdMask",
+    "inputs": {
+      "mask": ["cuffs-right:9", 0],
+      "value": 0
+    }
+  },
+  "cuffs-right:11": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["cuffs-right:4", 0],
+      "source": ["cuffs-right:1", 0],
+      "x": 0,
+      "y": 0,
+      "resize_source": false,
+      "mask": ["cuffs-right:10", 0]
+    }
+  },
+  "cuffs-right:12": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["cuffs-right:11", 0],
+      "alpha": ["cuffs-right:1", 1]
+    }
+  },
+  "cuffs-right:13": {
+    "class_type": "LoadImageMask",
+    "inputs": {
+      "image": "bounded-edit-cuffs-right.png",
+      "channel": "red"
+    }
+  },
+  "cuffs-right:14": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["cuffs-right:12", 0],
+      "source": ["cuffs-right:8", 0],
+      "x": 0,
+      "y": 0,
+      "resize_source": false,
+      "mask": ["cuffs-right:13", 0]
+    }
+  },
+  "cuffs-right:15": {
+    "class_type": "InvertMask",
+    "inputs": {
+      "mask": ["cuffs-right:2", 1]
+    }
+  },
+  "cuffs-right:16": {
+    "class_type": "ThresholdMask",
+    "inputs": {
+      "mask": ["cuffs-right:15", 0],
+      "value": 0
+    }
+  },
+  "cuffs-right:17": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["cuffs-right:4", 0],
+      "source": ["cuffs-right:2", 0],
+      "x": 0,
+      "y": 0,
+      "resize_source": false,
+      "mask": ["cuffs-right:16", 0]
+    }
+  },
+  "cuffs-right:18": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["cuffs-right:17", 0],
+      "alpha": ["cuffs-right:2", 1]
+    }
+  },
+  "cuffs-right:19": {
+    "class_type": "LoadImageMask",
+    "inputs": {
+      "image": "arm-restore-cuffs-right.png",
+      "channel": "red"
+    }
+  },
+  "cuffs-right:20": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["cuffs-right:14", 0],
+      "source": ["cuffs-right:18", 0],
+      "x": 0,
+      "y": 0,
+      "resize_source": false,
+      "mask": ["cuffs-right:19", 0]
+    }
+  },
+  "cuffs-right:21": {
+    "class_type": "SplitImageWithAlpha",
+    "inputs": {
+      "image": ["cuffs-right:8", 0]
+    }
+  },
+  "cuffs-right:22": {
+    "class_type": "InvertMask",
+    "inputs": {
+      "mask": ["cuffs-right:21", 1]
+    }
+  },
+  "cuffs-right:23": {
+    "class_type": "LoadImageMask",
+    "inputs": {
+      "image": "fade-cuffs-right.png",
+      "channel": "red"
+    }
+  },
+  "cuffs-right:24": {
+    "class_type": "MaskComposite",
+    "inputs": {
+      "destination": ["cuffs-right:22", 0],
+      "source": ["cuffs-right:23", 0],
+      "x": 0,
+      "y": 0,
+      "operation": "multiply"
+    }
+  },
+  "cuffs-right:25": {
+    "class_type": "MaskComposite",
+    "inputs": {
+      "destination": ["cuffs-right:24", 0],
+      "source": ["cuffs-right:29", 0],
+      "x": 0,
+      "y": 0,
+      "operation": "multiply"
+    }
+  },
+  "cuffs-right:26": {
+    "class_type": "InvertMask",
+    "inputs": {
+      "mask": ["cuffs-right:31", 0]
+    }
+  },
+  "cuffs-right:27": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["cuffs-right:8", 0],
+      "alpha": ["cuffs-right:26", 0]
+    }
+  },
+  "cuffs-right:28": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": ["cuffs-right:27", 0],
+      "filename_prefix": "Wallpaper/wrists/cuffs-right-fitted-wrist"
+    }
+  },
+  "cuffs-right:29": {
+    "class_type": "LoadImageMask",
+    "inputs": {
+      "image": "edit-cuffs-right.png",
+      "channel": "red"
+    }
+  },
+  "cuffs-right:30": {
+    "class_type": "LoadImageMask",
+    "inputs": {
+      "image": "skin-colour-cuffs-right.png",
+      "channel": "red"
+    }
+  },
+  "cuffs-right:31": {
+    "class_type": "MaskComposite",
+    "inputs": {
+      "destination": ["cuffs-right:25", 0],
+      "source": ["cuffs-right:32", 0],
+      "x": 0,
+      "y": 0,
+      "operation": "multiply"
+    }
+  },
+  "cuffs-right:32": {
+    "class_type": "GrowMask",
+    "inputs": {
+      "mask": ["cuffs-right:30", 0],
+      "expand": 6,
+      "tapered_corners": true
+    }
+  },
+  "cuffs-left:1": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "source-cuffs-left.png"
+    }
+  },
+  "cuffs-left:2": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "arm-cuffs-left.png"
+    }
+  },
+  "cuffs-left:3": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "matched-cuffs-left.png"
+    }
+  },
+  "cuffs-left:4": {
+    "class_type": "EmptyImage",
+    "inputs": {
+      "width": 672,
+      "height": 1056,
+      "batch_size": 1,
+      "color": 16777215
+    }
+  },
+  "cuffs-left:5": {
+    "class_type": "SolidMask",
+    "inputs": {
+      "value": 1,
+      "width": 672,
+      "height": 1056
+    }
+  },
+  "cuffs-left:6": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["cuffs-left:4", 0],
+      "alpha": ["cuffs-left:5", 0]
+    }
+  },
+  "cuffs-left:7": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["cuffs-left:3", 0],
+      "alpha": ["cuffs-left:3", 1]
+    }
+  },
+  "cuffs-left:8": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["cuffs-left:6", 0],
+      "source": ["cuffs-left:7", 0],
+      "x": 12,
+      "y": 257,
+      "resize_source": false
+    }
+  },
+  "cuffs-left:9": {
+    "class_type": "InvertMask",
+    "inputs": {
+      "mask": ["cuffs-left:1", 1]
+    }
+  },
+  "cuffs-left:10": {
+    "class_type": "ThresholdMask",
+    "inputs": {
+      "mask": ["cuffs-left:9", 0],
+      "value": 0
+    }
+  },
+  "cuffs-left:11": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["cuffs-left:4", 0],
+      "source": ["cuffs-left:1", 0],
+      "x": 0,
+      "y": 0,
+      "resize_source": false,
+      "mask": ["cuffs-left:10", 0]
+    }
+  },
+  "cuffs-left:12": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["cuffs-left:11", 0],
+      "alpha": ["cuffs-left:1", 1]
+    }
+  },
+  "cuffs-left:13": {
+    "class_type": "LoadImageMask",
+    "inputs": {
+      "image": "bounded-edit-cuffs-left.png",
+      "channel": "red"
+    }
+  },
+  "cuffs-left:14": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["cuffs-left:12", 0],
+      "source": ["cuffs-left:8", 0],
+      "x": 0,
+      "y": 0,
+      "resize_source": false,
+      "mask": ["cuffs-left:13", 0]
+    }
+  },
+  "cuffs-left:15": {
+    "class_type": "InvertMask",
+    "inputs": {
+      "mask": ["cuffs-left:2", 1]
+    }
+  },
+  "cuffs-left:16": {
+    "class_type": "ThresholdMask",
+    "inputs": {
+      "mask": ["cuffs-left:15", 0],
+      "value": 0
+    }
+  },
+  "cuffs-left:17": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["cuffs-left:4", 0],
+      "source": ["cuffs-left:2", 0],
+      "x": 0,
+      "y": 0,
+      "resize_source": false,
+      "mask": ["cuffs-left:16", 0]
+    }
+  },
+  "cuffs-left:18": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["cuffs-left:17", 0],
+      "alpha": ["cuffs-left:2", 1]
+    }
+  },
+  "cuffs-left:19": {
+    "class_type": "LoadImageMask",
+    "inputs": {
+      "image": "arm-restore-cuffs-left.png",
+      "channel": "red"
+    }
+  },
+  "cuffs-left:20": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["cuffs-left:14", 0],
+      "source": ["cuffs-left:18", 0],
+      "x": 0,
+      "y": 0,
+      "resize_source": false,
+      "mask": ["cuffs-left:19", 0]
+    }
+  },
+  "cuffs-left:21": {
+    "class_type": "SplitImageWithAlpha",
+    "inputs": {
+      "image": ["cuffs-left:8", 0]
+    }
+  },
+  "cuffs-left:22": {
+    "class_type": "InvertMask",
+    "inputs": {
+      "mask": ["cuffs-left:21", 1]
+    }
+  },
+  "cuffs-left:23": {
+    "class_type": "LoadImageMask",
+    "inputs": {
+      "image": "fade-cuffs-left.png",
+      "channel": "red"
+    }
+  },
+  "cuffs-left:24": {
+    "class_type": "MaskComposite",
+    "inputs": {
+      "destination": ["cuffs-left:22", 0],
+      "source": ["cuffs-left:23", 0],
+      "x": 0,
+      "y": 0,
+      "operation": "multiply"
+    }
+  },
+  "cuffs-left:25": {
+    "class_type": "MaskComposite",
+    "inputs": {
+      "destination": ["cuffs-left:24", 0],
+      "source": ["cuffs-left:29", 0],
+      "x": 0,
+      "y": 0,
+      "operation": "multiply"
+    }
+  },
+  "cuffs-left:26": {
+    "class_type": "InvertMask",
+    "inputs": {
+      "mask": ["cuffs-left:31", 0]
+    }
+  },
+  "cuffs-left:27": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["cuffs-left:8", 0],
+      "alpha": ["cuffs-left:26", 0]
+    }
+  },
+  "cuffs-left:28": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": ["cuffs-left:27", 0],
+      "filename_prefix": "Wallpaper/wrists/cuffs-left-fitted-wrist"
+    }
+  },
+  "cuffs-left:29": {
+    "class_type": "LoadImageMask",
+    "inputs": {
+      "image": "edit-cuffs-left.png",
+      "channel": "red"
+    }
+  },
+  "cuffs-left:30": {
+    "class_type": "LoadImageMask",
+    "inputs": {
+      "image": "skin-colour-cuffs-left.png",
+      "channel": "red"
+    }
+  },
+  "cuffs-left:31": {
+    "class_type": "MaskComposite",
+    "inputs": {
+      "destination": ["cuffs-left:25", 0],
+      "source": ["cuffs-left:32", 0],
+      "x": 0,
+      "y": 0,
+      "operation": "multiply"
+    }
+  },
+  "cuffs-left:32": {
+    "class_type": "GrowMask",
+    "inputs": {
+      "mask": ["cuffs-left:30", 0],
+      "expand": 6,
+      "tapered_corners": true
+    }
+  },
+  "noodles-right:1": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "source-noodles-right.png"
+    }
+  },
+  "noodles-right:2": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "arm-noodles-right.png"
+    }
+  },
+  "noodles-right:3": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "matched-noodles-right.png"
+    }
+  },
+  "noodles-right:4": {
+    "class_type": "EmptyImage",
+    "inputs": {
+      "width": 672,
+      "height": 896,
+      "batch_size": 1,
+      "color": 16777215
+    }
+  },
+  "noodles-right:5": {
+    "class_type": "SolidMask",
+    "inputs": {
+      "value": 1,
+      "width": 672,
+      "height": 896
+    }
+  },
+  "noodles-right:6": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["noodles-right:4", 0],
+      "alpha": ["noodles-right:5", 0]
+    }
+  },
+  "noodles-right:7": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["noodles-right:3", 0],
+      "alpha": ["noodles-right:3", 1]
+    }
+  },
+  "noodles-right:8": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["noodles-right:6", 0],
+      "source": ["noodles-right:7", 0],
+      "x": 13,
+      "y": 108,
+      "resize_source": false
+    }
+  },
+  "noodles-right:9": {
+    "class_type": "InvertMask",
+    "inputs": {
+      "mask": ["noodles-right:1", 1]
+    }
+  },
+  "noodles-right:10": {
+    "class_type": "ThresholdMask",
+    "inputs": {
+      "mask": ["noodles-right:9", 0],
+      "value": 0
+    }
+  },
+  "noodles-right:11": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["noodles-right:4", 0],
+      "source": ["noodles-right:1", 0],
+      "x": 0,
+      "y": 0,
+      "resize_source": false,
+      "mask": ["noodles-right:10", 0]
+    }
+  },
+  "noodles-right:12": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["noodles-right:11", 0],
+      "alpha": ["noodles-right:1", 1]
+    }
+  },
+  "noodles-right:13": {
+    "class_type": "LoadImageMask",
+    "inputs": {
+      "image": "bounded-edit-noodles-right.png",
+      "channel": "red"
+    }
+  },
+  "noodles-right:14": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["noodles-right:12", 0],
+      "source": ["noodles-right:8", 0],
+      "x": 0,
+      "y": 0,
+      "resize_source": false,
+      "mask": ["noodles-right:13", 0]
+    }
+  },
+  "noodles-right:15": {
+    "class_type": "InvertMask",
+    "inputs": {
+      "mask": ["noodles-right:2", 1]
+    }
+  },
+  "noodles-right:16": {
+    "class_type": "ThresholdMask",
+    "inputs": {
+      "mask": ["noodles-right:15", 0],
+      "value": 0
+    }
+  },
+  "noodles-right:17": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["noodles-right:4", 0],
+      "source": ["noodles-right:2", 0],
+      "x": 0,
+      "y": 0,
+      "resize_source": false,
+      "mask": ["noodles-right:16", 0]
+    }
+  },
+  "noodles-right:18": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["noodles-right:17", 0],
+      "alpha": ["noodles-right:2", 1]
+    }
+  },
+  "noodles-right:19": {
+    "class_type": "LoadImageMask",
+    "inputs": {
+      "image": "arm-restore-noodles-right.png",
+      "channel": "red"
+    }
+  },
+  "noodles-right:20": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["noodles-right:14", 0],
+      "source": ["noodles-right:18", 0],
+      "x": 0,
+      "y": 0,
+      "resize_source": false,
+      "mask": ["noodles-right:19", 0]
+    }
+  },
+  "noodles-right:21": {
+    "class_type": "SplitImageWithAlpha",
+    "inputs": {
+      "image": ["noodles-right:8", 0]
+    }
+  },
+  "noodles-right:22": {
+    "class_type": "InvertMask",
+    "inputs": {
+      "mask": ["noodles-right:21", 1]
+    }
+  },
+  "noodles-right:23": {
+    "class_type": "LoadImageMask",
+    "inputs": {
+      "image": "fade-noodles-right.png",
+      "channel": "red"
+    }
+  },
+  "noodles-right:24": {
+    "class_type": "MaskComposite",
+    "inputs": {
+      "destination": ["noodles-right:22", 0],
+      "source": ["noodles-right:23", 0],
+      "x": 0,
+      "y": 0,
+      "operation": "multiply"
+    }
+  },
+  "noodles-right:25": {
+    "class_type": "MaskComposite",
+    "inputs": {
+      "destination": ["noodles-right:24", 0],
+      "source": ["noodles-right:29", 0],
+      "x": 0,
+      "y": 0,
+      "operation": "multiply"
+    }
+  },
+  "noodles-right:26": {
+    "class_type": "InvertMask",
+    "inputs": {
+      "mask": ["noodles-right:31", 0]
+    }
+  },
+  "noodles-right:27": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["noodles-right:8", 0],
+      "alpha": ["noodles-right:26", 0]
+    }
+  },
+  "noodles-right:28": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": ["noodles-right:27", 0],
+      "filename_prefix": "Wallpaper/wrists/noodles-right-fitted-wrist"
+    }
+  },
+  "noodles-right:29": {
+    "class_type": "LoadImageMask",
+    "inputs": {
+      "image": "edit-noodles-right.png",
+      "channel": "red"
+    }
+  },
+  "noodles-right:30": {
+    "class_type": "LoadImageMask",
+    "inputs": {
+      "image": "skin-colour-noodles-right.png",
+      "channel": "red"
+    }
+  },
+  "noodles-right:31": {
+    "class_type": "MaskComposite",
+    "inputs": {
+      "destination": ["noodles-right:25", 0],
+      "source": ["noodles-right:32", 0],
+      "x": 0,
+      "y": 0,
+      "operation": "multiply"
+    }
+  },
+  "noodles-right:32": {
+    "class_type": "GrowMask",
+    "inputs": {
+      "mask": ["noodles-right:30", 0],
+      "expand": 6,
+      "tapered_corners": true
+    }
+  },
+  "noodles-left:1": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "source-noodles-left.png"
+    }
+  },
+  "noodles-left:2": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "arm-noodles-left.png"
+    }
+  },
+  "noodles-left:3": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "matched-noodles-left.png"
+    }
+  },
+  "noodles-left:4": {
+    "class_type": "EmptyImage",
+    "inputs": {
+      "width": 672,
+      "height": 800,
+      "batch_size": 1,
+      "color": 16777215
+    }
+  },
+  "noodles-left:5": {
+    "class_type": "SolidMask",
+    "inputs": {
+      "value": 1,
+      "width": 672,
+      "height": 800
+    }
+  },
+  "noodles-left:6": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["noodles-left:4", 0],
+      "alpha": ["noodles-left:5", 0]
+    }
+  },
+  "noodles-left:7": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["noodles-left:3", 0],
+      "alpha": ["noodles-left:3", 1]
+    }
+  },
+  "noodles-left:8": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["noodles-left:6", 0],
+      "source": ["noodles-left:7", 0],
+      "x": 13,
+      "y": 14,
+      "resize_source": false
+    }
+  },
+  "noodles-left:9": {
+    "class_type": "InvertMask",
+    "inputs": {
+      "mask": ["noodles-left:1", 1]
+    }
+  },
+  "noodles-left:10": {
+    "class_type": "ThresholdMask",
+    "inputs": {
+      "mask": ["noodles-left:9", 0],
+      "value": 0
+    }
+  },
+  "noodles-left:11": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["noodles-left:4", 0],
+      "source": ["noodles-left:1", 0],
+      "x": 0,
+      "y": 0,
+      "resize_source": false,
+      "mask": ["noodles-left:10", 0]
+    }
+  },
+  "noodles-left:12": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["noodles-left:11", 0],
+      "alpha": ["noodles-left:1", 1]
+    }
+  },
+  "noodles-left:13": {
+    "class_type": "LoadImageMask",
+    "inputs": {
+      "image": "bounded-edit-noodles-left.png",
+      "channel": "red"
+    }
+  },
+  "noodles-left:14": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["noodles-left:12", 0],
+      "source": ["noodles-left:8", 0],
+      "x": 0,
+      "y": 0,
+      "resize_source": false,
+      "mask": ["noodles-left:13", 0]
+    }
+  },
+  "noodles-left:15": {
+    "class_type": "InvertMask",
+    "inputs": {
+      "mask": ["noodles-left:2", 1]
+    }
+  },
+  "noodles-left:16": {
+    "class_type": "ThresholdMask",
+    "inputs": {
+      "mask": ["noodles-left:15", 0],
+      "value": 0
+    }
+  },
+  "noodles-left:17": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["noodles-left:4", 0],
+      "source": ["noodles-left:2", 0],
+      "x": 0,
+      "y": 0,
+      "resize_source": false,
+      "mask": ["noodles-left:16", 0]
+    }
+  },
+  "noodles-left:18": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["noodles-left:17", 0],
+      "alpha": ["noodles-left:2", 1]
+    }
+  },
+  "noodles-left:19": {
+    "class_type": "LoadImageMask",
+    "inputs": {
+      "image": "arm-restore-noodles-left.png",
+      "channel": "red"
+    }
+  },
+  "noodles-left:20": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["noodles-left:14", 0],
+      "source": ["noodles-left:18", 0],
+      "x": 0,
+      "y": 0,
+      "resize_source": false,
+      "mask": ["noodles-left:19", 0]
+    }
+  },
+  "noodles-left:21": {
+    "class_type": "SplitImageWithAlpha",
+    "inputs": {
+      "image": ["noodles-left:8", 0]
+    }
+  },
+  "noodles-left:22": {
+    "class_type": "InvertMask",
+    "inputs": {
+      "mask": ["noodles-left:21", 1]
+    }
+  },
+  "noodles-left:23": {
+    "class_type": "LoadImageMask",
+    "inputs": {
+      "image": "fade-noodles-left.png",
+      "channel": "red"
+    }
+  },
+  "noodles-left:24": {
+    "class_type": "MaskComposite",
+    "inputs": {
+      "destination": ["noodles-left:22", 0],
+      "source": ["noodles-left:23", 0],
+      "x": 0,
+      "y": 0,
+      "operation": "multiply"
+    }
+  },
+  "noodles-left:25": {
+    "class_type": "MaskComposite",
+    "inputs": {
+      "destination": ["noodles-left:24", 0],
+      "source": ["noodles-left:29", 0],
+      "x": 0,
+      "y": 0,
+      "operation": "multiply"
+    }
+  },
+  "noodles-left:26": {
+    "class_type": "InvertMask",
+    "inputs": {
+      "mask": ["noodles-left:31", 0]
+    }
+  },
+  "noodles-left:27": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["noodles-left:8", 0],
+      "alpha": ["noodles-left:26", 0]
+    }
+  },
+  "noodles-left:28": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": ["noodles-left:27", 0],
+      "filename_prefix": "Wallpaper/wrists/noodles-left-fitted-wrist"
+    }
+  },
+  "noodles-left:29": {
+    "class_type": "LoadImageMask",
+    "inputs": {
+      "image": "edit-noodles-left.png",
+      "channel": "red"
+    }
+  },
+  "noodles-left:30": {
+    "class_type": "LoadImageMask",
+    "inputs": {
+      "image": "skin-colour-noodles-left.png",
+      "channel": "red"
+    }
+  },
+  "noodles-left:31": {
+    "class_type": "MaskComposite",
+    "inputs": {
+      "destination": ["noodles-left:25", 0],
+      "source": ["noodles-left:32", 0],
+      "x": 0,
+      "y": 0,
+      "operation": "multiply"
+    }
+  },
+  "noodles-left:32": {
+    "class_type": "GrowMask",
+    "inputs": {
+      "mask": ["noodles-left:30", 0],
+      "expand": 6,
+      "tapered_corners": true
+    }
+  }
+}

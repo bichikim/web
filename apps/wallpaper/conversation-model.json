@@ -1,0 +1,61 @@
+{
+  "model": "onnx-community/gemma-4-E2B-it-ONNX",
+  "revision": "9f4bef82ea6e296bc69f8a2f5939f73af81b07a6",
+  "files": [
+    {
+      "path": "config.json",
+      "sha256": "5494e6677d9e150ea20ba3101ae8a32b0f141004626f052725d8bf48991b9faa",
+      "size": 5549
+    },
+    {
+      "path": "generation_config.json",
+      "sha256": "e6a0b50de21a511f15ac4857b7f227f68ee60ecb1f11255d07b75e0bdc60e155",
+      "size": 238
+    },
+    {
+      "path": "preprocessor_config.json",
+      "sha256": "4457c6e8a09070d7d5d1cd983fbfb67ebafe602bd98120c3543a024f5d07056b",
+      "size": 43
+    },
+    {
+      "path": "processor_config.json",
+      "sha256": "32bdf45d2ad4cc29a0822ddd157a182de76644f0419a6228d151495256e9813c",
+      "size": 1689
+    },
+    {
+      "path": "tokenizer.json",
+      "sha256": "47bd35616c7c782aaca6ccf48c75f3461d5877170984b8836b375107d0a9f566",
+      "size": 19439251
+    },
+    {
+      "path": "tokenizer_config.json",
+      "sha256": "06afbf54e228050cba79c4a0afd83543cc89070a2d62b8337d0aa8b4cdc348c3",
+      "size": 18807
+    },
+    {
+      "path": "chat_template.jinja",
+      "sha256": "781d10940fbc44be40064b5d43a056fc486c84ceaa55538226368b57314132bf",
+      "size": 16317
+    },
+    {
+      "path": "onnx/decoder_model_merged_q4.onnx",
+      "sha256": "c6edb929bf342c524728d37efd400285ee71525e8fe64ff996341f78c3e577d2",
+      "size": 647599
+    },
+    {
+      "path": "onnx/decoder_model_merged_q4.onnx_data",
+      "sha256": "b879fe4b946c9b9ff6acb60f7c5eda3d2c9c4df8625895feb2d1e269002f0345",
+      "size": 1864102912
+    },
+    {
+      "path": "onnx/embed_tokens_q4.onnx",
+      "sha256": "2d8c8a2bcc30e8ded7f636967c2a58a346116583356dd933720b005fc88079c4",
+      "size": 5142
+    },
+    {
+      "path": "onnx/embed_tokens_q4.onnx_data",
+      "sha256": "40fa957d9988b8a0160c8b0eb5c3f781a237627e9f7153f30514a4ffb2e62888",
+      "size": 1762656256
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "promptId": "b07241e8-5db6-4da6-8239-dbb35a261d8b",
+  "records": [
+    {
+      "name": "coffee",
+      "dimensions": [1024, 1536],
+      "changed": 14114,
+      "protectedChanged": 0,
+      "alphaChanged": 0
+    },
+    {
+      "name": "noodles",
+      "dimensions": [640, 768],
+      "changed": 13285,
+      "protectedChanged": 0,
+      "alphaChanged": 0
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "beforeSha256": "3271a7d258a72a3ee1be856787c2fbe85d5867bb9c3123000dc2dfe12aa0d565",
+  "sha256": "404a5a884fa552f548f09973ca7e37d008f81388e27fdb9c438f946880efa927",
+  "bytes": 18738748,
+  "method": "Use original thumb hand ArtMesh902/903 when the coat is worn, and the repaired bare hand only when the coat is removed.",
+  "coatParameter": "Param49",
+  "coatOn": {
+    "originalHand": 1,
+    "bareHand": 0
+  },
+  "coatOff": {
+    "originalHand": 0,
+    "bareHand": 1
+  },
+  "allPartMeshesAndTexturesUnchanged": true,
+  "sceneAndDrawOrderUnchanged": true,
+  "physicsAndGlueUnchanged": true,
+  "originalCoatedHandArtworkAndRigConfirmed": true,
+  "addedBinding": "thumb:wardrobe-hand"
+}

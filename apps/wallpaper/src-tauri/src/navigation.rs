@@ -12,11 +12,19 @@ struct WebsiteVisit {
 }
 
 pub(crate) fn page_loaded(webview: &Webview, payload: &PageLoadPayload<'_>) {
+    if matches!(payload.event(), PageLoadEvent::Started) {
+        #[cfg(target_os = "macos")]
+        crate::refresh_rate::configure(webview);
+        #[cfg(any(target_os = "macos", windows))]
+        crate::native_widget::close_window(webview.app_handle(), webview.label());
+    }
     if !matches!(payload.event(), PageLoadEvent::Finished) {
         return;
     }
     let url = payload.url();
-    if !matches!(url.scheme(), "http" | "https") || url.host_str() == Some("tauri.localhost") {
+    if !matches!(url.scheme(), "http" | "https")
+        || (url.host_str() == Some("tauri.localhost") || crate::frontend::owns(url))
+    {
         return;
     }
     if webview

@@ -72,6 +72,206 @@ const source: PuppetDocument = {
   },
 }
 
+test.each(['position', 'lag'] as const)(
+  'should consume a released touch pose once and resume standalone %s physics',
+  (outputMode) => {
+    const document: PuppetDocument = {
+      ...source,
+      motions: [],
+      physics: {
+        pendulums: [{...source.physics!.pendulums![0]!, outputMode}],
+      },
+    }
+    const reference = createBufferEngine(document)
+    const worker = createWasmWorker(new WebAssembly.Instance(module))
+    worker.process({audio: new Map(), document, id: 1, kind: 'initialize'})
+    const initial = reference.step(0, new ArrayBuffer(reference.bytes)).state
+    const state = {...initial, parameterValues: {p: 1, q: 0.5}, physicsRelease: {q: 3}}
+    reference.reset(state)
+    worker.process({generation: 1, id: 2, inputRevision: 0, kind: 'reset', state})
+    for (let frame = 0; frame < 12; frame += 1) {
+      const deltaTime = frame === 0 ? 0 : 1 / 60
+      const expected = reference.step(deltaTime, new ArrayBuffer(reference.bytes))
+      const actual = expectFrame(
+        worker.process({
+          id: frame + 3,
+          kind: 'produce',
+          request: {
+            buffer: new ArrayBuffer(reference.bytes),
+            deltaTime,
+            generation: 1,
+            time: frame / 60,
+          },
+        }),
+      )
+      expect(actual.state.frameValues.q).toBeCloseTo(expected.state.frameValues.q!, 10)
+      expect(actual.state.physicsState).toEqual(expected.state.physicsState)
+      expect(actual.state.physicsRelease).toBeUndefined()
+      if (frame === 0) {
+        expect(actual.state.frameValues.q).toBeCloseTo(3)
+      } else {
+        expect(actual.state.frameValues.q).toBeLessThan(3)
+      }
+    }
+    worker.destroy()
+  },
+)
+
+test.each(['angle', 'x', 'y'] as const)(
+  'should resume held chain %s outputs with matching reflection, weight and inertia',
+  (axis) => {
+    const document: PuppetDocument = {
+      ...source,
+      motions: [],
+      physics: {
+        chains: [
+          {
+            id: 'tail',
+            inputs: [],
+            normalization: {
+              angle: {center: 0, maximum: 30, minimum: -30},
+              position: {center: 0, maximum: 10, minimum: -10},
+            },
+            outputs: [
+              {axis, parameterId: 'p', pendulumIndex: 0, scale: 2, weight: 1},
+              {
+                axis: 'angle',
+                parameterId: 'q',
+                pendulumIndex: 1,
+                reflect: true,
+                scale: 7,
+                weight: 0.5,
+              },
+            ],
+            pendulums: [
+              {acceleration: 1.2, length: 10, mobility: 0.9, reaction: 0.7},
+              {acceleration: 0.75, length: 8, mobility: 0.95, reaction: 1},
+            ],
+          },
+        ],
+        pendulums: [],
+      },
+    }
+    const reference = createBufferEngine(document)
+    const worker = createWasmWorker(new WebAssembly.Instance(module))
+    worker.process({audio: new Map(), document, id: 1, kind: 'initialize'})
+    const initial = reference.step(0, new ArrayBuffer(reference.bytes)).state
+    const state = {...initial, physicsRelease: {p: 2, q: -0.4}}
+    reference.reset(state)
+    worker.process({generation: 1, id: 2, inputRevision: 0, kind: 'reset', state})
+    for (let frame = 0; frame < 12; frame += 1) {
+      const deltaTime = frame === 0 ? 0 : 1 / 60
+      const expected = reference.step(deltaTime, new ArrayBuffer(reference.bytes))
+      const actual = expectFrame(
+        worker.process({
+          id: frame + 3,
+          kind: 'produce',
+          request: {
+            buffer: new ArrayBuffer(reference.bytes),
+            deltaTime,
+            generation: 1,
+            time: frame / 60,
+          },
+        }),
+      )
+      expect(actual.state.frameValues.p).toBeCloseTo(expected.state.frameValues.p!, 10)
+      expect(actual.state.frameValues.q).toBeCloseTo(expected.state.frameValues.q!, 10)
+      expect(actual.state.physicsRelease).toBeUndefined()
+    }
+    worker.destroy()
+  },
+)
+
+test('should retain keyed part and group draw order with sparse and noninteger keyforms', () => {
+  const document: PuppetDocument = {
+    ...source,
+    motions: [],
+    parameterBindings: [
+      {
+        id: 'order',
+        keyforms: [
+          {
+            groups: [{groupId: 'right', properties: {drawOrder: 50.17}}],
+            parts: [
+              {
+                partId: 'first',
+                properties: {drawOrder: 501.13},
+                vertices: source.parts[0]!.mesh.vertices,
+              },
+            ],
+            values: [-1],
+          },
+          {
+            groups: [{groupId: 'right', properties: {opacity: 0.7}}],
+            parts: [
+              {
+                partId: 'first',
+                properties: {opacity: 0.8},
+                vertices: source.parts[0]!.mesh.vertices,
+              },
+            ],
+            values: [0],
+          },
+          {
+            groups: [{groupId: 'right', properties: {}}],
+            parts: [{partId: 'first', vertices: source.parts[0]!.mesh.vertices}],
+            values: [1],
+          },
+        ],
+        parameterIds: ['p'],
+        targetGroupIds: ['right'],
+        targetPartIds: ['first'],
+      },
+    ],
+    parts: source.parts.map((part, index) => ({
+      ...part,
+      properties: {drawOrder: 500.01 + index * 0.1},
+    })),
+    scene: {
+      roots: ['left', 'right'].map((id, index) => ({
+        children: [source.scene!.roots[index]!],
+        id,
+        kind: 'group',
+        locked: false,
+        name: id,
+        properties: {drawOrder: 100.23 + index * 100},
+        visible: true,
+      })),
+    },
+  }
+  const reference = createBufferEngine(document)
+  const worker = createWasmWorker(new WebAssembly.Instance(module))
+  expect(worker.process({audio: new Map(), document, id: 1, kind: 'initialize'})).toEqual({
+    bytes: reference.bytes,
+    id: 1,
+    kind: 'initialized',
+  })
+  const initial = reference.step(0, new ArrayBuffer(reference.bytes)).state
+  for (const value of [-1, -0.37, 0, 0.47, 1]) {
+    const state = {...initial, parameterValues: {p: value}}
+    reference.reset(state)
+    worker.process({generation: 1, id: 2, inputRevision: 0, kind: 'reset', state})
+    const expected = reference.step(0, new ArrayBuffer(reference.bytes))
+    const actual = expectFrame(
+      worker.process({
+        id: 3,
+        kind: 'produce',
+        request: {
+          buffer: new ArrayBuffer(reference.bytes),
+          deltaTime: 0,
+          generation: 1,
+          time: 0,
+        },
+      }),
+    )
+    expect(actual.computed.frame.plans.map((plan) => plan.partId)).toEqual(
+      expected.computed.frame.plans.map((plan) => plan.partId),
+    )
+    expect(actual.computed.vertices).toEqual(expected.computed.vertices)
+  }
+  worker.destroy()
+})
+
 test('should run complete motion, pendulum, Glue and checkpoint evaluation inside Wasm', () => {
   const reference = createBufferEngine(source)
   const worker = createWasmWorker(new WebAssembly.Instance(module))
@@ -159,6 +359,7 @@ test.each(['normal', 'cubism'] as const)(
         blends: {
           'after-physics': new Map([['q', {mode: 'multiply' as const, value: 1.2, weight: 0.8}]]),
           'before-physics': new Map([['p', {mode: 'add' as const, value: 0.2, weight: 0.5}]]),
+          interaction: new Map(),
         },
       },
       expressionLayers: [

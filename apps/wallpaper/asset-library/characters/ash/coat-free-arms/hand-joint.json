@@ -1,0 +1,303 @@
+{
+  "start": 780,
+  "end": 1040,
+  "m0": 0.125,
+  "m1": -0.10044642857142858,
+  "x0": 675,
+  "x1": 620.5,
+  "maxDelta": 26.877949643783836,
+  "guideIds": ["coat-free:notes-left:wrist-surface-900", "coat-free:notes-left:wrist-surface-901"],
+  "connections": [
+    {
+      "partId": "coat-free:notes-left:ArtMesh900",
+      "vertexIndex": 0,
+      "strength": 1,
+      "pixel": [516.3415154922137, 795.5093255530101]
+    },
+    {
+      "partId": "coat-free:notes-left:ArtMesh900",
+      "vertexIndex": 1,
+      "strength": 1,
+      "pixel": [611.8654203330871, 823.0404795987325]
+    },
+    {
+      "partId": "coat-free:notes-left:ArtMesh900",
+      "vertexIndex": 2,
+      "strength": 1,
+      "pixel": [691.2267773662212, 888.9832846353843]
+    },
+    {
+      "partId": "coat-free:notes-left:ArtMesh900",
+      "vertexIndex": 3,
+      "strength": 0.8153595923610706,
+      "pixel": [679.8707779001993, 969.4035138957555]
+    },
+    {
+      "partId": "coat-free:notes-left:ArtMesh900",
+      "vertexIndex": 4,
+      "strength": 0.21778713735732025,
+      "pixel": [675.3302344852754, 1045.7450377969017]
+    },
+    {
+      "partId": "coat-free:notes-left:ArtMesh900",
+      "vertexIndex": 32,
+      "strength": 0.5863847742384118,
+      "pixel": [404.6120498226246, 999.5873675040157]
+    },
+    {
+      "partId": "coat-free:notes-left:ArtMesh900",
+      "vertexIndex": 33,
+      "strength": 1,
+      "pixel": [418.08468740052655, 919.1094966272535]
+    },
+    {
+      "partId": "coat-free:notes-left:ArtMesh900",
+      "vertexIndex": 34,
+      "strength": 1,
+      "pixel": [436.61895117930203, 841.3047167627512]
+    },
+    {
+      "partId": "coat-free:notes-left:ArtMesh900",
+      "vertexIndex": 35,
+      "strength": 1,
+      "pixel": [544.0620033897311, 874.3014952426818]
+    },
+    {
+      "partId": "coat-free:notes-left:ArtMesh900",
+      "vertexIndex": 36,
+      "strength": 1,
+      "pixel": [602.2186516672535, 911.8822560606852]
+    },
+    {
+      "partId": "coat-free:notes-left:ArtMesh900",
+      "vertexIndex": 37,
+      "strength": 0.7344566788059614,
+      "pixel": [588.8015024495701, 980.8453984232561]
+    },
+    {
+      "partId": "coat-free:notes-left:ArtMesh900",
+      "vertexIndex": 38,
+      "strength": 0.14968464549690597,
+      "pixel": [581.2813697714138, 1056.0588263976053]
+    },
+    {
+      "partId": "coat-free:notes-left:ArtMesh900",
+      "vertexIndex": 64,
+      "strength": 0.19289211218080704,
+      "pixel": [484.1145050166514, 1049.3628236632458]
+    },
+    {
+      "partId": "coat-free:notes-left:ArtMesh900",
+      "vertexIndex": 65,
+      "strength": 0.7128473261992159,
+      "pixel": [489.79487362129777, 983.7106070492587]
+    },
+    {
+      "partId": "coat-free:notes-left:ArtMesh900",
+      "vertexIndex": 66,
+      "strength": 1,
+      "pixel": [494.85995234527314, 890.990758755993]
+    },
+    {
+      "partId": "coat-free:notes-left:ArtMesh901",
+      "vertexIndex": 0,
+      "strength": 1,
+      "pixel": [516.3415154922137, 795.5093255530101]
+    },
+    {
+      "partId": "coat-free:notes-left:ArtMesh901",
+      "vertexIndex": 1,
+      "strength": 1,
+      "pixel": [611.8654203330871, 823.0404795987325]
+    },
+    {
+      "partId": "coat-free:notes-left:ArtMesh901",
+      "vertexIndex": 2,
+      "strength": 1,
+      "pixel": [691.2267773662212, 888.9832846353843]
+    },
+    {
+      "partId": "coat-free:notes-left:ArtMesh901",
+      "vertexIndex": 3,
+      "strength": 0.8153595923610706,
+      "pixel": [679.8707779001993, 969.4035138957555]
+    },
+    {
+      "partId": "coat-free:notes-left:ArtMesh901",
+      "vertexIndex": 4,
+      "strength": 0.21778713735732025,
+      "pixel": [675.3302344852754, 1045.7450377969017]
+    },
+    {
+      "partId": "coat-free:notes-left:ArtMesh901",
+      "vertexIndex": 14,
+      "strength": 0.5863847742384118,
+      "pixel": [404.6120498226246, 999.5873675040157]
+    },
+    {
+      "partId": "coat-free:notes-left:ArtMesh901",
+      "vertexIndex": 15,
+      "strength": 1,
+      "pixel": [418.08468740052655, 919.1094966272535]
+    },
+    {
+      "partId": "coat-free:notes-left:ArtMesh901",
+      "vertexIndex": 16,
+      "strength": 1,
+      "pixel": [436.61895117930203, 841.3047167627512]
+    },
+    {
+      "partId": "coat-free:notes-left:ArtMesh901",
+      "vertexIndex": 17,
+      "strength": 1,
+      "pixel": [544.0620033897311, 874.3014952426818]
+    },
+    {
+      "partId": "coat-free:notes-left:ArtMesh901",
+      "vertexIndex": 18,
+      "strength": 1,
+      "pixel": [602.2186516672535, 911.8822560606852]
+    },
+    {
+      "partId": "coat-free:notes-left:ArtMesh901",
+      "vertexIndex": 19,
+      "strength": 0.7344566788059614,
+      "pixel": [588.8015024495701, 980.8453984232561]
+    },
+    {
+      "partId": "coat-free:notes-left:ArtMesh901",
+      "vertexIndex": 20,
+      "strength": 0.14968464549690597,
+      "pixel": [581.2813697714138, 1056.0588263976053]
+    },
+    {
+      "partId": "coat-free:notes-left:ArtMesh901",
+      "vertexIndex": 29,
+      "strength": 0.19289211218080704,
+      "pixel": [484.1145050166514, 1049.3628236632458]
+    },
+    {
+      "partId": "coat-free:notes-left:ArtMesh901",
+      "vertexIndex": 30,
+      "strength": 0.7128473261992159,
+      "pixel": [489.79487362129777, 983.7106070492587]
+    },
+    {
+      "partId": "coat-free:notes-left:ArtMesh901",
+      "vertexIndex": 31,
+      "strength": 1,
+      "pixel": [494.85995234527314, 890.990758755993]
+    }
+  ],
+  "translation": [
+    {
+      "id": "coat-free:notes-left:translation-900",
+      "composition": "sequential",
+      "first": {
+        "partId": "coat-free:notes-left:ArtMesh900",
+        "vertexIndex": 71
+      },
+      "second": {
+        "partId": "coat-free:notes-left:wrist-surface-900",
+        "vertexIndex": 33
+      },
+      "strength": 1,
+      "weight": 1,
+      "mode": "translate"
+    },
+    {
+      "id": "coat-free:notes-left:translation-901",
+      "composition": "sequential",
+      "first": {
+        "partId": "coat-free:notes-left:ArtMesh901",
+        "vertexIndex": 33
+      },
+      "second": {
+        "partId": "coat-free:notes-left:wrist-surface-901",
+        "vertexIndex": 33
+      },
+      "strength": 1,
+      "weight": 1,
+      "mode": "translate"
+    }
+  ],
+  "wristBlendRows": [920, 1100],
+  "removedPhysicsBindings": [
+    "coat-free:notes-left:moc3:Rotation55@ArtMesh70_Skinning",
+    "coat-free:notes-left:moc3:Rotation68@ArtMesh70_Skinning",
+    "coat-free:notes-left:moc3:blend:Warp92@ArtMesh70_Skinning:3",
+    "coat-free:notes-left:moc3:blend:Warp92@ArtMesh70_Skinning:4",
+    "coat-free:notes-left:moc3:blend:Warp92@ArtMesh70_Skinning:5"
+  ],
+  "bakedNeutralShape": true,
+  "elbowConnections": [
+    {
+      "id": "coat-free:notes-left:elbow-center:contact",
+      "composition": "sequential",
+      "mode": "translate",
+      "first": {
+        "partId": "coat-free:notes-left:ArtMesh900",
+        "vertexIndex": 132
+      },
+      "second": {
+        "partId": "ArtMesh1001",
+        "vertexIndex": 61
+      },
+      "weight": 1,
+      "strength": 1
+    }
+  ],
+  "upperArmRestoration": {
+    "sourceSha256": "d48a4a85108e59c8e5165b14d9db3b76936dedd4663538b594a9634f31c4bcbe",
+    "removedGlueCount": 108,
+    "nativeBindingIds": ["moc3:ArtMesh1001"],
+    "reconnection": "Painted thickness centers connected"
+  },
+  "elbowAssemblyFollowers": [
+    "ArtMesh130",
+    "ArtMesh131",
+    "ArtMesh132",
+    "ArtMesh133",
+    "ArtMesh134",
+    "ArtMesh135",
+    "ArtMesh136",
+    "ArtMesh137",
+    "ArtMesh139",
+    "coat-free:notes-left:hand",
+    "coat-free:notes-left:wrist-surface-900",
+    "coat-free:notes-left:wrist-surface-901",
+    "ArtMesh138",
+    "ArtMesh140",
+    "ArtMesh141",
+    "coat-free:notes-left:ArtMesh901"
+  ],
+  "elbowCenters": {
+    "upper": {
+      "partId": "ArtMesh1001",
+      "vertexIndex": 61,
+      "triangle": [14, 15, 41],
+      "weights": [0.34149293749241355, 0.21168786437015283, 0.44681919813743354]
+    },
+    "lower": {
+      "partId": "coat-free:notes-left:ArtMesh900",
+      "vertexIndex": 132,
+      "triangle": [49, 54, 55],
+      "weights": [0.501249639331376, 0.24933055295334577, 0.24941980771527822]
+    }
+  },
+  "elbowSeam": {
+    "beforeModelSha256": "a7eab0e42ac6e4af8644e1bb123bcf24d33dbbf923b777bb3004b02be128f172",
+    "modelSha256": "473c9ee9bec1c900a24cbb8331ba71a3ffdfc9a680c829c525080233e879b6d6",
+    "modelBytes": 9764747,
+    "bindingId": "coat-free:notes-left:elbow-seam",
+    "partId": "ArtMesh1001",
+    "vertexIndex": 13,
+    "worldShift": [17.534218313244416, 0],
+    "localDelta": [0.0076227649853060075, 3.642578016993525e-9],
+    "paintedEndShift": [9.943224732052158, 0],
+    "overlapInset": 4,
+    "activation": ["Param49", "Param89"],
+    "texturesAndMeshesUnchanged": true,
+    "existingBindingsAndCenterConstraintsUnchanged": true
+  }
+}

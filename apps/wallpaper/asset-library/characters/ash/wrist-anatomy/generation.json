@@ -1,0 +1,217 @@
+{
+  "generator": "ChatGPT built-in image generation",
+  "transparentBackground": true,
+  "records": [
+    {
+      "group": "coffee-left",
+      "referenceSha256": "3d4786bcaa339d538d9aa560d621e101ecf7cc9f0d6a3a64f6df21deb2d4d6ac",
+      "generatedSha256": "9cced35ffcfb88b9fdff2dd2b9093b98bb3b34906d54784afdfa998da5cfff77",
+      "prompt": "Original coffee reference + full character reference. Repair lower palm and wrist only, preserving original fingers, color, contour and crop.",
+      "promptKind": "summary",
+      "box": {
+        "x": 2056.7354491523593,
+        "y": 1461.440353536852,
+        "width": 320,
+        "height": 384,
+        "scale": 2
+      },
+      "appliedToHandArtwork": false
+    },
+    {
+      "group": "microphone-left",
+      "referenceSha256": "4c5b6e4996e777b29781206d37baae09a0f66f8742dd0044ae24cb3ea03dcec8",
+      "generatedSha256": "47c606411b015fbfc4dec68aaee32946ef417c0cddf1c6182dd3c4220a776ed7",
+      "prompt": "Precisely edit the reference illustration in its EXACT crop and layout. Repair ONLY the anatomically broken wrist of this microphone-holding hand. The existing forearm overlaps the base of the palm with a hard diagonal skin-color cutoff, duplicate taper, notch and two parallel outlines. Replace that failed junction with a SINGLE natural short wrist: smoothly tapered base of palm, anatomically plausible wrist bones, continuous skin and continuous two outer contour lines into the existing forearm. Remove the old end-lines inside the skin and any spare flap protruding behind the wrist. It must look like one naturally drawn hand with a wrist, not a narrow connection tube, pasted band or distorted rubber arm. Preserve exactly the original finger pose, finger count, nails, held object, hand proportions and forearm direction/width/length. Match the original illustration's pale ivory skin, subtle soft pale pink shading, delicate reddish-brown outlines and their existing thickness; do not thicken outlines and do not add saturation or painted seams. Keep all original artwork outside the lower palm and wrist unaltered and preserve EXACT original relative coordinates and crop (640x768). Actual transparent background. No annotations, no new objects, no diagrams.",
+      "promptKind": "exact",
+      "box": {
+        "x": 2096.0067019473177,
+        "y": 1471.676552615719,
+        "width": 320,
+        "height": 384,
+        "scale": 2
+      },
+      "appliedToHandArtwork": false
+    },
+    {
+      "group": "knife-left",
+      "referenceSha256": "1f04f8cf4c0d6312069ef68eead84656c5ffdc7f9fe09572ff009afc20f2c99f",
+      "generatedSha256": "c2005851916f23d62fb17bc00ad8ad860427e3a8dd54b671174e638ae9ea632b",
+      "prompt": "Precisely edit the reference illustration in its EXACT crop and layout. Repair ONLY the anatomically broken wrist of this knife-holding fist. The existing forearm overlaps the base of the palm with a hard diagonal skin-color cutoff, duplicate taper, notch and two parallel outlines. Replace that failed junction with a SINGLE natural short wrist: smoothly tapered base of palm, anatomically plausible wrist bones, continuous skin and continuous two outer contour lines into the existing forearm. Remove the old end-lines inside the skin and any spare flap protruding behind the wrist. It must look like one naturally drawn hand with a wrist, not a narrow connection tube, pasted band or distorted rubber arm. Preserve exactly the original finger pose, finger count, nails, held object, hand proportions and forearm direction/width/length. Match the original illustration's pale ivory skin, subtle soft pale pink shading, delicate reddish-brown outlines and their existing thickness; do not thicken outlines and do not add saturation or painted seams. Keep all original artwork outside the lower palm and wrist unaltered and preserve EXACT original relative coordinates and crop (640x768). Actual transparent background. No annotations, no new objects, no diagrams.",
+      "promptKind": "exact",
+      "box": {
+        "x": 1926.7882562978557,
+        "y": 1371.4750271737603,
+        "width": 320,
+        "height": 384,
+        "scale": 2
+      },
+      "appliedToHandArtwork": false
+    },
+    {
+      "group": "heart-right",
+      "referenceSha256": "b3a2871e4d577fd7bc310c478aabc23a6714b5b6ad7611a32765d5263e1109fd",
+      "generatedSha256": "716e14838e574501a6b55dbd477de7f0d98069ec600251bcd47e577872016536",
+      "prompt": "Precisely edit the reference illustration in its EXACT crop and layout. Repair ONLY the anatomically broken wrist of this finger-heart hand. The existing forearm overlaps the base of the palm with a hard diagonal skin-color cutoff, duplicate taper, notch and two parallel outlines. Replace that failed junction with a SINGLE natural short wrist: smoothly tapered base of palm, anatomically plausible wrist bones, continuous skin and continuous two outer contour lines into the existing forearm. Remove the old end-lines inside the skin and any spare flap protruding behind the wrist. It must look like one naturally drawn hand with a wrist, not a narrow connection tube, pasted band or distorted rubber arm. Preserve exactly the original finger pose, finger count, nails, held object, hand proportions and forearm direction/width/length. Match the original illustration's pale ivory skin, subtle soft pale pink shading, delicate reddish-brown outlines and their existing thickness; do not thicken outlines and do not add saturation or painted seams. Keep all original artwork outside the lower palm and wrist unaltered and preserve EXACT original relative coordinates and crop (640x768). Actual transparent background. No annotations, no new objects, no diagrams.",
+      "promptKind": "exact",
+      "box": {
+        "x": 2460.362311376455,
+        "y": 1450.432037088913,
+        "width": 320,
+        "height": 384,
+        "scale": 2
+      },
+      "appliedToHandArtwork": false
+    },
+    {
+      "group": "paws-right",
+      "referenceSha256": "71e8c22e88c303a163a845ac0d32bc3c13416c42022b0f710c75e8e02ed1ae0f",
+      "generatedSha256": "3f1d1728a21be0b5eaed9c0dd880a686efbef8ae3ab72801e020030e9c0b0896",
+      "prompt": "Edit this EXACT illustration crop, keeping the exact composition and pixel placement. Repair ONLY the wrist junction of the cat paw gesture with curled fingers. Currently the forearm ends as a diagonal overlapping stump with mismatched skin, protruding double lines and a notch. Redraw the lower base of the hand and wrist as a single anatomically normal short wrist flowing smoothly into the original forearm. The width should taper naturally from the palm into the forearm without a spare thumb-like flap, sudden step, cut line or rubber tube. Preserve the fingers and gesture, nail shape and blue color, palm size, arm width/direction and length. Match this exact illustration's original pale ivory skin with subtle pale pink soft shadows, reddish brown thin contours with the SAME weight as the arm. Remove the duplicate parallel outlines and internal cutoff/seam where the old forearm overlaps the hand. Keep all other original drawing unaltered. EXACT 640x768 layout/crop, truly transparent background, only the repaired existing art, no text/annotation.",
+      "promptKind": "exact",
+      "box": {
+        "x": 2735.8405111619995,
+        "y": 1290.4078670212602,
+        "width": 320,
+        "height": 384,
+        "scale": 2
+      },
+      "appliedToHandArtwork": false
+    },
+    {
+      "group": "paws-left",
+      "referenceSha256": "583dbd5fac984560252ca1c2f25b7ddf27261384e4aa5b94f068c0316bd5ad59",
+      "generatedSha256": "b78a0c4dce63bebcc892e02ce60e5248b95f0c00a0c3fac50bbf514b04b5e23e",
+      "prompt": "Edit this EXACT illustration crop, keeping the exact composition and pixel placement. Repair ONLY the wrist junction of the cat paw gesture with curled fingers. Currently the forearm ends as a diagonal overlapping stump with mismatched skin, protruding double lines and a notch. Redraw the lower base of the hand and wrist as a single anatomically normal short wrist flowing smoothly into the original forearm. The width should taper naturally from the palm into the forearm without a spare thumb-like flap, sudden step, cut line or rubber tube. Preserve the fingers and gesture, nail shape and blue color, palm size, arm width/direction and length. Match this exact illustration's original pale ivory skin with subtle pale pink soft shadows, reddish brown thin contours with the SAME weight as the arm. Remove the duplicate parallel outlines and internal cutoff/seam where the old forearm overlaps the hand. Keep all other original drawing unaltered. EXACT 640x768 layout/crop, truly transparent background, only the repaired existing art, no text/annotation.",
+      "promptKind": "exact",
+      "box": {
+        "x": 1652.2784509679286,
+        "y": 1291.4873726192563,
+        "width": 320,
+        "height": 384,
+        "scale": 2
+      },
+      "appliedToHandArtwork": false
+    },
+    {
+      "group": "fists-right",
+      "referenceSha256": "da9da358df19c132aa4d9d2ce8f1c3516a484b43f326787ed74f848deb6c7cd7",
+      "generatedSha256": "75e6b4c3370e75c66c65dd5d880df8176f56fbac30747313f70e8aeeb7f29b76",
+      "prompt": "Edit this EXACT illustration crop, keeping the exact composition and pixel placement. Repair ONLY the wrist junction of the raised clenched fist. Currently the forearm ends as a diagonal overlapping stump with mismatched skin, protruding double lines and a notch. Redraw the lower base of the hand and wrist as a single anatomically normal short wrist flowing smoothly into the original forearm. The width should taper naturally from the palm into the forearm without a spare thumb-like flap, sudden step, cut line or rubber tube. Preserve the fingers and gesture, nail shape and blue color, palm size, arm width/direction and length. Match this exact illustration's original pale ivory skin with subtle pale pink soft shadows, reddish brown thin contours with the SAME weight as the arm. Remove the duplicate parallel outlines and internal cutoff/seam where the old forearm overlaps the hand. Keep all other original drawing unaltered. EXACT 640x768 layout/crop, truly transparent background, only the repaired existing art, no text/annotation.",
+      "promptKind": "exact",
+      "box": {
+        "x": 2420.8564994623944,
+        "y": 1438.0513303575785,
+        "width": 320,
+        "height": 384,
+        "scale": 2
+      },
+      "appliedToHandArtwork": false
+    },
+    {
+      "group": "fists-left",
+      "referenceSha256": "22fc1b05c05c2b5c1db43a206db6611b64da422510a1592b3854588f6714e2ba",
+      "generatedSha256": "9680a5bba2d46429bbfc1f0e1d3541f98308c7230d4d88ce4e1b08ae1de09427",
+      "prompt": "Edit this EXACT illustration crop, keeping the exact composition and pixel placement. Repair ONLY the wrist junction of the raised clenched fist. Currently the forearm ends as a diagonal overlapping stump with mismatched skin, protruding double lines and a notch. Redraw the lower base of the hand and wrist as a single anatomically normal short wrist flowing smoothly into the original forearm. The width should taper naturally from the palm into the forearm without a spare thumb-like flap, sudden step, cut line or rubber tube. Preserve the fingers and gesture, nail shape and blue color, palm size, arm width/direction and length. Match this exact illustration's original pale ivory skin with subtle pale pink soft shadows, reddish brown thin contours with the SAME weight as the arm. Remove the duplicate parallel outlines and internal cutoff/seam where the old forearm overlaps the hand. Keep all other original drawing unaltered. EXACT 640x768 layout/crop, truly transparent background, only the repaired existing art, no text/annotation.",
+      "promptKind": "exact",
+      "box": {
+        "x": 1927.5367880643153,
+        "y": 1344.025444066479,
+        "width": 320,
+        "height": 384,
+        "scale": 2
+      },
+      "appliedToHandArtwork": false
+    },
+    {
+      "group": "gamepad-right",
+      "referenceSha256": "3f981cda05bc251aebeb17935f732b99b44dd906e4f85fc10d11f3f8e852f4ea",
+      "generatedSha256": "ad0ca702b3a6fe3dfe006c9cce83b8a340bf68b2f6c4d6e19090509f3e2d4b94",
+      "prompt": "Edit this EXACT illustration crop, keeping the exact composition and pixel placement. Repair ONLY the wrist junction of the game controller-holding hand. Currently the forearm ends as a diagonal overlapping stump with mismatched skin, protruding double lines and a notch. Redraw the lower base of the hand and wrist as a single anatomically normal short wrist flowing smoothly into the original forearm. Naturally taper the palm into the forearm with realistic subtle wrist bones, without a spare flap, sudden step, cut line or rubber tube. Preserve the exact fingers and gesture, nail shape and blue color, all held objects and accessories (especially controller/cuff/chain), palm size, arm width/direction and length. Match this exact illustration's original pale ivory skin with subtle pale pink soft shadows, reddish brown thin contours with the SAME weight as the arm. Remove the duplicate parallel outlines and internal cutoff/seam where the old forearm overlaps the hand. Keep all other original drawing unaltered. EXACT 640x768 layout/crop, truly transparent background, only the repaired existing art, no text/annotation.",
+      "promptKind": "exact",
+      "box": {
+        "x": 2621.999632743932,
+        "y": 1565.5295113248474,
+        "width": 320,
+        "height": 384,
+        "scale": 2
+      },
+      "appliedToHandArtwork": false
+    },
+    {
+      "group": "gamepad-left",
+      "referenceSha256": "0d1546865cbf49ddba23c51e6cc693f5e8878da8f26470e3f574f4db294291b1",
+      "generatedSha256": "9e011451f4441b8cb9c6cca1204f631ad325e5c359723fb4a01968e49f4288f1",
+      "prompt": "Edit this EXACT illustration crop, keeping the exact composition and pixel placement. Repair ONLY the wrist junction of the game controller-holding hand. Currently the forearm ends as a diagonal overlapping stump with mismatched skin, protruding double lines and a notch. Redraw the lower base of the hand and wrist as a single anatomically normal short wrist flowing smoothly into the original forearm. Naturally taper the palm into the forearm with realistic subtle wrist bones, without a spare flap, sudden step, cut line or rubber tube. Preserve the exact fingers and gesture, nail shape and blue color, all held objects and accessories (especially controller/cuff/chain), palm size, arm width/direction and length. Match this exact illustration's original pale ivory skin with subtle pale pink soft shadows, reddish brown thin contours with the SAME weight as the arm. Remove the duplicate parallel outlines and internal cutoff/seam where the old forearm overlaps the hand. Keep all other original drawing unaltered. EXACT 640x768 layout/crop, truly transparent background, only the repaired existing art, no text/annotation.",
+      "promptKind": "exact",
+      "box": {
+        "x": 1863.1355726359575,
+        "y": 1559.5448457352652,
+        "width": 320,
+        "height": 384,
+        "scale": 2
+      },
+      "appliedToHandArtwork": false
+    },
+    {
+      "group": "cuffs-right",
+      "referenceSha256": "0e457597afbde927c329d719fbca8cb9b9d0fef054889ffaf5335f39fb2dc08f",
+      "generatedSha256": "7fdf27e7858f24fe64dcb137a5bb6512f635186bdc67a0aa8533928da5430379",
+      "prompt": "Edit this EXACT illustration crop, keeping the exact composition and pixel placement. Repair ONLY the wrist junction of the hand with pink handcuff. Currently the forearm ends as a diagonal overlapping stump with mismatched skin, protruding double lines and a notch. Redraw the lower base of the hand and wrist as a single anatomically normal short wrist flowing smoothly into the original forearm. Naturally taper the palm into the forearm with realistic subtle wrist bones, without a spare flap, sudden step, cut line or rubber tube. Preserve the exact fingers and gesture, nail shape and blue color, all held objects and accessories (especially controller/cuff/chain), palm size, arm width/direction and length. Match this exact illustration's original pale ivory skin with subtle pale pink soft shadows, reddish brown thin contours with the SAME weight as the arm. Remove the duplicate parallel outlines and internal cutoff/seam where the old forearm overlaps the hand. Keep all other original drawing unaltered. EXACT 640x768 layout/crop, truly transparent background, only the repaired existing art, no text/annotation.",
+      "promptKind": "exact",
+      "box": {
+        "x": 2373.939148887898,
+        "y": 1417.9134788374324,
+        "width": 320,
+        "height": 384,
+        "scale": 2
+      },
+      "appliedToHandArtwork": false
+    },
+    {
+      "group": "cuffs-left",
+      "referenceSha256": "0e94f706b95b2282317229f3b71e8385987ff4ce77168766e8fc0a4626c5d85c",
+      "generatedSha256": "8c5ac7251d881abe41e8f1d329fb729e6a8fe9aeebac5d7fe34af132cf1b2b54",
+      "prompt": "Edit this EXACT illustration crop, keeping the exact composition and pixel placement. Repair ONLY the wrist junction of the hand with pink handcuff. Currently the forearm ends as a diagonal overlapping stump with mismatched skin, protruding double lines and a notch. Redraw the lower base of the hand and wrist as a single anatomically normal short wrist flowing smoothly into the original forearm. Naturally taper the palm into the forearm with realistic subtle wrist bones, without a spare flap, sudden step, cut line or rubber tube. Preserve the exact fingers and gesture, nail shape and blue color, all held objects and accessories (especially controller/cuff/chain), palm size, arm width/direction and length. Match this exact illustration's original pale ivory skin with subtle pale pink soft shadows, reddish brown thin contours with the SAME weight as the arm. Remove the duplicate parallel outlines and internal cutoff/seam where the old forearm overlaps the hand. Keep all other original drawing unaltered. EXACT 640x768 layout/crop, truly transparent background, only the repaired existing art, no text/annotation.",
+      "promptKind": "exact",
+      "box": {
+        "x": 2096.0360743486553,
+        "y": 1457.5056555456554,
+        "width": 320,
+        "height": 384,
+        "scale": 2
+      },
+      "appliedToHandArtwork": false
+    },
+    {
+      "group": "noodles-right",
+      "referenceSha256": "9d6a1f3a5a9f53ae84a9a558bf35bc998616e504549b163967a6bc750d1ee878",
+      "generatedSha256": "b997aba0fdf17a4cdd5c5a28c79dfd3de905c703c41d0beaf21dcdf916c9970e",
+      "prompt": "Production repair of this exact anime illustration crop. Repair ONLY the lower palm and wrist junction of the chopstick holding hand, preserving its exact layout and pose. Make an anatomically normal short wrist tapering smoothly from the hand into the existing forearm. Remove the duplicate skin flap, overlapping stump, angular notch, stray extra contour and hard diagonal skin-color cutoff at the joint. It must be ONE continuous natural skin surface, with two smooth uninterrupted outer contours, not a pasted patch or rubber tube. Preserve ALL existing fingers, blue nails, hand pose, props, forearm length/width/direction. Match the ORIGINAL pale ivory skin color, soft subtle pink shadows, delicate reddish-brown outline thickness exactly from hand to arm. Do not change any other part or add fingers. Keep exact 640x768 crop coordinates and truly transparent background. No text, annotations or diagrams.",
+      "promptKind": "exact",
+      "box": {
+        "x": 2571.6372329137266,
+        "y": 1225.983462416886,
+        "width": 320,
+        "height": 384,
+        "scale": 2
+      },
+      "appliedToHandArtwork": false
+    },
+    {
+      "group": "noodles-left",
+      "referenceSha256": "e90fa5e57e11c1a922c1a3eacb9805eb9bb003493c5981e898133c5a3827867e",
+      "generatedSha256": "74059fcd12f2fd3c8629c05d082b0288515476ef678cf3bd75b92f5c562e15b0",
+      "prompt": "Production repair of this exact anime illustration crop. Repair ONLY the lower palm and wrist junction of the noodle cup holding hand, preserving its exact layout and pose. Make an anatomically normal short wrist tapering smoothly from the hand into the existing forearm. Remove the duplicate skin flap, overlapping stump, angular notch, stray extra contour and hard diagonal skin-color cutoff at the joint. It must be ONE continuous natural skin surface, with two smooth uninterrupted outer contours, not a pasted patch or rubber tube. Preserve ALL existing fingers, blue nails, hand pose, props, forearm length/width/direction. Match the ORIGINAL pale ivory skin color, soft subtle pink shadows, delicate reddish-brown outline thickness exactly from hand to arm. Do not change any other part or add fingers. Keep exact 640x768 crop coordinates and truly transparent background. No text, annotations or diagrams.",
+      "promptKind": "exact",
+      "box": {
+        "x": 2041.3196940248768,
+        "y": 1535.8686154195975,
+        "width": 320,
+        "height": 384,
+        "scale": 2
+      },
+      "appliedToHandArtwork": false
+    }
+  ],
+  "purpose": "Anatomical reference only; existing hand illustration and geometry are preserved."
+}

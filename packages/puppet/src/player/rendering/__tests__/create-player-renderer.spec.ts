@@ -145,8 +145,9 @@ describe('createPlayerRenderer', () => {
   })
   test.each<{renderer: PlayerRendererPreference; preference: string[]}>([
     {preference: ['webgl', 'webgpu'], renderer: 'auto'},
-    {preference: ['webgl'], renderer: 'webgl'},
-    {preference: ['webgpu'], renderer: 'webgpu'},
+    {preference: ['webgl', 'webgpu'], renderer: 'pixi'},
+    {preference: ['webgl'], renderer: 'pixi-webgl'},
+    {preference: ['webgpu'], renderer: 'pixi-webgpu'},
   ])(
     'should honor the requested backend without falling back from explicit $renderer',
     async ({renderer, preference}) => {

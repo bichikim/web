@@ -49,6 +49,36 @@ fn monitor_identity(monitors: &[Monitor], index: usize) -> WallpaperMonitor {
     }
 }
 
+fn display_name(name: Option<&str>, index: usize, prefix: &str) -> String {
+    name.map(str::to_owned)
+        .unwrap_or_else(|| format!("{prefix} {}", index + 1))
+}
+
+pub(crate) fn localize_windows(
+    app: &AppHandle,
+    language: crate::locale::Language,
+) -> Result<(), String> {
+    let windows = app.webview_windows();
+    if !windows.keys().any(|label| label.starts_with("wallpaper-")) {
+        return Ok(());
+    }
+    let monitors = app
+        .available_monitors()
+        .map_err(|error| error.to_string())?;
+    let prefix = crate::locale::text_for(language, "모니터");
+    let title = crate::locale::text_for(language, "Wallpaper 배경");
+    for (index, monitor) in monitors.iter().enumerate() {
+        let identity = monitor_identity(&monitors, index);
+        if let Some(window) = windows.get(&window_label(&identity.id)) {
+            let name = display_name(monitor.name().map(String::as_str), index, &prefix);
+            window
+                .set_title(&format!("{title} — {name}"))
+                .map_err(|error| error.to_string())?;
+        }
+    }
+    Ok(())
+}
+
 fn window_label(monitor_id: &str) -> String {
     let mut hash = DefaultHasher::new();
     monitor_id.hash(&mut hash);
@@ -71,8 +101,13 @@ pub(crate) fn list_wallpaper_monitors(
     let monitors = app
         .available_monitors()
         .map_err(|error| error.to_string())?;
+    let prefix = crate::locale::text(&app, "모니터");
     Ok((0..monitors.len())
-        .map(|index| monitor_identity(&monitors, index))
+        .map(|index| {
+            let mut monitor = monitor_identity(&monitors, index);
+            monitor.name = display_name(monitors[index].name().map(String::as_str), index, &prefix);
+            monitor
+        })
         .collect())
 }
 
@@ -114,8 +149,13 @@ pub(crate) async fn open_background(
             .map_err(|error| error.to_string())?,
         )
         .title(format!(
-            "Wallpaper 배경 — {}",
-            monitor_identity(&monitors, index).name
+            "{} — {}",
+            crate::locale::text(&app, "Wallpaper 배경"),
+            display_name(
+                monitor.name().map(String::as_str),
+                index,
+                &crate::locale::text(&app, "모니터"),
+            )
         ))
         .position(
             f64::from(monitor.position().x) / scale,
@@ -169,4 +209,16 @@ pub(crate) async fn close_background(
         receiver.await.map_err(|error| error.to_string())?;
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::display_name;
+
+    #[test]
+    fn localizes_unnamed_displays_without_changing_authored_names() {
+        assert_eq!(display_name(None, 1, "Monitor"), "Monitor 2");
+        assert_eq!(display_name(None, 1, "모니터"), "모니터 2");
+        assert_eq!(display_name(Some("나의 화면"), 1, "Monitor"), "나의 화면");
+    }
 }

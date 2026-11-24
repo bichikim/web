@@ -18,29 +18,30 @@ test('should preserve existing multipliers and keep the base direction independe
     headVerticalScale: 3.5,
   })
   render(() => <SPoffoMotionAdjustment target="head" value={value()} onChange={setValue} />)
-  expect(screen.getByRole('spinbutton', {name: '얼굴 상하 반응 배율'})).toHaveValue('5.25')
-  fireEvent.click(screen.getByRole('button', {name: '얼굴 좌우 반응 배율 늘리기'}))
+  expect(screen.getByRole('spinbutton', {name: '머리 상하 반응 배율'})).toHaveValue('5.25')
+  fireEvent.click(screen.getByRole('button', {name: '머리 좌우 반응 배율 늘리기'}))
   expect(value()).toMatchObject({
     eyeCenterY: 10,
     headResponseX: 1.6,
     headScale: 1.5,
     headVerticalScale: 3.5,
   })
-  expect(screen.getByRole('spinbutton', {name: '얼굴 상하 반응 배율'})).toHaveValue('5.25')
-  const vertical = screen.getByRole('spinbutton', {name: '얼굴 상하 반응 배율'})
+  expect(screen.getByRole('spinbutton', {name: '머리 상하 반응 배율'})).toHaveValue('5.25')
+  const vertical = screen.getByRole('spinbutton', {name: '머리 상하 반응 배율'})
   fireEvent.input(vertical, {target: {value: '3'}})
   fireEvent.blur(vertical)
   expect(value()).toMatchObject({headResponseX: 1.6, headResponseY: 3})
-  const limit = screen.getByRole('spinbutton', {name: '얼굴 좌우 최대'})
+  const limit = screen.getByRole('spinbutton', {name: '머리 좌우 최대'})
   fireEvent.input(limit, {target: {value: '0'}})
   fireEvent.blur(limit)
   expect(value()).toMatchObject({headCenterX: 50, headMaximumX: 0, headMinimumX: -2})
-  fireEvent.click(screen.getByRole('button', {name: '얼굴 초기화'}))
+  fireEvent.click(screen.getByRole('button', {name: '머리 초기화'}))
   expect(value()).toEqual({
     cameraX: -0.2,
     eyeCenterY: 10,
     headCenterX: 0,
     headCenterY: 0,
+    headFollowSpeed: 1,
     headLimitX: 30,
     headLimitY: 30,
     headMaximumX: 30,

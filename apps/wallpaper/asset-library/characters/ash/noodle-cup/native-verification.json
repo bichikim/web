@@ -1,0 +1,60 @@
+{
+  "source": "actual Wallpaper Worker and canvas during gaze reversal with live physics",
+  "pointerInputUsed": false,
+  "poses": [
+    {
+      "name": "rest",
+      "head": [0, 0],
+      "physics": [0.00999468599249409, 0.006642174345024454, 0.0043657111763352316],
+      "anchorError": 0,
+      "coherentError": 0.00014541991913574748,
+      "folded": 0,
+      "maximumVertexError": 0.0004458657813302125
+    },
+    {
+      "name": "up",
+      "head": [0, 30],
+      "physics": [0.0032826083118690026, 0.027912465241062716, -0.06305428364367069],
+      "anchorError": 0,
+      "coherentError": 0.00012360843811620725,
+      "folded": 0,
+      "maximumVertexError": 0.000588270431762794
+    },
+    {
+      "name": "down",
+      "head": [0, -30],
+      "physics": [0, -0.05018092123484345, 0.24923495347593583],
+      "anchorError": 0,
+      "coherentError": 0.000205803487006051,
+      "folded": 0,
+      "maximumVertexError": 0.0005590289229076006
+    },
+    {
+      "name": "left",
+      "head": [-30, 0],
+      "physics": [-0.08555984296343346, 0.12351253084588307, 0.2906764651553997],
+      "anchorError": 0,
+      "coherentError": 0.0002037572767221718,
+      "folded": 0,
+      "maximumVertexError": 0.0005527407861336542
+    },
+    {
+      "name": "right",
+      "head": [30, 0],
+      "physics": [0.23873418597146318, 0.012692739403584202, 0.014323869398869022],
+      "anchorError": 0,
+      "coherentError": 0.00020425063212314853,
+      "folded": 0,
+      "maximumVertexError": 0.00045040717145639064
+    },
+    {
+      "name": "up-again",
+      "head": [0, 30],
+      "physics": [0.027273087007250736, -0.04104890080491034, 0.13408502091220015],
+      "anchorError": 0,
+      "coherentError": 0.0002177906817451003,
+      "folded": 0,
+      "maximumVertexError": 0.00039778377640686813
+    }
+  ]
+}

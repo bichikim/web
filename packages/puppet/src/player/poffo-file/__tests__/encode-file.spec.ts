@@ -29,6 +29,7 @@ test('should preserve the normalized document and every embedded byte without ch
   expect(file.type).toBe('application/vnd.poffo')
   const header = decodeHeader(new Uint8Array(await file.slice(0, POFFO_HEADER_BYTES).arrayBuffer()))
   expect(header.assetCount).toBe(1)
+  expect(header.version).toBe(2)
 })
 
 test('should preserve unknown authoring fields and audio data URLs', async () => {

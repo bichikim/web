@@ -1,7 +1,11 @@
 import {frameValues} from './frame-values'
 import {type Accessor, createEffect, createMemo, onCleanup} from 'solid-js'
 import type {Player} from '@winter-love/puppet/player'
-import {LIP_SYNC_SHAPES, type PoffoLipSync} from '@winter-love/wallpaper/settings/lipsync'
+import {
+  DEFAULT_POFFO_LIPSYNC,
+  LIP_SYNC_SHAPES,
+  type PoffoLipSync,
+} from '@winter-love/wallpaper/settings/lipsync'
 import type {TrackingParameter} from '../tracking/types'
 import {type LipSyncFrame, subscribeLipSync} from './channel'
 import {lipSyncValue, resolveLipSyncParameter} from './parameters'
@@ -15,9 +19,16 @@ interface UseLipSyncProps {
 }
 /** Applies independent mouth poses, releasing only its own overrides on rebind or cancellation. */
 export const useLipSync = (props: UseLipSyncProps) => {
-  const settings = createMemo(() => props.options(), undefined, {
-    equals: (first, second) => JSON.stringify(first) === JSON.stringify(second),
-  })
+  const settings = createMemo(
+    () => {
+      const options = props.options()
+      return options === undefined
+        ? undefined
+        : {...options, gain: options.gain ?? DEFAULT_POFFO_LIPSYNC.gain}
+    },
+    undefined,
+    {equals: (first, second) => JSON.stringify(first) === JSON.stringify(second)},
+  )
   createEffect(() => {
     const id = props.widgetId()
     const options = settings()
@@ -55,14 +66,22 @@ export const useLipSync = (props: UseLipSyncProps) => {
     let request = 0
     let pending: LipSyncFrame | null = null
     let applied = resting
+    let formOrigin: number | undefined
     const draw = () => {
       request = 0
       if (disposed) {
         return
       }
+      const motion = pending?.motion
+      if (motion?.phase === 'hold' || motion?.phase === 'release') {
+        formOrigin ??= paired === undefined ? undefined : applied[paired.form.id]
+      } else {
+        formOrigin = undefined
+      }
       const values = frameValues(pending, {
         automatic,
         connections,
+        formOrigin,
         pair: paired,
         resting,
         settings: options,

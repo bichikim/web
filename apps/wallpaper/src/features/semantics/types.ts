@@ -1,10 +1,17 @@
 import type {MotionPlayback, Player} from '@winter-love/puppet/player'
 import type {SemanticAction} from '@winter-love/wallpaper/settings/semantics'
 
+export interface SemanticSegment {
+  readonly start: number
+  readonly end: number
+  readonly text: string
+  readonly complete: boolean
+}
+
 export interface CharacterAction {
   readonly action: SemanticAction
   readonly label: string
-  /** Motion channels released on stop; omitted for expressions. */
+  /** Channels affected by this behavior, used for ownership and motion-history release; omitted when unknown. */
   readonly parameterIds?: readonly string[]
 }
 

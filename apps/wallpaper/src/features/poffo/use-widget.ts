@@ -2,23 +2,39 @@ import {isTauri} from '@tauri-apps/api/core'
 import {getCurrentWindow} from '@tauri-apps/api/window'
 import {type Accessor, createEffect, createMemo, createSignal, onCleanup, onMount} from 'solid-js'
 import {createStore, reconcile} from 'solid-js/store'
-import {createLibraryRepository} from '@winter-love/wallpaper/settings/library-repository'
 import {menuActions} from '../semantics/menu-actions'
-import {createBuiltinSettings} from '../builtin-assets'
+import {createBuiltinLibrary, createBuiltinSettings} from '../builtin-assets'
 import type {PoffoWidget, WidgetSize} from '@winter-love/wallpaper/settings/library-model'
+import {trackingProfile} from '@winter-love/wallpaper/settings/tracking-profile'
+import {useWidgetSilhouette} from './use-widget-silhouette'
+import type {FrameAlphaSample} from '@winter-love/puppet/player'
 
 interface WidgetState {
   widget: PoffoWidget | null
 }
 export const useWidget = (id: Accessor<string>) => {
-  const library = createLibraryRepository('wallpaper-library')
+  const library = createBuiltinLibrary('wallpaper-library')
   const assets = createBuiltinSettings('wallpaper-settings')
   const [state, setState] = createStore<WidgetState>({widget: null})
+  const assetId = () => state.widget?.assetId ?? null
+  const silhouette = useWidgetSilhouette({
+    assetId,
+    load: assets.loadPuppetSilhouette,
+    save: assets.savePuppetSilhouette,
+  })
   const [error, setError] = createSignal<string | null>(null)
   const [actionError, setActionError] = createSignal<string | null>(null)
   let disposed = false
+  let revision = 0
   let stopMove: (() => void) | null = null
   let pending = Promise.resolve()
+  let silhouetteWrites = Promise.resolve()
+  const captureSilhouette = (frame: FrameAlphaSample) => {
+    const write = silhouette.capture(frame)
+    if (write !== undefined) {
+      silhouetteWrites = Promise.all([silhouetteWrites, write]).then(() => undefined)
+    }
+  }
   const report = (cause: unknown) => {
     if (!disposed) {
       console.error('Poffo widget failed', cause)
@@ -26,13 +42,21 @@ export const useWidget = (id: Accessor<string>) => {
     }
   }
   const refresh = async () => {
+    revision += 1
+    const request = revision
     const currentId = id()
-    const snapshot = await library.read()
-    if (!disposed) {
-      setState(
-        'widget',
-        reconcile(snapshot.widgets.find((widget) => widget.id === currentId) ?? null),
-      )
+    try {
+      const snapshot = await library.read()
+      if (!disposed && request === revision) {
+        setState(
+          'widget',
+          reconcile(snapshot.widgets.find((widget) => widget.id === currentId) ?? null),
+        )
+      }
+    } catch (cause) {
+      if (request === revision) {
+        report(cause)
+      }
     }
   }
   const stopLibrary = library.subscribe(() => {
@@ -69,7 +93,7 @@ export const useWidget = (id: Accessor<string>) => {
     disposed = true
     stopLibrary()
     stopMove?.()
-    pending
+    Promise.all([pending, silhouetteWrites])
       .finally(() => {
         library.close()
         assets.close()
@@ -108,20 +132,28 @@ export const useWidget = (id: Accessor<string>) => {
   }
   return {
     agentBindings: () => state.widget?.speech?.agentBindings,
-    assetId: () => state.widget?.assetId ?? null,
+    assetId,
+    captureSilhouette,
     drag,
     error: () => actionError() ?? error(),
-    lipsync: () =>
-      state.widget?.speech?.enabled === false ? undefined : state.widget?.speech?.lipsync,
+    lipsync: () => {
+      const speech = state.widget?.speech
+      return speech?.lipsync?.source === 'microphone' || speech?.enabled !== false
+        ? speech?.lipsync
+        : undefined
+    },
     load: assets.loadPuppet,
     menuActions: registered,
     motionId: () => state.widget?.motionId,
     report,
     saveSize: (size: WidgetSize) => library.resizeWidget(id(), size),
     semanticBindings: () => state.widget?.speech?.semanticBindings,
+    silhouette: silhouette.silhouette,
     toggleAction,
+    touch: () => state.widget?.speech?.touch,
     tracking: () => state.widget?.tracking,
-    trackingBindings: () => state.widget?.trackingBindings,
-    trackingOptions: () => state.widget?.trackingOptions,
+    trackingBindings: () => trackingProfile(state.widget ?? undefined).bindings,
+    trackingOptions: () => trackingProfile(state.widget ?? undefined).options,
+    wantsSilhouette: silhouette.needsCapture,
   }
 }

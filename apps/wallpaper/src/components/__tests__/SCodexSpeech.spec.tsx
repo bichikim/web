@@ -4,12 +4,16 @@ import {afterEach, expect, it, vi} from 'vitest'
 import {createSignal} from 'solid-js'
 import {SCodexSpeech} from '../SCodexSpeech'
 
+vi.mock('../../features/speech/use-speech-minimum-height', () => ({
+  useSpeechMinimumHeight: () => () => ({}),
+}))
+
 afterEach(() => {
   cleanup()
   vi.restoreAllMocks()
 })
-it('should allow retrying speech independently of selecting or closing the bubble', () => {
-  const retry = vi.fn()
+it('should toggle speech independently of selecting or closing the bubble with one playback button', () => {
+  const toggle = vi.fn()
   const select = vi.fn()
   const dismiss = vi.fn()
   render(() => (
@@ -22,14 +26,15 @@ it('should allow retrying speech independently of selecting or closing the bubbl
         text: '응답',
         tool: null,
       }}
-      onVoiceRetry={retry}
+      onVoiceToggle={toggle}
       onSelect={select}
       onDismiss={dismiss}
       voiceNotice="무음 응답"
     />
   ))
-  fireEvent.click(screen.getByRole('button', {name: '다시 읽기'}))
-  expect(retry).toHaveBeenCalledOnce()
+  fireEvent.click(screen.getByRole('button', {name: '음성 재생'}))
+  expect(screen.queryByRole('button', {name: '다시 읽기'})).not.toBeInTheDocument()
+  expect(toggle).toHaveBeenCalledOnce()
   expect(select).not.toHaveBeenCalled()
   expect(dismiss).not.toHaveBeenCalled()
 })
@@ -52,10 +57,14 @@ it('should reorient its tail when the actual character target crosses to the oth
     />
   ))
   const bubble = screen.getByRole('status')
-  expect(bubble.querySelector('span[aria-hidden="true"]')).toHaveAttribute('data-edge', 'bottom')
-  expect(bubble.querySelector('span[aria-hidden="true"]')).toHaveStyle('--tail-x: 218px')
+  const outline = bubble.querySelector('svg[data-edge]')
+  expect(outline).toHaveAttribute('data-edge', 'bottom')
+  expect(outline).toHaveAttribute('data-corner', 'bottom-right')
+  const path = outline?.querySelector('path')
+  const before = path?.getAttribute('d')
   setTarget({x: -92, y: 48})
-  expect(bubble.querySelector('span[aria-hidden="true"]')).toHaveAttribute('data-edge', 'left')
+  expect(outline).toHaveAttribute('data-edge', 'left')
+  expect(path?.getAttribute('d')).not.toBe(before)
 })
 it('should show approval waiting without offering to approve outside Codex', () => {
   render(() => (
@@ -121,10 +130,11 @@ it('should render the actual response as text and close independently of selecti
   expect(select).not.toHaveBeenCalled()
 })
 
-it('should distinguish preparing speech from playback and hide the indicator when idle', () => {
+it('should show loading while preparing and retain one playback toggle across voice states', () => {
   const [status, setStatus] = createSignal<
-    'download' | 'generating' | 'playing' | 'buffering' | 'idle'
+    'download' | 'generating' | 'playing' | 'buffering' | 'paused' | 'idle'
   >('download')
+  const toggle = vi.fn()
   render(() => (
     <SCodexSpeech
       activity={{
@@ -136,22 +146,31 @@ it('should distinguish preparing speech from playback and hide the indicator whe
         tool: null,
       }}
       voiceState={status()}
+      onVoiceToggle={toggle}
     />
   ))
-  expect(screen.getByRole('img', {name: '음성 모델 준비 중'})).toHaveAttribute('aria-busy', 'true')
-  expect(screen.getByRole('img').querySelectorAll('svg')).toHaveLength(1)
+  const button = screen.getByRole('button', {name: '음성 일시정지'})
+  expect(button).toHaveAttribute('aria-busy', 'true')
+  expect(button).toHaveAccessibleDescription('음성 준비 중')
+  expect(button.querySelector('circle')).toHaveClass('animate-spin', 'motion-reduce:animate-none')
+  expect(button.querySelectorAll('svg')).toHaveLength(1)
+  fireEvent.click(button)
+  expect(toggle).toHaveBeenCalledOnce()
   setStatus('generating')
-  expect(screen.getByRole('img', {name: '음성 생성 중'})).toHaveAttribute('aria-busy', 'true')
+  expect(button).toHaveAttribute('aria-busy', 'true')
+  expect(button.querySelector('circle')).toBeInTheDocument()
   setStatus('buffering')
-  expect(screen.getByRole('img', {name: '말풍선 읽는 중 · 다음 음성 생성 중'})).toHaveAttribute(
-    'aria-busy',
-    'true',
-  )
+  expect(button).toHaveAttribute('aria-busy', 'true')
+  expect(button.querySelector('circle')).toBeInTheDocument()
   setStatus('playing')
-  expect(screen.getByRole('img', {name: '말풍선 읽는 중'})).toHaveAttribute('aria-busy', 'false')
-  expect(screen.getByRole('img').querySelectorAll('svg')).toHaveLength(1)
+  expect(button).toHaveAttribute('aria-busy', 'false')
+  expect(button.querySelector('circle')).toBeNull()
+  expect(button).not.toHaveAttribute('aria-description')
+  setStatus('paused')
+  expect(screen.getByRole('button', {name: '음성 재생'})).toBe(button)
   setStatus('idle')
-  expect(screen.queryByRole('img')).not.toBeInTheDocument()
+  expect(screen.getAllByRole('button', {name: '음성 재생'})).toEqual([button])
+  expect(screen.queryByRole('button', {name: '음성 일시정지'})).not.toBeInTheDocument()
 })
 
 it('should open its chat by header double click or the open button while keeping other actions separate', async () => {

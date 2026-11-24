@@ -1,0 +1,14 @@
+{
+  "source": "Actual approved right forearm reflected through both wrist boundary ends and elbow anchor; middle contour comparison in model coordinates",
+  "before": {
+    "mean": 11.266896271887429,
+    "maximum": 29,
+    "points": 818
+  },
+  "after": {
+    "mean": 0.6579690551662101,
+    "maximum": 3.1622776601683795,
+    "points": 814
+  },
+  "preservedElbowRoot": true
+}

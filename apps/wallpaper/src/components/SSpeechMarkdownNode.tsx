@@ -1,3 +1,4 @@
+import {text as uiText} from '../features/localization'
 import {For, type JSX} from 'solid-js'
 import {Dynamic} from 'solid-js/web'
 import type {Code, List, Nodes} from 'mdast'
@@ -9,7 +10,11 @@ const children = (node: Nodes): JSX.Element =>
 const SSpeechCode = (props: {readonly node: Code}) => (
   <pre
     role="region"
-    aria-label={props.node.lang ? `${props.node.lang} 코드` : '코드 블록'}
+    aria-label={
+      props.node.lang
+        ? uiText('{value0} 코드', {value0: String(props.node.lang)})
+        : uiText('코드 블록')
+    }
     tabIndex={0}
     class="m-0 min-w-0 overflow-auto rounded-lg border border-solid border-stone-300/70 bg-white/55
     p-2 font-mono text-xs leading-5 [white-space:inherit] [overflow-wrap:inherit]"

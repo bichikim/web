@@ -35,3 +35,21 @@ test('should acknowledge independent timeline fields separately and replace pend
   mailbox.add({additional: {1: null}})
   expect(mailbox.snapshot().patch).toEqual({additional: {1: null}})
 })
+
+test('should exclude submitted seeks and resets without acknowledging their display early', () => {
+  const mailbox = createInputMailbox()
+  mailbox.add({look: {lookTarget: {x: 0.1, y: 0}}, playback: {time: 0}}, true)
+  mailbox.add({look: {lookTarget: {x: 0.7, y: 0}}})
+  expect(mailbox.snapshot(1)).toEqual({
+    patch: {look: {lookTarget: {x: 0.7, y: 0}}},
+    revision: 2,
+    settle: false,
+  })
+  expect(mailbox.pending(2)).toBe(false)
+  expect(mailbox.pending()).toBe(true)
+  expect(mailbox.snapshot().patch.playback).toEqual({time: 0})
+  mailbox.acknowledge(1)
+  expect(mailbox.snapshot()).toEqual(mailbox.snapshot(1))
+  mailbox.acknowledge(2)
+  expect(mailbox.pending()).toBe(false)
+})

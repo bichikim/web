@@ -1,14 +1,88 @@
 /** @vitest-environment jsdom */
-import {cleanup, fireEvent, render, screen} from '@solidjs/testing-library'
+import {cleanup, fireEvent, render, screen, within} from '@solidjs/testing-library'
 import {createSignal} from 'solid-js'
 import {afterEach, expect, test, vi} from 'vitest'
 import {usePuppet} from '../../features/background/use-puppet'
 import {SPoffoCalibrationPreview} from '../SPoffoCalibrationPreview'
 
-vi.mock('../../features/background/use-puppet', () => ({usePuppet: vi.fn()}))
+vi.mock('../../features/background/use-puppet', () => ({
+  usePuppet: vi.fn(() => ({
+    cancel: vi.fn(),
+    canvasKey: () => document,
+    finish: vi.fn(),
+    lostCapture: vi.fn(),
+    move: vi.fn(),
+    ready: () => true,
+    start: vi.fn(),
+  })),
+}))
 afterEach(() => {
   cleanup()
   vi.clearAllMocks()
+})
+
+test('should discard an unfinished head preview when changing the tracking input', () => {
+  const [mode, setMode] = createSignal<'cursor' | 'camera-pose'>('cursor')
+  const {unmount} = render(() => (
+    <SPoffoCalibrationPreview
+      mode={mode()}
+      assetId={() => 'character'}
+      load={vi.fn()}
+      value={mode() === 'cursor' ? {headCenterX: 0} : {headCenterX: 5}}
+      onChange={vi.fn()}
+    />
+  ))
+  const rendering = vi.mocked(usePuppet).mock.lastCall![0]
+  const pad = screen.getByRole('group', {name: '머리 정면 보정'})
+  const area = pad.querySelector<HTMLDivElement>('[tabindex="-1"]')!
+  vi.spyOn(area, 'getBoundingClientRect').mockReturnValue({
+    height: 200,
+    left: 0,
+    top: 0,
+    width: 200,
+  } as DOMRect)
+  const release = vi.fn()
+  Object.defineProperties(area, {
+    hasPointerCapture: {value: () => true},
+    releasePointerCapture: {value: release},
+    setPointerCapture: {value: vi.fn()},
+  })
+  const event = new MouseEvent('pointerdown', {bubbles: true, button: 0, clientX: 150, clientY: 50})
+  Object.defineProperty(event, 'pointerId', {value: 1})
+  fireEvent(area, event)
+  expect(rendering.trackingOptions?.()?.headCenterX).toBe(50)
+  setMode('camera-pose')
+  expect(rendering.trackingOptions?.()).toEqual({headCenterX: 5})
+  unmount()
+  expect(release).toHaveBeenCalledWith(1)
+})
+
+test('should fold only the optional preview while keeping settings and the same canvas', () => {
+  render(() => (
+    <SPoffoCalibrationPreview
+      collapsible
+      assetId={() => 'character'}
+      load={vi.fn()}
+      onChange={vi.fn()}
+      controls={<button type="button">터치 설정</button>}
+    />
+  ))
+  const panel = screen.getByRole('group', {name: '미리보기'})
+  const summary = within(panel).getByText('미리보기', {selector: 'summary'})
+  const preview = within(panel).getByRole('figure', {hidden: true})
+  const canvas = preview.querySelector('canvas')
+  expect(panel).not.toHaveAttribute('open')
+  expect(preview).not.toBeVisible()
+  expect(screen.getByRole('button', {name: '터치 설정'})).toBeVisible()
+  expect(screen.getByRole('region', {name: '시선 보정 설정'})).toBeVisible()
+  fireEvent.click(summary)
+  expect(preview).toBeVisible()
+  fireEvent.click(summary)
+  expect(preview).not.toBeVisible()
+  fireEvent.click(summary)
+  expect(preview).toBeVisible()
+  expect(preview.querySelector('canvas')).toBe(canvas)
+  expect(usePuppet).toHaveBeenCalledOnce()
 })
 
 test('should keep settings-file controls outside the individual face, eye and connection tabs', () => {
@@ -26,7 +100,7 @@ test('should keep settings-file controls outside the individual face, eye and co
   expect(screen.getByRole('button', {name: '설정 JSON 저장'})).toBe(save)
   fireEvent.click(screen.getByRole('radio', {name: '연결'}))
   expect(screen.getByRole('button', {name: '설정 JSON 저장'})).toBe(save)
-  fireEvent.click(screen.getByRole('radio', {name: '얼굴'}))
+  fireEvent.click(screen.getByRole('radio', {name: '머리'}))
   expect(screen.getByRole('button', {name: '설정 JSON 저장'})).toBe(save)
 })
 
@@ -45,7 +119,7 @@ test('should reveal both handles only while calibrating and preserve the canvas 
   fireEvent.click(toggle)
   expect(screen.getByRole('button', {name: '카메라 위치 조정'})).toBeDefined()
   expect(screen.getByRole('button', {name: '얼굴 기준 조정'})).toBeDefined()
-  fireEvent.click(screen.getByRole('radio', {name: '얼굴'}))
+  fireEvent.click(screen.getByRole('radio', {name: '머리'}))
   expect(screen.queryByRole('button', {name: '카메라 위치 조정'})).toBeNull()
   expect(screen.queryByRole('button', {name: '얼굴 기준 조정'})).toBeNull()
   expect(screen.getByRole('group', {name: 'Poffo 위치'}).querySelector('canvas')).toBe(canvas)
@@ -169,12 +243,12 @@ test('should open face and eye calibration in cursor mode without enabling camer
   ))
   expect(screen.queryByRole('button', {name: '위치 핸들 표시'})).toBeNull()
   expect(screen.queryByRole('radio', {name: '위치'})).toBeNull()
-  expect(screen.getByRole('spinbutton', {name: '얼굴 좌우 기본 방향'})).toBeDefined()
+  expect(screen.getByRole('spinbutton', {name: '머리 정면 보정 좌우'})).toBeDefined()
   expect(screen.queryByRole('button', {name: '카메라 위치 조정'})).toBeNull()
   const rendering = vi.mocked(usePuppet).mock.lastCall![0]
   expect(rendering.tracking?.()).toBe('cursor')
   fireEvent.click(screen.getByRole('radio', {name: '눈동자'}))
-  expect(screen.getByRole('spinbutton', {name: '눈동자 상하 기본 방향'})).toBeDefined()
+  expect(screen.getByRole('spinbutton', {name: '눈동자 중심 보정 상하'})).toBeDefined()
   expect(rendering.tracking?.()).toBe('cursor')
 })
 
@@ -189,8 +263,8 @@ test('should preview two-dimensional calibration immediately and restore saved o
     />
   ))
   const rendering = vi.mocked(usePuppet).mock.lastCall![0]
-  fireEvent.click(screen.getByRole('radio', {name: '얼굴'}))
-  const pad = screen.getByRole('group', {name: '얼굴 기본 방향'})
+  fireEvent.click(screen.getByRole('radio', {name: '머리'}))
+  const pad = screen.getByRole('group', {name: '머리 정면 보정'})
   const area = pad.querySelector('[tabindex="-1"]') as HTMLDivElement
   vi.spyOn(area, 'getBoundingClientRect').mockReturnValue({
     height: 200,

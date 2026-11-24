@@ -1,0 +1,204 @@
+{
+  "sha256": "88cf0d741c97549f28864b26efe407a444a885d60287df2f7da94f918366e5d5",
+  "results": [
+    {
+      "pose": "rest",
+      "bodyError": 0,
+      "upperError": 5.084229945850415e-13,
+      "contactError": 2.513298937207951e-8,
+      "visibleNewSkinParts": ["coat-free:heart-right:hand"]
+    },
+    {
+      "pose": "physics--1",
+      "bodyError": 0,
+      "upperError": 6.431098710768743e-13,
+      "contactError": 2.5146003686019286e-8,
+      "visibleNewSkinParts": ["coat-free:heart-right:hand"]
+    },
+    {
+      "pose": "physics--0.5",
+      "bodyError": 0,
+      "upperError": 6.431098710768743e-13,
+      "contactError": 2.5139043090396572e-8,
+      "visibleNewSkinParts": ["coat-free:heart-right:hand"]
+    },
+    {
+      "pose": "physics-0.5",
+      "bodyError": 0,
+      "upperError": 9.094947017729282e-13,
+      "contactError": 2.517558753724956e-8,
+      "visibleNewSkinParts": ["coat-free:heart-right:hand"]
+    },
+    {
+      "pose": "physics-1",
+      "bodyError": 0,
+      "upperError": 6.431098710768743e-13,
+      "contactError": 2.5218656185644226e-8,
+      "visibleNewSkinParts": ["coat-free:heart-right:hand"]
+    },
+    {
+      "pose": "turn--1",
+      "bodyError": 0,
+      "upperError": 6.431098710768743e-13,
+      "contactError": 2.5132921559596958e-8,
+      "visibleNewSkinParts": ["coat-free:heart-right:hand"]
+    },
+    {
+      "pose": "turn-1",
+      "bodyError": 0,
+      "upperError": 5.084229945850415e-13,
+      "contactError": 2.5132903421863584e-8,
+      "visibleNewSkinParts": ["coat-free:heart-right:hand"]
+    },
+    {
+      "pose": "opposed",
+      "bodyError": 0,
+      "upperError": 5.084229945850415e-13,
+      "contactError": 2.4939278604977264e-8,
+      "visibleNewSkinParts": ["coat-free:heart-right:hand"]
+    },
+    {
+      "pose": "fade-0.25",
+      "bodyError": 0,
+      "upperError": 5.084229945850415e-13,
+      "contactError": 2.513298937207951e-8,
+      "visibleNewSkinParts": ["coat-free:heart-right:hand"]
+    },
+    {
+      "pose": "fade-0.5",
+      "bodyError": 0,
+      "upperError": 5.084229945850415e-13,
+      "contactError": 2.513298937207951e-8,
+      "visibleNewSkinParts": ["coat-free:heart-right:hand"]
+    },
+    {
+      "pose": "fade-0.75",
+      "bodyError": 0,
+      "upperError": 5.084229945850415e-13,
+      "contactError": 2.513298937207951e-8,
+      "visibleNewSkinParts": ["coat-free:heart-right:hand"]
+    }
+  ],
+  "otherActions": [
+    {
+      "id": "울먹이는 눈",
+      "error": 0
+    },
+    {
+      "id": "필기 동작",
+      "error": 0
+    },
+    {
+      "id": "작아지기",
+      "error": 0
+    },
+    {
+      "id": "얼굴 그림자",
+      "error": 0
+    },
+    {
+      "id": "커피 들기",
+      "error": 0
+    },
+    {
+      "id": "눈의 하이라이트 끄기",
+      "error": 0
+    },
+    {
+      "id": "화남",
+      "error": 0
+    },
+    {
+      "id": "노트 들기",
+      "error": 0
+    },
+    {
+      "id": "게임패드 들기",
+      "error": 0
+    },
+    {
+      "id": "수갑 찬 손",
+      "error": 0
+    },
+    {
+      "id": "안경",
+      "error": 0
+    },
+    {
+      "id": "반짝이는 눈",
+      "error": 0
+    },
+    {
+      "id": "땀방울",
+      "error": 0
+    },
+    {
+      "id": "컵라면 들기",
+      "error": 0
+    },
+    {
+      "id": "눈물",
+      "error": 0
+    },
+    {
+      "id": "엄지 척",
+      "error": 0
+    },
+    {
+      "id": "하트 눈",
+      "error": 0
+    },
+    {
+      "id": "목줄 동작",
+      "error": 0
+    },
+    {
+      "id": "고양이 손",
+      "error": 0
+    },
+    {
+      "id": "홍조",
+      "error": 0
+    },
+    {
+      "id": "마이크 들기",
+      "error": 0
+    },
+    {
+      "id": "긴장",
+      "error": 0
+    },
+    {
+      "id": "왼손 버튼 누르기",
+      "error": 0
+    },
+    {
+      "id": "오른손 버튼 누르기",
+      "error": 0
+    },
+    {
+      "id": "칼 들기",
+      "error": 0
+    },
+    {
+      "id": "주먹 쥐기",
+      "error": 0
+    },
+    {
+      "id": "외투 벗기",
+      "error": 0
+    }
+  ],
+  "originalForearmCoordinatesPreserved": true,
+  "originalForearmWidth": 113.82054745795428,
+  "originalForearmAlphaPreserved": true,
+  "forearmBentOrNarrowedByRepair": false,
+  "originalFingersAndHeartPreserved": true,
+  "maximumFingerPixelError": 0,
+  "maximumFingerUvError": 0,
+  "allOtherOriginalTexturesPreserved": true,
+  "forearmTextureEditOnlyAtWristEnd": true,
+  "coatOnPreserved": true,
+  "intermediateSkinPartAdded": false,
+  "generatedArea": "Lower root of the hand part, artwork within the 90 model-unit lower palm; joint deformation limited to the bottom 35 units"
+}

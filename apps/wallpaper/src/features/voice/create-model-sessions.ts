@@ -13,14 +13,17 @@ interface SessionOptions extends Omit<Parameters<typeof loadSessions>[0], 'backe
 }
 
 /** Remembers GPU availability and model incompatibility for the lifetime of one worker. */
-export const createModelSessions = () => {
+export const createModelSessions = (runtimePath?: string) => {
   const rejected = new Set<SupertonicModelId>()
   const runtimes = new Map<SupertonicBackend, Promise<SupertonicRuntime>>()
   let gpu: boolean | null = null
   const runtimeFor = (backend: SupertonicBackend) => {
     let runtime = runtimes.get(backend)
     if (runtime === undefined) {
-      runtime = loadSupertonicRuntime(backend)
+      runtime =
+        runtimePath === undefined
+          ? loadSupertonicRuntime(backend)
+          : loadSupertonicRuntime(backend, runtimePath)
       runtimes.set(backend, runtime)
     }
     return runtime

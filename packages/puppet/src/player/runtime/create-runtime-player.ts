@@ -1,6 +1,9 @@
 import type {PuppetParameterValueMap} from '../../deformation'
 import {createEyeBlinkState, resolveEyeBlinkTiming} from '../eye-blink'
-import {findHitArea} from '../internal/hit-area'
+import {createPlayerPicking} from '../internal/create-player-picking'
+import {createParameterDrag} from '../internal/create-parameter-drag'
+import {releasePhysics} from '../internal/release-physics'
+import {PARAMETER_BLEND_STAGES} from '../parameter-blends'
 import {createPhysicsState} from '../internal/physics'
 import {
   assertPreparedPuppetDocument,
@@ -51,7 +54,7 @@ const createParameterCommands = (
     },
     getParameterValues: () => ({...state.frameValues}),
     patchParameterBlends(values, stage = 'before-physics') {
-      if (!state.destroyed && (stage === 'before-physics' || stage === 'after-physics')) {
+      if (!state.destroyed && PARAMETER_BLEND_STAGES.includes(stage)) {
         for (const [id, blend] of Object.entries(values)) {
           adjustments.setParameterBlend(state.document, id, blend, stage)
         }
@@ -241,6 +244,7 @@ export const createRuntimePlayer = (options: CreateRuntimePlayerOptions): Player
     motionHistory.reset()
     notices.clear()
     state.document = nextDocument
+    state.physicsRelease = undefined
     if (nextParameterValues !== undefined) {
       state.parameterValues = resolveParameterOverrides(state.document, nextParameterValues)
     }
@@ -262,21 +266,51 @@ export const createRuntimePlayer = (options: CreateRuntimePlayerOptions): Player
     ...createParameterCommands(options),
     ...createEffectCommands(options),
     ...createPlaybackCommands(options),
+    ...createPlayerPicking({
+      document: () => (state.destroyed ? undefined : state.document),
+      renderer,
+    }),
     configureRenderer: renderer.configure,
-    destroy: dispose,
-    getRenderingInfo: renderer.getRenderingInfo,
-    hitTest(point) {
-      if (state.destroyed) {
-        return undefined
-      }
-      return findHitArea({
-        document: state.document,
-        paintOrder: renderer.getPaintOrder(),
-        point: renderer.toDocumentPoint(point),
-        vertices: (partId) => renderer.getPartVertices(partId),
+    createParameterDrag(settings) {
+      return createParameterDrag({
+        ...settings,
+        document: () => (state.destroyed ? undefined : state.document),
+        renderer,
+        values: () => state.frameValues,
       })
     },
+    destroy: dispose,
+    getRenderingInfo: renderer.getRenderingInfo,
     redraw,
+    releaseParameterPhysics(parameterIds) {
+      if (state.destroyed || !state.physicsPreview || state.chainState === undefined) {
+        return []
+      }
+      const values = Object.fromEntries(
+        parameterIds.flatMap((id) =>
+          state.frameValues[id] === undefined ? [] : [[id, state.frameValues[id]]],
+        ),
+      )
+      const released = releasePhysics({
+        baseValues: {},
+        chainState: state.chainState,
+        document: state.document,
+        physicsOptions: state.adjustments.physicsOptions(),
+        physicsState: state.physicsState,
+        values,
+      })
+      if (released.parameterIds.length > 0) {
+        state.physicsRelease = {
+          ...state.physicsRelease,
+          ...Object.fromEntries(released.parameterIds.map((id) => [id, values[id]!])),
+        }
+        for (const id of released.parameterIds) {
+          state.adjustments.setParameterBlend(state.document, id, undefined, 'interaction')
+        }
+        refresh()
+      }
+      return released.parameterIds
+    },
     resetPhysics() {
       if (state.destroyed) {
         return

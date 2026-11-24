@@ -1,7 +1,7 @@
 //! Translation of the web player's checkpoint at the Worker I/O boundary.
 use super::*;
 use crate::worker::{WorkerError, map, pairs, undefined};
-use serde::{Serialize, de::DeserializeOwned};
+use serde::{Deserialize, Serialize, de::DeserializeOwned};
 use serde_json::{Value, json};
 
 fn read<T: DeserializeOwned>(value: Value) -> Result<T, WorkerError> {
@@ -21,12 +21,6 @@ fn title(s: &str) -> String {
 }
 fn cursor(v: &Value) -> Value {
     json!({"looped":v["loop"],"speed":v["speed"],"time":v["time"],"elapsed":v["elapsed"]})
-}
-fn vector(v: &Value) -> Value {
-    json!({"x":v[0],"y":v[1]})
-}
-fn point(v: &Value) -> Value {
-    json!([v["x"], v["y"]])
 }
 fn vowels(v: &Value) -> Value {
     if v.is_null() {
@@ -99,7 +93,70 @@ impl Player {
             .map(|p| values[&p.id].as_f64().unwrap_or(p.default_value))
             .collect()
     }
+    fn restore_worker_chains(
+        &self,
+        checkpoint: &Value,
+    ) -> Result<Option<ChainsState>, WorkerError> {
+        if checkpoint.is_null() {
+            return Ok(None);
+        }
+        let entries = checkpoint["chains"]["__poffoMap"]
+            .as_array()
+            .map_or(&[][..], Vec::as_slice);
+        let chains = self
+            .model
+            .document
+            .physics
+            .iter()
+            .flat_map(|physics| &physics.chains)
+            .map(|chain| {
+                let entry = entries
+                    .iter()
+                    .find(|entry| entry[0] == chain.id)
+                    .ok_or_else(|| WorkerError::Checkpoint("Missing physics chain".into()))?;
+                chain::ChainState::deserialize(&entry[1]).map_err(WorkerError::Json)
+            })
+            .collect::<Result<_, _>>()?;
+        Ok(Some(ChainsState {
+            accumulator: f64::deserialize(&checkpoint["accumulator"]).map_err(WorkerError::Json)?,
+            chains,
+            inputs: self.parameter_vector(&checkpoint["inputs"]),
+        }))
+    }
+
+    fn capture_worker_chains(&self) -> Result<Value, WorkerError> {
+        let Some(state) = &self.chains else {
+            return Ok(undefined());
+        };
+        let entries = self
+            .model
+            .document
+            .physics
+            .iter()
+            .flat_map(|physics| &physics.chains)
+            .zip(state.chains.iter())
+            .map(|(chain, saved)| {
+                Ok(Value::Array(vec![
+                    Value::String(chain.id.clone()),
+                    write(saved)?,
+                ]))
+            })
+            .collect::<Result<_, WorkerError>>()?;
+        let mut snapshot = json!({"accumulator":state.accumulator});
+        snapshot["chains"] = map(entries);
+        snapshot["inputs"] = self.parameter_record(&state.inputs);
+        Ok(snapshot)
+    }
+
     pub(crate) fn restore_worker(&mut self, state: Value) -> Result<(), WorkerError> {
+        self.physics_release = state["physicsRelease"].as_object().map(|held| {
+            self.model
+                .document
+                .parameters
+                .iter()
+                .map(|parameter| held.get(&parameter.id).and_then(Value::as_f64))
+                .collect()
+        });
         let mut selected = state["playback"].clone();
         let outgoing = selected["outgoing"].as_array().into_iter().flatten().map(|v| {
             Ok(json!({"motion":self.motion_index(&v["motionId"])? ,"cursor":cursor(v),"remaining":v["remaining"]}))
@@ -170,7 +227,7 @@ impl Player {
                     .map(|v| v.as_f64().unwrap_or(p.default_value))
             })
             .collect();
-        for stage in ["before-physics", "after-physics"] {
+        for stage in ["before-physics", "after-physics", "interaction"] {
             let entries = pairs(&state["adjustments"]["blends"][stage]);
             let blends = self
                 .model
@@ -192,8 +249,10 @@ impl Player {
                 .collect::<Result<Vec<Option<ParameterBlend>>, WorkerError>>()?;
             if stage == "before-physics" {
                 self.parameter_blends = blends;
-            } else {
+            } else if stage == "after-physics" {
                 self.after_physics_blends = blends;
+            } else {
+                self.interaction_blends = blends;
             }
         }
         self.physics_options = if state["adjustments"]["physicsOptions"].is_null() {
@@ -215,38 +274,7 @@ impl Player {
                     .map_or(Ok(PendulumState::default()), |v| read(v[1].clone()))
             })
             .collect::<Result<_, _>>()?;
-        self.chains = if state["chainState"].is_null() {
-            None
-        } else {
-            let c = &state["chainState"];
-            let entries = pairs(&c["chains"]);
-            let chains = self
-                .model
-                .document
-                .physics
-                .iter()
-                .flat_map(|p| &p.chains)
-                .map(|p| {
-                    let mut chain = entries
-                        .iter()
-                        .find(|v| v[0] == p.id)
-                        .map(|v| v[1].clone())
-                        .ok_or_else(|| WorkerError::Checkpoint("Missing physics chain".into()))?;
-                    chain["root"] = vector(&chain["root"]);
-                    if let Some(pendulums) = chain["pendulums"].as_array_mut() {
-                        for p in pendulums {
-                            for key in ["gravity", "position", "velocity"] {
-                                p[key] = vector(&p[key]);
-                            }
-                        }
-                    }
-                    Ok(chain)
-                })
-                .collect::<Result<Vec<_>, WorkerError>>()?;
-            Some(read(
-                json!({"accumulator":c["accumulator"],"inputs":self.parameter_vector(&c["inputs"]),"chains":chains}),
-            )?)
-        };
+        self.chains = self.restore_worker_chains(&state["chainState"])?;
         let pose = pairs(&state["poseState"]);
         let groups = &self.model.document.pose_groups.as_slice();
         self.pose = if pose.is_empty() {
@@ -315,15 +343,32 @@ impl Player {
         let motion = self
             .selected
             .motion
+            .filter(|_| self.selected.status != crate::PlaybackStatus::Stopped)
             .and_then(|i| self.model.document.motions.get(i));
         json!({"duration":motion.map_or(0.0,|m|m.duration),"motionId":motion.map(|m|&m.id),"time":self.selected.cursor.time})
     }
-    pub(crate) fn capture_worker(
+    pub(crate) fn update_worker_state(
         &mut self,
         completed: &Completions,
         acknowledged: u64,
-    ) -> Result<Value, WorkerError> {
-        let mut state = self.worker_state.clone();
+    ) -> Result<(), WorkerError> {
+        let mut state = std::mem::take(&mut self.worker_state);
+        let result = self.write_worker_state(&mut state, completed, acknowledged);
+        self.worker_state = state;
+        result
+    }
+
+    fn write_worker_state(
+        &self,
+        state: &mut Value,
+        completed: &Completions,
+        acknowledged: u64,
+    ) -> Result<(), WorkerError> {
+        if self.physics_release.is_none()
+            && let Some(fields) = state.as_object_mut()
+        {
+            fields.remove("physicsRelease");
+        }
         let selected = write(&self.selected)?;
         let mut playback = state["playback"].clone();
         web_cursor(&mut playback, &selected["cursor"]);
@@ -448,32 +493,7 @@ impl Player {
             .zip(self.pose.as_ref().into_iter().flatten())
             .map(|(p, s)| Ok(json!([p.id, write(s)?])))
             .collect::<Result<Vec<_>, WorkerError>>()?);
-        state["chainState"] = if let Some(chains) = &self.chains {
-            let v = write(chains)?;
-            let chains = self
-                .model
-                .document
-                .physics
-                .iter()
-                .flat_map(|p| &p.chains)
-                .zip(v["chains"].as_array().into_iter().flatten())
-                .map(|(p, c)| {
-                    let mut c = c.clone();
-                    c["root"] = point(&c["root"]);
-                    if let Some(items) = c["pendulums"].as_array_mut() {
-                        for p in items {
-                            for key in ["gravity", "position", "velocity"] {
-                                p[key] = point(&p[key]);
-                            }
-                        }
-                    }
-                    json!([p.id, c])
-                })
-                .collect::<Vec<_>>();
-            json!({"accumulator":v["accumulator"],"chains":map(chains),"inputs":self.parameter_record(&v["inputs"].as_array().into_iter().flatten().map(|v|v.as_f64().unwrap_or(0.0)).collect::<Vec<_>>())})
-        } else {
-            undefined()
-        };
+        state["chainState"] = self.capture_worker_chains()?;
         state["history"]["values"] = self.parameter_record(&self.motion_values);
         let previous_signature = state["history"]["frames"]
             .as_array()
@@ -540,7 +560,6 @@ impl Player {
                 }
             }
         }
-        self.worker_state = state.clone();
-        Ok(state)
+        Ok(())
     }
 }

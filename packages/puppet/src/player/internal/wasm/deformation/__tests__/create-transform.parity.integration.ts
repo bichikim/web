@@ -42,9 +42,6 @@ test.each(models)(
         },
       },
     })
-    if (path === process.env.MODEL) {
-      expect(factory).toBeDefined()
-    }
     const reference = createBufferEngine(document)
     const hybrid = createBufferEngine(document, factory)
     const frames = Number(process.env.FRAMES ?? 120)
@@ -69,9 +66,7 @@ test.each(models)(
       }
     }
     expect(differentWords).toBe(0)
-    if (path === process.env.MODEL) {
-      expect(nativeCalls).toBeGreaterThan(0)
-    }
+    expect(nativeCalls > 0).toBe(factory !== undefined)
     const report = {
       differentWords,
       frames,

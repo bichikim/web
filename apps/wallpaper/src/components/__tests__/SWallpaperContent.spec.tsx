@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 import '@testing-library/jest-dom/vitest'
 import {cleanup, fireEvent, render, screen, waitFor, within} from '@solidjs/testing-library'
-import {afterEach, expect, it, vi} from 'vitest'
+import {afterEach, beforeEach, expect, it, vi} from 'vitest'
 import {
   type AlbumWallpaper,
   createMonitorWallpaper,
@@ -10,11 +10,25 @@ import {
 import type {WallpaperController} from '../../features/settings'
 import {createSignal} from 'solid-js'
 import {SWallpaperContent} from '../SWallpaperContent'
+import {usePuppet} from '../../features/background/use-puppet'
 
 vi.mock('../../features/background/use-puppet', () => ({usePuppet: vi.fn()}))
 
+beforeEach(() => {
+  vi.mocked(usePuppet).mockReturnValue({
+    cancel: vi.fn(),
+    canvasKey: () => document,
+    finish: vi.fn(),
+    lostCapture: vi.fn(),
+    move: vi.fn(),
+    ready: () => true,
+    start: vi.fn(),
+  })
+})
+
 afterEach(() => {
   cleanup()
+  vi.clearAllMocks()
   vi.unstubAllGlobals()
 })
 
@@ -113,8 +127,8 @@ it('should adjust camera and face in the main background preview without adding 
   expect(loader.contains(preview)).toBe(false)
   expect(editor.contains(preview)).toBe(true)
   expect(within(loader).getByRole('button', {name: 'Poffo 불러오기'})).toBeDefined()
-  expect(screen.queryByRole('button', {name: 'Poffo 파일 가져오기'})).toBeNull()
-  expect(within(editor).queryByRole('button', {name: 'Poffo 파일 가져오기'})).toBeNull()
+  expect(screen.queryByRole('button', {name: 'Poffo 파일 불러오기'})).toBeNull()
+  expect(within(editor).queryByRole('button', {name: 'Poffo 파일 불러오기'})).toBeNull()
   expect(loader.compareDocumentPosition(editor)).toBe(Node.DOCUMENT_POSITION_FOLLOWING)
 
   expect(screen.getByRole('region', {name: '시선 보정 설정'})).toBeDefined()
@@ -126,12 +140,14 @@ it('should adjust camera and face in the main background preview without adding 
   fireEvent.keyDown(camera, {key: 'ArrowRight'})
   expect(setContent.mock.lastCall?.[0]).toMatchObject({
     placement: {scale: 0.8, x: 0.7, y: 0.4},
-    trackingOptions: {cameraX: -0.19, faceY: 0.3, headScale: 1.5},
+    trackingOptions: {cameraX: -0.2, faceY: 0.3, headScale: 1.5},
+    trackingProfiles: {camera: {options: {cameraX: -0.19, faceY: 0.3, headScale: 1.5}}},
   })
   fireEvent.keyDown(face, {key: 'ArrowDown'})
   expect(setContent.mock.lastCall?.[0]).toMatchObject({
     placement: {scale: 0.8, x: 0.7, y: 0.4},
-    trackingOptions: {cameraX: -0.2, faceY: 0.31, headScale: 1.5},
+    trackingOptions: {cameraX: -0.2, faceY: 0.3, headScale: 1.5},
+    trackingProfiles: {camera: {options: {cameraX: -0.2, faceY: 0.31, headScale: 1.5}}},
   })
 })
 

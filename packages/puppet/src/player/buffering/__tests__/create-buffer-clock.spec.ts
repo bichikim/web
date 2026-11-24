@@ -36,3 +36,15 @@ test('should rebase discarded predictions while retaining display cadence', () =
   clock.rebase(50)
   expect(clock.next(70)).toEqual({deltaTime: 0.03, time: 80})
 })
+
+test('should advance immediate input by elapsed time without accumulating a display interval per update', () => {
+  const clock = createBufferClock(0)
+  let elapsed = 0
+  for (let now = 10; now <= 3000; now += 10) {
+    const frame = clock.current(now)
+    elapsed += frame.deltaTime
+    expect(frame.time).toBe(now)
+  }
+  expect(elapsed).toBeCloseTo(3)
+  expect(clock.next(3000).time).toBeCloseTo(3000 + 1000 / 60)
+})

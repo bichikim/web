@@ -1,0 +1,128 @@
+{
+  "1": {
+    "class_type": "EmptyImage",
+    "inputs": {
+      "width": 232,
+      "height": 604,
+      "batch_size": 1,
+      "color": 0
+    }
+  },
+  "10": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "hand-source-0.png"
+    }
+  },
+  "11": {
+    "class_type": "PrimitiveBoundingBox",
+    "inputs": {
+      "x": 3112,
+      "y": 932,
+      "width": 82,
+      "height": 139
+    }
+  },
+  "12": {
+    "class_type": "ImageCropV2",
+    "inputs": {
+      "image": ["10", 0],
+      "crop_region": ["11", 0]
+    }
+  },
+  "13": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["1", 0],
+      "source": ["12", 0],
+      "x": 4,
+      "y": 4,
+      "resize_source": false
+    }
+  },
+  "20": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "hand-source-1.png"
+    }
+  },
+  "21": {
+    "class_type": "PrimitiveBoundingBox",
+    "inputs": {
+      "x": 1148,
+      "y": 2504,
+      "width": 78,
+      "height": 111
+    }
+  },
+  "22": {
+    "class_type": "ImageCropV2",
+    "inputs": {
+      "image": ["20", 0],
+      "crop_region": ["21", 0]
+    }
+  },
+  "23": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["13", 0],
+      "source": ["22", 0],
+      "x": 4,
+      "y": 147,
+      "resize_source": false
+    }
+  },
+  "30": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "hand-source-2.png"
+    }
+  },
+  "31": {
+    "class_type": "PrimitiveBoundingBox",
+    "inputs": {
+      "x": 207,
+      "y": 187,
+      "width": 224,
+      "height": 338
+    }
+  },
+  "32": {
+    "class_type": "ImageCropV2",
+    "inputs": {
+      "image": ["30", 0],
+      "crop_region": ["31", 0]
+    }
+  },
+  "33": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["23", 0],
+      "source": ["32", 0],
+      "x": 4,
+      "y": 262,
+      "resize_source": false
+    }
+  },
+  "90": {
+    "class_type": "LoadImageMask",
+    "inputs": {
+      "image": "hand-atlas-inverse.png",
+      "channel": "red"
+    }
+  },
+  "91": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["33", 0],
+      "alpha": ["90", 0]
+    }
+  },
+  "92": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": ["91", 0],
+      "filename_prefix": "Wallpaper/wrist-two-parts/hand"
+    }
+  }
+}

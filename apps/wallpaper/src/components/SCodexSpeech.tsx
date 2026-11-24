@@ -1,23 +1,27 @@
+import {localizeMessage, text as uiText} from '../features/localization'
+
 import {SSpeechVoiceActivity} from './SSpeechVoiceActivity'
 import type {VoiceStatus} from '../features/voice/readout'
-import {Show} from 'solid-js'
+import {createSignal, type JSX, Show} from 'solid-js'
 import {
   type ChatTone,
   type CodexActivity,
   type CodexApproval,
-  codexPhaseLabel,
   type CodexPort,
   type CodexQuestionRequest,
   useChatOpen,
 } from '../features/codex'
-import {type SpeechAnchor, type SpeechPoint} from '../features/speech'
+import {type SpeechAnchor, type SpeechPoint, useSpeechMinimumHeight} from '../features/speech'
 import {SCodexSpeechContent} from './SCodexSpeechContent'
 import {SSpeechFrame} from './SSpeechFrame'
 
 interface SCodexSpeechProps {
+  /** Additional header controls; omission leaves the standard actions. */
+  readonly headerActions?: JSX.Element
+  readonly onRecording?: (active: boolean) => void
   readonly voiceNotice?: string
   readonly voiceState?: VoiceStatus
-  readonly onVoiceRetry?: () => void
+  readonly onVoiceToggle?: () => void
   readonly questions?: readonly CodexQuestionRequest[]
   readonly approvals?: readonly CodexApproval[]
   readonly activity: CodexActivity
@@ -36,11 +40,17 @@ interface SCodexSpeechProps {
 }
 export const SCodexSpeech = (props: SCodexSpeechProps) => {
   const chat = useChatOpen({open: () => props.onOpen, sessionId: () => props.activity.sessionId})
+  const [element, setElement] = createSignal<HTMLDivElement | null>(null)
+  const requests = () => [props.questions, props.approvals]
+  const minimumHeight = useSpeechMinimumHeight({
+    content: () => [props.activity, requests(), props.voiceNotice, chat.error()],
+    element,
+  })
   const caption = () => props.chatLabel ?? props.activity.title ?? 'Codex'
   return (
     <aside
       role="status"
-      aria-label="Codex 작업 알림"
+      aria-label={uiText('Codex 작업 알림')}
       aria-live="polite"
       aria-atomic="true"
       data-tone={props.tone}
@@ -49,32 +59,34 @@ export const SCodexSpeech = (props: SCodexSpeechProps) => {
     >
       <SSpeechFrame
         tone={props.tone}
-        target={props.target}
+        target={props.selected === false ? undefined : props.target}
         anchor={props.anchor}
         moving={props.moving}
         layout={props.layout}
       />
       <div
-        class="wallpaper-speech-contents pointer-events-auto relative box-border flex min-h-0
-        flex-col gap-1 rounded-xl [max-height:var(--speech-limit,568px)]
+        ref={setElement}
+        style={minimumHeight()}
+        class="wallpaper-speech-contents pointer-events-auto relative box-border flex
+        flex-col gap-1 rounded-xl
         border border-solid border-transparent p-3"
         classList={{'wallpaper-speech-contents-top': props.anchor === 'top'}}
       >
         <div
-          class="relative -mx-3 -mt-3 -mb-1 flex shrink-0 items-center gap-2 overflow-clip
-        rounded-t-[11px] px-3 pt-3 pb-1 text-xs font-medium"
+          class="relative -mx-3 -mt-3 -mb-1 flex shrink-0 items-center gap-1 overflow-clip
+        rounded-t-[11px] px-3 pt-2 pb-1 text-xs font-medium"
         >
           <Show when={props.onSelect}>
             {(select) => (
               <button
                 type="button"
-                aria-label={`채팅 ${caption()} 선택`}
+                aria-label={uiText('채팅 {value0} 선택', {value0: String(caption())})}
                 data-speech-drag-handle
                 aria-pressed={props.selected ?? false}
                 title={
                   props.onOpen === undefined
                     ? caption()
-                    : `${caption()} · 더블클릭하여 Codex에서 열기`
+                    : uiText('{value0} · 더블클릭하여 Codex에서 열기', {value0: String(caption())})
                 }
                 class="absolute inset-0 cursor-pointer appearance-none rounded-t-xl border-0 bg-transparent p-0
               [[data-draggable=true]_&]:cursor-grab [[data-dragging=true]_&]:cursor-grabbing touch-none
@@ -87,31 +99,21 @@ export const SCodexSpeech = (props: SCodexSpeechProps) => {
           <span class="pointer-events-none min-w-0 flex-1 truncate" title={caption()}>
             {caption()}
           </span>
-          <span
-            class="pointer-events-none shrink-0 rounded px-1.5 py-0.5"
-            classList={{
-              'bg-amber-100 text-amber-900': props.activity.phase === 'approval',
-              'bg-blue-50 text-blue-800': props.activity.phase !== 'approval',
-            }}
-          >
-            {codexPhaseLabel(props.activity.phase)}
-          </span>
-          <SSpeechVoiceActivity state={props.voiceState} />
+          {props.headerActions}
           <Show when={props.onOpen}>
             <button
               type="button"
-              aria-label={`${caption()} Codex에서 열기`}
-              title="Codex에서 열기"
+              aria-label={uiText('{value0} Codex에서 열기', {value0: String(caption())})}
+              title={uiText('Codex에서 열기')}
               disabled={chat.busy()}
               onClick={chat.open}
-              class="relative grid h-5 w-5 shrink-0 cursor-pointer place-items-center appearance-none rounded
-              border-0 bg-transparent p-0 text-stone-500 hover:bg-black/5 disabled:opacity-50
-              focus-visible:outline-2 focus-visible:outline-blue-700"
+              class="wallpaper-speech-action text-stone-600"
             >
               <svg
                 aria-hidden="true"
                 viewBox="0 0 24 24"
-                class="h-4 w-4 fill-none stroke-current stroke-2 [stroke-linecap:round] [stroke-linejoin:round]"
+                class="h-4 w-4 fill-none stroke-current [stroke-width:1.75]
+                [stroke-linecap:round] [stroke-linejoin:round]"
               >
                 <path d="M14 3h7v7m0-7L10 14m0-10H4v16h16v-6" />
               </svg>
@@ -121,16 +123,16 @@ export const SCodexSpeech = (props: SCodexSpeechProps) => {
             {(dismiss) => (
               <button
                 type="button"
-                aria-label={`${caption()} 알림 닫기`}
-                class="relative grid h-5 w-5 shrink-0 cursor-pointer place-items-center appearance-none rounded
-              border-0 bg-transparent p-0 leading-none text-stone-500 hover:bg-black/5
-              focus-visible:outline-2 focus-visible:outline-blue-700"
+                aria-label={uiText('{value0} 알림 닫기', {value0: String(caption())})}
+                title={uiText('알림 닫기')}
+                class="wallpaper-speech-action text-stone-600"
                 onClick={dismiss()}
               >
                 <svg
                   aria-hidden="true"
                   viewBox="0 0 24 24"
-                  class="pointer-events-none h-4 w-4 fill-none stroke-current stroke-2 [stroke-linecap:round]"
+                  class="pointer-events-none h-4 w-4 fill-none stroke-current
+                  [stroke-width:1.75] [stroke-linecap:round]"
                 >
                   <path d="M6 6 18 18M18 6 6 18" />
                 </svg>
@@ -141,31 +143,28 @@ export const SCodexSpeech = (props: SCodexSpeechProps) => {
         <Show when={chat.error()}>
           {(message) => (
             <p role="alert" class="m-0 text-xs text-red-700">
-              {message()}
+              {localizeMessage(message() ?? '')}
             </p>
           )}
         </Show>
         <SCodexSpeechContent
+          onRecording={props.onRecording}
           activity={props.activity}
           wrap={props.wrap}
           approvals={props.approvals}
           questions={props.questions}
           caption={caption()}
           inactive={props.selected === false}
+          footerActions={
+            <SSpeechVoiceActivity state={props.voiceState} onToggle={props.onVoiceToggle} />
+          }
         />
         <Show when={props.voiceNotice}>
           {(notice) => (
             <div class="flex shrink-0 items-center gap-2 text-[11px] text-stone-500">
               <span role="status" class="min-w-0 flex-1">
-                {notice()}
+                {localizeMessage(notice() ?? '')}
               </span>
-              <Show when={props.onVoiceRetry}>
-                {(retry) => (
-                  <button type="button" class="wallpaper-file-button shrink-0" onClick={retry()}>
-                    다시 읽기
-                  </button>
-                )}
-              </Show>
             </div>
           )}
         </Show>

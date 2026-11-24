@@ -1,0 +1,6 @@
+{
+  "method": "Harmonic RGB offsets at original skin boundaries, capped at 12 levels; preserve generated alpha and all source RGBA outside the edit mask",
+  "anchors": 288,
+  "iterations": 480,
+  "contourWarp": false
+}

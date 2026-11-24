@@ -4,12 +4,11 @@ use tauri::{PhysicalPosition, PhysicalSize};
 pub(super) fn placed_frame(
     current: NSRect,
     origin: PhysicalPosition<i32>,
-    size: PhysicalSize<u32>,
     position: PhysicalPosition<i32>,
     bounds: PhysicalSize<u32>,
     scale: f64,
 ) -> NSRect {
-    let growth = (f64::from(bounds.height) - f64::from(size.height)) / scale;
+    let growth = f64::from(bounds.height) / scale - current.size.height;
     NSRect::new(
         NSPoint::new(
             current.origin.x + (f64::from(position.x) - f64::from(origin.x)) / scale,
@@ -27,6 +26,27 @@ mod tests {
     use super::*;
 
     #[test]
+    fn initial_placement_does_not_shift_an_already_resized_native_frame() {
+        for scale in [1.0, 2.0] {
+            let current = NSRect::new(NSPoint::new(1184.0, 8.0), NSSize::new(320.0, 933.0));
+            let pixels = |value: f64| (value * scale).round() as u32;
+            let position = PhysicalPosition::new(pixels(1184.0) as i32, pixels(41.0) as i32);
+            let bounds = PhysicalSize::new(pixels(320.0), pixels(933.0));
+            let initial = placed_frame(
+                NSRect::new(NSPoint::new(1184.0, 8.0), NSSize::new(320.0, 180.0)),
+                PhysicalPosition::new(pixels(1184.0) as i32, pixels(794.0) as i32),
+                position,
+                bounds,
+                scale,
+            );
+            assert_eq!(initial, current);
+            // Repeat placement before the content view catches up with the native frame.
+            let next = placed_frame(initial, position, position, bounds, scale);
+            assert_eq!(next, current);
+        }
+    }
+
+    #[test]
     fn changing_height_and_top_together_preserves_the_cocoa_bottom_at_each_scale() {
         for scale in [1.0, 2.0] {
             for height in [200, 600] {
@@ -35,7 +55,6 @@ mod tests {
                 let next = placed_frame(
                     current,
                     PhysicalPosition::new(pixels(-500), pixels(300)),
-                    PhysicalSize::new(pixels(320) as u32, pixels(400) as u32),
                     PhysicalPosition::new(pixels(-500), pixels(700 - height)),
                     PhysicalSize::new(pixels(320) as u32, pixels(height) as u32),
                     scale,
@@ -52,7 +71,6 @@ mod tests {
         let next = placed_frame(
             current,
             PhysicalPosition::new(-1000, 600),
-            PhysicalSize::new(640, 800),
             PhysicalPosition::new(-800, 600),
             PhysicalSize::new(640, 400),
             2.0,
@@ -70,7 +88,6 @@ mod tests {
         let next = placed_frame(
             NSRect::new(NSPoint::new(100.0, 200.0), NSSize::new(0.0, 640.0)),
             PhysicalPosition::new(200, 400),
-            PhysicalSize::new(0, 1280),
             PhysicalPosition::new(200, 400),
             PhysicalSize::new(640, 1280),
             2.0,

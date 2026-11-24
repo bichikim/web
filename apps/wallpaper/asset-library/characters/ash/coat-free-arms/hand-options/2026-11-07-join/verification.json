@@ -1,0 +1,10 @@
+{
+  "dimensions": [1254, 1254],
+  "removedVisiblePixels": 49363,
+  "belowCutAlphaPixels": 0,
+  "nonBinaryAlphaMaskPixels": 0,
+  "keptAlphaMaxDelta": 1,
+  "protectedRgbMaxDelta": 0,
+  "comfyPromptId": "5045b00e-3eec-498a-8669-07acfda1e389",
+  "nativeOutputMatchesAppliedTexture": true
+}

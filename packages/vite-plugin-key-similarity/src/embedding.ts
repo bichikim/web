@@ -3,6 +3,7 @@ import {mkdir, readFile, rename, rm, writeFile} from 'node:fs/promises'
 import path from 'node:path'
 import {NORMALIZATION_VERSION} from './normalization'
 import {normalizeVector} from './similarity'
+import {modelDirectory, prepareE5Model} from './model-cache'
 import type {EmbeddingProvider, ResolvedKeySimilarityOptions} from './types'
 
 const CACHE_FILE_HEADER = Buffer.from('KSV1')
@@ -104,11 +105,14 @@ export class CachedEmbeddingProvider implements EmbeddingProvider {
 export const createLocalE5Provider = async (
   options: ResolvedKeySimilarityOptions,
 ): Promise<EmbeddingProvider> => {
+  if (options.modelPath === modelDirectory()) {
+    await prepareE5Model()
+  }
   const {env, pipeline} = await import('@huggingface/transformers')
   env.allowLocalModels = true
   env.allowRemoteModels = false
   env.localModelPath = `${path.dirname(options.modelPath)}${path.sep}`
-  env.cacheDir = options.cacheDir
+  env.useFSCache = false
   if (options.wasmPath !== undefined) {
     const wasmBackend = env.backends.onnx.wasm
     if (wasmBackend === undefined) {

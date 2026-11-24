@@ -1,0 +1,9 @@
+{
+  "widgetId": "9de2c32e-5da8-4742-b3e5-e4dca6be0040",
+  "assetId": "builtin:ash",
+  "bubbleEnabled": true,
+  "sha256": "e581dae5eaa96a556f31118d943014599b46559e19685094fa4e47fca4d3b83e",
+  "bytes": 18738414,
+  "status": 200,
+  "url": "tauri://localhost/index.html?surface=widget&widget=9de2c32e-5da8-4742-b3e5-e4dca6be0040"
+}

@@ -1,0 +1,131 @@
+{
+  "1": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "coffee-hand-original.png"
+    }
+  },
+  "2": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["1", 0],
+      "alpha": ["1", 1]
+    }
+  },
+  "10": {
+    "class_type": "UnetLoaderGGUF",
+    "inputs": {
+      "unet_name": "Qwen-Image-2.1-Turbo-Q4_K_S.gguf"
+    }
+  },
+  "11": {
+    "class_type": "CLIPLoader",
+    "inputs": {
+      "clip_name": "qwen3vl_8b_int8_convrot.safetensors",
+      "type": "qwen_image",
+      "device": "default"
+    }
+  },
+  "12": {
+    "class_type": "VAELoader",
+    "inputs": {
+      "vae_name": "qwen_image_2.1_vae_bf16.safetensors"
+    }
+  },
+  "13": {
+    "class_type": "TextEncodeQwenImage21",
+    "inputs": {
+      "clip": ["11", 0],
+      "vae": ["12", 0],
+      "resolution": 0,
+      "prompt": "图1是必须保留的原始咖啡杯手部素材，透明背景，画布576x1056。请只修复并稍微向下延伸掌根，补全到自然的手腕弯折处，制作一张可连接现有前臂的完整手部素材。现在掌根下方有错误的叠加皮片和截断边，必须移除这些错误，重画成短小、解剖正确、略向左下延伸的手腕。只补齐掌根到腕关节，不要生成整条前臂或肘部，不要长肉管。腕部终止于图1下方约y920，短小自然的腕关节。五指、蓝色指甲、指节姿势、咖啡杯、所有握杯细节、手和杯的位置及大小完全保留，不得重新设计手。图2是同一个角色现有前臂的插画风格和线宽参考，输出手掌到手腕的红棕色外轮廓必须与图2前臂同样的实际线宽、抗锯齿和颜色，不能到手腕就变细。浅象牙白皮肤和暖粉色柔和阴影也必须跟图2完全一致。图3仅参考正确手腕解剖的连续外形，不要把图3整张替换图1，也不要复制图3手指、杯或前臂。小指下方掌根平滑收窄接到腕部，不要额外内侧长线、第二条皮肤边、三角形皮片、环状接缝、横切线、尖角或袖口。必须输出与图1相同的构图和尺寸的透明RGBA图片。",
+      "negative_prompt": "",
+      "images.image_1": ["2", 0],
+      "images.image_2": ["31", 0],
+      "images.image_3": ["33", 0]
+    }
+  },
+  "16": {
+    "class_type": "QwenImage21Cache",
+    "inputs": {
+      "model": ["10", 0],
+      "device": "auto",
+      "dtype": "default"
+    }
+  },
+  "18": {
+    "class_type": "VAEDecode",
+    "inputs": {
+      "samples": ["24", 0],
+      "vae": ["12", 0]
+    }
+  },
+  "19": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": ["18", 0],
+      "filename_prefix": "Wallpaper/coffee-wrist/hand-extended"
+    }
+  },
+  "20": {
+    "class_type": "BasicGuider",
+    "inputs": {
+      "model": ["16", 0],
+      "conditioning": ["13", 0]
+    }
+  },
+  "21": {
+    "class_type": "RandomNoise",
+    "inputs": {
+      "noise_seed": 1110312
+    }
+  },
+  "22": {
+    "class_type": "KSamplerSelect",
+    "inputs": {
+      "sampler_name": "euler"
+    }
+  },
+  "23": {
+    "class_type": "ManualSigmas",
+    "inputs": {
+      "sigmas": "1.0, 0.978453, 0.95418, 0.926626, 0.89508, 0.845148, 0.704534, 0.414568, 0.0"
+    }
+  },
+  "24": {
+    "class_type": "SamplerCustomAdvanced",
+    "inputs": {
+      "noise": ["21", 0],
+      "guider": ["20", 0],
+      "sampler": ["22", 0],
+      "sigmas": ["23", 0],
+      "latent_image": ["13", 2]
+    }
+  },
+  "30": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "coffee-arm-style.png"
+    }
+  },
+  "31": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["30", 0],
+      "alpha": ["30", 1]
+    }
+  },
+  "32": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "coffee-wrist-anatomy.png"
+    }
+  },
+  "33": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["32", 0],
+      "alpha": ["32", 1]
+    }
+  }
+}

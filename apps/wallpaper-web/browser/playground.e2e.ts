@@ -1,5 +1,24 @@
 import {expect, test} from 'playwright/test'
 
+test('keeps the coat toggle independent of actions in the rendered playground', async ({page}) => {
+  await page.goto('/')
+  await expect(page.getByRole('button', {exact: true, name: '일시 정지'})).toBeVisible()
+  const menu = page.getByRole('button', {name: '표정 선택'})
+  await menu.click()
+  const coat = page.getByRole('menuitemcheckbox', {name: '외투 벗기'})
+  await coat.click()
+  await expect(coat).toBeChecked()
+  await page.getByRole('menuitemradio', {exact: true, name: '손하트'}).click()
+  await menu.click()
+  await expect(coat).toBeChecked()
+  await expect(page.getByRole('menuitemradio', {exact: true, name: '손하트'})).toBeChecked()
+  await page.getByRole('menuitemradio', {exact: true, name: '없음'}).click()
+  await menu.click()
+  await expect(coat).toBeChecked()
+  await coat.click()
+  await expect(coat).not.toBeChecked()
+})
+
 for (const motion of ['reduce', 'no-preference'] as const) {
   test(`preserves widget preferences through every chapter with motion=${motion}`, async ({
     page,

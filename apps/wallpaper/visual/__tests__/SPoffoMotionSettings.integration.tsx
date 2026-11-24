@@ -7,7 +7,10 @@ import {SPuppetBackground} from '../../src/components/SPuppetBackground'
 import {SAMPLE_PUPPET_ID} from '../../src/features/background/constants'
 import 'virtual:uno.css'
 
-vi.mock('@winter-love/puppet/player', {spy: true})
+vi.mock('@winter-love/puppet/player', async (original) => {
+  const actual = await original<typeof import('@winter-love/puppet/player')>()
+  return {...actual, createPlayer: vi.fn(actual.createPlayer)}
+})
 afterEach(() => {
   cleanup()
   vi.clearAllMocks()
@@ -37,14 +40,17 @@ it('should apply model motion changes and stop them on the same real player', as
   fireEvent.click(screen.getByRole('option', {name: 'blink'}))
   player.pause()
   player.seek(0.2)
+  await playerModule.flushPlayerInputs(player)
   expect(player.getParameterValue('angle-x')).toBe(30)
   fireEvent.click(select)
   fireEvent.click(screen.getByRole('option', {name: '재생 안 함'}))
+  await playerModule.flushPlayerInputs(player)
   expect(player.getParameterValue('angle-x')).toBe(0)
   fireEvent.click(select)
   fireEvent.click(screen.getByRole('option', {name: '자동 · idle-deform'}))
   player.pause()
   player.seek(1)
+  await playerModule.flushPlayerInputs(player)
   expect(player.getParameterValue('angle-y')).toBe(-30)
   expect(playerModule.createPlayer).toHaveBeenCalledOnce()
   expect(error).not.toHaveBeenCalled()

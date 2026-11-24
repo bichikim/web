@@ -1,0 +1,66 @@
+{
+  "group": "paws-left",
+  "sourceModelSha256": "404a5a884fa552f548f09973ca7e37d008f81388e27fdb9c438f946880efa927",
+  "wristSha256": "f4fa66f32c9c344e45f8c4ddafec8c62d1ae85bbf6e7399a910cbef1ad3e1da0",
+  "placement": {
+    "action": "paws",
+    "expression": "고양이 손",
+    "group": "paws-left",
+    "wrist": [1812.2784509679286, 1531.4873726192563],
+    "elbow": [1890.6062112311151, 2140.6666974533173],
+    "axis": [-0.12752927714474832, -0.9918348065433771],
+    "normal": [0.9918348065433771, -0.12752927714474832],
+    "box": {
+      "x": 1646,
+      "y": 1232,
+      "width": 368,
+      "height": 464,
+      "scale": 2
+    },
+    "referenceSize": [736, 928],
+    "arm": "coat-free:paws-left:ArtMesh900",
+    "armIds": ["coat-free:paws-left:ArtMesh900", "coat-free:paws-left:ArtMesh901"],
+    "followers": [
+      "ArtMesh866",
+      "ArtMesh868",
+      "ArtMesh869",
+      "ArtMesh870",
+      "ArtMesh871",
+      "ArtMesh872",
+      "ArtMesh873",
+      "ArtMesh874",
+      "ArtMesh875",
+      "ArtMesh855",
+      "ArtMesh857",
+      "ArtMesh858",
+      "ArtMesh859",
+      "ArtMesh860",
+      "ArtMesh861",
+      "ArtMesh862",
+      "ArtMesh864",
+      "ArtMesh865"
+    ],
+    "hand": {
+      "partId": "ArtMesh871",
+      "triangle": [19, 56, 55],
+      "weights": [0.27233895136242475, 0.252026094766255, 0.4756349538713202]
+    },
+    "actualHand": "ArtMesh871",
+    "selected": ["ArtMesh870", "ArtMesh871"],
+    "generationOffset": {
+      "x": 13,
+      "y": 119
+    },
+    "wristGeneration": {
+      "x": 1652.2784509679286,
+      "y": 1291.4873726192563,
+      "width": 320,
+      "height": 384,
+      "scale": 2
+    }
+  },
+  "generatedPixelsUsed": "Short wrist only. Original fingers and nails remain on the original parts. Forearm geometry and physics are unchanged.",
+  "method": "Local Qwen Image 2.1 Turbo 8-step wrist repair; original skin and ink palette; forearm outline registered in the new wrist mesh; barycentric surface contacts at both ends; original cuff drawing with coat on.",
+  "referenceModelSha256": "7c81a99a94605bd34078b0cccdeef99af18446ea0e769953a5ecd3ed0ac39813",
+  "execution": "Local ComfyUI; no hosted model"
+}

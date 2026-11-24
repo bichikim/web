@@ -1,3 +1,4 @@
+import {builtinConnectionProfile} from '../../src/features/connection-profiles/builtin-profile'
 import {cleanup, fireEvent, render, screen} from '@solidjs/testing-library'
 import {createSignal} from 'solid-js'
 import {afterEach, expect, test, vi} from 'vitest'
@@ -24,8 +25,12 @@ test('should follow cursor distance and retain gaze across speech saves and idle
   const repository = createLibraryRepository('wallpaper-library')
   const widget = await repository.addWidget('builtin:ash')
   await repository.trackWidget(widget.id, 'cursor')
-  await repository.bindWidget(widget.id, {headX: {parameterId: 'ParamAngleX'}})
-  await repository.configureTracking(widget.id, {headResponseX: 1})
+  await repository.configureConnections(widget.id, {
+    trackingBindingsVersion:
+      builtinConnectionProfile('builtin:ash')!.connections.trackingBindingsVersion,
+  })
+  await repository.bindWidget(widget.id, {headX: {blend: 'overwrite', parameterId: 'ParamAngleX'}})
+  await repository.configureTracking(widget.id, {eyeCursorReach: 1, headResponseX: 1})
   await repository.configureSpeech(widget.id, {
     enabled: true,
     lipsync: {source: 'voice'},
@@ -145,7 +150,7 @@ test('should follow cursor distance and retain gaze across speech saves and idle
       fireEvent.input(input, {target: {value}})
       fireEvent.blur(input)
     }
-    edit('얼굴 좌우 최대', '20')
+    edit('머리 좌우 최대', '20')
     await expect
       .poll(() => screen.getByRole('status', {name: '추적 범위'}).textContent)
       .toBe('20/1/-30/-1')
@@ -153,7 +158,7 @@ test('should follow cursor distance and retain gaze across speech saves and idle
     await expect
       .poll(() => screen.getByRole('status', {name: '추적 범위'}).textContent)
       .toBe('20/0.5/-30/-1')
-    edit('얼굴 좌우 최소', '-10')
+    edit('머리 좌우 최소', '-10')
     await expect
       .poll(() => screen.getByRole('status', {name: '추적 범위'}).textContent)
       .toBe('20/0.5/-10/-1')
@@ -168,7 +173,7 @@ test('should follow cursor distance and retain gaze across speech saves and idle
     expect(player.getParameterValue('ParamEyeBallX')).toBeCloseTo(0.362446388, 6)
     edit('최대 도달 거리', '0.5')
     await expect.poll(() => screen.getByRole('status', {name: '도달 거리'}).textContent).toBe('0.5')
-    edit('얼굴 좌우 반응 배율', '0.5')
+    edit('머리 좌우 반응 배율', '0.5')
     await expect
       .poll(() => screen.getByRole('status', {name: '반응 배율'}).textContent)
       .toBe('0.5/1')
@@ -178,15 +183,19 @@ test('should follow cursor distance and retain gaze across speech saves and idle
       .toBe('0.5/0.5')
     follow(reach / 2)
     await expect.poll(() => player!.getParameterValue('ParamAngleX'), {timeout: 3000}).toBe(20)
-    expect(player.getParameterValue('ParamEyeBallX')).toBe(0.5)
+    // The eyes retain their independent, longer reach when only head reach changes.
+    await expect.poll(() => player!.getParameterValue('ParamEyeBallX')).toBeCloseTo(0.2842477723, 6)
     follow(-reach / 2)
     await expect.poll(() => player!.getParameterValue('ParamAngleX'), {timeout: 3000}).toBe(-10)
-    expect(player.getParameterValue('ParamEyeBallX')).toBe(-0.25)
+    await expect
+      .poll(() => player!.getParameterValue('ParamEyeBallX'))
+      .toBeCloseTo(-0.1421238862, 6)
     follow(reach / 2)
     await expect.poll(() => player!.getParameterValue('ParamAngleX'), {timeout: 3000}).toBe(20)
-    expect(player.getParameterValue('ParamEyeBallX')).toBe(0.5)
+    // The eyes retain their independent, longer reach when only head reach changes.
+    await expect.poll(() => player!.getParameterValue('ParamEyeBallX')).toBeCloseTo(0.2842477723, 6)
     const stored = (await repository.read()).widgets.find((entry) => entry.id === widget.id)
-    expect(stored?.trackingOptions).toMatchObject({
+    expect(stored?.trackingProfiles?.cursor?.options).toMatchObject({
       cursorReach: 0.5,
       eyeMaximumX: 0.5,
       eyeMinimumX: -0.25,

@@ -1,16 +1,38 @@
 //! Parameter composition: part vertices and properties, glue and deformer poses.
 
-use poffo_format::document::{CurveHandle, DeformerType, Glue, PartKeyformProperties, Point};
+use poffo_format::document::{CurveHandle, DeformerType, PartKeyformProperties, Point};
 use poffo_format::resolve_parameter_value;
 
 use crate::deform::{PosedDeformer, RotationPose, SpatialPose};
 use crate::geometry::wrap_angle;
 use crate::keyform::{KeyformSample, blend};
+use crate::keyform_coordinates::sample_coordinates;
 use crate::layers::ColorEffect;
-use crate::model::{CompiledBinding, Model, PartProperties};
+use crate::model::{CompiledBinding, GlueConnection, Model, PartProperties};
 
 /// Parameter values indexed like `Document::parameters`.
 pub type ParameterValues = [f64];
+
+/// Immutable color channels compiled once, including the original keyform slot order.
+#[derive(Debug, Clone)]
+pub(crate) struct EffectBinding {
+    binding: usize,
+    coordinates: Vec<Option<[f64; 7]>>,
+}
+
+fn changing_effects(
+    rest: ColorEffect,
+    entries: impl Iterator<Item = (usize, Vec<Option<[f64; 7]>>)>,
+) -> Vec<EffectBinding> {
+    let rest = rest.coordinates();
+    entries
+        .filter(|(_, keyed)| !keyed.iter().flatten().all(|c| *c == rest))
+        .map(|(binding, coordinates)| EffectBinding {
+            binding,
+            coordinates,
+        })
+        .collect()
+}
 
 impl Model {
     /// The binding's resolved parameter values per axis, 0 past its parameters
@@ -48,9 +70,14 @@ impl Model {
     }
 
     /// `composeParameterVertices`: rest vertices plus each binding's weighted keyform delta.
-    pub(crate) fn compose_part_vertices(&self, part: usize, values: &ParameterValues) -> Vec<f64> {
+    pub(crate) fn compose_part_vertices(
+        &self,
+        part: usize,
+        values: &ParameterValues,
+        composed: &mut Vec<f64>,
+    ) {
         let rest = &self.parts[part].rest;
-        let mut composed = rest.clone();
+        composed.clone_from(rest);
         for &b in &self.parts[part].vertex_bindings {
             let binding = &self.bindings[b];
             let Some(sample) = self.binding_sample(binding, values) else {
@@ -63,15 +90,18 @@ impl Model {
                 let vertices = &keyforms[k].parts[entry].vertices;
                 (!vertices.is_empty()).then_some(vertices.as_slice())
             };
-            let sampled = blend(sample, coordinates, rest);
+            let sampled = crate::keyform_coordinates::sample_coordinates(sample, coordinates, rest);
             let weight = self.binding_influence(binding, values);
-            for ((current, &rest), &sampled) in
-                composed.iter_mut().zip(rest.iter()).zip(sampled.iter())
+            for (axis, (current, &rest)) in composed
+                .iter_mut()
+                .zip(rest.iter())
+                .enumerate()
+                .take(sampled.len())
             {
+                let sampled = sampled.coordinate(axis).unwrap_or(rest);
                 *current += (sampled - rest) * weight;
             }
         }
-        composed
     }
 
     /// Rest opacity and colors moved by each `(binding, keyed coordinates per keyform)`: the
@@ -80,32 +110,25 @@ impl Model {
     fn compose_effect(
         &self,
         rest: ColorEffect,
-        keyed: impl Iterator<Item = (usize, Vec<Option<[f64; 7]>>)>,
+        keyed: &[EffectBinding],
         values: &ParameterValues,
     ) -> ColorEffect {
         let rest_coordinates = rest.coordinates();
         let mut coordinates = rest_coordinates;
-        for (b, keyed) in keyed {
-            // A binding whose keyforms all keep the rest values adds nothing; skipping it keeps
-            // the rest values exact (`createColorEffectComposer`).
-            if keyed.iter().flatten().all(|c| *c == rest_coordinates) {
-                continue;
-            }
-            let binding = &self.bindings[b];
+        for effect in keyed {
+            let keyed = &effect.coordinates;
+            let binding = &self.bindings[effect.binding];
             let Some(sample) = self.binding_sample(binding, values) else {
                 continue;
             };
-            let sampled = blend(
+            let sampled = sample_coordinates(
                 sample,
                 |k| keyed.get(k)?.as_ref().map(|c| &c[..]),
                 &rest_coordinates,
             );
             let weight = self.binding_influence(binding, values);
             for (index, coordinate) in coordinates.iter_mut().enumerate() {
-                let value = sampled
-                    .get(index)
-                    .copied()
-                    .unwrap_or(rest_coordinates[index]);
+                let value = sampled.coordinate(index).unwrap_or(rest_coordinates[index]);
                 *coordinate += (value - rest_coordinates[index]) * weight;
             }
         }
@@ -124,6 +147,22 @@ impl Model {
             opacity: rest.opacity,
             screen_color: rest.screen_color,
         };
+        let effect = self.compose_effect(rest_effect, &self.part_effects[part], values);
+        PartProperties {
+            multiply_color: effect.multiply_color,
+            opacity: effect.opacity,
+            screen_color: effect.screen_color,
+            ..rest
+        }
+    }
+
+    pub(crate) fn compile_part_effects(&self, part: usize) -> Vec<EffectBinding> {
+        let rest = self.parts[part].rest_properties;
+        let rest_effect = ColorEffect {
+            multiply_color: rest.multiply_color,
+            opacity: rest.opacity,
+            screen_color: rest.screen_color,
+        };
         let entries = self.parts[part].property_bindings.iter().map(|&b| {
             let keyforms = &self.document.parameter_bindings[b].keyforms;
             let entries = self.bindings[b].part_entries.get(&part);
@@ -136,13 +175,7 @@ impl Model {
                 .collect();
             (b, keyed)
         });
-        let effect = self.compose_effect(rest_effect, entries, values);
-        PartProperties {
-            multiply_color: effect.multiply_color,
-            opacity: effect.opacity,
-            screen_color: effect.screen_color,
-            ..rest
-        }
+        changing_effects(rest_effect, entries)
     }
 
     /// `composeParameterGroupProperties` and `composeParameterDeformerProperties`: a group's or
@@ -153,6 +186,14 @@ impl Model {
         group: usize,
         values: &ParameterValues,
     ) -> ColorEffect {
+        self.compose_effect(
+            self.groups[group].properties.effect,
+            &self.group_effects[group],
+            values,
+        )
+    }
+
+    pub(crate) fn compile_group_effects(&self, group: usize) -> Vec<EffectBinding> {
         let compiled = &self.groups[group];
         let rest = compiled.properties.effect;
         let entries = compiled.bindings.iter().map(|(b, entries)| {
@@ -184,41 +225,40 @@ impl Model {
                 .collect();
             (*b, keyed)
         });
-        self.compose_effect(rest, entries, values)
+        changing_effects(rest, entries)
     }
 
-    /// `composeParameterGlue`: keyed weight and strength per connection.
-    pub(crate) fn compose_glue(&self, values: &ParameterValues) -> Vec<Glue> {
-        self.document
-            .glue
-            .iter()
-            .enumerate()
-            .map(|(index, glue)| {
-                let mut weight = glue.weight;
-                let mut strength = glue.strength;
-                for compiled in &self.glue_bindings[index] {
-                    let binding = &self.bindings[compiled.binding];
-                    let Some(sample) = self.binding_sample(binding, values) else {
-                        continue;
-                    };
-                    let keyed = &compiled.coordinates;
-                    let rest = [glue.weight, glue.strength];
-                    let sampled = blend(sample, |k| keyed[k].as_ref().map(|c| &c[..]), &rest);
-                    let influence = self.binding_influence(binding, values);
-                    weight += (sampled[0] - glue.weight) * influence;
-                    strength += (sampled[1] - glue.strength) * influence;
-                }
-                Glue {
-                    strength: strength.clamp(0.0, 1.0),
-                    weight: if glue.second.edge.is_some() {
-                        1.0
-                    } else {
-                        weight.clamp(0.0, 1.0)
-                    },
-                    ..glue.clone()
-                }
-            })
-            .collect()
+    /// One attachment's keyed weight and strength, in authored binding order.
+    pub(crate) fn compose_glue_connection(
+        &self,
+        index: usize,
+        values: &ParameterValues,
+    ) -> GlueConnection {
+        let glue = &self.glue_connections[index];
+        let mut weight = glue.weight;
+        let mut strength = glue.strength;
+        for compiled in &self.glue_bindings[index] {
+            let binding = &self.bindings[compiled.binding];
+            let Some(sample) = self.binding_sample(binding, values) else {
+                continue;
+            };
+            let keyed = &compiled.coordinates;
+            let rest = [glue.weight, glue.strength];
+            let sampled = sample_coordinates(sample, |k| keyed[k].as_ref().map(|c| &c[..]), &rest);
+            let influence = self.binding_influence(binding, values);
+            weight += (sampled.coordinate(0).unwrap_or(glue.weight) - glue.weight) * influence;
+            strength +=
+                (sampled.coordinate(1).unwrap_or(glue.strength) - glue.strength) * influence;
+        }
+        GlueConnection {
+            strength: strength.clamp(0.0, 1.0),
+            weight: if glue.edge.is_some() {
+                1.0
+            } else {
+                weight.clamp(0.0, 1.0)
+            },
+            ..*glue
+        }
     }
 
     /// `composeParameterDeformer`: the deformer's control points, handles and spatial channels.

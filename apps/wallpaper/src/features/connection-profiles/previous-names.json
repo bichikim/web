@@ -1,0 +1,15 @@
+{
+  "groups": {
+    "감정": "Emotion",
+    "손동작": "Hands",
+    "몸동작": "Body",
+    "장식": "Accessories",
+    "의상": "Outfit"
+  },
+  "menus": {
+    "ash:shrink": "귀엽게 작아지기",
+    "ash:glasses": "안경 쓰기",
+    "ash:walking": "앞으로 걷기",
+    "ash:remove-coat": "외투 벗기"
+  }
+}

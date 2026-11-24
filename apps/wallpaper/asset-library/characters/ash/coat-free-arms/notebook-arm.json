@@ -1,0 +1,587 @@
+{
+  "scope": "Screen-right notebook-supporting arm; character-left arm",
+  "beforeModelSha256": "473c9ee9bec1c900a24cbb8331ba71a3ffdfc9a680c829c525080233e879b6d6",
+  "modelSha256": "66a3a271b81494f283c778055573b58eb9207785e0876b7b0210edd03f488386",
+  "modelBytes": 9770226,
+  "mechanism": "Join painted thickness centers by translating the original forearm, hand and notebook together; retain original deformation and physics; finish only the upper-arm contour end.",
+  "attachment": {
+    "beforeModelSha256": "473c9ee9bec1c900a24cbb8331ba71a3ffdfc9a680c829c525080233e879b6d6",
+    "modelSha256": "53db5fa7ec4cb1ed198dd6c8ea2e25516c4e01b4dbecd9f23e12ab3d2dfff02d",
+    "modelBytes": 9769101,
+    "attachment": {
+      "id": "coat-free:notes-right:elbow-center:contact",
+      "composition": "sequential",
+      "mode": "translate",
+      "first": {
+        "partId": "coat-free:notes-right:ArtMesh994",
+        "vertexIndex": 76
+      },
+      "second": {
+        "partId": "ArtMesh1002",
+        "vertexIndex": 61
+      },
+      "weight": 1,
+      "strength": 1
+    },
+    "centers": {
+      "upper": {
+        "partId": "ArtMesh1002",
+        "vertexIndex": 61,
+        "triangle": [14, 15, 41],
+        "weights": [0.3424803245721833, 0.21795646268610716, 0.4395632127417096]
+      },
+      "lower": {
+        "partId": "coat-free:notes-right:ArtMesh994",
+        "vertexIndex": 76,
+        "triangle": [51, 74, 75],
+        "weights": [0.14401587128819812, 0.04343755932396352, 0.8125465693878383]
+      }
+    },
+    "landmarks": {
+      "definition": {
+        "upper": "Middle of the actual painted terminal cap of the upper arm",
+        "lower": "Middle of the painted forearm thickness, slightly toward the wrist from the elbow tip"
+      },
+      "upper": {
+        "partId": "ArtMesh1002",
+        "triangle": [14, 15, 41],
+        "weights": [0.3424803245721833, 0.21795646268610716, 0.4395632127417096],
+        "world": [2929.701996490148, 2130.59500857015],
+        "uv": [0.6982602085874752, 0.5216005288272884],
+        "surfaceAlpha": 200,
+        "capEnds": [
+          [2848, 2145.5],
+          [3003.5, 2092.5]
+        ]
+      },
+      "lower": {
+        "partId": "coat-free:notes-right:ArtMesh994",
+        "triangle": [51, 74, 75],
+        "weights": [0.14401587128819812, 0.04343755932396352, 0.8125465693878383],
+        "world": [2897.3584299318277, 2123.711616048283],
+        "uv": [0.5863759157854194, 0.5068621813404424],
+        "surfaceAlpha": 255,
+        "sectionEnds": [
+          [2832.766064144585, 2166.9885011257356],
+          [2961.9507957190704, 2080.4347309708305]
+        ],
+        "elbowTip": [2932.5, 2208.5],
+        "distanceFromTip": 91.78235124467051
+      },
+      "frame": {
+        "x": 2500,
+        "y": 1650,
+        "width": 650,
+        "height": 700
+      }
+    },
+    "followers": [
+      "ArtMesh119",
+      "ArtMesh120",
+      "ArtMesh121",
+      "ArtMesh122",
+      "ArtMesh123",
+      "ArtMesh124",
+      "ArtMesh125",
+      "ArtMesh126",
+      "ArtMesh128",
+      "ArtMesh129",
+      "ArtMesh127",
+      "coat-free:notes-right:ArtMesh995"
+    ],
+    "origin": {
+      "partId": "coat-free:notes-right:ArtMesh994",
+      "vertexIndex": 6
+    },
+    "referenceId": "coat-free:notes-right:elbow-center:translation-reference",
+    "addedParts": [
+      "coat-free:notes-right:elbow-center:upper-reference",
+      "coat-free:notes-right:elbow-center:lower-reference",
+      "coat-free:notes-right:elbow-center:translation-reference"
+    ],
+    "originalVertexCounts": {
+      "ArtMesh119": 17,
+      "ArtMesh120": 24,
+      "ArtMesh121": 25,
+      "ArtMesh122": 23,
+      "ArtMesh123": 130,
+      "ArtMesh124": 70,
+      "ArtMesh125": 68,
+      "ArtMesh126": 30,
+      "ArtMesh128": 4,
+      "ArtMesh129": 18,
+      "ArtMesh127": 76,
+      "coat-free:notes-right:ArtMesh995": 28,
+      "ArtMesh1002": 61,
+      "coat-free:notes-right:ArtMesh994": 76
+    },
+    "addedVertexCounts": {
+      "ArtMesh119": 1,
+      "ArtMesh120": 1,
+      "ArtMesh121": 1,
+      "ArtMesh122": 1,
+      "ArtMesh123": 1,
+      "ArtMesh124": 1,
+      "ArtMesh125": 1,
+      "ArtMesh126": 1,
+      "ArtMesh128": 1,
+      "ArtMesh129": 1,
+      "ArtMesh127": 1,
+      "coat-free:notes-right:ArtMesh995": 1,
+      "ArtMesh1002": 1,
+      "coat-free:notes-right:ArtMesh994": 1
+    }
+  },
+  "scopeVerification": {
+    "beforeSha256": "473c9ee9bec1c900a24cbb8331ba71a3ffdfc9a680c829c525080233e879b6d6",
+    "modelSha256": "53db5fa7ec4cb1ed198dd6c8ea2e25516c4e01b4dbecd9f23e12ab3d2dfff02d",
+    "modelBytes": 9769101,
+    "allTexturesUnchanged": true,
+    "originalRenderedVerticesUvsIndicesUnchanged": true,
+    "originalHierarchyBindingsPhysicsExpressionsUnchanged": true,
+    "originalUpperArmRenderedVerticesUnchanged": true,
+    "addedInvisibleReferenceParts": 3,
+    "addedUnreferencedVertices": 14,
+    "addedSequentialConstraints": 34,
+    "contact": {
+      "id": "coat-free:notes-right:elbow-center:contact",
+      "composition": "sequential",
+      "mode": "translate",
+      "first": {
+        "partId": "coat-free:notes-right:ArtMesh994",
+        "vertexIndex": 76
+      },
+      "second": {
+        "partId": "ArtMesh1002",
+        "vertexIndex": 61
+      },
+      "weight": 1,
+      "strength": 1
+    }
+  },
+  "geometryVerification": {
+    "samples": 65,
+    "maximumContactGap": 0,
+    "maximumUpperArmVertexChange": 0,
+    "maximumAssemblyShapeChange": 4.547473508864641e-13,
+    "maximumInactiveVertexChange": 0,
+    "neutralTranslation": [32.34356655832016, 6.883392521867336],
+    "midWritingTranslation": [32.34356655832016, 6.883392521867336]
+  },
+  "seam": {
+    "beforeModelSha256": "53db5fa7ec4cb1ed198dd6c8ea2e25516c4e01b4dbecd9f23e12ab3d2dfff02d",
+    "modelSha256": "66a3a271b81494f283c778055573b58eb9207785e0876b7b0210edd03f488386",
+    "modelBytes": 9770226,
+    "bindingId": "coat-free:notes-right:elbow-seam",
+    "partId": "ArtMesh1002",
+    "vertexIndex": 13,
+    "worldShift": [-22.826283258046644, 0],
+    "localDelta": [-0.009923426546394443, -4.7561217186853355e-9],
+    "paintedEndShift": [-13.075780452084928, 0],
+    "overlapInset": 4,
+    "activation": ["Param49", "Param89"],
+    "texturesAndMeshesUnchanged": true,
+    "existingBindingsAndCenterConstraintsUnchanged": true
+  },
+  "finishVerification": {
+    "samples": 65,
+    "maximumVertexChangeOutsideSeam": 0,
+    "maximumContactGap": 0,
+    "maximumInactiveVertexChange": 0,
+    "maximumSeamControlShift": 22.82657786350827,
+    "allTexturesMeshesAndExistingBindingsUnchanged": true,
+    "tip": {
+      "triangle": [13, 14, 40],
+      "weights": [0.5728387887009813, 0.03186947526863826, 0.3952917360303805]
+    },
+    "coverage": [
+      {
+        "sample": 0,
+        "writing": 0,
+        "before": 0,
+        "after": 255
+      },
+      {
+        "sample": 1,
+        "writing": 0.5,
+        "before": 0,
+        "after": 255
+      },
+      {
+        "sample": 2,
+        "writing": 1,
+        "before": 0,
+        "after": 255
+      },
+      {
+        "sample": 3,
+        "writing": 0,
+        "before": 0,
+        "after": 255
+      },
+      {
+        "sample": 4,
+        "writing": 0.5,
+        "before": 0,
+        "after": 255
+      },
+      {
+        "sample": 5,
+        "writing": 1,
+        "before": 0,
+        "after": 255
+      },
+      {
+        "sample": 6,
+        "writing": 0,
+        "before": 0,
+        "after": 255
+      },
+      {
+        "sample": 7,
+        "writing": 0.5,
+        "before": 0,
+        "after": 255
+      },
+      {
+        "sample": 8,
+        "writing": 1,
+        "before": 0,
+        "after": 255
+      },
+      {
+        "sample": 9,
+        "writing": 0,
+        "before": 0,
+        "after": 255
+      },
+      {
+        "sample": 10,
+        "writing": 0.5,
+        "before": 0,
+        "after": 255
+      },
+      {
+        "sample": 11,
+        "writing": 1,
+        "before": 0,
+        "after": 255
+      },
+      {
+        "sample": 12,
+        "writing": 0,
+        "before": 0,
+        "after": 255
+      },
+      {
+        "sample": 13,
+        "writing": 0.5,
+        "before": 0,
+        "after": 255
+      },
+      {
+        "sample": 14,
+        "writing": 1,
+        "before": 0,
+        "after": 255
+      },
+      {
+        "sample": 15,
+        "writing": 0,
+        "before": 0,
+        "after": 255
+      },
+      {
+        "sample": 16,
+        "writing": 0.5,
+        "before": 0,
+        "after": 255
+      },
+      {
+        "sample": 17,
+        "writing": 1,
+        "before": 0,
+        "after": 255
+      },
+      {
+        "sample": 18,
+        "writing": 0,
+        "before": 0,
+        "after": 255
+      },
+      {
+        "sample": 19,
+        "writing": 0.5,
+        "before": 0,
+        "after": 255
+      },
+      {
+        "sample": 20,
+        "writing": 1,
+        "before": 0,
+        "after": 255
+      },
+      {
+        "sample": 21,
+        "writing": 0,
+        "before": 0,
+        "after": 255
+      },
+      {
+        "sample": 22,
+        "writing": 0.5,
+        "before": 0,
+        "after": 255
+      },
+      {
+        "sample": 23,
+        "writing": 1,
+        "before": 0,
+        "after": 255
+      },
+      {
+        "sample": 24,
+        "writing": 0,
+        "before": 0,
+        "after": 255
+      },
+      {
+        "sample": 25,
+        "writing": 0.5,
+        "before": 0,
+        "after": 255
+      },
+      {
+        "sample": 26,
+        "writing": 1,
+        "before": 0,
+        "after": 255
+      },
+      {
+        "sample": 27,
+        "writing": 0,
+        "before": 0,
+        "after": 255
+      },
+      {
+        "sample": 28,
+        "writing": 0,
+        "before": 0,
+        "after": 255
+      },
+      {
+        "sample": 29,
+        "writing": 0,
+        "before": 0,
+        "after": 255
+      },
+      {
+        "sample": 30,
+        "writing": 0,
+        "before": 0,
+        "after": 255
+      },
+      {
+        "sample": 31,
+        "writing": 0,
+        "before": 0,
+        "after": 255
+      },
+      {
+        "sample": 32,
+        "writing": 0,
+        "before": 0,
+        "after": 255
+      },
+      {
+        "sample": 33,
+        "writing": 0,
+        "before": 0,
+        "after": 255
+      },
+      {
+        "sample": 34,
+        "writing": 0,
+        "before": 0,
+        "after": 255
+      },
+      {
+        "sample": 35,
+        "writing": 0,
+        "before": 0,
+        "after": 255
+      },
+      {
+        "sample": 36,
+        "writing": 0,
+        "before": 0,
+        "after": 255
+      },
+      {
+        "sample": 37,
+        "writing": 0,
+        "before": 0,
+        "after": 255
+      },
+      {
+        "sample": 38,
+        "writing": 0,
+        "before": 0,
+        "after": 255
+      },
+      {
+        "sample": 39,
+        "writing": 0,
+        "before": 0,
+        "after": 255
+      },
+      {
+        "sample": 40,
+        "writing": 0,
+        "before": 0,
+        "after": 255
+      },
+      {
+        "sample": 41,
+        "writing": 0,
+        "before": 0,
+        "after": 255
+      },
+      {
+        "sample": 42,
+        "writing": 0,
+        "before": 0,
+        "after": 255
+      },
+      {
+        "sample": 43,
+        "writing": 0,
+        "before": 0,
+        "after": 255
+      },
+      {
+        "sample": 44,
+        "writing": 0,
+        "before": 0,
+        "after": 255
+      },
+      {
+        "sample": 45,
+        "writing": 0,
+        "before": 0,
+        "after": 255
+      },
+      {
+        "sample": 46,
+        "writing": 0,
+        "before": 0,
+        "after": 255
+      },
+      {
+        "sample": 47,
+        "writing": 0,
+        "before": 0,
+        "after": 255
+      },
+      {
+        "sample": 48,
+        "writing": 0,
+        "before": 0,
+        "after": 255
+      },
+      {
+        "sample": 49,
+        "writing": 0,
+        "before": 0,
+        "after": 255
+      },
+      {
+        "sample": 50,
+        "writing": 0,
+        "before": 0,
+        "after": 255
+      },
+      {
+        "sample": 51,
+        "writing": 0,
+        "before": 0,
+        "after": 255
+      },
+      {
+        "sample": 52,
+        "writing": 0,
+        "before": 0,
+        "after": 255
+      },
+      {
+        "sample": 53,
+        "writing": 0,
+        "before": 0,
+        "after": 255
+      },
+      {
+        "sample": 54,
+        "writing": 0,
+        "before": 0,
+        "after": 255
+      },
+      {
+        "sample": 55,
+        "writing": 0,
+        "before": 0,
+        "after": 255
+      },
+      {
+        "sample": 56,
+        "writing": 0,
+        "before": 0,
+        "after": 255
+      },
+      {
+        "sample": 57,
+        "writing": 0,
+        "before": 0,
+        "after": 255
+      },
+      {
+        "sample": 62,
+        "writing": 0,
+        "before": 0,
+        "after": 255
+      }
+    ]
+  },
+  "review": {
+    "joint": "notebook-elbow.png",
+    "context": "notebook-elbow-context.png",
+    "physics": "notebook-elbow-physics.png",
+    "paintedCenters": "notebook-elbow-centers.png",
+    "livePhysics": "notebook-arm-live.png"
+  },
+  "checks": {
+    "browsers": ["Chromium", "WebKit"],
+    "buffering": [false, true],
+    "notebookArmCasesPassed": 4,
+    "staticPosesPerCase": 16,
+    "liveHeadReversalsPerCase": 3,
+    "geometrySamplesPassed": 65,
+    "regressionInitialRun": {
+      "passed": 19,
+      "failed": 1,
+      "total": 20
+    },
+    "regressionFocusedRecheck": {
+      "passed": 4,
+      "failed": 0,
+      "scope": "Existing live pen-wrist physics cases; initial WebKit buffering=true capture observed only 0.1757 units of movement, below the unchanged assertion threshold of 1"
+    },
+    "wallpaperTypecheckPassed": true,
+    "wallpaperBuildPassed": true,
+    "changedTestOxlintPassed": true,
+    "oxfmtPassed": true,
+    "repositoryOxlint": {
+      "passed": false,
+      "existingErrorsOutsideChangedFiles": 17
+    }
+  }
+}

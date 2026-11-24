@@ -1,3 +1,4 @@
+import {text as uiText} from '../features/localization'
 import {createEffect, createSignal, createUniqueId, type JSX, onCleanup} from 'solid-js'
 import {Portal} from 'solid-js/web'
 
@@ -45,7 +46,7 @@ export const SDialog = (props: SDialogProps) => {
             {props.title}
           </h2>
           <button type="button" class="wallpaper-file-button" onClick={() => props.onClose?.()}>
-            닫기
+            {uiText('닫기')}
           </button>
         </header>
         {props.children}

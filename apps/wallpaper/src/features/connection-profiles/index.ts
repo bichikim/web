@@ -1,3 +1,5 @@
 export * from './builtin-profile'
+export * from './migrate-agent-actions'
 export * from './migrate-semantic-actions'
+export * from './migrate-semantic-examples'
 export * from './use-connection-profiles'

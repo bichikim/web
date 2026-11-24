@@ -5,7 +5,7 @@
 這是一個 Vite 外掛，使用本機嵌入模型比較原始碼中的靜態字串，以找出語意相近的 key。翻譯文案、分析事件、權限名稱等任何以字串作為 key 的匯入函式都能使用此外掛。
 
 - 不使用網路連線或外部 API。
-- 套件內附 q8 `Xenova/multilingual-e5-small` 模型。
+- 從作業系統共用快取讀取固定版本的 q8 `Xenova/multilingual-e5-small` 模型。
 - 透過 `keyDetector` 決定要檢查哪個函式及其第幾個引數。
 - 在非同步 Worker 中比較 Vite 實際載入的模組，降低對 transform 流程的影響。
 - 只回報相似 key 及其原始碼位置，不會自動修改程式碼。
@@ -242,9 +242,9 @@ group=ungrouped, semantic=0.9560–0.9843/0.9000
 | `exclude`           | 排除測試、generated 與 node_modules  | Vite 與 CLI 檢查中排除的 glob 模式          |
 | `scanInclude`       | `src/**/*.{ts,tsx,js,jsx,mts,mjs}`   | 僅供 CLI 全專案掃描使用的檔案 glob          |
 | `cacheDir`          | `node_modules/.cache/key-similarity` | 模型快取與 `vectors` 快取的基礎目錄         |
-| `modelPath`         | 內附模型                             | 其他本機 Transformers.js 模型的路徑         |
-| `modelIdentifier`   | 內附模型 ID 或 `modelPath`           | 用來區分向量快取的模型識別碼                |
-| `modelRevision`     | 內附 revision 或 `local`             | 用來區分向量快取的模型 revision             |
+| `modelPath`         | 共用快取模型                         | 其他本機 Transformers.js 模型的路徑         |
+| `modelIdentifier`   | 共用快取模型 ID 或 `modelPath`       | 用來區分向量快取的模型識別碼                |
+| `modelRevision`     | 固定 revision 或 `local`             | 用來區分向量快取的模型 revision             |
 | `wasmPath`          | 自動選擇                             | ONNX WASM 檔案的明確路徑                    |
 
 Vite 沒有共用的 `include` 選項。Vite 會檢查其模組圖中的 JavaScript 與 TypeScript 檔案，並只套用 `exclude`。只有在需要全專案掃描時，才使用 CLI 專用的 `scanInclude`。
@@ -275,7 +275,7 @@ CLI 使用目前的工作目錄作為根目錄。
 
 ## 10. 模型與快取
 
-預設模型與 tokenizer 位於 `assets/multilingual-e5-small`。Transformers.js 的遠端模型存取已停用，因此執行時不會下載模型。
+預設模型與 tokenizer 依照 `assets/model.json` 的固定版本準備，驗證大小與 SHA-256 後儲存至作業系統的 `io.winterlove.models` 共用快取。只下載遺失或損壞的檔案，之後可離線重用。模型二進位檔不包含在 Git 與 npm 套件中。Transformers.js 只讀取已準備的本機檔案。
 
 正規化字串的向量預設儲存在 `node_modules/.cache/key-similarity/vectors`。模型 ID、revision、正規化版本與正規化字串都相同時，會重複使用既有向量。切換到其他本機模型時，請同時設定 `modelIdentifier` 與 `modelRevision`，避免與先前的模型快取混用。
 
@@ -319,7 +319,7 @@ Vite 模式不會在建置前使用 glob 掃描整個原始碼目錄。它只檢
 
 ## 13. 內附範例
 
-請在套件根目錄執行以下指令。所有範例都使用內附的本機模型。
+請在套件根目錄執行以下指令。所有範例都使用共用快取中的本機模型。
 
 ```bash
 npm run example:duplicate

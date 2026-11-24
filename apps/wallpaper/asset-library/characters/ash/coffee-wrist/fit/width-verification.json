@@ -1,0 +1,78 @@
+{
+  "units": "pixels at the same 1.5x neutral render",
+  "rows": [
+    {
+      "y": 902,
+      "before": {
+        "left": 644,
+        "right": 773,
+        "width": 130
+      },
+      "after": {
+        "left": 651,
+        "right": 766,
+        "width": 116
+      },
+      "arm": {
+        "left": 651,
+        "right": 766,
+        "width": 116
+      }
+    },
+    {
+      "y": 905,
+      "before": {
+        "left": 644,
+        "right": 771,
+        "width": 128
+      },
+      "after": {
+        "left": 650,
+        "right": 764,
+        "width": 115
+      },
+      "arm": {
+        "left": 649,
+        "right": 764,
+        "width": 116
+      }
+    },
+    {
+      "y": 908,
+      "before": {
+        "left": 643,
+        "right": 769,
+        "width": 127
+      },
+      "after": {
+        "left": 648,
+        "right": 762,
+        "width": 115
+      },
+      "arm": {
+        "left": 647,
+        "right": 763,
+        "width": 117
+      }
+    },
+    {
+      "y": 910,
+      "before": {
+        "left": 642,
+        "right": 767,
+        "width": 126
+      },
+      "after": {
+        "left": 646,
+        "right": 761,
+        "width": 116
+      },
+      "arm": {
+        "left": 646,
+        "right": 762,
+        "width": 117
+      }
+    }
+  ],
+  "maximumAfterWidthError": 2
+}

@@ -1,3 +1,4 @@
+import {text as uiText} from '../features/localization'
 import {For} from 'solid-js'
 import {Dynamic} from 'solid-js/web'
 import type {Table, TableRow} from 'mdast'
@@ -28,7 +29,7 @@ const SSpeechTableRow = (props: SpeechTableRowProps) => (
 export const SSpeechTable = (props: {readonly node: Table}) => (
   <div
     role="region"
-    aria-label="표"
+    aria-label={uiText('표')}
     tabIndex={0}
     class="min-w-0 max-w-full overflow-auto overscroll-contain rounded border border-solid
     border-stone-300/80 whitespace-pre [overflow-wrap:normal]

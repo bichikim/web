@@ -1,3 +1,4 @@
+import {text as uiText} from '../features/localization'
 import type {WallpaperController} from '../features/settings'
 import type {InteractionSettings} from '@winter-love/wallpaper/interaction/types'
 import {SSelect} from './SSelect'
@@ -11,15 +12,21 @@ export const SWallpaperInteraction = (props: SWallpaperInteractionProps) => {
   const handleActivation = (activation: InteractionSettings['activation']) =>
     props.controller.setInteraction({activation})
   return (
-    <section aria-label="배경 조작" class="grid gap-4 pt-2">
-      <h3 class="m-0 text-base font-semibold">배경 조작</h3>
+    <section aria-label={uiText('배경 조작')} class="grid gap-4 pt-2">
+      <h3 class="m-0 text-base font-semibold">{uiText('배경 조작')}</h3>
       <div class="wallpaper-row">
-        <span>배경 입력</span>
+        <span>{uiText('배경 입력')}</span>
         <SSelect
-          label="배경 입력"
+          label={uiText('배경 입력')}
           options={[
-            {label: '입력 통과', value: 'passThrough'},
-            {label: '조작 허용', value: 'always'},
+            {
+              label: uiText('입력 통과'),
+              value: 'passThrough',
+            },
+            {
+              label: uiText('조작 허용'),
+              value: 'always',
+            },
           ]}
           value={settings().activation}
           onChange={handleActivation}

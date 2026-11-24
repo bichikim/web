@@ -1,0 +1,18 @@
+{
+  "sha256": "b824a9ea198e8c7122bbdbc1905a6fb30ca88d7fb647fa56eba65d58658b956d",
+  "method": "Cuff rim corner overlapping the unchanged hand mask, within 20 model units of the outer wrist boundary and more than 2 units toward the palm",
+  "results": [
+    {
+      "model": "before",
+      "pixels": 7467,
+      "areaInModelCoordinates": 466.6875,
+      "cornerPalmExtent": -19.954074172263667
+    },
+    {
+      "model": "model",
+      "pixels": 0,
+      "areaInModelCoordinates": 0,
+      "cornerPalmExtent": null
+    }
+  ]
+}

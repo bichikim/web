@@ -1,5 +1,4 @@
-import {convertFileSrc, isTauri} from '@tauri-apps/api/core'
-import {resolveResource} from '@tauri-apps/api/path'
+import {convertFileSrc, invoke, isTauri} from '@tauri-apps/api/core'
 import type {SemanticReply, SemanticRequest} from './protocol'
 
 interface SemanticPending {
@@ -47,7 +46,7 @@ export const createSemanticModel = () => {
         throw new Error('텍스트 분석이 종료됐어요.')
       }
       const modelPath = isTauri()
-        ? `${convertFileSrc(await resolveResource('semantic-models'))}/`
+        ? `${convertFileSrc(await invoke<string>('prepare_semantic_model'))}/`
         : new URL('/semantic-models/', globalThis.location.href).href
       if (disposed) {
         throw new Error('텍스트 분석이 종료됐어요.')

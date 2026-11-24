@@ -1,0 +1,153 @@
+{
+  "1": {
+    "class_type": "SolidMask",
+    "inputs": {
+      "value": 1,
+      "width": 960,
+      "height": 960
+    }
+  },
+  "2": {
+    "class_type": "EmptyImage",
+    "inputs": {
+      "width": 960,
+      "height": 960,
+      "batch_size": 1,
+      "color": 0
+    }
+  },
+  "3": {
+    "class_type": "SolidMask",
+    "inputs": {
+      "value": 1e-6,
+      "width": 4096,
+      "height": 4096
+    }
+  },
+  "10": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "input-1.png"
+    }
+  },
+  "11": {
+    "class_type": "MaskComposite",
+    "inputs": {
+      "destination": ["10", 1],
+      "source": ["1", 0],
+      "x": 0,
+      "y": 0,
+      "operation": "add"
+    }
+  },
+  "12": {
+    "class_type": "InvertMask",
+    "inputs": {
+      "mask": ["11", 0]
+    }
+  },
+  "13": {
+    "class_type": "MaskComposite",
+    "inputs": {
+      "destination": ["12", 0],
+      "source": ["3", 0],
+      "x": 0,
+      "y": 0,
+      "operation": "add"
+    }
+  },
+  "14": {
+    "class_type": "InvertMask",
+    "inputs": {
+      "mask": ["13", 0]
+    }
+  },
+  "15": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["10", 0],
+      "source": ["2", 0],
+      "x": 0,
+      "y": 0,
+      "resize_source": false,
+      "mask": ["1", 0]
+    }
+  },
+  "16": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["15", 0],
+      "alpha": ["14", 0]
+    }
+  },
+  "17": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": ["16", 0],
+      "filename_prefix": "ash-atlas-clean-1"
+    }
+  },
+  "30": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "input-3.png"
+    }
+  },
+  "31": {
+    "class_type": "MaskComposite",
+    "inputs": {
+      "destination": ["30", 1],
+      "source": ["1", 0],
+      "x": 0,
+      "y": 0,
+      "operation": "add"
+    }
+  },
+  "32": {
+    "class_type": "InvertMask",
+    "inputs": {
+      "mask": ["31", 0]
+    }
+  },
+  "33": {
+    "class_type": "MaskComposite",
+    "inputs": {
+      "destination": ["32", 0],
+      "source": ["3", 0],
+      "x": 0,
+      "y": 0,
+      "operation": "add"
+    }
+  },
+  "34": {
+    "class_type": "InvertMask",
+    "inputs": {
+      "mask": ["33", 0]
+    }
+  },
+  "35": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["30", 0],
+      "source": ["2", 0],
+      "x": 0,
+      "y": 0,
+      "resize_source": false,
+      "mask": ["1", 0]
+    }
+  },
+  "36": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["35", 0],
+      "alpha": ["34", 0]
+    }
+  },
+  "37": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": ["36", 0],
+      "filename_prefix": "ash-atlas-clean-3"
+    }
+  }
+}

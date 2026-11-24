@@ -9,6 +9,12 @@ import {SPoffoWidget} from '../SPoffoWidget'
 
 vi.mock('../../features/poffo/use-widget', () => ({useWidget: vi.fn()}))
 vi.mock('@tauri-apps/api/core', () => ({invoke: vi.fn(), isTauri: vi.fn()}))
+vi.mock('@tauri-apps/api/webview', () => ({
+  getCurrentWebview: () => ({
+    listen: vi.fn().mockResolvedValue(vi.fn()),
+    setFocus: vi.fn().mockResolvedValue(undefined),
+  }),
+}))
 vi.mock('@tauri-apps/api/window', async () => {
   const actual =
     await vi.importActual<typeof import('@tauri-apps/api/window')>('@tauri-apps/api/window')
@@ -55,6 +61,7 @@ const setup = () => {
   const controller = {
     agentBindings: () => undefined,
     assetId: () => null,
+    captureSilhouette: vi.fn(),
     drag: vi.fn(),
     error: () => null,
     lipsync: () => undefined,
@@ -64,10 +71,13 @@ const setup = () => {
     report: vi.fn(),
     saveSize: vi.fn().mockResolvedValue(undefined),
     semanticBindings: () => undefined,
+    silhouette: () => null,
     toggleAction: vi.fn(),
+    touch: () => undefined,
     tracking: () => undefined,
     trackingBindings: () => undefined,
     trackingOptions: () => undefined,
+    wantsSilhouette: () => false,
   }
   vi.mocked(useWidget).mockReturnValue(controller)
   vi.mocked(isTauri).mockReturnValue(true)
@@ -75,6 +85,11 @@ const setup = () => {
   vi.mocked(getCurrentWindow).mockReturnValue(
     window as unknown as ReturnType<typeof getCurrentWindow>,
   )
+  Object.assign(HTMLElement.prototype, {
+    hasPointerCapture: vi.fn(() => false),
+    releasePointerCapture: vi.fn(),
+    setPointerCapture: vi.fn(),
+  })
   render(() => <SPoffoWidget id="character" />)
   return {controller, window}
 }
@@ -83,15 +98,17 @@ it('should resize through the context menu and handles without showing a close b
   const {controller, window} = setup()
   const widget = screen.getByRole('main', {name: 'Poffo 위젯'})
   expect(screen.queryByRole('button', {name: 'Poffo 위젯 닫기'})).toBeNull()
-  expect(screen.queryByRole('group', {name: '위젯 크기 조정'})).toBeNull()
+  expect(screen.queryByRole('group', {name: '위젯 크기 및 위치 조정'})).toBeNull()
   fireEvent.contextMenu(widget, {clientX: 100, clientY: 150})
   expect(screen.queryByRole('menu')).toBeNull()
   fireEvent(
     widget,
     new MouseEvent('pointerup', {bubbles: true, button: 2, clientX: 100, clientY: 150}),
   )
-  fireEvent.click(screen.getByRole('menuitem', {name: '크기 조정'}))
-  await waitFor(() => expect(screen.getByRole('group', {name: '위젯 크기 조정'})).toBeVisible())
+  fireEvent.click(screen.getByRole('menuitem', {name: '크기 및 위치 조정'}))
+  await waitFor(() =>
+    expect(screen.getByRole('group', {name: '위젯 크기 및 위치 조정'})).toBeVisible(),
+  )
   expect(screen.getAllByRole('button', {name: /크기 조정$/})).toHaveLength(8)
   fireEvent(
     screen.getByRole('button', {name: '오른쪽 아래 크기 조정'}),
@@ -104,7 +121,9 @@ it('should resize through the context menu and handles without showing a close b
   fireEvent.click(screen.getByRole('button', {name: '조정 완료'}))
   fireEvent(widget, new MouseEvent('pointerdown', {bubbles: true, button: 0}))
   expect(controller.drag).not.toHaveBeenCalled()
-  await waitFor(() => expect(screen.queryByRole('group', {name: '위젯 크기 조정'})).toBeNull())
+  await waitFor(() =>
+    expect(screen.queryByRole('group', {name: '위젯 크기 및 위치 조정'})).toBeNull(),
+  )
   expect(controller.saveSize).toHaveBeenCalledWith({height: 630, width: 480})
   expect(window.setResizable).toHaveBeenLastCalledWith(false)
 })
@@ -113,15 +132,19 @@ it('should offer completion in the context menu while editing and cancel with Es
   const {controller, window} = setup()
   const widget = screen.getByRole('main', {name: 'Poffo 위젯'})
   fireEvent.keyDown(widget, {key: 'F10', shiftKey: true})
-  fireEvent.click(screen.getByRole('menuitem', {name: '크기 조정'}))
-  await waitFor(() => expect(screen.getByRole('group', {name: '위젯 크기 조정'})).toBeVisible())
+  fireEvent.click(screen.getByRole('menuitem', {name: '크기 및 위치 조정'}))
+  await waitFor(() =>
+    expect(screen.getByRole('group', {name: '위젯 크기 및 위치 조정'})).toBeVisible(),
+  )
   fireEvent(widget, new MouseEvent('pointerup', {bubbles: true, button: 2}))
   expect(screen.getByRole('menuitem', {name: '조정 완료'})).toBeVisible()
   fireEvent.keyDown(screen.getByRole('menu', {name: 'Poffo 위젯 메뉴'}), {key: 'Escape'})
   expect(screen.queryByRole('menu')).toBeNull()
-  expect(screen.getByRole('group', {name: '위젯 크기 조정'})).toBeVisible()
+  expect(screen.getByRole('group', {name: '위젯 크기 및 위치 조정'})).toBeVisible()
   fireEvent.keyDown(widget, {key: 'Escape'})
-  await waitFor(() => expect(screen.queryByRole('group', {name: '위젯 크기 조정'})).toBeNull())
+  await waitFor(() =>
+    expect(screen.queryByRole('group', {name: '위젯 크기 및 위치 조정'})).toBeNull(),
+  )
   expect(window.setPosition).toHaveBeenCalledWith(new PhysicalPosition(10, 20))
   expect(controller.saveSize).not.toHaveBeenCalled()
 })
@@ -130,19 +153,37 @@ it('should move the character while keeping resize handles active and block move
   const {controller, window} = setup()
   const widget = screen.getByRole('main', {name: 'Poffo 위젯'})
   fireEvent.keyDown(widget, {key: 'F10', shiftKey: true})
-  fireEvent.click(screen.getByRole('menuitem', {name: '크기 조정'}))
-  await waitFor(() => expect(screen.getByRole('group', {name: '위젯 크기 조정'})).toBeVisible())
-  fireEvent(widget, new MouseEvent('pointerdown', {bubbles: true, button: 0}))
-  expect(controller.drag).toHaveBeenCalledOnce()
-  expect(screen.getByRole('group', {name: '위젯 크기 조정'})).toBeVisible()
+  fireEvent.click(screen.getByRole('menuitem', {name: '크기 및 위치 조정'}))
+  await waitFor(() =>
+    expect(screen.getByRole('group', {name: '위젯 크기 및 위치 조정'})).toBeVisible(),
+  )
+  fireEvent(
+    widget,
+    new MouseEvent('pointerdown', {bubbles: true, button: 0, screenX: 100, screenY: 150}),
+  )
+  await waitFor(() => expect(widget).toHaveClass('cursor-grabbing'))
+  expect(window.setPosition).not.toHaveBeenCalled()
+  fireEvent(widget, new MouseEvent('pointermove', {bubbles: true, screenX: 130, screenY: 170}))
+  await waitFor(() =>
+    expect(window.setPosition).toHaveBeenLastCalledWith(expect.objectContaining({x: 35, y: 30})),
+  )
+  fireEvent(
+    widget,
+    new MouseEvent('pointerup', {bubbles: true, button: 0, screenX: 130, screenY: 170}),
+  )
+  expect(controller.drag).not.toHaveBeenCalled()
+  expect(screen.getByRole('group', {name: '위젯 크기 및 위치 조정'})).toBeVisible()
   expect(window.startResizeDragging).not.toHaveBeenCalled()
   fireEvent(
     screen.getByRole('button', {name: '오른쪽 아래 크기 조정'}),
     new MouseEvent('pointerdown', {bubbles: true, button: 0}),
   )
   await waitFor(() => expect(window.startResizeDragging).toHaveBeenCalledWith('SouthEast'))
-  expect(controller.drag).toHaveBeenCalledOnce()
+  expect(controller.drag).not.toHaveBeenCalled()
   fireEvent(widget, new MouseEvent('pointerup', {bubbles: true, button: 2}))
+  const positions = window.setPosition.mock.calls.length
   fireEvent(widget, new MouseEvent('pointerdown', {bubbles: true, button: 0}))
-  expect(controller.drag).toHaveBeenCalledOnce()
+  fireEvent(widget, new MouseEvent('pointermove', {bubbles: true, screenX: 200, screenY: 300}))
+  expect(window.setPosition).toHaveBeenCalledTimes(positions)
+  expect(controller.drag).not.toHaveBeenCalled()
 })

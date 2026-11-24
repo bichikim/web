@@ -7,6 +7,7 @@ export interface EncodedValue {
   readonly parts: ReadonlyArray<Uint8Array<ArrayBuffer>>
   readonly byteLength: number
   readonly assets: ReadonlyArray<PoffoAsset>
+  readonly version: PoffoVersion
 }
 
 export type PoffoCodec = 0 | 1
@@ -26,4 +27,6 @@ export interface PoffoHeader {
   readonly encodedLength: number
   readonly decodedLength: number
   readonly assetCount: number
+  readonly version: PoffoVersion
 }
+export type PoffoVersion = 1 | 2

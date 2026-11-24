@@ -1,0 +1,101 @@
+{
+  "1": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "source (1).png"
+    }
+  },
+  "2": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "surface.png"
+    }
+  },
+  "3": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "edit.png"
+    }
+  },
+  "4": {
+    "class_type": "ImageToMask",
+    "inputs": {
+      "image": ["3", 0],
+      "channel": "red"
+    }
+  },
+  "5": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["1", 0],
+      "source": ["2", 0],
+      "x": 0,
+      "y": 0,
+      "resize_source": false,
+      "mask": ["4", 0]
+    }
+  },
+  "6": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "stroke.png"
+    }
+  },
+  "7": {
+    "class_type": "ImageToMask",
+    "inputs": {
+      "image": ["6", 0],
+      "channel": "red"
+    }
+  },
+  "8": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "ink (1).png"
+    }
+  },
+  "9": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["5", 0],
+      "source": ["8", 0],
+      "x": 0,
+      "y": 0,
+      "resize_source": false,
+      "mask": ["7", 0]
+    }
+  },
+  "10": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "alpha.png"
+    }
+  },
+  "11": {
+    "class_type": "ImageToMask",
+    "inputs": {
+      "image": ["10", 0],
+      "channel": "red"
+    }
+  },
+  "12": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["9", 0],
+      "alpha": ["14", 0]
+    }
+  },
+  "13": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": ["12", 0],
+      "filename_prefix": "ash-hand-lines/hand"
+    }
+  },
+  "14": {
+    "class_type": "InvertMask",
+    "inputs": {
+      "mask": ["11", 0]
+    }
+  }
+}

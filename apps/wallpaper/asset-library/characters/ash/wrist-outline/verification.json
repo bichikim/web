@@ -1,0 +1,20 @@
+{
+  "beforeSha256": "e581dae5eaa96a556f31118d943014599b46559e19685094fa4e47fca4d3b83e",
+  "sha256": "3271a7d258a72a3ee1be856787c2fbe85d5867bb9c3123000dc2dfe12aa0d565",
+  "bytes": 18738409,
+  "method": "Hide the obsolete bare wrist cap already covered by the complete thumb-up hand artwork.",
+  "changedParts": [
+    {
+      "id": "coat-free:thumb-left:ArtMesh901",
+      "opacity": {
+        "before": 1,
+        "after": 0
+      }
+    }
+  ],
+  "handArtworkAndLineWeightUnchanged": true,
+  "allMeshCoordinatesUnchanged": true,
+  "allTexturesUnchanged": true,
+  "physicsAndGlueUnchanged": true,
+  "trialWristMeshAndMaskReverted": true
+}

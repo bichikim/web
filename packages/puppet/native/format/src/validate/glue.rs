@@ -3,7 +3,7 @@
 use std::collections::{HashMap, HashSet};
 
 use super::{Check, Index, ensure, is_keyed_ratio, is_ratio, is_unbounded, unique};
-use crate::document::{Document, Mesh};
+use crate::document::{Document, GlueMode, Mesh};
 
 /// Boundary edges (`mesh/boundary.ts`): edges used by exactly one triangle.
 pub(crate) fn boundary_edges(mesh: &Mesh) -> Vec<(usize, usize)> {
@@ -74,6 +74,13 @@ pub(super) fn validate_glue(document: &Document, index: &Index) -> Check {
                     e.contains(&(a.min(b), a.max(b)))
                 })
         });
+        let rotation_ok = match glue.rotation {
+            Some(rotation) => {
+                has_vertex(&glue.first.part_id, rotation.first)
+                    && has_vertex(&glue.second.part_id, rotation.second)
+            }
+            None => glue.mode != Some(GlueMode::Rigid),
+        };
         ensure(
             !glue.id.is_empty()
                 && ids.insert(glue.id.as_str())
@@ -81,6 +88,7 @@ pub(super) fn validate_glue(document: &Document, index: &Index) -> Check {
                 && is_ratio(glue.weight)
                 && is_ratio(glue.strength)
                 && edge_ok
+                && rotation_ok
                 && has_vertex(&glue.first.part_id, glue.first.vertex_index)
                 && has_vertex(&glue.second.part_id, glue.second.vertex_index),
             path,
@@ -190,6 +198,29 @@ mod tests {
             "parameters": [parameter("s", 0.0, 1.0, 0.0)],
         }));
         test_support::accepts(merge(base, extra))
+    }
+
+    #[test]
+    fn whole_part_glue_requires_existing_direction_vertices() {
+        let valid = |mode: Option<&str>, rotation: Option<Value>| {
+            let mut glue = connection("wrist", ("a", 0), ("b", 0));
+            if let Some(mode) = mode {
+                glue["mode"] = json!(mode);
+            }
+            if let Some(rotation) = rotation {
+                glue["rotation"] = rotation;
+            }
+            accepts(json!({"glue": [glue]}))
+        };
+        assert!(valid(Some("vertex"), None));
+        assert!(valid(Some("translate"), None));
+        assert!(!valid(Some("rigid"), None));
+        assert!(!valid(Some("unknown"), None));
+        for mode in [None, Some("vertex"), Some("translate"), Some("rigid")] {
+            assert!(valid(mode, Some(json!({"first": 1, "second": 2}))));
+            assert!(!valid(mode, Some(json!({"first": 3, "second": 1}))));
+            assert!(!valid(mode, Some(json!({"first": 1, "second": 3}))));
+        }
     }
 
     #[test]

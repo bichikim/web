@@ -9,6 +9,10 @@ interface UseOverlapStackProps {
   readonly step?: number
   readonly height?: Accessor<number>
   readonly anchor?: Accessor<SpeechAnchor>
+  /** Keeps the front at its saved edge when the preview direction changes; defaults to anchor. */
+  readonly attachment?: Accessor<SpeechAnchor>
+  /** Caps cards contributing to stack geometry; omission reserves space for every card. */
+  readonly limit?: number
 }
 const report = (cause: unknown) => console.error('Poffo speech motion failed', cause)
 const mergeOrder = (props: {
@@ -24,17 +28,20 @@ const restingPose = (props: {
   readonly step: number
   readonly height: number
   readonly anchor: SpeechAnchor
+  readonly attachment: SpeechAnchor | undefined
+  readonly limit: number
 }): StackPose => {
-  const index = props.order.indexOf(props.id)
-  const offset = (props.order.length - 1) * props.step
+  const count = Math.min(props.order.length, props.limit)
+  const index = Math.min(props.order.indexOf(props.id), count - 1)
+  const offset = Math.max(0, count - 1) * props.step
+  const origin = (props.attachment ?? props.anchor) === 'top' ? 0 : offset
   const y =
-    props.anchor === 'top'
-      ? index === 0
-        ? 0
-        : props.height + index * props.step - COVERED_HEIGHT
-      : index === 0
-        ? offset
-        : offset - index * props.step + COVERED_HEIGHT - props.height
+    index === 0
+      ? origin
+      : origin +
+        (props.anchor === 'top'
+          ? props.height + index * props.step - COVERED_HEIGHT
+          : COVERED_HEIGHT - props.height - index * props.step)
   return {
     depth: 0,
     height: index === 0 ? props.height : COVERED_HEIGHT,
@@ -56,20 +63,20 @@ export const useOverlapStack = (props: UseOverlapStackProps) => {
   const destination = (id: string) =>
     restingPose({
       anchor: props.anchor?.() ?? 'bottom',
+      attachment: props.attachment?.(),
       height: props.height?.() ?? COVERED_HEIGHT,
       id,
+      limit: props.limit ?? order().length,
       order: order(),
       step: step(),
     })
-  const write = (id: string, value: StackPose) =>
-    setPoses((current) => new Map(current).set(id, value))
   const motion = createStackMotion({
     anchor: () => props.anchor?.() ?? 'bottom',
     destination,
     element: props.element,
     onFreeze: (drawn) => setPoses(new Map(drawn)),
     onLayout: () => setRevision((value) => value + 1),
-    onPose: write,
+    onPose: (id, value) => setPoses((current) => new Map(current).set(id, value)),
   })
 
   const commit = async (
@@ -104,7 +111,8 @@ export const useOverlapStack = (props: UseOverlapStackProps) => {
     if (initial === undefined) {
       return
     }
-    const animated = motion.available(initial.element)
+    const animated =
+      initial.element.getClientRects().length > 0 && motion.available(initial.element)
     motion.withLayout(() => setActive(id))
     drawn = motion.rebase(drawn)
     const selected = drawn.get(id)!
@@ -187,7 +195,7 @@ export const useOverlapStack = (props: UseOverlapStackProps) => {
   })
   return {
     active,
-    offset: () => Math.max(0, order().length - 1) * step(),
+    offset: () => Math.max(0, Math.min(order().length, props.limit ?? order().length) - 1) * step(),
     order,
     pose: (id: string) =>
       active() === null ? destination(id) : (poses().get(id) ?? destination(id)),

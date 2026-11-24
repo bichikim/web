@@ -1,0 +1,122 @@
+{
+  "1": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "9e3cad16_003.png"
+    }
+  },
+  "2": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["1", 0],
+      "alpha": ["1", 1]
+    }
+  },
+  "3": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "9e3cad16_003.png"
+    }
+  },
+  "4": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "9e3cad16_000.png"
+    }
+  },
+  "5": {
+    "class_type": "ImageToMask",
+    "inputs": {
+      "image": ["4", 0],
+      "channel": "red"
+    }
+  },
+  "10": {
+    "class_type": "UnetLoaderGGUF",
+    "inputs": {
+      "unet_name": "Qwen-Image-2.1-Turbo-Q4_K_S.gguf"
+    }
+  },
+  "11": {
+    "class_type": "CLIPLoader",
+    "inputs": {
+      "clip_name": "qwen3vl_8b_int8_convrot.safetensors",
+      "type": "qwen_image",
+      "device": "default"
+    }
+  },
+  "12": {
+    "class_type": "VAELoader",
+    "inputs": {
+      "vae_name": "qwen_image_2.1_vae_bf16.safetensors"
+    }
+  },
+  "13": {
+    "class_type": "TextEncodeQwenImage21",
+    "inputs": {
+      "clip": ["11", 0],
+      "vae": ["12", 0],
+      "prompt": "精确局部修复这张原画中手掌根部与手腕相接的地方。手指、手背、握持姿势、前臂的位置、长度和轮廓必须完全保持原样。只修改手掌最下端：消除现在那块圆鼓鼓、像被切断的粉色团块和斜向接缝，让手掌下缘顺着前臂的宽度和方向自然收窄，形成一段很短且解剖合理的手腕过渡。手腕不能变长，前臂不能弯曲或变细。肤色、柔和阴影、极细的暖棕色轮廓线都沿用原画，让连接处的肤色和阴影连续，不要画出新的接缝线、横向皱褶、描边加粗或胶皮状连接。严格保留画布尺寸、相机和所有像素的位置，保持原画的精细日系插画风格。只输出与原图同尺寸、同构图的一只手和前臂，透明RGBA背景。",
+      "negative_prompt": "",
+      "resolution": 0,
+      "images.image_1": ["1", 0]
+    }
+  },
+  "16": {
+    "class_type": "QwenImage21Cache",
+    "inputs": {
+      "model": ["10", 0],
+      "device": "auto",
+      "dtype": "default"
+    }
+  },
+  "18": {
+    "class_type": "VAEDecode",
+    "inputs": {
+      "samples": ["24", 0],
+      "vae": ["12", 0]
+    }
+  },
+  "19": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": ["18", 0],
+      "filename_prefix": "Wallpaper/wrist-art/generated-joint"
+    }
+  },
+  "20": {
+    "class_type": "BasicGuider",
+    "inputs": {
+      "model": ["16", 0],
+      "conditioning": ["13", 0]
+    }
+  },
+  "21": {
+    "class_type": "RandomNoise",
+    "inputs": {
+      "noise_seed": 711073
+    }
+  },
+  "22": {
+    "class_type": "KSamplerSelect",
+    "inputs": {
+      "sampler_name": "euler"
+    }
+  },
+  "23": {
+    "class_type": "ManualSigmas",
+    "inputs": {
+      "sigmas": "1.0, 0.978453, 0.95418, 0.926626, 0.89508, 0.845148, 0.704534, 0.414568, 0.0"
+    }
+  },
+  "24": {
+    "class_type": "SamplerCustomAdvanced",
+    "inputs": {
+      "noise": ["21", 0],
+      "guider": ["20", 0],
+      "sampler": ["22", 0],
+      "sigmas": ["23", 0],
+      "latent_image": ["13", 2]
+    }
+  }
+}

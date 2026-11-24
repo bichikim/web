@@ -1,3 +1,4 @@
+import {text as uiText} from '../features/localization'
 import {createMemo, createSignal, Index, Show, untrack} from 'solid-js'
 import {SEMANTIC_ACTION_LIMIT, type SemanticAction} from '@winter-love/wallpaper/settings/semantics'
 import type {CharacterAction} from '../features/semantics/types'
@@ -16,7 +17,7 @@ export const SPoffoActionSelection = (props: SPoffoActionSelectionProps) => {
   const [adding, setAdding] = createSignal(false)
   const [container, setContainer] = createSignal<HTMLDivElement | null>(null)
   const value = () => props.value ?? []
-  const caption = () => props.label ?? '연결'
+  const caption = () => props.label ?? uiText('연결')
   const disabled = () => props.disabled || props.onChange === undefined
   const rows = createMemo(() =>
     value().length === 0 ? [null] : [...value(), ...(adding() ? [null] : [])],
@@ -26,7 +27,12 @@ export const SPoffoActionSelection = (props: SPoffoActionSelectionProps) => {
       (item) => !value().some((target) => targetKey(target) === targetKey(item.action)),
     )
   const choices = (index: number) => [
-    {label: '행동 선택', value: ''},
+    {
+      get label() {
+        return uiText('행동 선택')
+      },
+      value: '',
+    },
     ...(props.actions ?? [])
       .filter(
         (item) =>
@@ -80,7 +86,10 @@ export const SPoffoActionSelection = (props: SPoffoActionSelectionProps) => {
             <div class="flex min-w-0 items-center gap-2">
               <div class="min-w-0 flex-1">
                 <SSelect
-                  label={`${caption()} 행동${index === 0 ? '' : ` ${index + 1}`}`}
+                  label={uiText('{value0} 행동{value1}', {
+                    value0: String(caption()),
+                    value1: String(index === 0 ? '' : ` ${index + 1}`),
+                  })}
                   value={target() === null ? '' : targetKey(target()!)}
                   options={choices(index)}
                   disabled={disabled()}
@@ -90,7 +99,10 @@ export const SPoffoActionSelection = (props: SPoffoActionSelectionProps) => {
               <Show when={target() !== null || adding()}>
                 <button
                   type="button"
-                  aria-label={`${caption()} 행동 ${index + 1} 삭제`}
+                  aria-label={uiText('{value0} 행동 {value1} 삭제', {
+                    value0: String(caption()),
+                    value1: String(index + 1),
+                  })}
                   disabled={disabled()}
                   onClick={handleDelete}
                   class="h-8 w-8 shrink-0 cursor-pointer rounded-md border border-solid
@@ -106,7 +118,7 @@ export const SPoffoActionSelection = (props: SPoffoActionSelectionProps) => {
       <Show when={value().length > 0}>
         <button
           type="button"
-          aria-label={`${caption()} 행동 추가`}
+          aria-label={uiText('{value0} 행동 추가', {value0: String(caption())})}
           onClick={handleAdd}
           disabled={
             disabled() ||
@@ -116,7 +128,7 @@ export const SPoffoActionSelection = (props: SPoffoActionSelectionProps) => {
           }
           class="wallpaper-file-button justify-self-start"
         >
-          행동 추가
+          {uiText('행동 추가')}
         </button>
       </Show>
     </div>

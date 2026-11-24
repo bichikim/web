@@ -29,6 +29,10 @@
 - Treat code under `scripts` as standalone; it must not import or use code from `src`.
 - If reusing `src` from a script appears necessary, obtain explicit user approval before adding the dependency.
 
+## xctrace profiling
+
+- After each `xctrace` run finishes, preserve the needed results, delete the `$TMPDIR/instruments*.ktrace` temporary files created by that run, and verify their removal. Check that the files are closed before deleting them and leave files from other runs alone.
+
 ## React dependencies
 
 - Do not introduce React or React-specific libraries, whether directly or through a new transitive dependency.

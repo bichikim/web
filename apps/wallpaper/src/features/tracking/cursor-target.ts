@@ -14,6 +14,8 @@ interface CursorTargetOptions {
   readonly viewport: Pick<TrackingViewport, 'width' | 'height'>
   /** Face anchor within the canvas; omitted uses the default face position. */
   readonly options?: PoffoTrackingOptions
+  /** Per-target distance override; omission uses the configured head distance. */
+  readonly reach?: number
 }
 /** Preserves direction and eases into full gaze at one character height from the face. */
 export const createCursorTarget = ({
@@ -21,6 +23,7 @@ export const createCursorTarget = ({
   point,
   viewport,
   options,
+  reach,
 }: CursorTargetOptions): TrackingPoint => {
   if (bounds.width <= 0 || bounds.height <= 0 || point.width <= 0 || point.height <= 0) {
     return {x: 0, y: 0}
@@ -37,7 +40,7 @@ export const createCursorTarget = ({
   if (!Number.isFinite(distance) || distance === 0) {
     return {x: 0, y: 0}
   }
-  const reach = options?.cursorReach ?? DEFAULT_TRACKING_OPTIONS.cursorReach
-  const magnitude = cursorResponse(distance / (bounds.height * reach))
+  const maximum = reach ?? options?.cursorReach ?? DEFAULT_TRACKING_OPTIONS.cursorReach
+  const magnitude = cursorResponse(distance / (bounds.height * maximum))
   return {x: (horizontal / distance) * magnitude, y: (vertical / distance) * magnitude}
 }

@@ -20,7 +20,8 @@ test('loads the embedded character and advances product scenes', async ({page}) 
   expect(binary.ok()).toBe(true)
   const content = await binary.body()
   expect(content.subarray(0, 5).toString()).toBe('POFFO')
-  expect(content.byteLength).toBeLessThan(7_000_000)
+  // Budget for the updated Ash rig and its four embedded atlases.
+  expect(content.byteLength).toBeLessThan(9_700_000)
   // This control appears only after the character Player renders its first frame.
   await expect(page.getByRole('button', {exact: true, name: '일시 정지'})).toBeVisible()
   await page.getByRole('button', {name: '스크롤로 앱 살펴보기'}).click()

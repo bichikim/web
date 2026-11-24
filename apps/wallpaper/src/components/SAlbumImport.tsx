@@ -1,3 +1,4 @@
+import {text as uiText} from '../features/localization'
 import type {WallpaperController} from '../features/settings'
 import {retainInputFocus} from '../features/input'
 import {SAlbumFolderImport} from './SAlbumFolderImport'
@@ -17,11 +18,11 @@ export const SAlbumImport = (props: SAlbumImportProps) => {
   }
   return (
     <>
-      <label class="relative shrink-0 cursor-pointer" title="사진·동영상 추가">
+      <label class="relative shrink-0 cursor-pointer" title={uiText('사진·동영상 추가')}>
         <input
           type="file"
           class="peer sr-only"
-          aria-label="사진·동영상 추가"
+          aria-label={uiText('사진·동영상 추가')}
           accept="image/*,video/*"
           multiple
           onChange={handleFiles}

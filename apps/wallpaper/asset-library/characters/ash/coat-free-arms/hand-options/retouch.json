@@ -1,0 +1,12 @@
+{
+  "tool": "Built-in ChatGPT image generation",
+  "source": "selected-reference.png",
+  "output": "wrist-color-retouch.png",
+  "references": ["reference-notebook-hand.png", "reference-forearm.png"],
+  "appliedToModel": false,
+  "prompt": "Retouch IMAGE 1 IN PLACE. It is the approved hand shape. Preserve its exact 1254x1254 canvas, silhouette, wrist curvature and length, all finger positions, every nail, pen and composition. Do not redraw the anatomy or borrow the pose/shape from the other references.\nMake ONLY these edits:\n1. The two outer wrist contours in the lower half are too thin. Give them the same continuous fine red-brown stroke weight as the existing original forearm in IMAGE 3, approximately 3-4 pixels at image1's native resolution. Maintain this weight through the wrist to the bottom; no thinning or fading at the wrist. Keep the approved finger lines and pen details unchanged.\n2. Match the SKIN COLOR of the original hand in IMAGE 2 and the forearm in IMAGE 3: near-white warm ivory, main light skin around #FFF8F4, not the current peach-pink cast.\n3. Match their SKIN SHADING: soft, very pale low-contrast warm shadows and broad creamy light areas. Reduce the current pink saturation and broad dark reddish gradients. Preserve the existing shading locations and hand volumes; only adjust their tone, softness and contrast to the original artwork.\nIMAGE 2 is color, paint and line-style reference ONLY. IMAGE 3 is forearm skin and wrist-line-weight reference ONLY. Neither changes image1's shape.\nKeep the black-and-blue pen and blue nail pixels visually identical. Genuine transparent background. Output the same single sprite, no labels or comparison. This is a precise color/line retouch of the attached approved image, not a new illustration.",
+  "review": {
+    "skin": "Sampled green and blue channels are brighter, reducing the peach-pink cast.",
+    "shape": "The pose is similar, but generation also changed overall placement and scale slightly; this is not a pixel-identical color-only edit."
+  }
+}

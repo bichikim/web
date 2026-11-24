@@ -1,0 +1,114 @@
+{
+  "source": "Actual restarted Wallpaper app Worker frames matched against the complete scene and glue evaluation",
+  "pointerInputUsed": false,
+  "poses": [
+    {
+      "name": "rest",
+      "contacts": [
+        {
+          "side": "right",
+          "boundaryColumns": 64,
+          "maximumBoundaryError": 0.0003013209675736622
+        }
+      ],
+      "maximumVertexError": 0.0006685875487164594,
+      "visibleConnectionParts": ["coat-free:heart-right:ArtMesh994", "coat-free:heart-right:hand"],
+      "head": 0,
+      "headY": 0,
+      "body": 0,
+      "bodyY": 0,
+      "physics": [4.7994985763468636e-12, 3.4282132688191884e-12, 4.7994985763468636e-12],
+      "buttons": [0, 0]
+    },
+    {
+      "name": "up",
+      "contacts": [
+        {
+          "side": "right",
+          "boundaryColumns": 64,
+          "maximumBoundaryError": 0.0002497355619947319
+        }
+      ],
+      "maximumVertexError": 0.0006093783626965887,
+      "visibleConnectionParts": ["coat-free:heart-right:ArtMesh994", "coat-free:heart-right:hand"],
+      "head": 0,
+      "headY": 30,
+      "body": 0,
+      "bodyY": 10,
+      "physics": [0, 0, 0],
+      "buttons": [0, 0]
+    },
+    {
+      "name": "down",
+      "contacts": [
+        {
+          "side": "right",
+          "boundaryColumns": 64,
+          "maximumBoundaryError": 0.00026849749820089105
+        }
+      ],
+      "maximumVertexError": 0.0006519085109175649,
+      "visibleConnectionParts": ["coat-free:heart-right:ArtMesh994", "coat-free:heart-right:hand"],
+      "head": 0,
+      "headY": -30,
+      "body": 0,
+      "bodyY": -10,
+      "physics": [0, 0, 0],
+      "buttons": [0, 0]
+    },
+    {
+      "name": "left",
+      "contacts": [
+        {
+          "side": "right",
+          "boundaryColumns": 64,
+          "maximumBoundaryError": 0.0002710077368408431
+        }
+      ],
+      "maximumVertexError": 0.00045766928315060795,
+      "visibleConnectionParts": ["coat-free:heart-right:ArtMesh994", "coat-free:heart-right:hand"],
+      "head": -30,
+      "headY": 0,
+      "body": -10,
+      "bodyY": 0,
+      "physics": [0.0056219157148528435, 0.004015654082037745, 0.0056219157148528435],
+      "buttons": [0, 0]
+    },
+    {
+      "name": "right",
+      "contacts": [
+        {
+          "side": "right",
+          "boundaryColumns": 64,
+          "maximumBoundaryError": 0.0002370881523987677
+        }
+      ],
+      "maximumVertexError": 0.00081304619425282,
+      "visibleConnectionParts": ["coat-free:heart-right:ArtMesh994", "coat-free:heart-right:hand"],
+      "head": 30,
+      "headY": 0,
+      "body": 10,
+      "bodyY": 0,
+      "physics": [0.00828034305743197, 0.0059145307553085495, 0.00828034305743197],
+      "buttons": [0, 0]
+    },
+    {
+      "name": "up-again",
+      "contacts": [
+        {
+          "side": "right",
+          "boundaryColumns": 64,
+          "maximumBoundaryError": 0.0002465441707161322
+        }
+      ],
+      "maximumVertexError": 0.0006792903413952445,
+      "visibleConnectionParts": ["coat-free:heart-right:ArtMesh994", "coat-free:heart-right:hand"],
+      "head": 0,
+      "headY": 30,
+      "body": 0,
+      "bodyY": 10,
+      "physics": [-0.007782090127481935, -0.0055586358053442385, -0.007782090127481935],
+      "buttons": [0, 0]
+    }
+  ]
+}

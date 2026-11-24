@@ -79,7 +79,7 @@ test('should submit only active provoking gradients to the real WebGL buffer', a
     player = await createPlayer({
       canvas: document.createElement('canvas'),
       document: fixture(),
-      renderer: 'webgl',
+      renderer: 'pixi-webgl',
       resolution: 1,
     })
     player.stop()

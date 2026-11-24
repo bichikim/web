@@ -6,6 +6,7 @@ import {
   LAYER_FRAME_VALUES,
   type LayerTemplate,
   type PackedRenderFrame,
+  PART_FRAME_FIELD,
   PART_FRAME_VALUES,
   type PartTemplate,
 } from './types'
@@ -69,10 +70,10 @@ export const createEncoder = (): ((frame: PartRenderFrame) => PackedRenderFrame)
         partTemplates.push([entry.index, entry.value])
       }
       const offset = order * PART_FRAME_VALUES
-      partValues[offset] = entry.index
-      partValues[offset + 1] = Number(plan.render)
-      partValues[offset + 2] = Number(plan.visible)
-      writeColors(partValues, offset + 3, plan.properties)
+      partValues[offset + PART_FRAME_FIELD.part] = entry.index
+      partValues[offset + PART_FRAME_FIELD.render] = Number(plan.render)
+      partValues[offset + PART_FRAME_FIELD.visible] = Number(plan.visible)
+      writeColors(partValues, offset + PART_FRAME_FIELD.opacity, plan.properties)
     })
     let order = 0
     for (const [groupId, plan] of frame.layers) {

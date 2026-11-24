@@ -1,0 +1,76 @@
+{
+  "sourceModelSha256": "0c4184bf033aafa647b13532d68cde8452fd35ca81b6791e3d2a82a48a661c6a",
+  "modelSha256": "4d3b7185cc43713a64229cb6f564e22c88a8a6a13d3e85ab41bfa75a85dc993f",
+  "bytes": 20355911,
+  "promptId": "dc8ee48a-6d19-4de7-bc55-9da63724a2d4",
+  "method": "Restore original combined hand/cup paint order above image row 690 and the 388 pixels of original cup base with local ComfyUI compositing",
+  "alphaUnchanged": true,
+  "wristRgbaOutsideOriginalCupUnchanged": true,
+  "riggingUnchanged": true,
+  "otherPartsUnchanged": true,
+  "maximumOpaqueRgbError": 0,
+  "originalCupSamples": [
+    {
+      "x": 626,
+      "y": 644,
+      "rgb": [145, 106, 113]
+    },
+    {
+      "x": 662,
+      "y": 648,
+      "rgb": [167, 137, 136]
+    },
+    {
+      "x": 670,
+      "y": 584,
+      "rgb": [121, 175, 188]
+    },
+    {
+      "x": 622,
+      "y": 584,
+      "rgb": [190, 148, 138]
+    },
+    {
+      "x": 590,
+      "y": 588,
+      "rgb": [194, 155, 147]
+    },
+    {
+      "x": 646,
+      "y": 608,
+      "rgb": [195, 154, 147]
+    },
+    {
+      "x": 610,
+      "y": 616,
+      "rgb": [199, 163, 155]
+    },
+    {
+      "x": 682,
+      "y": 616,
+      "rgb": [200, 165, 156]
+    }
+  ],
+  "checks": {
+    "before": "Cup artwork regression failed: channel difference 102 at (626,644)",
+    "after": "Both browser wrist integration cases passed with original cup RGB checks",
+    "build": "Tauri debug macOS app build passed",
+    "lint": "Targeted oxlint and oxfmt passed"
+  },
+  "native": {
+    "appPid": 72057,
+    "resource": {
+      "bytes": 20355911,
+      "sha256": "4d3b7185cc43713a64229cb6f564e22c88a8a6a13d3e85ab41bfa75a85dc993f"
+    },
+    "partCount": 1025,
+    "expandedHandMeshSha256": "528151fe4d6045f6ebc9d1b6165d7bdb56d91af5702e6059465d1f674c18ee02",
+    "resourceMatched": true,
+    "meshMatched": true,
+    "coatRemoved": true,
+    "pose": "ash:coffee",
+    "pointerInputUsed": false,
+    "capture": "applied.png",
+    "visibleCupBetweenPalmAndFingers": true
+  }
+}

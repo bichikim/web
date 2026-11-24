@@ -32,6 +32,7 @@ const setup = async (
     getPaintOrder: () => [],
     getPartVertices: vi.fn(),
     getRenderingInfo: () => ({antialiasing: 'ssaa', renderer: 'webgl'}),
+    pickPart: () => undefined,
     redraw: vi.fn(),
     resize: vi.fn(),
     setFit: vi.fn(),
@@ -91,6 +92,43 @@ test('should keep buffering disabled for existing createPlayer callers', async (
   expect(getPlayerBufferingInfo(player).status).toBe('disabled')
   expect(createBufferWorker).not.toHaveBeenCalled()
   player.destroy()
+})
+
+test('should wake buffered rendering for a changed blend and skip duplicate input', async () => {
+  const {player} = await setup()
+  await configurePlayerBuffering(player, {enabled: true})
+  const enqueue = vi.spyOn(globalThis, 'queueMicrotask')
+  const gaze = {angle: {mode: 'add', value: 0.4}} as const
+  try {
+    player.patchParameterBlends(gaze)
+    expect(enqueue).toHaveBeenCalledOnce()
+    await Promise.resolve()
+    enqueue.mockClear()
+
+    player.patchParameterBlends(gaze)
+    expect(enqueue).not.toHaveBeenCalled()
+
+    player.patchParameterBlends(gaze, 'interaction')
+    expect(enqueue).toHaveBeenCalledOnce()
+  } finally {
+    player.destroy()
+  }
+})
+
+test('should wake buffered rendering for identical blends when physics must settle', async () => {
+  const {player} = await setup()
+  await configurePlayerBuffering(player, {enabled: true})
+  const gaze = {angle: {mode: 'add', value: 0.4}} as const
+  try {
+    player.setPhysicsPreview(false)
+    player.patchParameterBlends(gaze)
+    await Promise.resolve()
+    const enqueue = vi.spyOn(globalThis, 'queueMicrotask')
+    player.patchParameterBlends(gaze)
+    expect(enqueue).toHaveBeenCalledOnce()
+  } finally {
+    player.destroy()
+  }
 })
 
 test('should change fitting on the host while preserving buffered playback and inputs', async () => {
@@ -174,7 +212,19 @@ test('should recognize a Player across independently loaded library entries', as
 })
 
 test('should accept controls synchronously while keeping queries on the displayed frame', async () => {
-  const {pending, player, renderer, worker} = await setup()
+  const {animation, pending, player, renderer, worker} = await setup()
+  let receive = vi.fn<(request: Parameters<BufferWorker['produce']>[0]) => void>()
+  const requested = new Promise<Parameters<BufferWorker['produce']>[0]>((resolve) => {
+    receive = vi.fn(resolve)
+  })
+  let complete = vi.fn<(frame: BufferFrame) => void>()
+  const next = new Promise<BufferFrame>((resolve) => {
+    complete = vi.fn(resolve)
+  })
+  worker.produce.mockImplementationOnce((request) => {
+    receive(request)
+    return next
+  })
   await configurePlayerBuffering(player, {enabled: true})
   const [state, generation] = worker.reset.mock.calls.at(-1)!
   const request = worker.produce.mock.calls[0]![0]
@@ -195,12 +245,23 @@ test('should accept controls synchronously while keeping queries on the displaye
     state: {...state, frameValues: {angle: 0}},
     time: request.time,
   })
-  await Promise.resolve()
-  await Promise.resolve()
+  const input = await requested
   expect(player.getParameterValue('angle')).toBe(0)
   expect(renderer.applyFrame).not.toHaveBeenCalled()
+  expect(input.input?.state.parameterValues.angle).toBe(0.5)
+  const engine = createBufferEngine(animation)
+  const computed = engine.step(input.deltaTime, input.buffer, input.input)
+  const applied = flushPlayerInputs(player)
+  complete({
+    ...computed,
+    deltaTime: input.deltaTime,
+    generation,
+    kind: 'frame',
+    time: input.time,
+  })
+  await expect(applied).resolves.toBe('applied')
+  expect(player.getParameterValue('angle')).toBe(0.5)
   expect(renderer.applyPreparedFrame).toHaveBeenCalledOnce()
-  expect(worker.produce.mock.calls.at(-1)![0].input?.state.parameterValues.angle).toBe(0.5)
   player.destroy()
 })
 
@@ -743,4 +804,65 @@ test('should preserve other parameter overrides through consecutive buffered pat
   } finally {
     player.destroy()
   }
+})
+
+test('should calculate new input from a submitted checkpoint while its GPU display is pending', async () => {
+  const {animation, player, renderer, worker, onFrame} = await setup(42)
+  const engine = createBufferEngine(animation)
+  const requests: Array<{
+    request: import('../buffering/types').ProduceBufferFrame
+    resolve: (frame: BufferFrame) => void
+  }> = []
+  let finishDisplay = () => {}
+  const display = new Promise<'presented'>((resolve) => {
+    finishDisplay = () => resolve('presented')
+  })
+  Object.assign(renderer, {presentFrame: vi.fn(() => display)})
+  worker.reset.mockImplementation(async (state, _generation, revision) =>
+    engine.reset(state, revision),
+  )
+  worker.produce.mockReset().mockImplementation(
+    (request) =>
+      new Promise((resolve) => {
+        requests.push({request, resolve})
+      }),
+  )
+  player.playMotion('walk', {loop: true})
+  player.seek(0.4)
+  player.setParameterValue('angle', 0.2)
+  await configurePlayerBuffering(player, {enabled: true})
+  onFrame.mockClear()
+  const complete = async (index: number) => {
+    const {request, resolve} = requests[index]!
+    resolve({
+      ...engine.step(request.deltaTime, request.buffer, request.input),
+      deltaTime: request.deltaTime,
+      generation: request.generation,
+      kind: 'frame',
+      time: request.time,
+    })
+    await Promise.resolve()
+    await Promise.resolve()
+  }
+  player.setParameterValue('angle', 0.3)
+  await complete(0)
+  expect(requests).toHaveLength(2)
+  player.seek(0.8)
+  player.setParameterValue('angle', 0.7)
+  await complete(1)
+  expect(requests).toHaveLength(3)
+  const input = requests[2]!.request.input!
+  const preview = createBufferEngine(animation)
+  preview.reset(input.state, input.revision)
+  const computed = preview.step(0, new ArrayBuffer(preview.bytes))
+  expect(computed.playback.time).toBeCloseTo(0.8)
+  expect(computed.computed.parameterValues.angle).toBe(0.7)
+  await complete(2)
+  expect(requests).toHaveLength(3)
+  expect(player.getParameterValue('angle')).toBe(0.2)
+  expect(onFrame).not.toHaveBeenCalled()
+  player.destroy()
+  finishDisplay()
+  await display
+  expect(onFrame).not.toHaveBeenCalled()
 })

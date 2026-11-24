@@ -1,5 +1,6 @@
 import {cp, mkdir, open, stat, writeFile} from 'node:fs/promises'
 import path from 'node:path'
+import isolationHeaders from '../isolation-headers.json' with {type: 'json'}
 
 const [, , source = 'apps/wallpaper-web/.output/public', target = '.vercel/output'] = process.argv
 const required = [
@@ -44,8 +45,6 @@ await mkdir(path.dirname(target), {recursive: true})
 // A fresh destination prevents old deployment files from being shipped with this build.
 await mkdir(target)
 await cp(source, path.join(target, 'static'), {recursive: true})
-await writeFile(
-  path.join(target, 'config.json'),
-  `${JSON.stringify({routes: [{handle: 'filesystem'}], version: 3})}\n`,
-)
+const routes = [{continue: true, headers: isolationHeaders, src: '/.*'}, {handle: 'filesystem'}]
+await writeFile(path.join(target, 'config.json'), `${JSON.stringify({routes, version: 3})}\n`)
 console.log(`Prepared static deployment in ${target}`)

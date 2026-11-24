@@ -1,0 +1,24 @@
+{
+  "beforeModelSha256": "39c42242e036548546d1f90749248dc7d32e0233d0af6630d0c1646c04c44bbd",
+  "modelSha256": "06fa651ba03b727999a1bbc46aa1cbb7aa5e54649d39db20d4226d405ecfad7d",
+  "modelBytes": 18189402,
+  "bindingId": "coat-free:notes-left:hand-layering",
+  "partId": "ArtMesh139",
+  "notebook": "ArtMesh128",
+  "mechanism": "Remove the pen-only draw-order override. Its original position in the parts list keeps it behind the notebook, while the gripping hand and supporting forearm remain in front.",
+  "allArtworkMeshesUvsSceneGluePhysicsMotionsExpressionsAndOtherBindingsUnchanged": true,
+  "originalPartsOrderUnchanged": true,
+  "checks": {
+    "browser": {
+      "engines": ["Chromium", "WebKit"],
+      "buffering": [false, true],
+      "writingPoses": [0, 0.5, 1],
+      "passed": 4,
+      "failed": 0,
+      "scope": "Notebook in front of the pen, gripping hand and supporting forearm in front of the notebook; preserved notebook size and rigid arm pose."
+    },
+    "oxlint": "passed",
+    "oxfmt": "passed"
+  },
+  "review": "notebook-layer.png"
+}

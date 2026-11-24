@@ -1,0 +1,97 @@
+{
+  "sha256": "ff21b1804aaf30389d79cf294f83d318cfda15c045fc1240c5f022b4053767a3",
+  "previousSha256": "143beffc3c329396f312fdb8b45cf00e1b31fd3cb01d547dbbbe20255e85b42c",
+  "bytes": 20784025,
+  "method": "Forearm contour meets the rendered hand boundary at the actual cut; a short overlapping mesh strip follows the hand contour above the cut",
+  "coffeeCut": 763.5,
+  "noodleCut": 6.533333333333333,
+  "noodleSkin": "Existing wrist mesh bottom triangles removed up to the shared join; original vertices, UVs, fingers, cup and pixels unchanged",
+  "addedVisibleParts": 0,
+  "changedTextures": 2,
+  "alpha": {
+    "promptId": "0b24d2a2-56d8-4c13-9e90-12010a1ad1fd",
+    "method": "Local ComfyUI alpha-only transition at the wrist end",
+    "rgbPreserved": true
+  },
+  "rigRecords": [
+    {
+      "action": "coffee",
+      "handEdge": [
+        [2160.1790466326156, 1709.6813245995909],
+        [2257.809049351391, 1714.9794304128422]
+      ],
+      "edgeCurves": [
+        {
+          "start": [2160.1790466326156, 1709.6813245995909],
+          "end": [2040.7983663979285, 1863.9647108770296],
+          "outgoing": [2147.9451856099154, 1762.5352853213053],
+          "incoming": [2081.083341357589, 1820.902664777762]
+        },
+        {
+          "start": [2256.8105185710297, 1714.9252429542248],
+          "end": [2174.6212806963435, 1883.2268511686916],
+          "outgoing": [2221.365066627019, 1760.1333401786471],
+          "incoming": [2202.945938711398, 1818.3531824314834]
+        }
+      ],
+      "extent": 120,
+      "maximumReferenceError": 9.374856803373542e-13
+    },
+    {
+      "action": "noodles",
+      "handEdge": [
+        [2155.180025212878, 1711.5064638556787],
+        [2228.7765510701415, 1798.0796849166043]
+      ],
+      "edgeCurves": [
+        {
+          "start": [2155.180025212878, 1711.5064638556787],
+          "end": [2064.0464917248464, 1840.4668804972434],
+          "outgoing": [2154.1300376361382, 1728.2510674287837],
+          "incoming": [2175.029256712091, 1749.3894638448107]
+        },
+        {
+          "start": [2227.8050072605733, 1796.9368364462941],
+          "end": [2169.300199335081, 1883.1814769122489],
+          "outgoing": [2211.1936186339267, 1828.235201460665],
+          "incoming": [2192.4453352422197, 1856.351855809476]
+        }
+      ],
+      "extent": 80,
+      "maximumReferenceError": 1.1368683772161603e-12
+    }
+  ],
+  "preservation": {
+    "sourceSha256": "143beffc3c329396f312fdb8b45cf00e1b31fd3cb01d547dbbbe20255e85b42c",
+    "sha256": "ff21b1804aaf30389d79cf294f83d318cfda15c045fc1240c5f022b4053767a3",
+    "addedParts": 0,
+    "changedTextures": 2,
+    "alphaRecords": [
+      {
+        "name": "coffee",
+        "changedAlphaPixels": 776,
+        "rgbChanged": 0,
+        "outsideWristChanged": 0
+      },
+      {
+        "name": "noodles",
+        "changedAlphaPixels": 7213,
+        "rgbChanged": 0,
+        "outsideWristChanged": 0
+      }
+    ],
+    "originalFingersAndCupsUnchanged": true,
+    "originalHandVerticesAndUvsPreserved": true,
+    "noodleSkinIndices": {
+      "before": 3600,
+      "after": 1320
+    },
+    "physicsAndMouthPreserved": true
+  },
+  "validation": {
+    "renderedPoses": 12,
+    "enlargedComparisons": 2,
+    "numericPoses": 14,
+    "otherArmConnections": 13
+  }
+}

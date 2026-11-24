@@ -60,7 +60,7 @@ export const addGlue = (
 export const updateGlue = (
   document: PuppetDocument,
   id: string,
-  changes: Pick<PuppetGlue, 'weight' | 'strength'> | null,
+  changes: Pick<PuppetGlue, 'weight' | 'strength' | 'mode'> | null,
 ): PuppetDocument | undefined => {
   const connection = document.glue?.find((glue) => glue.id === id)
   if (

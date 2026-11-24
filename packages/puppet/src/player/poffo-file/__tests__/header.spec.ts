@@ -9,6 +9,7 @@ const header = {
   encodedLength: 128,
   indexHash: new Uint8Array(32),
   indexLength: 256,
+  version: 1 as const,
 }
 
 test('should write the documented little-endian versioned header', () => {
@@ -34,4 +35,12 @@ test.each([0, 8, 10, 16])(
 
 test('should reject lengths that the v1 header cannot represent', () => {
   expect(() => encodeHeader({...header, decodedLength: 4294967296})).toThrow(RangeError)
+})
+
+test('should distinguish v2 reference files while continuing to read v1 files', () => {
+  const current = {...header, version: 2 as const}
+  const bytes = encodeHeader(current)
+  expect(new DataView(bytes.buffer).getUint16(8, true)).toBe(2)
+  expect(decodeHeader(bytes)).toEqual(current)
+  expect(decodeHeader(encodeHeader(header))).toEqual(header)
 })

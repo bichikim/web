@@ -1,14 +1,25 @@
 import {spokenText} from '../src/features/voice/text'
 import {createVoiceClient} from '../src/features/voice/client'
 import {createReadout} from '../src/features/voice/readout'
-import {expect, it} from 'vitest'
-import {userEvent} from 'vitest/browser'
+import {beforeAll, expect, it} from 'vitest'
+import {commands, userEvent} from 'vitest/browser'
 import {DEFAULT_POFFO_VOICE} from '@winter-love/wallpaper/settings/voice'
 import {createSynthesis} from '../src/features/voice/synthesis'
 import {playAudio} from '../src/features/voice/play-audio'
 
 const AUDIBLE_AMPLITUDE = 0.01
 const MODEL_TEST_TIMEOUT = 180_000
+declare module 'vitest/browser' {
+  interface BrowserCommands {
+    blockExternalRequests: () => Promise<void>
+  }
+}
+beforeAll(async () => {
+  await commands.blockExternalRequests()
+  await expect(
+    fetch('https://storage.pomofi.io/models/supertonic-3/3cadd1e/onnx/tts.json'),
+  ).rejects.toThrow()
+})
 it(
   'should generate and play Markdown list items as separate local speech chunks',
   async () => {
@@ -37,6 +48,7 @@ it(
           chunks.push(text)
           return client.prepare(text, settings, signal, observer)
         },
+        setPaused: client.setPaused,
       },
     })
     const activation = document.createElement('button')
@@ -181,6 +193,7 @@ it(
             ? Promise.resolve(audio)
             : client.prepare(text, settings, signal, status)
         },
+        setPaused: client.setPaused,
       },
     })
     const activation = document.createElement('button')

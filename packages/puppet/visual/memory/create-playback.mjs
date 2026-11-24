@@ -17,7 +17,7 @@ export const createPlayback = async (api, document) => {
       notify?.()
     },
     randomSeed: 42,
-    renderer: 'webgl',
+    renderer: 'pixi-webgl',
     resolution: 1,
   })
   player.setEyeBlink(false)

@@ -1,3 +1,4 @@
+import type {GeometryToken} from '../geometry/types'
 import {
   composeParameterGlue,
   composeParameterVertices,
@@ -8,10 +9,16 @@ import type {PuppetDocument} from '../document'
 import {mixMotionVertices, type MotionMix} from '../playback/mix-motion-frames'
 import {getPartRenderFrame, type PartRenderFrame} from './render-plan'
 import type {NativeDeformation} from './create-native-deformation'
+import type {NativePlayerTarget} from '../native-backend'
 import type {RenderOverrides} from './render-overrides'
 import {applySceneDeformers} from './scene-deformation'
 
 export interface ComputedRenderFrame {
+  /** Deferred coordinates owned by the rendering device; submission fills `vertices` before display. */
+  readonly geometry?: GeometryToken
+  /** The platform has already submitted this frame using this viewport. */
+  readonly nativeTarget?: NativePlayerTarget
+
   /** Exact geometry inputs before public query rounding; omitted by non-buffered callers. */
   readonly parameterValues?: PuppetParameterValueMap
   readonly frame: PartRenderFrame

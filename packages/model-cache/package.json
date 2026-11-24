@@ -1,0 +1,14 @@
+{
+  "name": "@winter-love/model-cache",
+  "version": "0.1.0",
+  "files": [
+    "index.mjs",
+    "index.d.mts"
+  ],
+  "type": "module",
+  "types": "./index.d.mts",
+  "exports": {
+    "types": "./index.d.mts",
+    "default": "./index.mjs"
+  }
+}

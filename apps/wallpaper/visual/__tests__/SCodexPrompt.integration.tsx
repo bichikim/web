@@ -69,7 +69,7 @@ it('should hide the composer through delivery and show it for failure or the nex
   fireEvent.input(screen.getByRole('textbox'), {target: {value: '다음 요청'}})
   fireEvent.click(screen.getByRole('button', {name: '보내기'}))
   expect(screen.queryByRole('textbox')).not.toBeInTheDocument()
-  expect(bubble.getBoundingClientRect().height).toBeLessThan(originalHeight)
+  await expect.poll(() => bubble.getBoundingClientRect().height).toBeLessThan(originalHeight)
   expect(screen.getByRole('region', {name: 'Codex 응답'})).toHaveTextContent('첫 응답')
   accepted.resolve()
   await accepted.promise

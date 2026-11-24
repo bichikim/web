@@ -1,8 +1,11 @@
 import {z} from 'zod'
+import {type AgentState, agentStateSchema} from './agent-states'
+import {semanticLanguage} from './semantic-language'
 
 export const SEMANTIC_LIMIT = 128
 export const SEMANTIC_TEXT_LIMIT = 4096
 export const SEMANTIC_DESCRIPTION_LIMIT = 1000
+export const SEMANTIC_LANGUAGE_LIMIT = 16
 export const SEMANTIC_ID_LIMIT = 128
 export const SEMANTIC_THRESHOLD_MAX = 0.99
 export const SEMANTIC_ACTION_LIMIT = 16
@@ -29,12 +32,12 @@ export interface SemanticNarrationPlaying {
   readonly readoutId: string
 }
 export interface SemanticNarrationInactive {
-  readonly phase: 'waiting' | 'ended'
+  readonly phase: 'preparing' | 'waiting' | 'ended'
 }
 export type SemanticNarration = SemanticNarrationPlaying | SemanticNarrationInactive
 const narrationSchema: z.ZodType<SemanticNarration> = z.discriminatedUnion('phase', [
   z.object({phase: z.literal('playing'), readoutId: z.string().min(1).max(SEMANTIC_ID_LIMIT)}),
-  z.object({phase: z.enum(['waiting', 'ended'])}),
+  z.object({phase: z.enum(['preparing', 'waiting', 'ended'])}),
 ])
 export interface SemanticAnimation {
   /** Seconds for one from-to-from cycle. */
@@ -58,6 +61,8 @@ export interface SemanticBinding {
   readonly animation?: SemanticAnimation
   readonly id: string
   readonly text: string
+  /** Language-specific examples; an explicit list replaces legacy text, including when empty. */
+  readonly examples?: readonly SemanticLanguageExamples[]
   /** Newline-separated examples that reject a paragraph when they match at least as closely. */
   readonly excludeText?: string
   readonly enabled: boolean
@@ -72,6 +77,19 @@ export interface SemanticBinding {
   readonly from?: number
   readonly to?: number
 }
+export interface SemanticLanguageExamples {
+  readonly language: string
+  readonly text: string
+  readonly excludeText?: string
+}
+const exampleSchema = z.object({
+  excludeText: z.string().max(SEMANTIC_DESCRIPTION_LIMIT).optional(),
+  language: z
+    .string()
+    .refine((value) => semanticLanguage(value) !== undefined)
+    .transform((value) => semanticLanguage(value)!),
+  text: z.string().max(SEMANTIC_DESCRIPTION_LIMIT),
+})
 export const semanticBindingsSchema = z
   .array(
     z.object({
@@ -94,6 +112,11 @@ export const semanticBindingsSchema = z
         .optional(),
       category: z.enum(['emotion', 'behavior', 'menu']).optional(),
       enabled: z.boolean(),
+      examples: z
+        .array(exampleSchema)
+        .max(SEMANTIC_LANGUAGE_LIMIT)
+        .refine((items) => new Set(items.map((item) => item.language)).size === items.length)
+        .optional(),
       excludeText: z.string().max(SEMANTIC_DESCRIPTION_LIMIT).optional(),
       exclusiveGroup: z.string().trim().min(1).max(SEMANTIC_ID_LIMIT).optional(),
       from: z.number().finite().optional(),
@@ -111,23 +134,29 @@ export const semanticBindingsSchema = z
   )
   .max(SEMANTIC_LIMIT)
   .refine((items) => new Set(items.map((item) => item.id)).size === items.length)
-export const semanticFrameSchema = z.object({
-  fallbackId: z.string().min(1).max(SEMANTIC_ID_LIMIT).optional(),
-  narration: narrationSchema.optional(),
-  previewId: z.string().min(1).max(SEMANTIC_ID_LIMIT).optional(),
-  scores: z
-    .record(z.string().max(SEMANTIC_ID_LIMIT), z.number().finite().min(-1).max(1))
-    .refine((scores) => Object.keys(scores).length <= SEMANTIC_LIMIT),
-  widgetId: z.string().min(1).max(SEMANTIC_ID_LIMIT),
-})
+export const semanticFrameSchema = z
+  .object({
+    agentPreview: agentStateSchema.optional(),
+    fallbackId: z.string().min(1).max(SEMANTIC_ID_LIMIT).optional(),
+    narration: narrationSchema.optional(),
+    previewId: z.string().min(1).max(SEMANTIC_ID_LIMIT).optional(),
+    scores: z
+      .record(z.string().max(SEMANTIC_ID_LIMIT), z.number().finite().min(-1).max(1))
+      .refine((scores) => Object.keys(scores).length <= SEMANTIC_LIMIT),
+    widgetId: z.string().min(1).max(SEMANTIC_ID_LIMIT),
+  })
+  .refine((frame) => frame.agentPreview === undefined || frame.previewId === undefined)
 export const semanticInputSchema = z.object({
   narration: narrationSchema.optional(),
+  nextText: z.string().max(SEMANTIC_TEXT_LIMIT).optional(),
   readoutId: z.string().min(1).max(SEMANTIC_ID_LIMIT).optional(),
   text: z.string().max(SEMANTIC_TEXT_LIMIT),
   widgetId: z.string().min(1).max(SEMANTIC_ID_LIMIT),
 })
 export interface SemanticFrame {
   readonly widgetId: string
+  /** Preview this state without changing live session signals; mutually exclusive with previewId. */
+  readonly agentPreview?: AgentState
   /** Audio lifecycle; omitted preserves text-only matching and explicit clearing. */
   readonly narration?: SemanticNarration
   /** Preview this binding ahead of menu toggles; omitted uses automatic scores. */
@@ -142,6 +171,8 @@ export interface SemanticInput {
   readonly narration?: SemanticNarration
   /** Narration identity when the explicit audio lifecycle is omitted. */
   readonly readoutId?: string
+  /** Only the immediately following completed segment is prefetched; omitted means none. */
+  readonly nextText?: string
   readonly widgetId: string
   readonly text: string
 }

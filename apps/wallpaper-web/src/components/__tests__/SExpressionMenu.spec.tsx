@@ -29,7 +29,10 @@ test('should navigate choices with arrows and home or end keys', () => {
   const hook = renderHook(useWidgetPreview)
   render(() => <SExpressionMenu preview={hook.result} />)
   const menu = screen.getByRole('menu', {name: '표정·행동'})
-  const choices = screen.getAllByRole('menuitemradio')
+  const choices = [
+    ...screen.getAllByRole('menuitemradio'),
+    screen.getByRole('menuitemcheckbox', {name: '외투 벗기'}),
+  ]
   choices[0]!.focus()
   fireEvent.keyDown(menu, {key: 'ArrowDown'})
   expect(document.activeElement).toBe(choices[1])
@@ -41,5 +44,20 @@ test('should navigate choices with arrows and home or end keys', () => {
   expect(document.activeElement).toBe(choices.at(-1))
   fireEvent.keyDown(menu, {key: 'Home'})
   expect(document.activeElement).toBe(choices[0])
+  hook.cleanup()
+})
+
+test('should toggle the coat without clearing another action or resetting it with none', () => {
+  const hook = renderHook(useWidgetPreview)
+  render(() => <SExpressionMenu preview={hook.result} />)
+  fireEvent.click(screen.getByRole('menuitemradio', {name: '손하트'}))
+  const coat = screen.getByRole('menuitemcheckbox', {name: '외투 벗기'})
+  fireEvent.click(coat)
+  expect(coat.getAttribute('aria-checked')).toBe('true')
+  expect(hook.result.expressionId()).toBe('손하트')
+  fireEvent.click(screen.getByRole('menuitemradio', {name: '없음'}))
+  expect(coat.getAttribute('aria-checked')).toBe('true')
+  fireEvent.click(coat)
+  expect(coat.getAttribute('aria-checked')).toBe('false')
   hook.cleanup()
 })

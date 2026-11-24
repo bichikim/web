@@ -33,9 +33,10 @@ export const createInputMailbox = () => {
       }
     }
   }
-  const snapshot = () => {
+  const snapshot = (afterRevision = 0) => {
     const patch: Record<string, unknown> = {}
-    for (const entry of fields.values()) {
+    const entries = Array.from(fields.values()).filter((entry) => entry.revision > afterRevision)
+    for (const entry of entries) {
       let target = patch
       entry.path.slice(0, -1).forEach((key) => {
         const nested = target[key]
@@ -46,7 +47,7 @@ export const createInputMailbox = () => {
       })
       target[entry.path.at(-1)!] = entry.value
     }
-    return {patch: patch as RuntimeInputPatch, revision, settle: settled > 0}
+    return {patch: patch as RuntimeInputPatch, revision, settle: settled > afterRevision}
   }
   return {
     acknowledge(applied: number) {
@@ -88,7 +89,7 @@ export const createInputMailbox = () => {
       settled = 0
       requested = 0
     },
-    pending: () => fields.size > 0 || settled > 0 || requested > 0,
+    pending: (afterRevision = 0) => requested > afterRevision,
     revision: () => revision,
     snapshot,
   }

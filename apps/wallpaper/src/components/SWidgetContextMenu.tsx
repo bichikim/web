@@ -1,3 +1,4 @@
+import {text as uiText} from '../features/localization'
 import {createEffect, createMemo, createSignal, For, onCleanup, Show} from 'solid-js'
 import type {ContextAction} from '../features/semantics/types'
 
@@ -93,7 +94,7 @@ export const SWidgetContextMenu = (props: SWidgetContextMenuProps) => {
     <div
       ref={setPanel}
       role="menu"
-      aria-label="Poffo 위젯 메뉴"
+      aria-label={uiText('Poffo 위젯 메뉴')}
       popover="auto"
       class="fixed bottom-auto right-auto m-0 box-border max-h-[calc(100dvh-1rem)]
         w-56 max-w-[calc(100vw-1rem)] overflow-y-auto rounded-lg border border-solid
@@ -119,7 +120,7 @@ export const SWidgetContextMenu = (props: SWidgetContextMenuProps) => {
         onClick={handleSelect}
         onFocus={handleSizingFocus}
       >
-        {props.editing ? '조정 완료' : '크기 조정'}
+        {props.editing ? uiText('조정 완료') : uiText('크기 및 위치 조정')}
       </button>
       <Show when={actions().size > 0}>
         <div role="separator" aria-orientation="horizontal" class="my-1 h-px bg-stone-200" />

@@ -9,6 +9,7 @@ export class AudioRuntime {
   destination = {}
   sources: AudioSource[] = []
   resume = vi.fn().mockResolvedValue(undefined)
+  suspend = vi.fn().mockResolvedValue(undefined)
   close = vi.fn().mockResolvedValue(undefined)
   constructor() {
     AudioRuntime.instances.push(this)

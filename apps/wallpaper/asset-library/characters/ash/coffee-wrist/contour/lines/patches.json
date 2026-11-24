@@ -1,0 +1,8 @@
+{
+  "method": "Interpolate intact contour RGB profiles at rows 685 and 736, align to existing alpha contour, composite with ComfyUI; original cup protected",
+  "pixels": 1723,
+  "range": [690, 736],
+  "sides": ["left", "right"],
+  "profileDepth": 20,
+  "alphaUnchanged": true
+}

@@ -1,6 +1,6 @@
 [workspace]
 resolver = "3"
-members = ["format", "runtime", "worker"]
+members = ["format", "runtime", "worker", "renderer"]
 
 [workspace.package]
 version = "0.4.0"
@@ -16,6 +16,7 @@ serde = { version = "=1.0.229", default-features = false, features = ["std", "de
 serde_json = { version = "=1.0.154", default-features = false, features = [
   "std",
   "float_roundtrip",
+  "unbounded_depth",
 ] }
 thiserror = { version = "=2.0.21", default-features = false, features = ["std"] }
 

@@ -11,13 +11,22 @@ afterEach(() => {
 test('should persist rendering choices independently and restore them in a new workspace', () => {
   const first = renderHook(useRenderingPreferences)
   expect(first.result.preferences()).toEqual({antialiasing: 'auto', renderer: 'auto'})
-  first.result.setRenderer('webgpu')
+  first.result.setRenderer('pixi')
   first.result.setAntialiasing('msaa')
   first.cleanup()
   const restored = renderHook(useRenderingPreferences)
-  expect(restored.result.preferences()).toEqual({antialiasing: 'msaa', renderer: 'webgpu'})
+  expect(restored.result.preferences()).toEqual({antialiasing: 'msaa', renderer: 'pixi'})
   expect(localStorage.length).toBe(1)
 })
+
+test.each(['webgl', 'webgpu'] as const)(
+  'should restore the Pixi backend saved as %s',
+  (renderer) => {
+    localStorage.setItem('poffo:rendering:v1', JSON.stringify({antialiasing: 'msaa', renderer}))
+    const {result} = renderHook(useRenderingPreferences)
+    expect(result.preferences()).toEqual({antialiasing: 'msaa', renderer: `pixi-${renderer}`})
+  },
+)
 
 test.each(['{', '{"renderer":"other","antialiasing":"msaa"}', 'null'])(
   'should restore automatic choices for corrupt or unsupported saved settings: %s',

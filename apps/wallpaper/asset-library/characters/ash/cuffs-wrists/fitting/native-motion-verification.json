@@ -1,0 +1,750 @@
+{
+  "sha256": "f3460b472098071cd9604afe7028e4d38a2c486c604165a5e691505b7989c9b9",
+  "source": "Actual Wallpaper app Worker frames with original live physics, including gaze reversals and return",
+  "pointerInputUsed": false,
+  "frames": 41,
+  "duration": 7879,
+  "minimumSeamMargin": 1.9015003643823982,
+  "maximumContactError": 0.00016907369429841672,
+  "maximumChainGap": 0,
+  "results": [
+    {
+      "phase": "neutral",
+      "elapsed": 25,
+      "head": [0, 0],
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "minimumSeamMargin": 2.1500299814990167,
+          "contactError": 0.00012044856380090781
+        },
+        {
+          "side": "right",
+          "minimumSeamMargin": 2.5414843140459618,
+          "contactError": 0.00010995611169786763
+        }
+      ]
+    },
+    {
+      "phase": "neutral",
+      "elapsed": 101,
+      "head": [0, 0],
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "minimumSeamMargin": 2.0816147170061043,
+          "contactError": 0.00011714070837650477
+        },
+        {
+          "side": "right",
+          "minimumSeamMargin": 2.585938657423608,
+          "contactError": 0.0001158583619258608
+        }
+      ]
+    },
+    {
+      "phase": "neutral",
+      "elapsed": 182,
+      "head": [0, 0],
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "minimumSeamMargin": 2.0999438934632546,
+          "contactError": 0.00013095032763901115
+        },
+        {
+          "side": "right",
+          "minimumSeamMargin": 2.411518841221625,
+          "contactError": 0.00012552854704523484
+        }
+      ]
+    },
+    {
+      "phase": "neutral",
+      "elapsed": 269,
+      "head": [0, 0],
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "minimumSeamMargin": 2.1741115543539298,
+          "contactError": 0.00011580608580779661
+        },
+        {
+          "side": "right",
+          "minimumSeamMargin": 2.5903678234653524,
+          "contactError": 0.0001321778830679837
+        }
+      ]
+    },
+    {
+      "phase": "neutral",
+      "elapsed": 346,
+      "head": [0, 0],
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "minimumSeamMargin": 2.0748904985909595,
+          "contactError": 0.00012169931954545489
+        },
+        {
+          "side": "right",
+          "minimumSeamMargin": 2.532496146798253,
+          "contactError": 0.00011224576097490639
+        }
+      ]
+    },
+    {
+      "phase": "neutral",
+      "elapsed": 424,
+      "head": [0, 0],
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "minimumSeamMargin": 2.2506292827304124,
+          "contactError": 0.00012986301169359452
+        },
+        {
+          "side": "right",
+          "minimumSeamMargin": 2.5488643402523388,
+          "contactError": 0.000126028269004201
+        }
+      ]
+    },
+    {
+      "phase": "neutral",
+      "elapsed": 503,
+      "head": [0, 0],
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "minimumSeamMargin": 2.1509600356030396,
+          "contactError": 0.0001293195396369898
+        },
+        {
+          "side": "right",
+          "minimumSeamMargin": 2.5797053012865847,
+          "contactError": 0.00012497793895026676
+        }
+      ]
+    },
+    {
+      "phase": "neutral",
+      "elapsed": 578,
+      "head": [0, 0],
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "minimumSeamMargin": 2.2214726291299187,
+          "contactError": 0.00012582775339355185
+        },
+        {
+          "side": "right",
+          "minimumSeamMargin": 2.408931806698356,
+          "contactError": 0.00013052155727257648
+        }
+      ]
+    },
+    {
+      "phase": "neutral",
+      "elapsed": 653,
+      "head": [0, 0],
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "minimumSeamMargin": 2.1723205372561813,
+          "contactError": 0.00013542936218978222
+        },
+        {
+          "side": "right",
+          "minimumSeamMargin": 2.527633698616939,
+          "contactError": 0.00012179246052859233
+        }
+      ]
+    },
+    {
+      "phase": "neutral",
+      "elapsed": 727,
+      "head": [0, 0],
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "minimumSeamMargin": 2.1645371383785577,
+          "contactError": 0.00011069486425969988
+        },
+        {
+          "side": "right",
+          "minimumSeamMargin": 2.560175340632352,
+          "contactError": 0.00012545263646152836
+        }
+      ]
+    },
+    {
+      "phase": "up",
+      "elapsed": 823,
+      "head": [0, 0],
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "minimumSeamMargin": 2.1538115544131204,
+          "contactError": 0.0001250724396421901
+        },
+        {
+          "side": "right",
+          "minimumSeamMargin": 2.460737090848451,
+          "contactError": 0.00012706190937212928
+        }
+      ]
+    },
+    {
+      "phase": "up",
+      "elapsed": 959,
+      "head": [0, 30],
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "minimumSeamMargin": 2.045581557730865,
+          "contactError": 0.0001292404391780334
+        },
+        {
+          "side": "right",
+          "minimumSeamMargin": 2.784455160063491,
+          "contactError": 0.00013452521021956466
+        }
+      ]
+    },
+    {
+      "phase": "up",
+      "elapsed": 1022,
+      "head": [0, 30],
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "minimumSeamMargin": 2.0247799399759203,
+          "contactError": 0.00011518116758311719
+        },
+        {
+          "side": "right",
+          "minimumSeamMargin": 2.505541188934647,
+          "contactError": 0.00012326777547452543
+        }
+      ]
+    },
+    {
+      "phase": "up",
+      "elapsed": 1106,
+      "head": [0, 30],
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "minimumSeamMargin": 2.0809861883710736,
+          "contactError": 0.00012800937838270546
+        },
+        {
+          "side": "right",
+          "minimumSeamMargin": 2.2425155040642553,
+          "contactError": 0.00013342649734177277
+        }
+      ]
+    },
+    {
+      "phase": "up",
+      "elapsed": 1182,
+      "head": [0, 30],
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "minimumSeamMargin": 2.279492376410435,
+          "contactError": 0.00011107838137914496
+        },
+        {
+          "side": "right",
+          "minimumSeamMargin": 2.3289330624859392,
+          "contactError": 0.00011958660182409058
+        }
+      ]
+    },
+    {
+      "phase": "up",
+      "elapsed": 1261,
+      "head": [0, 30],
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "minimumSeamMargin": 2.2209169914881843,
+          "contactError": 0.00013361182848488134
+        },
+        {
+          "side": "right",
+          "minimumSeamMargin": 2.4498105284603766,
+          "contactError": 0.000118291216998774
+        }
+      ]
+    },
+    {
+      "phase": "up",
+      "elapsed": 1336,
+      "head": [0, 30],
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "minimumSeamMargin": 2.2258055253245104,
+          "contactError": 0.00010992913929193951
+        },
+        {
+          "side": "right",
+          "minimumSeamMargin": 2.6966845524113054,
+          "contactError": 0.00011536256455446028
+        }
+      ]
+    },
+    {
+      "phase": "up",
+      "elapsed": 1411,
+      "head": [0, 30],
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "minimumSeamMargin": 2.01291946718441,
+          "contactError": 0.00012795073927120458
+        },
+        {
+          "side": "right",
+          "minimumSeamMargin": 2.470916971757255,
+          "contactError": 0.00013062345816774136
+        }
+      ]
+    },
+    {
+      "phase": "up",
+      "elapsed": 1488,
+      "head": [0, 30],
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "minimumSeamMargin": 2.053698757466453,
+          "contactError": 0.0001228888560607586
+        },
+        {
+          "side": "right",
+          "minimumSeamMargin": 2.7407019528846353,
+          "contactError": 0.00012034201941264042
+        }
+      ]
+    },
+    {
+      "phase": "up",
+      "elapsed": 1563,
+      "head": [0, 30],
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "minimumSeamMargin": 2.062422553100057,
+          "contactError": 0.00012109730866308643
+        },
+        {
+          "side": "right",
+          "minimumSeamMargin": 2.5124572467924104,
+          "contactError": 0.00011319066027063463
+        }
+      ]
+    },
+    {
+      "phase": "down",
+      "elapsed": 1646,
+      "head": [0, 30],
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "minimumSeamMargin": 2.1394772028300038,
+          "contactError": 0.00013096861207406246
+        },
+        {
+          "side": "right",
+          "minimumSeamMargin": 2.5218117463212004,
+          "contactError": 0.00013385937231466232
+        }
+      ]
+    },
+    {
+      "phase": "down",
+      "elapsed": 1754,
+      "head": [0, -30],
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "minimumSeamMargin": 2.2300067746683716,
+          "contactError": 0.00015992101415640775
+        },
+        {
+          "side": "right",
+          "minimumSeamMargin": 2.03020000731838,
+          "contactError": 0.00014987794742195824
+        }
+      ]
+    },
+    {
+      "phase": "down",
+      "elapsed": 1822,
+      "head": [0, -30],
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "minimumSeamMargin": 2.1657019351340887,
+          "contactError": 0.0001463218336835097
+        },
+        {
+          "side": "right",
+          "minimumSeamMargin": 2.4095981109027282,
+          "contactError": 0.0001470978045353365
+        }
+      ]
+    },
+    {
+      "phase": "down",
+      "elapsed": 1902,
+      "head": [0, -30],
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "minimumSeamMargin": 2.020752003700739,
+          "contactError": 0.0001498773582024215
+        },
+        {
+          "side": "right",
+          "minimumSeamMargin": 2.6880935052526076,
+          "contactError": 0.00016907369429841672
+        }
+      ]
+    },
+    {
+      "phase": "down",
+      "elapsed": 1982,
+      "head": [0, -30],
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "minimumSeamMargin": 1.9342662992144215,
+          "contactError": 0.0001479725831873279
+        },
+        {
+          "side": "right",
+          "minimumSeamMargin": 2.729207142896198,
+          "contactError": 0.00015780515950988242
+        }
+      ]
+    },
+    {
+      "phase": "down",
+      "elapsed": 2062,
+      "head": [0, -30],
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "minimumSeamMargin": 2.026396806599401,
+          "contactError": 0.0001536895086739954
+        },
+        {
+          "side": "right",
+          "minimumSeamMargin": 2.772919062530457,
+          "contactError": 0.00016092794091601833
+        }
+      ]
+    },
+    {
+      "phase": "down",
+      "elapsed": 2130,
+      "head": [0, -30],
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "minimumSeamMargin": 2.0075865235404606,
+          "contactError": 0.00015748803067034992
+        },
+        {
+          "side": "right",
+          "minimumSeamMargin": 2.513330158258073,
+          "contactError": 0.00015278809825195104
+        }
+      ]
+    },
+    {
+      "phase": "down",
+      "elapsed": 2216,
+      "head": [0, -30],
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "minimumSeamMargin": 2.0744453849429854,
+          "contactError": 0.00013667451927232898
+        },
+        {
+          "side": "right",
+          "minimumSeamMargin": 2.2017153129007503,
+          "contactError": 0.00016163332207750155
+        }
+      ]
+    },
+    {
+      "phase": "down",
+      "elapsed": 2294,
+      "head": [0, -30],
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "minimumSeamMargin": 1.9015003643823982,
+          "contactError": 0.0001567547886873851
+        },
+        {
+          "side": "right",
+          "minimumSeamMargin": 2.3573957162248056,
+          "contactError": 0.0001471123668451212
+        }
+      ]
+    },
+    {
+      "phase": "down",
+      "elapsed": 2371,
+      "head": [0, -30],
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "minimumSeamMargin": 2.0995138123276154,
+          "contactError": 0.00014196265787171973
+        },
+        {
+          "side": "right",
+          "minimumSeamMargin": 2.4692071703464187,
+          "contactError": 0.00016651690257351025
+        }
+      ]
+    },
+    {
+      "phase": "up-reversal",
+      "elapsed": 2450,
+      "head": [0, -30],
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "minimumSeamMargin": 2.17057605683522,
+          "contactError": 0.00013204632784049979
+        },
+        {
+          "side": "right",
+          "minimumSeamMargin": 2.584289989020865,
+          "contactError": 0.00013233715159425975
+        }
+      ]
+    },
+    {
+      "phase": "up-reversal",
+      "elapsed": 2551,
+      "head": [0, 30],
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "minimumSeamMargin": 1.9930732802874886,
+          "contactError": 0.0001159023477349252
+        },
+        {
+          "side": "right",
+          "minimumSeamMargin": 2.9577808819790863,
+          "contactError": 0.00011853774430452124
+        }
+      ]
+    },
+    {
+      "phase": "up-reversal",
+      "elapsed": 2618,
+      "head": [0, 30],
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "minimumSeamMargin": 1.9462907550547455,
+          "contactError": 0.00011637957655018636
+        },
+        {
+          "side": "right",
+          "minimumSeamMargin": 2.669524741474981,
+          "contactError": 0.0001235202323143748
+        }
+      ]
+    },
+    {
+      "phase": "up-reversal",
+      "elapsed": 2694,
+      "head": [0, 30],
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "minimumSeamMargin": 2.0819008033157993,
+          "contactError": 0.00012290712698706158
+        },
+        {
+          "side": "right",
+          "minimumSeamMargin": 2.281493079773161,
+          "contactError": 0.00012148538771326244
+        }
+      ]
+    },
+    {
+      "phase": "up-reversal",
+      "elapsed": 2769,
+      "head": [0, 30],
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "minimumSeamMargin": 2.307955587905211,
+          "contactError": 0.0001188212929746834
+        },
+        {
+          "side": "right",
+          "minimumSeamMargin": 2.1129345986597845,
+          "contactError": 0.00011789560132942212
+        }
+      ]
+    },
+    {
+      "phase": "up-reversal",
+      "elapsed": 2844,
+      "head": [0, 30],
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "minimumSeamMargin": 2.051150362155882,
+          "contactError": 0.0001304294095499531
+        },
+        {
+          "side": "right",
+          "minimumSeamMargin": 2.239639645255982,
+          "contactError": 0.00013127038609492286
+        }
+      ]
+    },
+    {
+      "phase": "up-reversal",
+      "elapsed": 2920,
+      "head": [0, 30],
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "minimumSeamMargin": 2.0902366375923367,
+          "contactError": 0.00012342621536123234
+        },
+        {
+          "side": "right",
+          "minimumSeamMargin": 2.458737086276186,
+          "contactError": 0.00012780186244792824
+        }
+      ]
+    },
+    {
+      "phase": "up-reversal",
+      "elapsed": 2997,
+      "head": [0, 30],
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "minimumSeamMargin": 2.0096497071719335,
+          "contactError": 0.00013152794579774957
+        },
+        {
+          "side": "right",
+          "minimumSeamMargin": 2.7869318250877524,
+          "contactError": 0.00010607834248850088
+        }
+      ]
+    },
+    {
+      "phase": "left",
+      "elapsed": 4236,
+      "head": [0, 30],
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "minimumSeamMargin": 2.185566911284984,
+          "contactError": 0.0001266080076148532
+        },
+        {
+          "side": "right",
+          "minimumSeamMargin": 2.492997832520961,
+          "contactError": 0.0001321262029084084
+        }
+      ]
+    },
+    {
+      "phase": "right",
+      "elapsed": 5904,
+      "head": [-30, 0],
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "minimumSeamMargin": 2.104945589154647,
+          "contactError": 0.0001271207232213046
+        },
+        {
+          "side": "right",
+          "minimumSeamMargin": 2.669697729078071,
+          "contactError": 0.00012600025612323528
+        }
+      ]
+    },
+    {
+      "phase": "return",
+      "elapsed": 7879,
+      "head": [30, 0],
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "minimumSeamMargin": 2.045794246472208,
+          "contactError": 0.00011228282549679091
+        },
+        {
+          "side": "right",
+          "minimumSeamMargin": 2.527623047226726,
+          "contactError": 0.00012149857563809108
+        }
+      ]
+    }
+  ]
+}

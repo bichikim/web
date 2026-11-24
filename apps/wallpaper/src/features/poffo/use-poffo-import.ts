@@ -4,11 +4,12 @@ import {importPoffoAsset} from './import-poffo-asset'
 export const usePoffoImport = (select: (id: string) => void) => {
   const [error, setError] = createSignal<string | null>(null)
   let revision = 0
-  onCleanup(() => {
+  const invalidateImport = () => {
     revision += 1
-  })
+  }
+  onCleanup(invalidateImport)
   const selectAsset = (id: string) => {
-    revision += 1
+    invalidateImport()
     select(id)
   }
   const importFiles = async (files: readonly File[]) => {
@@ -31,5 +32,5 @@ export const usePoffoImport = (select: (id: string) => void) => {
       }
     }
   }
-  return {error, importFiles, selectAsset}
+  return {error, importFiles, invalidateImport, selectAsset}
 }

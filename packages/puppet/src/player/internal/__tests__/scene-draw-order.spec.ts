@@ -1,3 +1,5 @@
+import {createIsolatedOrderDocument} from './fixtures/isolated-order'
+import {constantOrderChannels, createOrderDocument, orderInputs} from './fixtures/draw-order'
 import {describe, expect, test} from 'vitest'
 
 import {
@@ -152,36 +154,32 @@ describe('scene draw order', () => {
   })
 })
 
-test('should preserve paint order from legacy triangulated channels with equal rest orders', () => {
-  const document = createDocument(
-    [part('plain', 500), part('keyed', 500)],
-    [node('plain'), node('keyed')],
-    {
-      parameterBindings: [
-        {
-          id: 'opacity',
-          keyforms: (
-            [
-              [0, 0],
-              [1, 0],
-              [0, 1],
-            ] as const
-          ).map((values) => ({
-            parts: [{partId: 'keyed', properties: {opacity: 0.5}, vertices: []}],
-            values,
-          })),
-          parameterIds: ['x', 'y'],
-          targetPartIds: ['keyed'],
-        },
-      ],
-      parameters: ['x', 'y'].map((id) => ({defaultValue: 0, id, maximum: 1, minimum: 0, name: id})),
-    },
-  )
-  expect(parseDocumentValue(document).ok).toBe(true)
-  expect(order(document, {x: 0.02, y: 0.17})).toEqual(['keyed', 'plain'])
-  expect(order(document, {x: 0, y: 0})).toEqual(['plain', 'keyed'])
-  expect(order(document, {x: 0.02, y: 0.17})).toEqual(['keyed', 'plain'])
-})
+test.each(constantOrderChannels)(
+  'should retain equal-order overlaps and cached order through triangulated %s changes',
+  (channel) => {
+    for (const target of ['part', 'group'] as const) {
+      const document = createOrderDocument(channel, target)
+      expect(parseDocumentValue(document).ok).toBe(true)
+      const initial = getDrawOrderedPartStates(document, orderInputs[0])
+      expect(initial.map((state) => state.partId)).toEqual(['plain', 'keyed'])
+      for (const values of orderInputs) {
+        expect(order(document, values)).toEqual(['plain', 'keyed'])
+        expect(getDrawOrderedPartStates(document, {...values, weight: 0.123})).toBe(initial)
+      }
+    }
+  },
+)
+
+test.each(['part', 'group'] as const)(
+  'should update actual fractional triangulated %s orders across overlaps',
+  (target) => {
+    const document = createOrderDocument('changing', target)
+    expect(parseDocumentValue(document).ok).toBe(true)
+    expect(order(document, {x: 0.4999, y: 0.17})).toEqual(['keyed', 'plain'])
+    expect(order(document, {x: 0.5001, y: 0.17})).toEqual(['plain', 'keyed'])
+    expect(order(document, {weight: 0, x: 0.5001, y: 0.17})).toEqual(['keyed', 'plain'])
+  },
+)
 
 test('should reuse paint order while unrelated geometry parameters change', () => {
   const document = createDocument([part('a', 200), part('b', 600)], [node('a'), node('b')], {
@@ -287,4 +285,19 @@ test('should refresh group order for influence changes and inherited parameter v
     {locked: false, partId: 'a', visible: false},
     {locked: false, partId: 'b', visible: true},
   ])
+})
+
+test('should isolate child orders from outside siblings without an offscreen layer', () => {
+  const document = createDocument(
+    [part('low', 100), part('outside', 600), part('high', 900)],
+    [group('isolated', [node('high'), node('low')], {isolateOrder: true}), node('outside')],
+  )
+  expect(order(document)).toEqual(['low', 'high', 'outside'])
+})
+
+test('should key isolated group order without an explicit rest order', () => {
+  const document = createIsolatedOrderDocument(true)
+  expect(parseDocumentValue(document).ok).toBe(true)
+  expect(order(document, {x: 0.4999, y: 0.17})).toEqual(['keyed', 'plain'])
+  expect(order(document, {x: 0.5001, y: 0.17})).toEqual(['plain', 'keyed'])
 })

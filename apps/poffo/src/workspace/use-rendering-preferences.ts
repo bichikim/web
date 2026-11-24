@@ -9,15 +9,34 @@ export interface RenderingPreferences {
 const STORAGE_KEY = 'poffo:rendering:v1'
 const DEFAULT_PREFERENCES: RenderingPreferences = {antialiasing: 'auto', renderer: 'auto'}
 
-const isPreferences = (value: unknown): value is RenderingPreferences =>
-  typeof value === 'object' &&
-  value !== null &&
-  'renderer' in value &&
-  typeof value.renderer === 'string' &&
-  ['auto', 'webgl', 'webgpu'].includes(value.renderer) &&
-  'antialiasing' in value &&
-  typeof value.antialiasing === 'string' &&
-  ['auto', 'msaa', 'ssaa'].includes(value.antialiasing)
+export const RENDERER_OPTIONS = [
+  'auto',
+  'pixi',
+  'pixi-webgl',
+  'pixi-webgpu',
+  'wgpu',
+] as const satisfies readonly PlayerRendererPreference[]
+
+const readPreferences = (value: unknown): RenderingPreferences | undefined => {
+  if (
+    typeof value !== 'object' ||
+    value === null ||
+    !('renderer' in value) ||
+    !('antialiasing' in value)
+  ) {
+    return undefined
+  }
+  const saved = value.renderer
+  const preference = saved === 'webgl' || saved === 'webgpu' ? `pixi-${saved}` : saved
+  const renderer = RENDERER_OPTIONS.find((renderer) => renderer === preference)
+  const antialiasing = (['auto', 'msaa', 'ssaa'] as const).find(
+    (mode) => mode === value.antialiasing,
+  )
+  if (renderer !== undefined && antialiasing !== undefined) {
+    return {antialiasing, renderer}
+  }
+  return undefined
+}
 
 /** Browser-level display settings; never part of model history or recovery snapshots. */
 export const useRenderingPreferences = () => {
@@ -26,9 +45,9 @@ export const useRenderingPreferences = () => {
   try {
     const stored = globalThis.localStorage?.getItem(STORAGE_KEY)
     if (stored !== null && stored !== undefined) {
-      const parsed: unknown = JSON.parse(stored)
-      if (isPreferences(parsed)) {
-        setPreferences({antialiasing: parsed.antialiasing, renderer: parsed.renderer})
+      const saved = readPreferences(JSON.parse(stored))
+      if (saved !== undefined) {
+        setPreferences(saved)
       }
     }
   } catch (cause) {

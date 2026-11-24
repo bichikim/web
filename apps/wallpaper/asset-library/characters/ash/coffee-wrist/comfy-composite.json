@@ -1,0 +1,76 @@
+{
+  "1": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "coffee-hand-original.png"
+    }
+  },
+  "2": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["1", 0],
+      "alpha": ["1", 1]
+    }
+  },
+  "3": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "eeee0bcc_000.png"
+    }
+  },
+  "4": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["3", 0],
+      "alpha": ["3", 1]
+    }
+  },
+  "5": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "coffee-hand-edit.png"
+    }
+  },
+  "6": {
+    "class_type": "ImageToMask",
+    "inputs": {
+      "image": ["5", 0],
+      "channel": "red"
+    }
+  },
+  "7": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["2", 0],
+      "source": ["4", 0],
+      "x": 0,
+      "y": 0,
+      "resize_source": false,
+      "mask": ["6", 0]
+    }
+  },
+  "8": {
+    "class_type": "ImageCrop",
+    "inputs": {
+      "image": ["7", 0],
+      "x": 0,
+      "y": 0,
+      "width": 576,
+      "height": 864
+    }
+  },
+  "9": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": ["8", 0],
+      "filename_prefix": "Wallpaper/coffee-wrist/hand-preserved"
+    }
+  },
+  "10": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": ["7", 0],
+      "filename_prefix": "Wallpaper/coffee-wrist/hand-composite"
+    }
+  }
+}

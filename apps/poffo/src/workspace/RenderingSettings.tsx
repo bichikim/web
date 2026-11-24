@@ -2,10 +2,16 @@ import {Show} from 'solid-js'
 import type {PlayerBufferingStatus} from '@winter-love/puppet/player'
 import {EditorSelect, EditorToggleButton} from '@winter-love/puppet/editor'
 import {useWorkspace} from './context'
+import {RENDERER_OPTIONS} from './use-rendering-preferences'
 
-const RENDERERS = ['auto', 'webgl', 'webgpu'] as const
 const ANTIALIASING = ['auto', 'ssaa', 'msaa'] as const
-const RENDERER_LABELS = {auto: '자동', webgl: 'WebGL', webgpu: 'WebGPU'}
+const RENDERER_LABELS = {
+  auto: '자동',
+  pixi: 'Pixi · 자동',
+  'pixi-webgl': 'WebGL',
+  'pixi-webgpu': 'WebGPU',
+  wgpu: 'wgpu · WebGPU',
+}
 const AA_LABELS = {auto: '자동', msaa: 'MSAA + 2× 해상도', ssaa: 'SSAA · 2× 해상도'}
 
 const BUFFERING_LABELS: Record<PlayerBufferingStatus, string> = {
@@ -27,7 +33,7 @@ export const RenderingSettings = () => {
     }
   }
   const handleRenderer = (value: string) => {
-    const renderer = RENDERERS.find((entry) => entry === value)
+    const renderer = RENDERER_OPTIONS.find((entry) => entry === value)
     if (renderer !== undefined) {
       workspace?.setRenderer(renderer)
     }
@@ -39,7 +45,7 @@ export const RenderingSettings = () => {
     }
   }
   const rendererLabel = (value: string) =>
-    RENDERER_LABELS[RENDERERS.find((entry) => entry === value) ?? 'auto']
+    RENDERER_LABELS[RENDERER_OPTIONS.find((entry) => entry === value) ?? 'auto']
   const antialiasingLabel = (value: string) =>
     AA_LABELS[ANTIALIASING.find((entry) => entry === value) ?? 'auto']
   return (
@@ -52,7 +58,7 @@ export const RenderingSettings = () => {
               렌더러
               <EditorSelect
                 label="렌더러"
-                options={RENDERERS}
+                options={RENDERER_OPTIONS}
                 optionLabel={rendererLabel}
                 value={current().renderingPreferences().renderer}
                 onChange={handleRenderer}
@@ -71,7 +77,8 @@ export const RenderingSettings = () => {
             <Show when={current().renderingInfo()}>
               {(info) => (
                 <p class="m-0 text-editor-caption">
-                  사용 중: {rendererLabel(info().renderer)} ·{' '}
+                  사용 중:{' '}
+                  {rendererLabel(info().runtime === 'wgpu' ? 'wgpu' : `pixi-${info().renderer}`)} ·{' '}
                   {antialiasingLabel(info().antialiasing)}
                 </p>
               )}

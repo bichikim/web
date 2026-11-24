@@ -1,0 +1,23 @@
+{
+  "method": "Harmonic RGB interpolation within the marked skin interior; original forearm colors anchor the contact",
+  "regions": [
+    {
+      "x": 2168,
+      "y": 1715,
+      "rx": 48,
+      "ry": 30
+    },
+    {
+      "x": 2226,
+      "y": 1794,
+      "rx": 24,
+      "ry": 30
+    }
+  ],
+  "iterations": 443,
+  "residual": 0.001998185659253693,
+  "selectedPixels": 10253,
+  "alphaChanged": 0,
+  "geometryChanged": false,
+  "lineProtectionRadiusWorld": 1.5
+}

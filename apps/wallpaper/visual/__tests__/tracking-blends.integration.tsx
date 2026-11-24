@@ -64,7 +64,7 @@ test('should combine selected inputs with animation without accumulation and rel
       canvas,
       mode: () => 'cursor',
       onError: (cause) => errors.push(cause),
-      options: () => ({eyeResponseX: 6 / 7, headResponseX: 1}),
+      options: () => ({eyeCursorReach: 1, eyeResponseX: 6 / 7, headResponseX: 1}),
       parameters: () => model.parameters!,
       player: active,
     })
@@ -107,7 +107,7 @@ test('should combine selected inputs with animation without accumulation and rel
     follow()
     await expect.poll(() => player.getParameterValue('face-x')).toBeCloseTo(10, 1)
     expect(player.getParameterValue('gaze-x')).toBeCloseTo(0.3, 1)
-    fireEvent.click(screen.getByRole('combobox', {name: '얼굴 좌우 적용 방식'}))
+    fireEvent.click(screen.getByRole('combobox', {name: '머리 좌우 적용 방식'}))
     fireEvent.click(screen.getByRole('option', {name: '더하기'}))
     follow()
     await expect.poll(() => player.getParameterValue('face-x')).toBeCloseTo(12, 1)

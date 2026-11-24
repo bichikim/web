@@ -1,5 +1,6 @@
 import {expect, it} from 'vitest'
 import {parseConnectionProfile} from '../connections'
+import {DEFAULT_POFFO_TOUCH} from '../touch'
 const profile = {
   assetId: 'builtin:ash',
   connections: {
@@ -25,6 +26,101 @@ const profile = {
   version: 1,
 }
 const options = {assetId: 'builtin:ash', parameters: [{id: 'Param71'}]}
+it('should preserve every input profile and validate their connections and calibration', () => {
+  const input = {
+    ...profile,
+    connections: {
+      trackingProfiles: {
+        camera: {options: {headFollowSpeed: 0.4}},
+        'camera-pose': {bindings: {headZ: {parameterId: 'Param71'}}, options: {headLimitZ: 20}},
+        cursor: {options: {headFollowSpeed: 1.1}},
+      },
+    },
+  }
+  expect(parseConnectionProfile(JSON.stringify(input), options)).toEqual({ok: true, profile: input})
+  expect(parseConnectionProfile(JSON.stringify(input), {...options, parameters: []})).toEqual({
+    ok: false,
+    reason: 'parameter',
+  })
+  const invalid = {
+    ...input,
+    connections: {trackingProfiles: {camera: {options: {headFollowSpeed: -1}}}},
+  }
+  expect(parseConnectionProfile(JSON.stringify(invalid), options)).toEqual({
+    ok: false,
+    reason: 'invalid',
+  })
+})
+it('should retain touch profiles and reject parameters missing from the selected model', () => {
+  const input = {
+    ...profile,
+    connections: {
+      touch: {
+        ...DEFAULT_POFFO_TOUCH,
+        enabled: true,
+        parameters: {Param71: {axis: 'z' as const, invert: true}},
+      },
+    },
+  }
+  expect(parseConnectionProfile(JSON.stringify(input), options)).toEqual({ok: true, profile: input})
+  expect(parseConnectionProfile(JSON.stringify(input), {...options, parameters: []})).toEqual({
+    ok: false,
+    reason: 'parameter',
+  })
+})
+it.each([
+  {
+    enabled: true,
+    id: 'tail',
+    joints: [{id: 'tip', parameterId: 'missing', response: 1}],
+    name: 'Tail',
+  },
+  {enabled: true, id: 'arm', name: 'Arm', parameters: {wrist: 'missing'}},
+  ['Param71', 'Param71', 'missing'],
+])('should reject unknown touch joint parameters in every supported chain format (%j)', (chain) => {
+  const input = {...profile, connections: {touch: {...DEFAULT_POFFO_TOUCH, chains: [chain]}}}
+  expect(parseConnectionProfile(JSON.stringify(input), options)).toEqual({
+    ok: false,
+    reason: 'parameter',
+  })
+})
+it('should retain joints without a parameter and joints present in the model', () => {
+  const input = {
+    ...profile,
+    connections: {
+      touch: {
+        ...DEFAULT_POFFO_TOUCH,
+        chains: [
+          {
+            enabled: true,
+            id: 'tail',
+            joints: [
+              {id: 'root', response: 0},
+              {id: 'tip', parameterId: 'Param71', response: 1},
+            ],
+            name: 'Tail',
+          },
+        ],
+      },
+    },
+  }
+  expect(parseConnectionProfile(JSON.stringify(input), options)).toEqual({ok: true, profile: input})
+})
+it('should preserve state behavior bundles and validate them against the character actions', () => {
+  const action = {id: '노트 들기', kind: 'expression' as const}
+  const input = {
+    ...profile,
+    connections: {agentBindings: {working: {actions: [action], parameterId: null}}},
+  }
+  expect(parseConnectionProfile(JSON.stringify(input), {...options, actions: [action]})).toEqual({
+    ok: true,
+    profile: input,
+  })
+  expect(parseConnectionProfile(JSON.stringify(input), {...options, actions: []})).toEqual({
+    ok: false,
+    reason: 'action',
+  })
+})
 it('should persist character action targets and reject actions missing from the selected character', () => {
   const action = {id: '노트 들기', kind: 'expression' as const}
   const input = {

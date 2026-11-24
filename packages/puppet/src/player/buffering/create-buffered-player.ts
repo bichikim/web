@@ -12,6 +12,8 @@ interface CreateBufferedPlayerOptions {
   readonly destroy: () => void
 }
 const DIRECT_METHODS = new Set<PropertyKey>([
+  'createParameterDrag',
+  'pickPart',
   'getExpression',
   'getParameterValue',
   'getParameterValues',

@@ -11,14 +11,19 @@ interface PreparedAsset {
   readonly document: PreparedPuppetDocument
   readonly source: string | Blob | null
 }
+export interface PuppetDocumentSource {
+  /** Latest prepared document, retained while a replacement loads. */
+  readonly document: Accessor<PreparedPuppetDocument | null>
+  /** Whether the requested asset has finished preparation; failed replacements stay false. */
+  readonly ready: Accessor<boolean>
+}
 const CACHE_SIZE = 2
 
 /** Retains the current document while preparing the latest asset and reuses identical sources. */
-export const usePuppetDocument = (
-  props: UsePuppetDocumentProps,
-): Accessor<PreparedPuppetDocument | null> => {
+export const usePuppetDocument = (props: UsePuppetDocumentProps): PuppetDocumentSource => {
   const asset = createMemo(props.assetId)
   const [document, setDocument] = createSignal<PreparedPuppetDocument | null>(null)
+  const [ready, setReady] = createSignal(false)
   const cache = new Map<string, PreparedAsset>()
   let current: PreparedAsset | null = null
   const commit = (id: string, value: PreparedAsset) => {
@@ -30,9 +35,11 @@ export const usePuppetDocument = (
     }
     current = value
     setDocument(value.document)
+    setReady(true)
   }
   createEffect(() => {
     const id = asset()
+    setReady(false)
     if (id === null) {
       setDocument(null)
       return
@@ -76,5 +83,5 @@ export const usePuppetDocument = (
       }
     })
   })
-  return document
+  return {document, ready}
 }

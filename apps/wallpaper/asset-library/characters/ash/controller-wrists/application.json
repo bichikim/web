@@ -1,0 +1,71 @@
+{
+  "sourceSha256": "9a9cd65b002c81d34b7ffdbdd3396f286623945c9c3af131fc4970e585cf78bf",
+  "sha256": "8ed5591a27305813c7e72b46cdbb765cb6bd38ca976c7c5b47ca6e2fe4f27d76",
+  "bytes": 20814672,
+  "method": "The complete hand boundary is joined to forearm boundary columns using edge surface glue. Both ends remain attached and influence changes continuously. No intermediate wrist skin part.",
+  "branches": [
+    {
+      "side": "left",
+      "originalHand": "ArtMesh884",
+      "hand": "coat-free:gamepad-left:hand",
+      "forearm": "coat-free:gamepad-left:ArtMesh900",
+      "disabledCap": "coat-free:gamepad-left:ArtMesh901",
+      "hiddenMotionDrivers": [
+        "coat-free:gamepad-left:arm-driver",
+        "coat-free:gamepad-left:arm-end-guide"
+      ],
+      "cut": 24,
+      "extent": 100,
+      "cutSpan": [-48.01644287109785, 83.78475341796458],
+      "curves": [
+        {
+          "start": [1997.4382326779753, 1752.415350154856],
+          "end": [1911.6272309762508, 1889.1461414500238],
+          "c1": [1976.8776282443719, 1803.304083066475],
+          "c2": [1946.2546064607507, 1846.5627355378535]
+        },
+        {
+          "start": [2105.6127465202603, 1827.71363719719],
+          "end": [2027.0957609575757, 1912.550974288433],
+          "c1": [2083.137146926886, 1859.9553529990428],
+          "c2": [2040.3814074845975, 1875.5621596103692]
+        }
+      ],
+      "maximumReferenceError": 0.000011326705988791266,
+      "boundaryColumns": 29
+    },
+    {
+      "side": "right",
+      "originalHand": "ArtMesh31",
+      "hand": "coat-free:gamepad-right:hand",
+      "forearm": "coat-free:gamepad-right:ArtMesh994",
+      "disabledCap": "coat-free:gamepad-right:ArtMesh995",
+      "hiddenMotionDrivers": [
+        "coat-free:gamepad-right:arm-driver",
+        "coat-free:gamepad-right:arm-end-guide"
+      ],
+      "cut": 24,
+      "extent": 100,
+      "cutSpan": [-80.92850341797212, 48.65528564452799],
+      "curves": [
+        {
+          "start": [2701.7850157251805, 1831.8173223189717],
+          "end": [2750.8380516756397, 1889.9441356074703],
+          "c1": [2719.0265052174145, 1851.0908423252756],
+          "c2": [2733.6473067442344, 1870.6253410786294]
+        },
+        {
+          "start": [2808.369107650766, 1758.1165422896747],
+          "end": [2874.3374410351134, 1883.1490327054719],
+          "c1": [2817.446042907833, 1805.3168479039948],
+          "c2": [2843.195566355397, 1846.5369685028209]
+        }
+      ],
+      "maximumReferenceError": 0.00008113565373703331,
+      "boundaryColumns": 30
+    }
+  ],
+  "skinCorrection": "Local ComfyUI core masked compositing. Original hand pixels and forearm body below row 100 unchanged.",
+  "comparisonBaselineSha256": "d63b943ffa4615ec13c25a3ab03d50cad1dacebbb073f8ce837e0c6226338e40",
+  "comparison": "Top: character left wrist. Bottom: character right wrist. In each row: before on left, after on right."
+}

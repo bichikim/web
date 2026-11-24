@@ -1,0 +1,40 @@
+name: Verify Poffo Themes
+description: Check and build the catalog and its downloadable archives.
+runs:
+  using: composite
+  steps:
+    - uses: pnpm/action-setup@v6
+      with:
+        version: 11.8.0
+    - uses: actions/setup-node@v6
+      with:
+        node-version: 24.x
+        cache: pnpm
+    - name: Install dependencies
+      shell: bash
+      run: pnpm install --frozen-lockfile
+    - name: Check Poffo Themes source
+      shell: bash
+      run: |
+        pnpm --filter @apps/poffo-themes exec tsc --noEmit
+        pnpm exec oxlint apps/poffo-themes/src apps/poffo-themes/scripts apps/poffo-themes/vite.config.ts
+        pnpm exec oxfmt --check apps/poffo-themes .github/actions/poffo-themes \
+          .github/workflows/poffo-themes-deploy.yml .github/workflows/poffo-themes-production-deploy.yml
+    - name: Test deployment packaging
+      shell: bash
+      env:
+        NODE_OPTIONS: --no-experimental-webstorage
+      run: pnpm exec vitest run --project=unit apps/poffo-themes/scripts/__tests__/prepare-deployment.spec.mjs
+    - name: Build and verify static deployment files
+      shell: bash
+      run: |
+        pnpm --filter @apps/poffo-themes exec vite build
+        node apps/poffo-themes/scripts/prepare-deployment.mjs
+    - uses: actions/upload-artifact@v4
+      if: github.event_name == 'workflow_dispatch'
+      with:
+        name: poffo-themes-static
+        path: .vercel/output
+        include-hidden-files: true
+        if-no-files-found: error
+        retention-days: 1

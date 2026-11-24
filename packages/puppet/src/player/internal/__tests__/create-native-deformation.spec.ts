@@ -123,7 +123,43 @@ test('should preserve rotation inheritance, reflection and scale inside a moving
   }
   compare(document, [0, 0.5, 1, 0])
 })
-test('should defer unsupported bindings and vertex-dependent rigs to the general evaluator', () => {
+test('should keep pinned and partially weighted local vertices attached inside animated parents', () => {
+  const local: PuppetSceneDeformerNode = {
+    ...shape,
+    coordinateSpace: undefined,
+    vertexInfluences: [
+      {partId: 'part', vertexIndex: 0, weight: 0},
+      {partId: 'part', vertexIndex: 1, weight: 0.4},
+    ],
+  }
+  const parent = {...shape, children: [local], id: 'parent'}
+  const document: PuppetDocument = {
+    ...createDocument(parent),
+    parameterBindings: [
+      {
+        id: 'pose',
+        interpolation: 'grid',
+        keyforms: [0, 1].map((p) => ({
+          deformers: [
+            {controlPoints: [p, 0, 1 + p, 0, p, 1, 1 + p, 1], kind: 'deformer', nodeId: 'parent'},
+            {controlPoints: [0, 0, 1, 0, p, 1, 1 + p, 1], kind: 'deformer', nodeId: 'warp'},
+          ],
+          parts: [],
+          values: [p],
+        })),
+        parameterIds: ['p'],
+        targetDeformerIds: ['warp', 'parent'],
+      },
+    ],
+  }
+  expect(createNativeDeformation(document)).toBeDefined()
+  compare(document, [0, 0.25, 1, 0.5, 0])
+  const vertices = createVertices()
+  createNativeDeformation(document)!.apply({p: 1}, vertices)
+  expect(vertices.get('part')![0]).toBeCloseTo(0.8)
+  expect(vertices.get('part')![2]).toBeCloseTo(1.62)
+})
+test('should defer unsupported bindings and parent-space vertex-dependent rigs to the general evaluator', () => {
   expect(
     createNativeDeformation(createDocument({...shape, binding: {rest: shape, steps: []}})),
   ).toBeUndefined()

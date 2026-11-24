@@ -1,0 +1,133 @@
+{
+  "modelSha256": "8c27bca4b24049bbd4cd24af7934b17dd531b93e3a75ffc3657e9a753c101f75",
+  "scope": {
+    "actions": 9,
+    "wrists": 14,
+    "unchangedActions": ["노트 들기", "필기 동작", "엄지 척"]
+  },
+  "preservation": {
+    "originalHandPartsUnchanged": 28,
+    "protectedPartsUnchanged": 53,
+    "physicsUnchanged": true,
+    "replacementHandArtwork": 0,
+    "unchangedActions": ["노트 들기", "필기 동작", "엄지 척"],
+    "originalHandsFingersAndPropsUnchanged": 166
+  },
+  "browser": {
+    "filesPassed": 5,
+    "testsPassed": 10,
+    "buffering": [false, true],
+    "coatStates": [0, 1],
+    "physicsAndGazeStates": 3,
+    "wristContactTolerance": 0.03,
+    "durationSeconds": 41.38
+  },
+  "nativeBuild": "passed",
+  "nativeRuntime": {
+    "model": {
+      "matches": true,
+      "pointerInputUsed": false,
+      "modelSha256": "8c27bca4b24049bbd4cd24af7934b17dd531b93e3a75ffc3657e9a753c101f75",
+      "modelBytes": 19438565,
+      "partCount": 1021,
+      "handReferenceCount": 30,
+      "handReferenceSha256": "377baf13948dd51c3e8b0006cba93faf19edb20ae1a00841f49988b09d60d312",
+      "knifeGuideSha256": "62d7da8be976d9c3cbd523d91118385325823bd51da75a600a36e426d47fe5c0"
+    },
+    "poses": [
+      {
+        "pose": "coffee",
+        "matched": true,
+        "coatRemoved": true,
+        "pointerInputUsed": false
+      },
+      {
+        "pose": "microphone",
+        "matched": true,
+        "coatRemoved": true,
+        "pointerInputUsed": false
+      },
+      {
+        "pose": "knife",
+        "matched": true,
+        "coatRemoved": true,
+        "pointerInputUsed": false
+      },
+      {
+        "pose": "heart",
+        "matched": true,
+        "coatRemoved": true,
+        "pointerInputUsed": false
+      },
+      {
+        "pose": "paws",
+        "matched": true,
+        "coatRemoved": true,
+        "pointerInputUsed": false
+      },
+      {
+        "pose": "fists",
+        "matched": true,
+        "coatRemoved": true,
+        "pointerInputUsed": false
+      },
+      {
+        "pose": "gamepad",
+        "matched": true,
+        "coatRemoved": true,
+        "pointerInputUsed": false
+      },
+      {
+        "pose": "cuffs",
+        "matched": true,
+        "coatRemoved": true,
+        "pointerInputUsed": false
+      },
+      {
+        "pose": "noodles",
+        "matched": true,
+        "coatRemoved": true,
+        "pointerInputUsed": false
+      },
+      {
+        "pose": "notes",
+        "matched": true,
+        "coatRemoved": true,
+        "pointerInputUsed": false
+      },
+      {
+        "pose": "thumb",
+        "matched": true,
+        "coatRemoved": true,
+        "pointerInputUsed": false
+      },
+      {
+        "pose": "press-left",
+        "matched": true,
+        "coatRemoved": true,
+        "pointerInputUsed": false
+      },
+      {
+        "pose": "press-right",
+        "matched": true,
+        "coatRemoved": true,
+        "pointerInputUsed": false
+      },
+      {
+        "pose": "writing",
+        "matched": true,
+        "coatRemoved": true,
+        "pointerInputUsed": false
+      }
+    ],
+    "review": "app-review.png",
+    "cleanup": {
+      "previewCleared": true,
+      "observerRemoved": true,
+      "pointerInputUsed": false
+    },
+    "preservedActionsReview": "preserved-actions.png"
+  },
+  "pointerInputUsed": false,
+  "deliveredModelsMatch": true
+}

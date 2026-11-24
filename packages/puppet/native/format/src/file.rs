@@ -45,6 +45,11 @@ impl PoffoFile {
         container::decode(bytes).map(Self::from_value)
     }
 
+    /// Reads the binary model section with host-owned textures.
+    pub fn from_runtime_section(bytes: &[u8]) -> Result<RuntimeSection, FormatError> {
+        container::decode_runtime_section(bytes).map(RuntimeSection)
+    }
+
     /// Detects the format from the content, as the web does: a `.poffo` file by its magic
     /// number, anything else as JSON. Files in the earlier SDK-only binary encoding are
     /// [`FormatError::LegacyBinary`].
@@ -83,6 +88,32 @@ impl PoffoFile {
         let mut document: Document =
             serde_json::from_value(normalize_legacy_tracks(value)).map_err(FormatError::Schema)?;
         assets.resolve(&mut document.parts);
+        ValidDocument::new(document)
+    }
+}
+
+/// Validated raw numerical sections that can be deserialized without an expanded JSON tree.
+pub struct RuntimeSection(container::packed::Data);
+impl RuntimeSection {
+    pub fn structure(&self) -> &Value {
+        &self.0.value
+    }
+
+    pub fn into_document(mut self) -> Result<ValidDocument, FormatError> {
+        let mut value = std::mem::take(&mut self.0.value);
+        js_number::canonicalize_in_place(&mut value);
+        if let Some(parts) = value["parts"].as_array_mut() {
+            for part in parts {
+                part["texture"]["src"] = serde_json::json!("__host_texture__");
+            }
+        }
+        if let Some(model) = value.as_object_mut() {
+            model.remove("textureAssets");
+        }
+        let document = self
+            .0
+            .document(normalize_legacy_tracks(value))
+            .map_err(FormatError::Schema)?;
         ValidDocument::new(document)
     }
 }

@@ -49,6 +49,8 @@ const supports = (node: PuppetSceneNode): boolean => {
   const SEGMENT_COORDINATES = 4
   const rest = node.boneRestPoints
   return (
+    node.coordinateSpace === 'parent' &&
+    node.vertexInfluences === undefined &&
     (rigid
       ? rest?.length === SEGMENT_COORDINATES &&
         rest.every(Number.isFinite) &&
@@ -60,7 +62,8 @@ const supports = (node: PuppetSceneNode): boolean => {
         node.rows > 0 &&
         node.columns > 0 &&
         node.bounds.width !== 0 &&
-        node.bounds.height !== 0) && node.children.every(supports)
+        node.bounds.height !== 0) &&
+    node.children.every(supports)
   )
 }
 

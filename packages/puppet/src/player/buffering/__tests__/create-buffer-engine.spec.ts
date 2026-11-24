@@ -4,6 +4,71 @@ import {createEmptyDocument} from '../../create-empty-document'
 import {createBufferEngine} from '../create-buffer-engine'
 vi.mock('../../internal/compute-render-frame', () => ({computeRenderFrame: vi.fn()}))
 afterEach(() => vi.resetAllMocks())
+test('should release the displayed touch pose once through a Worker checkpoint', () => {
+  vi.mocked(computeRenderFrame).mockReturnValue({
+    layers: new Map(),
+    plans: [],
+    spatialPoses: new Map(),
+  })
+  const engine = createBufferEngine({
+    ...createEmptyDocument(),
+    parameters: ['root', 'tip'].map((id) => ({
+      defaultValue: 0,
+      id,
+      maximum: 30,
+      minimum: -30,
+      name: id,
+    })),
+    physics: {
+      pendulums: [
+        {
+          damping: 1,
+          gravity: 9.8,
+          id: 'tip-physics',
+          inputParameterId: 'root',
+          inputScale: 1,
+          length: 1,
+          outputParameterId: 'tip',
+          outputScale: 1,
+        },
+      ],
+    },
+  })
+  const initial = engine.step(0, new ArrayBuffer(0)).state
+  const held = engine.step(0, new ArrayBuffer(0), {
+    revision: 1,
+    settle: false,
+    state: {
+      ...initial,
+      adjustments: {
+        ...initial.adjustments,
+        blends: {
+          ...initial.adjustments.blends,
+          interaction: new Map([['tip', {mode: 'overwrite', value: 12}]]),
+        },
+      },
+    },
+  }).state
+  expect(held.frameValues.tip).toBe(12)
+  const released = engine.step(0, new ArrayBuffer(0), {
+    revision: 2,
+    settle: false,
+    state: {
+      ...held,
+      adjustments: {
+        ...held.adjustments,
+        blends: {...held.adjustments.blends, interaction: new Map()},
+      },
+      physicsRelease: {tip: 12},
+    },
+  })
+  expect(released.state.frameValues.tip).toBeCloseTo(12)
+  expect(released.state.physicsRelease).toBeUndefined()
+  const moved = engine.step(1 / 60, new ArrayBuffer(0))
+  expect(moved.state.frameValues.tip).toBeLessThan(12)
+  const later = engine.step(1 / 60, new ArrayBuffer(0))
+  expect(later.state.frameValues.tip).toBeLessThan(moved.state.frameValues.tip!)
+})
 test('should evaluate geometry once after applying a control checkpoint and settling physics', () => {
   vi.mocked(computeRenderFrame).mockReturnValue({
     layers: new Map(),

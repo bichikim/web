@@ -3,8 +3,10 @@ import {afterEach, expect, test, vi} from 'vitest'
 import {createEmptyDocument} from '../../create-empty-document'
 import {createPlayerRenderer, type PlayerRenderer} from '../create-player-renderer'
 import {createRendererController} from '../create-renderer-controller'
+import {createWgpuRenderer} from '../wgpu/create-renderer'
 
 vi.mock('../create-player-renderer', () => ({createPlayerRenderer: vi.fn()}))
+vi.mock('../wgpu/create-renderer', () => ({createWgpuRenderer: vi.fn()}))
 
 const resource = (): PlayerRenderer => ({
   applyFrame: vi.fn(),
@@ -13,6 +15,7 @@ const resource = (): PlayerRenderer => ({
   getPaintOrder: vi.fn(() => []),
   getPartVertices: vi.fn(),
   getRenderingInfo: vi.fn(() => ({antialiasing: 'msaa' as const, renderer: 'webgl' as const})),
+  pickPart: vi.fn(),
   redraw: vi.fn(),
   resize: vi.fn(),
   setFit: vi.fn(),
@@ -22,7 +25,77 @@ const resource = (): PlayerRenderer => ({
   toDocumentPoint: vi.fn((point) => point),
   updateDocument: vi.fn(() => true),
 })
-afterEach(() => vi.resetAllMocks())
+afterEach(() => {
+  vi.resetAllMocks()
+  vi.restoreAllMocks()
+  vi.unstubAllGlobals()
+})
+
+const enableWebGpu = () => {
+  vi.stubGlobal('Worker', vi.fn())
+  vi.stubGlobal('navigator', {gpu: {}})
+}
+
+test.each([{}, {renderer: 'auto'}] as const)(
+  'should try wgpu first for automatic browser selection (%j)',
+  async (preference) => {
+    enableWebGpu()
+    vi.mocked(createPlayerRenderer).mockResolvedValue(resource())
+    vi.mocked(createWgpuRenderer).mockResolvedValue(resource())
+    const controller = await createRendererController({
+      ...preference,
+      canvas: document.createElement('canvas'),
+      document: createEmptyDocument(),
+    })
+    controller.destroy()
+    expect(createWgpuRenderer).toHaveBeenCalledOnce()
+    expect(createPlayerRenderer).not.toHaveBeenCalled()
+  },
+)
+
+test('should fall back to Pixi on the same canvas when automatic wgpu initialization is rejected', async () => {
+  enableWebGpu()
+  vi.spyOn(console, 'warn').mockImplementation(() => {})
+  vi.mocked(createWgpuRenderer).mockRejectedValue(new Error('WebGPU device unavailable'))
+  vi.mocked(createPlayerRenderer).mockResolvedValue(resource())
+  const canvas = document.createElement('canvas')
+  const controller = await createRendererController({
+    canvas,
+    document: createEmptyDocument(),
+    renderer: 'auto',
+  })
+  controller.destroy()
+  expect(createWgpuRenderer).toHaveBeenCalledOnce()
+  expect(createPlayerRenderer).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({canvas}))
+})
+
+test.each([{renderer: 'pixi'}, {gpuPresentation: 'worker-canvas', renderer: 'auto'}] as const)(
+  'should preserve Pixi and the caller canvas with %j',
+  async (preference) => {
+    enableWebGpu()
+    vi.mocked(createPlayerRenderer).mockResolvedValue(resource())
+    const controller = await createRendererController({
+      ...preference,
+      canvas: document.createElement('canvas'),
+      document: createEmptyDocument(),
+    })
+    controller.destroy()
+    expect(createPlayerRenderer).toHaveBeenCalledOnce()
+    expect(createWgpuRenderer).not.toHaveBeenCalled()
+  },
+)
+
+test('should report that forced wgpu is unavailable without creating a Pixi renderer', async () => {
+  vi.stubGlobal('Worker', undefined)
+  await expect(
+    createRendererController({
+      canvas: document.createElement('canvas'),
+      document: createEmptyDocument(),
+      renderer: 'wgpu',
+    }),
+  ).rejects.toThrow('The wgpu renderer requires WebGPU and Worker support')
+  expect(createPlayerRenderer).not.toHaveBeenCalled()
+})
 
 test('should replace GPU resources while retaining the last frame, camera, density and ticker state', async () => {
   const previous = resource()
@@ -50,14 +123,14 @@ test('should replace GPU resources while retaining the last frame, camera, densi
   controller.subscribeFrame(onFrame)
   const canvas = globalThis.document.createElement('canvas')
   await expect(
-    controller.configure({antialiasing: 'ssaa', canvas, renderer: 'webgpu'}),
+    controller.configure({antialiasing: 'ssaa', canvas, renderer: 'pixi-webgpu'}),
   ).resolves.toBe('applied')
   expect(createPlayerRenderer).toHaveBeenLastCalledWith(
     expect.objectContaining({
       antialiasing: 'ssaa',
       canvas,
       document,
-      renderer: 'webgpu',
+      renderer: 'pixi-webgpu',
       resolution: 0.4,
     }),
   )
@@ -82,7 +155,7 @@ test('should retain the current renderer when initialization fails', async () =>
     document: createEmptyDocument(),
   })
   await expect(
-    controller.configure({canvas: document.createElement('canvas'), renderer: 'webgpu'}),
+    controller.configure({canvas: document.createElement('canvas'), renderer: 'pixi-webgpu'}),
   ).rejects.toBe(failure)
   controller.redraw()
   expect(previous.redraw).toHaveBeenCalledOnce()
@@ -161,9 +234,12 @@ test('should release superseded requests and never publish them', async () => {
     canvas: document.createElement('canvas'),
     document: createEmptyDocument(),
   })
-  const first = controller.configure({canvas: document.createElement('canvas'), renderer: 'webgpu'})
+  const first = controller.configure({
+    canvas: document.createElement('canvas'),
+    renderer: 'pixi-webgpu',
+  })
   await expect(
-    controller.configure({canvas: document.createElement('canvas'), renderer: 'webgl'}),
+    controller.configure({canvas: document.createElement('canvas'), renderer: 'pixi-webgl'}),
   ).resolves.toBe('applied')
   complete(obsolete)
   await expect(first).resolves.toBe('superseded')
@@ -245,7 +321,7 @@ test('should replace the renderer using the submitted document while a document 
   expect(controller.updateDocument(pending, true)).toBe(true)
   await controller.configure({
     canvas: globalThis.document.createElement('canvas'),
-    renderer: 'webgl',
+    renderer: 'pixi-webgl',
   })
   expect(createPlayerRenderer).toHaveBeenLastCalledWith(expect.objectContaining({document}))
   expect(second.applyPreparedFrame).toHaveBeenCalled()

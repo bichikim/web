@@ -1,3 +1,4 @@
+import {text as uiText} from '../features/localization'
 import {Show} from 'solid-js'
 import {
   SEMANTIC_ID_LIMIT,
@@ -18,7 +19,7 @@ interface SPoffoActionTriggerProps {
 }
 
 export const SPoffoActionTrigger = (props: SPoffoActionTriggerProps) => {
-  const caption = () => props.label ?? '연결'
+  const caption = () => props.label ?? uiText('연결')
   const update = (patch: Partial<SemanticBinding>) => props.onChange?.({...props.value, ...patch})
   const handleCategory = (category: SemanticActionCategory) => {
     if (category !== 'menu') {
@@ -45,21 +46,30 @@ export const SPoffoActionTrigger = (props: SPoffoActionTriggerProps) => {
   return (
     <>
       <SSelect
-        label={`${caption()} 종류`}
+        label={uiText('{value0} 종류', {value0: String(caption())})}
         value={props.value.category ?? 'emotion'}
         options={[
-          {label: '감정·내용', value: 'emotion'},
-          {label: '일반 행동', value: 'behavior'},
-          {label: '우클릭 메뉴', value: 'menu'},
+          {
+            label: uiText('감정·내용'),
+            value: 'emotion',
+          },
+          {
+            label: uiText('일반 행동'),
+            value: 'behavior',
+          },
+          {
+            label: uiText('우클릭 메뉴'),
+            value: 'menu',
+          },
         ]}
         onChange={handleCategory}
         disabled={props.onChange === undefined}
       />
       <Show when={props.value.category === 'menu'}>
         <label class="grid gap-1 text-xs text-stone-600">
-          메뉴 이름
+          {uiText('메뉴 이름')}
           <input
-            aria-label={`${caption()} 메뉴 이름`}
+            aria-label={uiText('{value0} 메뉴 이름', {value0: String(caption())})}
             value={props.value.menuLabel ?? ''}
             maxLength={SEMANTIC_ID_LIMIT}
             disabled={props.onChange === undefined}
@@ -71,9 +81,9 @@ export const SPoffoActionTrigger = (props: SPoffoActionTriggerProps) => {
       </Show>
       <Show when={(props.value.category ?? 'emotion') === 'emotion'}>
         <label class="grid gap-1 text-xs text-stone-600">
-          매칭 기준
+          {uiText('매칭 기준')}
           <SNumberInput
-            label={`${caption()} 매칭 기준`}
+            label={uiText('{value0} 매칭 기준', {value0: String(caption())})}
             value={props.value.threshold}
             min={0}
             max={0.99}
@@ -85,13 +95,19 @@ export const SPoffoActionTrigger = (props: SPoffoActionTriggerProps) => {
       </Show>
       <Show when={props.value.category !== 'menu'}>
         <label class="grid gap-1 text-xs text-stone-600">
-          해제 시점
+          {uiText('해제 시점')}
           <SSelect
-            label={`${caption()} 해제 시점`}
+            label={uiText('{value0} 해제 시점', {value0: String(caption())})}
             value={props.value.release ?? 'speech-end'}
             options={[
-              {label: '음성이 끝나면 해제', value: 'speech-end'},
-              {label: '다음 음성까지 유지', value: 'next-speech'},
+              {
+                label: uiText('음성이 끝나면 해제'),
+                value: 'speech-end',
+              },
+              {
+                label: uiText('다음 음성까지 유지'),
+                value: 'next-speech',
+              },
             ]}
             onChange={handleRelease}
             disabled={props.onChange === undefined}

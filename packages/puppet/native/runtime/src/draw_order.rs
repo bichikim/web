@@ -29,7 +29,7 @@ fn is_draw_order_group(node: &SceneNode) -> bool {
     matches!(node, SceneNode::Group(group) if group
         .properties
         .as_ref()
-        .is_some_and(|p| p.draw_order.is_some() || p.offscreen == Some(true)))
+        .is_some_and(|p| p.draw_order.is_some() || p.offscreen == Some(true) || p.isolate_order == Some(true)))
 }
 
 fn collect(
@@ -81,7 +81,9 @@ pub(crate) fn uses_draw_order(document: &Document, groups: &[CompiledGroup]) -> 
                 .as_ref()
                 .is_some_and(|p| p.draw_order.is_some())
         })
-        || groups.iter().any(|g| g.properties.draw_order.is_some())
+        || groups
+            .iter()
+            .any(|g| g.properties.draw_order.is_some() || g.properties.isolate_order)
 }
 
 /// The draw order tree, or `None` when no part or group has a draw order (scene order stands).
@@ -108,6 +110,13 @@ pub(crate) fn compile(
 /// Tolerance Cubism adds before truncating a draw order to an integer.
 const CUBISM_ORDER_TOLERANCE: f64 = 0.001;
 
+/// Immutable draw-order channels retain every original keyform slot and rest fallback.
+#[derive(Debug, Clone)]
+pub(crate) struct OrderBinding {
+    binding: usize,
+    coordinates: Vec<Option<f64>>,
+}
+
 /// Cubism's integer draw order: Float32, plus 0.001 in Float32, then truncation
 /// (`drawOrderRounding: cubism`).
 fn cubism_draw_order(order: f64) -> f64 {
@@ -120,18 +129,18 @@ impl Model {
     fn compose_draw_order(
         &self,
         rest: f64,
-        keyed: impl Iterator<Item = (usize, Vec<Option<f64>>)>,
+        keyed: &[OrderBinding],
         values: &ParameterValues,
     ) -> f64 {
         let mut current = rest;
-        for (b, keyed) in keyed {
-            let binding = &self.bindings[b];
+        for keyed in keyed {
+            let binding = &self.bindings[keyed.binding];
             let Some(sample) = self.binding_sample(binding, values) else {
                 continue;
             };
             let sampled = blend(
                 sample,
-                |k| keyed.get(k)?.as_ref().map(std::slice::from_ref),
+                |k| keyed.coordinates.get(k)?.as_ref().map(std::slice::from_ref),
                 std::slice::from_ref(&rest),
             );
             let weight = self.binding_influence(binding, values);
@@ -153,39 +162,81 @@ impl Model {
             .as_ref()
             .and_then(|p| p.draw_order)
             .unwrap_or(DEFAULT_DRAW_ORDER);
-        let keyed = self.parts[part].property_bindings.iter().map(|&b| {
-            let keyforms = &self.document.parameter_bindings[b].keyforms;
-            let entries = self.bindings[b].part_entries.get(&part);
-            let keyed = (0..keyforms.len())
-                .map(|k| {
-                    let entry = entries?.get(k).copied().flatten()?;
-                    let properties = keyforms[k].parts[entry].properties.as_ref()?;
-                    Some(properties.draw_order.unwrap_or(rest))
-                })
-                .collect();
-            (b, keyed)
-        });
-        self.compose_draw_order(rest, keyed, values)
+        self.compose_draw_order(rest, &self.part_orders[part], values)
+    }
+
+    pub(crate) fn compile_part_orders(&self, part: usize) -> Vec<OrderBinding> {
+        let rest = self.document.parts[part]
+            .properties
+            .as_ref()
+            .and_then(|p| p.draw_order)
+            .unwrap_or(DEFAULT_DRAW_ORDER);
+        self.parts[part]
+            .property_bindings
+            .iter()
+            .map(|&b| {
+                let keyforms = &self.document.parameter_bindings[b].keyforms;
+                let entries = self.bindings[b].part_entries.get(&part);
+                let keyed = (0..keyforms.len())
+                    .map(|k| {
+                        let entry = entries?.get(k).copied().flatten()?;
+                        let properties = keyforms[k].parts[entry].properties.as_ref()?;
+                        Some(properties.draw_order.unwrap_or(rest))
+                    })
+                    .collect();
+                OrderBinding {
+                    binding: b,
+                    coordinates: keyed,
+                }
+            })
+            // Constant rest channels cannot change order; interpolation must not perturb ties.
+            .filter(|keyed| {
+                keyed
+                    .coordinates
+                    .iter()
+                    .flatten()
+                    .any(|&value| value != rest)
+            })
+            .collect()
     }
 
     /// `composeParameterGroupDrawOrder`.
     fn group_draw_order(&self, group: usize, values: &ParameterValues) -> f64 {
         let compiled = &self.groups[group];
         let rest = compiled.properties.draw_order.unwrap_or(DEFAULT_DRAW_ORDER);
-        let keyed = compiled.bindings.iter().map(|(b, entries)| {
-            let keyforms = &self.document.parameter_bindings[*b].keyforms;
-            let keyed = keyforms
-                .iter()
-                .zip(entries)
-                .map(|(keyform, entry)| {
-                    let entry = (*entry)?;
-                    let properties = &keyform.groups.as_ref()?.get(entry)?.properties;
-                    Some(properties.draw_order.unwrap_or(rest))
-                })
-                .collect();
-            (*b, keyed)
-        });
-        self.compose_draw_order(rest, keyed, values)
+        self.compose_draw_order(rest, &self.group_orders[group], values)
+    }
+
+    pub(crate) fn compile_group_orders(&self, group: usize) -> Vec<OrderBinding> {
+        let compiled = &self.groups[group];
+        let rest = compiled.properties.draw_order.unwrap_or(DEFAULT_DRAW_ORDER);
+        compiled
+            .bindings
+            .iter()
+            .map(|(b, entries)| {
+                let keyforms = &self.document.parameter_bindings[*b].keyforms;
+                let keyed = keyforms
+                    .iter()
+                    .zip(entries)
+                    .map(|(keyform, entry)| {
+                        let entry = (*entry)?;
+                        let properties = &keyform.groups.as_ref()?.get(entry)?.properties;
+                        Some(properties.draw_order.unwrap_or(rest))
+                    })
+                    .collect();
+                OrderBinding {
+                    binding: *b,
+                    coordinates: keyed,
+                }
+            })
+            .filter(|keyed| {
+                keyed
+                    .coordinates
+                    .iter()
+                    .flatten()
+                    .any(|&value| value != rest)
+            })
+            .collect()
     }
 
     fn sort_items(

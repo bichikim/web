@@ -42,15 +42,18 @@ const FULL_TURN: f64 = 2.0 * std::f64::consts::PI;
 /// One pendulum's end point and velocity (`y` down) and the gravity it last felt.
 #[derive(Debug, Clone, Copy, Default, PartialEq, serde::Serialize, serde::Deserialize)]
 struct PendulumState {
+    #[serde(with = "checkpoint_point")]
     gravity: Vec2,
+    #[serde(with = "checkpoint_point")]
     position: Vec2,
+    #[serde(with = "checkpoint_point")]
     velocity: Vec2,
 }
 
 /// A chain's pendulums, root, and output readings of the last two steps.
 #[derive(Debug, Clone, Default, PartialEq, serde::Serialize, serde::Deserialize)]
-struct ChainState {
-    #[serde(default)]
+pub(crate) struct ChainState {
+    #[serde(with = "checkpoint_point")]
     root: Vec2,
     current: Vec<f64>,
     pendulums: Vec<PendulumState>,
@@ -59,11 +62,26 @@ struct ChainState {
 
 /// State shared by every chain: unstepped time, the parameter values the last step read, and
 /// each chain in document order.
-#[derive(Debug, Clone, Default, PartialEq, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, Default, PartialEq)]
 pub(crate) struct ChainsState {
-    accumulator: f64,
-    chains: Vec<ChainState>,
-    inputs: Vec<f64>,
+    pub(crate) accumulator: f64,
+    pub(crate) chains: Vec<ChainState>,
+    pub(crate) inputs: Vec<f64>,
+}
+
+/// Checkpoints use the same two-number coordinates as the TypeScript physics state.
+mod checkpoint_point {
+    use super::Vec2;
+    use serde::{Deserialize, Deserializer, Serialize, Serializer};
+
+    pub fn serialize<S: Serializer>(point: &Vec2, serializer: S) -> Result<S::Ok, S::Error> {
+        [point.x, point.y].serialize(serializer)
+    }
+
+    pub fn deserialize<'de, D: Deserializer<'de>>(deserializer: D) -> Result<Vec2, D::Error> {
+        let [x, y] = <[f64; 2]>::deserialize(deserializer)?;
+        Ok(Vec2::new(x, y))
+    }
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -392,6 +410,129 @@ fn matches(state: &ChainsState, physics: &Physics) -> bool {
         && physics.chains.iter().zip(&state.chains).all(|(chain, s)| {
             s.pendulums.len() == chain.pendulums.len() && s.current.len() == chain.outputs.len()
         })
+}
+
+/// Transfers held outputs into their authored segments; untouched chains retain their inertia.
+pub(crate) fn release(
+    physics: &Physics,
+    parameter: impl Fn(&str) -> Option<usize>,
+    parameters: &[Parameter],
+    state: &mut ChainsState,
+    (base, held): (&[f64], &[Option<f64>]),
+    options: PhysicsOptions,
+) {
+    let world = World {
+        gravity: unit(
+            options
+                .gravity
+                .or(physics.gravity)
+                .unwrap_or(DEFAULT_CHAIN_GRAVITY)
+                .into(),
+            DEFAULT_CHAIN_GRAVITY.into(),
+        ),
+        step: 0.0,
+        wind: Vec2::ZERO,
+        parameter,
+        parameters,
+    };
+    for (chain, previous) in physics.chains.iter().zip(&mut state.chains) {
+        let readings: Vec<_> = chain
+            .outputs
+            .iter()
+            .filter_map(|output| {
+                let index = (world.parameter)(&output.parameter_id)?;
+                let definition = parameters.get(index)?;
+                let value = held.get(index).copied().flatten()?;
+                if !value.is_finite() || output.scale == 0.0 || output.weight <= 0.0 {
+                    return None;
+                }
+                let target = (definition.bound(value)
+                    - read_value(definition, base.get(index).copied()) * (1.0 - output.weight))
+                    / output.weight;
+                Some((
+                    output,
+                    target / output.scale
+                        * if output.reflect == Some(true) {
+                            -1.0
+                        } else {
+                            1.0
+                        },
+                ))
+            })
+            .collect();
+        if readings.is_empty() {
+            continue;
+        }
+        let mut placed: Vec<PendulumState> = Vec::with_capacity(chain.pendulums.len());
+        let at = |items: &[PendulumState], index: Option<usize>| {
+            index
+                .and_then(|i| items.get(i))
+                .map_or(previous.root, |p| p.position)
+        };
+        for (index, pendulum) in chain.pendulums.iter().enumerate() {
+            let parent = at(&placed, index.checked_sub(1));
+            let reference = if index == 0 {
+                world.gravity
+            } else {
+                parent - at(&placed, index.checked_sub(2))
+            };
+            let old_reference = if index == 0 {
+                world.gravity
+            } else {
+                at(&previous.pendulums, index.checked_sub(1))
+                    - at(&previous.pendulums, index.checked_sub(2))
+            };
+            let old_segment = at(&previous.pendulums, Some(index))
+                - at(&previous.pendulums, index.checked_sub(1));
+            let reading = |axis| {
+                readings
+                    .iter()
+                    .find(|(output, _)| output.pendulum_index == index && output.axis == axis)
+                    .map(|(_, value)| *value)
+            };
+            let angle = reading(PhysicsAxis::Angle)
+                .unwrap_or_else(|| angle_between(old_reference, old_segment));
+            let segment = unit(reference, world.gravity).rotate(angle) * pendulum.length;
+            let segment = position_segment(
+                segment,
+                pendulum.length,
+                reading(PhysicsAxis::X),
+                reading(PhysicsAxis::Y),
+            );
+            placed.push(PendulumState {
+                gravity: previous.pendulums[index].gravity,
+                position: parent + segment,
+                velocity: Vec2::ZERO,
+            });
+        }
+        let current = world.readings(chain, &placed, previous.root);
+        previous.previous.clone_from(&current);
+        previous.current = current;
+        previous.pendulums = placed;
+    }
+}
+
+fn position_segment(segment: Vec2, length: f64, x: Option<f64>, y: Option<f64>) -> Vec2 {
+    match (x, y) {
+        (Some(x), Some(y)) => unit(Vec2::new(x, y), unit(segment, Vec2::new(0.0, 1.0))) * length,
+        (Some(x), None) => {
+            let x = x.clamp(-length, length);
+            Vec2::new(
+                x,
+                (length * length - x * x).max(0.0).sqrt()
+                    * if segment.y < 0.0 { -1.0 } else { 1.0 },
+            )
+        }
+        (None, Some(y)) => {
+            let y = y.clamp(-length, length);
+            Vec2::new(
+                (length * length - y * y).max(0.0).sqrt()
+                    * if segment.x < 0.0 { -1.0 } else { 1.0 },
+                y,
+            )
+        }
+        (None, None) => segment,
+    }
 }
 
 /// `evaluateChains`: settles every chain when `settle_all`, without state, or after chain edits;

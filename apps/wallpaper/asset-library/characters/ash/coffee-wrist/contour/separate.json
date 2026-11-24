@@ -1,0 +1,114 @@
+{
+  "1": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "coffee-contour-master.png"
+    }
+  },
+  "2": {
+    "class_type": "InvertMask",
+    "inputs": {
+      "mask": ["1", 1]
+    }
+  },
+  "10": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "coffee-contour-hand-mask.png"
+    }
+  },
+  "11": {
+    "class_type": "ImageToMask",
+    "inputs": {
+      "image": ["10", 0],
+      "channel": "red"
+    }
+  },
+  "12": {
+    "class_type": "ThresholdMask",
+    "inputs": {
+      "mask": ["11", 0],
+      "value": 0.5
+    }
+  },
+  "13": {
+    "class_type": "MaskComposite",
+    "inputs": {
+      "destination": ["2", 0],
+      "source": ["12", 0],
+      "x": 0,
+      "y": 0,
+      "operation": "multiply"
+    }
+  },
+  "14": {
+    "class_type": "InvertMask",
+    "inputs": {
+      "mask": ["13", 0]
+    }
+  },
+  "15": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["1", 0],
+      "alpha": ["14", 0]
+    }
+  },
+  "16": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": ["15", 0],
+      "filename_prefix": "Wallpaper/coffee-wrist/contour-hand"
+    }
+  },
+  "20": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "coffee-contour-arm-mask.png"
+    }
+  },
+  "21": {
+    "class_type": "ImageToMask",
+    "inputs": {
+      "image": ["20", 0],
+      "channel": "red"
+    }
+  },
+  "22": {
+    "class_type": "ThresholdMask",
+    "inputs": {
+      "mask": ["21", 0],
+      "value": 0.5
+    }
+  },
+  "23": {
+    "class_type": "MaskComposite",
+    "inputs": {
+      "destination": ["2", 0],
+      "source": ["22", 0],
+      "x": 0,
+      "y": 0,
+      "operation": "multiply"
+    }
+  },
+  "24": {
+    "class_type": "InvertMask",
+    "inputs": {
+      "mask": ["23", 0]
+    }
+  },
+  "25": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["1", 0],
+      "alpha": ["24", 0]
+    }
+  },
+  "26": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": ["25", 0],
+      "filename_prefix": "Wallpaper/coffee-wrist/contour-arm"
+    }
+  }
+}

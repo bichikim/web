@@ -1,6 +1,7 @@
 import {cleanup, render, screen} from '@solidjs/testing-library'
 import {createSignal} from 'solid-js'
 import {afterEach, expect, test, vi} from 'vitest'
+import {page} from 'vitest/browser'
 import * as playerModule from '@winter-love/puppet/player'
 import {cursorResponse} from '@winter-love/wallpaper/tracking/cursor-response'
 import SPuppetCharacter from '../../../components/SPuppetCharacter'
@@ -36,14 +37,16 @@ test('should animate the rendered character through short vowels and final lip c
   const sampleRate = 1000
   const short = createMouthTrack({sampleRate, samples: new Float32Array(50).fill(0.1)}, '빠')
   const final = createMouthTrack({sampleRate, samples: new Float32Array(200).fill(0.1)}, '암')
+  await expect.poll(() => playerModule.getPlayerBufferingInfo(player).status).toBe('active')
+  const mouthOpen = () => player.getParameterValue('ParamMouthOpenY')!
   setMouth(sampleMouthTrack(short, 0.02))
-  expect(player.getParameterValue('ParamMouthOpenY')).toBeGreaterThan(0.2)
+  await expect.poll(mouthOpen).toBeGreaterThan(0.2)
   setMouth(sampleMouthTrack(final, 0.1))
-  const open = player.getParameterValue('ParamMouthOpenY')!
-  expect(open).toBeGreaterThan(0.6)
+  await expect.poll(mouthOpen).toBeGreaterThan(0.6)
+  const open = mouthOpen()
   setMouth(sampleMouthTrack(final, 0.18))
-  expect(player.getParameterValue('ParamMouthOpenY')).toBeLessThan(open * 0.8)
-})
+  await expect.poll(mouthOpen).toBeLessThan(open * 0.8)
+}, 60_000)
 
 test('should add default mouse tracking to the compact Poffo idle animation without accumulating values', async () => {
   const rendered = Promise.withResolvers<void>()
@@ -65,6 +68,7 @@ test('should add default mouse tracking to the compact Poffo idle animation with
   expect(idle?.tracks).toHaveLength(23)
   const player: playerModule.Player = await vi.mocked(playerModule.createPlayer).mock.results[0]!
     .value
+  await playerModule.configurePlayerBuffering(player, {enabled: false})
   player.setBreath(false)
   player.setPhysicsPreview(false)
   player.pause()
@@ -139,3 +143,53 @@ test('should add default mouse tracking to the compact Poffo idle animation with
   expect(view.container.querySelector('canvas')).toBe(canvas)
   expect(playerModule.createPlayer).toHaveBeenCalledOnce()
 }, 60_000)
+
+test('should render the updated Ash with Worker buffering and independent clothing, action and speech', async () => {
+  const rendered = Promise.withResolvers<void>()
+  const [coatOff, setCoatOff] = createSignal(false)
+  const [expressionId, setExpression] = createSignal<string | null>('손하트')
+  const [mouth, setMouth] = createSignal<{form: number; open: number} | null>(null)
+  render(() => (
+    <div class="h-100 w-80">
+      <SPuppetCharacter
+        coatOff={coatOff()}
+        expressionId={expressionId()}
+        mouth={mouth()}
+        tracking={false}
+        onReady={() => rendered.resolve()}
+        onError={() => rendered.reject(new Error('Character preview failed'))}
+      />
+    </div>
+  ))
+  await rendered.promise
+  const options = vi.mocked(playerModule.createPlayer).mock.calls[0]![0]
+  expect(options.buffering).toBe(true)
+  expect(options.document.viewport).toEqual(geometry.viewport)
+  expect(options.document.parts.some((part) => part.id === 'waist-pouch-rear-strap')).toBe(true)
+  expect(
+    options.document.parameters?.some((parameter) => parameter.id === 'TouchHairFrontLeft19'),
+  ).toBe(true)
+  expect(
+    options.document.parameters?.some((parameter) => parameter.id === 'TouchHairSideLeft19'),
+  ).toBe(true)
+  const player = await vi.mocked(playerModule.createPlayer).mock.results[0]!.value
+  await expect.poll(() => playerModule.getPlayerBufferingInfo(player).status).toBe('active')
+  const action = options.document.expressions!.find((expression) => expression.id === '손하트')!
+    .parameters[0]!
+  await expect.poll(() => player.getParameterValue(action.parameterId)).toBeCloseTo(action.value)
+  setCoatOff(true)
+  await expect.poll(() => player.getParameterValue('Param49')).toBeCloseTo(1)
+  expect(player.getParameterValue(action.parameterId)).toBeCloseTo(action.value)
+  setMouth({form: -1, open: 0.8})
+  await expect.poll(() => player.getParameterValue('ParamMouthOpenY')).toBeCloseTo(0.8)
+  await page
+    .getByLabelText('흰 고양이 캐릭터 실시간 렌더링')
+    .screenshot({path: '__screenshots__/updated-ash-coat-off.png'})
+  setCoatOff(false)
+  await expect.poll(() => player.getParameterValue('Param49')).toBeCloseTo(0)
+  expect(player.getParameterValue(action.parameterId)).toBeCloseTo(action.value)
+  setExpression(null)
+  setMouth(null)
+  await expect.poll(() => player.getParameterValue('ParamMouthOpenY')).toBeCloseTo(0)
+  expect(playerModule.getPlayerBufferingInfo(player).status).toBe('active')
+}, 30_000)

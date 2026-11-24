@@ -1,0 +1,119 @@
+{
+  "modelSha256": "fcda2ff70725fb031c15dc29684b5cac7949c7b0732968007e9f91c1dc98cddf",
+  "modelBytes": 9767974,
+  "replacedModelSha256": "f2fe486c72ceacfff8fe054a73b5571e01e90db33b1a37207f6d8996d4759cf0",
+  "mechanism": "Only translate the original hand and notebook together. Restore all original forearm vertices and remove every added local wrist deformation. Put the forearm behind the hand using the existing parts order.",
+  "joint": {
+    "beforeModelSha256": "66a3a271b81494f283c778055573b58eb9207785e0876b7b0210edd03f488386",
+    "modelSha256": "fcda2ff70725fb031c15dc29684b5cac7949c7b0732968007e9f91c1dc98cddf",
+    "modelBytes": 9767974,
+    "arm": "coat-free:notes-right:ArtMesh994",
+    "hand": "ArtMesh125",
+    "centers": {
+      "hand": {
+        "partId": "ArtMesh125",
+        "triangle": [12, 41, 40],
+        "weights": [0.17223591654926718, 0.36813045613156076, 0.45963362731917207],
+        "world": [2719.7, 1647.8]
+      },
+      "arm": {
+        "partId": "coat-free:notes-right:ArtMesh994",
+        "triangle": [63, 65, 35],
+        "weights": [0.1887438183780753, 0.576936685527896, 0.2343194960940287],
+        "world": [2656.5, 1692.5]
+      }
+    },
+    "contact": {
+      "id": "coat-free:notes-right:wrist:contact",
+      "composition": "sequential",
+      "mode": "translate",
+      "first": {
+        "partId": "ArtMesh125",
+        "vertexIndex": 68
+      },
+      "second": {
+        "partId": "coat-free:notes-right:wrist:arm-reference",
+        "vertexIndex": 0
+      },
+      "weight": 1,
+      "strength": 1
+    },
+    "followers": [
+      "ArtMesh119",
+      "ArtMesh120",
+      "ArtMesh121",
+      "ArtMesh122",
+      "ArtMesh123",
+      "ArtMesh124",
+      "ArtMesh126",
+      "ArtMesh128",
+      "ArtMesh129",
+      "ArtMesh127"
+    ],
+    "referenceParts": [
+      "coat-free:notes-right:wrist:hand-reference",
+      "coat-free:notes-right:wrist:arm-reference"
+    ],
+    "offset": [12, 22],
+    "neutralHandTranslation": [-63.19999999999982, 44.700000000000045],
+    "paintOrder": "Original notebook, forearm, original hand; use existing parts order",
+    "mechanism": "Only translate the original hand and notebook together. No added forearm or wrist deformation."
+  },
+  "review": {
+    "joint": "notebook-wrist.png",
+    "context": "notebook-wrist-context.png",
+    "turn": "notebook-wrist-turn.png",
+    "physics": "notebook-wrist-physics.png"
+  },
+  "rejectedAttempt": {
+    "modelSha256": "f2fe486c72ceacfff8fe054a73b5571e01e90db33b1a37207f6d8996d4759cf0",
+    "reason": "Added local forearm/wrist deformation produced a rubber-like bend"
+  },
+  "verification": {
+    "flipDetails": [],
+    "samples": 65,
+    "originalTexturesMeshesBindingsPhysicsPreserved": true,
+    "maximumChangeOutsideWristArm": 0,
+    "maximumHandNotebookTranslationError": 4.547473508864641e-13,
+    "maximumForearmVertexChange": 0,
+    "maximumInactiveChange": 0,
+    "maximumElbowGap": 0,
+    "maximumWristGap": 9.374856803373542e-13,
+    "newTriangleFlips": 0,
+    "minimumTriangleAreaRatio": 1,
+    "minimumHandCoverage": 255,
+    "maximumWristMovement": 0,
+    "paintedCapLandmarks": [
+      {
+        "indices": [33, 65, 64],
+        "weights": [0.3131388443614157, 0.022428525049227512, 0.6644326305893568],
+        "sourceAlpha": 255
+      },
+      {
+        "indices": [33, 65, 64],
+        "weights": [0.1725795703633811, 0.5459227311108027, 0.2814976985258162],
+        "sourceAlpha": 255
+      },
+      {
+        "indices": [34, 66, 65],
+        "weights": [0.08215881490348687, 0.07043594805853666, 0.8474052370379764],
+        "sourceAlpha": 255
+      },
+      {
+        "indices": [34, 66, 65],
+        "weights": [0.22114760849309187, 0.7566489421957381, 0.02220344931117002],
+        "sourceAlpha": 255
+      }
+    ]
+  },
+  "checks": {
+    "browserTestsPassed": 20,
+    "browserTestFilesPassed": 8,
+    "browsers": ["Chromium", "WebKit"],
+    "buffering": [false, true],
+    "geometrySamplesPassed": 65,
+    "forearmVertexChange": 0,
+    "regression": "Reject added forearm wrist deformation and compare every original forearm vertex; only hand and notebook translation is allowed",
+    "coatAndKnifeRenderingUnchanged": true
+  }
+}

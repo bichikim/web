@@ -1,0 +1,18 @@
+[
+  {
+    "side": "left",
+    "width": 265,
+    "height": 355,
+    "comfyMaximumQuantizationError": 1,
+    "bodyBelowRow100Preserved": true,
+    "alphaMatchesTarget": true
+  },
+  {
+    "side": "right",
+    "width": 313,
+    "height": 337,
+    "comfyMaximumQuantizationError": 1,
+    "bodyBelowRow100Preserved": true,
+    "alphaMatchesTarget": true
+  }
+]

@@ -4,6 +4,7 @@ import {
   LAYER_FRAME_VALUES,
   type LayerTemplate,
   type PackedRenderFrame,
+  PART_FRAME_FIELD,
   PART_FRAME_VALUES,
   type PartTemplate,
 } from './types'
@@ -24,11 +25,24 @@ interface PartColors {
   readonly properties: PartRenderPlan['properties']
 }
 
+interface PackedParts {
+  readonly templates: ReadonlyArray<PartTemplate>
+  readonly values: Float64Array
+}
+
+const packedParts = new WeakMap<PartRenderFrame, PackedParts>()
+
+/** Gets the ordered numeric rows and template snapshots owned by a decoded frame. */
+export const getPackedParts = (frame: PartRenderFrame): PackedParts | undefined =>
+  packedParts.get(frame)
+
 /**
- * Snapshots queued values now; display objects are materialized once on demand.
+ * Snapshots borrowed values or retains exclusively transferred arrays; display objects are lazy.
  * Equal colors share immutable properties, retaining only the latest sample per template.
  */
-export const createDecoder = (): ((packet: PackedRenderFrame) => PartRenderFrame) => {
+export const createDecoder = (
+  ownership: 'borrowed' | 'transferred' = 'borrowed',
+): ((packet: PackedRenderFrame) => PartRenderFrame) => {
   const parts: PartTemplate[] = []
   const layers: LayerTemplate[] = []
   const colors = new WeakMap<PartTemplate, PartColors>()
@@ -51,12 +65,12 @@ export const createDecoder = (): ((packet: PackedRenderFrame) => PartRenderFrame
     packet.layerTemplates.forEach(([index, value]) => {
       layers[index] = value
     })
-    const partValues = packet.parts.slice()
-    const layerValues = packet.layers.slice()
+    const partValues = ownership === 'transferred' ? packet.parts : packet.parts.slice()
+    const layerValues = ownership === 'transferred' ? packet.layers : packet.layers.slice()
     const partTemplates = Array.from(
       {length: partValues.length / PART_FRAME_VALUES},
       (_, order) => {
-        const template = parts[partValues[order * PART_FRAME_VALUES]!]
+        const template = parts[partValues[order * PART_FRAME_VALUES + PART_FRAME_FIELD.part]!]
         if (template === undefined) {
           throw new Error('Missing playback part template')
         }
@@ -75,7 +89,7 @@ export const createDecoder = (): ((packet: PackedRenderFrame) => PartRenderFrame
     )
     let plans: PartRenderFrame['plans'] | undefined
     let restored: PartRenderFrame['layers'] | undefined
-    return {
+    const frame: PartRenderFrame = {
       get layers() {
         restored ??= new Map(
           layerTemplates.map((template, order) => {
@@ -101,14 +115,16 @@ export const createDecoder = (): ((packet: PackedRenderFrame) => PartRenderFrame
             layerIds: template.layerIds,
             mask: template.mask,
             partId: template.partId,
-            properties: readPartColors(partValues, offset + 3, template),
-            render: partValues[offset + 1] === 1,
-            visible: partValues[offset + 2] === 1,
+            properties: readPartColors(partValues, offset + PART_FRAME_FIELD.opacity, template),
+            render: partValues[offset + PART_FRAME_FIELD.render] === 1,
+            visible: partValues[offset + PART_FRAME_FIELD.visible] === 1,
           }
         })
         return plans
       },
       spatialPoses: packet.spatialPoses,
     }
+    packedParts.set(frame, {templates: partTemplates, values: partValues})
+    return frame
   }
 }

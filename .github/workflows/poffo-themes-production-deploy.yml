@@ -1,0 +1,46 @@
+name: Release Poffo Themes Production
+
+on:
+  workflow_dispatch:
+
+run-name: Release Poffo Themes Production from ${{ github.ref_name }} at ${{ github.sha }}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: poffo-themes-production
+  cancel-in-progress: false
+
+env:
+  VERCEL_ORG_ID: team_Ic8YKQ9jWkFLhVzeljhB4ZLV
+  VERCEL_PROJECT_ID: ${{ vars.POFFO_THEMES_VERCEL_PROJECT_ID }}
+  VERCEL_CLI_VERSION: 59.5.0
+
+jobs:
+  verify:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/poffo-themes/verify
+  deploy-production:
+    needs: verify
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment:
+      name: Production – poffo-themes
+      url: ${{ steps.deploy.outputs.url }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/poffo-themes/deploy
+        id: deploy
+        with:
+          target: production
+          token: ${{ secrets.VERCEL_TOKEN }}

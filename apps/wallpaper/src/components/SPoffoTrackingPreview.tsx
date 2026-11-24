@@ -13,11 +13,17 @@ import type {
   PoffoDisplayOptions,
   PoffoLipSyncControls,
   PoffoMotionControls,
+  PoffoTouchControls,
 } from '../features/background/types'
 import type {PointBounds} from '../features/tracking/use-point-drag'
 
 export interface PoffoCalibrationOptions
-  extends PoffoDisplayOptions, PoffoMotionControls, PoffoLipSyncControls, PoffoAgentControls {
+  extends
+    PoffoDisplayOptions,
+    PoffoMotionControls,
+    PoffoLipSyncControls,
+    PoffoAgentControls,
+    PoffoTouchControls {
   readonly targetId?: string
   readonly assetId: Accessor<string | null>
   readonly load: (id: string) => Promise<string | Blob>
@@ -96,6 +102,7 @@ export const SPoffoTrackingPreview = (props: SPoffoTrackingPreviewProps) => {
               assetId={props.assetId}
               fit={props.fit}
               load={props.load}
+              touch={props.touch}
               agentBindings={props.agentBindings}
               semanticBindings={props.semanticBindings}
               lipsync={props.lipsync}

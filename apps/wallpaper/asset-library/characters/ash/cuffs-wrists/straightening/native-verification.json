@@ -1,0 +1,162 @@
+{
+  "source": "Actual restarted Wallpaper app Worker frames matched against the complete scene and glue evaluation",
+  "pointerInputUsed": false,
+  "poses": [
+    {
+      "name": "rest",
+      "contacts": [
+        {
+          "side": "left",
+          "boundaryColumns": 28,
+          "maximumBoundaryError": 0.00011888804109234875
+        },
+        {
+          "side": "right",
+          "boundaryColumns": 29,
+          "maximumBoundaryError": 0.0001252399275661741
+        }
+      ],
+      "maximumVertexError": 0.0006600356591661694,
+      "visibleConnectionParts": [
+        "coat-free:cuffs-right:ArtMesh994",
+        "coat-free:cuffs-right:hand",
+        "coat-free:cuffs-left:ArtMesh900",
+        "coat-free:cuffs-left:hand"
+      ],
+      "head": 0,
+      "body": 0,
+      "physics": [0.011642890863939702, 0.008316350617099788, 0.011642890863939702],
+      "buttons": [0, 0]
+    },
+    {
+      "name": "up",
+      "contacts": [
+        {
+          "side": "left",
+          "boundaryColumns": 28,
+          "maximumBoundaryError": 0.00011979216750077784
+        },
+        {
+          "side": "right",
+          "boundaryColumns": 29,
+          "maximumBoundaryError": 0.00012475452955535132
+        }
+      ],
+      "maximumVertexError": 0.0005608146466329345,
+      "visibleConnectionParts": [
+        "coat-free:cuffs-right:ArtMesh994",
+        "coat-free:cuffs-right:hand",
+        "coat-free:cuffs-left:ArtMesh900",
+        "coat-free:cuffs-left:hand"
+      ],
+      "head": 0,
+      "body": 0,
+      "physics": [0, 0, 0],
+      "buttons": [0, 0]
+    },
+    {
+      "name": "down",
+      "contacts": [
+        {
+          "side": "left",
+          "boundaryColumns": 28,
+          "maximumBoundaryError": 0.00015837487573771788
+        },
+        {
+          "side": "right",
+          "boundaryColumns": 29,
+          "maximumBoundaryError": 0.00014514700197500757
+        }
+      ],
+      "maximumVertexError": 0.0006962522720641573,
+      "visibleConnectionParts": [
+        "coat-free:cuffs-right:ArtMesh994",
+        "coat-free:cuffs-right:hand",
+        "coat-free:cuffs-left:ArtMesh900",
+        "coat-free:cuffs-left:hand"
+      ],
+      "head": 0,
+      "body": 0,
+      "physics": [0, 0, 0],
+      "buttons": [0, 0]
+    },
+    {
+      "name": "left",
+      "contacts": [
+        {
+          "side": "left",
+          "boundaryColumns": 28,
+          "maximumBoundaryError": 0.00012207954185814406
+        },
+        {
+          "side": "right",
+          "boundaryColumns": 29,
+          "maximumBoundaryError": 0.0001251351415832272
+        }
+      ],
+      "maximumVertexError": 0.0005479074693539587,
+      "visibleConnectionParts": [
+        "coat-free:cuffs-right:ArtMesh994",
+        "coat-free:cuffs-right:hand",
+        "coat-free:cuffs-left:ArtMesh900",
+        "coat-free:cuffs-left:hand"
+      ],
+      "head": -30,
+      "body": -10,
+      "physics": [-0.010623857308105923, -0.007588469505789945, -0.010623857308105923],
+      "buttons": [0, 0]
+    },
+    {
+      "name": "right",
+      "contacts": [
+        {
+          "side": "left",
+          "boundaryColumns": 28,
+          "maximumBoundaryError": 0.00012652977450600765
+        },
+        {
+          "side": "right",
+          "boundaryColumns": 29,
+          "maximumBoundaryError": 0.0001344120070293876
+        }
+      ],
+      "maximumVertexError": 0.000586522501635045,
+      "visibleConnectionParts": [
+        "coat-free:cuffs-right:ArtMesh994",
+        "coat-free:cuffs-right:hand",
+        "coat-free:cuffs-left:ArtMesh900",
+        "coat-free:cuffs-left:hand"
+      ],
+      "head": 30,
+      "body": 10,
+      "physics": [0.0026961827687407265, 0.0019258448348148049, 0.0026961827687407265],
+      "buttons": [0, 0]
+    },
+    {
+      "name": "up-again",
+      "contacts": [
+        {
+          "side": "left",
+          "boundaryColumns": 28,
+          "maximumBoundaryError": 0.00011726461974757077
+        },
+        {
+          "side": "right",
+          "boundaryColumns": 29,
+          "maximumBoundaryError": 0.00013042611951568134
+        }
+      ],
+      "maximumVertexError": 0.0005271705035738705,
+      "visibleConnectionParts": [
+        "coat-free:cuffs-right:ArtMesh994",
+        "coat-free:cuffs-right:hand",
+        "coat-free:cuffs-left:ArtMesh900",
+        "coat-free:cuffs-left:hand"
+      ],
+      "head": 0,
+      "body": 0,
+      "physics": [0.013054437358600492, 0.009324598113286066, 0.013054437358600492],
+      "buttons": [0, 0]
+    }
+  ]
+}

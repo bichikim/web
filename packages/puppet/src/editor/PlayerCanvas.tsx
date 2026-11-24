@@ -137,7 +137,7 @@ export const PlayerCanvas = (props: PlayerCanvasProps) => {
     () =>
       ({
         antialiasing: props.antialiasing ?? 'auto',
-        renderer: props.spatialSurface === undefined ? (props.renderer ?? 'auto') : 'webgl',
+        renderer: props.spatialSurface === undefined ? (props.renderer ?? 'auto') : 'pixi-webgl',
       }) satisfies PlayerRenderingOptions,
     undefined,
     {

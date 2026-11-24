@@ -1,3 +1,5 @@
+import {localizeMessage, text as uiText} from '../features/localization'
+
 import {Show} from 'solid-js'
 import {type CodexApproval, type CodexPort, useApprovalDecision} from '../features/codex'
 
@@ -15,12 +17,12 @@ export const SCodexApproval = (props: SCodexApprovalProps) => {
   const fallback = () => decision.decide('codex')
   return (
     <section
-      aria-label={`${props.request.tool} 승인`}
+      aria-label={uiText('{value0} 승인', {value0: String(props.request.tool)})}
       class="flex min-h-0 min-w-0 flex-col gap-2 border-0 border-t border-solid border-amber-200 pt-2"
     >
       <div
         role="region"
-        aria-label="승인 요청 내용"
+        aria-label={uiText('승인 요청 내용')}
         tabIndex={0}
         class="min-h-0 overflow-auto overscroll-contain"
       >
@@ -40,7 +42,7 @@ export const SCodexApproval = (props: SCodexApprovalProps) => {
           disabled={decision.busy()}
           onClick={allow}
         >
-          이번만 승인
+          {uiText('이번만 승인')}
         </button>
         <button
           type="button"
@@ -48,7 +50,7 @@ export const SCodexApproval = (props: SCodexApprovalProps) => {
           disabled={decision.busy()}
           onClick={deny}
         >
-          거절
+          {uiText('거절')}
         </button>
         <button
           type="button"
@@ -56,13 +58,13 @@ export const SCodexApproval = (props: SCodexApprovalProps) => {
           disabled={decision.busy()}
           onClick={fallback}
         >
-          Codex에서 처리
+          {uiText('Codex에서 처리')}
         </button>
       </div>
       <Show when={decision.error()}>
         {(message) => (
           <p role="alert" class="m-0 shrink-0 text-xs text-red-700">
-            {message()}
+            {localizeMessage(message() ?? '')}
           </p>
         )}
       </Show>

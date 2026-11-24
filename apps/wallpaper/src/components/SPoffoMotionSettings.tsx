@@ -1,3 +1,4 @@
+import {text as uiText} from '../features/localization'
 import {createMemo} from 'solid-js'
 import {SSelect} from './SSelect'
 
@@ -16,11 +17,30 @@ export const SPoffoMotionSettings = (props: SPoffoMotionSettingsProps) => {
     const saved = props.value
     const missing =
       typeof saved === 'string' && !motions.includes(saved)
-        ? [{label: `${saved} (사용 불가)`, value: `motion:${saved}`}]
+        ? [
+            {
+              get label() {
+                return uiText('{value0} (사용 불가)', {value0: String(saved)})
+              },
+              value: `motion:${saved}`,
+            },
+          ]
         : []
     return [
-      {label: motions[0] === undefined ? '자동' : `자동 · ${motions[0]}`, value: 'auto'},
-      {label: '재생 안 함', value: 'off'},
+      {
+        get label() {
+          return motions[0] === undefined
+            ? uiText('자동')
+            : uiText('자동 · {value0}', {value0: String(motions[0])})
+        },
+        value: 'auto',
+      },
+      {
+        get label() {
+          return uiText('재생 안 함')
+        },
+        value: 'off',
+      },
       ...motions.map((id) => ({label: id, value: `motion:${id}`})),
       ...missing,
     ]
@@ -36,9 +56,9 @@ export const SPoffoMotionSettings = (props: SPoffoMotionSettingsProps) => {
   }
   return (
     <div class="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-3 text-[13px]">
-      <span class="whitespace-nowrap">기본 애니메이션</span>
+      <span class="whitespace-nowrap">{uiText('기본 애니메이션')}</span>
       <SSelect
-        label="기본 애니메이션"
+        label={uiText('기본 애니메이션')}
         value={value()}
         options={options()}
         disabled={props.onChange === undefined}

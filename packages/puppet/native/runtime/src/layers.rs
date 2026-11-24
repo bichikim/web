@@ -92,6 +92,7 @@ pub(crate) struct GroupProperties {
     pub(crate) draw_order: Option<f64>,
     pub(crate) effect: ColorEffect,
     pub(crate) inverted_mask: bool,
+    pub(crate) isolate_order: bool,
     pub(crate) offscreen: bool,
 }
 
@@ -110,6 +111,7 @@ impl GroupProperties {
                 screen_color: p.screen_color.unwrap_or(base.screen_color),
             },
             inverted_mask: p.inverted_mask.unwrap_or(false),
+            isolate_order: p.isolate_order.unwrap_or(false),
             offscreen: p.offscreen.unwrap_or(false),
         }
     }
@@ -132,6 +134,7 @@ impl GroupProperties {
                 screen_color: p.screen_color.unwrap_or(base.screen_color),
             },
             inverted_mask: false,
+            isolate_order: false,
             offscreen: false,
         }
     }

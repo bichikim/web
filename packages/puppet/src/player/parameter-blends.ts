@@ -8,7 +8,8 @@ import {resolveParameterValue} from './parameter-value'
  * by it, each by `weight`.
  */
 export type PuppetParameterBlendMode = 'add' | 'multiply' | 'overwrite'
-export type ParameterBlendStage = 'before-physics' | 'after-physics'
+export const PARAMETER_BLEND_STAGES = ['before-physics', 'after-physics', 'interaction'] as const
+export type ParameterBlendStage = (typeof PARAMETER_BLEND_STAGES)[number]
 
 export interface PuppetParameterBlend {
   readonly mode: PuppetParameterBlendMode

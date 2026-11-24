@@ -3,6 +3,8 @@ import {parseDocument, type ParseDocumentResult, parseDocumentValue} from './par
 import {decodeFile} from './poffo-file/decode-file'
 import {isPoffoFile, POFFO_MIME_TYPE, POFFO_SIGNATURE_BYTES} from './poffo-file/header'
 import {parseDocumentStream} from './parse-document-stream'
+import {markPreparedPuppetDocument} from './internal/prepared-document'
+import {PUPPET_DOCUMENT_FORMAT} from './document'
 
 export interface ParseDocumentBlobOptions {
   /** JSON or native .poffo file content; large JSON files are parsed as streams. */
@@ -12,6 +14,37 @@ export interface ParseDocumentBlobOptions {
 }
 
 const TEXT_LIMIT = 16_777_216
+
+const parseNativeDocument = async (
+  source: Blob,
+  signal?: AbortSignal,
+): Promise<ParseDocumentResult> => {
+  try {
+    let runtimeSection: Blob | undefined
+    const value = await decodeFile(source, signal, (section) => {
+      runtimeSection = section
+    })
+    const result = parseDocumentValue(value)
+    if (
+      result.ok &&
+      runtimeSection !== undefined &&
+      typeof value === 'object' &&
+      value !== null &&
+      'format' in value &&
+      value.format === PUPPET_DOCUMENT_FORMAT &&
+      result.document.motions.every((motion) => motion.sound === undefined)
+    ) {
+      markPreparedPuppetDocument(result.document, runtimeSection)
+    }
+    return result
+  } catch (error) {
+    signal?.throwIfAborted()
+    if (error instanceof SyntaxError) {
+      return {error: {code: 'invalid-document'}, ok: false}
+    }
+    throw error
+  }
+}
 
 export const parseDocumentBlob = async (
   options: ParseDocumentBlobOptions,
@@ -31,15 +64,7 @@ export const parseDocumentBlob = async (
       ))
   signal?.throwIfAborted()
   if (native) {
-    try {
-      return parseDocumentValue(await decodeFile(source, signal))
-    } catch (error) {
-      signal?.throwIfAborted()
-      if (error instanceof SyntaxError) {
-        return {error: {code: 'invalid-document'}, ok: false}
-      }
-      throw error
-    }
+    return parseNativeDocument(source, signal)
   }
   if (source.size < TEXT_LIMIT) {
     const text = await withAbort(() => source.text(), signal)

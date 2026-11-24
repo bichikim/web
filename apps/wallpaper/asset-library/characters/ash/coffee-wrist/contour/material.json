@@ -1,0 +1,151 @@
+{
+  "1": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "coffee-contour-seed.png"
+    }
+  },
+  "2": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["1", 0],
+      "alpha": ["1", 1]
+    }
+  },
+  "10": {
+    "class_type": "UnetLoaderGGUF",
+    "inputs": {
+      "unet_name": "Qwen-Image-2.1-Turbo-Q4_K_S.gguf"
+    }
+  },
+  "11": {
+    "class_type": "CLIPLoader",
+    "inputs": {
+      "clip_name": "qwen3vl_8b_int8_convrot.safetensors",
+      "type": "qwen_image",
+      "device": "default"
+    }
+  },
+  "12": {
+    "class_type": "VAELoader",
+    "inputs": {
+      "vae_name": "qwen_image_2.1_vae_bf16.safetensors"
+    }
+  },
+  "13": {
+    "class_type": "TextEncodeQwenImage21",
+    "inputs": {
+      "clip": ["11", 0],
+      "vae": ["12", 0],
+      "resolution": 0,
+      "prompt": "图1已经具有正确的自然手腕形状。保持图1的手掌、短手腕和前臂外轮廓、宽度、位置完全一致，只在手腕与掌根的局部统一图2原角色的浅象牙白皮肤、柔和暖粉色明暗渐变和细柔红棕色线条。消除拼接位置的横向色差和棱角，让掌根短小自然地连接前臂，内侧是圆润弧线，没有V字尖角、没有Z字台阶、没有突然收细的脖子。腕部轮廓就是图1的形状，不要重新设计、不窄化、不拉伸、不加长。掌根内部只保留图1那样很短很淡的弧形阴影，不要长直线。手指、蓝色指甲、咖啡杯、前臂主体必须与图1保持相同。背景透明，RGBA，图1相同480x640尺寸。",
+      "negative_prompt": "",
+      "images.image_1": ["2", 0],
+      "images.image_2": ["31", 0]
+    }
+  },
+  "16": {
+    "class_type": "QwenImage21Cache",
+    "inputs": {
+      "model": ["10", 0],
+      "device": "auto",
+      "dtype": "default"
+    }
+  },
+  "18": {
+    "class_type": "VAEDecode",
+    "inputs": {
+      "samples": ["24", 0],
+      "vae": ["12", 0]
+    }
+  },
+  "19": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": ["18", 0],
+      "filename_prefix": "Wallpaper/coffee-wrist/material"
+    }
+  },
+  "20": {
+    "class_type": "BasicGuider",
+    "inputs": {
+      "model": ["16", 0],
+      "conditioning": ["13", 0]
+    }
+  },
+  "21": {
+    "class_type": "RandomNoise",
+    "inputs": {
+      "noise_seed": 1110415
+    }
+  },
+  "22": {
+    "class_type": "KSamplerSelect",
+    "inputs": {
+      "sampler_name": "euler"
+    }
+  },
+  "23": {
+    "class_type": "ManualSigmas",
+    "inputs": {
+      "sigmas": "0.35, 0.3424585, 0.333963, 0.3243191, 0.313278, 0.2958018, 0.2465869, 0.1450988, 0.0"
+    }
+  },
+  "24": {
+    "class_type": "SamplerCustomAdvanced",
+    "inputs": {
+      "noise": ["21", 0],
+      "guider": ["20", 0],
+      "sampler": ["22", 0],
+      "sigmas": ["23", 0],
+      "latent_image": ["44", 0]
+    }
+  },
+  "30": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "coffee-contour-original.png"
+    }
+  },
+  "31": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["30", 0],
+      "alpha": ["30", 1]
+    }
+  },
+  "40": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "coffee-contour-material-mask.png"
+    }
+  },
+  "41": {
+    "class_type": "ImageToMask",
+    "inputs": {
+      "image": ["40", 0],
+      "channel": "red"
+    }
+  },
+  "42": {
+    "class_type": "ThresholdMask",
+    "inputs": {
+      "mask": ["41", 0],
+      "value": 0.5
+    }
+  },
+  "43": {
+    "class_type": "VAEEncode",
+    "inputs": {
+      "pixels": ["2", 0],
+      "vae": ["12", 0]
+    }
+  },
+  "44": {
+    "class_type": "SetLatentNoiseMask",
+    "inputs": {
+      "samples": ["43", 0],
+      "mask": ["42", 0]
+    }
+  }
+}

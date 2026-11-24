@@ -1,0 +1,728 @@
+{
+  "sha256": "b824a9ea198e8c7122bbdbc1905a6fb30ca88d7fb647fa56eba65d58658b956d",
+  "source": "Actual Wallpaper Worker frames; each gaze direction waits for four matching produced frames before the next input, including reversal and return",
+  "tipTest": "Alpha overlap near the outer wrist corner, using actual Worker vertices; excludes the front cuff surface farther across the wrist",
+  "pointerInputUsed": false,
+  "frames": 34,
+  "duration": 2612,
+  "maximumCuffTipOverlapArea": 0,
+  "maximumContactError": 0.00015557268774087522,
+  "maximumBodyRigidityError": 0.0005259889755819813,
+  "maximumChainGap": 0,
+  "results": [
+    {
+      "phase": "neutral",
+      "elapsed": 1105,
+      "head": [0, 0],
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.00012180609619115406,
+          "rigidityError": 0,
+          "bodyBasisError": 0
+        },
+        {
+          "side": "right",
+          "contactError": 0.00012638052347267845,
+          "rigidityError": 0,
+          "bodyBasisError": 0
+        }
+      ],
+      "cornerOverlapArea": 0
+    },
+    {
+      "phase": "neutral",
+      "elapsed": 1144,
+      "head": [0, 0],
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.00013038738960956803,
+          "rigidityError": 0.00034643931962108354,
+          "bodyBasisError": 0
+        },
+        {
+          "side": "right",
+          "contactError": 0.00013549578054606327,
+          "rigidityError": 0.0002853834592997373,
+          "bodyBasisError": 0
+        }
+      ],
+      "cornerOverlapArea": 0
+    },
+    {
+      "phase": "neutral",
+      "elapsed": 1175,
+      "head": [0, 0],
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.00011685424080296607,
+          "rigidityError": 0.00026809218272205726,
+          "bodyBasisError": 0
+        },
+        {
+          "side": "right",
+          "contactError": 0.00012496235069220214,
+          "rigidityError": 0.0002751959745026511,
+          "bodyBasisError": 0
+        }
+      ],
+      "cornerOverlapArea": 0
+    },
+    {
+      "phase": "neutral",
+      "elapsed": 1203,
+      "head": [0, 0],
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.00013019866780326355,
+          "rigidityError": 0.000277298565556805,
+          "bodyBasisError": 0
+        },
+        {
+          "side": "right",
+          "contactError": 0.00013122777328591976,
+          "rigidityError": 0.0003317809710026154,
+          "bodyBasisError": 0
+        }
+      ],
+      "cornerOverlapArea": 0
+    },
+    {
+      "phase": "up",
+      "elapsed": 1231,
+      "head": [0, 0],
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.00012141702393605842,
+          "rigidityError": 0.00030436287527635386,
+          "bodyBasisError": 0
+        },
+        {
+          "side": "right",
+          "contactError": 0.0001209454227851003,
+          "rigidityError": 0.0002729955485847313,
+          "bodyBasisError": 0
+        }
+      ],
+      "cornerOverlapArea": 0
+    },
+    {
+      "phase": "up",
+      "elapsed": 1348,
+      "head": [0, 30],
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.00011767368335207252,
+          "rigidityError": 0.0002925880705220152,
+          "bodyBasisError": 0
+        },
+        {
+          "side": "right",
+          "contactError": 0.00012229873504920907,
+          "rigidityError": 0.0002416552317612286,
+          "bodyBasisError": 0
+        }
+      ],
+      "cornerOverlapArea": 0
+    },
+    {
+      "phase": "up",
+      "elapsed": 1378,
+      "head": [0, 30],
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.00012136032044690044,
+          "rigidityError": 0.0002475132149726278,
+          "bodyBasisError": 0
+        },
+        {
+          "side": "right",
+          "contactError": 0.00012839915375796132,
+          "rigidityError": 0.00028513640440053223,
+          "bodyBasisError": 0
+        }
+      ],
+      "cornerOverlapArea": 0
+    },
+    {
+      "phase": "up",
+      "elapsed": 1405,
+      "head": [0, 30],
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.00009645727037009787,
+          "rigidityError": 0.00023664928210109792,
+          "bodyBasisError": 0
+        },
+        {
+          "side": "right",
+          "contactError": 0.00013330058142979595,
+          "rigidityError": 0.00027662975356435027,
+          "bodyBasisError": 0
+        }
+      ],
+      "cornerOverlapArea": 0
+    },
+    {
+      "phase": "up",
+      "elapsed": 1433,
+      "head": [0, 30],
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.00012521384251712635,
+          "rigidityError": 0.0003263082012310292,
+          "bodyBasisError": 0
+        },
+        {
+          "side": "right",
+          "contactError": 0.00012083207147685849,
+          "rigidityError": 0.0002598291010045273,
+          "bodyBasisError": 0
+        }
+      ],
+      "cornerOverlapArea": 0
+    },
+    {
+      "phase": "down",
+      "elapsed": 1461,
+      "head": [0, 30],
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.00012065636358864277,
+          "rigidityError": 0.0003819544538785635,
+          "bodyBasisError": 0
+        },
+        {
+          "side": "right",
+          "contactError": 0.00012122055194206026,
+          "rigidityError": 0.00026824897696542394,
+          "bodyBasisError": 0
+        }
+      ],
+      "cornerOverlapArea": 0
+    },
+    {
+      "phase": "down",
+      "elapsed": 1576,
+      "head": [0, -30],
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.0001426929277520302,
+          "rigidityError": 0.0003267907042072693,
+          "bodyBasisError": 0
+        },
+        {
+          "side": "right",
+          "contactError": 0.0001447613890537179,
+          "rigidityError": 0.000335703632558193,
+          "bodyBasisError": 0
+        }
+      ],
+      "cornerOverlapArea": 0
+    },
+    {
+      "phase": "down",
+      "elapsed": 1611,
+      "head": [0, -30],
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.00012194180280650774,
+          "rigidityError": 0.0002524710420814813,
+          "bodyBasisError": 0
+        },
+        {
+          "side": "right",
+          "contactError": 0.00014438336942932252,
+          "rigidityError": 0.0003349076653051952,
+          "bodyBasisError": 0
+        }
+      ],
+      "cornerOverlapArea": 0
+    },
+    {
+      "phase": "down",
+      "elapsed": 1639,
+      "head": [0, -30],
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.00015470171704182198,
+          "rigidityError": 0.0003787249707869478,
+          "bodyBasisError": 0
+        },
+        {
+          "side": "right",
+          "contactError": 0.00014980939604515952,
+          "rigidityError": 0.0002907830459832894,
+          "bodyBasisError": 0
+        }
+      ],
+      "cornerOverlapArea": 0
+    },
+    {
+      "phase": "down",
+      "elapsed": 1665,
+      "head": [0, -30],
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.00014769253884121573,
+          "rigidityError": 0.00030061564644512373,
+          "bodyBasisError": 0
+        },
+        {
+          "side": "right",
+          "contactError": 0.00014910360101881738,
+          "rigidityError": 0.0004111523198204736,
+          "bodyBasisError": 0
+        }
+      ],
+      "cornerOverlapArea": 0
+    },
+    {
+      "phase": "up-reversal",
+      "elapsed": 1693,
+      "head": [0, -30],
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.00015557268774087522,
+          "rigidityError": 0.0002913955735337481,
+          "bodyBasisError": 0
+        },
+        {
+          "side": "right",
+          "contactError": 0.00014824554541407466,
+          "rigidityError": 0.00042406169190201126,
+          "bodyBasisError": 0
+        }
+      ],
+      "cornerOverlapArea": 0
+    },
+    {
+      "phase": "up-reversal",
+      "elapsed": 1804,
+      "head": [0, 30],
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.00010800548652922817,
+          "rigidityError": 0.0001842115839139069,
+          "bodyBasisError": 0
+        },
+        {
+          "side": "right",
+          "contactError": 0.00012771711544490094,
+          "rigidityError": 0.00035200144362690367,
+          "bodyBasisError": 0
+        }
+      ],
+      "cornerOverlapArea": 0
+    },
+    {
+      "phase": "up-reversal",
+      "elapsed": 1843,
+      "head": [0, 30],
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.0001248692244633306,
+          "rigidityError": 0.00020581042479506095,
+          "bodyBasisError": 0
+        },
+        {
+          "side": "right",
+          "contactError": 0.00013157544010306346,
+          "rigidityError": 0.00027750143568283647,
+          "bodyBasisError": 0
+        }
+      ],
+      "cornerOverlapArea": 0
+    },
+    {
+      "phase": "up-reversal",
+      "elapsed": 1869,
+      "head": [0, 30],
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.00011082972939493062,
+          "rigidityError": 0.00015650850948389916,
+          "bodyBasisError": 0
+        },
+        {
+          "side": "right",
+          "contactError": 0.00012848117226710223,
+          "rigidityError": 0.00034163744868465074,
+          "bodyBasisError": 0
+        }
+      ],
+      "cornerOverlapArea": 0
+    },
+    {
+      "phase": "up-reversal",
+      "elapsed": 1896,
+      "head": [0, 30],
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.00012291919401000265,
+          "rigidityError": 0.00026873722561759905,
+          "bodyBasisError": 0
+        },
+        {
+          "side": "right",
+          "contactError": 0.00011445304998264733,
+          "rigidityError": 0.00022626153310056907,
+          "bodyBasisError": 0
+        }
+      ],
+      "cornerOverlapArea": 0
+    },
+    {
+      "phase": "left",
+      "elapsed": 1923,
+      "head": [0, 30],
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.00011650621101028223,
+          "rigidityError": 0.00046371425219149387,
+          "bodyBasisError": 0
+        },
+        {
+          "side": "right",
+          "contactError": 0.0001227338628636859,
+          "rigidityError": 0.0002539007729112086,
+          "bodyBasisError": 0
+        }
+      ],
+      "cornerOverlapArea": 0
+    },
+    {
+      "phase": "left",
+      "elapsed": 2036,
+      "head": [-30, 0],
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.00012543732545885824,
+          "rigidityError": 0.00029692644888967834,
+          "bodyBasisError": 0
+        },
+        {
+          "side": "right",
+          "contactError": 0.0001202285776479844,
+          "rigidityError": 0.00033826158364291814,
+          "bodyBasisError": 0
+        }
+      ],
+      "cornerOverlapArea": 0
+    },
+    {
+      "phase": "left",
+      "elapsed": 2076,
+      "head": [-30, 0],
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.00012631977700037784,
+          "rigidityError": 0.0005259889755819813,
+          "bodyBasisError": 0
+        },
+        {
+          "side": "right",
+          "contactError": 0.0001205860028141724,
+          "rigidityError": 0.0002658563210502507,
+          "bodyBasisError": 0
+        }
+      ],
+      "cornerOverlapArea": 0
+    },
+    {
+      "phase": "left",
+      "elapsed": 2107,
+      "head": [-30, 0],
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.00010756425940375567,
+          "rigidityError": 0.0003242102833524996,
+          "bodyBasisError": 0
+        },
+        {
+          "side": "right",
+          "contactError": 0.00012298946642142186,
+          "rigidityError": 0.0002946354411861307,
+          "bodyBasisError": 0
+        }
+      ],
+      "cornerOverlapArea": 0
+    },
+    {
+      "phase": "left",
+      "elapsed": 2136,
+      "head": [-30, 0],
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.0001267191640610178,
+          "rigidityError": 0.00020832070389076307,
+          "bodyBasisError": 0
+        },
+        {
+          "side": "right",
+          "contactError": 0.00011691356110502801,
+          "rigidityError": 0.00034265574448966163,
+          "bodyBasisError": 0
+        }
+      ],
+      "cornerOverlapArea": 0
+    },
+    {
+      "phase": "right",
+      "elapsed": 2165,
+      "head": [-30, 0],
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.00012770914812218075,
+          "rigidityError": 0.0003902450219115394,
+          "bodyBasisError": 0
+        },
+        {
+          "side": "right",
+          "contactError": 0.00013352187623044023,
+          "rigidityError": 0.00026649010666091044,
+          "bodyBasisError": 0
+        }
+      ],
+      "cornerOverlapArea": 0
+    },
+    {
+      "phase": "right",
+      "elapsed": 2285,
+      "head": [30, 0],
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.00012340849838980258,
+          "rigidityError": 0.0004030789902031984,
+          "bodyBasisError": 0
+        },
+        {
+          "side": "right",
+          "contactError": 0.00011908245310975592,
+          "rigidityError": 0.0002999781340093932,
+          "bodyBasisError": 0
+        }
+      ],
+      "cornerOverlapArea": 0
+    },
+    {
+      "phase": "right",
+      "elapsed": 2327,
+      "head": [30, 0],
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.00012821959296406736,
+          "rigidityError": 0.00021253607003757224,
+          "bodyBasisError": 0
+        },
+        {
+          "side": "right",
+          "contactError": 0.00012164936986698254,
+          "rigidityError": 0.00027817950618214127,
+          "bodyBasisError": 0
+        }
+      ],
+      "cornerOverlapArea": 0
+    },
+    {
+      "phase": "right",
+      "elapsed": 2353,
+      "head": [30, 0],
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.00012544676092806408,
+          "rigidityError": 0.0003228257818079783,
+          "bodyBasisError": 0
+        },
+        {
+          "side": "right",
+          "contactError": 0.00012334637042024695,
+          "rigidityError": 0.0003043156780009326,
+          "bodyBasisError": 0
+        }
+      ],
+      "cornerOverlapArea": 0
+    },
+    {
+      "phase": "right",
+      "elapsed": 2380,
+      "head": [30, 0],
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.00012791713991186412,
+          "rigidityError": 0.0003562140095425548,
+          "bodyBasisError": 0
+        },
+        {
+          "side": "right",
+          "contactError": 0.0001285270135439,
+          "rigidityError": 0.00028869991528068795,
+          "bodyBasisError": 0
+        }
+      ],
+      "cornerOverlapArea": 0
+    },
+    {
+      "phase": "return",
+      "elapsed": 2406,
+      "head": [30, 0],
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.00013327242489114455,
+          "rigidityError": 0.0002997415494618849,
+          "bodyBasisError": 0
+        },
+        {
+          "side": "right",
+          "contactError": 0.00013128205772628055,
+          "rigidityError": 0.00029367425231896505,
+          "bodyBasisError": 0
+        }
+      ],
+      "cornerOverlapArea": 0
+    },
+    {
+      "phase": "return",
+      "elapsed": 2518,
+      "head": [0, 0],
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.00012503480991381646,
+          "rigidityError": 0.00025225062501021966,
+          "bodyBasisError": 0
+        },
+        {
+          "side": "right",
+          "contactError": 0.00013456845213376083,
+          "rigidityError": 0.00026235570867783053,
+          "bodyBasisError": 0
+        }
+      ],
+      "cornerOverlapArea": 0
+    },
+    {
+      "phase": "return",
+      "elapsed": 2559,
+      "head": [0, 0],
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.00012678489119495882,
+          "rigidityError": 0.00038858959162979545,
+          "bodyBasisError": 0
+        },
+        {
+          "side": "right",
+          "contactError": 0.00012208417826150086,
+          "rigidityError": 0.0002535533243204213,
+          "bodyBasisError": 0
+        }
+      ],
+      "cornerOverlapArea": 0
+    },
+    {
+      "phase": "return",
+      "elapsed": 2585,
+      "head": [0, 0],
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.0001286924986734405,
+          "rigidityError": 0.00021310953883357797,
+          "bodyBasisError": 0
+        },
+        {
+          "side": "right",
+          "contactError": 0.00012787674017688096,
+          "rigidityError": 0.000315459587888256,
+          "bodyBasisError": 0
+        }
+      ],
+      "cornerOverlapArea": 0
+    },
+    {
+      "phase": "return",
+      "elapsed": 2612,
+      "head": [0, 0],
+      "linkError": 0,
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 0.00012907353572738216,
+          "rigidityError": 0.0002834080270446293,
+          "bodyBasisError": 0
+        },
+        {
+          "side": "right",
+          "contactError": 0.0001270101069237597,
+          "rigidityError": 0.0002600825752026026,
+          "bodyBasisError": 0
+        }
+      ],
+      "cornerOverlapArea": 0
+    }
+  ]
+}

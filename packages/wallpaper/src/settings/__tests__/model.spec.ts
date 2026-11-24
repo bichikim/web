@@ -1,6 +1,26 @@
 import {expect, it} from 'vitest'
 import {createMonitorWallpaper, monitorWallpaperSchema} from '../model'
 
+it('should retain independent input profiles in wallpaper content and reject invalid nested calibration', () => {
+  const base = createMonitorWallpaper('first')
+  const content = {
+    assetId: 'asset',
+    mode: 'puppet',
+    trackingProfiles: {
+      camera: {options: {eyeFollowSpeed: 0.4}},
+      'camera-pose': {bindings: {headZ: {parameterId: 'tilt'}}, options: {bodyFollowSpeed: 2}},
+      cursor: {options: {headFollowSpeed: 1}},
+    },
+  }
+  expect(monitorWallpaperSchema.parse({...base, content}).content).toEqual(content)
+  expect(
+    monitorWallpaperSchema.safeParse({
+      ...base,
+      content: {...content, trackingProfiles: {camera: {options: {eyeFollowSpeed: -1}}}},
+    }).success,
+  ).toBe(false)
+})
+
 it.each(['headResponseX', 'headResponseY', 'eyeResponseX', 'eyeResponseY'] as const)(
   'should retain independent response %s and reject invalid values',
   (key) => {
@@ -20,7 +40,7 @@ it.each(['headResponseX', 'headResponseY', 'eyeResponseX', 'eyeResponseY'] as co
 
 it('should retain each Poffo background tracking choice and reject combined or unknown modes', () => {
   const base = createMonitorWallpaper('first')
-  for (const tracking of ['off', 'cursor', 'camera']) {
+  for (const tracking of ['off', 'cursor', 'camera', 'camera-pose']) {
     expect(
       monitorWallpaperSchema.parse({...base, content: {assetId: 'asset', mode: 'puppet', tracking}})
         .content,

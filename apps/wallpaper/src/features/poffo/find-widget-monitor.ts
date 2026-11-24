@@ -1,6 +1,6 @@
 import type {PoffoWidget} from '@winter-love/wallpaper/settings/library-model'
 import type {WallpaperMonitor} from '../settings/monitors'
-const DEFAULT_WIDGET = {height: 420, width: 320}
+export const DEFAULT_WIDGET = {height: 420, width: 320}
 
 export const findWidgetMonitor = (widget: PoffoWidget, monitors: readonly WallpaperMonitor[]) => {
   return (

@@ -10,7 +10,7 @@ it('should list bundled characters beside imports and load each from its own sou
   try {
     const imported = await repository.addPuppet('My character', 'imported document')
     const puppets = await repository.listPuppets()
-    expect(puppets).toContainEqual({id: 'builtin:ash', name: '애시'})
+    expect(puppets).toContainEqual({id: 'builtin:ash', name: 'Ash'})
     expect(puppets).toContainEqual(imported)
     const fetch = vi.fn().mockResolvedValue(new Response('bundled document'))
     vi.stubGlobal('fetch', fetch)

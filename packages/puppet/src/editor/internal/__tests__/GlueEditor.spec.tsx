@@ -103,3 +103,26 @@ test('should edit and undo static Glue without creating a parameter', () => {
   expect(history.undo()).toBe(true)
   expect(input).toHaveValue(100)
 })
+
+test('should select whole-part translation and undo it as one document edit', () => {
+  const document = addGlue(
+    createDemoDocument(),
+    {partId: 'mesh-preview', vertexIndex: 0},
+    {partId: 'shape-diamond', vertexIndex: 0},
+  )!
+  const history = useDocumentHistory({initialDocument: document})
+  const view = render(() => (
+    <GlueEditor
+      document={history.document()}
+      partId="mesh-preview"
+      onDocumentChange={history.setDocument}
+    />
+  ))
+  fireEvent.click(view.getByRole('button', {name: '전체 이동'}))
+  expect(history.document().glue![0]!.mode).toBe('translate')
+  expect(view.getByRole('button', {name: '전체 이동'})).toHaveAttribute('aria-pressed', 'true')
+  expect(history.undo()).toBe(true)
+  expect(history.document().glue![0]!.mode).toBeUndefined()
+  expect(history.redo()).toBe(true)
+  expect(history.document().glue![0]!.mode).toBe('translate')
+})

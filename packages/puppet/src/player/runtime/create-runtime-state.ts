@@ -118,6 +118,7 @@ export const createRuntimeState = (options: CreateRuntimeStateOptions): RuntimeS
       notices: notices.capture(),
       parameterValues: state.parameterValues,
       physicsPreview: state.physicsPreview,
+      ...(state.physicsRelease === undefined ? {} : {physicsRelease: state.physicsRelease}),
       physicsState: state.physicsState,
       playback: state.playback.capture(),
       poseState: state.poseState,
@@ -127,6 +128,7 @@ export const createRuntimeState = (options: CreateRuntimeStateOptions): RuntimeS
     }),
     isRunning: () => isRunning(state),
     restore(checkpoint) {
+      state.physicsRelease = checkpoint.physicsRelease
       ;({
         chainState: state.chainState,
         eyeBlink: state.eyeBlink,

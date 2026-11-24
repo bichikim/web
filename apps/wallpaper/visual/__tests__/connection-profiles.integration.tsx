@@ -8,7 +8,15 @@ import {SPoffoConnectionProfiles} from '../../src/components/SPoffoConnectionPro
 import ashUrl from '../../../wallpaper-web/public/models/white-cat/model.poffo?url'
 import 'virtual:uno.css'
 
-vi.mock('../../src/features/background/use-puppet', () => ({usePuppet: vi.fn()}))
+vi.mock('../../src/features/background/use-puppet', () => ({
+  usePuppet: () => ({
+    cancel: vi.fn(),
+    finish: vi.fn(),
+    lostCapture: vi.fn(),
+    move: vi.fn(),
+    start: vi.fn(),
+  }),
+}))
 afterEach(() => {
   cleanup()
   vi.restoreAllMocks()
@@ -16,7 +24,7 @@ afterEach(() => {
 
 test('should save and restore all Poffo settings across tabs without exporting character data', async () => {
   const repository = createLibraryRepository('wallpaper-library')
-  const widget = await repository.addWidget('builtin:ash')
+  const widget = await repository.addWidget('profile-model')
   let unmount: (() => void) | undefined
   try {
     const connections: PoffoConnections = {
@@ -87,7 +95,7 @@ test('should save and restore all Poffo settings across tabs without exporting c
       const current = () => library.widgets().find((item) => item.id === widget.id)
       return (
         <SPoffoCalibrationPreview
-          assetId={() => 'builtin:ash'}
+          assetId={() => 'profile-model'}
           load={async () => blob}
           mode={current()?.tracking ?? 'off'}
           value={current()?.trackingOptions}
@@ -113,13 +121,13 @@ test('should save and restore all Poffo settings across tabs without exporting c
       )
       .toBe('false')
     expect(
-      (screen.getByRole('spinbutton', {name: '얼굴 좌우 최대'}) as HTMLInputElement).value,
+      (screen.getByRole('spinbutton', {name: '머리 좌우 최대'}) as HTMLInputElement).value,
     ).toBe('20')
     const save = screen.getByRole('button', {name: '설정 JSON 저장'})
     fireEvent.click(screen.getByRole('radio', {name: '눈동자'}))
     expect(screen.getByRole('button', {name: '설정 JSON 저장'})).toBe(save)
     expect(
-      (screen.getByRole('spinbutton', {name: '눈동자 상하 기본 방향'}) as HTMLInputElement).value,
+      (screen.getByRole('spinbutton', {name: '눈동자 중심 보정 상하'}) as HTMLInputElement).value,
     ).toBe('0.2')
     fireEvent.click(screen.getByRole('radio', {name: '연결'}))
     expect(screen.getByRole('button', {name: '설정 JSON 저장'})).toBe(save)
@@ -132,8 +140,16 @@ test('should save and restore all Poffo settings across tabs without exporting c
     }
     const source = await exported.text()
     expect(JSON.parse(source)).toEqual({
-      assetId: 'builtin:ash',
-      connections,
+      assetId: 'profile-model',
+      connections: {
+        ...connections,
+        trackingProfiles: Object.fromEntries(
+          ['off', 'cursor', 'camera', 'camera-pose'].map((mode) => [
+            mode,
+            {bindings: connections.trackingBindings, options: connections.trackingOptions},
+          ]),
+        ),
+      },
       format: 'poffo-connections',
       version: 1,
     })
@@ -178,15 +194,15 @@ test('should save and restore all Poffo settings across tabs without exporting c
       trackingOptions: connections.trackingOptions,
     })
     expect(screen.queryByRole('alert')).toBeNull()
-    fireEvent.click(screen.getByRole('radio', {name: '얼굴'}))
+    fireEvent.click(screen.getByRole('radio', {name: '머리'}))
     await expect
       .poll(
-        () => (screen.getByRole('spinbutton', {name: '얼굴 좌우 최대'}) as HTMLInputElement).value,
+        () => (screen.getByRole('spinbutton', {name: '머리 좌우 최대'}) as HTMLInputElement).value,
       )
       .toBe('20')
     fireEvent.click(screen.getByRole('radio', {name: '눈동자'}))
     expect(
-      (screen.getByRole('spinbutton', {name: '눈동자 상하 기본 방향'}) as HTMLInputElement).value,
+      (screen.getByRole('spinbutton', {name: '눈동자 중심 보정 상하'}) as HTMLInputElement).value,
     ).toBe('0.2')
   } finally {
     unmount?.()

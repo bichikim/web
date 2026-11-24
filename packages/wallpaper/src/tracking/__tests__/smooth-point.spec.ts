@@ -1,6 +1,17 @@
 import {expect, test} from 'vitest'
 import {smoothTrackingPoint} from '@winter-love/wallpaper/tracking/smooth-point'
 
+test('should apply follow speed after bounding frame time and retain the target without overshooting', () => {
+  const start = {x: 0, y: 0}
+  const target = {x: 1, y: -1}
+  const normal = smoothTrackingPoint(start, target, 0.1)
+  const fast = smoothTrackingPoint(start, target, 0.1, 2)
+  expect(fast.x).toBeGreaterThan(normal.x)
+  expect(fast.x).toBeLessThanOrEqual(1)
+  expect(fast.y).toBeGreaterThanOrEqual(-1)
+  expect(smoothTrackingPoint(start, target, 0.05, 2)).toEqual(normal)
+})
+
 test('should finish on the exact target rather than stopping just short of the maximum', () => {
   const target = {x: 1, y: -1}
   let current = {x: 0, y: 0}

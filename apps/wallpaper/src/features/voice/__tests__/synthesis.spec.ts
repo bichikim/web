@@ -57,48 +57,29 @@ it('should surface worker errors and reject disposal instead of leaving a genera
   await cancelled
 })
 
-it.each(['int8', 'full'] as const)(
-  'should send Pomo-normalized numbers and symbols to the %s model',
-  async (model) => {
+it.each([
+  {language: 'ko', model: 'int8', text: '사과 3개와 진행률 +12.5%'},
+  {language: 'ko', model: 'full', text: '09:05에 시작합니다.'},
+  {language: 'en', model: 'int8', text: '3 apples, the 21st item, and 12.5% complete.'},
+] as const)(
+  'should pass through $language numbers and symbols to the $model model',
+  async ({language, model, text}) => {
     vi.stubGlobal('Worker', ModelWorker)
     const client = createSynthesis()
-    const generated = client.generate(
-      '사과 3개와 진행률 +12.5%',
-      {...DEFAULT_POFFO_VOICE, model},
-      new AbortController().signal,
-      {status: vi.fn()},
-    )
-    const worker = ModelWorker.instances[0]
-    expect(worker.postMessage).toHaveBeenCalledWith(
-      expect.objectContaining({text: '사과 세 개와 진행률 플러스 십이 점 오 퍼센트'}),
-    )
+    const controller = new AbortController()
+    const voice = {...DEFAULT_POFFO_VOICE, language, model}
+    const generated = client.generate(text, voice, controller.signal, {status: vi.fn()})
+    const [worker] = ModelWorker.instances
     worker.dispatchEvent(
       new MessageEvent('message', {
         data: {id: 1, sampleRate: 24_000, samples: Float32Array.of(0.1), type: 'audio'},
       }),
     )
-    await generated
+    expect(worker.postMessage).toHaveBeenCalledWith({id: 1, text, type: 'generate', voice})
+    await expect(generated).resolves.toMatchObject({text})
     client.dispose()
   },
 )
-
-it('should preserve text when normalization would exceed the model input limit', async () => {
-  vi.stubGlobal('Worker', ModelWorker)
-  const client = createSynthesis()
-  const text = '12.5% '.repeat(25).trim()
-  const generated = client.generate(text, DEFAULT_POFFO_VOICE, new AbortController().signal, {
-    status: vi.fn(),
-  })
-  const worker = ModelWorker.instances[0]
-  expect(worker.postMessage).toHaveBeenCalledWith(expect.objectContaining({text}))
-  worker.dispatchEvent(
-    new MessageEvent('message', {
-      data: {id: 1, sampleRate: 24_000, samples: Float32Array.of(0.1), type: 'audio'},
-    }),
-  )
-  await generated
-  client.dispose()
-})
 
 it('should copy reactive settings into a cloneable worker request', async () => {
   vi.stubGlobal('Worker', ModelWorker)

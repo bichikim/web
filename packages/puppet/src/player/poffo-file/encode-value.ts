@@ -1,14 +1,17 @@
 import {decodeAsset} from './base64'
 import {createByteWriter} from './create-byte-writer'
 import {getNumberPacking} from './number-packing'
+import {createNumberArrayIndex} from './number-array-index'
 import {MAX_VALUE_DEPTH, VALUE_TAG} from './tags'
-import type {EncodedValue, PoffoAsset} from './types'
+import type {EncodedValue, PoffoAsset, PoffoVersion} from './types'
 
 /** Encodes the JSON value tree, retaining exact numbers and extracting embedded binary assets. */
 export const encodeValue = (source: unknown): EncodedValue => {
   const writer = createByteWriter()
   const strings = new Map<string, number>()
   const assets: PoffoAsset[] = []
+  const numberReference = createNumberArrayIndex()
+  let version: PoffoVersion = 1
   const ancestors = new WeakSet<object>()
   const encoder = new TextEncoder()
   const decoder = new TextDecoder('utf-8', {ignoreBOM: true})
@@ -37,6 +40,15 @@ export const encodeValue = (source: unknown): EncodedValue => {
   }
   const array = (values: ReadonlyArray<unknown>, depth: number) => {
     const packing = getNumberPacking(values)
+    if (packing !== undefined) {
+      const reference = numberReference(values as ReadonlyArray<number>)
+      if (reference !== undefined) {
+        writer.byte(VALUE_TAG.numberReference)
+        writer.uint32(reference)
+        version = 2
+        return
+      }
+    }
     writer.byte(packing ?? VALUE_TAG.array)
     writer.uint32(values.length)
     for (const value of values) {
@@ -93,7 +105,7 @@ export const encodeValue = (source: unknown): EncodedValue => {
     }
   }
   write(source, 0)
-  return {...writer.finish(), assets}
+  return {...writer.finish(), assets, version}
 }
 
 const writePackedNumber = (

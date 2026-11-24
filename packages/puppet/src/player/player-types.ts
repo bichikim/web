@@ -1,4 +1,4 @@
-import type {PlayerBufferingInfo} from './buffering/types'
+import type {PlayerBufferingInfo, PlayerWorkerRuntime} from './buffering/types'
 import type {PuppetParameterValueMap} from '../deformation'
 import type {MotionSoundError} from './audio/motion-sound-loader'
 import type {PuppetVowelWeights} from './document'
@@ -12,7 +12,9 @@ import type {ParameterBlendStage, PuppetParameterBlend} from './parameter-blends
 import type {PuppetPhysicsOptions} from './physics-options'
 import type {MotionEvent, MotionPlayback, MotionPlaybackOptions} from './playback'
 import type {PlayerViewCamera} from './view-camera'
+import type {ParameterDrag, ParameterDragOptions} from './parameter-drag'
 import type {
+  PlayerAlphaCapture,
   PlayerRendererChange,
   PlayerRendererConfiguration,
   PlayerRenderingInfo,
@@ -25,6 +27,8 @@ import type {
  * flushPlayerInputs before reading an applied input. Buffering off retains synchronous evaluation.
  */
 export interface Player {
+  /** Fits a keyed joint chain to an XY target; unsupported geometry returns undefined. */
+  createParameterDrag(options: ParameterDragOptions): ParameterDrag | undefined
   /** Replaces only GPU resources; playback, physics, overrides and the document are retained. */
   configureRenderer(options: PlayerRendererConfiguration): Promise<PlayerRendererChange>
   getRenderingInfo(): PlayerRenderingInfo
@@ -38,6 +42,8 @@ export interface Player {
   getParameterValues(): PuppetParameterValueMap
   /** Hit area ID under a point in canvas CSS pixels, using the last rendered meshes. */
   hitTest(point: {readonly x: number; readonly y: number}): string | undefined
+  /** Topmost painted part under canvas CSS pixels, excluding transparent texels and clipping. */
+  pickPart(point: {readonly x: number; readonly y: number}): string | undefined
   /** 지정한 외부 값만 병합하며 다른 입력과 모션 재생은 유지한다. */
   patchParameterValues(values: PuppetParameterValueMap): void
   /** Merges blends in one frame. Stage defaults to before physics; undefined releases only that stage's blends. */
@@ -57,6 +63,8 @@ export interface Player {
   resetParameters(parameterIds?: ReadonlyArray<string>): void
   /** Removes inertia at the current input pose without changing timeline time. */
   resetPhysics(): void
+  /** Releases interaction blends into authored physics at the displayed pose; returns handled IDs. Disabled inertia leaves them untouched. */
+  releaseParameterPhysics(parameterIds: ReadonlyArray<string>): ReadonlyArray<string>
   /** Clears retained motion values for the specified parameters; omitted clears all motion history. */
   resetMotionHistory(parameterIds?: ReadonlyArray<string>): void
   resume(): void
@@ -149,11 +157,17 @@ export interface PlayerFrame {
   readonly time: number
 }
 
-export interface CreatePlayerOptions extends PlayerRenderingOptions {
+export interface PlayerCreationOptions {
+  /** Optional asynchronous sampling of resident wgpu frame alpha. */
+  readonly alphaCapture?: PlayerAlphaCapture | undefined
   /** Uniform sizing within the screen; omitted to show the whole framed rectangle. */
   readonly fit?: PuppetFit
   /** Enables up to three predicted frames; omitted, retain the original synchronous rendering path. */
   readonly buffering?: boolean
+  /** Rust playback evaluates rendered parts and their mask and Glue dependencies in scenes without offscreen layers. Omitted, evaluates all parts. */
+  readonly renderGeometryOnly?: boolean
+  /** Numeric playback runtime when buffering is enabled; omitted, retain JavaScript orchestration. */
+  readonly workerRuntime?: PlayerWorkerRuntime
   /** Reports requested and actual buffering status; omitted, use getPlayerBufferingInfo to query it. */
   readonly onBufferingChange?: (info: PlayerBufferingInfo) => void
   /** Whether the shared external renderer is active. Omitted, render callbacks are always active. */
@@ -161,7 +175,9 @@ export interface CreatePlayerOptions extends PlayerRenderingOptions {
   readonly canvas: HTMLCanvasElement
   readonly document: PreparedPuppetDocument
   readonly motionId?: string
-  readonly onAfterRender?: () => void
+  /** Reports asynchronous GPU failures; omitted, pending flush/presentation rejects. */
+  readonly onRenderError?: (cause: Error) => void
+  readonly onAfterRender?: (() => void) | undefined
   readonly onBeforeRender?: () => void
   readonly onFrame?: (frame: PlayerFrame) => void
   /** Called after a rendered frame for each motion event its playbacks passed, in order. */
@@ -188,3 +204,5 @@ export interface CreatePlayerOptions extends PlayerRenderingOptions {
   readonly framing?: PuppetFraming
   readonly viewportPadding?: number
 }
+
+export interface CreatePlayerOptions extends PlayerCreationOptions, PlayerRenderingOptions {}

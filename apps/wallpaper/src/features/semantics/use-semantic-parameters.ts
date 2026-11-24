@@ -23,6 +23,9 @@ export const useSemanticParameters = (props: UseSemanticParametersProps) => {
   const matches = createMemo(
     () => {
       const frame = current()
+      if (frame?.agentPreview !== undefined) {
+        return []
+      }
       const previewId = frame?.previewId
       const bindings = props.bindings() ?? []
       return semanticMatches({

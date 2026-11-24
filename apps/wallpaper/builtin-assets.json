@@ -2,9 +2,9 @@
   "puppets": [
     {
       "id": "builtin:ash",
-      "name": "애시",
+      "name": "Ash",
       "file": "models/white-cat/model.poffo",
-      "size": 6573047
+      "size": 9643054
     },
     {
       "id": "builtin:profile",

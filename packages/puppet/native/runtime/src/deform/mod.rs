@@ -1,6 +1,8 @@
 //! Deformer nodes: static data compiled at load and per-frame posed control points.
 
+mod coordinates;
 pub(crate) mod parent;
+pub(crate) mod projection;
 mod shape;
 pub(crate) mod skin;
 mod warp_grid;
@@ -110,6 +112,21 @@ fn same_static_shape(a: &DeformerShape, b: &DeformerShape) -> bool {
 }
 
 impl CompiledDeformer {
+    /// Layouts whose point mapping depends only on grid coordinates (no preserved steps).
+    pub(crate) fn grid_interpolation(
+        &self,
+    ) -> Option<poffo_format::document::DeformerInterpolation> {
+        let shape = &self.node.shape;
+        shape.interpolation.filter(|_| {
+            self.binding.is_none()
+                && shape.deformer_type.is_none()
+                && shape.pins.is_none()
+                && shape.bone_rest_points.is_none()
+                && shape.curve_axis.is_none()
+                && shape.curve_handles.is_none()
+        })
+    }
+
     pub(crate) fn new(node: &DeformerNode, part_index: &impl Fn(&str) -> Option<usize>) -> Self {
         let binding = node.binding.as_ref().map(|binding| DeformerBindingLayouts {
             rest: StaticLayout::new(binding.rest.clone(), part_index),
@@ -212,7 +229,8 @@ pub(crate) struct RotationPose {
 #[derive(Debug, Clone)]
 pub(crate) struct PosedDeformer<'m> {
     pub(crate) compiled: &'m CompiledDeformer,
-    pub(crate) control_points: Vec<f64>,
+    pub(crate) control_points: coordinates::Coordinates<'m>,
+    pub(crate) revision: Option<u64>,
     pub(crate) handles: Vec<Option<CurveHandle>>,
     pub(crate) spatial: Option<SpatialPose>,
     pub(crate) rotation: RotationPose,
@@ -250,11 +268,40 @@ impl<'m> PosedDeformer<'m> {
         Self {
             bones: bone_segments(shape, &control_points, rotation.scale),
             compiled,
-            control_points,
+            control_points: coordinates::Coordinates::dense(control_points),
+            revision: None,
             handles,
             spatial,
             rotation,
             matches_binding_rest,
+        }
+    }
+
+    pub(crate) fn grid(
+        compiled: &'m CompiledDeformer,
+        revision: u64,
+        view: crate::pose_cache::GridView<'m>,
+    ) -> Self {
+        Self {
+            compiled,
+            control_points: coordinates::Coordinates::grid(
+                compiled.node.shape.control_points.len(),
+                view,
+            ),
+            revision: Some(revision),
+            handles: Vec::new(),
+            spatial: None,
+            rotation: RotationPose {
+                scale: compiled.node.shape.rotation_scale.unwrap_or(1.0).max(0.0),
+                reflection: compiled
+                    .node
+                    .shape
+                    .rotation_reflection
+                    .unwrap_or([false; 2]),
+                angle: None,
+            },
+            bones: Vec::new(),
+            matches_binding_rest: false,
         }
     }
 
@@ -280,6 +327,14 @@ impl<'m> PosedDeformer<'m> {
 
     fn transform_unweighted(&self, point: Vec2, vertex: Option<VertexKey>) -> Vec2 {
         let Some(binding) = &self.compiled.binding else {
+            if let Some(interpolation) = self.compiled.grid_interpolation() {
+                return warp_grid::sample_coordinates(
+                    &self.compiled.node.shape,
+                    point,
+                    interpolation,
+                    |i| self.control_points.at(i),
+                );
+            }
             return self.layout().transform(point, vertex);
         };
         let preserved = binding.steps.iter().fold(point, |current, step| {

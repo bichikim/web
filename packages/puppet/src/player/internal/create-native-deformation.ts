@@ -13,11 +13,13 @@ import {getDocumentScene} from '../scene'
 import {createWarpGridSampler} from '../../deformation/sample-warp-grid'
 import {createDeferredParentSpaceTransform} from '../../deformation/parent-space'
 import {getNativeTransformKey} from './get-native-transform-key'
+import {getVertexInfluence} from '../../deformation/weights'
 import type {
   PuppetDocument,
   PuppetPoint,
   PuppetSceneDeformerNode,
   PuppetSceneNode,
+  PuppetVertexReference,
 } from '../document'
 
 // Internal results are borrowed until that transform is sampled again.
@@ -28,12 +30,12 @@ export interface NativeTransform {
   readonly createMapper?: () => (vertices: Float32Array | number[]) => void
   readonly rotation: boolean
   readonly version: number
-  sample(point: PuppetPoint): PuppetPoint
+  sample(point: PuppetPoint, vertex?: PuppetVertexReference): PuppetPoint
   update(values: PuppetParameterValueMap | undefined): void
 }
 
 interface TransformBuffer {
-  sample(point: PuppetPoint): PuppetPoint
+  sample(point: PuppetPoint, vertex?: PuppetVertexReference): PuppetPoint
   refresh(node: PuppetSceneDeformerNode): void
 }
 
@@ -58,26 +60,40 @@ export interface NativeDeformation {
 
 const identity: PointTransform = (point) => point
 
-const supportsNode = (node: PuppetSceneNode): boolean => {
+const usesSimpleGrid = (node: PuppetSceneDeformerNode): boolean =>
+  node.deformerType === undefined &&
+  node.interpolation !== undefined &&
+  node.curveAxis === undefined &&
+  node.curveHandles === undefined &&
+  node.boneRestPoints === undefined &&
+  node.rotationAngle === undefined
+
+const supportsNativeNode = (node: PuppetSceneNode): boolean => {
   if (node.kind === 'part') {
     return node.skinning === undefined
   }
-  const supported =
+  return (
     node.kind === 'group' ||
     (node.binding === undefined &&
       node.pins === undefined &&
       node.boneWeights === undefined &&
-      node.vertexInfluences === undefined &&
+      (node.vertexInfluences === undefined ||
+        (node.coordinateSpace !== 'parent' &&
+          usesSimpleGrid(node) &&
+          node.children.every((child) => child.kind === 'part'))) &&
       (node.boneRestPoints === undefined || node.deformerType === 'rotation'))
-  return supported && node.children.every(supportsNode)
+  )
 }
+
+const supportsNode = (node: PuppetSceneNode): boolean =>
+  supportsNativeNode(node) && (node.kind === 'part' || node.children.every(supportsNode))
 
 const selectNativeNodes = (nodes: ReadonlyArray<PuppetSceneNode>): ReadonlyArray<PuppetSceneNode> =>
   nodes.flatMap((node): ReadonlyArray<PuppetSceneNode> => {
     if (node.kind === 'part') {
       return supportsNode(node) ? [node] : []
     }
-    if (!supportsNode({...node, children: []})) {
+    if (!supportsNativeNode(node)) {
       return []
     }
     const children = selectNativeNodes(node.children)
@@ -176,13 +192,13 @@ const createGridBuffer = (
       },
     },
   })
-  const sample: PointTransform = parentSpace
+  const sample: TransformBuffer['sample'] = parentSpace
     ? (point) => {
         sampler.sampleInto(point, output, 1)
         return output
       }
-    : (point) => {
-        sampler.sampleInto(point, output, 1)
+    : (point, vertex) => {
+        sampler.sampleInto(point, output, getVertexInfluence(node, vertex))
         return mapParent(output)
       }
   return {
@@ -205,14 +221,7 @@ const createNativeTransform = (
   parent: NativeTransform | undefined,
 ): NativeTransform => {
   const rotation = node.deformerType === 'rotation'
-  const simpleGrid =
-    node.deformerType === undefined &&
-    node.interpolation !== undefined &&
-    node.curveAxis === undefined &&
-    node.curveHandles === undefined &&
-    node.boneRestPoints === undefined &&
-    node.rotationAngle === undefined
-  const local = simpleGrid ? createDeformerSampler(document, node) : undefined
+  const local = usesSimpleGrid(node) ? createDeformerSampler(document, node) : undefined
   const buffer = createTransformBuffer(node, parent, local)
   let shape: PuppetSceneDeformerNode | undefined
   let parentVersion = -1
@@ -312,7 +321,7 @@ const compileNodes = (
   ) => {
     for (const node of children) {
       if (node.kind === 'part') {
-        parts.push({ancestors, apply: createVertexTransform(parent), partId: node.id})
+        parts.push({ancestors, apply: createVertexTransform(parent, node.id), partId: node.id})
       } else {
         const transform = node.kind === 'deformer' ? transformOf(node, parent) : parent
         visit(
@@ -328,12 +337,13 @@ const compileNodes = (
 }
 
 /** Retains unrounded outputs before downstream Glue mutates the caller's buffers. */
-const createVertexTransform = (transform: NativeTransform | undefined) => {
+const createVertexTransform = (transform: NativeTransform | undefined, partId: string) => {
   if (transform?.createMapper !== undefined) {
     return transform.createMapper()
   }
   const sample = transform?.sample ?? identity
   const input = {x: 0, y: 0}
+  const vertex = {partId, vertexIndex: 0}
   let previousVersion = -1
   let coordinates = new Float64Array(0)
   let output = new Float64Array(0)
@@ -357,7 +367,8 @@ const createVertexTransform = (transform: NativeTransform | undefined) => {
       ) {
         coordinates[offset] = input.x
         coordinates[offset + 1] = input.y
-        const point = sample(input)
+        vertex.vertexIndex = offset / 2
+        const point = sample(input, vertex)
         output[offset] = point.x
         output[offset + 1] = point.y
       }

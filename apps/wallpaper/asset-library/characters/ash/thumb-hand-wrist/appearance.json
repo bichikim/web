@@ -1,0 +1,13 @@
+{
+  "wholeHandAndWristGenerated": true,
+  "separateWristPatch": false,
+  "sourceSkin": [253, 246, 243],
+  "generatedSkin": [252, 233, 223],
+  "skinDelta": [1, 13, 20],
+  "sourceLine": [118, 38, 35],
+  "generatedLine": [176, 107, 88],
+  "lineDelta": [-58, -69, -53],
+  "restoredNailPixels": 6012,
+  "originalNailPreserved": true,
+  "source": "styled/8bb51483_001.png"
+}

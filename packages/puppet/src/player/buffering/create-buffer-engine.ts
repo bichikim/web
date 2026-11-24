@@ -48,6 +48,7 @@ export const createBufferEngine = (
     getPaintOrder: () => [],
     getPartVertices: (partId) => vertices.get(partId),
     getRenderingInfo: () => ({antialiasing: 'ssaa', renderer: 'webgl'}),
+    pickPart: () => undefined,
     redraw: noop,
     resize: noop,
     setFit: noop,

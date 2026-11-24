@@ -1,3 +1,4 @@
+import {text as uiText} from '../features/localization'
 import type {CameraSurface} from '../features/tracking/types'
 import {type Accessor, createEffect, createSignal, Show} from 'solid-js'
 import {SPoffoFacePosition} from './SPoffoFacePosition'
@@ -7,6 +8,7 @@ import type {
   PoffoDisplayOptions,
   PoffoLipSyncControls,
   PoffoMotionControls,
+  PoffoTouchControls,
 } from '../features/background/types'
 import type {PoffoPlacement} from '@winter-love/wallpaper/settings/model'
 import type {
@@ -16,7 +18,12 @@ import type {
 } from '@winter-love/wallpaper/settings/tracking'
 
 interface SPuppetPreviewProps
-  extends PoffoDisplayOptions, PoffoMotionControls, PoffoLipSyncControls, PoffoAgentControls {
+  extends
+    PoffoDisplayOptions,
+    PoffoMotionControls,
+    PoffoLipSyncControls,
+    PoffoAgentControls,
+    PoffoTouchControls {
   readonly assetId: Accessor<string | null>
   readonly load: (id: string) => Promise<string | Blob>
   readonly placement?: Accessor<PoffoPlacement | undefined>
@@ -42,7 +49,7 @@ export const SPuppetPreview = (props: SPuppetPreviewProps) => {
   return (
     <Show
       when={!failed()}
-      fallback={<p class="m-0 text-sm text-stone-600">미리보기를 불러올 수 없어요.</p>}
+      fallback={<p class="m-0 text-sm text-stone-600">{uiText('미리보기를 불러올 수 없어요.')}</p>}
     >
       <Show when={props.assetId() !== null}>
         <div class="absolute inset-0">
@@ -50,6 +57,7 @@ export const SPuppetPreview = (props: SPuppetPreviewProps) => {
             assetId={props.assetId}
             fit={props.fit}
             load={(id) => props.load(id)}
+            touch={() => (props.calibrating ? undefined : props.touch?.())}
             agentBindings={props.agentBindings}
             semanticBindings={props.semanticBindings}
             lipsync={props.lipsync}

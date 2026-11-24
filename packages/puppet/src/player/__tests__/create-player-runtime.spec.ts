@@ -12,6 +12,7 @@ const createRenderer = (): RendererController => ({
   getPaintOrder: () => [],
   getPartVertices: () => undefined,
   getRenderingInfo: () => ({antialiasing: 'ssaa', renderer: 'webgl'}),
+  pickPart: () => undefined,
   redraw: vi.fn(),
   resize: vi.fn(),
   setFit: vi.fn(),
@@ -35,6 +36,62 @@ const setup = () => {
     runtime: createPlayerRuntime({document, onFrame, randomSeed: 42, renderer}),
   }
 }
+
+test('should apply touch blends after other parameter effects in the shared runtime', () => {
+  const {runtime} = setup()
+  runtime.player.patchParameterBlends({p: {mode: 'overwrite', value: 0.7}}, 'interaction')
+  expect(runtime.player.getParameterValue('p')).toBe(0.7)
+  runtime.player.patchParameterBlends({p: undefined}, 'interaction')
+  expect(runtime.player.getParameterValue('p')).toBe(0)
+  runtime.player.destroy()
+})
+
+test.each([false, true])(
+  'should release held touch into physics when deferred is %s',
+  (deferred) => {
+    const runtime = createPlayerRuntime({
+      document: prepareDocument({
+        ...puppetDocument,
+        parameters: ['root', 'tip'].map((id) => ({
+          defaultValue: 0,
+          id,
+          maximum: 30,
+          minimum: -30,
+          name: id,
+        })),
+        physics: {
+          pendulums: [
+            {
+              damping: 1,
+              gravity: 9.8,
+              id: 'tip-physics',
+              inputParameterId: 'root',
+              inputScale: 1,
+              length: 1,
+              outputParameterId: 'tip',
+              outputScale: 1,
+            },
+          ],
+        },
+      }),
+      renderer: createRenderer(),
+    })
+    runtime.player.patchParameterBlends({tip: {mode: 'overwrite', value: 12}}, 'interaction')
+    expect(runtime.player.getParameterValue('tip')).toBe(12)
+    runtime.setDeferred(deferred)
+    expect(runtime.player.releaseParameterPhysics(['tip', 'missing'])).toEqual(['tip'])
+    if (deferred) {
+      expect(runtime.capture().physicsRelease).toEqual({tip: 12})
+      runtime.setDeferred(false)
+      runtime.render()
+    }
+    expect(runtime.player.getParameterValue('tip')).toBeCloseTo(12)
+    runtime.tick(1 / 60)
+    expect(runtime.player.getParameterValue('tip')).toBeLessThan(12)
+    expect(runtime.capture().physicsRelease).toBeUndefined()
+    runtime.player.destroy()
+  },
+)
 
 test.each([false, true])(
   'should change fitting without changing playback or numerical inputs when deferred is %s',

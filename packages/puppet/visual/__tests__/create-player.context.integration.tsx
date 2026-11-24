@@ -42,7 +42,7 @@ test('should restore paused clipped pixels without a resize or new computed fram
     buffering: false,
     canvas,
     document: parsed.document,
-    renderer: 'webgl',
+    renderer: 'pixi-webgl',
     resolution: 1,
   })
   const gl = canvas.getContext('webgl2')!

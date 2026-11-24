@@ -96,11 +96,13 @@ export interface PuppetGroupRenderProperties {
   /**
    * Makes the group a draw order group (Cubism's grouped part): its descendants sort among
    * themselves and paint together at this draw order (0..1000). Offscreen groups are draw
-   * order groups at 500 when omitted; other groups without it pass their descendants' draw
-   * orders through. Keyable.
+   * order groups at 500 when omitted, as are groups with `isolateOrder`; other groups without
+   * it pass their descendants' draw orders through. Keyable.
    */
   readonly drawOrder?: number
   readonly invertedMask?: boolean
+  /** Sorts descendants within this group as one unit, without an offscreen render layer. Static. */
+  readonly isolateOrder?: boolean
   readonly multiplyColor?: PuppetColor
   readonly offscreen?: boolean
   readonly opacity?: number

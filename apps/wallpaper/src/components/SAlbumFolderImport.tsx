@@ -1,3 +1,5 @@
+import {localizeMessage, text as uiText} from '../features/localization'
+
 import {createSignal, Show} from 'solid-js'
 import {selectFolderPhotos} from '../features/settings/select-folder-photos'
 import {SDialog} from './SDialog'
@@ -38,7 +40,7 @@ export const SAlbumFolderImport = (props: SAlbumFolderImportProps) => {
     }
     const photos = selectFolderPhotos(files, allDepths() ? null : depth())
     if (photos.length === 0) {
-      setError('지정한 깊이에 가져올 사진이 없어요.')
+      setError(uiText('지정한 깊이에 가져올 사진이 없어요.'))
       return
     }
     setOpen(false)
@@ -48,7 +50,7 @@ export const SAlbumFolderImport = (props: SAlbumFolderImportProps) => {
     <>
       <button
         type="button"
-        aria-label="사진 폴더 추가"
+        aria-label={uiText('사진 폴더 추가')}
         class="wallpaper-thumbnail shrink-0 cursor-pointer border-dashed text-stone-600
         [font-family:inherit] focus-visible:outline-solid focus-visible:outline-2
         focus-visible:outline-offset-2 focus-visible:outline-blue-700 disabled:opacity-50"
@@ -63,11 +65,11 @@ export const SAlbumFolderImport = (props: SAlbumFolderImportProps) => {
           >
             <path d="M3 7V5h6l2 2h10v13H3Z" />
           </svg>
-          폴더
+          {uiText('폴더')}
         </span>
       </button>
       <Show when={open()}>
-        <SDialog title="사진 폴더 추가" onClose={() => setOpen(false)}>
+        <SDialog title={uiText('사진 폴더 추가')} onClose={() => setOpen(false)}>
           <div class="grid min-h-0 gap-4 overflow-y-auto p-4">
             <label class="flex items-center gap-2 text-[13px]">
               <input
@@ -76,25 +78,25 @@ export const SAlbumFolderImport = (props: SAlbumFolderImportProps) => {
                 checked={allDepths()}
                 onChange={handleAll}
               />
-              하위 폴더 모두 포함
+              {uiText('하위 폴더 모두 포함')}
             </label>
             <Show when={!allDepths()}>
               <div class="grid gap-2">
                 <div class="wallpaper-row">
-                  <span>최대 깊이</span>
+                  <span>{uiText('최대 깊이')}</span>
                   <SNumberInput
-                    label="최대 깊이"
+                    label={uiText('최대 깊이')}
                     min={0}
                     step={1}
                     value={depth()}
                     onChange={handleDepth}
                   />
                 </div>
-                <p class="m-0 text-xs text-stone-600">선택한 폴더는 깊이 0입니다.</p>
+                <p class="m-0 text-xs text-stone-600">{uiText('선택한 폴더는 깊이 0입니다.')}</p>
               </div>
             </Show>
             <SFileInput
-              label="폴더 선택"
+              label={uiText('폴더 선택')}
               directory
               multiple
               disabled={disabled()}
@@ -103,7 +105,7 @@ export const SAlbumFolderImport = (props: SAlbumFolderImportProps) => {
             <Show when={error()}>
               {(message) => (
                 <p role="alert" class="m-0 text-xs text-red-700">
-                  {message()}
+                  {localizeMessage(message() ?? '')}
                 </p>
               )}
             </Show>

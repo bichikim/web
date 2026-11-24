@@ -1,0 +1,56 @@
+{
+  "1": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "joins-coffee-source.png"
+    }
+  },
+  "2": {
+    "class_type": "LoadImageMask",
+    "inputs": {
+      "image": "joins-coffee-inverse.png",
+      "channel": "red"
+    }
+  },
+  "3": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["1", 0],
+      "alpha": ["2", 0]
+    }
+  },
+  "4": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": ["3", 0],
+      "filename_prefix": "Wallpaper/wrist-joins/coffee"
+    }
+  },
+  "11": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "joins-noodles-source.png"
+    }
+  },
+  "12": {
+    "class_type": "LoadImageMask",
+    "inputs": {
+      "image": "joins-noodles-inverse.png",
+      "channel": "red"
+    }
+  },
+  "13": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["11", 0],
+      "alpha": ["12", 0]
+    }
+  },
+  "14": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": ["13", 0],
+      "filename_prefix": "Wallpaper/wrist-joins/noodles"
+    }
+  }
+}

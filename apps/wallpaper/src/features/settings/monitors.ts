@@ -1,5 +1,6 @@
 import {invoke, isTauri} from '@tauri-apps/api/core'
 import {listen} from '@tauri-apps/api/event'
+import {text as uiText} from '../localization'
 
 export interface WallpaperMonitor {
   readonly id: string
@@ -14,7 +15,14 @@ export interface WallpaperMonitor {
 /** Lists current display identities; identical display names are distinguished by their position. */
 export const listWallpaperMonitors = async (): Promise<readonly WallpaperMonitor[]> => {
   if (!isTauri()) {
-    return [{id: 'browser-preview', name: '미리보기 화면'}]
+    return [
+      {
+        id: 'browser-preview',
+        get name() {
+          return uiText('미리보기 화면')
+        },
+      },
+    ]
   }
   return invoke<readonly WallpaperMonitor[]>('list_wallpaper_monitors')
 }

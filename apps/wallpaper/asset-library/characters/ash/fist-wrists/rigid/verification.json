@@ -1,0 +1,316 @@
+{
+  "sha256": "364da2c71673f01304aa07f639fef8be8795d37e5ae7908e275c77140aa6ca00",
+  "motion": [
+    {
+      "name": "rest",
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 1.8998696850490482e-8,
+          "handLengthError": 9.312550730555813e-13,
+          "armLengthError": 7.389644451905042e-13,
+          "priorStretch": 1.7456000818709958
+        },
+        {
+          "side": "right",
+          "contactError": 2.9726296444883094e-8,
+          "handLengthError": 9.188205751797796e-13,
+          "armLengthError": 7.318590178329032e-13,
+          "priorStretch": 1.1904723908671722
+        }
+      ]
+    },
+    {
+      "name": "up",
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 1.899853522286334e-8,
+          "handLengthError": 1.1146639167236572e-12,
+          "armLengthError": 6.892264536872972e-13,
+          "priorStretch": 2.8346151301119855
+        },
+        {
+          "side": "right",
+          "contactError": 2.972653859498182e-8,
+          "handLengthError": 8.393286066166183e-13,
+          "armLengthError": 7.105427357601002e-13,
+          "priorStretch": 2.350416677530559
+        }
+      ]
+    },
+    {
+      "name": "down",
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 1.8997772584833507e-8,
+          "handLengthError": 8.810729923425242e-13,
+          "armLengthError": 5.968558980384842e-13,
+          "priorStretch": 6.605372999645582
+        },
+        {
+          "side": "right",
+          "contactError": 2.9726873023034708e-8,
+          "handLengthError": 9.254819133275305e-13,
+          "armLengthError": 7.744915819785092e-13,
+          "priorStretch": 13.68805672514414
+        }
+      ]
+    },
+    {
+      "name": "left",
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 1.8997959239784866e-8,
+          "handLengthError": 1.1826095658307167e-12,
+          "armLengthError": 6.679101716144942e-13,
+          "priorStretch": 7.804250779921049
+        },
+        {
+          "side": "right",
+          "contactError": 2.9726487046652087e-8,
+          "handLengthError": 7.94253551816837e-13,
+          "armLengthError": 7.815970093361102e-13,
+          "priorStretch": 12.418756199608769
+        }
+      ]
+    },
+    {
+      "name": "right",
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 1.899828703568053e-8,
+          "handLengthError": 7.958078640513122e-13,
+          "armLengthError": 9.947598300641403e-13,
+          "priorStretch": 2.540804558691364
+        },
+        {
+          "side": "right",
+          "contactError": 2.972649638153253e-8,
+          "handLengthError": 8.029132914089132e-13,
+          "armLengthError": 7.602807272633072e-13,
+          "priorStretch": 3.3677571873793575
+        }
+      ]
+    },
+    {
+      "name": "up-again",
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 1.8998175270181628e-8,
+          "handLengthError": 8.01358979174438e-13,
+          "armLengthError": 6.465938895416912e-13,
+          "priorStretch": 3.118393049276148
+        },
+        {
+          "side": "right",
+          "contactError": 2.9727087485236082e-8,
+          "handLengthError": 8.402167850363185e-13,
+          "armLengthError": 7.815970093361102e-13,
+          "priorStretch": 3.5906024366344464
+        }
+      ]
+    },
+    {
+      "name": "Param_Angle_Rotation61/-1",
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 1.899790838441475e-8,
+          "handLengthError": 9.166001291305292e-13,
+          "armLengthError": 9.592326932761353e-13,
+          "priorStretch": 22.176901626648462
+        },
+        {
+          "side": "right",
+          "contactError": 2.9726178196544904e-8,
+          "handLengthError": 7.567280135845067e-13,
+          "armLengthError": 6.039613253960852e-13,
+          "priorStretch": 35.60232555304755
+        }
+      ]
+    },
+    {
+      "name": "Param_Angle_Rotation61/1",
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 1.899832118986018e-8,
+          "handLengthError": 8.433254095052689e-13,
+          "armLengthError": 6.252776074688882e-13,
+          "priorStretch": 18.884127769043886
+        },
+        {
+          "side": "right",
+          "contactError": 2.972649945634672e-8,
+          "handLengthError": 8.464340339742193e-13,
+          "armLengthError": 6.892264536872972e-13,
+          "priorStretch": 50.516471086053535
+        }
+      ]
+    },
+    {
+      "name": "Param_Angle_Rotation77/-1",
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 1.899856961198008e-8,
+          "handLengthError": 7.318590178329032e-13,
+          "armLengthError": 7.815970093361102e-13,
+          "priorStretch": 28.802062685480294
+        },
+        {
+          "side": "right",
+          "contactError": 2.9726973799149146e-8,
+          "handLengthError": 8.055778266680136e-13,
+          "armLengthError": 6.039613253960852e-13,
+          "priorStretch": 39.17512742517326
+        }
+      ]
+    },
+    {
+      "name": "Param_Angle_Rotation77/1",
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 1.8998115076031808e-8,
+          "handLengthError": 8.775202786637237e-13,
+          "armLengthError": 5.488942633746774e-13,
+          "priorStretch": 23.819722313705203
+        },
+        {
+          "side": "right",
+          "contactError": 2.972668918376723e-8,
+          "handLengthError": 9.14823772291129e-13,
+          "armLengthError": 5.471179065352771e-13,
+          "priorStretch": 36.398473967688766
+        }
+      ]
+    },
+    {
+      "name": "Param57/-1",
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 1.8997859448782527e-8,
+          "handLengthError": 1.1741718708435656e-12,
+          "armLengthError": 5.471179065352771e-13,
+          "priorStretch": 6.665548620403479
+        },
+        {
+          "side": "right",
+          "contactError": 2.9726956428808932e-8,
+          "handLengthError": 9.920952948050399e-13,
+          "armLengthError": 7.318590178329032e-13,
+          "priorStretch": 6.109621199493729
+        }
+      ]
+    },
+    {
+      "name": "Param57/1",
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 1.8998391042327297e-8,
+          "handLengthError": 7.625011733125575e-13,
+          "armLengthError": 6.394884621840902e-13,
+          "priorStretch": 5.617607779238463
+        },
+        {
+          "side": "right",
+          "contactError": 2.9727001523324992e-8,
+          "handLengthError": 1.0151879337172431e-12,
+          "armLengthError": 6.963318810448982e-13,
+          "priorStretch": 10.290757892847395
+        }
+      ]
+    },
+    {
+      "name": "Param58/-1",
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 1.8998767626772652e-8,
+          "handLengthError": 8.606448886894214e-13,
+          "armLengthError": 8.384404281969182e-13,
+          "priorStretch": 1.667842163735231
+        },
+        {
+          "side": "right",
+          "contactError": 2.972682717354173e-8,
+          "handLengthError": 9.658940314238862e-13,
+          "armLengthError": 6.323830348264892e-13,
+          "priorStretch": 3.513619894568288
+        }
+      ]
+    },
+    {
+      "name": "Param58/1",
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 1.8998062903986002e-8,
+          "handLengthError": 7.553957459549565e-13,
+          "armLengthError": 7.105427357601002e-13,
+          "priorStretch": 1.9224618672490061
+        },
+        {
+          "side": "right",
+          "contactError": 2.9726945044517584e-8,
+          "handLengthError": 9.610090501155355e-13,
+          "armLengthError": 7.815970093361102e-13,
+          "priorStretch": 0.8391960023838072
+        }
+      ]
+    },
+    {
+      "name": "Param61/-1",
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 1.8998261783971053e-8,
+          "handLengthError": 7.607248164731573e-13,
+          "armLengthError": 5.897504706808832e-13,
+          "priorStretch": 5.2211685889930335
+        },
+        {
+          "side": "right",
+          "contactError": 2.9727265196918812e-8,
+          "handLengthError": 1.056044141023449e-12,
+          "armLengthError": 6.892264536872972e-13,
+          "priorStretch": 7.560888867531901
+        }
+      ]
+    },
+    {
+      "name": "Param61/1",
+      "sides": [
+        {
+          "side": "left",
+          "contactError": 1.899780840401474e-8,
+          "handLengthError": 9.379164112033322e-13,
+          "armLengthError": 7.887024366937112e-13,
+          "priorStretch": 5.265662004693187
+        },
+        {
+          "side": "right",
+          "contactError": 2.9726161137920445e-8,
+          "handLengthError": 8.597567102697212e-13,
+          "armLengthError": 7.744915819785092e-13,
+          "priorStretch": 7.86434089448056
+        }
+      ]
+    }
+  ],
+  "expressions": 28,
+  "coatStates": 2,
+  "visibleCompared": 28657,
+  "visibilityCompared": 81984,
+  "artworkUnchanged": true,
+  "restShapeUnchanged": true,
+  "skinPartsPerSide": 2
+}

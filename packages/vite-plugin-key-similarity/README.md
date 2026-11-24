@@ -5,7 +5,7 @@
 A Vite plugin that finds semantically similar keys by comparing static strings from source code with a local embedding model. It works with any imported function that accepts string keys, including translation messages, analytics events, and permission names.
 
 - Uses no network connection or external API.
-- Includes a q8 `Xenova/multilingual-e5-small` model.
+- Prepares a pinned q8 `Xenova/multilingual-e5-small` model in the shared OS cache.
 - Lets `keyDetector` decide which function call and argument contain the key.
 - Compares modules loaded by Vite in an asynchronous Worker, keeping the transform path responsive.
 - Reports similar keys and source locations without modifying code.
@@ -241,10 +241,10 @@ When introducing the plugin to a project with existing duplicates, use `buildMod
 | `buildMode`         | `error`                                  | Production build diagnostic mode                             |
 | `exclude`           | Tests, generated files, and node_modules | Glob patterns excluded from Vite and CLI checks              |
 | `scanInclude`       | `src/**/*.{ts,tsx,js,jsx,mts,mjs}`       | File globs used only by full-project CLI scans               |
-| `cacheDir`          | `node_modules/.cache/key-similarity`     | Base directory for model and `vectors` caches                |
-| `modelPath`         | Bundled model                            | Path to another local Transformers.js model                  |
-| `modelIdentifier`   | Bundled model ID or `modelPath`          | Model identifier used to separate vector caches              |
-| `modelRevision`     | Bundled revision or `local`              | Model revision used to separate vector caches                |
+| `cacheDir`          | `node_modules/.cache/key-similarity`     | Project-local `vectors` cache directory                      |
+| `modelPath`         | Shared cached model                      | Path to another local Transformers.js model                  |
+| `modelIdentifier`   | Shared cached model ID or `modelPath`    | Model identifier used to separate vector caches              |
+| `modelRevision`     | Pinned revision or `local`               | Model revision used to separate vector caches                |
 | `wasmPath`          | Automatically selected                   | Explicit path to ONNX WASM files                             |
 
 There is no shared `include` option for Vite. Vite checks JavaScript and TypeScript modules in its module graph and applies only `exclude`. Use the CLI-only `scanInclude` option when a full-project scan is required.
@@ -275,7 +275,7 @@ The CLI uses the current working directory as its root.
 
 ## 10. Model and cache
 
-The default model and tokenizer are included in `assets/multilingual-e5-small`. Transformers.js remote model access is disabled, so no model is downloaded at runtime.
+The default model and tokenizer are prepared from the pinned Hugging Face revision in `assets/model.json`, with size and SHA-256 validation. Files are stored under the OS cache namespace `io.winterlove.models`, independently of the project or worktree. Missing or invalid files are downloaded once; verified files are reused offline. Model binaries are excluded from Git and the npm package. Transformers.js loads only those prepared local files.
 
 Vectors for normalized strings are stored in `node_modules/.cache/key-similarity/vectors` by default. A vector is reused when its model ID, revision, normalization version, and normalized string match. When selecting another local model, also set `modelIdentifier` and `modelRevision` so its vectors cannot be mixed with the previous model cache.
 
@@ -319,7 +319,7 @@ Add their globs to `exclude`. Because Vite has no plugin-wide `include` option, 
 
 ## 13. Included examples
 
-Run the examples from the package root. Every example uses the bundled local model.
+Run the examples from the package root. Every example uses the shared cached local model.
 
 ```bash
 npm run example:duplicate

@@ -1,0 +1,141 @@
+{
+  "1": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "source (3).png"
+    }
+  },
+  "2": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "source-white.png"
+    }
+  },
+  "3": {
+    "class_type": "LoadImageMask",
+    "inputs": {
+      "image": "edit-mask.png",
+      "channel": "red"
+    }
+  },
+  "4": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "edit-mask.png"
+    }
+  },
+  "5": {
+    "class_type": "ImageBlur",
+    "inputs": {
+      "image": ["4", 0],
+      "blur_radius": 5,
+      "sigma": 2.4
+    }
+  },
+  "6": {
+    "class_type": "ImageToMask",
+    "inputs": {
+      "image": ["5", 0],
+      "channel": "red"
+    }
+  },
+  "10": {
+    "class_type": "Morphology",
+    "inputs": {
+      "image": ["2", 0],
+      "operation": "erode",
+      "kernel_size": 5
+    }
+  },
+  "11": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["1", 0],
+      "source": ["10", 0],
+      "x": 0,
+      "y": 0,
+      "resize_source": false,
+      "mask": ["6", 0]
+    }
+  },
+  "12": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["11", 0],
+      "alpha": ["1", 1]
+    }
+  },
+  "13": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": ["12", 0],
+      "filename_prefix": "thumb-line-weight-5-soft"
+    }
+  },
+  "20": {
+    "class_type": "Morphology",
+    "inputs": {
+      "image": ["2", 0],
+      "operation": "erode",
+      "kernel_size": 7
+    }
+  },
+  "21": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["1", 0],
+      "source": ["20", 0],
+      "x": 0,
+      "y": 0,
+      "resize_source": false,
+      "mask": ["6", 0]
+    }
+  },
+  "22": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["21", 0],
+      "alpha": ["1", 1]
+    }
+  },
+  "23": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": ["22", 0],
+      "filename_prefix": "thumb-line-weight-7-soft"
+    }
+  },
+  "30": {
+    "class_type": "Morphology",
+    "inputs": {
+      "image": ["2", 0],
+      "operation": "erode",
+      "kernel_size": 9
+    }
+  },
+  "31": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["1", 0],
+      "source": ["30", 0],
+      "x": 0,
+      "y": 0,
+      "resize_source": false,
+      "mask": ["6", 0]
+    }
+  },
+  "32": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["31", 0],
+      "alpha": ["1", 1]
+    }
+  },
+  "33": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": ["32", 0],
+      "filename_prefix": "thumb-line-weight-9-soft"
+    }
+  }
+}

@@ -6,7 +6,8 @@ import {
   type WallpaperContent,
 } from '@winter-love/wallpaper/settings/model'
 import type {PuppetAsset} from '@winter-love/wallpaper/settings/repository'
-import {createBuiltinMedia, createBuiltinSettings} from '../builtin-assets'
+import {createBuiltinMedia, createBuiltinSettings, localizeBuiltinAsset} from '../builtin-assets'
+import {interfaceLanguage} from '../localization'
 import type {BackgroundMedia} from '@winter-love/wallpaper/model'
 import type {InteractionSettings} from '@winter-love/wallpaper/interaction/types'
 import {useWallpaperMonitors} from './use-wallpaper-monitors'
@@ -33,6 +34,12 @@ export const useWallpaper = () => {
   })
   const [collection, setCollection] = createStore<MediaCollection>({items: []})
   const [puppets, setPuppets] = createSignal<readonly PuppetAsset[]>([])
+  const localizedPuppets = createMemo(() =>
+    puppets().map((asset) => localizeBuiltinAsset(asset, interfaceLanguage.language())),
+  )
+  const items = createMemo(() =>
+    collection.items.map((asset) => localizeBuiltinAsset(asset, interfaceLanguage.language())),
+  )
   const [hiddenCount, setHiddenCount] = createSignal(0)
   const [error, setError] = createSignal<string | null>(null)
   const [imports, setImports] = createSignal(0)
@@ -49,15 +56,21 @@ export const useWallpaper = () => {
   const refresh = async () => {
     revision += 1
     const request = revision
-    const [album, assets] = await Promise.all([
-      media.read(),
-      settings.listPuppets(),
-      state.refresh(),
-    ])
-    if (!disposed && request === revision) {
-      setCollection('items', reconcile(album.items, {key: 'id'}))
-      setHiddenCount(album.hiddenCount)
-      setPuppets(assets)
+    try {
+      const [album, assets] = await Promise.all([
+        media.read(),
+        settings.listPuppets(),
+        state.refresh(),
+      ])
+      if (!disposed && request === revision) {
+        setCollection('items', reconcile(album.items, {key: 'id'}))
+        setHiddenCount(album.hiddenCount)
+        setPuppets(assets)
+      }
+    } catch (cause) {
+      if (!disposed && request === revision) {
+        report(cause)
+      }
     }
   }
   const report = (cause: unknown, message = '설정을 저장하지 못했어요.') => {
@@ -86,15 +99,9 @@ export const useWallpaper = () => {
       }
     })
   }
-  onMount(() => {
-    refresh().catch(report)
-  })
-  const unsubscribeSettings = settings.subscribe(() => {
-    refresh().catch(report)
-  }, report)
-  const unsubscribeMedia = media.subscribe(() => {
-    refresh().catch(report)
-  }, report)
+  onMount(refresh)
+  const unsubscribeSettings = settings.subscribe(refresh, report)
+  const unsubscribeMedia = media.subscribe(refresh, report)
   onCleanup(() => {
     disposed = true
     unsubscribeSettings()
@@ -139,11 +146,11 @@ export const useWallpaper = () => {
     },
     error: () => error() ?? screens.error(),
     hasHiddenMedia: () => hiddenCount() > 0,
-    items: () => collection.items,
+    items,
     loadMedia: media.load,
     loadPuppet: settings.loadPuppet,
     monitors: screens.monitors,
-    puppets,
+    puppets: localizedPuppets,
     removeMedia: (id: string) =>
       enqueue(async () => {
         await settings.removeMediaReferences(id)

@@ -1,3 +1,4 @@
+import {text as uiText} from '../features/localization'
 import {createUniqueId, type JSX} from 'solid-js'
 import {DEFAULT_POFFO_SPEECH, type PoffoWidget} from '@winter-love/wallpaper/settings/library-model'
 import {SChevron} from './SChevron'
@@ -12,7 +13,17 @@ interface SPoffoWidgetRowProps {
   readonly onSelect?: () => void
   readonly onClose: () => void | Promise<void>
 }
-const TRACKING = {camera: '카메라', cursor: '커서', off: '트래킹 없음'}
+const TRACKING = {
+  get camera() {
+    return uiText('카메라')
+  },
+  get cursor() {
+    return uiText('커서')
+  },
+  get off() {
+    return uiText('트래킹 없음')
+  },
+}
 export const SPoffoWidgetRow = (props: SPoffoWidgetRowProps) => {
   const id = createUniqueId()
   const expanded = () => props.expanded ?? props.selected
@@ -31,7 +42,7 @@ export const SPoffoWidgetRow = (props: SPoffoWidgetRowProps) => {
       <div class="flex items-stretch">
         <button
           type="button"
-          aria-label={`위젯 ${props.number} 설정`}
+          aria-label={uiText('위젯 {value0} 설정', {value0: String(props.number)})}
           aria-expanded={expanded()}
           aria-controls={id}
           data-selected={props.selected}
@@ -53,15 +64,18 @@ export const SPoffoWidgetRow = (props: SPoffoWidgetRowProps) => {
           </span>
           <span class="grid min-w-0 flex-1 gap-0.5">
             <span class="flex min-w-0 items-baseline gap-2">
-              <span class="shrink-0 font-medium text-stone-800">위젯 {props.number}</span>
+              <span class="shrink-0 font-medium text-stone-800">
+                {`${uiText('위젯')} `}
+                {props.number}
+              </span>
               <span class="truncate text-xs text-stone-600" title={props.name}>
                 {props.name}
               </span>
             </span>
             <span class="truncate text-[11px] text-stone-600">
               {TRACKING[props.widget.tracking ?? 'off']} ·{' '}
-              {speech().enabled ? '말풍선 켜짐' : '말풍선 꺼짐'}
-              {speech().voice?.enabled ? ' · 읽어주기' : ''}
+              {speech().enabled ? uiText('말풍선 켜짐') : uiText('말풍선 꺼짐')}
+              {speech().voice?.enabled ? uiText(' · 읽어주기') : ''}
             </span>
           </span>
           <span
@@ -78,8 +92,8 @@ export const SPoffoWidgetRow = (props: SPoffoWidgetRowProps) => {
           class="mr-2 grid h-8 w-8 shrink-0 cursor-pointer place-items-center self-center rounded-md
           border-0 bg-transparent p-0 text-stone-500 hover:bg-stone-100 hover:text-stone-800
           focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-blue-700"
-          aria-label={`위젯 ${props.number} 닫기`}
-          title="위젯 닫기"
+          aria-label={uiText('위젯 {value0} 닫기', {value0: String(props.number)})}
+          title={uiText('위젯 닫기')}
           onClick={() => props.onClose()}
         >
           <svg
@@ -94,7 +108,7 @@ export const SPoffoWidgetRow = (props: SPoffoWidgetRowProps) => {
       <div
         id={id}
         role="region"
-        aria-label={`위젯 ${props.number} 설정 내용`}
+        aria-label={uiText('위젯 {value0} 설정 내용', {value0: String(props.number)})}
         aria-hidden={!expanded()}
         inert={!expanded()}
         data-expanded={expanded()}

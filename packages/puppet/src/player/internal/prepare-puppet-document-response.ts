@@ -4,6 +4,7 @@ import type {compactDocumentTextures} from '../texture-assets'
 interface PrepareDocumentWireSuccess {
   readonly document: ReturnType<typeof compactDocumentTextures>
   readonly ok: true
+  readonly runtimeSection?: Blob
 }
 
 interface PrepareDocumentReadFailure {

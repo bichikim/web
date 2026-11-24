@@ -1,7 +1,7 @@
 import {isTauri} from '@tauri-apps/api/core'
 import {listen} from '@tauri-apps/api/event'
 import {onCleanup, onMount} from 'solid-js'
-import type {WallpaperLibraryController} from './index'
+import type {WallpaperLibraryController} from '.'
 
 export const useWebsiteNavigation = (library: WallpaperLibraryController) => {
   let disposed = false

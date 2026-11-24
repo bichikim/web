@@ -3,6 +3,14 @@ import {mouthPairValues, resolveMouthPair} from '../mouth-pair'
 
 const opening = {defaultValue: 0, id: 'ParamMouthOpenY', maximum: 1, minimum: 0}
 const form = {defaultValue: 0, id: 'ParamMouthForm', maximum: 1, minimum: -1}
+it('should preserve the original opening weights while correcting vowel form independently', () => {
+  const pair = {form, opening}
+  const original = {a: 0.2, e: 0.8}
+  const before = mouthPairValues(pair, original, 0.4, {gain: 3})
+  const corrected = mouthPairValues(pair, {a: 1}, 0.4, {gain: 3, openingWeights: original})
+  expect(corrected.ParamMouthOpenY).toBe(before.ParamMouthOpenY)
+  expect(corrected.ParamMouthForm).not.toBe(before.ParamMouthForm)
+})
 it('should require an unambiguous complete pair rather than a lone opening', () => {
   expect(resolveMouthPair([opening])).toBeUndefined()
   expect(resolveMouthPair([opening, form, {...form}])).toBeUndefined()
@@ -10,13 +18,16 @@ it('should require an unambiguous complete pair rather than a lone opening', () 
 })
 it('should preserve round and wide forms while modulating opening and resetting silence', () => {
   const pair = {form, opening}
-  expect(mouthPairValues(pair, 'a', 0.5, {})).toEqual({ParamMouthForm: 0.2, ParamMouthOpenY: 0.45})
-  expect(mouthPairValues(pair, 'i', 0.5, {})).toEqual({ParamMouthForm: 1, ParamMouthOpenY: 0.275})
-  expect(mouthPairValues(pair, 'o', 0.5, {})).toEqual({ParamMouthForm: -1, ParamMouthOpenY: 0.325})
+  expect(mouthPairValues(pair, 'a', 0.5, {})).toEqual({ParamMouthForm: 0, ParamMouthOpenY: 0.45})
+  expect(mouthPairValues(pair, 'i', 0.5, {})).toEqual({ParamMouthForm: 0.9, ParamMouthOpenY: 0.275})
+  expect(mouthPairValues(pair, 'o', 0.5, {})).toEqual({
+    ParamMouthForm: -0.6,
+    ParamMouthOpenY: 0.325,
+  })
   expect(mouthPairValues(pair, 'o', 0, {})).toEqual({ParamMouthForm: 0, ParamMouthOpenY: 0})
   expect(mouthPairValues(pair, null, 1, {})).toEqual({ParamMouthForm: 0, ParamMouthOpenY: 0})
   expect(mouthPairValues(pair, 'o', 1, {inverted: true})).toEqual({
-    ParamMouthForm: 1,
+    ParamMouthForm: 0.6,
     ParamMouthOpenY: 0.65,
   })
 })
@@ -35,7 +46,7 @@ it('should round u at a smaller opening than o and distinguish e from i', () => 
   const o = mouthPairValues(pair, 'o', 1, {})
   const e = mouthPairValues(pair, 'e', 1, {})
   const i = mouthPairValues(pair, 'i', 1, {})
-  expect(u.ParamMouthForm).toBe(-1)
+  expect(u.ParamMouthForm).toBe(-0.8)
   expect(u.ParamMouthOpenY).toBeLessThan(o.ParamMouthOpenY!)
   expect(e.ParamMouthForm).toBeGreaterThan(0)
   expect(e.ParamMouthForm).toBeLessThan(i.ParamMouthForm!)
@@ -59,5 +70,5 @@ it('should relax a nearly closed wide mouth continuously instead of holding the 
 it('should blend vowel coordinates rather than switch to the strongest pose', () => {
   const values = mouthPairValues({form, opening}, {a: 0.5, o: 0.5}, 1, {})
   expect(values.ParamMouthOpenY).toBeCloseTo(0.775)
-  expect(values.ParamMouthForm).toBeCloseTo(-0.4)
+  expect(values.ParamMouthForm).toBeCloseTo(-0.3)
 })

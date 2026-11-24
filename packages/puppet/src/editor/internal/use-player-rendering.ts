@@ -13,12 +13,14 @@ export const usePlayerRendering = (options: PlayerRenderingConfiguration) => {
   let pending = false
   let sequence = 0
   let observed: Player | null = null
+  let previousRenderer: PlayerRenderingOptions['renderer']
   createEffect(() => {
     const current = options.player()
     const configuration = options.configuration()
     if (observed !== current) {
       observed = current
       pending = false
+      previousRenderer = undefined
       sequence += 1
     }
     if (current === null) {
@@ -26,11 +28,17 @@ export const usePlayerRendering = (options: PlayerRenderingConfiguration) => {
     }
     const actual = current.getRenderingInfo()
     const antialiasing = configuration.antialiasing === 'ssaa' ? 'ssaa' : 'msaa'
-    if (
-      !pending &&
-      actual.antialiasing === antialiasing &&
-      (configuration.renderer === 'auto' || configuration.renderer === actual.renderer)
-    ) {
+    const renderer = configuration.renderer ?? 'auto'
+    const enteringAuto =
+      renderer === 'auto' && previousRenderer !== undefined && previousRenderer !== 'auto'
+    previousRenderer = renderer
+    const matchesRenderer =
+      actual.runtime === 'wgpu'
+        ? renderer === 'wgpu' || renderer === 'auto'
+        : (renderer === 'auto' && !enteringAuto) ||
+          renderer === 'pixi' ||
+          renderer === `pixi-${actual.renderer}`
+    if (!pending && actual.antialiasing === antialiasing && matchesRenderer) {
       return
     }
     pending = true

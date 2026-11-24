@@ -1,0 +1,595 @@
+{
+  "status": "Painted centers retained; local elbow contour finished and verified",
+  "beforeModelSha256": "a7eab0e42ac6e4af8644e1bb123bcf24d33dbbf923b777bb3004b02be128f172",
+  "modelSha256": "473c9ee9bec1c900a24cbb8331ba71a3ffdfc9a680c829c525080233e879b6d6",
+  "modelBytes": 9764747,
+  "attachment": {
+    "id": "coat-free:notes-left:elbow-center:contact",
+    "composition": "sequential",
+    "mode": "translate",
+    "first": {
+      "partId": "coat-free:notes-left:ArtMesh900",
+      "vertexIndex": 132
+    },
+    "second": {
+      "partId": "ArtMesh1001",
+      "vertexIndex": 61
+    },
+    "weight": 1,
+    "strength": 1
+  },
+  "centers": {
+    "upper": {
+      "partId": "ArtMesh1001",
+      "vertexIndex": 61,
+      "triangle": [14, 15, 41],
+      "weights": [0.34149293749241355, 0.21168786437015283, 0.44681919813743354]
+    },
+    "lower": {
+      "partId": "coat-free:notes-left:ArtMesh900",
+      "vertexIndex": 132,
+      "triangle": [49, 54, 55],
+      "weights": [0.501249639331376, 0.24933055295334577, 0.24941980771527822]
+    }
+  },
+  "landmarks": {
+    "definition": {
+      "upper": "Middle of the actual painted terminal cap of the upper arm",
+      "lower": "Middle of the painted forearm thickness, slightly toward the wrist from the elbow tip"
+    },
+    "upper": {
+      "partId": "ArtMesh1001",
+      "triangle": [14, 15, 41],
+      "weights": [0.34149293749241355, 0.21168786437015283, 0.44681919813743354],
+      "world": [1870.4442905641954, 2135.880534947454],
+      "uv": [0.6982656979298374, 0.5215554657237821],
+      "surfaceAlpha": 200,
+      "capEnds": [
+        [1796.5, 2098.5],
+        [1952, 2150.5]
+      ]
+    },
+    "lower": {
+      "partId": "coat-free:notes-left:ArtMesh900",
+      "triangle": [49, 54, 55],
+      "weights": [0.501249639331376, 0.24933055295334577, 0.24941980771527822],
+      "world": [1893.0010658321432, 2073.5246268777573],
+      "uv": [0.5495512076820668, 0.2204132669370293],
+      "surfaceAlpha": 255,
+      "sectionEnds": [
+        [1821.2120957369941, 2050.5521564473097],
+        [1964.7900359272924, 2096.4970973082054]
+      ],
+      "elbowTip": [1869.5, 2160.5],
+      "distanceFromTip": 90.09448165675887
+    },
+    "frame": {
+      "x": 1700,
+      "y": 1700,
+      "width": 550,
+      "height": 550
+    }
+  },
+  "referenceId": "coat-free:notes-left:assembly-reference",
+  "pivot": {
+    "partId": "coat-free:notes-left:ArtMesh900",
+    "vertexIndex": 71
+  },
+  "sourceReference": {
+    "partId": "coat-free:notes-left:wrist-surface-900",
+    "vertexIndex": 33
+  },
+  "followers": [
+    "ArtMesh130",
+    "ArtMesh131",
+    "ArtMesh132",
+    "ArtMesh133",
+    "ArtMesh134",
+    "ArtMesh135",
+    "ArtMesh136",
+    "ArtMesh137",
+    "ArtMesh139",
+    "coat-free:notes-left:hand",
+    "coat-free:notes-left:wrist-surface-900",
+    "coat-free:notes-left:wrist-surface-901",
+    "ArtMesh138",
+    "ArtMesh140",
+    "ArtMesh141",
+    "coat-free:notes-left:ArtMesh901"
+  ],
+  "originalVertexCounts": {
+    "ArtMesh130": 17,
+    "ArtMesh131": 32,
+    "ArtMesh132": 24,
+    "ArtMesh133": 17,
+    "ArtMesh134": 145,
+    "ArtMesh135": 80,
+    "ArtMesh136": 40,
+    "ArtMesh137": 39,
+    "ArtMesh139": 78,
+    "coat-free:notes-left:hand": 452,
+    "coat-free:notes-left:wrist-surface-900": 34,
+    "coat-free:notes-left:wrist-surface-901": 34,
+    "ArtMesh138": 47,
+    "ArtMesh140": 44,
+    "ArtMesh141": 79,
+    "coat-free:notes-left:ArtMesh901": 34,
+    "ArtMesh1001": 61,
+    "coat-free:notes-left:ArtMesh900": 132
+  },
+  "addedVertexCounts": {
+    "ArtMesh130": 1,
+    "ArtMesh131": 1,
+    "ArtMesh132": 1,
+    "ArtMesh133": 1,
+    "ArtMesh134": 1,
+    "ArtMesh135": 1,
+    "ArtMesh136": 1,
+    "ArtMesh137": 1,
+    "ArtMesh139": 1,
+    "coat-free:notes-left:hand": 1,
+    "coat-free:notes-left:wrist-surface-900": 1,
+    "coat-free:notes-left:wrist-surface-901": 1,
+    "ArtMesh138": 1,
+    "ArtMesh140": 1,
+    "ArtMesh141": 1,
+    "coat-free:notes-left:ArtMesh901": 1,
+    "ArtMesh1001": 1,
+    "coat-free:notes-left:ArtMesh900": 1
+  },
+  "addedParts": [
+    "coat-free:notes-left:assembly-reference",
+    "coat-free:notes-left:elbow-center:upper-reference",
+    "coat-free:notes-left:elbow-center:lower-reference"
+  ],
+  "scope": {
+    "allTexturesAndMeshesUnchanged": true,
+    "allExistingBindingsAndGluesUnchanged": true,
+    "changedRenderedVertex": {
+      "partId": "ArtMesh1001",
+      "index": 13
+    },
+    "maximumOtherVertexChange": 0,
+    "maximumCenterGap": 0
+  },
+  "geometry": {
+    "samples": 65,
+    "maximumContactGap": 0,
+    "maximumUpperArmVertexChange": 0,
+    "maximumAssemblyShapeChange": 4.547473508864641e-13,
+    "maximumInactiveVertexChange": 0,
+    "neutralTranslation": [-22.55677526794784, 62.35590806969685],
+    "midWritingTranslation": [-51.54061370079171, 62.48315020958307]
+  },
+  "definition": {
+    "upper": "Middle of the actual painted terminal cap of the upper arm",
+    "lower": "Middle of the painted forearm thickness, slightly toward the wrist from the elbow tip"
+  },
+  "images": {
+    "centers": "elbow-centers.png",
+    "joint": "elbow-center.png",
+    "context": "elbow-center-context.png",
+    "physics": "elbow-center-physics.png",
+    "finish": "elbow-finish-detail.png"
+  },
+  "checks": {
+    "geometrySamplesPassed": 65,
+    "coveredActiveSamples": 59,
+    "chromiumWebkitTestsPassed": 16,
+    "candidateChromiumPoseReviewPassed": true,
+    "wallpaperTypecheckPassed": true,
+    "wallpaperBuildPassed": true,
+    "oxlintPassed": true,
+    "oxfmtPassed": true
+  },
+  "previousCenterScope": {
+    "beforeSha256": "4d6b9adbac59396856c3705bbd88a6cac149b2b6b69a5af48ab85427fb42e47e",
+    "modelSha256": "a7eab0e42ac6e4af8644e1bb123bcf24d33dbbf923b777bb3004b02be128f172",
+    "modelBytes": 9763717,
+    "allTexturesUnchanged": true,
+    "originalRenderedVerticesUvsIndicesUnchanged": true,
+    "originalHierarchyBindingsPhysicsExpressionsUnchanged": true,
+    "originalUpperArmRenderedVerticesUnchanged": true,
+    "addedInvisibleReferenceParts": 3,
+    "addedUnreferencedVertices": 18,
+    "addedSequentialConstraints": 41,
+    "contact": {
+      "id": "coat-free:notes-left:elbow-center:contact",
+      "composition": "sequential",
+      "mode": "translate",
+      "first": {
+        "partId": "coat-free:notes-left:ArtMesh900",
+        "vertexIndex": 132
+      },
+      "second": {
+        "partId": "ArtMesh1001",
+        "vertexIndex": 61
+      },
+      "weight": 1,
+      "strength": 1
+    }
+  },
+  "seamFinish": {
+    "beforeModelSha256": "a7eab0e42ac6e4af8644e1bb123bcf24d33dbbf923b777bb3004b02be128f172",
+    "modelSha256": "473c9ee9bec1c900a24cbb8331ba71a3ffdfc9a680c829c525080233e879b6d6",
+    "modelBytes": 9764747,
+    "bindingId": "coat-free:notes-left:elbow-seam",
+    "partId": "ArtMesh1001",
+    "vertexIndex": 13,
+    "worldShift": [17.534218313244416, 0],
+    "localDelta": [0.0076227649853060075, 3.642578016993525e-9],
+    "paintedEndShift": [9.943224732052158, 0],
+    "overlapInset": 4,
+    "activation": ["Param49", "Param89"],
+    "texturesAndMeshesUnchanged": true,
+    "existingBindingsAndCenterConstraintsUnchanged": true,
+    "geometry": {
+      "samples": 65,
+      "maximumVertexChangeOutsideSeam": 0,
+      "maximumContactGap": 0,
+      "maximumInactiveVertexChange": 0,
+      "maximumSeamControlShift": 17.534444660515486,
+      "allTexturesMeshesAndExistingBindingsUnchanged": true,
+      "tip": {
+        "triangle": [13, 14, 40],
+        "weights": [0.5670754495249768, 0.024448223112353458, 0.40847632736266976]
+      },
+      "coverage": [
+        {
+          "sample": 0,
+          "writing": 0,
+          "before": 0,
+          "after": 255
+        },
+        {
+          "sample": 1,
+          "writing": 0.5,
+          "before": 0,
+          "after": 255
+        },
+        {
+          "sample": 2,
+          "writing": 1,
+          "before": 0,
+          "after": 255
+        },
+        {
+          "sample": 3,
+          "writing": 0,
+          "before": 0,
+          "after": 255
+        },
+        {
+          "sample": 4,
+          "writing": 0.5,
+          "before": 0,
+          "after": 255
+        },
+        {
+          "sample": 5,
+          "writing": 1,
+          "before": 0,
+          "after": 255
+        },
+        {
+          "sample": 6,
+          "writing": 0,
+          "before": 0,
+          "after": 255
+        },
+        {
+          "sample": 7,
+          "writing": 0.5,
+          "before": 0,
+          "after": 255
+        },
+        {
+          "sample": 8,
+          "writing": 1,
+          "before": 0,
+          "after": 255
+        },
+        {
+          "sample": 9,
+          "writing": 0,
+          "before": 0,
+          "after": 255
+        },
+        {
+          "sample": 10,
+          "writing": 0.5,
+          "before": 0,
+          "after": 253
+        },
+        {
+          "sample": 11,
+          "writing": 1,
+          "before": 0,
+          "after": 231
+        },
+        {
+          "sample": 12,
+          "writing": 0,
+          "before": 0,
+          "after": 255
+        },
+        {
+          "sample": 13,
+          "writing": 0.5,
+          "before": 0,
+          "after": 255
+        },
+        {
+          "sample": 14,
+          "writing": 1,
+          "before": 0,
+          "after": 231
+        },
+        {
+          "sample": 15,
+          "writing": 0,
+          "before": 0,
+          "after": 255
+        },
+        {
+          "sample": 16,
+          "writing": 0.5,
+          "before": 0,
+          "after": 255
+        },
+        {
+          "sample": 17,
+          "writing": 1,
+          "before": 0,
+          "after": 255
+        },
+        {
+          "sample": 18,
+          "writing": 0,
+          "before": 178,
+          "after": 255
+        },
+        {
+          "sample": 19,
+          "writing": 0.5,
+          "before": 0,
+          "after": 255
+        },
+        {
+          "sample": 20,
+          "writing": 1,
+          "before": 0,
+          "after": 255
+        },
+        {
+          "sample": 21,
+          "writing": 0,
+          "before": 63,
+          "after": 255
+        },
+        {
+          "sample": 22,
+          "writing": 0.5,
+          "before": 0,
+          "after": 255
+        },
+        {
+          "sample": 23,
+          "writing": 1,
+          "before": 0,
+          "after": 255
+        },
+        {
+          "sample": 24,
+          "writing": 0,
+          "before": 63,
+          "after": 255
+        },
+        {
+          "sample": 25,
+          "writing": 0.5,
+          "before": 0,
+          "after": 255
+        },
+        {
+          "sample": 26,
+          "writing": 1,
+          "before": 0,
+          "after": 255
+        },
+        {
+          "sample": 27,
+          "writing": 0,
+          "before": 0,
+          "after": 255
+        },
+        {
+          "sample": 28,
+          "writing": 0,
+          "before": 0,
+          "after": 255
+        },
+        {
+          "sample": 29,
+          "writing": 0,
+          "before": 0,
+          "after": 255
+        },
+        {
+          "sample": 30,
+          "writing": 0,
+          "before": 0,
+          "after": 255
+        },
+        {
+          "sample": 31,
+          "writing": 0,
+          "before": 0,
+          "after": 255
+        },
+        {
+          "sample": 32,
+          "writing": 0,
+          "before": 0,
+          "after": 255
+        },
+        {
+          "sample": 33,
+          "writing": 0,
+          "before": 0,
+          "after": 255
+        },
+        {
+          "sample": 34,
+          "writing": 0,
+          "before": 0,
+          "after": 255
+        },
+        {
+          "sample": 35,
+          "writing": 0,
+          "before": 0,
+          "after": 255
+        },
+        {
+          "sample": 36,
+          "writing": 0,
+          "before": 0,
+          "after": 255
+        },
+        {
+          "sample": 37,
+          "writing": 0,
+          "before": 0,
+          "after": 255
+        },
+        {
+          "sample": 38,
+          "writing": 0,
+          "before": 0,
+          "after": 255
+        },
+        {
+          "sample": 39,
+          "writing": 0,
+          "before": 0,
+          "after": 255
+        },
+        {
+          "sample": 40,
+          "writing": 0,
+          "before": 0,
+          "after": 255
+        },
+        {
+          "sample": 41,
+          "writing": 0,
+          "before": 0,
+          "after": 255
+        },
+        {
+          "sample": 42,
+          "writing": 0,
+          "before": 0,
+          "after": 255
+        },
+        {
+          "sample": 43,
+          "writing": 0,
+          "before": 0,
+          "after": 255
+        },
+        {
+          "sample": 44,
+          "writing": 0,
+          "before": 0,
+          "after": 255
+        },
+        {
+          "sample": 45,
+          "writing": 0,
+          "before": 0,
+          "after": 255
+        },
+        {
+          "sample": 46,
+          "writing": 0,
+          "before": 0,
+          "after": 255
+        },
+        {
+          "sample": 47,
+          "writing": 0,
+          "before": 0,
+          "after": 255
+        },
+        {
+          "sample": 48,
+          "writing": 0,
+          "before": 0,
+          "after": 255
+        },
+        {
+          "sample": 49,
+          "writing": 0,
+          "before": 0,
+          "after": 255
+        },
+        {
+          "sample": 50,
+          "writing": 0,
+          "before": 0,
+          "after": 255
+        },
+        {
+          "sample": 51,
+          "writing": 0,
+          "before": 0,
+          "after": 255
+        },
+        {
+          "sample": 52,
+          "writing": 0,
+          "before": 0,
+          "after": 255
+        },
+        {
+          "sample": 53,
+          "writing": 0,
+          "before": 0,
+          "after": 255
+        },
+        {
+          "sample": 54,
+          "writing": 0,
+          "before": 0,
+          "after": 255
+        },
+        {
+          "sample": 55,
+          "writing": 0,
+          "before": 0,
+          "after": 255
+        },
+        {
+          "sample": 56,
+          "writing": 0,
+          "before": 0,
+          "after": 255
+        },
+        {
+          "sample": 57,
+          "writing": 0,
+          "before": 0,
+          "after": 255
+        },
+        {
+          "sample": 62,
+          "writing": 0,
+          "before": 0,
+          "after": 255
+        }
+      ]
+    }
+  }
+}

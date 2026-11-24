@@ -1,0 +1,50 @@
+{
+  "source": "actual Wallpaper app synthetic canvas pointer drag",
+  "pointerInputUsed": false,
+  "drags": [
+    {
+      "name": "left",
+      "targetDistanceCss": 1500,
+      "start": {
+        "x": 775.5032811242494,
+        "y": 521.1922088776079,
+        "count": 32306
+      },
+      "angle": 2,
+      "peak": 2
+    },
+    {
+      "name": "right",
+      "targetDistanceCss": 1500,
+      "start": {
+        "x": 774.1106769636235,
+        "y": 523.135193527627,
+        "count": 32631
+      },
+      "angle": -2,
+      "peak": 2
+    }
+  ],
+  "captures": [
+    {
+      "name": "bag-rest",
+      "angle": 8.098419177573375e-288,
+      "maximumVertexError": 0.00012199489538033959
+    },
+    {
+      "name": "bag-left",
+      "angle": 2,
+      "maximumVertexError": 0.00012205634220663342
+    },
+    {
+      "name": "bag-right",
+      "angle": -2,
+      "maximumVertexError": 0.00012203146570755052
+    },
+    {
+      "name": "bag-released",
+      "angle": -0.14786359569264607,
+      "maximumVertexError": 0.00012202351990708848
+    }
+  ]
+}

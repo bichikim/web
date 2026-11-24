@@ -1,0 +1,73 @@
+{
+  "tool": "Local ComfyUI core image/mask/compositing nodes; no diffusion or regeneration",
+  "source": "hand-options/2026-11-07-lines/source.png",
+  "texture": "hand.png",
+  "appliedToModel": true,
+  "application": "Keep only the generated hand back. Remove the surplus generated wrist/forearm with a deterministic binary alpha mask. Native ArtMesh136/137 fingers and ArtMesh139 pen are unchanged.",
+  "line": "Join the palm contour to the preserved native finger outline; replace generated finger marks under the native pinky with adjoining palm skin and match the contour stroke to the original forearm. No new raster hand shape generation.",
+  "colour": "Original hand skin palette retained. The last 30 source rows at the assembly join match the actual adjoining forearm UV paint; skin-only RGB compositing, no alpha feather.",
+  "assembly": "Join the painted upper-arm terminal thickness center to the painted forearm thickness center slightly above the elbow. Locate both anchors barycentrically in their painted triangles. Translate the lower arm and hand assembly together, keeping original rendered vertices, textures, keyforms and physics.",
+  "physics": "Authored physics chains are unchanged. The upper arm follows the original native rig without the added lower-arm tracking constraints.",
+  "comfyPromptId": "9d2f3474-690b-41b2-b763-fc5c26c25990",
+  "modelSha256": "7ed8bd78a1f9df44e6f7d0e242fd3d1b06f5498892121b33a93f404d0795b088",
+  "textureSha256": "ed874e0eab0df8a73df23ec396183961240de804ba7db5e699f3df9aba316bf1",
+  "joint": {
+    "mechanism": "Read-only triangle center references, rigid lower-arm assembly translation, existing local wrist bend",
+    "translationLinks": 2,
+    "elbowLinks": 1,
+    "wristLinks": 30,
+    "fullStrengthWristLinks": 16,
+    "wristBlendRows": [920, 1100],
+    "upperArmRestored": true,
+    "reconnection": "Painted thickness centers connected",
+    "assemblyFollowers": 16,
+    "seamFinish": "Pose-gated local upper-arm contour correction; centers, forearm and hand positions unchanged"
+  },
+  "notebookArm": {
+    "record": "notebook-arm.json",
+    "beforeModelSha256": "473c9ee9bec1c900a24cbb8331ba71a3ffdfc9a680c829c525080233e879b6d6",
+    "mechanism": "Painted thickness center attachment; rigid forearm, hand and notebook translation; local upper-arm contour finish"
+  },
+  "notebookWrist": {
+    "record": "notebook-wrist.json",
+    "replacedModelSha256": "f2fe486c72ceacfff8fe054a73b5571e01e90db33b1a37207f6d8996d4759cf0",
+    "mechanism": "Only translate the original hand and notebook together. Restore all original forearm vertices and remove every added local wrist deformation. Put the forearm behind the hand using the existing parts order."
+  },
+  "notebookHandRetouch": {
+    "record": "notebook-hand.json",
+    "beforeModelSha256": "fcda2ff70725fb031c15dc29684b5cac7949c7b0732968007e9f91c1dc98cddf",
+    "scope": "Retouch only the bottom of the original notebook-supporting hand; preserve fingers, upper hand, forearm, wrist length and all rigging."
+  },
+  "atlasCleanup": {
+    "record": "../texture-atlas/cleanup.json",
+    "scope": "Unused notice pixels cleared; all part UV artwork and rigging unchanged"
+  },
+  "notebookWristContour": {
+    "record": "notebook-wrist-contour.json",
+    "scope": "Only the protruding outer wrist contour; all rigging and other artwork unchanged"
+  },
+  "notebookTransition": {
+    "record": "notebook-transition.json",
+    "scope": "Keep contact active independently of notebook action opacity; retain the coat parameter."
+  },
+  "notebookPose": {
+    "record": "notebook-pose.json",
+    "scope": "Shrink only the notebook about its grip; rotate the screen-left forearm, hand and pen about the elbow. Preserve all artwork, arm/hand length, existing glue and authored physics."
+  },
+  "notebookLayer": {
+    "record": "notebook-layer.json",
+    "scope": "Notebook in front of the pen; retain the original hand and forearm layers."
+  },
+  "penPhysics": {
+    "record": "pen-physics.json",
+    "scope": "Reuse the authored body pendulum for visible wrist rotation; preserve rigid forearm geometry and the original wrist contacts."
+  },
+  "handBalance": {
+    "record": "hand-balance.json",
+    "scope": "Match both hands across body and secondary physics while writing; finish only the two contour registrations. Preserve all artwork, mesh vertices and joints."
+  },
+  "armActions": {
+    "record": "arm-actions.json",
+    "scope": "Connect all other bare-arm hand gestures; preserve the accepted notebook parts, hand balance, artwork and existing notebook joints."
+  }
+}

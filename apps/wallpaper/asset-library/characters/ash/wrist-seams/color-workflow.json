@@ -1,0 +1,180 @@
+{
+  "10": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "wrist-color-coffee-source.png"
+    }
+  },
+  "11": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "wrist-color-coffee-stats.png"
+    }
+  },
+  "12": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "wrist-color-arm-palette.png"
+    }
+  },
+  "13": {
+    "class_type": "ImageBatch",
+    "inputs": {
+      "image1": ["11", 0],
+      "image2": ["10", 0]
+    }
+  },
+  "14": {
+    "class_type": "ColorTransfer",
+    "inputs": {
+      "image_target": ["13", 0],
+      "image_ref": ["12", 0],
+      "method": "reinhard_lab",
+      "source_stats": "target_frame",
+      "strength": 1,
+      "source_stats.target_index": 0
+    }
+  },
+  "15": {
+    "class_type": "ImageFromBatch",
+    "inputs": {
+      "image": ["14", 0],
+      "batch_index": 1,
+      "length": 1
+    }
+  },
+  "16": {
+    "class_type": "LoadImageMask",
+    "inputs": {
+      "image": "wrist-color-coffee-mask.png",
+      "channel": "red"
+    }
+  },
+  "17": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["10", 0],
+      "source": ["15", 0],
+      "mask": ["16", 0],
+      "x": 0,
+      "y": 0,
+      "resize_source": false
+    }
+  },
+  "18": {
+    "class_type": "LoadImageMask",
+    "inputs": {
+      "image": "wrist-color-coffee-alpha.png",
+      "channel": "red"
+    }
+  },
+  "19": {
+    "class_type": "InvertMask",
+    "inputs": {
+      "mask": ["18", 0]
+    }
+  },
+  "20": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["17", 0],
+      "alpha": ["19", 0]
+    }
+  },
+  "21": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": ["20", 0],
+      "filename_prefix": "Wallpaper/wrist-color/coffee"
+    }
+  },
+  "30": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "wrist-color-noodles-source.png"
+    }
+  },
+  "31": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "wrist-color-noodles-stats.png"
+    }
+  },
+  "32": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "wrist-color-arm-palette.png"
+    }
+  },
+  "33": {
+    "class_type": "ImageBatch",
+    "inputs": {
+      "image1": ["31", 0],
+      "image2": ["30", 0]
+    }
+  },
+  "34": {
+    "class_type": "ColorTransfer",
+    "inputs": {
+      "image_target": ["33", 0],
+      "image_ref": ["32", 0],
+      "method": "reinhard_lab",
+      "source_stats": "target_frame",
+      "strength": 1,
+      "source_stats.target_index": 0
+    }
+  },
+  "35": {
+    "class_type": "ImageFromBatch",
+    "inputs": {
+      "image": ["34", 0],
+      "batch_index": 1,
+      "length": 1
+    }
+  },
+  "36": {
+    "class_type": "LoadImageMask",
+    "inputs": {
+      "image": "wrist-color-noodles-mask.png",
+      "channel": "red"
+    }
+  },
+  "37": {
+    "class_type": "ImageCompositeMasked",
+    "inputs": {
+      "destination": ["30", 0],
+      "source": ["35", 0],
+      "mask": ["36", 0],
+      "x": 0,
+      "y": 0,
+      "resize_source": false
+    }
+  },
+  "38": {
+    "class_type": "LoadImageMask",
+    "inputs": {
+      "image": "wrist-color-noodles-alpha.png",
+      "channel": "red"
+    }
+  },
+  "39": {
+    "class_type": "InvertMask",
+    "inputs": {
+      "mask": ["38", 0]
+    }
+  },
+  "40": {
+    "class_type": "JoinImageWithAlpha",
+    "inputs": {
+      "image": ["37", 0],
+      "alpha": ["39", 0]
+    }
+  },
+  "41": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": ["40", 0],
+      "filename_prefix": "Wallpaper/wrist-color/noodles"
+    }
+  }
+}

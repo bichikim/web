@@ -1,0 +1,28 @@
+{
+  "tool": "Local ComfyUI core morphology and masked composite",
+  "promptId": "5f33d317-b487-4075-9f0d-ff1f64d67488",
+  "kernel": 5,
+  "maskFeather": {
+    "radius": 5,
+    "sigma": 2.4
+  },
+  "maskPolarity": "white edits, black protects; wrist strength tapers",
+  "changedRGB": 53624,
+  "protectedSkinError": 0,
+  "restoredAlpha": 3078,
+  "restoredNail": 219044,
+  "exactAlphaPreserved": true,
+  "nailPreserved": true,
+  "dimensions": [768, 1280],
+  "lineWeight": {
+    "before": 3.6573099415204666,
+    "after": 5.7827485380116945,
+    "existingArmReference": 5.609259259259258
+  },
+  "postprocess": "Restore original alpha and blue nail pixels only. No skin color or geometry edits.",
+  "beforeSha256": "86fb4bee0ef7603b555c3bb18e1af91d7a662b0e04a4a2c26156a56025f2212e",
+  "sha256": "e581dae5eaa96a556f31118d943014599b46559e19685094fa4e47fca4d3b83e",
+  "bytes": 18738414,
+  "geometryAndPhysicsUnchanged": true,
+  "otherPartsUnchanged": true
+}

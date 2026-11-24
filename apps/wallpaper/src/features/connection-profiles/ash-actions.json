@@ -126,5 +126,9 @@
   "ash:joy-open-right": {
     "id": "반짝이는 눈",
     "kind": "expression"
+  },
+  "ash:remove-coat": {
+    "kind": "expression",
+    "id": "외투 벗기"
   }
 }
