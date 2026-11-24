@@ -1,32 +1,19 @@
-export const PRIMARY_MOOD_IDS = [
-  'cheerful',
-  'calm',
-  'warm',
-  'hopeful',
-  'dreamlike',
-  'awe',
-  'nostalgic',
-  'sad',
-  'anxious',
-  'fearful',
-  'angry',
-  'neutral',
-] as const
-
-export type PrimaryMoodId = (typeof PRIMARY_MOOD_IDS)[number]
-
-export const MOOD_MODIFIER_IDS = ['playful', 'sarcastic'] as const
-
-export type MoodModifierId = (typeof MOOD_MODIFIER_IDS)[number]
-
-export interface MoodDefinition {
+interface MoodMetadata {
   readonly description: string
   readonly icon: string
-  readonly id: PrimaryMoodId
+  readonly id: string
   readonly label: string
 }
 
-export const PRIMARY_MOODS: ReadonlyArray<MoodDefinition> = [
+type DefinitionIds<Definitions extends ReadonlyArray<MoodMetadata>> = {
+  readonly [Index in keyof Definitions]: Definitions[Index]['id']
+}
+
+const getDefinitionIds = <const Definitions extends ReadonlyArray<MoodMetadata>>(
+  definitions: Definitions,
+): DefinitionIds<Definitions> => definitions.map(({id}) => id) as DefinitionIds<Definitions>
+
+const PRIMARY_MOOD_DEFINITIONS = [
   {description: '현재의 기쁨, 신남, 활기', icon: '😄', id: 'cheerful', label: '밝음·즐거움'},
   {description: '차분함, 편안함, 안정감', icon: '😌', id: 'calm', label: '평온·여유'},
   {description: '다정함, 친밀감, 위로', icon: '🥰', id: 'warm', label: '따뜻함·애정'},
@@ -59,19 +46,29 @@ export const PRIMARY_MOODS: ReadonlyArray<MoodDefinition> = [
     id: 'neutral',
     label: '중립',
   },
-]
+] as const satisfies ReadonlyArray<MoodMetadata>
 
-export interface MoodModifierDefinition {
-  readonly description: string
-  readonly icon: string
-  readonly id: MoodModifierId
-  readonly label: string
+export const PRIMARY_MOOD_IDS = getDefinitionIds(PRIMARY_MOOD_DEFINITIONS)
+export type PrimaryMoodId = (typeof PRIMARY_MOOD_IDS)[number]
+
+export interface MoodDefinition extends MoodMetadata {
+  readonly id: PrimaryMoodId
 }
 
-export const MOOD_MODIFIERS: ReadonlyArray<MoodModifierDefinition> = [
+export const PRIMARY_MOODS: ReadonlyArray<MoodDefinition> = PRIMARY_MOOD_DEFINITIONS
+
+export interface MoodModifierDefinition extends MoodMetadata {
+  readonly id: MoodModifierId
+}
+
+const MODIFIER_DEFINITIONS = [
   {description: '농담, 장난, 가벼운 과장', icon: '😜', id: 'playful', label: '장난스러움'},
   {description: '반어, 비꼼, 냉소', icon: '😏', id: 'sarcastic', label: '냉소·비꼼'},
-]
+] as const satisfies ReadonlyArray<MoodMetadata>
+
+export const MOOD_MODIFIER_IDS = getDefinitionIds(MODIFIER_DEFINITIONS)
+export type MoodModifierId = (typeof MOOD_MODIFIER_IDS)[number]
+export const MOOD_MODIFIERS: ReadonlyArray<MoodModifierDefinition> = MODIFIER_DEFINITIONS
 
 export const getPrimaryMood = (id: PrimaryMoodId) => {
   const mood = PRIMARY_MOODS.find((candidate) => candidate.id === id)
