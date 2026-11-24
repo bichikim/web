@@ -82,13 +82,3 @@ export const renderEditor = (options: RenderEditorOptions = {}) =>
 
 const SETTLED_DURATION = 700
 export const finishPageTurn = () => turns.advance(SETTLED_DURATION)
-
-export const sampleEntry = (text: string): PictureDiaryEntry => ({
-  createdAt: '2026-09-04T03:00:00.000Z',
-  date: '2026-09-04',
-  id: text,
-  strokes: [],
-  text,
-  updatedAt: '2026-09-04T03:00:00.000Z',
-  version: 1,
-})
