@@ -22,6 +22,8 @@ import {
 const CHANNEL_SLUG = 'today-in-history'
 const MAX_GENERATION_ATTEMPTS = 2
 
+type StoredGenerationRun = typeof historicalGenerationRuns.$inferSelect
+
 export interface GenerationRun {
   readonly id: string
   readonly openAiResponseId: string | null
@@ -48,19 +50,22 @@ interface PrepareRerunOptions extends CreateRunOptions {
   readonly requiredTitles: ReadonlyArray<string>
 }
 
-interface PublishResponseOptions {
+interface ResponseEvent {
+  /** Identifies the webhook delivery claimed by the transaction. */
   readonly eventId: string
+  /** Identifies the provider response whose generation run is locked. */
+  readonly responseId: string
+}
+
+interface PublishResponseOptions extends ResponseEvent {
   readonly generation: HistoryGenerationOutput
   readonly model: string
-  readonly responseId: string
   readonly replaceDate: boolean
   readonly searchSourceUrls: ReadonlyArray<string>
 }
 
-interface FinishResponseOptions {
-  readonly eventId: string
+interface FinishResponseOptions extends ResponseEvent {
   readonly message: string
-  readonly responseId: string
   readonly status: 'failed' | 'rejected'
 }
 
@@ -92,7 +97,7 @@ const getChannelId = async (database: Database): Promise<string> => {
   return channel.id
 }
 
-const mapRun = (run: typeof historicalGenerationRuns.$inferSelect): GenerationRun => ({
+const mapRun = (run: StoredGenerationRun): GenerationRun => ({
   id: run.id,
   openAiResponseId: run.openAiResponseId,
   openAiSubmissionKey: run.openAiSubmissionKey,
@@ -103,7 +108,7 @@ const mapRun = (run: typeof historicalGenerationRuns.$inferSelect): GenerationRu
   targetDate: run.targetDate,
 })
 
-const canPrepareRerun = (run: typeof historicalGenerationRuns.$inferSelect): boolean => {
+const canPrepareRerun = (run: StoredGenerationRun): boolean => {
   switch (run.status) {
     case 'completed':
     case 'failed':
@@ -412,27 +417,36 @@ const claimWebhookEvent = async (
   return inserted !== undefined
 }
 
+/** Claims an event and locks its submitted generation run in the same transaction. */
+const claimSubmittedRun = async (
+  event: ResponseEvent,
+  database: Parameters<Parameters<TransactionalDatabase['transaction']>[0]>[0],
+): Promise<StoredGenerationRun | undefined> => {
+  if (!(await claimWebhookEvent(event.eventId, database))) {
+    return undefined
+  }
+
+  const [run] = await database
+    .select()
+    .from(historicalGenerationRuns)
+    .where(eq(historicalGenerationRuns.openAiResponseId, event.responseId))
+    .for('update')
+    .limit(1)
+
+  if (run === undefined) {
+    throw new Error(`Generation run not found for response: ${event.responseId}`)
+  }
+
+  return run.status === 'submitted' ? run : undefined
+}
+
 const publishHistoryResponseWithDatabase = async (
   options: PublishResponseOptions,
   database: TransactionalDatabase,
 ): Promise<boolean> =>
   database.transaction(async (transaction) => {
-    if (!(await claimWebhookEvent(options.eventId, transaction))) {
-      return false
-    }
-
-    const [run] = await transaction
-      .select()
-      .from(historicalGenerationRuns)
-      .where(eq(historicalGenerationRuns.openAiResponseId, options.responseId))
-      .for('update')
-      .limit(1)
-
+    const run = await claimSubmittedRun(options, transaction)
     if (run === undefined) {
-      throw new Error(`Generation run not found for response: ${options.responseId}`)
-    }
-
-    if (run.status !== 'submitted') {
       return false
     }
 
@@ -543,22 +557,8 @@ const finishHistoryResponseWithDatabase = async (
   database: TransactionalDatabase,
 ): Promise<boolean> =>
   database.transaction(async (transaction) => {
-    if (!(await claimWebhookEvent(options.eventId, transaction))) {
-      return false
-    }
-
-    const [run] = await transaction
-      .select()
-      .from(historicalGenerationRuns)
-      .where(eq(historicalGenerationRuns.openAiResponseId, options.responseId))
-      .for('update')
-      .limit(1)
-
+    const run = await claimSubmittedRun(options, transaction)
     if (run === undefined) {
-      throw new Error(`Generation run not found for response: ${options.responseId}`)
-    }
-
-    if (run.status !== 'submitted') {
       return false
     }
 
