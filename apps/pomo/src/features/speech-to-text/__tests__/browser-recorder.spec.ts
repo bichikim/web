@@ -21,31 +21,24 @@ vi.mock('../speech-end-detector', async () => {
 
 import {createBrowserSpeechRecorder} from '../index'
 
-type RecorderListener = (event: BlobEvent | Event) => void
 type TrackListener = (event: Event) => void
 
-class FakeMediaRecorder {
+class FakeMediaRecorder extends EventTarget {
   static autoStop = true
   static current: FakeMediaRecorder | null = null
   static data = new Blob(['audio'])
   static throwOnConstruct = false
 
   readonly mimeType = 'audio/webm'
-  readonly #listeners = new Map<string, Array<RecorderListener>>()
   state: RecordingState = 'inactive'
 
   constructor() {
+    super()
     if (FakeMediaRecorder.throwOnConstruct) {
       throw new Error('MediaRecorder 생성 실패')
     }
 
     FakeMediaRecorder.current = this
-  }
-
-  addEventListener(type: string, listener: RecorderListener) {
-    const listeners = this.#listeners.get(type) ?? []
-    listeners.push(listener)
-    this.#listeners.set(type, listeners)
   }
 
   start() {
@@ -61,23 +54,17 @@ class FakeMediaRecorder {
   }
 
   emitData() {
-    for (const listener of this.#listeners.get('dataavailable') ?? []) {
-      listener({data: FakeMediaRecorder.data} as BlobEvent)
-    }
+    this.dispatchEvent(Object.assign(new Event('dataavailable'), {data: FakeMediaRecorder.data}))
   }
 
   emitStop() {
     this.emitData()
-    for (const listener of this.#listeners.get('stop') ?? []) {
-      listener(new Event('stop'))
-    }
+    this.dispatchEvent(new Event('stop'))
   }
 
   emitError() {
     this.state = 'inactive'
-    for (const listener of this.#listeners.get('error') ?? []) {
-      listener(new Event('error'))
-    }
+    this.dispatchEvent(new Event('error'))
     this.emitStop()
   }
 }
@@ -93,27 +80,20 @@ const getMediaRecorder = () => {
 }
 
 const trackStop = vi.fn()
-const trackListeners = new Map<string, Array<TrackListener>>()
+let trackEvents = new EventTarget()
 const createTrack = () => {
   let readyState: MediaStreamTrackState = 'live'
   return {
-    addEventListener: (type: string, listener: TrackListener) => {
-      const listeners = trackListeners.get(type) ?? []
-      listeners.push(listener)
-      trackListeners.set(type, listeners)
-    },
+    addEventListener: (type: string, listener: TrackListener) =>
+      trackEvents.addEventListener(type, listener),
     get readyState() {
       return readyState
     },
     set readyState(value: MediaStreamTrackState) {
       readyState = value
     },
-    removeEventListener: (type: string, listener: TrackListener) => {
-      trackListeners.set(
-        type,
-        (trackListeners.get(type) ?? []).filter((candidate) => candidate !== listener),
-      )
-    },
+    removeEventListener: (type: string, listener: TrackListener) =>
+      trackEvents.removeEventListener(type, listener),
     stop: vi.fn(() => {
       readyState = 'ended'
       trackStop()
@@ -123,9 +103,7 @@ const createTrack = () => {
 let track = createTrack()
 const emitTrackEnded = () => {
   track.readyState = 'ended'
-  for (const listener of trackListeners.get('ended') ?? []) {
-    listener(new Event('ended'))
-  }
+  trackEvents.dispatchEvent(new Event('ended'))
 }
 const stream = {getTracks: () => [track]} as unknown as MediaStream
 const getUserMedia = vi.fn(async () => {
@@ -139,7 +117,7 @@ beforeEach(() => {
   FakeMediaRecorder.data = new Blob(['audio'])
   FakeMediaRecorder.throwOnConstruct = false
   track = createTrack()
-  trackListeners.clear()
+  trackEvents = new EventTarget()
   dependencyMocks.createBrowserSpeechEndDetector.mockReset()
   dependencyMocks.decodeSpeechRecording.mockReset()
   vi.stubGlobal('MediaRecorder', FakeMediaRecorder)
